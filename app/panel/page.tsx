@@ -1,79 +1,120 @@
-"use client";
+import { createServerClient } from "@supabase/ssr";
+import { cookies } from "next/headers";
+import Link from "next/link";
+import { Plus, Car, MapPin, DollarSign } from "lucide-react";
+import AccionesAuto from "./AccionesAuto";
 
-import { useEffect, useState } from "react";
-import { supabase } from "@/lib/supabase";
-import { useRouter } from "next/navigation";
-import { CarFront, Plus, LayoutDashboard } from "lucide-react";
+export default async function PanelPage() {
+  const cookieStore = await cookies();
 
-export default function PanelPage() {
-  const [loading, setLoading] = useState(true);
-  const [userEmail, setUserEmail] = useState<string | undefined>("");
-  const router = useRouter();
+  // Conectamos con Supabase desde el servidor
+  const supabase = createServerClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY!,
+    {
+      cookies: {
+        getAll: () => cookieStore.getAll(),
+      },
+    },
+  );
 
-  useEffect(() => {
-    // Función que verifica si el usuario tiene permiso para estar acá
-    const checkUser = async () => {
-      const { data: { session } } = await supabase.auth.getSession();
-      
-      if (!session) {
-        // Si no hay sesión activa, lo mandamos al login
-        router.push("/login");
-      } else {
-        // Si todo está bien, lo dejamos pasar y guardamos su email
-        setUserEmail(session.user.email);
-        setLoading(false);
-      }
-    };
-    
-    checkUser();
-  }, [router]);
+  // Traemos los autos ordenados por los más recientes
+  const { data: autos, error } = await supabase
+    .from("autos")
+    .select("*")
+    .order("created_at", { ascending: false });
 
-  if (loading) {
-    return (
-      <div className="min-h-screen bg-[#0A0A0A] flex justify-center items-center">
-        <p className="text-[#0055A4] font-bold animate-pulse">Cargando panel seguro...</p>
-      </div>
-    );
+  if (error) {
+    console.error("Error cargando autos:", error);
   }
 
   return (
-    <div className="min-h-screen bg-[#0A0A0A] pt-24 px-4 sm:px-6 lg:px-8">
-      <div className="max-w-7xl mx-auto">
-        
-        {/* Cabecera del Panel */}
-        <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-8">
+    <div className="min-h-screen bg-[#0A0A0A] pt-24 pb-12 px-4 text-white">
+      <div className="max-w-6xl mx-auto">
+        <div className="flex justify-between items-center mb-8">
           <div>
-            <h1 className="text-3xl font-serif text-[#F5F5F3] flex items-center gap-3">
-              <LayoutDashboard className="w-8 h-8 text-[#0055A4]" />
-              Centro de Gestión
-            </h1>
-            <p className="text-gray-400 mt-1">
-              Sesión iniciada como: <span className="text-[#F5F5F3] font-medium">{userEmail}</span>
+            <h1 className="text-3xl font-serif mb-2">Centro de Gestión</h1>
+            <p className="text-gray-400">
+              Administración de stock de Pfaffen Autos
             </p>
           </div>
-          
-          <button className="flex items-center justify-center gap-2 bg-[#0055A4] hover:bg-[#1E6FD9] text-white px-6 py-3 rounded-md font-bold transition-colors">
-            <Plus className="w-5 h-5" />
-            Ingresar Nuevo Auto
-          </button>
+          <Link
+            href="/panel/nuevo"
+            className="bg-[#0055A4] hover:bg-[#1E6FD9] transition-colors px-6 py-3 rounded font-bold flex items-center gap-2"
+          >
+            <Plus className="w-5 h-5" /> Ingresar Nuevo Auto
+          </Link>
         </div>
 
-        {/* Grilla de Opciones */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-          <div className="bg-[#1A1A1A] p-6 rounded-xl border border-white/10 flex flex-col items-center text-center">
-            <div className="w-16 h-16 bg-[#0055A4]/10 rounded-full flex items-center justify-center mb-4">
-              <CarFront className="w-8 h-8 text-[#0055A4]" />
+        {/* Grilla de vehículos */}
+        <div className="bg-[#1A1A1A] border border-white/10 rounded-xl overflow-hidden">
+          {autos && autos.length > 0 ? (
+            <table className="w-full text-left border-collapse">
+              <thead>
+                <tr className="bg-black/50 border-b border-white/10 text-gray-400 text-sm">
+                  <th className="p-4 font-normal">Vehículo</th>
+                  <th className="p-4 font-normal">Año / Km</th>
+                  <th className="p-4 font-normal">Precio</th>
+                  <th className="p-4 font-normal">Sucursal</th>
+                  <th className="p-4 font-normal">Estado</th>
+                </tr>
+              </thead>
+              <tbody>
+                {autos.map((auto) => (
+                  <tr
+                    key={auto.id}
+                    className="border-b border-white/5 hover:bg-white/5 transition-colors"
+                  >
+                    <td className="p-4">
+                      <div className="flex items-center gap-3">
+                        {auto.fotos?.[0] ? (
+                          <img
+                            src={auto.fotos[0]}
+                            alt={auto.modelo}
+                            className="w-16 h-12 object-cover rounded"
+                          />
+                        ) : (
+                          <div className="w-16 h-12 bg-[#0A0A0A] rounded flex items-center justify-center">
+                            <Car className="w-6 h-6 text-gray-600" />
+                          </div>
+                        )}
+                        <span className="font-bold capitalize">
+                          {auto.marca} {auto.modelo}
+                        </span>
+                      </div>
+                    </td>
+                    <td className="p-4 text-gray-300">
+                      {auto.anio} • {auto.kilometraje.toLocaleString()} km
+                    </td>
+                    <td className="p-4 font-mono text-[#4A90E2]">
+                      <div className="flex items-center gap-1">
+                        <DollarSign className="w-4 h-4" />
+                        {auto.precio.toLocaleString()}
+                      </div>
+                    </td>
+                    <td className="p-4 text-gray-300">
+                      <div className="flex items-center gap-1">
+                        <MapPin className="w-4 h-4 text-gray-500" />
+                        {auto.sucursal}
+                      </div>
+                    </td>
+                    <td className="p-4">
+                      <AccionesAuto
+                        autoId={auto.id}
+                        estadoActual={auto.estado}
+                      />
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          ) : (
+            <div className="p-12 text-center text-gray-500">
+              <Car className="w-12 h-12 mx-auto mb-4 opacity-50" />
+              <p>No hay vehículos cargados en el sistema.</p>
             </div>
-            <h3 className="text-xl font-bold text-[#F5F5F3] mb-2">Stock Activo</h3>
-            <p className="text-gray-400 text-sm mb-4">
-              Administrar precios, fotos y estado de los vehículos disponibles.
-            </p>
-            <button className="mt-auto text-[#0055A4] font-bold hover:text-[#1E6FD9] transition-colors">
-              Ver inventario completo →
-            </button>
-          </div>
+          )}
         </div>
-
       </div>
     </div>
   );

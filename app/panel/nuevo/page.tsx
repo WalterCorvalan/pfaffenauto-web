@@ -9,7 +9,8 @@ import { ArrowLeft, Upload, Save } from "lucide-react";
 export default function NuevoAutoPage() {
   const router = useRouter();
   const [loading, setLoading] = useState(false);
-  const [file, setFile] = useState<File | null>(null);
+  // 1. Cambiamos el estado para que guarde una lista de archivos en lugar de uno solo
+  const [fotos, setFotos] = useState<File[]>([]);
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
@@ -18,14 +19,22 @@ export default function NuevoAutoPage() {
     try {
       const formData = new FormData(e.currentTarget);
       
-      // 1. Subir imagen primero
-      let imageUrl = "";
-      if (file) {
-        const fileName = `${Date.now()}-${file.name}`;
-        imageUrl = await uploadAutoImage(file, fileName);
+      // 2. Subir todas las imágenes una por una usando tu función uploadAutoImage
+      let imageUrls: string[] = [];
+      
+      if (fotos.length > 0) {
+        for (const foto of fotos) {
+          // Limpiamos el nombre para que no tenga caracteres raros que rompan la URL
+          const fileName = `${Date.now()}-${foto.name.replace(/[^a-zA-Z0-9.]/g, '')}`;
+          const url = await uploadAutoImage(foto, fileName);
+          
+          if (url) {
+            imageUrls.push(url);
+          }
+        }
       }
 
-      // 2. Insertar datos en la tabla 'autos'
+      // 3. Insertar datos en la tabla 'autos', guardando la lista completa de fotos
       const { error } = await supabase.from("autos").insert({
         marca: formData.get("marca"),
         modelo: formData.get("modelo"),
@@ -33,7 +42,7 @@ export default function NuevoAutoPage() {
         precio: parseFloat(formData.get("precio") as string),
         kilometraje: parseInt(formData.get("kilometraje") as string),
         sucursal: formData.get("sucursal"),
-        fotos: imageUrl ? [imageUrl] : [],
+        fotos: imageUrls, // Acá pasamos el array lleno de URLs
       });
 
       if (error) throw error;
@@ -72,8 +81,27 @@ export default function NuevoAutoPage() {
           </div>
 
           <div className="border-2 border-dashed border-white/10 p-8 text-center rounded-lg">
-            <input type="file" onChange={(e) => setFile(e.target.files?.[0] || null)} className="text-gray-400" />
-            <p className="text-sm text-gray-500 mt-2">Seleccionar foto principal</p>
+            {/* Agregamos la propiedad 'multiple' y actualizamos el onChange */}
+            <input 
+              type="file" 
+              accept="image/*"
+              multiple
+              onChange={(e) => {
+                if (e.target.files) {
+                  setFotos(Array.from(e.target.files));
+                }
+              }} 
+              className="text-gray-400 w-full cursor-pointer" 
+            />
+            <p className="text-sm text-gray-500 mt-2">
+              Seleccionar fotos (podés elegir varias a la vez)
+            </p>
+            {/* Indicador visual de cuántas fotos seleccionó */}
+            {fotos.length > 0 && (
+              <p className="text-sm text-[#4A90E2] mt-2 font-bold">
+                {fotos.length} fotos seleccionadas.
+              </p>
+            )}
           </div>
 
           <button 
