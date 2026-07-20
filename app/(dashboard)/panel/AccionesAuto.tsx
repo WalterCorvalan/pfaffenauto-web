@@ -4,9 +4,19 @@ import { useState } from "react";
 import { supabase } from "@/lib/supabase"; 
 import { useRouter } from "next/navigation";
 
+// en panel/page.tsx, junto con la consulta de vehículos:
+const { data: { user } } = await supabase.auth.getUser();
+const { data: perfil } = await supabase
+  .from("perfiles")
+  .select("rol")
+  .eq("id", user?.id)
+  .single();
+
+const puedeGestionar = perfil?.rol === "admin" || perfil?.rol === "encargado";
 export default function AccionesAuto({ autoId, estadoActual }: { autoId: string, estadoActual: string }) {
   const router = useRouter();
   const [cargando, setCargando] = useState(false);
+  
 
   const cambiarEstado = async (nuevoEstado: string) => {
     setCargando(true);

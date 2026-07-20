@@ -1,36 +1,46 @@
 import { NextResponse, type NextRequest } from 'next/server'
+import { createServerClient } from '@supabase/ssr'
 
 export async function proxy(request: NextRequest) {
   const { pathname } = request.nextUrl;
-  const sesion = request.cookies.get("pfaffen_session");
+  let response = NextResponse.next({ request });
 
-  // Regla A: Si quiere entrar a /panel y NO tiene la cookie de sesión -> Lo mandamos al login
-  if (!sesion && pathname.startsWith('/panel')) {
+  const supabase = createServerClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY!,
+    {
+      cookies: {
+        getAll: () => request.cookies.getAll(),
+        setAll: (cookiesToSet) => {
+          cookiesToSet.forEach(({ name, value }) => request.cookies.set(name, value));
+          response = NextResponse.next({ request });
+          cookiesToSet.forEach(({ name, value, options }) =>
+            response.cookies.set(name, value, options)
+          );
+        },
+      },
+    }
+  );
+
+  const { data: { user } } = await supabase.auth.getUser();
+
+  if (!user && pathname.startsWith('/panel')) {
     const url = request.nextUrl.clone();
     url.pathname = '/login';
     return NextResponse.redirect(url);
   }
 
-  // Regla B: Si YA tiene sesión (está logueado) e intenta ir a /login -> Lo mandamos directo al panel
-  if (sesion && pathname === '/login') {
+  if (user && pathname === '/login') {
     const url = request.nextUrl.clone();
     url.pathname = '/panel';
     return NextResponse.redirect(url);
   }
 
-  // Si pasa las reglas, dejamos que la petición continúe con normalidad
-  return NextResponse.next();
+  return response;
 }
 
-// Configuramos las rutas en las que actúa el proxy
 export const config = {
   matcher: [
-    /*
-     * Ejecuta el proxy en todas las rutas EXCEPTO en:
-     * - api (Endopoints internos)
-     * - _next/static, _next/image
-     * - Archivos estáticos (.png, .jpg, etc.)
-     */
     '/((?!api|_next/static|_next/image|favicon.ico|.*\\.(?:svg|png|jpg|jpeg|gif|webp)$).*)',
   ],
 }

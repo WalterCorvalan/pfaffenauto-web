@@ -5,7 +5,7 @@ import { supabase } from "@/lib/supabase";
 import { useRouter } from "next/navigation";
 
 export default function LoginPage() {
-  const [nombre, setNombre] = useState("");
+  const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
@@ -16,24 +16,17 @@ export default function LoginPage() {
     setLoading(true);
     setError(null);
 
-    // Buscamos al empleado en nuestra propia tabla
-    const { data: empleado, error: dbError } = await supabase
-      .from("empleados")
-      .select("*")
-      .eq("nombre", nombre.toLowerCase().trim())
-      .eq("password", password)
-      .single();
+    const { error: authError } = await supabase.auth.signInWithPassword({
+      email,
+      password,
+    });
 
-    if (dbError || !empleado) {
+    if (authError) {
       setError("Usuario o contraseña incorrectos.");
       setLoading(false);
       return;
     }
 
-    // Guardamos una cookie simple en el navegador que dura 1 día
-    document.cookie = `pfaffen_session=${empleado.nombre}; path=/; max-age=86400`;
-
-    // Redirigimos al panel
     router.push("/panel");
     router.refresh();
   };
@@ -45,22 +38,18 @@ export default function LoginPage() {
           <h2 className="text-center text-3xl font-serif text-[#F5F5F3]">
             Panel de Gestión
           </h2>
-          <p className="mt-2 text-center text-sm text-gray-400">
-            Ingreso con usuario directo
-          </p>
         </div>
 
         <form className="mt-8 space-y-6" onSubmit={handleLogin}>
           <div className="space-y-4">
             <div>
-              <label className="text-sm font-medium text-gray-300">Usuario</label>
+              <label className="text-sm font-medium text-gray-300">Email</label>
               <input
-                type="text"
+                type="email"
                 required
-                placeholder="nico"
                 className="mt-1 w-full px-3 py-2 bg-[#0A0A0A] border border-white/10 rounded-md text-white focus:outline-none focus:border-[#0055A4]"
-                value={nombre}
-                onChange={(e) => setNombre(e.target.value)}
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
               />
             </div>
             <div>
@@ -68,7 +57,6 @@ export default function LoginPage() {
               <input
                 type="password"
                 required
-                placeholder="••••••"
                 className="mt-1 w-full px-3 py-2 bg-[#0A0A0A] border border-white/10 rounded-md text-white focus:outline-none focus:border-[#0055A4]"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
