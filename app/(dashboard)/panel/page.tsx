@@ -7,7 +7,6 @@ import AccionesAuto from "./AccionesAuto";
 export default async function PanelPage() {
   const cookieStore = await cookies();
 
-  // Conectamos con Supabase desde el servidor
   const supabase = createServerClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
     process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY!,
@@ -18,10 +17,13 @@ export default async function PanelPage() {
     },
   );
 
-  // Traemos los autos ordenados por los más recientes
-  const { data: autos, error } = await supabase
-    .from("autos")
-    .select("*")
+  const { data: vehiculos, error } = await supabase
+    .from("vehiculos")
+    .select(`
+      *,
+      multimedia_vehiculos ( url_archivo ),
+      sucursales ( nombre )
+    `)
     .order("created_at", { ascending: false });
 
   if (error) {
@@ -34,21 +36,18 @@ export default async function PanelPage() {
         <div className="flex justify-between items-center mb-8">
           <div>
             <h1 className="text-3xl font-serif mb-2">Centro de Gestión</h1>
-            <p className="text-gray-400">
-              Administración de stock de Pfaffen Autos
-            </p>
+            <p className="text-gray-400">Administración de stock de Pfaffen Autos</p>
           </div>
           <Link
-            href="/panel/nuevo"
+            href="/panel/vehiculo/nuevo"
             className="bg-[#0055A4] hover:bg-[#1E6FD9] transition-colors px-6 py-3 rounded font-bold flex items-center gap-2"
           >
             <Plus className="w-5 h-5" /> Ingresar Nuevo Auto
           </Link>
         </div>
 
-        {/* Grilla de vehículos */}
         <div className="bg-[#1A1A1A] border border-white/10 rounded-xl overflow-hidden">
-          {autos && autos.length > 0 ? (
+          {vehiculos && vehiculos.length > 0 ? (
             <table className="w-full text-left border-collapse">
               <thead>
                 <tr className="bg-black/50 border-b border-white/10 text-gray-400 text-sm">
@@ -60,16 +59,13 @@ export default async function PanelPage() {
                 </tr>
               </thead>
               <tbody>
-                {autos.map((auto) => (
-                  <tr
-                    key={auto.id}
-                    className="border-b border-white/5 hover:bg-white/5 transition-colors"
-                  >
+                {vehiculos.map((auto) => (
+                  <tr key={auto.id} className="border-b border-white/5 hover:bg-white/5 transition-colors">
                     <td className="p-4">
                       <div className="flex items-center gap-3">
-                        {auto.fotos?.[0] ? (
+                        {auto.multimedia_vehiculos?.[0] ? (
                           <img
-                            src={auto.fotos[0]}
+                            src={auto.multimedia_vehiculos[0].url_archivo}
                             alt={auto.modelo}
                             className="w-16 h-12 object-cover rounded"
                           />
@@ -84,25 +80,22 @@ export default async function PanelPage() {
                       </div>
                     </td>
                     <td className="p-4 text-gray-300">
-                      {auto.anio} • {auto.kilometraje.toLocaleString()} km
+                      {auto.anio} • {auto.kilometraje?.toLocaleString()} km
                     </td>
                     <td className="p-4 font-mono text-[#4A90E2]">
                       <div className="flex items-center gap-1">
                         <DollarSign className="w-4 h-4" />
-                        {auto.precio.toLocaleString()}
+                        {auto.precio_usd?.toLocaleString()}
                       </div>
                     </td>
                     <td className="p-4 text-gray-300">
                       <div className="flex items-center gap-1">
                         <MapPin className="w-4 h-4 text-gray-500" />
-                        {auto.sucursal}
+                        {auto.sucursales?.nombre || "Sin sucursal"}
                       </div>
                     </td>
                     <td className="p-4">
-                      <AccionesAuto
-                        autoId={auto.id}
-                        estadoActual={auto.estado}
-                      />
+                      <AccionesAuto autoId={auto.id} estadoActual={auto.estado} />
                     </td>
                   </tr>
                 ))}

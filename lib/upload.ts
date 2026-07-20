@@ -1,20 +1,42 @@
-import { supabase } from "./supabase";
-
-export async function uploadAutoImage(file: File, fileName: string) {
-  // Subimos el archivo al bucket 'autos'
-  const { data, error } = await supabase.storage
-    .from("autos")
-    .upload(`public/${fileName}`, file, {
-      cacheControl: "3600",
-      upsert: true,
+export async function uploadAutoImage(file: File): Promise<string> {
+  try {
+    // 1. Pedirle permiso a nuestro servidor (Next.js) para subir esta foto
+    const authResponse = await fetch('/api/upload', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        filename: file.name,
+        contentType: file.type,
+      }),
     });
 
-  if (error) throw error;
+    if (!authResponse.ok) {
+      throw new Error('No se pudo obtener la autorización del servidor');
+    }
 
-  // Obtenemos la URL pública para mostrar la foto
-  const { data: urlData } = supabase.storage
-    .from("autos")
-    .getPublicUrl(`public/${fileName}`);
+    // Recibimos la llave temporal (signedUrl) y la URL final (publicUrl)
+    const { signedUrl, publicUrl } = await authResponse.json();
 
-  return urlData.publicUrl;
+    // 2. Subir el archivo físico DIRECTAMENTE a Cloudflare R2 usando la llave temporal
+    const uploadResponse = await fetch(signedUrl, {
+      method: 'PUT',
+      body: file,
+      headers: {
+        'Content-Type': file.type, // Es crucial enviar el tipo de archivo correcto
+      },
+    });
+
+    if (!uploadResponse.ok) {
+      throw new Error('Error al subir la imagen a Cloudflare');
+    }
+
+    // 3. Si todo salió bien, devolvemos la URL pública para guardarla en Supabase
+    return publicUrl;
+    
+  } catch (error) {
+    console.error('Error en uploadAutoImage:', error);
+    throw error; // Lanzamos el error para que el formulario sepa que falló
+  }
 }

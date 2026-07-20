@@ -2,32 +2,43 @@ import { createClient } from "@supabase/supabase-js";
 import Link from "next/link";
 import { MessageCircle } from "lucide-react";
 
-// Conexión a Supabase (solo lectura)
+// Conexión a Supabase (modo lectura pública)
 const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY!
+  process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY!,
 );
 
+// Le decimos a Next.js que siempre traiga datos frescos (no cachee esta página)
 export const revalidate = 0;
 
-const getImageUrl = (ruta: string) => {
-  if (ruta.startsWith("http")) return ruta;
-  return `${process.env.NEXT_PUBLIC_SUPABASE_URL}/storage/v1/object/public/autos/${ruta}`;
-};
-
 export default async function HomePage() {
-  const { data: autos } = await supabase
-    .from("autos")
-    .select("*")
+  // CONSULTA RELACIONAL: Traemos el vehículo, sus fotos y el nombre de su sucursal
+  const { data: vehiculos } = await supabase
+    .from("vehiculos")
+    .select(
+      `
+      *,
+      multimedia_vehiculos ( url_archivo ),
+      sucursales ( nombre )
+    `,
+    )
     .in("estado", ["Disponible", "Reservado"])
     .order("created_at", { ascending: false });
 
   return (
     <div className="w-full text-white font-sans scroll-smooth">
-      
-      {/* 1. HERO - Ya no choca con el Header porque el Header está en el Layout */}
-      <section id="inicio" className="relative h-screen w-full flex flex-col justify-center items-center text-center px-6 overflow-hidden">
-        <div className="absolute inset-0 bg-cover bg-center z-0" style={{ backgroundImage: "url('https://images.unsplash.com/photo-1614200187524-dc4b892acf16?q=80&w=2000&auto=format&fit=crop')" }}>
+      {/* 1. HERO */}
+      <section
+        id="inicio"
+        className="relative h-screen w-full flex flex-col justify-center items-center text-center px-6 overflow-hidden"
+      >
+        <div
+          className="absolute inset-0 bg-cover bg-center z-0"
+          style={{
+            backgroundImage:
+              "url('https://images.unsplash.com/photo-1614200187524-dc4b892acf16?q=80&w=2000&auto=format&fit=crop')",
+          }}
+        >
           <div className="absolute inset-0 bg-black/60"></div>
         </div>
 
@@ -47,10 +58,16 @@ export default async function HomePage() {
       {/* 2. SUCURSALES */}
       <section id="sucursales" className="py-20 bg-[#050505]">
         <div className="max-w-[95%] mx-auto px-4">
-          <h2 className="text-xl font-black uppercase tracking-tighter mb-10 text-center">Nuestras Sucursales</h2>
+          <h2 className="text-xl font-black uppercase tracking-tighter mb-10 text-center">
+            Nuestras Sucursales
+          </h2>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
             {["Casa Central", "Panamericana", "La Lucila"].map((s, i) => (
-              <Link key={i} href={`/sucursales/${s.toLowerCase().replace(' ', '-')}`} className="bg-[#111] p-8 rounded-2xl border border-white/5 hover:border-[#0055A4] transition-all text-center">
+              <Link
+                key={i}
+                href={`/sucursales/${s.toLowerCase().replace(" ", "-")}`}
+                className="bg-[#111] p-8 rounded-2xl border border-white/5 hover:border-[#0055A4] transition-all text-center"
+              >
                 <h3 className="text-md font-black uppercase">{s}</h3>
               </Link>
             ))}
@@ -61,46 +78,134 @@ export default async function HomePage() {
       {/* 3. CONTACTO */}
       <section id="contacto" className="py-16 bg-[#080808]">
         <div className="max-w-4xl mx-auto px-4">
-          <h2 className="text-xl font-black uppercase text-center mb-10">Contacto</h2>
+          <h2 className="text-xl font-black uppercase text-center mb-10">
+            Contacto
+          </h2>
           <form className="grid grid-cols-1 md:grid-cols-2 gap-6 bg-[#111] p-8 rounded-2xl border border-white/5">
-            <input type="text" placeholder="Nombre" className="bg-[#050505] border border-white/10 p-4 rounded-xl text-sm outline-none focus:border-[#0055A4]" />
-            <input type="tel" placeholder="Teléfono" className="bg-[#050505] border border-white/10 p-4 rounded-xl text-sm outline-none focus:border-[#0055A4]" />
-            <textarea placeholder="Mensaje" className="md:col-span-2 bg-[#050505] border border-white/10 p-4 rounded-xl text-sm h-32 outline-none focus:border-[#0055A4]"></textarea>
-            <button className="md:col-span-2 bg-[#0055A4] hover:bg-[#1E6FD9] py-4 rounded-xl font-bold uppercase tracking-widest text-sm transition-all">Enviar Consulta</button>
+            <input
+              type="text"
+              placeholder="Nombre"
+              className="bg-[#050505] border border-white/10 p-4 rounded-xl text-sm outline-none focus:border-[#0055A4]"
+            />
+            <input
+              type="tel"
+              placeholder="Teléfono"
+              className="bg-[#050505] border border-white/10 p-4 rounded-xl text-sm outline-none focus:border-[#0055A4]"
+            />
+            <textarea
+              placeholder="Mensaje"
+              className="md:col-span-2 bg-[#050505] border border-white/10 p-4 rounded-xl text-sm h-32 outline-none focus:border-[#0055A4]"
+            ></textarea>
+            <button
+              type="button"
+              className="md:col-span-2 bg-[#0055A4] hover:bg-[#1E6FD9] py-4 rounded-xl font-bold uppercase tracking-widest text-sm transition-all"
+            >
+              Enviar Consulta
+            </button>
           </form>
         </div>
       </section>
 
-      {/* 4. STOCK */}
+      {/* 4. STOCK ACTUALIZADO */}
       <section id="stock" className="py-20 bg-[#050505]">
         <div className="max-w-[95%] mx-auto px-4">
-          <h2 className="text-xl font-black uppercase tracking-tighter mb-12">Nuestro Stock</h2>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-            {autos?.map((auto) => (
-              <div key={auto.id} className="bg-[#111] rounded-2xl overflow-hidden border border-white/5">
-                <div className="h-48 bg-gray-900">{auto.fotos?.[0] && <img src={getImageUrl(auto.fotos[0])} className="w-full h-full object-cover" />}</div>
-                <div className="p-4">
-                  <h3 className="text-sm font-black uppercase mb-1">{auto.marca} {auto.modelo}</h3>
-                  <p className="text-md font-bold text-[#1E6FD9] mb-4">${auto.precio.toLocaleString()}</p>
-                  <a href={`https://wa.me/5491100000000?text=Consulta%20por%20${auto.marca}`} className="text-[10px] font-bold uppercase border border-[#0055A4] px-4 py-2 rounded-full hover:bg-[#0055A4] transition-colors">Consultar</a>
+          <h2 className="text-xl font-black uppercase tracking-tighter mb-12">
+            Nuestro Stock
+          </h2>
+
+          {vehiculos && vehiculos.length > 0 ? (
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+              {vehiculos.map((auto) => (
+                <div
+                  key={auto.id}
+                  className="bg-[#111] rounded-2xl overflow-hidden border border-white/5 flex flex-col group"
+                >
+                  <div className="relative h-48 bg-gray-900 overflow-hidden">
+                    {/* Renderizamos la foto directamente desde el array anidado */}
+                    {auto.multimedia_vehiculos?.[0] && (
+                      <img
+                        src={auto.multimedia_vehiculos[0].url_archivo}
+                        alt={`${auto.marca} ${auto.modelo}`}
+                        className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+                      />
+                    )}
+
+                    {/* Etiqueta condicional si está reservado */}
+                    {auto.estado === "Reservado" && (
+                      <div className="absolute top-3 right-3 bg-[#D4AF37] text-black px-3 py-1 rounded-full text-xs font-bold shadow-lg">
+                        RESERVADO
+                      </div>
+                    )}
+                  </div>
+
+                  {/* PRECIOS: ARS prioritario, USD secundario */}
+                  <div className="mb-4">
+                    <div className="text-2xl font-black text-white font-mono">
+                      ${auto.precio_ars?.toLocaleString()}{" "}
+                      <span className="text-xs font-sans text-gray-400 font-normal">
+                        ARS
+                      </span>
+                    </div>
+                    {auto.precio_usd && (
+                      <div className="text-xs font-bold text-[#0055A4] font-mono mt-0.5">
+                        (${auto.precio_usd?.toLocaleString()} USD)
+                      </div>
+                    )}
+
+                    {/* Espaciador flexible para empujar el botón hacia abajo */}
+                    <div className="flex-grow"></div>
+
+                    <a
+                      href={`https://wa.me/5491100000000?text=Hola,%20me%20interesa%20el%20${auto.marca}%20${auto.modelo}`}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="text-center text-[10px] font-bold uppercase border border-[#0055A4] px-4 py-3 rounded-full hover:bg-[#0055A4] transition-colors w-full inline-block"
+                    >
+                      Consultar
+                    </a>
+                  </div>
                 </div>
-              </div>
-            ))}
-          </div>
+              ))}
+            </div>
+          ) : (
+            <div className="text-center py-12 bg-[#111] rounded-2xl border border-white/5">
+              <p className="text-gray-400">
+                Actualmente estamos actualizando nuestro catálogo. ¡Volvé a
+                consultar pronto!
+              </p>
+            </div>
+          )}
         </div>
       </section>
 
       {/* 5. FOOTER */}
       <footer className="py-12 border-t border-white/5 text-center bg-[#050505]">
         <div className="flex justify-center gap-8 mb-8 text-gray-400">
-          <a href="#" className="font-black text-xs hover:text-[#FFE600] transition-colors">MELI</a>
-          <a href="#" className="font-black text-xs hover:text-[#00F2EA] transition-colors">TIKTOK</a>
+          <a
+            href="#"
+            className="font-black text-xs hover:text-[#FFE600] transition-colors"
+          >
+            MELI
+          </a>
+          <a
+            href="#"
+            className="font-black text-xs hover:text-[#00F2EA] transition-colors"
+          >
+            TIKTOK
+          </a>
         </div>
-        <p className="text-[10px] text-gray-600 uppercase tracking-widest">© 2026 Pfaffen Autos</p>
+        <p className="text-[10px] text-gray-600 uppercase tracking-widest">
+          © 2026 Pfaffen Autos
+        </p>
       </footer>
 
       {/* BOTÓN FLOTANTE WHATSAPP */}
-      <a href="https://wa.me/5491100000000" target="_blank" rel="noopener noreferrer" className="fixed bottom-8 right-8 bg-[#25D366] text-white p-4 rounded-full shadow-lg z-50 hover:scale-110 transition-transform">
+      <a
+        href="https://wa.me/5491100000000"
+        target="_blank"
+        rel="noopener noreferrer"
+        className="fixed bottom-8 right-8 bg-[#25D366] text-white p-4 rounded-full shadow-lg z-50 hover:scale-110 transition-transform"
+      >
         <MessageCircle className="w-6 h-6" />
       </a>
     </div>

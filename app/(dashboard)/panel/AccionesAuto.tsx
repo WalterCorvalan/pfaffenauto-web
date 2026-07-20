@@ -1,19 +1,18 @@
 "use client";
 
 import { useState } from "react";
-import { supabase } from "@/lib/supabase"; // Usa tu conexión de cliente
+import { supabase } from "@/lib/supabase"; 
 import { useRouter } from "next/navigation";
 
-export default function AccionesAuto({ autoId, estadoActual }: { autoId: number, estadoActual: string }) {
+export default function AccionesAuto({ autoId, estadoActual }: { autoId: string, estadoActual: string }) {
   const router = useRouter();
   const [cargando, setCargando] = useState(false);
 
   const cambiarEstado = async (nuevoEstado: string) => {
     setCargando(true);
     
-    // Actualizamos la fila en Supabase
     const { error } = await supabase
-      .from("autos")
+      .from("vehiculos")
       .update({ estado: nuevoEstado })
       .eq("id", autoId);
 
@@ -21,7 +20,6 @@ export default function AccionesAuto({ autoId, estadoActual }: { autoId: number,
       console.error("Error al actualizar:", error);
       alert("Hubo un error al cambiar el estado.");
     } else {
-      // Le decimos a Next.js que recargue los datos del servidor para ver el cambio
       router.refresh();
     }
     

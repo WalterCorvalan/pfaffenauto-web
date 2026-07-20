@@ -1,4 +1,3 @@
-
 "use client";
 
 import { useState } from "react";
@@ -6,7 +5,7 @@ import { supabase } from "@/lib/supabase";
 import { useRouter } from "next/navigation";
 
 export default function LoginPage() {
-  const [email, setEmail] = useState("");
+  const [nombre, setNombre] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
@@ -17,46 +16,51 @@ export default function LoginPage() {
     setLoading(true);
     setError(null);
 
-    // Intentamos iniciar sesión con Supabase
-    const { data, error } = await supabase.auth.signInWithPassword({
-      email,
-      password,
-    });
+    // Buscamos al empleado en nuestra propia tabla
+    const { data: empleado, error: dbError } = await supabase
+      .from("empleados")
+      .select("*")
+      .eq("nombre", nombre.toLowerCase().trim())
+      .eq("password", password)
+      .single();
 
-    if (error) {
-      console.log("Motivo del rechazo de Supabase:", error.message);
-      setError("Correo o contraseña incorrectos.");
+    if (dbError || !empleado) {
+      setError("Usuario o contraseña incorrectos.");
       setLoading(false);
       return;
     }
 
-    // Si el login es exitoso, lo mandamos al panel interno
+    // Guardamos una cookie simple en el navegador que dura 1 día
+    document.cookie = `pfaffen_session=${empleado.nombre}; path=/; max-age=86400`;
+
+    // Redirigimos al panel
     router.push("/panel");
+    router.refresh();
   };
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-[#0A0A0A] px-4">
       <div className="max-w-md w-full space-y-8 bg-[#1A1A1A] p-8 rounded-xl border border-white/10 shadow-2xl">
-        
         <div>
           <h2 className="text-center text-3xl font-serif text-[#F5F5F3]">
             Panel de Gestión
           </h2>
           <p className="mt-2 text-center text-sm text-gray-400">
-            Ingreso exclusivo para personal de Pfaffen Autos
+            Ingreso con usuario directo
           </p>
         </div>
 
         <form className="mt-8 space-y-6" onSubmit={handleLogin}>
           <div className="space-y-4">
             <div>
-              <label className="text-sm font-medium text-gray-300">Email</label>
+              <label className="text-sm font-medium text-gray-300">Usuario</label>
               <input
-                type="email"
+                type="text"
                 required
-                className="mt-1 w-full px-3 py-2 bg-[#0A0A0A] border border-white/10 rounded-md text-white focus:outline-none focus:border-[#0055A4] focus:ring-1 focus:ring-[#0055A4]"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
+                placeholder="nico"
+                className="mt-1 w-full px-3 py-2 bg-[#0A0A0A] border border-white/10 rounded-md text-white focus:outline-none focus:border-[#0055A4]"
+                value={nombre}
+                onChange={(e) => setNombre(e.target.value)}
               />
             </div>
             <div>
@@ -64,7 +68,8 @@ export default function LoginPage() {
               <input
                 type="password"
                 required
-                className="mt-1 w-full px-3 py-2 bg-[#0A0A0A] border border-white/10 rounded-md text-white focus:outline-none focus:border-[#0055A4] focus:ring-1 focus:ring-[#0055A4]"
+                placeholder="••••••"
+                className="mt-1 w-full px-3 py-2 bg-[#0A0A0A] border border-white/10 rounded-md text-white focus:outline-none focus:border-[#0055A4]"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
               />
@@ -85,7 +90,6 @@ export default function LoginPage() {
             {loading ? "Ingresando..." : "Iniciar Sesión"}
           </button>
         </form>
-
       </div>
     </div>
   );
