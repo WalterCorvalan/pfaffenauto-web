@@ -27,12 +27,12 @@ export default function RootLayout({
 }>) {
   return (
     // Inyectamos las variables CSS de las fuentes en el HTML
-    <html lang="es" className={`${playfair.variable} ${inter.variable}`}>
+    <html lang="es" className={`${playfair.variable} ${inter.variable} scroll-smooth`}>
       {/* 
-        Aplicamos el fondo carbón (#0A0A0A) y el texto blanco roto (#F5F5F3) 
-        por defecto a toda la página
+        Ajuste clave: Usamos el fondo #050505 y text-white para que 
+        coincida exactamente con la Landing Page y no sobreescriba nada.
       */}
-      <body className="font-sans bg-[#0A0A0A] text-[#F5F5F3] antialiased">
+      <body className="font-sans bg-[#050505] text-white antialiased">
         {children}
       </body>
     </html>
