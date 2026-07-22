@@ -289,15 +289,15 @@ export default function Stock({ vehiculos }: StockProps) {
 
                   <div className="mt-auto">
                     <div className="text-2xl font-black text-white font-mono flex items-end gap-2">
-                      ${auto.precio_ars?.toLocaleString()}
+                      ${auto.precio_publicado_ars?.toLocaleString()}
                       <span className="text-[10px] font-sans text-gray-500 font-bold uppercase tracking-widest mb-1">
                         ARS
                       </span>
                     </div>
 
-                    {auto.precio_usd && (
+                    {auto.precio_publicado_usd && (
                       <div className="text-[11px] font-bold text-[#0145F2] font-mono mt-1">
-                        (US$ {auto.precio_usd?.toLocaleString()})
+                        (US$ {auto.precio_publicado_usd?.toLocaleString()})
                       </div>
                     )}
                   </div>

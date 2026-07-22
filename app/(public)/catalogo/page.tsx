@@ -65,7 +65,7 @@ export default async function CatalogoPage() {
                     {auto.marca} {auto.modelo}
                   </h2>
                   <div className="text-3xl font-bold text-[#4A90E2] mb-6">
-                    ${auto.precio_usd?.toLocaleString()} USD
+                    ${auto.precio_publicado_usd?.toLocaleString()} USD
                   </div>
 
                   <div className="grid grid-cols-2 gap-4 text-sm text-gray-400 mb-8 flex-grow">

@@ -4,21 +4,18 @@ import { useState } from "react";
 import { supabase } from "@/lib/supabase"; 
 import { useRouter } from "next/navigation";
 
-// en panel/page.tsx, junto con la consulta de vehículos:
-const { data: { user } } = await supabase.auth.getUser();
-const { data: perfil } = await supabase
-  .from("perfiles")
-  .select("rol")
-  .eq("id", user?.id)
-  .single();
+interface AccionesAutoProps {
+  autoId: string;
+  estadoActual: string;
+  puedeGestionar: boolean;
+}
 
-const puedeGestionar = perfil?.rol === "admin" || perfil?.rol === "encargado";
-export default function AccionesAuto({ autoId, estadoActual }: { autoId: string, estadoActual: string }) {
+export default function AccionesAuto({ autoId, estadoActual, puedeGestionar }: AccionesAutoProps) {
   const router = useRouter();
   const [cargando, setCargando] = useState(false);
-  
 
   const cambiarEstado = async (nuevoEstado: string) => {
+    if (!puedeGestionar) return; // Seguridad extra en el frontend
     setCargando(true);
     
     const { error } = await supabase
@@ -41,9 +38,9 @@ export default function AccionesAuto({ autoId, estadoActual }: { autoId: string,
       <select
         value={estadoActual}
         onChange={(e) => cambiarEstado(e.target.value)}
-        disabled={cargando}
-        className={`text-xs font-bold px-3 py-1.5 rounded-full border outline-none cursor-pointer appearance-none transition-colors
-          ${cargando ? 'opacity-50 cursor-wait' : ''}
+        disabled={cargando || !puedeGestionar}
+        className={`text-xs font-bold px-3 py-1.5 rounded-full border outline-none appearance-none transition-colors
+          ${cargando || !puedeGestionar ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer'}
           ${estadoActual === 'Borrador' ? 'bg-gray-800 text-gray-300 border-gray-600' : ''}
           ${estadoActual === 'Disponible' ? 'bg-green-900/30 text-green-400 border-green-700/50' : ''}
           ${estadoActual === 'Reservado' ? 'bg-yellow-900/30 text-yellow-400 border-yellow-700/50' : ''}

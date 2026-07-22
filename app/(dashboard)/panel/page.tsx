@@ -17,6 +17,22 @@ export default async function PanelPage() {
     },
   );
 
+  // 1. Obtener usuario actual
+  const { data: { user } } = await supabase.auth.getUser();
+  
+  // 2. Obtener rol para saber si puede cambiar los estados
+  let puedeGestionar = false;
+  if (user) {
+    const { data: perfil } = await supabase
+      .from("perfiles")
+      .select("rol")
+      .eq("id", user.id)
+      .single();
+    
+    puedeGestionar = perfil?.rol === "admin" || perfil?.rol === "encargado";
+  }
+
+  // 3. Consultar vehículos
   const { data: vehiculos, error } = await supabase
     .from("vehiculos")
     .select(`
@@ -85,7 +101,8 @@ export default async function PanelPage() {
                     <td className="p-4 font-mono text-[#4A90E2]">
                       <div className="flex items-center gap-1">
                         <DollarSign className="w-4 h-4" />
-                        {auto.precio_usd?.toLocaleString()}
+                        {/* Se actualizó a precio_publicado_usd */}
+                        {auto.precio_publicado_usd?.toLocaleString()}
                       </div>
                     </td>
                     <td className="p-4 text-gray-300">
@@ -95,7 +112,12 @@ export default async function PanelPage() {
                       </div>
                     </td>
                     <td className="p-4">
-                      <AccionesAuto autoId={auto.id} estadoActual={auto.estado} />
+                      {/* Se pasa la prop puedeGestionar al componente */}
+                      <AccionesAuto 
+                        autoId={auto.id} 
+                        estadoActual={auto.estado} 
+                        puedeGestionar={puedeGestionar} 
+                      />
                     </td>
                   </tr>
                 ))}
