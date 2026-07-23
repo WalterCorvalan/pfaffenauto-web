@@ -242,7 +242,7 @@ export default function Stock({ vehiculos }: StockProps) {
 
                   <div className="mt-auto">
                     <div className="text-2xl font-black text-white font-mono flex items-end gap-2">
-                      ${auto.precio_publicado_ars?.toLocaleString()}
+                      ${auto.precio_publicado_ars?.toLocaleString("es-AR")}
                       <span className="text-[10px] font-sans text-gray-500 font-bold uppercase tracking-widest mb-1">
                         ARS
                       </span>

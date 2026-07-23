@@ -49,14 +49,14 @@ const formSchema = z.object({
 
 type FormValues = z.infer<typeof formSchema>;
 
-// Función auxiliar para generar el slug amigable para las URLs
 const generarSlug = (marca: string, modelo: string, anio: number) => {
-  return `${marca}-${modelo}-${anio}`
+  const base = `${marca}-${modelo}-${anio}`
     .toLowerCase()
-    .trim()
-    .replace(/[^a-z0-9\s-]/g, "")
-    .replace(/\s+/g, "-")
-    .replace(/-+/g, "-");
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "") // saca acentos
+    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/(^-|-$)/g, "");
+  return `${base}-${Date.now().toString().slice(-4)}`; // sufijo anti-choques
 };
 
 export default function NuevoAutoPage() {
@@ -135,6 +135,8 @@ export default function NuevoAutoPage() {
   };
 
   const onSubmit = async (data: FormValues) => {
+    const slug = generarSlug(data.marca, data.modelo, data.anio); // <--- Generamos el slug
+
     if (archivos.length === 0) {
       setErrorArchivos("Debés seleccionar al menos una foto o video.");
       return;
@@ -147,7 +149,7 @@ export default function NuevoAutoPage() {
         data: { user },
       } = await supabase.auth.getUser();
 
-      // Insertamos el vehículo incluyendo su slug generado automáticamente
+      // INSERT CORREGIDO CON EL SLUG INCLUIDO
       const { data: vehiculoNuevo, error: errorVehiculo } = await supabase
         .from("vehiculos")
         .insert({
@@ -156,7 +158,7 @@ export default function NuevoAutoPage() {
           modelo: data.modelo,
           anio: data.anio,
           kilometraje: data.kilometraje,
-          slug: generarSlug(data.marca, data.modelo, data.anio), // <--- Slug incluido correctamente
+          slug, // <--- ¡ACÁ ESTABA FALTANDO EN EL OBJETO!
           segmento: data.segmento || null,
           tipo: data.tipo || null,
           color: data.color || null,
