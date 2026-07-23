@@ -24,3 +24,59 @@ body {
   color: var(--foreground);
   font-family: Arial, Helvetica, sans-serif;
 }
+
+
+@import "tailwindcss";
+
+:root {
+  --background: #ffffff;
+  --foreground: #171717;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --background: #0a0a0a;
+    --foreground: #ededed;
+  }
+}
+
+body {
+  background: var(--background);
+  color: var(--foreground);
+  font-family: Arial, Helvetica, sans-serif;
+  transition: background-color 0.3s ease, color 0.3s ease;
+}
+
+/* ================= MODO CLARO GLOBAL ================= */
+body.light-mode {
+  background-color: #f3f4f6 !important;
+  color: #111827 !important;
+}
+
+/* Invertir superficies oscuras a blancas en modo claro */
+body.light-mode .bg-\[\#050505\],
+body.light-mode .bg-\[\#0A0A0A\],
+body.light-mode .bg-\[\#0A0F16\],
+body.light-mode .bg-\[\#09090b\],
+body.light-mode .bg-\[\#121212\],
+body.light-mode .bg-\[\#1A1A1A\] {
+  background-color: #ffffff !important;
+  color: #111827 !important;
+  border-color: #e5e7eb !important;
+}
+
+body.light-mode .text-white {
+  color: #111827 !important;
+}
+
+body.light-mode .text-gray-300,
+body.light-mode .text-gray-400,
+body.light-mode .text-gray-500 {
+  color: #4b5563 !important;
+}
+
+body.light-mode header,
+body.light-mode footer {
+  background-color: #ffffff !important;
+  border-color: #e5e7eb !important;
+}

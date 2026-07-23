@@ -1,12 +1,7 @@
-import { createClient } from "@supabase/supabase-js";
+import { createClient } from "@/lib/supabase-server";
 import { notFound } from "next/navigation";
 import { MapPin, ArrowLeft, Fuel, Cog, Gauge, CalendarDays, Palette, CheckCircle2, Phone, ShieldCheck, Car } from "lucide-react";
 import Link from "next/link";
-
-const supabase = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY!
-);
 
 export const revalidate = 60;
 
@@ -16,8 +11,12 @@ export default async function VehiculoDetallePage({
   params: Promise<{ slug: string }>;
 }) {
   const { slug } = await params;
+  
+  // Usamos el cliente de servidor configurado con cookies en tu proyecto
+  const supabase = await createClient();
 
-  const { data: auto } = await supabase
+  // 1. Consulta exacta con impresión de errores en terminal
+  const { data: autoExacto, error } = await supabase
     .from("vehiculos")
     .select(`
       *, 
@@ -25,7 +24,32 @@ export default async function VehiculoDetallePage({
       sucursales ( nombre, direccion )
     `)
     .eq("slug", slug)
-    .single();
+    .maybeSingle();
+
+  console.log("=== DEBUG SUPABASE DETALLE ===");
+  console.log("Slug buscado:", slug);
+  console.log("Auto encontrado:", autoExacto);
+  console.log("Error devuelto por Supabase:", error);
+
+  let auto = autoExacto;
+
+  // 2. Si no hay coincidencia exacta, probamos búsqueda flexible por prefijo (por si tiene sufijo numérico)
+  if (!auto) {
+    const { data: autosSimilares } = await supabase
+      .from("vehiculos")
+      .select(`
+        *, 
+        multimedia_vehiculos ( url_archivo, tipo, orden ), 
+        sucursales ( nombre, direccion )
+      `)
+      .ilike("slug", `${slug}%`)
+      .limit(1);
+
+    if (autosSimilares && autosSimilares.length > 0) {
+      auto = autosSimilares[0];
+      console.log("Encontrado por coincidencia parcial (ilike):", auto.slug);
+    }
+  }
 
   if (!auto) notFound();
 
