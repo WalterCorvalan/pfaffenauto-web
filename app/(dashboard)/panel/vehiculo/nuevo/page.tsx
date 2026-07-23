@@ -186,17 +186,28 @@ export default function NuevoAutoPage() {
       if (errorVehiculo) throw errorVehiculo;
 
       let orden = 0;
+      const erroresFotos = [];
+      
       for (const archivo of archivos) {
-        const url = await uploadAutoImage(archivo);
-        if (url) {
-          await supabase.from("multimedia_vehiculos").insert({
-            vehiculo_id: vehiculoNuevo.id,
-            url_archivo: url,
-            tipo: archivo.type.startsWith("video") ? "video" : "foto",
-            orden: orden,
-          });
-          orden++;
+        try {
+          const url = await uploadAutoImage(archivo);
+          if (url) {
+            await supabase.from("multimedia_vehiculos").insert({
+              vehiculo_id: vehiculoNuevo.id,
+              url_archivo: url,
+              tipo: archivo.type.startsWith("video") ? "video" : "foto",
+              orden: orden,
+            });
+            orden++;
+          }
+        } catch (imgErr) {
+           console.error("Fallo al subir foto:", archivo.name, imgErr);
+           erroresFotos.push(archivo.name);
         }
+      }
+
+      if (erroresFotos.length > 0) {
+         alert(`El vehículo se guardó, pero falló la subida de: ${erroresFotos.join(', ')}`);
       }
 
       router.push("/panel");

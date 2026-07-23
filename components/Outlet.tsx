@@ -2,10 +2,8 @@ import { Tag, ChevronRight } from "lucide-react";
 import Link from "next/link";
 
 export default function Outlet({ vehiculos }: { vehiculos?: any[] }) {
-  // Aquí recibiremos los autos. Por ahora, aseguramos que sea un array vacío si no hay datos.
   const outletCars = vehiculos || [];
 
-  // Si no hay autos en el outlet, no mostramos la sección para que no quede un hueco vacío
   if (outletCars.length === 0) {
     return null; 
   }
@@ -33,7 +31,6 @@ export default function Outlet({ vehiculos }: { vehiculos?: any[] }) {
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
           {outletCars.slice(0, 4).map((auto, idx) => (
             <div key={idx} className="bg-[#050505] border border-white/10 rounded-2xl overflow-hidden group hover:border-[#FBBF24]/50 transition-colors">
-              {/* Foto más pequeña que en el catálogo principal */}
               <div className="relative h-40 bg-gray-900">
                 <img
                   src={auto.multimedia_vehiculos?.[0]?.url_archivo || "/placeholder.jpg"}
@@ -45,23 +42,20 @@ export default function Outlet({ vehiculos }: { vehiculos?: any[] }) {
                 </div>
               </div>
               
-              {/* Info súper directa */}
               <div className="p-4">
                 <h3 className="text-white font-bold text-base uppercase leading-tight truncate">
                   {auto.marca} {auto.modelo}
                 </h3>
                 <div className="flex justify-between items-center mt-2 mb-4 text-[11px] text-gray-500 font-medium uppercase tracking-wider">
-                  {/* Corregido a auto.anio */}
                   <span>{auto.anio}</span>
                   <span>{auto.kilometraje?.toLocaleString("es-AR")} km</span>
                 </div>
                 <div className="flex justify-between items-center">
-                  {/* Corregido a auto.precio_publicado_ars */}
                   <span className="text-[#FBBF24] font-black text-lg tracking-tight">
                     ${auto.precio_publicado_ars?.toLocaleString("es-AR")}
                   </span>
                   <Link 
-                    href={`/catalogo/${auto.id}`} 
+                    href={`/catalogo/${auto.slug}`} 
                     className="bg-white/5 hover:bg-white/10 border border-white/10 p-2 rounded-xl transition-colors"
                   >
                     <ChevronRight className="w-4 h-4 text-white" />

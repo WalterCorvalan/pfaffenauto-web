@@ -1,7 +1,6 @@
 import type { Metadata } from "next";
 import { Playfair_Display, Inter } from "next/font/google";
 import "./globals.css";
-<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@3.19.0/dist/tabler-icons.min.css" />
 import Footer from "@/components/Footer";
 import FloatingWhatsApp from "@/components/FloatingWhatsApp";
 
@@ -57,7 +56,7 @@ export default function RootLayout({
 }: Readonly<{
   children: React.ReactNode;
 }>) {
-  // Schema JSON-LD para AIO y GEO (Ayuda a las IA y Google a entender la empresa)
+  // Schema JSON-LD para AIO y GEO
   const jsonLd = {
     "@context": "https://schema.org",
     "@type": "AutoDealer",
@@ -103,7 +102,7 @@ export default function RootLayout({
       "closes": "19:00"
     },
     "sameAs": [
-      "https://instagram.com/pfaffenautos", // Reemplazar con links reales
+      "https://instagram.com/pfaffenautos",
       "https://facebook.com/pfaffenautos",
       "https://www.mercadolibre.com.ar"
     ]
@@ -112,7 +111,8 @@ export default function RootLayout({
   return (
     <html lang="es" className={`${playfair.variable} ${inter.variable} scroll-smooth`}>
       <head>
-        {/* Inyectamos el Schema Structured Data para los motores de búsqueda e IA */}
+        {/* Enlace a Tabler Icons movido correctamente al head */}
+        <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@3.19.0/dist/tabler-icons.min.css" />
         <script
           type="application/ld+json"
           dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}

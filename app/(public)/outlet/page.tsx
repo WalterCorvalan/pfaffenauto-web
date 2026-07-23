@@ -23,7 +23,8 @@ const { data: vehiculos } = await supabase
       sucursales ( nombre )
     `)
     .in("estado", ["Disponible", "Reservado"])
-    .lt("precio_publicado_ars", 10000000) // <-- ACTUALIZADO AL NOMBRE DE TU COLUMNA
+    .not("precio_publicado_ars", "is", null) // Prevenir errores con nulos
+    .lt("precio_publicado_ars", 10000000) 
     .order("created_at", { ascending: false });
 
   return (
