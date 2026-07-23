@@ -1,153 +1,119 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import Link from "next/link";
-import { ChevronLeft, ChevronRight, Clock, MapPin } from "lucide-react";
+import { Search, Settings2, CarFront, Zap, Users, Lightbulb, Grid } from "lucide-react";
+import { useRouter } from "next/navigation";
 
 export default function Hero() {
-  const [currentIndex, setCurrentIndex] = useState(0);
+  const [searchTerm, setSearchTerm] = useState("");
+  const router = useRouter();
 
-  // ================= DATOS DE LOS BANNERS (SUCURSALES) =================
-  // Acá podés cambiar las imágenes por las reales de tus sucursales
-const slides = [
-    {
-      id: "villa-de-mayo",
-      nombre: "Villa de Mayo",
-      etiqueta: "Casa Central",
-      descripcion: "Descubrí nuestro mayor stock de vehículos seleccionados y 0KM.",
-      imagen: "VDM.jpeg",
-      enlace: "/sucursales/villa-de-mayo",
-      posicion: "object-center", // <--- Clase Tailwind
-    },
-    {
-      id: "olivos",
-      nombre: "Olivos",
-      etiqueta: "Sucursal Norte",
-      descripcion: "Atención premium y financiación a medida en el corazón de Olivos.",
-      imagen: "https://images.unsplash.com/photo-1542282088-72c9c27ed0cd?q=80&w=2000&auto=format&fit=crop",
-      enlace: "/sucursales/olivos",
-      posicion: "object-center", // <--- Clase Tailwind
-    },
-    {
-      id: "panamericana",
-      nombre: "Panamericana",
-      etiqueta: "Acceso Directo",
-      descripcion: "La forma más rápida y cómoda de llegar a tu próximo auto.",
-      imagen: "/pana.jpg",
-      enlace: "/sucursales/panamericana",
-      posicion: "object-top", // <--- Clase Tailwind (Ancla el cartel al techo)
-    },
-  ];
-
-  // ================= LÓGICA DEL CARRUSEL (Autoplay) =================
-  useEffect(() => {
-    const timer = setInterval(() => {
-      setCurrentIndex((prevIndex) => (prevIndex + 1) % slides.length);
-    }, 5000); // Cambia de banner cada 5 segundos
-    return () => clearInterval(timer);
-  }, [slides.length]);
-
-  const prevSlide = () => {
-    setCurrentIndex((prev) => (prev === 0 ? slides.length - 1 : prev - 1));
-  };
-
-  const nextSlide = () => {
-    setCurrentIndex((prev) => (prev + 1) % slides.length);
+  const handleSearch = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (searchTerm.trim()) {
+      router.push(`/catalogo?q=${encodeURIComponent(searchTerm)}`);
+    }
   };
 
   return (
-    <section id="inicio" className="relative w-full pt-28 md:pt-32 pb-8 bg-[#050505] flex flex-col items-center">
+    <section className="relative w-full pt-12 pb-16 md:pt-20 md:pb-24 bg-gradient-to-b from-[#4bcff2] via-[#81e2f6] to-[#d6f5fb] overflow-hidden border-b border-gray-200">
       
-      {/* Contenedor principal del Carrusel (Estilo ML) */}
-      <div className="w-full max-w-[95rem] mx-auto px-4 md:px-8">
+      {/* Patrón de Cuadrícula (la clase bg-grid-pattern se definió en globals.css) */}
+      <div className="absolute inset-0 bg-grid-pattern opacity-50"></div>
+
+      <div className="relative z-10 max-w-4xl mx-auto px-4 flex flex-col items-center text-center">
         
-        {/* ================= CARRUSEL DE IMÁGENES ================= */}
-        <div className="relative w-full h-[280px] sm:h-[350px] md:h-[450px] lg:h-[500px] rounded-2xl md:rounded-3xl overflow-hidden shadow-[0_0_30px_rgba(0,0,0,0.5)] group">
-          
-          {/* Pista deslizable */}
-          <div
-            className="flex w-full h-full transition-transform duration-700 ease-in-out"
-            style={{ transform: `translateX(-${currentIndex * 100}%)` }}
-          >
-            {slides.map((slide, index) => (
-              <div key={index} className="relative w-full h-full flex-shrink-0">
-                {/* Imagen de fondo del banner */}
-                <img
-                  src={slide.imagen}
-                  alt={`Sucursal ${slide.nombre}`}
-                  className="w-full h-full object-cover object-center brightness-75"
-                />
-                
-                {/* Degradado oscuro para que el texto resalte siempre */}
-                <div className="absolute inset-0 bg-gradient-to-r from-black/80 via-black/40 to-transparent"></div>
+        {/* Etiqueta Social Proof (Amarilla) */}
+        <span className="bg-yellow-100/90 text-yellow-700 font-bold text-[10px] md:text-[11px] uppercase tracking-wide px-4 py-1.5 rounded-full mb-6 shadow-sm border border-yellow-300 backdrop-blur-sm">
+          +52.300 personas ya cotizaron
+        </span>
 
-                {/* Textos del Banner (Programados para no usar Photoshop) */}
-                <div className="absolute inset-0 flex flex-col justify-center px-8 md:px-16 lg:px-24 max-w-3xl">
-                  <span className="inline-block bg-[#0055A4] text-white text-[10px] md:text-xs font-black uppercase tracking-widest px-3 md:px-4 py-1.5 rounded-full mb-4 w-max shadow-lg">
-                    {slide.etiqueta}
-                  </span>
-                  
-                  <h2 className="text-3xl sm:text-4xl md:text-5xl lg:text-7xl font-black text-white uppercase tracking-tight mb-4 drop-shadow-lg">
-                    {slide.nombre}
-                  </h2>
-                  
-                  <p className="text-gray-300 text-xs sm:text-sm md:text-base font-medium mb-8 max-w-md drop-shadow">
-                    {slide.descripcion}
-                  </p>
-                  
-                  <Link
-                    href={slide.enlace}
-                    className="bg-white text-black hover:bg-gray-200 px-6 md:px-8 py-3 w-max rounded-full text-xs md:text-sm font-bold uppercase tracking-widest transition-colors shadow-xl flex items-center gap-2"
-                  >
-                    Ver Sucursal
-                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 5l7 7-7 7" /></svg>
-                  </Link>
-                </div>
-              </div>
-            ))}
+        {/* Título Principal (Combinando textos finos y gruesos) */}
+        <h1 className="text-3xl md:text-5xl lg:text-[54px] text-navy leading-[1.1] mb-8 font-light tracking-tight">
+          <strong className="font-black">Comprá</strong> tu 0km,<br className="hidden md:block"/>
+          de <strong className="font-black">concesionario oficial</strong>,<br className="hidden md:block"/>
+          sin llamar a ninguno
+        </h1>
+
+        {/* ================= BARRA DE BÚSQUEDA BLANCA ================= */}
+        <form 
+          onSubmit={handleSearch}
+          className="w-full max-w-[40rem] bg-white rounded-xl md:rounded-full shadow-xl p-1.5 md:p-2 flex flex-col md:flex-row items-center gap-2 mb-8 border border-gray-100"
+        >
+          <div className="flex items-center w-full px-3 py-2 md:py-1">
+            <Search className="w-5 h-5 text-gray-400 mr-3 shrink-0" />
+            <input 
+              type="text"
+              placeholder="Buscá por marca, modelo o versión"
+              className="w-full bg-transparent border-none outline-none text-navy placeholder:text-gray-400 text-sm md:text-base font-medium"
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+            />
           </div>
-
-          {/* ================= CONTROLES DEL CARRUSEL ================= */}
-          {/* Botón Anterior */}
-          <button
-            onClick={prevSlide}
-            className="absolute left-2 md:left-6 top-1/2 -translate-y-1/2 w-10 h-10 md:w-12 md:h-12 bg-white/10 hover:bg-white/30 backdrop-blur-md border border-white/20 rounded-full flex items-center justify-center text-white opacity-0 group-hover:opacity-100 transition-all shadow-lg"
+          {/* Botón de Filtros Naranja */}
+          <button 
+            type="button"
+            className="hidden md:flex items-center justify-center p-3 hover:bg-orange-50 rounded-full transition-colors shrink-0 group"
           >
-            <ChevronLeft className="w-6 h-6" />
+            <Settings2 className="w-5 h-5 text-orange-500 group-hover:text-orange-600" strokeWidth={2.5} />
           </button>
+        </form>
+
+        {/* ================= PASTILLAS DE ACCESO RÁPIDO (PILLS) ================= */}
+        <div className="flex flex-wrap justify-center gap-2 md:gap-3 max-w-[42rem]">
+          {/* Categorías Standard (Blancas) */}
+          <Pill icon={<CarFront className="w-4 h-4 text-gray-500"/>} text="SUVs" />
+          <Pill icon={<CarFront className="w-4 h-4 text-gray-500"/>} text="Sedanes" />
+          <Pill icon={<CarFront className="w-4 h-4 text-gray-500"/>} text="Pick-ups" />
           
-          {/* Botón Siguiente */}
-          <button
-            onClick={nextSlide}
-            className="absolute right-2 md:right-6 top-1/2 -translate-y-1/2 w-10 h-10 md:w-12 md:h-12 bg-white/10 hover:bg-white/30 backdrop-blur-md border border-white/20 rounded-full flex items-center justify-center text-white opacity-0 group-hover:opacity-100 transition-all shadow-lg"
-          >
-            <ChevronRight className="w-6 h-6" />
-          </button>
-
-          {/* Puntos de Paginación (Dots) abajo en el centro */}
-          <div className="absolute bottom-4 left-1/2 -translate-x-1/2 flex gap-2">
-            {slides.map((_, idx) => (
-              <button
-                key={idx}
-                onClick={() => setCurrentIndex(idx)}
-                className={`w-2.5 h-2.5 rounded-full transition-all duration-300 ${
-                  currentIndex === idx ? "bg-[#0055A4] w-6" : "bg-white/50 hover:bg-white"
-                }`}
-              />
-            ))}
-          </div>
-        </div>
-
-        {/* ================= BARRA DE INFORMACIÓN (Estilo "Envío Gratis" ML) ================= */}
-        {/* Pegada justo debajo del banner, con un diseño limpio para destacar */}
-        <div className="w-full max-w-5xl mx-auto mt-0 bg-white text-black py-3 md:py-3.5 px-4 rounded-b-2xl shadow-xl border-t-4 border-[#0055A4] flex items-center justify-center gap-3">
-          <Clock className="w-5 h-5 text-[#0055A4]" />
-          <span className="text-xs md:text-sm font-bold tracking-wide">
-            Horarios de atención: <span className="text-[#0055A4]">Lunes a Viernes de 9 a 18 hs.</span>
-          </span>
+          {/* Especiales (Colores Pastel) */}
+          <Pill 
+            icon={<Zap className="w-4 h-4 text-sky-500" fill="currentColor"/>} 
+            text="Híbridos y eléctricos" 
+          />
+          <Pill 
+            icon={<Users className="w-4 h-4 text-emerald-500" fill="currentColor"/>} 
+            text="Asesoría" 
+            colorClass="text-emerald-700 bg-emerald-50 hover:bg-emerald-100 border-emerald-200" 
+          />
+          <Pill 
+            icon={<Lightbulb className="w-4 h-4 text-purple-500" fill="currentColor"/>} 
+            text="Recomendador" 
+            colorClass="text-purple-700 bg-purple-50 hover:bg-purple-100 border-purple-200" 
+          />
+          <Pill 
+            icon={<Grid className="w-4 h-4 text-cyan-600"/>} 
+            text="Catálogo" 
+            colorClass="text-cyan-800 bg-cyan-100 hover:bg-cyan-200 border-cyan-200" 
+            href="/catalogo"
+          />
         </div>
 
       </div>
     </section>
+  );
+}
+
+// Componente interno para las pastillas
+function Pill({ 
+  icon, 
+  text, 
+  colorClass = "text-gray-600 bg-white hover:bg-gray-50 border-white", 
+  href = "/catalogo" 
+}: { 
+  icon: React.ReactNode, 
+  text: string, 
+  colorClass?: string,
+  href?: string
+}) {
+  return (
+    <Link 
+      href={href} 
+      className={`border shadow-sm rounded-full px-4 py-2 md:py-2.5 flex items-center gap-2 text-[11px] md:text-sm font-bold transition-all hover:-translate-y-0.5 ${colorClass}`}
+    >
+      {icon}
+      <span>{text}</span>
+    </Link>
   );
 }

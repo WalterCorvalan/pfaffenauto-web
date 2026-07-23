@@ -2,20 +2,24 @@
 import type { Config } from "tailwindcss";
 
 const config: Config = {
-  content: ["./app/**/*.{js,ts,jsx,tsx,mdx}"],
+  content: [
+    "./app/**/*.{js,ts,jsx,tsx,mdx}",
+    "./components/**/*.{js,ts,jsx,tsx,mdx}"
+  ],
   theme: {
     extend: {
       colors: {
-        // Pfaffen Palette (Reemplazo total del rojo de referencia)
-        primary: "#0055A4",    // Azul Pfaffen principal
-        secondary: "#1E6FD9",  // Azul Pfaffen claro (Glow/Hover)
-        background: "#050505", // Fondo premium
-        foreground: "#FFFFFF",
+        // Nueva Paleta Marketplace Luminosa
+        primary: "#0ea5e9",    // Celeste principal (Bordes, links, iconos)
+        secondary: "#26bae0",  // Turquesa/Cian (Botones de acción gigantes)
+        navy: "#0f293e",       // Azul oscuro profundo (Títulos, textos fuertes y bloques oscuros)
+        background: "#f8fafc", // Fondo general (Gris ultra claro para que las tarjetas blancas destaquen)
+        foreground: "#0f172a", // Texto de lectura (Casi negro)
+        card: "#ffffff",       // Blanco puro para tarjetas
       },
       fontFamily: {
-        // Usaremos una fuente condensada para los titulares
         sans: ['Inter', 'sans-serif'],
-        display: ['Anton', 'sans-serif'], // Recomendación: Importar 'Anton' en tu layout
+        display: ['Anton', 'sans-serif'],
       },
     },
   },

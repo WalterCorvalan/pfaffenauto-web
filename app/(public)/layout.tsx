@@ -10,11 +10,11 @@ export default function PublicLayout({
   children: React.ReactNode;
 }) {
   return (
-    <div className="flex flex-col min-h-screen relative">
+    <div className="min-h-screen flex flex-col bg-background text-foreground selection:bg-primary selection:text-white">
       {/* Importamos la cabecera interactiva que creamos */}
       <PublicHeader />
       
-      <main className="flex-grow">
+      <main className="flex-grow w-full">
         {children}
       </main>
     </div>
