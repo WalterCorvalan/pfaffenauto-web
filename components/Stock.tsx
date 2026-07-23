@@ -1,5 +1,6 @@
 "use client";
 import React, { useState } from "react";
+import Link from "next/link";
 
 interface StockProps {
   vehiculos: any[] | null;
@@ -11,31 +12,25 @@ export default function Stock({ vehiculos }: StockProps) {
 
   const listaVehiculos = vehiculos || [];
 
-  // Extraemos marcas únicas de la base de datos para el filtro dinámicamente
   const marcasDisponibles = Array.from(
     new Set(listaVehiculos.map((auto) => auto.marca).filter(Boolean))
   );
 
-  // Lógica de filtrado inteligente (Tolerante a errores y multi-criterio)
   const vehiculosFiltrados = listaVehiculos.filter((auto) => {
     const query = searchTerm.toLowerCase().trim();
     const marcaAuto = auto.marca?.toLowerCase() || "";
     const modeloAuto = auto.modelo?.toLowerCase() || "";
     const textoCompleto = `${marcaAuto} ${modeloAuto}`;
 
-    // 1. Filtro por marca desde el selector desplegable
     if (selectedBrand !== "Todas las marcas" && auto.marca !== selectedBrand) {
       return false;
     }
 
-    // 2. Si no hay texto en el buscador, pasa el filtro de marca
     if (!query) return true;
 
-    // Protección de Typosquatting (Si escriben variaciones de marca de la casa o términos generales)
     const esPfaffenMatch = query.includes("fafen") || query.includes("pfafen");
     if (esPfaffenMatch) return true;
 
-    // Coincidencia parcial flexible
     return textoCompleto.includes(query);
   });
 
@@ -46,12 +41,11 @@ export default function Stock({ vehiculos }: StockProps) {
 
   return (
     <section id="stock" className="py-24 bg-[#050505] relative overflow-hidden">
-      {/* Brillo de fondo */}
       <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[800px] h-[300px] bg-[#0145F2]/5 blur-[150px] rounded-full pointer-events-none z-0"></div>
 
       <div className="max-w-[90rem] mx-auto px-4 md:px-6 relative z-10">
         
-        {/* ================= A. BUSCADOR PRINCIPAL (ESTILO AI) ================= */}
+        {/* ================= A. BUSCADOR PRINCIPAL ================= */}
         <div className="max-w-4xl mx-auto mb-8 relative z-20">
           <div className="flex items-center bg-[#09090b] border border-white/10 hover:border-[#0145F2]/50 transition-colors rounded-full p-1.5 pl-6 shadow-2xl">
             <svg
@@ -87,7 +81,6 @@ export default function Stock({ vehiculos }: StockProps) {
             </button>
           </div>
 
-          {/* Sugerencias (Pills interactivos) */}
           <div className="flex flex-wrap items-center justify-center gap-3 mt-4">
             <span className="text-gray-500 text-[9px] uppercase tracking-widest font-bold">
               Búsquedas frecuentes:
@@ -109,11 +102,10 @@ export default function Stock({ vehiculos }: StockProps) {
           </div>
         </div>
 
-        {/* ================= B. BARRA DE FILTROS AVANZADA ================= */}
+        {/* ================= B. BARRA DE FILTROS ================= */}
         <div className="bg-[#09090b] border border-white/5 rounded-[2rem] p-6 lg:p-8 mb-16 shadow-2xl relative">
           <div className="absolute top-6 right-6 w-1.5 h-1.5 rounded-full bg-[#0145F2] animate-pulse"></div>
 
-          {/* Input secundario sincronizado */}
           <div className="flex items-center border-b border-white/5 pb-4 mb-5">
             <svg
               className="w-5 h-5 text-gray-500 mr-4 shrink-0"
@@ -137,11 +129,8 @@ export default function Stock({ vehiculos }: StockProps) {
             />
           </div>
 
-          {/* Selects de filtros */}
           <div className="flex flex-wrap gap-4 items-center justify-between">
             <div className="flex flex-wrap gap-3 flex-grow">
-              
-              {/* Filtro Dinámico de Marcas */}
               <div className="relative group">
                 <select 
                   value={selectedBrand}
@@ -165,7 +154,6 @@ export default function Stock({ vehiculos }: StockProps) {
                 </svg>
               </div>
 
-              {/* Filtros visuales estáticos (preparados para lógica futura si se requiere) */}
               {["Cualquier año", "Transmisión", "Kilómetros", "Rango de precio"].map((filtro, i) => (
                 <div key={i} className="relative group">
                   <select className="bg-black/40 border border-white/5 hover:border-white/20 text-gray-500 text-[11px] font-medium rounded-xl px-5 py-3 outline-none appearance-none cursor-pointer pr-10 transition-colors">
@@ -209,27 +197,7 @@ export default function Stock({ vehiculos }: StockProps) {
           </div>
         </div>
 
-        {/* ================= C. ENCABEZADO DE RESULTADOS ================= */}
-        <div className="flex flex-col sm:flex-row sm:justify-between sm:items-end mb-8 gap-4">
-          <h3 className="text-2xl md:text-3xl font-black uppercase tracking-tighter text-white flex items-center gap-3">
-            <svg
-              className="text-[#0145F2] w-6 h-6"
-              fill="currentColor"
-              viewBox="0 0 24 24"
-            >
-              <path d="M17.58 6.42a1 1 0 00-1.07-.15c-.17.08-1.52.74-2.88 2.3A5.4 5.4 0 0012 11c0-1.87-.58-3.41-1.72-4.57a7.25 7.25 0 00-3.83-2A9 9 0 005.1 8c-.62 1.4-.73 2.87-.33 4.31a5.62 5.62 0 001.35 2.59 5.89 5.89 0 011.08 1.45c.23.46.22.95-.03 1.48-.33.68-.9 1.05-1.7 1.1-.38.03-.64.38-.56.76.13.62.43 1.2.91 1.68C7.11 22.7 8.94 23.5 11 23.5c2.14 0 4.15-.84 5.66-2.36C18.17 19.63 19 17.62 19 15.5c0-2.82-1-5-1.42-9.08z" />
-            </svg>
-            Stock Seleccionado
-          </h3>
-          <a
-            href="#stock"
-            className="text-[10px] font-bold text-gray-400 uppercase tracking-widest hover:text-[#0145F2] flex items-center gap-2 transition-colors"
-          >
-            Catálogo General <span className="animate-bounce">&darr;</span>
-          </a>
-        </div>
-
-        {/* ================= D. GRILLA DE VEHÍCULOS ================= */}
+        {/* ================= C. GRILLA DE VEHÍCULOS ================= */}
         {vehiculosFiltrados.length > 0 ? (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             {vehiculosFiltrados.map((auto) => (
@@ -237,8 +205,8 @@ export default function Stock({ vehiculos }: StockProps) {
                 key={auto.id}
                 className="bg-[#09090b] rounded-[1.5rem] overflow-hidden border border-white/5 hover:border-[#0145F2]/40 transition-all duration-300 flex flex-col group hover:shadow-[0_0_30px_rgba(1,69,242,0.1)]"
               >
-                {/* Contenedor Imagen */}
-                <div className="relative h-[250px] bg-gray-900 overflow-hidden">
+                {/* Contenedor Imagen (Enlazado al Slug) */}
+                <Link href={`/catalogo/${auto.slug}`} className="relative h-[250px] bg-gray-900 overflow-hidden block">
                   {auto.multimedia_vehiculos?.[0] && (
                     <img
                       src={auto.multimedia_vehiculos[0].url_archivo}
@@ -249,39 +217,24 @@ export default function Stock({ vehiculos }: StockProps) {
 
                   <div className="absolute inset-0 bg-gradient-to-b from-black/50 via-transparent to-transparent pointer-events-none"></div>
 
-                  {/* Badge PREMIUM */}
                   <div className="absolute top-4 left-4 bg-[#0145F2] text-white px-3 py-1.5 rounded text-[9px] font-black uppercase tracking-widest shadow-lg">
                     Premium
                   </div>
 
-                  {/* Badge Estado si está reservado */}
                   {auto.estado === "Reservado" && (
                     <div className="absolute top-12 left-4 bg-[#D4AF37] text-black px-3 py-1.5 rounded text-[9px] font-black uppercase tracking-widest shadow-lg">
                       Reservado
                     </div>
                   )}
-
-                  {/* Iconos de Acción flotantes */}
-                  <div className="absolute top-4 right-4 flex gap-2">
-                    <button aria-label="Compartir vehículo" className="w-8 h-8 rounded-full bg-black/40 backdrop-blur-md border border-white/10 flex items-center justify-center text-white/70 hover:text-white hover:bg-[#0145F2] hover:border-[#0145F2] transition-all">
-                      <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.368 2.684 3 3 0 00-5.368-2.684z" /></svg>
-                    </button>
-                    <button aria-label="Comparar vehículo" className="w-8 h-8 rounded-full bg-black/40 backdrop-blur-md border border-white/10 flex items-center justify-center text-white/70 hover:text-white hover:bg-[#0145F2] hover:border-[#0145F2] transition-all">
-                      <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M3 6l3 1m0 0l-3 9a5.002 5.002 0 006.001 0M6 7l3 9M6 7l6-2m6 2l3-1m-3 1l-3 9a5.002 5.002 0 006.001 0M18 7l3 9m-3-9l-6-2m0-2v2m0 16V5m0 16H9m3 0h3" /></svg>
-                    </button>
-                    <button aria-label="Agregar a favoritos" className="w-8 h-8 rounded-full bg-black/40 backdrop-blur-md border border-white/10 flex items-center justify-center text-white/70 hover:text-pink-500 hover:bg-pink-500/20 hover:border-pink-500 transition-all">
-                      <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" /></svg>
-                    </button>
-                  </div>
-                </div>
+                </Link>
 
                 {/* Info Vehículo */}
                 <div className="p-6 md:p-8 flex-grow flex flex-col">
-                  <div className="flex justify-between items-start mb-2">
+                  <Link href={`/catalogo/${auto.slug}`} className="block mb-2">
                     <h3 className="text-xl font-black uppercase tracking-tight text-white group-hover:text-[#0145F2] transition-colors">
                       {auto.marca} {auto.modelo}
                     </h3>
-                  </div>
+                  </Link>
 
                   <p className="text-[11px] text-gray-500 uppercase tracking-widest font-medium mb-6">
                     {auto.sucursales?.nombre ? `Sucursal ${auto.sucursales.nombre}` : "Unidad Seleccionada"}
@@ -331,19 +284,6 @@ export default function Stock({ vehiculos }: StockProps) {
           </div>
         ) : (
           <div className="text-center py-20 bg-[#09090b] rounded-[2rem] border border-white/5">
-            <svg
-              className="w-12 h-12 text-gray-600 mx-auto mb-4"
-              fill="none"
-              stroke="currentColor"
-              viewBox="0 0 24 24"
-            >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth="1.5"
-                d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2_2 0 012 2v2M7 7h10"
-              />
-            </svg>
             <h4 className="text-white font-bold text-lg mb-2">
               No se encontraron resultados
             </h4>

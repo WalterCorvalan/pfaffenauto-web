@@ -4,7 +4,19 @@ import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { supabase } from "@/lib/supabase";
 import { uploadAutoImage } from "@/lib/upload";
-import { ArrowLeft, Save, Upload, X, Car, Shield, DollarSign, FileText, Image as ImageIcon, ChevronRight, ChevronLeft } from "lucide-react";
+import {
+  ArrowLeft,
+  Save,
+  Upload,
+  X,
+  Car,
+  Shield,
+  DollarSign,
+  FileText,
+  Image as ImageIcon,
+  ChevronRight,
+  ChevronLeft,
+} from "lucide-react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
@@ -37,6 +49,16 @@ const formSchema = z.object({
 
 type FormValues = z.infer<typeof formSchema>;
 
+// Función auxiliar para generar el slug amigable para las URLs
+const generarSlug = (marca: string, modelo: string, anio: number) => {
+  return `${marca}-${modelo}-${anio}`
+    .toLowerCase()
+    .trim()
+    .replace(/[^a-z0-9\s-]/g, "")
+    .replace(/\s+/g, "-")
+    .replace(/-+/g, "-");
+};
+
 export default function NuevoAutoPage() {
   const router = useRouter();
   const [paso, setPaso] = useState(1);
@@ -45,9 +67,16 @@ export default function NuevoAutoPage() {
   const [archivos, setArchivos] = useState<File[]>([]);
   const [previsualizaciones, setPrevisualizaciones] = useState<string[]>([]);
   const [errorArchivos, setErrorArchivos] = useState("");
-  const [sucursales, setSucursales] = useState<{ id: string; nombre: string }[]>([]);
+  const [sucursales, setSucursales] = useState<
+    { id: string; nombre: string }[]
+  >([]);
 
-  const { register, handleSubmit, trigger, formState: { errors } } = useForm<FormValues>({
+  const {
+    register,
+    handleSubmit,
+    trigger,
+    formState: { errors },
+  } = useForm<FormValues>({
     resolver: zodResolver(formSchema),
     defaultValues: {
       origen: "Propio",
@@ -86,7 +115,9 @@ export default function NuevoAutoPage() {
     setPaso((prev) => Math.max(prev - 1, 1));
   };
 
-  const handleSeleccionarArchivos = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleSeleccionarArchivos = (
+    e: React.ChangeEvent<HTMLInputElement>,
+  ) => {
     if (e.target.files) {
       const nuevos = Array.from(e.target.files);
       setArchivos((prev) => [...prev, ...nuevos]);
@@ -112,8 +143,11 @@ export default function NuevoAutoPage() {
     setLoading(true);
 
     try {
-      const { data: { user } } = await supabase.auth.getUser();
+      const {
+        data: { user },
+      } = await supabase.auth.getUser();
 
+      // Insertamos el vehículo incluyendo su slug generado automáticamente
       const { data: vehiculoNuevo, error: errorVehiculo } = await supabase
         .from("vehiculos")
         .insert({
@@ -122,6 +156,7 @@ export default function NuevoAutoPage() {
           modelo: data.modelo,
           anio: data.anio,
           kilometraje: data.kilometraje,
+          slug: generarSlug(data.marca, data.modelo, data.anio), // <--- Slug incluido correctamente
           segmento: data.segmento || null,
           tipo: data.tipo || null,
           color: data.color || null,
@@ -185,14 +220,20 @@ export default function NuevoAutoPage() {
         {/* Encabezado y Progreso */}
         <div className="flex justify-between items-end mb-2">
           <div>
-            <h1 className="text-2xl md:text-3xl font-serif">Registrar Vehículo</h1>
+            <h1 className="text-2xl md:text-3xl font-serif">
+              Registrar Vehículo
+            </h1>
             <p className="text-gray-400 text-xs md:text-sm mt-1">
-              Paso {paso} de {totalPasos}: {
-                paso === 1 ? "Información Principal" :
-                paso === 2 ? "Especificaciones y Sucursal" :
-                paso === 3 ? "Esquema de Precios" :
-                paso === 4 ? "Datos Legales" : "Multimedia y Observaciones"
-              }
+              Paso {paso} de {totalPasos}:{" "}
+              {paso === 1
+                ? "Información Principal"
+                : paso === 2
+                  ? "Especificaciones y Sucursal"
+                  : paso === 3
+                    ? "Esquema de Precios"
+                    : paso === 4
+                      ? "Datos Legales"
+                      : "Multimedia y Observaciones"}
             </p>
           </div>
           <span className="text-xs font-mono font-bold text-[#0055A4] bg-[#0055A4]/10 px-3 py-1 rounded-full border border-[#0055A4]/20">
@@ -201,35 +242,65 @@ export default function NuevoAutoPage() {
         </div>
 
         <div className="w-full bg-[#1A1A1A] h-1.5 rounded-full mb-8 overflow-hidden">
-          <div 
+          <div
             className="bg-[#0055A4] h-full transition-all duration-300"
             style={{ width: `${(paso / totalPasos) * 100}%` }}
           ></div>
         </div>
 
         <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
-          
           {/* PASO 1 */}
           {paso === 1 && (
-            <SectionCard title="1. Información Principal" icon={<Car className="w-4 h-4 text-[#0055A4]" />}>
+            <SectionCard
+              title="1. Información Principal"
+              icon={<Car className="w-4 h-4 text-[#0055A4]" />}
+            >
               <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
                 <Campo label="Patente *" error={errors.patente?.message}>
-                  <input {...register("patente")} placeholder="Ej: AB123CD" className={inputClass} />
+                  <input
+                    {...register("patente")}
+                    placeholder="Ej: AB123CD"
+                    className={inputClass}
+                  />
                 </Campo>
                 <Campo label="Marca *" error={errors.marca?.message}>
-                  <input {...register("marca")} placeholder="Ej: Volkswagen" className={inputClass} />
+                  <input
+                    {...register("marca")}
+                    placeholder="Ej: Volkswagen"
+                    className={inputClass}
+                  />
                 </Campo>
                 <Campo label="Modelo *" error={errors.modelo?.message}>
-                  <input {...register("modelo")} placeholder="Ej: Amarok V6" className={inputClass} />
+                  <input
+                    {...register("modelo")}
+                    placeholder="Ej: Amarok V6"
+                    className={inputClass}
+                  />
                 </Campo>
                 <Campo label="Año *" error={errors.anio?.message}>
-                  <input type="number" {...register("anio", { valueAsNumber: true })} className={inputClass} />
+                  <input
+                    type="number"
+                    {...register("anio", { valueAsNumber: true })}
+                    className={inputClass}
+                  />
                 </Campo>
-                <Campo label="Kilometraje *" error={errors.kilometraje?.message}>
-                  <input type="number" {...register("kilometraje", { valueAsNumber: true })} placeholder="Ej: 45000" className={inputClass} />
+                <Campo
+                  label="Kilometraje *"
+                  error={errors.kilometraje?.message}
+                >
+                  <input
+                    type="number"
+                    {...register("kilometraje", { valueAsNumber: true })}
+                    placeholder="Ej: 45000"
+                    className={inputClass}
+                  />
                 </Campo>
                 <Campo label="Color">
-                  <input {...register("color")} placeholder="Ej: Gris Indio" className={inputClass} />
+                  <input
+                    {...register("color")}
+                    placeholder="Ej: Gris Indio"
+                    className={inputClass}
+                  />
                 </Campo>
               </div>
             </SectionCard>
@@ -237,16 +308,30 @@ export default function NuevoAutoPage() {
 
           {/* PASO 2 */}
           {paso === 2 && (
-            <SectionCard title="2. Especificaciones y Sucursal" icon={<Shield className="w-4 h-4 text-[#0055A4]" />}>
+            <SectionCard
+              title="2. Especificaciones y Sucursal"
+              icon={<Shield className="w-4 h-4 text-[#0055A4]" />}
+            >
               <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
                 <Campo label="Segmento">
-                  <input {...register("segmento")} placeholder="Ej: SUV / Pick-up" className={inputClass} />
+                  <input
+                    {...register("segmento")}
+                    placeholder="Ej: SUV / Pick-up"
+                    className={inputClass}
+                  />
                 </Campo>
                 <Campo label="Tipo de Vehículo">
-                  <input {...register("tipo")} placeholder="Ej: Utilitario" className={inputClass} />
+                  <input
+                    {...register("tipo")}
+                    placeholder="Ej: Utilitario"
+                    className={inputClass}
+                  />
                 </Campo>
                 <Campo label="Combustible">
-                  <select {...register("tipo_combustible")} className={inputClass}>
+                  <select
+                    {...register("tipo_combustible")}
+                    className={inputClass}
+                  >
                     <option value="">Seleccionar...</option>
                     <option>Nafta</option>
                     <option>Diesel</option>
@@ -266,7 +351,9 @@ export default function NuevoAutoPage() {
                   <select {...register("sucursal_id")} className={inputClass}>
                     <option value="">Seleccionar...</option>
                     {sucursales.map((s) => (
-                      <option key={s.id} value={s.id}>{s.nombre}</option>
+                      <option key={s.id} value={s.id}>
+                        {s.nombre}
+                      </option>
                     ))}
                   </select>
                 </Campo>
@@ -280,11 +367,19 @@ export default function NuevoAutoPage() {
 
               <div className="flex gap-8 pt-4 border-t border-white/5 mt-4">
                 <label className="flex items-center gap-2 text-sm text-gray-300 cursor-pointer">
-                  <input type="checkbox" {...register("stock_fisico")} className="w-4 h-4 accent-[#0055A4]" />
+                  <input
+                    type="checkbox"
+                    {...register("stock_fisico")}
+                    className="w-4 h-4 accent-[#0055A4]"
+                  />
                   En stock físico
                 </label>
                 <label className="flex items-center gap-2 text-sm text-gray-300 cursor-pointer">
-                  <input type="checkbox" {...register("destacado")} className="w-4 h-4 accent-[#0055A4]" />
+                  <input
+                    type="checkbox"
+                    {...register("destacado")}
+                    className="w-4 h-4 accent-[#0055A4]"
+                  />
                   Destacado en la web
                 </label>
               </div>
@@ -293,19 +388,49 @@ export default function NuevoAutoPage() {
 
           {/* PASO 3 */}
           {paso === 3 && (
-            <SectionCard title="3. Esquema de Precios" icon={<DollarSign className="w-4 h-4 text-[#0055A4]" />}>
+            <SectionCard
+              title="3. Esquema de Precios"
+              icon={<DollarSign className="w-4 h-4 text-[#0055A4]" />}
+            >
               <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
-                <Campo label="Precio Publicado ARS *" error={errors.precio_publicado_ars?.message}>
-                  <input type="number" {...register("precio_publicado_ars", { valueAsNumber: true })} placeholder="Ej: 25000000" className={inputClass} />
+                <Campo
+                  label="Precio Publicado ARS *"
+                  error={errors.precio_publicado_ars?.message}
+                >
+                  <input
+                    type="number"
+                    {...register("precio_publicado_ars", {
+                      valueAsNumber: true,
+                    })}
+                    placeholder="Ej: 25000000"
+                    className={inputClass}
+                  />
                 </Campo>
                 <Campo label="Precio Publicado USD">
-                  <input type="number" {...register("precio_publicado_usd", { valueAsNumber: true })} placeholder="Ej: 22000" className={inputClass} />
+                  <input
+                    type="number"
+                    {...register("precio_publicado_usd", {
+                      valueAsNumber: true,
+                    })}
+                    placeholder="Ej: 22000"
+                    className={inputClass}
+                  />
                 </Campo>
                 <Campo label="Precio Costo ARS (Interno)">
-                  <input type="number" {...register("precio_costo_ars", { valueAsNumber: true })} placeholder="Solo visible internamente" className={inputClass} />
+                  <input
+                    type="number"
+                    {...register("precio_costo_ars", { valueAsNumber: true })}
+                    placeholder="Solo visible internamente"
+                    className={inputClass}
+                  />
                 </Campo>
                 <Campo label="Precio Costo USD (Interno)">
-                  <input type="number" {...register("precio_costo_usd", { valueAsNumber: true })} placeholder="Solo visible internamente" className={inputClass} />
+                  <input
+                    type="number"
+                    {...register("precio_costo_usd", { valueAsNumber: true })}
+                    placeholder="Solo visible internamente"
+                    className={inputClass}
+                  />
                 </Campo>
               </div>
             </SectionCard>
@@ -313,19 +438,38 @@ export default function NuevoAutoPage() {
 
           {/* PASO 4 */}
           {paso === 4 && (
-            <SectionCard title="4. Datos Legales (Transferencia)" icon={<FileText className="w-4 h-4 text-[#0055A4]" />}>
+            <SectionCard
+              title="4. Datos Legales (Transferencia)"
+              icon={<FileText className="w-4 h-4 text-[#0055A4]" />}
+            >
               <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
                 <Campo label="Número de Motor">
-                  <input {...register("numero_motor")} placeholder="Nro de motor" className={inputClass} />
+                  <input
+                    {...register("numero_motor")}
+                    placeholder="Nro de motor"
+                    className={inputClass}
+                  />
                 </Campo>
                 <Campo label="Número de Chasis">
-                  <input {...register("numero_chasis")} placeholder="Nro de chasis / cuadro" className={inputClass} />
+                  <input
+                    {...register("numero_chasis")}
+                    placeholder="Nro de chasis / cuadro"
+                    className={inputClass}
+                  />
                 </Campo>
                 <Campo label="Radicado - Localidad">
-                  <input {...register("radicado_localidad")} placeholder="Ej: San Isidro" className={inputClass} />
+                  <input
+                    {...register("radicado_localidad")}
+                    placeholder="Ej: San Isidro"
+                    className={inputClass}
+                  />
                 </Campo>
                 <Campo label="Radicado - Provincia">
-                  <input {...register("radicado_provincia")} placeholder="Ej: Buenos Aires" className={inputClass} />
+                  <input
+                    {...register("radicado_provincia")}
+                    placeholder="Ej: Buenos Aires"
+                    className={inputClass}
+                  />
                 </Campo>
               </div>
             </SectionCard>
@@ -333,10 +477,15 @@ export default function NuevoAutoPage() {
 
           {/* PASO 5 */}
           {paso === 5 && (
-            <SectionCard title="5. Multimedia y Observaciones" icon={<ImageIcon className="w-4 h-4 text-[#0055A4]" />}>
+            <SectionCard
+              title="5. Multimedia y Observaciones"
+              icon={<ImageIcon className="w-4 h-4 text-[#0055A4]" />}
+            >
               <div className="space-y-4">
                 <div>
-                  <label className="text-xs text-gray-400 block mb-1">Observaciones Internas</label>
+                  <label className="text-xs text-gray-400 block mb-1">
+                    Observaciones Internas
+                  </label>
                   <textarea
                     {...register("observaciones_internas")}
                     placeholder="Notas privadas sobre el estado del vehículo..."
@@ -344,7 +493,9 @@ export default function NuevoAutoPage() {
                   />
                 </div>
 
-                <div className={`border-2 border-dashed rounded-xl p-6 text-center transition-colors ${errorArchivos ? "border-red-500/50 bg-red-500/5" : "border-white/10 hover:border-[#0055A4]/50 bg-[#0A0A0A]"}`}>
+                <div
+                  className={`border-2 border-dashed rounded-xl p-6 text-center transition-colors ${errorArchivos ? "border-red-500/50 bg-red-500/5" : "border-white/10 hover:border-[#0055A4]/50 bg-[#0A0A0A]"}`}
+                >
                   <input
                     type="file"
                     accept="image/*,video/*"
@@ -353,24 +504,50 @@ export default function NuevoAutoPage() {
                     onChange={handleSeleccionarArchivos}
                     className="hidden"
                   />
-                  <label htmlFor="file-upload" className="cursor-pointer flex flex-col items-center">
+                  <label
+                    htmlFor="file-upload"
+                    className="cursor-pointer flex flex-col items-center"
+                  >
                     <Upload className="w-8 h-8 text-gray-500 mb-2" />
-                    <span className="text-sm font-bold text-gray-200">Subir Fotografías o Videos</span>
-                    <span className="text-[11px] text-gray-500 mt-1">La primera foto elegida será la portada principal</span>
+                    <span className="text-sm font-bold text-gray-200">
+                      Subir Fotografías o Videos
+                    </span>
+                    <span className="text-[11px] text-gray-500 mt-1">
+                      La primera foto elegida será la portada principal
+                    </span>
                   </label>
                 </div>
-                {errorArchivos && <span className="text-red-500 text-xs block">{errorArchivos}</span>}
+                {errorArchivos && (
+                  <span className="text-red-500 text-xs block">
+                    {errorArchivos}
+                  </span>
+                )}
 
                 {previsualizaciones.length > 0 && (
                   <div className="grid grid-cols-2 md:grid-cols-4 gap-3 pt-2">
                     {previsualizaciones.map((src, index) => (
-                      <div key={index} className="relative group h-24 bg-black rounded-lg overflow-hidden border border-white/10">
+                      <div
+                        key={index}
+                        className="relative group h-24 bg-black rounded-lg overflow-hidden border border-white/10"
+                      >
                         {archivos[index]?.type.startsWith("video") ? (
-                          <video src={src} className="w-full h-full object-cover" muted />
+                          <video
+                            src={src}
+                            className="w-full h-full object-cover"
+                            muted
+                          />
                         ) : (
-                          <img src={src} alt="Preview" className="w-full h-full object-cover" />
+                          <img
+                            src={src}
+                            alt="Preview"
+                            className="w-full h-full object-cover"
+                          />
                         )}
-                        <button type="button" onClick={() => eliminarArchivo(index)} className="absolute top-1 right-1 bg-red-600 text-white p-1 rounded-full shadow">
+                        <button
+                          type="button"
+                          onClick={() => eliminarArchivo(index)}
+                          className="absolute top-1 right-1 bg-red-600 text-white p-1 rounded-full shadow"
+                        >
                           <X className="w-3 h-3" />
                         </button>
                       </div>
@@ -407,7 +584,13 @@ export default function NuevoAutoPage() {
                 disabled={loading}
                 className="w-2/3 bg-[#0055A4] hover:bg-[#1E6FD9] py-4 rounded-xl font-bold uppercase tracking-wider text-xs transition-all flex items-center justify-center gap-2 shadow-xl disabled:opacity-50"
               >
-                {loading ? "Registrando unidad..." : <><Save className="w-4 h-4" /> Guardar y Publicar</>}
+                {loading ? (
+                  "Registrando unidad..."
+                ) : (
+                  <>
+                    <Save className="w-4 h-4" /> Guardar y Publicar
+                  </>
+                )}
               </button>
             )}
           </div>
@@ -417,9 +600,18 @@ export default function NuevoAutoPage() {
   );
 }
 
-const inputClass = "w-full bg-[#0A0A0A] border border-white/10 p-3 rounded-xl text-sm outline-none focus:border-[#0055A4]";
+const inputClass =
+  "w-full bg-[#0A0A0A] border border-white/10 p-3 rounded-xl text-sm outline-none focus:border-[#0055A4]";
 
-function SectionCard({ title, icon, children }: { title: string; icon: React.ReactNode; children: React.ReactNode }) {
+function SectionCard({
+  title,
+  icon,
+  children,
+}: {
+  title: string;
+  icon: React.ReactNode;
+  children: React.ReactNode;
+}) {
   return (
     <div className="bg-[#121212] p-6 rounded-2xl border border-white/5 space-y-5 shadow-lg">
       <h2 className="text-xs font-bold uppercase tracking-widest text-gray-300 flex items-center gap-2 pb-2 border-b border-white/5">
@@ -430,12 +622,22 @@ function SectionCard({ title, icon, children }: { title: string; icon: React.Rea
   );
 }
 
-function Campo({ label, error, children }: { label: string; error?: string; children: React.ReactNode }) {
+function Campo({
+  label,
+  error,
+  children,
+}: {
+  label: string;
+  error?: string;
+  children: React.ReactNode;
+}) {
   return (
     <div>
       <label className="text-xs text-gray-400 block mb-1">{label}</label>
       {children}
-      {error && <span className="text-red-500 text-[11px] mt-1 block">{error}</span>}
+      {error && (
+        <span className="text-red-500 text-[11px] mt-1 block">{error}</span>
+      )}
     </div>
   );
 }

@@ -6,15 +6,16 @@ import Stock from "@/components/Stock";
 import Location from "@/components/Location";
 import Socials from "@/components/Socials";
 import FAQ from "@/components/FAQ";
+import FadeIn from "@/components/FadeIn";
+import Testimonials from "@/components/Testimonials";
 
-// Conexión a Supabase (modo lectura pública)
 const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
   process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY!,
 );
 
-// En lugar de revalidate = 0, haz esto para que la web vuele:
-export const revalidate = 60; // Revalida la página automáticamente cada 60 segundos o cuando actualices un auto
+export const revalidate = 60; 
+
 export default async function HomePage() {
   const { data: vehiculos } = await supabase
     .from("vehiculos")
@@ -29,17 +30,34 @@ export default async function HomePage() {
     .order("created_at", { ascending: false });
 
   return (
-    <div className="w-full text-white font-sans scroll-smooth">
+    <div className="w-full text-white font-sans scroll-smooth overflow-x-hidden">
+      {/* Al Hero NO lo envolvemos con scroll porque ya está arriba de todo */}
       <Hero />
-      <Stats />
-      <Sucursales />
       
-      {/* Le pasamos la data de Supabase al componente */}
-      <Stock vehiculos={vehiculos} />
+      {/* Las demás secciones las envolvemos para que aparezcan suavemente */}
+      <FadeIn direction="up">
+        <Stock vehiculos={vehiculos} />
+      </FadeIn>
+
+      <FadeIn direction="up">
+        <Stats />
+      </FadeIn>
+
+      <FadeIn direction="up">
+        <Testimonials />
+      </FadeIn>
       
-      <Location />
-      <Socials />
-      <FAQ />
+      <FadeIn direction="up">
+        <Location />
+      </FadeIn>
+
+      <FadeIn direction="up">
+        <Socials />
+      </FadeIn>
+
+      <FadeIn direction="up">
+        <FAQ />
+      </FadeIn>
     </div>
   );
 }
