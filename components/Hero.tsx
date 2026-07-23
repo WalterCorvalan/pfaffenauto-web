@@ -9,14 +9,15 @@ export default function Hero() {
 
   // ================= DATOS DE LOS BANNERS (SUCURSALES) =================
   // Acá podés cambiar las imágenes por las reales de tus sucursales
-  const slides = [
+const slides = [
     {
       id: "villa-de-mayo",
       nombre: "Villa de Mayo",
       etiqueta: "Casa Central",
       descripcion: "Descubrí nuestro mayor stock de vehículos seleccionados y 0KM.",
-      imagen: "https://images.unsplash.com/photo-1486406146926-c627a92ad1ab?q=80&w=2000&auto=format&fit=crop",
+      imagen: "VDM.jpeg",
       enlace: "/sucursales/villa-de-mayo",
+      posicion: "object-center", // <--- Clase Tailwind
     },
     {
       id: "olivos",
@@ -25,14 +26,16 @@ export default function Hero() {
       descripcion: "Atención premium y financiación a medida en el corazón de Olivos.",
       imagen: "https://images.unsplash.com/photo-1542282088-72c9c27ed0cd?q=80&w=2000&auto=format&fit=crop",
       enlace: "/sucursales/olivos",
+      posicion: "object-center", // <--- Clase Tailwind
     },
     {
       id: "panamericana",
       nombre: "Panamericana",
       etiqueta: "Acceso Directo",
       descripcion: "La forma más rápida y cómoda de llegar a tu próximo auto.",
-      imagen: "https://images.unsplash.com/photo-1503376780353-7e6692767b70?q=80&w=2000&auto=format&fit=crop",
+      imagen: "/pana.jpg",
       enlace: "/sucursales/panamericana",
+      posicion: "object-top", // <--- Clase Tailwind (Ancla el cartel al techo)
     },
   ];
 
