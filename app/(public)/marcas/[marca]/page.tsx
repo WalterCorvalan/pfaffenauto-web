@@ -56,12 +56,11 @@ export default async function MarcaPage({
     .order("precio_publicado_ars", { ascending: true });
 
   if (!vehiculos || vehiculos.length === 0) {
-    // Si la marca existe pero no hay stock, mostramos un mensaje amigable
     return (
-      <div className="min-h-screen bg-background pt-6 pb-20 text-center flex flex-col items-center justify-center">
+      <div className="min-h-screen bg-background pt-6 pb-20 text-center flex flex-col items-center justify-center px-4">
         <h2 className="text-2xl font-black text-navy mb-2">No hay stock de {marcaName}</h2>
-        <p className="text-gray-500 mb-6">Por el momento no tenemos unidades disponibles de esta marca.</p>
-        <Link href="/marcas" className="text-primary font-bold hover:underline">Volver a Marcas</Link>
+        <p className="text-gray-500 mb-6 text-sm">Por el momento no tenemos unidades disponibles de esta marca.</p>
+        <Link href="/marcas" className="text-primary font-bold hover:underline text-sm">Volver a Marcas</Link>
       </div>
     );
   }
@@ -71,13 +70,12 @@ export default async function MarcaPage({
       
       {/* ================= PORTADA DE LA MARCA (Header) ================= */}
       <div className="relative w-full bg-gradient-to-b from-[#fdfbf7] to-white border-b border-gray-100 overflow-hidden pt-6 pb-12">
-        {/* Círculo decorativo de fondo simulando el diseño */}
         <div className="absolute top-0 right-0 w-96 h-96 bg-[#f3efe6] rounded-full blur-3xl opacity-50 -translate-y-1/2 translate-x-1/3 pointer-events-none"></div>
         <div className="absolute bottom-0 left-0 w-64 h-64 bg-[#f3efe6] rounded-full blur-3xl opacity-50 translate-y-1/2 -translate-x-1/4 pointer-events-none"></div>
 
         <div className="max-w-7xl mx-auto px-4 md:px-6 relative z-10">
           {/* Migas de pan */}
-          <div className="text-xs text-gray-500 font-medium mb-10">
+          <div className="text-xs text-gray-500 font-medium mb-8">
             <Link href="/" className="hover:text-primary">Inicio</Link> /{" "}
             <Link href="/marcas" className="hover:text-primary">Marcas</Link> /{" "}
             <strong className="text-navy">{marcaName}</strong>
@@ -85,7 +83,7 @@ export default async function MarcaPage({
 
           <div className="flex flex-col items-center text-center max-w-2xl mx-auto">
             {/* Logo en caja flotante */}
-            <div className="w-24 h-24 bg-white rounded-2xl shadow-sm border border-gray-100 flex items-center justify-center p-4 mb-6">
+            <div className="w-20 h-20 md:w-24 md:h-24 bg-white rounded-2xl shadow-sm border border-gray-100 flex items-center justify-center p-4 mb-5">
               <img 
                 src={marcaInfo.logo} 
                 alt={`Logo ${marcaName}`} 
@@ -93,19 +91,19 @@ export default async function MarcaPage({
               />
             </div>
 
-            <h1 className="text-3xl md:text-4xl font-black text-navy tracking-tight mb-4">
+            <h1 className="text-2xl md:text-4xl font-black text-navy tracking-tight mb-3">
               Modelos de {marcaName} 0km
             </h1>
             
-            <p className="text-sm md:text-base text-gray-500 font-medium mb-8 leading-relaxed">
+            <p className="text-xs md:text-base text-gray-500 font-medium mb-6 leading-relaxed px-2">
               {marcaInfo.descripcion}
             </p>
 
             {/* Píldoras de ventajas */}
-            <h3 className="text-lg font-bold text-navy mb-4">¿Por qué elegir {marcaName}?</h3>
-            <div className="flex flex-wrap justify-center gap-3">
+            <h3 className="text-sm md:text-lg font-bold text-navy mb-3">¿Por qué elegir {marcaName}?</h3>
+            <div className="flex flex-wrap justify-center gap-2 md:gap-3">
               {marcaInfo.pills.map((pill, idx) => (
-                <span key={idx} className="bg-white border border-gray-200 text-gray-600 text-xs font-bold px-4 py-2 rounded-full shadow-sm">
+                <span key={idx} className="bg-white border border-gray-200 text-gray-600 text-[11px] md:text-xs font-bold px-3.5 py-1.5 rounded-full shadow-sm">
                   {pill}
                 </span>
               ))}
@@ -115,18 +113,19 @@ export default async function MarcaPage({
       </div>
 
       {/* ================= GRILLA DE VEHÍCULOS ================= */}
-      <div className="max-w-7xl mx-auto px-4 md:px-6 pt-10">
-        <div className="text-center text-sm font-bold text-navy mb-8">
-          {vehiculos.length} modelos encontrados.
+      <div className="max-w-7xl mx-auto px-3 sm:px-4 md:px-6 pt-8">
+        <div className="text-center text-xs md:text-sm font-bold text-gray-500 mb-6">
+          <strong className="text-navy">{vehiculos.length}</strong> modelos encontrados
         </div>
 
-        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 md:gap-5">
+        {/* FORZAMOS 2 COLUMNAS EN MÓVIL (grid-cols-2) y escalamos hacia arriba */}
+        <div className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3 sm:gap-4 md:gap-5">
           {vehiculos.map((auto) => (
             <Link href={`/catalogo/${auto.slug}`} key={auto.id} className="block group">
-              <div className="bg-white rounded-2xl border border-gray-200 overflow-hidden flex flex-col h-full shadow-sm hover:shadow-xl transition-all duration-300 p-4">
+              <div className="bg-white rounded-2xl border border-gray-200 overflow-hidden flex flex-col h-full shadow-sm hover:shadow-xl transition-all duration-300 p-3 sm:p-4">
                 
                 {/* Imagen */}
-                <div className="relative h-[160px] flex items-center justify-center overflow-hidden mb-4 bg-gray-50 rounded-xl">
+                <div className="relative h-[110px] sm:h-[150px] flex items-center justify-center overflow-hidden mb-3 bg-gray-50 rounded-xl">
                   <img
                     src={auto.multimedia_vehiculos?.[0]?.url_archivo || "/placeholder.jpg"}
                     alt={`${auto.marca} ${auto.modelo}`}
@@ -136,29 +135,29 @@ export default async function MarcaPage({
 
                 {/* Info Textual */}
                 <div className="flex flex-col flex-grow">
-                  <span className="text-[10px] text-gray-400 font-bold uppercase tracking-widest mb-1">
+                  <span className="text-[9px] sm:text-[10px] text-gray-400 font-bold uppercase tracking-widest mb-0.5">
                     {auto.marca}
                   </span>
-                  <h3 className="text-lg font-black text-navy leading-tight capitalize truncate">
+                  <h3 className="text-sm sm:text-base md:text-lg font-black text-navy leading-tight capitalize truncate">
                     {auto.modelo}
                   </h3>
-                  <p className="text-xs text-gray-500 font-medium mt-1">
+                  <p className="text-[11px] text-gray-500 font-medium mt-0.5 truncate">
                     {auto.version || auto.tipo || "Vehículo"}
                   </p>
 
                   {/* Bloque de Precio y Botón */}
-                  <div className="mt-auto pt-4">
-                    <div className="bg-gray-50 rounded-xl p-3 mb-3 border border-gray-100">
-                      <span className="text-[9px] text-gray-400 font-bold uppercase tracking-widest block mb-0.5">
+                  <div className="mt-auto pt-3">
+                    <div className="bg-gray-50 rounded-xl p-2.5 sm:p-3 mb-2.5 border border-gray-100">
+                      <span className="text-[8px] sm:text-[9px] text-gray-400 font-bold uppercase tracking-widest block mb-0.5">
                         Desde
                       </span>
-                      <span className="text-lg font-black text-navy tracking-tight">
+                      <span className="text-xs sm:text-base md:text-lg font-black text-navy tracking-tight">
                         $ {auto.precio_publicado_ars?.toLocaleString("es-AR")}
                       </span>
                     </div>
 
-                    {/* Botón Ver Detalles (Estilo Celeste Hollow) */}
-                    <button className="w-full bg-white text-primary border border-primary/30 hover:bg-sky-50 font-bold text-xs uppercase tracking-widest py-3 rounded-xl transition-colors">
+                    {/* Botón Ver Detalles */}
+                    <button className="w-full bg-white text-primary border border-primary/30 hover:bg-sky-50 font-bold text-[10px] sm:text-xs uppercase tracking-widest py-2 sm:py-2.5 rounded-xl transition-colors">
                       Ver detalles
                     </button>
                   </div>

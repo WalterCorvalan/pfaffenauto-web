@@ -16,7 +16,7 @@ export default function Socials() {
           
           {/* WhatsApp */}
           <a
-            href="https://wa.me/5491100000000"
+            href="https://wa.me/5491121907000"
             target="_blank"
             rel="noopener noreferrer"
             className="group relative overflow-hidden bg-[#09090b] rounded-2xl border border-white/5 hover:border-[#25D366]/50 p-5 flex flex-col items-center justify-center gap-3 transition-all duration-300 hover:-translate-y-1 hover:shadow-[0_0_20px_rgba(37,211,102,0.15)]"
@@ -35,7 +35,7 @@ export default function Socials() {
 
           {/* Instagram */}
           <a
-            href="https://instagram.com"
+            href="https://www.instagram.com/pfaffenautomotores/"
             target="_blank"
             rel="noopener noreferrer"
             className="group relative overflow-hidden bg-[#09090b] rounded-2xl border border-white/5 hover:border-pink-500/50 p-5 flex flex-col items-center justify-center gap-3 transition-all duration-300 hover:-translate-y-1 hover:shadow-[0_0_20px_rgba(236,72,153,0.15)]"

@@ -23,13 +23,13 @@ export default async function VehiculoDetallePage({
   const { slug } = await params;
   const supabase = await createClient();
 
-  // Búsqueda del vehículo
+  // 1. Agregamos "telefono" a la búsqueda de la sucursal
   const { data: autoExacto } = await supabase
     .from("vehiculos")
     .select(`
       *, 
       multimedia_vehiculos ( url_archivo, tipo, orden ), 
-      sucursales ( nombre, direccion )
+      sucursales ( nombre, direccion, telefono )
     `)
     .eq("slug", slug)
     .maybeSingle();
@@ -42,7 +42,7 @@ export default async function VehiculoDetallePage({
       .select(`
         *, 
         multimedia_vehiculos ( url_archivo, tipo, orden ), 
-        sucursales ( nombre, direccion )
+        sucursales ( nombre, direccion, telefono )
       `)
       .ilike("slug", `${slug}%`)
       .limit(1);
@@ -54,8 +54,26 @@ export default async function VehiculoDetallePage({
 
   if (!auto) notFound();
 
-  const mensajeWhatsApp = encodeURIComponent(`Hola Pfaffen Autos, estoy interesado en el ${auto.marca} ${auto.modelo} (${auto.anio}) que vi en la web.`);
-  const linkWhatsApp = `https://wa.me/5491100000000?text=${mensajeWhatsApp}`;
+  // ================= LÓGICA DE WHATSAPP INTELIGENTE =================
+  // Tomamos el teléfono de la sucursal, si no tiene, usamos uno de emergencia (Casa Central)
+  const telefonoDb = auto.sucursales?.telefono || "1137564398"; 
+  
+  // Limpiamos el texto: dejamos SOLO los números (quita espacios, guiones y el "+")
+  let numeroLimpio = telefonoDb.replace(/\D/g, "");
+  
+  // Aseguramos que tenga el prefijo correcto de Argentina (+54 9) para WhatsApp
+  if (numeroLimpio.startsWith("549")) {
+    // Ya está perfecto
+  } else if (numeroLimpio.startsWith("54")) {
+    numeroLimpio = numeroLimpio.replace(/^54/, "549"); // Cambia 54 por 549
+  } else {
+    numeroLimpio = "549" + numeroLimpio; // Si empieza con 11, le pone 549 adelante
+  }
+
+  // Armamos el mensaje y el link final
+  const mensajeWhatsApp = encodeURIComponent(`Hola Pfaffen Autos, estoy interesado en el ${auto.marca} ${auto.modelo} (${auto.anio}) que tienen en la sucursal de ${auto.sucursales?.nombre || "ustedes"}.`);
+  const linkWhatsApp = `https://wa.me/${numeroLimpio}?text=${mensajeWhatsApp}`;
+  // =================================================================
 
   const esCeroKm = auto.kilometraje === 0;
   const precioArs = auto.precio_publicado_ars || 0;
