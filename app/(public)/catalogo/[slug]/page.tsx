@@ -23,7 +23,6 @@ export default async function VehiculoDetallePage({
   const { slug } = await params;
   const supabase = await createClient();
 
-  // 1. Agregamos "telefono" a la búsqueda de la sucursal
   const { data: autoExacto } = await supabase
     .from("vehiculos")
     .select(`
@@ -54,37 +53,30 @@ export default async function VehiculoDetallePage({
 
   if (!auto) notFound();
 
-  // ================= LÓGICA DE WHATSAPP INTELIGENTE =================
-  // Tomamos el teléfono de la sucursal, si no tiene, usamos uno de emergencia (Casa Central)
-  const telefonoDb = auto.sucursales?.telefono || "1137564398"; 
-  
-  // Limpiamos el texto: dejamos SOLO los números (quita espacios, guiones y el "+")
+  // Lógica de WhatsApp
+  const telefonoDb = auto.sucursales?.telefono || "1121907000"; 
   let numeroLimpio = telefonoDb.replace(/\D/g, "");
-  
-  // Aseguramos que tenga el prefijo correcto de Argentina (+54 9) para WhatsApp
-  if (numeroLimpio.startsWith("549")) {
-    // Ya está perfecto
-  } else if (numeroLimpio.startsWith("54")) {
-    numeroLimpio = numeroLimpio.replace(/^54/, "549"); // Cambia 54 por 549
-  } else {
-    numeroLimpio = "549" + numeroLimpio; // Si empieza con 11, le pone 549 adelante
+  if (!numeroLimpio.startsWith("549") && !numeroLimpio.startsWith("54")) {
+    numeroLimpio = "549" + numeroLimpio; 
+  } else if (numeroLimpio.startsWith("54") && !numeroLimpio.startsWith("549")) {
+    numeroLimpio = numeroLimpio.replace(/^54/, "549");
   }
 
-  // Armamos el mensaje y el link final
   const mensajeWhatsApp = encodeURIComponent(`Hola Pfaffen Autos, estoy interesado en el ${auto.marca} ${auto.modelo} (${auto.anio}) que tienen en la sucursal de ${auto.sucursales?.nombre || "ustedes"}.`);
   const linkWhatsApp = `https://wa.me/${numeroLimpio}?text=${mensajeWhatsApp}`;
-  // =================================================================
 
   const esCeroKm = auto.kilometraje === 0;
   const precioArs = auto.precio_publicado_ars || 0;
-  // Simulamos un valor USD referencial como en el diseño si no existe en BD
-  const precioUsd = auto.precio_publicado_usd || Math.round(precioArs / 1485);
+  
+  // ELIMINADA LA SIMULACIÓN INVENTADA (/ 1485)
+  // Ahora tomamos estrictamente lo que hay en la base de datos
+  const precioUsd = auto.precio_publicado_usd || null; 
 
   return (
     <div className="min-h-screen bg-background pt-6 pb-32 lg:pb-20 font-sans text-foreground">
       <div className="max-w-7xl mx-auto px-4 md:px-6">
 
-        {/* ================= TÍTULO MÓVIL (Visible solo en celus, arriba de todo) ================= */}
+        {/* TÍTULO MÓVIL */}
         <div className="block lg:hidden mb-4">
           <div className="text-[10px] sm:text-xs text-gray-400 font-medium mb-2">
             <Link href="/" className="hover:text-primary">Inicio</Link> /{" "}
@@ -101,17 +93,15 @@ export default async function VehiculoDetallePage({
 
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 lg:gap-10">
           
-          {/* ================= COLUMNA IZQUIERDA (Imagen y Detalles) ================= */}
+          {/* COLUMNA IZQUIERDA (Imagen y Detalles) */}
           <div className="lg:col-span-7 flex flex-col gap-6">
             
-            {/* Migas de pan de Escritorio */}
             <div className="hidden lg:block text-xs text-gray-400 font-medium mb-[-10px]">
               <Link href="/" className="hover:text-primary">Inicio</Link> /{" "}
               <Link href="/catalogo" className="hover:text-primary">Catálogo</Link> /{" "}
               <span className="text-gray-600">{auto.marca}</span> / <span className="text-gray-600">{auto.modelo}</span>
             </div>
 
-            {/* FOTO DEL VEHÍCULO (Silueta sobre fondo gris claro) */}
             <div className="relative w-full h-[250px] sm:h-[350px] md:h-[450px] bg-gray-50/80 rounded-2xl flex items-center justify-center p-4 md:p-10 overflow-hidden border border-gray-100 shadow-sm">
               <img
                 src={auto.multimedia_vehiculos?.[0]?.url_archivo || "/placeholder.jpg"}
@@ -126,7 +116,6 @@ export default async function VehiculoDetallePage({
               </div>
             </div>
 
-            {/* Simulación de selectores de color (Referencia de diseño) */}
             <div className="flex items-center justify-center gap-4 bg-gray-50 rounded-full py-3 px-6 mx-auto w-max border border-gray-100">
               <div className="w-5 h-5 rounded-full bg-gray-400 border-2 border-white ring-2 ring-gray-400 cursor-pointer"></div>
               <div className="w-4 h-4 rounded-full bg-slate-300 cursor-pointer hover:scale-110 transition-transform"></div>
@@ -135,7 +124,7 @@ export default async function VehiculoDetallePage({
               <div className="w-4 h-4 rounded-full bg-black cursor-pointer hover:scale-110 transition-transform"></div>
             </div>
 
-            {/* BLOQUE DE COTIZACIÓN / ESPECIFICACIONES */}
+            {/* ESPECIFICACIONES */}
             <div className="mt-4">
               <h3 className="text-lg font-bold text-navy mb-4">Detalles de la unidad</h3>
               <div className="bg-white border border-gray-200 rounded-2xl p-5 md:p-6 shadow-sm hover:border-primary/30 transition-colors">
@@ -160,9 +149,7 @@ export default async function VehiculoDetallePage({
                 <ul className="space-y-3 pt-4 border-t border-gray-100 text-sm text-gray-600">
                   <li className="flex items-start gap-3">
                     <Clock className="w-4 h-4 text-gray-400 mt-0.5" />
-                    <div>
-                      <strong className="text-gray-700">Disponibilidad:</strong> Inmediata / 30 días
-                    </div>
+                    <div><strong className="text-gray-700">Disponibilidad:</strong> Inmediata / 30 días</div>
                   </li>
                   <li className="flex items-start gap-3">
                     <MapPin className="w-4 h-4 text-gray-400 mt-0.5" />
@@ -186,13 +173,11 @@ export default async function VehiculoDetallePage({
 
           </div>
 
-          {/* ================= COLUMNA DERECHA (Panel Fijo Desktop) ================= */}
+          {/* COLUMNA DERECHA (Panel Fijo Desktop) */}
           <div className="lg:col-span-5 relative">
             
-            {/* Contenedor Sticky para PC */}
             <div className="lg:sticky lg:top-24 bg-white border border-gray-200 rounded-2xl p-6 shadow-xl shadow-gray-200/50 flex flex-col gap-6">
               
-              {/* Título Desktop */}
               <div className="hidden lg:block border-b border-gray-100 pb-4">
                 <span className="text-[11px] text-gray-400 font-bold uppercase tracking-widest block mb-1">
                   {esCeroKm ? "0km" : "Usado seleccionado"} | {auto.anio}
@@ -220,12 +205,15 @@ export default async function VehiculoDetallePage({
                   Precio sin impuestos nacionales: $ {(precioArs * 0.7).toLocaleString("es-AR", { maximumFractionDigits: 0 })}
                 </p>
 
-                <div className="mt-4 flex items-center justify-between border-t border-gray-100 pt-3">
-                  <span className="text-sm font-bold text-gray-600">US$ {precioUsd.toLocaleString("en-US")}</span>
-                  <span className="text-[10px] text-gray-400 flex items-center gap-1">
-                    Dólar oficial prom $ 1.485 <span className="bg-emerald-100 text-emerald-700 px-1 py-0.5 rounded font-bold">dolarito</span>
-                  </span>
-                </div>
+                {/* MAGIA ACÁ: Renderizado Condicional del USD */}
+                {precioUsd && precioUsd > 0 && (
+                  <div className="mt-4 flex items-center justify-between border-t border-gray-100 pt-3">
+                    <span className="text-sm font-black text-gray-600 tracking-tight">US$ {precioUsd.toLocaleString("en-US")}</span>
+                    <span className="text-[9px] text-gray-400 uppercase tracking-widest font-bold">
+                      Valor Asignado
+                    </span>
+                  </div>
+                )}
               </div>
 
               {/* COMPRA PROTEGIDA */}
@@ -252,7 +240,6 @@ export default async function VehiculoDetallePage({
                   </div>
                 </li>
                 
-                {/* Botón Desktop (En móvil se oculta porque va fijo abajo) */}
                 <li className="hidden lg:block w-full pt-2">
                   <a 
                     href={linkWhatsApp} 
@@ -273,17 +260,6 @@ export default async function VehiculoDetallePage({
                 </li>
 
                 <li className="flex items-start gap-3 pt-4 border-t border-gray-100">
-                  <CreditCard className="w-5 h-5 text-gray-400 mt-0.5" />
-                  <div>
-                    <strong className="text-gray-800 block text-xs uppercase tracking-wide mb-1">Formas de pago</strong>
-                    <span className="text-gray-500 text-xs block mb-2">Precio al contado / Se puede financiar, pero es otro precio. ⚠️</span>
-                    <span className="bg-sky-100 text-primary text-[9px] font-black uppercase tracking-widest px-2 py-0.5 rounded border border-sky-200">
-                      CRÉDITO BNA
-                    </span>
-                  </div>
-                </li>
-
-                <li className="flex items-start gap-3 pt-4 border-t border-gray-100">
                   <MapPin className="w-5 h-5 text-gray-400 mt-0.5" />
                   <div className="w-full">
                     <strong className="text-gray-800 block text-xs uppercase tracking-wide mb-1">
@@ -291,15 +267,6 @@ export default async function VehiculoDetallePage({
                     </strong>
                     <div className="flex items-center gap-1 text-xs text-gray-500 mb-2">
                       Ubicado en Sucursal {auto.sucursales?.nombre} <CheckCircle2 className="w-3 h-3 text-emerald-500" />
-                    </div>
-                    <div className="flex items-center justify-between mt-3 bg-gray-50 p-2 rounded-lg border border-gray-100">
-                      <span className="text-[11px] font-bold text-gray-500">Calificaciones</span>
-                      <div className="flex items-center gap-1">
-                        <span className="text-xs font-bold text-navy mr-1">4.8</span>
-                        {[...Array(5)].map((_, i) => (
-                          <Star key={i} className="w-3 h-3 fill-yellow-400 text-yellow-400" />
-                        ))}
-                      </div>
                     </div>
                   </div>
                 </li>
@@ -311,8 +278,7 @@ export default async function VehiculoDetallePage({
 
       </div>
 
-      {/* ================= BARRA FIJA MÓVIL INFERIOR ================= */}
-      {/* Esta barra solo aparece en celulares y se queda pegada abajo, empujando el logo de WhatsApp */}
+      {/* BARRA FIJA MÓVIL INFERIOR */}
       <div className="lg:hidden fixed bottom-0 left-0 w-full bg-white border-t border-gray-200 p-4 z-[40] shadow-[0_-10px_20px_rgba(0,0,0,0.05)]">
         <a 
           href={linkWhatsApp} 

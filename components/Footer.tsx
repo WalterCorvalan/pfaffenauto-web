@@ -120,6 +120,11 @@ export default function Footer() {
           <a href="#" className="hover:text-white transition-colors">
             Privacidad
           </a>
+          {/* 👇 ACÁ AGREGAMOS EL BOTÓN DISCRETO 👇 */}
+          <span className="text-gray-800">|</span>
+          <Link href="/panel" className="text-gray-600 hover:text-[#0145F2] font-black transition-colors">
+            Acceso Staff
+          </Link>
         </div>
       </div>
     </footer>

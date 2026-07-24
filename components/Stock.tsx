@@ -3,6 +3,8 @@
 import React from "react";
 import Link from "next/link";
 import { ChevronRight } from "lucide-react";
+import { motion, Variants} from "framer-motion"; // <-- Sumamos Framer Motion
+
 
 interface StockProps {
   vehiculos: any[] | null;
@@ -13,37 +15,45 @@ const normalizar = (texto: string) => {
   return texto?.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").trim() || "";
 };
 
+// Variantes para la animación en cascada (Stagger)
+const containerVariants: Variants = {
+  hidden: { opacity: 0 },
+  visible: {
+    opacity: 1,
+    transition: { staggerChildren: 0.1 }
+  }
+};
+
+const itemVariants: Variants = {
+  hidden: { opacity: 0, y: 20 },
+  visible: { opacity: 1, y: 0, transition: { duration: 0.5, ease: "easeOut" } }
+};
+
 export default function Stock({ vehiculos }: StockProps) {
   const listaVehiculos = vehiculos || [];
 
-  // Segmentación inteligente (soporta "sedán", "sedan", "pickup", "pick-up", " pick up ", etc)
   const suvsDestacadas = listaVehiculos.filter((auto) => normalizar(auto.tipo).includes("suv")).slice(0, 4);
-  
   const pickipsCarrusel = listaVehiculos.filter((auto) => {
     const t = normalizar(auto.tipo);
     return t.includes("pick") || t.includes("camioneta"); 
   }).slice(0, 10);
-  
   const urbanosYSedanes = listaVehiculos.filter((auto) => {
     const t = normalizar(auto.tipo);
     return t.includes("sedan") || t.includes("hatchback") || t.includes("urbano");
   }).slice(0, 4);
 
-  // Recopilamos los IDs de los autos que YA mostramos
   const idsMostrados = new Set([
     ...suvsDestacadas.map(a => a.id),
     ...pickipsCarrusel.map(a => a.id),
     ...urbanosYSedanes.map(a => a.id)
   ]);
 
-  // Si hay autos en la sucursal que NO son ni SUV, ni Pickup, ni Sedan (Ej: Furgón, Coupé), los atrapamos acá:
   const otrosVehiculos = listaVehiculos.filter((auto) => !idsMostrados.has(auto.id)).slice(0, 8);
 
-  // Si la lista total está vacía, mostramos mensaje general
   if (listaVehiculos.length === 0) {
     return (
       <section className="py-16 bg-background relative border-t border-gray-100 text-center">
-        <p className="text-gray-500 font-medium">Actualmente no hay unidades disponibles en esta sucursal.</p>
+        <p className="text-gray-500 font-medium animate-pulse">Actualmente no hay unidades disponibles en esta sucursal.</p>
       </section>
     );
   }
@@ -64,7 +74,7 @@ export default function Stock({ vehiculos }: StockProps) {
                   SUVs <strong className="font-black">Destacadas</strong>
                 </h2>
               </div>
-              <Link href="/catalogo?tipo=SUV" className="text-sm font-bold text-gray-500 hover:text-primary transition-colors flex items-center gap-1 group">
+              <Link href="/catalogo?tipo=SUV" className="text-sm font-bold text-gray-500 hover:text-primary active:scale-95 transition-all flex items-center gap-1 group">
                 Ver todas las SUVs <ChevronRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
               </Link>
             </div>
@@ -84,18 +94,21 @@ export default function Stock({ vehiculos }: StockProps) {
                   Pick-ups <strong className="font-black">Disponibles</strong>
                 </h2>
               </div>
-              <Link href="/catalogo?tipo=Pick-up" className="text-sm font-bold text-gray-500 hover:text-primary transition-colors flex items-center gap-1 group">
+              <Link href="/catalogo?tipo=Pick-up" className="text-sm font-bold text-gray-500 hover:text-primary active:scale-95 transition-all flex items-center gap-1 group">
                 Ver catálogo de Pick-ups <ChevronRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
               </Link>
             </div>
 
-            <div className="flex gap-4 overflow-x-auto pb-4 pt-2 no-scrollbar snap-x">
+            <motion.div 
+              variants={containerVariants} initial="hidden" whileInView="visible" viewport={{ once: true, margin: "-50px" }}
+              className="flex gap-4 overflow-x-auto pb-4 pt-2 no-scrollbar snap-x"
+            >
               {pickipsCarrusel.map((auto) => (
-                <div key={auto.id} className="min-w-[260px] max-w-[260px] sm:min-w-[280px] sm:max-w-[280px] snap-start flex-shrink-0">
+                <motion.div variants={itemVariants} key={auto.id} className="min-w-[260px] max-w-[260px] sm:min-w-[280px] sm:max-w-[280px] snap-start flex-shrink-0">
                   <VehicleCard auto={auto} />
-                </div>
+                </motion.div>
               ))}
-            </div>
+            </motion.div>
           </div>
         )}
 
@@ -111,7 +124,7 @@ export default function Stock({ vehiculos }: StockProps) {
                   Sedanes y Hatchbacks <strong className="font-black">Urbanos</strong>
                 </h2>
               </div>
-              <Link href="/catalogo" className="text-sm font-bold text-gray-500 hover:text-primary transition-colors flex items-center gap-1 group">
+              <Link href="/catalogo" className="text-sm font-bold text-gray-500 hover:text-primary active:scale-95 transition-all flex items-center gap-1 group">
                 Ver todo el stock <ChevronRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
               </Link>
             </div>
@@ -119,8 +132,7 @@ export default function Stock({ vehiculos }: StockProps) {
           </div>
         )}
 
-        {/* ================= SECCIÓN 4: OTROS VEHÍCULOS (El "Seguro de vida") ================= */}
-        {/* Si la sucursal tiene autos, pero no encajaban en las 3 de arriba, caen acá automáticamente */}
+        {/* ================= SECCIÓN 4: OTROS ================= */}
         {otrosVehiculos.length > 0 && (
           <div>
             <div className="flex flex-col sm:flex-row sm:items-end justify-between mb-6 gap-2">
@@ -132,7 +144,7 @@ export default function Stock({ vehiculos }: StockProps) {
                   Unidades <strong className="font-black">Disponibles</strong>
                 </h2>
               </div>
-              <Link href="/catalogo" className="text-sm font-bold text-gray-500 hover:text-primary transition-colors flex items-center gap-1 group">
+              <Link href="/catalogo" className="text-sm font-bold text-gray-500 hover:text-primary active:scale-95 transition-all flex items-center gap-1 group">
                 Ir al catálogo completo <ChevronRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
               </Link>
             </div>
@@ -145,18 +157,26 @@ export default function Stock({ vehiculos }: StockProps) {
   );
 }
 
-// Subcomponente de Grilla de elementos
+// Grilla Animada
 function VehicleGrid({ vehiculos }: { vehiculos: any[] }) {
   return (
-    <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3 md:gap-5">
+    <motion.div 
+      variants={containerVariants} 
+      initial="hidden" 
+      whileInView="visible" 
+      viewport={{ once: true, margin: "-50px" }}
+      className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3 md:gap-5"
+    >
       {vehiculos.map((auto) => (
-        <VehicleCard key={auto.id} auto={auto} />
+        <motion.div variants={itemVariants} key={auto.id}>
+          <VehicleCard auto={auto} />
+        </motion.div>
       ))}
-    </div>
+    </motion.div>
   );
 }
 
-// Subcomponente de Tarjeta de Vehículo
+// Tarjeta Individual
 function VehicleCard({ auto }: { auto: any }) {
   const precioMostrar = auto.precio_publicado_usd && !auto.precio_publicado_ars
     ? `US$ ${auto.precio_publicado_usd.toLocaleString("es-AR")}`
@@ -165,7 +185,7 @@ function VehicleCard({ auto }: { auto: any }) {
       : `US$ ${auto.precio_publicado_usd?.toLocaleString("es-AR")}`;
 
   return (
-    <Link href={`/catalogo/${auto.slug}`} className="block group h-full">
+    <Link href={`/catalogo/${auto.slug}`} className="block group h-full active:scale-[0.98] transition-transform">
       <div className="bg-white rounded-2xl border border-gray-200/80 overflow-hidden flex flex-col h-full shadow-sm hover:shadow-xl hover:border-primary/30 transition-all duration-300">
         
         <div className="relative h-[140px] sm:h-[160px] bg-gray-50/50 flex items-center justify-center overflow-hidden p-4">

@@ -1,10 +1,11 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { supabase } from "@/lib/supabase"; // <-- ESTO FALTABA
+import { supabase } from "@/lib/supabase"; 
 import { Search, ChevronDown, MapPin, SlidersHorizontal, X, Filter } from "lucide-react";
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
+import { motion } from "framer-motion"; // <-- Sumamos Framer Motion
 
 export default function CatalogoPage() {
   const searchParams = useSearchParams();
@@ -15,7 +16,6 @@ export default function CatalogoPage() {
   const [isFilterOpen, setIsFilterOpen] = useState(false);
   const [orden, setOrden] = useState("Relevancia");
 
-  // Filtros seleccionados
   const [precioMin, setPrecioMin] = useState("");
   const [precioMax, setPrecioMax] = useState("");
   const [tiposSeleccionados, setTiposSeleccionados] = useState<string[]>([]);
@@ -71,7 +71,7 @@ export default function CatalogoPage() {
         {/* ================= MIGAS DE PAN Y TÍTULO ================= */}
         <div className="mb-6">
           <div className="text-xs text-gray-400 font-medium mb-1">
-            <Link href="/" className="hover:text-primary">Inicio</Link> / <span className="text-gray-600">Catálogo</span>
+            <Link href="/" className="hover:text-primary transition-colors">Inicio</Link> / <span className="text-gray-600">Catálogo</span>
           </div>
           <h1 className="text-2xl md:text-3xl font-black text-navy tracking-tight">
             Catálogo de autos 0km y usados en Argentina
@@ -85,20 +85,20 @@ export default function CatalogoPage() {
             {searchQuery ? (
               <span className="inline-flex items-center gap-1.5 bg-sky-50 text-primary border border-sky-100 text-xs font-bold px-3 py-1 rounded-full">
                 Búsqueda: "{searchQuery}"
-                <Link href="/catalogo" className="hover:text-navy"><X className="w-3.5 h-3.5" /></Link>
+                <Link href="/catalogo" className="hover:text-navy transition-colors"><X className="w-3.5 h-3.5" /></Link>
               </span>
             ) : (
               <span className="text-xs text-gray-400 italic">Ningún filtro activo por el momento.</span>
             )}
           </div>
           {searchQuery && (
-            <Link href="/catalogo" className="text-xs font-bold text-primary hover:underline">
+            <Link href="/catalogo" className="text-xs font-bold text-primary hover:underline active:scale-95 transition-transform">
               Limpiar todo
             </Link>
           )}
         </div>
 
-        {/* ================= CONTROLES SUPERIORES (CON BOTÓN MÓVIL DE FILTROS) ================= */}
+        {/* ================= CONTROLES SUPERIORES ================= */}
         <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-6 gap-4 pb-4 border-b border-gray-200">
           
           <div className="flex items-center justify-between w-full sm:w-auto gap-4">
@@ -106,31 +106,28 @@ export default function CatalogoPage() {
               <strong className="text-navy">{totalResultados}</strong> autos disponibles
             </span>
 
-            {/* Botón Filtros Mobile (Abre el Drawer) */}
+            {/* Botón Filtros Mobile */}
             <button 
               onClick={() => setIsFilterOpen(true)}
-              className="lg:hidden flex items-center gap-2 bg-white px-4 py-2 rounded-full border border-gray-200 shadow-sm text-xs font-bold text-navy hover:bg-gray-50 transition-colors"
+              className="lg:hidden flex items-center gap-2 bg-white px-4 py-2 rounded-full border border-gray-200 shadow-sm text-xs font-bold text-navy hover:bg-gray-50 active:scale-95 transition-all"
             >
               <Filter className="w-3.5 h-3.5 text-primary" /> Filtros
             </button>
           </div>
 
           <div className="flex flex-wrap items-center gap-3">
-            {/* Toggle Crédito BNA */}
             <label className="flex items-center gap-2 text-xs font-bold text-gray-600 cursor-pointer bg-white px-3 py-1.5 rounded-full border border-gray-200 shadow-sm">
               <span>Crédito BNA</span>
               <input type="checkbox" className="sr-only peer" />
               <div className="w-8 h-4 bg-gray-300 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-3 after:w-3 after:transition-all peer-checked:bg-primary relative"></div>
             </label>
 
-            {/* Toggle USD */}
             <label className="flex items-center gap-2 text-xs font-bold text-gray-600 cursor-pointer bg-white px-3 py-1.5 rounded-full border border-gray-200 shadow-sm">
               <span>USD</span>
               <input type="checkbox" className="sr-only peer" />
               <div className="w-8 h-4 bg-gray-300 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-3 after:w-3 after:transition-all peer-checked:bg-primary relative"></div>
             </label>
 
-            {/* Ordenar por */}
             <div className="flex items-center gap-2 bg-white px-3 py-1.5 rounded-full border border-gray-200 shadow-sm text-xs font-bold text-gray-600">
               <span>Ordenar por:</span>
               <select 
@@ -150,45 +147,37 @@ export default function CatalogoPage() {
         {/* ================= DISEÑO DE 2 COLUMNAS ================= */}
         <div className="flex flex-col lg:flex-row gap-8">
           
-          {/* ASIDE: FILTROS LATERALES (Escritorio) */}
           <aside className="hidden lg:block w-72 shrink-0 space-y-6">
             <FiltrosContent 
-              precioMin={precioMin} 
-              setPrecioMin={setPrecioMin} 
-              precioMax={precioMax} 
-              setPrecioMax={setPrecioMax} 
-              tiposSeleccionados={tiposSeleccionados} 
-              toggleTipo={toggleTipo} 
+              precioMin={precioMin} setPrecioMin={setPrecioMin} 
+              precioMax={precioMax} setPrecioMax={setPrecioMax} 
+              tiposSeleccionados={tiposSeleccionados} toggleTipo={toggleTipo} 
             />
           </aside>
 
-          {/* DRAWER / PANEL DE FILTROS MÓVIL */}
           {isFilterOpen && (
             <div className="fixed inset-0 z-50 flex lg:hidden">
               <div className="fixed inset-0 bg-black/50 backdrop-blur-sm" onClick={() => setIsFilterOpen(false)}></div>
               <div className="relative w-full max-w-xs bg-white h-full shadow-2xl z-10 p-6 flex flex-col overflow-y-auto">
                 <div className="flex items-center justify-between mb-6 pb-4 border-b border-gray-100">
                   <h3 className="text-base font-black text-navy uppercase tracking-tight">Filtros</h3>
-                  <button onClick={() => setIsFilterOpen(false)} className="p-2 text-gray-400 hover:text-navy rounded-full">
+                  <button onClick={() => setIsFilterOpen(false)} className="p-2 text-gray-400 hover:text-navy active:scale-90 rounded-full transition-all">
                     <X className="w-5 h-5" />
                   </button>
                 </div>
 
                 <div className="flex-1">
                   <FiltrosContent 
-                    precioMin={precioMin} 
-                    setPrecioMin={setPrecioMin} 
-                    precioMax={precioMax} 
-                    setPrecioMax={setPrecioMax} 
-                    tiposSeleccionados={tiposSeleccionados} 
-                    toggleTipo={toggleTipo} 
+                    precioMin={precioMin} setPrecioMin={setPrecioMin} 
+                    precioMax={precioMax} setPrecioMax={setPrecioMax} 
+                    tiposSeleccionados={tiposSeleccionados} toggleTipo={toggleTipo} 
                   />
                 </div>
 
                 <div className="pt-4 border-t border-gray-100 mt-auto">
                   <button 
                     onClick={() => setIsFilterOpen(false)}
-                    className="w-full bg-primary hover:bg-secondary text-white font-bold text-xs uppercase tracking-widest py-3.5 rounded-xl transition-colors shadow-md"
+                    className="w-full bg-primary hover:bg-secondary active:scale-95 text-white font-bold text-xs uppercase tracking-widest py-3.5 rounded-xl transition-all shadow-md"
                   >
                     Ver resultados ({totalResultados})
                   </button>
@@ -197,67 +186,105 @@ export default function CatalogoPage() {
             </div>
           )}
 
-          {/* GRILLA DE AUTOS */}
+          {/* ================= GRILLA DE AUTOS ================= */}
           <div className="flex-1">
             {loading ? (
-              <div className="text-center py-20 text-gray-400 font-medium">Cargando vehículos...</div>
-            ) : vehiculos.length > 0 ? (
+              // SKELETONS FANTASMAS MIENTRAS CARGA
               <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-5">
-                {vehiculos.map((auto) => (
-                  <Link href={`/catalogo/${auto.slug}`} key={auto.id} className="block group h-full">
-                    <div className="bg-white rounded-2xl border border-gray-200 overflow-hidden flex flex-col h-full shadow-sm hover:shadow-xl transition-all duration-300">
-                      
-                      <div className="relative h-[180px] bg-gray-50 flex items-center justify-center overflow-hidden p-4">
-                        <img
-                          src={auto.multimedia_vehiculos?.[0]?.url_archivo || "/placeholder.jpg"}
-                          alt={`${auto.marca} ${auto.modelo}`}
-                          className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500 mix-blend-multiply"
-                        />
-                        <div className="absolute bottom-2 left-3 bg-white/80 backdrop-blur-sm px-2 py-0.5 rounded text-[9px] font-bold text-gray-500 uppercase tracking-widest border border-gray-100">
-                          elcerokm.com
+                {[...Array(6)].map((_, i) => (
+                  <div key={i} className="bg-white rounded-2xl border border-gray-200 overflow-hidden flex flex-col h-full shadow-sm p-4 animate-pulse">
+                    <div className="h-[150px] bg-gray-200 rounded-xl mb-4 w-full"></div>
+                    <div className="flex flex-col flex-grow">
+                      <div className="h-3 bg-gray-200 rounded w-1/3 mb-2"></div>
+                      <div className="h-5 bg-gray-300 rounded w-3/4 mb-3"></div>
+                      <div className="h-3 bg-gray-200 rounded w-1/2 mb-6"></div>
+                      <div className="mt-auto pt-3">
+                        <div className="bg-gray-50 rounded-xl p-3 mb-3 border border-gray-100">
+                          <div className="h-2 bg-gray-200 rounded w-1/4 mb-2"></div>
+                          <div className="h-6 bg-gray-300 rounded w-2/3"></div>
                         </div>
-                        <div className="absolute bottom-2 right-3 text-[9px] font-medium text-gray-400 italic">
-                          *Imagen ilustrativa
-                        </div>
-
-                        {auto.estado === "Reservado" && (
-                          <div className="absolute top-3 right-3 bg-yellow-100 text-yellow-700 border border-yellow-200 px-2.5 py-1 rounded-md text-[9px] font-black uppercase tracking-widest shadow-sm">
-                            Reservado
-                          </div>
-                        )}
+                        <div className="h-9 bg-gray-200 rounded-xl w-full"></div>
                       </div>
-
-                      <div className="p-5 flex flex-col flex-grow">
-                        <span className="text-[11px] text-gray-400 font-bold uppercase tracking-widest">
-                          {auto.marca}
-                        </span>
-                        <h3 className="text-xl font-black text-navy leading-tight uppercase truncate">
-                          {auto.modelo}
-                        </h3>
-                        
-                        <p className="text-xs text-gray-500 font-medium mt-1 line-clamp-1">
-                          {auto.version || `${auto.tipo || "Vehículo"} • ${auto.transmision || "Manual"}`}
-                        </p>
-
-                        <div className="mt-auto pt-5">
-                          <span className="text-[10px] text-gray-400 font-bold uppercase tracking-wider block mb-0.5">
-                            Desde
-                          </span>
-                          <span className="text-xl md:text-2xl font-black text-navy tracking-tight">
-                            $ {auto.precio_publicado_ars?.toLocaleString("es-AR")}
-                          </span>
-                        </div>
-                      </div>
-
                     </div>
-                  </Link>
+                  </div>
                 ))}
               </div>
+            ) : vehiculos.length > 0 ? (
+              // AUTOS CARGADOS CON EFECTO STAGGER
+              <motion.div 
+                initial="hidden" animate="visible"
+                variants={{ visible: { transition: { staggerChildren: 0.1 } } }}
+                className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-5"
+              >
+                {vehiculos.map((auto) => (
+                  <motion.div 
+                    key={auto.id} 
+                    variants={{
+                      hidden: { opacity: 0, y: 20 },
+                      visible: { opacity: 1, y: 0, transition: { duration: 0.4 } }
+                    }}
+                  >
+                    <Link href={`/catalogo/${auto.slug}`} className="block group h-full active:scale-[0.98] transition-transform">
+                      <div className="bg-white rounded-2xl border border-gray-200 overflow-hidden flex flex-col h-full shadow-sm hover:shadow-xl transition-all duration-300">
+                        
+                        <div className="relative h-[180px] bg-gray-50 flex items-center justify-center overflow-hidden p-4">
+                          <img
+                            src={auto.multimedia_vehiculos?.[0]?.url_archivo || "/placeholder.jpg"}
+                            alt={`${auto.marca} ${auto.modelo}`}
+                            className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500 mix-blend-multiply"
+                          />
+                          <div className="absolute bottom-2 left-3 bg-white/80 backdrop-blur-sm px-2 py-0.5 rounded text-[9px] font-bold text-gray-500 uppercase tracking-widest border border-gray-100">
+                            elcerokm.com
+                          </div>
+                          <div className="absolute bottom-2 right-3 text-[9px] font-medium text-gray-400 italic">
+                            *Imagen ilustrativa
+                          </div>
+
+                          {auto.estado === "Reservado" && (
+                            <div className="absolute top-3 right-3 bg-yellow-100 text-yellow-700 border border-yellow-200 px-2.5 py-1 rounded-md text-[9px] font-black uppercase tracking-widest shadow-sm">
+                              Reservado
+                            </div>
+                          )}
+                        </div>
+
+                        <div className="p-5 flex flex-col flex-grow">
+                          <span className="text-[11px] text-gray-400 font-bold uppercase tracking-widest mb-0.5">
+                            {auto.marca}
+                          </span>
+                          <h3 className="text-xl font-black text-navy leading-tight uppercase truncate">
+                            {auto.modelo}
+                          </h3>
+                          
+                          <p className="text-xs text-gray-500 font-medium mt-1 line-clamp-1">
+                            {auto.version || `${auto.tipo || "Vehículo"} • ${auto.transmision || "Manual"}`}
+                          </p>
+
+                          <div className="mt-auto pt-5">
+                            <div className="bg-gray-50 rounded-xl p-2.5 sm:p-3 mb-2.5 border border-gray-100">
+                              <span className="text-[8px] sm:text-[9px] text-gray-400 font-bold uppercase tracking-widest block mb-0.5">
+                                Desde
+                              </span>
+                              <span className="text-xl md:text-2xl font-black text-navy tracking-tight">
+                                $ {auto.precio_publicado_ars?.toLocaleString("es-AR")}
+                              </span>
+                            </div>
+
+                            <button className="w-full bg-white text-primary border border-primary/30 hover:bg-sky-50 font-bold text-[10px] sm:text-xs uppercase tracking-widest py-2 sm:py-2.5 rounded-xl transition-colors">
+                              Ver detalles
+                            </button>
+                          </div>
+                        </div>
+
+                      </div>
+                    </Link>
+                  </motion.div>
+                ))}
+              </motion.div>
             ) : (
               <div className="text-center py-20 bg-white rounded-2xl border border-gray-200 shadow-sm">
                 <h3 className="text-navy font-black text-lg mb-2">No se encontraron vehículos</h3>
                 <p className="text-gray-500 text-sm mb-6">Probá modificando los filtros o buscando con otros términos.</p>
-                <Link href="/catalogo" className="bg-primary hover:bg-secondary text-white font-bold text-xs uppercase tracking-widest px-6 py-3 rounded-full transition-colors">
+                <Link href="/catalogo" className="bg-primary hover:bg-secondary active:scale-95 text-white font-bold text-xs uppercase tracking-widest px-6 py-3 rounded-full transition-all">
                   Ver todo el catálogo
                 </Link>
               </div>
@@ -265,20 +292,16 @@ export default function CatalogoPage() {
           </div>
 
         </div>
-
       </div>
     </div>
   );
 }
 
-// Componente interno para reutilizar los filtros en Escritorio y Mobile Drawer
+// Filtros Content (Igual que antes)
 function FiltrosContent({ 
-  precioMin, 
-  setPrecioMin, 
-  precioMax, 
-  setPrecioMax, 
-  tiposSeleccionados, 
-  toggleTipo 
+  precioMin, setPrecioMin, 
+  precioMax, setPrecioMax, 
+  tiposSeleccionados, toggleTipo 
 }: any) {
   return (
     <div className="bg-white border border-gray-200 rounded-2xl p-6 shadow-sm">
@@ -289,7 +312,6 @@ function FiltrosContent({
         </div>
       </div>
 
-      {/* Rango de Precio */}
       <div className="space-y-3 mb-6">
         <label className="text-xs font-bold text-navy uppercase tracking-wider block">Precio (ARS)</label>
         <div className="space-y-2">
@@ -298,28 +320,27 @@ function FiltrosContent({
             placeholder="Desde" 
             value={precioMin}
             onChange={(e) => setPrecioMin(e.target.value)}
-            className="w-full bg-gray-50 border border-gray-200 rounded-xl px-3 py-2 text-xs font-medium text-navy outline-none focus:border-primary"
+            className="w-full bg-gray-50 border border-gray-200 rounded-xl px-3 py-2 text-xs font-medium text-navy outline-none focus:border-primary transition-colors"
           />
           <input 
             type="number" 
             placeholder="Hasta" 
             value={precioMax}
             onChange={(e) => setPrecioMax(e.target.value)}
-            className="w-full bg-gray-50 border border-gray-200 rounded-xl px-3 py-2 text-xs font-medium text-navy outline-none focus:border-primary"
+            className="w-full bg-gray-50 border border-gray-200 rounded-xl px-3 py-2 text-xs font-medium text-navy outline-none focus:border-primary transition-colors"
           />
         </div>
       </div>
 
-      {/* Tipo de vehículo */}
       <div className="space-y-3 pt-4 border-t border-gray-100">
         <label className="text-xs font-bold text-navy uppercase tracking-wider block">Tipo de auto</label>
         {["Hatchback", "Pick-up", "Sedán", "SUV", "Utilitario"].map((tipo, idx) => (
-          <label key={idx} className="flex items-center gap-2 text-xs text-gray-600 font-medium cursor-pointer hover:text-navy">
+          <label key={idx} className="flex items-center gap-2 text-xs text-gray-600 font-medium cursor-pointer hover:text-navy transition-colors">
             <input 
               type="checkbox" 
               checked={tiposSeleccionados.includes(tipo)}
               onChange={() => toggleTipo(tipo)}
-              className="w-4 h-4 rounded border-gray-300 text-primary focus:ring-primary" 
+              className="w-4 h-4 rounded border-gray-300 text-primary focus:ring-primary transition-colors" 
             />
             {tipo}
           </label>
