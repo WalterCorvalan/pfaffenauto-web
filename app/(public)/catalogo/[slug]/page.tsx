@@ -1,7 +1,17 @@
 import { createClient } from "@/lib/supabase-server";
 import { notFound } from "next/navigation";
-import { MapPin, ArrowLeft, Fuel, Cog, Gauge, CalendarDays, Palette, CheckCircle2, Phone, ShieldCheck, Car } from "lucide-react";
 import Link from "next/link";
+import { 
+  ChevronRight, 
+  ShieldCheck, 
+  Palette, 
+  Clock, 
+  CreditCard, 
+  MapPin, 
+  Star, 
+  CheckCircle2,
+  Info
+} from "lucide-react";
 
 export const revalidate = 60;
 
@@ -11,12 +21,10 @@ export default async function VehiculoDetallePage({
   params: Promise<{ slug: string }>;
 }) {
   const { slug } = await params;
-  
-  // Usamos el cliente de servidor configurado con cookies en tu proyecto
   const supabase = await createClient();
 
-  // 1. Consulta exacta con impresión de errores en terminal
-  const { data: autoExacto, error } = await supabase
+  // Búsqueda del vehículo
+  const { data: autoExacto } = await supabase
     .from("vehiculos")
     .select(`
       *, 
@@ -26,14 +34,8 @@ export default async function VehiculoDetallePage({
     .eq("slug", slug)
     .maybeSingle();
 
-  console.log("=== DEBUG SUPABASE DETALLE ===");
-  console.log("Slug buscado:", slug);
-  console.log("Auto encontrado:", autoExacto);
-  console.log("Error devuelto por Supabase:", error);
-
   let auto = autoExacto;
 
-  // 2. Si no hay coincidencia exacta, probamos búsqueda flexible por prefijo (por si tiene sufijo numérico)
   if (!auto) {
     const { data: autosSimilares } = await supabase
       .from("vehiculos")
@@ -47,7 +49,6 @@ export default async function VehiculoDetallePage({
 
     if (autosSimilares && autosSimilares.length > 0) {
       auto = autosSimilares[0];
-      console.log("Encontrado por coincidencia parcial (ilike):", auto.slug);
     }
   }
 
@@ -56,113 +57,255 @@ export default async function VehiculoDetallePage({
   const mensajeWhatsApp = encodeURIComponent(`Hola Pfaffen Autos, estoy interesado en el ${auto.marca} ${auto.modelo} (${auto.anio}) que vi en la web.`);
   const linkWhatsApp = `https://wa.me/5491100000000?text=${mensajeWhatsApp}`;
 
-  const tecnicas = [
-    { icon: CalendarDays, label: "Año", value: auto.anio },
-    { icon: Gauge, label: "Kilómetros", value: `${auto.kilometraje?.toLocaleString("es-AR")} km` },
-    { icon: Cog, label: "Transmisión", value: auto.transmision },
-    { icon: Fuel, label: "Combustible", value: auto.tipo_combustible },
-    { icon: Palette, label: "Color", value: auto.color },
-    { icon: Car, label: "Tipo", value: auto.tipo || "N/D" },
-    { icon: ShieldCheck, label: "Origen", value: auto.origen },
-  ];
+  const esCeroKm = auto.kilometraje === 0;
+  const precioArs = auto.precio_publicado_ars || 0;
+  // Simulamos un valor USD referencial como en el diseño si no existe en BD
+  const precioUsd = auto.precio_publicado_usd || Math.round(precioArs / 1485);
 
   return (
-    <div className="min-h-screen bg-[#050505] text-white pt-32 pb-20 font-sans">
-      <div className="max-w-[90rem] mx-auto px-4 md:px-8">
-        
-        {/* Botón Volver */}
-        <div className="mb-8">
-          <Link 
-            href="/catalogo" 
-            className="inline-flex items-center gap-2 text-gray-500 hover:text-white text-[10px] md:text-xs font-bold uppercase tracking-widest transition-colors group"
-          >
-            <ArrowLeft className="w-4 h-4 group-hover:-translate-x-1 transition-transform" />
-            Volver al Catálogo
-          </Link>
+    <div className="min-h-screen bg-background pt-6 pb-32 lg:pb-20 font-sans text-foreground">
+      <div className="max-w-7xl mx-auto px-4 md:px-6">
+
+        {/* ================= TÍTULO MÓVIL (Visible solo en celus, arriba de todo) ================= */}
+        <div className="block lg:hidden mb-4">
+          <div className="text-[10px] sm:text-xs text-gray-400 font-medium mb-2">
+            <Link href="/" className="hover:text-primary">Inicio</Link> /{" "}
+            <Link href="/catalogo" className="hover:text-primary">Catálogo</Link> /{" "}
+            <span className="text-gray-600">{auto.marca}</span> / <span className="text-gray-600">{auto.modelo}</span>
+          </div>
+          <h1 className="text-2xl font-black text-navy uppercase tracking-tight leading-tight">
+            {auto.marca} {auto.modelo}
+          </h1>
+          <p className="text-sm font-bold text-gray-600 uppercase">
+            {auto.version || `${auto.tipo || "Vehículo"} • ${auto.transmision || "Manual"}`}
+          </p>
         </div>
 
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-12">
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 lg:gap-10">
           
-          {/* Galería */}
-          <div className="lg:col-span-8 flex flex-col gap-4">
-            <div className="w-full h-[40svh] md:h-[60svh] bg-[#0A0F16] rounded-2xl border border-white/5 overflow-hidden shadow-2xl relative">
+          {/* ================= COLUMNA IZQUIERDA (Imagen y Detalles) ================= */}
+          <div className="lg:col-span-7 flex flex-col gap-6">
+            
+            {/* Migas de pan de Escritorio */}
+            <div className="hidden lg:block text-xs text-gray-400 font-medium mb-[-10px]">
+              <Link href="/" className="hover:text-primary">Inicio</Link> /{" "}
+              <Link href="/catalogo" className="hover:text-primary">Catálogo</Link> /{" "}
+              <span className="text-gray-600">{auto.marca}</span> / <span className="text-gray-600">{auto.modelo}</span>
+            </div>
+
+            {/* FOTO DEL VEHÍCULO (Silueta sobre fondo gris claro) */}
+            <div className="relative w-full h-[250px] sm:h-[350px] md:h-[450px] bg-gray-50/80 rounded-2xl flex items-center justify-center p-4 md:p-10 overflow-hidden border border-gray-100 shadow-sm">
               <img
                 src={auto.multimedia_vehiculos?.[0]?.url_archivo || "/placeholder.jpg"}
                 alt={`${auto.marca} ${auto.modelo}`}
-                className="w-full h-full object-cover object-center"
+                className="w-full h-full object-contain mix-blend-multiply hover:scale-105 transition-transform duration-700"
               />
-              {auto.estado === "Reservado" && (
-                <div className="absolute top-4 right-4 bg-yellow-500 text-black text-[10px] font-black uppercase tracking-widest px-4 py-2 rounded-full shadow-lg">
-                  Reservado
-                </div>
-              )}
+              <div className="absolute bottom-4 left-4 bg-white/80 backdrop-blur-md px-3 py-1 rounded text-[10px] font-bold text-gray-500 uppercase tracking-widest border border-gray-200 shadow-sm">
+                elcerokm.com
+              </div>
+              <div className="absolute bottom-4 right-4 text-[10px] font-medium text-gray-400 italic">
+                * Imagen ilustrativa
+              </div>
             </div>
 
-            {/* Miniaturas */}
-            <div className="grid grid-cols-5 gap-3 md:gap-4">
-              {auto.multimedia_vehiculos?.slice(1, 6).map((img: any, idx: number) => (
-                <div key={idx} className="h-20 md:h-28 bg-[#0A0F16] rounded-xl border border-white/5 overflow-hidden hover:border-[#0145F2]/50 transition-colors cursor-pointer shadow-md">
-                  <img src={img.url_archivo} alt="Thumbnail" className="w-full h-full object-cover" />
-                </div>
-              ))}
+            {/* Simulación de selectores de color (Referencia de diseño) */}
+            <div className="flex items-center justify-center gap-4 bg-gray-50 rounded-full py-3 px-6 mx-auto w-max border border-gray-100">
+              <div className="w-5 h-5 rounded-full bg-gray-400 border-2 border-white ring-2 ring-gray-400 cursor-pointer"></div>
+              <div className="w-4 h-4 rounded-full bg-slate-300 cursor-pointer hover:scale-110 transition-transform"></div>
+              <div className="w-4 h-4 rounded-full bg-blue-900 cursor-pointer hover:scale-110 transition-transform"></div>
+              <div className="w-4 h-4 rounded-full bg-gray-100 border border-gray-300 cursor-pointer hover:scale-110 transition-transform"></div>
+              <div className="w-4 h-4 rounded-full bg-black cursor-pointer hover:scale-110 transition-transform"></div>
             </div>
+
+            {/* BLOQUE DE COTIZACIÓN / ESPECIFICACIONES */}
+            <div className="mt-4">
+              <h3 className="text-lg font-bold text-navy mb-4">Detalles de la unidad</h3>
+              <div className="bg-white border border-gray-200 rounded-2xl p-5 md:p-6 shadow-sm hover:border-primary/30 transition-colors">
+                
+                <div className="flex items-center gap-2 mb-3">
+                  <span className="bg-sky-100 text-primary text-[10px] font-black uppercase tracking-widest px-2.5 py-1 rounded border border-sky-200">
+                    {esCeroKm ? "0KM" : "USADO"}
+                  </span>
+                  <span className="bg-gray-100 text-gray-600 text-[10px] font-black uppercase tracking-widest px-2.5 py-1 rounded border border-gray-200">
+                    CRÉDITO BNA
+                  </span>
+                </div>
+
+                <div className="mb-4">
+                  <h4 className="text-xl md:text-2xl font-black text-navy">$ {precioArs.toLocaleString("es-AR")}</h4>
+                  <p className="text-[11px] text-gray-500 mt-1">
+                    Incluye flete y formularios. <span className="text-gray-400 underline cursor-pointer">¿Qué es?</span><br />
+                    No incluye patentamiento. <span className="text-primary underline cursor-pointer">Calcular</span>.
+                  </p>
+                </div>
+
+                <ul className="space-y-3 pt-4 border-t border-gray-100 text-sm text-gray-600">
+                  <li className="flex items-start gap-3">
+                    <Clock className="w-4 h-4 text-gray-400 mt-0.5" />
+                    <div>
+                      <strong className="text-gray-700">Disponibilidad:</strong> Inmediata / 30 días
+                    </div>
+                  </li>
+                  <li className="flex items-start gap-3">
+                    <MapPin className="w-4 h-4 text-gray-400 mt-0.5" />
+                    <div>
+                      <strong className="text-gray-700 block">Concesionario oficial {auto.marca}</strong>
+                      <span className="text-xs text-emerald-600 font-bold flex items-center gap-1 mt-0.5">
+                        <CheckCircle2 className="w-3 h-3" /> Sucursal {auto.sucursales?.nombre || "Central"}
+                      </span>
+                    </div>
+                  </li>
+                  <li className="flex items-start gap-3">
+                    <CreditCard className="w-4 h-4 text-gray-400 mt-0.5" />
+                    <div>
+                      <strong className="text-gray-700 block">Precio al contado</strong>
+                      <span className="text-xs text-gray-500">Se puede financiar, consultar planes.</span>
+                    </div>
+                  </li>
+                </ul>
+              </div>
+            </div>
+
           </div>
 
-          {/* Sidebar de Compra / Contacto */}
-          <aside className="lg:col-span-4 flex flex-col gap-8 lg:sticky lg:top-36 h-max">
-            <div className="bg-[#0A0F16] border border-white/10 rounded-2xl p-8 shadow-xl">
-              <h1 className="text-3xl md:text-4xl font-black uppercase tracking-tight text-white mb-2 leading-tight">
-                {auto.marca} {auto.modelo}
-              </h1>
-              <p className="text-gray-400 text-sm font-medium mb-8">
-                {auto.version || "Unidad Seleccionada"}
-              </p>
-
-              <div className="flex justify-between items-center mb-8 pb-8 border-b border-white/5">
-                <span className="text-gray-500 text-[10px] uppercase tracking-widest font-bold">Precio publicado ARS</span>
-                <p className="text-white font-black text-3xl tracking-tight">
-                  ${auto.precio_publicado_ars?.toLocaleString("es-AR")}
+          {/* ================= COLUMNA DERECHA (Panel Fijo Desktop) ================= */}
+          <div className="lg:col-span-5 relative">
+            
+            {/* Contenedor Sticky para PC */}
+            <div className="lg:sticky lg:top-24 bg-white border border-gray-200 rounded-2xl p-6 shadow-xl shadow-gray-200/50 flex flex-col gap-6">
+              
+              {/* Título Desktop */}
+              <div className="hidden lg:block border-b border-gray-100 pb-4">
+                <span className="text-[11px] text-gray-400 font-bold uppercase tracking-widest block mb-1">
+                  {esCeroKm ? "0km" : "Usado seleccionado"} | {auto.anio}
+                </span>
+                <h1 className="text-2xl lg:text-[28px] font-black text-navy uppercase tracking-tight leading-tight">
+                  {auto.marca} {auto.modelo}
+                </h1>
+                <p className="text-sm font-bold text-gray-500 uppercase mt-1">
+                  {auto.version || `${auto.tipo || "Vehículo"} • ${auto.transmision || "Manual"}`}
                 </p>
               </div>
 
-              <a 
-                href={linkWhatsApp}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="w-full bg-[#25D366] hover:bg-[#1fbe58] text-white font-bold uppercase tracking-widest text-xs py-4 rounded-full transition-all flex items-center justify-center gap-2 shadow-[0_0_25px_rgba(37,211,102,0.3)] hover:shadow-[0_0_35px_rgba(37,211,102,0.5)] hover:-translate-y-1"
-              >
-                <Phone className="w-4 h-4" /> Consultar por WhatsApp
-              </a>
-            </div>
+              {/* BLOQUE DE PRECIO */}
+              <div>
+                <div className="flex items-center gap-2 mb-1">
+                  <h2 className="text-4xl md:text-5xl font-black text-navy tracking-tighter">
+                    $ {precioArs.toLocaleString("es-AR")}
+                  </h2>
+                  <Info className="w-4 h-4 text-gray-400 cursor-pointer" />
+                </div>
+                
+                <p className="text-[11px] text-gray-500 mt-2 leading-relaxed">
+                  Incluye flete y formularios. <span className="text-gray-400 underline cursor-pointer">¿Qué es?</span><br />
+                  No incluye patentamiento. <span className="text-primary underline cursor-pointer">Calcular</span>.<br />
+                  Precio sin impuestos nacionales: $ {(precioArs * 0.7).toLocaleString("es-AR", { maximumFractionDigits: 0 })}
+                </p>
 
-            {/* Ficha Técnica */}
-            <div className="bg-[#0A0F16] border border-white/10 rounded-2xl p-8 shadow-xl">
-              <h4 className="text-white font-black uppercase tracking-widest text-[11px] mb-8">Ficha Técnica</h4>
-              <div className="grid grid-cols-2 gap-x-6 gap-y-6">
-                {tecnicas.map((spec, idx) => (
-                  <div key={idx} className="flex items-start gap-3">
-                    <spec.icon className="w-5 h-5 text-[#0145F2] shrink-0 mt-0.5" />
-                    <div>
-                      <p className="text-[10px] text-gray-500 uppercase tracking-widest font-bold">{spec.label}</p>
-                      <p className="text-sm text-white font-medium">{spec.value || "N/D"}</p>
+                <div className="mt-4 flex items-center justify-between border-t border-gray-100 pt-3">
+                  <span className="text-sm font-bold text-gray-600">US$ {precioUsd.toLocaleString("en-US")}</span>
+                  <span className="text-[10px] text-gray-400 flex items-center gap-1">
+                    Dólar oficial prom $ 1.485 <span className="bg-emerald-100 text-emerald-700 px-1 py-0.5 rounded font-bold">dolarito</span>
+                  </span>
+                </div>
+              </div>
+
+              {/* COMPRA PROTEGIDA */}
+              <div className="bg-emerald-50 border border-emerald-100 rounded-xl p-3 md:p-4 flex items-center justify-between hover:bg-emerald-100/50 transition-colors cursor-pointer group">
+                <div className="flex items-center gap-3">
+                  <div className="bg-emerald-100 p-2 rounded-full">
+                    <ShieldCheck className="text-emerald-600 w-5 h-5" />
+                  </div>
+                  <div>
+                    <p className="text-emerald-800 font-bold text-xs md:text-sm">Compra protegida - Gratis</p>
+                    <p className="text-emerald-600 text-[10px] md:text-xs font-medium">Sin costo adicional para vos</p>
+                  </div>
+                </div>
+                <ChevronRight className="text-emerald-600 w-4 h-4 group-hover:translate-x-1 transition-transform" />
+              </div>
+
+              {/* LISTA DE INFO LATERAL */}
+              <ul className="space-y-5 text-sm text-gray-600">
+                <li className="flex items-start gap-3">
+                  <Palette className="w-5 h-5 text-gray-400 mt-0.5" />
+                  <div>
+                    <strong className="text-gray-800 block text-xs uppercase tracking-wide">Colores disponibles</strong>
+                    <span className="text-gray-500">A consultar</span>
+                  </div>
+                </li>
+                
+                {/* Botón Desktop (En móvil se oculta porque va fijo abajo) */}
+                <li className="hidden lg:block w-full pt-2">
+                  <a 
+                    href={linkWhatsApp} 
+                    target="_blank" 
+                    rel="noopener noreferrer"
+                    className="block w-full bg-secondary hover:bg-cyan-500 text-white font-bold text-sm uppercase tracking-widest text-center py-4 rounded-xl shadow-lg shadow-secondary/30 transition-all hover:-translate-y-0.5"
+                  >
+                    Consultar
+                  </a>
+                </li>
+
+                <li className="flex items-start gap-3 pt-4 border-t border-gray-100">
+                  <Clock className="w-5 h-5 text-gray-400 mt-0.5" />
+                  <div>
+                    <strong className="text-gray-800 block text-xs uppercase tracking-wide">Disponibilidad</strong>
+                    <span className="text-gray-500">Inmediata / 30 días</span>
+                  </div>
+                </li>
+
+                <li className="flex items-start gap-3 pt-4 border-t border-gray-100">
+                  <CreditCard className="w-5 h-5 text-gray-400 mt-0.5" />
+                  <div>
+                    <strong className="text-gray-800 block text-xs uppercase tracking-wide mb-1">Formas de pago</strong>
+                    <span className="text-gray-500 text-xs block mb-2">Precio al contado / Se puede financiar, pero es otro precio. ⚠️</span>
+                    <span className="bg-sky-100 text-primary text-[9px] font-black uppercase tracking-widest px-2 py-0.5 rounded border border-sky-200">
+                      CRÉDITO BNA
+                    </span>
+                  </div>
+                </li>
+
+                <li className="flex items-start gap-3 pt-4 border-t border-gray-100">
+                  <MapPin className="w-5 h-5 text-gray-400 mt-0.5" />
+                  <div className="w-full">
+                    <strong className="text-gray-800 block text-xs uppercase tracking-wide mb-1">
+                      Concesionario oficial {auto.marca}
+                    </strong>
+                    <div className="flex items-center gap-1 text-xs text-gray-500 mb-2">
+                      Ubicado en Sucursal {auto.sucursales?.nombre} <CheckCircle2 className="w-3 h-3 text-emerald-500" />
+                    </div>
+                    <div className="flex items-center justify-between mt-3 bg-gray-50 p-2 rounded-lg border border-gray-100">
+                      <span className="text-[11px] font-bold text-gray-500">Calificaciones</span>
+                      <div className="flex items-center gap-1">
+                        <span className="text-xs font-bold text-navy mr-1">4.8</span>
+                        {[...Array(5)].map((_, i) => (
+                          <Star key={i} className="w-3 h-3 fill-yellow-400 text-yellow-400" />
+                        ))}
+                      </div>
                     </div>
                   </div>
-                ))}
-              </div>
-            </div>
+                </li>
+              </ul>
 
-            {/* Sucursal */}
-            <div className="bg-[#0A0F16] border border-white/10 rounded-xl p-5 flex items-center gap-4 text-gray-400 text-xs shadow-lg">
-              <MapPin className="w-5 h-5 text-gray-600 shrink-0" />
-              <p>
-                Ubicado en Sucursal <span className="text-white font-bold">{auto.sucursales?.nombre || "Casa Central"}</span> <br/>
-                {auto.sucursales?.direccion}
-              </p>
             </div>
-          </aside>
-
+          </div>
         </div>
+
       </div>
+
+      {/* ================= BARRA FIJA MÓVIL INFERIOR ================= */}
+      {/* Esta barra solo aparece en celulares y se queda pegada abajo, empujando el logo de WhatsApp */}
+      <div className="lg:hidden fixed bottom-0 left-0 w-full bg-white border-t border-gray-200 p-4 z-[40] shadow-[0_-10px_20px_rgba(0,0,0,0.05)]">
+        <a 
+          href={linkWhatsApp} 
+          target="_blank" 
+          rel="noopener noreferrer"
+          className="block w-full bg-secondary hover:bg-cyan-500 text-white font-bold text-sm uppercase tracking-widest text-center py-3.5 rounded-xl shadow-lg transition-colors"
+        >
+          Consultar
+        </a>
+      </div>
+
     </div>
   );
 }

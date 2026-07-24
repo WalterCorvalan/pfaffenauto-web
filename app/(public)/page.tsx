@@ -8,6 +8,7 @@ import Socials from "@/components/Socials";
 import FAQ from "@/components/FAQ";
 import FadeIn from "@/components/FadeIn";
 import Testimonials from "@/components/Testimonials";
+import Marcas from "@/components/Marcas";
 
 const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -30,10 +31,16 @@ export default async function HomePage() {
     .order("created_at", { ascending: false });
 
   return (
-    <div className="w-full text-white font-sans scroll-smooth overflow-x-hidden">
+    // Reemplazamos el div por <main> y quitamos overflow-x-hidden y text-white
+    <main className="w-full">
+      
       {/* Al Hero NO lo envolvemos con scroll porque ya está arriba de todo */}
       <Hero />
-      
+
+      <FadeIn direction="up">
+        <Sucursales />
+      </FadeIn>
+
       {/* Las demás secciones las envolvemos para que aparezcan suavemente */}
       <FadeIn direction="up">
         <Stock vehiculos={vehiculos} />
@@ -41,6 +48,10 @@ export default async function HomePage() {
 
       <FadeIn direction="up">
         <Stats />
+      </FadeIn>
+
+      <FadeIn direction="up">
+        <Marcas />
       </FadeIn>
 
       <FadeIn direction="up">
@@ -58,6 +69,7 @@ export default async function HomePage() {
       <FadeIn direction="up">
         <FAQ />
       </FadeIn>
-    </div>
+      
+    </main>
   );
 }
