@@ -2,9 +2,8 @@
 
 import { useState, useEffect } from "react";
 import Link from "next/link";
-import { Montserrat } from "next/font/google";
 import { motion, AnimatePresence } from "framer-motion";
-import { MapPin, X, Mail, Search, Wand2 } from "lucide-react";
+import { MapPin, X, Mail, Wand2 } from "lucide-react";
 import { useRouter } from "next/navigation";
 
 export default function PublicHeader() {
@@ -16,7 +15,6 @@ export default function PublicHeader() {
   // ================= DETECCIÓN DE SCROLL =================
   useEffect(() => {
     const handleScroll = () => {
-      // Cuando el usuario baja 350px, aparece el buscador mágico
       setIsScrolled(window.scrollY > 350);
     };
     window.addEventListener("scroll", handleScroll);
@@ -40,10 +38,13 @@ export default function PublicHeader() {
 
   return (
     <>
-      <header className="sticky top-0 w-full z-50 bg-white shadow-sm flex flex-col transition-all duration-300">
-        {/* ================= FILA SUPERIOR: LOGO Y MENÚ ================= */}
-        <div className="max-w-7xl mx-auto px-4 md:px-6 h-16 md:h-20 flex justify-between items-center w-full bg-white relative z-20">
-          <Link href="/" className="flex items-center relative group">
+      <header className="sticky top-0 w-full z-50 bg-white/95 backdrop-blur-md shadow-sm transition-all duration-300">
+        
+        {/* ================= FILA ÚNICA: LOGO | ESPACIO CENTRAL MÁGICO | MENÚ ================= */}
+        <div className="max-w-7xl mx-auto px-4 md:px-6 h-16 md:h-20 flex justify-between items-center w-full relative z-20 gap-3 md:gap-6">
+          
+          {/* 1. LOGO (Izquierda) */}
+          <Link href="/" className="shrink-0 flex items-center relative group">
             <div className="relative inline-block transform group-hover:scale-105 transition-transform duration-500">
               <img
                 src="/logo.png"
@@ -58,20 +59,72 @@ export default function PublicHeader() {
             </div>
           </Link>
 
-          <nav
-            className={`hidden lg:flex absolute left-1/2 -translate-x-1/2 gap-8 text-[13px] font-bold text-navy items-center`}
-          >
-            {navLinks.map((link, i) => (
-              <Link key={i} href={link.href} className="relative group py-2">
-                <span className="group-hover:text-primary transition-colors duration-300">
-                  {link.name}
-                </span>
-                <span className="absolute bottom-0 left-0 w-0 h-[2px] bg-primary group-hover:w-full transition-all duration-300"></span>
-              </Link>
-            ))}
-          </nav>
+          {/* 2. ESPACIO CENTRAL MÁGICO (Ocupa todo el espacio disponible) */}
+          <div className="flex-1 h-full flex items-center justify-center relative overflow-hidden">
+            
+            {/* A) ENLACES DE NAVEGACIÓN (Solo PC, se ocultan al scrollear) */}
+            <nav
+              className={`hidden lg:flex absolute gap-8 text-[13px] font-bold text-navy items-center transition-all duration-500 ease-out ${
+                isScrolled ? "opacity-0 translate-y-8 pointer-events-none" : "opacity-100 translate-y-0"
+              }`}
+            >
+              {navLinks.map((link, i) => (
+                <Link key={i} href={link.href} className="relative group py-2">
+                  <span className="group-hover:text-primary transition-colors duration-300">
+                    {link.name}
+                  </span>
+                  <span className="absolute bottom-0 left-0 w-0 h-[2px] bg-primary group-hover:w-full transition-all duration-300"></span>
+                </Link>
+              ))}
+            </nav>
 
-          <div className="flex items-center gap-3">
+            {/* B) BUSCADOR IA (Cae desde arriba al scrollear, funciona en PC y Móvil) */}
+            <div
+              className={`w-full max-w-xl absolute px-1 transition-all duration-500 ease-out ${
+                isScrolled ? "opacity-100 translate-y-0 pointer-events-auto" : "opacity-0 -translate-y-8 pointer-events-none"
+              }`}
+            >
+              <form
+                onSubmit={handleSearch}
+                className="flex items-center w-full bg-gray-50 border border-primary/20 rounded-full px-2 md:px-3 py-1 shadow-inner focus-within:border-primary/50 transition-colors focus-within:ring-4 focus-within:ring-primary/10 focus-within:bg-white"
+              >
+                <Wand2 className="w-3.5 h-3.5 text-blue-600 ml-2 mr-2 shrink-0 animate-pulse hidden sm:block" />
+                <input
+                  type="text"
+                  placeholder="Describile a la IA qué buscás..."
+                  className="w-full bg-transparent text-[11px] md:text-[13px] outline-none text-navy placeholder:text-gray-400 py-1.5 px-2 truncate"
+                  value={searchTerm}
+                  onChange={(e) => setSearchTerm(e.target.value)}
+                />
+                
+                {/* CRUZ PARA BORRAR RÁPIDO */}
+                <AnimatePresence>
+                  {searchTerm && (
+                    <motion.button
+                      initial={{ scale: 0, opacity: 0 }}
+                      animate={{ scale: 1, opacity: 1 }}
+                      exit={{ scale: 0, opacity: 0 }}
+                      type="button"
+                      onClick={() => setSearchTerm("")}
+                      className="p-1.5 mr-1 text-gray-400 hover:text-red-500 bg-gray-100 hover:bg-red-50 rounded-full transition-colors focus:outline-none shrink-0"
+                    >
+                      <X className="w-3.5 h-3.5" />
+                    </motion.button>
+                  )}
+                </AnimatePresence>
+
+                <button
+                  type="submit"
+                  className="shrink-0 px-3 md:px-4 py-1.5 bg-gradient-to-r from-blue-400 to-blue-500 text-white font-bold uppercase tracking-widest text-[9px] md:text-[10px] rounded-full hover:from-blue-500 hover:to-blue-600 transition-colors shadow-sm cursor-pointer"
+                >
+                  Buscar
+                </button>
+              </form>
+            </div>
+          </div>
+
+          {/* 3. CONTROLES DERECHA (Ubicación y Menú) */}
+          <div className="shrink-0 flex items-center gap-2 md:gap-3">
             <Link
               href="/#sucursales"
               className="hidden sm:flex items-center gap-2 px-4 py-2 border border-gray-200 rounded-full text-xs font-bold text-gray-600 hover:bg-gray-50 hover:text-navy hover:border-gray-300 transition-colors"
@@ -79,7 +132,6 @@ export default function PublicHeader() {
               <MapPin className="w-4 h-4 text-gray-400" /> Ubicación
             </Link>
 
-            {/* ================= BOTÓN MENÚ INNOVADOR (PILL + LÍNEAS ANIMADAS) ================= */}
             <button
               onClick={() => setIsNavOpen(true)}
               className="group flex items-center gap-2 px-3.5 py-2 bg-gray-50 hover:bg-sky-50 border border-gray-200 hover:border-primary/40 rounded-full transition-all duration-300 focus:outline-none shadow-sm cursor-pointer"
@@ -88,40 +140,14 @@ export default function PublicHeader() {
               <span className="text-xs font-black uppercase tracking-wider text-navy group-hover:text-primary transition-colors hidden sm:inline">
                 Menú
               </span>
-              <div className="flex flex-col gap-1 w-5 items-end justify-center">
+              <div className="flex flex-col gap-1 w-5 items-end justify-center shrink-0">
                 <span className="w-full h-0.5 bg-navy group-hover:bg-primary rounded-full transition-all duration-300 group-hover:w-3"></span>
                 <span className="w-3.5 h-0.5 bg-navy group-hover:bg-primary rounded-full transition-all duration-300 group-hover:w-5"></span>
                 <span className="w-full h-0.5 bg-navy group-hover:bg-primary rounded-full transition-all duration-300 group-hover:w-4"></span>
               </div>
             </button>
           </div>
-        </div>
 
-        {/* ================= FILA INFERIOR: BUSCADOR IA STICKY ================= */}
-        <div
-          className={`w-full bg-white transition-all duration-300 ease-in-out overflow-hidden ${isScrolled ? "max-h-24 border-t border-gray-100 py-3 shadow-md" : "max-h-0 py-0"}`}
-        >
-          <div className="max-w-3xl mx-auto px-4 md:px-6">
-            <form
-              onSubmit={handleSearch}
-              className="flex items-center w-full bg-gray-50 border border-primary/20 rounded-full px-4 py-1.5 shadow-inner focus-within:border-primary/50 transition-colors focus-within:ring-4 focus-within:ring-primary/10"
-            >
-              <Wand2 className="w-4 h-4 text-blue-600 mr-2 shrink-0 animate-pulse" />
-              <input
-                type="text"
-                placeholder="Describile a la IA lo que buscás..."
-                className="w-full bg-transparent text-[13px] md:text-sm outline-none text-navy placeholder:text-gray-400 py-1.5"
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-              />
-              <button
-                type="submit"
-                className="shrink-0 px-4 py-1.5 bg-gradient-to-r from-blue-400 to-blue-500 text-white font-bold uppercase tracking-widest text-[10px] rounded-full hover:from-blue-500 hover:to-blue-600 transition-colors shadow-sm"
-              >
-                Buscar
-              </button>
-            </form>
-          </div>
         </div>
       </header>
 

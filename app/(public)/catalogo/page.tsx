@@ -2,10 +2,11 @@
 
 import { useState, useEffect } from "react";
 import { supabase } from "@/lib/supabase"; 
-import { Search, ChevronDown, MapPin, SlidersHorizontal, X, Filter } from "lucide-react";
+import { Search, ChevronDown, MapPin, SlidersHorizontal, X, Filter, Scale } from "lucide-react"; // <-- Agregamos Scale
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
-import { motion } from "framer-motion"; // <-- Sumamos Framer Motion
+import { motion, AnimatePresence } from "framer-motion"; 
+import ComparadorModal from "@/components/ComparadorModal"; // <-- Importamos el Modal
 
 export default function CatalogoPage() {
   const searchParams = useSearchParams();
@@ -19,6 +20,10 @@ export default function CatalogoPage() {
   const [precioMin, setPrecioMin] = useState("");
   const [precioMax, setPrecioMax] = useState("");
   const [tiposSeleccionados, setTiposSeleccionados] = useState<string[]>([]);
+
+  // NUEVO: ESTADOS PARA EL COMPARADOR
+  const [autosComparar, setAutosComparar] = useState<any[]>([]);
+  const [modalComparadorOpen, setModalComparadorOpen] = useState(false);
 
   useEffect(() => {
     async function fetchVehiculos() {
@@ -62,6 +67,23 @@ export default function CatalogoPage() {
     setTiposSeleccionados(prev => 
       prev.includes(tipo) ? prev.filter(t => t !== tipo) : [...prev, tipo]
     );
+  };
+
+  // NUEVO: LÓGICA PARA AGREGAR/QUITAR DEL COMPARADOR
+  const toggleComparar = (e: React.MouseEvent, auto: any) => {
+    e.preventDefault(); 
+    e.stopPropagation();
+
+    const yaEsta = autosComparar.find(a => a.id === auto.id);
+    if (yaEsta) {
+      setAutosComparar(prev => prev.filter(a => a.id !== auto.id));
+    } else {
+      if (autosComparar.length >= 2) {
+        setAutosComparar([autosComparar[1], auto]);
+      } else {
+        setAutosComparar(prev => [...prev, auto]);
+      }
+    }
   };
 
   return (
@@ -156,7 +178,7 @@ export default function CatalogoPage() {
           </aside>
 
           {isFilterOpen && (
-            <div className="fixed inset-0 z-50 flex lg:hidden">
+            <div className="fixed inset-0 z-[60] flex lg:hidden">
               <div className="fixed inset-0 bg-black/50 backdrop-blur-sm" onClick={() => setIsFilterOpen(false)}></div>
               <div className="relative w-full max-w-xs bg-white h-full shadow-2xl z-10 p-6 flex flex-col overflow-y-auto">
                 <div className="flex items-center justify-between mb-6 pb-4 border-b border-gray-100">
@@ -214,71 +236,88 @@ export default function CatalogoPage() {
               <motion.div 
                 initial="hidden" animate="visible"
                 variants={{ visible: { transition: { staggerChildren: 0.1 } } }}
-                className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-5"
+                className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-5 pb-16"
               >
-                {vehiculos.map((auto) => (
-                  <motion.div 
-                    key={auto.id} 
-                    variants={{
-                      hidden: { opacity: 0, y: 20 },
-                      visible: { opacity: 1, y: 0, transition: { duration: 0.4 } }
-                    }}
-                  >
-                    <Link href={`/catalogo/${auto.slug}`} className="block group h-full active:scale-[0.98] transition-transform">
-                      <div className="bg-white rounded-2xl border border-gray-200 overflow-hidden flex flex-col h-full shadow-sm hover:shadow-xl transition-all duration-300">
-                        
-                        <div className="relative h-[180px] bg-gray-50 flex items-center justify-center overflow-hidden p-4">
-                          <img
-                            src={auto.multimedia_vehiculos?.[0]?.url_archivo || "/placeholder.jpg"}
-                            alt={`${auto.marca} ${auto.modelo}`}
-                            className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500 mix-blend-multiply"
-                          />
-                          <div className="absolute bottom-2 left-3 bg-white/80 backdrop-blur-sm px-2 py-0.5 rounded text-[9px] font-bold text-gray-500 uppercase tracking-widest border border-gray-100">
-                            elcerokm.com
-                          </div>
-                          <div className="absolute bottom-2 right-3 text-[9px] font-medium text-gray-400 italic">
-                            *Imagen ilustrativa
-                          </div>
+                {vehiculos.map((auto) => {
+                  const estaSeleccionado = autosComparar.some(a => a.id === auto.id);
 
-                          {auto.estado === "Reservado" && (
-                            <div className="absolute top-3 right-3 bg-yellow-100 text-yellow-700 border border-yellow-200 px-2.5 py-1 rounded-md text-[9px] font-black uppercase tracking-widest shadow-sm">
-                              Reservado
-                            </div>
-                          )}
-                        </div>
-
-                        <div className="p-5 flex flex-col flex-grow">
-                          <span className="text-[11px] text-gray-400 font-bold uppercase tracking-widest mb-0.5">
-                            {auto.marca}
-                          </span>
-                          <h3 className="text-xl font-black text-navy leading-tight uppercase truncate">
-                            {auto.modelo}
-                          </h3>
+                  return (
+                    <motion.div 
+                      key={auto.id} 
+                      variants={{
+                        hidden: { opacity: 0, y: 20 },
+                        visible: { opacity: 1, y: 0, transition: { duration: 0.4 } }
+                      }}
+                    >
+                      <Link href={`/catalogo/${auto.slug}`} className="block group h-full active:scale-[0.98] transition-transform">
+                        <div className={`bg-white rounded-2xl border overflow-hidden flex flex-col h-full shadow-sm hover:shadow-xl transition-all duration-300 relative
+                          ${estaSeleccionado ? 'border-primary ring-2 ring-primary/20' : 'border-gray-200'}
+                        `}>
                           
-                          <p className="text-xs text-gray-500 font-medium mt-1 line-clamp-1">
-                            {auto.version || `${auto.tipo || "Vehículo"} • ${auto.transmision || "Manual"}`}
-                          </p>
+                          {/* BOTÓN FLOTANTE COMPARAR */}
+                          <button 
+                            onClick={(e) => toggleComparar(e, auto)}
+                            className={`absolute top-3 left-3 z-10 p-2 rounded-full shadow-md transition-colors border backdrop-blur-md hover:scale-110
+                              ${estaSeleccionado ? 'bg-primary text-white border-primary' : 'bg-white/90 text-gray-400 hover:text-primary border-gray-200'}
+                            `}
+                            title="Comparar vehículo"
+                          >
+                            <Scale className="w-4 h-4" />
+                          </button>
 
-                          <div className="mt-auto pt-5">
-                            <div className="bg-gray-50 rounded-xl p-2.5 sm:p-3 mb-2.5 border border-gray-100">
-                              <span className="text-[8px] sm:text-[9px] text-gray-400 font-bold uppercase tracking-widest block mb-0.5">
-                                Desde
-                              </span>
-                              <span className="text-xl md:text-2xl font-black text-navy tracking-tight">
-                                $ {auto.precio_publicado_ars?.toLocaleString("es-AR")}
-                              </span>
+                          <div className="relative h-[180px] bg-gray-50 flex items-center justify-center overflow-hidden p-4">
+                            <img
+                              src={auto.multimedia_vehiculos?.[0]?.url_archivo || "/placeholder.jpg"}
+                              alt={`${auto.marca} ${auto.modelo}`}
+                              className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500 mix-blend-multiply"
+                            />
+                            <div className="absolute bottom-2 left-3 bg-white/80 backdrop-blur-sm px-2 py-0.5 rounded text-[9px] font-bold text-gray-500 uppercase tracking-widest border border-gray-100">
+                              elcerokm.com
+                            </div>
+                            <div className="absolute bottom-2 right-3 text-[9px] font-medium text-gray-400 italic">
+                              *Imagen ilustrativa
                             </div>
 
-                            <button className="w-full bg-white text-primary border border-primary/30 hover:bg-sky-50 font-bold text-[10px] sm:text-xs uppercase tracking-widest py-2 sm:py-2.5 rounded-xl transition-colors">
-                              Ver detalles
-                            </button>
+                            {auto.estado === "Reservado" && (
+                              <div className="absolute top-3 right-3 bg-yellow-100 text-yellow-700 border border-yellow-200 px-2.5 py-1 rounded-md text-[9px] font-black uppercase tracking-widest shadow-sm">
+                                Reservado
+                              </div>
+                            )}
                           </div>
-                        </div>
 
-                      </div>
-                    </Link>
-                  </motion.div>
-                ))}
+                          <div className="p-5 flex flex-col flex-grow">
+                            <span className="text-[11px] text-gray-400 font-bold uppercase tracking-widest mb-0.5">
+                              {auto.marca}
+                            </span>
+                            <h3 className="text-xl font-black text-navy leading-tight uppercase truncate">
+                              {auto.modelo}
+                            </h3>
+                            
+                            <p className="text-xs text-gray-500 font-medium mt-1 line-clamp-1">
+                              {auto.version || `${auto.tipo || "Vehículo"} • ${auto.transmision || "Manual"}`}
+                            </p>
+
+                            <div className="mt-auto pt-5">
+                              <div className="bg-gray-50 rounded-xl p-2.5 sm:p-3 mb-2.5 border border-gray-100">
+                                <span className="text-[8px] sm:text-[9px] text-gray-400 font-bold uppercase tracking-widest block mb-0.5">
+                                  Desde
+                                </span>
+                                <span className="text-xl md:text-2xl font-black text-navy tracking-tight">
+                                  $ {auto.precio_publicado_ars?.toLocaleString("es-AR")}
+                                </span>
+                              </div>
+
+                              <button className="w-full bg-white text-primary border border-primary/30 hover:bg-sky-50 font-bold text-[10px] sm:text-xs uppercase tracking-widest py-2 sm:py-2.5 rounded-xl transition-colors">
+                                Ver detalles
+                              </button>
+                            </div>
+                          </div>
+
+                        </div>
+                      </Link>
+                    </motion.div>
+                  )
+                })}
               </motion.div>
             ) : (
               <div className="text-center py-20 bg-white rounded-2xl border border-gray-200 shadow-sm">
@@ -293,6 +332,68 @@ export default function CatalogoPage() {
 
         </div>
       </div>
+
+      {/* ================= BARRA FLOTANTE COMPARADOR ================= */}
+      <AnimatePresence>
+        {autosComparar.length > 0 && (
+          <motion.div 
+            initial={{ y: 100, opacity: 0 }} 
+            animate={{ y: 0, opacity: 1 }} 
+            exit={{ y: 100, opacity: 0 }}
+            className="fixed bottom-28 md:bottom-6 left-2 right-2 sm:left-4 sm:right-4 md:left-1/2 md:-translate-x-1/2 md:w-max z-50"
+          >
+            <div className="bg-navy border border-gray-800 shadow-2xl shadow-navy/30 rounded-full pl-3 pr-2 py-2 md:px-4 md:py-3 flex items-center justify-between gap-2 md:gap-8 backdrop-blur-lg">
+              
+              <div className="flex items-center gap-2 md:gap-3 shrink-0">
+                <div className="flex -space-x-2 md:-space-x-3">
+                  {autosComparar.map((auto, i) => (
+                    <div key={i} className="w-8 h-8 md:w-10 md:h-10 rounded-full border-2 border-navy overflow-hidden bg-white shadow-sm shrink-0">
+                      <img src={auto.multimedia_vehiculos?.[0]?.url_archivo || "/placeholder.jpg"} className="w-full h-full object-cover" />
+                    </div>
+                  ))}
+                  {autosComparar.length === 1 && (
+                    <div className="w-8 h-8 md:w-10 md:h-10 rounded-full border-2 border-navy border-dashed flex items-center justify-center bg-gray-800 text-gray-400 text-[10px] md:text-xs font-bold shrink-0">?</div>
+                  )}
+                </div>
+                
+                <div className="flex flex-col justify-center">
+                  <span className="text-white text-[11px] md:text-sm font-bold leading-none">
+                    {autosComparar.length} {autosComparar.length === 1 ? 'auto' : 'autos'}
+                    {/* Ocultamos "seleccionado(s)" en celulares para que no se rompa el diseño */}
+                    <span className="hidden sm:inline"> seleccionado(s)</span>
+                  </span>
+                  <span className="text-gray-400 text-[8px] md:text-[10px] uppercase tracking-widest hidden sm:block mt-0.5">Comparador activo</span>
+                </div>
+              </div>
+              
+              <div className="flex items-center gap-1 md:gap-4 shrink-0">
+                <button 
+                  onClick={() => setAutosComparar([])}
+                  className="text-gray-400 hover:text-white px-2 py-2 text-[9px] md:text-[10px] font-bold uppercase tracking-widest transition-colors"
+                >
+                  Limpiar
+                </button>
+                <button 
+                  onClick={() => setModalComparadorOpen(true)}
+                  disabled={autosComparar.length === 0}
+                  className="bg-primary hover:bg-secondary disabled:bg-gray-700 disabled:text-gray-500 text-white px-3 py-2 md:px-6 md:py-2.5 rounded-full text-[10px] md:text-xs font-bold uppercase tracking-widest transition-colors flex items-center gap-1.5 shadow-lg shrink-0"
+                >
+                  <Scale className="w-3.5 h-3.5 md:w-4 md:h-4 shrink-0" /> Comparar
+                </button>
+              </div>
+
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      <ComparadorModal 
+        isOpen={modalComparadorOpen} 
+        onClose={() => setModalComparadorOpen(false)} 
+        autos={autosComparar} 
+        removerAuto={(id) => setAutosComparar(prev => prev.filter(a => a.id !== id))}
+      />
+
     </div>
   );
 }
