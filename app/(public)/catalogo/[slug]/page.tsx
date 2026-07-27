@@ -290,6 +290,29 @@ export default async function VehiculoDetallePage({
 
           {/* BLOQUE 3: ESPECIFICACIONES Y BANNER USADO */}
           <div className="lg:col-span-7 order-3 flex flex-col gap-6">
+
+            {/* BANNER TOMAMOS TU USADO */}
+            <div className="bg-gradient-to-r from-navy to-[#0145F2] rounded-2xl p-6 md:p-8 flex flex-col md:flex-row items-center justify-between gap-6 shadow-lg shadow-[#0145F2]/20 relative overflow-hidden mt-2">
+              <div className="absolute -right-4 -top-8 opacity-10 rotate-12">
+                <CarFront className="w-48 h-48 text-white" />
+              </div>
+              <div className="relative z-10 text-center md:text-left">
+                <h3 className="text-xl md:text-2xl font-black text-white mb-2 uppercase tracking-tight">
+                  ¿Querés entregar tu usado?
+                </h3>
+                <p className="text-xs md:text-sm text-sky-100 font-medium max-w-md">
+                  Lo cotizamos en el acto y lo tomamos como parte de pago asegurándote el mejor valor del mercado para tu vehículo.
+                </p>
+              </div>
+              <a
+                href="/cotizador"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="relative z-10 shrink-0 bg-white hover:bg-gray-50 text-navy font-black text-[10px] md:text-xs uppercase tracking-widest px-6 py-3.5 md:py-4 rounded-full transition-all shadow-xl flex items-center gap-2 active:scale-95"
+              >
+                Cotizar mi auto <ChevronRight className="w-4 h-4 text-[#0145F2]" />
+              </a>
+            </div>
             <h3 className="text-lg font-bold text-navy mb-[-10px]">Detalles de la unidad</h3>
             <div className="bg-white border border-gray-200 rounded-2xl p-5 md:p-6 shadow-sm hover:border-primary/30 transition-colors">
               <div className="mb-5 pb-5 border-b border-gray-100">
@@ -353,28 +376,7 @@ export default async function VehiculoDetallePage({
               </ul>
             </div>
 
-            {/* BANNER TOMAMOS TU USADO */}
-            <div className="bg-gradient-to-r from-navy to-[#0145F2] rounded-2xl p-6 md:p-8 flex flex-col md:flex-row items-center justify-between gap-6 shadow-lg shadow-[#0145F2]/20 relative overflow-hidden mt-2">
-              <div className="absolute -right-4 -top-8 opacity-10 rotate-12">
-                <CarFront className="w-48 h-48 text-white" />
-              </div>
-              <div className="relative z-10 text-center md:text-left">
-                <h3 className="text-xl md:text-2xl font-black text-white mb-2 uppercase tracking-tight">
-                  ¿Querés entregar tu usado?
-                </h3>
-                <p className="text-xs md:text-sm text-sky-100 font-medium max-w-md">
-                  Lo cotizamos en el acto y lo tomamos como parte de pago asegurándote el mejor valor del mercado para tu vehículo.
-                </p>
-              </div>
-              <a
-                href="/cotizador"
-                target="_blank"
-                rel="noopener noreferrer"
-                className="relative z-10 shrink-0 bg-white hover:bg-gray-50 text-navy font-black text-[10px] md:text-xs uppercase tracking-widest px-6 py-3.5 md:py-4 rounded-full transition-all shadow-xl flex items-center gap-2 active:scale-95"
-              >
-                Cotizar mi auto <ChevronRight className="w-4 h-4 text-[#0145F2]" />
-              </a>
-            </div>
+            
           </div>
         </div>
 

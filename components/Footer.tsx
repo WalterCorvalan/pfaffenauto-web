@@ -127,7 +127,7 @@ export default function Footer() {
               Volver a la Web
             </Link>
           ) : (
-            <Link href="/panel" className="text-gray-600 hover:text-[#0145F2] font-black transition-colors">
+            <Link href="/panel" className="text-blue-600 hover:text-[#0145F2] font-black transition-colors">
               Acceso Staff
             </Link>
           )}

@@ -31,7 +31,7 @@ export default function Hero() {
 
         {/* Título principal con tipografía sólida */}
         <h1 className="text-3xl md:text-5xl lg:text-[54px] text-navy leading-[1.1] mb-8 font-light tracking-tight">
-          La forma más <strong className="font-black text-primary">fácil</strong><br className="hidden md:block"/>
+          La forma más <strong className="font-black text-primary">confiable</strong><br className="hidden md:block"/>
           de <strong className="font-black">comprar o vender</strong><br className="hidden md:block"/>
           tu auto
         </h1>

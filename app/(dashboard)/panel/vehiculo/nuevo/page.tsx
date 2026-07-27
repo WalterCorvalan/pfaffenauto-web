@@ -21,19 +21,22 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
 
+// ================= SCHEMAS DE VALIDACIÓN =================
 const formSchema = z.object({
   patente: z.string().min(6, "Patente inválida").toUpperCase(),
   marca: z.string().min(2, "Obligatorio"),
   modelo: z.string().min(2, "Obligatorio"),
   anio: z.number().min(1950, "Año inválido"),
   kilometraje: z.number().min(0, "No puede ser negativo"),
-  segmento: z.string().optional(),
-  tipo: z.string().optional(),
+  segmento: z.string().min(1, "Seleccioná un segmento"),
+  tipo: z.string().min(1, "Seleccioná un tipo"),
   color: z.string().optional(),
-  tipo_combustible: z.string().optional(),
-  transmision: z.string().optional(),
-  origen: z.enum(["Propio", "Consignacion"]),
+  tipo_combustible: z.string().min(1, "Seleccioná el combustible"),
+  transmision: z.string().min(1, "Seleccioná la transmisión"),
+  origen: z.string().min(1, "Seleccioná el origen"),
+  estado: z.string().min(1, "Seleccioná el estado"),
   stock_fisico: z.boolean(),
+  condicion_web: z.string().optional(),
   sucursal_id: z.string().min(1, "Seleccioná una sucursal"),
   precio_costo_ars: z.number().optional(),
   precio_costo_usd: z.number().optional(),
@@ -45,6 +48,15 @@ const formSchema = z.object({
   radicado_provincia: z.string().optional(),
   destacado: z.boolean(),
   observaciones_internas: z.string().optional(),
+}).superRefine((data, ctx) => {
+  // Validamos que si NO hay stock físico, obligatoriamente elija la condición web
+  if (!data.stock_fisico && (!data.condicion_web || data.condicion_web === "")) {
+    ctx.addIssue({
+      code: z.ZodIssueCode.custom,
+      message: "Obligatorio indicar la condición web",
+      path: ["condicion_web"],
+    });
+  }
 });
 
 type FormValues = z.infer<typeof formSchema>;
@@ -53,10 +65,10 @@ const generarSlug = (marca: string, modelo: string, anio: number) => {
   const base = `${marca}-${modelo}-${anio}`
     .toLowerCase()
     .normalize("NFD")
-    .replace(/[\u0300-\u036f]/g, "") // saca acentos
+    .replace(/[\u0300-\u036f]/g, "") 
     .replace(/[^a-z0-9]+/g, "-")
     .replace(/(^-|-$)/g, "");
-  return `${base}-${Date.now().toString().slice(-4)}`; // sufijo anti-choques
+  return `${base}-${Date.now().toString().slice(-4)}`; 
 };
 
 export default function NuevoAutoPage() {
@@ -75,14 +87,16 @@ export default function NuevoAutoPage() {
     register,
     handleSubmit,
     trigger,
+    watch,
     formState: { errors },
   } = useForm<FormValues>({
     resolver: zodResolver(formSchema),
     defaultValues: {
-      origen: "Propio",
+      origen: "Comprado",
+      estado: "Disponible",
       stock_fisico: true,
       destacado: false,
-      anio: 2024,
+      anio: new Date().getFullYear(),
     },
   });
 
@@ -94,13 +108,17 @@ export default function NuevoAutoPage() {
     fetchSucursales();
   }, []);
 
-  // Validación y avance paso a paso
   const handleSiguiente = async () => {
     let camposAValidar: (keyof FormValues)[] = [];
+    
     if (paso === 1) {
       camposAValidar = ["patente", "marca", "modelo", "anio", "kilometraje"];
     } else if (paso === 2) {
-      camposAValidar = ["sucursal_id"];
+      camposAValidar = [
+        "sucursal_id", "segmento", "tipo", "tipo_combustible", 
+        "transmision", "origen", "estado"
+      ];
+      if (!watch("stock_fisico")) camposAValidar.push("condicion_web");
     } else if (paso === 3) {
       camposAValidar = ["precio_publicado_ars"];
     }
@@ -115,9 +133,7 @@ export default function NuevoAutoPage() {
     setPaso((prev) => Math.max(prev - 1, 1));
   };
 
-  const handleSeleccionarArchivos = (
-    e: React.ChangeEvent<HTMLInputElement>,
-  ) => {
+  const handleSeleccionarArchivos = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files) {
       const nuevos = Array.from(e.target.files);
       setArchivos((prev) => [...prev, ...nuevos]);
@@ -135,7 +151,7 @@ export default function NuevoAutoPage() {
   };
 
   const onSubmit = async (data: FormValues) => {
-    const slug = generarSlug(data.marca, data.modelo, data.anio); // <--- Generamos el slug
+    const slug = generarSlug(data.marca, data.modelo, data.anio);
 
     if (archivos.length === 0) {
       setErrorArchivos("Debés seleccionar al menos una foto o video.");
@@ -145,11 +161,17 @@ export default function NuevoAutoPage() {
     setLoading(true);
 
     try {
-      const {
-        data: { user },
-      } = await supabase.auth.getUser();
+      const { data: { user } } = await supabase.auth.getUser();
 
-      // INSERT CORREGIDO CON EL SLUG INCLUIDO
+      // Mapeo inteligente para respetar tu base de datos actual (Señado -> Reservado)
+      const estadoDB = data.estado === "Señado" ? "Reservado" : data.estado;
+
+      // Inyectamos la condición de venta online a las notas si es necesario
+      let notas_finales = data.observaciones_internas || "";
+      if (!data.stock_fisico && data.condicion_web) {
+        notas_finales = `[VENTA ONLINE: ${data.condicion_web.toUpperCase()}] \n${notas_finales}`;
+      }
+
       const { data: vehiculoNuevo, error: errorVehiculo } = await supabase
         .from("vehiculos")
         .insert({
@@ -158,14 +180,15 @@ export default function NuevoAutoPage() {
           modelo: data.modelo,
           anio: data.anio,
           kilometraje: data.kilometraje,
-          slug, // <--- ¡ACÁ ESTABA FALTANDO EN EL OBJETO!
-          segmento: data.segmento || null,
-          tipo: data.tipo || null,
+          slug,
+          segmento: data.segmento,
+          tipo: data.tipo,
           color: data.color || null,
-          tipo_combustible: data.tipo_combustible || null,
-          transmision: data.transmision || null,
+          tipo_combustible: data.tipo_combustible,
+          transmision: data.transmision,
           origen: data.origen,
           stock_fisico: data.stock_fisico,
+          estado: estadoDB,
           sucursal_id: data.sucursal_id,
           precio_costo_ars: data.precio_costo_ars || null,
           precio_costo_usd: data.precio_costo_usd || null,
@@ -176,9 +199,8 @@ export default function NuevoAutoPage() {
           radicado_localidad: data.radicado_localidad || null,
           radicado_provincia: data.radicado_provincia || null,
           destacado: data.destacado,
-          observaciones_internas: data.observaciones_internas || null,
+          observaciones_internas: notas_finales,
           vendedor_asignado_id: user?.id || null,
-          estado: "Disponible",
         })
         .select("id")
         .single();
@@ -221,7 +243,7 @@ export default function NuevoAutoPage() {
   };
 
   return (
-    <div className="min-h-screen bg-[#0A0A0A] text-white pt-28 pb-16 px-4">
+    <div className="w-full h-full text-white py-6 md:py-10 px-4 md:px-8">
       <div className="max-w-2xl mx-auto">
         <button
           onClick={() => router.back()}
@@ -238,15 +260,11 @@ export default function NuevoAutoPage() {
             </h1>
             <p className="text-gray-400 text-xs md:text-sm mt-1">
               Paso {paso} de {totalPasos}:{" "}
-              {paso === 1
-                ? "Información Principal"
-                : paso === 2
-                  ? "Especificaciones y Sucursal"
-                  : paso === 3
-                    ? "Esquema de Precios"
-                    : paso === 4
-                      ? "Datos Legales"
-                      : "Multimedia y Observaciones"}
+              {paso === 1 ? "Información Principal"
+                : paso === 2 ? "Especificaciones y Sucursal"
+                : paso === 3 ? "Esquema de Precios"
+                : paso === 4 ? "Datos Legales"
+                : "Multimedia y Observaciones"}
             </p>
           </div>
           <span className="text-xs font-mono font-bold text-[#0055A4] bg-[#0055A4]/10 px-3 py-1 rounded-full border border-[#0055A4]/20">
@@ -262,238 +280,200 @@ export default function NuevoAutoPage() {
         </div>
 
         <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
-          {/* PASO 1 */}
+          
+          {/* ================= PASO 1 ================= */}
           {paso === 1 && (
-            <SectionCard
-              title="1. Información Principal"
-              icon={<Car className="w-4 h-4 text-[#0055A4]" />}
-            >
+            <SectionCard title="1. Información Principal" icon={<Car className="w-4 h-4 text-[#0055A4]" />}>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
                 <Campo label="Patente *" error={errors.patente?.message}>
-                  <input
-                    {...register("patente")}
-                    placeholder="Ej: AB123CD"
-                    className={inputClass}
-                  />
+                  <input {...register("patente")} placeholder="Ej: AB123CD" className={inputClass} />
                 </Campo>
                 <Campo label="Marca *" error={errors.marca?.message}>
-                  <input
-                    {...register("marca")}
-                    placeholder="Ej: Volkswagen"
-                    className={inputClass}
-                  />
+                  <input {...register("marca")} placeholder="Ej: Volkswagen" className={inputClass} />
                 </Campo>
                 <Campo label="Modelo *" error={errors.modelo?.message}>
-                  <input
-                    {...register("modelo")}
-                    placeholder="Ej: Amarok V6"
-                    className={inputClass}
-                  />
+                  <input {...register("modelo")} placeholder="Ej: Amarok V6" className={inputClass} />
                 </Campo>
                 <Campo label="Año *" error={errors.anio?.message}>
-                  <input
-                    type="number"
-                    {...register("anio", { valueAsNumber: true })}
-                    className={inputClass}
-                  />
+                  <input type="number" {...register("anio", { valueAsNumber: true })} className={inputClass} />
                 </Campo>
-                <Campo
-                  label="Kilometraje *"
-                  error={errors.kilometraje?.message}
-                >
-                  <input
-                    type="number"
-                    {...register("kilometraje", { valueAsNumber: true })}
-                    placeholder="Ej: 45000"
-                    className={inputClass}
-                  />
+                <Campo label="Kilometraje *" error={errors.kilometraje?.message}>
+                  <input type="number" {...register("kilometraje", { valueAsNumber: true })} placeholder="Ej: 45000" className={inputClass} />
                 </Campo>
                 <Campo label="Color">
-                  <input
-                    {...register("color")}
-                    placeholder="Ej: Gris Indio"
-                    className={inputClass}
-                  />
+                  <input {...register("color")} placeholder="Ej: Gris Indio" className={inputClass} />
                 </Campo>
               </div>
             </SectionCard>
           )}
 
-          {/* PASO 2 */}
+          {/* ================= PASO 2: ESPECIFICACIONES (REDISEÑADO) ================= */}
           {paso === 2 && (
-            <SectionCard
-              title="2. Especificaciones y Sucursal"
-              icon={<Shield className="w-4 h-4 text-[#0055A4]" />}
-            >
+            <SectionCard title="2. Especificaciones y Sucursal" icon={<Shield className="w-4 h-4 text-[#0055A4]" />}>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
-                <Campo label="Segmento">
-                  <input
-                    {...register("segmento")}
-                    placeholder="Ej: SUV / Pick-up"
-                    className={inputClass}
-                  />
-                </Campo>
-                <Campo label="Tipo de Vehículo">
-                  <input
-                    {...register("tipo")}
-                    placeholder="Ej: Utilitario"
-                    className={inputClass}
-                  />
-                </Campo>
-                <Campo label="Combustible">
-                  <select
-                    {...register("tipo_combustible")}
-                    className={inputClass}
-                  >
+                
+                <Campo label="Segmento *" error={errors.segmento?.message}>
+                  <select {...register("segmento")} className={inputClass}>
                     <option value="">Seleccionar...</option>
-                    <option>Nafta</option>
-                    <option>Diesel</option>
-                    <option>GNC</option>
-                    <option>Híbrido</option>
-                    <option>Eléctrico</option>
+                    <option value="Auto">Auto</option>
+                    <option value="Camión">Camión</option>
+                    <option value="Camioneta">Camioneta</option>
+                    <option value="Casa Rodante">Casa Rodante</option>
+                    <option value="Moto">Moto</option>
+                    <option value="Van/Ómnibus">Van/Ómnibus</option>
                   </select>
                 </Campo>
-                <Campo label="Transmisión">
+
+                <Campo label="Tipo de Vehículo *" error={errors.tipo?.message}>
+                  <select {...register("tipo")} className={inputClass}>
+                    <option value="">Seleccionar...</option>
+                    <option value="Buses">Buses</option>
+                    <option value="Cabriolet">Cabriolet</option>
+                    <option value="Coupe">Coupe</option>
+                    <option value="Familiar">Familiar</option>
+                    <option value="Monovolumen">Monovolumen</option>
+                    <option value="Otro">Otro</option>
+                    <option value="Pickup">Pickup</option>
+                    <option value="Rural 5 Puertas">Rural 5 Puertas</option>
+                    <option value="Sedan 3p">Sedan 3p</option>
+                    <option value="Sedan 4p">Sedan 4p</option>
+                    <option value="Sedan 5p">Sedan 5p</option>
+                    <option value="Todo Terreno | SUV">Todo Terreno | SUV</option>
+                    <option value="Utilitarios">Utilitarios</option>
+                    <option value="Van | Mini-Van">Van | Mini-Van</option>
+                  </select>
+                </Campo>
+
+                <Campo label="Combustible *" error={errors.tipo_combustible?.message}>
+                  <select {...register("tipo_combustible")} className={inputClass}>
+                    <option value="">Seleccionar...</option>
+                    <option value="Eléctrico">Eléctrico</option>
+                    <option value="Gasoil">Gasoil</option>
+                    <option value="GNC">GNC</option>
+                    <option value="Híbrido">Híbrido</option>
+                    <option value="Nafta">Nafta</option>
+                    <option value="Otro">Otro</option>
+                  </select>
+                </Campo>
+
+                <Campo label="Transmisión *" error={errors.transmision?.message}>
                   <select {...register("transmision")} className={inputClass}>
                     <option value="">Seleccionar...</option>
-                    <option>Manual</option>
-                    <option>Automática</option>
+                    <option value="Manual">Manual</option>
+                    <option value="Automática">Automática</option>
                   </select>
                 </Campo>
+
+                <Campo label="Origen *" error={errors.origen?.message}>
+                  <select {...register("origen")} className={inputClass}>
+                    <option value="">Seleccionar...</option>
+                    <option value="Comprado">Comprado</option>
+                    <option value="Consignado">Consignado</option>
+                    <option value="Permuta">Permuta</option>
+                    <option value="Otro">Otro</option>
+                  </select>
+                </Campo>
+
+                <Campo label="Estado del Vehículo *" error={errors.estado?.message}>
+                  <select {...register("estado")} className={inputClass}>
+                    <option value="">Seleccionar...</option>
+                    <option value="Disponible">Disponible</option>
+                    <option value="Señado">Señado</option>
+                    <option value="Vendido">Vendido</option>
+                  </select>
+                </Campo>
+
                 <Campo label="Sucursal *" error={errors.sucursal_id?.message}>
                   <select {...register("sucursal_id")} className={inputClass}>
                     <option value="">Seleccionar...</option>
                     {sucursales.map((s) => (
-                      <option key={s.id} value={s.id}>
-                        {s.nombre}
-                      </option>
+                      <option key={s.id} value={s.id}>{s.nombre}</option>
                     ))}
-                  </select>
-                </Campo>
-                <Campo label="Origen">
-                  <select {...register("origen")} className={inputClass}>
-                    <option value="Propio">Propio</option>
-                    <option value="Consignacion">Consignación</option>
                   </select>
                 </Campo>
               </div>
 
-              <div className="flex gap-8 pt-4 border-t border-white/5 mt-4">
-                <label className="flex items-center gap-2 text-sm text-gray-300 cursor-pointer">
+              {/* LÓGICA DE STOCK Y PUBLICACIÓN WEB */}
+              <div className="flex flex-col gap-4 pt-6 border-t border-white/5 mt-6">
+                <h3 className="text-sm font-bold text-white mb-2">Disponibilidad Física y Web</h3>
+                
+                <label className="flex items-center gap-3 text-sm text-gray-300 cursor-pointer bg-white/5 p-4 rounded-xl border border-white/10 hover:bg-white/10 transition-colors w-fit">
                   <input
                     type="checkbox"
                     {...register("stock_fisico")}
                     className="w-4 h-4 accent-[#0055A4]"
                   />
-                  En stock físico
+                  El vehículo se encuentra en nuestro salón / depósito físico
                 </label>
-                <label className="flex items-center gap-2 text-sm text-gray-300 cursor-pointer">
+
+                {/* Si no hay stock físico, mostramos el campo obligatorio para definir la condición de la venta online */}
+                {!watch("stock_fisico") && (
+                  <div className="ml-4 pl-4 border-l-2 border-[#0055A4] transition-all duration-300">
+                    <Campo label="Condición de Venta Web *" error={errors.condicion_web?.message}>
+                      <select {...register("condicion_web")} className={`${inputClass} max-w-xs`}>
+                        <option value="">Definir situación...</option>
+                        <option value="A comprar">A comprar</option>
+                        <option value="A patentar">A patentar</option>
+                      </select>
+                    </Campo>
+                  </div>
+                )}
+
+                <label className="flex items-center gap-3 text-sm text-gray-300 cursor-pointer bg-white/5 p-4 rounded-xl border border-white/10 hover:bg-white/10 transition-colors w-fit">
                   <input
                     type="checkbox"
                     {...register("destacado")}
                     className="w-4 h-4 accent-[#0055A4]"
                   />
-                  Destacado en la web
+                  Marcar como Destacado en la Web
                 </label>
               </div>
             </SectionCard>
           )}
 
-          {/* PASO 3 */}
+          {/* ================= PASO 3 ================= */}
           {paso === 3 && (
-            <SectionCard
-              title="3. Esquema de Precios"
-              icon={<DollarSign className="w-4 h-4 text-[#0055A4]" />}
-            >
+            <SectionCard title="3. Esquema de Precios" icon={<DollarSign className="w-4 h-4 text-[#0055A4]" />}>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
-                <Campo
-                  label="Precio Publicado ARS *"
-                  error={errors.precio_publicado_ars?.message}
-                >
-                  <input
-                    type="number"
-                    {...register("precio_publicado_ars", {
-                      valueAsNumber: true,
-                    })}
-                    placeholder="Ej: 25000000"
-                    className={inputClass}
-                  />
+                <Campo label="Precio Publicado ARS *" error={errors.precio_publicado_ars?.message}>
+                  <input type="number" {...register("precio_publicado_ars", { valueAsNumber: true })} placeholder="Ej: 25000000" className={inputClass} />
                 </Campo>
                 <Campo label="Precio Publicado USD">
-                  <input
-                    type="number"
-                    {...register("precio_publicado_usd", {
-                      valueAsNumber: true,
-                    })}
-                    placeholder="Ej: 22000"
-                    className={inputClass}
-                  />
+                  <input type="number" {...register("precio_publicado_usd", { valueAsNumber: true })} placeholder="Ej: 22000" className={inputClass} />
                 </Campo>
                 <Campo label="Precio Costo ARS (Interno)">
-                  <input
-                    type="number"
-                    {...register("precio_costo_ars", { valueAsNumber: true })}
-                    placeholder="Solo visible internamente"
-                    className={inputClass}
-                  />
+                  <input type="number" {...register("precio_costo_ars", { valueAsNumber: true })} placeholder="Solo visible internamente" className={inputClass} />
                 </Campo>
                 <Campo label="Precio Costo USD (Interno)">
-                  <input
-                    type="number"
-                    {...register("precio_costo_usd", { valueAsNumber: true })}
-                    placeholder="Solo visible internamente"
-                    className={inputClass}
-                  />
+                  <input type="number" {...register("precio_costo_usd", { valueAsNumber: true })} placeholder="Solo visible internamente" className={inputClass} />
                 </Campo>
               </div>
             </SectionCard>
           )}
 
-          {/* PASO 4 */}
+          {/* ================= PASO 4 ================= */}
           {paso === 4 && (
-            <SectionCard
-              title="4. Datos Legales (Transferencia)"
-              icon={<FileText className="w-4 h-4 text-[#0055A4]" />}
-            >
+            <SectionCard title="4. Datos Legales (Transferencia)" icon={<FileText className="w-4 h-4 text-[#0055A4]" />}>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
                 <Campo label="Número de Motor">
-                  <input
-                    {...register("numero_motor")}
-                    placeholder="Nro de motor"
-                    className={inputClass}
-                  />
+                  <input {...register("numero_motor")} placeholder="Nro de motor" className={inputClass} />
                 </Campo>
                 <Campo label="Número de Chasis">
-                  <input
-                    {...register("numero_chasis")}
-                    placeholder="Nro de chasis / cuadro"
-                    className={inputClass}
-                  />
+                  <input {...register("numero_chasis")} placeholder="Nro de chasis / cuadro" className={inputClass} />
                 </Campo>
                 <Campo label="Radicado - Localidad">
-                  <input
-                    {...register("radicado_localidad")}
-                    placeholder="Ej: San Isidro"
-                    className={inputClass}
-                  />
+                  <input {...register("radicado_localidad")} placeholder="Ej: San Isidro" className={inputClass} />
                 </Campo>
                 <Campo label="Radicado - Provincia">
-                  <input
-                    {...register("radicado_provincia")}
-                    placeholder="Ej: Buenos Aires"
-                    className={inputClass}
-                  />
+                  <input {...register("radicado_provincia")} placeholder="Ej: Buenos Aires" className={inputClass} />
                 </Campo>
               </div>
             </SectionCard>
           )}
 
-          {/* PASO 5 */}
+          {/* ================= PASO 5 ================= */}
           {paso === 5 && (
-            <SectionCard
-              title="5. Multimedia y Observaciones"
-              icon={<ImageIcon className="w-4 h-4 text-[#0055A4]" />}
-            >
+            <SectionCard title="5. Multimedia y Observaciones" icon={<ImageIcon className="w-4 h-4 text-[#0055A4]" />}>
               <div className="space-y-4">
                 <div>
                   <label className="text-xs text-gray-400 block mb-1">
@@ -506,9 +486,7 @@ export default function NuevoAutoPage() {
                   />
                 </div>
 
-                <div
-                  className={`border-2 border-dashed rounded-xl p-6 text-center transition-colors ${errorArchivos ? "border-red-500/50 bg-red-500/5" : "border-white/10 hover:border-[#0055A4]/50 bg-[#0A0A0A]"}`}
-                >
+                <div className={`border-2 border-dashed rounded-xl p-6 text-center transition-colors ${errorArchivos ? "border-red-500/50 bg-red-500/5" : "border-white/10 hover:border-[#0055A4]/50 bg-[#0A0A0A]"}`}>
                   <input
                     type="file"
                     accept="image/*,video/*"
@@ -517,10 +495,7 @@ export default function NuevoAutoPage() {
                     onChange={handleSeleccionarArchivos}
                     className="hidden"
                   />
-                  <label
-                    htmlFor="file-upload"
-                    className="cursor-pointer flex flex-col items-center"
-                  >
+                  <label htmlFor="file-upload" className="cursor-pointer flex flex-col items-center">
                     <Upload className="w-8 h-8 text-gray-500 mb-2" />
                     <span className="text-sm font-bold text-gray-200">
                       Subir Fotografías o Videos
@@ -530,31 +505,19 @@ export default function NuevoAutoPage() {
                     </span>
                   </label>
                 </div>
+                
                 {errorArchivos && (
-                  <span className="text-red-500 text-xs block">
-                    {errorArchivos}
-                  </span>
+                  <span className="text-red-500 text-xs block">{errorArchivos}</span>
                 )}
 
                 {previsualizaciones.length > 0 && (
                   <div className="grid grid-cols-2 md:grid-cols-4 gap-3 pt-2">
                     {previsualizaciones.map((src, index) => (
-                      <div
-                        key={index}
-                        className="relative group h-24 bg-black rounded-lg overflow-hidden border border-white/10"
-                      >
+                      <div key={index} className="relative group h-24 bg-black rounded-lg overflow-hidden border border-white/10">
                         {archivos[index]?.type.startsWith("video") ? (
-                          <video
-                            src={src}
-                            className="w-full h-full object-cover"
-                            muted
-                          />
+                          <video src={src} className="w-full h-full object-cover" muted />
                         ) : (
-                          <img
-                            src={src}
-                            alt="Preview"
-                            className="w-full h-full object-cover"
-                          />
+                          <img src={src} alt="Preview" className="w-full h-full object-cover" />
                         )}
                         <button
                           type="button"
@@ -571,7 +534,7 @@ export default function NuevoAutoPage() {
             </SectionCard>
           )}
 
-          {/* Botones de Navegación Anterior / Siguiente / Guardar */}
+          {/* ================= CONTROLES GENERALES ================= */}
           <div className="flex items-center gap-4 pt-4">
             {paso > 1 && (
               <button
@@ -614,17 +577,9 @@ export default function NuevoAutoPage() {
 }
 
 const inputClass =
-  "w-full bg-[#0A0A0A] border border-white/10 p-3 rounded-xl text-sm outline-none focus:border-[#0055A4]";
+  "w-full bg-[#0A0A0A] border border-white/10 p-3 rounded-xl text-sm outline-none focus:border-[#0055A4] text-gray-200";
 
-function SectionCard({
-  title,
-  icon,
-  children,
-}: {
-  title: string;
-  icon: React.ReactNode;
-  children: React.ReactNode;
-}) {
+function SectionCard({ title, icon, children }: { title: string; icon: React.ReactNode; children: React.ReactNode }) {
   return (
     <div className="bg-[#121212] p-6 rounded-2xl border border-white/5 space-y-5 shadow-lg">
       <h2 className="text-xs font-bold uppercase tracking-widest text-gray-300 flex items-center gap-2 pb-2 border-b border-white/5">
@@ -635,22 +590,12 @@ function SectionCard({
   );
 }
 
-function Campo({
-  label,
-  error,
-  children,
-}: {
-  label: string;
-  error?: string;
-  children: React.ReactNode;
-}) {
+function Campo({ label, error, children }: { label: string; error?: string; children: React.ReactNode }) {
   return (
     <div>
       <label className="text-xs text-gray-400 block mb-1">{label}</label>
       {children}
-      {error && (
-        <span className="text-red-500 text-[11px] mt-1 block">{error}</span>
-      )}
+      {error && <span className="text-red-500 text-[11px] mt-1 block">{error}</span>}
     </div>
   );
 }

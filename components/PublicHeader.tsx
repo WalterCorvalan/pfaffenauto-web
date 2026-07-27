@@ -129,7 +129,7 @@ export default function PublicHeader() {
               href="/#sucursales"
               className="hidden sm:flex items-center gap-2 px-4 py-2 border border-gray-200 rounded-full text-xs font-bold text-gray-600 hover:bg-gray-50 hover:text-navy hover:border-gray-300 transition-colors"
             >
-              <MapPin className="w-4 h-4 text-gray-400" /> Ubicación
+              <MapPin className="w-4 h-4 text-gray-400" /> Pendiente
             </Link>
 
             <button
