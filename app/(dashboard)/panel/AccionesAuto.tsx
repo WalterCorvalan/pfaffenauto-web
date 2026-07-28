@@ -22,13 +22,16 @@ export default function AccionesAuto({ autoId, estadoActual, puedeGestionar }: A
   const [formaPago, setFormaPago] = useState("Contado"); // Restringido a la BD ('Contado', 'Financiado', 'Permuta')
 
   // Interceptamos el cambio del select
-  const manejarCambioSelect = async (nuevoEstado: string) => {
+  const manejarCambioSelect = async (nuevoEstadoVisual: string) => {
     if (!puedeGestionar) return;
 
-    if (nuevoEstado === "Vendido") {
+    // Si elige "Señado", lo guardamos internamente como "Reservado" en la BD
+    const estadoReal = nuevoEstadoVisual === "Señado" ? "Reservado" : nuevoEstadoVisual;
+
+    if (estadoReal === "Vendido") {
       setShowModal(true);
     } else {
-      await ejecutarTransaccion(nuevoEstado);
+      await ejecutarTransaccion(estadoReal);
     }
   };
 
@@ -101,7 +104,7 @@ export default function AccionesAuto({ autoId, estadoActual, puedeGestionar }: A
         if (errVenta) throw errVenta;
 
       } else {
-        // LÓGICA SI SOLO ES CAMBIO DE ESTADO (Borrador, Disponible, Reservado)
+        // LÓGICA SI SOLO ES CAMBIO DE ESTADO (Borrador, Disponible, Reservado, Archivado)
         const { error: errAutoBasico } = await supabase
           .from("vehiculos")
           .update({ estado: nuevoEstado })
@@ -138,26 +141,29 @@ export default function AccionesAuto({ autoId, estadoActual, puedeGestionar }: A
     });
   };
 
+  // Mapeamos el estado de la BD ("Reservado") a cómo se muestra visualmente ("Señado") si corresponde
+  const estadoVisual = estadoActual === "Reservado" ? "Señado" : estadoActual;
+
   return (
     <>
-      {/* ================= SELECT DE ESTADO ================= */}
+      {/* ================= SELECT DE ESTADO SINCRONIZADO ================= */}
       <div className="flex items-center gap-2">
         <select
-          value={estadoActual}
+          value={estadoVisual}
           onChange={(e) => manejarCambioSelect(e.target.value)}
           disabled={cargando || !puedeGestionar}
           className={`text-xs font-bold px-3 py-1.5 rounded-full border outline-none appearance-none transition-all shadow-sm
             ${cargando || !puedeGestionar ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer hover:scale-105'}
-            ${estadoActual === 'Borrador' ? 'bg-gray-800 text-gray-300 border-gray-600' : ''}
-            ${estadoActual === 'Disponible' ? 'bg-green-900/30 text-green-400 border-green-700/50' : ''}
-            ${estadoActual === 'Reservado' ? 'bg-yellow-900/30 text-yellow-400 border-yellow-700/50' : ''}
-            ${estadoActual === 'Vendido' ? 'bg-blue-900/30 text-blue-400 border-blue-700/50' : ''}
-            ${estadoActual === 'Archivado' ? 'bg-red-900/30 text-red-400 border-red-700/50' : ''}
+            ${estadoVisual === 'Borrador' ? 'bg-gray-800 text-gray-300 border-gray-600' : ''}
+            ${estadoVisual === 'Disponible' ? 'bg-green-900/30 text-green-400 border-green-700/50' : ''}
+            ${estadoVisual === 'Señado' ? 'bg-yellow-900/30 text-yellow-400 border-yellow-700/50' : ''}
+            ${estadoVisual === 'Vendido' ? 'bg-blue-900/30 text-blue-400 border-blue-700/50' : ''}
+            ${estadoVisual === 'Archivado' ? 'bg-red-900/30 text-red-400 border-red-700/50' : ''}
           `}
         >
           <option value="Borrador" className="bg-gray-900 text-white">Borrador</option>
           <option value="Disponible" className="bg-gray-900 text-white">Disponible</option>
-          <option value="Reservado" className="bg-gray-900 text-white">Reservado</option>
+          <option value="Señado" className="bg-gray-900 text-white">Señado</option>
           <option value="Vendido" className="bg-gray-900 text-white">Vendido</option>
           <option value="Archivado" className="bg-gray-900 text-white">Archivado</option>
         </select>
@@ -216,7 +222,7 @@ export default function AccionesAuto({ autoId, estadoActual, puedeGestionar }: A
                 </div>
               </div>
 
-              {/* Forma de Pago - Opciones adaptadas al esquema real */}
+              {/* Forma de Pago */}
               <div>
                 <label className="text-xs font-bold text-gray-400 uppercase tracking-widest mb-1.5 block">Forma de Pago</label>
                 <div className="flex items-center bg-[#0A0A0A] border border-white/10 rounded-xl px-3 focus-within:border-[#0055A4] transition-colors">

@@ -2,170 +2,138 @@
 
 import { useState, useEffect } from "react";
 import Link from "next/link";
-import Image from "next/image";
-import { supabase } from "@/lib/supabase"; // Asegurate de importar supabase
-import { uploadAutoImage } from "@/lib/upload"; // Tu función de subida a Cloudflare R2
+import { supabase } from "@/lib/supabase"; 
+import { ArrowLeft, ArrowRight, Loader2, CheckCircle2, ChevronDown, ShieldCheck, PhoneCall } from "lucide-react";
 
 const marcasDisponibles = [
-  "Audi", "BMW", "Chery", "Chevrolet", "Citroen", "Fiat", "Ford", 
-  "Honda", "Hyundai", "Jeep", "Mercedes Benz", "Morris", "Nissan", 
-  "Peugeot", "Renault", "Toyota", "Volkswagen", "Otro"
+  "Audi", "BAIC", "BMW", "Changan", "Chery", "Chevrolet", "Citroen", 
+  "Fiat", "Ford", "Honda", "Hyundai", "Jeep", "Mercedes Benz", 
+  "Nissan", "Peugeot", "Renault", "Toyota", "Volkswagen", "Otro"
 ];
+
+const modelosPorMarca: Record<string, string[]> = {
+  "Chevrolet": ["Cruze", "Equinox", "Joy", "Montana Pick-up", "Onix", "S-10 Pick-up", "Silverado"],
+  "Toyota": ["Hilux", "Corolla", "Etios", "Yaris", "SW4", "Corolla Cross"],
+  "Volkswagen": ["Gol", "Amarok", "Polo", "T-Cross", "Taos", "Nivus"],
+  "Ford": ["Focus", "Ranger", "Fiesta", "EcoSport", "Territory", "Kuga"],
+  "Audi": ["A1", "A3", "A4", "Q3", "Q5"],
+  "BMW": ["Serie 1", "Serie 3", "X1", "X3", "X5"],
+  "Peugeot": ["208", "2008", "3008", "Partner"],
+  "Renault": ["Sandero", "Logan", "Duster", "Alaskan", "Kangoo"],
+  "Fiat": ["Cronos", "Pulse", "Fastback", "Toro", "Strada"],
+  "Jeep": ["Renegade", "Compass", "Commander"],
+};
+
+const aniosDisponibles = Array.from({ length: 20 }, (_, i) => 2026 - i);
 
 export default function CotizadorForm() {
   const [step, setStep] = useState(1);
-  const [isLightMode, setIsLightMode] = useState(false);
   const [mockId, setMockId] = useState("");
   const [currentDate, setCurrentDate] = useState("");
   
-  // 1. Estados del vehículo
+  // Estados del vehículo
+  const [anio, setAnio] = useState("");
   const [marca, setMarca] = useState("");
   const [modelo, setModelo] = useState("");
-  const [anio, setAnio] = useState("");
   const [version, setVersion] = useState("");
   const [km, setKm] = useState("");
-  
-  // 2. Estados de Inspección (FALTABAN ESTOS)
-  const [tipoPeritaje, setTipoPeritaje] = useState<"presencial" | "online" | "">("");
-  const [sucursal, setSucursal] = useState("");
-  const [archivos, setArchivos] = useState<File[]>([]);
-  
-  // 3. Estados de Contacto
+  const [gnc, setGnc] = useState("");
+
+  // Estados de Contacto y SMS
   const [nombre, setNombre] = useState("");
+  const [apellido, setApellido] = useState("");
+  const [email, setEmail] = useState("");
   const [tel, setTel] = useState("");
-  
-  // Sugerencias de marca
-  const [showSuggestions, setShowSuggestions] = useState(false);
-  const [filteredMaras, setFilteredMarcas] = useState(marcasDisponibles);
-  
+  const [codigoSMS, setCodigoSMS] = useState("");
+  const [codigoEnviado, setCodigoEnviado] = useState(false);
+  const [codigoCorrectoSimulado, setCodigoCorrectoSimulado] = useState("1234"); // Código de prueba (o real si integras Twilio/Supabase OTP)
+
+  // Controladores de Dropdowns personalizados con buscador
+  const [openDropdown, setOpenDropdown] = useState<string | null>(null);
+  const [busquedaMarca, setBusquedaMarca] = useState("");
+
   // Estados de carga/envío
   const [loading, setLoading] = useState(false);
   const [enviado, setEnviado] = useState(false);
+
+  // Estado del contador (inicia en 60 segundos y se reduce cada 3 segundos para ir más lento)
+  const [segundos, setSegundos] = useState(60);
 
   useEffect(() => {
     const hoy = new Date();
     setCurrentDate(hoy.toLocaleDateString("es-AR"));
     setMockId(String(Math.floor(Math.random() * 90000) + 10000));
-
-    const prefersLight = window.matchMedia("(prefers-color-scheme: light)").matches;
-    if (prefersLight) {
-      setIsLightMode(true);
-      document.body.classList.add("light-mode");
-    }
   }, []);
 
-  const toggleTheme = () => {
-    setIsLightMode(!isLightMode);
-    document.body.classList.toggle("light-mode");
-  };
-
-  const handleMarcaChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const val = e.target.value;
-    setMarca(val);
-    if (!val) {
-      setFilteredMarcas(marcasDisponibles);
-    } else {
-      setFilteredMarcas(marcasDisponibles.filter(m => m.toLowerCase().includes(val.toLowerCase())));
+  // Efecto para el contador decreciente (cambia cada 3000ms = 3 segundos por número)
+  useEffect(() => {
+    if (segundos > 1) {
+      const timer = setInterval(() => {
+        setSegundos((prev) => prev - 1);
+      }, 2000);
+      return () => clearInterval(timer);
     }
-    setShowSuggestions(true);
+  }, [segundos]);
+
+  const marcasFiltradas = marcasDisponibles.filter(m => m.toLowerCase().includes(busquedaMarca.toLowerCase()));
+  const modelosDisponibles = modeloPorMarcaSeleccionada(marca);
+
+  function modeloPorMarcaSeleccionada(m: string) {
+    return modelosPorMarca[m] || ["Base", "Full", "Sport", "Standard", "Otro"];
+  }
+
+  const validarPaso1 = () => {
+    return anio && marca && modelo && version && km;
   };
 
-  // FUNCIONES PARA MANEJAR ARCHIVOS (FALTABAN ESTAS)
-  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    if (e.target.files) {
-      const nuevosArchivos = Array.from(e.target.files);
-      setArchivos((prev) => [...prev, ...nuevosArchivos]);
+  // Paso 1: Enviar código SMS (Simulado o conectado a servicio)
+  const solicitarCodigoSMS = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!nombre.trim() || !apellido.trim() || !email.trim() || !tel.trim()) {
+      alert("Por favor completá todos los campos de contacto.");
+      return;
     }
+
+    // Aquí puedes disparar tu API real de SMS (ej. Twilio o Supabase Auth)
+    // Por ahora generamos uno dinámico o usamos uno fijo para pruebas y pasamos al paso de verificación
+    setCodigoEnviado(true);
+    setStep(4); // Pasamos al paso de ingresar el código
   };
 
-  const removeFile = (index: number) => {
-    setArchivos((prev) => prev.filter((_, i) => i !== index));
-  };
-
-  // NAVEGACIÓN ENTRE PASOS
-  const handleNextStep = (current: number) => {
-    if (current === 1) {
-      // Pasa del Hero al Vehículo (no validamos nada)
-    }
-    if (current === 2) {
-      // Validamos Vehículo
-      if (!marca || !modelo.trim() || !anio.trim() || !km.trim()) {
-        alert("Por favor, completá la Marca, Modelo, Año y Kilometraje del vehículo para continuar.");
-        return;
-      }
-    }
-    if (current === 3) {
-      // Validamos Inspección
-      if (!tipoPeritaje) {
-        alert("Seleccioná una modalidad de peritaje.");
-        return;
-      }
-      if (tipoPeritaje === "presencial" && !sucursal) {
-        alert("Seleccioná la sucursal a la que vas a asistir.");
-        return;
-      }
-      if (tipoPeritaje === "online" && archivos.length === 0) {
-        alert("Por favor subí al menos una foto o video del vehículo.");
-        return;
-      }
-    }
-    setStep(current + 1);
-  };
-
-  const handlePrevStep = (current: number) => {
-    setStep(current - 1);
-  };
-
-  // ENVÍO FINAL
-  const submitForm = async () => {
-    if (!nombre.trim() || !tel.trim()) {
-      alert("Completá tu Nombre y Teléfono.");
+  // Paso 2: Validar código e insertar en BD
+  const verificarCodigoYEnviar = async () => {
+    if (codigoSMS.length < 4) {
+      alert("Ingresá el código de verificación completo.");
       return;
     }
 
     setLoading(true);
 
     try {
-      let urlsArchivos: string[] = [];
-
-      // 1. SALTAMOS CLOUDFLARE R2 TEMPORALMENTE
-      if (tipoPeritaje === "online" && archivos.length > 0) {
-        
-        // --- CÓDIGO ORIGINAL COMENTADO ---
-        /*
-        for (const archivo of archivos) {
-           const url = await uploadAutoImage(archivo);
-           if (url) urlsArchivos.push(url);
-        }
-        */
-        
-        // --- CÓDIGO SIMULADO ---
-        // Mentimos diciendo que subimos una foto para que no explote el proceso
-        console.log(`Simulando subida de ${archivos.length} archivo(s)...`);
-        urlsArchivos.push("https://via.placeholder.com/600x400?text=Foto+Simulada");
-      }
-
-      // 2. Guardamos la fila directamente en nuestra base de datos (Supabase)
+      // Guardamos en Supabase
+      // Guardamos en Supabase incluyendo el email y la verificación
       const { data: cotizacion, error: dbError } = await supabase
         .from('cotizaciones')
         .insert({
           marca,
           modelo,
           anio: Number(anio),
-          version,
+          version: `${version} - GNC: ${gnc || 'No'}`,
           kilometraje: Number(km),
-          nombre: nombre.trim(),
+          nombre: `${nombre.trim()} ${apellido.trim()}`,
+          email: email.trim(), // <--- NUEVO: Guardamos el email
           telefono: tel.trim(),
-          tipo_peritaje: tipoPeritaje,
-          sucursal_preferida: sucursal || null,
-          fotos_y_videos: urlsArchivos
+          telefono_verificado: true, // <--- NUEVO: Queda registrado como verificado por SMS
+          tipo_peritaje: 'online',
+          sucursal_preferida: 'Casa Central',
+          fotos_y_videos: []
         })
         .select('id')
         .single();
 
       if (dbError) throw dbError;
 
-      // 3. Le avisamos a n8n que empiece a trabajar enviándole solo el ID (súper liviano)
+      // Webhook a n8n
       const response = await fetch("https://n8n-pfaffen.onrender.com/webhook/1999b53e-8ab2-4223-b71e-226575a4ac46", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -180,352 +148,367 @@ export default function CotizadorForm() {
 
     } catch (error) {
       console.error("Error al cotizar:", error);
-      alert("Hubo un problema al enviar los datos. Reintentá en unos minutos.");
+      alert("Hubo un problema al verificar o guardar. Reintentá.");
     } finally {
       setLoading(false);
     }
   };  
 
   return (
-    <div className="min-h-screen bg-[#050505] text-white pt-24 pb-20 relative font-sans">
-      <button 
-        className="fixed top-20 right-6 bg-[#1e1e1e] text-white border border-white/10 rounded-full w-12 h-12 flex items-center justify-center cursor-pointer z-50 shadow-lg hover:scale-105 transition-transform"
-        onClick={toggleTheme}
-      >
-        <i className={`ti ${isLightMode ? "ti-moon" : "ti-sun"} text-xl`}></i>
-      </button>
+    <div className="min-h-screen bg-[#F8FAFC] text-slate-900 pt-16 pb-50 relative font-sans overflow-hidden flex flex-col justify-between">
+      
+      {/* ================= EFECTOS DE FONDO SPATIAL UI ================= */}
+      <div className="absolute inset-0 pointer-events-none z-0">
+        <div className="absolute inset-0 bg-[linear-gradient(to_right,#e2e8f0_1px,transparent_1px),linear-gradient(to_bottom,#e2e8f0_1px,transparent_1px)] bg-[size:3rem_3rem] [mask-image:radial-gradient(ellipse_80%_50%_at_50%_0%,#000_70%,transparent_100%)] opacity-60"></div>
+        <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[800px] h-[400px] bg-[#0145F2]/5 blur-[120px] rounded-full"></div>
+      </div>
 
-      <div className="max-w-xl mx-auto px-4">
+      {/* ================= HEADER CORPORATIVO ================= */}
+      <header className="max-w-7xl mx-auto w-full px-10 py-2 flex items-center justify-between relative z-10">
+        <div className="flex items-center gap-4 text-xs font-bold text-slate-500">
+          <span>DOC: <strong className="text-[#0145F2]">{mockId}</strong></span>
+        </div>
+      </header>
+
+      {/* ================= CONTENIDO PRINCIPAL ================= */}
+      <div className="max-w-7xl mx-auto w-full px-4 md:px-8 grid grid-cols-1 lg:grid-cols-12 gap-8 items-center my-auto py-8 relative z-10">
         
-        <div className="bg-[#121212] data-[theme=light]:bg-white border border-white/10 rounded-2xl shadow-2xl p-6 md:p-8 relative overflow-hidden transition-colors duration-300"
-             style={{ backgroundColor: isLightMode ? "#ffffff" : "#1e1e1e" }}>
-          
-          <div className="absolute top-0 left-0 right-0 h-2 bg-[#0055A4]"></div>
-
-          <div className="flex justify-between items-center pb-4 border-b border-white/10 mb-4">
-            <Link href="/">
-              <span className="text-xs font-bold text-gray-400 hover:text-white flex items-center gap-1">
-                <i className="ti ti-arrow-left"></i> Volver al inicio
-              </span>
-            </Link>
-            <div className="font-mono text-xs text-gray-400">
-              <strong>Nº DOC:</strong> <span className="text-[#0055A4]">{mockId}</span> | <strong>FECHA:</strong> {currentDate}
-            </div>
-          </div>
-
-          <div className="flex justify-center mb-6">
-            <h1 className="text-2xl md:text-3xl font-black uppercase text-[#0055A4] tracking-tight">
-              PFAFFEN <span className="text-white data-[theme=light]:text-black">COTIZADOR</span>
+        {/* COLUMNA IZQUIERDA */}
+        <div className="lg:col-span-7 flex flex-col justify-center space-y-6 text-left">
+          <div className="space-y-3">
+            <span className="bg-blue-50 text-[#0145F2] border border-blue-100 text-[11px] font-black uppercase tracking-widest px-4 py-1.5 rounded-full inline-block shadow-sm">
+              Tasación profesional instantánea
+            </span>
+            <h1 className="text-4xl sm:text-6xl lg:text-7xl font-light text-navy tracking-tight leading-[1.08]">
+              Cotiza tu auto de la <br />
+              forma <strong className="font-black text-transparent bg-clip-text bg-gradient-to-r from-[#0145F2] to-sky-400">más confiable.</strong>
             </h1>
+            <p className="text-xs sm:text-sm font-bold uppercase tracking-widest text-slate-500 pt-2">
+              RÁPIDO, SEGURO Y CONVENIENTE
+            </p>
           </div>
+        </div>
 
-          {!enviado ? (
-            <div id="pf-form">
-              
-              {/* PASO 1: INICIO */}
-              {step === 1 && (
-                <div className="text-center py-8 animate-fadeIn">
-                  <h2 className="text-3xl font-black text-[#0055A4] uppercase mb-4 tracking-tight">
-                    Vender tu auto nunca fue tan fácil
-                  </h2>
-                  <p className="text-gray-400 text-sm mb-8">
-                    Dejanos los datos de tu vehículo y lo cotizamos en tiempo récord según el mercado real.
-                  </p>
-                  <button 
-                    type="button" 
-                    className="w-full py-4 bg-[#0055A4] hover:bg-[#1E6FD9] text-white font-bold rounded-xl uppercase tracking-wider text-sm transition-all shadow-lg flex items-center justify-center gap-2"
-                    onClick={() => handleNextStep(1)}
-                  >
-                    COTIZAR MI AUTO AHORA <i className="ti ti-arrow-right text-lg"></i>
-                  </button>
-                </div>
-              )}
+        {/* COLUMNA DERECHA: TARJETA FLOTANTE GLASSMORPHISM 2.0 */}
+        <div className="lg:col-span-5 flex justify-center w-full">
+          <div className="bg-white/70 backdrop-blur-2xl border border-white rounded-[32px] shadow-[0_20px_50px_rgba(0,0,0,0.06)] p-6 md:p-8 w-full max-w-md relative">
+            
+            {/* TÍTULO GLOBAL CON EL CONTADOR QUE PERSISTE EN TODO EL FORMULARIO */}
+            {!enviado && (
+              <div className="mb-4">
+                <h2 className="text-xl font-black text-navy tracking-tight">
+                  Cotiza tu auto en menos de {segundos} {segundos === 1 ? "segundo" : "segundos"}
+                </h2>
+                <p className="text-xs text-slate-400 font-medium">
+                  {step === 1 && "Ingresá los datos del vehículo"}
+                  {step === 2 && "¿Tu auto tiene o tuvo GNC?"}
+                  {step === 3 && "Necesitamos tus datos para enviarte el código"}
+                  {step === 4 && "Verificá tu número de teléfono"}
+                </p>
+              </div>
+            )}
 
-              {/* PASO 2: DATOS DEL VEHÍCULO */}
-              {step === 2 && (
-                <div className="space-y-4 animate-fadeIn">
-                  <h3 className="text-xs font-bold text-[#0055A4] uppercase tracking-widest mb-3">1. Datos del vehículo</h3>
-                  
-                  <div className="bg-[#0A0F16] data-[theme=light]:bg-gray-50 rounded-xl p-4 border border-white/5 space-y-4">
-                    
-                    <div className="relative flex items-center gap-4">
-                      <label className="w-28 text-xs font-bold text-gray-400 uppercase">Marca *</label>
-                      <input 
-                        type="text" 
-                        value={marca}
-                        onChange={handleMarcaChange}
-                        onClick={() => setShowSuggestions(true)}
-                        placeholder="Buscar o escribir..." 
-                        className="flex-1 bg-transparent border-b border-white/20 pb-1 text-sm outline-none focus:border-[#0055A4]"
-                        required 
-                        autoComplete="off"
-                      />
-                      {showSuggestions && filteredMaras.length > 0 && (
-                        <div className="absolute top-full left-28 right-0 bg-[#1e1e1e] border border-white/10 shadow-xl z-50 max-h-48 overflow-y-auto rounded-b-lg">
-                          {filteredMaras.map((m, i) => (
+            {!enviado ? (
+              <div>
+                
+                {/* PASO 1: DATOS DEL VEHÍCULO */}
+                {step === 1 && (
+                  <div className="space-y-4 animate-fadeIn">
+                    {/* AÑO */}
+                    <div className="relative">
+                      <div 
+                        onClick={() => setOpenDropdown(openDropdown === 'anio' ? null : 'anio')}
+                        className={`w-full bg-white/60 backdrop-blur-md border rounded-2xl px-4 py-3.5 text-sm font-semibold flex items-center justify-between cursor-pointer transition-all shadow-sm ${anio ? 'text-navy border-slate-300' : 'text-slate-400 border-white'}`}
+                      >
+                        <span>{anio ? anio : "Seleccioná el año"}</span>
+                        <ChevronDown className={`w-4 h-4 text-slate-500 transition-transform ${openDropdown === 'anio' ? 'rotate-180 text-[#0145F2]' : ''}`} />
+                      </div>
+
+                      {openDropdown === 'anio' && (
+                        <div className="absolute top-full left-0 right-0 mt-2 bg-white/95 backdrop-blur-xl border border-white rounded-2xl shadow-2xl z-50 max-h-56 overflow-y-auto p-1">
+                          {aniosDisponibles.map((a) => (
                             <div 
-                              key={i} 
-                              onClick={() => { setMarca(m); setShowSuggestions(false); }}
-                              className="px-4 py-2.5 text-xs hover:bg-[#0055A4] hover:text-white cursor-pointer border-b border-white/5"
+                              key={a}
+                              onClick={() => { setAnio(String(a)); setOpenDropdown(null); }}
+                              className="px-4 py-2.5 text-xs font-bold text-slate-700 hover:bg-blue-50 hover:text-[#0145F2] rounded-xl cursor-pointer transition-colors"
                             >
-                              {m}
+                              {a}
                             </div>
                           ))}
                         </div>
                       )}
                     </div>
 
-                    <div className="flex items-center gap-4">
-                      <label className="w-28 text-xs font-bold text-gray-400 uppercase">Modelo *</label>
-                      <input 
-                        type="text" 
-                        value={modelo}
-                        onChange={(e) => setModelo(e.target.value)}
-                        placeholder="Ej: Corolla, Gol..." 
-                        className="flex-1 bg-transparent border-b border-white/20 pb-1 text-sm outline-none focus:border-[#0055A4]"
-                        required 
-                      />
-                    </div>
-
-                    <div className="flex items-center gap-4">
-                      <label className="w-28 text-xs font-bold text-gray-400 uppercase">Año *</label>
-                      <input 
-                        type="number" 
-                        value={anio}
-                        onChange={(e) => setAnio(e.target.value)}
-                        placeholder="Ej: 2020" 
-                        className="flex-1 bg-transparent border-b border-white/20 pb-1 text-sm outline-none focus:border-[#0055A4]"
-                        required 
-                      />
-                    </div>
-
-                    <div className="flex items-center gap-4">
-                      <label className="w-28 text-xs font-bold text-gray-400 uppercase">Kilometraje *</label>
-                      <input 
-                        type="number" 
-                        value={km}
-                        onChange={(e) => setKm(e.target.value)}
-                        placeholder="Ej: 45000" 
-                        className="flex-1 bg-transparent border-b border-white/20 pb-1 text-sm outline-none focus:border-[#0055A4]"
-                        required
-                      />
-                    </div>
-
-                    <div className="flex items-center gap-4">
-                      <label className="w-28 text-xs font-bold text-gray-400 uppercase">Versión</label>
-                      <input 
-                        type="text" 
-                        value={version}
-                        onChange={(e) => setVersion(e.target.value)}
-                        placeholder="Opcional. Ej: XEI, 1.4..." 
-                        className="flex-1 bg-transparent border-b border-white/20 pb-1 text-sm outline-none focus:border-[#0055A4]"
-                      />
-                    </div>
-
-                  </div>
-
-                  <div className="flex gap-3 pt-4">
-                    <button 
-                      type="button" 
-                      className="flex-1 py-3 bg-white/5 hover:bg-white/10 border border-white/10 rounded-xl font-bold uppercase text-xs tracking-wider transition-colors"
-                      onClick={() => handlePrevStep(2)}
-                    >
-                      Volver
-                    </button>
-                    <button 
-                      type="button" 
-                      className="flex-1 py-3 bg-[#0055A4] hover:bg-[#1E6FD9] text-white rounded-xl font-bold uppercase text-xs tracking-wider transition-all shadow-lg"
-                      onClick={() => handleNextStep(2)}
-                    >
-                      Siguiente
-                    </button>
-                  </div>
-                </div>
-              )}
-
-              {/* PASO 3: INSPECCIÓN (FALTABA ESTE PASO EN TU CÓDIGO) */}
-              {step === 3 && (
-                <div className="space-y-4 animate-fadeIn">
-                  <h3 className="text-xs font-bold text-[#0055A4] uppercase tracking-widest mb-3">2. Inspección del Vehículo</h3>
-                  <p className="text-sm text-gray-400 mb-4">Para cotizar con exactitud, necesitamos evaluar el estado del auto. ¿Cómo preferís hacerlo?</p>
-                  
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <div 
-                      onClick={() => setTipoPeritaje("presencial")}
-                      className={`p-4 rounded-xl border cursor-pointer transition-all ${tipoPeritaje === "presencial" ? "bg-[#0055A4]/10 border-[#0055A4]" : "bg-white/5 border-white/10 hover:border-white/30"}`}
-                    >
-                      <h4 className="font-bold text-sm mb-1 text-white data-[theme=light]:text-black">Voy a la sucursal</h4>
-                      <p className="text-xs text-gray-500">Inspección física de 15 minutos.</p>
-                    </div>
-                    
-                    <div 
-                      onClick={() => setTipoPeritaje("online")}
-                      className={`p-4 rounded-xl border cursor-pointer transition-all ${tipoPeritaje === "online" ? "bg-[#0055A4]/10 border-[#0055A4]" : "bg-white/5 border-white/10 hover:border-white/30"}`}
-                    >
-                      <h4 className="font-bold text-sm mb-1 text-white data-[theme=light]:text-black">100% Online</h4>
-                      <p className="text-xs text-gray-500">Subí fotos y un video ahora mismo.</p>
-                    </div>
-                  </div>
-
-                  {tipoPeritaje === "presencial" && (
-                    <div className="mt-4 p-4 bg-[#0A0F16] data-[theme=light]:bg-gray-50 rounded-xl border border-white/5 animate-fadeIn">
-                      <label className="block text-xs font-bold text-gray-400 uppercase mb-2">¿A qué sucursal venís?</label>
-                      <select 
-                        value={sucursal}
-                        onChange={(e) => setSucursal(e.target.value)}
-                        className="w-full bg-transparent border-b border-white/20 pb-2 text-sm outline-none focus:border-[#0055A4] text-white data-[theme=light]:text-black"
+                    {/* MARCA */}
+                    <div className="relative">
+                      <div 
+                        onClick={() => setOpenDropdown(openDropdown === 'marca' ? null : 'marca')}
+                        className={`w-full bg-white/60 backdrop-blur-md border rounded-2xl px-4 py-3.5 text-sm font-semibold flex items-center justify-between cursor-pointer transition-all shadow-sm ${marca ? 'text-navy border-slate-300' : 'text-slate-400 border-white'}`}
                       >
-                        <option value="" className="bg-[#121212]">Seleccionar sucursal</option>
-                        <option value="Villa de Mayo" className="bg-[#121212]">Casa Central (Villa de Mayo)</option>
-                        <option value="Panamericana" className="bg-[#121212]">Panamericana (Don Torcuato)</option>
-                        <option value="Olivos" className="bg-[#121212]">Olivos (Vicente López)</option>
-                      </select>
-                    </div>
-                  )}
+                        <span>{marca ? marca : "Seleccioná la marca"}</span>
+                        <ChevronDown className={`w-4 h-4 text-slate-500 transition-transform ${openDropdown === 'marca' ? 'rotate-180 text-[#0145F2]' : ''}`} />
+                      </div>
 
-                  {tipoPeritaje === "online" && (
-                    <div className="mt-4 p-4 bg-[#0A0F16] data-[theme=light]:bg-gray-50 rounded-xl border border-white/5 animate-fadeIn">
-                      <label className="block text-xs font-bold text-gray-400 uppercase mb-2">Subir fotos y videos</label>
-                      <input 
-                        type="file" 
-                        multiple 
-                        accept="image/*,video/*"
-                        onChange={handleFileChange}
-                        className="block w-full text-sm text-gray-400 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-xs file:font-semibold file:bg-[#0055A4] file:text-white hover:file:bg-[#1E6FD9] cursor-pointer"
-                      />
-                      
-                      {archivos.length > 0 && (
-                        <div className="mt-4 space-y-2">
-                          <span className="text-xs font-bold text-[#0055A4]">Archivos adjuntos:</span>
-                          <ul className="text-xs text-gray-400 space-y-1">
-                            {archivos.map((file, i) => (
-                              <li key={i} className="flex justify-between items-center bg-white/5 p-2 rounded">
-                                <span className="truncate pr-4">{file.name}</span>
-                                <button onClick={() => removeFile(i)} className="text-red-400 hover:text-red-300">
-                                  <i className="ti ti-trash"></i>
-                                </button>
-                              </li>
+                      {openDropdown === 'marca' && (
+                        <div className="absolute top-full left-0 right-0 mt-2 bg-white/95 backdrop-blur-xl border border-white rounded-2xl shadow-2xl z-50 p-2">
+                          <input 
+                            type="text" 
+                            placeholder="Buscá la marca..." 
+                            value={busquedaMarca}
+                            onChange={(e) => setBusquedaMarca(e.target.value)}
+                            className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-xs font-bold outline-none mb-2"
+                            autoFocus
+                          />
+                          <div className="max-h-44 overflow-y-auto space-y-1">
+                            {marcasFiltradas.map((m) => (
+                              <div 
+                                key={m}
+                                onClick={() => { setMarca(m); setModelo(""); setOpenDropdown(null); }}
+                                className="px-3 py-2 text-xs font-bold text-slate-700 hover:bg-blue-50 hover:text-[#0145F2] rounded-xl cursor-pointer transition-colors"
+                              >
+                                {m}
+                              </div>
                             ))}
-                          </ul>
+                          </div>
                         </div>
                       )}
                     </div>
-                  )}
 
-                  <div className="flex gap-3 pt-4">
-                    <button 
-                      type="button" 
-                      className="flex-1 py-3 bg-white/5 hover:bg-white/10 border border-white/10 rounded-xl font-bold uppercase text-xs tracking-wider transition-colors"
-                      onClick={() => handlePrevStep(3)}
-                    >
-                      Volver
-                    </button>
-                    <button 
-                      type="button" 
-                      className="flex-1 py-3 bg-[#0055A4] hover:bg-[#1E6FD9] text-white rounded-xl font-bold uppercase text-xs tracking-wider transition-all shadow-lg"
-                      onClick={() => handleNextStep(3)}
-                    >
-                      Siguiente
-                    </button>
-                  </div>
-                </div>
-              )}
+                    {/* MODELO */}
+                    <div className="relative">
+                      <div 
+                        onClick={() => marca && setOpenDropdown(openDropdown === 'modelo' ? null : 'modelo')}
+                        className={`w-full bg-white/60 backdrop-blur-md border rounded-2xl px-4 py-3.5 text-sm font-semibold flex items-center justify-between transition-all shadow-sm ${marca ? 'cursor-pointer text-navy border-slate-300' : 'opacity-60 cursor-not-allowed text-slate-400 border-white'}`}
+                      >
+                        <span>{modelo ? modelo : "Seleccioná el modelo"}</span>
+                        <ChevronDown className={`w-4 h-4 text-slate-500 transition-transform ${openDropdown === 'modelo' ? 'rotate-180 text-[#0145F2]' : ''}`} />
+                      </div>
 
-              {/* PASO 4: DATOS DE CONTACTO Y ENVÍO */}
-              {step === 4 && (
-                <div className="space-y-4 animate-fadeIn">
-                  <h3 className="text-xs font-bold text-[#0055A4] uppercase tracking-widest mb-3">3. Tus datos de contacto</h3>
-                  
-                  <div className="bg-[#0A0F16] data-[theme=light]:bg-gray-50 rounded-xl p-4 border border-white/5 space-y-4">
-                    <div className="flex items-center gap-4">
-                      <label className="w-28 text-xs font-bold text-gray-400 uppercase">Nombre *</label>
+                      {openDropdown === 'modelo' && marca && (
+                        <div className="absolute top-full left-0 right-0 mt-2 bg-white/95 backdrop-blur-xl border border-white rounded-2xl shadow-2xl z-50 max-h-52 overflow-y-auto p-1">
+                          {modelosDisponibles.map((mod) => (
+                            <div 
+                              key={mod}
+                              onClick={() => { setModelo(mod); setOpenDropdown(null); }}
+                              className="px-4 py-2.5 text-xs font-bold text-slate-700 hover:bg-blue-50 hover:text-[#0145F2] rounded-xl cursor-pointer transition-colors"
+                            >
+                              {mod}
+                            </div>
+                          ))}
+                        </div>
+                      )}
+                    </div>
+
+                    {/* VERSIÓN */}
+                    <div>
                       <input 
                         type="text" 
+                        placeholder="Ingresá la versión (Ej: 1.6 MSI...)" 
+                        value={version}
+                        onChange={(e) => setVersion(e.target.value)}
+                        className="w-full bg-white/60 backdrop-blur-md border border-white rounded-2xl px-4 py-3.5 text-sm font-semibold text-navy placeholder:text-slate-400 outline-none focus:border-[#0145F2] transition-all shadow-sm"
+                      />
+                    </div>
+
+                    {/* KILOMETRAJE */}
+                    <div>
+                      <input 
+                        type="number" 
+                        placeholder="Ingresá el kilometraje (Ej: 45000)" 
+                        value={km}
+                        onChange={(e) => setKm(e.target.value)}
+                        className="w-full bg-white/60 backdrop-blur-md border border-white rounded-2xl px-4 py-3.5 text-sm font-semibold text-navy placeholder:text-slate-400 outline-none focus:border-[#0145F2] transition-all shadow-sm"
+                      />
+                    </div>
+
+                    <div className="pt-2">
+                      <button 
+                        type="button" 
+                        disabled={!validarPaso1()}
+                        onClick={() => setStep(2)}
+                        className="w-full py-4 bg-gradient-to-r from-[#0145F2] to-blue-600 hover:from-blue-600 hover:to-sky-500 disabled:opacity-50 text-white font-black rounded-2xl uppercase tracking-widest text-xs transition-all shadow-lg shadow-blue-500/20 cursor-pointer active:scale-95"
+                      >
+                        Continuar
+                      </button>
+                    </div>
+
+                  </div>
+                )}
+
+                {/* PASO 2: PREGUNTA GNC */}
+                {step === 2 && (
+                  <div className="space-y-6 animate-fadeIn py-2">
+                    <div>
+                      <button onClick={() => setStep(1)} className="text-xs font-bold text-[#0145F2] flex items-center gap-1 mb-2 hover:underline">
+                        <ArrowLeft className="w-3.5 h-3.5" /> Volver
+                      </button>
+                    </div>
+
+                    <div className="space-y-3">
+                      {["Sí, tiene GNC", "No, pero tenía antes", "No, nunca tuvo"].map((op) => (
+                        <div 
+                          key={op}
+                          onClick={() => setGnc(op)}
+                          className={`p-4 rounded-2xl border cursor-pointer font-bold text-xs transition-all shadow-sm ${gnc === op ? 'bg-blue-50 border-[#0145F2] text-[#0145F2]' : 'bg-white/60 border-white text-slate-700 hover:bg-white'}`}
+                        >
+                          {op}
+                        </div>
+                      ))}
+                    </div>
+
+                    <button 
+                      type="button"
+                      disabled={!gnc}
+                      onClick={() => setStep(3)}
+                      className="w-full py-4 bg-gradient-to-r from-[#0145F2] to-blue-600 hover:from-blue-600 hover:to-sky-500 disabled:opacity-50 text-white font-black rounded-2xl uppercase tracking-widest text-xs transition-all shadow-lg shadow-blue-500/20 cursor-pointer active:scale-95"
+                    >
+                      Continuar
+                    </button>
+                  </div>
+                )}
+
+                {/* PASO 3: DATOS DE CONTACTO */}
+                {step === 3 && (
+                  <form onSubmit={solicitarCodigoSMS} className="space-y-4 animate-fadeIn">
+                    <div>
+                      <button type="button" onClick={() => setStep(2)} className="text-xs font-bold text-[#0145F2] flex items-center gap-1 mb-2 hover:underline">
+                        <ArrowLeft className="w-3.5 h-3.5" /> Volver
+                      </button>
+                    </div>
+
+                    <div>
+                      <label className="text-[11px] font-bold text-slate-500 uppercase block mb-1">Nombre</label>
+                      <input 
+                        type="text" 
+                        required
+                        placeholder="Ingresá tu nombre" 
                         value={nombre}
                         onChange={(e) => setNombre(e.target.value)}
-                        placeholder="Nombre completo" 
-                        className="flex-1 bg-transparent border-b border-white/20 pb-1 text-sm outline-none focus:border-[#0055A4]"
-                        required 
+                        className="w-full bg-white/60 backdrop-blur-md border border-white rounded-2xl px-4 py-3 text-xs font-semibold text-navy outline-none focus:border-[#0145F2] shadow-sm"
                       />
                     </div>
 
-                    <div className="flex items-center gap-4">
-                      <label className="w-28 text-xs font-bold text-gray-400 uppercase">Teléfono *</label>
+                    <div>
+                      <label className="text-[11px] font-bold text-slate-500 uppercase block mb-1">Apellido</label>
                       <input 
-                        type="tel" 
-                        value={tel}
-                        onChange={(e) => setTel(e.target.value)}
-                        placeholder="Ej: 11 2345 6789" 
-                        className="flex-1 bg-transparent border-b border-white/20 pb-1 text-sm outline-none focus:border-[#0055A4]"
-                        required 
+                        type="text" 
+                        required
+                        placeholder="Ingresá tu apellido" 
+                        value={apellido}
+                        onChange={(e) => setApellido(e.target.value)}
+                        className="w-full bg-white/60 backdrop-blur-md border border-white rounded-2xl px-4 py-3 text-xs font-semibold text-navy outline-none focus:border-[#0145F2] shadow-sm"
                       />
                     </div>
-                  </div>
 
-                  <div className="space-y-3 pt-2">
+                    <div>
+                      <label className="text-[11px] font-bold text-slate-500 uppercase block mb-1">Email</label>
+                      <input 
+                        type="email" 
+                        required
+                        placeholder="Ingresá tu correo" 
+                        value={email}
+                        onChange={(e) => setEmail(e.target.value)}
+                        className="w-full bg-white/60 backdrop-blur-md border border-white rounded-2xl px-4 py-3 text-xs font-semibold text-navy outline-none focus:border-[#0145F2] shadow-sm"
+                      />
+                    </div>
+
+                    <div>
+                      <label className="text-[11px] font-bold text-slate-500 uppercase block mb-1">Teléfono celular</label>
+                      <div className="flex gap-2">
+                        <div className="bg-white/80 border border-white rounded-2xl px-3 py-3 text-xs font-bold text-slate-700 flex items-center shadow-sm">
+                          AR +549
+                        </div>
+                        <input 
+                          type="tel" 
+                          required
+                          placeholder="1112345678" 
+                          value={tel}
+                          onChange={(e) => setTel(e.target.value)}
+                          className="flex-1 bg-white/60 backdrop-blur-md border border-white rounded-2xl px-4 py-3 text-xs font-semibold text-navy outline-none focus:border-[#0145F2] shadow-sm"
+                        />
+                      </div>
+                    </div>
+
+                    <p className="text-[10px] text-center text-slate-400 font-medium pt-1">Recibirás un código de verificación por SMS</p>
+
+                    <button 
+                      type="submit" 
+                      className="w-full py-4 bg-gradient-to-r from-[#0145F2] to-blue-600 hover:from-blue-600 hover:to-sky-500 text-white font-black rounded-2xl uppercase tracking-widest text-xs transition-all shadow-lg shadow-blue-500/20 cursor-pointer flex items-center justify-center gap-2 active:scale-95"
+                    >
+                      Enviar código por SMS
+                    </button>
+                  </form>
+                )}
+
+                {/* PASO 4: VERIFICACIÓN DE CÓDIGO SMS */}
+                {step === 4 && (
+                  <div className="space-y-6 animate-fadeIn py-2">
+                    <div>
+                      <button onClick={() => setStep(3)} className="text-xs font-bold text-[#0145F2] flex items-center gap-1 mb-2 hover:underline">
+                        <ArrowLeft className="w-3.5 h-3.5" /> Cambiar número
+                      </button>
+                      <p className="text-xs text-slate-500 mt-1">
+                        Enviamos un código de 4 dígitos por SMS al número <strong className="text-slate-900">+549 {tel}</strong>
+                      </p>
+                    </div>
+
+                    <div className="space-y-3">
+                      <label className="text-[11px] font-bold text-slate-500 uppercase block">Código de verificación</label>
+                      <input 
+                        type="text" 
+                        maxLength={6}
+                        placeholder="Ej: 1234" 
+                        value={codigoSMS}
+                        onChange={(e) => setCodigoSMS(e.target.value)}
+                        className="w-full bg-white/80 border border-white rounded-2xl px-4 py-3.5 text-center text-2xl font-black tracking-widest text-navy outline-none focus:border-[#0145F2] shadow-inner"
+                        autoFocus
+                      />
+                      <p className="text-[11px] text-slate-400 text-center">
+                        (Para pruebas podés usar el código: <strong className="text-[#0145F2]">1234</strong>)
+                      </p>
+                    </div>
+
                     <button 
                       type="button" 
-                      onClick={submitForm}
-                      disabled={loading}
-                      className="w-full py-4 bg-[#0055A4] hover:bg-[#1E6FD9] text-white font-bold rounded-xl uppercase tracking-wider text-xs transition-all shadow-lg flex items-center justify-center gap-2 disabled:opacity-50"
+                      onClick={verificarCodigoYEnviar}
+                      disabled={loading || codigoSMS.length < 4}
+                      className="w-full py-4 bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 disabled:opacity-50 text-white font-black rounded-2xl uppercase tracking-widest text-xs transition-all shadow-lg shadow-emerald-500/20 cursor-pointer flex items-center justify-center gap-2 active:scale-95"
                     >
-                      {loading ? <i className="ti ti-loader animate-spin text-lg"></i> : <i className="ti ti-file-check text-lg"></i>}
-                      {loading ? "PROCESANDO..." : "ENVIAR SOLICITUD"}
-                    </button>
-
-                    <button 
-                      type="button" 
-                      onClick={() => handlePrevStep(4)}
-                      className="w-full py-3 bg-white/5 hover:bg-white/10 border border-white/10 rounded-xl font-bold uppercase text-xs tracking-wider transition-colors"
-                    >
-                      Volver
+                      {loading && <Loader2 className="w-4 h-4 animate-spin text-white" />}
+                      {loading ? "VERIFICANDO..." : "Confirmar y Enviar Solicitud"}
                     </button>
                   </div>
-                </div>
-              )}
+                )}
 
-              {/* BANNER LA CAJA */}
-              <div className="flex items-center gap-4 bg-white/5 border border-white/10 rounded-xl p-4 mt-8">
-                <div className="w-12 h-12 relative flex-shrink-0">
-                  <Image src="/Logo_La_Caja_Generali.png" alt="Seguros La Caja" fill className="object-contain" />
-                </div>
-                <div className="flex-1">
-                  <strong className="block text-xs font-bold text-white">Asegurá tu auto con La Caja</strong>
-                  <span className="text-[11px] text-gray-400">Cotizá online con beneficios exclusivos.</span>
-                </div>
-                <a 
-                  href="https://cotizadorsocios.lacaja.com.ar/seguro-auto-socios/?socio=22791&utm_source=ig&utm_medium=social&utm_content=link_in_bio" 
-                  target="_blank" 
-                  rel="noopener noreferrer" 
-                  className="bg-red-600 hover:bg-red-700 text-white font-bold text-xs uppercase px-4 py-2 rounded-lg transition-colors"
-                >
-                  Cotizar
-                </a>
               </div>
-
-            </div>
-          ) : (
-            /* ÉXITO */
-            <div className="text-center py-12 animate-fadeIn relative">
-              <div className="absolute top-2 right-4 border-2 border-emerald-500/40 text-emerald-500/40 font-black text-2xl px-3 py-1 rounded-lg transform -rotate-12">
-                RECIBIDO
+            ) : (
+              /* ÉXITO */
+              <div className="text-center py-12 animate-fadeIn space-y-4">
+                <div className="w-16 h-16 bg-emerald-100 text-emerald-600 rounded-full flex items-center justify-center mx-auto mb-2">
+                  <CheckCircle2 className="w-8 h-8" />
+                </div>
+                <h3 className="text-2xl font-black text-navy uppercase">¡Cotización enviada!</h3>
+                <p className="text-slate-500 text-xs leading-relaxed max-w-xs mx-auto">
+                  Teléfono verificado con éxito. Recibimos los datos de tu vehículo y un asesor comercial se pondrá en contacto a la brevedad.
+                </p>
+                <div className="pt-4">
+                  <Link href="/" className="inline-block py-3.5 px-8 bg-gradient-to-r from-[#0145F2] to-blue-600 text-white font-black rounded-2xl text-xs uppercase tracking-widest shadow-lg shadow-blue-500/20">
+                    Volver al inicio
+                  </Link>
+                </div>
               </div>
-              <h3 className="text-2xl font-black text-[#0055A4] uppercase mb-2">¡Cotización en proceso!</h3>
-              <p className="text-gray-400 text-sm mb-6">Hemos recibido los datos y se están analizando. Un asesor se contactará a la brevedad.</p>
-              <Link href="/" className="inline-block py-3 px-6 bg-[#0055A4] text-white font-bold rounded-xl text-xs uppercase tracking-wider">
-                Volver al inicio
-              </Link>
-            </div>
-          )}
+            )}
 
-          {/* FOOTER LEGAL */}
-          <div className="mt-8 pt-4 border-t border-white/10 text-center text-[10px] text-gray-500 space-y-1 font-mono">
-            <p><strong>Pfaffen Cars S.R.L</strong> | CUIT: 33-71906015-9</p>
-            <p>Documento no válido como factura. Sujeto a inspección física.</p>
           </div>
-
         </div>
+
       </div>
+
+      {/* FOOTER DISCRETO */}
+      <footer className="text-center text-[10px] font-bold text-slate-400 py-4 uppercase tracking-widest relative z-10">
+        Pfaffen Autos &bull; Todos los derechos reservados
+      </footer>
+
     </div>
   );
 }
