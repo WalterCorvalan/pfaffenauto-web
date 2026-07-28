@@ -1,7 +1,12 @@
+"use client";
+
+import { useEffect, useRef } from "react";
 import Link from "next/link";
-import { MapPin, ChevronRight } from "lucide-react";
+import { MapPin, ChevronRight, ChevronLeft } from "lucide-react";
 
 export default function Sucursales() {
+  const scrollRef = useRef<HTMLDivElement>(null);
+
   const sucursales = [
     {
       id: "villa-de-mayo",
@@ -29,6 +34,32 @@ export default function Sucursales() {
     }
   ];
 
+  // ================= LÓGICA DE AUTOPLAY =================
+  useEffect(() => {
+    const container = scrollRef.current;
+    if (!container) return;
+
+    const interval = setInterval(() => {
+      // Si llegó al final, vuelve al principio; si no, avanza al siguiente elemento
+      const maxScrollLeft = container.scrollWidth - container.clientWidth;
+      if (container.scrollLeft >= maxScrollLeft - 10) {
+        container.scrollTo({ left: 0, behavior: "smooth" });
+      } else {
+        container.scrollBy({ left: container.clientWidth, behavior: "smooth" });
+      }
+    }, 4500); // Cambia de sucursal cada 4.5 segundos
+
+    return () => clearInterval(interval);
+  }, []);
+
+  const scroll = (direction: "left" | "right") => {
+    if (scrollRef.current) {
+      const { scrollLeft, clientWidth } = scrollRef.current;
+      const offset = direction === "left" ? -clientWidth : clientWidth;
+      scrollRef.current.scrollTo({ left: scrollLeft + offset, behavior: "smooth" });
+    }
+  };
+
   return (
     <section id="sucursales" className="w-full bg-background pt-8 pb-4">
       <div className="max-w-7xl mx-auto px-4 md:px-6">
@@ -38,17 +69,37 @@ export default function Sucursales() {
           <h2 className="text-xl md:text-2xl font-light text-navy tracking-tight">
             Nuestras <strong className="font-black">sucursales</strong>
           </h2>
-          <span className="text-[10px] md:text-xs text-gray-400 font-bold uppercase tracking-widest flex items-center gap-1 animate-pulse">
-            {/* Magia Responsive: Cambia el texto según la pantalla */}
-            <span className="hidden sm:inline">Deslizá para ver más</span>
-            <span className="inline sm:hidden">Deslizá</span>
-            <ChevronRight className="w-3 h-3 md:w-4 md:h-4"/>
-          </span>
+
+          <div className="flex items-center gap-3">
+            <span className="text-[10px] md:text-xs text-gray-400 font-bold uppercase tracking-widest hidden sm:flex items-center gap-1">
+              Deslizá para ver más <ChevronRight className="w-3 h-3 md:w-4 md:h-4"/>
+            </span>
+
+            {/* FLECHAS DE NAVEGACIÓN MANUAL (PC) */}
+            <div className="hidden md:flex items-center gap-1.5 ml-2">
+              <button 
+                onClick={() => scroll("left")}
+                className="p-2 rounded-full border border-gray-200 hover:bg-gray-100 text-navy transition-colors cursor-pointer"
+                aria-label="Anterior"
+              >
+                <ChevronLeft className="w-4 h-4" />
+              </button>
+              <button 
+                onClick={() => scroll("right")}
+                className="p-2 rounded-full border border-gray-200 hover:bg-gray-100 text-navy transition-colors cursor-pointer"
+                aria-label="Siguiente"
+              >
+                <ChevronRight className="w-4 h-4" />
+              </button>
+            </div>
+          </div>
         </div>
 
         {/* ================= CARRUSEL DE BANNERS ================= */}
-        <div className="flex overflow-x-auto snap-x snap-mandatory gap-4 pb-6 [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
-          
+        <div 
+          ref={scrollRef}
+          className="flex overflow-x-auto snap-x snap-mandatory gap-4 pb-6 [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none] scroll-smooth"
+        >
           {sucursales.map((s) => (
             <Link 
               href={`/sucursales/${s.id}`} 
@@ -97,10 +148,9 @@ export default function Sucursales() {
                       {s.subtitulo}
                     </span>
                     
-                    {/* Contenedor del número (whitespace-nowrap evita que el número se rompa en dos líneas) */}
+                    {/* Contenedor del número */}
                     <div className="flex items-end gap-1 sm:gap-1.5 text-white group-hover:text-black leading-none whitespace-nowrap">
                        <span className="font-black text-xs sm:text-sm md:text-lg mb-0.5">TEL</span>
-                       {/* Tamaños escalonados: 19px (celus chicos) -> 24px (tablets) -> 36px (PC) */}
                        <span className="font-black text-[19px] sm:text-2xl md:text-4xl tracking-tighter">
                          {s.telefono}
                        </span>

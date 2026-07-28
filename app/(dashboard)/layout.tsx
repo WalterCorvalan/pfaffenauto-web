@@ -10,7 +10,8 @@ import {
   Users,  
   LogOut,  
   Menu,  
-  X
+  X,
+  ClipboardList
 } from "lucide-react";
 
 export default function DashboardLayout({
@@ -30,6 +31,7 @@ export default function DashboardLayout({
   const navItems = [
     { name: "Gestión de Stock", href: "/panel", icon: Car },
     { name: "Ingresar Vehículo", href: "/panel/vehiculo/nuevo", icon: PlusCircle },
+    { name: "Cotizaciones", href: "/panel/cotizaciones", icon: ClipboardList }, // <-- NUEVA SECCIÓN
     { name: "Usuarios", href: "/panel/usuarios", icon: Users },
   ];
 

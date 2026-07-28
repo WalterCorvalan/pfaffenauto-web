@@ -4,7 +4,6 @@ import Stats from "@/components/Stats";
 import Sucursales from "@/components/Sucursales";
 import Stock from "@/components/Stock";
 import Location from "@/components/Location";
-import Socials from "@/components/Socials";
 import FAQ from "@/components/FAQ";
 import FadeIn from "@/components/FadeIn";
 import Testimonials from "@/components/Testimonials";
@@ -60,10 +59,6 @@ export default async function HomePage() {
       
       <FadeIn direction="up">
         <Location />
-      </FadeIn>
-
-      <FadeIn direction="up">
-        <Socials />
       </FadeIn>
 
       <FadeIn direction="up">
