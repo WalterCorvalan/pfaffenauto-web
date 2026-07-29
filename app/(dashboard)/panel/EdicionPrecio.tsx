@@ -15,7 +15,6 @@ interface EdicionPrecioProps {
 export default function EdicionPrecio({ autoId, precioArs, precioUsd, puedeGestionar }: EdicionPrecioProps) {
   const router = useRouter();
   const [isEditing, setIsEditing] = useState(false);
-  
   const [ars, setArs] = useState(precioArs?.toString() || "");
   const [usd, setUsd] = useState(precioUsd?.toString() || "");
   const [cargando, setCargando] = useState(false);
@@ -27,25 +26,14 @@ export default function EdicionPrecio({ autoId, precioArs, precioUsd, puedeGesti
 
     try {
       const { data: { user } } = await supabase.auth.getUser();
+      const updateData = { precio_publicado_ars: ars ? Number(ars) : null, precio_publicado_usd: usd ? Number(usd) : null };
 
-      const updateData = {
-        precio_publicado_ars: ars ? Number(ars) : null,
-        precio_publicado_usd: usd ? Number(usd) : null,
-      };
-
-      const { error } = await supabase
-        .from("vehiculos")
-        .update(updateData)
-        .eq("id", autoId);
-
+      const { error } = await supabase.from("vehiculos").update(updateData).eq("id", autoId);
       if (error) throw error;
 
       await supabase.from("historial_cambios").insert({
-        tabla: "vehiculos",
-        registro_id: autoId,
-        campo_modificado: "precios_publicados",
-        valor_anterior: `ARS: ${precioArs} | USD: ${precioUsd}`,
-        valor_nuevo: `ARS: ${updateData.precio_publicado_ars} | USD: ${updateData.precio_publicado_usd}`,
+        tabla: "vehiculos", registro_id: autoId, campo_modificado: "precios_publicados",
+        valor_anterior: `ARS: ${precioArs} | USD: ${precioUsd}`, valor_nuevo: `ARS: ${updateData.precio_publicado_ars} | USD: ${updateData.precio_publicado_usd}`,
         usuario_id: user?.id,
       });
 
@@ -63,8 +51,8 @@ export default function EdicionPrecio({ autoId, precioArs, precioUsd, puedeGesti
     <>
       <div 
         onClick={() => puedeGestionar && setIsEditing(true)}
-        className={`inline-flex flex-col gap-0.5 font-mono text-[#4A90E2] group transition-all rounded-lg p-1.5 -ml-1.5
-          ${puedeGestionar ? 'cursor-pointer hover:bg-white/10 hover:text-white' : ''}
+        className={`inline-flex flex-col gap-0.5 font-mono text-[#4A90E2] transition-all rounded-lg p-1.5 -ml-1.5
+          ${puedeGestionar ? 'cursor-pointer hover:bg-white/10 hover:text-white group' : 'cursor-default'}
         `}
         title={puedeGestionar ? "Tocar para editar precios" : ""}
       >
@@ -81,7 +69,7 @@ export default function EdicionPrecio({ autoId, precioArs, precioUsd, puedeGesti
         </div>
       </div>
 
-      {isEditing && (
+      {isEditing && puedeGestionar && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
           <div className="absolute inset-0 bg-black/80 backdrop-blur-sm" onClick={() => !cargando && setIsEditing(false)}></div>
           

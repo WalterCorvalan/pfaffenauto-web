@@ -54,21 +54,26 @@ export default function EditarAutoPage() {
   const params = useParams();
   const autoId = params.id as string;
 
+  // ESTADO NUEVO: Rol del usuario
+  const [rol, setRol] = useState<string>("vendedor"); // Por defecto el menor permiso
+
   const [paso, setPaso] = useState(1);
   const totalPasos = 5;
   const [loadingGuardar, setLoadingGuardar] = useState(false);
   const [loadingDatos, setLoadingDatos] = useState(true);
-  
+
   // Archivos nuevos a subir
   const [archivos, setArchivos] = useState<File[]>([]);
   const [previsualizaciones, setPrevisualizaciones] = useState<string[]>([]);
-  
+
   // Imágenes que ya existían en la base de datos
   const [imagenesExistentes, setImagenesExistentes] = useState<any[]>([]);
   const [imagenesA_Eliminar, setImagenesA_Eliminar] = useState<string[]>([]);
-  
+
   const [errorArchivos, setErrorArchivos] = useState("");
-  const [sucursales, setSucursales] = useState<{ id: string; nombre: string }[]>([]);
+  const [sucursales, setSucursales] = useState<
+    { id: string; nombre: string }[]
+  >([]);
 
   const {
     register,
@@ -80,13 +85,28 @@ export default function EditarAutoPage() {
     resolver: zodResolver(formSchema),
   });
 
-  // 1. CARGAR DATOS DEL AUTO Y SUCURSALES
+  // 1. CARGAR DATOS DEL AUTO, SUCURSALES Y ROL
   useEffect(() => {
     const fetchData = async () => {
       setLoadingDatos(true);
-      
+
+      // Traer el rol del usuario actual
+      const {
+        data: { user },
+      } = await supabase.auth.getUser();
+      if (user) {
+        const { data: perfil } = await supabase
+          .from("perfiles")
+          .select("rol")
+          .eq("id", user.id)
+          .single();
+        if (perfil) setRol(perfil.rol);
+      }
+
       // Traer sucursales
-      const { data: dataSucursales } = await supabase.from("sucursales").select("id, nombre");
+      const { data: dataSucursales } = await supabase
+        .from("sucursales")
+        .select("id, nombre");
       if (dataSucursales) setSucursales(dataSucursales);
 
       // Traer datos del vehículo
@@ -132,7 +152,9 @@ export default function EditarAutoPage() {
       // Guardar imágenes que ya estaban subidas
       if (vehiculo.multimedia_vehiculos) {
         // Ordenarlas por su campo 'orden'
-        const ordenadas = vehiculo.multimedia_vehiculos.sort((a: any, b: any) => a.orden - b.orden);
+        const ordenadas = vehiculo.multimedia_vehiculos.sort(
+          (a: any, b: any) => a.orden - b.orden,
+        );
         setImagenesExistentes(ordenadas);
       }
 
@@ -145,7 +167,8 @@ export default function EditarAutoPage() {
   // Navegación de pasos
   const handleSiguiente = async () => {
     let camposAValidar: (keyof FormValues)[] = [];
-    if (paso === 1) camposAValidar = ["patente", "marca", "modelo", "anio", "kilometraje"];
+    if (paso === 1)
+      camposAValidar = ["patente", "marca", "modelo", "anio", "kilometraje"];
     else if (paso === 2) camposAValidar = ["sucursal_id"];
     else if (paso === 3) camposAValidar = ["precio_publicado_ars"];
 
@@ -156,11 +179,16 @@ export default function EditarAutoPage() {
   const handleAnterior = () => setPaso((prev) => Math.max(prev - 1, 1));
 
   // Manejo de nuevas imágenes
-  const handleSeleccionarArchivos = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleSeleccionarArchivos = (
+    e: React.ChangeEvent<HTMLInputElement>,
+  ) => {
     if (e.target.files) {
       const nuevos = Array.from(e.target.files);
       setArchivos((prev) => [...prev, ...nuevos]);
-      setPrevisualizaciones((prev) => [...prev, ...nuevos.map((f) => URL.createObjectURL(f))]);
+      setPrevisualizaciones((prev) => [
+        ...prev,
+        ...nuevos.map((f) => URL.createObjectURL(f)),
+      ]);
       setErrorArchivos("");
     }
   };
@@ -184,80 +212,101 @@ export default function EditarAutoPage() {
     setLoadingGuardar(true);
 
     try {
-      const { data: { user } } = await supabase.auth.getUser();
+      const {
+        data: { user },
+      } = await supabase.auth.getUser();
 
-      // 1. HACER UPDATE DEL VEHÍCULO (El slug no se actualiza para no romper links SEO viejos)
-      const { error: errorVehiculo } = await supabase
-        .from("vehiculos")
-        .update({
-          patente: data.patente,
-          marca: data.marca,
-          modelo: data.modelo,
-          anio: data.anio,
-          kilometraje: data.kilometraje,
-          segmento: data.segmento || null,
-          tipo: data.tipo || null,
-          color: data.color || null,
-          tipo_combustible: data.tipo_combustible || null,
-          transmision: data.transmision || null,
-          origen: data.origen,
-          stock_fisico: data.stock_fisico,
-          sucursal_id: data.sucursal_id,
-          precio_costo_ars: data.precio_costo_ars || null,
-          precio_costo_usd: data.precio_costo_usd || null,
-          precio_publicado_ars: data.precio_publicado_ars,
-          precio_publicado_usd: data.precio_publicado_usd || null,
-          numero_motor: data.numero_motor || null,
-          numero_chasis: data.numero_chasis || null,
-          radicado_localidad: data.radicado_localidad || null,
-          radicado_provincia: data.radicado_provincia || null,
-          destacado: data.destacado,
-          observaciones_internas: data.observaciones_internas || null,
-          updated_at: new Date().toISOString(),
-        })
-        .eq("id", autoId);
+      // 1. SI ES ADMIN O ENCARGADO, ACTUALIZAMOS LOS DATOS TÉCNICOS. EL VENDEDOR NO PASA POR ACÁ.
+      if (rol !== "vendedor") {
+        const { error: errorVehiculo } = await supabase
+          .from("vehiculos")
+          .update({
+            patente: data.patente,
+            marca: data.marca,
+            modelo: data.modelo,
+            anio: data.anio,
+            kilometraje: data.kilometraje,
+            segmento: data.segmento || null,
+            tipo: data.tipo || null,
+            color: data.color || null,
+            tipo_combustible: data.tipo_combustible || null,
+            transmision: data.transmision || null,
+            origen: data.origen,
+            stock_fisico: data.stock_fisico,
+            sucursal_id: data.sucursal_id,
+            precio_costo_ars: data.precio_costo_ars || null,
+            precio_costo_usd: data.precio_costo_usd || null,
+            precio_publicado_ars: data.precio_publicado_ars,
+            precio_publicado_usd: data.precio_publicado_usd || null,
+            numero_motor: data.numero_motor || null,
+            numero_chasis: data.numero_chasis || null,
+            radicado_localidad: data.radicado_localidad || null,
+            radicado_provincia: data.radicado_provincia || null,
+            destacado: data.destacado,
+            observaciones_internas: data.observaciones_internas || null,
+            updated_at: new Date().toISOString(),
+          })
+          .eq("id", autoId);
 
-      if (errorVehiculo) throw errorVehiculo;
+        if (errorVehiculo) throw errorVehiculo;
+      }
 
       // 2. ELIMINAR FOTOS QUE EL USUARIO BORRÓ
       if (imagenesA_Eliminar.length > 0) {
-        await supabase.from("multimedia_vehiculos").delete().in("id", imagenesA_Eliminar);
+        await supabase
+          .from("multimedia_vehiculos")
+          .delete()
+          .in("id", imagenesA_Eliminar);
       }
-
-      // 3. SUBIR FOTOS NUEVAS
+// 3. SUBIR FOTOS NUEVAS (Optimizado en Paralelo y Tipado estricto)
       let ordenSiguiente = imagenesExistentes.length; 
-      const erroresFotos = [];
       
-      for (const archivo of archivos) {
+      const promesasSubida = archivos.map(async (archivo, index) => {
         try {
           const url = await uploadAutoImage(archivo);
           if (url) {
-            await supabase.from("multimedia_vehiculos").insert({
-              vehiculo_id: autoId,
+            return {
+              vehiculo_id: autoId, // Cambiar a vehiculoNuevo.id si estás en "nuevo/page.tsx"
               url_archivo: url,
               tipo: archivo.type.startsWith("video") ? "video" : "foto",
-              orden: ordenSiguiente,
-            });
-            ordenSiguiente++;
+              orden: ordenSiguiente + index,
+            };
           }
+          return undefined; // <-- Retorno explícito para TS
         } catch (imgErr) {
-           console.error("Fallo al subir foto:", archivo.name, imgErr);
-           erroresFotos.push(archivo.name);
+          console.error("Fallo al subir foto:", archivo.name, imgErr);
+          return undefined; // <-- Retorno explícito para TS
         }
+      });
+
+      const resultadosSubida = await Promise.all(promesasSubida);
+      
+      // TYPE GUARD: Filtramos los undefined y le aseguramos a TypeScript el tipo de dato exacto
+      const imagenesAInsertar = resultadosSubida.filter(
+        (res): res is { vehiculo_id: string; url_archivo: string; tipo: string; orden: number } => 
+          res !== undefined && res !== null
+      );
+
+      if (imagenesAInsertar.length > 0) {
+        const { error: insertError } = await supabase
+          .from("multimedia_vehiculos")
+          .insert(imagenesAInsertar);
+        
+        if (insertError) throw insertError;
       }
 
-      // 4. DEJAR REGISTRO EN HISTORIAL (Auditoría)
+      // 4. DEJAR REGISTRO EN HISTORIAL (Auditoría basada en rol)
       await supabase.from("historial_cambios").insert({
         tabla: "vehiculos",
         registro_id: autoId,
-        campo_modificado: "edicion_completa",
-        valor_nuevo: "El vehículo fue editado completamente.",
+        campo_modificado:
+          rol === "vendedor" ? "galeria_multimedia" : "edicion_completa",
+        valor_nuevo:
+          rol === "vendedor"
+            ? "El vendedor actualizó las fotos/videos de la unidad."
+            : "El vehículo fue editado completamente.",
         usuario_id: user?.id,
       });
-
-      if (erroresFotos.length > 0) {
-         alert(`Se actualizaron los datos, pero falló la subida de: ${erroresFotos.join(', ')}`);
-      }
 
       router.push("/panel");
       router.refresh();
@@ -271,18 +320,21 @@ export default function EditarAutoPage() {
 
   if (loadingDatos) {
     return (
-      <div className="min-h-screen bg-[#0A0A0A] flex items-center justify-center text-white">
+      <div className="min-h-screen bg-[#0A0A0A] flex items-center justify-center text-white w-full">
         <div className="flex flex-col items-center gap-3">
           <Car className="w-8 h-8 text-[#0055A4] animate-pulse" />
-          <p className="text-gray-400 text-sm tracking-widest uppercase">Cargando datos del vehículo...</p>
+          <p className="text-gray-400 text-sm tracking-widest uppercase">
+            Cargando datos del vehículo...
+          </p>
         </div>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-[#0A0A0A] text-white pt-28 pb-16 px-4">
-      <div className="max-w-2xl mx-auto">
+    // Agregamos w-full overflow-x-hidden acá para evitar scrolleos horizontales forzados
+    <div className="min-h-screen bg-[#0A0A0A] text-white pt-28 pb-16 px-4 w-full overflow-x-hidden">
+      <div className="max-w-2xl mx-auto w-full">
         <button
           onClick={() => router.back()}
           className="text-gray-400 hover:text-white flex items-center gap-2 text-sm transition-colors py-2 mb-4"
@@ -290,68 +342,135 @@ export default function EditarAutoPage() {
           <ArrowLeft className="w-4 h-4" /> Volver al panel
         </button>
 
-        {/* Encabezado y Progreso */}
-        <div className="flex justify-between items-end mb-2">
-          <div>
+        {/* Encabezado y Progreso (Condicional por rol) */}
+        {rol !== "vendedor" ? (
+          <>
+            <div className="flex justify-between items-end mb-2 w-full">
+              <div>
+                <h1 className="text-2xl md:text-3xl font-serif text-[#0055A4]">
+                  Editar Vehículo
+                </h1>
+                <p className="text-gray-400 text-xs md:text-sm mt-1">
+                  Paso {paso} de {totalPasos}:{" "}
+                  {paso === 1
+                    ? "Información Principal"
+                    : paso === 2
+                      ? "Especificaciones y Sucursal"
+                      : paso === 3
+                        ? "Esquema de Precios"
+                        : paso === 4
+                          ? "Datos Legales"
+                          : "Multimedia y Observaciones"}
+                </p>
+              </div>
+              <span className="text-xs font-mono font-bold text-[#0055A4] bg-[#0055A4]/10 px-3 py-1 rounded-full border border-[#0055A4]/20 shrink-0">
+                {Math.round((paso / totalPasos) * 100)}%
+              </span>
+            </div>
+
+            <div className="w-full bg-[#1A1A1A] h-1.5 rounded-full mb-8 overflow-hidden">
+              <div
+                className="bg-[#0055A4] h-full transition-all duration-300"
+                style={{ width: `${(paso / totalPasos) * 100}%` }}
+              ></div>
+            </div>
+          </>
+        ) : (
+          <div className="mb-8 w-full">
             <h1 className="text-2xl md:text-3xl font-serif text-[#0055A4]">
-              Editar Vehículo
+              Galería del Vehículo
             </h1>
             <p className="text-gray-400 text-xs md:text-sm mt-1">
-              Paso {paso} de {totalPasos}:{" "}
-              {paso === 1 ? "Información Principal" : paso === 2 ? "Especificaciones y Sucursal" : paso === 3 ? "Esquema de Precios" : paso === 4 ? "Datos Legales" : "Multimedia y Observaciones"}
+              Solo tenés permisos para gestionar el material visual de esta
+              unidad.
             </p>
           </div>
-          <span className="text-xs font-mono font-bold text-[#0055A4] bg-[#0055A4]/10 px-3 py-1 rounded-full border border-[#0055A4]/20">
-            {Math.round((paso / totalPasos) * 100)}%
-          </span>
-        </div>
+        )}
 
-        <div className="w-full bg-[#1A1A1A] h-1.5 rounded-full mb-8 overflow-hidden">
-          <div
-            className="bg-[#0055A4] h-full transition-all duration-300"
-            style={{ width: `${(paso / totalPasos) * 100}%` }}
-          ></div>
-        </div>
-
-        <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
+        <form onSubmit={handleSubmit(onSubmit)} className="space-y-6 w-full">
           {/* PASO 1 */}
-          {paso === 1 && (
-            <SectionCard title="1. Información Principal" icon={<Car className="w-4 h-4 text-[#0055A4]" />}>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+          {rol !== "vendedor" && paso === 1 && (
+            <SectionCard
+              title="1. Información Principal"
+              icon={<Car className="w-4 h-4 text-[#0055A4]" />}
+            >
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-5 w-full">
                 <Campo label="Patente *" error={errors.patente?.message}>
-                  <input {...register("patente")} placeholder="Ej: AB123CD" className={inputClass} />
+                  <input
+                    {...register("patente")}
+                    placeholder="Ej: AB123CD"
+                    className={inputClass}
+                  />
                 </Campo>
                 <Campo label="Marca *" error={errors.marca?.message}>
-                  <input {...register("marca")} placeholder="Ej: Volkswagen" className={inputClass} />
+                  <input
+                    {...register("marca")}
+                    placeholder="Ej: Volkswagen"
+                    className={inputClass}
+                  />
                 </Campo>
                 <Campo label="Modelo *" error={errors.modelo?.message}>
-                  <input {...register("modelo")} placeholder="Ej: Amarok V6" className={inputClass} />
+                  <input
+                    {...register("modelo")}
+                    placeholder="Ej: Amarok V6"
+                    className={inputClass}
+                  />
                 </Campo>
                 <Campo label="Año *" error={errors.anio?.message}>
-                  <input type="number" {...register("anio", { valueAsNumber: true })} className={inputClass} />
+                  <input
+                    type="number"
+                    {...register("anio", { valueAsNumber: true })}
+                    className={inputClass}
+                  />
                 </Campo>
-                <Campo label="Kilometraje *" error={errors.kilometraje?.message}>
-                  <input type="number" {...register("kilometraje", { valueAsNumber: true })} placeholder="Ej: 45000" className={inputClass} />
+                <Campo
+                  label="Kilometraje *"
+                  error={errors.kilometraje?.message}
+                >
+                  <input
+                    type="number"
+                    {...register("kilometraje", { valueAsNumber: true })}
+                    placeholder="Ej: 45000"
+                    className={inputClass}
+                  />
                 </Campo>
                 <Campo label="Color">
-                  <input {...register("color")} placeholder="Ej: Gris Indio" className={inputClass} />
+                  <input
+                    {...register("color")}
+                    placeholder="Ej: Gris Indio"
+                    className={inputClass}
+                  />
                 </Campo>
               </div>
             </SectionCard>
           )}
 
           {/* PASO 2 */}
-          {paso === 2 && (
-            <SectionCard title="2. Especificaciones y Sucursal" icon={<Shield className="w-4 h-4 text-[#0055A4]" />}>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+          {rol !== "vendedor" && paso === 2 && (
+            <SectionCard
+              title="2. Especificaciones y Sucursal"
+              icon={<Shield className="w-4 h-4 text-[#0055A4]" />}
+            >
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-5 w-full">
                 <Campo label="Segmento">
-                  <input {...register("segmento")} placeholder="Ej: SUV / Pick-up" className={inputClass} />
+                  <input
+                    {...register("segmento")}
+                    placeholder="Ej: SUV / Pick-up"
+                    className={inputClass}
+                  />
                 </Campo>
                 <Campo label="Tipo de Vehículo">
-                  <input {...register("tipo")} placeholder="Ej: Utilitario" className={inputClass} />
+                  <input
+                    {...register("tipo")}
+                    placeholder="Ej: Utilitario"
+                    className={inputClass}
+                  />
                 </Campo>
                 <Campo label="Combustible">
-                  <select {...register("tipo_combustible")} className={inputClass}>
+                  <select
+                    {...register("tipo_combustible")}
+                    className={inputClass}
+                  >
                     <option value="">Seleccionar...</option>
                     <option>Nafta</option>
                     <option>Diesel</option>
@@ -371,7 +490,9 @@ export default function EditarAutoPage() {
                   <select {...register("sucursal_id")} className={inputClass}>
                     <option value="">Seleccionar...</option>
                     {sucursales.map((s) => (
-                      <option key={s.id} value={s.id}>{s.nombre}</option>
+                      <option key={s.id} value={s.id}>
+                        {s.nombre}
+                      </option>
                     ))}
                   </select>
                 </Campo>
@@ -383,13 +504,21 @@ export default function EditarAutoPage() {
                 </Campo>
               </div>
 
-              <div className="flex gap-8 pt-4 border-t border-white/5 mt-4">
-                <label className="flex items-center gap-2 text-sm text-gray-300 cursor-pointer">
-                  <input type="checkbox" {...register("stock_fisico")} className="w-4 h-4 accent-[#0055A4]" />
+              <div className="flex flex-wrap gap-4 sm:gap-8 pt-4 border-t border-white/5 mt-4 w-full">
+                <label className="flex items-center gap-2 text-sm text-gray-300 cursor-pointer shrink-0">
+                  <input
+                    type="checkbox"
+                    {...register("stock_fisico")}
+                    className="w-4 h-4 accent-[#0055A4]"
+                  />
                   En stock físico
                 </label>
-                <label className="flex items-center gap-2 text-sm text-gray-300 cursor-pointer">
-                  <input type="checkbox" {...register("destacado")} className="w-4 h-4 accent-[#0055A4]" />
+                <label className="flex items-center gap-2 text-sm text-gray-300 cursor-pointer shrink-0">
+                  <input
+                    type="checkbox"
+                    {...register("destacado")}
+                    className="w-4 h-4 accent-[#0055A4]"
+                  />
                   Destacado en la web
                 </label>
               </div>
@@ -397,79 +526,178 @@ export default function EditarAutoPage() {
           )}
 
           {/* PASO 3 */}
-          {paso === 3 && (
-            <SectionCard title="3. Esquema de Precios" icon={<DollarSign className="w-4 h-4 text-[#0055A4]" />}>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
-                <Campo label="Precio Publicado ARS *" error={errors.precio_publicado_ars?.message}>
-                  <input type="number" {...register("precio_publicado_ars", { valueAsNumber: true })} placeholder="Ej: 25000000" className={inputClass} />
+          {rol !== "vendedor" && paso === 3 && (
+            <SectionCard
+              title="3. Esquema de Precios"
+              icon={<DollarSign className="w-4 h-4 text-[#0055A4]" />}
+            >
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-5 w-full">
+                <Campo
+                  label="Precio Publicado ARS *"
+                  error={errors.precio_publicado_ars?.message}
+                >
+                  <input
+                    type="number"
+                    {...register("precio_publicado_ars", {
+                      valueAsNumber: true,
+                    })}
+                    placeholder="Ej: 25000000"
+                    className={inputClass}
+                  />
                 </Campo>
                 <Campo label="Precio Publicado USD">
-                  <input type="number" {...register("precio_publicado_usd", { valueAsNumber: true })} placeholder="Ej: 22000" className={inputClass} />
+                  <input
+                    type="number"
+                    {...register("precio_publicado_usd", {
+                      valueAsNumber: true,
+                    })}
+                    placeholder="Ej: 22000"
+                    className={inputClass}
+                  />
                 </Campo>
                 <Campo label="Precio Costo ARS (Interno)">
-                  <input type="number" {...register("precio_costo_ars", { valueAsNumber: true })} placeholder="Solo visible internamente" className={inputClass} />
+                  <input
+                    type="number"
+                    {...register("precio_costo_ars", { valueAsNumber: true })}
+                    placeholder="Solo visible internamente"
+                    className={inputClass}
+                  />
                 </Campo>
                 <Campo label="Precio Costo USD (Interno)">
-                  <input type="number" {...register("precio_costo_usd", { valueAsNumber: true })} placeholder="Solo visible internamente" className={inputClass} />
+                  <input
+                    type="number"
+                    {...register("precio_costo_usd", { valueAsNumber: true })}
+                    placeholder="Solo visible internamente"
+                    className={inputClass}
+                  />
                 </Campo>
               </div>
             </SectionCard>
           )}
 
           {/* PASO 4 */}
-          {paso === 4 && (
-            <SectionCard title="4. Datos Legales (Transferencia)" icon={<FileText className="w-4 h-4 text-[#0055A4]" />}>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+          {rol !== "vendedor" && paso === 4 && (
+            <SectionCard
+              title="4. Datos Legales (Transferencia)"
+              icon={<FileText className="w-4 h-4 text-[#0055A4]" />}
+            >
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-5 w-full">
                 <Campo label="Número de Motor">
-                  <input {...register("numero_motor")} placeholder="Nro de motor" className={inputClass} />
+                  <input
+                    {...register("numero_motor")}
+                    placeholder="Nro de motor"
+                    className={inputClass}
+                  />
                 </Campo>
                 <Campo label="Número de Chasis">
-                  <input {...register("numero_chasis")} placeholder="Nro de chasis / cuadro" className={inputClass} />
+                  <input
+                    {...register("numero_chasis")}
+                    placeholder="Nro de chasis / cuadro"
+                    className={inputClass}
+                  />
                 </Campo>
                 <Campo label="Radicado - Localidad">
-                  <input {...register("radicado_localidad")} placeholder="Ej: San Isidro" className={inputClass} />
+                  <input
+                    {...register("radicado_localidad")}
+                    placeholder="Ej: San Isidro"
+                    className={inputClass}
+                  />
                 </Campo>
                 <Campo label="Radicado - Provincia">
-                  <input {...register("radicado_provincia")} placeholder="Ej: Buenos Aires" className={inputClass} />
+                  <input
+                    {...register("radicado_provincia")}
+                    placeholder="Ej: Buenos Aires"
+                    className={inputClass}
+                  />
                 </Campo>
               </div>
             </SectionCard>
           )}
 
-          {/* PASO 5 */}
-          {paso === 5 && (
-            <SectionCard title="5. Multimedia y Observaciones" icon={<ImageIcon className="w-4 h-4 text-[#0055A4]" />}>
-              <div className="space-y-4">
-                <div>
-                  <label className="text-xs text-gray-400 block mb-1">Observaciones Internas</label>
-                  <textarea {...register("observaciones_internas")} placeholder="Notas privadas sobre el estado del vehículo..." className={`${inputClass} h-24`} />
-                </div>
+          {/* PASO 5 / VENDEDOR */}
+          {(paso === 5 || rol === "vendedor") && (
+            <SectionCard
+              title={
+                rol === "vendedor"
+                  ? "Imágenes"
+                  : "5. Multimedia y Observaciones"
+              }
+              icon={<ImageIcon className="w-4 h-4 text-[#0055A4]" />}
+            >
+              <div className="space-y-4 w-full">
+                {rol !== "vendedor" && (
+                  <div className="w-full">
+                    <label className="text-xs text-gray-400 block mb-1">
+                      Observaciones Internas
+                    </label>
+                    <textarea
+                      {...register("observaciones_internas")}
+                      placeholder="Notas privadas sobre el estado del vehículo..."
+                      className={`${inputClass} h-24`}
+                    />
+                  </div>
+                )}
 
-                <div className={`border-2 border-dashed rounded-xl p-6 text-center transition-colors ${errorArchivos ? "border-red-500/50 bg-red-500/5" : "border-white/10 hover:border-[#0055A4]/50 bg-[#0A0A0A]"}`}>
-                  <input type="file" accept="image/*,video/*" multiple id="file-upload" onChange={handleSeleccionarArchivos} className="hidden" />
-                  <label htmlFor="file-upload" className="cursor-pointer flex flex-col items-center">
+                <div
+                  className={`w-full border-2 border-dashed rounded-xl p-6 text-center transition-colors ${errorArchivos ? "border-red-500/50 bg-red-500/5" : "border-white/10 hover:border-[#0055A4]/50 bg-[#0A0A0A]"}`}
+                >
+                  <input
+                    type="file"
+                    accept="image/*,video/*"
+                    multiple
+                    id="file-upload"
+                    onChange={handleSeleccionarArchivos}
+                    className="hidden"
+                  />
+                  <label
+                    htmlFor="file-upload"
+                    className="cursor-pointer flex flex-col items-center"
+                  >
                     <Upload className="w-8 h-8 text-gray-500 mb-2" />
-                    <span className="text-sm font-bold text-gray-200">Subir Más Fotografías</span>
+                    <span className="text-sm font-bold text-gray-200">
+                      Subir Más Fotografías
+                    </span>
                   </label>
                 </div>
-                {errorArchivos && <span className="text-red-500 text-xs block">{errorArchivos}</span>}
+                {errorArchivos && (
+                  <span className="text-red-500 text-xs block">
+                    {errorArchivos}
+                  </span>
+                )}
 
                 {/* GALERÍA DE IMÁGENES MIXTA (Viejas y Nuevas) */}
-                {(imagenesExistentes.length > 0 || previsualizaciones.length > 0) && (
-                  <div className="grid grid-cols-2 md:grid-cols-4 gap-3 pt-2">
-                    
+                {(imagenesExistentes.length > 0 ||
+                  previsualizaciones.length > 0) && (
+                  <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3 pt-2 w-full">
                     {/* Imágenes Viejas (Base de datos) */}
                     {imagenesExistentes.map((img) => (
-                      <div key={img.id} className="relative group h-24 bg-black rounded-lg overflow-hidden border border-white/10">
+                      <div
+                        key={img.id}
+                        className="relative group h-24 bg-black rounded-lg overflow-hidden border border-white/10 w-full"
+                      >
                         {img.tipo === "video" ? (
-                          <video src={img.url_archivo} className="w-full h-full object-cover opacity-70" muted />
+                          <video
+                            src={img.url_archivo}
+                            className="w-full h-full object-cover opacity-70"
+                            muted
+                          />
                         ) : (
-                          <img src={img.url_archivo} alt="Existente" className="w-full h-full object-cover opacity-70" />
+                          <img
+                            src={img.url_archivo}
+                            alt="Existente"
+                            className="w-full h-full object-cover opacity-70"
+                          />
                         )}
                         <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
-                           <span className="bg-black/60 text-white text-[9px] px-2 py-0.5 rounded font-bold tracking-widest">GUARDADA</span>
+                          <span className="bg-black/60 text-white text-[9px] px-2 py-0.5 rounded font-bold tracking-widest">
+                            GUARDADA
+                          </span>
                         </div>
-                        <button type="button" onClick={() => eliminarImagenExistente(img.id)} className="absolute top-1 right-1 bg-red-600 hover:bg-red-700 text-white p-1 rounded-full shadow transition-colors cursor-pointer">
+                        <button
+                          type="button"
+                          onClick={() => eliminarImagenExistente(img.id)}
+                          className="absolute top-1 right-1 bg-red-600 hover:bg-red-700 text-white p-1 rounded-full shadow transition-colors cursor-pointer"
+                        >
                           <X className="w-3 h-3" />
                         </button>
                       </div>
@@ -477,42 +705,95 @@ export default function EditarAutoPage() {
 
                     {/* Imágenes Nuevas (A subir) */}
                     {previsualizaciones.map((src, index) => (
-                      <div key={`nuevo-${index}`} className="relative group h-24 bg-black rounded-lg overflow-hidden border border-emerald-500/30">
+                      <div
+                        key={`nuevo-${index}`}
+                        className="relative group h-24 bg-black rounded-lg overflow-hidden border border-emerald-500/30 w-full"
+                      >
                         {archivos[index]?.type.startsWith("video") ? (
-                          <video src={src} className="w-full h-full object-cover" muted />
+                          <video
+                            src={src}
+                            className="w-full h-full object-cover"
+                            muted
+                          />
                         ) : (
-                          <img src={src} alt="Nueva" className="w-full h-full object-cover" />
+                          <img
+                            src={src}
+                            alt="Nueva"
+                            className="w-full h-full object-cover"
+                          />
                         )}
                         <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
-                           <span className="bg-emerald-500 text-white text-[9px] px-2 py-0.5 rounded font-bold tracking-widest">NUEVA</span>
+                          <span className="bg-emerald-500 text-white text-[9px] px-2 py-0.5 rounded font-bold tracking-widest">
+                            NUEVA
+                          </span>
                         </div>
-                        <button type="button" onClick={() => eliminarArchivoNuevo(index)} className="absolute top-1 right-1 bg-red-600 hover:bg-red-700 text-white p-1 rounded-full shadow transition-colors cursor-pointer">
+                        <button
+                          type="button"
+                          onClick={() => eliminarArchivoNuevo(index)}
+                          className="absolute top-1 right-1 bg-red-600 hover:bg-red-700 text-white p-1 rounded-full shadow transition-colors cursor-pointer"
+                        >
                           <X className="w-3 h-3" />
                         </button>
                       </div>
                     ))}
-
                   </div>
                 )}
               </div>
             </SectionCard>
           )}
 
-          {/* Botones de Navegación Anterior / Siguiente / Guardar */}
-          <div className="flex items-center gap-4 pt-4">
-            {paso > 1 && (
-              <button type="button" onClick={handleAnterior} className="w-1/3 bg-[#1A1A1A] hover:bg-[#252525] border border-white/10 py-4 rounded-xl font-bold uppercase tracking-wider text-xs transition-all flex items-center justify-center gap-2">
-                <ChevronLeft className="w-4 h-4" /> Anterior
-              </button>
-            )}
+          {/* Botones de Navegación / Guardar */}
+          <div className="flex items-center gap-4 pt-4 w-full">
+            {rol !== "vendedor" ? (
+              <>
+                {paso > 1 && (
+                  <button
+                    type="button"
+                    onClick={handleAnterior}
+                    className="w-1/3 bg-[#1A1A1A] hover:bg-[#252525] border border-white/10 py-4 rounded-xl font-bold uppercase tracking-wider text-xs transition-all flex items-center justify-center gap-2"
+                  >
+                    <ChevronLeft className="w-4 h-4" />{" "}
+                    <span className="hidden sm:inline">Anterior</span>
+                  </button>
+                )}
 
-            {paso < totalPasos ? (
-              <button type="button" onClick={handleSiguiente} className={`${paso === 1 ? "w-full" : "w-2/3"} bg-[#0055A4] hover:bg-[#1E6FD9] py-4 rounded-xl font-bold uppercase tracking-wider text-xs transition-all flex items-center justify-center gap-2 shadow-xl`}>
-                Siguiente <ChevronRight className="w-4 h-4" />
-              </button>
+                {paso < totalPasos ? (
+                  <button
+                    type="button"
+                    onClick={handleSiguiente}
+                    className={`${paso === 1 ? "w-full" : "w-2/3"} bg-[#0055A4] hover:bg-[#1E6FD9] py-4 rounded-xl font-bold uppercase tracking-wider text-xs transition-all flex items-center justify-center gap-2 shadow-xl`}
+                  >
+                    Siguiente <ChevronRight className="w-4 h-4" />
+                  </button>
+                ) : (
+                  <button
+                    type="submit"
+                    disabled={loadingGuardar}
+                    className="w-2/3 bg-[#0055A4] hover:bg-[#1E6FD9] py-4 rounded-xl font-bold uppercase tracking-wider text-xs transition-all flex items-center justify-center gap-2 shadow-xl disabled:opacity-50"
+                  >
+                    {loadingGuardar ? (
+                      "Guardando..."
+                    ) : (
+                      <>
+                        <Save className="w-4 h-4" /> Actualizar Vehículo
+                      </>
+                    )}
+                  </button>
+                )}
+              </>
             ) : (
-              <button type="submit" disabled={loadingGuardar} className="w-2/3 bg-[#0055A4] hover:bg-[#1E6FD9] py-4 rounded-xl font-bold uppercase tracking-wider text-xs transition-all flex items-center justify-center gap-2 shadow-xl disabled:opacity-50">
-                {loadingGuardar ? "Guardando Cambios..." : <><Save className="w-4 h-4" /> Actualizar Vehículo</>}
+              <button
+                type="submit"
+                disabled={loadingGuardar}
+                className="w-full bg-[#0055A4] hover:bg-[#1E6FD9] py-4 rounded-xl font-bold uppercase tracking-wider text-xs transition-all flex items-center justify-center gap-2 shadow-xl disabled:opacity-50"
+              >
+                {loadingGuardar ? (
+                  "Actualizando Galería..."
+                ) : (
+                  <>
+                    <Save className="w-4 h-4" /> Guardar Cambios
+                  </>
+                )}
               </button>
             )}
           </div>
@@ -522,25 +803,48 @@ export default function EditarAutoPage() {
   );
 }
 
-const inputClass = "w-full bg-[#0A0A0A] border border-white/10 p-3 rounded-xl text-sm outline-none focus:border-[#0055A4] transition-colors";
+const inputClass =
+  "w-full bg-[#0A0A0A] border border-white/10 p-3 rounded-xl text-sm outline-none focus:border-[#0055A4] transition-colors";
 
-function SectionCard({ title, icon, children }: { title: string; icon: React.ReactNode; children: React.ReactNode; }) {
+function SectionCard({
+  title,
+  icon,
+  children,
+}: {
+  title: string;
+  icon: React.ReactNode;
+  children: React.ReactNode;
+}) {
   return (
-    <div className="bg-[#121212] p-6 rounded-2xl border border-white/5 space-y-5 shadow-lg animate-fadeIn">
+    <div className="bg-[#121212] p-6 rounded-2xl border border-white/5 space-y-5 shadow-lg animate-fadeIn w-full overflow-hidden">
       <h2 className="text-xs font-bold uppercase tracking-widest text-gray-300 flex items-center gap-2 pb-2 border-b border-white/5">
         {icon} {title}
       </h2>
-      {children}
+      <div className="w-full">{children}</div>
     </div>
   );
 }
 
-function Campo({ label, error, children }: { label: string; error?: string; children: React.ReactNode; }) {
+function Campo({
+  label,
+  error,
+  children,
+}: {
+  label: string;
+  error?: string;
+  children: React.ReactNode;
+}) {
   return (
-    <div>
-      <label className="text-xs text-gray-400 block mb-1 font-bold tracking-wide">{label}</label>
+    <div className="w-full min-w-0">
+      <label className="text-xs text-gray-400 block mb-1 font-bold tracking-wide truncate">
+        {label}
+      </label>
       {children}
-      {error && <span className="text-red-500 text-[11px] mt-1.5 block font-bold tracking-wide">{error}</span>}
+      {error && (
+        <span className="text-red-500 text-[11px] mt-1.5 block font-bold tracking-wide truncate">
+          {error}
+        </span>
+      )}
     </div>
   );
 }

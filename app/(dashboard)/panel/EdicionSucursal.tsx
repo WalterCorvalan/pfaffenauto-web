@@ -27,21 +27,14 @@ export default function EdicionSucursal({ autoId, sucursalActualId, sucursalActu
     try {
       const { data: { user } } = await supabase.auth.getUser();
 
-      const { error } = await supabase
-        .from("vehiculos")
-        .update({ sucursal_id: nuevaSucursal })
-        .eq("id", autoId);
-
+      const { error } = await supabase.from("vehiculos").update({ sucursal_id: nuevaSucursal }).eq("id", autoId);
       if (error) throw error;
 
       const nombreNueva = sucursales.find(s => s.id === nuevaSucursal)?.nombre || "N/A";
 
       await supabase.from("historial_cambios").insert({
-        tabla: "vehiculos",
-        registro_id: autoId,
-        campo_modificado: "sucursal_id",
-        valor_anterior: sucursalActualNombre || "Sin sucursal",
-        valor_nuevo: nombreNueva,
+        tabla: "vehiculos", registro_id: autoId, campo_modificado: "sucursal_id",
+        valor_anterior: sucursalActualNombre || "Sin sucursal", valor_nuevo: nombreNueva,
         usuario_id: user?.id,
       });
 
@@ -59,12 +52,12 @@ export default function EdicionSucursal({ autoId, sucursalActualId, sucursalActu
     <>
       <div 
         onClick={() => puedeGestionar && setIsEditing(true)}
-        className={`inline-flex items-center gap-1.5 truncate font-medium text-sm group transition-all rounded-md px-1.5 py-1 -ml-1.5
-          ${puedeGestionar ? 'cursor-pointer hover:bg-white/10 hover:text-white text-gray-300' : 'text-gray-300'}
+        className={`inline-flex items-center gap-1.5 truncate font-medium text-sm transition-all rounded-md px-1.5 py-1 -ml-1.5
+          ${puedeGestionar ? 'cursor-pointer hover:bg-white/10 hover:text-white text-gray-300 group' : 'cursor-default text-gray-300'}
         `}
         title={puedeGestionar ? "Tocar para mover de sucursal" : ""}
       >
-        <MapPin className="w-3.5 h-3.5 text-gray-500 group-hover:text-white shrink-0" />
+        <MapPin className={`w-3.5 h-3.5 shrink-0 ${puedeGestionar ? 'text-gray-500 group-hover:text-white' : 'text-gray-500'}`} />
         <span className="truncate">{sucursalActualNombre || "Sin asignar"}</span>
         
         {puedeGestionar && (
@@ -72,7 +65,7 @@ export default function EdicionSucursal({ autoId, sucursalActualId, sucursalActu
         )}
       </div>
 
-      {isEditing && (
+      {isEditing && puedeGestionar && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
           <div className="absolute inset-0 bg-black/80 backdrop-blur-sm" onClick={() => !cargando && setIsEditing(false)}></div>
           
@@ -90,15 +83,9 @@ export default function EdicionSucursal({ autoId, sucursalActualId, sucursalActu
               <div>
                 <label className="text-xs font-bold text-gray-400 uppercase tracking-widest mb-1.5 block">Nueva Ubicación</label>
                 <div className="flex items-center bg-[#0A0A0A] border border-white/10 rounded-xl px-3 focus-within:border-[#0055A4] transition-colors shadow-inner">
-                  <select
-                    value={nuevaSucursal}
-                    onChange={(e) => setNuevaSucursal(e.target.value)}
-                    className="w-full bg-transparent py-3 text-sm text-white outline-none appearance-none cursor-pointer"
-                  >
+                  <select value={nuevaSucursal} onChange={(e) => setNuevaSucursal(e.target.value)} className="w-full bg-transparent py-3 text-sm text-white outline-none appearance-none cursor-pointer">
                     <option value="" disabled className="bg-[#121212]">Seleccionar sucursal...</option>
-                    {sucursales.map(s => (
-                      <option key={s.id} value={s.id} className="bg-[#121212]">{s.nombre}</option>
-                    ))}
+                    {sucursales.map(s => (<option key={s.id} value={s.id} className="bg-[#121212]">{s.nombre}</option>))}
                   </select>
                 </div>
               </div>

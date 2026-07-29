@@ -1,18 +1,29 @@
 import { createServerClient } from "@supabase/ssr";
 import { cookies } from "next/headers";
 import Link from "next/link";
-import { Plus, Car, Search, Edit2 } from "lucide-react";
+import {
+  Plus,
+  Car,
+  Search,
+  Edit2,
+  ChevronLeft,
+  ChevronRight,
+  FileText,
+} from "lucide-react";
 import AccionesAuto from "./AccionesAuto";
 import EdicionPrecio from "./EdicionPrecio";
 import EdicionSucursal from "./EdicionSucursal";
 
+const ITEMS_POR_PAGINA = 10; // Podés ajustar este valor a 15 o 20 según prefieras
+
 export default async function PanelPage({
   searchParams,
 }: {
-  searchParams: Promise<{ q?: string; sucursal?: string }>;
+  searchParams: Promise<{ q?: string; sucursal?: string; page?: string }>;
 }) {
   const cookieStore = await cookies();
-  const { q = "", sucursal = "" } = await searchParams;
+  const { q = "", sucursal = "", page = "1" } = await searchParams;
+  const currentPage = parseInt(page, 10) || 1;
 
   const supabase = createServerClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -24,8 +35,10 @@ export default async function PanelPage({
     },
   );
 
-  const { data: { user } } = await supabase.auth.getUser();
-  
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+
   let puedeGestionar = false;
   if (user) {
     const { data: perfil } = await supabase
@@ -33,7 +46,7 @@ export default async function PanelPage({
       .select("rol")
       .eq("id", user.id)
       .single();
-    
+
     puedeGestionar = perfil?.rol === "admin" || perfil?.rol === "encargado";
   }
 
@@ -42,86 +55,114 @@ export default async function PanelPage({
     .select("id, nombre")
     .order("nombre");
 
+  // Agregamos { count: 'exact' } para saber el total real sin descargar todos los datos
   let query = supabase
     .from("vehiculos")
-    .select(`
+    .select(
+      `
       *,
       multimedia_vehiculos ( url_archivo ),
       sucursales ( id, nombre )
-    `)
+    `,
+      { count: "exact" },
+    )
     .order("created_at", { ascending: false });
 
   if (q) {
-    query = query.or(`marca.ilike.%${q}%,modelo.ilike.%${q}%,patente.ilike.%${q}%`);
+    query = query.or(
+      `marca.ilike.%${q}%,modelo.ilike.%${q}%,patente.ilike.%${q}%`,
+    );
   }
-  
+
   if (sucursal) {
     query = query.eq("sucursal_id", sucursal);
   }
 
-  const { data: vehiculos, error } = await query;
+  // Lógica matemática para la paginación
+  const from = (currentPage - 1) * ITEMS_POR_PAGINA;
+  const to = from + ITEMS_POR_PAGINA - 1;
+
+  // Aplicamos el rango a la consulta de Supabase
+  query = query.range(from, to);
+
+  const { data: vehiculos, count, error } = await query;
 
   if (error) console.error("Error cargando autos:", error);
 
+  const totalPages = count ? Math.ceil(count / ITEMS_POR_PAGINA) : 1;
+
   return (
-    <div className="min-h-screen bg-[#0b1329] pt-4 md:pt-8 pb-16 px-3 md:px-6 text-slate-100">
-      <div className="max-w-6xl mx-auto">
-        
+    <div className="bg-[#0b1329] pt-4 md:pt-8 pb-16 px-3 md:px-6 text-slate-100 w-full overflow-x-hidden">
+      <div className="max-w-6xl mx-auto w-full">
         {/* Encabezado */}
         <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-6 gap-4">
           <div>
-            <h1 className="text-2xl md:text-3xl font-serif mb-1 text-white">Centro de Gestión</h1>
-            <p className="text-xs md:text-sm text-slate-400">Administración de stock de Pfaffen Autos</p>
+            <h1 className="text-2xl md:text-3xl font-serif mb-1 text-white">
+              Centro de Gestión
+            </h1>
+            <p className="text-xs md:text-sm text-slate-400">
+              Administración de stock de Pfaffen Autos
+            </p>
           </div>
           <Link
             href="/panel/vehiculo/nuevo"
-            className="w-full md:w-auto justify-center bg-[#0ea5e9] hover:bg-[#0284c7] transition-colors px-6 py-3.5 rounded-xl font-bold flex items-center gap-2 shadow-lg"
+            className="w-full md:w-auto justify-center bg-[#0ea5e9] hover:bg-[#0284c7] transition-colors px-6 py-3.5 rounded-xl font-bold flex items-center gap-2 shadow-lg shrink-0"
           >
             <Plus className="w-5 h-5" /> Ingresar Nuevo Auto
           </Link>
         </div>
 
         {/* Filtros */}
-        <form method="GET" action="/panel" className="flex flex-col sm:flex-row gap-3 mb-6 bg-[#0f172a] p-4 rounded-2xl border border-slate-800 shadow-lg">
-          <div className="flex-1 relative">
+        <form
+          method="GET"
+          action="/panel"
+          className="flex flex-col sm:flex-row gap-3 mb-6 bg-[#0f172a] p-4 rounded-2xl border border-slate-800 shadow-lg w-full"
+        >
+          <div className="flex-1 relative min-w-0">
             <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
-            <input 
-              type="text" 
-              name="q" 
-              defaultValue={q} 
-              placeholder="Buscar por marca, modelo o patente..." 
+            <input
+              type="text"
+              name="q"
+              defaultValue={q}
+              placeholder="Buscar por marca, modelo o patente..."
               className="w-full bg-[#0b1329] border border-slate-800 rounded-xl py-3 pl-10 pr-4 text-sm outline-none focus:border-[#0ea5e9] text-white placeholder:text-slate-500 transition-colors"
             />
           </div>
 
-          <div className="sm:w-64 relative">
-            <select 
-              name="sucursal" 
+          <div className="w-full sm:w-64 relative shrink-0">
+            <select
+              name="sucursal"
               defaultValue={sucursal}
               className="w-full bg-[#0b1329] border border-slate-800 rounded-xl py-3 px-4 text-sm outline-none focus:border-[#0ea5e9] appearance-none text-white cursor-pointer transition-colors"
             >
               <option value="">Todas las sucursales</option>
-              {sucursales?.map(s => (
-                <option key={s.id} value={s.id}>{s.nombre}</option>
+              {sucursales?.map((s) => (
+                <option key={s.id} value={s.id}>
+                  {s.nombre}
+                </option>
               ))}
             </select>
           </div>
 
-          <button type="submit" className="bg-slate-800 hover:bg-slate-700 text-white px-6 py-3 rounded-xl font-bold text-xs uppercase tracking-wider transition-colors border border-slate-700">
+          <button
+            type="submit"
+            className="w-full sm:w-auto shrink-0 bg-slate-800 hover:bg-slate-700 text-white px-6 py-3 rounded-xl font-bold text-xs uppercase tracking-wider transition-colors border border-slate-700"
+          >
             Filtrar
           </button>
         </form>
 
         {/* Lista de Vehículos */}
-        <div>
+        <div className="w-full">
           {vehiculos && vehiculos.length > 0 ? (
             <>
-              {/* VISTA MÓVIL: Tarjetas separadas y más compactas */}
-              <div className="flex flex-col gap-4 md:hidden">
+              {/* VISTA MÓVIL: Tarjetas separadas */}
+              <div className="flex flex-col gap-4 md:hidden w-full">
                 {vehiculos.map((auto) => (
-                  <div key={auto.id} className="p-4 bg-[#0f172a] border border-slate-800 rounded-2xl flex flex-col gap-3 shadow-md hover:border-slate-700 transition-colors">
-                    
-                    {/* Fila Superior: Foto y Título/Precio */}
+                  <div
+                    key={auto.id}
+                    className="p-4 bg-[#0f172a] border border-slate-800 rounded-2xl flex flex-col gap-3 shadow-md hover:border-slate-700 transition-colors w-full overflow-hidden"
+                  >
                     <div className="flex items-start gap-3">
                       {auto.multimedia_vehiculos?.[0] ? (
                         <img
@@ -134,30 +175,37 @@ export default async function PanelPage({
                           <Car className="w-6 h-6 text-slate-600" />
                         </div>
                       )}
-                      
+                      {/* El min-w-0 evita que los textos largos rompan la caja en móviles */}
                       <div className="flex-1 min-w-0">
-                        <span className="text-[10px] uppercase tracking-widest font-bold text-slate-400 block mb-0.5">{auto.patente || "S/P"}</span>
+                        <span className="text-[10px] uppercase tracking-widest font-bold text-slate-400 block mb-0.5 truncate">
+                          {auto.patente || "S/P"}
+                        </span>
                         <h3 className="font-black capitalize text-base text-white leading-tight truncate mb-1">
                           {auto.marca} {auto.modelo}
                         </h3>
-                        <EdicionPrecio 
-                          autoId={auto.id} 
-                          precioArs={auto.precio_publicado_ars} 
-                          precioUsd={auto.precio_publicado_usd} 
-                          puedeGestionar={puedeGestionar} 
+                        <EdicionPrecio
+                          autoId={auto.id}
+                          precioArs={auto.precio_publicado_ars}
+                          precioUsd={auto.precio_publicado_usd}
+                          puedeGestionar={puedeGestionar}
                         />
                       </div>
                     </div>
-                    
-                    {/* Caja de Datos Técnicos Compacta */}
+
                     <div className="grid grid-cols-2 gap-2 text-xs bg-[#0b1329] border border-slate-800/80 p-2.5 rounded-xl">
-                      <div>
-                        <span className="block text-slate-400 text-[9px] uppercase tracking-widest font-bold mb-0.5">Año / Km</span>
-                        <span className="font-semibold text-slate-200">{auto.anio} • {auto.kilometraje?.toLocaleString()} km</span>
+                      <div className="min-w-0">
+                        <span className="block text-slate-400 text-[9px] uppercase tracking-widest font-bold mb-0.5 truncate">
+                          Año / Km
+                        </span>
+                        <span className="font-semibold text-slate-200 truncate block">
+                          {auto.anio} • {auto.kilometraje?.toLocaleString()} km
+                        </span>
                       </div>
-                      <div>
-                        <span className="block text-slate-400 text-[9px] uppercase tracking-widest font-bold mb-0.5">Ubicación</span>
-                        <EdicionSucursal 
+                      <div className="min-w-0">
+                        <span className="block text-slate-400 text-[9px] uppercase tracking-widest font-bold mb-0.5 truncate">
+                          Ubicación
+                        </span>
+                        <EdicionSucursal
                           autoId={auto.id}
                           sucursalActualId={auto.sucursal_id}
                           sucursalActualNombre={auto.sucursales?.nombre}
@@ -167,76 +215,97 @@ export default async function PanelPage({
                       </div>
                     </div>
 
-                    {/* Acciones Inferiores */}
-                    <div className="pt-2 flex items-center justify-between gap-2 border-t border-slate-800/80">
+                    <div className="pt-2 flex flex-wrap items-center justify-between gap-2 border-t border-slate-800/80">
                       <div className="scale-90 origin-left">
-                        <AccionesAuto 
-                          autoId={auto.id} 
-                          estadoActual={auto.estado} 
-                          puedeGestionar={puedeGestionar} 
+                        <AccionesAuto
+                          autoId={auto.id}
+                          estadoActual={auto.estado}
+                          puedeGestionar={puedeGestionar}
                         />
                       </div>
-                      <Link 
-                        href={`/panel/vehiculo/editar/${auto.id}`} 
-                        className="flex items-center gap-1.5 text-xs font-bold uppercase tracking-wider bg-slate-800 hover:bg-slate-700 border border-slate-700 text-slate-200 px-3 py-2 rounded-xl transition-colors shadow-sm"
-                      >
-                        <Edit2 className="w-3.5 h-3.5 text-[#0ea5e9]" /> Editar Todo
-                      </Link>
+                      <div className="flex items-center gap-2">
+                        {puedeGestionar && (
+                          <Link
+                            href={`/panel/vehiculo/boleto/${auto.id}`}
+                            className="p-2.5 bg-slate-800 hover:bg-slate-700 border border-slate-700 rounded-xl text-slate-300 hover:text-white transition-all shadow-sm"
+                            title="Generar Boleto"
+                          >
+                            <FileText className="w-4 h-4 text-emerald-400" />
+                          </Link>
+                        )}
+                        <Link
+                          href={`/panel/vehiculo/editar/${auto.id}`}
+                          className="flex items-center gap-1.5 text-xs font-bold uppercase tracking-wider bg-slate-800 hover:bg-slate-700 border border-slate-700 text-slate-200 px-3 py-2 rounded-xl transition-colors shadow-sm"
+                        >
+                          <Edit2 className="w-3.5 h-3.5 text-[#0ea5e9]" />{" "}
+                          <span className="hidden sm:inline">Editar</span>
+                        </Link>
+                      </div>
                     </div>
-
                   </div>
                 ))}
               </div>
 
               {/* VISTA DESKTOP: Tabla */}
-              <div className="hidden md:block bg-[#0f172a] border border-slate-800 rounded-2xl overflow-hidden shadow-2xl">
-                <table className="w-full text-left border-collapse">
+              <div className="hidden md:block bg-[#0f172a] border border-slate-800 rounded-2xl overflow-x-auto shadow-2xl max-w-full">
+                <table className="w-full text-left border-collapse min-w-[900px]">
                   <thead>
                     <tr className="bg-slate-900/50 border-b border-slate-800 text-slate-400 text-xs uppercase tracking-widest font-bold">
-                      <th className="p-4">Vehículo</th>
-                      <th className="p-4">Año / Km</th>
-                      <th className="p-4">Precio (ARS / USD)</th>
-                      <th className="p-4">Sucursal</th>
-                      <th className="p-4 text-right">Estado / Acciones</th>
+                      <th className="p-4 whitespace-nowrap">Vehículo</th>
+                      <th className="p-4 whitespace-nowrap">Año / Km</th>
+                      <th className="p-4 whitespace-nowrap">
+                        Precio (ARS / USD)
+                      </th>
+                      <th className="p-4 whitespace-nowrap">Sucursal</th>
+                      <th className="p-4 text-right whitespace-nowrap">
+                        Estado / Acciones
+                      </th>
                     </tr>
                   </thead>
                   <tbody>
                     {vehiculos.map((auto) => (
-                      <tr key={auto.id} className="border-b border-slate-800/60 hover:bg-slate-800/40 transition-colors">
+                      <tr
+                        key={auto.id}
+                        className="border-b border-slate-800/60 hover:bg-slate-800/40 transition-colors"
+                      >
                         <td className="p-4">
                           <div className="flex items-center gap-3">
                             {auto.multimedia_vehiculos?.[0] ? (
                               <img
                                 src={auto.multimedia_vehiculos[0].url_archivo}
                                 alt={auto.modelo}
-                                className="w-16 h-12 object-cover rounded-lg shadow-sm border border-slate-800"
+                                className="w-16 h-12 object-cover rounded-lg shadow-sm border border-slate-800 shrink-0"
                               />
                             ) : (
-                              <div className="w-16 h-12 bg-[#0b1329] border border-slate-800 rounded-lg flex items-center justify-center">
+                              <div className="w-16 h-12 bg-[#0b1329] border border-slate-800 rounded-lg flex items-center justify-center shrink-0">
                                 <Car className="w-6 h-6 text-slate-600" />
                               </div>
                             )}
-                            <div>
-                              <span className="text-[10px] text-slate-400 font-bold block">{auto.patente}</span>
-                              <span className="font-bold capitalize text-[15px] text-white">
+                            <div className="min-w-0">
+                              <span className="text-[10px] text-slate-400 font-bold block truncate">
+                                {auto.patente}
+                              </span>
+                              <span className="font-bold capitalize text-[15px] text-white block truncate">
                                 {auto.marca} {auto.modelo}
                               </span>
                             </div>
                           </div>
                         </td>
-                        <td className="p-4 text-slate-300 font-medium text-sm">
-                          {auto.anio} <span className="text-slate-600 mx-1">•</span> {auto.kilometraje?.toLocaleString()} km
+                        <td className="p-4 text-slate-300 font-medium text-sm whitespace-nowrap">
+                          {auto.anio}{" "}
+                          <span className="text-slate-600 mx-1">•</span>{" "}
+                          {auto.kilometraje?.toLocaleString()} km
                         </td>
-                        <td className="p-4">
-                          <EdicionPrecio 
-                            autoId={auto.id} 
-                            precioArs={auto.precio_publicado_ars} 
-                            precioUsd={auto.precio_publicado_usd} 
-                            puedeGestionar={puedeGestionar} 
+                        <td className="p-4 whitespace-nowrap">
+                          <EdicionPrecio
+                            autoId={auto.id}
+                            precioArs={auto.precio_publicado_ars}
+                            precioUsd={auto.precio_publicado_usd}
+                            puedeGestionar={puedeGestionar}
                           />
                         </td>
-                        <td className="p-4 text-slate-300 font-medium text-sm">
-                          <EdicionSucursal 
+                        <td className="p-4 whitespace-nowrap">
+                          <EdicionSucursal
                             autoId={auto.id}
                             sucursalActualId={auto.sucursal_id}
                             sucursalActualNombre={auto.sucursales?.nombre}
@@ -246,14 +315,23 @@ export default async function PanelPage({
                         </td>
                         <td className="p-4">
                           <div className="flex items-center justify-end gap-3">
-                            <AccionesAuto 
-                              autoId={auto.id} 
-                              estadoActual={auto.estado} 
-                              puedeGestionar={puedeGestionar} 
+                            <AccionesAuto
+                              autoId={auto.id}
+                              estadoActual={auto.estado}
+                              puedeGestionar={puedeGestionar}
                             />
-                            <Link 
-                              href={`/panel/vehiculo/editar/${auto.id}`} 
-                              className="p-2.5 bg-slate-800 hover:bg-slate-700 border border-slate-700 rounded-xl text-slate-300 hover:text-white transition-all shadow-sm group"
+
+                            <Link
+                              href={`/panel/vehiculo/boleto/${auto.id}`}
+                              className="p-2.5 bg-slate-800 hover:bg-slate-700 border border-slate-700 rounded-xl text-slate-300 hover:text-white transition-all shadow-sm group shrink-0"
+                              title="Generar Boleto de Reserva"
+                            >
+                              <FileText className="w-4 h-4 group-hover:scale-110 transition-transform text-emerald-400" />
+                            </Link>
+
+                            <Link
+                              href={`/panel/vehiculo/editar/${auto.id}`}
+                              className="p-2.5 bg-slate-800 hover:bg-slate-700 border border-slate-700 rounded-xl text-slate-300 hover:text-white transition-all shadow-sm group shrink-0"
                               title="Editar vehículo completo"
                             >
                               <Edit2 className="w-4 h-4 group-hover:scale-110 transition-transform text-[#0ea5e9]" />
@@ -265,14 +343,77 @@ export default async function PanelPage({
                   </tbody>
                 </table>
               </div>
+
+              {/* CONTROLES DE PAGINACIÓN */}
+              {totalPages > 1 && (
+                <div className="flex flex-col sm:flex-row items-center justify-between mt-6 bg-[#0f172a] border border-slate-800 p-4 rounded-2xl gap-4 w-full">
+                  <p className="text-sm text-slate-400 text-center sm:text-left">
+                    Mostrando del{" "}
+                    <span className="font-bold text-white">{from + 1}</span> al{" "}
+                    <span className="font-bold text-white">
+                      {Math.min(to + 1, count || 0)}
+                    </span>{" "}
+                    de <span className="font-bold text-white">{count}</span>{" "}
+                    resultados
+                  </p>
+
+                  <div className="flex items-center gap-2">
+                    {/* Botón Anterior */}
+                    {currentPage > 1 ? (
+                      <Link
+                        href={`/panel?q=${q}&sucursal=${sucursal}&page=${currentPage - 1}`}
+                        className="p-2 bg-slate-800 hover:bg-slate-700 rounded-lg transition-colors text-slate-300 border border-slate-700"
+                      >
+                        <ChevronLeft className="w-5 h-5" />
+                      </Link>
+                    ) : (
+                      <button
+                        disabled
+                        className="p-2 bg-slate-800/30 rounded-lg text-slate-600 cursor-not-allowed border border-slate-800"
+                      >
+                        <ChevronLeft className="w-5 h-5" />
+                      </button>
+                    )}
+
+                    {/* Indicador de página */}
+                    <div className="px-4 py-2 bg-slate-800 rounded-lg font-bold text-sm text-white border border-slate-700">
+                      {currentPage} / {totalPages}
+                    </div>
+
+                    {/* Botón Siguiente */}
+                    {currentPage < totalPages ? (
+                      <Link
+                        href={`/panel?q=${q}&sucursal=${sucursal}&page=${currentPage + 1}`}
+                        className="p-2 bg-slate-800 hover:bg-slate-700 rounded-lg transition-colors text-slate-300 border border-slate-700"
+                      >
+                        <ChevronRight className="w-5 h-5" />
+                      </Link>
+                    ) : (
+                      <button
+                        disabled
+                        className="p-2 bg-slate-800/30 rounded-lg text-slate-600 cursor-not-allowed border border-slate-800"
+                      >
+                        <ChevronRight className="w-5 h-5" />
+                      </button>
+                    )}
+                  </div>
+                </div>
+              )}
             </>
           ) : (
-            <div className="p-12 text-center text-slate-400 flex flex-col items-center bg-[#0f172a] rounded-2xl border border-slate-800">
+            <div className="p-12 text-center text-slate-400 flex flex-col items-center bg-[#0f172a] rounded-2xl border border-slate-800 w-full">
               <Search className="w-12 h-12 mb-4 opacity-20" />
-              <h3 className="text-white font-bold text-lg mb-1">Sin resultados</h3>
-              <p className="text-sm">No se encontraron vehículos con esos filtros.</p>
+              <h3 className="text-white font-bold text-lg mb-1">
+                Sin resultados
+              </h3>
+              <p className="text-sm">
+                No se encontraron vehículos con esos filtros.
+              </p>
               {(q || sucursal) && (
-                <Link href="/panel" className="mt-4 text-[#0ea5e9] hover:underline font-bold text-sm">
+                <Link
+                  href="/panel"
+                  className="mt-4 text-[#0ea5e9] hover:underline font-bold text-sm"
+                >
                   Limpiar filtros
                 </Link>
               )}

@@ -159,7 +159,7 @@ export default function Hero() {
           <Pill icon={<CarFront className="w-4 h-4"/>} text="Pick-ups" />
           <Pill icon={<Zap className="w-4 h-4 text-amber-500" fill="currentColor"/>} text="Híbridos / Eléctricos" />
           <div className="w-full h-2 md:hidden"></div> {/* Break en móvil */}
-          <Pill icon={<Users className="w-4 h-4 text-emerald-500"/>} text="Cotizar Mi Auto" borderClass="border-emerald-200 bg-emerald-50/50 hover:bg-emerald-100/80 text-emerald-800" href="/cotizador" />
+          <Pill icon={<Users className="w-4 h-4 text-emerald-500"/>} text="Consignar Mi Auto" borderClass="border-emerald-200 bg-emerald-50/50 hover:bg-emerald-100/80 text-emerald-800" href="/cotizador" />
           <Pill icon={<Grid className="w-4 h-4 text-blue-500"/>} text="Ver Catálogo" borderClass="border-blue-200 bg-blue-50/50 hover:bg-blue-100/80 text-blue-800" href="/catalogo" />
         </motion.div>
 
