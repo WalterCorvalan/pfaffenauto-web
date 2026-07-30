@@ -49,7 +49,7 @@ export default function Marcas() {
   ];
 
   return (
-    <section className="w-full bg-[#dee2e6] border-gray-300 pt-10 pb-4">
+    <section className="w-full bg-[#E9ECEF] border-gray-300 pt-10 pb-4">
       <div className="max-w-7xl mx-auto px-4 md:px-6">
         
         {/* ENCABEZADO */}

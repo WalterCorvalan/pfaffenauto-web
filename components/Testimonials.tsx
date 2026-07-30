@@ -16,10 +16,10 @@ const duplicatedReviews = [...reviews, ...reviews];
 
 export default function Testimonials() {
   return (
-    <section className="py-24 bg-[#dee2e6] border-gray-400 border-t overflow-hidden">
+    <section className="py-24 bg-[#E9ECEF] border-gray-400 border-t overflow-hidden">
       <div className="max-w-7xl mx-auto px-4 md:px-6 mb-12 text-center md:text-left">
         <h2 className="text-3xl md:text-4xl font-light text-navy tracking-tight">
-          Lo que opinan <strong className="font-black text-primary">nuestros clientes</strong>
+          Lo que opinan <strong className="font-black ">nuestros clientes</strong>
         </h2>
         <p className="text-gray-500 mt-3 text-sm font-medium">
           Más de 1.180 clientes satisfechos avalan nuestro compromiso.

@@ -3,11 +3,11 @@ import Link from "next/link";
 
 export default function Location() {
   return (
-    <section className="py-24 bg-[#dee2e6] border-gray-400 border-t relative overflow-hidden">
+    <section className="py-24 bg-[#E9ECEF] border-gray-400 border-t relative overflow-hidden">
       <div className="max-w-7xl mx-auto px-4 md:px-6 relative z-10">
         
         <div className="text-center mb-12">
-          <span className="text-primary text-[10px] font-bold uppercase tracking-[0.3em] mb-3 block">
+          <span className="text-[#0000ff] text-[10px] font-bold uppercase tracking-[0.3em] mb-3 block">
             Dónde encontrarnos
           </span>
           <h2 className="text-3xl md:text-4xl font-light text-navy tracking-tight">
@@ -28,7 +28,7 @@ export default function Location() {
                 <MapPin className="w-3.5 h-3.5" /> <span>Casa Central, Buenos Aires</span>
               </div>
               <div className="mt-auto flex gap-2">
-                <Link href="/sucursales/casa-central" className="flex-1 bg-primary hover:bg-secondary text-white text-[10px] font-bold uppercase tracking-widest py-2.5 rounded-xl transition-colors flex items-center justify-center gap-1.5 shadow-sm">
+                <Link href="/sucursales/casa-central" className="flex-1 bg-[#0000ff] hover:bg-secondary text-white text-[10px] font-bold uppercase tracking-widest py-2.5 rounded-xl transition-colors flex items-center justify-center gap-1.5 shadow-sm">
                   <Car className="w-3.5 h-3.5" /> Stock
                 </Link>
                 <a href="https://maps.app.goo.gl/4ZMmpWJCarHcZ2sb9" target="_blank" rel="noopener noreferrer" className="flex-1 bg-white border border-gray-200 hover:bg-gray-50 text-navy text-[10px] font-bold uppercase tracking-widest py-2.5 rounded-xl transition-colors flex items-center justify-center gap-1.5">
@@ -49,7 +49,7 @@ export default function Location() {
                 <MapPin className="w-3.5 h-3.5" /> <span>Don Torcuato, Tigre</span>
               </div>
               <div className="mt-auto flex gap-2">
-                <Link href="/sucursales/don-torcuato" className="flex-1 bg-primary hover:bg-secondary text-white text-[10px] font-bold uppercase tracking-widest py-2.5 rounded-xl transition-colors flex items-center justify-center gap-1.5 shadow-sm">
+                <Link href="/sucursales/don-torcuato" className="flex-1 bg-[#0000ff] hover:bg-secondary text-white text-[10px] font-bold uppercase tracking-widest py-2.5 rounded-xl transition-colors flex items-center justify-center gap-1.5 shadow-sm">
                   <Car className="w-3.5 h-3.5" /> Stock
                 </Link>
                 <a href="https://maps.app.goo.gl/GuNBuUKT5xMFw5jR9" target="_blank" rel="noopener noreferrer" className="flex-1 bg-white border border-gray-200 hover:bg-gray-50 text-navy text-[10px] font-bold uppercase tracking-widest py-2.5 rounded-xl transition-colors flex items-center justify-center gap-1.5">
@@ -70,7 +70,7 @@ export default function Location() {
                 <MapPin className="w-3.5 h-3.5" /> <span>Olivos, Buenos Aires</span>
               </div>
               <div className="mt-auto flex gap-2">
-                <Link href="/sucursales/olivos" className="flex-1 bg-primary hover:bg-secondary text-white text-[10px] font-bold uppercase tracking-widest py-2.5 rounded-xl transition-colors flex items-center justify-center gap-1.5 shadow-sm">
+                <Link href="/sucursales/olivos" className="flex-1 bg-[#0000ff] hover:bg-secondary text-white text-[10px] font-bold uppercase tracking-widest py-2.5 rounded-xl transition-colors flex items-center justify-center gap-1.5 shadow-sm">
                   <Car className="w-3.5 h-3.5" /> Stock
                 </Link>
                 <a href="https://maps.app.goo.gl/LZCyj4v4mBHBt3uu5" target="_blank" rel="noopener noreferrer" className="flex-1 bg-white border border-gray-200 hover:bg-gray-50 text-navy text-[10px] font-bold uppercase tracking-widest py-2.5 rounded-xl transition-colors flex items-center justify-center gap-1.5">
