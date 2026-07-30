@@ -3,7 +3,7 @@ import Link from "next/link";
 
 export default function Location() {
   return (
-    <section className="py-24 bg-white border-t border-gray-100 relative overflow-hidden">
+    <section className="py-24 bg-[#dee2e6] border-gray-400 border-t relative overflow-hidden">
       <div className="max-w-7xl mx-auto px-4 md:px-6 relative z-10">
         
         <div className="text-center mb-12">

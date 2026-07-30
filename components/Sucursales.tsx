@@ -77,7 +77,7 @@ export default function Sucursales() {
   };
 
   return (
-    <section id="sucursales" className="w-full bg-background pt-8 pb-4">
+    <section id="sucursales" className="w-full bg-[#dee2e6] border-gray-400 pt-8 pb-4">
       <div className="max-w-7xl mx-auto px-4 md:px-6">
         
         {/* ================= ENCABEZADO ================= */}

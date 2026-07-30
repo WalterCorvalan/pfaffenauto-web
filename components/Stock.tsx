@@ -113,7 +113,7 @@ export default function Stock({ vehiculos }: StockProps) {
   }
 
   return (
-    <section id="stock" className="py-24 bg-[#6c757d] relative border-t border-gray-200/50 overflow-hidden">
+    <section id="stock" className="py-24 bg-[#dee2e6] relative border-t border-gray-200/50 overflow-hidden">
       
       {/* Elementos ambientales de fondo para realzar el Spatial UI */}
       <div className="absolute top-1/4 left-[-10%] w-[500px] h-[500px] bg-blue-400/5 rounded-full blur-3xl pointer-events-none"></div>

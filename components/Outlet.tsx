@@ -9,7 +9,7 @@ export default function Outlet({ vehiculos }: { vehiculos?: any[] }) {
   }
 
   return (
-    <section id="outlet" className="py-16 bg-background border-t border-gray-200">
+    <section id="outlet" className="py-16 bg-background border-t border-gray-400">
       <div className="max-w-7xl mx-auto px-4 md:px-6">
         
         {/* ================= ENCABEZADO ================= */}

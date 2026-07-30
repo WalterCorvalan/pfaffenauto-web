@@ -13,7 +13,7 @@ export default async function OutletBanner() {
     .lt("precio_publicado_ars", 10000000);
 
   return (
-    <section className="w-full bg-background py-10 md:py-16 px-4 md:px-6">
+    <section className="w-full bg-[#dee2e6] border-gray-400 py-10 md:py-16 px-4 md:px-6">
       
       {/* Contenedor Principal (Banner Oscuro/Promocional) */}
       <div className="max-w-7xl mx-auto bg-navy rounded-[2rem] p-6 md:p-10 relative overflow-hidden shadow-xl border border-navy/80">

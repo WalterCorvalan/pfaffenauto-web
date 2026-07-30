@@ -71,7 +71,7 @@ export default function PublicHeader() {
   };
 
   return (
-    <header className="sticky top-0 z-50 w-full bg-white/80 backdrop-blur-xl border-b border-gray-100 shadow-[0_4px_30px_rgba(0,0,0,0.03)] transition-all">
+    <header className="sticky top-0 z-50 w-full bg-[#dee2e6] backdrop-blur-xl border-b border-gray-300/50 shadow-[0_4px_30px_rgba(0,0,0,0.03)] transition-all">
       <div className="max-w-7xl mx-auto px-4 md:px-6 h-20 flex items-center justify-between">
         
         {/* LOGO */}

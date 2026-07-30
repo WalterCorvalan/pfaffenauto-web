@@ -2,7 +2,7 @@ export default function FAQ() {
   const faqSchema = { /* Mismo schema JSON-LD que ya tenías */ };
 
   return (
-    <section className="py-24 bg-gray-50 border-t border-gray-200 relative">
+    <section className="py-24 bg-[#dee2e6] border-gray-400 border-t border-gray-400 relative">
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(faqSchema) }} />
 
       <div className="max-w-7xl mx-auto px-4 md:px-6">

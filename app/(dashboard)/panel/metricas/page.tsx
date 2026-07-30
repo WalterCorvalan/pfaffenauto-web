@@ -1,8 +1,12 @@
 import { createServerClient } from "@supabase/ssr";
 import { cookies } from "next/headers";
-import { Wallet, TrendingUp, CarFront, DollarSign, Activity, PieChart } from "lucide-react";
+import { 
+  Wallet, TrendingUp, CarFront, DollarSign, Activity, 
+  PieChart, Target, Trophy, Users, ArrowRight 
+} from "lucide-react";
+import Link from "next/link";
 
-export default async function MetricasPage() {
+export default async function DashboardIntegralPage() {
   const cookieStore = await cookies();
   const supabase = createServerClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -10,15 +14,27 @@ export default async function MetricasPage() {
     { cookies: { getAll: () => cookieStore.getAll() } }
   );
 
-  // 1. Traer todos los vehículos para el cálculo del activo
+  // 1. Traer vehículos para cálculos de capital
   const { data: vehiculos } = await supabase
     .from("vehiculos")
     .select("estado, precio_costo_ars, precio_publicado_ars");
 
-  // 2. Traer las ventas registradas
+  // 2. Traer ventas con datos del vendedor para el ranking
   const { data: ventas } = await supabase
     .from("ventas")
-    .select("precio_final_ars, fecha_venta");
+    .select(`
+      precio_final_ars, 
+      fecha_venta, 
+      vendedor_id,
+      perfiles ( nombre )
+    `);
+
+  // 3. Traer los últimos leads (cotizaciones/consignaciones) de la web
+  const { data: ultimosLeads } = await supabase
+    .from("cotizaciones")
+    .select("id, nombre, marca, modelo, tipo_peritaje, created_at")
+    .order("created_at", { ascending: false })
+    .limit(4);
 
   // ---- CÁLCULOS CONTABLES (ACTIVOS Y RENTABILIDAD) ----
   const stockActivo = vehiculos?.filter(v => v.estado === 'Disponible' || v.estado === 'Reservado') || [];
@@ -28,90 +44,218 @@ export default async function MetricasPage() {
   const valorVentaProyectado = stockActivo.reduce((acc, v) => acc + (Number(v.precio_publicado_ars) || 0), 0);
   
   const gananciaBrutaProyectada = valorVentaProyectado - capitalInmovilizado;
-  // Previene división por 0
   const margenPromedio = capitalInmovilizado > 0 ? (gananciaBrutaProyectada / capitalInmovilizado) * 100 : 0;
 
-  // ---- VENTAS DEL MES ----
+  // ---- VENTAS DEL MES Y OBJETIVOS ----
   const hoy = new Date();
   const mesActual = hoy.getMonth();
   const anoActual = hoy.getFullYear();
+  const OBJETIVO_MENSUAL_AUTOS = 15; // Esto a futuro puede venir de la tabla configuración
   
   const ventasDelMes = ventas?.filter(v => {
-    // Si la fecha_venta viene como string (YYYY-MM-DD), parseamos tomando en cuenta la zona horaria UTC
     const fecha = new Date(`${v.fecha_venta}T12:00:00Z`); 
     return fecha.getMonth() === mesActual && fecha.getFullYear() === anoActual;
   }) || [];
   
   const ingresosDelMes = ventasDelMes.reduce((acc, v) => acc + (Number(v.precio_final_ars) || 0), 0);
   const autosVendidosMes = ventasDelMes.length;
+  const progresoObjetivo = Math.min((autosVendidosMes / OBJETIVO_MENSUAL_AUTOS) * 100, 100);
+
+  // ---- RANKING DE VENDEDORES (Agrupación) ----
+  const rankingMap: Record<string, { nombre: string; cantidad: number; facturacion: number }> = {};
+  
+  ventasDelMes.forEach(v => {
+    const vId = v.vendedor_id || "sin-asignar";
+    // Si la BD no trae el nombre, usamos "Administración" o "Vendedor Desconocido"
+    // @ts-ignore (evitamos error de tipado estricto si Supabase devuelve array o null)
+    const vNombre = v.perfiles?.nombre || "Administración"; 
+
+    if (!rankingMap[vId]) {
+      rankingMap[vId] = { nombre: vNombre, cantidad: 0, facturacion: 0 };
+    }
+    rankingMap[vId].cantidad += 1;
+    rankingMap[vId].facturacion += Number(v.precio_final_ars) || 0;
+  });
+
+  const rankingOrdenado = Object.values(rankingMap).sort((a, b) => b.cantidad - a.cantidad);
 
   return (
-    <div className="min-h-screen bg-[#0b1329] pt-4 md:pt-8 pb-16 px-3 md:px-6 text-slate-100">
-      <div className="max-w-6xl mx-auto">
+    <div className="min-h-screen bg-[#0b1329] pt-4 md:pt-8 pb-16 px-3 md:px-6 text-slate-100 w-full overflow-x-hidden">
+      <div className="max-w-7xl mx-auto">
         
-        <div className="mb-8">
-          <h1 className="text-2xl md:text-3xl font-serif mb-1 text-white flex items-center gap-3">
-            <PieChart className="w-8 h-8 text-[#0ea5e9]" /> Dashboard Financiero
-          </h1>
-          <p className="text-xs md:text-sm text-slate-400">Análisis del rendimiento y capital de la agencia</p>
+        <div className="mb-8 flex flex-col md:flex-row md:items-end justify-between gap-4">
+          <div>
+            <h1 className="text-2xl md:text-3xl font-serif mb-1 text-white flex items-center gap-3">
+              <PieChart className="w-8 h-8 text-[#0ea5e9]" /> Dashboard Principal
+            </h1>
+            <p className="text-xs md:text-sm text-slate-400">Rendimiento, capital y gestión comercial de la agencia</p>
+          </div>
+          <div className="text-right">
+            <span className="text-xs text-slate-500 font-bold uppercase tracking-widest block mb-1">Mes en curso</span>
+            <div className="bg-[#0f172a] border border-slate-800 px-4 py-2 rounded-xl font-mono text-[#0ea5e9] shadow-inner">
+              {hoy.toLocaleDateString("es-AR", { month: 'long', year: 'numeric' }).toUpperCase()}
+            </div>
+          </div>
         </div>
 
-        {/* SECCIÓN 1: STOCK Y CAPITAL INMOVILIZADO */}
-        <h2 className="text-sm font-bold uppercase tracking-widest text-slate-500 mb-4">Activo en Stock</h2>
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-5 mb-10">
-          
-          <div className="bg-[#0f172a] border border-slate-800 p-6 rounded-2xl shadow-lg relative overflow-hidden">
-            <div className="absolute top-0 right-0 p-4 opacity-10"><Wallet className="w-16 h-16 text-white" /></div>
+        {/* ================= FILA 1: KPIs GLOBALES (Lo que ya tenías mejorado) ================= */}
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+          <div className="bg-[#0f172a] border border-slate-800 p-5 rounded-2xl shadow-lg relative overflow-hidden">
+            <div className="absolute -right-4 -top-4 opacity-5"><Wallet className="w-24 h-24 text-white" /></div>
             <span className="text-[10px] uppercase tracking-widest font-bold text-slate-400">Capital Inmovilizado</span>
-            <h3 className="text-2xl font-black text-white mt-1 mb-2">$ {capitalInmovilizado.toLocaleString("es-AR")}</h3>
-            <span className="text-xs text-slate-500 font-medium">Costo total de compra de unidades</span>
+            <h3 className="text-xl lg:text-2xl font-black text-white mt-1 mb-1 truncate">$ {capitalInmovilizado.toLocaleString("es-AR")}</h3>
+            <span className="text-[10px] text-slate-500 font-medium">Costo de compra</span>
           </div>
 
-          <div className="bg-[#0f172a] border border-slate-800 p-6 rounded-2xl shadow-lg relative overflow-hidden">
-            <div className="absolute top-0 right-0 p-4 opacity-10"><TrendingUp className="w-16 h-16 text-[#0ea5e9]" /></div>
-            <span className="text-[10px] uppercase tracking-widest font-bold text-[#0ea5e9]">Valor de Venta (Proyectado)</span>
-            <h3 className="text-2xl font-black text-[#0ea5e9] mt-1 mb-2">$ {valorVentaProyectado.toLocaleString("es-AR")}</h3>
-            <span className="text-xs text-slate-500 font-medium">Suma de precios publicados</span>
+          <div className="bg-[#0f172a] border border-slate-800 p-5 rounded-2xl shadow-lg relative overflow-hidden">
+            <div className="absolute -right-4 -top-4 opacity-5"><TrendingUp className="w-24 h-24 text-[#0ea5e9]" /></div>
+            <span className="text-[10px] uppercase tracking-widest font-bold text-[#0ea5e9]">Valor de Venta (Proy)</span>
+            <h3 className="text-xl lg:text-2xl font-black text-[#0ea5e9] mt-1 mb-1 truncate">$ {valorVentaProyectado.toLocaleString("es-AR")}</h3>
+            <span className="text-[10px] text-slate-500 font-medium">Precios de lista</span>
           </div>
 
-          <div className="bg-[#0f172a] border border-slate-800 p-6 rounded-2xl shadow-lg relative overflow-hidden">
-            <div className="absolute top-0 right-0 p-4 opacity-10"><CarFront className="w-16 h-16 text-white" /></div>
-            <span className="text-[10px] uppercase tracking-widest font-bold text-slate-400">Unidades Disponibles</span>
-            <h3 className="text-3xl font-black text-white mt-1 mb-2">{totalAutos}</h3>
-            <span className="text-xs text-slate-500 font-medium">Autos a la venta o señados</span>
+          <div className="bg-gradient-to-br from-emerald-900/40 to-[#0f172a] border border-emerald-800/50 p-5 rounded-2xl shadow-lg">
+            <div className="flex justify-between items-start mb-1">
+              <span className="text-[10px] uppercase tracking-widest font-bold text-emerald-400">Ganancia Bruta</span>
+              <span className="bg-emerald-500/20 text-emerald-400 px-1.5 py-0.5 rounded text-[9px] font-black">{margenPromedio.toFixed(1)}%</span>
+            </div>
+            <h3 className="text-xl lg:text-2xl font-black text-emerald-400 mb-1 truncate">$ {gananciaBrutaProyectada.toLocaleString("es-AR")}</h3>
+            <span className="text-[10px] text-slate-400 font-medium">Beneficio estimado total</span>
           </div>
 
+          <div className="bg-[#0f172a] border border-slate-800 p-5 rounded-2xl shadow-lg flex flex-col justify-between">
+            <div className="flex justify-between items-center">
+              <span className="text-[10px] uppercase tracking-widest font-bold text-slate-400">Stock Activo</span>
+              <CarFront className="w-4 h-4 text-slate-500" />
+            </div>
+            <div className="flex items-baseline gap-2 mt-2">
+              <h3 className="text-3xl font-black text-white leading-none">{totalAutos}</h3>
+              <span className="text-[10px] text-slate-500 font-medium">unidades</span>
+            </div>
+          </div>
         </div>
 
-        {/* SECCIÓN 2: RENTABILIDAD Y VENTAS REALES */}
-        <h2 className="text-sm font-bold uppercase tracking-widest text-slate-500 mb-4">Rentabilidad y Ventas del Mes</h2>
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
+        {/* ================= FILA 2: VENTAS, OBJETIVOS Y LEADS ================= */}
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
           
-          <div className="bg-gradient-to-br from-emerald-900/40 to-[#0f172a] border border-emerald-800/50 p-6 rounded-2xl shadow-lg">
-            <div className="flex justify-between items-start mb-2">
-              <span className="text-[10px] uppercase tracking-widest font-bold text-emerald-400">Ganancia Bruta Proyectada</span>
-              <span className="bg-emerald-500/20 text-emerald-400 px-2 py-1 rounded text-[10px] font-black">{margenPromedio.toFixed(1)}% PROM</span>
+          {/* COLUMNA 1 y 2: Ventas y Ranking */}
+          <div className="lg:col-span-2 space-y-6">
+            
+            {/* Panel de Objetivo de Ventas */}
+            <div className="bg-[#0f172a] border border-slate-800 p-6 rounded-2xl shadow-lg relative">
+              <div className="flex justify-between items-center mb-6">
+                <div className="flex items-center gap-3">
+                  <div className="p-2.5 bg-blue-500/10 rounded-xl"><Target className="w-5 h-5 text-blue-400" /></div>
+                  <div>
+                    <h3 className="text-sm font-bold uppercase tracking-widest text-slate-300">Progreso del Mes</h3>
+                    <p className="text-xs text-slate-500">Objetivo comercial: {OBJETIVO_MENSUAL_AUTOS} unidades</p>
+                  </div>
+                </div>
+                <div className="text-right">
+                  <span className="text-3xl font-black text-white">{autosVendidosMes}</span>
+                  <span className="text-sm text-slate-500 font-bold"> / {OBJETIVO_MENSUAL_AUTOS}</span>
+                </div>
+              </div>
+
+              {/* Barra de progreso */}
+              <div className="w-full bg-slate-800/50 rounded-full h-4 mb-2 overflow-hidden border border-slate-700/50">
+                <div 
+                  className={`h-4 transition-all duration-1000 ${progresoObjetivo >= 100 ? 'bg-emerald-500' : 'bg-gradient-to-r from-[#0145F2] to-sky-400'}`} 
+                  style={{ width: `${progresoObjetivo}%` }}
+                ></div>
+              </div>
+              
+              <div className="flex justify-between items-center text-xs font-bold mt-4 pt-4 border-t border-slate-800">
+                <div className="flex items-center gap-2 text-slate-300">
+                  <DollarSign className="w-4 h-4 text-emerald-500" />
+                  Facturación mensual: <span className="text-white">$ {ingresosDelMes.toLocaleString("es-AR")}</span>
+                </div>
+                <span className={progresoObjetivo >= 100 ? 'text-emerald-400' : 'text-sky-400'}>
+                  {progresoObjetivo.toFixed(0)}% Alcanzado
+                </span>
+              </div>
             </div>
-            <h3 className="text-3xl font-black text-emerald-400 mb-1">$ {gananciaBrutaProyectada.toLocaleString("es-AR")}</h3>
-            <span className="text-xs text-slate-400 font-medium">Beneficio estimado al vender todo el stock</span>
+
+            {/* Panel de Ranking de Vendedores */}
+            <div className="bg-[#0f172a] border border-slate-800 rounded-2xl shadow-lg overflow-hidden">
+              <div className="px-6 py-4 border-b border-slate-800 flex justify-between items-center bg-slate-900/50">
+                <h3 className="text-xs font-bold uppercase tracking-widest text-slate-300 flex items-center gap-2">
+                  <Trophy className="w-4 h-4 text-amber-400" /> Ranking de Vendedores
+                </h3>
+              </div>
+              <div className="p-0">
+                {rankingOrdenado.length > 0 ? (
+                  <table className="w-full text-left border-collapse">
+                    <thead>
+                      <tr className="bg-slate-900/30 text-slate-500 text-[10px] uppercase tracking-widest font-bold">
+                        <th className="px-6 py-3">Vendedor</th>
+                        <th className="px-6 py-3 text-center">Unidades</th>
+                        <th className="px-6 py-3 text-right">Facturación</th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-slate-800/60">
+                      {rankingOrdenado.map((vendedor, index) => (
+                        <tr key={index} className="hover:bg-slate-800/30 transition-colors">
+                          <td className="px-6 py-3.5 flex items-center gap-3">
+                            <div className={`w-6 h-6 rounded-full flex items-center justify-center text-[10px] font-black ${index === 0 ? 'bg-amber-400/20 text-amber-400 border border-amber-400/30' : index === 1 ? 'bg-slate-300/20 text-slate-300 border border-slate-300/30' : 'bg-orange-700/20 text-orange-400 border border-orange-700/30'}`}>
+                              {index + 1}
+                            </div>
+                            <span className="font-bold text-sm text-slate-200">{vendedor.nombre}</span>
+                          </td>
+                          <td className="px-6 py-3.5 text-center text-white font-black">{vendedor.cantidad}</td>
+                          <td className="px-6 py-3.5 text-right font-mono text-xs text-slate-400">
+                            $ {vendedor.facturacion.toLocaleString("es-AR")}
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                ) : (
+                  <div className="p-8 text-center text-slate-500 text-sm">
+                    Aún no hay ventas registradas este mes.
+                  </div>
+                )}
+              </div>
+            </div>
+
           </div>
 
-          <div className="bg-[#0f172a] border border-slate-800 p-6 rounded-2xl shadow-lg">
-            <div className="flex items-center gap-3 mb-3">
-              <div className="p-2.5 bg-blue-500/10 rounded-xl"><DollarSign className="w-5 h-5 text-blue-400" /></div>
-              <span className="text-xs uppercase tracking-widest font-bold text-slate-300">Ingresos del Mes</span>
+          {/* COLUMNA 3: Últimos Leads (CRM Preview) */}
+          <div className="bg-[#0f172a] border border-slate-800 rounded-2xl shadow-lg flex flex-col h-full">
+            <div className="px-6 py-4 border-b border-slate-800 flex justify-between items-center bg-slate-900/50">
+              <h3 className="text-xs font-bold uppercase tracking-widest text-slate-300 flex items-center gap-2">
+                <Users className="w-4 h-4 text-[#0ea5e9]" /> Últimos Leads (Web)
+              </h3>
             </div>
-            <h3 className="text-2xl font-black text-white mb-1">$ {ingresosDelMes.toLocaleString("es-AR")}</h3>
-            <span className="text-xs text-slate-500 font-medium">Facturado en ventas finalizadas este mes</span>
-          </div>
+            
+            <div className="p-4 flex-1 flex flex-col gap-3">
+              {ultimosLeads && ultimosLeads.length > 0 ? (
+                ultimosLeads.map(lead => (
+                  <div key={lead.id} className="bg-[#0b1329] border border-slate-800 p-4 rounded-xl">
+                    <div className="flex justify-between items-start mb-1">
+                      <span className="text-[10px] uppercase font-bold tracking-widest text-slate-400">
+                        {new Date(lead.created_at).toLocaleDateString("es-AR")}
+                      </span>
+                      <span className={`text-[9px] font-black uppercase tracking-widest px-2 py-0.5 rounded border ${lead.tipo_peritaje === 'consignacion' ? 'bg-emerald-900/30 text-emerald-400 border-emerald-700/50' : 'bg-purple-900/30 text-purple-400 border-purple-700/50'}`}>
+                        {lead.tipo_peritaje}
+                      </span>
+                    </div>
+                    <p className="font-bold text-sm text-white mb-0.5 truncate">{lead.nombre}</p>
+                    <p className="text-xs text-[#0ea5e9] truncate">{lead.marca} {lead.modelo}</p>
+                  </div>
+                ))
+              ) : (
+                <div className="flex-1 flex items-center justify-center text-slate-500 text-sm p-4 text-center">
+                  No hay solicitudes recientes.
+                </div>
+              )}
+            </div>
 
-          <div className="bg-[#0f172a] border border-slate-800 p-6 rounded-2xl shadow-lg">
-            <div className="flex items-center gap-3 mb-3">
-              <div className="p-2.5 bg-purple-500/10 rounded-xl"><Activity className="w-5 h-5 text-purple-400" /></div>
-              <span className="text-xs uppercase tracking-widest font-bold text-slate-300">Volumen Mensual</span>
+            <div className="p-4 border-t border-slate-800">
+              <Link href="/panel/cotizaciones" className="w-full flex items-center justify-center gap-2 text-xs font-bold uppercase tracking-widest bg-slate-800 hover:bg-slate-700 text-slate-200 py-3 rounded-xl transition-colors border border-slate-700">
+                Ver todos los leads <ArrowRight className="w-3.5 h-3.5" />
+              </Link>
             </div>
-            <h3 className="text-3xl font-black text-white mb-1">{autosVendidosMes}</h3>
-            <span className="text-xs text-slate-500 font-medium">Autos entregados este mes</span>
           </div>
 
         </div>

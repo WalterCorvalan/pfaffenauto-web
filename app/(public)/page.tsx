@@ -8,6 +8,7 @@ import FAQ from "@/components/FAQ";
 import FadeIn from "@/components/FadeIn";
 import Testimonials from "@/components/Testimonials";
 import Marcas from "@/components/Marcas";
+import OutletBanner from "@/components/OutletBanner";
 
 const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -46,7 +47,7 @@ export default async function HomePage() {
       </FadeIn>
 
       <FadeIn direction="up">
-        <Stats />
+        <OutletBanner />
       </FadeIn>
 
       <FadeIn direction="up">
