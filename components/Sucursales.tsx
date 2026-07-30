@@ -8,8 +8,8 @@ import { motion, AnimatePresence } from "framer-motion";
 export default function Sucursales() {
   const sucursales = [
     {
-      id: "villa-de-mayo",
-      titulo: "VILLA DE MAYO",
+      id: "casa-central",
+      titulo: "CASA CENTRAL",
       subtitulo: "AUTOS 0KM",
       telefono: "11 37564398",
       direccion: "Villa de Mayo, Buenos Aires",
@@ -24,8 +24,8 @@ export default function Sucursales() {
       img: "https://images.unsplash.com/photo-1580273916550-e323be2ae537?q=80&w=1200&auto=format&fit=crop" 
     },
     {
-      id: "panamericana",
-      titulo: "PANAMERICANA",
+      id: "don-torcuato",
+      titulo: "DON TORCUATO",
       subtitulo: "USADOS Y SEMINUEVOS",
       telefono: "11 57998065",
       direccion: "Panamericana R202",

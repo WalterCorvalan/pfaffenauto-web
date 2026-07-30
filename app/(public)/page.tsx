@@ -1,6 +1,6 @@
 import { createClient } from "@supabase/supabase-js";
 import Hero from "@/components/Hero";
-import Stats from "@/components/Stats";
+import Stats from "@/components/OutletBanner";
 import Sucursales from "@/components/Sucursales";
 import Stock from "@/components/Stock";
 import Location from "@/components/Location";

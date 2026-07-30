@@ -15,32 +15,27 @@ const jakarta = Plus_Jakarta_Sans({
 export const metadata: Metadata = {
   title: "Pfaffen Autos | Concesionaria de 0KM y Usados en Zona Norte",
   description:
-    "Comprá o vendé tu auto de forma fácil y segura. Amplio catálogo de 0KM y usados seleccionados de alta gama (Toyota, Volkswagen, BMW, Audi). Sucursales en Olivos y Villa de Mayo.",
+    "Comprá o vendé tu auto de forma fácil y segura. Amplio catálogo de 0KM y usados seleccionados de alta gama (Toyota, Volkswagen, BMW, Audi). Sucursales en Olivos y Casa Central.",
   keywords: [
-    // Identidad
     "pfaffen",
     "fafen",
     "pfaffen autos",
     "fafen autos",
     "agencia pfaffen",
-    // Intención de compra/venta
     "comprar auto 0km",
     "vender mi auto usado",
     "comprar auto usado buenos aires",
     "cotizar auto online",
     "venta de autos usados",
-    // SEO Local (¡Clave!)
     "concesionaria zona norte",
     "agencia de autos olivos",
-    "concesionaria villa de mayo",
-    "autos usados panamericana",
+    "concesionaria casa central",
+    "autos usados don torcuato",
     "agencia de autos gran buenos aires",
     "concesionaria oficial",
-    // Competencia / Alternativas (Oculto en código)
     "mejor que kavak",
     "alternativa a kavak",
     "vender auto rapido",
-    // Marcas y Categorías
     "autos alta gama buenos aires",
     "comprar suv usada",
     "camionetas 4x4 usadas",
@@ -65,7 +60,6 @@ export default function RootLayout({
 }: Readonly<{
   children: React.ReactNode;
 }>) {
-  // Schema JSON-LD Mejorado para SEO Local
   const jsonLd = {
     "@context": "https://schema.org",
     "@type": "AutoDealer",
@@ -78,7 +72,8 @@ export default function RootLayout({
     areaServed: [
       "Zona Norte, Buenos Aires",
       "Olivos, Buenos Aires",
-      "Villa de Mayo, Malvinas Argentinas",
+      "Casa Central, Malvinas Argentinas",
+      "Don Torcuato, Tigre"
     ],
     description:
       "Concesionaria de autos 0KM y usados seleccionados de alta gama en Buenos Aires.",

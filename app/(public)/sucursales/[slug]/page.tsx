@@ -3,37 +3,46 @@ import { notFound } from "next/navigation";
 import Stock from "@/components/Stock";
 import { MapPin, Phone, Clock, ArrowLeft } from "lucide-react";
 import Link from "next/link";
-import FadeIn from "@/components/FadeIn"; // <-- Traemos tu componente de animaciones
+import FadeIn from "@/components/FadeIn";
 
 const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY!
+  process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY!,
 );
 
 export const revalidate = 60;
 
-const FALLBACK_DATA: Record<string, { imagen: string; telefono: string; direccion: string; horario: string }> = {
-  "villa-de-mayo": {
+// Objeto FALLBACK_DATA con los nombres actualizados
+const FALLBACK_DATA: Record<
+  string,
+  { imagen: string; telefono: string; direccion: string; horario: string }
+> = {
+  "casa-central": {
     imagen: "/VDM.jpeg",
     telefono: "11 37564398",
-    direccion: "Villa de Mayo, Buenos Aires",
-    horario: "Lun a Sáb - 9:00 a 19:00hs"
+    direccion: "Casa Central, Buenos Aires",
+    horario: "Lun a Sáb - 9:00 a 19:00hs",
   },
   "olivos": {
-    imagen: "https://images.unsplash.com/photo-1580273916550-e323be2ae537?q=80&w=1200&auto=format&fit=crop",
+    imagen:
+      "https://images.unsplash.com/photo-1580273916550-e323be2ae537?q=80&w=1200&auto=format&fit=crop",
     telefono: "11 56520726",
     direccion: "Olivos, Buenos Aires",
-    horario: "Lun a Sáb - 9:00 a 19:00hs"
+    horario: "Lun a Sáb - 9:00 a 19:00hs",
   },
-  "panamericana": {
+  "don-torcuato": {
     imagen: "/pana.jpg",
     telefono: "11 57998065",
-    direccion: "Panamericana R202",
-    horario: "Lun a Sáb - 9:00 a 19:00hs"
-  }
+    direccion: "Don Torcuato, Buenos Aires",
+    horario: "Lun a Sáb - 9:00 a 19:00hs",
+  },
 };
 
-export default async function SucursalPage({ params }: { params: Promise<{ slug: string }> }) {
+export default async function SucursalPage({
+  params,
+}: {
+  params: Promise<{ slug: string }>;
+}) {
   const { slug } = await params;
 
   const { data: sucursal } = await supabase
@@ -46,17 +55,20 @@ export default async function SucursalPage({ params }: { params: Promise<{ slug:
 
   const { data: vehiculos } = await supabase
     .from("vehiculos")
-    .select(`
+    .select(
+      `
       *,
       multimedia_vehiculos ( url_archivo ),
       sucursales ( nombre )
-    `)
+    `,
+    )
     .eq("sucursal_id", sucursal.id)
     .in("estado", ["Disponible", "Reservado"])
     .order("created_at", { ascending: false });
 
-  const fallback = FALLBACK_DATA[slug] || FALLBACK_DATA["villa-de-mayo"];
-  
+  // EL FALLBACK VA ÚNICAMENTE ACÁ ADENTRO, donde "slug" existe
+  const fallback = FALLBACK_DATA[slug] || FALLBACK_DATA["casa-central"];
+
   const imagenFondo = sucursal.imagen_url || fallback.imagen;
   const direccion = sucursal.direccion || fallback.direccion;
   const telefono = sucursal.telefono || fallback.telefono;
@@ -66,9 +78,7 @@ export default async function SucursalPage({ params }: { params: Promise<{ slug:
 
   return (
     <div className="w-full bg-[#050505] min-h-screen flex flex-col">
-      
       <section className="relative h-[65vh] min-h-[500px] w-full flex flex-col justify-center px-6 md:px-12 pb-16 overflow-hidden bg-black">
-        
         <div className="absolute inset-0 z-0">
           <img
             src={imagenFondo}
@@ -80,36 +90,42 @@ export default async function SucursalPage({ params }: { params: Promise<{ slug:
         </div>
 
         <div className="relative z-20 max-w-7xl mx-auto w-full mt-10">
-          
-          {/* Envolvemos en FadeIn con pequeño retraso para efecto elegante */}
           <FadeIn direction="up" delay={0.1}>
-            <Link href="/#sucursales" className="inline-flex items-center gap-2 text-[#0145F2] hover:text-blue-400 active:scale-95 text-[10px] md:text-xs font-black uppercase tracking-widest transition-all mb-6 bg-black/20 backdrop-blur-sm px-3 py-1.5 rounded-full border border-white/10 w-fit">
+            <Link
+              href="/#sucursales"
+              className="inline-flex items-center gap-2 text-[#0145F2] hover:text-blue-400 active:scale-95 text-[10px] md:text-xs font-black uppercase tracking-widest transition-all mb-6 bg-black/20 backdrop-blur-sm px-3 py-1.5 rounded-full border border-white/10 w-fit"
+            >
               <ArrowLeft className="w-4 h-4" /> Volver a Sucursales
             </Link>
-            
+
             <h1 className="text-4xl md:text-6xl lg:text-7xl font-black uppercase text-white tracking-tight drop-shadow-xl mb-8 leading-none">
               SUCURSAL <br className="hidden md:block" />
-              <span className="text-[#0145F2] drop-shadow-md">{nombreSucursal}</span>
+              <span className="text-[#0145F2] drop-shadow-md">
+                {nombreSucursal}
+              </span>
             </h1>
           </FadeIn>
-          
+
           <div className="flex flex-col gap-5 mt-4 max-w-md">
-            {/* Escalamos un poquito el retraso de cada píldora para que entren en cascada */}
             <FadeIn direction="up" delay={0.2}>
               <div className="flex items-center gap-4 text-gray-200 hover:text-white transition-colors bg-black/10 backdrop-blur-sm p-2 rounded-2xl border border-white/5 w-fit pr-6">
                 <div className="w-10 h-10 rounded-full bg-[#0145F2]/20 border border-[#0145F2]/30 flex items-center justify-center shrink-0 shadow-[0_0_15px_rgba(1,69,242,0.3)]">
                   <MapPin className="w-4 h-4 text-[#0145F2]" />
                 </div>
-                <span className="text-sm font-bold tracking-wide drop-shadow-md">{direccion}</span>
+                <span className="text-sm font-bold tracking-wide drop-shadow-md">
+                  {direccion}
+                </span>
               </div>
             </FadeIn>
-            
+
             <FadeIn direction="up" delay={0.3}>
               <div className="flex items-center gap-4 text-gray-200 hover:text-white transition-colors bg-black/10 backdrop-blur-sm p-2 rounded-2xl border border-white/5 w-fit pr-6">
                 <div className="w-10 h-10 rounded-full bg-[#0145F2]/20 border border-[#0145F2]/30 flex items-center justify-center shrink-0 shadow-[0_0_15px_rgba(1,69,242,0.3)]">
                   <Phone className="w-4 h-4 text-[#0145F2]" />
                 </div>
-                <span className="text-sm font-bold tracking-wide drop-shadow-md">{telefono}</span>
+                <span className="text-sm font-bold tracking-wide drop-shadow-md">
+                  {telefono}
+                </span>
               </div>
             </FadeIn>
 
@@ -118,7 +134,9 @@ export default async function SucursalPage({ params }: { params: Promise<{ slug:
                 <div className="w-10 h-10 rounded-full bg-[#0145F2]/20 border border-[#0145F2]/30 flex items-center justify-center shrink-0 shadow-[0_0_15px_rgba(1,69,242,0.3)]">
                   <Clock className="w-4 h-4 text-[#0145F2]" />
                 </div>
-                <span className="text-sm font-bold tracking-wide drop-shadow-md">{horario}</span>
+                <span className="text-sm font-bold tracking-wide drop-shadow-md">
+                  {horario}
+                </span>
               </div>
             </FadeIn>
           </div>
@@ -128,7 +146,6 @@ export default async function SucursalPage({ params }: { params: Promise<{ slug:
       <div className="relative z-30 -mt-10 bg-background rounded-t-[2.5rem] pt-6 overflow-hidden">
         <Stock vehiculos={vehiculos} />
       </div>
-
     </div>
   );
 }

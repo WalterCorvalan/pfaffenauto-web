@@ -17,18 +17,18 @@ export default function Location() {
 
         <div className="grid grid-cols-1 md:grid-cols-3 gap-5 md:gap-6">
           
-          {/* Villa de Mayo */}
+          {/* Casa Central */}
           <div className="bg-gray-50 rounded-2xl border border-gray-200 hover:border-primary/40 overflow-hidden flex flex-col transition-all duration-300 group shadow-sm">
             <div className="w-full h-[200px] relative">
-              <iframe src="https://maps.google.com/maps?q=Pfaffen+Autos,+Villa+de+Mayo,+Buenos+Aires&t=m&z=15&output=embed&iwloc=near&hl=es" className="w-full h-full border-0 group-hover:grayscale-0 group-hover:opacity-100 transition-all duration-700" loading="lazy" title="Mapa Villa de Mayo"></iframe>
+              <iframe src="https://maps.google.com/maps?q=Pfaffen+Autos,+Villa+de+Mayo,+Buenos+Aires&t=m&z=15&output=embed&iwloc=near&hl=es" className="w-full h-full border-0 group-hover:grayscale-0 group-hover:opacity-100 transition-all duration-700" loading="lazy" title="Mapa Casa Central"></iframe>
             </div>
             <div className="p-1.5 flex flex-col flex-grow relative z-10">
-              <h3 className="text-lg font-black text-navy uppercase tracking-tight mb-2">Villa de Mayo</h3>
+              <h3 className="text-lg font-black text-navy uppercase tracking-tight mb-2">Casa Central</h3>
               <div className="flex items-center gap-1.5 text-gray-500 text-xs font-medium mb-5">
-                <MapPin className="w-3.5 h-3.5" /> <span>Villa de Mayo, Buenos Aires</span>
+                <MapPin className="w-3.5 h-3.5" /> <span>Casa Central, Buenos Aires</span>
               </div>
               <div className="mt-auto flex gap-2">
-                <Link href="/sucursales/villa-de-mayo" className="flex-1 bg-primary hover:bg-secondary text-white text-[10px] font-bold uppercase tracking-widest py-2.5 rounded-xl transition-colors flex items-center justify-center gap-1.5 shadow-sm">
+                <Link href="/sucursales/casa-central" className="flex-1 bg-primary hover:bg-secondary text-white text-[10px] font-bold uppercase tracking-widest py-2.5 rounded-xl transition-colors flex items-center justify-center gap-1.5 shadow-sm">
                   <Car className="w-3.5 h-3.5" /> Stock
                 </Link>
                 <a href="https://maps.app.goo.gl/4ZMmpWJCarHcZ2sb9" target="_blank" rel="noopener noreferrer" className="flex-1 bg-white border border-gray-200 hover:bg-gray-50 text-navy text-[10px] font-bold uppercase tracking-widest py-2.5 rounded-xl transition-colors flex items-center justify-center gap-1.5">
@@ -38,18 +38,18 @@ export default function Location() {
             </div>
           </div>
 
-          {/* Panamericana */}
+          {/* Don Torcuato */}
           <div className="bg-gray-50 rounded-2xl border border-gray-200 hover:border-primary/40 overflow-hidden flex flex-col transition-all duration-300 group shadow-sm">
             <div className="w-full h-[200px] relative">
-              <iframe src="https://maps.google.com/maps?q=Pfaffen+Autos,+Don+Torcuato,+Buenos+Aires&t=m&z=15&output=embed&iwloc=near&hl=es" className="w-full h-full border-0 group-hover:grayscale-0 group-hover:opacity-100 transition-all duration-700" loading="lazy" title="Mapa Panamericana"></iframe>
+              <iframe src="https://maps.google.com/maps?q=Pfaffen+Autos,+Don+Torcuato,+Buenos+Aires&t=m&z=15&output=embed&iwloc=near&hl=es" className="w-full h-full border-0 group-hover:grayscale-0 group-hover:opacity-100 transition-all duration-700" loading="lazy" title="Mapa Don Torcuato"></iframe>
             </div>
             <div className="p-1.5 flex flex-col flex-grow relative z-10">
-              <h3 className="text-lg font-black text-navy uppercase tracking-tight mb-2">Panamericana</h3>
+              <h3 className="text-lg font-black text-navy uppercase tracking-tight mb-2">Don Torcuato</h3>
               <div className="flex items-center gap-1.5 text-gray-500 text-xs font-medium mb-5">
-                <MapPin className="w-3.5 h-3.5" /> <span>Panamericana Km 28</span>
+                <MapPin className="w-3.5 h-3.5" /> <span>Don Torcuato, Tigre</span>
               </div>
               <div className="mt-auto flex gap-2">
-                <Link href="/sucursales/panamericana" className="flex-1 bg-primary hover:bg-secondary text-white text-[10px] font-bold uppercase tracking-widest py-2.5 rounded-xl transition-colors flex items-center justify-center gap-1.5 shadow-sm">
+                <Link href="/sucursales/don-torcuato" className="flex-1 bg-primary hover:bg-secondary text-white text-[10px] font-bold uppercase tracking-widest py-2.5 rounded-xl transition-colors flex items-center justify-center gap-1.5 shadow-sm">
                   <Car className="w-3.5 h-3.5" /> Stock
                 </Link>
                 <a href="https://maps.app.goo.gl/GuNBuUKT5xMFw5jR9" target="_blank" rel="noopener noreferrer" className="flex-1 bg-white border border-gray-200 hover:bg-gray-50 text-navy text-[10px] font-bold uppercase tracking-widest py-2.5 rounded-xl transition-colors flex items-center justify-center gap-1.5">

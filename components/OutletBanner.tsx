@@ -26,7 +26,7 @@ export default async function OutletBanner() {
         <div className="relative z-10 flex flex-col md:flex-row items-center justify-between gap-8 md:gap-12">
           
           {/* Textos Izquierda */}
-          <div className="flex-1 text-center md:text-left">
+          <div className="flex-1 text-center md:text-left flex flex-col items-center md:items-start">
             <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full border border-primary/30 bg-primary/10 mb-4 md:mb-6">
               <Zap className="w-3 h-3 text-primary fill-primary animate-pulse" />
               <span className="text-primary text-[10px] md:text-xs font-bold tracking-widest uppercase">
@@ -34,9 +34,24 @@ export default async function OutletBanner() {
               </span>
             </div>
 
-            <h2 className="text-3xl md:text-5xl lg:text-[56px] font-black text-white leading-[1] mb-4 tracking-tighter uppercase">
-              Outlet <span className="text-transparent bg-clip-text bg-gradient-to-r from-primary to-[#0145F2]">Pfaffen</span>
-            </h2>
+            <div className="flex flex-col sm:flex-row items-center gap-4 mb-4">
+              <h2 className="text-3xl md:text-5xl lg:text-[56px] font-black text-white leading-[1] tracking-tighter uppercase">
+                Outlet
+              </h2>
+              {/* LOGO PFAFFEN INYECTADO */}
+              <div className="relative flex items-center shrink-0 mt-1 sm:mt-0">
+                <img
+                  src="/logo.png"
+                  alt="Pfaffen Autos"
+                  className="h-7 sm:h-9 md:h-12 w-auto invert brightness-0"
+                />
+                <img
+                  src="/r.png"
+                  alt="Marca Registrada"
+                  className="absolute -top-1 -right-3 md:-right-4 w-2.5 h-2.5 md:w-3.5 md:h-3.5 object-contain invert brightness-0 opacity-80"
+                />
+              </div>
+            </div>
             
             <p className="text-gray-300 text-sm md:text-base font-medium max-w-lg mb-0 leading-relaxed mx-auto md:mx-0">
               Vehículos seleccionados a precios súper accesibles. Ideales como primer auto, herramienta de trabajo o proyecto.
@@ -81,4 +96,4 @@ export default async function OutletBanner() {
       </div>
     </section>
   );
-} 
+}
