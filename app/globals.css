@@ -1,4 +1,11 @@
 @import "tailwindcss";
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@keyframes shimmer {
+  100% { transform: translateX(150%); }
+}
 
 :root {
   --background: #f8fafc;

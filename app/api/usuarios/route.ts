@@ -1,51 +1,68 @@
-import { createClient } from "@supabase/supabase-js";
 import { NextResponse } from "next/server";
-
-// Usamos la service_role key para operaciones administrativas
-const supabaseAdmin = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.SUPABASE_SERVICE_ROLE_KEY!,
-  { auth: { persistSession: false } }
-);
+import { createServerClient } from "@supabase/ssr";
+import { cookies } from "next/headers";
+import { createClient } from "@supabase/supabase-js"; 
 
 export async function POST(request: Request) {
   try {
-    const { email, password, nombre, rol, sucursal_id } = await request.json();
+    const cookieStore = await cookies();
+    
+    // 1. Cliente normal (con cookies) para saber QUIÉN hace la petición
+    const supabase = createServerClient(
+      process.env.NEXT_PUBLIC_SUPABASE_URL!,
+      process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY!,
+      { cookies: { getAll: () => cookieStore.getAll() } }
+    );
 
-    if (!email || !password || !nombre || !rol) {
-      return NextResponse.json({ error: "Faltan datos obligatorios" }, { status: 400 });
+    const { data: { user }, error: authError } = await supabase.auth.getUser();
+    if (authError || !user) {
+      return NextResponse.json({ error: "No autorizado" }, { status: 401 });
     }
 
-    // 1. Crear el usuario en Supabase Auth (Auto-confirmado para que pueda ingresar al toque)
-    const { data: authData, error: authError } = await supabaseAdmin.auth.admin.createUser({
+    // 2. VERIFICACIÓN SERVER-SIDE DEL ROL
+    const { data: perfil } = await supabase
+      .from("perfiles")
+      .select("rol")
+      .eq("id", user.id)
+      .single();
+
+    if (perfil?.rol !== "admin") {
+      return NextResponse.json(
+        { error: "Acceso denegado. Solo los administradores pueden crear usuarios." }, 
+        { status: 403 }
+      );
+    }
+
+    // 3. Cliente ADMIN (Service Role) para bypassear RLS y crear el usuario en Auth
+    // IMPORTANTE: Asegurate de tener SUPABASE_SERVICE_ROLE_KEY en tu archivo .env.local
+    const supabaseAdmin = createClient(
+      process.env.NEXT_PUBLIC_SUPABASE_URL!,
+      process.env.SUPABASE_SERVICE_ROLE_KEY! 
+    );
+
+    const body = await request.json();
+    const { email, password, nombre, rol, sucursal_id } = body;
+
+    // Crear usuario real en Supabase Auth
+    const { data: newUser, error: createError } = await supabaseAdmin.auth.admin.createUser({
       email,
       password,
       email_confirm: true,
     });
 
-    if (authError) {
-      return NextResponse.json({ error: authError.message }, { status: 400 });
-    }
+    if (createError) throw createError;
 
-    const userId = authData.user.id;
-
-    // 2. Insertar o actualizar el perfil en la tabla perfiles
-    const { error: perfilError } = await supabaseAdmin
+    // Actualizar el perfil público vinculado a ese usuario
+    const { error: updateError } = await supabaseAdmin
       .from("perfiles")
-      .upsert({
-        id: userId,
-        nombre,
-        rol,
-        sucursal_id: sucursal_id || null,
-      });
+      .update({ nombre, rol, sucursal_id })
+      .eq("id", newUser.user.id);
 
-    if (perfilError) {
-      return NextResponse.json({ error: perfilError.message }, { status: 400 });
-    }
+    if (updateError) throw updateError;
 
-    return NextResponse.json({ success: true, userId });
+    return NextResponse.json({ success: true, user: newUser.user });
   } catch (error: any) {
-    console.error("Error creando usuario:", error);
-    return NextResponse.json({ error: error.message || "Error interno del servidor" }, { status: 500 });
+    console.error("Error API Usuarios:", error);
+    return NextResponse.json({ error: error.message }, { status: 400 });
   }
 }

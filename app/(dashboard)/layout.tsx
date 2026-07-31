@@ -6,17 +6,13 @@ import { usePathname, useRouter } from "next/navigation";
 import { supabase } from "@/lib/supabase";
 import {
   Car,
-  Users,
   LogOut,
   Menu,
   X,
-  MessageSquareShare, // Para CRM
-  FileCheck, // Para Gestoría
-  BarChart3,
-  ChevronDown,
-  ChevronUp,
-  Settings,
-  Wallet,
+  MessageSquareShare,
+  Search,
+  ChevronRight,
+  Plus,
   UserPlus,
   Banknote,
 } from "lucide-react";
@@ -27,252 +23,203 @@ export default function DashboardLayout({
   children: React.ReactNode;
 }) {
   const [isOpen, setIsOpen] = useState(false);
-  const [adminMenuOpen, setAdminMenuOpen] = useState(false);
-  const [rol, setRol] = useState<string | null>(null);
+  
+  // Estado ampliado para mostrar Nombre y Email en el perfil
+  const [userProfile, setUserProfile] = useState({
+    nombre: "Cargando...",
+    email: "",
+    rol: "vendedor",
+  });
 
   const pathname = usePathname();
   const router = useRouter();
 
-  // Traemos el rol del usuario al cargar el layout y BLOQUEAMOS ACCESOS DIRECTOS
   useEffect(() => {
-    const fetchRol = async () => {
-      const {
-        data: { user },
-      } = await supabase.auth.getUser();
+    const fetchUser = async () => {
+      const { data: { user } } = await supabase.auth.getUser();
       if (user) {
         const { data } = await supabase
           .from("perfiles")
-          .select("rol")
+          .select("rol, nombre")
           .eq("id", user.id)
           .single();
 
         const userRol = data?.rol || "vendedor";
-        setRol(userRol);
+        
+        setUserProfile({
+          nombre: data?.nombre || "Usuario",
+          email: user.email || "",
+          rol: userRol,
+        });
 
-        // ========================================================
-        // BARRERA DE SEGURIDAD: PREVENIR ACCESO DIRECTO POR URL
-        // ========================================================
-
-        // 1. Si no es admin y quiere entrar a Usuarios o Gastos -> Afuera
+        // BARRERAS DE SEGURIDAD
         if (
           userRol !== "admin" &&
-          (pathname.startsWith("/panel/usuarios") ||
-            pathname.startsWith("/panel/gastos"))
+          (pathname.startsWith("/panel/usuarios") || pathname.startsWith("/panel/gastos"))
         ) {
           router.replace("/panel");
         }
 
-        // 2. Si es vendedor y quiere entrar a Gestoría o Métricas -> Afuera
         if (
           userRol === "vendedor" &&
-          (pathname.startsWith("/panel/gestoria") ||
-            pathname.startsWith("/panel/metricas"))
+          (pathname.startsWith("/panel/gestoria") || pathname.startsWith("/panel/metricas"))
         ) {
           router.replace("/panel");
         }
       }
     };
-    fetchRol();
-  }, [pathname, router]); // Se vuelve a ejecutar cada vez que cambia la URL
+    fetchUser();
+  }, [pathname, router]);
 
   const handleLogout = async () => {
     await supabase.auth.signOut();
     router.push("/login");
   };
 
+  // ================= CONFIGURACIÓN DE LINKS =================
+  const mainLinks = [
+    { icon: Car, label: "Gestión de Stock", href: "/panel", exact: true },
+    { icon: MessageSquareShare, label: "CRM / Leads", href: "/panel/crm", notifications: 3 }, // Notificación visual de ejemplo
+    { icon: UserPlus, label: "Nuevo Cliente", href: "/panel/clientes/nuevo" },
+    { icon: Banknote, label: "Nueva Operación", href: "/panel/ventas/nueva" },
+  ];
+
+  // Colecciones (Adaptadas a Pfaffen Autos usando Emojis según tu captura)
+  const collectionLinks = [];
+  
+  if (userProfile.rol === "admin" || userProfile.rol === "encargado") {
+    collectionLinks.push({ emoji: "📝", label: "Gestoría", href: "/panel/gestoria" });
+    collectionLinks.push({ emoji: "📊", label: "Métricas", href: "/panel/metricas" });
+  }
+  
+  if (userProfile.rol === "admin") {
+    collectionLinks.push({ emoji: "💰", label: "Tesorería", href: "/panel/gastos" });
+    collectionLinks.push({ emoji: "👥", label: "Usuarios", href: "/panel/usuarios" });
+  }
+
   return (
     <div className="flex min-h-screen w-full bg-[#0b1329] text-slate-100 font-sans">
-      {/* 1. BARRA SUPERIOR (MÓVIL) */}
-      <div className="md:hidden print:hidden fixed top-0 left-0 right-0 h-16 bg-[#0f172a] border-b border-slate-800 flex items-center justify-between px-4 z-50 shadow-md">
+      
+      {/* ================= 1. BARRA SUPERIOR (MÓVIL) ================= */}
+      <div className="md:hidden print:hidden fixed top-0 left-0 right-0 h-16 bg-[#1A1B1E] border-b border-[#2C2E33] flex items-center justify-between px-4 z-50 shadow-md">
         <Link href="/panel" className="flex items-center relative group py-2">
-          <div className="relative inline-block">
-            <img
-              src="/logo.png"
-              alt="Pfaffen Autos"
-              className="h-6 w-auto invert brightness-0"
-            />
-            <img
-              src="/r.png"
-              alt="Marca"
-              className="absolute invert brightness-0 -top-1 -right-3 w-2.5 h-2.5 opacity-80"
-            />
-          </div>
+          <img src="/logo.png" alt="Pfaffen Autos" className="h-6 w-auto invert brightness-0" />
         </Link>
-        <button
-          onClick={() => setIsOpen(!isOpen)}
-          className="text-slate-300 hover:text-white"
-        >
+        <button onClick={() => setIsOpen(!isOpen)} className="text-[#C1C2C5] hover:text-white">
           {isOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
         </button>
       </div>
 
-      {/* 2. BARRA LATERAL (SIDEBAR) */}
+      {/* ================= 2. BARRA LATERAL (SIDEBAR ESTILO MANTINE) ================= */}
       <aside
-        className={`fixed print:hidden md:sticky top-16 md:top-0 left-0 h-[calc(100vh-4rem)] md:h-screen w-64 bg-[#0f172a] border-r border-slate-800/80 transform transition-transform duration-300 z-40 shadow-xl ${
+        className={`fixed print:hidden md:sticky top-16 md:top-0 left-0 h-[calc(100vh-4rem)] md:h-screen w-[280px] bg-[#1A1B1E] border-r border-[#2C2E33] transform transition-transform duration-300 z-40 flex flex-col shrink-0 overflow-y-auto custom-scrollbar ${
           isOpen ? "translate-x-0" : "-translate-x-full md:translate-x-0"
-        } flex flex-col shrink-0`}
+        }`}
       >
-        <div className="hidden md:flex shrink-0 h-20 items-center px-6 border-b border-slate-800">
-          <Link href="/panel" className="flex items-center relative group py-2">
-            <div className="relative inline-block transform group-hover:scale-105 transition-transform duration-300">
-              <img
-                src="/logo.png"
-                alt="Pfaffen Autos"
-                className="h-7 w-auto invert brightness-0"
-              />
-              <img
-                src="/r.png"
-                alt="Marca"
-                className="absolute invert brightness-0 -top-1 -right-3.5 w-3 h-3 opacity-80"
-              />
+        <div className="p-4 flex flex-col h-full">
+          
+          {/* USER BUTTON */}
+          <div className="flex items-center justify-between p-3 -mx-2 rounded-lg hover:bg-[#25262B] transition-colors cursor-pointer mb-4">
+            <div className="flex items-center gap-3">
+              <div className="w-9 h-9 rounded-full bg-gradient-to-br from-[#0145F2] to-sky-400 flex items-center justify-center text-white font-bold text-sm shrink-0">
+                {userProfile.nombre.charAt(0).toUpperCase()}
+              </div>
+              <div className="flex flex-col min-w-0">
+                <span className="text-sm font-semibold text-gray-200 truncate pr-2">
+                  {userProfile.nombre}
+                </span>
+                <span className="text-xs text-gray-500 truncate pr-2">
+                  {userProfile.email}
+                </span>
+              </div>
             </div>
-          </Link>
-        </div>
+            <ChevronRight className="w-4 h-4 text-gray-500 shrink-0" />
+          </div>
 
-        {/* Menú de Navegación Dinámico */}
-        <nav className="flex-1 px-4 py-6 space-y-2 overflow-y-auto custom-scrollbar">
-          {/* MÓDULOS GLOBALES (Todos los ven) */}
-          <Link
-            href="/panel"
-            onClick={() => setIsOpen(false)}
-            className={`flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-bold transition-all ${pathname === "/panel" || pathname.startsWith("/panel/vehiculo") ? "bg-[#0ea5e9] text-white shadow-lg shadow-sky-500/20" : "text-slate-400 hover:bg-slate-800/60 hover:text-white"}`}
-          >
-            <Car
-              className={`w-5 h-5 ${pathname === "/panel" || pathname.startsWith("/panel/vehiculo") ? "text-white" : "text-slate-500"}`}
+          {/* SEARCH BAR */}
+          <div className="relative mb-6">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-500" />
+            <input 
+              type="text"
+              placeholder="Buscar" 
+              className="w-full bg-[#25262B] border border-[#373A40] text-sm text-gray-200 rounded-md pl-9 pr-14 py-2 outline-none focus:border-[#1971C2] transition-colors placeholder:text-gray-500" 
             />
-            Gestión de Stock
-          </Link>
+            <div className="absolute right-2 top-1/2 -translate-y-1/2 bg-[#1A1B1E] border border-[#373A40] text-[10px] font-bold text-gray-400 px-1.5 py-0.5 rounded pointer-events-none">
+              Ctrl + K
+            </div>
+          </div>
 
-          <Link
-            href="/panel/crm"
-            onClick={() => setIsOpen(false)}
-            className={`flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-bold transition-all ${pathname.startsWith("/panel/crm") || pathname.startsWith("/panel/cotizaciones") ? "bg-[#0ea5e9] text-white shadow-lg shadow-sky-500/20" : "text-slate-400 hover:bg-slate-800/60 hover:text-white"}`}
-          >
-            <MessageSquareShare
-              className={`w-5 h-5 ${pathname.startsWith("/panel/crm") || pathname.startsWith("/panel/cotizaciones") ? "text-white" : "text-slate-500"}`}
-            />
-            CRM / Leads
-          </Link>
+          {/* MAIN LINKS */}
+          <div className="flex flex-col gap-1 mb-8">
+            {mainLinks.map((link) => {
+              const isActive = link.exact ? pathname === link.href : pathname.startsWith(link.href);
+              return (
+                <Link
+                  key={link.label}
+                  href={link.href}
+                  onClick={() => setIsOpen(false)}
+                  className={`flex items-center justify-between px-3 py-2 rounded-md transition-colors ${
+                    isActive ? "bg-[#0145F2]/10 text-[#0ea5e9]" : "text-[#C1C2C5] hover:bg-[#25262B] hover:text-gray-200"
+                  }`}
+                >
+                  <div className="flex items-center gap-3">
+                    <link.icon className={`w-[18px] h-[18px] ${isActive ? "text-[#0ea5e9]" : "text-gray-400"}`} strokeWidth={2} />
+                    <span className="text-sm font-medium">{link.label}</span>
+                  </div>
+                  {link.notifications && (
+                    <span className="bg-[#1971C2] text-white text-[10px] font-bold px-1.5 py-0.5 rounded-full min-w-[20px] text-center">
+                      {link.notifications}
+                    </span>
+                  )}
+                </Link>
+              );
+            })}
+          </div>
 
-          {/* <--- ACÁ AGREGAMOS EL BOTÓN DE NUEVO CLIENTE ---> */}
-          <Link
-            href="/panel/clientes/nuevo"
-            onClick={() => setIsOpen(false)}
-            className={`flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-bold transition-all ${pathname === "/panel/clientes/nuevo" ? "bg-[#0ea5e9] text-white shadow-lg shadow-sky-500/20" : "text-slate-400 hover:bg-slate-800/60 hover:text-white"}`}
-          >
-            <UserPlus
-              className={`w-5 h-5 ${pathname === "/panel/clientes/nuevo" ? "text-white" : "text-slate-500"}`}
-            />
-            Nuevo Cliente
-          </Link>
+          {/* COLLECTIONS (ADMINISTRACIÓN) */}
+          {collectionLinks.length > 0 && (
+            <div className="mb-auto">
+              <div className="flex items-center justify-between text-xs font-bold text-gray-500 mb-2 px-1">
+                <span>Colecciones</span>
+                <button className="hover:bg-[#25262B] p-1 rounded transition-colors" title="Añadir colección">
+                  <Plus className="w-3.5 h-3.5" />
+                </button>
+              </div>
+              <div className="flex flex-col gap-0.5">
+                {collectionLinks.map((collection) => {
+                  const isActive = pathname.startsWith(collection.href);
+                  return (
+                    <Link
+                      key={collection.label}
+                      href={collection.href}
+                      onClick={() => setIsOpen(false)}
+                      className={`flex items-center gap-3 px-3 py-1.5 rounded-md transition-colors text-sm ${
+                        isActive ? "bg-[#25262B] text-white font-medium" : "text-[#C1C2C5] hover:bg-[#25262B] hover:text-gray-200"
+                      }`}
+                    >
+                      <span className="text-base leading-none">{collection.emoji}</span>
+                      <span>{collection.label}</span>
+                    </Link>
+                  );
+                })}
+              </div>
+            </div>
+          )}
 
-          {/* <--- NUEVO BOTÓN DE VENTAS / OPERACIONES ---> */}
-          <Link
-            href="/panel/ventas/nueva"
-            onClick={() => setIsOpen(false)}
-            className={`flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-bold transition-all ${pathname.startsWith("/panel/ventas") ? "bg-[#0ea5e9] text-white shadow-lg shadow-sky-500/20" : "text-slate-400 hover:bg-slate-800/60 hover:text-white"}`}
-          >
-            <Banknote
-              className={`w-5 h-5 ${pathname.startsWith("/panel/ventas") ? "text-white" : "text-slate-500"}`}
-            />
-            Nueva Operación
-          </Link>
-
-          {/* MÓDULOS DE ENCARGADOS Y ADMINS */}
-          {(rol === "admin" || rol === "encargado") && (
-            <Link
-              href="/panel/gestoria"
-              onClick={() => setIsOpen(false)}
-              className={`flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-bold transition-all ${pathname.startsWith("/panel/gestoria") ? "bg-[#0ea5e9] text-white shadow-lg shadow-sky-500/20" : "text-slate-400 hover:bg-slate-800/60 hover:text-white"}`}
+          {/* LOGOUT BUTTON */}
+          <div className="pt-6 mt-6 border-t border-[#2C2E33]">
+            <button
+              onClick={handleLogout}
+              className="flex items-center gap-3 w-full px-3 py-2 rounded-md text-sm font-medium text-gray-400 hover:bg-rose-500/10 hover:text-rose-400 transition-colors"
             >
-              <FileCheck
-                className={`w-5 h-5 ${pathname.startsWith("/panel/gestoria") ? "text-white" : "text-slate-500"}`}
-              />
-              Gestoría
-            </Link>
-          )}
+              <span className="text-base leading-none">🚪</span> Cerrar Sesión
+            </button>
+          </div>
 
-          {/* EL "ABANICO" DE ADMINISTRACIÓN */}
-          {(rol === "admin" || rol === "encargado") && (
-            <div className="pt-2">
-              <button
-                onClick={() => setAdminMenuOpen(!adminMenuOpen)}
-                className="w-full flex items-center justify-between px-4 py-3 rounded-xl text-sm font-bold text-slate-400 hover:bg-slate-800/60 hover:text-white transition-all"
-              >
-                <div className="flex items-center gap-3">
-                  <Settings className="w-5 h-5 text-slate-500" />
-                  Administración
-                </div>
-                {adminMenuOpen ? (
-                  <ChevronUp className="w-4 h-4" />
-                ) : (
-                  <ChevronDown className="w-4 h-4" />
-                )}
-              </button>
-
-              {/* Sub-menú desplegable */}
-              {adminMenuOpen && (
-                <div className="mt-1 ml-4 pl-4 border-l border-slate-700 space-y-1 animate-fadeIn">
-                  {/* Métricas: Lo ven admin y encargado */}
-                  <Link
-                    href="/panel/metricas"
-                    onClick={() => setIsOpen(false)}
-                    className={`flex items-center gap-3 px-4 py-2.5 rounded-xl text-xs font-bold transition-all ${pathname.startsWith("/panel/metricas") ? "text-[#0ea5e9] bg-[#0ea5e9]/10" : "text-slate-400 hover:text-white"}`}
-                  >
-                    <BarChart3 className="w-4 h-4" /> Métricas
-                  </Link>
-
-                  {/* Gastos: SOLO ADMIN */}
-                  {rol === "admin" && (
-                    <Link
-                      href="/panel/gastos"
-                      onClick={() => setIsOpen(false)}
-                      className={`flex items-center gap-3 px-4 py-2.5 rounded-xl text-xs font-bold transition-all ${pathname.startsWith("/panel/gastos") ? "text-[#0ea5e9] bg-[#0ea5e9]/10" : "text-slate-400 hover:text-white"}`}
-                    >
-                      <Wallet className="w-4 h-4" /> Caja y Gastos
-                    </Link>
-                  )}
-
-                  {/* Usuarios: SOLO ADMIN */}
-                  {rol === "admin" && (
-                    <Link
-                      href="/panel/usuarios"
-                      onClick={() => setIsOpen(false)}
-                      className={`flex items-center gap-3 px-4 py-2.5 rounded-xl text-xs font-bold transition-all ${pathname.startsWith("/panel/usuarios") ? "text-[#0ea5e9] bg-[#0ea5e9]/10" : "text-slate-400 hover:text-white"}`}
-                    >
-                      <Users className="w-4 h-4" /> Usuarios
-                    </Link>
-                  )}
-                </div>
-              )}
-            </div>
-          )}
-        </nav>
-
-        {/* Botón de Cerrar Sesión */}
-        <div className="p-4 border-t border-slate-800 shrink-0">
-          {rol && (
-            <div className="mb-3 px-4">
-              <span className="text-[10px] font-black uppercase tracking-widest text-slate-500 block mb-1">
-                Conectado como
-              </span>
-              <span
-                className={`text-xs font-bold px-2 py-0.5 rounded-full border ${rol === "admin" ? "bg-purple-900/30 text-purple-400 border-purple-700/50" : rol === "encargado" ? "bg-blue-900/30 text-blue-400 border-blue-700/50" : "bg-green-900/30 text-green-400 border-green-700/50"}`}
-              >
-                {rol}
-              </span>
-            </div>
-          )}
-          <button
-            onClick={handleLogout}
-            className="flex items-center gap-3 w-full px-4 py-3 rounded-xl text-sm font-bold text-rose-400 hover:bg-rose-500/10 hover:text-rose-300 transition-colors"
-          >
-            <LogOut className="w-5 h-5" /> Cerrar Sesión
-          </button>
         </div>
       </aside>
 
-      {/* 3. ÁREA DE CONTENIDO PRINCIPAL */}
+      {/* ================= 3. ÁREA DE CONTENIDO PRINCIPAL ================= */}
       <main className="flex-1 min-w-0 overflow-x-hidden pt-16 md:pt-0 bg-[#0b1329] flex flex-col">
         <div className="p-4 md:p-8 w-full flex-1">{children}</div>
       </main>

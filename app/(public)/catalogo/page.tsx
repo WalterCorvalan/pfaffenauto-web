@@ -510,10 +510,6 @@ export default function CatalogoPage() {
                                 className="w-full h-full object-cover rounded-[14px] sm:rounded-[20px] group-hover:scale-105 transition-transform duration-700 mix-blend-multiply"
                               />
 
-                              <div className="hidden sm:block absolute bottom-4 left-4 bg-white/80 backdrop-blur-md px-2.5 py-1 rounded-md text-[9px] font-black text-slate-500 uppercase tracking-widest border border-white shadow-sm">
-                                elcerokm.com
-                              </div>
-
                               {auto.estado === "Reservado" && (
                                 <div className="absolute top-2 right-2 sm:top-4 sm:right-4 bg-amber-400/95 backdrop-blur-md text-amber-950 border border-amber-300 px-2 sm:px-3 py-0.5 sm:py-1 rounded-full text-[8px] sm:text-[10px] font-black uppercase tracking-widest shadow-sm">
                                   Reservado

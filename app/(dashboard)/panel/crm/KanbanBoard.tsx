@@ -8,7 +8,7 @@ import { motion } from "framer-motion";
 
 // Definimos las columnas del Pipeline (Basado en lo que pidió el jefe)
 // Nota: Usamos "Pendiente" como "Nuevo" porque así está por defecto en tu BD.
-const COLUMNAS = ["Pendiente", "Contactado", "Interesado", "Prueba de manejo", "Negociación", "Perdido"];
+const COLUMNAS = ["Pendiente", "Contactado", "Interesado", "Perdido"];
 
 export default function KanbanBoard({ leadsIniciales }: { leadsIniciales: any[] }) {
   const router = useRouter();
@@ -69,8 +69,6 @@ export default function KanbanBoard({ leadsIniciales }: { leadsIniciales: any[] 
       case "Pendiente": return "border-blue-500/50 bg-blue-500/10 text-blue-400";
       case "Contactado": return "border-purple-500/50 bg-purple-500/10 text-purple-400";
       case "Interesado": return "border-amber-500/50 bg-amber-500/10 text-amber-400";
-      case "Prueba de manejo": return "border-emerald-500/50 bg-emerald-500/10 text-emerald-400";
-      case "Negociación": return "border-orange-500/50 bg-orange-500/10 text-orange-400";
       case "Perdido": return "border-red-500/50 bg-red-500/10 text-red-400";
       default: return "border-slate-500/50 bg-slate-500/10 text-slate-400";
     }

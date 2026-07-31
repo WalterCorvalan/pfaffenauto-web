@@ -6,21 +6,24 @@ export const metadata = {
   description: "Descubrí todas las marcas de vehículos que tenemos disponibles: Volkswagen, Chevrolet, Toyota, Ford, Peugeot y más.",
 };
 
-// Componente para aislar la carga de imagen (con fallback a la letra)
+// Componente para aislar la carga de imagen con Glassmorphism
 const MarcaCard = ({ marca }: { marca: { nombre: string; slug: string; logo: string } }) => {
   return (
     <Link 
       href={`/marcas/${marca.slug}`} 
-      className="flex items-center gap-4 bg-white border border-gray-100 rounded-2xl p-4 shadow-sm hover:shadow-md hover:border-primary/40 transition-all group"
+      className="flex items-center gap-4 bg-white/40 backdrop-blur-2xl border border-white/60 rounded-[28px] p-5 shadow-[0_8px_32px_rgba(0,0,0,0.04)] hover:shadow-[0_20px_48px_rgba(1,69,242,0.12)] hover:border-white hover:bg-white/70 transition-all duration-500 group relative overflow-hidden focus:outline-none"
     >
-      <div className="w-12 h-12 flex items-center justify-center shrink-0">
+      {/* Reflejo de luz interior al hacer hover */}
+      <div className="absolute inset-0 bg-gradient-to-tr from-transparent via-white/50 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-700 pointer-events-none"></div>
+
+      <div className="w-12 h-12 flex items-center justify-center shrink-0 relative z-10">
         <img 
           src={marca.logo} 
           alt={`Logo de ${marca.nombre}`} 
-          className="w-full h-full object-contain opacity-80 group-hover:opacity-100 transition-opacity"
+          className="w-full h-full object-contain opacity-80 group-hover:opacity-100 group-hover:scale-110 transition-all duration-500 mix-blend-multiply drop-shadow-sm"
         />
       </div>
-      <span className="text-sm font-bold text-gray-600 group-hover:text-navy uppercase tracking-wider">
+      <span className="text-xs md:text-sm font-black text-gray-500 group-hover:text-navy uppercase tracking-widest transition-colors relative z-10">
         {marca.nombre}
       </span>
     </Link>
@@ -46,21 +49,28 @@ export default function MarcasPage() {
   ];
 
   return (
-    <div className="min-h-screen bg-background pt-6 pb-20">
-      <div className="max-w-7xl mx-auto px-4 md:px-6">
+    <div className="min-h-screen bg-[#E9ECEF] relative overflow-hidden pt-12 pb-24">
+      
+      {/* Luces Ambientales */}
+      <div className="absolute top-[10%] left-[-10%] w-[500px] h-[500px] bg-slate-400/10 rounded-full blur-[120px] pointer-events-none z-0"></div>
+      <div className="absolute bottom-[10%] right-[-5%] w-[600px] h-[600px] bg-[#0145F2]/10 rounded-full blur-[150px] pointer-events-none z-0"></div>
+
+      <div className="max-w-7xl mx-auto px-4 md:px-6 relative z-10">
         
         {/* Migas de pan y Título */}
-        <div className="mb-8">
-          <div className="text-xs text-gray-400 font-medium mb-2">
-            <Link href="/" className="hover:text-primary">Inicio</Link> / <span className="text-gray-600">Marcas</span>
+        <div className="mb-10">
+          <div className="text-[10px] sm:text-xs text-gray-500 font-bold uppercase tracking-widest mb-3 flex items-center gap-1.5">
+            <Link href="/" className="hover:text-[#0145F2] transition-colors">Inicio</Link> 
+            <span className="text-gray-400">/</span> 
+            <span className="text-navy">Marcas</span>
           </div>
-          <h1 className="text-3xl md:text-4xl font-black text-navy tracking-tight">
-            Marcas
+          <h1 className="text-4xl md:text-5xl font-black text-navy tracking-tighter drop-shadow-sm">
+            Todas las <span className="text-transparent bg-clip-text bg-gradient-to-r from-navy to-[#0145F2]">Marcas</span>
           </h1>
         </div>
 
         {/* Grilla de Marcas */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-5">
           {marcas.map((marca) => (
             <MarcaCard key={marca.slug} marca={marca} />
           ))}

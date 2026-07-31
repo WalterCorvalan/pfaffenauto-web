@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, ReactNode } from "react";
 import { usePathname, useRouter } from "next/navigation";
 import { motion, AnimatePresence } from "framer-motion";
 import { 
@@ -43,6 +43,17 @@ const SUCURSALES_INFO: Record<string, { nombre: string; telefono: string; slug: 
   default: { nombre: "Atención General", telefono: "5491121907000", slug: "" },
 };
 
+// Función para parsear texto con asteriscos a negritas de React
+const formatMessageText = (text: string): ReactNode[] => {
+  const parts = text.split(/(\*\*.*?\*\*)/g);
+  return parts.map((part, i) => {
+    if (part.startsWith('**') && part.endsWith('**')) {
+      return <strong key={i} className="font-black text-navy">{part.slice(2, -2)}</strong>;
+    }
+    return <span key={i}>{part}</span>;
+  });
+};
+
 export default function FloatingChatbot() {
   const pathname = usePathname();
   const router = useRouter();
@@ -68,15 +79,14 @@ export default function FloatingChatbot() {
       text: "¡Hola! Soy el Asistente Virtual de Pfaffen Autos 🤖. ¿Qué te gustaría explorar hoy?",
       sender: "bot",
       quickReplies: [
-        { label: "🎲 Probar Test de Auto Ideal", action: "start_quiz" },
-        { label: "🚘 Ver marcas en stock", action: "marcas" },
-        { label: "💵 Cotizar mi auto usado", action: "cotizar" },
-        { label: "📍 Sucursales y Horarios", action: "sucursales" },
+        { label: "🌱 Mi primer auto", action: "primer_auto" },
+        { label: "🎲 Test Auto Ideal", action: "start_quiz" },
+        { label: "💵 Cotizar usado", action: "cotizar" },
+        { label: "📍 Sucursales", action: "sucursales" },
       ]
     },
   ]);
 
-  // Cargar marcas
   useEffect(() => {
     const fetchMarcas = async () => {
       const { data } = await supabase.from("vehiculos").select("marca").in("estado", ["Disponible", "Reservado"]);
@@ -135,8 +145,8 @@ export default function FloatingChatbot() {
         text: "🎯 ¡Genial! Vamos a encontrar tu auto ideal en 2 pasos rápidos.\n\n**Paso 1:** ¿Qué tipo de vehículo estás buscando?",
         quickReplies: [
           { label: "🏙️ Auto Urbano / Sedán", action: "quiz_tipo_auto" },
-          { label: "🚙 SUV / 4x4 / Camioneta", action: "quiz_tipo_suv" },
-          { label: "📦 Utilitario / Trabajo", action: "quiz_tipo_utilitario" },
+          { label: "🚙 SUV / 4x4", action: "quiz_tipo_suv" },
+          { label: "📦 Utilitario", action: "quiz_tipo_utilitario" },
         ]
       };
     }
@@ -165,7 +175,7 @@ export default function FloatingChatbot() {
           text: `🎉 ¡Acá tenés las mejores opciones de nuestro stock que hacen **MATCH** con tus preferencias!`,
           cars: autosEncontrados,
           links: [{ url: "/catalogo", label: "Ver catálogo completo", icon: "web", external: false }],
-          quickReplies: [{ label: "🔄 Reintentar Test", action: "start_quiz" }]
+          quickReplies: [{ label: "🔄 Reintentar", action: "start_quiz" }]
         };
       } else {
         return {
@@ -175,9 +185,18 @@ export default function FloatingChatbot() {
       }
     }
 
+    if (text === "primer_auto" || /\b(primer auto|primeros autos|barato|economico)\b/.test(text)) {
+      const autosEconomicos = await buscarAutosEnBD(undefined, undefined, 18000000);
+      return {
+        text: "Para un **primer auto** te recomiendo unidades ágiles, fáciles de mantener y a muy buen precio (seleccioné opciones por debajo de los **$18.000.000**). ¡Mirá estas bellezas!",
+        cars: autosEconomicos,
+        links: [{ url: "/catalogo", label: "Ver catálogo completo", icon: "web", external: false }]
+      };
+    }
+
     if (text === "marcas" || text === "ver_marcas") {
       return {
-        text: `Tenemos unidades increíbles esperando por vos. Podés explorar todas las marcas que comercializamos directamente en nuestra web:`,
+        text: `Tenemos unidades increíbles esperando por vos. Podés explorar todas las marcas directamente en nuestra web:`,
         links: [{ url: "/marcas", label: "Ver todas las Marcas", icon: "web", external: false }]
       };
     }
@@ -199,13 +218,12 @@ export default function FloatingChatbot() {
         return {
           text: "Nuestras sucursales oficiales 📍:\n\n1️⃣ **Casa Central** (Villa de Mayo)\n2️⃣ **Don Torcuato**\n3️⃣ **Olivos**\n\nPodés visitar las páginas de cada sucursal para ver su stock exclusivo:",
           links: [
-            { url: "/sucursales/casa-central", label: "Ir a Casa Central", icon: "map", external: false },
-            { url: "/sucursales/don-torcuato", label: "Ir a Don Torcuato", icon: "map", external: false },
-            { url: "/sucursales/olivos", label: "Ir a Olivos", icon: "map", external: false },
+            { url: "/sucursales/casa-central", label: "Casa Central", icon: "map", external: false },
+            { url: "/sucursales/don-torcuato", label: "Don Torcuato", icon: "map", external: false },
+            { url: "/sucursales/olivos", label: "Olivos", icon: "map", external: false },
           ]
         };
       }
-
       let key = "default";
       if (esVDM) key = "vdm";
       if (esTorcuato) key = "torcuato";
@@ -215,8 +233,8 @@ export default function FloatingChatbot() {
       return {
         text: `¡Genial! Acá tenés todo lo que necesitás de la sucursal **${suc.nombre}**. Podés ver los autos que tienen en salón o hablarles directo:`,
         links: [
-          { url: `/sucursales/${suc.slug}`, label: `Ver página de la Sucursal`, icon: "web", external: false },
-          { url: `https://wa.me/${suc.telefono}`, label: "Hablar por WhatsApp", icon: "whatsapp", external: true },
+          { url: `/sucursales/${suc.slug}`, label: `Página de Sucursal`, icon: "web", external: false },
+          { url: `https://wa.me/${suc.telefono}`, label: "WhatsApp", icon: "whatsapp", external: true },
         ],
       };
     }
@@ -233,24 +251,39 @@ export default function FloatingChatbot() {
       };
     }
 
-    // --- MATRIZ DE INTENCIONES ---
+    // --- MATRIZ DE INTENCIONES NUEVAS ---
     const intents = [
       {
         match: /\b(hola|buenas|dia|tarde|noche|que tal|saludos)\b/,
-        text: "¡Hola! Soy el asistente virtual de Pfaffen Autos 🤖. Podés preguntarme por modelos en stock, financiación o usar nuestro comparador rápido.",
+        text: "¡Hola! Soy el asistente virtual de Pfaffen Autos 🤖. Podés preguntarme por modelos en stock, financiación o buscar tu primer auto.",
         quickReplies: [
-          { label: "🎲 Hacer Test Auto Ideal", action: "start_quiz" },
-          { label: "💵 Cotizar usado", action: "cotizar" }
+          { label: "🌱 Primer Auto", action: "primer_auto" },
+          { label: "📍 Sucursales", action: "sucursales" }
         ]
       },
       {
-        match: /\b(horario|abierto|atienden|cierran|hora|dias|fines de semana|sabado|domingo)\b/,
-        text: "⏰ Atendemos de **Lunes a Sábados de 9:00 a 19:00 hs**. Los domingos descansamos.",
+        match: /\b(dueño|propietario|jefe|quien es el dueño)\b/,
+        text: "El fundador y dueño de la concesionaria es **Sergio Pfaffezeller**, quien transmite su pasión por los autos a todo nuestro equipo todos los días. 🚗",
+      },
+      {
+        match: /\b(encargado|encargados|gerente|responsable)\b/,
+        text: "Nuestros encargados están siempre dispuestos a ayudarte para que tengas la mejor experiencia: **Lucas** lidera en la sucursal de Don Torcuato y **Gabriel** en Olivos.",
+      },
+      {
+        match: /\b(vendedor|vendedores|comercial|asesor|con quien hablo)\b/,
+        text: "Contamos con un equipo de asesores geniales. Elegí la sucursal que te quede más cerca y contactanos por WhatsApp; ¡ahí mismo tu vendedor se presentará con su nombre y te atenderá de 10!",
+        quickReplies: [
+          { label: "📍 Ver Sucursales", action: "sucursales" }
+        ]
+      },
+      {
+        match: /\b(horario|abierto|atienden|cierran|hora|dias|sabado|domingo)\b/,
+        text: "⏰ Atendemos de **Lunes a Sábados de 9:00 a 19:00 hs**. Los domingos descansamos para arrancar la semana con todo.",
       },
       {
         match: /\b(pago|financiar|financiacion|credito|cuota|bna|tarjeta|prendario|efectivo|transferencia|dolares|usd)\b/,
-        text: "💳 **Opciones de Pago:**\n• Contado (Pesos y Dólares).\n• Permuta (tomamos tu usado).\n• Créditos Prendarios y línea BNA.\n\nPodés explorar el catálogo y ver el precio de cada unidad:",
-        links: [{ url: "/catalogo", label: "Ir al Catálogo de Autos", icon: "web", external: false }]
+        text: "💳 **Opciones de Pago:**\n• Contado (Pesos y Dólares).\n• Permuta (tomamos tu usado).\n• Créditos Prendarios y línea BNA.",
+        links: [{ url: "/catalogo", label: "Ir al Catálogo", icon: "web", external: false }]
       },
     ];
 
@@ -260,7 +293,7 @@ export default function FloatingChatbot() {
       }
     }
 
-    // Fallback absoluto
+    // Fallback
     return {
       text: "Te entiendo. Podés usar nuestro buscador de la web o contactarte con un asesor real para que te despeje todas las dudas:",
       links: [
@@ -302,7 +335,7 @@ export default function FloatingChatbot() {
       setModoNitro(true);
       setMessages((prev) => [...prev, {
         id: Date.now(),
-        text: "🔥 **¡MODO NITRO ACTIVADO!** 🚀\n¡Descubriste el secreto! Decile a tu vendedor el código **#NITROPFAFFEN** para un beneficio en tu reserva.",
+        text: "🔥 **¡MODO NITRO ACTIVADO!** 🚀\n¡Descubriste el secreto! Decile a tu vendedor el código **#NITROPFAFFEN** para un beneficio exclusivo.",
         sender: "bot",
       }]);
     }
@@ -326,63 +359,66 @@ export default function FloatingChatbot() {
             initial={{ opacity: 0, y: 20, scale: 0.95 }}
             animate={{ opacity: 1, y: 0, scale: 1 }}
             exit={{ opacity: 0, y: 20, scale: 0.95 }}
-            transition={{ duration: 0.2 }}
-            className={`mb-4 w-[330px] sm:w-[390px] bg-white rounded-3xl shadow-2xl border border-gray-200 overflow-hidden flex flex-col transition-all ${
-              modoNitro ? "ring-4 ring-amber-400/80 shadow-amber-500/20" : ""
+            transition={{ duration: 0.3, ease: "easeOut" }}
+            className={`mb-4 w-[330px] sm:w-[390px] bg-white/70 backdrop-blur-3xl rounded-3xl shadow-[0_8px_32px_0_rgba(31,38,135,0.1)] border border-white/60 overflow-hidden flex flex-col transition-all ${
+              modoNitro ? "ring-4 ring-amber-400/80 shadow-amber-500/30" : ""
             }`}
-            style={{ height: "min(540px, 78vh)" }}
+            style={{ height: "min(560px, 78vh)" }}
           >
-            {/* Cabecera */}
+            {/* Cabecera (Glass) */}
             <div 
               onClick={handleRobotClick}
-              className={`px-4 py-3.5 flex items-center justify-between shadow-md z-10 cursor-pointer select-none transition-colors ${
-                modoNitro ? "bg-gradient-to-r from-amber-600 via-orange-600 to-red-600" : "bg-gradient-to-r from-navy to-[#0145F2]"
+              className={`px-4 py-3.5 flex items-center justify-between border-b border-white/50 z-10 cursor-pointer select-none transition-colors ${
+                modoNitro ? "bg-amber-500/40 backdrop-blur-md" : "bg-white/40 backdrop-blur-md"
               }`}
             >
               <div className="flex items-center gap-3">
-                <div className="bg-white/10 backdrop-blur-md p-2 rounded-full border border-white/20 relative">
-                  <Bot className="w-5 h-5 text-white" />
-                  {modoNitro && <Flame className="w-3.5 h-3.5 text-amber-300 absolute -top-1 -right-1 animate-bounce" />}
+                <div className={`p-2 rounded-full border relative ${modoNitro ? 'bg-amber-100 border-amber-300' : 'bg-blue-50 border-blue-200'}`}>
+                  <Bot className={`w-5 h-5 ${modoNitro ? 'text-amber-600' : 'text-[#0145F2]'}`} />
+                  {modoNitro && <Flame className="w-3.5 h-3.5 text-orange-500 absolute -top-1 -right-1 animate-bounce" />}
                 </div>
                 <div>
-                  <h3 className="text-white font-bold text-sm leading-tight">
+                  <h3 className={`font-black text-sm leading-tight ${modoNitro ? 'text-amber-900' : 'text-navy'}`}>
                     {modoNitro ? "Pfaffen AI • Turbo 🔥" : "Pfaffen Assistant"}
                   </h3>
-                  <span className="text-sky-200 text-[10px] font-medium flex items-center gap-1">
+                  <span className="text-gray-500 text-[10px] font-bold tracking-wide flex items-center gap-1 uppercase">
                     <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse"></span> En línea
                   </span>
                 </div>
               </div>
-              <button onClick={(e) => { e.stopPropagation(); setIsOpen(false); }} className="text-white/80 hover:text-white p-1">
+              <button onClick={(e) => { e.stopPropagation(); setIsOpen(false); }} className="text-gray-400 hover:text-navy p-1 transition-colors">
                 <X className="w-5 h-5" />
               </button>
             </div>
 
             {/* Mensajes */}
-            <div className="flex-1 overflow-y-auto p-4 bg-slate-50 flex flex-col gap-4 custom-scrollbar">
+            <div className="flex-1 overflow-y-auto p-4 bg-gradient-to-b from-transparent to-slate-50/30 flex flex-col gap-4 custom-scrollbar">
               {messages.map((msg) => (
                 <div key={msg.id} className={`flex flex-col ${msg.sender === "user" ? "items-end" : "items-start"}`}>
-                  <div className={`max-w-[88%] px-4 py-3 text-xs sm:text-sm shadow-sm whitespace-pre-wrap leading-relaxed ${
-                    msg.sender === "user" ? "bg-[#0145F2] text-white rounded-2xl rounded-tr-sm font-medium" : "bg-white border border-slate-200/80 text-slate-800 rounded-2xl rounded-tl-sm"
+                  <div className={`max-w-[88%] px-4 py-3 text-xs sm:text-sm shadow-sm whitespace-pre-wrap leading-relaxed backdrop-blur-md ${
+                    msg.sender === "user" 
+                      ? "bg-[#0145F2]/90 border border-blue-400/30 text-white rounded-[20px] rounded-tr-[4px] font-medium" 
+                      : "bg-white/80 border border-white text-slate-700 rounded-[20px] rounded-tl-[4px]"
                   }`}>
-                    {msg.text}
+                    {/* Renderizamos el texto parseando los asteriscos */}
+                    {formatMessageText(msg.text)}
                   </div>
 
-                  {/* CARDS DE AUTOS REALES */}
+                  {/* CARDS DE AUTOS (Glass) */}
                   {msg.cars && msg.cars.length > 0 && (
                     <div className="mt-3 flex gap-2.5 overflow-x-auto w-full pb-2 custom-scrollbar">
                       {msg.cars.map((car) => (
                         <div
                           key={car.id}
                           onClick={() => { router.push(`/catalogo/${car.slug}`); setIsOpen(false); }}
-                          className="min-w-[150px] max-w-[160px] bg-white border border-slate-200 rounded-xl overflow-hidden shadow-sm hover:border-[#0145F2] transition-colors shrink-0 group cursor-pointer"
+                          className="min-w-[150px] max-w-[160px] bg-white/60 backdrop-blur-md border border-white rounded-[16px] overflow-hidden shadow-sm hover:shadow-md hover:border-blue-300 transition-all shrink-0 group cursor-pointer"
                         >
-                          <div className="h-20 bg-slate-100 overflow-hidden relative">
-                            <img src={car.imagen} alt={car.modelo} className="w-full h-full object-cover group-hover:scale-105 transition-transform" />
+                          <div className="h-20 bg-slate-100/50 overflow-hidden relative mix-blend-multiply">
+                            <img src={car.imagen} alt={car.modelo} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" />
                           </div>
                           <div className="p-2.5">
-                            <span className="text-[9px] font-bold text-slate-400 uppercase tracking-widest block">{car.marca}</span>
-                            <h4 className="text-xs font-black text-slate-900 truncate uppercase">{car.modelo}</h4>
+                            <span className="text-[9px] font-bold text-gray-400 uppercase tracking-widest block">{car.marca}</span>
+                            <h4 className="text-xs font-black text-navy truncate uppercase">{car.modelo}</h4>
                             <span className="text-xs font-black text-[#0145F2] block mt-1">
                               $ {car.precio_publicado_ars?.toLocaleString("es-AR")}
                             </span>
@@ -392,14 +428,14 @@ export default function FloatingChatbot() {
                     </div>
                   )}
 
-                  {/* CHIPS / SUGERENCIAS RÁPIDAS */}
+                  {/* CHIPS / SUGERENCIAS RÁPIDAS (Glass) */}
                   {msg.quickReplies && (
                     <div className="mt-2.5 flex flex-wrap gap-1.5">
                       {msg.quickReplies.map((qr, idx) => (
                         <button
                           key={idx}
                           onClick={() => handleSendMessage(qr.action)}
-                          className="bg-white hover:bg-blue-50 border border-blue-200/80 text-[#0145F2] text-[10px] font-bold px-3 py-1.5 rounded-full shadow-2xs transition-all active:scale-95"
+                          className="bg-white/60 backdrop-blur-md hover:bg-white border border-white text-[#0145F2] text-[10px] font-black tracking-wide uppercase px-3 py-1.5 rounded-full shadow-sm transition-all active:scale-95"
                         >
                           {qr.label}
                         </button>
@@ -407,7 +443,7 @@ export default function FloatingChatbot() {
                     </div>
                   )}
 
-                  {/* ENLACES INTERNOS / EXTERNOS */}
+                  {/* ENLACES INTERNOS / EXTERNOS (Glass) */}
                   {msg.links && (
                     <div className="mt-2 flex flex-col gap-1.5 w-full items-start">
                       {msg.links.map((link, idx) => (
@@ -417,10 +453,10 @@ export default function FloatingChatbot() {
                             href={link.url}
                             target="_blank"
                             rel="noopener noreferrer"
-                            className={`inline-flex items-center gap-2 font-bold text-[11px] px-4 py-2.5 rounded-xl shadow-sm transition-all active:scale-95 border ${
+                            className={`inline-flex items-center gap-2 font-bold text-[11px] px-4 py-2.5 rounded-[12px] shadow-sm transition-all active:scale-95 border backdrop-blur-md ${
                               link.icon === "whatsapp" 
-                                ? "bg-emerald-600 hover:bg-emerald-700 text-white border-emerald-500" 
-                                : "bg-white hover:bg-slate-50 text-slate-700 border-slate-200"
+                                ? "bg-emerald-500/90 hover:bg-emerald-600 text-white border-emerald-400/50" 
+                                : "bg-white/60 hover:bg-white text-navy border-white"
                             }`}
                           >
                             {renderLinkIcon(link.icon)} {link.label}
@@ -429,7 +465,7 @@ export default function FloatingChatbot() {
                           <button
                             key={idx}
                             onClick={() => { router.push(link.url); setIsOpen(false); }}
-                            className="inline-flex items-center gap-2 bg-white hover:bg-blue-50 border border-blue-100 text-[#0145F2] font-bold text-[11px] px-4 py-2.5 rounded-xl shadow-sm transition-all active:scale-95 text-left"
+                            className="inline-flex items-center gap-2 bg-white/60 backdrop-blur-md hover:bg-white border border-white text-[#0145F2] font-bold text-[11px] px-4 py-2.5 rounded-[12px] shadow-sm transition-all active:scale-95 text-left"
                           >
                             {renderLinkIcon(link.icon)} {link.label}
                           </button>
@@ -443,29 +479,29 @@ export default function FloatingChatbot() {
               {/* Indicador de escribiendo */}
               {isTyping && (
                 <div className="flex justify-start">
-                  <div className="bg-white border border-slate-200 px-4 py-3 rounded-2xl rounded-tl-sm shadow-sm flex items-center gap-1.5">
-                    <span className="w-1.5 h-1.5 bg-[#0145F2] rounded-full animate-bounce"></span>
-                    <span className="w-1.5 h-1.5 bg-[#0145F2] rounded-full animate-bounce delay-75"></span>
-                    <span className="w-1.5 h-1.5 bg-[#0145F2] rounded-full animate-bounce delay-150"></span>
+                  <div className="bg-white/60 backdrop-blur-md border border-white px-4 py-3 rounded-[20px] rounded-tl-[4px] shadow-sm flex items-center gap-1.5">
+                    <span className="w-1.5 h-1.5 bg-gray-400 rounded-full animate-bounce"></span>
+                    <span className="w-1.5 h-1.5 bg-gray-400 rounded-full animate-bounce delay-75"></span>
+                    <span className="w-1.5 h-1.5 bg-gray-400 rounded-full animate-bounce delay-150"></span>
                   </div>
                 </div>
               )}
               <div ref={messagesEndRef} />
             </div>
 
-            {/* Input de Texto */}
-            <form onSubmit={(e) => { e.preventDefault(); handleSendMessage(); }} className="p-3 bg-white border-t border-slate-100 flex items-center gap-2">
+            {/* Input de Texto (Glass) */}
+            <form onSubmit={(e) => { e.preventDefault(); handleSendMessage(); }} className="p-3 bg-white/40 backdrop-blur-xl border-t border-white/60 flex items-center gap-2">
               <input
                 type="text"
-                placeholder="Escribí tu consulta, marca o modelo..."
+                placeholder="Escribí tu consulta..."
                 value={input}
                 onChange={(e) => setInput(e.target.value)}
-                className="flex-1 bg-slate-50 border border-slate-200 rounded-full px-4 py-2.5 text-xs sm:text-sm outline-none focus:border-[#0145F2] focus:bg-white transition-all placeholder:text-slate-400 text-slate-800 font-medium"
+                className="flex-1 bg-white/70 border border-white rounded-full px-4 py-2.5 text-xs sm:text-sm outline-none focus:border-blue-300 focus:bg-white transition-all placeholder:text-gray-400 text-navy font-medium shadow-inner"
               />
               <button
                 type="submit"
                 disabled={!input.trim() || isTyping}
-                className="bg-[#0145F2] hover:bg-blue-700 disabled:bg-slate-200 text-white p-2.5 rounded-full transition-all shrink-0 shadow-sm active:scale-95"
+                className="bg-[#0145F2] hover:bg-blue-600 disabled:bg-gray-300 text-white p-2.5 rounded-full transition-all shrink-0 shadow-md active:scale-95"
               >
                 <Send className="w-4 h-4" />
               </button>
@@ -474,23 +510,23 @@ export default function FloatingChatbot() {
         )}
       </AnimatePresence>
 
-      {/* BOTÓN FLOTANTE */}
+      {/* BOTÓN FLOTANTE (Glass) */}
       <motion.button
-        whileHover={{ scale: 1.06 }}
-        whileTap={{ scale: 0.94 }}
+        whileHover={{ scale: 1.05 }}
+        whileTap={{ scale: 0.95 }}
         onClick={() => setIsOpen(!isOpen)}
-        className={`p-4 rounded-full shadow-[0_10px_35px_-5px_rgba(15,41,62,0.5)] flex items-center justify-center relative border-[3px] border-white z-50 transition-colors ${
-          modoNitro ? "bg-gradient-to-r from-amber-500 to-red-600 text-white" : "bg-navy text-white"
+        className={`p-4 rounded-full shadow-[0_8px_32px_0_rgba(1,69,242,0.3)] flex items-center justify-center relative border border-white/40 z-50 transition-all backdrop-blur-xl ${
+          modoNitro ? "bg-gradient-to-r from-amber-500 to-orange-600 text-white" : "bg-[#0145F2]/90 text-white"
         }`}
       >
         {isOpen ? (
           <X className="w-7 h-7" />
         ) : (
           <>
-            <Bot className="w-7 h-7 group-hover:text-sky-300 transition-colors" />
+            <Bot className="w-7 h-7" />
             <span className="absolute -top-1 -right-1 flex h-4 w-4">
-              <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-[#0145F2] opacity-75"></span>
-              <span className="relative inline-flex rounded-full h-4 w-4 bg-blue-600 border-2 border-white"></span>
+              <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-sky-300 opacity-75"></span>
+              <span className="relative inline-flex rounded-full h-4 w-4 bg-sky-400 border border-white/50"></span>
             </span>
           </>
         )}

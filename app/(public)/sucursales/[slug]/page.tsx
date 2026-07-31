@@ -1,9 +1,12 @@
 import { createClient } from "@supabase/supabase-js";
 import { notFound } from "next/navigation";
 import Stock from "@/components/Stock";
-import { MapPin, Phone, Clock, ArrowLeft } from "lucide-react";
 import Link from "next/link";
-import FadeIn from "@/components/FadeIn";
+import { MapPin, Phone, Clock, ArrowLeft } from "lucide-react";
+// Importamos tu FadeIn por si lo necesitas después, aunque usaremos framer internamente
+import FadeIn from "@/components/FadeIn"; 
+// Importación crucial para permitir Framer Motion en Next.js App Router (Client Component Inline)
+import SucursalHeroAnimated from "./SucursalHeroAnimated"; 
 
 const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -12,7 +15,6 @@ const supabase = createClient(
 
 export const revalidate = 60;
 
-// Objeto FALLBACK_DATA con los nombres actualizados
 const FALLBACK_DATA: Record<
   string,
   { imagen: string; telefono: string; direccion: string; horario: string }
@@ -24,8 +26,7 @@ const FALLBACK_DATA: Record<
     horario: "Lun a Sáb - 9:00 a 19:00hs",
   },
   "olivos": {
-    imagen:
-      "https://images.unsplash.com/photo-1580273916550-e323be2ae537?q=80&w=1200&auto=format&fit=crop",
+    imagen: "https://images.unsplash.com/photo-1580273916550-e323be2ae537?q=80&w=1200&auto=format&fit=crop",
     telefono: "11 56520726",
     direccion: "Olivos, Buenos Aires",
     horario: "Lun a Sáb - 9:00 a 19:00hs",
@@ -38,11 +39,7 @@ const FALLBACK_DATA: Record<
   },
 };
 
-export default async function SucursalPage({
-  params,
-}: {
-  params: Promise<{ slug: string }>;
-}) {
+export default async function SucursalPage({ params }: { params: Promise<{ slug: string }> }) {
   const { slug } = await params;
 
   const { data: sucursal } = await supabase
@@ -66,84 +63,28 @@ export default async function SucursalPage({
     .in("estado", ["Disponible", "Reservado"])
     .order("created_at", { ascending: false });
 
-  // EL FALLBACK VA ÚNICAMENTE ACÁ ADENTRO, donde "slug" existe
   const fallback = FALLBACK_DATA[slug] || FALLBACK_DATA["casa-central"];
 
   const imagenFondo = sucursal.imagen_url || fallback.imagen;
   const direccion = sucursal.direccion || fallback.direccion;
   const telefono = sucursal.telefono || fallback.telefono;
   const horario = sucursal.horarios || fallback.horario;
-
-  const nombreSucursal = sucursal.nombre.toUpperCase();
+  const nombreSucursal = sucursal.nombre;
 
   return (
-    <div className="w-full bg-[#050505] min-h-screen flex flex-col">
-      <section className="relative h-[65vh] min-h-[500px] w-full flex flex-col justify-center px-6 md:px-12 pb-16 overflow-hidden bg-black">
-        <div className="absolute inset-0 z-0">
-          <img
-            src={imagenFondo}
-            alt={`Sucursal ${sucursal.nombre}`}
-            className="w-full h-full object-cover object-center opacity-90"
-          />
-          <div className="absolute inset-0 bg-gradient-to-r from-black/95 via-black/60 to-transparent"></div>
-          <div className="absolute inset-0 bg-gradient-to-t from-[#050505] via-transparent to-black/20"></div>
-        </div>
+    <div className="w-full bg-[#E9ECEF] min-h-screen flex flex-col relative overflow-hidden">
+      
+      {/* Componente Cliente Interactivo con Framer Motion y Spatial UI */}
+      <SucursalHeroAnimated 
+        nombre={nombreSucursal} 
+        imagen={imagenFondo} 
+        direccion={direccion} 
+        telefono={telefono} 
+        horario={horario} 
+      />
 
-        <div className="relative z-20 max-w-7xl mx-auto w-full mt-10">
-          <FadeIn direction="up" delay={0.1}>
-            <Link
-              href="/#sucursales"
-              className="inline-flex items-center gap-2 text-[#0145F2] hover:text-blue-400 active:scale-95 text-[10px] md:text-xs font-black uppercase tracking-widest transition-all mb-6 bg-black/20 backdrop-blur-sm px-3 py-1.5 rounded-full border border-white/10 w-fit"
-            >
-              <ArrowLeft className="w-4 h-4" /> Volver a Sucursales
-            </Link>
-
-            <h1 className="text-4xl md:text-6xl lg:text-7xl font-black uppercase text-white tracking-tight drop-shadow-xl mb-8 leading-none">
-              SUCURSAL <br className="hidden md:block" />
-              <span className="text-[#0145F2] drop-shadow-md">
-                {nombreSucursal}
-              </span>
-            </h1>
-          </FadeIn>
-
-          <div className="flex flex-col gap-5 mt-4 max-w-md">
-            <FadeIn direction="up" delay={0.2}>
-              <div className="flex items-center gap-4 text-gray-200 hover:text-white transition-colors bg-black/10 backdrop-blur-sm p-2 rounded-2xl border border-white/5 w-fit pr-6">
-                <div className="w-10 h-10 rounded-full bg-[#0145F2]/20 border border-[#0145F2]/30 flex items-center justify-center shrink-0 shadow-[0_0_15px_rgba(1,69,242,0.3)]">
-                  <MapPin className="w-4 h-4 text-[#0145F2]" />
-                </div>
-                <span className="text-sm font-bold tracking-wide drop-shadow-md">
-                  {direccion}
-                </span>
-              </div>
-            </FadeIn>
-
-            <FadeIn direction="up" delay={0.3}>
-              <div className="flex items-center gap-4 text-gray-200 hover:text-white transition-colors bg-black/10 backdrop-blur-sm p-2 rounded-2xl border border-white/5 w-fit pr-6">
-                <div className="w-10 h-10 rounded-full bg-[#0145F2]/20 border border-[#0145F2]/30 flex items-center justify-center shrink-0 shadow-[0_0_15px_rgba(1,69,242,0.3)]">
-                  <Phone className="w-4 h-4 text-[#0145F2]" />
-                </div>
-                <span className="text-sm font-bold tracking-wide drop-shadow-md">
-                  {telefono}
-                </span>
-              </div>
-            </FadeIn>
-
-            <FadeIn direction="up" delay={0.4}>
-              <div className="flex items-center gap-4 text-gray-200 hover:text-white transition-colors bg-black/10 backdrop-blur-sm p-2 rounded-2xl border border-white/5 w-fit pr-6">
-                <div className="w-10 h-10 rounded-full bg-[#0145F2]/20 border border-[#0145F2]/30 flex items-center justify-center shrink-0 shadow-[0_0_15px_rgba(1,69,242,0.3)]">
-                  <Clock className="w-4 h-4 text-[#0145F2]" />
-                </div>
-                <span className="text-sm font-bold tracking-wide drop-shadow-md">
-                  {horario}
-                </span>
-              </div>
-            </FadeIn>
-          </div>
-        </div>
-      </section>
-
-      <div className="relative z-30 -mt-10 bg-background rounded-t-[2.5rem] pt-6 overflow-hidden">
+      {/* Transición al Catálogo - Se superpone elegantemente al Hero */}
+      <div className="relative z-20 -mt-[100px] md:-mt-[140px] bg-[#E9ECEF] rounded-t-[40px] md:rounded-t-[60px] pt-12 overflow-hidden shadow-[0_-20px_50px_rgba(0,0,0,0.15)] border-t border-white/60">
         <Stock vehiculos={vehiculos} />
       </div>
     </div>

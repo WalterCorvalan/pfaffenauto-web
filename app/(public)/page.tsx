@@ -31,8 +31,8 @@ export default async function HomePage() {
     .order("created_at", { ascending: false });
 
   return (
-    // Reemplazamos el div por <main> y quitamos overflow-x-hidden y text-white
-    <main className="w-full">
+    // Agregamos bg-[#E9ECEF] y min-h-screen al contenedor principal
+    <main className="w-full bg-[#E9ECEF] min-h-screen">
       
       {/* Al Hero NO lo envolvemos con scroll porque ya está arriba de todo */}
       <Hero />
