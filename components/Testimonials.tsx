@@ -1,9 +1,11 @@
 "use client";
 
+import { useState, useEffect } from "react";
 import { motion } from "framer-motion";
 import { Star, MessageSquareQuote } from "lucide-react";
 
-const reviews = [
+// Reseñas estáticas de respaldo por si falla la API o está cargando
+const fallbackReviews = [
   { id: 1, name: "Claudia Adari", date: "20 nov 2024", text: "El trámite fue muy sencillo y el trato fue impecable de principio a fin. Muy recomendables.", initials: "CA" },
   { id: 2, name: "Leana Carballo", date: "12 oct 2024", text: "Atención impecable, cumplieron con los tiempos estipulados. ¡Gracias a todo el equipo!", initials: "LC" },
   { id: 3, name: "José Rodríguez", date: "17 ene 2025", text: "Auto usado pero en condiciones impecables y un trato que te hace sentir especial.", initials: "JR" },
@@ -12,9 +14,23 @@ const reviews = [
   { id: 6, name: "Diego Fernández", date: "22 mar 2024", text: "Entregué mi usado como parte de pago y me lo cotizaron súper bien.", initials: "DF" }
 ];
 
-const duplicatedReviews = [...reviews, ...reviews];
-
 export default function Testimonials() {
+  const [reviews, setReviews] = useState(fallbackReviews);
+
+  useEffect(() => {
+    // Llamamos a nuestra API interna para buscar las de Google Maps
+    fetch("/api/reviews")
+      .then((res) => res.json())
+      .then((data) => {
+        if (data.reviews && data.reviews.length > 0) {
+          setReviews(data.reviews);
+        }
+      })
+      .catch((err) => console.log("Usando reseñas estáticas de respaldo", err));
+  }, []);
+
+  const duplicatedReviews = [...reviews, ...reviews];
+
   return (
     <section className="py-24 bg-transparent border-t border-transparent overflow-hidden relative">
       
@@ -37,7 +53,7 @@ export default function Testimonials() {
         <div className="bg-white/40 backdrop-blur-md p-4 rounded-2xl border border-white/60 shadow-[0_8px_30px_rgba(0,0,0,0.04)] text-left md:text-right max-w-sm relative overflow-hidden">
           <div className="absolute inset-0 bg-gradient-to-tr from-white/20 to-transparent pointer-events-none"></div>
           <p className="text-gray-600 text-sm font-medium relative z-10">
-            Más de <strong className="text-navy font-black text-base drop-shadow-sm">1.180</strong> clientes satisfechos avalan nuestro compromiso y transparencia.
+            Más de <strong className="text-navy font-black text-base drop-shadow-sm">5.180</strong> clientes satisfechos avalan nuestro compromiso y transparencia.
           </p>
         </div>
       </div>
@@ -72,7 +88,7 @@ export default function Testimonials() {
 }
 
 // ================= TARJETA INDIVIDUAL (GLASSMORPHISM) =================
-function ReviewCard({ review }: { review: typeof reviews[0] }) {
+function ReviewCard({ review }: { review: typeof fallbackReviews[0] }) {
   return (
     <div className="w-[280px] md:w-[380px] bg-white/40 backdrop-blur-2xl border border-white/60 rounded-[28px] p-6 md:p-8 shrink-0 flex flex-col shadow-[0_8px_32px_rgba(0,0,0,0.04)] hover:shadow-[0_20px_48px_rgba(1,69,242,0.12)] hover:border-white hover:bg-white/70 transition-all duration-500 relative group overflow-hidden select-none">
       

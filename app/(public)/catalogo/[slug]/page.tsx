@@ -83,32 +83,36 @@ export default async function VehiculoDetallePage({
   const precioUsd = auto.precio_publicado_usd || null;
 
   // =========================================================
-  // ---> NUEVO: ESTRATEGIA TRIPLE DE AUTOS SIMILARES <---
+  // ---> ESTRATEGIA TRIPLE DE AUTOS SIMILARES <---
   // =========================================================
-  
+
   // PLAN A: Misma marca
   let { data: vehiculosSimilares } = await supabase
     .from("vehiculos")
-    .select(`id, marca, modelo, version, anio, precio_publicado_ars, precio_publicado_usd, slug, multimedia_vehiculos ( url_archivo )`)
+    .select(
+      `id, marca, modelo, version, anio, precio_publicado_ars, precio_publicado_usd, slug, multimedia_vehiculos ( url_archivo )`,
+    )
     .eq("marca", auto.marca)
-    .neq("id", auto.id) // Que no sea el mismo que estamos viendo
+    .neq("id", auto.id)
     .in("estado", ["Disponible", "Reservado"])
     .limit(3);
 
   // PLAN B: Rango de precios similares (+/- 30%)
   if (!vehiculosSimilares || vehiculosSimilares.length === 0) {
-    const precioMin = precioArs * 0.7; // 30% menos
-    const precioMax = precioArs * 1.3; // 30% más
+    const precioMin = precioArs * 0.7;
+    const precioMax = precioArs * 1.3;
 
     const { data: porPrecio } = await supabase
       .from("vehiculos")
-      .select(`id, marca, modelo, version, anio, precio_publicado_ars, precio_publicado_usd, slug, multimedia_vehiculos ( url_archivo )`)
+      .select(
+        `id, marca, modelo, version, anio, precio_publicado_ars, precio_publicado_usd, slug, multimedia_vehiculos ( url_archivo )`,
+      )
       .gte("precio_publicado_ars", precioMin)
       .lte("precio_publicado_ars", precioMax)
       .neq("id", auto.id)
       .in("estado", ["Disponible", "Reservado"])
       .limit(3);
-      
+
     vehiculosSimilares = porPrecio;
   }
 
@@ -116,43 +120,58 @@ export default async function VehiculoDetallePage({
   if (!vehiculosSimilares || vehiculosSimilares.length === 0) {
     const { data: ultimosIngresos } = await supabase
       .from("vehiculos")
-      .select(`id, marca, modelo, version, anio, precio_publicado_ars, precio_publicado_usd, slug, multimedia_vehiculos ( url_archivo )`)
+      .select(
+        `id, marca, modelo, version, anio, precio_publicado_ars, precio_publicado_usd, slug, multimedia_vehiculos ( url_archivo )`,
+      )
       .neq("id", auto.id)
       .in("estado", ["Disponible", "Reservado"])
       .order("created_at", { ascending: false })
       .limit(3);
-      
+
     vehiculosSimilares = ultimosIngresos;
   }
 
   return (
-    <div className="min-h-screen bg-[#E9ECEF] font-sans text-foreground flex flex-col relative overflow-hidden">
-      
-      {/* ================= LUCES AMBIENTALES (SPATIAL UI) ================= */}
-      <div className="absolute top-[-5%] left-[-10%] w-[600px] h-[600px] bg-[#0145F2]/10 rounded-full blur-[120px] pointer-events-none z-0"></div>
-      <div className="absolute bottom-[20%] right-[-5%] w-[500px] h-[500px] bg-sky-300/15 rounded-full blur-[120px] pointer-events-none z-0"></div>
+    // Se retiró "overflow-hidden" del contenedor padre para que el position: sticky del footer no se rompa
+    <div className="min-h-screen bg-[#E9ECEF] font-sans text-foreground flex flex-col relative">
+      {/* ================= CAPA DE LUCES AMBIENTALES (AISLADA PARA NO ROMPER EL STICKY) ================= */}
+      <div className="absolute inset-0 overflow-hidden pointer-events-none z-0">
+        <div className="absolute top-[-5%] left-[-10%] w-[600px] h-[600px] bg-[#0145F2]/10 rounded-full blur-[140px]"></div>
+        <div className="absolute top-[40%] right-[-10%] w-[500px] h-[500px] bg-sky-300/15 rounded-full blur-[140px]"></div>
+      </div>
 
-      <div className="flex-1 w-full max-w-7xl mx-auto px-4 md:px-6 pt-6 pb-24 lg:pb-20 relative z-10">
-        
+      <div className="flex-1 w-full max-w-7xl mx-auto px-4 md:px-6 pt-6 pb-16 lg:pb-20 flex flex-col relative z-10">
         {/* TÍTULO MÓVIL */}
         <div className="block lg:hidden mb-6">
           <div className="text-[10px] sm:text-xs text-gray-500 font-bold uppercase tracking-widest mb-3 flex items-center gap-1.5 flex-wrap">
-            <Link href="/" className="hover:text-[#0145F2] transition-colors">Inicio</Link> 
+            <Link href="/" className="hover:text-[#0145F2] transition-colors">
+              Inicio
+            </Link>
             <span className="text-gray-400">/</span>
-            <Link href="/catalogo" className="hover:text-[#0145F2] transition-colors">Catálogo</Link> 
+            <Link
+              href="/catalogo"
+              className="hover:text-[#0145F2] transition-colors"
+            >
+              Catálogo
+            </Link>
             <span className="text-gray-400">/</span>
-            {/* AQUÍ CONVERTIMOS LA MARCA EN UN LINK DINÁMICO */}
-            <Link 
-              href={`/marcas/${auto.marca.toLowerCase().replace(/\s+/g, '-')}`} 
-              className="text-[#0145F2] hover:text-sky-500 transition-colors"
+
+            {/* AQUÍ ESTÁ EL LINK DINÁMICO DE LA MARCA */}
+            <Link
+              href={`/marcas/${auto.marca.toLowerCase().replace(/\s+/g, "-")}`}
+              className="text-gray-500 hover:text-[#0145F2] transition-colors"
             >
               {auto.marca}
-            </Link> 
+            </Link>
+
             <span className="text-gray-400">/</span>
             <span className="text-navy">{auto.modelo}</span>
           </div>
           <h1 className="text-3xl font-black text-navy uppercase tracking-tighter leading-tight drop-shadow-sm">
-            {auto.marca} <span className="text-transparent bg-clip-text bg-gradient-to-r from-navy to-[#0145F2]">{auto.modelo}</span>
+            {auto.marca}{" "}
+            <span className="text-transparent bg-clip-text bg-gradient-to-r from-navy to-[#0145F2]">
+              {auto.modelo}
+            </span>
           </h1>
 
           <div className="mt-4">
@@ -161,60 +180,81 @@ export default async function VehiculoDetallePage({
         </div>
 
         {/* CONTENEDOR GRID PRINCIPAL */}
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-10">
-          
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 lg:gap-10 items-start">
           {/* ================= BLOQUE 1: GALERÍA DE IMÁGENES Y DATOS RÁPIDOS ================= */}
-          <div className="lg:col-span-7 flex flex-col gap-6 order-1">
-            
+          <div className="lg:col-span-7 flex flex-col gap-6 order-1 pt-1 md:pt-7">
             <div className="hidden lg:flex text-[10px] sm:text-xs text-gray-500 font-bold uppercase tracking-widest mb-[-10px] items-center gap-2">
-              <Link href="/" className="hover:text-[#0145F2] transition-colors">Inicio</Link> 
+              <Link href="/" className="hover:text-[#0145F2] transition-colors">
+                Inicio
+              </Link>
               <span className="text-gray-400">/</span>
-              <Link href="/catalogo" className="hover:text-[#0145F2] transition-colors">Catálogo</Link> 
+              <Link
+                href="/catalogo"
+                className="hover:text-[#0145F2] transition-colors"
+              >
+                Catálogo
+              </Link>
               <span className="text-gray-400">/</span>
-              {/* AQUÍ TAMBIÉN CONVERTIMOS LA MARCA EN UN LINK PARA ESCRITORIO */}
-              <Link 
-                href={`/marcas/${auto.marca.toLowerCase().replace(/\s+/g, '-')}`} 
-                className="text-[#0145F2] hover:text-sky-500 transition-colors"
+              <Link
+                href={`/marcas/${auto.marca.toLowerCase().replace(/\s+/g, "-")}`}
+                className="hover:text-[#0145F2] transition-colors"
               >
                 {auto.marca}
-              </Link> 
+              </Link>{" "}
               <span className="text-gray-400">/</span>
               <span className="text-navy">{auto.modelo}</span>
             </div>
 
-            <div className="bg-white/40 backdrop-blur-md rounded-[32px] p-2 border border-white/60 shadow-[0_8px_32px_rgba(0,0,0,0.03)]">
+            {/* GALERÍA 100% LIMPIA SIN BORDES REDONDEADOS NI CONTENEDOR BLANCO */}
+            <div className="w-full overflow-hidden shadow-xl">
               <GaleriaVehiculo
                 imagenes={auto.multimedia_vehiculos || []}
                 altText={`${auto.marca} ${auto.modelo}`}
               />
             </div>
-            
-            {/* GRILLA RÁPIDA DE DATOS TÉCNICOS (GLASSMORPHISM) */}
+
+            {/* GRILLA RÁPIDA DE DATOS TÉCNICOS (GLASS) */}
             <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 md:gap-4 mt-2">
               <div className="bg-white/40 backdrop-blur-xl border border-white/60 rounded-2xl p-4 flex flex-col items-center justify-center text-center shadow-[0_4px_15px_rgba(0,0,0,0.03)] hover:shadow-[0_8px_25px_rgba(1,69,242,0.1)] hover:border-white hover:bg-white/60 transition-all duration-300 group">
                 <CalendarDays className="w-6 h-6 text-[#0145F2] mb-2 opacity-80 group-hover:scale-110 transition-transform" />
-                <span className="text-[9px] md:text-[10px] text-gray-500 font-bold uppercase tracking-widest mb-1 group-hover:text-[#0145F2] transition-colors">Año</span>
-                <span className="text-sm md:text-base font-black text-navy">{auto.anio}</span>
+                <span className="text-[9px] md:text-[10px] text-gray-500 font-bold uppercase tracking-widest mb-1 group-hover:text-[#0145F2] transition-colors">
+                  Año
+                </span>
+                <span className="text-sm md:text-base font-black text-navy">
+                  {auto.anio}
+                </span>
               </div>
 
               <div className="bg-white/40 backdrop-blur-xl border border-white/60 rounded-2xl p-4 flex flex-col items-center justify-center text-center shadow-[0_4px_15px_rgba(0,0,0,0.03)] hover:shadow-[0_8px_25px_rgba(1,69,242,0.1)] hover:border-white hover:bg-white/60 transition-all duration-300 group">
                 <Gauge className="w-6 h-6 text-[#0145F2] mb-2 opacity-80 group-hover:scale-110 transition-transform" />
-                <span className="text-[9px] md:text-[10px] text-gray-500 font-bold uppercase tracking-widest mb-1 group-hover:text-[#0145F2] transition-colors">Kilometraje</span>
+                <span className="text-[9px] md:text-[10px] text-gray-500 font-bold uppercase tracking-widest mb-1 group-hover:text-[#0145F2] transition-colors">
+                  Kilometraje
+                </span>
                 <span className="text-sm md:text-base font-black text-navy">
-                  {auto.kilometraje === 0 ? "0 km" : `${auto.kilometraje?.toLocaleString("es-AR")} km`}
+                  {auto.kilometraje === 0
+                    ? "0 km"
+                    : `${auto.kilometraje?.toLocaleString("es-AR")} km`}
                 </span>
               </div>
 
               <div className="bg-white/40 backdrop-blur-xl border border-white/60 rounded-2xl p-4 flex flex-col items-center justify-center text-center shadow-[0_4px_15px_rgba(0,0,0,0.03)] hover:shadow-[0_8px_25px_rgba(1,69,242,0.1)] hover:border-white hover:bg-white/60 transition-all duration-300 group">
                 <Fuel className="w-6 h-6 text-[#0145F2] mb-2 opacity-80 group-hover:scale-110 transition-transform" />
-                <span className="text-[9px] md:text-[10px] text-gray-500 font-bold uppercase tracking-widest mb-1 group-hover:text-[#0145F2] transition-colors">Combustible</span>
-                <span className="text-sm md:text-base font-black text-navy capitalize">{auto.tipo_combustible || "-"}</span>
+                <span className="text-[9px] md:text-[10px] text-gray-500 font-bold uppercase tracking-widest mb-1 group-hover:text-[#0145F2] transition-colors">
+                  Combustible
+                </span>
+                <span className="text-sm md:text-base font-black text-navy capitalize">
+                  {auto.tipo_combustible || "-"}
+                </span>
               </div>
 
               <div className="bg-white/40 backdrop-blur-xl border border-white/60 rounded-2xl p-4 flex flex-col items-center justify-center text-center shadow-[0_4px_15px_rgba(0,0,0,0.03)] hover:shadow-[0_8px_25px_rgba(1,69,242,0.1)] hover:border-white hover:bg-white/60 transition-all duration-300 group">
                 <Settings2 className="w-6 h-6 text-[#0145F2] mb-2 opacity-80 group-hover:scale-110 transition-transform" />
-                <span className="text-[9px] md:text-[10px] text-gray-500 font-bold uppercase tracking-widest mb-1 group-hover:text-[#0145F2] transition-colors">Transmisión</span>
-                <span className="text-sm md:text-base font-black text-navy capitalize">{auto.transmision || "-"}</span>
+                <span className="text-[9px] md:text-[10px] text-gray-500 font-bold uppercase tracking-widest mb-1 group-hover:text-[#0145F2] transition-colors">
+                  Transmisión
+                </span>
+                <span className="text-sm md:text-base font-black text-navy capitalize">
+                  {auto.transmision || "-"}
+                </span>
               </div>
             </div>
           </div>
@@ -222,8 +262,6 @@ export default async function VehiculoDetallePage({
           {/* ================= BLOQUE 2: COLUMNA DERECHA PANEL FIJO (GLASS) ================= */}
           <div className="lg:col-span-5 lg:row-span-2 relative order-2">
             <div className="lg:sticky lg:top-28 bg-white/50 backdrop-blur-3xl border border-white/80 rounded-[32px] p-6 lg:p-8 shadow-[0_12px_40px_rgba(0,0,0,0.05)] flex flex-col gap-6 relative overflow-hidden">
-              
-              {/* Brillo interior del panel */}
               <div className="absolute inset-0 bg-gradient-to-br from-white/60 to-transparent pointer-events-none z-0"></div>
 
               <div className="hidden lg:block border-b border-gray-200/50 pb-5 relative z-10">
@@ -231,7 +269,10 @@ export default async function VehiculoDetallePage({
                   {esCeroKm ? "0km" : "Usado seleccionado"} | {auto.anio}
                 </span>
                 <h1 className="text-3xl lg:text-4xl font-black text-navy uppercase tracking-tighter leading-tight drop-shadow-sm">
-                  {auto.marca} <span className="text-transparent bg-clip-text bg-gradient-to-r from-navy to-[#0145F2]">{auto.modelo}</span>
+                  {auto.marca}{" "}
+                  <span className="text-transparent bg-clip-text bg-gradient-to-r from-navy to-[#0145F2]">
+                    {auto.modelo}
+                  </span>
                 </h1>
 
                 <div className="mt-5">
@@ -259,22 +300,31 @@ export default async function VehiculoDetallePage({
                 </div>
 
                 <p className="text-[11px] text-gray-500 mt-2 leading-relaxed font-medium">
-                  Incluye flete y formularios. <span className="text-gray-400 underline cursor-pointer hover:text-navy">¿Qué es?</span><br />
-                  No incluye patentamiento. <span className="text-[#0145F2] underline cursor-pointer font-bold">Calcular</span>.<br />
-                  Precio sin impuestos nacionales: ${" "}
-                  <span className="font-bold">{(precioArs * 0.7).toLocaleString("es-AR", { maximumFractionDigits: 0 })}</span>
+                  Incluye flete y formularios.{" "}
+                  <span className="text-gray-400 underline cursor-pointer hover:text-navy transition-colors">
+                    ¿Qué es?
+                  </span>
+                  <br />
+                  No incluye patentamiento.{" "}
+                  <span className="text-[#0145F2] underline cursor-pointer font-bold hover:text-blue-700 transition-colors">
+                    Calcular
+                  </span>
                 </p>
               </div>
 
-              {/* COMPRA PROTEGIDA */}
+              {/* COMPRA PROTEGIDA (Glass) */}
               <div className="bg-emerald-50/60 backdrop-blur-md border border-emerald-200/60 rounded-[20px] p-4 flex items-center justify-between hover:bg-emerald-100/60 hover:border-emerald-300 transition-all duration-300 cursor-pointer group relative z-10 shadow-[0_4px_15px_rgba(16,185,129,0.05)]">
                 <div className="flex items-center gap-4">
                   <div className="bg-emerald-100/80 p-2.5 rounded-full shadow-inner">
                     <ShieldCheck className="text-emerald-600 w-5 h-5" />
                   </div>
                   <div>
-                    <p className="text-emerald-800 font-black text-xs md:text-sm tracking-wide">Compra protegida - Gratis</p>
-                    <p className="text-emerald-600 text-[10px] md:text-xs font-bold uppercase tracking-widest mt-0.5">Sin costo adicional</p>
+                    <p className="text-emerald-800 font-black text-xs md:text-sm tracking-wide">
+                      Compra protegida - Gratis
+                    </p>
+                    <p className="text-emerald-600 text-[10px] md:text-xs font-bold uppercase tracking-widest mt-0.5">
+                      Sin costo adicional
+                    </p>
                   </div>
                 </div>
                 <ChevronRight className="text-emerald-600 w-5 h-5 group-hover:translate-x-1 transition-transform" />
@@ -287,8 +337,12 @@ export default async function VehiculoDetallePage({
                     <Palette className="w-4 h-4 text-[#0145F2]" />
                   </div>
                   <div className="mt-1">
-                    <strong className="text-navy block text-[11px] uppercase tracking-widest font-black">Colores disponibles</strong>
-                    <span className="text-gray-500 font-medium text-xs">A consultar</span>
+                    <strong className="text-navy block text-[11px] uppercase tracking-widest font-black">
+                      Colores disponibles
+                    </strong>
+                    <span className="text-gray-500 font-medium text-xs">
+                      A consultar
+                    </span>
                   </div>
                 </li>
 
@@ -308,8 +362,12 @@ export default async function VehiculoDetallePage({
                     <Clock className="w-4 h-4 text-[#0145F2]" />
                   </div>
                   <div className="mt-1">
-                    <strong className="text-navy block text-[11px] uppercase tracking-widest font-black">Disponibilidad</strong>
-                    <span className="text-gray-500 font-medium text-xs">Inmediata</span>
+                    <strong className="text-navy block text-[11px] uppercase tracking-widest font-black">
+                      Disponibilidad
+                    </strong>
+                    <span className="text-gray-500 font-medium text-xs">
+                      Inmediata
+                    </span>
                   </div>
                 </li>
 
@@ -318,10 +376,14 @@ export default async function VehiculoDetallePage({
                     <MapPin className="w-4 h-4 text-[#0145F2]" />
                   </div>
                   <div className="w-full mt-1">
-                    <strong className="text-navy block text-[11px] uppercase tracking-widest font-black mb-2">Punto de Venta Oficial</strong>
-                    <div className="inline-flex items-center gap-2 bg-white/60 backdrop-blur-md border border-white px-3 py-1.5 rounded-xl shadow-sm">
-                      <span className="text-xs font-black text-navy uppercase tracking-wide">Sucursal {auto.sucursales?.nombre || "Central"}</span>
-                      <CheckCircle2 className="w-4 h-4 text-emerald-500" />
+                    <strong className="text-navy block text-[11px] uppercase tracking-widest font-black mb-2">
+                      Punto de Venta Oficial
+                    </strong>
+                    <div className="inline-flex items-center gap-1.5 bg-white/60 backdrop-blur-md border border-white px-3 py-1.5 rounded-xl shadow-sm">
+                      <span className="text-xs font-black text-navy uppercase tracking-wide">
+                        Sucursal {auto.sucursales?.nombre || "Central"}
+                      </span>
+                      <CheckCircle2 className="w-3.5 h-3.5 text-emerald-500" />
                     </div>
                   </div>
                 </li>
@@ -331,9 +393,8 @@ export default async function VehiculoDetallePage({
 
           {/* ================= BLOQUE 3: ESPECIFICACIONES Y BANNER USADO ================= */}
           <div className="lg:col-span-7 order-3 flex flex-col gap-8">
-
             {/* BANNER TOMAMOS TU USADO (GLASS) */}
-            <div className="bg-gradient-to-r from-navy to-[#0145F2] rounded-[32px] p-6 md:p-8 flex flex-col md:flex-row items-center justify-between gap-6 shadow-[0_12px_40px_rgba(1,69,242,0.2)] relative overflow-hidden">
+            <div className="bg-gradient-to-r from-navy to-[#0145F2] rounded-[32px] p-6 md:p-8 flex flex-col md:flex-row items-center justify-between gap-6 shadow-[0_12px_40px_rgba(1,69,242,0.2)] relative overflow-hidden mt-2">
               <div className="absolute inset-0 bg-white/5 backdrop-blur-sm pointer-events-none z-0"></div>
               <div className="absolute -right-4 -top-8 opacity-10 rotate-12 z-0 mix-blend-overlay">
                 <CarFront className="w-48 h-48 text-white" />
@@ -343,7 +404,8 @@ export default async function VehiculoDetallePage({
                   ¿Querés entregar tu usado?
                 </h3>
                 <p className="text-xs md:text-sm text-sky-100 font-medium max-w-md">
-                  Lo cotizamos en el acto y lo tomamos como parte de pago asegurándote el mejor valor del mercado para tu vehículo.
+                  Lo cotizamos en el acto y lo tomamos como parte de pago
+                  asegurándote el mejor valor del mercado para tu vehículo.
                 </p>
               </div>
               <a
@@ -352,22 +414,26 @@ export default async function VehiculoDetallePage({
                 rel="noopener noreferrer"
                 className="relative z-10 shrink-0 bg-white/10 backdrop-blur-xl border border-white/40 hover:bg-white text-white hover:text-navy font-black text-[10px] md:text-xs uppercase tracking-widest px-6 py-4 rounded-full transition-all duration-300 shadow-[0_8px_25px_rgba(0,0,0,0.2)] hover:shadow-[0_8px_30px_rgba(255,255,255,0.3)] flex items-center gap-2 active:scale-95 group"
               >
-                Cotizar mi auto <ChevronRight className="w-4 h-4 text-white group-hover:text-[#0145F2] transition-colors" />
+                Cotizar mi auto{" "}
+                <ChevronRight className="w-4 h-4 text-white group-hover:text-[#0145F2] transition-colors" />
               </a>
             </div>
-            
-            <h3 className="text-2xl font-black text-navy tracking-tight drop-shadow-sm mb-[-10px] mt-4">Detalles de la unidad</h3>
-            
+
+            <h3 className="text-2xl font-black text-navy tracking-tight drop-shadow-sm mb-[-10px] mt-4">
+              Detalles de la unidad
+            </h3>
+
             {/* PANEL DE ESPECIFICACIONES (GLASS) */}
             <div className="bg-white/40 backdrop-blur-2xl border border-white/60 rounded-[32px] p-6 md:p-8 shadow-[0_8px_32px_rgba(0,0,0,0.03)] relative overflow-hidden">
               <div className="absolute inset-0 bg-gradient-to-tr from-transparent via-white/40 to-transparent pointer-events-none z-0"></div>
-              
+
               <div className="mb-6 pb-6 border-b border-gray-200/50 relative z-10">
                 <span className="block text-[10px] text-gray-500 font-black uppercase tracking-widest mb-1.5">
                   Versión y Especificaciones
                 </span>
                 <p className="text-lg font-black text-navy uppercase drop-shadow-sm">
-                  {auto.version || `${auto.tipo || "Vehículo"} • ${auto.transmision || "Manual"}`}
+                  {auto.version ||
+                    `${auto.tipo || "Vehículo"} • ${auto.transmision || "Manual"}`}
                 </p>
               </div>
 
@@ -382,7 +448,9 @@ export default async function VehiculoDetallePage({
 
               <div className="mb-6 relative z-10">
                 <div className="flex flex-wrap items-center gap-3">
-                  <h4 className="text-3xl font-black text-navy drop-shadow-sm">$ {precioArs.toLocaleString("es-AR")}</h4>
+                  <h4 className="text-3xl font-black text-navy drop-shadow-sm">
+                    $ {precioArs.toLocaleString("es-AR")}
+                  </h4>
                   {precioUsd && precioUsd > 0 && (
                     <span className="bg-emerald-500/10 backdrop-blur-md text-emerald-700 border border-emerald-500/20 px-3 py-1.5 rounded-xl text-xs font-black tracking-wide shadow-sm">
                       US$ {precioUsd.toLocaleString("en-US")}
@@ -390,8 +458,16 @@ export default async function VehiculoDetallePage({
                   )}
                 </div>
                 <p className="text-[11px] text-gray-500 mt-2 font-medium">
-                  Incluye flete y formularios. <span className="text-gray-400 underline cursor-pointer hover:text-navy transition-colors">¿Qué es?</span><br />
-                  No incluye patentamiento. <span className="text-[#0145F2] underline cursor-pointer font-bold hover:text-blue-700 transition-colors">Calcular</span>.
+                  Incluye flete y formularios.{" "}
+                  <span className="text-gray-400 underline cursor-pointer hover:text-navy transition-colors">
+                    ¿Qué es?
+                  </span>
+                  <br />
+                  No incluye patentamiento.{" "}
+                  <span className="text-[#0145F2] underline cursor-pointer font-bold hover:text-blue-700 transition-colors">
+                    Calcular
+                  </span>
+                  .
                 </p>
               </div>
 
@@ -401,8 +477,12 @@ export default async function VehiculoDetallePage({
                     <Clock className="w-4 h-4 text-[#0145F2]" />
                   </div>
                   <div className="mt-1">
-                    <strong className="text-navy block text-[11px] uppercase tracking-widest font-black">Disponibilidad</strong>
-                    <span className="text-gray-500 font-medium text-xs">Inmediata</span>
+                    <strong className="text-navy block text-[11px] uppercase tracking-widest font-black">
+                      Disponibilidad
+                    </strong>
+                    <span className="text-gray-500 font-medium text-xs">
+                      Inmediata
+                    </span>
                   </div>
                 </li>
                 <li className="flex items-start gap-3">
@@ -410,9 +490,13 @@ export default async function VehiculoDetallePage({
                     <MapPin className="w-4 h-4 text-[#0145F2]" />
                   </div>
                   <div className="mt-1">
-                    <strong className="text-navy block text-[11px] uppercase tracking-widest font-black mb-2">Punto de Venta Oficial</strong>
+                    <strong className="text-navy block text-[11px] uppercase tracking-widest font-black mb-2">
+                      Punto de Venta Oficial
+                    </strong>
                     <div className="inline-flex items-center gap-1.5 bg-white/60 backdrop-blur-md border border-white px-3 py-1.5 rounded-xl shadow-sm">
-                      <span className="text-xs font-black text-navy uppercase tracking-wide">Sucursal {auto.sucursales?.nombre || "Central"}</span>
+                      <span className="text-xs font-black text-navy uppercase tracking-wide">
+                        Sucursal {auto.sucursales?.nombre || "Central"}
+                      </span>
                       <CheckCircle2 className="w-3.5 h-3.5 text-emerald-500" />
                     </div>
                   </div>
@@ -422,13 +506,16 @@ export default async function VehiculoDetallePage({
                     <CreditCard className="w-4 h-4 text-[#0145F2]" />
                   </div>
                   <div className="mt-1">
-                    <strong className="text-navy block text-[11px] uppercase tracking-widest font-black">Precio al contado</strong>
-                    <span className="text-xs text-gray-500 font-medium">Se puede financiar, consultar planes disponibles.</span>
+                    <strong className="text-navy block text-[11px] uppercase tracking-widest font-black">
+                      Precio al contado
+                    </strong>
+                    <span className="text-xs text-gray-500 font-medium">
+                      Se puede financiar, consultar planes disponibles.
+                    </span>
                   </div>
                 </li>
               </ul>
             </div>
-            
           </div>
         </div>
 
@@ -436,7 +523,10 @@ export default async function VehiculoDetallePage({
         {vehiculosSimilares && vehiculosSimilares.length > 0 && (
           <div className="mt-20 md:mt-28 border-t border-white/60 pt-16 relative z-10">
             <h3 className="text-2xl md:text-3xl font-black text-navy uppercase tracking-tighter mb-8 drop-shadow-sm">
-              También podría <span className="text-transparent bg-clip-text bg-gradient-to-r from-navy to-[#0145F2]">interesarte</span>
+              También podría{" "}
+              <span className="text-transparent bg-clip-text bg-gradient-to-r from-navy to-[#0145F2]">
+                interesarte
+              </span>
             </h3>
 
             <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6 md:gap-8">
@@ -447,16 +537,15 @@ export default async function VehiculoDetallePage({
                   className="block group h-full focus:outline-none"
                 >
                   <div className="bg-white/40 backdrop-blur-2xl rounded-[28px] border border-white/60 overflow-hidden flex flex-col h-full shadow-[0_8px_32px_rgba(0,0,0,0.04)] hover:shadow-[0_20px_48px_rgba(1,69,242,0.12)] hover:border-white hover:bg-white/70 transition-all duration-500 relative transform group-hover:-translate-y-1">
-                    
                     {/* Reflejo hover */}
                     <div className="absolute inset-0 bg-gradient-to-tr from-transparent via-white/40 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-700 pointer-events-none z-20"></div>
 
-                    <div className="relative h-[180px] bg-white/30 flex items-center justify-center overflow-hidden p-4 mix-blend-multiply">
+                    <div className="relative h-[160px] sm:h-[180px] bg-white/30 flex items-center justify-center overflow-hidden p-3 mix-blend-multiply">
                       {simil.multimedia_vehiculos?.[0] ? (
                         <img
                           src={simil.multimedia_vehiculos[0].url_archivo}
                           alt={`${simil.marca} ${simil.modelo}`}
-                          className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700 ease-out"
+                          className="w-full h-full object-cover rounded-[20px] group-hover:scale-110 transition-transform duration-700 ease-out"
                         />
                       ) : (
                         <div className="w-full h-full flex items-center justify-center text-gray-400 text-xs font-medium">
@@ -464,7 +553,7 @@ export default async function VehiculoDetallePage({
                         </div>
                       )}
                     </div>
-                    
+
                     <div className="p-5 sm:p-6 flex flex-col flex-grow relative z-10">
                       <span className="text-[10px] text-gray-500 font-black uppercase tracking-widest mb-1.5">
                         {simil.marca} • {simil.anio}
@@ -478,9 +567,14 @@ export default async function VehiculoDetallePage({
 
                       <div className="mt-auto pt-5 flex items-end justify-between border-t border-gray-200/50">
                         <div className="flex flex-col">
-                          <span className="text-[9px] text-gray-400 uppercase tracking-widest font-black mb-0.5">Desde</span>
+                          <span className="text-[9px] text-gray-400 uppercase tracking-widest font-black mb-0.5">
+                            Desde
+                          </span>
                           <span className="text-xl font-black text-navy tracking-tighter">
-                            $ {simil.precio_publicado_ars?.toLocaleString("es-AR")}
+                            ${" "}
+                            {simil.precio_publicado_ars?.toLocaleString(
+                              "es-AR",
+                            )}
                           </span>
                         </div>
                         <div className="w-9 h-9 rounded-full bg-white border border-gray-100 shadow-sm group-hover:bg-[#0145F2] group-hover:border-[#0145F2] group-hover:text-white flex items-center justify-center transition-all duration-300 text-gray-400 group-hover:shadow-[0_0_15px_rgba(1,69,242,0.4)]">
@@ -494,19 +588,20 @@ export default async function VehiculoDetallePage({
             </div>
           </div>
         )}
-        
       </div>
 
-      {/* ================= BOTÓN FLOTANTE MÓVIL DE CONSULTA (GLASS) ================= */}
-      <div className="lg:hidden sticky bottom-0 w-full bg-white/70 backdrop-blur-3xl border-t border-white/60 p-4 z-[40] shadow-[0_-10px_30px_rgba(0,0,0,0.08)] mt-auto">
-        <a
-          href={linkWhatsApp}
-          target="_blank"
-          rel="noopener noreferrer"
-          className="block w-full bg-gradient-to-r from-[#0145F2] to-sky-500 hover:from-blue-600 hover:to-sky-400 text-white font-black text-sm uppercase tracking-widest text-center py-4 rounded-2xl shadow-[0_8px_20px_rgba(1,69,242,0.3)] transition-all duration-300 active:scale-95"
-        >
-          Consultar
-        </a>
+      {/* ================= BOTÓN FLOTANTE MÓVIL STICKY (FONDO TRANSPARENTE / FLOTANDO) ================= */}
+      <div className="lg:hidden sticky bottom-0 w-full bg-transparent p-4 z-[40] mt-auto pointer-events-none">
+        <div className="pointer-events-auto">
+          <a
+            href={linkWhatsApp}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="block w-full bg-gradient-to-r from-[#0145F2] to-sky-500 hover:from-blue-600 hover:to-sky-400 text-white font-black text-sm uppercase tracking-widest text-center py-4 rounded-2xl shadow-[0_10px_30px_rgba(1,69,242,0.4)] transition-all duration-300 active:scale-95"
+          >
+            Consultar a un Asesor
+          </a>
+        </div>
       </div>
     </div>
   );

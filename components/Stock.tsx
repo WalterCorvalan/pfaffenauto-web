@@ -1,15 +1,15 @@
 "use client";
 
-import React, { useState, useEffect, useRef } from "react";
+import React from "react";
 import Link from "next/link";
-import { ChevronRight } from "lucide-react";
+import { ChevronRight, ArrowUpRight } from "lucide-react";
 import { motion, Variants } from "framer-motion";
 
 interface StockProps {
   vehiculos: any[] | null;
 }
 
-// Función mágica para limpiar textos: quita tildes, espacios extra y pasa a minúsculas
+// Función para limpiar textos
 const normalizar = (texto: string) => {
   return (
     texto
@@ -20,7 +20,7 @@ const normalizar = (texto: string) => {
   );
 };
 
-// Variantes para la animación en cascada (Stagger) - Refinadas con físicas Spring
+// Variantes para la animación
 const containerVariants: Variants = {
   hidden: { opacity: 0 },
   visible: {
@@ -31,12 +31,12 @@ const containerVariants: Variants = {
 
 const itemVariants: Variants = {
   hidden: { opacity: 0, y: 30, scale: 0.95, filter: "blur(5px)" },
-  visible: { 
-    opacity: 1, 
-    y: 0, 
-    scale: 1, 
+  visible: {
+    opacity: 1,
+    y: 0,
+    scale: 1,
     filter: "blur(0px)",
-    transition: { type: "spring", stiffness: 150, damping: 20 } 
+    transition: { type: "spring", stiffness: 150, damping: 20 },
   },
 };
 
@@ -71,55 +71,7 @@ export default function Stock({ vehiculos }: StockProps) {
 
   const otrosVehiculos = listaVehiculos
     .filter((auto) => !idsMostrados.has(auto.id))
-    .slice(0, 8);
-
-  // =========================================================================
-  // LÓGICA DEL CARRUSEL INFINITO Y ARRASTRABLE (INTACTA)
-  // =========================================================================
-  const carouselRef = useRef<HTMLDivElement>(null);
-  const [isPaused, setIsPaused] = useState(false);
-  const [isDragging, setIsDragging] = useState(false);
-  const [startX, setStartX] = useState(0);
-  const [scrollLeft, setScrollLeft] = useState(0);
-
-  useEffect(() => {
-    let animationId: number;
-    const move = () => {
-      if (carouselRef.current && !isPaused && !isDragging) {
-        carouselRef.current.scrollLeft += 0.6;
-        if (
-          carouselRef.current.scrollLeft >=
-          carouselRef.current.scrollWidth / 2
-        ) {
-          carouselRef.current.scrollLeft = 0;
-        }
-      }
-      animationId = requestAnimationFrame(move);
-    };
-    animationId = requestAnimationFrame(move);
-    return () => cancelAnimationFrame(animationId);
-  }, [isPaused, isDragging]);
-
-  const handleMouseDown = (e: React.MouseEvent) => {
-    if (!carouselRef.current) return;
-    setIsDragging(true);
-    setStartX(e.pageX - carouselRef.current.offsetLeft);
-    setScrollLeft(carouselRef.current.scrollLeft);
-  };
-
-  const handleMouseMove = (e: React.MouseEvent) => {
-    if (!isDragging || !carouselRef.current) return;
-    e.preventDefault();
-    const x = e.pageX - carouselRef.current.offsetLeft;
-    const walk = (x - startX) * 1.5; 
-    carouselRef.current.scrollLeft = scrollLeft - walk;
-  };
-
-  const stopDragging = () => {
-    setIsDragging(false);
-    setIsPaused(false);
-  };
-  // =========================================================================
+    .slice(0, 6);
 
   if (listaVehiculos.length === 0) {
     return (
@@ -139,59 +91,48 @@ export default function Stock({ vehiculos }: StockProps) {
   return (
     <section
       id="stock"
-      className="py-24 bg-transparent relative border-t border-transparent overflow-hidden"
+      className="py-12 bg-transparent relative border-t border-transparent overflow-hidden"
     >
       {/* Luces Ambientales (Spatial UI) */}
       <div className="absolute top-0 left-[-5%] w-[600px] h-[600px] bg-[#0145F2]/5 rounded-full blur-[120px] pointer-events-none"></div>
       <div className="absolute bottom-[20%] right-[-5%] w-[500px] h-[500px] bg-sky-300/10 rounded-full blur-[100px] pointer-events-none"></div>
 
       <div className="max-w-7xl mx-auto px-4 md:px-6 space-y-24 relative z-10">
-        
-        {/* ================= SECCIÓN 1: SUVs ================= */}
+        {/* ================= SECCIÓN 1: SUVs (GRILLA TRADICIONAL) ================= */}
         {suvsDestacadas.length > 0 && (
           <div>
-            <SectionHeader 
-              pillText="Selección exclusiva" 
+            <SectionHeader
+              pillText="Selección exclusiva"
               pillColor="text-sky-600 bg-sky-50/50 border-sky-100/50"
-              titleLight="SUVs" 
-              titleBold="Destacadas" 
-              linkHref="/catalogo?tipo=SUV" 
-              linkLabel="Ver todas las SUVs" 
+              titleLight="SUVs"
+              titleBold="Destacadas"
+              linkHref="/catalogo?q=SUV"
+              linkLabel="Ver todas las SUVs"
             />
             <VehicleGrid vehiculos={suvsDestacadas} />
           </div>
         )}
 
-        {/* ================= SECCIÓN 2: Pick-ups (Carrusel ARRASTRABLE) ================= */}
+        {/* ================= SECCIÓN 2: Pick-ups (CARRUSEL SCROLL NATIVO) ================= */}
         {pickipsCarrusel.length > 0 && (
           <div className="space-y-8">
-            <SectionHeader 
-              pillText="Alta Demanda" 
+            <SectionHeader
+              pillText="Alta Demanda"
               pillColor="text-orange-600 bg-orange-50/50 border-orange-100/50"
-              titleLight="Pick-ups" 
-              titleBold="Disponibles" 
-              linkHref="/catalogo?tipo=Pick-up" 
-              linkLabel="Ver catálogo de Pick-ups" 
+              titleLight="Pick-ups"
+              titleBold="Disponibles"
+              linkHref="/catalogo?q=Pick-up"
+              linkLabel="Ver catálogo de Pick-ups"
             />
 
-            {/* CONTENEDOR DEL CARRUSEL INTERACTIVO */}
             <div className="relative w-full [mask-image:linear-gradient(to_right,transparent,black_5%,black_95%,transparent)] py-4">
-              <div
-                ref={carouselRef}
-                className="flex gap-5 md:gap-6 w-full overflow-x-auto cursor-grab active:cursor-grabbing pb-6 [&::-webkit-scrollbar]:hidden"
-                style={{ scrollbarWidth: "none", msOverflowStyle: "none" }}
-                onMouseEnter={() => setIsPaused(true)}
-                onMouseLeave={stopDragging}
-                onMouseDown={handleMouseDown}
-                onMouseUp={stopDragging}
-                onMouseMove={handleMouseMove}
-                onTouchStart={() => setIsPaused(true)}
-                onTouchEnd={() => setIsPaused(false)}
-              >
+              {/* Carrusel optimizado con CSS nativo, sin bloqueos JS */}
+              <div className="flex gap-5 md:gap-6 w-full overflow-x-auto pb-6 custom-scrollbar snap-x snap-mandatory">
+                {/* Duplicamos el arreglo visualmente para dar el efecto de que hay más */}
                 {[...pickipsCarrusel, ...pickipsCarrusel].map((auto, index) => (
                   <div
                     key={`${auto.id}-${index}`}
-                    className={`min-w-[280px] max-w-[280px] sm:min-w-[300px] sm:max-w-[300px] flex-shrink-0 ${isDragging ? "pointer-events-none" : ""}`}
+                    className="min-w-[280px] max-w-[280px] sm:min-w-[300px] sm:max-w-[300px] flex-shrink-0 snap-center"
                   >
                     <VehicleCard auto={auto} />
                   </div>
@@ -201,33 +142,169 @@ export default function Stock({ vehiculos }: StockProps) {
           </div>
         )}
 
-        {/* ================= SECCIÓN 3: Sedanes / Hatchbacks ================= */}
+        {/* ================= SECCIÓN 3: SEDANES (ESTILO BENTO GRID / HERO UI) ================= */}
         {urbanosYSedanes.length > 0 && (
           <div>
-            <SectionHeader 
-              pillText="Prácticos y eficientes" 
+            <SectionHeader
+              pillText="Prácticos y eficientes"
               pillColor="text-emerald-600 bg-emerald-50/50 border-emerald-100/50"
-              titleLight="Sedanes y Hatchbacks" 
-              titleBold="Urbanos" 
-              linkHref="/catalogo" 
-              linkLabel="Ver todo el stock" 
+              titleLight="Sedanes y Hatchbacks"
+              titleBold="Urbanos"
+              linkHref="/catalogo?q=Sedan"
+              linkLabel="Ver todo el stock"
             />
-            <VehicleGrid vehiculos={urbanosYSedanes} />
+
+            <div className="grid grid-cols-1 md:grid-cols-12 gap-4 md:gap-6">
+              {/* Tarjeta Principal Izquierda (Grande) */}
+              {urbanosYSedanes[0] && (
+                <Link
+                  href={`/catalogo/${urbanosYSedanes[0].slug}`}
+                  className="md:col-span-8 relative h-[380px] md:h-[450px] rounded-[32px] overflow-hidden group shadow-[0_8px_32px_rgba(0,0,0,0.04)] hover:shadow-[0_20px_48px_rgba(1,69,242,0.12)] border border-white/60 transition-all duration-500"
+                >
+                  {/* Fondo oscuro para contraste */}
+                  <div className="absolute inset-0 bg-slate-100 z-0"></div>
+                  <img
+                    src={
+                      urbanosYSedanes[0].multimedia_vehiculos?.[0]
+                        ?.url_archivo || "/placeholder.jpg"
+                    }
+                    alt={urbanosYSedanes[0].modelo}
+                    className="absolute inset-0 w-full h-full object-cover group-hover:scale-105 transition-transform duration-700 ease-out mix-blend-multiply opacity-90 z-0"
+                  />
+                  {/* Gradiente para lectura */}
+                  <div className="absolute inset-0 bg-gradient-to-t from-navy/90 via-navy/30 to-transparent z-10"></div>
+
+                  <div className="absolute bottom-0 left-0 p-6 md:p-8 w-full flex flex-col sm:flex-row sm:items-end justify-between gap-4 z-20">
+                    <div>
+                      <span className="bg-white/20 backdrop-blur-md border border-white/30 px-3 py-1.5 rounded-full text-white text-[10px] font-black tracking-widest uppercase mb-3 inline-block">
+                        Destacado
+                      </span>
+                      <h3 className="text-3xl md:text-4xl font-black text-white leading-tight uppercase drop-shadow-md">
+                        {urbanosYSedanes[0].marca}{" "}
+                        <br className="hidden sm:block" />
+                        {urbanosYSedanes[0].modelo}
+                      </h3>
+                      <p className="text-white/80 text-sm mt-1 font-medium">
+                        {urbanosYSedanes[0].version || urbanosYSedanes[0].anio}
+                      </p>
+                    </div>
+                    <div className="sm:text-right flex items-center sm:items-end gap-3 sm:flex-col">
+                      <p className="text-white font-black text-2xl md:text-3xl drop-shadow-md">
+                        ${" "}
+                        {urbanosYSedanes[0].precio_publicado_ars?.toLocaleString(
+                          "es-AR",
+                        )}
+                      </p>
+                      <div className="w-10 h-10 rounded-full bg-white text-navy flex items-center justify-center group-hover:bg-[#0145F2] group-hover:text-white transition-colors shadow-lg">
+                        <ArrowUpRight className="w-5 h-5" />
+                      </div>
+                    </div>
+                  </div>
+                </Link>
+              )}
+
+              {/* Tarjetas Secundarias Derecha (Lista/Stack) */}
+              {urbanosYSedanes.length > 1 && (
+                <div className="md:col-span-4 flex flex-col gap-4">
+                  {urbanosYSedanes.slice(1, 4).map((auto) => (
+                    <Link
+                      key={auto.id}
+                      href={`/catalogo/${auto.slug}`}
+                      className="flex-1 bg-white/40 backdrop-blur-2xl border border-white/60 rounded-[24px] p-2 flex gap-4 items-center group hover:bg-white/70 transition-all shadow-[0_4px_20px_rgba(0,0,0,0.03)] hover:shadow-lg"
+                    >
+                      <div className="h-24 w-28 shrink-0 rounded-[18px] overflow-hidden relative bg-white/30 mix-blend-multiply">
+                        <img
+                          src={
+                            auto.multimedia_vehiculos?.[0]?.url_archivo ||
+                            "/placeholder.jpg"
+                          }
+                          alt={auto.modelo}
+                          className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
+                        />
+                      </div>
+                      <div className="py-2 pr-4 flex flex-col justify-center w-full">
+                        <span className="text-[9px] text-gray-400 font-bold uppercase tracking-widest">
+                          {auto.marca}
+                        </span>
+                        <h4 className="text-sm md:text-base font-black text-navy leading-tight uppercase truncate">
+                          {auto.modelo}
+                        </h4>
+                        <div className="flex items-center justify-between mt-2">
+                          <p className="text-[10px] text-gray-500 font-medium">
+                            {auto.anio} •{" "}
+                            {auto.kilometraje?.toLocaleString("es-AR")} km
+                          </p>
+                        </div>
+                        <p className="text-[#0145F2] font-black text-sm mt-0.5">
+                          ${auto.precio_publicado_ars?.toLocaleString("es-AR")}
+                        </p>
+                      </div>
+                    </Link>
+                  ))}
+                </div>
+              )}
+            </div>
           </div>
         )}
 
-        {/* ================= SECCIÓN 4: OTROS ================= */}
+        {/* ================= SECCIÓN 4: OTROS (ESTILO APPLE CARDS CAROUSEL) ================= */}
         {otrosVehiculos.length > 0 && (
           <div>
-            <SectionHeader 
-              pillText="Más Opciones" 
+            <SectionHeader
+              pillText="Más Opciones"
               pillColor="text-purple-600 bg-purple-50/50 border-purple-100/50"
-              titleLight="Unidades" 
-              titleBold="Disponibles" 
-              linkHref="/catalogo" 
-              linkLabel="Ir al catálogo completo" 
+              titleLight="Oportunidades"
+              titleBold="Especiales"
+              linkHref="/catalogo"
+              linkLabel="Ir al catálogo completo"
             />
-            <VehicleGrid vehiculos={otrosVehiculos} />
+
+            {/* Carrusel Inmersivo con scroll nativo (Snap) */}
+            <div className="flex gap-4 md:gap-6 overflow-x-auto pb-10 pt-2 custom-scrollbar snap-x snap-mandatory">
+              {otrosVehiculos.map((auto) => (
+                <Link
+                  key={auto.id}
+                  href={`/catalogo/${auto.slug}`}
+                  className="min-w-[280px] md:min-w-[360px] h-[380px] md:h-[480px] relative rounded-[32px] overflow-hidden group snap-center shadow-lg hover:shadow-2xl border border-white/40 shrink-0 transition-all duration-500"
+                >
+                  <div className="absolute inset-0 bg-slate-200 z-0"></div>
+                  <img
+                    src={
+                      auto.multimedia_vehiculos?.[0]?.url_archivo ||
+                      "/placeholder.jpg"
+                    }
+                    alt={auto.modelo}
+                    className="absolute inset-0 w-full h-full object-cover group-hover:scale-105 transition-transform duration-700 ease-out z-0 mix-blend-multiply opacity-90"
+                  />
+                  {/* Gradiente estilo Apple (Oscuro arriba para el título, oscuro abajo para el precio) */}
+                  <div className="absolute inset-0 bg-gradient-to-b from-black/70 via-transparent to-black/80 z-10" />
+
+                  <div className="absolute top-6 left-6 right-6 z-20">
+                    <span className="text-white/80 text-[10px] md:text-xs uppercase tracking-widest font-black drop-shadow-md">
+                      {auto.marca}
+                    </span>
+                    <h3 className="text-2xl md:text-3xl font-black text-white leading-tight mt-1 drop-shadow-lg uppercase">
+                      {auto.modelo}
+                    </h3>
+                  </div>
+
+                  <div className="absolute bottom-6 left-6 right-6 flex items-end justify-between z-20">
+                    <div>
+                      <p className="text-white/80 text-xs md:text-sm font-medium mb-1 drop-shadow-md">
+                        {auto.anio} •{" "}
+                        {auto.kilometraje?.toLocaleString("es-AR")} km
+                      </p>
+                      <p className="text-white font-black text-xl md:text-2xl drop-shadow-lg">
+                        $ {auto.precio_publicado_ars?.toLocaleString("es-AR")}
+                      </p>
+                    </div>
+                    <div className="w-10 h-10 md:w-12 md:h-12 rounded-full bg-white/20 backdrop-blur-md flex items-center justify-center border border-white/40 text-white group-hover:bg-[#0145F2] group-hover:border-[#0145F2] transition-colors shadow-lg">
+                      <ChevronRight className="w-5 h-5" />
+                    </div>
+                  </div>
+                </Link>
+              ))}
+            </div>
           </div>
         )}
       </div>
@@ -237,16 +314,27 @@ export default function Stock({ vehiculos }: StockProps) {
 
 // ================= COMPONENTES DE UI MODULARIZADOS =================
 
-// Encabezado de Sección Estilizado
-function SectionHeader({ pillText, pillColor, titleLight, titleBold, linkHref, linkLabel }: any) {
+function SectionHeader({
+  pillText,
+  pillColor,
+  titleLight,
+  titleBold,
+  linkHref,
+  linkLabel,
+}: any) {
   return (
     <div className="flex flex-col sm:flex-row sm:items-end justify-between mb-8 gap-4">
       <div>
-        <span className={`text-[10px] font-black uppercase tracking-widest backdrop-blur-xl px-4 py-1.5 rounded-full border shadow-[0_2px_10px_rgba(0,0,0,0.03)] ${pillColor}`}>
+        <span
+          className={`text-[10px] font-black uppercase tracking-widest backdrop-blur-xl px-4 py-1.5 rounded-full border shadow-[0_2px_10px_rgba(0,0,0,0.03)] ${pillColor}`}
+        >
           {pillText}
         </span>
         <h2 className="text-3xl md:text-4xl text-navy font-light tracking-tighter mt-4 drop-shadow-sm">
-          {titleLight} <strong className="font-black bg-clip-text text-transparent bg-gradient-to-r from-navy to-[#0145F2]">{titleBold}</strong>
+          {titleLight}{" "}
+          <strong className="font-black bg-clip-text text-transparent bg-gradient-to-r from-navy to-[#0145F2]">
+            {titleBold}
+          </strong>
         </h2>
       </div>
       <Link
@@ -262,7 +350,7 @@ function SectionHeader({ pillText, pillColor, titleLight, titleBold, linkHref, l
   );
 }
 
-// Grilla Animada
+// Grilla Animada (Para SUVs y otros usos estándar)
 function VehicleGrid({ vehiculos }: { vehiculos: any[] }) {
   return (
     <motion.div
@@ -281,7 +369,7 @@ function VehicleGrid({ vehiculos }: { vehiculos: any[] }) {
   );
 }
 
-// Tarjeta Individual Glassmorphism 2.0 / Spatial UI
+// Tarjeta Individual Estándar (Spatial UI)
 function VehicleCard({ auto }: { auto: any }) {
   const precioMostrar =
     auto.precio_publicado_usd && !auto.precio_publicado_ars
@@ -296,8 +384,7 @@ function VehicleCard({ auto }: { auto: any }) {
       className="block group h-full focus:outline-none"
     >
       <div className="bg-white/40 backdrop-blur-2xl rounded-[28px] border border-white/60 overflow-hidden flex flex-col h-full shadow-[0_8px_32px_rgba(0,0,0,0.04)] hover:shadow-[0_20px_48px_rgba(1,69,242,0.12)] hover:border-white hover:bg-white/70 transition-all duration-500 relative transform group-hover:-translate-y-1">
-        
-        {/* Reflejo de luz interior al hacer hover */}
+        {/* Reflejo hover */}
         <div className="absolute inset-0 bg-gradient-to-tr from-transparent via-white/40 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-700 pointer-events-none z-20"></div>
 
         <div className="relative h-[160px] sm:h-[180px] bg-white/30 flex items-center justify-center overflow-hidden p-4 mix-blend-multiply">
@@ -327,7 +414,8 @@ function VehicleCard({ auto }: { auto: any }) {
             {auto.modelo}
           </h3>
           <p className="text-xs text-gray-500 font-medium mt-1 line-clamp-1">
-            {auto.version || `${auto.anio} • ${auto.kilometraje?.toLocaleString("es-AR")} km`}
+            {auto.version ||
+              `${auto.anio} • ${auto.kilometraje?.toLocaleString("es-AR")} km`}
           </p>
 
           <div className="mt-auto pt-5 flex items-end justify-between border-t border-gray-200/50">

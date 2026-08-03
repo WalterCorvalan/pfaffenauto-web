@@ -26,7 +26,7 @@ const modelosPorMarca: Record<string, string[]> = {
 
 const aniosDisponibles = Array.from({ length: 20 }, (_, i) => 2026 - i);
 
-export default function ConsignarForm() {
+export default function VenderForm() {
   const [step, setStep] = useState(1);
   const [mockId, setMockId] = useState("");
   
@@ -100,7 +100,7 @@ export default function ConsignarForm() {
     setLoading(true);
 
     try {
-      // Guardamos en Supabase incluyendo el email y la verificación
+      // Guardamos en Supabase con el tipo 'venta' para diferenciarlo en el CRM
       const { data: cotizacion, error: dbError } = await supabase
         .from('cotizaciones')
         .insert({
@@ -113,7 +113,7 @@ export default function ConsignarForm() {
           email: email.trim(), 
           telefono: tel.trim(),
           telefono_verificado: true, 
-          tipo_peritaje: 'cotizacion', // <--- CAMBIAMOS 'online' POR 'cotizacion'
+          tipo_peritaje: 'venta', // <--- MARCADOR PARA VENTA DIRECTA
           sucursal_preferida: 'Casa Central',
           fotos_y_videos: []
         })
@@ -136,7 +136,7 @@ export default function ConsignarForm() {
       }
 
     } catch (error) {
-      console.error("Error al consignar:", error);
+      console.error("Error al vender auto:", error);
       alert("Hubo un problema al verificar o guardar. Reintentá.");
     } finally {
       setLoading(false);
@@ -148,12 +148,12 @@ export default function ConsignarForm() {
       
       <div className="absolute inset-0 pointer-events-none z-0">
         <div className="absolute inset-0 bg-[linear-gradient(to_right,#e2e8f0_1px,transparent_1px),linear-gradient(to_bottom,#e2e8f0_1px,transparent_1px)] bg-[size:3rem_3rem] [mask-image:radial-gradient(ellipse_80%_50%_at_50%_0%,#000_70%,transparent_100%)] opacity-60"></div>
-        <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[800px] h-[400px] bg-emerald-500/5 blur-[120px] rounded-full"></div>
+        <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[800px] h-[400px] bg-orange-500/5 blur-[120px] rounded-full"></div>
       </div>
 
       <header className="max-w-7xl mx-auto w-full px-10 py-2 flex items-center justify-between relative z-10">
         <div className="flex items-center gap-4 text-xs font-bold text-slate-500">
-          <span>DOC: <strong className="text-emerald-600">{mockId}</strong></span>
+          <span>DOC: <strong className="text-orange-600">{mockId}</strong></span>
         </div>
       </header>
 
@@ -162,15 +162,15 @@ export default function ConsignarForm() {
         {/* COLUMNA IZQUIERDA */}
         <div className="lg:col-span-7 flex flex-col justify-center space-y-6 text-left">
           <div className="space-y-3">
-            <span className="bg-emerald-50 text-emerald-700 border border-emerald-200 text-[11px] font-black uppercase tracking-widest px-4 py-1.5 rounded-full inline-block shadow-sm">
-              Gestión Integral de Venta
+            <span className="bg-orange-50 text-orange-700 border border-orange-200 text-[11px] font-black uppercase tracking-widest px-4 py-1.5 rounded-full inline-block shadow-sm">
+              Venta Directa y Transparente
             </span>
             <h1 className="text-4xl sm:text-6xl lg:text-7xl font-light text-navy tracking-tight leading-[1.08]">
-              Consigná tu auto y <br />
-              <strong className="font-black text-transparent bg-clip-text bg-gradient-to-r from-emerald-600 to-teal-400">olvidate de todo.</strong>
+              Vendé tu vehículo <br />
+              <strong className="font-black text-transparent bg-clip-text bg-gradient-to-r from-orange-600 to-amber-500">al mejor precio.</strong>
             </h1>
             <p className="text-xs sm:text-sm font-bold uppercase tracking-widest text-slate-500 pt-2">
-              MÁXIMA RENTABILIDAD, CERO ESTRÉS
+              EFECTIVO INMEDIATO Y TRANSFERENCIA SEGURA
             </p>
           </div>
         </div>
@@ -182,10 +182,10 @@ export default function ConsignarForm() {
             {!enviado && (
               <div className="mb-4">
                 <h2 className="text-xl font-black text-navy tracking-tight">
-                  Iniciá el proceso en {segundos} {segundos === 1 ? "segundo" : "segundos"}
+                  Iniciá la venta en {segundos} {segundos === 1 ? "segundo" : "segundos"}
                 </h2>
                 <p className="text-xs text-slate-400 font-medium">
-                  {step === 1 && "Ingresá los datos del vehículo a consignar"}
+                  {step === 1 && "Ingresá los datos del vehículo que querés vender"}
                   {step === 2 && "¿Tu auto tiene o tuvo GNC?"}
                   {step === 3 && "Necesitamos tus datos para enviarte el código"}
                   {step === 4 && "Verificá tu número de teléfono"}
@@ -204,7 +204,7 @@ export default function ConsignarForm() {
                         className={`w-full bg-white/60 backdrop-blur-md border rounded-2xl px-4 py-3.5 text-sm font-semibold flex items-center justify-between cursor-pointer transition-all shadow-sm ${anio ? 'text-navy border-slate-300' : 'text-slate-400 border-white'}`}
                       >
                         <span>{anio ? anio : "Seleccioná el año"}</span>
-                        <ChevronDown className={`w-4 h-4 text-slate-500 transition-transform ${openDropdown === 'anio' ? 'rotate-180 text-emerald-600' : ''}`} />
+                        <ChevronDown className={`w-4 h-4 text-slate-500 transition-transform ${openDropdown === 'anio' ? 'rotate-180 text-orange-600' : ''}`} />
                       </div>
 
                       {openDropdown === 'anio' && (
@@ -213,7 +213,7 @@ export default function ConsignarForm() {
                             <div 
                               key={a}
                               onClick={() => { setAnio(String(a)); setOpenDropdown(null); }}
-                              className="px-4 py-2.5 text-xs font-bold text-slate-700 hover:bg-emerald-50 hover:text-emerald-700 rounded-xl cursor-pointer transition-colors"
+                              className="px-4 py-2.5 text-xs font-bold text-slate-700 hover:bg-orange-50 hover:text-orange-700 rounded-xl cursor-pointer transition-colors"
                             >
                               {a}
                             </div>
@@ -228,7 +228,7 @@ export default function ConsignarForm() {
                         className={`w-full bg-white/60 backdrop-blur-md border rounded-2xl px-4 py-3.5 text-sm font-semibold flex items-center justify-between cursor-pointer transition-all shadow-sm ${marca ? 'text-navy border-slate-300' : 'text-slate-400 border-white'}`}
                       >
                         <span>{marca ? marca : "Seleccioná la marca"}</span>
-                        <ChevronDown className={`w-4 h-4 text-slate-500 transition-transform ${openDropdown === 'marca' ? 'rotate-180 text-emerald-600' : ''}`} />
+                        <ChevronDown className={`w-4 h-4 text-slate-500 transition-transform ${openDropdown === 'marca' ? 'rotate-180 text-orange-600' : ''}`} />
                       </div>
 
                       {openDropdown === 'marca' && (
@@ -246,7 +246,7 @@ export default function ConsignarForm() {
                               <div 
                                 key={m}
                                 onClick={() => { setMarca(m); setModelo(""); setOpenDropdown(null); }}
-                                className="px-3 py-2 text-xs font-bold text-slate-700 hover:bg-emerald-50 hover:text-emerald-700 rounded-xl cursor-pointer transition-colors"
+                                className="px-3 py-2 text-xs font-bold text-slate-700 hover:bg-orange-50 hover:text-orange-700 rounded-xl cursor-pointer transition-colors"
                               >
                                 {m}
                               </div>
@@ -262,7 +262,7 @@ export default function ConsignarForm() {
                         className={`w-full bg-white/60 backdrop-blur-md border rounded-2xl px-4 py-3.5 text-sm font-semibold flex items-center justify-between transition-all shadow-sm ${marca ? 'cursor-pointer text-navy border-slate-300' : 'opacity-60 cursor-not-allowed text-slate-400 border-white'}`}
                       >
                         <span>{modelo ? modelo : "Seleccioná el modelo"}</span>
-                        <ChevronDown className={`w-4 h-4 text-slate-500 transition-transform ${openDropdown === 'modelo' ? 'rotate-180 text-emerald-600' : ''}`} />
+                        <ChevronDown className={`w-4 h-4 text-slate-500 transition-transform ${openDropdown === 'modelo' ? 'rotate-180 text-orange-600' : ''}`} />
                       </div>
 
                       {openDropdown === 'modelo' && marca && (
@@ -271,7 +271,7 @@ export default function ConsignarForm() {
                             <div 
                               key={mod}
                               onClick={() => { setModelo(mod); setOpenDropdown(null); }}
-                              className="px-4 py-2.5 text-xs font-bold text-slate-700 hover:bg-emerald-50 hover:text-emerald-700 rounded-xl cursor-pointer transition-colors"
+                              className="px-4 py-2.5 text-xs font-bold text-slate-700 hover:bg-orange-50 hover:text-orange-700 rounded-xl cursor-pointer transition-colors"
                             >
                               {mod}
                             </div>
@@ -286,7 +286,7 @@ export default function ConsignarForm() {
                         placeholder="Ingresá la versión (Ej: 1.6 MSI...)" 
                         value={version}
                         onChange={(e) => setVersion(e.target.value)}
-                        className="w-full bg-white/60 backdrop-blur-md border border-white rounded-2xl px-4 py-3.5 text-sm font-semibold text-navy placeholder:text-slate-400 outline-none focus:border-emerald-500 transition-all shadow-sm"
+                        className="w-full bg-white/60 backdrop-blur-md border border-white rounded-2xl px-4 py-3.5 text-sm font-semibold text-navy placeholder:text-slate-400 outline-none focus:border-orange-500 transition-all shadow-sm"
                       />
                     </div>
 
@@ -296,7 +296,7 @@ export default function ConsignarForm() {
                         placeholder="Ingresá el kilometraje (Ej: 45000)" 
                         value={km}
                         onChange={(e) => setKm(e.target.value)}
-                        className="w-full bg-white/60 backdrop-blur-md border border-white rounded-2xl px-4 py-3.5 text-sm font-semibold text-navy placeholder:text-slate-400 outline-none focus:border-emerald-500 transition-all shadow-sm"
+                        className="w-full bg-white/60 backdrop-blur-md border border-white rounded-2xl px-4 py-3.5 text-sm font-semibold text-navy placeholder:text-slate-400 outline-none focus:border-orange-500 transition-all shadow-sm"
                       />
                     </div>
 
@@ -305,7 +305,7 @@ export default function ConsignarForm() {
                         type="button" 
                         disabled={!validarPaso1()}
                         onClick={() => setStep(2)}
-                        className="w-full py-4 bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-teal-600 hover:to-emerald-500 disabled:opacity-50 text-white font-black rounded-2xl uppercase tracking-widest text-xs transition-all shadow-lg shadow-emerald-500/20 cursor-pointer active:scale-95"
+                        className="w-full py-4 bg-gradient-to-r from-orange-600 to-amber-500 hover:from-amber-600 hover:to-orange-500 disabled:opacity-50 text-white font-black rounded-2xl uppercase tracking-widest text-xs transition-all shadow-lg shadow-orange-500/20 cursor-pointer active:scale-95"
                       >
                         Continuar
                       </button>
@@ -317,7 +317,7 @@ export default function ConsignarForm() {
                 {step === 2 && (
                   <div className="space-y-6 animate-fadeIn py-2">
                     <div>
-                      <button onClick={() => setStep(1)} className="text-xs font-bold text-emerald-600 flex items-center gap-1 mb-2 hover:underline">
+                      <button onClick={() => setStep(1)} className="text-xs font-bold text-orange-600 flex items-center gap-1 mb-2 hover:underline">
                         <ArrowLeft className="w-3.5 h-3.5" /> Volver
                       </button>
                     </div>
@@ -327,7 +327,7 @@ export default function ConsignarForm() {
                         <div 
                           key={op}
                           onClick={() => setGnc(op)}
-                          className={`p-4 rounded-2xl border cursor-pointer font-bold text-xs transition-all shadow-sm ${gnc === op ? 'bg-emerald-50 border-emerald-500 text-emerald-700' : 'bg-white/60 border-white text-slate-700 hover:bg-white'}`}
+                          className={`p-4 rounded-2xl border cursor-pointer font-bold text-xs transition-all shadow-sm ${gnc === op ? 'bg-orange-50 border-orange-500 text-orange-700' : 'bg-white/60 border-white text-slate-700 hover:bg-white'}`}
                         >
                           {op}
                         </div>
@@ -338,7 +338,7 @@ export default function ConsignarForm() {
                       type="button"
                       disabled={!gnc}
                       onClick={() => setStep(3)}
-                      className="w-full py-4 bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-teal-600 hover:to-emerald-500 disabled:opacity-50 text-white font-black rounded-2xl uppercase tracking-widest text-xs transition-all shadow-lg shadow-emerald-500/20 cursor-pointer active:scale-95"
+                      className="w-full py-4 bg-gradient-to-r from-orange-600 to-amber-500 hover:from-amber-600 hover:to-orange-500 disabled:opacity-50 text-white font-black rounded-2xl uppercase tracking-widest text-xs transition-all shadow-lg shadow-orange-500/20 cursor-pointer active:scale-95"
                     >
                       Continuar
                     </button>
@@ -349,7 +349,7 @@ export default function ConsignarForm() {
                 {step === 3 && (
                   <form onSubmit={solicitarCodigoSMS} className="space-y-4 animate-fadeIn">
                     <div>
-                      <button type="button" onClick={() => setStep(2)} className="text-xs font-bold text-emerald-600 flex items-center gap-1 mb-2 hover:underline">
+                      <button type="button" onClick={() => setStep(2)} className="text-xs font-bold text-orange-600 flex items-center gap-1 mb-2 hover:underline">
                         <ArrowLeft className="w-3.5 h-3.5" /> Volver
                       </button>
                     </div>
@@ -362,7 +362,7 @@ export default function ConsignarForm() {
                         placeholder="Ingresá tu nombre" 
                         value={nombre}
                         onChange={(e) => setNombre(e.target.value)}
-                        className="w-full bg-white/60 backdrop-blur-md border border-white rounded-2xl px-4 py-3 text-xs font-semibold text-navy outline-none focus:border-emerald-500 shadow-sm"
+                        className="w-full bg-white/60 backdrop-blur-md border border-white rounded-2xl px-4 py-3 text-xs font-semibold text-navy outline-none focus:border-orange-500 shadow-sm"
                       />
                     </div>
 
@@ -374,7 +374,7 @@ export default function ConsignarForm() {
                         placeholder="Ingresá tu apellido" 
                         value={apellido}
                         onChange={(e) => setApellido(e.target.value)}
-                        className="w-full bg-white/60 backdrop-blur-md border border-white rounded-2xl px-4 py-3 text-xs font-semibold text-navy outline-none focus:border-emerald-500 shadow-sm"
+                        className="w-full bg-white/60 backdrop-blur-md border border-white rounded-2xl px-4 py-3 text-xs font-semibold text-navy outline-none focus:border-orange-500 shadow-sm"
                       />
                     </div>
 
@@ -386,7 +386,7 @@ export default function ConsignarForm() {
                         placeholder="Ingresá tu correo" 
                         value={email}
                         onChange={(e) => setEmail(e.target.value)}
-                        className="w-full bg-white/60 backdrop-blur-md border border-white rounded-2xl px-4 py-3 text-xs font-semibold text-navy outline-none focus:border-emerald-500 shadow-sm"
+                        className="w-full bg-white/60 backdrop-blur-md border border-white rounded-2xl px-4 py-3 text-xs font-semibold text-navy outline-none focus:border-orange-500 shadow-sm"
                       />
                     </div>
 
@@ -402,7 +402,7 @@ export default function ConsignarForm() {
                           placeholder="1112345678" 
                           value={tel}
                           onChange={(e) => setTel(e.target.value)}
-                          className="flex-1 bg-white/60 backdrop-blur-md border border-white rounded-2xl px-4 py-3 text-xs font-semibold text-navy outline-none focus:border-emerald-500 shadow-sm"
+                          className="flex-1 bg-white/60 backdrop-blur-md border border-white rounded-2xl px-4 py-3 text-xs font-semibold text-navy outline-none focus:border-orange-500 shadow-sm"
                         />
                       </div>
                     </div>
@@ -411,7 +411,7 @@ export default function ConsignarForm() {
 
                     <button 
                       type="submit" 
-                      className="w-full py-4 bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-teal-600 hover:to-emerald-500 text-white font-black rounded-2xl uppercase tracking-widest text-xs transition-all shadow-lg shadow-emerald-500/20 cursor-pointer flex items-center justify-center gap-2 active:scale-95"
+                      className="w-full py-4 bg-gradient-to-r from-orange-600 to-amber-500 hover:from-amber-600 hover:to-orange-500 text-white font-black rounded-2xl uppercase tracking-widest text-xs transition-all shadow-lg shadow-orange-500/20 cursor-pointer flex items-center justify-center gap-2 active:scale-95"
                     >
                       Enviar código por SMS
                     </button>
@@ -422,7 +422,7 @@ export default function ConsignarForm() {
                 {step === 4 && (
                   <div className="space-y-6 animate-fadeIn py-2">
                     <div>
-                      <button onClick={() => setStep(3)} className="text-xs font-bold text-emerald-600 flex items-center gap-1 mb-2 hover:underline">
+                      <button onClick={() => setStep(3)} className="text-xs font-bold text-orange-600 flex items-center gap-1 mb-2 hover:underline">
                         <ArrowLeft className="w-3.5 h-3.5" /> Cambiar número
                       </button>
                       <p className="text-xs text-slate-500 mt-1">
@@ -438,7 +438,7 @@ export default function ConsignarForm() {
                         placeholder="Ej: 1234" 
                         value={codigoSMS}
                         onChange={(e) => setCodigoSMS(e.target.value)}
-                        className="w-full bg-white/80 border border-white rounded-2xl px-4 py-3.5 text-center text-2xl font-black tracking-widest text-navy outline-none focus:border-emerald-500 shadow-inner"
+                        className="w-full bg-white/80 border border-white rounded-2xl px-4 py-3.5 text-center text-2xl font-black tracking-widest text-navy outline-none focus:border-orange-500 shadow-inner"
                         autoFocus
                       />
                     </div>
@@ -447,10 +447,10 @@ export default function ConsignarForm() {
                       type="button" 
                       onClick={verificarCodigoYEnviar}
                       disabled={loading || codigoSMS.length < 4}
-                      className="w-full py-4 bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-teal-600 hover:to-emerald-500 disabled:opacity-50 text-white font-black rounded-2xl uppercase tracking-widest text-xs transition-all shadow-lg shadow-emerald-500/20 cursor-pointer flex items-center justify-center gap-2 active:scale-95"
+                      className="w-full py-4 bg-gradient-to-r from-orange-600 to-amber-500 hover:from-amber-600 hover:to-orange-500 disabled:opacity-50 text-white font-black rounded-2xl uppercase tracking-widest text-xs transition-all shadow-lg shadow-orange-500/20 cursor-pointer flex items-center justify-center gap-2 active:scale-95"
                     >
                       {loading && <Loader2 className="w-4 h-4 animate-spin text-white" />}
-                      {loading ? "PROCESANDO..." : "Confirmar Consignación"}
+                      {loading ? "PROCESANDO..." : "Confirmar Venta"}
                     </button>
                   </div>
                 )}
@@ -459,15 +459,15 @@ export default function ConsignarForm() {
             ) : (
               /* ÉXITO */
               <div className="text-center py-12 animate-fadeIn space-y-4">
-                <div className="w-16 h-16 bg-emerald-100 text-emerald-600 rounded-full flex items-center justify-center mx-auto mb-2">
+                <div className="w-16 h-16 bg-orange-100 text-orange-600 rounded-full flex items-center justify-center mx-auto mb-2">
                   <CheckCircle2 className="w-8 h-8" />
                 </div>
-                <h3 className="text-2xl font-black text-navy uppercase tracking-tighter">¡Solicitud recibida!</h3>
+                <h3 className="text-2xl font-black text-navy uppercase tracking-tighter">¡Solicitud de venta recibida!</h3>
                 <p className="text-slate-500 text-xs leading-relaxed max-w-xs mx-auto">
-                  Tu número fue verificado. Hemos recibido los datos de tu vehículo y uno de nuestros expertos en consignación te contactará a la brevedad para coordinar.
+                  Tu número fue verificado. Hemos registrado tu interés en vender el vehículo y nos comunicaremos en la brevedad para coordinar la tasación presencial y la oferta final.
                 </p>
                 <div className="pt-4">
-                  <Link href="/" className="inline-block py-3.5 px-8 bg-gradient-to-r from-emerald-600 to-teal-500 text-white font-black rounded-2xl text-xs uppercase tracking-widest shadow-lg shadow-emerald-500/20">
+                  <Link href="/" className="inline-block py-3.5 px-8 bg-gradient-to-r from-orange-600 to-amber-500 text-white font-black rounded-2xl text-xs uppercase tracking-widest shadow-lg shadow-orange-500/20">
                     Volver al inicio
                   </Link>
                 </div>

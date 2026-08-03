@@ -1,14 +1,16 @@
 import { createClient } from "@supabase/supabase-js";
 import Hero from "@/components/Hero";
-import Stats from "@/components/OutletBanner";
-import Sucursales from "@/components/Sucursales";
 import Stock from "@/components/Stock";
 import Location from "@/components/Location";
 import FAQ from "@/components/FAQ";
 import FadeIn from "@/components/FadeIn";
 import Testimonials from "@/components/Testimonials";
 import Marcas from "@/components/Marcas";
-import OutletBanner from "@/components/OutletBanner";
+import OutletBanner from "@/components/banners/OutletBanner";
+import ServiciosWobble from "@/components/ServiciosWobble";
+import BannersPublicitarios from "@/components/banners/BannerPublicitario";
+import BannerRRHH from "@/components/banners/BannerRRHH";
+import BannerFinanciacion from "@/components/banners/BannerFinanciacion";
 
 const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -38,12 +40,17 @@ export default async function HomePage() {
       <Hero />
 
       <FadeIn direction="up">
-        <Sucursales />
+        <BannersPublicitarios />
       </FadeIn>
 
       {/* Las demás secciones las envolvemos para que aparezcan suavemente */}
       <FadeIn direction="up">
         <Stock vehiculos={vehiculos} />
+      </FadeIn>
+
+      {/* 2. Colocalo acá para que rompa el esquema y llame la atención */}
+      <FadeIn direction="up">
+        <ServiciosWobble /> 
       </FadeIn>
 
       <FadeIn direction="up">
@@ -57,9 +64,17 @@ export default async function HomePage() {
       <FadeIn direction="up">
         <Testimonials />
       </FadeIn>
+
+      <FadeIn direction="up">
+        <BannerFinanciacion /> 
+      </FadeIn>
       
       <FadeIn direction="up">
         <Location />
+      </FadeIn>
+
+      <FadeIn direction="up">
+        <BannerRRHH />
       </FadeIn>
 
       <FadeIn direction="up">

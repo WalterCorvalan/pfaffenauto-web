@@ -5,6 +5,7 @@ import {
   PieChart, Target, Trophy, Users, ArrowRight 
 } from "lucide-react";
 import Link from "next/link";
+import VentasChart from "@/components/VentasChart"; // <--- Importamos nuestro nuevo componente
 
 export default async function DashboardIntegralPage() {
   const cookieStore = await cookies();
@@ -19,7 +20,7 @@ export default async function DashboardIntegralPage() {
     .from("vehiculos")
     .select("estado, precio_costo_ars, precio_publicado_ars");
 
-  // 2. Traer ventas con datos del vendedor para el ranking
+  // 2. Traer TODAS las ventas (necesitamos el histórico para el gráfico)
   const { data: ventas } = await supabase
     .from("ventas")
     .select(`
@@ -50,7 +51,7 @@ export default async function DashboardIntegralPage() {
   const hoy = new Date();
   const mesActual = hoy.getMonth();
   const anoActual = hoy.getFullYear();
-  const OBJETIVO_MENSUAL_AUTOS = 15; // Esto a futuro puede venir de la tabla configuración
+  const OBJETIVO_MENSUAL_AUTOS = 15; 
   
   const ventasDelMes = ventas?.filter(v => {
     const fecha = new Date(`${v.fecha_venta}T12:00:00Z`); 
@@ -61,13 +62,12 @@ export default async function DashboardIntegralPage() {
   const autosVendidosMes = ventasDelMes.length;
   const progresoObjetivo = Math.min((autosVendidosMes / OBJETIVO_MENSUAL_AUTOS) * 100, 100);
 
-  // ---- RANKING DE VENDEDORES (Agrupación) ----
+  // ---- RANKING DE VENDEDORES (Mes Actual) ----
   const rankingMap: Record<string, { nombre: string; cantidad: number; facturacion: number }> = {};
   
   ventasDelMes.forEach(v => {
     const vId = v.vendedor_id || "sin-asignar";
-    // Si la BD no trae el nombre, usamos "Administración" o "Vendedor Desconocido"
-    // @ts-ignore (evitamos error de tipado estricto si Supabase devuelve array o null)
+    // @ts-ignore
     const vNombre = v.perfiles?.nombre || "Administración"; 
 
     if (!rankingMap[vId]) {
@@ -78,6 +78,54 @@ export default async function DashboardIntegralPage() {
   });
 
   const rankingOrdenado = Object.values(rankingMap).sort((a, b) => b.cantidad - a.cantidad);
+
+  // =====================================================================
+  // ---- LÓGICA MATEMÁTICA PARA EL GRÁFICO (ÚLTIMOS 6 MESES) ----
+  // =====================================================================
+  
+  // 1. Generamos el esqueleto de los últimos 6 meses
+  const ultimos6Meses = Array.from({ length: 6 }).map((_, i) => {
+    const d = new Date();
+    d.setMonth(d.getMonth() - (5 - i)); // Retrocedemos 5, 4, 3... meses
+    return {
+      label: d.toLocaleDateString("es-AR", { month: "short" }).toUpperCase(), // Ej: ENE, FEB
+      month: d.getMonth(),
+      year: d.getFullYear(),
+      total: 0,
+      vendedores: {} as Record<string, number>
+    };
+  });
+
+  const vendedoresUnicos = new Set<string>();
+
+  // 2. Rellenamos el esqueleto con las ventas históricas
+  ventas?.forEach(v => {
+    const date = new Date(`${v.fecha_venta}T12:00:00Z`);
+    const vMonth = date.getMonth();
+    const vYear = date.getFullYear();
+    // @ts-ignore
+    const vNombre = v.perfiles?.nombre || "Administración";
+
+    // Buscamos si la venta cae en los últimos 6 meses
+    const mesObj = ultimos6Meses.find(m => m.month === vMonth && m.year === vYear);
+    
+    if (mesObj) {
+      vendedoresUnicos.add(vNombre);
+      mesObj.total += 1;
+      if (!mesObj.vendedores[vNombre]) mesObj.vendedores[vNombre] = 0;
+      mesObj.vendedores[vNombre] += 1;
+    }
+  });
+
+  // 3. Formateamos los datos exactamente como los pide Recharts
+  const chartData = ultimos6Meses.map(m => {
+    const dataPoint: any = { name: m.label, Total: m.total };
+    // Le asignamos a cada mes cuántas ventas tuvo cada vendedor (o 0 si no vendió nada)
+    Array.from(vendedoresUnicos).forEach(v => {
+      dataPoint[v] = m.vendedores[v] || 0;
+    });
+    return dataPoint;
+  });
 
   return (
     <div className="min-h-screen bg-[#0b1329] pt-4 md:pt-8 pb-16 px-3 md:px-6 text-slate-100 w-full overflow-x-hidden">
@@ -98,7 +146,7 @@ export default async function DashboardIntegralPage() {
           </div>
         </div>
 
-        {/* ================= FILA 1: KPIs GLOBALES (Lo que ya tenías mejorado) ================= */}
+        {/* ================= FILA 1: KPIs GLOBALES ================= */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
           <div className="bg-[#0f172a] border border-slate-800 p-5 rounded-2xl shadow-lg relative overflow-hidden">
             <div className="absolute -right-4 -top-4 opacity-5"><Wallet className="w-24 h-24 text-white" /></div>
@@ -135,8 +183,11 @@ export default async function DashboardIntegralPage() {
           </div>
         </div>
 
-        {/* ================= FILA 2: VENTAS, OBJETIVOS Y LEADS ================= */}
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        {/* ================= FILA 2: GRÁFICOS INTERACTIVOS (NUEVO) ================= */}
+        <VentasChart data={chartData} vendedores={Array.from(vendedoresUnicos)} />
+
+        {/* ================= FILA 3: VENTAS, OBJETIVOS Y LEADS ================= */}
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mt-8">
           
           {/* COLUMNA 1 y 2: Ventas y Ranking */}
           <div className="lg:col-span-2 space-y-6">
@@ -180,7 +231,7 @@ export default async function DashboardIntegralPage() {
             <div className="bg-[#0f172a] border border-slate-800 rounded-2xl shadow-lg overflow-hidden">
               <div className="px-6 py-4 border-b border-slate-800 flex justify-between items-center bg-slate-900/50">
                 <h3 className="text-xs font-bold uppercase tracking-widest text-slate-300 flex items-center gap-2">
-                  <Trophy className="w-4 h-4 text-amber-400" /> Ranking de Vendedores
+                  <Trophy className="w-4 h-4 text-amber-400" /> Ranking de Vendedores (Este Mes)
                 </h3>
               </div>
               <div className="p-0">
@@ -237,7 +288,7 @@ export default async function DashboardIntegralPage() {
                         {new Date(lead.created_at).toLocaleDateString("es-AR")}
                       </span>
                       <span className={`text-[9px] font-black uppercase tracking-widest px-2 py-0.5 rounded border ${lead.tipo_peritaje === 'consignacion' ? 'bg-emerald-900/30 text-emerald-400 border-emerald-700/50' : 'bg-purple-900/30 text-purple-400 border-purple-700/50'}`}>
-                        {lead.tipo_peritaje}
+                        {lead.tipo_peritaje === 'online' ? 'cotización' : lead.tipo_peritaje}
                       </span>
                     </div>
                     <p className="font-bold text-sm text-white mb-0.5 truncate">{lead.nombre}</p>
@@ -252,7 +303,7 @@ export default async function DashboardIntegralPage() {
             </div>
 
             <div className="p-4 border-t border-slate-800">
-              <Link href="/panel/cotizaciones" className="w-full flex items-center justify-center gap-2 text-xs font-bold uppercase tracking-widest bg-slate-800 hover:bg-slate-700 text-slate-200 py-3 rounded-xl transition-colors border border-slate-700">
+              <Link href="/panel/crm" className="w-full flex items-center justify-center gap-2 text-xs font-bold uppercase tracking-widest bg-slate-800 hover:bg-slate-700 text-slate-200 py-3 rounded-xl transition-colors border border-slate-700">
                 Ver todos los leads <ArrowRight className="w-3.5 h-3.5" />
               </Link>
             </div>

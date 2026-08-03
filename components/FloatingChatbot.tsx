@@ -76,12 +76,12 @@ export default function FloatingChatbot() {
   const [messages, setMessages] = useState<Message[]>([
     {
       id: 1,
-      text: "¡Hola! Soy el Asistente Virtual de Pfaffen Autos 🤖. ¿Qué te gustaría explorar hoy?",
+      text: "¡Hola! Soy el Asistente Virtual de Pfaffen Autos 🤖. ¿Qué te gustaría hacer hoy?",
       sender: "bot",
       quickReplies: [
-        { label: "🌱 Mi primer auto", action: "primer_auto" },
-        { label: "🎲 Test Auto Ideal", action: "start_quiz" },
-        { label: "💵 Cotizar usado", action: "cotizar" },
+        { label: "🎯 Encontrar mi auto ideal", action: "start_quiz" },
+        { label: "🌟 Sorprendeme", action: "sorprendeme" },
+        { label: "🤝 Quiero vender mi auto", action: "vender_auto" },
         { label: "📍 Sucursales", action: "sucursales" },
       ]
     },
@@ -138,15 +138,60 @@ export default function FloatingChatbot() {
   const getBotResponse = async (userText: string): Promise<Partial<Message>> => {
     const text = userText.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
 
-    // --- ACCIONES RÁPIDAS ---
+    // --- ACCIONES DE INNOVACIÓN ---
+    if (text === "sorprendeme") {
+      // Busca los últimos 20 autos y elige 1 al azar
+      const { data } = await supabase.from("vehiculos").select(`id, marca, modelo, precio_publicado_ars, slug, multimedia_vehiculos(url_archivo)`).in("estado", ["Disponible", "Reservado"]).limit(20);
+      if (data && data.length > 0) {
+        const randomCar = data[Math.floor(Math.random() * data.length)];
+        const mappedCar = {
+          id: randomCar.id, marca: randomCar.marca, modelo: randomCar.modelo, precio_publicado_ars: randomCar.precio_publicado_ars, slug: randomCar.slug,
+          imagen: randomCar.multimedia_vehiculos?.[0]?.url_archivo || "/placeholder.jpg"
+        };
+        return {
+          text: "¡Magia pura! 🪄 Cerrá los ojos, acá tenés una unidad destacada al azar que te podría encantar:",
+          cars: [mappedCar],
+          quickReplies: [
+            { label: "🎲 ¡Mostrar otro!", action: "sorprendeme" },
+            { label: "🔍 Ver catálogo", action: "catalogo" }
+          ]
+        };
+      }
+    }
+
+    if (text === "catalogo") {
+      return {
+        text: "¡Tenemos muchísimas opciones! Pasate por nuestro catálogo online para ver todo el stock actualizado al instante con fotos HD.",
+        links: [{ url: "/catalogo", label: "Abrir Catálogo", icon: "web", external: false }]
+      };
+    }
+
+    if (text === "vender_auto" || text === "vender") {
+      return {
+         text: "¡Excelente decisión! 🤝 Compramos tu auto o te ayudamos a venderlo. Podés elegir entre:\n\n• **Consignación Premium:** Lo vendemos por vos y le sacás la máxima rentabilidad.\n• **Venta Directa:** Te lo cotizamos y te llevás el efectivo en el acto.",
+         quickReplies: [
+           { label: "💵 Cotizar (Venta Directa)", action: "cotizar" },
+           { label: "🤝 Consignación Premium", action: "consignar" }
+         ]
+      };
+    }
+
+    if (text === "consignar") {
+      return {
+         text: "Dejanos tu auto y **despreocupate de todo**. Nosotros nos encargamos de las fotos profesionales, la publicación, mostrarlo seguro en nuestro salón y hacer todos los papeles. 🚘✨",
+         links: [{ url: "/consignacion", label: "Quiero Consignar mi Auto", icon: "web" }]
+      };
+    }
+
+    // --- CUESTIONARIO INTERACTIVO ---
     if (text === "start_quiz") {
       setQuizStep(1);
       return {
-        text: "🎯 ¡Genial! Vamos a encontrar tu auto ideal en 2 pasos rápidos.\n\n**Paso 1:** ¿Qué tipo de vehículo estás buscando?",
+        text: "🎯 ¡Genial! Vamos a encontrar tu auto ideal en 2 pasos rápidos.\n\n**Paso 1:** ¿Para qué vas a usar más el auto?",
         quickReplies: [
-          { label: "🏙️ Auto Urbano / Sedán", action: "quiz_tipo_auto" },
-          { label: "🚙 SUV / 4x4", action: "quiz_tipo_suv" },
-          { label: "📦 Utilitario", action: "quiz_tipo_utilitario" },
+          { label: "👨‍👩‍👧‍👦 Viajes en familia", action: "quiz_tipo_suv" },
+          { label: "💼 Trabajo / Carga", action: "quiz_tipo_utilitario" },
+          { label: "🌆 Ciudad / Económico", action: "quiz_tipo_auto" },
         ]
       };
     }
@@ -156,11 +201,11 @@ export default function FloatingChatbot() {
       setQuizPref((prev) => ({ ...prev, tipo }));
       setQuizStep(2);
       return {
-        text: `Anotado: **${tipo}** 👍.\n\n**Paso 2:** ¿En qué rango de presupuesto te gustaría moverte?`,
+        text: `Anotado: Perfil **${tipo}** 👍.\n\n**Paso 2:** ¿En qué rango de presupuesto te gustaría moverte?`,
         quickReplies: [
           { label: "Hasta $20.000.000", action: "quiz_precio_20m" },
           { label: "Hasta $35.000.000", action: "quiz_precio_35m" },
-          { label: "Más de $35.000.000", action: "quiz_precio_max" },
+          { label: "Sin límite / Alta Gama", action: "quiz_precio_max" },
         ]
       };
     }
@@ -172,15 +217,15 @@ export default function FloatingChatbot() {
 
       if (autosEncontrados.length > 0) {
         return {
-          text: `🎉 ¡Acá tenés las mejores opciones de nuestro stock que hacen **MATCH** con tus preferencias!`,
+          text: `🎉 ¡Acá tenés las mejores opciones de nuestro stock que hacen **MATCH** con tu estilo de vida!`,
           cars: autosEncontrados,
           links: [{ url: "/catalogo", label: "Ver catálogo completo", icon: "web", external: false }],
-          quickReplies: [{ label: "🔄 Reintentar", action: "start_quiz" }]
+          quickReplies: [{ label: "🔄 Volver a buscar", action: "start_quiz" }]
         };
       } else {
         return {
-          text: "No encontré un auto exacto con esos filtros ahora mismo, ¡pero nuestro equipo te lo consigue a medida!",
-          links: [{ url: `https://wa.me/${SUCURSALES_INFO.default.telefono}?text=Hola! Busco un auto a medida.`, label: "Contactar Asesor", icon: "whatsapp", external: true }]
+          text: "Mmm, justo ahora no encontré un auto exacto con esos filtros en la web, ¡pero nuestro equipo te lo consigue a medida!",
+          links: [{ url: `https://wa.me/${SUCURSALES_INFO.default.telefono}?text=Hola! Busco un auto a medida.`, label: "Contactar Asesor VIP", icon: "whatsapp", external: true }]
         };
       }
     }
@@ -188,7 +233,7 @@ export default function FloatingChatbot() {
     if (text === "primer_auto" || /\b(primer auto|primeros autos|barato|economico)\b/.test(text)) {
       const autosEconomicos = await buscarAutosEnBD(undefined, undefined, 18000000);
       return {
-        text: "Para un **primer auto** te recomiendo unidades ágiles, fáciles de mantener y a muy buen precio (seleccioné opciones por debajo de los **$18.000.000**). ¡Mirá estas bellezas!",
+        text: "Para un **primer auto** te recomiendo unidades ágiles, fáciles de estacionar, de bajo consumo y a muy buen precio. ¡Mirá estas opciones por debajo de los $18M!",
         cars: autosEconomicos,
         links: [{ url: "/catalogo", label: "Ver catálogo completo", icon: "web", external: false }]
       };
@@ -197,15 +242,63 @@ export default function FloatingChatbot() {
     if (text === "marcas" || text === "ver_marcas") {
       return {
         text: `Tenemos unidades increíbles esperando por vos. Podés explorar todas las marcas directamente en nuestra web:`,
-        links: [{ url: "/marcas", label: "Ver todas las Marcas", icon: "web", external: false }]
+        links: [{ url: "/marcas", label: "Explorar por Marcas", icon: "web", external: false }]
       };
     }
 
     if (text === "cotizar") {
       return {
-        text: "¡Excelente! Cotizamos tu auto usado en el acto y lo tomamos como parte de pago. Ingresá tus datos de forma segura acá:",
+        text: "¡Excelente! Cotizamos tu auto usado en el acto y lo tomamos como parte de pago. Ingresá tus datos de forma segura en nuestra web:",
         links: [{ url: "/cotizador", label: "Abrir Cotizador Online", icon: "money", external: false }]
       };
+    }
+
+    // --- MATRIZ DE INTENCIONES AVANZADAS ---
+    const intents = [
+      {
+        match: /\b(hola|buenas|dia|tarde|noche|que tal|saludos|hey)\b/,
+        text: "¡Hola! Soy el asistente virtual de Pfaffen Autos 🤖. Estoy 24/7 acá para ayudarte a buscar modelos, cotizar tu usado o hablar de financiación.",
+        quickReplies: [
+          { label: "🎯 Encontrar mi auto", action: "start_quiz" },
+          { label: "📍 Ver Sucursales", action: "sucursales" }
+        ]
+      },
+      {
+        match: /\b(garantia|garantía|seguro|protegida|estado)\b/,
+        text: "Todos nuestros autos usados seleccionados cuentan con **Compra Protegida y Garantía**, además de documentación 100% verificada, al día y lista para transferir. Cero sorpresas. 🛡️"
+      },
+      {
+        match: /\b(envio|envios|interior|provincia|mandan|llevan)\b/,
+        text: "¡Sí! 🇦🇷 Vendemos y enviamos vehículos a **todo el país**. Coordinamos la logística completa para que el auto llegue a la puerta de tu casa de forma rápida y súper segura."
+      },
+      {
+        match: /\b(moto|motos|plan de ahorro|planes)\b/,
+        text: "Tomamos autos usados en parte de pago. Las motos se evalúan caso por caso con gerencia. Te aclaro que **NO tomamos planes de ahorro** ni terrenos. 🏍️"
+      },
+      {
+        match: /\b(requisitos|necesito para financiar|recibo de sueldo|monotributo)\b/,
+        text: "Para financiar (Crédito Prendario o Créditos BNA) generalmente vas a necesitar:\n\n• DNI vigente.\n• Servicio a tu nombre.\n• Últimos recibos de sueldo (o constancia de Monotributo/Responsable Inscripto).\n\n¿Te gustaría que un asesor te pre-apruebe el crédito ahora mismo?",
+        links: [{ url: `https://wa.me/${SUCURSALES_INFO.default.telefono}?text=Hola, quiero pre-aprobar un crédito prendario.`, label: "Pre-aprobar crédito", icon: "whatsapp", external: true }]
+      },
+      {
+        match: /\b(pago|financiar|financiacion|credito|cuota|bna|tarjeta|prendario|efectivo|transferencia|dolares|usd)\b/,
+        text: "💳 **Tenemos excelentes opciones de pago:**\n• Contado (Pesos y Dólares).\n• Permuta (tomamos tu auto usado llave por llave).\n• Créditos Prendarios y línea BNA con tasas exclusivas.",
+        links: [{ url: "/catalogo", label: "Buscar mi próximo auto", icon: "web", external: false }]
+      },
+      {
+        match: /\b(dueño|propietario|jefe|quien es el dueño)\b/,
+        text: "El fundador y dueño de la concesionaria es **Sergio Pfaffezeller**, quien transmite su enorme pasión por los fierros a todo nuestro equipo comercial día a día. 🚗",
+      },
+      {
+        match: /\b(horario|abierto|atienden|cierran|hora|dias|sabado|domingo)\b/,
+        text: "⏰ Nuestros salones están abiertos de **Lunes a Sábados de 9:00 a 19:00 hs**. Los domingos descansamos para arrancar la semana con toda la energía.",
+      },
+    ];
+
+    for (let intent of intents) {
+      if (intent.match.test(text)) {
+        return { text: intent.text, quickReplies: intent.quickReplies, links: intent.links as any };
+      }
     }
 
     // --- DETECCIÓN DE SUCURSALES ---
@@ -216,11 +309,11 @@ export default function FloatingChatbot() {
     if (esVDM || esTorcuato || esOlivos || text === "sucursales") {
       if (text === "sucursales") {
         return {
-          text: "Nuestras sucursales oficiales 📍:\n\n1️⃣ **Casa Central** (Villa de Mayo)\n2️⃣ **Don Torcuato**\n3️⃣ **Olivos**\n\nPodés visitar las páginas de cada sucursal para ver su stock exclusivo:",
+          text: "Nuestras sucursales oficiales 📍:\n\n1️⃣ **Casa Central** (Villa de Mayo)\n2️⃣ **Don Torcuato**\n3️⃣ **Olivos**\n\nElegí la que te quede más cómoda para ver su stock exclusivo o hablar con los chicos del salón:",
           links: [
-            { url: "/sucursales/casa-central", label: "Casa Central", icon: "map", external: false },
-            { url: "/sucursales/don-torcuato", label: "Don Torcuato", icon: "map", external: false },
-            { url: "/sucursales/olivos", label: "Olivos", icon: "map", external: false },
+            { url: "/sucursales/casa-central", label: "Ver Casa Central", icon: "map", external: false },
+            { url: "/sucursales/don-torcuato", label: "Ver Don Torcuato", icon: "map", external: false },
+            { url: "/sucursales/olivos", label: "Ver Olivos", icon: "map", external: false },
           ]
         };
       }
@@ -231,19 +324,19 @@ export default function FloatingChatbot() {
 
       const suc = SUCURSALES_INFO[key];
       return {
-        text: `¡Genial! Acá tenés todo lo que necesitás de la sucursal **${suc.nombre}**. Podés ver los autos que tienen en salón o hablarles directo:`,
+        text: `¡Genial! Acá tenés el acceso directo a nuestra sucursal **${suc.nombre}**. Podés chusmear qué tienen en el salón hoy o mandarles un mensajito:`,
         links: [
-          { url: `/sucursales/${suc.slug}`, label: `Página de Sucursal`, icon: "web", external: false },
-          { url: `https://wa.me/${suc.telefono}`, label: "WhatsApp", icon: "whatsapp", external: true },
+          { url: `/sucursales/${suc.slug}`, label: `Página de la Sucursal`, icon: "web", external: false },
+          { url: `https://wa.me/${suc.telefono}`, label: "Mandar WhatsApp", icon: "whatsapp", external: true },
         ],
       };
     }
 
-    // --- BÚSQUEDA LIBRE DE AUTOS ---
+    // --- BÚSQUEDA LIBRE DE AUTOS (Fallback inteligente) ---
     const autosLibres = await buscarAutosLibre(text);
     if (autosLibres.length > 0) {
       return {
-        text: `Buscando en nuestro stock, encontré estas opciones que coinciden con tu consulta 🚘:`,
+        text: `Buscando en nuestro stock, encontré estas hermosuras que coinciden con tu consulta 🚘:`,
         cars: autosLibres,
         links: [
           { url: `/catalogo?q=${encodeURIComponent(text)}`, label: "Ver todos los resultados", icon: "web", external: false }
@@ -251,54 +344,12 @@ export default function FloatingChatbot() {
       };
     }
 
-    // --- MATRIZ DE INTENCIONES NUEVAS ---
-    const intents = [
-      {
-        match: /\b(hola|buenas|dia|tarde|noche|que tal|saludos)\b/,
-        text: "¡Hola! Soy el asistente virtual de Pfaffen Autos 🤖. Podés preguntarme por modelos en stock, financiación o buscar tu primer auto.",
-        quickReplies: [
-          { label: "🌱 Primer Auto", action: "primer_auto" },
-          { label: "📍 Sucursales", action: "sucursales" }
-        ]
-      },
-      {
-        match: /\b(dueño|propietario|jefe|quien es el dueño)\b/,
-        text: "El fundador y dueño de la concesionaria es **Sergio Pfaffezeller**, quien transmite su pasión por los autos a todo nuestro equipo todos los días. 🚗",
-      },
-      {
-        match: /\b(encargado|encargados|gerente|responsable)\b/,
-        text: "Nuestros encargados están siempre dispuestos a ayudarte para que tengas la mejor experiencia: **Lucas** lidera en la sucursal de Don Torcuato y **Gabriel** en Olivos.",
-      },
-      {
-        match: /\b(vendedor|vendedores|comercial|asesor|con quien hablo)\b/,
-        text: "Contamos con un equipo de asesores geniales. Elegí la sucursal que te quede más cerca y contactanos por WhatsApp; ¡ahí mismo tu vendedor se presentará con su nombre y te atenderá de 10!",
-        quickReplies: [
-          { label: "📍 Ver Sucursales", action: "sucursales" }
-        ]
-      },
-      {
-        match: /\b(horario|abierto|atienden|cierran|hora|dias|sabado|domingo)\b/,
-        text: "⏰ Atendemos de **Lunes a Sábados de 9:00 a 19:00 hs**. Los domingos descansamos para arrancar la semana con todo.",
-      },
-      {
-        match: /\b(pago|financiar|financiacion|credito|cuota|bna|tarjeta|prendario|efectivo|transferencia|dolares|usd)\b/,
-        text: "💳 **Opciones de Pago:**\n• Contado (Pesos y Dólares).\n• Permuta (tomamos tu usado).\n• Créditos Prendarios y línea BNA.",
-        links: [{ url: "/catalogo", label: "Ir al Catálogo", icon: "web", external: false }]
-      },
-    ];
-
-    for (let intent of intents) {
-      if (intent.match.test(text)) {
-        return { text: intent.text, quickReplies: intent.quickReplies, links: intent.links as any };
-      }
-    }
-
-    // Fallback
+    // Fallback absoluto si nada hace match
     return {
-      text: "Te entiendo. Podés usar nuestro buscador de la web o contactarte con un asesor real para que te despeje todas las dudas:",
+      text: "Te entiendo perfecto. Para darte la información más precisa, te recomiendo usar nuestro buscador o hablar directamente con uno de nuestros asesores humanos:",
       links: [
         { url: "/catalogo", label: "Explorar Catálogo", icon: "web", external: false },
-        { url: `https://wa.me/${SUCURSALES_INFO.default.telefono}`, label: "Hablar con Asesor", icon: "whatsapp", external: true },
+        { url: `https://wa.me/${SUCURSALES_INFO.default.telefono}`, label: "Hablar con un Humano", icon: "whatsapp", external: true },
       ]
     };
   };
@@ -312,7 +363,7 @@ export default function FloatingChatbot() {
     setIsTyping(true);
 
     const botResult = await getBotResponse(userText);
-    const typingTime = Math.min(Math.max((botResult.text?.length || 0) * 12, 600), 1800);
+    const typingTime = Math.min(Math.max((botResult.text?.length || 0) * 15, 600), 1500); // Tipeo un poquito más natural
 
     setTimeout(() => {
       setMessages((prev) => [...prev, {
@@ -327,7 +378,7 @@ export default function FloatingChatbot() {
     }, typingTime);
   };
 
-  // Easter Egg
+  // Easter Egg "Modo Nitro"
   const handleRobotClick = () => {
     const nuevosClicks = clicksRobot + 1;
     setClicksRobot(nuevosClicks);
@@ -335,7 +386,7 @@ export default function FloatingChatbot() {
       setModoNitro(true);
       setMessages((prev) => [...prev, {
         id: Date.now(),
-        text: "🔥 **¡MODO NITRO ACTIVADO!** 🚀\n¡Descubriste el secreto! Decile a tu vendedor el código **#NITROPFAFFEN** para un beneficio exclusivo.",
+        text: "🔥 **¡MODO NITRO ACTIVADO!** 🚀\n¡Encontraste el Easter Egg! Cuando hables con tu vendedor, decile el código secreto **#NITROPFAFFEN** para desbloquear un beneficio especial en tu compra.",
         sender: "bot",
       }]);
     }
@@ -406,12 +457,12 @@ export default function FloatingChatbot() {
 
                   {/* CARDS DE AUTOS (Glass) */}
                   {msg.cars && msg.cars.length > 0 && (
-                    <div className="mt-3 flex gap-2.5 overflow-x-auto w-full pb-2 custom-scrollbar">
+                    <div className="mt-3 flex gap-2.5 overflow-x-auto w-full pb-2 custom-scrollbar snap-x">
                       {msg.cars.map((car) => (
                         <div
                           key={car.id}
                           onClick={() => { router.push(`/catalogo/${car.slug}`); setIsOpen(false); }}
-                          className="min-w-[150px] max-w-[160px] bg-white/60 backdrop-blur-md border border-white rounded-[16px] overflow-hidden shadow-sm hover:shadow-md hover:border-blue-300 transition-all shrink-0 group cursor-pointer"
+                          className="min-w-[150px] max-w-[160px] bg-white/60 backdrop-blur-md border border-white rounded-[16px] overflow-hidden shadow-sm hover:shadow-md hover:border-blue-300 transition-all shrink-0 group cursor-pointer snap-center"
                         >
                           <div className="h-20 bg-slate-100/50 overflow-hidden relative mix-blend-multiply">
                             <img src={car.imagen} alt={car.modelo} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" />

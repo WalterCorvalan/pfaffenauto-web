@@ -87,11 +87,11 @@ export default function Location() {
                 {/* Reflejo de luz interior al hacer hover */}
                 <div className="absolute inset-0 bg-gradient-to-tr from-transparent via-white/50 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-700 pointer-events-none z-20 rounded-[32px]"></div>
 
-                {/* Mapa */}
+                {/* Mapa SIN el filtro gris */}
                 <div className="w-full h-[220px] rounded-[24px] overflow-hidden relative border border-white/40 shadow-inner bg-slate-100/50">
                   <iframe 
                     src={sucursal.mapUrl} 
-                    className="w-full h-full border-0 grayscale opacity-80 group-hover:grayscale-0 group-hover:opacity-100 transition-all duration-700 mix-blend-multiply group-hover:mix-blend-normal" 
+                    className="w-full h-full border-0 transition-transform duration-700 group-hover:scale-105" 
                     loading="lazy" 
                     title={`Mapa ${sucursal.nombre}`}
                   ></iframe>

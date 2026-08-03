@@ -31,67 +31,86 @@ export default function Footer() {
   ];
 
   return (
-    <footer className="bg-[#0b1329] border-t border-white/5 pt-16 pb-28 md:pb-10 relative overflow-hidden flex flex-col items-center">
+    <footer className="bg-[#0b1329] border-t border-slate-800/80 pt-20 pb-28 md:pb-12 relative overflow-hidden flex flex-col items-center">
       
-      {/* Resplandor sutil de fondo */}
-      <div className="absolute bottom-0 left-1/2 -translate-x-1/2 w-[800px] h-[300px] bg-[#0145F2]/5 blur-[120px] pointer-events-none z-0 rounded-full"></div>
+      {/* Resplandor corporativo sutil superior */}
+      <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[600px] h-[200px] bg-[#0145F2]/10 blur-[100px] pointer-events-none z-0 rounded-full"></div>
 
-      <div className="max-w-4xl mx-auto px-6 w-full relative z-10 flex flex-col items-center">
+      <div className="max-w-6xl mx-auto px-6 w-full relative z-10 flex flex-col items-center">
         
-        {/* LOGO CENTRADO CON LA "R" */}
+        {/* LOGO CON LA "R" */}
         <Link 
           href="/" 
-          className="group mb-8 relative inline-block transform hover:scale-105 transition-transform duration-500"
+          className="group mb-10 relative inline-block transition-transform duration-300 hover:scale-105"
         >
           <img
             src="/logo.png"
             alt="Pfaffen Autos"
-            className="h-7 md:h-8 w-auto invert brightness-0 drop-shadow-lg"
+            className="h-8 md:h-10 w-auto invert brightness-0 drop-shadow-md"
           />
-          {/* Aquí agregamos la "R" */}
           <img
             src="/r.png"
             alt="Marca Registrada"
-            className="absolute -top-1 -right-3 w-2.5 h-2.5 object-contain invert brightness-0 opacity-80"
+            className="absolute -top-1 -right-3.5 w-3 h-3 object-contain invert brightness-0 opacity-80"
           />
         </Link>
 
-        {/* ENLACES PRINCIPALES (Inline) */}
-        <nav className="flex flex-wrap justify-center items-center gap-x-6 gap-y-3 mb-10">
-          <Link href="/catalogo" className="text-sm font-medium text-slate-300 hover:text-white transition-colors">
+        {/* NAVEGACIÓN PRINCIPAL (Minimalista y espaciada) */}
+        <nav className="flex flex-wrap justify-center items-center gap-x-8 gap-y-4 mb-12">
+          <Link href="/catalogo" className="text-xs font-bold uppercase tracking-widest text-slate-400 hover:text-white transition-colors">
             Catálogo
           </Link>
-          <Link href="/#sucursales" className="text-sm font-medium text-slate-300 hover:text-white transition-colors">
+          <Link href="/#sucursales" className="text-xs font-bold uppercase tracking-widest text-slate-400 hover:text-white transition-colors">
             Sucursales
           </Link>
-          <Link href="/cotizador" className="text-sm font-medium text-slate-300 hover:text-white transition-colors">
+          <Link href="/cotizador" className="text-xs font-bold uppercase tracking-widest text-slate-400 hover:text-white transition-colors">
             Cotizar Usado
           </Link>
-          <Link href="/consignacion" className="text-sm font-medium text-slate-300 hover:text-white transition-colors">
+          <Link href="/consignacion" className="text-xs font-bold uppercase tracking-widest text-slate-400 hover:text-white transition-colors">
             Consignación
           </Link>
+          <Link href="/nosotros" className="text-xs font-bold uppercase tracking-widest text-slate-400 hover:text-white transition-colors">
+            Nosotros
+          </Link>
           {isPanel ? (
-            <Link href="/" className="text-sm font-medium text-[#0ea5e9] hover:text-[#38bdf8] transition-colors">
+            <Link href="/" className="text-xs font-bold uppercase tracking-widest text-sky-400 hover:text-sky-300 transition-colors">
               Volver a la Web
             </Link>
           ) : (
-            <Link href="/login" className="text-sm font-medium text-[#0ea5e9] hover:text-[#38bdf8] transition-colors">
+            <Link href="/login" className="text-xs font-bold uppercase tracking-widest text-sky-400 hover:text-sky-300 transition-colors">
               Acceso Staff
             </Link>
           )}
         </nav>
 
-        {/* LÍNEA DIVISORIA PUNTEADA */}
-        <div className="w-full border-t border-dashed border-slate-700/50 mb-6"></div>
+        {/* LÍNEA DIVISORIA SOBRIA */}
+        <div className="w-full border-t border-slate-800 mb-10"></div>
 
-        {/* COPYRIGHT Y REDES SOCIALES (Alineados) */}
-        <div className="w-full flex flex-col sm:flex-row justify-between items-center gap-4">
+        {/* SECCIÓN INSTITUCIONAL / BADGES (Nollame, Data Fiscal, Acceso a la Información, SSN) */}
+        <div className="w-full flex flex-wrap justify-center items-center gap-6 mb-12 opacity-80 hover:opacity-100 transition-opacity">
+          {/* Aquí puedes enlazar o colocar las imágenes oficiales de los sellos */}
+          <div className="bg-white px-3 py-1.5 rounded-lg flex items-center justify-center shadow-sm h-10">
+            <span className="text-[10px] font-black text-slate-900 tracking-wider">Nóllame (REGISTRO)</span>
+          </div>
+          <div className="bg-white px-3 py-1.5 rounded-lg flex items-center justify-center shadow-sm h-10">
+            <span className="text-[10px] font-black text-sky-700 tracking-wider">DATA FISCAL</span>
+          </div>
+          <div className="bg-sky-600 px-3 py-1.5 rounded-lg flex items-center justify-center shadow-sm h-10">
+            <span className="text-[10px] font-black text-white tracking-wider">INF. PÚBLICA</span>
+          </div>
+          <div className="bg-white px-3 py-1.5 rounded-lg flex items-center justify-center shadow-sm h-10">
+            <span className="text-[10px] font-black text-slate-800 tracking-wider">SSN (SEGUROS)</span>
+          </div>
+        </div>
+
+        {/* COPYRIGHT Y REDES SOCIALES */}
+        <div className="w-full flex flex-col md:flex-row justify-between items-center gap-6 pt-2 border-t border-slate-800/60">
           
-          <p className="text-xs text-slate-500 font-medium">
+          <p className="text-xs text-slate-500 font-medium text-center md:text-left">
             © {new Date().getFullYear()} Pfaffen Autos. Todos los derechos reservados.
           </p>
 
-          <div className="flex items-center gap-5">
+          <div className="flex items-center gap-4">
             {socials.map((s) => (
               <a
                 key={s.name}
@@ -100,7 +119,7 @@ export default function Footer() {
                 rel="noopener noreferrer"
                 aria-label={s.name}
                 title={s.name}
-                className="text-slate-400 hover:text-white hover:scale-110 transition-all duration-200"
+                className="w-9 h-9 rounded-full bg-white/5 border border-white/10 flex items-center justify-center text-slate-400 hover:text-white hover:bg-white/10 hover:border-white/20 transition-all duration-300"
               >
                 <svg className="w-4 h-4 fill-current" viewBox="0 0 24 24">
                   <path d={s.path} />
@@ -110,6 +129,7 @@ export default function Footer() {
           </div>
 
         </div>
+
       </div>
     </footer>
   );
