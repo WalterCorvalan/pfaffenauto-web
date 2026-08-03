@@ -14,6 +14,16 @@ import {
   Banknote,
   MessageSquareShare,
   CheckSquare,
+  CalendarCheck,
+  MessagesSquare,
+  Landmark,
+  Wallet,
+  FileBarChart,
+  Users,
+  Megaphone,
+  Target,
+  MousePointerClick,
+  Bot,
 } from "lucide-react";
 
 export default function DashboardLayout({
@@ -23,7 +33,6 @@ export default function DashboardLayout({
 }) {
   const [isOpen, setIsOpen] = useState(false);
 
-  // Estado ampliado para mostrar Nombre y Email en el perfil
   const [userProfile, setUserProfile] = useState({
     nombre: "Cargando...",
     email: "",
@@ -53,7 +62,6 @@ export default function DashboardLayout({
           rol: userRol,
         });
 
-        // BARRERAS DE SEGURIDAD
         if (
           userRol !== "admin" &&
           (pathname?.startsWith("/panel/usuarios") ||
@@ -64,8 +72,8 @@ export default function DashboardLayout({
 
         if (
           userRol === "vendedor" &&
-          (pathname?.startsWith("/panel/gestoria") ||
-            pathname?.startsWith("/panel/metricas"))
+          (pathname?.startsWith("/panel/metricas") ||
+            pathname?.startsWith("/panel/marketing"))
         ) {
           router.replace("/panel");
         }
@@ -79,7 +87,6 @@ export default function DashboardLayout({
     router.push("/login");
   };
 
-  // Componente interno ultra-flexible (Soporta Iconos Lucide o Emojis estilo Mantine)
   const NavLinkItem = ({
     icon: Icon,
     emoji,
@@ -100,7 +107,6 @@ export default function DashboardLayout({
         }`}
       >
         <div className="flex items-center gap-3">
-          {/* Si pasamos un emoji, lo renderiza. Si pasamos un ícono, usa Lucide */}
           {emoji ? (
             <span className="text-base leading-none w-[18px] text-center">
               {emoji}
@@ -113,8 +119,6 @@ export default function DashboardLayout({
           )}
           <span className="text-sm">{label}</span>
         </div>
-
-        {/* Burbuja de notificaciones (Opcional) */}
         {notifications && (
           <span className="bg-[#1971C2] text-white text-[10px] font-bold px-1.5 py-0.5 rounded-full min-w-[20px] text-center shadow-sm">
             {notifications}
@@ -124,9 +128,15 @@ export default function DashboardLayout({
     );
   };
 
+  const SectionLabel = ({ children }: { children: React.ReactNode }) => (
+    <div className="text-[10px] font-bold text-gray-500 uppercase tracking-widest mb-2 px-3">
+      {children}
+    </div>
+  );
+
   return (
     <div className="flex min-h-screen w-full bg-[#0b1329] text-slate-100 font-sans">
-      {/* ================= 1. BARRA SUPERIOR (MÓVIL) ================= */}
+      {/* BARRA SUPERIOR MÓVIL */}
       <div className="md:hidden print:hidden fixed top-0 left-0 right-0 h-16 bg-[#1A1B1E] border-b border-[#2C2E33] flex items-center justify-between px-4 z-50 shadow-md">
         <Link href="/panel" className="flex items-center relative group py-2">
           <img
@@ -143,7 +153,7 @@ export default function DashboardLayout({
         </button>
       </div>
 
-      {/* ================= 2. BARRA LATERAL (SIDEBAR ESTILO MANTINE) ================= */}
+      {/* SIDEBAR */}
       <aside
         className={`fixed print:hidden md:sticky top-16 md:top-0 left-0 h-[calc(100vh-4rem)] md:h-screen w-[280px] bg-[#1A1B1E] border-r border-[#2C2E33] transform transition-transform duration-300 z-40 flex flex-col shrink-0 overflow-y-auto custom-scrollbar ${
           isOpen ? "translate-x-0" : "-translate-x-full md:translate-x-0"
@@ -168,7 +178,7 @@ export default function DashboardLayout({
             <ChevronRight className="w-4 h-4 text-gray-500 shrink-0" />
           </div>
 
-          {/* SEARCH BAR MOCKUP */}
+          {/* SEARCH */}
           <div className="relative mb-6">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-500" />
             <input
@@ -181,95 +191,67 @@ export default function DashboardLayout({
             </div>
           </div>
 
-          {/* ================= SECCIONES ORDENADAS ================= */}
-
-          {/* INVENTARIO */}
+          {/* 📦 STOCK */}
           <div className="mb-6">
-            <div className="text-[10px] font-bold text-gray-500 uppercase tracking-widest mb-2 px-3">
-              Inventario
-            </div>
+            <SectionLabel>Stock</SectionLabel>
             <div className="flex flex-col gap-0.5">
-              <NavLinkItem
-                icon={Car}
-                label="Gestión de Stock"
-                href="/panel"
-                exact
-              />
+              <NavLinkItem icon={Car} label="Gestión de Stock" href="/panel" exact />
             </div>
           </div>
 
-          {/* COMERCIAL & CRM */}
+          {/* 💬 CRM */}
           <div className="mb-6">
-            <div className="text-[10px] font-bold text-gray-500 uppercase tracking-widest mb-2 px-3">
-              Comercial & CRM
-            </div>
+            <SectionLabel>CRM</SectionLabel>
             <div className="flex flex-col gap-0.5">
-              <NavLinkItem
-                icon={MessageSquareShare}
-                label="Tablero Kanban"
-                href="/panel/crm"
-              />
-              <NavLinkItem
-                icon={CheckSquare}
-                label="Tareas del Equipo"
-                href="/panel/tareas"
-              />{" "}
-              {/* <-- NUEVO */}
-              <NavLinkItem
-                emoji="📥"
-                label="Leads Web (Cotiz / Consig)"
-                href="/panel/cotizaciones"
-              />
-              <NavLinkItem
-                icon={Banknote}
-                label="Nueva Operación"
-                href="/panel/ventas/nueva"
-              />
-              <NavLinkItem
-                icon={UserPlus}
-                label="Nuevo Cliente"
-                href="/panel/clientes/nuevo"
-              />
+              <NavLinkItem icon={MessageSquareShare} label="Tablero de Leads" href="/panel/crm" />
+              <NavLinkItem icon={CheckSquare} label="Tareas del Equipo" href="/panel/tareas" />
+              <NavLinkItem icon={CalendarCheck} label="Citas / Agenda" href="/panel/citas" />
+              <NavLinkItem icon={MessagesSquare} label="Consultas (Chat)" href="/panel/chat" />
+              <NavLinkItem emoji="📥" label="Leads Web (Cotiz/Consig)" href="/panel/cotizaciones" />
             </div>
           </div>
 
-          {/* ADMINISTRACIÓN (Protegido por Rol) */}
+          {/* 🧾 VENTAS */}
+          <div className="mb-6">
+            <SectionLabel>Ventas</SectionLabel>
+            <div className="flex flex-col gap-0.5">
+              <NavLinkItem icon={Banknote} label="Nueva Operación" href="/panel/ventas/nueva" />
+              <NavLinkItem icon={UserPlus} label="Nuevo Cliente" href="/panel/clientes/nuevo" />
+              <NavLinkItem icon={Landmark} label="Financiaciones" href="/panel/ventas/financiaciones" />
+            </div>
+          </div>
+
+          {/* 💼 ADMINISTRACIÓN (protegido por rol) */}
           {(userProfile.rol === "admin" || userProfile.rol === "encargado") && (
-            <div className="mb-auto">
-              <div className="text-[10px] font-bold text-gray-500 uppercase tracking-widest mb-2 px-3">
-                Colecciones
-              </div>
+            <div className="mb-6">
+              <SectionLabel>Administración</SectionLabel>
               <div className="flex flex-col gap-0.5">
-                <NavLinkItem
-                  emoji="📝"
-                  label="Gestoría"
-                  href="/panel/gestoria"
-                />
-                <NavLinkItem
-                  emoji="📊"
-                  label="Métricas"
-                  href="/panel/metricas"
-                />
-
+                <NavLinkItem icon={FileBarChart} label="Informes" href="/panel/informes" />
                 {userProfile.rol === "admin" && (
                   <>
-                    <NavLinkItem
-                      emoji="💰"
-                      label="Tesorería y Caja"
-                      href="/panel/gastos"
-                    />
-                    <NavLinkItem
-                      emoji="👥"
-                      label="Usuarios"
-                      href="/panel/usuarios"
-                    />
+                    <NavLinkItem icon={Wallet} label="Movimientos de Caja" href="/panel/gastos" />
+                    <NavLinkItem icon={Users} label="Usuarios" href="/panel/usuarios" />
                   </>
                 )}
               </div>
             </div>
           )}
 
-          {/* LOGOUT BUTTON */}
+          {/* 📣 MARKETING (protegido por rol) */}
+          {(userProfile.rol === "admin" || userProfile.rol === "encargado") && (
+            <div className="mb-auto">
+              <SectionLabel>Marketing</SectionLabel>
+              <div className="flex flex-col gap-0.5">
+                <NavLinkItem icon={Target} label="Autos Pautados" href="/panel/marketing/pautados" />
+                <NavLinkItem icon={Megaphone} label="Embudo de Conversión" href="/panel/marketing/embudo" />
+                <NavLinkItem icon={MousePointerClick} label="Búsquedas Frecuentes" href="/panel/marketing/busquedas" />
+                <NavLinkItem icon={Bot} label="Preguntas del Chatbot" href="/panel/marketing/chatbot" />
+                <NavLinkItem emoji="📊" label="Métricas Generales" href="/panel/metricas" />
+              </div>
+            </div>
+          )}
+
+          {/* LOGOUT */}
           <div className="pt-6 mt-6 border-t border-[#2C2E33]">
             <button
               onClick={handleLogout}
@@ -281,7 +263,7 @@ export default function DashboardLayout({
         </div>
       </aside>
 
-      {/* ================= 3. ÁREA DE CONTENIDO PRINCIPAL ================= */}
+      {/* CONTENIDO */}
       <main className="flex-1 min-w-0 overflow-x-hidden pt-16 md:pt-0 bg-[#0b1329] flex flex-col">
         <div className="p-4 md:p-8 w-full flex-1">{children}</div>
       </main>

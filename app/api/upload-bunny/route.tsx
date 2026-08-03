@@ -11,16 +11,16 @@ export async function POST(request: Request) {
 
     const buffer = Buffer.from(await file.arrayBuffer());
     
-    // Limpiamos el nombre del archivo
+    // Limpiamos el nombre del archivo para evitar errores en las URLs
     const cleanFileName = file.name.replace(/[^a-zA-Z0-9.\-_]/g, '');
-    const uniqueFileName = `${Date.now()}-${Math.floor(Math.random() * 10000)}-${cleanFileName}`;
+    const uniqueFileName = `${Date.now()}-${cleanFileName}`;
     
     // Armamos la ruta hacia Bunny.net
     const storageEndpoint = process.env.BUNNY_STORAGE_ENDPOINT;
     const storageZone = process.env.BUNNY_STORAGE_ZONE;
     const uploadUrl = `${storageEndpoint}/${storageZone}/vehiculos/${uniqueFileName}`;
 
-    // Subimos el archivo
+    // Subimos el archivo a Bunny.net de forma segura desde el backend
     const response = await fetch(uploadUrl, {
       method: "PUT",
       headers: {
@@ -34,9 +34,10 @@ export async function POST(request: Request) {
       throw new Error(`Error de Bunny: ${response.statusText}`);
     }
 
-    // Devolvemos la URL pública final
+    // Armamos la URL pública que se guardará en tu base de datos
     const publicUrl = `${process.env.BUNNY_CDN_URL}/vehiculos/${uniqueFileName}`;
     
+    // Devolvemos la URL al frontend
     return NextResponse.json({ publicUrl });
 
   } catch (error) {

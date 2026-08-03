@@ -9,12 +9,13 @@ import {
   ChevronLeft,
   ChevronRight,
   FileText,
+  LayoutGrid,
 } from "lucide-react";
 import AccionesAuto from "./AccionesAuto";
 import EdicionPrecio from "./EdicionPrecio";
 import EdicionSucursal from "./EdicionSucursal";
 
-const ITEMS_POR_PAGINA = 10; // Podés ajustar este valor a 15 o 20 según prefieras
+const ITEMS_POR_PAGINA = 10;
 
 export default async function PanelPage({
   searchParams,
@@ -55,7 +56,6 @@ export default async function PanelPage({
     .select("id, nombre")
     .order("nombre");
 
-  // Agregamos { count: 'exact' } para saber el total real sin descargar todos los datos
   let query = supabase
     .from("vehiculos")
     .select(
@@ -78,11 +78,8 @@ export default async function PanelPage({
     query = query.eq("sucursal_id", sucursal);
   }
 
-  // Lógica matemática para la paginación
   const from = (currentPage - 1) * ITEMS_POR_PAGINA;
   const to = from + ITEMS_POR_PAGINA - 1;
-
-  // Aplicamos el rango a la consulta de Supabase
   query = query.range(from, to);
 
   const { data: vehiculos, count, error } = await query;
@@ -95,20 +92,25 @@ export default async function PanelPage({
     <div className="bg-[#0b1329] pt-4 md:pt-8 pb-16 px-3 md:px-6 text-slate-100 w-full overflow-x-hidden">
       <div className="max-w-6xl mx-auto w-full">
         {/* Encabezado */}
-        <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-6 gap-4">
-          <div>
-            <h1 className="text-2xl md:text-3xl font-serif mb-1 text-white">
-              Centro de Gestión
-            </h1>
-            <p className="text-xs md:text-sm text-slate-400">
-              Administración de stock de Pfaffen Autos
-            </p>
+        <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-7 gap-4">
+          <div className="flex items-center gap-3.5">
+            <div className="w-11 h-11 rounded-xl bg-[#0ea5e9]/10 border border-[#0ea5e9]/20 flex items-center justify-center shrink-0">
+              <LayoutGrid className="w-5 h-5 text-[#0ea5e9]" />
+            </div>
+            <div>
+              <h1 className="text-xl md:text-2xl font-bold tracking-tight text-white leading-tight">
+                Centro de Gestión
+              </h1>
+              <p className="text-xs md:text-sm text-slate-500 mt-0.5">
+                Administración de stock · Pfaffen Autos
+              </p>
+            </div>
           </div>
           <Link
             href="/panel/vehiculo/nuevo"
-            className="w-full md:w-auto justify-center bg-[#0ea5e9] hover:bg-[#0284c7] transition-colors px-6 py-3.5 rounded-xl font-bold flex items-center gap-2 shadow-lg shrink-0"
+            className="w-full md:w-auto justify-center bg-[#0ea5e9] hover:bg-[#0284c7] transition-colors px-5 py-3 rounded-xl font-semibold text-sm flex items-center gap-2 shadow-lg shadow-sky-950/40 shrink-0"
           >
-            <Plus className="w-5 h-5" /> Ingresar Nuevo Auto
+            <Plus className="w-4 h-4" /> Ingresar Nuevo Auto
           </Link>
         </div>
 
@@ -116,16 +118,16 @@ export default async function PanelPage({
         <form
           method="GET"
           action="/panel"
-          className="flex flex-col sm:flex-row gap-3 mb-6 bg-[#0f172a] p-4 rounded-2xl border border-slate-800 shadow-lg w-full"
+          className="flex flex-col sm:flex-row gap-3 mb-6 bg-[#111827] p-3.5 rounded-2xl border border-[#1e293b] shadow-sm w-full"
         >
           <div className="flex-1 relative min-w-0">
-            <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
+            <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-500" />
             <input
               type="text"
               name="q"
               defaultValue={q}
               placeholder="Buscar por marca, modelo o patente..."
-              className="w-full bg-[#0b1329] border border-slate-800 rounded-xl py-3 pl-10 pr-4 text-sm outline-none focus:border-[#0ea5e9] text-white placeholder:text-slate-500 transition-colors"
+              className="w-full bg-[#0b1329] border border-[#1e293b] rounded-xl py-2.5 pl-10 pr-4 text-sm outline-none focus:border-[#0ea5e9]/60 focus:ring-2 focus:ring-[#0ea5e9]/10 text-white placeholder:text-slate-600 transition-all"
             />
           </div>
 
@@ -133,7 +135,7 @@ export default async function PanelPage({
             <select
               name="sucursal"
               defaultValue={sucursal}
-              className="w-full bg-[#0b1329] border border-slate-800 rounded-xl py-3 px-4 text-sm outline-none focus:border-[#0ea5e9] appearance-none text-white cursor-pointer transition-colors"
+              className="w-full bg-[#0b1329] border border-[#1e293b] rounded-xl py-2.5 px-4 text-sm outline-none focus:border-[#0ea5e9]/60 focus:ring-2 focus:ring-[#0ea5e9]/10 appearance-none text-white cursor-pointer transition-all"
             >
               <option value="">Todas las sucursales</option>
               {sucursales?.map((s) => (
@@ -146,7 +148,7 @@ export default async function PanelPage({
 
           <button
             type="submit"
-            className="w-full sm:w-auto shrink-0 bg-slate-800 hover:bg-slate-700 text-white px-6 py-3 rounded-xl font-bold text-xs uppercase tracking-wider transition-colors border border-slate-700"
+            className="w-full sm:w-auto shrink-0 bg-[#1e293b] hover:bg-[#263447] text-slate-200 px-6 py-2.5 rounded-xl font-semibold text-xs uppercase tracking-wider transition-colors border border-[#2d3d54]"
           >
             Filtrar
           </button>
@@ -156,31 +158,31 @@ export default async function PanelPage({
         <div className="w-full">
           {vehiculos && vehiculos.length > 0 ? (
             <>
-              {/* VISTA MÓVIL: Tarjetas separadas */}
-              <div className="flex flex-col gap-4 md:hidden w-full">
+              {/* VISTA MÓVIL */}
+              <div className="flex flex-col gap-3.5 md:hidden w-full">
                 {vehiculos.map((auto) => (
                   <div
                     key={auto.id}
-                    className="p-4 bg-[#0f172a] border border-slate-800 rounded-2xl flex flex-col gap-3 shadow-md hover:border-slate-700 transition-colors w-full overflow-hidden"
+                    className="relative p-4 bg-[#111827] border border-[#1e293b] rounded-2xl flex flex-col gap-3 shadow-sm hover:border-[#2d3d54] transition-colors w-full overflow-hidden"
                   >
+                    <div className="absolute top-0 left-0 right-0 h-[2px] bg-gradient-to-r from-[#0ea5e9]/60 via-[#0ea5e9]/10 to-transparent" />
                     <div className="flex items-start gap-3">
                       {auto.multimedia_vehiculos?.[0] ? (
                         <img
                           src={auto.multimedia_vehiculos[0].url_archivo}
                           alt={auto.modelo}
-                          className="w-20 h-16 object-cover rounded-xl shadow-sm border border-slate-800 shrink-0"
+                          className="w-20 h-16 object-cover rounded-xl shadow-sm border border-[#1e293b] shrink-0"
                         />
                       ) : (
-                        <div className="w-20 h-16 bg-[#0b1329] border border-slate-800 rounded-xl flex items-center justify-center shrink-0">
-                          <Car className="w-6 h-6 text-slate-600" />
+                        <div className="w-20 h-16 bg-[#0b1329] border border-[#1e293b] rounded-xl flex items-center justify-center shrink-0">
+                          <Car className="w-6 h-6 text-slate-700" />
                         </div>
                       )}
-                      {/* El min-w-0 evita que los textos largos rompan la caja en móviles */}
                       <div className="flex-1 min-w-0">
-                        <span className="text-[10px] uppercase tracking-widest font-bold text-slate-400 block mb-0.5 truncate">
+                        <span className="text-[10px] uppercase tracking-widest font-bold text-slate-500 block mb-0.5 truncate">
                           {auto.patente || "S/P"}
                         </span>
-                        <h3 className="font-black capitalize text-base text-white leading-tight truncate mb-1">
+                        <h3 className="font-bold capitalize text-base text-white leading-tight truncate mb-1">
                           {auto.marca} {auto.modelo}
                         </h3>
                         <EdicionPrecio
@@ -192,9 +194,9 @@ export default async function PanelPage({
                       </div>
                     </div>
 
-                    <div className="grid grid-cols-2 gap-2 text-xs bg-[#0b1329] border border-slate-800/80 p-2.5 rounded-xl">
+                    <div className="grid grid-cols-2 gap-2 text-xs bg-[#0b1329] border border-[#1e293b] p-2.5 rounded-xl">
                       <div className="min-w-0">
-                        <span className="block text-slate-400 text-[9px] uppercase tracking-widest font-bold mb-0.5 truncate">
+                        <span className="block text-slate-500 text-[9px] uppercase tracking-widest font-bold mb-0.5 truncate">
                           Año / Km
                         </span>
                         <span className="font-semibold text-slate-200 truncate block">
@@ -202,7 +204,7 @@ export default async function PanelPage({
                         </span>
                       </div>
                       <div className="min-w-0">
-                        <span className="block text-slate-400 text-[9px] uppercase tracking-widest font-bold mb-0.5 truncate">
+                        <span className="block text-slate-500 text-[9px] uppercase tracking-widest font-bold mb-0.5 truncate">
                           Ubicación
                         </span>
                         <EdicionSucursal
@@ -215,7 +217,7 @@ export default async function PanelPage({
                       </div>
                     </div>
 
-                    <div className="pt-2 flex flex-wrap items-center justify-between gap-2 border-t border-slate-800/80">
+                    <div className="pt-2 flex flex-wrap items-center justify-between gap-2 border-t border-[#1e293b]">
                       <div className="scale-90 origin-left">
                         <AccionesAuto
                           autoId={auto.id}
@@ -227,7 +229,7 @@ export default async function PanelPage({
                         {puedeGestionar && (
                           <Link
                             href={`/panel/vehiculo/boleto/${auto.id}`}
-                            className="p-2.5 bg-slate-800 hover:bg-slate-700 border border-slate-700 rounded-xl text-slate-300 hover:text-white transition-all shadow-sm"
+                            className="p-2.5 bg-[#0b1329] hover:bg-[#1e293b] border border-[#1e293b] rounded-xl text-slate-400 hover:text-white transition-all"
                             title="Generar Boleto"
                           >
                             <FileText className="w-4 h-4 text-emerald-400" />
@@ -235,7 +237,7 @@ export default async function PanelPage({
                         )}
                         <Link
                           href={`/panel/vehiculo/editar/${auto.id}`}
-                          className="flex items-center gap-1.5 text-xs font-bold uppercase tracking-wider bg-slate-800 hover:bg-slate-700 border border-slate-700 text-slate-200 px-3 py-2 rounded-xl transition-colors shadow-sm"
+                          className="flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wider bg-[#0b1329] hover:bg-[#1e293b] border border-[#1e293b] text-slate-200 px-3 py-2 rounded-xl transition-colors"
                         >
                           <Edit2 className="w-3.5 h-3.5 text-[#0ea5e9]" />{" "}
                           <span className="hidden sm:inline">Editar</span>
@@ -246,11 +248,11 @@ export default async function PanelPage({
                 ))}
               </div>
 
-              {/* VISTA DESKTOP: Tabla */}
-              <div className="hidden md:block bg-[#0f172a] border border-slate-800 rounded-2xl overflow-x-auto shadow-2xl max-w-full">
+              {/* VISTA DESKTOP */}
+              <div className="hidden md:block bg-[#111827] border border-[#1e293b] rounded-2xl overflow-x-auto shadow-sm max-w-full">
                 <table className="w-full text-left border-collapse min-w-[900px]">
                   <thead>
-                    <tr className="bg-slate-900/50 border-b border-slate-800 text-slate-400 text-xs uppercase tracking-widest font-bold">
+                    <tr className="bg-[#0b1329]/60 border-b border-[#1e293b] text-slate-500 text-[11px] uppercase tracking-widest font-bold">
                       <th className="p-4 whitespace-nowrap">Vehículo</th>
                       <th className="p-4 whitespace-nowrap">Año / Km</th>
                       <th className="p-4 whitespace-nowrap">
@@ -266,7 +268,7 @@ export default async function PanelPage({
                     {vehiculos.map((auto) => (
                       <tr
                         key={auto.id}
-                        className="border-b border-slate-800/60 hover:bg-slate-800/40 transition-colors"
+                        className="border-b border-[#1e293b]/70 hover:bg-[#0ea5e9]/[0.03] transition-colors"
                       >
                         <td className="p-4">
                           <div className="flex items-center gap-3">
@@ -274,18 +276,18 @@ export default async function PanelPage({
                               <img
                                 src={auto.multimedia_vehiculos[0].url_archivo}
                                 alt={auto.modelo}
-                                className="w-16 h-12 object-cover rounded-lg shadow-sm border border-slate-800 shrink-0"
+                                className="w-16 h-12 object-cover rounded-lg shadow-sm border border-[#1e293b] shrink-0"
                               />
                             ) : (
-                              <div className="w-16 h-12 bg-[#0b1329] border border-slate-800 rounded-lg flex items-center justify-center shrink-0">
-                                <Car className="w-6 h-6 text-slate-600" />
+                              <div className="w-16 h-12 bg-[#0b1329] border border-[#1e293b] rounded-lg flex items-center justify-center shrink-0">
+                                <Car className="w-6 h-6 text-slate-700" />
                               </div>
                             )}
                             <div className="min-w-0">
-                              <span className="text-[10px] text-slate-400 font-bold block truncate">
+                              <span className="text-[10px] text-slate-500 font-bold block truncate">
                                 {auto.patente}
                               </span>
-                              <span className="font-bold capitalize text-[15px] text-white block truncate">
+                              <span className="font-semibold capitalize text-[15px] text-white block truncate">
                                 {auto.marca} {auto.modelo}
                               </span>
                             </div>
@@ -314,7 +316,7 @@ export default async function PanelPage({
                           />
                         </td>
                         <td className="p-4">
-                          <div className="flex items-center justify-end gap-3">
+                          <div className="flex items-center justify-end gap-2.5">
                             <AccionesAuto
                               autoId={auto.id}
                               estadoActual={auto.estado}
@@ -323,7 +325,7 @@ export default async function PanelPage({
 
                             <Link
                               href={`/panel/vehiculo/boleto/${auto.id}`}
-                              className="p-2.5 bg-slate-800 hover:bg-slate-700 border border-slate-700 rounded-xl text-slate-300 hover:text-white transition-all shadow-sm group shrink-0"
+                              className="p-2.5 bg-[#0b1329] hover:bg-[#1e293b] border border-[#1e293b] rounded-xl text-slate-400 hover:text-white transition-all group shrink-0"
                               title="Generar Boleto de Reserva"
                             >
                               <FileText className="w-4 h-4 group-hover:scale-110 transition-transform text-emerald-400" />
@@ -331,7 +333,7 @@ export default async function PanelPage({
 
                             <Link
                               href={`/panel/vehiculo/editar/${auto.id}`}
-                              className="p-2.5 bg-slate-800 hover:bg-slate-700 border border-slate-700 rounded-xl text-slate-300 hover:text-white transition-all shadow-sm group shrink-0"
+                              className="p-2.5 bg-[#0b1329] hover:bg-[#1e293b] border border-[#1e293b] rounded-xl text-slate-400 hover:text-white transition-all group shrink-0"
                               title="Editar vehículo completo"
                             >
                               <Edit2 className="w-4 h-4 group-hover:scale-110 transition-transform text-[#0ea5e9]" />
@@ -344,54 +346,51 @@ export default async function PanelPage({
                 </table>
               </div>
 
-              {/* CONTROLES DE PAGINACIÓN */}
+              {/* PAGINACIÓN */}
               {totalPages > 1 && (
-                <div className="flex flex-col sm:flex-row items-center justify-between mt-6 bg-[#0f172a] border border-slate-800 p-4 rounded-2xl gap-4 w-full">
-                  <p className="text-sm text-slate-400 text-center sm:text-left">
+                <div className="flex flex-col sm:flex-row items-center justify-between mt-5 bg-[#111827] border border-[#1e293b] p-4 rounded-2xl gap-4 w-full">
+                  <p className="text-sm text-slate-500 text-center sm:text-left">
                     Mostrando del{" "}
-                    <span className="font-bold text-white">{from + 1}</span> al{" "}
-                    <span className="font-bold text-white">
+                    <span className="font-semibold text-white">{from + 1}</span> al{" "}
+                    <span className="font-semibold text-white">
                       {Math.min(to + 1, count || 0)}
                     </span>{" "}
-                    de <span className="font-bold text-white">{count}</span>{" "}
+                    de <span className="font-semibold text-white">{count}</span>{" "}
                     resultados
                   </p>
 
                   <div className="flex items-center gap-2">
-                    {/* Botón Anterior */}
                     {currentPage > 1 ? (
                       <Link
                         href={`/panel?q=${q}&sucursal=${sucursal}&page=${currentPage - 1}`}
-                        className="p-2 bg-slate-800 hover:bg-slate-700 rounded-lg transition-colors text-slate-300 border border-slate-700"
+                        className="p-2 bg-[#0b1329] hover:bg-[#1e293b] rounded-lg transition-colors text-slate-300 border border-[#1e293b]"
                       >
                         <ChevronLeft className="w-5 h-5" />
                       </Link>
                     ) : (
                       <button
                         disabled
-                        className="p-2 bg-slate-800/30 rounded-lg text-slate-600 cursor-not-allowed border border-slate-800"
+                        className="p-2 bg-[#0b1329]/50 rounded-lg text-slate-700 cursor-not-allowed border border-[#1e293b]"
                       >
                         <ChevronLeft className="w-5 h-5" />
                       </button>
                     )}
 
-                    {/* Indicador de página */}
-                    <div className="px-4 py-2 bg-slate-800 rounded-lg font-bold text-sm text-white border border-slate-700">
+                    <div className="px-4 py-2 bg-[#0ea5e9]/10 border border-[#0ea5e9]/20 rounded-lg font-bold text-sm text-[#0ea5e9]">
                       {currentPage} / {totalPages}
                     </div>
 
-                    {/* Botón Siguiente */}
                     {currentPage < totalPages ? (
                       <Link
                         href={`/panel?q=${q}&sucursal=${sucursal}&page=${currentPage + 1}`}
-                        className="p-2 bg-slate-800 hover:bg-slate-700 rounded-lg transition-colors text-slate-300 border border-slate-700"
+                        className="p-2 bg-[#0b1329] hover:bg-[#1e293b] rounded-lg transition-colors text-slate-300 border border-[#1e293b]"
                       >
                         <ChevronRight className="w-5 h-5" />
                       </Link>
                     ) : (
                       <button
                         disabled
-                        className="p-2 bg-slate-800/30 rounded-lg text-slate-600 cursor-not-allowed border border-slate-800"
+                        className="p-2 bg-[#0b1329]/50 rounded-lg text-slate-700 cursor-not-allowed border border-[#1e293b]"
                       >
                         <ChevronRight className="w-5 h-5" />
                       </button>
@@ -401,9 +400,11 @@ export default async function PanelPage({
               )}
             </>
           ) : (
-            <div className="p-12 text-center text-slate-400 flex flex-col items-center bg-[#0f172a] rounded-2xl border border-slate-800 w-full">
-              <Search className="w-12 h-12 mb-4 opacity-20" />
-              <h3 className="text-white font-bold text-lg mb-1">
+            <div className="p-12 text-center text-slate-500 flex flex-col items-center bg-[#111827] rounded-2xl border border-[#1e293b] w-full">
+              <div className="w-12 h-12 rounded-xl bg-[#0b1329] border border-[#1e293b] flex items-center justify-center mb-4">
+                <Search className="w-5 h-5 text-slate-600" />
+              </div>
+              <h3 className="text-white font-semibold text-lg mb-1">
                 Sin resultados
               </h3>
               <p className="text-sm">
@@ -412,7 +413,7 @@ export default async function PanelPage({
               {(q || sucursal) && (
                 <Link
                   href="/panel"
-                  className="mt-4 text-[#0ea5e9] hover:underline font-bold text-sm"
+                  className="mt-4 text-[#0ea5e9] hover:underline font-semibold text-sm"
                 >
                   Limpiar filtros
                 </Link>

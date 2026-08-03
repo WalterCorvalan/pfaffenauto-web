@@ -72,6 +72,12 @@ export default function Footer() {
           <Link href="/nosotros" className="text-xs font-bold uppercase tracking-widest text-slate-400 hover:text-white transition-colors">
             Nosotros
           </Link>
+          
+          {/* NUEVO ENLACE RRHH */}
+          <Link href="/trabaja-con-nosotros" className="text-xs font-bold uppercase tracking-widest text-slate-400 hover:text-white transition-colors">
+            Trabajá con nosotros
+          </Link>
+
           {isPanel ? (
             <Link href="/" className="text-xs font-bold uppercase tracking-widest text-sky-400 hover:text-sky-300 transition-colors">
               Volver a la Web
@@ -88,7 +94,6 @@ export default function Footer() {
 
         {/* SECCIÓN INSTITUCIONAL / BADGES (Nollame, Data Fiscal, Acceso a la Información, SSN) */}
         <div className="w-full flex flex-wrap justify-center items-center gap-6 mb-12 opacity-80 hover:opacity-100 transition-opacity">
-          {/* Aquí puedes enlazar o colocar las imágenes oficiales de los sellos */}
           <div className="bg-white px-3 py-1.5 rounded-lg flex items-center justify-center shadow-sm h-10">
             <span className="text-[10px] font-black text-slate-900 tracking-wider">Nóllame (REGISTRO)</span>
           </div>

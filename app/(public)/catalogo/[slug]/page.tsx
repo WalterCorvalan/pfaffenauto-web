@@ -19,6 +19,7 @@ import {
 
 import BotonesInteractivos from "@/components/BotonesInteractivos";
 import GaleriaVehiculo from "@/components/GaleriaVehiculo";
+import AgendarVisita from "@/components/AgendarVisita";
 
 export const revalidate = 60;
 
@@ -132,39 +133,44 @@ export default async function VehiculoDetallePage({
   }
 
   return (
-    // Se retiró "overflow-hidden" del contenedor padre para que el position: sticky del footer no se rompa
-    <div className="min-h-screen bg-[#E9ECEF] font-sans text-foreground flex flex-col relative">
-      {/* ================= CAPA DE LUCES AMBIENTALES (AISLADA PARA NO ROMPER EL STICKY) ================= */}
-      <div className="absolute inset-0 overflow-hidden pointer-events-none z-0">
-        <div className="absolute top-[-5%] left-[-10%] w-[600px] h-[600px] bg-[#0145F2]/10 rounded-full blur-[140px]"></div>
-        <div className="absolute top-[40%] right-[-10%] w-[500px] h-[500px] bg-sky-300/15 rounded-full blur-[140px]"></div>
+    <div className="min-h-screen bg-[#F8FAFC] font-sans text-foreground flex flex-col relative overflow-x-hidden">
+      
+      {/* ================= EFECTOS ESPACIALES DE FONDO (ESTILO HERO/CATÁLOGO) ================= */}
+      <div className="absolute inset-0 pointer-events-none z-0">
+        {/* Grilla arquitectónica sutil */}
+        <div className="absolute inset-0 bg-[linear-gradient(to_right,#e2e8f0_1px,transparent_1px),linear-gradient(to_bottom,#e2e8f0_1px,transparent_1px)] bg-[size:3rem_3rem] [mask-image:radial-gradient(ellipse_80%_50%_at_50%_0%,#000_70%,transparent_100%)] opacity-60"></div>
+        
+        {/* Luces Ambientales (Spotlights) */}
+        <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[800px] h-[400px] bg-[#0145F2]/5 blur-[120px] rounded-full"></div>
+        <div className="absolute top-[20%] -left-[10%] w-[500px] h-[500px] bg-sky-300/10 blur-[120px] rounded-full"></div>
+        <div className="absolute bottom-[10%] -right-[5%] w-[600px] h-[600px] bg-blue-400/5 blur-[120px] rounded-full"></div>
       </div>
 
       <div className="flex-1 w-full max-w-7xl mx-auto px-4 md:px-6 pt-6 pb-16 lg:pb-20 flex flex-col relative z-10">
+        
         {/* TÍTULO MÓVIL */}
         <div className="block lg:hidden mb-6">
-          <div className="text-[10px] sm:text-xs text-gray-500 font-bold uppercase tracking-widest mb-3 flex items-center gap-1.5 flex-wrap">
+          <div className="text-[10px] sm:text-xs text-slate-500 font-bold uppercase tracking-widest mb-3 flex items-center gap-1.5 flex-wrap">
             <Link href="/" className="hover:text-[#0145F2] transition-colors">
               Inicio
             </Link>
-            <span className="text-gray-400">/</span>
+            <span className="text-slate-400">/</span>
             <Link
               href="/catalogo"
               className="hover:text-[#0145F2] transition-colors"
             >
               Catálogo
             </Link>
-            <span className="text-gray-400">/</span>
+            <span className="text-slate-400">/</span>
 
-            {/* AQUÍ ESTÁ EL LINK DINÁMICO DE LA MARCA */}
             <Link
               href={`/marcas/${auto.marca.toLowerCase().replace(/\s+/g, "-")}`}
-              className="text-gray-500 hover:text-[#0145F2] transition-colors"
+              className="text-slate-500 hover:text-[#0145F2] transition-colors"
             >
               {auto.marca}
             </Link>
 
-            <span className="text-gray-400">/</span>
+            <span className="text-slate-400">/</span>
             <span className="text-navy">{auto.modelo}</span>
           </div>
           <h1 className="text-3xl font-black text-navy uppercase tracking-tighter leading-tight drop-shadow-sm">
@@ -181,32 +187,33 @@ export default async function VehiculoDetallePage({
 
         {/* CONTENEDOR GRID PRINCIPAL */}
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 lg:gap-10 items-start">
+          
           {/* ================= BLOQUE 1: GALERÍA DE IMÁGENES Y DATOS RÁPIDOS ================= */}
           <div className="lg:col-span-7 flex flex-col gap-6 order-1 pt-1 md:pt-7">
-            <div className="hidden lg:flex text-[10px] sm:text-xs text-gray-500 font-bold uppercase tracking-widest mb-[-10px] items-center gap-2">
+            <div className="hidden lg:flex text-[10px] sm:text-xs text-slate-500 font-bold uppercase tracking-widest mb-[-10px] items-center gap-2">
               <Link href="/" className="hover:text-[#0145F2] transition-colors">
                 Inicio
               </Link>
-              <span className="text-gray-400">/</span>
+              <span className="text-slate-400">/</span>
               <Link
                 href="/catalogo"
                 className="hover:text-[#0145F2] transition-colors"
               >
                 Catálogo
               </Link>
-              <span className="text-gray-400">/</span>
+              <span className="text-slate-400">/</span>
               <Link
                 href={`/marcas/${auto.marca.toLowerCase().replace(/\s+/g, "-")}`}
                 className="hover:text-[#0145F2] transition-colors"
               >
                 {auto.marca}
               </Link>{" "}
-              <span className="text-gray-400">/</span>
+              <span className="text-slate-400">/</span>
               <span className="text-navy">{auto.modelo}</span>
             </div>
 
             {/* GALERÍA 100% LIMPIA SIN BORDES REDONDEADOS NI CONTENEDOR BLANCO */}
-            <div className="w-full overflow-hidden shadow-xl">
+            <div className="w-full overflow-hidden shadow-[0_20px_50px_rgba(0,0,0,0.1)] rounded-[20px] md:rounded-[32px] border border-slate-200/50 bg-white">
               <GaleriaVehiculo
                 imagenes={auto.multimedia_vehiculos || []}
                 altText={`${auto.marca} ${auto.modelo}`}
@@ -215,9 +222,9 @@ export default async function VehiculoDetallePage({
 
             {/* GRILLA RÁPIDA DE DATOS TÉCNICOS (GLASS) */}
             <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 md:gap-4 mt-2">
-              <div className="bg-white/40 backdrop-blur-xl border border-white/60 rounded-2xl p-4 flex flex-col items-center justify-center text-center shadow-[0_4px_15px_rgba(0,0,0,0.03)] hover:shadow-[0_8px_25px_rgba(1,69,242,0.1)] hover:border-white hover:bg-white/60 transition-all duration-300 group">
+              <div className="bg-white/60 backdrop-blur-xl border border-white rounded-2xl p-4 flex flex-col items-center justify-center text-center shadow-[0_4px_15px_rgba(0,0,0,0.03)] hover:shadow-[0_8px_25px_rgba(1,69,242,0.1)] hover:bg-white transition-all duration-300 group">
                 <CalendarDays className="w-6 h-6 text-[#0145F2] mb-2 opacity-80 group-hover:scale-110 transition-transform" />
-                <span className="text-[9px] md:text-[10px] text-gray-500 font-bold uppercase tracking-widest mb-1 group-hover:text-[#0145F2] transition-colors">
+                <span className="text-[9px] md:text-[10px] text-slate-500 font-bold uppercase tracking-widest mb-1 group-hover:text-[#0145F2] transition-colors">
                   Año
                 </span>
                 <span className="text-sm md:text-base font-black text-navy">
@@ -225,9 +232,9 @@ export default async function VehiculoDetallePage({
                 </span>
               </div>
 
-              <div className="bg-white/40 backdrop-blur-xl border border-white/60 rounded-2xl p-4 flex flex-col items-center justify-center text-center shadow-[0_4px_15px_rgba(0,0,0,0.03)] hover:shadow-[0_8px_25px_rgba(1,69,242,0.1)] hover:border-white hover:bg-white/60 transition-all duration-300 group">
+              <div className="bg-white/60 backdrop-blur-xl border border-white rounded-2xl p-4 flex flex-col items-center justify-center text-center shadow-[0_4px_15px_rgba(0,0,0,0.03)] hover:shadow-[0_8px_25px_rgba(1,69,242,0.1)] hover:bg-white transition-all duration-300 group">
                 <Gauge className="w-6 h-6 text-[#0145F2] mb-2 opacity-80 group-hover:scale-110 transition-transform" />
-                <span className="text-[9px] md:text-[10px] text-gray-500 font-bold uppercase tracking-widest mb-1 group-hover:text-[#0145F2] transition-colors">
+                <span className="text-[9px] md:text-[10px] text-slate-500 font-bold uppercase tracking-widest mb-1 group-hover:text-[#0145F2] transition-colors">
                   Kilometraje
                 </span>
                 <span className="text-sm md:text-base font-black text-navy">
@@ -237,9 +244,9 @@ export default async function VehiculoDetallePage({
                 </span>
               </div>
 
-              <div className="bg-white/40 backdrop-blur-xl border border-white/60 rounded-2xl p-4 flex flex-col items-center justify-center text-center shadow-[0_4px_15px_rgba(0,0,0,0.03)] hover:shadow-[0_8px_25px_rgba(1,69,242,0.1)] hover:border-white hover:bg-white/60 transition-all duration-300 group">
+              <div className="bg-white/60 backdrop-blur-xl border border-white rounded-2xl p-4 flex flex-col items-center justify-center text-center shadow-[0_4px_15px_rgba(0,0,0,0.03)] hover:shadow-[0_8px_25px_rgba(1,69,242,0.1)] hover:bg-white transition-all duration-300 group">
                 <Fuel className="w-6 h-6 text-[#0145F2] mb-2 opacity-80 group-hover:scale-110 transition-transform" />
-                <span className="text-[9px] md:text-[10px] text-gray-500 font-bold uppercase tracking-widest mb-1 group-hover:text-[#0145F2] transition-colors">
+                <span className="text-[9px] md:text-[10px] text-slate-500 font-bold uppercase tracking-widest mb-1 group-hover:text-[#0145F2] transition-colors">
                   Combustible
                 </span>
                 <span className="text-sm md:text-base font-black text-navy capitalize">
@@ -247,9 +254,9 @@ export default async function VehiculoDetallePage({
                 </span>
               </div>
 
-              <div className="bg-white/40 backdrop-blur-xl border border-white/60 rounded-2xl p-4 flex flex-col items-center justify-center text-center shadow-[0_4px_15px_rgba(0,0,0,0.03)] hover:shadow-[0_8px_25px_rgba(1,69,242,0.1)] hover:border-white hover:bg-white/60 transition-all duration-300 group">
+              <div className="bg-white/60 backdrop-blur-xl border border-white rounded-2xl p-4 flex flex-col items-center justify-center text-center shadow-[0_4px_15px_rgba(0,0,0,0.03)] hover:shadow-[0_8px_25px_rgba(1,69,242,0.1)] hover:bg-white transition-all duration-300 group">
                 <Settings2 className="w-6 h-6 text-[#0145F2] mb-2 opacity-80 group-hover:scale-110 transition-transform" />
-                <span className="text-[9px] md:text-[10px] text-gray-500 font-bold uppercase tracking-widest mb-1 group-hover:text-[#0145F2] transition-colors">
+                <span className="text-[9px] md:text-[10px] text-slate-500 font-bold uppercase tracking-widest mb-1 group-hover:text-[#0145F2] transition-colors">
                   Transmisión
                 </span>
                 <span className="text-sm md:text-base font-black text-navy capitalize">
@@ -261,11 +268,11 @@ export default async function VehiculoDetallePage({
 
           {/* ================= BLOQUE 2: COLUMNA DERECHA PANEL FIJO (GLASS) ================= */}
           <div className="lg:col-span-5 lg:row-span-2 relative order-2">
-            <div className="lg:sticky lg:top-28 bg-white/50 backdrop-blur-3xl border border-white/80 rounded-[32px] p-6 lg:p-8 shadow-[0_12px_40px_rgba(0,0,0,0.05)] flex flex-col gap-6 relative overflow-hidden">
-              <div className="absolute inset-0 bg-gradient-to-br from-white/60 to-transparent pointer-events-none z-0"></div>
+            <div className="lg:sticky lg:top-28 bg-white/70 backdrop-blur-3xl border border-white rounded-[32px] p-6 lg:p-8 shadow-[0_12px_40px_rgba(0,0,0,0.05)] flex flex-col gap-6 relative overflow-hidden">
+              <div className="absolute inset-0 bg-gradient-to-br from-white/40 to-transparent pointer-events-none z-0"></div>
 
-              <div className="hidden lg:block border-b border-gray-200/50 pb-5 relative z-10">
-                <span className="text-[10px] text-gray-500 font-black uppercase tracking-widest block mb-2">
+              <div className="hidden lg:block border-b border-slate-200/50 pb-5 relative z-10">
+                <span className="text-[10px] text-slate-500 font-black uppercase tracking-widest block mb-2">
                   {esCeroKm ? "0km" : "Usado seleccionado"} | {auto.anio}
                 </span>
                 <h1 className="text-3xl lg:text-4xl font-black text-navy uppercase tracking-tighter leading-tight drop-shadow-sm">
@@ -287,7 +294,7 @@ export default async function VehiculoDetallePage({
                     <h2 className="text-4xl md:text-5xl font-black text-navy tracking-tighter drop-shadow-sm">
                       $ {precioArs.toLocaleString("es-AR")}
                     </h2>
-                    <Info className="w-5 h-5 text-gray-400 cursor-pointer hover:text-[#0145F2] transition-colors" />
+                    <Info className="w-5 h-5 text-slate-400 cursor-pointer hover:text-[#0145F2] transition-colors" />
                   </div>
 
                   {precioUsd && precioUsd > 0 && (
@@ -299,9 +306,9 @@ export default async function VehiculoDetallePage({
                   )}
                 </div>
 
-                <p className="text-[11px] text-gray-500 mt-2 leading-relaxed font-medium">
+                <p className="text-[11px] text-slate-500 mt-2 leading-relaxed font-medium">
                   Incluye flete y formularios.{" "}
-                  <span className="text-gray-400 underline cursor-pointer hover:text-navy transition-colors">
+                  <span className="text-slate-400 underline cursor-pointer hover:text-navy transition-colors">
                     ¿Qué es?
                   </span>
                   <br />
@@ -313,9 +320,9 @@ export default async function VehiculoDetallePage({
               </div>
 
               {/* COMPRA PROTEGIDA (Glass) */}
-              <div className="bg-emerald-50/60 backdrop-blur-md border border-emerald-200/60 rounded-[20px] p-4 flex items-center justify-between hover:bg-emerald-100/60 hover:border-emerald-300 transition-all duration-300 cursor-pointer group relative z-10 shadow-[0_4px_15px_rgba(16,185,129,0.05)]">
+              <div className="bg-emerald-50/80 backdrop-blur-md border border-emerald-200/60 rounded-[20px] p-4 flex items-center justify-between hover:bg-emerald-100 transition-all duration-300 cursor-pointer group relative z-10 shadow-sm">
                 <div className="flex items-center gap-4">
-                  <div className="bg-emerald-100/80 p-2.5 rounded-full shadow-inner">
+                  <div className="bg-white p-2.5 rounded-full shadow-sm">
                     <ShieldCheck className="text-emerald-600 w-5 h-5" />
                   </div>
                   <div>
@@ -331,60 +338,74 @@ export default async function VehiculoDetallePage({
               </div>
 
               {/* LISTA DE INFO LATERAL */}
-              <ul className="space-y-5 text-sm text-gray-600 relative z-10">
+              <ul className="space-y-5 text-sm text-slate-600 relative z-10">
                 <li className="flex items-start gap-3">
-                  <div className="bg-white/60 p-2 rounded-full border border-white shadow-sm">
+                  <div className="bg-white p-2 rounded-full border border-slate-100 shadow-sm">
                     <Palette className="w-4 h-4 text-[#0145F2]" />
                   </div>
                   <div className="mt-1">
                     <strong className="text-navy block text-[11px] uppercase tracking-widest font-black">
                       Colores disponibles
                     </strong>
-                    <span className="text-gray-500 font-medium text-xs">
+                    <span className="text-slate-500 font-medium text-xs">
                       A consultar
                     </span>
                   </div>
                 </li>
 
-                <li className="hidden lg:block w-full pt-2">
+                <li className="hidden lg:block w-full pt-2 space-y-3">
                   <a
                     href={linkWhatsApp}
                     target="_blank"
                     rel="noopener noreferrer"
                     className="block w-full bg-gradient-to-r from-[#0145F2] to-sky-500 hover:from-blue-600 hover:to-sky-400 text-white font-black text-sm uppercase tracking-widest text-center py-4 rounded-2xl shadow-[0_8px_20px_rgba(1,69,242,0.3)] hover:shadow-[0_12px_25px_rgba(1,69,242,0.4)] transition-all duration-300 active:scale-95"
                   >
-                    Consultar a un Asesor
+                    Consultar por WhatsApp
                   </a>
+                  <AgendarVisita auto={auto} />
                 </li>
 
-                <li className="flex items-start gap-3 pt-5 border-t border-gray-200/50">
-                  <div className="bg-white/60 p-2 rounded-full border border-white shadow-sm">
+                <li className="flex items-start gap-3 pt-5 border-t border-slate-200/50">
+                  <div className="bg-white p-2 rounded-full border border-slate-100 shadow-sm">
                     <Clock className="w-4 h-4 text-[#0145F2]" />
                   </div>
                   <div className="mt-1">
                     <strong className="text-navy block text-[11px] uppercase tracking-widest font-black">
                       Disponibilidad
                     </strong>
-                    <span className="text-gray-500 font-medium text-xs">
+                    <span className="text-slate-500 font-medium text-xs">
                       Inmediata
                     </span>
                   </div>
                 </li>
 
-                <li className="flex items-start gap-3 pt-5 border-t border-gray-200/50">
-                  <div className="bg-white/60 p-2 rounded-full border border-white shadow-sm">
+                <li className="flex items-start gap-3 pt-5 border-t border-slate-200/50">
+                  <div className="bg-white p-2 rounded-full border border-slate-100 shadow-sm">
                     <MapPin className="w-4 h-4 text-[#0145F2]" />
                   </div>
                   <div className="w-full mt-1">
                     <strong className="text-navy block text-[11px] uppercase tracking-widest font-black mb-2">
                       Punto de Venta Oficial
                     </strong>
-                    <div className="inline-flex items-center gap-1.5 bg-white/60 backdrop-blur-md border border-white px-3 py-1.5 rounded-xl shadow-sm">
+                    <div className="inline-flex items-center gap-1.5 bg-white backdrop-blur-md border border-slate-100 px-3 py-1.5 rounded-xl shadow-sm">
                       <span className="text-xs font-black text-navy uppercase tracking-wide">
                         Sucursal {auto.sucursales?.nombre || "Central"}
                       </span>
                       <CheckCircle2 className="w-3.5 h-3.5 text-emerald-500" />
                     </div>
+                  </div>
+                </li>
+                <li className="flex items-start gap-3">
+                  <div className="bg-white p-2 rounded-full border border-slate-100 shadow-sm">
+                    <CreditCard className="w-4 h-4 text-[#0145F2]" />
+                  </div>
+                  <div className="mt-1">
+                    <strong className="text-navy block text-[11px] uppercase tracking-widest font-black">
+                      Precio al contado
+                    </strong>
+                    <span className="text-xs text-slate-500 font-medium">
+                      Se puede financiar, consultar planes disponibles.
+                    </span>
                   </div>
                 </li>
               </ul>
@@ -393,7 +414,7 @@ export default async function VehiculoDetallePage({
 
           {/* ================= BLOQUE 3: ESPECIFICACIONES Y BANNER USADO ================= */}
           <div className="lg:col-span-7 order-3 flex flex-col gap-8">
-            {/* BANNER TOMAMOS TU USADO (GLASS) */}
+            {/* BANNER TOMAMOS TU USADO */}
             <div className="bg-gradient-to-r from-navy to-[#0145F2] rounded-[32px] p-6 md:p-8 flex flex-col md:flex-row items-center justify-between gap-6 shadow-[0_12px_40px_rgba(1,69,242,0.2)] relative overflow-hidden mt-2">
               <div className="absolute inset-0 bg-white/5 backdrop-blur-sm pointer-events-none z-0"></div>
               <div className="absolute -right-4 -top-8 opacity-10 rotate-12 z-0 mix-blend-overlay">
@@ -423,12 +444,12 @@ export default async function VehiculoDetallePage({
               Detalles de la unidad
             </h3>
 
-            {/* PANEL DE ESPECIFICACIONES (GLASS) */}
-            <div className="bg-white/40 backdrop-blur-2xl border border-white/60 rounded-[32px] p-6 md:p-8 shadow-[0_8px_32px_rgba(0,0,0,0.03)] relative overflow-hidden">
+            {/* PANEL DE ESPECIFICACIONES */}
+            <div className="bg-white/60 backdrop-blur-2xl border border-white rounded-[32px] p-6 md:p-8 shadow-[0_8px_32px_rgba(0,0,0,0.03)] relative overflow-hidden">
               <div className="absolute inset-0 bg-gradient-to-tr from-transparent via-white/40 to-transparent pointer-events-none z-0"></div>
 
-              <div className="mb-6 pb-6 border-b border-gray-200/50 relative z-10">
-                <span className="block text-[10px] text-gray-500 font-black uppercase tracking-widest mb-1.5">
+              <div className="mb-6 pb-6 border-b border-slate-200/50 relative z-10">
+                <span className="block text-[10px] text-slate-500 font-black uppercase tracking-widest mb-1.5">
                   Versión y Especificaciones
                 </span>
                 <p className="text-lg font-black text-navy uppercase drop-shadow-sm">
@@ -441,7 +462,7 @@ export default async function VehiculoDetallePage({
                 <span className="bg-sky-500/10 backdrop-blur-md text-[#0145F2] text-[10px] font-black uppercase tracking-widest px-3 py-1.5 rounded-lg border border-sky-500/20 shadow-sm">
                   {esCeroKm ? "0KM" : "USADO"}
                 </span>
-                <span className="bg-gray-100/50 backdrop-blur-md text-gray-600 text-[10px] font-black uppercase tracking-widest px-3 py-1.5 rounded-lg border border-gray-200 shadow-sm">
+                <span className="bg-slate-100 backdrop-blur-md text-slate-600 text-[10px] font-black uppercase tracking-widest px-3 py-1.5 rounded-lg border border-slate-200 shadow-sm">
                   CRÉDITO BNA
                 </span>
               </div>
@@ -457,9 +478,9 @@ export default async function VehiculoDetallePage({
                     </span>
                   )}
                 </div>
-                <p className="text-[11px] text-gray-500 mt-2 font-medium">
+                <p className="text-[11px] text-slate-500 mt-2 font-medium">
                   Incluye flete y formularios.{" "}
-                  <span className="text-gray-400 underline cursor-pointer hover:text-navy transition-colors">
+                  <span className="text-slate-400 underline cursor-pointer hover:text-navy transition-colors">
                     ¿Qué es?
                   </span>
                   <br />
@@ -471,29 +492,29 @@ export default async function VehiculoDetallePage({
                 </p>
               </div>
 
-              <ul className="space-y-5 pt-6 border-t border-gray-200/50 text-sm text-gray-600 relative z-10">
+              <ul className="space-y-5 pt-6 border-t border-slate-200/50 text-sm text-slate-600 relative z-10">
                 <li className="flex items-start gap-3">
-                  <div className="bg-white/60 p-2 rounded-full border border-white shadow-sm">
+                  <div className="bg-white p-2 rounded-full border border-slate-100 shadow-sm">
                     <Clock className="w-4 h-4 text-[#0145F2]" />
                   </div>
                   <div className="mt-1">
                     <strong className="text-navy block text-[11px] uppercase tracking-widest font-black">
                       Disponibilidad
                     </strong>
-                    <span className="text-gray-500 font-medium text-xs">
+                    <span className="text-slate-500 font-medium text-xs">
                       Inmediata
                     </span>
                   </div>
                 </li>
                 <li className="flex items-start gap-3">
-                  <div className="bg-white/60 p-2 rounded-full border border-white shadow-sm">
+                  <div className="bg-white p-2 rounded-full border border-slate-100 shadow-sm">
                     <MapPin className="w-4 h-4 text-[#0145F2]" />
                   </div>
                   <div className="mt-1">
                     <strong className="text-navy block text-[11px] uppercase tracking-widest font-black mb-2">
                       Punto de Venta Oficial
                     </strong>
-                    <div className="inline-flex items-center gap-1.5 bg-white/60 backdrop-blur-md border border-white px-3 py-1.5 rounded-xl shadow-sm">
+                    <div className="inline-flex items-center gap-1.5 bg-white backdrop-blur-md border border-slate-100 px-3 py-1.5 rounded-xl shadow-sm">
                       <span className="text-xs font-black text-navy uppercase tracking-wide">
                         Sucursal {auto.sucursales?.nombre || "Central"}
                       </span>
@@ -502,14 +523,14 @@ export default async function VehiculoDetallePage({
                   </div>
                 </li>
                 <li className="flex items-start gap-3">
-                  <div className="bg-white/60 p-2 rounded-full border border-white shadow-sm">
+                  <div className="bg-white p-2 rounded-full border border-slate-100 shadow-sm">
                     <CreditCard className="w-4 h-4 text-[#0145F2]" />
                   </div>
                   <div className="mt-1">
                     <strong className="text-navy block text-[11px] uppercase tracking-widest font-black">
                       Precio al contado
                     </strong>
-                    <span className="text-xs text-gray-500 font-medium">
+                    <span className="text-xs text-slate-500 font-medium">
                       Se puede financiar, consultar planes disponibles.
                     </span>
                   </div>
@@ -521,7 +542,7 @@ export default async function VehiculoDetallePage({
 
         {/* ================= SECCIÓN AUTOS SIMILARES ================= */}
         {vehiculosSimilares && vehiculosSimilares.length > 0 && (
-          <div className="mt-20 md:mt-28 border-t border-white/60 pt-16 relative z-10">
+          <div className="mt-20 md:mt-28 border-t border-slate-200/50 pt-16 relative z-10">
             <h3 className="text-2xl md:text-3xl font-black text-navy uppercase tracking-tighter mb-8 drop-shadow-sm">
               También podría{" "}
               <span className="text-transparent bg-clip-text bg-gradient-to-r from-navy to-[#0145F2]">
@@ -536,11 +557,11 @@ export default async function VehiculoDetallePage({
                   href={`/catalogo/${simil.slug}`}
                   className="block group h-full focus:outline-none"
                 >
-                  <div className="bg-white/40 backdrop-blur-2xl rounded-[28px] border border-white/60 overflow-hidden flex flex-col h-full shadow-[0_8px_32px_rgba(0,0,0,0.04)] hover:shadow-[0_20px_48px_rgba(1,69,242,0.12)] hover:border-white hover:bg-white/70 transition-all duration-500 relative transform group-hover:-translate-y-1">
+                  <div className="bg-white/60 backdrop-blur-2xl rounded-[28px] border border-white overflow-hidden flex flex-col h-full shadow-[0_8px_32px_rgba(0,0,0,0.04)] hover:shadow-[0_20px_48px_rgba(1,69,242,0.12)] hover:bg-white transition-all duration-500 relative transform group-hover:-translate-y-1">
                     {/* Reflejo hover */}
                     <div className="absolute inset-0 bg-gradient-to-tr from-transparent via-white/40 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-700 pointer-events-none z-20"></div>
 
-                    <div className="relative h-[160px] sm:h-[180px] bg-white/30 flex items-center justify-center overflow-hidden p-3 mix-blend-multiply">
+                    <div className="relative h-[160px] sm:h-[180px] bg-slate-50/50 flex items-center justify-center overflow-hidden p-3 mix-blend-multiply">
                       {simil.multimedia_vehiculos?.[0] ? (
                         <img
                           src={simil.multimedia_vehiculos[0].url_archivo}
@@ -548,26 +569,26 @@ export default async function VehiculoDetallePage({
                           className="w-full h-full object-cover rounded-[20px] group-hover:scale-110 transition-transform duration-700 ease-out"
                         />
                       ) : (
-                        <div className="w-full h-full flex items-center justify-center text-gray-400 text-xs font-medium">
+                        <div className="w-full h-full flex items-center justify-center text-slate-300 text-xs font-medium">
                           Sin foto
                         </div>
                       )}
                     </div>
 
                     <div className="p-5 sm:p-6 flex flex-col flex-grow relative z-10">
-                      <span className="text-[10px] text-gray-500 font-black uppercase tracking-widest mb-1.5">
+                      <span className="text-[10px] text-slate-500 font-black uppercase tracking-widest mb-1.5">
                         {simil.marca} • {simil.anio}
                       </span>
                       <h4 className="text-lg font-black text-navy uppercase leading-tight truncate drop-shadow-sm">
                         {simil.modelo}
                       </h4>
-                      <p className="text-xs text-gray-500 font-medium mt-1 truncate">
+                      <p className="text-xs text-slate-500 font-medium mt-1 truncate">
                         {simil.version || "Ver especificaciones"}
                       </p>
 
-                      <div className="mt-auto pt-5 flex items-end justify-between border-t border-gray-200/50">
+                      <div className="mt-auto pt-5 flex items-end justify-between border-t border-slate-200/50">
                         <div className="flex flex-col">
-                          <span className="text-[9px] text-gray-400 uppercase tracking-widest font-black mb-0.5">
+                          <span className="text-[9px] text-slate-400 uppercase tracking-widest font-black mb-0.5">
                             Desde
                           </span>
                           <span className="text-xl font-black text-navy tracking-tighter">
@@ -577,7 +598,7 @@ export default async function VehiculoDetallePage({
                             )}
                           </span>
                         </div>
-                        <div className="w-9 h-9 rounded-full bg-white border border-gray-100 shadow-sm group-hover:bg-[#0145F2] group-hover:border-[#0145F2] group-hover:text-white flex items-center justify-center transition-all duration-300 text-gray-400 group-hover:shadow-[0_0_15px_rgba(1,69,242,0.4)]">
+                        <div className="w-9 h-9 rounded-full bg-white border border-slate-100 shadow-sm group-hover:bg-[#0145F2] group-hover:border-[#0145F2] group-hover:text-white flex items-center justify-center transition-all duration-300 text-slate-400 group-hover:shadow-[0_0_15px_rgba(1,69,242,0.4)]">
                           <ChevronRight className="w-4 h-4" />
                         </div>
                       </div>
@@ -592,14 +613,15 @@ export default async function VehiculoDetallePage({
 
       {/* ================= BOTÓN FLOTANTE MÓVIL STICKY (FONDO TRANSPARENTE / FLOTANDO) ================= */}
       <div className="lg:hidden sticky bottom-0 w-full bg-transparent p-4 z-[40] mt-auto pointer-events-none">
-        <div className="pointer-events-auto">
+        <div className="pointer-events-auto flex gap-2">
+          <AgendarVisita auto={auto} isMobile={true} />
           <a
             href={linkWhatsApp}
             target="_blank"
             rel="noopener noreferrer"
-            className="block w-full bg-gradient-to-r from-[#0145F2] to-sky-500 hover:from-blue-600 hover:to-sky-400 text-white font-black text-sm uppercase tracking-widest text-center py-4 rounded-2xl shadow-[0_10px_30px_rgba(1,69,242,0.4)] transition-all duration-300 active:scale-95"
+            className="flex-[2] bg-gradient-to-r from-[#0145F2] to-sky-500 hover:from-blue-600 hover:to-sky-400 text-white font-black text-[10px] sm:text-xs uppercase tracking-widest text-center py-4 rounded-2xl shadow-[0_10px_30px_rgba(1,69,242,0.4)] transition-all duration-300 active:scale-95 flex items-center justify-center"
           >
-            Consultar a un Asesor
+            WhatsApp
           </a>
         </div>
       </div>
