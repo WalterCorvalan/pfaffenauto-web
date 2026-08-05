@@ -36,7 +36,6 @@ const formSchema = z.object({
   origen: z.string().optional(),
   estado: z.string().optional(),
 
-  // SOLUCIÓN AL ERROR: z.boolean() estricto sin .default()
   stock_fisico: z.boolean(),
   destacado: z.boolean(),
 
@@ -101,8 +100,8 @@ export default function VehiculoForm({ modo, autoId }: VehiculoFormProps) {
     defaultValues: {
       origen: "Comprado",
       estado: "Disponible",
-      stock_fisico: true, // Los defaults se manejan acá, no en Zod
-      destacado: false, // Los defaults se manejan acá, no en Zod
+      stock_fisico: true,
+      destacado: false,
       anio: String(new Date().getFullYear()),
       kilometraje: "0",
     },
@@ -159,8 +158,8 @@ export default function VehiculoForm({ modo, autoId }: VehiculoFormProps) {
             transmision: vehiculo.transmision || "",
             origen: vehiculo.origen || "",
             estado: vehiculo.estado || "",
-            stock_fisico: vehiculo.stock_fisico !== false, // Garantizamos booleano
-            destacado: vehiculo.destacado === true, // Garantizamos booleano
+            stock_fisico: vehiculo.stock_fisico !== false,
+            destacado: vehiculo.destacado === true,
             condicion_web: vehiculo.condicion_web || "",
             numero_motor: vehiculo.numero_motor || "",
             numero_chasis: vehiculo.numero_chasis || "",
@@ -218,7 +217,6 @@ export default function VehiculoForm({ modo, autoId }: VehiculoFormProps) {
     }
   };
 
-  // Función inferida naturalmente
   const onSubmit = async (data: FormValues) => {
     if (archivos.length === 0 && imagenesExistentes.length === 0) {
       setErrorArchivos("Debés mantener o subir al menos una foto o video.");
@@ -298,6 +296,7 @@ export default function VehiculoForm({ modo, autoId }: VehiculoFormProps) {
           .eq("id", autoId);
         if (error) throw error;
       }
+      
       if (modo === "editar" && imagenesA_Eliminar.length > 0) {
         await supabase
           .from("multimedia_vehiculos")
@@ -308,8 +307,7 @@ export default function VehiculoForm({ modo, autoId }: VehiculoFormProps) {
       let ordenSiguiente = imagenesExistentes.length;
       const imagenesAInsertar = [];
 
-      // ================= SOLUCIÓN: BUCLE SECUENCIAL =================
-      // Subimos las fotos UNA POR UNA para no saturar el servidor ni Bunny.net
+      // Subimos las fotos de forma secuencial
       for (let i = 0; i < archivos.length; i++) {
         try {
           const archivo = archivos[i];
@@ -327,9 +325,8 @@ export default function VehiculoForm({ modo, autoId }: VehiculoFormProps) {
           console.error(`Error subiendo la foto ${i + 1}:`, imgErr);
         }
       }
-      // ==============================================================
 
-      // Insertamos todas las imágenes válidas en la base de datos
+      // Insertamos todas las imágenes válidas
       if (imagenesAInsertar.length > 0) {
         const { error: insertError } = await supabase
           .from("multimedia_vehiculos")
@@ -370,7 +367,7 @@ export default function VehiculoForm({ modo, autoId }: VehiculoFormProps) {
       ...nuevos.map((f) => URL.createObjectURL(f)),
     ]);
     setErrorArchivos("");
-    e.target.value = "";
+    e.target.value = ""; // Reseteamos el input
   };
 
   const eliminarArchivoNuevo = (index: number) => {
@@ -396,7 +393,9 @@ export default function VehiculoForm({ modo, autoId }: VehiculoFormProps) {
   return (
     <div className="w-full h-full text-white py-6 md:py-10 px-4 md:px-8">
       <div className="max-w-2xl mx-auto">
+        
         <button
+          type="button" // BLINDAJE EXTRA AQUÍ
           onClick={() => router.back()}
           className="text-gray-400 hover:text-white flex items-center gap-2 text-sm transition-colors py-2 mb-4"
         >
@@ -674,12 +673,11 @@ export default function VehiculoForm({ modo, autoId }: VehiculoFormProps) {
                     />
                   </div>
                 )}
-                <div
-                  onClick={(e) => {
-                    e.preventDefault();
-                    document.getElementById("file-upload")?.click();
-                  }}
-                  className={`w-full border-2 border-dashed rounded-xl p-8 text-center cursor-pointer transition-all duration-200 hover:bg-white/5 hover:border-[#0055A4] ${errorArchivos ? "border-red-500" : "border-white/10"}`}
+                
+                {/* SOLUCIÓN FINAL: USANDO UN LABEL HTML ESTÁNDAR */}
+                <label
+                  htmlFor="file-upload"
+                  className={`w-full border-2 border-dashed rounded-xl p-8 flex flex-col items-center justify-center cursor-pointer transition-all duration-200 hover:bg-white/5 hover:border-[#0055A4] ${errorArchivos ? "border-red-500" : "border-white/10"}`}
                 >
                   <input
                     type="file"
@@ -689,18 +687,17 @@ export default function VehiculoForm({ modo, autoId }: VehiculoFormProps) {
                     onChange={handleSeleccionarArchivos}
                     className="hidden"
                   />
-                  <div className="pointer-events-none">
-                    <Upload className="w-10 h-10 text-[#0055A4] mx-auto mb-3" />
-                    <span className="block text-base font-semibold text-white">
-                      Clickeá aquí para subir fotografías
-                    </span>
-                    <span className="block text-sm text-gray-400 mt-2">
-                      Podés seleccionar una o varias imágenes o videos.
-                    </span>
-                  </div>
-                </div>
+                  <Upload className="w-10 h-10 text-[#0055A4] mb-3" />
+                  <span className="block text-base font-semibold text-white">
+                    Clickeá aquí para subir fotografías
+                  </span>
+                  <span className="block text-sm text-gray-400 mt-2">
+                    Podés seleccionar una o varias imágenes o videos.
+                  </span>
+                </label>
+                
                 {errorArchivos && (
-                  <span className="text-red-500 text-xs block">
+                  <span className="text-red-500 text-xs block text-center mt-2">
                     {errorArchivos}
                   </span>
                 )}
@@ -726,7 +723,7 @@ export default function VehiculoForm({ modo, autoId }: VehiculoFormProps) {
                       <button
                         type="button"
                         onClick={() => eliminarImagenExistente(img.id)}
-                        className="absolute top-1 right-1 bg-red-600 text-white p-1 rounded-full"
+                        className="absolute top-1 right-1 bg-red-600 text-white p-1 rounded-full opacity-0 group-hover:opacity-100 transition-opacity"
                       >
                         <X className="w-3 h-3" />
                       </button>
@@ -749,7 +746,7 @@ export default function VehiculoForm({ modo, autoId }: VehiculoFormProps) {
                       <button
                         type="button"
                         onClick={() => eliminarArchivoNuevo(index)}
-                        className="absolute top-1 right-1 bg-red-600 text-white p-1 rounded-full"
+                        className="absolute top-1 right-1 bg-red-600 text-white p-1 rounded-full opacity-0 group-hover:opacity-100 transition-opacity"
                       >
                         <X className="w-3 h-3" />
                       </button>
