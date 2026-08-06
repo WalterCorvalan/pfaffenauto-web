@@ -78,18 +78,7 @@ export default function Testimonials() {
                     <span className="text-[10px] text-gray-500 uppercase tracking-wide font-semibold">{review.date}</span>
                   </div>
                 </div>
-                
-                {/* Badge de fuente */}
-                {review.source === "Compra Verificada" ? (
-                  <div className="flex items-center gap-1 bg-emerald-50 text-emerald-700 px-2 py-1 rounded text-[10px] font-bold uppercase">
-                    <CheckCircle2 className="w-3 h-3" /> Verificada
-                  </div>
-                ) : (
-                  <div className="flex items-center gap-1 bg-gray-50 text-gray-600 px-2 py-1 rounded text-[10px] font-bold uppercase border border-gray-200">
-                    Google
-                  </div>
-                )}
-              </div>
+              </div> 
 
               {/* Estrellas */}
               <div className="flex items-center gap-1 mb-4">
@@ -106,10 +95,6 @@ export default function Testimonials() {
                 "{review.text}"
               </blockquote>
 
-              {/* Footer de Tarjeta (Pulgar arriba) */}
-              <div className="mt-auto pt-4 border-t border-gray-100 flex items-center text-gray-400 text-xs font-medium">
-                <ThumbsUp className="w-3.5 h-3.5 mr-1.5" /> Útil
-              </div>
             </div>
           ))}
         </div>

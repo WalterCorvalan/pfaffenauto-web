@@ -86,9 +86,12 @@ export default function FloatingChatbot() {
       setLoading(false);
     }
   };
+  
+  // Reemplazá el div padre del FloatingChatbot.tsx (aprox línea 66):
 
   return (
-    <div className="fixed bottom-6 right-6 z-50 font-sans">
+    // Agregamos bottom-24 en móviles y bottom-6 en PC
+    <div className="fixed bottom-24 lg:bottom-6 right-4 lg:right-6 z-[60] font-sans">
       {/* Botón flotante para abrir/cerrar */}
       {!isOpen && (
         <button

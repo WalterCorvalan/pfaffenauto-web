@@ -2,11 +2,13 @@
 
 import React, { useState, useEffect } from "react";
 import Link from "next/link";
-import { ChevronRight, ArrowUpRight } from "lucide-react";
+import { ChevronRight, ArrowUpRight, Clock } from "lucide-react";
 import { motion, Variants } from "framer-motion";
 
 interface StockProps {
   vehiculos: any[] | null;
+  onSelectParaComparar?: (auto: any) => void; // <--- Agregado
+  autosParaComparar?: any[];                   // <--- Agregado
 }
 
 // Función para limpiar textos
@@ -43,7 +45,7 @@ const itemVariants: Variants = {
 export default function Stock({ vehiculos }: StockProps) {
   const listaVehiculos = vehiculos || [];
 
-  // Estado para la lista de "Vistos recientemente" (Carga desde LocalStorage con fallback al stock general)
+  // Estado para la lista de "Vistos recientemente"
   const [vistosRecientes, setVistosRecientes] = useState<any[]>([]);
 
   useEffect(() => {
@@ -51,7 +53,7 @@ export default function Stock({ vehiculos }: StockProps) {
       const stored = localStorage.getItem("pfaffen_vistos");
       if (stored) {
         const parsed = JSON.parse(stored);
-        if (parsed && parsed.length > 0) {
+        if (parsed && Array.isArray(parsed)) {
           setVistosRecientes(parsed.slice(0, 10)); // Top 10
           return;
         }
@@ -59,9 +61,9 @@ export default function Stock({ vehiculos }: StockProps) {
     } catch (e) {
       console.error("Error leyendo vistos recientes", e);
     }
-    // Fallback: si no hay historial, tomamos los primeros 10 autos del stock
-    setVistosRecientes(listaVehiculos.slice(0, 10));
-  }, [listaVehiculos]);
+    // Si no hay historial, se queda vacío. No rellenamos más.
+    setVistosRecientes([]); 
+  }, []);
 
   const suvsDestacadas = listaVehiculos
     .filter((auto) => normalizar(auto.tipo).includes("suv"))
@@ -219,7 +221,7 @@ export default function Stock({ vehiculos }: StockProps) {
                 </Link>
               )}
 
-              {/* TARJETA DERECHA: VISTOS RECIENTEMENTE (Estilo Glassmorphism con scroll para 10 autos) */}
+              {/* TARJETA DERECHA: VISTOS RECIENTEMENTE */}
               <div className="md:col-span-4 bg-white/40 backdrop-blur-2xl border border-white/60 rounded-[32px] p-5 md:p-6 flex flex-col h-[400px] md:h-[450px] shadow-[0_8px_32px_rgba(0,0,0,0.04)]">
                 <div className="mb-4 pb-3 border-b border-white/40 flex items-center justify-between">
                   <h4 className="text-xs font-black text-navy uppercase tracking-widest">
@@ -231,46 +233,57 @@ export default function Stock({ vehiculos }: StockProps) {
                 </div>
 
                 <div className="flex-1 overflow-y-auto pr-1 space-y-3 custom-scrollbar">
-                  {vistosRecientes.map((auto, idx) => {
-                    const precioMostrar =
-                      auto.precio_publicado_usd && !auto.precio_publicado_ars
-                        ? `US$ ${auto.precio_publicado_usd.toLocaleString("es-AR")}`
-                        : auto.precio_publicado_ars
-                          ? `$ ${auto.precio_publicado_ars.toLocaleString("es-AR")}`
-                          : `US$ ${auto.precio_publicado_usd?.toLocaleString("es-AR")}`;
+                  {vistosRecientes.length > 0 ? (
+                    vistosRecientes.map((auto, idx) => {
+                      const precioMostrar =
+                        auto.precio_publicado_usd && !auto.precio_publicado_ars
+                          ? `US$ ${auto.precio_publicado_usd.toLocaleString("es-AR")}`
+                          : auto.precio_publicado_ars
+                            ? `$ ${auto.precio_publicado_ars.toLocaleString("es-AR")}`
+                            : `US$ ${auto.precio_publicado_usd?.toLocaleString("es-AR")}`;
 
-                    const imagenSrc =
-                      auto.imagen ||
-                      auto.multimedia_vehiculos?.[0]?.url_archivo ||
-                      "/placeholder.jpg";
+                      const imagenSrc =
+                        auto.imagen ||
+                        auto.multimedia_vehiculos?.[0]?.url_archivo ||
+                        "/placeholder.jpg";
 
-                    return (
-                      <Link
-                        key={`visto-${auto.id}-${idx}`}
-                        href={`/catalogo/${auto.slug}`}
-                        className="bg-white/60 backdrop-blur-md border border-white/80 rounded-2xl p-2.5 flex gap-3 items-center group hover:bg-white hover:border-[#0145F2]/40 transition-all shadow-sm focus:outline-none"
-                      >
-                        <div className="h-14 w-16 shrink-0 rounded-xl overflow-hidden relative bg-white/50 mix-blend-multiply">
-                          <img
-                            src={imagenSrc}
-                            alt={auto.modelo}
-                            className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
-                          />
-                        </div>
-                        <div className="flex flex-col justify-center w-full min-w-0 pr-1">
-                          <span className="text-[9px] text-gray-400 font-bold uppercase tracking-widest truncate">
-                            {auto.marca}
-                          </span>
-                          <h5 className="text-xs font-black text-navy leading-tight truncate uppercase">
-                            {auto.modelo}
-                          </h5>
-                          <p className="text-[#] font-black text-xs mt-0.5">
-                            {precioMostrar}
-                          </p>
-                        </div>
-                      </Link>
-                    );
-                  })}
+                      return (
+                        <Link
+                          key={`visto-${auto.id}-${idx}`}
+                          href={`/catalogo/${auto.slug}`}
+                          className="bg-white/60 backdrop-blur-md border border-white/80 rounded-2xl p-2.5 flex gap-3 items-center group hover:bg-white hover:border-[#0145F2]/40 transition-all shadow-sm focus:outline-none"
+                        >
+                          <div className="h-14 w-16 shrink-0 rounded-xl overflow-hidden relative bg-white/50 mix-blend-multiply">
+                            <img
+                              src={imagenSrc}
+                              alt={auto.modelo}
+                              className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+                            />
+                          </div>
+                          <div className="flex flex-col justify-center w-full min-w-0 pr-1">
+                            <span className="text-[9px] text-gray-400 font-bold uppercase tracking-widest truncate">
+                              {auto.marca}
+                            </span>
+                            <h5 className="text-xs font-black text-navy leading-tight truncate uppercase">
+                              {auto.modelo}
+                            </h5>
+                            <p className="text-[#] font-black text-xs mt-0.5">
+                              {precioMostrar}
+                            </p>
+                          </div>
+                        </Link>
+                      );
+                    })
+                  ) : (
+                    // ====== ESTADO VACÍO ELEGANTE ======
+                    <div className="h-full flex flex-col items-center justify-center text-center px-4 opacity-60">
+                      <div className="w-12 h-12 bg-white/50 rounded-full flex items-center justify-center mb-3">
+                        <Clock className="w-5 h-5 text-navy" />
+                      </div>
+                      <p className="text-xs font-black text-navy uppercase tracking-widest mb-1">Historial vacío</p>
+                      <p className="text-[10px] text-slate-500 font-medium">Aún no viste ningún vehículo. Explorá nuestro catálogo y aparecerán acá.</p>
+                    </div>
+                  )}
                 </div>
               </div>
             </div>

@@ -7,24 +7,46 @@ export default function BotonesInteractivos({ auto }: { auto: any }) {
   const [isFav, setIsFav] = useState(false);
   const [copied, setCopied] = useState(false);
 
-  // Al cargar, verificamos si el auto ya está en favoritos
   useEffect(() => {
+    // 1. Verificamos si ya está en favoritos
     const favs = JSON.parse(localStorage.getItem("pfaffen_favs") || "[]");
     if (favs.some((f: any) => f.id === auto.id)) {
       setIsFav(true);
     }
-  }, [auto.id]);
+
+    // 2. REGISTRAMOS LA VISITA EN "VISTOS RECIENTEMENTE"
+    try {
+      let vistos = JSON.parse(localStorage.getItem("pfaffen_vistos") || "[]");
+      // Si el auto ya estaba en la lista, lo sacamos para volver a ponerlo primero
+      vistos = vistos.filter((v: any) => v.id !== auto.id);
+      
+      // Agregamos el auto al inicio del array
+      vistos.unshift({
+        id: auto.id,
+        marca: auto.marca,
+        modelo: auto.modelo,
+        slug: auto.slug,
+        precio_publicado_ars: auto.precio_publicado_ars,
+        precio_publicado_usd: auto.precio_publicado_usd,
+        imagen: auto.multimedia_vehiculos?.[0]?.url_archivo
+      });
+      
+      // Guardamos solo los últimos 10 para no saturar la memoria
+      vistos = vistos.slice(0, 10);
+      localStorage.setItem("pfaffen_vistos", JSON.stringify(vistos));
+    } catch (e) {
+      console.error("Error guardando en vistos recientes", e);
+    }
+  }, [auto.id, auto.marca, auto.modelo, auto.slug, auto.precio_publicado_ars, auto.precio_publicado_usd, auto.multimedia_vehiculos]);
 
   const toggleFav = () => {
     let favs = JSON.parse(localStorage.getItem("pfaffen_favs") || "[]");
     
     if (isFav) {
-      // Si ya es favorito, lo sacamos
       favs = favs.filter((f: any) => f.id !== auto.id);
       localStorage.setItem("pfaffen_favs", JSON.stringify(favs));
       setIsFav(false);
     } else {
-      // Si no es favorito, lo guardamos con datos básicos por si luego armás una página de "Mis Favoritos"
       favs.push({
         id: auto.id,
         marca: auto.marca,
@@ -44,7 +66,6 @@ export default function BotonesInteractivos({ auto }: { auto: any }) {
     const title = `${auto.marca} ${auto.modelo} - Pfaffen Autos`;
 
     if (navigator.share) {
-      // Usa el menú nativo de compartir en celulares
       try {
         await navigator.share({
           title: title,
@@ -54,7 +75,6 @@ export default function BotonesInteractivos({ auto }: { auto: any }) {
         console.log("Error compartiendo", err);
       }
     } else {
-      // Fallback para PC: copia el link al portapapeles
       navigator.clipboard.writeText(url);
       setCopied(true);
       setTimeout(() => setCopied(false), 2000);

@@ -3,9 +3,9 @@
 import React from "react";
 import { WobbleCard } from "./ui/wobble-card";
 import Link from "next/link";
-import { ArrowRight, Calculator, Banknote, CarFront, Sparkles } from "lucide-react";
+import { ArrowRight, ShieldCheck, Banknote, CarFront, Sparkles } from "lucide-react";
 
-export default function ServiciosWobble() {
+export default function Servicios() {
   return (
     <section className="py-24 bg-transparent relative overflow-hidden border-t border-transparent">
       
@@ -28,7 +28,7 @@ export default function ServiciosWobble() {
         {/* ================= GRILLA DE WOBBLE CARDS ================= */}
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 max-w-7xl mx-auto w-full">
           
-          {/* TARJETA 1: COTIZAR */}
+          {/* TARJETA 1: CONSIGNAR / COMPRAMOS TU AUTO */}
           <WobbleCard
             containerClassName="col-span-1 lg:col-span-2 h-full bg-[#0d1631] relative overflow-hidden group shadow-[0_12px_40px_rgba(11,19,41,0.25)] border border-slate-700/40 rounded-[32px]"
             className="p-6 md:p-10 flex flex-col h-full min-h-[420px]"
@@ -36,20 +36,20 @@ export default function ServiciosWobble() {
             {/* Contenido (Textos y Botón) por encima de todo */}
             <div className="relative z-20 flex flex-col flex-1">
               <div className="w-12 h-12 bg-white/5 border border-white/10 rounded-[14px] flex items-center justify-center mb-6 shadow-inner">
-                <Calculator className="w-5 h-5 text-sky-400" />
+                <CarFront className="w-5 h-5 text-sky-400" />
               </div>
               <h2 className="text-left text-balance text-3xl md:text-4xl lg:text-5xl font-black tracking-tight text-white mb-4 leading-tight drop-shadow-md">
-                Cotizá tu usado en <br className="hidden md:block" />el acto y llevalo.
+                Compramos tu auto <br className="hidden md:block" />en el momento.
               </h2>
               <p className="text-left text-sm md:text-base text-slate-300 font-medium mb-8 leading-relaxed max-w-sm">
-                Entregá tu vehículo como parte de pago. Te aseguramos una tasación justa y transparente para que te subas a tu próximo auto sin demoras.
+                Dejanos tu vehículo en consignación para obtener la máxima rentabilidad, o te lo compramos en efectivo hoy mismo sin vueltas.
               </p>
               <div className="mt-auto">
                 <Link 
-                  href="/cotizador" 
+                  href="/consignacion" 
                   className="inline-flex items-center gap-2 bg-white text-navy hover:bg-slate-100 font-black text-[10px] md:text-xs uppercase tracking-widest px-6 py-3.5 rounded-full transition-all active:scale-95 shadow-xl group/btn"
                 >
-                  Cotizar Ahora <ArrowRight className="w-4 h-4 group-hover/btn:translate-x-1 transition-transform" />
+                  Consignar Auto <ArrowRight className="w-4 h-4 group-hover/btn:translate-x-1 transition-transform" />
                 </Link>
               </div>
             </div>
@@ -60,59 +60,61 @@ export default function ServiciosWobble() {
               <div className="absolute inset-0 bg-gradient-to-t lg:bg-gradient-to-l from-transparent via-[#0d1631]/80 to-[#0d1631] z-10"></div>
               <img
                 src="https://images.unsplash.com/photo-1560958089-b8a1929cea89?q=80&w=800&auto=format&fit=crop"
-                alt="Cotizar auto usado"
+                alt="Consignar auto"
                 className="w-full h-full object-cover object-right-bottom opacity-50 mix-blend-screen group-hover:opacity-70 transition-all duration-700 ease-out"
               />
             </div>
           </WobbleCard>
 
-          {/* TARJETA 2: VENDÉ TU AUTO */}
+          {/* TARJETA 2: SEGUROS (LA CAJA) */}
           <WobbleCard 
             containerClassName="col-span-1 bg-[#111520] relative overflow-hidden flex flex-col justify-center shadow-[0_12px_40px_rgba(15,23,42,0.3)] border border-slate-700/50 group rounded-[32px]"
             className="p-6 md:p-10 flex flex-col h-full min-h-[380px]"
           >
             <div className="relative z-20 flex flex-col flex-1">
               <div className="w-12 h-12 bg-white/5 border border-white/10 rounded-[14px] flex items-center justify-center mb-6 shadow-inner">
-                <Banknote className="w-5 h-5 text-slate-300" />
+                <ShieldCheck className="w-5 h-5 text-emerald-400" />
               </div>
               <h2 className="text-left text-balance text-3xl md:text-4xl font-black tracking-tight text-white mb-4 leading-tight drop-shadow-md">
-                Vendé tu auto en <br className="hidden md:block"/>menos de 24 hrs.
+                Asegurá tu auto <br className="hidden md:block"/>con La Caja.
               </h2>
               <p className="text-left text-sm md:text-base text-slate-400 font-medium mb-8 leading-relaxed max-w-[26rem]">
-                Efectivo inmediato, transferencia segura y 100% formal. Vende tu unidad de forma directa y sin complicaciones.
+                Llevate tu vehículo 100% protegido desde el primer kilómetro. Cotizá en el acto la mejor cobertura del mercado.
               </p>
               <div className="mt-auto">
-                <Link 
-                  href="/vender" 
+                <a 
+                  href="https://www.lacaja.com.ar" 
+                  target="_blank"
+                  rel="noopener noreferrer"
                   className="inline-flex items-center gap-2 bg-slate-700/60 hover:bg-slate-600 border border-slate-600/50 text-white backdrop-blur-md font-black text-[10px] md:text-xs uppercase tracking-widest px-6 py-3.5 rounded-full transition-all active:scale-95 shadow-lg group/btn"
                 >
-                  Vender mi auto <ArrowRight className="w-4 h-4 group-hover/btn:translate-x-1 transition-transform" />
-                </Link>
+                  Cotizar en La Caja <ArrowRight className="w-4 h-4 group-hover/btn:translate-x-1 transition-transform" />
+                </a>
               </div>
             </div>
           </WobbleCard>
 
-          {/* TARJETA 3: CONSIGNAR */}
+          {/* TARJETA 3: VENDER MI AUTO */}
           <WobbleCard 
             containerClassName="col-span-1 lg:col-span-3 bg-[#1e293b] relative overflow-hidden group shadow-[0_12px_40px_rgba(15,23,42,0.25)] border border-slate-600/40 rounded-[32px]"
             className="p-6 md:p-10 flex flex-col h-full min-h-[420px]"
           >
             <div className="relative z-20 flex flex-col flex-1 w-full lg:w-1/2">
               <div className="w-12 h-12 bg-white/5 border border-white/10 rounded-[14px] flex items-center justify-center mb-6 shadow-inner">
-                <CarFront className="w-5 h-5 text-sky-400" />
+                <Banknote className="w-5 h-5 text-sky-400" />
               </div>
               <h2 className="text-left text-balance text-3xl md:text-4xl lg:text-5xl font-black tracking-tighter text-white mb-4 leading-tight drop-shadow-md">
-                Consignación Premium: <br />Nosotros vendemos por vos.
+                Vendé tu auto: <br />Cotización rápida y segura.
               </h2>
               <p className="text-left text-sm md:text-base text-slate-300 font-medium mb-8 leading-relaxed max-w-md">
-                Dejanos tu vehículo y despreocupate de la gestión. Nos encargamos de la exposición, atención comercial y seguridad jurídica. <strong className="text-white font-bold">Máxima rentabilidad asegurada.</strong>
+                Efectivo inmediato, transferencia segura y 100% formal. Vende tu unidad de forma directa y sin complicaciones al mejor precio del mercado.
               </p>
               <div className="mt-auto">
                 <Link 
-                  href="/consignacion" 
+                  href="/vender" 
                   className="inline-flex items-center gap-2 bg-white text-navy hover:bg-slate-100 font-black text-[10px] md:text-xs uppercase tracking-widest px-6 py-3.5 rounded-full transition-all active:scale-95 shadow-xl group/btn2"
                 >
-                  Quiero Consignar Mi Auto <ArrowRight className="w-4 h-4 group-hover/btn2:translate-x-1 transition-transform" />
+                  Vender Mi Auto <ArrowRight className="w-4 h-4 group-hover/btn2:translate-x-1 transition-transform" />
                 </Link>
               </div>
             </div>
@@ -123,7 +125,7 @@ export default function ServiciosWobble() {
               <div className="absolute inset-0 bg-gradient-to-t lg:bg-gradient-to-l from-transparent via-[#1e293b]/90 to-[#1e293b] z-10"></div>
               <img
                 src="https://images.unsplash.com/photo-1552519507-da3b142c6e3d?q=80&w=1000&auto=format&fit=crop"
-                alt="Consignación de autos"
+                alt="Vender auto de forma segura"
                 className="w-full h-full object-cover object-center opacity-60 mix-blend-screen group-hover:opacity-80 transition-all duration-700 ease-out"
               />
             </div>

@@ -2,10 +2,15 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import { ArrowUpRight, ArrowUp, ShieldCheck } from "lucide-react";
 
 export default function Footer() {
   const pathname = usePathname();
   const isPanel = pathname?.startsWith("/panel");
+
+  const scrollToTop = () => {
+    window.scrollTo({ top: 0, behavior: "smooth" });
+  };
 
   const socials = [
     {
@@ -30,109 +35,156 @@ export default function Footer() {
     },
   ];
 
+  const links = [
+    { label: "Catálogo de Autos", href: "/catalogo" },
+    { label: "Nuestras Sucursales", href: "/#sucursales" },
+    { label: "Cotizar mi Usado", href: "/cotizador" },
+    { label: "Consignar Vehículo", href: "/consignacion" },
+    { label: "Nuestra Historia", href: "/nosotros" },
+    { label: "Trabajá con nosotros", href: "/trabaja-con-nosotros" },
+  ];
+
   return (
-    <footer className="bg-[#0b1329] border-t border-slate-800/80 pt-20 pb-28 md:pb-12 relative overflow-hidden flex flex-col items-center">
+    <footer className="bg-[#050A15] pt-24 pb-12 relative overflow-hidden flex flex-col items-center border-t border-white/5">
       
-      {/* Resplandor corporativo sutil superior */}
-      <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[600px] h-[200px] bg-[#0145F2]/10 blur-[100px] pointer-events-none z-0 rounded-full"></div>
+      {/* ================= EFECTOS DE LUCES PARA GLASSMORPHISM ================= */}
+      <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[800px] h-[300px] bg-[#0145F2]/15 blur-[120px] pointer-events-none z-0 rounded-full"></div>
+      <div className="absolute bottom-[-10%] left-[-5%] w-[400px] h-[400px] bg-sky-500/10 blur-[100px] pointer-events-none z-0 rounded-full"></div>
+      <div className="absolute top-[20%] right-[-10%] w-[400px] h-[400px] bg-indigo-500/10 blur-[120px] pointer-events-none z-0 rounded-full"></div>
 
-      <div className="max-w-6xl mx-auto px-6 w-full relative z-10 flex flex-col items-center">
+      {/* ================= MARCA DE AGUA GIGANTE ================= */}
+      <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 text-[15vw] font-black text-white/[0.02] uppercase tracking-tighter pointer-events-none select-none z-0 w-full text-center whitespace-nowrap overflow-hidden">
+        Pfaffen
+      </div>
+
+      <div className="max-w-7xl mx-auto px-6 w-full relative z-10">
         
-        {/* LOGO CON LA "R" */}
-        <Link 
-          href="/" 
-          className="group mb-10 relative inline-block transition-transform duration-300 hover:scale-105"
-        >
-          <img
-            src="/logo.png"
-            alt="Pfaffen Autos"
-            className="h-8 md:h-10 w-auto invert brightness-0 drop-shadow-md"
-          />
-          <img
-            src="/r.png"
-            alt="Marca Registrada"
-            className="absolute -top-1 -right-3.5 w-3 h-3 object-contain invert brightness-0 opacity-80"
-          />
-        </Link>
-
-        {/* NAVEGACIÓN PRINCIPAL (Minimalista y espaciada) */}
-        <nav className="flex flex-wrap justify-center items-center gap-x-8 gap-y-4 mb-12">
-          <Link href="/catalogo" className="text-xs font-bold uppercase tracking-widest text-slate-400 hover:text-white transition-colors">
-            Catálogo
-          </Link>
-          <Link href="/#sucursales" className="text-xs font-bold uppercase tracking-widest text-slate-400 hover:text-white transition-colors">
-            Sucursales
-          </Link>
-          <Link href="/cotizador" className="text-xs font-bold uppercase tracking-widest text-slate-400 hover:text-white transition-colors">
-            Cotizar Usado
-          </Link>
-          <Link href="/consignacion" className="text-xs font-bold uppercase tracking-widest text-slate-400 hover:text-white transition-colors">
-            Consignación
-          </Link>
-          <Link href="/nosotros" className="text-xs font-bold uppercase tracking-widest text-slate-400 hover:text-white transition-colors">
-            Nosotros
-          </Link>
+        {/* ================= ESTRUCTURA BENTO BOX ================= */}
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 mb-16">
           
-          {/* NUEVO ENLACE RRHH */}
-          <Link href="/trabaja-con-nosotros" className="text-xs font-bold uppercase tracking-widest text-slate-400 hover:text-white transition-colors">
-            Trabajá con nosotros
-          </Link>
+          {/* BLOQUE 1: Marca y Redes (Ocupa 5 columnas) */}
+          <div className="lg:col-span-5 bg-white/[0.03] backdrop-blur-2xl border border-white/10 p-8 md:p-10 rounded-[32px] shadow-[0_8px_32px_rgba(0,0,0,0.3)] flex flex-col justify-between group hover:bg-white/[0.05] transition-colors duration-500">
+            <div>
+              <Link href="/" className="relative inline-block mb-6">
+                <img
+                  src="/logo.png"
+                  alt="Pfaffen Autos"
+                  className="h-8 md:h-10 w-auto invert brightness-0 drop-shadow-[0_0_15px_rgba(255,255,255,0.2)]"
+                />
+                <img
+                  src="/r.png"
+                  alt="Marca Registrada"
+                  className="absolute -top-1 -right-3.5 w-3 h-3 object-contain invert brightness-0 opacity-80"
+                />
+              </Link>
+              <p className="text-slate-400 text-sm leading-relaxed max-w-sm font-medium">
+                Revolucionando la experiencia de compra y venta de vehículos en Zona Norte. Confiabilidad, transparencia y tecnología en cada kilómetro.
+              </p>
+            </div>
 
-          {isPanel ? (
-            <Link href="/" className="text-xs font-bold uppercase tracking-widest text-sky-400 hover:text-sky-300 transition-colors">
-              Volver a la Web
-            </Link>
-          ) : (
-            <Link href="/login" className="text-xs font-bold uppercase tracking-widest text-sky-400 hover:text-sky-300 transition-colors">
-              Acceso Staff
-            </Link>
-          )}
-        </nav>
+            <div className="mt-12">
+              <span className="text-[10px] font-black text-slate-500 uppercase tracking-widest block mb-4">Seguinos en</span>
+              <div className="flex items-center gap-3">
+                {socials.map((s) => (
+                  <a
+                    key={s.name}
+                    href={s.href}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    aria-label={s.name}
+                    className="w-11 h-11 rounded-2xl bg-white/5 border border-white/10 flex items-center justify-center text-slate-400 hover:text-white hover:bg-[#0145F2] hover:border-[#0145F2] transition-all duration-300 shadow-lg"
+                  >
+                    <svg className="w-4 h-4 fill-current" viewBox="0 0 24 24">
+                      <path d={s.path} />
+                    </svg>
+                  </a>
+                ))}
+              </div>
+            </div>
+          </div>
 
-        {/* LÍNEA DIVISORIA SOBRIA */}
-        <div className="w-full border-t border-slate-800 mb-10"></div>
+          {/* BLOQUE 2: Navegación Rápida (Ocupa 3 columnas) */}
+          <div className="lg:col-span-3 bg-white/[0.02] backdrop-blur-2xl border border-white/5 p-8 md:p-10 rounded-[32px] flex flex-col">
+            <h3 className="text-white text-lg font-black tracking-tight mb-6 flex items-center gap-2">
+              Explorar
+            </h3>
+            <ul className="space-y-4 flex-1">
+              {links.map((link) => (
+                <li key={link.label}>
+                  <Link 
+                    href={link.href} 
+                    className="text-slate-400 hover:text-white text-sm font-bold flex items-center group transition-colors"
+                  >
+                    <span className="w-0 overflow-hidden group-hover:w-4 transition-all duration-300 ease-out text-[#0145F2]">
+                      <ArrowUpRight className="w-3.5 h-3.5" />
+                    </span>
+                    {link.label}
+                  </Link>
+                </li>
+              ))}
+              
+              {/* Acceso Staff Dinámico */}
+              <li className="pt-4 mt-auto border-t border-white/10">
+                {isPanel ? (
+                  <Link href="/" className="text-sky-400 hover:text-sky-300 text-xs font-black uppercase tracking-widest flex items-center gap-2 transition-colors">
+                    Volver a la Web
+                  </Link>
+                ) : (
+                  <Link href="/login" className="text-sky-400 hover:text-sky-300 text-xs font-black uppercase tracking-widest flex items-center gap-2 transition-colors">
+                    Acceso Staff
+                  </Link>
+                )}
+              </li>
+            </ul>
+          </div>
 
-        {/* SECCIÓN INSTITUCIONAL / BADGES (Nollame, Data Fiscal, Acceso a la Información, SSN) */}
-        <div className="w-full flex flex-wrap justify-center items-center gap-6 mb-12 opacity-80 hover:opacity-100 transition-opacity">
-          <div className="bg-white px-3 py-1.5 rounded-lg flex items-center justify-center shadow-sm h-10">
-            <span className="text-[10px] font-black text-slate-900 tracking-wider">Nóllame (REGISTRO)</span>
+          {/* BLOQUE 3: Respaldo Legal e Institucional (Ocupa 4 columnas) */}
+          <div className="lg:col-span-4 bg-gradient-to-br from-[#0145F2]/10 to-transparent backdrop-blur-2xl border border-white/10 p-8 md:p-10 rounded-[32px] flex flex-col justify-between">
+            <div>
+              <h3 className="text-white text-lg font-black tracking-tight mb-2 flex items-center gap-2">
+                <ShieldCheck className="w-5 h-5 text-sky-400" /> Respaldo Oficial
+              </h3>
+              <p className="text-slate-400 text-xs font-medium mb-6">
+                Operamos bajo las normativas vigentes garantizando máxima seguridad en cada transacción.
+              </p>
+            </div>
+            
+            {/* Grilla de Badges de Cristal */}
+            <div className="grid grid-cols-2 gap-3">
+              <div className="bg-white/5 border border-white/10 p-4 rounded-2xl flex flex-col items-center justify-center text-center shadow-inner hover:bg-white/10 transition-colors">
+                <span className="text-[10px] font-black text-slate-300 uppercase tracking-widest mb-1">Registro</span>
+                <span className="text-xs font-bold text-white">Nóllame</span>
+              </div>
+              <div className="bg-white/5 border border-white/10 p-4 rounded-2xl flex flex-col items-center justify-center text-center shadow-inner hover:bg-white/10 transition-colors">
+                <span className="text-[10px] font-black text-slate-300 uppercase tracking-widest mb-1">AFIP</span>
+                <span className="text-xs font-bold text-sky-400">Data Fiscal</span>
+              </div>
+              <div className="bg-[#0145F2]/20 border border-[#0145F2]/30 p-4 rounded-2xl flex flex-col items-center justify-center text-center shadow-inner hover:bg-[#0145F2]/30 transition-colors">
+                <span className="text-[10px] font-black text-sky-200 uppercase tracking-widest mb-1">Estado</span>
+                <span className="text-xs font-bold text-white">Inf. Pública</span>
+              </div>
+              <div className="bg-white/5 border border-white/10 p-4 rounded-2xl flex flex-col items-center justify-center text-center shadow-inner hover:bg-white/10 transition-colors">
+                <span className="text-[10px] font-black text-slate-300 uppercase tracking-widest mb-1">Seguros</span>
+                <span className="text-xs font-bold text-white">SSN</span>
+              </div>
+            </div>
           </div>
-          <div className="bg-white px-3 py-1.5 rounded-lg flex items-center justify-center shadow-sm h-10">
-            <span className="text-[10px] font-black text-sky-700 tracking-wider">DATA FISCAL</span>
-          </div>
-          <div className="bg-sky-600 px-3 py-1.5 rounded-lg flex items-center justify-center shadow-sm h-10">
-            <span className="text-[10px] font-black text-white tracking-wider">INF. PÚBLICA</span>
-          </div>
-          <div className="bg-white px-3 py-1.5 rounded-lg flex items-center justify-center shadow-sm h-10">
-            <span className="text-[10px] font-black text-slate-800 tracking-wider">SSN (SEGUROS)</span>
-          </div>
+
         </div>
 
-        {/* COPYRIGHT Y REDES SOCIALES */}
-        <div className="w-full flex flex-col md:flex-row justify-between items-center gap-6 pt-2 border-t border-slate-800/60">
-          
-          <p className="text-xs text-slate-500 font-medium text-center md:text-left">
+        {/* ================= BOTTOM BAR ================= */}
+        <div className="w-full flex flex-col md:flex-row justify-between items-center gap-6 border-t border-white/10 pt-8">
+          <p className="text-[11px] sm:text-xs text-slate-500 font-bold uppercase tracking-widest text-center md:text-left">
             © {new Date().getFullYear()} Pfaffen Autos. Todos los derechos reservados.
           </p>
 
-          <div className="flex items-center gap-4">
-            {socials.map((s) => (
-              <a
-                key={s.name}
-                href={s.href}
-                target="_blank"
-                rel="noopener noreferrer"
-                aria-label={s.name}
-                title={s.name}
-                className="w-9 h-9 rounded-full bg-white/5 border border-white/10 flex items-center justify-center text-slate-400 hover:text-white hover:bg-white/10 hover:border-white/20 transition-all duration-300"
-              >
-                <svg className="w-4 h-4 fill-current" viewBox="0 0 24 24">
-                  <path d={s.path} />
-                </svg>
-              </a>
-            ))}
-          </div>
-
+          {/* Botón Volver Arriba */}
+          <button 
+            onClick={scrollToTop}
+            className="flex items-center gap-2 text-[10px] sm:text-xs font-black uppercase tracking-widest text-slate-400 hover:text-white bg-white/5 hover:bg-white/10 border border-white/10 px-5 py-2.5 rounded-full transition-all active:scale-95"
+          >
+            Volver arriba <ArrowUp className="w-3.5 h-3.5" />
+          </button>
         </div>
 
       </div>

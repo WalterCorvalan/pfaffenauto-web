@@ -133,17 +133,18 @@ export default async function VehiculoDetallePage({
   }
 
   return (
-    <div className="min-h-screen bg-[#F8FAFC] font-sans text-foreground flex flex-col relative overflow-x-hidden">
+    // ELIMINAMOS overflow-x-hidden PARA QUE EL EFECTO STICKY DEL FOOTER FUNCIONE
+    <div className="min-h-screen bg-[#F8FAFC] font-sans text-foreground flex flex-col relative">
       
-      {/* ================= EFECTOS ESPACIALES DE FONDO (ESTILO HERO/CATÁLOGO) ================= */}
-      <div className="absolute inset-0 pointer-events-none z-0">
+      {/* EFECTOS ESPACIALES (Encapsulados para no desbordar) */}
+      <div className="absolute inset-0 pointer-events-none z-0 overflow-hidden">
         <div className="absolute inset-0 bg-[linear-gradient(to_right,#e2e8f0_1px,transparent_1px),linear-gradient(to_bottom,#e2e8f0_1px,transparent_1px)] bg-[size:3rem_3rem] [mask-image:radial-gradient(ellipse_80%_50%_at_50%_0%,#000_70%,transparent_100%)] opacity-60"></div>
         <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[800px] h-[400px] bg-[#0145F2]/5 blur-[120px] rounded-full"></div>
         <div className="absolute top-[20%] -left-[10%] w-[500px] h-[500px] bg-sky-300/10 blur-[120px] rounded-full"></div>
         <div className="absolute bottom-[10%] -right-[5%] w-[600px] h-[600px] bg-blue-400/5 blur-[120px] rounded-full"></div>
       </div>
 
-      <div className="flex-1 w-full max-w-7xl mx-auto px-4 md:px-6 pt-6 pb-16 lg:pb-20 flex flex-col relative z-10">
+      <div className="flex-1 w-full max-w-7xl mx-auto px-4 md:px-6 pt-6 pb-12 flex flex-col relative z-10">
         
         {/* TÍTULO MÓVIL */}
         <div className="block lg:hidden mb-6">
@@ -177,7 +178,7 @@ export default async function VehiculoDetallePage({
         {/* CONTENEDOR GRID PRINCIPAL */}
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 lg:gap-10 items-start">
           
-          {/* ================= BLOQUE 1: GALERÍA DE IMÁGENES Y DATOS RÁPIDOS ================= */}
+          {/* ================= BLOQUE 1: GALERÍA DE IMÁGENES ================= */}
           <div className="lg:col-span-7 flex flex-col gap-6 order-1 pt-1 md:pt-7">
             <div className="hidden lg:flex text-[10px] sm:text-xs text-slate-500 font-bold uppercase tracking-widest mb-[-10px] items-center gap-2">
               <Link href="/" className="hover:text-[#0145F2] transition-colors">Inicio</Link>
@@ -227,7 +228,7 @@ export default async function VehiculoDetallePage({
             </div>
           </div>
 
-          {/* ================= BLOQUE 2: COLUMNA DERECHA PANEL FIJO ================= */}
+          {/* ================= BLOQUE 2: COLUMNA DERECHA PANEL FIJO (DESKTOP) ================= */}
           <div className="lg:col-span-5 lg:row-span-2 relative order-2">
             <div className="lg:sticky lg:top-28 bg-white/70 backdrop-blur-3xl border border-white rounded-[32px] p-6 lg:p-8 shadow-[0_12px_40px_rgba(0,0,0,0.05)] flex flex-col gap-6 relative overflow-hidden">
               <div className="absolute inset-0 bg-gradient-to-br from-white/40 to-transparent pointer-events-none z-0"></div>
@@ -311,6 +312,7 @@ export default async function VehiculoDetallePage({
                   </div>
                 </li>
 
+                {/* BOTONES EXCLUSIVOS DE PC */}
                 <li className="hidden lg:block w-full pt-2 space-y-3">
                   <a
                     href={linkWhatsApp}
@@ -518,16 +520,25 @@ export default async function VehiculoDetallePage({
         )}
       </div>
 
-      {/* BOTÓN FLOTANTE MÓVIL STICKY */}
-      <div className="lg:hidden sticky bottom-0 w-full bg-transparent p-4 z-[40] mt-auto pointer-events-none">
-        <div className="pointer-events-auto flex gap-2">
-          <AgendarVisita auto={auto} isMobile={true} />
+      {/* ================= BOTONERA FLOTANTE MÓVIL (AHORA 50/50 Y STICKY) ================= */}
+      <div className="lg:hidden sticky bottom-4 left-0 w-full px-4 z-[40] mt-4 mb-4">
+        <div className="pointer-events-auto flex items-center gap-3 w-full max-w-md mx-auto bg-white/90 backdrop-blur-xl p-2.5 rounded-2xl shadow-[0_10px_40px_rgba(0,0,0,0.15)] border border-slate-200/60">
+          
+          {/* BOTÓN VISITA (50%) */}
+          <div className="flex-1 h-[48px]">
+            <AgendarVisita auto={auto} isMobile={true} />
+          </div>
+          
+          {/* BOTÓN WHATSAPP (50%) */}
           <a
             href={linkWhatsApp}
             target="_blank"
             rel="noopener noreferrer"
-            className="flex-[2] bg-gradient-to-r from-[#0145F2] to-sky-500 hover:from-blue-600 hover:to-sky-400 text-white font-black text-[10px] sm:text-xs uppercase tracking-widest text-center py-4 rounded-2xl shadow-[0_10px_30px_rgba(1,69,242,0.4)] transition-all duration-300 active:scale-95 flex items-center justify-center"
+            className="flex-1 h-[48px] bg-[#25D366] hover:bg-[#1EBE5D] text-white font-black text-[11px] sm:text-xs uppercase tracking-widest rounded-xl shadow-md flex items-center justify-center gap-2 active:scale-95 transition-all"
           >
+            <svg width="18" height="18" fill="currentColor" viewBox="0 0 24 24">
+              <path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51a12.8 12.8 0 0 0-.57-.01c-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 0 1-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 0 1-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.98 2.898a9.825 9.825 0 0 1 2.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0 0 12.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 0 0 5.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 0 0-3.48-8.413Z"/>
+            </svg>
             WhatsApp
           </a>
         </div>

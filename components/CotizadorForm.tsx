@@ -3,7 +3,7 @@
 import { useState, useEffect } from "react";
 import Link from "next/link";
 import { supabase } from "@/lib/supabase"; 
-import { ArrowLeft, ArrowRight, Loader2, CheckCircle2, ChevronDown, ShieldCheck, PhoneCall } from "lucide-react";
+import { ArrowLeft, Loader2, CheckCircle2, ChevronDown, CarFront, User, Phone } from "lucide-react";
 
 const marcasDisponibles = [
   "Audi", "BAIC", "BMW", "Changan", "Chery", "Chevrolet", "Citroen", 
@@ -29,7 +29,6 @@ const aniosDisponibles = Array.from({ length: 20 }, (_, i) => 2026 - i);
 export default function CotizadorForm() {
   const [step, setStep] = useState(1);
   const [mockId, setMockId] = useState("");
-  const [currentDate, setCurrentDate] = useState("");
   
   // Estados del vehículo
   const [anio, setAnio] = useState("");
@@ -46,26 +45,20 @@ export default function CotizadorForm() {
   const [tel, setTel] = useState("");
   const [codigoSMS, setCodigoSMS] = useState("");
   const [codigoEnviado, setCodigoEnviado] = useState(false);
-  const [codigoCorrectoSimulado, setCodigoCorrectoSimulado] = useState("1234"); // Código de prueba (o real si integras Twilio/Supabase OTP)
 
-  // Controladores de Dropdowns personalizados con buscador
+  // Controladores de Dropdowns
   const [openDropdown, setOpenDropdown] = useState<string | null>(null);
   const [busquedaMarca, setBusquedaMarca] = useState("");
 
   // Estados de carga/envío
   const [loading, setLoading] = useState(false);
   const [enviado, setEnviado] = useState(false);
-
-  // Estado del contador (inicia en 60 segundos y se reduce cada 3 segundos para ir más lento)
   const [segundos, setSegundos] = useState(60);
 
   useEffect(() => {
-    const hoy = new Date();
-    setCurrentDate(hoy.toLocaleDateString("es-AR"));
     setMockId(String(Math.floor(Math.random() * 90000) + 10000));
   }, []);
 
-  // Efecto para el contador decreciente (cambia cada 3000ms = 3 segundos por número)
   useEffect(() => {
     if (segundos > 1) {
       const timer = setInterval(() => {
@@ -86,21 +79,59 @@ export default function CotizadorForm() {
     return anio && marca && modelo && version && km;
   };
 
-  // Paso 1: Enviar código SMS (Simulado o conectado a servicio)
-  const solicitarCodigoSMS = (e: React.FormEvent) => {
+  // =================================================================
+  // 1. SOLICITAR CÓDIGO (Usa el puente /api/n8n para evitar CORS)
+  // =================================================================
+  const solicitarCodigoSMS = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!nombre.trim() || !apellido.trim() || !email.trim() || !tel.trim()) {
       alert("Por favor completá todos los campos de contacto.");
       return;
     }
 
-    // Aquí puedes disparar tu API real de SMS (ej. Twilio o Supabase Auth)
-    // Por ahora generamos uno dinámico o usamos uno fijo para pruebas y pasamos al paso de verificación
-    setCodigoEnviado(true);
-    setStep(4); // Pasamos al paso de ingresar el código
+    setLoading(true);
+
+    try {
+      const codigoGenerado = Math.floor(1000 + Math.random() * 9000).toString();
+
+      const { error: dbError } = await supabase
+        .from('verificaciones_sms')
+        .insert({
+          telefono: tel.trim(),
+          codigo: codigoGenerado
+        });
+
+      if (dbError) throw dbError;
+
+      // Disparamos a N8N a través de nuestra API local
+      await fetch("/api/n8n", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ 
+          endpoint: "ENVIAR-CODIGO-SMS",
+          isTest: false, // <--- CAMBIAMOS ESTO A FALSE O LO BORRAMOS
+          payload: {
+            telefono: tel.trim(), 
+            nombre: nombre.trim(), 
+            codigo: codigoGenerado
+          }
+        })
+      });
+
+      setCodigoEnviado(true);
+      setStep(4);
+
+    } catch (error) {
+      console.error("Error al solicitar SMS:", error);
+      alert("No pudimos enviar el código. Asegurate de correr el SQL en Supabase.");
+    } finally {
+      setLoading(false);
+    }
   };
 
-  // Paso 2: Validar código e insertar en BD
+  // =================================================================
+  // 2. VERIFICAR Y ENVIAR (Usa el puente /api/n8n para evitar CORS)
+  // =================================================================
   const verificarCodigoYEnviar = async () => {
     if (codigoSMS.length < 4) {
       alert("Ingresá el código de verificación completo.");
@@ -110,8 +141,26 @@ export default function CotizadorForm() {
     setLoading(true);
 
     try {
-      // Guardamos en Supabase
-      // Guardamos en Supabase incluyendo el email y la verificación
+      const { data: verificacion, error: fetchError } = await supabase
+        .from('verificaciones_sms')
+        .select('codigo')
+        .eq('telefono', tel.trim())
+        .order('created_at', { ascending: false })
+        .limit(1)
+        .single();
+
+      if (fetchError || !verificacion) {
+        alert("No se encontró una solicitud para este número.");
+        setLoading(false);
+        return;
+      }
+
+      if (verificacion.codigo !== codigoSMS) {
+        alert("El código ingresado es incorrecto.");
+        setLoading(false);
+        return;
+      }
+
       const { data: cotizacion, error: dbError } = await supabase
         .from('cotizaciones')
         .insert({
@@ -121,9 +170,9 @@ export default function CotizadorForm() {
           version: `${version} - GNC: ${gnc || 'No'}`,
           kilometraje: Number(km),
           nombre: `${nombre.trim()} ${apellido.trim()}`,
-          email: email.trim(), // <--- NUEVO: Guardamos el email
+          email: email.trim(), 
           telefono: tel.trim(),
-          telefono_verificado: true, // <--- NUEVO: Queda registrado como verificado por SMS
+          telefono_verificado: true, 
           tipo_peritaje: 'online',
           sucursal_preferida: 'Casa Central',
           fotos_y_videos: []
@@ -133,22 +182,25 @@ export default function CotizadorForm() {
 
       if (dbError) throw dbError;
 
-      // Webhook a n8n
-      const response = await fetch("https://n8n-pfaffen.onrender.com/webhook/1999b53e-8ab2-4223-b71e-226575a4ac46", {
+      // Disparamos CRM a través de nuestra API local
+      const response = await fetch("/api/n8n", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ cotizacion_id: cotizacion.id })
+        body: JSON.stringify({ 
+          endpoint: "1999b53e-8ab2-4223-b71e-226575a4ac46",
+          payload: { cotizacion_id: cotizacion.id }
+        })
       });
 
       if (response.ok) {
         setEnviado(true);
       } else {
-        throw new Error("El webhook de n8n falló");
+        throw new Error("El webhook del CRM falló");
       }
 
     } catch (error) {
-      console.error("Error al cotizar:", error);
-      alert("Hubo un problema al verificar o guardar. Reintentá.");
+      console.error("Error al verificar/cotizar:", error);
+      alert("Hubo un problema al procesar tu solicitud. Reintentá.");
     } finally {
       setLoading(false);
     }
@@ -157,23 +209,19 @@ export default function CotizadorForm() {
   return (
     <div className="min-h-screen bg-[#F8FAFC] text-slate-900 pt-16 pb-50 relative font-sans overflow-hidden flex flex-col justify-between">
       
-      {/* ================= EFECTOS DE FONDO SPATIAL UI ================= */}
       <div className="absolute inset-0 pointer-events-none z-0">
         <div className="absolute inset-0 bg-[linear-gradient(to_right,#e2e8f0_1px,transparent_1px),linear-gradient(to_bottom,#e2e8f0_1px,transparent_1px)] bg-[size:3rem_3rem] [mask-image:radial-gradient(ellipse_80%_50%_at_50%_0%,#000_70%,transparent_100%)] opacity-60"></div>
         <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[800px] h-[400px] bg-[#0145F2]/5 blur-[120px] rounded-full"></div>
       </div>
 
-      {/* ================= HEADER CORPORATIVO ================= */}
       <header className="max-w-7xl mx-auto w-full px-10 py-2 flex items-center justify-between relative z-10">
         <div className="flex items-center gap-4 text-xs font-bold text-slate-500">
           <span>DOC: <strong className="text-[#0145F2]">{mockId}</strong></span>
         </div>
       </header>
 
-      {/* ================= CONTENIDO PRINCIPAL ================= */}
       <div className="max-w-7xl mx-auto w-full px-4 md:px-8 grid grid-cols-1 lg:grid-cols-12 gap-8 items-center my-auto py-8 relative z-10">
         
-        {/* COLUMNA IZQUIERDA */}
         <div className="lg:col-span-7 flex flex-col justify-center space-y-6 text-left">
           <div className="space-y-3">
             <span className="bg-blue-50 text-[#0145F2] border border-blue-100 text-[11px] font-black uppercase tracking-widest px-4 py-1.5 rounded-full inline-block shadow-sm">
@@ -189,11 +237,9 @@ export default function CotizadorForm() {
           </div>
         </div>
 
-        {/* COLUMNA DERECHA: TARJETA FLOTANTE GLASSMORPHISM 2.0 */}
         <div className="lg:col-span-5 flex justify-center w-full">
           <div className="bg-white/70 backdrop-blur-2xl border border-white rounded-[32px] shadow-[0_20px_50px_rgba(0,0,0,0.06)] p-6 md:p-8 w-full max-w-md relative">
             
-            {/* TÍTULO GLOBAL CON EL CONTADOR QUE PERSISTE EN TODO EL FORMULARIO */}
             {!enviado && (
               <div className="mb-4">
                 <h2 className="text-xl font-black text-navy tracking-tight">
@@ -211,10 +257,8 @@ export default function CotizadorForm() {
             {!enviado ? (
               <div>
                 
-                {/* PASO 1: DATOS DEL VEHÍCULO */}
                 {step === 1 && (
                   <div className="space-y-4 animate-fadeIn">
-                    {/* AÑO */}
                     <div className="relative">
                       <div 
                         onClick={() => setOpenDropdown(openDropdown === 'anio' ? null : 'anio')}
@@ -239,7 +283,6 @@ export default function CotizadorForm() {
                       )}
                     </div>
 
-                    {/* MARCA */}
                     <div className="relative">
                       <div 
                         onClick={() => setOpenDropdown(openDropdown === 'marca' ? null : 'marca')}
@@ -274,7 +317,6 @@ export default function CotizadorForm() {
                       )}
                     </div>
 
-                    {/* MODELO */}
                     <div className="relative">
                       <div 
                         onClick={() => marca && setOpenDropdown(openDropdown === 'modelo' ? null : 'modelo')}
@@ -299,7 +341,6 @@ export default function CotizadorForm() {
                       )}
                     </div>
 
-                    {/* VERSIÓN */}
                     <div>
                       <input 
                         type="text" 
@@ -310,7 +351,6 @@ export default function CotizadorForm() {
                       />
                     </div>
 
-                    {/* KILOMETRAJE */}
                     <div>
                       <input 
                         type="number" 
@@ -335,7 +375,6 @@ export default function CotizadorForm() {
                   </div>
                 )}
 
-                {/* PASO 2: PREGUNTA GNC */}
                 {step === 2 && (
                   <div className="space-y-6 animate-fadeIn py-2">
                     <div>
@@ -367,7 +406,6 @@ export default function CotizadorForm() {
                   </div>
                 )}
 
-                {/* PASO 3: DATOS DE CONTACTO */}
                 {step === 3 && (
                   <form onSubmit={solicitarCodigoSMS} className="space-y-4 animate-fadeIn">
                     <div>
@@ -433,14 +471,15 @@ export default function CotizadorForm() {
 
                     <button 
                       type="submit" 
-                      className="w-full py-4 bg-gradient-to-r from-[#0145F2] to-blue-600 hover:from-blue-600 hover:to-sky-500 text-white font-black rounded-2xl uppercase tracking-widest text-xs transition-all shadow-lg shadow-blue-500/20 cursor-pointer flex items-center justify-center gap-2 active:scale-95"
+                      disabled={loading}
+                      className="w-full py-4 bg-gradient-to-r from-[#0145F2] to-blue-600 hover:from-blue-600 hover:to-sky-500 disabled:opacity-50 text-white font-black rounded-2xl uppercase tracking-widest text-xs transition-all shadow-lg shadow-blue-500/20 cursor-pointer flex items-center justify-center gap-2 active:scale-95"
                     >
-                      Enviar código por SMS
+                      {loading && <Loader2 className="w-4 h-4 animate-spin" />}
+                      {loading ? "Enviando..." : "Enviar código por SMS"}
                     </button>
                   </form>
                 )}
 
-                {/* PASO 4: VERIFICACIÓN DE CÓDIGO SMS */}
                 {step === 4 && (
                   <div className="space-y-6 animate-fadeIn py-2">
                     <div>
@@ -463,16 +502,13 @@ export default function CotizadorForm() {
                         className="w-full bg-white/80 border border-white rounded-2xl px-4 py-3.5 text-center text-2xl font-black tracking-widest text-navy outline-none focus:border-[#0145F2] shadow-inner"
                         autoFocus
                       />
-                      <p className="text-[11px] text-slate-400 text-center">
-                        (Para pruebas podés usar el código: <strong className="text-[#0145F2]">1234</strong>)
-                      </p>
                     </div>
 
                     <button 
                       type="button" 
                       onClick={verificarCodigoYEnviar}
                       disabled={loading || codigoSMS.length < 4}
-                      className="w-full py-4 bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 disabled:opacity-50 text-white font-black rounded-2xl uppercase tracking-widest text-xs transition-all shadow-lg shadow-emerald-500/20 cursor-pointer flex items-center justify-center gap-2 active:scale-95"
+                      className="w-full py-4 bg-gradient-to-r from-[#0145F2] to-blue-600 hover:from-blue-600 hover:to-sky-500 disabled:opacity-50 text-white font-black rounded-2xl uppercase tracking-widest text-xs transition-all shadow-lg shadow-blue-500/20 cursor-pointer flex items-center justify-center gap-2 active:scale-95"
                     >
                       {loading && <Loader2 className="w-4 h-4 animate-spin text-white" />}
                       {loading ? "VERIFICANDO..." : "Confirmar y Enviar Solicitud"}
@@ -482,12 +518,11 @@ export default function CotizadorForm() {
 
               </div>
             ) : (
-              /* ÉXITO */
               <div className="text-center py-12 animate-fadeIn space-y-4">
-                <div className="w-16 h-16 bg-emerald-100 text-emerald-600 rounded-full flex items-center justify-center mx-auto mb-2">
+                <div className="w-16 h-16 bg-blue-50 text-[#0145F2] rounded-full flex items-center justify-center mx-auto mb-2">
                   <CheckCircle2 className="w-8 h-8" />
                 </div>
-                <h3 className="text-2xl font-black text-navy uppercase">¡Cotización enviada!</h3>
+                <h3 className="text-2xl font-black text-navy uppercase tracking-tighter">¡Cotización enviada!</h3>
                 <p className="text-slate-500 text-xs leading-relaxed max-w-xs mx-auto">
                   Teléfono verificado con éxito. Recibimos los datos de tu vehículo y un asesor comercial se pondrá en contacto a la brevedad.
                 </p>
@@ -504,7 +539,6 @@ export default function CotizadorForm() {
 
       </div>
 
-      {/* FOOTER DISCRETO */}
       <footer className="text-center text-[10px] font-bold text-slate-400 py-4 uppercase tracking-widest relative z-10">
         Pfaffen Autos &bull; Todos los derechos reservados
       </footer>

@@ -81,16 +81,54 @@ export default function ConsignarForm() {
     return anio && marca && modelo && version && km;
   };
 
-  const solicitarCodigoSMS = (e: React.FormEvent) => {
+  // =================================================================
+  // 1. GENERAR CÓDIGO, GUARDAR EN SUPABASE Y ENVIAR A N8N
+  // =================================================================
+  const solicitarCodigoSMS = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!nombre.trim() || !apellido.trim() || !email.trim() || !tel.trim()) {
       alert("Por favor completá todos los campos de contacto.");
       return;
     }
-    setCodigoEnviado(true);
-    setStep(4);
+
+    setLoading(true);
+
+    try {
+      const codigoGenerado = Math.floor(1000 + Math.random() * 9000).toString();
+
+      const { error: dbError } = await supabase
+        .from('verificaciones_sms')
+        .insert({
+          telefono: tel.trim(),
+          codigo: codigoGenerado
+        });
+
+      if (dbError) throw dbError;
+
+      await fetch("https://n8n-pfaffen.onrender.com/webhook/ENVIAR-CODIGO-SMS", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ 
+          telefono: tel.trim(), 
+          nombre: nombre.trim(), 
+          codigo: codigoGenerado 
+        })
+      });
+
+      setCodigoEnviado(true);
+      setStep(4); 
+
+    } catch (error) {
+      console.error("Error al solicitar SMS:", error);
+      alert("No pudimos enviar el código. Intentá nuevamente.");
+    } finally {
+      setLoading(false);
+    }
   };
 
+  // =================================================================
+  // 2. VALIDAR CÓDIGO INGRESADO Y GUARDAR LA COTIZACIÓN FINAL
+  // =================================================================
   const verificarCodigoYEnviar = async () => {
     if (codigoSMS.length < 4) {
       alert("Ingresá el código de verificación completo.");
@@ -100,7 +138,26 @@ export default function ConsignarForm() {
     setLoading(true);
 
     try {
-      // Guardamos en Supabase incluyendo el email y la verificación
+      const { data: verificacion, error: fetchError } = await supabase
+        .from('verificaciones_sms')
+        .select('codigo')
+        .eq('telefono', tel.trim())
+        .order('created_at', { ascending: false })
+        .limit(1)
+        .single();
+
+      if (fetchError || !verificacion) {
+        alert("No se encontró una solicitud para este número.");
+        setLoading(false);
+        return;
+      }
+
+      if (verificacion.codigo !== codigoSMS) {
+        alert("El código ingresado es incorrecto.");
+        setLoading(false);
+        return;
+      }
+
       const { data: cotizacion, error: dbError } = await supabase
         .from('cotizaciones')
         .insert({
@@ -113,7 +170,7 @@ export default function ConsignarForm() {
           email: email.trim(), 
           telefono: tel.trim(),
           telefono_verificado: true, 
-          tipo_peritaje: 'cotizacion', // <--- CAMBIAMOS 'online' POR 'cotizacion'
+          tipo_peritaje: 'cotizacion', // <--- MARCADOR PARA CONSIGNACIÓN
           sucursal_preferida: 'Casa Central',
           fotos_y_videos: []
         })
@@ -122,7 +179,6 @@ export default function ConsignarForm() {
 
       if (dbError) throw dbError;
 
-      // Webhook a n8n
       const response = await fetch("https://n8n-pfaffen.onrender.com/webhook/1999b53e-8ab2-4223-b71e-226575a4ac46", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -132,12 +188,12 @@ export default function ConsignarForm() {
       if (response.ok) {
         setEnviado(true);
       } else {
-        throw new Error("El webhook de n8n falló");
+        throw new Error("El webhook del CRM falló");
       }
 
     } catch (error) {
-      console.error("Error al consignar:", error);
-      alert("Hubo un problema al verificar o guardar. Reintentá.");
+      console.error("Error al verificar/cotizar:", error);
+      alert("Hubo un problema al procesar tu solicitud. Reintentá.");
     } finally {
       setLoading(false);
     }

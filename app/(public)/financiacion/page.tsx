@@ -106,7 +106,7 @@ export default function BannerFinanciacion() {
             {/* Botón de Acción Principal */}
             <div className="pt-2">
               <Link
-                href="/financiacion"
+                href="/cotizador"
                 className="inline-flex items-center gap-3 bg-[#0145F2] hover:bg-blue-600 text-white font-black text-xs md:text-sm uppercase tracking-widest px-8 py-4.5 rounded-2xl shadow-[0_10px_25px_rgba(1,69,242,0.3)] transition-all active:scale-95 group w-full sm:w-auto justify-center"
               >
                 Solicitar mi crédito 

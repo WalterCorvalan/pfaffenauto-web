@@ -48,7 +48,7 @@ export default async function OutletBanner() {
             </div>
             
             <p className="text-slate-300 text-sm md:text-base font-medium max-w-lg mt-2 leading-relaxed">
-              Unidades seleccionadas a precios imbatibles. Ideales como primer auto, herramienta de trabajo o proyecto personal.
+              Vehiculos de segunda y tercera seleccion.
             </p>
           </div>
 
