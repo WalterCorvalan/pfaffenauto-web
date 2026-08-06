@@ -35,7 +35,7 @@ export default async function CitasPage() {
   };
 
   const Tarjeta = ({ v }: { v: any }) => (
-    <div className="bg-[#111827] border border-[#1e293b] rounded-2xl p-5 flex flex-col gap-3">
+    <div className="bg-[#111827] border border-[#1e293b] rounded-2xl p-5 flex flex-col gap-3 shadow-sm hover:border-[#2d3d54] transition-colors">
       <div className="flex justify-between items-start">
         <div>
           <span className="text-[10px] uppercase tracking-widest font-bold text-slate-500 flex items-center gap-1.5 mb-1">
@@ -50,7 +50,7 @@ export default async function CitasPage() {
       </div>
 
       <div className="flex flex-col gap-1.5 text-sm text-slate-400">
-        <a href={`https://wa.me/${v.telefono_cliente.replace(/\D/g, "")}`} target="_blank" className="flex items-center gap-2 hover:text-[#25D366] transition-colors w-fit">
+        <a href={`https://wa.me/${v.telefono_cliente.replace(/\D/g, "")}`} target="_blank" rel="noreferrer" className="flex items-center gap-2 hover:text-[#25D366] transition-colors w-fit">
           <Phone className="w-3.5 h-3.5" /> {v.telefono_cliente}
         </a>
         <span className="flex items-center gap-2">

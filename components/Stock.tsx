@@ -1,6 +1,6 @@
 "use client";
 
-import React from "react";
+import React, { useState, useEffect } from "react";
 import Link from "next/link";
 import { ChevronRight, ArrowUpRight } from "lucide-react";
 import { motion, Variants } from "framer-motion";
@@ -42,6 +42,26 @@ const itemVariants: Variants = {
 
 export default function Stock({ vehiculos }: StockProps) {
   const listaVehiculos = vehiculos || [];
+
+  // Estado para la lista de "Vistos recientemente" (Carga desde LocalStorage con fallback al stock general)
+  const [vistosRecientes, setVistosRecientes] = useState<any[]>([]);
+
+  useEffect(() => {
+    try {
+      const stored = localStorage.getItem("pfaffen_vistos");
+      if (stored) {
+        const parsed = JSON.parse(stored);
+        if (parsed && parsed.length > 0) {
+          setVistosRecientes(parsed.slice(0, 10)); // Top 10
+          return;
+        }
+      }
+    } catch (e) {
+      console.error("Error leyendo vistos recientes", e);
+    }
+    // Fallback: si no hay historial, tomamos los primeros 10 autos del stock
+    setVistosRecientes(listaVehiculos.slice(0, 10));
+  }, [listaVehiculos]);
 
   const suvsDestacadas = listaVehiculos
     .filter((auto) => normalizar(auto.tipo).includes("suv"))
@@ -126,9 +146,7 @@ export default function Stock({ vehiculos }: StockProps) {
             />
 
             <div className="relative w-full [mask-image:linear-gradient(to_right,transparent,black_5%,black_95%,transparent)] py-4">
-              {/* Carrusel optimizado con CSS nativo, sin bloqueos JS */}
               <div className="flex gap-5 md:gap-6 w-full overflow-x-auto pb-6 custom-scrollbar snap-x snap-mandatory">
-                {/* Duplicamos el arreglo visualmente para dar el efecto de que hay más */}
                 {[...pickipsCarrusel, ...pickipsCarrusel].map((auto, index) => (
                   <div
                     key={`${auto.id}-${index}`}
@@ -142,7 +160,7 @@ export default function Stock({ vehiculos }: StockProps) {
           </div>
         )}
 
-        {/* ================= SECCIÓN 3: SEDANES (ESTILO BENTO GRID / HERO UI) ================= */}
+        {/* ================= SECCIÓN 3: SEDANES + VISTOS RECIENTEMENTE (GLASS) ================= */}
         {urbanosYSedanes.length > 0 && (
           <div>
             <SectionHeader
@@ -161,7 +179,6 @@ export default function Stock({ vehiculos }: StockProps) {
                   href={`/catalogo/${urbanosYSedanes[0].slug}`}
                   className="md:col-span-8 relative h-[380px] md:h-[450px] rounded-[32px] overflow-hidden group shadow-[0_8px_32px_rgba(0,0,0,0.04)] hover:shadow-[0_20px_48px_rgba(1,69,242,0.12)] border border-white/60 transition-all duration-500"
                 >
-                  {/* Fondo oscuro para contraste */}
                   <div className="absolute inset-0 bg-slate-100 z-0"></div>
                   <img
                     src={
@@ -171,7 +188,6 @@ export default function Stock({ vehiculos }: StockProps) {
                     alt={urbanosYSedanes[0].modelo}
                     className="absolute inset-0 w-full h-full object-cover group-hover:scale-105 transition-transform duration-700 ease-out mix-blend-multiply opacity-90 z-0"
                   />
-                  {/* Gradiente para lectura */}
                   <div className="absolute inset-0 bg-gradient-to-t from-navy/90 via-navy/30 to-transparent z-10"></div>
 
                   <div className="absolute bottom-0 left-0 p-6 md:p-8 w-full flex flex-col sm:flex-row sm:items-end justify-between gap-4 z-20">
@@ -203,46 +219,60 @@ export default function Stock({ vehiculos }: StockProps) {
                 </Link>
               )}
 
-              {/* Tarjetas Secundarias Derecha (Lista/Stack) */}
-              {urbanosYSedanes.length > 1 && (
-                <div className="md:col-span-4 flex flex-col gap-4">
-                  {urbanosYSedanes.slice(1, 4).map((auto) => (
-                    <Link
-                      key={auto.id}
-                      href={`/catalogo/${auto.slug}`}
-                      className="flex-1 bg-white/40 backdrop-blur-2xl border border-white/60 rounded-[24px] p-2 flex gap-4 items-center group hover:bg-white/70 transition-all shadow-[0_4px_20px_rgba(0,0,0,0.03)] hover:shadow-lg"
-                    >
-                      <div className="h-24 w-28 shrink-0 rounded-[18px] overflow-hidden relative bg-white/30 mix-blend-multiply">
-                        <img
-                          src={
-                            auto.multimedia_vehiculos?.[0]?.url_archivo ||
-                            "/placeholder.jpg"
-                          }
-                          alt={auto.modelo}
-                          className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
-                        />
-                      </div>
-                      <div className="py-2 pr-4 flex flex-col justify-center w-full">
-                        <span className="text-[9px] text-gray-400 font-bold uppercase tracking-widest">
-                          {auto.marca}
-                        </span>
-                        <h4 className="text-sm md:text-base font-black text-navy leading-tight uppercase truncate">
-                          {auto.modelo}
-                        </h4>
-                        <div className="flex items-center justify-between mt-2">
-                          <p className="text-[10px] text-gray-500 font-medium">
-                            {auto.anio} •{" "}
-                            {auto.kilometraje?.toLocaleString("es-AR")} km
+              {/* TARJETA DERECHA: VISTOS RECIENTEMENTE (Estilo Glassmorphism con scroll para 10 autos) */}
+              <div className="md:col-span-4 bg-white/40 backdrop-blur-2xl border border-white/60 rounded-[32px] p-5 md:p-6 flex flex-col h-[400px] md:h-[450px] shadow-[0_8px_32px_rgba(0,0,0,0.04)]">
+                <div className="mb-4 pb-3 border-b border-white/40 flex items-center justify-between">
+                  <h4 className="text-xs font-black text-navy uppercase tracking-widest">
+                    Vistos recientemente
+                  </h4>
+                  <span className="text-[10px] bg-blue-500/10 text-[#0145F2] font-bold px-2.5 py-0.5 rounded-full">
+                    {vistosRecientes.length}
+                  </span>
+                </div>
+
+                <div className="flex-1 overflow-y-auto pr-1 space-y-3 custom-scrollbar">
+                  {vistosRecientes.map((auto, idx) => {
+                    const precioMostrar =
+                      auto.precio_publicado_usd && !auto.precio_publicado_ars
+                        ? `US$ ${auto.precio_publicado_usd.toLocaleString("es-AR")}`
+                        : auto.precio_publicado_ars
+                          ? `$ ${auto.precio_publicado_ars.toLocaleString("es-AR")}`
+                          : `US$ ${auto.precio_publicado_usd?.toLocaleString("es-AR")}`;
+
+                    const imagenSrc =
+                      auto.imagen ||
+                      auto.multimedia_vehiculos?.[0]?.url_archivo ||
+                      "/placeholder.jpg";
+
+                    return (
+                      <Link
+                        key={`visto-${auto.id}-${idx}`}
+                        href={`/catalogo/${auto.slug}`}
+                        className="bg-white/60 backdrop-blur-md border border-white/80 rounded-2xl p-2.5 flex gap-3 items-center group hover:bg-white hover:border-[#0145F2]/40 transition-all shadow-sm focus:outline-none"
+                      >
+                        <div className="h-14 w-16 shrink-0 rounded-xl overflow-hidden relative bg-white/50 mix-blend-multiply">
+                          <img
+                            src={imagenSrc}
+                            alt={auto.modelo}
+                            className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+                          />
+                        </div>
+                        <div className="flex flex-col justify-center w-full min-w-0 pr-1">
+                          <span className="text-[9px] text-gray-400 font-bold uppercase tracking-widest truncate">
+                            {auto.marca}
+                          </span>
+                          <h5 className="text-xs font-black text-navy leading-tight truncate uppercase">
+                            {auto.modelo}
+                          </h5>
+                          <p className="text-[#] font-black text-xs mt-0.5">
+                            {precioMostrar}
                           </p>
                         </div>
-                        <p className="text-[#0145F2] font-black text-sm mt-0.5">
-                          ${auto.precio_publicado_ars?.toLocaleString("es-AR")}
-                        </p>
-                      </div>
-                    </Link>
-                  ))}
+                      </Link>
+                    );
+                  })}
                 </div>
-              )}
+              </div>
             </div>
           </div>
         )}
@@ -253,13 +283,12 @@ export default function Stock({ vehiculos }: StockProps) {
             <SectionHeader
               pillText="Más Opciones"
               pillColor="text-purple-600 bg-purple-50/50 border-purple-100/50"
-              titleLight="Oportunidades"
-              titleBold="Especiales"
+              titleLight="0"
+              titleBold="KM"
               linkHref="/catalogo"
               linkLabel="Ir al catálogo completo"
             />
 
-            {/* Carrusel Inmersivo con scroll nativo (Snap) */}
             <div className="flex gap-4 md:gap-6 overflow-x-auto pb-10 pt-2 custom-scrollbar snap-x snap-mandatory">
               {otrosVehiculos.map((auto) => (
                 <Link
@@ -276,7 +305,6 @@ export default function Stock({ vehiculos }: StockProps) {
                     alt={auto.modelo}
                     className="absolute inset-0 w-full h-full object-cover group-hover:scale-105 transition-transform duration-700 ease-out z-0 mix-blend-multiply opacity-90"
                   />
-                  {/* Gradiente estilo Apple (Oscuro arriba para el título, oscuro abajo para el precio) */}
                   <div className="absolute inset-0 bg-gradient-to-b from-black/70 via-transparent to-black/80 z-10" />
 
                   <div className="absolute top-6 left-6 right-6 z-20">
@@ -350,7 +378,6 @@ function SectionHeader({
   );
 }
 
-// Grilla Animada (Para SUVs y otros usos estándar)
 function VehicleGrid({ vehiculos }: { vehiculos: any[] }) {
   return (
     <motion.div
@@ -369,7 +396,6 @@ function VehicleGrid({ vehiculos }: { vehiculos: any[] }) {
   );
 }
 
-// Tarjeta Individual Estándar (Spatial UI)
 function VehicleCard({ auto }: { auto: any }) {
   const precioMostrar =
     auto.precio_publicado_usd && !auto.precio_publicado_ars
@@ -384,15 +410,14 @@ function VehicleCard({ auto }: { auto: any }) {
       className="block group h-full focus:outline-none"
     >
       <div className="bg-white/40 backdrop-blur-2xl rounded-[28px] border border-white/60 overflow-hidden flex flex-col h-full shadow-[0_8px_32px_rgba(0,0,0,0.04)] hover:shadow-[0_20px_48px_rgba(1,69,242,0.12)] hover:border-white hover:bg-white/70 transition-all duration-500 relative transform group-hover:-translate-y-1">
-        {/* Reflejo hover */}
         <div className="absolute inset-0 bg-gradient-to-tr from-transparent via-white/40 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-700 pointer-events-none z-20"></div>
 
-        <div className="relative h-[160px] sm:h-[180px] bg-white/30 flex items-center justify-center overflow-hidden p-4 mix-blend-multiply">
+        <div className="relative h-[160px] sm:h-[180px] bg-white/30 flex items-center justify-center overflow-hidden mix-blend-multiply">
           {auto.multimedia_vehiculos?.[0] ? (
             <img
               src={auto.multimedia_vehiculos[0].url_archivo}
               alt={`${auto.marca} ${auto.modelo}`}
-              className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700 ease-out"
+              className="w-full h-full object-cover object-center group-hover:scale-105 transition-transform duration-700 ease-out"
             />
           ) : (
             <div className="w-full h-full flex items-center justify-center text-gray-300 text-xs font-medium">

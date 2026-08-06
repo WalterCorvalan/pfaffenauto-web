@@ -34,36 +34,26 @@ export default function CatalogoPage() {
   // ================= ESTADOS DE FILTROS =================
   const [precioMin, setPrecioMin] = useState("");
   const [precioMax, setPrecioMax] = useState("");
+  const [precioMinUsd, setPrecioMinUsd] = useState("");
+  const [precioMaxUsd, setPrecioMaxUsd] = useState("");
   const [tiposSeleccionados, setTiposSeleccionados] = useState<string[]>([]);
   const [marcasSeleccionadas, setMarcasSeleccionadas] = useState<string[]>([]);
-  const [sucursalesSeleccionadas, setSucursalesSeleccionadas] = useState<
-    string[]
-  >([]);
-  const [transmisionesSeleccionadas, setTransmisionesSeleccionadas] = useState<
-    string[]
-  >([]);
-  const [combustiblesSeleccionados, setCombustiblesSeleccionados] = useState<
-    string[]
-  >([]);
-  const [traccionesSeleccionadas, setTraccionesSeleccionadas] = useState<
-    string[]
-  >([]);
-  const [potenciasSeleccionadas, setPotenciasSeleccionadas] = useState<
-    string[]
-  >([]);
+  const [sucursalesSeleccionadas, setSucursalesSeleccionadas] = useState<string[]>([]);
+  const [transmisionesSeleccionadas, setTransmisionesSeleccionadas] = useState<string[]>([]);
+  const [combustiblesSeleccionados, setCombustiblesSeleccionados] = useState<string[]>([]);
+  const [traccionesSeleccionadas, setTraccionesSeleccionadas] = useState<string[]>([]);
+  const [potenciasSeleccionadas, setPotenciasSeleccionadas] = useState<string[]>([]);
   const [plazasSeleccionadas, setPlazasSeleccionadas] = useState<number[]>([]);
 
   // Datos de base para los filtros (Sucursales se traen dinámicas)
-  const [sucursalesDB, setSucursalesDB] = useState<
-    { id: string; nombre: string }[]
-  >([]);
+  const [sucursalesDB, setSucursalesDB] = useState<{ id: string; nombre: string }[]>([]);
 
   // ESTADOS DE PAGINACIÓN
   const [pagina, setPagina] = useState(0);
   const [hasMore, setHasMore] = useState(false);
   const [totalResultados, setTotalResultados] = useState(0);
 
-  // ESTADOS PARA EL COMPARADOR
+  // ESTADOS PARA EL COMPARADOR (Ahora soporta hasta 3 autos)
   const [autosComparar, setAutosComparar] = useState<any[]>([]);
   const [modalComparadorOpen, setModalComparadorOpen] = useState(false);
 
@@ -104,6 +94,10 @@ export default function CatalogoPage() {
       );
     if (precioMin) query = query.gte("precio_publicado_ars", Number(precioMin));
     if (precioMax) query = query.lte("precio_publicado_ars", Number(precioMax));
+    
+    // Filtros de Dólares
+    if (precioMinUsd) query = query.gte("precio_publicado_usd", Number(precioMinUsd));
+    if (precioMaxUsd) query = query.lte("precio_publicado_usd", Number(precioMaxUsd));
 
     // Filtros de Arrays Exactos
     if (tiposSeleccionados.length > 0)
@@ -177,6 +171,8 @@ export default function CatalogoPage() {
     searchQuery,
     precioMin,
     precioMax,
+    precioMinUsd,
+    precioMaxUsd,
     tiposSeleccionados,
     orden,
     marcasSeleccionadas,
@@ -203,60 +199,56 @@ export default function CatalogoPage() {
     );
   };
 
+  // Actualizado: Ahora permite hasta 3 autos en el comparador
   const toggleComparar = (e: React.MouseEvent, auto: any) => {
     e.preventDefault();
     e.stopPropagation();
     const yaEsta = autosComparar.find((a) => a.id === auto.id);
-    if (yaEsta)
+    if (yaEsta) {
       setAutosComparar((prev) => prev.filter((a) => a.id !== auto.id));
-    else if (autosComparar.length >= 2)
-      setAutosComparar([autosComparar[1], auto]);
-    else setAutosComparar((prev) => [...prev, auto]);
+    } else if (autosComparar.length >= 3) {
+      setAutosComparar((prev) => [...prev.slice(1), auto]); // Quita el primero y agrega el nuevo al final
+    } else {
+      setAutosComparar((prev) => [...prev, auto]);
+    }
   };
 
   return (
-    <div className="min-h-screen bg-[#F8FAFC] pt-6 pb-20 font-sans text-foreground relative overflow-hidden">
-      {/* ================= EFECTOS ESPACIALES DE FONDO ================= */}
-      <div className="absolute inset-0 pointer-events-none z-0">
-        <div className="absolute inset-0 bg-[linear-gradient(to_right,#e2e8f0_1px,transparent_1px),linear-gradient(to_bottom,#e2e8f0_1px,transparent_1px)] bg-[size:3rem_3rem] [mask-image:radial-gradient(ellipse_80%_50%_at_50%_0%,#000_70%,transparent_100%)] opacity-60"></div>
-        <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[800px] h-[400px] bg-[#0145F2]/5 blur-[120px] rounded-full"></div>
-      </div>
+    <div className="min-h-screen bg-[#f5f5f5] pt-6 pb-20 font-sans text-gray-900">
 
-      <div className="max-w-7xl mx-auto px-4 md:px-6 relative z-10">
+      <div className="max-w-7xl mx-auto px-4 md:px-6">
+        
         {/* ================= MIGAS DE PAN Y TÍTULO ================= */}
         <div className="mb-6">
-          <div className="text-xs text-slate-400 font-medium mb-1">
-            <Link href="/" className="hover:text-[#0145F2] transition-colors">
+          <div className="text-xs text-gray-500 font-medium mb-2">
+            <Link href="/" className="hover:text-blue-600 transition-colors">
               Inicio
             </Link>{" "}
-            / <span className="text-slate-600">Catálogo</span>
+            / <span className="text-gray-700">Catálogo</span>
           </div>
-          <h1 className="text-3xl md:text-4xl font-light text-navy tracking-tighter">
-            Catálogo de autos{" "}
-            <strong className="font-black text-transparent bg-clip-text bg-gradient-to-r from-[#0145F2] to-sky-400">
-              0km y usados
-            </strong>
+          <h1 className="text-3xl md:text-4xl font-light text-gray-900 tracking-tight">
+            Catálogo de autos <strong className="font-black text-blue-600">0km y usados</strong>
           </h1>
         </div>
 
         {/* ================= BARRA DE FILTROS APLICADOS ================= */}
-        <div className="bg-white/60 backdrop-blur-2xl border border-white rounded-3xl p-4 mb-6 shadow-[0_8px_32px_rgba(0,0,0,0.03)] flex flex-wrap items-center justify-between gap-4">
+        <div className="bg-white border border-gray-200 rounded-2xl p-4 mb-6 shadow-sm flex flex-wrap items-center justify-between gap-4">
           <div className="flex flex-wrap items-center gap-2">
-            <span className="text-xs text-slate-500 font-bold uppercase tracking-wider mr-2">
+            <span className="text-xs text-gray-500 font-bold uppercase tracking-wider mr-2">
               Filtros aplicados:
             </span>
             {searchQuery ? (
-              <span className="inline-flex items-center gap-1.5 bg-white border border-sky-100 text-[#0145F2] shadow-sm text-xs font-bold px-4 py-1.5 rounded-full">
+              <span className="inline-flex items-center gap-1.5 bg-blue-50 border border-blue-200 text-blue-700 text-xs font-bold px-3 py-1.5 rounded-full">
                 Búsqueda: "{searchQuery}"
                 <Link
                   href="/catalogo"
-                  className="hover:text-red-500 transition-colors bg-sky-50 rounded-full p-0.5"
+                  className="hover:bg-blue-100 hover:text-red-500 transition-colors rounded-full p-0.5"
                 >
                   <X className="w-3.5 h-3.5" />
                 </Link>
               </span>
             ) : (
-              <span className="text-xs text-slate-400 italic">
+              <span className="text-xs text-gray-400 italic">
                 Ningún filtro activo.
               </span>
             )}
@@ -264,7 +256,7 @@ export default function CatalogoPage() {
           {searchQuery && (
             <Link
               href="/catalogo"
-              className="text-xs font-bold text-[#0145F2] hover:underline active:scale-95 transition-transform"
+              className="text-xs font-bold text-blue-600 hover:underline transition-all"
             >
               Limpiar todo
             </Link>
@@ -272,30 +264,30 @@ export default function CatalogoPage() {
         </div>
 
         {/* ================= CONTROLES SUPERIORES ================= */}
-        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-8 gap-4 pb-4 border-b border-slate-200/50">
+        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-6 gap-4 pb-4 border-b border-gray-200">
           <div className="flex items-center justify-between w-full sm:w-auto gap-4">
-            <span className="text-sm font-medium text-slate-500">
-              <strong className="text-navy font-black text-lg">
+            <span className="text-sm font-medium text-gray-600">
+              <strong className="text-gray-900 font-black text-lg">
                 {totalResultados}
               </strong>{" "}
-              vehículos
+              vehículos encontrados
             </span>
 
             <button
               onClick={() => setIsFilterOpen(true)}
-              className="lg:hidden flex items-center gap-2 bg-white/80 backdrop-blur-md px-4 py-2 rounded-full border border-white shadow-sm text-xs font-bold text-navy hover:bg-white active:scale-95 transition-all"
+              className="lg:hidden flex items-center gap-2 bg-white px-4 py-2 rounded-lg border border-gray-300 shadow-sm text-xs font-bold text-gray-900 active:scale-95 transition-all"
             >
-              <Filter className="w-3.5 h-3.5 text-[#0145F2]" /> Filtros
+              <Filter className="w-4 h-4 text-blue-600" /> Filtros
             </button>
           </div>
 
           <div className="flex flex-wrap items-center gap-2 md:gap-3">
-            <div className="flex items-center gap-2 bg-white/60 backdrop-blur-md px-3 md:px-4 py-1.5 rounded-full border border-white shadow-[0_2px_10px_rgba(0,0,0,0.02)] text-[10px] md:text-xs font-bold text-slate-500">
-              <span className="hidden sm:inline">Ordenar:</span>
+            <div className="flex items-center gap-2 bg-white px-4 py-2 rounded-lg border border-gray-200 shadow-sm text-xs font-bold text-gray-600">
+              <span className="hidden sm:inline">Ordenar por:</span>
               <select
                 value={orden}
                 onChange={(e) => setOrden(e.target.value)}
-                className="bg-transparent border-none outline-none text-navy font-black cursor-pointer appearance-none pr-1 focus:ring-0"
+                className="bg-transparent border-none outline-none text-gray-900 font-black cursor-pointer appearance-none pr-4 focus:ring-0"
               >
                 <option value="Relevancia">Relevancia</option>
                 <option value="Menor precio">Menor precio</option>
@@ -307,7 +299,8 @@ export default function CatalogoPage() {
         </div>
 
         {/* ================= DISEÑO DE 2 COLUMNAS ================= */}
-        <div className="flex flex-col lg:flex-row gap-4 md:gap-8">
+        <div className="flex flex-col lg:flex-row gap-6 md:gap-8">
+          
           {/* SIDEBAR PC */}
           <aside className="hidden lg:block w-72 shrink-0 space-y-6">
             <FiltrosContent
@@ -315,6 +308,10 @@ export default function CatalogoPage() {
               setPrecioMin={setPrecioMin}
               precioMax={precioMax}
               setPrecioMax={setPrecioMax}
+              precioMinUsd={precioMinUsd}
+              setPrecioMinUsd={setPrecioMinUsd}
+              precioMaxUsd={precioMaxUsd}
+              setPrecioMaxUsd={setPrecioMaxUsd}
               tiposSeleccionados={tiposSeleccionados}
               toggleTipo={(t: string) =>
                 toggleArrayItem(setTiposSeleccionados, t)
@@ -355,7 +352,7 @@ export default function CatalogoPage() {
           {isFilterOpen && (
             <div className="fixed inset-0 z-[60] flex lg:hidden">
               <div
-                className="fixed inset-0 bg-slate-900/20 backdrop-blur-sm"
+                className="fixed inset-0 bg-gray-900/40 backdrop-blur-sm"
                 onClick={() => setIsFilterOpen(false)}
               ></div>
               <motion.div
@@ -363,15 +360,15 @@ export default function CatalogoPage() {
                 animate={{ x: 0 }}
                 exit={{ x: "-100%" }}
                 transition={{ type: "spring", damping: 25, stiffness: 200 }}
-                className="relative w-full max-w-[280px] bg-white/95 backdrop-blur-2xl h-full shadow-2xl z-10 p-5 flex flex-col overflow-y-auto border-r border-white"
+                className="relative w-full max-w-[300px] bg-white h-full shadow-2xl z-10 p-5 flex flex-col overflow-y-auto"
               >
-                <div className="flex items-center justify-between mb-6 pb-4 border-b border-slate-200/50">
-                  <h3 className="text-sm font-black text-navy uppercase tracking-tight">
+                <div className="flex items-center justify-between mb-6 pb-4 border-b border-gray-200">
+                  <h3 className="text-sm font-black text-gray-900 uppercase tracking-tight">
                     Filtros
                   </h3>
                   <button
                     onClick={() => setIsFilterOpen(false)}
-                    className="p-1.5 text-slate-400 hover:text-navy bg-white rounded-full border border-slate-100 shadow-sm active:scale-90 transition-all"
+                    className="p-1.5 text-gray-500 hover:text-gray-900 bg-gray-100 rounded-lg active:scale-95 transition-all"
                   >
                     <X className="w-4 h-4" />
                   </button>
@@ -383,6 +380,10 @@ export default function CatalogoPage() {
                     setPrecioMin={setPrecioMin}
                     precioMax={precioMax}
                     setPrecioMax={setPrecioMax}
+                    precioMinUsd={precioMinUsd}
+                    setPrecioMinUsd={setPrecioMinUsd}
+                    precioMaxUsd={precioMaxUsd}
+                    setPrecioMaxUsd={setPrecioMaxUsd}
                     tiposSeleccionados={tiposSeleccionados}
                     toggleTipo={(t: string) =>
                       toggleArrayItem(setTiposSeleccionados, t)
@@ -419,10 +420,10 @@ export default function CatalogoPage() {
                   />
                 </div>
 
-                <div className="pt-4 mt-auto">
+                <div className="pt-4 mt-auto border-t border-gray-200 bg-white sticky bottom-0">
                   <button
                     onClick={() => setIsFilterOpen(false)}
-                    className="w-full bg-gradient-to-r from-[#0145F2] to-blue-600 hover:from-blue-600 hover:to-sky-500 active:scale-95 text-white font-bold text-[10px] uppercase tracking-widest py-3.5 rounded-2xl transition-all shadow-lg shadow-blue-500/20"
+                    className="w-full bg-blue-600 hover:bg-blue-700 active:scale-95 text-white font-bold text-xs uppercase tracking-widest py-3.5 rounded-xl transition-all"
                   >
                     Ver {totalResultados} resultados
                   </button>
@@ -434,19 +435,19 @@ export default function CatalogoPage() {
           {/* ================= GRILLA DE AUTOS ================= */}
           <div className="flex-1 w-full flex flex-col">
             {loading ? (
-              // SKELETONS INICIALES
-              <div className="grid grid-cols-2 lg:grid-cols-2 xl:grid-cols-3 gap-3 sm:gap-6">
+              // SKELETONS INICIALES (Sólidos)
+              <div className="grid grid-cols-2 lg:grid-cols-2 xl:grid-cols-3 gap-4 md:gap-6">
                 {[...Array(6)].map((_, i) => (
                   <div
                     key={i}
-                    className="bg-white/40 backdrop-blur-xl rounded-[20px] sm:rounded-3xl border border-white overflow-hidden flex flex-col h-full shadow-sm p-3 sm:p-4 animate-pulse"
+                    className="bg-white rounded-2xl border border-gray-200 overflow-hidden flex flex-col h-full p-4 animate-pulse"
                   >
-                    <div className="h-[100px] sm:h-[180px] bg-slate-200/50 rounded-xl sm:rounded-2xl mb-3 sm:mb-4 w-full"></div>
+                    <div className="h-32 sm:h-40 bg-gray-200 rounded-xl mb-4 w-full"></div>
                     <div className="flex flex-col flex-grow">
-                      <div className="h-2 sm:h-3 bg-slate-200 rounded-full w-1/3 mb-2 sm:mb-3"></div>
-                      <div className="h-4 sm:h-6 bg-slate-300 rounded-full w-3/4 mb-3 sm:mb-4"></div>
-                      <div className="mt-auto pt-2 sm:pt-3">
-                        <div className="h-8 sm:h-11 bg-slate-200 rounded-xl sm:rounded-2xl w-full"></div>
+                      <div className="h-3 bg-gray-200 rounded-full w-1/3 mb-3"></div>
+                      <div className="h-5 bg-gray-300 rounded-full w-3/4 mb-4"></div>
+                      <div className="mt-auto pt-3">
+                        <div className="h-6 bg-gray-200 rounded-xl w-1/2"></div>
                       </div>
                     </div>
                   </div>
@@ -455,105 +456,84 @@ export default function CatalogoPage() {
             ) : vehiculos.length > 0 ? (
               <>
                 {/* AUTOS CARGADOS */}
-                <motion.div
-                  initial="hidden"
-                  animate="visible"
-                  variants={{
-                    visible: { transition: { staggerChildren: 0.05 } },
-                  }}
-                  className="grid grid-cols-2 lg:grid-cols-2 xl:grid-cols-3 gap-3 sm:gap-6 pb-8"
-                >
+                <div className="grid grid-cols-2 lg:grid-cols-2 xl:grid-cols-3 gap-4 md:gap-6 pb-8">
                   {vehiculos.map((auto, index) => {
                     const estaSeleccionado = autosComparar.some(
                       (a) => a.id === auto.id,
                     );
+                    
+                    const precioMostrar =
+                      auto.precio_publicado_usd && !auto.precio_publicado_ars
+                        ? `US$ ${auto.precio_publicado_usd.toLocaleString("es-AR")}`
+                        : auto.precio_publicado_ars
+                          ? `$ ${auto.precio_publicado_ars.toLocaleString("es-AR")}`
+                          : `US$ ${auto.precio_publicado_usd?.toLocaleString("es-AR")}`;
+
                     return (
-                      <motion.div
+                      <Link
                         key={`${auto.id}-${index}`}
-                        variants={{
-                          hidden: { opacity: 0, y: 20 },
-                          visible: {
-                            opacity: 1,
-                            y: 0,
-                            transition: { duration: 0.4, ease: "easeOut" },
-                          },
-                        }}
-                        className="h-full"
+                        href={`/catalogo/${auto.slug}`}
+                        className="block group h-full focus:outline-none"
                       >
-                        <Link
-                          href={`/catalogo/${auto.slug}`}
-                          className="block group h-full transition-transform duration-300 active:scale-[0.98]"
-                        >
-                          <div
-                            className={`bg-white/70 backdrop-blur-2xl rounded-[20px] sm:rounded-[28px] overflow-hidden flex flex-col h-full shadow-[0_4px_20px_rgba(0,0,0,0.03)] hover:shadow-[0_15px_35px_rgba(1,69,242,0.08)] hover:-translate-y-1 transition-all duration-500 relative border
-                            ${estaSeleccionado ? "border-[#0145F2] ring-2 sm:ring-4 ring-[#0145F2]/10" : "border-white"}
+                        <div
+                          className={`bg-white rounded-2xl overflow-hidden flex flex-col h-full hover:shadow-lg transition-all duration-300 relative border
+                            ${estaSeleccionado ? "border-blue-600 ring-1 ring-blue-600 shadow-md" : "border-gray-200 hover:border-blue-400"}
                           `}
+                        >
+                          {/* BOTÓN COMPARAR */}
+                          <button
+                            onClick={(e) => toggleComparar(e, auto)}
+                            className={`absolute top-3 left-3 z-10 p-2 rounded-full shadow-sm transition-all duration-300 border hover:scale-110 active:scale-95
+                              ${estaSeleccionado ? "bg-blue-600 text-white border-blue-600" : "bg-white text-gray-400 hover:text-blue-600 border-gray-200"}
+                            `}
+                            title="Comparar vehículo"
                           >
-                            {/* BOTÓN COMPARAR */}
-                            <button
-                              onClick={(e) => toggleComparar(e, auto)}
-                              className={`absolute top-2 left-2 sm:top-4 sm:left-4 z-10 p-1.5 sm:p-2.5 rounded-full shadow-md transition-all duration-300 border backdrop-blur-xl hover:scale-110 hover:rotate-3
-                                ${estaSeleccionado ? "bg-[#0145F2] text-white border-[#0145F2]" : "bg-white/90 text-slate-400 hover:text-[#0145F2] border-white"}
-                              `}
-                              title="Comparar vehículo"
-                            >
-                              <Scale className="w-3 h-3 sm:w-4 sm:h-4" />
-                            </button>
+                            <Scale className="w-3.5 h-3.5" />
+                          </button>
 
-                            <div className="relative h-[110px] sm:h-[180px] bg-slate-50/50 p-1.5 sm:p-2 overflow-hidden">
+                          {/* Imagen */}
+                          <div className="relative h-32 sm:h-48 bg-gray-100 flex items-center justify-center overflow-hidden shrink-0">
+                            {auto.multimedia_vehiculos?.[0] ? (
                               <img
-                                src={
-                                  auto.multimedia_vehiculos?.[0]?.url_archivo ||
-                                  "/placeholder.jpg"
-                                }
+                                src={auto.multimedia_vehiculos[0].url_archivo}
                                 alt={`${auto.marca} ${auto.modelo}`}
-                                className="w-full h-full object-cover rounded-[14px] sm:rounded-[20px] group-hover:scale-105 transition-transform duration-700 mix-blend-multiply"
+                                className="w-full h-full object-cover mix-blend-multiply group-hover:scale-105 transition-transform duration-500"
                               />
-
-                              {auto.estado === "Reservado" && (
-                                <div className="absolute top-2 right-2 sm:top-4 sm:right-4 bg-amber-400/95 backdrop-blur-md text-amber-950 border border-amber-300 px-2 sm:px-3 py-0.5 sm:py-1 rounded-full text-[8px] sm:text-[10px] font-black uppercase tracking-widest shadow-sm">
-                                  Reservado
-                                </div>
-                              )}
-                            </div>
-
-                            <div className="p-3 sm:p-6 flex flex-col flex-grow">
-                              <span className="text-[9px] sm:text-[11px] text-slate-400 font-bold uppercase tracking-widest mb-0.5 sm:mb-1">
-                                {auto.marca}
-                              </span>
-                              <h3 className="text-sm sm:text-xl font-black text-navy leading-tight uppercase line-clamp-1">
-                                {auto.modelo}
-                              </h3>
-
-                              <p className="text-[10px] sm:text-xs text-slate-500 font-medium mt-0.5 sm:mt-1.5 line-clamp-1">
-                                {auto.version ||
-                                  `${auto.tipo || "Vehículo"} • ${auto.transmision || "Manual"}`}
-                              </p>
-
-                              <div className="mt-auto pt-3 sm:pt-6">
-                                <div className="bg-white/80 backdrop-blur-md rounded-xl sm:rounded-2xl p-2 sm:p-4 mb-2 sm:mb-3 border border-white shadow-[0_2px_10px_rgba(0,0,0,0.02)] group-hover:border-blue-50 transition-colors">
-                                  <span className="text-[8px] sm:text-[9px] text-slate-400 font-bold uppercase tracking-widest block mb-0.5">
-                                    Desde
-                                  </span>
-                                  <span className="text-sm sm:text-2xl font-black text-navy tracking-tighter">
-                                    ${" "}
-                                    {auto.precio_publicado_ars?.toLocaleString(
-                                      "es-AR",
-                                    )}
-                                  </span>
-                                </div>
-
-                                <button className="w-full bg-white text-[#0145F2] border border-blue-50 hover:bg-blue-50 hover:border-blue-100 font-black text-[9px] sm:text-[11px] uppercase tracking-widest py-2 sm:py-3.5 rounded-lg sm:rounded-xl transition-all shadow-sm">
-                                  Ver detalles
-                                </button>
+                            ) : (
+                              <div className="text-gray-400 text-xs font-medium">Sin foto</div>
+                            )}
+                            
+                            {/* Etiqueta de Reservado */}
+                            {auto.estado === "Reservado" && (
+                              <div className="absolute top-3 right-3 bg-yellow-100 text-yellow-800 px-2.5 py-1 rounded-md text-[10px] font-bold uppercase tracking-widest border border-yellow-200">
+                                Reservado
                               </div>
+                            )}
+                          </div>
+
+                          {/* Textos y Precios */}
+                          <div className="p-4 sm:p-5 flex flex-col flex-grow">
+                            <span className="text-[10px] text-gray-500 font-bold uppercase tracking-widest mb-1">
+                              {auto.marca}
+                            </span>
+                            <h3 className="text-sm sm:text-lg font-black text-gray-900 leading-tight uppercase truncate">
+                              {auto.modelo}
+                            </h3>
+                            <p className="text-[11px] sm:text-xs text-gray-500 mt-1 line-clamp-1">
+                              {auto.version || `${auto.anio} • ${auto.kilometraje?.toLocaleString("es-AR")} km`}
+                            </p>
+
+                            <div className="mt-auto pt-4">
+                              <span className="block text-base sm:text-xl font-black text-blue-600">
+                                {precioMostrar}
+                              </span>
                             </div>
                           </div>
-                        </Link>
-                      </motion.div>
+                        </div>
+                      </Link>
                     );
                   })}
-                </motion.div>
+                </div>
 
                 {/* BOTÓN CARGAR MÁS */}
                 {hasMore && (
@@ -561,17 +541,16 @@ export default function CatalogoPage() {
                     <button
                       onClick={cargarMas}
                       disabled={loadingMore}
-                      className="group flex items-center gap-2 bg-white/60 backdrop-blur-md border border-white hover:border-[#0145F2]/20 hover:bg-white shadow-[0_4px_20px_rgba(0,0,0,0.03)] hover:shadow-lg disabled:opacity-70 px-8 py-3.5 rounded-full text-navy font-black text-xs uppercase tracking-widest transition-all active:scale-95"
+                      className="flex items-center gap-2 bg-white border border-gray-300 hover:border-blue-600 hover:text-blue-600 shadow-sm hover:shadow px-8 py-3.5 rounded-xl text-gray-700 font-bold text-xs uppercase tracking-widest transition-all active:scale-95 disabled:opacity-50"
                     >
                       {loadingMore ? (
                         <>
-                          <Loader2 className="w-4 h-4 animate-spin text-[#0145F2]" />
-                          Cargando...
+                          <Loader2 className="w-4 h-4 animate-spin" /> Cargando...
                         </>
                       ) : (
                         <>
                           Cargar más autos
-                          <ChevronDown className="w-4 h-4 text-[#0145F2] group-hover:translate-y-0.5 transition-transform" />
+                          <ChevronDown className="w-4 h-4" />
                         </>
                       )}
                     </button>
@@ -579,22 +558,20 @@ export default function CatalogoPage() {
                 )}
               </>
             ) : (
-              <div className="text-center py-20 sm:py-24 bg-white/60 backdrop-blur-xl rounded-[20px] sm:rounded-3xl border border-white shadow-sm px-4">
-                <div className="w-12 h-12 sm:w-16 sm:h-16 bg-slate-100 rounded-full flex items-center justify-center mx-auto mb-4">
-                  <Search className="w-5 h-5 sm:w-6 sm:h-6 text-slate-400" />
+              <div className="text-center py-20 bg-white rounded-3xl border border-gray-200 shadow-sm px-4">
+                <div className="w-16 h-16 bg-gray-50 rounded-full flex items-center justify-center mx-auto mb-4 border border-gray-100">
+                  <Search className="w-6 h-6 text-gray-400" />
                 </div>
-                <h3 className="text-navy font-black text-base sm:text-xl mb-2">No encontramos resultados</h3>
-                <p className="text-slate-500 text-xs sm:text-sm mb-6 sm:mb-8 max-w-sm mx-auto">Probá ajustando los filtros o realizando otra búsqueda.</p>
+                <h3 className="text-gray-900 font-black text-xl mb-2">No encontramos resultados</h3>
+                <p className="text-gray-500 text-sm mb-8 max-w-sm mx-auto">Probá ajustando los filtros o realizando otra búsqueda.</p>
                 
                 <div className="flex flex-col sm:flex-row items-center justify-center gap-3">
-                  <Link href="/catalogo" className="w-full sm:w-auto inline-block bg-white text-navy border border-gray-200 hover:bg-gray-50 active:scale-95 font-bold text-[10px] sm:text-xs uppercase tracking-widest px-6 sm:px-8 py-3.5 rounded-full transition-all shadow-sm">
+                  <Link href="/catalogo" className="w-full sm:w-auto bg-gray-100 text-gray-900 border border-gray-200 hover:bg-gray-200 font-bold text-xs uppercase tracking-widest px-8 py-3.5 rounded-xl transition-all shadow-sm">
                     Limpiar filtros
                   </Link>
-                  
-                  {/* BOTÓN PARA ABRIR EL POPUP */}
                   <button 
                     onClick={() => setIsFallbackModalOpen(true)}
-                    className="w-full sm:w-auto inline-block bg-gradient-to-r from-[#0145F2] to-blue-600 hover:to-sky-500 active:scale-95 text-white font-bold text-[10px] sm:text-xs uppercase tracking-widest px-6 sm:px-8 py-3.5 rounded-full transition-all shadow-lg shadow-blue-500/20"
+                    className="w-full sm:w-auto bg-blue-600 hover:bg-blue-700 text-white font-bold text-xs uppercase tracking-widest px-8 py-3.5 rounded-xl transition-all shadow-sm active:scale-95"
                   >
                     Pedir auto a medida
                   </button>
@@ -605,23 +582,23 @@ export default function CatalogoPage() {
         </div>
       </div>
 
-      {/* ================= BARRA FLOTANTE COMPARADOR ================= */}
+      {/* ================= BARRA FLOTANTE COMPARADOR (HASTA 3 AUTOS) ================= */}
       <AnimatePresence>
         {autosComparar.length > 0 && (
           <motion.div
-            initial={{ y: 100, opacity: 0, scale: 0.9 }}
-            animate={{ y: 0, opacity: 1, scale: 1 }}
-            exit={{ y: 100, opacity: 0, scale: 0.9 }}
+            initial={{ y: 100, opacity: 0 }}
+            animate={{ y: 0, opacity: 1 }}
+            exit={{ y: 100, opacity: 0 }}
             transition={{ type: "spring", damping: 25, stiffness: 300 }}
-            className="fixed bottom-24 md:bottom-8 left-2 right-2 sm:left-4 sm:right-4 md:left-1/2 md:-translate-x-1/2 md:w-max z-50"
+            className="fixed bottom-6 left-4 right-4 md:left-1/2 md:-translate-x-1/2 md:w-max z-50"
           >
-            <div className="bg-[#0F172A]/90 backdrop-blur-3xl border border-white/10 shadow-[0_20px_50px_rgba(0,0,0,0.3)] rounded-full pl-3 pr-2 py-2 md:px-4 md:py-3 flex items-center justify-between gap-3 md:gap-8 ring-1 ring-white/5">
-              <div className="flex items-center gap-2 md:gap-3 shrink-0">
+            <div className="bg-gray-900 shadow-2xl rounded-2xl pl-4 pr-3 py-3 md:px-5 md:py-3.5 flex items-center justify-between gap-4 md:gap-8 border border-gray-700">
+              <div className="flex items-center gap-3 md:gap-4 shrink-0">
                 <div className="flex -space-x-3">
                   {autosComparar.map((auto, i) => (
                     <div
                       key={i}
-                      className="w-8 h-8 md:w-12 md:h-12 rounded-full border-2 border-[#0F172A] overflow-hidden bg-white shadow-md shrink-0"
+                      className="w-10 h-10 md:w-12 md:h-12 rounded-full border-2 border-gray-900 overflow-hidden bg-white shadow-sm shrink-0"
                     >
                       <img
                         src={
@@ -632,37 +609,37 @@ export default function CatalogoPage() {
                       />
                     </div>
                   ))}
-                  {autosComparar.length === 1 && (
-                    <div className="w-8 h-8 md:w-12 md:h-12 rounded-full border-2 border-[#0F172A] border-dashed flex items-center justify-center bg-slate-800/50 text-slate-400 text-[10px] md:text-xs font-bold shrink-0">
+                  {/* Slots vacíos si hay menos de 3 */}
+                  {autosComparar.length < 3 && (
+                    <div className="w-10 h-10 md:w-12 md:h-12 rounded-full border-2 border-dashed border-gray-600 flex items-center justify-center bg-gray-800 text-gray-500 text-xs font-bold shrink-0">
                       +
                     </div>
                   )}
                 </div>
                 <div className="flex flex-col justify-center">
-                  <span className="text-white text-[10px] md:text-sm font-bold leading-none">
-                    {autosComparar.length}{" "}
-                    {autosComparar.length === 1 ? "auto" : "autos"}
-                    <span className="hidden sm:inline"> listo(s)</span>
+                  <span className="text-white text-[11px] md:text-sm font-bold leading-none">
+                    {autosComparar.length} / 3
+                    <span className="hidden sm:inline"> listos</span>
                   </span>
-                  <span className="text-slate-400 text-[8px] md:text-[9px] uppercase tracking-widest hidden sm:block mt-1">
+                  <span className="text-gray-400 text-[9px] uppercase tracking-widest hidden sm:block mt-1">
                     Comparador
                   </span>
                 </div>
               </div>
-              <div className="flex items-center gap-1 md:gap-3 shrink-0">
+              <div className="flex items-center gap-2 shrink-0">
                 <button
                   onClick={() => setAutosComparar([])}
-                  className="text-slate-400 hover:text-white px-2 py-2 text-[9px] md:text-[10px] font-bold uppercase tracking-widest transition-colors rounded-full hover:bg-white/5"
+                  className="text-gray-400 hover:text-white px-2 py-2 text-[10px] font-bold uppercase tracking-widest transition-colors rounded-lg hover:bg-white/10"
                 >
-                  <X className="w-3.5 h-3.5 md:hidden" />
+                  <X className="w-4 h-4 md:hidden" />
                   <span className="hidden md:inline">Limpiar</span>
                 </button>
                 <button
                   onClick={() => setModalComparadorOpen(true)}
                   disabled={autosComparar.length === 0}
-                  className="bg-gradient-to-r from-[#0145F2] to-sky-500 hover:to-sky-400 disabled:from-slate-700 disabled:to-slate-700 disabled:text-slate-400 text-white px-3 py-2 md:px-6 md:py-3 rounded-full text-[9px] md:text-xs font-black uppercase tracking-widest transition-all flex items-center gap-1.5 md:gap-2 shadow-lg shadow-blue-500/20 shrink-0 border border-blue-400/30"
+                  className="bg-blue-600 hover:bg-blue-500 disabled:bg-gray-700 disabled:text-gray-500 text-white px-4 py-2.5 md:px-6 md:py-3 rounded-xl text-[10px] md:text-xs font-bold uppercase tracking-widest transition-all flex items-center gap-2 active:scale-95"
                 >
-                  <Scale className="w-3.5 h-3.5 shrink-0" /> Comparar
+                  <Scale className="w-4 h-4 shrink-0" /> Comparar
                 </button>
               </div>
             </div>
@@ -678,6 +655,7 @@ export default function CatalogoPage() {
           setAutosComparar((prev) => prev.filter((a) => a.id !== id))
         }
       />
+      
       {/* POPUP DE CAÍDA (CUANDO NO ENCUENTRA AUTO) */}
       <BuscadorFallback 
         isOpen={isFallbackModalOpen} 
@@ -688,78 +666,76 @@ export default function CatalogoPage() {
   );
 }
 
-// ================= SIDEBAR COMPONENT =================
+// ================= SIDEBAR COMPONENT (SÓLIDO) =================
 function FiltrosContent(props: any) {
   const LISTA_MARCAS = [
-    "Audi",
-    "BMW",
-    "Chevrolet",
-    "Citroën",
-    "Fiat",
-    "Ford",
-    "Hyundai",
-    "Jeep",
-    "Kia",
-    "Nissan",
-    "Peugeot",
-    "Renault",
-    "Toyota",
-    "Volkswagen",
+    "Audi", "BMW", "Chevrolet", "Citroën", "Fiat", "Ford", "Hyundai", 
+    "Jeep", "Kia", "Nissan", "Peugeot", "Renault", "Toyota", "Volkswagen"
   ];
+  
+  // Se agregó "Náutica"
   const LISTA_TIPOS = [
-    "Auto",
-    "Buses",
-    "Cabriolet",
-    "Camión",
-    "Camioneta",
-    "Casa Rodante",
-    "Coupe",
-    "Familiar",
-    "Monovolumen",
-    "Moto",
-    "Pickup",
-    "Rural 5 Puertas",
-    "Sedan 3p",
-    "Sedan 4p",
-    "Sedan 5p",
-    "Todo Terreno | SUV",
-    "Utilitarios",
-    "Van | Mini-Van",
+    "Auto", "Buses", "Cabriolet", "Camión", "Camioneta", "Casa Rodante", 
+    "Coupe", "Familiar", "Monovolumen", "Moto", "Náutica", "Pickup", 
+    "Rural 5 Puertas", "Sedan 3p", "Sedan 4p", "Sedan 5p", "Todo Terreno | SUV", 
+    "Utilitarios", "Van | Mini-Van"
   ];
 
   return (
-    <div className="bg-white/60 backdrop-blur-2xl border border-white rounded-[24px] md:rounded-[28px] p-5 md:p-6 shadow-[0_8px_32px_rgba(0,0,0,0.03)] pb-10 max-h-[85vh] overflow-y-auto custom-scrollbar">
-      <div className="flex items-center justify-between mb-5 md:mb-6 pb-3 md:pb-4 border-b border-slate-200/50 sticky top-0 bg-white/40 backdrop-blur-md z-10">
-        <div className="flex items-center gap-2 text-navy font-black uppercase tracking-widest text-[11px] md:text-xs">
-          <SlidersHorizontal className="w-3.5 h-3.5 md:w-4 md:h-4 text-[#0145F2]" />
+    <div className="bg-white border border-gray-200 rounded-2xl p-6 shadow-sm pb-10 max-h-[85vh] overflow-y-auto custom-scrollbar">
+      <div className="flex items-center justify-between mb-6 pb-4 border-b border-gray-200 sticky top-0 bg-white z-10">
+        <div className="flex items-center gap-2 text-gray-900 font-black uppercase tracking-widest text-xs">
+          <SlidersHorizontal className="w-4 h-4 text-blue-600" />
           Filtros Avanzados
         </div>
       </div>
 
-      <div className="space-y-3 mb-6">
-        <label className="text-[9px] md:text-[10px] font-black text-slate-400 uppercase tracking-widest block mb-1 md:mb-2">
-          Rango de Precio
+      <div className="space-y-4 mb-6">
+        <label className="text-[10px] font-bold text-gray-500 uppercase tracking-widest block">
+          Precio en Pesos (ARS)
         </label>
-        <div className="space-y-2 md:space-y-3">
+        <div className="grid grid-cols-2 gap-2">
           <input
             type="number"
-            placeholder="Desde $ (Mínimo)"
+            placeholder="Desde $"
             value={props.precioMin}
             onChange={(e) => props.setPrecioMin(e.target.value)}
-            className="w-full bg-white/50 backdrop-blur-md border border-white shadow-inner rounded-xl px-3 py-2 md:px-4 md:py-2.5 text-xs font-bold text-navy outline-none focus:ring-4 focus:ring-[#0145F2]/10 placeholder:text-slate-400 transition-all"
+            className="w-full bg-gray-50 border border-gray-200 rounded-lg px-3 py-2.5 text-xs font-bold text-gray-900 outline-none focus:bg-white focus:border-blue-500 transition-colors placeholder:font-medium"
           />
           <input
             type="number"
-            placeholder="Hasta $ (Máximo)"
+            placeholder="Hasta $"
             value={props.precioMax}
             onChange={(e) => props.setPrecioMax(e.target.value)}
-            className="w-full bg-white/50 backdrop-blur-md border border-white shadow-inner rounded-xl px-3 py-2 md:px-4 md:py-2.5 text-xs font-bold text-navy outline-none focus:ring-4 focus:ring-[#0145F2]/10 placeholder:text-slate-400 transition-all"
+            className="w-full bg-gray-50 border border-gray-200 rounded-lg px-3 py-2.5 text-xs font-bold text-gray-900 outline-none focus:bg-white focus:border-blue-500 transition-colors placeholder:font-medium"
+          />
+        </div>
+      </div>
+
+      <div className="space-y-4 mb-6 pb-6 border-b border-gray-100">
+        <label className="text-[10px] font-bold text-gray-500 uppercase tracking-widest block">
+          Precio en Dólares (USD)
+        </label>
+        <div className="grid grid-cols-2 gap-2">
+          <input
+            type="number"
+            placeholder="Desde US$"
+            value={props.precioMinUsd}
+            onChange={(e) => props.setPrecioMinUsd(e.target.value)}
+            className="w-full bg-gray-50 border border-gray-200 rounded-lg px-3 py-2.5 text-xs font-bold text-gray-900 outline-none focus:bg-white focus:border-emerald-500 transition-colors placeholder:font-medium"
+          />
+          <input
+            type="number"
+            placeholder="Hasta US$"
+            value={props.precioMaxUsd}
+            onChange={(e) => props.setPrecioMaxUsd(e.target.value)}
+            className="w-full bg-gray-50 border border-gray-200 rounded-lg px-3 py-2.5 text-xs font-bold text-gray-900 outline-none focus:bg-white focus:border-emerald-500 transition-colors placeholder:font-medium"
           />
         </div>
       </div>
 
       <FilterSection
-        title="Tipo de Auto"
+        title="Tipo de Vehículo"
         options={LISTA_TIPOS.map((t) => ({ label: t, value: t }))}
         selected={props.tiposSeleccionados}
         onToggle={props.toggleTipo}
@@ -847,27 +823,25 @@ function FilterSection({
   onToggle: (val: any) => void;
 }) {
   return (
-    <div className="space-y-3 md:space-y-4 pt-5 md:pt-6 border-t border-slate-200/50">
-      <label className="text-[9px] md:text-[10px] font-black text-slate-400 uppercase tracking-widest block mb-1 md:mb-2">
+    <div className="space-y-3 pt-5 border-t border-gray-100">
+      <label className="text-[10px] font-bold text-gray-500 uppercase tracking-widest block">
         {title}
       </label>
       <div className="max-h-48 overflow-y-auto custom-scrollbar pr-2 space-y-2.5">
         {options.map((opt, idx) => (
           <label
             key={idx}
-            className="flex items-center gap-2.5 md:gap-3 text-[11px] md:text-xs text-slate-600 font-bold cursor-pointer hover:text-navy transition-colors group"
+            className="flex items-center gap-3 text-xs text-gray-700 font-semibold cursor-pointer hover:text-blue-600 transition-colors group"
           >
-            <div className="relative flex items-center justify-center">
+            <div className="relative flex items-center justify-center shrink-0">
               <input
                 type="checkbox"
                 checked={selected.includes(opt.value)}
                 onChange={() => onToggle(opt.value)}
-                className="peer w-4 h-4 md:w-5 md:h-5 rounded-[4px] md:rounded-md border-slate-300 text-[#0145F2] focus:ring-[#0145F2] transition-all bg-white shadow-inner cursor-pointer"
+                className="w-4 h-4 rounded border-gray-300 text-blue-600 focus:ring-blue-600 transition-all bg-gray-50 cursor-pointer"
               />
             </div>
-            <span className="group-hover:translate-x-1 transition-transform">
-              {opt.label}
-            </span>
+            <span className="truncate">{opt.label}</span>
           </label>
         ))}
       </div>

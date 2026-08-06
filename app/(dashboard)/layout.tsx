@@ -5,14 +5,12 @@ import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { supabase } from "@/lib/supabase";
 import {
-  Car,
   Menu,
   X,
   Search,
   ChevronRight,
   UserPlus,
   Banknote,
-  MessageSquareShare,
   CheckSquare,
   CalendarCheck,
   MessagesSquare,
@@ -24,6 +22,11 @@ import {
   Target,
   MousePointerClick,
   Bot,
+  CarFront,
+  LayoutDashboard,
+  Inbox,
+  PieChart,
+  LogOut
 } from "lucide-react";
 
 export default function DashboardLayout({
@@ -87,9 +90,9 @@ export default function DashboardLayout({
     router.push("/login");
   };
 
+  // Componente de Enlace Mejorado
   const NavLinkItem = ({
     icon: Icon,
-    emoji,
     label,
     href,
     exact = false,
@@ -100,27 +103,29 @@ export default function DashboardLayout({
       <Link
         href={href}
         onClick={() => setIsOpen(false)}
-        className={`flex items-center justify-between px-3 py-2 rounded-md transition-colors ${
+        className={`flex items-center justify-between px-4 py-2.5 rounded-xl transition-all duration-200 group relative overflow-hidden ${
           isActive
-            ? "bg-[#0145F2]/10 text-[#339AF0] font-medium"
-            : "text-[#C1C2C5] hover:bg-[#25262B] hover:text-gray-200"
+            ? "bg-[#0ea5e9]/10 text-[#0ea5e9] font-bold"
+            : "text-slate-400 hover:bg-white/5 hover:text-slate-100 font-medium"
         }`}
       >
+        {/* Indicador Activo Lateral */}
+        {isActive && (
+          <div className="absolute left-0 top-1/2 -translate-y-1/2 w-1 h-6 bg-[#0ea5e9] rounded-r-full shadow-[0_0_10px_rgba(14,165,233,0.5)]" />
+        )}
+        
         <div className="flex items-center gap-3">
-          {emoji ? (
-            <span className="text-base leading-none w-[18px] text-center">
-              {emoji}
-            </span>
-          ) : (
-            <Icon
-              className={`w-[18px] h-[18px] ${isActive ? "text-[#339AF0]" : "text-gray-400"}`}
-              strokeWidth={2}
-            />
-          )}
-          <span className="text-sm">{label}</span>
+          <Icon
+            className={`w-[18px] h-[18px] transition-transform duration-300 ${
+              isActive ? "text-[#0ea5e9]" : "text-slate-500 group-hover:scale-110 group-hover:text-[#0ea5e9]"
+            }`}
+            strokeWidth={isActive ? 2.5 : 2}
+          />
+          <span className="text-sm tracking-wide">{label}</span>
         </div>
+
         {notifications && (
-          <span className="bg-[#1971C2] text-white text-[10px] font-bold px-1.5 py-0.5 rounded-full min-w-[20px] text-center shadow-sm">
+          <span className="bg-rose-500 text-white text-[10px] font-black px-2 py-0.5 rounded-full min-w-[20px] text-center shadow-md">
             {notifications}
           </span>
         )}
@@ -129,15 +134,16 @@ export default function DashboardLayout({
   };
 
   const SectionLabel = ({ children }: { children: React.ReactNode }) => (
-    <div className="text-[10px] font-bold text-gray-500 uppercase tracking-widest mb-2 px-3">
+    <div className="text-[10px] font-black text-slate-500 uppercase tracking-widest mb-3 px-4">
       {children}
     </div>
   );
 
   return (
     <div className="flex min-h-screen w-full bg-[#0b1329] text-slate-100 font-sans">
+      
       {/* BARRA SUPERIOR MÓVIL */}
-      <div className="md:hidden print:hidden fixed top-0 left-0 right-0 h-16 bg-[#1A1B1E] border-b border-[#2C2E33] flex items-center justify-between px-4 z-50 shadow-md">
+      <div className="md:hidden print:hidden fixed top-0 left-0 right-0 h-16 bg-[#0f172a] border-b border-slate-800 flex items-center justify-between px-4 z-50 shadow-md">
         <Link href="/panel" className="flex items-center relative group py-2">
           <img
             src="/logo.png"
@@ -147,123 +153,125 @@ export default function DashboardLayout({
         </Link>
         <button
           onClick={() => setIsOpen(!isOpen)}
-          className="text-[#C1C2C5] hover:text-white"
+          className="text-slate-400 hover:text-white transition-colors bg-white/5 p-2 rounded-lg"
         >
-          {isOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
+          {isOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
         </button>
       </div>
 
       {/* SIDEBAR */}
       <aside
-        className={`fixed print:hidden md:sticky top-16 md:top-0 left-0 h-[calc(100vh-4rem)] md:h-screen w-[280px] bg-[#1A1B1E] border-r border-[#2C2E33] transform transition-transform duration-300 z-40 flex flex-col shrink-0 overflow-y-auto custom-scrollbar ${
+        className={`fixed print:hidden md:sticky top-16 md:top-0 left-0 h-[calc(100vh-4rem)] md:h-screen w-[280px] bg-[#0f172a] border-r border-slate-800 transform transition-transform duration-300 z-40 flex flex-col shrink-0 overflow-y-auto custom-scrollbar shadow-2xl md:shadow-none ${
           isOpen ? "translate-x-0" : "-translate-x-full md:translate-x-0"
         }`}
       >
-        <div className="p-4 flex flex-col h-full">
-          {/* USER BUTTON */}
-          <div className="flex items-center justify-between p-3 -mx-2 rounded-lg hover:bg-[#25262B] transition-colors cursor-pointer mb-4">
+        <div className="p-5 flex flex-col h-full">
+          
+          {/* USER BUTTON (Premium Card) */}
+          <div className="flex items-center justify-between p-3 -mx-2 rounded-2xl bg-white/5 border border-white/5 hover:bg-white/10 transition-all cursor-pointer mb-8 group">
             <div className="flex items-center gap-3">
-              <div className="w-9 h-9 rounded-full bg-gradient-to-br from-[#0145F2] to-sky-400 flex items-center justify-center text-white font-bold text-sm shrink-0 shadow-sm">
+              <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-[#0145F2] to-sky-400 flex items-center justify-center text-white font-black text-sm shrink-0 shadow-lg shadow-blue-500/20 group-hover:scale-105 transition-transform">
                 {userProfile.nombre.charAt(0).toUpperCase()}
               </div>
               <div className="flex flex-col min-w-0">
-                <span className="text-sm font-semibold text-gray-200 truncate pr-2">
+                <span className="text-sm font-bold text-white truncate pr-2">
                   {userProfile.nombre}
                 </span>
-                <span className="text-xs text-gray-500 truncate pr-2 capitalize">
+                <span className="text-[10px] font-black uppercase tracking-widest text-[#0ea5e9] truncate pr-2">
                   {userProfile.rol}
                 </span>
               </div>
             </div>
-            <ChevronRight className="w-4 h-4 text-gray-500 shrink-0" />
+            <ChevronRight className="w-4 h-4 text-slate-500 group-hover:text-white transition-colors shrink-0" />
           </div>
 
-          {/* SEARCH */}
-          <div className="relative mb-6">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-500" />
+          {/* SEARCH (Glassmorphism Input) */}
+          <div className="relative mb-8">
+            <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-500" />
             <input
               type="text"
-              placeholder="Buscar"
-              className="w-full bg-[#25262B] border border-[#373A40] text-sm text-gray-200 rounded-md pl-9 pr-14 py-2 outline-none focus:border-[#1971C2] transition-colors placeholder:text-gray-500"
+              placeholder="Buscar rápido..."
+              className="w-full bg-[#0b1329] border border-slate-800 text-sm text-white rounded-xl pl-10 pr-14 py-2.5 outline-none focus:border-[#0ea5e9]/50 focus:ring-2 focus:ring-[#0ea5e9]/10 transition-all placeholder:text-slate-600 shadow-inner"
             />
-            <div className="absolute right-2 top-1/2 -translate-y-1/2 bg-[#1A1B1E] border border-[#373A40] text-[10px] font-bold text-gray-400 px-1.5 py-0.5 rounded pointer-events-none">
-              Ctrl + K
+            <div className="absolute right-2 top-1/2 -translate-y-1/2 bg-slate-800 border border-slate-700 text-[9px] font-black text-slate-400 px-1.5 py-1 rounded-md pointer-events-none uppercase tracking-widest">
+              Ctrl K
             </div>
           </div>
 
           {/* 📦 STOCK */}
-          <div className="mb-6">
-            <SectionLabel>Stock</SectionLabel>
-            <div className="flex flex-col gap-0.5">
-              <NavLinkItem icon={Car} label="Gestión de Stock" href="/panel" exact />
+          <div className="mb-8">
+            <SectionLabel>Inventario</SectionLabel>
+            <div className="flex flex-col gap-1 -mx-2">
+              <NavLinkItem icon={CarFront} label="Gestión de Stock" href="/panel" exact />
             </div>
           </div>
 
           {/* 💬 CRM */}
-          <div className="mb-6">
-            <SectionLabel>CRM</SectionLabel>
-            <div className="flex flex-col gap-0.5">
-              <NavLinkItem icon={MessageSquareShare} label="Tablero de Leads" href="/panel/crm" />
+          <div className="mb-8">
+            <SectionLabel>CRM & Leads</SectionLabel>
+            <div className="flex flex-col gap-1 -mx-2">
+              <NavLinkItem icon={LayoutDashboard} label="Tablero de Leads" href="/panel/crm" />
+              <NavLinkItem icon={Inbox} label="Solicitudes Web" href="/panel/cotizaciones" />
+              <NavLinkItem icon={CalendarCheck} label="Agenda de Visitas" href="/panel/citas" />
+              <NavLinkItem icon={MessagesSquare} label="Consultas Activas" href="/panel/chat" />
               <NavLinkItem icon={CheckSquare} label="Tareas del Equipo" href="/panel/tareas" />
-              <NavLinkItem icon={CalendarCheck} label="Citas / Agenda" href="/panel/citas" />
-              <NavLinkItem icon={MessagesSquare} label="Consultas (Chat)" href="/panel/chat" />
-              <NavLinkItem emoji="📥" label="Leads Web (Cotiz/Consig)" href="/panel/cotizaciones" />
             </div>
           </div>
 
           {/* 🧾 VENTAS */}
-          <div className="mb-6">
-            <SectionLabel>Ventas</SectionLabel>
-            <div className="flex flex-col gap-0.5">
+          <div className="mb-8">
+            <SectionLabel>Operaciones</SectionLabel>
+            <div className="flex flex-col gap-1 -mx-2">
               <NavLinkItem icon={Banknote} label="Nueva Operación" href="/panel/ventas/nueva" />
               <NavLinkItem icon={UserPlus} label="Nuevo Cliente" href="/panel/clientes/nuevo" />
               <NavLinkItem icon={Landmark} label="Financiaciones" href="/panel/ventas/financiaciones" />
             </div>
           </div>
 
-          {/* 💼 ADMINISTRACIÓN (protegido por rol) */}
+          {/* 💼 ADMINISTRACIÓN */}
           {(userProfile.rol === "admin" || userProfile.rol === "encargado") && (
-            <div className="mb-6">
+            <div className="mb-8">
               <SectionLabel>Administración</SectionLabel>
-              <div className="flex flex-col gap-0.5">
-                <NavLinkItem icon={FileBarChart} label="Informes" href="/panel/informes" />
+              <div className="flex flex-col gap-1 -mx-2">
+                <NavLinkItem icon={FileBarChart} label="Informes Globales" href="/panel/informes" />
                 {userProfile.rol === "admin" && (
                   <>
                     <NavLinkItem icon={Wallet} label="Movimientos de Caja" href="/panel/gastos" />
-                    <NavLinkItem icon={Users} label="Usuarios" href="/panel/usuarios" />
+                    <NavLinkItem icon={Users} label="Gestión de Equipo" href="/panel/usuarios" />
                   </>
                 )}
               </div>
             </div>
           )}
 
-          {/* 📣 MARKETING (protegido por rol) */}
+          {/* 📣 MARKETING */}
           {(userProfile.rol === "admin" || userProfile.rol === "encargado") && (
             <div className="mb-auto">
               <SectionLabel>Marketing</SectionLabel>
-              <div className="flex flex-col gap-0.5">
+              <div className="flex flex-col gap-1 -mx-2">
+                <NavLinkItem icon={PieChart} label="Métricas Generales" href="/panel/metricas" />
                 <NavLinkItem icon={Target} label="Autos Pautados" href="/panel/marketing/pautados" />
                 <NavLinkItem icon={Megaphone} label="Embudo de Conversión" href="/panel/marketing/embudo" />
-                <NavLinkItem icon={MousePointerClick} label="Búsquedas Frecuentes" href="/panel/marketing/busquedas" />
-                <NavLinkItem icon={Bot} label="Preguntas del Chatbot" href="/panel/marketing/chatbot" />
-                <NavLinkItem emoji="📊" label="Métricas Generales" href="/panel/metricas" />
+                <NavLinkItem icon={MousePointerClick} label="Búsquedas Web" href="/panel/marketing/busquedas" />
+                <NavLinkItem icon={Bot} label="Asistente Virtual" href="/panel/marketing/chatbot" />
               </div>
             </div>
           )}
 
           {/* LOGOUT */}
-          <div className="pt-6 mt-6 border-t border-[#2C2E33]">
+          <div className="pt-6 mt-6 border-t border-slate-800 -mx-2">
             <button
               onClick={handleLogout}
-              className="flex items-center gap-3 w-full px-3 py-2 rounded-md text-sm font-medium text-gray-400 hover:bg-rose-500/10 hover:text-rose-400 transition-colors"
+              className="flex items-center gap-3 w-full px-4 py-2.5 rounded-xl text-sm font-bold text-slate-400 hover:bg-rose-500/10 hover:text-rose-400 transition-colors group"
             >
-              <span className="text-base leading-none">🚪</span> Cerrar Sesión
+              <LogOut className="w-[18px] h-[18px] group-hover:scale-110 transition-transform" strokeWidth={2.5} />
+              Cerrar Sesión
             </button>
           </div>
         </div>
       </aside>
 
-      {/* CONTENIDO */}
+      {/* CONTENIDO PRINCIPAL */}
       <main className="flex-1 min-w-0 overflow-x-hidden pt-16 md:pt-0 bg-[#0b1329] flex flex-col">
         <div className="p-4 md:p-8 w-full flex-1">{children}</div>
       </main>

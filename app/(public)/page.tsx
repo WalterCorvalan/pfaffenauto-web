@@ -11,6 +11,7 @@ import ServiciosWobble from "@/components/ServiciosWobble";
 import BannersPublicitarios from "@/components/banners/BannerPublicitario";
 import BannerRRHH from "@/components/banners/BannerRRHH";
 import BannerFinanciacion from "@/components/banners/BannerFinanciacion";
+import AgendarCitaForm from "@/components/AgendarCitaForm";
 
 const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -63,6 +64,10 @@ export default async function HomePage() {
 
       <FadeIn direction="up">
         <Testimonials />
+      </FadeIn>
+
+      <FadeIn direction="up">
+        <AgendarCitaForm />
       </FadeIn>
 
       <FadeIn direction="up">

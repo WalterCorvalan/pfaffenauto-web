@@ -2,7 +2,7 @@
 
 import { useState, MouseEvent } from "react";
 import Link from "next/link";
-import { Search, CarFront, Zap, Users, Grid, Wand2 } from "lucide-react";
+import { Search, CarFront, Zap, Users, Grid, Wand2, Sparkles } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { motion, useMotionTemplate, useMotionValue } from "framer-motion";
 
@@ -158,7 +158,7 @@ export default function Hero() {
             {/* Efecto de brillo interior en el botón */}
             <div className="absolute inset-0 w-1/2 h-full bg-gradient-to-r from-transparent via-white/20 to-transparent -skew-x-12 -translate-x-[150%] group-hover:translate-x-[250%] transition-transform duration-700 ease-out"></div>
             
-            <span className="text-sm font-black uppercase tracking-widest relative z-10">Encontrar</span>
+            <span className="text-sm font-black uppercase tracking-widest relative z-10">Buscar</span>
             <Wand2 className="w-5 h-5 relative z-10" />
           </button>
         </motion.form>
@@ -172,10 +172,17 @@ export default function Hero() {
         >
           <Pill icon={<CarFront className="w-4 h-4"/>} text="SUVs" href="/catalogo?q=SUV" />
           <Pill icon={<CarFront className="w-4 h-4"/>} text="Sedanes" href="/catalogo?q=Sedan" />
-          <Pill icon={<CarFront className="w-4 h-4"/>} text="Pick-ups" href="/catalogo?q=Pick-up" />
+          <Pill icon={<CarFront className="w-4 h-4" />} text="Pick-ups" href="/catalogo?q=Pick-up" />
           <Pill icon={<Zap className="w-4 h-4 text-amber-500" fill="currentColor"/>} text="Híbridos / Eléctricos" href="/catalogo?q=Hibrido" />
           <div className="w-full h-2 md:hidden"></div> {/* Break en móvil */}
-          <Pill icon={<Users className="w-4 h-4 text-emerald-600"/>} text="Consignar Mi Auto" borderClass="border-white bg-emerald-50/80 hover:bg-emerald-100/90 text-emerald-900" href="/consignacion" />
+          <Pill icon={<Users className="w-4 h-4 text-emerald-600" />} text="Consignar Mi Auto" borderClass="border-white bg-emerald-50/80 hover:bg-emerald-100/90 text-emerald-900" href="/consignacion" />
+          {/* Pill de 0KM renovada con estilo exclusivo */}
+          <Pill 
+            icon={<CarFront className="w-4 h-4 text-amber-400" fill="currentColor"/>} 
+            text="0KM" 
+            borderClass="border-gray-900 bg-gray-900 text-white hover:bg-gray-800 shadow-md" 
+            href="/catalogo?q=0km" 
+          />
           <Pill icon={<Grid className="w-4 h-4 text-[#0055A4]"/>} text="Ver Catálogo" borderClass="border-white bg-blue-50/80 hover:bg-blue-100/90 text-[#0055A4]" href="/catalogo" />
         </motion.div>
 

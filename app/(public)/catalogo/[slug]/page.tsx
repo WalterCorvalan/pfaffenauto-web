@@ -137,10 +137,7 @@ export default async function VehiculoDetallePage({
       
       {/* ================= EFECTOS ESPACIALES DE FONDO (ESTILO HERO/CATÁLOGO) ================= */}
       <div className="absolute inset-0 pointer-events-none z-0">
-        {/* Grilla arquitectónica sutil */}
         <div className="absolute inset-0 bg-[linear-gradient(to_right,#e2e8f0_1px,transparent_1px),linear-gradient(to_bottom,#e2e8f0_1px,transparent_1px)] bg-[size:3rem_3rem] [mask-image:radial-gradient(ellipse_80%_50%_at_50%_0%,#000_70%,transparent_100%)] opacity-60"></div>
-        
-        {/* Luces Ambientales (Spotlights) */}
         <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[800px] h-[400px] bg-[#0145F2]/5 blur-[120px] rounded-full"></div>
         <div className="absolute top-[20%] -left-[10%] w-[500px] h-[500px] bg-sky-300/10 blur-[120px] rounded-full"></div>
         <div className="absolute bottom-[10%] -right-[5%] w-[600px] h-[600px] bg-blue-400/5 blur-[120px] rounded-full"></div>
@@ -155,21 +152,13 @@ export default async function VehiculoDetallePage({
               Inicio
             </Link>
             <span className="text-slate-400">/</span>
-            <Link
-              href="/catalogo"
-              className="hover:text-[#0145F2] transition-colors"
-            >
+            <Link href="/catalogo" className="hover:text-[#0145F2] transition-colors">
               Catálogo
             </Link>
             <span className="text-slate-400">/</span>
-
-            <Link
-              href={`/marcas/${auto.marca.toLowerCase().replace(/\s+/g, "-")}`}
-              className="text-slate-500 hover:text-[#0145F2] transition-colors"
-            >
+            <Link href={`/marcas/${auto.marca.toLowerCase().replace(/\s+/g, "-")}`} className="text-slate-500 hover:text-[#0145F2] transition-colors">
               {auto.marca}
             </Link>
-
             <span className="text-slate-400">/</span>
             <span className="text-navy">{auto.modelo}</span>
           </div>
@@ -191,28 +180,17 @@ export default async function VehiculoDetallePage({
           {/* ================= BLOQUE 1: GALERÍA DE IMÁGENES Y DATOS RÁPIDOS ================= */}
           <div className="lg:col-span-7 flex flex-col gap-6 order-1 pt-1 md:pt-7">
             <div className="hidden lg:flex text-[10px] sm:text-xs text-slate-500 font-bold uppercase tracking-widest mb-[-10px] items-center gap-2">
-              <Link href="/" className="hover:text-[#0145F2] transition-colors">
-                Inicio
-              </Link>
+              <Link href="/" className="hover:text-[#0145F2] transition-colors">Inicio</Link>
               <span className="text-slate-400">/</span>
-              <Link
-                href="/catalogo"
-                className="hover:text-[#0145F2] transition-colors"
-              >
-                Catálogo
-              </Link>
+              <Link href="/catalogo" className="hover:text-[#0145F2] transition-colors">Catálogo</Link>
               <span className="text-slate-400">/</span>
-              <Link
-                href={`/marcas/${auto.marca.toLowerCase().replace(/\s+/g, "-")}`}
-                className="hover:text-[#0145F2] transition-colors"
-              >
+              <Link href={`/marcas/${auto.marca.toLowerCase().replace(/\s+/g, "-")}`} className="hover:text-[#0145F2] transition-colors">
                 {auto.marca}
-              </Link>{" "}
+              </Link>
               <span className="text-slate-400">/</span>
               <span className="text-navy">{auto.modelo}</span>
             </div>
 
-            {/* GALERÍA 100% LIMPIA SIN BORDES REDONDEADOS NI CONTENEDOR BLANCO */}
             <div className="w-full overflow-hidden shadow-[0_20px_50px_rgba(0,0,0,0.1)] rounded-[20px] md:rounded-[32px] border border-slate-200/50 bg-white">
               <GaleriaVehiculo
                 imagenes={auto.multimedia_vehiculos || []}
@@ -220,53 +198,36 @@ export default async function VehiculoDetallePage({
               />
             </div>
 
-            {/* GRILLA RÁPIDA DE DATOS TÉCNICOS (GLASS) */}
             <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 md:gap-4 mt-2">
               <div className="bg-white/60 backdrop-blur-xl border border-white rounded-2xl p-4 flex flex-col items-center justify-center text-center shadow-[0_4px_15px_rgba(0,0,0,0.03)] hover:shadow-[0_8px_25px_rgba(1,69,242,0.1)] hover:bg-white transition-all duration-300 group">
                 <CalendarDays className="w-6 h-6 text-[#0145F2] mb-2 opacity-80 group-hover:scale-110 transition-transform" />
-                <span className="text-[9px] md:text-[10px] text-slate-500 font-bold uppercase tracking-widest mb-1 group-hover:text-[#0145F2] transition-colors">
-                  Año
-                </span>
-                <span className="text-sm md:text-base font-black text-navy">
-                  {auto.anio}
-                </span>
+                <span className="text-[9px] md:text-[10px] text-slate-500 font-bold uppercase tracking-widest mb-1 group-hover:text-[#0145F2] transition-colors">Año</span>
+                <span className="text-sm md:text-base font-black text-navy">{auto.anio}</span>
               </div>
 
               <div className="bg-white/60 backdrop-blur-xl border border-white rounded-2xl p-4 flex flex-col items-center justify-center text-center shadow-[0_4px_15px_rgba(0,0,0,0.03)] hover:shadow-[0_8px_25px_rgba(1,69,242,0.1)] hover:bg-white transition-all duration-300 group">
                 <Gauge className="w-6 h-6 text-[#0145F2] mb-2 opacity-80 group-hover:scale-110 transition-transform" />
-                <span className="text-[9px] md:text-[10px] text-slate-500 font-bold uppercase tracking-widest mb-1 group-hover:text-[#0145F2] transition-colors">
-                  Kilometraje
-                </span>
+                <span className="text-[9px] md:text-[10px] text-slate-500 font-bold uppercase tracking-widest mb-1 group-hover:text-[#0145F2] transition-colors">Kilometraje</span>
                 <span className="text-sm md:text-base font-black text-navy">
-                  {auto.kilometraje === 0
-                    ? "0 km"
-                    : `${auto.kilometraje?.toLocaleString("es-AR")} km`}
+                  {auto.kilometraje === 0 ? "0 km" : `${auto.kilometraje?.toLocaleString("es-AR")} km`}
                 </span>
               </div>
 
               <div className="bg-white/60 backdrop-blur-xl border border-white rounded-2xl p-4 flex flex-col items-center justify-center text-center shadow-[0_4px_15px_rgba(0,0,0,0.03)] hover:shadow-[0_8px_25px_rgba(1,69,242,0.1)] hover:bg-white transition-all duration-300 group">
                 <Fuel className="w-6 h-6 text-[#0145F2] mb-2 opacity-80 group-hover:scale-110 transition-transform" />
-                <span className="text-[9px] md:text-[10px] text-slate-500 font-bold uppercase tracking-widest mb-1 group-hover:text-[#0145F2] transition-colors">
-                  Combustible
-                </span>
-                <span className="text-sm md:text-base font-black text-navy capitalize">
-                  {auto.tipo_combustible || "-"}
-                </span>
+                <span className="text-[9px] md:text-[10px] text-slate-500 font-bold uppercase tracking-widest mb-1 group-hover:text-[#0145F2] transition-colors">Combustible</span>
+                <span className="text-sm md:text-base font-black text-navy capitalize">{auto.tipo_combustible || "-"}</span>
               </div>
 
               <div className="bg-white/60 backdrop-blur-xl border border-white rounded-2xl p-4 flex flex-col items-center justify-center text-center shadow-[0_4px_15px_rgba(0,0,0,0.03)] hover:shadow-[0_8px_25px_rgba(1,69,242,0.1)] hover:bg-white transition-all duration-300 group">
                 <Settings2 className="w-6 h-6 text-[#0145F2] mb-2 opacity-80 group-hover:scale-110 transition-transform" />
-                <span className="text-[9px] md:text-[10px] text-slate-500 font-bold uppercase tracking-widest mb-1 group-hover:text-[#0145F2] transition-colors">
-                  Transmisión
-                </span>
-                <span className="text-sm md:text-base font-black text-navy capitalize">
-                  {auto.transmision || "-"}
-                </span>
+                <span className="text-[9px] md:text-[10px] text-slate-500 font-bold uppercase tracking-widest mb-1 group-hover:text-[#0145F2] transition-colors">Transmisión</span>
+                <span className="text-sm md:text-base font-black text-navy capitalize">{auto.transmision || "-"}</span>
               </div>
             </div>
           </div>
 
-          {/* ================= BLOQUE 2: COLUMNA DERECHA PANEL FIJO (GLASS) ================= */}
+          {/* ================= BLOQUE 2: COLUMNA DERECHA PANEL FIJO ================= */}
           <div className="lg:col-span-5 lg:row-span-2 relative order-2">
             <div className="lg:sticky lg:top-28 bg-white/70 backdrop-blur-3xl border border-white rounded-[32px] p-6 lg:p-8 shadow-[0_12px_40px_rgba(0,0,0,0.05)] flex flex-col gap-6 relative overflow-hidden">
               <div className="absolute inset-0 bg-gradient-to-br from-white/40 to-transparent pointer-events-none z-0"></div>
@@ -287,7 +248,6 @@ export default async function VehiculoDetallePage({
                 </div>
               </div>
 
-              {/* BLOQUE DE PRECIO */}
               <div className="relative z-10">
                 <div className="flex flex-col gap-3 mb-3">
                   <div className="flex items-center gap-2">
@@ -319,7 +279,6 @@ export default async function VehiculoDetallePage({
                 </p>
               </div>
 
-              {/* COMPRA PROTEGIDA (Glass) */}
               <div className="bg-emerald-50/80 backdrop-blur-md border border-emerald-200/60 rounded-[20px] p-4 flex items-center justify-between hover:bg-emerald-100 transition-all duration-300 cursor-pointer group relative z-10 shadow-sm">
                 <div className="flex items-center gap-4">
                   <div className="bg-white p-2.5 rounded-full shadow-sm">
@@ -337,7 +296,6 @@ export default async function VehiculoDetallePage({
                 <ChevronRight className="text-emerald-600 w-5 h-5 group-hover:translate-x-1 transition-transform" />
               </div>
 
-              {/* LISTA DE INFO LATERAL */}
               <ul className="space-y-5 text-sm text-slate-600 relative z-10">
                 <li className="flex items-start gap-3">
                   <div className="bg-white p-2 rounded-full border border-slate-100 shadow-sm">
@@ -395,6 +353,7 @@ export default async function VehiculoDetallePage({
                     </div>
                   </div>
                 </li>
+                
                 <li className="flex items-start gap-3">
                   <div className="bg-white p-2 rounded-full border border-slate-100 shadow-sm">
                     <CreditCard className="w-4 h-4 text-[#0145F2]" />
@@ -412,9 +371,8 @@ export default async function VehiculoDetallePage({
             </div>
           </div>
 
-          {/* ================= BLOQUE 3: ESPECIFICACIONES Y BANNER USADO ================= */}
+          {/* ================= BLOQUE 3: ESPECIFICACIONES ================= */}
           <div className="lg:col-span-7 order-3 flex flex-col gap-8">
-            {/* BANNER TOMAMOS TU USADO */}
             <div className="bg-gradient-to-r from-navy to-[#0145F2] rounded-[32px] p-6 md:p-8 flex flex-col md:flex-row items-center justify-between gap-6 shadow-[0_12px_40px_rgba(1,69,242,0.2)] relative overflow-hidden mt-2">
               <div className="absolute inset-0 bg-white/5 backdrop-blur-sm pointer-events-none z-0"></div>
               <div className="absolute -right-4 -top-8 opacity-10 rotate-12 z-0 mix-blend-overlay">
@@ -444,10 +402,8 @@ export default async function VehiculoDetallePage({
               Detalles de la unidad
             </h3>
 
-            {/* PANEL DE ESPECIFICACIONES */}
             <div className="bg-white/60 backdrop-blur-2xl border border-white rounded-[32px] p-6 md:p-8 shadow-[0_8px_32px_rgba(0,0,0,0.03)] relative overflow-hidden">
               <div className="absolute inset-0 bg-gradient-to-tr from-transparent via-white/40 to-transparent pointer-events-none z-0"></div>
-
               <div className="mb-6 pb-6 border-b border-slate-200/50 relative z-10">
                 <span className="block text-[10px] text-slate-500 font-black uppercase tracking-widest mb-1.5">
                   Versión y Especificaciones
@@ -457,7 +413,6 @@ export default async function VehiculoDetallePage({
                     `${auto.tipo || "Vehículo"} • ${auto.transmision || "Manual"}`}
                 </p>
               </div>
-
               <div className="flex items-center gap-2 mb-4 relative z-10">
                 <span className="bg-sky-500/10 backdrop-blur-md text-[#0145F2] text-[10px] font-black uppercase tracking-widest px-3 py-1.5 rounded-lg border border-sky-500/20 shadow-sm">
                   {esCeroKm ? "0KM" : "USADO"}
@@ -466,7 +421,6 @@ export default async function VehiculoDetallePage({
                   CRÉDITO BNA
                 </span>
               </div>
-
               <div className="mb-6 relative z-10">
                 <div className="flex flex-wrap items-center gap-3">
                   <h4 className="text-3xl font-black text-navy drop-shadow-sm">
@@ -488,54 +442,8 @@ export default async function VehiculoDetallePage({
                   <span className="text-[#0145F2] underline cursor-pointer font-bold hover:text-blue-700 transition-colors">
                     Calcular
                   </span>
-                  .
                 </p>
               </div>
-
-              <ul className="space-y-5 pt-6 border-t border-slate-200/50 text-sm text-slate-600 relative z-10">
-                <li className="flex items-start gap-3">
-                  <div className="bg-white p-2 rounded-full border border-slate-100 shadow-sm">
-                    <Clock className="w-4 h-4 text-[#0145F2]" />
-                  </div>
-                  <div className="mt-1">
-                    <strong className="text-navy block text-[11px] uppercase tracking-widest font-black">
-                      Disponibilidad
-                    </strong>
-                    <span className="text-slate-500 font-medium text-xs">
-                      Inmediata
-                    </span>
-                  </div>
-                </li>
-                <li className="flex items-start gap-3">
-                  <div className="bg-white p-2 rounded-full border border-slate-100 shadow-sm">
-                    <MapPin className="w-4 h-4 text-[#0145F2]" />
-                  </div>
-                  <div className="mt-1">
-                    <strong className="text-navy block text-[11px] uppercase tracking-widest font-black mb-2">
-                      Punto de Venta Oficial
-                    </strong>
-                    <div className="inline-flex items-center gap-1.5 bg-white backdrop-blur-md border border-slate-100 px-3 py-1.5 rounded-xl shadow-sm">
-                      <span className="text-xs font-black text-navy uppercase tracking-wide">
-                        Sucursal {auto.sucursales?.nombre || "Central"}
-                      </span>
-                      <CheckCircle2 className="w-3.5 h-3.5 text-emerald-500" />
-                    </div>
-                  </div>
-                </li>
-                <li className="flex items-start gap-3">
-                  <div className="bg-white p-2 rounded-full border border-slate-100 shadow-sm">
-                    <CreditCard className="w-4 h-4 text-[#0145F2]" />
-                  </div>
-                  <div className="mt-1">
-                    <strong className="text-navy block text-[11px] uppercase tracking-widest font-black">
-                      Precio al contado
-                    </strong>
-                    <span className="text-xs text-slate-500 font-medium">
-                      Se puede financiar, consultar planes disponibles.
-                    </span>
-                  </div>
-                </li>
-              </ul>
             </div>
           </div>
         </div>
@@ -558,7 +466,6 @@ export default async function VehiculoDetallePage({
                   className="block group h-full focus:outline-none"
                 >
                   <div className="bg-white/60 backdrop-blur-2xl rounded-[28px] border border-white overflow-hidden flex flex-col h-full shadow-[0_8px_32px_rgba(0,0,0,0.04)] hover:shadow-[0_20px_48px_rgba(1,69,242,0.12)] hover:bg-white transition-all duration-500 relative transform group-hover:-translate-y-1">
-                    {/* Reflejo hover */}
                     <div className="absolute inset-0 bg-gradient-to-tr from-transparent via-white/40 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-700 pointer-events-none z-20"></div>
 
                     <div className="relative h-[160px] sm:h-[180px] bg-slate-50/50 flex items-center justify-center overflow-hidden p-3 mix-blend-multiply">
@@ -611,7 +518,7 @@ export default async function VehiculoDetallePage({
         )}
       </div>
 
-      {/* ================= BOTÓN FLOTANTE MÓVIL STICKY (FONDO TRANSPARENTE / FLOTANDO) ================= */}
+      {/* BOTÓN FLOTANTE MÓVIL STICKY */}
       <div className="lg:hidden sticky bottom-0 w-full bg-transparent p-4 z-[40] mt-auto pointer-events-none">
         <div className="pointer-events-auto flex gap-2">
           <AgendarVisita auto={auto} isMobile={true} />
