@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { supabase } from "@/lib/supabase";
 import { useRouter } from "next/navigation";
-import { Clock, MessageSquareShare, User, CarFront, Filter } from "lucide-react";
+import { Clock, MessageSquareShare, User, CarFront, Filter, AlertTriangle } from "lucide-react";
 import { motion } from "framer-motion";
 
 const COLUMNAS = ["Pendiente", "Contactado", "Interesado", "Perdido"];
@@ -13,7 +13,7 @@ export default function KanbanBoard({ leadsIniciales }: { leadsIniciales: any[] 
   const [leads, setLeads] = useState(leadsIniciales);
   const [draggedLeadId, setDraggedLeadId] = useState<string | null>(null);
   
-  // NUEVO: Estado para el filtro actual
+  // Filtro activo: "todos" | "cotizacion" | "consignacion" | "dormidos"
   const [filtroActivo, setFiltroActivo] = useState<string>("todos");
 
   // Funciones nativas de Drag & Drop
@@ -70,11 +70,17 @@ export default function KanbanBoard({ leadsIniciales }: { leadsIniciales: any[] 
     }
   };
 
-  // Filtrar los leads antes de renderizarlos
+  // Filtrar los leads considerando la inactividad (>= 7 días)
   const leadsFiltrados = leads.filter((lead) => {
+    const fechaLead = new Date(lead.created_at).getTime();
+    const hoy = new Date().getTime();
+    const diasInactivo = Math.floor((hoy - fechaLead) / (1000 * 60 * 60 * 24));
+
+    if (filtroActivo === "dormidos") {
+      return diasInactivo >= 7 && lead.estado !== "Perdido";
+    }
     if (filtroActivo === "todos") return true;
-    // Si guardaron con 'online' en el pasado, lo tratamos como cotización por compatibilidad
-    if (filtroActivo === "cotizacion" && lead.tipo_peritaje === "online") return true;
+    if (filtroActivo === "cotizacion" && (lead.tipo_peritaje === "online" || !lead.tipo_peritaje)) return true;
     return lead.tipo_peritaje === filtroActivo;
   });
 
@@ -118,6 +124,16 @@ export default function KanbanBoard({ leadsIniciales }: { leadsIniciales: any[] 
         >
           Consignaciones
         </button>
+        <button
+          onClick={() => setFiltroActivo("dormidos")}
+          className={`px-4 py-2 rounded-xl text-xs font-bold uppercase tracking-widest transition-all flex items-center gap-1.5 ${
+            filtroActivo === "dormidos" 
+            ? "bg-rose-600 text-white shadow-lg shadow-rose-500/20" 
+            : "text-slate-400 hover:bg-slate-800 hover:text-white"
+          }`}
+        >
+          <AlertTriangle className="w-3.5 h-3.5" /> Dormidos (7d+)
+        </button>
       </div>
 
       {/* ================= COLUMNAS KANBAN ================= */}
@@ -144,12 +160,15 @@ export default function KanbanBoard({ leadsIniciales }: { leadsIniciales: any[] 
               <div className="p-3 flex flex-col gap-3 min-h-[150px] flex-1 transition-colors">
                 {leadsEnColumna.map((lead) => {
                   
-                  // Lógica visual para la etiqueta del Lead
                   const esConsignacion = lead.tipo_peritaje === 'consignacion';
                   const etiqueta = esConsignacion ? "CONSIGNACIÓN" : "COTIZACIÓN";
                   const colorEtiqueta = esConsignacion 
                     ? "bg-emerald-900/30 text-emerald-400 border-emerald-700/50" 
                     : "bg-blue-900/30 text-blue-400 border-blue-700/50";
+
+                  // Cálculo de inactividad
+                  const diasInactivo = Math.floor((new Date().getTime() - new Date(lead.created_at).getTime()) / (1000 * 60 * 60 * 24));
+                  const esDormido = diasInactivo >= 7 && lead.estado !== "Perdido";
 
                   return (
                     <motion.div
@@ -157,7 +176,9 @@ export default function KanbanBoard({ leadsIniciales }: { leadsIniciales: any[] 
                       key={lead.id}
                       draggable
                       onDragStart={(e: any) => handleDragStart(e, lead.id)}
-                      className={`bg-[#0b1329] border border-slate-700/60 p-4 rounded-xl cursor-grab active:cursor-grabbing shadow-lg hover:border-[#0ea5e9]/50 transition-colors ${draggedLeadId === lead.id ? "opacity-50 scale-95" : "opacity-100"}`}
+                      className={`bg-[#0b1329] border p-4 rounded-xl cursor-grab active:cursor-grabbing shadow-lg transition-colors ${
+                        esDormido ? "border-rose-500/50 hover:border-rose-400" : "border-slate-700/60 hover:border-[#0ea5e9]/50"
+                      } ${draggedLeadId === lead.id ? "opacity-50 scale-95" : "opacity-100"}`}
                     >
                       <div className="flex justify-between items-start mb-2 gap-2">
                         <span className={`text-[9px] font-black uppercase tracking-widest px-2 py-0.5 rounded border truncate ${colorEtiqueta}`}>
@@ -168,6 +189,14 @@ export default function KanbanBoard({ leadsIniciales }: { leadsIniciales: any[] 
                           {new Date(lead.created_at).toLocaleDateString("es-AR", { day: '2-digit', month: 'short' })}
                         </span>
                       </div>
+
+                      {/* ADVERTENCIA DE CLIENTE DORMIDO */}
+                      {esDormido && (
+                        <div className="mb-2 bg-rose-950/40 border border-rose-800/60 text-rose-400 text-[10px] font-bold px-2 py-1 rounded-lg flex items-center gap-1.5">
+                          <AlertTriangle className="w-3 h-3 shrink-0" />
+                          Sin contacto ({diasInactivo} días)
+                        </div>
+                      )}
 
                       <h4 className="font-bold text-sm text-white mb-1 flex items-center gap-2 truncate">
                         <User className="w-3.5 h-3.5 text-slate-400 shrink-0" />
@@ -188,7 +217,7 @@ export default function KanbanBoard({ leadsIniciales }: { leadsIniciales: any[] 
                           target="_blank"
                           rel="noopener noreferrer"
                           className="bg-[#25D366]/10 hover:bg-[#25D366]/20 text-[#25D366] p-1.5 rounded-lg transition-colors"
-                          title="Abrir WhatsApp"
+                          title="Abrir WhatsApp para reactivar"
                           onClick={(e) => e.stopPropagation()}
                         >
                           <MessageSquareShare className="w-4 h-4" />

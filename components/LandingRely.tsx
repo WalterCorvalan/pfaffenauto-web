@@ -1,6 +1,8 @@
 "use client";
 
+import { useState } from "react";
 import { Oswald, Inter, IBM_Plex_Mono } from "next/font/google";
+import { CalendarDays, Phone, ChevronRight, FileText, Settings, ShieldCheck, X } from "lucide-react";
 
 const oswald = Oswald({
   subsets: ["latin"],
@@ -9,12 +11,12 @@ const oswald = Oswald({
 });
 const inter = Inter({
   subsets: ["latin"],
-  weight: ["400", "500", "600"],
+  weight: ["400", "500", "600", "700", "900"],
   variable: "--font-body",
 });
 const mono = IBM_Plex_Mono({
   subsets: ["latin"],
-  weight: ["400", "500", "600"],
+  weight: ["400", "500", "600", "700"],
   variable: "--font-mono",
 });
 
@@ -28,172 +30,232 @@ const STATS = [
 const FEATURES = [
   {
     n: "01",
-    title: "Frenado autónomo de emergencia",
+    title: "Frenado autónomo",
     text: "Detecta riesgo de colisión y frena solo cuando vos no llegás a hacerlo.",
+    icon: <ShieldCheck className="w-6 h-6 text-[#0145F2]" />
   },
   {
     n: "02",
-    title: "Control de crucero adaptativo",
-    text: "Mantiene la distancia con el vehículo de adelante en ruta, sin que toques el pedal.",
+    title: "Crucero adaptativo",
+    text: "Mantiene la distancia con el vehículo de adelante en ruta, de forma automática.",
+    icon: <Settings className="w-6 h-6 text-[#0145F2]" />
   },
   {
     n: "03",
-    title: "Pantalla multimedia de 12,3″",
-    text: "Apple CarPlay y Android Auto inalámbricos, más carga por inducción para el celular.",
+    title: "Pantalla 12,3″",
+    text: "Apple CarPlay y Android Auto inalámbricos, más carga por inducción.",
+    icon: <Settings className="w-6 h-6 text-[#0145F2]" />
   },
   {
     n: "04",
     title: "Cámara 360°",
-    text: "Visión completa del entorno para maniobrar en obra, playa de carga o cochera.",
-  },
-  {
-    n: "05",
-    title: "Hasta 7 airbags",
-    text: "Frontales, laterales, de cortina y de rodilla según versión.",
-  },
-  {
-    n: "06",
-    title: "Modos de tracción 4×4",
-    text: "2H / 4H / 4L con bloqueo de diferencial para terrenos exigentes.",
+    text: "Visión completa del entorno para maniobrar en terrenos exigentes.",
+    icon: <ShieldCheck className="w-6 h-6 text-[#0145F2]" />
   },
 ];
 
 const VERSIONS = [
   {
-    name: "Comfort",
-    trans: "Manual",
+    name: "Comfort MT",
+    trans: "Manual 6 Vel.",
     price: "32.000",
-    bullets: ["Motor 2.3 turbodiésel", "Doble airbag frontal", "4×4"],
+    bullets: ["Motor 2.3 turbodiésel", "Doble airbag frontal", "Tracción 4×4"],
+    image: "/Pick-up-Rely-R8-frente-1.jpg",
   },
   {
-    name: "Comfort",
-    trans: "Automática",
+    name: "Comfort AT",
+    trans: "Automática 8 Vel.",
     price: "34.000",
-    bullets: ["Motor 2.3 turbodiésel", "Caja automática 8 vel.", "4×4"],
+    bullets: ["Motor 2.3 turbodiésel", "Caja automática", "Tracción 4×4"],
+    image: "/Pick-up-Rely-R8-frente-1.jpg",
   },
   {
-    name: "Luxury",
-    trans: "Manual",
+    name: "Luxury MT",
+    trans: "Manual 6 Vel.",
     price: "36.500",
-    bullets: ["Equipamiento ampliado", "Pantalla 12,3″", "4×4"],
+    bullets: ["Equipamiento ampliado", "Pantalla 12,3″", "Tracción 4×4"],
     highlight: true,
+    image: "/Pick-up-Rely-R8-frente-1.jpg",
   },
   {
-    name: "Limited",
-    trans: "Automática",
+    name: "Limited AT",
+    trans: "Automática 8 Vel.",
     price: "39.500",
     bullets: ["Tope de gama", "7 airbags + ADAS", "Cámara 360°"],
+    image: "/Pick-up-Rely-R8-frente-1.jpg",
   },
 ];
 
 const SPECS = [
-  { label: "Largo", value: "5.370 mm" },
-  { label: "Ancho", value: "1.960 mm" },
-  { label: "Alto", value: "1.880 mm" },
+  { label: "Largo / Ancho / Alto", value: "5.370 / 1.960 / 1.880 mm" },
   { label: "Entre ejes", value: "3.230 mm" },
   { label: "Altura libre al piso", value: "200 mm" },
   { label: "Motor", value: "2.3L turbodiésel · 4 cil." },
   { label: "Potencia", value: "161 CV @ 3.500 rpm" },
   { label: "Torque", value: "420 Nm @ 1.500–2.500 rpm" },
-  { label: "Transmisión", value: "Manual 6 vel. / Automática 8 vel." },
-  { label: "Tracción", value: "4×4" },
+  { label: "Transmisión", value: "MT 6 vel. / AT 8 vel." },
+  { label: "Tracción", value: "4×4 (2H / 4H / 4L)" },
   { label: "Garantía", value: "5 años / 200.000 km" },
 ];
 
 const WHATSAPP_LINK =
-  "https://wa.me/5491100000000?text=Hola%2C%20quiero%20cotizar%20la%20Rely%20R8";
+  "https://wa.me/5491121907000?text=Hola%2C%20quiero%20cotizar%20la%20Rely%20R8";
 
 export default function LandingRely() {
-  return (
-    <main
-      className={`${oswald.variable} ${inter.variable} ${mono.variable} bg-[#121210] text-[#ECE8DD] font-[family-name:var(--font-body)]`}
-    >
-      {/* HEADER */}
-      <header className="sticky top-0 z-50 border-b border-[#2A2A24] bg-[#121210]/95 backdrop-blur">
-        <div className="mx-auto flex max-w-6xl items-center justify-between px-6 py-4">
-          <span className="font-[family-name:var(--font-display)] text-xl font-semibold tracking-wide">
-            RELY <span className="text-[#FFC629]">R8</span>
-          </span>
+  const [isMenuOpen, setIsMenuOpen] = useState(false);
 
-          <nav className="hidden gap-8 text-sm font-medium text-[#B9B4A6] md:flex">
-            <a href="#versiones" className="hover:text-[#ECE8DD]">Versiones</a>
-            <a href="#ficha" className="hover:text-[#ECE8DD]">Ficha técnica</a>
-            <a href="#contacto" className="hover:text-[#ECE8DD]">Concesionario</a>
-          </nav>
-          <a
-            href={WHATSAPP_LINK}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="rounded-sm bg-[#FFC629] px-4 py-2 text-sm font-semibold text-[#121210] transition hover:bg-[#e6b024]"
-          >
-            Cotizar
+  return (
+    <main className={`${oswald.variable} ${inter.variable} ${mono.variable} bg-[#0a0a0a] text-[#ECE8DD] font-sans selection:bg-[#0145f2] selection:text-white`}>
+      
+      {/* ================= HEADER TRANSPARENTE CON MEGA-MENÚ ================= */}
+      <header 
+        className="fixed top-0 left-0 right-0 z-50 bg-gradient-to-b from-black/90 via-black/50 to-transparent pt-4 pb-10"
+        onMouseLeave={() => setIsMenuOpen(false)}
+      >
+        <div className="mx-auto flex max-w-[1400px] items-center justify-between px-6 xl:px-8 relative">
+          
+          {/* Logo */}
+          <a href="/" className="flex items-center shrink-0">
+            <img 
+              src="/relyLogo.png" 
+              alt="Rely Logo" 
+              className="h-8 md:h-10 lg:h-22 w-auto object-contain invert brightness-0"
+            />
           </a>
+
+          {/* Navegación Desktop */}
+          <nav className="hidden lg:flex items-center gap-6 xl:gap-8 text-[13px] font-bold uppercase tracking-widest text-gray-300 h-full">
+            {/* Disparador Mega Menú */}
+            <div 
+              className="py-4 cursor-pointer"
+              onMouseEnter={() => setIsMenuOpen(true)}
+            >
+              <span className="hover:text-white transition-colors">Modelos ▾</span>
+            </div>
+            
+            <a href="#catalogo" className="hover:text-white transition-colors py-4">Catálogo</a>
+            <a href="#galeria" className="hover:text-white transition-colors py-4">Galería</a>
+            <a href="#contacto" className="hover:text-white transition-colors py-4">Compra Programada</a>
+            <a href="#servicios" className="hover:text-white transition-colors py-4">Servicios</a>
+          </nav>
+
+          {/* Botones de Acción */}
+          <div className="flex items-center gap-3">
+            <a
+              href="#contacto"
+              className="hidden md:flex items-center gap-2 border border-white/30 bg-black/20 backdrop-blur-sm hover:bg-white/10 px-4 py-2 rounded-lg text-xs font-bold text-white transition-colors uppercase tracking-wider"
+            >
+              <CalendarDays className="w-4 h-4" /> Test Drive
+            </a>
+            <a
+              href={WHATSAPP_LINK}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="flex items-center gap-2 bg-[#0145F2] hover:bg-[#0134b0] px-4 py-2 md:px-5 md:py-2.5 rounded-lg text-xs font-bold text-white transition-colors shadow-lg shadow-[#0145F2]/20 uppercase tracking-wider"
+            >
+              <Phone className="w-4 h-4" /> Contactar
+            </a>
+          </div>
+
+          {/* ================= MEGA MENÚ DESPLEGABLE (OSCURO) ================= */}
+          {isMenuOpen && (
+            <div className="absolute top-[calc(100%+10px)] left-6 right-6 xl:left-8 xl:right-8 bg-[#111] rounded-2xl shadow-[0_20px_50px_rgba(0,0,0,0.5)] border border-[#222] p-8 animate-fadeIn cursor-default">
+              
+              <div className="flex justify-between items-center border-b border-[#222] pb-4 mb-6">
+                <div className="flex gap-8">
+                  <button className="text-[13px] font-bold text-white border-b-2 border-[#0145F2] pb-4 -mb-[17px] uppercase tracking-wider">Todas las versiones</button>
+                  <button className="text-[13px] font-medium text-gray-500 hover:text-gray-300 pb-4 -mb-[17px] uppercase tracking-wider transition-colors">Transmisión Manual</button>
+                  <button className="text-[13px] font-medium text-gray-500 hover:text-gray-300 pb-4 -mb-[17px] uppercase tracking-wider transition-colors">Transmisión Automática</button>
+                </div>
+                <button onClick={() => setIsMenuOpen(false)} className="text-gray-500 hover:text-white transition-colors">
+                  <X className="w-5 h-5" />
+                </button>
+              </div>
+
+              <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+                {VERSIONS.map((v) => (
+                  <div key={v.name} className="bg-[#0a0a0a] rounded-xl p-5 border border-[#222] hover:border-[#0145F2]/50 transition-colors group flex flex-col">
+                    <div>
+                      <h4 className="font-black text-lg text-white uppercase tracking-tight">{v.name}</h4>
+                      <p className="text-xs text-[#0145F2] font-bold mt-1 uppercase tracking-widest">{v.trans}</p>
+                    </div>
+                    
+                    <div className="py-6 flex justify-center">
+                      <img src={v.image} alt={v.name} className="h-24 object-contain group-hover:scale-105 transition-transform drop-shadow-xl" />
+                    </div>
+
+                    <div className="flex items-center gap-2 mt-auto">
+                      <a href="#versiones" onClick={() => setIsMenuOpen(false)} className="flex-1 text-center border border-[#333] text-gray-400 hover:border-gray-400 hover:text-white text-xs font-bold uppercase tracking-widest py-2 rounded-lg transition-colors">
+                        Conócelo
+                      </a>
+                      <a href="#contacto" onClick={() => setIsMenuOpen(false)} className="flex-1 text-center bg-[#0] hover:bg-[#e04800] text-white text-xs font-bold uppercase tracking-widest py-2 rounded-lg transition-colors">
+                        Reservá
+                      </a>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
         </div>
       </header>
 
-      {/* HERO */}
-      <section className="relative overflow-hidden border-b-8 border-[#FFC629]">
-        <div
-          className="absolute inset-x-0 top-0 h-2 opacity-70"
-          style={{
-            backgroundImage:
-              "repeating-linear-gradient(135deg, #FFC629 0 18px, #121210 18px 36px)",
-          }}
-        />
-        <div className="mx-auto grid max-w-6xl gap-10 px-6 py-20 md:grid-cols-[1.2fr_0.8fr] md:py-28">
-          <div className="relative z-10">
-            <p className="mb-4 font-[family-name:var(--font-mono)] text-xs uppercase tracking-[0.3em] text-[#FFC629]">
-              Pick-up mediana · 4×4 · Turbodiésel
-            </p>
-            <h1 className="font-[family-name:var(--font-display)] text-5xl font-semibold uppercase leading-[0.95] tracking-tight sm:text-6xl md:text-7xl">
-              No hay obstáculo
-              <br />
-              que la <span className="text-[#FFC629]">detenga.</span>
-            </h1>
-            <p className="mt-6 max-w-md text-base text-[#B9B4A6]">
-              La Rely R8 llega a la Argentina como la 4×4 más accesible de su
-              segmento, con equipamiento y diseño interior por encima del
-              resto del mercado.
-            </p>
-            <div className="mt-8 flex flex-wrap gap-4">
-              <a
-                href={WHATSAPP_LINK}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="rounded-sm bg-[#FFC629] px-6 py-3 text-sm font-semibold uppercase tracking-wide text-[#121210] transition hover:bg-[#e6b024]"
-              >
-                Cotizar por WhatsApp
-              </a>
-              <a
-                href="#ficha"
-                className="rounded-sm border border-[#3A3A32] px-6 py-3 text-sm font-semibold uppercase tracking-wide text-[#ECE8DD] transition hover:border-[#FFC629] hover:text-[#FFC629]"
-              >
-                Ver ficha técnica
-              </a>
-            </div>
-          </div>
+      {/* ================= HERO SECTION (FULL SCREEN) ================= */}
+      <section className="relative h-[100svh] flex flex-col justify-center overflow-hidden">
+        
+        {/* Imagen de Fondo Absoluta */}
+        <div className="absolute inset-0 w-full h-full z-0">
+          <img 
+            src="/Pick-up-Rely-R8-frente-1.jpg" 
+            alt="Rely R8 Pickup" 
+            className="w-full h-full object-cover object-center"
+          />
+          {/* Gradiente oscuro para asegurar legibilidad */}
+          <div className="absolute inset-0 bg-gradient-to-r from-black/80 via-black/40 to-black/20"></div>
+          <div className="absolute inset-0 bg-gradient-to-t from-[#0a0a0a] via-transparent to-transparent h-full"></div>
+        </div>
 
-          <div
-            aria-hidden
-            className="pointer-events-none relative z-0 flex items-center justify-center"
-          >
-            <span className="select-none font-[family-name:var(--font-display)] text-[13rem] font-bold leading-none text-[#1D1D18] sm:text-[16rem] md:text-[19rem]">
-              R8
-            </span>
+        {/* Contenido del Hero */}
+        <div className="relative z-10 mx-auto w-full max-w-[1400px] px-6 xl:px-8 mt-20">
+          <h1 className="font-[family-name:var(--font-display)] text-[3.5rem] leading-[0.9] sm:text-[5rem] md:text-[6.5rem] lg:text-[8.5rem] font-black uppercase tracking-tighter text-white drop-shadow-2xl">
+            La pickup que lo
+            <br />
+            <span className="text-[#0145f2]">puede todo</span>
+          </h1>
+
+          <div className="mt-8 md:mt-12 flex flex-col sm:flex-row gap-4">
+            <a
+              href="#versiones"
+              className="bg-[#0145f2] hover:bg-[#e04800] text-white text-center px-8 py-4 rounded-lg font-bold text-sm uppercase tracking-widest transition-all shadow-[0_0_30px_rgba(255,81,0,0.3)] active:scale-95"
+            >
+              Explorar Modelos
+            </a>
+            <a
+              href="#contacto"
+              className="border border-white/40 bg-black/30 backdrop-blur-md hover:bg-white/10 text-white text-center px-8 py-4 rounded-lg font-bold text-sm uppercase tracking-widest flex items-center justify-center gap-2 transition-all active:scale-95"
+            >
+              <CalendarDays className="w-5 h-5" /> Agendar Test Drive
+            </a>
           </div>
+        </div>
+
+        {/* Scroll Indicator */}
+        <div className="absolute bottom-8 left-1/2 -translate-x-1/2 z-10 flex flex-col items-center gap-2 opacity-60 animate-bounce">
+          <span className="text-[10px] uppercase tracking-[0.3em] text-white font-bold">Scroll</span>
+          <div className="w-px h-6 bg-white"></div>
         </div>
       </section>
 
-      {/* STATS BAR */}
-      <section className="border-b border-[#2A2A24] bg-[#17170F]">
-        <div className="mx-auto grid max-w-6xl grid-cols-2 divide-x divide-[#2A2A24] px-6 md:grid-cols-4">
+      {/* ================= STATS BAR ================= */}
+      <section className="bg-[#0a0a0a] relative z-20 border-b border-[#222]">
+        <div className="mx-auto grid max-w-[1400px] grid-cols-2 lg:grid-cols-4 px-6 xl:px-8 divide-x divide-[#222]">
           {STATS.map((s) => (
-            <div key={s.label} className="px-4 py-8 text-center">
-              <div className="font-[family-name:var(--font-mono)] text-3xl font-semibold text-[#FFC629] sm:text-4xl">
+            <div key={s.label} className="py-10 md:py-14 text-center">
+              <div className="font-[family-name:var(--font-display)] text-4xl md:text-5xl lg:text-6xl font-black text-white tracking-tighter">
                 {s.value}
-                <span className="ml-1 text-base text-[#B9B4A6]">{s.unit}</span>
+                <span className="ml-2 text-xl md:text-2xl text-[#0145f2]">{s.unit}</span>
               </div>
-              <div className="mt-2 text-xs uppercase tracking-widest text-[#8D897C]">
+              <div className="mt-2 text-[11px] font-bold uppercase tracking-widest text-gray-500">
                 {s.label}
               </div>
             </div>
@@ -201,25 +263,30 @@ export default function LandingRely() {
         </div>
       </section>
 
-      {/* FEATURES */}
-      <section className="mx-auto max-w-6xl px-6 py-20">
-        <h2 className="font-[family-name:var(--font-display)] text-3xl font-semibold uppercase tracking-tight sm:text-4xl">
-          Tecnología pensada para el trabajo
-        </h2>
-        <p className="mt-3 max-w-xl text-[#B9B4A6]">
-          Cada función tiene un propósito concreto: menos riesgo, más
-          control, menos vueltas.
-        </p>
-        <div className="mt-12 grid gap-px overflow-hidden rounded-sm bg-[#2A2A24] sm:grid-cols-2 lg:grid-cols-3">
+      {/* ================= FEATURES ================= */}
+      <section className="mx-auto max-w-[1400px] px-6 xl:px-8 py-24">
+        <div className="mb-16 md:w-2/3">
+          <h2 className="font-[family-name:var(--font-display)] text-4xl md:text-5xl lg:text-6xl font-black uppercase tracking-tight text-white leading-none">
+            Tecnología pensada <br/><span className="text-[#0145f2]">para el trabajo duro</span>
+          </h2>
+          <p className="mt-6 text-lg text-gray-400 font-light max-w-xl">
+            Cada función tiene un propósito concreto: menos riesgo, más control en el terreno y mayor comodidad en la ruta.
+          </p>
+        </div>
+
+        <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-6">
           {FEATURES.map((f) => (
-            <div key={f.n} className="bg-[#17170F] p-6">
-              <span className="font-[family-name:var(--font-mono)] text-sm text-[#FFC629]">
-                {f.n}
-              </span>
-              <h3 className="mt-3 font-[family-name:var(--font-display)] text-lg font-semibold uppercase tracking-tight">
+            <div key={f.n} className="bg-[#111] border border-[#222] p-8 rounded-2xl hover:border-[#0145f2]/50 transition-colors group">
+              <div className="flex justify-between items-start mb-8">
+                {f.icon}
+                <span className="font-[family-name:var(--font-mono)] text-xl font-black text-[#222] group-hover:text-[#0145f2]/30 transition-colors">
+                  {f.n}
+                </span>
+              </div>
+              <h3 className="font-[family-name:var(--font-display)] text-2xl font-bold uppercase tracking-tight text-white mb-3">
                 {f.title}
               </h3>
-              <p className="mt-2 text-sm leading-relaxed text-[#B9B4A6]">
+              <p className="text-sm text-gray-500 leading-relaxed font-light">
                 {f.text}
               </p>
             </div>
@@ -227,121 +294,198 @@ export default function LandingRely() {
         </div>
       </section>
 
-      {/* VERSIONES / PRECIOS */}
-      <section id="versiones" className="border-y border-[#2A2A24] bg-[#17170F] py-20">
-        <div className="mx-auto max-w-6xl px-6">
-          <h2 className="font-[family-name:var(--font-display)] text-3xl font-semibold uppercase tracking-tight sm:text-4xl">
-            Versiones y precios
-          </h2>
-          <p className="mt-3 max-w-xl text-[#B9B4A6]">
-            Cuatro configuraciones, todas con tracción 4×4 de serie.
-          </p>
+      {/* ================= VERSIONES (ESTILO MODELOS DESTACADOS) ================= */}
+      <section id="versiones" className="bg-[#111] py-24 border-y border-[#222]">
+        <div className="mx-auto max-w-[1400px] px-6 xl:px-8">
+          <div className="flex flex-col md:flex-row justify-between items-start md:items-end mb-16 gap-6">
+            <div>
+              <h2 className="font-[family-name:var(--font-display)] text-4xl md:text-5xl font-black uppercase tracking-tight text-white">
+                Versiones
+              </h2>
+              <p className="mt-3 text-gray-400">
+                Cuatro configuraciones, todas con tracción 4×4 de serie.
+              </p>
+            </div>
+            <a href="#contacto" className="bg-[#0145f2] hover:bg-[#e04800] text-white px-6 py-3 rounded-lg font-bold text-xs uppercase tracking-widest transition-colors shadow-sm">
+              Reservar ahora
+            </a>
+          </div>
 
-          <div className="mt-12 grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
+          <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6">
             {VERSIONS.map((v) => (
               <div
                 key={`${v.name}-${v.trans}`}
-                className={`flex flex-col rounded-sm border p-6 ${
-                  v.highlight
-                    ? "border-[#FFC629] bg-[#1D1D14]"
-                    : "border-[#2A2A24] bg-[#121210]"
+                className={`bg-[#0a0a0a] rounded-2xl overflow-hidden flex flex-col border transition-all ${
+                  v.highlight 
+                  ? "border-[#0145f2] shadow-[0_0_30px_rgba(1,69,242,0.15)] relative lg:-translate-y-2" 
+                  : "border-[#222] hover:border-gray-600"
                 }`}
               >
+                {/* Etiqueta Destacada */}
                 {v.highlight && (
-                  <span className="mb-3 w-fit rounded-sm bg-[#FFC629] px-2 py-0.5 font-[family-name:var(--font-mono)] text-[10px] font-semibold uppercase tracking-wider text-[#121210]">
+                  <span className="absolute top-4 left-4 z-10 bg-[#0145f2] text-white text-[10px] font-black px-3 py-1 rounded-full uppercase tracking-widest shadow-lg">
                     Más elegida
                   </span>
                 )}
-                <h3 className="font-[family-name:var(--font-display)] text-xl font-semibold uppercase">
-                  {v.name}
-                </h3>
-                <p className="text-sm text-[#8D897C]">{v.trans}</p>
-                <p className="mt-4 font-[family-name:var(--font-mono)] text-2xl font-semibold text-[#FFC629]">
-                  USD {v.price}
-                </p>
-                <ul className="mt-4 flex-1 space-y-2 text-sm text-[#B9B4A6]">
-                  {v.bullets.map((b) => (
-                    <li key={b} className="flex gap-2">
-                      <span className="text-[#FFC629]">—</span>
-                      {b}
-                    </li>
-                  ))}
-                </ul>
-                <a
-                  href={WHATSAPP_LINK}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="mt-6 rounded-sm border border-[#3A3A32] py-2 text-center text-sm font-semibold uppercase tracking-wide transition hover:border-[#FFC629] hover:text-[#FFC629]"
-                >
-                  Consultar
-                </a>
+                
+                {/* Imagen del modelo con dots simulados */}
+                <div className="bg-[#151515] h-48 relative flex justify-center items-center p-4">
+                  <img src={v.image} alt={v.name} className="w-full h-full object-contain drop-shadow-xl" />
+                  <div className="absolute bottom-3 left-1/2 -translate-x-1/2 flex gap-1.5">
+                    <div className="w-1.5 h-1.5 rounded-full bg-[#0145f2]"></div>
+                    <div className="w-1.5 h-1.5 rounded-full bg-gray-600"></div>
+                    <div className="w-1.5 h-1.5 rounded-full bg-gray-600"></div>
+                  </div>
+                </div>
+
+                {/* Contenido de la Tarjeta */}
+                <div className="p-6 flex flex-col flex-grow">
+                  <h3 className="font-[family-name:var(--font-display)] text-2xl font-black uppercase text-white tracking-tight">{v.name}</h3>
+                  <p className="text-xs text-[#0145F2] font-bold mt-1 mb-4 uppercase tracking-widest">{v.trans}</p>
+                  
+                  {/* Precio */}
+                  <div className="mb-6 pb-6 border-b border-[#222]">
+                    <p className="font-[family-name:var(--font-mono)] text-3xl font-bold text-white">
+                      <span className="text-sm text-gray-500 mr-1">USD</span>{v.price}
+                    </p>
+                  </div>
+                  
+                  {/* Bullets */}
+                  <ul className="flex-1 space-y-2.5 text-[13px] text-gray-400 font-medium mb-8">
+                    {v.bullets.map((b, i) => (
+                      <li key={i} className="flex gap-3 items-start">
+                        <span className="text-[#0145F2]">•</span>
+                        {b}
+                      </li>
+                    ))}
+                  </ul>
+
+                  {/* Botones de acción */}
+                  <div className="flex gap-2 mt-auto">
+                    <a href="#contacto" className="flex-1 text-center bg-[#0145f2] hover:bg-[#e04800] text-white font-bold text-xs uppercase tracking-widest py-3 rounded-lg transition-colors">
+                      Reservar
+                    </a>
+                    <a href="#ficha" className="flex-1 text-center border border-[#333] hover:border-gray-500 text-gray-300 hover:text-white font-bold text-xs uppercase tracking-widest py-3 rounded-lg transition-colors">
+                      Ficha
+                    </a>
+                  </div>
+                </div>
               </div>
             ))}
           </div>
         </div>
       </section>
 
-      {/* FICHA TÉCNICA */}
-      <section id="ficha" className="mx-auto max-w-6xl px-6 py-20">
-        <h2 className="font-[family-name:var(--font-display)] text-3xl font-semibold uppercase tracking-tight sm:text-4xl">
-          Ficha técnica
-        </h2>
+      {/* ================= FORMULARIO Y FICHA ================= */}
+      <section id="contacto" className="mx-auto max-w-[1400px] px-6 xl:px-8 py-24 grid lg:grid-cols-2 gap-16 lg:gap-24">
+        
+        {/* Formulario */}
+        <div>
+          <div className="mb-10">
+            <h2 className="font-[family-name:var(--font-display)] text-4xl md:text-5xl font-black uppercase tracking-tight text-white mb-4">
+              Ponela a prueba
+            </h2>
+            <p className="text-gray-400">
+              Coordiná un test drive o pedí tu cotización personalizada. Dejanos tus datos y un asesor se comunicará al instante.
+            </p>
+          </div>
 
-        <div className="mt-10 rounded-sm border-2 border-[#3A3A32] bg-[#17170F] p-1">
-          <div className="rounded-sm border border-[#2A2A24] p-6 sm:p-10">
-            <div className="mb-6 flex items-center justify-between border-b border-[#2A2A24] pb-4">
-              <span className="font-[family-name:var(--font-mono)] text-xs uppercase tracking-[0.3em] text-[#8D897C]">
-                Placa de especificaciones
-              </span>
-              <span className="font-[family-name:var(--font-mono)] text-xs text-[#8D897C]">
-                MOD. R8 · 2026
-              </span>
+          <form className="space-y-6">
+            <div className="grid grid-cols-2 gap-6">
+              <div>
+                <label className="text-[10px] font-bold text-gray-500 uppercase tracking-widest block mb-2">Nombre</label>
+                <input type="text" className="w-full bg-[#111] border border-[#222] rounded-xl px-4 py-3.5 text-white outline-none focus:border-[#0145f2] transition-colors" placeholder="Tu nombre" />
+              </div>
+              <div>
+                <label className="text-[10px] font-bold text-gray-500 uppercase tracking-widest block mb-2">Apellido</label>
+                <input type="text" className="w-full bg-[#111] border border-[#222] rounded-xl px-4 py-3.5 text-white outline-none focus:border-[#0145f2] transition-colors" placeholder="Tu apellido" />
+              </div>
             </div>
-            <dl className="grid grid-cols-1 gap-x-10 gap-y-4 sm:grid-cols-2">
-              {SPECS.map((s) => (
-                <div
-                  key={s.label}
-                  className="flex items-baseline justify-between gap-4 border-b border-dotted border-[#2A2A24] pb-2"
-                >
-                  <dt className="text-sm text-[#8D897C]">{s.label}</dt>
-                  <dd className="font-[family-name:var(--font-mono)] text-sm font-medium text-[#ECE8DD]">
-                    {s.value}
-                  </dd>
-                </div>
-              ))}
-            </dl>
+            
+            <div>
+              <label className="text-[10px] font-bold text-gray-500 uppercase tracking-widest block mb-2">WhatsApp</label>
+              <input type="tel" className="w-full bg-[#111] border border-[#222] rounded-xl px-4 py-3.5 text-white outline-none focus:border-[#0145f2] transition-colors" placeholder="Código de área + Número" />
+            </div>
+
+            <div className="grid grid-cols-2 gap-6">
+              <div>
+                <label className="text-[10px] font-bold text-gray-500 uppercase tracking-widest block mb-2">Interés</label>
+                <select className="w-full bg-[#111] border border-[#222] rounded-xl px-4 py-3.5 text-white outline-none focus:border-[#0145f2] transition-colors appearance-none">
+                  <option>Comprar 0KM</option>
+                  <option>Test Drive</option>
+                  <option>Plan de Ahorro</option>
+                </select>
+              </div>
+              <div>
+                <label className="text-[10px] font-bold text-gray-500 uppercase tracking-widest block mb-2">Sucursal</label>
+                <select className="w-full bg-[#111] border border-[#222] rounded-xl px-4 py-3.5 text-white outline-none focus:border-[#0145f2] transition-colors appearance-none">
+                  <option>Casa Central</option>
+                  <option>Pilar</option>
+                  <option>Don Torcuato</option>
+                </select>
+              </div>
+            </div>
+
+            <button type="button" className="w-full bg-[#0145f2] hover:bg-[#e04800] text-white font-black uppercase tracking-widest text-sm py-4 rounded-xl transition-all shadow-lg active:scale-95 mt-4">
+              Enviar Solicitud
+            </button>
+          </form>
+        </div>
+
+        {/* Ficha Técnica */}
+        <div id="ficha">
+          <div className="mb-10 flex items-center justify-between">
+            <h2 className="font-[family-name:var(--font-display)] text-3xl font-black uppercase tracking-tight text-white">
+              Ficha Técnica
+            </h2>
+            <div className="bg-[#111] border border-[#222] p-2 rounded-lg flex items-center justify-center">
+              <FileText className="w-5 h-5 text-[#0145f2]" />
+            </div>
+          </div>
+
+          <div className="bg-[#111] border border-[#222] rounded-2xl overflow-hidden">
+            {SPECS.map((s, i) => (
+              <div
+                key={s.label}
+                className={`flex items-center justify-between px-6 py-4 border-b border-[#222] last:border-0 ${
+                  i % 2 === 0 ? "bg-[#161616]" : "bg-transparent"
+                }`}
+              >
+                <span className="text-sm text-gray-400 font-medium">{s.label}</span>
+                <span className="font-[family-name:var(--font-mono)] text-sm font-bold text-white text-right ml-4">
+                  {s.value}
+                </span>
+              </div>
+            ))}
           </div>
         </div>
+
       </section>
 
-      {/* CONTACTO / CTA */}
-      <section id="contacto" className="relative overflow-hidden border-t-8 border-[#FFC629] bg-[#17170F]">
-        <div className="mx-auto max-w-6xl px-6 py-20 text-center">
-          <h2 className="font-[family-name:var(--font-display)] text-3xl font-semibold uppercase tracking-tight sm:text-4xl">
-            Probala en tu concesionario
-          </h2>
-          <p className="mx-auto mt-3 max-w-md text-[#B9B4A6]">
-            Coordiná un test drive o pedí tu cotización personalizada, sin
-            compromiso.
-          </p>
-          <a
-            href={WHATSAPP_LINK}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="mt-8 inline-block rounded-sm bg-[#FFC629] px-8 py-3 text-sm font-semibold uppercase tracking-wide text-[#121210] transition hover:bg-[#e6b024]"
-          >
-            Cotizar por WhatsApp
-          </a>
-        </div>
-      </section>
-
-      {/* FOOTER */}
-      <footer className="border-t border-[#2A2A24] py-8">
-        <div className="mx-auto flex max-w-6xl flex-col items-center justify-between gap-3 px-6 text-xs text-[#6F6C61] sm:flex-row">
-          <span>© {new Date().getFullYear()} Rely Argentina</span>
-          <span>Precios sujetos a modificación sin previo aviso.</span>
+      {/* ================= FOOTER ================= */}
+      <footer className="bg-black py-12 border-t border-[#222]">
+        <div className="mx-auto flex max-w-[1400px] flex-col items-center justify-between gap-6 px-6 text-xs text-gray-500 font-medium sm:flex-row">
+          <div className="flex items-center gap-4">
+            <span className="font-[family-name:var(--font-display)] text-2xl font-black text-white tracking-widest">RELY</span>
+            <span className="border-l border-gray-700 pl-4">© {new Date().getFullYear()} Rely Argentina / Pfaffen Autos</span>
+          </div>
+          <span>Precios y disponibilidad sujetos a modificación sin previo aviso.</span>
         </div>
       </footer>
+
+      {/* ================= BOTÓN WHATSAPP FLOTANTE ================= */}
+      <a
+        href={WHATSAPP_LINK}
+        target="_blank"
+        rel="noopener noreferrer"
+        className="fixed bottom-6 right-6 bg-[#0145f2] text-white p-4 rounded-full shadow-2xl hover:scale-110 active:scale-95 transition-all z-50 flex items-center justify-center border-2 border-black"
+        aria-label="Contactar por WhatsApp"
+      >
+        <svg viewBox="0 0 24 24" className="w-6 h-6 fill-current">
+          <path d="M12.031 6.172c-3.181 0-5.767 2.586-5.768 5.766-.001 1.298.38 2.27 1.019 3.287l-.582 2.128 2.182-.573c.978.58 1.911.928 3.145.929 3.178 0 5.767-2.587 5.768-5.766.001-3.187-2.575-5.77-5.764-5.771zm3.392 8.244c-.144.405-.837.774-1.17.824-.299.045-.677.063-1.092-.069-.252-.08-.575-.187-.988-.365-1.739-.751-2.874-2.502-2.961-2.617-.087-.116-.708-.94-.708-1.793s.448-1.273.607-1.446c.159-.173.346-.217.462-.217l.332.006c.106.005.249-.04.39.311.144.359.491 1.205.534 1.293.043.087.072.188.014.304-.058.116-.087.188-.173.289l-.26.304c-.087.086-.177.18-.076.327.101.148.45.716 1.018 1.157.734.568 1.258.744 1.403.832.145.087.231.072.318-.029l.375-.434c.087-.116.173-.087.318-.029l1.446.685c.145.087.231.13.26.202.03.072.03.419-.114.824z"/>
+        </svg>
+      </a>
+
     </main>
   );
 }

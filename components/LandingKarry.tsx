@@ -1,21 +1,13 @@
 "use client";
 
-import { Space_Grotesk, Inter, Space_Mono } from "next/font/google";
+import { useState } from "react";
+import { Inter } from "next/font/google";
+import { ChevronLeft, ChevronRight, X } from "lucide-react";
 
-const spaceGrotesk = Space_Grotesk({
-  subsets: ["latin"],
-  weight: ["500", "600", "700"],
-  variable: "--font-display",
-});
 const inter = Inter({
   subsets: ["latin"],
-  weight: ["400", "500", "600"],
-  variable: "--font-body",
-});
-const spaceMono = Space_Mono({
-  subsets: ["latin"],
-  weight: ["400", "700"],
-  variable: "--font-mono",
+  weight: ["300", "400", "500", "600", "700"],
+  variable: "--font-inter",
 });
 
 const STATS = [
@@ -28,25 +20,31 @@ const STATS = [
 const VERSIONS = [
   {
     code: "CS",
-    name: "Cabina Simple",
+    name: "KARRY CABINA SIMPLE",
+    subtitle: "MAYOR ESPACIO Y SUPERFICIE COMERCIAL",
     load: "1,62 toneladas",
-    text: "Mayor espacio de carga y superficie optimizada para herramientas, mercadería o adaptaciones comerciales.",
-    bullets: [
-      "Capacidad de carga 1,62 ton",
-      "Caja abierta de gran superficie",
-      "Ideal para reparto y logística",
+    text: "Caja abierta de gran superficie optimizada para herramientas o mercadería.",
+    specs: [
+      "Motor 1.6L 121 HP",
+      "Capacidad de carga: 1.620 kg",
+      "Ideal para reparto y logística urbana",
+      "Garantía 7 años / 100.000 km",
     ],
+    image: "/logo-karry.webp"
   },
   {
     code: "CD",
-    name: "Cabina Doble",
+    name: "KARRY CABINA DOBLE",
+    subtitle: "DOS FILAS DE ASIENTOS PARA TU EQUIPO",
     load: "1,54 toneladas",
-    text: "Dos filas de asientos para trasladar equipo de trabajo sin resignar caja de carga.",
-    bullets: [
-      "Capacidad de carga 1,54 ton",
-      "2 filas de asientos",
+    text: "Trasladá a tu equipo completo sin resignar capacidad en la caja de carga.",
+    specs: [
+      "Motor 1.6L 121 HP",
+      "Capacidad de carga: 1.540 kg",
       "Ideal para cuadrillas y servicio técnico",
+      "Garantía 7 años / 100.000 km",
     ],
+    image: "/logo-karry.webp"
   },
 ];
 
@@ -71,93 +69,242 @@ const SPECS = [
 ];
 
 const WHATSAPP_LINK =
-  "https://wa.me/5491100000000?text=Hola%2C%20quiero%20cotizar%20la%20Karry%20Pick%20Up";
+  "https://wa.me/5491121907000?text=Hola%2C%20quiero%20cotizar%20la%20Karry%20Pick%20Up";
 
 export default function LandingKarry() {
+  const [isMenuOpen, setIsMenuOpen] = useState(false);
+
   return (
-    <main
-      className={`${spaceGrotesk.variable} ${inter.variable} ${spaceMono.variable} bg-[#0F2440] text-[#EAF0F6] font-[family-name:var(--font-body)]`}
-    >
-      {/* HEADER */}
-      <header className="sticky top-0 z-50 border-b border-[#1E3A5F] bg-[#0F2440]/95 backdrop-blur">
-        <div className="mx-auto flex max-w-6xl items-center justify-between px-6 py-4">
-          <span className="font-[family-name:var(--font-display)] text-xl font-bold tracking-wide">
-            KARRY <span className="text-[#FF6B35]">Pick Up</span>
-          </span>
+    <main className={`${inter.variable} font-sans bg-white text-slate-800 selection:bg-[#1273b9] selection:text-white relative scroll-smooth`}>
+      
+      {/* ================= HEADER FLOTANTE ESTILO BYD ================= */}
+      <header className="fixed top-4 left-0 right-0 z-50 px-4 md:px-8">
+        <div 
+          className="mx-auto max-w-7xl bg-[#4a5056] backdrop-blur-md rounded-full px-6 flex items-center justify-between text-white shadow-[0_10px_30px_rgba(0,0,0,0.15)] relative"
+          onMouseLeave={() => setIsMenuOpen(false)}
+        >
+          <div className="flex items-center gap-3 py-3 md:py-4">
+            <span className="text-xl md:text-2xl font-bold tracking-widest">KARRY</span>
+            <span className="text-[10px] border-l border-white/30 pl-3 uppercase tracking-widest font-medium hidden sm:block">
+              Pfaffen Autos
+            </span>
+          </div>
 
-          <nav className="hidden gap-8 text-sm font-medium text-[#9FB6CC] md:flex">
-            <a href="#versiones" className="hover:text-[#EAF0F6]">CS / CD</a>
-            <a href="#ficha" className="hover:text-[#EAF0F6]">Ficha técnica</a>
-            <a href="#contacto" className="hover:text-[#EAF0F6]">Concesionario</a>
+          <nav className="hidden lg:flex items-center gap-8 text-[11px] font-bold uppercase tracking-wider h-full">
+            {/* Disparador del Mega Menú */}
+            <div 
+              className="h-full flex items-center cursor-pointer py-5"
+              onMouseEnter={() => setIsMenuOpen(true)}
+            >
+              <span className="hover:text-gray-300 transition-colors">Modelos ▾</span>
+            </div>
+            
+            <a href="#contacto" className="hover:text-gray-300 transition-colors py-5">Prueba de manejo</a>
+            <a href="#institucional" className="hover:text-gray-300 transition-colors py-5">Institucional</a>
+            <a href="#contacto" className="hover:text-gray-300 transition-colors py-5">Contacto</a>
           </nav>
-          <a
-            href={WHATSAPP_LINK}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="rounded-sm bg-[#FF6B35] px-4 py-2 text-sm font-semibold text-[#0F2440] transition hover:bg-[#e85a26]"
-          >
-            Cotizar
-          </a>
-        </div>
-      </header>
 
-      {/* HERO */}
-      <section
-        className="relative overflow-hidden border-b border-[#1E3A5F]"
-        style={{
-          backgroundImage:
-            "linear-gradient(#1A3A5C 1px, transparent 1px), linear-gradient(90deg, #1A3A5C 1px, transparent 1px)",
-          backgroundSize: "40px 40px",
-        }}
-      >
-        <div className="mx-auto max-w-6xl px-6 py-24 md:py-32">
-          <p className="mb-4 font-[family-name:var(--font-mono)] text-xs uppercase tracking-[0.3em] text-[#FF6B35]">
-            Fig. 01 — Utilitaria CS / CD · Motor 1.6L
-          </p>
-          <h1 className="max-w-3xl font-[family-name:var(--font-display)] text-4xl font-bold leading-[1.05] tracking-tight sm:text-5xl md:text-6xl">
-            El motor de tu productividad.
-          </h1>
-          <p className="mt-6 max-w-lg text-base text-[#9FB6CC]">
-            Fuerza utilitaria con doble versatilidad: elegí cabina simple para
-            más caja, o cabina doble para llevar al equipo completo.
-          </p>
-          <div className="mt-8 flex flex-wrap gap-4">
+          <div className="flex items-center gap-4 py-3 md:py-4">
+            <span className="hidden md:block text-xs font-medium">Cigliutti Guerini</span>
             <a
-              href={WHATSAPP_LINK}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="rounded-sm bg-[#FF6B35] px-6 py-3 text-sm font-semibold uppercase tracking-wide text-[#0F2440] transition hover:bg-[#e85a26]"
+              href="#contacto"
+              className="border border-white hover:bg-white hover:text-[#4a5056] transition-colors rounded-full px-5 py-2 text-xs font-bold uppercase tracking-wider"
             >
-              Cotizar por WhatsApp
-            </a>
-            <a
-              href="#ficha"
-              className="rounded-sm border border-[#2E4E70] px-6 py-3 text-sm font-semibold uppercase tracking-wide text-[#EAF0F6] transition hover:border-[#FF6B35] hover:text-[#FF6B35]"
-            >
-              Ver ficha técnica
+              Reservá
             </a>
           </div>
 
-          <div className="mt-16 flex items-center gap-3 text-[#3E5C7C]">
-            <span className="h-px w-10 bg-[#3E5C7C]" />
-            <span className="font-[family-name:var(--font-mono)] text-xs">
-              ESCALA 1:1 — TODAS LAS MEDIDAS EN MM
-            </span>
-            <span className="h-px flex-1 bg-[#3E5C7C]" />
+          {/* ================= MEGA MENÚ DESPLEGABLE (IMAGEN 1) ================= */}
+          {isMenuOpen && (
+            <div className="absolute top-[calc(100%+10px)] left-0 w-full bg-white rounded-xl shadow-2xl border border-gray-100 text-slate-800 p-6 md:p-8 animate-fadeIn cursor-default">
+              
+              {/* Pestañas superiores */}
+              <div className="flex justify-between items-center border-b border-gray-200 pb-0 mb-6">
+                <div className="flex gap-8">
+                  <button className="text-[15px] font-bold text-slate-900 border-b-2 border-slate-900 pb-3">Todos los modelos</button>
+                  <button className="text-[15px] font-normal text-slate-400 hover:text-slate-600 pb-3">Vehículos Utilitarios</button>
+                  <button className="text-[15px] font-normal text-slate-400 hover:text-slate-600 pb-3">Carga Pesada</button>
+                </div>
+                <button onClick={() => setIsMenuOpen(false)} className="text-slate-400 hover:text-slate-700 pb-3">
+                  <X className="w-5 h-5" />
+                </button>
+              </div>
+
+              {/* Tarjetas de Vehículos del Menú */}
+              <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                {VERSIONS.map((v) => (
+                  <div key={v.code} className="bg-[#f4f5f6] rounded-lg p-5 flex flex-col justify-between group hover:bg-[#ebeef0] transition-colors">
+                    <div>
+                      <h4 className="font-bold text-[15px] text-slate-900 uppercase tracking-tight">{v.name}</h4>
+                      <p className="text-xs text-slate-500 mt-1 font-light leading-relaxed">{v.text}</p>
+                    </div>
+                    
+                    <div className="py-4 flex justify-center mix-blend-multiply">
+                      <img src={v.image} alt={v.name} className="h-24 object-contain group-hover:scale-105 transition-transform" />
+                    </div>
+
+                    <div className="flex items-center gap-2 mt-auto">
+                      <a href="#modelos" onClick={() => setIsMenuOpen(false)} className="flex-1 text-center bg-transparent border border-slate-300 text-slate-700 hover:border-slate-500 text-xs py-1.5 rounded font-medium transition-colors">
+                        Conócelo
+                      </a>
+                      <a href="#contacto" onClick={() => setIsMenuOpen(false)} className="flex-1 text-center bg-transparent border border-slate-300 text-slate-700 hover:border-slate-500 text-xs py-1.5 rounded font-medium transition-colors">
+                        Reservá
+                      </a>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+        </div>
+      </header>
+
+      {/* ================= HERO SECTION ================= */}
+      <section className="relative pt-32 pb-16 md:pt-40 md:pb-20 min-h-[75vh] flex flex-col items-center justify-center text-center overflow-hidden">
+        
+        {/* IMAGEN DE FONDO ABSOLUTA */}
+        <div className="absolute inset-0 w-full h-full z-0">
+          <img 
+            src="/karryBanner.png" 
+            alt="Karry Pick Up" 
+            className="w-full h-full object-cover"
+          />
+          {/* Sombra sutil opcional para que el texto blanco de arriba se lea bien */}
+          <div className="absolute inset-0 bg-black/20"></div>
+        </div>
+
+        {/* Textos y Botones (z-10 para que queden arriba de la foto) */}
+        <div className="relative z-10 flex flex-col items-center px-4 mt-6">
+          <span className="bg-[#1273b9] text-white px-3 py-1 rounded-full text-[10px] font-bold tracking-widest uppercase mb-4 shadow-md">
+            ¡Ya Disponible!
+          </span>
+          <h1 className="text-4xl md:text-5xl lg:text-6xl font-medium text-white tracking-tight mb-2 drop-shadow-md">
+            Karry Pick Up
+          </h1>
+          <p className="text-base md:text-lg text-slate-100 font-medium mb-6 drop-shadow-md">
+            Utilitario CS / CD · Capacidad hasta 1,62 Ton.
+          </p>
+
+          <div className="flex items-center gap-4">
+            <a href="#modelos" className="bg-white text-slate-800 hover:bg-gray-50 px-8 py-3 rounded-full text-sm font-semibold shadow-md transition-all active:scale-95">
+              Conócelo
+            </a>
+            <a href="#contacto" className="bg-[#1273b9] text-white hover:bg-[#0f609b] px-8 py-3 rounded-full text-sm font-semibold shadow-md transition-all active:scale-95">
+              Reservá
+            </a>
           </div>
         </div>
       </section>
 
-      {/* STATS BAR */}
-      <section className="border-b border-[#1E3A5F] bg-[#0C1F38]">
-        <div className="mx-auto grid max-w-6xl grid-cols-2 divide-x divide-[#1E3A5F] px-6 md:grid-cols-4">
-          {STATS.map((s) => (
-            <div key={s.label} className="px-4 py-8 text-center">
-              <div className="font-[family-name:var(--font-mono)] text-3xl font-bold text-[#FF6B35] sm:text-4xl">
-                {s.value}
-                <span className="ml-1 text-base text-[#9FB6CC]">{s.unit}</span>
+      {/* ================= FORMULARIO DE RESERVA ================= */}
+      <section id="contacto" className="bg-white py-16 relative border-b border-gray-100">
+        <div className="max-w-6xl mx-auto px-6 grid lg:grid-cols-2 gap-16 items-center">
+          
+          <div className="max-w-md">
+            <h2 className="text-3xl md:text-4xl font-bold text-slate-900 tracking-tight mb-4">
+              Dejá tus datos y reservá tu Karry
+            </h2>
+            <p className="text-slate-600 font-medium mb-8 text-base md:text-lg italic">
+              Completá el formulario. Te contactamos para confirmar la reserva y los pasos a seguir.
+            </p>
+          </div>
+
+          <div className="bg-white border border-gray-100 rounded-[20px] p-8 shadow-[0_8px_40px_rgb(0,0,0,0.06)] relative overflow-hidden">
+            <form className="space-y-6 relative z-10">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
+                <div>
+                  <label className="text-[11px] text-gray-500 font-bold uppercase tracking-wider mb-1 block">Nombre</label>
+                  <input type="text" placeholder="Nombre completo" className="w-full bg-transparent border-b border-gray-300 py-2 outline-none focus:border-[#1273b9] transition-colors text-slate-800 font-medium placeholder:font-normal placeholder:text-gray-400" />
+                </div>
+                <div>
+                  <label className="text-[11px] text-gray-500 font-bold uppercase tracking-wider mb-1 block">Apellido</label>
+                  <input type="text" placeholder="Apellido" className="w-full bg-transparent border-b border-gray-300 py-2 outline-none focus:border-[#1273b9] transition-colors text-slate-800 font-medium placeholder:font-normal placeholder:text-gray-400" />
+                </div>
               </div>
-              <div className="mt-2 text-xs uppercase tracking-widest text-[#6E8CAA]">
+              
+              <div>
+                <label className="text-[11px] text-gray-500 font-bold uppercase tracking-wider mb-1 block">Teléfono / WhatsApp</label>
+                <input type="tel" placeholder="Código de área + Número" className="w-full bg-transparent border-b border-gray-300 py-2 outline-none focus:border-[#1273b9] transition-colors text-slate-800 font-medium placeholder:font-normal placeholder:text-gray-400" />
+              </div>
+
+              <div>
+                <label className="text-[11px] text-gray-500 font-bold uppercase tracking-wider mb-1 block">Versión de interés</label>
+                <select className="w-full bg-transparent border-b border-gray-300 py-2 outline-none focus:border-[#1273b9] transition-colors text-slate-800 font-medium appearance-none cursor-pointer">
+                  <option>Cabina Simple (CS)</option>
+                  <option>Cabina Doble (CD)</option>
+                </select>
+              </div>
+
+              <button type="button" className="w-full bg-[#25D366] hover:bg-[#1fbc59] text-white font-bold uppercase tracking-widest text-xs py-4 rounded-xl transition-all shadow-md active:scale-95 mt-6 flex items-center justify-center gap-2">
+                Enviar Solicitud
+              </button>
+            </form>
+          </div>
+
+        </div>
+      </section>
+
+      {/* ================= MODELOS DESTACADOS (IMAGEN 2) ================= */}
+      <section id="modelos" className="bg-[#f8f9fa] py-20 px-6">
+        <div className="max-w-6xl mx-auto">
+          <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-10 gap-4">
+            <h2 className="text-3xl font-bold text-slate-900 tracking-tight">Modelos destacados</h2>
+            <a href="#contacto" className="bg-[#1273b9] hover:bg-[#0f609b] text-white px-6 py-2.5 rounded-full font-bold text-sm transition-colors shadow-sm">
+              Reservar ahora
+            </a>
+          </div>
+
+          <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
+            {VERSIONS.map((v) => (
+              <div key={v.code} className="bg-white rounded-2xl overflow-hidden shadow-sm hover:shadow-md transition-shadow border border-gray-100 flex flex-col">
+                
+                {/* Imagen del modelo con dots simulados */}
+                <div className="bg-[#eef0f2] h-56 relative flex justify-center items-center p-4">
+                  <img src={v.image} alt={v.name} className="w-full h-full object-contain mix-blend-multiply drop-shadow-md" />
+                  <div className="absolute bottom-3 left-1/2 -translate-x-1/2 flex gap-1.5">
+                    <div className="w-1.5 h-1.5 rounded-full bg-[#1273b9]"></div>
+                    <div className="w-1.5 h-1.5 rounded-full bg-slate-300"></div>
+                    <div className="w-1.5 h-1.5 rounded-full bg-slate-300"></div>
+                  </div>
+                </div>
+
+                {/* Contenido de la Tarjeta */}
+                <div className="p-6 flex flex-col flex-grow">
+                  <h3 className="text-[17px] font-bold text-slate-900 uppercase tracking-tight">{v.name}</h3>
+                  <p className="text-[13px] italic text-slate-600 mb-4 mt-1 font-medium">{v.subtitle}</p>
+                  
+                  {/* Specs sin viñetas, texto limpio como en BYD */}
+                  <div className="space-y-1 text-[13px] text-slate-600 font-light mb-8 flex-grow leading-relaxed">
+                    {v.specs.map((spec, i) => (
+                      <p key={i}>{spec}</p>
+                    ))}
+                  </div>
+
+                  <div className="flex gap-3 mt-auto">
+                    <a href="#contacto" className="bg-[#1273b9] hover:bg-[#0f609b] text-white px-6 py-2 rounded-[10px] font-semibold text-sm transition-colors text-center shadow-sm">
+                      Reservar
+                    </a>
+                    <a href="#institucional" className="bg-white border border-gray-300 text-slate-800 hover:bg-gray-50 px-6 py-2 rounded-[10px] font-semibold text-sm transition-colors text-center italic">
+                      Ficha
+                    </a>
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* ================= ESTADÍSTICAS RÁPIDAS ================= */}
+      <section className="bg-white py-12 border-b border-gray-100">
+        <div className="mx-auto grid max-w-6xl grid-cols-2 md:grid-cols-4 gap-8 px-6 divide-x divide-gray-100">
+          {STATS.map((s, index) => (
+            <div key={s.label} className={`text-center ${index === 0 ? "" : "pl-8"}`}>
+              <div className="text-3xl sm:text-5xl font-light text-[#1273b9] tracking-tight">
+                {s.value}
+                <span className="ml-1 text-base font-medium text-slate-400">{s.unit}</span>
+              </div>
+              <div className="mt-2 text-[10px] font-bold uppercase tracking-widest text-slate-500">
                 {s.label}
               </div>
             </div>
@@ -165,129 +312,69 @@ export default function LandingKarry() {
         </div>
       </section>
 
-      {/* VERSIONES CS / CD */}
-      <section id="versiones" className="mx-auto max-w-6xl px-6 py-20">
-        <h2 className="font-[family-name:var(--font-display)] text-3xl font-bold tracking-tight sm:text-4xl">
-          Dos configuraciones, un mismo motor
-        </h2>
-        <p className="mt-3 max-w-xl text-[#9FB6CC]">
-          Elegí la que se adapte a tu operación diaria.
-        </p>
+      {/* ================= FICHA TÉCNICA E INSTITUCIONAL ================= */}
+      <section id="institucional" className="bg-white py-20 border-b border-gray-200">
+        <div className="mx-auto max-w-6xl px-6 grid lg:grid-cols-2 gap-16">
+          
+          <div>
+            <h2 className="text-3xl font-bold mb-3 text-slate-900 tracking-tight">Equipamiento de serie</h2>
+            <p className="text-slate-500 mb-8 font-medium">Sin extras innecesarios, con lo justo para trabajar todos los días.</p>
+            
+            <ul className="space-y-4">
+              {CHECKLIST.map((item, i) => (
+                <li key={item} className="flex items-center gap-4 border-b border-gray-100 pb-4">
+                  <span className="text-[#1273b9] font-mono text-sm font-bold">
+                    {String(i + 1).padStart(2, "0")}
+                  </span>
+                  <span className="text-slate-700 text-sm font-medium">{item}</span>
+                </li>
+              ))}
+            </ul>
+          </div>
 
-        <div className="mt-12 grid gap-6 md:grid-cols-2">
-          {VERSIONS.map((v) => (
-            <div
-              key={v.code}
-              className="rounded-sm border border-[#1E3A5F] bg-[#0C1F38] p-8"
-            >
-              <div className="flex items-baseline justify-between">
-                <span className="font-[family-name:var(--font-display)] text-2xl font-bold">
-                  {v.name}
-                </span>
-                <span className="font-[family-name:var(--font-mono)] text-sm text-[#FF6B35]">
-                  {v.code}
-                </span>
-              </div>
-              <p className="mt-4 text-sm leading-relaxed text-[#9FB6CC]">
-                {v.text}
-              </p>
-              <ul className="mt-6 space-y-2 border-t border-[#1E3A5F] pt-6 text-sm text-[#C4D4E4]">
-                {v.bullets.map((b) => (
-                  <li key={b} className="flex gap-2">
-                    <span className="text-[#FF6B35]">→</span>
-                    {b}
-                  </li>
-                ))}
-              </ul>
-              <a
-                href={WHATSAPP_LINK}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="mt-6 block rounded-sm border border-[#2E4E70] py-2 text-center text-sm font-semibold uppercase tracking-wide transition hover:border-[#FF6B35] hover:text-[#FF6B35]"
-              >
-                Consultar {v.code}
-              </a>
+          <div>
+            <h2 className="text-3xl font-bold mb-8 text-slate-900 tracking-tight">Ficha técnica</h2>
+            <div className="rounded-2xl border border-gray-200 overflow-hidden bg-white shadow-sm">
+              {SPECS.map((s, i) => (
+                <div
+                  key={s.label}
+                  className={`flex items-center justify-between px-6 py-4 border-b border-gray-100 last:border-0 ${
+                    i % 2 === 0 ? "bg-gray-50" : "bg-white"
+                  }`}
+                >
+                  <span className="text-sm text-slate-500 font-medium">{s.label}</span>
+                  <span className="text-sm font-bold text-slate-900 text-right ml-4">
+                    {s.value}
+                  </span>
+                </div>
+              ))}
             </div>
-          ))}
+          </div>
+
         </div>
       </section>
 
-      {/* CHECKLIST / MANIFIESTO */}
-      <section className="border-y border-[#1E3A5F] bg-[#0C1F38] py-20">
-        <div className="mx-auto max-w-6xl px-6">
-          <h2 className="font-[family-name:var(--font-display)] text-3xl font-bold tracking-tight sm:text-4xl">
-            Equipamiento de serie
-          </h2>
-          <p className="mt-3 max-w-xl text-[#9FB6CC]">
-            Sin extras que no necesitás, con lo justo para trabajar todos los
-            días.
-          </p>
-          <ul className="mt-10 grid gap-x-8 gap-y-4 sm:grid-cols-2">
-            {CHECKLIST.map((item, i) => (
-              <li
-                key={item}
-                className="flex items-center gap-4 border-b border-dotted border-[#1E3A5F] pb-4"
-              >
-                <span className="font-[family-name:var(--font-mono)] text-xs text-[#3E5C7C]">
-                  {String(i + 1).padStart(2, "0")}
-                </span>
-                <span className="text-sm text-[#EAF0F6]">{item}</span>
-              </li>
-            ))}
-          </ul>
-        </div>
-      </section>
-
-      {/* FICHA TÉCNICA */}
-      <section id="ficha" className="mx-auto max-w-6xl px-6 py-20">
-        <h2 className="font-[family-name:var(--font-display)] text-3xl font-bold tracking-tight sm:text-4xl">
-          Ficha técnica
-        </h2>
-
-        <div className="mt-10 overflow-hidden rounded-sm border border-[#1E3A5F]">
-          {SPECS.map((s, i) => (
-            <div
-              key={s.label}
-              className={`flex items-center justify-between px-6 py-4 ${
-                i % 2 === 0 ? "bg-[#0C1F38]" : "bg-[#0F2440]"
-              }`}
-            >
-              <span className="text-sm text-[#9FB6CC]">{s.label}</span>
-              <span className="font-[family-name:var(--font-mono)] text-sm font-bold text-[#EAF0F6]">
-                {s.value}
-              </span>
-            </div>
-          ))}
-        </div>
-      </section>
-
-      {/* CONTACTO / CTA */}
-      <section id="contacto" className="relative overflow-hidden border-t border-[#1E3A5F] bg-[#0C1F38]">
-        <div className="mx-auto max-w-6xl px-6 py-20 text-center">
-          <h2 className="font-[family-name:var(--font-display)] text-3xl font-bold tracking-tight sm:text-4xl">
-            Activá el motor de tu negocio
-          </h2>
-          <p className="mx-auto mt-3 max-w-md text-[#9FB6CC]">
-            Coordiná un test drive o pedí tu cotización sin compromiso.
-          </p>
-          <a
-            href={WHATSAPP_LINK}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="mt-8 inline-block rounded-sm bg-[#FF6B35] px-8 py-3 text-sm font-semibold uppercase tracking-wide text-[#0F2440] transition hover:bg-[#e85a26]"
-          >
-            Cotizar por WhatsApp
-          </a>
-        </div>
-      </section>
-
-      {/* FOOTER */}
-      <footer className="border-t border-[#1E3A5F] py-8">
-        <div className="mx-auto flex max-w-6xl flex-col items-center justify-between gap-3 px-6 text-xs text-[#5E7A98] sm:flex-row">
-          <span>© {new Date().getFullYear()} Karry Argentina</span>
+      {/* ================= FOOTER ================= */}
+      <footer className="bg-white py-8">
+        <div className="mx-auto flex max-w-6xl flex-col items-center justify-between gap-4 px-6 text-xs text-slate-400 font-medium sm:flex-row">
+          <span>© {new Date().getFullYear()} Karry Argentina / Pfaffen Autos</span>
           <span>Precios sujetos a modificación sin previo aviso.</span>
         </div>
       </footer>
+
+      {/* ================= BOTÓN WHATSAPP FLOTANTE ================= */}
+      <a
+        href={WHATSAPP_LINK}
+        target="_blank"
+        rel="noopener noreferrer"
+        className="fixed bottom-6 right-6 bg-[#25D366] text-white p-4 rounded-full shadow-xl hover:scale-110 active:scale-95 transition-all z-50 flex items-center justify-center"
+        aria-label="Contactar por WhatsApp"
+      >
+        <svg viewBox="0 0 24 24" className="w-7 h-7 fill-current">
+          <path d="M12.031 6.172c-3.181 0-5.767 2.586-5.768 5.766-.001 1.298.38 2.27 1.019 3.287l-.582 2.128 2.182-.573c.978.58 1.911.928 3.145.929 3.178 0 5.767-2.587 5.768-5.766.001-3.187-2.575-5.77-5.764-5.771zm3.392 8.244c-.144.405-.837.774-1.17.824-.299.045-.677.063-1.092-.069-.252-.08-.575-.988-.365-1.739-.751-2.874-2.502-2.961-2.617-.087-.116-.708-.94-.708-1.793s.448-1.273.607-1.446c.159-.173.346-.217.462-.217l.332.006c.106.005.249-.04.39.311.144.359.491 1.205.534 1.293.043.087.072.188.014.304-.058.116-.087.188-.173.289l-.26.304c-.087.086-.177.18-.076.327.101.148.45.716 1.018 1.157.734.568 1.258.744 1.403.832.145.087.231.072.318-.029l.375-.434c.087-.116.173-.087.318-.029l1.446.685c.145.087.231.13.26.202.03.072.03.419-.114.824z"/>
+        </svg>
+      </a>
+
     </main>
   );
 }

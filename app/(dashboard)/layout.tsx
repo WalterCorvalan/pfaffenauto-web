@@ -26,7 +26,8 @@ import {
   LayoutDashboard,
   Inbox,
   PieChart,
-  LogOut
+  LogOut,
+  Handshake
 } from "lucide-react";
 
 export default function DashboardLayout({
@@ -212,6 +213,8 @@ export default function DashboardLayout({
             <div className="flex flex-col gap-1 -mx-2">
               <NavLinkItem icon={LayoutDashboard} label="Tablero de Leads" href="/panel/crm" />
               <NavLinkItem icon={Inbox} label="Solicitudes Web" href="/panel/cotizaciones" />
+              <NavLinkItem icon={Handshake} label="Consignaciones" href="/panel/consignaciones" />
+              <NavLinkItem icon={Search} label="Pedidos Especiales" href="/panel/pedidos" />
               <NavLinkItem icon={CalendarCheck} label="Agenda de Visitas" href="/panel/citas" />
               <NavLinkItem icon={MessagesSquare} label="Consultas Activas" href="/panel/chat" />
               <NavLinkItem icon={CheckSquare} label="Tareas del Equipo" href="/panel/tareas" />

@@ -44,8 +44,8 @@ export default function PublicHeader() {
 
   const navLinks = [
     { name: "Inicio", href: "/" },
-    { name: "0KM", href: "/catalogo?condicion=0km" },
-    { name: "Usados Seleccionados", href: "/catalogo?condicion=usados" },
+    { name: "0KM", href: "/0km" },
+    { name: "Usados Seleccionados", href: "/catalogo?q=usados-seleccionados" },
     { name: "Outlet", href: "/outlet", badge: "Ofertas" },
   ];
 
@@ -108,7 +108,7 @@ export default function PublicHeader() {
                 title="Rely"
               >
                 <img
-                  src="/ChatGPT Image 6 ago 2026, 05_41_31 p.m.png"
+                  src="/relyLogo.png"
                   alt="Rely"
                   className="h-7 md:h-9 w-auto object-contain transition-transform group-hover:scale-105"
                 />

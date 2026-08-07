@@ -13,6 +13,7 @@ import BannerFinanciacion from "@/components/banners/BannerFinanciacion";
 import Sucursales from "@/components/Sucursales";
 import Testimonials from "@/components/Testimonials";
 import FAQ from "@/components/FAQ";
+import AgendarCitaForm from "@/components/AgendarCitaForm";
 
 const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -79,6 +80,8 @@ export default function Page() {
       
       {/* 7. Reseñas de Clientes */}
       <Testimonials />
+
+      <AgendarCitaForm />
       
       {/* 8. Preguntas Frecuentes */}
       <FAQ />

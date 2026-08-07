@@ -1,8 +1,9 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { Search, User, Phone, CarFront, Send, X } from "lucide-react";
+import { Search, User, Phone, CarFront, Send, X, Loader2 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
+import { supabase } from "@/lib/supabase"; // Importamos tu cliente de Supabase
 
 interface BuscadorFallbackProps {
   isOpen: boolean;
@@ -14,20 +15,42 @@ export default function BuscadorFallback({ isOpen, onClose, busquedaPrevia = "" 
   const [busqueda, setBusqueda] = useState(busquedaPrevia);
   const [nombre, setNombre] = useState("");
   const [telefono, setTelefono] = useState("");
+  const [loading, setLoading] = useState(false);
 
   // Actualizar el estado interno si cambia la búsqueda previa desde afuera
   useEffect(() => {
     setBusqueda(busquedaPrevia);
   }, [busquedaPrevia]);
 
-  const handleAvisame = (e: React.FormEvent) => {
+  const handleAvisame = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!busqueda.trim() || !nombre.trim() || !telefono.trim()) {
       alert("Por favor completá todos los campos para que podamos comunicarnos con vos.");
       return;
     }
 
-    const numeroOficial = "5491121907000"; // Reemplazar por tu número
+    setLoading(true);
+
+    try {
+      // 1. Guardar en la nueva tabla de pedidos especiales en Supabase
+      const { error } = await supabase.from("pedidos_especiales").insert({
+        nombre,
+        telefono,
+        busqueda,
+        estado: "Buscando",
+      });
+
+      if (error) {
+        console.error("Error guardando pedido especial:", error);
+      }
+    } catch (err) {
+      console.error("Error de red o base de datos:", err);
+    } finally {
+      setLoading(false);
+    }
+
+    // 2. Abrir WhatsApp con el mensaje prearmado
+    const numeroOficial = "5491121907000"; 
     const mensaje = `¡Hola Pfaffen Autos! 🚘\nNo encontré el auto que buscaba en la web y necesito ayuda.\n\n*Me llamo:* ${nombre}\n*Mi teléfono es:* ${telefono}\n*Estoy buscando:* ${busqueda}\n\n¡Espero su contacto!`;
     const waLink = `https://wa.me/${numeroOficial}?text=${encodeURIComponent(mensaje)}`;
     
@@ -36,7 +59,7 @@ export default function BuscadorFallback({ isOpen, onClose, busquedaPrevia = "" 
     setBusqueda("");
     setNombre("");
     setTelefono("");
-    onClose(); // Cerramos el popup después de enviar
+    onClose(); 
   };
 
   const tituloDinamico = busquedaPrevia 
@@ -47,7 +70,6 @@ export default function BuscadorFallback({ isOpen, onClose, busquedaPrevia = "" 
     <AnimatePresence>
       {isOpen && (
         <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 sm:p-6">
-          {/* Fondo oscuro desenfocado */}
           <motion.div 
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
@@ -56,7 +78,6 @@ export default function BuscadorFallback({ isOpen, onClose, busquedaPrevia = "" 
             className="absolute inset-0 bg-navy/60 backdrop-blur-sm"
           />
 
-          {/* Tarjeta Modal Glassmorphism */}
           <motion.div 
             initial={{ opacity: 0, scale: 0.95, y: 20 }}
             animate={{ opacity: 1, scale: 1, y: 0 }}
@@ -64,7 +85,6 @@ export default function BuscadorFallback({ isOpen, onClose, busquedaPrevia = "" 
             transition={{ type: "spring", damping: 25, stiffness: 300 }}
             className="bg-white/80 backdrop-blur-2xl border border-white rounded-[28px] p-6 sm:p-8 w-full max-w-lg shadow-[0_20px_50px_rgba(0,0,0,0.15)] relative overflow-hidden group text-left z-10"
           >
-            {/* Botón Cerrar */}
             <button 
               onClick={onClose}
               className="absolute top-4 right-4 z-20 p-2 bg-white/50 hover:bg-white text-slate-400 hover:text-navy rounded-full transition-colors border border-white shadow-sm"
@@ -72,7 +92,6 @@ export default function BuscadorFallback({ isOpen, onClose, busquedaPrevia = "" 
               <X className="w-5 h-5" />
             </button>
 
-            {/* Luces de fondo ambientales */}
             <div className="absolute top-0 right-0 w-48 h-48 bg-[#0145F2]/10 blur-[80px] rounded-full pointer-events-none transition-transform duration-700 group-hover:scale-110"></div>
             <div className="absolute bottom-0 left-0 w-32 h-32 bg-sky-400/10 blur-[60px] rounded-full pointer-events-none"></div>
 
@@ -133,9 +152,14 @@ export default function BuscadorFallback({ isOpen, onClose, busquedaPrevia = "" 
               <div className="pt-2">
                 <button
                   type="submit"
-                  className="w-full bg-gradient-to-r from-[#0145F2] to-blue-600 hover:from-blue-600 hover:to-sky-500 active:scale-95 text-white font-black text-[11px] sm:text-xs uppercase tracking-widest px-6 py-3.5 rounded-xl flex items-center justify-center gap-2 transition-all shadow-lg shadow-blue-500/30"
+                  disabled={loading}
+                  className="w-full bg-gradient-to-r from-[#0145F2] to-blue-600 hover:from-blue-600 hover:to-sky-500 active:scale-95 text-white font-black text-[11px] sm:text-xs uppercase tracking-widest px-6 py-3.5 rounded-xl flex items-center justify-center gap-2 transition-all shadow-lg shadow-blue-500/30 disabled:opacity-50"
                 >
-                  Contactenme <Send className="w-4 h-4" />
+                  {loading ? (
+                    <>Guardando... <Loader2 className="w-4 h-4 animate-spin" /></>
+                  ) : (
+                    <>Contáctenme <Send className="w-4 h-4" /></>
+                  )}
                 </button>
               </div>
             </form>

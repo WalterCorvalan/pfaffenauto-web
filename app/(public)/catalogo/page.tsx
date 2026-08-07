@@ -23,6 +23,7 @@ const ITEMS_POR_PAGINA = 12;
 export default function CatalogoPage() {
   const searchParams = useSearchParams();
   const searchQuery = searchParams.get("q") || "";
+  const condicionQuery = searchParams.get("condicion") || "";
 
   const [isFallbackModalOpen, setIsFallbackModalOpen] = useState(false);
   const [vehiculos, setVehiculos] = useState<any[]>([]);
@@ -87,11 +88,20 @@ export default function CatalogoPage() {
       )
       .in("estado", ["Disponible", "Reservado"]);
 
-    // Filtros de texto y precio
+    // Filtros de texto, condición y precio
     if (searchQuery)
       query = query.or(
         `marca.ilike.%${searchQuery}%,modelo.ilike.%${searchQuery}%`,
       );
+
+    if (condicionQuery) {
+      if (condicionQuery === "0km") {
+        query = query.eq("condicion", "0km");
+      } else if (condicionQuery === "usados") {
+        query = query.in("condicion", ["Usado", "usado", "usados"]);
+      }
+    }
+
     if (precioMin) query = query.gte("precio_publicado_ars", Number(precioMin));
     if (precioMax) query = query.lte("precio_publicado_ars", Number(precioMax));
     
@@ -169,6 +179,7 @@ export default function CatalogoPage() {
     fetchVehiculos(0, true);
   }, [
     searchQuery,
+    condicionQuery,
     precioMin,
     precioMax,
     precioMinUsd,
@@ -241,19 +252,33 @@ export default function CatalogoPage() {
               <span className="inline-flex items-center gap-1.5 bg-blue-50 border border-blue-200 text-blue-700 text-xs font-bold px-3 py-1.5 rounded-full">
                 Búsqueda: "{searchQuery}"
                 <Link
-                  href="/catalogo"
+                  href={condicionQuery ? `/catalogo?condicion=${condicionQuery}` : "/catalogo"}
                   className="hover:bg-blue-100 hover:text-red-500 transition-colors rounded-full p-0.5"
                 >
                   <X className="w-3.5 h-3.5" />
                 </Link>
               </span>
-            ) : (
+            ) : null}
+
+            {condicionQuery ? (
+              <span className="inline-flex items-center gap-1.5 bg-blue-50 border border-blue-200 text-blue-700 text-xs font-bold px-3 py-1.5 rounded-full">
+                Condición: {condicionQuery === "0km" ? "0KM" : "Usados Seleccionados"}
+                <Link
+                  href={searchQuery ? `/catalogo?q=${searchQuery}` : "/catalogo"}
+                  className="hover:bg-blue-100 hover:text-red-500 transition-colors rounded-full p-0.5"
+                >
+                  <X className="w-3.5 h-3.5" />
+                </Link>
+              </span>
+            ) : null}
+
+            {!searchQuery && !condicionQuery && (
               <span className="text-xs text-gray-400 italic">
                 Ningún filtro activo.
               </span>
             )}
           </div>
-          {searchQuery && (
+          {(searchQuery || condicionQuery) && (
             <Link
               href="/catalogo"
               className="text-xs font-bold text-blue-600 hover:underline transition-all"
@@ -673,7 +698,6 @@ function FiltrosContent(props: any) {
     "Jeep", "Kia", "Nissan", "Peugeot", "Renault", "Toyota", "Volkswagen"
   ];
   
-  // Se agregó "Náutica"
   const LISTA_TIPOS = [
     "Auto", "Buses", "Cabriolet", "Camión", "Camioneta", "Casa Rodante", 
     "Coupe", "Familiar", "Monovolumen", "Moto", "Náutica", "Pickup", 
