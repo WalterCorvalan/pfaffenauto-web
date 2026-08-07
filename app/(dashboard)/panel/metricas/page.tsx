@@ -2,40 +2,63 @@ import { createServerClient } from "@supabase/ssr";
 import { cookies } from "next/headers";
 import { 
   Wallet, TrendingUp, CarFront, DollarSign, Activity, 
-  PieChart, Target, Trophy, Users, ArrowRight 
+  PieChart, Target, Trophy, Users, ArrowRight, Building2, Filter 
 } from "lucide-react";
 import Link from "next/link";
-import VentasChart from "@/components/VentasChart"; // <--- Importamos nuestro nuevo componente
+import VentasChart from "@/components/VentasChart";
 
-export default async function DashboardIntegralPage() {
+export default async function DashboardIntegralPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ sucursal?: string }>;
+}) {
   const cookieStore = await cookies();
+  const { sucursal = "" } = await searchParams;
+
   const supabase = createServerClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
     process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY!,
     { cookies: { getAll: () => cookieStore.getAll() } }
   );
 
-  // 1. Traer vehículos para cálculos de capital
-  const { data: vehiculos } = await supabase
-    .from("vehiculos")
-    .select("estado, precio_costo_ars, precio_publicado_ars");
+  // 1. Traer lista de sucursales para los filtros y desgloses
+  const { data: sucursales } = await supabase
+    .from("sucursales")
+    .select("id, nombre")
+    .order("nombre");
 
-  // 2. Traer TODAS las ventas (necesitamos el histórico para el gráfico)
-  const { data: ventas } = await supabase
+  // 2. Traer vehículos para cálculos de capital
+  const { data: vehiculosRaw } = await supabase
+    .from("vehiculos")
+    .select("id, estado, precio_costo_ars, precio_publicado_ars, sucursal_id, sucursales(id, nombre)");
+
+  // 3. Traer TODAS las ventas (con datos de vehículos y sucursales)
+  const { data: ventasRaw } = await supabase
     .from("ventas")
     .select(`
       precio_final_ars, 
       fecha_venta, 
       vendedor_id,
+      vehiculo_id,
+      vehiculos ( sucursal_id, sucursales ( id, nombre ) ),
       perfiles ( nombre )
     `);
 
-  // 3. Traer los últimos leads (cotizaciones/consignaciones) de la web
+  // 4. Traer los últimos leads de la web
   const { data: ultimosLeads } = await supabase
     .from("cotizaciones")
     .select("id, nombre, marca, modelo, tipo_peritaje, created_at")
     .order("created_at", { ascending: false })
     .limit(4);
+
+  // ---- FILTRADO SI EL DUEÑO SELECCIONA UNA SUCURSAL ESPECÍFICA ----
+  const vehiculos = sucursal
+    ? vehiculosRaw?.filter((v) => v.sucursal_id === sucursal)
+    : vehiculosRaw;
+
+  const ventas = sucursal
+    ? ventasRaw?.filter((v) => (v.vehiculos as any)?.sucursal_id === sucursal)
+    : ventasRaw;
 
   // ---- CÁLCULOS CONTABLES (ACTIVOS Y RENTABILIDAD) ----
   const stockActivo = vehiculos?.filter(v => v.estado === 'Disponible' || v.estado === 'Reservado') || [];
@@ -51,7 +74,7 @@ export default async function DashboardIntegralPage() {
   const hoy = new Date();
   const mesActual = hoy.getMonth();
   const anoActual = hoy.getFullYear();
-  const OBJETIVO_MENSUAL_AUTOS = 15; 
+  const OBJETIVO_MENSUAL_AUTOS = sucursal ? 5 : 15; // 5 por sucursal o 15 total
   
   const ventasDelMes = ventas?.filter(v => {
     const fecha = new Date(`${v.fecha_venta}T12:00:00Z`); 
@@ -62,13 +85,40 @@ export default async function DashboardIntegralPage() {
   const autosVendidosMes = ventasDelMes.length;
   const progresoObjetivo = Math.min((autosVendidosMes / OBJETIVO_MENSUAL_AUTOS) * 100, 100);
 
+  // ---- DESGLOSE COMPARATIVO POR SUCURSAL (PARA EL DUEÑO) ----
+  const desgloseSucursales = sucursales?.map((s) => {
+    const vehiculosSuc = vehiculosRaw?.filter(
+      (v) => (v.estado === "Disponible" || v.estado === "Reservado") && v.sucursal_id === s.id
+    ) || [];
+    
+    const ventasSucMes = ventasRaw?.filter((v) => {
+      const fecha = new Date(`${v.fecha_venta}T12:00:00Z`);
+      return (
+        (v.vehiculos as any)?.sucursal_id === s.id &&
+        fecha.getMonth() === mesActual &&
+        fecha.getFullYear() === anoActual
+      );
+    }) || [];
+
+    const capital = vehiculosSuc.reduce((acc, v) => acc + (Number(v.precio_costo_ars) || 0), 0);
+    const facturacion = ventasSucMes.reduce((acc, v) => acc + (Number(v.precio_final_ars) || 0), 0);
+
+    return {
+      id: s.id,
+      nombre: s.nombre,
+      unidadesStock: vehiculosSuc.length,
+      capital,
+      ventasUnidades: ventasSucMes.length,
+      facturacion,
+    };
+  }) || [];
+
   // ---- RANKING DE VENDEDORES (Mes Actual) ----
   const rankingMap: Record<string, { nombre: string; cantidad: number; facturacion: number }> = {};
   
   ventasDelMes.forEach(v => {
     const vId = v.vendedor_id || "sin-asignar";
-    // @ts-ignore
-    const vNombre = v.perfiles?.nombre || "Administración"; 
+    const vNombre = (v.perfiles as any)?.nombre || "Administración"; 
 
     if (!rankingMap[vId]) {
       rankingMap[vId] = { nombre: vNombre, cantidad: 0, facturacion: 0 };
@@ -79,16 +129,12 @@ export default async function DashboardIntegralPage() {
 
   const rankingOrdenado = Object.values(rankingMap).sort((a, b) => b.cantidad - a.cantidad);
 
-  // =====================================================================
-  // ---- LÓGICA MATEMÁTICA PARA EL GRÁFICO (ÚLTIMOS 6 MESES) ----
-  // =====================================================================
-  
-  // 1. Generamos el esqueleto de los últimos 6 meses
+  // ---- GRÁFICO HISTÓRICO (ÚLTIMOS 6 MESES) ----
   const ultimos6Meses = Array.from({ length: 6 }).map((_, i) => {
     const d = new Date();
-    d.setMonth(d.getMonth() - (5 - i)); // Retrocedemos 5, 4, 3... meses
+    d.setMonth(d.getMonth() - (5 - i));
     return {
-      label: d.toLocaleDateString("es-AR", { month: "short" }).toUpperCase(), // Ej: ENE, FEB
+      label: d.toLocaleDateString("es-AR", { month: "short" }).toUpperCase(),
       month: d.getMonth(),
       year: d.getFullYear(),
       total: 0,
@@ -98,15 +144,12 @@ export default async function DashboardIntegralPage() {
 
   const vendedoresUnicos = new Set<string>();
 
-  // 2. Rellenamos el esqueleto con las ventas históricas
   ventas?.forEach(v => {
     const date = new Date(`${v.fecha_venta}T12:00:00Z`);
     const vMonth = date.getMonth();
     const vYear = date.getFullYear();
-    // @ts-ignore
-    const vNombre = v.perfiles?.nombre || "Administración";
+    const vNombre = (v.perfiles as any)?.nombre || "Administración";
 
-    // Buscamos si la venta cae en los últimos 6 meses
     const mesObj = ultimos6Meses.find(m => m.month === vMonth && m.year === vYear);
     
     if (mesObj) {
@@ -117,10 +160,8 @@ export default async function DashboardIntegralPage() {
     }
   });
 
-  // 3. Formateamos los datos exactamente como los pide Recharts
   const chartData = ultimos6Meses.map(m => {
     const dataPoint: any = { name: m.label, Total: m.total };
-    // Le asignamos a cada mes cuántas ventas tuvo cada vendedor (o 0 si no vendió nada)
     Array.from(vendedoresUnicos).forEach(v => {
       dataPoint[v] = m.vendedores[v] || 0;
     });
@@ -131,18 +172,44 @@ export default async function DashboardIntegralPage() {
     <div className="min-h-screen bg-[#0b1329] pt-4 md:pt-8 pb-16 px-3 md:px-6 text-slate-100 w-full overflow-x-hidden">
       <div className="max-w-7xl mx-auto">
         
-        <div className="mb-8 flex flex-col md:flex-row md:items-end justify-between gap-4">
+        {/* ENCABEZADO Y FILTRO POR SUCURSAL */}
+        <div className="mb-8 flex flex-col lg:flex-row lg:items-center justify-between gap-4 bg-[#0f172a] p-5 rounded-2xl border border-slate-800 shadow-xl">
           <div>
             <h1 className="text-2xl md:text-3xl font-serif mb-1 text-white flex items-center gap-3">
-              <PieChart className="w-8 h-8 text-[#0ea5e9]" /> Dashboard Principal
+              <PieChart className="w-8 h-8 text-[#0ea5e9]" /> Dashboard de Control
             </h1>
-            <p className="text-xs md:text-sm text-slate-400">Rendimiento, capital y gestión comercial de la agencia</p>
+            <p className="text-xs md:text-sm text-slate-400">Panel del dueño: Rendimiento, capital y gestión multi-sucursal</p>
           </div>
-          <div className="text-right">
-            <span className="text-xs text-slate-500 font-bold uppercase tracking-widest block mb-1">Mes en curso</span>
-            <div className="bg-[#0f172a] border border-slate-800 px-4 py-2 rounded-xl font-mono text-[#0ea5e9] shadow-inner">
-              {hoy.toLocaleDateString("es-AR", { month: 'long', year: 'numeric' }).toUpperCase()}
+
+          {/* Selector de Sucursal */}
+          <div className="flex flex-wrap items-center gap-3">
+            <div className="flex items-center gap-2 bg-[#0b1329] border border-slate-700 px-3 py-2 rounded-xl text-xs font-bold text-slate-300">
+              <Filter className="w-4 h-4 text-[#0ea5e9]" />
+              <span>Sucursal:</span>
             </div>
+            <Link
+              href="/panel/metricas"
+              className={`px-4 py-2 rounded-xl text-xs font-bold transition-all border ${
+                !sucursal
+                  ? "bg-[#0ea5e9] text-white border-[#0ea5e9] shadow-lg shadow-sky-500/20"
+                  : "bg-[#0b1329] text-slate-400 border-slate-700 hover:text-white"
+              }`}
+            >
+              Todas
+            </Link>
+            {sucursales?.map((s) => (
+              <Link
+                key={s.id}
+                href={`/panel/metricas?sucursal=${s.id}`}
+                className={`px-4 py-2 rounded-xl text-xs font-bold transition-all border ${
+                  sucursal === s.id
+                    ? "bg-[#0ea5e9] text-white border-[#0ea5e9] shadow-lg shadow-sky-500/20"
+                    : "bg-[#0b1329] text-slate-400 border-slate-700 hover:text-white"
+                }`}
+              >
+                {s.nombre}
+              </Link>
+            ))}
           </div>
         </div>
 
@@ -152,7 +219,7 @@ export default async function DashboardIntegralPage() {
             <div className="absolute -right-4 -top-4 opacity-5"><Wallet className="w-24 h-24 text-white" /></div>
             <span className="text-[10px] uppercase tracking-widest font-bold text-slate-400">Capital Inmovilizado</span>
             <h3 className="text-xl lg:text-2xl font-black text-white mt-1 mb-1 truncate">$ {capitalInmovilizado.toLocaleString("es-AR")}</h3>
-            <span className="text-[10px] text-slate-500 font-medium">Costo de compra</span>
+            <span className="text-[10px] text-slate-500 font-medium">Costo total de compra</span>
           </div>
 
           <div className="bg-[#0f172a] border border-slate-800 p-5 rounded-2xl shadow-lg relative overflow-hidden">
@@ -168,7 +235,7 @@ export default async function DashboardIntegralPage() {
               <span className="bg-emerald-500/20 text-emerald-400 px-1.5 py-0.5 rounded text-[9px] font-black">{margenPromedio.toFixed(1)}%</span>
             </div>
             <h3 className="text-xl lg:text-2xl font-black text-emerald-400 mb-1 truncate">$ {gananciaBrutaProyectada.toLocaleString("es-AR")}</h3>
-            <span className="text-[10px] text-slate-400 font-medium">Beneficio estimado total</span>
+            <span className="text-[10px] text-slate-400 font-medium">Beneficio estimado</span>
           </div>
 
           <div className="bg-[#0f172a] border border-slate-800 p-5 rounded-2xl shadow-lg flex flex-col justify-between">
@@ -183,16 +250,50 @@ export default async function DashboardIntegralPage() {
           </div>
         </div>
 
-        {/* ================= FILA 2: GRÁFICOS INTERACTIVOS (NUEVO) ================= */}
+        {/* ================= TARJETAS DESGLOSE COMPARATIVO SUCURSALES (SOLO DUEÑO) ================= */}
+        {!sucursal && (
+          <div className="mb-8">
+            <h2 className="text-xs font-bold uppercase tracking-widest text-slate-400 mb-4 flex items-center gap-2">
+              <Building2 className="w-4 h-4 text-[#0ea5e9]" /> Comparativa por Sucursal (Mes Actual)
+            </h2>
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+              {desgloseSucursales.map((suc) => (
+                <div key={suc.id} className="bg-[#0f172a] border border-slate-800 p-5 rounded-2xl shadow-lg">
+                  <div className="flex justify-between items-center border-b border-slate-800 pb-3 mb-3">
+                    <h3 className="font-black text-base text-white">{suc.nombre}</h3>
+                    <span className="bg-sky-500/10 text-sky-400 text-[10px] font-bold px-2 py-0.5 rounded-full border border-sky-500/20">
+                      {suc.unidadesStock} autos en stock
+                    </span>
+                  </div>
+                  <div className="space-y-2 text-xs">
+                    <div className="flex justify-between text-slate-400">
+                      <span>Capital Inmovilizado:</span>
+                      <span className="font-mono text-slate-200 font-bold">$ {suc.capital.toLocaleString("es-AR")}</span>
+                    </div>
+                    <div className="flex justify-between text-slate-400">
+                      <span>Ventas del Mes:</span>
+                      <span className="font-bold text-white">{suc.ventasUnidades} unidades</span>
+                    </div>
+                    <div className="flex justify-between text-emerald-400 font-bold pt-2 border-t border-slate-800/60">
+                      <span>Facturación Mes:</span>
+                      <span className="font-mono text-sm">$ {suc.facturacion.toLocaleString("es-AR")}</span>
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {/* ================= GRÁFICOS INTERACTIVOS ================= */}
         <VentasChart data={chartData} vendedores={Array.from(vendedoresUnicos)} />
 
         {/* ================= FILA 3: VENTAS, OBJETIVOS Y LEADS ================= */}
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mt-8">
           
-          {/* COLUMNA 1 y 2: Ventas y Ranking */}
           <div className="lg:col-span-2 space-y-6">
             
-            {/* Panel de Objetivo de Ventas */}
+            {/* Panel Objetivo de Ventas */}
             <div className="bg-[#0f172a] border border-slate-800 p-6 rounded-2xl shadow-lg relative">
               <div className="flex justify-between items-center mb-6">
                 <div className="flex items-center gap-3">
@@ -208,7 +309,6 @@ export default async function DashboardIntegralPage() {
                 </div>
               </div>
 
-              {/* Barra de progreso */}
               <div className="w-full bg-slate-800/50 rounded-full h-4 mb-2 overflow-hidden border border-slate-700/50">
                 <div 
                   className={`h-4 transition-all duration-1000 ${progresoObjetivo >= 100 ? 'bg-emerald-500' : 'bg-gradient-to-r from-[#0145F2] to-sky-400'}`} 
@@ -227,11 +327,11 @@ export default async function DashboardIntegralPage() {
               </div>
             </div>
 
-            {/* Panel de Ranking de Vendedores */}
+            {/* Panel Ranking Vendedores */}
             <div className="bg-[#0f172a] border border-slate-800 rounded-2xl shadow-lg overflow-hidden">
               <div className="px-6 py-4 border-b border-slate-800 flex justify-between items-center bg-slate-900/50">
                 <h3 className="text-xs font-bold uppercase tracking-widest text-slate-300 flex items-center gap-2">
-                  <Trophy className="w-4 h-4 text-amber-400" /> Ranking de Vendedores (Este Mes)
+                  <Trophy className="w-4 h-4 text-amber-400" /> Ranking de Vendedores
                 </h3>
               </div>
               <div className="p-0">
@@ -271,7 +371,7 @@ export default async function DashboardIntegralPage() {
 
           </div>
 
-          {/* COLUMNA 3: Últimos Leads (CRM Preview) */}
+          {/* COLUMNA 3: Últimos Leads */}
           <div className="bg-[#0f172a] border border-slate-800 rounded-2xl shadow-lg flex flex-col h-full">
             <div className="px-6 py-4 border-b border-slate-800 flex justify-between items-center bg-slate-900/50">
               <h3 className="text-xs font-bold uppercase tracking-widest text-slate-300 flex items-center gap-2">

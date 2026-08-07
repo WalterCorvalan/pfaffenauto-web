@@ -2,11 +2,17 @@
 
 import { useState, useEffect } from "react";
 import { createClient } from "@supabase/supabase-js";
+import { Scale } from "lucide-react";
+
+// ================= COMPONENTES DE LA LANDING =================
 import Hero from "@/components/Hero";
 import Stock from "@/components/Stock";
-import ComparadorModal from "@/components/ComparadorModal";
-import { Scale } from "lucide-react";
-// ... (importás el resto de tus componentes)
+import Marcas from "@/components/Marcas";
+import Servicios from "@/components/Servicios";
+import BannerFinanciacion from "@/components/banners/BannerFinanciacion";
+import Sucursales from "@/components/Sucursales";
+import Testimonials from "@/components/Testimonials";
+import FAQ from "@/components/FAQ";
 
 const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -44,33 +50,39 @@ export default function Page() {
   };
 
   return (
-    <main className="w-full bg-[#E9ECEF] min-h-screen relative">
+    // Usamos el fondo claro premium que definimos para el resto de la web
+    <main className="w-full bg-[#F8FAFC] min-h-screen relative flex flex-col gap-12 md:gap-20 pb-20">
+      
+      {/* 1. Hero Principal */}
       <Hero />
+      
+      {/* 2. Catálogo Destacado (Stock) */}
       <Stock 
         vehiculos={vehiculos} 
         onSelectParaComparar={manejarSeleccionComparar}
         autosParaComparar={autosComparar}
       />
-      {/* ... el resto de tus componentes ... */}
-
-      {autosComparar.length > 0 && (
-        <div className="fixed bottom-6 right-6 z-50">
-          <button
-            onClick={() => setIsComparadorOpen(true)}
-            className="bg-[#0b1329] text-white px-6 py-3.5 rounded-full font-black text-xs uppercase tracking-widest shadow-2xl flex items-center gap-2 border border-white/20 backdrop-blur-md"
-          >
-            <Scale className="w-4 h-4 text-sky-400" />
-            Comparar vehículos ({autosComparar.length}/3)
-          </button>
-        </div>
-      )}
-
-      <ComparadorModal
-        isOpen={isComparadorOpen}
-        onClose={() => setIsComparadorOpen(false)}
-        autos={autosComparar}
-        removerAuto={(id) => setAutosComparar(prev => prev.filter(a => a.id !== id))}
-      />
+      
+      {/* 3. Marcas con las que trabajan */}
+      <Marcas />
+      
+      {/* 4. Propuesta de Valor / Servicios */}
+      <Servicios />
+      
+      {/* 5. Banner CTA de Financiación / Permutas */}
+      <div className="max-w-7xl mx-auto w-full px-4 md:px-6">
+        <BannerFinanciacion />
+      </div>
+      
+      {/* 6. Puntos de Venta */}
+      <Sucursales />
+      
+      {/* 7. Reseñas de Clientes */}
+      <Testimonials />
+      
+      {/* 8. Preguntas Frecuentes */}
+      <FAQ />
+      
     </main>
   );
 }

@@ -1,54 +1,123 @@
+"use client";
+
+import { useState } from "react";
+import { HelpCircle, ChevronDown } from "lucide-react";
+import { motion, AnimatePresence } from "framer-motion";
+
 export default function FAQ() {
-  const faqSchema = { /* Mismo schema JSON-LD que ya tenías */ };
+  const [openIndex, setOpenIndex] = useState<number | null>(0); // La primera abierta por defecto
+
+  const faqs = [
+    {
+      pregunta: "¿Cómo puedo comprar un vehículo en Pfaffen Autos?",
+      respuesta: "Podés ver nuestro stock actualizado online, elegir el modelo que te guste y contactarte de forma inmediata con nuestros asesores a través de WhatsApp para coordinar una seña o visita en nuestras sucursales."
+    },
+    {
+      pregunta: "¿Ofrecen financiación para la compra de autos?",
+      respuesta: "Sí, contamos con líneas de financiación exclusivas y planes a medida tanto para vehículos 0KM como para usados seleccionados. Podés cotizar tu plan directamente con nosotros."
+    },
+    {
+      pregunta: "¿Puedo entregar mi auto usado como parte de pago?",
+      respuesta: "Sí. Tomamos tu vehículo usado al mejor precio del mercado bajo un sistema ágil y transparente de tasación presencial en cualquiera de nuestras sucursales."
+    }
+  ];
+
+  const faqSchema = {
+    "@context": "https://schema.org",
+    "@type": "FAQPage",
+    "mainEntity": faqs.map(faq => ({
+      "@type": "Question",
+      "name": faq.pregunta,
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": faq.respuesta
+      }
+    }))
+  };
+
+  const toggleFAQ = (index: number) => {
+    setOpenIndex(openIndex === index ? null : index);
+  };
 
   return (
-    <section className="py-24 bg-[#E9ECEF] border-gray-400 border-t border-gray-400 relative">
+    <section className="py-20 bg-[#F8FAFC] border-t border-slate-200/80 relative overflow-hidden">
+      
+      {/* Script SEO JSON-LD */}
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(faqSchema) }} />
 
-      <div className="max-w-7xl mx-auto px-4 md:px-6">
+      {/* Efectos ambientales sutiles */}
+      <div className="absolute bottom-0 right-0 w-[400px] h-[400px] bg-blue-400/5 rounded-full blur-[120px] pointer-events-none"></div>
+
+      <div className="max-w-4xl mx-auto px-4 md:px-6 relative z-10">
         
-        <div className="text-center mb-16">
-          <span className="text-primary text-[10px] md:text-xs font-bold uppercase tracking-widest mb-3 block">
-            Resolvé tus dudas
-          </span>
-          <h2 className="text-3xl md:text-4xl font-light text-navy tracking-tight">
-            Preguntas <strong className="font-black">Frecuentes</strong>
+        {/* ================= ENCABEZADO ================= */}
+        <div className="text-center mb-12">
+          <div className="inline-flex items-center gap-2 bg-[#0145F2]/10 text-[#0145F2] text-[10px] font-black uppercase tracking-widest px-3.5 py-1.5 rounded-full mb-3 border border-[#0145F2]/20">
+            <HelpCircle className="w-3.5 h-3.5" /> Resolvé tus dudas
+          </div>
+          <h2 className="text-3xl md:text-4xl font-black text-[#0f293e] tracking-tight">
+            Preguntas <span className="text-[#0145F2]">Frecuentes</span>
           </h2>
+          <p className="text-slate-500 text-xs md:text-sm font-medium mt-2">
+            Todo lo que necesitás saber sobre nuestros procesos de compra, financiación y permutas.
+          </p>
         </div>
 
-        <div className="max-w-4xl mx-auto flex flex-col gap-4">
-          
-          <div className="bg-white border border-gray-200 rounded-2xl p-6 md:p-8 shadow-sm hover:border-primary/40 transition-colors">
-            <h3 className="text-base md:text-lg font-bold text-navy mb-3 flex items-center gap-3">
-              <span className="text-primary font-black text-lg bg-sky-50 w-8 h-8 flex items-center justify-center rounded-full">1</span>
-              ¿Cómo puedo comprar un vehículo en Pfaffen Autos?
-            </h3>
-            <p className="text-gray-500 text-sm leading-relaxed pl-11">
-              Podés ver nuestro stock actualizado online, elegir el modelo que te guste y contactarte de forma inmediata con nuestros asesores a través de WhatsApp para coordinar una seña o visita en nuestras sucursales.
-            </p>
-          </div>
+        {/* ================= ACORDEÓN DE PREGUNTAS ================= */}
+        <div className="flex flex-col gap-4">
+          {faqs.map((faq, index) => {
+            const isOpen = openIndex === index;
 
-          <div className="bg-white border border-gray-200 rounded-2xl p-6 md:p-8 shadow-sm hover:border-primary/40 transition-colors">
-            <h3 className="text-base md:text-lg font-bold text-navy mb-3 flex items-center gap-3">
-              <span className="text-primary font-black text-lg bg-sky-50 w-8 h-8 flex items-center justify-center rounded-full">2</span>
-              ¿Ofrecen financiación para la compra de autos?
-            </h3>
-            <p className="text-gray-500 text-sm leading-relaxed pl-11">
-              Sí, contamos con líneas de financiación exclusivas y planes a medida tanto para vehículos 0KM como para usados seleccionados. Podés cotizar tu plan directamente con nosotros.
-            </p>
-          </div>
+            return (
+              <div 
+                key={index}
+                className={`bg-white border rounded-2xl transition-all duration-300 overflow-hidden shadow-[0_4px_20px_rgba(0,0,0,0.02)] ${
+                  isOpen ? 'border-[#0145F2]/50 shadow-[0_10px_30px_rgba(1,69,242,0.06)]' : 'border-slate-200/80 hover:border-slate-300'
+                }`}
+              >
+                <button
+                  onClick={() => toggleFAQ(index)}
+                  className="w-full p-6 text-left flex items-center justify-between gap-4 focus:outline-none cursor-pointer"
+                >
+                  <div className="flex items-center gap-4">
+                    <span className={`w-8 h-8 rounded-xl flex items-center justify-center text-xs font-black transition-colors ${
+                      isOpen ? 'bg-[#0145F2] text-white' : 'bg-slate-100 text-slate-600'
+                    }`}>
+                      0{index + 1}
+                    </span>
+                    <h3 className="text-base md:text-lg font-black text-[#0f293e] tracking-tight">
+                      {faq.pregunta}
+                    </h3>
+                  </div>
+                  
+                  <div className={`w-8 h-8 rounded-full flex items-center justify-center transition-transform duration-300 shrink-0 ${
+                    isOpen ? 'rotate-180 bg-blue-50 text-[#0145F2]' : 'bg-slate-50 text-slate-400'
+                  }`}>
+                    <ChevronDown className="w-4 h-4" />
+                  </div>
+                </button>
 
-          <div className="bg-white border border-gray-200 rounded-2xl p-6 md:p-8 shadow-sm hover:border-primary/40 transition-colors">
-            <h3 className="text-base md:text-lg font-bold text-navy mb-3 flex items-center gap-3">
-              <span className="text-primary font-black text-lg bg-sky-50 w-8 h-8 flex items-center justify-center rounded-full">3</span>
-              ¿Puedo entregar mi auto usado como parte de pago?
-            </h3>
-            <p className="text-gray-500 text-sm leading-relaxed pl-11">
-              Sí. Tomamos tu vehículo usado al mejor precio del mercado bajo un sistema ágil y transparente de tasación presencial en cualquiera de nuestras sucursales.
-            </p>
-          </div>
-
+                <AnimatePresence>
+                  {isOpen && (
+                    <motion.div
+                      initial={{ height: 0, opacity: 0 }}
+                      animate={{ height: "auto", opacity: 1 }}
+                      exit={{ height: 0, opacity: 0 }}
+                      transition={{ duration: 0.3, ease: "easeInOut" }}
+                    >
+                      <div className="px-6 pb-6 pt-0 pl-16 md:pl-20 pr-8">
+                        <p className="text-slate-500 text-sm leading-relaxed font-medium">
+                          {faq.respuesta}
+                        </p>
+                      </div>
+                    </motion.div>
+                  )}
+                </AnimatePresence>
+              </div>
+            );
+          })}
         </div>
+
       </div>
     </section>
   );

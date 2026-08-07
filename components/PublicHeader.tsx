@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react";
 import Link from "next/link";
-import { usePathname, useRouter } from "next/navigation";
+import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { Menu, X, Heart, ChevronRight, Search, Sparkles } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 
@@ -15,6 +15,8 @@ export default function PublicHeader() {
 
   const pathname = usePathname();
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const condicionParam = searchParams.get("condicion");
 
   const updateFavCount = () => {
     const favs = JSON.parse(localStorage.getItem("pfaffen_favs") || "[]");
@@ -38,12 +40,12 @@ export default function PublicHeader() {
     updateFavCount();
     setIsOpen(false);
     setIsSearchMobileOpen(false);
-  }, [pathname]);
+  }, [pathname, searchParams]);
 
   const navLinks = [
     { name: "Inicio", href: "/" },
-    { name: "Catálogo", href: "/catalogo" },
-    { name: "Marcas", href: "/marcas" },
+    { name: "0KM", href: "/catalogo?condicion=0km" },
+    { name: "Usados Seleccionados", href: "/catalogo?condicion=usados" },
     { name: "Outlet", href: "/outlet", badge: "Ofertas" },
   ];
 
@@ -76,7 +78,6 @@ export default function PublicHeader() {
     >
       {/* Contenedor estirado a los laterales para aprovechar espacio */}
       <div className="w-full px-4 md:px-8 h-20 grid grid-cols-3 items-center">
-        
         {/* ================= COLUMNA IZQUIERDA: LOGOS ================= */}
         <div className="flex items-center gap-3 md:gap-4 justify-start shrink-0">
           {/* Logo Pfaffen */}
@@ -98,22 +99,50 @@ export default function PublicHeader() {
           {/* Grupo de concesionarios oficiales */}
           <div className="hidden xl:flex items-center gap-3 bg-white/30 border border-white/50 rounded-full pl-3 pr-3 py-1">
             <span className="text-[9px] font-black uppercase tracking-widest text-slate-500 whitespace-nowrap">
-              Concesionarios oficiales
+              Concesionario oficial
             </span>
             <div className="flex items-center gap-3">
-              <Link href="/karry" className="flex items-center group shrink-0" title="Karry">
-                <img src="/logo-karry.webp" alt="Karry" className="h-6 md:h-7 w-auto object-contain transition-transform group-hover:scale-105" />
+              <Link
+                href="/rely"
+                className="flex items-center group shrink-0"
+                title="Rely"
+              >
+                <img
+                  src="/ChatGPT Image 6 ago 2026, 05_41_31 p.m.png"
+                  alt="Rely"
+                  className="h-7 md:h-9 w-auto object-contain transition-transform group-hover:scale-105"
+                />
               </Link>
-              <Link href="/rely" className="flex items-center group shrink-0" title="Rely">
-                <img src="/ChatGPT Image 6 ago 2026, 05_41_31 p.m.png" alt="Rely" className="h-7 md:h-9 w-auto object-contain transition-transform group-hover:scale-105" />
+              <Link
+                href="/karry"
+                className="flex items-center group shrink-0"
+                title="Karry"
+              >
+                <img
+                  src="/logo-karry.webp"
+                  alt="Karry"
+                  className="h-6 md:h-7 w-auto object-contain transition-transform group-hover:scale-105"
+                />
               </Link>
             </div>
           </div>
 
           {/* Versión compacta para pantallas medianas */}
           <div className="hidden sm:flex xl:hidden items-center gap-2">
-            <Link href="/karry" className="flex items-center"><img src="/logo-karry.webp" alt="Karry" className="h-6 w-auto object-contain" /></Link>
-            <Link href="/rely" className="flex items-center"><img src="/ChatGPT Image 6 ago 2026, 05_41_31 p.m.png" alt="Rely" className="h-7 w-auto object-contain" /></Link>
+            <Link href="/karry" className="flex items-center">
+              <img
+                src="/logo-karry.webp"
+                alt="Karry"
+                className="h-6 w-auto object-contain"
+              />
+            </Link>
+            <Link href="/rely" className="flex items-center">
+              <img
+                src="/ChatGPT Image 6 ago 2026, 05_41_31 p.m.png"
+                alt="Rely"
+                className="h-7 w-auto object-contain"
+              />
+            </Link>
           </div>
         </div>
 
@@ -130,9 +159,22 @@ export default function PublicHeader() {
                 className="hidden lg:flex items-center gap-1 bg-white/30 backdrop-blur-md px-2 py-1.5 rounded-full border border-white/50 shadow-inner"
               >
                 {navLinks.map((link) => {
-                  const isActive =
-                    pathname === link.href ||
-                    (link.href !== "/" && pathname?.startsWith(link.href));
+                  const is0KM = link.href.includes("condicion=0km");
+                  const isUsados = link.href.includes("condicion=usados");
+
+                  let isActive = false;
+                  if (link.href === "/") {
+                    isActive = pathname === "/";
+                  } else if (is0KM) {
+                    isActive = pathname === "/catalogo" && condicionParam === "0km";
+                  } else if (isUsados) {
+                    isActive = pathname === "/catalogo" && condicionParam === "usados";
+                  } else {
+                    isActive =
+                      pathname === link.href ||
+                      (link.href !== "/" && pathname?.startsWith(link.href) && !condicionParam);
+                  }
+
                   return (
                     <Link
                       key={link.name}
@@ -282,10 +324,24 @@ export default function PublicHeader() {
               ))}
 
               <div className="mt-2 p-4 rounded-[20px] bg-white/40 border border-white/60">
-                <span className="text-[9px] font-black uppercase tracking-widest text-slate-500">Concesionarios oficiales Pfaffen</span>
+                <span className="text-[9px] font-black uppercase tracking-widest text-slate-500">
+                  Concesionarios oficiales Pfaffen
+                </span>
                 <div className="flex items-center gap-6 mt-3">
-                  <Link href="/karry" onClick={() => setIsOpen(false)}><img src="/logo-karry.webp" alt="Karry" className="h-7 w-auto object-contain" /></Link>
-                  <Link href="/rely" onClick={() => setIsOpen(false)}><img src="/ChatGPT Image 6 ago 2026, 05_41_31 p.m.png" alt="Rely" className="h-9 w-auto object-contain" /></Link>
+                  <Link href="/karry" onClick={() => setIsOpen(false)}>
+                    <img
+                      src="/logo-karry.webp"
+                      alt="Karry"
+                      className="h-7 w-auto object-contain"
+                    />
+                  </Link>
+                  <Link href="/rely" onClick={() => setIsOpen(false)}>
+                    <img
+                      src="/ChatGPT Image 6 ago 2026, 05_41_31 p.m.png"
+                      alt="Rely"
+                      className="h-9 w-auto object-contain"
+                    />
+                  </Link>
                 </div>
               </div>
             </div>

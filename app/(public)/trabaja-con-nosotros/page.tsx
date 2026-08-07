@@ -8,7 +8,14 @@ import {
   CheckCircle2, 
   Loader2,
   FileText,
-  ArrowLeft
+  ArrowLeft,
+  Briefcase,
+  Star,
+  HeartHandshake,
+  User,
+  Mail,
+  Phone,
+  Building2
 } from "lucide-react";
 import { supabase } from "@/lib/supabase";
 
@@ -83,185 +90,253 @@ export default function TrabajaConNosotrosPage() {
   };
 
   return (
-    <main className="min-h-screen bg-[#0b1329] relative overflow-hidden flex flex-col items-center justify-center py-12 px-4 font-sans selection:bg-[#0145F2] selection:text-white">
+    <main className="min-h-screen relative overflow-hidden flex flex-col py-8 px-4 sm:px-6 lg:px-8 font-sans text-slate-900 bg-slate-100">
       
-      {/* ================= LUCES Y EFECTOS DE FONDO ================= */}
-      <div className="absolute inset-0 pointer-events-none z-0">
-        <div className="absolute top-0 left-1/4 w-[500px] h-[500px] bg-[#0145F2]/20 rounded-full blur-[140px]"></div>
-        <div className="absolute bottom-0 right-1/4 w-[400px] h-[400px] bg-sky-400/10 rounded-full blur-[120px]"></div>
-        {/* Grilla sutil tecnológica */}
-        <div className="absolute inset-0 bg-[linear-gradient(to_right,#ffffff05_1px,transparent_1px),linear-gradient(to_bottom,#ffffff05_1px,transparent_1px)] bg-[size:32px_32px]"></div>
+      {/* ================= VIDEO DE FONDO ================= */}
+      <div className="absolute inset-0 z-0 overflow-hidden pointer-events-none">
+        <video
+          autoPlay
+          loop
+          muted
+          playsInline
+          className="absolute inset-0 w-full h-full object-cover scale-105"
+        >
+          <source src="/hero-video.mp4" type="video/mp4" />
+        </video>
+        {/* Overlay protector translúcido para asegurar que los textos oscuros se lean perfecto */}
+        <div className="absolute inset-0 bg-white/80 backdrop-blur-[2px]"></div>
       </div>
 
-      {/* Botón para volver a la web principal */}
+      {/* Botón para volver */}
       <div className="absolute top-6 left-6 z-20">
-        <Link href="/" className="inline-flex items-center gap-2 text-slate-400 hover:text-white text-xs font-bold uppercase tracking-widest transition-colors bg-white/5 hover:bg-white/10 px-4 py-2 rounded-full border border-white/10 backdrop-blur-md">
-          <ArrowLeft className="w-4 h-4" /> Volver a la web
+        <Link href="/" className="inline-flex items-center gap-2 text-slate-500 hover:text-[#0145F2] text-[10px] sm:text-xs font-bold uppercase tracking-widest transition-colors bg-white hover:bg-slate-50 px-4 py-2.5 rounded-full border border-slate-200 shadow-sm">
+          <ArrowLeft className="w-4 h-4" /> Volver al inicio
         </Link>
       </div>
 
-      <div className="w-full max-w-2xl relative z-10 flex flex-col mt-10 md:mt-0">
-        
-        {/* ================= ENCABEZADO ================= */}
-        <div className="text-center mb-10">
-          <span className="inline-flex items-center gap-2 bg-blue-500/10 border border-blue-500/20 text-blue-400 text-xs font-black uppercase tracking-widest px-4 py-1.5 rounded-full mb-6 shadow-sm">
-            <Users className="w-4 h-4" /> Recursos Humanos
-          </span>
-          <h1 className="text-4xl md:text-5xl lg:text-6xl font-black text-white uppercase tracking-tighter leading-tight drop-shadow-md mb-4">
-            Unite a nuestro <br className="hidden sm:block" />
-            <span className="text-transparent bg-clip-text bg-gradient-to-r from-sky-400 to-[#0145F2]">equipo</span>
-          </h1>
-          <p className="text-slate-400 text-sm md:text-base font-medium max-w-lg mx-auto leading-relaxed">
-            Estamos en constante crecimiento y buscamos talentos apasionados por la industria automotriz. Dejanos tus datos y nos pondremos en contacto.
-          </p>
-        </div>
-
-        {/* ================= TARJETA DEL FORMULARIO ================= */}
-        <div className="bg-white rounded-[32px] shadow-[0_20px_50px_rgba(0,0,0,0.3)] border border-white/10 p-6 md:p-10 relative overflow-hidden">
+      <div className="flex-1 flex items-center justify-center w-full mt-12 md:mt-0 relative z-10">
+        <div className="w-full max-w-6xl grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-16 items-center">
           
-          {success ? (
-            <div className="flex flex-col items-center justify-center py-12 text-center animate-fadeIn">
-              <div className="w-24 h-24 bg-emerald-50 rounded-full flex items-center justify-center mb-6 shadow-inner border border-emerald-100">
-                <CheckCircle2 className="w-12 h-12 text-emerald-500" />
-              </div>
-              <h2 className="text-3xl font-black text-navy mb-3 uppercase tracking-tight">¡CV Enviado con éxito!</h2>
-              <p className="text-slate-500 text-base max-w-md mx-auto leading-relaxed">
-                Recibimos tu postulación correctamente. Nuestro equipo de Recursos Humanos la revisará y nos pondremos en contacto si tu perfil se ajusta a nuestras búsquedas activas.
+          {/* ================= COLUMNA IZQUIERDA: CULTURA Y CONFIANZA ================= */}
+          <div className="lg:col-span-5 flex flex-col gap-8 order-2 lg:order-1 mt-8 lg:mt-0">
+            <div>
+              <span className="inline-flex items-center gap-2 bg-[#0145F2]/10 text-[#0145F2] text-[10px] font-black uppercase tracking-widest px-3 py-1.5 rounded-md mb-4 border border-[#0145F2]/20 backdrop-blur-md">
+                <Building2 className="w-3.5 h-3.5" /> Sumate al equipo
+              </span>
+              <h1 className="text-4xl lg:text-5xl font-black text-[#0f293e] tracking-tighter leading-tight mb-4 drop-shadow-sm">
+                Construí tu futuro en <span className="text-[#0145F2]">Pfaffen Autos</span>
+              </h1>
+              <p className="text-slate-600 text-sm leading-relaxed font-medium">
+                Somos una agencia líder en constante expansión. Buscamos personas proactivas, apasionadas por la industria automotriz y con ganas de desarrollarse en un entorno dinámico y profesional.
               </p>
-              <button 
-                onClick={() => setSuccess(false)}
-                className="mt-8 text-[#0145F2] font-bold text-xs uppercase tracking-widest hover:underline transition-all"
-              >
-                Enviar otra postulación
-              </button>
             </div>
-          ) : (
-            <form onSubmit={handleSubmit} className="space-y-6">
+
+            <div className="space-y-6">
+              <div className="flex items-start gap-4">
+                <div className="bg-white/80 backdrop-blur-sm p-3 rounded-2xl shadow-sm border border-white shrink-0">
+                  <Star className="w-6 h-6 text-[#0145F2]" />
+                </div>
+                <div>
+                  <h3 className="text-sm font-black uppercase tracking-wider text-[#0f293e]">Desarrollo Profesional</h3>
+                  <p className="text-xs text-slate-600 mt-1 leading-relaxed">Oportunidades reales de crecimiento y capacitación constante en ventas y gestión.</p>
+                </div>
+              </div>
+
+              <div className="flex items-start gap-4">
+                <div className="bg-white/80 backdrop-blur-sm p-3 rounded-2xl shadow-sm border border-white shrink-0">
+                  <HeartHandshake className="w-6 h-6 text-[#0145F2]" />
+                </div>
+                <div>
+                  <h3 className="text-sm font-black uppercase tracking-wider text-[#0f293e]">Excelente Clima Laboral</h3>
+                  <p className="text-xs text-slate-600 mt-1 leading-relaxed">Fomentamos el trabajo en equipo, el respeto y la colaboración diaria entre todas las áreas.</p>
+                </div>
+              </div>
+
+              <div className="flex items-start gap-4">
+                <div className="bg-white/80 backdrop-blur-sm p-3 rounded-2xl shadow-sm border border-white shrink-0">
+                  <Briefcase className="w-6 h-6 text-[#0145F2]" />
+                </div>
+                <div>
+                  <h3 className="text-sm font-black uppercase tracking-wider text-[#0f293e]">Estabilidad y Beneficios</h3>
+                  <p className="text-xs text-slate-600 mt-1 leading-relaxed">Condiciones de contratación claras, esquema de comisiones competitivo y estabilidad garantizada.</p>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* ================= COLUMNA DERECHA: FORMULARIO ================= */}
+          <div className="lg:col-span-7 order-1 lg:order-2">
+            <div className="bg-white/90 backdrop-blur-2xl rounded-[32px] shadow-[0_20px_50px_rgba(0,0,0,0.05)] border border-white p-6 sm:p-10 relative overflow-hidden">
               
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <div>
-                  <label className="text-[11px] font-black text-slate-500 uppercase tracking-widest mb-2 block">Nombre</label>
-                  <input 
-                    type="text" 
-                    required 
-                    value={nombre} onChange={(e) => setNombre(e.target.value)}
-                    className="w-full bg-slate-50 border border-slate-200 rounded-2xl px-4 py-3.5 text-sm font-semibold text-navy outline-none focus:bg-white focus:border-[#0145F2] focus:ring-4 focus:ring-blue-500/10 transition-all shadow-sm"
-                    placeholder="Tu nombre"
-                  />
-                </div>
-                <div>
-                  <label className="text-[11px] font-black text-slate-500 uppercase tracking-widest mb-2 block">Apellido</label>
-                  <input 
-                    type="text" 
-                    required 
-                    value={apellido} onChange={(e) => setApellido(e.target.value)}
-                    className="w-full bg-slate-50 border border-slate-200 rounded-2xl px-4 py-3.5 text-sm font-semibold text-navy outline-none focus:bg-white focus:border-[#0145F2] focus:ring-4 focus:ring-blue-500/10 transition-all shadow-sm"
-                    placeholder="Tu apellido"
-                  />
-                </div>
-              </div>
-
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <div>
-                  <label className="text-[11px] font-black text-slate-500 uppercase tracking-widest mb-2 block">Email</label>
-                  <input 
-                    type="email" 
-                    required 
-                    value={email} onChange={(e) => setEmail(e.target.value)}
-                    className="w-full bg-slate-50 border border-slate-200 rounded-2xl px-4 py-3.5 text-sm font-semibold text-navy outline-none focus:bg-white focus:border-[#0145F2] focus:ring-4 focus:ring-blue-500/10 transition-all shadow-sm"
-                    placeholder="ejemplo@correo.com"
-                  />
-                </div>
-                <div>
-                  <label className="text-[11px] font-black text-slate-500 uppercase tracking-widest mb-2 block">Teléfono (WhatsApp)</label>
-                  <input 
-                    type="tel" 
-                    required 
-                    value={telefono} onChange={(e) => setTelefono(e.target.value)}
-                    className="w-full bg-slate-50 border border-slate-200 rounded-2xl px-4 py-3.5 text-sm font-semibold text-navy outline-none focus:bg-white focus:border-[#0145F2] focus:ring-4 focus:ring-blue-500/10 transition-all shadow-sm"
-                    placeholder="+54 9 11 0000-0000"
-                  />
-                </div>
-              </div>
-
-              <div>
-                <label className="text-[11px] font-black text-slate-500 uppercase tracking-widest mb-2 block">Puesto de interés</label>
-                <div className="relative">
-                  <select 
-                    value={puesto} onChange={(e) => setPuesto(e.target.value)}
-                    className="w-full bg-slate-50 border border-slate-200 rounded-2xl px-4 py-3.5 text-sm font-semibold text-navy outline-none focus:bg-white focus:border-[#0145F2] focus:ring-4 focus:ring-blue-500/10 transition-all shadow-sm appearance-none cursor-pointer"
+              {success ? (
+                <div className="flex flex-col items-center justify-center py-16 text-center animate-fadeIn">
+                  <div className="w-20 h-20 bg-emerald-50 rounded-full flex items-center justify-center mb-6 shadow-inner border border-emerald-100">
+                    <CheckCircle2 className="w-10 h-10 text-emerald-500" />
+                  </div>
+                  <h2 className="text-2xl font-black text-[#0f293e] mb-3 uppercase tracking-tight">¡Postulación recibida!</h2>
+                  <p className="text-slate-500 text-sm max-w-sm mx-auto leading-relaxed">
+                    Gracias por querer formar parte de Pfaffen Autos. Nuestro equipo de Recursos Humanos revisará tu perfil y te contactaremos si se ajusta a nuestras búsquedas.
+                  </p>
+                  <button 
+                    onClick={() => setSuccess(false)}
+                    className="mt-8 text-[#0145F2] font-bold text-xs uppercase tracking-widest hover:text-blue-700 transition-all bg-blue-50 px-6 py-3 rounded-full"
                   >
-                    <option value="Ventas / Comercial">Ventas / Comercial</option>
-                    <option value="Administración">Administración</option>
-                    <option value="Marketing / Redes Sociales">Marketing / Redes Sociales</option>
-                    <option value="Taller / Mecánica">Taller / Mecánica</option>
-                    <option value="Atención al Cliente">Atención al Cliente</option>
-                    <option value="Gerencia / Liderazgo">Gerencia / Liderazgo</option>
-                    <option value="Otro">Otro puesto</option>
-                  </select>
+                    Enviar otra postulación
+                  </button>
                 </div>
-              </div>
+              ) : (
+                <form onSubmit={handleSubmit} className="space-y-6">
+                  
+                  <div>
+                    <h2 className="text-xl font-black text-[#0f293e] mb-1">Dejanos tus datos</h2>
+                    <p className="text-xs text-slate-500 font-medium">Completá el formulario para ingresar a nuestra base de talentos.</p>
+                  </div>
 
-              {/* Zona de Carga de CV */}
-              <div>
-                <label className="text-[11px] font-black text-slate-500 uppercase tracking-widest mb-2 block">Currículum Vitae (PDF o Word)</label>
-                
-                <input 
-                  type="file" 
-                  accept=".pdf,.doc,.docx"
-                  ref={fileInputRef}
-                  className="hidden"
-                  onChange={(e) => {
-                    if (e.target.files && e.target.files.length > 0) {
-                      setArchivoCV(e.target.files[0]);
-                    }
-                  }}
-                />
-
-                <div 
-                  onClick={() => fileInputRef.current?.click()}
-                  className={`border-2 border-dashed rounded-3xl p-8 text-center cursor-pointer transition-all duration-300 ${archivoCV ? 'border-[#0145F2] bg-blue-50/50 shadow-inner' : 'border-slate-300 hover:border-[#0145F2] hover:bg-slate-50 bg-slate-50/50'}`}
-                >
-                  {archivoCV ? (
-                    <div className="flex flex-col items-center gap-3">
-                      <div className="w-14 h-14 bg-white shadow-sm text-[#0145F2] rounded-full flex items-center justify-center border border-blue-100">
-                        <FileText className="w-6 h-6" />
+                  {/* Fila: Nombre y Apellido */}
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+                    <div className="space-y-1.5">
+                      <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest pl-1">Nombre</label>
+                      <div className="relative">
+                        <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none">
+                          <User className="w-4 h-4 text-slate-400" />
+                        </div>
+                        <input 
+                          type="text" 
+                          required 
+                          value={nombre} onChange={(e) => setNombre(e.target.value)}
+                          className="w-full bg-slate-50 border border-slate-200 rounded-xl pl-10 pr-4 py-3.5 text-sm font-semibold text-[#0f293e] outline-none focus:bg-white focus:border-[#0145F2] focus:ring-4 focus:ring-blue-500/10 transition-all placeholder:text-slate-400 placeholder:font-medium"
+                          placeholder="Tu nombre"
+                        />
                       </div>
-                      <span className="text-sm font-black text-navy">{archivoCV.name}</span>
-                      <span className="text-[10px] font-bold uppercase tracking-widest text-[#0145F2] hover:underline">Cambiar archivo</span>
                     </div>
-                  ) : (
-                    <div className="flex flex-col items-center gap-3">
-                      <div className="w-14 h-14 bg-white shadow-sm text-slate-400 rounded-full flex items-center justify-center border border-slate-100 mb-1">
-                        <UploadCloud className="w-6 h-6" />
+                    <div className="space-y-1.5">
+                      <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest pl-1">Apellido</label>
+                      <div className="relative">
+                        <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none">
+                          <User className="w-4 h-4 text-slate-400" />
+                        </div>
+                        <input 
+                          type="text" 
+                          required 
+                          value={apellido} onChange={(e) => setApellido(e.target.value)}
+                          className="w-full bg-slate-50 border border-slate-200 rounded-xl pl-10 pr-4 py-3.5 text-sm font-semibold text-[#0f293e] outline-none focus:bg-white focus:border-[#0145F2] focus:ring-4 focus:ring-blue-500/10 transition-all placeholder:text-slate-400 placeholder:font-medium"
+                          placeholder="Tu apellido"
+                        />
                       </div>
-                      <span className="text-sm font-black text-navy">Hacé clic para seleccionar tu CV</span>
-                      <span className="text-xs text-slate-400 font-medium">Formatos soportados: PDF, DOC. Tamaño máximo: 5MB</span>
                     </div>
-                  )}
-                </div>
-              </div>
+                  </div>
 
-              {/* Botón Submit */}
-              <div className="pt-4">
-                <button 
-                  type="submit" 
-                  disabled={loading || !archivoCV}
-                  className="w-full py-5 bg-gradient-to-r from-[#0145F2] to-sky-500 text-white font-black text-sm uppercase tracking-widest rounded-2xl hover:from-blue-600 hover:to-sky-400 transition-all shadow-[0_8px_25px_rgba(1,69,242,0.3)] hover:shadow-[0_12px_30px_rgba(1,69,242,0.4)] disabled:opacity-50 disabled:shadow-none active:scale-[0.98] flex items-center justify-center gap-2"
-                >
-                  {loading && <Loader2 className="w-5 h-5 animate-spin" />}
-                  {loading ? "Procesando Postulación..." : "Enviar Postulación"}
-                </button>
-              </div>
-            </form>
-          )}
-        </div>
-        
-        {/* Footer simple para la Landing */}
-        <div className="text-center mt-8">
-          <p className="text-slate-500 text-[10px] uppercase tracking-widest font-bold">
-            Pfaffen Autos © {new Date().getFullYear()} • Tu próximo desafío te espera
-          </p>
+                  {/* Fila: Email y Teléfono */}
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+                    <div className="space-y-1.5">
+                      <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest pl-1">Email</label>
+                      <div className="relative">
+                        <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none">
+                          <Mail className="w-4 h-4 text-slate-400" />
+                        </div>
+                        <input 
+                          type="email" 
+                          required 
+                          value={email} onChange={(e) => setEmail(e.target.value)}
+                          className="w-full bg-slate-50 border border-slate-200 rounded-xl pl-10 pr-4 py-3.5 text-sm font-semibold text-[#0f293e] outline-none focus:bg-white focus:border-[#0145F2] focus:ring-4 focus:ring-blue-500/10 transition-all placeholder:text-slate-400 placeholder:font-medium"
+                          placeholder="ejemplo@correo.com"
+                        />
+                      </div>
+                    </div>
+                    <div className="space-y-1.5">
+                      <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest pl-1">Teléfono</label>
+                      <div className="relative">
+                        <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none">
+                          <Phone className="w-4 h-4 text-slate-400" />
+                        </div>
+                        <input 
+                          type="tel" 
+                          required 
+                          value={telefono} onChange={(e) => setTelefono(e.target.value)}
+                          className="w-full bg-slate-50 border border-slate-200 rounded-xl pl-10 pr-4 py-3.5 text-sm font-semibold text-[#0f293e] outline-none focus:bg-white focus:border-[#0145F2] focus:ring-4 focus:ring-blue-500/10 transition-all placeholder:text-slate-400 placeholder:font-medium"
+                          placeholder="+54 9 11 0000-0000"
+                        />
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Puesto */}
+                  <div className="space-y-1.5">
+                    <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest pl-1">Puesto de interés</label>
+                    <div className="relative">
+                      <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none">
+                        <Briefcase className="w-4 h-4 text-[#0145F2]" />
+                      </div>
+                      <select 
+                        value={puesto} onChange={(e) => setPuesto(e.target.value)}
+                        className="w-full bg-slate-50 border border-slate-200 rounded-xl pl-10 pr-4 py-3.5 text-sm font-semibold text-[#0f293e] outline-none focus:bg-white focus:border-[#0145F2] focus:ring-4 focus:ring-blue-500/10 transition-all shadow-sm appearance-none cursor-pointer"
+                      >
+                        <option value="Ventas / Comercial">Ventas / Comercial</option>
+                        <option value="Administración">Administración</option>
+                        <option value="Marketing / Redes Sociales">Marketing / Redes Sociales</option>
+                        <option value="Taller / Mecánica">Taller / Mecánica</option>
+                        <option value="Atención al Cliente">Atención al Cliente</option>
+                        <option value="Gerencia / Liderazgo">Gerencia / Liderazgo</option>
+                        <option value="Otro">Otro puesto</option>
+                      </select>
+                    </div>
+                  </div>
+
+                  {/* Zona de Carga de CV */}
+                  <div className="space-y-1.5">
+                    <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest pl-1">Currículum Vitae (PDF o Word)</label>
+                    
+                    <input 
+                      type="file" 
+                      accept=".pdf,.doc,.docx"
+                      ref={fileInputRef}
+                      className="hidden"
+                      onChange={(e) => {
+                        if (e.target.files && e.target.files.length > 0) {
+                          setArchivoCV(e.target.files[0]);
+                        }
+                      }}
+                    />
+
+                    <div 
+                      onClick={() => fileInputRef.current?.click()}
+                      className={`border-2 border-dashed rounded-2xl p-6 text-center cursor-pointer transition-all duration-300 ${archivoCV ? 'border-[#0145F2] bg-blue-50/50 shadow-sm' : 'border-slate-300 hover:border-[#0145F2] hover:bg-slate-50 bg-slate-50/50'}`}
+                    >
+                      {archivoCV ? (
+                        <div className="flex flex-col items-center gap-2">
+                          <div className="w-12 h-12 bg-white shadow-sm text-[#0145F2] rounded-full flex items-center justify-center border border-blue-100">
+                            <FileText className="w-5 h-5" />
+                          </div>
+                          <span className="text-sm font-black text-[#0f293e] mt-1">{archivoCV.name}</span>
+                          <span className="text-[10px] font-bold uppercase tracking-widest text-slate-400 hover:text-[#0145F2]">Cambiar archivo adjunto</span>
+                        </div>
+                      ) : (
+                        <div className="flex flex-col items-center gap-2">
+                          <div className="w-12 h-12 bg-white shadow-sm text-slate-400 rounded-full flex items-center justify-center border border-slate-200 mb-1 group-hover:text-[#0145F2]">
+                            <UploadCloud className="w-5 h-5" />
+                          </div>
+                          <span className="text-sm font-bold text-[#0f293e]">Hacé clic para subir tu CV</span>
+                          <span className="text-[10px] text-slate-400 font-medium uppercase tracking-widest">Máximo 5MB • PDF, DOC, DOCX</span>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+
+                  {/* Botón Submit */}
+                  <div className="pt-2">
+                    <button 
+                      type="submit" 
+                      disabled={loading || !archivoCV}
+                      className="w-full py-4 bg-[#0145F2] text-white font-black text-xs uppercase tracking-widest rounded-xl hover:bg-blue-700 transition-all shadow-[0_8px_20px_rgba(1,69,242,0.25)] disabled:opacity-50 disabled:shadow-none active:scale-[0.98] flex items-center justify-center gap-2"
+                    >
+                      {loading && <Loader2 className="w-4 h-4 animate-spin" />}
+                      {loading ? "Enviando Postulación..." : "Enviar Postulación"}
+                    </button>
+                  </div>
+                </form>
+              )}
+            </div>
+          </div>
         </div>
       </div>
     </main>
