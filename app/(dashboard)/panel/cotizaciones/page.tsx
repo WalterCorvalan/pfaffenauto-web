@@ -1,7 +1,6 @@
-// app/(dashboard)/panel/cotizaciones/page.tsx
 import { createServerClient } from "@supabase/ssr";
 import { cookies } from "next/headers";
-import { ClipboardList, Image as ImageIcon, MapPin, CheckCircle, Clock } from "lucide-react";
+import { ClipboardList, CheckCircle, Clock, Image as ImageIcon, Video, MapPin, MessageSquareText, Calculator } from "lucide-react";
 
 export default async function CotizacionesPage() {
   const cookieStore = await cookies();
@@ -11,105 +10,165 @@ export default async function CotizacionesPage() {
     { cookies: { getAll: () => cookieStore.getAll() } }
   );
 
-  // Traemos las cotizaciones ordenadas de más nuevas a más viejas
+  // FILTRO LOGÍSTICO: Solo cotizaciones (ventas a la agencia)
   const { data: cotizaciones } = await supabase
     .from("cotizaciones")
     .select("*")
+    .neq("tipo_peritaje", "consignacion")
     .order("created_at", { ascending: false });
 
+  // ================= MÉTRICAS INTEGRADAS =================
+  const total = cotizaciones?.length || 0;
+  const tasados = cotizaciones?.filter(c => c.precio_sugerido).length || 0;
+  const pendientes = total - tasados;
+  const presenciales = cotizaciones?.filter(c => c.tipo_peritaje?.toLowerCase().includes("presencial")).length || 0;
+
   return (
-    <div className="min-h-screen bg-[#0b1329] pt-4 md:pt-8 pb-16 px-3 md:px-6 text-slate-100">
-      <div className="max-w-6xl mx-auto">
-        <div className="mb-8">
-          <h1 className="text-2xl md:text-3xl font-serif mb-1 text-white flex items-center gap-3">
-            <ClipboardList className="w-8 h-8 text-[#0ea5e9]" /> Cotizaciones Recibidas
-          </h1>
-          <p className="text-xs md:text-sm text-slate-400">
-            Vehículos ingresados por clientes desde la web. n8n calcula el precio sugerido automáticamente.
-          </p>
+    <div className="flex flex-col h-full w-full bg-white overflow-hidden">
+      
+      {/* ================= HEADER Y MÉTRICAS ================= */}
+      <header className="flex flex-col md:flex-row md:items-center justify-between border-b border-slate-200 px-6 py-3.5 bg-white shrink-0 gap-4">
+        <div className="flex items-center gap-4">
+          <div className="w-10 h-10 rounded-lg bg-emerald-50 border border-emerald-100 flex items-center justify-center shrink-0">
+            <ClipboardList className="w-5 h-5 text-emerald-600" />
+          </div>
+          <div>
+            <h1 className="text-[17px] font-bold text-slate-900 leading-tight">
+              Solicitudes de Tasación
+            </h1>
+            <p className="text-[11px] font-medium text-slate-500 mt-0.5">
+              Vehículos ingresados para venta directa o permuta
+            </p>
+          </div>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
-          {cotizaciones?.map((cot) => (
-            <div key={cot.id} className="bg-[#0f172a] border border-slate-800 rounded-2xl p-5 flex flex-col hover:border-slate-700 transition-colors shadow-lg">
-              
-              <div className="flex justify-between items-start mb-4">
-                <div>
-                  <span className="text-[10px] uppercase tracking-widest font-bold text-slate-400 block mb-0.5">
-                    {cot.marca} • {cot.anio}
+        {/* Resumen de Métricas tipo Badges */}
+        <div className="flex items-center gap-2 overflow-x-auto custom-scrollbar pb-1 md:pb-0">
+          <div className="flex items-center gap-1.5 bg-slate-50 border border-slate-200 px-2.5 py-1 rounded-md text-[11px] font-bold text-slate-600 whitespace-nowrap">
+            <ClipboardList className="w-3.5 h-3.5 text-slate-400" /> {total} Recibidas
+          </div>
+          <div className="flex items-center gap-1.5 bg-amber-50 border border-amber-200 px-2.5 py-1 rounded-md text-[11px] font-bold text-amber-700 whitespace-nowrap">
+            <Clock className="w-3.5 h-3.5 text-amber-500" /> {pendientes} Procesando
+          </div>
+          <div className="flex items-center gap-1.5 bg-emerald-50 border border-emerald-200 px-2.5 py-1 rounded-md text-[11px] font-bold text-emerald-700 whitespace-nowrap">
+            <CheckCircle className="w-3.5 h-3.5 text-emerald-500" /> {tasados} Tasados
+          </div>
+          <div className="flex items-center gap-1.5 bg-blue-50 border border-blue-200 px-2.5 py-1 rounded-md text-[11px] font-bold text-blue-700 whitespace-nowrap">
+            <MapPin className="w-3.5 h-3.5 text-blue-500" /> {presenciales} Presenciales
+          </div>
+        </div>
+      </header>
+
+      {/* ================= ÁREA SCROLLABLE (TARJETAS DENSAS) ================= */}
+      <div className="flex-1 overflow-y-auto p-6 bg-[#F9FAFB] custom-scrollbar">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5 gap-4 max-w-[1800px] mx-auto">
+          {cotizaciones?.map((cot) => {
+            const esPresencial = cot.tipo_peritaje?.toLowerCase().includes("presencial");
+            
+            return (
+              <div 
+                key={cot.id} 
+                className="bg-white border border-slate-200 rounded-xl p-4 flex flex-col shadow-sm hover:shadow-md hover:border-emerald-500/30 transition-all group"
+              >
+                {/* Top: Estado y Modalidad */}
+                <div className="flex justify-between items-start mb-3">
+                  {cot.precio_sugerido ? (
+                    <span className="bg-emerald-50 text-emerald-700 border border-emerald-200 px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-widest flex items-center gap-1">
+                      <CheckCircle className="w-3 h-3" /> Tasado
+                    </span>
+                  ) : (
+                    <span className="bg-amber-50 text-amber-700 border border-amber-200 px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-widest flex items-center gap-1">
+                      <Clock className="w-3 h-3" /> Procesando
+                    </span>
+                  )}
+                  
+                  <span className={`text-[9px] font-bold uppercase tracking-widest px-2 py-0.5 rounded flex items-center gap-1 border ${esPresencial ? "bg-blue-50 text-blue-700 border-blue-200" : "bg-slate-100 text-slate-500 border-slate-200"}`}>
+                    {esPresencial ? <MapPin className="w-3 h-3" /> : <ImageIcon className="w-3 h-3" />}
+                    {esPresencial ? "Presencial" : "Online"}
                   </span>
-                  <h3 className="font-black text-lg text-white leading-tight">
-                    {cot.modelo} {cot.version && <span className="text-sm font-medium text-slate-400 block truncate">{cot.version}</span>}
+                </div>
+
+                {/* Info Cliente */}
+                <div className="flex items-center gap-2 mb-3">
+                  <div className="w-7 h-7 rounded-full bg-slate-100 text-slate-600 flex items-center justify-center font-bold text-xs shrink-0 border border-slate-200">
+                    {cot.nombre.substring(0, 2).toUpperCase()}
+                  </div>
+                  <h3 className="font-bold text-[14px] text-slate-900 truncate">
+                    {cot.nombre}
                   </h3>
                 </div>
-                {cot.precio_sugerido ? (
-                  <span className="bg-emerald-900/30 text-emerald-400 border border-emerald-700/50 px-2.5 py-1 rounded-md text-[10px] font-black uppercase tracking-widest flex items-center gap-1">
-                    <CheckCircle className="w-3 h-3" /> Tasado
-                  </span>
-                ) : (
-                  <span className="bg-yellow-900/30 text-yellow-400 border border-yellow-700/50 px-2.5 py-1 rounded-md text-[10px] font-black uppercase tracking-widest flex items-center gap-1">
-                    <Clock className="w-3 h-3" /> Procesando
-                  </span>
-                )}
-              </div>
 
-              <div className="grid grid-cols-2 gap-2 text-xs bg-[#0b1329] border border-slate-800 p-3 rounded-xl mb-4">
-                <div>
-                  <span className="block text-slate-500 text-[9px] uppercase tracking-widest font-bold">KM</span>
-                  <span className="font-bold text-slate-200">{cot.kilometraje.toLocaleString()} km</span>
+                {/* Info Auto (Caja compacta) */}
+                <div className="bg-slate-50 border border-slate-100 p-3 rounded-lg mb-4 flex-1">
+                  <div className="flex items-center justify-between mb-1">
+                    <span className="text-[9px] uppercase tracking-widest font-bold text-slate-400">
+                      {cot.marca} • {cot.anio}
+                    </span>
+                    <span className="text-[10px] font-bold text-slate-500">{cot.kilometraje.toLocaleString()} km</span>
+                  </div>
+                  <p className="text-[13px] font-semibold text-emerald-700 leading-tight truncate">
+                    {cot.modelo}
+                  </p>
+                  <p className="text-[11px] text-slate-500 truncate mt-0.5">
+                    {cot.version || "Sin versión"}
+                  </p>
                 </div>
-                <div>
-                  <span className="block text-slate-500 text-[9px] uppercase tracking-widest font-bold">Modalidad</span>
-                  <span className="font-bold text-slate-200 capitalize">{cot.tipo_peritaje}</span>
-                </div>
-              </div>
 
-              {/* Precio sugerido por n8n */}
-              <div className="bg-slate-900/50 border border-slate-800 rounded-xl p-4 mb-4 text-center">
-                <span className="block text-slate-400 text-[10px] uppercase tracking-widest font-bold mb-1">
-                  Precio de Compra Sugerido (n8n)
-                </span>
-                {cot.precio_sugerido ? (
-                  <span className="text-2xl font-black text-[#0ea5e9]">
-                    $ {cot.precio_sugerido.toLocaleString("es-AR")}
-                  </span>
-                ) : (
-                  <span className="text-sm font-medium text-slate-500 italic">
-                    Calculando mercado...
-                  </span>
-                )}
-              </div>
+                {/* Footer: Precio, Fotos y Acción */}
+                <div className="pt-3 border-t border-slate-100 flex items-center justify-between gap-2 mt-auto">
+                  
+                  {/* Precio */}
+                  <div className="flex-1 min-w-0">
+                    <span className="block text-[9px] uppercase tracking-widest font-bold text-slate-400 mb-0.5 truncate">
+                      Oferta Sugerida
+                    </span>
+                    <span className="text-[13px] font-black text-slate-800 font-mono truncate block">
+                      {cot.precio_sugerido ? `USD ${cot.precio_sugerido.toLocaleString("es-AR")}` : "Calculando..."}
+                    </span>
+                  </div>
 
-              <div className="mt-auto space-y-3">
-                <div className="flex justify-between items-center text-xs border-t border-slate-800/80 pt-3">
-                  <span className="text-slate-400">{cot.nombre}</span>
-                  <a href={`https://wa.me/${cot.telefono}`} target="_blank" className="text-[#25D366] font-bold hover:underline">
-                    {cot.telefono}
+                  {/* Miniaturas superpuestas (Ahorro de espacio) */}
+                  {cot.fotos_y_videos && cot.fotos_y_videos.length > 0 && (
+                    <div className="flex -space-x-2 shrink-0">
+                      {cot.fotos_y_videos.slice(0, 3).map((url: string, i: number) => (
+                        <a key={i} href={url} target="_blank" rel="noreferrer" className="w-6 h-6 rounded-full border-2 border-white overflow-hidden bg-slate-200 z-0 hover:z-10 hover:scale-110 transition-transform">
+                          {url.includes("mp4") ? (
+                            <div className="w-full h-full flex items-center justify-center bg-slate-800"><Video className="w-3 h-3 text-white"/></div>
+                          ) : (
+                            <img src={url} alt="Evidencia" className="w-full h-full object-cover" />
+                          )}
+                        </a>
+                      ))}
+                      {cot.fotos_y_videos.length > 3 && (
+                        <div className="w-6 h-6 rounded-full border-2 border-white bg-slate-100 flex items-center justify-center text-[8px] font-bold text-slate-500 z-10">
+                          +{cot.fotos_y_videos.length - 3}
+                        </div>
+                      )}
+                    </div>
+                  )}
+
+                  {/* Botón WhatsApp */}
+                  <a
+                    href={`https://wa.me/${cot.telefono.replace(/\D/g, "")}?text=${encodeURIComponent(`¡Hola ${cot.nombre}! Te escribimos de Pfaffen Autos respecto a la tasación de tu ${cot.marca} ${cot.modelo}.`)}`}
+                    target="_blank"
+                    rel="noreferrer"
+                    className="bg-green-50 hover:bg-green-100 text-green-600 p-1.5 rounded-md transition-colors shrink-0 ml-1"
+                    title="Contactar por WhatsApp"
+                  >
+                    <MessageSquareText className="w-[18px] h-[18px]" strokeWidth={2.5} />
                   </a>
                 </div>
 
-                {cot.fotos_y_videos && cot.fotos_y_videos.length > 0 && (
-                  <div className="flex gap-2 overflow-x-auto custom-scrollbar pb-1">
-                    {cot.fotos_y_videos.map((url: string, i: number) => (
-                      <a key={i} href={url} target="_blank" rel="noreferrer" className="w-10 h-10 shrink-0 rounded-lg overflow-hidden border border-slate-700 hover:border-[#0ea5e9] transition-colors relative group">
-                        {url.includes("mp4") || url.includes("mov") ? (
-                          <div className="w-full h-full bg-slate-800 flex items-center justify-center"><span className="text-[8px] font-bold">VID</span></div>
-                        ) : (
-                          <img src={url} className="w-full h-full object-cover opacity-80 group-hover:opacity-100" />
-                        )}
-                      </a>
-                    ))}
-                  </div>
-                )}
               </div>
-
-            </div>
-          ))}
+            );
+          })}
           
+          {/* Estado Vacío */}
           {(!cotizaciones || cotizaciones.length === 0) && (
-            <div className="col-span-full p-12 text-center border border-dashed border-slate-700 rounded-2xl">
-              <ClipboardList className="w-10 h-10 text-slate-600 mx-auto mb-3" />
-              <p className="text-slate-400">Aún no hay solicitudes de cotización.</p>
+            <div className="col-span-full py-20 flex flex-col items-center justify-center text-center border-2 border-dashed border-slate-200 rounded-2xl bg-white">
+              <Calculator className="w-10 h-10 text-slate-300 mb-3" />
+              <h3 className="text-[15px] font-bold text-slate-700">Sin cotizaciones activas</h3>
+              <p className="text-slate-500 text-xs mt-1">Las tasaciones de compra o permuta aparecerán aquí.</p>
             </div>
           )}
         </div>

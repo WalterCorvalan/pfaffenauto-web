@@ -37,31 +37,26 @@ export default function CambiarEstadoVisita({
   };
 
   return (
-    <div className="flex items-center justify-between w-full">
-      <span className="text-[10px] uppercase tracking-widest text-slate-500 font-bold">
-        Cambiar estado:
-      </span>
-      <div className="relative">
-        <select
-          value={estadoActual}
-          onChange={handleChange}
-          disabled={loading}
-          className="bg-[#0b1329] border border-[#1e293b] text-xs font-bold text-slate-300 rounded-lg px-3 py-1.5 outline-none focus:border-[#0ea5e9] transition-colors appearance-none cursor-pointer pr-8 disabled:opacity-50"
-        >
-          <option value="Pendiente">Pendiente</option>
-          <option value="Confirmada">Confirmada</option>
-          <option value="Asistió">Asistió</option>
-          <option value="Cancelada">Cancelada</option>
-        </select>
-        {loading && (
-          <Loader2 className="w-3 h-3 text-[#0ea5e9] animate-spin absolute right-2 top-1/2 -translate-y-1/2 pointer-events-none" />
-        )}
-        {!loading && (
-          <svg className="w-3 h-3 text-slate-400 absolute right-2 top-1/2 -translate-y-1/2 pointer-events-none" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7"></path>
-          </svg>
-        )}
-      </div>
+    <div className="relative flex-1">
+      <select
+        value={estadoActual}
+        onChange={handleChange}
+        disabled={loading}
+        className="w-full bg-white border border-slate-200 text-[11px] font-bold text-slate-600 rounded-md px-2 py-1.5 outline-none focus:border-indigo-500 transition-colors appearance-none cursor-pointer pr-8 disabled:opacity-50"
+      >
+        <option value="Pendiente">Pendiente</option>
+        <option value="Confirmada">Confirmada</option>
+        <option value="Asistió">Asistió</option>
+        <option value="Cancelada">Cancelada</option>
+      </select>
+      {loading && (
+        <Loader2 className="w-3 h-3 text-indigo-500 animate-spin absolute right-2 top-1/2 -translate-y-1/2 pointer-events-none" />
+      )}
+      {!loading && (
+        <svg className="w-3 h-3 text-slate-400 absolute right-2 top-1/2 -translate-y-1/2 pointer-events-none" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7"></path>
+        </svg>
+      )}
     </div>
   );
 }
