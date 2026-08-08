@@ -45,8 +45,9 @@ export default function KanbanBoard({ leadsIniciales }: { leadsIniciales: any[] 
     setDraggedLeadId(null);
 
     try {
+      const tabla = leadActual.origen === "whatsapp" ? "whatsapp_conversaciones" : "cotizaciones";
       const { error } = await supabase
-        .from("cotizaciones")
+        .from(tabla)
         .update({ estado: nuevoEstado })
         .eq("id", draggedLeadId);
 

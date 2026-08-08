@@ -14,7 +14,7 @@ export default async function ChatPage() {
     .from("whatsapp_conversaciones")
     .select(`
       id, last_message_at, unread_count, handoff_at, ai_habilitada,
-      whatsapp_contactos ( id, telefono, nombre_perfil )
+      whatsapp_contactos ( id, telefono, nombre_perfil ),cliente_id, vehiculo_id
     `)
     .order("last_message_at", { ascending: false });
 

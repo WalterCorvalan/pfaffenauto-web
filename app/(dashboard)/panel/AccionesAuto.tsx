@@ -11,14 +11,9 @@ interface AccionesAutoProps {
   puedeGestionar: boolean;
 }
 
-export default function AccionesAuto({
-  autoId,
-  estadoActual,
-  puedeGestionar,
-}: AccionesAutoProps) {
+export default function AccionesAuto({ autoId, estadoActual, puedeGestionar }: AccionesAutoProps) {
   const router = useRouter();
   const [cargando, setCargando] = useState(false);
-
   const [showModal, setShowModal] = useState(false);
   const [precioFinal, setPrecioFinal] = useState("");
   const [compradorNombre, setCompradorNombre] = useState("");
@@ -27,9 +22,7 @@ export default function AccionesAuto({
 
   const manejarCambioSelect = async (nuevoEstadoVisual: string) => {
     if (!puedeGestionar) return;
-    const estadoReal =
-      nuevoEstadoVisual === "Señado" ? "Reservado" : nuevoEstadoVisual;
-
+    const estadoReal = nuevoEstadoVisual === "Señado" ? "Reservado" : nuevoEstadoVisual;
     if (estadoReal === "Vendido") {
       setShowModal(true);
     } else {
@@ -39,11 +32,8 @@ export default function AccionesAuto({
 
   const ejecutarTransaccion = async (nuevoEstado: string, datosVenta?: any) => {
     setCargando(true);
-
     try {
-      const {
-        data: { user },
-      } = await supabase.auth.getUser();
+      const { data: { user } } = await supabase.auth.getUser();
       const fechaActual = new Date().toISOString().split("T")[0];
 
       await supabase.from("historial_cambios").insert({
@@ -55,29 +45,17 @@ export default function AccionesAuto({
         usuario_id: user?.id,
       });
 
-      // ---------------------------------------------------------
-      // LÓGICA SI ES UNA VENTA CERRADA
-      // ---------------------------------------------------------
       if (nuevoEstado === "Vendido" && datosVenta) {
-        // A. Crear el cliente para obtener el cliente_id
         let clienteId = null;
-
         const { data: clienteInsertado, error: errCliente } = await supabase
           .from("clientes")
-          .insert({
-            nombre: datosVenta.compradorNombre,
-            apellido: datosVenta.compradorApellido,
-          })
+          .insert({ nombre: datosVenta.compradorNombre, apellido: datosVenta.compradorApellido })
           .select("id")
           .single();
 
-        if (!errCliente && clienteInsertado) {
-          clienteId = clienteInsertado.id;
-        } else if (errCliente) {
-          console.error("Error creando cliente:", errCliente);
-        }
+        if (!errCliente && clienteInsertado) clienteId = clienteInsertado.id;
+        else if (errCliente) console.error("Error creando cliente:", errCliente);
 
-        // B. Actualizar el Vehículo
         const { error: errAuto } = await supabase
           .from("vehiculos")
           .update({
@@ -90,7 +68,6 @@ export default function AccionesAuto({
 
         if (errAuto) throw errAuto;
 
-        // C. Registrar en la tabla Ventas
         const { error: errVenta } = await supabase.from("ventas").insert({
           vehiculo_id: autoId,
           cliente_id: clienteId,
@@ -106,7 +83,6 @@ export default function AccionesAuto({
           .from("vehiculos")
           .update({ estado: nuevoEstado })
           .eq("id", autoId);
-
         if (errAutoBasico) throw errAutoBasico;
       }
 
@@ -126,12 +102,9 @@ export default function AccionesAuto({
   const confirmarVenta = (e: React.FormEvent) => {
     e.preventDefault();
     if (!precioFinal || !compradorNombre || !compradorApellido) {
-      alert(
-        "Por favor completá el precio final, nombre y apellido del comprador.",
-      );
+      alert("Por favor completá el precio final, nombre y apellido del comprador.");
       return;
     }
-
     ejecutarTransaccion("Vendido", {
       precioFinal: Number(precioFinal),
       compradorNombre,
@@ -142,21 +115,17 @@ export default function AccionesAuto({
 
   const estadoVisual = estadoActual === "Reservado" ? "Señado" : estadoActual;
 
-  // ESTILOS GLOBALES PARA LAS PÍLDORAS DE ESTADO
   const colorClasses = `
-    ${estadoVisual === "Borrador" ? "bg-gray-800 text-gray-300 border-gray-600" : ""}
-    ${estadoVisual === "Disponible" ? "bg-green-900/30 text-green-400 border-green-700/50" : ""}
-    ${estadoVisual === "Señado" ? "bg-yellow-900/30 text-yellow-400 border-yellow-700/50" : ""}
-    ${estadoVisual === "Vendido" ? "bg-blue-900/30 text-blue-400 border-blue-700/50" : ""}
-    ${estadoVisual === "Archivado" ? "bg-red-900/30 text-red-400 border-red-700/50" : ""}
+    ${estadoVisual === "Borrador" ? "bg-slate-100 text-slate-600 border-slate-200" : ""}
+    ${estadoVisual === "Disponible" ? "bg-emerald-50 text-emerald-700 border-emerald-200" : ""}
+    ${estadoVisual === "Señado" ? "bg-amber-50 text-amber-700 border-amber-200" : ""}
+    ${estadoVisual === "Vendido" ? "bg-indigo-50 text-indigo-700 border-indigo-200" : ""}
+    ${estadoVisual === "Archivado" ? "bg-rose-50 text-rose-700 border-rose-200" : ""}
   `;
 
-  // SI ES VENDEDOR (NO GESTIONA), DEVOLVEMOS SOLO TEXTO ESTÁTICO
   if (!puedeGestionar) {
     return (
-      <div
-        className={`inline-flex items-center justify-center text-[10px] md:text-xs font-bold px-3 py-1.5 rounded-full border shadow-sm cursor-default ${colorClasses}`}
-      >
+      <div className={`inline-flex items-center justify-center text-[10px] md:text-[11px] font-bold px-3 py-1 rounded-full border shadow-sm cursor-default uppercase tracking-wider ${colorClasses}`}>
         {estadoVisual}
       </div>
     );
@@ -169,142 +138,74 @@ export default function AccionesAuto({
           value={estadoVisual}
           onChange={(e) => manejarCambioSelect(e.target.value)}
           disabled={cargando}
-          className={`text-xs font-bold px-3 py-1.5 rounded-full border outline-none appearance-none transition-all shadow-sm
+          className={`text-[11px] font-bold uppercase tracking-wider px-3 py-1.5 rounded-full border outline-none appearance-none transition-all shadow-sm
             ${cargando ? "opacity-50 cursor-not-allowed" : "cursor-pointer hover:scale-105"}
             ${colorClasses}
           `}
         >
-          <option value="Disponible" className="bg-gray-900 text-white">
-            Disponible
-          </option>
-          <option value="Señado" className="bg-gray-900 text-white">
-            Señado
-          </option>
-          <option value="Vendido" className="bg-gray-900 text-white">
-            Vendido
-          </option>
-          <option value="Archivado" className="bg-gray-900 text-white">
-            Archivado
-          </option>
+          <option value="Disponible" className="bg-white text-slate-900">Disponible</option>
+          <option value="Señado" className="bg-white text-slate-900">Señado</option>
+          <option value="Vendido" className="bg-white text-slate-900">Vendido</option>
+          <option value="Archivado" className="bg-white text-slate-900">Archivado</option>
         </select>
       </div>
 
       {showModal && (
         <div className="fixed inset-0 z-[60] flex items-center justify-center p-4">
-          <div
-            className="absolute inset-0 bg-black/80 backdrop-blur-sm"
-            onClick={() => setShowModal(false)}
-          ></div>
-
-          <div className="relative bg-[#121212] border border-white/10 w-full max-w-md rounded-2xl shadow-2xl p-6 md:p-8 animate-fadeIn">
-            <div className="flex justify-between items-center mb-6 border-b border-white/5 pb-4">
+          <div className="absolute inset-0 bg-slate-900/40 backdrop-blur-sm" onClick={() => setShowModal(false)}></div>
+          <div className="relative bg-white border border-slate-200 w-full max-w-md rounded-2xl shadow-2xl p-6 md:p-8 animate-fadeIn">
+            <div className="flex justify-between items-center mb-6 border-b border-slate-100 pb-4">
               <div>
-                <h3 className="text-xl font-serif text-white flex items-center gap-2">
-                  <CheckCircle2 className="w-5 h-5 text-emerald-500" /> Cierre
-                  de Venta
+                <h3 className="text-lg font-bold text-slate-900 flex items-center gap-2">
+                  <CheckCircle2 className="w-5 h-5 text-indigo-600" /> Cierre de Venta
                 </h3>
-                <p className="text-xs text-gray-400 mt-1">
-                  Ingresá los datos reales de la operación.
-                </p>
+                <p className="text-[11px] text-slate-500 mt-1">Ingresá los datos reales de la operación.</p>
               </div>
-              <button
-                onClick={() => setShowModal(false)}
-                className="text-gray-500 hover:text-white transition-colors bg-white/5 hover:bg-white/10 p-2 rounded-full"
-              >
+              <button onClick={() => setShowModal(false)} className="text-slate-400 hover:text-slate-700 transition-colors bg-slate-50 hover:bg-slate-100 p-1.5 rounded-lg border border-slate-200">
                 <X className="w-4 h-4" />
               </button>
             </div>
 
             <form onSubmit={confirmarVenta} className="space-y-4">
               <div>
-                <label className="text-xs font-bold text-gray-400 uppercase tracking-widest mb-1.5 block">
-                  Precio Final Acordado (ARS)
-                </label>
-                <div className="flex items-center bg-[#0A0A0A] border border-white/10 rounded-xl px-3 focus-within:border-[#0055A4] transition-colors">
-                  <DollarSign className="w-4 h-4 text-gray-500 mr-2" />
-                  <input
-                    type="number"
-                    required
-                    value={precioFinal}
-                    onChange={(e) => setPrecioFinal(e.target.value)}
-                    placeholder="Ej: 24500000"
-                    className="w-full bg-transparent py-3 text-sm text-white outline-none placeholder:text-gray-600"
-                  />
+                <label className="text-[11px] font-bold text-slate-500 uppercase tracking-widest mb-1.5 block">Precio Final Acordado (ARS)</label>
+                <div className="flex items-center bg-slate-50 border border-slate-200 rounded-xl px-3 focus-within:border-indigo-500 transition-colors">
+                  <DollarSign className="w-4 h-4 text-slate-400 mr-2" />
+                  <input type="number" required value={precioFinal} onChange={(e) => setPrecioFinal(e.target.value)} placeholder="Ej: 24500000" className="w-full bg-transparent py-2.5 text-sm text-slate-900 outline-none placeholder:text-slate-400" />
                 </div>
               </div>
 
-              {/* Datos del Comprador */}
               <div className="grid grid-cols-2 gap-3">
                 <div>
-                  <label className="text-xs font-bold text-gray-400 uppercase tracking-widest mb-1.5 block">
-                    Nombre
-                  </label>
-                  <div className="flex items-center bg-[#0A0A0A] border border-white/10 rounded-xl px-3 focus-within:border-[#0055A4] transition-colors">
-                    <User className="w-4 h-4 text-gray-500 mr-2" />
-                    <input
-                      type="text"
-                      required
-                      value={compradorNombre}
-                      onChange={(e) => setCompradorNombre(e.target.value)}
-                      placeholder="Nombre"
-                      className="w-full bg-transparent py-3 text-sm text-white outline-none placeholder:text-gray-600"
-                    />
+                  <label className="text-[11px] font-bold text-slate-500 uppercase tracking-widest mb-1.5 block">Nombre</label>
+                  <div className="flex items-center bg-slate-50 border border-slate-200 rounded-xl px-3 focus-within:border-indigo-500 transition-colors">
+                    <User className="w-4 h-4 text-slate-400 mr-2" />
+                    <input type="text" required value={compradorNombre} onChange={(e) => setCompradorNombre(e.target.value)} placeholder="Nombre" className="w-full bg-transparent py-2.5 text-sm text-slate-900 outline-none placeholder:text-slate-400" />
                   </div>
                 </div>
                 <div>
-                  <label className="text-xs font-bold text-gray-400 uppercase tracking-widest mb-1.5 block">
-                    Apellido
-                  </label>
-                  <div className="flex items-center bg-[#0A0A0A] border border-white/10 rounded-xl px-3 focus-within:border-[#0055A4] transition-colors">
-                    <input
-                      type="text"
-                      required
-                      value={compradorApellido}
-                      onChange={(e) => setCompradorApellido(e.target.value)}
-                      placeholder="Apellido"
-                      className="w-full bg-transparent py-3 text-sm text-white outline-none placeholder:text-gray-600"
-                    />
+                  <label className="text-[11px] font-bold text-slate-500 uppercase tracking-widest mb-1.5 block">Apellido</label>
+                  <div className="flex items-center bg-slate-50 border border-slate-200 rounded-xl px-3 focus-within:border-indigo-500 transition-colors">
+                    <input type="text" required value={compradorApellido} onChange={(e) => setCompradorApellido(e.target.value)} placeholder="Apellido" className="w-full bg-transparent py-2.5 text-sm text-slate-900 outline-none placeholder:text-slate-400" />
                   </div>
                 </div>
               </div>
 
               <div>
-                <label className="text-xs font-bold text-gray-400 uppercase tracking-widest mb-1.5 block">
-                  Forma de Pago
-                </label>
-                <div className="flex items-center bg-[#0A0A0A] border border-white/10 rounded-xl px-3 focus-within:border-[#0055A4] transition-colors">
-                  <CreditCard className="w-4 h-4 text-gray-500 mr-2" />
-                  <select
-                    value={formaPago}
-                    onChange={(e) => setFormaPago(e.target.value)}
-                    className="w-full bg-transparent py-3 text-sm text-white outline-none appearance-none cursor-pointer"
-                  >
-                    <option value="Contado" className="bg-[#121212]">
-                      Contado (Transf. o Efectivo)
-                    </option>
-                    <option value="Financiado" className="bg-[#121212]">
-                      Financiado (Crédito/Prenda)
-                    </option>
-                    <option value="Permuta" className="bg-[#121212]">
-                      Permuta (Usado como pago)
-                    </option>
+                <label className="text-[11px] font-bold text-slate-500 uppercase tracking-widest mb-1.5 block">Forma de Pago</label>
+                <div className="flex items-center bg-slate-50 border border-slate-200 rounded-xl px-3 focus-within:border-indigo-500 transition-colors">
+                  <CreditCard className="w-4 h-4 text-slate-400 mr-2" />
+                  <select value={formaPago} onChange={(e) => setFormaPago(e.target.value)} className="w-full bg-transparent py-2.5 text-sm text-slate-900 outline-none appearance-none cursor-pointer">
+                    <option value="Contado">Contado (Transf. o Efectivo)</option>
+                    <option value="Financiado">Financiado (Crédito/Prenda)</option>
+                    <option value="Permuta">Permuta (Usado como pago)</option>
                   </select>
                 </div>
               </div>
 
-              <div className="pt-4 mt-2 border-t border-white/5 flex gap-3">
-                <button
-                  type="button"
-                  onClick={() => setShowModal(false)}
-                  className="flex-1 py-3 text-xs font-bold uppercase tracking-widest bg-white/5 hover:bg-white/10 text-gray-300 rounded-xl transition-colors"
-                >
-                  Cancelar
-                </button>
-                <button
-                  type="submit"
-                  disabled={cargando}
-                  className="flex-1 py-3 text-xs font-bold uppercase tracking-widest bg-[#0055A4] hover:bg-[#1E6FD9] text-white rounded-xl transition-colors shadow-lg shadow-[#0055A4]/20 disabled:opacity-50"
-                >
+              <div className="pt-4 mt-2 flex gap-3">
+                <button type="button" onClick={() => setShowModal(false)} className="flex-1 py-3 text-xs font-bold uppercase tracking-widest bg-white border border-slate-200 hover:bg-slate-50 text-slate-600 rounded-xl transition-colors">Cancelar</button>
+                <button type="submit" disabled={cargando} className="flex-1 py-3 text-xs font-bold uppercase tracking-widest bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl transition-colors shadow-sm disabled:opacity-50">
                   {cargando ? "Guardando..." : "Confirmar Venta"}
                 </button>
               </div>

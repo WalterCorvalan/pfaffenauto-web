@@ -16,61 +16,71 @@ export default function BoletoClient({ auto }: { auto: any }) {
   };
 
   return (
-    <div className="min-h-screen pb-20 text-slate-800">
+    <div className="min-h-screen bg-[#F9FAFB] pt-8 pb-20 text-slate-800 font-sans selection:bg-indigo-100 selection:text-indigo-900">
       
-      {/* PANEL DE CONTROL (Oculto al imprimir) */}
-      <div className="print:hidden max-w-4xl mx-auto mb-8 bg-[#0f172a] p-6 rounded-2xl border border-slate-800 text-white shadow-xl">
-        <div className="flex items-center justify-between mb-6 border-b border-slate-700 pb-4">
+      {/* ================= PANEL DE CONTROL (Oculto al imprimir) ================= */}
+      <div className="print:hidden max-w-5xl mx-auto mb-8 bg-white p-6 rounded-2xl border border-slate-200 shadow-sm">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6 border-b border-slate-100 pb-4">
           <div className="flex items-center gap-3">
-            <Link href="/panel" className="text-slate-400 hover:text-white transition-colors bg-white/5 p-2 rounded-full">
-              <ArrowLeft className="w-5 h-5" />
+            <Link 
+              href="/panel" 
+              className="text-slate-400 hover:text-slate-700 transition-colors bg-slate-50 hover:bg-slate-100 p-2 rounded-lg border border-slate-200"
+              title="Volver al inventario"
+            >
+              <ArrowLeft className="w-4 h-4" />
             </Link>
-            <h2 className="text-xl font-serif flex items-center gap-2">
-              <FileText className="w-5 h-5 text-[#0ea5e9]" /> Generador de Boleto
-            </h2>
+            <div>
+              <h2 className="text-[17px] font-bold text-slate-900 flex items-center gap-2 leading-tight">
+                <FileText className="w-5 h-5 text-indigo-600" /> Generador de Boleto
+              </h2>
+              <p className="text-[11px] text-slate-500 font-medium mt-0.5">Completá los datos del comprador para el PDF</p>
+            </div>
           </div>
           <button 
             onClick={handlePrint}
-            className="bg-[#0ea5e9] hover:bg-[#0284c7] text-white px-6 py-2.5 rounded-xl font-bold text-sm uppercase tracking-widest flex items-center gap-2 transition-all shadow-lg"
+            className="bg-indigo-600 hover:bg-indigo-700 text-white px-5 py-2.5 rounded-xl font-bold text-xs uppercase tracking-widest flex items-center justify-center gap-2 transition-all shadow-sm active:scale-95"
           >
             <Printer className="w-4 h-4" /> Imprimir / Guardar PDF
           </button>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
           <div>
-            <label className="text-xs font-bold text-slate-400 uppercase tracking-widest block mb-1">Nombre Completo</label>
-            <input type="text" value={comprador} onChange={e => setComprador(e.target.value)} className="w-full bg-[#0b1329] border border-slate-700 rounded-xl px-4 py-2.5 text-sm outline-none focus:border-[#0ea5e9]" placeholder="Ej: Juan Pérez" />
+            <label className="text-[11px] font-bold text-slate-500 uppercase tracking-widest block mb-1.5">Nombre Completo</label>
+            <input type="text" value={comprador} onChange={e => setComprador(e.target.value)} className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3.5 py-2.5 text-[13px] text-slate-900 outline-none focus:border-indigo-500 focus:bg-white transition-colors placeholder:text-slate-400" placeholder="Ej: Juan Pérez" />
           </div>
           <div>
-            <label className="text-xs font-bold text-slate-400 uppercase tracking-widest block mb-1">DNI / CUIT</label>
-            <input type="text" value={dni} onChange={e => setDni(e.target.value)} className="w-full bg-[#0b1329] border border-slate-700 rounded-xl px-4 py-2.5 text-sm outline-none focus:border-[#0ea5e9]" placeholder="Sin puntos" />
+            <label className="text-[11px] font-bold text-slate-500 uppercase tracking-widest block mb-1.5">DNI / CUIT</label>
+            <input type="text" value={dni} onChange={e => setDni(e.target.value)} className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3.5 py-2.5 text-[13px] text-slate-900 outline-none focus:border-indigo-500 focus:bg-white transition-colors placeholder:text-slate-400" placeholder="Sin puntos" />
           </div>
           <div>
-            <label className="text-xs font-bold text-slate-400 uppercase tracking-widest block mb-1">Domicilio</label>
-            <input type="text" value={domicilio} onChange={e => setDomicilio(e.target.value)} className="w-full bg-[#0b1329] border border-slate-700 rounded-xl px-4 py-2.5 text-sm outline-none focus:border-[#0ea5e9]" placeholder="Ej: Av. San Martín 123" />
+            <label className="text-[11px] font-bold text-slate-500 uppercase tracking-widest block mb-1.5">Domicilio</label>
+            <input type="text" value={domicilio} onChange={e => setDomicilio(e.target.value)} className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3.5 py-2.5 text-[13px] text-slate-900 outline-none focus:border-indigo-500 focus:bg-white transition-colors placeholder:text-slate-400" placeholder="Ej: Av. San Martín 123" />
           </div>
           <div>
-            <label className="text-xs font-bold text-slate-400 uppercase tracking-widest block mb-1">Monto de Seña ($)</label>
-            <input type="number" value={montoSena} onChange={e => setMontoSena(e.target.value)} className="w-full bg-[#0b1329] border border-slate-700 rounded-xl px-4 py-2.5 text-sm outline-none focus:border-[#0ea5e9]" placeholder="Ej: 500000" />
+            <label className="text-[11px] font-bold text-slate-500 uppercase tracking-widest block mb-1.5">Monto de Seña ($)</label>
+            <div className="flex items-center bg-slate-50 border border-slate-200 rounded-xl px-3 focus-within:border-indigo-500 focus-within:bg-white transition-colors">
+              <span className="text-slate-400 font-bold mr-1">$</span>
+              <input type="number" value={montoSena} onChange={e => setMontoSena(e.target.value)} className="w-full bg-transparent py-2.5 text-[13px] text-slate-900 outline-none placeholder:text-slate-400 font-mono" placeholder="Ej: 500000" />
+            </div>
           </div>
         </div>
       </div>
 
-      {/* HOJA A4 PARA IMPRIMIR (Visible siempre, se aísla al imprimir) */}
-      <div className="max-w-[210mm] min-h-[297mm] mx-auto bg-white p-[20mm] shadow-2xl print:shadow-none print:p-0 print:m-0">
+      {/* ================= HOJA A4 PARA IMPRIMIR ================= */}
+      <div className="max-w-[210mm] min-h-[297mm] mx-auto bg-white p-[20mm] shadow-lg border border-slate-200 print:shadow-none print:border-none print:p-0 print:m-0">
         
         {/* Cabecera del Boleto */}
         <div className="flex justify-between items-start border-b-2 border-slate-900 pb-6 mb-8">
           <div>
             <h1 className="text-3xl font-black text-slate-900 tracking-tighter uppercase">Pfaffen Autos</h1>
             <p className="text-sm font-medium text-slate-600 mt-1">Concesionaria Oficial y Usados Seleccionados</p>
-            <p className="text-xs text-slate-500">{auto.sucursales?.direccion || "Buenos Aires, Argentina"}</p>
+            <p className="text-xs text-slate-500 mt-0.5">{auto.sucursales?.direccion || "Buenos Aires, Argentina"}</p>
           </div>
           <div className="text-right">
-            <h2 className="text-xl font-bold text-slate-800 uppercase tracking-widest border border-slate-300 px-4 py-2 rounded-lg">Boleto de Reserva</h2>
+            <h2 className="text-[17px] font-bold text-slate-800 uppercase tracking-widest border-2 border-slate-300 px-4 py-2 rounded-lg">Boleto de Reserva</h2>
             <p className="text-sm text-slate-600 mt-3 font-medium">Fecha: <span className="font-bold text-slate-900">{fecha}</span></p>
-            <p className="text-sm text-slate-600 mt-1 font-medium">Ref: <span className="font-bold text-slate-900">#RES-{auto.id.slice(0,6).toUpperCase()}</span></p>
+            <p className="text-sm text-slate-600 mt-1 font-medium">Ref: <span className="font-bold text-slate-900 font-mono">#RES-{auto.id.slice(0,6).toUpperCase()}</span></p>
           </div>
         </div>
 
@@ -85,13 +95,13 @@ export default function BoletoClient({ auto }: { auto: any }) {
           </p>
 
           {/* Caja de datos del vehículo */}
-          <div className="bg-slate-50 border border-slate-200 p-5 rounded-xl grid grid-cols-2 gap-y-4 gap-x-8 my-6">
-            <div><span className="text-xs text-slate-500 uppercase tracking-widest block">Marca y Modelo</span><strong className="text-base uppercase">{auto.marca} {auto.modelo}</strong></div>
-            <div><span className="text-xs text-slate-500 uppercase tracking-widest block">Patente (Dominio)</span><strong className="text-base uppercase">{auto.patente || "A PATENTAR (0KM)"}</strong></div>
-            <div><span className="text-xs text-slate-500 uppercase tracking-widest block">Año</span><strong className="text-base">{auto.anio}</strong></div>
-            <div><span className="text-xs text-slate-500 uppercase tracking-widest block">Precio Total Publicado</span><strong className="text-base">$ {auto.precio_publicado_ars?.toLocaleString("es-AR")}</strong></div>
-            <div><span className="text-xs text-slate-500 uppercase tracking-widest block">N° de Motor</span><strong className="text-base">{auto.numero_motor || "A verificar"}</strong></div>
-            <div><span className="text-xs text-slate-500 uppercase tracking-widest block">N° de Chasis</span><strong className="text-base">{auto.numero_chasis || "A verificar"}</strong></div>
+          <div className="bg-slate-50 border-2 border-slate-200 p-5 rounded-xl grid grid-cols-2 gap-y-5 gap-x-8 my-8 print:bg-white print:border-slate-300">
+            <div><span className="text-[10px] text-slate-500 uppercase tracking-widest font-bold block mb-1">Marca y Modelo</span><strong className="text-[15px] uppercase">{auto.marca} {auto.modelo}</strong></div>
+            <div><span className="text-[10px] text-slate-500 uppercase tracking-widest font-bold block mb-1">Patente (Dominio)</span><strong className="text-[15px] uppercase">{auto.patente || "A PATENTAR (0KM)"}</strong></div>
+            <div><span className="text-[10px] text-slate-500 uppercase tracking-widest font-bold block mb-1">Año</span><strong className="text-[15px]">{auto.anio}</strong></div>
+            <div><span className="text-[10px] text-slate-500 uppercase tracking-widest font-bold block mb-1">Precio Publicado</span><strong className="text-[15px]">$ {auto.precio_publicado_ars?.toLocaleString("es-AR")}</strong></div>
+            <div><span className="text-[10px] text-slate-500 uppercase tracking-widest font-bold block mb-1">N° de Motor</span><strong className="text-[15px]">{auto.numero_motor || "A verificar"}</strong></div>
+            <div><span className="text-[10px] text-slate-500 uppercase tracking-widest font-bold block mb-1">N° de Chasis</span><strong className="text-[15px]">{auto.numero_chasis || "A verificar"}</strong></div>
           </div>
 
           <p>
@@ -103,14 +113,14 @@ export default function BoletoClient({ auto }: { auto: any }) {
           </p>
 
           {/* Firmas */}
-          <div className="grid grid-cols-2 gap-10 mt-24">
+          <div className="grid grid-cols-2 gap-12 mt-32">
             <div className="text-center border-t border-slate-400 pt-3">
               <span className="block font-bold">Firma del Comprador</span>
-              <span className="block text-xs text-slate-500 mt-1">Aclaración y DNI</span>
+              <span className="block text-[11px] text-slate-500 mt-1 uppercase tracking-widest">Aclaración y DNI</span>
             </div>
             <div className="text-center border-t border-slate-400 pt-3">
               <span className="block font-bold">Firma por Pfaffen Autos</span>
-              <span className="block text-xs text-slate-500 mt-1">Recibí conforme</span>
+              <span className="block text-[11px] text-slate-500 mt-1 uppercase tracking-widest">Recibí conforme</span>
             </div>
           </div>
         </div>

@@ -173,6 +173,15 @@ async function ejecutarAgente(conversacionId: string, contactoId: string) {
 
   const { reply, handoff, calificacion } = result.data;
 
+  const estadoSegunCalificacion =
+    calificacion === "caliente" ? "Interesado" :
+    calificacion === "frio" ? "Perdido" : "Contactado";
+
+  await supabase
+    .from("whatsapp_conversaciones")
+    .update({ calificacion, estado: estadoSegunCalificacion })
+    .eq("id", conversacionId);
+
   await supabase.from("whatsapp_mensajes").insert({
     conversacion_id: conversacionId,
     direccion: "out",

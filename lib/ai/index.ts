@@ -1,10 +1,12 @@
 import { z } from "zod";
+import Anthropic from "@anthropic-ai/sdk";
 
-const BASE_URL = process.env.OPENROUTER_BASE_URL ?? "https://openrouter.ai/api";
-const MODEL = process.env.OPENROUTER_MODEL ?? "anthropic/claude-sonnet-4.5";
+const anthropic = new Anthropic({
+  apiKey: process.env.ANTHROPIC_API_KEY || "",
+});
 
 export function isAiConfigured(): boolean {
-  return !!process.env.OPENROUTER_API_TOKEN;
+  return !!process.env.ANTHROPIC_API_KEY;
 }
 
 type ChatMessage = { role: "system" | "user" | "assistant"; content: string };
@@ -25,41 +27,42 @@ export async function chatJson<T>(
   messages: ChatMessage[],
   opts?: { maxRetries?: number }
 ): Promise<{ ok: true; data: T } | { ok: false; error: string }> {
-  const token = process.env.OPENROUTER_API_TOKEN;
-  if (!token) return { ok: false, error: "OPENROUTER_API_TOKEN no configurado" };
+  if (!isAiConfigured()) return { ok: false, error: "ANTHROPIC_API_KEY no configurado" };
 
   const maxRetries = opts?.maxRetries ?? 2;
   let lastError = "";
 
+  const systemMsg = messages.find((m) => m.role === "system")?.content ?? "";
+  const conversationMsgs = messages.filter((m) => m.role !== "system") as {
+    role: "user" | "assistant";
+    content: string;
+  }[];
+
   for (let attempt = 0; attempt <= maxRetries; attempt++) {
     try {
-      const finalMessages =
+      const finalMsgs =
         attempt === 0
-          ? messages
+          ? conversationMsgs
           : [
-              ...messages,
+              ...conversationMsgs,
               {
                 role: "user" as const,
                 content: "IMPORTANTE: tu respuesta anterior no era JSON válido. Respondé ÚNICAMENTE con el JSON, sin texto extra ni backticks.",
               },
             ];
 
-      const res = await fetch(`${BASE_URL}/v1/chat/completions`, {
-        method: "POST",
-        headers: {
-          Authorization: `Bearer ${token}`,
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({ model: MODEL, messages: finalMessages }),
+      const response = await anthropic.messages.create({
+        model: "claude-sonnet-4-5",
+        max_tokens: 1000,
+        system: systemMsg,
+        messages: finalMsgs,
       });
 
-      if (!res.ok) {
-        lastError = `HTTP ${res.status}`;
-        continue;
+      let content = "";
+      for (const block of response.content) {
+        if (block.type === "text") content += block.text;
       }
 
-      const data = await res.json();
-      const content = data?.choices?.[0]?.message?.content ?? "";
       const jsonStr = extractJson(content);
       const parsed = JSON.parse(jsonStr);
       const validated = schema.parse(parsed);

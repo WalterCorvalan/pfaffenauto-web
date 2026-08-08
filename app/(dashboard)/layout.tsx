@@ -128,7 +128,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
               <NavLinkItem icon={FileBarChart} label="Informes Globales" href="/panel/informes" />
               {userProfile.rol === "admin" && (
                 <>
-                  <NavLinkItem icon={Wallet} label="Movimientos de Caja" href="/panel/gastos" />
+                  <NavLinkItem icon={Wallet} label="Gastos" href="/panel/gastos" />
                   <NavLinkItem icon={Users} label="Gestión de Equipo" href="/panel/usuarios" />
                 </>
               )}

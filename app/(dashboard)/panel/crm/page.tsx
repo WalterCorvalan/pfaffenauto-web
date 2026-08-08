@@ -10,16 +10,39 @@ export default async function CRMPage() {
     { cookies: { getAll: () => cookieStore.getAll() } },
   );
 
-  // Traemos todas las solicitudes para el Pipeline
-  const { data: leads } = await supabase
+  const { data: cotizaciones } = await supabase
     .from("cotizaciones")
     .select("*")
     .order("created_at", { ascending: false });
 
+  const { data: conversacionesWa } = await supabase
+    .from("whatsapp_conversaciones")
+    .select(`
+      id, estado, created_at, calificacion,
+      whatsapp_contactos ( nombre_perfil, telefono )
+    `)
+    .order("created_at", { ascending: false });
+
+  const leadsWa = (conversacionesWa || []).map((c: any) => ({
+    id: c.id,
+    origen: "whatsapp",
+    nombre: c.whatsapp_contactos?.nombre_perfil || c.whatsapp_contactos?.telefono || "Consulta WhatsApp",
+    telefono: c.whatsapp_contactos?.telefono || "",
+    marca: "",
+    modelo: "Consulta por WhatsApp",
+    tipo_peritaje: "whatsapp",
+    precio_sugerido: null,
+    estado: c.estado || "Pendiente",
+    created_at: c.created_at,
+  }));
+
+  const leadsCotizaciones = (cotizaciones || []).map((c: any) => ({ ...c, origen: "cotizacion" }));
+
+  const leadsUnificados = [...leadsCotizaciones, ...leadsWa];
+
   return (
-    // Sin márgenes, 100% del alto y fondo blanco puro
     <div className="flex flex-col h-full w-full bg-white overflow-hidden">
-      <KanbanBoard leadsIniciales={leads || []} />
+      <KanbanBoard leadsIniciales={leadsUnificados} />
     </div>
   );
 }

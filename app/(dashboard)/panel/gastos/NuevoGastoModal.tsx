@@ -42,40 +42,77 @@ export default function NuevoGastoModal({ sucursales }: { sucursales: any[] }) {
 
   return (
     <>
-      <div onClick={() => setIsOpen(true)} className="bg-[#111827] border border-dashed border-[#2d3d54] p-6 rounded-2xl flex flex-col justify-center items-center text-center cursor-pointer hover:border-rose-500/40 hover:bg-rose-500/[0.03] transition-colors h-full">
-        <div className="w-10 h-10 bg-rose-500/10 border border-rose-500/20 rounded-full flex items-center justify-center mb-3 text-rose-500">
+      <div 
+        onClick={() => setIsOpen(true)} 
+        className="bg-white border-2 border-dashed border-slate-200 p-6 rounded-2xl flex flex-col justify-center items-center text-center cursor-pointer hover:border-rose-300 hover:bg-rose-50 transition-all h-full shadow-sm group"
+      >
+        <div className="w-10 h-10 bg-rose-50 border border-rose-100 rounded-full flex items-center justify-center mb-3 text-rose-500 group-hover:scale-110 transition-transform">
           <Plus className="w-5 h-5" />
         </div>
-        <h3 className="text-sm font-semibold text-rose-400">Registrar Egreso</h3>
-        <span className="text-xs text-slate-500 mt-1">Luz, sueldos, gestoría</span>
+        <h3 className="text-[13px] font-bold text-slate-700 group-hover:text-rose-600 transition-colors">Registrar Gasto Manual</h3>
+        <span className="text-[11px] text-slate-400 mt-1 font-medium">Luz, sueldos, gestoría</span>
       </div>
 
       {isOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm">
-          <div className="bg-[#111827] border border-[#1e293b] p-6 rounded-2xl w-full max-w-md shadow-2xl">
-            <div className="flex justify-between items-center mb-6">
-              <h3 className="text-lg font-bold text-white flex items-center gap-2"><Receipt className="w-5 h-5 text-rose-500"/> Nuevo Gasto</h3>
-              <button onClick={() => setIsOpen(false)} className="text-slate-500 hover:text-white"><X className="w-5 h-5"/></button>
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/40 backdrop-blur-sm">
+          <div className="bg-white border border-slate-200 p-6 md:p-8 rounded-2xl w-full max-w-md shadow-2xl animate-fadeIn">
+            
+            <div className="flex justify-between items-center mb-6 border-b border-slate-100 pb-4">
+              <h3 className="text-lg font-bold text-slate-900 flex items-center gap-2">
+                <Receipt className="w-5 h-5 text-rose-500"/> Nuevo Gasto
+              </h3>
+              <button onClick={() => setIsOpen(false)} className="text-slate-400 hover:text-slate-700 transition-colors bg-slate-50 hover:bg-slate-100 p-1.5 rounded-lg border border-slate-200">
+                <X className="w-4 h-4"/>
+              </button>
             </div>
+
             <form onSubmit={handleSubmit} className="space-y-4">
               <div>
-                <label className="text-xs font-bold text-slate-400 mb-1 block">Monto ($)</label>
-                <input type="number" required value={monto} onChange={e => setMonto(e.target.value)} className="w-full bg-[#0b1329] border border-[#1e293b] p-3 rounded-xl text-white outline-none focus:border-rose-500" placeholder="Ej: 50000" />
+                <label className="text-[11px] font-bold uppercase tracking-widest text-slate-500 mb-1.5 block">Monto ($)</label>
+                <input 
+                  type="number" 
+                  required 
+                  value={monto} 
+                  onChange={e => setMonto(e.target.value)} 
+                  className="w-full bg-slate-50 border border-slate-200 p-3 rounded-xl text-slate-900 text-[14px] font-mono outline-none focus:border-rose-500 focus:bg-white transition-colors placeholder:text-slate-400" 
+                  placeholder="Ej: 50000" 
+                />
               </div>
+              
               <div>
-                <label className="text-xs font-bold text-slate-400 mb-1 block">Descripción</label>
-                <input type="text" required value={descripcion} onChange={e => setDescripcion(e.target.value)} className="w-full bg-[#0b1329] border border-[#1e293b] p-3 rounded-xl text-white outline-none focus:border-rose-500" placeholder="Ej: Pago de luz" />
+                <label className="text-[11px] font-bold uppercase tracking-widest text-slate-500 mb-1.5 block">Descripción</label>
+                <input 
+                  type="text" 
+                  required 
+                  value={descripcion} 
+                  onChange={e => setDescripcion(e.target.value)} 
+                  className="w-full bg-slate-50 border border-slate-200 p-3 rounded-xl text-slate-900 text-[14px] outline-none focus:border-rose-500 focus:bg-white transition-colors placeholder:text-slate-400" 
+                  placeholder="Ej: Pago de luz" 
+                />
               </div>
+              
               <div>
-                <label className="text-xs font-bold text-slate-400 mb-1 block">¿A qué sucursal afecta?</label>
-                <select required value={sucursalId} onChange={e => setSucursalId(e.target.value)} className="w-full bg-[#0b1329] border border-[#1e293b] p-3 rounded-xl text-white outline-none focus:border-rose-500">
-                  <option value="">Seleccionar...</option>
+                <label className="text-[11px] font-bold uppercase tracking-widest text-slate-500 mb-1.5 block">¿A qué sucursal afecta?</label>
+                <select 
+                  required 
+                  value={sucursalId} 
+                  onChange={e => setSucursalId(e.target.value)} 
+                  className="w-full bg-slate-50 border border-slate-200 p-3 rounded-xl text-slate-900 text-[13px] outline-none focus:border-rose-500 focus:bg-white transition-colors appearance-none cursor-pointer"
+                >
+                  <option value="" disabled>Seleccionar...</option>
                   {sucursales.map(s => <option key={s.id} value={s.id}>{s.nombre}</option>)}
                 </select>
               </div>
-              <button type="submit" disabled={cargando} className="w-full bg-rose-600 hover:bg-rose-500 text-white font-bold py-3 rounded-xl mt-4 disabled:opacity-50">
-                {cargando ? "Guardando..." : "Registrar Gasto"}
-              </button>
+              
+              <div className="pt-2 border-t border-slate-100 mt-6">
+                <button 
+                  type="submit" 
+                  disabled={cargando} 
+                  className="w-full bg-rose-600 hover:bg-rose-700 text-white font-bold py-3.5 rounded-xl mt-2 disabled:opacity-50 text-[11px] uppercase tracking-widest shadow-sm transition-colors"
+                >
+                  {cargando ? "Guardando..." : "Registrar Gasto"}
+                </button>
+              </div>
             </form>
           </div>
         </div>

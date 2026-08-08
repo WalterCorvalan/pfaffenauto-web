@@ -17,7 +17,6 @@ export default async function ImprimirOperacionPage({
     { cookies: { getAll: () => cookieStore.getAll() } }
   );
 
-  // Traemos TODA la información cruzada de un solo saque
   const { data: operacion } = await supabase
     .from("ventas")
     .select(`
