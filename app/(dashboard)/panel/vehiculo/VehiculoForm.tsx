@@ -24,6 +24,8 @@ const formSchema = z.object({
   estado: z.string().optional(),
   stock_fisico: z.boolean(),
   destacado: z.boolean(),
+  pautado: z.boolean(),
+  canal_pauta: z.string().optional(),
   condicion_web: z.string().optional(),
   sucursal_id: z.string().min(1, "Seleccioná una sucursal"),
   precio_costo_ars: z.string().optional(),
@@ -75,6 +77,7 @@ export default function VehiculoForm({ modo, autoId }: VehiculoFormProps) {
     resolver: zodResolver(formSchema),
     defaultValues: {
       origen: "Comprado", estado: "Disponible", stock_fisico: true, destacado: false,
+      pautado: false, canal_pauta: "",
       anio: String(new Date().getFullYear()), kilometraje: "0",
     },
   });
@@ -105,6 +108,7 @@ export default function VehiculoForm({ modo, autoId }: VehiculoFormProps) {
             tipo_combustible: vehiculo.tipo_combustible || "", transmision: vehiculo.transmision || "",
             origen: vehiculo.origen || "", estado: vehiculo.estado || "",
             stock_fisico: vehiculo.stock_fisico !== false, destacado: vehiculo.destacado === true,
+            pautado: vehiculo.pautado === true, canal_pauta: vehiculo.canal_pauta || "",
             condicion_web: vehiculo.condicion_web || "", numero_motor: vehiculo.numero_motor || "",
             numero_chasis: vehiculo.numero_chasis || "", radicado_localidad: vehiculo.radicado_localidad || "",
             radicado_provincia: vehiculo.radicado_provincia || "", observaciones_internas: vehiculo.observaciones_internas || "",
@@ -164,6 +168,7 @@ export default function VehiculoForm({ modo, autoId }: VehiculoFormProps) {
         precio_publicado_usd: data.precio_publicado_usd ? Number(data.precio_publicado_usd) : null,
         numero_motor: data.numero_motor || null, numero_chasis: data.numero_chasis || null,
         radicado_localidad: data.radicado_localidad || null, radicado_provincia: data.radicado_provincia || null, destacado: data.destacado,
+        pautado: data.pautado, canal_pauta: data.pautado ? (data.canal_pauta || null) : null,
       };
 
       if (modo === "crear") {
@@ -386,6 +391,22 @@ export default function VehiculoForm({ modo, autoId }: VehiculoFormProps) {
                 <label className="flex items-center gap-3 text-sm text-slate-700 cursor-pointer bg-slate-50 border border-slate-200 p-4 rounded-xl hover:bg-white w-fit transition-colors font-medium">
                   <input type="checkbox" {...register("destacado")} className="w-4 h-4 accent-indigo-600" /> Destacado en Web
                 </label>
+                <label className="flex items-center gap-3 text-sm text-slate-700 cursor-pointer bg-orange-50 border border-orange-200 p-4 rounded-xl hover:bg-orange-100/50 w-fit transition-colors font-medium">
+                  <input type="checkbox" {...register("pautado")} className="w-4 h-4 accent-orange-600" /> Pautado (con inversión publicitaria)
+                </label>
+                {watch("pautado") && (
+                  <div className="ml-4 pl-4 border-l-2 border-orange-400 max-w-xs">
+                    <Campo label="Canal de la pauta">
+                      <select {...register("canal_pauta")} className={inputClass}>
+                        <option value="">Sin especificar</option>
+                        <option value="MercadoLibre">MercadoLibre</option>
+                        <option value="Meta Ads">Meta Ads (Instagram/Facebook)</option>
+                        <option value="Google Ads">Google Ads</option>
+                        <option value="Web">Web</option>
+                      </select>
+                    </Campo>
+                  </div>
+                )}
               </div>
             </SectionCard>
           )}

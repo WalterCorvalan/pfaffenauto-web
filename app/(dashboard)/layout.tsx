@@ -8,7 +8,7 @@ import {
   Menu, X, Search, ChevronRight, UserPlus, Banknote, CheckSquare,
   CalendarCheck, MessagesSquare, Landmark, Wallet, FileBarChart,
   Users, Megaphone, Target, MousePointerClick, Bot, CarFront,
-  LayoutDashboard, Inbox, PieChart, LogOut, Handshake, MessageSquareCheckIcon, Settings, Receipt
+  LayoutDashboard, Inbox, PieChart, LogOut, Handshake, MessageSquareCheckIcon, Settings, Receipt, UsersRound
 } from "lucide-react";
 
 export default function DashboardLayout({ children }: { children: React.ReactNode }) {
@@ -112,6 +112,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
           <NavLinkItem icon={Handshake} label="Consignaciones" href="/panel/consignaciones" />
           <NavLinkItem icon={Search} label="Pedidos Especiales" href="/panel/pedidos" />
           <NavLinkItem icon={MessageSquareCheckIcon} label="Chat" href="/panel/chat" />
+          <NavLinkItem icon={UsersRound} label="Contactos" href="/panel/contactos" />
           <NavLinkItem icon={CalendarCheck} label="Agenda de Visitas" href="/panel/citas" />
           <NavLinkItem icon={CheckSquare} label="Tareas del Equipo" href="/panel/tareas" />
 
@@ -130,6 +131,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
               {userProfile.rol === "admin" && (
                 <>
                   <NavLinkItem icon={Wallet} label="Gastos" href="/panel/gastos" />
+                  <NavLinkItem icon={Receipt} label="Egresos por Categoría" href="/panel/gastos/egresos" />
                   <NavLinkItem icon={Users} label="Gestión de Equipo" href="/panel/usuarios" />
                 </>
               )}

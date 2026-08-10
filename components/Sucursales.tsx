@@ -11,25 +11,16 @@ export default function Sucursales() {
       titulo: "CASA CENTRAL",
       subtitulo: "AUTOS 0KM",
       telefono: "11 37564398",
-      direccion: "Villa de Mayo, Buenos Aires",
+      direccion: "Casa Central, Buenos Aires",
       img: "/VDM.jpeg",
       destacado: true, // Ocupará un espacio visual principal
-    },
-    {
-      id: "olivos",
-      titulo: "OLIVOS",
-      subtitulo: "ALTA GAMA",
-      telefono: "11 56520726",
-      direccion: "Olivos, Buenos Aires",
-      img: "https://images.unsplash.com/photo-1580273916550-e323be2ae537?q=80&w=1200&auto=format&fit=crop",
-      destacado: false,
     },
     {
       id: "don-torcuato",
       titulo: "DON TORCUATO",
       subtitulo: "USADOS Y SEMINUEVOS",
       telefono: "11 57998065",
-      direccion: "Panamericana R202",
+      direccion: "Don Torcuato, Buenos Aires",
       img: "/pana.jpg",
       destacado: false,
     },
@@ -59,7 +50,7 @@ export default function Sucursales() {
         </div>
 
         {/* ================= GRILLA BENTO MODERNA ================= */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 lg:gap-8">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 lg:gap-8">
           {sucursales.map((sucursal, index) => (
             <motion.div
               key={sucursal.id}

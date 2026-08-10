@@ -5,7 +5,7 @@ import { supabase } from "@/lib/supabase";
 import { useRouter } from "next/navigation";
 import { MessageSquareText, Filter, AlertTriangle, CheckCircle2, Circle, CarFront } from "lucide-react";
 
-const COLUMNAS = ["Pendiente", "Contactado", "Interesado", "Perdido"];
+const COLUMNAS = ["Nuevo", "Contactado", "Interesado", "Cliente", "Perdido"];
 
 export default function KanbanBoard({ leadsIniciales }: { leadsIniciales: any[] }) {
   const router = useRouter();
@@ -45,10 +45,12 @@ export default function KanbanBoard({ leadsIniciales }: { leadsIniciales: any[] 
     setDraggedLeadId(null);
 
     try {
-      const tabla = leadActual.origen === "whatsapp" ? "whatsapp_conversaciones" : "cotizaciones";
+      const esWhatsapp = leadActual.origen === "whatsapp";
+      const tabla = esWhatsapp ? "whatsapp_conversaciones" : "cotizaciones";
+      const campo = esWhatsapp ? "estado_pipeline" : "estado";
       const { error } = await supabase
         .from(tabla)
-        .update({ estado: nuevoEstado })
+        .update({ [campo]: nuevoEstado })
         .eq("id", draggedLeadId);
 
       if (error) throw error;

@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { supabase } from "@/lib/supabase"; // <--- ESTA ES LA LÍNEA QUE FALTABA
 import {
@@ -40,12 +40,19 @@ type ClienteFormValues = {
 export default function NuevoClientePage() {
   const router = useRouter();
   const [loading, setLoading] = useState(false);
+  const [sucursales, setSucursales] = useState<{ id: string; nombre: string }[]>([]);
 
   const {
     register,
     handleSubmit,
     formState: { errors },
   } = useForm<ClienteFormValues>();
+
+  useEffect(() => {
+    supabase.from("sucursales").select("id, nombre").order("nombre").then(({ data }) => {
+      if (data) setSucursales(data);
+    });
+  }, []);
 
   const onSubmit = async (data: ClienteFormValues) => {
     setLoading(true);
@@ -123,9 +130,9 @@ export default function NuevoClientePage() {
                     className={inputClass}
                   >
                     <option value="">Seleccionar sucursal...</option>
-                    <option value="Don Torcuato">Don Torcuato</option>
-                    <option value="Olivos">Olivos</option>
-                    <option value="Casa Central">Casa Central</option>
+                    {sucursales.map((s) => (
+                      <option key={s.id} value={s.id}>{s.nombre}</option>
+                    ))}
                   </select>
                 </Campo>
               </div>

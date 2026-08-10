@@ -11,16 +11,16 @@ export const NEGOCIO_CONFIG = {
   },
   sucursales: [
     {
-      nombre: "Casa Central San Isidro",
-      direccion: "Av. del Libertador 1420, San Isidro",
-      telefono: "011 4700-1234",
-      mapa: "Frente al hipódromo."
+      nombre: "Casa Central",
+      direccion: "Casa Central, Buenos Aires",
+      telefono: "011 3756-4398",
+      mapa: "Casa Central, autos 0KM."
     },
     {
-      nombre: "Punto Panamericana",
-      direccion: "Panamericana Ramal Pilar Km 35, Don Torcuato",
-      telefono: "011 4800-5678",
-      mapa: "Bajada rápida desde autopista."
+      nombre: "Don Torcuato",
+      direccion: "Don Torcuato, Buenos Aires",
+      telefono: "011 5799-8065",
+      mapa: "Usados y seminuevos, bajada rápida desde autopista."
     }
   ],
   politicas: {

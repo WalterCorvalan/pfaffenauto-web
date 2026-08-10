@@ -10,7 +10,7 @@ const config: Config = {
     extend: {
       colors: {
         // Nueva Paleta Marketplace Luminosa
-        primary: "#0ea5e9",    // Celeste principal (Bordes, links, iconos)
+        primary: "#0145F2",    // Azul principal de marca (Botones, links, acentos) — antes #0ea5e9, no coincidía con el uso real
         secondary: "#26bae0",  // Turquesa/Cian (Botones de acción gigantes)
         navy: "#0f293e",       // Azul oscuro profundo (Títulos, textos fuertes y bloques oscuros)
         background: "#f8fafc", // Fondo general (Gris ultra claro para que las tarjetas blancas destaquen)

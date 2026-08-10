@@ -117,7 +117,7 @@ export default function LandingRely() {
           {/* Logo */}
           <a href="/" className="flex items-center shrink-0">
             <img 
-              src="/relyLogo.png" 
+              src="/RelyLogo.png"
               alt="Rely Logo" 
               className="h-8 md:h-10 lg:h-22 w-auto object-contain invert brightness-0"
             />

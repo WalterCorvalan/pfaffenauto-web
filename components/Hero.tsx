@@ -70,7 +70,7 @@ export default function Hero() {
           background: useMotionTemplate`
             radial-gradient(
               650px circle at ${mouseX}px ${mouseY}px,
-              rgba(0, 85, 164, 0.12),
+              rgba(1, 69, 242, 0.12),
               transparent 80%
             )
           `,
@@ -85,7 +85,7 @@ export default function Hero() {
         {speedTrails.map((trail, i) => (
           <motion.div
             key={i}
-            className="absolute h-[1px] bg-gradient-to-r from-transparent via-[#0055A4]/40 to-transparent"
+            className="absolute h-[1px] bg-gradient-to-r from-transparent via-[#0145F2]/40 to-transparent"
             style={{
               top: `${trail.top}%`,
               width: `${trail.width}%`,
@@ -129,7 +129,7 @@ export default function Hero() {
           className="text-4xl md:text-6xl lg:text-[72px] text-navy leading-[1.05] mb-10 font-light tracking-tighter drop-shadow-sm"
         >
           La forma mas<br className="font-black hidden md:block"/>
-          confiable de comprar o vender<span className="font-black bg-clip-text text-transparent bg-gradient-to-r from-[#0055A4] to-sky-500"> TU AUTO</span>
+          confiable de comprar o vender<span className="font-black bg-clip-text text-transparent bg-gradient-to-r from-[#0145F2] to-sky-500"> TU AUTO</span>
         </motion.h1>
 
         {/* ================= BUSCADOR ESPACIAL (GLASSMORPHISM) ================= */}
@@ -153,7 +153,7 @@ export default function Hero() {
           
           <button 
             type="submit"
-            className="flex items-center justify-center gap-2 bg-navy hover:bg-[#0055A4] text-white p-4 md:px-8 md:py-4 rounded-2xl transition-all shadow-lg shrink-0 w-full md:w-auto z-10 cursor-pointer overflow-hidden relative"
+            className="flex items-center justify-center gap-2 bg-navy hover:bg-[#0145F2] text-white p-4 md:px-8 md:py-4 rounded-2xl transition-all shadow-lg shrink-0 w-full md:w-auto z-10 cursor-pointer overflow-hidden relative"
           >
             {/* Efecto de brillo interior en el botón */}
             <div className="absolute inset-0 w-1/2 h-full bg-gradient-to-r from-transparent via-white/20 to-transparent -skew-x-12 -translate-x-[150%] group-hover:translate-x-[250%] transition-transform duration-700 ease-out"></div>
@@ -183,7 +183,7 @@ export default function Hero() {
             borderClass="border-gray-900 bg-gray-900 text-white hover:bg-gray-800 shadow-md" 
             href="/catalogo?q=0km" 
           />
-          <Pill icon={<Grid className="w-4 h-4 text-[#0055A4]"/>} text="Ver Catálogo" borderClass="border-white bg-blue-50/80 hover:bg-blue-100/90 text-[#0055A4]" href="/catalogo" />
+          <Pill icon={<Grid className="w-4 h-4 text-[#0145F2]"/>} text="Ver Catálogo" borderClass="border-white bg-blue-50/80 hover:bg-blue-100/90 text-[#0145F2]" href="/catalogo" />
         </motion.div>
 
       </div>

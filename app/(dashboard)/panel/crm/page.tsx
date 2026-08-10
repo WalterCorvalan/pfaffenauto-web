@@ -18,7 +18,7 @@ export default async function CRMPage() {
   const { data: conversacionesWa } = await supabase
     .from("whatsapp_conversaciones")
     .select(`
-      id, estado, created_at, calificacion,
+      id, estado_pipeline, created_at, calificacion,
       whatsapp_contactos ( nombre_perfil, telefono )
     `)
     .order("created_at", { ascending: false });
@@ -32,7 +32,7 @@ export default async function CRMPage() {
     modelo: "Consulta por WhatsApp",
     tipo_peritaje: "whatsapp",
     precio_sugerido: null,
-    estado: c.estado || "Pendiente",
+    estado: c.estado_pipeline || "Nuevo",
     created_at: c.created_at,
   }));
 

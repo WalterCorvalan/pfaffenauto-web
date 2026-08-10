@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { supabase } from "@/lib/supabase";
 import {
   Search,
@@ -57,6 +57,9 @@ export default function CatalogoPage() {
   // ESTADOS PARA EL COMPARADOR (Ahora soporta hasta 3 autos)
   const [autosComparar, setAutosComparar] = useState<any[]>([]);
   const [modalComparadorOpen, setModalComparadorOpen] = useState(false);
+
+  // Evita loguear la misma búsqueda varias veces al tocar otros filtros
+  const ultimoTerminoLogueado = useRef<string>("");
 
   // Traer Sucursales al cargar
   useEffect(() => {
@@ -168,6 +171,16 @@ export default function CatalogoPage() {
     }
 
     if (count !== null) setTotalResultados(count);
+
+    if (reemplazar && searchQuery && searchQuery !== ultimoTerminoLogueado.current) {
+      ultimoTerminoLogueado.current = searchQuery;
+      supabase
+        .from("busquedas_log")
+        .insert({ termino: searchQuery, resultados_encontrados: count ?? 0 })
+        .then(({ error }) => {
+          if (error) console.error("Error registrando búsqueda:", error);
+        });
+    }
 
     setLoading(false);
     setLoadingMore(false);

@@ -15,7 +15,7 @@ const TEAM_MEMBERS = [
   },
   {
     name: "Gabriel",
-    role: "Encargado de Sucursal Olivos",
+    role: "Encargado de Sucursal Casa Central",
     image: "https://images.unsplash.com/photo-1519085360753-af0119f7cbe7?q=80&w=800&auto=format&fit=crop",
     color: "bg-[#845EF7]",
   },
@@ -37,12 +37,12 @@ export default function NosotrosPage() {
             Los Inicios en Casa Central
           </h3>
           <p className="mb-6 text-sm font-medium text-gray-600 leading-relaxed max-w-2xl">
-            Pfaffen Autos abrió sus puertas en nuestra Casa Central de Villa de Mayo con una visión clara impulsada por nuestro fundador, <strong>Sergio Pfaffezeller</strong>: transformar la compra y venta de vehículos en una experiencia transparente, segura y humana.
+            Pfaffen Autos abrió sus puertas en nuestra Casa Central con una visión clara impulsada por nuestro fundador, <strong>Sergio Pfaffezeller</strong>: transformar la compra y venta de vehículos en una experiencia transparente, segura y humana.
           </p>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <img
               src="/VDM.jpeg"
-              alt="Sede Villa de Mayo"
+              alt="Sede Casa Central"
               className="h-40 w-full rounded-2xl object-cover shadow-[0_8px_30px_rgba(0,0,0,0.1)] md:h-52 lg:h-64 border border-white/50"
             />
             <img
@@ -62,17 +62,12 @@ export default function NosotrosPage() {
             Expansión en Zona Norte
           </h3>
           <p className="mb-6 text-sm font-medium text-gray-600 leading-relaxed max-w-2xl">
-            Gracias a la confianza inquebrantable de nuestros clientes, inauguramos nuestras sucursales estratégicas en <strong>Don Torcuato</strong> y <strong>Olivos</strong>. Esto nos consolidó como referentes absolutos en Zona Norte para la comercialización de vehículos 0KM y usados seleccionados de alta gama.
+            Gracias a la confianza inquebrantable de nuestros clientes, inauguramos nuestra sucursal estratégica en <strong>Don Torcuato</strong>. Esto nos consolidó como referentes absolutos en Zona Norte para la comercialización de vehículos 0KM y usados seleccionados de alta gama.
           </p>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <img
               src="/pana.jpg"
               alt="Sucursal Don Torcuato"
-              className="h-40 w-full rounded-2xl object-cover shadow-[0_8px_30px_rgba(0,0,0,0.1)] md:h-52 lg:h-64 border border-white/50"
-            />
-            <img
-              src="https://images.unsplash.com/photo-1580273916550-e323be2ae537?q=80&w=1200&auto=format&fit=crop"
-              alt="Sucursal Olivos"
               className="h-40 w-full rounded-2xl object-cover shadow-[0_8px_30px_rgba(0,0,0,0.1)] md:h-52 lg:h-64 border border-white/50"
             />
           </div>

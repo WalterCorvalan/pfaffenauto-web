@@ -40,14 +40,6 @@ const sucursalesData = [
     mapUrl: "https://maps.google.com/maps?q=Pfaffen+Autos,+Don+Torcuato,+Buenos+Aires&t=m&z=15&output=embed&iwloc=near&hl=es",
     stockLink: "/sucursales/don-torcuato",
     navLink: "https://maps.app.goo.gl/GuNBuUKT5xMFw5jR9"
-  },
-  {
-    id: "olivos",
-    nombre: "Olivos",
-    direccion: "Olivos, Buenos Aires",
-    mapUrl: "https://maps.google.com/maps?q=Pfaffen+Autos+Olivos,+Av.+Maipu+4182,+Olivos&t=m&z=16&output=embed&iwloc=near&hl=es",
-    stockLink: "/sucursales/olivos",
-    navLink: "https://maps.app.goo.gl/LZCyj4v4mBHBt3uu5"
   }
 ];
 
@@ -77,7 +69,7 @@ export default function Location() {
           initial="hidden"
           whileInView="visible"
           viewport={{ once: true, margin: "-50px" }}
-          className="grid grid-cols-1 md:grid-cols-3 gap-6 md:gap-8"
+          className="grid grid-cols-1 md:grid-cols-2 gap-6 md:gap-8 max-w-3xl mx-auto"
         >
           {sucursalesData.map((sucursal) => (
             <motion.div variants={itemVariants} key={sucursal.id}>

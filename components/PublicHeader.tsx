@@ -108,7 +108,7 @@ export default function PublicHeader() {
                 title="Rely"
               >
                 <img
-                  src="/relyLogo.png"
+                  src="/RelyLogo.png"
                   alt="Rely"
                   className="h-7 md:h-9 w-auto object-contain transition-transform group-hover:scale-105"
                 />
@@ -127,20 +127,20 @@ export default function PublicHeader() {
             </div>
           </div>
 
-          {/* Versión compacta para pantallas medianas */}
-          <div className="hidden sm:flex xl:hidden items-center gap-2">
-            <Link href="/karry" className="flex items-center">
+          {/* Versión compacta: visible en mobile y tablet, se oculta cuando entra el bloque completo en xl */}
+          <div className="flex xl:hidden items-center gap-1.5 sm:gap-2 shrink-0">
+            <Link href="/karry" className="flex items-center shrink-0">
               <img
                 src="/logo-karry.webp"
                 alt="Karry"
-                className="h-6 w-auto object-contain"
+                className="h-5 sm:h-6 w-auto object-contain"
               />
             </Link>
-            <Link href="/rely" className="flex items-center">
+            <Link href="/rely" className="flex items-center shrink-0">
               <img
-                src="/ChatGPT Image 6 ago 2026, 05_41_31 p.m.png"
+                src="/RelyLogo.png"
                 alt="Rely"
-                className="h-7 w-auto object-contain"
+                className="h-6 sm:h-7 w-auto object-contain"
               />
             </Link>
           </div>
@@ -228,24 +228,17 @@ export default function PublicHeader() {
 
         {/* ================= COLUMNA DERECHA: ACCIONES ================= */}
         <div className="flex items-center gap-2 md:gap-3 justify-end shrink-0">
-          <AnimatePresence>
-            {isScrolled && (
-              <motion.button
-                initial={{ opacity: 0, scale: 0 }}
-                animate={{ opacity: 1, scale: 1 }}
-                exit={{ opacity: 0, scale: 0 }}
-                onClick={toggleSearchMobile}
-                className="lg:hidden p-2.5 text-[#0145F2] bg-white/40 backdrop-blur-md border border-white/60 rounded-full shadow-sm"
-                title="Buscar"
-              >
-                <Search className="w-4 h-4 md:w-5 md:h-5" />
-              </motion.button>
-            )}
-          </AnimatePresence>
+          <button
+            onClick={toggleSearchMobile}
+            className="lg:hidden p-2.5 text-primary bg-white/40 backdrop-blur-md border border-white/60 rounded-full shadow-sm"
+            title="Buscar"
+          >
+            <Search className="w-4 h-4 md:w-5 md:h-5" />
+          </button>
 
           <Link
             href="/favoritos"
-            className="relative p-2.5 text-slate-500 hover:text-red-500 rounded-full transition-all"
+            className="hidden lg:flex relative p-2.5 text-slate-500 hover:text-red-500 rounded-full transition-all"
             title="Mis Favoritos"
           >
             <Heart
@@ -308,7 +301,7 @@ export default function PublicHeader() {
             initial={{ opacity: 0, height: 0 }}
             animate={{ opacity: 1, height: "auto" }}
             exit={{ opacity: 0, height: 0 }}
-            className="lg:hidden bg-white/80 backdrop-blur-3xl border-t border-white/60 shadow-xl overflow-hidden absolute w-full"
+            className="lg:hidden bg-white border-t border-slate-200 shadow-xl overflow-hidden absolute w-full"
           >
             <div className="flex flex-col px-4 py-6 gap-3">
               {navLinks.map((link) => (
@@ -316,14 +309,31 @@ export default function PublicHeader() {
                   key={link.name}
                   href={link.href}
                   onClick={() => setIsOpen(false)}
-                  className="flex items-center justify-between p-4 rounded-[20px] bg-white/40 border border-white/60 text-navy font-black uppercase tracking-widest text-sm"
+                  className="flex items-center justify-between p-4 rounded-[20px] bg-slate-50 border border-slate-200 text-navy font-black uppercase tracking-widest text-sm"
                 >
                   {link.name}
-                  <ChevronRight className="w-4 h-4 text-[#0145F2]" />
+                  <ChevronRight className="w-4 h-4 text-primary" />
                 </Link>
               ))}
 
-              <div className="mt-2 p-4 rounded-[20px] bg-white/40 border border-white/60">
+              <Link
+                href="/favoritos"
+                onClick={() => setIsOpen(false)}
+                className="flex items-center justify-between p-4 rounded-[20px] bg-slate-50 border border-slate-200 text-navy font-black uppercase tracking-widest text-sm"
+              >
+                <span className="flex items-center gap-2">
+                  <Heart className={`w-4 h-4 ${favCount > 0 ? "fill-red-500 text-red-500" : "text-slate-400"}`} />
+                  Mis Favoritos
+                  {favCount > 0 && (
+                    <span className="bg-red-500 text-white text-[10px] font-black w-5 h-5 flex items-center justify-center rounded-full">
+                      {favCount}
+                    </span>
+                  )}
+                </span>
+                <ChevronRight className="w-4 h-4 text-primary" />
+              </Link>
+
+              <div className="mt-2 p-4 rounded-[20px] bg-slate-50 border border-slate-200">
                 <span className="text-[9px] font-black uppercase tracking-widest text-slate-500">
                   Concesionarios oficiales Pfaffen
                 </span>
@@ -337,7 +347,7 @@ export default function PublicHeader() {
                   </Link>
                   <Link href="/rely" onClick={() => setIsOpen(false)}>
                     <img
-                      src="/ChatGPT Image 6 ago 2026, 05_41_31 p.m.png"
+                      src="/RelyLogo.png"
                       alt="Rely"
                       className="h-9 w-auto object-contain"
                     />

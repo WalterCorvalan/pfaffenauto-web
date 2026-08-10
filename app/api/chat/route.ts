@@ -19,11 +19,22 @@ const supabase = createClient(
   process.env.SUPABASE_SERVICE_ROLE_KEY || "",
 );
 
+function logPregunta(pregunta: string, respondida: boolean) {
+  if (!pregunta.trim()) return;
+  supabase
+    .from("chatbot_log")
+    .insert({ pregunta, respondida })
+    .then(({ error }) => {
+      if (error) console.error("Error registrando pregunta del chatbot:", error);
+    });
+}
+
 export async function POST(request: Request) {
   try {
     const body = await request.json();
     const rawMessages = body.messages || [];
-    const ultimoMensaje = rawMessages[rawMessages.length - 1]?.content?.toLowerCase() || "";
+    const preguntaOriginal = rawMessages[rawMessages.length - 1]?.content || "";
+    const ultimoMensaje = preguntaOriginal.toLowerCase();
 
     // =================================================================
     // OPCIÓN 1: MODO PRUEBA (0 Tokens de IA - Usa TS + Supabase directo)
@@ -60,8 +71,9 @@ export async function POST(request: Request) {
           .map(v => `🚗 **${v.marca} ${v.modelo}** (${v.anio})\n💰 Precio: **$${v.precio_publicado_ars?.toLocaleString("es-AR")}**\n🛣️ Kilometraje: ${v.kilometraje} km\n`)
           .join("\n");
         
-        return NextResponse.json({ 
-          reply: `¡Sí! Tenemos estas opciones disponibles en stock:\n\n${listadoStock}\n*(Modo prueba - 0 tokens)*` 
+        logPregunta(preguntaOriginal, true);
+        return NextResponse.json({
+          reply: `¡Sí! Tenemos estas opciones disponibles en stock:\n\n${listadoStock}\n*(Modo prueba - 0 tokens)*`
         });
       }
 
@@ -87,6 +99,9 @@ export async function POST(request: Request) {
         respuestaLocal = `🔄 **Permutas:**\n\n${NEGOCIO_CONFIG.politicas.permutas}`;
       }
 
+      // Respuesta institucional "no sé qué me preguntó" cuenta como no respondida de verdad
+      const fueGenerica = respuestaLocal.startsWith("👋 ¡Hola!");
+      logPregunta(preguntaOriginal, !fueGenerica);
       return NextResponse.json({ reply: `${respuestaLocal}\n\n*(Modo prueba - 0 tokens)*` });
     }
 
@@ -151,6 +166,7 @@ REGLAS:
     } as any);
 
     if (response.stop_reason === "refusal") {
+      logPregunta(preguntaOriginal, false);
       return NextResponse.json(
         { error: "No puedo responder esa consulta. Probá reformularla." },
         { status: 422 },
@@ -164,6 +180,7 @@ REGLAS:
       }
     }
 
+    logPregunta(preguntaOriginal, true);
     return NextResponse.json({ reply: replyText });
 
   } catch (error: any) {

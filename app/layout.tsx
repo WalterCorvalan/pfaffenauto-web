@@ -15,7 +15,7 @@ const jakarta = Plus_Jakarta_Sans({
 export const metadata: Metadata = {
   title: "Pfaffen Autos | Concesionaria de 0KM y Usados en Zona Norte",
   description:
-    "Comprá o vendé tu auto de forma fácil y segura. Amplio catálogo de 0KM y usados seleccionados de alta gama (Toyota, Volkswagen, BMW, Audi). Sucursales en Olivos y Casa Central.",
+    "Comprá o vendé tu auto de forma fácil y segura. Amplio catálogo de 0KM y usados seleccionados de alta gama (Toyota, Volkswagen, BMW, Audi). Sucursales en Casa Central y Don Torcuato.",
   keywords: [
     "pfaffen",
     "fafen",
@@ -28,7 +28,6 @@ export const metadata: Metadata = {
     "cotizar auto online",
     "venta de autos usados",
     "concesionaria zona norte",
-    "agencia de autos olivos",
     "concesionaria casa central",
     "autos usados don torcuato",
     "agencia de autos gran buenos aires",
@@ -71,7 +70,6 @@ export default function RootLayout({
     priceRange: "$$$",
     areaServed: [
       "Zona Norte, Buenos Aires",
-      "Olivos, Buenos Aires",
       "Casa Central, Malvinas Argentinas",
       "Don Torcuato, Tigre"
     ],

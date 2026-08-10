@@ -84,7 +84,7 @@ function MarcaDestacadaCard({ marca }: { marca: { nombre: string; slug: string; 
 export default function Marcas() {
   // Marcas Oficiales Destacadas (Primeras en la fila)
   const marcasDestacadas = [
-    { nombre: "Rely", slug: "rely", logo: "/ChatGPT Image 6 ago 2026, 05_41_31 p.m.png" },
+    { nombre: "Rely", slug: "rely", logo: "/RelyLogo.png" },
     { nombre: "Karry", slug: "karry", logo: "/logo-karry.webp" },
   ];
 

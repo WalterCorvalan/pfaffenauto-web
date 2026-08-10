@@ -1,7 +1,7 @@
 import { createServerClient } from "@supabase/ssr";
 import { cookies } from "next/headers";
 import Link from "next/link";
-import { Wallet, FileText, Printer, ArrowDownRight, Search, Activity, User, CarFront, Building2, Filter } from "lucide-react";
+import { Wallet, FileText, Printer, ArrowDownRight, ArrowUpRight, Search, Activity, User, CarFront, Building2, Filter, Scale } from "lucide-react";
 import NuevoGastoModal from "./NuevoGastoModal";
 
 export default async function CajaYGastosPage({
@@ -72,6 +72,31 @@ export default async function CajaYGastosPage({
   }, 0);
 
   const saldoPendienteCalle = operaciones?.reduce((acc, op) => acc + (Number(op.saldo_pendiente) || 0), 0) || 0;
+
+  // 3. Egresos del mes: movimientos_caja (gastos manuales) + las 5 categorías especializadas
+  const primerDiaMes = new Date(anoActual, mesActual, 1).toISOString().split("T")[0];
+  const ultimoDiaMes = new Date(anoActual, mesActual + 1, 0).toISOString().split("T")[0];
+
+  const [movCaja, patentes, transferencias, repuestos, gastosVarios, sueldos] = await Promise.all([
+    supabase.from("movimientos_caja").select("monto, sucursal_id").eq("tipo", "egreso").gte("fecha", primerDiaMes).lte("fecha", ultimoDiaMes),
+    supabase.from("patentes").select("importe, sucursal_id").gte("fecha", primerDiaMes).lte("fecha", ultimoDiaMes),
+    supabase.from("transferencias_patentamientos").select("importe, sucursal_id").gte("fecha", primerDiaMes).lte("fecha", ultimoDiaMes),
+    supabase.from("repuestos_reparaciones").select("importe, sucursal_id").gte("fecha", primerDiaMes).lte("fecha", ultimoDiaMes),
+    supabase.from("gastos_varios").select("importe, sucursal_id").gte("fecha", primerDiaMes).lte("fecha", ultimoDiaMes),
+    supabase.from("sueldos").select("importe, sucursal_id").gte("fecha", primerDiaMes).lte("fecha", ultimoDiaMes),
+  ]);
+
+  const filtrarPorSucursal = (rows: any[] | null) => (rows || []).filter((r) => !sucursal || r.sucursal_id === sucursal);
+
+  const egresosDelMes =
+    filtrarPorSucursal(movCaja.data).reduce((acc, r) => acc + (Number(r.monto) || 0), 0) +
+    filtrarPorSucursal(patentes.data).reduce((acc, r) => acc + (Number(r.importe) || 0), 0) +
+    filtrarPorSucursal(transferencias.data).reduce((acc, r) => acc + (Number(r.importe) || 0), 0) +
+    filtrarPorSucursal(repuestos.data).reduce((acc, r) => acc + (Number(r.importe) || 0), 0) +
+    filtrarPorSucursal(gastosVarios.data).reduce((acc, r) => acc + (Number(r.importe) || 0), 0) +
+    filtrarPorSucursal(sueldos.data).reduce((acc, r) => acc + (Number(r.importe) || 0), 0);
+
+  const netoDelMes = ingresosCajaMes - egresosDelMes;
 
   // CÁLCULO DE CAJA INDIVIDUAL POR SUCURSAL (PARA EL DUEÑO)
   const cajaPorSucursal = sucursales?.map((suc) => {
@@ -152,7 +177,7 @@ export default async function CajaYGastosPage({
         <div className="max-w-[1600px] mx-auto">
 
           {/* Tarjetas de Resumen Global/Filtrado */}
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-5 mb-8">
+          <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-5 mb-8">
             <div className="bg-white border border-slate-200 shadow-sm p-6 rounded-2xl relative overflow-hidden flex flex-col justify-center">
               <div className="w-9 h-9 rounded-lg bg-emerald-50 border border-emerald-100 flex items-center justify-center mb-4">
                 <ArrowDownRight className="w-4 h-4 text-emerald-600" />
@@ -160,6 +185,24 @@ export default async function CajaYGastosPage({
               <span className="text-[10px] uppercase tracking-widest font-bold text-slate-400">Ingresos Efectivos (Mes)</span>
               <h3 className="text-2xl font-black text-emerald-600 mt-1 mb-1 font-mono">$ {ingresosCajaMes.toLocaleString("es-AR")}</h3>
               <span className="text-[11px] text-slate-500 font-medium">Suma de Ventas y Señas cobradas</span>
+            </div>
+
+            <Link href="/panel/gastos/egresos" className="bg-white border border-slate-200 shadow-sm p-6 rounded-2xl relative overflow-hidden flex flex-col justify-center hover:border-rose-300 hover:shadow-md transition-all">
+              <div className="w-9 h-9 rounded-lg bg-rose-50 border border-rose-100 flex items-center justify-center mb-4">
+                <ArrowUpRight className="w-4 h-4 text-rose-600" />
+              </div>
+              <span className="text-[10px] uppercase tracking-widest font-bold text-slate-400">Egresos Totales (Mes)</span>
+              <h3 className="text-2xl font-black text-rose-600 mt-1 mb-1 font-mono">$ {egresosDelMes.toLocaleString("es-AR")}</h3>
+              <span className="text-[11px] text-slate-500 font-medium">Gastos manuales + las 5 categorías</span>
+            </Link>
+
+            <div className="bg-white border border-slate-200 shadow-sm p-6 rounded-2xl relative overflow-hidden flex flex-col justify-center">
+              <div className={`w-9 h-9 rounded-lg border flex items-center justify-center mb-4 ${netoDelMes >= 0 ? "bg-indigo-50 border-indigo-100" : "bg-rose-50 border-rose-100"}`}>
+                <Scale className={`w-4 h-4 ${netoDelMes >= 0 ? "text-indigo-600" : "text-rose-600"}`} />
+              </div>
+              <span className="text-[10px] uppercase tracking-widest font-bold text-slate-400">Neto del Mes</span>
+              <h3 className={`text-2xl font-black mt-1 mb-1 font-mono ${netoDelMes >= 0 ? "text-slate-900" : "text-rose-600"}`}>$ {netoDelMes.toLocaleString("es-AR")}</h3>
+              <span className="text-[11px] text-slate-500 font-medium">Ingresos menos egresos</span>
             </div>
 
             <div className="bg-white border border-slate-200 shadow-sm p-6 rounded-2xl relative overflow-hidden flex flex-col justify-center">
@@ -170,8 +213,9 @@ export default async function CajaYGastosPage({
               <h3 className="text-2xl font-black text-slate-900 mt-1 mb-1 font-mono">$ {saldoPendienteCalle.toLocaleString("es-AR")}</h3>
               <span className="text-[11px] text-slate-500 font-medium">Plata en la calle por operaciones señadas</span>
             </div>
+          </div>
 
-            {/* Modal de Gastos integrado correctamente */}
+          <div className="mb-8 max-w-xs">
             <NuevoGastoModal sucursales={sucursales || []} />
           </div>
 

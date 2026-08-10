@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect, useRef } from "react";
+import { useSearchParams } from "next/navigation";
 import { supabase } from "@/lib/supabase";
 import {
   Search,
@@ -17,7 +18,7 @@ import {
 
 const ETAPAS_PIPELINE = [
   "Nuevo",
-  "En conversación",
+  "Contactado",
   "Interesado",
   "Cliente",
   "Perdido",
@@ -42,6 +43,13 @@ export default function ChatClient({
   const [guardandoNotas, setGuardandoNotas] = useState(false);
 
   const mensajesEndRef = useRef<HTMLDivElement>(null);
+  const searchParams = useSearchParams();
+
+  // Deep link desde /panel/contactos: /panel/chat?conversacion=<id>
+  useEffect(() => {
+    const conversacionParam = searchParams.get("conversacion");
+    if (conversacionParam) setSeleccionada(conversacionParam);
+  }, [searchParams]);
 
   useEffect(() => {
     mensajesEndRef.current?.scrollIntoView({ behavior: "smooth" });

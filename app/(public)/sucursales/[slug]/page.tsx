@@ -25,12 +25,6 @@ const FALLBACK_DATA: Record<
     direccion: "Casa Central, Buenos Aires",
     horario: "Lun a Sáb - 9:00 a 19:00hs",
   },
-  "olivos": {
-    imagen: "https://images.unsplash.com/photo-1580273916550-e323be2ae537?q=80&w=1200&auto=format&fit=crop",
-    telefono: "11 56520726",
-    direccion: "Olivos, Buenos Aires",
-    horario: "Lun a Sáb - 9:00 a 19:00hs",
-  },
   "don-torcuato": {
     imagen: "/pana.jpg",
     telefono: "11 57998065",

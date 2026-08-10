@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { supabase } from "@/lib/supabase";
-import { Users, UserPlus, X, Edit2, Trash2, Shield } from "lucide-react";
+import { Users, UserPlus, X, Edit2, Trash2, Shield, MapPin } from "lucide-react";
 import { useRouter } from "next/navigation";
 
 export default function UsuariosPage() {
@@ -11,6 +11,14 @@ export default function UsuariosPage() {
   const [sucursales, setSucursales] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [showModal, setShowModal] = useState(false);
+  const [usuarioEditando, setUsuarioEditando] = useState<any | null>(null);
+  const [guardandoEdicion, setGuardandoEdicion] = useState(false);
+  const [errorEdicion, setErrorEdicion] = useState<string | null>(null);
+  const [eliminandoId, setEliminandoId] = useState<string | null>(null);
+  const [editandoSucursalId, setEditandoSucursalId] = useState<string | null>(null);
+  const [guardandoSucursalRapida, setGuardandoSucursalRapida] = useState(false);
+  const [editandoRolId, setEditandoRolId] = useState<string | null>(null);
+  const [guardandoRolRapido, setGuardandoRolRapido] = useState(false);
 
   // Estados del formulario de nuevo usuario
   const [nombre, setNombre] = useState("");
@@ -79,6 +87,108 @@ export default function UsuariosPage() {
       setErrorMsg(err.message);
     } finally {
       setCreando(false);
+    }
+  };
+
+  const handleGuardarEdicion = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!usuarioEditando) return;
+    setGuardandoEdicion(true);
+    setErrorEdicion(null);
+
+    try {
+      const res = await fetch("/api/usuarios", {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          id: usuarioEditando.id,
+          nombre: usuarioEditando.nombre,
+          rol: usuarioEditando.rol,
+          sucursal_id: usuarioEditando.sucursal_id || null,
+        }),
+      });
+
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || "No se pudo actualizar el usuario");
+
+      setUsuarioEditando(null);
+      fetchData();
+    } catch (err: any) {
+      setErrorEdicion(err.message);
+    } finally {
+      setGuardandoEdicion(false);
+    }
+  };
+
+  const handleCambiarSucursalRapida = async (perfil: any, nuevaSucursalId: string) => {
+    if (nuevaSucursalId === (perfil.sucursal_id || "")) {
+      setEditandoSucursalId(null);
+      return;
+    }
+    setGuardandoSucursalRapida(true);
+    try {
+      const res = await fetch("/api/usuarios", {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          id: perfil.id,
+          nombre: perfil.nombre,
+          rol: perfil.rol,
+          sucursal_id: nuevaSucursalId || null,
+        }),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || "No se pudo actualizar la sucursal");
+      fetchData();
+    } catch (err: any) {
+      alert(err.message);
+    } finally {
+      setGuardandoSucursalRapida(false);
+      setEditandoSucursalId(null);
+    }
+  };
+
+  const handleCambiarRolRapido = async (perfil: any, nuevoRol: string) => {
+    if (nuevoRol === perfil.rol) {
+      setEditandoRolId(null);
+      return;
+    }
+    setGuardandoRolRapido(true);
+    try {
+      const res = await fetch("/api/usuarios", {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          id: perfil.id,
+          nombre: perfil.nombre,
+          rol: nuevoRol,
+          sucursal_id: perfil.sucursal_id || null,
+        }),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || "No se pudo actualizar el rol");
+      fetchData();
+    } catch (err: any) {
+      alert(err.message);
+    } finally {
+      setGuardandoRolRapido(false);
+      setEditandoRolId(null);
+    }
+  };
+
+  const handleEliminarUsuario = async (id: string, nombre: string) => {
+    if (!confirm(`¿Eliminar a ${nombre || "este usuario"}? Esta acción no se puede deshacer.`)) return;
+    setEliminandoId(id);
+
+    try {
+      const res = await fetch(`/api/usuarios?id=${id}`, { method: "DELETE" });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || "No se pudo eliminar el usuario");
+      fetchData();
+    } catch (err: any) {
+      alert(err.message);
+    } finally {
+      setEliminandoId(null);
     }
   };
 
@@ -168,12 +278,31 @@ export default function UsuariosPage() {
                             </div>
                           </td>
                           
-                          {/* Título del Puesto (Rol) */}
+                          {/* Título del Puesto (Rol) - acceso directo */}
                           <td className="py-3.5 px-6 text-center">
-                            <span className={`inline-flex items-center px-2.5 py-1 rounded-md text-[10px] font-bold uppercase tracking-widest border ${getRoleBadgeStyle(p.rol)}`}>
-                              <Shield className="w-3 h-3 mr-1.5 opacity-70" />
-                              {p.rol}
-                            </span>
+                            {editandoRolId === p.id ? (
+                              <select
+                                autoFocus
+                                defaultValue={p.rol}
+                                disabled={guardandoRolRapido}
+                                onChange={(e) => handleCambiarRolRapido(p, e.target.value)}
+                                onBlur={() => setEditandoRolId(null)}
+                                className="bg-white border border-indigo-300 rounded-lg px-2 py-1.5 text-[12px] font-medium text-slate-900 outline-none focus:border-indigo-500 cursor-pointer"
+                              >
+                                <option value="vendedor">Vendedor</option>
+                                <option value="encargado">Encargado</option>
+                                <option value="admin">Administrador</option>
+                              </select>
+                            ) : (
+                              <button
+                                onClick={() => setEditandoRolId(p.id)}
+                                className={`inline-flex items-center px-2.5 py-1 rounded-md text-[10px] font-bold uppercase tracking-widest border hover:opacity-75 transition-opacity ${getRoleBadgeStyle(p.rol)}`}
+                                title="Tocar para cambiar de rol"
+                              >
+                                <Shield className="w-3 h-3 mr-1.5 opacity-70" />
+                                {p.rol}
+                              </button>
+                            )}
                           </td>
 
                           {/* Correo Electrónico (Visual/Placeholder) */}
@@ -183,20 +312,51 @@ export default function UsuariosPage() {
                             </span>
                           </td>
 
-                          {/* Sucursal */}
+                          {/* Sucursal (acceso directo, estilo mover auto en Stock) */}
                           <td className="py-3.5 px-6">
-                            <span className="text-[13px] font-medium text-slate-700">
-                              {p.sucursales?.nombre || "Sin sucursal asignada"}
-                            </span>
+                            {editandoSucursalId === p.id ? (
+                              <select
+                                autoFocus
+                                defaultValue={p.sucursal_id || ""}
+                                disabled={guardandoSucursalRapida}
+                                onChange={(e) => handleCambiarSucursalRapida(p, e.target.value)}
+                                onBlur={() => setEditandoSucursalId(null)}
+                                className="bg-white border border-indigo-300 rounded-lg px-2 py-1.5 text-[12px] font-medium text-slate-900 outline-none focus:border-indigo-500 cursor-pointer"
+                              >
+                                <option value="">Sin sucursal fija</option>
+                                {sucursales.map(s => (
+                                  <option key={s.id} value={s.id}>{s.nombre}</option>
+                                ))}
+                              </select>
+                            ) : (
+                              <button
+                                onClick={() => setEditandoSucursalId(p.id)}
+                                className="inline-flex items-center gap-1.5 truncate font-medium text-[13px] text-slate-700 hover:text-indigo-600 hover:bg-indigo-50 rounded-md px-1.5 py-1 -ml-1.5 transition-colors group"
+                                title="Tocar para cambiar de sucursal"
+                              >
+                                <MapPin className="w-3.5 h-3.5 text-slate-400 group-hover:text-indigo-500 shrink-0" />
+                                {p.sucursales?.nombre || "Sin sucursal asignada"}
+                                <Edit2 className="w-3 h-3 opacity-0 group-hover:opacity-100 transition-opacity text-slate-400" />
+                              </button>
+                            )}
                           </td>
 
                           {/* Acciones */}
                           <td className="py-3.5 px-6 text-right">
                             <div className="flex items-center justify-end gap-1">
-                              <button className="p-2 text-slate-400 hover:text-indigo-600 hover:bg-indigo-50 rounded-lg transition-all" title="Editar usuario">
+                              <button
+                                onClick={() => { setUsuarioEditando({ ...p, sucursal_id: p.sucursal_id || "" }); setErrorEdicion(null); }}
+                                className="p-2 text-slate-400 hover:text-indigo-600 hover:bg-indigo-50 rounded-lg transition-all"
+                                title="Editar usuario"
+                              >
                                 <Edit2 className="w-4 h-4" />
                               </button>
-                              <button className="p-2 text-slate-400 hover:text-rose-600 hover:bg-rose-50 rounded-lg transition-all" title="Eliminar usuario">
+                              <button
+                                onClick={() => handleEliminarUsuario(p.id, p.nombre)}
+                                disabled={eliminandoId === p.id}
+                                className="p-2 text-slate-400 hover:text-rose-600 hover:bg-rose-50 rounded-lg transition-all disabled:opacity-50"
+                                title="Eliminar usuario"
+                              >
                                 <Trash2 className="w-4 h-4" />
                               </button>
                             </div>
@@ -326,6 +486,98 @@ export default function UsuariosPage() {
                   className="flex-1 py-3 text-[11px] font-bold uppercase tracking-widest bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl transition-colors disabled:opacity-50 shadow-sm"
                 >
                   {creando ? "Guardando..." : "Crear Usuario"}
+                </button>
+              </div>
+
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* ================= MODAL PARA EDITAR USUARIO ================= */}
+      {usuarioEditando && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+          <div className="absolute inset-0 bg-slate-900/40 backdrop-blur-sm" onClick={() => !guardandoEdicion && setUsuarioEditando(null)}></div>
+
+          <div className="relative bg-white border border-slate-200 w-full max-w-md rounded-2xl shadow-xl p-6 md:p-8 animate-fadeIn">
+
+            <div className="flex justify-between items-center mb-6 border-b border-slate-100 pb-4">
+              <div>
+                <h3 className="text-[15px] font-bold text-slate-900 flex items-center gap-2">
+                  <Edit2 className="w-4 h-4 text-indigo-600" /> Editar Colaborador
+                </h3>
+                <p className="text-[11px] text-slate-500 font-medium mt-1">Actualizá rol y sucursal del acceso.</p>
+              </div>
+              <button
+                onClick={() => setUsuarioEditando(null)}
+                className="text-slate-400 hover:text-slate-700 transition-colors bg-slate-50 hover:bg-slate-100 p-1.5 rounded-lg border border-slate-200"
+              >
+                <X className="w-4 h-4" />
+              </button>
+            </div>
+
+            <form onSubmit={handleGuardarEdicion} className="space-y-4">
+
+              {errorEdicion && (
+                <div className="bg-rose-50 border border-rose-200 text-rose-700 text-[11px] p-3 rounded-xl font-bold tracking-wide">
+                  {errorEdicion}
+                </div>
+              )}
+
+              <div>
+                <label className="text-[11px] font-bold uppercase tracking-widest text-slate-500 mb-1.5 block">Nombre Completo</label>
+                <input
+                  type="text"
+                  required
+                  value={usuarioEditando.nombre || ""}
+                  onChange={(e) => setUsuarioEditando({ ...usuarioEditando, nombre: e.target.value })}
+                  className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3.5 py-2.5 text-[13px] text-slate-900 outline-none focus:border-indigo-500 focus:bg-white transition-colors"
+                />
+              </div>
+
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className="text-[11px] font-bold uppercase tracking-widest text-slate-500 mb-1.5 block">Rol / Permisos</label>
+                  <select
+                    value={usuarioEditando.rol}
+                    onChange={(e) => setUsuarioEditando({ ...usuarioEditando, rol: e.target.value })}
+                    className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3.5 py-2.5 text-[13px] text-slate-900 outline-none focus:border-indigo-500 focus:bg-white cursor-pointer transition-colors appearance-none"
+                  >
+                    <option value="vendedor">Vendedor</option>
+                    <option value="encargado">Encargado</option>
+                    <option value="admin">Administrador</option>
+                  </select>
+                </div>
+
+                <div>
+                  <label className="text-[11px] font-bold uppercase tracking-widest text-slate-500 mb-1.5 block">Sucursal Asignada</label>
+                  <select
+                    value={usuarioEditando.sucursal_id || ""}
+                    onChange={(e) => setUsuarioEditando({ ...usuarioEditando, sucursal_id: e.target.value })}
+                    className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3.5 py-2.5 text-[13px] text-slate-900 outline-none focus:border-indigo-500 focus:bg-white cursor-pointer transition-colors appearance-none"
+                  >
+                    <option value="">Sin sucursal fija</option>
+                    {sucursales.map(s => (
+                      <option key={s.id} value={s.id}>{s.nombre}</option>
+                    ))}
+                  </select>
+                </div>
+              </div>
+
+              <div className="pt-5 mt-2 flex gap-3 border-t border-slate-100">
+                <button
+                  type="button"
+                  onClick={() => setUsuarioEditando(null)}
+                  className="flex-1 py-3 text-[11px] font-bold uppercase tracking-widest bg-white hover:bg-slate-50 border border-slate-200 text-slate-600 rounded-xl transition-colors"
+                >
+                  Cancelar
+                </button>
+                <button
+                  type="submit"
+                  disabled={guardandoEdicion}
+                  className="flex-1 py-3 text-[11px] font-bold uppercase tracking-widest bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl transition-colors disabled:opacity-50 shadow-sm"
+                >
+                  {guardandoEdicion ? "Guardando..." : "Guardar Cambios"}
                 </button>
               </div>
 
