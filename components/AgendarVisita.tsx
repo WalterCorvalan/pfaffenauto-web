@@ -56,7 +56,8 @@ export default function AgendarVisita({ auto, isMobile = false }: AgendarVisitaP
           fecha_visita: fecha,
           horario_visita: horario,
           sucursal: sucursalNombre,
-          estado: 'Pendiente'
+          estado: 'Pendiente',
+          vendedor_id: auto?.vendedor_asignado_id || null
         }]);
 
       if (error) throw error;

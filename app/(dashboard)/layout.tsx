@@ -8,7 +8,7 @@ import {
   Menu, X, Search, ChevronRight, UserPlus, Banknote, CheckSquare,
   CalendarCheck, MessagesSquare, Landmark, Wallet, FileBarChart,
   Users, Megaphone, Target, MousePointerClick, Bot, CarFront,
-  LayoutDashboard, Inbox, PieChart, LogOut, Handshake, MessageSquareCheckIcon, Settings
+  LayoutDashboard, Inbox, PieChart, LogOut, Handshake, MessageSquareCheckIcon, Settings, Receipt
 } from "lucide-react";
 
 export default function DashboardLayout({ children }: { children: React.ReactNode }) {
@@ -118,6 +118,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
           {/* 🧾 VENTAS */}
           <SectionLabel>Operaciones</SectionLabel>
           <NavLinkItem icon={Banknote} label="Nueva Operación" href="/panel/ventas/nueva" />
+          <NavLinkItem icon={Receipt} label="Ventas y Seguimiento" href="/panel/ventas" />
           <NavLinkItem icon={UserPlus} label="Nuevo Cliente" href="/panel/clientes/nuevo" />
           <NavLinkItem icon={Landmark} label="Financiaciones" href="/panel/ventas/financiaciones" />
 

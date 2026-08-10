@@ -2,6 +2,7 @@ import { createServerClient } from "@supabase/ssr";
 import { cookies } from "next/headers";
 import { CalendarCheck, CarFront, MapPin, Clock, Users, CheckCircle2, XCircle, CalendarClock, MessageSquareText } from "lucide-react";
 import CambiarEstadoVisita from "./CambiarEstadoVisita";
+import AsignarVendedorVisita from "./AsignarVendedorVisita";
 
 export default async function CitasPage() {
   const cookieStore = await cookies();
@@ -14,11 +15,23 @@ export default async function CitasPage() {
   const { data: visitas } = await supabase
     .from("visitas_agendadas")
     .select(`
-      id, nombre_cliente, telefono_cliente, fecha_visita, horario_visita, sucursal, estado,
-      vehiculos ( marca, modelo, patente )
+      id, nombre_cliente, telefono_cliente, fecha_visita, horario_visita, sucursal, estado, vendedor_id, vehiculo_id,
+      vehiculos ( marca, modelo, patente, vendedor_asignado_id )
     `)
     .order("fecha_visita", { ascending: true })
     .order("horario_visita", { ascending: true });
+
+  const { data: perfilesVendedores } = await supabase
+    .from("perfiles")
+    .select("id, nombre, sucursales ( nombre )")
+    .eq("rol", "vendedor")
+    .order("nombre");
+
+  const vendedores = (perfilesVendedores || []).map((v: any) => ({
+    id: v.id,
+    nombre: v.nombre,
+    sucursalNombre: v.sucursales?.nombre || null,
+  }));
 
   const hoy = new Date().toISOString().split("T")[0];
   const proximas = visitas?.filter((v) => v.fecha_visita >= hoy && v.estado !== "Cancelada") || [];
@@ -70,6 +83,16 @@ export default async function CitasPage() {
           <MapPin className="w-3.5 h-3.5 text-slate-400 shrink-0" />
           <span className="font-medium truncate">{v.sucursal}</span>
         </div>
+        {v.vehiculo_id ? (
+          <div className="flex items-center gap-2 text-[11px] text-slate-600">
+            <Users className="w-3.5 h-3.5 text-slate-400 shrink-0" />
+            <span className="font-medium truncate">
+              {vendedores.find((vd) => vd.id === v.vehiculos?.vendedor_asignado_id)?.nombre || "Sin vendedor (auto sin asignar)"}
+            </span>
+          </div>
+        ) : (
+          <AsignarVendedorVisita visitaId={v.id} visitaSucursal={v.sucursal} vendedorActualId={v.vendedor_id} vendedores={vendedores} />
+        )}
         <div className="flex items-center gap-2 text-[11px]">
           <CarFront className="w-3.5 h-3.5 text-indigo-500 shrink-0" />
           {v.vehiculos ? (

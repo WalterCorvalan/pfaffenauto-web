@@ -47,6 +47,7 @@ export default function VentaForm({ vehiculos, clientes, sucursales }: { vehicul
   const totalPasos = 4;
   const [loading, setLoading] = useState(false);
   const [operacionGeneradaId, setOperacionGeneradaId] = useState<string | null>(null);
+  const [codigoSeguimiento, setCodigoSeguimiento] = useState<string | null>(null);
   const [bloqueoSeguridad, setBloqueoSeguridad] = useState(true);
 
   const { register, handleSubmit, watch, setValue, trigger, formState: { errors } } = useForm<OperacionValues>({
@@ -152,24 +153,37 @@ export default function VentaForm({ vehiculos, clientes, sucursales }: { vehicul
       const p_cuotas = Number(data.cantidad_cuotas) || 0;
 
       const saldoFinal = calcularSaldo();
-      
+
+      const generarCodigoSeguimiento = () =>
+        Array.from({ length: 8 }, () => "ABCDEFGHJKLMNPQRSTUVWXYZ23456789"[Math.floor(Math.random() * 32)]).join("");
+
+      const esOperacionReal = data.tipo_operacion !== "Presupuesto";
+
       const { data: nuevaOperacion, error: errVenta } = await supabase.from("ventas").insert({
         vehiculo_id: data.vehiculo_id, cliente_id: cliente_id_final, vendedor_id: user?.id,
         precio_final_ars: p_venta, forma_pago: p_prenda > 0 ? "Financiado" : "Contado",
         observaciones: data.observaciones, tipo_operacion: data.tipo_operacion,
         saldo_pendiente: saldoFinal, seña_ars: p_sena, gastos_transferencia: p_transf,
-        datos_prenda: data.banco_prenda ? { banco: data.banco_prenda, monto: p_prenda, cuotas: p_cuotas } : null
-      }).select("id").single();
+        datos_prenda: data.banco_prenda ? { banco: data.banco_prenda, monto: p_prenda, cuotas: p_cuotas } : null,
+        codigo_seguimiento: esOperacionReal ? generarCodigoSeguimiento() : null,
+        etapa_seguimiento: esOperacionReal ? "Seña" : null,
+      }).select("id, codigo_seguimiento").single();
 
       if (errVenta) throw errVenta;
 
       const nuevoEstadoAuto = data.tipo_operacion === "Seña" ? "Reservado" : "Vendido";
-      if (data.tipo_operacion !== "Presupuesto") {
+      if (esOperacionReal) {
         await supabase.from("vehiculos").update({ estado: nuevoEstadoAuto }).eq("id", data.vehiculo_id);
+
+        const documentosDefault = ["DNI", "Cédula Verde", "CUIT/CUIL", "Formulario 08", "Título del Auto"];
+        await supabase.from("documentacion_ventas").insert(
+          documentosDefault.map((tipo_documento) => ({ venta_id: nuevaOperacion.id, tipo_documento }))
+        );
       }
 
+      setCodigoSeguimiento(nuevaOperacion.codigo_seguimiento);
       setOperacionGeneradaId(nuevaOperacion.id);
-      setPaso(5); 
+      setPaso(5);
     } catch (error) {
       console.error(error);
       alert("Error al procesar la operación.");
@@ -189,8 +203,21 @@ export default function VentaForm({ vehiculos, clientes, sucursales }: { vehicul
           </div>
           <h2 className="text-3xl font-black text-slate-900 uppercase tracking-tight mb-2">Operación Registrada</h2>
           <p className="text-slate-500 mb-8 font-medium">El {watchTipoOp} se ha guardado correctamente en el sistema.</p>
-          
+
+          {codigoSeguimiento && (
+            <div className="max-w-sm mx-auto mb-8 bg-indigo-50 border border-indigo-100 rounded-xl p-4">
+              <p className="text-[11px] font-bold text-indigo-700 uppercase tracking-widest mb-1">Código de seguimiento para el cliente</p>
+              <p className="text-2xl font-black text-indigo-900 tracking-widest">{codigoSeguimiento}</p>
+              <p className="text-[11px] text-indigo-500 mt-1">Compartilo con el cliente: pfaffenautos.com/seguimiento/{codigoSeguimiento}</p>
+            </div>
+          )}
+
           <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
+            {operacionGeneradaId && codigoSeguimiento && (
+              <button onClick={() => router.push(`/panel/ventas/seguimiento/${operacionGeneradaId}`)} className="w-full sm:w-auto bg-white hover:bg-slate-50 border border-indigo-200 text-indigo-700 px-8 py-3.5 rounded-xl font-bold uppercase tracking-widest text-[11px] flex items-center justify-center gap-2 transition-colors">
+                Gestionar documentación
+              </button>
+            )}
             <button onClick={() => router.push(`/panel/ventas/imprimir/${operacionGeneradaId}`)} className="w-full sm:w-auto bg-indigo-600 hover:bg-indigo-700 text-white px-8 py-3.5 rounded-xl font-bold uppercase tracking-widest text-[11px] flex items-center justify-center gap-2 shadow-sm transition-colors">
               <Printer className="w-4 h-4" /> Imprimir Documento
             </button>

@@ -14,6 +14,7 @@ import Sucursales from "@/components/Sucursales";
 import Testimonials from "@/components/Testimonials";
 import FAQ from "@/components/FAQ";
 import AgendarCitaForm from "@/components/AgendarCitaForm";
+import Seguimiento from "@/components/Seguimiento";
 
 const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -73,6 +74,10 @@ export default function Page() {
       {/* 5. Banner CTA de Financiación / Permutas */}
       <div className="max-w-7xl mx-auto w-full px-4 md:px-6">
         <BannerFinanciacion />
+      </div>
+
+      <div>
+        <Seguimiento />
       </div>
       
       {/* 6. Puntos de Venta */}

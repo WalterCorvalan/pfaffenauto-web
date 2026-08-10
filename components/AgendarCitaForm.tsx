@@ -18,7 +18,7 @@ function generarFranjas() {
 
 export default function AgendarCitaForm() {
   const [sucursales, setSucursales] = useState<{ id: string; nombre: string }[]>([]);
-  const [vehiculos, setVehiculos] = useState<{ id: string; marca: string; modelo: string; patente: string | null }[]>([]);
+  const [vehiculos, setVehiculos] = useState<{ id: string; marca: string; modelo: string; patente: string | null; vendedor_asignado_id: string | null }[]>([]);
   const [ocupadas, setOcupadas] = useState<string[]>([]);
 
   const [sucursal, setSucursal] = useState("");
@@ -40,7 +40,7 @@ export default function AgendarCitaForm() {
     });
     supabase
       .from("vehiculos")
-      .select("id, marca, modelo, patente")
+      .select("id, marca, modelo, patente, vendedor_asignado_id")
       .in("estado", ["Disponible", "Reservado"])
       .order("marca")
       .then(({ data }) => {
@@ -78,6 +78,8 @@ export default function AgendarCitaForm() {
 
     setCargando(true);
     try {
+      const vehiculoSeleccionado = vehiculos.find((v) => v.id === vehiculoId);
+
       const { error: errInsert } = await supabase.from("visitas_agendadas").insert({
         vehiculo_id: vehiculoId || null,
         nombre_cliente: nombre,
@@ -86,6 +88,7 @@ export default function AgendarCitaForm() {
         horario_visita: horario,
         sucursal,
         estado: "Pendiente",
+        vendedor_id: vehiculoSeleccionado?.vendedor_asignado_id || null,
       });
 
       if (errInsert) throw errInsert;

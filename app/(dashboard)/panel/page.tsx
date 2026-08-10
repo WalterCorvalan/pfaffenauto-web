@@ -1,10 +1,11 @@
 import { createServerClient } from "@supabase/ssr";
 import { cookies } from "next/headers";
 import Link from "next/link";
-import { Plus, Car, Search, Edit2, ChevronLeft, ChevronRight, FileText, LayoutGrid } from "lucide-react";
+import { Plus, Car, Search, Edit2, ChevronLeft, ChevronRight, FileText, LayoutGrid, Megaphone } from "lucide-react";
 import AccionesAuto from "./AccionesAuto";
 import EdicionPrecio from "./EdicionPrecio";
 import EdicionSucursal from "./EdicionSucursal";
+import EdicionVendedor from "./EdicionVendedor";
 
 const ITEMS_POR_PAGINA = 10;
 
@@ -27,10 +28,11 @@ export default async function PanelPage({ searchParams }: { searchParams: Promis
   }
 
   const { data: sucursales } = await supabase.from("sucursales").select("id, nombre").order("nombre");
+  const { data: vendedores } = await supabase.from("perfiles").select("id, nombre, sucursal_id").eq("rol", "vendedor").order("nombre");
 
   let query = supabase
     .from("vehiculos")
-    .select(`*, multimedia_vehiculos ( url_archivo ), sucursales ( id, nombre )`, { count: "exact" })
+    .select(`*, multimedia_vehiculos ( url_archivo ), sucursales ( id, nombre ), vendedor:vendedor_asignado_id ( id, nombre )`, { count: "exact" })
     .order("created_at", { ascending: false });
 
   if (q) query = query.or(`marca.ilike.%${q}%,modelo.ilike.%${q}%,patente.ilike.%${q}%`);
@@ -85,15 +87,22 @@ export default async function PanelPage({ searchParams }: { searchParams: Promis
               {/* VISTA MÓVIL */}
               <div className="flex flex-col gap-3 p-4 md:hidden w-full">
                 {vehiculos.map((auto) => (
-                  <div key={auto.id} className="bg-white border border-slate-200 rounded-xl p-4 flex flex-col gap-3 shadow-sm">
+                  <div key={auto.id} className={`bg-white border rounded-xl p-4 flex flex-col gap-3 shadow-sm ${auto.pautado ? "border-orange-300 ring-1 ring-orange-200" : "border-slate-200"}`}>
                     <div className="flex items-start gap-3">
-                      {auto.multimedia_vehiculos?.[0] ? (
-                        <img src={auto.multimedia_vehiculos[0].url_archivo} className="w-20 h-16 object-cover rounded-lg border border-slate-200 shrink-0" />
-                      ) : (
-                        <div className="w-20 h-16 bg-slate-100 border border-slate-200 rounded-lg flex items-center justify-center shrink-0">
-                          <Car className="w-6 h-6 text-slate-400" />
-                        </div>
-                      )}
+                      <div className="relative shrink-0">
+                        {auto.multimedia_vehiculos?.[0] ? (
+                          <img src={auto.multimedia_vehiculos[0].url_archivo} className="w-20 h-16 object-cover rounded-lg border border-slate-200" />
+                        ) : (
+                          <div className="w-20 h-16 bg-slate-100 border border-slate-200 rounded-lg flex items-center justify-center">
+                            <Car className="w-6 h-6 text-slate-400" />
+                          </div>
+                        )}
+                        {auto.pautado && (
+                          <span className="absolute -top-1.5 -left-1.5 bg-orange-500 text-white rounded-full p-1 shadow-sm" title={`Pautado${auto.canal_pauta ? ` · ${auto.canal_pauta}` : ""}`}>
+                            <Megaphone className="w-3 h-3" />
+                          </span>
+                        )}
+                      </div>
                       <div className="flex-1 min-w-0">
                         <span className="text-[10px] uppercase tracking-widest font-bold text-slate-400 block mb-0.5 truncate">{auto.patente || "S/P"}</span>
                         <h3 className="font-bold capitalize text-sm text-slate-900 leading-tight truncate mb-1">{auto.marca} {auto.modelo}</h3>
@@ -108,6 +117,10 @@ export default async function PanelPage({ searchParams }: { searchParams: Promis
                       <div className="min-w-0">
                         <span className="block text-slate-400 uppercase tracking-widest font-bold mb-0.5">Ubicación</span>
                         <EdicionSucursal autoId={auto.id} sucursalActualId={auto.sucursal_id} sucursalActualNombre={auto.sucursales?.nombre} sucursales={sucursales || []} puedeGestionar={puedeGestionar} />
+                      </div>
+                      <div className="min-w-0 col-span-2">
+                        <span className="block text-slate-400 uppercase tracking-widest font-bold mb-0.5">Vendedor</span>
+                        <EdicionVendedor autoId={auto.id} autoSucursalId={auto.sucursal_id} vendedorActualId={auto.vendedor_asignado_id} vendedorActualNombre={auto.vendedor?.nombre} vendedores={vendedores || []} puedeGestionar={puedeGestionar} />
                       </div>
                     </div>
                     <div className="pt-2 flex items-center justify-between gap-2 border-t border-slate-100">
@@ -136,21 +149,29 @@ export default async function PanelPage({ searchParams }: { searchParams: Promis
                       <th className="p-4 whitespace-nowrap font-bold">Año / Km</th>
                       <th className="p-4 whitespace-nowrap font-bold">Precio (ARS / USD)</th>
                       <th className="p-4 whitespace-nowrap font-bold">Sucursal</th>
+                      <th className="p-4 whitespace-nowrap font-bold">Vendedor</th>
                       <th className="p-4 text-right whitespace-nowrap font-bold">Estado / Acciones</th>
                     </tr>
                   </thead>
                   <tbody>
                     {vehiculos.map((auto) => (
-                      <tr key={auto.id} className="border-b border-slate-100 hover:bg-slate-50 transition-colors">
+                      <tr key={auto.id} className={`border-b hover:bg-slate-50 transition-colors ${auto.pautado ? "border-l-2 border-l-orange-400 bg-orange-50/30 border-b-slate-100" : "border-slate-100"}`}>
                         <td className="p-4">
                           <div className="flex items-center gap-3">
-                            {auto.multimedia_vehiculos?.[0] ? (
-                              <img src={auto.multimedia_vehiculos[0].url_archivo} className="w-14 h-10 object-cover rounded-md border border-slate-200 shrink-0 shadow-sm" />
-                            ) : (
-                              <div className="w-14 h-10 bg-slate-100 border border-slate-200 rounded-md flex items-center justify-center shrink-0">
-                                <Car className="w-5 h-5 text-slate-400" />
-                              </div>
-                            )}
+                            <div className="relative shrink-0">
+                              {auto.multimedia_vehiculos?.[0] ? (
+                                <img src={auto.multimedia_vehiculos[0].url_archivo} className="w-14 h-10 object-cover rounded-md border border-slate-200 shadow-sm" />
+                              ) : (
+                                <div className="w-14 h-10 bg-slate-100 border border-slate-200 rounded-md flex items-center justify-center">
+                                  <Car className="w-5 h-5 text-slate-400" />
+                                </div>
+                              )}
+                              {auto.pautado && (
+                                <span className="absolute -top-1.5 -left-1.5 bg-orange-500 text-white rounded-full p-0.5 shadow-sm" title={`Pautado${auto.canal_pauta ? ` · ${auto.canal_pauta}` : ""}`}>
+                                  <Megaphone className="w-2.5 h-2.5" />
+                                </span>
+                              )}
+                            </div>
                             <div className="min-w-0">
                               <span className="text-[9px] text-slate-400 font-bold block truncate uppercase tracking-widest">{auto.patente}</span>
                               <span className="font-bold capitalize text-[13px] text-slate-900 block truncate leading-tight">{auto.marca} {auto.modelo}</span>
@@ -165,6 +186,9 @@ export default async function PanelPage({ searchParams }: { searchParams: Promis
                         </td>
                         <td className="p-4 whitespace-nowrap">
                           <EdicionSucursal autoId={auto.id} sucursalActualId={auto.sucursal_id} sucursalActualNombre={auto.sucursales?.nombre} sucursales={sucursales || []} puedeGestionar={puedeGestionar} />
+                        </td>
+                        <td className="p-4 whitespace-nowrap">
+                          <EdicionVendedor autoId={auto.id} autoSucursalId={auto.sucursal_id} vendedorActualId={auto.vendedor_asignado_id} vendedorActualNombre={auto.vendedor?.nombre} vendedores={vendedores || []} puedeGestionar={puedeGestionar} />
                         </td>
                         <td className="p-4">
                           <div className="flex items-center justify-end gap-3">

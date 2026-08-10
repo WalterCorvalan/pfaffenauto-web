@@ -1,9 +1,18 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import Link from "next/link";
-import { supabase } from "@/lib/supabase"; 
+import Script from "next/script";
 import { ArrowLeft, Loader2, CheckCircle2, ChevronDown, CarFront, User, Phone } from "lucide-react";
+
+declare global {
+  interface Window {
+    turnstile?: {
+      render: (container: HTMLElement, options: Record<string, unknown>) => string;
+      reset: (widgetId?: string) => void;
+    };
+  }
+}
 
 const marcasDisponibles = [
   "Audi", "BAIC", "BMW", "Changan", "Chery", "Chevrolet", "Citroen", 
@@ -38,13 +47,17 @@ export default function CotizadorForm() {
   const [km, setKm] = useState("");
   const [gnc, setGnc] = useState("");
 
-  // Estados de Contacto y SMS
+  // Estados de Contacto
   const [nombre, setNombre] = useState("");
   const [apellido, setApellido] = useState("");
   const [email, setEmail] = useState("");
   const [tel, setTel] = useState("");
-  const [codigoSMS, setCodigoSMS] = useState("");
-  const [codigoEnviado, setCodigoEnviado] = useState(false);
+
+  // Turnstile (anti-spam gratuito)
+  const [turnstileToken, setTurnstileToken] = useState("");
+  const [turnstileListo, setTurnstileListo] = useState(false);
+  const turnstileRef = useRef<HTMLDivElement>(null);
+  const turnstileWidgetId = useRef<string | null>(null);
 
   // Controladores de Dropdowns
   const [openDropdown, setOpenDropdown] = useState<string | null>(null);
@@ -79,132 +92,69 @@ export default function CotizadorForm() {
     return anio && marca && modelo && version && km;
   };
 
+  // Renderiza el widget de Turnstile cuando llegamos al paso de contacto
+  useEffect(() => {
+    if (step !== 3 || !turnstileListo || !turnstileRef.current || !window.turnstile) return;
+    if (turnstileWidgetId.current) return; // ya renderizado
+
+    turnstileWidgetId.current = window.turnstile.render(turnstileRef.current, {
+      sitekey: process.env.NEXT_PUBLIC_TURNSTILE_SITE_KEY || "",
+      callback: (token: string) => setTurnstileToken(token),
+      "expired-callback": () => setTurnstileToken(""),
+      "error-callback": () => setTurnstileToken(""),
+    });
+  }, [step, turnstileListo]);
+
   // =================================================================
-  // 1. SOLICITAR CÓDIGO (Usa el puente /api/n8n para evitar CORS)
+  // ENVIAR COTIZACIÓN (verificación anti-spam vía Turnstile, server-side)
   // =================================================================
-  const solicitarCodigoSMS = async (e: React.FormEvent) => {
+  const enviarCotizacion = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!nombre.trim() || !apellido.trim() || !email.trim() || !tel.trim()) {
       alert("Por favor completá todos los campos de contacto.");
       return;
     }
-
-    setLoading(true);
-
-    try {
-      const codigoGenerado = Math.floor(1000 + Math.random() * 9000).toString();
-
-      const { error: dbError } = await supabase
-        .from('verificaciones_sms')
-        .insert({
-          telefono: tel.trim(),
-          codigo: codigoGenerado
-        });
-
-      if (dbError) throw dbError;
-
-      // Disparamos a N8N a través de nuestra API local
-      await fetch("/api/n8n", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ 
-          endpoint: "ENVIAR-CODIGO-SMS",
-          isTest: false, // <--- CAMBIAMOS ESTO A FALSE O LO BORRAMOS
-          payload: {
-            telefono: tel.trim(), 
-            nombre: nombre.trim(), 
-            codigo: codigoGenerado
-          }
-        })
-      });
-
-      setCodigoEnviado(true);
-      setStep(4);
-
-    } catch (error) {
-      console.error("Error al solicitar SMS:", error);
-      alert("No pudimos enviar el código. Asegurate de correr el SQL en Supabase.");
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  // =================================================================
-  // 2. VERIFICAR Y ENVIAR (Usa el puente /api/n8n para evitar CORS)
-  // =================================================================
-  const verificarCodigoYEnviar = async () => {
-    if (codigoSMS.length < 4) {
-      alert("Ingresá el código de verificación completo.");
+    if (!turnstileToken) {
+      alert("Completá la verificación anti-spam antes de continuar.");
       return;
     }
 
     setLoading(true);
 
     try {
-      const { data: verificacion, error: fetchError } = await supabase
-        .from('verificaciones_sms')
-        .select('codigo')
-        .eq('telefono', tel.trim())
-        .order('created_at', { ascending: false })
-        .limit(1)
-        .single();
-
-      if (fetchError || !verificacion) {
-        alert("No se encontró una solicitud para este número.");
-        setLoading(false);
-        return;
-      }
-
-      if (verificacion.codigo !== codigoSMS) {
-        alert("El código ingresado es incorrecto.");
-        setLoading(false);
-        return;
-      }
-
-      const { data: cotizacion, error: dbError } = await supabase
-        .from('cotizaciones')
-        .insert({
-          marca,
-          modelo,
-          anio: Number(anio),
-          version: `${version} - GNC: ${gnc || 'No'}`,
-          kilometraje: Number(km),
-          nombre: `${nombre.trim()} ${apellido.trim()}`,
-          email: email.trim(), 
-          telefono: tel.trim(),
-          telefono_verificado: true, 
-          tipo_peritaje: 'online',
-          sucursal_preferida: 'Casa Central',
-          fotos_y_videos: []
-        })
-        .select('id')
-        .single();
-
-      if (dbError) throw dbError;
-
-      // Disparamos CRM a través de nuestra API local
-      const response = await fetch("/api/n8n", {
+      const response = await fetch("/api/cotizaciones", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ 
-          endpoint: "1999b53e-8ab2-4223-b71e-226575a4ac46",
-          payload: { cotizacion_id: cotizacion.id }
-        })
+        body: JSON.stringify({
+          turnstileToken,
+          marca,
+          modelo,
+          anio,
+          version: `${version} - GNC: ${gnc || "No"}`,
+          kilometraje: km,
+          nombre: `${nombre.trim()} ${apellido.trim()}`,
+          email: email.trim(),
+          telefono: tel.trim(),
+          tipo_peritaje: "online",
+          sucursal_preferida: "Casa Central",
+        }),
       });
 
-      if (response.ok) {
-        setEnviado(true);
-      } else {
-        throw new Error("El webhook del CRM falló");
-      }
+      const data = await response.json();
+      if (!response.ok) throw new Error(data.error || "Error al enviar la cotización");
 
+      setEnviado(true);
     } catch (error) {
-      console.error("Error al verificar/cotizar:", error);
-      alert("Hubo un problema al procesar tu solicitud. Reintentá.");
+      console.error("Error al enviar cotización:", error);
+      alert(error instanceof Error ? error.message : "Hubo un problema al procesar tu solicitud. Reintentá.");
+      if (turnstileWidgetId.current && window.turnstile) {
+        window.turnstile.reset(turnstileWidgetId.current);
+      }
+      setTurnstileToken("");
     } finally {
       setLoading(false);
     }
-  };  
+  };
 
   return (
     <div className="min-h-screen bg-[#F8FAFC] text-slate-900 pt-16 pb-50 relative font-sans overflow-hidden flex flex-col justify-between">
@@ -248,8 +198,7 @@ export default function CotizadorForm() {
                 <p className="text-xs text-slate-400 font-medium">
                   {step === 1 && "Ingresá los datos del vehículo"}
                   {step === 2 && "¿Tu auto tiene o tuvo GNC?"}
-                  {step === 3 && "Necesitamos tus datos para enviarte el código"}
-                  {step === 4 && "Verificá tu número de teléfono"}
+                  {step === 3 && "Dejanos tus datos de contacto"}
                 </p>
               </div>
             )}
@@ -407,7 +356,7 @@ export default function CotizadorForm() {
                 )}
 
                 {step === 3 && (
-                  <form onSubmit={solicitarCodigoSMS} className="space-y-4 animate-fadeIn">
+                  <form onSubmit={enviarCotizacion} className="space-y-4 animate-fadeIn">
                     <div>
                       <button type="button" onClick={() => setStep(2)} className="text-xs font-bold text-[#0145F2] flex items-center gap-1 mb-2 hover:underline">
                         <ArrowLeft className="w-3.5 h-3.5" /> Volver
@@ -467,53 +416,19 @@ export default function CotizadorForm() {
                       </div>
                     </div>
 
-                    <p className="text-[10px] text-center text-slate-400 font-medium pt-1">Recibirás un código de verificación por SMS</p>
+                    <div className="pt-1 flex justify-center">
+                      <div ref={turnstileRef} />
+                    </div>
 
-                    <button 
-                      type="submit" 
-                      disabled={loading}
+                    <button
+                      type="submit"
+                      disabled={loading || !turnstileToken}
                       className="w-full py-4 bg-gradient-to-r from-[#0145F2] to-blue-600 hover:from-blue-600 hover:to-sky-500 disabled:opacity-50 text-white font-black rounded-2xl uppercase tracking-widest text-xs transition-all shadow-lg shadow-blue-500/20 cursor-pointer flex items-center justify-center gap-2 active:scale-95"
                     >
                       {loading && <Loader2 className="w-4 h-4 animate-spin" />}
-                      {loading ? "Enviando..." : "Enviar código por SMS"}
+                      {loading ? "Enviando..." : "Enviar solicitud de cotización"}
                     </button>
                   </form>
-                )}
-
-                {step === 4 && (
-                  <div className="space-y-6 animate-fadeIn py-2">
-                    <div>
-                      <button onClick={() => setStep(3)} className="text-xs font-bold text-[#0145F2] flex items-center gap-1 mb-2 hover:underline">
-                        <ArrowLeft className="w-3.5 h-3.5" /> Cambiar número
-                      </button>
-                      <p className="text-xs text-slate-500 mt-1">
-                        Enviamos un código de 4 dígitos por SMS al número <strong className="text-slate-900">+549 {tel}</strong>
-                      </p>
-                    </div>
-
-                    <div className="space-y-3">
-                      <label className="text-[11px] font-bold text-slate-500 uppercase block">Código de verificación</label>
-                      <input 
-                        type="text" 
-                        maxLength={6}
-                        placeholder="Ej: 1234" 
-                        value={codigoSMS}
-                        onChange={(e) => setCodigoSMS(e.target.value)}
-                        className="w-full bg-white/80 border border-white rounded-2xl px-4 py-3.5 text-center text-2xl font-black tracking-widest text-navy outline-none focus:border-[#0145F2] shadow-inner"
-                        autoFocus
-                      />
-                    </div>
-
-                    <button 
-                      type="button" 
-                      onClick={verificarCodigoYEnviar}
-                      disabled={loading || codigoSMS.length < 4}
-                      className="w-full py-4 bg-gradient-to-r from-[#0145F2] to-blue-600 hover:from-blue-600 hover:to-sky-500 disabled:opacity-50 text-white font-black rounded-2xl uppercase tracking-widest text-xs transition-all shadow-lg shadow-blue-500/20 cursor-pointer flex items-center justify-center gap-2 active:scale-95"
-                    >
-                      {loading && <Loader2 className="w-4 h-4 animate-spin text-white" />}
-                      {loading ? "VERIFICANDO..." : "Confirmar y Enviar Solicitud"}
-                    </button>
-                  </div>
                 )}
 
               </div>
@@ -524,7 +439,7 @@ export default function CotizadorForm() {
                 </div>
                 <h3 className="text-2xl font-black text-navy uppercase tracking-tighter">¡Cotización enviada!</h3>
                 <p className="text-slate-500 text-xs leading-relaxed max-w-xs mx-auto">
-                  Teléfono verificado con éxito. Recibimos los datos de tu vehículo y un asesor comercial se pondrá en contacto a la brevedad.
+                  Recibimos los datos de tu vehículo y un asesor comercial se pondrá en contacto a la brevedad.
                 </p>
                 <div className="pt-4">
                   <Link href="/" className="inline-block py-3.5 px-8 bg-gradient-to-r from-[#0145F2] to-blue-600 text-white font-black rounded-2xl text-xs uppercase tracking-widest shadow-lg shadow-blue-500/20">
@@ -543,6 +458,11 @@ export default function CotizadorForm() {
         Pfaffen Autos &bull; Todos los derechos reservados
       </footer>
 
+      <Script
+        src="https://challenges.cloudflare.com/turnstile/v0/api.js"
+        strategy="lazyOnload"
+        onLoad={() => setTurnstileListo(true)}
+      />
     </div>
   );
 }

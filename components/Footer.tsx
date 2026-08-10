@@ -40,6 +40,7 @@ export default function Footer() {
     { label: "Nuestras Sucursales", href: "/#sucursales" },
     { label: "Cotizar mi Usado", href: "/cotizador" },
     { label: "Consignar Vehículo", href: "/consignacion" },
+    { label: "Seguir mi Compra", href: "/seguimiento" },
     { label: "Nuestra Historia", href: "/nosotros" },
     { label: "Trabajá con nosotros", href: "/trabaja-con-nosotros" },
   ];

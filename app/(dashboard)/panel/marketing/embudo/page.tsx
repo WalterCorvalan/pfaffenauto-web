@@ -1,6 +1,6 @@
 import { createServerClient } from "@supabase/ssr";
 import { cookies } from "next/headers";
-import { Megaphone, Filter, Users, MessageSquareText, Target, Trophy, ArrowRight, BarChart3, Globe, TrendingUp } from "lucide-react";
+import { Megaphone, Filter, Users, MessageSquareText, Target, Trophy, ArrowRight, BarChart3, Globe, TrendingUp, Percent, CheckCircle2 } from "lucide-react";
 
 export default async function EmbudoPage() {
   const cookieStore = await cookies();
@@ -16,6 +16,51 @@ export default async function EmbudoPage() {
     .select("estado, canal_origen, created_at");
 
   const datos = leads || [];
+
+  // 1b. Ventas cruzadas con si el auto estaba pautado o no
+  const { data: ventasPauta } = await supabase
+    .from("ventas")
+    .select("vehiculo_id, vehiculos ( pautado, canal_pauta )");
+
+  const totalVentas = ventasPauta?.length || 0;
+  const ventasConPauta = (ventasPauta || []).filter((v: any) => v.vehiculos?.pautado).length;
+  const ventasSinPauta = totalVentas - ventasConPauta;
+  const pctConPauta = totalVentas > 0 ? Math.round((ventasConPauta / totalVentas) * 100) : 0;
+  const pctSinPauta = totalVentas > 0 ? 100 - pctConPauta : 0;
+
+  // 1c. Embudo por cita, cruzado por vendedor: citó -> asistió -> compró
+  const { data: visitasVend } = await supabase
+    .from("visitas_agendadas")
+    .select("vendedor_id, estado, vehiculo_id")
+    .not("vendedor_id", "is", null);
+
+  const { data: ventasVehIds } = await supabase.from("ventas").select("vehiculo_id");
+  const vehiculosVendidos = new Set((ventasVehIds || []).map((v: any) => v.vehiculo_id));
+
+  const { data: vendedoresPerfiles } = await supabase
+    .from("perfiles")
+    .select("id, nombre")
+    .eq("rol", "vendedor");
+
+  const nombreVendedor = (id: string) => vendedoresPerfiles?.find((v: any) => v.id === id)?.nombre || "Sin nombre";
+
+  const porVendedorMap: Record<string, { citas: number; asistieron: number; compraron: number }> = {};
+  (visitasVend || []).forEach((v: any) => {
+    if (!porVendedorMap[v.vendedor_id]) {
+      porVendedorMap[v.vendedor_id] = { citas: 0, asistieron: 0, compraron: 0 };
+    }
+    porVendedorMap[v.vendedor_id].citas += 1;
+    if (v.estado === "Asistió") {
+      porVendedorMap[v.vendedor_id].asistieron += 1;
+      if (v.vehiculo_id && vehiculosVendidos.has(v.vehiculo_id)) {
+        porVendedorMap[v.vendedor_id].compraron += 1;
+      }
+    }
+  });
+
+  const embudoPorVendedor = Object.entries(porVendedorMap)
+    .map(([vendedorId, stats]) => ({ vendedorId, nombre: nombreVendedor(vendedorId), ...stats }))
+    .sort((a, b) => b.citas - a.citas);
 
   // ================= CÁLCULOS DEL EMBUDO =================
   const totalLeads = datos.length;
@@ -131,6 +176,82 @@ export default async function EmbudoPage() {
                 </div>
               </div>
 
+            </div>
+          </div>
+
+          {/* ================= VENTAS: PAUTADO VS NO PAUTADO ================= */}
+          <div className="bg-white border border-slate-200 rounded-2xl shadow-sm overflow-hidden">
+            <div className="p-6 border-b border-slate-100 flex items-center justify-between">
+              <h2 className="text-[11px] font-bold uppercase tracking-widest text-slate-500 flex items-center gap-2">
+                <Percent className="w-4 h-4 text-orange-500" /> Ventas: Autos Pautados vs. No Pautados
+              </h2>
+              <span className="text-[11px] font-bold text-slate-400">{totalVentas} ventas totales</span>
+            </div>
+            <div className="p-6 grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <div className="bg-orange-50 border border-orange-200 rounded-xl p-5 text-center">
+                <div className="w-10 h-10 mx-auto bg-orange-100 text-orange-600 rounded-full flex items-center justify-center mb-3">
+                  <Megaphone className="w-5 h-5" />
+                </div>
+                <h3 className="text-3xl font-black text-orange-700 mb-1">{pctConPauta}%</h3>
+                <p className="text-[11px] font-bold uppercase tracking-widest text-orange-600">Estaban Pautados ({ventasConPauta})</p>
+              </div>
+              <div className="bg-slate-50 border border-slate-100 rounded-xl p-5 text-center">
+                <div className="w-10 h-10 mx-auto bg-slate-200 text-slate-600 rounded-full flex items-center justify-center mb-3">
+                  <CheckCircle2 className="w-5 h-5" />
+                </div>
+                <h3 className="text-3xl font-black text-slate-700 mb-1">{pctSinPauta}%</h3>
+                <p className="text-[11px] font-bold uppercase tracking-widest text-slate-500">Sin Pauta ({ventasSinPauta})</p>
+              </div>
+            </div>
+          </div>
+
+          {/* ================= EMBUDO POR CITA X VENDEDOR ================= */}
+          <div className="bg-white border border-slate-200 rounded-2xl shadow-sm overflow-hidden">
+            <div className="p-6 border-b border-slate-100 flex items-center justify-between">
+              <h2 className="text-[11px] font-bold uppercase tracking-widest text-slate-500 flex items-center gap-2">
+                <Users className="w-4 h-4 text-indigo-500" /> Embudo por Cita, según Vendedor
+              </h2>
+            </div>
+            <div className="overflow-x-auto">
+              <table className="w-full text-left border-collapse">
+                <thead>
+                  <tr className="bg-slate-50 border-b border-slate-200 text-slate-500 text-[10px] uppercase tracking-widest font-bold">
+                    <th className="p-4 pl-6 whitespace-nowrap">Vendedor</th>
+                    <th className="p-4 text-center whitespace-nowrap">Citas Asignadas</th>
+                    <th className="p-4 text-center whitespace-nowrap">Asistieron</th>
+                    <th className="p-4 text-center whitespace-nowrap">Compraron</th>
+                    <th className="p-4 pr-6 text-right whitespace-nowrap">Cierre sobre Citas</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-slate-100">
+                  {embudoPorVendedor.map((v) => {
+                    const cierre = v.citas > 0 ? Math.round((v.compraron / v.citas) * 100) : 0;
+                    return (
+                      <tr key={v.vendedorId} className="hover:bg-slate-50/50 transition-colors">
+                        <td className="p-4 pl-6 font-bold text-[13px] text-slate-800">{v.nombre}</td>
+                        <td className="p-4 text-center font-mono text-[14px] text-slate-600">{v.citas}</td>
+                        <td className="p-4 text-center font-mono text-[14px] text-slate-600">{v.asistieron}</td>
+                        <td className="p-4 text-center font-mono text-[14px] font-bold text-emerald-600">{v.compraron}</td>
+                        <td className="p-4 pr-6 text-right">
+                          <span className={`inline-flex items-center px-2 py-1 rounded-md text-[11px] font-bold border ${
+                            cierre > 20 ? 'bg-emerald-50 text-emerald-700 border-emerald-200' :
+                            cierre > 0 ? 'bg-blue-50 text-blue-700 border-blue-200' : 'bg-slate-100 text-slate-500 border-slate-200'
+                          }`}>
+                            <TrendingUp className="w-3 h-3 mr-1" /> {cierre}%
+                          </span>
+                        </td>
+                      </tr>
+                    );
+                  })}
+                  {embudoPorVendedor.length === 0 && (
+                    <tr>
+                      <td colSpan={5} className="p-10 text-center text-slate-400 text-sm italic">
+                        Aún no hay citas con vendedor asignado.
+                      </td>
+                    </tr>
+                  )}
+                </tbody>
+              </table>
             </div>
           </div>
 

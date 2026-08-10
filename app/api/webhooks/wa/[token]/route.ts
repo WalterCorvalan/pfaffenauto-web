@@ -144,6 +144,10 @@ const AgentReplySchema = z.object({
   }),
 });
 
+function isWhatsappEnvioConfigurado(): boolean {
+  return !!process.env.META_WHATSAPP_TOKEN && !!process.env.META_WHATSAPP_PHONE_NUMBER_ID;
+}
+
 async function ejecutarAgente(conversacionId: string, contactoId: string) {
   if (!isAiConfigured()) return;
 
@@ -182,14 +186,22 @@ async function ejecutarAgente(conversacionId: string, contactoId: string) {
     .update({ calificacion, estado: estadoSegunCalificacion })
     .eq("id", conversacionId);
 
-  await supabase.from("whatsapp_mensajes").insert({
-    conversacion_id: conversacionId,
-    direccion: "out",
-    tipo: "text",
-    texto: reply,
-    status: "pending",
-    ai_generado: true,
-  });
+  const { data: mensajeSaliente } = await supabase
+    .from("whatsapp_mensajes")
+    .insert({
+      conversacion_id: conversacionId,
+      direccion: "out",
+      tipo: "text",
+      texto: reply,
+      status: "pending",
+      ai_generado: true,
+    })
+    .select("id")
+    .single();
+
+  if (mensajeSaliente) {
+    await enviarYActualizarMensaje(mensajeSaliente.id, contactoId, reply);
+  }
 
   if (handoff) {
     await supabase
@@ -199,6 +211,36 @@ async function ejecutarAgente(conversacionId: string, contactoId: string) {
   }
 
   console.log(`[agente] respuesta generada (calificación: ${calificacion ?? "sin definir"}): ${reply}`);
+}
+
+async function enviarYActualizarMensaje(mensajeId: string, contactoId: string, texto: string) {
+  if (!isWhatsappEnvioConfigurado()) {
+    console.warn("[whatsapp] META_WHATSAPP_TOKEN / META_WHATSAPP_PHONE_NUMBER_ID no configurados: mensaje queda 'pending' sin enviar.");
+    return;
+  }
+
+  const { data: contacto } = await supabase
+    .from("whatsapp_contactos")
+    .select("telefono")
+    .eq("id", contactoId)
+    .single();
+  if (!contacto) return;
+
+  try {
+    const resultado = await sendTextMessage(
+      process.env.META_WHATSAPP_PHONE_NUMBER_ID!,
+      process.env.META_WHATSAPP_TOKEN!,
+      contacto.telefono,
+      texto
+    );
+    await supabase
+      .from("whatsapp_mensajes")
+      .update({ status: "sent", wa_message_id: resultado.messages?.[0]?.id })
+      .eq("id", mensajeId);
+  } catch (err) {
+    console.error("[whatsapp] error enviando mensaje:", err);
+    await supabase.from("whatsapp_mensajes").update({ status: "failed" }).eq("id", mensajeId);
+  }
 }
 
 async function actualizarEstadoMensaje(status: any) {
