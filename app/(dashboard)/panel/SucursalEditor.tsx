@@ -5,7 +5,7 @@ import { supabase } from "@/lib/supabase/client";
 import { useRouter } from "next/navigation";
 import { MapPin, Edit3, X, Save } from "lucide-react";
 
-interface EdicionSucursalProps {
+interface SucursalEditorProps {
   autoId: string;
   sucursalActualId: string | null;
   sucursalActualNombre: string | null;
@@ -13,7 +13,7 @@ interface EdicionSucursalProps {
   puedeGestionar: boolean;
 }
 
-export default function EdicionSucursal({ autoId, sucursalActualId, sucursalActualNombre, sucursales, puedeGestionar }: EdicionSucursalProps) {
+export default function SucursalEditor({ autoId, sucursalActualId, sucursalActualNombre, sucursales, puedeGestionar }: SucursalEditorProps) {
   const router = useRouter();
   const [isEditing, setIsEditing] = useState(false);
   const [nuevaSucursal, setNuevaSucursal] = useState(sucursalActualId || "");

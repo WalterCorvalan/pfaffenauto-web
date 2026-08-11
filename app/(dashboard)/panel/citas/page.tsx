@@ -1,8 +1,8 @@
 import { createServerClient } from "@supabase/ssr";
 import { cookies } from "next/headers";
 import { CalendarCheck, CarFront, MapPin, Clock, Users, CheckCircle2, XCircle, CalendarClock, MessageSquareText } from "lucide-react";
-import CambiarEstadoVisita from "./CambiarEstadoVisita";
-import AsignarVendedorVisita from "./AsignarVendedorVisita";
+import EstadoVisitaSelector from "./EstadoVisitaSelector";
+import VendedorVisitaSelector from "./VendedorVisitaSelector";
 
 export default async function CitasPage() {
   const cookieStore = await cookies();
@@ -91,7 +91,7 @@ export default async function CitasPage() {
             </span>
           </div>
         ) : (
-          <AsignarVendedorVisita visitaId={v.id} visitaSucursal={v.sucursal} vendedorActualId={v.vendedor_id} vendedores={vendedores} />
+          <VendedorVisitaSelector visitaId={v.id} visitaSucursal={v.sucursal} vendedorActualId={v.vendedor_id} vendedores={vendedores} />
         )}
         <div className="flex items-center gap-2 text-[11px]">
           <CarFront className="w-3.5 h-3.5 text-indigo-500 shrink-0" />
@@ -107,7 +107,7 @@ export default async function CitasPage() {
 
       {/* Footer: Acciones */}
       <div className="pt-3 border-t border-slate-100 flex items-center justify-between gap-2 mt-auto">
-        <CambiarEstadoVisita visitaId={v.id} estadoActual={v.estado} />
+        <EstadoVisitaSelector visitaId={v.id} estadoActual={v.estado} />
         <a
           href={`https://wa.me/${v.telefono_cliente.replace(/\D/g, "")}`}
           target="_blank"

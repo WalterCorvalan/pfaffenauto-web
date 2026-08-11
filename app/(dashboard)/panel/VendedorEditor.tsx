@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { supabase } from "@/lib/supabase";
+import { supabase } from "@/lib/supabase/client";
 import { useRouter } from "next/navigation";
 import { User, Edit3, X, Save } from "lucide-react";
 
@@ -11,7 +11,7 @@ interface Vendedor {
   sucursal_id: string | null;
 }
 
-interface EdicionVendedorProps {
+interface VendedorEditorProps {
   autoId: string;
   autoSucursalId: string | null;
   vendedorActualId: string | null;
@@ -20,7 +20,7 @@ interface EdicionVendedorProps {
   puedeGestionar: boolean;
 }
 
-export default function EdicionVendedor({ autoId, autoSucursalId, vendedorActualId, vendedorActualNombre, vendedores, puedeGestionar }: EdicionVendedorProps) {
+export default function VendedorEditor({ autoId, autoSucursalId, vendedorActualId, vendedorActualNombre, vendedores, puedeGestionar }: VendedorEditorProps) {
   const router = useRouter();
   const [isEditing, setIsEditing] = useState(false);
   const [nuevoVendedor, setNuevoVendedor] = useState(vendedorActualId || "");

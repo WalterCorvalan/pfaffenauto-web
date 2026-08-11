@@ -1,4 +1,4 @@
-import { createClient } from "@/lib/supabase-server";
+import { createClient } from "@/lib/supabase/server";
 import Link from "next/link";
 import { ChevronRight, ShieldCheck } from "lucide-react";
 export const revalidate = 60;

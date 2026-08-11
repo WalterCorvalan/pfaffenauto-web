@@ -13,7 +13,7 @@ import BannerFinanciacion from "@/components/banners/BannerFinanciacion";
 import Sucursales from "@/components/Sucursales";
 import Testimonials from "@/components/Testimonials";
 import FAQ from "@/components/FAQ";
-import AgendarCitaForm from "@/components/AgendarCitaForm";
+import AgendarCitaForm from "@/components/forms/AgendarCitaForm";
 import Seguimiento from "@/components/Seguimiento";
 
 const supabase = createClient(
@@ -23,7 +23,6 @@ const supabase = createClient(
 
 export default function Page() {
   const [vehiculos, setVehiculos] = useState<any[]>([]);
-  const [isComparadorOpen, setIsComparadorOpen] = useState(false);
   const [autosComparar, setAutosComparar] = useState<any[]>([]);
 
   useEffect(() => {

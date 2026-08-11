@@ -2,7 +2,7 @@
 
 import { useMemo, useState } from "react";
 import Link from "next/link";
-import { supabase } from "@/lib/supabase";
+import { supabase } from "@/lib/supabase/client";
 import {
   Archive, ArchiveRestore, MessageSquareText, Search, Users, Edit2, X, Save, Phone,
 } from "lucide-react";

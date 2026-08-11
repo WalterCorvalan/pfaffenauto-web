@@ -3,7 +3,7 @@
 import { useState, useEffect } from "react";
 import { Search, User, Phone, CarFront, Send, X, Loader2 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
-import { supabase } from "@/lib/supabase"; // Importamos tu cliente de Supabase
+import { supabase } from "@/lib/supabase/client"; // Importamos tu cliente de Supabase
 
 interface BuscadorFallbackProps {
   isOpen: boolean;

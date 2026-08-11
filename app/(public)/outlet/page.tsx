@@ -1,4 +1,4 @@
-import { createClient } from "@/lib/supabase-server";
+import { createClient } from "@/lib/supabase/server";
 import Stock from "@/components/Stock";
 import { Tag, AlertCircle } from "lucide-react";
 import Link from "next/link";

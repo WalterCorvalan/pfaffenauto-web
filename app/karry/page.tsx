@@ -1,4 +1,4 @@
-import LandingKarry from "@/components/LandingKarry";
+import LandingKarry from "@/components/landing/LandingKarry";
 
 export const metadata = {
   title: "Karry Pick Up | Pfaffen Autos",

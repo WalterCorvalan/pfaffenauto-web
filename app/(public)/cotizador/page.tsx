@@ -1,4 +1,4 @@
-import CotizadorForm from "@/components/CotizadorForm";
+import CotizadorForm from "@/components/forms/CotizadorForm";
 
 export const metadata = {
   title: "Cotizá tu vehículo | Pfaffen Autos",

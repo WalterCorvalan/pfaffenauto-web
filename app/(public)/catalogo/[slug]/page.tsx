@@ -1,4 +1,4 @@
-import { createClient } from "@/lib/supabase-server";
+import { createClient } from "@/lib/supabase/server";
 import { notFound } from "next/navigation";
 import Link from "next/link";
 import {
@@ -14,7 +14,7 @@ import {
 
 import BotonesInteractivos from "@/components/BotonesInteractivos";
 import GaleriaVehiculo from "@/components/GaleriaVehiculo";
-import AgendarVisita from "@/components/AgendarVisita";
+import AgendarVisitaForm from "@/components/forms/AgendarVisitaForm";
 import SimuladorFinanciacion from "@/components/SimuladorFinanciacion";
 
 export const revalidate = 60;
@@ -71,45 +71,57 @@ export default async function VehiculoDetallePage({
   const precioArs = auto.precio_publicado_ars || 0;
   const precioUsd = auto.precio_publicado_usd || null;
 
-  // ================= 3. AUTOS SIMILARES =================
-  let { data: vehiculosSimilares } = await supabase
+  // ================= 3. TAMBIÉN TE PODRÍA INTERESAR (misma marca o tipo) =================
+  const CAMPOS_CARD = `id, marca, modelo, version, anio, kilometraje, transmision, precio_publicado_ars, precio_publicado_usd, slug, sucursales ( nombre ), multimedia_vehiculos ( url_archivo )`;
+
+  // Se arman como dos queries separadas (en vez de .or() con un string armado a mano) porque
+  // varios "tipo" tienen espacios y "|" (ej: "Todo Terreno | SUV") que rompen el filtro OR de PostgREST.
+  const { data: porMarca } = await supabase
     .from("vehiculos")
-    .select(
-      `id, marca, modelo, version, anio, precio_publicado_ars, precio_publicado_usd, slug, multimedia_vehiculos ( url_archivo )`,
-    )
+    .select(CAMPOS_CARD)
     .eq("marca", auto.marca)
     .neq("id", auto.id)
     .in("estado", ["Disponible", "Reservado"])
-    .limit(3);
+    .order("created_at", { ascending: false })
+    .limit(4);
 
-  if (!vehiculosSimilares || vehiculosSimilares.length === 0) {
-    const precioMin = precioArs * 0.7;
-    const precioMax = precioArs * 1.3;
-    const { data: porPrecio } = await supabase
+  let tambienTeInteresa = porMarca || [];
+
+  if (tambienTeInteresa.length < 4 && auto.tipo) {
+    const idsYaIncluidos = [auto.id, ...tambienTeInteresa.map((v: any) => v.id)];
+    const { data: porTipo } = await supabase
       .from("vehiculos")
-      .select(
-        `id, marca, modelo, version, anio, precio_publicado_ars, precio_publicado_usd, slug, multimedia_vehiculos ( url_archivo )`,
-      )
-      .gte("precio_publicado_ars", precioMin)
-      .lte("precio_publicado_ars", precioMax)
-      .neq("id", auto.id)
+      .select(CAMPOS_CARD)
+      .eq("tipo", auto.tipo)
+      .not("id", "in", `(${idsYaIncluidos.join(",")})`)
       .in("estado", ["Disponible", "Reservado"])
-      .limit(3);
-    vehiculosSimilares = porPrecio;
+      .order("created_at", { ascending: false })
+      .limit(4 - tambienTeInteresa.length);
+    tambienTeInteresa = [...tambienTeInteresa, ...(porTipo || [])];
   }
 
-  if (!vehiculosSimilares || vehiculosSimilares.length === 0) {
+  if (!tambienTeInteresa || tambienTeInteresa.length === 0) {
     const { data: ultimosIngresos } = await supabase
       .from("vehiculos")
-      .select(
-        `id, marca, modelo, version, anio, precio_publicado_ars, precio_publicado_usd, slug, multimedia_vehiculos ( url_archivo )`,
-      )
+      .select(CAMPOS_CARD)
       .neq("id", auto.id)
       .in("estado", ["Disponible", "Reservado"])
       .order("created_at", { ascending: false })
-      .limit(3);
-    vehiculosSimilares = ultimosIngresos;
+      .limit(4);
+    tambienTeInteresa = ultimosIngresos || [];
   }
+
+  const idsExcluidos = [auto.id, ...(tambienTeInteresa || []).map((v: any) => v.id)];
+
+  // ================= 4. AUTOS CON PRECIO SIMILAR (±15%) =================
+  const { data: precioSimilar } = await supabase
+    .from("vehiculos")
+    .select(CAMPOS_CARD)
+    .gte("precio_publicado_ars", precioArs * 0.85)
+    .lte("precio_publicado_ars", precioArs * 1.15)
+    .not("id", "in", `(${idsExcluidos.join(",")})`)
+    .in("estado", ["Disponible", "Reservado"])
+    .limit(4);
 
   // ================= 4. RENDERIZADO PRINCIPAL =================
   return (
@@ -173,6 +185,9 @@ export default async function VehiculoDetallePage({
             />
           </div>
         </div>
+
+        <VehiculosRelacionados titulo="También te podría interesar" vehiculos={tambienTeInteresa || []} />
+        <VehiculosRelacionados titulo="Autos con precio similar" vehiculos={precioSimilar || []} />
 
         <VehiculoPermuta />
       </div>
@@ -398,7 +413,7 @@ function VehiculoPriceCard({
         >
           Consultar por WhatsApp
         </a>
-        <AgendarVisita auto={auto} />
+        <AgendarVisitaForm auto={auto} />
       </div>
 
       <hr className="border-slate-200/50 my-6 relative z-10 print:my-4" />
@@ -451,6 +466,59 @@ function VehiculoPriceCard({
   );
 }
 
+function VehiculosRelacionados({ titulo, vehiculos }: { titulo: string; vehiculos: any[] }) {
+  if (!vehiculos || vehiculos.length === 0) return null;
+
+  return (
+    <div className="mt-16 print:hidden relative z-10">
+      <h2 className="text-xl md:text-2xl font-black text-navy tracking-tight mb-5">{titulo}</h2>
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 md:gap-5">
+        {vehiculos.map((v) => {
+          const precioMostrar = v.precio_publicado_usd && !v.precio_publicado_ars
+            ? `US$ ${v.precio_publicado_usd.toLocaleString("es-AR")}`
+            : `$ ${(v.precio_publicado_ars || 0).toLocaleString("es-AR")}`;
+
+          return (
+            <Link
+              key={v.id}
+              href={`/catalogo/${v.slug}`}
+              className="block group bg-white/40 backdrop-blur-2xl rounded-[24px] border border-white/60 overflow-hidden shadow-[0_8px_32px_rgba(0,0,0,0.04)] hover:shadow-[0_20px_48px_rgba(1,69,242,0.12)] hover:border-white hover:bg-white/70 transition-all duration-500"
+            >
+              <div className="relative h-[140px] sm:h-[160px] bg-white/30 overflow-hidden mix-blend-multiply">
+                {v.multimedia_vehiculos?.[0] ? (
+                  <img
+                    src={v.multimedia_vehiculos[0].url_archivo}
+                    alt={`${v.marca} ${v.modelo}`}
+                    className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700 ease-out"
+                  />
+                ) : (
+                  <div className="w-full h-full flex items-center justify-center text-gray-300 text-xs font-medium">Sin foto</div>
+                )}
+              </div>
+              <div className="p-4 flex flex-col">
+                <span className="text-[10px] text-gray-400 font-black uppercase tracking-widest mb-1">{v.marca}</span>
+                <h3 className="text-sm font-black text-navy leading-tight uppercase truncate">{v.modelo}</h3>
+                <p className="text-[11px] text-gray-500 font-medium mt-0.5">
+                  {v.anio} · {v.kilometraje?.toLocaleString("es-AR")} km · {v.transmision || "—"}
+                </p>
+                <div className="mt-3 pt-3 flex items-center justify-between border-t border-gray-200/50">
+                  <span className="text-base font-black text-navy tracking-tighter">{precioMostrar}</span>
+                  <div className="w-7 h-7 rounded-full bg-white border border-gray-100 shadow-sm group-hover:bg-[#0145F2] group-hover:border-[#0145F2] group-hover:text-white flex items-center justify-center transition-all duration-300 text-gray-400">
+                    <ChevronRight className="w-3.5 h-3.5" />
+                  </div>
+                </div>
+                <span className="flex items-center gap-1 text-[10px] text-gray-400 font-medium mt-1.5">
+                  <MapPin className="w-2.5 h-2.5" /> {v.sucursales?.nombre || "Buenos Aires"}
+                </span>
+              </div>
+            </Link>
+          );
+        })}
+      </div>
+    </div>
+  );
+}
+
 function VehiculoPermuta() {
   return (
     <div className="mt-24 print:hidden relative z-10">
@@ -493,7 +561,7 @@ function MobileBottomBar({
     <div className="lg:hidden sticky bottom-4 left-0 w-full px-4 z-[40] mt-4 print:hidden">
       <div className="pointer-events-auto flex items-center gap-3 w-full max-w-md mx-auto bg-white/90 backdrop-blur-xl p-2.5 rounded-2xl shadow-[0_10px_40px_rgba(0,0,0,0.15)] border border-slate-200/60">
         <div className="flex-1 h-[48px]">
-          <AgendarVisita auto={auto} isMobile={true} />
+          <AgendarVisitaForm auto={auto} isMobile={true} />
         </div>
         <a
           href={linkWhatsApp}

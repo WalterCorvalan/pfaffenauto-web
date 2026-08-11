@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { supabase } from "@/lib/supabase";
+import { supabase } from "@/lib/supabase/client";
 import {
   Wallet, Plus, X, Car, FileBadge, ArrowLeftRight, Wrench, Receipt, Users, Building2,
 } from "lucide-react";

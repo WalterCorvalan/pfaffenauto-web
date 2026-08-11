@@ -4,11 +4,12 @@ import { createClient } from "@supabase/supabase-js";
 import { NEGOCIO_CONFIG } from "@/data/NegocioConfig";
 
 // =====================================================================
-// 🎛️ INTERRUPTOR PRINCIPAL
-// - true = Modo prueba: Lee el archivo TS y consulta Supabase (0 tokens de IA).
-// - false = Modo real: Activa a Claude con el stock de Supabase (con tokens).
+// 🎛️ BUSCADOR HÍBRIDO
+// 1. Reglas primero (0 tokens): institucional (horarios/sucursales/políticas)
+//    y stock por keyword directo.
+// 2. Si nada matchea con confianza, recién ahí cae a la IA (Claude + stock
+//    en vivo) para interpretar lenguaje natural más complejo.
 // =====================================================================
-const MODO_PRUEBA = true; 
 
 const anthropic = new Anthropic({
   apiKey: process.env.ANTHROPIC_API_KEY || "",
@@ -36,84 +37,74 @@ export async function POST(request: Request) {
     const preguntaOriginal = rawMessages[rawMessages.length - 1]?.content || "";
     const ultimoMensaje = preguntaOriginal.toLowerCase();
 
-    // =================================================================
-    // OPCIÓN 1: MODO PRUEBA (0 Tokens de IA - Usa TS + Supabase directo)
-    // =================================================================
-    // =================================================================
-    // OPCIÓN 1: MODO PRUEBA (0 Tokens de IA - Usa TS + Supabase directo)
-    // =================================================================
-    if (MODO_PRUEBA) {
-      await new Promise((resolve) => setTimeout(resolve, 600));
-
-      const { data: vehiculos } = await supabase
-        .from("vehiculos")
-        .select("marca, modelo, anio, precio_publicado_ars, tipo, kilometraje, estado")
-        .eq("estado", "Disponible");
-
-      const vehiculosList = vehiculos ?? [];
-
-      const autoEncontrado = vehiculosList.filter(v => 
-        ultimoMensaje.includes(v.marca.toLowerCase()) || 
-        ultimoMensaje.includes(v.modelo.toLowerCase()) ||
-        ultimoMensaje.includes("auto") ||
-        ultimoMensaje.includes("stock") ||
-        ultimoMensaje.includes("tienen")
-      );
-
-      // --- RESPUESTA DE STOCK (Autos) ---
-      if (autoEncontrado.length > 0 && (
-        ultimoMensaje.includes("tienen") || 
-        ultimoMensaje.includes("stock") || 
-        ultimoMensaje.includes("auto") || 
-        vehiculosList.some(v => ultimoMensaje.includes(v.marca.toLowerCase()))
-      )) {
-        const listadoStock = autoEncontrado
-          .map(v => `🚗 **${v.marca} ${v.modelo}** (${v.anio})\n💰 Precio: **$${v.precio_publicado_ars?.toLocaleString("es-AR")}**\n🛣️ Kilometraje: ${v.kilometraje} km\n`)
-          .join("\n");
-        
-        logPregunta(preguntaOriginal, true);
-        return NextResponse.json({
-          reply: `¡Sí! Tenemos estas opciones disponibles en stock:\n\n${listadoStock}\n*(Modo prueba - 0 tokens)*`
-        });
-      }
-
-      // --- RESPUESTAS INSTITUCIONALES (Estilizadas) ---
-      let respuestaLocal = `👋 ¡Hola! Soy el asistente virtual de **${NEGOCIO_CONFIG.nombre}**.\n\nPodés preguntarme por nuestro stock de vehículos, horarios, sucursales o planes de financiación. ¿En qué te ayudo hoy?`;
-
-      if (ultimoMensaje.includes("horario") || ultimoMensaje.includes("hora")) {
-        respuestaLocal = `🕒 **Nuestros Horarios de Atención:**\n\n${NEGOCIO_CONFIG.contacto.horarios}\n\n¡Te esperamos!`;
-      } 
-      else if (ultimoMensaje.includes("sucursal") || ultimoMensaje.includes("donde") || ultimoMensaje.includes("direccion") || ultimoMensaje.includes("ubicacion")) {
-        const listaSucursales = NEGOCIO_CONFIG.sucursales.map(s => 
-          `📍 **${s.nombre}**\n🗺️ ${s.direccion}\n📞 ${s.telefono}`
-        ).join("\n\n");
-        respuestaLocal = `🏢 **Nuestras Sucursales:**\n\n${listaSucursales}`;
-      } 
-      else if (ultimoMensaje.includes("financiacion") || ultimoMensaje.includes("cuotas") || ultimoMensaje.includes("credito")) {
-        respuestaLocal = `💳 **Planes de Financiación:**\n\n${NEGOCIO_CONFIG.politicas.financiacion}`;
-      } 
-      else if (ultimoMensaje.includes("consignacion") || ultimoMensaje.includes("vender") || ultimoMensaje.includes("consignar")) {
-        respuestaLocal = `🤝 **Consignación de Vehículos:**\n\n${NEGOCIO_CONFIG.politicas.consignacion}`;
-      }
-      else if (ultimoMensaje.includes("permuta") || ultimoMensaje.includes("parte de pago")) {
-        respuestaLocal = `🔄 **Permutas:**\n\n${NEGOCIO_CONFIG.politicas.permutas}`;
-      }
-
-      // Respuesta institucional "no sé qué me preguntó" cuenta como no respondida de verdad
-      const fueGenerica = respuestaLocal.startsWith("👋 ¡Hola!");
-      logPregunta(preguntaOriginal, !fueGenerica);
-      return NextResponse.json({ reply: `${respuestaLocal}\n\n*(Modo prueba - 0 tokens)*` });
-    }
-
-    // =================================================================
-    // OPCIÓN 2: MODO REAL CON TOKENS (Claude + Supabase en vivo)
-    // =================================================================
     const { data: vehiculos } = await supabase
       .from("vehiculos")
       .select("marca, modelo, anio, precio_publicado_ars, tipo, kilometraje, estado")
       .eq("estado", "Disponible");
 
     const vehiculosList = vehiculos ?? [];
+
+    // =================================================================
+    // PASO 1: REGLAS (0 tokens de IA)
+    // =================================================================
+    const autoEncontrado = vehiculosList.filter(v =>
+      ultimoMensaje.includes(v.marca.toLowerCase()) ||
+      ultimoMensaje.includes(v.modelo.toLowerCase()) ||
+      ultimoMensaje.includes("auto") ||
+      ultimoMensaje.includes("stock") ||
+      ultimoMensaje.includes("tienen")
+    );
+
+    // --- RESPUESTA DE STOCK POR KEYWORD DIRECTO ---
+    if (autoEncontrado.length > 0 && (
+      ultimoMensaje.includes("tienen") ||
+      ultimoMensaje.includes("stock") ||
+      ultimoMensaje.includes("auto") ||
+      vehiculosList.some(v => ultimoMensaje.includes(v.marca.toLowerCase()))
+    )) {
+      const listadoStock = autoEncontrado
+        .map(v => `🚗 **${v.marca} ${v.modelo}** (${v.anio})\n💰 Precio: **$${v.precio_publicado_ars?.toLocaleString("es-AR")}**\n🛣️ Kilometraje: ${v.kilometraje} km\n`)
+        .join("\n");
+
+      logPregunta(preguntaOriginal, true);
+      return NextResponse.json({ reply: `¡Sí! Tenemos estas opciones disponibles en stock:\n\n${listadoStock}` });
+    }
+
+    // --- RESPUESTAS INSTITUCIONALES ---
+    let respuestaLocal: string | null = null;
+
+    if (ultimoMensaje.includes("horario") || ultimoMensaje.includes("hora")) {
+      respuestaLocal = `🕒 **Nuestros Horarios de Atención:**\n\n${NEGOCIO_CONFIG.contacto.horarios}\n\n¡Te esperamos!`;
+    }
+    else if (ultimoMensaje.includes("sucursal") || ultimoMensaje.includes("donde") || ultimoMensaje.includes("direccion") || ultimoMensaje.includes("ubicacion")) {
+      const listaSucursales = NEGOCIO_CONFIG.sucursales.map(s =>
+        `📍 **${s.nombre}**\n🗺️ ${s.direccion}\n📞 ${s.telefono}`
+      ).join("\n\n");
+      respuestaLocal = `🏢 **Nuestras Sucursales:**\n\n${listaSucursales}`;
+    }
+    else if (ultimoMensaje.includes("financiacion") || ultimoMensaje.includes("cuotas") || ultimoMensaje.includes("credito")) {
+      respuestaLocal = `💳 **Planes de Financiación:**\n\n${NEGOCIO_CONFIG.politicas.financiacion}`;
+    }
+    else if (ultimoMensaje.includes("consignacion") || ultimoMensaje.includes("vender") || ultimoMensaje.includes("consignar")) {
+      respuestaLocal = `🤝 **Consignación de Vehículos:**\n\n${NEGOCIO_CONFIG.politicas.consignacion}`;
+    }
+    else if (ultimoMensaje.includes("permuta") || ultimoMensaje.includes("parte de pago")) {
+      respuestaLocal = `🔄 **Permutas:**\n\n${NEGOCIO_CONFIG.politicas.permutas}`;
+    }
+
+    if (respuestaLocal) {
+      logPregunta(preguntaOriginal, true);
+      return NextResponse.json({ reply: respuestaLocal });
+    }
+
+    // =================================================================
+    // PASO 2: nada matcheó con confianza → cae a la IA (con tokens)
+    // =================================================================
+    if (!process.env.ANTHROPIC_API_KEY) {
+      const generica = `👋 ¡Hola! Soy el asistente virtual de **${NEGOCIO_CONFIG.nombre}**.\n\nPodés preguntarme por nuestro stock de vehículos, horarios, sucursales o planes de financiación. ¿En qué te ayudo hoy?`;
+      logPregunta(preguntaOriginal, false);
+      return NextResponse.json({ reply: generica });
+    }
 
     const stockContext =
       vehiculosList.length > 0

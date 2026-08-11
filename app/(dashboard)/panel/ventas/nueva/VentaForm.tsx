@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
-import { supabase } from "@/lib/supabase";
+import { supabase } from "@/lib/supabase/client";
 import { useForm, SubmitHandler } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
@@ -179,6 +179,20 @@ export default function VentaForm({ vehiculos, clientes, sucursales }: { vehicul
         await supabase.from("documentacion_ventas").insert(
           documentosDefault.map((tipo_documento) => ({ venta_id: nuevaOperacion.id, tipo_documento }))
         );
+
+        if (data.banco_prenda && p_prenda > 0) {
+          const primerVencimiento = new Date();
+          primerVencimiento.setMonth(primerVencimiento.getMonth() + 1);
+          await supabase.from("financiaciones").insert({
+            venta_id: nuevaOperacion.id,
+            tipo: "Prenda Bancaria",
+            entidad: data.banco_prenda,
+            monto: p_prenda,
+            cuotas: p_cuotas,
+            fecha_vencimiento: primerVencimiento.toISOString().split("T")[0],
+            estado: "Pendiente",
+          });
+        }
       }
 
       setCodigoSeguimiento(nuevaOperacion.codigo_seguimiento);

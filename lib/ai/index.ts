@@ -52,7 +52,7 @@ export async function chatJson<T>(
             ];
 
       const response = await anthropic.messages.create({
-        model: "claude-sonnet-4-5",
+        model: "claude-sonnet-5",
         max_tokens: 1000,
         system: systemMsg,
         messages: finalMsgs,

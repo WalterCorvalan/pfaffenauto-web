@@ -3,14 +3,14 @@
 import React, { useState, useEffect } from "react";
 import { createPortal } from "react-dom";
 import { CalendarDays, X, CheckCircle2, Loader2, MapPin, Clock, CarFront, User, Phone } from "lucide-react";
-import { supabase } from "@/lib/supabase"; 
+import { supabase } from "@/lib/supabase/client"; 
 
-interface AgendarVisitaProps {
+interface AgendarVisitaFormProps {
   auto: any;
   isMobile?: boolean;
 }
 
-export default function AgendarVisita({ auto, isMobile = false }: AgendarVisitaProps) {
+export default function AgendarVisitaForm({ auto, isMobile = false }: AgendarVisitaFormProps) {
   const [isOpen, setIsOpen] = useState(false);
   const [loading, setLoading] = useState(false);
   const [success, setSuccess] = useState(false);

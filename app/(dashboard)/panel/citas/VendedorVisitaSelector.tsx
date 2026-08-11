@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { supabase } from "@/lib/supabase";
+import { supabase } from "@/lib/supabase/client";
 import { useRouter } from "next/navigation";
 import { User, Loader2 } from "lucide-react";
 
@@ -11,7 +11,7 @@ interface Vendedor {
   sucursalNombre: string | null;
 }
 
-export default function AsignarVendedorVisita({
+export default function VendedorVisitaSelector({
   visitaId,
   visitaSucursal,
   vendedorActualId,

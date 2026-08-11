@@ -5,7 +5,7 @@ import { supabase } from "@/lib/supabase/client";
 import { useRouter } from "next/navigation";
 import { Loader2 } from "lucide-react";
 
-export default function CambiarEstadoVisita({ 
+export default function EstadoVisitaSelector({ 
   visitaId, 
   estadoActual 
 }: { 

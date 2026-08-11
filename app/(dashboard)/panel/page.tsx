@@ -3,9 +3,9 @@ import { cookies } from "next/headers";
 import Link from "next/link";
 import { Plus, Car, Search, Edit2, ChevronLeft, ChevronRight, FileText, LayoutGrid, Megaphone } from "lucide-react";
 import AccionesAuto from "./AccionesAuto";
-import EdicionPrecio from "./EdicionPrecio";
-import EdicionSucursal from "./EdicionSucursal";
-import EdicionVendedor from "./EdicionVendedor";
+import PrecioEditor from "./PrecioEditor";
+import SucursalEditor from "./SucursalEditor";
+import VendedorEditor from "./VendedorEditor";
 
 const ITEMS_POR_PAGINA = 10;
 
@@ -106,7 +106,7 @@ export default async function PanelPage({ searchParams }: { searchParams: Promis
                       <div className="flex-1 min-w-0">
                         <span className="text-[10px] uppercase tracking-widest font-bold text-slate-400 block mb-0.5 truncate">{auto.patente || "S/P"}</span>
                         <h3 className="font-bold capitalize text-sm text-slate-900 leading-tight truncate mb-1">{auto.marca} {auto.modelo}</h3>
-                        <EdicionPrecio autoId={auto.id} precioArs={auto.precio_publicado_ars} precioUsd={auto.precio_publicado_usd} puedeGestionar={puedeGestionar} />
+                        <PrecioEditor autoId={auto.id} precioArs={auto.precio_publicado_ars} precioUsd={auto.precio_publicado_usd} puedeGestionar={puedeGestionar} />
                       </div>
                     </div>
                     <div className="grid grid-cols-2 gap-2 text-[11px] bg-slate-50 border border-slate-100 p-2.5 rounded-lg">
@@ -116,11 +116,11 @@ export default async function PanelPage({ searchParams }: { searchParams: Promis
                       </div>
                       <div className="min-w-0">
                         <span className="block text-slate-400 uppercase tracking-widest font-bold mb-0.5">Ubicación</span>
-                        <EdicionSucursal autoId={auto.id} sucursalActualId={auto.sucursal_id} sucursalActualNombre={auto.sucursales?.nombre} sucursales={sucursales || []} puedeGestionar={puedeGestionar} />
+                        <SucursalEditor autoId={auto.id} sucursalActualId={auto.sucursal_id} sucursalActualNombre={auto.sucursales?.nombre} sucursales={sucursales || []} puedeGestionar={puedeGestionar} />
                       </div>
                       <div className="min-w-0 col-span-2">
                         <span className="block text-slate-400 uppercase tracking-widest font-bold mb-0.5">Vendedor</span>
-                        <EdicionVendedor autoId={auto.id} autoSucursalId={auto.sucursal_id} vendedorActualId={auto.vendedor_asignado_id} vendedorActualNombre={auto.vendedor?.nombre} vendedores={vendedores || []} puedeGestionar={puedeGestionar} />
+                        <VendedorEditor autoId={auto.id} autoSucursalId={auto.sucursal_id} vendedorActualId={auto.vendedor_asignado_id} vendedorActualNombre={auto.vendedor?.nombre} vendedores={vendedores || []} puedeGestionar={puedeGestionar} />
                       </div>
                     </div>
                     <div className="pt-2 flex items-center justify-between gap-2 border-t border-slate-100">
@@ -182,13 +182,13 @@ export default async function PanelPage({ searchParams }: { searchParams: Promis
                           {auto.anio} <span className="text-slate-300 mx-1">•</span> {auto.kilometraje?.toLocaleString()} km
                         </td>
                         <td className="p-4 whitespace-nowrap">
-                          <EdicionPrecio autoId={auto.id} precioArs={auto.precio_publicado_ars} precioUsd={auto.precio_publicado_usd} puedeGestionar={puedeGestionar} />
+                          <PrecioEditor autoId={auto.id} precioArs={auto.precio_publicado_ars} precioUsd={auto.precio_publicado_usd} puedeGestionar={puedeGestionar} />
                         </td>
                         <td className="p-4 whitespace-nowrap">
-                          <EdicionSucursal autoId={auto.id} sucursalActualId={auto.sucursal_id} sucursalActualNombre={auto.sucursales?.nombre} sucursales={sucursales || []} puedeGestionar={puedeGestionar} />
+                          <SucursalEditor autoId={auto.id} sucursalActualId={auto.sucursal_id} sucursalActualNombre={auto.sucursales?.nombre} sucursales={sucursales || []} puedeGestionar={puedeGestionar} />
                         </td>
                         <td className="p-4 whitespace-nowrap">
-                          <EdicionVendedor autoId={auto.id} autoSucursalId={auto.sucursal_id} vendedorActualId={auto.vendedor_asignado_id} vendedorActualNombre={auto.vendedor?.nombre} vendedores={vendedores || []} puedeGestionar={puedeGestionar} />
+                          <VendedorEditor autoId={auto.id} autoSucursalId={auto.sucursal_id} vendedorActualId={auto.vendedor_asignado_id} vendedorActualNombre={auto.vendedor?.nombre} vendedores={vendedores || []} puedeGestionar={puedeGestionar} />
                         </td>
                         <td className="p-4">
                           <div className="flex items-center justify-end gap-3">

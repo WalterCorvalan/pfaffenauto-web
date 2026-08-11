@@ -1,4 +1,4 @@
-import VenderForm from "@/components/VenderForm";
+import VenderForm from "@/components/forms/VenderForm";
 
 export const metadata = {
   title: "Vendé tu auto | Pfaffen Autos",

@@ -1,4 +1,4 @@
-import ConsignarForm from "@/components/ConsignarForm";
+import ConsignarForm from "@/components/forms/ConsignarForm";
 
 export const metadata = {
   title: "Consigná tu auto | Pfaffen Autos",

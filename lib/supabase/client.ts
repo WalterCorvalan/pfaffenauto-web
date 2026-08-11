@@ -4,7 +4,7 @@ import { createBrowserClient } from "@supabase/ssr";
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
 const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY!;
 
-// 1. Exportamos la instancia directa (para componentes que usaban "import { supabase } from '@/lib/supabase'")
+// 1. Exportamos la instancia directa (para componentes que usaban "import { supabase } from '@/lib/supabase/client'")
 export const supabase = createBrowserClient(supabaseUrl, supabaseAnonKey);
 
 // 2. Exportamos también createClient por si algún componente la llama explícitamente

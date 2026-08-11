@@ -5,14 +5,14 @@ import { supabase } from "@/lib/supabase/client";
 import { useRouter } from "next/navigation";
 import { DollarSign, Edit3, X, Save } from "lucide-react";
 
-interface EdicionPrecioProps {
+interface PrecioEditorProps {
   autoId: string;
   precioArs: number | null;
   precioUsd: number | null;
   puedeGestionar: boolean;
 }
 
-export default function EdicionPrecio({ autoId, precioArs, precioUsd, puedeGestionar }: EdicionPrecioProps) {
+export default function PrecioEditor({ autoId, precioArs, precioUsd, puedeGestionar }: PrecioEditorProps) {
   const router = useRouter();
   const [isEditing, setIsEditing] = useState(false);
   const [ars, setArs] = useState(precioArs?.toString() || "");

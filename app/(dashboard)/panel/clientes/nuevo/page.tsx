@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
-import { supabase } from "@/lib/supabase"; // <--- ESTA ES LA LÍNEA QUE FALTABA
+import { supabase } from "@/lib/supabase/client";
 import {
   ArrowLeft,
   Save,
@@ -92,259 +92,276 @@ export default function NuevoClientePage() {
   };
 
   const inputClass =
-    "w-full bg-[#0A0A0A] border border-white/10 p-3 rounded-xl text-sm outline-none focus:border-[#0055A4] transition-colors text-white placeholder:text-slate-500";
+    "w-full bg-white border border-slate-200 p-3 rounded-xl text-sm outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500/20 transition-all text-slate-900 placeholder:text-slate-400";
 
   return (
-    <div className="min-h-screen bg-[#0b1329] text-white w-full overflow-x-hidden pt-4 pb-16">
-      <div className="max-w-4xl mx-auto w-full">
-        {/* Cabecera */}
-        <div className="flex items-center justify-between mb-8 border-b border-slate-800 pb-4">
-          <div>
-            <button
-              onClick={() => router.back()}
-              className="text-gray-400 hover:text-white flex items-center gap-2 text-sm transition-colors mb-2"
-            >
-              <ArrowLeft className="w-4 h-4" /> Volver
-            </button>
-            <h1 className="text-2xl md:text-3xl font-serif text-[#0ea5e9] flex items-center gap-3">
-              <User className="w-7 h-7" /> Cliente Nuevo
-            </h1>
+    <div className="flex flex-col h-full w-full bg-[#F9FAFB] overflow-hidden font-sans">
+      
+      {/* ================= HEADER ================= */}
+      <header className="flex flex-col md:flex-row md:items-center justify-between border-b border-slate-200 px-6 py-4 bg-white shrink-0 gap-4">
+        <div className="flex items-center gap-4">
+          <div className="w-10 h-10 rounded-lg bg-indigo-50 border border-indigo-100 flex items-center justify-center shrink-0">
+            <User className="w-5 h-5 text-indigo-600" />
           </div>
-          <div className="text-xs text-slate-500 font-medium">
-            (Los datos resaltados con <span className="text-rose-500">*</span>{" "}
-            son obligatorios)
+          <div>
+            <div className="flex items-center gap-2">
+              <button
+                onClick={() => router.back()}
+                className="text-slate-400 hover:text-indigo-600 transition-colors"
+                title="Volver"
+              >
+                <ArrowLeft className="w-4 h-4" />
+              </button>
+              <h1 className="text-[17px] font-bold text-slate-900 leading-tight">
+                Cliente Nuevo
+              </h1>
+            </div>
+            <p className="text-[11px] font-medium text-slate-500 mt-0.5 ml-6">
+              Ingreso de datos al sistema de gestión.
+            </p>
           </div>
         </div>
+        <div className="text-[11px] text-slate-500 font-medium bg-slate-50 border border-slate-200 px-3 py-1.5 rounded-lg">
+          (Los datos con <span className="text-rose-500 font-bold">*</span> son obligatorios)
+        </div>
+      </header>
 
-        <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
-          {/* SECCIÓN 1: INFORMACIÓN DEL CLIENTE */}
-          <SectionCard
-            title="Información del Cliente"
-            icon={<User className="w-4 h-4 text-[#0ea5e9]" />}
-          >
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-x-6 gap-y-4">
-              <div className="md:col-span-2 border-b border-white/5 pb-4 mb-2">
-                <Campo label="Sucursal *" error={errors.sucursal?.message}>
-                  <select
-                    {...register("sucursal", { required: "Requerido" })}
+      {/* ================= ÁREA SCROLLABLE ================= */}
+      <div className="flex-1 overflow-y-auto p-6 bg-[#F9FAFB] custom-scrollbar">
+        <div className="max-w-4xl mx-auto w-full">
+
+          <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
+            
+            {/* SECCIÓN 1: INFORMACIÓN DEL CLIENTE */}
+            <SectionCard
+              title="Información del Cliente"
+              icon={<User className="w-4 h-4 text-indigo-600" />}
+            >
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-x-6 gap-y-5">
+                <div className="md:col-span-2 border-b border-slate-100 pb-5 mb-1">
+                  <Campo label="Sucursal *" error={errors.sucursal?.message}>
+                    <select
+                      {...register("sucursal", { required: "Requerido" })}
+                      className={`${inputClass} appearance-none cursor-pointer`}
+                    >
+                      <option value="" disabled>Seleccionar sucursal...</option>
+                      {sucursales.map((s) => (
+                        <option key={s.id} value={s.id}>{s.nombre}</option>
+                      ))}
+                    </select>
+                  </Campo>
+                </div>
+
+                <Campo label="Nombre *" error={errors.nombre?.message}>
+                  <input
+                    type="text"
+                    {...register("nombre", { required: "Requerido" })}
                     className={inputClass}
-                  >
-                    <option value="">Seleccionar sucursal...</option>
-                    {sucursales.map((s) => (
-                      <option key={s.id} value={s.id}>{s.nombre}</option>
-                    ))}
+                    placeholder="Nombre completo"
+                  />
+                </Campo>
+                <Campo label="Apellido *" error={errors.apellido?.message}>
+                  <input
+                    type="text"
+                    {...register("apellido", { required: "Requerido" })}
+                    className={inputClass}
+                    placeholder="Apellido completo"
+                  />
+                </Campo>
+
+                <Campo label="D.N.I. *" error={errors.dni?.message}>
+                  <input
+                    type="text"
+                    {...register("dni", { required: "Requerido" })}
+                    className={inputClass}
+                    placeholder="Sin puntos"
+                  />
+                </Campo>
+                <Campo label="Fecha de Nacimiento">
+                  <input
+                    type="date"
+                    {...register("fecha_nacimiento")}
+                    className={inputClass}
+                  />
+                </Campo>
+
+                <Campo label="Cuit/Cuil">
+                  <input
+                    type="text"
+                    {...register("cuit_cuil")}
+                    className={inputClass}
+                    placeholder="Sin guiones"
+                  />
+                </Campo>
+                <Campo label="Clave Fiscal">
+                  <input
+                    type="text"
+                    {...register("clave_fiscal")}
+                    className={inputClass}
+                    placeholder="Opcional"
+                  />
+                </Campo>
+
+                <Campo label="Estado Civil">
+                  <select {...register("estado_civil")} className={`${inputClass} appearance-none cursor-pointer`}>
+                    <option value="">Seleccionar...</option>
+                    <option value="Soltero/a">Soltero/a</option>
+                    <option value="Casado/a">Casado/a</option>
+                    <option value="Divorciado/a">Divorciado/a</option>
+                    <option value="Viudo/a">Viudo/a</option>
                   </select>
                 </Campo>
-              </div>
+                <Campo label="Profesión">
+                  <input
+                    type="text"
+                    {...register("profesion")}
+                    className={inputClass}
+                    placeholder="Ej: Empleado, Comerciante..."
+                  />
+                </Campo>
 
-              <Campo label="Nombre *" error={errors.nombre?.message}>
-                <input
-                  type="text"
-                  {...register("nombre", { required: "Requerido" })}
-                  className={inputClass}
-                  placeholder="Nombre completo"
-                />
-              </Campo>
-              <Campo label="Apellido *" error={errors.apellido?.message}>
-                <input
-                  type="text"
-                  {...register("apellido", { required: "Requerido" })}
-                  className={inputClass}
-                  placeholder="Apellido completo"
-                />
-              </Campo>
-
-              <Campo label="D.N.I. *" error={errors.dni?.message}>
-                <input
-                  type="text"
-                  {...register("dni", { required: "Requerido" })}
-                  className={inputClass}
-                  placeholder="Sin puntos"
-                />
-              </Campo>
-              <Campo label="Fecha de Nacimiento (día/mes/año)">
-                <input
-                  type="date"
-                  {...register("fecha_nacimiento")}
-                  className={inputClass}
-                />
-              </Campo>
-
-              <Campo label="Cuit/Cuil">
-                <input
-                  type="text"
-                  {...register("cuit_cuil")}
-                  className={inputClass}
-                  placeholder="Sin guiones"
-                />
-              </Campo>
-              <Campo label="Clave Fiscal">
-                <input
-                  type="text"
-                  {...register("clave_fiscal")}
-                  className={inputClass}
-                />
-              </Campo>
-
-              <Campo label="Estado Civil">
-                <select {...register("estado_civil")} className={inputClass}>
-                  <option value="">Seleccionar...</option>
-                  <option value="Soltero/a">Soltero/a</option>
-                  <option value="Casado/a">Casado/a</option>
-                  <option value="Divorciado/a">Divorciado/a</option>
-                  <option value="Viudo/a">Viudo/a</option>
-                </select>
-              </Campo>
-              <Campo label="Profesión">
-                <input
-                  type="text"
-                  {...register("profesion")}
-                  className={inputClass}
-                  placeholder="Ej: Empleado, Comerciante..."
-                />
-              </Campo>
-
-              {/* DOMICILIO INCORPORADO */}
-              <div className="md:col-span-2 mt-4 pt-4 border-t border-white/5">
-                <h3 className="text-xs font-bold text-[#0ea5e9] uppercase tracking-widest mb-4 flex items-center gap-2">
-                  <MapPin className="w-3.5 h-3.5" /> Domicilio
-                </h3>
-                <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-                  <div className="md:col-span-2">
-                    <Campo label="Calle">
-                      <input
-                        type="text"
-                        {...register("calle")}
-                        className={inputClass}
-                      />
-                    </Campo>
-                  </div>
-                  <div>
-                    <Campo label="Número">
-                      <input
-                        type="text"
-                        {...register("numero")}
-                        className={inputClass}
-                      />
-                    </Campo>
-                  </div>
-                  <div>
-                    <Campo label="Depto">
-                      <input
-                        type="text"
-                        {...register("depto")}
-                        className={inputClass}
-                      />
-                    </Campo>
-                  </div>
-                  <div className="md:col-span-2">
-                    <Campo label="Localidad">
-                      <input
-                        type="text"
-                        {...register("localidad")}
-                        className={inputClass}
-                      />
-                    </Campo>
-                  </div>
-                  <div>
-                    <Campo label="Cód. Postal">
-                      <input
-                        type="text"
-                        {...register("codigo_postal")}
-                        className={inputClass}
-                      />
-                    </Campo>
-                  </div>
-                  <div>
-                    <Campo label="Provincia">
-                      <select {...register("provincia")} className={inputClass}>
-                        <option value="">Seleccionar...</option>
-                        <option value="Buenos Aires">Buenos Aires</option>
-                        <option value="CABA">CABA</option>
-                        <option value="Córdoba">Córdoba</option>
-                        <option value="Santa Fe">Santa Fe</option>
-                        {/* Agregar más si es necesario */}
-                      </select>
-                    </Campo>
+                {/* DOMICILIO INCORPORADO */}
+                <div className="md:col-span-2 mt-2 pt-5 border-t border-slate-100">
+                  <h3 className="text-[11px] font-bold text-slate-500 uppercase tracking-widest mb-4 flex items-center gap-2">
+                    <MapPin className="w-3.5 h-3.5 text-indigo-500" /> Domicilio
+                  </h3>
+                  <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+                    <div className="md:col-span-2">
+                      <Campo label="Calle">
+                        <input
+                          type="text"
+                          {...register("calle")}
+                          className={inputClass}
+                        />
+                      </Campo>
+                    </div>
+                    <div>
+                      <Campo label="Número">
+                        <input
+                          type="text"
+                          {...register("numero")}
+                          className={inputClass}
+                        />
+                      </Campo>
+                    </div>
+                    <div>
+                      <Campo label="Depto">
+                        <input
+                          type="text"
+                          {...register("depto")}
+                          className={inputClass}
+                        />
+                      </Campo>
+                    </div>
+                    <div className="md:col-span-2">
+                      <Campo label="Localidad">
+                        <input
+                          type="text"
+                          {...register("localidad")}
+                          className={inputClass}
+                        />
+                      </Campo>
+                    </div>
+                    <div>
+                      <Campo label="Cód. Postal">
+                        <input
+                          type="text"
+                          {...register("codigo_postal")}
+                          className={inputClass}
+                        />
+                      </Campo>
+                    </div>
+                    <div>
+                      <Campo label="Provincia">
+                        <select {...register("provincia")} className={`${inputClass} appearance-none cursor-pointer`}>
+                          <option value="">Seleccionar...</option>
+                          <option value="Buenos Aires">Buenos Aires</option>
+                          <option value="CABA">CABA</option>
+                          <option value="Córdoba">Córdoba</option>
+                          <option value="Santa Fe">Santa Fe</option>
+                        </select>
+                      </Campo>
+                    </div>
                   </div>
                 </div>
               </div>
-            </div>
-          </SectionCard>
+            </SectionCard>
 
-          {/* SECCIÓN 2: INFORMACIÓN DE CONTACTO */}
-          <SectionCard
-            title="Información de Contacto"
-            icon={<Phone className="w-4 h-4 text-[#0ea5e9]" />}
-          >
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-x-6 gap-y-4">
-              <Campo label="Teléfono Celular *">
-                <input
-                  type="tel"
-                  {...register("telefono_celular", { required: "Requerido" })}
-                  className={inputClass}
-                  placeholder="Ej: 1122334455"
-                />
-              </Campo>
-              <Campo label="Teléfono de Línea">
-                <input
-                  type="tel"
-                  {...register("telefono_linea")}
-                  className={inputClass}
-                  placeholder="Opcional"
-                />
-              </Campo>
-              <div className="md:col-span-2">
-                <Campo label="Correo Electrónico">
+            {/* SECCIÓN 2: INFORMACIÓN DE CONTACTO */}
+            <SectionCard
+              title="Información de Contacto"
+              icon={<Phone className="w-4 h-4 text-indigo-600" />}
+            >
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-x-6 gap-y-5">
+                <Campo label="Teléfono Celular *">
                   <input
-                    type="email"
-                    {...register("correo_electronico")}
+                    type="tel"
+                    {...register("telefono_celular", { required: "Requerido" })}
                     className={inputClass}
-                    placeholder="ejemplo@correo.com"
+                    placeholder="Ej: 1122334455"
                   />
                 </Campo>
+                <Campo label="Teléfono de Línea">
+                  <input
+                    type="tel"
+                    {...register("telefono_linea")}
+                    className={inputClass}
+                    placeholder="Opcional"
+                  />
+                </Campo>
+                <div className="md:col-span-2">
+                  <Campo label="Correo Electrónico">
+                    <input
+                      type="email"
+                      {...register("correo_electronico")}
+                      className={inputClass}
+                      placeholder="ejemplo@correo.com"
+                    />
+                  </Campo>
+                </div>
               </div>
+            </SectionCard>
+
+            {/* SECCIÓN 3: INFORMACIÓN ADICIONAL */}
+            <SectionCard
+              title="Información Adicional"
+              icon={<FileText className="w-4 h-4 text-indigo-600" />}
+            >
+              <Campo label="Observaciones">
+                <textarea
+                  {...register("observaciones")}
+                  className={`${inputClass} min-h-[120px] resize-y custom-scrollbar`}
+                  placeholder="Notas sobre el cliente, preferencias de compra, etc."
+                ></textarea>
+              </Campo>
+            </SectionCard>
+
+            {/* BOTONES DE ACCIÓN */}
+            <div className="flex items-center justify-end gap-4 pt-4 pb-8">
+              <button
+                type="button"
+                onClick={() => router.back()}
+                className="px-6 py-3 rounded-xl text-[11px] font-bold uppercase tracking-widest text-slate-500 hover:text-slate-800 hover:bg-slate-200/50 transition-colors flex items-center gap-2"
+              >
+                <X className="w-4 h-4" /> Cancelar
+              </button>
+              <button
+                type="submit"
+                disabled={loading}
+                className="px-8 py-3 rounded-xl text-[11px] font-bold uppercase tracking-widest bg-indigo-600 hover:bg-indigo-700 text-white shadow-sm transition-all flex items-center gap-2 disabled:opacity-50 active:scale-95"
+              >
+                {loading ? (
+                  "Guardando..."
+                ) : (
+                  <>
+                    <Save className="w-4 h-4" /> Guardar Cliente
+                  </>
+                )}
+              </button>
             </div>
-          </SectionCard>
-
-          {/* SECCIÓN 3: INFORMACIÓN ADICIONAL */}
-          <SectionCard
-            title="Información Adicional"
-            icon={<FileText className="w-4 h-4 text-[#0ea5e9]" />}
-          >
-            <Campo label="Observaciones">
-              <textarea
-                {...register("observaciones")}
-                className={`${inputClass} min-h-[120px] resize-y`}
-                placeholder="Notas sobre el cliente, preferencias de compra, etc."
-              ></textarea>
-            </Campo>
-          </SectionCard>
-
-          {/* BOTONES DE ACCIÓN */}
-          <div className="flex items-center justify-end gap-4 pt-6 border-t border-slate-800">
-            <button
-              type="button"
-              onClick={() => router.back()}
-              className="px-6 py-3 rounded-xl text-xs font-bold uppercase tracking-widest text-slate-400 hover:text-white hover:bg-slate-800 transition-colors flex items-center gap-2"
-            >
-              <X className="w-4 h-4" /> Cancelar
-            </button>
-            <button
-              type="submit"
-              disabled={loading}
-              className="px-8 py-3 rounded-xl text-xs font-bold uppercase tracking-widest bg-[#0ea5e9] hover:bg-[#0284c7] text-white shadow-lg shadow-sky-500/20 transition-all flex items-center gap-2 disabled:opacity-50 active:scale-95"
-            >
-              {loading ? (
-                "Guardando..."
-              ) : (
-                <>
-                  <Save className="w-4 h-4" /> Guardar Cliente
-                </>
-              )}
-            </button>
-          </div>
-        </form>
+            
+          </form>
+        </div>
       </div>
     </div>
   );
@@ -361,8 +378,8 @@ function SectionCard({
   children: React.ReactNode;
 }) {
   return (
-    <div className="bg-[#0f172a] p-6 md:p-8 rounded-2xl border border-slate-800 shadow-xl w-full">
-      <h2 className="text-sm font-bold uppercase tracking-widest text-slate-300 flex items-center gap-2 mb-6 pb-3 border-b border-slate-800/80">
+    <div className="bg-white p-6 md:p-8 rounded-2xl border border-slate-200 shadow-sm w-full">
+      <h2 className="text-[11px] font-bold uppercase tracking-widest text-slate-500 flex items-center gap-2 mb-6 pb-3 border-b border-slate-100">
         {icon} {title}
       </h2>
       <div className="w-full">{children}</div>
@@ -381,10 +398,10 @@ function Campo({
 }) {
   return (
     <div className="w-full">
-      <label className="text-xs text-slate-400 block mb-1.5 font-bold tracking-wide">
+      <label className="text-[11px] font-bold uppercase tracking-widest text-slate-500 mb-1.5 block">
         {label.includes("*") ? (
           <>
-            {label.replace("*", "")} <span className="text-rose-500">*</span>
+            {label.replace("*", "")} <span className="text-rose-500 font-black">*</span>
           </>
         ) : (
           label

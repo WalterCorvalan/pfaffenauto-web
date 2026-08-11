@@ -17,7 +17,7 @@ import {
   Phone,
   Building2
 } from "lucide-react";
-import { supabase } from "@/lib/supabase";
+import { supabase } from "@/lib/supabase/client";
 
 export default function TrabajaConNosotrosPage() {
   const [loading, setLoading] = useState(false);

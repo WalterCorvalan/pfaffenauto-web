@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { supabase } from "@/lib/supabase";
+import { supabase } from "@/lib/supabase/client";
 import { useRouter } from "next/navigation";
 import { Search, Clock, MessageSquareText, CheckCircle2, CarFront, Filter, User } from "lucide-react";
 

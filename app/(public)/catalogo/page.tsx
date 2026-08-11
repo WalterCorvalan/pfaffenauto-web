@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect, useRef } from "react";
-import { supabase } from "@/lib/supabase";
+import { supabase } from "@/lib/supabase/client";
 import {
   Search,
   ChevronDown,
@@ -11,11 +11,12 @@ import {
   Filter,
   Scale,
   Loader2,
+  Sparkles,
 } from "lucide-react";
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import { motion, AnimatePresence } from "framer-motion";
-import ComparadorModal from "@/components/ComparadorModal";
+import ComparadorModal from "@/components/modals/ComparadorModal";
 import BuscadorFallback from "@/components/BuscadorFallBack";
 
 const ITEMS_POR_PAGINA = 12;
@@ -60,6 +61,10 @@ export default function CatalogoPage() {
 
   // Evita loguear la misma búsqueda varias veces al tocar otros filtros
   const ultimoTerminoLogueado = useRef<string>("");
+
+  // ================= BUSCADOR HÍBRIDO: fallback a IA cuando el match por texto no encuentra nada =================
+  const [buscandoConIA, setBuscandoConIA] = useState(false);
+  const [sugerenciaIA, setSugerenciaIA] = useState<string | null>(null);
 
   // Traer Sucursales al cargar
   useEffect(() => {
@@ -182,8 +187,38 @@ export default function CatalogoPage() {
         });
     }
 
+    // Fallback a IA: si la búsqueda de texto plano no encontró nada y parece una frase (no una sola palabra)
+    if (reemplazar && searchQuery && (count ?? 0) === 0 && searchQuery.trim().split(/\s+/).length >= 2) {
+      buscarConIA(searchQuery);
+    } else {
+      setSugerenciaIA(null);
+    }
+
     setLoading(false);
     setLoadingMore(false);
+  };
+
+  const buscarConIA = async (termino: string) => {
+    setBuscandoConIA(true);
+    setSugerenciaIA(null);
+    try {
+      const res = await fetch("/api/buscar-ia", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ termino }),
+      });
+      const data = await res.json();
+      if (res.ok && data.vehiculos?.length > 0) {
+        setVehiculos(data.vehiculos);
+        setTotalResultados(data.count);
+        setHasMore(false);
+        setSugerenciaIA(data.interpretacion.explicacion);
+      }
+    } catch (err) {
+      console.error("Error en búsqueda con IA:", err);
+    } finally {
+      setBuscandoConIA(false);
+    }
   };
 
   // Disparador cuando cambian los filtros
@@ -300,6 +335,20 @@ export default function CatalogoPage() {
             </Link>
           )}
         </div>
+
+        {/* ================= BANNER BUSCADOR IA ================= */}
+        {buscandoConIA && (
+          <div className="mb-6 bg-indigo-50 border border-indigo-200 rounded-2xl p-4 flex items-center gap-3 text-sm text-indigo-700 font-medium">
+            <Loader2 className="w-4 h-4 animate-spin shrink-0" />
+            No encontramos nada exacto, dejá que la IA interprete tu búsqueda...
+          </div>
+        )}
+        {sugerenciaIA && !buscandoConIA && (
+          <div className="mb-6 bg-indigo-50 border border-indigo-200 rounded-2xl p-4 flex items-center gap-3 text-sm text-indigo-700 font-medium">
+            <Sparkles className="w-4 h-4 shrink-0" />
+            🤖 {sugerenciaIA}
+          </div>
+        )}
 
         {/* ================= CONTROLES SUPERIORES ================= */}
         <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-6 gap-4 pb-4 border-b border-gray-200">

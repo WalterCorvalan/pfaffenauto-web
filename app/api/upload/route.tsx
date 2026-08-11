@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { isRemoveBgConfigurado, quitarFondo } from "@/lib/removeBg";
 
 export async function POST(request: Request) {
   try {
@@ -9,8 +10,17 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: "No se encontró ningún archivo." }, { status: 400 });
     }
 
-    const buffer = Buffer.from(await file.arrayBuffer());
-    
+    let buffer: Buffer = Buffer.from(new Uint8Array(await file.arrayBuffer()));
+
+    // Fotos de autos: recorte automático de fondo → fondo gris estudio parejo en todas las tomas
+    if (isRemoveBgConfigurado()) {
+      try {
+        buffer = await quitarFondo(buffer, file.name);
+      } catch (err) {
+        console.error("[remove.bg] no se pudo procesar, se sube la foto original:", err);
+      }
+    }
+
     // Limpiamos el nombre del archivo
     const cleanFileName = file.name.replace(/[^a-zA-Z0-9.\-_]/g, '');
     const uniqueFileName = `${Date.now()}-${Math.floor(Math.random() * 10000)}-${cleanFileName}`;
@@ -27,7 +37,7 @@ export async function POST(request: Request) {
         "AccessKey": process.env.BUNNY_API_KEY as string,
         "Content-Type": "application/octet-stream",
       },
-      body: buffer,
+      body: new Uint8Array(buffer),
     });
 
     if (!response.ok) {

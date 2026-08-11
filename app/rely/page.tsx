@@ -1,4 +1,4 @@
-import LandingRely from "@/components/LandingRely";
+import LandingRely from "@/components/landing/LandingRely";
 
 export const metadata = {
   title: "Rely R8 | Pfaffen Autos",
