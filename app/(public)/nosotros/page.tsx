@@ -19,12 +19,6 @@ const TEAM_MEMBERS = [
     image: "https://images.unsplash.com/photo-1519085360753-af0119f7cbe7?q=80&w=800&auto=format&fit=crop",
     color: "bg-[#845EF7]",
   },
-  {
-    name: "Lucas",
-    role: "Encargado de Sucursal Don Torcuato",
-    image: "https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?q=80&w=800&auto=format&fit=crop",
-    color: "bg-[#20C997]",
-  },
 ];
 
 export default function NosotrosPage() {

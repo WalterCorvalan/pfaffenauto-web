@@ -7,7 +7,7 @@ import { ArrowRight, ShieldCheck, Banknote, CarFront, Sparkles } from "lucide-re
 
 export default function Servicios() {
   return (
-    <section className="py-24 bg-transparent relative overflow-hidden border-t border-transparent">
+    <section className="py-12 md:py-24 bg-transparent relative overflow-hidden border-t border-transparent">
       
       {/* ================= LUCES AMBIENTALES ================= */}
       <div className="absolute top-[10%] left-[-5%] w-[500px] h-[500px] bg-slate-900/5 rounded-full blur-[120px] pointer-events-none z-0"></div>

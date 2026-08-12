@@ -8,7 +8,7 @@ import {
   Menu, X, Search, ChevronRight, ChevronDown, UserPlus, Banknote, CheckSquare,
   CalendarCheck, MessagesSquare, Landmark, Wallet, FileBarChart,
   Users, Megaphone, Target, MousePointerClick, Bot, CarFront,
-  LayoutDashboard, Inbox, PieChart, LogOut, Handshake, MessageSquareCheckIcon, Receipt, UsersRound
+  LayoutDashboard, Inbox, PieChart, LogOut, Handshake, MessageSquareCheckIcon, Receipt, UsersRound, Wrench
 } from "lucide-react";
 
 const SECCIONES_INICIALES = {
@@ -60,6 +60,9 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
         }
         if (userRol === "vendedor" && (pathname?.startsWith("/panel/metricas") || pathname?.startsWith("/panel/marketing"))) {
           router.replace("/panel");
+        }
+        if (userRol === "taller" && !pathname?.startsWith("/panel/taller")) {
+          router.replace("/panel/taller");
         }
       }
     };
@@ -140,10 +143,18 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
 
         {/* Links de Navegación Completos (Scrollable) */}
         <div className="flex-1 overflow-y-auto py-3 custom-scrollbar">
-          
+
+          {/* 🔧 TALLER (rol exclusivo, sin acceso al resto del panel) */}
+          {userProfile.rol === "taller" && (
+            <NavLinkItem icon={Wrench} label="Preparación de Vehículos" href="/panel/taller" exact />
+          )}
+
+          {userProfile.rol !== "taller" && (
+          <>
           {/* 📦 STOCK */}
           <SectionAccordion id="inventario" label="Inventario">
             <NavLinkItem icon={CarFront} label="Gestión de Stock" href="/panel" exact />
+            <NavLinkItem icon={Wrench} label="Preparación de Vehículos" href="/panel/taller" />
           </SectionAccordion>
 
           {/* 💬 CRM */}
@@ -189,6 +200,8 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
               <NavLinkItem icon={MousePointerClick} label="Búsquedas Web" href="/panel/marketing/busquedas" />
               <NavLinkItem icon={Bot} label="Asistente Virtual" href="/panel/marketing/chatbot" />
             </SectionAccordion>
+          )}
+          </>
           )}
         </div>
 

@@ -43,6 +43,8 @@ export async function POST(req: Request) {
       return Response.json({ error: "Faltan datos obligatorios." }, { status: 400 });
     }
 
+    const puedeVenirSucursal = cotizacion.puede_venir_sucursal === true;
+
     const { data, error } = await supabase
       .from("cotizaciones")
       .insert({
@@ -51,13 +53,15 @@ export async function POST(req: Request) {
         anio: Number(cotizacion.anio),
         version: cotizacion.version,
         kilometraje: Number(cotizacion.kilometraje),
+        gnc: cotizacion.gnc ?? null,
         nombre: cotizacion.nombre,
         email: cotizacion.email,
         telefono: cotizacion.telefono,
         telefono_verificado: false,
-        tipo_peritaje: cotizacion.tipo_peritaje ?? "online",
+        puede_venir_sucursal: puedeVenirSucursal,
+        tipo_peritaje: puedeVenirSucursal ? "presencial" : "online",
         sucursal_preferida: cotizacion.sucursal_preferida ?? "Casa Central",
-        fotos_y_videos: [],
+        fotos_y_videos: Array.isArray(cotizacion.fotos_y_videos) ? cotizacion.fotos_y_videos : [],
       })
       .select("id")
       .single();

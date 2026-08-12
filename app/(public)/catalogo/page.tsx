@@ -97,16 +97,20 @@ export default function CatalogoPage() {
       .in("estado", ["Disponible", "Reservado"]);
 
     // Filtros de texto, condición y precio
-    if (searchQuery)
+    const busquedaNormalizada = searchQuery.trim().toLowerCase();
+    if (busquedaNormalizada === "0km" || busquedaNormalizada === "0 km") {
+      query = query.eq("kilometraje", 0);
+    } else if (searchQuery) {
       query = query.or(
-        `marca.ilike.%${searchQuery}%,modelo.ilike.%${searchQuery}%`,
+        `marca.ilike.%${searchQuery}%,modelo.ilike.%${searchQuery}%,tipo.ilike.%${searchQuery}%,version.ilike.%${searchQuery}%`,
       );
+    }
 
     if (condicionQuery) {
       if (condicionQuery === "0km") {
-        query = query.eq("condicion", "0km");
+        query = query.eq("kilometraje", 0);
       } else if (condicionQuery === "usados") {
-        query = query.in("condicion", ["Usado", "usado", "usados"]);
+        query = query.gt("kilometraje", 0);
       }
     }
 
@@ -523,7 +527,7 @@ export default function CatalogoPage() {
           <div className="flex-1 w-full flex flex-col">
             {loading ? (
               // SKELETONS INICIALES (Sólidos)
-              <div className="grid grid-cols-2 lg:grid-cols-2 xl:grid-cols-3 gap-4 md:gap-6">
+              <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-4 md:gap-6">
                 {[...Array(6)].map((_, i) => (
                   <div
                     key={i}
@@ -543,7 +547,7 @@ export default function CatalogoPage() {
             ) : vehiculos.length > 0 ? (
               <>
                 {/* AUTOS CARGADOS */}
-                <div className="grid grid-cols-2 lg:grid-cols-2 xl:grid-cols-3 gap-4 md:gap-6 pb-8">
+                <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-4 md:gap-6 pb-8">
                   {vehiculos.map((auto, index) => {
                     const estaSeleccionado = autosComparar.some(
                       (a) => a.id === auto.id,

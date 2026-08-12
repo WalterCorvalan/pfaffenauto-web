@@ -2,19 +2,20 @@
 
 import { useState, useEffect } from "react";
 import { createClient } from "@supabase/supabase-js";
-import { Scale } from "lucide-react";
 
 // ================= COMPONENTES DE LA LANDING =================
 import Hero from "@/components/Hero";
 import Stock from "@/components/Stock";
 import Marcas from "@/components/Marcas";
 import Servicios from "@/components/Servicios";
+import Location from "@/components/Location";
 import BannerFinanciacion from "@/components/banners/BannerFinanciacion";
 import Sucursales from "@/components/Sucursales";
 import Testimonials from "@/components/Testimonials";
 import FAQ from "@/components/FAQ";
 import AgendarCitaForm from "@/components/forms/AgendarCitaForm";
 import Seguimiento from "@/components/Seguimiento";
+import BannersPublicitarios from "@/components/banners/BannerPublicitario";
 
 const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -23,7 +24,6 @@ const supabase = createClient(
 
 export default function Page() {
   const [vehiculos, setVehiculos] = useState<any[]>([]);
-  const [autosComparar, setAutosComparar] = useState<any[]>([]);
 
   useEffect(() => {
     async function cargarVehiculos() {
@@ -38,31 +38,18 @@ export default function Page() {
     cargarVehiculos();
   }, []);
 
-  const manejarSeleccionComparar = (auto: any) => {
-    setAutosComparar((prev) => {
-      const yaExiste = prev.some((a) => a.id === auto.id);
-      if (yaExiste) return prev.filter((a) => a.id !== auto.id);
-      if (prev.length >= 3) {
-        alert("Solo podés comparar hasta 3 vehículos a la vez.");
-        return prev;
-      }
-      return [...prev, auto];
-    });
-  };
-
   return (
     // Usamos el fondo claro premium que definimos para el resto de la web
-    <main className="w-full bg-[#F8FAFC] min-h-screen relative flex flex-col gap-12 md:gap-20 pb-20">
+    <main className="w-full bg-[#f8f9fa] min-h-screen relative flex flex-col gap-0 md:gap-20 pb-20">
       
       {/* 1. Hero Principal */}
       <Hero />
+
+      {/* 3. Marcas con las que trabajan */}
+      <BannersPublicitarios />
       
       {/* 2. Catálogo Destacado (Stock) */}
-      <Stock 
-        vehiculos={vehiculos} 
-        onSelectParaComparar={manejarSeleccionComparar}
-        autosParaComparar={autosComparar}
-      />
+      <Stock vehiculos={vehiculos} />
       
       {/* 3. Marcas con las que trabajan */}
       <Marcas />
@@ -79,11 +66,10 @@ export default function Page() {
         <Seguimiento />
       </div>
       
-      {/* 6. Puntos de Venta */}
-      <Sucursales />
-      
       {/* 7. Reseñas de Clientes */}
       <Testimonials />
+
+      <Location />
 
       <AgendarCitaForm />
       

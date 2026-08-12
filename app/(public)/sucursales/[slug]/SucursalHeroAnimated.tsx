@@ -1,12 +1,8 @@
-"use client";
-
-import React, { useRef } from "react";
-// 1. Agregamos "Variants" a la importación
-import { motion, useScroll, useTransform, Variants } from "framer-motion";
 import Link from "next/link";
 import { MapPin, Phone, Clock, ArrowLeft } from "lucide-react";
 
 interface HeroProps {
+  slug: string;
   nombre: string;
   imagen: string;
   direccion: string;
@@ -14,133 +10,96 @@ interface HeroProps {
   horario: string;
 }
 
-export default function SucursalHeroAnimated({ nombre, imagen, direccion, telefono, horario }: HeroProps) {
-  const containerRef = useRef<HTMLElement>(null);
-  const { scrollYProgress } = useScroll({
-    target: containerRef,
-    offset: ["start start", "end start"],
-  });
+const UBICACIONES: Record<string, { mapUrl: string; navLink: string }> = {
+  "casa-central": {
+    mapUrl: "https://maps.google.com/maps?q=Pfaffen+Autos,+Villa+de+Mayo,+Buenos+Aires&t=m&z=15&output=embed&iwloc=near&hl=es",
+    navLink: "https://maps.app.goo.gl/4ZMmpWJCarHcZ2sb9",
+  },
+  "don-torcuato": {
+    mapUrl: "https://maps.google.com/maps?q=Pfaffen+Autos,+Don+Torcuato,+Buenos+Aires&t=m&z=15&output=embed&iwloc=near&hl=es",
+    navLink: "https://maps.app.goo.gl/GuNBuUKT5xMFw5jR9",
+  },
+};
 
-  // Efecto Parallax en la imagen de fondo
-  const yImage = useTransform(scrollYProgress, [0, 1], ["0%", "30%"]);
-  const opacityText = useTransform(scrollYProgress, [0, 0.5], [1, 0]);
-
-  // 2. Le decimos a TypeScript explícitamente que esto es un tipo "Variants"
-  const containerVariants: Variants = {
-    hidden: { opacity: 0 },
-    visible: {
-      opacity: 1,
-      transition: { staggerChildren: 0.15, delayChildren: 0.2 },
-    },
-  };
-
-  const itemVariants: Variants = {
-    hidden: { opacity: 0, y: 30, filter: "blur(10px)" },
-    visible: {
-      opacity: 1,
-      y: 0,
-      filter: "blur(0px)",
-      transition: { type: "spring", stiffness: 100, damping: 20 },
-    },
-  };
+export default function SucursalHeroAnimated({ slug, nombre, imagen, direccion, telefono, horario }: HeroProps) {
+  const ubicacion = UBICACIONES[slug];
+  const mapaSrc = ubicacion?.mapUrl || `https://www.google.com/maps?q=${encodeURIComponent(direccion)}&output=embed`;
 
   return (
-    <section 
-      ref={containerRef}
-      className="relative h-[80vh] min-h-[600px] w-full flex flex-col justify-center px-4 md:px-12 pb-[140px] overflow-hidden"
-    >
-      {/* ================= FONDO PARALLAX Y ESPACIAL ================= */}
-      <motion.div style={{ y: yImage }} className="absolute inset-0 z-0 bg-black">
-        <motion.img
-          initial={{ scale: 1.1, opacity: 0 }}
-          animate={{ scale: 1, opacity: 0.8 }}
-          transition={{ duration: 1.5, ease: "easeOut" }}
-          src={imagen}
-          alt={`Sucursal ${nombre}`}
-          className="w-full h-full object-cover object-center"
-        />
-        {/* Gradientes volumétricos */}
-        <div className="absolute inset-0 bg-gradient-to-b from-black/70 via-black/30 to-[#050505]/95"></div>
-        <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_center,transparent_0%,rgba(0,0,0,0.5)_100%)]"></div>
-        
-        {/* Luces de Neón difuminadas (Glow) */}
-        <motion.div 
-          animate={{ opacity: [0.3, 0.6, 0.3] }} 
-          transition={{ duration: 4, repeat: Infinity, ease: "easeInOut" }}
-          className="absolute top-[10%] right-[10%] w-[500px] h-[500px] bg-[#0145F2]/40 rounded-full blur-[140px] pointer-events-none mix-blend-screen"
-        ></motion.div>
-        <motion.div 
-          animate={{ opacity: [0.2, 0.4, 0.2] }} 
-          transition={{ duration: 5, repeat: Infinity, ease: "easeInOut", delay: 1 }}
-          className="absolute bottom-[20%] left-[5%] w-[400px] h-[400px] bg-sky-400/30 rounded-full blur-[120px] pointer-events-none mix-blend-screen"
-        ></motion.div>
-      </motion.div>
+    <>
+      {/* ================= BANNER ================= */}
+      <section className="relative h-64 md:h-80 lg:h-[420px] w-full overflow-hidden">
+        <img src={imagen} alt={`Sucursal ${nombre}`} className="absolute inset-0 w-full h-full object-cover" />
+        <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/30 to-black/10"></div>
 
-      {/* ================= CONTENIDO PRINCIPAL ================= */}
-      <motion.div 
-        variants={containerVariants}
-        initial="hidden"
-        animate="visible"
-        style={{ opacity: opacityText }}
-        className="relative z-20 max-w-7xl mx-auto w-full mt-12"
-      >
-        {/* Botón Volver con Microinteracción (Hover magnético) */}
-        <motion.div variants={itemVariants} className="w-fit">
+        <div className="relative z-10 max-w-7xl mx-auto w-full h-full px-4 md:px-6 flex flex-col justify-between py-6">
           <Link
             href="/#sucursales"
-            className="inline-flex items-center gap-2 text-white/90 hover:text-white text-[10px] md:text-xs font-black uppercase tracking-widest transition-all mb-10 bg-white/10 backdrop-blur-2xl px-5 py-2.5 rounded-full border border-white/20 shadow-[0_8px_32px_rgba(0,0,0,0.3)] hover:bg-white/20 hover:border-white/40 hover:shadow-[0_8px_32px_rgba(1,69,242,0.4)] group overflow-hidden relative"
+            className="inline-flex items-center gap-2 text-white/90 hover:text-white text-xs font-bold uppercase tracking-widest transition-colors w-fit bg-white/10 backdrop-blur-md px-4 py-2 rounded-full border border-white/20"
           >
-            {/* Brillo de barrido al hacer hover */}
-            <span className="absolute inset-0 w-[150%] h-full bg-gradient-to-r from-transparent via-white/20 to-transparent -translate-x-[150%] group-hover:animate-[shimmer_1.5s_infinite]"></span>
-            <ArrowLeft className="w-4 h-4 group-hover:-translate-x-1 transition-transform" /> 
-            Volver a Sucursales
+            <ArrowLeft className="w-3.5 h-3.5" /> Volver a Sucursales
           </Link>
-        </motion.div>
 
-        {/* Título Transparente/Cristal */}
-        <motion.h1 variants={itemVariants} className="text-5xl md:text-7xl lg:text-[90px] font-black uppercase tracking-tighter drop-shadow-2xl mb-12 leading-[0.9]">
-          <span className="text-white/40 font-light text-2xl md:text-4xl block mb-2 tracking-widest drop-shadow-md">Sucursal</span>
-          <span className="text-transparent bg-clip-text bg-gradient-to-r from-white via-blue-100 to-sky-300 drop-shadow-[0_0_30px_rgba(255,255,255,0.2)]">
-            {nombre}
-          </span>
-        </motion.h1>
+          <div>
+            <span className="text-white/60 text-xs font-bold uppercase tracking-widest block mb-1">Sucursal</span>
+            <h1 className="text-3xl md:text-5xl lg:text-6xl font-black text-white tracking-tight">{nombre}</h1>
+          </div>
+        </div>
+      </section>
 
-        {/* ================= TARJETAS GLASSMORPHISM ================= */}
-        <motion.div variants={itemVariants} className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4 md:gap-6 max-w-5xl">
-          <GlassCard icon={<MapPin />} title="Dirección" value={direccion} delay={0} />
-          <GlassCard icon={<Phone />} title="Línea Directa" value={telefono} delay={0.1} />
-          <GlassCard icon={<Clock />} title="Horario" value={horario} delay={0.2} />
-        </motion.div>
-      </motion.div>
-    </section>
+      {/* ================= DATOS DE CONTACTO Y UBICACIÓN ================= */}
+      <section className="bg-white border-b border-gray-200">
+        <div className="max-w-7xl mx-auto px-4 md:px-6 py-10 lg:py-14 grid grid-cols-1 lg:grid-cols-12 gap-6 lg:gap-8">
+
+          {/* Info formal */}
+          <div className="lg:col-span-5 bg-white border border-gray-200 rounded-2xl divide-y divide-gray-100">
+            <InfoRow icon={<MapPin className="w-4 h-4" />} label="Dirección" value={direccion} />
+            <InfoRow
+              icon={<Phone className="w-4 h-4" />}
+              label="Teléfono"
+              value={telefono}
+              href={`https://wa.me/549${telefono.replace(/\D/g, "")}`}
+            />
+            <InfoRow icon={<Clock className="w-4 h-4" />} label="Horario de atención" value={horario} />
+          </div>
+
+          {/* Mapa de ubicación */}
+          <div className="lg:col-span-7 relative rounded-2xl overflow-hidden border border-gray-200 h-64 lg:h-auto min-h-[260px]">
+            <iframe
+              title={`Ubicación de ${nombre}`}
+              src={mapaSrc}
+              className="w-full h-full border-0"
+              loading="lazy"
+              referrerPolicy="no-referrer-when-downgrade"
+            />
+          </div>
+
+        </div>
+      </section>
+    </>
   );
 }
 
-// Subcomponente de Tarjeta Glass
-function GlassCard({ icon, title, value, delay }: { icon: React.ReactNode; title: string; value: string; delay: number }) {
-  return (
-    <motion.div 
-      whileHover={{ y: -5, scale: 1.02 }}
-      transition={{ type: "spring", stiffness: 400, damping: 25 }}
-      className="flex items-center gap-4 bg-white/[0.08] backdrop-blur-[40px] p-4 md:p-5 rounded-[24px] border border-white/10 shadow-[0_8px_32px_0_rgba(0,0,0,0.3)] hover:bg-white/[0.15] hover:border-white/30 hover:shadow-[0_8px_40px_0_rgba(1,69,242,0.2)] group cursor-default relative overflow-hidden"
-    >
-      {/* Resplandor lateral en hover */}
-      <div className="absolute top-0 left-0 w-1 h-full bg-gradient-to-b from-[#0145F2] to-sky-400 opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
-
-      <div className="w-12 h-12 md:w-14 md:h-14 rounded-full bg-gradient-to-br from-white/10 to-transparent border border-white/20 flex items-center justify-center shrink-0 shadow-inner group-hover:bg-[#0145F2]/40 group-hover:border-sky-300/50 transition-all duration-300 relative z-10">
-        <div className="text-gray-300 group-hover:text-white w-5 h-5 md:w-6 md:h-6 transition-colors drop-shadow-md">
-          {icon}
-        </div>
+function InfoRow({ icon, label, value, href }: { icon: React.ReactNode; label: string; value: string; href?: string }) {
+  const contenido = (
+    <>
+      <div className="w-10 h-10 rounded-full bg-blue-50 text-blue-700 flex items-center justify-center shrink-0">
+        {icon}
       </div>
-      
-      <div className="flex flex-col relative z-10">
-        <span className="text-[10px] md:text-xs text-gray-400 font-bold uppercase tracking-widest mb-1 group-hover:text-sky-300 transition-colors">
-          {title}
-        </span>
-        <span className="text-sm md:text-base font-black text-white tracking-wide leading-tight drop-shadow-md">
-          {value}
-        </span>
+      <div className="min-w-0">
+        <span className="text-[11px] font-bold text-gray-400 uppercase tracking-widest block mb-0.5">{label}</span>
+        <span className={`text-sm font-bold block truncate ${href ? "text-blue-700" : "text-gray-900"}`}>{value}</span>
       </div>
-    </motion.div>
+    </>
   );
+
+  if (href) {
+    return (
+      <a href={href} target="_blank" rel="noopener noreferrer" className="flex items-center gap-4 p-5 hover:bg-blue-50/50 transition-colors">
+        {contenido}
+      </a>
+    );
+  }
+
+  return <div className="flex items-center gap-4 p-5">{contenido}</div>;
 }

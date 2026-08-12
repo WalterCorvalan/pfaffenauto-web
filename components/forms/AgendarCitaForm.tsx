@@ -103,7 +103,7 @@ export default function AgendarCitaForm() {
 
   if (enviado) {
     return (
-      <section className="w-full bg-[#F8FAFC] py-16 px-4">
+      <section className="w-full bg-[#f8f9fa] py-10 md:py-16 px-4 md:px-6">
         <div className="max-w-xl mx-auto text-center bg-white border border-slate-100 rounded-3xl p-10 shadow-sm">
           <div className="w-16 h-16 bg-emerald-50 text-emerald-500 rounded-full flex items-center justify-center mx-auto mb-5">
             <CheckCircle2 className="w-8 h-8" />
@@ -120,7 +120,7 @@ export default function AgendarCitaForm() {
   }
 
   return (
-    <section className="w-full bg-[#F8FAFC] py-16 px-4">
+    <section className="w-full bg-[#f8f9fa] py-10 md:py-16 px-4 md:px-6">
       <div className="max-w-3xl mx-auto">
         <div className="text-center mb-10">
           <span className="inline-flex items-center gap-2 bg-[#0145F2]/10 text-[#0145F2] text-xs font-black uppercase tracking-widest px-4 py-1.5 rounded-full mb-4">
@@ -148,7 +148,7 @@ export default function AgendarCitaForm() {
                   value={sucursal}
                   onChange={(e) => setSucursal(e.target.value)}
                   required
-                  className="w-full appearance-none bg-[#F8FAFC] border border-slate-200 rounded-xl px-4 py-3 text-sm text-navy outline-none focus:border-[#0145F2] transition-colors"
+                  className="w-full appearance-none bg-[#f8f9fa] border border-slate-200 rounded-xl px-4 py-3 text-sm text-navy outline-none focus:border-[#0145F2] transition-colors"
                 >
                   <option value="">Seleccionar...</option>
                   {sucursales.map((s) => (
@@ -169,7 +169,7 @@ export default function AgendarCitaForm() {
                 <select
                   value={vehiculoId}
                   onChange={(e) => setVehiculoId(e.target.value)}
-                  className="w-full appearance-none bg-[#F8FAFC] border border-slate-200 rounded-xl px-4 py-3 text-sm text-navy outline-none focus:border-[#0145F2] transition-colors"
+                  className="w-full appearance-none bg-[#f8f9fa] border border-slate-200 rounded-xl px-4 py-3 text-sm text-navy outline-none focus:border-[#0145F2] transition-colors"
                 >
                   <option value="">Solo quiero conocer la sucursal</option>
                   {vehiculos.map((v) => (
@@ -195,7 +195,7 @@ export default function AgendarCitaForm() {
                   setHorario("");
                 }}
                 required
-                className="w-full bg-[#F8FAFC] border border-slate-200 rounded-xl px-4 py-3 text-sm text-navy outline-none focus:border-[#0145F2] transition-colors"
+                className="w-full bg-[#f8f9fa] border border-slate-200 rounded-xl px-4 py-3 text-sm text-navy outline-none focus:border-[#0145F2] transition-colors"
               />
             </div>
 
@@ -209,7 +209,7 @@ export default function AgendarCitaForm() {
                   onChange={(e) => setHorario(e.target.value)}
                   disabled={!sucursal || !fecha}
                   required
-                  className="w-full appearance-none bg-[#F8FAFC] border border-slate-200 rounded-xl px-4 py-3 text-sm text-navy outline-none focus:border-[#0145F2] transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                  className="w-full appearance-none bg-[#f8f9fa] border border-slate-200 rounded-xl px-4 py-3 text-sm text-navy outline-none focus:border-[#0145F2] transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                 >
                   <option value="">
                     {!sucursal || !fecha ? "Elegí sucursal y fecha primero" : "Seleccionar horario..."}
@@ -234,7 +234,7 @@ export default function AgendarCitaForm() {
                 onChange={(e) => setNombre(e.target.value)}
                 placeholder="Nombre y apellido"
                 required
-                className="w-full bg-[#F8FAFC] border border-slate-200 rounded-xl px-4 py-3 text-sm text-navy outline-none focus:border-[#0145F2] transition-colors placeholder:text-slate-400"
+                className="w-full bg-[#f8f9fa] border border-slate-200 rounded-xl px-4 py-3 text-sm text-navy outline-none focus:border-[#0145F2] transition-colors placeholder:text-slate-400"
               />
             </div>
 
@@ -248,7 +248,7 @@ export default function AgendarCitaForm() {
                 onChange={(e) => setTelefono(e.target.value)}
                 placeholder="Ej: 1122334455"
                 required
-                className="w-full bg-[#F8FAFC] border border-slate-200 rounded-xl px-4 py-3 text-sm text-navy outline-none focus:border-[#0145F2] transition-colors placeholder:text-slate-400"
+                className="w-full bg-[#f8f9fa] border border-slate-200 rounded-xl px-4 py-3 text-sm text-navy outline-none focus:border-[#0145F2] transition-colors placeholder:text-slate-400"
               />
             </div>
           </div>

@@ -15,8 +15,8 @@ export default function Seguimiento() {
   };
 
   return (
-    <section className="py-12 bg-white border-y border-slate-100">
-      <div className="max-w-5xl mx-auto px-4">
+    <section className="py-12 bg-[#f8f9fa] border-y border-slate-100">
+      <div className="max-w-5xl mx-auto px-4 md:px-6">
         <div className="bg-[#F8FAFC] border border-slate-200/80 rounded-3xl p-6 sm:p-10 flex flex-col md:flex-row items-center justify-between gap-8 shadow-sm">
           
           {/* Texto explicativo */}

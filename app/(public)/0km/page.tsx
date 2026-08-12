@@ -1,5 +1,5 @@
 import { createClient } from "@/lib/supabase/server";
-import Stock from "@/components/Stock";
+import VehiculosGrid from "@/components/VehiculosGrid";
 import { Sparkles, ShieldCheck } from "lucide-react";
 import Link from "next/link";
 
@@ -19,7 +19,7 @@ export default async function CeroKmPage() {
     `,
     )
     .in("estado", ["Disponible", "Reservado"])
-    .eq("condicion", "0km") // Ajusta este filtro según el campo que uses en tu base de datos (ej: .eq("tipo", "0km") o .eq("kilometraje", 0))
+    .eq("kilometraje", 0)
     .not("precio_publicado_ars", "is", null)
     .order("created_at", { ascending: false });
 
@@ -77,7 +77,7 @@ export default async function CeroKmPage() {
 
       {/* ================= CATÁLOGO ================= */}
       <div className="relative z-10">
-        <Stock vehiculos={vehiculos} />
+        <VehiculosGrid vehiculos={vehiculos} />
       </div>
     </div>
   );

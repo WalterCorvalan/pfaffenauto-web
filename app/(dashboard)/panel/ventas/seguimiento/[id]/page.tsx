@@ -31,7 +31,7 @@ export default async function SeguimientoVentaPage({
 
   const { data: documentos } = await supabase
     .from("documentacion_ventas")
-    .select("id, tipo_documento, estado, fecha_recibido")
+    .select("id, tipo_documento, estado, fecha_recibido, archivo_url, etapa")
     .eq("venta_id", id)
     .order("created_at", { ascending: true });
 

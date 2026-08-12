@@ -2,13 +2,12 @@
 
 import React, { useState, useEffect } from "react";
 import Link from "next/link";
-import { ChevronRight, ArrowUpRight, Clock } from "lucide-react";
-import { motion, Variants } from "framer-motion";
+import { ChevronRight, ArrowUpRight, Clock, Scale, X } from "lucide-react";
+import { motion, AnimatePresence, Variants } from "framer-motion";
+import ComparadorModal from "@/components/modals/ComparadorModal";
 
 interface StockProps {
   vehiculos: any[] | null;
-  onSelectParaComparar?: (auto: any) => void; // <--- Agregado
-  autosParaComparar?: any[];                   // <--- Agregado
 }
 
 // Función para limpiar textos
@@ -47,6 +46,23 @@ export default function Stock({ vehiculos }: StockProps) {
 
   // Estado para la lista de "Vistos recientemente"
   const [vistosRecientes, setVistosRecientes] = useState<any[]>([]);
+
+  // ================= COMPARADOR (hasta 3 autos) =================
+  const [autosComparar, setAutosComparar] = useState<any[]>([]);
+  const [modalComparadorOpen, setModalComparadorOpen] = useState(false);
+
+  const toggleComparar = (e: React.MouseEvent, auto: any) => {
+    e.preventDefault();
+    e.stopPropagation();
+    const yaEsta = autosComparar.find((a) => a.id === auto.id);
+    if (yaEsta) {
+      setAutosComparar((prev) => prev.filter((a) => a.id !== auto.id));
+    } else if (autosComparar.length >= 3) {
+      setAutosComparar((prev) => [...prev.slice(1), auto]);
+    } else {
+      setAutosComparar((prev) => [...prev, auto]);
+    }
+  };
 
   useEffect(() => {
     try {
@@ -131,7 +147,7 @@ export default function Stock({ vehiculos }: StockProps) {
               linkHref="/catalogo?q=SUV"
               linkLabel="Ver todas las SUVs"
             />
-            <VehicleGrid vehiculos={suvsDestacadas} />
+            <VehicleGrid vehiculos={suvsDestacadas} autosComparar={autosComparar} onToggleComparar={toggleComparar} />
           </div>
         )}
 
@@ -154,7 +170,11 @@ export default function Stock({ vehiculos }: StockProps) {
                     key={`${auto.id}-${index}`}
                     className="min-w-[280px] max-w-[280px] sm:min-w-[300px] sm:max-w-[300px] flex-shrink-0 snap-center"
                   >
-                    <VehicleCard auto={auto} />
+                    <VehicleCard
+                      auto={auto}
+                      estaSeleccionado={autosComparar.some((a) => a.id === auto.id)}
+                      onToggleComparar={toggleComparar}
+                    />
                   </div>
                 ))}
               </div>
@@ -181,6 +201,17 @@ export default function Stock({ vehiculos }: StockProps) {
                   href={`/catalogo/${urbanosYSedanes[0].slug}`}
                   className="md:col-span-8 relative h-[380px] md:h-[450px] rounded-[32px] overflow-hidden group shadow-[0_8px_32px_rgba(0,0,0,0.04)] hover:shadow-[0_20px_48px_rgba(1,69,242,0.12)] border border-white/60 transition-all duration-500"
                 >
+                  <button
+                    onClick={(e) => toggleComparar(e, urbanosYSedanes[0])}
+                    className={`absolute top-5 left-5 z-30 p-2.5 rounded-full shadow-sm transition-all duration-300 border hover:scale-110 active:scale-95 ${
+                      autosComparar.some((a) => a.id === urbanosYSedanes[0].id)
+                        ? "bg-[#0145F2] text-white border-[#0145F2]"
+                        : "bg-white/80 backdrop-blur-md text-slate-500 hover:text-[#0145F2] border-white/60"
+                    }`}
+                    title="Comparar vehículo"
+                  >
+                    <Scale className="w-4 h-4" />
+                  </button>
                   <div className="absolute inset-0 bg-slate-100 z-0"></div>
                   <img
                     src={
@@ -309,6 +340,17 @@ export default function Stock({ vehiculos }: StockProps) {
                   href={`/catalogo/${auto.slug}`}
                   className="min-w-[280px] md:min-w-[360px] h-[380px] md:h-[480px] relative rounded-[32px] overflow-hidden group snap-center shadow-lg hover:shadow-2xl border border-white/40 shrink-0 transition-all duration-500"
                 >
+                  <button
+                    onClick={(e) => toggleComparar(e, auto)}
+                    className={`absolute top-5 left-5 z-30 p-2.5 rounded-full shadow-sm transition-all duration-300 border hover:scale-110 active:scale-95 ${
+                      autosComparar.some((a) => a.id === auto.id)
+                        ? "bg-[#0145F2] text-white border-[#0145F2]"
+                        : "bg-white/20 backdrop-blur-md text-white hover:text-[#0145F2] hover:bg-white border-white/40"
+                    }`}
+                    title="Comparar vehículo"
+                  >
+                    <Scale className="w-4 h-4" />
+                  </button>
                   <div className="absolute inset-0 bg-slate-200 z-0"></div>
                   <img
                     src={
@@ -320,7 +362,7 @@ export default function Stock({ vehiculos }: StockProps) {
                   />
                   <div className="absolute inset-0 bg-gradient-to-b from-black/70 via-transparent to-black/80 z-10" />
 
-                  <div className="absolute top-6 left-6 right-6 z-20">
+                  <div className="absolute top-6 left-16 right-6 z-20">
                     <span className="text-white/80 text-[10px] md:text-xs uppercase tracking-widest font-black drop-shadow-md">
                       {auto.marca}
                     </span>
@@ -349,6 +391,74 @@ export default function Stock({ vehiculos }: StockProps) {
           </div>
         )}
       </div>
+
+      {/* ================= BARRA FLOTANTE COMPARADOR (HASTA 3 AUTOS) ================= */}
+      <AnimatePresence>
+        {autosComparar.length > 0 && (
+          <motion.div
+            initial={{ y: 100, opacity: 0 }}
+            animate={{ y: 0, opacity: 1 }}
+            exit={{ y: 100, opacity: 0 }}
+            transition={{ type: "spring", damping: 25, stiffness: 300 }}
+            className="fixed bottom-6 left-4 right-4 md:left-1/2 md:-translate-x-1/2 md:w-max z-50"
+          >
+            <div className="bg-gray-900 shadow-2xl rounded-2xl pl-4 pr-3 py-3 md:px-5 md:py-3.5 flex items-center justify-between gap-4 md:gap-8 border border-gray-700">
+              <div className="flex items-center gap-3 md:gap-4 shrink-0">
+                <div className="flex -space-x-3">
+                  {autosComparar.map((auto, i) => (
+                    <div
+                      key={i}
+                      className="w-10 h-10 md:w-12 md:h-12 rounded-full border-2 border-gray-900 overflow-hidden bg-white shadow-sm shrink-0"
+                    >
+                      <img
+                        src={auto.multimedia_vehiculos?.[0]?.url_archivo || "/placeholder.jpg"}
+                        className="w-full h-full object-cover"
+                      />
+                    </div>
+                  ))}
+                  {autosComparar.length < 3 && (
+                    <div className="w-10 h-10 md:w-12 md:h-12 rounded-full border-2 border-dashed border-gray-600 flex items-center justify-center bg-gray-800 text-gray-500 text-xs font-bold shrink-0">
+                      +
+                    </div>
+                  )}
+                </div>
+                <div className="flex flex-col justify-center">
+                  <span className="text-white text-[11px] md:text-sm font-bold leading-none">
+                    {autosComparar.length} / 3
+                    <span className="hidden sm:inline"> listos</span>
+                  </span>
+                  <span className="text-gray-400 text-[9px] uppercase tracking-widest hidden sm:block mt-1">
+                    Comparador
+                  </span>
+                </div>
+              </div>
+              <div className="flex items-center gap-2 shrink-0">
+                <button
+                  onClick={() => setAutosComparar([])}
+                  className="text-gray-400 hover:text-white px-2 py-2 text-[10px] font-bold uppercase tracking-widest transition-colors rounded-lg hover:bg-white/10"
+                >
+                  <X className="w-4 h-4 md:hidden" />
+                  <span className="hidden md:inline">Limpiar</span>
+                </button>
+                <button
+                  onClick={() => setModalComparadorOpen(true)}
+                  disabled={autosComparar.length === 0}
+                  className="bg-blue-600 hover:bg-blue-500 disabled:bg-gray-700 disabled:text-gray-500 text-white px-4 py-2.5 md:px-6 md:py-3 rounded-xl text-[10px] md:text-xs font-bold uppercase tracking-widest transition-all flex items-center gap-2 active:scale-95"
+                >
+                  <Scale className="w-4 h-4 shrink-0" /> Comparar
+                </button>
+              </div>
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      <ComparadorModal
+        isOpen={modalComparadorOpen}
+        onClose={() => setModalComparadorOpen(false)}
+        autos={autosComparar}
+        removerAuto={(id) => setAutosComparar((prev) => prev.filter((a) => a.id !== id))}
+      />
     </section>
   );
 }
@@ -391,7 +501,15 @@ function SectionHeader({
   );
 }
 
-function VehicleGrid({ vehiculos }: { vehiculos: any[] }) {
+function VehicleGrid({
+  vehiculos,
+  autosComparar,
+  onToggleComparar,
+}: {
+  vehiculos: any[];
+  autosComparar?: any[];
+  onToggleComparar?: (e: React.MouseEvent, auto: any) => void;
+}) {
   return (
     <motion.div
       variants={containerVariants}
@@ -402,14 +520,26 @@ function VehicleGrid({ vehiculos }: { vehiculos: any[] }) {
     >
       {vehiculos.map((auto) => (
         <motion.div variants={itemVariants} key={auto.id} className="h-full">
-          <VehicleCard auto={auto} />
+          <VehicleCard
+            auto={auto}
+            estaSeleccionado={autosComparar?.some((a) => a.id === auto.id)}
+            onToggleComparar={onToggleComparar}
+          />
         </motion.div>
       ))}
     </motion.div>
   );
 }
 
-function VehicleCard({ auto }: { auto: any }) {
+function VehicleCard({
+  auto,
+  estaSeleccionado,
+  onToggleComparar,
+}: {
+  auto: any;
+  estaSeleccionado?: boolean;
+  onToggleComparar?: (e: React.MouseEvent, auto: any) => void;
+}) {
   const precioMostrar =
     auto.precio_publicado_usd && !auto.precio_publicado_ars
       ? `US$ ${auto.precio_publicado_usd.toLocaleString("es-AR")}`
@@ -422,8 +552,26 @@ function VehicleCard({ auto }: { auto: any }) {
       href={`/catalogo/${auto.slug}`}
       className="block group h-full focus:outline-none"
     >
-      <div className="bg-white/40 backdrop-blur-2xl rounded-[28px] border border-white/60 overflow-hidden flex flex-col h-full shadow-[0_8px_32px_rgba(0,0,0,0.04)] hover:shadow-[0_20px_48px_rgba(1,69,242,0.12)] hover:border-white hover:bg-white/70 transition-all duration-500 relative transform group-hover:-translate-y-1">
+      <div
+        className={`bg-white/40 backdrop-blur-2xl rounded-[28px] overflow-hidden flex flex-col h-full shadow-[0_8px_32px_rgba(0,0,0,0.04)] hover:shadow-[0_20px_48px_rgba(1,69,242,0.12)] hover:bg-white/70 transition-all duration-500 relative transform group-hover:-translate-y-1 border ${
+          estaSeleccionado ? "border-[#0145F2] ring-1 ring-[#0145F2]" : "border-white/60 hover:border-white"
+        }`}
+      >
         <div className="absolute inset-0 bg-gradient-to-tr from-transparent via-white/40 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-700 pointer-events-none z-20"></div>
+
+        {onToggleComparar && (
+          <button
+            onClick={(e) => onToggleComparar(e, auto)}
+            className={`absolute top-3.5 left-3.5 z-30 p-2 rounded-full shadow-sm transition-all duration-300 border hover:scale-110 active:scale-95 ${
+              estaSeleccionado
+                ? "bg-[#0145F2] text-white border-[#0145F2]"
+                : "bg-white/80 backdrop-blur-md text-gray-400 hover:text-[#0145F2] border-white/60"
+            }`}
+            title="Comparar vehículo"
+          >
+            <Scale className="w-3.5 h-3.5" />
+          </button>
+        )}
 
         <div className="relative h-[160px] sm:h-[180px] bg-white/30 flex items-center justify-center overflow-hidden mix-blend-multiply">
           {auto.multimedia_vehiculos?.[0] ? (

@@ -12,6 +12,9 @@ export async function quitarFondo(buffer: Buffer, fileName: string): Promise<Buf
   formData.append("image_file", new Blob([new Uint8Array(buffer)]), fileName);
   formData.append("bg_image_url", FONDO_ESTUDIO_URL);
   formData.append("size", "auto");
+  formData.append("type", "car");       // mejora la detección de bordes (espejos, antenas, ruedas)
+  formData.append("scale", "80%");      // qué tan grande se ve el auto dentro del cuadro
+  formData.append("position", "center"); // centrado horizontal/vertical dentro del fondo
 
   const response = await fetch("https://api.remove.bg/v1.0/removebg", {
     method: "POST",

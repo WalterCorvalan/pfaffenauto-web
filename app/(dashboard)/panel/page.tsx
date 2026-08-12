@@ -63,17 +63,21 @@ export default async function PanelPage({ searchParams }: { searchParams: Promis
         </div>
         
         <form method="GET" action="/panel" className="flex flex-col sm:flex-row gap-2">
-          <div className="relative">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
-            <input type="text" name="q" defaultValue={q} placeholder="Buscar..." className="w-full sm:w-48 bg-slate-50 border border-slate-200 rounded-lg py-1.5 pl-9 pr-3 text-[13px] outline-none focus:border-indigo-500 text-slate-900 placeholder:text-slate-400" />
+          <div className="relative flex items-stretch gap-2">
+            <div className="relative flex-1 sm:flex-none">
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
+              <input type="text" name="q" defaultValue={q} enterKeyHint="search" placeholder="Buscar..." className="w-full sm:w-48 bg-slate-50 border border-slate-200 rounded-lg py-1.5 pl-9 pr-3 text-[13px] outline-none focus:border-indigo-500 text-slate-900 placeholder:text-slate-400" />
+            </div>
+            <button type="submit" className="shrink-0 flex items-center justify-center bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg px-3 transition-colors" title="Buscar">
+              <Search className="w-4 h-4" />
+            </button>
           </div>
           <select name="sucursal" defaultValue={sucursal} className="w-full sm:w-40 bg-slate-50 border border-slate-200 rounded-lg py-1.5 px-3 text-[13px] outline-none focus:border-indigo-500 text-slate-900 appearance-none cursor-pointer">
             <option value="">Todas las sucursales</option>
             {sucursales?.map((s) => (<option key={s.id} value={s.id}>{s.nombre}</option>))}
           </select>
-          <button type="submit" className="hidden"></button>
-          
-          <Link href="/panel/vehiculo/nuevo" className="w-full sm:w-auto flex items-center justify-center gap-1.5 bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-1.5 rounded-lg text-[13px] font-bold transition-colors shadow-sm ml-2">
+
+          <Link href="/panel/vehiculo/nuevo" className="w-full sm:w-auto flex items-center justify-center gap-1.5 bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-1.5 rounded-lg text-[13px] font-bold transition-colors shadow-sm sm:ml-2">
             <Plus className="w-4 h-4" /> Ingresar Auto
           </Link>
         </form>

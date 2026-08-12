@@ -1,0 +1,238 @@
+"use client";
+
+import { useState, useMemo } from "react";
+import Link from "next/link";
+import { ChevronRight, ChevronLeft, Scale, X } from "lucide-react";
+import { AnimatePresence, motion } from "framer-motion";
+import ComparadorModal from "@/components/modals/ComparadorModal";
+
+const ITEMS_POR_PAGINA = 9;
+
+const normalizar = (texto: string) =>
+  texto?.toLowerCase().normalize("NFD").replace(/[̀-ͯ]/g, "").trim() || "";
+
+function categoriaDe(tipo: string): string {
+  const t = normalizar(tipo);
+  if (t.includes("suv") || t.includes("terreno")) return "SUV";
+  if (t.includes("pick") || t.includes("camioneta")) return "Pick-ups";
+  if (t.includes("sedan") || t.includes("hatchback") || t.includes("urbano") || t.includes("auto")) return "Sedanes";
+  return "Otros";
+}
+
+export default function VehiculosGrid({ vehiculos }: { vehiculos: any[] | null }) {
+  const lista = vehiculos || [];
+  const [autosComparar, setAutosComparar] = useState<any[]>([]);
+  const [modalComparadorOpen, setModalComparadorOpen] = useState(false);
+  const [categoriaActiva, setCategoriaActiva] = useState("Todos");
+  const [pagina, setPagina] = useState(0);
+
+  const categoriasDisponibles = useMemo(() => {
+    const set = new Set(lista.map((a) => categoriaDe(a.tipo)));
+    return ["Todos", ...Array.from(set)];
+  }, [lista]);
+
+  const listaFiltrada = useMemo(() => {
+    if (categoriaActiva === "Todos") return lista;
+    return lista.filter((a) => categoriaDe(a.tipo) === categoriaActiva);
+  }, [lista, categoriaActiva]);
+
+  const totalPaginas = Math.max(1, Math.ceil(listaFiltrada.length / ITEMS_POR_PAGINA));
+  const listaPaginada = listaFiltrada.slice(pagina * ITEMS_POR_PAGINA, (pagina + 1) * ITEMS_POR_PAGINA);
+
+  const cambiarCategoria = (cat: string) => {
+    setCategoriaActiva(cat);
+    setPagina(0);
+  };
+
+  const toggleComparar = (e: React.MouseEvent, auto: any) => {
+    e.preventDefault();
+    e.stopPropagation();
+    const yaEsta = autosComparar.find((a) => a.id === auto.id);
+    if (yaEsta) {
+      setAutosComparar((prev) => prev.filter((a) => a.id !== auto.id));
+    } else if (autosComparar.length >= 3) {
+      setAutosComparar((prev) => [...prev.slice(1), auto]);
+    } else {
+      setAutosComparar((prev) => [...prev, auto]);
+    }
+  };
+
+  if (lista.length === 0) {
+    return (
+      <section className="py-16 text-center">
+        <div className="max-w-md mx-auto p-10 rounded-[32px] bg-white/40 backdrop-blur-2xl border border-white/60 shadow-[0_16px_40px_0_rgba(31,38,135,0.05)]">
+          <p className="text-gray-500 font-bold tracking-wide">
+            Actualmente no hay unidades disponibles.
+          </p>
+        </div>
+      </section>
+    );
+  }
+
+  return (
+    <section className="py-8 max-w-7xl mx-auto px-4 md:px-6">
+      {categoriasDisponibles.length > 2 && (
+        <div className="flex items-center gap-2 mb-6 overflow-x-auto pb-1">
+          {categoriasDisponibles.map((cat) => (
+            <button
+              key={cat}
+              onClick={() => cambiarCategoria(cat)}
+              className={`shrink-0 px-4 py-2 rounded-full text-xs font-bold uppercase tracking-wider border transition-colors ${
+                categoriaActiva === cat
+                  ? "bg-blue-600 border-blue-600 text-white"
+                  : "bg-white border-gray-200 text-gray-500 hover:border-blue-300"
+              }`}
+            >
+              {cat}
+            </button>
+          ))}
+        </div>
+      )}
+
+      <div className="grid grid-cols-2 lg:grid-cols-3 2xl:grid-cols-4 gap-3 sm:gap-4 md:gap-6 pb-8">
+        {listaPaginada.map((auto) => {
+          const estaSeleccionado = autosComparar.some((a) => a.id === auto.id);
+          const precioMostrar =
+            auto.precio_publicado_usd && !auto.precio_publicado_ars
+              ? `US$ ${auto.precio_publicado_usd.toLocaleString("es-AR")}`
+              : auto.precio_publicado_ars
+                ? `$ ${auto.precio_publicado_ars.toLocaleString("es-AR")}`
+                : `US$ ${auto.precio_publicado_usd?.toLocaleString("es-AR")}`;
+
+          return (
+            <Link
+              key={auto.id}
+              href={`/catalogo/${auto.slug}`}
+              className="block group h-full focus:outline-none"
+            >
+              <div
+                className={`bg-white rounded-2xl overflow-hidden flex flex-col h-full hover:shadow-lg transition-all duration-300 relative border ${
+                  estaSeleccionado ? "border-blue-600 ring-1 ring-blue-600 shadow-md" : "border-gray-200 hover:border-blue-400"
+                }`}
+              >
+                <button
+                  onClick={(e) => toggleComparar(e, auto)}
+                  className={`absolute top-3 left-3 z-10 p-2 rounded-full shadow-sm transition-all duration-300 border hover:scale-110 active:scale-95 ${
+                    estaSeleccionado ? "bg-blue-600 text-white border-blue-600" : "bg-white text-gray-400 hover:text-blue-600 border-gray-200"
+                  }`}
+                  title="Comparar vehículo"
+                >
+                  <Scale className="w-3.5 h-3.5" />
+                </button>
+
+                <div className="relative h-32 sm:h-48 lg:h-52 bg-gray-100 flex items-center justify-center overflow-hidden shrink-0">
+                  {auto.multimedia_vehiculos?.[0] ? (
+                    <img
+                      src={auto.multimedia_vehiculos[0].url_archivo}
+                      alt={`${auto.marca} ${auto.modelo}`}
+                      className="w-full h-full object-cover mix-blend-multiply group-hover:scale-105 transition-transform duration-500"
+                    />
+                  ) : (
+                    <div className="text-gray-400 text-xs font-medium">Sin foto</div>
+                  )}
+                  {auto.estado === "Reservado" && (
+                    <div className="absolute top-3 right-3 bg-yellow-100 text-yellow-800 px-2.5 py-1 rounded-md text-[10px] font-bold uppercase tracking-widest border border-yellow-200">
+                      Reservado
+                    </div>
+                  )}
+                </div>
+
+                <div className="p-4 sm:p-5 flex flex-col flex-grow">
+                  <span className="text-[10px] text-gray-500 font-bold uppercase tracking-widest mb-1">{auto.marca}</span>
+                  <h3 className="text-sm sm:text-lg font-black text-gray-900 leading-tight uppercase truncate">{auto.modelo}</h3>
+                  <p className="text-[11px] sm:text-xs text-gray-500 mt-1 line-clamp-1">
+                    {auto.version || `${auto.anio} • ${auto.kilometraje?.toLocaleString("es-AR")} km`}
+                  </p>
+                  <div className="mt-auto pt-4 flex items-center justify-between">
+                    <span className="text-base sm:text-xl font-black text-blue-600">{precioMostrar}</span>
+                    <ChevronRight className="w-4 h-4 text-gray-300 group-hover:text-blue-600 transition-colors" />
+                  </div>
+                </div>
+              </div>
+            </Link>
+          );
+        })}
+      </div>
+
+      {totalPaginas > 1 && (
+        <div className="flex items-center justify-center gap-2 pb-8">
+          <button
+            onClick={() => setPagina((p) => Math.max(0, p - 1))}
+            disabled={pagina === 0}
+            className="p-2 rounded-lg border border-gray-200 text-gray-500 disabled:opacity-30 hover:border-blue-400 hover:text-blue-600 transition-colors"
+            aria-label="Página anterior"
+          >
+            <ChevronLeft className="w-4 h-4" />
+          </button>
+          {Array.from({ length: totalPaginas }).map((_, i) => (
+            <button
+              key={i}
+              onClick={() => setPagina(i)}
+              className={`w-9 h-9 rounded-lg text-xs font-bold border transition-colors ${
+                pagina === i ? "bg-blue-600 border-blue-600 text-white" : "bg-white border-gray-200 text-gray-500 hover:border-blue-400"
+              }`}
+            >
+              {i + 1}
+            </button>
+          ))}
+          <button
+            onClick={() => setPagina((p) => Math.min(totalPaginas - 1, p + 1))}
+            disabled={pagina === totalPaginas - 1}
+            className="p-2 rounded-lg border border-gray-200 text-gray-500 disabled:opacity-30 hover:border-blue-400 hover:text-blue-600 transition-colors"
+            aria-label="Página siguiente"
+          >
+            <ChevronRight className="w-4 h-4" />
+          </button>
+        </div>
+      )}
+
+      {/* BARRA FLOTANTE COMPARADOR */}
+      <AnimatePresence>
+        {autosComparar.length > 0 && (
+          <motion.div
+            initial={{ y: 100, opacity: 0 }}
+            animate={{ y: 0, opacity: 1 }}
+            exit={{ y: 100, opacity: 0 }}
+            transition={{ type: "spring", damping: 25, stiffness: 300 }}
+            className="fixed bottom-6 left-4 right-4 md:left-1/2 md:-translate-x-1/2 md:w-max z-50"
+          >
+            <div className="bg-gray-900 shadow-2xl rounded-2xl pl-4 pr-3 py-3 md:px-5 md:py-3.5 flex items-center justify-between gap-4 md:gap-8 border border-gray-700">
+              <div className="flex items-center gap-3 md:gap-4 shrink-0">
+                <div className="flex -space-x-3">
+                  {autosComparar.map((auto, i) => (
+                    <div key={i} className="w-10 h-10 md:w-12 md:h-12 rounded-full border-2 border-gray-900 overflow-hidden bg-white shadow-sm shrink-0">
+                      <img src={auto.multimedia_vehiculos?.[0]?.url_archivo || "/placeholder.jpg"} className="w-full h-full object-cover" />
+                    </div>
+                  ))}
+                  {autosComparar.length < 3 && (
+                    <div className="w-10 h-10 md:w-12 md:h-12 rounded-full border-2 border-dashed border-gray-600 flex items-center justify-center bg-gray-800 text-gray-500 text-xs font-bold shrink-0">+</div>
+                  )}
+                </div>
+                <div className="flex flex-col justify-center">
+                  <span className="text-white text-[11px] md:text-sm font-bold leading-none">{autosComparar.length} / 3<span className="hidden sm:inline"> listos</span></span>
+                  <span className="text-gray-400 text-[9px] uppercase tracking-widest hidden sm:block mt-1">Comparador</span>
+                </div>
+              </div>
+              <div className="flex items-center gap-2 shrink-0">
+                <button onClick={() => setAutosComparar([])} className="text-gray-400 hover:text-white px-2 py-2 text-[10px] font-bold uppercase tracking-widest transition-colors rounded-lg hover:bg-white/10">
+                  <X className="w-4 h-4 md:hidden" />
+                  <span className="hidden md:inline">Limpiar</span>
+                </button>
+                <button onClick={() => setModalComparadorOpen(true)} disabled={autosComparar.length === 0} className="bg-blue-600 hover:bg-blue-500 disabled:bg-gray-700 disabled:text-gray-500 text-white px-4 py-2.5 md:px-6 md:py-3 rounded-xl text-[10px] md:text-xs font-bold uppercase tracking-widest transition-all flex items-center gap-2 active:scale-95">
+                  <Scale className="w-4 h-4 shrink-0" /> Comparar
+                </button>
+              </div>
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      <ComparadorModal
+        isOpen={modalComparadorOpen}
+        onClose={() => setModalComparadorOpen(false)}
+        autos={autosComparar}
+        removerAuto={(id) => setAutosComparar((prev) => prev.filter((a) => a.id !== id))}
+      />
+    </section>
+  );
+}

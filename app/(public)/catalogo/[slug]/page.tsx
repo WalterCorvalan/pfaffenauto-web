@@ -16,6 +16,7 @@ import BotonesInteractivos from "@/components/BotonesInteractivos";
 import GaleriaVehiculo from "@/components/GaleriaVehiculo";
 import AgendarVisitaForm from "@/components/forms/AgendarVisitaForm";
 import SimuladorFinanciacion from "@/components/SimuladorFinanciacion";
+import DestacadosCarousel from "./DestacadosCarousel";
 
 export const revalidate = 60;
 
@@ -123,7 +124,17 @@ export default async function VehiculoDetallePage({
     .in("estado", ["Disponible", "Reservado"])
     .limit(4);
 
-  // ================= 4. RENDERIZADO PRINCIPAL =================
+  // ================= 5. AUTOS DESTACADOS =================
+  const { data: destacados } = await supabase
+    .from("vehiculos")
+    .select("id, marca, modelo, slug, precio_publicado_ars, precio_publicado_usd, multimedia_vehiculos ( url_archivo )")
+    .eq("destacado", true)
+    .neq("id", auto.id)
+    .in("estado", ["Disponible", "Reservado"])
+    .order("created_at", { ascending: false })
+    .limit(10);
+
+  // ================= 6. RENDERIZADO PRINCIPAL =================
   return (
     <div className="min-h-screen bg-[#F8FAFC] print:bg-white font-sans text-foreground flex flex-col relative pb-20">
       {/* Fondo cuadriculado y brillos (Exactamente igual a la imagen) */}
@@ -190,6 +201,10 @@ export default async function VehiculoDetallePage({
         <VehiculosRelacionados titulo="Autos con precio similar" vehiculos={precioSimilar || []} />
 
         <VehiculoPermuta />
+
+        <div className="mt-16">
+          <DestacadosCarousel vehiculos={destacados || []} />
+        </div>
       </div>
 
       <MobileBottomBar auto={auto} linkWhatsApp={linkWhatsApp} />

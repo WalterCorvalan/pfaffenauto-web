@@ -1,6 +1,7 @@
 import { createServerClient } from "@supabase/ssr";
 import { cookies } from "next/headers";
 import { ClipboardList, CheckCircle, Clock, Image as ImageIcon, Video, MapPin, MessageSquareText, Calculator } from "lucide-react";
+import PrecioSugeridoEditor from "./PrecioSugeridoEditor";
 
 export default async function CotizacionesPage() {
   const cookieStore = await cookies();
@@ -118,14 +119,15 @@ export default async function CotizacionesPage() {
                 <div className="pt-3 border-t border-slate-100 flex items-center justify-between gap-2 mt-auto">
                   
                   {/* Precio */}
-                  <div className="flex-1 min-w-0">
-                    <span className="block text-[9px] uppercase tracking-widest font-bold text-slate-400 mb-0.5 truncate">
-                      Oferta Sugerida
-                    </span>
-                    <span className="text-[13px] font-black text-slate-800 font-mono truncate block">
-                      {cot.precio_sugerido ? `USD ${cot.precio_sugerido.toLocaleString("es-AR")}` : "Calculando..."}
-                    </span>
-                  </div>
+                  <PrecioSugeridoEditor
+                    cotizacionId={cot.id}
+                    precioSugerido={cot.precio_sugerido}
+                    marca={cot.marca}
+                    modelo={cot.modelo}
+                    version={cot.version}
+                    anio={cot.anio}
+                    kilometraje={cot.kilometraje}
+                  />
 
                   {/* Miniaturas superpuestas (Ahorro de espacio) */}
                   {cot.fotos_y_videos && cot.fotos_y_videos.length > 0 && (

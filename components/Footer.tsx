@@ -45,150 +45,98 @@ export default function Footer() {
     { label: "Trabajá con nosotros", href: "/trabaja-con-nosotros" },
   ];
 
+  const badges = [
+    { value: "Data Fiscal", image: "/footer/data-fiscal.png" },
+    { value: "Acceso a la Información Pública", image: "/footer/datos-publicos.jpg" },
+    { value: "SSN", image: "/footer/ssn.png" },
+  ];
+
   return (
-    <footer className="bg-[#050A15] pt-24 pb-12 relative overflow-hidden flex flex-col items-center border-t border-white/5">
-      
-      {/* ================= EFECTOS DE LUCES PARA GLASSMORPHISM ================= */}
-      <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[800px] h-[300px] bg-[#0145F2]/15 blur-[120px] pointer-events-none z-0 rounded-full"></div>
-      <div className="absolute bottom-[-10%] left-[-5%] w-[400px] h-[400px] bg-sky-500/10 blur-[100px] pointer-events-none z-0 rounded-full"></div>
-      <div className="absolute top-[20%] right-[-10%] w-[400px] h-[400px] bg-indigo-500/10 blur-[120px] pointer-events-none z-0 rounded-full"></div>
+    <footer className="bg-white border-t border-gray-200 relative overflow-hidden">
 
-      {/* ================= MARCA DE AGUA GIGANTE ================= */}
-      <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 text-[15vw] font-black text-white/[0.02] uppercase tracking-tighter pointer-events-none select-none z-0 w-full text-center whitespace-nowrap overflow-hidden">
-        Pfaffen
-      </div>
+      {/* ================= COLUMNAS ================= */}
+      <div className="max-w-7xl mx-auto px-4 md:px-6 py-14 md:py-16">
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-8 md:gap-6">
 
-      <div className="max-w-7xl mx-auto px-6 w-full relative z-10">
-        
-        {/* ================= ESTRUCTURA BENTO BOX ================= */}
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 mb-16">
-          
-          {/* BLOQUE 1: Marca y Redes (Ocupa 5 columnas) */}
-          <div className="lg:col-span-5 bg-white/[0.03] backdrop-blur-2xl border border-white/10 p-8 md:p-10 rounded-[32px] shadow-[0_8px_32px_rgba(0,0,0,0.3)] flex flex-col justify-between group hover:bg-white/[0.05] transition-colors duration-500">
-            <div>
-              <Link href="/" className="relative inline-block mb-6">
-                <img
-                  src="/logo.png"
-                  alt="Pfaffen Autos"
-                  className="h-8 md:h-10 w-auto invert brightness-0 drop-shadow-[0_0_15px_rgba(255,255,255,0.2)]"
-                />
-                <img
-                  src="/r.png"
-                  alt="Marca Registrada"
-                  className="absolute -top-1 -right-3.5 w-3 h-3 object-contain invert brightness-0 opacity-80"
-                />
-              </Link>
-              <p className="text-slate-400 text-sm leading-relaxed max-w-sm font-medium">
-                Revolucionando la experiencia de compra y venta de vehículos en Zona Norte. Confiabilidad, transparencia y tecnología en cada kilómetro.
-              </p>
-            </div>
-
-            <div className="mt-12">
-              <span className="text-[10px] font-black text-slate-500 uppercase tracking-widest block mb-4">Seguinos en</span>
-              <div className="flex items-center gap-3">
-                {socials.map((s) => (
-                  <a
-                    key={s.name}
-                    href={s.href}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    aria-label={s.name}
-                    className="w-11 h-11 rounded-2xl bg-white/5 border border-white/10 flex items-center justify-center text-slate-400 hover:text-white hover:bg-[#0145F2] hover:border-[#0145F2] transition-all duration-300 shadow-lg"
-                  >
-                    <svg className="w-4 h-4 fill-current" viewBox="0 0 24 24">
-                      <path d={s.path} />
-                    </svg>
-                  </a>
-                ))}
-              </div>
-            </div>
-          </div>
-
-          {/* BLOQUE 2: Navegación Rápida (Ocupa 3 columnas) */}
-          <div className="lg:col-span-3 bg-white/[0.02] backdrop-blur-2xl border border-white/5 p-8 md:p-10 rounded-[32px] flex flex-col">
-            <h3 className="text-white text-lg font-black tracking-tight mb-6 flex items-center gap-2">
-              Explorar
-            </h3>
-            <ul className="space-y-4 flex-1">
+          {/* Explorar */}
+          <div>
+            <h3 className="text-gray-900 text-[11px] font-black uppercase tracking-widest mb-5">Explorar</h3>
+            <ul className="space-y-3.5">
               {links.map((link) => (
                 <li key={link.label}>
-                  <Link 
-                    href={link.href} 
-                    className="text-slate-400 hover:text-white text-sm font-bold flex items-center group transition-colors"
-                  >
-                    <span className="w-0 overflow-hidden group-hover:w-4 transition-all duration-300 ease-out text-[#0145F2]">
-                      <ArrowUpRight className="w-3.5 h-3.5" />
-                    </span>
+                  <Link href={link.href} className="text-gray-500 hover:text-blue-600 text-sm font-bold transition-colors">
                     {link.label}
                   </Link>
                 </li>
               ))}
-              
-              {/* Acceso Staff Dinámico */}
-              <li className="pt-4 mt-auto border-t border-white/10">
-                {isPanel ? (
-                  <Link href="/" className="text-sky-400 hover:text-sky-300 text-xs font-black uppercase tracking-widest flex items-center gap-2 transition-colors">
-                    Volver a la Web
-                  </Link>
-                ) : (
-                  <Link href="/login" className="text-sky-400 hover:text-sky-300 text-xs font-black uppercase tracking-widest flex items-center gap-2 transition-colors">
-                    Acceso Staff
-                  </Link>
-                )}
-              </li>
             </ul>
           </div>
 
-          {/* BLOQUE 3: Respaldo Legal e Institucional (Ocupa 4 columnas) */}
-          <div className="lg:col-span-4 bg-gradient-to-br from-[#0145F2]/10 to-transparent backdrop-blur-2xl border border-white/10 p-8 md:p-10 rounded-[32px] flex flex-col justify-between">
-            <div>
-              <h3 className="text-white text-lg font-black tracking-tight mb-2 flex items-center gap-2">
-                <ShieldCheck className="w-5 h-5 text-sky-400" /> Respaldo Oficial
-              </h3>
-              <p className="text-slate-400 text-xs font-medium mb-6">
-                Operamos bajo las normativas vigentes garantizando máxima seguridad en cada transacción.
-              </p>
-            </div>
-            
-            {/* Grilla de Badges de Cristal */}
-            <div className="grid grid-cols-2 gap-3">
-              <div className="bg-white/5 border border-white/10 p-4 rounded-2xl flex flex-col items-center justify-center text-center shadow-inner hover:bg-white/10 transition-colors">
-                <span className="text-[10px] font-black text-slate-300 uppercase tracking-widest mb-1">Registro</span>
-                <span className="text-xs font-bold text-white">Nóllame</span>
-              </div>
-              <div className="bg-white/5 border border-white/10 p-4 rounded-2xl flex flex-col items-center justify-center text-center shadow-inner hover:bg-white/10 transition-colors">
-                <span className="text-[10px] font-black text-slate-300 uppercase tracking-widest mb-1">AFIP</span>
-                <span className="text-xs font-bold text-sky-400">Data Fiscal</span>
-              </div>
-              <div className="bg-[#0145F2]/20 border border-[#0145F2]/30 p-4 rounded-2xl flex flex-col items-center justify-center text-center shadow-inner hover:bg-[#0145F2]/30 transition-colors">
-                <span className="text-[10px] font-black text-sky-200 uppercase tracking-widest mb-1">Estado</span>
-                <span className="text-xs font-bold text-white">Inf. Pública</span>
-              </div>
-              <div className="bg-white/5 border border-white/10 p-4 rounded-2xl flex flex-col items-center justify-center text-center shadow-inner hover:bg-white/10 transition-colors">
-                <span className="text-[10px] font-black text-slate-300 uppercase tracking-widest mb-1">Seguros</span>
-                <span className="text-xs font-bold text-white">SSN</span>
-              </div>
+          {/* Redes */}
+          <div>
+            <h3 className="text-gray-900 text-[11px] font-black uppercase tracking-widest mb-5">Seguinos</h3>
+            <div className="flex flex-col gap-3.5">
+              {socials.map((s) => (
+                <a
+                  key={s.name}
+                  href={s.href}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="flex items-center gap-2.5 text-gray-500 hover:text-blue-600 text-sm font-bold transition-colors"
+                >
+                  <svg className="w-4 h-4 fill-current shrink-0" viewBox="0 0 24 24">
+                    <path d={s.path} />
+                  </svg>
+                  {s.name}
+                </a>
+              ))}
             </div>
           </div>
 
-        </div>
+          {/* Respaldo Oficial */}
+          <div className="col-span-2 md:col-span-1">
+            <h3 className="text-gray-900 text-[11px] font-black uppercase tracking-widest mb-5 flex items-center gap-1.5">
+              <ShieldCheck className="w-3.5 h-3.5 text-blue-600" /> Respaldo Oficial
+            </h3>
+            <div className="flex flex-wrap items-center gap-5">
+              {badges.map((b) => (
+                <img key={b.value} src={b.image} alt={b.value} className="h-16 w-auto object-contain" />
+              ))}
+            </div>
+          </div>
 
-        {/* ================= BOTTOM BAR ================= */}
-        <div className="w-full flex flex-col md:flex-row justify-between items-center gap-6 border-t border-white/10 pt-8">
-          <p className="text-[11px] sm:text-xs text-slate-500 font-bold uppercase tracking-widest text-center md:text-left">
+          {/* Acceso Staff */}
+          <div className="col-span-2 md:col-span-1">
+            <h3 className="text-gray-900 text-[11px] font-black uppercase tracking-widest mb-5">Equipo</h3>
+            {isPanel ? (
+              <Link href="/" className="inline-flex items-center gap-2 text-blue-600 hover:text-blue-700 text-sm font-black transition-colors">
+                Volver a la Web <ArrowUpRight className="w-3.5 h-3.5" />
+              </Link>
+            ) : (
+              <Link href="/login" className="inline-flex items-center gap-2 text-blue-600 hover:text-blue-700 text-sm font-black transition-colors">
+                Acceso Staff <ArrowUpRight className="w-3.5 h-3.5" />
+              </Link>
+            )}
+          </div>
+
+        </div>
+      </div>
+
+      {/* ================= BOTTOM BAR ================= */}
+      <div className="border-t border-gray-200">
+        <div className="max-w-7xl mx-auto px-4 md:px-6 py-6 flex flex-col md:flex-row justify-between items-center gap-4">
+          <p className="text-[11px] text-gray-400 font-bold uppercase tracking-widest text-center md:text-left">
             © {new Date().getFullYear()} Pfaffen Autos. Todos los derechos reservados.
           </p>
-
-          {/* Botón Volver Arriba */}
-          <button 
+          <button
             onClick={scrollToTop}
-            className="flex items-center gap-2 text-[10px] sm:text-xs font-black uppercase tracking-widest text-slate-400 hover:text-white bg-white/5 hover:bg-white/10 border border-white/10 px-5 py-2.5 rounded-full transition-all active:scale-95"
+            className="flex items-center gap-2 text-[10px] font-black uppercase tracking-widest text-gray-500 hover:text-blue-600 transition-colors"
           >
             Volver arriba <ArrowUp className="w-3.5 h-3.5" />
           </button>
         </div>
-
       </div>
+
     </footer>
   );
 }

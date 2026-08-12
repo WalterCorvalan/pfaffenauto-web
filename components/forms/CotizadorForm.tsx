@@ -3,7 +3,7 @@
 import { useState, useEffect, useRef } from "react";
 import Link from "next/link";
 import Script from "next/script";
-import { ArrowLeft, Loader2, CheckCircle2, ChevronDown, CarFront, User, Phone } from "lucide-react";
+import { ArrowLeft, Loader2, CheckCircle2, ChevronDown, CarFront, User, Phone, Upload, X, FileVideo, ImageIcon, Building2, Camera } from "lucide-react";
 
 declare global {
   interface Window {
@@ -46,6 +46,13 @@ export default function CotizadorForm() {
   const [version, setVersion] = useState("");
   const [km, setKm] = useState("");
   const [gnc, setGnc] = useState("");
+
+  // Estado del peritaje (¿puede venir a sucursal, o manda fotos/videos?)
+  const [puedeVenir, setPuedeVenir] = useState<boolean | null>(null);
+  const [archivosSubidos, setArchivosSubidos] = useState<{ nombre: string; url: string; tipo: "imagen" | "video" }[]>([]);
+  const [subiendoArchivo, setSubiendoArchivo] = useState(false);
+  const [errorArchivo, setErrorArchivo] = useState("");
+  const inputArchivoRef = useRef<HTMLInputElement>(null);
 
   // Estados de Contacto
   const [nombre, setNombre] = useState("");
@@ -106,6 +113,50 @@ export default function CotizadorForm() {
   }, [step, turnstileListo]);
 
   // =================================================================
+  // SUBIR FOTOS/VIDEOS (cuando el cliente no puede venir a sucursal)
+  // =================================================================
+  const subirArchivo = async (file: File) => {
+    setErrorArchivo("");
+    const esVideo = file.type.startsWith("video/");
+    const MAX_MB = 100;
+    if (file.size > MAX_MB * 1024 * 1024) {
+      setErrorArchivo(`"${file.name}" pesa más de ${MAX_MB}MB, probá con un archivo más liviano.`);
+      return;
+    }
+
+    setSubiendoArchivo(true);
+    try {
+      const formData = new FormData();
+      formData.append("file", file);
+      const res = await fetch("/api/upload-cotizacion", { method: "POST", body: formData });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || "No se pudo subir el archivo");
+
+      setArchivosSubidos((prev) => [...prev, { nombre: file.name, url: data.publicUrl, tipo: esVideo ? "video" : "imagen" }]);
+    } catch (err) {
+      setErrorArchivo(err instanceof Error ? err.message : "Error al subir el archivo. Reintentá.");
+    } finally {
+      setSubiendoArchivo(false);
+    }
+  };
+
+  const manejarSeleccionArchivos = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const files = Array.from(e.target.files || []);
+    files.forEach(subirArchivo);
+    if (inputArchivoRef.current) inputArchivoRef.current.value = "";
+  };
+
+  const quitarArchivo = (url: string) => {
+    setArchivosSubidos((prev) => prev.filter((a) => a.url !== url));
+  };
+
+  const validarPaso3 = () => {
+    if (puedeVenir === null) return false;
+    if (puedeVenir === false && archivosSubidos.length === 0) return false;
+    return true;
+  };
+
+  // =================================================================
   // ENVIAR COTIZACIÓN (verificación anti-spam vía Turnstile, server-side)
   // =================================================================
   const enviarCotizacion = async (e: React.FormEvent) => {
@@ -130,12 +181,14 @@ export default function CotizadorForm() {
           marca,
           modelo,
           anio,
-          version: `${version} - GNC: ${gnc || "No"}`,
+          version,
+          gnc,
           kilometraje: km,
           nombre: `${nombre.trim()} ${apellido.trim()}`,
           email: email.trim(),
           telefono: tel.trim(),
-          tipo_peritaje: "online",
+          puede_venir_sucursal: puedeVenir === true,
+          fotos_y_videos: archivosSubidos.map((a) => a.url),
           sucursal_preferida: "Casa Central",
         }),
       });
@@ -198,7 +251,8 @@ export default function CotizadorForm() {
                 <p className="text-xs text-slate-400 font-medium">
                   {step === 1 && "Ingresá los datos del vehículo"}
                   {step === 2 && "¿Tu auto tiene o tuvo GNC?"}
-                  {step === 3 && "Dejanos tus datos de contacto"}
+                  {step === 3 && "¿Podés venir a una sucursal?"}
+                  {step === 4 && "Dejanos tus datos de contacto"}
                 </p>
               </div>
             )}
@@ -356,9 +410,90 @@ export default function CotizadorForm() {
                 )}
 
                 {step === 3 && (
+                  <div className="space-y-5 animate-fadeIn py-2">
+                    <div>
+                      <button onClick={() => setStep(2)} className="text-xs font-bold text-[#0145F2] flex items-center gap-1 mb-2 hover:underline">
+                        <ArrowLeft className="w-3.5 h-3.5" /> Volver
+                      </button>
+                    </div>
+
+                    <div className="space-y-3">
+                      <div
+                        onClick={() => setPuedeVenir(true)}
+                        className={`p-4 rounded-2xl border cursor-pointer font-bold text-xs transition-all shadow-sm flex items-center gap-3 ${puedeVenir === true ? 'bg-blue-50 border-[#0145F2] text-[#0145F2]' : 'bg-white/60 border-white text-slate-700 hover:bg-white'}`}
+                      >
+                        <Building2 className="w-4 h-4 shrink-0" />
+                        Sí, puedo llevarlo a una sucursal para el peritaje
+                      </div>
+                      <div
+                        onClick={() => setPuedeVenir(false)}
+                        className={`p-4 rounded-2xl border cursor-pointer font-bold text-xs transition-all shadow-sm flex items-center gap-3 ${puedeVenir === false ? 'bg-blue-50 border-[#0145F2] text-[#0145F2]' : 'bg-white/60 border-white text-slate-700 hover:bg-white'}`}
+                      >
+                        <Camera className="w-4 h-4 shrink-0" />
+                        No, prefiero mandar fotos y videos
+                      </div>
+                    </div>
+
+                    {puedeVenir === false && (
+                      <div className="space-y-3 animate-fadeIn">
+                        <input
+                          ref={inputArchivoRef}
+                          type="file"
+                          accept="image/*,video/*"
+                          multiple
+                          onChange={manejarSeleccionArchivos}
+                          className="hidden"
+                          id="input-archivos-cotizacion"
+                        />
+                        <label
+                          htmlFor="input-archivos-cotizacion"
+                          className="flex flex-col items-center justify-center gap-2 border-2 border-dashed border-slate-300 hover:border-[#0145F2] rounded-2xl py-6 cursor-pointer transition-colors bg-white/50"
+                        >
+                          {subiendoArchivo ? (
+                            <Loader2 className="w-5 h-5 text-[#0145F2] animate-spin" />
+                          ) : (
+                            <Upload className="w-5 h-5 text-slate-400" />
+                          )}
+                          <span className="text-[11px] font-bold text-slate-500">
+                            {subiendoArchivo ? "Subiendo..." : "Tocá para subir fotos o videos"}
+                          </span>
+                        </label>
+
+                        {errorArchivo && (
+                          <p className="text-[11px] text-rose-600 font-medium">{errorArchivo}</p>
+                        )}
+
+                        {archivosSubidos.length > 0 && (
+                          <div className="space-y-1.5">
+                            {archivosSubidos.map((a) => (
+                              <div key={a.url} className="flex items-center gap-2 bg-white/70 border border-white rounded-xl px-3 py-2 text-[11px] font-semibold text-slate-600">
+                                {a.tipo === "video" ? <FileVideo className="w-3.5 h-3.5 text-[#0145F2] shrink-0" /> : <ImageIcon className="w-3.5 h-3.5 text-[#0145F2] shrink-0" />}
+                                <span className="truncate flex-1">{a.nombre}</span>
+                                <button type="button" onClick={() => quitarArchivo(a.url)} className="text-slate-400 hover:text-rose-600 shrink-0">
+                                  <X className="w-3.5 h-3.5" />
+                                </button>
+                              </div>
+                            ))}
+                          </div>
+                        )}
+                      </div>
+                    )}
+
+                    <button
+                      type="button"
+                      disabled={!validarPaso3() || subiendoArchivo}
+                      onClick={() => setStep(4)}
+                      className="w-full py-4 bg-gradient-to-r from-[#0145F2] to-blue-600 hover:from-blue-600 hover:to-sky-500 disabled:opacity-50 text-white font-black rounded-2xl uppercase tracking-widest text-xs transition-all shadow-lg shadow-blue-500/20 cursor-pointer active:scale-95"
+                    >
+                      Continuar
+                    </button>
+                  </div>
+                )}
+
+                {step === 4 && (
                   <form onSubmit={enviarCotizacion} className="space-y-4 animate-fadeIn">
                     <div>
-                      <button type="button" onClick={() => setStep(2)} className="text-xs font-bold text-[#0145F2] flex items-center gap-1 mb-2 hover:underline">
+                      <button type="button" onClick={() => setStep(3)} className="text-xs font-bold text-[#0145F2] flex items-center gap-1 mb-2 hover:underline">
                         <ArrowLeft className="w-3.5 h-3.5" /> Volver
                       </button>
                     </div>

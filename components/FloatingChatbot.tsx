@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useRef, useEffect } from "react";
+import { usePathname } from "next/navigation";
 import { MessageSquare, X, Send, Bot, User } from "lucide-react";
 
 interface Message {
@@ -9,6 +10,10 @@ interface Message {
 }
 
 export default function FloatingChatbot() {
+  const pathname = usePathname();
+  // En la ficha de auto hay una barra fija de WhatsApp/Agendar en mobile: el chatbot sube para no taparla.
+  const enDetalleVehiculo = pathname?.startsWith("/catalogo/") ?? false;
+
   const [isOpen, setIsOpen] = useState(false);
   const [input, setInput] = useState("");
   const [loading, setLoading] = useState(false);
@@ -90,8 +95,8 @@ export default function FloatingChatbot() {
   // Reemplazá el div padre del FloatingChatbot.tsx (aprox línea 66):
 
   return (
-    // Agregamos bottom-24 en móviles y bottom-6 en PC
-    <div className="fixed bottom-24 lg:bottom-6 right-4 lg:right-6 z-[60] font-sans">
+    // En ficha de auto sube (bottom-24) para no tapar la barra de WhatsApp/Agendar; en el resto queda abajo (bottom-6)
+    <div className={`fixed ${enDetalleVehiculo ? "bottom-24 lg:bottom-6" : "bottom-6"} right-4 lg:right-6 z-[60] font-sans`}>
       {/* Botón flotante para abrir/cerrar */}
       {!isOpen && (
         <button

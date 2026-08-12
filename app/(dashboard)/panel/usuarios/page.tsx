@@ -198,7 +198,9 @@ export default function UsuariosPage() {
       case "admin":
         return "bg-rose-50 text-rose-700 border-rose-200"; 
       case "encargado":
-        return "bg-teal-50 text-teal-700 border-teal-200"; 
+        return "bg-teal-50 text-teal-700 border-teal-200";
+      case "taller":
+        return "bg-orange-50 text-orange-700 border-orange-200";
       case "vendedor":
       default:
         return "bg-indigo-50 text-indigo-700 border-indigo-200";
@@ -290,6 +292,7 @@ export default function UsuariosPage() {
                                 className="bg-white border border-indigo-300 rounded-lg px-2 py-1.5 text-[12px] font-medium text-slate-900 outline-none focus:border-indigo-500 cursor-pointer"
                               >
                                 <option value="vendedor">Vendedor</option>
+                                <option value="taller">Taller</option>
                                 <option value="encargado">Encargado</option>
                                 <option value="admin">Administrador</option>
                               </select>
@@ -452,6 +455,7 @@ export default function UsuariosPage() {
                     className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3.5 py-2.5 text-[13px] text-slate-900 outline-none focus:border-indigo-500 focus:bg-white cursor-pointer transition-colors appearance-none"
                   >
                     <option value="vendedor">Vendedor</option>
+                    <option value="taller">Taller</option>
                     <option value="encargado">Encargado</option>
                     <option value="admin">Administrador</option>
                   </select>
@@ -544,6 +548,7 @@ export default function UsuariosPage() {
                     className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3.5 py-2.5 text-[13px] text-slate-900 outline-none focus:border-indigo-500 focus:bg-white cursor-pointer transition-colors appearance-none"
                   >
                     <option value="vendedor">Vendedor</option>
+                    <option value="taller">Taller</option>
                     <option value="encargado">Encargado</option>
                     <option value="admin">Administrador</option>
                   </select>

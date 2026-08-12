@@ -1,0 +1,48 @@
+export const KARRY_VERSIONS = [
+  {
+    code: "CS",
+    slug: "cabina-simple",
+    name: "KARRY CABINA SIMPLE",
+    subtitle: "MAYOR ESPACIO Y SUPERFICIE COMERCIAL",
+    load: "1,62 toneladas",
+    text: "Caja abierta de gran superficie optimizada para herramientas o mercadería.",
+    specs: [
+      "Motor 1.6L 121 HP",
+      "Capacidad de carga: 1.620 kg",
+      "Ideal para reparto y logística urbana",
+      "Garantía 7 años / 100.000 km",
+    ],
+    image: "/Karry-cabina-simple/1.jpeg",
+    images: [
+      "/Karry-cabina-simple/1.jpeg",
+      "/Karry-cabina-simple/2.jpeg",
+      "/Karry-cabina-simple/3.jpeg",
+      "/Karry-cabina-simple/4.jpeg",
+      "/Karry-cabina-simple/5.jpeg",
+      "/Karry-cabina-simple/6.jpeg",
+    ],
+  },
+  {
+    code: "CD",
+    slug: "cabina-doble",
+    name: "KARRY CABINA DOBLE",
+    subtitle: "DOS FILAS DE ASIENTOS PARA TU EQUIPO",
+    load: "1,54 toneladas",
+    text: "Trasladá a tu equipo completo sin resignar capacidad en la caja de carga.",
+    specs: [
+      "Motor 1.6L 121 HP",
+      "Capacidad de carga: 1.540 kg",
+      "Ideal para cuadrillas y servicio técnico",
+      "Garantía 7 años / 100.000 km",
+    ],
+    image: "/Karry-cabina-doble/1.jpeg",
+    images: [
+      "/Karry-cabina-doble/1.jpeg",
+      "/Karry-cabina-doble/2.jpeg",
+      "/Karry-cabina-doble/3.jpeg",
+      "/Karry-cabina-doble/4.jpeg",
+      "/Karry-cabina-doble/5.jpeg",
+      "/Karry-cabina-doble/6.jpeg",
+    ],
+  },
+];

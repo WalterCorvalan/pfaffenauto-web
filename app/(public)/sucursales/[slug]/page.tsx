@@ -1,6 +1,6 @@
 import { createClient } from "@supabase/supabase-js";
 import { notFound } from "next/navigation";
-import Stock from "@/components/Stock";
+import VehiculosGrid from "@/components/VehiculosGrid";
 import Link from "next/link";
 import { MapPin, Phone, Clock, ArrowLeft } from "lucide-react";
 // Importamos tu FadeIn por si lo necesitas después, aunque usaremos framer internamente
@@ -66,21 +66,20 @@ export default async function SucursalPage({ params }: { params: Promise<{ slug:
   const nombreSucursal = sucursal.nombre;
 
   return (
-    <div className="w-full bg-[#E9ECEF] min-h-screen flex flex-col relative overflow-hidden">
-      
-      {/* Componente Cliente Interactivo con Framer Motion y Spatial UI */}
-      <SucursalHeroAnimated 
-        nombre={nombreSucursal} 
-        imagen={imagenFondo} 
-        direccion={direccion} 
-        telefono={telefono} 
-        horario={horario} 
+    <div className="w-full bg-[#f8f9fa] min-h-screen flex flex-col">
+      <SucursalHeroAnimated
+        slug={slug}
+        nombre={nombreSucursal}
+        imagen={imagenFondo}
+        direccion={direccion}
+        telefono={telefono}
+        horario={horario}
       />
 
-      {/* Transición al Catálogo - Se superpone elegantemente al Hero */}
-      <div className="relative z-20 -mt-[100px] md:-mt-[140px] bg-[#E9ECEF] rounded-t-[40px] md:rounded-t-[60px] pt-12 overflow-hidden shadow-[0_-20px_50px_rgba(0,0,0,0.15)] border-t border-white/60">
-        <Stock vehiculos={vehiculos} />
+      <div className="max-w-7xl mx-auto w-full px-4 md:px-6 pt-10">
+        <h2 className="text-xl md:text-2xl font-black text-gray-900 tracking-tight">Stock disponible en esta sucursal</h2>
       </div>
+      <VehiculosGrid vehiculos={vehiculos} />
     </div>
   );
 }

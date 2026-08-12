@@ -3,7 +3,7 @@
 import { useState, useEffect } from "react";
 import Link from "next/link";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
-import { Menu, X, Heart, ChevronRight, Search, Sparkles } from "lucide-react";
+import { Menu, X, Heart, ChevronRight, Search, Sparkles, Landmark } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 
 export default function PublicHeader() {
@@ -47,6 +47,7 @@ export default function PublicHeader() {
     { name: "0KM", href: "/0km" },
     { name: "Usados Seleccionados", href: "/catalogo?q=usados-seleccionados" },
     { name: "Outlet", href: "/outlet", badge: "Ofertas" },
+    { name: "Nuestra Historia", href: "/nosotros", icon: Landmark },
   ];
 
   const handleSearch = (e: React.FormEvent) => {
@@ -77,7 +78,7 @@ export default function PublicHeader() {
       }`}
     >
       {/* Contenedor estirado a los laterales para aprovechar espacio */}
-      <div className="w-full px-4 md:px-8 h-20 grid grid-cols-3 items-center">
+      <div className="w-full px-4 md:px-8 h-20 grid grid-cols-[auto_1fr_auto] items-center gap-2">
         {/* ================= COLUMNA IZQUIERDA: LOGOS ================= */}
         <div className="flex items-center gap-3 md:gap-4 justify-start shrink-0">
           {/* Logo Pfaffen */}
@@ -94,55 +95,37 @@ export default function PublicHeader() {
             />
           </Link>
 
-          <span className="h-6 w-[1px] bg-slate-300/75 hidden xl:block"></span>
+          <span className="h-6 w-[1px] bg-slate-300/75 hidden sm:block"></span>
 
           {/* Grupo de concesionarios oficiales */}
-          <div className="hidden xl:flex items-center gap-3 bg-white/30 border border-white/50 rounded-full pl-3 pr-3 py-1">
-            <span className="text-[9px] font-black uppercase tracking-widest text-slate-500 whitespace-nowrap">
+          <div className="flex items-center gap-1.5 sm:gap-2.5 sm:bg-white/30 sm:border sm:border-white/50 rounded-full sm:pl-3 sm:pr-3 sm:py-1 min-w-0">
+            <span className="text-[7px] sm:text-[8px] md:text-[9px] font-black uppercase tracking-wide sm:tracking-widest text-slate-500 whitespace-nowrap shrink-0 leading-none">
               Concesionario oficial
             </span>
-            <div className="flex items-center gap-3">
+            <div className="flex items-center gap-0 sm:gap-3 shrink-0 h-4 sm:h-6 md:h-7">
               <Link
                 href="/rely"
-                className="flex items-center group shrink-0"
+                className="flex items-center h-full group shrink-0"
                 title="Rely"
               >
                 <img
                   src="/RelyLogo.png"
                   alt="Rely"
-                  className="h-7 md:h-9 w-auto object-contain transition-transform group-hover:scale-105"
+                  className="h-8 sm:h-10 md:h-12 w-auto object-contain transition-transform group-hover:scale-105 -my-1.5 sm:-my-2 md:-my-2.5"
                 />
               </Link>
               <Link
                 href="/karry"
-                className="flex items-center group shrink-0"
+                className="flex items-center h-full group shrink-0"
                 title="Karry"
               >
                 <img
                   src="/logo-karry.webp"
                   alt="Karry"
-                  className="h-6 md:h-7 w-auto object-contain transition-transform group-hover:scale-105"
+                  className="h-5 sm:h-10 md:h-12 w-auto object-contain transition-transform group-hover:scale-105 -my-1.5 sm:-my-2 md:-my-2.5"
                 />
               </Link>
             </div>
-          </div>
-
-          {/* Versión compacta: visible en mobile y tablet, se oculta cuando entra el bloque completo en xl */}
-          <div className="flex xl:hidden items-center gap-1.5 sm:gap-2 shrink-0">
-            <Link href="/karry" className="flex items-center shrink-0">
-              <img
-                src="/logo-karry.webp"
-                alt="Karry"
-                className="h-5 sm:h-6 w-auto object-contain"
-              />
-            </Link>
-            <Link href="/rely" className="flex items-center shrink-0">
-              <img
-                src="/RelyLogo.png"
-                alt="Rely"
-                className="h-6 sm:h-7 w-auto object-contain"
-              />
-            </Link>
           </div>
         </div>
 
@@ -227,13 +210,13 @@ export default function PublicHeader() {
         </div>
 
         {/* ================= COLUMNA DERECHA: ACCIONES ================= */}
-        <div className="flex items-center gap-2 md:gap-3 justify-end shrink-0">
+        <div className="flex items-center gap-0 md:gap-3 justify-end shrink-0">
           <button
             onClick={toggleSearchMobile}
             className="lg:hidden p-2.5 text-primary bg-white/40 backdrop-blur-md border border-white/60 rounded-full shadow-sm"
             title="Buscar"
           >
-            <Search className="w-4 h-4 md:w-5 md:h-5" />
+            <Search className="w-3.5 h-3.5 md:w-5 md:h-5" />
           </button>
 
           <Link
@@ -311,7 +294,10 @@ export default function PublicHeader() {
                   onClick={() => setIsOpen(false)}
                   className="flex items-center justify-between p-4 rounded-[20px] bg-slate-50 border border-slate-200 text-navy font-black uppercase tracking-widest text-sm"
                 >
-                  {link.name}
+                  <span className="flex items-center gap-2.5">
+                    {link.icon && <link.icon className="w-4 h-4 text-primary shrink-0" />}
+                    {link.name}
+                  </span>
                   <ChevronRight className="w-4 h-4 text-primary" />
                 </Link>
               ))}
@@ -332,28 +318,6 @@ export default function PublicHeader() {
                 </span>
                 <ChevronRight className="w-4 h-4 text-primary" />
               </Link>
-
-              <div className="mt-2 p-4 rounded-[20px] bg-slate-50 border border-slate-200">
-                <span className="text-[9px] font-black uppercase tracking-widest text-slate-500">
-                  Concesionarios oficiales Pfaffen
-                </span>
-                <div className="flex items-center gap-6 mt-3">
-                  <Link href="/karry" onClick={() => setIsOpen(false)}>
-                    <img
-                      src="/logo-karry.webp"
-                      alt="Karry"
-                      className="h-7 w-auto object-contain"
-                    />
-                  </Link>
-                  <Link href="/rely" onClick={() => setIsOpen(false)}>
-                    <img
-                      src="/RelyLogo.png"
-                      alt="Rely"
-                      className="h-9 w-auto object-contain"
-                    />
-                  </Link>
-                </div>
-              </div>
             </div>
           </motion.div>
         )}

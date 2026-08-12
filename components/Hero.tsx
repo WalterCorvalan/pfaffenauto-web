@@ -106,7 +106,7 @@ export default function Hero() {
 
 
       {/* ================= CONTENIDO PRINCIPAL ================= */}
-      <div className="relative z-10 max-w-5xl mx-auto px-4 flex flex-col items-center text-center">
+      <div className="relative z-10 max-w-5xl mx-auto px-4 md:px-6 flex flex-col items-center text-center">
         
         {/* Etiqueta animada */}
         <motion.div 

@@ -1,10 +1,9 @@
 import Link from "next/link";
-import { Montserrat } from "next/font/google";
 import PublicHeader from "@/components/PublicHeader";
 import UtmTracker from "@/components/UtmTracker";
+import FloatingChatbot from "@/components/FloatingChatbot";
+import RouteProgress from "@/components/ui/RouteProgress";
 
-// 1. Cargamos Montserrat: ideal para diseño premium, limpio y muy espaciado
-const montserrat = Montserrat({ subsets: ["latin"], weight: ["400", "500"] });
 export default function PublicLayout({
   children,
 }: {
@@ -12,6 +11,7 @@ export default function PublicLayout({
 }) {
   return (
     <div className="min-h-screen flex flex-col bg-background text-foreground selection:bg-primary selection:text-white">
+      <RouteProgress />
       {/* Importamos la cabecera interactiva que creamos */}
       <PublicHeader />
       <UtmTracker />
@@ -19,6 +19,7 @@ export default function PublicLayout({
       <main className="flex-grow w-full">
         {children}
       </main>
+      <FloatingChatbot />
     </div>
   );
 }

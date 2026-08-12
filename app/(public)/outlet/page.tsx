@@ -1,5 +1,5 @@
 import { createClient } from "@/lib/supabase/server";
-import Stock from "@/components/Stock";
+import VehiculosGrid from "@/components/VehiculosGrid";
 import { Tag, AlertCircle } from "lucide-react";
 import Link from "next/link";
 
@@ -78,7 +78,7 @@ export default async function OutletPage() {
 
       {/* ================= CATÁLOGO ================= */}
       <div className="relative z-10">
-        <Stock vehiculos={vehiculos} />
+        <VehiculosGrid vehiculos={vehiculos} />
       </div>
     </div>
   );

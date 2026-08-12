@@ -1,9 +1,9 @@
 "use client";
 
-import { useState } from "react";
+import { useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { supabase } from "@/lib/supabase/client";
-import { CheckCircle2, Circle, Copy, ArrowLeft, FileText } from "lucide-react";
+import { CheckCircle2, Circle, Copy, ArrowLeft, FileText, Paperclip, Loader2, ExternalLink } from "lucide-react";
 
 const ETAPAS = ["Seña", "Documentación", "Patentamiento", "Transferencia", "Entrega", "Completado"];
 
@@ -12,7 +12,18 @@ interface Documento {
   tipo_documento: string;
   estado: string;
   fecha_recibido: string | null;
+  archivo_url: string | null;
+  etapa: string | null;
 }
+
+// Patentamiento y Transferencia comparten los mismos ítems (aranceles, informes) —
+// suceden en paralelo en la gestoría, no tiene sentido duplicarlos por etapa.
+const ETAPA_DOCUMENTOS: Record<string, string> = {
+  "Seña": "Seña",
+  "Documentación": "Documentación",
+  "Patentamiento": "Patentamiento",
+  "Transferencia": "Patentamiento",
+};
 
 interface Venta {
   id: string;
@@ -28,6 +39,8 @@ export default function SeguimientoClient({ venta, documentosIniciales }: { vent
   const [etapaActual, setEtapaActual] = useState(venta.etapa_seguimiento || "Seña");
   const [documentos, setDocumentos] = useState(documentosIniciales);
   const [cargando, setCargando] = useState(false);
+  const [subiendoId, setSubiendoId] = useState<string | null>(null);
+  const inputsRef = useRef<Record<string, HTMLInputElement | null>>({});
 
   const cambiarEtapa = async (nuevaEtapa: string) => {
     setEtapaActual(nuevaEtapa);
@@ -44,13 +57,40 @@ export default function SeguimientoClient({ venta, documentosIniciales }: { vent
       .eq("id", doc.id);
   };
 
+  const subirArchivo = async (doc: Documento, file: File) => {
+    setSubiendoId(doc.id);
+    try {
+      const formData = new FormData();
+      formData.append("file", file);
+      const res = await fetch("/api/upload-documento", { method: "POST", body: formData });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || "No se pudo subir el archivo");
+
+      const hoy = new Date().toISOString().split("T")[0];
+      await supabase
+        .from("documentacion_ventas")
+        .update({ archivo_url: data.publicUrl, estado: "Recibido", fecha_recibido: hoy })
+        .eq("id", doc.id);
+
+      setDocumentos((prev) =>
+        prev.map((d) => (d.id === doc.id ? { ...d, archivo_url: data.publicUrl, estado: "Recibido", fecha_recibido: hoy } : d))
+      );
+    } catch (err) {
+      alert(err instanceof Error ? err.message : "Error al subir el archivo.");
+    } finally {
+      setSubiendoId(null);
+    }
+  };
+
   const copiarLink = () => {
     if (!venta.codigo_seguimiento) return;
     navigator.clipboard.writeText(`${window.location.origin}/seguimiento/${venta.codigo_seguimiento}`);
     alert("Link copiado");
   };
 
-  const recibidos = documentos.filter((d) => d.estado === "Recibido").length;
+  const etapaDocumentosActual = ETAPA_DOCUMENTOS[etapaActual];
+  const documentosVisibles = documentos.filter((d) => d.etapa === etapaDocumentosActual);
+  const recibidos = documentosVisibles.filter((d) => d.estado === "Recibido").length;
 
   return (
     <div className="w-full h-full overflow-y-auto custom-scrollbar bg-[#F9FAFB] p-6">
@@ -96,33 +136,67 @@ export default function SeguimientoClient({ venta, documentosIniciales }: { vent
         <div className="bg-white border border-slate-200 rounded-2xl p-6 shadow-sm">
           <div className="flex items-center justify-between mb-4">
             <h2 className="text-[11px] font-bold uppercase tracking-widest text-slate-400 flex items-center gap-2">
-              <FileText className="w-4 h-4 text-slate-400" /> Documentación
+              <FileText className="w-4 h-4 text-slate-400" /> {etapaActual === "Transferencia" ? "Patentamiento / Transferencia" : etapaActual}
             </h2>
-            <span className="text-[11px] font-bold text-slate-400">{recibidos}/{documentos.length} recibidos</span>
+            <span className="text-[11px] font-bold text-slate-400">{recibidos}/{documentosVisibles.length} recibidos</span>
           </div>
 
           <div className="space-y-1">
-            {documentos.map((doc) => (
-              <div
-                key={doc.id}
-                onClick={() => toggleDocumento(doc)}
-                className="flex items-center gap-3 py-2.5 px-2 rounded-lg hover:bg-slate-50 cursor-pointer transition-colors"
-              >
-                {doc.estado === "Recibido" ? (
-                  <CheckCircle2 className="w-5 h-5 text-emerald-600 shrink-0" />
-                ) : (
-                  <Circle className="w-5 h-5 text-slate-300 shrink-0" />
-                )}
-                <span className={`text-sm font-medium ${doc.estado === "Recibido" ? "text-slate-400 line-through" : "text-slate-700"}`}>
+            {documentosVisibles.map((doc) => (
+              <div key={doc.id} className="flex items-center gap-3 py-2.5 px-2 rounded-lg hover:bg-slate-50 transition-colors">
+                <button onClick={() => toggleDocumento(doc)} className="shrink-0">
+                  {doc.estado === "Recibido" ? (
+                    <CheckCircle2 className="w-5 h-5 text-emerald-600" />
+                  ) : (
+                    <Circle className="w-5 h-5 text-slate-300" />
+                  )}
+                </button>
+                <span
+                  onClick={() => toggleDocumento(doc)}
+                  className={`text-sm font-medium cursor-pointer flex-1 ${doc.estado === "Recibido" ? "text-slate-400 line-through" : "text-slate-700"}`}
+                >
                   {doc.tipo_documento}
                 </span>
                 {doc.fecha_recibido && (
-                  <span className="text-[10px] text-slate-400 ml-auto">{doc.fecha_recibido}</span>
+                  <span className="text-[10px] text-slate-400">{doc.fecha_recibido}</span>
                 )}
+
+                {doc.archivo_url && (
+                  <a
+                    href={doc.archivo_url}
+                    target="_blank"
+                    rel="noreferrer"
+                    className="p-1.5 text-indigo-500 hover:text-indigo-700 hover:bg-indigo-50 rounded-md transition-colors shrink-0"
+                    title="Ver archivo adjunto"
+                  >
+                    <ExternalLink className="w-3.5 h-3.5" />
+                  </a>
+                )}
+
+                <input
+                  ref={(el) => { inputsRef.current[doc.id] = el; }}
+                  type="file"
+                  className="hidden"
+                  onChange={(e) => {
+                    const file = e.target.files?.[0];
+                    if (file) subirArchivo(doc, file);
+                    e.target.value = "";
+                  }}
+                />
+                <button
+                  onClick={() => inputsRef.current[doc.id]?.click()}
+                  disabled={subiendoId === doc.id}
+                  className="p-1.5 text-slate-400 hover:text-indigo-600 hover:bg-indigo-50 rounded-md transition-colors shrink-0 disabled:opacity-50"
+                  title={doc.archivo_url ? "Reemplazar archivo" : "Adjuntar archivo"}
+                >
+                  {subiendoId === doc.id ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Paperclip className="w-3.5 h-3.5" />}
+                </button>
               </div>
             ))}
-            {documentos.length === 0 && (
-              <p className="text-sm text-slate-400 italic py-4 text-center">Sin documentación cargada para esta venta.</p>
+            {documentosVisibles.length === 0 && (
+              <p className="text-sm text-slate-400 italic py-4 text-center">
+                {etapaDocumentosActual ? "Sin documentación para esta etapa." : "Esta etapa no tiene documentación asociada."}
+              </p>
             )}
           </div>
         </div>

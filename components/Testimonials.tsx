@@ -15,6 +15,8 @@ const fallbackReviews = [
 
 export default function Testimonials() {
   const [reviews, setReviews] = useState(fallbackReviews);
+  const [rating, setRating] = useState(4.8);
+  const [total, setTotal] = useState<number | null>(null);
 
   useEffect(() => {
     fetch("/api/reviews")
@@ -23,12 +25,14 @@ export default function Testimonials() {
         if (data.reviews && data.reviews.length > 0) {
           setReviews(data.reviews.slice(0, 6)); // Tomamos máximo 6 para la grilla
         }
+        if (data.rating) setRating(data.rating);
+        if (data.total) setTotal(data.total);
       })
       .catch((err) => console.log("Usando reseñas estáticas de respaldo", err));
   }, []);
 
   return (
-    <section className="py-16 md:py-24 bg-white border-t border-gray-200">
+    <section className="py-16 md:py-24 bg-[#f8f9fa] border-t border-gray-200">
       <div className="max-w-7xl mx-auto px-4 md:px-6">
         
         {/* ================= HEADER CLEAN ================= */}
@@ -46,16 +50,16 @@ export default function Testimonials() {
           {/* Bloque de confianza */}
           <div className="flex items-center gap-4 bg-gray-50 border border-gray-200 p-4 rounded-xl shrink-0">
             <div className="flex flex-col items-center justify-center pr-4 border-r border-gray-200">
-              <span className="text-2xl font-black text-gray-900">4.8</span>
+              <span className="text-2xl font-black text-gray-900">{rating.toFixed(1)}</span>
               <div className="flex gap-0.5 mt-1">
                 {[...Array(5)].map((_, i) => (
-                  <Star key={i} className={`w-3.5 h-3.5 ${i === 4 ? 'fill-gray-300 text-gray-300' : 'fill-yellow-400 text-yellow-400'}`} />
+                  <Star key={i} className={`w-3.5 h-3.5 ${i < Math.round(rating) ? 'fill-yellow-400 text-yellow-400' : 'fill-gray-300 text-gray-300'}`} />
                 ))}
               </div>
             </div>
             <div className="flex flex-col">
               <span className="text-sm font-bold text-gray-900">Google Reviews</span>
-              <span className="text-xs text-gray-500 font-medium">Basado en opiniones reales</span>
+              <span className="text-xs text-gray-500 font-medium">{total ? `${total} opiniones reales` : "Basado en opiniones reales"}</span>
             </div>
           </div>
         </div>

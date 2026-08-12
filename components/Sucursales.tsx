@@ -27,7 +27,7 @@ export default function Sucursales() {
   ];
 
   return (
-    <section id="sucursales" className="w-full bg-[#F8FAFC] py-20 relative overflow-hidden">
+    <section id="sucursales" className="w-full bg-[#f8f9fa] py-12 md:py-20 relative overflow-hidden">
       
       {/* Elementos ambientales de fondo (Spatial UI) */}
       <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] bg-blue-400/5 rounded-full blur-[140px] pointer-events-none"></div>

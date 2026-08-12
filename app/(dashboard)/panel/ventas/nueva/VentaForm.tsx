@@ -175,10 +175,43 @@ export default function VentaForm({ vehiculos, clientes, sucursales }: { vehicul
       if (esOperacionReal) {
         await supabase.from("vehiculos").update({ estado: nuevoEstadoAuto }).eq("id", data.vehiculo_id);
 
-        const documentosDefault = ["DNI", "Cédula Verde", "CUIT/CUIL", "Formulario 08", "Título del Auto"];
-        await supabase.from("documentacion_ventas").insert(
-          documentosDefault.map((tipo_documento) => ({ venta_id: nuevaOperacion.id, tipo_documento }))
-        );
+        // Documentación por etapa: cada ítem sólo se muestra cuando la venta está en esa etapa.
+        const documentosDocumentacion = [
+          "Formulario 08 (Firmada)",
+          "Formulario 02 (Informe de Dominio)",
+          "Infracciones (SUAT)",
+          "Título (CAT)",
+          "Cédula Verde",
+          "Cédula Azul",
+          "Informe de Prenda (SUAT)",
+          "Grabado de Autopartes",
+          "VTV",
+          "Copia de Llave",
+          "Manuales",
+        ];
+        const documentosPatentamiento = ["Aranceles 6% Total", "Informes 51"];
+        const documentosSena = ["Título del Auto", "DNI", "CUIT/CUIL"];
+
+        const itemsDocumentacion = [
+          // La seña queda pre-cargada y marcada como recibida: ya se cobró al crear la venta.
+          {
+            venta_id: nuevaOperacion.id,
+            tipo_documento: `Seña Pagada ($${p_sena.toLocaleString("es-AR")})`,
+            etapa: "Seña",
+            estado: "Recibido",
+            fecha_recibido: new Date().toISOString().split("T")[0],
+          },
+          ...documentosSena.map((tipo_documento) => ({
+            venta_id: nuevaOperacion.id, tipo_documento, etapa: "Seña",
+          })),
+          ...documentosDocumentacion.map((tipo_documento) => ({
+            venta_id: nuevaOperacion.id, tipo_documento, etapa: "Documentación",
+          })),
+          ...documentosPatentamiento.map((tipo_documento) => ({
+            venta_id: nuevaOperacion.id, tipo_documento, etapa: "Patentamiento",
+          })),
+        ];
+        await supabase.from("documentacion_ventas").insert(itemsDocumentacion);
 
         if (data.banco_prenda && p_prenda > 0) {
           const primerVencimiento = new Date();

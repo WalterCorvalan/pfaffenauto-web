@@ -1,8 +1,10 @@
 "use client";
 
 import { useState } from "react";
+import Link from "next/link";
 import { Inter } from "next/font/google";
-import { ChevronLeft, ChevronRight, X } from "lucide-react";
+import { ChevronLeft, ChevronRight, X, Menu, Loader2, CheckCircle2 } from "lucide-react";
+import { KARRY_VERSIONS } from "@/lib/karry-versions";
 
 const inter = Inter({
   subsets: ["latin"],
@@ -17,36 +19,7 @@ const STATS = [
   { value: "7", unit: "años", label: "Garantía" },
 ];
 
-const VERSIONS = [
-  {
-    code: "CS",
-    name: "KARRY CABINA SIMPLE",
-    subtitle: "MAYOR ESPACIO Y SUPERFICIE COMERCIAL",
-    load: "1,62 toneladas",
-    text: "Caja abierta de gran superficie optimizada para herramientas o mercadería.",
-    specs: [
-      "Motor 1.6L 121 HP",
-      "Capacidad de carga: 1.620 kg",
-      "Ideal para reparto y logística urbana",
-      "Garantía 7 años / 100.000 km",
-    ],
-    image: "/logo-karry.webp"
-  },
-  {
-    code: "CD",
-    name: "KARRY CABINA DOBLE",
-    subtitle: "DOS FILAS DE ASIENTOS PARA TU EQUIPO",
-    load: "1,54 toneladas",
-    text: "Trasladá a tu equipo completo sin resignar capacidad en la caja de carga.",
-    specs: [
-      "Motor 1.6L 121 HP",
-      "Capacidad de carga: 1.540 kg",
-      "Ideal para cuadrillas y servicio técnico",
-      "Garantía 7 años / 100.000 km",
-    ],
-    image: "/logo-karry.webp"
-  },
-];
+const VERSIONS = KARRY_VERSIONS;
 
 const CHECKLIST = [
   "Motor 1.6L · 121 HP",
@@ -73,6 +46,28 @@ const WHATSAPP_LINK =
 
 export default function LandingKarry() {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
+  const [isMobileNavOpen, setIsMobileNavOpen] = useState(false);
+
+  // ================= FORMULARIO DE RESERVA =================
+  const [nombre, setNombre] = useState("");
+  const [apellido, setApellido] = useState("");
+  const [telefono, setTelefono] = useState("");
+  const [versionInteres, setVersionInteres] = useState("Cabina Simple (CS)");
+  const [enviando, setEnviando] = useState(false);
+  const [enviado, setEnviado] = useState(false);
+
+  const enviarReserva = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!nombre.trim() || !apellido.trim() || !telefono.trim()) return;
+
+    setEnviando(true);
+    const mensaje = encodeURIComponent(
+      `Hola, quiero reservar la Karry Pick Up.\nNombre: ${nombre} ${apellido}\nTeléfono: ${telefono}\nVersión de interés: ${versionInteres}`
+    );
+    window.open(`https://wa.me/5491121907000?text=${mensaje}`, "_blank", "noopener,noreferrer");
+    setEnviado(true);
+    setEnviando(false);
+  };
 
   return (
     <main className={`${inter.variable} font-sans bg-white text-slate-800 selection:bg-[#1273b9] selection:text-white relative scroll-smooth`}>
@@ -84,10 +79,11 @@ export default function LandingKarry() {
           onMouseLeave={() => setIsMenuOpen(false)}
         >
           <div className="flex items-center gap-3 py-3 md:py-4">
-            <span className="text-xl md:text-2xl font-bold tracking-widest">KARRY</span>
-            <span className="text-[10px] border-l border-white/30 pl-3 uppercase tracking-widest font-medium hidden sm:block">
-              Pfaffen Autos
-            </span>
+            <img src="/logo-karry.webp" alt="Karry" className="h-6 md:h-7 w-auto object-contain" />
+            <Link href="/" className="relative flex items-center border-l border-white/30 pl-3">
+              <img src="/logo.png" alt="Pfaffen Autos" className="h-4 sm:h-5 md:h-6 w-auto object-contain brightness-0 invert" />
+              <img src="/r.png" alt="" className="absolute -top-1.5 -right-2 h-2 md:h-2.5 w-auto object-contain brightness-0 invert" />
+            </Link>
           </div>
 
           <nav className="hidden lg:flex items-center gap-8 text-[11px] font-bold uppercase tracking-wider h-full">
@@ -104,14 +100,21 @@ export default function LandingKarry() {
             <a href="#contacto" className="hover:text-gray-300 transition-colors py-5">Contacto</a>
           </nav>
 
-          <div className="flex items-center gap-4 py-3 md:py-4">
+          <div className="flex items-center gap-3 sm:gap-4 py-3 md:py-4">
             <span className="hidden md:block text-xs font-medium">Cigliutti Guerini</span>
             <a
               href="#contacto"
-              className="border border-white hover:bg-white hover:text-[#4a5056] transition-colors rounded-full px-5 py-2 text-xs font-bold uppercase tracking-wider"
+              className="border border-white hover:bg-white hover:text-[#4a5056] transition-colors rounded-full px-4 sm:px-5 py-2 text-[11px] sm:text-xs font-bold uppercase tracking-wider shrink-0"
             >
               Reservá
             </a>
+            <button
+              onClick={() => setIsMobileNavOpen((v) => !v)}
+              className="lg:hidden text-white p-1 shrink-0"
+              aria-label="Abrir menú"
+            >
+              {isMobileNavOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
+            </button>
           </div>
 
           {/* ================= MEGA MENÚ DESPLEGABLE (IMAGEN 1) ================= */}
@@ -156,6 +159,16 @@ export default function LandingKarry() {
               </div>
             </div>
           )}
+
+          {/* ================= MENÚ MOBILE ================= */}
+          {isMobileNavOpen && (
+            <div className="lg:hidden absolute top-[calc(100%+10px)] left-0 w-full bg-white rounded-2xl shadow-2xl border border-gray-100 text-slate-800 p-5 animate-fadeIn cursor-default flex flex-col gap-1">
+              <a href="#modelos" onClick={() => setIsMobileNavOpen(false)} className="px-3 py-3 rounded-xl hover:bg-gray-50 font-bold text-sm uppercase tracking-wide">Modelos</a>
+              <a href="#contacto" onClick={() => setIsMobileNavOpen(false)} className="px-3 py-3 rounded-xl hover:bg-gray-50 font-bold text-sm uppercase tracking-wide">Prueba de manejo</a>
+              <a href="#institucional" onClick={() => setIsMobileNavOpen(false)} className="px-3 py-3 rounded-xl hover:bg-gray-50 font-bold text-sm uppercase tracking-wide">Institucional</a>
+              <a href="#contacto" onClick={() => setIsMobileNavOpen(false)} className="px-3 py-3 rounded-xl hover:bg-gray-50 font-bold text-sm uppercase tracking-wide">Contacto</a>
+            </div>
+          )}
         </div>
       </header>
 
@@ -185,11 +198,11 @@ export default function LandingKarry() {
             Utilitario CS / CD · Capacidad hasta 1,62 Ton.
           </p>
 
-          <div className="flex items-center gap-4">
-            <a href="#modelos" className="bg-white text-slate-800 hover:bg-gray-50 px-8 py-3 rounded-full text-sm font-semibold shadow-md transition-all active:scale-95">
+          <div className="flex flex-col sm:flex-row items-center gap-3 sm:gap-4 w-full sm:w-auto px-6 sm:px-0 max-w-xs sm:max-w-none mx-auto sm:mx-0">
+            <a href="#modelos" className="w-full sm:w-auto text-center bg-white text-slate-800 hover:bg-gray-50 px-6 sm:px-8 py-3 rounded-full text-sm font-semibold shadow-md transition-all active:scale-95">
               Conócelo
             </a>
-            <a href="#contacto" className="bg-[#1273b9] text-white hover:bg-[#0f609b] px-8 py-3 rounded-full text-sm font-semibold shadow-md transition-all active:scale-95">
+            <a href="#contacto" className="w-full sm:w-auto text-center bg-[#1273b9] text-white hover:bg-[#0f609b] px-6 sm:px-8 py-3 rounded-full text-sm font-semibold shadow-md transition-all active:scale-95">
               Reservá
             </a>
           </div>
@@ -197,8 +210,8 @@ export default function LandingKarry() {
       </section>
 
       {/* ================= FORMULARIO DE RESERVA ================= */}
-      <section id="contacto" className="bg-white py-16 relative border-b border-gray-100">
-        <div className="max-w-6xl mx-auto px-6 grid lg:grid-cols-2 gap-16 items-center">
+      <section id="contacto" className="bg-white py-12 md:py-16 relative border-b border-gray-100">
+        <div className="max-w-6xl mx-auto px-6 grid lg:grid-cols-2 gap-10 md:gap-16 items-center">
           
           <div className="max-w-md">
             <h2 className="text-3xl md:text-4xl font-bold text-slate-900 tracking-tight mb-4">
@@ -209,43 +222,51 @@ export default function LandingKarry() {
             </p>
           </div>
 
-          <div className="bg-white border border-gray-100 rounded-[20px] p-8 shadow-[0_8px_40px_rgb(0,0,0,0.06)] relative overflow-hidden">
-            <form className="space-y-6 relative z-10">
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
-                <div>
-                  <label className="text-[11px] text-gray-500 font-bold uppercase tracking-wider mb-1 block">Nombre</label>
-                  <input type="text" placeholder="Nombre completo" className="w-full bg-transparent border-b border-gray-300 py-2 outline-none focus:border-[#1273b9] transition-colors text-slate-800 font-medium placeholder:font-normal placeholder:text-gray-400" />
+          <div className="bg-white border border-gray-100 rounded-[20px] p-6 sm:p-8 shadow-[0_8px_40px_rgb(0,0,0,0.06)] relative overflow-hidden">
+            {enviado ? (
+              <div className="text-center py-8 space-y-3">
+                <CheckCircle2 className="w-12 h-12 text-[#25D366] mx-auto" />
+                <h3 className="text-lg font-bold text-slate-900">¡Listo!</h3>
+                <p className="text-sm text-slate-500">Te abrimos WhatsApp para que confirmes tu reserva con un asesor.</p>
+              </div>
+            ) : (
+              <form onSubmit={enviarReserva} className="space-y-6 relative z-10">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
+                  <div>
+                    <label className="text-[11px] text-gray-500 font-bold uppercase tracking-wider mb-1 block">Nombre</label>
+                    <input required type="text" value={nombre} onChange={(e) => setNombre(e.target.value)} placeholder="Nombre completo" className="w-full bg-transparent border-b border-gray-300 py-2 outline-none focus:border-[#1273b9] transition-colors text-slate-800 font-medium placeholder:font-normal placeholder:text-gray-400" />
+                  </div>
+                  <div>
+                    <label className="text-[11px] text-gray-500 font-bold uppercase tracking-wider mb-1 block">Apellido</label>
+                    <input required type="text" value={apellido} onChange={(e) => setApellido(e.target.value)} placeholder="Apellido" className="w-full bg-transparent border-b border-gray-300 py-2 outline-none focus:border-[#1273b9] transition-colors text-slate-800 font-medium placeholder:font-normal placeholder:text-gray-400" />
+                  </div>
                 </div>
+
                 <div>
-                  <label className="text-[11px] text-gray-500 font-bold uppercase tracking-wider mb-1 block">Apellido</label>
-                  <input type="text" placeholder="Apellido" className="w-full bg-transparent border-b border-gray-300 py-2 outline-none focus:border-[#1273b9] transition-colors text-slate-800 font-medium placeholder:font-normal placeholder:text-gray-400" />
+                  <label className="text-[11px] text-gray-500 font-bold uppercase tracking-wider mb-1 block">Teléfono / WhatsApp</label>
+                  <input required type="tel" value={telefono} onChange={(e) => setTelefono(e.target.value)} placeholder="Código de área + Número" className="w-full bg-transparent border-b border-gray-300 py-2 outline-none focus:border-[#1273b9] transition-colors text-slate-800 font-medium placeholder:font-normal placeholder:text-gray-400" />
                 </div>
-              </div>
-              
-              <div>
-                <label className="text-[11px] text-gray-500 font-bold uppercase tracking-wider mb-1 block">Teléfono / WhatsApp</label>
-                <input type="tel" placeholder="Código de área + Número" className="w-full bg-transparent border-b border-gray-300 py-2 outline-none focus:border-[#1273b9] transition-colors text-slate-800 font-medium placeholder:font-normal placeholder:text-gray-400" />
-              </div>
 
-              <div>
-                <label className="text-[11px] text-gray-500 font-bold uppercase tracking-wider mb-1 block">Versión de interés</label>
-                <select className="w-full bg-transparent border-b border-gray-300 py-2 outline-none focus:border-[#1273b9] transition-colors text-slate-800 font-medium appearance-none cursor-pointer">
-                  <option>Cabina Simple (CS)</option>
-                  <option>Cabina Doble (CD)</option>
-                </select>
-              </div>
+                <div>
+                  <label className="text-[11px] text-gray-500 font-bold uppercase tracking-wider mb-1 block">Versión de interés</label>
+                  <select value={versionInteres} onChange={(e) => setVersionInteres(e.target.value)} className="w-full bg-transparent border-b border-gray-300 py-2 outline-none focus:border-[#1273b9] transition-colors text-slate-800 font-medium appearance-none cursor-pointer">
+                    <option>Cabina Simple (CS)</option>
+                    <option>Cabina Doble (CD)</option>
+                  </select>
+                </div>
 
-              <button type="button" className="w-full bg-[#25D366] hover:bg-[#1fbc59] text-white font-bold uppercase tracking-widest text-xs py-4 rounded-xl transition-all shadow-md active:scale-95 mt-6 flex items-center justify-center gap-2">
-                Enviar Solicitud
-              </button>
-            </form>
+                <button type="submit" disabled={enviando} className="w-full bg-[#25D366] hover:bg-[#1fbc59] disabled:opacity-60 text-white font-bold uppercase tracking-widest text-xs py-4 rounded-xl transition-all shadow-md active:scale-95 mt-6 flex items-center justify-center gap-2">
+                  {enviando ? <Loader2 className="w-4 h-4 animate-spin" /> : "Enviar Solicitud"}
+                </button>
+              </form>
+            )}
           </div>
 
         </div>
       </section>
 
       {/* ================= MODELOS DESTACADOS (IMAGEN 2) ================= */}
-      <section id="modelos" className="bg-[#f8f9fa] py-20 px-6">
+      <section id="modelos" className="bg-[#f8f9fa] py-12 md:py-20 px-6">
         <div className="max-w-6xl mx-auto">
           <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-10 gap-4">
             <h2 className="text-3xl font-bold text-slate-900 tracking-tight">Modelos destacados</h2>
@@ -257,20 +278,24 @@ export default function LandingKarry() {
           <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
             {VERSIONS.map((v) => (
               <div key={v.code} className="bg-white rounded-2xl overflow-hidden shadow-sm hover:shadow-md transition-shadow border border-gray-100 flex flex-col">
-                
-                {/* Imagen del modelo con dots simulados */}
-                <div className="bg-[#eef0f2] h-56 relative flex justify-center items-center p-4">
-                  <img src={v.image} alt={v.name} className="w-full h-full object-contain mix-blend-multiply drop-shadow-md" />
-                  <div className="absolute bottom-3 left-1/2 -translate-x-1/2 flex gap-1.5">
-                    <div className="w-1.5 h-1.5 rounded-full bg-[#1273b9]"></div>
-                    <div className="w-1.5 h-1.5 rounded-full bg-slate-300"></div>
-                    <div className="w-1.5 h-1.5 rounded-full bg-slate-300"></div>
+
+                <Link href={`/karry/${v.slug}`} className="block">
+                  {/* Imagen del modelo con dots simulados */}
+                  <div className="bg-[#eef0f2] h-56 relative flex justify-center items-center p-4">
+                    <img src={v.image} alt={v.name} className="w-full h-full object-contain mix-blend-multiply drop-shadow-md" />
+                    <div className="absolute bottom-3 left-1/2 -translate-x-1/2 flex gap-1.5">
+                      <div className="w-1.5 h-1.5 rounded-full bg-[#1273b9]"></div>
+                      <div className="w-1.5 h-1.5 rounded-full bg-slate-300"></div>
+                      <div className="w-1.5 h-1.5 rounded-full bg-slate-300"></div>
+                    </div>
                   </div>
-                </div>
+                </Link>
 
                 {/* Contenido de la Tarjeta */}
                 <div className="p-6 flex flex-col flex-grow">
-                  <h3 className="text-[17px] font-bold text-slate-900 uppercase tracking-tight">{v.name}</h3>
+                  <Link href={`/karry/${v.slug}`}>
+                    <h3 className="text-[17px] font-bold text-slate-900 uppercase tracking-tight hover:text-[#1273b9] transition-colors">{v.name}</h3>
+                  </Link>
                   <p className="text-[13px] italic text-slate-600 mb-4 mt-1 font-medium">{v.subtitle}</p>
                   
                   {/* Specs sin viñetas, texto limpio como en BYD */}
@@ -284,9 +309,9 @@ export default function LandingKarry() {
                     <a href="#contacto" className="bg-[#1273b9] hover:bg-[#0f609b] text-white px-6 py-2 rounded-[10px] font-semibold text-sm transition-colors text-center shadow-sm">
                       Reservar
                     </a>
-                    <a href="#institucional" className="bg-white border border-gray-300 text-slate-800 hover:bg-gray-50 px-6 py-2 rounded-[10px] font-semibold text-sm transition-colors text-center italic">
+                    <Link href={`/karry/${v.slug}`} className="bg-white border border-gray-300 text-slate-800 hover:bg-gray-50 px-6 py-2 rounded-[10px] font-semibold text-sm transition-colors text-center italic">
                       Ficha
-                    </a>
+                    </Link>
                   </div>
                 </div>
               </div>
@@ -297,14 +322,14 @@ export default function LandingKarry() {
 
       {/* ================= ESTADÍSTICAS RÁPIDAS ================= */}
       <section className="bg-white py-12 border-b border-gray-100">
-        <div className="mx-auto grid max-w-6xl grid-cols-2 md:grid-cols-4 gap-8 px-6 divide-x divide-gray-100">
+        <div className="mx-auto grid max-w-6xl grid-cols-2 md:grid-cols-4 gap-x-4 gap-y-8 md:gap-8 px-6 md:divide-x md:divide-gray-100">
           {STATS.map((s, index) => (
-            <div key={s.label} className={`text-center ${index === 0 ? "" : "pl-8"}`}>
-              <div className="text-3xl sm:text-5xl font-light text-[#1273b9] tracking-tight">
+            <div key={s.label} className={`text-center ${index === 0 ? "" : "md:pl-8"}`}>
+              <div className="text-2xl sm:text-3xl md:text-5xl font-light text-[#1273b9] tracking-tight">
                 {s.value}
-                <span className="ml-1 text-base font-medium text-slate-400">{s.unit}</span>
+                <span className="ml-1 text-sm md:text-base font-medium text-slate-400">{s.unit}</span>
               </div>
-              <div className="mt-2 text-[10px] font-bold uppercase tracking-widest text-slate-500">
+              <div className="mt-2 text-[9px] sm:text-[10px] font-bold uppercase tracking-widest text-slate-500">
                 {s.label}
               </div>
             </div>
@@ -313,8 +338,8 @@ export default function LandingKarry() {
       </section>
 
       {/* ================= FICHA TÉCNICA E INSTITUCIONAL ================= */}
-      <section id="institucional" className="bg-white py-20 border-b border-gray-200">
-        <div className="mx-auto max-w-6xl px-6 grid lg:grid-cols-2 gap-16">
+      <section id="institucional" className="bg-white py-12 md:py-20 border-b border-gray-200">
+        <div className="mx-auto max-w-6xl px-6 grid lg:grid-cols-2 gap-10 md:gap-16">
           
           <div>
             <h2 className="text-3xl font-bold mb-3 text-slate-900 tracking-tight">Equipamiento de serie</h2>

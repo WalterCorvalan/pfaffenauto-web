@@ -40,7 +40,7 @@ export default function FAQ() {
   };
 
   return (
-    <section className="py-20 bg-[#F8FAFC] border-t border-slate-200/80 relative overflow-hidden">
+    <section className="py-12 md:py-20 bg-[#f8f9fa] border-t border-slate-200/80 relative overflow-hidden">
       
       {/* Script SEO JSON-LD */}
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(faqSchema) }} />

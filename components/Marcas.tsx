@@ -123,7 +123,7 @@ export default function Marcas() {
   ];
 
   return (
-    <section className="w-full bg-[#f8f9fa] pt-16 pb-20">
+    <section className="w-full bg-[#f8f9fa] pt-10 pb-10 md:pt-16 md:pb-20">
       <div className="max-w-7xl mx-auto px-4 md:px-6">
         
         {/* ================= ENCABEZADO ================= */}
