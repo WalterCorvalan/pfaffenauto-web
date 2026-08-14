@@ -35,7 +35,7 @@ export default function TareasKanban({ tareasIniciales }: { tareasIniciales: any
     if (!draggedTaskId) return;
 
     const taskActual = (tareas || []).find((t) => t.id === draggedTaskId);
-    if (!taskActual || taskActual.estado === nuevoEstado) {
+    if (!taskActual || taskActual.columna === nuevoEstado) {
       setDraggedTaskId(null);
       return;
     }
@@ -43,7 +43,7 @@ export default function TareasKanban({ tareasIniciales }: { tareasIniciales: any
     // Actualización optimista blindada
     setTareas((prev) =>
       (prev || []).map((t) =>
-        t.id === draggedTaskId ? { ...t, estado: nuevoEstado } : t
+        t.id === draggedTaskId ? { ...t, columna: nuevoEstado } : t
       )
     );
     setDraggedTaskId(null);
@@ -51,7 +51,7 @@ export default function TareasKanban({ tareasIniciales }: { tareasIniciales: any
     try {
       const { error } = await supabase
         .from("tareas")
-        .update({ estado: nuevoEstado })
+        .update({ columna: nuevoEstado })
         .eq("id", draggedTaskId);
 
       if (error) throw error;
@@ -74,7 +74,7 @@ export default function TareasKanban({ tareasIniciales }: { tareasIniciales: any
         .insert({
           titulo,
           descripcion,
-          estado: "Pendiente"
+          columna: "Pendiente"
         })
         .select("*")
         .single();
@@ -145,7 +145,7 @@ export default function TareasKanban({ tareasIniciales }: { tareasIniciales: any
       <div className="flex-1 overflow-x-auto overflow-y-hidden p-6 bg-[#F9FAFB] flex gap-5 custom-scrollbar">
         {COLUMNAS.map((columna, index) => {
           // 3. Blindaje crítico en el filter
-          const tareasEnColumna = (tareas || []).filter((t) => (t.estado || "Pendiente") === columna);
+          const tareasEnColumna = (tareas || []).filter((t) => (t.columna || "Pendiente") === columna);
 
           return (
             <div
@@ -175,11 +175,11 @@ export default function TareasKanban({ tareasIniciales }: { tareasIniciales: any
                     draggable
                     onDragStart={(e: any) => handleDragStart(e, tarea.id)}
                     className={`bg-white border rounded-lg p-3.5 cursor-grab active:cursor-grabbing shadow-sm hover:shadow-md transition-all group ${
-                      tarea.estado === "Completado" ? "opacity-70 hover:opacity-100 border-emerald-200" : "border-slate-200 hover:border-indigo-400/40"
+                      tarea.columna === "Completado" ? "opacity-70 hover:opacity-100 border-emerald-200" : "border-slate-200 hover:border-indigo-400/40"
                     } ${draggedTaskId === tarea.id ? "opacity-40 scale-[0.98] shadow-none" : ""}`}
                   >
                     <div className="flex justify-between items-start mb-2 gap-2">
-                      <span className={`text-[10px] font-bold flex items-center gap-1 ${tarea.estado === "Completado" ? "text-emerald-600" : "text-slate-400"}`}>
+                      <span className={`text-[10px] font-bold flex items-center gap-1 ${tarea.columna === "Completado" ? "text-emerald-600" : "text-slate-400"}`}>
                         <Clock className="w-3 h-3" />
                         {new Date(tarea.created_at).toLocaleDateString("es-AR", { day: '2-digit', month: 'short' })}
                       </span>
@@ -193,7 +193,7 @@ export default function TareasKanban({ tareasIniciales }: { tareasIniciales: any
                       </button>
                     </div>
 
-                    <h4 className={`font-bold text-[14px] leading-tight mb-1.5 ${tarea.estado === "Completado" ? "text-slate-600 line-through" : "text-slate-900"}`}>
+                    <h4 className={`font-bold text-[14px] leading-tight mb-1.5 ${tarea.columna === "Completado" ? "text-slate-600 line-through" : "text-slate-900"}`}>
                       {tarea.titulo}
                     </h4>
 

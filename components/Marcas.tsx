@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import Link from "next/link";
+import Image from "next/image";
 import { ChevronRight, ShieldCheck, Sparkles } from "lucide-react";
 
 // ================= SUBCOMPONENTE DE TARJETA ESTÁNDAR =================
@@ -13,13 +14,15 @@ function MarcaCard({ marca }: { marca: { nombre: string; slug: string; logo: str
       href={`/marcas/${marca.slug}`} 
       className="flex flex-col items-center justify-center gap-3 bg-white border border-gray-200 rounded-2xl py-6 hover:border-blue-500 hover:shadow-lg transition-all duration-300 group h-full focus:outline-none"
     >
-      <div className="w-14 h-14 md:w-16 md:h-16 flex items-center justify-center transition-transform duration-300 group-hover:scale-105 mix-blend-multiply p-2">
+      <div className="relative w-14 h-14 md:w-16 md:h-16 flex items-center justify-center transition-transform duration-300 group-hover:scale-105 mix-blend-multiply p-2">
         {!imgError ? (
-          <img 
-            src={marca.logo} 
-            alt={`Logo de ${marca.nombre}`} 
-            className="w-full h-full object-contain"
-            onError={() => setImgError(true)} 
+          <Image
+            src={marca.logo}
+            alt={`Logo de ${marca.nombre}`}
+            fill
+            sizes="64px"
+            className="object-contain"
+            onError={() => setImgError(true)}
           />
         ) : (
           <div className="w-full h-full rounded-full bg-gray-50 border border-gray-200 flex items-center justify-center group-hover:bg-blue-50 group-hover:border-blue-200 transition-colors">
@@ -51,13 +54,15 @@ function MarcaDestacadaCard({ marca }: { marca: { nombre: string; slug: string; 
         <Sparkles className="w-2.5 h-2.5" /> Oficial
       </div>
 
-      <div className="w-16 h-16 md:w-20 md:h-20 flex items-center justify-center transition-transform duration-300 group-hover:scale-110 p-2">
+      <div className="relative w-16 h-16 md:w-20 md:h-20 flex items-center justify-center transition-transform duration-300 group-hover:scale-110 p-2">
         {!imgError ? (
-          <img 
-            src={marca.logo} 
-            alt={`Logo de ${marca.nombre}`} 
-            className="w-full h-full object-contain drop-shadow-sm"
-            onError={() => setImgError(true)} 
+          <Image
+            src={marca.logo}
+            alt={`Logo de ${marca.nombre}`}
+            fill
+            sizes="80px"
+            className="object-contain drop-shadow-sm"
+            onError={() => setImgError(true)}
           />
         ) : (
           <div className="w-full h-full rounded-full bg-blue-100 border border-blue-200 flex items-center justify-center">

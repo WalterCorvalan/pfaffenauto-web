@@ -3,6 +3,7 @@
 import React from "react";
 import { Timeline } from "@/components/ui/Timeline";
 import Link from "next/link";
+import Image from "next/image";
 import { ChevronRight, Users } from "lucide-react";
 
 const TEAM_MEMBERS = [
@@ -159,10 +160,12 @@ export default function NosotrosPage() {
                   <div className="absolute inset-0 bg-gradient-to-t from-black/50 via-transparent to-transparent opacity-60 z-10 mix-blend-multiply"></div>
                   
                   {/* Imagen */}
-                  <img 
-                    src={member.image} 
-                    alt={member.name} 
-                    className="w-full h-full object-cover grayscale-[20%] group-hover:grayscale-0 group-hover:scale-105 transition-all duration-700 ease-out relative z-0" 
+                  <Image
+                    src={member.image}
+                    alt={member.name}
+                    fill
+                    sizes="(max-width: 768px) 100vw, 33vw"
+                    className="object-cover grayscale-[20%] group-hover:grayscale-0 group-hover:scale-105 transition-all duration-700 ease-out relative z-0"
                   />
                   
                   {/* Textura sutil superpuesta (opcional, para dar el efecto de la imagen de referencia) */}

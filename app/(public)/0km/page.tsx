@@ -1,4 +1,5 @@
 import { createClient } from "@/lib/supabase/server";
+import { CAMPOS_VEHICULO_PUBLICO } from "@/lib/vehiculos";
 import VehiculosGrid from "@/components/VehiculosGrid";
 import { Sparkles, ShieldCheck } from "lucide-react";
 import Link from "next/link";
@@ -11,13 +12,7 @@ export default async function CeroKmPage() {
   // ================= FETCH DE AUTOS 0KM =================
   const { data: vehiculos } = await supabase
     .from("vehiculos")
-    .select(
-      `
-      *,
-      multimedia_vehiculos ( url_archivo ),
-      sucursales ( nombre )
-    `,
-    )
+    .select(CAMPOS_VEHICULO_PUBLICO)
     .in("estado", ["Disponible", "Reservado"])
     .eq("kilometraje", 0)
     .not("precio_publicado_ars", "is", null)

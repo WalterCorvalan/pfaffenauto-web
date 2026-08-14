@@ -1,4 +1,5 @@
 import { createClient } from "@/lib/supabase/server";
+import { CAMPOS_VEHICULO_PUBLICO } from "@/lib/vehiculos";
 import VehiculosGrid from "@/components/VehiculosGrid";
 import { Tag, AlertCircle } from "lucide-react";
 import Link from "next/link";
@@ -11,13 +12,7 @@ export default async function OutletPage() {
   // ================= FETCH DE AUTOS OUTLET =================
   const { data: vehiculos } = await supabase
     .from("vehiculos")
-    .select(
-      `
-      *,
-      multimedia_vehiculos ( url_archivo ),
-      sucursales ( nombre )
-    `,
-    )
+    .select(CAMPOS_VEHICULO_PUBLICO)
     .in("estado", ["Disponible", "Reservado"])
     .not("precio_publicado_ars", "is", null)
     .lt("precio_publicado_ars", 10000000)

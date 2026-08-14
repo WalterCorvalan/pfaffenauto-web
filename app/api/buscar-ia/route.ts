@@ -1,5 +1,6 @@
 import { createClient } from "@supabase/supabase-js";
 import { interpretarBusqueda, isBuscadorIaDisponible } from "@/lib/ai/buscador";
+import { rateLimit, ipDesdeRequest } from "@/lib/rateLimit";
 
 const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -8,6 +9,11 @@ const supabase = createClient(
 
 export async function POST(req: Request) {
   try {
+    const limite = rateLimit(ipDesdeRequest(req), { limite: 20, ventanaMs: 60 * 1000 });
+    if (!limite.ok) {
+      return Response.json({ error: "Demasiadas búsquedas. Esperá un momento." }, { status: 429 });
+    }
+
     if (!isBuscadorIaDisponible()) {
       return Response.json({ error: "Buscador con IA no disponible." }, { status: 400 });
     }

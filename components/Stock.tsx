@@ -78,17 +78,38 @@ export default function Stock({ vehiculos }: StockProps) {
       console.error("Error leyendo vistos recientes", e);
     }
     // Si no hay historial, se queda vacío. No rellenamos más.
-    setVistosRecientes([]); 
+    setVistosRecientes([]);
   }, []);
 
+  // ================= FILTROS INTELIGENTES Y ROBUSTOS =================
   const suvsDestacadas = listaVehiculos
-    .filter((auto) => normalizar(auto.tipo).includes("suv"))
+    .filter((auto) => {
+      const t = normalizar(auto.tipo);
+      const m = normalizar(auto.modelo);
+      return (
+        t.includes("suv") ||
+        t.includes("terreno") ||
+        m.includes("sw4") ||
+        m.includes("tracker") ||
+        m.includes("taos") ||
+        m.includes("t-cross")
+      );
+    })
     .slice(0, 4);
 
   const pickipsCarrusel = listaVehiculos
     .filter((auto) => {
       const t = normalizar(auto.tipo);
-      return t.includes("pick") || t.includes("camioneta");
+      const m = normalizar(auto.modelo);
+      return (
+        t.includes("pick") ||
+        t.includes("camioneta") ||
+        m.includes("hilux") ||
+        m.includes("amarok") ||
+        m.includes("ranger") ||
+        m.includes("strada") ||
+        m.includes("toro")
+      );
     })
     .slice(0, 8);
 
@@ -96,7 +117,10 @@ export default function Stock({ vehiculos }: StockProps) {
     .filter((auto) => {
       const t = normalizar(auto.tipo);
       return (
-        t.includes("sedan") || t.includes("hatchback") || t.includes("urbano")
+        t.includes("sedan") ||
+        t.includes("hatchback") ||
+        t.includes("urbano") ||
+        t.includes("auto")
       );
     })
     .slice(0, 4);
@@ -107,9 +131,17 @@ export default function Stock({ vehiculos }: StockProps) {
     ...urbanosYSedanes.map((a) => a.id),
   ]);
 
-  const otrosVehiculos = listaVehiculos
-    .filter((auto) => !idsMostrados.has(auto.id))
-    .slice(0, 6);
+  // Si después de filtrar por categoría sigue habiendo autos sin mostrar,
+  // los mandamos a "otrosVehiculos" para que NUNCA aparezca vacío el stock.
+  let otrosVehiculos = listaVehiculos.filter(
+    (auto) => !idsMostrados.has(auto.id),
+  );
+
+  if (otrosVehiculos.length === 0 && listaVehiculos.length > 0) {
+    otrosVehiculos = listaVehiculos.slice(0, 6);
+  } else {
+    otrosVehiculos = otrosVehiculos.slice(0, 6);
+  }
 
   if (listaVehiculos.length === 0) {
     return (
@@ -147,7 +179,11 @@ export default function Stock({ vehiculos }: StockProps) {
               linkHref="/catalogo?q=SUV"
               linkLabel="Ver todas las SUVs"
             />
-            <VehicleGrid vehiculos={suvsDestacadas} autosComparar={autosComparar} onToggleComparar={toggleComparar} />
+            <VehicleGrid
+              vehiculos={suvsDestacadas}
+              autosComparar={autosComparar}
+              onToggleComparar={toggleComparar}
+            />
           </div>
         )}
 
@@ -172,7 +208,9 @@ export default function Stock({ vehiculos }: StockProps) {
                   >
                     <VehicleCard
                       auto={auto}
-                      estaSeleccionado={autosComparar.some((a) => a.id === auto.id)}
+                      estaSeleccionado={autosComparar.some(
+                        (a) => a.id === auto.id,
+                      )}
                       onToggleComparar={toggleComparar}
                     />
                   </div>
@@ -234,7 +272,7 @@ export default function Stock({ vehiculos }: StockProps) {
                         {urbanosYSedanes[0].modelo}
                       </h3>
                       <p className="text-white/80 text-sm mt-1 font-medium">
-                        {urbanosYSedanes[0].version || urbanosYSedanes[0].anio}
+                        {urbanosYSedanes[0].segmento || urbanosYSedanes[0].anio}
                       </p>
                     </div>
                     <div className="sm:text-right flex items-center sm:items-end gap-3 sm:flex-col">
@@ -311,8 +349,13 @@ export default function Stock({ vehiculos }: StockProps) {
                       <div className="w-12 h-12 bg-white/50 rounded-full flex items-center justify-center mb-3">
                         <Clock className="w-5 h-5 text-navy" />
                       </div>
-                      <p className="text-xs font-black text-navy uppercase tracking-widest mb-1">Historial vacío</p>
-                      <p className="text-[10px] text-slate-500 font-medium">Aún no viste ningún vehículo. Explorá nuestro catálogo y aparecerán acá.</p>
+                      <p className="text-xs font-black text-navy uppercase tracking-widest mb-1">
+                        Historial vacío
+                      </p>
+                      <p className="text-[10px] text-slate-500 font-medium">
+                        Aún no viste ningún vehículo. Explorá nuestro catálogo y
+                        aparecerán acá.
+                      </p>
                     </div>
                   )}
                 </div>
@@ -411,7 +454,10 @@ export default function Stock({ vehiculos }: StockProps) {
                       className="w-10 h-10 md:w-12 md:h-12 rounded-full border-2 border-gray-900 overflow-hidden bg-white shadow-sm shrink-0"
                     >
                       <img
-                        src={auto.multimedia_vehiculos?.[0]?.url_archivo || "/placeholder.jpg"}
+                        src={
+                          auto.multimedia_vehiculos?.[0]?.url_archivo ||
+                          "/placeholder.jpg"
+                        }
                         className="w-full h-full object-cover"
                       />
                     </div>
@@ -457,7 +503,9 @@ export default function Stock({ vehiculos }: StockProps) {
         isOpen={modalComparadorOpen}
         onClose={() => setModalComparadorOpen(false)}
         autos={autosComparar}
-        removerAuto={(id) => setAutosComparar((prev) => prev.filter((a) => a.id !== id))}
+        removerAuto={(id) =>
+          setAutosComparar((prev) => prev.filter((a) => a.id !== id))
+        }
       />
     </section>
   );
@@ -554,7 +602,9 @@ function VehicleCard({
     >
       <div
         className={`bg-white/40 backdrop-blur-2xl rounded-[28px] overflow-hidden flex flex-col h-full shadow-[0_8px_32px_rgba(0,0,0,0.04)] hover:shadow-[0_20px_48px_rgba(1,69,242,0.12)] hover:bg-white/70 transition-all duration-500 relative transform group-hover:-translate-y-1 border ${
-          estaSeleccionado ? "border-[#0145F2] ring-1 ring-[#0145F2]" : "border-white/60 hover:border-white"
+          estaSeleccionado
+            ? "border-[#0145F2] ring-1 ring-[#0145F2]"
+            : "border-white/60 hover:border-white"
         }`}
       >
         <div className="absolute inset-0 bg-gradient-to-tr from-transparent via-white/40 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-700 pointer-events-none z-20"></div>

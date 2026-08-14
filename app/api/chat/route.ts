@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import Anthropic from "@anthropic-ai/sdk";
 import { createClient } from "@supabase/supabase-js";
 import { NEGOCIO_CONFIG } from "@/data/NegocioConfig";
+import { rateLimit, ipDesdeRequest } from "@/lib/rateLimit";
 
 // =====================================================================
 // 🎛️ BUSCADOR HÍBRIDO
@@ -32,6 +33,11 @@ function logPregunta(pregunta: string, respondida: boolean) {
 
 export async function POST(request: Request) {
   try {
+    const limite = rateLimit(ipDesdeRequest(request), { limite: 20, ventanaMs: 60 * 1000 });
+    if (!limite.ok) {
+      return NextResponse.json({ error: "Demasiados mensajes. Esperá un momento." }, { status: 429 });
+    }
+
     const body = await request.json();
     const rawMessages = body.messages || [];
     const preguntaOriginal = rawMessages[rawMessages.length - 1]?.content || "";

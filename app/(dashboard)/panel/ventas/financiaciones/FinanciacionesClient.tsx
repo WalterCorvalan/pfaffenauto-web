@@ -14,9 +14,12 @@ interface Financiacion {
   fecha_vencimiento: string | null;
   estado: string | null;
   created_at: string;
-  ventas: {
-    clientes: { nombre: string; apellido: string } | null;
-    vehiculos: { marca: string; modelo: string; patente: string | null } | null;
+  boleto: {
+    nombre: string | null;
+    apellido: string | null;
+    marca: string | null;
+    modelo: string | null;
+    dominio: string | null;
   } | null;
 }
 
@@ -133,9 +136,9 @@ export default function FinanciacionesClient({ financiacionesIniciales }: { fina
                       <td className="p-4 pl-6">
                         <div className="flex items-center gap-2 text-[13px] font-bold text-slate-900">
                           <Car className="w-3.5 h-3.5 text-slate-400" />
-                          {f.ventas?.vehiculos?.marca} {f.ventas?.vehiculos?.modelo}
+                          {f.boleto?.marca} {f.boleto?.modelo}
                         </div>
-                        <span className="text-[11px] text-slate-500">{f.ventas?.clientes?.nombre} {f.ventas?.clientes?.apellido}</span>
+                        <span className="text-[11px] text-slate-500">{f.boleto?.nombre} {f.boleto?.apellido}</span>
                       </td>
                       <td className="p-4 text-[13px] text-slate-600">{f.entidad || "—"}</td>
                       <td className="p-4 text-center text-[13px] font-mono text-slate-600">{f.cuotas || "—"}</td>

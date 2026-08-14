@@ -6,9 +6,10 @@ import { usePathname, useRouter } from "next/navigation";
 import { supabase } from "@/lib/supabase/client";
 import {
   Menu, X, Search, ChevronRight, ChevronDown, UserPlus, Banknote, CheckSquare,
-  CalendarCheck, MessagesSquare, Landmark, Wallet, FileBarChart,
+  CalendarCheck, MessagesSquare, Landmark, Wallet, FileBarChart, Tags,
   Users, Megaphone, Target, MousePointerClick, Bot, CarFront,
-  LayoutDashboard, Inbox, PieChart, LogOut, Handshake, MessageSquareCheckIcon, Receipt, UsersRound, Wrench
+  LayoutDashboard, Inbox, PieChart, LogOut, Handshake, MessageSquareCheckIcon, Receipt, UsersRound, Wrench,
+  Moon, Sun, FileText, ShieldCheck
 } from "lucide-react";
 
 const SECCIONES_INICIALES = {
@@ -23,8 +24,21 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
   const [isOpen, setIsOpen] = useState(false);
   const [userProfile, setUserProfile] = useState({ nombre: "Cargando...", email: "", rol: "vendedor" });
   const [seccionesAbiertas, setSeccionesAbiertas] = useState<Record<string, boolean>>(SECCIONES_INICIALES);
+  const [darkMode, setDarkMode] = useState(false);
   const pathname = usePathname();
   const router = useRouter();
+
+  useEffect(() => {
+    const guardado = localStorage.getItem("panelDarkMode");
+    if (guardado === "true") setDarkMode(true);
+  }, []);
+
+  const toggleDarkMode = () => {
+    setDarkMode((prev) => {
+      localStorage.setItem("panelDarkMode", String(!prev));
+      return !prev;
+    });
+  };
 
   const toggleSeccion = (clave: string) => {
     setSeccionesAbiertas((prev) => ({ ...prev, [clave]: !prev[clave] }));
@@ -35,8 +49,8 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
     const rutasPorSeccion: Record<string, string[]> = {
       inventario: ["/panel"],
       crm: ["/panel/crm", "/panel/chat", "/panel/contactos", "/panel/citas", "/panel/cotizaciones", "/panel/consignaciones", "/panel/pedidos", "/panel/tareas"],
-      operaciones: ["/panel/ventas", "/panel/clientes"],
-      administracion: ["/panel/informes", "/panel/gastos", "/panel/usuarios"],
+      operaciones: ["/panel/ventas", "/panel/clientes", "/panel/postventa", "/panel/presupuestos", "/panel/senas", "/panel/boletos", "/panel/resp-civil"],
+      administracion: ["/panel/informes", "/panel/gastos", "/panel/usuarios", "/panel/tesoreria"],
       marketing: ["/panel/metricas", "/panel/marketing"],
     };
     const seccionActiva = Object.entries(rutasPorSeccion).find(([, rutas]) =>
@@ -83,16 +97,16 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
         onClick={() => setIsOpen(false)}
         className={`flex items-center justify-between px-3 py-2 mx-2 rounded-md transition-colors ${
           isActive
-            ? "bg-emerald-50 text-emerald-900 font-medium"
-            : "text-slate-600 hover:bg-slate-100 hover:text-slate-900"
+            ? "bg-emerald-50 dark:bg-[#002a6e] text-emerald-900 dark:text-white font-medium"
+            : "text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-[#002a6e] hover:text-slate-900 dark:hover:text-white"
         }`}
       >
         <div className="flex items-center gap-3">
-          <Icon className={`w-[18px] h-[18px] ${isActive ? "text-emerald-700" : "text-slate-400"}`} strokeWidth={isActive ? 2.5 : 2} />
+          <Icon className={`w-[18px] h-[18px] ${isActive ? "text-emerald-700 dark:text-sky-300" : "text-slate-400 dark:text-slate-400"}`} strokeWidth={isActive ? 2.5 : 2} />
           <span className="text-[13px]">{label}</span>
         </div>
         {notifications && (
-          <span className={`text-[10px] font-bold px-1.5 py-0.5 rounded-full ${isActive ? "bg-emerald-800 text-white" : "bg-slate-200 text-slate-600"}`}>
+          <span className={`text-[10px] font-bold px-1.5 py-0.5 rounded-full ${isActive ? "bg-emerald-800 text-white" : "bg-slate-200 dark:bg-[#0a2a6b] text-slate-600 dark:text-slate-300"}`}>
             {notifications}
           </span>
         )}
@@ -106,7 +120,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
       <div className="mt-2">
         <button
           onClick={() => toggleSeccion(id)}
-          className="w-full flex items-center justify-between px-5 py-1.5 text-[10px] font-bold text-slate-400 uppercase tracking-wider hover:text-slate-600 transition-colors"
+          className="w-full flex items-center justify-between px-5 py-1.5 text-[10px] font-bold text-slate-400 dark:text-slate-400 uppercase tracking-wider hover:text-slate-600 dark:hover:text-slate-200 transition-colors"
         >
           {label}
           <ChevronDown className={`w-3 h-3 transition-transform ${abierta ? "rotate-0" : "-rotate-90"}`} />
@@ -117,28 +131,41 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
   };
 
   return (
-    <div className="flex h-screen w-full bg-white text-slate-900 font-sans overflow-hidden">
-      
+    <div className={darkMode ? "dark" : ""}>
+    <div className="flex h-screen w-full bg-white dark:bg-[#001233] text-slate-900 dark:text-slate-100 font-sans overflow-hidden transition-colors">
+
       {/* HEADER MÓVIL */}
-      <div className="md:hidden fixed top-0 left-0 right-0 h-14 bg-white border-b border-slate-200 flex items-center justify-between px-4 z-50">
-        <span className="font-bold text-slate-900">Pfaffen CRM</span>
-        <button onClick={() => setIsOpen(!isOpen)} className="text-slate-600 p-2">
-          {isOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
-        </button>
+      <div className="md:hidden fixed top-0 left-0 right-0 h-14 bg-white dark:bg-[#001c55] border-b border-slate-200 dark:border-[#0a2a6b] flex items-center justify-between px-4 z-50 transition-colors">
+        <span className="font-bold text-slate-900 dark:text-white">Pfaffen CRM</span>
+        <div className="flex items-center gap-1">
+          <button onClick={toggleDarkMode} className="text-slate-600 dark:text-slate-300 p-2" title="Modo oscuro">
+            {darkMode ? <Sun className="w-4 h-4" /> : <Moon className="w-4 h-4" />}
+          </button>
+          <button onClick={() => setIsOpen(!isOpen)} className="text-slate-600 dark:text-slate-300 p-2">
+            {isOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
+          </button>
+        </div>
       </div>
 
       {/* SIDEBAR DESKTOP */}
-      <aside className={`fixed md:relative top-14 md:top-0 left-0 h-full w-[225px] bg-[#F9FAFB] border-r border-slate-200 transform transition-transform z-40 flex flex-col shrink-0 ${isOpen ? "translate-x-0" : "-translate-x-full md:translate-x-0"}`}>
-        
+      <aside className={`fixed md:relative top-14 md:top-0 left-0 h-full w-[225px] bg-[#F9FAFB] dark:bg-[#001c55] border-r border-slate-200 dark:border-[#0a2a6b] transform transition-transform z-40 flex flex-col shrink-0 ${isOpen ? "translate-x-0" : "-translate-x-full md:translate-x-0"}`}>
+
         {/* Cabecera del Espacio de Trabajo */}
-        <div className="h-[60px] flex items-center gap-3 px-4 border-b border-slate-200 hover:bg-slate-100 cursor-pointer transition-colors shrink-0">
+        <div className="h-[60px] flex items-center gap-3 px-4 border-b border-slate-200 dark:border-[#0a2a6b] hover:bg-slate-100 dark:hover:bg-[#002a6e] cursor-pointer transition-colors shrink-0">
           <div className="w-8 h-8 rounded-lg bg-emerald-800 text-white flex items-center justify-center font-bold text-sm shrink-0 shadow-sm">
             P
           </div>
-          <div className="flex flex-col min-w-0">
-            <span className="text-[13px] font-bold text-slate-900 truncate">Pfaffen</span>
-            <span className="text-[11px] text-slate-500 truncate">CRM · WhatsApp</span>
+          <div className="flex flex-col min-w-0 flex-1">
+            <span className="text-[13px] font-bold text-slate-900 dark:text-white truncate">Pfaffen</span>
+            <span className="text-[11px] text-slate-500 dark:text-slate-400 truncate">CRM · WhatsApp</span>
           </div>
+          <button
+            onClick={(e) => { e.stopPropagation(); toggleDarkMode(); }}
+            className="hidden md:flex text-slate-400 dark:text-slate-300 hover:text-slate-700 dark:hover:text-white shrink-0 p-1.5 rounded-lg hover:bg-slate-200 dark:hover:bg-[#0a2a6b] transition-colors"
+            title={darkMode ? "Modo claro" : "Modo oscuro"}
+          >
+            {darkMode ? <Sun className="w-4 h-4" /> : <Moon className="w-4 h-4" />}
+          </button>
         </div>
 
         {/* Links de Navegación Completos (Scrollable) */}
@@ -171,10 +198,13 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
 
           {/* 🧾 VENTAS */}
           <SectionAccordion id="operaciones" label="Operaciones">
-            <NavLinkItem icon={Banknote} label="Nueva Operación" href="/panel/ventas/nueva" />
-            <NavLinkItem icon={Receipt} label="Ventas y Seguimiento" href="/panel/ventas" />
+            <NavLinkItem icon={FileText} label="Presupuestos" href="/panel/presupuestos" />
+            <NavLinkItem icon={Banknote} label="Señas" href="/panel/senas" />
+            <NavLinkItem icon={Receipt} label="Ventas" href="/panel/boletos" />
+            <NavLinkItem icon={ShieldCheck} label="Resp. Civil" href="/panel/resp-civil" />
             <NavLinkItem icon={Landmark} label="Financiaciones" href="/panel/ventas/financiaciones" />
             <NavLinkItem icon={UserPlus} label="Nuevo Cliente" href="/panel/clientes/nuevo" />
+            <NavLinkItem icon={Wrench} label="Postventa" href="/panel/postventa" />
           </SectionAccordion>
 
           {/* 💼 ADMINISTRACIÓN */}
@@ -185,6 +215,9 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
                 <>
                   <NavLinkItem icon={Wallet} label="Gastos" href="/panel/gastos" />
                   <NavLinkItem icon={Receipt} label="Egresos por Categoría" href="/panel/gastos/egresos" />
+                  <NavLinkItem icon={Landmark} label="Tesorería" href="/panel/tesoreria" />
+                  <NavLinkItem icon={Wallet} label="Liquidador de Sueldos" href="/panel/sueldos/liquidador" />
+                  <NavLinkItem icon={Tags} label="Categorías de Empleado" href="/panel/sueldos/categorias" />
                   <NavLinkItem icon={Users} label="Gestión de Equipo" href="/panel/usuarios" />
                 </>
               )}
@@ -195,6 +228,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
           {(userProfile.rol === "admin" || userProfile.rol === "encargado") && (
             <SectionAccordion id="marketing" label="Marketing">
               <NavLinkItem icon={PieChart} label="Métricas Generales" href="/panel/metricas" />
+              <NavLinkItem icon={Megaphone} label="Pautas Publicitarias" href="/panel/marketing/pautas" />
               <NavLinkItem icon={Megaphone} label="Embudo de Conversión" href="/panel/marketing/embudo" />
               <NavLinkItem icon={Target} label="Autos Pautados" href="/panel/marketing/pautados" />
               <NavLinkItem icon={MousePointerClick} label="Búsquedas Web" href="/panel/marketing/busquedas" />
@@ -206,18 +240,18 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
         </div>
 
         {/* Footer: Perfil de Usuario */}
-        <div className="mt-auto border-t border-slate-200 bg-[#F9FAFB] shrink-0">
-          <div className="p-4 flex items-center justify-between hover:bg-slate-100 transition-colors cursor-pointer group">
+        <div className="mt-auto border-t border-slate-200 dark:border-[#0a2a6b] bg-[#F9FAFB] dark:bg-[#001c55] shrink-0">
+          <div className="p-4 flex items-center justify-between hover:bg-slate-100 dark:hover:bg-[#002a6e] transition-colors cursor-pointer group">
             <div className="flex items-center gap-3 min-w-0">
               <div className="w-8 h-8 rounded-full bg-emerald-100 text-emerald-800 flex items-center justify-center font-bold text-xs shrink-0">
                 {userProfile.nombre.charAt(0).toUpperCase()}
               </div>
               <div className="flex flex-col min-w-0">
-                <span className="text-[13px] font-bold text-slate-900 truncate">{userProfile.nombre}</span>
-                <span className="text-[11px] text-slate-500 truncate">{userProfile.rol} · En línea</span>
+                <span className="text-[13px] font-bold text-slate-900 dark:text-white truncate">{userProfile.nombre}</span>
+                <span className="text-[11px] text-slate-500 dark:text-slate-400 truncate">{userProfile.rol} · En línea</span>
               </div>
             </div>
-            <button onClick={handleLogout} className="text-slate-400 hover:text-slate-700 shrink-0 p-1 opacity-0 group-hover:opacity-100 transition-opacity" title="Cerrar sesión">
+            <button onClick={handleLogout} className="text-slate-400 dark:text-slate-300 hover:text-slate-700 dark:hover:text-white shrink-0 p-1 opacity-0 group-hover:opacity-100 transition-opacity" title="Cerrar sesión">
               <LogOut className="w-4 h-4" />
             </button>
           </div>
@@ -225,9 +259,10 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
       </aside>
 
       {/* ÁREA PRINCIPAL */}
-      <main className="flex-1 min-w-0 h-full flex flex-col bg-white relative pt-14 md:pt-0">
+      <main className="flex-1 min-w-0 h-full flex flex-col bg-white dark:bg-[#001233] relative pt-14 md:pt-0 transition-colors">
         {children}
       </main>
+    </div>
     </div>
   );
 }

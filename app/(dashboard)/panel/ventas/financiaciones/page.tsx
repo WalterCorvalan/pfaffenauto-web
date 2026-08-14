@@ -10,13 +10,18 @@ export default async function FinanciacionesPage() {
     { cookies: { getAll: () => cookieStore.getAll() } }
   );
 
-  const { data: financiaciones } = await supabase
+  const { data: financiacionesRaw } = await supabase
     .from("financiaciones")
-    .select(`
-      id, venta_id, tipo, entidad, monto, cuotas, fecha_vencimiento, estado, created_at,
-      ventas ( clientes ( nombre, apellido ), vehiculos ( marca, modelo, patente ) )
-    `)
+    .select("id, venta_id, tipo, entidad, monto, cuotas, fecha_vencimiento, estado, created_at")
     .order("fecha_vencimiento", { ascending: true });
 
-  return <FinanciacionesClient financiacionesIniciales={(financiaciones || []) as any} />;
+  const ventaIds = [...new Set((financiacionesRaw || []).map((f) => f.venta_id).filter(Boolean))];
+  const { data: boletos } = ventaIds.length
+    ? await supabase.from("boletos_venta").select("id, nombre, apellido, marca, modelo, dominio").in("id", ventaIds)
+    : { data: [] as any[] };
+
+  const boletosPorId = new Map((boletos || []).map((b) => [b.id, b]));
+  const financiaciones = (financiacionesRaw || []).map((f) => ({ ...f, boleto: boletosPorId.get(f.venta_id) || null }));
+
+  return <FinanciacionesClient financiacionesIniciales={financiaciones as any} />;
 }

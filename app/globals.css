@@ -3,8 +3,32 @@
 @tailwind components;
 @tailwind utilities;
 
+/* Dark mode del panel: activado por clase .dark (no por prefers-color-scheme),
+   así el sitio público no se ve afectado. */
+@custom-variant dark (&:where(.dark, .dark *));
+
 @keyframes shimmer {
   100% { transform: translateX(150%); }
+}
+
+/* Usado en decenas de componentes (modales, pasos de formulario, estados de éxito) */
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(6px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+.animate-fadeIn {
+  animation: fadeIn 0.35s ease-out;
+}
+
+/* Feedback de error en formularios */
+@keyframes shake {
+  10%, 90% { transform: translateX(-1px); }
+  20%, 80% { transform: translateX(2px); }
+  30%, 50%, 70% { transform: translateX(-4px); }
+  40%, 60% { transform: translateX(4px); }
+}
+.animate-shake {
+  animation: shake 0.4s ease-in-out;
 }
 
 :root {
@@ -25,6 +49,16 @@
      ACÁ OCURRE LA MAGIA: Forzamos Plus Jakarta globalmente
      ==================================================== */
   --font-sans: var(--font-jakarta), ui-sans-serif, system-ui, sans-serif;
+
+  /* Unificación de criterios de animación y transiciones:
+     - Fast (200ms): Micro-interacciones rápidas, clicks, focus, active states, progress.
+     - Normal (300ms): Transiciones interactivas estándar (botones, links, inputs, FAQs).
+     - Card (500ms): Cambios de estado en contenedores grandes (cards background, borders, shadows).
+     - Fluid (700ms): Zoom de imágenes en hover, gradientes y efectos lentos/fluidos. */
+  --duration-fast: 200ms;
+  --duration-normal: 300ms;
+  --duration-card: 500ms;
+  --duration-fluid: 700ms;
 }
 
 body {
@@ -32,6 +66,20 @@ body {
   color: var(--foreground);
   font-family: var(--font-sans); /* Aplicación global */
   -webkit-font-smoothing: antialiased;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  ::before,
+  ::after {
+    animation-delay: -1ms !important;
+    animation-duration: 1ms !important;
+    animation-iteration-count: 1 !important;
+    background-attachment: initial !important;
+    scroll-behavior: auto !important;
+    transition-duration: 0s !important;
+    transition-delay: 0s !important;
+  }
 }
 
 .bg-grid-pattern {

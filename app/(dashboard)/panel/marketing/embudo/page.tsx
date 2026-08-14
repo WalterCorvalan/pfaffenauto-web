@@ -19,7 +19,7 @@ export default async function EmbudoPage() {
 
   // 1b. Ventas cruzadas con si el auto estaba pautado o no
   const { data: ventasPauta } = await supabase
-    .from("ventas")
+    .from("boletos_venta")
     .select("vehiculo_id, vehiculos ( pautado, canal_pauta )");
 
   const totalVentas = ventasPauta?.length || 0;
@@ -34,7 +34,7 @@ export default async function EmbudoPage() {
     .select("vendedor_id, estado, vehiculo_id")
     .not("vendedor_id", "is", null);
 
-  const { data: ventasVehIds } = await supabase.from("ventas").select("vehiculo_id");
+  const { data: ventasVehIds } = await supabase.from("boletos_venta").select("vehiculo_id");
   const vehiculosVendidos = new Set((ventasVehIds || []).map((v: any) => v.vehiculo_id));
 
   const { data: vendedoresPerfiles } = await supabase

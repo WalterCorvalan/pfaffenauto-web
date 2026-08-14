@@ -1,6 +1,7 @@
 import { createServerClient } from "@supabase/ssr";
 import { cookies } from "next/headers";
-import { Handshake, CarFront, DollarSign, MapPin, Tag } from "lucide-react";
+import { Handshake, CarFront, DollarSign, MapPin, Tag, Inbox, Phone, MessageSquareText } from "lucide-react";
+import EstadoConsignacionSelector from "./EstadoConsignacionSelector";
 
 export default async function ConsignacionesPage() {
   const cookieStore = await cookies();
@@ -16,6 +17,13 @@ export default async function ConsignacionesPage() {
     .select("*, sucursales(nombre)")
     .eq("origen", "Consignado")
     .in("estado", ["Disponible", "Reservado"])
+    .order("created_at", { ascending: false });
+
+  // Solicitudes entrantes: leads del formulario público de consignación (tabla cotizaciones)
+  const { data: solicitudes } = await supabase
+    .from("cotizaciones")
+    .select("*")
+    .eq("tipo_peritaje", "consignacion")
     .order("created_at", { ascending: false });
 
   return (
@@ -38,15 +46,68 @@ export default async function ConsignacionesPage() {
           </div>
         </div>
         
-        <div className="hidden sm:flex items-center gap-2 bg-slate-50 border border-slate-200 px-3 py-1.5 rounded-lg">
-          <span className="text-sm font-bold text-slate-700">{consignados?.length || 0}</span>
-          <span className="text-xs font-medium text-slate-500">Unidades Activas</span>
+        <div className="hidden sm:flex items-center gap-3">
+          <div className="flex items-center gap-2 bg-amber-50 border border-amber-200 px-3 py-1.5 rounded-lg">
+            <span className="text-sm font-bold text-amber-700">{solicitudes?.filter((s) => s.estado === "Pendiente" || !s.estado).length || 0}</span>
+            <span className="text-xs font-medium text-amber-600">Solicitudes pendientes</span>
+          </div>
+          <div className="flex items-center gap-2 bg-slate-50 border border-slate-200 px-3 py-1.5 rounded-lg">
+            <span className="text-sm font-bold text-slate-700">{consignados?.length || 0}</span>
+            <span className="text-xs font-medium text-slate-500">Unidades Activas</span>
+          </div>
         </div>
       </header>
 
-      {/* ================= ÁREA SCROLLABLE (TARJETAS) ================= */}
+      {/* ================= ÁREA SCROLLABLE ================= */}
       <div className="flex-1 overflow-y-auto p-6 bg-[#F9FAFB] custom-scrollbar">
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-5 max-w-[1600px] mx-auto">
+        <div className="max-w-[1600px] mx-auto space-y-8">
+
+          {/* ================= SOLICITUDES ENTRANTES ================= */}
+          <div>
+            <h2 className="text-[11px] font-bold uppercase tracking-widest text-slate-400 mb-4 flex items-center gap-2">
+              <Inbox className="w-3.5 h-3.5" /> Solicitudes Entrantes ({solicitudes?.length || 0})
+            </h2>
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+              {solicitudes?.map((s) => (
+                <div key={s.id} className="bg-white border border-slate-200 rounded-xl p-4 shadow-sm hover:shadow-md transition-shadow">
+                  <div className="flex justify-between items-start mb-3">
+                    <span className="text-[9px] font-bold uppercase tracking-widest px-2 py-0.5 rounded border bg-indigo-50 text-indigo-700 border-indigo-200">
+                      Consignación
+                    </span>
+                    <EstadoConsignacionSelector id={s.id} estado={s.estado} />
+                  </div>
+                  <h3 className="font-bold text-[14px] text-slate-900 mb-1">{s.nombre}</h3>
+                  <p className="text-[11px] text-slate-500 flex items-center gap-1 mb-2">
+                    <Phone className="w-3 h-3" /> {s.telefono}
+                  </p>
+                  <p className="text-[11px] text-slate-600 font-medium flex items-center gap-1 mb-3">
+                    <CarFront className="w-3 h-3 text-slate-400" /> {s.marca} {s.modelo} ({s.anio}) · {s.kilometraje?.toLocaleString("es-AR")} km
+                  </p>
+                  <a
+                    href={`https://wa.me/${String(s.telefono).replace(/\D/g, "")}?text=${encodeURIComponent(`¡Hola ${s.nombre}! Te escribimos de Pfaffen Autos por tu solicitud de consignación del ${s.marca} ${s.modelo}.`)}`}
+                    target="_blank"
+                    rel="noreferrer"
+                    className="inline-flex items-center gap-1.5 bg-emerald-50 hover:bg-emerald-100 text-emerald-700 border border-emerald-200 px-3 py-1.5 rounded-lg text-[11px] font-bold transition-colors"
+                  >
+                    <MessageSquareText className="w-3.5 h-3.5" /> Contactar
+                  </a>
+                </div>
+              ))}
+              {(!solicitudes || solicitudes.length === 0) && (
+                <div className="col-span-full py-10 flex flex-col items-center justify-center text-center border-2 border-dashed border-slate-200 rounded-2xl bg-white">
+                  <Inbox className="w-8 h-8 text-slate-300 mb-2" />
+                  <p className="text-slate-500 text-sm">Sin solicitudes de consignación pendientes.</p>
+                </div>
+              )}
+            </div>
+          </div>
+
+          {/* ================= INVENTARIO CONSIGNADO ================= */}
+          <div>
+            <h2 className="text-[11px] font-bold uppercase tracking-widest text-slate-400 mb-4 flex items-center gap-2">
+              <Handshake className="w-3.5 h-3.5" /> Unidades en Consignación ({consignados?.length || 0})
+            </h2>
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-5">
           {consignados?.map((auto) => {
             
             // Cálculos financieros
@@ -129,6 +190,9 @@ export default async function ConsignacionesPage() {
               <p className="text-slate-500 text-sm mt-1">Los vehículos de terceros marcados como "Consignado" aparecerán aquí.</p>
             </div>
           )}
+            </div>
+          </div>
+
         </div>
       </div>
     </div>

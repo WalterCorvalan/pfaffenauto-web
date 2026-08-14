@@ -29,8 +29,9 @@ export default function Servicios() {
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 max-w-7xl mx-auto w-full">
           
           {/* TARJETA 1: CONSIGNAR / COMPRAMOS TU AUTO */}
+          {/* CORRECCIÓN: Unificado a rounded-[24px] y sombras de sistema */}
           <WobbleCard
-            containerClassName="col-span-1 lg:col-span-2 h-full bg-[#0d1631] relative overflow-hidden group shadow-[0_12px_40px_rgba(11,19,41,0.25)] border border-slate-700/40 rounded-[32px]"
+            containerClassName="col-span-1 lg:col-span-2 h-full bg-[#0d1631] relative overflow-hidden group shadow-md hover:shadow-xl hover:-translate-y-1 transition-all duration-500 border border-slate-700/40 rounded-[24px]"
             className="p-6 md:p-10 flex flex-col h-full min-h-[420px]"
           >
             {/* Contenido (Textos y Botón) por encima de todo */}
@@ -47,7 +48,7 @@ export default function Servicios() {
               <div className="mt-auto">
                 <Link 
                   href="/consignacion" 
-                  className="inline-flex items-center gap-2 bg-white text-navy hover:bg-slate-100 font-black text-[10px] md:text-xs uppercase tracking-widest px-6 py-3.5 rounded-full transition-all active:scale-95 shadow-xl group/btn"
+                  className="inline-flex items-center gap-2 bg-white text-navy hover:bg-slate-100 font-black text-[10px] md:text-xs uppercase tracking-widest px-6 py-3.5 rounded-full transition-all active:scale-95 shadow-md hover:shadow-lg group/btn"
                 >
                   Consignar Auto <ArrowRight className="w-4 h-4 group-hover/btn:translate-x-1 transition-transform" />
                 </Link>
@@ -68,7 +69,7 @@ export default function Servicios() {
 
           {/* TARJETA 2: SEGUROS (LA CAJA) */}
           <WobbleCard 
-            containerClassName="col-span-1 bg-[#111520] relative overflow-hidden flex flex-col justify-center shadow-[0_12px_40px_rgba(15,23,42,0.3)] border border-slate-700/50 group rounded-[32px]"
+            containerClassName="col-span-1 bg-[#111520] relative overflow-hidden flex flex-col justify-center shadow-md hover:shadow-xl hover:-translate-y-1 transition-all duration-500 border border-slate-700/50 group rounded-[24px]"
             className="p-6 md:p-10 flex flex-col h-full min-h-[380px]"
           >
             <div className="relative z-20 flex flex-col flex-1">
@@ -86,7 +87,7 @@ export default function Servicios() {
                   href="https://www.lacaja.com.ar" 
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="inline-flex items-center gap-2 bg-slate-700/60 hover:bg-slate-600 border border-slate-600/50 text-white backdrop-blur-md font-black text-[10px] md:text-xs uppercase tracking-widest px-6 py-3.5 rounded-full transition-all active:scale-95 shadow-lg group/btn"
+                  className="inline-flex items-center gap-2 bg-slate-700/60 hover:bg-slate-600 border border-slate-600/50 text-white backdrop-blur-md font-black text-[10px] md:text-xs uppercase tracking-widest px-6 py-3.5 rounded-full transition-all active:scale-95 shadow-md hover:shadow-lg group/btn"
                 >
                   Cotizar en La Caja <ArrowRight className="w-4 h-4 group-hover/btn:translate-x-1 transition-transform" />
                 </a>
@@ -96,7 +97,7 @@ export default function Servicios() {
 
           {/* TARJETA 3: VENDER MI AUTO */}
           <WobbleCard 
-            containerClassName="col-span-1 lg:col-span-3 bg-[#1e293b] relative overflow-hidden group shadow-[0_12px_40px_rgba(15,23,42,0.25)] border border-slate-600/40 rounded-[32px]"
+            containerClassName="col-span-1 lg:col-span-3 bg-[#1e293b] relative overflow-hidden group shadow-md hover:shadow-xl hover:-translate-y-1 transition-all duration-500 border border-slate-600/40 rounded-[24px]"
             className="p-6 md:p-10 flex flex-col h-full min-h-[420px]"
           >
             <div className="relative z-20 flex flex-col flex-1 w-full lg:w-1/2">
@@ -112,7 +113,7 @@ export default function Servicios() {
               <div className="mt-auto">
                 <Link 
                   href="/vender" 
-                  className="inline-flex items-center gap-2 bg-white text-navy hover:bg-slate-100 font-black text-[10px] md:text-xs uppercase tracking-widest px-6 py-3.5 rounded-full transition-all active:scale-95 shadow-xl group/btn2"
+                  className="inline-flex items-center gap-2 bg-white text-navy hover:bg-slate-100 font-black text-[10px] md:text-xs uppercase tracking-widest px-6 py-3.5 rounded-full transition-all active:scale-95 shadow-md hover:shadow-lg group/btn2"
                 >
                   Vender Mi Auto <ArrowRight className="w-4 h-4 group-hover/btn2:translate-x-1 transition-transform" />
                 </Link>

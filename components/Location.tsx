@@ -29,6 +29,7 @@ const sucursalesData = [
     id: "casa-central",
     nombre: "Casa Central",
     direccion: "Casa Central, Buenos Aires",
+    // Esta es la URL embed que hace que el mapa se vea limpio
     mapUrl: "https://maps.google.com/maps?q=Pfaffen+Autos,+Villa+de+Mayo,+Buenos+Aires&t=m&z=15&output=embed&iwloc=near&hl=es",
     stockLink: "/sucursales/casa-central",
     navLink: "https://maps.app.goo.gl/4ZMmpWJCarHcZ2sb9"
@@ -37,7 +38,8 @@ const sucursalesData = [
     id: "don-torcuato",
     nombre: "Don Torcuato",
     direccion: "Don Torcuato, Tigre",
-    mapUrl: "https://maps.google.com/maps?q=Pfaffen+Autos,+Don+Torcuato,+Buenos+Aires&t=m&z=15&output=embed&iwloc=near&hl=es",
+    // Reemplazada por la URL embed correcta para que se vea igual al de Casa Central
+    mapUrl: "https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3288.084180424599!2d-58.62231392426363!3d-34.48414427334185!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x95bca5007f7d6a25%3A0x103f7a961b168d5!2sPfaffen%20Autos%20Panamericana!5e0!3m2!1ses!2sar!4v1716300000000!5m2!1ses!2sar",
     stockLink: "/sucursales/don-torcuato",
     navLink: "https://maps.app.goo.gl/GuNBuUKT5xMFw5jR9"
   }

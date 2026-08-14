@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import Image from "next/image";
 import { MapPin, Phone, ArrowUpRight, Building2 } from "lucide-react";
 import { motion } from "framer-motion";
 
@@ -66,10 +67,12 @@ export default function Sucursales() {
 
               {/* IMAGEN DE FONDO CON ZOOM EN HOVER */}
               <div className="absolute inset-0 overflow-hidden">
-                <img 
-                  src={sucursal.img} 
-                  alt={sucursal.titulo} 
-                  className="w-full h-full object-cover transition-transform duration-700 ease-out group-hover:scale-110"
+                <Image
+                  src={sucursal.img}
+                  alt={sucursal.titulo}
+                  fill
+                  sizes="(max-width: 1024px) 100vw, 33vw"
+                  className="object-cover transition-transform duration-700 ease-out group-hover:scale-110"
                 />
                 {/* Degradado cinematográfico para asegurar legibilidad */}
                 <div className="absolute inset-0 bg-gradient-to-t from-[#050505]/95 via-[#050505]/40 to-transparent transition-opacity duration-300"></div>

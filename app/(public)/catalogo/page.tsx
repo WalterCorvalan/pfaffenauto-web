@@ -12,19 +12,26 @@ import {
   Scale,
   Loader2,
   Sparkles,
+  ArrowRight,
+  ChevronRight,
 } from "lucide-react";
 import Link from "next/link";
-import { useSearchParams } from "next/navigation";
+import { useSearchParams, useRouter } from "next/navigation";
 import { motion, AnimatePresence } from "framer-motion";
 import ComparadorModal from "@/components/modals/ComparadorModal";
 import BuscadorFallback from "@/components/BuscadorFallBack";
+import { CAMPOS_VEHICULO_PUBLICO } from "@/lib/vehiculos";
 
 const ITEMS_POR_PAGINA = 12;
 
 export default function CatalogoPage() {
   const searchParams = useSearchParams();
+  const router = useRouter();
   const searchQuery = searchParams.get("q") || "";
   const condicionQuery = searchParams.get("condicion") || "";
+
+  // Estado local para el nuevo buscador
+  const [inputBuscador, setInputBuscador] = useState(searchQuery);
 
   const [isFallbackModalOpen, setIsFallbackModalOpen] = useState(false);
   const [vehiculos, setVehiculos] = useState<any[]>([]);
@@ -66,6 +73,11 @@ export default function CatalogoPage() {
   const [buscandoConIA, setBuscandoConIA] = useState(false);
   const [sugerenciaIA, setSugerenciaIA] = useState<string | null>(null);
 
+  // Sincroniza el input si cambia la URL por fuera
+  useEffect(() => {
+    setInputBuscador(searchQuery);
+  }, [searchQuery]);
+
   // Traer Sucursales al cargar
   useEffect(() => {
     supabase
@@ -75,6 +87,25 @@ export default function CatalogoPage() {
         if (data) setSucursalesDB(data);
       });
   }, []);
+
+  // Lógica del nuevo buscador integrado
+  const handleSearchSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    const params = new URLSearchParams(searchParams.toString());
+    if (inputBuscador.trim()) {
+      params.set("q", inputBuscador.trim());
+    } else {
+      params.delete("q");
+    }
+    router.push(`/catalogo?${params.toString()}`);
+  };
+
+  const aplicarSugerencia = (texto: string) => {
+    setInputBuscador(texto);
+    const params = new URLSearchParams(searchParams.toString());
+    params.set("q", texto);
+    router.push(`/catalogo?${params.toString()}`);
+  };
 
   // FUNCIÓN PRINCIPAL DE FETCH PROTEGIDA CONTRA DUPLICADOS
   const fetchVehiculos = async (
@@ -86,14 +117,7 @@ export default function CatalogoPage() {
 
     let query = supabase
       .from("vehiculos")
-      .select(
-        `
-        *,
-        multimedia_vehiculos ( url_archivo ),
-        sucursales ( nombre )
-      `,
-        { count: "exact" },
-      )
+      .select(CAMPOS_VEHICULO_PUBLICO, { count: "exact" })
       .in("estado", ["Disponible", "Reservado"]);
 
     // Filtros de texto, condición y precio
@@ -102,7 +126,7 @@ export default function CatalogoPage() {
       query = query.eq("kilometraje", 0);
     } else if (searchQuery) {
       query = query.or(
-        `marca.ilike.%${searchQuery}%,modelo.ilike.%${searchQuery}%,tipo.ilike.%${searchQuery}%,version.ilike.%${searchQuery}%`,
+        `marca.ilike.%${searchQuery}%,modelo.ilike.%${searchQuery}%,tipo.ilike.%${searchQuery}%,segmento.ilike.%${searchQuery}%`,
       );
     }
 
@@ -163,20 +187,21 @@ export default function CatalogoPage() {
     query = query.range(from, to);
 
     const { data, count } = await query;
+    const dataVehiculos = data as any[] | null;
 
-    if (data) {
+    if (dataVehiculos) {
       if (reemplazar) {
-        setVehiculos(data);
+        setVehiculos(dataVehiculos);
       } else {
         setVehiculos((prev) => {
           const idsExistentes = new Set(prev.map((item) => item.id));
-          const nuevosUnicos = data.filter(
+          const nuevosUnicos = dataVehiculos.filter(
             (item) => !idsExistentes.has(item.id),
           );
           return [...prev, ...nuevosUnicos];
         });
       }
-      setHasMore(data.length === ITEMS_POR_PAGINA);
+      setHasMore(dataVehiculos.length === ITEMS_POR_PAGINA);
     }
 
     if (count !== null) setTotalResultados(count);
@@ -262,7 +287,6 @@ export default function CatalogoPage() {
     );
   };
 
-  // Actualizado: Ahora permite hasta 3 autos en el comparador
   const toggleComparar = (e: React.MouseEvent, auto: any) => {
     e.preventDefault();
     e.stopPropagation();
@@ -281,17 +305,61 @@ export default function CatalogoPage() {
 
       <div className="max-w-7xl mx-auto px-4 md:px-6">
         
-        {/* ================= MIGAS DE PAN Y TÍTULO ================= */}
-        <div className="mb-6">
-          <div className="text-xs text-gray-500 font-medium mb-2">
+        {/* ================= MIGAS DE PAN Y BUSCADOR INTELIGENTE ================= */}
+        <div className="mb-8">
+          <div className="text-xs text-gray-500 font-medium mb-4">
             <Link href="/" className="hover:text-blue-600 transition-colors">
               Inicio
             </Link>{" "}
             / <span className="text-gray-700">Catálogo</span>
           </div>
-          <h1 className="text-3xl md:text-4xl font-light text-gray-900 tracking-tight">
-            Catálogo de autos <strong className="font-black text-blue-600">0km y usados</strong>
-          </h1>
+          
+          <form onSubmit={handleSearchSubmit} className="w-full max-w-3xl mx-auto">
+            <div className="relative flex items-center w-full bg-white rounded-full shadow-[0_8px_20px_rgba(0,0,0,0.04)] border border-gray-200 hover:shadow-md transition-shadow overflow-hidden p-1.5 group focus-within:border-[#0145F2]/40 focus-within:ring-4 focus-within:ring-[#0145F2]/10">
+              <div className="pl-4 pr-3 text-[#0145F2] shrink-0">
+                <Sparkles className="w-5 h-5" />
+              </div>
+              <input
+                type="text"
+                value={inputBuscador}
+                onChange={(e) => setInputBuscador(e.target.value)}
+                placeholder='Buscá como hablás: "SUV diésel automática"'
+                className="flex-1 bg-transparent outline-none text-gray-900 placeholder:text-gray-400 font-medium text-sm md:text-base w-full"
+              />
+              <button
+                type="submit"
+                className="shrink-0 bg-[#0145F2] hover:bg-blue-700 text-white rounded-full w-10 h-10 md:w-auto md:px-6 md:h-12 flex items-center justify-center gap-2 font-black text-xs uppercase tracking-widest transition-all active:scale-95"
+              >
+                <span className="hidden md:inline">Buscar</span>
+                <ArrowRight className="w-4 h-4" />
+              </button>
+            </div>
+
+            <div className="flex flex-wrap items-center justify-center md:justify-start gap-2 mt-4 md:ml-2">
+              <span className="text-[10px] text-gray-400 font-black uppercase tracking-widest mr-1">Probá:</span>
+              <button
+                type="button"
+                onClick={() => aplicarSugerencia("Pick-up 4x4 diésel")}
+                className="px-3.5 py-1.5 bg-white border border-gray-200 text-gray-600 rounded-full text-[11px] font-bold hover:border-[#0145F2] hover:text-[#0145F2] transition-colors shadow-sm"
+              >
+                Pick-up 4x4 diésel
+              </button>
+              <button
+                type="button"
+                onClick={() => aplicarSugerencia("Auto automático hasta USD 25.000")}
+                className="px-3.5 py-1.5 bg-white border border-gray-200 text-gray-600 rounded-full text-[11px] font-bold hover:border-[#0145F2] hover:text-[#0145F2] transition-colors shadow-sm"
+              >
+                Auto automático hasta USD 25.000
+              </button>
+              <button
+                type="button"
+                onClick={() => aplicarSugerencia("SUV 2022 o más nueva")}
+                className="px-3.5 py-1.5 bg-white border border-gray-200 text-gray-600 rounded-full text-[11px] font-bold hover:border-[#0145F2] hover:text-[#0145F2] transition-colors shadow-sm"
+              >
+                SUV 2022 o más nueva
+              </button>
+            </div>
+          </form>
         </div>
 
         {/* ================= BARRA DE FILTROS APLICADOS ================= */}
@@ -527,7 +595,8 @@ export default function CatalogoPage() {
           <div className="flex-1 w-full flex flex-col">
             {loading ? (
               // SKELETONS INICIALES (Sólidos)
-              <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-4 md:gap-6">
+              // CAMBIO ACÁ: grid-cols-2 para móvil por defecto
+              <div className="grid grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3 sm:gap-4 md:gap-6 pb-8">
                 {[...Array(6)].map((_, i) => (
                   <div
                     key={i}
@@ -547,7 +616,8 @@ export default function CatalogoPage() {
             ) : vehiculos.length > 0 ? (
               <>
                 {/* AUTOS CARGADOS */}
-                <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-4 md:gap-6 pb-8">
+                {/* CAMBIO ACÁ: grid-cols-2 para móvil por defecto */}
+                <div className="grid grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3 sm:gap-4 md:gap-6 pb-8 w-full">
                   {vehiculos.map((auto, index) => {
                     const estaSeleccionado = autosComparar.some(
                       (a) => a.id === auto.id,
@@ -564,10 +634,10 @@ export default function CatalogoPage() {
                       <Link
                         key={`${auto.id}-${index}`}
                         href={`/catalogo/${auto.slug}`}
-                        className="block group h-full focus:outline-none"
+                        className="block group h-full focus:outline-none w-full"
                       >
                         <div
-                          className={`bg-white rounded-2xl overflow-hidden flex flex-col h-full hover:shadow-lg transition-all duration-300 relative border
+                          className={`bg-white rounded-2xl overflow-hidden flex flex-col h-full hover:shadow-lg transition-all duration-300 relative border w-full
                             ${estaSeleccionado ? "border-blue-600 ring-1 ring-blue-600 shadow-md" : "border-gray-200 hover:border-blue-400"}
                           `}
                         >
@@ -583,7 +653,7 @@ export default function CatalogoPage() {
                           </button>
 
                           {/* Imagen */}
-                          <div className="relative h-32 sm:h-48 bg-gray-100 flex items-center justify-center overflow-hidden shrink-0">
+                          <div className="relative h-32 sm:h-48 bg-gray-100 flex items-center justify-center overflow-hidden shrink-0 w-full">
                             {auto.multimedia_vehiculos?.[0] ? (
                               <img
                                 src={auto.multimedia_vehiculos[0].url_archivo}
@@ -603,7 +673,7 @@ export default function CatalogoPage() {
                           </div>
 
                           {/* Textos y Precios */}
-                          <div className="p-4 sm:p-5 flex flex-col flex-grow">
+                          <div className="p-4 sm:p-5 flex flex-col flex-grow w-full">
                             <span className="text-[10px] text-gray-500 font-bold uppercase tracking-widest mb-1">
                               {auto.marca}
                             </span>
@@ -614,10 +684,11 @@ export default function CatalogoPage() {
                               {auto.version || `${auto.anio} • ${auto.kilometraje?.toLocaleString("es-AR")} km`}
                             </p>
 
-                            <div className="mt-auto pt-4">
-                              <span className="block text-base sm:text-xl font-black text-blue-600">
+                            <div className="mt-auto pt-4 flex items-center justify-between">
+                              <span className="block text-base sm:text-xl font-black text-gray-900">
                                 {precioMostrar}
                               </span>
+                              <ChevronRight className="w-4 h-4 text-gray-300 group-hover:text-blue-600 transition-colors" />
                             </div>
                           </div>
                         </div>

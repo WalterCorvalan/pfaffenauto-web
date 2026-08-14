@@ -1,10 +1,16 @@
 import { NextResponse } from "next/server";
+import { rateLimit, ipDesdeRequest } from "@/lib/rateLimit";
 
 // Fotos/videos que manda el cliente en el cotizador cuando no puede venir a sucursal.
 // Van a Bunny por ahora (mismo proveedor que el resto del sitio); si el día de mañana
 // se migra a Cloudflare, este es el único archivo que hay que tocar.
 export async function POST(request: Request) {
   try {
+    const limite = rateLimit(ipDesdeRequest(request), { limite: 20, ventanaMs: 10 * 60 * 1000 });
+    if (!limite.ok) {
+      return NextResponse.json({ error: "Demasiados archivos subidos. Esperá un momento." }, { status: 429 });
+    }
+
     const formData = await request.formData();
     const file = formData.get("file") as File;
 

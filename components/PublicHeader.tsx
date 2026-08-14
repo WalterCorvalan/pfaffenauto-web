@@ -99,30 +99,30 @@ export default function PublicHeader() {
 
           {/* Grupo de concesionarios oficiales */}
           <div className="flex items-center gap-1.5 sm:gap-2.5 sm:bg-white/30 sm:border sm:border-white/50 rounded-full sm:pl-3 sm:pr-3 sm:py-1 min-w-0">
-            <span className="text-[7px] sm:text-[8px] md:text-[9px] font-black uppercase tracking-wide sm:tracking-widest text-slate-500 whitespace-nowrap shrink-0 leading-none">
+            <span className="text-[7px] sm:text-[8px] md:text-[9px] font-black uppercase tracking-wide sm:tracking-widest text-slate-600 whitespace-nowrap shrink-0 leading-none">
               Concesionario oficial
             </span>
-            <div className="flex items-center gap-0 sm:gap-3 shrink-0 h-4 sm:h-6 md:h-7">
+            <div className="flex items-center gap-0 sm:gap-1 shrink-0 h-4 sm:h-6 md:h-7">
               <Link
                 href="/rely"
-                className="flex items-center h-full group shrink-0"
+                className="flex items-center h-full group shrink-0 rounded-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#0145F2] focus-visible:ring-offset-1"
                 title="Rely"
               >
                 <img
                   src="/RelyLogo.png"
                   alt="Rely"
-                  className="h-8 sm:h-10 md:h-12 w-auto object-contain transition-transform group-hover:scale-105 -my-1.5 sm:-my-2 md:-my-2.5"
+                  className="h-8 sm:h-10 md:h-12.5 w-auto object-contain transition-transform group-hover:scale-105 -my-1.5 sm:-my-2 md:-my-2.5"
                 />
               </Link>
               <Link
                 href="/karry"
-                className="flex items-center h-full group shrink-0"
+                className="flex items-center h-full group shrink-0 rounded-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#0145F2] focus-visible:ring-offset-1"
                 title="Karry"
               >
                 <img
                   src="/logo-karry.webp"
                   alt="Karry"
-                  className="h-5 sm:h-10 md:h-12 w-auto object-contain transition-transform group-hover:scale-105 -my-1.5 sm:-my-2 md:-my-2.5"
+                  className="h-5 sm:h-10 md:h-7.5 w-auto object-contain transition-transform group-hover:scale-105 -my-1.5 sm:-my-2 md:-my-2.5"
                 />
               </Link>
             </div>
@@ -139,7 +139,7 @@ export default function PublicHeader() {
                 animate={{ opacity: 1, y: 0, filter: "blur(0px)" }}
                 exit={{ opacity: 0, y: 10, filter: "blur(4px)" }}
                 transition={{ duration: 0.3, type: "spring", stiffness: 200 }}
-                className="hidden lg:flex items-center gap-1 bg-white/30 backdrop-blur-md px-2 py-1.5 rounded-full border border-white/50 shadow-inner"
+                className="hidden lg:flex items-center gap-0 bg-white/30 backdrop-blur-md px-2 py-1.5 rounded-full border border-white/50 shadow-inner"
               >
                 {navLinks.map((link) => {
                   const is0KM = link.href.includes("condicion=0km");

@@ -29,9 +29,13 @@ interface Venta {
   id: string;
   codigo_seguimiento: string | null;
   etapa_seguimiento: string | null;
-  fecha_venta: string;
-  clientes: { nombre: string; apellido: string; telefono_celular: string | null } | null;
-  vehiculos: { marca: string; modelo: string; patente: string | null } | null;
+  fecha: string;
+  nombre: string | null;
+  apellido: string | null;
+  telefono_celular: string | null;
+  marca: string | null;
+  modelo: string | null;
+  dominio: string | null;
 }
 
 export default function SeguimientoClient({ venta, documentosIniciales }: { venta: Venta; documentosIniciales: Documento[] }) {
@@ -44,7 +48,7 @@ export default function SeguimientoClient({ venta, documentosIniciales }: { vent
 
   const cambiarEtapa = async (nuevaEtapa: string) => {
     setEtapaActual(nuevaEtapa);
-    await supabase.from("ventas").update({ etapa_seguimiento: nuevaEtapa }).eq("id", venta.id);
+    await supabase.from("boletos_venta").update({ etapa_seguimiento: nuevaEtapa }).eq("id", venta.id);
     router.refresh();
   };
 
@@ -103,9 +107,9 @@ export default function SeguimientoClient({ venta, documentosIniciales }: { vent
           <div className="flex items-start justify-between mb-4">
             <div>
               <h1 className="text-xl font-bold text-slate-900">
-                {venta.vehiculos?.marca} {venta.vehiculos?.modelo} {venta.vehiculos?.patente ? `(${venta.vehiculos.patente})` : ""}
+                {venta.marca} {venta.modelo} {venta.dominio ? `(${venta.dominio})` : ""}
               </h1>
-              <p className="text-sm text-slate-500">{venta.clientes?.nombre} {venta.clientes?.apellido}</p>
+              <p className="text-sm text-slate-500">{venta.nombre} {venta.apellido}</p>
             </div>
             {venta.codigo_seguimiento && (
               <button onClick={copiarLink} className="flex items-center gap-1.5 text-[11px] font-bold text-indigo-600 bg-indigo-50 border border-indigo-100 px-3 py-1.5 rounded-lg hover:bg-indigo-100 transition-colors">

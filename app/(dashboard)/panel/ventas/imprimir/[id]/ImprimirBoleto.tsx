@@ -26,7 +26,7 @@ export default function ImprimirBoleto({ operacion }: { operacion: any }) {
       {/* ================= PANEL DE CONTROL (Oculto al imprimir) ================= */}
       <div className="print:hidden max-w-[210mm] mx-auto mb-8 bg-white p-6 rounded-2xl border border-slate-200 shadow-sm flex flex-col sm:flex-row items-center justify-between gap-4">
         <div className="flex items-center gap-4">
-          <Link href="/panel/ventas/nueva" className="text-slate-400 hover:text-slate-700 transition-colors bg-slate-50 hover:bg-slate-100 p-2.5 rounded-lg border border-slate-200">
+          <Link href="/panel/ventas" className="text-slate-400 hover:text-slate-700 transition-colors bg-slate-50 hover:bg-slate-100 p-2.5 rounded-lg border border-slate-200">
             <ArrowLeft className="w-4 h-4" />
           </Link>
           <div>

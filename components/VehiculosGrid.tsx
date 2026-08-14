@@ -2,6 +2,7 @@
 
 import { useState, useMemo } from "react";
 import Link from "next/link";
+import Image from "next/image";
 import { ChevronRight, ChevronLeft, Scale, X } from "lucide-react";
 import { AnimatePresence, motion } from "framer-motion";
 import ComparadorModal from "@/components/modals/ComparadorModal";
@@ -11,7 +12,13 @@ const ITEMS_POR_PAGINA = 9;
 const normalizar = (texto: string) =>
   texto?.toLowerCase().normalize("NFD").replace(/[̀-ͯ]/g, "").trim() || "";
 
-function categoriaDe(tipo: string): string {
+export const MARCAS_CHINAS = new Set([
+  "baic", "changan", "chery", "jac", "haval", "gwm", "great wall",
+  "dfsk", "dfm", "mg", "byd", "geely", "foton", "jetour", "omoda",
+]);
+
+function categoriaDe(tipo: string, marca?: string): string {
+  if (marca && MARCAS_CHINAS.has(normalizar(marca))) return "Mundo Chino";
   const t = normalizar(tipo);
   if (t.includes("suv") || t.includes("terreno")) return "SUV";
   if (t.includes("pick") || t.includes("camioneta")) return "Pick-ups";
@@ -27,13 +34,13 @@ export default function VehiculosGrid({ vehiculos }: { vehiculos: any[] | null }
   const [pagina, setPagina] = useState(0);
 
   const categoriasDisponibles = useMemo(() => {
-    const set = new Set(lista.map((a) => categoriaDe(a.tipo)));
+    const set = new Set(lista.map((a) => categoriaDe(a.tipo, a.marca)));
     return ["Todos", ...Array.from(set)];
   }, [lista]);
 
   const listaFiltrada = useMemo(() => {
     if (categoriaActiva === "Todos") return lista;
-    return lista.filter((a) => categoriaDe(a.tipo) === categoriaActiva);
+    return lista.filter((a) => categoriaDe(a.tipo, a.marca) === categoriaActiva);
   }, [lista, categoriaActiva]);
 
   const totalPaginas = Math.max(1, Math.ceil(listaFiltrada.length / ITEMS_POR_PAGINA));
@@ -59,7 +66,7 @@ export default function VehiculosGrid({ vehiculos }: { vehiculos: any[] | null }
 
   if (lista.length === 0) {
     return (
-      <section className="py-16 text-center">
+      <section className="py-16 text-center w-full">
         <div className="max-w-md mx-auto p-10 rounded-[32px] bg-white/40 backdrop-blur-2xl border border-white/60 shadow-[0_16px_40px_0_rgba(31,38,135,0.05)]">
           <p className="text-gray-500 font-bold tracking-wide">
             Actualmente no hay unidades disponibles.
@@ -70,7 +77,7 @@ export default function VehiculosGrid({ vehiculos }: { vehiculos: any[] | null }
   }
 
   return (
-    <section className="py-8 max-w-7xl mx-auto px-4 md:px-6">
+    <section className="w-full py-8 max-w-7xl mx-auto px-4 md:px-6">
       {categoriasDisponibles.length > 2 && (
         <div className="flex items-center gap-2 mb-6 overflow-x-auto pb-1">
           {categoriasDisponibles.map((cat) => (
@@ -89,7 +96,8 @@ export default function VehiculosGrid({ vehiculos }: { vehiculos: any[] | null }
         </div>
       )}
 
-      <div className="grid grid-cols-2 lg:grid-cols-3 2xl:grid-cols-4 gap-3 sm:gap-4 md:gap-6 pb-8">
+      {/* ACÁ ESTÁ EL CAMBIO CLAVE: w-full y xl:grid-cols-4 para escritorio, manteniendo grid-cols-2 para móvil */}
+      <div className="w-full grid grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3 sm:gap-4 md:gap-6 pb-8">
         {listaPaginada.map((auto) => {
           const estaSeleccionado = autosComparar.some((a) => a.id === auto.id);
           const precioMostrar =
@@ -103,7 +111,7 @@ export default function VehiculosGrid({ vehiculos }: { vehiculos: any[] | null }
             <Link
               key={auto.id}
               href={`/catalogo/${auto.slug}`}
-              className="block group h-full focus:outline-none"
+              className="block group h-full focus:outline-none w-full"
             >
               <div
                 className={`bg-white rounded-2xl overflow-hidden flex flex-col h-full hover:shadow-lg transition-all duration-300 relative border ${
@@ -122,10 +130,12 @@ export default function VehiculosGrid({ vehiculos }: { vehiculos: any[] | null }
 
                 <div className="relative h-32 sm:h-48 lg:h-52 bg-gray-100 flex items-center justify-center overflow-hidden shrink-0">
                   {auto.multimedia_vehiculos?.[0] ? (
-                    <img
+                    <Image
                       src={auto.multimedia_vehiculos[0].url_archivo}
                       alt={`${auto.marca} ${auto.modelo}`}
-                      className="w-full h-full object-cover mix-blend-multiply group-hover:scale-105 transition-transform duration-500"
+                      fill
+                      sizes="(max-width: 640px) 50vw, (max-width: 1024px) 33vw, 300px"
+                      className="object-cover mix-blend-multiply group-hover:scale-105 transition-transform duration-500"
                     />
                   ) : (
                     <div className="text-gray-400 text-xs font-medium">Sin foto</div>
@@ -200,8 +210,8 @@ export default function VehiculosGrid({ vehiculos }: { vehiculos: any[] | null }
               <div className="flex items-center gap-3 md:gap-4 shrink-0">
                 <div className="flex -space-x-3">
                   {autosComparar.map((auto, i) => (
-                    <div key={i} className="w-10 h-10 md:w-12 md:h-12 rounded-full border-2 border-gray-900 overflow-hidden bg-white shadow-sm shrink-0">
-                      <img src={auto.multimedia_vehiculos?.[0]?.url_archivo || "/placeholder.jpg"} className="w-full h-full object-cover" />
+                    <div key={i} className="relative w-10 h-10 md:w-12 md:h-12 rounded-full border-2 border-gray-900 overflow-hidden bg-white shadow-sm shrink-0">
+                      <Image src={auto.multimedia_vehiculos?.[0]?.url_archivo || "/placeholder.jpg"} alt={`${auto.marca} ${auto.modelo}`} fill sizes="48px" className="object-cover" />
                     </div>
                   ))}
                   {autosComparar.length < 3 && (

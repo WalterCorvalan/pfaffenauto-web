@@ -1,24 +1,80 @@
+import { cache } from "react";
 import { createClient } from "@/lib/supabase/server";
-import { notFound } from "next/navigation";
-import Link from "next/link";
 import {
+  CalendarDays,
+  CarFront,
   ChevronRight,
   Clock,
-  MapPin,
-  CalendarDays,
-  Gauge,
   Fuel,
+  Gauge,
+  MapPin,
   Settings2,
-  CarFront,
 } from "lucide-react";
+import type { Metadata } from "next";
+import Image from "next/image";
+import Link from "next/link";
+import { notFound } from "next/navigation";
 
 import BotonesInteractivos from "@/components/BotonesInteractivos";
-import GaleriaVehiculo from "@/components/GaleriaVehiculo";
 import AgendarVisitaForm from "@/components/forms/AgendarVisitaForm";
+import GaleriaVehiculo from "@/components/GaleriaVehiculo";
 import SimuladorFinanciacion from "@/components/SimuladorFinanciacion";
+import { CAMPOS_VEHICULO_DETALLE } from "@/lib/vehiculos";
 import DestacadosCarousel from "./DestacadosCarousel";
 
 export const revalidate = 60;
+
+// cache() dedupe: generateMetadata y el componente de página piden el mismo auto
+// en el mismo request — sin esto se dispara la consulta 2 veces.
+const buscarAuto = cache(async (slug: string) => {
+  const supabase = await createClient();
+  const { data: autoExacto } = await supabase
+    .from("vehiculos")
+    .select(CAMPOS_VEHICULO_DETALLE)
+    .eq("slug", slug)
+    .maybeSingle();
+  if (autoExacto) return autoExacto as any;
+
+  const { data: autosSimilares } = await supabase
+    .from("vehiculos")
+    .select(CAMPOS_VEHICULO_DETALLE)
+    .ilike("slug", `${slug}%`)
+    .limit(1);
+  return (autosSimilares?.[0] as any) || null;
+});
+
+export async function generateMetadata({
+  params,
+}: {
+  params: Promise<{ slug: string }>;
+}): Promise<Metadata> {
+  const { slug } = await params;
+  const auto = await buscarAuto(slug);
+  if (!auto) return { title: "Vehículo no encontrado | Pfaffen Autos" };
+
+  const esCeroKm = auto.kilometraje === 0;
+  const titulo = `${auto.marca} ${auto.modelo} ${auto.anio} ${esCeroKm ? "0KM" : "Usado"} | Pfaffen Autos`;
+  const descripcion = `${auto.marca} ${auto.modelo} ${auto.anio}, ${esCeroKm ? "0km" : `${auto.kilometraje?.toLocaleString("es-AR")} km`}. Precio $${(auto.precio_publicado_ars || 0).toLocaleString("es-AR")}. Financiación disponible en Pfaffen Autos.`;
+  const imagen = (auto.multimedia_vehiculos as any)?.[0]?.url_archivo;
+
+  return {
+    title: titulo,
+    description: descripcion,
+    alternates: { canonical: `/catalogo/${auto.slug}` },
+    openGraph: {
+      title: titulo,
+      description: descripcion,
+      images: imagen ? [{ url: imagen }] : undefined,
+      type: "website",
+    },
+    twitter: {
+      card: "summary_large_image",
+      title: titulo,
+      description: descripcion,
+      images: imagen ? [imagen] : undefined,
+    },
+  };
+}
 
 export default async function VehiculoDetallePage({
   params,
@@ -28,30 +84,8 @@ export default async function VehiculoDetallePage({
   const { slug } = await params;
   const supabase = await createClient();
 
-  // ================= 1. CONSULTA BD =================
-  const { data: autoExacto } = await supabase
-    .from("vehiculos")
-    .select(
-      `*, multimedia_vehiculos ( url_archivo, tipo, orden ), sucursales ( nombre, direccion, telefono )`,
-    )
-    .eq("slug", slug)
-    .maybeSingle();
-
-  let auto = autoExacto;
-
-  if (!auto) {
-    const { data: autosSimilares } = await supabase
-      .from("vehiculos")
-      .select(
-        `*, multimedia_vehiculos ( url_archivo, tipo, orden ), sucursales ( nombre, direccion, telefono )`,
-      )
-      .ilike("slug", `${slug}%`)
-      .limit(1);
-
-    if (autosSimilares && autosSimilares.length > 0) {
-      auto = autosSimilares[0];
-    }
-  }
+  // ================= 1. CONSULTA BD PRINCIPAL (deduped con generateMetadata) =================
+  const auto = await buscarAuto(slug);
 
   if (!auto) notFound();
 
@@ -72,22 +106,26 @@ export default async function VehiculoDetallePage({
   const precioArs = auto.precio_publicado_ars || 0;
   const precioUsd = auto.precio_publicado_usd || null;
 
-  // ================= 3. TAMBIÉN TE PODRÍA INTERESAR (misma marca o tipo) =================
-  const CAMPOS_CARD = `id, marca, modelo, version, anio, kilometraje, transmision, precio_publicado_ars, precio_publicado_usd, slug, sucursales ( nombre ), multimedia_vehiculos ( url_archivo )`;
+  // ================= 3. QUERIES SECUNDARIAS PARALELIZADAS (PROMISE.ALL) =================
+  const CAMPOS_CARD = `id, marca, modelo, segmento, anio, kilometraje, transmision, precio_publicado_ars, precio_publicado_usd, slug, sucursales ( nombre ), multimedia_vehiculos ( url_archivo )`;
 
-  // Se arman como dos queries separadas (en vez de .or() con un string armado a mano) porque
-  // varios "tipo" tienen espacios y "|" (ej: "Todo Terreno | SUV") que rompen el filtro OR de PostgREST.
-  const { data: porMarca } = await supabase
-    .from("vehiculos")
-    .select(CAMPOS_CARD)
-    .eq("marca", auto.marca)
-    .neq("id", auto.id)
-    .in("estado", ["Disponible", "Reservado"])
-    .order("created_at", { ascending: false })
-    .limit(4);
+  // Disparamos las 3 consultas al mismo tiempo
+  const [reqPorMarca, reqPrecioSimilar, reqDestacados] = await Promise.all([
+    // A. También te podría interesar (Por Marca)
+    supabase.from("vehiculos").select(CAMPOS_CARD).eq("marca", auto.marca).neq("id", auto.id).in("estado", ["Disponible", "Reservado"]).order("created_at", { ascending: false }).limit(4),
+    
+    // B. Precio similar (+- 15%)
+    supabase.from("vehiculos").select(CAMPOS_CARD).gte("precio_publicado_ars", precioArs * 0.85).lte("precio_publicado_ars", precioArs * 1.15).neq("id", auto.id).in("estado", ["Disponible", "Reservado"]).limit(4),
+    
+    // C. Autos Destacados
+    supabase.from("vehiculos").select("id, marca, modelo, slug, precio_publicado_ars, precio_publicado_usd, multimedia_vehiculos ( url_archivo )").eq("destacado", true).neq("id", auto.id).in("estado", ["Disponible", "Reservado"]).order("created_at", { ascending: false }).limit(10)
+  ]);
 
-  let tambienTeInteresa = porMarca || [];
+  let tambienTeInteresa = reqPorMarca.data || [];
+  let precioSimilar = reqPrecioSimilar.data || [];
+  const destacados = reqDestacados.data || [];
 
+  // Fallback 1: Si no hay 4 autos de la misma marca, completamos con el mismo "tipo" (SUV, Pick-up, etc)
   if (tambienTeInteresa.length < 4 && auto.tipo) {
     const idsYaIncluidos = [auto.id, ...tambienTeInteresa.map((v: any) => v.id)];
     const { data: porTipo } = await supabase
@@ -101,6 +139,7 @@ export default async function VehiculoDetallePage({
     tambienTeInteresa = [...tambienTeInteresa, ...(porTipo || [])];
   }
 
+  // Fallback 2: Si sigue vacío, traemos los últimos ingresos
   if (!tambienTeInteresa || tambienTeInteresa.length === 0) {
     const { data: ultimosIngresos } = await supabase
       .from("vehiculos")
@@ -112,62 +151,51 @@ export default async function VehiculoDetallePage({
     tambienTeInteresa = ultimosIngresos || [];
   }
 
-  const idsExcluidos = [auto.id, ...(tambienTeInteresa || []).map((v: any) => v.id)];
+  // ================= 4. RENDERIZADO =================
+  const jsonLdVehicle = {
+    "@context": "https://schema.org",
+    "@type": "Vehicle",
+    name: `${auto.marca} ${auto.modelo}`,
+    brand: auto.marca,
+    model: auto.modelo,
+    vehicleModelDate: String(auto.anio),
+    mileageFromOdometer: {
+      "@type": "QuantitativeValue",
+      value: auto.kilometraje,
+      unitCode: "KMT",
+    },
+    fuelType: auto.tipo_combustible || undefined,
+    vehicleTransmission: auto.transmision || undefined,
+    image: (auto.multimedia_vehiculos || []).map((m: any) => m.url_archivo),
+    offers: {
+      "@type": "Offer",
+      priceCurrency: "ARS",
+      price: precioArs,
+      availability: "https://schema.org/InStock",
+      url: `https://pfaffenautos.com.ar/catalogo/${auto.slug}`,
+    },
+  };
 
-  // ================= 4. AUTOS CON PRECIO SIMILAR (±15%) =================
-  const { data: precioSimilar } = await supabase
-    .from("vehiculos")
-    .select(CAMPOS_CARD)
-    .gte("precio_publicado_ars", precioArs * 0.85)
-    .lte("precio_publicado_ars", precioArs * 1.15)
-    .not("id", "in", `(${idsExcluidos.join(",")})`)
-    .in("estado", ["Disponible", "Reservado"])
-    .limit(4);
-
-  // ================= 5. AUTOS DESTACADOS =================
-  const { data: destacados } = await supabase
-    .from("vehiculos")
-    .select("id, marca, modelo, slug, precio_publicado_ars, precio_publicado_usd, multimedia_vehiculos ( url_archivo )")
-    .eq("destacado", true)
-    .neq("id", auto.id)
-    .in("estado", ["Disponible", "Reservado"])
-    .order("created_at", { ascending: false })
-    .limit(10);
-
-  // ================= 6. RENDERIZADO PRINCIPAL =================
   return (
     <div className="min-h-screen bg-[#F8FAFC] print:bg-white font-sans text-foreground flex flex-col relative pb-20">
-      {/* Fondo cuadriculado y brillos (Exactamente igual a la imagen) */}
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLdVehicle) }}
+      />
       <BackgroundEffects />
-
       <PrintHeader auto={auto} />
 
       <div className="flex-1 w-full max-w-7xl mx-auto px-4 md:px-6 pt-6 pb-12 flex flex-col relative z-10 print:pt-0">
-        {/* Título solo visible en Celulares */}
         <MobileTitle auto={auto} />
 
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 lg:gap-10 items-start mt-2 lg:mt-6">
-          {/* COLUMNA IZQUIERDA (Breadcrumb, Galería, Specs) */}
           <div className="lg:col-span-8 flex flex-col gap-8 order-1 print:col-span-12">
-            {/* Breadcrumb exacto al de la foto (Solo Desktop) */}
             <div className="hidden lg:flex text-[10px] sm:text-[11px] text-slate-500 font-bold uppercase tracking-widest items-center gap-2.5 print:hidden">
-              <Link href="/" className="hover:text-[#0145F2] transition-colors">
-                Inicio
-              </Link>
+              <Link href="/" className="hover:text-[#0145F2] transition-colors">Inicio</Link>
               <span className="text-slate-300">/</span>
-              <Link
-                href="/catalogo"
-                className="hover:text-[#0145F2] transition-colors"
-              >
-                Catálogo
-              </Link>
+              <Link href="/catalogo" className="hover:text-[#0145F2] transition-colors">Catálogo</Link>
               <span className="text-slate-300">/</span>
-              <Link
-                href={`/marcas/${auto.marca.toLowerCase().replace(/\s+/g, "-")}`}
-                className="hover:text-[#0145F2] transition-colors"
-              >
-                {auto.marca}
-              </Link>
+              <Link href={`/marcas/${auto.marca.toLowerCase().replace(/\s+/g, "-")}`} className="hover:text-[#0145F2] transition-colors">{auto.marca}</Link>
               <span className="text-slate-300">/</span>
               <span className="text-navy font-black">{auto.modelo}</span>
             </div>
@@ -175,7 +203,6 @@ export default async function VehiculoDetallePage({
             <VehiculoGallery auto={auto} />
             <VehiculoSpecs auto={auto} esCeroKm={esCeroKm} />
 
-            {/* SIMULADOR (Movido debajo, sin competir con el CTA principal) */}
             <div className="print:hidden">
               <SimuladorFinanciacion
                 precioTotal={precioArs}
@@ -185,7 +212,6 @@ export default async function VehiculoDetallePage({
             </div>
           </div>
 
-          {/* COLUMNA DERECHA (Panel Sticky: Título, Precio, CTAs, Sucursal) */}
           <div className="lg:col-span-4 lg:sticky lg:top-28 order-2 print:col-span-12">
             <VehiculoPriceCard
               auto={auto}
@@ -245,23 +271,11 @@ function MobileTitle({ auto }: { auto: any }) {
   return (
     <div className="block lg:hidden mb-2 print:hidden relative z-10">
       <div className="text-[10px] sm:text-xs text-slate-500 font-bold uppercase tracking-widest mb-3 flex items-center gap-1.5 flex-wrap">
-        <Link href="/" className="hover:text-[#0145F2] transition-colors">
-          Inicio
-        </Link>
+        <Link href="/" className="hover:text-[#0145F2] transition-colors">Inicio</Link>
         <span className="text-slate-400">/</span>
-        <Link
-          href="/catalogo"
-          className="hover:text-[#0145F2] transition-colors"
-        >
-          Catálogo
-        </Link>
+        <Link href="/catalogo" className="hover:text-[#0145F2] transition-colors">Catálogo</Link>
         <span className="text-slate-400">/</span>
-        <Link
-          href={`/marcas/${auto.marca.toLowerCase().replace(/\s+/g, "-")}`}
-          className="text-slate-500 hover:text-[#0145F2] transition-colors"
-        >
-          {auto.marca}
-        </Link>
+        <Link href={`/marcas/${auto.marca.toLowerCase().replace(/\s+/g, "-")}`} className="text-slate-500 hover:text-[#0145F2] transition-colors">{auto.marca}</Link>
       </div>
 
       <h1 className="text-3xl font-black text-navy uppercase tracking-tighter leading-tight drop-shadow-sm">
@@ -271,8 +285,7 @@ function MobileTitle({ auto }: { auto: any }) {
         </span>
       </h1>
       <p className="text-sm font-black text-slate-500 uppercase mt-1">
-        {auto.version ||
-          `${auto.tipo || "Vehículo"} • ${auto.transmision || "Manual"}`}
+        {auto.version || `${auto.tipo || "Vehículo"} • ${auto.transmision || "Manual"}`}
       </p>
 
       <div className="mt-5 flex items-center gap-2">
@@ -310,15 +323,13 @@ function VehiculoGallery({ auto }: { auto: any }) {
 
 function VehiculoSpecs({ auto, esCeroKm }: { auto: any; esCeroKm: boolean }) {
   return (
-    <div className="bg-white/60 print:bg-white backdrop-blur-xl border border-white print:border-slate-200 rounded-[24px] p-6 md:p-8 shadow-[0_4px_15px_rgba(0,0,0,0.03)] print:shadow-none flex flex-wrap items-center justify-between gap-6 relative z-10">
+    <div className="bg-white/60 print:bg-white backdrop-blur-xl border border-white print:border-slate-200 rounded-[24px] p-6 md:p-8 shadow-[0_4px_15px_rgba(0,0,0,0.03)] print:shadow-none grid grid-cols-2 md:flex md:flex-wrap items-center justify-between gap-6 relative z-10">
       <div className="flex items-center gap-4">
         <div className="bg-white p-3 rounded-2xl shadow-sm border border-slate-100">
           <CalendarDays className="w-6 h-6 text-[#0145F2] opacity-80" />
         </div>
         <div className="flex flex-col">
-          <span className="text-[10px] text-slate-500 font-bold uppercase tracking-widest">
-            Año
-          </span>
+          <span className="text-[10px] text-slate-500 font-bold uppercase tracking-widest">Año</span>
           <span className="text-base font-black text-navy">{auto.anio}</span>
         </div>
       </div>
@@ -327,14 +338,8 @@ function VehiculoSpecs({ auto, esCeroKm }: { auto: any; esCeroKm: boolean }) {
           <Gauge className="w-6 h-6 text-[#0145F2] opacity-80" />
         </div>
         <div className="flex flex-col">
-          <span className="text-[10px] text-slate-500 font-bold uppercase tracking-widest">
-            Kilómetros
-          </span>
-          <span className="text-base font-black text-navy">
-            {esCeroKm
-              ? "0 km"
-              : `${auto.kilometraje?.toLocaleString("es-AR")} km`}
-          </span>
+          <span className="text-[10px] text-slate-500 font-bold uppercase tracking-widest">Kilómetros</span>
+          <span className="text-base font-black text-navy">{esCeroKm ? "0 km" : `${auto.kilometraje?.toLocaleString("es-AR")} km`}</span>
         </div>
       </div>
       <div className="flex items-center gap-4">
@@ -342,12 +347,8 @@ function VehiculoSpecs({ auto, esCeroKm }: { auto: any; esCeroKm: boolean }) {
           <Fuel className="w-6 h-6 text-[#0145F2] opacity-80" />
         </div>
         <div className="flex flex-col">
-          <span className="text-[10px] text-slate-500 font-bold uppercase tracking-widest">
-            Combustible
-          </span>
-          <span className="text-base font-black text-navy capitalize">
-            {auto.tipo_combustible || "-"}
-          </span>
+          <span className="text-[10px] text-slate-500 font-bold uppercase tracking-widest">Combustible</span>
+          <span className="text-base font-black text-navy capitalize">{auto.tipo_combustible || "-"}</span>
         </div>
       </div>
       <div className="flex items-center gap-4">
@@ -355,12 +356,8 @@ function VehiculoSpecs({ auto, esCeroKm }: { auto: any; esCeroKm: boolean }) {
           <Settings2 className="w-6 h-6 text-[#0145F2] opacity-80" />
         </div>
         <div className="flex flex-col">
-          <span className="text-[10px] text-slate-500 font-bold uppercase tracking-widest">
-            Transmisión
-          </span>
-          <span className="text-base font-black text-navy capitalize">
-            {auto.transmision || "-"}
-          </span>
+          <span className="text-[10px] text-slate-500 font-bold uppercase tracking-widest">Transmisión</span>
+          <span className="text-base font-black text-navy capitalize">{auto.transmision || "-"}</span>
         </div>
       </div>
     </div>
@@ -378,7 +375,6 @@ function VehiculoPriceCard({
     <div className="bg-white/70 print:bg-white backdrop-blur-3xl border border-white print:border-slate-300 rounded-[32px] p-6 lg:p-8 shadow-[0_12px_40px_rgba(0,0,0,0.05)] print:shadow-none flex flex-col relative overflow-hidden">
       <div className="absolute inset-0 bg-gradient-to-br from-white/40 to-transparent pointer-events-none z-0 print:hidden"></div>
 
-      {/* Título Desktop */}
       <div className="hidden lg:block border-b border-slate-200/50 pb-5 mb-6 relative z-10">
         <span className="text-[10px] text-slate-500 font-black uppercase tracking-widest block mb-2">
           {esCeroKm ? "0km" : "Usado seleccionado"} | {auto.anio}
@@ -390,8 +386,7 @@ function VehiculoPriceCard({
           </span>
         </h1>
         <p className="text-sm font-black text-slate-500 uppercase mt-2">
-          {auto.version ||
-            `${auto.tipo || "Vehículo"} • ${auto.transmision || "Manual"}`}
+          {auto.version || `${auto.tipo || "Vehículo"} • ${auto.transmision || "Manual"}`}
         </p>
 
         <div className="mt-5 flex items-center gap-2 print:hidden">
@@ -399,26 +394,20 @@ function VehiculoPriceCard({
         </div>
       </div>
 
-      {/* BLOQUE: PRECIO */}
       <div className="relative z-10 mb-8">
         <div className="flex flex-col gap-2">
-          <span className="text-sm font-medium text-slate-500 block mb-1">
-            Precio al contado
-          </span>
+          <span className="text-sm font-medium text-slate-500 block mb-1">Precio al contado</span>
           <h2 className="text-4xl md:text-5xl font-black text-navy tracking-tighter drop-shadow-sm">
             $ {precioArs.toLocaleString("es-AR")}
           </h2>
           {precioUsd && precioUsd > 0 && (
             <div className="inline-flex items-center gap-2 bg-emerald-500/10 border border-emerald-500/20 px-3 py-1.5 rounded-xl w-max print:border-emerald-600">
-              <span className="text-sm font-black text-emerald-700 tracking-wide">
-                US$ {precioUsd.toLocaleString("en-US")}
-              </span>
+              <span className="text-sm font-black text-emerald-700 tracking-wide">US$ {precioUsd.toLocaleString("en-US")}</span>
             </div>
           )}
         </div>
       </div>
 
-      {/* BLOQUE: BOTONES DE ACCIÓN */}
       <div className="hidden lg:flex flex-col gap-3 relative z-10 print:hidden">
         <a
           href={linkWhatsApp}
@@ -433,19 +422,15 @@ function VehiculoPriceCard({
 
       <hr className="border-slate-200/50 my-6 relative z-10 print:my-4" />
 
-      {/* BLOQUE: INFO SUCURSAL Y ENTREGA */}
       <div className="flex flex-col gap-5 relative z-10">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-3">
             <div className="bg-white p-2 rounded-full border border-slate-100 shadow-sm">
               <MapPin className="w-4 h-4 text-[#0145F2]" />
             </div>
-            <span className="text-navy text-xs uppercase tracking-widest font-black">
-              Sucursal
-            </span>
+            <span className="text-navy text-xs uppercase tracking-widest font-black">Sucursal</span>
           </div>
 
-          {/* Convertimos el span en un Link y generamos el slug dinámicamente */}
           <Link
             href={`/sucursales/${(auto.sucursales?.nombre || "casa-central")
               .toLowerCase()
@@ -464,18 +449,14 @@ function VehiculoPriceCard({
             <div className="bg-white p-2 rounded-full border border-slate-100 shadow-sm">
               <Clock className="w-4 h-4 text-[#0145F2]" />
             </div>
-            <span className="text-navy text-xs uppercase tracking-widest font-black">
-              Entrega
-            </span>
+            <span className="text-navy text-xs uppercase tracking-widest font-black">Entrega</span>
           </div>
           <span className="text-sm font-medium text-slate-600">Inmediata</span>
         </div>
       </div>
 
-      {/* TEXTO LEGAL (Visible en PDF) */}
       <div className="hidden print:block mt-8 text-center text-xs text-slate-500">
-        Documento generado automáticamente desde pfaffenautos.com.ar. Precios
-        sujetos a modificación sin previo aviso.
+        Documento generado automáticamente desde pfaffenautos.com.ar. Precios sujetos a modificación sin previo aviso.
       </div>
     </div>
   );
@@ -501,10 +482,12 @@ function VehiculosRelacionados({ titulo, vehiculos }: { titulo: string; vehiculo
             >
               <div className="relative h-[140px] sm:h-[160px] bg-white/30 overflow-hidden mix-blend-multiply">
                 {v.multimedia_vehiculos?.[0] ? (
-                  <img
+                  <Image
                     src={v.multimedia_vehiculos[0].url_archivo}
                     alt={`${v.marca} ${v.modelo}`}
-                    className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700 ease-out"
+                    fill
+                    sizes="(max-width: 640px) 50vw, 25vw"
+                    className="object-cover group-hover:scale-105 transition-transform duration-700 ease-out"
                   />
                 ) : (
                   <div className="w-full h-full flex items-center justify-center text-gray-300 text-xs font-medium">Sin foto</div>
@@ -547,8 +530,7 @@ function VehiculoPermuta() {
             ¿Tenés un usado para entregar?
           </h3>
           <p className="text-xs md:text-sm text-sky-100 font-medium max-w-xl">
-            Lo cotizamos en el acto y lo tomamos como parte de pago asegurándote
-            el mejor valor del mercado.
+            Lo cotizamos en el acto y lo tomamos como parte de pago asegurándote el mejor valor del mercado.
           </p>
         </div>
         <a
@@ -565,13 +547,7 @@ function VehiculoPermuta() {
   );
 }
 
-function MobileBottomBar({
-  auto,
-  linkWhatsApp,
-}: {
-  auto: any;
-  linkWhatsApp: string;
-}) {
+function MobileBottomBar({ auto, linkWhatsApp }: { auto: any; linkWhatsApp: string; }) {
   return (
     <div className="lg:hidden sticky bottom-4 left-0 w-full px-4 z-[40] mt-4 print:hidden">
       <div className="pointer-events-auto flex items-center gap-3 w-full max-w-md mx-auto bg-white/90 backdrop-blur-xl p-2.5 rounded-2xl shadow-[0_10px_40px_rgba(0,0,0,0.15)] border border-slate-200/60">

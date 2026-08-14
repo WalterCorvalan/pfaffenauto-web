@@ -1,31 +1,20 @@
 import { createClient } from "@supabase/supabase-js";
+import { verificarTurnstile } from "@/lib/turnstile";
+import { rateLimit, ipDesdeRequest } from "@/lib/rateLimit";
 
 const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
   process.env.SUPABASE_SERVICE_ROLE_KEY!
 );
 
-async function verificarTurnstile(token: string, ip: string | null): Promise<boolean> {
-  const secret = process.env.TURNSTILE_SECRET_KEY;
-  if (!secret) {
-    console.warn("[turnstile] TURNSTILE_SECRET_KEY no configurada: se rechaza la solicitud.");
-    return false;
-  }
-
-  const body = new URLSearchParams({ secret, response: token });
-  if (ip) body.append("remoteip", ip);
-
-  const res = await fetch("https://challenges.cloudflare.com/turnstile/v0/siteverify", {
-    method: "POST",
-    headers: { "Content-Type": "application/x-www-form-urlencoded" },
-    body,
-  });
-  const data = await res.json();
-  return data.success === true;
-}
-
 export async function POST(req: Request) {
   try {
+    const ip = ipDesdeRequest(req);
+    const limite = rateLimit(ip, { limite: 5, ventanaMs: 10 * 60 * 1000 });
+    if (!limite.ok) {
+      return Response.json({ error: "Demasiadas solicitudes. Reintentá en unos minutos." }, { status: 429 });
+    }
+
     const payload = await req.json();
     const { turnstileToken, ...cotizacion } = payload;
 
@@ -33,7 +22,6 @@ export async function POST(req: Request) {
       return Response.json({ error: "Falta verificación anti-spam." }, { status: 400 });
     }
 
-    const ip = req.headers.get("x-forwarded-for")?.split(",")[0]?.trim() ?? null;
     const humano = await verificarTurnstile(turnstileToken, ip);
     if (!humano) {
       return Response.json({ error: "No pudimos verificar que sos humano. Reintentá." }, { status: 400 });
@@ -44,6 +32,15 @@ export async function POST(req: Request) {
     }
 
     const puedeVenirSucursal = cotizacion.puede_venir_sucursal === true;
+
+    // =====================================================================
+    // CORRECCIÓN AUDITORÍA: Respetar el tipo de operación si el frontend 
+    // lo envía explícitamente (Ej: "venta" o "consignacion").
+    // Si no lo envía (Cotizador normal), mantiene la lógica anterior.
+    // =====================================================================
+    const tipoPeritajeFinal = cotizacion.tipo_peritaje 
+      ? cotizacion.tipo_peritaje 
+      : (puedeVenirSucursal ? "presencial" : "online");
 
     const { data, error } = await supabase
       .from("cotizaciones")
@@ -59,7 +56,7 @@ export async function POST(req: Request) {
         telefono: cotizacion.telefono,
         telefono_verificado: false,
         puede_venir_sucursal: puedeVenirSucursal,
-        tipo_peritaje: puedeVenirSucursal ? "presencial" : "online",
+        tipo_peritaje: tipoPeritajeFinal, // <- Ahora guarda exactamente lo que corresponde
         sucursal_preferida: cotizacion.sucursal_preferida ?? "Casa Central",
         fotos_y_videos: Array.isArray(cotizacion.fotos_y_videos) ? cotizacion.fotos_y_videos : [],
       })

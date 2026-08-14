@@ -1,8 +1,11 @@
 "use client";
 
 import { useState } from "react";
+import Image from "next/image";
 import { ChevronLeft, ChevronRight, Image as ImageIcon } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
+
+const MotionImage = motion.create(Image);
 
 interface GaleriaProps {
   imagenes: any[];
@@ -36,7 +39,7 @@ export default function GaleriaVehiculo({ imagenes, altText }: GaleriaProps) {
       <div className="relative w-full h-[300px] sm:h-[420px] md:h-[520px] bg-slate-950 overflow-hidden group">
         
         <AnimatePresence mode="wait">
-          <motion.img
+          <MotionImage
             key={currentIndex}
             initial={{ opacity: 0, scale: 0.98, filter: "blur(4px)" }}
             animate={{ opacity: 1, scale: 1, filter: "blur(0px)" }}
@@ -44,7 +47,10 @@ export default function GaleriaVehiculo({ imagenes, altText }: GaleriaProps) {
             transition={{ duration: 0.3 }}
             src={imagenes[currentIndex]?.url_archivo}
             alt={`${altText} - Foto ${currentIndex + 1}`}
-            className="w-full h-full object-cover"
+            fill
+            sizes="(max-width: 768px) 100vw, 66vw"
+            priority={currentIndex === 0}
+            className="object-cover"
           />
         </AnimatePresence>
         
@@ -85,7 +91,7 @@ export default function GaleriaVehiculo({ imagenes, altText }: GaleriaProps) {
                   : "opacity-50 hover:opacity-100 grayscale hover:grayscale-0"
               }`}
             >
-              <img src={img.url_archivo} alt={`Miniatura ${idx + 1}`} className="w-full h-full object-cover" />
+              <Image src={img.url_archivo} alt={`Miniatura ${idx + 1}`} fill sizes="112px" className="object-cover" />
             </button>
           ))}
         </div>

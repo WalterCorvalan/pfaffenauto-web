@@ -4,7 +4,7 @@ import { CheckCircle2, Circle, CarFront, Search } from "lucide-react";
 
 const ETAPAS = ["Seña", "Documentación", "Patentamiento", "Transferencia", "Entrega", "Completado"];
 
-// Server-only: usamos service role porque "ventas" no tiene policy pública de SELECT.
+// Server-only: usamos service role porque "boletos_venta" no tiene policy pública de SELECT.
 // La query solo expone etapa + auto, nunca precios ni datos del cliente.
 const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -19,11 +19,8 @@ export default async function SeguimientoPublicoPage({
   const { codigo } = await params;
 
   const { data: venta } = await supabase
-    .from("ventas")
-    .select(`
-      etapa_seguimiento,
-      vehiculos ( marca, modelo, patente )
-    `)
+    .from("boletos_venta")
+    .select("etapa_seguimiento, marca, modelo")
     .eq("codigo_seguimiento", codigo.toUpperCase())
     .maybeSingle();
 
@@ -50,7 +47,7 @@ export default async function SeguimientoPublicoPage({
               <div>
                 <p className="text-[10px] font-black uppercase tracking-widest text-slate-400">Seguimiento de tu operación</p>
                 <h1 className="text-lg font-black text-navy">
-                  {(venta.vehiculos as any)?.marca} {(venta.vehiculos as any)?.modelo}
+                  {venta.marca} {venta.modelo}
                 </h1>
               </div>
             </div>

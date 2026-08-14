@@ -3,7 +3,7 @@
 import { useState, useEffect, useRef } from "react";
 import Link from "next/link";
 import Script from "next/script";
-import { ArrowLeft, Loader2, CheckCircle2, ChevronDown, CarFront, User, Phone, Upload, X, FileVideo, ImageIcon, Building2, Camera } from "lucide-react";
+import { ArrowLeft, Loader2, CheckCircle2, ChevronDown, CarFront, User, Phone, Upload, X, FileVideo, ImageIcon, Building2, Camera, AlertTriangle } from "lucide-react";
 
 declare global {
   interface Window {
@@ -37,8 +37,7 @@ const aniosDisponibles = Array.from({ length: 20 }, (_, i) => 2026 - i);
 
 export default function CotizadorForm() {
   const [step, setStep] = useState(1);
-  const [mockId, setMockId] = useState("");
-  
+
   // Estados del vehículo
   const [anio, setAnio] = useState("");
   const [marca, setMarca] = useState("");
@@ -74,10 +73,13 @@ export default function CotizadorForm() {
   const [loading, setLoading] = useState(false);
   const [enviado, setEnviado] = useState(false);
   const [segundos, setSegundos] = useState(60);
+  const [errorEnvio, setErrorEnvio] = useState("");
+  const [shakeError, setShakeError] = useState(0);
 
-  useEffect(() => {
-    setMockId(String(Math.floor(Math.random() * 90000) + 10000));
-  }, []);
+  const mostrarError = (msg: string) => {
+    setErrorEnvio(msg);
+    setShakeError((n) => n + 1);
+  };
 
   useEffect(() => {
     if (segundos > 1) {
@@ -101,7 +103,7 @@ export default function CotizadorForm() {
 
   // Renderiza el widget de Turnstile cuando llegamos al paso de contacto
   useEffect(() => {
-    if (step !== 3 || !turnstileListo || !turnstileRef.current || !window.turnstile) return;
+    if (step !== 4 || !turnstileListo || !turnstileRef.current || !window.turnstile) return;
     if (turnstileWidgetId.current) return; // ya renderizado
 
     turnstileWidgetId.current = window.turnstile.render(turnstileRef.current, {
@@ -161,12 +163,14 @@ export default function CotizadorForm() {
   // =================================================================
   const enviarCotizacion = async (e: React.FormEvent) => {
     e.preventDefault();
+    setErrorEnvio("");
+
     if (!nombre.trim() || !apellido.trim() || !email.trim() || !tel.trim()) {
-      alert("Por favor completá todos los campos de contacto.");
+      mostrarError("Por favor completá todos los campos de contacto.");
       return;
     }
     if (!turnstileToken) {
-      alert("Completá la verificación anti-spam antes de continuar.");
+      mostrarError("Completá la verificación anti-spam antes de continuar.");
       return;
     }
 
@@ -199,7 +203,7 @@ export default function CotizadorForm() {
       setEnviado(true);
     } catch (error) {
       console.error("Error al enviar cotización:", error);
-      alert(error instanceof Error ? error.message : "Hubo un problema al procesar tu solicitud. Reintentá.");
+      mostrarError(error instanceof Error ? error.message : "Hubo un problema al procesar tu solicitud. Reintentá.");
       if (turnstileWidgetId.current && window.turnstile) {
         window.turnstile.reset(turnstileWidgetId.current);
       }
@@ -216,12 +220,6 @@ export default function CotizadorForm() {
         <div className="absolute inset-0 bg-[linear-gradient(to_right,#e2e8f0_1px,transparent_1px),linear-gradient(to_bottom,#e2e8f0_1px,transparent_1px)] bg-[size:3rem_3rem] [mask-image:radial-gradient(ellipse_80%_50%_at_50%_0%,#000_70%,transparent_100%)] opacity-60"></div>
         <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[800px] h-[400px] bg-[#0145F2]/5 blur-[120px] rounded-full"></div>
       </div>
-
-      <header className="max-w-7xl mx-auto w-full px-10 py-2 flex items-center justify-between relative z-10">
-        <div className="flex items-center gap-4 text-xs font-bold text-slate-500">
-          <span>DOC: <strong className="text-[#0145F2]">{mockId}</strong></span>
-        </div>
-      </header>
 
       <div className="max-w-7xl mx-auto w-full px-4 md:px-8 grid grid-cols-1 lg:grid-cols-12 gap-8 items-center my-auto py-8 relative z-10">
         
@@ -417,6 +415,15 @@ export default function CotizadorForm() {
                       </button>
                     </div>
 
+                    {Number(km) > 200000 && (
+                      <div className="flex items-start gap-2.5 bg-amber-50 border border-amber-200 rounded-2xl p-3.5">
+                        <AlertTriangle className="w-4 h-4 text-amber-600 shrink-0 mt-0.5" />
+                        <p className="text-[11px] text-amber-800 font-medium leading-relaxed">
+                          Por el kilometraje que indicaste, te recomendamos acercarte a una sucursal para un peritaje presencial más preciso.
+                        </p>
+                      </div>
+                    )}
+
                     <div className="space-y-3">
                       <div
                         onClick={() => setPuedeVenir(true)}
@@ -554,6 +561,13 @@ export default function CotizadorForm() {
                     <div className="pt-1 flex justify-center">
                       <div ref={turnstileRef} />
                     </div>
+
+                    {errorEnvio && (
+                      <div key={shakeError} className="flex items-start gap-2 bg-rose-50 border border-rose-200 rounded-2xl p-3 animate-fadeIn animate-shake">
+                        <X className="w-4 h-4 text-rose-600 shrink-0 mt-0.5" />
+                        <p className="text-[11px] text-rose-700 font-medium leading-relaxed">{errorEnvio}</p>
+                      </div>
+                    )}
 
                     <button
                       type="submit"

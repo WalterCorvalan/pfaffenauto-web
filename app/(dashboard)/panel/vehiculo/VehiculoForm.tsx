@@ -20,12 +20,15 @@ const formSchema = z.object({
   color: z.string().optional(),
   tipo_combustible: z.string().optional(),
   transmision: z.string().optional(),
+  traccion: z.string().optional(),
+  potencia_cv: z.string().optional(),
+  cantidad_plazas: z.string().optional(),
   origen: z.string().optional(),
   estado: z.string().optional(),
   stock_fisico: z.boolean(),
   destacado: z.boolean(),
   pautado: z.boolean(),
-  canal_pauta: z.string().optional(),
+  canal_pauta: z.array(z.string()).optional(), // Transformado a Array para soportar múltiples checkboxes
   condicion_web: z.string().optional(),
   sucursal_id: z.string().min(1, "Seleccioná una sucursal"),
   precio_costo_ars: z.string().optional(),
@@ -77,7 +80,7 @@ export default function VehiculoForm({ modo, autoId }: VehiculoFormProps) {
     resolver: zodResolver(formSchema),
     defaultValues: {
       origen: "Comprado", estado: "Disponible", stock_fisico: true, destacado: false,
-      pautado: false, canal_pauta: "",
+      pautado: false, canal_pauta: [], // Iniciamos el array vacío
       anio: String(new Date().getFullYear()), kilometraje: "0",
     },
   });
@@ -106,9 +109,13 @@ export default function VehiculoForm({ modo, autoId }: VehiculoFormProps) {
             precio_publicado_usd: vehiculo.precio_publicado_usd ? String(vehiculo.precio_publicado_usd) : "",
             segmento: vehiculo.segmento || "", tipo: vehiculo.tipo || "", color: vehiculo.color || "",
             tipo_combustible: vehiculo.tipo_combustible || "", transmision: vehiculo.transmision || "",
+            traccion: vehiculo.traccion || "", potencia_cv: vehiculo.potencia_cv ? String(vehiculo.potencia_cv) : "",
+            cantidad_plazas: vehiculo.cantidad_plazas ? String(vehiculo.cantidad_plazas) : "",
             origen: vehiculo.origen || "", estado: vehiculo.estado || "",
             stock_fisico: vehiculo.stock_fisico !== false, destacado: vehiculo.destacado === true,
-            pautado: vehiculo.pautado === true, canal_pauta: vehiculo.canal_pauta || "",
+            pautado: vehiculo.pautado === true, 
+            // Separamos el string guardado en la DB por comas para rellenar los checkboxes
+            canal_pauta: vehiculo.canal_pauta ? vehiculo.canal_pauta.split(",").map((s: string) => s.trim()) : [],
             condicion_web: vehiculo.condicion_web || "", numero_motor: vehiculo.numero_motor || "",
             numero_chasis: vehiculo.numero_chasis || "", radicado_localidad: vehiculo.radicado_localidad || "",
             radicado_provincia: vehiculo.radicado_provincia || "", observaciones_internas: vehiculo.observaciones_internas || "",
@@ -161,6 +168,8 @@ export default function VehiculoForm({ modo, autoId }: VehiculoFormProps) {
         patente: data.patente, marca: data.marca, modelo: data.modelo, anio: Number(data.anio),
         kilometraje: Number(data.kilometraje), segmento: data.segmento || null, tipo: data.tipo || null,
         color: data.color || null, tipo_combustible: data.tipo_combustible || null, transmision: data.transmision || null,
+        traccion: data.traccion || null, potencia_cv: data.potencia_cv ? Number(data.potencia_cv) : null,
+        cantidad_plazas: data.cantidad_plazas ? Number(data.cantidad_plazas) : null,
         origen: data.origen || null, stock_fisico: data.stock_fisico, sucursal_id: data.sucursal_id,
         precio_costo_ars: data.precio_costo_ars ? Number(data.precio_costo_ars) : null,
         precio_costo_usd: data.precio_costo_usd ? Number(data.precio_costo_usd) : null,
@@ -168,7 +177,9 @@ export default function VehiculoForm({ modo, autoId }: VehiculoFormProps) {
         precio_publicado_usd: data.precio_publicado_usd ? Number(data.precio_publicado_usd) : null,
         numero_motor: data.numero_motor || null, numero_chasis: data.numero_chasis || null,
         radicado_localidad: data.radicado_localidad || null, radicado_provincia: data.radicado_provincia || null, destacado: data.destacado,
-        pautado: data.pautado, canal_pauta: data.pautado ? (data.canal_pauta || null) : null,
+        pautado: data.pautado, 
+        // Unimos el array con comas para guardarlo como string en la DB
+        canal_pauta: data.pautado && data.canal_pauta?.length ? data.canal_pauta.join(", ") : null,
       };
 
       if (modo === "crear") {
@@ -357,6 +368,27 @@ export default function VehiculoForm({ modo, autoId }: VehiculoFormProps) {
                     <option value="Automática">Automática</option>
                   </select>
                 </Campo>
+                <Campo label="Tracción" error={errors.traccion?.message}>
+                  <select {...register("traccion")} className={inputClass}>
+                    <option value="">Seleccionar...</option>
+                    <option value="4x2">4x2</option>
+                    <option value="4x4">4x4</option>
+                    <option value="Delantera">Delantera</option>
+                    <option value="Trasera">Trasera</option>
+                    <option value="Integral (AWD)">Integral (AWD)</option>
+                  </select>
+                </Campo>
+                <Campo label="Potencia (CV)" error={errors.potencia_cv?.message}>
+                  <input type="number" {...register("potencia_cv")} className={inputClass} placeholder="Ej: 150" />
+                </Campo>
+                <Campo label="Cantidad de plazas" error={errors.cantidad_plazas?.message}>
+                  <select {...register("cantidad_plazas")} className={inputClass}>
+                    <option value="">Seleccionar...</option>
+                    {[2, 3, 4, 5, 6, 7].map((n) => (
+                      <option key={n} value={n}>{n} plazas</option>
+                    ))}
+                  </select>
+                </Campo>
                 <Campo label="Sucursal *" error={errors.sucursal_id?.message}>
                   <select {...register("sucursal_id")} className={inputClass}>
                     <option value="">Seleccionar...</option>
@@ -392,18 +424,29 @@ export default function VehiculoForm({ modo, autoId }: VehiculoFormProps) {
                   <input type="checkbox" {...register("destacado")} className="w-4 h-4 accent-indigo-600" /> Destacado en Web
                 </label>
                 <label className="flex items-center gap-3 text-sm text-slate-700 cursor-pointer bg-orange-50 border border-orange-200 p-4 rounded-xl hover:bg-orange-100/50 w-fit transition-colors font-medium">
-                  <input type="checkbox" {...register("pautado")} className="w-4 h-4 accent-orange-600" /> Pautado (con inversión publicitaria)
+                  <input type="checkbox" {...register("pautado")} className="w-4 h-4 accent-orange-600" /> Pautado
                 </label>
                 {watch("pautado") && (
-                  <div className="ml-4 pl-4 border-l-2 border-orange-400 max-w-xs">
-                    <Campo label="Canal de la pauta">
-                      <select {...register("canal_pauta")} className={inputClass}>
-                        <option value="">Sin especificar</option>
-                        <option value="MercadoLibre">MercadoLibre</option>
-                        <option value="Meta Ads">Meta Ads (Instagram/Facebook)</option>
-                        <option value="Google Ads">Google Ads</option>
-                        <option value="Web">Web</option>
-                      </select>
+                  <div className="ml-4 pl-4 border-l-2 border-orange-400">
+                    <Campo label="Canales de la pauta">
+                      <div className="flex flex-col gap-3 mt-3">
+                        {[
+                          { id: "MercadoLibre", label: "MercadoLibre" },
+                          { id: "Meta Ads", label: "Meta Ads (Instagram/Facebook)" },
+                          { id: "Google Ads", label: "Google Ads" },
+                          { id: "Web", label: "Web" },
+                        ].map((canal) => (
+                          <label key={canal.id} className="flex items-center gap-3 text-sm text-slate-700 cursor-pointer font-medium hover:text-orange-600 transition-colors w-fit">
+                            <input
+                              type="checkbox"
+                              value={canal.id}
+                              {...register("canal_pauta")}
+                              className="w-4 h-4 accent-orange-600 rounded border-slate-300 cursor-pointer"
+                            />
+                            {canal.label}
+                          </label>
+                        ))}
+                      </div>
                     </Campo>
                   </div>
                 )}

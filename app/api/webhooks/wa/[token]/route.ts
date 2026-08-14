@@ -41,12 +41,15 @@ export async function POST(req: Request, { params }: { params: Promise<{ token: 
   const rawBody = await req.text();
 
   const appSecret = process.env.META_APP_SECRET;
-  if (appSecret) {
-    const signature = req.headers.get("x-hub-signature-256") ?? "";
-    const expected = "sha256=" + createHmac("sha256", appSecret).update(rawBody).digest("hex");
-    if (signature.length !== expected.length || !timingSafeEqual(Buffer.from(signature), Buffer.from(expected))) {
-      return new Response("Unauthorized", { status: 401 });
-    }
+  if (!appSecret) {
+    console.error("[webhook] Error: META_APP_SECRET is not configured in environment variables.");
+    return new Response("Unauthorized", { status: 401 });
+  }
+
+  const signature = req.headers.get("x-hub-signature-256") ?? "";
+  const expected = "sha256=" + createHmac("sha256", appSecret).update(rawBody).digest("hex");
+  if (signature.length !== expected.length || !timingSafeEqual(Buffer.from(signature), Buffer.from(expected))) {
+    return new Response("Unauthorized", { status: 401 });
   }
 
   const payload = JSON.parse(rawBody);
@@ -142,7 +145,50 @@ const AgentReplySchema = z.object({
     forma_pago: z.string().nullable(),
     tiene_permuta: z.boolean().nullable(),
   }),
+  vehiculo_mencionado: z.object({
+    marca: z.string().nullable(),
+    modelo: z.string().nullable(),
+  }).nullable(),
 });
+
+// Si el lead menciona un auto puntual, lo vinculamos. El vendedor sale directo
+// de vehiculos.vendedor_asignado_id (cada auto ya tiene su vendedor). Si el auto
+// no tiene vendedor asignado, la conversación queda sin asignar para repartirse a mano.
+async function vincularAutoYAsignar(conversacionId: string, marca: string, modelo: string) {
+  const { data: auto } = await supabase
+    .from("vehiculos")
+    .select("id, vendedor_asignado_id")
+    .ilike("marca", `%${marca}%`)
+    .ilike("modelo", `%${modelo}%`)
+    .in("estado", ["Disponible", "Reservado"])
+    .limit(1)
+    .maybeSingle();
+
+  if (!auto) return;
+
+  const update: Record<string, unknown> = { vehiculo_id: auto.id };
+  if (auto.vendedor_asignado_id) update.vendedor_id = auto.vendedor_asignado_id;
+
+  await supabase.from("whatsapp_conversaciones").update(update).eq("id", conversacionId);
+}
+
+// Si después de un par de mensajes la IA no logra identificar qué auto busca el
+// cliente, no lo dejamos sin asignar para siempre: se lo tira a un vendedor activo al azar.
+async function asignarVendedorAlAzar(conversacionId: string) {
+  const { data: vendedores } = await supabase
+    .from("perfiles")
+    .select("id")
+    .eq("rol", "vendedor")
+    .eq("activo", true);
+
+  if (!vendedores || vendedores.length === 0) return;
+
+  const elegido = vendedores[Math.floor(Math.random() * vendedores.length)];
+  await supabase
+    .from("whatsapp_conversaciones")
+    .update({ vendedor_id: elegido.id })
+    .eq("id", conversacionId);
+}
 
 function isWhatsappEnvioConfigurado(): boolean {
   return !!process.env.META_WHATSAPP_TOKEN && !!process.env.META_WHATSAPP_PHONE_NUMBER_ID;
@@ -175,7 +221,7 @@ async function ejecutarAgente(conversacionId: string, contactoId: string) {
     return;
   }
 
-  const { reply, handoff, calificacion } = result.data;
+  const { reply, handoff, calificacion, vehiculo_mencionado } = result.data;
 
   const estadoSegunCalificacion =
     calificacion === "caliente" ? "Interesado" :
@@ -185,6 +231,31 @@ async function ejecutarAgente(conversacionId: string, contactoId: string) {
     .from("whatsapp_conversaciones")
     .update({ calificacion, estado: estadoSegunCalificacion })
     .eq("id", conversacionId);
+
+  if (vehiculo_mencionado?.marca && vehiculo_mencionado?.modelo) {
+    const { data: conv } = await supabase
+      .from("whatsapp_conversaciones")
+      .select("vehiculo_id")
+      .eq("id", conversacionId)
+      .single();
+    if (!conv?.vehiculo_id) {
+      await vincularAutoYAsignar(conversacionId, vehiculo_mencionado.marca, vehiculo_mencionado.modelo);
+    }
+  } else {
+    // Sin auto identificado: si ya le repreguntamos y en 2 o más mensajes del
+    // cliente sigue sin decir marca/modelo, no lo dejamos sin asignar.
+    const mensajesCliente = historial.filter((m) => m.role === "user").length;
+    if (mensajesCliente >= 2) {
+      const { data: conv } = await supabase
+        .from("whatsapp_conversaciones")
+        .select("vehiculo_id, vendedor_id")
+        .eq("id", conversacionId)
+        .single();
+      if (!conv?.vehiculo_id && !conv?.vendedor_id) {
+        await asignarVendedorAlAzar(conversacionId);
+      }
+    }
+  }
 
   const { data: mensajeSaliente } = await supabase
     .from("whatsapp_mensajes")

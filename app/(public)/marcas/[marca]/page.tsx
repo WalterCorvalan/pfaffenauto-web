@@ -1,6 +1,8 @@
 import { createClient } from "@/lib/supabase/server";
 import Link from "next/link";
-import { ChevronRight, ShieldCheck } from "lucide-react";
+import { ShieldCheck } from "lucide-react";
+import VehiculosGrid from "@/components/VehiculosGrid";
+import { CAMPOS_VEHICULO_PUBLICO } from "@/lib/vehiculos";
 export const revalidate = 60;
 
 // Diccionario para personalizar textos y logos por marca de forma elegante
@@ -48,10 +50,7 @@ export default async function MarcaPage({
 
   const { data: vehiculos } = await supabase
     .from("vehiculos")
-    .select(`
-      *,
-      multimedia_vehiculos ( url_archivo )
-    `)
+    .select(CAMPOS_VEHICULO_PUBLICO)
     .ilike("marca", marca)
     .in("estado", ["Disponible", "Reservado"])
     .order("precio_publicado_ars", { ascending: true });
@@ -168,66 +167,7 @@ export default async function MarcaPage({
           </span>
         </div>
 
-        {/* FORZAMOS 2 COLUMNAS EN MÓVIL y escalamos hacia arriba */}
-        <div className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 md:gap-6">
-          {vehiculos.map((auto) => (
-            <Link
-              href={`/catalogo/${auto.slug}`}
-              key={auto.id}
-              className="block group focus:outline-none h-full"
-            >
-              <div className="bg-white/40 backdrop-blur-2xl rounded-[24px] md:rounded-[28px] border border-white/60 overflow-hidden flex flex-col h-full shadow-[0_8px_32px_rgba(0,0,0,0.04)] hover:shadow-[0_20px_48px_rgba(1,69,242,0.12)] hover:border-white hover:bg-white/70 transition-all duration-500 relative transform group-hover:-translate-y-1 p-3 md:p-4">
-                
-                {/* Reflejo hover */}
-                <div className="absolute inset-0 bg-gradient-to-tr from-transparent via-white/50 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-700 pointer-events-none z-20"></div>
-
-                {/* Imagen */}
-                <div className="relative h-[120px] sm:h-[160px] flex items-center justify-center overflow-hidden mb-4 bg-white/30 rounded-xl md:rounded-[20px] mix-blend-multiply">
-                  <img
-                    src={auto.multimedia_vehiculos?.[0]?.url_archivo || "/placeholder.jpg"}
-                    alt={`${auto.marca} ${auto.modelo}`}
-                    className="w-full h-full object-contain group-hover:scale-110 transition-transform duration-700 ease-out p-2"
-                  />
-                  {auto.estado === "Reservado" && (
-                    <div className="absolute top-2 right-2 bg-yellow-100/90 backdrop-blur-md text-yellow-800 border border-yellow-200/80 px-2.5 py-1 rounded-full text-[8px] md:text-[9px] font-black uppercase tracking-widest shadow-sm z-10">
-                      Reservado
-                    </div>
-                  )}
-                </div>
-
-                {/* Info Textual */}
-                <div className="flex flex-col flex-grow relative z-10 px-1">
-                  <span className="text-[9px] sm:text-[10px] text-gray-500 font-black uppercase tracking-widest mb-1">
-                    {auto.marca}
-                  </span>
-                  <h3 className="text-sm sm:text-base md:text-lg font-black text-navy leading-tight uppercase truncate drop-shadow-sm">
-                    {auto.modelo}
-                  </h3>
-                  <p className="text-[10px] sm:text-xs text-gray-500 font-medium mt-1 truncate">
-                    {auto.version || auto.tipo || "Vehículo"}
-                  </p>
-
-                  {/* Bloque de Precio y Botón */}
-                  <div className="mt-auto pt-4">
-                    <div className="bg-white/50 backdrop-blur-md rounded-xl p-3 mb-3 border border-white/80 shadow-[inset_0_2px_4px_rgba(0,0,0,0.02)]">
-                      <span className="text-[8px] sm:text-[9px] text-gray-400 font-black uppercase tracking-widest block mb-0.5">
-                        Desde
-                      </span>
-                      <span className="text-xs sm:text-base md:text-lg font-black text-navy tracking-tighter drop-shadow-sm">
-                        $ {auto.precio_publicado_ars?.toLocaleString("es-AR")}
-                      </span>
-                    </div>
-
-                    <button className="w-full bg-white/80 backdrop-blur-md text-navy border border-white/80 hover:bg-[#0145F2] hover:text-white hover:border-[#0145F2] font-black text-[10px] sm:text-xs uppercase tracking-widest py-2.5 sm:py-3 rounded-xl transition-all duration-300 shadow-sm hover:shadow-[0_8px_20px_rgba(1,69,242,0.3)] active:scale-95">
-                      Ver detalles
-                    </button>
-                  </div>
-                </div>
-
-              </div>
-            </Link>
-          ))}
-        </div>
+        <VehiculosGrid vehiculos={vehiculos} />
 
       </div>
     </div>

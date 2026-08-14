@@ -1,4 +1,5 @@
 import Link from "next/link";
+import Image from "next/image";
 import { MapPin, Phone, Clock, ArrowLeft } from "lucide-react";
 
 interface HeroProps {
@@ -16,7 +17,8 @@ const UBICACIONES: Record<string, { mapUrl: string; navLink: string }> = {
     navLink: "https://maps.app.goo.gl/4ZMmpWJCarHcZ2sb9",
   },
   "don-torcuato": {
-    mapUrl: "https://maps.google.com/maps?q=Pfaffen+Autos,+Don+Torcuato,+Buenos+Aires&t=m&z=15&output=embed&iwloc=near&hl=es",
+    // Acá colocamos la URL embed exacta de Google Maps
+    mapUrl: "https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3288.084180424599!2d-58.62231392426363!3d-34.48414427334185!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x95bca5007f7d6a25%3A0x103f7a961b168d5!2sPfaffen%20Autos%20Panamericana!5e0!3m2!1ses!2sar!4v1716300000000!5m2!1ses!2sar",
     navLink: "https://maps.app.goo.gl/GuNBuUKT5xMFw5jR9",
   },
 };
@@ -29,7 +31,7 @@ export default function SucursalHeroAnimated({ slug, nombre, imagen, direccion, 
     <>
       {/* ================= BANNER ================= */}
       <section className="relative h-64 md:h-80 lg:h-[420px] w-full overflow-hidden">
-        <img src={imagen} alt={`Sucursal ${nombre}`} className="absolute inset-0 w-full h-full object-cover" />
+        <Image src={imagen} alt={`Sucursal ${nombre}`} fill priority sizes="100vw" className="object-cover" />
         <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/30 to-black/10"></div>
 
         <div className="relative z-10 max-w-7xl mx-auto w-full h-full px-4 md:px-6 flex flex-col justify-between py-6">
@@ -49,10 +51,11 @@ export default function SucursalHeroAnimated({ slug, nombre, imagen, direccion, 
 
       {/* ================= DATOS DE CONTACTO Y UBICACIÓN ================= */}
       <section className="bg-white border-b border-gray-200">
-        <div className="max-w-7xl mx-auto px-4 md:px-6 py-10 lg:py-14 grid grid-cols-1 lg:grid-cols-12 gap-6 lg:gap-8">
+        {/* Agregamos items-stretch para que ambas columnas midan lo mismo */}
+        <div className="max-w-7xl mx-auto px-4 md:px-6 py-10 lg:py-14 grid grid-cols-1 lg:grid-cols-12 gap-6 lg:gap-8 items-stretch">
 
-          {/* Info formal */}
-          <div className="lg:col-span-5 bg-white border border-gray-200 rounded-2xl divide-y divide-gray-100">
+          {/* Info formal: Le damos flex-col y justify-center para que se centre verticalmente */}
+          <div className="lg:col-span-5 bg-white border border-gray-200 rounded-2xl divide-y divide-gray-100 flex flex-col justify-center">
             <InfoRow icon={<MapPin className="w-4 h-4" />} label="Dirección" value={direccion} />
             <InfoRow
               icon={<Phone className="w-4 h-4" />}
@@ -63,12 +66,12 @@ export default function SucursalHeroAnimated({ slug, nombre, imagen, direccion, 
             <InfoRow icon={<Clock className="w-4 h-4" />} label="Horario de atención" value={horario} />
           </div>
 
-          {/* Mapa de ubicación */}
-          <div className="lg:col-span-7 relative rounded-2xl overflow-hidden border border-gray-200 h-64 lg:h-auto min-h-[260px]">
+          {/* Mapa de ubicación: relative y h-full con el iframe en absolute */}
+          <div className="lg:col-span-7 relative rounded-2xl overflow-hidden border border-gray-200 min-h-[300px]">
             <iframe
               title={`Ubicación de ${nombre}`}
               src={mapaSrc}
-              className="w-full h-full border-0"
+              className="absolute inset-0 w-full h-full border-0"
               loading="lazy"
               referrerPolicy="no-referrer-when-downgrade"
             />

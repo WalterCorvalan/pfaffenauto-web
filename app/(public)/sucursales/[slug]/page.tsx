@@ -1,5 +1,6 @@
 import { createClient } from "@supabase/supabase-js";
 import { notFound } from "next/navigation";
+import { CAMPOS_VEHICULO_PUBLICO } from "@/lib/vehiculos";
 import VehiculosGrid from "@/components/VehiculosGrid";
 import Link from "next/link";
 import { MapPin, Phone, Clock, ArrowLeft } from "lucide-react";
@@ -38,7 +39,7 @@ export default async function SucursalPage({ params }: { params: Promise<{ slug:
 
   const { data: sucursal } = await supabase
     .from("sucursales")
-    .select("*")
+    .select("id, nombre, direccion, telefono, slug")
     .eq("slug", slug)
     .single();
 
@@ -46,23 +47,17 @@ export default async function SucursalPage({ params }: { params: Promise<{ slug:
 
   const { data: vehiculos } = await supabase
     .from("vehiculos")
-    .select(
-      `
-      *,
-      multimedia_vehiculos ( url_archivo ),
-      sucursales ( nombre )
-    `,
-    )
+    .select(CAMPOS_VEHICULO_PUBLICO)
     .eq("sucursal_id", sucursal.id)
     .in("estado", ["Disponible", "Reservado"])
     .order("created_at", { ascending: false });
 
   const fallback = FALLBACK_DATA[slug] || FALLBACK_DATA["casa-central"];
 
-  const imagenFondo = sucursal.imagen_url || fallback.imagen;
+  const imagenFondo = fallback.imagen;
   const direccion = sucursal.direccion || fallback.direccion;
   const telefono = sucursal.telefono || fallback.telefono;
-  const horario = sucursal.horarios || fallback.horario;
+  const horario = fallback.horario;
   const nombreSucursal = sucursal.nombre;
 
   return (

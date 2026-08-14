@@ -12,6 +12,7 @@ const jakarta = Plus_Jakarta_Sans({
 
 // ================= METADATA SEO OPTIMIZADA =================
 export const metadata: Metadata = {
+  metadataBase: new URL("https://pfaffenautos.com.ar"),
   title: "Pfaffen Autos | Concesionaria de 0KM y Usados en Zona Norte",
   description:
     "Comprá o vendé tu auto de forma fácil y segura. Amplio catálogo de 0KM y usados seleccionados de alta gama (Toyota, Volkswagen, BMW, Audi). Sucursales en Casa Central y Don Torcuato.",
@@ -43,6 +44,10 @@ export const metadata: Metadata = {
     "audi",
     "mercedes benz",
     "ford",
+    "rely",
+    "karry",
+    "concesionario oficial rely",
+    "concesionario oficial karry",
   ],
   authors: [{ name: "Pfaffen Autos" }],
   creator: "Pfaffen Autos",
@@ -50,6 +55,30 @@ export const metadata: Metadata = {
   robots: {
     index: true,
     follow: true,
+  },
+  openGraph: {
+    title: "Pfaffen Autos | Concesionaria de 0KM y Usados en Zona Norte",
+    description:
+      "Comprá o vendé tu auto de forma fácil y segura. Amplio catálogo de 0KM y usados seleccionados de alta gama.",
+    url: "https://pfaffenautos.com.ar",
+    siteName: "Pfaffen Autos",
+    images: [
+      {
+        url: "https://pfaffenautos.com.ar/logo.png",
+        width: 1200,
+        height: 630,
+        alt: "Pfaffen Autos",
+      },
+    ],
+    locale: "es_AR",
+    type: "website",
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "Pfaffen Autos | Concesionaria de 0KM y Usados en Zona Norte",
+    description:
+      "Comprá o vendé tu auto de forma fácil y segura. Amplio catálogo de 0KM y usados seleccionados de alta gama.",
+    images: ["https://pfaffenautos.com.ar/logo.png"],
   },
 };
 

@@ -26,10 +26,12 @@ const ETAPAS_PIPELINE = [
 
 export default function ChatClient({
   conversacionesIniciales,
+  vendedores = [],
 }: {
   conversacionesIniciales: any[];
+  vendedores?: { id: string; nombre: string; sucursal_id: string | null }[];
 }) {
-  const [conversaciones] = useState(conversacionesIniciales);
+  const [conversaciones, setConversaciones] = useState(conversacionesIniciales);
   const [seleccionada, setSeleccionada] = useState<string | null>(null);
   const [mensajes, setMensajes] = useState<any[]>([]);
   const [nuevoMensaje, setNuevoMensaje] = useState("");
@@ -236,10 +238,81 @@ export default function ChatClient({
     setShowVincular(false);
   };
 
+  const reasignarVendedor = async (vendedorId: string) => {
+    if (!seleccionada) return;
+    const nuevoId = vendedorId || null;
+    await supabase
+      .from("whatsapp_conversaciones")
+      .update({ vendedor_id: nuevoId })
+      .eq("id", seleccionada);
+    const vendedor = vendedores.find((v) => v.id === nuevoId) || null;
+    setConversaciones((prev) =>
+      prev.map((c) => (c.id === seleccionada ? { ...c, vendedor_id: nuevoId, vendedor } : c))
+    );
+  };
+
+  const tibiosYCalientes = conversaciones.filter(
+    (c) => c.calificacion === "tibio" || c.calificacion === "caliente"
+  );
+  const frios = conversaciones.filter(
+    (c) => c.calificacion !== "tibio" && c.calificacion !== "caliente"
+  );
+
+  const colorCalificacion = (calificacion: string | null) => {
+    if (calificacion === "caliente") return "bg-rose-500";
+    if (calificacion === "tibio") return "bg-amber-500";
+    return "bg-slate-300";
+  };
+
+  const renderConversacion = (c: any) => {
+    const contacto = c.whatsapp_contactos;
+    const iniciales = (contacto?.nombre_perfil || contacto?.telefono || "?")
+      .substring(0, 2)
+      .toUpperCase();
+    const isActive = seleccionada === c.id;
+
+    return (
+      <button
+        key={c.id}
+        onClick={() => setSeleccionada(c.id)}
+        className={`w-full text-left p-3.5 border-b border-slate-100 transition-all flex gap-3 ${
+          isActive
+            ? "bg-emerald-50 border-l-2 border-l-emerald-700"
+            : "bg-white border-l-2 border-l-transparent hover:bg-slate-50"
+        }`}
+      >
+        <div className="relative shrink-0">
+          <div className="w-10 h-10 rounded-full bg-slate-600 text-white flex items-center justify-center font-bold text-sm">
+            {iniciales}
+          </div>
+          <span
+            className={`absolute -top-0.5 -right-0.5 w-3 h-3 rounded-full border-2 border-white ${colorCalificacion(c.calificacion)}`}
+            title={c.calificacion || "Sin calificar"}
+          />
+        </div>
+        <div className="flex-1 min-w-0">
+          <div className="flex justify-between items-start mb-0.5">
+            <span
+              className={`font-bold text-sm truncate ${isActive ? "text-emerald-900" : "text-slate-900"}`}
+            >
+              {contacto?.nombre_perfil || contacto?.telefono}
+            </span>
+            <span className="text-[11px] text-slate-400 whitespace-nowrap">
+              {c.last_message_at ? formatDay(c.last_message_at) : ""}
+            </span>
+          </div>
+          <p className="text-[13px] text-slate-500 truncate mb-1.5">
+            Clic para ver historial...
+          </p>
+        </div>
+      </button>
+    );
+  };
+
   return (
     <div className="flex w-full h-full text-slate-800">
       {/* ================= COLUMNA 1: BANDEJA (Izquierda) ================= */}
-      <div className="w-full md:w-[320px] flex flex-col bg-white border-r border-slate-200 shrink-0">
+      <div className={`w-full md:w-[320px] flex-col bg-white border-r border-slate-200 shrink-0 ${seleccionada ? "hidden md:flex" : "flex"}`}>
         <div className="p-4 border-b border-slate-100 flex-shrink-0">
           <h2 className="text-[17px] font-bold text-slate-900 mb-4 flex items-center gap-2">
             Bandeja{" "}
@@ -277,48 +350,23 @@ export default function ChatClient({
         </div>
 
         <div className="flex-1 overflow-y-auto custom-scrollbar">
-          {conversaciones.map((c) => {
-            const contacto = c.whatsapp_contactos;
-            const iniciales = (
-              contacto?.nombre_perfil ||
-              contacto?.telefono ||
-              "?"
-            )
-              .substring(0, 2)
-              .toUpperCase();
-            const isActive = seleccionada === c.id;
+          {tibiosYCalientes.length > 0 && (
+            <div className="px-3.5 py-2 bg-slate-50 border-b border-slate-100 sticky top-0 z-[1]">
+              <span className="text-[10px] font-bold uppercase tracking-widest text-slate-500">
+                Tibios y calientes · {tibiosYCalientes.length}
+              </span>
+            </div>
+          )}
+          {tibiosYCalientes.map((c) => renderConversacion(c))}
 
-            return (
-              <button
-                key={c.id}
-                onClick={() => setSeleccionada(c.id)}
-                className={`w-full text-left p-3.5 border-b border-slate-100 transition-all flex gap-3 ${
-                  isActive
-                    ? "bg-emerald-50 border-l-2 border-l-emerald-700"
-                    : "bg-white border-l-2 border-l-transparent hover:bg-slate-50"
-                }`}
-              >
-                <div className="w-10 h-10 rounded-full bg-slate-600 text-white flex items-center justify-center font-bold text-sm shrink-0">
-                  {iniciales}
-                </div>
-                <div className="flex-1 min-w-0">
-                  <div className="flex justify-between items-start mb-0.5">
-                    <span
-                      className={`font-bold text-sm truncate ${isActive ? "text-emerald-900" : "text-slate-900"}`}
-                    >
-                      {contacto?.nombre_perfil || contacto?.telefono}
-                    </span>
-                    <span className="text-[11px] text-slate-400 whitespace-nowrap">
-                      {c.last_message_at ? formatDay(c.last_message_at) : ""}
-                    </span>
-                  </div>
-                  <p className="text-[13px] text-slate-500 truncate mb-1.5">
-                    Clic para ver historial...
-                  </p>
-                </div>
-              </button>
-            );
-          })}
+          {frios.length > 0 && (
+            <div className="px-3.5 py-2 bg-slate-50 border-y border-slate-100 sticky top-0 z-[1]">
+              <span className="text-[10px] font-bold uppercase tracking-widest text-slate-400">
+                Fríos · {frios.length}
+              </span>
+            </div>
+          )}
+          {frios.map((c) => renderConversacion(c))}
         </div>
       </div>
 
@@ -555,6 +603,23 @@ export default function ChatClient({
                   );
                 })}
               </div>
+            </div>
+
+            {/* Vendedor asignado */}
+            <div className="p-6 border-b border-slate-200">
+              <h4 className="text-[11px] font-bold text-slate-400 uppercase tracking-widest mb-3">
+                Vendedor asignado
+              </h4>
+              <select
+                value={conversacionActiva?.vendedor_id || ""}
+                onChange={(e) => reasignarVendedor(e.target.value)}
+                className="w-full bg-slate-50 border border-slate-200 rounded-lg px-3 py-2 text-sm font-medium text-slate-800 outline-none focus:border-emerald-600 cursor-pointer"
+              >
+                <option value="">Sin asignar</option>
+                {vendedores.map((v) => (
+                  <option key={v.id} value={v.id}>{v.nombre}</option>
+                ))}
+              </select>
             </div>
 
             <button

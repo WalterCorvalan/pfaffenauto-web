@@ -56,7 +56,7 @@ export default function AccionesAuto({ autoId, estadoActual, puedeGestionar }: A
         if (!errCliente && clienteInsertado) clienteId = clienteInsertado.id;
         else if (errCliente) console.error("Error creando cliente:", errCliente);
 
-        const { error: errAuto } = await supabase
+        const { data: autoActualizado, error: errAuto } = await supabase
           .from("vehiculos")
           .update({
             estado: "Vendido",
@@ -64,17 +64,32 @@ export default function AccionesAuto({ autoId, estadoActual, puedeGestionar }: A
             forma_pago: datosVenta.formaPago,
             fecha_venta: fechaActual,
           })
-          .eq("id", autoId);
+          .eq("id", autoId)
+          .select("marca, modelo, patente, color, anio, numero_motor, numero_chasis")
+          .single();
 
         if (errAuto) throw errAuto;
 
-        const { error: errVenta } = await supabase.from("ventas").insert({
+        const { data: ultimoBoleto } = await supabase.from("boletos_venta").select("numero").order("numero", { ascending: false }).limit(1).maybeSingle();
+        const siguienteNumero = (ultimoBoleto?.numero || 0) + 1;
+
+        const { error: errVenta } = await supabase.from("boletos_venta").insert({
+          numero: siguienteNumero,
+          fecha: fechaActual,
           vehiculo_id: autoId,
           cliente_id: clienteId,
+          nombre: datosVenta.compradorNombre,
+          apellido: datosVenta.compradorApellido,
           vendedor_id: user?.id,
-          precio_final_ars: datosVenta.precioFinal,
-          forma_pago: datosVenta.formaPago,
-          fecha_venta: fechaActual,
+          venta_ars: datosVenta.precioFinal,
+          saldo_abonar_ars: 0,
+          marca: autoActualizado?.marca,
+          modelo: autoActualizado?.modelo,
+          dominio: autoActualizado?.patente,
+          color: autoActualizado?.color,
+          modelo_anio: autoActualizado?.anio,
+          numero_motor: autoActualizado?.numero_motor,
+          numero_chasis: autoActualizado?.numero_chasis,
         });
 
         if (errVenta) throw errVenta;

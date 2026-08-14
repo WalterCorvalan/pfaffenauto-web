@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import Link from "next/link";
+import Image from "next/image";
 import { Inter } from "next/font/google";
 import { ChevronLeft, ChevronRight, X, Menu, Loader2, CheckCircle2 } from "lucide-react";
 import { KARRY_VERSIONS } from "@/lib/karry-versions";
@@ -79,10 +80,10 @@ export default function LandingKarry() {
           onMouseLeave={() => setIsMenuOpen(false)}
         >
           <div className="flex items-center gap-3 py-3 md:py-4">
-            <img src="/logo-karry.webp" alt="Karry" className="h-6 md:h-7 w-auto object-contain" />
+            <Image src="/logo-karry.webp" alt="Karry" width={120} height={28} className="h-6 md:h-7 w-auto object-contain" />
             <Link href="/" className="relative flex items-center border-l border-white/30 pl-3">
-              <img src="/logo.png" alt="Pfaffen Autos" className="h-4 sm:h-5 md:h-6 w-auto object-contain brightness-0 invert" />
-              <img src="/r.png" alt="" className="absolute -top-1.5 -right-2 h-2 md:h-2.5 w-auto object-contain brightness-0 invert" />
+              <Image src="/logo.png" alt="Pfaffen Autos" width={100} height={24} className="h-4 sm:h-5 md:h-6 w-auto object-contain brightness-0 invert" />
+              <Image src="/r.png" alt="" width={10} height={10} className="absolute -top-1.5 -right-2 h-2 md:h-2.5 w-auto object-contain brightness-0 invert" />
             </Link>
           </div>
 
@@ -142,8 +143,8 @@ export default function LandingKarry() {
                       <p className="text-xs text-slate-500 mt-1 font-light leading-relaxed">{v.text}</p>
                     </div>
                     
-                    <div className="py-4 flex justify-center mix-blend-multiply">
-                      <img src={v.image} alt={v.name} className="h-24 object-contain group-hover:scale-105 transition-transform" />
+                    <div className="relative py-4 h-32 flex justify-center mix-blend-multiply">
+                      <Image src={v.image} alt={v.name} fill sizes="200px" className="object-contain group-hover:scale-105 transition-transform" />
                     </div>
 
                     <div className="flex items-center gap-2 mt-auto">
@@ -177,10 +178,13 @@ export default function LandingKarry() {
         
         {/* IMAGEN DE FONDO ABSOLUTA */}
         <div className="absolute inset-0 w-full h-full z-0">
-          <img 
-            src="/karryBanner.png" 
-            alt="Karry Pick Up" 
-            className="w-full h-full object-cover"
+          <Image
+            src="/karryBanner.png"
+            alt="Karry Pick Up"
+            fill
+            priority
+            sizes="100vw"
+            className="object-cover"
           />
           {/* Sombra sutil opcional para que el texto blanco de arriba se lea bien */}
           <div className="absolute inset-0 bg-black/20"></div>
@@ -234,22 +238,22 @@ export default function LandingKarry() {
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
                   <div>
                     <label className="text-[11px] text-gray-500 font-bold uppercase tracking-wider mb-1 block">Nombre</label>
-                    <input required type="text" value={nombre} onChange={(e) => setNombre(e.target.value)} placeholder="Nombre completo" className="w-full bg-transparent border-b border-gray-300 py-2 outline-none focus:border-[#1273b9] transition-colors text-slate-800 font-medium placeholder:font-normal placeholder:text-gray-400" />
+                    <input required type="text" value={nombre} onChange={(e) => setNombre(e.target.value)} placeholder="Nombre completo" className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 outline-none focus:border-[#1273b9] focus:bg-white transition-colors text-slate-800 font-medium placeholder:font-normal placeholder:text-gray-400" />
                   </div>
                   <div>
                     <label className="text-[11px] text-gray-500 font-bold uppercase tracking-wider mb-1 block">Apellido</label>
-                    <input required type="text" value={apellido} onChange={(e) => setApellido(e.target.value)} placeholder="Apellido" className="w-full bg-transparent border-b border-gray-300 py-2 outline-none focus:border-[#1273b9] transition-colors text-slate-800 font-medium placeholder:font-normal placeholder:text-gray-400" />
+                    <input required type="text" value={apellido} onChange={(e) => setApellido(e.target.value)} placeholder="Apellido" className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 outline-none focus:border-[#1273b9] focus:bg-white transition-colors text-slate-800 font-medium placeholder:font-normal placeholder:text-gray-400" />
                   </div>
                 </div>
 
                 <div>
                   <label className="text-[11px] text-gray-500 font-bold uppercase tracking-wider mb-1 block">Teléfono / WhatsApp</label>
-                  <input required type="tel" value={telefono} onChange={(e) => setTelefono(e.target.value)} placeholder="Código de área + Número" className="w-full bg-transparent border-b border-gray-300 py-2 outline-none focus:border-[#1273b9] transition-colors text-slate-800 font-medium placeholder:font-normal placeholder:text-gray-400" />
+                  <input required type="tel" value={telefono} onChange={(e) => setTelefono(e.target.value)} placeholder="Código de área + Número" className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 outline-none focus:border-[#1273b9] focus:bg-white transition-colors text-slate-800 font-medium placeholder:font-normal placeholder:text-gray-400" />
                 </div>
 
                 <div>
                   <label className="text-[11px] text-gray-500 font-bold uppercase tracking-wider mb-1 block">Versión de interés</label>
-                  <select value={versionInteres} onChange={(e) => setVersionInteres(e.target.value)} className="w-full bg-transparent border-b border-gray-300 py-2 outline-none focus:border-[#1273b9] transition-colors text-slate-800 font-medium appearance-none cursor-pointer">
+                  <select value={versionInteres} onChange={(e) => setVersionInteres(e.target.value)} className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 outline-none focus:border-[#1273b9] focus:bg-white transition-colors text-slate-800 font-medium appearance-none cursor-pointer">
                     <option>Cabina Simple (CS)</option>
                     <option>Cabina Doble (CD)</option>
                   </select>
@@ -282,7 +286,7 @@ export default function LandingKarry() {
                 <Link href={`/karry/${v.slug}`} className="block">
                   {/* Imagen del modelo con dots simulados */}
                   <div className="bg-[#eef0f2] h-56 relative flex justify-center items-center p-4">
-                    <img src={v.image} alt={v.name} className="w-full h-full object-contain mix-blend-multiply drop-shadow-md" />
+                    <Image src={v.image} alt={v.name} fill sizes="(max-width: 768px) 50vw, 25vw" className="object-contain mix-blend-multiply drop-shadow-md" />
                     <div className="absolute bottom-3 left-1/2 -translate-x-1/2 flex gap-1.5">
                       <div className="w-1.5 h-1.5 rounded-full bg-[#1273b9]"></div>
                       <div className="w-1.5 h-1.5 rounded-full bg-slate-300"></div>

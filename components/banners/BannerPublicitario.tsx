@@ -2,6 +2,7 @@
 
 import React from "react";
 import Link from "next/link";
+import Image from "next/image";
 import { Plus } from "lucide-react";
 
 export default function BannersPublicitarios() {
@@ -10,12 +11,11 @@ export default function BannersPublicitarios() {
       id: 1,
       titulo: "El auto que buscás, más cerca de lo que pensás",
       subtitulo: "Más de 50 unidades certificadas",
-      cta: "Ver Catálogo",
-      href: "/catalogo",
+      cta: "Ver Casa Central",
+      href: "/sucursales/casa-central",
       // Azul corporativo vibrante
       bgColor: "bg-gradient-to-br from-[#0145F2] to-blue-600",
-      // Imagen de cliente feliz / vendedor
-      imgSrc: "https://images.unsplash.com/photo-1619551734325-81aaf323686c?q=80&w=800&auto=format&fit=crop",
+      imgSrc: "/VDM.jpeg",
       // Corte diagonal tipo "/" (más ancho arriba, entra hacia la izquierda abajo)
       clipPath: "polygon(0 0, 100% 0, 100% 100%, 20% 100%)"
     },
@@ -23,25 +23,23 @@ export default function BannersPublicitarios() {
       id: 2,
       titulo: "Con nuestros planes, pagalo a tu medida",
       subtitulo: "Elegí entre múltiples opciones de financiación",
-      cta: "Ver opciones",
-      href: "/financiacion",
+      cta: "Ver Don Torcuato",
+      href: "/sucursales/don-torcuato",
       // Azul oscuro / Ejecutivo
       bgColor: "bg-gradient-to-br from-slate-900 to-[#0b1329]",
-      // Imagen de showroom / hombre en estacionamiento
-      imgSrc: "https://images.unsplash.com/photo-1550355291-bbee04a92027?q=80&w=800&auto=format&fit=crop",
+      imgSrc: "/pana.jpg",
       // Corte diagonal tipo "\" (entra hacia la izquierda arriba, más ancho abajo)
       clipPath: "polygon(20% 0, 100% 0, 100% 100%, 0% 100%)"
     },
     {
       id: 3,
-      titulo: "Descubrí el precio de tu auto hoy",
-      subtitulo: "Hacelo rápido, 100% online y seguro",
-      cta: "Cotizar auto",
-      href: "/cotizador",
+      titulo: "Descubrí el Mundo Chino",
+      subtitulo: "BAIC, Chery, Changan, JAC, BYD y más",
+      cta: "Ver Mundo Chino",
+      href: "/mundo-chino",
       // Azul intermedio / Royal Blue
       bgColor: "bg-gradient-to-br from-sky-700 to-[#0145F2]",
-      // Imagen de auto limpio / moderno
-      imgSrc: "https://images.unsplash.com/photo-1605559424843-9e4c228bf1c2?q=80&w=800&auto=format&fit=crop",
+      imgSrc: "/Pick-up-Rely-R8-frente-1.jpg",
       // Corte diagonal tipo "/"
       clipPath: "polygon(0 0, 100% 0, 100% 100%, 15% 100%)"
     }
@@ -55,7 +53,7 @@ export default function BannersPublicitarios() {
             <Link
               key={banner.id}
               href={banner.href}
-              className={`relative h-[200px] sm:h-[220px] rounded-[24px] overflow-hidden flex group transition-all duration-500 shadow-lg hover:shadow-2xl hover:-translate-y-1 ${banner.bgColor}`}
+              className={`relative h-[200px] sm:h-[220px] rounded-[24px] overflow-hidden flex group transition-all duration-500 shadow-lg hover:shadow-2xl hover:-translate-y-1 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-white/60 focus-visible:ring-offset-2 ${banner.bgColor}`}
             >
               {/* === LADO IZQUIERDO: TEXTO Y BOTÓN === */}
               <div className="relative z-10 w-[55%] p-5 sm:p-6 flex flex-col justify-center h-full">
@@ -83,10 +81,12 @@ export default function BannersPublicitarios() {
                 {/* Degradado oscuro sutil para que la imagen no pelee con el texto en pantallas chicas */}
                 <div className="absolute inset-0 bg-gradient-to-l from-transparent to-black/20 z-10 mix-blend-multiply"></div>
                 
-                <img 
-                  src={banner.imgSrc} 
-                  alt={banner.titulo} 
-                  className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700 ease-out" 
+                <Image
+                  src={banner.imgSrc}
+                  alt={banner.titulo}
+                  fill
+                  sizes="60vw"
+                  className="object-cover group-hover:scale-110 transition-transform duration-700 ease-out"
                 />
               </div>
             </Link>

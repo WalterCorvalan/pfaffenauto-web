@@ -1,10 +1,9 @@
-"use client";
-
-import { useState, useEffect } from "react";
-import { createClient } from "@supabase/supabase-js";
+import { createClient } from "@/lib/supabase/server";
 
 // ================= COMPONENTES DE LA LANDING =================
 import Hero from "@/components/Hero";
+import IntroLoader from "@/components/IntroLoader";
+import VentasRealizadas from "@/components/VentasRealizadas";
 import Stock from "@/components/Stock";
 import Marcas from "@/components/Marcas";
 import Servicios from "@/components/Servicios";
@@ -17,31 +16,24 @@ import AgendarCitaForm from "@/components/forms/AgendarCitaForm";
 import Seguimiento from "@/components/Seguimiento";
 import BannersPublicitarios from "@/components/banners/BannerPublicitario";
 
-const supabase = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY!
-);
+export const revalidate = 60;
 
-export default function Page() {
-  const [vehiculos, setVehiculos] = useState<any[]>([]);
+const CAMPOS_PUBLICOS = "id, marca, modelo, anio, kilometraje, tipo, segmento, estado, slug, precio_publicado_ars, precio_publicado_usd, multimedia_vehiculos ( url_archivo ), sucursales ( nombre )";
 
-  useEffect(() => {
-    async function cargarVehiculos() {
-      const { data } = await supabase
-        .from("vehiculos")
-        .select(`*, multimedia_vehiculos ( url_archivo ), sucursales ( nombre )`)
-        .in("estado", ["Disponible", "Reservado"])
-        .order("created_at", { ascending: false });
-      
-      if (data) setVehiculos(data);
-    }
-    cargarVehiculos();
-  }, []);
+export default async function Page() {
+  const supabase = await createClient();
+  const { data: vehiculos } = await supabase
+    .from("vehiculos")
+    .select(CAMPOS_PUBLICOS)
+    .in("estado", ["Disponible", "Reservado"])
+    .order("created_at", { ascending: false });
 
   return (
     // Usamos el fondo claro premium que definimos para el resto de la web
     <main className="w-full bg-[#f8f9fa] min-h-screen relative flex flex-col gap-0 md:gap-20 pb-20">
-      
+
+      <IntroLoader />
+
       {/* 1. Hero Principal */}
       <Hero />
 
@@ -49,7 +41,7 @@ export default function Page() {
       <BannersPublicitarios />
       
       {/* 2. Catálogo Destacado (Stock) */}
-      <Stock vehiculos={vehiculos} />
+      <Stock vehiculos={vehiculos || []} />
       
       {/* 3. Marcas con las que trabajan */}
       <Marcas />
@@ -68,6 +60,8 @@ export default function Page() {
       
       {/* 7. Reseñas de Clientes */}
       <Testimonials />
+
+      <VentasRealizadas />
 
       <Location />
 

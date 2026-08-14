@@ -25,7 +25,7 @@ export async function POST() {
 DATOS:
 - Autos vendidos: ${datos.cantidadVendidos}
 - Ingresos por ventas: $${datos.ingresosTotales.toLocaleString("es-AR")}
-- Venta más cara: ${datos.ventaMasCara ? `${datos.ventaMasCara.vehiculos?.marca} ${datos.ventaMasCara.vehiculos?.modelo} por $${Number(datos.ventaMasCara.precio_final_ars).toLocaleString("es-AR")}` : "sin ventas"}
+- Venta más cara: ${datos.ventaMasCara ? `${datos.ventaMasCara.marca} ${datos.ventaMasCara.modelo} por $${Number(datos.ventaMasCara.venta_ars).toLocaleString("es-AR")}` : "sin ventas"}
 - Egresos totales: $${datos.egresosTotales.toLocaleString("es-AR")}
 - Neto del mes: $${datos.netoDelMes.toLocaleString("es-AR")}
 - Gastos más caros: ${datos.gastosMasCaros.map((g) => `${g.concepto} (${g.categoria}): $${g.monto.toLocaleString("es-AR")}`).join(" | ") || "ninguno"}

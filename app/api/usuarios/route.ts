@@ -94,7 +94,7 @@ export async function PATCH(request: Request) {
     if (error) return error;
 
     const body = await request.json();
-    const { id, nombre, rol, sucursal_id } = body;
+    const { id, nombre, rol, sucursal_id, activo } = body;
     if (!id) return NextResponse.json({ error: "Falta el id del usuario" }, { status: 400 });
 
     const supabaseAdmin = createClient(
@@ -102,9 +102,12 @@ export async function PATCH(request: Request) {
       process.env.SUPABASE_SERVICE_ROLE_KEY!
     );
 
+    const update: Record<string, unknown> = { nombre, rol, sucursal_id: sucursal_id || null };
+    if (typeof activo === "boolean") update.activo = activo;
+
     const { error: updateError } = await supabaseAdmin
       .from("perfiles")
-      .update({ nombre, rol, sucursal_id: sucursal_id || null })
+      .update(update)
       .eq("id", id);
 
     if (updateError) throw updateError;

@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import Image from "next/image";
 import { usePathname } from "next/navigation";
 import { ArrowUpRight, ArrowUp, ShieldCheck } from "lucide-react";
 
@@ -100,7 +101,7 @@ export default function Footer() {
             </h3>
             <div className="flex flex-wrap items-center gap-5">
               {badges.map((b) => (
-                <img key={b.value} src={b.image} alt={b.value} className="h-16 w-auto object-contain" />
+                <Image key={b.value} src={b.image} alt={b.value} width={64} height={64} className="h-16 w-auto object-contain" />
               ))}
             </div>
           </div>

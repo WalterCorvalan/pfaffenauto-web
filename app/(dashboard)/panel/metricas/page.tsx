@@ -1,8 +1,6 @@
 import { createServerClient } from "@supabase/ssr";
 import { cookies } from "next/headers";
 import {
-  Wallet,
-  TrendingUp,
   CarFront,
   DollarSign,
   Activity,
@@ -12,10 +10,11 @@ import {
   Users,
   ArrowRight,
   Building2,
-  Filter,
 } from "lucide-react";
 import Link from "next/link";
 import VentasChart from "@/components/VentasChart";
+import SucursalFilterHeader from "../SucursalFilterHeader";
+import { getVentasPanel } from "@/lib/ventas";
 
 export default async function DashboardIntegralPage({
   searchParams,
@@ -57,15 +56,7 @@ export default async function DashboardIntegralPage({
     );
 
   // 4. Traer TODAS las ventas
-  const { data: ventasRaw } = await supabase.from("ventas").select(`
-    precio_final_ars, 
-    precio_final_usd,
-    fecha_venta, 
-    vendedor_id,
-    vehiculo_id,
-    vehiculos ( sucursal_id, sucursales ( id, nombre ) ),
-    perfiles ( nombre )
-  `);
+  const ventasRaw = await getVentasPanel(supabase);
 
   // 5. Traer últimos leads
   const { data: ultimosLeads } = await supabase
@@ -181,7 +172,7 @@ export default async function DashboardIntegralPage({
   // ---- RANKING DE VENDEDORES (Mes Actual) ----
   const rankingMap: Record<
     string,
-    { nombre: string; cantidad: number; facturacion: number }
+    { nombre: string; cantidad: number; facturacion: number; comision: number }
   > = {};
 
   ventasDelMes.forEach((v) => {
@@ -189,10 +180,11 @@ export default async function DashboardIntegralPage({
     const vNombre = (v.perfiles as any)?.nombre || "Administración";
 
     if (!rankingMap[vId]) {
-      rankingMap[vId] = { nombre: vNombre, cantidad: 0, facturacion: 0 };
+      rankingMap[vId] = { nombre: vNombre, cantidad: 0, facturacion: 0, comision: 0 };
     }
     rankingMap[vId].cantidad += 1;
     rankingMap[vId].facturacion += Number(v.precio_final_ars) || 0;
+    rankingMap[vId].comision += Number((v as any).comision_ars) || 0;
   });
 
   const rankingOrdenado = Object.values(rankingMap).sort(
@@ -244,51 +236,14 @@ export default async function DashboardIntegralPage({
     <div className="flex flex-col h-full w-full bg-white overflow-hidden font-sans">
       
       {/* ================= HEADER Y FILTRO POR SUCURSAL ================= */}
-      <header className="flex flex-col lg:flex-row lg:items-center justify-between border-b border-slate-200 px-6 py-4 bg-white shrink-0 gap-4">
-        <div className="flex items-center gap-4">
-          <div className="w-10 h-10 rounded-lg bg-indigo-50 border border-indigo-100 flex items-center justify-center shrink-0">
-            <PieChart className="w-5 h-5 text-indigo-600" />
-          </div>
-          <div>
-            <h1 className="text-[17px] font-bold text-slate-900 leading-tight">
-              Dashboard de Control
-            </h1>
-            <p className="text-[11px] font-medium text-slate-500 mt-0.5">
-              Panel del dueño: Rendimiento, capital y gestión multi-sucursal
-            </p>
-          </div>
-        </div>
-
-        {/* Selector de Sucursal Minimalista */}
-        <div className="flex items-center gap-2 overflow-x-auto custom-scrollbar pb-1 lg:pb-0">
-          <Filter className="w-3.5 h-3.5 text-slate-400 mr-2 shrink-0 hidden sm:block" />
-          
-          <Link
-            href="/panel/metricas"
-            className={`px-3 py-1.5 rounded-md text-[13px] font-medium transition-colors whitespace-nowrap ${
-              !sucursal
-                ? "bg-slate-100 text-slate-900 border border-slate-200 shadow-sm"
-                : "bg-white text-slate-500 hover:text-slate-900 hover:bg-slate-50 border border-transparent"
-            }`}
-          >
-            Todas
-          </Link>
-          
-          {sucursales?.map((s) => (
-            <Link
-              key={s.id}
-              href={`/panel/metricas?sucursal=${s.id}`}
-              className={`px-3 py-1.5 rounded-md text-[13px] font-medium transition-colors whitespace-nowrap ${
-                sucursal === s.id
-                  ? "bg-slate-100 text-slate-900 border border-slate-200 shadow-sm"
-                  : "bg-white text-slate-500 hover:text-slate-900 hover:bg-slate-50 border border-transparent"
-              }`}
-            >
-              {s.nombre}
-            </Link>
-          ))}
-        </div>
-      </header>
+      <SucursalFilterHeader
+        icon={<PieChart className="w-5 h-5 text-indigo-600" />}
+        titulo="Dashboard de Control"
+        subtitulo="Panel del dueño: Rendimiento, capital y gestión multi-sucursal"
+        basePath="/panel/metricas"
+        sucursales={sucursales || []}
+        sucursalActual={sucursal}
+      />
 
       {/* ================= ÁREA SCROLLABLE ================= */}
       <div className="flex-1 overflow-y-auto p-6 bg-[#F9FAFB] custom-scrollbar">
@@ -490,6 +445,7 @@ export default async function DashboardIntegralPage({
                           <th className="px-6 py-3">Vendedor</th>
                           <th className="px-6 py-3 text-center">Unidades</th>
                           <th className="px-6 py-3 text-right">Facturación</th>
+                          <th className="px-6 py-3 text-right">Comisión</th>
                         </tr>
                       </thead>
                       <tbody className="divide-y divide-slate-100">
@@ -514,6 +470,9 @@ export default async function DashboardIntegralPage({
                             </td>
                             <td className="px-6 py-3.5 text-right font-mono text-xs text-slate-600 font-semibold">
                               $ {vendedor.facturacion.toLocaleString("es-AR")}
+                            </td>
+                            <td className="px-6 py-3.5 text-right font-mono text-xs text-emerald-700 font-bold">
+                              $ {vendedor.comision.toLocaleString("es-AR")}
                             </td>
                           </tr>
                         ))}

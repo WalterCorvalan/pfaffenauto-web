@@ -18,12 +18,8 @@ export default async function SeguimientoVentaPage({
   );
 
   const { data: venta } = await supabase
-    .from("ventas")
-    .select(`
-      id, codigo_seguimiento, etapa_seguimiento, fecha_venta,
-      clientes ( nombre, apellido, telefono_celular ),
-      vehiculos ( marca, modelo, patente )
-    `)
+    .from("boletos_venta")
+    .select("id, codigo_seguimiento, etapa_seguimiento, fecha, nombre, apellido, telefono_celular, marca, modelo, dominio")
     .eq("id", id)
     .single();
 

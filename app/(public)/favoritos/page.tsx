@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from "react";
 import Link from "next/link";
+import Image from "next/image";
 import { Trash2, Heart, Phone, Car, ChevronRight } from "lucide-react";
 import { motion } from "framer-motion";
 
@@ -101,7 +102,7 @@ export default function FavoritosPage() {
 
                     <div className="relative h-[160px] bg-gray-50 flex items-center justify-center overflow-hidden p-2">
                       {auto.imagen ? (
-                        <img src={auto.imagen} alt={auto.modelo} className="w-full h-full object-contain mix-blend-multiply group-hover:scale-105 transition-transform duration-500" />
+                        <Image src={auto.imagen} alt={auto.modelo} fill sizes="(max-width: 640px) 50vw, 25vw" className="object-contain mix-blend-multiply group-hover:scale-105 transition-transform duration-500" />
                       ) : (
                         <Car className="w-10 h-10 text-gray-300" />
                       )}

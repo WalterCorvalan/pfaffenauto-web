@@ -2,6 +2,7 @@
 
 import { X } from "lucide-react";
 import Link from "next/link";
+import Image from "next/image";
 import { motion, AnimatePresence } from "framer-motion";
 
 interface ComparadorModalProps {
@@ -58,8 +59,8 @@ export default function ComparadorModal({ isOpen, onClose, autos, removerAuto }:
               {/* AUTO 1 */}
               <div className="flex flex-col relative group">
                 <button onClick={() => removerAuto(auto1.id)} className="absolute -top-2 -right-2 bg-red-600 text-white p-1 rounded-full opacity-0 group-hover:opacity-100 transition-opacity z-10 hidden md:block"><X className="w-3 h-3"/></button>
-                <div className="h-14 md:h-24 bg-white/5 rounded-xl overflow-hidden border border-white/10 mb-2 md:mb-3">
-                  <img src={auto1?.multimedia_vehiculos?.[0]?.url_archivo || "/placeholder.jpg"} alt={auto1?.modelo} className="w-full h-full object-cover" />
+                <div className="relative h-14 md:h-24 bg-white/5 rounded-xl overflow-hidden border border-white/10 mb-2 md:mb-3">
+                  <Image src={auto1?.multimedia_vehiculos?.[0]?.url_archivo || "/placeholder.jpg"} alt={auto1?.modelo || ""} fill sizes="200px" className="object-cover" />
                 </div>
                 <h3 className="text-xs md:text-xl font-black text-white leading-tight truncate">{auto1?.marca} <br className="md:hidden"/>{auto1?.modelo}</h3>
               </div>
@@ -69,8 +70,8 @@ export default function ComparadorModal({ isOpen, onClose, autos, removerAuto }:
                 {auto2 ? (
                   <>
                     <button onClick={() => removerAuto(auto2.id)} className="absolute -top-2 -right-2 bg-red-600 text-white p-1 rounded-full opacity-0 group-hover:opacity-100 transition-opacity z-10 hidden md:block"><X className="w-3 h-3"/></button>
-                    <div className="h-14 md:h-24 bg-white/5 rounded-xl overflow-hidden border border-white/10 mb-2 md:mb-3">
-                      <img src={auto2.multimedia_vehiculos?.[0]?.url_archivo || "/placeholder.jpg"} alt={auto2.modelo} className="w-full h-full object-cover" />
+                    <div className="relative h-14 md:h-24 bg-white/5 rounded-xl overflow-hidden border border-white/10 mb-2 md:mb-3">
+                      <Image src={auto2.multimedia_vehiculos?.[0]?.url_archivo || "/placeholder.jpg"} alt={auto2.modelo} fill sizes="200px" className="object-cover" />
                     </div>
                     <h3 className="text-xs md:text-xl font-black text-white leading-tight truncate">{auto2.marca} <br className="md:hidden"/>{auto2.modelo}</h3>
                   </>
@@ -86,8 +87,8 @@ export default function ComparadorModal({ isOpen, onClose, autos, removerAuto }:
                 {auto3 ? (
                   <>
                     <button onClick={() => removerAuto(auto3.id)} className="absolute -top-2 -right-2 bg-red-600 text-white p-1 rounded-full opacity-0 group-hover:opacity-100 transition-opacity z-10 hidden md:block"><X className="w-3 h-3"/></button>
-                    <div className="h-14 md:h-24 bg-white/5 rounded-xl overflow-hidden border border-white/10 mb-2 md:mb-3">
-                      <img src={auto3.multimedia_vehiculos?.[0]?.url_archivo || "/placeholder.jpg"} alt={auto3.modelo} className="w-full h-full object-cover" />
+                    <div className="relative h-14 md:h-24 bg-white/5 rounded-xl overflow-hidden border border-white/10 mb-2 md:mb-3">
+                      <Image src={auto3.multimedia_vehiculos?.[0]?.url_archivo || "/placeholder.jpg"} alt={auto3.modelo} fill sizes="200px" className="object-cover" />
                     </div>
                     <h3 className="text-xs md:text-xl font-black text-white leading-tight truncate">{auto3.marca} <br className="md:hidden"/>{auto3.modelo}</h3>
                   </>

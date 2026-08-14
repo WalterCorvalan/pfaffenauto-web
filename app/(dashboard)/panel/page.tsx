@@ -9,6 +9,16 @@ import VendedorEditor from "./VendedorEditor";
 
 const ITEMS_POR_PAGINA = 10;
 
+// Semáforo de antigüedad en stock: normal < 2 semanas, amarillo 2-3, naranja 3-4, rojo 1 mes+
+function semaforoAntiguedad(fechaIngreso: string | null): { color: string; label: string } | null {
+  if (!fechaIngreso) return null;
+  const dias = Math.floor((Date.now() - new Date(fechaIngreso).getTime()) / 86400000);
+  if (dias >= 30) return { color: "bg-rose-500", label: `${dias} días en stock` };
+  if (dias >= 21) return { color: "bg-orange-500", label: `${dias} días en stock` };
+  if (dias >= 14) return { color: "bg-amber-400", label: `${dias} días en stock` };
+  return null;
+}
+
 export default async function PanelPage({ searchParams }: { searchParams: Promise<{ q?: string; sucursal?: string; page?: string }>; }) {
   const cookieStore = await cookies();
   const { q = "", sucursal = "", page = "1" } = await searchParams;
@@ -48,17 +58,24 @@ export default async function PanelPage({ searchParams }: { searchParams: Promis
   const totalPages = count ? Math.ceil(count / ITEMS_POR_PAGINA) : 1;
 
   return (
-    <div className="flex flex-col h-full w-full bg-white overflow-hidden">
-      
+    <div className="flex flex-col h-full w-full bg-white dark:bg-[#001233] overflow-hidden">
+
       {/* HEADER Y FILTROS */}
-      <header className="flex flex-col md:flex-row md:items-center justify-between border-b border-slate-200 px-6 py-4 bg-white shrink-0 gap-4">
+      <header className="flex flex-col md:flex-row md:items-center justify-between border-b border-slate-200 dark:border-[#0a2a6b] px-6 py-4 bg-white dark:bg-[#001c55] shrink-0 gap-4">
         <div className="flex items-center gap-4">
-          <div className="w-10 h-10 rounded-lg bg-indigo-50 border border-indigo-100 flex items-center justify-center shrink-0">
-            <LayoutGrid className="w-5 h-5 text-indigo-600" />
+          <div className="w-10 h-10 rounded-lg bg-indigo-50 dark:bg-[#002a6e] border border-indigo-100 dark:border-[#0a2a6b] flex items-center justify-center shrink-0">
+            <LayoutGrid className="w-5 h-5 text-indigo-600 dark:text-sky-300" />
           </div>
           <div>
-            <h1 className="text-[17px] font-bold text-slate-900 leading-tight">Gestión de Stock</h1>
-            <p className="text-[11px] font-medium text-slate-500 mt-0.5">Administración del inventario de unidades</p>
+            <h1 className="text-[17px] font-bold text-slate-900 dark:text-white leading-tight">Gestión de Stock</h1>
+            <p className="text-[11px] font-medium text-slate-500 dark:text-slate-400 mt-0.5 flex items-center gap-3 flex-wrap">
+              Administración del inventario de unidades
+              <span className="flex items-center gap-2.5 text-[10px] font-bold uppercase tracking-wide">
+                <span className="flex items-center gap-1"><span className="w-1.5 h-1.5 rounded-full bg-amber-400" />2 sem.</span>
+                <span className="flex items-center gap-1"><span className="w-1.5 h-1.5 rounded-full bg-orange-500" />3 sem.</span>
+                <span className="flex items-center gap-1"><span className="w-1.5 h-1.5 rounded-full bg-rose-500" />1 mes+</span>
+              </span>
+            </p>
           </div>
         </div>
         
@@ -66,13 +83,13 @@ export default async function PanelPage({ searchParams }: { searchParams: Promis
           <div className="relative flex items-stretch gap-2">
             <div className="relative flex-1 sm:flex-none">
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
-              <input type="text" name="q" defaultValue={q} enterKeyHint="search" placeholder="Buscar..." className="w-full sm:w-48 bg-slate-50 border border-slate-200 rounded-lg py-1.5 pl-9 pr-3 text-[13px] outline-none focus:border-indigo-500 text-slate-900 placeholder:text-slate-400" />
+              <input type="text" name="q" defaultValue={q} enterKeyHint="search" placeholder="Buscar..." className="w-full sm:w-48 bg-slate-50 dark:bg-[#00246b] border border-slate-200 dark:border-[#0a2a6b] rounded-lg py-1.5 pl-9 pr-3 text-[13px] outline-none focus:border-indigo-500 text-slate-900 dark:text-white placeholder:text-slate-400" />
             </div>
             <button type="submit" className="shrink-0 flex items-center justify-center bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg px-3 transition-colors" title="Buscar">
               <Search className="w-4 h-4" />
             </button>
           </div>
-          <select name="sucursal" defaultValue={sucursal} className="w-full sm:w-40 bg-slate-50 border border-slate-200 rounded-lg py-1.5 px-3 text-[13px] outline-none focus:border-indigo-500 text-slate-900 appearance-none cursor-pointer">
+          <select name="sucursal" defaultValue={sucursal} className="w-full sm:w-40 bg-slate-50 dark:bg-[#00246b] border border-slate-200 dark:border-[#0a2a6b] rounded-lg py-1.5 px-3 text-[13px] outline-none focus:border-indigo-500 text-slate-900 dark:text-white appearance-none cursor-pointer">
             <option value="">Todas las sucursales</option>
             {sucursales?.map((s) => (<option key={s.id} value={s.id}>{s.nombre}</option>))}
           </select>
@@ -84,14 +101,16 @@ export default async function PanelPage({ searchParams }: { searchParams: Promis
       </header>
 
       {/* ÁREA SCROLLABLE */}
-      <div className="flex-1 overflow-y-auto bg-[#F9FAFB] custom-scrollbar">
+      <div className="flex-1 overflow-y-auto bg-[#F9FAFB] dark:bg-[#001233] custom-scrollbar">
         <div className="w-full h-full flex flex-col">
           {vehiculos && vehiculos.length > 0 ? (
             <>
               {/* VISTA MÓVIL */}
               <div className="flex flex-col gap-3 p-4 md:hidden w-full">
-                {vehiculos.map((auto) => (
-                  <div key={auto.id} className={`bg-white border rounded-xl p-4 flex flex-col gap-3 shadow-sm ${auto.pautado ? "border-orange-300 ring-1 ring-orange-200" : "border-slate-200"}`}>
+                {vehiculos.map((auto) => {
+                  const semaforo = auto.estado !== "Vendido" ? semaforoAntiguedad(auto.fecha_ingreso) : null;
+                  return (
+                  <div key={auto.id} className={`bg-white dark:bg-[#001c55] border rounded-xl p-4 flex flex-col gap-3 shadow-sm ${auto.pautado ? "border-orange-300 ring-1 ring-orange-200" : "border-slate-200 dark:border-[#0a2a6b]"}`}>
                     <div className="flex items-start gap-3">
                       <div className="relative shrink-0">
                         {auto.multimedia_vehiculos?.[0] ? (
@@ -108,15 +127,18 @@ export default async function PanelPage({ searchParams }: { searchParams: Promis
                         )}
                       </div>
                       <div className="flex-1 min-w-0">
-                        <span className="text-[10px] uppercase tracking-widest font-bold text-slate-400 block mb-0.5 truncate">{auto.patente || "S/P"}</span>
-                        <h3 className="font-bold capitalize text-sm text-slate-900 leading-tight truncate mb-1">{auto.marca} {auto.modelo}</h3>
+                        <span className="text-[10px] uppercase tracking-widest font-bold text-slate-400 mb-0.5 truncate flex items-center gap-1.5">
+                          {auto.patente || "S/P"}
+                          {semaforo && <span className={`w-2 h-2 rounded-full ${semaforo.color}`} title={semaforo.label} />}
+                        </span>
+                        <h3 className="font-bold capitalize text-sm text-slate-900 dark:text-white leading-tight truncate mb-1">{auto.marca} {auto.modelo}</h3>
                         <PrecioEditor autoId={auto.id} precioArs={auto.precio_publicado_ars} precioUsd={auto.precio_publicado_usd} puedeGestionar={puedeGestionar} />
                       </div>
                     </div>
-                    <div className="grid grid-cols-2 gap-2 text-[11px] bg-slate-50 border border-slate-100 p-2.5 rounded-lg">
+                    <div className="grid grid-cols-2 gap-2 text-[11px] bg-slate-50 dark:bg-[#00246b] border border-slate-100 dark:border-[#0a2a6b] p-2.5 rounded-lg">
                       <div className="min-w-0">
-                        <span className="block text-slate-400 uppercase tracking-widest font-bold mb-0.5">Año/Km</span>
-                        <span className="font-bold text-slate-700 truncate block">{auto.anio} • {auto.kilometraje?.toLocaleString()} km</span>
+                        <span className="block text-slate-400 dark:text-slate-400 uppercase tracking-widest font-bold mb-0.5">Año/Km</span>
+                        <span className="font-bold text-slate-700 dark:text-slate-200 truncate block">{auto.anio} • {auto.kilometraje?.toLocaleString()} km</span>
                       </div>
                       <div className="min-w-0">
                         <span className="block text-slate-400 uppercase tracking-widest font-bold mb-0.5">Ubicación</span>
@@ -127,28 +149,29 @@ export default async function PanelPage({ searchParams }: { searchParams: Promis
                         <VendedorEditor autoId={auto.id} autoSucursalId={auto.sucursal_id} vendedorActualId={auto.vendedor_asignado_id} vendedorActualNombre={auto.vendedor?.nombre} vendedores={vendedores || []} puedeGestionar={puedeGestionar} />
                       </div>
                     </div>
-                    <div className="pt-2 flex items-center justify-between gap-2 border-t border-slate-100">
+                    <div className="pt-2 flex items-center justify-between gap-2 border-t border-slate-100 dark:border-[#0a2a6b]">
                       <AccionesAuto autoId={auto.id} estadoActual={auto.estado} puedeGestionar={puedeGestionar} />
                       <div className="flex items-center gap-1.5">
                         {puedeGestionar && (
-                          <Link href={`/panel/vehiculo/boleto/${auto.id}`} className="p-2 bg-slate-50 border border-slate-200 hover:bg-slate-100 rounded-lg text-slate-500 hover:text-emerald-600 transition-colors">
+                          <Link href={`/panel/vehiculo/boleto/${auto.id}`} className="p-2 bg-slate-50 dark:bg-[#00246b] border border-slate-200 dark:border-[#0a2a6b] hover:bg-slate-100 dark:hover:bg-[#002a6e] rounded-lg text-slate-500 dark:text-slate-300 hover:text-emerald-600 transition-colors">
                             <FileText className="w-4 h-4" />
                           </Link>
                         )}
-                        <Link href={`/panel/vehiculo/editar/${auto.id}`} className="flex items-center gap-1 text-[11px] font-bold uppercase tracking-wider bg-slate-50 border border-slate-200 hover:bg-slate-100 text-slate-600 px-3 py-1.5 rounded-lg transition-colors">
+                        <Link href={`/panel/vehiculo/editar/${auto.id}`} className="flex items-center gap-1 text-[11px] font-bold uppercase tracking-wider bg-slate-50 dark:bg-[#00246b] border border-slate-200 dark:border-[#0a2a6b] hover:bg-slate-100 dark:hover:bg-[#002a6e] text-slate-600 dark:text-slate-300 px-3 py-1.5 rounded-lg transition-colors">
                           <Edit2 className="w-3.5 h-3.5" /> Editar
                         </Link>
                       </div>
                     </div>
                   </div>
-                ))}
+                  );
+                })}
               </div>
 
               {/* VISTA DESKTOP */}
-              <div className="hidden md:block bg-white border-b border-slate-200 w-full">
+              <div className="hidden md:block bg-white dark:bg-[#001c55] border-b border-slate-200 dark:border-[#0a2a6b] w-full">
                 <table className="w-full text-left border-collapse min-w-[900px]">
                   <thead>
-                    <tr className="bg-slate-50 border-b border-slate-200 text-slate-500 text-[10px] uppercase tracking-widest font-bold">
+                    <tr className="bg-slate-50 dark:bg-[#00246b] border-b border-slate-200 dark:border-[#0a2a6b] text-slate-500 dark:text-slate-300 text-[10px] uppercase tracking-widest font-bold">
                       <th className="p-4 whitespace-nowrap font-bold">Vehículo</th>
                       <th className="p-4 whitespace-nowrap font-bold">Año / Km</th>
                       <th className="p-4 whitespace-nowrap font-bold">Precio (ARS / USD)</th>
@@ -158,8 +181,10 @@ export default async function PanelPage({ searchParams }: { searchParams: Promis
                     </tr>
                   </thead>
                   <tbody>
-                    {vehiculos.map((auto) => (
-                      <tr key={auto.id} className={`border-b hover:bg-slate-50 transition-colors ${auto.pautado ? "border-l-2 border-l-orange-400 bg-orange-50/30 border-b-slate-100" : "border-slate-100"}`}>
+                    {vehiculos.map((auto) => {
+                      const semaforo = auto.estado !== "Vendido" ? semaforoAntiguedad(auto.fecha_ingreso) : null;
+                      return (
+                      <tr key={auto.id} className={`border-b hover:bg-slate-50 dark:hover:bg-[#00246b] transition-colors ${auto.pautado ? "border-l-2 border-l-orange-400 bg-orange-50/30 dark:bg-transparent border-b-slate-100 dark:border-b-[#0a2a6b]" : "border-slate-100 dark:border-[#0a2a6b]"}`}>
                         <td className="p-4">
                           <div className="flex items-center gap-3">
                             <div className="relative shrink-0">
@@ -177,12 +202,15 @@ export default async function PanelPage({ searchParams }: { searchParams: Promis
                               )}
                             </div>
                             <div className="min-w-0">
-                              <span className="text-[9px] text-slate-400 font-bold block truncate uppercase tracking-widest">{auto.patente}</span>
-                              <span className="font-bold capitalize text-[13px] text-slate-900 block truncate leading-tight">{auto.marca} {auto.modelo}</span>
+                              <span className="text-[9px] text-slate-400 font-bold uppercase tracking-widest truncate flex items-center gap-1.5">
+                                {auto.patente}
+                                {semaforo && <span className={`w-1.5 h-1.5 rounded-full shrink-0 ${semaforo.color}`} title={semaforo.label} />}
+                              </span>
+                              <span className="font-bold capitalize text-[13px] text-slate-900 dark:text-white block truncate leading-tight">{auto.marca} {auto.modelo}</span>
                             </div>
                           </div>
                         </td>
-                        <td className="p-4 text-slate-600 font-medium text-[13px] whitespace-nowrap">
+                        <td className="p-4 text-slate-600 dark:text-slate-300 font-medium text-[13px] whitespace-nowrap">
                           {auto.anio} <span className="text-slate-300 mx-1">•</span> {auto.kilometraje?.toLocaleString()} km
                         </td>
                         <td className="p-4 whitespace-nowrap">
@@ -198,49 +226,50 @@ export default async function PanelPage({ searchParams }: { searchParams: Promis
                           <div className="flex items-center justify-end gap-3">
                             <AccionesAuto autoId={auto.id} estadoActual={auto.estado} puedeGestionar={puedeGestionar} />
                             
-                            <div className="flex items-center gap-1 border-l border-slate-200 pl-3">
+                            <div className="flex items-center gap-1 border-l border-slate-200 dark:border-[#0a2a6b] pl-3">
                               {puedeGestionar && (
-                                <Link href={`/panel/vehiculo/boleto/${auto.id}`} className="p-1.5 text-slate-400 hover:text-emerald-600 transition-colors" title="Generar Boleto">
+                                <Link href={`/panel/vehiculo/boleto/${auto.id}`} className="p-1.5 text-slate-400 dark:text-slate-300 hover:text-emerald-600 transition-colors" title="Generar Boleto">
                                   <FileText className="w-4 h-4" />
                                 </Link>
                               )}
-                              <Link href={`/panel/vehiculo/editar/${auto.id}`} className="p-1.5 text-slate-400 hover:text-indigo-600 transition-colors" title="Editar">
+                              <Link href={`/panel/vehiculo/editar/${auto.id}`} className="p-1.5 text-slate-400 dark:text-slate-300 hover:text-indigo-600 transition-colors" title="Editar">
                                 <Edit2 className="w-4 h-4" />
                               </Link>
                             </div>
                           </div>
                         </td>
                       </tr>
-                    ))}
+                      );
+                    })}
                   </tbody>
                 </table>
               </div>
 
               {/* PAGINACIÓN */}
               {totalPages > 1 && (
-                <div className="flex items-center justify-between p-4 bg-white border-t border-slate-200 shrink-0">
+                <div className="flex items-center justify-between p-4 bg-white dark:bg-[#001c55] border-t border-slate-200 dark:border-[#0a2a6b] shrink-0">
                   <p className="text-[11px] font-bold text-slate-400 uppercase tracking-widest">
-                    Mostrando del <span className="text-slate-700">{from + 1}</span> al <span className="text-slate-700">{Math.min(to + 1, count || 0)}</span> de <span className="text-slate-700">{count}</span>
+                    Mostrando del <span className="text-slate-700 dark:text-slate-200">{from + 1}</span> al <span className="text-slate-700 dark:text-slate-200">{Math.min(to + 1, count || 0)}</span> de <span className="text-slate-700 dark:text-slate-200">{count}</span>
                   </p>
                   <div className="flex items-center gap-1.5">
                     {currentPage > 1 ? (
-                      <Link href={`/panel?q=${q}&sucursal=${sucursal}&page=${currentPage - 1}`} className="p-1.5 bg-slate-50 hover:bg-slate-100 rounded-md border border-slate-200 text-slate-600">
+                      <Link href={`/panel?q=${q}&sucursal=${sucursal}&page=${currentPage - 1}`} className="p-1.5 bg-slate-50 dark:bg-[#00246b] hover:bg-slate-100 dark:hover:bg-[#002a6e] rounded-md border border-slate-200 dark:border-[#0a2a6b] text-slate-600 dark:text-slate-300">
                         <ChevronLeft className="w-4 h-4" />
                       </Link>
                     ) : (
-                      <button disabled className="p-1.5 bg-slate-50 opacity-50 rounded-md border border-slate-200 text-slate-400 cursor-not-allowed">
+                      <button disabled className="p-1.5 bg-slate-50 dark:bg-[#00246b] opacity-50 rounded-md border border-slate-200 dark:border-[#0a2a6b] text-slate-400 cursor-not-allowed">
                         <ChevronLeft className="w-4 h-4" />
                       </button>
                     )}
-                    <div className="px-3 py-1 bg-indigo-50 border border-indigo-100 rounded-md font-bold text-[11px] text-indigo-600">
+                    <div className="px-3 py-1 bg-indigo-50 dark:bg-[#002a6e] border border-indigo-100 dark:border-[#0a2a6b] rounded-md font-bold text-[11px] text-indigo-600 dark:text-sky-300">
                       {currentPage} / {totalPages}
                     </div>
                     {currentPage < totalPages ? (
-                      <Link href={`/panel?q=${q}&sucursal=${sucursal}&page=${currentPage + 1}`} className="p-1.5 bg-slate-50 hover:bg-slate-100 rounded-md border border-slate-200 text-slate-600">
+                      <Link href={`/panel?q=${q}&sucursal=${sucursal}&page=${currentPage + 1}`} className="p-1.5 bg-slate-50 dark:bg-[#00246b] hover:bg-slate-100 dark:hover:bg-[#002a6e] rounded-md border border-slate-200 dark:border-[#0a2a6b] text-slate-600 dark:text-slate-300">
                         <ChevronRight className="w-4 h-4" />
                       </Link>
                     ) : (
-                      <button disabled className="p-1.5 bg-slate-50 opacity-50 rounded-md border border-slate-200 text-slate-400 cursor-not-allowed">
+                      <button disabled className="p-1.5 bg-slate-50 dark:bg-[#00246b] opacity-50 rounded-md border border-slate-200 dark:border-[#0a2a6b] text-slate-400 cursor-not-allowed">
                         <ChevronRight className="w-4 h-4" />
                       </button>
                     )}
@@ -249,9 +278,9 @@ export default async function PanelPage({ searchParams }: { searchParams: Promis
               )}
             </>
           ) : (
-            <div className="flex-1 flex flex-col items-center justify-center p-12 text-slate-500">
-              <Search className="w-10 h-10 text-slate-300 mb-3" />
-              <h3 className="text-slate-700 font-bold text-base mb-1">Sin resultados</h3>
+            <div className="flex-1 flex flex-col items-center justify-center p-12 text-slate-500 dark:text-slate-400">
+              <Search className="w-10 h-10 text-slate-300 dark:text-slate-500 mb-3" />
+              <h3 className="text-slate-700 dark:text-slate-200 font-bold text-base mb-1">Sin resultados</h3>
               <p className="text-[13px]">No se encontraron vehículos con esos filtros.</p>
               {(q || sucursal) && (
                 <Link href="/panel" className="mt-4 bg-indigo-50 text-indigo-600 hover:bg-indigo-100 px-4 py-2 rounded-lg font-bold text-xs transition-colors">Limpiar filtros</Link>

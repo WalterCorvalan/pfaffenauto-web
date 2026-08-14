@@ -78,10 +78,10 @@ export default async function InformesGlobalesPage() {
               <div>
                 <span className="text-[10px] uppercase tracking-widest font-bold text-slate-400">Venta más cara del mes</span>
                 <h3 className="text-lg font-black text-slate-900">
-                  {ventaMasCara.vehiculos?.marca} {ventaMasCara.vehiculos?.modelo} {ventaMasCara.vehiculos?.patente ? `(${ventaMasCara.vehiculos.patente})` : ""}
+                  {ventaMasCara.marca} {ventaMasCara.modelo}
                 </h3>
                 <p className="text-[13px] text-slate-500">
-                  {ventaMasCara.clientes?.nombre} {ventaMasCara.clientes?.apellido} · <span className="font-mono font-bold text-amber-600">$ {Number(ventaMasCara.precio_final_ars).toLocaleString("es-AR")}</span>
+                  {ventaMasCara.nombre} {ventaMasCara.apellido} · <span className="font-mono font-bold text-amber-600">$ {Number(ventaMasCara.venta_ars).toLocaleString("es-AR")}</span>
                 </p>
               </div>
             ) : (

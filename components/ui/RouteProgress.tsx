@@ -46,7 +46,7 @@ function RouteProgressInner() {
     return () => document.removeEventListener("click", handleClick);
   }, []);
 
-  const iniciar = () => {
+  function iniciar() {
     if (hideTimeoutRef.current) clearTimeout(hideTimeoutRef.current);
     if (intervalRef.current) clearInterval(intervalRef.current);
 
@@ -56,7 +56,7 @@ function RouteProgressInner() {
     intervalRef.current = setInterval(() => {
       setProgress((p) => (p >= 88 ? p : p + (88 - p) * 0.12));
     }, 180);
-  };
+  }
 
   // Cuando la ruta efectivamente cambió, completa la barra y la esconde
   useEffect(() => {
@@ -88,8 +88,12 @@ function RouteProgressInner() {
   return (
     <div className="fixed top-0 left-0 right-0 z-[9999] h-[3px] bg-transparent pointer-events-none">
       <div
-        className="h-full bg-gradient-to-r from-[#0145F2] to-sky-400 shadow-[0_0_10px_rgba(1,69,242,0.6)] transition-[width] duration-200 ease-out"
-        style={{ width: `${progress}%` }}
+        className="h-full bg-gradient-to-r from-[#0145F2] to-sky-400 shadow-[0_0_10px_rgba(1,69,242,0.6)] transition-transform duration-200 ease-out"
+        style={{
+          width: "100%",
+          transform: `scaleX(${progress / 100})`,
+          transformOrigin: "left",
+        }}
       />
     </div>
   );

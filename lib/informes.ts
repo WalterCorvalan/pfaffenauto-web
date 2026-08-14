@@ -38,20 +38,19 @@ export async function obtenerDatosMes(supabase: SupabaseClient, fecha: Date = ne
   const nombreMes = fecha.toLocaleDateString("es-AR", { month: "long", year: "numeric" });
 
   const { data: ventasMes } = await supabase
-    .from("ventas")
+    .from("boletos_venta")
     .select(`
-      id, precio_final_ars, fecha_venta, tipo_operacion,
-      vehiculos ( marca, modelo, patente ),
-      clientes ( nombre, apellido )
+      id, venta_ars, fecha,
+      marca, modelo,
+      apellido, nombre
     `)
-    .eq("tipo_operacion", "Venta")
-    .gte("fecha_venta", primerDiaMes)
-    .lte("fecha_venta", ultimoDiaMes);
+    .gte("fecha", primerDiaMes)
+    .lte("fecha", ultimoDiaMes);
 
   const ventas = ventasMes || [];
   const cantidadVendidos = ventas.length;
-  const ingresosTotales = ventas.reduce((acc, v: any) => acc + (Number(v.precio_final_ars) || 0), 0);
-  const ventaMasCara = [...ventas].sort((a: any, b: any) => (Number(b.precio_final_ars) || 0) - (Number(a.precio_final_ars) || 0))[0] as any || null;
+  const ingresosTotales = ventas.reduce((acc, v: any) => acc + (Number(v.venta_ars) || 0), 0);
+  const ventaMasCara = [...ventas].sort((a: any, b: any) => (Number(b.venta_ars) || 0) - (Number(a.venta_ars) || 0))[0] as any || null;
 
   const resultados = await Promise.all(
     CATEGORIAS_EGRESO.map((cat) =>
