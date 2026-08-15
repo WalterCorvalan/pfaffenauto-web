@@ -6,16 +6,27 @@ import AccionesAuto from "./AccionesAuto";
 import PrecioEditor from "./PrecioEditor";
 import SucursalEditor from "./SucursalEditor";
 import VendedorEditor from "./VendedorEditor";
+import { tienePermiso } from "@/lib/permisos";
 
 const ITEMS_POR_PAGINA = 10;
 
-// Semáforo de antigüedad en stock: normal < 2 semanas, amarillo 2-3, naranja 3-4, rojo 1 mes+
+const COLOR_ESTADO_BORDE: Record<string, string> = {
+  Disponible: "border-l-emerald-400", Reservado: "border-l-amber-400", Vendido: "border-l-indigo-400",
+  Archivado: "border-l-slate-300", Incompleto: "border-l-rose-400",
+};
+
+// Semáforo de antigüedad en stock: verde hasta 1 mes, amarillo de 1 mes y 1 día a 2 meses, rojo de 2 meses y 1 día en adelante.
 function semaforoAntiguedad(fechaIngreso: string | null): { color: string; label: string } | null {
   if (!fechaIngreso) return null;
-  const dias = Math.floor((Date.now() - new Date(fechaIngreso).getTime()) / 86400000);
-  if (dias >= 30) return { color: "bg-rose-500", label: `${dias} días en stock` };
-  if (dias >= 21) return { color: "bg-orange-500", label: `${dias} días en stock` };
-  if (dias >= 14) return { color: "bg-amber-400", label: `${dias} días en stock` };
+  const ingreso = new Date(fechaIngreso);
+  const unMes = new Date(ingreso);
+  unMes.setMonth(unMes.getMonth() + 1);
+  const dosMeses = new Date(ingreso);
+  dosMeses.setMonth(dosMeses.getMonth() + 2);
+  const ahora = new Date();
+  const dias = Math.floor((ahora.getTime() - ingreso.getTime()) / 86400000);
+  if (ahora > dosMeses) return { color: "bg-rose-500", label: `${dias} días en stock` };
+  if (ahora > unMes) return { color: "bg-amber-400", label: `${dias} días en stock` };
   return null;
 }
 
@@ -36,13 +47,14 @@ export default async function PanelPage({ searchParams }: { searchParams: Promis
     const { data: perfil } = await supabase.from("perfiles").select("rol").eq("id", user.id).single();
     puedeGestionar = perfil?.rol === "admin" || perfil?.rol === "encargado";
   }
+  const puedeCrearVehiculo = await tienePermiso(supabase, "vehiculos.crear");
 
   const { data: sucursales } = await supabase.from("sucursales").select("id, nombre").order("nombre");
   const { data: vendedores } = await supabase.from("perfiles").select("id, nombre, sucursal_id").eq("rol", "vendedor").order("nombre");
 
   let query = supabase
     .from("vehiculos")
-    .select(`*, multimedia_vehiculos ( url_archivo ), sucursales ( id, nombre ), vendedor:vendedor_asignado_id ( id, nombre )`, { count: "exact" })
+    .select(`*, multimedia_vehiculos ( url_archivo ), sucursales!vehiculos_sucursal_id_fkey ( id, nombre ), vendedor:vendedor_asignado_id ( id, nombre )`, { count: "exact" })
     .order("created_at", { ascending: false });
 
   if (q) query = query.or(`marca.ilike.%${q}%,modelo.ilike.%${q}%,patente.ilike.%${q}%`);
@@ -71,9 +83,8 @@ export default async function PanelPage({ searchParams }: { searchParams: Promis
             <p className="text-[11px] font-medium text-slate-500 dark:text-slate-400 mt-0.5 flex items-center gap-3 flex-wrap">
               Administración del inventario de unidades
               <span className="flex items-center gap-2.5 text-[10px] font-bold uppercase tracking-wide">
-                <span className="flex items-center gap-1"><span className="w-1.5 h-1.5 rounded-full bg-amber-400" />2 sem.</span>
-                <span className="flex items-center gap-1"><span className="w-1.5 h-1.5 rounded-full bg-orange-500" />3 sem.</span>
-                <span className="flex items-center gap-1"><span className="w-1.5 h-1.5 rounded-full bg-rose-500" />1 mes+</span>
+                <span className="flex items-center gap-1"><span className="w-1.5 h-1.5 rounded-full bg-amber-400" />+1 mes</span>
+                <span className="flex items-center gap-1"><span className="w-1.5 h-1.5 rounded-full bg-rose-500" />+2 meses</span>
               </span>
             </p>
           </div>
@@ -94,9 +105,11 @@ export default async function PanelPage({ searchParams }: { searchParams: Promis
             {sucursales?.map((s) => (<option key={s.id} value={s.id}>{s.nombre}</option>))}
           </select>
 
-          <Link href="/panel/vehiculo/nuevo" className="w-full sm:w-auto flex items-center justify-center gap-1.5 bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-1.5 rounded-lg text-[13px] font-bold transition-colors shadow-sm sm:ml-2">
-            <Plus className="w-4 h-4" /> Ingresar Auto
-          </Link>
+          {puedeCrearVehiculo && (
+            <Link href="/panel/vehiculo/nuevo" className="w-full sm:w-auto flex items-center justify-center gap-1.5 bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-1.5 rounded-lg text-[13px] font-bold transition-colors shadow-sm sm:ml-2">
+              <Plus className="w-4 h-4" /> Ingresar Auto
+            </Link>
+          )}
         </form>
       </header>
 
@@ -171,7 +184,7 @@ export default async function PanelPage({ searchParams }: { searchParams: Promis
               <div className="hidden md:block bg-white dark:bg-[#001c55] border-b border-slate-200 dark:border-[#0a2a6b] w-full">
                 <table className="w-full text-left border-collapse min-w-[900px]">
                   <thead>
-                    <tr className="bg-slate-50 dark:bg-[#00246b] border-b border-slate-200 dark:border-[#0a2a6b] text-slate-500 dark:text-slate-300 text-[10px] uppercase tracking-widest font-bold">
+                    <tr className="bg-slate-800 dark:bg-[#00246b] border-b border-slate-200 dark:border-[#0a2a6b] text-white dark:text-slate-300 text-[10px] uppercase tracking-widest font-bold">
                       <th className="p-4 whitespace-nowrap font-bold">Vehículo</th>
                       <th className="p-4 whitespace-nowrap font-bold">Año / Km</th>
                       <th className="p-4 whitespace-nowrap font-bold">Precio (ARS / USD)</th>
@@ -184,7 +197,7 @@ export default async function PanelPage({ searchParams }: { searchParams: Promis
                     {vehiculos.map((auto) => {
                       const semaforo = auto.estado !== "Vendido" ? semaforoAntiguedad(auto.fecha_ingreso) : null;
                       return (
-                      <tr key={auto.id} className={`border-b hover:bg-slate-50 dark:hover:bg-[#00246b] transition-colors ${auto.pautado ? "border-l-2 border-l-orange-400 bg-orange-50/30 dark:bg-transparent border-b-slate-100 dark:border-b-[#0a2a6b]" : "border-slate-100 dark:border-[#0a2a6b]"}`}>
+                      <tr key={auto.id} className={`border-b border-l-4 hover:bg-indigo-50/40 dark:hover:bg-[#00246b] transition-colors ${auto.pautado ? "border-l-orange-400 bg-orange-50/30 dark:bg-transparent border-b-slate-100 dark:border-b-[#0a2a6b]" : `${COLOR_ESTADO_BORDE[auto.estado] || "border-l-slate-200"} border-b-slate-100 dark:border-b-[#0a2a6b]`}`}>
                         <td className="p-4">
                           <div className="flex items-center gap-3">
                             <div className="relative shrink-0">

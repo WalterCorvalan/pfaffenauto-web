@@ -32,12 +32,21 @@ export default function VehiculoSelector({
   vehiculos,
   datos,
   onCambiar,
+  persistirManual = false,
+  sucursalId,
+  origen = "Comprado",
+  soloManual = false,
 }: {
   vehiculos: any[];
   datos: VehiculoDatos | null;
   onCambiar: (datos: VehiculoDatos | null) => void;
+  persistirManual?: boolean;
+  sucursalId?: string;
+  origen?: string;
+  soloManual?: boolean;
 }) {
-  const [modoManual, setModoManual] = useState(false);
+  const [modoManual, setModoManual] = useState(soloManual);
+  const [guardandoManual, setGuardandoManual] = useState(false);
 
   const seleccionarDeStock = (id: string) => {
     if (!id) return;
@@ -50,9 +59,9 @@ export default function VehiculoSelector({
       marca: v.marca || "",
       modelo: v.modelo || "",
       tipo: v.tipo || "",
-      marca_motor: v.marca || "",
+      marca_motor: v.marca_motor || "",
       numero_motor: v.numero_motor || "",
-      marca_chasis: v.marca || "",
+      marca_chasis: v.marca_chasis || "",
       numero_chasis: v.numero_chasis || "",
       modelo_anio: String(v.anio || ""),
       color: v.color || "",
@@ -74,7 +83,11 @@ export default function VehiculoSelector({
           <button type="button" onClick={() => setModoManual(true)} className="text-emerald-600 hover:text-emerald-800 bg-white border border-emerald-200 p-2 rounded-lg transition-colors" title="Editar campos">
             <Pencil className="w-3.5 h-3.5" />
           </button>
-          <button type="button" onClick={() => onCambiar(null)} className="text-emerald-600 hover:text-emerald-800 bg-white border border-emerald-200 px-3 py-1.5 rounded-lg text-[11px] font-bold uppercase tracking-widest transition-colors">
+          <button
+            type="button"
+            onClick={() => { onCambiar(null); if (soloManual) setModoManual(true); }}
+            className="text-emerald-600 hover:text-emerald-800 bg-white border border-emerald-200 px-3 py-1.5 rounded-lg text-[11px] font-bold uppercase tracking-widest transition-colors"
+          >
             Cambiar
           </button>
         </div>
@@ -82,15 +95,47 @@ export default function VehiculoSelector({
     );
   }
 
+  const confirmarManual = async () => {
+    const d = datos || VACIO;
+    if (!persistirManual) {
+      setModoManual(false);
+      return;
+    }
+    if (!d.marca.trim() || !d.modelo.trim()) return alert("Marca y modelo son obligatorios.");
+    if (!sucursalId) return alert("Elegí la sucursal antes de cargar el vehículo.");
+    setGuardandoManual(true);
+    try {
+      const res = await fetch("/api/vehiculos/crear-incompleto", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          patente: d.dominio, marca: d.marca, modelo: d.modelo, anio: d.modelo_anio, color: d.color,
+          tipo: d.tipo, tipo_combustible: d.combustible, numero_motor: d.numero_motor, numero_chasis: d.numero_chasis,
+          marca_motor: d.marca_motor, marca_chasis: d.marca_chasis, segmento: d.segmento, sucursal_id: sucursalId, origen,
+        }),
+      });
+      const json = await res.json();
+      if (!res.ok) throw new Error(json.error || "Error al crear el vehículo.");
+      onCambiar({ ...d, vehiculo_id: json.id });
+      setModoManual(false);
+    } catch (err: any) {
+      alert(err.message || "Error al crear el vehículo.");
+    } finally {
+      setGuardandoManual(false);
+    }
+  };
+
   if (modoManual) {
     const d = datos || VACIO;
     return (
       <div className="bg-slate-50 border border-slate-200 rounded-xl p-4 space-y-3">
         <div className="flex justify-between items-center">
           <span className="text-[11px] font-bold uppercase tracking-widest text-slate-500">Datos del vehículo</span>
-          <button type="button" onClick={() => setModoManual(false)} className="text-slate-400 hover:text-slate-700">
-            <X className="w-4 h-4" />
-          </button>
+          {!soloManual && (
+            <button type="button" onClick={() => setModoManual(false)} className="text-slate-400 hover:text-slate-700">
+              <X className="w-4 h-4" />
+            </button>
+          )}
         </div>
         <div className="grid grid-cols-2 gap-2">
           <input className={inputClass} placeholder="Dominio" value={d.dominio} onChange={(e) => onCambiar({ ...d, dominio: e.target.value })} />
@@ -109,10 +154,11 @@ export default function VehiculoSelector({
         </div>
         <button
           type="button"
-          onClick={() => setModoManual(false)}
-          className="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-2.5 rounded-lg text-[11px] uppercase tracking-widest transition-colors"
+          onClick={confirmarManual}
+          disabled={guardandoManual}
+          className="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-2.5 rounded-lg text-[11px] uppercase tracking-widest transition-colors disabled:opacity-50"
         >
-          Listo
+          {guardandoManual ? "Guardando..." : "Listo"}
         </button>
       </div>
     );

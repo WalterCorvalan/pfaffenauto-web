@@ -37,9 +37,29 @@ const formSchema = z.object({
   precio_publicado_usd: z.string().optional(),
   numero_motor: z.string().optional(),
   numero_chasis: z.string().optional(),
+  marca_motor: z.string().optional(),
+  marca_chasis: z.string().optional(),
+  ubicacion: z.string().optional(),
   radicado_localidad: z.string().optional(),
   radicado_provincia: z.string().optional(),
   observaciones_internas: z.string().optional(),
+  fecha_compra: z.string().optional(),
+  sucursal_compra_id: z.string().optional(),
+  importe_patente_anual: z.string().optional(),
+  prov_nombre: z.string().optional(),
+  prov_apellido: z.string().optional(),
+  prov_dni: z.string().optional(),
+  prov_fecha_nacimiento: z.string().optional(),
+  prov_cuit_cuil: z.string().optional(),
+  prov_calle: z.string().optional(),
+  prov_numero: z.string().optional(),
+  prov_depto: z.string().optional(),
+  prov_localidad: z.string().optional(),
+  prov_codigo_postal: z.string().optional(),
+  prov_provincia: z.string().optional(),
+  prov_telefono_linea: z.string().optional(),
+  prov_telefono_celular: z.string().optional(),
+  prov_email: z.string().optional(),
 });
 
 type FormValues = z.infer<typeof formSchema>;
@@ -62,8 +82,11 @@ interface VehiculoFormProps {
 export default function VehiculoForm({ modo, autoId }: VehiculoFormProps) {
   const router = useRouter();
   const [rol, setRol] = useState<string>("vendedor");
+  const [puedeEditarCompleto, setPuedeEditarCompleto] = useState(false);
+  const [puedeVerCosto, setPuedeVerCosto] = useState(false);
   const [paso, setPaso] = useState(1);
-  const totalPasos = 5;
+  const totalPasos = 7;
+  const [titulares, setTitulares] = useState<{ nombre: string; porcentaje: string; cuit_cuil: string }[]>([]);
   const [loading, setLoading] = useState(false);
   const [loadingDatos, setLoadingDatos] = useState(modo === "editar");
 
@@ -92,11 +115,19 @@ export default function VehiculoForm({ modo, autoId }: VehiculoFormProps) {
         const { data: perfil } = await supabase.from("perfiles").select("rol").eq("id", user.id).single();
         if (perfil) setRol(perfil.rol);
       }
+      const [{ data: puedeEditar }, { data: puedeCosto }] = await Promise.all([
+        supabase.rpc("tiene_permiso", { uid: user?.id, clave_permiso: "vehiculos.editar_completo" }),
+        supabase.rpc("tiene_permiso", { uid: user?.id, clave_permiso: "vehiculos.ver_costo" }),
+      ]);
+      setPuedeEditarCompleto(!!puedeEditar);
+      setPuedeVerCosto(!!puedeCosto);
       const { data: dataSucursales } = await supabase.from("sucursales").select("id, nombre");
       if (dataSucursales) setSucursales(dataSucursales);
 
       if (modo === "editar" && autoId) {
         const { data: vehiculo } = await supabase.from("vehiculos").select(`*, multimedia_vehiculos(*)`).eq("id", autoId).single();
+        const { data: proveedor } = await supabase.from("vehiculo_proveedores").select("*").eq("vehiculo_id", autoId).maybeSingle();
+        const { data: titularesData } = await supabase.from("vehiculo_titulares").select("*").eq("vehiculo_id", autoId).order("orden");
         if (vehiculo) {
           reset({
             ...vehiculo,
@@ -113,15 +144,31 @@ export default function VehiculoForm({ modo, autoId }: VehiculoFormProps) {
             cantidad_plazas: vehiculo.cantidad_plazas ? String(vehiculo.cantidad_plazas) : "",
             origen: vehiculo.origen || "", estado: vehiculo.estado || "",
             stock_fisico: vehiculo.stock_fisico !== false, destacado: vehiculo.destacado === true,
-            pautado: vehiculo.pautado === true, 
+            pautado: vehiculo.pautado === true,
             // Separamos el string guardado en la DB por comas para rellenar los checkboxes
             canal_pauta: vehiculo.canal_pauta ? vehiculo.canal_pauta.split(",").map((s: string) => s.trim()) : [],
             condicion_web: vehiculo.condicion_web || "", numero_motor: vehiculo.numero_motor || "",
             numero_chasis: vehiculo.numero_chasis || "", radicado_localidad: vehiculo.radicado_localidad || "",
             radicado_provincia: vehiculo.radicado_provincia || "", observaciones_internas: vehiculo.observaciones_internas || "",
+            marca_motor: vehiculo.marca_motor || "", marca_chasis: vehiculo.marca_chasis || "",
+            ubicacion: vehiculo.ubicacion || "",
+            fecha_compra: vehiculo.fecha_compra || "", sucursal_compra_id: vehiculo.sucursal_compra_id || "",
+            importe_patente_anual: vehiculo.importe_patente_anual ? String(vehiculo.importe_patente_anual) : "",
+            prov_nombre: proveedor?.nombre || "", prov_apellido: proveedor?.apellido || "",
+            prov_dni: proveedor?.dni || "", prov_fecha_nacimiento: proveedor?.fecha_nacimiento || "",
+            prov_cuit_cuil: proveedor?.cuit_cuil || "", prov_calle: proveedor?.calle || "",
+            prov_numero: proveedor?.numero || "", prov_depto: proveedor?.depto || "",
+            prov_localidad: proveedor?.localidad || "", prov_codigo_postal: proveedor?.codigo_postal || "",
+            prov_provincia: proveedor?.provincia || "", prov_telefono_linea: proveedor?.telefono_linea || "",
+            prov_telefono_celular: proveedor?.telefono_celular || "", prov_email: proveedor?.email || "",
           });
           if (vehiculo.multimedia_vehiculos) {
             setImagenesExistentes(vehiculo.multimedia_vehiculos.sort((a: any, b: any) => a.orden - b.orden));
+          }
+          if (titularesData) {
+            setTitulares(titularesData.map((t: any) => ({
+              nombre: t.nombre || "", porcentaje: t.porcentaje !== null ? String(t.porcentaje) : "", cuit_cuil: t.cuit_cuil || "",
+            })));
           }
         }
       }
@@ -130,14 +177,15 @@ export default function VehiculoForm({ modo, autoId }: VehiculoFormProps) {
     fetchData();
   }, [modo, autoId, reset]);
 
-  const esEdicionVendedor = modo === "editar" && rol === "vendedor";
+  const esEdicionVendedor = modo === "editar" && !puedeEditarCompleto;
 
   const handleSiguiente = async () => {
     let camposAValidar: (keyof FormValues)[] = [];
     if (paso === 1) camposAValidar = ["patente", "marca", "modelo", "anio", "kilometraje"];
     else if (paso === 2) camposAValidar = ["sucursal_id", "segmento", "tipo", "tipo_combustible", "transmision", "estado", "condicion_web", "stock_fisico", "destacado"];
     else if (paso === 3) camposAValidar = ["precio_publicado_ars", "precio_publicado_usd", "precio_costo_ars", "precio_costo_usd"];
-    else if (paso === 4) camposAValidar = ["numero_motor", "numero_chasis", "radicado_localidad", "radicado_provincia"];
+    else if (paso === 4) camposAValidar = ["numero_motor", "numero_chasis", "marca_motor", "marca_chasis", "ubicacion", "radicado_localidad", "radicado_provincia"];
+    else if (paso === 5) camposAValidar = ["fecha_compra", "sucursal_compra_id", "importe_patente_anual"];
 
     const esValido = camposAValidar.length > 0 ? await trigger(camposAValidar) : true;
     if (esValido) setPaso((prev) => Math.min(prev + 1, totalPasos));
@@ -176,10 +224,14 @@ export default function VehiculoForm({ modo, autoId }: VehiculoFormProps) {
         precio_publicado_ars: Number(data.precio_publicado_ars),
         precio_publicado_usd: data.precio_publicado_usd ? Number(data.precio_publicado_usd) : null,
         numero_motor: data.numero_motor || null, numero_chasis: data.numero_chasis || null,
+        marca_motor: data.marca_motor || null, marca_chasis: data.marca_chasis || null,
+        ubicacion: data.ubicacion || null,
         radicado_localidad: data.radicado_localidad || null, radicado_provincia: data.radicado_provincia || null, destacado: data.destacado,
-        pautado: data.pautado, 
+        pautado: data.pautado,
         // Unimos el array con comas para guardarlo como string en la DB
         canal_pauta: data.pautado && data.canal_pauta?.length ? data.canal_pauta.join(", ") : null,
+        fecha_compra: data.fecha_compra || null, sucursal_compra_id: data.sucursal_compra_id || null,
+        importe_patente_anual: data.importe_patente_anual ? Number(data.importe_patente_anual) : null,
       };
 
       if (modo === "crear") {
@@ -201,6 +253,31 @@ export default function VehiculoForm({ modo, autoId }: VehiculoFormProps) {
       
       if (modo === "editar" && imagenesA_Eliminar.length > 0) {
         await supabase.from("multimedia_vehiculos").delete().in("id", imagenesA_Eliminar);
+      }
+
+      if (!esEdicionVendedor && vehiculoTargetId) {
+        const proveedorPayload = {
+          vehiculo_id: vehiculoTargetId, nombre: data.prov_nombre || null, apellido: data.prov_apellido || null,
+          dni: data.prov_dni || null, fecha_nacimiento: data.prov_fecha_nacimiento || null, cuit_cuil: data.prov_cuit_cuil || null,
+          calle: data.prov_calle || null, numero: data.prov_numero || null, depto: data.prov_depto || null,
+          localidad: data.prov_localidad || null, codigo_postal: data.prov_codigo_postal || null, provincia: data.prov_provincia || null,
+          telefono_linea: data.prov_telefono_linea || null, telefono_celular: data.prov_telefono_celular || null, email: data.prov_email || null,
+        };
+        const hayDatosProveedor = Object.entries(proveedorPayload).some(([k, v]) => k !== "vehiculo_id" && v);
+        if (hayDatosProveedor) {
+          await supabase.from("vehiculo_proveedores").upsert(proveedorPayload, { onConflict: "vehiculo_id" });
+        }
+
+        await supabase.from("vehiculo_titulares").delete().eq("vehiculo_id", vehiculoTargetId);
+        const titularesConDatos = titulares.filter((t) => t.nombre || t.cuit_cuil);
+        if (titularesConDatos.length > 0) {
+          await supabase.from("vehiculo_titulares").insert(
+            titularesConDatos.map((t, i) => ({
+              vehiculo_id: vehiculoTargetId, orden: i + 1, nombre: t.nombre || null,
+              porcentaje: t.porcentaje ? Number(t.porcentaje) : null, cuit_cuil: t.cuit_cuil || null,
+            }))
+          );
+        }
       }
 
       let ordenSiguiente = imagenesExistentes.length;
@@ -227,8 +304,12 @@ export default function VehiculoForm({ modo, autoId }: VehiculoFormProps) {
 
       router.push("/panel");
       router.refresh();
-    } catch (err) {
-      alert(`Error al ${modo} el vehículo.`);
+    } catch (err: any) {
+      if (err?.code === "42501" || /row-level security|permission denied/i.test(err?.message || "")) {
+        alert("No tenés permiso para hacer esto. Consultá con un admin o encargado.");
+      } else {
+        alert(`Error al ${modo} el vehículo.`);
+      }
     } finally {
       setLoading(false);
     }
@@ -397,6 +478,16 @@ export default function VehiculoForm({ modo, autoId }: VehiculoFormProps) {
                     ))}
                   </select>
                 </Campo>
+                <Campo label="Segmento">
+                  <input {...register("segmento")} className={inputClass} placeholder="Ej: Premium, Familiar..." />
+                </Campo>
+                <Campo label="Origen">
+                  <select {...register("origen")} className={inputClass}>
+                    <option value="Comprado">Comprado</option>
+                    <option value="Consignado">Consignado</option>
+                    <option value="Permuta">Permuta</option>
+                  </select>
+                </Campo>
                 {modo === "crear" && (
                   <Campo label="Estado *" error={errors.estado?.message}>
                     <select {...register("estado")} className={inputClass}>
@@ -465,7 +556,7 @@ export default function VehiculoForm({ modo, autoId }: VehiculoFormProps) {
                   <input type="number" {...register("precio_publicado_usd")} className={inputClass} />
                 </Campo>
 
-                {rol === "admin" || rol === "encargado" ? (
+                {puedeVerCosto ? (
                   <>
                     <Campo label="Precio Costo ARS (Oculto)">
                       <input type="number" {...register("precio_costo_ars")} className={inputClass} />
@@ -483,11 +574,20 @@ export default function VehiculoForm({ modo, autoId }: VehiculoFormProps) {
           {!esEdicionVendedor && paso === 4 && (
             <SectionCard title="4. Datos Legales" icon={<FileText className="w-4 h-4 text-indigo-600" />}>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+                <Campo label="Marca de Motor">
+                  <input {...register("marca_motor")} className={inputClass} />
+                </Campo>
                 <Campo label="Número de Motor">
                   <input {...register("numero_motor")} className={inputClass} />
                 </Campo>
+                <Campo label="Marca de Chasis">
+                  <input {...register("marca_chasis")} className={inputClass} />
+                </Campo>
                 <Campo label="Número de Chasis">
                   <input {...register("numero_chasis")} className={inputClass} />
+                </Campo>
+                <Campo label="Ubicación (playón/predio)">
+                  <input {...register("ubicacion")} className={inputClass} />
                 </Campo>
                 <Campo label="Radicado - Localidad">
                   <input {...register("radicado_localidad")} className={inputClass} />
@@ -499,8 +599,111 @@ export default function VehiculoForm({ modo, autoId }: VehiculoFormProps) {
             </SectionCard>
           )}
 
-          {/* PASO 5: GALERÍA */}
-          {(paso === 5 || esEdicionVendedor) && (
+          {/* PASO 5 */}
+          {!esEdicionVendedor && paso === 5 && (
+            <SectionCard title="5. Datos Comerciales y Patentes" icon={<DollarSign className="w-4 h-4 text-indigo-600" />}>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+                <Campo label="Fecha de Compra">
+                  <input type="date" {...register("fecha_compra")} className={inputClass} />
+                </Campo>
+                <Campo label="Sucursal que Compra">
+                  <select {...register("sucursal_compra_id")} className={inputClass}>
+                    <option value="">Seleccionar...</option>
+                    {sucursales.map((s) => (
+                      <option key={s.id} value={s.id}>{s.nombre}</option>
+                    ))}
+                  </select>
+                </Campo>
+                <Campo label="Importe Anual de Patente">
+                  <input type="number" {...register("importe_patente_anual")} className={inputClass} />
+                  {!!watch("importe_patente_anual") && (
+                    <span className="text-[11px] text-slate-400 mt-1 block">
+                      ≈ $ {(Number(watch("importe_patente_anual")) / 12).toLocaleString("es-AR", { maximumFractionDigits: 0 })} / mes
+                    </span>
+                  )}
+                </Campo>
+              </div>
+            </SectionCard>
+          )}
+
+          {/* PASO 6 */}
+          {!esEdicionVendedor && paso === 6 && (
+            <SectionCard title="6. Proveedor y Titulares" icon={<FileText className="w-4 h-4 text-indigo-600" />}>
+              <h3 className="text-[11px] font-bold uppercase tracking-widest text-slate-400 mb-1">Datos del Proveedor</h3>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+                <Campo label="Nombre"><input {...register("prov_nombre")} className={inputClass} /></Campo>
+                <Campo label="Apellido"><input {...register("prov_apellido")} className={inputClass} /></Campo>
+                <Campo label="DNI"><input {...register("prov_dni")} className={inputClass} /></Campo>
+                <Campo label="Fecha de Nacimiento"><input type="date" {...register("prov_fecha_nacimiento")} className={inputClass} /></Campo>
+                <Campo label="Cuit/Cuil"><input {...register("prov_cuit_cuil")} className={inputClass} /></Campo>
+                <Campo label="Calle"><input {...register("prov_calle")} className={inputClass} /></Campo>
+                <Campo label="Número"><input {...register("prov_numero")} className={inputClass} /></Campo>
+                <Campo label="Depto"><input {...register("prov_depto")} className={inputClass} /></Campo>
+                <Campo label="Localidad"><input {...register("prov_localidad")} className={inputClass} /></Campo>
+                <Campo label="Código Postal"><input {...register("prov_codigo_postal")} className={inputClass} /></Campo>
+                <Campo label="Provincia"><input {...register("prov_provincia")} className={inputClass} /></Campo>
+                <Campo label="Teléfono de Línea"><input {...register("prov_telefono_linea")} className={inputClass} /></Campo>
+                <Campo label="Teléfono Celular"><input {...register("prov_telefono_celular")} className={inputClass} /></Campo>
+                <Campo label="Correo Electrónico"><input type="email" {...register("prov_email")} className={inputClass} /></Campo>
+              </div>
+
+              <div className="pt-6 border-t border-slate-100 mt-6">
+                <div className="flex items-center justify-between mb-3">
+                  <h3 className="text-[11px] font-bold uppercase tracking-widest text-slate-400">Titulares</h3>
+                  {titulares.length < 4 && (
+                    <button
+                      type="button"
+                      onClick={() => setTitulares((prev) => [...prev, { nombre: "", porcentaje: "", cuit_cuil: "" }])}
+                      className="text-[11px] font-bold text-indigo-600 hover:text-indigo-700"
+                    >
+                      + Agregar titular
+                    </button>
+                  )}
+                </div>
+                <div className="space-y-3">
+                  {titulares.map((t, i) => (
+                    <div key={i} className="grid grid-cols-1 md:grid-cols-[2fr_1fr_1fr_auto] gap-3 items-end bg-slate-50 border border-slate-200 rounded-xl p-3">
+                      <Campo label={`Titular #${i + 1}`}>
+                        <input
+                          value={t.nombre}
+                          onChange={(e) => setTitulares((prev) => prev.map((x, idx) => (idx === i ? { ...x, nombre: e.target.value } : x)))}
+                          className={inputClass}
+                        />
+                      </Campo>
+                      <Campo label="Porcet. (%)">
+                        <input
+                          type="number"
+                          value={t.porcentaje}
+                          onChange={(e) => setTitulares((prev) => prev.map((x, idx) => (idx === i ? { ...x, porcentaje: e.target.value } : x)))}
+                          className={inputClass}
+                        />
+                      </Campo>
+                      <Campo label="Cuit/Cuil">
+                        <input
+                          value={t.cuit_cuil}
+                          onChange={(e) => setTitulares((prev) => prev.map((x, idx) => (idx === i ? { ...x, cuit_cuil: e.target.value } : x)))}
+                          className={inputClass}
+                        />
+                      </Campo>
+                      <button
+                        type="button"
+                        onClick={() => setTitulares((prev) => prev.filter((_, idx) => idx !== i))}
+                        className="text-rose-500 hover:text-rose-600 p-3"
+                      >
+                        <X className="w-4 h-4" />
+                      </button>
+                    </div>
+                  ))}
+                  {titulares.length === 0 && (
+                    <p className="text-[12px] text-slate-400 italic">Sin titulares cargados.</p>
+                  )}
+                </div>
+              </div>
+            </SectionCard>
+          )}
+
+          {/* PASO 7: GALERÍA */}
+          {(paso === 7 || esEdicionVendedor) && (
             <SectionCard title="Multimedia" icon={<ImageIcon className="w-4 h-4 text-indigo-600" />}>
               <div className="space-y-4">
                 {!esEdicionVendedor && (

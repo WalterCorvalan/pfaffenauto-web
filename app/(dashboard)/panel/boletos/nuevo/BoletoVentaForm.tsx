@@ -4,9 +4,11 @@ import { useState, useMemo } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { supabase } from "@/lib/supabase/client";
+import { notificarEncargados } from "@/lib/notificaciones";
 import { ArrowLeft, Receipt, Save } from "lucide-react";
 import ClienteBuscador, { ClienteSeleccionado } from "../../ClienteBuscador";
 import VehiculoSelector, { VehiculoDatos } from "../../VehiculoSelector";
+import ConfirmarPrecioModal from "../../ConfirmarPrecioModal";
 
 const inputClass = "w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2.5 text-sm outline-none focus:border-indigo-500 focus:bg-white transition-colors text-slate-900 placeholder:text-slate-400";
 
@@ -46,6 +48,16 @@ export default function BoletoVentaForm({
   const [cuentaOrdenDireccion, setCuentaOrdenDireccion] = useState("");
 
   const [observaciones, setObservaciones] = useState("");
+  const [mostrarModalPrecio, setMostrarModalPrecio] = useState(false);
+
+  const [efectivoArs, setEfectivoArs] = useState("");
+  const [efectivoUsd, setEfectivoUsd] = useState("");
+  const [recibePermuta, setRecibePermuta] = useState(false);
+  const [vehiculoPermuta, setVehiculoPermuta] = useState<VehiculoDatos | null>(null);
+  const [permutaTasadoArs, setPermutaTasadoArs] = useState("");
+  const [fechaPrimeraCuotaRemanente, setFechaPrimeraCuotaRemanente] = useState("");
+  const [cantCuotasRemanente, setCantCuotasRemanente] = useState("");
+  const [cuotaRemanenteArs, setCuotaRemanenteArs] = useState("");
 
   const saldoCalculado = useMemo(() => {
     const v = Number(ventaArs) || 0;
@@ -54,6 +66,12 @@ export default function BoletoVentaForm({
     const t = Number(patentTransf) || 0;
     return v + t - s - p;
   }, [ventaArs, senaArs, prendaMonto, patentTransf]);
+
+  const remanenteCalculado = useMemo(() => {
+    const e = Number(efectivoArs) || 0;
+    const perm = Number(permutaTasadoArs) || 0;
+    return saldoCalculado - e - perm;
+  }, [saldoCalculado, efectivoArs, permutaTasadoArs]);
 
   const comisionCalculada = useMemo(() => {
     const v = Number(ventaArs) || 0;
@@ -86,12 +104,17 @@ export default function BoletoVentaForm({
     }
   };
 
-  const handleSubmit = async (e: React.FormEvent) => {
+  const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (!cliente) return alert("Elegí o cargá un cliente.");
     if (!vehiculo || !vehiculo.marca || !vehiculo.modelo) return alert("Elegí o cargá el vehículo.");
     if (!sucursalId) return alert("Elegí la sucursal.");
+    setMostrarModalPrecio(true);
+  };
 
+  const guardarVenta = async (precioConfirmado: boolean) => {
+    if (!cliente || !vehiculo) return;
+    setMostrarModalPrecio(false);
     setGuardando(true);
     try {
       const { data: { user } } = await supabase.auth.getUser();
@@ -160,9 +183,26 @@ export default function BoletoVentaForm({
         codigo_seguimiento: codigoSeguimiento,
         etapa_seguimiento: "Seña",
         observaciones: observaciones || null,
+        precio_confirmado: precioConfirmado,
+        efectivo_ars: efectivoArs ? Number(efectivoArs) : null,
+        efectivo_usd: efectivoUsd ? Number(efectivoUsd) : null,
+        permuta_vehiculo_id: recibePermuta ? vehiculoPermuta?.vehiculo_id || null : null,
+        permuta_tasado_ars: recibePermuta && permutaTasadoArs ? Number(permutaTasadoArs) : null,
+        remanente_ars: remanenteCalculado,
+        fecha_primera_cuota_remanente: fechaPrimeraCuotaRemanente || null,
+        cant_cuotas_remanente: cantCuotasRemanente ? Number(cantCuotasRemanente) : null,
+        cuota_remanente_ars: cuotaRemanenteArs ? Number(cuotaRemanenteArs) : null,
       }).select("id").single();
 
       if (error) throw error;
+
+      if (!precioConfirmado) {
+        await notificarEncargados(
+          supabase,
+          `${cliente.nombre} ${cliente.apellido} — Venta N° ${siguienteNumero}: el vendedor no confirmó el precio ($${(Number(ventaArs) || 0).toLocaleString("es-AR")}). Verificalo.`,
+          `/panel/boletos/imprimir/${data.id}`
+        );
+      }
 
       if (vehiculo.vehiculo_id) {
         await supabase.from("vehiculos").update({ estado: "Vendido" }).eq("id", vehiculo.vehiculo_id);
@@ -275,7 +315,14 @@ export default function BoletoVentaForm({
 
           <div className="bg-white border border-slate-200 rounded-2xl p-6 shadow-sm space-y-4">
             <h2 className="text-[11px] font-bold uppercase tracking-widest text-slate-500 border-b border-slate-100 pb-3">Vehículo</h2>
-            <VehiculoSelector vehiculos={vehiculos} datos={vehiculo} onCambiar={setVehiculo} />
+            <VehiculoSelector
+              vehiculos={vehiculos}
+              datos={vehiculo}
+              onCambiar={setVehiculo}
+              persistirManual
+              sucursalId={sucursalId}
+              origen="Comprado"
+            />
           </div>
 
           <div className="bg-white border border-slate-200 rounded-2xl p-6 shadow-sm space-y-4">
@@ -325,6 +372,64 @@ export default function BoletoVentaForm({
           </div>
 
           <div className="bg-white border border-slate-200 rounded-2xl p-6 shadow-sm space-y-4">
+            <h2 className="text-[11px] font-bold uppercase tracking-widest text-slate-500 border-b border-slate-100 pb-3">Forma de Pago</h2>
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <label className="text-[11px] font-bold text-slate-500 uppercase block mb-1.5">En Efectivo ($)</label>
+                <input type="number" step="0.01" className={inputClass} value={efectivoArs} onChange={(e) => setEfectivoArs(e.target.value)} placeholder="0" />
+              </div>
+              <div>
+                <label className="text-[11px] font-bold text-slate-500 uppercase block mb-1.5">En Efectivo (US$)</label>
+                <input type="number" step="0.01" className={inputClass} value={efectivoUsd} onChange={(e) => setEfectivoUsd(e.target.value)} placeholder="0" />
+              </div>
+            </div>
+
+            <label className="flex items-center gap-3 text-sm text-slate-700 cursor-pointer bg-slate-50 border border-slate-200 p-4 rounded-xl hover:bg-white w-fit transition-colors font-medium">
+              <input type="checkbox" checked={recibePermuta} onChange={(e) => setRecibePermuta(e.target.checked)} className="w-4 h-4 accent-indigo-600" /> ¿Recibe auto en permuta?
+            </label>
+
+            {recibePermuta && (
+              <div className="pl-4 border-l-2 border-indigo-200 space-y-4">
+                <VehiculoSelector
+                  vehiculos={[]}
+                  datos={vehiculoPermuta}
+                  onCambiar={setVehiculoPermuta}
+                  persistirManual
+                  soloManual
+                  sucursalId={sucursalId}
+                  origen="Permuta"
+                />
+                <div>
+                  <label className="text-[11px] font-bold text-slate-500 uppercase block mb-1.5">Tasado en ($)</label>
+                  <input type="number" step="0.01" className={inputClass} value={permutaTasadoArs} onChange={(e) => setPermutaTasadoArs(e.target.value)} placeholder="0" />
+                </div>
+              </div>
+            )}
+
+            <div className="bg-slate-50 border border-slate-200 rounded-xl p-4 flex items-center justify-between">
+              <span className="text-[12px] font-bold uppercase tracking-widest text-slate-600">Remanente</span>
+              <strong className="text-lg font-black text-slate-900">$ {remanenteCalculado.toLocaleString("es-AR")}</strong>
+            </div>
+
+            {remanenteCalculado > 0 && (
+              <div className="grid grid-cols-3 gap-4">
+                <div>
+                  <label className="text-[11px] font-bold text-slate-500 uppercase block mb-1.5">Fecha 1ª Cuota</label>
+                  <input type="date" className={inputClass} value={fechaPrimeraCuotaRemanente} onChange={(e) => setFechaPrimeraCuotaRemanente(e.target.value)} />
+                </div>
+                <div>
+                  <label className="text-[11px] font-bold text-slate-500 uppercase block mb-1.5">Cant. de Cuotas</label>
+                  <input type="number" className={inputClass} value={cantCuotasRemanente} onChange={(e) => setCantCuotasRemanente(e.target.value)} placeholder="0" />
+                </div>
+                <div>
+                  <label className="text-[11px] font-bold text-slate-500 uppercase block mb-1.5">Cuota ($)</label>
+                  <input type="number" step="0.01" className={inputClass} value={cuotaRemanenteArs} onChange={(e) => setCuotaRemanenteArs(e.target.value)} placeholder="0" />
+                </div>
+              </div>
+            )}
+          </div>
+
+          <div className="bg-white border border-slate-200 rounded-2xl p-6 shadow-sm space-y-4">
             <h2 className="text-[11px] font-bold uppercase tracking-widest text-slate-500 border-b border-slate-100 pb-3">Prenda (opcional)</h2>
             <div className="grid grid-cols-2 gap-4">
               <input className={inputClass} placeholder="Banco de la prenda" value={bancoPrenda} onChange={(e) => setBancoPrenda(e.target.value)} />
@@ -357,6 +462,15 @@ export default function BoletoVentaForm({
             <Save className="w-4 h-4" /> {guardando ? "Guardando..." : "Guardar Venta"}
           </button>
         </form>
+
+        {mostrarModalPrecio && (
+          <ConfirmarPrecioModal
+            precioTexto={`Venta $ ${(Number(ventaArs) || 0).toLocaleString("es-AR")}${senaArs ? ` · Seña $ ${Number(senaArs).toLocaleString("es-AR")}` : ""}`}
+            onConfirmar={() => guardarVenta(true)}
+            onNoSeguro={() => guardarVenta(false)}
+            onCancelar={() => setMostrarModalPrecio(false)}
+          />
+        )}
       </div>
     </div>
   );

@@ -7,10 +7,10 @@ import { useRouter } from "next/navigation";
 const ESTADOS = ["Pendiente", "Contactado", "Convertido", "Descartado"];
 
 const COLOR: Record<string, string> = {
-  "Pendiente": "bg-amber-50 text-amber-700 border-amber-200",
-  "Contactado": "bg-blue-50 text-blue-700 border-blue-200",
-  "Convertido": "bg-emerald-50 text-emerald-700 border-emerald-200",
-  "Descartado": "bg-slate-100 text-slate-500 border-slate-200",
+  "Pendiente": "bg-amber-500 text-white border-amber-500",
+  "Contactado": "bg-blue-500 text-white border-blue-500",
+  "Convertido": "bg-emerald-500 text-white border-emerald-500",
+  "Descartado": "bg-slate-400 text-white border-slate-400",
 };
 
 export default function EstadoConsignacionSelector({ id, estado }: { id: string; estado: string }) {
@@ -36,9 +36,9 @@ export default function EstadoConsignacionSelector({ id, estado }: { id: string;
       value={actual}
       disabled={cargando}
       onChange={(e) => cambiar(e.target.value)}
-      className={`text-[10px] font-bold uppercase tracking-widest px-2 py-1 rounded border outline-none cursor-pointer disabled:opacity-50 ${COLOR[actual] || COLOR.Pendiente}`}
+      className={`text-[10px] font-bold uppercase tracking-widest px-2.5 py-1.5 rounded-lg border outline-none cursor-pointer shadow-sm transition-transform hover:scale-105 disabled:opacity-50 ${COLOR[actual] || COLOR.Pendiente}`}
     >
-      {ESTADOS.map((e) => (<option key={e} value={e}>{e}</option>))}
+      {ESTADOS.map((e) => (<option key={e} value={e} className="bg-white text-slate-900">{e}</option>))}
     </select>
   );
 }

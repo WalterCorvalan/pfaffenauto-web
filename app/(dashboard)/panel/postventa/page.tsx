@@ -8,9 +8,13 @@ import CrearRecordatorioButton from "./CrearRecordatorioButton";
 const DIAS_RECORDATORIO_SERVICE_DEFAULT = 180;
 
 const TIPO_COLOR: Record<string, string> = {
-  Service: "bg-blue-50 text-blue-700 border-blue-200",
-  Reclamo: "bg-rose-50 text-rose-700 border-rose-200",
-  Garantia: "bg-purple-50 text-purple-700 border-purple-200",
+  Service: "bg-blue-500 text-white",
+  Reclamo: "bg-rose-500 text-white",
+  Garantia: "bg-purple-500 text-white",
+};
+
+const ESTADO_BORDE: Record<string, string> = {
+  Pendiente: "border-l-amber-400", "En proceso": "border-l-sky-400", Resuelto: "border-l-emerald-400",
 };
 
 export default async function PostventaPage() {
@@ -121,9 +125,9 @@ export default async function PostventaPage() {
 
           <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
           {casos?.map((c) => (
-            <div key={c.id} className="bg-white border border-slate-200 rounded-xl p-4 shadow-sm hover:shadow-md transition-shadow">
+            <div key={c.id} className={`bg-white border border-slate-200 border-l-4 rounded-xl p-4 shadow-sm hover:shadow-md transition-shadow ${ESTADO_BORDE[c.estado] || "border-l-slate-200"}`}>
               <div className="flex justify-between items-start mb-3">
-                <span className={`text-[9px] font-bold uppercase tracking-widest px-2 py-0.5 rounded border ${TIPO_COLOR[c.tipo] || TIPO_COLOR.Service}`}>
+                <span className={`text-[9px] font-bold uppercase tracking-widest px-2 py-1 rounded-lg ${TIPO_COLOR[c.tipo] || TIPO_COLOR.Service}`}>
                   {c.tipo}
                 </span>
                 <EstadoCasoSelector id={c.id} estado={c.estado} />

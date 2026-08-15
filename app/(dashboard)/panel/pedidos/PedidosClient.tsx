@@ -38,11 +38,21 @@ export default function PedidosClient({ pedidosIniciales }: { pedidosIniciales: 
 
   const getStatusStyles = (estado: string) => {
     switch (estado) {
-      case "Buscando": return "bg-blue-50 text-blue-700 border-blue-200";
-      case "Encontrado": return "bg-emerald-50 text-emerald-700 border-emerald-200";
-      case "Cerrado": return "bg-slate-100 text-slate-600 border-slate-200";
-      case "Cancelado": return "bg-rose-50 text-rose-700 border-rose-200";
-      default: return "bg-slate-50 text-slate-500 border-slate-200";
+      case "Buscando": return "bg-blue-500 text-white border-blue-500";
+      case "Encontrado": return "bg-emerald-500 text-white border-emerald-500";
+      case "Cerrado": return "bg-slate-400 text-white border-slate-400";
+      case "Cancelado": return "bg-rose-500 text-white border-rose-500";
+      default: return "bg-slate-400 text-white border-slate-400";
+    }
+  };
+
+  const getBorderStyles = (estado: string) => {
+    switch (estado) {
+      case "Buscando": return "border-t-blue-400";
+      case "Encontrado": return "border-t-emerald-400";
+      case "Cerrado": return "border-t-slate-300";
+      case "Cancelado": return "border-t-rose-400";
+      default: return "border-t-slate-300";
     }
   };
 
@@ -105,7 +115,7 @@ export default function PedidosClient({ pedidosIniciales }: { pedidosIniciales: 
           {pedidosFiltrados.map((pedido) => (
             <div
               key={pedido.id}
-              className="bg-white border border-slate-200 rounded-xl p-4 flex flex-col shadow-sm hover:shadow-md hover:border-indigo-500/30 transition-all group"
+              className={`bg-white border border-slate-200 border-t-4 rounded-xl p-4 flex flex-col shadow-sm hover:shadow-md hover:border-indigo-500/30 transition-all group ${getBorderStyles(pedido.estado)}`}
             >
               {/* Top: Estado y Fecha */}
               <div className="flex justify-between items-start mb-3">
@@ -120,7 +130,7 @@ export default function PedidosClient({ pedidosIniciales }: { pedidosIniciales: 
 
               {/* Info Cliente */}
               <div className="flex items-center gap-2 mb-3">
-                <div className="w-7 h-7 rounded-full bg-slate-100 text-slate-600 flex items-center justify-center font-bold text-xs shrink-0 border border-slate-200">
+                <div className="w-7 h-7 rounded-full bg-indigo-500 text-white flex items-center justify-center font-bold text-xs shrink-0">
                   {pedido.nombre.substring(0, 2).toUpperCase()}
                 </div>
                 <h3 className="font-bold text-[14px] text-slate-900 truncate">
@@ -144,12 +154,12 @@ export default function PedidosClient({ pedidosIniciales }: { pedidosIniciales: 
                 <select
                   value={pedido.estado}
                   onChange={(e) => actualizarEstado(pedido.id, e.target.value)}
-                  className="bg-white border border-slate-200 text-[11px] font-bold text-slate-600 rounded-md px-2 py-1.5 outline-none focus:border-indigo-500 transition-colors cursor-pointer flex-1"
+                  className={`text-[11px] font-bold uppercase tracking-widest rounded-lg px-2.5 py-1.5 outline-none transition-transform hover:scale-105 cursor-pointer flex-1 shadow-sm border ${getStatusStyles(pedido.estado)}`}
                 >
-                  <option value="Buscando">Buscando</option>
-                  <option value="Encontrado">Encontrado</option>
-                  <option value="Cerrado">Cerrado</option>
-                  <option value="Cancelado">Cancelado</option>
+                  <option value="Buscando" className="bg-white text-slate-900">Buscando</option>
+                  <option value="Encontrado" className="bg-white text-slate-900">Encontrado</option>
+                  <option value="Cerrado" className="bg-white text-slate-900">Cerrado</option>
+                  <option value="Cancelado" className="bg-white text-slate-900">Cancelado</option>
                 </select>
 
                 {/* Botón WhatsApp Minimalista */}

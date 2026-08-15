@@ -19,7 +19,7 @@ export default async function BoletoPage({
 
   const { data: auto } = await supabase
     .from("vehiculos")
-    .select("*, sucursales(nombre, direccion)")
+    .select("*, sucursales!vehiculos_sucursal_id_fkey(nombre, direccion)")
     .eq("id", id)
     .single();
 

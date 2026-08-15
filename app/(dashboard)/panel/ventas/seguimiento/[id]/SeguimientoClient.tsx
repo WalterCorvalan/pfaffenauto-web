@@ -14,6 +14,7 @@ interface Documento {
   fecha_recibido: string | null;
   archivo_url: string | null;
   etapa: string | null;
+  verificado_por: string | null;
 }
 
 // Patentamiento y Transferencia comparten los mismos ítems (aranceles, informes) —
@@ -59,6 +60,11 @@ export default function SeguimientoClient({ venta, documentosIniciales }: { vent
       .from("documentacion_ventas")
       .update({ estado: nuevoEstado, fecha_recibido: nuevoEstado === "Recibido" ? new Date().toISOString().split("T")[0] : null })
       .eq("id", doc.id);
+  };
+
+  const cambiarVerificadoPor = async (doc: Documento, valor: string) => {
+    setDocumentos((prev) => prev.map((d) => (d.id === doc.id ? { ...d, verificado_por: valor || null } : d)));
+    await supabase.from("documentacion_ventas").update({ verificado_por: valor || null }).eq("id", doc.id);
   };
 
   const subirArchivo = async (doc: Documento, file: File) => {
@@ -163,6 +169,23 @@ export default function SeguimientoClient({ venta, documentosIniciales }: { vent
                 </span>
                 {doc.fecha_recibido && (
                   <span className="text-[10px] text-slate-400">{doc.fecha_recibido}</span>
+                )}
+
+                {doc.estado === "Recibido" && (
+                  <select
+                    value={doc.verificado_por || ""}
+                    onChange={(e) => cambiarVerificadoPor(doc, e.target.value)}
+                    className={`text-[10px] font-bold uppercase tracking-widest px-2 py-1 rounded border outline-none cursor-pointer shrink-0 ${
+                      doc.verificado_por === "Agencia" ? "bg-emerald-50 text-emerald-700 border-emerald-200" :
+                      doc.verificado_por === "Cliente" ? "bg-amber-50 text-amber-700 border-amber-200" :
+                      "bg-slate-50 text-slate-400 border-slate-200"
+                    }`}
+                    title="¿Quién verificó este documento?"
+                  >
+                    <option value="">¿Quién verificó?</option>
+                    <option value="Agencia">Agencia</option>
+                    <option value="Cliente">Cliente</option>
+                  </select>
                 )}
 
                 {doc.archivo_url && (

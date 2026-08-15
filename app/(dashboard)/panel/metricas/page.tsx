@@ -52,7 +52,7 @@ export default async function DashboardIntegralPage({
   const { data: vehiculosRaw } = await supabase
     .from("vehiculos")
     .select(
-      "id, estado, precio_costo_ars, precio_costo_usd, precio_publicado_ars, precio_publicado_usd, sucursal_id, sucursales(id, nombre)",
+      "id, estado, precio_costo_ars, precio_costo_usd, precio_publicado_ars, precio_publicado_usd, sucursal_id, sucursales!vehiculos_sucursal_id_fkey(id, nombre)",
     );
 
   // 4. Traer TODAS las ventas

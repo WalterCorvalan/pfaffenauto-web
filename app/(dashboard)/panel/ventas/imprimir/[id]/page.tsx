@@ -21,7 +21,7 @@ export default async function ImprimirOperacionPage({
     .from("ventas")
     .select(`
       *,
-      vehiculos (*, sucursales(nombre, direccion)),
+      vehiculos (*, sucursales!vehiculos_sucursal_id_fkey(nombre, direccion)),
       clientes (*),
       perfiles (nombre)
     `)

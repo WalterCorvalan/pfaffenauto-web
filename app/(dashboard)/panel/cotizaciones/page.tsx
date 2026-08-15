@@ -80,7 +80,7 @@ export default async function CotizacionesPage() {
             return (
               <div
                 key={cot.id}
-                className="bg-white dark:bg-[#001c55] border border-slate-200 dark:border-[#0a2a6b] rounded-xl p-4 flex flex-col shadow-sm hover:shadow-md hover:border-emerald-500/30 transition-all group"
+                className={`bg-white dark:bg-[#001c55] border border-slate-200 dark:border-[#0a2a6b] border-t-4 rounded-xl p-4 flex flex-col shadow-sm hover:shadow-md hover:border-emerald-500/30 transition-all group ${cot.precio_sugerido ? "border-t-emerald-400" : "border-t-amber-400"}`}
               >
                 {/* Top: Estado y Modalidad */}
                 <div className="flex justify-between items-start mb-3">
@@ -102,7 +102,7 @@ export default async function CotizacionesPage() {
 
                 {/* Info Cliente */}
                 <div className="flex items-center gap-2 mb-3">
-                  <div className="w-7 h-7 rounded-full bg-slate-100 dark:bg-[#00246b] text-slate-600 dark:text-slate-300 flex items-center justify-center font-bold text-xs shrink-0 border border-slate-200 dark:border-[#0a2a6b]">
+                  <div className="w-7 h-7 rounded-full bg-emerald-500 text-white flex items-center justify-center font-bold text-xs shrink-0">
                     {cot.nombre.substring(0, 2).toUpperCase()}
                   </div>
                   <h3 className="font-bold text-[14px] text-slate-900 dark:text-white truncate">

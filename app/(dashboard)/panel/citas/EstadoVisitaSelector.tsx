@@ -36,24 +36,31 @@ export default function EstadoVisitaSelector({
     }
   };
 
+  const COLOR: Record<string, string> = {
+    Pendiente: "bg-amber-500 border-amber-500",
+    Confirmada: "bg-indigo-500 border-indigo-500",
+    "Asistió": "bg-emerald-500 border-emerald-500",
+    Cancelada: "bg-rose-500 border-rose-500",
+  };
+
   return (
     <div className="relative flex-1">
       <select
         value={estadoActual}
         onChange={handleChange}
         disabled={loading}
-        className="w-full bg-white border border-slate-200 text-[11px] font-bold text-slate-600 rounded-md px-2 py-1.5 outline-none focus:border-indigo-500 transition-colors appearance-none cursor-pointer pr-8 disabled:opacity-50"
+        className={`w-full text-white text-[11px] font-bold uppercase tracking-widest rounded-lg px-2.5 py-1.5 outline-none transition-transform hover:scale-105 appearance-none cursor-pointer pr-8 disabled:opacity-50 shadow-sm border ${COLOR[estadoActual] || "bg-slate-400 border-slate-400"}`}
       >
-        <option value="Pendiente">Pendiente</option>
-        <option value="Confirmada">Confirmada</option>
-        <option value="Asistió">Asistió</option>
-        <option value="Cancelada">Cancelada</option>
+        <option value="Pendiente" className="bg-white text-slate-900">Pendiente</option>
+        <option value="Confirmada" className="bg-white text-slate-900">Confirmada</option>
+        <option value="Asistió" className="bg-white text-slate-900">Asistió</option>
+        <option value="Cancelada" className="bg-white text-slate-900">Cancelada</option>
       </select>
       {loading && (
-        <Loader2 className="w-3 h-3 text-indigo-500 animate-spin absolute right-2 top-1/2 -translate-y-1/2 pointer-events-none" />
+        <Loader2 className="w-3 h-3 text-white animate-spin absolute right-2 top-1/2 -translate-y-1/2 pointer-events-none" />
       )}
       {!loading && (
-        <svg className="w-3 h-3 text-slate-400 absolute right-2 top-1/2 -translate-y-1/2 pointer-events-none" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <svg className="w-3 h-3 text-white absolute right-2 top-1/2 -translate-y-1/2 pointer-events-none" fill="none" stroke="currentColor" viewBox="0 0 24 24">
           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7"></path>
         </svg>
       )}

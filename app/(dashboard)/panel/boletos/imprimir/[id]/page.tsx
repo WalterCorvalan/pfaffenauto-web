@@ -14,7 +14,7 @@ export default async function ImprimirBoletoPage({ params }: { params: Promise<{
 
   const { data: boleto } = await supabase
     .from("boletos_venta")
-    .select("*, perfiles ( nombre ), sucursales ( nombre, direccion )")
+    .select("*, perfiles ( nombre ), sucursales ( nombre, direccion ), permuta_vehiculo:vehiculos!boletos_venta_permuta_vehiculo_id_fkey ( marca, modelo, patente, anio )")
     .eq("id", id)
     .maybeSingle();
 

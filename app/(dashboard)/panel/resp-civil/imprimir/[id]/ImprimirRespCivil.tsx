@@ -6,6 +6,7 @@ import Link from "next/link";
 export default function ImprimirRespCivil({ registro: r }: { registro: any }) {
   const vendedor = r.perfiles?.nombre || "Administración";
   const fecha = r.fecha ? new Date(`${r.fecha}T12:00:00Z`).toLocaleDateString("es-AR", { timeZone: "UTC" }) : "—";
+  const fechaNacimiento = r.fecha_nacimiento ? new Date(`${r.fecha_nacimiento}T12:00:00Z`).toLocaleDateString("es-AR", { timeZone: "UTC" }) : "N/A";
 
   return (
     <div className="min-h-screen pb-20 text-slate-800 bg-[#F9FAFB] print:bg-white pt-8 font-sans">
@@ -34,7 +35,7 @@ export default function ImprimirRespCivil({ registro: r }: { registro: any }) {
             <div className="mt-3 text-[11px] text-slate-500 font-medium space-y-1 uppercase tracking-widest">
               <p>Número: <span className="font-mono font-bold text-slate-900">{r.numero}</span></p>
               <p>Fecha: <span className="font-bold text-slate-900">{fecha}</span></p>
-              <p>Hora: <span className="font-bold text-slate-900">{r.hora || "—"}</span></p>
+              <p>Hora: <span className="font-bold text-slate-900">{r.hora ? r.hora.slice(0, 5) : "—"}</span></p>
               <p>Vendedor: <span className="font-bold text-slate-900">{vendedor}</span></p>
             </div>
           </div>
@@ -52,16 +53,36 @@ export default function ImprimirRespCivil({ registro: r }: { registro: any }) {
               <strong className="text-slate-900 text-[13px]">{r.dni || "N/A"}</strong>
             </div>
             <div>
-              <span className="text-[10px] uppercase tracking-widest font-bold text-slate-400 block">Celular</span>
-              <strong className="text-slate-900">{r.telefono_celular || "N/A"}</strong>
+              <span className="text-[10px] uppercase tracking-widest font-bold text-slate-400 block">Fecha de Nacimiento</span>
+              <strong className="text-slate-900">{fechaNacimiento}</strong>
+            </div>
+            <div>
+              <span className="text-[10px] uppercase tracking-widest font-bold text-slate-400 block">Cuit/Cuil</span>
+              <strong className="text-slate-900">{r.cuit_cuil || "N/A"}</strong>
             </div>
             <div className="col-span-2">
               <span className="text-[10px] uppercase tracking-widest font-bold text-slate-400 block">Domicilio</span>
-              <strong className="text-slate-900">{r.calle} {r.numero_calle}, {r.localidad} ({r.provincia})</strong>
+              <strong className="text-slate-900">{r.calle} {r.numero_calle}{r.depto ? ` Dto. ${r.depto}` : ""}, {r.localidad} ({r.provincia}) {r.codigo_postal ? `- CP ${r.codigo_postal}` : ""}</strong>
+            </div>
+            <div>
+              <span className="text-[10px] uppercase tracking-widest font-bold text-slate-400 block">Celular</span>
+              <strong className="text-slate-900">{r.telefono_celular || "N/A"}</strong>
+            </div>
+            <div>
+              <span className="text-[10px] uppercase tracking-widest font-bold text-slate-400 block">Teléfono de Línea</span>
+              <strong className="text-slate-900">{r.telefono_linea || "N/A"}</strong>
             </div>
             <div className="col-span-2">
               <span className="text-[10px] uppercase tracking-widest font-bold text-slate-400 block">Email</span>
               <strong className="text-slate-900">{r.correo_electronico || "No registrado"}</strong>
+            </div>
+            <div>
+              <span className="text-[10px] uppercase tracking-widest font-bold text-slate-400 block">Estado Civil</span>
+              <strong className="text-slate-900 capitalize">{r.estado_civil || "N/A"}</strong>
+            </div>
+            <div>
+              <span className="text-[10px] uppercase tracking-widest font-bold text-slate-400 block">Profesión</span>
+              <strong className="text-slate-900 capitalize">{r.profesion || "N/A"}</strong>
             </div>
           </div>
         </div>
@@ -82,12 +103,28 @@ export default function ImprimirRespCivil({ registro: r }: { registro: any }) {
               <strong className="text-[14px] font-black">{r.modelo_anio}</strong>
             </div>
             <div>
+              <span className="text-slate-400 font-bold tracking-widest text-[9px] uppercase block mb-0.5">Segmento</span>
+              <strong className="text-slate-900 capitalize">{r.segmento || "-"}</strong>
+            </div>
+            <div>
+              <span className="text-slate-400 font-bold tracking-widest text-[9px] uppercase block mb-0.5">Tipo</span>
+              <strong className="text-slate-900 capitalize">{r.tipo || "-"}</strong>
+            </div>
+            <div>
               <span className="text-slate-400 font-bold tracking-widest text-[9px] uppercase block mb-0.5">Color</span>
               <strong className="text-slate-900 capitalize">{r.color || "-"}</strong>
             </div>
             <div>
+              <span className="text-slate-400 font-bold tracking-widest text-[9px] uppercase block mb-0.5">Marca de Motor</span>
+              <strong className="text-slate-900 uppercase">{r.marca_motor || "-"}</strong>
+            </div>
+            <div>
               <span className="text-slate-400 font-bold tracking-widest text-[9px] uppercase block mb-0.5">Nro. de Motor</span>
               <strong className="text-slate-900 font-mono uppercase">{r.numero_motor || "A verificar"}</strong>
+            </div>
+            <div>
+              <span className="text-slate-400 font-bold tracking-widest text-[9px] uppercase block mb-0.5">Marca de Chasis</span>
+              <strong className="text-slate-900 uppercase">{r.marca_chasis || "-"}</strong>
             </div>
             <div>
               <span className="text-slate-400 font-bold tracking-widest text-[9px] uppercase block mb-0.5">Nro. de Chasis</span>

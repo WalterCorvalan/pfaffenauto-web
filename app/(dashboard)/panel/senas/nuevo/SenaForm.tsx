@@ -4,9 +4,11 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { supabase } from "@/lib/supabase/client";
+import { notificarEncargados } from "@/lib/notificaciones";
 import { ArrowLeft, Wallet, Save } from "lucide-react";
 import ClienteBuscador, { ClienteSeleccionado } from "../../ClienteBuscador";
 import VehiculoSelector, { VehiculoDatos } from "../../VehiculoSelector";
+import ConfirmarPrecioModal from "../../ConfirmarPrecioModal";
 
 const inputClass = "w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2.5 text-sm outline-none focus:border-indigo-500 focus:bg-white transition-colors text-slate-900 placeholder:text-slate-400";
 
@@ -25,13 +27,19 @@ export default function SenaForm({ clientes, vehiculos, vendedores, sucursales }
   const [tipoCambio, setTipoCambio] = useState("");
   const [patentTransf, setPatentTransf] = useState("");
   const [observaciones, setObservaciones] = useState("");
+  const [mostrarModalPrecio, setMostrarModalPrecio] = useState(false);
 
-  const handleSubmit = async (e: React.FormEvent) => {
+  const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (!cliente) return alert("Elegí o cargá un cliente.");
     if (!vehiculo || !vehiculo.marca || !vehiculo.modelo) return alert("Elegí o cargá el vehículo.");
     if (!sucursalId) return alert("Elegí la sucursal.");
+    setMostrarModalPrecio(true);
+  };
 
+  const guardarSena = async (precioConfirmado: boolean) => {
+    if (!cliente || !vehiculo) return;
+    setMostrarModalPrecio(false);
     setGuardando(true);
     try {
       const { data: { user } } = await supabase.auth.getUser();
@@ -80,9 +88,19 @@ export default function SenaForm({ clientes, vehiculos, vendedores, sucursales }
         tipo_cambio: tipoCambio ? Number(tipoCambio) : null,
         patentamiento_transferencia_ars: patentTransf ? Number(patentTransf) : null,
         observaciones: observaciones || null,
+        precio_confirmado: precioConfirmado,
       }).select("id").single();
 
       if (error) throw error;
+
+      if (!precioConfirmado) {
+        await notificarEncargados(
+          supabase,
+          `${cliente.nombre} ${cliente.apellido} — Seña N° ${siguienteNumero}: el vendedor no confirmó el precio ($${(Number(ventaArs) || 0).toLocaleString("es-AR")}). Verificalo.`,
+          `/panel/senas/imprimir/${data.id}`
+        );
+      }
+
       router.push(`/panel/senas/imprimir/${data.id}`);
     } catch (err) {
       console.error(err);
@@ -175,6 +193,15 @@ export default function SenaForm({ clientes, vehiculos, vendedores, sucursales }
             <Save className="w-4 h-4" /> {guardando ? "Guardando..." : "Guardar Seña"}
           </button>
         </form>
+
+        {mostrarModalPrecio && (
+          <ConfirmarPrecioModal
+            precioTexto={`Venta $ ${(Number(ventaArs) || 0).toLocaleString("es-AR")}${senaArs ? ` · Seña $ ${Number(senaArs).toLocaleString("es-AR")}` : ""}`}
+            onConfirmar={() => guardarSena(true)}
+            onNoSeguro={() => guardarSena(false)}
+            onCancelar={() => setMostrarModalPrecio(false)}
+          />
+        )}
       </div>
     </div>
   );

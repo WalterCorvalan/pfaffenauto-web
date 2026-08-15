@@ -13,7 +13,7 @@ export default async function ChatPage() {
   const { data: conversaciones } = await supabase
     .from("whatsapp_conversaciones")
     .select(`
-      id, last_message_at, unread_count, handoff_at, ai_habilitada, calificacion,
+      id, last_message_at, unread_count, handoff_at, ai_habilitada, calificacion, origen_ads,
       whatsapp_contactos ( id, telefono, nombre_perfil ), cliente_id, vehiculo_id,
       vendedor_id, vendedor:perfiles!whatsapp_conversaciones_vendedor_id_fkey ( id, nombre )
     `)

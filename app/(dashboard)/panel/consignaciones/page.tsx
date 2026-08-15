@@ -14,7 +14,7 @@ export default async function ConsignacionesPage() {
   // Traemos solo los vehículos que están a consignación
   const { data: consignados } = await supabase
     .from("vehiculos")
-    .select("*, sucursales(nombre)")
+    .select("*, sucursales!vehiculos_sucursal_id_fkey(nombre)")
     .eq("origen", "Consignado")
     .in("estado", ["Disponible", "Reservado"])
     .order("created_at", { ascending: false });
@@ -119,9 +119,9 @@ export default async function ConsignacionesPage() {
             const esReservado = auto.estado === "Reservado";
 
             return (
-              <div 
-                key={auto.id} 
-                className="bg-white border border-slate-200 rounded-xl p-5 shadow-sm hover:shadow-md hover:border-indigo-500/30 transition-all flex flex-col"
+              <div
+                key={auto.id}
+                className={`bg-white border border-slate-200 border-l-4 rounded-xl p-5 shadow-sm hover:shadow-md hover:border-indigo-500/30 transition-all flex flex-col ${esReservado ? "border-l-amber-400" : "border-l-emerald-400"}`}
               >
                 {/* Cabecera de Tarjeta: Estado y Sucursal */}
                 <div className="flex justify-between items-start mb-4">

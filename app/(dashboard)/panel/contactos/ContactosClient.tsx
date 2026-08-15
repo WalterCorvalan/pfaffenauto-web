@@ -122,9 +122,9 @@ export default function ContactosClient({ contactosIniciales }: { contactosInici
                 return (
                   <li
                     key={c.id}
-                    className="flex items-center gap-4 rounded-xl border border-slate-200 bg-white px-4 py-3 shadow-sm hover:border-indigo-200 transition-colors"
+                    className={`flex items-center gap-4 rounded-xl border border-slate-200 border-l-4 bg-white px-4 py-3 shadow-sm hover:border-indigo-200 transition-colors ${c.archivado_at ? "border-l-slate-300" : "border-l-emerald-400"}`}
                   >
-                    <div className="w-10 h-10 rounded-full bg-indigo-50 border border-indigo-100 text-indigo-600 flex items-center justify-center font-bold text-sm shrink-0">
+                    <div className="w-10 h-10 rounded-full bg-indigo-500 text-white flex items-center justify-center font-bold text-sm shrink-0">
                       {(c.nombre_perfil || c.telefono).substring(0, 2).toUpperCase()}
                     </div>
                     <div className="min-w-0 flex-1">

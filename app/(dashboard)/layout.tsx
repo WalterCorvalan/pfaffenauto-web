@@ -11,6 +11,7 @@ import {
   LayoutDashboard, Inbox, PieChart, LogOut, Handshake, MessageSquareCheckIcon, Receipt, UsersRound, Wrench,
   Moon, Sun, FileText, ShieldCheck
 } from "lucide-react";
+import NotificacionesBell from "./NotificacionesBell";
 
 const SECCIONES_INICIALES = {
   inventario: true,
@@ -48,7 +49,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
   useEffect(() => {
     const rutasPorSeccion: Record<string, string[]> = {
       inventario: ["/panel"],
-      crm: ["/panel/crm", "/panel/chat", "/panel/contactos", "/panel/citas", "/panel/cotizaciones", "/panel/consignaciones", "/panel/pedidos", "/panel/tareas"],
+      crm: ["/panel/crm", "/panel/chat", "/panel/contactos", "/panel/citas", "/panel/cotizaciones", "/panel/consignaciones", "/panel/pedidos"],
       operaciones: ["/panel/ventas", "/panel/clientes", "/panel/postventa", "/panel/presupuestos", "/panel/senas", "/panel/boletos", "/panel/resp-civil"],
       administracion: ["/panel/informes", "/panel/gastos", "/panel/usuarios", "/panel/tesoreria"],
       marketing: ["/panel/metricas", "/panel/marketing"],
@@ -138,6 +139,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
       <div className="md:hidden fixed top-0 left-0 right-0 h-14 bg-white dark:bg-[#001c55] border-b border-slate-200 dark:border-[#0a2a6b] flex items-center justify-between px-4 z-50 transition-colors">
         <span className="font-bold text-slate-900 dark:text-white">Pfaffen CRM</span>
         <div className="flex items-center gap-1">
+          <NotificacionesBell />
           <button onClick={toggleDarkMode} className="text-slate-600 dark:text-slate-300 p-2" title="Modo oscuro">
             {darkMode ? <Sun className="w-4 h-4" /> : <Moon className="w-4 h-4" />}
           </button>
@@ -158,6 +160,9 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
           <div className="flex flex-col min-w-0 flex-1">
             <span className="text-[13px] font-bold text-slate-900 dark:text-white truncate">Pfaffen</span>
             <span className="text-[11px] text-slate-500 dark:text-slate-400 truncate">CRM · WhatsApp</span>
+          </div>
+          <div className="hidden md:block" onClick={(e) => e.stopPropagation()}>
+            <NotificacionesBell />
           </div>
           <button
             onClick={(e) => { e.stopPropagation(); toggleDarkMode(); }}
@@ -187,13 +192,13 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
           {/* 💬 CRM */}
           <SectionAccordion id="crm" label="CRM & Leads">
             <NavLinkItem icon={LayoutDashboard} label="Tablero de Leads" href="/panel/crm" />
+            <NavLinkItem icon={CheckSquare} label="Tareas de Leads" href="/panel/crm/tareas" />
             <NavLinkItem icon={MessageSquareCheckIcon} label="Chat" href="/panel/chat" />
             <NavLinkItem icon={UsersRound} label="Contactos" href="/panel/contactos" />
             <NavLinkItem icon={CalendarCheck} label="Agenda de Visitas" href="/panel/citas" />
             <NavLinkItem icon={Inbox} label="Cotizaciones" href="/panel/cotizaciones" />
             <NavLinkItem icon={Handshake} label="Consignaciones" href="/panel/consignaciones" />
             <NavLinkItem icon={Search} label="Pedidos Especiales" href="/panel/pedidos" />
-            <NavLinkItem icon={CheckSquare} label="Tareas del Equipo" href="/panel/tareas" />
           </SectionAccordion>
 
           {/* 🧾 VENTAS */}
@@ -202,6 +207,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
             <NavLinkItem icon={Banknote} label="Señas" href="/panel/senas" />
             <NavLinkItem icon={Receipt} label="Ventas" href="/panel/boletos" />
             <NavLinkItem icon={ShieldCheck} label="Resp. Civil" href="/panel/resp-civil" />
+            <NavLinkItem icon={Receipt} label="Seguimiento de Ventas" href="/panel/ventas" />
             <NavLinkItem icon={Landmark} label="Financiaciones" href="/panel/ventas/financiaciones" />
             <NavLinkItem icon={UserPlus} label="Nuevo Cliente" href="/panel/clientes/nuevo" />
             <NavLinkItem icon={Wrench} label="Postventa" href="/panel/postventa" />

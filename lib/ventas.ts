@@ -6,7 +6,7 @@ export async function getVentasPanel(supabase: SupabaseClient) {
     .select(
       `
       id, created_at, fecha, venta_ars, venta_usd, sena_ars, saldo_abonar_ars, prenda_monto, comision_ars, vendedor_id, vehiculo_id, apellido, nombre, dni,
-      vehiculos ( id, marca, modelo, patente, sucursal_id, sucursales ( id, nombre ) ),
+      vehiculos ( id, marca, modelo, patente, sucursal_id, sucursales!vehiculos_sucursal_id_fkey ( id, nombre ) ),
       perfiles ( nombre )
     `,
     )

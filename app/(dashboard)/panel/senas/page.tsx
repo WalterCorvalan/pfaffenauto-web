@@ -1,8 +1,12 @@
 import { createServerClient } from "@supabase/ssr";
 import { cookies } from "next/headers";
 import Link from "next/link";
-import { Wallet, Plus, Printer, CarFront } from "lucide-react";
+import { Wallet, Plus, Printer, CarFront, AlertTriangle } from "lucide-react";
 import EstadoSenaSelector from "./EstadoSenaSelector";
+
+const COLOR_ESTADO: Record<string, string> = {
+  Activa: "border-l-amber-400", Convertida: "border-l-emerald-400", Perdida: "border-l-slate-300",
+};
 
 export default async function SenasPage() {
   const cookieStore = await cookies();
@@ -41,7 +45,7 @@ export default async function SenasPage() {
             <div className="overflow-x-auto">
               <table className="w-full text-left border-collapse">
                 <thead>
-                  <tr className="bg-slate-50 border-b border-slate-200 text-slate-500 text-[10px] uppercase tracking-widest font-bold">
+                  <tr className="bg-slate-800 text-white text-[10px] uppercase tracking-widest font-bold">
                     <th className="p-4 pl-6">N°</th>
                     <th className="p-4">Fecha</th>
                     <th className="p-4">Sucursal</th>
@@ -54,13 +58,20 @@ export default async function SenasPage() {
                 </thead>
                 <tbody className="divide-y divide-slate-100">
                   {senas?.map((s: any) => (
-                    <tr key={s.id} className="hover:bg-slate-50/50 transition-colors">
+                    <tr key={s.id} className={`hover:bg-indigo-50/40 transition-colors border-l-4 ${COLOR_ESTADO[s.estado] || "border-l-slate-200"}`}>
                       <td className="p-4 pl-6 font-mono text-[13px] font-bold text-indigo-600">{s.numero || "—"}</td>
                       <td className="p-4 text-[13px] text-slate-600 whitespace-nowrap">
                         {s.fecha ? new Date(`${s.fecha}T12:00:00Z`).toLocaleDateString("es-AR", { timeZone: "UTC" }) : "—"}
                       </td>
                       <td className="p-4 text-[13px] text-slate-500">{s.sucursales?.nombre || "—"}</td>
-                      <td className="p-4 text-[13px] font-medium text-slate-900">{s.apellido}, {s.nombre}</td>
+                      <td className="p-4 text-[13px] font-medium text-slate-900">
+                        {s.apellido}, {s.nombre}
+                        {s.precio_confirmado === false && (
+                          <span title="Precio a confirmar" className="inline-flex ml-1.5 align-middle">
+                            <AlertTriangle className="w-3.5 h-3.5 text-amber-500" />
+                          </span>
+                        )}
+                      </td>
                       <td className="p-4 text-[13px] text-slate-700 flex items-center gap-1.5">
                         <CarFront className="w-3.5 h-3.5 text-slate-400" /> {s.marca} {s.modelo}
                       </td>

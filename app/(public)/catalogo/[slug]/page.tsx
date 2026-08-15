@@ -107,7 +107,7 @@ export default async function VehiculoDetallePage({
   const precioUsd = auto.precio_publicado_usd || null;
 
   // ================= 3. QUERIES SECUNDARIAS PARALELIZADAS (PROMISE.ALL) =================
-  const CAMPOS_CARD = `id, marca, modelo, segmento, anio, kilometraje, transmision, precio_publicado_ars, precio_publicado_usd, slug, sucursales ( nombre ), multimedia_vehiculos ( url_archivo )`;
+  const CAMPOS_CARD = `id, marca, modelo, segmento, anio, kilometraje, transmision, precio_publicado_ars, precio_publicado_usd, slug, sucursales!vehiculos_sucursal_id_fkey ( nombre ), multimedia_vehiculos ( url_archivo )`;
 
   // Disparamos las 3 consultas al mismo tiempo
   const [reqPorMarca, reqPrecioSimilar, reqDestacados] = await Promise.all([

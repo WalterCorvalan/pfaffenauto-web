@@ -7,9 +7,9 @@ import { useRouter } from "next/navigation";
 const ESTADOS = ["Pendiente", "En proceso", "Resuelto"];
 
 const COLOR: Record<string, string> = {
-  "Pendiente": "bg-amber-50 text-amber-700 border-amber-200",
-  "En proceso": "bg-blue-50 text-blue-700 border-blue-200",
-  "Resuelto": "bg-emerald-50 text-emerald-700 border-emerald-200",
+  "Pendiente": "bg-amber-500 text-white border-amber-500",
+  "En proceso": "bg-sky-500 text-white border-sky-500",
+  "Resuelto": "bg-emerald-500 text-white border-emerald-500",
 };
 
 export default function EstadoCasoSelector({ id, estado }: { id: string; estado: string }) {
@@ -35,9 +35,9 @@ export default function EstadoCasoSelector({ id, estado }: { id: string; estado:
       value={actual}
       disabled={cargando}
       onChange={(e) => cambiar(e.target.value)}
-      className={`text-[10px] font-bold uppercase tracking-widest px-2 py-1 rounded border outline-none cursor-pointer disabled:opacity-50 ${COLOR[actual]}`}
+      className={`text-[10px] font-bold uppercase tracking-widest px-2.5 py-1.5 rounded-lg border outline-none cursor-pointer shadow-sm transition-transform hover:scale-105 disabled:opacity-50 ${COLOR[actual]}`}
     >
-      {ESTADOS.map((e) => (<option key={e} value={e}>{e}</option>))}
+      {ESTADOS.map((e) => (<option key={e} value={e} className="bg-white text-slate-900">{e}</option>))}
     </select>
   );
 }

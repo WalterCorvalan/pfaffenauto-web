@@ -40,7 +40,7 @@ export default async function RespCivilPage() {
             <div className="overflow-x-auto">
               <table className="w-full text-left border-collapse">
                 <thead>
-                  <tr className="bg-slate-50 border-b border-slate-200 text-slate-500 text-[10px] uppercase tracking-widest font-bold">
+                  <tr className="bg-slate-800 text-white text-[10px] uppercase tracking-widest font-bold">
                     <th className="p-4 pl-6">N°</th>
                     <th className="p-4">Fecha</th>
                     <th className="p-4">Cliente</th>
@@ -51,7 +51,7 @@ export default async function RespCivilPage() {
                 </thead>
                 <tbody className="divide-y divide-slate-100">
                   {registros?.map((r: any) => (
-                    <tr key={r.id} className="hover:bg-slate-50/50 transition-colors">
+                    <tr key={r.id} className="hover:bg-purple-50/40 transition-colors border-l-4 border-l-purple-300">
                       <td className="p-4 pl-6 font-mono text-[13px] font-bold text-indigo-600">{r.numero || "—"}</td>
                       <td className="p-4 text-[13px] text-slate-600 whitespace-nowrap">
                         {r.fecha ? new Date(`${r.fecha}T12:00:00Z`).toLocaleDateString("es-AR", { timeZone: "UTC" }) : "—"}

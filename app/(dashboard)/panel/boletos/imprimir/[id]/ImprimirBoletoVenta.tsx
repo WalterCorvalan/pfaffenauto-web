@@ -1,12 +1,13 @@
 "use client";
 
-import { Printer, ArrowLeft } from "lucide-react";
+import { Printer, ArrowLeft, AlertTriangle } from "lucide-react";
 import Link from "next/link";
 
 export default function ImprimirBoletoVenta({ boleto: b }: { boleto: any }) {
   const vendedor = b.perfiles?.nombre || "Administración";
   const formatMoney = (val: number) => `$ ${Number(val || 0).toLocaleString("es-AR")}`;
   const fecha = b.fecha ? new Date(`${b.fecha}T12:00:00Z`).toLocaleDateString("es-AR", { timeZone: "UTC" }) : "—";
+  const fechaNacimiento = b.fecha_nacimiento ? new Date(`${b.fecha_nacimiento}T12:00:00Z`).toLocaleDateString("es-AR", { timeZone: "UTC" }) : "N/A";
 
   return (
     <div className="min-h-screen pb-20 text-slate-800 bg-[#F9FAFB] print:bg-white pt-8 font-sans">
@@ -20,9 +21,16 @@ export default function ImprimirBoletoVenta({ boleto: b }: { boleto: any }) {
             <p className="text-[11px] text-slate-500 font-mono mt-0.5">N° {b.numero}</p>
           </div>
         </div>
-        <button onClick={() => window.print()} className="bg-indigo-600 hover:bg-indigo-700 text-white px-6 py-2.5 rounded-xl font-bold text-xs uppercase tracking-widest flex items-center gap-2 transition-all shadow-sm active:scale-95">
-          <Printer className="w-4 h-4" /> Imprimir / PDF
-        </button>
+        <div className="flex items-center gap-3">
+          {b.precio_confirmado === false && (
+            <span className="flex items-center gap-1.5 bg-amber-50 text-amber-700 border border-amber-200 px-3 py-2 rounded-xl text-xs font-bold">
+              <AlertTriangle className="w-4 h-4" /> Precio a confirmar
+            </span>
+          )}
+          <button onClick={() => window.print()} className="bg-indigo-600 hover:bg-indigo-700 text-white px-6 py-2.5 rounded-xl font-bold text-xs uppercase tracking-widest flex items-center gap-2 transition-all shadow-sm active:scale-95">
+            <Printer className="w-4 h-4" /> Imprimir / PDF
+          </button>
+        </div>
       </div>
 
       <div className="max-w-[210mm] min-h-[297mm] mx-auto bg-white p-[15mm] shadow-lg border border-slate-200 print:shadow-none print:border-none print:p-0 print:m-0">
@@ -55,16 +63,36 @@ export default function ImprimirBoletoVenta({ boleto: b }: { boleto: any }) {
               <strong className="text-slate-900 text-[13px]">{b.dni || "N/A"}</strong>
             </div>
             <div>
-              <span className="text-[10px] uppercase tracking-widest font-bold text-slate-400 block">Celular</span>
-              <strong className="text-slate-900">{b.telefono_celular || "N/A"}</strong>
+              <span className="text-[10px] uppercase tracking-widest font-bold text-slate-400 block">Fecha de Nacimiento</span>
+              <strong className="text-slate-900">{fechaNacimiento}</strong>
+            </div>
+            <div>
+              <span className="text-[10px] uppercase tracking-widest font-bold text-slate-400 block">Cuit/Cuil</span>
+              <strong className="text-slate-900">{b.cuit_cuil || "N/A"}</strong>
             </div>
             <div className="col-span-2">
               <span className="text-[10px] uppercase tracking-widest font-bold text-slate-400 block">Domicilio</span>
-              <strong className="text-slate-900">{b.calle} {b.numero_calle}, {b.localidad} ({b.provincia})</strong>
+              <strong className="text-slate-900">{b.calle} {b.numero_calle}{b.depto ? ` Dto. ${b.depto}` : ""}, {b.localidad} ({b.provincia}) {b.codigo_postal ? `- CP ${b.codigo_postal}` : ""}</strong>
+            </div>
+            <div>
+              <span className="text-[10px] uppercase tracking-widest font-bold text-slate-400 block">Celular</span>
+              <strong className="text-slate-900">{b.telefono_celular || "N/A"}</strong>
+            </div>
+            <div>
+              <span className="text-[10px] uppercase tracking-widest font-bold text-slate-400 block">Teléfono de Línea</span>
+              <strong className="text-slate-900">{b.telefono_linea || "N/A"}</strong>
             </div>
             <div className="col-span-2">
               <span className="text-[10px] uppercase tracking-widest font-bold text-slate-400 block">Email</span>
               <strong className="text-slate-900">{b.correo_electronico || "No registrado"}</strong>
+            </div>
+            <div>
+              <span className="text-[10px] uppercase tracking-widest font-bold text-slate-400 block">Estado Civil</span>
+              <strong className="text-slate-900 capitalize">{b.estado_civil || "N/A"}</strong>
+            </div>
+            <div>
+              <span className="text-[10px] uppercase tracking-widest font-bold text-slate-400 block">Profesión</span>
+              <strong className="text-slate-900 capitalize">{b.profesion || "N/A"}</strong>
             </div>
           </div>
         </div>
@@ -85,12 +113,28 @@ export default function ImprimirBoletoVenta({ boleto: b }: { boleto: any }) {
               <strong className="text-[14px] font-black">{b.modelo_anio}</strong>
             </div>
             <div>
+              <span className="text-slate-400 font-bold tracking-widest text-[9px] uppercase block mb-0.5">Segmento</span>
+              <strong className="text-slate-900 capitalize">{b.segmento || "-"}</strong>
+            </div>
+            <div>
+              <span className="text-slate-400 font-bold tracking-widest text-[9px] uppercase block mb-0.5">Tipo</span>
+              <strong className="text-slate-900 capitalize">{b.tipo || "-"}</strong>
+            </div>
+            <div>
               <span className="text-slate-400 font-bold tracking-widest text-[9px] uppercase block mb-0.5">Color</span>
               <strong className="text-slate-900 capitalize">{b.color || "-"}</strong>
             </div>
             <div>
+              <span className="text-slate-400 font-bold tracking-widest text-[9px] uppercase block mb-0.5">Marca de Motor</span>
+              <strong className="text-slate-900 uppercase">{b.marca_motor || "-"}</strong>
+            </div>
+            <div>
               <span className="text-slate-400 font-bold tracking-widest text-[9px] uppercase block mb-0.5">Nro. de Motor</span>
               <strong className="text-slate-900 font-mono uppercase">{b.numero_motor || "A verificar"}</strong>
+            </div>
+            <div>
+              <span className="text-slate-400 font-bold tracking-widest text-[9px] uppercase block mb-0.5">Marca de Chasis</span>
+              <strong className="text-slate-900 uppercase">{b.marca_chasis || "-"}</strong>
             </div>
             <div>
               <span className="text-slate-400 font-bold tracking-widest text-[9px] uppercase block mb-0.5">Nro. de Chasis</span>
@@ -112,34 +156,107 @@ export default function ImprimirBoletoVenta({ boleto: b }: { boleto: any }) {
 
         <div className="mb-6 flex gap-6">
           <div className="flex-1 border border-slate-300 rounded-xl overflow-hidden">
-            <h3 className="bg-slate-50 px-4 py-2 text-[10px] font-black uppercase tracking-widest text-slate-500 border-b border-slate-300">Liquidación Comercial</h3>
+            <h3 className="bg-slate-50 px-4 py-2 text-[10px] font-black uppercase tracking-widest text-slate-500 border-b border-slate-300">Datos Comerciales</h3>
             <div className="p-4 space-y-3 text-xs">
               <div className="flex justify-between items-center">
-                <span className="text-slate-600 font-medium">Precio de Venta:</span>
-                <strong className="text-[14px]">{formatMoney(b.venta_ars)}</strong>
+                <span className="text-slate-600 font-medium">Venta:</span>
+                <strong className="text-[14px]">{formatMoney(b.venta_ars)} {b.venta_usd ? `/ US$ ${Number(b.venta_usd).toLocaleString("es-AR")}` : ""}</strong>
               </div>
+              <div className="flex justify-between items-center text-slate-600 font-medium">
+                <span>Seña:</span>
+                <strong className="text-slate-900">{formatMoney(b.sena_ars)} {b.sena_usd ? `/ US$ ${Number(b.sena_usd).toLocaleString("es-AR")}` : ""}</strong>
+              </div>
+              {!!b.tipo_cambio && (
+                <div className="flex justify-between items-center text-slate-600 font-medium">
+                  <span>Tipo de Cambio:</span>
+                  <strong>$ {Number(b.tipo_cambio).toLocaleString("es-AR")}</strong>
+                </div>
+              )}
               <div className="flex justify-between items-center text-slate-600 font-medium">
                 <span>Patentamiento / Transferencia:</span>
                 <strong>{formatMoney(b.patentamiento_transferencia_ars)}</strong>
               </div>
-              <div className="flex justify-between items-center text-slate-600 font-medium">
-                <span>Seña entregada:</span>
-                <strong className="text-slate-900">- {formatMoney(b.sena_ars)}</strong>
-              </div>
-              {b.prenda_monto > 0 && (
-                <div className="flex justify-between items-center text-slate-600 font-medium">
-                  <span>Financiación ({b.banco_prenda} - {b.cant_cuotas_prenda} cuotas):</span>
-                  <strong className="text-slate-900">- {formatMoney(b.prenda_monto)}</strong>
+            </div>
+          </div>
+        </div>
+
+        {(b.efectivo_ars > 0 || b.efectivo_usd > 0 || b.permuta_vehiculo_id || b.remanente_ars > 0) && (
+          <div className="mb-6 flex gap-6">
+            <div className="flex-1 border border-slate-300 rounded-xl overflow-hidden">
+              <h3 className="bg-slate-50 px-4 py-2 text-[10px] font-black uppercase tracking-widest text-slate-500 border-b border-slate-300">Forma de Pago</h3>
+              <div className="p-4 space-y-3 text-xs">
+                {(b.efectivo_ars > 0 || b.efectivo_usd > 0) && (
+                  <div className="flex justify-between items-center text-slate-600 font-medium">
+                    <span>En Efectivo:</span>
+                    <strong className="text-slate-900">{formatMoney(b.efectivo_ars)} {b.efectivo_usd ? `/ US$ ${Number(b.efectivo_usd).toLocaleString("es-AR")}` : ""}</strong>
+                  </div>
+                )}
+                {b.permuta_vehiculo && (
+                  <div className="flex justify-between items-center text-slate-600 font-medium">
+                    <span>Auto en Permuta:</span>
+                    <strong className="text-slate-900">{b.permuta_vehiculo.marca} {b.permuta_vehiculo.modelo} {b.permuta_vehiculo.patente ? `(${b.permuta_vehiculo.patente})` : ""} — Tasado {formatMoney(b.permuta_tasado_ars)}</strong>
+                  </div>
+                )}
+                <div className="flex justify-between items-center border-t-2 border-slate-900 pt-3 mt-3">
+                  <span className="font-bold text-[13px] uppercase tracking-widest">Remanente:</span>
+                  <strong className="text-[14px]">{formatMoney(b.remanente_ars)}</strong>
                 </div>
-              )}
-              <div className="flex justify-between items-center border-t-2 border-slate-900 pt-3 mt-3">
-                <span className="font-bold text-[13px] uppercase tracking-widest">SALDO A ABONAR:</span>
-                <strong className="text-xl font-black text-slate-900 bg-slate-100 px-3 py-1 rounded">
-                  {formatMoney(b.saldo_abonar_ars)}
-                </strong>
+                {b.cant_cuotas_remanente > 0 && (
+                  <>
+                    <div className="flex justify-between items-center text-slate-600 font-medium">
+                      <span>Fecha 1ª Cuota:</span>
+                      <strong className="text-slate-900">{b.fecha_primera_cuota_remanente ? new Date(`${b.fecha_primera_cuota_remanente}T12:00:00Z`).toLocaleDateString("es-AR", { timeZone: "UTC" }) : "-"}</strong>
+                    </div>
+                    <div className="flex justify-between items-center text-slate-600 font-medium">
+                      <span>Cant. de Cuotas:</span>
+                      <strong className="text-slate-900">{b.cant_cuotas_remanente}</strong>
+                    </div>
+                    <div className="flex justify-between items-center text-slate-600 font-medium">
+                      <span>Cuota:</span>
+                      <strong className="text-slate-900">{formatMoney(b.cuota_remanente_ars)}</strong>
+                    </div>
+                  </>
+                )}
               </div>
             </div>
           </div>
+        )}
+
+        {(b.banco_prenda || b.prenda_monto > 0) && (
+          <div className="mb-6 flex gap-6">
+            <div className="flex-1 border border-slate-300 rounded-xl overflow-hidden">
+              <h3 className="bg-slate-50 px-4 py-2 text-[10px] font-black uppercase tracking-widest text-slate-500 border-b border-slate-300">Datos de Prenda</h3>
+              <div className="p-4 space-y-3 text-xs">
+                <div className="flex justify-between items-center text-slate-600 font-medium">
+                  <span>Banco de la Prenda:</span>
+                  <strong className="text-slate-900">{b.banco_prenda || "-"}</strong>
+                </div>
+                <div className="flex justify-between items-center text-slate-600 font-medium">
+                  <span>Prenda:</span>
+                  <strong className="text-slate-900">{formatMoney(b.prenda_monto)}</strong>
+                </div>
+                <div className="flex justify-between items-center text-slate-600 font-medium">
+                  <span>Cant. Cuotas Prenda:</span>
+                  <strong className="text-slate-900">{b.cant_cuotas_prenda || "-"}</strong>
+                </div>
+                <div className="flex justify-between items-center text-slate-600 font-medium">
+                  <span>Cuota de Prenda:</span>
+                  <strong className="text-slate-900">{formatMoney(b.cuota_prenda_ars)}</strong>
+                </div>
+                <div className="flex justify-between items-center text-slate-600 font-medium">
+                  <span>Seguro de Prenda:</span>
+                  <strong className="text-slate-900">{formatMoney(b.seguro_prenda_ars)}</strong>
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
+
+        <div className="mb-6 bg-slate-900 rounded-xl p-4 flex justify-between items-center">
+          <span className="font-bold text-[13px] uppercase tracking-widest text-white">Saldo a Abonar:</span>
+          <strong className="text-xl font-black text-white bg-white/10 px-3 py-1 rounded">
+            {formatMoney(b.saldo_abonar_ars)} {b.saldo_abonar_usd ? `/ US$ ${Number(b.saldo_abonar_usd).toLocaleString("es-AR")}` : ""}
+          </strong>
         </div>
 
         {b.seguro_compania && (

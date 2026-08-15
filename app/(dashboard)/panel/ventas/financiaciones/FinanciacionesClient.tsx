@@ -27,9 +27,17 @@ const ESTADOS = ["Pendiente", "Cobrado", "Vencido"];
 
 const badgeEstado = (estado: string) => {
   switch (estado) {
-    case "Cobrado": return "bg-emerald-50 text-emerald-600 border-emerald-200";
-    case "Vencido": return "bg-rose-50 text-rose-600 border-rose-200";
-    default: return "bg-amber-50 text-amber-600 border-amber-200";
+    case "Cobrado": return "bg-emerald-500 text-white border-emerald-500";
+    case "Vencido": return "bg-rose-500 text-white border-rose-500";
+    default: return "bg-amber-500 text-white border-amber-500";
+  }
+};
+
+const bordeEstado = (estado: string) => {
+  switch (estado) {
+    case "Cobrado": return "border-l-emerald-400";
+    case "Vencido": return "border-l-rose-400";
+    default: return "border-l-amber-400";
   }
 };
 
@@ -121,7 +129,7 @@ export default function FinanciacionesClient({ financiacionesIniciales }: { fina
             <div className="overflow-x-auto">
               <table className="w-full text-left border-collapse">
                 <thead>
-                  <tr className="bg-slate-50 border-b border-slate-200 text-slate-500 text-[10px] uppercase tracking-widest font-bold">
+                  <tr className="bg-slate-800 text-white text-[10px] uppercase tracking-widest font-bold">
                     <th className="p-4 pl-6">Vehículo / Cliente</th>
                     <th className="p-4">Entidad</th>
                     <th className="p-4 text-center">Cuotas</th>
@@ -132,7 +140,7 @@ export default function FinanciacionesClient({ financiacionesIniciales }: { fina
                 </thead>
                 <tbody className="divide-y divide-slate-100">
                   {filtradas.map((f) => (
-                    <tr key={f.id} className="hover:bg-slate-50/50 transition-colors">
+                    <tr key={f.id} className={`hover:bg-indigo-50/40 transition-colors border-l-4 ${bordeEstado(f.estadoVisual)}`}>
                       <td className="p-4 pl-6">
                         <div className="flex items-center gap-2 text-[13px] font-bold text-slate-900">
                           <Car className="w-3.5 h-3.5 text-slate-400" />
@@ -151,9 +159,9 @@ export default function FinanciacionesClient({ financiacionesIniciales }: { fina
                           value={f.estado || "Pendiente"}
                           onChange={(e) => cambiarEstado(f.id, e.target.value)}
                           disabled={actualizandoId === f.id}
-                          className={`text-[10px] font-bold uppercase tracking-widest border rounded-md px-2 py-1 outline-none cursor-pointer ${badgeEstado(f.estadoVisual)}`}
+                          className={`text-[10px] font-bold uppercase tracking-widest border rounded-lg px-2.5 py-1.5 outline-none cursor-pointer shadow-sm transition-transform hover:scale-105 ${badgeEstado(f.estadoVisual)}`}
                         >
-                          {ESTADOS.map((e) => (<option key={e} value={e}>{e}</option>))}
+                          {ESTADOS.map((e) => (<option key={e} value={e} className="bg-white text-slate-900">{e}</option>))}
                         </select>
                       </td>
                     </tr>

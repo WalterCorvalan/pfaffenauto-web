@@ -32,7 +32,7 @@ export async function POST(req: Request) {
 
     let query = supabase
       .from("vehiculos")
-      .select(`*, multimedia_vehiculos ( url_archivo ), sucursales ( nombre )`, { count: "exact" })
+      .select(`*, multimedia_vehiculos ( url_archivo ), sucursales!vehiculos_sucursal_id_fkey ( nombre )`, { count: "exact" })
       .in("estado", ["Disponible", "Reservado"]);
 
     if (filtros.tipo) query = query.eq("tipo", filtros.tipo);

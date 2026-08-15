@@ -1,7 +1,16 @@
 import { createServerClient } from "@supabase/ssr";
 import { cookies } from "next/headers";
 import Link from "next/link";
-import { Receipt, Plus, Printer, CarFront } from "lucide-react";
+import { Receipt, Plus, Printer, CarFront, AlertTriangle } from "lucide-react";
+
+const COLOR_ETAPA: Record<string, string> = {
+  "Seña": "border-l-amber-400", "Documentación": "border-l-sky-400", "Patentamiento": "border-l-purple-400",
+  "Transferencia": "border-l-indigo-400", "Entrega": "border-l-teal-400", "Completado": "border-l-emerald-400",
+};
+const BADGE_ETAPA: Record<string, string> = {
+  "Seña": "bg-amber-500", "Documentación": "bg-sky-500", "Patentamiento": "bg-purple-500",
+  "Transferencia": "bg-indigo-500", "Entrega": "bg-teal-500", "Completado": "bg-emerald-500",
+};
 
 export default async function BoletosPage() {
   const cookieStore = await cookies();
@@ -40,12 +49,13 @@ export default async function BoletosPage() {
             <div className="overflow-x-auto">
               <table className="w-full text-left border-collapse">
                 <thead>
-                  <tr className="bg-slate-50 border-b border-slate-200 text-slate-500 text-[10px] uppercase tracking-widest font-bold">
+                  <tr className="bg-slate-800 text-white text-[10px] uppercase tracking-widest font-bold">
                     <th className="p-4 pl-6">N°</th>
                     <th className="p-4">Fecha</th>
                     <th className="p-4">Sucursal</th>
                     <th className="p-4">Cliente</th>
                     <th className="p-4">Vehículo</th>
+                    <th className="p-4">Etapa</th>
                     <th className="p-4 text-right">Venta</th>
                     <th className="p-4 text-right">Saldo</th>
                     <th className="p-4 pr-6 text-center">Imprimir</th>
@@ -53,15 +63,29 @@ export default async function BoletosPage() {
                 </thead>
                 <tbody className="divide-y divide-slate-100">
                   {boletos?.map((b: any) => (
-                    <tr key={b.id} className="hover:bg-slate-50/50 transition-colors">
+                    <tr key={b.id} className={`hover:bg-indigo-50/40 transition-colors border-l-4 ${COLOR_ETAPA[b.etapa_seguimiento] || "border-l-slate-200"}`}>
                       <td className="p-4 pl-6 font-mono text-[13px] font-bold text-indigo-600">{b.numero || "—"}</td>
                       <td className="p-4 text-[13px] text-slate-600 whitespace-nowrap">
                         {b.fecha ? new Date(`${b.fecha}T12:00:00Z`).toLocaleDateString("es-AR", { timeZone: "UTC" }) : "—"}
                       </td>
                       <td className="p-4 text-[13px] text-slate-500">{b.sucursales?.nombre || "—"}</td>
-                      <td className="p-4 text-[13px] font-medium text-slate-900">{b.apellido}, {b.nombre}</td>
+                      <td className="p-4 text-[13px] font-medium text-slate-900">
+                        {b.apellido}, {b.nombre}
+                        {b.precio_confirmado === false && (
+                          <span title="Precio a confirmar" className="inline-flex ml-1.5 align-middle">
+                            <AlertTriangle className="w-3.5 h-3.5 text-amber-500" />
+                          </span>
+                        )}
+                      </td>
                       <td className="p-4 text-[13px] text-slate-700 flex items-center gap-1.5">
                         <CarFront className="w-3.5 h-3.5 text-slate-400" /> {b.marca} {b.modelo}
+                      </td>
+                      <td className="p-4">
+                        {b.etapa_seguimiento ? (
+                          <span className={`text-[10px] font-bold uppercase tracking-widest text-white px-2 py-1 rounded-lg ${BADGE_ETAPA[b.etapa_seguimiento] || "bg-slate-400"}`}>
+                            {b.etapa_seguimiento}
+                          </span>
+                        ) : "—"}
                       </td>
                       <td className="p-4 text-right font-mono text-[13px] font-bold text-slate-900">
                         {b.venta_ars ? `$ ${Number(b.venta_ars).toLocaleString("es-AR")}` : "—"}
@@ -78,7 +102,7 @@ export default async function BoletosPage() {
                   ))}
                   {(!boletos || boletos.length === 0) && (
                     <tr>
-                      <td colSpan={8} className="p-16 text-center text-slate-400 text-sm italic">
+                      <td colSpan={9} className="p-16 text-center text-slate-400 text-sm italic">
                         Sin ventas cargadas todavía.
                       </td>
                     </tr>

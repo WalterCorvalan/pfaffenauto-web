@@ -133,6 +133,10 @@ async function ingestarMensaje({ waId, nombrePerfil, msg }: { waId: string; nomb
     })
     .eq("id", conversacion.id);
 
+  if (msg.referral) {
+    await vincularAutoDesdeAnuncio(conversacion.id, msg.referral);
+  }
+
   await ejecutarAgente(conversacion.id, contacto.id);
 }
 
@@ -151,6 +155,14 @@ const AgentReplySchema = z.object({
   }).nullable(),
 });
 
+// Escritura compartida: vincula auto + vendedor asignado a una conversación.
+async function asignarVehiculoYVendedor(conversacionId: string, vehiculoId: string, vendedorId: string | null, origenAds?: string) {
+  const update: Record<string, unknown> = { vehiculo_id: vehiculoId };
+  if (vendedorId) update.vendedor_id = vendedorId;
+  if (origenAds) update.origen_ads = origenAds;
+  await supabase.from("whatsapp_conversaciones").update(update).eq("id", conversacionId);
+}
+
 // Si el lead menciona un auto puntual, lo vinculamos. El vendedor sale directo
 // de vehiculos.vendedor_asignado_id (cada auto ya tiene su vendedor). Si el auto
 // no tiene vendedor asignado, la conversación queda sin asignar para repartirse a mano.
@@ -166,10 +178,27 @@ async function vincularAutoYAsignar(conversacionId: string, marca: string, model
 
   if (!auto) return;
 
-  const update: Record<string, unknown> = { vehiculo_id: auto.id };
-  if (auto.vendedor_asignado_id) update.vendedor_id = auto.vendedor_asignado_id;
+  await asignarVehiculoYVendedor(conversacionId, auto.id, auto.vendedor_asignado_id ?? null);
+}
 
-  await supabase.from("whatsapp_conversaciones").update(update).eq("id", conversacionId);
+// Meta manda "referral" en el primer mensaje de un Click-to-WhatsApp Ad (headline/body
+// del anuncio). Si el título/texto matchea un auto en stock, vinculamos al instante sin
+// esperar a que la IA lo infiera charlando.
+async function vincularAutoDesdeAnuncio(conversacionId: string, referral: { headline?: string; body?: string }) {
+  const textoAnuncio = `${referral.headline ?? ""} ${referral.body ?? ""}`.toLowerCase();
+  if (!textoAnuncio.trim()) return;
+
+  const { data: vehiculos } = await supabase
+    .from("vehiculos")
+    .select("id, marca, modelo, vendedor_asignado_id")
+    .in("estado", ["Disponible", "Reservado"]);
+
+  const match = (vehiculos ?? []).find(
+    (v) => v.marca && v.modelo && textoAnuncio.includes(v.marca.toLowerCase()) && textoAnuncio.includes(v.modelo.toLowerCase())
+  );
+  if (!match) return;
+
+  await asignarVehiculoYVendedor(conversacionId, match.id, match.vendedor_asignado_id ?? null, referral.headline);
 }
 
 // Si después de un par de mensajes la IA no logra identificar qué auto busca el

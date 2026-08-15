@@ -16,7 +16,7 @@ export default async function AutosPautadosPage() {
     .select(`
       id, marca, modelo, patente, estado, pautado, canal_pauta, precio_publicado_ars,
       multimedia_vehiculos ( url_archivo ),
-      sucursales ( nombre )
+      sucursales!vehiculos_sucursal_id_fkey ( nombre )
     `)
     .order("created_at", { ascending: false });
 

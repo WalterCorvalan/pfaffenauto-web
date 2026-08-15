@@ -18,7 +18,7 @@ import BannersPublicitarios from "@/components/banners/BannerPublicitario";
 
 export const revalidate = 60;
 
-const CAMPOS_PUBLICOS = "id, marca, modelo, anio, kilometraje, tipo, segmento, estado, slug, precio_publicado_ars, precio_publicado_usd, multimedia_vehiculos ( url_archivo ), sucursales ( nombre )";
+const CAMPOS_PUBLICOS = "id, marca, modelo, anio, kilometraje, tipo, segmento, estado, slug, precio_publicado_ars, precio_publicado_usd, multimedia_vehiculos ( url_archivo ), sucursales!vehiculos_sucursal_id_fkey ( nombre )";
 
 export default async function Page() {
   const supabase = await createClient();

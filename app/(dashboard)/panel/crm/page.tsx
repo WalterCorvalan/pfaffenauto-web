@@ -10,16 +10,31 @@ export default async function CRMPage() {
     { cookies: { getAll: () => cookieStore.getAll() } },
   );
 
-  const { data: cotizaciones } = await supabase
-    .from("cotizaciones")
-    .select("*")
-    .order("created_at", { ascending: false });
+  const { data: { user } } = await supabase.auth.getUser();
+  let miRol = "vendedor";
+  if (user) {
+    const { data: perfil } = await supabase.from("perfiles").select("rol").eq("id", user.id).single();
+    miRol = perfil?.rol || "vendedor";
+  }
+
+  const [{ data: cotizaciones }, { data: motivosCierre }] = await Promise.all([
+    supabase
+      .from("cotizaciones")
+      .select("*, perfiles:perfiles!cotizaciones_vendedor_id_fkey ( nombre ), vehiculos ( marca, modelo, sucursales!vehiculos_sucursal_id_fkey ( nombre ) )") // incluye asistencia_solicitada/atendida vía *
+      .order("created_at", { ascending: false }),
+    supabase.from("motivos_cierre").select("*").eq("activo", true).order("nombre"),
+  ]);
+
+  const { data: vendedores } = await supabase.from("perfiles").select("id, nombre").eq("rol", "vendedor").eq("activo", true).order("nombre");
+  const { data: sucursales } = await supabase.from("sucursales").select("id, nombre").order("nombre");
 
   const { data: conversacionesWa } = await supabase
     .from("whatsapp_conversaciones")
     .select(`
-      id, estado_pipeline, created_at, calificacion,
-      whatsapp_contactos ( nombre_perfil, telefono )
+      id, estado_pipeline, created_at, calificacion, vendedor_id, origen_ads,
+      whatsapp_contactos ( nombre_perfil, telefono ),
+      perfiles ( nombre ),
+      vehiculos ( marca, modelo, sucursales!vehiculos_sucursal_id_fkey ( nombre ) )
     `)
     .order("created_at", { ascending: false });
 
@@ -28,21 +43,31 @@ export default async function CRMPage() {
     origen: "whatsapp",
     nombre: c.whatsapp_contactos?.nombre_perfil || c.whatsapp_contactos?.telefono || "Consulta WhatsApp",
     telefono: c.whatsapp_contactos?.telefono || "",
-    marca: "",
-    modelo: "Consulta por WhatsApp",
+    marca: c.vehiculos?.marca || "",
+    modelo: c.vehiculos?.modelo || "Consulta por WhatsApp",
     tipo_peritaje: "whatsapp",
     precio_sugerido: null,
     estado: c.estado_pipeline || "Nuevo",
     created_at: c.created_at,
+    vendedor_id: c.vendedor_id,
+    perfiles: c.perfiles,
+    vehiculos: c.vehiculos,
+    origen_ads: c.origen_ads,
   }));
 
   const leadsCotizaciones = (cotizaciones || []).map((c: any) => ({ ...c, origen: "cotizacion" }));
 
-  const leadsUnificados = [...leadsCotizaciones, ...leadsWa];
+  let leadsUnificados = [...leadsCotizaciones, ...leadsWa];
+
+  // Vendedor: solo ve sus leads asignados + los sin asignar (para poder tomarlos). Nunca los de otro vendedor.
+  // Admin siempre ve todo. Encargado ve todo por default, con toggle "Mis leads" en el Kanban (client-side).
+  if (miRol === "vendedor" && user) {
+    leadsUnificados = leadsUnificados.filter((l: any) => !l.vendedor_id || l.vendedor_id === user.id);
+  }
 
   return (
     <div className="flex flex-col h-full w-full bg-white overflow-hidden">
-      <KanbanBoard leadsIniciales={leadsUnificados} />
+      <KanbanBoard leadsIniciales={leadsUnificados} motivosCierre={motivosCierre || []} miRol={miRol} miId={user?.id || ""} vendedores={vendedores || []} sucursales={sucursales || []} />
     </div>
   );
 }

@@ -45,17 +45,27 @@ export default async function CitasPage() {
 
   const badgeEstado = (estado: string) => {
     switch (estado) {
-      case "Pendiente": return "bg-amber-50 text-amber-600 border-amber-200";
-      case "Confirmada": return "bg-indigo-50 text-indigo-600 border-indigo-200";
-      case "Asistió": return "bg-emerald-50 text-emerald-600 border-emerald-200";
-      case "Cancelada": return "bg-rose-50 text-rose-600 border-rose-200";
-      default: return "bg-slate-50 text-slate-500 border-slate-200";
+      case "Pendiente": return "bg-amber-500 text-white border-amber-500";
+      case "Confirmada": return "bg-indigo-500 text-white border-indigo-500";
+      case "Asistió": return "bg-emerald-500 text-white border-emerald-500";
+      case "Cancelada": return "bg-rose-500 text-white border-rose-500";
+      default: return "bg-slate-400 text-white border-slate-400";
+    }
+  };
+
+  const bordeEstado = (estado: string) => {
+    switch (estado) {
+      case "Pendiente": return "border-t-amber-400";
+      case "Confirmada": return "border-t-indigo-400";
+      case "Asistió": return "border-t-emerald-400";
+      case "Cancelada": return "border-t-rose-400";
+      default: return "border-t-slate-300";
     }
   };
 
   const Tarjeta = ({ v }: { v: any }) => (
-    <div className="bg-white border border-slate-200 rounded-xl p-4 flex flex-col shadow-sm hover:shadow-md hover:border-indigo-500/30 transition-all group">
-      
+    <div className={`bg-white border border-slate-200 border-t-4 rounded-xl p-4 flex flex-col shadow-sm hover:shadow-md hover:border-indigo-500/30 transition-all group ${bordeEstado(v.estado)}`}>
+
       {/* Cabecera de la Tarjeta */}
       <div className="flex justify-between items-start mb-3">
         <span className={`text-[10px] font-bold uppercase tracking-widest px-2 py-0.5 rounded border ${badgeEstado(v.estado)}`}>
@@ -69,7 +79,7 @@ export default async function CitasPage() {
 
       {/* Info del Cliente */}
       <div className="flex items-center gap-2 mb-3">
-        <div className="w-8 h-8 rounded-full bg-slate-100 text-slate-600 flex items-center justify-center font-bold text-xs shrink-0 border border-slate-200">
+        <div className="w-8 h-8 rounded-full bg-indigo-500 text-white flex items-center justify-center font-bold text-xs shrink-0">
           {v.nombre_cliente.substring(0, 2).toUpperCase()}
         </div>
         <h3 className="font-bold text-[14px] text-slate-900 truncate">

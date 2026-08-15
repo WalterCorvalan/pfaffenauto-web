@@ -1,7 +1,7 @@
 import { createServerClient } from "@supabase/ssr";
 import { cookies } from "next/headers";
 import Link from "next/link";
-import { FileText, Plus, Printer, CarFront } from "lucide-react";
+import { FileText, Plus, Printer, CarFront, AlertTriangle } from "lucide-react";
 
 export default async function PresupuestosPage() {
   const cookieStore = await cookies();
@@ -40,7 +40,7 @@ export default async function PresupuestosPage() {
             <div className="overflow-x-auto">
               <table className="w-full text-left border-collapse">
                 <thead>
-                  <tr className="bg-slate-50 border-b border-slate-200 text-slate-500 text-[10px] uppercase tracking-widest font-bold">
+                  <tr className="bg-slate-800 text-white text-[10px] uppercase tracking-widest font-bold">
                     <th className="p-4 pl-6">N°</th>
                     <th className="p-4">Fecha</th>
                     <th className="p-4">Cliente</th>
@@ -52,12 +52,19 @@ export default async function PresupuestosPage() {
                 </thead>
                 <tbody className="divide-y divide-slate-100">
                   {presupuestos?.map((p: any) => (
-                    <tr key={p.id} className="hover:bg-slate-50/50 transition-colors">
+                    <tr key={p.id} className={`hover:bg-indigo-50/40 transition-colors border-l-4 ${p.precio_confirmado === false ? "border-l-amber-400" : "border-l-indigo-300"}`}>
                       <td className="p-4 pl-6 font-mono text-[13px] font-bold text-indigo-600">{p.numero || "—"}</td>
                       <td className="p-4 text-[13px] text-slate-600 whitespace-nowrap">
                         {p.fecha ? new Date(`${p.fecha}T12:00:00Z`).toLocaleDateString("es-AR", { timeZone: "UTC" }) : "—"}
                       </td>
-                      <td className="p-4 text-[13px] font-medium text-slate-900">{p.cliente}</td>
+                      <td className="p-4 text-[13px] font-medium text-slate-900">
+                        {p.cliente}
+                        {p.precio_confirmado === false && (
+                          <span title="Precio a confirmar" className="inline-flex ml-1.5 align-middle">
+                            <AlertTriangle className="w-3.5 h-3.5 text-amber-500" />
+                          </span>
+                        )}
+                      </td>
                       <td className="p-4 text-[13px] text-slate-700 flex items-center gap-1.5">
                         <CarFront className="w-3.5 h-3.5 text-slate-400" /> {p.marca} {p.modelo}
                       </td>

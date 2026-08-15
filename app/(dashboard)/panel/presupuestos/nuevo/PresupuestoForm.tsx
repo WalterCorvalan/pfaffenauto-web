@@ -4,38 +4,67 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { supabase } from "@/lib/supabase/client";
+import { notificarEncargados } from "@/lib/notificaciones";
 import { ArrowLeft, FileText, Save } from "lucide-react";
 import ClienteBuscador, { ClienteSeleccionado } from "../../ClienteBuscador";
 import VehiculoSelector, { VehiculoDatos } from "../../VehiculoSelector";
+import ConfirmarPrecioModal from "../../ConfirmarPrecioModal";
 
 const inputClass = "w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2.5 text-sm outline-none focus:border-indigo-500 focus:bg-white transition-colors text-slate-900 placeholder:text-slate-400";
 
-export default function PresupuestoForm({ clientes, vehiculos, vendedores }: { clientes: any[]; vehiculos: any[]; vendedores: any[] }) {
+export default function PresupuestoForm({ clientes, vehiculos, vendedores, vehiculoInicial }: { clientes: any[]; vehiculos: any[]; vendedores: any[]; vehiculoInicial?: any | null }) {
   const router = useRouter();
   const [guardando, setGuardando] = useState(false);
 
   const [cliente, setCliente] = useState<ClienteSeleccionado | null>(null);
-  const [vehiculo, setVehiculo] = useState<VehiculoDatos | null>(null);
+  const [vehiculo, setVehiculo] = useState<VehiculoDatos | null>(
+    vehiculoInicial
+      ? {
+          vehiculo_id: vehiculoInicial.id,
+          dominio: vehiculoInicial.patente || "",
+          segmento: vehiculoInicial.segmento || "",
+          marca: vehiculoInicial.marca || "",
+          modelo: vehiculoInicial.modelo || "",
+          tipo: vehiculoInicial.tipo || "",
+          marca_motor: vehiculoInicial.marca || "",
+          numero_motor: vehiculoInicial.numero_motor || "",
+          marca_chasis: vehiculoInicial.marca || "",
+          numero_chasis: vehiculoInicial.numero_chasis || "",
+          modelo_anio: String(vehiculoInicial.anio || ""),
+          color: vehiculoInicial.color || "",
+          kilometros: String(vehiculoInicial.kilometraje || ""),
+          combustible: vehiculoInicial.tipo_combustible || "",
+        }
+      : null
+  );
   const [vendedorId, setVendedorId] = useState("");
   const [precioArs, setPrecioArs] = useState("");
   const [precioUsd, setPrecioUsd] = useState("");
   const [imprimirEn, setImprimirEn] = useState("");
   const [observaciones, setObservaciones] = useState("");
+  const [mostrarModalPrecio, setMostrarModalPrecio] = useState(false);
 
-  const handleSubmit = async (e: React.FormEvent) => {
+  const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (!cliente) return alert("Elegí o cargá un cliente.");
     if (!vehiculo || !vehiculo.marca || !vehiculo.modelo) return alert("Elegí o cargá el vehículo.");
+    setMostrarModalPrecio(true);
+  };
 
+  const guardarPresupuesto = async (precioConfirmado: boolean) => {
+    if (!cliente || !vehiculo) return;
+    setMostrarModalPrecio(false);
     setGuardando(true);
     try {
       const { data: { user } } = await supabase.auth.getUser();
       const { data: ultimo } = await supabase.from("presupuestos").select("numero").order("numero", { ascending: false }).limit(1).maybeSingle();
       const siguienteNumero = (ultimo?.numero || 0) + 1;
+      const tokenPublico = Array.from({ length: 8 }, () => "ABCDEFGHJKLMNPQRSTUVWXYZ23456789"[Math.floor(Math.random() * 32)]).join("");
 
       const { data, error } = await supabase.from("presupuestos").insert({
         numero: siguienteNumero,
         fecha: new Date().toISOString().split("T")[0],
+        token_publico: tokenPublico,
         vendedor_id: vendedorId || user?.id,
         cliente_id: cliente.id,
         cliente: `${cliente.apellido} ${cliente.nombre}`,
@@ -53,9 +82,19 @@ export default function PresupuestoForm({ clientes, vehiculos, vendedores }: { c
         precio_venta_usd: precioUsd ? Number(precioUsd) : null,
         imprimir_en: imprimirEn || null,
         observaciones: observaciones || null,
+        precio_confirmado: precioConfirmado,
       }).select("id").single();
 
       if (error) throw error;
+
+      if (!precioConfirmado) {
+        await notificarEncargados(
+          supabase,
+          `${cliente.nombre} ${cliente.apellido} — Presupuesto N° ${siguienteNumero}: el vendedor no confirmó el precio ($${(Number(precioArs) || 0).toLocaleString("es-AR")}). Verificalo.`,
+          `/panel/presupuestos/imprimir/${data.id}`
+        );
+      }
+
       router.push(`/panel/presupuestos/imprimir/${data.id}`);
     } catch (err) {
       console.error(err);
@@ -123,6 +162,15 @@ export default function PresupuestoForm({ clientes, vehiculos, vendedores }: { c
             <Save className="w-4 h-4" /> {guardando ? "Guardando..." : "Guardar Presupuesto"}
           </button>
         </form>
+
+        {mostrarModalPrecio && (
+          <ConfirmarPrecioModal
+            precioTexto={`$ ${(Number(precioArs) || 0).toLocaleString("es-AR")}${precioUsd ? ` (US$ ${Number(precioUsd).toLocaleString("es-AR")})` : ""}`}
+            onConfirmar={() => guardarPresupuesto(true)}
+            onNoSeguro={() => guardarPresupuesto(false)}
+            onCancelar={() => setMostrarModalPrecio(false)}
+          />
+        )}
       </div>
     </div>
   );

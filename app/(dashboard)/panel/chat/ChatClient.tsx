@@ -14,6 +14,7 @@ import {
   ChevronRight,
   PanelRight,
   Loader2,
+  Megaphone,
 } from "lucide-react";
 
 const ETAPAS_PIPELINE = [
@@ -293,8 +294,13 @@ export default function ChatClient({
         <div className="flex-1 min-w-0">
           <div className="flex justify-between items-start mb-0.5">
             <span
-              className={`font-bold text-sm truncate ${isActive ? "text-emerald-900" : "text-slate-900"}`}
+              className={`font-bold text-sm truncate flex items-center gap-1 ${isActive ? "text-emerald-900" : "text-slate-900"}`}
             >
+              {c.origen_ads && (
+                <span title={c.origen_ads} className="shrink-0 inline-flex">
+                  <Megaphone className="w-3 h-3 text-indigo-500" />
+                </span>
+              )}
               {contacto?.nombre_perfil || contacto?.telefono}
             </span>
             <span className="text-[11px] text-slate-400 whitespace-nowrap">
@@ -532,6 +538,14 @@ export default function ChatClient({
               <p className="text-sm text-slate-500 mt-1">
                 {contactoActivo?.telefono}
               </p>
+              {conversacionActiva?.origen_ads && (
+                <div className="mt-3 flex items-center gap-1.5 bg-indigo-50 border border-indigo-200 text-indigo-700 text-[11px] font-bold px-2.5 py-1 rounded-full max-w-full">
+                  <Megaphone className="w-3 h-3 shrink-0" />
+                  <span className="truncate" title={conversacionActiva.origen_ads}>
+                    {conversacionActiva.origen_ads}
+                  </span>
+                </div>
+              )}
             </div>
 
             {/* IA Toggle */}

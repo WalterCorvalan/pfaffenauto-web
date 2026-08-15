@@ -7,9 +7,9 @@ import { useRouter } from "next/navigation";
 const ESTADOS = ["Activa", "Convertida", "Perdida"];
 
 const COLOR: Record<string, string> = {
-  "Activa": "bg-amber-50 text-amber-700 border-amber-200",
-  "Convertida": "bg-emerald-50 text-emerald-700 border-emerald-200",
-  "Perdida": "bg-slate-100 text-slate-500 border-slate-200",
+  "Activa": "bg-amber-500 text-white border-amber-500",
+  "Convertida": "bg-emerald-500 text-white border-emerald-500",
+  "Perdida": "bg-slate-400 text-white border-slate-400",
 };
 
 export default function EstadoSenaSelector({ id, estado }: { id: string; estado: string }) {
@@ -35,9 +35,9 @@ export default function EstadoSenaSelector({ id, estado }: { id: string; estado:
       value={actual}
       disabled={cargando}
       onChange={(e) => cambiar(e.target.value)}
-      className={`text-[10px] font-bold uppercase tracking-widest px-2 py-1 rounded border outline-none cursor-pointer disabled:opacity-50 ${COLOR[actual] || COLOR.Activa}`}
+      className={`text-[10px] font-bold uppercase tracking-widest px-2.5 py-1.5 rounded-lg border outline-none cursor-pointer shadow-sm transition-transform hover:scale-105 disabled:opacity-50 ${COLOR[actual] || COLOR.Activa}`}
     >
-      {ESTADOS.map((e) => (<option key={e} value={e}>{e}</option>))}
+      {ESTADOS.map((e) => (<option key={e} value={e} className="bg-white text-slate-900">{e}</option>))}
     </select>
   );
 }
