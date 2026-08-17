@@ -49,22 +49,22 @@ export default function EdicionPrecio({ autoId, precioArs, precioUsd, puedeGesti
 
   return (
     <>
-      <div 
+      <div
         onClick={() => puedeGestionar && setIsEditing(true)}
         className={`inline-flex flex-col gap-0.5 font-mono transition-all rounded-lg p-1.5 -ml-1.5
-          ${puedeGestionar ? 'cursor-pointer hover:bg-slate-50 group' : 'cursor-default'}
+          ${puedeGestionar ? 'cursor-pointer hover:bg-slate-50 dark:hover:bg-[#00246b] group' : 'cursor-default'}
         `}
         title={puedeGestionar ? "Tocar para editar precios" : ""}
       >
         <div className="flex items-center gap-1.5">
-          <span className="font-bold text-emerald-700 text-[15px]">
+          <span className="font-bold text-emerald-700 dark:text-emerald-300 text-[15px]">
             {precioArs ? `$ ${precioArs.toLocaleString("es-AR")}` : "Sin ARS"}
           </span>
           {puedeGestionar && (
-            <Edit3 className="w-3.5 h-3.5 opacity-0 group-hover:opacity-100 transition-opacity text-slate-400" />
+            <Edit3 className="w-3.5 h-3.5 opacity-0 group-hover:opacity-100 transition-opacity text-slate-400 dark:text-slate-500" />
           )}
         </div>
-        <div className="text-[11px] text-slate-500 font-semibold">
+        <div className="text-[11px] text-slate-500 dark:text-slate-400 font-semibold">
           {precioUsd ? `U$S ${precioUsd.toLocaleString("en-US")}` : "Sin USD"}
         </div>
       </div>
@@ -72,35 +72,35 @@ export default function EdicionPrecio({ autoId, precioArs, precioUsd, puedeGesti
       {isEditing && puedeGestionar && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
           <div className="absolute inset-0 bg-slate-900/40 backdrop-blur-sm" onClick={() => !cargando && setIsEditing(false)}></div>
-          <div className="relative bg-white border border-slate-200 w-full max-w-sm rounded-2xl shadow-2xl p-6 animate-fadeIn">
-            <div className="flex justify-between items-center mb-5 border-b border-slate-100 pb-3">
-              <h3 className="text-lg font-bold text-slate-900 flex items-center gap-2">
-                <DollarSign className="w-5 h-5 text-emerald-600" /> Edición de Precios
+          <div className="relative bg-white dark:bg-[#001c55] border border-slate-200 dark:border-[#0a2a6b] w-full max-w-sm rounded-2xl shadow-2xl p-6 animate-fadeIn">
+            <div className="flex justify-between items-center mb-5 border-b border-slate-100 dark:border-[#0a2a6b] pb-3">
+              <h3 className="text-lg font-bold text-slate-900 dark:text-white flex items-center gap-2">
+                <DollarSign className="w-5 h-5 text-emerald-600 dark:text-emerald-300" /> Edición de Precios
               </h3>
-              <button onClick={() => setIsEditing(false)} className="text-slate-400 hover:text-slate-700 transition-colors bg-slate-50 hover:bg-slate-100 p-1.5 rounded-lg border border-slate-200">
+              <button onClick={() => setIsEditing(false)} className="text-slate-400 dark:text-slate-500 hover:text-slate-700 dark:hover:text-slate-200 transition-colors bg-slate-50 dark:bg-[#00246b] hover:bg-slate-100 dark:hover:bg-[#002a6e] p-1.5 rounded-lg border border-slate-200 dark:border-[#0a2a6b]">
                 <X className="w-4 h-4" />
               </button>
             </div>
 
             <form onSubmit={guardarPrecio} className="space-y-4">
               <div>
-                <label className="text-[11px] font-bold text-slate-500 uppercase tracking-widest mb-1.5 block">Precio en Dólares (USD)</label>
-                <div className="flex items-center bg-slate-50 border border-slate-200 rounded-xl px-3 focus-within:border-emerald-500 transition-colors shadow-sm">
-                  <span className="text-slate-400 mr-2 font-bold">US$</span>
-                  <input type="number" value={usd} onChange={(e) => setUsd(e.target.value)} placeholder="Ej: 21000" className="w-full bg-transparent py-2.5 text-sm text-slate-900 outline-none placeholder:text-slate-400 font-mono" />
+                <label className="text-[11px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-widest mb-1.5 block">Precio en Dólares (USD)</label>
+                <div className="flex items-center bg-slate-50 dark:bg-[#00246b] border border-slate-200 dark:border-[#0a2a6b] rounded-xl px-3 focus-within:border-emerald-500 transition-colors shadow-sm">
+                  <span className="text-slate-400 dark:text-slate-500 mr-2 font-bold">US$</span>
+                  <input type="number" value={usd} onChange={(e) => setUsd(e.target.value)} placeholder="Ej: 21000" className="w-full bg-transparent py-2.5 text-sm text-slate-900 dark:text-white outline-none placeholder:text-slate-400 dark:placeholder:text-slate-500 font-mono" />
                 </div>
               </div>
 
               <div>
-                <label className="text-[11px] font-bold text-slate-500 uppercase tracking-widest mb-1.5 block">Precio en Pesos (ARS)</label>
-                <div className="flex items-center bg-slate-50 border border-slate-200 rounded-xl px-3 focus-within:border-emerald-500 transition-colors shadow-sm">
-                  <span className="text-slate-400 mr-2 font-bold">AR$</span>
-                  <input type="number" value={ars} onChange={(e) => setArs(e.target.value)} placeholder="Ej: 24500000" className="w-full bg-transparent py-2.5 text-sm text-slate-900 outline-none placeholder:text-slate-400 font-mono" />
+                <label className="text-[11px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-widest mb-1.5 block">Precio en Pesos (ARS)</label>
+                <div className="flex items-center bg-slate-50 dark:bg-[#00246b] border border-slate-200 dark:border-[#0a2a6b] rounded-xl px-3 focus-within:border-emerald-500 transition-colors shadow-sm">
+                  <span className="text-slate-400 dark:text-slate-500 mr-2 font-bold">AR$</span>
+                  <input type="number" value={ars} onChange={(e) => setArs(e.target.value)} placeholder="Ej: 24500000" className="w-full bg-transparent py-2.5 text-sm text-slate-900 dark:text-white outline-none placeholder:text-slate-400 dark:placeholder:text-slate-500 font-mono" />
                 </div>
               </div>
 
-              <div className="pt-4 mt-2 border-t border-slate-100 flex gap-3">
-                <button type="button" onClick={() => setIsEditing(false)} className="flex-1 py-2.5 text-xs font-bold uppercase tracking-widest bg-white border border-slate-200 hover:bg-slate-50 text-slate-600 rounded-xl transition-colors">Cancelar</button>
+              <div className="pt-4 mt-2 border-t border-slate-100 dark:border-[#0a2a6b] flex gap-3">
+                <button type="button" onClick={() => setIsEditing(false)} className="flex-1 py-2.5 text-xs font-bold uppercase tracking-widest bg-white dark:bg-[#00246b] border border-slate-200 dark:border-[#0a2a6b] hover:bg-slate-50 dark:hover:bg-[#002a6e] text-slate-600 dark:text-slate-300 rounded-xl transition-colors">Cancelar</button>
                 <button type="submit" disabled={cargando} className="flex-1 py-2.5 flex items-center justify-center gap-2 text-xs font-bold uppercase tracking-widest bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl transition-colors shadow-sm disabled:opacity-50">
                   {cargando ? "Guardando..." : <><Save className="w-3.5 h-3.5" /> Guardar</>}
                 </button>

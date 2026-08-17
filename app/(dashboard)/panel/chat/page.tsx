@@ -27,7 +27,7 @@ export default async function ChatPage() {
 
   // Ocupa el 100% exacto del espacio disponible del nuevo layout
   return (
-    <div className="w-full h-full flex overflow-hidden bg-white">
+    <div className="w-full h-full flex overflow-hidden bg-white dark:bg-[#001233]">
       <ChatClient conversacionesIniciales={conversaciones || []} vendedores={vendedores || []} />
     </div>
   );

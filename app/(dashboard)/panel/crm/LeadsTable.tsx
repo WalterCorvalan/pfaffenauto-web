@@ -87,12 +87,12 @@ export default function LeadsTable({
   };
 
   return (
-    <div className="flex-1 overflow-auto p-6 bg-[#F9FAFB] custom-scrollbar">
-      <div className="bg-white border border-slate-200 rounded-2xl shadow-sm overflow-hidden">
+    <div className="flex-1 overflow-auto p-6 bg-[#F9FAFB] dark:bg-[#001233] custom-scrollbar">
+      <div className="bg-white dark:bg-[#001c55] border border-slate-200 dark:border-[#0a2a6b] rounded-2xl shadow-sm overflow-hidden">
         <div className="overflow-x-auto">
           <table className="w-full text-left border-collapse">
             <thead>
-              <tr className="bg-slate-800 text-white text-[10px] uppercase tracking-widest font-bold">
+              <tr className="bg-slate-800 dark:bg-[#00246b] text-white text-[10px] uppercase tracking-widest font-bold">
                 <th className="p-3 pl-4">Lead</th>
                 <th className="p-3">Origen</th>
                 <th className="p-3">Vendedor Asignado</th>
@@ -102,7 +102,7 @@ export default function LeadsTable({
                 <th className="p-3 pr-4 text-right">Acciones</th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-slate-100">
+            <tbody className="divide-y divide-slate-100 dark:divide-[#0a2a6b]">
               {leads.map((lead) => {
                 const vendedorActualId = overrideVendedor[lead.id] !== undefined ? overrideVendedor[lead.id] : lead.vendedor_id;
                 const esWhatsapp = lead.origen === "whatsapp";
@@ -115,14 +115,14 @@ export default function LeadsTable({
                 const href = lead.origen === "cotizacion" ? `/panel/crm/${lead.id}` : `/panel/chat?conversacion=${lead.id}`;
 
                 return (
-                  <tr key={lead.id} className={`hover:bg-indigo-50/40 transition-colors border-l-4 ${BORDE_ESTADO[estadoActual] || "border-l-slate-200"}`}>
+                  <tr key={lead.id} className={`hover:bg-indigo-50/40 dark:hover:bg-[#00246b] transition-colors border-l-4 ${BORDE_ESTADO[estadoActual] || "border-l-slate-200"}`}>
                     <td className="p-3 pl-4">
                       <div className="flex items-center gap-2.5">
                         <div className={`w-8 h-8 rounded-full flex items-center justify-center font-bold text-[11px] text-white shrink-0 ${colorAvatar(lead.id)}`}>
                           {lead.nombre.substring(0, 2).toUpperCase()}
                         </div>
                         <div className="min-w-0">
-                          <p className="text-[13px] font-bold text-slate-900 truncate">{lead.nombre}</p>
+                          <p className="text-[13px] font-bold text-slate-900 dark:text-white truncate">{lead.nombre}</p>
                           {badgeCalificacion && (
                             <span className={`inline-block mt-0.5 text-[9px] font-black uppercase tracking-widest px-1.5 py-0.5 rounded border ${badgeCalificacion.color}`}>
                               {badgeCalificacion.texto}
@@ -141,7 +141,7 @@ export default function LeadsTable({
                         value={vendedorActualId || ""}
                         disabled={reasignando === lead.id}
                         onChange={(e) => reasignar(lead, e.target.value)}
-                        className="bg-slate-50 border border-slate-200 rounded-lg px-2.5 py-1.5 text-[12px] font-medium outline-none focus:border-indigo-500 cursor-pointer text-slate-800 disabled:opacity-50 hover:bg-white transition-colors"
+                        className="bg-slate-50 dark:bg-[#00246b] border border-slate-200 dark:border-[#0a2a6b] rounded-lg px-2.5 py-1.5 text-[12px] font-medium outline-none focus:border-indigo-500 cursor-pointer text-slate-800 dark:text-slate-200 disabled:opacity-50 hover:bg-white dark:hover:bg-[#002a6e] transition-colors"
                       >
                         <option value="">Sin asignar</option>
                         {vendedores.map((v) => (
@@ -155,18 +155,18 @@ export default function LeadsTable({
                         onChange={(e) => onCambiarEstado(lead, e.target.value)}
                         className={`text-[11px] font-bold uppercase tracking-widest px-2.5 py-1.5 rounded-lg border outline-none cursor-pointer shadow-sm transition-transform hover:scale-105 ${ESTILO_ESTADO[estadoActual] || ESTILO_ESTADO.Nuevo}`}
                       >
-                        {ESTADOS.map((e) => (<option key={e} value={e} className="bg-white text-slate-900">{e}</option>))}
+                        {ESTADOS.map((e) => (<option key={e} value={e} className="bg-white dark:bg-[#001c55] text-slate-900 dark:text-white">{e}</option>))}
                       </select>
                     </td>
                     <td className="p-3">
                       {esWhatsapp ? (
-                        <span className="text-[12px] text-slate-400 italic">—</span>
+                        <span className="text-[12px] text-slate-400 dark:text-slate-500 italic">—</span>
                       ) : (
                         <select
                           value={sucursalActual}
                           disabled={guardandoSucursal === lead.id}
                           onChange={(e) => cambiarSucursal(lead, e.target.value)}
-                          className="bg-slate-50 border border-slate-200 rounded-lg px-2.5 py-1.5 text-[12px] font-medium outline-none focus:border-indigo-500 cursor-pointer text-slate-800 disabled:opacity-50 hover:bg-white transition-colors"
+                          className="bg-slate-50 dark:bg-[#00246b] border border-slate-200 dark:border-[#0a2a6b] rounded-lg px-2.5 py-1.5 text-[12px] font-medium outline-none focus:border-indigo-500 cursor-pointer text-slate-800 dark:text-slate-200 disabled:opacity-50 hover:bg-white dark:hover:bg-[#002a6e] transition-colors"
                         >
                           <option value="">Sin definir</option>
                           {sucursales.map((s) => (
@@ -175,7 +175,7 @@ export default function LeadsTable({
                         </select>
                       )}
                     </td>
-                    <td className="p-3 text-[12px] text-slate-500 font-medium whitespace-nowrap">
+                    <td className="p-3 text-[12px] text-slate-500 dark:text-slate-400 font-medium whitespace-nowrap">
                       {new Date(lead.created_at).toLocaleDateString("es-AR", { day: "2-digit", month: "short", year: "numeric" })}
                     </td>
                     <td className="p-3 pr-4 text-right">
@@ -191,7 +191,7 @@ export default function LeadsTable({
               })}
               {leads.length === 0 && (
                 <tr>
-                  <td colSpan={7} className="p-10 text-center text-slate-400 text-sm italic">
+                  <td colSpan={7} className="p-10 text-center text-slate-400 dark:text-slate-500 text-sm italic">
                     Sin leads para mostrar.
                   </td>
                 </tr>

@@ -37,7 +37,7 @@ export default function EstadoSenaSelector({ id, estado }: { id: string; estado:
       onChange={(e) => cambiar(e.target.value)}
       className={`text-[10px] font-bold uppercase tracking-widest px-2.5 py-1.5 rounded-lg border outline-none cursor-pointer shadow-sm transition-transform hover:scale-105 disabled:opacity-50 ${COLOR[actual] || COLOR.Activa}`}
     >
-      {ESTADOS.map((e) => (<option key={e} value={e} className="bg-white text-slate-900">{e}</option>))}
+      {ESTADOS.map((e) => (<option key={e} value={e} className="bg-white dark:bg-[#001c55] text-slate-900 dark:text-white">{e}</option>))}
     </select>
   );
 }

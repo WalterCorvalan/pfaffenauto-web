@@ -10,20 +10,20 @@ export default function ImprimirBoletoVenta({ boleto: b }: { boleto: any }) {
   const fechaNacimiento = b.fecha_nacimiento ? new Date(`${b.fecha_nacimiento}T12:00:00Z`).toLocaleDateString("es-AR", { timeZone: "UTC" }) : "N/A";
 
   return (
-    <div className="min-h-screen pb-20 text-slate-800 bg-[#F9FAFB] print:bg-white pt-8 font-sans">
-      <div className="print:hidden max-w-[210mm] mx-auto mb-8 bg-white p-6 rounded-2xl border border-slate-200 shadow-sm flex flex-col sm:flex-row items-center justify-between gap-4">
+    <div className="min-h-screen pb-20 text-slate-800 bg-[#F9FAFB] dark:bg-[#001233] print:bg-white pt-8 font-sans">
+      <div className="print:hidden max-w-[210mm] mx-auto mb-8 bg-white dark:bg-[#001c55] p-6 rounded-2xl border border-slate-200 dark:border-[#0a2a6b] shadow-sm flex flex-col sm:flex-row items-center justify-between gap-4">
         <div className="flex items-center gap-4">
-          <Link href="/panel/boletos" className="text-slate-400 hover:text-slate-700 transition-colors bg-slate-50 hover:bg-slate-100 p-2.5 rounded-lg border border-slate-200">
+          <Link href="/panel/boletos" className="text-slate-400 dark:text-slate-500 hover:text-slate-700 dark:hover:text-slate-200 transition-colors bg-slate-50 dark:bg-[#00246b] hover:bg-slate-100 dark:hover:bg-[#002a6e] p-2.5 rounded-lg border border-slate-200 dark:border-[#0a2a6b]">
             <ArrowLeft className="w-4 h-4" />
           </Link>
           <div>
-            <h2 className="text-[17px] font-bold text-slate-900 leading-tight">Boleto de Compraventa</h2>
-            <p className="text-[11px] text-slate-500 font-mono mt-0.5">N° {b.numero}</p>
+            <h2 className="text-[17px] font-bold text-slate-900 dark:text-white leading-tight">Boleto de Compraventa</h2>
+            <p className="text-[11px] text-slate-500 dark:text-slate-400 font-mono mt-0.5">N° {b.numero}</p>
           </div>
         </div>
         <div className="flex items-center gap-3">
           {b.precio_confirmado === false && (
-            <span className="flex items-center gap-1.5 bg-amber-50 text-amber-700 border border-amber-200 px-3 py-2 rounded-xl text-xs font-bold">
+            <span className="flex items-center gap-1.5 bg-amber-50 dark:bg-[#002a6e] text-amber-700 dark:text-amber-300 border border-amber-200 dark:border-[#0a2a6b] px-3 py-2 rounded-xl text-xs font-bold">
               <AlertTriangle className="w-4 h-4" /> Precio a confirmar
             </span>
           )}

@@ -10,7 +10,7 @@ import ClienteBuscador, { ClienteSeleccionado } from "../../ClienteBuscador";
 import VehiculoSelector, { VehiculoDatos } from "../../VehiculoSelector";
 import ConfirmarPrecioModal from "../../ConfirmarPrecioModal";
 
-const inputClass = "w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2.5 text-sm outline-none focus:border-indigo-500 focus:bg-white transition-colors text-slate-900 placeholder:text-slate-400";
+const inputClass = "w-full bg-slate-50 dark:bg-[#00246b] border border-slate-200 dark:border-[#0a2a6b] rounded-xl px-3 py-2.5 text-sm outline-none focus:border-indigo-500 focus:bg-white dark:focus:bg-[#002a6e] transition-colors text-slate-900 dark:text-white placeholder:text-slate-400 dark:placeholder:text-slate-500";
 
 export default function PresupuestoForm({ clientes, vehiculos, vendedores, vehiculoInicial }: { clientes: any[]; vehiculos: any[]; vendedores: any[]; vehiculoInicial?: any | null }) {
   const router = useRouter();
@@ -105,55 +105,55 @@ export default function PresupuestoForm({ clientes, vehiculos, vendedores, vehic
   };
 
   return (
-    <div className="w-full h-full overflow-y-auto custom-scrollbar bg-[#F9FAFB] pb-20">
+    <div className="w-full h-full overflow-y-auto custom-scrollbar bg-[#F9FAFB] dark:bg-[#001233] pb-20">
       <div className="max-w-3xl mx-auto px-6 py-10">
-        <div className="flex items-center justify-between mb-8 border-b border-slate-200 pb-4">
+        <div className="flex items-center justify-between mb-8 border-b border-slate-200 dark:border-[#0a2a6b] pb-4">
           <div>
-            <Link href="/panel/presupuestos" className="text-slate-400 hover:text-indigo-600 flex items-center gap-2 text-sm transition-colors mb-2 font-medium">
+            <Link href="/panel/presupuestos" className="text-slate-400 dark:text-slate-500 hover:text-indigo-600 dark:hover:text-sky-300 flex items-center gap-2 text-sm transition-colors mb-2 font-medium">
               <ArrowLeft className="w-4 h-4" /> Volver
             </Link>
-            <h1 className="text-2xl font-bold text-slate-900 flex items-center gap-2">
-              <FileText className="w-6 h-6 text-indigo-600" /> Nuevo Presupuesto
+            <h1 className="text-2xl font-bold text-slate-900 dark:text-white flex items-center gap-2">
+              <FileText className="w-6 h-6 text-indigo-600 dark:text-sky-300" /> Nuevo Presupuesto
             </h1>
           </div>
         </div>
 
         <form onSubmit={handleSubmit} className="space-y-6">
-          <div className="bg-white border border-slate-200 rounded-2xl p-6 shadow-sm space-y-4">
-            <h2 className="text-[11px] font-bold uppercase tracking-widest text-slate-500 border-b border-slate-100 pb-3">Cliente</h2>
+          <div className="bg-white dark:bg-[#001c55] border border-slate-200 dark:border-[#0a2a6b] rounded-2xl p-6 shadow-sm space-y-4">
+            <h2 className="text-[11px] font-bold uppercase tracking-widest text-slate-500 dark:text-slate-400 border-b border-slate-100 dark:border-[#0a2a6b] pb-3">Cliente</h2>
             <ClienteBuscador clientes={clientes} seleccionado={cliente} onSeleccionar={setCliente} />
           </div>
 
-          <div className="bg-white border border-slate-200 rounded-2xl p-6 shadow-sm space-y-4">
-            <h2 className="text-[11px] font-bold uppercase tracking-widest text-slate-500 border-b border-slate-100 pb-3">Vehículo</h2>
+          <div className="bg-white dark:bg-[#001c55] border border-slate-200 dark:border-[#0a2a6b] rounded-2xl p-6 shadow-sm space-y-4">
+            <h2 className="text-[11px] font-bold uppercase tracking-widest text-slate-500 dark:text-slate-400 border-b border-slate-100 dark:border-[#0a2a6b] pb-3">Vehículo</h2>
             <VehiculoSelector vehiculos={vehiculos} datos={vehiculo} onCambiar={setVehiculo} />
           </div>
 
-          <div className="bg-white border border-slate-200 rounded-2xl p-6 shadow-sm space-y-4">
-            <h2 className="text-[11px] font-bold uppercase tracking-widest text-slate-500 border-b border-slate-100 pb-3">Datos comerciales</h2>
+          <div className="bg-white dark:bg-[#001c55] border border-slate-200 dark:border-[#0a2a6b] rounded-2xl p-6 shadow-sm space-y-4">
+            <h2 className="text-[11px] font-bold uppercase tracking-widest text-slate-500 dark:text-slate-400 border-b border-slate-100 dark:border-[#0a2a6b] pb-3">Datos comerciales</h2>
             <div className="grid grid-cols-2 gap-4">
               <div>
-                <label className="text-[11px] font-bold text-slate-500 uppercase block mb-1.5">Precio de venta ($)</label>
+                <label className="text-[11px] font-bold text-slate-500 dark:text-slate-400 uppercase block mb-1.5">Precio de venta ($)</label>
                 <input type="number" step="0.01" className={inputClass} value={precioArs} onChange={(e) => setPrecioArs(e.target.value)} placeholder="0" />
               </div>
               <div>
-                <label className="text-[11px] font-bold text-slate-500 uppercase block mb-1.5">Precio de venta (US$)</label>
+                <label className="text-[11px] font-bold text-slate-500 dark:text-slate-400 uppercase block mb-1.5">Precio de venta (US$)</label>
                 <input type="number" step="0.01" className={inputClass} value={precioUsd} onChange={(e) => setPrecioUsd(e.target.value)} placeholder="0" />
               </div>
               <div>
-                <label className="text-[11px] font-bold text-slate-500 uppercase block mb-1.5">Vendedor</label>
+                <label className="text-[11px] font-bold text-slate-500 dark:text-slate-400 uppercase block mb-1.5">Vendedor</label>
                 <select className={inputClass} value={vendedorId} onChange={(e) => setVendedorId(e.target.value)}>
                   <option value="">Vos (usuario actual)</option>
                   {vendedores.map((v) => (<option key={v.id} value={v.id}>{v.nombre}</option>))}
                 </select>
               </div>
               <div>
-                <label className="text-[11px] font-bold text-slate-500 uppercase block mb-1.5">Imprimir en</label>
+                <label className="text-[11px] font-bold text-slate-500 dark:text-slate-400 uppercase block mb-1.5">Imprimir en</label>
                 <input className={inputClass} value={imprimirEn} onChange={(e) => setImprimirEn(e.target.value)} placeholder="Ej: Casa Central" />
               </div>
             </div>
             <div>
-              <label className="text-[11px] font-bold text-slate-500 uppercase block mb-1.5">Observaciones</label>
+              <label className="text-[11px] font-bold text-slate-500 dark:text-slate-400 uppercase block mb-1.5">Observaciones</label>
               <textarea className={inputClass} rows={3} value={observaciones} onChange={(e) => setObservaciones(e.target.value)} />
             </div>
           </div>

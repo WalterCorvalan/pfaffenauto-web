@@ -64,14 +64,14 @@ export default async function CitasPage() {
   };
 
   const Tarjeta = ({ v }: { v: any }) => (
-    <div className={`bg-white border border-slate-200 border-t-4 rounded-xl p-4 flex flex-col shadow-sm hover:shadow-md hover:border-indigo-500/30 transition-all group ${bordeEstado(v.estado)}`}>
+    <div className={`bg-white dark:bg-[#001c55] border border-slate-200 dark:border-[#0a2a6b] border-t-4 rounded-xl p-4 flex flex-col shadow-sm hover:shadow-md hover:border-indigo-500/30 transition-all group ${bordeEstado(v.estado)}`}>
 
       {/* Cabecera de la Tarjeta */}
       <div className="flex justify-between items-start mb-3">
         <span className={`text-[10px] font-bold uppercase tracking-widest px-2 py-0.5 rounded border ${badgeEstado(v.estado)}`}>
           {v.estado}
         </span>
-        <span className="text-[10px] font-medium text-slate-400 flex items-center gap-1">
+        <span className="text-[10px] font-medium text-slate-400 dark:text-slate-500 flex items-center gap-1">
           <Clock className="w-3 h-3" />
           {new Date(`${v.fecha_visita}T12:00:00Z`).toLocaleDateString("es-AR", { day: "2-digit", month: "short", timeZone: "UTC" })} · {v.horario_visita}
         </span>
@@ -82,20 +82,20 @@ export default async function CitasPage() {
         <div className="w-8 h-8 rounded-full bg-indigo-500 text-white flex items-center justify-center font-bold text-xs shrink-0">
           {v.nombre_cliente.substring(0, 2).toUpperCase()}
         </div>
-        <h3 className="font-bold text-[14px] text-slate-900 truncate">
+        <h3 className="font-bold text-[14px] text-slate-900 dark:text-white truncate">
           {v.nombre_cliente}
         </h3>
       </div>
 
       {/* Info de la Visita */}
-      <div className="bg-slate-50 border border-slate-100 p-3 rounded-lg mb-4 flex-1 space-y-2.5">
-        <div className="flex items-center gap-2 text-[11px] text-slate-600">
-          <MapPin className="w-3.5 h-3.5 text-slate-400 shrink-0" />
+      <div className="bg-slate-50 dark:bg-[#00246b] border border-slate-100 dark:border-[#0a2a6b] p-3 rounded-lg mb-4 flex-1 space-y-2.5">
+        <div className="flex items-center gap-2 text-[11px] text-slate-600 dark:text-slate-300">
+          <MapPin className="w-3.5 h-3.5 text-slate-400 dark:text-slate-500 shrink-0" />
           <span className="font-medium truncate">{v.sucursal}</span>
         </div>
         {v.vehiculo_id ? (
-          <div className="flex items-center gap-2 text-[11px] text-slate-600">
-            <Users className="w-3.5 h-3.5 text-slate-400 shrink-0" />
+          <div className="flex items-center gap-2 text-[11px] text-slate-600 dark:text-slate-300">
+            <Users className="w-3.5 h-3.5 text-slate-400 dark:text-slate-500 shrink-0" />
             <span className="font-medium truncate">
               {vendedores.find((vd) => vd.id === v.vehiculos?.vendedor_asignado_id)?.nombre || "Sin vendedor (auto sin asignar)"}
             </span>
@@ -106,23 +106,23 @@ export default async function CitasPage() {
         <div className="flex items-center gap-2 text-[11px]">
           <CarFront className="w-3.5 h-3.5 text-indigo-500 shrink-0" />
           {v.vehiculos ? (
-            <span className="font-semibold text-indigo-700 truncate">
+            <span className="font-semibold text-indigo-700 dark:text-sky-300 truncate">
               {v.vehiculos.marca} {v.vehiculos.modelo} {v.vehiculos.patente ? `(${v.vehiculos.patente})` : ""}
             </span>
           ) : (
-            <span className="text-slate-400 italic">Visita general (Sin auto)</span>
+            <span className="text-slate-400 dark:text-slate-500 italic">Visita general (Sin auto)</span>
           )}
         </div>
       </div>
 
       {/* Footer: Acciones */}
-      <div className="pt-3 border-t border-slate-100 flex items-center justify-between gap-2 mt-auto">
+      <div className="pt-3 border-t border-slate-100 dark:border-[#0a2a6b] flex items-center justify-between gap-2 mt-auto">
         <EstadoVisitaSelector visitaId={v.id} estadoActual={v.estado} />
         <a
           href={`https://wa.me/${v.telefono_cliente.replace(/\D/g, "")}`}
           target="_blank"
           rel="noreferrer"
-          className="bg-green-50 hover:bg-green-100 text-green-600 p-1.5 rounded-md transition-colors shrink-0"
+          className="bg-green-50 dark:bg-[#002a6e] hover:bg-green-100 dark:hover:bg-[#00246b] text-green-600 dark:text-green-300 p-1.5 rounded-md transition-colors shrink-0"
           title="Contactar por WhatsApp"
         >
           <MessageSquareText className="w-[18px] h-[18px]" strokeWidth={2.5} />
@@ -132,19 +132,19 @@ export default async function CitasPage() {
   );
 
   return (
-    <div className="flex flex-col h-full w-full bg-white overflow-hidden">
-      
+    <div className="flex flex-col h-full w-full bg-white dark:bg-[#001233] overflow-hidden">
+
       {/* ================= HEADER Y MÉTRICAS ================= */}
-      <header className="flex flex-col md:flex-row md:items-center justify-between border-b border-slate-200 px-6 py-3.5 bg-white shrink-0 gap-4">
+      <header className="flex flex-col md:flex-row md:items-center justify-between border-b border-slate-200 dark:border-[#0a2a6b] px-6 py-3.5 bg-white dark:bg-[#001c55] shrink-0 gap-4">
         <div className="flex items-center gap-4">
-          <div className="w-10 h-10 rounded-lg bg-indigo-50 border border-indigo-100 flex items-center justify-center shrink-0">
-            <CalendarCheck className="w-5 h-5 text-indigo-600" />
+          <div className="w-10 h-10 rounded-lg bg-indigo-50 dark:bg-[#002a6e] border border-indigo-100 dark:border-[#0a2a6b] flex items-center justify-center shrink-0">
+            <CalendarCheck className="w-5 h-5 text-indigo-600 dark:text-sky-300" />
           </div>
           <div>
-            <h1 className="text-[17px] font-bold text-slate-900 leading-tight">
+            <h1 className="text-[17px] font-bold text-slate-900 dark:text-white leading-tight">
               Agenda de Citas
             </h1>
-            <p className="text-[11px] font-medium text-slate-500 mt-0.5">
+            <p className="text-[11px] font-medium text-slate-500 dark:text-slate-400 mt-0.5">
               Visitas reservadas por clientes desde la web
             </p>
           </div>
@@ -152,36 +152,36 @@ export default async function CitasPage() {
 
         {/* Resumen de Métricas tipo Badges */}
         <div className="flex items-center gap-2 overflow-x-auto custom-scrollbar pb-1 md:pb-0">
-          <div className="flex items-center gap-1.5 bg-slate-50 border border-slate-200 px-2.5 py-1 rounded-md text-[11px] font-bold text-slate-600 whitespace-nowrap">
-            <Users className="w-3.5 h-3.5 text-slate-400" /> {totalVisitas} Total
+          <div className="flex items-center gap-1.5 bg-slate-50 dark:bg-[#00246b] border border-slate-200 dark:border-[#0a2a6b] px-2.5 py-1 rounded-md text-[11px] font-bold text-slate-600 dark:text-slate-300 whitespace-nowrap">
+            <Users className="w-3.5 h-3.5 text-slate-400 dark:text-slate-500" /> {totalVisitas} Total
           </div>
-          <div className="flex items-center gap-1.5 bg-amber-50 border border-amber-200 px-2.5 py-1 rounded-md text-[11px] font-bold text-amber-700 whitespace-nowrap">
+          <div className="flex items-center gap-1.5 bg-amber-50 dark:bg-[#002a6e] border border-amber-200 dark:border-[#0a2a6b] px-2.5 py-1 rounded-md text-[11px] font-bold text-amber-700 dark:text-amber-300 whitespace-nowrap">
             <CalendarClock className="w-3.5 h-3.5 text-amber-500" /> {pendientes} Por venir
           </div>
-          <div className="flex items-center gap-1.5 bg-emerald-50 border border-emerald-200 px-2.5 py-1 rounded-md text-[11px] font-bold text-emerald-700 whitespace-nowrap">
+          <div className="flex items-center gap-1.5 bg-emerald-50 dark:bg-[#002a6e] border border-emerald-200 dark:border-[#0a2a6b] px-2.5 py-1 rounded-md text-[11px] font-bold text-emerald-700 dark:text-emerald-300 whitespace-nowrap">
             <CheckCircle2 className="w-3.5 h-3.5 text-emerald-500" /> {asistieron} Asistieron
           </div>
-          <div className="flex items-center gap-1.5 bg-rose-50 border border-rose-200 px-2.5 py-1 rounded-md text-[11px] font-bold text-rose-700 whitespace-nowrap">
+          <div className="flex items-center gap-1.5 bg-rose-50 dark:bg-[#002a6e] border border-rose-200 dark:border-[#0a2a6b] px-2.5 py-1 rounded-md text-[11px] font-bold text-rose-700 dark:text-rose-300 whitespace-nowrap">
             <XCircle className="w-3.5 h-3.5 text-rose-500" /> {canceladas} Canceladas
           </div>
         </div>
       </header>
 
       {/* ================= ÁREA SCROLLABLE ================= */}
-      <div className="flex-1 overflow-y-auto p-6 bg-[#F9FAFB] custom-scrollbar">
+      <div className="flex-1 overflow-y-auto p-6 bg-[#F9FAFB] dark:bg-[#001233] custom-scrollbar">
         <div className="max-w-[1800px] mx-auto">
-          
+
           {/* SECCIÓN: Próximas */}
           <div className="mb-10">
             <div className="flex items-center gap-2 mb-4">
-              <h2 className="text-[11px] font-bold uppercase tracking-widest text-slate-400">
+              <h2 className="text-[11px] font-bold uppercase tracking-widest text-slate-400 dark:text-slate-500">
                 Citas Próximas
               </h2>
-              <span className="bg-slate-200 text-slate-500 text-[10px] font-bold px-2 py-0.5 rounded-full">
+              <span className="bg-slate-200 dark:bg-[#00246b] text-slate-500 dark:text-slate-400 text-[10px] font-bold px-2 py-0.5 rounded-full">
                 {proximas.length}
               </span>
             </div>
-            
+
             {proximas.length > 0 ? (
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5 gap-4">
                 {proximas.map((v) => (
@@ -189,7 +189,7 @@ export default async function CitasPage() {
                 ))}
               </div>
             ) : (
-              <div className="p-10 text-center border-2 border-dashed border-slate-200 rounded-xl bg-white text-slate-500 text-sm">
+              <div className="p-10 text-center border-2 border-dashed border-slate-200 dark:border-[#0a2a6b] rounded-xl bg-white dark:bg-[#001c55] text-slate-500 dark:text-slate-400 text-sm">
                 No hay citas próximas agendadas.
               </div>
             )}
@@ -199,10 +199,10 @@ export default async function CitasPage() {
           {pasadas.length > 0 && (
             <div>
               <div className="flex items-center gap-2 mb-4">
-                <h2 className="text-[11px] font-bold uppercase tracking-widest text-slate-400">
+                <h2 className="text-[11px] font-bold uppercase tracking-widest text-slate-400 dark:text-slate-500">
                   Historial
                 </h2>
-                <span className="bg-slate-200 text-slate-500 text-[10px] font-bold px-2 py-0.5 rounded-full">
+                <span className="bg-slate-200 dark:bg-[#00246b] text-slate-500 dark:text-slate-400 text-[10px] font-bold px-2 py-0.5 rounded-full">
                   {pasadas.length}
                 </span>
               </div>

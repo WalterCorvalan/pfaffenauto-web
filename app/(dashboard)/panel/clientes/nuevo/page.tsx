@@ -92,42 +92,42 @@ export default function NuevoClientePage() {
   };
 
   const inputClass =
-    "w-full bg-white border border-slate-200 p-3 rounded-xl text-sm outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500/20 transition-all text-slate-900 placeholder:text-slate-400";
+    "w-full bg-white dark:bg-[#00246b] border border-slate-200 dark:border-[#0a2a6b] p-3 rounded-xl text-sm outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500/20 transition-all text-slate-900 dark:text-white placeholder:text-slate-400 dark:placeholder:text-slate-500";
 
   return (
-    <div className="flex flex-col h-full w-full bg-[#F9FAFB] overflow-hidden font-sans">
-      
+    <div className="flex flex-col h-full w-full bg-[#F9FAFB] dark:bg-[#001233] overflow-hidden font-sans">
+
       {/* ================= HEADER ================= */}
-      <header className="flex flex-col md:flex-row md:items-center justify-between border-b border-slate-200 px-6 py-4 bg-white shrink-0 gap-4">
+      <header className="flex flex-col md:flex-row md:items-center justify-between border-b border-slate-200 dark:border-[#0a2a6b] px-6 py-4 bg-white dark:bg-[#001c55] shrink-0 gap-4">
         <div className="flex items-center gap-4">
-          <div className="w-10 h-10 rounded-lg bg-indigo-50 border border-indigo-100 flex items-center justify-center shrink-0">
-            <User className="w-5 h-5 text-indigo-600" />
+          <div className="w-10 h-10 rounded-lg bg-indigo-50 dark:bg-[#002a6e] border border-indigo-100 dark:border-[#0a2a6b] flex items-center justify-center shrink-0">
+            <User className="w-5 h-5 text-indigo-600 dark:text-sky-300" />
           </div>
           <div>
             <div className="flex items-center gap-2">
               <button
                 onClick={() => router.back()}
-                className="text-slate-400 hover:text-indigo-600 transition-colors"
+                className="text-slate-400 dark:text-slate-500 hover:text-indigo-600 dark:hover:text-sky-300 transition-colors"
                 title="Volver"
               >
                 <ArrowLeft className="w-4 h-4" />
               </button>
-              <h1 className="text-[17px] font-bold text-slate-900 leading-tight">
+              <h1 className="text-[17px] font-bold text-slate-900 dark:text-white leading-tight">
                 Cliente Nuevo
               </h1>
             </div>
-            <p className="text-[11px] font-medium text-slate-500 mt-0.5 ml-6">
+            <p className="text-[11px] font-medium text-slate-500 dark:text-slate-400 mt-0.5 ml-6">
               Ingreso de datos al sistema de gestión.
             </p>
           </div>
         </div>
-        <div className="text-[11px] text-slate-500 font-medium bg-slate-50 border border-slate-200 px-3 py-1.5 rounded-lg">
-          (Los datos con <span className="text-rose-500 font-bold">*</span> son obligatorios)
+        <div className="text-[11px] text-slate-500 dark:text-slate-400 font-medium bg-slate-50 dark:bg-[#00246b] border border-slate-200 dark:border-[#0a2a6b] px-3 py-1.5 rounded-lg">
+          (Los datos con <span className="text-rose-500 dark:text-rose-300 font-bold">*</span> son obligatorios)
         </div>
       </header>
 
       {/* ================= ÁREA SCROLLABLE ================= */}
-      <div className="flex-1 overflow-y-auto p-6 bg-[#F9FAFB] custom-scrollbar">
+      <div className="flex-1 overflow-y-auto p-6 bg-[#F9FAFB] dark:bg-[#001233] custom-scrollbar">
         <div className="max-w-4xl mx-auto w-full">
 
           <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
@@ -221,9 +221,9 @@ export default function NuevoClientePage() {
                 </Campo>
 
                 {/* DOMICILIO INCORPORADO */}
-                <div className="md:col-span-2 mt-2 pt-5 border-t border-slate-100">
-                  <h3 className="text-[11px] font-bold text-slate-500 uppercase tracking-widest mb-4 flex items-center gap-2">
-                    <MapPin className="w-3.5 h-3.5 text-indigo-500" /> Domicilio
+                <div className="md:col-span-2 mt-2 pt-5 border-t border-slate-100 dark:border-[#0a2a6b]">
+                  <h3 className="text-[11px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-widest mb-4 flex items-center gap-2">
+                    <MapPin className="w-3.5 h-3.5 text-indigo-500 dark:text-sky-300" /> Domicilio
                   </h3>
                   <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
                     <div className="md:col-span-2">
@@ -341,7 +341,7 @@ export default function NuevoClientePage() {
               <button
                 type="button"
                 onClick={() => router.back()}
-                className="px-6 py-3 rounded-xl text-[11px] font-bold uppercase tracking-widest text-slate-500 hover:text-slate-800 hover:bg-slate-200/50 transition-colors flex items-center gap-2"
+                className="px-6 py-3 rounded-xl text-[11px] font-bold uppercase tracking-widest text-slate-500 dark:text-slate-400 hover:text-slate-800 dark:hover:text-slate-100 hover:bg-slate-200/50 dark:hover:bg-[#00246b] transition-colors flex items-center gap-2"
               >
                 <X className="w-4 h-4" /> Cancelar
               </button>
@@ -378,8 +378,8 @@ function SectionCard({
   children: React.ReactNode;
 }) {
   return (
-    <div className="bg-white p-6 md:p-8 rounded-2xl border border-slate-200 shadow-sm w-full">
-      <h2 className="text-[11px] font-bold uppercase tracking-widest text-slate-500 flex items-center gap-2 mb-6 pb-3 border-b border-slate-100">
+    <div className="bg-white dark:bg-[#001c55] p-6 md:p-8 rounded-2xl border border-slate-200 dark:border-[#0a2a6b] shadow-sm w-full">
+      <h2 className="text-[11px] font-bold uppercase tracking-widest text-slate-500 dark:text-slate-400 flex items-center gap-2 mb-6 pb-3 border-b border-slate-100 dark:border-[#0a2a6b]">
         {icon} {title}
       </h2>
       <div className="w-full">{children}</div>
@@ -398,10 +398,10 @@ function Campo({
 }) {
   return (
     <div className="w-full">
-      <label className="text-[11px] font-bold uppercase tracking-widest text-slate-500 mb-1.5 block">
+      <label className="text-[11px] font-bold uppercase tracking-widest text-slate-500 dark:text-slate-400 mb-1.5 block">
         {label.includes("*") ? (
           <>
-            {label.replace("*", "")} <span className="text-rose-500 font-black">*</span>
+            {label.replace("*", "")} <span className="text-rose-500 dark:text-rose-300 font-black">*</span>
           </>
         ) : (
           label
@@ -409,7 +409,7 @@ function Campo({
       </label>
       {children}
       {error && (
-        <span className="text-rose-500 text-[10px] mt-1.5 block font-bold tracking-wide">
+        <span className="text-rose-500 dark:text-rose-300 text-[10px] mt-1.5 block font-bold tracking-wide">
           {error}
         </span>
       )}

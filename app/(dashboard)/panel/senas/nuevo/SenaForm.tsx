@@ -10,7 +10,7 @@ import ClienteBuscador, { ClienteSeleccionado } from "../../ClienteBuscador";
 import VehiculoSelector, { VehiculoDatos } from "../../VehiculoSelector";
 import ConfirmarPrecioModal from "../../ConfirmarPrecioModal";
 
-const inputClass = "w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2.5 text-sm outline-none focus:border-indigo-500 focus:bg-white transition-colors text-slate-900 placeholder:text-slate-400";
+const inputClass = "w-full bg-slate-50 dark:bg-[#00246b] border border-slate-200 dark:border-[#0a2a6b] rounded-xl px-3 py-2.5 text-sm outline-none focus:border-indigo-500 focus:bg-white dark:focus:bg-[#002a6e] transition-colors text-slate-900 dark:text-white placeholder:text-slate-400 dark:placeholder:text-slate-500";
 
 export default function SenaForm({ clientes, vehiculos, vendedores, sucursales }: { clientes: any[]; vehiculos: any[]; vendedores: any[]; sucursales: any[] }) {
   const router = useRouter();
@@ -111,32 +111,32 @@ export default function SenaForm({ clientes, vehiculos, vendedores, sucursales }
   };
 
   return (
-    <div className="w-full h-full overflow-y-auto custom-scrollbar bg-[#F9FAFB] pb-20">
+    <div className="w-full h-full overflow-y-auto custom-scrollbar bg-[#F9FAFB] dark:bg-[#001233] pb-20">
       <div className="max-w-3xl mx-auto px-6 py-10">
-        <div className="flex items-center justify-between mb-8 border-b border-slate-200 pb-4">
+        <div className="flex items-center justify-between mb-8 border-b border-slate-200 dark:border-[#0a2a6b] pb-4">
           <div>
-            <Link href="/panel/senas" className="text-slate-400 hover:text-indigo-600 flex items-center gap-2 text-sm transition-colors mb-2 font-medium">
+            <Link href="/panel/senas" className="text-slate-400 dark:text-slate-500 hover:text-indigo-600 dark:hover:text-sky-300 flex items-center gap-2 text-sm transition-colors mb-2 font-medium">
               <ArrowLeft className="w-4 h-4" /> Volver
             </Link>
-            <h1 className="text-2xl font-bold text-slate-900 flex items-center gap-2">
-              <Wallet className="w-6 h-6 text-amber-600" /> Nueva Seña
+            <h1 className="text-2xl font-bold text-slate-900 dark:text-white flex items-center gap-2">
+              <Wallet className="w-6 h-6 text-amber-600 dark:text-amber-300" /> Nueva Seña
             </h1>
           </div>
         </div>
 
         <form onSubmit={handleSubmit} className="space-y-6">
-          <div className="bg-white border border-slate-200 rounded-2xl p-6 shadow-sm space-y-4">
-            <h2 className="text-[11px] font-bold uppercase tracking-widest text-slate-500 border-b border-slate-100 pb-3">Sucursal y vendedor</h2>
+          <div className="bg-white dark:bg-[#001c55] border border-slate-200 dark:border-[#0a2a6b] rounded-2xl p-6 shadow-sm space-y-4">
+            <h2 className="text-[11px] font-bold uppercase tracking-widest text-slate-500 dark:text-slate-400 border-b border-slate-100 dark:border-[#0a2a6b] pb-3">Sucursal y vendedor</h2>
             <div className="grid grid-cols-2 gap-4">
               <div>
-                <label className="text-[11px] font-bold text-slate-500 uppercase block mb-1.5">Sucursal *</label>
+                <label className="text-[11px] font-bold text-slate-500 dark:text-slate-400 uppercase block mb-1.5">Sucursal *</label>
                 <select className={inputClass} value={sucursalId} onChange={(e) => setSucursalId(e.target.value)} required>
                   <option value="">Seleccionar...</option>
                   {sucursales.map((s) => (<option key={s.id} value={s.id}>{s.nombre}</option>))}
                 </select>
               </div>
               <div>
-                <label className="text-[11px] font-bold text-slate-500 uppercase block mb-1.5">Vendedor</label>
+                <label className="text-[11px] font-bold text-slate-500 dark:text-slate-400 uppercase block mb-1.5">Vendedor</label>
                 <select className={inputClass} value={vendedorId} onChange={(e) => setVendedorId(e.target.value)}>
                   <option value="">Vos (usuario actual)</option>
                   {vendedores.map((v) => (<option key={v.id} value={v.id}>{v.nombre}</option>))}
@@ -145,46 +145,46 @@ export default function SenaForm({ clientes, vehiculos, vendedores, sucursales }
             </div>
           </div>
 
-          <div className="bg-white border border-slate-200 rounded-2xl p-6 shadow-sm space-y-4">
-            <h2 className="text-[11px] font-bold uppercase tracking-widest text-slate-500 border-b border-slate-100 pb-3">Cliente</h2>
+          <div className="bg-white dark:bg-[#001c55] border border-slate-200 dark:border-[#0a2a6b] rounded-2xl p-6 shadow-sm space-y-4">
+            <h2 className="text-[11px] font-bold uppercase tracking-widest text-slate-500 dark:text-slate-400 border-b border-slate-100 dark:border-[#0a2a6b] pb-3">Cliente</h2>
             <ClienteBuscador clientes={clientes} seleccionado={cliente} onSeleccionar={setCliente} />
           </div>
 
-          <div className="bg-white border border-slate-200 rounded-2xl p-6 shadow-sm space-y-4">
-            <h2 className="text-[11px] font-bold uppercase tracking-widest text-slate-500 border-b border-slate-100 pb-3">Vehículo</h2>
+          <div className="bg-white dark:bg-[#001c55] border border-slate-200 dark:border-[#0a2a6b] rounded-2xl p-6 shadow-sm space-y-4">
+            <h2 className="text-[11px] font-bold uppercase tracking-widest text-slate-500 dark:text-slate-400 border-b border-slate-100 dark:border-[#0a2a6b] pb-3">Vehículo</h2>
             <VehiculoSelector vehiculos={vehiculos} datos={vehiculo} onCambiar={setVehiculo} />
           </div>
 
-          <div className="bg-white border border-slate-200 rounded-2xl p-6 shadow-sm space-y-4">
-            <h2 className="text-[11px] font-bold uppercase tracking-widest text-slate-500 border-b border-slate-100 pb-3">Datos comerciales</h2>
+          <div className="bg-white dark:bg-[#001c55] border border-slate-200 dark:border-[#0a2a6b] rounded-2xl p-6 shadow-sm space-y-4">
+            <h2 className="text-[11px] font-bold uppercase tracking-widest text-slate-500 dark:text-slate-400 border-b border-slate-100 dark:border-[#0a2a6b] pb-3">Datos comerciales</h2>
             <div className="grid grid-cols-2 gap-4">
               <div>
-                <label className="text-[11px] font-bold text-slate-500 uppercase block mb-1.5">Venta ($)</label>
+                <label className="text-[11px] font-bold text-slate-500 dark:text-slate-400 uppercase block mb-1.5">Venta ($)</label>
                 <input type="number" step="0.01" className={inputClass} value={ventaArs} onChange={(e) => setVentaArs(e.target.value)} placeholder="0" />
               </div>
               <div>
-                <label className="text-[11px] font-bold text-slate-500 uppercase block mb-1.5">Venta (US$)</label>
+                <label className="text-[11px] font-bold text-slate-500 dark:text-slate-400 uppercase block mb-1.5">Venta (US$)</label>
                 <input type="number" step="0.01" className={inputClass} value={ventaUsd} onChange={(e) => setVentaUsd(e.target.value)} placeholder="0" />
               </div>
               <div>
-                <label className="text-[11px] font-bold text-slate-500 uppercase block mb-1.5">Seña ($)</label>
+                <label className="text-[11px] font-bold text-slate-500 dark:text-slate-400 uppercase block mb-1.5">Seña ($)</label>
                 <input type="number" step="0.01" className={inputClass} value={senaArs} onChange={(e) => setSenaArs(e.target.value)} placeholder="0" />
               </div>
               <div>
-                <label className="text-[11px] font-bold text-slate-500 uppercase block mb-1.5">Seña (US$)</label>
+                <label className="text-[11px] font-bold text-slate-500 dark:text-slate-400 uppercase block mb-1.5">Seña (US$)</label>
                 <input type="number" step="0.01" className={inputClass} value={senaUsd} onChange={(e) => setSenaUsd(e.target.value)} placeholder="0" />
               </div>
               <div>
-                <label className="text-[11px] font-bold text-slate-500 uppercase block mb-1.5">Tipo de cambio</label>
+                <label className="text-[11px] font-bold text-slate-500 dark:text-slate-400 uppercase block mb-1.5">Tipo de cambio</label>
                 <input type="number" step="0.01" className={inputClass} value={tipoCambio} onChange={(e) => setTipoCambio(e.target.value)} placeholder="0" />
               </div>
               <div>
-                <label className="text-[11px] font-bold text-slate-500 uppercase block mb-1.5">Patentamiento / Transferencia ($)</label>
+                <label className="text-[11px] font-bold text-slate-500 dark:text-slate-400 uppercase block mb-1.5">Patentamiento / Transferencia ($)</label>
                 <input type="number" step="0.01" className={inputClass} value={patentTransf} onChange={(e) => setPatentTransf(e.target.value)} placeholder="0" />
               </div>
             </div>
             <div>
-              <label className="text-[11px] font-bold text-slate-500 uppercase block mb-1.5">Observaciones</label>
+              <label className="text-[11px] font-bold text-slate-500 dark:text-slate-400 uppercase block mb-1.5">Observaciones</label>
               <textarea className={inputClass} rows={3} value={observaciones} onChange={(e) => setObservaciones(e.target.value)} />
             </div>
           </div>

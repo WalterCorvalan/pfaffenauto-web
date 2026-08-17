@@ -16,27 +16,27 @@ export default function BoletoClient({ auto }: { auto: any }) {
   };
 
   return (
-    <div className="min-h-screen bg-[#F9FAFB] pt-8 pb-20 text-slate-800 font-sans selection:bg-indigo-100 selection:text-indigo-900">
-      
+    <div className="min-h-screen bg-[#F9FAFB] dark:bg-[#001233] pt-8 pb-20 text-slate-800 font-sans selection:bg-indigo-100 selection:text-indigo-900">
+
       {/* ================= PANEL DE CONTROL (Oculto al imprimir) ================= */}
-      <div className="print:hidden max-w-5xl mx-auto mb-8 bg-white p-6 rounded-2xl border border-slate-200 shadow-sm">
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6 border-b border-slate-100 pb-4">
+      <div className="print:hidden max-w-5xl mx-auto mb-8 bg-white dark:bg-[#001c55] p-6 rounded-2xl border border-slate-200 dark:border-[#0a2a6b] shadow-sm">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6 border-b border-slate-100 dark:border-[#0a2a6b] pb-4">
           <div className="flex items-center gap-3">
-            <Link 
-              href="/panel" 
-              className="text-slate-400 hover:text-slate-700 transition-colors bg-slate-50 hover:bg-slate-100 p-2 rounded-lg border border-slate-200"
+            <Link
+              href="/panel"
+              className="text-slate-400 dark:text-slate-500 hover:text-slate-700 dark:hover:text-slate-200 transition-colors bg-slate-50 dark:bg-[#00246b] hover:bg-slate-100 dark:hover:bg-[#002a6e] p-2 rounded-lg border border-slate-200 dark:border-[#0a2a6b]"
               title="Volver al inventario"
             >
               <ArrowLeft className="w-4 h-4" />
             </Link>
             <div>
-              <h2 className="text-[17px] font-bold text-slate-900 flex items-center gap-2 leading-tight">
-                <FileText className="w-5 h-5 text-indigo-600" /> Generador de Boleto
+              <h2 className="text-[17px] font-bold text-slate-900 dark:text-white flex items-center gap-2 leading-tight">
+                <FileText className="w-5 h-5 text-indigo-600 dark:text-sky-300" /> Generador de Boleto
               </h2>
-              <p className="text-[11px] text-slate-500 font-medium mt-0.5">Completá los datos del comprador para el PDF</p>
+              <p className="text-[11px] text-slate-500 dark:text-slate-400 font-medium mt-0.5">Completá los datos del comprador para el PDF</p>
             </div>
           </div>
-          <button 
+          <button
             onClick={handlePrint}
             className="bg-indigo-600 hover:bg-indigo-700 text-white px-5 py-2.5 rounded-xl font-bold text-xs uppercase tracking-widest flex items-center justify-center gap-2 transition-all shadow-sm active:scale-95"
           >
@@ -46,22 +46,22 @@ export default function BoletoClient({ auto }: { auto: any }) {
 
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
           <div>
-            <label className="text-[11px] font-bold text-slate-500 uppercase tracking-widest block mb-1.5">Nombre Completo</label>
-            <input type="text" value={comprador} onChange={e => setComprador(e.target.value)} className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3.5 py-2.5 text-[13px] text-slate-900 outline-none focus:border-indigo-500 focus:bg-white transition-colors placeholder:text-slate-400" placeholder="Ej: Juan Pérez" />
+            <label className="text-[11px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-widest block mb-1.5">Nombre Completo</label>
+            <input type="text" value={comprador} onChange={e => setComprador(e.target.value)} className="w-full bg-slate-50 dark:bg-[#00246b] border border-slate-200 dark:border-[#0a2a6b] rounded-xl px-3.5 py-2.5 text-[13px] text-slate-900 dark:text-white outline-none focus:border-indigo-500 focus:bg-white dark:focus:bg-[#002a6e] transition-colors placeholder:text-slate-400 dark:placeholder:text-slate-500" placeholder="Ej: Juan Pérez" />
           </div>
           <div>
-            <label className="text-[11px] font-bold text-slate-500 uppercase tracking-widest block mb-1.5">DNI / CUIT</label>
-            <input type="text" value={dni} onChange={e => setDni(e.target.value)} className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3.5 py-2.5 text-[13px] text-slate-900 outline-none focus:border-indigo-500 focus:bg-white transition-colors placeholder:text-slate-400" placeholder="Sin puntos" />
+            <label className="text-[11px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-widest block mb-1.5">DNI / CUIT</label>
+            <input type="text" value={dni} onChange={e => setDni(e.target.value)} className="w-full bg-slate-50 dark:bg-[#00246b] border border-slate-200 dark:border-[#0a2a6b] rounded-xl px-3.5 py-2.5 text-[13px] text-slate-900 dark:text-white outline-none focus:border-indigo-500 focus:bg-white dark:focus:bg-[#002a6e] transition-colors placeholder:text-slate-400 dark:placeholder:text-slate-500" placeholder="Sin puntos" />
           </div>
           <div>
-            <label className="text-[11px] font-bold text-slate-500 uppercase tracking-widest block mb-1.5">Domicilio</label>
-            <input type="text" value={domicilio} onChange={e => setDomicilio(e.target.value)} className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3.5 py-2.5 text-[13px] text-slate-900 outline-none focus:border-indigo-500 focus:bg-white transition-colors placeholder:text-slate-400" placeholder="Ej: Av. San Martín 123" />
+            <label className="text-[11px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-widest block mb-1.5">Domicilio</label>
+            <input type="text" value={domicilio} onChange={e => setDomicilio(e.target.value)} className="w-full bg-slate-50 dark:bg-[#00246b] border border-slate-200 dark:border-[#0a2a6b] rounded-xl px-3.5 py-2.5 text-[13px] text-slate-900 dark:text-white outline-none focus:border-indigo-500 focus:bg-white dark:focus:bg-[#002a6e] transition-colors placeholder:text-slate-400 dark:placeholder:text-slate-500" placeholder="Ej: Av. San Martín 123" />
           </div>
           <div>
-            <label className="text-[11px] font-bold text-slate-500 uppercase tracking-widest block mb-1.5">Monto de Seña ($)</label>
-            <div className="flex items-center bg-slate-50 border border-slate-200 rounded-xl px-3 focus-within:border-indigo-500 focus-within:bg-white transition-colors">
-              <span className="text-slate-400 font-bold mr-1">$</span>
-              <input type="number" value={montoSena} onChange={e => setMontoSena(e.target.value)} className="w-full bg-transparent py-2.5 text-[13px] text-slate-900 outline-none placeholder:text-slate-400 font-mono" placeholder="Ej: 500000" />
+            <label className="text-[11px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-widest block mb-1.5">Monto de Seña ($)</label>
+            <div className="flex items-center bg-slate-50 dark:bg-[#00246b] border border-slate-200 dark:border-[#0a2a6b] rounded-xl px-3 focus-within:border-indigo-500 focus-within:bg-white dark:focus-within:bg-[#002a6e] transition-colors">
+              <span className="text-slate-400 dark:text-slate-500 font-bold mr-1">$</span>
+              <input type="number" value={montoSena} onChange={e => setMontoSena(e.target.value)} className="w-full bg-transparent py-2.5 text-[13px] text-slate-900 dark:text-white outline-none placeholder:text-slate-400 dark:placeholder:text-slate-500 font-mono" placeholder="Ej: 500000" />
             </div>
           </div>
         </div>

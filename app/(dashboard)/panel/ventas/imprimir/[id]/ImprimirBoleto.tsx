@@ -21,20 +21,20 @@ export default function ImprimirBoleto({ operacion }: { operacion: any }) {
   const fechaOperacion = new Date(operacion.fecha_venta).toLocaleDateString("es-AR", { timeZone: "UTC" });
 
   return (
-    <div className="min-h-screen pb-20 text-slate-800 bg-[#F9FAFB] print:bg-white pt-8 font-sans selection:bg-indigo-100 selection:text-indigo-900">
-      
+    <div className="min-h-screen pb-20 text-slate-800 bg-[#F9FAFB] dark:bg-[#001233] print:bg-white pt-8 font-sans selection:bg-indigo-100 selection:text-indigo-900">
+
       {/* ================= PANEL DE CONTROL (Oculto al imprimir) ================= */}
-      <div className="print:hidden max-w-[210mm] mx-auto mb-8 bg-white p-6 rounded-2xl border border-slate-200 shadow-sm flex flex-col sm:flex-row items-center justify-between gap-4">
+      <div className="print:hidden max-w-[210mm] mx-auto mb-8 bg-white dark:bg-[#001c55] p-6 rounded-2xl border border-slate-200 dark:border-[#0a2a6b] shadow-sm flex flex-col sm:flex-row items-center justify-between gap-4">
         <div className="flex items-center gap-4">
-          <Link href="/panel/ventas" className="text-slate-400 hover:text-slate-700 transition-colors bg-slate-50 hover:bg-slate-100 p-2.5 rounded-lg border border-slate-200">
+          <Link href="/panel/ventas" className="text-slate-400 dark:text-slate-500 hover:text-slate-700 dark:hover:text-slate-200 transition-colors bg-slate-50 dark:bg-[#00246b] hover:bg-slate-100 dark:hover:bg-[#002a6e] p-2.5 rounded-lg border border-slate-200 dark:border-[#0a2a6b]">
             <ArrowLeft className="w-4 h-4" />
           </Link>
           <div>
-            <h2 className="text-[17px] font-bold text-slate-900 leading-tight">Impresión de {operacion.tipo_operacion}</h2>
-            <p className="text-[11px] text-slate-500 font-mono mt-0.5">Ref: OP-{operacion.id.split("-")[0].toUpperCase()}</p>
+            <h2 className="text-[17px] font-bold text-slate-900 dark:text-white leading-tight">Impresión de {operacion.tipo_operacion}</h2>
+            <p className="text-[11px] text-slate-500 dark:text-slate-400 font-mono mt-0.5">Ref: OP-{operacion.id.split("-")[0].toUpperCase()}</p>
           </div>
         </div>
-        <button 
+        <button
           onClick={handlePrint}
           className="bg-indigo-600 hover:bg-indigo-700 text-white px-6 py-2.5 rounded-xl font-bold text-xs uppercase tracking-widest flex items-center gap-2 transition-all shadow-sm active:scale-95"
         >

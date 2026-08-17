@@ -80,25 +80,25 @@ export default function FinanciacionesClient({ financiacionesIniciales }: { fina
   };
 
   return (
-    <div className="flex flex-col h-full w-full bg-white overflow-hidden">
-      <header className="flex flex-col md:flex-row md:items-center justify-between border-b border-slate-200 px-6 py-4 bg-white shrink-0 gap-4">
+    <div className="flex flex-col h-full w-full bg-white dark:bg-[#001233] overflow-hidden">
+      <header className="flex flex-col md:flex-row md:items-center justify-between border-b border-slate-200 dark:border-[#0a2a6b] px-6 py-4 bg-white dark:bg-[#001c55] shrink-0 gap-4">
         <div className="flex items-center gap-4">
-          <div className="w-10 h-10 rounded-lg bg-indigo-50 border border-indigo-100 flex items-center justify-center shrink-0">
-            <Landmark className="w-5 h-5 text-indigo-600" />
+          <div className="w-10 h-10 rounded-lg bg-indigo-50 dark:bg-[#002a6e] border border-indigo-100 dark:border-[#0a2a6b] flex items-center justify-center shrink-0">
+            <Landmark className="w-5 h-5 text-indigo-600 dark:text-sky-300" />
           </div>
           <div>
-            <h1 className="text-[17px] font-bold text-slate-900 leading-tight">Financiaciones</h1>
-            <p className="text-[11px] font-medium text-slate-500 mt-0.5">Prendas bancarias y planes de pago de las ventas</p>
+            <h1 className="text-[17px] font-bold text-slate-900 dark:text-white leading-tight">Financiaciones</h1>
+            <p className="text-[11px] font-medium text-slate-500 dark:text-slate-400 mt-0.5">Prendas bancarias y planes de pago de las ventas</p>
           </div>
         </div>
         <div className="flex items-center gap-1.5">
-          <Filter className="w-3.5 h-3.5 text-slate-400 mr-1" />
+          <Filter className="w-3.5 h-3.5 text-slate-400 dark:text-slate-500 mr-1" />
           {["todos", ...ESTADOS].map((e) => (
             <button
               key={e}
               onClick={() => setFiltroEstado(e)}
               className={`px-3 py-1.5 rounded-md text-[12px] font-bold transition-colors ${
-                filtroEstado === e ? "bg-slate-100 text-slate-900 border border-slate-200" : "text-slate-500 hover:bg-slate-50"
+                filtroEstado === e ? "bg-slate-100 dark:bg-[#00246b] text-slate-900 dark:text-white border border-slate-200 dark:border-[#0a2a6b]" : "text-slate-500 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-[#00246b]"
               }`}
             >
               {e === "todos" ? "Todos" : e}
@@ -107,29 +107,29 @@ export default function FinanciacionesClient({ financiacionesIniciales }: { fina
         </div>
       </header>
 
-      <div className="flex-1 overflow-y-auto p-6 bg-[#F9FAFB] custom-scrollbar">
+      <div className="flex-1 overflow-y-auto p-6 bg-[#F9FAFB] dark:bg-[#001233] custom-scrollbar">
         <div className="max-w-[1200px] mx-auto space-y-6">
 
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-            <div className="bg-white border border-amber-200 rounded-2xl p-5 shadow-sm">
-              <span className="text-[10px] uppercase tracking-widest font-bold text-slate-400">Pendiente de cobro</span>
-              <h3 className="text-2xl font-black mt-1 font-mono text-amber-600">$ {totales.pendiente.toLocaleString("es-AR")}</h3>
+            <div className="bg-white dark:bg-[#001c55] border border-amber-200 dark:border-[#0a2a6b] rounded-2xl p-5 shadow-sm">
+              <span className="text-[10px] uppercase tracking-widest font-bold text-slate-400 dark:text-slate-500">Pendiente de cobro</span>
+              <h3 className="text-2xl font-black mt-1 font-mono text-amber-600 dark:text-amber-300">$ {totales.pendiente.toLocaleString("es-AR")}</h3>
             </div>
-            <div className="bg-white border border-rose-200 rounded-2xl p-5 shadow-sm">
-              <span className="text-[10px] uppercase tracking-widest font-bold text-slate-400 flex items-center gap-1"><AlertTriangle className="w-3 h-3" /> Vencido</span>
-              <h3 className="text-2xl font-black mt-1 font-mono text-rose-600">$ {totales.vencido.toLocaleString("es-AR")}</h3>
+            <div className="bg-white dark:bg-[#001c55] border border-rose-200 dark:border-[#0a2a6b] rounded-2xl p-5 shadow-sm">
+              <span className="text-[10px] uppercase tracking-widest font-bold text-slate-400 dark:text-slate-500 flex items-center gap-1"><AlertTriangle className="w-3 h-3" /> Vencido</span>
+              <h3 className="text-2xl font-black mt-1 font-mono text-rose-600 dark:text-rose-300">$ {totales.vencido.toLocaleString("es-AR")}</h3>
             </div>
-            <div className="bg-white border border-emerald-200 rounded-2xl p-5 shadow-sm">
-              <span className="text-[10px] uppercase tracking-widest font-bold text-slate-400">Cobrado</span>
-              <h3 className="text-2xl font-black mt-1 font-mono text-emerald-600">$ {totales.cobrado.toLocaleString("es-AR")}</h3>
+            <div className="bg-white dark:bg-[#001c55] border border-emerald-200 dark:border-[#0a2a6b] rounded-2xl p-5 shadow-sm">
+              <span className="text-[10px] uppercase tracking-widest font-bold text-slate-400 dark:text-slate-500">Cobrado</span>
+              <h3 className="text-2xl font-black mt-1 font-mono text-emerald-600 dark:text-emerald-300">$ {totales.cobrado.toLocaleString("es-AR")}</h3>
             </div>
           </div>
 
-          <div className="bg-white border border-slate-200 rounded-2xl shadow-sm overflow-hidden">
+          <div className="bg-white dark:bg-[#001c55] border border-slate-200 dark:border-[#0a2a6b] rounded-2xl shadow-sm overflow-hidden">
             <div className="overflow-x-auto">
               <table className="w-full text-left border-collapse">
                 <thead>
-                  <tr className="bg-slate-800 text-white text-[10px] uppercase tracking-widest font-bold">
+                  <tr className="bg-slate-800 dark:bg-[#00246b] text-white text-[10px] uppercase tracking-widest font-bold">
                     <th className="p-4 pl-6">Vehículo / Cliente</th>
                     <th className="p-4">Entidad</th>
                     <th className="p-4 text-center">Cuotas</th>
@@ -138,22 +138,22 @@ export default function FinanciacionesClient({ financiacionesIniciales }: { fina
                     <th className="p-4 pr-6 text-center">Estado</th>
                   </tr>
                 </thead>
-                <tbody className="divide-y divide-slate-100">
+                <tbody className="divide-y divide-slate-100 dark:divide-[#0a2a6b]">
                   {filtradas.map((f) => (
-                    <tr key={f.id} className={`hover:bg-indigo-50/40 transition-colors border-l-4 ${bordeEstado(f.estadoVisual)}`}>
+                    <tr key={f.id} className={`hover:bg-indigo-50/40 dark:hover:bg-[#00246b] transition-colors border-l-4 ${bordeEstado(f.estadoVisual)}`}>
                       <td className="p-4 pl-6">
-                        <div className="flex items-center gap-2 text-[13px] font-bold text-slate-900">
-                          <Car className="w-3.5 h-3.5 text-slate-400" />
+                        <div className="flex items-center gap-2 text-[13px] font-bold text-slate-900 dark:text-white">
+                          <Car className="w-3.5 h-3.5 text-slate-400 dark:text-slate-500" />
                           {f.boleto?.marca} {f.boleto?.modelo}
                         </div>
-                        <span className="text-[11px] text-slate-500">{f.boleto?.nombre} {f.boleto?.apellido}</span>
+                        <span className="text-[11px] text-slate-500 dark:text-slate-400">{f.boleto?.nombre} {f.boleto?.apellido}</span>
                       </td>
-                      <td className="p-4 text-[13px] text-slate-600">{f.entidad || "—"}</td>
-                      <td className="p-4 text-center text-[13px] font-mono text-slate-600">{f.cuotas || "—"}</td>
-                      <td className="p-4 text-[13px] text-slate-600">
+                      <td className="p-4 text-[13px] text-slate-600 dark:text-slate-300">{f.entidad || "—"}</td>
+                      <td className="p-4 text-center text-[13px] font-mono text-slate-600 dark:text-slate-300">{f.cuotas || "—"}</td>
+                      <td className="p-4 text-[13px] text-slate-600 dark:text-slate-300">
                         {f.fecha_vencimiento ? new Date(`${f.fecha_vencimiento}T12:00:00Z`).toLocaleDateString("es-AR", { day: "2-digit", month: "short", year: "numeric", timeZone: "UTC" }) : "—"}
                       </td>
-                      <td className="p-4 text-right font-mono text-[13px] font-bold text-slate-800">$ {Number(f.monto).toLocaleString("es-AR")}</td>
+                      <td className="p-4 text-right font-mono text-[13px] font-bold text-slate-800 dark:text-white">$ {Number(f.monto).toLocaleString("es-AR")}</td>
                       <td className="p-4 pr-6 text-center">
                         <select
                           value={f.estado || "Pendiente"}
@@ -168,7 +168,7 @@ export default function FinanciacionesClient({ financiacionesIniciales }: { fina
                   ))}
                   {filtradas.length === 0 && (
                     <tr>
-                      <td colSpan={6} className="p-10 text-center text-slate-400 text-sm italic">
+                      <td colSpan={6} className="p-10 text-center text-slate-400 dark:text-slate-500 text-sm italic">
                         Sin financiaciones registradas.
                       </td>
                     </tr>

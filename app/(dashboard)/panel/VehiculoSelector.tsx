@@ -26,7 +26,7 @@ const VACIO: VehiculoDatos = {
   modelo_anio: "", color: "", kilometros: "", combustible: "",
 };
 
-const inputClass = "w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2.5 text-sm outline-none focus:border-indigo-500 focus:bg-white transition-colors text-slate-900 placeholder:text-slate-400";
+const inputClass = "w-full bg-slate-50 dark:bg-[#00246b] border border-slate-200 dark:border-[#0a2a6b] rounded-xl px-3 py-2.5 text-sm outline-none focus:border-indigo-500 focus:bg-white dark:focus:bg-[#002a6e] transition-colors text-slate-900 dark:text-white placeholder:text-slate-400 dark:placeholder:text-slate-500";
 
 export default function VehiculoSelector({
   vehiculos,
@@ -72,21 +72,21 @@ export default function VehiculoSelector({
 
   if (datos && !modoManual) {
     return (
-      <div className="bg-emerald-50 border border-emerald-200 rounded-xl p-4 flex items-center justify-between gap-3">
+      <div className="bg-emerald-50 dark:bg-[#002a6e] border border-emerald-200 dark:border-[#0a2a6b] rounded-xl p-4 flex items-center justify-between gap-3">
         <div className="min-w-0">
-          <div className="flex items-center gap-1.5 text-emerald-700 font-bold text-sm">
+          <div className="flex items-center gap-1.5 text-emerald-700 dark:text-emerald-300 font-bold text-sm">
             <Check className="w-4 h-4 shrink-0" /> {datos.marca} {datos.modelo} {datos.dominio ? `(${datos.dominio})` : ""}
           </div>
-          <p className="text-[11px] text-emerald-600 mt-0.5">{datos.modelo_anio || "—"} · {datos.color || "—"}</p>
+          <p className="text-[11px] text-emerald-600 dark:text-emerald-300 mt-0.5">{datos.modelo_anio || "—"} · {datos.color || "—"}</p>
         </div>
         <div className="flex items-center gap-2 shrink-0">
-          <button type="button" onClick={() => setModoManual(true)} className="text-emerald-600 hover:text-emerald-800 bg-white border border-emerald-200 p-2 rounded-lg transition-colors" title="Editar campos">
+          <button type="button" onClick={() => setModoManual(true)} className="text-emerald-600 dark:text-emerald-300 hover:text-emerald-800 dark:hover:text-emerald-200 bg-white dark:bg-[#001c55] border border-emerald-200 dark:border-[#0a2a6b] p-2 rounded-lg transition-colors" title="Editar campos">
             <Pencil className="w-3.5 h-3.5" />
           </button>
           <button
             type="button"
             onClick={() => { onCambiar(null); if (soloManual) setModoManual(true); }}
-            className="text-emerald-600 hover:text-emerald-800 bg-white border border-emerald-200 px-3 py-1.5 rounded-lg text-[11px] font-bold uppercase tracking-widest transition-colors"
+            className="text-emerald-600 dark:text-emerald-300 hover:text-emerald-800 dark:hover:text-emerald-200 bg-white dark:bg-[#001c55] border border-emerald-200 dark:border-[#0a2a6b] px-3 py-1.5 rounded-lg text-[11px] font-bold uppercase tracking-widest transition-colors"
           >
             Cambiar
           </button>
@@ -128,11 +128,11 @@ export default function VehiculoSelector({
   if (modoManual) {
     const d = datos || VACIO;
     return (
-      <div className="bg-slate-50 border border-slate-200 rounded-xl p-4 space-y-3">
+      <div className="bg-slate-50 dark:bg-[#00246b] border border-slate-200 dark:border-[#0a2a6b] rounded-xl p-4 space-y-3">
         <div className="flex justify-between items-center">
-          <span className="text-[11px] font-bold uppercase tracking-widest text-slate-500">Datos del vehículo</span>
+          <span className="text-[11px] font-bold uppercase tracking-widest text-slate-500 dark:text-slate-400">Datos del vehículo</span>
           {!soloManual && (
-            <button type="button" onClick={() => setModoManual(false)} className="text-slate-400 hover:text-slate-700">
+            <button type="button" onClick={() => setModoManual(false)} className="text-slate-400 dark:text-slate-500 hover:text-slate-700 dark:hover:text-slate-200">
               <X className="w-4 h-4" />
             </button>
           )}
@@ -169,7 +169,7 @@ export default function VehiculoSelector({
       <select
         onChange={(e) => seleccionarDeStock(e.target.value)}
         defaultValue=""
-        className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2.5 text-sm outline-none focus:border-indigo-500 cursor-pointer text-slate-900"
+        className="w-full bg-slate-50 dark:bg-[#00246b] border border-slate-200 dark:border-[#0a2a6b] rounded-xl px-3 py-2.5 text-sm outline-none focus:border-indigo-500 cursor-pointer text-slate-900 dark:text-white"
       >
         <option value="">Elegir del stock...</option>
         {vehiculos.map((v) => (
@@ -179,7 +179,7 @@ export default function VehiculoSelector({
       <button
         type="button"
         onClick={() => setModoManual(true)}
-        className="flex items-center gap-1.5 text-indigo-600 hover:text-indigo-800 text-[12px] font-bold"
+        className="flex items-center gap-1.5 text-indigo-600 dark:text-sky-300 hover:text-indigo-800 dark:hover:text-sky-200 text-[12px] font-bold"
       >
         <Car className="w-3.5 h-3.5" /> Cargar vehículo manualmente
       </button>

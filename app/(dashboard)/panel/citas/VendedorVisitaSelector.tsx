@@ -50,13 +50,13 @@ export default function VendedorVisitaSelector({
   };
 
   return (
-    <div className="relative flex items-center gap-1.5 text-[11px] text-slate-600">
-      <User className="w-3.5 h-3.5 text-slate-400 shrink-0" />
+    <div className="relative flex items-center gap-1.5 text-[11px] text-slate-600 dark:text-slate-300">
+      <User className="w-3.5 h-3.5 text-slate-400 dark:text-slate-500 shrink-0" />
       <select
         defaultValue={vendedorActualId || ""}
         onChange={handleChange}
         disabled={loading}
-        className="w-full bg-slate-50 border border-slate-200 text-[11px] font-medium text-slate-700 rounded-md pl-1.5 pr-6 py-1 outline-none focus:border-indigo-500 transition-colors appearance-none cursor-pointer disabled:opacity-50"
+        className="w-full bg-slate-50 dark:bg-[#00246b] border border-slate-200 dark:border-[#0a2a6b] text-[11px] font-medium text-slate-700 dark:text-slate-200 rounded-md pl-1.5 pr-6 py-1 outline-none focus:border-indigo-500 transition-colors appearance-none cursor-pointer disabled:opacity-50"
       >
         <option value="">Sin vendedor</option>
         {deLaSucursal.length > 0 && (

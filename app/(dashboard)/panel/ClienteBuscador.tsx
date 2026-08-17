@@ -24,7 +24,7 @@ export interface ClienteSeleccionado {
   fecha_nacimiento: string | null;
 }
 
-const inputClass = "w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2.5 text-sm outline-none focus:border-indigo-500 focus:bg-white transition-colors text-slate-900 placeholder:text-slate-400";
+const inputClass = "w-full bg-slate-50 dark:bg-[#00246b] border border-slate-200 dark:border-[#0a2a6b] rounded-xl px-3 py-2.5 text-sm outline-none focus:border-indigo-500 focus:bg-white dark:focus:bg-[#002a6e] transition-colors text-slate-900 dark:text-white placeholder:text-slate-400 dark:placeholder:text-slate-500";
 
 export default function ClienteBuscador({
   clientes,
@@ -73,19 +73,19 @@ export default function ClienteBuscador({
 
   if (seleccionado) {
     return (
-      <div className="bg-emerald-50 border border-emerald-200 rounded-xl p-4 flex items-center justify-between gap-3">
+      <div className="bg-emerald-50 dark:bg-[#002a6e] border border-emerald-200 dark:border-[#0a2a6b] rounded-xl p-4 flex items-center justify-between gap-3">
         <div className="min-w-0">
-          <div className="flex items-center gap-1.5 text-emerald-700 font-bold text-sm">
+          <div className="flex items-center gap-1.5 text-emerald-700 dark:text-emerald-300 font-bold text-sm">
             <Check className="w-4 h-4 shrink-0" /> {seleccionado.nombre} {seleccionado.apellido}
           </div>
-          <p className="text-[11px] text-emerald-600 mt-0.5">
+          <p className="text-[11px] text-emerald-600 dark:text-emerald-300 mt-0.5">
             {seleccionado.dni ? `DNI ${seleccionado.dni}` : "Sin DNI"} · {seleccionado.telefono_celular || "Sin teléfono"}
           </p>
         </div>
         <button
           type="button"
           onClick={() => onSeleccionar(null)}
-          className="shrink-0 text-emerald-600 hover:text-emerald-800 bg-white border border-emerald-200 px-3 py-1.5 rounded-lg text-[11px] font-bold uppercase tracking-widest transition-colors"
+          className="shrink-0 text-emerald-600 dark:text-emerald-300 hover:text-emerald-800 dark:hover:text-emerald-200 bg-white dark:bg-[#001c55] border border-emerald-200 dark:border-[#0a2a6b] px-3 py-1.5 rounded-lg text-[11px] font-bold uppercase tracking-widest transition-colors"
         >
           Cambiar
         </button>
@@ -95,10 +95,10 @@ export default function ClienteBuscador({
 
   if (creandoNuevo) {
     return (
-      <div className="bg-slate-50 border border-slate-200 rounded-xl p-4 space-y-3">
+      <div className="bg-slate-50 dark:bg-[#00246b] border border-slate-200 dark:border-[#0a2a6b] rounded-xl p-4 space-y-3">
         <div className="flex justify-between items-center">
-          <span className="text-[11px] font-bold uppercase tracking-widest text-slate-500">Nuevo cliente</span>
-          <button type="button" onClick={() => setCreandoNuevo(false)} className="text-slate-400 hover:text-slate-700">
+          <span className="text-[11px] font-bold uppercase tracking-widest text-slate-500 dark:text-slate-400">Nuevo cliente</span>
+          <button type="button" onClick={() => setCreandoNuevo(false)} className="text-slate-400 dark:text-slate-500 hover:text-slate-700 dark:hover:text-slate-200">
             <X className="w-4 h-4" />
           </button>
         </div>
@@ -135,7 +135,7 @@ export default function ClienteBuscador({
   return (
     <div className="space-y-2">
       <div className="relative">
-        <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
+        <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400 dark:text-slate-500" />
         <input
           className={`${inputClass} pl-9`}
           placeholder="Buscar cliente por nombre, apellido o DNI..."
@@ -144,27 +144,27 @@ export default function ClienteBuscador({
         />
       </div>
       {busqueda && (
-        <div className="max-h-48 overflow-y-auto border border-slate-200 rounded-xl divide-y divide-slate-100">
+        <div className="max-h-48 overflow-y-auto border border-slate-200 dark:border-[#0a2a6b] rounded-xl divide-y divide-slate-100 dark:divide-[#0a2a6b]">
           {filtrados.slice(0, 20).map((c) => (
             <button
               key={c.id}
               type="button"
               onClick={() => onSeleccionar(c)}
-              className="w-full text-left px-3 py-2.5 hover:bg-indigo-50 transition-colors flex items-center justify-between"
+              className="w-full text-left px-3 py-2.5 hover:bg-indigo-50 dark:hover:bg-[#00246b] transition-colors flex items-center justify-between"
             >
-              <span className="text-sm font-medium text-slate-800">{c.nombre} {c.apellido}</span>
-              <span className="text-[11px] text-slate-400">{c.dni || "Sin DNI"}</span>
+              <span className="text-sm font-medium text-slate-800 dark:text-white">{c.nombre} {c.apellido}</span>
+              <span className="text-[11px] text-slate-400 dark:text-slate-500">{c.dni || "Sin DNI"}</span>
             </button>
           ))}
           {filtrados.length === 0 && (
-            <p className="px-3 py-3 text-[13px] text-slate-400 italic">Sin resultados.</p>
+            <p className="px-3 py-3 text-[13px] text-slate-400 dark:text-slate-500 italic">Sin resultados.</p>
           )}
         </div>
       )}
       <button
         type="button"
         onClick={() => setCreandoNuevo(true)}
-        className="flex items-center gap-1.5 text-indigo-600 hover:text-indigo-800 text-[12px] font-bold"
+        className="flex items-center gap-1.5 text-indigo-600 dark:text-sky-300 hover:text-indigo-800 dark:hover:text-sky-200 text-[12px] font-bold"
       >
         <UserPlus className="w-3.5 h-3.5" /> Cargar cliente nuevo
       </button>

@@ -8,7 +8,7 @@ import { ArrowLeft, ShieldCheck, Save } from "lucide-react";
 import ClienteBuscador, { ClienteSeleccionado } from "../../ClienteBuscador";
 import VehiculoSelector, { VehiculoDatos } from "../../VehiculoSelector";
 
-const inputClass = "w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2.5 text-sm outline-none focus:border-indigo-500 focus:bg-white transition-colors text-slate-900 placeholder:text-slate-400";
+const inputClass = "w-full bg-slate-50 dark:bg-[#00246b] border border-slate-200 dark:border-[#0a2a6b] rounded-xl px-3 py-2.5 text-sm outline-none focus:border-indigo-500 focus:bg-white dark:focus:bg-[#002a6e] transition-colors text-slate-900 dark:text-white placeholder:text-slate-400 dark:placeholder:text-slate-500";
 
 export default function RespCivilForm({ clientes, vehiculos, vendedores }: { clientes: any[]; vehiculos: any[]; vendedores: any[] }) {
   const router = useRouter();
@@ -79,40 +79,40 @@ export default function RespCivilForm({ clientes, vehiculos, vendedores }: { cli
   };
 
   return (
-    <div className="w-full h-full overflow-y-auto custom-scrollbar bg-[#F9FAFB] pb-20">
+    <div className="w-full h-full overflow-y-auto custom-scrollbar bg-[#F9FAFB] dark:bg-[#001233] pb-20">
       <div className="max-w-3xl mx-auto px-6 py-10">
-        <div className="flex items-center justify-between mb-8 border-b border-slate-200 pb-4">
+        <div className="flex items-center justify-between mb-8 border-b border-slate-200 dark:border-[#0a2a6b] pb-4">
           <div>
-            <Link href="/panel/resp-civil" className="text-slate-400 hover:text-indigo-600 flex items-center gap-2 text-sm transition-colors mb-2 font-medium">
+            <Link href="/panel/resp-civil" className="text-slate-400 dark:text-slate-500 hover:text-indigo-600 dark:hover:text-sky-300 flex items-center gap-2 text-sm transition-colors mb-2 font-medium">
               <ArrowLeft className="w-4 h-4" /> Volver
             </Link>
-            <h1 className="text-2xl font-bold text-slate-900 flex items-center gap-2">
-              <ShieldCheck className="w-6 h-6 text-purple-600" /> Nuevo Recibo de Resp. Civil
+            <h1 className="text-2xl font-bold text-slate-900 dark:text-white flex items-center gap-2">
+              <ShieldCheck className="w-6 h-6 text-purple-600 dark:text-purple-300" /> Nuevo Recibo de Resp. Civil
             </h1>
           </div>
         </div>
 
         <form onSubmit={handleSubmit} className="space-y-6">
-          <div className="bg-white border border-slate-200 rounded-2xl p-6 shadow-sm space-y-4">
-            <h2 className="text-[11px] font-bold uppercase tracking-widest text-slate-500 border-b border-slate-100 pb-3">Vendedor</h2>
+          <div className="bg-white dark:bg-[#001c55] border border-slate-200 dark:border-[#0a2a6b] rounded-2xl p-6 shadow-sm space-y-4">
+            <h2 className="text-[11px] font-bold uppercase tracking-widest text-slate-500 dark:text-slate-400 border-b border-slate-100 dark:border-[#0a2a6b] pb-3">Vendedor</h2>
             <select className={inputClass} value={vendedorId} onChange={(e) => setVendedorId(e.target.value)}>
               <option value="">Vos (usuario actual)</option>
               {vendedores.map((v) => (<option key={v.id} value={v.id}>{v.nombre}</option>))}
             </select>
           </div>
 
-          <div className="bg-white border border-slate-200 rounded-2xl p-6 shadow-sm space-y-4">
-            <h2 className="text-[11px] font-bold uppercase tracking-widest text-slate-500 border-b border-slate-100 pb-3">Cliente</h2>
+          <div className="bg-white dark:bg-[#001c55] border border-slate-200 dark:border-[#0a2a6b] rounded-2xl p-6 shadow-sm space-y-4">
+            <h2 className="text-[11px] font-bold uppercase tracking-widest text-slate-500 dark:text-slate-400 border-b border-slate-100 dark:border-[#0a2a6b] pb-3">Cliente</h2>
             <ClienteBuscador clientes={clientes} seleccionado={cliente} onSeleccionar={setCliente} />
           </div>
 
-          <div className="bg-white border border-slate-200 rounded-2xl p-6 shadow-sm space-y-4">
-            <h2 className="text-[11px] font-bold uppercase tracking-widest text-slate-500 border-b border-slate-100 pb-3">Vehículo</h2>
+          <div className="bg-white dark:bg-[#001c55] border border-slate-200 dark:border-[#0a2a6b] rounded-2xl p-6 shadow-sm space-y-4">
+            <h2 className="text-[11px] font-bold uppercase tracking-widest text-slate-500 dark:text-slate-400 border-b border-slate-100 dark:border-[#0a2a6b] pb-3">Vehículo</h2>
             <VehiculoSelector vehiculos={vehiculos} datos={vehiculo} onCambiar={setVehiculo} />
           </div>
 
-          <div className="bg-white border border-slate-200 rounded-2xl p-6 shadow-sm">
-            <label className="text-[11px] font-bold text-slate-500 uppercase block mb-1.5">Observaciones</label>
+          <div className="bg-white dark:bg-[#001c55] border border-slate-200 dark:border-[#0a2a6b] rounded-2xl p-6 shadow-sm">
+            <label className="text-[11px] font-bold text-slate-500 dark:text-slate-400 uppercase block mb-1.5">Observaciones</label>
             <textarea className={inputClass} rows={4} value={observaciones} onChange={(e) => setObservaciones(e.target.value)} placeholder="Ej: Vehículo para venta a consumidor final. Deberá entregarse transferido..." />
           </div>
 

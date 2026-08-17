@@ -233,8 +233,8 @@ export default async function DashboardIntegralPage({
   });
 
   return (
-    <div className="flex flex-col h-full w-full bg-white overflow-hidden font-sans">
-      
+    <div className="flex flex-col h-full w-full bg-white dark:bg-[#001233] overflow-hidden font-sans">
+
       {/* ================= HEADER Y FILTRO POR SUCURSAL ================= */}
       <SucursalFilterHeader
         icon={<PieChart className="w-5 h-5 text-indigo-600" />}
@@ -246,71 +246,71 @@ export default async function DashboardIntegralPage({
       />
 
       {/* ================= ÁREA SCROLLABLE ================= */}
-      <div className="flex-1 overflow-y-auto p-6 bg-[#F9FAFB] custom-scrollbar">
+      <div className="flex-1 overflow-y-auto p-6 bg-[#F9FAFB] dark:bg-[#001233] custom-scrollbar">
         <div className="max-w-[1600px] mx-auto space-y-6">
 
           {/* ================= FILA 1: KPIs GLOBALES (ARS & USD) ================= */}
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-            
-            <div className="bg-white border border-slate-200 shadow-sm p-5 rounded-2xl flex flex-col justify-center">
-              <span className="text-[10px] uppercase tracking-widest font-bold text-slate-400 mb-1">
+
+            <div className="bg-white dark:bg-[#001c55] border border-slate-200 dark:border-[#0a2a6b] shadow-sm p-5 rounded-2xl flex flex-col justify-center">
+              <span className="text-[10px] uppercase tracking-widest font-bold text-slate-400 dark:text-slate-500 mb-1">
                 Capital Inmovilizado
               </span>
-              <h3 className="text-xl lg:text-2xl font-black text-slate-900 font-mono mb-1">
+              <h3 className="text-xl lg:text-2xl font-black text-slate-900 dark:text-white font-mono mb-1">
                 $ {capitalInmovilizadoArs.toLocaleString("es-AR")}
               </h3>
               {capitalInmovilizadoUsd > 0 && (
-                <span className="text-[11px] font-mono text-indigo-600 font-bold">
+                <span className="text-[11px] font-mono text-indigo-600 dark:text-sky-300 font-bold">
                   US$ {capitalInmovilizadoUsd.toLocaleString("en-US")}
                 </span>
               )}
             </div>
 
-            <div className="bg-white border border-slate-200 shadow-sm p-5 rounded-2xl flex flex-col justify-center">
-              <span className="text-[10px] uppercase tracking-widest font-bold text-indigo-600 mb-1">
+            <div className="bg-white dark:bg-[#001c55] border border-slate-200 dark:border-[#0a2a6b] shadow-sm p-5 rounded-2xl flex flex-col justify-center">
+              <span className="text-[10px] uppercase tracking-widest font-bold text-indigo-600 dark:text-sky-300 mb-1">
                 Valor de Venta (Proy)
               </span>
-              <h3 className="text-xl lg:text-2xl font-black text-indigo-700 font-mono mb-1">
+              <h3 className="text-xl lg:text-2xl font-black text-indigo-700 dark:text-sky-300 font-mono mb-1">
                 $ {valorVentaProyectadoArs.toLocaleString("es-AR")}
               </h3>
               {valorVentaProyectadoUsd > 0 && (
-                <span className="text-[11px] font-mono text-emerald-600 font-bold">
+                <span className="text-[11px] font-mono text-emerald-600 dark:text-emerald-300 font-bold">
                   US$ {valorVentaProyectadoUsd.toLocaleString("en-US")}
                 </span>
               )}
             </div>
 
-            <div className="bg-white border border-slate-200 shadow-sm p-5 rounded-2xl flex flex-col justify-center relative overflow-hidden">
+            <div className="bg-white dark:bg-[#001c55] border border-slate-200 dark:border-[#0a2a6b] shadow-sm p-5 rounded-2xl flex flex-col justify-center relative overflow-hidden">
               <div className="flex justify-between items-start mb-1">
-                <span className="text-[10px] uppercase tracking-widest font-bold text-slate-400">
+                <span className="text-[10px] uppercase tracking-widest font-bold text-slate-400 dark:text-slate-500">
                   Ganancia Bruta
                 </span>
-                <span className="bg-emerald-50 text-emerald-700 border border-emerald-200 px-2 py-0.5 rounded text-[10px] font-bold">
+                <span className="bg-emerald-50 dark:bg-[#002a6e] text-emerald-700 dark:text-emerald-300 border border-emerald-200 dark:border-[#0a2a6b] px-2 py-0.5 rounded text-[10px] font-bold">
                   {margenPromedioArs.toFixed(1)}%
                 </span>
               </div>
-              <h3 className="text-xl lg:text-2xl font-black text-emerald-600 font-mono mb-1">
+              <h3 className="text-xl lg:text-2xl font-black text-emerald-600 dark:text-emerald-300 font-mono mb-1">
                 $ {gananciaBrutaArs.toLocaleString("es-AR")}
               </h3>
               {gananciaBrutaUsd > 0 && (
-                <span className="text-[11px] font-mono text-emerald-700 font-bold">
+                <span className="text-[11px] font-mono text-emerald-700 dark:text-emerald-300 font-bold">
                   US$ {gananciaBrutaUsd.toLocaleString("en-US")}
                 </span>
               )}
             </div>
 
-            <div className="bg-white border border-slate-200 shadow-sm p-5 rounded-2xl flex flex-col justify-between">
+            <div className="bg-white dark:bg-[#001c55] border border-slate-200 dark:border-[#0a2a6b] shadow-sm p-5 rounded-2xl flex flex-col justify-between">
               <div className="flex justify-between items-center">
-                <span className="text-[10px] uppercase tracking-widest font-bold text-slate-400">
+                <span className="text-[10px] uppercase tracking-widest font-bold text-slate-400 dark:text-slate-500">
                   Stock Activo
                 </span>
-                <CarFront className="w-4 h-4 text-slate-400" />
+                <CarFront className="w-4 h-4 text-slate-400 dark:text-slate-500" />
               </div>
               <div className="flex items-baseline gap-2 mt-2">
-                <h3 className="text-3xl font-black text-slate-900 leading-none">
+                <h3 className="text-3xl font-black text-slate-900 dark:text-white leading-none">
                   {totalAutos}
                 </h3>
-                <span className="text-[11px] text-slate-500 font-medium">
+                <span className="text-[11px] text-slate-500 dark:text-slate-400 font-medium">
                   unidades
                 </span>
               </div>
@@ -321,39 +321,39 @@ export default async function DashboardIntegralPage({
           {/* ================= DESGLOSE COMPARATIVO SUCURSALES ================= */}
           {!sucursal && (
             <div>
-              <h2 className="text-[11px] font-bold uppercase tracking-widest text-slate-400 mb-4 flex items-center gap-2">
+              <h2 className="text-[11px] font-bold uppercase tracking-widest text-slate-400 dark:text-slate-500 mb-4 flex items-center gap-2">
                 <Building2 className="w-3.5 h-3.5" /> Comparativa por Sucursal (Mes Actual)
               </h2>
               <div className="grid grid-cols-1 md:grid-cols-3 xl:grid-cols-4 gap-4">
                 {desgloseSucursales.map((suc) => (
                   <div
                     key={suc.id}
-                    className="bg-white border border-slate-200 p-5 rounded-xl shadow-sm hover:shadow-md transition-shadow"
+                    className="bg-white dark:bg-[#001c55] border border-slate-200 dark:border-[#0a2a6b] p-5 rounded-xl shadow-sm hover:shadow-md transition-shadow"
                   >
-                    <div className="flex justify-between items-center border-b border-slate-100 pb-3 mb-3">
-                      <h3 className="font-bold text-[13px] text-slate-900">
+                    <div className="flex justify-between items-center border-b border-slate-100 dark:border-[#0a2a6b] pb-3 mb-3">
+                      <h3 className="font-bold text-[13px] text-slate-900 dark:text-white">
                         {suc.nombre}
                       </h3>
-                      <span className="bg-indigo-50 text-indigo-700 text-[10px] font-bold px-2 py-0.5 rounded-md border border-indigo-100">
+                      <span className="bg-indigo-50 dark:bg-[#002a6e] text-indigo-700 dark:text-sky-300 text-[10px] font-bold px-2 py-0.5 rounded-md border border-indigo-100 dark:border-[#0a2a6b]">
                         {suc.unidadesStock} en stock
                       </span>
                     </div>
                     <div className="space-y-2 text-xs">
-                      <div className="flex justify-between text-slate-500">
+                      <div className="flex justify-between text-slate-500 dark:text-slate-400">
                         <span className="font-medium">Capital Inmovilizado:</span>
-                        <span className="font-mono text-slate-700 font-bold">
+                        <span className="font-mono text-slate-700 dark:text-slate-200 font-bold">
                           $ {suc.capital.toLocaleString("es-AR")}
                         </span>
                       </div>
-                      <div className="flex justify-between text-slate-500">
+                      <div className="flex justify-between text-slate-500 dark:text-slate-400">
                         <span className="font-medium">Ventas del Mes:</span>
-                        <span className="font-bold text-slate-900">
+                        <span className="font-bold text-slate-900 dark:text-white">
                           {suc.ventasUnidades} unidades
                         </span>
                       </div>
-                      <div className="flex justify-between text-slate-700 font-bold pt-2 border-t border-slate-100">
+                      <div className="flex justify-between text-slate-700 dark:text-slate-200 font-bold pt-2 border-t border-slate-100 dark:border-[#0a2a6b]">
                         <span>Facturación Mes:</span>
-                        <span className="font-mono text-emerald-600 text-[13px]">
+                        <span className="font-mono text-emerald-600 dark:text-emerald-300 text-[13px]">
                           $ {suc.facturacion.toLocaleString("es-AR")}
                         </span>
                       </div>
@@ -365,7 +365,7 @@ export default async function DashboardIntegralPage({
           )}
 
           {/* ================= GRÁFICOS INTERACTIVOS ================= */}
-          <div className="bg-white border border-slate-200 rounded-2xl p-6 shadow-sm">
+          <div className="bg-white dark:bg-[#001c55] border border-slate-200 dark:border-[#0a2a6b] rounded-2xl p-6 shadow-sm">
             <VentasChart
               data={chartData}
               vendedores={Array.from(vendedoresUnicos)}
@@ -374,55 +374,55 @@ export default async function DashboardIntegralPage({
 
           {/* ================= FILA 3: VENTAS, OBJETIVOS Y LEADS ================= */}
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-            
+
             <div className="lg:col-span-2 space-y-6">
-              
+
               {/* Panel Objetivo de Ventas */}
-              <div className="bg-white border border-slate-200 p-6 rounded-2xl shadow-sm relative">
+              <div className="bg-white dark:bg-[#001c55] border border-slate-200 dark:border-[#0a2a6b] p-6 rounded-2xl shadow-sm relative">
                 <div className="flex justify-between items-center mb-6">
                   <div className="flex items-center gap-3">
-                    <div className="p-2.5 bg-indigo-50 border border-indigo-100 rounded-xl">
-                      <Target className="w-5 h-5 text-indigo-600" />
+                    <div className="p-2.5 bg-indigo-50 dark:bg-[#002a6e] border border-indigo-100 dark:border-[#0a2a6b] rounded-xl">
+                      <Target className="w-5 h-5 text-indigo-600 dark:text-sky-300" />
                     </div>
                     <div>
-                      <h3 className="text-[13px] font-bold uppercase tracking-widest text-slate-800">
+                      <h3 className="text-[13px] font-bold uppercase tracking-widest text-slate-800 dark:text-white">
                         Progreso del Mes
                       </h3>
-                      <p className="text-[11px] text-slate-500 font-medium">
+                      <p className="text-[11px] text-slate-500 dark:text-slate-400 font-medium">
                         Objetivo comercial: {OBJETIVO_MENSUAL_AUTOS} unidades
                       </p>
                     </div>
                   </div>
                   <div className="text-right">
-                    <span className="text-3xl font-black text-slate-900">
+                    <span className="text-3xl font-black text-slate-900 dark:text-white">
                       {autosVendidosMes}
                     </span>
-                    <span className="text-xs text-slate-400 font-bold">
+                    <span className="text-xs text-slate-400 dark:text-slate-500 font-bold">
                       {" "} / {OBJETIVO_MENSUAL_AUTOS}
                     </span>
                   </div>
                 </div>
 
-                <div className="w-full bg-slate-100 rounded-full h-3 mb-3 overflow-hidden border border-slate-200">
+                <div className="w-full bg-slate-100 dark:bg-[#00246b] rounded-full h-3 mb-3 overflow-hidden border border-slate-200 dark:border-[#0a2a6b]">
                   <div
                     className={`h-3 transition-all duration-1000 ${progresoObjetivo >= 100 ? "bg-emerald-500" : "bg-indigo-600"}`}
                     style={{ width: `${progresoObjetivo}%` }}
                   ></div>
                 </div>
 
-                <div className="flex justify-between items-center text-xs font-bold mt-4 pt-4 border-t border-slate-100">
-                  <div className="flex items-center gap-2 text-slate-600">
-                    <DollarSign className="w-4 h-4 text-emerald-600" />
+                <div className="flex justify-between items-center text-xs font-bold mt-4 pt-4 border-t border-slate-100 dark:border-[#0a2a6b]">
+                  <div className="flex items-center gap-2 text-slate-600 dark:text-slate-300">
+                    <DollarSign className="w-4 h-4 text-emerald-600 dark:text-emerald-300" />
                     Facturación mensual:{" "}
-                    <span className="text-slate-900 font-mono">
+                    <span className="text-slate-900 dark:text-white font-mono">
                       $ {ingresosDelMesArs.toLocaleString("es-AR")}
                     </span>
                   </div>
                   <span
                     className={
                       progresoObjetivo >= 100
-                        ? "text-emerald-600 font-bold"
-                        : "text-indigo-600 font-bold"
+                        ? "text-emerald-600 dark:text-emerald-300 font-bold"
+                        : "text-indigo-600 dark:text-sky-300 font-bold"
                     }
                   >
                     {progresoObjetivo.toFixed(0)}% Alcanzado
@@ -431,9 +431,9 @@ export default async function DashboardIntegralPage({
               </div>
 
               {/* Panel Ranking Vendedores */}
-              <div className="bg-white border border-slate-200 rounded-2xl shadow-sm overflow-hidden">
-                <div className="px-6 py-4 border-b border-slate-100 flex justify-between items-center bg-white">
-                  <h3 className="text-[11px] font-bold uppercase tracking-widest text-slate-500 flex items-center gap-2">
+              <div className="bg-white dark:bg-[#001c55] border border-slate-200 dark:border-[#0a2a6b] rounded-2xl shadow-sm overflow-hidden">
+                <div className="px-6 py-4 border-b border-slate-100 dark:border-[#0a2a6b] flex justify-between items-center bg-white dark:bg-[#001c55]">
+                  <h3 className="text-[11px] font-bold uppercase tracking-widest text-slate-500 dark:text-slate-400 flex items-center gap-2">
                     <Trophy className="w-4 h-4 text-amber-500" /> Ranking de Vendedores
                   </h3>
                 </div>
@@ -441,37 +441,37 @@ export default async function DashboardIntegralPage({
                   {rankingOrdenado.length > 0 ? (
                     <table className="w-full text-left border-collapse">
                       <thead>
-                        <tr className="bg-slate-50 text-slate-400 text-[10px] uppercase tracking-widest font-bold border-b border-slate-100">
+                        <tr className="bg-slate-50 dark:bg-[#00246b] text-slate-400 dark:text-slate-500 text-[10px] uppercase tracking-widest font-bold border-b border-slate-100 dark:border-[#0a2a6b]">
                           <th className="px-6 py-3">Vendedor</th>
                           <th className="px-6 py-3 text-center">Unidades</th>
                           <th className="px-6 py-3 text-right">Facturación</th>
                           <th className="px-6 py-3 text-right">Comisión</th>
                         </tr>
                       </thead>
-                      <tbody className="divide-y divide-slate-100">
+                      <tbody className="divide-y divide-slate-100 dark:divide-[#0a2a6b]">
                         {rankingOrdenado.map((vendedor, index) => (
-                          <tr key={index} className="hover:bg-slate-50/50 transition-colors">
+                          <tr key={index} className="hover:bg-slate-50/50 dark:hover:bg-[#00246b] transition-colors">
                             <td className="px-6 py-3.5 flex items-center gap-3">
                               <div
                                 className={`w-6 h-6 rounded-full flex items-center justify-center text-[10px] font-black ${
-                                  index === 0 ? "bg-amber-100 text-amber-700 border border-amber-200" : 
-                                  index === 1 ? "bg-slate-100 text-slate-700 border border-slate-200" : 
-                                  "bg-orange-100 text-orange-700 border border-orange-200"
+                                  index === 0 ? "bg-amber-100 dark:bg-amber-900/50 text-amber-700 dark:text-amber-300 border border-amber-200 dark:border-amber-800" :
+                                  index === 1 ? "bg-slate-100 dark:bg-[#00246b] text-slate-700 dark:text-slate-200 border border-slate-200 dark:border-[#0a2a6b]" :
+                                  "bg-orange-100 dark:bg-orange-900/50 text-orange-700 dark:text-orange-300 border border-orange-200 dark:border-orange-800"
                                 }`}
                               >
                                 {index + 1}
                               </div>
-                              <span className="font-bold text-[13px] text-slate-800">
+                              <span className="font-bold text-[13px] text-slate-800 dark:text-white">
                                 {vendedor.nombre}
                               </span>
                             </td>
-                            <td className="px-6 py-3.5 text-center text-slate-900 font-black">
+                            <td className="px-6 py-3.5 text-center text-slate-900 dark:text-white font-black">
                               {vendedor.cantidad}
                             </td>
-                            <td className="px-6 py-3.5 text-right font-mono text-xs text-slate-600 font-semibold">
+                            <td className="px-6 py-3.5 text-right font-mono text-xs text-slate-600 dark:text-slate-300 font-semibold">
                               $ {vendedor.facturacion.toLocaleString("es-AR")}
                             </td>
-                            <td className="px-6 py-3.5 text-right font-mono text-xs text-emerald-700 font-bold">
+                            <td className="px-6 py-3.5 text-right font-mono text-xs text-emerald-700 dark:text-emerald-300 font-bold">
                               $ {vendedor.comision.toLocaleString("es-AR")}
                             </td>
                           </tr>
@@ -479,7 +479,7 @@ export default async function DashboardIntegralPage({
                       </tbody>
                     </table>
                   ) : (
-                    <div className="p-8 text-center text-slate-400 text-sm italic">
+                    <div className="p-8 text-center text-slate-400 dark:text-slate-500 text-sm italic">
                       Aún no hay ventas registradas este mes.
                     </div>
                   )}
@@ -489,10 +489,10 @@ export default async function DashboardIntegralPage({
             </div>
 
             {/* COLUMNA 3: Últimos Leads */}
-            <div className="bg-white border border-slate-200 rounded-2xl shadow-sm flex flex-col h-full">
-              <div className="px-6 py-4 border-b border-slate-100 flex justify-between items-center bg-white">
-                <h3 className="text-[11px] font-bold uppercase tracking-widest text-slate-500 flex items-center gap-2">
-                  <Users className="w-4 h-4 text-indigo-600" /> Últimos Leads (Web)
+            <div className="bg-white dark:bg-[#001c55] border border-slate-200 dark:border-[#0a2a6b] rounded-2xl shadow-sm flex flex-col h-full">
+              <div className="px-6 py-4 border-b border-slate-100 dark:border-[#0a2a6b] flex justify-between items-center bg-white dark:bg-[#001c55]">
+                <h3 className="text-[11px] font-bold uppercase tracking-widest text-slate-500 dark:text-slate-400 flex items-center gap-2">
+                  <Users className="w-4 h-4 text-indigo-600 dark:text-sky-300" /> Últimos Leads (Web)
                 </h3>
               </div>
 
@@ -501,41 +501,41 @@ export default async function DashboardIntegralPage({
                   ultimosLeads.map((lead) => (
                     <div
                       key={lead.id}
-                      className="bg-slate-50 border border-slate-200 p-3.5 rounded-xl hover:border-indigo-300 transition-colors"
+                      className="bg-slate-50 dark:bg-[#00246b] border border-slate-200 dark:border-[#0a2a6b] p-3.5 rounded-xl hover:border-indigo-300 dark:hover:border-sky-700 transition-colors"
                     >
                       <div className="flex justify-between items-start mb-1">
-                        <span className="text-[10px] uppercase font-bold tracking-widest text-slate-400">
+                        <span className="text-[10px] uppercase font-bold tracking-widest text-slate-400 dark:text-slate-500">
                           {new Date(lead.created_at).toLocaleDateString("es-AR")}
                         </span>
                         <span
                           className={`text-[9px] font-bold uppercase tracking-widest px-2 py-0.5 rounded border ${
-                            lead.tipo_peritaje === "consignacion" ? 
-                            "bg-emerald-50 text-emerald-700 border-emerald-200" : 
-                            "bg-indigo-50 text-indigo-700 border-indigo-200"
+                            lead.tipo_peritaje === "consignacion" ?
+                            "bg-emerald-50 dark:bg-[#002a6e] text-emerald-700 dark:text-emerald-300 border-emerald-200 dark:border-[#0a2a6b]" :
+                            "bg-indigo-50 dark:bg-[#002a6e] text-indigo-700 dark:text-sky-300 border-indigo-200 dark:border-[#0a2a6b]"
                           }`}
                         >
                           {lead.tipo_peritaje === "online" ? "cotización" : lead.tipo_peritaje}
                         </span>
                       </div>
-                      <p className="font-bold text-[13px] text-slate-900 mb-0.5 truncate">
+                      <p className="font-bold text-[13px] text-slate-900 dark:text-white mb-0.5 truncate">
                         {lead.nombre}
                       </p>
-                      <p className="text-xs text-indigo-600 font-medium truncate">
+                      <p className="text-xs text-indigo-600 dark:text-sky-300 font-medium truncate">
                         {lead.marca} {lead.modelo}
                       </p>
                     </div>
                   ))
                 ) : (
-                  <div className="flex-1 flex items-center justify-center text-slate-400 text-sm p-6 text-center italic">
+                  <div className="flex-1 flex items-center justify-center text-slate-400 dark:text-slate-500 text-sm p-6 text-center italic">
                     No hay solicitudes recientes.
                   </div>
                 )}
               </div>
 
-              <div className="p-4 border-t border-slate-100">
+              <div className="p-4 border-t border-slate-100 dark:border-[#0a2a6b]">
                 <Link
                   href="/panel/crm"
-                  className="w-full flex items-center justify-center gap-2 text-xs font-bold uppercase tracking-widest bg-slate-50 hover:bg-slate-100 text-slate-700 py-3 rounded-xl transition-colors border border-slate-200"
+                  className="w-full flex items-center justify-center gap-2 text-xs font-bold uppercase tracking-widest bg-slate-50 dark:bg-[#00246b] hover:bg-slate-100 dark:hover:bg-[#002a6e] text-slate-700 dark:text-slate-200 py-3 rounded-xl transition-colors border border-slate-200 dark:border-[#0a2a6b]"
                 >
                   Ver todos los leads <ArrowRight className="w-3.5 h-3.5" />
                 </Link>

@@ -16,7 +16,7 @@ export default async function PedidosPage() {
     .order("created_at", { ascending: false });
 
   return (
-    <div className="flex flex-col h-full w-full bg-white overflow-hidden">
+    <div className="flex flex-col h-full w-full bg-white dark:bg-[#001233] overflow-hidden">
       <PedidosClient pedidosIniciales={pedidos || []} />
     </div>
   );

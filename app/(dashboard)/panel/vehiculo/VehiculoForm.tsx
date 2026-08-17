@@ -341,31 +341,31 @@ export default function VehiculoForm({ modo, autoId }: VehiculoFormProps) {
 
   if (loadingDatos)
     return (
-      <div className="flex-1 bg-[#F9FAFB] flex items-center justify-center text-slate-400">
+      <div className="flex-1 bg-[#F9FAFB] dark:bg-[#001233] flex items-center justify-center text-slate-400 dark:text-slate-500">
         <Car className="w-8 h-8 text-indigo-500 animate-pulse" />
       </div>
     );
 
-  const inputClass = "w-full bg-slate-50 border border-slate-200 p-3 rounded-xl text-sm outline-none focus:border-indigo-500 focus:bg-white text-slate-900 transition-colors placeholder:text-slate-400";
+  const inputClass = "w-full bg-slate-50 dark:bg-[#00246b] border border-slate-200 dark:border-[#0a2a6b] p-3 rounded-xl text-sm outline-none focus:border-indigo-500 focus:bg-white dark:focus:bg-[#002a6e] text-slate-900 dark:text-white transition-colors placeholder:text-slate-400 dark:placeholder:text-slate-500";
 
   return (
-    <div className="w-full h-full overflow-y-auto bg-[#F9FAFB] text-slate-900 custom-scrollbar pb-20">
+    <div className="w-full h-full overflow-y-auto bg-[#F9FAFB] dark:bg-[#001233] text-slate-900 dark:text-white custom-scrollbar pb-20">
       <div className="max-w-3xl mx-auto px-6 py-10">
-        
+
         <button
-          type="button" 
+          type="button"
           onClick={() => router.back()}
-          className="text-slate-500 hover:text-indigo-600 flex items-center gap-2 text-sm transition-colors py-2 mb-4 font-medium"
+          className="text-slate-500 dark:text-slate-400 hover:text-indigo-600 dark:hover:text-sky-300 flex items-center gap-2 text-sm transition-colors py-2 mb-4 font-medium"
         >
           <ArrowLeft className="w-4 h-4" /> Volver al inventario
         </button>
 
         {esEdicionVendedor ? (
           <div className="mb-8 w-full">
-            <h1 className="text-2xl md:text-3xl font-bold text-slate-900">
+            <h1 className="text-2xl md:text-3xl font-bold text-slate-900 dark:text-white">
               Galería del Vehículo
             </h1>
-            <p className="text-slate-500 text-xs md:text-sm mt-1">
+            <p className="text-slate-500 dark:text-slate-400 text-xs md:text-sm mt-1">
               Solo tenés permisos para gestionar el material visual de esta unidad.
             </p>
           </div>
@@ -373,18 +373,18 @@ export default function VehiculoForm({ modo, autoId }: VehiculoFormProps) {
           <>
             <div className="flex justify-between items-end mb-3">
               <div>
-                <h1 className="text-2xl md:text-3xl font-bold text-slate-900">
+                <h1 className="text-2xl md:text-3xl font-bold text-slate-900 dark:text-white">
                   {modo === "crear" ? "Registrar Vehículo" : "Editar Vehículo"}
                 </h1>
-                <p className="text-slate-500 text-xs md:text-sm mt-1">
+                <p className="text-slate-500 dark:text-slate-400 text-xs md:text-sm mt-1">
                   Paso {paso} de {totalPasos}
                 </p>
               </div>
-              <span className="text-xs font-bold text-indigo-600 bg-indigo-50 px-3 py-1 rounded-md border border-indigo-100">
+              <span className="text-xs font-bold text-indigo-600 dark:text-sky-300 bg-indigo-50 dark:bg-[#002a6e] px-3 py-1 rounded-md border border-indigo-100 dark:border-[#0a2a6b]">
                 {Math.round((paso / totalPasos) * 100)}%
               </span>
             </div>
-            <div className="w-full bg-slate-200 h-1.5 rounded-full mb-8 overflow-hidden">
+            <div className="w-full bg-slate-200 dark:bg-[#00246b] h-1.5 rounded-full mb-8 overflow-hidden">
               <div
                 className="bg-indigo-600 h-full transition-all duration-300"
                 style={{ width: `${(paso / totalPasos) * 100}%` }}
@@ -497,8 +497,8 @@ export default function VehiculoForm({ modo, autoId }: VehiculoFormProps) {
                   </Campo>
                 )}
               </div>
-              <div className="flex flex-col gap-4 pt-6 border-t border-slate-100 mt-6">
-                <label className="flex items-center gap-3 text-sm text-slate-700 cursor-pointer bg-slate-50 border border-slate-200 p-4 rounded-xl hover:bg-white w-fit transition-colors font-medium">
+              <div className="flex flex-col gap-4 pt-6 border-t border-slate-100 dark:border-[#0a2a6b] mt-6">
+                <label className="flex items-center gap-3 text-sm text-slate-700 dark:text-slate-200 cursor-pointer bg-slate-50 dark:bg-[#00246b] border border-slate-200 dark:border-[#0a2a6b] p-4 rounded-xl hover:bg-white dark:hover:bg-[#002a6e] w-fit transition-colors font-medium">
                   <input type="checkbox" {...register("stock_fisico")} className="w-4 h-4 accent-indigo-600" /> En stock físico
                 </label>
                 {!watch("stock_fisico") && modo === "crear" && (
@@ -511,10 +511,10 @@ export default function VehiculoForm({ modo, autoId }: VehiculoFormProps) {
                     </Campo>
                   </div>
                 )}
-                <label className="flex items-center gap-3 text-sm text-slate-700 cursor-pointer bg-slate-50 border border-slate-200 p-4 rounded-xl hover:bg-white w-fit transition-colors font-medium">
+                <label className="flex items-center gap-3 text-sm text-slate-700 dark:text-slate-200 cursor-pointer bg-slate-50 dark:bg-[#00246b] border border-slate-200 dark:border-[#0a2a6b] p-4 rounded-xl hover:bg-white dark:hover:bg-[#002a6e] w-fit transition-colors font-medium">
                   <input type="checkbox" {...register("destacado")} className="w-4 h-4 accent-indigo-600" /> Destacado en Web
                 </label>
-                <label className="flex items-center gap-3 text-sm text-slate-700 cursor-pointer bg-orange-50 border border-orange-200 p-4 rounded-xl hover:bg-orange-100/50 w-fit transition-colors font-medium">
+                <label className="flex items-center gap-3 text-sm text-slate-700 dark:text-slate-200 cursor-pointer bg-orange-50 dark:bg-[#002a6e] border border-orange-200 dark:border-[#0a2a6b] p-4 rounded-xl hover:bg-orange-100/50 dark:hover:bg-[#00246b] w-fit transition-colors font-medium">
                   <input type="checkbox" {...register("pautado")} className="w-4 h-4 accent-orange-600" /> Pautado
                 </label>
                 {watch("pautado") && (
@@ -527,7 +527,7 @@ export default function VehiculoForm({ modo, autoId }: VehiculoFormProps) {
                           { id: "Google Ads", label: "Google Ads" },
                           { id: "Web", label: "Web" },
                         ].map((canal) => (
-                          <label key={canal.id} className="flex items-center gap-3 text-sm text-slate-700 cursor-pointer font-medium hover:text-orange-600 transition-colors w-fit">
+                          <label key={canal.id} className="flex items-center gap-3 text-sm text-slate-700 dark:text-slate-200 cursor-pointer font-medium hover:text-orange-600 dark:hover:text-orange-300 transition-colors w-fit">
                             <input
                               type="checkbox"
                               value={canal.id}
@@ -617,7 +617,7 @@ export default function VehiculoForm({ modo, autoId }: VehiculoFormProps) {
                 <Campo label="Importe Anual de Patente">
                   <input type="number" {...register("importe_patente_anual")} className={inputClass} />
                   {!!watch("importe_patente_anual") && (
-                    <span className="text-[11px] text-slate-400 mt-1 block">
+                    <span className="text-[11px] text-slate-400 dark:text-slate-500 mt-1 block">
                       ≈ $ {(Number(watch("importe_patente_anual")) / 12).toLocaleString("es-AR", { maximumFractionDigits: 0 })} / mes
                     </span>
                   )}
@@ -629,7 +629,7 @@ export default function VehiculoForm({ modo, autoId }: VehiculoFormProps) {
           {/* PASO 6 */}
           {!esEdicionVendedor && paso === 6 && (
             <SectionCard title="6. Proveedor y Titulares" icon={<FileText className="w-4 h-4 text-indigo-600" />}>
-              <h3 className="text-[11px] font-bold uppercase tracking-widest text-slate-400 mb-1">Datos del Proveedor</h3>
+              <h3 className="text-[11px] font-bold uppercase tracking-widest text-slate-400 dark:text-slate-500 mb-1">Datos del Proveedor</h3>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
                 <Campo label="Nombre"><input {...register("prov_nombre")} className={inputClass} /></Campo>
                 <Campo label="Apellido"><input {...register("prov_apellido")} className={inputClass} /></Campo>
@@ -647,14 +647,14 @@ export default function VehiculoForm({ modo, autoId }: VehiculoFormProps) {
                 <Campo label="Correo Electrónico"><input type="email" {...register("prov_email")} className={inputClass} /></Campo>
               </div>
 
-              <div className="pt-6 border-t border-slate-100 mt-6">
+              <div className="pt-6 border-t border-slate-100 dark:border-[#0a2a6b] mt-6">
                 <div className="flex items-center justify-between mb-3">
-                  <h3 className="text-[11px] font-bold uppercase tracking-widest text-slate-400">Titulares</h3>
+                  <h3 className="text-[11px] font-bold uppercase tracking-widest text-slate-400 dark:text-slate-500">Titulares</h3>
                   {titulares.length < 4 && (
                     <button
                       type="button"
                       onClick={() => setTitulares((prev) => [...prev, { nombre: "", porcentaje: "", cuit_cuil: "" }])}
-                      className="text-[11px] font-bold text-indigo-600 hover:text-indigo-700"
+                      className="text-[11px] font-bold text-indigo-600 dark:text-sky-300 hover:text-indigo-700 dark:hover:text-sky-200"
                     >
                       + Agregar titular
                     </button>
@@ -662,7 +662,7 @@ export default function VehiculoForm({ modo, autoId }: VehiculoFormProps) {
                 </div>
                 <div className="space-y-3">
                   {titulares.map((t, i) => (
-                    <div key={i} className="grid grid-cols-1 md:grid-cols-[2fr_1fr_1fr_auto] gap-3 items-end bg-slate-50 border border-slate-200 rounded-xl p-3">
+                    <div key={i} className="grid grid-cols-1 md:grid-cols-[2fr_1fr_1fr_auto] gap-3 items-end bg-slate-50 dark:bg-[#00246b] border border-slate-200 dark:border-[#0a2a6b] rounded-xl p-3">
                       <Campo label={`Titular #${i + 1}`}>
                         <input
                           value={t.nombre}
@@ -695,7 +695,7 @@ export default function VehiculoForm({ modo, autoId }: VehiculoFormProps) {
                     </div>
                   ))}
                   {titulares.length === 0 && (
-                    <p className="text-[12px] text-slate-400 italic">Sin titulares cargados.</p>
+                    <p className="text-[12px] text-slate-400 dark:text-slate-500 italic">Sin titulares cargados.</p>
                   )}
                 </div>
               </div>
@@ -708,23 +708,23 @@ export default function VehiculoForm({ modo, autoId }: VehiculoFormProps) {
               <div className="space-y-4">
                 {!esEdicionVendedor && (
                   <div>
-                    <label className="text-[11px] font-bold uppercase tracking-widest text-slate-500 block mb-1.5">Notas Internas</label>
+                    <label className="text-[11px] font-bold uppercase tracking-widest text-slate-500 dark:text-slate-400 block mb-1.5">Notas Internas</label>
                     <textarea {...register("observaciones_internas")} className={`${inputClass} h-24 resize-none`} />
                   </div>
                 )}
-                
+
                 <input type="file" accept="image/*,video/*" multiple ref={fileInputRef} onChange={handleSeleccionarArchivos} className="hidden" />
-                
+
                 <button
                   type="button"
                   onClick={abrirBuscadorArchivos}
-                  className={`w-full border-2 border-dashed rounded-xl p-8 flex flex-col items-center justify-center cursor-pointer transition-all duration-200 hover:bg-slate-50 hover:border-indigo-400 outline-none ${errorArchivos ? "border-red-400 bg-red-50" : "border-slate-300 bg-white"}`}
+                  className={`w-full border-2 border-dashed rounded-xl p-8 flex flex-col items-center justify-center cursor-pointer transition-all duration-200 hover:bg-slate-50 dark:hover:bg-[#00246b] hover:border-indigo-400 outline-none ${errorArchivos ? "border-red-400 bg-red-50 dark:bg-red-950/40" : "border-slate-300 dark:border-[#0a2a6b] bg-white dark:bg-[#001c55]"}`}
                 >
                   <Upload className="w-10 h-10 text-indigo-500 mb-3" />
-                  <span className="block text-base font-bold text-slate-700">Clickeá aquí para subir fotografías</span>
-                  <span className="block text-sm text-slate-400 mt-2">Podés seleccionar una o varias imágenes o videos.</span>
+                  <span className="block text-base font-bold text-slate-700 dark:text-slate-200">Clickeá aquí para subir fotografías</span>
+                  <span className="block text-sm text-slate-400 dark:text-slate-500 mt-2">Podés seleccionar una o varias imágenes o videos.</span>
                 </button>
-                
+
                 {errorArchivos && (
                   <span className="text-red-500 text-xs font-bold block text-center mt-2">{errorArchivos}</span>
                 )}
@@ -732,7 +732,7 @@ export default function VehiculoForm({ modo, autoId }: VehiculoFormProps) {
                 {/* Galería visual */}
                 <div className="grid grid-cols-2 md:grid-cols-4 gap-3 pt-2">
                   {imagenesExistentes.map((img) => (
-                    <div key={img.id} className="relative h-24 bg-slate-100 rounded-lg overflow-hidden border border-slate-200 group">
+                    <div key={img.id} className="relative h-24 bg-slate-100 dark:bg-[#00246b] rounded-lg overflow-hidden border border-slate-200 dark:border-[#0a2a6b] group">
                       {img.tipo === "video" ? (
                         <video src={img.url_archivo} className="w-full h-full object-cover" muted />
                       ) : (
@@ -744,7 +744,7 @@ export default function VehiculoForm({ modo, autoId }: VehiculoFormProps) {
                     </div>
                   ))}
                   {previsualizaciones.map((src, index) => (
-                    <div key={`nuevo-${index}`} className="relative h-24 bg-slate-100 rounded-lg overflow-hidden border-2 border-emerald-400 group">
+                    <div key={`nuevo-${index}`} className="relative h-24 bg-slate-100 dark:bg-[#00246b] rounded-lg overflow-hidden border-2 border-emerald-400 group">
                       {archivos[index]?.type.startsWith("video") ? (
                         <video src={src} className="w-full h-full object-cover" muted />
                       ) : (
@@ -768,7 +768,7 @@ export default function VehiculoForm({ modo, autoId }: VehiculoFormProps) {
                   <button
                     type="button"
                     onClick={() => setPaso((p) => p - 1)}
-                    className="w-1/3 bg-white border border-slate-200 hover:bg-slate-50 py-4 rounded-xl text-xs font-bold text-slate-600 transition-all flex items-center justify-center gap-2"
+                    className="w-1/3 bg-white dark:bg-[#001c55] border border-slate-200 dark:border-[#0a2a6b] hover:bg-slate-50 dark:hover:bg-[#00246b] py-4 rounded-xl text-xs font-bold text-slate-600 dark:text-slate-300 transition-all flex items-center justify-center gap-2"
                   >
                     <ChevronLeft className="w-4 h-4" /> Anterior
                   </button>
@@ -811,8 +811,8 @@ export default function VehiculoForm({ modo, autoId }: VehiculoFormProps) {
 
 function SectionCard({ title, icon, children }: { title: string; icon: React.ReactNode; children: React.ReactNode }) {
   return (
-    <div className="bg-white p-6 rounded-2xl border border-slate-200 space-y-5 shadow-sm">
-      <h2 className="text-[11px] font-bold uppercase tracking-widest text-slate-500 flex items-center gap-2 pb-3 border-b border-slate-100">
+    <div className="bg-white dark:bg-[#001c55] p-6 rounded-2xl border border-slate-200 dark:border-[#0a2a6b] space-y-5 shadow-sm">
+      <h2 className="text-[11px] font-bold uppercase tracking-widest text-slate-500 dark:text-slate-400 flex items-center gap-2 pb-3 border-b border-slate-100 dark:border-[#0a2a6b]">
         {icon} {title}
       </h2>
       {children}
@@ -823,9 +823,9 @@ function SectionCard({ title, icon, children }: { title: string; icon: React.Rea
 function Campo({ label, error, children }: { label: string; error?: string; children: React.ReactNode }) {
   return (
     <div>
-      <label className="text-[11px] font-bold text-slate-500 uppercase tracking-widest block mb-1.5">{label}</label>
+      <label className="text-[11px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-widest block mb-1.5">{label}</label>
       {children}
-      {error && <span className="text-rose-500 text-[11px] mt-1.5 block font-bold">{error}</span>}
+      {error && <span className="text-rose-500 dark:text-rose-300 text-[11px] mt-1.5 block font-bold">{error}</span>}
     </div>
   );
 }

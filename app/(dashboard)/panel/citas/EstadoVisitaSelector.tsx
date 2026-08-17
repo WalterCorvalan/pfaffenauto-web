@@ -51,10 +51,10 @@ export default function EstadoVisitaSelector({
         disabled={loading}
         className={`w-full text-white text-[11px] font-bold uppercase tracking-widest rounded-lg px-2.5 py-1.5 outline-none transition-transform hover:scale-105 appearance-none cursor-pointer pr-8 disabled:opacity-50 shadow-sm border ${COLOR[estadoActual] || "bg-slate-400 border-slate-400"}`}
       >
-        <option value="Pendiente" className="bg-white text-slate-900">Pendiente</option>
-        <option value="Confirmada" className="bg-white text-slate-900">Confirmada</option>
-        <option value="Asistió" className="bg-white text-slate-900">Asistió</option>
-        <option value="Cancelada" className="bg-white text-slate-900">Cancelada</option>
+        <option value="Pendiente" className="bg-white dark:bg-[#001c55] text-slate-900 dark:text-white">Pendiente</option>
+        <option value="Confirmada" className="bg-white dark:bg-[#001c55] text-slate-900 dark:text-white">Confirmada</option>
+        <option value="Asistió" className="bg-white dark:bg-[#001c55] text-slate-900 dark:text-white">Asistió</option>
+        <option value="Cancelada" className="bg-white dark:bg-[#001c55] text-slate-900 dark:text-white">Cancelada</option>
       </select>
       {loading && (
         <Loader2 className="w-3 h-3 text-white animate-spin absolute right-2 top-1/2 -translate-y-1/2 pointer-events-none" />

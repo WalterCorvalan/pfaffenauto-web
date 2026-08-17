@@ -12,17 +12,17 @@ import {
 
 const ESTADOS = ["Nuevo", "Contactado", "Interesado", "Cliente", "Perdido"];
 const ESTADO_COLOR: Record<string, string> = {
-  Nuevo: "bg-blue-50 text-blue-700 border-blue-200",
-  Contactado: "bg-amber-50 text-amber-700 border-amber-200",
-  Interesado: "bg-emerald-50 text-emerald-700 border-emerald-200",
-  Cliente: "bg-indigo-50 text-indigo-700 border-indigo-200",
-  Perdido: "bg-slate-100 text-slate-500 border-slate-200",
+  Nuevo: "bg-blue-50 dark:bg-[#002a6e] text-blue-700 dark:text-blue-300 border-blue-200 dark:border-[#0a2a6b]",
+  Contactado: "bg-amber-50 dark:bg-[#002a6e] text-amber-700 dark:text-amber-300 border-amber-200 dark:border-[#0a2a6b]",
+  Interesado: "bg-emerald-50 dark:bg-[#002a6e] text-emerald-700 dark:text-emerald-300 border-emerald-200 dark:border-[#0a2a6b]",
+  Cliente: "bg-indigo-50 dark:bg-[#002a6e] text-indigo-700 dark:text-sky-300 border-indigo-200 dark:border-[#0a2a6b]",
+  Perdido: "bg-slate-100 dark:bg-[#00246b] text-slate-500 dark:text-slate-400 border-slate-200 dark:border-[#0a2a6b]",
 };
 
 const TIPOS_TAREA = ["Llamar", "Enviar Email", "Enviar SMS", "Enviar WhatsApp", "Visitar al Cliente", "Cliente visita salón"];
 const ESTADOS_TEST_DRIVE = ["Programado", "Realizado", "Cancelado"];
 
-const inputClass = "w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2.5 text-sm outline-none focus:border-indigo-500 focus:bg-white transition-colors text-slate-900";
+const inputClass = "w-full bg-slate-50 dark:bg-[#00246b] border border-slate-200 dark:border-[#0a2a6b] rounded-xl px-3 py-2.5 text-sm outline-none focus:border-indigo-500 focus:bg-white dark:focus:bg-[#002a6e] transition-colors text-slate-900 dark:text-white";
 
 export default function LeadDetailClient({
   lead, vendedores, vehiculosStock, motivosCierre, tareasIniciales, testDrivesIniciales, eventos, usuarioActual,
@@ -268,18 +268,18 @@ export default function LeadDetailClient({
   }, [tareas]);
 
   return (
-    <div className="w-full h-full overflow-y-auto custom-scrollbar bg-[#F9FAFB] pb-20">
+    <div className="w-full h-full overflow-y-auto custom-scrollbar bg-[#F9FAFB] dark:bg-[#001233] pb-20">
       <div className="max-w-2xl lg:max-w-6xl mx-auto px-4 sm:px-6 py-8 space-y-5">
-        <Link href="/panel/crm" className="text-slate-400 hover:text-indigo-600 flex items-center gap-2 text-sm transition-colors font-medium">
+        <Link href="/panel/crm" className="text-slate-400 dark:text-slate-500 hover:text-indigo-600 dark:hover:text-sky-300 flex items-center gap-2 text-sm transition-colors font-medium">
           <ArrowLeft className="w-4 h-4" /> Volver al pipeline
         </Link>
 
         {/* Header */}
-        <div className="bg-white border border-slate-200 rounded-2xl p-5 shadow-sm">
+        <div className="bg-white dark:bg-[#001c55] border border-slate-200 dark:border-[#0a2a6b] rounded-2xl p-5 shadow-sm">
           <div className="flex items-start justify-between gap-3 mb-3">
             <div>
-              <h1 className="text-xl font-bold text-slate-900">{lead.nombre}</h1>
-              <p className="text-[12px] text-slate-500 mt-0.5">{lead.tipo_peritaje === "online" ? "Cotización web" : lead.tipo_peritaje}</p>
+              <h1 className="text-xl font-bold text-slate-900 dark:text-white">{lead.nombre}</h1>
+              <p className="text-[12px] text-slate-500 dark:text-slate-400 mt-0.5">{lead.tipo_peritaje === "online" ? "Cotización web" : lead.tipo_peritaje}</p>
             </div>
             <select
               value={lead.estado || "Nuevo"}
@@ -290,14 +290,14 @@ export default function LeadDetailClient({
               {ESTADOS.map((e) => (<option key={e} value={e}>{e}</option>))}
             </select>
           </div>
-          <div className="flex items-center gap-4 text-[13px] text-slate-600">
-            <span className="flex items-center gap-1.5"><Phone className="w-3.5 h-3.5 text-slate-400" /> {lead.telefono || "Sin teléfono"}</span>
+          <div className="flex items-center gap-4 text-[13px] text-slate-600 dark:text-slate-300">
+            <span className="flex items-center gap-1.5"><Phone className="w-3.5 h-3.5 text-slate-400 dark:text-slate-500" /> {lead.telefono || "Sin teléfono"}</span>
             {linkWhatsApp && (
-              <a href={linkWhatsApp} target="_blank" rel="noopener noreferrer" className="text-emerald-600 font-bold text-[12px] hover:underline">WhatsApp</a>
+              <a href={linkWhatsApp} target="_blank" rel="noopener noreferrer" className="text-emerald-600 dark:text-emerald-300 font-bold text-[12px] hover:underline">WhatsApp</a>
             )}
           </div>
           {lead.motivo_cierre_id && lead.estado === "Perdido" && (
-            <p className="text-[11px] text-rose-600 font-bold mt-2 bg-rose-50 border border-rose-200 rounded-lg px-2.5 py-1.5 w-fit">
+            <p className="text-[11px] text-rose-600 dark:text-rose-300 font-bold mt-2 bg-rose-50 dark:bg-[#002a6e] border border-rose-200 dark:border-[#0a2a6b] rounded-lg px-2.5 py-1.5 w-fit">
               Motivo: {motivos.find((m) => m.id === lead.motivo_cierre_id)?.nombre || lead.motivo_cierre_id}
             </p>
           )}
@@ -305,8 +305,8 @@ export default function LeadDetailClient({
 
         {/* Solo lectura si el lead es de otro vendedor */}
         {!puedeEditar && (
-          <div className="bg-slate-100 border border-slate-300 rounded-2xl p-3.5 text-center">
-            <p className="text-[12px] font-bold text-slate-600">
+          <div className="bg-slate-100 dark:bg-[#00246b] border border-slate-300 dark:border-[#0a2a6b] rounded-2xl p-3.5 text-center">
+            <p className="text-[12px] font-bold text-slate-600 dark:text-slate-300">
               Este lead está asignado a {lead.perfiles?.nombre || "otro vendedor"} — solo podés verlo, no editarlo.
             </p>
           </div>
@@ -314,7 +314,7 @@ export default function LeadDetailClient({
 
         {/* Banner de asistencia */}
         {lead.asistencia_solicitada && !lead.asistencia_atendida && (
-          <div className="bg-orange-500 border-2 border-orange-600 rounded-2xl p-4 flex items-start justify-between gap-3 shadow-md shadow-orange-200">
+          <div className="bg-orange-500 border-2 border-orange-600 rounded-2xl p-4 flex items-start justify-between gap-3 shadow-md shadow-orange-200 dark:shadow-none">
             <div className="flex items-start gap-3">
               <LifeBuoy className="w-6 h-6 text-white mt-0.5 shrink-0 animate-pulse" />
               <div>
@@ -332,15 +332,15 @@ export default function LeadDetailClient({
         {(!lead.asistencia_solicitada || lead.asistencia_atendida) && (
           <button
             onClick={() => setShowAsistenciaModal(true)}
-            className="flex items-center justify-center gap-2 w-full bg-white border border-slate-200 hover:bg-slate-50 text-slate-600 font-bold py-2 rounded-xl text-[11px] uppercase tracking-widest transition-colors"
+            className="flex items-center justify-center gap-2 w-full bg-white dark:bg-[#001c55] border border-slate-200 dark:border-[#0a2a6b] hover:bg-slate-50 dark:hover:bg-[#00246b] text-slate-600 dark:text-slate-300 font-bold py-2 rounded-xl text-[11px] uppercase tracking-widest transition-colors"
           >
             <LifeBuoy className="w-3.5 h-3.5" /> Pedir asistencia
           </button>
         )}
 
         {/* Vendedor (mobile) — en desktop se repite en el sidebar, acá se oculta */}
-        <div className="lg:hidden bg-white border border-slate-200 rounded-2xl p-5 shadow-sm">
-          <h2 className="text-[11px] font-bold uppercase tracking-widest text-slate-500 mb-3 flex items-center gap-2">
+        <div className="lg:hidden bg-white dark:bg-[#001c55] border border-slate-200 dark:border-[#0a2a6b] rounded-2xl p-5 shadow-sm">
+          <h2 className="text-[11px] font-bold uppercase tracking-widest text-slate-500 dark:text-slate-400 mb-3 flex items-center gap-2">
             <User className="w-3.5 h-3.5" /> Vendedor asignado
           </h2>
           <select
@@ -357,12 +357,12 @@ export default function LeadDetailClient({
         <div className="lg:grid lg:grid-cols-3 lg:gap-5 lg:items-start space-y-5 lg:space-y-0">
         <div className="lg:col-span-2 space-y-5">
         {/* Vehículo vinculado */}
-        <div className="bg-white border border-slate-200 rounded-2xl p-5 shadow-sm">
-          <h2 className="text-[11px] font-bold uppercase tracking-widest text-slate-500 mb-3 flex items-center gap-2">
+        <div className="bg-white dark:bg-[#001c55] border border-slate-200 dark:border-[#0a2a6b] rounded-2xl p-5 shadow-sm">
+          <h2 className="text-[11px] font-bold uppercase tracking-widest text-slate-500 dark:text-slate-400 mb-3 flex items-center gap-2">
             <CarFront className="w-3.5 h-3.5" /> Vehículo de interés
           </h2>
           {(lead.marca || lead.modelo) && !lead.vehiculo_id && (
-            <p className="text-[12px] text-slate-500 mb-2">Consultó por: <strong className="text-slate-700">{lead.marca} {lead.modelo} {lead.anio ? `(${lead.anio})` : ""}</strong> — vinculalo a uno del stock:</p>
+            <p className="text-[12px] text-slate-500 dark:text-slate-400 mb-2">Consultó por: <strong className="text-slate-700 dark:text-slate-200">{lead.marca} {lead.modelo} {lead.anio ? `(${lead.anio})` : ""}</strong> — vinculalo a uno del stock:</p>
           )}
           <select
             defaultValue={lead.vehiculo_id || ""}
@@ -378,15 +378,15 @@ export default function LeadDetailClient({
         </div>
 
         {/* Prospecto */}
-        <div className="bg-white border border-slate-200 rounded-2xl p-5 shadow-sm space-y-4">
-          <h2 className="text-[11px] font-bold uppercase tracking-widest text-slate-500 flex items-center gap-2">
+        <div className="bg-white dark:bg-[#001c55] border border-slate-200 dark:border-[#0a2a6b] rounded-2xl p-5 shadow-sm space-y-4">
+          <h2 className="text-[11px] font-bold uppercase tracking-widest text-slate-500 dark:text-slate-400 flex items-center gap-2">
             <MapPin className="w-3.5 h-3.5" /> Prospecto
           </h2>
           <div>
             <div className="flex items-center justify-between mb-1">
-              <span className="text-[10px] font-bold uppercase tracking-widest text-slate-400">Domicilio</span>
+              <span className="text-[10px] font-bold uppercase tracking-widest text-slate-400 dark:text-slate-500">Domicilio</span>
               {!editandoDomicilio && puedeEditar && (
-                <button onClick={() => setEditandoDomicilio(true)} className="text-slate-400 hover:text-indigo-600"><Edit2 className="w-3 h-3" /></button>
+                <button onClick={() => setEditandoDomicilio(true)} className="text-slate-400 dark:text-slate-500 hover:text-indigo-600 dark:hover:text-sky-300"><Edit2 className="w-3 h-3" /></button>
               )}
             </div>
             {editandoDomicilio ? (
@@ -395,14 +395,14 @@ export default function LeadDetailClient({
                 <button onClick={guardarDomicilio} className="shrink-0 bg-indigo-600 hover:bg-indigo-700 text-white p-2.5 rounded-xl"><Check className="w-4 h-4" /></button>
               </div>
             ) : (
-              <p className="text-[13px] text-slate-700">{lead.domicilio || "Sin domicilio"}</p>
+              <p className="text-[13px] text-slate-700 dark:text-slate-200">{lead.domicilio || "Sin domicilio"}</p>
             )}
           </div>
           <div>
             <div className="flex items-center justify-between mb-1">
-              <span className="text-[10px] font-bold uppercase tracking-widest text-slate-400 flex items-center gap-1"><StickyNote className="w-3 h-3" /> Notas</span>
+              <span className="text-[10px] font-bold uppercase tracking-widest text-slate-400 dark:text-slate-500 flex items-center gap-1"><StickyNote className="w-3 h-3" /> Notas</span>
               {!editandoNotas && puedeEditar && (
-                <button onClick={() => setEditandoNotas(true)} className="text-slate-400 hover:text-indigo-600"><Edit2 className="w-3 h-3" /></button>
+                <button onClick={() => setEditandoNotas(true)} className="text-slate-400 dark:text-slate-500 hover:text-indigo-600 dark:hover:text-sky-300"><Edit2 className="w-3 h-3" /></button>
               )}
             </div>
             {editandoNotas ? (
@@ -411,14 +411,14 @@ export default function LeadDetailClient({
                 <button onClick={guardarNotas} className="w-full bg-indigo-600 hover:bg-indigo-700 text-white text-[11px] font-bold uppercase tracking-widest py-2 rounded-xl">Guardar</button>
               </div>
             ) : (
-              <p className="text-[13px] text-slate-700 whitespace-pre-wrap">{lead.notas || "Sin notas"}</p>
+              <p className="text-[13px] text-slate-700 dark:text-slate-200 whitespace-pre-wrap">{lead.notas || "Sin notas"}</p>
             )}
           </div>
         </div>
 
         {/* Canal de ingreso */}
-        <div className="bg-white border border-slate-200 rounded-2xl p-5 shadow-sm">
-          <h2 className="text-[11px] font-bold uppercase tracking-widest text-slate-500 mb-3 flex items-center gap-2">
+        <div className="bg-white dark:bg-[#001c55] border border-slate-200 dark:border-[#0a2a6b] rounded-2xl p-5 shadow-sm">
+          <h2 className="text-[11px] font-bold uppercase tracking-widest text-slate-500 dark:text-slate-400 mb-3 flex items-center gap-2">
             <Radio className="w-3.5 h-3.5" /> Canal de ingreso
           </h2>
           <div className="grid grid-cols-2 gap-y-2.5 gap-x-4 text-[12px]">
@@ -432,13 +432,13 @@ export default function LeadDetailClient({
         </div>
 
         {/* Tareas de seguimiento */}
-        <div className="bg-white border border-slate-200 rounded-2xl p-5 shadow-sm">
+        <div className="bg-white dark:bg-[#001c55] border border-slate-200 dark:border-[#0a2a6b] rounded-2xl p-5 shadow-sm">
           <div className="flex items-center justify-between mb-3">
-            <h2 className="text-[11px] font-bold uppercase tracking-widest text-slate-500 flex items-center gap-2">
+            <h2 className="text-[11px] font-bold uppercase tracking-widest text-slate-500 dark:text-slate-400 flex items-center gap-2">
               <Calendar className="w-3.5 h-3.5" /> Tareas de seguimiento
             </h2>
             {puedeEditar && (
-              <button onClick={() => setShowTareaModal(true)} className="flex items-center gap-1 text-[11px] font-bold text-indigo-600 hover:text-indigo-700">
+              <button onClick={() => setShowTareaModal(true)} className="flex items-center gap-1 text-[11px] font-bold text-indigo-600 dark:text-sky-300 hover:text-indigo-700 dark:hover:text-sky-200">
                 <Plus className="w-3.5 h-3.5" /> Nueva
               </button>
             )}
@@ -448,13 +448,13 @@ export default function LeadDetailClient({
           <TareasGrupo titulo="Hoy" icono={<Clock className="w-3.5 h-3.5 text-amber-500" />} tareas={hoy} onToggle={toggleCompletada} />
           <TareasGrupo titulo="Próximas" icono={<Calendar className="w-3.5 h-3.5 text-slate-400" />} tareas={proximas} onToggle={toggleCompletada} />
           {vencidas.length === 0 && hoy.length === 0 && proximas.length === 0 && (
-            <p className="text-[12px] text-slate-400 italic py-2">Sin tareas pendientes.</p>
+            <p className="text-[12px] text-slate-400 dark:text-slate-500 italic py-2">Sin tareas pendientes.</p>
           )}
         </div>
 
         {/* Presupuesto */}
-        <div className="bg-white border border-slate-200 rounded-2xl p-5 shadow-sm">
-          <h2 className="text-[11px] font-bold uppercase tracking-widest text-slate-500 mb-3 flex items-center gap-2">
+        <div className="bg-white dark:bg-[#001c55] border border-slate-200 dark:border-[#0a2a6b] rounded-2xl p-5 shadow-sm">
+          <h2 className="text-[11px] font-bold uppercase tracking-widest text-slate-500 dark:text-slate-400 mb-3 flex items-center gap-2">
             <FileText className="w-3.5 h-3.5" /> Presupuesto
           </h2>
           <Link
@@ -466,35 +466,35 @@ export default function LeadDetailClient({
         </div>
 
         {/* Test Drive */}
-        <div className="bg-white border border-slate-200 rounded-2xl p-5 shadow-sm">
+        <div className="bg-white dark:bg-[#001c55] border border-slate-200 dark:border-[#0a2a6b] rounded-2xl p-5 shadow-sm">
           <div className="flex items-center justify-between mb-3">
-            <h2 className="text-[11px] font-bold uppercase tracking-widest text-slate-500 flex items-center gap-2">
+            <h2 className="text-[11px] font-bold uppercase tracking-widest text-slate-500 dark:text-slate-400 flex items-center gap-2">
               <Car className="w-3.5 h-3.5" /> Test Drive
             </h2>
             {puedeEditar && (
-              <button onClick={() => setShowTestDriveModal(true)} className="flex items-center gap-1 text-[11px] font-bold text-indigo-600 hover:text-indigo-700">
+              <button onClick={() => setShowTestDriveModal(true)} className="flex items-center gap-1 text-[11px] font-bold text-indigo-600 dark:text-sky-300 hover:text-indigo-700 dark:hover:text-sky-200">
                 <Plus className="w-3.5 h-3.5" /> Agendar
               </button>
             )}
           </div>
           {testDrives.length === 0 ? (
-            <p className="text-[12px] text-slate-400 italic py-2">Sin test drives agendados.</p>
+            <p className="text-[12px] text-slate-400 dark:text-slate-500 italic py-2">Sin test drives agendados.</p>
           ) : (
             <div className="space-y-1.5">
               {testDrives.map((td: any) => {
                 const v = vehiculosStock.find((x) => x.id === td.vehiculo_id);
                 return (
-                  <div key={td.id} className="flex items-center justify-between gap-2 bg-slate-50 border border-slate-100 rounded-lg px-3 py-2.5">
+                  <div key={td.id} className="flex items-center justify-between gap-2 bg-slate-50 dark:bg-[#00246b] border border-slate-100 dark:border-[#0a2a6b] rounded-lg px-3 py-2.5">
                     <div className="min-w-0">
-                      <p className="text-[12px] font-bold text-slate-800">{v ? `${v.marca} ${v.modelo}` : "Sin auto"}</p>
-                      <span className="text-[10px] text-slate-400">
+                      <p className="text-[12px] font-bold text-slate-800 dark:text-white">{v ? `${v.marca} ${v.modelo}` : "Sin auto"}</p>
+                      <span className="text-[10px] text-slate-400 dark:text-slate-500">
                         {new Date(td.fecha_hora).toLocaleString("es-AR", { day: "2-digit", month: "short", hour: "2-digit", minute: "2-digit" })}
                       </span>
                     </div>
                     <select
                       value={td.estado}
                       onChange={(e) => cambiarEstadoTestDrive(td, e.target.value)}
-                      className="text-[10px] font-bold uppercase tracking-widest px-2 py-1 rounded border outline-none cursor-pointer bg-white border-slate-200 text-slate-600 shrink-0"
+                      className="text-[10px] font-bold uppercase tracking-widest px-2 py-1 rounded border outline-none cursor-pointer bg-white dark:bg-[#001c55] border-slate-200 dark:border-[#0a2a6b] text-slate-600 dark:text-slate-300 shrink-0"
                     >
                       {ESTADOS_TEST_DRIVE.map((e) => (<option key={e} value={e}>{e}</option>))}
                     </select>
@@ -509,8 +509,8 @@ export default function LeadDetailClient({
 
         <div className="lg:col-span-1 space-y-5">
         {/* Vendedor (desktop) */}
-        <div className="hidden lg:block bg-white border border-slate-200 rounded-2xl p-5 shadow-sm">
-          <h2 className="text-[11px] font-bold uppercase tracking-widest text-slate-500 mb-3 flex items-center gap-2">
+        <div className="hidden lg:block bg-white dark:bg-[#001c55] border border-slate-200 dark:border-[#0a2a6b] rounded-2xl p-5 shadow-sm">
+          <h2 className="text-[11px] font-bold uppercase tracking-widest text-slate-500 dark:text-slate-400 mb-3 flex items-center gap-2">
             <User className="w-3.5 h-3.5" /> Vendedor asignado
           </h2>
           <select
@@ -525,23 +525,23 @@ export default function LeadDetailClient({
         </div>
 
         {/* Eventos */}
-        <div className="bg-white border border-slate-200 rounded-2xl p-5 shadow-sm">
-          <h2 className="text-[11px] font-bold uppercase tracking-widest text-slate-500 mb-3 flex items-center gap-2">
+        <div className="bg-white dark:bg-[#001c55] border border-slate-200 dark:border-[#0a2a6b] rounded-2xl p-5 shadow-sm">
+          <h2 className="text-[11px] font-bold uppercase tracking-widest text-slate-500 dark:text-slate-400 mb-3 flex items-center gap-2">
             <History className="w-3.5 h-3.5" /> Eventos
           </h2>
           <div className="space-y-2.5">
             {eventos.map((ev: any) => (
-              <div key={ev.id} className="text-[12px] border-l-2 border-slate-200 pl-3">
-                <p className="text-slate-700 font-medium">{ev.descripcion}</p>
-                <span className="text-[10px] text-slate-400">
+              <div key={ev.id} className="text-[12px] border-l-2 border-slate-200 dark:border-[#0a2a6b] pl-3">
+                <p className="text-slate-700 dark:text-slate-200 font-medium">{ev.descripcion}</p>
+                <span className="text-[10px] text-slate-400 dark:text-slate-500">
                   {new Date(ev.created_at).toLocaleString("es-AR", { day: "2-digit", month: "short", hour: "2-digit", minute: "2-digit" })}
                   {ev.perfiles?.nombre ? ` · ${ev.perfiles.nombre}` : ""}
                 </span>
               </div>
             ))}
-            <div className="text-[12px] border-l-2 border-slate-200 pl-3">
-              <p className="text-slate-700 font-medium">Lead creado{lead.canal_origen ? ` — ${lead.canal_origen}` : ""}</p>
-              <span className="text-[10px] text-slate-400">
+            <div className="text-[12px] border-l-2 border-slate-200 dark:border-[#0a2a6b] pl-3">
+              <p className="text-slate-700 dark:text-slate-200 font-medium">Lead creado{lead.canal_origen ? ` — ${lead.canal_origen}` : ""}</p>
+              <span className="text-[10px] text-slate-400 dark:text-slate-500">
                 {new Date(lead.created_at).toLocaleString("es-AR", { day: "2-digit", month: "short", hour: "2-digit", minute: "2-digit" })}
               </span>
             </div>
@@ -552,7 +552,7 @@ export default function LeadDetailClient({
         {lead.estado !== "Perdido" && lead.estado !== "Cliente" && puedeEditar && (
           <button
             onClick={() => setShowCierreModal(true)}
-            className="flex items-center justify-center gap-2 w-full bg-white border border-rose-200 hover:bg-rose-50 text-rose-600 font-bold py-2.5 rounded-xl text-[12px] uppercase tracking-widest transition-colors"
+            className="flex items-center justify-center gap-2 w-full bg-white dark:bg-[#001c55] border border-rose-200 dark:border-rose-800 hover:bg-rose-50 dark:hover:bg-[#002a6e] text-rose-600 dark:text-rose-300 font-bold py-2.5 rounded-xl text-[12px] uppercase tracking-widest transition-colors"
           >
             <Ban className="w-4 h-4" /> Cerrar lead
           </button>
@@ -565,30 +565,30 @@ export default function LeadDetailClient({
       {showTareaModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
           <div className="absolute inset-0 bg-slate-900/40 backdrop-blur-sm" onClick={() => !guardandoTarea && setShowTareaModal(false)}></div>
-          <div className="relative bg-white border border-slate-200 w-full max-w-sm rounded-2xl shadow-2xl p-6">
-            <div className="flex justify-between items-center mb-5 border-b border-slate-100 pb-3">
-              <h3 className="text-lg font-bold text-slate-900">Nueva tarea</h3>
-              <button onClick={() => setShowTareaModal(false)} className="text-slate-400 hover:text-slate-700 bg-slate-50 hover:bg-slate-100 p-1.5 rounded-lg border border-slate-200">
+          <div className="relative bg-white dark:bg-[#001c55] border border-slate-200 dark:border-[#0a2a6b] w-full max-w-sm rounded-2xl shadow-2xl p-6">
+            <div className="flex justify-between items-center mb-5 border-b border-slate-100 dark:border-[#0a2a6b] pb-3">
+              <h3 className="text-lg font-bold text-slate-900 dark:text-white">Nueva tarea</h3>
+              <button onClick={() => setShowTareaModal(false)} className="text-slate-400 dark:text-slate-500 hover:text-slate-700 dark:hover:text-slate-200 bg-slate-50 dark:bg-[#00246b] hover:bg-slate-100 dark:hover:bg-[#002a6e] p-1.5 rounded-lg border border-slate-200 dark:border-[#0a2a6b]">
                 <X className="w-4 h-4" />
               </button>
             </div>
             <form onSubmit={crearTarea} className="space-y-4">
               <div>
-                <label className="text-[11px] font-bold text-slate-500 uppercase tracking-widest mb-1.5 block">Tipo</label>
+                <label className="text-[11px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-widest mb-1.5 block">Tipo</label>
                 <select value={tipoTarea} onChange={(e) => setTipoTarea(e.target.value)} className={inputClass}>
                   {TIPOS_TAREA.map((t) => (<option key={t} value={t}>{t}</option>))}
                 </select>
               </div>
               <div>
-                <label className="text-[11px] font-bold text-slate-500 uppercase tracking-widest mb-1.5 block">Fecha y hora *</label>
+                <label className="text-[11px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-widest mb-1.5 block">Fecha y hora *</label>
                 <input required type="datetime-local" value={fechaTarea} onChange={(e) => setFechaTarea(e.target.value)} className={inputClass} />
               </div>
               <div>
-                <label className="text-[11px] font-bold text-slate-500 uppercase tracking-widest mb-1.5 block">Título (opcional)</label>
+                <label className="text-[11px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-widest mb-1.5 block">Título (opcional)</label>
                 <input value={tituloTarea} onChange={(e) => setTituloTarea(e.target.value)} placeholder="Ej: Confirmar interés en el Corolla" className={inputClass} />
               </div>
               <div className="pt-2 flex gap-3">
-                <button type="button" onClick={() => setShowTareaModal(false)} className="flex-1 py-2.5 text-xs font-bold uppercase tracking-widest bg-white border border-slate-200 hover:bg-slate-50 text-slate-600 rounded-xl transition-colors">Cancelar</button>
+                <button type="button" onClick={() => setShowTareaModal(false)} className="flex-1 py-2.5 text-xs font-bold uppercase tracking-widest bg-white dark:bg-[#00246b] border border-slate-200 dark:border-[#0a2a6b] hover:bg-slate-50 dark:hover:bg-[#002a6e] text-slate-600 dark:text-slate-300 rounded-xl transition-colors">Cancelar</button>
                 <button type="submit" disabled={guardandoTarea} className="flex-1 py-2.5 text-xs font-bold uppercase tracking-widest bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl transition-colors shadow-sm disabled:opacity-50">
                   {guardandoTarea ? "Guardando..." : "Crear"}
                 </button>
@@ -602,10 +602,10 @@ export default function LeadDetailClient({
       {showCierreModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
           <div className="absolute inset-0 bg-slate-900/40 backdrop-blur-sm" onClick={() => !guardandoEstado && setShowCierreModal(false)}></div>
-          <div className="relative bg-white border border-slate-200 w-full max-w-sm rounded-2xl shadow-2xl p-6">
-            <div className="flex justify-between items-center mb-5 border-b border-slate-100 pb-3">
-              <h3 className="text-lg font-bold text-slate-900">Cerrar lead</h3>
-              <button onClick={() => setShowCierreModal(false)} className="text-slate-400 hover:text-slate-700 bg-slate-50 hover:bg-slate-100 p-1.5 rounded-lg border border-slate-200">
+          <div className="relative bg-white dark:bg-[#001c55] border border-slate-200 dark:border-[#0a2a6b] w-full max-w-sm rounded-2xl shadow-2xl p-6">
+            <div className="flex justify-between items-center mb-5 border-b border-slate-100 dark:border-[#0a2a6b] pb-3">
+              <h3 className="text-lg font-bold text-slate-900 dark:text-white">Cerrar lead</h3>
+              <button onClick={() => setShowCierreModal(false)} className="text-slate-400 dark:text-slate-500 hover:text-slate-700 dark:hover:text-slate-200 bg-slate-50 dark:bg-[#00246b] hover:bg-slate-100 dark:hover:bg-[#002a6e] p-1.5 rounded-lg border border-slate-200 dark:border-[#0a2a6b]">
                 <X className="w-4 h-4" />
               </button>
             </div>
@@ -616,8 +616,8 @@ export default function LeadDetailClient({
             >
               <Trophy className="w-4 h-4" /> Venta generada
             </button>
-            <div className="border-t border-slate-100 pt-4">
-              <label className="text-[11px] font-bold text-slate-500 uppercase tracking-widest mb-1.5 block">Desistido — Motivo *</label>
+            <div className="border-t border-slate-100 dark:border-[#0a2a6b] pt-4">
+              <label className="text-[11px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-widest mb-1.5 block">Desistido — Motivo *</label>
               <select value={motivoCierreId} onChange={(e) => setMotivoCierreId(e.target.value)} className={inputClass}>
                 <option value="">Seleccionar motivo...</option>
                 {motivos.map((m) => (<option key={m.id} value={m.id}>{m.nombre}</option>))}
@@ -627,13 +627,13 @@ export default function LeadDetailClient({
                   value={nuevoMotivoNombre}
                   onChange={(e) => setNuevoMotivoNombre(e.target.value)}
                   placeholder="+ Nuevo motivo..."
-                  className="flex-1 bg-slate-50 border border-slate-200 rounded-lg px-3 py-2 text-[12px] outline-none focus:border-indigo-500 focus:bg-white text-slate-900"
+                  className="flex-1 bg-slate-50 dark:bg-[#00246b] border border-slate-200 dark:border-[#0a2a6b] rounded-lg px-3 py-2 text-[12px] outline-none focus:border-indigo-500 focus:bg-white dark:focus:bg-[#002a6e] text-slate-900 dark:text-white"
                 />
                 <button
                   type="button"
                   onClick={crearMotivo}
                   disabled={creandoMotivo || !nuevoMotivoNombre.trim()}
-                  className="shrink-0 text-[11px] font-bold text-indigo-600 hover:text-indigo-700 bg-indigo-50 hover:bg-indigo-100 px-3 rounded-lg disabled:opacity-50"
+                  className="shrink-0 text-[11px] font-bold text-indigo-600 dark:text-sky-300 hover:text-indigo-700 dark:hover:text-sky-200 bg-indigo-50 dark:bg-[#002a6e] hover:bg-indigo-100 dark:hover:bg-[#00246b] px-3 rounded-lg disabled:opacity-50"
                 >
                   Agregar
                 </button>
@@ -641,7 +641,7 @@ export default function LeadDetailClient({
               <button
                 onClick={cerrarComoDesistido}
                 disabled={guardandoEstado}
-                className="w-full mt-3 flex items-center justify-center gap-2 bg-white border border-rose-200 hover:bg-rose-50 text-rose-600 font-bold py-2.5 rounded-xl text-[12px] uppercase tracking-widest disabled:opacity-50"
+                className="w-full mt-3 flex items-center justify-center gap-2 bg-white dark:bg-[#001c55] border border-rose-200 dark:border-rose-800 hover:bg-rose-50 dark:hover:bg-[#002a6e] text-rose-600 dark:text-rose-300 font-bold py-2.5 rounded-xl text-[12px] uppercase tracking-widest disabled:opacity-50"
               >
                 <Ban className="w-4 h-4" /> Desistir
               </button>
@@ -653,27 +653,27 @@ export default function LeadDetailClient({
       {showTestDriveModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
           <div className="absolute inset-0 bg-slate-900/40 backdrop-blur-sm" onClick={() => !guardandoTestDrive && setShowTestDriveModal(false)}></div>
-          <div className="relative bg-white border border-slate-200 w-full max-w-sm rounded-2xl shadow-2xl p-6">
-            <div className="flex justify-between items-center mb-5 border-b border-slate-100 pb-3">
-              <h3 className="text-lg font-bold text-slate-900">Agendar Test Drive</h3>
-              <button onClick={() => setShowTestDriveModal(false)} className="text-slate-400 hover:text-slate-700 bg-slate-50 hover:bg-slate-100 p-1.5 rounded-lg border border-slate-200">
+          <div className="relative bg-white dark:bg-[#001c55] border border-slate-200 dark:border-[#0a2a6b] w-full max-w-sm rounded-2xl shadow-2xl p-6">
+            <div className="flex justify-between items-center mb-5 border-b border-slate-100 dark:border-[#0a2a6b] pb-3">
+              <h3 className="text-lg font-bold text-slate-900 dark:text-white">Agendar Test Drive</h3>
+              <button onClick={() => setShowTestDriveModal(false)} className="text-slate-400 dark:text-slate-500 hover:text-slate-700 dark:hover:text-slate-200 bg-slate-50 dark:bg-[#00246b] hover:bg-slate-100 dark:hover:bg-[#002a6e] p-1.5 rounded-lg border border-slate-200 dark:border-[#0a2a6b]">
                 <X className="w-4 h-4" />
               </button>
             </div>
             <form onSubmit={agendarTestDrive} className="space-y-4">
               <div>
-                <label className="text-[11px] font-bold text-slate-500 uppercase tracking-widest mb-1.5 block">Vehículo</label>
+                <label className="text-[11px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-widest mb-1.5 block">Vehículo</label>
                 <select value={vehiculoTestDriveId} onChange={(e) => setVehiculoTestDriveId(e.target.value)} className={inputClass}>
                   <option value="">Sin especificar</option>
                   {vehiculosStock.map((v: any) => (<option key={v.id} value={v.id}>{v.marca} {v.modelo} {v.patente ? `— ${v.patente}` : ""}</option>))}
                 </select>
               </div>
               <div>
-                <label className="text-[11px] font-bold text-slate-500 uppercase tracking-widest mb-1.5 block">Fecha y hora *</label>
+                <label className="text-[11px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-widest mb-1.5 block">Fecha y hora *</label>
                 <input required type="datetime-local" value={fechaTestDrive} onChange={(e) => setFechaTestDrive(e.target.value)} className={inputClass} />
               </div>
               <div className="pt-2 flex gap-3">
-                <button type="button" onClick={() => setShowTestDriveModal(false)} className="flex-1 py-2.5 text-xs font-bold uppercase tracking-widest bg-white border border-slate-200 hover:bg-slate-50 text-slate-600 rounded-xl transition-colors">Cancelar</button>
+                <button type="button" onClick={() => setShowTestDriveModal(false)} className="flex-1 py-2.5 text-xs font-bold uppercase tracking-widest bg-white dark:bg-[#00246b] border border-slate-200 dark:border-[#0a2a6b] hover:bg-slate-50 dark:hover:bg-[#002a6e] text-slate-600 dark:text-slate-300 rounded-xl transition-colors">Cancelar</button>
                 <button type="submit" disabled={guardandoTestDrive} className="flex-1 py-2.5 text-xs font-bold uppercase tracking-widest bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl transition-colors shadow-sm disabled:opacity-50">
                   {guardandoTestDrive ? "Guardando..." : "Agendar"}
                 </button>
@@ -687,19 +687,19 @@ export default function LeadDetailClient({
       {showAsistenciaModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
           <div className="absolute inset-0 bg-slate-900/40 backdrop-blur-sm" onClick={() => !guardandoAsistencia && setShowAsistenciaModal(false)}></div>
-          <div className="relative bg-white border border-slate-200 w-full max-w-sm rounded-2xl shadow-2xl p-6">
-            <div className="flex justify-between items-center mb-5 border-b border-slate-100 pb-3">
-              <h3 className="text-lg font-bold text-slate-900">Pedir asistencia</h3>
-              <button onClick={() => setShowAsistenciaModal(false)} className="text-slate-400 hover:text-slate-700 bg-slate-50 hover:bg-slate-100 p-1.5 rounded-lg border border-slate-200">
+          <div className="relative bg-white dark:bg-[#001c55] border border-slate-200 dark:border-[#0a2a6b] w-full max-w-sm rounded-2xl shadow-2xl p-6">
+            <div className="flex justify-between items-center mb-5 border-b border-slate-100 dark:border-[#0a2a6b] pb-3">
+              <h3 className="text-lg font-bold text-slate-900 dark:text-white">Pedir asistencia</h3>
+              <button onClick={() => setShowAsistenciaModal(false)} className="text-slate-400 dark:text-slate-500 hover:text-slate-700 dark:hover:text-slate-200 bg-slate-50 dark:bg-[#00246b] hover:bg-slate-100 dark:hover:bg-[#002a6e] p-1.5 rounded-lg border border-slate-200 dark:border-[#0a2a6b]">
                 <X className="w-4 h-4" />
               </button>
             </div>
-            <label className="text-[11px] font-bold text-slate-500 uppercase tracking-widest mb-1.5 block">Pedirle ayuda a *</label>
+            <label className="text-[11px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-widest mb-1.5 block">Pedirle ayuda a *</label>
             <select value={asistenciaParaId} onChange={(e) => setAsistenciaParaId(e.target.value)} className={inputClass}>
               <option value="">Seleccionar persona...</option>
               {vendedores.map((v) => (<option key={v.id} value={v.id}>{v.nombre}</option>))}
             </select>
-            <label className="text-[11px] font-bold text-slate-500 uppercase tracking-widest mb-1.5 block mt-4">Nota (opcional)</label>
+            <label className="text-[11px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-widest mb-1.5 block mt-4">Nota (opcional)</label>
             <textarea rows={3} value={notaAsistencia} onChange={(e) => setNotaAsistencia(e.target.value)} placeholder="Contale qué necesitás..." className={inputClass} />
             <button
               onClick={pedirAsistencia}
@@ -718,8 +718,8 @@ export default function LeadDetailClient({
 function Dato({ label, valor }: { label: string; valor?: string | null }) {
   return (
     <div>
-      <span className="text-[10px] font-bold uppercase tracking-widest text-slate-400 block">{label}</span>
-      <span className="text-slate-700 font-medium">{valor || "—"}</span>
+      <span className="text-[10px] font-bold uppercase tracking-widest text-slate-400 dark:text-slate-500 block">{label}</span>
+      <span className="text-slate-700 dark:text-slate-200 font-medium">{valor || "—"}</span>
     </div>
   );
 }
@@ -728,20 +728,20 @@ function TareasGrupo({ titulo, icono, tareas, onToggle }: { titulo: string; icon
   if (tareas.length === 0) return null;
   return (
     <div className="mb-3 last:mb-0">
-      <h3 className="text-[10px] font-bold uppercase tracking-widest text-slate-400 flex items-center gap-1.5 mb-1.5">
+      <h3 className="text-[10px] font-bold uppercase tracking-widest text-slate-400 dark:text-slate-500 flex items-center gap-1.5 mb-1.5">
         {icono} {titulo} ({tareas.length})
       </h3>
       <div className="space-y-1.5">
         {tareas.map((t) => (
-          <div key={t.id} className="flex items-center gap-2.5 bg-slate-50 border border-slate-100 rounded-lg px-3 py-2">
+          <div key={t.id} className="flex items-center gap-2.5 bg-slate-50 dark:bg-[#00246b] border border-slate-100 dark:border-[#0a2a6b] rounded-lg px-3 py-2">
             <button onClick={() => onToggle(t)} className="shrink-0">
-              {t.completada ? <CheckCircle2 className="w-4 h-4 text-emerald-600" /> : <Circle className="w-4 h-4 text-slate-300" />}
+              {t.completada ? <CheckCircle2 className="w-4 h-4 text-emerald-600 dark:text-emerald-300" /> : <Circle className="w-4 h-4 text-slate-300 dark:text-slate-600" />}
             </button>
             <div className="min-w-0 flex-1">
-              <p className={`text-[12px] font-bold ${t.completada ? "text-slate-400 line-through" : "text-slate-800"}`}>
+              <p className={`text-[12px] font-bold ${t.completada ? "text-slate-400 dark:text-slate-500 line-through" : "text-slate-800 dark:text-white"}`}>
                 {t.tipo}{t.titulo ? ` — ${t.titulo}` : ""}
               </p>
-              <span className="text-[10px] text-slate-400">
+              <span className="text-[10px] text-slate-400 dark:text-slate-500">
                 {new Date(t.fecha_vencimiento).toLocaleString("es-AR", { day: "2-digit", month: "short", hour: "2-digit", minute: "2-digit" })}
               </span>
             </div>

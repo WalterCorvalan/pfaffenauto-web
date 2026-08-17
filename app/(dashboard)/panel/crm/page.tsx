@@ -66,7 +66,7 @@ export default async function CRMPage() {
   }
 
   return (
-    <div className="flex flex-col h-full w-full bg-white overflow-hidden">
+    <div className="flex flex-col h-full w-full bg-white dark:bg-[#001233] overflow-hidden">
       <KanbanBoard leadsIniciales={leadsUnificados} motivosCierre={motivosCierre || []} miRol={miRol} miId={user?.id || ""} vendedores={vendedores || []} sucursales={sucursales || []} />
     </div>
   );

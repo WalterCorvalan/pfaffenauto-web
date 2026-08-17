@@ -6,9 +6,9 @@ import NuevaCampanaModal from "./NuevaCampanaModal";
 const PLATAFORMAS = ["Google Ads", "Meta Ads", "MercadoLibre"] as const;
 
 const COLOR_PLATAFORMA: Record<string, { bg: string; text: string; border: string }> = {
-  "Google Ads": { bg: "bg-blue-50", text: "text-blue-700", border: "border-blue-200" },
-  "Meta Ads": { bg: "bg-indigo-50", text: "text-indigo-700", border: "border-indigo-200" },
-  "MercadoLibre": { bg: "bg-yellow-50", text: "text-yellow-700", border: "border-yellow-200" },
+  "Google Ads": { bg: "bg-blue-50 dark:bg-[#002a6e]", text: "text-blue-700 dark:text-blue-300", border: "border-blue-200 dark:border-[#0a2a6b]" },
+  "Meta Ads": { bg: "bg-indigo-50 dark:bg-[#002a6e]", text: "text-indigo-700 dark:text-sky-300", border: "border-indigo-200 dark:border-[#0a2a6b]" },
+  "MercadoLibre": { bg: "bg-yellow-50 dark:bg-[#002a6e]", text: "text-yellow-700 dark:text-yellow-300", border: "border-yellow-200 dark:border-[#0a2a6b]" },
 };
 
 function inicioMes(offset: number) {
@@ -64,64 +64,64 @@ export default async function PautasMarketingPage() {
   const nombreMesActual = new Date(mesActualInicio).toLocaleDateString("es-AR", { month: "long", year: "numeric", timeZone: "UTC" });
 
   return (
-    <div className="flex flex-col h-full w-full bg-white overflow-hidden">
-      <header className="flex flex-col md:flex-row md:items-center justify-between border-b border-slate-200 px-6 py-4 bg-white shrink-0 gap-4">
+    <div className="flex flex-col h-full w-full bg-white dark:bg-[#001233] overflow-hidden">
+      <header className="flex flex-col md:flex-row md:items-center justify-between border-b border-slate-200 dark:border-[#0a2a6b] px-6 py-4 bg-white dark:bg-[#001c55] shrink-0 gap-4">
         <div className="flex items-center gap-4">
-          <div className="w-10 h-10 rounded-lg bg-indigo-50 border border-indigo-100 flex items-center justify-center shrink-0">
-            <Megaphone className="w-5 h-5 text-indigo-600" />
+          <div className="w-10 h-10 rounded-lg bg-indigo-50 dark:bg-[#002a6e] border border-indigo-100 dark:border-[#0a2a6b] flex items-center justify-center shrink-0">
+            <Megaphone className="w-5 h-5 text-indigo-600 dark:text-sky-300" />
           </div>
           <div>
-            <h1 className="text-[17px] font-bold text-slate-900 leading-tight">Pautas Publicitarias</h1>
-            <p className="text-[11px] font-medium text-slate-500 mt-0.5 capitalize">Google Ads, Meta Ads y MercadoLibre — {nombreMesActual}</p>
+            <h1 className="text-[17px] font-bold text-slate-900 dark:text-white leading-tight">Pautas Publicitarias</h1>
+            <p className="text-[11px] font-medium text-slate-500 dark:text-slate-400 mt-0.5 capitalize">Google Ads, Meta Ads y MercadoLibre — {nombreMesActual}</p>
           </div>
         </div>
         <NuevaCampanaModal sucursales={sucursales || []} />
       </header>
 
-      <div className="flex-1 overflow-y-auto p-6 bg-[#F9FAFB] custom-scrollbar">
+      <div className="flex-1 overflow-y-auto p-6 bg-[#F9FAFB] dark:bg-[#001233] custom-scrollbar">
         <div className="max-w-[1400px] mx-auto space-y-6">
 
           {/* ================= RESUMEN GLOBAL DEL MES ================= */}
           <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-4">
-            <div className="bg-white border border-slate-200 rounded-2xl p-5 shadow-sm">
-              <span className="text-[10px] uppercase tracking-widest font-bold text-slate-400 flex items-center gap-1.5">
+            <div className="bg-white dark:bg-[#001c55] border border-slate-200 dark:border-[#0a2a6b] rounded-2xl p-5 shadow-sm">
+              <span className="text-[10px] uppercase tracking-widest font-bold text-slate-400 dark:text-slate-500 flex items-center gap-1.5">
                 <DollarSign className="w-3.5 h-3.5" /> Gasto Total
               </span>
-              <h3 className="text-2xl font-black text-slate-900 mt-1 font-mono">$ {totalActual.gasto.toLocaleString("es-AR")}</h3>
-              <span className={`text-[11px] font-bold flex items-center gap-1 mt-1 ${varGasto > 0 ? "text-rose-600" : varGasto < 0 ? "text-emerald-600" : "text-slate-400"}`}>
+              <h3 className="text-2xl font-black text-slate-900 dark:text-white mt-1 font-mono">$ {totalActual.gasto.toLocaleString("es-AR")}</h3>
+              <span className={`text-[11px] font-bold flex items-center gap-1 mt-1 ${varGasto > 0 ? "text-rose-600 dark:text-rose-300" : varGasto < 0 ? "text-emerald-600 dark:text-emerald-300" : "text-slate-400 dark:text-slate-500"}`}>
                 {varGasto > 0 ? <TrendingUp className="w-3 h-3" /> : varGasto < 0 ? <TrendingDown className="w-3 h-3" /> : <Minus className="w-3 h-3" />}
                 {varGasto.toFixed(0)}% vs mes anterior
               </span>
             </div>
 
-            <div className="bg-white border border-slate-200 rounded-2xl p-5 shadow-sm">
-              <span className="text-[10px] uppercase tracking-widest font-bold text-slate-400 flex items-center gap-1.5">
+            <div className="bg-white dark:bg-[#001c55] border border-slate-200 dark:border-[#0a2a6b] rounded-2xl p-5 shadow-sm">
+              <span className="text-[10px] uppercase tracking-widest font-bold text-slate-400 dark:text-slate-500 flex items-center gap-1.5">
                 <MousePointerClick className="w-3.5 h-3.5" /> Clics / Alcance
               </span>
-              <h3 className="text-2xl font-black text-slate-900 mt-1 font-mono">{totalActual.clics.toLocaleString("es-AR")}</h3>
-              <span className="text-[11px] text-slate-400 font-medium mt-1 block">Mes anterior: {totalAnterior.clics.toLocaleString("es-AR")}</span>
+              <h3 className="text-2xl font-black text-slate-900 dark:text-white mt-1 font-mono">{totalActual.clics.toLocaleString("es-AR")}</h3>
+              <span className="text-[11px] text-slate-400 dark:text-slate-500 font-medium mt-1 block">Mes anterior: {totalAnterior.clics.toLocaleString("es-AR")}</span>
             </div>
 
-            <div className="bg-white border border-slate-200 rounded-2xl p-5 shadow-sm">
-              <span className="text-[10px] uppercase tracking-widest font-bold text-slate-400 flex items-center gap-1.5">
+            <div className="bg-white dark:bg-[#001c55] border border-slate-200 dark:border-[#0a2a6b] rounded-2xl p-5 shadow-sm">
+              <span className="text-[10px] uppercase tracking-widest font-bold text-slate-400 dark:text-slate-500 flex items-center gap-1.5">
                 <Users className="w-3.5 h-3.5" /> Leads Generados
               </span>
-              <h3 className="text-2xl font-black text-slate-900 mt-1 font-mono">{totalActual.leads.toLocaleString("es-AR")}</h3>
-              <span className="text-[11px] text-slate-400 font-medium mt-1 block">Mes anterior: {totalAnterior.leads.toLocaleString("es-AR")}</span>
+              <h3 className="text-2xl font-black text-slate-900 dark:text-white mt-1 font-mono">{totalActual.leads.toLocaleString("es-AR")}</h3>
+              <span className="text-[11px] text-slate-400 dark:text-slate-500 font-medium mt-1 block">Mes anterior: {totalAnterior.leads.toLocaleString("es-AR")}</span>
             </div>
 
-            <div className="bg-white border border-slate-200 rounded-2xl p-5 shadow-sm">
-              <span className="text-[10px] uppercase tracking-widest font-bold text-slate-400">Costo por Lead</span>
-              <h3 className="text-2xl font-black text-indigo-600 mt-1 font-mono">
+            <div className="bg-white dark:bg-[#001c55] border border-slate-200 dark:border-[#0a2a6b] rounded-2xl p-5 shadow-sm">
+              <span className="text-[10px] uppercase tracking-widest font-bold text-slate-400 dark:text-slate-500">Costo por Lead</span>
+              <h3 className="text-2xl font-black text-indigo-600 dark:text-sky-300 mt-1 font-mono">
                 {costoPorLead > 0 ? `$ ${costoPorLead.toLocaleString("es-AR", { maximumFractionDigits: 0 })}` : "—"}
               </h3>
-              <span className="text-[11px] text-slate-400 font-medium mt-1 block">Gasto total / leads del mes</span>
+              <span className="text-[11px] text-slate-400 dark:text-slate-500 font-medium mt-1 block">Gasto total / leads del mes</span>
             </div>
           </div>
 
           {/* ================= DESGLOSE POR PLATAFORMA ================= */}
           <div>
-            <h2 className="text-[11px] font-bold uppercase tracking-widest text-slate-400 mb-4">Rendimiento por plataforma (este mes)</h2>
+            <h2 className="text-[11px] font-bold uppercase tracking-widest text-slate-400 dark:text-slate-500 mb-4">Rendimiento por plataforma (este mes)</h2>
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
               {PLATAFORMAS.map((plataforma) => {
                 const col = COLOR_PLATAFORMA[plataforma];
@@ -133,32 +133,32 @@ export default async function PautasMarketingPage() {
                 const varPlataforma = variacion(totales.gasto, totalesAnterior.gasto);
 
                 return (
-                  <div key={plataforma} className={`bg-white border ${col.border} rounded-2xl p-5 shadow-sm`}>
+                  <div key={plataforma} className={`bg-white dark:bg-[#001c55] border ${col.border} rounded-2xl p-5 shadow-sm`}>
                     <div className="flex items-center justify-between mb-4">
                       <span className={`text-[11px] font-bold uppercase tracking-widest px-2.5 py-1 rounded-md border ${col.bg} ${col.text} ${col.border}`}>
                         {plataforma}
                       </span>
-                      <span className="text-[10px] font-bold text-slate-400">{campanasPlataforma.length} campañas</span>
+                      <span className="text-[10px] font-bold text-slate-400 dark:text-slate-500">{campanasPlataforma.length} campañas</span>
                     </div>
 
                     <div className="space-y-2.5">
                       <div className="flex justify-between items-center">
-                        <span className="text-[12px] text-slate-500 font-medium">Gasto</span>
-                        <span className="font-mono font-bold text-[13px] text-slate-900">$ {totales.gasto.toLocaleString("es-AR")}</span>
+                        <span className="text-[12px] text-slate-500 dark:text-slate-400 font-medium">Gasto</span>
+                        <span className="font-mono font-bold text-[13px] text-slate-900 dark:text-white">$ {totales.gasto.toLocaleString("es-AR")}</span>
                       </div>
                       <div className="flex justify-between items-center">
-                        <span className="text-[12px] text-slate-500 font-medium">Clics/Alcance</span>
-                        <span className="font-mono font-bold text-[13px] text-slate-900">{totales.clics.toLocaleString("es-AR")}</span>
+                        <span className="text-[12px] text-slate-500 dark:text-slate-400 font-medium">Clics/Alcance</span>
+                        <span className="font-mono font-bold text-[13px] text-slate-900 dark:text-white">{totales.clics.toLocaleString("es-AR")}</span>
                       </div>
                       <div className="flex justify-between items-center">
-                        <span className="text-[12px] text-slate-500 font-medium">Leads</span>
-                        <span className="font-mono font-bold text-[13px] text-slate-900">{totales.leads.toLocaleString("es-AR")}</span>
+                        <span className="text-[12px] text-slate-500 dark:text-slate-400 font-medium">Leads</span>
+                        <span className="font-mono font-bold text-[13px] text-slate-900 dark:text-white">{totales.leads.toLocaleString("es-AR")}</span>
                       </div>
-                      <div className="flex justify-between items-center pt-2.5 border-t border-slate-100">
-                        <span className="text-[12px] text-slate-500 font-medium">Costo/Lead</span>
-                        <span className="font-mono font-bold text-[13px] text-indigo-600">{cpl > 0 ? `$ ${cpl.toLocaleString("es-AR", { maximumFractionDigits: 0 })}` : "—"}</span>
+                      <div className="flex justify-between items-center pt-2.5 border-t border-slate-100 dark:border-[#0a2a6b]">
+                        <span className="text-[12px] text-slate-500 dark:text-slate-400 font-medium">Costo/Lead</span>
+                        <span className="font-mono font-bold text-[13px] text-indigo-600 dark:text-sky-300">{cpl > 0 ? `$ ${cpl.toLocaleString("es-AR", { maximumFractionDigits: 0 })}` : "—"}</span>
                       </div>
-                      <div className={`flex items-center gap-1 text-[11px] font-bold ${varPlataforma > 0 ? "text-rose-600" : varPlataforma < 0 ? "text-emerald-600" : "text-slate-400"}`}>
+                      <div className={`flex items-center gap-1 text-[11px] font-bold ${varPlataforma > 0 ? "text-rose-600 dark:text-rose-300" : varPlataforma < 0 ? "text-emerald-600 dark:text-emerald-300" : "text-slate-400 dark:text-slate-500"}`}>
                         {varPlataforma > 0 ? <TrendingUp className="w-3 h-3" /> : varPlataforma < 0 ? <TrendingDown className="w-3 h-3" /> : <Minus className="w-3 h-3" />}
                         {varPlataforma.toFixed(0)}% gasto vs mes anterior
                       </div>
@@ -170,14 +170,14 @@ export default async function PautasMarketingPage() {
           </div>
 
           {/* ================= HISTORIAL DE CAMPAÑAS CARGADAS ================= */}
-          <div className="bg-white border border-slate-200 rounded-2xl shadow-sm overflow-hidden">
-            <div className="p-4 border-b border-slate-100">
-              <h2 className="text-[11px] font-bold uppercase tracking-widest text-slate-500">Historial de cargas</h2>
+          <div className="bg-white dark:bg-[#001c55] border border-slate-200 dark:border-[#0a2a6b] rounded-2xl shadow-sm overflow-hidden">
+            <div className="p-4 border-b border-slate-100 dark:border-[#0a2a6b]">
+              <h2 className="text-[11px] font-bold uppercase tracking-widest text-slate-500 dark:text-slate-400">Historial de cargas</h2>
             </div>
             <div className="overflow-x-auto">
               <table className="w-full text-left border-collapse">
                 <thead>
-                  <tr className="bg-slate-50 border-b border-slate-200 text-slate-500 text-[10px] uppercase tracking-widest font-bold">
+                  <tr className="bg-slate-50 dark:bg-[#00246b] border-b border-slate-200 dark:border-[#0a2a6b] text-slate-500 dark:text-slate-400 text-[10px] uppercase tracking-widest font-bold">
                     <th className="p-4 pl-6">Mes</th>
                     <th className="p-4">Plataforma</th>
                     <th className="p-4">Campaña</th>
@@ -187,12 +187,12 @@ export default async function PautasMarketingPage() {
                     <th className="p-4 pr-6 text-right">Leads</th>
                   </tr>
                 </thead>
-                <tbody className="divide-y divide-slate-100">
+                <tbody className="divide-y divide-slate-100 dark:divide-[#0a2a6b]">
                   {(todas || []).map((c: any) => {
                     const col = COLOR_PLATAFORMA[c.plataforma] || COLOR_PLATAFORMA["Google Ads"];
                     return (
-                      <tr key={c.id} className="hover:bg-slate-50/50 transition-colors">
-                        <td className="p-4 pl-6 text-[13px] text-slate-600 capitalize whitespace-nowrap">
+                      <tr key={c.id} className="hover:bg-slate-50/50 dark:hover:bg-[#00246b] transition-colors">
+                        <td className="p-4 pl-6 text-[13px] text-slate-600 dark:text-slate-300 capitalize whitespace-nowrap">
                           {new Date(`${c.periodo}T12:00:00Z`).toLocaleDateString("es-AR", { month: "short", year: "numeric", timeZone: "UTC" })}
                         </td>
                         <td className="p-4">
@@ -200,17 +200,17 @@ export default async function PautasMarketingPage() {
                             {c.plataforma}
                           </span>
                         </td>
-                        <td className="p-4 text-[13px] text-slate-700">{c.nombre_campana || "—"}</td>
-                        <td className="p-4 text-[13px] text-slate-600">{c.sucursales?.nombre || "Página general"}</td>
-                        <td className="p-4 text-right font-mono text-[13px] font-bold text-slate-900">$ {Number(c.gasto).toLocaleString("es-AR")}</td>
-                        <td className="p-4 text-right font-mono text-[13px] text-slate-600">{c.clics}</td>
-                        <td className="p-4 pr-6 text-right font-mono text-[13px] text-slate-600">{c.leads}</td>
+                        <td className="p-4 text-[13px] text-slate-700 dark:text-slate-200">{c.nombre_campana || "—"}</td>
+                        <td className="p-4 text-[13px] text-slate-600 dark:text-slate-300">{c.sucursales?.nombre || "Página general"}</td>
+                        <td className="p-4 text-right font-mono text-[13px] font-bold text-slate-900 dark:text-white">$ {Number(c.gasto).toLocaleString("es-AR")}</td>
+                        <td className="p-4 text-right font-mono text-[13px] text-slate-600 dark:text-slate-300">{c.clics}</td>
+                        <td className="p-4 pr-6 text-right font-mono text-[13px] text-slate-600 dark:text-slate-300">{c.leads}</td>
                       </tr>
                     );
                   })}
                   {(!todas || todas.length === 0) && (
                     <tr>
-                      <td colSpan={7} className="p-10 text-center text-slate-400 text-sm italic">
+                      <td colSpan={7} className="p-10 text-center text-slate-400 dark:text-slate-500 text-sm italic">
                         Sin métricas cargadas todavía.
                       </td>
                     </tr>
