@@ -30,7 +30,7 @@ export default function FavoritosPage() {
     
     favoritos.forEach((fav, index) => {
       mensaje += `*${index + 1}. ${fav.marca} ${fav.modelo}*%0A`;
-      mensaje += `💵 Precio: $${fav.precio_ars?.toLocaleString("es-AR")}%0A`;
+      mensaje += `💵 Precio: ${fav.precio_usd ? `US$${fav.precio_usd.toLocaleString("en-US")}` : `$${fav.precio_ars?.toLocaleString("es-AR")}`}%0A`;
       mensaje += `🔗 Link: https://pfaffenautos.com.ar/catalogo/${fav.slug}%0A%0A`;
     });
 
@@ -116,10 +116,11 @@ export default function FavoritosPage() {
                         <div className="bg-gray-50 rounded-xl p-3 mb-3 border border-gray-100">
                           <span className="text-[9px] text-gray-400 font-bold uppercase tracking-widest block mb-0.5">Precio</span>
                           <div className="flex flex-col">
-                            <span className="text-lg font-black text-navy tracking-tight">$ {auto.precio_ars?.toLocaleString("es-AR")}</span>
-                            {auto.precio_usd && (
-                              <span className="text-[10px] text-emerald-600 font-bold">US$ {auto.precio_usd.toLocaleString("en-US")}</span>
-                            )}
+                            <span className="text-lg font-black text-navy tracking-tight">
+                              {auto.precio_usd
+                                ? `US$ ${auto.precio_usd.toLocaleString("en-US")}`
+                                : `$ ${auto.precio_ars?.toLocaleString("es-AR")}`}
+                            </span>
                           </div>
                         </div>
 

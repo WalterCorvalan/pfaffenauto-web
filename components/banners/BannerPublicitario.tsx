@@ -46,21 +46,21 @@ export default function BannersPublicitarios() {
   ];
 
   return (
-    <section className="py-12 bg-transparent relative z-10">
+    <section className="py-12 bg-transparent dark:bg-[#0a0a0f] relative z-10">
       <div className="max-w-7xl mx-auto px-4 md:px-6">
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4 md:gap-6">
           {banners.map((banner) => (
             <Link
               key={banner.id}
               href={banner.href}
-              className={`relative h-[200px] sm:h-[220px] rounded-[24px] overflow-hidden flex group transition-all duration-500 shadow-lg hover:shadow-2xl hover:-translate-y-1 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-white/60 focus-visible:ring-offset-2 ${banner.bgColor}`}
+              className={`relative h-[200px] sm:h-[220px] rounded-[24px] overflow-hidden flex group transition-all duration-500 shadow-lg dark:shadow-[0_8px_32px_rgba(0,0,0,0.5)] hover:shadow-2xl dark:hover:shadow-[0_20px_48px_rgba(0,0,0,0.6)] hover:-translate-y-1 border border-transparent dark:border-white/10 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-white/60 dark:focus-visible:ring-sky-400/40 focus-visible:ring-offset-2 dark:focus-visible:ring-offset-black ${banner.bgColor}`}
             >
               {/* === LADO IZQUIERDO: TEXTO Y BOTÓN === */}
               <div className="relative z-10 w-[55%] p-5 sm:p-6 flex flex-col justify-center h-full">
                 <h3 className="text-white font-black text-base sm:text-lg lg:text-[1.15rem] leading-tight drop-shadow-md">
                   {banner.titulo}
                 </h3>
-                <p className="text-white/80 text-[10px] sm:text-xs mt-2 font-medium">
+                <p className="text-white/80 dark:text-white/70 text-[10px] sm:text-xs mt-2 font-medium">
                   {banner.subtitulo}
                 </p>
                 
@@ -74,19 +74,19 @@ export default function BannersPublicitarios() {
               </div>
 
               {/* === LADO DERECHO: IMAGEN CORTADA === */}
-              <div 
-                className="absolute top-0 right-0 w-[60%] h-full z-0 overflow-hidden bg-slate-200"
+              <div
+                className="absolute top-0 right-0 w-[60%] h-full z-0 overflow-hidden bg-slate-200 dark:bg-slate-900"
                 style={{ clipPath: banner.clipPath }}
               >
                 {/* Degradado oscuro sutil para que la imagen no pelee con el texto en pantallas chicas */}
-                <div className="absolute inset-0 bg-gradient-to-l from-transparent to-black/20 z-10 mix-blend-multiply"></div>
-                
+                <div className="absolute inset-0 bg-gradient-to-l from-transparent to-black/20 dark:to-black/60 z-10 mix-blend-multiply dark:mix-blend-normal"></div>
+
                 <Image
                   src={banner.imgSrc}
                   alt={banner.titulo}
                   fill
                   sizes="60vw"
-                  className="object-cover group-hover:scale-110 transition-transform duration-700 ease-out"
+                  className="object-cover dark:opacity-80 group-hover:scale-110 transition-transform duration-700 ease-out"
                 />
               </div>
             </Link>

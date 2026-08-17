@@ -15,8 +15,12 @@ export async function GET() {
     const data = await response.json();
 
     if (data.status !== "OK") {
-      return NextResponse.json({ error: "No se pudieron obtener las reseñas de Google" }, { status: 500 });
-    }
+  console.error("Google Places API error:", data.status, data.error_message);
+  return NextResponse.json(
+    { error: "No se pudieron obtener las reseñas de Google", detail: data.status, message: data.error_message },
+    { status: 500 }
+  );
+}
 
     const reviews = (data.result.reviews || []).map((rev: { author_name: string; relative_time_description: string; text: string; rating: number }, index: number) => ({
       id: index + 1,
@@ -33,7 +37,8 @@ export async function GET() {
       rating: data.result.rating,
       total: data.result.user_ratings_total,
     });
-  } catch {
-    return NextResponse.json({ error: "Error interno del servidor" }, { status: 500 });
-  }
+  } catch (err) {
+  console.error("Error interno /api/reviews:", err);
+  return NextResponse.json({ error: "Error interno del servidor" }, { status: 500 });
+}
 }

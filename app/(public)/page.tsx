@@ -39,7 +39,7 @@ export default async function Page() {
 
       {/* 3. Marcas con las que trabajan */}
       <BannersPublicitarios />
-      
+
       {/* 2. Catálogo Destacado (Stock) */}
       <Stock vehiculos={vehiculos || []} />
       

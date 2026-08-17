@@ -73,8 +73,8 @@ export default function PublicHeader() {
     <header
       className={`sticky top-0 z-50 w-full transition-all duration-500 border-b ${
         isScrolled
-          ? "bg-white/60 backdrop-blur-2xl border-white/80 shadow-[0_8px_32px_rgba(0,0,0,0.05)]"
-          : "bg-white/40 backdrop-blur-xl border-white/40 shadow-sm"
+          ? "bg-white/60 dark:bg-black/70 backdrop-blur-2xl border-white/80 dark:border-white/10 shadow-[0_8px_32px_rgba(0,0,0,0.05)] dark:shadow-[0_8px_32px_rgba(0,0,0,0.4)]"
+          : "bg-white/40 dark:bg-black/50 backdrop-blur-xl border-white/40 dark:border-white/5 shadow-sm"
       }`}
     >
       {/* Contenedor estirado a los laterales para aprovechar espacio */}
@@ -86,20 +86,20 @@ export default function PublicHeader() {
             <img
               src="/logo.png"
               alt="Pfaffen Autos"
-              className="h-6 md:h-7 w-auto transition-transform duration-500 group-hover:scale-105 drop-shadow-sm"
+              className="h-6 md:h-7 w-auto transition-transform duration-500 group-hover:scale-105 drop-shadow-sm dark:brightness-0 dark:invert"
             />
             <img
               src="/r.png"
               alt="Marca Registrada"
-              className="absolute -top-1 -right-2.5 md:-right-3.5 w-2 h-2 object-contain brightness-0 opacity-80"
+              className="absolute -top-1 -right-2.5 md:-right-3.5 w-2 h-2 object-contain brightness-0 dark:invert opacity-80"
             />
           </Link>
 
-          <span className="h-6 w-[1px] bg-slate-300/75 hidden sm:block"></span>
+          <span className="h-6 w-[1px] bg-slate-300/75 dark:bg-white/15 hidden sm:block"></span>
 
           {/* Grupo de concesionarios oficiales */}
-          <div className="flex items-center gap-1.5 sm:gap-2.5 sm:bg-white/30 sm:border sm:border-white/50 rounded-full sm:pl-3 sm:pr-3 sm:py-1 min-w-0">
-            <span className="text-[7px] sm:text-[8px] md:text-[9px] font-black uppercase tracking-wide sm:tracking-widest text-slate-600 whitespace-nowrap shrink-0 leading-none">
+          <div className="flex items-center gap-1.5 sm:gap-2.5 sm:bg-white/30 dark:sm:bg-white/5 sm:border sm:border-white/50 dark:sm:border-white/10 rounded-full sm:pl-3 sm:pr-3 sm:py-1 min-w-0">
+            <span className="text-[7px] sm:text-[8px] md:text-[9px] font-black uppercase tracking-wide sm:tracking-widest text-slate-600 dark:text-slate-300 whitespace-nowrap shrink-0 leading-none">
               Concesionario oficial
             </span>
             <div className="flex items-center gap-0 sm:gap-1 shrink-0 h-4 sm:h-6 md:h-7">
@@ -111,7 +111,7 @@ export default function PublicHeader() {
                 <img
                   src="/RelyLogo.png"
                   alt="Rely"
-                  className="h-8 sm:h-10 md:h-12.5 w-auto object-contain transition-transform group-hover:scale-105 -my-1.5 sm:-my-2 md:-my-2.5"
+                  className="h-8 sm:h-10 md:h-12.5 w-auto object-contain transition-transform group-hover:scale-105 -my-1.5 sm:-my-2 md:-my-2.5 dark:brightness-0 dark:invert"
                 />
               </Link>
               <Link
@@ -139,7 +139,7 @@ export default function PublicHeader() {
                 animate={{ opacity: 1, y: 0, filter: "blur(0px)" }}
                 exit={{ opacity: 0, y: 10, filter: "blur(4px)" }}
                 transition={{ duration: 0.3, type: "spring", stiffness: 200 }}
-                className="hidden lg:flex items-center gap-0 bg-white/30 backdrop-blur-md px-2 py-1.5 rounded-full border border-white/50 shadow-inner"
+                className="hidden lg:flex items-center gap-0 bg-white/30 dark:bg-white/5 backdrop-blur-md px-2 py-1.5 rounded-full border border-white/50 dark:border-white/10 shadow-inner"
               >
                 {navLinks.map((link) => {
                   const is0KM = link.href.includes("condicion=0km");
@@ -164,8 +164,8 @@ export default function PublicHeader() {
                       href={link.href}
                       className={`relative px-4 py-2 text-[11px] font-black uppercase tracking-widest transition-all duration-300 rounded-full ${
                         isActive
-                          ? "bg-white text-[#0145F2] shadow-[0_4px_12px_rgba(0,0,0,0.05)] border border-white/80"
-                          : "text-slate-600 hover:text-navy hover:bg-white/50"
+                          ? "bg-white dark:bg-white text-[#0145F2] dark:text-black shadow-[0_4px_12px_rgba(0,0,0,0.05)] border border-white/80"
+                          : "text-slate-600 dark:text-slate-300 hover:text-navy dark:hover:text-white hover:bg-white/50 dark:hover:bg-white/10"
                       }`}
                     >
                       {link.name}
@@ -189,18 +189,18 @@ export default function PublicHeader() {
                 className="hidden lg:block w-full max-w-md relative group"
               >
                 <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none z-10">
-                  <Sparkles className="h-4 w-4 text-[#0145F2] opacity-80" />
+                  <Sparkles className="h-4 w-4 text-[#0145F2] dark:text-sky-400 opacity-80" />
                 </div>
                 <input
                   type="text"
                   placeholder="Buscá por marca, modelo, o necesidad..."
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
-                  className="w-full bg-white/40 backdrop-blur-md hover:bg-white/60 border border-white/60 text-navy text-xs font-bold rounded-full pl-11 pr-12 py-3 outline-none focus:bg-white/80 focus:ring-4 focus:ring-[#0145F2]/15 focus:border-[#0145F2]/40 transition-all shadow-[inset_0_2px_4px_rgba(0,0,0,0.02)] placeholder:text-slate-400 placeholder:font-medium"
+                  className="w-full bg-white/40 dark:bg-white/5 backdrop-blur-md hover:bg-white/60 dark:hover:bg-white/10 border border-white/60 dark:border-white/10 text-navy dark:text-white text-xs font-bold rounded-full pl-11 pr-12 py-3 outline-none focus:bg-white/80 dark:focus:bg-white/15 focus:ring-4 focus:ring-[#0145F2]/15 dark:focus:ring-sky-400/15 focus:border-[#0145F2]/40 dark:focus:border-sky-400/40 transition-all shadow-[inset_0_2px_4px_rgba(0,0,0,0.02)] dark:shadow-[inset_0_2px_4px_rgba(0,0,0,0.2)] placeholder:text-slate-400 placeholder:font-medium"
                 />
                 <button
                   type="submit"
-                  className="absolute inset-y-1.5 right-1.5 bg-[#0145F2] hover:bg-blue-600 text-white p-2 rounded-full transition-all shadow-[0_2px_10px_rgba(1,69,242,0.3)] active:scale-95"
+                  className="absolute inset-y-1.5 right-1.5 bg-[#0145F2] hover:bg-blue-600 dark:hover:bg-blue-500 text-white p-2 rounded-full transition-all shadow-[0_2px_10px_rgba(1,69,242,0.3)] active:scale-95"
                 >
                   <Search className="w-3.5 h-3.5" />
                 </button>
@@ -213,7 +213,7 @@ export default function PublicHeader() {
         <div className="flex items-center gap-0 md:gap-3 justify-end shrink-0">
           <button
             onClick={toggleSearchMobile}
-            className="lg:hidden p-2.5 text-primary bg-white/40 backdrop-blur-md border border-white/60 rounded-full shadow-sm"
+            className="lg:hidden p-2.5 text-primary dark:text-sky-300 bg-white/40 dark:bg-white/5 backdrop-blur-md border border-white/60 dark:border-white/10 rounded-full shadow-sm"
             title="Buscar"
           >
             <Search className="w-3.5 h-3.5 md:w-5 md:h-5" />
@@ -221,7 +221,7 @@ export default function PublicHeader() {
 
           <Link
             href="/favoritos"
-            className="hidden lg:flex relative p-2.5 text-slate-500 hover:text-red-500 rounded-full transition-all"
+            className="hidden lg:flex relative p-2.5 text-slate-500 dark:text-slate-300 hover:text-red-500 dark:hover:text-red-400 rounded-full transition-all"
             title="Mis Favoritos"
           >
             <Heart
@@ -232,7 +232,7 @@ export default function PublicHeader() {
               }`}
             />
             {favCount > 0 && (
-              <span className="absolute top-1 right-1 bg-gradient-to-br from-red-400 to-red-600 text-white text-[9px] font-black w-4 h-4 flex items-center justify-center rounded-full border border-white/80 shadow-sm">
+              <span className="absolute top-1 right-1 bg-gradient-to-br from-red-400 to-red-600 text-white text-[9px] font-black w-4 h-4 flex items-center justify-center rounded-full border border-white/80 dark:border-black/40 shadow-sm">
                 {favCount}
               </span>
             )}
@@ -240,7 +240,7 @@ export default function PublicHeader() {
 
           <Link
             href="/cotizador"
-            className="hidden lg:flex items-center gap-2 bg-[#0145F2] hover:bg-blue-600 text-white px-5 py-2.5 rounded-full text-xs font-black uppercase tracking-widest transition-all shadow-[0_4px_15px_rgba(1,69,242,0.3)] shrink-0 relative overflow-hidden group"
+            className="hidden lg:flex items-center gap-2 bg-[#0145F2] hover:bg-blue-600 dark:hover:bg-blue-500 text-white px-5 py-2.5 rounded-full text-xs font-black uppercase tracking-widest transition-all shadow-[0_4px_15px_rgba(1,69,242,0.3)] shrink-0 relative overflow-hidden group"
           >
             <span className="absolute inset-0 w-[150%] h-full bg-gradient-to-r from-transparent via-white/20 to-transparent -translate-x-[150%] group-hover:animate-[shimmer_1.5s_infinite]"></span>
             Cotizá Tu Usado <ChevronRight className="w-4 h-4" />
@@ -248,7 +248,7 @@ export default function PublicHeader() {
 
           <button
             onClick={toggleMenu}
-            className="lg:hidden p-2.5 text-navy hover:bg-white/60 rounded-full transition-all"
+            className="lg:hidden p-2.5 text-navy dark:text-white hover:bg-white/60 dark:hover:bg-white/10 rounded-full transition-all"
           >
             {isOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
           </button>
@@ -262,7 +262,7 @@ export default function PublicHeader() {
             initial={{ opacity: 0, height: 0 }}
             animate={{ opacity: 1, height: "auto" }}
             exit={{ opacity: 0, height: 0 }}
-            className="lg:hidden bg-white/70 backdrop-blur-3xl border-t border-white/60 overflow-hidden"
+            className="lg:hidden bg-white/70 dark:bg-black/80 backdrop-blur-3xl border-t border-white/60 dark:border-white/10 overflow-hidden"
           >
             <form onSubmit={handleSearch} className="p-4 relative">
               <input
@@ -270,7 +270,7 @@ export default function PublicHeader() {
                 placeholder="¿Qué auto buscás?"
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                className="w-full bg-white/50 backdrop-blur-md border border-white/80 text-navy text-sm font-bold rounded-2xl pl-12 pr-4 py-3.5 outline-none"
+                className="w-full bg-white/50 dark:bg-white/5 backdrop-blur-md border border-white/80 dark:border-white/15 text-navy dark:text-white text-sm font-bold rounded-2xl pl-12 pr-4 py-3.5 outline-none"
                 autoFocus
               />
             </form>
@@ -284,7 +284,7 @@ export default function PublicHeader() {
             initial={{ opacity: 0, height: 0 }}
             animate={{ opacity: 1, height: "auto" }}
             exit={{ opacity: 0, height: 0 }}
-            className="lg:hidden bg-white border-t border-slate-200 shadow-xl overflow-hidden absolute w-full"
+            className="lg:hidden bg-white dark:bg-black border-t border-slate-200 dark:border-white/10 shadow-xl overflow-hidden absolute w-full"
           >
             <div className="flex flex-col px-4 py-6 gap-3">
               {navLinks.map((link) => (
@@ -292,20 +292,20 @@ export default function PublicHeader() {
                   key={link.name}
                   href={link.href}
                   onClick={() => setIsOpen(false)}
-                  className="flex items-center justify-between p-4 rounded-[20px] bg-slate-50 border border-slate-200 text-navy font-black uppercase tracking-widest text-sm"
+                  className="flex items-center justify-between p-4 rounded-[20px] bg-slate-50 dark:bg-white/5 border border-slate-200 dark:border-white/10 text-navy dark:text-white font-black uppercase tracking-widest text-sm"
                 >
                   <span className="flex items-center gap-2.5">
-                    {link.icon && <link.icon className="w-4 h-4 text-primary shrink-0" />}
+                    {link.icon && <link.icon className="w-4 h-4 text-primary dark:text-sky-400 shrink-0" />}
                     {link.name}
                   </span>
-                  <ChevronRight className="w-4 h-4 text-primary" />
+                  <ChevronRight className="w-4 h-4 text-primary dark:text-sky-400" />
                 </Link>
               ))}
 
               <Link
                 href="/favoritos"
                 onClick={() => setIsOpen(false)}
-                className="flex items-center justify-between p-4 rounded-[20px] bg-slate-50 border border-slate-200 text-navy font-black uppercase tracking-widest text-sm"
+                className="flex items-center justify-between p-4 rounded-[20px] bg-slate-50 dark:bg-white/5 border border-slate-200 dark:border-white/10 text-navy dark:text-white font-black uppercase tracking-widest text-sm"
               >
                 <span className="flex items-center gap-2">
                   <Heart className={`w-4 h-4 ${favCount > 0 ? "fill-red-500 text-red-500" : "text-slate-400"}`} />
@@ -316,7 +316,7 @@ export default function PublicHeader() {
                     </span>
                   )}
                 </span>
-                <ChevronRight className="w-4 h-4 text-primary" />
+                <ChevronRight className="w-4 h-4 text-primary dark:text-sky-400" />
               </Link>
             </div>
           </motion.div>

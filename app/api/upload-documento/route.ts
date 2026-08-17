@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { r2Configurado, subirArchivoR2 } from "@/lib/storage/r2";
 
 // Adjuntos de documentación de venta (título, formularios, cédulas, etc.)
 export async function POST(request: Request) {
@@ -19,24 +20,31 @@ export async function POST(request: Request) {
     const cleanFileName = file.name.replace(/[^a-zA-Z0-9.\-_]/g, "");
     const uniqueFileName = `${Date.now()}-${Math.floor(Math.random() * 10000)}-${cleanFileName}`;
 
-    const storageEndpoint = process.env.BUNNY_STORAGE_ENDPOINT;
-    const storageZone = process.env.BUNNY_STORAGE_ZONE;
-    const uploadUrl = `${storageEndpoint}/${storageZone}/documentacion/${uniqueFileName}`;
+    let publicUrl: string;
 
-    const response = await fetch(uploadUrl, {
-      method: "PUT",
-      headers: {
-        AccessKey: process.env.BUNNY_API_KEY as string,
-        "Content-Type": "application/octet-stream",
-      },
-      body: new Uint8Array(buffer),
-    });
+    if (r2Configurado()) {
+      publicUrl = await subirArchivoR2(buffer, `documentacion/${uniqueFileName}`, file.type || "application/octet-stream");
+    } else {
+      const storageEndpoint = process.env.BUNNY_STORAGE_ENDPOINT;
+      const storageZone = process.env.BUNNY_STORAGE_ZONE;
+      const uploadUrl = `${storageEndpoint}/${storageZone}/documentacion/${uniqueFileName}`;
 
-    if (!response.ok) {
-      throw new Error(`Error de Bunny: ${response.statusText}`);
+      const response = await fetch(uploadUrl, {
+        method: "PUT",
+        headers: {
+          AccessKey: process.env.BUNNY_API_KEY as string,
+          "Content-Type": "application/octet-stream",
+        },
+        body: new Uint8Array(buffer),
+      });
+
+      if (!response.ok) {
+        throw new Error(`Error de Bunny: ${response.statusText}`);
+      }
+
+      publicUrl = `${process.env.BUNNY_CDN_URL}/documentacion/${uniqueFileName}`;
     }
 
-    const publicUrl = `${process.env.BUNNY_CDN_URL}/documentacion/${uniqueFileName}`;
     return NextResponse.json({ publicUrl });
   } catch (error) {
     console.error("Error en /api/upload-documento:", error);

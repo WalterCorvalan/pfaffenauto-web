@@ -54,7 +54,10 @@ export async function generateMetadata({
 
   const esCeroKm = auto.kilometraje === 0;
   const titulo = `${auto.marca} ${auto.modelo} ${auto.anio} ${esCeroKm ? "0KM" : "Usado"} | Pfaffen Autos`;
-  const descripcion = `${auto.marca} ${auto.modelo} ${auto.anio}, ${esCeroKm ? "0km" : `${auto.kilometraje?.toLocaleString("es-AR")} km`}. Precio $${(auto.precio_publicado_ars || 0).toLocaleString("es-AR")}. Financiación disponible en Pfaffen Autos.`;
+  const precioTexto = auto.precio_publicado_usd
+    ? `US$ ${auto.precio_publicado_usd.toLocaleString("en-US")}`
+    : `$${(auto.precio_publicado_ars || 0).toLocaleString("es-AR")}`;
+  const descripcion = `${auto.marca} ${auto.modelo} ${auto.anio}, ${esCeroKm ? "0km" : `${auto.kilometraje?.toLocaleString("es-AR")} km`}. Precio ${precioTexto}. Financiación disponible en Pfaffen Autos.`;
   const imagen = (auto.multimedia_vehiculos as any)?.[0]?.url_archivo;
 
   return {
@@ -169,8 +172,8 @@ export default async function VehiculoDetallePage({
     image: (auto.multimedia_vehiculos || []).map((m: any) => m.url_archivo),
     offers: {
       "@type": "Offer",
-      priceCurrency: "ARS",
-      price: precioArs,
+      priceCurrency: precioUsd ? "USD" : "ARS",
+      price: precioUsd || precioArs,
       availability: "https://schema.org/InStock",
       url: `https://pfaffenautos.com.ar/catalogo/${auto.slug}`,
     },
@@ -398,13 +401,11 @@ function VehiculoPriceCard({
         <div className="flex flex-col gap-2">
           <span className="text-sm font-medium text-slate-500 block mb-1">Precio al contado</span>
           <h2 className="text-4xl md:text-5xl font-black text-navy tracking-tighter drop-shadow-sm">
-            $ {precioArs.toLocaleString("es-AR")}
+            {precioUsd && precioUsd > 0
+              ? `US$ ${precioUsd.toLocaleString("en-US")}`
+              : `$ ${precioArs.toLocaleString("es-AR")}`}
           </h2>
-          {precioUsd && precioUsd > 0 && (
-            <div className="inline-flex items-center gap-2 bg-emerald-500/10 border border-emerald-500/20 px-3 py-1.5 rounded-xl w-max print:border-emerald-600">
-              <span className="text-sm font-black text-emerald-700 tracking-wide">US$ {precioUsd.toLocaleString("en-US")}</span>
-            </div>
-          )}
+          <span className="block w-10 h-1 rounded-full bg-gradient-to-r from-[#0145F2] to-sky-400 mt-1"></span>
         </div>
       </div>
 

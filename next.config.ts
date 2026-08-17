@@ -1,7 +1,7 @@
 import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
-  allowedDevOrigins: ['192.168.2.*',"192.168.2.111"],
+  allowedDevOrigins: ['192.168.2.*', '192.168.2.111', '*.devtunnels.ms', '*.brs.devtunnels.ms'],
   images: {
     dangerouslyAllowSVG: true,
     contentDispositionType: "attachment",
@@ -10,6 +10,8 @@ const nextConfig: NextConfig = {
       { protocol: "https", hostname: "*.b-cdn.net" },
       { protocol: "https", hostname: "upload.wikimedia.org" },
       { protocol: "https", hostname: "images.unsplash.com" }, // <-- Dominio agregado
+      { protocol: "https", hostname: "*.r2.dev" }, // Cloudflare R2 (dominio público por defecto)
+      { protocol: "https", hostname: "*.r2.cloudflarestorage.com" },
     ],
   },
   async headers() {

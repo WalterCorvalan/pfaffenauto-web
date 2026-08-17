@@ -5,6 +5,11 @@ import Link from "next/link";
 import Image from "next/image";
 import { motion, AnimatePresence } from "framer-motion";
 
+const precioTexto = (auto: any) =>
+  auto.precio_publicado_usd
+    ? `US$ ${auto.precio_publicado_usd.toLocaleString("en-US")}`
+    : `$ ${auto.precio_publicado_ars?.toLocaleString("es-AR")}`;
+
 interface ComparadorModalProps {
   isOpen: boolean;
   onClose: () => void;
@@ -103,11 +108,11 @@ export default function ComparadorModal({ isOpen, onClose, autos, removerAuto }:
 
           {/* TABLA DE DATOS (Scrolleable) */}
           <div className="flex-1 overflow-y-auto pb-8 custom-scrollbar">
-            <Row 
-              label="Precio" 
-              val1={<div className="flex flex-col"><span className="text-xs md:text-lg text-white">${auto1?.precio_publicado_ars?.toLocaleString("es-AR")}</span>{auto1?.precio_publicado_usd && <span className="text-[8px] md:text-xs text-gray-400 font-medium">U$S {auto1.precio_publicado_usd.toLocaleString("en-US")}</span>}</div>} 
-              val2={auto2 ? <div className="flex flex-col"><span className="text-xs md:text-lg text-white">${auto2.precio_publicado_ars?.toLocaleString("es-AR")}</span>{auto2.precio_publicado_usd && <span className="text-[8px] md:text-xs text-gray-400 font-medium">U$S {auto2.precio_publicado_usd.toLocaleString("en-US")}</span>}</div> : null} 
-              val3={auto3 ? <div className="flex flex-col"><span className="text-xs md:text-lg text-white">${auto3.precio_publicado_ars?.toLocaleString("es-AR")}</span>{auto3.precio_publicado_usd && <span className="text-[8px] md:text-xs text-gray-400 font-medium">U$S {auto3.precio_publicado_usd.toLocaleString("en-US")}</span>}</div> : null} 
+            <Row
+              label="Precio"
+              val1={auto1 ? <span className="text-xs md:text-lg text-white">{precioTexto(auto1)}</span> : null}
+              val2={auto2 ? <span className="text-xs md:text-lg text-white">{precioTexto(auto2)}</span> : null}
+              val3={auto3 ? <span className="text-xs md:text-lg text-white">{precioTexto(auto3)}</span> : null}
             />
             <Row label="Marca" val1={auto1?.marca} val2={auto2?.marca} val3={auto3?.marca} />
             <Row label="Modelo" val1={auto1?.modelo} val2={auto2?.modelo} val3={auto3?.modelo} />

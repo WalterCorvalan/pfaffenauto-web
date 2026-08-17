@@ -3,6 +3,9 @@ import PublicHeader from "@/components/PublicHeader";
 import UtmTracker from "@/components/UtmTracker";
 import FloatingChatbot from "@/components/FloatingChatbot";
 import RouteProgress from "@/components/ui/RouteProgress";
+import { TemaPublicoProvider } from "@/components/TemaPublicoContext";
+import TemaPublicoRoot from "@/components/TemaPublicoRoot";
+import ToggleTemaPublico from "@/components/ToggleTemaPublico";
 
 export default function PublicLayout({
   children,
@@ -10,16 +13,19 @@ export default function PublicLayout({
   children: React.ReactNode;
 }) {
   return (
-    <div className="min-h-screen flex flex-col bg-background text-foreground selection:bg-primary selection:text-white">
-      <RouteProgress />
-      {/* Importamos la cabecera interactiva que creamos */}
-      <PublicHeader />
-      <UtmTracker />
-      {/* Renderizamos el contenido de la página */}
-      <main className="flex-grow w-full">
-        {children}
-      </main>
-      <FloatingChatbot />
-    </div>
+    <TemaPublicoProvider>
+      <TemaPublicoRoot>
+        <div className="relative min-h-screen flex flex-col bg-background text-foreground selection:bg-primary selection:text-white">
+          <RouteProgress />
+          <PublicHeader />
+          <ToggleTemaPublico />
+          <UtmTracker />
+          <main className="flex-grow w-full">
+            {children}
+          </main>
+          <FloatingChatbot />
+        </div>
+      </TemaPublicoRoot>
+    </TemaPublicoProvider>
   );
 }

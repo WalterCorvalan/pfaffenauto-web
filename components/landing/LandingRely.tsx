@@ -6,6 +6,16 @@ import Image from "next/image";
 import { Inter } from "next/font/google";
 import { ChevronLeft, ChevronRight, X } from "lucide-react";
 import { RELY_VERSIONS } from "@/lib/rely-versions";
+import VehiculosCarousel from "./VehiculosCarousel";
+
+const CARRUSEL_RELY = RELY_VERSIONS.map((v, i) => ({
+  src: v.image,
+  bg: ["#F26B1D", "#C9560F", "#A6470C"][i % 3],
+  panel: ["#F68E4F", "#DB763A", "#C0632B"][i % 3],
+  name: v.name,
+  subtitle: v.subtitle,
+  href: `/rely/${v.slug}`,
+}));
 
 const inter = Inter({
   subsets: ["latin"],
@@ -49,12 +59,12 @@ export default function LandingRely() {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
 
   return (
-    <main className={`${inter.variable} font-sans bg-white text-slate-800 selection:bg-[#1273b9] selection:text-white relative scroll-smooth`}>
+    <main className={`${inter.variable} font-sans bg-black text-white selection:bg-[#F26B1D] selection:text-white relative scroll-smooth`}>
 
-      {/* ================= HEADER FLOTANTE ESTILO BYD ================= */}
+      {/* ================= HEADER FLOTANTE — mismo negro del hero ================= */}
       <header className="fixed top-4 left-0 right-0 z-50 px-4 md:px-8">
         <div
-          className="mx-auto max-w-7xl bg-[#4a5056] backdrop-blur-md rounded-full px-6 flex items-center justify-between text-white shadow-[0_10px_30px_rgba(0,0,0,0.15)] relative"
+          className="mx-auto max-w-7xl bg-black/90 backdrop-blur-md rounded-full px-6 flex items-center justify-between text-white shadow-[0_10px_30px_rgba(0,0,0,0.4)] border border-white/10 relative"
           onMouseLeave={() => setIsMenuOpen(false)}
         >
           <div className="flex items-center gap-3 py-3 md:py-4">
@@ -81,7 +91,7 @@ export default function LandingRely() {
           <div className="flex items-center gap-4 py-3 md:py-4">
             <a
               href="#contacto"
-              className="border border-white hover:bg-white hover:text-[#4a5056] transition-colors rounded-full px-5 py-2 text-xs font-bold uppercase tracking-wider"
+              className="border border-white hover:bg-white hover:text-black transition-colors rounded-full px-5 py-2 text-xs font-bold uppercase tracking-wider"
             >
               Reservá
             </a>
@@ -89,35 +99,35 @@ export default function LandingRely() {
 
           {/* ================= MEGA MENÚ DESPLEGABLE ================= */}
           {isMenuOpen && (
-            <div className="absolute top-[calc(100%+10px)] left-0 w-full bg-white rounded-xl shadow-2xl border border-gray-100 text-slate-800 p-6 md:p-8 animate-fadeIn cursor-default">
+            <div className="absolute top-[calc(100%+10px)] left-0 w-full bg-[#111] rounded-xl shadow-2xl border border-white/10 text-white p-6 md:p-8 animate-fadeIn cursor-default">
 
-              <div className="flex justify-between items-center border-b border-gray-200 pb-0 mb-6">
+              <div className="flex justify-between items-center border-b border-white/10 pb-0 mb-6">
                 <div className="flex gap-8">
-                  <button className="text-[15px] font-bold text-slate-900 border-b-2 border-slate-900 pb-3">Todas las versiones</button>
-                  <button className="text-[15px] font-normal text-slate-400 hover:text-slate-600 pb-3">Pick-ups 4x4</button>
+                  <button className="text-[15px] font-bold text-white border-b-2 border-white pb-3">Todas las versiones</button>
+                  <button className="text-[15px] font-normal text-slate-400 hover:text-slate-200 pb-3">Pick-ups 4x4</button>
                 </div>
-                <button onClick={() => setIsMenuOpen(false)} className="text-slate-400 hover:text-slate-700 pb-3">
+                <button onClick={() => setIsMenuOpen(false)} className="text-slate-400 hover:text-white pb-3">
                   <X className="w-5 h-5" />
                 </button>
               </div>
 
               <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
                 {VERSIONS.map((v) => (
-                  <div key={v.code} className="bg-[#f4f5f6] rounded-lg p-5 flex flex-col justify-between group hover:bg-[#ebeef0] transition-colors">
+                  <div key={v.code} className="bg-white/5 rounded-lg p-5 flex flex-col justify-between group hover:bg-white/10 transition-colors">
                     <div>
-                      <h4 className="font-bold text-[15px] text-slate-900 uppercase tracking-tight">{v.name}</h4>
-                      <p className="text-xs text-slate-500 mt-1 font-light leading-relaxed">{v.text}</p>
+                      <h4 className="font-bold text-[15px] text-white uppercase tracking-tight">{v.name}</h4>
+                      <p className="text-xs text-slate-400 mt-1 font-light leading-relaxed">{v.text}</p>
                     </div>
 
-                    <div className="relative py-4 h-32 flex justify-center mix-blend-multiply">
+                    <div className="relative py-4 h-32 flex justify-center">
                       <Image src={v.image} alt={v.name} fill sizes="200px" className="object-contain group-hover:scale-105 transition-transform" />
                     </div>
 
                     <div className="flex items-center gap-2 mt-auto">
-                      <a href="#modelos" onClick={() => setIsMenuOpen(false)} className="flex-1 text-center bg-transparent border border-slate-300 text-slate-700 hover:border-slate-500 text-xs py-1.5 rounded font-medium transition-colors">
+                      <a href="#modelos" onClick={() => setIsMenuOpen(false)} className="flex-1 text-center bg-transparent border border-white/20 text-slate-200 hover:border-white/50 text-xs py-1.5 rounded font-medium transition-colors">
                         Conócelo
                       </a>
-                      <a href="#contacto" onClick={() => setIsMenuOpen(false)} className="flex-1 text-center bg-transparent border border-slate-300 text-slate-700 hover:border-slate-500 text-xs py-1.5 rounded font-medium transition-colors">
+                      <a href="#contacto" onClick={() => setIsMenuOpen(false)} className="flex-1 text-center bg-transparent border border-white/20 text-slate-200 hover:border-white/50 text-xs py-1.5 rounded font-medium transition-colors">
                         Reservá
                       </a>
                     </div>
@@ -129,79 +139,44 @@ export default function LandingRely() {
         </div>
       </header>
 
-      {/* ================= HERO SECTION ================= */}
-      <section className="relative pt-32 pb-16 md:pt-40 md:pb-20 min-h-[75vh] flex flex-col items-center justify-center text-center overflow-hidden">
-
-        {/* TODO (Walter): reemplazar por la foto real del hero */}
-        <div className="absolute inset-0 w-full h-full z-0">
-          <Image
-            src="/Pick-up-Rely-R8-frente-1.jpg"
-            alt="Rely R8 Pickup"
-            fill
-            priority
-            sizes="100vw"
-            className="object-cover"
-          />
-          <div className="absolute inset-0 bg-black/20"></div>
-        </div>
-
-        <div className="relative z-10 flex flex-col items-center px-4 mt-6">
-          <span className="bg-[#1273b9] text-white px-3 py-1 rounded-full text-[10px] font-bold tracking-widest uppercase mb-4 shadow-md">
-            ¡Ya Disponible!
-          </span>
-          <h1 className="text-4xl md:text-5xl lg:text-6xl font-medium text-white tracking-tight mb-2 drop-shadow-md">
-            Rely R8
-          </h1>
-          <p className="text-base md:text-lg text-slate-100 font-medium mb-6 drop-shadow-md">
-            Pick-up 4x4 · Capacidad hasta 1.000 kg
-          </p>
-
-          <div className="flex items-center gap-4">
-            <a href="#modelos" className="bg-white text-slate-800 hover:bg-gray-50 px-8 py-3 rounded-full text-sm font-semibold shadow-md transition-all active:scale-95">
-              Conócelo
-            </a>
-            <a href="#contacto" className="bg-[#1273b9] text-white hover:bg-[#0f609b] px-8 py-3 rounded-full text-sm font-semibold shadow-md transition-all active:scale-95">
-              Reservá
-            </a>
-          </div>
-        </div>
-      </section>
+      {/* ================= HERO — CARRUSEL DE AUTOS ================= */}
+      <VehiculosCarousel items={CARRUSEL_RELY} logoSrc="/RelyLogo.png" logoAlt="Rely" invertLogo />
 
       {/* ================= FORMULARIO DE RESERVA ================= */}
-      <section id="contacto" className="bg-white py-16 relative border-b border-gray-100">
+      <section id="contacto" className="bg-black py-16 relative border-b border-white/10">
         <div className="max-w-6xl mx-auto px-6 grid lg:grid-cols-2 gap-16 items-center">
 
           <div className="max-w-md">
-            <h2 className="text-3xl md:text-4xl font-bold text-slate-900 tracking-tight mb-4">
+            <h2 className="text-3xl md:text-4xl font-bold text-white tracking-tight mb-4">
               Dejá tus datos y reservá tu Rely R8
             </h2>
-            <p className="text-slate-600 font-medium mb-8 text-base md:text-lg italic">
+            <p className="text-slate-400 font-medium mb-8 text-base md:text-lg italic">
               Completá el formulario. Te contactamos para confirmar la reserva y los pasos a seguir.
             </p>
           </div>
 
-          <div className="bg-white border border-gray-100 rounded-[20px] p-8 shadow-[0_8px_40px_rgb(0,0,0,0.06)] relative overflow-hidden">
+          <div className="bg-white/5 border border-white/10 rounded-[20px] p-8 shadow-[0_8px_40px_rgb(0,0,0,0.3)] relative overflow-hidden">
             <form className="space-y-6 relative z-10">
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
                 <div>
-                  <label className="text-[11px] text-gray-500 font-bold uppercase tracking-wider mb-1 block">Nombre</label>
-                  <input type="text" placeholder="Nombre completo" className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 outline-none focus:border-[#1273b9] focus:bg-white transition-colors text-slate-800 font-medium placeholder:font-normal placeholder:text-gray-400" />
+                  <label className="text-[11px] text-slate-400 font-bold uppercase tracking-wider mb-1 block">Nombre</label>
+                  <input type="text" placeholder="Nombre completo" className="w-full bg-white/5 border border-white/15 rounded-xl px-4 py-3 outline-none focus:border-[#F26B1D] focus:bg-white/10 transition-colors text-white font-medium placeholder:font-normal placeholder:text-slate-500" />
                 </div>
                 <div>
-                  <label className="text-[11px] text-gray-500 font-bold uppercase tracking-wider mb-1 block">Apellido</label>
-                  <input type="text" placeholder="Apellido" className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 outline-none focus:border-[#1273b9] focus:bg-white transition-colors text-slate-800 font-medium placeholder:font-normal placeholder:text-gray-400" />
+                  <label className="text-[11px] text-slate-400 font-bold uppercase tracking-wider mb-1 block">Apellido</label>
+                  <input type="text" placeholder="Apellido" className="w-full bg-white/5 border border-white/15 rounded-xl px-4 py-3 outline-none focus:border-[#F26B1D] focus:bg-white/10 transition-colors text-white font-medium placeholder:font-normal placeholder:text-slate-500" />
                 </div>
               </div>
 
               <div>
-                <label className="text-[11px] text-gray-500 font-bold uppercase tracking-wider mb-1 block">Teléfono / WhatsApp</label>
-                <input type="tel" placeholder="Código de área + Número" className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 outline-none focus:border-[#1273b9] focus:bg-white transition-colors text-slate-800 font-medium placeholder:font-normal placeholder:text-gray-400" />
+                <label className="text-[11px] text-slate-400 font-bold uppercase tracking-wider mb-1 block">Teléfono / WhatsApp</label>
+                <input type="tel" placeholder="Código de área + Número" className="w-full bg-white/5 border border-white/15 rounded-xl px-4 py-3 outline-none focus:border-[#F26B1D] focus:bg-white/10 transition-colors text-white font-medium placeholder:font-normal placeholder:text-slate-500" />
               </div>
 
               <div>
-                <label className="text-[11px] text-gray-500 font-bold uppercase tracking-wider mb-1 block">Versión de interés</label>
-                <select className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 outline-none focus:border-[#1273b9] focus:bg-white transition-colors text-slate-800 font-medium appearance-none cursor-pointer">
-                  {VERSIONS.map((v) => (<option key={v.code}>{v.name}</option>))}
+                <label className="text-[11px] text-slate-400 font-bold uppercase tracking-wider mb-1 block">Versión de interés</label>
+                <select className="w-full bg-white/5 border border-white/15 rounded-xl px-4 py-3 outline-none focus:border-[#F26B1D] focus:bg-white/10 transition-colors text-white font-medium appearance-none cursor-pointer">
+                  {VERSIONS.map((v) => (<option key={v.code} className="bg-black">{v.name}</option>))}
                 </select>
               </div>
 
@@ -215,47 +190,47 @@ export default function LandingRely() {
       </section>
 
       {/* ================= MODELOS DESTACADOS ================= */}
-      <section id="modelos" className="bg-[#f8f9fa] py-20 px-6">
+      <section id="modelos" className="bg-[#0a0a0a] py-20 px-6">
         <div className="max-w-6xl mx-auto">
           <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-10 gap-4">
-            <h2 className="text-3xl font-bold text-slate-900 tracking-tight">Versiones disponibles</h2>
-            <a href="#contacto" className="bg-[#1273b9] hover:bg-[#0f609b] text-white px-6 py-2.5 rounded-full font-bold text-sm transition-colors shadow-sm">
+            <h2 className="text-3xl font-bold text-white tracking-tight">Versiones disponibles</h2>
+            <a href="#contacto" className="bg-[#F26B1D] hover:bg-[#C9560F] text-white px-6 py-2.5 rounded-full font-bold text-sm transition-colors shadow-sm">
               Reservar ahora
             </a>
           </div>
 
           <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
             {VERSIONS.map((v) => (
-              <div key={v.code} className="bg-white rounded-2xl overflow-hidden shadow-sm hover:shadow-md transition-shadow border border-gray-100 flex flex-col">
+              <div key={v.code} className="bg-white/5 rounded-2xl overflow-hidden shadow-sm hover:shadow-md transition-shadow border border-white/10 flex flex-col">
 
                 <Link href={`/rely/${v.slug}`} className="block">
-                  <div className="bg-[#eef0f2] h-56 relative flex justify-center items-center p-4">
-                    <Image src={v.image} alt={v.name} fill sizes="(max-width: 768px) 50vw, 33vw" className="object-contain mix-blend-multiply drop-shadow-md" />
+                  <div className="bg-white/5 h-56 relative flex justify-center items-center p-4">
+                    <Image src={v.image} alt={v.name} fill sizes="(max-width: 768px) 50vw, 33vw" className="object-contain drop-shadow-md" />
                     <div className="absolute bottom-3 left-1/2 -translate-x-1/2 flex gap-1.5">
-                      <div className="w-1.5 h-1.5 rounded-full bg-[#1273b9]"></div>
-                      <div className="w-1.5 h-1.5 rounded-full bg-slate-300"></div>
-                      <div className="w-1.5 h-1.5 rounded-full bg-slate-300"></div>
+                      <div className="w-1.5 h-1.5 rounded-full bg-[#F26B1D]"></div>
+                      <div className="w-1.5 h-1.5 rounded-full bg-white/20"></div>
+                      <div className="w-1.5 h-1.5 rounded-full bg-white/20"></div>
                     </div>
                   </div>
                 </Link>
 
                 <div className="p-6 flex flex-col flex-grow">
                   <Link href={`/rely/${v.slug}`}>
-                    <h3 className="text-[17px] font-bold text-slate-900 uppercase tracking-tight hover:text-[#1273b9] transition-colors">{v.name}</h3>
+                    <h3 className="text-[17px] font-bold text-white uppercase tracking-tight hover:text-[#F26B1D] transition-colors">{v.name}</h3>
                   </Link>
-                  <p className="text-[13px] italic text-slate-600 mb-4 mt-1 font-medium">{v.subtitle}</p>
+                  <p className="text-[13px] italic text-slate-400 mb-4 mt-1 font-medium">{v.subtitle}</p>
 
-                  <div className="space-y-1 text-[13px] text-slate-600 font-light mb-8 flex-grow leading-relaxed">
+                  <div className="space-y-1 text-[13px] text-slate-400 font-light mb-8 flex-grow leading-relaxed">
                     {v.specs.map((spec, i) => (
                       <p key={i}>{spec}</p>
                     ))}
                   </div>
 
                   <div className="flex gap-3 mt-auto">
-                    <a href="#contacto" className="bg-[#1273b9] hover:bg-[#0f609b] text-white px-6 py-2 rounded-[10px] font-semibold text-sm transition-colors text-center shadow-sm">
+                    <a href="#contacto" className="bg-[#F26B1D] hover:bg-[#C9560F] text-white px-6 py-2 rounded-[10px] font-semibold text-sm transition-colors text-center shadow-sm">
                       Reservar
                     </a>
-                    <Link href={`/rely/${v.slug}`} className="bg-white border border-gray-300 text-slate-800 hover:bg-gray-50 px-6 py-2 rounded-[10px] font-semibold text-sm transition-colors text-center italic">
+                    <Link href={`/rely/${v.slug}`} className="bg-transparent border border-white/20 text-white hover:bg-white/5 px-6 py-2 rounded-[10px] font-semibold text-sm transition-colors text-center italic">
                       Ficha
                     </Link>
                   </div>
@@ -267,15 +242,15 @@ export default function LandingRely() {
       </section>
 
       {/* ================= ESTADÍSTICAS RÁPIDAS ================= */}
-      <section className="bg-white py-12 border-b border-gray-100">
-        <div className="mx-auto grid max-w-6xl grid-cols-2 md:grid-cols-4 gap-8 px-6 divide-x divide-gray-100">
+      <section className="bg-black py-12 border-b border-white/10">
+        <div className="mx-auto grid max-w-6xl grid-cols-2 md:grid-cols-4 gap-8 px-6 divide-x divide-white/10">
           {STATS.map((s, index) => (
             <div key={s.label} className={`text-center ${index === 0 ? "" : "pl-8"}`}>
-              <div className="text-3xl sm:text-5xl font-light text-[#1273b9] tracking-tight">
+              <div className="text-3xl sm:text-5xl font-light text-[#F26B1D] tracking-tight">
                 {s.value}
-                <span className="ml-1 text-base font-medium text-slate-400">{s.unit}</span>
+                <span className="ml-1 text-base font-medium text-slate-500">{s.unit}</span>
               </div>
-              <div className="mt-2 text-[10px] font-bold uppercase tracking-widest text-slate-500">
+              <div className="mt-2 text-[10px] font-bold uppercase tracking-widest text-slate-400">
                 {s.label}
               </div>
             </div>
@@ -284,37 +259,37 @@ export default function LandingRely() {
       </section>
 
       {/* ================= FICHA TÉCNICA E INSTITUCIONAL ================= */}
-      <section id="institucional" className="bg-white py-20 border-b border-gray-200">
+      <section id="institucional" className="bg-[#0a0a0a] py-20 border-b border-white/10">
         <div className="mx-auto max-w-6xl px-6 grid lg:grid-cols-2 gap-16">
 
           <div>
-            <h2 className="text-3xl font-bold mb-3 text-slate-900 tracking-tight">Equipamiento de serie</h2>
-            <p className="text-slate-500 mb-8 font-medium">Sin extras innecesarios, con lo justo para trabajar todos los días.</p>
+            <h2 className="text-3xl font-bold mb-3 text-white tracking-tight">Equipamiento de serie</h2>
+            <p className="text-slate-400 mb-8 font-medium">Sin extras innecesarios, con lo justo para trabajar todos los días.</p>
 
             <ul className="space-y-4">
               {CHECKLIST.map((item, i) => (
-                <li key={item} className="flex items-center gap-4 border-b border-gray-100 pb-4">
-                  <span className="text-[#1273b9] font-mono text-sm font-bold">
+                <li key={item} className="flex items-center gap-4 border-b border-white/10 pb-4">
+                  <span className="text-[#F26B1D] font-mono text-sm font-bold">
                     {String(i + 1).padStart(2, "0")}
                   </span>
-                  <span className="text-slate-700 text-sm font-medium">{item}</span>
+                  <span className="text-slate-200 text-sm font-medium">{item}</span>
                 </li>
               ))}
             </ul>
           </div>
 
           <div>
-            <h2 className="text-3xl font-bold mb-8 text-slate-900 tracking-tight">Ficha técnica</h2>
-            <div className="rounded-2xl border border-gray-200 overflow-hidden bg-white shadow-sm">
+            <h2 className="text-3xl font-bold mb-8 text-white tracking-tight">Ficha técnica</h2>
+            <div className="rounded-2xl border border-white/10 overflow-hidden bg-white/5">
               {SPECS.map((s, i) => (
                 <div
                   key={s.label}
-                  className={`flex items-center justify-between px-6 py-4 border-b border-gray-100 last:border-0 ${
-                    i % 2 === 0 ? "bg-gray-50" : "bg-white"
+                  className={`flex items-center justify-between px-6 py-4 border-b border-white/10 last:border-0 ${
+                    i % 2 === 0 ? "bg-white/5" : "bg-transparent"
                   }`}
                 >
-                  <span className="text-sm text-slate-500 font-medium">{s.label}</span>
-                  <span className="text-sm font-bold text-slate-900 text-right ml-4">
+                  <span className="text-sm text-slate-400 font-medium">{s.label}</span>
+                  <span className="text-sm font-bold text-white text-right ml-4">
                     {s.value}
                   </span>
                 </div>
@@ -326,8 +301,8 @@ export default function LandingRely() {
       </section>
 
       {/* ================= FOOTER ================= */}
-      <footer className="bg-white py-8">
-        <div className="mx-auto flex max-w-6xl flex-col items-center justify-between gap-4 px-6 text-xs text-slate-400 font-medium sm:flex-row">
+      <footer className="bg-black py-8 border-t border-white/10">
+        <div className="mx-auto flex max-w-6xl flex-col items-center justify-between gap-4 px-6 text-xs text-slate-500 font-medium sm:flex-row">
           <span>© {new Date().getFullYear()} Rely Argentina / Pfaffen Autos</span>
           <span>Precios sujetos a modificación sin previo aviso.</span>
         </div>

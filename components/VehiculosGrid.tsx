@@ -6,6 +6,7 @@ import Image from "next/image";
 import { ChevronRight, ChevronLeft, Scale, X } from "lucide-react";
 import { AnimatePresence, motion } from "framer-motion";
 import ComparadorModal from "@/components/modals/ComparadorModal";
+import { VehicleCard } from "@/components/Stock";
 
 const ITEMS_POR_PAGINA = 9;
 
@@ -98,70 +99,14 @@ export default function VehiculosGrid({ vehiculos }: { vehiculos: any[] | null }
 
       {/* ACÁ ESTÁ EL CAMBIO CLAVE: w-full y xl:grid-cols-4 para escritorio, manteniendo grid-cols-2 para móvil */}
       <div className="w-full grid grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3 sm:gap-4 md:gap-6 pb-8">
-        {listaPaginada.map((auto) => {
-          const estaSeleccionado = autosComparar.some((a) => a.id === auto.id);
-          const precioMostrar =
-            auto.precio_publicado_usd && !auto.precio_publicado_ars
-              ? `US$ ${auto.precio_publicado_usd.toLocaleString("es-AR")}`
-              : auto.precio_publicado_ars
-                ? `$ ${auto.precio_publicado_ars.toLocaleString("es-AR")}`
-                : `US$ ${auto.precio_publicado_usd?.toLocaleString("es-AR")}`;
-
-          return (
-            <Link
-              key={auto.id}
-              href={`/catalogo/${auto.slug}`}
-              className="block group h-full focus:outline-none w-full"
-            >
-              <div
-                className={`bg-white rounded-2xl overflow-hidden flex flex-col h-full hover:shadow-lg transition-all duration-300 relative border ${
-                  estaSeleccionado ? "border-blue-600 ring-1 ring-blue-600 shadow-md" : "border-gray-200 hover:border-blue-400"
-                }`}
-              >
-                <button
-                  onClick={(e) => toggleComparar(e, auto)}
-                  className={`absolute top-3 left-3 z-10 p-2 rounded-full shadow-sm transition-all duration-300 border hover:scale-110 active:scale-95 ${
-                    estaSeleccionado ? "bg-blue-600 text-white border-blue-600" : "bg-white text-gray-400 hover:text-blue-600 border-gray-200"
-                  }`}
-                  title="Comparar vehículo"
-                >
-                  <Scale className="w-3.5 h-3.5" />
-                </button>
-
-                <div className="relative h-32 sm:h-48 lg:h-52 bg-gray-100 flex items-center justify-center overflow-hidden shrink-0">
-                  {auto.multimedia_vehiculos?.[0] ? (
-                    <Image
-                      src={auto.multimedia_vehiculos[0].url_archivo}
-                      alt={`${auto.marca} ${auto.modelo}`}
-                      fill
-                      sizes="(max-width: 640px) 50vw, (max-width: 1024px) 33vw, 300px"
-                      className="object-cover mix-blend-multiply group-hover:scale-105 transition-transform duration-500"
-                    />
-                  ) : (
-                    <div className="text-gray-400 text-xs font-medium">Sin foto</div>
-                  )}
-                  {auto.estado === "Reservado" && (
-                    <div className="absolute top-3 right-3 bg-yellow-100 text-yellow-800 px-2.5 py-1 rounded-md text-[10px] font-bold uppercase tracking-widest border border-yellow-200">
-                      Reservado
-                    </div>
-                  )}
-                </div>
-
-                <div className="p-4 sm:p-5 flex flex-col flex-grow">
-                  <span className="text-[10px] text-gray-500 font-bold uppercase tracking-widest mb-1">{auto.marca}</span>
-                  <h3 className="text-sm sm:text-lg font-black text-gray-900 leading-tight uppercase truncate">{auto.modelo}</h3>
-                  <p className="text-[11px] sm:text-xs text-gray-500 mt-1 line-clamp-1">
-                    {auto.version || `${auto.anio} • ${auto.kilometraje?.toLocaleString("es-AR")} km`}
-                  </p>
-                  <div className="mt-auto pt-4 flex items-center justify-between">
-                    <span className="text-base sm:text-xl font-black text-blue-600">{precioMostrar}</span>
-                    <ChevronRight className="w-4 h-4 text-gray-300 group-hover:text-blue-600 transition-colors" />
-                  </div>
-                </div>
-              </div>
-            </Link>
-          );
-        })}
+        {listaPaginada.map((auto) => (
+          <VehicleCard
+            key={auto.id}
+            auto={auto}
+            estaSeleccionado={autosComparar.some((a) => a.id === auto.id)}
+            onToggleComparar={toggleComparar}
+          />
+        ))}
       </div>
 
       {totalPaginas > 1 && (

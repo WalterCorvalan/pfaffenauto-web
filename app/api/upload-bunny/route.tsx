@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { createServerClient } from "@supabase/ssr";
 import { cookies } from "next/headers";
+import { r2Configurado, subirArchivoR2 } from "@/lib/storage/r2";
 
 const MAX_MB = 15;
 
@@ -36,29 +37,32 @@ export async function POST(request: Request) {
     const cleanFileName = file.name.replace(/[^a-zA-Z0-9.\-_]/g, '');
     const uniqueFileName = `${Date.now()}-${cleanFileName}`;
     
-    // Armamos la ruta hacia Bunny.net
-    const storageEndpoint = process.env.BUNNY_STORAGE_ENDPOINT;
-    const storageZone = process.env.BUNNY_STORAGE_ZONE;
-    const uploadUrl = `${storageEndpoint}/${storageZone}/vehiculos/${uniqueFileName}`;
+    let publicUrl: string;
 
-    // Subimos el archivo a Bunny.net de forma segura desde el backend
-    const response = await fetch(uploadUrl, {
-      method: "PUT",
-      headers: {
-        "AccessKey": process.env.BUNNY_API_KEY as string,
-        "Content-Type": "application/octet-stream",
-      },
-      body: buffer,
-    });
+    if (r2Configurado()) {
+      publicUrl = await subirArchivoR2(buffer, `vehiculos/${uniqueFileName}`, file.type);
+    } else {
+      // Fallback a Bunny mientras no estén las credenciales de R2 cargadas
+      const storageEndpoint = process.env.BUNNY_STORAGE_ENDPOINT;
+      const storageZone = process.env.BUNNY_STORAGE_ZONE;
+      const uploadUrl = `${storageEndpoint}/${storageZone}/vehiculos/${uniqueFileName}`;
 
-    if (!response.ok) {
-      throw new Error(`Error de Bunny: ${response.statusText}`);
+      const response = await fetch(uploadUrl, {
+        method: "PUT",
+        headers: {
+          "AccessKey": process.env.BUNNY_API_KEY as string,
+          "Content-Type": "application/octet-stream",
+        },
+        body: buffer,
+      });
+
+      if (!response.ok) {
+        throw new Error(`Error de Bunny: ${response.statusText}`);
+      }
+
+      publicUrl = `${process.env.BUNNY_CDN_URL}/vehiculos/${uniqueFileName}`;
     }
 
-    // Armamos la URL pública que se guardará en tu base de datos
-    const publicUrl = `${process.env.BUNNY_CDN_URL}/vehiculos/${uniqueFileName}`;
-    
-    // Devolvemos la URL al frontend
     return NextResponse.json({ publicUrl });
 
   } catch (error) {
