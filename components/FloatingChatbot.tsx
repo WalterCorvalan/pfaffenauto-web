@@ -2,11 +2,28 @@
 
 import { useState, useRef, useEffect } from "react";
 import { usePathname } from "next/navigation";
+import Image from "next/image";
 import { MessageSquare, X, Send, Bot, User } from "lucide-react";
 
 interface Message {
   role: "user" | "assistant";
   content: string;
+  imagen?: string | null;
+}
+
+const MENSAJE_INICIAL: Message = {
+  role: "assistant",
+  content: "¡Hola! Soy el asistente virtual de Pfaffen Autos. Contame qué auto estás buscando y te cuento si lo tenemos en stock.",
+};
+
+function obtenerSessionId(): string {
+  const KEY = "pfaffen_webchat_session";
+  let id = localStorage.getItem(KEY);
+  if (!id) {
+    id = crypto.randomUUID();
+    localStorage.setItem(KEY, id);
+  }
+  return id;
 }
 
 export default function FloatingChatbot() {
@@ -16,12 +33,7 @@ export default function FloatingChatbot() {
   const [isOpen, setIsOpen] = useState(false);
   const [input, setInput] = useState("");
   const [loading, setLoading] = useState(false);
-  
-  const [messages, setMessages] = useState<Message[]>([]);
-  // ========================================================
-  // NUEVO: Estado para saber en qué parte del flujo estamos
-  // ========================================================
-  const [chatStep, setChatStep] = useState<string>("MENU");
+  const [messages, setMessages] = useState<Message[]>([MENSAJE_INICIAL]);
 
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
@@ -29,143 +41,41 @@ export default function FloatingChatbot() {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
   };
 
-  // ================= 1. CARGAR MEMORIA =================
   useEffect(() => {
-    const chatGuardado = localStorage.getItem("pfaffen_chat_memory");
-    const pasoGuardado = localStorage.getItem("pfaffen_chat_step");
-    
-    if (chatGuardado && pasoGuardado) {
-      setMessages(JSON.parse(chatGuardado));
-      setChatStep(pasoGuardado);
-    } else {
-      setMessages([
-        {
-          role: "assistant",
-          content: "¡Hola! Soy el asistente virtual de Pfaffen Autos. ¿En qué te puedo ayudar hoy? Escribí el número de la opción:\n\n1️⃣ Comprar\n2️⃣ Consignar\n3️⃣ Vender\n4️⃣ Seguros",
-        },
-      ]);
-    }
-  }, []);
-
-  // ================= 2. GUARDAR MEMORIA =================
-  useEffect(() => {
-    if (messages.length > 0) {
-      localStorage.setItem("pfaffen_chat_memory", JSON.stringify(messages));
-      localStorage.setItem("pfaffen_chat_step", chatStep);
-    }
     if (isOpen) scrollToBottom();
-  }, [messages, chatStep, isOpen]);
+  }, [messages, isOpen]);
 
-  // ================= 3. CEREBRO: FLUJO DEL MAPA MENTAL =================
-  const procesarMensaje = (textoUsuario: string, currentStep: string) => {
-    const t = textoUsuario.toLowerCase();
-
-    // Salida de emergencia: Si el usuario quiere volver a empezar
-    if (t.includes("menu") || t.includes("volver") || t.includes("inicio") || t.includes("hola")) {
-      return {
-        reply: "Volvimos al inicio. Escribí el número de la opción:\n\n1️⃣ Comprar\n2️⃣ Consignar\n3️⃣ Vender\n4️⃣ Seguros",
-        nextStep: "MENU"
-      };
-    }
-
-    switch (currentStep) {
-      // ----------------- MENÚ PRINCIPAL -----------------
-      case "MENU":
-        if (t.includes("1") || t.includes("comprar")) return { reply: "¡Genial! ¿Estás buscando un vehículo NUEVO (0KM) o un USADO?", nextStep: "COMPRAR_TIPO" };
-        if (t.includes("2") || t.includes("consignar")) return { reply: "Excelente. Para consignar tu auto y obtener la mayor rentabilidad, por favor pasame: Marca, Modelo, Año, Kilometraje y qué idea de precio tenés.", nextStep: "CONSIGNAR_DATOS" };
-        if (t.includes("3") || t.includes("vender")) return { reply: "Para vender tu auto de forma directa y al instante, decime: Marca, Modelo, Año, Kilómetros y el precio pretendido.", nextStep: "VENDER_DATOS" };
-        if (t.includes("4") || t.includes("seguro")) return { reply: "Para cotizar tu seguro con las mejores coberturas, necesito que me pases: Marca, Modelo, Año, KM y la localidad de guarda del vehículo.", nextStep: "SEGUROS_DATOS" };
-        
-        return { reply: "Por favor, elegí una opción válida (1, 2, 3 o 4) o escribí 'Menu' para reiniciar.", nextStep: "MENU" };
-
-      // ----------------- RAMA 1: COMPRAR -----------------
-      case "COMPRAR_TIPO":
-        if (t.includes("usado")) return { reply: "¿Qué auto estás buscando o qué presupuesto tenés? (Ej: 'Un 5 puertas por 15 millones')", nextStep: "COMPRAR_USADO_CUAL" };
-        if (t.includes("nuevo") || t.includes("0km")) return { reply: "¿Qué marca y modelo de 0KM estás buscando?", nextStep: "COMPRAR_NUEVO_CUAL" };
-        return { reply: "Por favor indicame si buscás un 'Nuevo' o un 'Usado'.", nextStep: "COMPRAR_TIPO" };
-
-      // USADO
-      case "COMPRAR_USADO_CUAL":
-        return { reply: "¡Anotado! Si lo tenemos en stock te lo mostraremos enseguida, y si está por ingresar, generaremos un pedido. ¿Qué forma de pago tenés pensada? (Efectivo, Permuta o Crédito)", nextStep: "COMPRAR_USADO_PAGO" };
-      case "COMPRAR_USADO_PAGO":
-        if (t.includes("credito") || t.includes("crédito") || t.includes("cuotas")) return { reply: "Para evaluar tu crédito en el acto, por favor pasame tu número de CUIL.", nextStep: "COMPRAR_USADO_CUIL" };
-        return { reply: "¡Perfecto! Ya derivé tu consulta al vendedor de la sucursal para que te asesore con el stock y el pago. En breve te responde por este medio.", nextStep: "FIN" };
-      case "COMPRAR_USADO_CUIL":
-        return { reply: "Gracias. Un asesor revisará tu perfil crediticio y te contactará con las opciones de financiación disponibles. ¡Hablamos pronto!", nextStep: "FIN" };
-
-      // NUEVO
-      case "COMPRAR_NUEVO_CUAL":
-        return { reply: "Si lo tenemos físico te asignaremos un asesor. Si no, trabajamos con todas las marcas y modelos a pedido.\n¿Cómo tenés pensado abonarlo? ¿Entregás un usado en parte de pago?", nextStep: "COMPRAR_NUEVO_PAGO" };
-      case "COMPRAR_NUEVO_PAGO":
-        if (t.includes("usado") || t.includes("permuta") || t.includes("entrego") || t.includes("si")) return { reply: "¡Bárbaro! Por favor pasame: Marca, Modelo, Año y Kilómetros de tu auto actual.", nextStep: "COMPRAR_NUEVO_USADO_DATOS" };
-        return { reply: "¡Anotado! Ya asigné a tu vendedor para que te pase las cotizaciones del 0KM. En unos minutos te escribe.", nextStep: "FIN" };
-      case "COMPRAR_NUEVO_USADO_DATOS":
-        return { reply: "Perfecto. Le paso todos estos datos a Gabriel y Sergio, nuestros especialistas en 0KM con permuta. Ellos te contactarán enseguida con los números finos.", nextStep: "FIN" };
-
-      // ----------------- RAMA 2: CONSIGNAR -----------------
-      case "CONSIGNAR_DATOS":
-        return { reply: "¡Gracias por los datos! ¿De qué zona sos? Tenemos sucursales en Villa de Mayo y Don Torcuato.", nextStep: "CONSIGNAR_ZONA" };
-      case "CONSIGNAR_ZONA":
-        // NOTA: Olivos eliminado de la lógica.
-        if (t.includes("villa") || t.includes("mayo")) return { reply: "¡Genial! Gabriel de la sucursal Villa de Mayo se va a poner en contacto con vos para coordinar la consignación.", nextStep: "FIN" };
-        if (t.includes("torcuato")) return { reply: "¡Genial! Lucas de la sucursal Don Torcuato te va a escribir a la brevedad para coordinar la revisión.", nextStep: "FIN" };
-        return { reply: "¡Anotado! Derivaremos tu consulta al asesor más cercano a tu zona. ¡En breve nos comunicamos!", nextStep: "FIN" };
-
-      // ----------------- RAMA 3: VENDER -----------------
-      case "VENDER_DATOS":
-        return { reply: "¡Excelente! ¿De qué zona sos? (Villa de Mayo o Don Torcuato)", nextStep: "VENDER_ZONA" };
-      case "VENDER_ZONA":
-        return { reply: "¡Anotado! Ya le pasé los datos de tu auto al equipo de compras de tu zona. Te van a hablar para hacerte una oferta en efectivo. ¡Gracias!", nextStep: "FIN" };
-
-      // ----------------- RAMA 4: SEGUROS -----------------
-      case "SEGUROS_DATOS":
-        return { reply: "Con esa info ya podemos cotizar. Un vendedor exclusivo de seguros se va a contactar con vos en los próximos minutos para pasarte las mejores opciones. ¡Saludos!", nextStep: "FIN" };
-
-      // ----------------- FINALIZADO -----------------
-      case "FIN":
-        return { reply: "Tu consulta ya está en manos de un asesor humano que te va a responder por esta misma vía. Si querés hacer una consulta nueva, escribí la palabra 'Menu'.", nextStep: "FIN" };
-
-      default:
-        return { reply: "No te entendí bien. Escribí 'Menu' para volver a ver las opciones.", nextStep: "MENU" };
-    }
+  const limpiarChat = () => {
+    localStorage.removeItem("pfaffen_webchat_session");
+    setMessages([MENSAJE_INICIAL]);
   };
 
-  const handleSend = (e: React.FormEvent) => {
+  const handleSend = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!input.trim() || loading) return;
 
-    const userMessage = input.trim();
+    const texto = input.trim();
     setInput("");
-
-    const newMessages: Message[] = [
-      ...messages,
-      { role: "user", content: userMessage },
-    ];
-    setMessages(newMessages);
+    setMessages((prev) => [...prev, { role: "user", content: texto }]);
     setLoading(true);
 
-    // Procesamos la lógica del diagrama de flujo
-    setTimeout(() => {
-      const { reply, nextStep } = procesarMensaje(userMessage, chatStep);
-      
+    try {
+      const sessionId = obtenerSessionId();
+      const res = await fetch("/api/webchat", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ sessionId, mensaje: texto }),
+      });
+      const data = await res.json();
       setMessages((prev) => [
         ...prev,
-        { role: "assistant", content: reply },
+        { role: "assistant", content: data.reply || "Perdón, no pude responder. Probá de nuevo.", imagen: data.fotoUrl || null },
       ]);
-      setChatStep(nextStep); // Avanzamos al siguiente paso del embudo
+    } catch {
+      setMessages((prev) => [...prev, { role: "assistant", content: "Perdón, hubo un error de conexión. Probá de nuevo en un momento." }]);
+    } finally {
       setLoading(false);
-    }, 1200);
-  };
-
-  const limpiarChat = () => {
-    const msgInicial: Message[] = [{
-      role: "assistant",
-      content: "Historial borrado. ¡Hola de nuevo!\n\n1️⃣ Comprar\n2️⃣ Consignar\n3️⃣ Vender\n4️⃣ Seguros",
-    }];
-    setMessages(msgInicial);
-    setChatStep("MENU");
-    localStorage.setItem("pfaffen_chat_memory", JSON.stringify(msgInicial));
-    localStorage.setItem("pfaffen_chat_step", "MENU");
+    }
   };
 
   return (
@@ -202,11 +112,11 @@ export default function FloatingChatbot() {
                 </span>
               </div>
             </div>
-            
+
             {/* Controles: Limpiar y Cerrar */}
             <div className="flex items-center gap-2">
-              <button 
-                onClick={limpiarChat} 
+              <button
+                onClick={limpiarChat}
                 className="text-slate-400 hover:text-white text-[10px] font-bold uppercase px-2 py-1 rounded hover:bg-white/10 transition-colors"
                 title="Borrar historial"
               >
@@ -233,14 +143,21 @@ export default function FloatingChatbot() {
                     <Bot className="w-3.5 h-3.5" />
                   </div>
                 )}
-                <div
-                  className={`max-w-[80%] p-3.5 rounded-2xl text-xs leading-relaxed shadow-sm whitespace-pre-wrap ${
-                    m.role === "user"
-                      ? "bg-[#0145F2] text-white rounded-br-none font-medium"
-                      : "bg-white text-slate-800 rounded-bl-none border border-slate-100"
-                  }`}
-                >
-                  {m.content}
+                <div className="max-w-[80%] flex flex-col gap-2">
+                  <div
+                    className={`p-3.5 rounded-2xl text-xs leading-relaxed shadow-sm whitespace-pre-wrap ${
+                      m.role === "user"
+                        ? "bg-[#0145F2] text-white rounded-br-none font-medium"
+                        : "bg-white text-slate-800 rounded-bl-none border border-slate-100"
+                    }`}
+                  >
+                    {m.content}
+                  </div>
+                  {m.imagen && (
+                    <div className="relative w-full h-32 rounded-xl overflow-hidden border border-slate-100">
+                      <Image src={m.imagen} alt="Foto del vehículo" fill className="object-cover" sizes="300px" />
+                    </div>
+                  )}
                 </div>
                 {m.role === "user" && (
                   <div className="w-7 h-7 rounded-full bg-slate-200 text-slate-700 flex items-center justify-center shrink-0 mb-1">

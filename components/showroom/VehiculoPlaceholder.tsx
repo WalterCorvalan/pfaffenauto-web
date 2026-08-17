@@ -4,11 +4,22 @@ import type { ShowroomVehicle } from "@/lib/showroom/types";
 
 // Caja geométrica temporal. Reemplazar por <primitive object={gltf.scene} /> cuando haya modelUrl (.glb).
 // Vista "interior" no funciona con placeholder (mesh sólido, sin cabina hueca) — pendiente hasta cargar .glb real.
-export default function VehiculoPlaceholder({ vehiculo }: { vehiculo: ShowroomVehicle }) {
+type Props = {
+  vehiculo: ShowroomVehicle;
+  posicionX?: number; // offset horizontal, para la fila cenital
+  onClick?: () => void;
+};
+
+export default function VehiculoPlaceholder({ vehiculo, posicionX = 0, onClick }: Props) {
   const { largo, ancho, alto } = vehiculo.dimensiones;
 
   return (
-    <group position={[0, alto / 2, 0]}>
+    <group
+      position={[posicionX, alto / 2, 0]}
+      onClick={onClick ? (e) => { e.stopPropagation(); onClick(); } : undefined}
+      onPointerOver={onClick ? (e) => { e.stopPropagation(); document.body.style.cursor = "pointer"; } : undefined}
+      onPointerOut={onClick ? () => { document.body.style.cursor = "auto"; } : undefined}
+    >
       {/* carrocería */}
       <mesh castShadow receiveShadow>
         <boxGeometry args={[ancho, alto, largo]} />

@@ -131,7 +131,7 @@ export default function PublicHeader() {
 
         {/* ================= COLUMNA CENTRO: MENÚ / BUSCADOR (CENTRADO EXACTO) ================= */}
         <div className="flex justify-center items-center w-full">
-          <AnimatePresence mode="wait">
+          <AnimatePresence mode="popLayout">
             {!isScrolled ? (
               <motion.nav
                 key="nav-links"

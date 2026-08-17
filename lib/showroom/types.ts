@@ -1,4 +1,4 @@
-export type ShowroomView = "exterior" | "interior" | "trasera";
+export type ShowroomView = "cenital" | "exterior" | "interior" | "trasera";
 
 export type ShowroomVehicle = {
   id: string;
@@ -11,6 +11,7 @@ export type ShowroomVehicle = {
   image: string;
   specs: string[];
   whatsappLink: string;
+  disponibles?: number; // cantidad de unidades en stock de este modelo, para el badge de la tarjeta cenital
 };
 
 export const SHOWROOM_VEHICULOS: ShowroomVehicle[] = [

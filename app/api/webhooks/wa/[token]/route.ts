@@ -1,9 +1,8 @@
 import { createHmac, timingSafeEqual } from "crypto";
 import { createClient } from "@supabase/supabase-js";
-import { z } from "zod";
-import { chatJson, isAiConfigured } from "@/lib/ai";
-import { buildSystemPrompt } from "@/lib/ai/prompts";
-import { sendTextMessage } from "@/lib/meta/client"; // ya lo tenés de antes
+import { isAiConfigured } from "@/lib/ai";
+import { generarRespuestaAgente } from "@/lib/ai/agente";
+import { sendTextMessage, sendImageMessage } from "@/lib/meta/client"; // ya lo tenés de antes
 import { decrypt } from "@/lib/crypto"; // ya lo tenés de antes
 
 const supabase = createClient(
@@ -140,21 +139,6 @@ async function ingestarMensaje({ waId, nombrePerfil, msg }: { waId: string; nomb
   await ejecutarAgente(conversacion.id, contacto.id);
 }
 
-const AgentReplySchema = z.object({
-  reply: z.string(),
-  handoff: z.boolean(),
-  calificacion: z.enum(["caliente", "tibio", "frio"]).nullable(),
-  datos_detectados: z.object({
-    timing: z.string().nullable(),
-    forma_pago: z.string().nullable(),
-    tiene_permuta: z.boolean().nullable(),
-  }),
-  vehiculo_mencionado: z.object({
-    marca: z.string().nullable(),
-    modelo: z.string().nullable(),
-  }).nullable(),
-});
-
 // Escritura compartida: vincula auto + vendedor asignado a una conversación.
 async function asignarVehiculoYVendedor(conversacionId: string, vehiculoId: string, vendedorId: string | null, origenAds?: string) {
   const update: Record<string, unknown> = { vehiculo_id: vehiculoId };
@@ -240,10 +224,7 @@ async function ejecutarAgente(conversacionId: string, contactoId: string) {
       content: m.texto as string,
     }));
 
-  const result = await chatJson(AgentReplySchema, [
-    { role: "system", content: buildSystemPrompt() },
-    ...historial,
-  ]);
+  const result = await generarRespuestaAgente(historial);
 
   if (!result.ok) {
     console.error("[agente] error:", result.error);
@@ -251,6 +232,7 @@ async function ejecutarAgente(conversacionId: string, contactoId: string) {
   }
 
   const { reply, handoff, calificacion, vehiculo_mencionado } = result.data;
+  const fotoParaEnviar = result.fotoParaEnviar;
 
   const estadoSegunCalificacion =
     calificacion === "caliente" ? "Interesado" :
@@ -303,6 +285,10 @@ async function ejecutarAgente(conversacionId: string, contactoId: string) {
     await enviarYActualizarMensaje(mensajeSaliente.id, contactoId, reply);
   }
 
+  if (fotoParaEnviar) {
+    await enviarFoto(contactoId, fotoParaEnviar);
+  }
+
   if (handoff) {
     await supabase
       .from("whatsapp_conversaciones")
@@ -340,6 +326,29 @@ async function enviarYActualizarMensaje(mensajeId: string, contactoId: string, t
   } catch (err) {
     console.error("[whatsapp] error enviando mensaje:", err);
     await supabase.from("whatsapp_mensajes").update({ status: "failed" }).eq("id", mensajeId);
+  }
+}
+
+// Best-effort: si falla el envío de la foto no rompe la conversación, ya se mandó el texto.
+async function enviarFoto(contactoId: string, imageUrl: string) {
+  if (!isWhatsappEnvioConfigurado()) return;
+
+  const { data: contacto } = await supabase
+    .from("whatsapp_contactos")
+    .select("telefono")
+    .eq("id", contactoId)
+    .single();
+  if (!contacto) return;
+
+  try {
+    await sendImageMessage(
+      process.env.META_WHATSAPP_PHONE_NUMBER_ID!,
+      process.env.META_WHATSAPP_TOKEN!,
+      contacto.telefono,
+      imageUrl
+    );
+  } catch (err) {
+    console.error("[whatsapp] error enviando foto:", err);
   }
 }
 

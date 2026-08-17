@@ -12,7 +12,7 @@ import ConfirmarPrecioModal from "../../ConfirmarPrecioModal";
 
 const inputClass = "w-full bg-slate-50 dark:bg-[#00246b] border border-slate-200 dark:border-[#0a2a6b] rounded-xl px-3 py-2.5 text-sm outline-none focus:border-indigo-500 focus:bg-white dark:focus:bg-[#002a6e] transition-colors text-slate-900 dark:text-white placeholder:text-slate-400 dark:placeholder:text-slate-500";
 
-export default function PresupuestoForm({ clientes, vehiculos, vendedores, vehiculoInicial }: { clientes: any[]; vehiculos: any[]; vendedores: any[]; vehiculoInicial?: any | null }) {
+export default function PresupuestoForm({ clientes, vehiculos, vendedores, sucursales, vehiculoInicial }: { clientes: any[]; vehiculos: any[]; vendedores: any[]; sucursales: any[]; vehiculoInicial?: any | null }) {
   const router = useRouter();
   const [guardando, setGuardando] = useState(false);
 
@@ -38,6 +38,7 @@ export default function PresupuestoForm({ clientes, vehiculos, vendedores, vehic
       : null
   );
   const [vendedorId, setVendedorId] = useState("");
+  const [sucursalId, setSucursalId] = useState("");
   const [precioArs, setPrecioArs] = useState("");
   const [precioUsd, setPrecioUsd] = useState("");
   const [imprimirEn, setImprimirEn] = useState("");
@@ -126,7 +127,16 @@ export default function PresupuestoForm({ clientes, vehiculos, vendedores, vehic
 
           <div className="bg-white dark:bg-[#001c55] border border-slate-200 dark:border-[#0a2a6b] rounded-2xl p-6 shadow-sm space-y-4">
             <h2 className="text-[11px] font-bold uppercase tracking-widest text-slate-500 dark:text-slate-400 border-b border-slate-100 dark:border-[#0a2a6b] pb-3">Vehículo</h2>
-            <VehiculoSelector vehiculos={vehiculos} datos={vehiculo} onCambiar={setVehiculo} />
+            {!vehiculo?.vehiculo_id && (
+              <div>
+                <label className="text-[11px] font-bold text-slate-500 dark:text-slate-400 uppercase block mb-1.5">Sucursal (para cargar un auto nuevo al stock)</label>
+                <select className={inputClass} value={sucursalId} onChange={(e) => setSucursalId(e.target.value)}>
+                  <option value="">Seleccionar...</option>
+                  {sucursales.map((s) => (<option key={s.id} value={s.id}>{s.nombre}</option>))}
+                </select>
+              </div>
+            )}
+            <VehiculoSelector vehiculos={vehiculos} datos={vehiculo} onCambiar={setVehiculo} persistirManual sucursalId={sucursalId} />
           </div>
 
           <div className="bg-white dark:bg-[#001c55] border border-slate-200 dark:border-[#0a2a6b] rounded-2xl p-6 shadow-sm space-y-4">

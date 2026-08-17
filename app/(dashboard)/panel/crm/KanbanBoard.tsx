@@ -4,8 +4,9 @@ import { useState } from "react";
 import { supabase } from "@/lib/supabase/client";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
-import { MessageSquareText, Filter, AlertTriangle, CheckCircle2, Circle, CarFront, User, X, Ban, LifeBuoy, LayoutGrid, List } from "lucide-react";
+import { MessageSquareText, Filter, AlertTriangle, CheckCircle2, Circle, CarFront, User, X, Ban, LifeBuoy, LayoutGrid, List, BarChart3 } from "lucide-react";
 import LeadsTable from "./LeadsTable";
+import LeadsReporte from "./LeadsReporte";
 
 const COLUMNAS = ["Nuevo", "Contactado", "Interesado", "Cliente", "Perdido"];
 
@@ -16,7 +17,7 @@ export default function KanbanBoard({ leadsIniciales, motivosCierre, miRol, miId
   const [pendienteCierre, setPendienteCierre] = useState<any | null>(null);
   const [motivoCierreId, setMotivoCierreId] = useState("");
   const [soloMisLeads, setSoloMisLeads] = useState(false);
-  const [vista, setVista] = useState<"kanban" | "tabla">("kanban");
+  const [vista, setVista] = useState<"kanban" | "tabla" | "reporte">("kanban");
   const puedeAlternarVista = miRol === "admin" || miRol === "encargado";
 
   // Filtro activo: "todos" | "cotizacion" | "consignacion" | "dormidos"
@@ -73,8 +74,9 @@ export default function KanbanBoard({ leadsIniciales, motivosCierre, miRol, miId
 
     try {
       const esWhatsapp = leadActual.origen === "whatsapp";
-      const tabla = esWhatsapp ? "whatsapp_conversaciones" : "cotizaciones";
-      const campo = esWhatsapp ? "estado_pipeline" : "estado";
+      const esWebChat = leadActual.origen === "webchat";
+      const tabla = esWhatsapp ? "whatsapp_conversaciones" : esWebChat ? "web_chat_conversaciones" : "cotizaciones";
+      const campo = esWhatsapp || esWebChat ? "estado_pipeline" : "estado";
       const payload: Record<string, any> = { [campo]: nuevoEstado };
       if (motivoId) payload.motivo_cierre_id = motivoId;
       const { error } = await supabase
@@ -174,6 +176,13 @@ export default function KanbanBoard({ leadsIniciales, motivosCierre, miRol, miId
             >
               <List className="w-3.5 h-3.5" />
             </button>
+            <button
+              onClick={() => setVista("reporte")}
+              title="Vista Reporte"
+              className={`p-1.5 rounded-md transition-colors ${vista === "reporte" ? "bg-white dark:bg-[#001c55] text-slate-900 dark:text-white shadow-sm" : "text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-200"}`}
+            >
+              <BarChart3 className="w-3.5 h-3.5" />
+            </button>
           </div>
           {puedeAlternarVista && (
             <div className="flex items-center bg-slate-100 dark:bg-[#00246b] border border-slate-200 dark:border-[#0a2a6b] rounded-lg p-0.5">
@@ -199,6 +208,8 @@ export default function KanbanBoard({ leadsIniciales, motivosCierre, miRol, miId
 
       {vista === "tabla" ? (
         <LeadsTable leads={leadsFiltrados} vendedores={vendedores} sucursales={sucursales} onCambiarEstado={cambiarEstadoDesdeTabla} />
+      ) : vista === "reporte" ? (
+        <LeadsReporte leads={leadsFiltrados} />
       ) : (
       /* ================= ÁREA DEL BOARD ================= */
       <div className="flex-1 overflow-x-auto overflow-y-hidden p-6 bg-[#F9FAFB] dark:bg-[#001233] flex gap-5 custom-scrollbar">

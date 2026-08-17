@@ -55,9 +55,34 @@ export default async function CRMPage() {
     origen_ads: c.origen_ads,
   }));
 
+  const { data: conversacionesWeb } = await supabase
+    .from("web_chat_conversaciones")
+    .select(`
+      id, estado_pipeline, created_at, calificacion, vendedor_id, nombre, telefono,
+      perfiles ( nombre ),
+      vehiculos ( marca, modelo, sucursales!vehiculos_sucursal_id_fkey ( nombre ) )
+    `)
+    .order("created_at", { ascending: false });
+
+  const leadsWeb = (conversacionesWeb || []).map((c: any) => ({
+    id: c.id,
+    origen: "webchat",
+    nombre: c.nombre || "Consulta Web Chat",
+    telefono: c.telefono || "",
+    marca: c.vehiculos?.marca || "",
+    modelo: c.vehiculos?.modelo || "Consulta por Web Chat",
+    tipo_peritaje: "webchat",
+    precio_sugerido: null,
+    estado: c.estado_pipeline || "Nuevo",
+    created_at: c.created_at,
+    vendedor_id: c.vendedor_id,
+    perfiles: c.perfiles,
+    vehiculos: c.vehiculos,
+  }));
+
   const leadsCotizaciones = (cotizaciones || []).map((c: any) => ({ ...c, origen: "cotizacion" }));
 
-  let leadsUnificados = [...leadsCotizaciones, ...leadsWa];
+  let leadsUnificados = [...leadsCotizaciones, ...leadsWa, ...leadsWeb];
 
   // Vendedor: solo ve sus leads asignados + los sin asignar (para poder tomarlos). Nunca los de otro vendedor.
   // Admin siempre ve todo. Encargado ve todo por default, con toggle "Mis leads" en el Kanban (client-side).

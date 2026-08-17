@@ -11,10 +11,11 @@ export default async function NuevoPresupuestoPage({ searchParams }: { searchPar
     { cookies: { getAll: () => cookieStore.getAll() } }
   );
 
-  const [{ data: clientes }, { data: vehiculos }, { data: vendedores }] = await Promise.all([
+  const [{ data: clientes }, { data: vehiculos }, { data: vendedores }, { data: sucursales }] = await Promise.all([
     supabase.from("clientes").select("*").order("apellido"),
     supabase.from("vehiculos").select("*").in("estado", ["Disponible", "Reservado"]).order("marca"),
     supabase.from("perfiles").select("id, nombre").order("nombre"),
+    supabase.from("sucursales").select("id, nombre").order("nombre"),
   ]);
 
   let vehiculoInicial = null;
@@ -25,5 +26,5 @@ export default async function NuevoPresupuestoPage({ searchParams }: { searchPar
     }
   }
 
-  return <PresupuestoForm clientes={clientes || []} vehiculos={vehiculos || []} vendedores={vendedores || []} vehiculoInicial={vehiculoInicial} />;
+  return <PresupuestoForm clientes={clientes || []} vehiculos={vehiculos || []} vendedores={vendedores || []} sucursales={sucursales || []} vehiculoInicial={vehiculoInicial} />;
 }

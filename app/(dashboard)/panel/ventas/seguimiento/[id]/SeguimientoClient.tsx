@@ -2,8 +2,9 @@
 
 import { useRef, useState } from "react";
 import { useRouter } from "next/navigation";
+import Link from "next/link";
 import { supabase } from "@/lib/supabase/client";
-import { CheckCircle2, Circle, Copy, ArrowLeft, FileText, Paperclip, Loader2, ExternalLink } from "lucide-react";
+import { CheckCircle2, Circle, Copy, ArrowLeft, FileText, Paperclip, Loader2, ExternalLink, Printer, Save } from "lucide-react";
 
 const ETAPAS = ["Seña", "Documentación", "Patentamiento", "Transferencia", "Entrega", "Completado"];
 
@@ -28,15 +29,21 @@ const ETAPA_DOCUMENTOS: Record<string, string> = {
 
 interface Venta {
   id: string;
+  numero: number | null;
   codigo_seguimiento: string | null;
   etapa_seguimiento: string | null;
   fecha: string;
   nombre: string | null;
   apellido: string | null;
   telefono_celular: string | null;
+  correo_electronico: string | null;
   marca: string | null;
   modelo: string | null;
   dominio: string | null;
+  venta_ars: number | null;
+  observaciones: string | null;
+  comision_ars: number | null;
+  porcentaje_comision: number | null;
 }
 
 export default function SeguimientoClient({ venta, documentosIniciales }: { venta: Venta; documentosIniciales: Documento[] }) {
@@ -46,6 +53,39 @@ export default function SeguimientoClient({ venta, documentosIniciales }: { vent
   const [cargando, setCargando] = useState(false);
   const [subiendoId, setSubiendoId] = useState<string | null>(null);
   const inputsRef = useRef<Record<string, HTMLInputElement | null>>({});
+
+  const [telefono, setTelefono] = useState(venta.telefono_celular || "");
+  const [correo, setCorreo] = useState(venta.correo_electronico || "");
+  const [guardandoContacto, setGuardandoContacto] = useState(false);
+
+  const [observaciones, setObservaciones] = useState(venta.observaciones || "");
+  const [guardandoObservaciones, setGuardandoObservaciones] = useState(false);
+
+  const [porcentajeComision, setPorcentajeComision] = useState(venta.porcentaje_comision?.toString() || "");
+  const [guardandoComision, setGuardandoComision] = useState(false);
+
+  const comisionCalculada = (Number(venta.venta_ars) || 0) * (Number(porcentajeComision) || 0) / 100;
+
+  const guardarContacto = async () => {
+    setGuardandoContacto(true);
+    await supabase.from("boletos_venta").update({ telefono_celular: telefono || null, correo_electronico: correo || null }).eq("id", venta.id);
+    setGuardandoContacto(false);
+  };
+
+  const guardarObservaciones = async () => {
+    setGuardandoObservaciones(true);
+    await supabase.from("boletos_venta").update({ observaciones: observaciones || null }).eq("id", venta.id);
+    setGuardandoObservaciones(false);
+  };
+
+  const guardarComision = async () => {
+    setGuardandoComision(true);
+    await supabase.from("boletos_venta").update({
+      porcentaje_comision: porcentajeComision ? Number(porcentajeComision) : null,
+      comision_ars: comisionCalculada || null,
+    }).eq("id", venta.id);
+    setGuardandoComision(false);
+  };
 
   const cambiarEtapa = async (nuevaEtapa: string) => {
     setEtapaActual(nuevaEtapa);
@@ -105,15 +145,23 @@ export default function SeguimientoClient({ venta, documentosIniciales }: { vent
   return (
     <div className="w-full h-full overflow-y-auto custom-scrollbar bg-[#F9FAFB] dark:bg-[#001233] p-6">
       <div className="max-w-3xl mx-auto space-y-6">
-        <button onClick={() => router.back()} className="text-slate-400 dark:text-slate-500 hover:text-indigo-600 dark:hover:text-sky-300 flex items-center gap-2 text-sm transition-colors font-medium">
-          <ArrowLeft className="w-4 h-4" /> Volver
-        </button>
+        <div className="flex items-center justify-between">
+          <button onClick={() => router.back()} className="text-slate-400 dark:text-slate-500 hover:text-indigo-600 dark:hover:text-sky-300 flex items-center gap-2 text-sm transition-colors font-medium">
+            <ArrowLeft className="w-4 h-4" /> Volver
+          </button>
+          <Link
+            href={`/panel/boletos/imprimir/${venta.id}`}
+            className="flex items-center gap-1.5 text-[11px] font-bold text-slate-500 dark:text-slate-400 bg-white dark:bg-[#00246b] border border-slate-200 dark:border-[#0a2a6b] px-3 py-1.5 rounded-lg hover:border-indigo-200 hover:text-indigo-600 dark:hover:text-sky-300 transition-colors"
+          >
+            <Printer className="w-3.5 h-3.5" /> Imprimir boleto
+          </Link>
+        </div>
 
         <div className="bg-white dark:bg-[#001c55] border border-slate-200 dark:border-[#0a2a6b] rounded-2xl p-6 shadow-sm">
           <div className="flex items-start justify-between mb-4">
             <div>
               <h1 className="text-xl font-bold text-slate-900 dark:text-white">
-                {venta.marca} {venta.modelo} {venta.dominio ? `(${venta.dominio})` : ""}
+                {venta.numero ? `N° ${venta.numero} — ` : ""}{venta.marca} {venta.modelo} {venta.dominio ? `(${venta.dominio})` : ""}
               </h1>
               <p className="text-sm text-slate-500 dark:text-slate-400">{venta.nombre} {venta.apellido}</p>
             </div>
@@ -141,6 +189,79 @@ export default function SeguimientoClient({ venta, documentosIniciales }: { vent
               </button>
             ))}
           </div>
+        </div>
+
+        <div className="bg-white dark:bg-[#001c55] border border-slate-200 dark:border-[#0a2a6b] rounded-2xl p-6 shadow-sm">
+          <h2 className="text-[11px] font-bold uppercase tracking-widest text-slate-400 dark:text-slate-500 mb-4">Datos de contacto</h2>
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mb-3">
+            <input
+              value={telefono}
+              onChange={(e) => setTelefono(e.target.value)}
+              placeholder="Teléfono celular"
+              className="w-full bg-slate-50 dark:bg-[#00246b] border border-slate-200 dark:border-[#0a2a6b] rounded-xl px-3 py-2.5 text-sm outline-none focus:border-indigo-500 text-slate-900 dark:text-white placeholder:text-slate-400 dark:placeholder:text-slate-500"
+            />
+            <input
+              value={correo}
+              onChange={(e) => setCorreo(e.target.value)}
+              placeholder="Correo electrónico"
+              className="w-full bg-slate-50 dark:bg-[#00246b] border border-slate-200 dark:border-[#0a2a6b] rounded-xl px-3 py-2.5 text-sm outline-none focus:border-indigo-500 text-slate-900 dark:text-white placeholder:text-slate-400 dark:placeholder:text-slate-500"
+            />
+          </div>
+          <button
+            onClick={guardarContacto}
+            disabled={guardandoContacto}
+            className="flex items-center gap-1.5 text-[11px] font-bold text-white bg-indigo-600 hover:bg-indigo-700 px-3 py-1.5 rounded-lg transition-colors disabled:opacity-50"
+          >
+            {guardandoContacto ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Save className="w-3.5 h-3.5" />} Guardar contacto
+          </button>
+        </div>
+
+        <div className="bg-white dark:bg-[#001c55] border border-slate-200 dark:border-[#0a2a6b] rounded-2xl p-6 shadow-sm">
+          <h2 className="text-[11px] font-bold uppercase tracking-widest text-slate-400 dark:text-slate-500 mb-4">Observaciones</h2>
+          <textarea
+            value={observaciones}
+            onChange={(e) => setObservaciones(e.target.value)}
+            rows={3}
+            placeholder="Comentarios internos sobre esta venta..."
+            className="w-full bg-slate-50 dark:bg-[#00246b] border border-slate-200 dark:border-[#0a2a6b] rounded-xl px-3 py-2.5 text-sm outline-none focus:border-indigo-500 text-slate-900 dark:text-white placeholder:text-slate-400 dark:placeholder:text-slate-500 mb-3 resize-none"
+          />
+          <button
+            onClick={guardarObservaciones}
+            disabled={guardandoObservaciones}
+            className="flex items-center gap-1.5 text-[11px] font-bold text-white bg-indigo-600 hover:bg-indigo-700 px-3 py-1.5 rounded-lg transition-colors disabled:opacity-50"
+          >
+            {guardandoObservaciones ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Save className="w-3.5 h-3.5" />} Guardar observaciones
+          </button>
+        </div>
+
+        <div className="bg-white dark:bg-[#001c55] border border-slate-200 dark:border-[#0a2a6b] rounded-2xl p-6 shadow-sm">
+          <h2 className="text-[11px] font-bold uppercase tracking-widest text-slate-400 dark:text-slate-500 mb-4">Comisión del vendedor</h2>
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mb-3">
+            <div>
+              <label className="text-[11px] font-bold text-slate-500 dark:text-slate-400 uppercase block mb-1.5">% Comisión</label>
+              <input
+                type="number"
+                step="0.01"
+                value={porcentajeComision}
+                onChange={(e) => setPorcentajeComision(e.target.value)}
+                placeholder="0"
+                className="w-full bg-slate-50 dark:bg-[#00246b] border border-slate-200 dark:border-[#0a2a6b] rounded-xl px-3 py-2.5 text-sm outline-none focus:border-indigo-500 text-slate-900 dark:text-white placeholder:text-slate-400 dark:placeholder:text-slate-500"
+              />
+            </div>
+            <div>
+              <label className="text-[11px] font-bold text-slate-500 dark:text-slate-400 uppercase block mb-1.5">Monto calculado</label>
+              <div className="w-full bg-slate-100 dark:bg-[#002a6e] border border-slate-200 dark:border-[#0a2a6b] rounded-xl px-3 py-2.5 text-sm font-mono font-bold text-slate-700 dark:text-slate-200">
+                $ {comisionCalculada.toLocaleString("es-AR")}
+              </div>
+            </div>
+          </div>
+          <button
+            onClick={guardarComision}
+            disabled={guardandoComision}
+            className="flex items-center gap-1.5 text-[11px] font-bold text-white bg-indigo-600 hover:bg-indigo-700 px-3 py-1.5 rounded-lg transition-colors disabled:opacity-50"
+          >
+            {guardandoComision ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Save className="w-3.5 h-3.5" />} Guardar comisión
+          </button>
         </div>
 
         <div className="bg-white dark:bg-[#001c55] border border-slate-200 dark:border-[#0a2a6b] rounded-2xl p-6 shadow-sm">

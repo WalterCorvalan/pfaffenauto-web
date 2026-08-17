@@ -51,3 +51,15 @@ export async function sendTextMessage(phoneNumberId: string, token: string, to: 
     }),
   });
 }
+
+export async function sendImageMessage(phoneNumberId: string, token: string, to: string, imageUrl: string, caption?: string) {
+  return graphRequest<{ messages: { id: string }[] }>(`${phoneNumberId}/messages`, token, {
+    method: "POST",
+    body: JSON.stringify({
+      messaging_product: "whatsapp",
+      to,
+      type: "image",
+      image: { link: imageUrl, ...(caption ? { caption } : {}) },
+    }),
+  });
+}

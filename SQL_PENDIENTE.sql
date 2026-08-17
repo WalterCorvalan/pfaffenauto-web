@@ -245,3 +245,69 @@ CREATE TABLE IF NOT EXISTS public.vehiculo_titulares (
 );
 DROP POLICY IF EXISTS "Staff gestiona titulares vehiculo" ON public.vehiculo_titulares;
 CREATE POLICY "Staff gestiona titulares vehiculo" ON public.vehiculo_titulares FOR ALL TO authenticated USING (true) WITH CHECK (true);
+
+-- Integración MercadoLibre: publicar/sincronizar autos automáticamente vía su API (OAuth2).
+-- Tokens se guardan encriptados (lib/crypto, AES-256-GCM) — nunca en texto plano.
+CREATE TABLE IF NOT EXISTS public.mercadolibre_config (
+  id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+  ml_user_id text NOT NULL,
+  access_token_cipher text NOT NULL,
+  access_token_iv text NOT NULL,
+  access_token_tag text NOT NULL,
+  refresh_token_cipher text NOT NULL,
+  refresh_token_iv text NOT NULL,
+  refresh_token_tag text NOT NULL,
+  expires_at timestamptz NOT NULL,
+  created_at timestamptz DEFAULT now(),
+  updated_at timestamptz DEFAULT now()
+);
+ALTER TABLE public.mercadolibre_config ENABLE ROW LEVEL SECURITY;
+DROP POLICY IF EXISTS "Solo admin gestiona config mercadolibre" ON public.mercadolibre_config;
+CREATE POLICY "Solo admin gestiona config mercadolibre" ON public.mercadolibre_config FOR ALL TO authenticated
+  USING (EXISTS (SELECT 1 FROM perfiles WHERE id = auth.uid() AND rol = 'admin'))
+  WITH CHECK (EXISTS (SELECT 1 FROM perfiles WHERE id = auth.uid() AND rol = 'admin'));
+
+-- Estado de publicación por vehículo. ml_estado: no_publicado | publicado | pausado | error.
+ALTER TABLE public.vehiculos ADD COLUMN IF NOT EXISTS ml_item_id text;
+ALTER TABLE public.vehiculos ADD COLUMN IF NOT EXISTS ml_estado text NOT NULL DEFAULT 'no_publicado';
+ALTER TABLE public.vehiculos ADD COLUMN IF NOT EXISTS ml_publicado_at timestamptz;
+ALTER TABLE public.vehiculos ADD COLUMN IF NOT EXISTS ml_error text;
+
+-- Canal Web Chat: mismo agente de IA que WhatsApp, pero para el widget del sitio público.
+-- Tablas nuevas y aditivas, no tocan whatsapp_conversaciones/whatsapp_mensajes.
+CREATE TABLE IF NOT EXISTS public.web_chat_conversaciones (
+  id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+  session_id text UNIQUE NOT NULL,
+  nombre text,
+  telefono text,
+  estado_pipeline text NOT NULL DEFAULT 'Nuevo',
+  calificacion text,
+  vehiculo_id uuid REFERENCES public.vehiculos(id),
+  vendedor_id uuid REFERENCES public.perfiles(id),
+  handoff_at timestamptz,
+  handoff_reason text,
+  ai_habilitada boolean NOT NULL DEFAULT true,
+  created_at timestamptz NOT NULL DEFAULT now(),
+  updated_at timestamptz NOT NULL DEFAULT now()
+);
+
+CREATE TABLE IF NOT EXISTS public.web_chat_mensajes (
+  id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+  conversacion_id uuid NOT NULL REFERENCES public.web_chat_conversaciones(id),
+  direccion text NOT NULL CHECK (direccion = ANY (ARRAY['in','out'])),
+  texto text NOT NULL,
+  ai_generado boolean NOT NULL DEFAULT false,
+  created_at timestamptz NOT NULL DEFAULT now()
+);
+
+ALTER TABLE public.web_chat_conversaciones ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.web_chat_mensajes ENABLE ROW LEVEL SECURITY;
+
+DROP POLICY IF EXISTS "Staff ve y gestiona web_chat_conversaciones" ON public.web_chat_conversaciones;
+CREATE POLICY "Staff ve y gestiona web_chat_conversaciones" ON public.web_chat_conversaciones FOR ALL TO authenticated USING (true) WITH CHECK (true);
+
+DROP POLICY IF EXISTS "Staff ve y gestiona web_chat_mensajes" ON public.web_chat_mensajes;
+CREATE POLICY "Staff ve y gestiona web_chat_mensajes" ON public.web_chat_mensajes FOR ALL TO authenticated USING (true) WITH CHECK (true);
+
+-- Sin policy pública de insert: el widget escribe siempre a través de /api/webchat
+-- con la service role key, nunca directo desde el navegador.

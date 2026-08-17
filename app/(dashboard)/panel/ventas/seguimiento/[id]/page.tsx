@@ -19,7 +19,7 @@ export default async function SeguimientoVentaPage({
 
   const { data: venta } = await supabase
     .from("boletos_venta")
-    .select("id, codigo_seguimiento, etapa_seguimiento, fecha, nombre, apellido, telefono_celular, marca, modelo, dominio")
+    .select("id, numero, codigo_seguimiento, etapa_seguimiento, fecha, nombre, apellido, telefono_celular, correo_electronico, marca, modelo, dominio, venta_ars, observaciones, comision_ars, porcentaje_comision")
     .eq("id", id)
     .single();
 

@@ -1,4 +1,4 @@
-import Showroom3D from "@/components/showroom/Showroom3D";
+import ShowroomEntrada from "@/components/showroom/ShowroomEntrada";
 
 export default async function ShowroomTestPage({
   params,
@@ -7,5 +7,5 @@ export default async function ShowroomTestPage({
 }) {
   const { marca } = await params;
   const marcaValida = marca === "rely" ? "rely" : "karry";
-  return <Showroom3D marca={marcaValida} />;
+  return <ShowroomEntrada marca={marcaValida} fachadaSrc={`/fachada-${marcaValida}.jpeg`} />;
 }

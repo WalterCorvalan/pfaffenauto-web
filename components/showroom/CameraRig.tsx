@@ -7,14 +7,23 @@ import gsap from "gsap";
 import * as THREE from "three";
 import type { ShowroomView } from "@/lib/showroom/types";
 
-const VIEW_POSITIONS: Record<ShowroomView, { pos: [number, number, number]; target: [number, number, number] }> = {
+const VIEW_POSITIONS: Record<Exclude<ShowroomView, "cenital">, { pos: [number, number, number]; target: [number, number, number] }> = {
   exterior: { pos: [5, 2.5, 6], target: [0, 0.8, 0] },
   interior: { pos: [0.4, 1.1, 0.2], target: [0.4, 1.1, 2] },
   trasera: { pos: [0, 1.3, -5], target: [0, 0.8, 0] },
 };
 
+// Posición cenital: depende de cuántos autos hay en la fila para que entren todos en cámara.
+function getCenitalPosition(cantidad: number): { pos: [number, number, number]; target: [number, number, number] } {
+  const distanciaX = Math.max(cantidad * 3.2, 6); // ancho total de la fila
+  return {
+    pos: [0, distanciaX * 0.9, 0.1], // arriba, casi puramente cenital (Z chico evita gimbal lock de OrbitControls)
+    target: [0, 0, 0],
+  };
+}
+
 export type CameraRigHandle = {
-  goTo: (view: ShowroomView) => void;
+  goTo: (view: ShowroomView, cantidadAutos?: number) => void;
 };
 
 const CameraRig = forwardRef<CameraRigHandle, { autoRotate: boolean }>(function CameraRig(
@@ -25,8 +34,8 @@ const CameraRig = forwardRef<CameraRigHandle, { autoRotate: boolean }>(function 
   const controlsRef = useRef<any>(null);
 
   useImperativeHandle(ref, () => ({
-    goTo(view: ShowroomView) {
-      const { pos, target } = VIEW_POSITIONS[view];
+    goTo(view: ShowroomView, cantidadAutos = 1) {
+      const { pos, target } = view === "cenital" ? getCenitalPosition(cantidadAutos) : VIEW_POSITIONS[view];
       const controls = controlsRef.current;
       if (!controls) return;
 

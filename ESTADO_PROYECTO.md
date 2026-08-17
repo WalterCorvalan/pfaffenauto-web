@@ -1,10 +1,10 @@
 # Estado del Proyecto — Pfaffen Autos
 
-Reporte de sesión larga de trabajo. Última actualización: 2026-08-14.
+Reporte de sesión larga de trabajo. Última actualización: 2026-08-17.
 
 ---
 
-## 0. Reestructura de Operaciones (2026-08-14) — nuevo desde la última actualización
+## 0. Reestructura de Operaciones (2026-08-14)
 
 Se retiró el flujo unificado "Nueva Operación" (`ventas/nueva/VentaForm.tsx`, ya borrado) y se separó en 4 módulos independientes, cada uno con su propia carga/listado/impresión:
 
@@ -19,6 +19,25 @@ Se retiró el flujo unificado "Nueva Operación" (`ventas/nueva/VentaForm.tsx`, 
 
 ## 1. Tareas Completadas
 
+### Dark mode del panel — 100% COMPLETO (2026-08-17)
+- Infraestructura: toggle luna/sol (sidebar desktop + header mobile), persiste en `localStorage` (`panelDarkMode`), clase `.dark` scoped solo al panel vía `@custom-variant dark (&:where(.dark, .dark *));` en `app/globals.css` — no afecta el sitio público.
+- Paleta navy: `#001233` (fondo general), `#001c55` (cards/header/sidebar), `#00246b` (inputs/hover), `#0a2a6b` (bordes), `#002a6e` (hover secundario).
+- **Todo `/panel` convertido** (~75 archivos): las 7 páginas que ya estaban de la vuelta anterior + todo lo que faltaba (postventa, métricas, CRM completo, chat, tareas, taller, informes, contactos, citas, consignaciones, pedidos, sueldos, marketing completo, boletos/señas/presupuestos/resp-civil, financiaciones, vehículo nuevo/editar/boleto, clientes/nuevo, y todos los componentes sueltos: AccionesAuto, PrecioEditor, SucursalEditor, VendedorEditor, EdicionSucursal, EdicionPrecio).
+- Páginas de impresión (`Imprimir*.tsx`): solo el panel de control `print:hidden` recibió `dark:`, la hoja A4 de vista previa queda permanentemente clara (representa papel físico impreso, no depende del tema).
+- Verificado con auditoría exhaustiva (grep de `dark:` cero-residuos) + `tsc --noEmit` limpio en todo el árbol.
+
+### Showroom 3D (nuevo, en progreso) — `/showroom-test/[marca]`
+- Feature experimental con Three.js/`@react-three/fiber`/`@react-three/drei`: vista cenital de una fila de autos (placeholders geométricos por ahora), tocás uno → tarjeta de confirmación flotante con badge de disponibilidad → cámara se acerca a vista exterior del auto elegido → botón "Volver a la fila".
+- Entrada con scroll: `ShowroomEntrada.tsx` (Framer Motion `useScroll`/`useTransform`) — foto de fachada real de la sucursal en pantalla completa, zoom+fade al hacer scroll, revela el showroom 3D debajo.
+- Modelos reales `.glb` — **pendiente, se consiguen después** (ver WIP).
+- Solo Karry activo por ahora (Cabina Simple + Cabina Doble, 1 unidad cada uno). Rely queda para después.
+- Fix aplicado: se sacó `<Environment preset="city">` de `@react-three/drei` (dependía de un fetch externo a `raw.githubusercontent.com` que tiraba 503 en producción) — reemplazado por luces manuales (`ambientLight` + 2 `directionalLight`).
+
+### Auditoría "todo lo de public" — cerrada (2026-08-17)
+- `PublicHeader.tsx`: `AnimatePresence` del swap nav↔buscador (desktop, `isScrolled`) pasado de `mode="wait"` a `mode="popLayout"` — evita el hueco vacío entre que el nav sale y el buscador entra (con `mode="wait"` el saliente tenía que desaparecer del todo antes de que el nuevo empezara a aparecer). El layout en sí nunca corría riesgo real de reflow: la fila del header usa CSS grid `grid-cols-[auto_1fr_auto]` con alto fijo `h-20`, así que las columnas izquierda/derecha no se movían — el problema era el parpadeo visual, ya resuelto.
+- Home (`app/(public)/page.tsx`) re-verificado post-migración a server component: si la query a `vehiculos` falla, `data` llega `null` y el código ya hace `vehiculos || []` — la sección de Stock se muestra vacía en vez de romper la página. Degradación aceptable para una landing pública, no hace falta agregar UI de error visible al visitante. Hallazgo cerrado, sin cambios de código necesarios.
+- Con esto, los 3 informes de la auditoría de `public` quedan sin hallazgos 🔴/🟡 pendientes (quedan solo los 🟢 cosméticos de la sección de Backlog).
+
 ### Seguridad
 - Uploads (`/api/upload`, `/api/upload-bunny`) ahora requieren sesión de staff logueada + límite 15MB + solo `image/*`.
 - Rate limiting agregado (`lib/rateLimit.ts`, in-memory por IP) en: cotizaciones, visitas, chat, buscar-ia, upload-cotizacion.
@@ -27,26 +46,30 @@ Se retiró el flujo unificado "Nueva Operación" (`ventas/nueva/VentaForm.tsx`, 
 - `VenderForm.tsx` reescrito para funcionar exactamente igual que `ConsignarForm.tsx`: 3 pasos, Turnstile, pasa por `/api/cotizaciones` (rate-limited, server-side) en vez de insertar directo a Supabase con webhooks n8n hardcodeados sin protección.
 - **CRÍTICO resuelto**: se sacó `select("*")` de las 7 páginas públicas que consultan `vehiculos` (home, catálogo listado, catálogo detalle, 0km, outlet, mundo-chino, marcas/[marca], sucursales/[slug]). Antes exponían `precio_costo_ars/usd`, `observaciones_internas`, `vendedor_asignado_id` al cliente. Ahora usan columnas explícitas centralizadas en `lib/vehiculos.ts` (`CAMPOS_VEHICULO_PUBLICO` / `CAMPOS_VEHICULO_DETALLE`).
 - Home (`app/(public)/page.tsx`) migrado de client component con fetch inseguro en el browser a server component con `revalidate=60`.
-- `webhooks/wa/[token]/route.ts`: si falta `META_APP_SECRET` ahora devuelve 401 en vez de saltear la validación de firma silenciosamente (ya estaba resuelto al iniciar esta sesión, confirmado).
+- `webhooks/wa/[token]/route.ts`: si falta `META_APP_SECRET` ahora devuelve 401 en vez de saltear la validación de firma silenciosamente.
 - `VehicleCatalog.tsx` (componente muerto, sin imports, duplicaba `VehiculosGrid` con `select("*")` sin paginación) — borrado.
 
 ### SEO
 - `generateMetadata` dinámico + JSON-LD `Vehicle`/`Offer` en `catalogo/[slug]/page.tsx`.
 - `metadataBase` agregado en `app/layout.tsx`.
-- `sitemap.ts` reescrito: incluye fichas de auto dinámicas, marcas, sucursales, landings Karry/Rely y páginas estáticas que faltaban (antes solo tenía home + catálogo + 3 sucursales hardcodeadas). Se sumó `/mundo-chino`.
+- `sitemap.ts` reescrito: incluye fichas de auto dinámicas, marcas, sucursales, landings Karry/Rely y páginas estáticas que faltaban. Se sumó `/mundo-chino`.
 - Keywords agregadas: `rely`, `karry`, `concesionario oficial rely`, `concesionario oficial karry`.
-- OG/Twitter cards, JSON-LD `AutoDealer`, `prefers-reduced-motion` — confirmados ya resueltos por Gemini CLI antes de retomar esta sesión.
+- OG/Twitter cards, JSON-LD `AutoDealer`, `prefers-reduced-motion` — confirmados resueltos.
 
 ### Performance
-- `next/image` convertido en todas las imágenes de contenido público de tráfico alto: `VehiculosGrid`, `GaleriaVehiculo` (con `priority` en la primera foto), relacionados en ficha de auto, hero de sucursal, Sucursales (home), Marcas (home + página), Footer badges, BannerPublicitario, ComparadorModal, avatar comparador flotante, nosotros (equipo), favoritos, LandingKarry, LandingRely, IntroLoader quedó afuera a propósito (overlay decorativo 2s, sin impacto).
+- `next/image` convertido en todas las imágenes de contenido público de tráfico alto: `VehiculosGrid`, `GaleriaVehiculo` (con `priority` en la primera foto), relacionados en ficha de auto, hero de sucursal, Sucursales (home), Marcas (home + página), Footer badges, BannerPublicitario, ComparadorModal, avatar comparador flotante, nosotros (equipo), favoritos, LandingKarry, LandingRely. IntroLoader quedó afuera a propósito (overlay decorativo 2s, sin impacto).
 - `remotePatterns` configurado en `next.config.ts` para `*.b-cdn.net`, `upload.wikimedia.org`, `images.unsplash.com`.
 - `dangerouslyAllowSVG: true` + CSP de imagen agregado — bug real que rompía todos los logos SVG de marcas (Wikimedia) al convertir a `next/image`, ya resuelto.
+
+### Fotos de autos — remove.bg + Bunny CDN
+- Parámetros de `lib/removeBg.ts` ajustados tras varias rondas de prueba con fotos reales de fábrica: `scale: "65%"`, `crop_margin: "20%"`, `shadow_type: "car"`, `type: "car"`, `position: "center"`, `size: "auto"` — el auto queda centrado, con margen y sombra de piso, sin cortarse en los bordes (antes `scale: 90%` + `crop_margin: 5%` pegaba el auto contra el marco).
+- Fondo de estudio nuevo generado (prompt de dealership profesional) y subido a Bunny CDN (`fondos/fondo.png`).
+- Techo de calidad: la resolución final depende del plan pago de remove.bg (`size: "auto"` ya pide lo mejor disponible), no de los parámetros de encuadre.
 
 ### Nuevas features del panel
 - **Tasación con historial**: `cotizaciones/page.tsx` + `HistorialTasacionBadge.tsx` — agrupa por teléfono, badge expandible con tasaciones previas del mismo cliente, sin query extra.
 - **Tesorería** (`/panel/tesoreria`): tabla `cuentas` (banco/tarjeta/efectivo), saldo = inicial + movimientos_caja vinculados, modal alta cuenta, selector de cuenta agregado al modal de gasto existente.
 - **Postventa** (`/panel/postventa`): tabla `postventa_casos` (service/reclamo/garantía), estado Pendiente→En proceso→Resuelto con selector inline, modal alta caso, vínculo opcional a vehículo.
-- SQL de estas 3 features está en `SQL_PENDIENTE.sql` en la raíz — **confirmar si ya se corrió en Supabase**.
 - Sidebar del panel actualizado con los nuevos links (Postventa en Operaciones, Tesorería en Administración, solo admin).
 
 ### Refactors / limpieza
@@ -56,62 +79,36 @@ Se retiró el flujo unificado "Nueva Operación" (`ventas/nueva/VentaForm.tsx`, 
 
 ### Home / público — features de contenido
 - "Mundo Chino": nueva sección `/mundo-chino`, mismo patrón que `/0km` y `/outlet`, filtra por marcas chinas (`MARCAS_CHINAS` exportado desde `VehiculosGrid.tsx`).
-- Banners del home (`BannerPublicitario.tsx`) reapuntados: banner 1 → Casa Central, banner 2 → Don Torcuato, banner 3 → Mundo Chino. Fotos de stock Unsplash reemplazadas por fotos reales (`/VDM.jpeg`, `/pana.jpg`, `/Pick-up-Rely-R8-frente-1.jpg`).
+- Banners del home (`BannerPublicitario.tsx`) reapuntados: banner 1 → Casa Central, banner 2 → Don Torcuato, banner 3 → Mundo Chino. Fotos de stock Unsplash reemplazadas por fotos reales.
 - `/marcas/[marca]` ahora usa `VehiculosGrid` (mismas tarjetas que catálogo) en vez de cards glassmorphism custom.
 - Catálogo (`/catalogo`): buscador centrado en desktop, chips "Probá:" centrados en mobile, precio de las cards pasado de azul a negro.
 - Specs del vehículo en mobile (`catalogo/[slug]`): grid 2x2 en vez de columna apilada.
-
-### Dark mode del panel (parcial — ver WIP)
-- Infraestructura: toggle luna/sol (sidebar desktop + header mobile), persiste en `localStorage` (`panelDarkMode`), clase `.dark` scoped solo al panel vía `@custom-variant dark (&:where(.dark, .dark *));` en `app/globals.css` — no afecta el sitio público.
-- Paleta navy: `#001233` (fondo general), `#001c55` (cards/header/sidebar), `#00246b` (inputs/hover), `#0a2a6b` (bordes), `#002a6e` (hover secundario).
-- Páginas 100% convertidas a dark: `/panel` (Stock), `/panel/ventas`, `/panel/gastos` + `NuevoGastoModal`, `/panel/usuarios`, `/panel/cotizaciones` + `HistorialTasacionBadge` + `PrecioSugeridoEditor`, `/panel/tesoreria` + `NuevaCuentaModal`, `SucursalFilterHeader` (compartido).
-- Bug del toggle "no funciona" investigado y resuelto — era cache vieja del tab del browser, no bug de código (confirmado con el usuario, "ya funciona").
 
 ---
 
 ## 2. Procesos a la Mitad (WIP)
 
-### Dark mode del panel — el más grande, quedó a mitad de camino
-Convertidas 7 páginas + 4 modales/componentes compartidos. **Faltan sin tocar:**
-- `/panel/postventa` + `NuevoCasoPostventaModal.tsx` + `EstadoCasoSelector.tsx` (páginas nuevas de esta misma sesión, nacieron ya en modo claro)
-- `/panel/metricas`
-- `/panel/crm` + `KanbanBoard.tsx`
-- `/panel/chat` + `ChatClient.tsx`
-- `/panel/tareas` + `TareasKanban.tsx`
-- `/panel/taller` + `TallerClient.tsx`
-- `/panel/informes` + `ReporteIA.tsx`
-- `/panel/contactos` + `ContactosClient.tsx`
-- `/panel/citas` + `EstadoVisitaSelector.tsx`, `VendedorVisitaSelector.tsx`, `CambiarEstadoVisita.tsx`
-- `/panel/consignaciones`
-- `/panel/pedidos` + `PedidosClient.tsx`
-- `/panel/sueldos/liquidador` + `LiquidadorClient.tsx`
-- `/panel/sueldos/categorias`
-- `/panel/marketing/*` (embudo, pautados, busquedas, chatbot)
-- `/panel/boletos`, `/panel/senas`, `/panel/presupuestos`, `/panel/resp-civil` (módulos nuevos del 2026-08-14, nacieron en modo claro)
-- `/panel/ventas/financiaciones` + `FinanciacionesClient.tsx`
-- `/panel/ventas/imprimir/[id]` + `ImprimirBoleto.tsx`
-- `/panel/ventas/seguimiento/[id]` + `SeguimientoClient.tsx`
-- `/panel/vehiculo/*` (nuevo, editar, boleto, `VehiculoForm.tsx`)
-- `/panel/clientes/nuevo`
-- Componentes sueltos en raíz de `/panel`: `AccionesAuto.tsx`, `PrecioEditor.tsx`, `SucursalEditor.tsx`, `VendedorEditor.tsx`, `EdicionSucursal.tsx`, `EdicionPrecio.tsx`
+### WhatsApp propio (reemplazo de Redoo + Pilot) — BLOQUEADO
+- El webhook de Meta WhatsApp Cloud API (`app/api/webhooks/wa/[token]/route.ts`) ya está listo en el código desde antes — handshake, verificación de firma, ingesta de mensajes a `/panel/chat`, IA de agente. No hace falta ningún producto de terceros (Forja/AgentKit/etc.), solo credenciales reales de Meta.
+- Se conectó un número de prueba gratuito de Meta y se completó `META_WHATSAPP_PHONE_NUMBER_ID` en `.env.local`. Faltaban `META_WHATSAPP_TOKEN` y `META_APP_SECRET`.
+- **La cuenta de desarrollador de Meta quedó suspendida** (Platform Policy 7.e.i.3, probable falso positivo). Se presentó la apelación, Meta respondió con error genérico de "intentar más tarde". Decisión explícita: **no tocar la cuenta del jefe con workarounds hasta estar seguros de que funciona** — queda esperando respuesta de Meta a la apelación.
 
-**Patrón a replicar** (ya usado 7 veces, es mecánico): `bg-white`→`dark:bg-[#001c55]`, `bg-[#F9FAFB]`→`dark:bg-[#001233]`, `border-slate-200/100`→`dark:border-[#0a2a6b]`, `text-slate-900`→`dark:text-white`, `text-slate-500/600/700`→`dark:text-slate-400/300/200`, `bg-slate-50`→`dark:bg-[#00246b]`, `hover:bg-slate-50/100`→`dark:hover:bg-[#002a6e]`.
+### Integración MercadoLibre — arrancada, BLOQUEADA
+- Investigado en profundidad: categoría `MLA1744` (Autos y Camionetas), 8 atributos requeridos (marca, modelo, año, versión, tipo, combustible, puertas, km), Karry y Rely ya existen como marcas reconocidas en la taxonomía de ML. Google Vehicle Ads queda descartado — no existe en Argentina.
+- Preparado en paralelo mientras se consiguen las credenciales: `ENCRYPTION_KEY` generada en `.env.local` (reutiliza `lib/crypto/index.ts`, AES-256-GCM, ya usado para otros secretos), placeholders `ML_CLIENT_ID`/`ML_CLIENT_SECRET`/`ML_REDIRECT_URI` agregados, y sección nueva en `SQL_PENDIENTE.sql` (tabla `mercadolibre_config` para tokens OAuth encriptados + columnas `ml_item_id`/`ml_estado`/`ml_publicado_at`/`ml_error` en `vehiculos`).
+- **Bloqueado**: no se puede entrar a la cuenta de MercadoLibre para registrar la app y sacar `client_id`/`client_secret` en `applications.mercadolibre.com`.
+- Importante para cuando se retome: la publicación automática por API no reduce el costo del paquete de Autos en ML Argentina (subió a ~$326.000 ARS/mes en nov-2025) — ese costo es del marketplace, no de la integración.
 
-### Auditoría "todo lo de public" — 3 informes entregados, 1 de 3 críticos resuelto
-Se lanzaron 3 auditorías en paralelo (funcionalidad, UI/responsive, datos/queries) sobre todo `app/(public)/`. Resultado, con lo ya resuelto tachado:
+### Showroom 3D — pendientes
+- Modelos `.glb` reales en vez de las cajas geométricas placeholder — se consiguen más adelante.
+- Rely: mismo tratamiento que Karry, queda para después.
+- Decisión sin tomar: si `/showroom-test/[marca]` debería salir del layout compartido `(public)` (Header/Footer) para una experiencia full-bleed sin esos elementos encima.
 
-- ~~🔴 `select("*")` exponiendo campos internos~~ → **RESUELTO** (ver sección 1)
-- ~~🔴 `VenderForm` sin Turnstile / lógica de negocio en cliente~~ → **RESUELTO** (ver sección 1)
-- 🟡 `VenderForm` (ya reescrito, heredado del rewrite): verificar que no queden referencias muertas a `verificaciones_sms` en otro lado del código, o si esa tabla sigue usándose en algo — **no verificado**.
-- ~~🟡 `PublicHeader.tsx`: texto `text-[7px]` con contraste bajo en "Concesionario oficial"~~ → **RESUELTO** (2026-08-14): `text-slate-500`→`text-slate-600`.
-- 🟡 `PublicHeader.tsx`: `AnimatePresence` nav↔buscador puede causar layout shift — **sin tocar**.
-- ~~🟡 Links de logos Rely/Karry y banners CTA sin `focus-visible`~~ → **RESUELTO** (2026-08-14): `focus-visible:ring` agregado en `PublicHeader.tsx` (logos Rely/Karry) y `BannerPublicitario.tsx` (los 3 banners CTA).
-- ~~🟡 `catalogo/[slug]/page.tsx`: queries en cascada~~ → **RESUELTO** (2026-08-14): las 3 queries secundarias (marca/precio similar/destacados) ya estaban en `Promise.all`; se agregó `cache()` de React a `buscarAuto()` para no duplicar la consulta principal entre `generateMetadata` y el render de la página (antes corría 2 veces por request).
-- ~~🟡 `VehiculosGrid.tsx:214`: `alt=""` en thumbnail no decorativo~~ → **RESUELTO** (2026-08-14): ahora usa `${auto.marca} ${auto.modelo}`.
-- 🟡 Home sin manejo de error de red visible si la query falla (era client-side, ahora es server component — revisar si sigue aplicando el hallazgo post-migración) — **no re-verificado tras el fix de home**.
-- 🟢 Radios/sombras de cards inconsistentes entre secciones (24px/28px/32px sin sistema) — **sin tocar, cosmético**.
-- 🟢 TODOs conocidos: hero real Rely (`LandingRely.tsx:135`), fotos reales `VentasRealizadas.tsx:5` — **bloqueados por vos** (fotos), no son bug de código.
-- 🟢 `alt="Marca Registrada"` redundante en ícono ® — **sin tocar, cosmético**.
+### Fondo de estudio en Bunny CDN — posible cache
+- Al subir una versión nueva de `fondos/fondo.png` (mismo nombre de archivo), las fotos procesadas seguían mostrando el fondo viejo. Diagnóstico: probablemente cache de borde de Bunny CDN sirviendo el archivo anterior. Se sugirió purgar cache desde el dashboard de Bunny o subir con nombre de archivo nuevo — **no confirmado si se resolvió**, el usuario cambió de tema antes de verificar.
+
+### Plantilla de carga masiva de autos (Excel/CSV) — sin especificar
+- Pedida, pero las 3 preguntas de alcance (qué campos, formato exacto, validación) quedaron sin responder — no arrancada.
 
 ---
 
@@ -119,42 +116,46 @@ Se lanzaron 3 auditorías en paralelo (funcionalidad, UI/responsive, datos/queri
 
 ### De la auditoría de seguridad/SEO/perf/animaciones original
 - **CSP** (Content Security Policy) en `next.config.ts` — no se agregó porque necesita allowlist cuidadoso de Turnstile, Anthropic, Bunny, Google Maps, Tabler Icons, y probarlo antes de producción para no romper nada. Los otros 4 headers de seguridad ya están.
-- `next/image` en el resto de imágenes de menor tráfico que quedaron afuera a propósito la primera vuelta (revisar si sigue quedando algo suelto fuera de lo ya convertido).
+- `next/image` en el resto de imágenes de menor tráfico que quedaron afuera a propósito la primera vuelta.
 
-### Del backlog general del proyecto (histórico, previo a esta sesión)
+### Cosmético / bajo impacto (de la auditoría de public, sin tocar)
+- Radios/sombras de cards inconsistentes entre secciones (24px/28px/32px sin sistema).
+- TODOs conocidos: hero real Rely (`LandingRely.tsx:135`), fotos reales `VentasRealizadas.tsx:5` — bloqueados por fotos, no son bug de código.
+- `alt="Marca Registrada"` redundante en ícono ®.
+- `VenderForm` (heredado del rewrite): verificar que no queden referencias muertas a `verificaciones_sms` en otro lado del código — no verificado.
+
+### Del backlog general del proyecto
 - Dashboard inicio: decidido que se queda en `/panel/metricas`, no se mueve a `/panel` raíz.
-- Tasación con historial → **HECHO esta sesión**.
-- Tesorería (bancos/tarjetas) → **HECHO esta sesión** (motor cuentas + saldo).
-- Postventa → **HECHO esta sesión** (casos service/reclamo/garantía).
 - Stock en tiempo real (Supabase Realtime) — charlado, no implementado, no pedido explícitamente.
-- Liquidador de sueldos: motor armado en sesiones previas, **sigue sin categorías de empleado reales cargadas**, no probado con datos de verdad.
-- Integración MercadoLibre / Meta Ads / Google Ads, publicación automática en redes, firma digital de boletos, OCR DNI, GPS entregas, app móvil vendedores, módulo postventa completo con turnos de service reales (lo hecho ahora es solo el registro de casos), dashboard con objetivo/ganancia/ranking (ya vive en metricas), correo Gmail integrado, alertas automáticas, clientes dormidos, autorizaciones de descuentos/permutas, recordatorios WhatsApp automáticos — todo esto **sin arrancar**, viene de listas previas a esta sesión.
+- Liquidador de sueldos: motor armado, **sigue sin categorías de empleado reales cargadas**, no probado con datos de verdad.
+- Meta Ads / publicación automática en redes, firma digital de boletos, OCR DNI, GPS entregas, app móvil vendedores, módulo postventa completo con turnos de service reales (lo hecho ahora es solo el registro de casos), correo Gmail integrado, alertas automáticas, clientes dormidos, autorizaciones de descuentos/permutas, recordatorios WhatsApp automáticos — todo esto sigue sin arrancar.
 
-### Env vars bloqueadas por vos (sin cambios esta sesión)
+### Env vars bloqueadas por vos
 - `ANTHROPIC_API_KEY` sin crédito → todo lo de IA apagado
 - `OPENAI_API_KEY` vacía → precio sugerido del cotizador apagado
 - `GOOGLE_PLACE_ID` / `GOOGLE_MAPS_API_KEY` vacías → reviews en fallback estático
-- `META_WHATSAPP_TOKEN` / `META_WHATSAPP_PHONE_NUMBER_ID` vacías → WhatsApp no envía de verdad
+- `META_WHATSAPP_TOKEN` / `META_APP_SECRET` vacías → cuenta de Meta suspendida, apelación pendiente
+- `ML_CLIENT_ID` / `ML_CLIENT_SECRET` / `ML_REDIRECT_URI` vacías → esperando poder entrar a la cuenta de MercadoLibre
 
 ---
 
 ## 4. Bloqueos / Dudas
 
-1. ~~¿Corriste `SQL_PENDIENTE.sql`?~~ **RESUELTO** — confirmado con schema dump + query a `pg_policies`: tabla `cuentas`, columna `movimientos_caja.cuenta_id`, tabla `postventa_casos` y ambas policies ("Staff gestiona cuentas", "Staff gestiona postventa") están aplicadas. Tesorería y Postventa operativas.
-2. **¿Seguimos el dark mode página por página** hasta cubrir las ~25 páginas que faltan (lista completa en sección 2), **o lo dejamos así** (7 páginas más usadas ya cubiertas) y priorizamos otra cosa?
-3. **¿Atacamos los hallazgos 🟡 de la auditoría de `public`** (contraste bajo en header, focus-visible faltante, queries en cascada sin paralelizar, alt text) **o quedan para después**?
-4. **CSP**: ¿querés que arme el allowlist igual (con testing manual antes de confiar en él), o preferís dejarlo afuera por ahora dado el riesgo de romper Turnstile/Maps/etc?
-5. No hay credenciales de test para el panel disponibles para mí — cualquier verificación visual del panel la tenés que hacer vos y avisarme si algo se ve mal (como pasó con el toggle de dark mode).
+1. **WhatsApp**: esperando que Meta resuelva la apelación de la cuenta suspendida. No hay nada más para hacer de mi lado hasta esa respuesta.
+2. **MercadoLibre**: esperando que puedas entrar a tu cuenta de ML para registrar la app y conseguir `client_id`/`client_secret`.
+3. **Fondo de estudio en Bunny**: ¿confirmás si al final se ve actualizado, o seguimos con la purga de cache / nombre de archivo nuevo?
+4. **Plantilla de carga masiva**: sigue pendiente de definir alcance (qué campos, formato) cuando quieras retomarla.
+5. **CSP**: ¿armamos el allowlist igual (con testing manual antes de confiar en él), o queda afuera por ahora?
+6. No hay credenciales de test para el panel disponibles para mí — cualquier verificación visual del panel la tenés que hacer vos.
 
 ---
 
 ## 5. Próximo Paso Sugerido
 
-**Correr `SQL_PENDIENTE.sql`** si todavía no lo hiciste — es lo único que puede estar rompiendo silenciosamente Tesorería y Postventa ahora mismo, y es un paso tuyo, no mío.
+No hay nada mío bloqueando ahora mismo — los dos frentes grandes (WhatsApp, MercadoLibre) dependen de vos (apelación de Meta / login a ML). Mientras tanto, lo más productivo:
 
-Después de eso, mi sugerencia de orden:
-1. Terminar el dark mode del panel (es mecánico, ya hay patrón probado, solo falta volumen) — arrancaría por `/panel/postventa` y `/panel/metricas` por ser las más nuevas/usadas de las que faltan.
-2. Limpiar los 🟡 rápidos de la auditoría de `public` (contraste texto header, focus-visible, alt text) — son cambios chicos y acotados.
-3. Dejar CSP y la paralelización de queries en `catalogo/[slug]` para el final, son los de mayor riesgo/menor urgencia.
+1. Confirmar si el fondo de Bunny quedó bien o si purgamos cache.
+2. Si querés seguir con el Showroom 3D: conseguir/definir los modelos `.glb` reales, o decidir si sale del layout público compartido.
+3. Definir alcance de la plantilla de carga masiva cuando haya tiempo.
 
 Decime con cuál seguimos.

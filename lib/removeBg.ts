@@ -1,7 +1,7 @@
 // Recorta el auto de la foto y lo compone sobre el fondo de estudio (remove.bg).
 // remove.bg necesita bajar la imagen de fondo desde una URL pública de internet,
 // por eso vive en el CDN de Bunny (público siempre, sin depender de si el sitio está deployado).
-const FONDO_ESTUDIO_URL = "https://pfaffen-autos.b-cdn.net/fondos/estudio.jpeg";
+const FONDO_ESTUDIO_URL = "https://pfaffen-autos.b-cdn.net/fondos/fondo.png";
 
 export function isRemoveBgConfigurado(): boolean {
   return !!process.env.REMOVE_BG_API_KEY;
@@ -13,8 +13,10 @@ export async function quitarFondo(buffer: Buffer, fileName: string): Promise<Buf
   formData.append("bg_image_url", FONDO_ESTUDIO_URL);
   formData.append("size", "auto");
   formData.append("type", "car");       // mejora la detección de bordes (espejos, antenas, ruedas)
-  formData.append("scale", "80%");      // qué tan grande se ve el auto dentro del cuadro
+  formData.append("scale", "65%");      // qué tan grande se ve el auto dentro del cuadro (bajo = más aire alrededor)
   formData.append("position", "center"); // centrado horizontal/vertical dentro del fondo
+  formData.append("crop_margin", "20%"); // margen alrededor del auto antes de escalar (evita que quede pegado a los bordes)
+  formData.append("shadow_type", "car"); // sombra debajo del auto, ayuda a que se vea asentado en vez de flotando
 
   const response = await fetch("https://api.remove.bg/v1.0/removebg", {
     method: "POST",

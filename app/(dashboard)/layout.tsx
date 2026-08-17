@@ -207,7 +207,6 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
             <NavLinkItem icon={Banknote} label="Señas" href="/panel/senas" />
             <NavLinkItem icon={Receipt} label="Ventas" href="/panel/boletos" />
             <NavLinkItem icon={ShieldCheck} label="Resp. Civil" href="/panel/resp-civil" />
-            <NavLinkItem icon={Receipt} label="Seguimiento de Ventas" href="/panel/ventas" />
             <NavLinkItem icon={Landmark} label="Financiaciones" href="/panel/ventas/financiaciones" />
             <NavLinkItem icon={UserPlus} label="Nuevo Cliente" href="/panel/clientes/nuevo" />
             <NavLinkItem icon={Wrench} label="Postventa" href="/panel/postventa" />
