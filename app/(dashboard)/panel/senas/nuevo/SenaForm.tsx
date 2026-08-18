@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { supabase } from "@/lib/supabase/client";
@@ -28,6 +28,15 @@ export default function SenaForm({ clientes, vehiculos, vendedores, sucursales }
   const [patentTransf, setPatentTransf] = useState("");
   const [observaciones, setObservaciones] = useState("");
   const [mostrarModalPrecio, setMostrarModalPrecio] = useState(false);
+
+  // Al elegir un auto del stock, el precio de venta sale directo de su ficha
+  // (en pesos, dólares, o ambos según cómo esté publicado) en vez de tipearlo a mano.
+  useEffect(() => {
+    if (!vehiculo?.vehiculo_id) return;
+    if (vehiculo.precio_publicado_ars) setVentaArs(String(vehiculo.precio_publicado_ars));
+    if (vehiculo.precio_publicado_usd) setVentaUsd(String(vehiculo.precio_publicado_usd));
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [vehiculo?.vehiculo_id]);
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -97,7 +106,8 @@ export default function SenaForm({ clientes, vehiculos, vendedores, sucursales }
         await notificarEncargados(
           supabase,
           `${cliente.nombre} ${cliente.apellido} — Seña N° ${siguienteNumero}: el vendedor no confirmó el precio ($${(Number(ventaArs) || 0).toLocaleString("es-AR")}). Verificalo.`,
-          `/panel/senas/imprimir/${data.id}`
+          `/panel/senas/imprimir/${data.id}`,
+          "senas"
         );
       }
 

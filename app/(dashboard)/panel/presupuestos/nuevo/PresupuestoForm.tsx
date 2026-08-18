@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { supabase } from "@/lib/supabase/client";
@@ -44,6 +44,13 @@ export default function PresupuestoForm({ clientes, vehiculos, vendedores, sucur
   const [imprimirEn, setImprimirEn] = useState("");
   const [observaciones, setObservaciones] = useState("");
   const [mostrarModalPrecio, setMostrarModalPrecio] = useState(false);
+
+  useEffect(() => {
+    if (!vehiculo?.vehiculo_id) return;
+    if (vehiculo.precio_publicado_ars) setPrecioArs(String(vehiculo.precio_publicado_ars));
+    if (vehiculo.precio_publicado_usd) setPrecioUsd(String(vehiculo.precio_publicado_usd));
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [vehiculo?.vehiculo_id]);
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -92,7 +99,8 @@ export default function PresupuestoForm({ clientes, vehiculos, vendedores, sucur
         await notificarEncargados(
           supabase,
           `${cliente.nombre} ${cliente.apellido} — Presupuesto N° ${siguienteNumero}: el vendedor no confirmó el precio ($${(Number(precioArs) || 0).toLocaleString("es-AR")}). Verificalo.`,
-          `/panel/presupuestos/imprimir/${data.id}`
+          `/panel/presupuestos/imprimir/${data.id}`,
+          "presupuestos"
         );
       }
 

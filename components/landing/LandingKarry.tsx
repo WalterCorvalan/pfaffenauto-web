@@ -3,7 +3,7 @@
 import { useState } from "react";
 import Link from "next/link";
 import Image from "next/image";
-import { Inter } from "next/font/google";
+import { Inter, Barlow_Condensed, JetBrains_Mono } from "next/font/google";
 import { ChevronLeft, ChevronRight, X, Menu, Loader2, CheckCircle2 } from "lucide-react";
 import { KARRY_VERSIONS } from "@/lib/karry-versions";
 import VehiculosCarousel from "./VehiculosCarousel";
@@ -20,6 +20,7 @@ const CARRUSEL_KARRY = KARRY_VERSIONS.map((v, i) => ({
   name: v.name,
   subtitle: v.subtitle,
   href: `/karry/${v.slug}`,
+  load: v.load,
 }));
 
 const inter = Inter({
@@ -27,6 +28,9 @@ const inter = Inter({
   weight: ["300", "400", "500", "600", "700"],
   variable: "--font-inter",
 });
+
+const barlow = Barlow_Condensed({ subsets: ["latin"], weight: ["600", "700"], variable: "--font-barlow" });
+const mono = JetBrains_Mono({ subsets: ["latin"], weight: ["500"], variable: "--font-mono" });
 
 const STATS = [
   { value: "121", unit: "HP", label: "Potencia" },
@@ -86,7 +90,7 @@ export default function LandingKarry() {
   };
 
   return (
-    <main className={`${inter.variable} font-sans bg-black text-white selection:bg-[#0145F2] selection:text-white relative scroll-smooth`}>
+    <main className={`${inter.variable} ${barlow.variable} ${mono.variable} font-sans bg-black text-white selection:bg-[#0145F2] selection:text-white relative scroll-smooth`}>
 
       {/* ================= HEADER FLOTANTE — mismo negro del hero ================= */}
       <header className="fixed top-4 left-0 right-0 z-50 px-4 md:px-8">
@@ -117,7 +121,6 @@ export default function LandingKarry() {
           </nav>
 
           <div className="flex items-center gap-3 sm:gap-4 py-3 md:py-4">
-            <span className="hidden md:block text-xs font-medium">Cigliutti Guerini</span>
             <a
               href="#contacto"
               className="border border-white hover:bg-white hover:text-black transition-colors rounded-full px-4 sm:px-5 py-2 text-[11px] sm:text-xs font-bold uppercase tracking-wider shrink-0"
@@ -196,7 +199,7 @@ export default function LandingKarry() {
         <div className="max-w-6xl mx-auto px-6 grid lg:grid-cols-2 gap-10 md:gap-16 items-center">
 
           <div className="max-w-md">
-            <h2 className="text-3xl md:text-4xl font-bold text-white tracking-tight mb-4">
+            <h2 className="text-4xl md:text-5xl uppercase text-white tracking-tight mb-4" style={{ fontFamily: "var(--font-barlow)", fontWeight: 700, lineHeight: 0.95 }}>
               Dejá tus datos y reservá tu Karry
             </h2>
             <p className="text-slate-400 font-medium mb-8 text-base md:text-lg italic">
@@ -251,7 +254,7 @@ export default function LandingKarry() {
       <section id="modelos" className="bg-[#0a0a0a] py-12 md:py-20 px-6">
         <div className="max-w-6xl mx-auto">
           <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-10 gap-4">
-            <h2 className="text-3xl font-bold text-white tracking-tight">Modelos destacados</h2>
+            <h2 className="text-4xl uppercase text-white tracking-tight" style={{ fontFamily: "var(--font-barlow)", fontWeight: 700 }}>Modelos destacados</h2>
             <a href="#contacto" className="bg-[#0145F2] hover:bg-[#0038c9] text-white px-6 py-2.5 rounded-full font-bold text-sm transition-colors shadow-sm">
               Reservar ahora
             </a>
@@ -307,7 +310,7 @@ export default function LandingKarry() {
         <div className="mx-auto grid max-w-6xl grid-cols-2 md:grid-cols-4 gap-x-4 gap-y-8 md:gap-8 px-6 md:divide-x md:divide-white/10">
           {STATS.map((s, index) => (
             <div key={s.label} className={`text-center ${index === 0 ? "" : "md:pl-8"}`}>
-              <div className="text-2xl sm:text-3xl md:text-5xl font-light text-[#0145F2] tracking-tight">
+              <div className="text-2xl sm:text-3xl md:text-5xl font-medium text-[#0145F2] tracking-tight" style={{ fontFamily: "var(--font-mono)" }}>
                 {s.value}
                 <span className="ml-1 text-sm md:text-base font-medium text-slate-500">{s.unit}</span>
               </div>
@@ -324,7 +327,7 @@ export default function LandingKarry() {
         <div className="mx-auto max-w-6xl px-6 grid lg:grid-cols-2 gap-10 md:gap-16">
 
           <div>
-            <h2 className="text-3xl font-bold mb-3 text-white tracking-tight">Equipamiento de serie</h2>
+            <h2 className="text-4xl uppercase text-white tracking-tight mb-3" style={{ fontFamily: "var(--font-barlow)", fontWeight: 700 }}>Equipamiento de serie</h2>
             <p className="text-slate-400 mb-8 font-medium">Sin extras innecesarios, con lo justo para trabajar todos los días.</p>
 
             <ul className="space-y-4">
@@ -340,7 +343,7 @@ export default function LandingKarry() {
           </div>
 
           <div>
-            <h2 className="text-3xl font-bold mb-8 text-white tracking-tight">Ficha técnica</h2>
+            <h2 className="text-4xl uppercase text-white tracking-tight mb-8" style={{ fontFamily: "var(--font-barlow)", fontWeight: 700 }}>Ficha técnica</h2>
             <div className="rounded-2xl border border-white/10 overflow-hidden bg-white/5">
               {SPECS.map((s, i) => (
                 <div
@@ -350,7 +353,7 @@ export default function LandingKarry() {
                   }`}
                 >
                   <span className="text-sm text-slate-400 font-medium">{s.label}</span>
-                  <span className="text-sm font-bold text-white text-right ml-4">
+                  <span className="text-sm font-medium text-white text-right ml-4" style={{ fontFamily: "var(--font-mono)" }}>
                     {s.value}
                   </span>
                 </div>

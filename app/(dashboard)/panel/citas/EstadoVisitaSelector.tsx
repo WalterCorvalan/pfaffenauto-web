@@ -38,7 +38,7 @@ export default function EstadoVisitaSelector({
 
   const COLOR: Record<string, string> = {
     Pendiente: "bg-amber-500 border-amber-500",
-    Confirmada: "bg-indigo-500 border-indigo-500",
+    Confirmada: "bg-amber-500 border-amber-500",
     "Asistió": "bg-emerald-500 border-emerald-500",
     Cancelada: "bg-rose-500 border-rose-500",
   };

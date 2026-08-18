@@ -47,21 +47,21 @@ const sucursalesData = [
 
 export default function Location() {
   return (
-    <section className="py-24 bg-transparent border-t border-transparent relative overflow-hidden">
-      
+    <section className="py-12 md:py-24 bg-transparent dark:bg-[#0a0a0f] border-t border-transparent relative overflow-hidden">
+
       {/* ================= LUCES AMBIENTALES (SPATIAL UI) ================= */}
-      <div className="absolute top-[10%] left-[-5%] w-[600px] h-[600px] bg-sky-300/15 rounded-full blur-[120px] pointer-events-none"></div>
-      <div className="absolute bottom-[-10%] right-[-5%] w-[500px] h-[500px] bg-[#0145F2]/10 rounded-full blur-[100px] pointer-events-none"></div>
+      <div className="absolute top-[10%] left-[-5%] w-[600px] h-[600px] bg-sky-300/15 dark:bg-sky-500/10 rounded-full blur-[120px] pointer-events-none"></div>
+      <div className="absolute bottom-[-10%] right-[-5%] w-[500px] h-[500px] bg-[#0145F2]/10 dark:bg-[#0145F2]/15 rounded-full blur-[100px] pointer-events-none"></div>
 
       <div className="max-w-7xl mx-auto px-4 md:px-6 relative z-10">
         
         {/* ================= ENCABEZADO GLASSMORPHISM ================= */}
         <div className="text-center mb-16 relative z-10">
-          <span className="flex items-center justify-center gap-1.5 mx-auto text-[#0145F2] bg-blue-50/50 backdrop-blur-xl border border-blue-100/50 text-[10px] font-black uppercase tracking-[0.2em] px-4 py-1.5 rounded-full shadow-[0_2px_10px_rgba(0,0,0,0.03)] w-fit mb-4">
+          <span className="flex items-center justify-center gap-1.5 mx-auto text-[#0145F2] dark:text-sky-300 bg-blue-50/50 dark:bg-sky-400/10 backdrop-blur-xl border border-blue-100/50 dark:border-sky-400/20 text-[10px] font-black uppercase tracking-[0.2em] px-4 py-1.5 rounded-full shadow-[0_2px_10px_rgba(0,0,0,0.03)] w-fit mb-4">
             <Map className="w-3.5 h-3.5" /> Dónde encontrarnos
           </span>
-          <h2 className="text-3xl md:text-5xl text-navy font-light tracking-tighter drop-shadow-sm">
-            Nuestras <strong className="font-black bg-clip-text text-transparent bg-gradient-to-r from-navy to-[#0145F2]">Sucursales</strong>
+          <h2 className="text-3xl md:text-5xl text-navy dark:text-white font-light tracking-tighter drop-shadow-sm">
+            Nuestras <strong className="font-black bg-clip-text text-transparent bg-gradient-to-r from-navy to-[#0145F2] dark:from-white dark:to-sky-400">Sucursales</strong>
           </h2>
         </div>
 
@@ -76,13 +76,13 @@ export default function Location() {
           {sucursalesData.map((sucursal) => (
             <motion.div variants={itemVariants} key={sucursal.id}>
               {/* Contenedor tipo Widget iOS (Cristal) */}
-              <div className="bg-white/40 backdrop-blur-2xl rounded-[32px] border border-white/60 p-2.5 flex flex-col h-full shadow-[0_8px_32px_rgba(0,0,0,0.04)] hover:shadow-[0_20px_48px_rgba(1,69,242,0.12)] hover:border-white hover:bg-white/70 transition-all duration-500 group relative">
-                
+              <div className="bg-white/40 dark:bg-white/5 backdrop-blur-2xl rounded-[32px] border border-white/60 dark:border-white/10 p-2.5 flex flex-col h-full shadow-[0_8px_32px_rgba(0,0,0,0.04)] dark:shadow-[0_8px_32px_rgba(0,0,0,0.4)] hover:shadow-[0_20px_48px_rgba(1,69,242,0.12)] dark:hover:shadow-[0_20px_48px_rgba(1,69,242,0.2)] hover:border-white dark:hover:border-white/20 hover:bg-white/70 dark:hover:bg-white/10 transition-all duration-500 group relative">
+
                 {/* Reflejo de luz interior al hacer hover */}
-                <div className="absolute inset-0 bg-gradient-to-tr from-transparent via-white/50 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-700 pointer-events-none z-20 rounded-[32px]"></div>
+                <div className="absolute inset-0 bg-gradient-to-tr from-transparent via-white/50 dark:via-white/10 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-700 pointer-events-none z-20 rounded-[32px]"></div>
 
                 {/* Mapa SIN el filtro gris */}
-                <div className="w-full h-[220px] rounded-[24px] overflow-hidden relative border border-white/40 shadow-inner bg-slate-100/50">
+                <div className="w-full h-[220px] rounded-[24px] overflow-hidden relative border border-white/40 dark:border-white/10 shadow-inner bg-slate-100/50 dark:bg-slate-900">
                   <iframe 
                     src={sucursal.mapUrl} 
                     className="w-full h-full border-0 transition-transform duration-700 group-hover:scale-105" 
@@ -93,12 +93,12 @@ export default function Location() {
                 
                 {/* Info y Botones */}
                 <div className="p-5 flex flex-col flex-grow relative z-10">
-                  <h3 className="text-xl font-black text-navy uppercase tracking-tight mb-1.5 drop-shadow-sm transition-colors">
+                  <h3 className="text-xl font-black text-navy dark:text-white uppercase tracking-tight mb-1.5 drop-shadow-sm transition-colors">
                     {sucursal.nombre}
                   </h3>
-                  
-                  <div className="flex items-center gap-2 text-gray-500 text-xs font-bold uppercase tracking-wider mb-8">
-                    <MapPin className="w-3.5 h-3.5 text-sky-400" /> 
+
+                  <div className="flex items-center gap-2 text-gray-500 dark:text-slate-400 text-xs font-bold uppercase tracking-wider mb-8">
+                    <MapPin className="w-3.5 h-3.5 text-sky-400" />
                     <span>{sucursal.direccion}</span>
                   </div>
                   
@@ -112,11 +112,11 @@ export default function Location() {
                     </Link>
                     
                     {/* Botón Llegar Glass */}
-                    <a 
-                      href={sucursal.navLink} 
-                      target="_blank" 
-                      rel="noopener noreferrer" 
-                      className="flex-1 bg-white/60 backdrop-blur-md border border-white/80 hover:bg-white text-navy hover:text-[#0145F2] text-[10px] font-black uppercase tracking-widest py-3.5 rounded-2xl transition-all duration-300 shadow-sm hover:shadow-[0_8px_25px_rgba(0,0,0,0.05)] flex items-center justify-center gap-2 active:scale-95"
+                    <a
+                      href={sucursal.navLink}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="flex-1 bg-white/60 dark:bg-white/5 backdrop-blur-md border border-white/80 dark:border-white/10 hover:bg-white dark:hover:bg-white/10 text-navy dark:text-white hover:text-[#0145F2] dark:hover:text-sky-300 text-[10px] font-black uppercase tracking-widest py-3.5 rounded-2xl transition-all duration-300 shadow-sm hover:shadow-[0_8px_25px_rgba(0,0,0,0.05)] flex items-center justify-center gap-2 active:scale-95"
                     >
                       <Navigation className="w-4 h-4" /> Llegar
                     </a>

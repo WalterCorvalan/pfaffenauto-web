@@ -13,17 +13,8 @@ const VIEW_POSITIONS: Record<Exclude<ShowroomView, "cenital">, { pos: [number, n
   trasera: { pos: [0, 1.3, -5], target: [0, 0.8, 0] },
 };
 
-// Posición cenital: depende de cuántos autos hay en la fila para que entren todos en cámara.
-function getCenitalPosition(cantidad: number): { pos: [number, number, number]; target: [number, number, number] } {
-  const distanciaX = Math.max(cantidad * 3.2, 6); // ancho total de la fila
-  return {
-    pos: [0, distanciaX * 0.9, 0.1], // arriba, casi puramente cenital (Z chico evita gimbal lock de OrbitControls)
-    target: [0, 0, 0],
-  };
-}
-
 export type CameraRigHandle = {
-  goTo: (view: ShowroomView, cantidadAutos?: number) => void;
+  goTo: (view: ShowroomView) => void;
 };
 
 const CameraRig = forwardRef<CameraRigHandle, { autoRotate: boolean }>(function CameraRig(
@@ -34,13 +25,18 @@ const CameraRig = forwardRef<CameraRigHandle, { autoRotate: boolean }>(function 
   const controlsRef = useRef<any>(null);
 
   useImperativeHandle(ref, () => ({
-    goTo(view: ShowroomView, cantidadAutos = 1) {
-      const { pos, target } = view === "cenital" ? getCenitalPosition(cantidadAutos) : VIEW_POSITIONS[view];
+    goTo(view: ShowroomView) {
       const controls = controlsRef.current;
       if (!controls) return;
 
       controls.enabled = view === "exterior";
 
+      // "cenital" ahora es el modo caminata en primera persona (WalkControls
+      // maneja la cámara cuadro a cuadro) — acá solo apagamos OrbitControls,
+      // no hay posición fija a la que animar.
+      if (view === "cenital") return;
+
+      const { pos, target } = VIEW_POSITIONS[view];
       gsap.to(camera.position, {
         x: pos[0],
         y: pos[1],

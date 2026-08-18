@@ -3,6 +3,7 @@ import { cookies } from "next/headers";
 import Link from "next/link";
 import { Plus, Car, Search, Edit2, ChevronLeft, ChevronRight, FileText, LayoutGrid, Megaphone } from "lucide-react";
 import AccionesAuto from "./AccionesAuto";
+import MiniaturaAuto from "./MiniaturaAuto";
 import PrecioEditor from "./PrecioEditor";
 import SucursalEditor from "./SucursalEditor";
 import VendedorEditor from "./VendedorEditor";
@@ -11,8 +12,8 @@ import { tienePermiso } from "@/lib/permisos";
 const ITEMS_POR_PAGINA = 10;
 
 const COLOR_ESTADO_BORDE: Record<string, string> = {
-  Disponible: "border-l-emerald-400", Reservado: "border-l-amber-400", Vendido: "border-l-indigo-400",
-  Archivado: "border-l-slate-300", Incompleto: "border-l-rose-400",
+  Disponible: "border-l-emerald-400", Reservado: "border-l-amber-400", Vendido: "border-l-emerald-400",
+  Archivado: "border-l-rose-400", Incompleto: "border-l-rose-400",
 };
 
 // Semáforo de antigüedad en stock: verde hasta 1 mes, amarillo de 1 mes y 1 día a 2 meses, rojo de 2 meses y 1 día en adelante.
@@ -127,7 +128,7 @@ export default async function PanelPage({ searchParams }: { searchParams: Promis
                     <div className="flex items-start gap-3">
                       <div className="relative shrink-0">
                         {auto.multimedia_vehiculos?.[0] ? (
-                          <img src={auto.multimedia_vehiculos[0].url_archivo} className="w-20 h-16 object-cover rounded-lg border border-slate-200" />
+                          <MiniaturaAuto src={auto.multimedia_vehiculos[0].url_archivo} alt={`${auto.marca} ${auto.modelo}`} className="w-20 h-16 object-cover rounded-lg border border-slate-200" />
                         ) : (
                           <div className="w-20 h-16 bg-slate-100 border border-slate-200 rounded-lg flex items-center justify-center">
                             <Car className="w-6 h-6 text-slate-400" />
@@ -202,7 +203,7 @@ export default async function PanelPage({ searchParams }: { searchParams: Promis
                           <div className="flex items-center gap-3">
                             <div className="relative shrink-0">
                               {auto.multimedia_vehiculos?.[0] ? (
-                                <img src={auto.multimedia_vehiculos[0].url_archivo} className="w-14 h-10 object-cover rounded-md border border-slate-200 shadow-sm" />
+                                <MiniaturaAuto src={auto.multimedia_vehiculos[0].url_archivo} alt={`${auto.marca} ${auto.modelo}`} className="w-14 h-10 object-cover rounded-md border border-slate-200 shadow-sm" />
                               ) : (
                                 <div className="w-14 h-10 bg-slate-100 border border-slate-200 rounded-md flex items-center justify-center">
                                   <Car className="w-5 h-5 text-slate-400" />

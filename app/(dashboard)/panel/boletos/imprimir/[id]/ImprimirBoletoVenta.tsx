@@ -1,9 +1,50 @@
 "use client";
 
-import { Printer, ArrowLeft, AlertTriangle } from "lucide-react";
+import { useState } from "react";
+import { Printer, ArrowLeft, AlertTriangle, CheckCircle2 } from "lucide-react";
 import Link from "next/link";
+import { supabase } from "@/lib/supabase/client";
+import { notificarRespuestaPrecio } from "@/lib/notificaciones";
+import ConfirmarPrecioEncargadoModal from "../../../ConfirmarPrecioEncargadoModal";
 
 export default function ImprimirBoletoVenta({ boleto: b }: { boleto: any }) {
+  const [precioConfirmado, setPrecioConfirmado] = useState(b.precio_confirmado);
+  const [ventaArs, setVentaArs] = useState(b.venta_ars);
+  const [ventaUsd, setVentaUsd] = useState(b.venta_usd);
+  const [mostrarModal, setMostrarModal] = useState(false);
+  const [confirmando, setConfirmando] = useState(false);
+
+  const confirmarPrecio = async (nuevoArs: number | null, nuevoUsd: number | null) => {
+    setConfirmando(true);
+    const { error } = await supabase
+      .from("boletos_venta")
+      .update({ precio_confirmado: true, venta_ars: nuevoArs, venta_usd: nuevoUsd })
+      .eq("id", b.id);
+    setConfirmando(false);
+    if (error) return alert("No se pudo confirmar el precio.");
+
+    const cambio = nuevoArs !== b.venta_ars || nuevoUsd !== b.venta_usd;
+    const { data: { user } } = await supabase.auth.getUser();
+    const { data: perfil } = user ? await supabase.from("perfiles").select("nombre").eq("id", user.id).maybeSingle() : { data: null };
+    const nombreEncargado = perfil?.nombre || "El encargado";
+    const formatMoneyLocal = (v: number | null) => (v ? `$ ${Number(v).toLocaleString("es-AR")}` : null);
+    const precioTexto = [formatMoneyLocal(nuevoArs), nuevoUsd ? `US$ ${Number(nuevoUsd).toLocaleString("es-AR")}` : null].filter(Boolean).join(" / ");
+    await notificarRespuestaPrecio(
+      supabase,
+      b.vendedor_id,
+      cambio
+        ? `${nombreEncargado} corrigió el precio de la Venta N° ${b.numero}: ahora es ${precioTexto}.`
+        : `${nombreEncargado} confirmó el precio de la Venta N° ${b.numero}: ${precioTexto}.`,
+      `/panel/boletos/imprimir/${b.id}`,
+      "boletos"
+    );
+
+    setVentaArs(nuevoArs);
+    setVentaUsd(nuevoUsd);
+    setPrecioConfirmado(true);
+    setMostrarModal(false);
+  };
+
   const vendedor = b.perfiles?.nombre || "Administración";
   const formatMoney = (val: number) => `$ ${Number(val || 0).toLocaleString("es-AR")}`;
   const fecha = b.fecha ? new Date(`${b.fecha}T12:00:00Z`).toLocaleDateString("es-AR", { timeZone: "UTC" }) : "—";
@@ -22,9 +63,18 @@ export default function ImprimirBoletoVenta({ boleto: b }: { boleto: any }) {
           </div>
         </div>
         <div className="flex items-center gap-3">
-          {b.precio_confirmado === false && (
-            <span className="flex items-center gap-1.5 bg-amber-50 dark:bg-[#002a6e] text-amber-700 dark:text-amber-300 border border-amber-200 dark:border-[#0a2a6b] px-3 py-2 rounded-xl text-xs font-bold">
+          {precioConfirmado === false && (
+            <button
+              onClick={() => setMostrarModal(true)}
+              className="flex items-center gap-1.5 bg-amber-50 dark:bg-[#002a6e] hover:bg-amber-100 dark:hover:bg-[#0a2a6b] text-amber-700 dark:text-amber-300 border border-amber-200 dark:border-[#0a2a6b] px-3 py-2 rounded-xl text-xs font-bold transition-colors"
+              title="El vendedor no estaba seguro de este precio — clickeá para revisarlo"
+            >
               <AlertTriangle className="w-4 h-4" /> Precio a confirmar
+            </button>
+          )}
+          {precioConfirmado === true && b.precio_confirmado === false && (
+            <span className="flex items-center gap-1.5 bg-emerald-50 dark:bg-[#002a6e] text-emerald-700 dark:text-emerald-300 border border-emerald-200 dark:border-[#0a2a6b] px-3 py-2 rounded-xl text-xs font-bold">
+              <CheckCircle2 className="w-4 h-4" /> Precio confirmado
             </span>
           )}
           <button onClick={() => window.print()} className="bg-indigo-600 hover:bg-indigo-700 text-white px-6 py-2.5 rounded-xl font-bold text-xs uppercase tracking-widest flex items-center gap-2 transition-all shadow-sm active:scale-95">
@@ -160,7 +210,7 @@ export default function ImprimirBoletoVenta({ boleto: b }: { boleto: any }) {
             <div className="p-4 space-y-3 text-xs">
               <div className="flex justify-between items-center">
                 <span className="text-slate-600 font-medium">Venta:</span>
-                <strong className="text-[14px]">{formatMoney(b.venta_ars)} {b.venta_usd ? `/ US$ ${Number(b.venta_usd).toLocaleString("es-AR")}` : ""}</strong>
+                <strong className="text-[14px]">{formatMoney(ventaArs)} {ventaUsd ? `/ US$ ${Number(ventaUsd).toLocaleString("es-AR")}` : ""}</strong>
               </div>
               <div className="flex justify-between items-center text-slate-600 font-medium">
                 <span>Seña:</span>
@@ -290,6 +340,16 @@ export default function ImprimirBoletoVenta({ boleto: b }: { boleto: any }) {
           </div>
         </div>
       </div>
+
+      {mostrarModal && (
+        <ConfirmarPrecioEncargadoModal
+          precioArsActual={ventaArs}
+          precioUsdActual={ventaUsd}
+          guardando={confirmando}
+          onConfirmar={confirmarPrecio}
+          onClose={() => setMostrarModal(false)}
+        />
+      )}
     </div>
   );
 }

@@ -53,7 +53,7 @@ export default function Footer() {
   ];
 
   return (
-    <footer className="bg-white border-t border-gray-200 relative overflow-hidden">
+    <footer className="bg-white dark:bg-[#0a0a0f] border-t border-gray-200 dark:border-white/10 relative overflow-hidden">
 
       {/* ================= COLUMNAS ================= */}
       <div className="max-w-7xl mx-auto px-4 md:px-6 py-14 md:py-16">
@@ -61,11 +61,11 @@ export default function Footer() {
 
           {/* Explorar */}
           <div>
-            <h3 className="text-gray-900 text-[11px] font-black uppercase tracking-widest mb-5">Explorar</h3>
+            <h3 className="text-gray-900 dark:text-white text-[11px] font-black uppercase tracking-widest mb-5">Explorar</h3>
             <ul className="space-y-3.5">
               {links.map((link) => (
                 <li key={link.label}>
-                  <Link href={link.href} className="text-gray-500 hover:text-blue-600 text-sm font-bold transition-colors">
+                  <Link href={link.href} className="text-gray-500 dark:text-slate-400 hover:text-blue-600 text-sm font-bold transition-colors">
                     {link.label}
                   </Link>
                 </li>
@@ -75,7 +75,7 @@ export default function Footer() {
 
           {/* Redes */}
           <div>
-            <h3 className="text-gray-900 text-[11px] font-black uppercase tracking-widest mb-5">Seguinos</h3>
+            <h3 className="text-gray-900 dark:text-white text-[11px] font-black uppercase tracking-widest mb-5">Seguinos</h3>
             <div className="flex flex-col gap-3.5">
               {socials.map((s) => (
                 <a
@@ -83,7 +83,7 @@ export default function Footer() {
                   href={s.href}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="flex items-center gap-2.5 text-gray-500 hover:text-blue-600 text-sm font-bold transition-colors"
+                  className="flex items-center gap-2.5 text-gray-500 dark:text-slate-400 hover:text-blue-600 text-sm font-bold transition-colors"
                 >
                   <svg className="w-4 h-4 fill-current shrink-0" viewBox="0 0 24 24">
                     <path d={s.path} />
@@ -96,7 +96,7 @@ export default function Footer() {
 
           {/* Respaldo Oficial */}
           <div className="col-span-2 md:col-span-1">
-            <h3 className="text-gray-900 text-[11px] font-black uppercase tracking-widest mb-5 flex items-center gap-1.5">
+            <h3 className="text-gray-900 dark:text-white text-[11px] font-black uppercase tracking-widest mb-5 flex items-center gap-1.5">
               <ShieldCheck className="w-3.5 h-3.5 text-blue-600" /> Respaldo Oficial
             </h3>
             <div className="flex flex-wrap items-center gap-5">
@@ -108,7 +108,7 @@ export default function Footer() {
 
           {/* Acceso Staff */}
           <div className="col-span-2 md:col-span-1">
-            <h3 className="text-gray-900 text-[11px] font-black uppercase tracking-widest mb-5">Equipo</h3>
+            <h3 className="text-gray-900 dark:text-white text-[11px] font-black uppercase tracking-widest mb-5">Equipo</h3>
             {isPanel ? (
               <Link href="/" className="inline-flex items-center gap-2 text-blue-600 hover:text-blue-700 text-sm font-black transition-colors">
                 Volver a la Web <ArrowUpRight className="w-3.5 h-3.5" />
@@ -124,14 +124,14 @@ export default function Footer() {
       </div>
 
       {/* ================= BOTTOM BAR ================= */}
-      <div className="border-t border-gray-200">
+      <div className="border-t border-gray-200 dark:border-white/10">
         <div className="max-w-7xl mx-auto px-4 md:px-6 py-6 flex flex-col md:flex-row justify-between items-center gap-4">
-          <p className="text-[11px] text-gray-400 font-bold uppercase tracking-widest text-center md:text-left">
+          <p className="text-[11px] text-gray-400 dark:text-slate-500 font-bold uppercase tracking-widest text-center md:text-left">
             © {new Date().getFullYear()} Pfaffen Autos. Todos los derechos reservados.
           </p>
           <button
             onClick={scrollToTop}
-            className="flex items-center gap-2 text-[10px] font-black uppercase tracking-widest text-gray-500 hover:text-blue-600 transition-colors"
+            className="flex items-center gap-2 text-[10px] font-black uppercase tracking-widest text-gray-500 dark:text-slate-400 hover:text-blue-600 transition-colors"
           >
             Volver arriba <ArrowUp className="w-3.5 h-3.5" />
           </button>

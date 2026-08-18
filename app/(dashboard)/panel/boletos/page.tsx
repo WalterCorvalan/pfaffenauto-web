@@ -4,12 +4,12 @@ import Link from "next/link";
 import { Receipt, Plus, Printer, CarFront, AlertTriangle, ExternalLink, Search } from "lucide-react";
 
 const COLOR_ETAPA: Record<string, string> = {
-  "Seña": "border-l-amber-400", "Documentación": "border-l-sky-400", "Patentamiento": "border-l-purple-400",
-  "Transferencia": "border-l-indigo-400", "Entrega": "border-l-teal-400", "Completado": "border-l-emerald-400",
+  "Seña": "border-l-amber-400", "Documentación": "border-l-amber-400", "Patentamiento": "border-l-amber-400",
+  "Transferencia": "border-l-amber-400", "Entrega": "border-l-amber-400", "Completado": "border-l-emerald-400",
 };
 const BADGE_ETAPA: Record<string, string> = {
-  "Seña": "bg-amber-500", "Documentación": "bg-sky-500", "Patentamiento": "bg-purple-500",
-  "Transferencia": "bg-indigo-500", "Entrega": "bg-teal-500", "Completado": "bg-emerald-500",
+  "Seña": "bg-amber-500", "Documentación": "bg-amber-500", "Patentamiento": "bg-amber-500",
+  "Transferencia": "bg-amber-500", "Entrega": "bg-amber-500", "Completado": "bg-emerald-500",
 };
 
 export default async function BoletosPage({ searchParams }: { searchParams: Promise<{ q?: string }> }) {

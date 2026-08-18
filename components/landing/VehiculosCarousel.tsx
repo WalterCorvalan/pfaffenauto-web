@@ -1,14 +1,19 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { ArrowLeft, ArrowRight } from "lucide-react";
+import { Barlow_Condensed, JetBrains_Mono } from "next/font/google";
 
-// Hero de carrusel full-viewport (referencia: carrusel de personajes tipo
-// "figurine carousel") adaptado para mostrar los autos de una marca en vez
-// de personajes. Roles (centro/izq/der/atrás) se calculan de forma genérica
-// según la cantidad de items — con 2 (Karry) o 3 (Rely) igual funciona,
-// simplemente no se usan todos los roles.
+const barlow = Barlow_Condensed({ subsets: ["latin"], weight: ["600", "700"], variable: "--font-barlow" });
+const mono = JetBrains_Mono({ subsets: ["latin"], weight: ["500"], variable: "--font-mono" });
+
+// Hero "Drive-In": en vez de un carrusel de figuras chicas rotando, cada auto
+// ENTRA manejando a toda velocidad (estelas de movimiento incluidas) y frena
+// en seco con un rebote de suspensión al llegar al centro. Al cambiar de
+// versión, el auto actual arranca y se va rápido para el lado que elegiste,
+// y el siguiente entra manejando desde el lado opuesto. Un solo auto en
+// pantalla siempre — nada se esconde detrás de nada.
 
 export interface ItemCarrusel {
   src: string;
@@ -17,6 +22,7 @@ export interface ItemCarrusel {
   name: string;
   subtitle: string;
   href: string;
+  load?: string;
 }
 
 const GRAIN_SVG =
@@ -25,46 +31,10 @@ const GRAIN_SVG =
     `<svg xmlns='http://www.w3.org/2000/svg'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/><feColorMatrix type='saturate' values='0'/></filter><rect width='100%' height='100%' filter='url(%23n)' opacity='0.08'/></svg>`
   );
 
-type Rol = "center" | "left" | "right" | "back";
+type Fase = "entrando" | "idle" | "saliendo";
 
-const ESTILO_ROL: Record<Rol, (isMobile: boolean) => React.CSSProperties> = {
-  center: (isMobile) => ({
-    transform: `translateX(-50%) scale(${isMobile ? 1.05 : 1.68})`,
-    filter: "blur(0px)",
-    opacity: 1,
-    zIndex: 20,
-    left: "50%",
-    height: isMobile ? "56%" : "92%",
-    bottom: isMobile ? "20%" : 0,
-  }),
-  left: (isMobile) => ({
-    transform: "translateX(-50%) scale(1)",
-    filter: "blur(1px)",
-    opacity: 0.9,
-    zIndex: 10,
-    left: isMobile ? "6%" : "30%",
-    height: isMobile ? "22%" : "28%",
-    bottom: isMobile ? "26%" : "12%",
-  }),
-  right: (isMobile) => ({
-    transform: "translateX(-50%) scale(1)",
-    filter: "blur(1px)",
-    opacity: 0.9,
-    zIndex: 10,
-    left: isMobile ? "94%" : "70%",
-    height: isMobile ? "22%" : "28%",
-    bottom: isMobile ? "26%" : "12%",
-  }),
-  back: (isMobile) => ({
-    transform: "translateX(-50%) scale(1)",
-    filter: "blur(4px)",
-    opacity: 1,
-    zIndex: 5,
-    left: "50%",
-    height: isMobile ? "13%" : "22%",
-    bottom: isMobile ? "32%" : "12%",
-  }),
-};
+const DURACION_SALIDA = 380;
+const DURACION_ENTRADA = 650;
 
 export default function VehiculosCarousel({
   items,
@@ -78,8 +48,11 @@ export default function VehiculosCarousel({
   invertLogo?: boolean;
 }) {
   const [activeIndex, setActiveIndex] = useState(0);
-  const [isAnimating, setIsAnimating] = useState(false);
+  const [saliente, setSaliente] = useState<{ index: number; direccion: "izquierda" | "derecha" } | null>(null);
+  const [fase, setFase] = useState<Fase>("entrando");
+  const [direccionEntrada, setDireccionEntrada] = useState<"izquierda" | "derecha">("derecha");
   const [isMobile, setIsMobile] = useState(false);
+  const timeouts = useRef<ReturnType<typeof setTimeout>[]>([]);
 
   useEffect(() => {
     const onResize = () => setIsMobile(window.innerWidth < 640);
@@ -95,43 +68,92 @@ export default function VehiculosCarousel({
     });
   }, [items]);
 
+  // Entrada inicial al cargar la página
+  useEffect(() => {
+    const t = setTimeout(() => setFase("idle"), DURACION_ENTRADA);
+    return () => clearTimeout(t);
+  }, []);
+
+  useEffect(() => () => timeouts.current.forEach(clearTimeout), []);
+
   const n = items.length;
 
   const navigate = (dir: "next" | "prev") => {
-    if (isAnimating || n <= 1) return;
-    setIsAnimating(true);
-    setActiveIndex((prev) => (dir === "next" ? (prev + 1) % n : (prev + n - 1) % n));
-    setTimeout(() => setIsAnimating(false), 650);
+    if (fase !== "idle" || n <= 1) return;
+    // "next" = el auto actual arranca hacia la izquierda, el próximo entra desde la derecha.
+    const salidaHacia = dir === "next" ? "izquierda" : "derecha";
+    const entradaDesde = dir === "next" ? "derecha" : "izquierda";
+
+    setSaliente({ index: activeIndex, direccion: salidaHacia });
+    setFase("saliendo");
+
+    const t1 = setTimeout(() => {
+      setActiveIndex((prev) => (dir === "next" ? (prev + 1) % n : (prev + n - 1) % n));
+      setDireccionEntrada(entradaDesde);
+      setSaliente(null);
+      setFase("entrando");
+
+      const t2 = setTimeout(() => setFase("idle"), DURACION_ENTRADA);
+      timeouts.current.push(t2);
+    }, DURACION_SALIDA);
+    timeouts.current.push(t1);
   };
 
-  // Roles genéricos: se saltea cualquier rol cuyo índice ya se usó (pasa con
-  // pocos items — con 2 o 3 autos no hay "back" distinto, y listo).
-  const usados = new Set<number>();
-  const roles: { rol: Rol; index: number }[] = [];
-  (
-    [
-      ["center", activeIndex],
-      ["left", (activeIndex + n - 1) % n],
-      ["right", (activeIndex + 1) % n],
-      ["back", (activeIndex + 2) % n],
-    ] as [Rol, number][]
-  ).forEach(([rol, index]) => {
-    if (usados.has(index)) return;
-    usados.add(index);
-    roles.push({ rol, index });
-  });
-
   const activo = items[activeIndex];
+  const enMovimiento = fase !== "idle";
+
+  const altoAuto = isMobile ? "88%" : "140%";
+  const bottomAuto = isMobile ? "24%" : "8%";
 
   return (
     <div
       style={{
-        backgroundColor: activo.bg,
-        transition: "background-color 650ms cubic-bezier(0.4,0,0.2,1)",
+        backgroundImage: `url("https://pub-e8051b52508949878d450ac52092f601.r2.dev/bg/fondo.png")`,
+        backgroundSize: "cover",
+        backgroundPosition: "center",
         fontFamily: "Inter, sans-serif",
       }}
-      className="relative w-full overflow-hidden"
+      className={`relative w-full overflow-hidden ${barlow.variable} ${mono.variable}`}
     >
+      {/* Inline a propósito: los @keyframes en globals.css no los estaba
+          tomando el dev server (caché de Turbopack) — esto no depende de eso. */}
+      <style>{`
+        @keyframes drive-in-der {
+          0%   { transform: translateX(calc(-50% + 140%)) scale(0.88); filter: blur(10px); opacity: 0; }
+          55%  { transform: translateX(calc(-50% - 3%)) scale(1.02); filter: blur(1px); opacity: 1; }
+          75%  { transform: translateX(calc(-50% + 1.5%)) scale(0.99); filter: blur(0px); }
+          100% { transform: translateX(-50%) scale(1); filter: blur(0px); opacity: 1; }
+        }
+        @keyframes drive-in-izq {
+          0%   { transform: translateX(calc(-50% - 140%)) scale(0.88); filter: blur(10px); opacity: 0; }
+          55%  { transform: translateX(calc(-50% + 3%)) scale(1.02); filter: blur(1px); opacity: 1; }
+          75%  { transform: translateX(calc(-50% - 1.5%)) scale(0.99); filter: blur(0px); }
+          100% { transform: translateX(-50%) scale(1); filter: blur(0px); opacity: 1; }
+        }
+        @keyframes drive-out-izq {
+          0%   { transform: translateX(-50%) scale(1); filter: blur(0px); opacity: 1; }
+          100% { transform: translateX(calc(-50% - 140%)) scale(0.9); filter: blur(10px); opacity: 0; }
+        }
+        @keyframes drive-out-der {
+          0%   { transform: translateX(-50%) scale(1); filter: blur(0px); opacity: 1; }
+          100% { transform: translateX(calc(-50% + 140%)) scale(0.9); filter: blur(10px); opacity: 0; }
+        }
+        @keyframes logo-respira {
+          0%, 100% { opacity: 0.85; transform: scale(1); }
+          50% { opacity: 1; transform: scale(1.02); }
+        }
+        @keyframes estela-mover {
+          0% { transform: translateX(-30%); }
+          100% { transform: translateX(130%); }
+        }
+        .vc-drive-in-der { animation: drive-in-der ${DURACION_ENTRADA}ms cubic-bezier(0.22, 1, 0.36, 1) forwards; }
+        .vc-drive-in-izq { animation: drive-in-izq ${DURACION_ENTRADA}ms cubic-bezier(0.22, 1, 0.36, 1) forwards; }
+        .vc-drive-out-izq { animation: drive-out-izq ${DURACION_SALIDA}ms cubic-bezier(0.5, 0, 0.9, 0.4) forwards; }
+        .vc-drive-out-der { animation: drive-out-der ${DURACION_SALIDA}ms cubic-bezier(0.5, 0, 0.9, 0.4) forwards; }
+        .vc-logo-respira { animation: logo-respira 4s ease-in-out infinite; }
+        .vc-estela { animation: estela-mover 550ms linear infinite; }
+      `}</style>
+
       <div className="relative w-full overflow-hidden" style={{ height: "100vh" }}>
         {/* Grano */}
         <div
@@ -145,65 +167,122 @@ export default function VehiculosCarousel({
           }}
         />
 
-        {/* Logo fantasma gigante — debajo del header fijo, no lo pisa */}
+        {/* Logo marca de agua — chico, arriba, no compite con el auto */}
         <div
           className="absolute inset-x-0 flex items-center justify-center pointer-events-none select-none"
-          style={{ zIndex: 2, top: "26%" }}
+          style={{ zIndex: 2, top: "16%" }}
         >
           <img
             src={logoSrc}
             alt={logoAlt}
+            className={!enMovimiento ? "vc-logo-respira" : ""}
             style={{
-              width: "clamp(220px, 42vw, 560px)",
+              width: "clamp(120px, 16vw, 220px)",
               height: "auto",
               objectFit: "contain",
               filter: invertLogo ? "brightness(0) invert(1)" : "none",
-              opacity: 0.9,
+              opacity: 0.35,
             }}
           />
         </div>
 
-        {/* Carrusel de autos */}
-        <div className="absolute inset-0" style={{ zIndex: 3 }}>
-          {roles.map(({ rol, index }) => {
-            const item = items[index];
-            return (
+        {/* Estelas de velocidad — solo mientras el auto entra o sale */}
+        {enMovimiento && (
+          <div className="absolute inset-0 pointer-events-none overflow-hidden" style={{ zIndex: 4, bottom: isMobile ? "22%" : "8%", top: "auto", height: isMobile ? "18%" : "22%" }}>
+            {[0, 1, 2, 3].map((i) => (
               <div
-                key={index}
-                className="absolute"
+                key={i}
+                className="vc-estela absolute h-[2px] bg-white/40 rounded-full"
                 style={{
-                  aspectRatio: "0.6 / 1",
-                  transition:
-                    "transform 650ms cubic-bezier(0.4,0,0.2,1), filter 650ms cubic-bezier(0.4,0,0.2,1), opacity 650ms cubic-bezier(0.4,0,0.2,1), left 650ms cubic-bezier(0.4,0,0.2,1)",
-                  willChange: "transform, filter, opacity",
-                  ...ESTILO_ROL[rol](isMobile),
+                  top: `${18 + i * 22}%`,
+                  width: isMobile ? "40%" : "26%",
+                  animationDelay: `${i * 70}ms`,
                 }}
-              >
-                <img
-                  src={item.src}
-                  alt={item.name}
-                  draggable={false}
-                  style={{ width: "100%", height: "100%", objectFit: "contain", objectPosition: "bottom center" }}
-                />
-              </div>
-            );
-          })}
-        </div>
+              />
+            ))}
+          </div>
+        )}
+
+        {/* Auto saliente (si hay una transición en curso) */}
+        {saliente && (
+          <div
+            key={`out-${saliente.index}`}
+            className={`absolute ${saliente.direccion === "izquierda" ? "vc-drive-out-izq" : "vc-drive-out-der"}`}
+            style={{
+              left: "50%",
+              bottom: bottomAuto,
+              height: altoAuto,
+              aspectRatio: "0.6 / 1",
+              zIndex: 15,
+              transformOrigin: "bottom center",
+              transform: "translateX(-50%)",
+            }}
+          >
+            <img
+              src={items[saliente.index].src}
+              alt={items[saliente.index].name}
+              draggable={false}
+              style={{ width: "100%", height: "100%", objectFit: "contain", objectPosition: "bottom center" }}
+            />
+          </div>
+        )}
+
+        {/* Auto activo */}
+        {fase !== "saliendo" && (
+          <div
+            key={`in-${activeIndex}`}
+            className={fase === "entrando" ? (direccionEntrada === "derecha" ? "vc-drive-in-der" : "vc-drive-in-izq") : ""}
+            style={{
+              position: "absolute",
+              left: "50%",
+              bottom: bottomAuto,
+              height: altoAuto,
+              aspectRatio: "0.6 / 1",
+              zIndex: 20,
+              transformOrigin: "bottom center",
+              transform: fase === "idle" ? "translateX(-50%) scale(1)" : undefined,
+            }}
+          >
+            <img
+              src={activo.src}
+              alt={activo.name}
+              draggable={false}
+              style={{ width: "100%", height: "100%", objectFit: "contain", objectPosition: "bottom center" }}
+            />
+          </div>
+        )}
 
         {/* Texto + flechas abajo a la izquierda */}
-        <div
-          className="absolute bottom-6 left-4 sm:bottom-20 sm:left-24"
-          style={{ zIndex: 60, maxWidth: 320 }}
-        >
+        <div className="absolute bottom-6 left-4 sm:bottom-20 sm:left-24" style={{ zIndex: 60, maxWidth: 340 }}>
+          {activo.load && (
+            <div
+              className="inline-flex items-center gap-2 mb-3 sm:mb-4 px-2.5 py-1 border border-white/40 transition-opacity duration-200"
+              style={{ opacity: enMovimiento ? 0.25 : 0.9 }}
+            >
+              <span
+                className="uppercase text-[9px] sm:text-[10px] tracking-[0.15em] text-white/70"
+                style={{ fontFamily: "var(--font-mono)" }}
+              >
+                Carga útil
+              </span>
+              <span className="w-px h-3 bg-white/30" />
+              <span
+                className="text-[11px] sm:text-xs font-medium text-white"
+                style={{ fontFamily: "var(--font-mono)" }}
+              >
+                {activo.load}
+              </span>
+            </div>
+          )}
           <p
-            className="uppercase font-bold tracking-widest mb-2 sm:mb-3 text-base sm:text-[22px] text-white"
-            style={{ opacity: 0.95, letterSpacing: "0.02em" }}
+            className="uppercase mb-2 sm:mb-3 text-2xl sm:text-4xl text-white transition-opacity duration-200"
+            style={{ opacity: enMovimiento ? 0.4 : 0.95, letterSpacing: "0.01em", fontFamily: "var(--font-barlow)", fontWeight: 700, lineHeight: 0.95 }}
           >
             {activo.name}
           </p>
           <p
-            className="hidden sm:block text-xs sm:text-sm text-white mb-4 sm:mb-5"
-            style={{ opacity: 0.85, lineHeight: 1.6 }}
+            className="hidden sm:block text-xs sm:text-sm text-white mb-4 sm:mb-5 transition-opacity duration-200"
+            style={{ opacity: enMovimiento ? 0.3 : 0.85, lineHeight: 1.6 }}
           >
             {activo.subtitle}
           </p>
@@ -213,14 +292,16 @@ export default function VehiculosCarousel({
               <button
                 onClick={() => navigate("prev")}
                 aria-label="Anterior"
-                className="w-12 h-12 sm:w-16 sm:h-16 rounded-full flex items-center justify-center text-white border-2 border-white bg-transparent hover:bg-white/12 hover:scale-[1.08] transition-[transform,background-color] duration-150"
+                disabled={enMovimiento}
+                className="w-12 h-12 sm:w-16 sm:h-16 rounded-full flex items-center justify-center text-white border-2 border-white bg-transparent hover:bg-white/12 hover:scale-[1.08] disabled:opacity-40 transition-[transform,background-color,opacity] duration-150"
               >
                 <ArrowLeft size={26} strokeWidth={2.25} />
               </button>
               <button
                 onClick={() => navigate("next")}
                 aria-label="Siguiente"
-                className="w-12 h-12 sm:w-16 sm:h-16 rounded-full flex items-center justify-center text-white border-2 border-white bg-transparent hover:bg-white/12 hover:scale-[1.08] transition-[transform,background-color] duration-150"
+                disabled={enMovimiento}
+                className="w-12 h-12 sm:w-16 sm:h-16 rounded-full flex items-center justify-center text-white border-2 border-white bg-transparent hover:bg-white/12 hover:scale-[1.08] disabled:opacity-40 transition-[transform,background-color,opacity] duration-150"
               >
                 <ArrowRight size={26} strokeWidth={2.25} />
               </button>

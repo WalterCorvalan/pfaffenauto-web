@@ -1,9 +1,50 @@
 "use client";
 
-import { Printer, ArrowLeft, Share2, AlertTriangle } from "lucide-react";
+import { useState } from "react";
+import { Printer, ArrowLeft, Share2, AlertTriangle, CheckCircle2 } from "lucide-react";
 import Link from "next/link";
+import { supabase } from "@/lib/supabase/client";
+import { notificarRespuestaPrecio } from "@/lib/notificaciones";
+import ConfirmarPrecioEncargadoModal from "../../../ConfirmarPrecioEncargadoModal";
 
 export default function ImprimirPresupuesto({ presupuesto: p }: { presupuesto: any }) {
+  const [precioConfirmado, setPrecioConfirmado] = useState(p.precio_confirmado);
+  const [precioArs, setPrecioArs] = useState(p.precio_venta_ars);
+  const [precioUsd, setPrecioUsd] = useState(p.precio_venta_usd);
+  const [mostrarModal, setMostrarModal] = useState(false);
+  const [confirmando, setConfirmando] = useState(false);
+
+  const confirmarPrecio = async (nuevoArs: number | null, nuevoUsd: number | null) => {
+    setConfirmando(true);
+    const { error } = await supabase
+      .from("presupuestos")
+      .update({ precio_confirmado: true, precio_venta_ars: nuevoArs, precio_venta_usd: nuevoUsd })
+      .eq("id", p.id);
+    setConfirmando(false);
+    if (error) return alert("No se pudo confirmar el precio.");
+
+    const cambio = nuevoArs !== p.precio_venta_ars || nuevoUsd !== p.precio_venta_usd;
+    const { data: { user } } = await supabase.auth.getUser();
+    const { data: perfil } = user ? await supabase.from("perfiles").select("nombre").eq("id", user.id).maybeSingle() : { data: null };
+    const nombreEncargado = perfil?.nombre || "El encargado";
+    const formatMoneyLocal = (v: number | null) => (v ? `$ ${Number(v).toLocaleString("es-AR")}` : null);
+    const precioTexto = [formatMoneyLocal(nuevoArs), nuevoUsd ? `US$ ${Number(nuevoUsd).toLocaleString("es-AR")}` : null].filter(Boolean).join(" / ");
+    await notificarRespuestaPrecio(
+      supabase,
+      p.vendedor_id,
+      cambio
+        ? `${nombreEncargado} corrigió el precio del Presupuesto N° ${p.numero}: ahora es ${precioTexto}.`
+        : `${nombreEncargado} confirmó el precio del Presupuesto N° ${p.numero}: ${precioTexto}.`,
+      `/panel/presupuestos/imprimir/${p.id}`,
+      "presupuestos"
+    );
+
+    setPrecioArs(nuevoArs);
+    setPrecioUsd(nuevoUsd);
+    setPrecioConfirmado(true);
+    setMostrarModal(false);
+  };
+
   const vendedor = p.perfiles?.nombre || "Administración";
   const formatMoney = (val: number) => `$ ${Number(val || 0).toLocaleString("es-AR")}`;
   const fecha = p.fecha ? new Date(`${p.fecha}T12:00:00Z`).toLocaleDateString("es-AR", { timeZone: "UTC" }) : "—";
@@ -29,9 +70,18 @@ export default function ImprimirPresupuesto({ presupuesto: p }: { presupuesto: a
           </div>
         </div>
         <div className="flex items-center gap-2">
-          {p.precio_confirmado === false && (
-            <span className="flex items-center gap-1.5 bg-amber-50 dark:bg-[#002a6e] text-amber-700 dark:text-amber-300 border border-amber-200 dark:border-[#0a2a6b] px-3 py-2 rounded-xl text-xs font-bold">
+          {precioConfirmado === false && (
+            <button
+              onClick={() => setMostrarModal(true)}
+              className="flex items-center gap-1.5 bg-amber-50 dark:bg-[#002a6e] hover:bg-amber-100 dark:hover:bg-[#0a2a6b] text-amber-700 dark:text-amber-300 border border-amber-200 dark:border-[#0a2a6b] px-3 py-2 rounded-xl text-xs font-bold transition-colors"
+              title="El vendedor no estaba seguro de este precio — clickeá para revisarlo"
+            >
               <AlertTriangle className="w-4 h-4" /> Precio a confirmar
+            </button>
+          )}
+          {precioConfirmado === true && p.precio_confirmado === false && (
+            <span className="flex items-center gap-1.5 bg-emerald-50 dark:bg-[#002a6e] text-emerald-700 dark:text-emerald-300 border border-emerald-200 dark:border-[#0a2a6b] px-3 py-2 rounded-xl text-xs font-bold">
+              <CheckCircle2 className="w-4 h-4" /> Precio confirmado
             </span>
           )}
           {linkPublico && (
@@ -112,12 +162,12 @@ export default function ImprimirPresupuesto({ presupuesto: p }: { presupuesto: a
             <div className="p-4 space-y-3 text-xs">
               <div className="flex justify-between items-center">
                 <span className="text-slate-600 font-medium">Precio de Venta u$s:</span>
-                <strong className="text-[14px]">{p.precio_venta_usd ? `u$s ${Number(p.precio_venta_usd).toLocaleString("es-AR")}` : "u$s 0,00"}</strong>
+                <strong className="text-[14px]">{precioUsd ? `u$s ${Number(precioUsd).toLocaleString("es-AR")}` : "u$s 0,00"}</strong>
               </div>
               <div className="flex justify-between items-center border-t-2 border-slate-900 pt-3 mt-3">
                 <span className="font-bold text-[13px] uppercase tracking-widest">Precio Venta $:</span>
                 <strong className="text-xl font-black text-slate-900 bg-slate-100 px-3 py-1 rounded">
-                  {p.precio_venta_ars ? formatMoney(p.precio_venta_ars) : "A convenir"}
+                  {precioArs ? formatMoney(precioArs) : "A convenir"}
                 </strong>
               </div>
               {p.imprimir_en && (
@@ -143,6 +193,16 @@ export default function ImprimirPresupuesto({ presupuesto: p }: { presupuesto: a
           El presente documento es de carácter meramente informativo y no constituye una reserva del vehículo ni congela el valor del mismo. El stock y los precios están sujetos a modificaciones sin previo aviso hasta la efectiva seña de la unidad.
         </p>
       </div>
+
+      {mostrarModal && (
+        <ConfirmarPrecioEncargadoModal
+          precioArsActual={precioArs}
+          precioUsdActual={precioUsd}
+          guardando={confirmando}
+          onConfirmar={confirmarPrecio}
+          onClose={() => setMostrarModal(false)}
+        />
+      )}
     </div>
   );
 }

@@ -9,7 +9,7 @@ const ESTADOS = ["Activa", "Convertida", "Perdida"];
 const COLOR: Record<string, string> = {
   "Activa": "bg-amber-500 text-white border-amber-500",
   "Convertida": "bg-emerald-500 text-white border-emerald-500",
-  "Perdida": "bg-slate-400 text-white border-slate-400",
+  "Perdida": "bg-rose-500 text-white border-rose-500",
 };
 
 export default function EstadoSenaSelector({ id, estado }: { id: string; estado: string }) {

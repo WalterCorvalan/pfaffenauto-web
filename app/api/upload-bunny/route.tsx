@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { createServerClient } from "@supabase/ssr";
 import { cookies } from "next/headers";
-import { r2Configurado, subirArchivoR2 } from "@/lib/storage/r2";
+import { subirArchivoR2 } from "@/lib/storage/r2";
 
 const MAX_MB = 15;
 
@@ -37,31 +37,7 @@ export async function POST(request: Request) {
     const cleanFileName = file.name.replace(/[^a-zA-Z0-9.\-_]/g, '');
     const uniqueFileName = `${Date.now()}-${cleanFileName}`;
     
-    let publicUrl: string;
-
-    if (r2Configurado()) {
-      publicUrl = await subirArchivoR2(buffer, `vehiculos/${uniqueFileName}`, file.type);
-    } else {
-      // Fallback a Bunny mientras no estén las credenciales de R2 cargadas
-      const storageEndpoint = process.env.BUNNY_STORAGE_ENDPOINT;
-      const storageZone = process.env.BUNNY_STORAGE_ZONE;
-      const uploadUrl = `${storageEndpoint}/${storageZone}/vehiculos/${uniqueFileName}`;
-
-      const response = await fetch(uploadUrl, {
-        method: "PUT",
-        headers: {
-          "AccessKey": process.env.BUNNY_API_KEY as string,
-          "Content-Type": "application/octet-stream",
-        },
-        body: buffer,
-      });
-
-      if (!response.ok) {
-        throw new Error(`Error de Bunny: ${response.statusText}`);
-      }
-
-      publicUrl = `${process.env.BUNNY_CDN_URL}/vehiculos/${uniqueFileName}`;
-    }
+    const publicUrl = await subirArchivoR2(buffer, `vehiculos/${uniqueFileName}`, file.type);
 
     return NextResponse.json({ publicUrl });
 

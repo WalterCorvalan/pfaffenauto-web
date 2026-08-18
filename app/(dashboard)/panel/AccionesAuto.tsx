@@ -131,10 +131,10 @@ export default function AccionesAuto({ autoId, estadoActual, puedeGestionar }: A
   const estadoVisual = estadoActual === "Reservado" ? "Señado" : estadoActual;
 
   const colorClasses = `
-    ${estadoVisual === "Borrador" ? "bg-slate-100 dark:bg-[#00246b] text-slate-600 dark:text-slate-300 border-slate-200 dark:border-[#0a2a6b]" : ""}
+    ${estadoVisual === "Borrador" ? "bg-amber-50 dark:bg-[#002a6e] text-amber-700 dark:text-amber-300 border-amber-200 dark:border-[#0a2a6b]" : ""}
     ${estadoVisual === "Disponible" ? "bg-emerald-50 dark:bg-[#002a6e] text-emerald-700 dark:text-emerald-300 border-emerald-200 dark:border-[#0a2a6b]" : ""}
     ${estadoVisual === "Señado" ? "bg-amber-50 dark:bg-[#002a6e] text-amber-700 dark:text-amber-300 border-amber-200 dark:border-[#0a2a6b]" : ""}
-    ${estadoVisual === "Vendido" ? "bg-indigo-50 dark:bg-[#002a6e] text-indigo-700 dark:text-sky-300 border-indigo-200 dark:border-[#0a2a6b]" : ""}
+    ${estadoVisual === "Vendido" ? "bg-emerald-50 dark:bg-[#002a6e] text-emerald-700 dark:text-emerald-300 border-emerald-200 dark:border-[#0a2a6b]" : ""}
     ${estadoVisual === "Archivado" ? "bg-rose-50 dark:bg-[#002a6e] text-rose-700 dark:text-rose-300 border-rose-200 dark:border-[#0a2a6b]" : ""}
   `;
 

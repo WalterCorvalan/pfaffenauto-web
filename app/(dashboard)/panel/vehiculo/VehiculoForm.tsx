@@ -4,7 +4,7 @@ import { useState, useEffect, useRef } from "react";
 import { useRouter } from "next/navigation";
 import { supabase } from "@/lib/supabase/client";
 import { uploadAutoImage } from "@/lib/upload";
-import { ArrowLeft, Save, Upload, X, Car, Shield, DollarSign, FileText, Image as ImageIcon, ChevronRight, ChevronLeft } from "lucide-react";
+import { ArrowLeft, Save, Upload, X, Car, Shield, DollarSign, FileText, Image as ImageIcon, ChevronRight, ChevronLeft, Loader2 } from "lucide-react";
 import { useForm, SubmitHandler } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
@@ -88,6 +88,7 @@ export default function VehiculoForm({ modo, autoId }: VehiculoFormProps) {
   const totalPasos = 7;
   const [titulares, setTitulares] = useState<{ nombre: string; porcentaje: string; cuit_cuil: string }[]>([]);
   const [loading, setLoading] = useState(false);
+  const [progresoFotos, setProgresoFotos] = useState<{ actual: number; total: number } | null>(null);
   const [loadingDatos, setLoadingDatos] = useState(modo === "editar");
 
   const [archivos, setArchivos] = useState<File[]>([]);
@@ -282,13 +283,16 @@ export default function VehiculoForm({ modo, autoId }: VehiculoFormProps) {
 
       let ordenSiguiente = imagenesExistentes.length;
       const imagenesAInsertar = [];
+      if (archivos.length > 0) setProgresoFotos({ actual: 0, total: archivos.length });
       for (let i = 0; i < archivos.length; i++) {
         try {
           const archivo = archivos[i];
           const url = await uploadAutoImage(archivo);
           if (url) imagenesAInsertar.push({ vehiculo_id: vehiculoTargetId!, url_archivo: url, tipo: archivo.type.startsWith("video") ? "video" : "foto", orden: ordenSiguiente + i });
         } catch (imgErr) { console.error(`Error subiendo la foto ${i + 1}:`, imgErr); }
+        setProgresoFotos({ actual: i + 1, total: archivos.length });
       }
+      setProgresoFotos(null);
 
       if (imagenesAInsertar.length > 0) {
         const { error: insertError } = await supabase.from("multimedia_vehiculos").insert(imagenesAInsertar);
@@ -312,6 +316,7 @@ export default function VehiculoForm({ modo, autoId }: VehiculoFormProps) {
       }
     } finally {
       setLoading(false);
+      setProgresoFotos(null);
     }
   };
 
@@ -788,7 +793,7 @@ export default function VehiculoForm({ modo, autoId }: VehiculoFormProps) {
                     disabled={loading}
                     className="w-2/3 bg-emerald-600 hover:bg-emerald-700 py-4 rounded-xl text-xs font-bold flex items-center justify-center gap-2 shadow-sm disabled:opacity-50 text-white"
                   >
-                    {loading ? "Guardando..." : <><Save className="w-4 h-4" /> Confirmar</>}
+                    {loading ? <><Loader2 className="w-4 h-4 animate-spin" /> Guardando...</> : <><Save className="w-4 h-4" /> Confirmar</>}
                   </button>
                 )}
               </>
@@ -799,12 +804,32 @@ export default function VehiculoForm({ modo, autoId }: VehiculoFormProps) {
                 disabled={loading}
                 className="w-full bg-indigo-600 hover:bg-indigo-700 py-4 rounded-xl text-xs font-bold flex items-center justify-center gap-2 shadow-sm disabled:opacity-50 text-white"
               >
-                {loading ? "Actualizando Galería..." : <><Save className="w-4 h-4" /> Guardar Cambios</>}
+                {loading ? <><Loader2 className="w-4 h-4 animate-spin" /> Actualizando Galería...</> : <><Save className="w-4 h-4" /> Guardar Cambios</>}
               </button>
             )}
           </div>
         </form>
       </div>
+
+      {loading && (
+        <div className="fixed inset-0 z-[100] bg-slate-900/70 backdrop-blur-sm flex flex-col items-center justify-center gap-4">
+          <Loader2 className="w-12 h-12 text-white animate-spin" />
+          <div className="text-center">
+            <p className="text-white font-bold text-sm">
+              {progresoFotos ? `Subiendo foto ${progresoFotos.actual} de ${progresoFotos.total}...` : "Guardando..."}
+            </p>
+            <p className="text-white/60 text-xs mt-1">No cierres esta ventana</p>
+          </div>
+          {progresoFotos && (
+            <div className="w-56 h-1.5 bg-white/20 rounded-full overflow-hidden">
+              <div
+                className="h-full bg-indigo-400 transition-all duration-300"
+                style={{ width: `${(progresoFotos.actual / progresoFotos.total) * 100}%` }}
+              />
+            </div>
+          )}
+        </div>
+      )}
     </div>
   );
 }

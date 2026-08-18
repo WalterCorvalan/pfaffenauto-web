@@ -203,6 +203,9 @@ async function asignarVendedorAlAzar(conversacionId: string) {
     .eq("id", conversacionId);
 }
 
+const RESPUESTA_FALLBACK =
+  "¡Hola! Gracias por escribirnos a Pfaffen Autos. En breve te contacta uno de nuestros asesores. 🚗";
+
 function isWhatsappEnvioConfigurado(): boolean {
   return !!process.env.META_WHATSAPP_TOKEN && !!process.env.META_WHATSAPP_PHONE_NUMBER_ID;
 }
@@ -228,6 +231,23 @@ async function ejecutarAgente(conversacionId: string, contactoId: string) {
 
   if (!result.ok) {
     console.error("[agente] error:", result.error);
+    // Fallback básico sin IA (ej: sin crédito en Anthropic) — mejor una respuesta
+    // genérica que dejar al cliente sin nada.
+    const { data: mensajeFallback } = await supabase
+      .from("whatsapp_mensajes")
+      .insert({
+        conversacion_id: conversacionId,
+        direccion: "out",
+        tipo: "text",
+        texto: RESPUESTA_FALLBACK,
+        status: "pending",
+        ai_generado: false,
+      })
+      .select("id")
+      .single();
+    if (mensajeFallback) {
+      await enviarYActualizarMensaje(mensajeFallback.id, contactoId, RESPUESTA_FALLBACK);
+    }
     return;
   }
 

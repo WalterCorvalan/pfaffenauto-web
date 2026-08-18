@@ -5,7 +5,7 @@ import { Wallet, Plus, Printer, CarFront, AlertTriangle } from "lucide-react";
 import EstadoSenaSelector from "./EstadoSenaSelector";
 
 const COLOR_ESTADO: Record<string, string> = {
-  Activa: "border-l-amber-400", Convertida: "border-l-emerald-400", Perdida: "border-l-slate-300",
+  Activa: "border-l-amber-400", Convertida: "border-l-emerald-400", Perdida: "border-l-rose-400",
 };
 
 export default async function SenasPage() {

@@ -8,7 +8,7 @@ const ESTADOS = ["Pendiente", "En proceso", "Resuelto"];
 
 const COLOR: Record<string, string> = {
   "Pendiente": "bg-amber-500 text-white border-amber-500",
-  "En proceso": "bg-sky-500 text-white border-sky-500",
+  "En proceso": "bg-amber-500 text-white border-amber-500",
   "Resuelto": "bg-emerald-500 text-white border-emerald-500",
 };
 

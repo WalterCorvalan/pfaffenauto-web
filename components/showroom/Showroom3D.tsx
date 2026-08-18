@@ -6,10 +6,14 @@ import { ContactShadows, Loader } from "@react-three/drei";
 import Image from "next/image";
 import CameraRig, { type CameraRigHandle } from "./CameraRig";
 import VehiculoPlaceholder from "./VehiculoPlaceholder";
+import WalkControls from "./WalkControls";
+import WalkJoystick from "./WalkJoystick";
+import { useWalkState } from "./useWalkState";
 import ShowroomUI from "./ShowroomUI";
 import { SHOWROOM_VEHICULOS, type ShowroomVehicle } from "@/lib/showroom/types";
 
-const ESPACIADO_FILA = 3.2; // distancia entre autos en la fila cenital
+const ESPACIADO_FILA = 3.2; // distancia entre autos en la fila
+const Z_INICIAL = 4; // dónde arranca parado el visitante (vereda frente a la fila)
 
 export default function Showroom3D({ marca }: { marca: "karry" | "rely" }) {
   const modelos = SHOWROOM_VEHICULOS.filter((v) => v.marca === marca);
@@ -17,14 +21,18 @@ export default function Showroom3D({ marca }: { marca: "karry" | "rely" }) {
   const instancias = modelos.flatMap((v) =>
     Array.from({ length: v.disponibles ?? 1 }, (_, unidad) => ({ vehiculo: v, unidad }))
   );
-  // null = estamos en la vista cenital (fila completa), sin selección confirmada.
+  // null = estamos caminando por la fila en primera persona, sin selección confirmada.
   const [activo, setActivo] = useState<ShowroomVehicle | null>(null);
   // auto tocado en la fila, esperando confirmación en la tarjeta flotante.
   const [candidato, setCandidato] = useState<ShowroomVehicle | null>(null);
+  const [resetId, setResetId] = useState(0);
   const rigRef = useRef<CameraRigHandle>(null);
+  const walk = useWalkState();
+
+  const limiteX = { min: -(instancias.length - 1) / 2 * ESPACIADO_FILA - 2, max: (instancias.length - 1) / 2 * ESPACIADO_FILA + 2 };
 
   useEffect(() => {
-    rigRef.current?.goTo("cenital", instancias.length);
+    rigRef.current?.goTo("cenital");
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
@@ -37,12 +45,31 @@ export default function Showroom3D({ marca }: { marca: "karry" | "rely" }) {
   function volverALaFila() {
     setActivo(null);
     setCandidato(null);
-    rigRef.current?.goTo("cenital", instancias.length);
+    setResetId((r) => r + 1);
+    rigRef.current?.goTo("cenital");
   }
 
+  // Arrastre para mirar alrededor (mouse en desktop, dedo en mobile) — en
+  // toda la pantalla salvo el joystick, que captura su propio puntero.
+  const onPointerDown = (e: React.PointerEvent) => {
+    if (activo) return;
+    walk.iniciarArrastre(e.clientX, e.clientY);
+  };
+  const onPointerMove = (e: React.PointerEvent) => {
+    if (activo) return;
+    walk.moverArrastre(e.clientX, e.clientY);
+  };
+  const onPointerUp = () => walk.terminarArrastre();
+
   return (
-    <div className="relative h-[100dvh] w-full bg-neutral-950">
-      <Canvas shadows camera={{ position: [0, instancias.length * 2.9, 0.1], fov: 45 }}>
+    <div
+      className="relative h-[100dvh] w-full bg-neutral-950 touch-none"
+      onPointerDown={onPointerDown}
+      onPointerMove={onPointerMove}
+      onPointerUp={onPointerUp}
+      onPointerLeave={onPointerUp}
+    >
+      <Canvas shadows camera={{ position: [0, 1.6, Z_INICIAL], fov: 60 }}>
         <Suspense fallback={null}>
           <ambientLight intensity={0.5} />
           <directionalLight
@@ -62,17 +89,28 @@ export default function Showroom3D({ marca }: { marca: "karry" | "rely" }) {
                 vehiculo={v}
                 posicionX={(i - (instancias.length - 1) / 2) * ESPACIADO_FILA}
                 onClick={() => setCandidato(v)}
+                mostrarMarcador
               />
             ))
           )}
 
           <ContactShadows position={[0, 0, 0]} opacity={0.5} scale={24} blur={2} far={4} />
           <CameraRig ref={rigRef} autoRotate={false} />
+          <WalkControls
+            activo={!activo}
+            walk={walk}
+            limiteX={limiteX}
+            posicionInicial={{ x: 0, z: Z_INICIAL }}
+            resetId={resetId}
+          />
         </Suspense>
       </Canvas>
       <Loader />
 
-      {/* tarjeta de confirmación al tocar un auto en la vista cenital */}
+      {/* joystick táctil — solo en modo caminata */}
+      {!activo && !candidato && <WalkJoystick walk={walk} />}
+
+      {/* tarjeta de confirmación al tocar un auto en la fila */}
       {candidato && !activo && (
         <div className="pointer-events-auto absolute inset-0 z-10 flex items-center justify-center bg-black/40 backdrop-blur-sm">
           <div className="w-72 rounded-3xl bg-[#0b1440] p-6 text-center text-white shadow-2xl">

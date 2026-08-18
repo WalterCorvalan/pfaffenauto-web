@@ -86,6 +86,38 @@ export default function ChatClient({
           setNotasLocales(data.notas || "");
         }
       });
+
+    // 3. Tiempo real: mensajes nuevos (entrantes del cliente o del bot) sin recargar la página.
+    const canal = supabase
+      .channel(`whatsapp_mensajes:${seleccionada}`)
+      .on(
+        "postgres_changes",
+        { event: "INSERT", schema: "public", table: "whatsapp_mensajes", filter: `conversacion_id=eq.${seleccionada}` },
+        (payload) => {
+          const nuevo = payload.new as any;
+          setMensajes((prev) => {
+            if (prev.some((m) => m.id === nuevo.id)) return prev;
+            // Reemplaza el eco optimista local (mismo texto/dirección, sin id real todavía).
+            const sinEcoLocal = prev.filter(
+              (m) => !(m.direccion === "out" && m.texto === nuevo.texto && m.status === "pending" && m.id !== nuevo.id)
+            );
+            return [...sinEcoLocal, nuevo];
+          });
+        }
+      )
+      .on(
+        "postgres_changes",
+        { event: "UPDATE", schema: "public", table: "whatsapp_mensajes", filter: `conversacion_id=eq.${seleccionada}` },
+        (payload) => {
+          const actualizado = payload.new as any;
+          setMensajes((prev) => prev.map((m) => (m.id === actualizado.id ? actualizado : m)));
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(canal);
+    };
   }, [seleccionada]);
 
   const enviarMensaje = async (e: React.FormEvent) => {
@@ -95,8 +127,9 @@ export default function ChatClient({
     const texto = nuevoMensaje.trim();
     setNuevoMensaje("");
 
+    const tempId = crypto.randomUUID();
     const tempMsg = {
-      id: crypto.randomUUID(),
+      id: tempId,
       conversacion_id: seleccionada,
       direccion: "out",
       tipo: "text",
@@ -108,17 +141,23 @@ export default function ChatClient({
     setMensajes((prev) => [...prev, tempMsg]);
 
     try {
-      const { error } = await supabase.from("whatsapp_mensajes").insert({
-        conversacion_id: seleccionada,
-        direccion: "out",
-        tipo: "text",
-        texto: texto,
-        ai_generado: false,
-        status: "pending",
+      const res = await fetch("/api/panel/whatsapp/enviar", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ conversacionId: seleccionada, texto }),
       });
-      if (error) throw error;
+      const data = await res.json();
+      if (!res.ok) {
+        console.error("Error al enviar", data.error);
+        setMensajes((prev) =>
+          prev.map((m) => (m.id === tempId ? { ...m, status: "failed" } : m))
+        );
+      }
     } catch (err) {
       console.error("Error al enviar", err);
+      setMensajes((prev) =>
+        prev.map((m) => (m.id === tempId ? { ...m, status: "failed" } : m))
+      );
     }
   };
 

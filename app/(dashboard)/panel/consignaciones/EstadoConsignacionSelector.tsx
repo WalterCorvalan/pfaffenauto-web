@@ -8,9 +8,9 @@ const ESTADOS = ["Pendiente", "Contactado", "Convertido", "Descartado"];
 
 const COLOR: Record<string, string> = {
   "Pendiente": "bg-amber-500 text-white border-amber-500",
-  "Contactado": "bg-blue-500 text-white border-blue-500",
+  "Contactado": "bg-amber-500 text-white border-amber-500",
   "Convertido": "bg-emerald-500 text-white border-emerald-500",
-  "Descartado": "bg-slate-400 text-white border-slate-400",
+  "Descartado": "bg-rose-500 text-white border-rose-500",
 };
 
 export default function EstadoConsignacionSelector({ id, estado }: { id: string; estado: string }) {

@@ -18,12 +18,15 @@ export interface VehiculoDatos {
   color: string;
   kilometros: string;
   combustible: string;
+  precio_publicado_ars?: number | null;
+  precio_publicado_usd?: number | null;
 }
 
 const VACIO: VehiculoDatos = {
   vehiculo_id: null, dominio: "", segmento: "", marca: "", modelo: "", tipo: "",
   marca_motor: "", numero_motor: "", marca_chasis: "", numero_chasis: "",
   modelo_anio: "", color: "", kilometros: "", combustible: "",
+  precio_publicado_ars: null, precio_publicado_usd: null,
 };
 
 const inputClass = "w-full bg-slate-50 dark:bg-[#00246b] border border-slate-200 dark:border-[#0a2a6b] rounded-xl px-3 py-2.5 text-sm outline-none focus:border-indigo-500 focus:bg-white dark:focus:bg-[#002a6e] transition-colors text-slate-900 dark:text-white placeholder:text-slate-400 dark:placeholder:text-slate-500";
@@ -67,6 +70,8 @@ export default function VehiculoSelector({
       color: v.color || "",
       kilometros: String(v.kilometraje || ""),
       combustible: v.tipo_combustible || "",
+      precio_publicado_ars: v.precio_publicado_ars ?? null,
+      precio_publicado_usd: v.precio_publicado_usd ?? null,
     });
   };
 

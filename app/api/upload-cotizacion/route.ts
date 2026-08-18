@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { rateLimit, ipDesdeRequest } from "@/lib/rateLimit";
-import { r2Configurado, subirArchivoR2 } from "@/lib/storage/r2";
+import { subirArchivoR2 } from "@/lib/storage/r2";
 
 // Fotos/videos que manda el cliente en el cotizador cuando no puede venir a sucursal.
 export async function POST(request: Request) {
@@ -26,30 +26,7 @@ export async function POST(request: Request) {
     const cleanFileName = file.name.replace(/[^a-zA-Z0-9.\-_]/g, "");
     const uniqueFileName = `${Date.now()}-${Math.floor(Math.random() * 10000)}-${cleanFileName}`;
 
-    let publicUrl: string;
-
-    if (r2Configurado()) {
-      publicUrl = await subirArchivoR2(buffer, `cotizaciones/${uniqueFileName}`, file.type || "application/octet-stream");
-    } else {
-      const storageEndpoint = process.env.BUNNY_STORAGE_ENDPOINT;
-      const storageZone = process.env.BUNNY_STORAGE_ZONE;
-      const uploadUrl = `${storageEndpoint}/${storageZone}/cotizaciones/${uniqueFileName}`;
-
-      const response = await fetch(uploadUrl, {
-        method: "PUT",
-        headers: {
-          AccessKey: process.env.BUNNY_API_KEY as string,
-          "Content-Type": "application/octet-stream",
-        },
-        body: new Uint8Array(buffer),
-      });
-
-      if (!response.ok) {
-        throw new Error(`Error de Bunny: ${response.statusText}`);
-      }
-
-      publicUrl = `${process.env.BUNNY_CDN_URL}/cotizaciones/${uniqueFileName}`;
-    }
+    const publicUrl = await subirArchivoR2(buffer, `cotizaciones/${uniqueFileName}`, file.type || "application/octet-stream");
 
     return NextResponse.json({ publicUrl });
   } catch (error) {

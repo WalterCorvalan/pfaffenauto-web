@@ -12,11 +12,11 @@ import {
 
 const ESTADOS = ["Nuevo", "Contactado", "Interesado", "Cliente", "Perdido"];
 const ESTADO_COLOR: Record<string, string> = {
-  Nuevo: "bg-blue-50 dark:bg-[#002a6e] text-blue-700 dark:text-blue-300 border-blue-200 dark:border-[#0a2a6b]",
+  Nuevo: "bg-amber-50 dark:bg-[#002a6e] text-amber-700 dark:text-amber-300 border-amber-200 dark:border-[#0a2a6b]",
   Contactado: "bg-amber-50 dark:bg-[#002a6e] text-amber-700 dark:text-amber-300 border-amber-200 dark:border-[#0a2a6b]",
-  Interesado: "bg-emerald-50 dark:bg-[#002a6e] text-emerald-700 dark:text-emerald-300 border-emerald-200 dark:border-[#0a2a6b]",
-  Cliente: "bg-indigo-50 dark:bg-[#002a6e] text-indigo-700 dark:text-sky-300 border-indigo-200 dark:border-[#0a2a6b]",
-  Perdido: "bg-slate-100 dark:bg-[#00246b] text-slate-500 dark:text-slate-400 border-slate-200 dark:border-[#0a2a6b]",
+  Interesado: "bg-amber-50 dark:bg-[#002a6e] text-amber-700 dark:text-amber-300 border-amber-200 dark:border-[#0a2a6b]",
+  Cliente: "bg-emerald-50 dark:bg-[#002a6e] text-emerald-700 dark:text-emerald-300 border-emerald-200 dark:border-[#0a2a6b]",
+  Perdido: "bg-rose-50 dark:bg-[#002a6e] text-rose-700 dark:text-rose-300 border-rose-200 dark:border-[#0a2a6b]",
 };
 
 const TIPOS_TAREA = ["Llamar", "Enviar Email", "Enviar SMS", "Enviar WhatsApp", "Visitar al Cliente", "Cliente visita salón"];

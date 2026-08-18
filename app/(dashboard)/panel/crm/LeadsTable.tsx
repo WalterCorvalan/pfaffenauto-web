@@ -8,18 +8,18 @@ import { ExternalLink, MessageCircle, Globe, Handshake } from "lucide-react";
 const ESTADOS = ["Nuevo", "Contactado", "Interesado", "Cliente", "Perdido"];
 
 const ESTILO_ESTADO: Record<string, string> = {
-  Nuevo: "bg-blue-500 text-white border-blue-500",
+  Nuevo: "bg-amber-500 text-white border-amber-500",
   Contactado: "bg-amber-500 text-white border-amber-500",
-  Interesado: "bg-emerald-500 text-white border-emerald-500",
-  Cliente: "bg-indigo-500 text-white border-indigo-500",
+  Interesado: "bg-amber-500 text-white border-amber-500",
+  Cliente: "bg-emerald-500 text-white border-emerald-500",
   Perdido: "bg-rose-500 text-white border-rose-500",
 };
 
 const BORDE_ESTADO: Record<string, string> = {
-  Nuevo: "border-l-blue-400",
+  Nuevo: "border-l-amber-400",
   Contactado: "border-l-amber-400",
-  Interesado: "border-l-emerald-400",
-  Cliente: "border-l-indigo-400",
+  Interesado: "border-l-amber-400",
+  Cliente: "border-l-emerald-400",
   Perdido: "border-l-rose-400",
 };
 

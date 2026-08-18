@@ -24,6 +24,8 @@ const SECCIONES_INICIALES = {
 export default function DashboardLayout({ children }: { children: React.ReactNode }) {
   const [isOpen, setIsOpen] = useState(false);
   const [userProfile, setUserProfile] = useState({ nombre: "Cargando...", email: "", rol: "vendedor" });
+  const [userId, setUserId] = useState<string | null>(null);
+  const [notifPorSeccion, setNotifPorSeccion] = useState<Record<string, number>>({});
   const [seccionesAbiertas, setSeccionesAbiertas] = useState<Record<string, boolean>>(SECCIONES_INICIALES);
   const [darkMode, setDarkMode] = useState(false);
   const pathname = usePathname();
@@ -66,6 +68,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
     const fetchUser = async () => {
       const { data: { user } } = await supabase.auth.getUser();
       if (user) {
+        setUserId(user.id);
         const { data } = await supabase.from("perfiles").select("rol, nombre").eq("id", user.id).single();
         const userRol = data?.rol || "vendedor";
         setUserProfile({ nombre: data?.nombre || "Usuario", email: user.email || "", rol: userRol });
@@ -83,6 +86,38 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
     };
     fetchUser();
   }, [pathname, router]);
+
+  useEffect(() => {
+    if (!userId) return;
+
+    const cargarConteos = async () => {
+      const { data } = await supabase
+        .from("notificaciones")
+        .select("seccion")
+        .eq("perfil_id", userId)
+        .eq("leida", false)
+        .not("seccion", "is", null);
+      const conteos: Record<string, number> = {};
+      (data || []).forEach((n: any) => {
+        if (n.seccion) conteos[n.seccion] = (conteos[n.seccion] || 0) + 1;
+      });
+      setNotifPorSeccion(conteos);
+    };
+    cargarConteos();
+
+    const canal = supabase
+      .channel(`notif-secciones-${userId}-${Math.random().toString(36).slice(2)}`)
+      .on(
+        "postgres_changes",
+        { event: "*", schema: "public", table: "notificaciones", filter: `perfil_id=eq.${userId}` },
+        cargarConteos
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(canal);
+    };
+  }, [userId]);
 
   const handleLogout = async () => {
     await supabase.auth.signOut();
@@ -153,19 +188,25 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
       <aside className={`fixed md:relative top-14 md:top-0 left-0 h-full w-[225px] bg-[#F9FAFB] dark:bg-[#001c55] border-r border-slate-200 dark:border-[#0a2a6b] transform transition-transform z-40 flex flex-col shrink-0 ${isOpen ? "translate-x-0" : "-translate-x-full md:translate-x-0"}`}>
 
         {/* Cabecera del Espacio de Trabajo */}
-        <div className="h-[60px] flex items-center gap-3 px-4 border-b border-slate-200 dark:border-[#0a2a6b] hover:bg-slate-100 dark:hover:bg-[#002a6e] cursor-pointer transition-colors shrink-0">
-          <div className="w-8 h-8 rounded-lg bg-emerald-800 text-white flex items-center justify-center font-bold text-sm shrink-0 shadow-sm">
-            P
-          </div>
-          <div className="flex flex-col min-w-0 flex-1">
-            <span className="text-[13px] font-bold text-slate-900 dark:text-white truncate">Pfaffen</span>
-            <span className="text-[11px] text-slate-500 dark:text-slate-400 truncate">CRM · WhatsApp</span>
-          </div>
-          <div className="hidden md:block" onClick={(e) => e.stopPropagation()}>
+        <div className="h-[60px] flex items-center gap-3 px-4 border-b border-slate-200 dark:border-[#0a2a6b] transition-colors shrink-0">
+          <Link
+            href="/"
+            title="Volver al sitio público"
+            className="flex items-center gap-3 min-w-0 flex-1 hover:bg-slate-100 dark:hover:bg-[#002a6e] -mx-4 px-4 h-full transition-colors"
+          >
+            <div className="w-8 h-8 rounded-lg bg-emerald-800 text-white flex items-center justify-center font-bold text-sm shrink-0 shadow-sm">
+              P
+            </div>
+            <div className="flex flex-col min-w-0 flex-1">
+              <span className="text-[13px] font-bold text-slate-900 dark:text-white truncate">Pfaffen</span>
+              <span className="text-[11px] text-slate-500 dark:text-slate-400 truncate">CRM · WhatsApp</span>
+            </div>
+          </Link>
+          <div className="hidden md:block">
             <NotificacionesBell />
           </div>
           <button
-            onClick={(e) => { e.stopPropagation(); toggleDarkMode(); }}
+            onClick={toggleDarkMode}
             className="hidden md:flex text-slate-400 dark:text-slate-300 hover:text-slate-700 dark:hover:text-white shrink-0 p-1.5 rounded-lg hover:bg-slate-200 dark:hover:bg-[#0a2a6b] transition-colors"
             title={darkMode ? "Modo claro" : "Modo oscuro"}
           >
@@ -203,9 +244,9 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
 
           {/* 🧾 VENTAS */}
           <SectionAccordion id="operaciones" label="Operaciones">
-            <NavLinkItem icon={FileText} label="Presupuestos" href="/panel/presupuestos" />
-            <NavLinkItem icon={Banknote} label="Señas" href="/panel/senas" />
-            <NavLinkItem icon={Receipt} label="Ventas" href="/panel/boletos" />
+            <NavLinkItem icon={FileText} label="Presupuestos" href="/panel/presupuestos" notifications={notifPorSeccion.presupuestos} />
+            <NavLinkItem icon={Banknote} label="Señas" href="/panel/senas" notifications={notifPorSeccion.senas} />
+            <NavLinkItem icon={Receipt} label="Ventas" href="/panel/boletos" notifications={notifPorSeccion.boletos} />
             <NavLinkItem icon={ShieldCheck} label="Resp. Civil" href="/panel/resp-civil" />
             <NavLinkItem icon={Landmark} label="Financiaciones" href="/panel/ventas/financiaciones" />
             <NavLinkItem icon={UserPlus} label="Nuevo Cliente" href="/panel/clientes/nuevo" />
@@ -264,7 +305,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
       </aside>
 
       {/* ÁREA PRINCIPAL */}
-      <main className="flex-1 min-w-0 h-full flex flex-col bg-white dark:bg-[#001233] relative pt-14 md:pt-0 transition-colors">
+      <main className="flex-1 min-w-0 h-full flex flex-col bg-white dark:bg-[#001233] relative pt-14 md:pt-0 transition-colors overflow-y-auto">
         {children}
       </main>
     </div>

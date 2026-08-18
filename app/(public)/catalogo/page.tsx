@@ -21,6 +21,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import ComparadorModal from "@/components/modals/ComparadorModal";
 import BuscadorFallback from "@/components/BuscadorFallBack";
 import { CAMPOS_VEHICULO_PUBLICO } from "@/lib/vehiculos";
+import { VehicleCard } from "@/components/Stock";
 
 const ITEMS_POR_PAGINA = 12;
 
@@ -301,21 +302,21 @@ export default function CatalogoPage() {
   };
 
   return (
-    <div className="min-h-screen bg-[#f5f5f5] pt-6 pb-20 font-sans text-gray-900">
+    <div className="min-h-screen bg-[#f5f5f5] dark:bg-[#0a0a0f] pt-6 pb-20 font-sans text-gray-900 dark:text-white">
 
       <div className="max-w-7xl mx-auto px-4 md:px-6">
         
         {/* ================= MIGAS DE PAN Y BUSCADOR INTELIGENTE ================= */}
         <div className="mb-8">
-          <div className="text-xs text-gray-500 font-medium mb-4">
+          <div className="text-xs text-gray-500 dark:text-slate-400 font-medium mb-4">
             <Link href="/" className="hover:text-blue-600 transition-colors">
               Inicio
             </Link>{" "}
-            / <span className="text-gray-700">Catálogo</span>
+            / <span className="text-gray-700 dark:text-slate-300">Catálogo</span>
           </div>
           
           <form onSubmit={handleSearchSubmit} className="w-full max-w-3xl mx-auto">
-            <div className="relative flex items-center w-full bg-white rounded-full shadow-[0_8px_20px_rgba(0,0,0,0.04)] border border-gray-200 hover:shadow-md transition-shadow overflow-hidden p-1.5 group focus-within:border-[#0145F2]/40 focus-within:ring-4 focus-within:ring-[#0145F2]/10">
+            <div className="relative flex items-center w-full bg-white dark:bg-[#161821] rounded-full shadow-[0_8px_20px_rgba(0,0,0,0.04)] border border-gray-200 dark:border-white/15 hover:shadow-md transition-shadow overflow-hidden p-1.5 group focus-within:border-[#0145F2]/40 focus-within:ring-4 focus-within:ring-[#0145F2]/10">
               <div className="pl-4 pr-3 text-[#0145F2] shrink-0">
                 <Sparkles className="w-5 h-5" />
               </div>
@@ -324,7 +325,7 @@ export default function CatalogoPage() {
                 value={inputBuscador}
                 onChange={(e) => setInputBuscador(e.target.value)}
                 placeholder='Buscá como hablás: "SUV diésel automática"'
-                className="flex-1 bg-transparent outline-none text-gray-900 placeholder:text-gray-400 font-medium text-sm md:text-base w-full"
+                className="flex-1 bg-transparent outline-none text-gray-900 dark:text-white placeholder:text-gray-400 dark:placeholder:text-slate-500 font-medium text-sm md:text-base w-full"
               />
               <button
                 type="submit"
@@ -336,25 +337,25 @@ export default function CatalogoPage() {
             </div>
 
             <div className="flex flex-wrap items-center justify-center md:justify-start gap-2 mt-4 md:ml-2">
-              <span className="text-[10px] text-gray-400 font-black uppercase tracking-widest mr-1">Probá:</span>
+              <span className="text-[10px] text-gray-400 dark:text-slate-500 font-black uppercase tracking-widest mr-1">Probá:</span>
               <button
                 type="button"
                 onClick={() => aplicarSugerencia("Pick-up 4x4 diésel")}
-                className="px-3.5 py-1.5 bg-white border border-gray-200 text-gray-600 rounded-full text-[11px] font-bold hover:border-[#0145F2] hover:text-[#0145F2] transition-colors shadow-sm"
+                className="px-3.5 py-1.5 bg-white dark:bg-[#161821] border border-gray-200 dark:border-white/15 text-gray-600 dark:text-slate-400 rounded-full text-[11px] font-bold hover:border-[#0145F2] hover:text-[#0145F2] transition-colors shadow-sm"
               >
                 Pick-up 4x4 diésel
               </button>
               <button
                 type="button"
                 onClick={() => aplicarSugerencia("Auto automático hasta USD 25.000")}
-                className="px-3.5 py-1.5 bg-white border border-gray-200 text-gray-600 rounded-full text-[11px] font-bold hover:border-[#0145F2] hover:text-[#0145F2] transition-colors shadow-sm"
+                className="px-3.5 py-1.5 bg-white dark:bg-[#161821] border border-gray-200 dark:border-white/15 text-gray-600 dark:text-slate-400 rounded-full text-[11px] font-bold hover:border-[#0145F2] hover:text-[#0145F2] transition-colors shadow-sm"
               >
                 Auto automático hasta USD 25.000
               </button>
               <button
                 type="button"
                 onClick={() => aplicarSugerencia("SUV 2022 o más nueva")}
-                className="px-3.5 py-1.5 bg-white border border-gray-200 text-gray-600 rounded-full text-[11px] font-bold hover:border-[#0145F2] hover:text-[#0145F2] transition-colors shadow-sm"
+                className="px-3.5 py-1.5 bg-white dark:bg-[#161821] border border-gray-200 dark:border-white/15 text-gray-600 dark:text-slate-400 rounded-full text-[11px] font-bold hover:border-[#0145F2] hover:text-[#0145F2] transition-colors shadow-sm"
               >
                 SUV 2022 o más nueva
               </button>
@@ -363,13 +364,13 @@ export default function CatalogoPage() {
         </div>
 
         {/* ================= BARRA DE FILTROS APLICADOS ================= */}
-        <div className="bg-white border border-gray-200 rounded-2xl p-4 mb-6 shadow-sm flex flex-wrap items-center justify-between gap-4">
+        <div className="bg-white dark:bg-[#161821] border border-gray-200 dark:border-white/15 rounded-2xl p-4 mb-6 shadow-sm flex flex-wrap items-center justify-between gap-4">
           <div className="flex flex-wrap items-center gap-2">
-            <span className="text-xs text-gray-500 font-bold uppercase tracking-wider mr-2">
+            <span className="text-xs text-gray-500 dark:text-slate-400 font-bold uppercase tracking-wider mr-2">
               Filtros aplicados:
             </span>
             {searchQuery ? (
-              <span className="inline-flex items-center gap-1.5 bg-blue-50 border border-blue-200 text-blue-700 text-xs font-bold px-3 py-1.5 rounded-full">
+              <span className="inline-flex items-center gap-1.5 bg-blue-50 dark:bg-sky-400/10 border border-blue-200 dark:border-sky-400/20 text-blue-700 dark:text-sky-300 text-xs font-bold px-3 py-1.5 rounded-full">
                 Búsqueda: "{searchQuery}"
                 <Link
                   href={condicionQuery ? `/catalogo?condicion=${condicionQuery}` : "/catalogo"}
@@ -381,7 +382,7 @@ export default function CatalogoPage() {
             ) : null}
 
             {condicionQuery ? (
-              <span className="inline-flex items-center gap-1.5 bg-blue-50 border border-blue-200 text-blue-700 text-xs font-bold px-3 py-1.5 rounded-full">
+              <span className="inline-flex items-center gap-1.5 bg-blue-50 dark:bg-sky-400/10 border border-blue-200 dark:border-sky-400/20 text-blue-700 dark:text-sky-300 text-xs font-bold px-3 py-1.5 rounded-full">
                 Condición: {condicionQuery === "0km" ? "0KM" : "Usados Seleccionados"}
                 <Link
                   href={searchQuery ? `/catalogo?q=${searchQuery}` : "/catalogo"}
@@ -393,7 +394,7 @@ export default function CatalogoPage() {
             ) : null}
 
             {!searchQuery && !condicionQuery && (
-              <span className="text-xs text-gray-400 italic">
+              <span className="text-xs text-gray-400 dark:text-slate-500 italic">
                 Ningún filtro activo.
               </span>
             )}
@@ -410,23 +411,23 @@ export default function CatalogoPage() {
 
         {/* ================= BANNER BUSCADOR IA ================= */}
         {buscandoConIA && (
-          <div className="mb-6 bg-indigo-50 border border-indigo-200 rounded-2xl p-4 flex items-center gap-3 text-sm text-indigo-700 font-medium">
+          <div className="mb-6 bg-indigo-50 dark:bg-indigo-400/10 border border-indigo-200 dark:border-indigo-400/20 rounded-2xl p-4 flex items-center gap-3 text-sm text-indigo-700 dark:text-indigo-300 font-medium">
             <Loader2 className="w-4 h-4 animate-spin shrink-0" />
             No encontramos nada exacto, dejá que la IA interprete tu búsqueda...
           </div>
         )}
         {sugerenciaIA && !buscandoConIA && (
-          <div className="mb-6 bg-indigo-50 border border-indigo-200 rounded-2xl p-4 flex items-center gap-3 text-sm text-indigo-700 font-medium">
+          <div className="mb-6 bg-indigo-50 dark:bg-indigo-400/10 border border-indigo-200 dark:border-indigo-400/20 rounded-2xl p-4 flex items-center gap-3 text-sm text-indigo-700 dark:text-indigo-300 font-medium">
             <Sparkles className="w-4 h-4 shrink-0" />
             🤖 {sugerenciaIA}
           </div>
         )}
 
         {/* ================= CONTROLES SUPERIORES ================= */}
-        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-6 gap-4 pb-4 border-b border-gray-200">
+        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-6 gap-4 pb-4 border-b border-gray-200 dark:border-white/15">
           <div className="flex items-center justify-between w-full sm:w-auto gap-4">
-            <span className="text-sm font-medium text-gray-600">
-              <strong className="text-gray-900 font-black text-lg">
+            <span className="text-sm font-medium text-gray-600 dark:text-slate-400">
+              <strong className="text-gray-900 dark:text-white font-black text-lg">
                 {totalResultados}
               </strong>{" "}
               vehículos encontrados
@@ -434,19 +435,19 @@ export default function CatalogoPage() {
 
             <button
               onClick={() => setIsFilterOpen(true)}
-              className="lg:hidden flex items-center gap-2 bg-white px-4 py-2 rounded-lg border border-gray-300 shadow-sm text-xs font-bold text-gray-900 active:scale-95 transition-all"
+              className="lg:hidden flex items-center gap-2 bg-white dark:bg-[#161821] px-4 py-2 rounded-lg border border-gray-300 dark:border-white/15 shadow-sm text-xs font-bold text-gray-900 dark:text-white active:scale-95 transition-all"
             >
               <Filter className="w-4 h-4 text-blue-600" /> Filtros
             </button>
           </div>
 
           <div className="flex flex-wrap items-center gap-2 md:gap-3">
-            <div className="flex items-center gap-2 bg-white px-4 py-2 rounded-lg border border-gray-200 shadow-sm text-xs font-bold text-gray-600">
+            <div className="flex items-center gap-2 bg-white dark:bg-[#161821] px-4 py-2 rounded-lg border border-gray-200 dark:border-white/15 shadow-sm text-xs font-bold text-gray-600 dark:text-slate-400">
               <span className="hidden sm:inline">Ordenar por:</span>
               <select
                 value={orden}
                 onChange={(e) => setOrden(e.target.value)}
-                className="bg-transparent border-none outline-none text-gray-900 font-black cursor-pointer appearance-none pr-4 focus:ring-0"
+                className="bg-transparent border-none outline-none text-gray-900 dark:text-white font-black cursor-pointer appearance-none pr-4 focus:ring-0"
               >
                 <option value="Relevancia">Relevancia</option>
                 <option value="Menor precio">Menor precio</option>
@@ -519,15 +520,15 @@ export default function CatalogoPage() {
                 animate={{ x: 0 }}
                 exit={{ x: "-100%" }}
                 transition={{ type: "spring", damping: 25, stiffness: 200 }}
-                className="relative w-full max-w-[300px] bg-white h-full shadow-2xl z-10 p-5 flex flex-col overflow-y-auto"
+                className="relative w-full max-w-[300px] bg-white dark:bg-[#161821] h-full shadow-2xl z-10 p-5 flex flex-col overflow-y-auto"
               >
-                <div className="flex items-center justify-between mb-6 pb-4 border-b border-gray-200">
-                  <h3 className="text-sm font-black text-gray-900 uppercase tracking-tight">
+                <div className="flex items-center justify-between mb-6 pb-4 border-b border-gray-200 dark:border-white/15">
+                  <h3 className="text-sm font-black text-gray-900 dark:text-white uppercase tracking-tight">
                     Filtros
                   </h3>
                   <button
                     onClick={() => setIsFilterOpen(false)}
-                    className="p-1.5 text-gray-500 hover:text-gray-900 bg-gray-100 rounded-lg active:scale-95 transition-all"
+                    className="p-1.5 text-gray-500 dark:text-slate-400 hover:text-gray-900 bg-gray-100 dark:bg-white/10 rounded-lg active:scale-95 transition-all"
                   >
                     <X className="w-4 h-4" />
                   </button>
@@ -579,7 +580,7 @@ export default function CatalogoPage() {
                   />
                 </div>
 
-                <div className="pt-4 mt-auto border-t border-gray-200 bg-white sticky bottom-0">
+                <div className="pt-4 mt-auto border-t border-gray-200 dark:border-white/15 bg-white dark:bg-[#161821] sticky bottom-0">
                   <button
                     onClick={() => setIsFilterOpen(false)}
                     className="w-full bg-blue-600 hover:bg-blue-700 active:scale-95 text-white font-bold text-xs uppercase tracking-widest py-3.5 rounded-xl transition-all"
@@ -600,14 +601,14 @@ export default function CatalogoPage() {
                 {[...Array(6)].map((_, i) => (
                   <div
                     key={i}
-                    className="bg-white rounded-2xl border border-gray-200 overflow-hidden flex flex-col h-full p-4 animate-pulse"
+                    className="bg-white dark:bg-[#161821] rounded-2xl border border-gray-200 dark:border-white/15 overflow-hidden flex flex-col h-full p-4 animate-pulse"
                   >
-                    <div className="h-32 sm:h-40 bg-gray-200 rounded-xl mb-4 w-full"></div>
+                    <div className="h-32 sm:h-40 bg-gray-200 dark:bg-white/10 rounded-xl mb-4 w-full"></div>
                     <div className="flex flex-col flex-grow">
-                      <div className="h-3 bg-gray-200 rounded-full w-1/3 mb-3"></div>
+                      <div className="h-3 bg-gray-200 dark:bg-white/10 rounded-full w-1/3 mb-3"></div>
                       <div className="h-5 bg-gray-300 rounded-full w-3/4 mb-4"></div>
                       <div className="mt-auto pt-3">
-                        <div className="h-6 bg-gray-200 rounded-xl w-1/2"></div>
+                        <div className="h-6 bg-gray-200 dark:bg-white/10 rounded-xl w-1/2"></div>
                       </div>
                     </div>
                   </div>
@@ -618,83 +619,14 @@ export default function CatalogoPage() {
                 {/* AUTOS CARGADOS */}
                 {/* CAMBIO ACÁ: grid-cols-2 para móvil por defecto */}
                 <div className="grid grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3 sm:gap-4 md:gap-6 pb-8 w-full">
-                  {vehiculos.map((auto, index) => {
-                    const estaSeleccionado = autosComparar.some(
-                      (a) => a.id === auto.id,
-                    );
-                    
-                    const precioMostrar =
-                      auto.precio_publicado_usd && !auto.precio_publicado_ars
-                        ? `US$ ${auto.precio_publicado_usd.toLocaleString("es-AR")}`
-                        : auto.precio_publicado_ars
-                          ? `$ ${auto.precio_publicado_ars.toLocaleString("es-AR")}`
-                          : `US$ ${auto.precio_publicado_usd?.toLocaleString("es-AR")}`;
-
-                    return (
-                      <Link
-                        key={`${auto.id}-${index}`}
-                        href={`/catalogo/${auto.slug}`}
-                        className="block group h-full focus:outline-none w-full"
-                      >
-                        <div
-                          className={`bg-white rounded-2xl overflow-hidden flex flex-col h-full hover:shadow-lg transition-all duration-300 relative border w-full
-                            ${estaSeleccionado ? "border-blue-600 ring-1 ring-blue-600 shadow-md" : "border-gray-200 hover:border-blue-400"}
-                          `}
-                        >
-                          {/* BOTÓN COMPARAR */}
-                          <button
-                            onClick={(e) => toggleComparar(e, auto)}
-                            className={`absolute top-3 left-3 z-10 p-2 rounded-full shadow-sm transition-all duration-300 border hover:scale-110 active:scale-95
-                              ${estaSeleccionado ? "bg-blue-600 text-white border-blue-600" : "bg-white text-gray-400 hover:text-blue-600 border-gray-200"}
-                            `}
-                            title="Comparar vehículo"
-                          >
-                            <Scale className="w-3.5 h-3.5" />
-                          </button>
-
-                          {/* Imagen */}
-                          <div className="relative h-32 sm:h-48 bg-gray-100 flex items-center justify-center overflow-hidden shrink-0 w-full">
-                            {auto.multimedia_vehiculos?.[0] ? (
-                              <img
-                                src={auto.multimedia_vehiculos[0].url_archivo}
-                                alt={`${auto.marca} ${auto.modelo}`}
-                                className="w-full h-full object-cover mix-blend-multiply group-hover:scale-105 transition-transform duration-500"
-                              />
-                            ) : (
-                              <div className="text-gray-400 text-xs font-medium">Sin foto</div>
-                            )}
-                            
-                            {/* Etiqueta de Reservado */}
-                            {auto.estado === "Reservado" && (
-                              <div className="absolute top-3 right-3 bg-yellow-100 text-yellow-800 px-2.5 py-1 rounded-md text-[10px] font-bold uppercase tracking-widest border border-yellow-200">
-                                Reservado
-                              </div>
-                            )}
-                          </div>
-
-                          {/* Textos y Precios */}
-                          <div className="p-4 sm:p-5 flex flex-col flex-grow w-full">
-                            <span className="text-[10px] text-gray-500 font-bold uppercase tracking-widest mb-1">
-                              {auto.marca}
-                            </span>
-                            <h3 className="text-sm sm:text-lg font-black text-gray-900 leading-tight uppercase truncate">
-                              {auto.modelo}
-                            </h3>
-                            <p className="text-[11px] sm:text-xs text-gray-500 mt-1 line-clamp-1">
-                              {auto.version || `${auto.anio} • ${auto.kilometraje?.toLocaleString("es-AR")} km`}
-                            </p>
-
-                            <div className="mt-auto pt-4 flex items-center justify-between">
-                              <span className="block text-base sm:text-xl font-black text-gray-900">
-                                {precioMostrar}
-                              </span>
-                              <ChevronRight className="w-4 h-4 text-gray-300 group-hover:text-blue-600 transition-colors" />
-                            </div>
-                          </div>
-                        </div>
-                      </Link>
-                    );
-                  })}
+                  {vehiculos.map((auto, index) => (
+                    <VehicleCard
+                      key={`${auto.id}-${index}`}
+                      auto={auto}
+                      estaSeleccionado={autosComparar.some((a) => a.id === auto.id)}
+                      onToggleComparar={toggleComparar}
+                    />
+                  ))}
                 </div>
 
                 {/* BOTÓN CARGAR MÁS */}
@@ -703,7 +635,7 @@ export default function CatalogoPage() {
                     <button
                       onClick={cargarMas}
                       disabled={loadingMore}
-                      className="flex items-center gap-2 bg-white border border-gray-300 hover:border-blue-600 hover:text-blue-600 shadow-sm hover:shadow px-8 py-3.5 rounded-xl text-gray-700 font-bold text-xs uppercase tracking-widest transition-all active:scale-95 disabled:opacity-50"
+                      className="flex items-center gap-2 bg-white dark:bg-[#161821] border border-gray-300 dark:border-white/15 hover:border-blue-600 hover:text-blue-600 shadow-sm hover:shadow px-8 py-3.5 rounded-xl text-gray-700 dark:text-slate-300 font-bold text-xs uppercase tracking-widest transition-all active:scale-95 disabled:opacity-50"
                     >
                       {loadingMore ? (
                         <>
@@ -720,15 +652,15 @@ export default function CatalogoPage() {
                 )}
               </>
             ) : (
-              <div className="text-center py-20 bg-white rounded-3xl border border-gray-200 shadow-sm px-4">
-                <div className="w-16 h-16 bg-gray-50 rounded-full flex items-center justify-center mx-auto mb-4 border border-gray-100">
-                  <Search className="w-6 h-6 text-gray-400" />
+              <div className="text-center py-20 bg-white dark:bg-[#161821] rounded-3xl border border-gray-200 dark:border-white/15 shadow-sm px-4">
+                <div className="w-16 h-16 bg-gray-50 dark:bg-white/5 rounded-full flex items-center justify-center mx-auto mb-4 border border-gray-100 dark:border-white/15">
+                  <Search className="w-6 h-6 text-gray-400 dark:text-slate-500" />
                 </div>
-                <h3 className="text-gray-900 font-black text-xl mb-2">No encontramos resultados</h3>
-                <p className="text-gray-500 text-sm mb-8 max-w-sm mx-auto">Probá ajustando los filtros o realizando otra búsqueda.</p>
+                <h3 className="text-gray-900 dark:text-white font-black text-xl mb-2">No encontramos resultados</h3>
+                <p className="text-gray-500 dark:text-slate-400 text-sm mb-8 max-w-sm mx-auto">Probá ajustando los filtros o realizando otra búsqueda.</p>
                 
                 <div className="flex flex-col sm:flex-row items-center justify-center gap-3">
-                  <Link href="/catalogo" className="w-full sm:w-auto bg-gray-100 text-gray-900 border border-gray-200 hover:bg-gray-200 font-bold text-xs uppercase tracking-widest px-8 py-3.5 rounded-xl transition-all shadow-sm">
+                  <Link href="/catalogo" className="w-full sm:w-auto bg-gray-100 dark:bg-white/10 text-gray-900 dark:text-white border border-gray-200 dark:border-white/15 hover:bg-gray-200 font-bold text-xs uppercase tracking-widest px-8 py-3.5 rounded-xl transition-all shadow-sm">
                     Limpiar filtros
                   </Link>
                   <button 
@@ -760,7 +692,7 @@ export default function CatalogoPage() {
                   {autosComparar.map((auto, i) => (
                     <div
                       key={i}
-                      className="w-10 h-10 md:w-12 md:h-12 rounded-full border-2 border-gray-900 overflow-hidden bg-white shadow-sm shrink-0"
+                      className="w-10 h-10 md:w-12 md:h-12 rounded-full border-2 border-gray-900 overflow-hidden bg-white dark:bg-[#161821] shadow-sm shrink-0"
                     >
                       <img
                         src={
@@ -773,7 +705,7 @@ export default function CatalogoPage() {
                   ))}
                   {/* Slots vacíos si hay menos de 3 */}
                   {autosComparar.length < 3 && (
-                    <div className="w-10 h-10 md:w-12 md:h-12 rounded-full border-2 border-dashed border-gray-600 flex items-center justify-center bg-gray-800 text-gray-500 text-xs font-bold shrink-0">
+                    <div className="w-10 h-10 md:w-12 md:h-12 rounded-full border-2 border-dashed border-gray-600 flex items-center justify-center bg-gray-800 text-gray-500 dark:text-slate-400 text-xs font-bold shrink-0">
                       +
                     </div>
                   )}
@@ -783,7 +715,7 @@ export default function CatalogoPage() {
                     {autosComparar.length} / 3
                     <span className="hidden sm:inline"> listos</span>
                   </span>
-                  <span className="text-gray-400 text-[9px] uppercase tracking-widest hidden sm:block mt-1">
+                  <span className="text-gray-400 dark:text-slate-500 text-[9px] uppercase tracking-widest hidden sm:block mt-1">
                     Comparador
                   </span>
                 </div>
@@ -791,7 +723,7 @@ export default function CatalogoPage() {
               <div className="flex items-center gap-2 shrink-0">
                 <button
                   onClick={() => setAutosComparar([])}
-                  className="text-gray-400 hover:text-white px-2 py-2 text-[10px] font-bold uppercase tracking-widest transition-colors rounded-lg hover:bg-white/10"
+                  className="text-gray-400 dark:text-slate-500 hover:text-white px-2 py-2 text-[10px] font-bold uppercase tracking-widest transition-colors rounded-lg hover:bg-white/10"
                 >
                   <X className="w-4 h-4 md:hidden" />
                   <span className="hidden md:inline">Limpiar</span>
@@ -843,16 +775,16 @@ function FiltrosContent(props: any) {
   ];
 
   return (
-    <div className="bg-white border border-gray-200 rounded-2xl p-6 shadow-sm pb-10 max-h-[85vh] overflow-y-auto custom-scrollbar">
-      <div className="flex items-center justify-between mb-6 pb-4 border-b border-gray-200 sticky top-0 bg-white z-10">
-        <div className="flex items-center gap-2 text-gray-900 font-black uppercase tracking-widest text-xs">
+    <div className="bg-white dark:bg-[#161821] border border-gray-200 dark:border-white/15 rounded-2xl p-6 shadow-sm pb-10 max-h-[85vh] overflow-y-auto custom-scrollbar">
+      <div className="flex items-center justify-between mb-6 pb-4 border-b border-gray-200 dark:border-white/15 sticky top-0 bg-white dark:bg-[#161821] z-10">
+        <div className="flex items-center gap-2 text-gray-900 dark:text-white font-black uppercase tracking-widest text-xs">
           <SlidersHorizontal className="w-4 h-4 text-blue-600" />
           Filtros Avanzados
         </div>
       </div>
 
       <div className="space-y-4 mb-6">
-        <label className="text-[10px] font-bold text-gray-500 uppercase tracking-widest block">
+        <label className="text-[10px] font-bold text-gray-500 dark:text-slate-400 uppercase tracking-widest block">
           Precio en Pesos (ARS)
         </label>
         <div className="grid grid-cols-2 gap-2">
@@ -861,20 +793,20 @@ function FiltrosContent(props: any) {
             placeholder="Desde $"
             value={props.precioMin}
             onChange={(e) => props.setPrecioMin(e.target.value)}
-            className="w-full bg-gray-50 border border-gray-200 rounded-lg px-3 py-2.5 text-xs font-bold text-gray-900 outline-none focus:bg-white focus:border-blue-500 transition-colors placeholder:font-medium"
+            className="w-full bg-gray-50 dark:bg-white/5 border border-gray-200 dark:border-white/15 rounded-lg px-3 py-2.5 text-xs font-bold text-gray-900 dark:text-white outline-none focus:bg-white focus:border-blue-500 transition-colors placeholder:font-medium"
           />
           <input
             type="number"
             placeholder="Hasta $"
             value={props.precioMax}
             onChange={(e) => props.setPrecioMax(e.target.value)}
-            className="w-full bg-gray-50 border border-gray-200 rounded-lg px-3 py-2.5 text-xs font-bold text-gray-900 outline-none focus:bg-white focus:border-blue-500 transition-colors placeholder:font-medium"
+            className="w-full bg-gray-50 dark:bg-white/5 border border-gray-200 dark:border-white/15 rounded-lg px-3 py-2.5 text-xs font-bold text-gray-900 dark:text-white outline-none focus:bg-white focus:border-blue-500 transition-colors placeholder:font-medium"
           />
         </div>
       </div>
 
-      <div className="space-y-4 mb-6 pb-6 border-b border-gray-100">
-        <label className="text-[10px] font-bold text-gray-500 uppercase tracking-widest block">
+      <div className="space-y-4 mb-6 pb-6 border-b border-gray-100 dark:border-white/15">
+        <label className="text-[10px] font-bold text-gray-500 dark:text-slate-400 uppercase tracking-widest block">
           Precio en Dólares (USD)
         </label>
         <div className="grid grid-cols-2 gap-2">
@@ -883,14 +815,14 @@ function FiltrosContent(props: any) {
             placeholder="Desde US$"
             value={props.precioMinUsd}
             onChange={(e) => props.setPrecioMinUsd(e.target.value)}
-            className="w-full bg-gray-50 border border-gray-200 rounded-lg px-3 py-2.5 text-xs font-bold text-gray-900 outline-none focus:bg-white focus:border-emerald-500 transition-colors placeholder:font-medium"
+            className="w-full bg-gray-50 dark:bg-white/5 border border-gray-200 dark:border-white/15 rounded-lg px-3 py-2.5 text-xs font-bold text-gray-900 dark:text-white outline-none focus:bg-white focus:border-emerald-500 transition-colors placeholder:font-medium"
           />
           <input
             type="number"
             placeholder="Hasta US$"
             value={props.precioMaxUsd}
             onChange={(e) => props.setPrecioMaxUsd(e.target.value)}
-            className="w-full bg-gray-50 border border-gray-200 rounded-lg px-3 py-2.5 text-xs font-bold text-gray-900 outline-none focus:bg-white focus:border-emerald-500 transition-colors placeholder:font-medium"
+            className="w-full bg-gray-50 dark:bg-white/5 border border-gray-200 dark:border-white/15 rounded-lg px-3 py-2.5 text-xs font-bold text-gray-900 dark:text-white outline-none focus:bg-white focus:border-emerald-500 transition-colors placeholder:font-medium"
           />
         </div>
       </div>
@@ -984,22 +916,22 @@ function FilterSection({
   onToggle: (val: any) => void;
 }) {
   return (
-    <div className="space-y-3 pt-5 border-t border-gray-100">
-      <label className="text-[10px] font-bold text-gray-500 uppercase tracking-widest block">
+    <div className="space-y-3 pt-5 border-t border-gray-100 dark:border-white/15">
+      <label className="text-[10px] font-bold text-gray-500 dark:text-slate-400 uppercase tracking-widest block">
         {title}
       </label>
       <div className="max-h-48 overflow-y-auto custom-scrollbar pr-2 space-y-2.5">
         {options.map((opt, idx) => (
           <label
             key={idx}
-            className="flex items-center gap-3 text-xs text-gray-700 font-semibold cursor-pointer hover:text-blue-600 transition-colors group"
+            className="flex items-center gap-3 text-xs text-gray-700 dark:text-slate-300 font-semibold cursor-pointer hover:text-blue-600 transition-colors group"
           >
             <div className="relative flex items-center justify-center shrink-0">
               <input
                 type="checkbox"
                 checked={selected.includes(opt.value)}
                 onChange={() => onToggle(opt.value)}
-                className="w-4 h-4 rounded border-gray-300 text-blue-600 focus:ring-blue-600 transition-all bg-gray-50 cursor-pointer"
+                className="w-4 h-4 rounded border-gray-300 dark:border-white/15 text-blue-600 focus:ring-blue-600 transition-all bg-gray-50 dark:bg-white/5 cursor-pointer"
               />
             </div>
             <span className="truncate">{opt.label}</span>

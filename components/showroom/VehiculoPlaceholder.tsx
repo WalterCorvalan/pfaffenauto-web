@@ -1,5 +1,6 @@
 "use client";
 
+import { Html } from "@react-three/drei";
 import type { ShowroomVehicle } from "@/lib/showroom/types";
 
 // Caja geométrica temporal. Reemplazar por <primitive object={gltf.scene} /> cuando haya modelUrl (.glb).
@@ -8,9 +9,10 @@ type Props = {
   vehiculo: ShowroomVehicle;
   posicionX?: number; // offset horizontal, para la fila cenital
   onClick?: () => void;
+  mostrarMarcador?: boolean; // pin clickeable tipo Street View, para el modo caminata
 };
 
-export default function VehiculoPlaceholder({ vehiculo, posicionX = 0, onClick }: Props) {
+export default function VehiculoPlaceholder({ vehiculo, posicionX = 0, onClick, mostrarMarcador = false }: Props) {
   const { largo, ancho, alto } = vehiculo.dimensiones;
 
   return (
@@ -20,6 +22,19 @@ export default function VehiculoPlaceholder({ vehiculo, posicionX = 0, onClick }
       onPointerOver={onClick ? (e) => { e.stopPropagation(); document.body.style.cursor = "pointer"; } : undefined}
       onPointerOut={onClick ? () => { document.body.style.cursor = "auto"; } : undefined}
     >
+      {mostrarMarcador && (
+        <Html position={[0, alto * 0.9, 0]} center distanceFactor={8} zIndexRange={[10, 0]}>
+          <button
+            onClick={(e) => { e.stopPropagation(); onClick?.(); }}
+            className="pointer-events-auto flex flex-col items-center gap-1 cursor-pointer select-none"
+          >
+            <span className="rounded-full bg-white text-black text-[11px] font-bold px-3 py-1.5 shadow-lg whitespace-nowrap border-2 border-[#0145F2]">
+              {vehiculo.nombre}
+            </span>
+            <span className="h-3 w-3 rotate-45 bg-white border-b-2 border-r-2 border-[#0145F2] -mt-2.5" />
+          </button>
+        </Html>
+      )}
       {/* carrocería */}
       <mesh castShadow receiveShadow>
         <boxGeometry args={[ancho, alto, largo]} />

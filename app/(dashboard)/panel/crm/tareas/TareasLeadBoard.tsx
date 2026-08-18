@@ -65,7 +65,7 @@ export default function TareasLeadBoard({
 }
 
 const COLOR_HEADER: Record<string, string> = {
-  rose: "bg-rose-500", amber: "bg-amber-500", sky: "bg-sky-500",
+  rose: "bg-rose-500", amber: "bg-amber-500", sky: "bg-amber-500",
 };
 
 function Columna({ titulo, icono, items, render, color }: { titulo: string; icono: React.ReactNode; items: any[]; render: (item: any) => React.ReactNode; color: string }) {
@@ -87,7 +87,7 @@ function Columna({ titulo, icono, items, render, color }: { titulo: string; icon
 }
 
 const COLOR_BORDE: Record<string, string> = {
-  rose: "border-l-rose-400", amber: "border-l-amber-400", sky: "border-l-sky-400",
+  rose: "border-l-rose-400", amber: "border-l-amber-400", sky: "border-l-amber-400",
 };
 
 function TareaCard({ tarea, color }: { tarea: any; color: string }) {

@@ -1,5 +1,6 @@
 import Link from "next/link";
 import PublicHeader from "@/components/PublicHeader";
+import Footer from "@/components/Footer";
 import UtmTracker from "@/components/UtmTracker";
 import FloatingChatbot from "@/components/FloatingChatbot";
 import RouteProgress from "@/components/ui/RouteProgress";
@@ -23,6 +24,7 @@ export default function PublicLayout({
           <main className="flex-grow w-full">
             {children}
           </main>
+          <Footer />
           <FloatingChatbot />
         </div>
       </TemaPublicoRoot>

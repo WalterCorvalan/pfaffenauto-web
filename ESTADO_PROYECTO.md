@@ -1,6 +1,6 @@
 # Estado del Proyecto — Pfaffen Autos
 
-Reporte de sesión larga de trabajo. Última actualización: 2026-08-17.
+Reporte de sesión larga de trabajo. Última actualización: 2026-08-18.
 
 ---
 
@@ -61,10 +61,12 @@ Se retiró el flujo unificado "Nueva Operación" (`ventas/nueva/VentaForm.tsx`, 
 - `remotePatterns` configurado en `next.config.ts` para `*.b-cdn.net`, `upload.wikimedia.org`, `images.unsplash.com`.
 - `dangerouslyAllowSVG: true` + CSP de imagen agregado — bug real que rompía todos los logos SVG de marcas (Wikimedia) al convertir a `next/image`, ya resuelto.
 
-### Fotos de autos — remove.bg + Bunny CDN
-- Parámetros de `lib/removeBg.ts` ajustados tras varias rondas de prueba con fotos reales de fábrica: `scale: "65%"`, `crop_margin: "20%"`, `shadow_type: "car"`, `type: "car"`, `position: "center"`, `size: "auto"` — el auto queda centrado, con margen y sombra de piso, sin cortarse en los bordes (antes `scale: 90%` + `crop_margin: 5%` pegaba el auto contra el marco).
-- Fondo de estudio nuevo generado (prompt de dealership profesional) y subido a Bunny CDN (`fondos/fondo.png`).
-- Techo de calidad: la resolución final depende del plan pago de remove.bg (`size: "auto"` ya pide lo mejor disponible), no de los parámetros de encuadre.
+### Fotos de autos — Cloudflare R2 + removedor de fondo propio (2026-08-18)
+- **Bunny CDN dado de baja por completo**: storage zone borrada por vos, `BUNNY_*` sacado de `.env.local`, fallback a Bunny sacado de las 4 rutas de upload (`/api/upload`, `/api/upload-bunny`, `/api/upload-cotizacion`, `/api/upload-documento`) — ahora suben directo a R2, sin condicional.
+- Fondo de estudio real (foto de escenario con luces, subida a R2: `bg/fondo.png`) compuesto con `sharp` en `lib/removeBg.ts` — encuadre fijo 1600×1067, auto centrado y "parado" en el piso, siempre igual (antes dependíamos del auto-fit de remove.bg, que recortaba distinto según cada foto).
+- **remove.bg reemplazado por servidor propio** (`bg-remover/`, Flask + `rembg`, modelo `birefnet-general`) — a 3.000+ autos × 12 fotos, remove.bg salía miles de USD; self-hosted en Render sale ~$0-7/mes. **Falta el deploy** (paso a paso en `bg-remover/README.md`, requiere que crees cuenta en Render y sigas la guía). Hasta entonces `BG_REMOVER_URL` vacío en `.env.local` → `isRemoveBgConfigurado()` da false → las fotos suben sin recortar (fallback silencioso, no rompe nada, solo no procesa fondo).
+- **Roto y sin resolver**: los logos de marcas en `/marcas` (`app/(public)/marcas/page.tsx`, usa `BUNNY_CDN_URL`) y cualquier foto/documento subido *antes* de esta sesión que todavía tuviera URL `b-cdn.net` — se perdieron con la zone. Hay que volver a conseguir/subir esos SVG de marcas y volver a cargar fotos viejas rotas cuando aparezcan.
+- Bug real encontrado y arreglado: `UploaderVehiculo.tsx` leía `data.url` de la respuesta del upload, pero la ruta devuelve `{ publicUrl }` — nunca matcheaba, subía URL `undefined`. Corregido. También se agregó overlay de pantalla completa con progreso ("Subiendo foto X de Y") en `VehiculoForm.tsx`, antes solo cambiaba el texto del botón sin animación visible.
 
 ### Nuevas features del panel
 - **Tasación con historial**: `cotizaciones/page.tsx` + `HistorialTasacionBadge.tsx` — agrupa por teléfono, badge expandible con tasaciones previas del mismo cliente, sin query extra.
@@ -88,14 +90,16 @@ Se retiró el flujo unificado "Nueva Operación" (`ventas/nueva/VentaForm.tsx`, 
 
 ## 2. Procesos a la Mitad (WIP)
 
-### WhatsApp propio (reemplazo de Redoo + Pilot) — BLOQUEADO
-- El webhook de Meta WhatsApp Cloud API (`app/api/webhooks/wa/[token]/route.ts`) ya está listo en el código desde antes — handshake, verificación de firma, ingesta de mensajes a `/panel/chat`, IA de agente. No hace falta ningún producto de terceros (Forja/AgentKit/etc.), solo credenciales reales de Meta.
-- Se conectó un número de prueba gratuito de Meta y se completó `META_WHATSAPP_PHONE_NUMBER_ID` en `.env.local`. Faltaban `META_WHATSAPP_TOKEN` y `META_APP_SECRET`.
-- **La cuenta de desarrollador de Meta quedó suspendida** (Platform Policy 7.e.i.3, probable falso positivo). Se presentó la apelación, Meta respondió con error genérico de "intentar más tarde". Decisión explícita: **no tocar la cuenta del jefe con workarounds hasta estar seguros de que funciona** — queda esperando respuesta de Meta a la apelación.
+### WhatsApp propio (reemplazo de Redoo + Pilot) — EN CURSO, esperando número de prueba
+- El webhook de Meta WhatsApp Cloud API (`app/api/webhooks/wa/[token]/route.ts`) ya está listo en el código — handshake, verificación de firma, ingesta a `/panel/chat`, agente IA (`lib/ai/agente.ts`, consulta stock real y manda foto por WhatsApp). Solo faltan credenciales reales de Meta.
+- **Cuenta anterior suspendida quedó abandonada** — se armó Business Portfolio nuevo ("PfaffenCars") y app nueva ("Bot_wpp", ID `1730065111657728`) en una cuenta de Meta distinta.
+- `META_APP_SECRET` ya cargado en `.env.local`. `META_WEBHOOK_VERIFY_TOKEN` ya estaba.
+- **Bloqueado**: al pedir el número de prueba gratuito, Meta devuelve "No hay ningún número de teléfono disponible para esta aplicación" — error genérico, común en cuentas/Business Manager recién creadas. Falta reintentar hasta que Meta lo habilite. `META_WHATSAPP_TOKEN` / `META_WHATSAPP_PHONE_NUMBER_ID` quedan vacíos hasta entonces.
+- Túnel de desarrollo: Cloudflare Tunnel (`cloudflared tunnel --url http://localhost:3000`) reemplazó a VS Code devtunnels (inestable, 502 constante). Es un "quick tunnel" sin cuenta — URL nueva cada vez que se reinicia, sin garantía de uptime. Cuando haya número, el Webhook callback URL de Meta se carga con esa URL + `/api/webhooks/wa/<verify-token>`.
 
 ### Integración MercadoLibre — arrancada, BLOQUEADA
 - Investigado en profundidad: categoría `MLA1744` (Autos y Camionetas), 8 atributos requeridos (marca, modelo, año, versión, tipo, combustible, puertas, km), Karry y Rely ya existen como marcas reconocidas en la taxonomía de ML. Google Vehicle Ads queda descartado — no existe en Argentina.
-- Preparado en paralelo mientras se consiguen las credenciales: `ENCRYPTION_KEY` generada en `.env.local` (reutiliza `lib/crypto/index.ts`, AES-256-GCM, ya usado para otros secretos), placeholders `ML_CLIENT_ID`/`ML_CLIENT_SECRET`/`ML_REDIRECT_URI` agregados, y sección nueva en `SQL_PENDIENTE.sql` (tabla `mercadolibre_config` para tokens OAuth encriptados + columnas `ml_item_id`/`ml_estado`/`ml_publicado_at`/`ml_error` en `vehiculos`).
+- Preparado en paralelo mientras se consiguen las credenciales: `ENCRYPTION_KEY` generada en `.env.local` (reutiliza `lib/crypto/index.ts`, AES-256-GCM), placeholders `ML_CLIENT_ID`/`ML_CLIENT_SECRET`/`ML_REDIRECT_URI` agregados. Tabla `mercadolibre_config` (tokens OAuth encriptados) y columnas `ml_item_id`/`ml_estado`/`ml_publicado_at`/`ml_error` en `vehiculos` **ya aplicadas en la base**.
 - **Bloqueado**: no se puede entrar a la cuenta de MercadoLibre para registrar la app y sacar `client_id`/`client_secret` en `applications.mercadolibre.com`.
 - Importante para cuando se retome: la publicación automática por API no reduce el costo del paquete de Autos en ML Argentina (subió a ~$326.000 ARS/mes en nov-2025) — ese costo es del marketplace, no de la integración.
 
@@ -104,11 +108,19 @@ Se retiró el flujo unificado "Nueva Operación" (`ventas/nueva/VentaForm.tsx`, 
 - Rely: mismo tratamiento que Karry, queda para después.
 - Decisión sin tomar: si `/showroom-test/[marca]` debería salir del layout compartido `(public)` (Header/Footer) para una experiencia full-bleed sin esos elementos encima.
 
-### Fondo de estudio en Bunny CDN — posible cache
-- Al subir una versión nueva de `fondos/fondo.png` (mismo nombre de archivo), las fotos procesadas seguían mostrando el fondo viejo. Diagnóstico: probablemente cache de borde de Bunny CDN sirviendo el archivo anterior. Se sugirió purgar cache desde el dashboard de Bunny o subir con nombre de archivo nuevo — **no confirmado si se resolvió**, el usuario cambió de tema antes de verificar.
+### Karry / Rely — landing pages
+- Hero rediseñado ("Drive-In"): auto único en pantalla, transición de salida/entrada a velocidad con motion blur y rebote de suspensión, franjas de velocidad animadas, logo de fondo con "respiración" en idle (`components/landing/VehiculosCarousel.tsx`, compartido por ambas marcas).
+- Ambas landings pasadas a tema oscuro completo (header, form, versiones, stats, ficha técnica, footer), con imágenes propias del hero por versión (`Karry-cabina-simple.png`/`Karry-cabina-doble.png`, `Rely-confort.png`/`Rely-deluxe.png`/`Rely-limited.png`) en vez de las fotos de galería genéricas.
+- Karry = paleta azul, Rely = paleta naranja. Logo de Karry mantiene color original en el header (no se invierte a blanco); el de Rely sí (`invertLogo` prop).
 
-### Plantilla de carga masiva de autos (Excel/CSV) — sin especificar
-- Pedida, pero las 3 preguntas de alcance (qué campos, formato exacto, validación) quedaron sin responder — no arrancada.
+### Showroom 3D — modo caminata en primera persona
+- Reemplazada la vista cenital fija por caminata real: WASD/flechas + joystick táctil (`WalkControls.tsx`, `WalkJoystick.tsx`, `useWalkState.ts`), mirar alrededor con drag de mouse/dedo, límites de recorrido por cantidad de autos en la fila.
+- Marcadores tipo Street View (pin clickeable) sobre cada auto de la fila (`VehiculoPlaceholder.tsx`, prop `mostrarMarcador`).
+- Sin verificar en navegador real por limitación de la herramienta de preview — pendiente que lo pruebes vos.
+
+### Dark mode del sitio público — en progreso
+- Ya con modo oscuro: `Marcas.tsx`, `Location.tsx`, `Footer.tsx`, `/catalogo` (fondo, tarjetas — ahora reusa el mismo `VehicleCard` de la home en vez de una tarjeta propia).
+- Falta revisar el resto de componentes/páginas públicas una por una.
 
 ---
 
@@ -134,28 +146,27 @@ Se retiró el flujo unificado "Nueva Operación" (`ventas/nueva/VentaForm.tsx`, 
 - `ANTHROPIC_API_KEY` sin crédito → todo lo de IA apagado
 - `OPENAI_API_KEY` vacía → precio sugerido del cotizador apagado
 - `GOOGLE_PLACE_ID` / `GOOGLE_MAPS_API_KEY` vacías → reviews en fallback estático
-- `META_WHATSAPP_TOKEN` / `META_APP_SECRET` vacías → cuenta de Meta suspendida, apelación pendiente
+- `META_WHATSAPP_TOKEN` / `META_WHATSAPP_PHONE_NUMBER_ID` vacías → esperando que Meta habilite el número de prueba en la app nueva
 - `ML_CLIENT_ID` / `ML_CLIENT_SECRET` / `ML_REDIRECT_URI` vacías → esperando poder entrar a la cuenta de MercadoLibre
 
 ---
 
 ## 4. Bloqueos / Dudas
 
-1. **WhatsApp**: esperando que Meta resuelva la apelación de la cuenta suspendida. No hay nada más para hacer de mi lado hasta esa respuesta.
+1. **WhatsApp**: reintentar pedir el número de prueba en la app nueva de Meta hasta que deje de tirar "No hay ningún número de teléfono disponible".
 2. **MercadoLibre**: esperando que puedas entrar a tu cuenta de ML para registrar la app y conseguir `client_id`/`client_secret`.
-3. **Fondo de estudio en Bunny**: ¿confirmás si al final se ve actualizado, o seguimos con la purga de cache / nombre de archivo nuevo?
-4. **Plantilla de carga masiva**: sigue pendiente de definir alcance (qué campos, formato) cuando quieras retomarla.
-5. **CSP**: ¿armamos el allowlist igual (con testing manual antes de confiar en él), o queda afuera por ahora?
-6. No hay credenciales de test para el panel disponibles para mí — cualquier verificación visual del panel la tenés que hacer vos.
+3. **Logos de marcas rotos** (`/marcas`): se perdieron los SVG al borrar la storage zone de Bunny — hay que volver a conseguirlos/subirlos a R2.
+4. **Removedor de fondo propio sin deployar**: `bg-remover/` listo en el repo, falta que crees cuenta en Render y sigas `bg-remover/README.md` — hasta entonces las fotos suben sin recorte de fondo.
+4. **CSP**: ¿armamos el allowlist igual (con testing manual antes de confiar en él), o queda afuera por ahora?
+5. No hay credenciales de test para el panel disponibles para mí — cualquier verificación visual del panel la tenés que hacer vos.
 
 ---
 
 ## 5. Próximo Paso Sugerido
 
-No hay nada mío bloqueando ahora mismo — los dos frentes grandes (WhatsApp, MercadoLibre) dependen de vos (apelación de Meta / login a ML). Mientras tanto, lo más productivo:
-
-1. Confirmar si el fondo de Bunny quedó bien o si purgamos cache.
-2. Si querés seguir con el Showroom 3D: conseguir/definir los modelos `.glb` reales, o decidir si sale del layout público compartido.
-3. Definir alcance de la plantilla de carga masiva cuando haya tiempo.
+1. Reintentar el número de prueba de WhatsApp en la app nueva de Meta (bloqueo activo).
+2. Resolver logos de `/marcas` (subir SVG a R2).
+3. Seguir el dark mode del sitio público componente por componente.
+4. Si querés seguir con el Showroom 3D: conseguir/definir los modelos `.glb` reales, o decidir si sale del layout público compartido.
 
 Decime con cuál seguimos.

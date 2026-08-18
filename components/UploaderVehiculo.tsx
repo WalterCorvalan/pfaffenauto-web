@@ -34,8 +34,8 @@ export default function UploaderVehiculo({ onUploadComplete }: UploaderVehiculoP
 
         const data = await response.json();
         
-        if (response.ok && data.url) {
-          newUrls.push(data.url);
+        if (response.ok && data.publicUrl) {
+          newUrls.push(data.publicUrl);
         } else {
           console.error("Fallo al subir:", data.error);
         }

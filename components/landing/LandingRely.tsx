@@ -8,13 +8,20 @@ import { ChevronLeft, ChevronRight, X } from "lucide-react";
 import { RELY_VERSIONS } from "@/lib/rely-versions";
 import VehiculosCarousel from "./VehiculosCarousel";
 
+const IMAGENES_CARRUSEL_RELY: Record<string, string> = {
+  comfort: "/Rely-confort/Rely-confort.png",
+  luxury: "/Rely-deluxe/Rely-deluxe.png",
+  limited: "/Rely-Limited/Rely-limited.png",
+};
+
 const CARRUSEL_RELY = RELY_VERSIONS.map((v, i) => ({
-  src: v.image,
+  src: IMAGENES_CARRUSEL_RELY[v.slug] || v.image,
   bg: ["#F26B1D", "#C9560F", "#A6470C"][i % 3],
   panel: ["#F68E4F", "#DB763A", "#C0632B"][i % 3],
   name: v.name,
   subtitle: v.subtitle,
   href: `/rely/${v.slug}`,
+  load: v.load,
 }));
 
 const inter = Inter({

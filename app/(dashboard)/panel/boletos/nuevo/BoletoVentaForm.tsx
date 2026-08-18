@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { supabase } from "@/lib/supabase/client";
@@ -78,6 +78,15 @@ export default function BoletoVentaForm({
     const pct = Number(porcentajeComision) || 0;
     return (v * pct) / 100;
   }, [ventaArs, porcentajeComision]);
+
+  // Auto-completa Venta con el precio publicado del auto — solo en boletos directos
+  // (sin seña previa, que ya trae su propio precio ya acordado con el cliente).
+  useEffect(() => {
+    if (senaId || !vehiculo?.vehiculo_id) return;
+    if (vehiculo.precio_publicado_ars) setVentaArs(String(vehiculo.precio_publicado_ars));
+    if (vehiculo.precio_publicado_usd) setVentaUsd(String(vehiculo.precio_publicado_usd));
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [vehiculo?.vehiculo_id]);
 
   const aplicarSena = (id: string) => {
     setSenaId(id);
@@ -200,7 +209,8 @@ export default function BoletoVentaForm({
         await notificarEncargados(
           supabase,
           `${cliente.nombre} ${cliente.apellido} — Venta N° ${siguienteNumero}: el vendedor no confirmó el precio ($${(Number(ventaArs) || 0).toLocaleString("es-AR")}). Verificalo.`,
-          `/panel/boletos/imprimir/${data.id}`
+          `/panel/boletos/imprimir/${data.id}`,
+          "boletos"
         );
       }
 
