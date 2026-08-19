@@ -68,8 +68,8 @@ export default function VehiculosGrid({ vehiculos }: { vehiculos: any[] | null }
   if (lista.length === 0) {
     return (
       <section className="py-16 text-center w-full">
-        <div className="max-w-md mx-auto p-10 rounded-[32px] bg-white/40 backdrop-blur-2xl border border-white/60 shadow-[0_16px_40px_0_rgba(31,38,135,0.05)]">
-          <p className="text-gray-500 font-bold tracking-wide">
+        <div className="max-w-md mx-auto p-10 rounded-[32px] bg-white/40 dark:bg-white/5 backdrop-blur-2xl border border-white/60 dark:border-white/10 shadow-[0_16px_40px_0_rgba(31,38,135,0.05)] dark:shadow-none">
+          <p className="text-gray-500 dark:text-slate-400 font-bold tracking-wide">
             Actualmente no hay unidades disponibles.
           </p>
         </div>
@@ -88,7 +88,7 @@ export default function VehiculosGrid({ vehiculos }: { vehiculos: any[] | null }
               className={`shrink-0 px-4 py-2 rounded-full text-xs font-bold uppercase tracking-wider border transition-colors ${
                 categoriaActiva === cat
                   ? "bg-blue-600 border-blue-600 text-white"
-                  : "bg-white border-gray-200 text-gray-500 hover:border-blue-300"
+                  : "bg-white dark:bg-white/5 border-gray-200 dark:border-white/10 text-gray-500 dark:text-slate-400 hover:border-blue-300 dark:hover:border-sky-400/50"
               }`}
             >
               {cat}
@@ -114,7 +114,7 @@ export default function VehiculosGrid({ vehiculos }: { vehiculos: any[] | null }
           <button
             onClick={() => setPagina((p) => Math.max(0, p - 1))}
             disabled={pagina === 0}
-            className="p-2 rounded-lg border border-gray-200 text-gray-500 disabled:opacity-30 hover:border-blue-400 hover:text-blue-600 transition-colors"
+            className="p-2 rounded-lg border border-gray-200 dark:border-white/10 text-gray-500 dark:text-slate-400 disabled:opacity-30 hover:border-blue-400 dark:hover:border-sky-400/50 hover:text-blue-600 dark:hover:text-sky-300 transition-colors"
             aria-label="Página anterior"
           >
             <ChevronLeft className="w-4 h-4" />
@@ -124,7 +124,7 @@ export default function VehiculosGrid({ vehiculos }: { vehiculos: any[] | null }
               key={i}
               onClick={() => setPagina(i)}
               className={`w-9 h-9 rounded-lg text-xs font-bold border transition-colors ${
-                pagina === i ? "bg-blue-600 border-blue-600 text-white" : "bg-white border-gray-200 text-gray-500 hover:border-blue-400"
+                pagina === i ? "bg-blue-600 border-blue-600 text-white" : "bg-white dark:bg-white/5 border-gray-200 dark:border-white/10 text-gray-500 dark:text-slate-400 hover:border-blue-400 dark:hover:border-sky-400/50"
               }`}
             >
               {i + 1}
@@ -133,7 +133,7 @@ export default function VehiculosGrid({ vehiculos }: { vehiculos: any[] | null }
           <button
             onClick={() => setPagina((p) => Math.min(totalPaginas - 1, p + 1))}
             disabled={pagina === totalPaginas - 1}
-            className="p-2 rounded-lg border border-gray-200 text-gray-500 disabled:opacity-30 hover:border-blue-400 hover:text-blue-600 transition-colors"
+            className="p-2 rounded-lg border border-gray-200 dark:border-white/10 text-gray-500 dark:text-slate-400 disabled:opacity-30 hover:border-blue-400 dark:hover:border-sky-400/50 hover:text-blue-600 dark:hover:text-sky-300 transition-colors"
             aria-label="Página siguiente"
           >
             <ChevronRight className="w-4 h-4" />

@@ -4,6 +4,7 @@ import { isAiConfigured } from "@/lib/ai";
 import { generarRespuestaAgente } from "@/lib/ai/agente";
 import { sendTextMessage, sendImageMessage } from "@/lib/meta/client"; // ya lo tenés de antes
 import { decrypt } from "@/lib/crypto"; // ya lo tenés de antes
+import { notificarPersona, notificarEncargados } from "@/lib/notificaciones";
 
 const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -93,7 +94,7 @@ async function ingestarMensaje({ waId, nombrePerfil, msg }: { waId: string; nomb
 
   let { data: conversacion } = await supabase
     .from("whatsapp_conversaciones")
-    .select("id")
+    .select("id, vendedor_id")
     .eq("contacto_id", contacto.id)
     .maybeSingle();
 
@@ -101,7 +102,7 @@ async function ingestarMensaje({ waId, nombrePerfil, msg }: { waId: string; nomb
     const { data: nueva } = await supabase
       .from("whatsapp_conversaciones")
       .insert({ contacto_id: contacto.id })
-      .select("id")
+      .select("id, vendedor_id")
       .single();
     conversacion = nueva;
   }
@@ -134,6 +135,15 @@ async function ingestarMensaje({ waId, nombrePerfil, msg }: { waId: string; nomb
 
   if (msg.referral) {
     await vincularAutoDesdeAnuncio(conversacion.id, msg.referral);
+  }
+
+  const nombreLead = nombrePerfil || waId;
+  const mensajeNoti = `${nombreLead}: ${texto || "envió un mensaje"}`;
+  const linkNoti = `/panel/chat?conversacion=${conversacion.id}&canal=whatsapp`;
+  if (conversacion.vendedor_id) {
+    notificarPersona(supabase, conversacion.vendedor_id, "nuevo_mensaje_chat", mensajeNoti, linkNoti, "chat").catch((err) => console.error("[wa] error notificando:", err));
+  } else {
+    notificarEncargados(supabase, mensajeNoti, linkNoti, "chat", "nuevo_mensaje_chat").catch((err) => console.error("[wa] error notificando:", err));
   }
 
   await ejecutarAgente(conversacion.id, contacto.id);
@@ -212,6 +222,13 @@ function isWhatsappEnvioConfigurado(): boolean {
 
 async function ejecutarAgente(conversacionId: string, contactoId: string) {
   if (!isAiConfigured()) return;
+
+  const { data: conversacionActual } = await supabase
+    .from("whatsapp_conversaciones")
+    .select("ai_habilitada")
+    .eq("id", conversacionId)
+    .single();
+  if (conversacionActual?.ai_habilitada === false) return; // ya tomó un humano, no interferir
 
   const { data: mensajes } = await supabase
     .from("whatsapp_mensajes")
@@ -310,10 +327,19 @@ async function ejecutarAgente(conversacionId: string, contactoId: string) {
   }
 
   if (handoff) {
-    await supabase
+    const { data: convHandoff } = await supabase
       .from("whatsapp_conversaciones")
       .update({ handoff_at: new Date().toISOString(), handoff_reason: "cliente_pidio_humano", ai_habilitada: false })
-      .eq("id", conversacionId);
+      .eq("id", conversacionId)
+      .select("vendedor_id")
+      .single();
+    const linkNoti = `/panel/chat?conversacion=${conversacionId}&canal=whatsapp`;
+    const mensajeNoti = "El cliente pidió hablar con una persona — la IA dejó de responder.";
+    if (convHandoff?.vendedor_id) {
+      notificarPersona(supabase, convHandoff.vendedor_id, "handoff_chat", mensajeNoti, linkNoti, "chat").catch((err) => console.error("[wa] error notificando handoff:", err));
+    } else {
+      notificarEncargados(supabase, mensajeNoti, linkNoti, "chat", "handoff_chat").catch((err) => console.error("[wa] error notificando handoff:", err));
+    }
   }
 
   console.log(`[agente] respuesta generada (calificación: ${calificacion ?? "sin definir"}): ${reply}`);

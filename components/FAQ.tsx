@@ -40,25 +40,25 @@ export default function FAQ() {
   };
 
   return (
-    <section className="py-12 md:py-20 bg-[#f8f9fa] border-t border-slate-200/80 relative overflow-hidden">
-      
+    <section className="py-12 md:py-20 bg-[#f8f9fa] dark:bg-[#0a0a0f] border-t border-slate-200/80 dark:border-transparent relative overflow-hidden">
+
       {/* Script SEO JSON-LD */}
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(faqSchema) }} />
 
       {/* Efectos ambientales sutiles */}
-      <div className="absolute bottom-0 right-0 w-[400px] h-[400px] bg-blue-400/5 rounded-full blur-[120px] pointer-events-none"></div>
+      <div className="absolute bottom-0 right-0 w-[400px] h-[400px] bg-blue-400/5 dark:bg-sky-400/5 rounded-full blur-[120px] pointer-events-none"></div>
 
       <div className="max-w-4xl mx-auto px-4 md:px-6 relative z-10">
-        
+
         {/* ================= ENCABEZADO ================= */}
         <div className="text-center mb-12">
-          <div className="inline-flex items-center gap-2 bg-[#0145F2]/10 text-[#0145F2] text-[10px] font-black uppercase tracking-widest px-3.5 py-1.5 rounded-full mb-3 border border-[#0145F2]/20">
+          <div className="inline-flex items-center gap-2 bg-[#0145F2]/10 dark:bg-sky-400/10 text-[#0145F2] dark:text-sky-300 text-[10px] font-black uppercase tracking-widest px-3.5 py-1.5 rounded-full mb-3 border border-[#0145F2]/20 dark:border-sky-400/20">
             <HelpCircle className="w-3.5 h-3.5" /> Resolvé tus dudas
           </div>
-          <h2 className="text-3xl md:text-4xl font-black text-[#0f293e] tracking-tight">
-            Preguntas <span className="text-[#0145F2]">Frecuentes</span>
+          <h2 className="text-3xl md:text-4xl font-black text-[#0f293e] dark:text-white tracking-tight">
+            Preguntas <span className="text-[#0145F2] dark:text-sky-300">Frecuentes</span>
           </h2>
-          <p className="text-slate-500 text-xs md:text-sm font-medium mt-2">
+          <p className="text-slate-500 dark:text-slate-400 text-xs md:text-sm font-medium mt-2">
             Todo lo que necesitás saber sobre nuestros procesos de compra, financiación y permutas.
           </p>
         </div>
@@ -71,8 +71,8 @@ export default function FAQ() {
             return (
               <div 
                 key={index}
-                className={`bg-white border rounded-2xl transition-all duration-300 overflow-hidden shadow-[0_4px_20px_rgba(0,0,0,0.02)] ${
-                  isOpen ? 'border-[#0145F2]/50 shadow-[0_10px_30px_rgba(1,69,242,0.06)]' : 'border-slate-200/80 hover:border-slate-300'
+                className={`bg-white dark:bg-white/5 border rounded-2xl transition-all duration-300 overflow-hidden shadow-[0_4px_20px_rgba(0,0,0,0.02)] dark:shadow-none ${
+                  isOpen ? 'border-[#0145F2]/50 dark:border-sky-400/50 shadow-[0_10px_30px_rgba(1,69,242,0.06)] dark:shadow-none' : 'border-slate-200/80 dark:border-white/10 hover:border-slate-300 dark:hover:border-white/20'
                 }`}
               >
                 <button
@@ -81,17 +81,17 @@ export default function FAQ() {
                 >
                   <div className="flex items-center gap-4">
                     <span className={`w-8 h-8 rounded-xl flex items-center justify-center text-xs font-black transition-colors ${
-                      isOpen ? 'bg-[#0145F2] text-white' : 'bg-slate-100 text-slate-600'
+                      isOpen ? 'bg-[#0145F2] text-white' : 'bg-slate-100 dark:bg-white/10 text-slate-600 dark:text-slate-300'
                     }`}>
                       0{index + 1}
                     </span>
-                    <h3 className="text-base md:text-lg font-black text-[#0f293e] tracking-tight">
+                    <h3 className="text-base md:text-lg font-black text-[#0f293e] dark:text-white tracking-tight">
                       {faq.pregunta}
                     </h3>
                   </div>
-                  
+
                   <div className={`w-8 h-8 rounded-full flex items-center justify-center transition-transform duration-300 shrink-0 ${
-                    isOpen ? 'rotate-180 bg-blue-50 text-[#0145F2]' : 'bg-slate-50 text-slate-400'
+                    isOpen ? 'rotate-180 bg-blue-50 dark:bg-sky-400/10 text-[#0145F2] dark:text-sky-300' : 'bg-slate-50 dark:bg-white/5 text-slate-400 dark:text-slate-500'
                   }`}>
                     <ChevronDown className="w-4 h-4" />
                   </div>
@@ -106,7 +106,7 @@ export default function FAQ() {
                       transition={{ duration: 0.3, ease: "easeInOut" }}
                     >
                       <div className="px-6 pb-6 pt-0 pl-16 md:pl-20 pr-8">
-                        <p className="text-slate-500 text-sm leading-relaxed font-medium">
+                        <p className="text-slate-500 dark:text-slate-400 text-sm leading-relaxed font-medium">
                           {faq.respuesta}
                         </p>
                       </div>

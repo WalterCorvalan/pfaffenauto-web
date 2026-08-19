@@ -12,7 +12,7 @@ import ConfirmarPrecioModal from "../../ConfirmarPrecioModal";
 
 const inputClass = "w-full bg-slate-50 dark:bg-[#00246b] border border-slate-200 dark:border-[#0a2a6b] rounded-xl px-3 py-2.5 text-sm outline-none focus:border-indigo-500 focus:bg-white dark:focus:bg-[#002a6e] transition-colors text-slate-900 dark:text-white placeholder:text-slate-400 dark:placeholder:text-slate-500";
 
-export default function SenaForm({ clientes, vehiculos, vendedores, sucursales }: { clientes: any[]; vehiculos: any[]; vendedores: any[]; sucursales: any[] }) {
+export default function SenaForm({ clientes, vehiculos, vendedores, sucursales, cotizacionId }: { clientes: any[]; vehiculos: any[]; vendedores: any[]; sucursales: any[]; cotizacionId?: string | null }) {
   const router = useRouter();
   const [guardando, setGuardando] = useState(false);
 
@@ -54,13 +54,19 @@ export default function SenaForm({ clientes, vehiculos, vendedores, sucursales }
       const { data: { user } } = await supabase.auth.getUser();
       const { data: ultimo } = await supabase.from("senas").select("numero").order("numero", { ascending: false }).limit(1).maybeSingle();
       const siguienteNumero = (ultimo?.numero || 0) + 1;
+      const generarCodigoSeguimiento = () =>
+        Array.from({ length: 8 }, () => "ABCDEFGHJKLMNPQRSTUVWXYZ23456789"[Math.floor(Math.random() * 32)]).join("");
+      const codigoSeguimiento = generarCodigoSeguimiento();
 
       const { data, error } = await supabase.from("senas").insert({
         numero: siguienteNumero,
+        codigo_seguimiento: codigoSeguimiento,
+        etapa_seguimiento: "Seña",
         fecha: new Date().toISOString().split("T")[0],
         sucursal_id: sucursalId,
         vendedor_id: vendedorId || user?.id,
         estado: "Activa",
+        cotizacion_id: cotizacionId || null,
         cliente_id: cliente.id,
         dni: cliente.dni,
         fecha_nacimiento: cliente.fecha_nacimiento || null,

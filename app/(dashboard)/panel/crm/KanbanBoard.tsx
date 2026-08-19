@@ -7,6 +7,7 @@ import Link from "next/link";
 import { MessageSquareText, Filter, AlertTriangle, CheckCircle2, Circle, CarFront, User, X, Ban, LifeBuoy, LayoutGrid, List, BarChart3 } from "lucide-react";
 import LeadsTable from "./LeadsTable";
 import LeadsReporte from "./LeadsReporte";
+import NotificacionesBell from "../../NotificacionesBell";
 
 const COLUMNAS = ["Nuevo", "Contactado", "Interesado", "Cliente", "Perdido"];
 
@@ -161,6 +162,7 @@ export default function KanbanBoard({ leadsIniciales, motivosCierre, miRol, miId
         </div>
 
         <div className="flex items-center gap-2">
+          <NotificacionesBell seccion="crm" />
           <div className="flex items-center bg-slate-100 dark:bg-[#00246b] border border-slate-200 dark:border-[#0a2a6b] rounded-lg p-0.5">
             <button
               onClick={() => setVista("kanban")}

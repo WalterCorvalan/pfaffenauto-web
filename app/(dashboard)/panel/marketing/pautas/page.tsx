@@ -170,7 +170,7 @@ export default async function PautasMarketingPage() {
           </div>
 
           {/* ================= HISTORIAL DE CAMPAÑAS CARGADAS ================= */}
-          <div className="bg-white dark:bg-[#001c55] border border-slate-200 dark:border-[#0a2a6b] rounded-2xl shadow-sm overflow-hidden">
+          <div className="hidden md:block bg-white dark:bg-[#001c55] border border-slate-200 dark:border-[#0a2a6b] rounded-2xl shadow-sm overflow-hidden">
             <div className="p-4 border-b border-slate-100 dark:border-[#0a2a6b]">
               <h2 className="text-[11px] font-bold uppercase tracking-widest text-slate-500 dark:text-slate-400">Historial de cargas</h2>
             </div>
@@ -217,6 +217,42 @@ export default async function PautasMarketingPage() {
                   )}
                 </tbody>
               </table>
+            </div>
+          </div>
+
+          {/* Mobile: tarjetas apiladas, mismos datos sin scroll horizontal */}
+          <div className="md:hidden bg-white dark:bg-[#001c55] border border-slate-200 dark:border-[#0a2a6b] rounded-2xl shadow-sm overflow-hidden">
+            <div className="p-4 border-b border-slate-100 dark:border-[#0a2a6b]">
+              <h2 className="text-[11px] font-bold uppercase tracking-widest text-slate-500 dark:text-slate-400">Historial de cargas</h2>
+            </div>
+            <div className="p-4 space-y-3">
+              {(!todas || todas.length === 0) && (
+                <div className="p-6 text-center text-slate-400 dark:text-slate-500 text-sm italic">
+                  Sin métricas cargadas todavía.
+                </div>
+              )}
+              {(todas || []).map((c: any) => {
+                const col = COLOR_PLATAFORMA[c.plataforma] || COLOR_PLATAFORMA["Google Ads"];
+                return (
+                  <div key={c.id} className="bg-slate-50 dark:bg-[#00246b] border border-slate-200 dark:border-[#0a2a6b] rounded-xl p-4 space-y-2">
+                    <div className="flex items-center justify-between">
+                      <span className={`text-[10px] font-bold uppercase tracking-widest px-2 py-0.5 rounded border ${col.bg} ${col.text} ${col.border}`}>
+                        {c.plataforma}
+                      </span>
+                      <span className="text-[11px] text-slate-500 dark:text-slate-400 capitalize font-medium">
+                        {new Date(`${c.periodo}T12:00:00Z`).toLocaleDateString("es-AR", { month: "short", year: "numeric", timeZone: "UTC" })}
+                      </span>
+                    </div>
+                    <p className="text-[13px] font-medium text-slate-900 dark:text-white">{c.nombre_campana || "—"}</p>
+                    <p className="text-[12px] text-slate-500 dark:text-slate-400">{c.sucursales?.nombre || "Página general"}</p>
+                    <div className="flex items-center justify-between pt-2 border-t border-slate-200 dark:border-[#0a2a6b] text-[12px]">
+                      <span className="font-mono font-bold text-slate-900 dark:text-white">$ {Number(c.gasto).toLocaleString("es-AR")}</span>
+                      <span className="font-mono text-slate-600 dark:text-slate-300">{c.clics} clics</span>
+                      <span className="font-mono text-slate-600 dark:text-slate-300">{c.leads} leads</span>
+                    </div>
+                  </div>
+                );
+              })}
             </div>
           </div>
 

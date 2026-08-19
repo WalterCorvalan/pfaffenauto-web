@@ -2,7 +2,8 @@ import { createServerClient } from "@supabase/ssr";
 import { cookies } from "next/headers";
 import BoletoVentaForm from "./BoletoVentaForm";
 
-export default async function NuevoBoletoPage() {
+export default async function NuevoBoletoPage({ searchParams }: { searchParams: Promise<{ cotizacion_id?: string }> }) {
+  const { cotizacion_id } = await searchParams;
   const cookieStore = await cookies();
   const supabase = createServerClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -25,6 +26,7 @@ export default async function NuevoBoletoPage() {
       vendedores={vendedores || []}
       sucursales={sucursales || []}
       senas={senas || []}
+      cotizacionId={cotizacion_id || null}
     />
   );
 }

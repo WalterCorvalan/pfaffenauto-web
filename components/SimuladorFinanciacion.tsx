@@ -14,14 +14,19 @@ export default function SimuladorFinanciacion({
 }) {
   const [anticipoPorcentaje, setAnticipoPorcentaje] = useState(50);
   const [cuotas, setCuotas] = useState(24);
+  const [cuentaSueldo, setCuentaSueldo] = useState(false);
 
-  // Cálculos matemáticos simples (Simulación TNA 55%)
+  // Línea "+Autos con BNA" (préstamo personal, no prendario) — tasas oficiales
+  // publicadas en bna.com.ar/home/masautos. Sistema francés de amortización.
   const montoAnticipo = (precioTotal * anticipoPorcentaje) / 100;
   const saldoAFinanciar = precioTotal - montoAnticipo;
-  
-  const TNA = 0.55; 
-  const interesTotal = saldoAFinanciar * TNA * (cuotas / 12);
-  const cuotaEstimada = (saldoAFinanciar + interesTotal) / cuotas;
+
+  const TNA = cuentaSueldo ? 0.36 : 0.46;
+  const tasaMensual = TNA / 12;
+  const cuotaEstimada =
+    saldoAFinanciar > 0
+      ? (saldoAFinanciar * tasaMensual) / (1 - Math.pow(1 + tasaMensual, -cuotas))
+      : 0;
 
   // Lógica WhatsApp
   let numWA = telefono.replace(/\D/g, "");
@@ -62,11 +67,22 @@ export default function SimuladorFinanciacion({
           </div>
         </div>
 
+        {/* Cuenta sueldo BNA */}
+        <label className="flex items-center gap-2.5 text-xs font-bold text-slate-600 cursor-pointer bg-slate-50 border border-slate-200 rounded-xl px-3 py-2.5 w-fit">
+          <input
+            type="checkbox"
+            checked={cuentaSueldo}
+            onChange={(e) => setCuentaSueldo(e.target.checked)}
+            className="w-4 h-4 accent-[#0145F2]"
+          />
+          Tengo cuenta sueldo en el Banco Nación
+        </label>
+
         {/* Selector de Cuotas */}
         <div>
           <label className="text-xs font-bold text-slate-500 uppercase tracking-widest mb-2 block">Cantidad de Cuotas</label>
           <div className="grid grid-cols-4 gap-2">
-            {[12, 24, 36, 48].map((c) => (
+            {[12, 24, 48, 72].map((c) => (
               <button
                 key={c}
                 onClick={() => setCuotas(c)}
@@ -86,8 +102,11 @@ export default function SimuladorFinanciacion({
           </div>
           <CheckCircle2 className="w-8 h-8 text-sky-400" />
         </div>
+        <p className="text-[10px] text-slate-400 text-center -mt-2">
+          Línea &quot;+Autos con BNA&quot; · TNA {(TNA * 100).toFixed(0)}% ({cuentaSueldo ? "cuenta sueldo" : "cartera abierta"}) · tasas oficiales sujetas a cambios del Banco Nación
+        </p>
 
-        <a 
+        <a
           href={linkWA}
           target="_blank"
           rel="noopener noreferrer"

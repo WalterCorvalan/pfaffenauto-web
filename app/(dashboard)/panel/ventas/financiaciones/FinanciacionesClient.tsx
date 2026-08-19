@@ -125,7 +125,7 @@ export default function FinanciacionesClient({ financiacionesIniciales }: { fina
             </div>
           </div>
 
-          <div className="bg-white dark:bg-[#001c55] border border-slate-200 dark:border-[#0a2a6b] rounded-2xl shadow-sm overflow-hidden">
+          <div className="hidden md:block bg-white dark:bg-[#001c55] border border-slate-200 dark:border-[#0a2a6b] rounded-2xl shadow-sm overflow-hidden">
             <div className="overflow-x-auto">
               <table className="w-full text-left border-collapse">
                 <thead>
@@ -176,6 +176,41 @@ export default function FinanciacionesClient({ financiacionesIniciales }: { fina
                 </tbody>
               </table>
             </div>
+          </div>
+
+          {/* Mobile: tarjetas apiladas, mismos datos sin scroll horizontal */}
+          <div className="md:hidden space-y-3">
+            {filtradas.length === 0 && (
+              <div className="bg-white dark:bg-[#001c55] border border-slate-200 dark:border-[#0a2a6b] rounded-2xl p-8 text-center text-slate-400 dark:text-slate-500 text-sm italic">
+                Sin financiaciones registradas.
+              </div>
+            )}
+            {filtradas.map((f) => (
+              <div key={f.id} className={`bg-white dark:bg-[#001c55] border border-slate-200 dark:border-[#0a2a6b] rounded-2xl p-4 shadow-sm space-y-2 border-l-4 ${bordeEstado(f.estadoVisual)}`}>
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-2 text-[13px] font-bold text-slate-900 dark:text-white">
+                    <Car className="w-3.5 h-3.5 text-slate-400 dark:text-slate-500" />
+                    {f.boleto?.marca} {f.boleto?.modelo}
+                  </div>
+                  <span className="font-mono text-[13px] font-bold text-slate-800 dark:text-white">$ {Number(f.monto).toLocaleString("es-AR")}</span>
+                </div>
+                <span className="text-[12px] text-slate-500 dark:text-slate-400 block">{f.boleto?.nombre} {f.boleto?.apellido}</span>
+                <p className="text-[12px] text-slate-600 dark:text-slate-300">Entidad: {f.entidad || "—"} · Cuotas: {f.cuotas || "—"}</p>
+                <div className="flex items-center justify-between pt-1 border-t border-slate-100 dark:border-[#0a2a6b]">
+                  <span className="text-[12px] text-slate-500 dark:text-slate-400">
+                    Vence: {f.fecha_vencimiento ? new Date(`${f.fecha_vencimiento}T12:00:00Z`).toLocaleDateString("es-AR", { day: "2-digit", month: "short", year: "numeric", timeZone: "UTC" }) : "—"}
+                  </span>
+                  <select
+                    value={f.estado || "Pendiente"}
+                    onChange={(e) => cambiarEstado(f.id, e.target.value)}
+                    disabled={actualizandoId === f.id}
+                    className={`text-[10px] font-bold uppercase tracking-widest border rounded-lg px-2.5 py-1.5 outline-none cursor-pointer shadow-sm transition-transform hover:scale-105 ${badgeEstado(f.estadoVisual)}`}
+                  >
+                    {ESTADOS.map((e) => (<option key={e} value={e} className="bg-white text-slate-900">{e}</option>))}
+                  </select>
+                </div>
+              </div>
+            ))}
           </div>
 
         </div>

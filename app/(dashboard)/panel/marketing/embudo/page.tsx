@@ -1,6 +1,6 @@
 import { createServerClient } from "@supabase/ssr";
 import { cookies } from "next/headers";
-import { Megaphone, Filter, Users, MessageSquareText, Target, Trophy, ArrowRight, BarChart3, Globe, TrendingUp, Percent, CheckCircle2 } from "lucide-react";
+import { Megaphone, Filter, Users, MessageSquareText, Target, Trophy, ArrowRight, ChevronDown, BarChart3, Globe, TrendingUp, Percent, CheckCircle2 } from "lucide-react";
 
 export default async function EmbudoPage() {
   const cookieStore = await cookies();
@@ -138,6 +138,7 @@ export default async function EmbudoPage() {
               </div>
 
               <ArrowRight className="w-6 h-6 text-slate-300 dark:text-slate-600 hidden md:block shrink-0" />
+              <ChevronDown className="w-5 h-5 text-slate-300 dark:text-slate-600 md:hidden shrink-0" />
 
               {/* PASO 2: CONTACTADOS */}
               <div className="flex-1 w-full bg-slate-50 dark:bg-[#00246b] border border-slate-100 dark:border-[#0a2a6b] rounded-xl p-5 text-center relative group hover:border-amber-200 dark:hover:border-amber-800 transition-colors">
@@ -152,6 +153,7 @@ export default async function EmbudoPage() {
               </div>
 
               <ArrowRight className="w-6 h-6 text-slate-300 dark:text-slate-600 hidden md:block shrink-0" />
+              <ChevronDown className="w-5 h-5 text-slate-300 dark:text-slate-600 md:hidden shrink-0" />
 
               {/* PASO 3: INTERESADOS */}
               <div className="flex-1 w-full bg-slate-50 dark:bg-[#00246b] border border-slate-100 dark:border-[#0a2a6b] rounded-xl p-5 text-center relative group hover:border-indigo-200 dark:hover:border-indigo-800 transition-colors">
@@ -163,6 +165,7 @@ export default async function EmbudoPage() {
               </div>
 
               <ArrowRight className="w-6 h-6 text-slate-300 dark:text-slate-600 hidden md:block shrink-0" />
+              <ChevronDown className="w-5 h-5 text-slate-300 dark:text-slate-600 md:hidden shrink-0" />
 
               {/* PASO 4: CERRADOS */}
               <div className="flex-1 w-full bg-slate-50 dark:bg-[#00246b] border border-slate-100 dark:border-[#0a2a6b] rounded-xl p-5 text-center relative group hover:border-emerald-200 dark:hover:border-emerald-800 transition-colors">
@@ -212,7 +215,7 @@ export default async function EmbudoPage() {
                 <Users className="w-4 h-4 text-indigo-500 dark:text-sky-300" /> Embudo por Cita, según Vendedor
               </h2>
             </div>
-            <div className="overflow-x-auto">
+            <div className="hidden md:block overflow-x-auto">
               <table className="w-full text-left border-collapse">
                 <thead>
                   <tr className="bg-slate-50 dark:bg-[#00246b] border-b border-slate-200 dark:border-[#0a2a6b] text-slate-500 dark:text-slate-400 text-[10px] uppercase tracking-widest font-bold">
@@ -253,6 +256,36 @@ export default async function EmbudoPage() {
                 </tbody>
               </table>
             </div>
+
+            {/* Mobile: tarjetas apiladas, mismos datos sin scroll horizontal */}
+            <div className="md:hidden p-4 space-y-3">
+              {embudoPorVendedor.length === 0 && (
+                <div className="p-6 text-center text-slate-400 dark:text-slate-500 text-sm italic">
+                  Aún no hay citas con vendedor asignado.
+                </div>
+              )}
+              {embudoPorVendedor.map((v) => {
+                const cierre = v.citas > 0 ? Math.round((v.compraron / v.citas) * 100) : 0;
+                return (
+                  <div key={v.vendedorId} className="bg-slate-50 dark:bg-[#00246b] border border-slate-200 dark:border-[#0a2a6b] rounded-xl p-4 space-y-2">
+                    <div className="flex items-center justify-between">
+                      <span className="font-bold text-[13px] text-slate-800 dark:text-white">{v.nombre}</span>
+                      <span className={`inline-flex items-center px-2 py-1 rounded-md text-[11px] font-bold border ${
+                        cierre > 20 ? 'bg-emerald-50 dark:bg-[#002a6e] text-emerald-700 dark:text-emerald-300 border-emerald-200 dark:border-[#0a2a6b]' :
+                        cierre > 0 ? 'bg-blue-50 dark:bg-[#002a6e] text-blue-700 dark:text-blue-300 border-blue-200 dark:border-[#0a2a6b]' : 'bg-slate-100 dark:bg-[#00246b] text-slate-500 dark:text-slate-400 border-slate-200 dark:border-[#0a2a6b]'
+                      }`}>
+                        <TrendingUp className="w-3 h-3 mr-1" /> {cierre}%
+                      </span>
+                    </div>
+                    <div className="flex items-center justify-between pt-2 border-t border-slate-200 dark:border-[#0a2a6b] text-[12px]">
+                      <span className="text-slate-500 dark:text-slate-400">Citas: <span className="font-mono font-bold text-slate-700 dark:text-slate-200">{v.citas}</span></span>
+                      <span className="text-slate-500 dark:text-slate-400">Asistieron: <span className="font-mono font-bold text-slate-700 dark:text-slate-200">{v.asistieron}</span></span>
+                      <span className="text-slate-500 dark:text-slate-400">Compraron: <span className="font-mono font-bold text-emerald-600 dark:text-emerald-300">{v.compraron}</span></span>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
           </div>
 
           {/* ================= TABLA DE ORIGENES (UTM TRACKER) ================= */}
@@ -263,7 +296,7 @@ export default async function EmbudoPage() {
               </h2>
             </div>
 
-            <div className="overflow-x-auto">
+            <div className="hidden md:block overflow-x-auto">
               <table className="w-full text-left border-collapse">
                 <thead>
                   <tr className="bg-slate-50 dark:bg-[#00246b] border-b border-slate-200 dark:border-[#0a2a6b] text-slate-500 dark:text-slate-400 text-[10px] uppercase tracking-widest font-bold">
@@ -312,6 +345,38 @@ export default async function EmbudoPage() {
                   )}
                 </tbody>
               </table>
+            </div>
+
+            {/* Mobile: tarjetas apiladas, mismos datos sin scroll horizontal */}
+            <div className="md:hidden p-4 space-y-3">
+              {canalesOrdenados.length === 0 && (
+                <div className="p-6 text-center text-slate-400 dark:text-slate-500 text-sm italic">
+                  Aún no hay leads registrados con rastreo de origen.
+                </div>
+              )}
+              {canalesOrdenados.map(([canal, stats]) => {
+                const convCanal = stats.total > 0 ? Math.round((stats.ganados / stats.total) * 100) : 0;
+                return (
+                  <div key={canal} className="bg-slate-50 dark:bg-[#00246b] border border-slate-200 dark:border-[#0a2a6b] rounded-xl p-4 space-y-2">
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-2">
+                        <div className="w-2 h-2 rounded-full bg-indigo-500"></div>
+                        <span className="font-bold text-[13px] text-slate-800 dark:text-white uppercase">{canal}</span>
+                      </div>
+                      <span className={`inline-flex items-center px-2 py-1 rounded-md text-[11px] font-bold border ${
+                        convCanal > 5 ? 'bg-emerald-50 dark:bg-[#002a6e] text-emerald-700 dark:text-emerald-300 border-emerald-200 dark:border-[#0a2a6b]' :
+                        convCanal > 0 ? 'bg-blue-50 dark:bg-[#002a6e] text-blue-700 dark:text-blue-300 border-blue-200 dark:border-[#0a2a6b]' : 'bg-slate-100 dark:bg-[#00246b] text-slate-500 dark:text-slate-400 border-slate-200 dark:border-[#0a2a6b]'
+                      }`}>
+                        <TrendingUp className="w-3 h-3 mr-1" /> {convCanal}%
+                      </span>
+                    </div>
+                    <div className="flex items-center justify-between pt-2 border-t border-slate-200 dark:border-[#0a2a6b] text-[12px]">
+                      <span className="text-slate-500 dark:text-slate-400">Leads: <span className="font-mono font-bold text-slate-700 dark:text-slate-200">{stats.total}</span></span>
+                      <span className="text-slate-500 dark:text-slate-400">Ventas: <span className="font-mono font-bold text-emerald-600 dark:text-emerald-300">{stats.ganados}</span></span>
+                    </div>
+                  </div>
+                );
+              })}
             </div>
           </div>
 

@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { supabase } from "@/lib/supabase/client";
-import { Users, UserPlus, X, Edit2, Trash2, Shield, MapPin, Tags, ShieldCheck } from "lucide-react";
+import { Users, UserPlus, X, Edit2, Trash2, Shield, MapPin, Tags, ShieldCheck, Search, UserCheck, UserX } from "lucide-react";
 import { useRouter } from "next/navigation";
 import PermisosTab from "./PermisosTab";
 
@@ -24,6 +24,8 @@ export default function UsuariosPage() {
   const [categorias, setCategorias] = useState<any[]>([]);
   const [editandoCategoriaId, setEditandoCategoriaId] = useState<string | null>(null);
   const [guardandoCategoriaRapida, setGuardandoCategoriaRapida] = useState(false);
+  const [busqueda, setBusqueda] = useState("");
+  const [filtroRol, setFiltroRol] = useState<string>("todos");
 
   // Estados del formulario de nuevo usuario
   const [nombre, setNombre] = useState("");
@@ -258,6 +260,14 @@ export default function UsuariosPage() {
     }
   };
 
+  const perfilesFiltrados = perfiles.filter((p) => {
+    const coincideRol = filtroRol === "todos" || p.rol === filtroRol;
+    const coincideBusqueda = !busqueda.trim() || (p.nombre || "").toLowerCase().includes(busqueda.trim().toLowerCase());
+    return coincideRol && coincideBusqueda;
+  });
+  const totalActivos = perfiles.filter((p) => p.activo !== false).length;
+  const totalInactivos = perfiles.length - totalActivos;
+
   return (
     <div className="flex flex-col h-full w-full bg-[#F9FAFB] dark:bg-[#001233] overflow-hidden font-sans">
 
@@ -310,6 +320,51 @@ export default function UsuariosPage() {
             <PermisosTab perfiles={perfiles} />
           ) : (
           <>
+          {/* Stats rápidas */}
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-4">
+            <div className="bg-white dark:bg-[#001c55] border border-slate-200 dark:border-[#0a2a6b] rounded-xl p-4">
+              <span className="block text-[10px] font-bold uppercase tracking-widest text-slate-400 mb-1">Total</span>
+              <span className="text-xl font-bold text-slate-900 dark:text-white flex items-center gap-1.5"><Users className="w-4 h-4 text-indigo-500" /> {perfiles.length}</span>
+            </div>
+            <div className="bg-white dark:bg-[#001c55] border border-slate-200 dark:border-[#0a2a6b] rounded-xl p-4">
+              <span className="block text-[10px] font-bold uppercase tracking-widest text-slate-400 mb-1">Activos</span>
+              <span className="text-xl font-bold text-emerald-600 dark:text-emerald-400 flex items-center gap-1.5"><UserCheck className="w-4 h-4" /> {totalActivos}</span>
+            </div>
+            <div className="bg-white dark:bg-[#001c55] border border-slate-200 dark:border-[#0a2a6b] rounded-xl p-4">
+              <span className="block text-[10px] font-bold uppercase tracking-widest text-slate-400 mb-1">Inactivos</span>
+              <span className="text-xl font-bold text-slate-400 flex items-center gap-1.5"><UserX className="w-4 h-4" /> {totalInactivos}</span>
+            </div>
+            <div className="bg-white dark:bg-[#001c55] border border-slate-200 dark:border-[#0a2a6b] rounded-xl p-4">
+              <span className="block text-[10px] font-bold uppercase tracking-widest text-slate-400 mb-1">Sucursales</span>
+              <span className="text-xl font-bold text-slate-900 dark:text-white flex items-center gap-1.5"><MapPin className="w-4 h-4 text-indigo-500" /> {sucursales.length}</span>
+            </div>
+          </div>
+
+          {/* Búsqueda + filtro de rol */}
+          <div className="flex flex-col sm:flex-row gap-2 mb-4">
+            <div className="relative flex-1">
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
+              <input
+                type="text"
+                value={busqueda}
+                onChange={(e) => setBusqueda(e.target.value)}
+                placeholder="Buscar colaborador por nombre..."
+                className="w-full bg-white dark:bg-[#001c55] border border-slate-200 dark:border-[#0a2a6b] rounded-lg py-2 pl-9 pr-3 text-[13px] outline-none focus:border-indigo-500 text-slate-900 dark:text-white placeholder:text-slate-400"
+              />
+            </div>
+            <div className="flex gap-1.5 overflow-x-auto">
+              {["todos", "admin", "encargado", "vendedor", "taller"].map((r) => (
+                <button
+                  key={r}
+                  onClick={() => setFiltroRol(r)}
+                  className={`shrink-0 px-3 py-2 rounded-lg text-[11px] font-bold uppercase tracking-widest border transition-colors capitalize ${filtroRol === r ? "bg-slate-800 dark:bg-[#00246b] text-white border-slate-800 dark:border-[#0a2a6b]" : "bg-white dark:bg-[#001c55] border-slate-200 dark:border-[#0a2a6b] text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-[#00246b]"}`}
+                >
+                  {r === "todos" ? "Todos" : r}
+                </button>
+              ))}
+            </div>
+          </div>
+
           {/* Tabla de Usuarios */}
           <div className="bg-white dark:bg-[#001c55] border border-slate-200 dark:border-[#0a2a6b] rounded-2xl overflow-hidden shadow-sm">
             {loading ? (
@@ -317,11 +372,11 @@ export default function UsuariosPage() {
                 <Users className="w-10 h-10 mb-3 text-slate-300 animate-pulse" />
                 <p className="text-[13px] font-medium text-slate-500">Cargando equipo...</p>
               </div>
-            ) : perfiles.length > 0 ? (
+            ) : perfilesFiltrados.length > 0 ? (
               <>
               {/* VISTA MÓVIL */}
               <div className="flex flex-col gap-3 p-4 md:hidden">
-                {perfiles.map((p) => (
+                {perfilesFiltrados.map((p) => (
                   <div key={p.id} className="bg-slate-50 dark:bg-[#00246b] border border-slate-200 dark:border-[#0a2a6b] rounded-xl p-4 flex flex-col gap-3">
                     <div className="flex items-center justify-between gap-3">
                       <div className="flex items-center gap-3 min-w-0">
@@ -420,7 +475,7 @@ export default function UsuariosPage() {
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-slate-100 dark:divide-[#0a2a6b]">
-                    {perfiles.map((p) => {
+                    {perfilesFiltrados.map((p) => {
                       // Generamos un correo visual basado en el nombre para mantener la estética
                       const correoVisual = p.nombre 
                         ? `${p.nombre.split(' ')[0].toLowerCase()}@pfaffenautos.com.ar` 
@@ -575,7 +630,9 @@ export default function UsuariosPage() {
             ) : (
               <div className="p-16 text-center text-slate-500 flex flex-col items-center justify-center">
                 <Users className="w-12 h-12 mb-3 text-slate-300" />
-                <p className="text-[13px] font-medium text-slate-600 dark:text-slate-300">No hay perfiles registrados en el sistema.</p>
+                <p className="text-[13px] font-medium text-slate-600 dark:text-slate-300">
+                  {perfiles.length === 0 ? "No hay perfiles registrados en el sistema." : "Ningún colaborador coincide con la búsqueda."}
+                </p>
               </div>
             )}
           </div>

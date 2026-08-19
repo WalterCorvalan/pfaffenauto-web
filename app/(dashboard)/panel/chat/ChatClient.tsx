@@ -3,6 +3,7 @@
 import { useState, useEffect, useRef } from "react";
 import { useSearchParams } from "next/navigation";
 import { supabase } from "@/lib/supabase/client";
+import { buscarClienteDuplicado } from "@/lib/clienteDedupe";
 import {
   Search,
   Send,
@@ -17,6 +18,7 @@ import {
   Megaphone,
   X,
 } from "lucide-react";
+import NotificacionesBell from "../../NotificacionesBell";
 
 const ETAPAS_PIPELINE = [
   "Nuevo",
@@ -28,12 +30,21 @@ const ETAPAS_PIPELINE = [
 
 export default function ChatClient({
   conversacionesIniciales,
+  conversacionesInstagramIniciales = [],
   vendedores = [],
 }: {
   conversacionesIniciales: any[];
+  conversacionesInstagramIniciales?: any[];
   vendedores?: { id: string; nombre: string; sucursal_id: string | null }[];
 }) {
-  const [conversaciones, setConversaciones] = useState(conversacionesIniciales);
+  const [canal, setCanal] = useState<"whatsapp" | "instagram">("whatsapp");
+  const [conversacionesWA, setConversacionesWA] = useState(conversacionesIniciales);
+  const [conversacionesIG, setConversacionesIG] = useState(conversacionesInstagramIniciales);
+  const conversaciones = canal === "whatsapp" ? conversacionesWA : conversacionesIG;
+  const setConversaciones = canal === "whatsapp" ? setConversacionesWA : setConversacionesIG;
+  const tablaConversaciones = canal === "whatsapp" ? "whatsapp_conversaciones" : "instagram_conversaciones";
+  const tablaMensajes = canal === "whatsapp" ? "whatsapp_mensajes" : "instagram_mensajes";
+  const endpointEnviar = canal === "whatsapp" ? "/api/panel/whatsapp/enviar" : "/api/panel/instagram/enviar";
   const [seleccionada, setSeleccionada] = useState<string | null>(null);
   const [mensajes, setMensajes] = useState<any[]>([]);
   const [nuevoMensaje, setNuevoMensaje] = useState("");
@@ -71,9 +82,11 @@ export default function ChatClient({
   const mensajesEndRef = useRef<HTMLDivElement>(null);
   const searchParams = useSearchParams();
 
-  // Deep link desde /panel/contactos: /panel/chat?conversacion=<id>
+  // Deep link desde /panel/contactos o una notificación: /panel/chat?conversacion=<id>&canal=instagram
   useEffect(() => {
     const conversacionParam = searchParams.get("conversacion");
+    const canalParam = searchParams.get("canal");
+    if (canalParam === "instagram" || canalParam === "whatsapp") setCanal(canalParam);
     if (conversacionParam) setSeleccionada(conversacionParam);
   }, [searchParams]);
 
@@ -88,7 +101,7 @@ export default function ChatClient({
 
     // 1. Traer mensajes
     supabase
-      .from("whatsapp_mensajes")
+      .from(tablaMensajes)
       .select("*")
       .eq("conversacion_id", seleccionada)
       .order("created_at", { ascending: true })
@@ -99,7 +112,7 @@ export default function ChatClient({
 
     // 2. Traer estado del pipeline y notas de la conversación
     supabase
-      .from("whatsapp_conversaciones")
+      .from(tablaConversaciones)
       .select("estado_pipeline, notas")
       .eq("id", seleccionada)
       .single()
@@ -111,14 +124,14 @@ export default function ChatClient({
       });
 
     // 3. Tiempo real: mensajes nuevos (entrantes del cliente o del bot) sin recargar la página.
-    const canal = supabase
-      .channel(`whatsapp_mensajes:${seleccionada}`)
+    const canalRealtime = supabase
+      .channel(`${tablaMensajes}:${seleccionada}`)
       .on(
         "postgres_changes",
         {
           event: "INSERT",
           schema: "public",
-          table: "whatsapp_mensajes",
+          table: tablaMensajes,
           filter: `conversacion_id=eq.${seleccionada}`,
         },
         (payload) => {
@@ -144,7 +157,7 @@ export default function ChatClient({
         {
           event: "UPDATE",
           schema: "public",
-          table: "whatsapp_mensajes",
+          table: tablaMensajes,
           filter: `conversacion_id=eq.${seleccionada}`,
         },
         (payload) => {
@@ -157,9 +170,9 @@ export default function ChatClient({
       .subscribe();
 
     return () => {
-      supabase.removeChannel(canal);
+      supabase.removeChannel(canalRealtime);
     };
-  }, [seleccionada]);
+  }, [seleccionada, tablaMensajes, tablaConversaciones]);
 
   const enviarMensaje = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -182,7 +195,7 @@ export default function ChatClient({
     setMensajes((prev) => [...prev, tempMsg]);
 
     try {
-      const res = await fetch("/api/panel/whatsapp/enviar", {
+      const res = await fetch(endpointEnviar, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ conversacionId: seleccionada, texto }),
@@ -208,7 +221,7 @@ export default function ChatClient({
     setEtapaActual(nuevaEtapa); // Actualización optimista UI
     try {
       await supabase
-        .from("whatsapp_conversaciones")
+        .from(tablaConversaciones)
         .update({ estado_pipeline: nuevaEtapa })
         .eq("id", seleccionada);
     } catch (error) {
@@ -221,7 +234,7 @@ export default function ChatClient({
     setGuardandoNotas(true);
     try {
       await supabase
-        .from("whatsapp_conversaciones")
+        .from(tablaConversaciones)
         .update({ notas: notasLocales })
         .eq("id", seleccionada);
     } catch (error) {
@@ -232,7 +245,13 @@ export default function ChatClient({
   };
 
   const conversacionActiva = conversaciones.find((c) => c.id === seleccionada);
-  const contactoActivo = conversacionActiva?.whatsapp_contactos;
+  const contactoActivoRaw = canal === "whatsapp" ? conversacionActiva?.whatsapp_contactos : conversacionActiva?.instagram_contactos;
+  const contactoActivo = contactoActivoRaw
+    ? {
+        nombre_perfil: canal === "whatsapp" ? contactoActivoRaw.nombre_perfil : `@${contactoActivoRaw.username || contactoActivoRaw.ig_user_id}`,
+        telefono: canal === "whatsapp" ? contactoActivoRaw.telefono : null,
+      }
+    : null;
 
   const formatDate = (dateString: string) => {
     const date = new Date(dateString);
@@ -313,6 +332,19 @@ export default function ChatClient({
     }
     setGuardandoCliente(true);
     try {
+      {
+        const existente = await buscarClienteDuplicado(supabase, nuevoCliente);
+        if (existente) {
+          if (!confirm(`Ya existe un cliente con ese DNI/teléfono: ${existente.nombre} ${existente.apellido}. ¿Usar ese en vez de crear uno nuevo?`)) {
+            setGuardandoCliente(false);
+            return;
+          }
+          await vincularCliente(existente.id);
+          setCreandoClienteManual(false);
+          setGuardandoCliente(false);
+          return;
+        }
+      }
       const { data, error } = await supabase
         .from("clientes")
         .insert({
@@ -334,7 +366,7 @@ export default function ChatClient({
   const vincularCliente = async (clienteId: string) => {
     if (!seleccionada) return;
     await supabase
-      .from("whatsapp_conversaciones")
+      .from(tablaConversaciones)
       .update({ cliente_id: clienteId })
       .eq("id", seleccionada);
     setShowVincular(false);
@@ -344,7 +376,7 @@ export default function ChatClient({
   const vincularVehiculo = async (vehiculoId: string) => {
     if (!seleccionada) return;
     await supabase
-      .from("whatsapp_conversaciones")
+      .from(tablaConversaciones)
       .update({ vehiculo_id: vehiculoId })
       .eq("id", seleccionada);
     setShowVincular(false);
@@ -354,7 +386,7 @@ export default function ChatClient({
     if (!seleccionada) return;
     const nuevoId = vendedorId || null;
     await supabase
-      .from("whatsapp_conversaciones")
+      .from(tablaConversaciones)
       .update({ vendedor_id: nuevoId })
       .eq("id", seleccionada);
     const vendedor = vendedores.find((v) => v.id === nuevoId) || null;
@@ -379,7 +411,9 @@ export default function ChatClient({
   };
 
   const renderConversacion = (c: any) => {
-    const contacto = c.whatsapp_contactos;
+    const contactoRaw = canal === "whatsapp" ? c.whatsapp_contactos : c.instagram_contactos;
+    const nombreMostrado = canal === "whatsapp" ? contactoRaw?.nombre_perfil : (contactoRaw ? `@${contactoRaw.username || contactoRaw.ig_user_id}` : null);
+    const contacto = { nombre_perfil: nombreMostrado, telefono: canal === "whatsapp" ? contactoRaw?.telefono : null };
     const iniciales = (contacto?.nombre_perfil || contacto?.telefono || "?")
       .substring(0, 2)
       .toUpperCase();
@@ -435,12 +469,30 @@ export default function ChatClient({
         className={`w-full md:w-[320px] flex-col bg-white dark:bg-[#001c55] border-r border-slate-200 dark:border-[#0a2a6b] shrink-0 ${seleccionada ? "hidden md:flex" : "flex"}`}
       >
         <div className="p-4 border-b border-slate-100 dark:border-[#0a2a6b] flex-shrink-0">
-          <h2 className="text-[17px] font-bold text-slate-900 dark:text-white mb-4 flex items-center gap-2">
-            Bandeja{" "}
-            <span className="text-sm font-normal text-slate-400 dark:text-slate-500">
-              {conversaciones.length}
+          <h2 className="text-[17px] font-bold text-slate-900 dark:text-white mb-4 flex items-center justify-between gap-2">
+            <span className="flex items-center gap-2">
+              Bandeja{" "}
+              <span className="text-sm font-normal text-slate-400 dark:text-slate-500">
+                {conversaciones.length}
+              </span>
             </span>
+            <NotificacionesBell seccion="chat" />
           </h2>
+
+          <div className="flex gap-2 mb-4">
+            <button
+              onClick={() => { setCanal("whatsapp"); setSeleccionada(null); }}
+              className={`flex-1 px-3 py-1.5 text-xs font-bold rounded-lg transition-colors ${canal === "whatsapp" ? "bg-emerald-700 text-white" : "bg-slate-50 dark:bg-[#00246b] border border-slate-200 dark:border-[#0a2a6b] text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-[#002a6e]"}`}
+            >
+              WhatsApp {conversacionesWA.length}
+            </button>
+            <button
+              onClick={() => { setCanal("instagram"); setSeleccionada(null); }}
+              className={`flex-1 px-3 py-1.5 text-xs font-bold rounded-lg transition-colors ${canal === "instagram" ? "bg-emerald-700 text-white" : "bg-slate-50 dark:bg-[#00246b] border border-slate-200 dark:border-[#0a2a6b] text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-[#002a6e]"}`}
+            >
+              Instagram {conversacionesIG.length}
+            </button>
+          </div>
 
           <div className="relative mb-4">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400 dark:text-slate-500" />

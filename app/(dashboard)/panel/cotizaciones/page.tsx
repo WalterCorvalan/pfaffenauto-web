@@ -3,6 +3,7 @@ import { cookies } from "next/headers";
 import { ClipboardList, CheckCircle, Clock, Image as ImageIcon, Video, MapPin, MessageSquareText, Calculator } from "lucide-react";
 import PrecioSugeridoEditor from "./PrecioSugeridoEditor";
 import HistorialTasacionBadge from "./HistorialTasacionBadge";
+import NotificacionesBell from "../../NotificacionesBell";
 
 export default async function CotizacionesPage() {
   const cookieStore = await cookies();
@@ -54,6 +55,7 @@ export default async function CotizacionesPage() {
 
         {/* Resumen de Métricas tipo Badges */}
         <div className="flex items-center gap-2 overflow-x-auto custom-scrollbar pb-1 md:pb-0">
+          <NotificacionesBell seccion="cotizaciones" />
           <div className="flex items-center gap-1.5 bg-slate-50 dark:bg-[#00246b] border border-slate-200 dark:border-[#0a2a6b] px-2.5 py-1 rounded-md text-[11px] font-bold text-slate-600 dark:text-slate-300 whitespace-nowrap">
             <ClipboardList className="w-3.5 h-3.5 text-slate-400" /> {total} Recibidas
           </div>

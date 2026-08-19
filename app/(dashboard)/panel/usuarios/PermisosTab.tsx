@@ -2,7 +2,7 @@
 
 import { Fragment, useEffect, useState } from "react";
 import { supabase } from "@/lib/supabase/client";
-import { ShieldCheck, User } from "lucide-react";
+import { ShieldCheck, User, Search } from "lucide-react";
 
 const ROLES = ["admin", "encargado", "vendedor", "taller"];
 
@@ -20,6 +20,7 @@ export default function PermisosTab({ perfiles }: { perfiles: any[] }) {
   const [loading, setLoading] = useState(true);
   const [usuarioSeleccionadoId, setUsuarioSeleccionadoId] = useState("");
   const [guardando, setGuardando] = useState<string | null>(null);
+  const [busquedaPermiso, setBusquedaPermiso] = useState("");
 
   useEffect(() => {
     fetchData();
@@ -75,31 +76,51 @@ export default function PermisosTab({ perfiles }: { perfiles: any[] }) {
   }
 
   const usuarioSeleccionado = perfiles.find((p) => p.id === usuarioSeleccionadoId);
-  const categorias = [...new Set(permisos.map((p) => p.categoria))];
+  const permisosFiltrados = permisos.filter((p) => {
+    const q = busquedaPermiso.trim().toLowerCase();
+    if (!q) return true;
+    return p.nombre.toLowerCase().includes(q) || (p.descripcion || "").toLowerCase().includes(q) || p.categoria.toLowerCase().includes(q);
+  });
+  const categorias = [...new Set(permisosFiltrados.map((p) => p.categoria))];
 
   return (
     <div className="space-y-6">
       {/* ============= PERMISOS POR ROL ============= */}
       <div className="bg-white dark:bg-[#001c55] border border-slate-200 dark:border-[#0a2a6b] rounded-2xl shadow-sm overflow-hidden">
-        <div className="px-4 py-3 bg-slate-800 flex items-center gap-2">
-          <ShieldCheck className="w-4 h-4 text-white" />
-          <h2 className="text-[12px] font-bold text-white uppercase tracking-widest">Permisos por Rol</h2>
+        <div className="px-4 py-3 bg-slate-800 flex items-center gap-2 flex-wrap justify-between">
+          <span className="flex items-center gap-2">
+            <ShieldCheck className="w-4 h-4 text-white" />
+            <h2 className="text-[12px] font-bold text-white uppercase tracking-widest">Permisos por Rol</h2>
+          </span>
+          <div className="relative">
+            <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-slate-400" />
+            <input
+              type="text"
+              value={busquedaPermiso}
+              onChange={(e) => setBusquedaPermiso(e.target.value)}
+              placeholder="Buscar permiso..."
+              className="bg-slate-700 border border-slate-600 rounded-lg py-1.5 pl-8 pr-3 text-[12px] text-white outline-none focus:border-indigo-400 placeholder:text-slate-400 w-48"
+            />
+          </div>
         </div>
-        <div className="overflow-x-auto">
+        <div className="overflow-x-auto max-h-[520px] overflow-y-auto custom-scrollbar">
           <table className="w-full text-left border-collapse">
-            <thead>
+            <thead className="sticky top-0 z-[1]">
               <tr className="bg-slate-50 dark:bg-[#00246b] border-b border-slate-200 dark:border-[#0a2a6b] text-slate-500 dark:text-slate-300 text-[10px] uppercase tracking-widest font-bold">
                 <th className="p-3 pl-4">Permiso</th>
                 {ROLES.map((r) => (<th key={r} className="p-3 text-center capitalize">{r}</th>))}
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-100 dark:divide-[#0a2a6b]">
+              {categorias.length === 0 && (
+                <tr><td colSpan={ROLES.length + 1} className="p-8 text-center text-[12px] text-slate-400 italic">Ningún permiso coincide con la búsqueda.</td></tr>
+              )}
               {categorias.map((cat) => (
                 <Fragment key={cat}>
                   <tr className="bg-slate-50/60 dark:bg-[#00184a]">
                     <td colSpan={ROLES.length + 1} className="px-4 py-1.5 text-[10px] font-bold uppercase tracking-widest text-slate-400">{cat}</td>
                   </tr>
-                  {permisos.filter((p) => p.categoria === cat).map((permiso) => (
+                  {permisosFiltrados.filter((p) => p.categoria === cat).map((permiso) => (
                     <tr key={permiso.clave}>
                       <td className="p-3 pl-4">
                         <p className="text-[13px] font-bold text-slate-900 dark:text-white">{permiso.nombre}</p>

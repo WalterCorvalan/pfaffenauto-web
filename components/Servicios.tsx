@@ -7,21 +7,21 @@ import { ArrowRight, ShieldCheck, Banknote, CarFront, Sparkles } from "lucide-re
 
 export default function Servicios() {
   return (
-    <section className="py-12 md:py-24 bg-transparent relative overflow-hidden border-t border-transparent">
+    <section className="py-12 md:py-24 bg-transparent dark:bg-[#0a0a0f] relative overflow-hidden border-t border-transparent">
       
       {/* ================= LUCES AMBIENTALES ================= */}
-      <div className="absolute top-[10%] left-[-5%] w-[500px] h-[500px] bg-slate-900/5 rounded-full blur-[120px] pointer-events-none z-0"></div>
-      <div className="absolute bottom-[-10%] right-[-5%] w-[600px] h-[600px] bg-sky-900/5 rounded-full blur-[120px] pointer-events-none z-0"></div>
+      <div className="absolute top-[10%] left-[-5%] w-[500px] h-[500px] bg-slate-900/5 dark:bg-sky-400/5 rounded-full blur-[120px] pointer-events-none z-0"></div>
+      <div className="absolute bottom-[-10%] right-[-5%] w-[600px] h-[600px] bg-sky-900/5 dark:bg-sky-400/5 rounded-full blur-[120px] pointer-events-none z-0"></div>
 
       <div className="max-w-7xl mx-auto px-4 md:px-6 relative z-10">
-        
+
         {/* ================= ENCABEZADO ================= */}
         <div className="text-center mb-16 relative z-10">
-          <span className="text-[#0145F2] text-[10px] md:text-xs font-black uppercase tracking-[0.2em] bg-blue-50/50 backdrop-blur-xl border border-blue-100/50 px-4 py-1.5 rounded-full inline-block shadow-sm mb-4">
+          <span className="text-[#0145F2] dark:text-sky-300 text-[10px] md:text-xs font-black uppercase tracking-[0.2em] bg-blue-50/50 dark:bg-sky-400/10 backdrop-blur-xl border border-blue-100/50 dark:border-sky-400/20 px-4 py-1.5 rounded-full inline-block shadow-sm mb-4">
             <Sparkles className="w-3.5 h-3.5 inline mr-1" /> Nuestros Servicios
           </span>
-          <h2 className="text-3xl md:text-5xl font-light text-navy tracking-tighter drop-shadow-sm">
-            Soluciones a <strong className="font-black text-transparent bg-clip-text bg-gradient-to-r from-navy to-[#0145F2]">tu medida</strong>
+          <h2 className="text-3xl md:text-5xl font-light text-navy dark:text-white tracking-tighter drop-shadow-sm">
+            Soluciones a <strong className="font-black text-transparent bg-clip-text bg-gradient-to-r from-navy dark:from-sky-300 to-[#0145F2] dark:to-sky-500">tu medida</strong>
           </h2>
         </div>
 

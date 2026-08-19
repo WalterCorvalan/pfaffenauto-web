@@ -2,6 +2,7 @@ import { createServerClient } from "@supabase/ssr";
 import { cookies } from "next/headers";
 import Link from "next/link";
 import { FileText, Plus, Printer, CarFront, AlertTriangle } from "lucide-react";
+import NotificacionesBell from "../../NotificacionesBell";
 
 export default async function PresupuestosPage() {
   const cookieStore = await cookies();
@@ -29,14 +30,17 @@ export default async function PresupuestosPage() {
             <p className="text-[11px] font-medium text-slate-500 dark:text-slate-400 mt-0.5">Cotizaciones formales enviadas a clientes</p>
           </div>
         </div>
-        <Link href="/panel/presupuestos/nuevo" className="flex items-center justify-center gap-1.5 bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 rounded-lg text-[13px] font-bold transition-colors shadow-sm">
-          <Plus className="w-4 h-4" /> Nuevo Presupuesto
-        </Link>
+        <div className="flex items-center gap-2">
+          <NotificacionesBell seccion="presupuestos" />
+          <Link href="/panel/presupuestos/nuevo" className="flex items-center justify-center gap-1.5 bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 rounded-lg text-[13px] font-bold transition-colors shadow-sm">
+            <Plus className="w-4 h-4" /> Nuevo Presupuesto
+          </Link>
+        </div>
       </header>
 
       <div className="flex-1 overflow-y-auto bg-[#F9FAFB] dark:bg-[#001233] custom-scrollbar">
         <div className="max-w-[1400px] mx-auto p-6">
-          <div className="bg-white dark:bg-[#001c55] border border-slate-200 dark:border-[#0a2a6b] rounded-2xl shadow-sm overflow-hidden">
+          <div className="hidden md:block bg-white dark:bg-[#001c55] border border-slate-200 dark:border-[#0a2a6b] rounded-2xl shadow-sm overflow-hidden">
             <div className="overflow-x-auto">
               <table className="w-full text-left border-collapse">
                 <thead>
@@ -89,6 +93,36 @@ export default async function PresupuestosPage() {
                 </tbody>
               </table>
             </div>
+          </div>
+
+          {/* Mobile: tarjetas apiladas, mismos datos sin scroll horizontal */}
+          <div className="md:hidden space-y-3">
+            {(!presupuestos || presupuestos.length === 0) && (
+              <div className="bg-white dark:bg-[#001c55] border border-slate-200 dark:border-[#0a2a6b] rounded-2xl p-8 text-center text-slate-400 dark:text-slate-500 text-sm italic">
+                Sin presupuestos cargados todavía.
+              </div>
+            )}
+            {presupuestos?.map((p: any) => (
+              <div key={p.id} className={`bg-white dark:bg-[#001c55] border border-slate-200 dark:border-[#0a2a6b] rounded-2xl p-4 shadow-sm space-y-2 border-l-4 ${p.precio_confirmado === false ? "border-l-amber-400" : "border-l-indigo-300"}`}>
+                <div className="flex items-center justify-between">
+                  <span className="font-mono text-[13px] font-bold text-indigo-600 dark:text-sky-300">N° {p.numero || "—"}</span>
+                  <span className="font-mono text-[13px] font-bold text-slate-900 dark:text-white">
+                    {p.precio_venta_ars ? `$ ${Number(p.precio_venta_ars).toLocaleString("es-AR")}` : (p.precio_venta_usd ? `US$ ${Number(p.precio_venta_usd).toLocaleString("es-AR")}` : "—")}
+                  </span>
+                </div>
+                <p className="text-[13px] font-medium text-slate-900 dark:text-white flex items-center gap-1.5">
+                  {p.cliente}
+                  {p.precio_confirmado === false && <AlertTriangle className="w-3.5 h-3.5 text-amber-500" />}
+                </p>
+                <p className="text-[12px] text-slate-600 dark:text-slate-300 flex items-center gap-1.5"><CarFront className="w-3.5 h-3.5 text-slate-400" /> {p.marca} {p.modelo}</p>
+                <div className="flex items-center justify-between text-[12px] text-slate-500 dark:text-slate-400 pt-1 border-t border-slate-100 dark:border-[#0a2a6b]">
+                  <span>{p.fecha ? new Date(`${p.fecha}T12:00:00Z`).toLocaleDateString("es-AR", { timeZone: "UTC" }) : "—"} · {p.perfiles?.nombre || "Sin vendedor"}</span>
+                  <Link href={`/panel/presupuestos/imprimir/${p.id}`} className="inline-flex p-1.5 bg-slate-50 dark:bg-[#00246b] border border-slate-200 dark:border-[#0a2a6b] rounded-lg text-slate-400 dark:text-slate-300">
+                    <Printer className="w-3.5 h-3.5" />
+                  </Link>
+                </div>
+              </div>
+            ))}
           </div>
         </div>
       </div>

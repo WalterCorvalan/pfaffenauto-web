@@ -40,8 +40,6 @@ import {
   ShieldCheck,
   Settings,
 } from "lucide-react";
-import NotificacionesBell from "./NotificacionesBell";
-
 const SECCIONES_INICIALES = {
   inventario: true,
   crm: true,
@@ -288,7 +286,14 @@ export default function DashboardLayout({
             Pfaffen CRM
           </span>
           <div className="flex items-center gap-1">
-            <NotificacionesBell />
+            <Link
+              href="/panel/ajustes"
+              onClick={() => setIsOpen(false)}
+              className="text-slate-600 dark:text-slate-300 p-2"
+              title="Ajustes"
+            >
+              <Settings className="w-4 h-4" />
+            </Link>
             <button
               onClick={toggleDarkMode}
               className="text-slate-600 dark:text-slate-300 p-2"
@@ -335,9 +340,6 @@ export default function DashboardLayout({
                 </span>
               </div>
             </Link>
-            <div className="hidden md:block">
-              <NotificacionesBell />
-            </div>
             <button
               onClick={toggleDarkMode}
               className="hidden md:flex text-slate-400 dark:text-slate-300 hover:text-slate-700 dark:hover:text-white shrink-0 p-1.5 rounded-lg hover:bg-slate-200 dark:hover:bg-[#0a2a6b] transition-colors"

@@ -4,10 +4,12 @@ import { useState, useMemo } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { supabase } from "@/lib/supabase/client";
+import { notificarPersona } from "@/lib/notificaciones";
 import {
   ArrowLeft, User, Phone, CarFront, Calendar, Plus, X,
   CheckCircle2, Circle, FileText, Ban, Trophy, Clock, AlertTriangle,
   MapPin, StickyNote, Radio, Car, LifeBuoy, History, Edit2, Check,
+  Flame, Snowflake, Minus, Receipt, Wallet, Printer, Paperclip,
 } from "lucide-react";
 
 const ESTADOS = ["Nuevo", "Contactado", "Interesado", "Cliente", "Perdido"];
@@ -22,13 +24,22 @@ const ESTADO_COLOR: Record<string, string> = {
 const TIPOS_TAREA = ["Llamar", "Enviar Email", "Enviar SMS", "Enviar WhatsApp", "Visitar al Cliente", "Cliente visita salón"];
 const ESTADOS_TEST_DRIVE = ["Programado", "Realizado", "Cancelado"];
 
+const CALIFICACIONES = [
+  { value: "", label: "Sin calificar", icono: Minus, color: "text-slate-500 dark:text-slate-400 border-slate-200 dark:border-[#0a2a6b] bg-slate-50 dark:bg-[#00246b]" },
+  { value: "caliente", label: "Caliente", icono: Flame, color: "text-rose-600 dark:text-rose-300 border-rose-200 dark:border-[#0a2a6b] bg-rose-50 dark:bg-[#002a6e]" },
+  { value: "tibio", label: "Tibio", icono: Clock, color: "text-amber-600 dark:text-amber-300 border-amber-200 dark:border-[#0a2a6b] bg-amber-50 dark:bg-[#002a6e]" },
+  { value: "frio", label: "Frío", icono: Snowflake, color: "text-sky-600 dark:text-sky-300 border-sky-200 dark:border-[#0a2a6b] bg-sky-50 dark:bg-[#002a6e]" },
+];
+
 const inputClass = "w-full bg-slate-50 dark:bg-[#00246b] border border-slate-200 dark:border-[#0a2a6b] rounded-xl px-3 py-2.5 text-sm outline-none focus:border-indigo-500 focus:bg-white dark:focus:bg-[#002a6e] transition-colors text-slate-900 dark:text-white";
 
 export default function LeadDetailClient({
   lead, vendedores, vehiculosStock, motivosCierre, tareasIniciales, testDrivesIniciales, eventos, usuarioActual,
+  presupuestos, senas, boletos,
 }: {
   lead: any; vendedores: any[]; vehiculosStock: any[]; motivosCierre: any[]; tareasIniciales: any[];
   testDrivesIniciales: any[]; eventos: any[]; usuarioActual: { id?: string; rol?: string };
+  presupuestos: any[]; senas: any[]; boletos: any[];
 }) {
   const router = useRouter();
   const puedeEditar =
@@ -39,6 +50,10 @@ export default function LeadDetailClient({
   const [guardandoVendedor, setGuardandoVendedor] = useState(false);
   const [guardandoVehiculo, setGuardandoVehiculo] = useState(false);
   const [guardandoEstado, setGuardandoEstado] = useState(false);
+  const [guardandoCalificacion, setGuardandoCalificacion] = useState(false);
+  const [tareaACompletar, setTareaACompletar] = useState<any | null>(null);
+  const [resultadoTarea, setResultadoTarea] = useState("");
+  const [guardandoResultado, setGuardandoResultado] = useState(false);
   const [tareas, setTareas] = useState(tareasIniciales);
   const [showTareaModal, setShowTareaModal] = useState(false);
   const [showCierreModal, setShowCierreModal] = useState(false);
@@ -107,6 +122,15 @@ export default function LeadDetailClient({
     await registrarEvento("cierre", `Cerrado como desistido — ${nombreMotivo}`);
     setGuardandoEstado(false);
     setShowCierreModal(false);
+    router.refresh();
+  };
+
+  const cambiarCalificacion = async (nueva: string) => {
+    setGuardandoCalificacion(true);
+    await supabase.from("cotizaciones").update({ calificacion: nueva || null }).eq("id", lead.id);
+    const label = CALIFICACIONES.find((c) => c.value === nueva)?.label || "Sin calificar";
+    await registrarEvento("calificacion", `Grado de interés cambiado a "${label}"`);
+    setGuardandoCalificacion(false);
     router.refresh();
   };
 
@@ -182,6 +206,14 @@ export default function LeadDetailClient({
     }).eq("id", lead.id);
     const nombreDestinatario = vendedores.find((v) => v.id === asistenciaParaId)?.nombre;
     await registrarEvento("asistencia", `Asistencia pedida a ${nombreDestinatario}` + (notaAsistencia ? `: ${notaAsistencia}` : ""));
+    notificarPersona(
+      supabase,
+      asistenciaParaId,
+      "asistencia_pedida",
+      `Te pidieron asistencia en el lead de ${lead.nombre}` + (notaAsistencia ? `: ${notaAsistencia}` : ""),
+      `/panel/crm/${lead.id}`,
+      "crm"
+    ).catch((err) => console.error("[crm] error notificando asistencia:", err));
     setGuardandoAsistencia(false);
     setShowAsistenciaModal(false);
     router.refresh();
@@ -247,12 +279,25 @@ export default function LeadDetailClient({
   };
 
   const toggleCompletada = async (tarea: any) => {
-    setTareas((prev) => prev.map((t) => (t.id === tarea.id ? { ...t, completada: !t.completada } : t)));
-    await supabase.from("tareas_lead").update({ completada: !tarea.completada }).eq("id", tarea.id);
     if (!tarea.completada) {
-      await registrarEvento("tarea", `Tarea completada: ${tarea.tipo}`);
-      router.refresh();
+      // Al completar pedimos resultado; al descompletar no hace falta.
+      setTareaACompletar(tarea);
+      setResultadoTarea("");
+      return;
     }
+    setTareas((prev) => prev.map((t) => (t.id === tarea.id ? { ...t, completada: false } : t)));
+    await supabase.from("tareas_lead").update({ completada: false }).eq("id", tarea.id);
+  };
+
+  const confirmarCompletarTarea = async () => {
+    if (!tareaACompletar) return;
+    setGuardandoResultado(true);
+    setTareas((prev) => prev.map((t) => (t.id === tareaACompletar.id ? { ...t, completada: true, resultado: resultadoTarea || null } : t)));
+    await supabase.from("tareas_lead").update({ completada: true, resultado: resultadoTarea || null }).eq("id", tareaACompletar.id);
+    await registrarEvento("tarea", `Tarea completada: ${tareaACompletar.tipo}` + (resultadoTarea ? ` — ${resultadoTarea}` : ""));
+    setGuardandoResultado(false);
+    setTareaACompletar(null);
+    router.refresh();
   };
 
   const { vencidas, hoy, proximas } = useMemo(() => {
@@ -296,6 +341,26 @@ export default function LeadDetailClient({
               <a href={linkWhatsApp} target="_blank" rel="noopener noreferrer" className="text-emerald-600 dark:text-emerald-300 font-bold text-[12px] hover:underline">WhatsApp</a>
             )}
           </div>
+          <div className="flex items-center gap-1.5 mt-3 flex-wrap">
+            <span className="text-[10px] font-bold uppercase tracking-widest text-slate-400 dark:text-slate-500 mr-1">Grado de interés:</span>
+            {CALIFICACIONES.map((c) => {
+              const Icono = c.icono;
+              const activo = (lead.calificacion || "") === c.value;
+              return (
+                <button
+                  key={c.value || "sin"}
+                  onClick={() => puedeEditar && cambiarCalificacion(c.value)}
+                  disabled={guardandoCalificacion || !puedeEditar}
+                  className={`flex items-center gap-1 px-2.5 py-1 rounded-full border text-[10px] font-bold uppercase tracking-widest transition-all disabled:opacity-50 ${
+                    activo ? c.color + " ring-1 ring-current" : "text-slate-400 dark:text-slate-500 border-slate-200 dark:border-[#0a2a6b] bg-white dark:bg-[#001c55] hover:bg-slate-50 dark:hover:bg-[#00246b]"
+                  }`}
+                >
+                  <Icono className="w-3 h-3" /> {c.label}
+                </button>
+              );
+            })}
+          </div>
+
           {lead.motivo_cierre_id && lead.estado === "Perdido" && (
             <p className="text-[11px] text-rose-600 dark:text-rose-300 font-bold mt-2 bg-rose-50 dark:bg-[#002a6e] border border-rose-200 dark:border-[#0a2a6b] rounded-lg px-2.5 py-1.5 w-fit">
               Motivo: {motivos.find((m) => m.id === lead.motivo_cierre_id)?.nombre || lead.motivo_cierre_id}
@@ -452,17 +517,62 @@ export default function LeadDetailClient({
           )}
         </div>
 
-        {/* Presupuesto */}
-        <div className="bg-white dark:bg-[#001c55] border border-slate-200 dark:border-[#0a2a6b] rounded-2xl p-5 shadow-sm">
-          <h2 className="text-[11px] font-bold uppercase tracking-widest text-slate-500 dark:text-slate-400 mb-3 flex items-center gap-2">
-            <FileText className="w-3.5 h-3.5" /> Presupuesto
+        {/* Historial comercial: presupuestos, señas, boleto y su documentación */}
+        <div className="bg-white dark:bg-[#001c55] border border-slate-200 dark:border-[#0a2a6b] rounded-2xl p-5 shadow-sm space-y-4">
+          <h2 className="text-[11px] font-bold uppercase tracking-widest text-slate-500 dark:text-slate-400 flex items-center gap-2">
+            <FileText className="w-3.5 h-3.5" /> Historial comercial
           </h2>
-          <Link
-            href={`/panel/presupuestos/nuevo?cotizacion_id=${lead.id}`}
-            className="flex items-center justify-center gap-2 w-full bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-2.5 rounded-xl text-[12px] uppercase tracking-widest transition-colors"
-          >
-            <Plus className="w-4 h-4" /> Nuevo presupuesto para este lead
-          </Link>
+
+          {presupuestos.length === 0 && senas.length === 0 && boletos.length === 0 && (
+            <p className="text-[12px] text-slate-400 dark:text-slate-500 italic">Todavía no se generó ningún presupuesto, seña ni venta para este lead.</p>
+          )}
+
+          {presupuestos.map((p: any) => (
+            <RegistroComercial
+              key={`p-${p.id}`}
+              icono={<FileText className="w-4 h-4" />}
+              titulo={`Presupuesto N° ${p.numero}`}
+              fecha={p.fecha}
+              monto={p.precio_venta_ars ? `$ ${Number(p.precio_venta_ars).toLocaleString("es-AR")}` : p.precio_venta_usd ? `US$ ${Number(p.precio_venta_usd).toLocaleString("es-AR")}` : null}
+              href={`/panel/presupuestos/imprimir/${p.id}`}
+            />
+          ))}
+          {senas.map((s: any) => (
+            <RegistroComercial
+              key={`s-${s.id}`}
+              icono={<Wallet className="w-4 h-4" />}
+              titulo={`Seña N° ${s.numero}`}
+              fecha={s.fecha}
+              estado={s.estado}
+              monto={s.venta_ars ? `$ ${Number(s.venta_ars).toLocaleString("es-AR")}` : s.venta_usd ? `US$ ${Number(s.venta_usd).toLocaleString("es-AR")}` : null}
+              href={`/panel/senas/imprimir/${s.id}`}
+            />
+          ))}
+          {boletos.map((b: any) => (
+            <RegistroComercial
+              key={`b-${b.id}`}
+              icono={<Receipt className="w-4 h-4" />}
+              titulo={`Venta N° ${b.numero}`}
+              fecha={b.fecha}
+              monto={b.venta_ars ? `$ ${Number(b.venta_ars).toLocaleString("es-AR")}` : b.venta_usd ? `US$ ${Number(b.venta_usd).toLocaleString("es-AR")}` : null}
+              href={`/panel/boletos/imprimir/${b.id}`}
+              documentos={b.documentacion_ventas}
+            />
+          ))}
+
+          {puedeEditar && (
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-2 pt-2 border-t border-slate-100 dark:border-[#0a2a6b]">
+              <Link href={`/panel/presupuestos/nuevo?cotizacion_id=${lead.id}`} className="flex items-center justify-center gap-1.5 bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-2 rounded-xl text-[11px] uppercase tracking-widest transition-colors">
+                <Plus className="w-3.5 h-3.5" /> Presupuesto
+              </Link>
+              <Link href={`/panel/senas/nuevo?cotizacion_id=${lead.id}`} className="flex items-center justify-center gap-1.5 bg-slate-700 hover:bg-slate-800 dark:bg-[#00246b] dark:hover:bg-[#002a6e] text-white font-bold py-2 rounded-xl text-[11px] uppercase tracking-widest transition-colors">
+                <Plus className="w-3.5 h-3.5" /> Seña
+              </Link>
+              <Link href={`/panel/boletos/nuevo?cotizacion_id=${lead.id}`} className="flex items-center justify-center gap-1.5 bg-emerald-600 hover:bg-emerald-700 text-white font-bold py-2 rounded-xl text-[11px] uppercase tracking-widest transition-colors">
+                <Plus className="w-3.5 h-3.5" /> Venta
+              </Link>
+            </div>
+          )}
         </div>
 
         {/* Test Drive */}
@@ -683,6 +793,30 @@ export default function LeadDetailClient({
         </div>
       )}
 
+      {/* Modal resultado de la tarea */}
+      {tareaACompletar && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+          <div className="absolute inset-0 bg-slate-900/40 backdrop-blur-sm" onClick={() => !guardandoResultado && setTareaACompletar(null)}></div>
+          <div className="relative bg-white dark:bg-[#001c55] border border-slate-200 dark:border-[#0a2a6b] w-full max-w-sm rounded-2xl shadow-2xl p-6">
+            <div className="flex justify-between items-center mb-5 border-b border-slate-100 dark:border-[#0a2a6b] pb-3">
+              <h3 className="text-lg font-bold text-slate-900 dark:text-white">Completar tarea</h3>
+              <button onClick={() => setTareaACompletar(null)} className="text-slate-400 dark:text-slate-500 hover:text-slate-700 dark:hover:text-slate-200 bg-slate-50 dark:bg-[#00246b] hover:bg-slate-100 dark:hover:bg-[#002a6e] p-1.5 rounded-lg border border-slate-200 dark:border-[#0a2a6b]">
+                <X className="w-4 h-4" />
+              </button>
+            </div>
+            <p className="text-[12px] text-slate-500 dark:text-slate-400 mb-3">{tareaACompletar.tipo}{tareaACompletar.titulo ? ` — ${tareaACompletar.titulo}` : ""}</p>
+            <label className="text-[11px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-widest mb-1.5 block">Resultado (opcional)</label>
+            <textarea autoFocus rows={3} value={resultadoTarea} onChange={(e) => setResultadoTarea(e.target.value)} placeholder="¿Qué pasó? Ej: no atendió, pidió que lo llamen mañana..." className={inputClass} />
+            <div className="pt-4 flex gap-3">
+              <button type="button" onClick={() => setTareaACompletar(null)} className="flex-1 py-2.5 text-xs font-bold uppercase tracking-widest bg-white dark:bg-[#00246b] border border-slate-200 dark:border-[#0a2a6b] hover:bg-slate-50 dark:hover:bg-[#002a6e] text-slate-600 dark:text-slate-300 rounded-xl transition-colors">Cancelar</button>
+              <button onClick={confirmarCompletarTarea} disabled={guardandoResultado} className="flex-1 py-2.5 text-xs font-bold uppercase tracking-widest bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl transition-colors shadow-sm disabled:opacity-50">
+                {guardandoResultado ? "Guardando..." : "Completar"}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* Modal pedir asistencia */}
       {showAsistenciaModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
@@ -709,6 +843,44 @@ export default function LeadDetailClient({
               <LifeBuoy className="w-4 h-4" /> {guardandoAsistencia ? "Enviando..." : "Solicitar"}
             </button>
           </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
+function RegistroComercial({
+  icono, titulo, fecha, monto, estado, href, documentos,
+}: {
+  icono: React.ReactNode; titulo: string; fecha: string; monto?: string | null; estado?: string; href: string; documentos?: { id: string; tipo_documento: string; estado: string | null }[];
+}) {
+  return (
+    <div className="bg-slate-50 dark:bg-[#00246b] border border-slate-100 dark:border-[#0a2a6b] rounded-xl p-3">
+      <div className="flex items-center justify-between gap-2">
+        <div className="flex items-center gap-2.5 min-w-0">
+          <span className="text-indigo-600 dark:text-sky-300 shrink-0">{icono}</span>
+          <div className="min-w-0">
+            <p className="text-[12px] font-bold text-slate-800 dark:text-white truncate">{titulo}</p>
+            <span className="text-[10px] text-slate-400 dark:text-slate-500">
+              {new Date(`${fecha}T12:00:00Z`).toLocaleDateString("es-AR", { day: "2-digit", month: "short", year: "numeric", timeZone: "UTC" })}
+              {estado ? ` · ${estado}` : ""}
+            </span>
+          </div>
+        </div>
+        <div className="flex items-center gap-3 shrink-0">
+          {monto && <span className="text-[12px] font-black text-slate-700 dark:text-slate-200">{monto}</span>}
+          <Link href={href} target="_blank" className="text-slate-400 dark:text-slate-500 hover:text-indigo-600 dark:hover:text-sky-300" title="Imprimir">
+            <Printer className="w-3.5 h-3.5" />
+          </Link>
+        </div>
+      </div>
+      {documentos && documentos.length > 0 && (
+        <div className="mt-2 pt-2 border-t border-slate-200 dark:border-[#0a2a6b] flex flex-wrap gap-1.5">
+          {documentos.map((d) => (
+            <span key={d.id} className="flex items-center gap-1 text-[10px] font-bold px-1.5 py-0.5 rounded bg-white dark:bg-[#001c55] border border-slate-200 dark:border-[#0a2a6b] text-slate-500 dark:text-slate-400">
+              <Paperclip className="w-2.5 h-2.5" /> {d.tipo_documento} {d.estado ? `(${d.estado})` : ""}
+            </span>
+          ))}
         </div>
       )}
     </div>
@@ -744,6 +916,9 @@ function TareasGrupo({ titulo, icono, tareas, onToggle }: { titulo: string; icon
               <span className="text-[10px] text-slate-400 dark:text-slate-500">
                 {new Date(t.fecha_vencimiento).toLocaleString("es-AR", { day: "2-digit", month: "short", hour: "2-digit", minute: "2-digit" })}
               </span>
+              {t.resultado && (
+                <p className="text-[11px] text-slate-500 dark:text-slate-400 italic mt-0.5">"{t.resultado}"</p>
+              )}
             </div>
           </div>
         ))}

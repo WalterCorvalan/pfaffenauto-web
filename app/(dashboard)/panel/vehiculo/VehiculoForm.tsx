@@ -245,6 +245,13 @@ export default function VehiculoForm({ modo, autoId }: VehiculoFormProps) {
           .select("id").single();
         if (error) throw error;
         vehiculoTargetId = vehiculoNuevo.id;
+        if (estadoDB === "Disponible") {
+          fetch("/api/vehiculos/reactivar-leads", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ vehiculoId: vehiculoNuevo.id }),
+          }).catch(() => {});
+        }
       } else if (modo === "editar" && !esEdicionVendedor) {
         const { error } = await supabase.from("vehiculos")
           .update({ ...payloadVehiculo, observaciones_internas: data.observaciones_internas || null, updated_at: new Date().toISOString() })

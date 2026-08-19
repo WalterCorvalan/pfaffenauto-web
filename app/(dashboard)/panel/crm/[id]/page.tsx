@@ -14,7 +14,7 @@ export default async function LeadDetailPage({ params }: { params: Promise<{ id:
 
   const { data: { user } } = await supabase.auth.getUser();
 
-  const [{ data: lead }, { data: vendedores }, { data: vehiculosStock }, { data: motivosCierre }, { data: tareas }, { data: testDrives }, { data: eventos }, { data: miPerfil }] = await Promise.all([
+  const [{ data: lead }, { data: vendedores }, { data: vehiculosStock }, { data: motivosCierre }, { data: tareas }, { data: testDrives }, { data: eventos }, { data: miPerfil }, { data: presupuestos }, { data: senas }, { data: boletos }] = await Promise.all([
     supabase
       .from("cotizaciones")
       .select("*, perfiles:perfiles!cotizaciones_vendedor_id_fkey ( id, nombre ), vehiculos ( id, marca, modelo, patente )")
@@ -27,6 +27,9 @@ export default async function LeadDetailPage({ params }: { params: Promise<{ id:
     supabase.from("test_drives").select("*").eq("cotizacion_id", id).order("fecha_hora", { ascending: false }),
     supabase.from("eventos_lead").select("*, perfiles ( nombre )").eq("cotizacion_id", id).order("created_at", { ascending: false }),
     user ? supabase.from("perfiles").select("id, rol").eq("id", user.id).maybeSingle() : Promise.resolve({ data: null }),
+    supabase.from("presupuestos").select("id, numero, fecha, precio_venta_ars, precio_venta_usd").eq("cotizacion_id", id).order("created_at", { ascending: false }),
+    supabase.from("senas").select("id, numero, fecha, estado, venta_ars, venta_usd").eq("cotizacion_id", id).order("created_at", { ascending: false }),
+    supabase.from("boletos_venta").select("id, numero, fecha, venta_ars, venta_usd, documentacion_ventas ( id, tipo_documento, estado )").eq("cotizacion_id", id).order("created_at", { ascending: false }),
   ]);
 
   if (!lead) notFound();
@@ -41,6 +44,9 @@ export default async function LeadDetailPage({ params }: { params: Promise<{ id:
       testDrivesIniciales={testDrives || []}
       eventos={eventos || []}
       usuarioActual={miPerfil || { id: user?.id, rol: "vendedor" }}
+      presupuestos={presupuestos || []}
+      senas={senas || []}
+      boletos={boletos || []}
     />
   );
 }

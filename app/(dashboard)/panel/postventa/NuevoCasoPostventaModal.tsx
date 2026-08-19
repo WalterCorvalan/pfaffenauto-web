@@ -4,6 +4,7 @@ import { useState } from "react";
 import { supabase } from "@/lib/supabase/client";
 import { useRouter } from "next/navigation";
 import { Plus, X, Wrench } from "lucide-react";
+import { notificarEncargados } from "@/lib/notificaciones";
 
 export default function NuevoCasoPostventaModal({ vehiculos }: { vehiculos: any[] }) {
   const router = useRouter();
@@ -30,6 +31,15 @@ export default function NuevoCasoPostventaModal({ vehiculos }: { vehiculos: any[
         fecha: new Date().toISOString().split("T")[0],
       });
       if (error) throw error;
+      if (tipo !== "Service") {
+        notificarEncargados(
+          supabase,
+          `Nuevo ${tipo === "Reclamo" ? "reclamo" : "caso de garantía"}: ${nombreContacto}`,
+          "/panel/postventa",
+          "postventa",
+          "nuevo_caso_postventa"
+        ).catch((err) => console.error("[postventa] error notificando:", err));
+      }
       setIsOpen(false);
       setNombreContacto(""); setTelefonoContacto(""); setVehiculoId(""); setDescripcion(""); setTipo("Service");
       router.refresh();

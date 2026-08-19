@@ -12,9 +12,10 @@ interface Notificacion {
   link: string | null;
   leida: boolean;
   created_at: string;
+  seccion: string | null;
 }
 
-export default function NotificacionesBell() {
+export default function NotificacionesBell({ seccion }: { seccion?: string }) {
   const router = useRouter();
   const [notificaciones, setNotificaciones] = useState<Notificacion[]>([]);
   const [abierto, setAbierto] = useState(false);
@@ -30,24 +31,28 @@ export default function NotificacionesBell() {
       if (!user) return;
       setUserId(user.id);
 
-      const { data } = await supabase
+      let query = supabase
         .from("notificaciones")
-        .select("id, mensaje, link, leida, created_at")
+        .select("id, mensaje, link, leida, created_at, seccion")
         .eq("perfil_id", user.id)
         .order("created_at", { ascending: false })
         .limit(30);
+      if (seccion) query = query.eq("seccion", seccion);
+      const { data } = await query;
       setNotificaciones(data || []);
 
-      // Nombre único por instancia: el componente se monta 2 veces en simultáneo
-      // (header mobile + sidebar desktop), y Supabase reutiliza el channel si el
-      // nombre se repite, lo que tira "cannot add callbacks after subscribe()".
+      // Nombre único por instancia: el componente se monta varias veces en simultáneo
+      // (header mobile + sidebar desktop + bells de cada módulo), y Supabase reutiliza
+      // el channel si el nombre se repite, lo que tira "cannot add callbacks after subscribe()".
       canal = supabase
-        .channel(`notificaciones-${user.id}-${Math.random().toString(36).slice(2)}`)
+        .channel(`notificaciones-${user.id}-${seccion || "todas"}-${Math.random().toString(36).slice(2)}`)
         .on(
           "postgres_changes",
           { event: "INSERT", schema: "public", table: "notificaciones", filter: `perfil_id=eq.${user.id}` },
           (payload) => {
-            setNotificaciones((prev) => [payload.new as Notificacion, ...prev]);
+            const nueva = payload.new as Notificacion;
+            if (seccion && nueva.seccion !== seccion) return;
+            setNotificaciones((prev) => [nueva, ...prev]);
           }
         )
         .subscribe();
@@ -57,7 +62,7 @@ export default function NotificacionesBell() {
     return () => {
       if (canal) supabase.removeChannel(canal);
     };
-  }, []);
+  }, [seccion]);
 
   const noLeidas = notificaciones.filter((n) => !n.leida).length;
 
@@ -86,6 +91,7 @@ export default function NotificacionesBell() {
   return (
     <div className="relative">
       <button
+        type="button"
         ref={botonRef}
         onClick={abrirONo}
         className="relative text-slate-600 dark:text-slate-300 p-2 hover:bg-slate-100 dark:hover:bg-[#0a2a6b] rounded-lg transition-colors"

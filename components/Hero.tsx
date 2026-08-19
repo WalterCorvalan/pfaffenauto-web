@@ -42,7 +42,7 @@ export default function Hero() {
   return (
     <section 
       onMouseMove={handleMouseMove}
-      className="relative w-full pt-20 pb-24 md:pt-32 md:pb-32 overflow-hidden flex flex-col items-center justify-center border-b border-gray-400 dark:border-white/10 bg-black"
+      className="relative w-full pt-20 pb-24 md:pt-32 md:pb-32 overflow-hidden flex flex-col items-center justify-center border-b border-gray-400 dark:border-white/10 bg-[#0a0a0f]"
     >
 
       {/* ================= VIDEO DE FONDO ================= */}

@@ -165,8 +165,8 @@ export default function EgresosClient({
             </div>
           </div>
 
-          {/* ================= TABLA ================= */}
-          <div className="bg-white dark:bg-[#001c55] border border-slate-200 dark:border-[#0a2a6b] rounded-2xl shadow-sm overflow-hidden">
+          {/* ================= TABLA (desktop) ================= */}
+          <div className="hidden md:block bg-white dark:bg-[#001c55] border border-slate-200 dark:border-[#0a2a6b] rounded-2xl shadow-sm overflow-hidden">
             <div className="overflow-x-auto">
               <table className="w-full text-left border-collapse">
                 <thead>
@@ -210,6 +210,32 @@ export default function EgresosClient({
                 </tbody>
               </table>
             </div>
+          </div>
+
+          {/* ================= TARJETAS (mobile) — mismos datos, sin scroll horizontal ================= */}
+          <div className="md:hidden space-y-3">
+            {registros.length === 0 ? (
+              <div className="bg-white dark:bg-[#001c55] border border-slate-200 dark:border-[#0a2a6b] rounded-2xl p-8 text-center text-slate-400 dark:text-slate-500 text-sm italic">
+                Sin registros de {config.label.toLowerCase()} todavía.
+              </div>
+            ) : (
+              registros.map((r) => (
+                <div key={r.id} className="bg-white dark:bg-[#001c55] border border-slate-200 dark:border-[#0a2a6b] rounded-2xl p-4 shadow-sm space-y-2">
+                  <div className="flex items-center justify-between">
+                    <span className="text-[12px] font-bold text-slate-600 dark:text-slate-300">
+                      {new Date(`${r.fecha}T12:00:00Z`).toLocaleDateString("es-AR", { day: "2-digit", month: "short", year: "numeric", timeZone: "UTC" })}
+                    </span>
+                    <span className="font-mono text-[14px] font-black text-rose-600 dark:text-rose-300">$ {Number(r.importe).toLocaleString("es-AR")}</span>
+                  </div>
+                  {config.conVehiculo && (
+                    <FilaMovil label="Vehículo" valor={r.marca || r.modelo ? `${r.marca || ""} ${r.modelo || ""} ${r.modelo_anio ? `(${r.modelo_anio})` : ""} ${r.dominio ? `· ${r.dominio}` : ""}`.trim() : "—"} icono={<Car className="w-3 h-3" />} />
+                  )}
+                  {config.conEmpleado && <FilaMovil label="Empleado" valor={r.nombre || "—"} />}
+                  <FilaMovil label={config.campoExtraLabel} valor={r[config.campoExtraKey] || "—"} />
+                  <FilaMovil label="Sucursal" valor={r.sucursales?.nombre || "—"} icono={<Building2 className="w-3 h-3" />} />
+                </div>
+              ))
+            )}
           </div>
 
         </div>
@@ -296,6 +322,15 @@ export default function EgresosClient({
           </div>
         </div>
       )}
+    </div>
+  );
+}
+
+function FilaMovil({ label, valor, icono }: { label: string; valor: string; icono?: React.ReactNode }) {
+  return (
+    <div className="flex items-center justify-between gap-3 text-[12px]">
+      <span className="text-slate-400 dark:text-slate-500 font-bold uppercase tracking-wide flex items-center gap-1 shrink-0">{icono}{label}</span>
+      <span className="text-slate-700 dark:text-slate-200 text-right truncate">{valor}</span>
     </div>
   );
 }

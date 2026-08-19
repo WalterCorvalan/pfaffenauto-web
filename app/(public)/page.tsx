@@ -9,7 +9,6 @@ import Marcas from "@/components/Marcas";
 import Servicios from "@/components/Servicios";
 import Location from "@/components/Location";
 import BannerFinanciacion from "@/components/banners/BannerFinanciacion";
-import Sucursales from "@/components/Sucursales";
 import Testimonials from "@/components/Testimonials";
 import FAQ from "@/components/FAQ";
 import AgendarCitaForm from "@/components/forms/AgendarCitaForm";
@@ -30,7 +29,7 @@ export default async function Page() {
 
   return (
     // Usamos el fondo claro premium que definimos para el resto de la web
-    <main className="w-full bg-[#f8f9fa] min-h-screen relative flex flex-col gap-0 md:gap-20 pb-20">
+    <main className="w-full bg-[#f8f9fa] dark:bg-[#0a0a0f] min-h-screen relative flex flex-col gap-0 md:gap-20 pb-20">
 
       <IntroLoader />
 

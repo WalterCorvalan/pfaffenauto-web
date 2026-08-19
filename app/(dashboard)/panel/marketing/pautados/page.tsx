@@ -87,7 +87,7 @@ export default async function AutosPautadosPage() {
             <div className="p-6 border-b border-slate-100 dark:border-[#0a2a6b]">
               <h2 className="text-[11px] font-bold uppercase tracking-widest text-slate-500 dark:text-slate-400">Unidades pautadas activas</h2>
             </div>
-            <div className="overflow-x-auto">
+            <div className="hidden md:block overflow-x-auto">
               <table className="w-full text-left border-collapse">
                 <thead>
                   <tr className="bg-slate-50 dark:bg-[#00246b] border-b border-slate-200 dark:border-[#0a2a6b] text-slate-500 dark:text-slate-400 text-[10px] uppercase tracking-widest font-bold">
@@ -140,6 +140,44 @@ export default async function AutosPautadosPage() {
                   )}
                 </tbody>
               </table>
+            </div>
+
+            {/* Mobile: tarjetas apiladas, mismos datos sin scroll horizontal */}
+            <div className="md:hidden p-4 space-y-3">
+              {activos.length === 0 && (
+                <div className="p-6 text-center text-slate-400 dark:text-slate-500 text-sm italic">
+                  No hay unidades pautadas activas. Marcá autos como "pautado" desde la edición del vehículo.
+                </div>
+              )}
+              {activos.map((v: any) => (
+                <div key={v.id} className="bg-slate-50 dark:bg-[#00246b] border border-slate-200 dark:border-[#0a2a6b] rounded-xl p-4 space-y-2">
+                  <div className="flex items-center justify-between gap-2">
+                    <Link href={`/panel/vehiculo/editar/${v.id}`} className="flex items-center gap-3 min-w-0">
+                      {v.multimedia_vehiculos?.[0] ? (
+                        <img src={v.multimedia_vehiculos[0].url_archivo} className="w-14 h-10 object-cover rounded-md border border-slate-200 dark:border-[#0a2a6b] shrink-0" />
+                      ) : (
+                        <div className="w-14 h-10 bg-white dark:bg-[#001c55] border border-slate-200 dark:border-[#0a2a6b] rounded-md flex items-center justify-center shrink-0">
+                          <Car className="w-5 h-5 text-slate-400 dark:text-slate-500" />
+                        </div>
+                      )}
+                      <div className="min-w-0">
+                        <span className="text-[9px] text-slate-400 dark:text-slate-500 font-bold block truncate uppercase tracking-widest">{v.patente || "S/P"}</span>
+                        <span className="font-bold text-[13px] text-slate-900 dark:text-white block truncate">{v.marca} {v.modelo}</span>
+                      </div>
+                    </Link>
+                    <span className={`inline-flex items-center px-2.5 py-1 rounded-md text-[10px] font-bold uppercase tracking-widest border shrink-0 ${badgeEstado(v.estado)}`}>
+                      {v.estado}
+                    </span>
+                  </div>
+                  <div className="flex items-center justify-between pt-2 border-t border-slate-200 dark:border-[#0a2a6b] text-[12px]">
+                    <span className="text-slate-500 dark:text-slate-400">{v.canal_pauta || "Sin especificar"} · {v.sucursales?.nombre || "—"}</span>
+                    <span className="flex items-center gap-1 font-mono font-bold text-slate-700 dark:text-slate-200">
+                      <DollarSign className="w-3.5 h-3.5 text-slate-400 dark:text-slate-500" />
+                      {v.precio_publicado_ars?.toLocaleString("es-AR") || "—"}
+                    </span>
+                  </div>
+                </div>
+              ))}
             </div>
           </div>
 

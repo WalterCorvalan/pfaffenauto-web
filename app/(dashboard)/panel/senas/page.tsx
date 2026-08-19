@@ -3,6 +3,7 @@ import { cookies } from "next/headers";
 import Link from "next/link";
 import { Wallet, Plus, Printer, CarFront, AlertTriangle } from "lucide-react";
 import EstadoSenaSelector from "./EstadoSenaSelector";
+import NotificacionesBell from "../../NotificacionesBell";
 
 const COLOR_ESTADO: Record<string, string> = {
   Activa: "border-l-amber-400", Convertida: "border-l-emerald-400", Perdida: "border-l-rose-400",
@@ -34,14 +35,17 @@ export default async function SenasPage() {
             <p className="text-[11px] font-medium text-slate-500 dark:text-slate-400 mt-0.5">Anticipos y reservas de unidades</p>
           </div>
         </div>
-        <Link href="/panel/senas/nuevo" className="flex items-center justify-center gap-1.5 bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 rounded-lg text-[13px] font-bold transition-colors shadow-sm">
-          <Plus className="w-4 h-4" /> Nueva Seña
-        </Link>
+        <div className="flex items-center gap-2">
+          <NotificacionesBell seccion="senas" />
+          <Link href="/panel/senas/nuevo" className="flex items-center justify-center gap-1.5 bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 rounded-lg text-[13px] font-bold transition-colors shadow-sm">
+            <Plus className="w-4 h-4" /> Nueva Seña
+          </Link>
+        </div>
       </header>
 
       <div className="flex-1 overflow-y-auto bg-[#F9FAFB] dark:bg-[#001233] custom-scrollbar">
         <div className="max-w-[1400px] mx-auto p-6">
-          <div className="bg-white dark:bg-[#001c55] border border-slate-200 dark:border-[#0a2a6b] rounded-2xl shadow-sm overflow-hidden">
+          <div className="hidden md:block bg-white dark:bg-[#001c55] border border-slate-200 dark:border-[#0a2a6b] rounded-2xl shadow-sm overflow-hidden">
             <div className="overflow-x-auto">
               <table className="w-full text-left border-collapse">
                 <thead>
@@ -98,6 +102,40 @@ export default async function SenasPage() {
                 </tbody>
               </table>
             </div>
+          </div>
+
+          {/* Mobile: tarjetas apiladas, mismos datos sin scroll horizontal */}
+          <div className="md:hidden space-y-3">
+            {(!senas || senas.length === 0) && (
+              <div className="bg-white dark:bg-[#001c55] border border-slate-200 dark:border-[#0a2a6b] rounded-2xl p-8 text-center text-slate-400 dark:text-slate-500 text-sm italic">
+                Sin señas cargadas todavía.
+              </div>
+            )}
+            {senas?.map((s: any) => (
+              <div key={s.id} className={`bg-white dark:bg-[#001c55] border border-slate-200 dark:border-[#0a2a6b] rounded-2xl p-4 shadow-sm space-y-2 border-l-4 ${COLOR_ESTADO[s.estado] || "border-l-slate-200"}`}>
+                <div className="flex items-center justify-between">
+                  <span className="font-mono text-[13px] font-bold text-indigo-600 dark:text-sky-300">N° {s.numero || "—"}</span>
+                  <span className="font-mono text-[13px] font-bold text-slate-900 dark:text-white">
+                    {s.sena_ars ? `$ ${Number(s.sena_ars).toLocaleString("es-AR")}` : "—"}
+                  </span>
+                </div>
+                <p className="text-[13px] font-medium text-slate-900 dark:text-white flex items-center gap-1.5">
+                  {s.apellido}, {s.nombre}
+                  {s.precio_confirmado === false && <AlertTriangle className="w-3.5 h-3.5 text-amber-500" />}
+                </p>
+                <p className="text-[12px] text-slate-600 dark:text-slate-300 flex items-center gap-1.5"><CarFront className="w-3.5 h-3.5 text-slate-400" /> {s.marca} {s.modelo}</p>
+                <p className="text-[12px] text-slate-500 dark:text-slate-400">{s.sucursales?.nombre || "Sin sucursal"}</p>
+                <div className="flex items-center justify-between pt-1 border-t border-slate-100 dark:border-[#0a2a6b]">
+                  <div className="flex items-center gap-2">
+                    <span className="text-[12px] text-slate-500 dark:text-slate-400">{s.fecha ? new Date(`${s.fecha}T12:00:00Z`).toLocaleDateString("es-AR", { timeZone: "UTC" }) : "—"}</span>
+                    <EstadoSenaSelector id={s.id} estado={s.estado} />
+                  </div>
+                  <Link href={`/panel/senas/imprimir/${s.id}`} className="inline-flex p-1.5 bg-slate-50 dark:bg-[#00246b] border border-slate-200 dark:border-[#0a2a6b] rounded-lg text-slate-400 dark:text-slate-300">
+                    <Printer className="w-3.5 h-3.5" />
+                  </Link>
+                </div>
+              </div>
+            ))}
           </div>
         </div>
       </div>

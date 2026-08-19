@@ -26,5 +26,5 @@ export default async function NuevoPresupuestoPage({ searchParams }: { searchPar
     }
   }
 
-  return <PresupuestoForm clientes={clientes || []} vehiculos={vehiculos || []} vendedores={vendedores || []} sucursales={sucursales || []} vehiculoInicial={vehiculoInicial} />;
+  return <PresupuestoForm clientes={clientes || []} vehiculos={vehiculos || []} vendedores={vendedores || []} sucursales={sucursales || []} vehiculoInicial={vehiculoInicial} cotizacionId={cotizacion_id || null} />;
 }

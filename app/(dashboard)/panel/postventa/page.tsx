@@ -4,6 +4,7 @@ import { Wrench, Phone, CarFront, Calendar, BellRing } from "lucide-react";
 import NuevoCasoPostventaModal from "./NuevoCasoPostventaModal";
 import EstadoCasoSelector from "./EstadoCasoSelector";
 import CrearRecordatorioButton from "./CrearRecordatorioButton";
+import NotificacionesBell from "../../NotificacionesBell";
 
 const DIAS_RECORDATORIO_SERVICE_DEFAULT = 180;
 
@@ -79,7 +80,10 @@ export default async function PostventaPage() {
             </p>
           </div>
         </div>
-        <NuevoCasoPostventaModal vehiculos={vehiculos || []} />
+        <div className="flex items-center gap-2">
+          <NotificacionesBell seccion="postventa" />
+          <NuevoCasoPostventaModal vehiculos={vehiculos || []} />
+        </div>
       </header>
 
       <div className="flex-1 overflow-y-auto p-6 bg-[#F9FAFB] dark:bg-[#001233] custom-scrollbar">

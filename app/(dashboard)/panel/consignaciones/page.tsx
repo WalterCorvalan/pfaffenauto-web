@@ -2,6 +2,7 @@ import { createServerClient } from "@supabase/ssr";
 import { cookies } from "next/headers";
 import { Handshake, CarFront, DollarSign, MapPin, Tag, Inbox, Phone, MessageSquareText } from "lucide-react";
 import EstadoConsignacionSelector from "./EstadoConsignacionSelector";
+import NotificacionesBell from "../../NotificacionesBell";
 
 export default async function ConsignacionesPage() {
   const cookieStore = await cookies();
@@ -46,8 +47,9 @@ export default async function ConsignacionesPage() {
           </div>
         </div>
 
-        <div className="hidden sm:flex items-center gap-3">
-          <div className="flex items-center gap-2 bg-amber-50 dark:bg-[#002a6e] border border-amber-200 dark:border-[#0a2a6b] px-3 py-1.5 rounded-lg">
+        <div className="flex items-center gap-3">
+          <NotificacionesBell seccion="consignaciones" />
+          <div className="hidden sm:flex items-center gap-2 bg-amber-50 dark:bg-[#002a6e] border border-amber-200 dark:border-[#0a2a6b] px-3 py-1.5 rounded-lg">
             <span className="text-sm font-bold text-amber-700 dark:text-amber-300">{solicitudes?.filter((s) => s.estado === "Pendiente" || !s.estado).length || 0}</span>
             <span className="text-xs font-medium text-amber-600 dark:text-amber-300">Solicitudes pendientes</span>
           </div>

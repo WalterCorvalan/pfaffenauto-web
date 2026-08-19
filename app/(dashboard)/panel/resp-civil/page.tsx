@@ -36,7 +36,7 @@ export default async function RespCivilPage() {
 
       <div className="flex-1 overflow-y-auto bg-[#F9FAFB] dark:bg-[#001233] custom-scrollbar">
         <div className="max-w-[1400px] mx-auto p-6">
-          <div className="bg-white dark:bg-[#001c55] border border-slate-200 dark:border-[#0a2a6b] rounded-2xl shadow-sm overflow-hidden">
+          <div className="hidden md:block bg-white dark:bg-[#001c55] border border-slate-200 dark:border-[#0a2a6b] rounded-2xl shadow-sm overflow-hidden">
             <div className="overflow-x-auto">
               <table className="w-full text-left border-collapse">
                 <thead>
@@ -78,6 +78,31 @@ export default async function RespCivilPage() {
                 </tbody>
               </table>
             </div>
+          </div>
+
+          {/* Mobile: tarjetas apiladas, mismos datos sin scroll horizontal */}
+          <div className="md:hidden space-y-3">
+            {(!registros || registros.length === 0) && (
+              <div className="bg-white dark:bg-[#001c55] border border-slate-200 dark:border-[#0a2a6b] rounded-2xl p-8 text-center text-slate-400 dark:text-slate-500 text-sm italic">
+                Sin registros cargados todavía.
+              </div>
+            )}
+            {registros?.map((r: any) => (
+              <div key={r.id} className="bg-white dark:bg-[#001c55] border border-slate-200 dark:border-[#0a2a6b] rounded-2xl p-4 shadow-sm space-y-2 border-l-4 border-l-purple-300">
+                <div className="flex items-center justify-between">
+                  <span className="font-mono text-[13px] font-bold text-indigo-600 dark:text-sky-300">N° {r.numero || "—"}</span>
+                  <span className="text-[12px] text-slate-500 dark:text-slate-400">{r.fecha ? new Date(`${r.fecha}T12:00:00Z`).toLocaleDateString("es-AR", { timeZone: "UTC" }) : "—"}</span>
+                </div>
+                <p className="text-[13px] font-medium text-slate-900 dark:text-white">{r.apellido}, {r.nombre}</p>
+                <p className="text-[12px] text-slate-600 dark:text-slate-300 flex items-center gap-1.5"><CarFront className="w-3.5 h-3.5 text-slate-400" /> {r.marca} {r.modelo}</p>
+                <div className="flex items-center justify-between pt-1 border-t border-slate-100 dark:border-[#0a2a6b]">
+                  <span className="text-[12px] text-slate-500 dark:text-slate-400">{r.perfiles?.nombre || "Sin vendedor"}</span>
+                  <Link href={`/panel/resp-civil/imprimir/${r.id}`} className="inline-flex p-1.5 bg-slate-50 dark:bg-[#00246b] border border-slate-200 dark:border-[#0a2a6b] rounded-lg text-slate-400 dark:text-slate-300">
+                    <Printer className="w-3.5 h-3.5" />
+                  </Link>
+                </div>
+              </div>
+            ))}
           </div>
         </div>
       </div>

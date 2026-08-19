@@ -2,6 +2,7 @@ import { createServerClient } from "@supabase/ssr";
 import { cookies } from "next/headers";
 import Link from "next/link";
 import { Receipt, Plus, Printer, CarFront, AlertTriangle, ExternalLink, Search } from "lucide-react";
+import NotificacionesBell from "../../NotificacionesBell";
 
 const COLOR_ETAPA: Record<string, string> = {
   "Seña": "border-l-amber-400", "Documentación": "border-l-amber-400", "Patentamiento": "border-l-amber-400",
@@ -51,6 +52,7 @@ export default async function BoletosPage({ searchParams }: { searchParams: Prom
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
             <input type="text" name="q" defaultValue={q} placeholder="Buscar cliente, auto o número..." className="w-full sm:w-64 bg-slate-50 dark:bg-[#00246b] border border-slate-200 dark:border-[#0a2a6b] rounded-lg py-1.5 pl-9 pr-3 text-[13px] outline-none focus:border-indigo-500 text-slate-900 dark:text-white placeholder:text-slate-400 dark:placeholder:text-slate-500" />
           </div>
+          <NotificacionesBell seccion="boletos" />
           <Link href="/panel/boletos/nuevo" className="flex items-center justify-center gap-1.5 bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 rounded-lg text-[13px] font-bold transition-colors shadow-sm shrink-0">
             <Plus className="w-4 h-4" /> Nueva Venta
           </Link>
@@ -59,7 +61,7 @@ export default async function BoletosPage({ searchParams }: { searchParams: Prom
 
       <div className="flex-1 overflow-y-auto bg-[#F9FAFB] dark:bg-[#001233] custom-scrollbar">
         <div className="max-w-[1400px] mx-auto p-6">
-          <div className="bg-white dark:bg-[#001c55] border border-slate-200 dark:border-[#0a2a6b] rounded-2xl shadow-sm overflow-hidden">
+          <div className="hidden md:block bg-white dark:bg-[#001c55] border border-slate-200 dark:border-[#0a2a6b] rounded-2xl shadow-sm overflow-hidden">
             <div className="overflow-x-auto">
               <table className="w-full text-left border-collapse">
                 <thead>
@@ -131,6 +133,50 @@ export default async function BoletosPage({ searchParams }: { searchParams: Prom
                 </tbody>
               </table>
             </div>
+          </div>
+
+          {/* Mobile: tarjetas apiladas, mismos datos sin scroll horizontal */}
+          <div className="md:hidden space-y-3">
+            {boletos.length === 0 && (
+              <div className="bg-white dark:bg-[#001c55] border border-slate-200 dark:border-[#0a2a6b] rounded-2xl p-8 text-center text-slate-400 dark:text-slate-500 text-sm italic">
+                {q ? "Sin resultados para esa búsqueda." : "Sin ventas cargadas todavía."}
+              </div>
+            )}
+            {boletos?.map((b: any) => (
+              <div key={b.id} className={`bg-white dark:bg-[#001c55] border border-slate-200 dark:border-[#0a2a6b] rounded-2xl p-4 shadow-sm space-y-2 border-l-4 ${COLOR_ETAPA[b.etapa_seguimiento] || "border-l-slate-200"}`}>
+                <div className="flex items-center justify-between">
+                  <span className="font-mono text-[13px] font-bold text-indigo-600 dark:text-sky-300">N° {b.numero || "—"}</span>
+                  {b.etapa_seguimiento ? (
+                    <span className={`text-[10px] font-bold uppercase tracking-widest text-white px-2 py-1 rounded-lg ${BADGE_ETAPA[b.etapa_seguimiento] || "bg-slate-400"}`}>
+                      {b.etapa_seguimiento}
+                    </span>
+                  ) : null}
+                </div>
+                <p className="text-[13px] font-medium text-slate-900 dark:text-white flex items-center gap-1.5">
+                  <Link href={`/panel/ventas/seguimiento/${b.id}`} className="hover:text-indigo-600 dark:hover:text-sky-300 hover:underline">
+                    {b.apellido}, {b.nombre}
+                  </Link>
+                  {b.precio_confirmado === false && <AlertTriangle className="w-3.5 h-3.5 text-amber-500" />}
+                </p>
+                <p className="text-[12px] text-slate-600 dark:text-slate-300 flex items-center gap-1.5"><CarFront className="w-3.5 h-3.5 text-slate-400" /> {b.marca} {b.modelo}</p>
+                <p className="text-[12px] text-slate-500 dark:text-slate-400">{b.sucursales?.nombre || "Sin sucursal"}</p>
+                <div className="flex items-center justify-between text-[12px] text-slate-700 dark:text-slate-200">
+                  <span>Venta: <span className="font-mono font-bold text-slate-900 dark:text-white">{b.venta_ars ? `$ ${Number(b.venta_ars).toLocaleString("es-AR")}` : "—"}</span></span>
+                  <span>Saldo: <span className="font-mono font-bold text-indigo-600 dark:text-sky-300">{b.saldo_abonar_ars ? `$ ${Number(b.saldo_abonar_ars).toLocaleString("es-AR")}` : "—"}</span></span>
+                </div>
+                <div className="flex items-center justify-between pt-1 border-t border-slate-100 dark:border-[#0a2a6b]">
+                  <span className="text-[12px] text-slate-500 dark:text-slate-400">{b.fecha ? new Date(`${b.fecha}T12:00:00Z`).toLocaleDateString("es-AR", { timeZone: "UTC" }) : "—"}</span>
+                  <div className="flex items-center gap-2">
+                    <Link href={`/panel/ventas/seguimiento/${b.id}`} className="inline-flex p-1.5 bg-slate-50 dark:bg-[#00246b] border border-slate-200 dark:border-[#0a2a6b] rounded-lg text-slate-400 dark:text-slate-300" title="Gestionar venta">
+                      <ExternalLink className="w-3.5 h-3.5" />
+                    </Link>
+                    <Link href={`/panel/boletos/imprimir/${b.id}`} className="inline-flex p-1.5 bg-slate-50 dark:bg-[#00246b] border border-slate-200 dark:border-[#0a2a6b] rounded-lg text-slate-400 dark:text-slate-300" title="Imprimir">
+                      <Printer className="w-3.5 h-3.5" />
+                    </Link>
+                  </div>
+                </div>
+              </div>
+            ))}
           </div>
         </div>
       </div>

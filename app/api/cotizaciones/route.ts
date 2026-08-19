@@ -1,6 +1,7 @@
 import { createClient } from "@supabase/supabase-js";
 import { verificarTurnstile } from "@/lib/turnstile";
 import { rateLimit, ipDesdeRequest } from "@/lib/rateLimit";
+import { notificarEncargados } from "@/lib/notificaciones";
 
 const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -64,6 +65,25 @@ export async function POST(req: Request) {
       .single();
 
     if (error) throw error;
+
+    const esConsignacion = tipoPeritajeFinal === "consignacion";
+    const nombreVehiculo = `${cotizacion.marca} ${cotizacion.modelo}`;
+    notificarEncargados(
+      supabase,
+      `Nuevo lead: ${cotizacion.nombre} — ${nombreVehiculo}`,
+      `/panel/crm/${data.id}`,
+      "crm",
+      "nuevo_lead"
+    ).catch((err) => console.error("[cotizaciones] error notificando crm:", err));
+    notificarEncargados(
+      supabase,
+      esConsignacion
+        ? `Nueva consignación: ${cotizacion.nombre} — ${nombreVehiculo}`
+        : `Nueva cotización: ${cotizacion.nombre} — ${nombreVehiculo}`,
+      esConsignacion ? "/panel/consignaciones" : "/panel/cotizaciones",
+      esConsignacion ? "consignaciones" : "cotizaciones",
+      "nuevo_lead"
+    ).catch((err) => console.error("[cotizaciones] error notificando sección:", err));
 
     return Response.json({ ok: true, id: data.id });
   } catch (err) {

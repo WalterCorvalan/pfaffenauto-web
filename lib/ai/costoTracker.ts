@@ -5,6 +5,7 @@ import { createClient } from "@supabase/supabase-js";
 // de entradas de centavos, ilegible), lo vamos acumulando en UN solo
 // movimiento de caja por día — se actualiza cada vez que hay una llamada nueva.
 const DESCRIPCION_GASTO_IA = "Uso de IA (OpenRouter)";
+const CATEGORIA_SERVICIOS_DIGITALES_ID = "d149743f-7402-416d-bad0-0c94dc0c145a";
 
 let supabaseAdmin: any = null;
 function getSupabaseAdmin() {
@@ -41,6 +42,7 @@ export async function registrarCostoIA(costoUsd: number) {
         tipo: "egreso",
         monto: costoUsd,
         descripcion: DESCRIPCION_GASTO_IA,
+        categoria_id: CATEGORIA_SERVICIOS_DIGITALES_ID,
         fecha: hoy,
         forma_pago: "Tarjeta",
       });

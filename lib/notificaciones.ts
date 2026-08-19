@@ -1,21 +1,38 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 
-export type SeccionNotificacion = "senas" | "presupuestos" | "boletos" | "tareas" | "pedidos" | "chat";
+export type SeccionNotificacion =
+  | "senas" | "presupuestos" | "boletos" | "tareas" | "pedidos" | "chat"
+  | "cotizaciones" | "consignaciones" | "crm" | "postventa";
 
 // Avisa a todos los encargados activos (in-app, vía la campanita) — el vendedor
-// no está seguro de un precio y necesita que un encargado lo revise.
+// no está seguro de un precio y necesita que un encargado lo revise, o llegó
+// algo nuevo (lead, consignación, reclamo) que hay que atender.
 export async function notificarEncargados(
   supabase: SupabaseClient,
   mensaje: string,
   link: string,
-  seccion: SeccionNotificacion
+  seccion: SeccionNotificacion,
+  tipo: string = "precio_a_confirmar"
 ) {
   const { data: encargados } = await supabase.from("perfiles").select("id").eq("rol", "encargado").eq("activo", true);
   if (!encargados || encargados.length === 0) return;
 
   await supabase.from("notificaciones").insert(
-    encargados.map((e) => ({ perfil_id: e.id, tipo: "precio_a_confirmar", mensaje, link, seccion }))
+    encargados.map((e) => ({ perfil_id: e.id, tipo, mensaje, link, seccion }))
   );
+}
+
+// Notifica directo a una persona puntual (ej: pedido de asistencia a un encargado específico).
+export async function notificarPersona(
+  supabase: SupabaseClient,
+  perfilId: string | null,
+  tipo: string,
+  mensaje: string,
+  link: string,
+  seccion: SeccionNotificacion
+) {
+  if (!perfilId) return;
+  await supabase.from("notificaciones").insert({ perfil_id: perfilId, tipo, mensaje, link, seccion });
 }
 
 // Respuesta de vuelta: el encargado ya revisó el precio (confirmado o corregido),

@@ -63,3 +63,24 @@ export async function sendImageMessage(phoneNumberId: string, token: string, to:
     }),
   });
 }
+
+// Instagram: respuesta privada (DM) a un comentario puntual — es el mecanismo
+// "comentaste, te mando un privado" tipo ManyChat, hecho directo con la API de Meta.
+export async function sendInstagramPrivateReply(commentId: string, token: string, text: string) {
+  return graphRequest<{ id: string; recipient_id: string }>(`${commentId}/private_replies`, token, {
+    method: "POST",
+    body: JSON.stringify({ message: text }),
+  });
+}
+
+// Instagram: mensaje directo de seguimiento dentro de una conversación ya abierta
+// (después del primer private reply, se puede seguir charlando como un DM normal).
+export async function sendInstagramMessage(igUserId: string, token: string, recipientId: string, text: string) {
+  return graphRequest<{ recipient_id: string; message_id: string }>(`${igUserId}/messages`, token, {
+    method: "POST",
+    body: JSON.stringify({
+      recipient: { id: recipientId },
+      message: { text },
+    }),
+  });
+}

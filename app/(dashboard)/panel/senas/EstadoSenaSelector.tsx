@@ -20,7 +20,7 @@ export default function EstadoSenaSelector({ id, estado }: { id: string; estado:
   const cambiar = async (nuevo: string) => {
     setActual(nuevo);
     setCargando(true);
-    const { error } = await supabase.from("senas").update({ estado: nuevo }).eq("id", id);
+    const { error } = await supabase.from("senas").update({ estado: nuevo, etapa_seguimiento: nuevo }).eq("id", id);
     setCargando(false);
     if (error) {
       alert("Error al cambiar el estado");

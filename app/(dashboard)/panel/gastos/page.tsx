@@ -1,6 +1,7 @@
 import { createServerClient } from "@supabase/ssr";
 import { cookies } from "next/headers";
 import Link from "next/link";
+import LinkConCarga from "./LinkConCarga";
 import { Wallet, FileText, Printer, ArrowDownRight, ArrowUpRight, Search, Activity, User, CarFront, Building2, Scale } from "lucide-react";
 import NuevoGastoModal from "./NuevoGastoModal";
 import SucursalFilterHeader from "../SucursalFilterHeader";
@@ -20,10 +21,14 @@ export default async function CajaYGastosPage({
     { cookies: { getAll: () => cookieStore.getAll() } }
   );
 
-  // 1. Traer sucursales y cuentas
-  const [{ data: sucursales }, { data: cuentas }] = await Promise.all([
+  // 1. Traer sucursales, cuentas y AHORA categorías (SOLO EGRESOS)
+  const [{ data: sucursales }, { data: cuentas }, { data: categorias }] = await Promise.all([
     supabase.from("sucursales").select("id, nombre").order("nombre"),
     supabase.from("cuentas").select("id, nombre").eq("activa", true).order("nombre"),
+    supabase.from("categorias_movimiento")
+      .select("id, nombre")
+      .eq("tipo", "egreso") // <--- ESTE ES EL FILTRO QUE FALTABA
+      .order("nombre"), 
   ]);
 
   // 2. Traer operaciones de venta
@@ -142,14 +147,14 @@ export default async function CajaYGastosPage({
               <span className="text-[11px] text-slate-500 dark:text-slate-400 font-medium">Suma de Ventas y Señas cobradas</span>
             </div>
 
-            <Link href="/panel/gastos/egresos" className="bg-white dark:bg-[#001c55] border border-slate-200 dark:border-[#0a2a6b] shadow-sm p-6 rounded-2xl relative overflow-hidden flex flex-col justify-center hover:border-rose-300 hover:shadow-md transition-all">
+            <LinkConCarga href="/panel/gastos/egresos" className="bg-white dark:bg-[#001c55] border border-slate-200 dark:border-[#0a2a6b] shadow-sm p-6 rounded-2xl relative overflow-hidden flex flex-col justify-center hover:border-rose-300 hover:shadow-md transition-all">
               <div className="w-9 h-9 rounded-lg bg-rose-50 dark:bg-[#002a6e] border border-rose-100 dark:border-[#0a2a6b] flex items-center justify-center mb-4">
                 <ArrowUpRight className="w-4 h-4 text-rose-600" />
               </div>
               <span className="text-[10px] uppercase tracking-widest font-bold text-slate-400">Egresos Totales (Mes)</span>
               <h3 className="text-2xl font-black text-rose-600 mt-1 mb-1 font-mono">$ {egresosDelMes.toLocaleString("es-AR")}</h3>
               <span className="text-[11px] text-slate-500 dark:text-slate-400 font-medium">Gastos manuales + las 5 categorías</span>
-            </Link>
+            </LinkConCarga>
 
             <div className="bg-white dark:bg-[#001c55] border border-slate-200 dark:border-[#0a2a6b] shadow-sm p-6 rounded-2xl relative overflow-hidden flex flex-col justify-center">
               <div className={`w-9 h-9 rounded-lg border flex items-center justify-center mb-4 ${netoDelMes >= 0 ? "bg-indigo-50 dark:bg-[#002a6e] border-indigo-100 dark:border-[#0a2a6b]" : "bg-rose-50 dark:bg-[#002a6e] border-rose-100 dark:border-[#0a2a6b]"}`}>
@@ -170,8 +175,12 @@ export default async function CajaYGastosPage({
             </div>
           </div>
 
-          <div className="mb-8 max-w-xs">
-            <NuevoGastoModal sucursales={sucursales || []} cuentas={cuentas || []} />
+          <div className="mb-8 max-w-xs mx-auto sm:mx-0">
+            <NuevoGastoModal 
+              sucursales={sucursales || []} 
+              cuentas={cuentas || []} 
+              categorias={categorias || []} 
+            />
           </div>
 
           {/* COMPARATIVA DE CAJA POR SUCURSAL (SOLO DUEÑO) */}
@@ -340,7 +349,7 @@ export default async function CajaYGastosPage({
                               <div>
                                 <strong className="text-[13px] font-bold text-slate-900 dark:text-white block uppercase leading-tight">
                                   {op.vehiculos?.marca} {op.vehiculos?.modelo}
-                                </strong>
+                               </strong>
                                 <span className="text-[10px] text-slate-500 dark:text-slate-400 font-medium">
                                   {op.vehiculos?.sucursales?.nombre || "Sin Sucursal"}
                                 </span>

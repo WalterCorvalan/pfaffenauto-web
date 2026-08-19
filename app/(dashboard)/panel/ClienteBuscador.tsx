@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { supabase } from "@/lib/supabase/client";
+import { buscarClienteDuplicado } from "@/lib/clienteDedupe";
 import { Search, UserPlus, X, Check } from "lucide-react";
 
 export interface ClienteSeleccionado {
@@ -56,6 +57,19 @@ export default function ClienteBuscador({
     }
     setGuardando(true);
     try {
+      {
+        const existente = await buscarClienteDuplicado(supabase, nuevo);
+        if (existente) {
+          if (!confirm(`Ya existe un cliente con ese DNI/teléfono: ${existente.nombre} ${existente.apellido}. ¿Usar ese en vez de crear uno nuevo?`)) {
+            setGuardando(false);
+            return;
+          }
+          onSeleccionar(existente);
+          setCreandoNuevo(false);
+          setGuardando(false);
+          return;
+        }
+      }
       const { data, error } = await supabase
         .from("clientes")
         .insert({ ...nuevo, fecha_nacimiento: nuevo.fecha_nacimiento || null })
