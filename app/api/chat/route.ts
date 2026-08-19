@@ -3,6 +3,7 @@ import Anthropic from "@anthropic-ai/sdk";
 import { createClient } from "@supabase/supabase-js";
 import { NEGOCIO_CONFIG } from "@/data/NegocioConfig";
 import { rateLimit, ipDesdeRequest } from "@/lib/rateLimit";
+import { registrarCostoIA } from "@/lib/ai/costoTracker";
 
 // =====================================================================
 // 🎛️ BUSCADOR HÍBRIDO
@@ -106,7 +107,7 @@ export async function POST(request: Request) {
     // =================================================================
     // PASO 2: nada matcheó con confianza → cae a la IA (con tokens)
     // =================================================================
-    if (!process.env.ANTHROPIC_API_KEY) {
+    if (!process.env.ANTHROPIC_API_KEY && !process.env.OPENROUTER_API_TOKEN) {
       const generica = `👋 ¡Hola! Soy el asistente virtual de **${NEGOCIO_CONFIG.nombre}**.\n\nPodés preguntarme por nuestro stock de vehículos, horarios, sucursales o planes de financiación. ¿En qué te ayudo hoy?`;
       logPregunta(preguntaOriginal, false);
       return NextResponse.json({ reply: generica });
@@ -154,27 +155,45 @@ REGLAS:
         return false;
       });
 
-    const response = await anthropic.messages.create({
-      model: "claude-opus-5",
-      max_tokens: 2000,
-      system: SYSTEM_PROMPT,
-      messages: formattedMessages,
-      output_config: { effort: "low" },
-    } as any);
-
-    if (response.stop_reason === "refusal") {
-      logPregunta(preguntaOriginal, false);
-      return NextResponse.json(
-        { error: "No puedo responder esa consulta. Probá reformularla." },
-        { status: 422 },
-      );
-    }
-
     let replyText = "";
-    for (const block of response.content) {
-      if (block.type === "text") {
-        replyText += (block as any).text;
+    try {
+      // Haiku: el modelo barato de Anthropic. Alcanza de sobra para este chat.
+      const response = await anthropic.messages.create({
+        model: "claude-haiku-4-5-20251001",
+        max_tokens: 2000,
+        system: SYSTEM_PROMPT,
+        messages: formattedMessages,
+      });
+
+      if (response.stop_reason === "refusal") {
+        logPregunta(preguntaOriginal, false);
+        return NextResponse.json(
+          { error: "No puedo responder esa consulta. Probá reformularla." },
+          { status: 422 },
+        );
       }
+
+      for (const block of response.content) {
+        if (block.type === "text") replyText += (block as any).text;
+      }
+    } catch (err) {
+      // Anthropic falló (sin crédito, etc.) — respaldo gratis por OpenRouter.
+      if (!process.env.OPENROUTER_API_TOKEN) throw err;
+      const res = await fetch(`${process.env.OPENROUTER_BASE_URL}/v1/chat/completions`, {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${process.env.OPENROUTER_API_TOKEN}`,
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          model: process.env.OPENROUTER_MODEL,
+          messages: [{ role: "system", content: SYSTEM_PROMPT }, ...formattedMessages],
+        }),
+      });
+      if (!res.ok) throw err;
+      const data = await res.json();
+      registrarCostoIA(data.usage?.cost).catch(() => {});
+      replyText = data.choices?.[0]?.message?.content ?? "";
     }
 
     logPregunta(preguntaOriginal, true);

@@ -15,6 +15,7 @@ import {
   PanelRight,
   Loader2,
   Megaphone,
+  X,
 } from "lucide-react";
 
 const ETAPAS_PIPELINE = [
@@ -38,6 +39,28 @@ export default function ChatClient({
   const [nuevoMensaje, setNuevoMensaje] = useState("");
   const [filtro, setFiltro] = useState<"todas" | "no-leidas">("todas");
   const [loading, setLoading] = useState(false);
+
+  // Estados para el formulario de nuevo cliente
+  const [creandoClienteManual, setCreandoClienteManual] = useState(false);
+  const [guardandoCliente, setGuardandoCliente] = useState(false);
+  const [nuevoCliente, setNuevoCliente] = useState({
+    nombre: "",
+    apellido: "",
+    dni: "",
+    cuit_cuil: "",
+    telefono_celular: "",
+    telefono_linea: "",
+    correo_electronico: "",
+    calle: "",
+    numero: "",
+    depto: "",
+    localidad: "",
+    codigo_postal: "",
+    provincia: "",
+    estado_civil: "",
+    profesion: "",
+    fecha_nacimiento: "",
+  });
 
   // Nuevos estados para el Panel de Detalles
   const [panelAbierto, setPanelAbierto] = useState(true);
@@ -92,26 +115,44 @@ export default function ChatClient({
       .channel(`whatsapp_mensajes:${seleccionada}`)
       .on(
         "postgres_changes",
-        { event: "INSERT", schema: "public", table: "whatsapp_mensajes", filter: `conversacion_id=eq.${seleccionada}` },
+        {
+          event: "INSERT",
+          schema: "public",
+          table: "whatsapp_mensajes",
+          filter: `conversacion_id=eq.${seleccionada}`,
+        },
         (payload) => {
           const nuevo = payload.new as any;
           setMensajes((prev) => {
             if (prev.some((m) => m.id === nuevo.id)) return prev;
             // Reemplaza el eco optimista local (mismo texto/dirección, sin id real todavía).
             const sinEcoLocal = prev.filter(
-              (m) => !(m.direccion === "out" && m.texto === nuevo.texto && m.status === "pending" && m.id !== nuevo.id)
+              (m) =>
+                !(
+                  m.direccion === "out" &&
+                  m.texto === nuevo.texto &&
+                  m.status === "pending" &&
+                  m.id !== nuevo.id
+                ),
             );
             return [...sinEcoLocal, nuevo];
           });
-        }
+        },
       )
       .on(
         "postgres_changes",
-        { event: "UPDATE", schema: "public", table: "whatsapp_mensajes", filter: `conversacion_id=eq.${seleccionada}` },
+        {
+          event: "UPDATE",
+          schema: "public",
+          table: "whatsapp_mensajes",
+          filter: `conversacion_id=eq.${seleccionada}`,
+        },
         (payload) => {
           const actualizado = payload.new as any;
-          setMensajes((prev) => prev.map((m) => (m.id === actualizado.id ? actualizado : m)));
-        }
+          setMensajes((prev) =>
+            prev.map((m) => (m.id === actualizado.id ? actualizado : m)),
+          );
+        },
       )
       .subscribe();
 
@@ -150,13 +191,13 @@ export default function ChatClient({
       if (!res.ok) {
         console.error("Error al enviar", data.error);
         setMensajes((prev) =>
-          prev.map((m) => (m.id === tempId ? { ...m, status: "failed" } : m))
+          prev.map((m) => (m.id === tempId ? { ...m, status: "failed" } : m)),
         );
       }
     } catch (err) {
       console.error("Error al enviar", err);
       setMensajes((prev) =>
-        prev.map((m) => (m.id === tempId ? { ...m, status: "failed" } : m))
+        prev.map((m) => (m.id === tempId ? { ...m, status: "failed" } : m)),
       );
     }
   };
@@ -243,20 +284,51 @@ export default function ChatClient({
     setVehiculosResult(data || []);
   };
 
-  // crear cliente nuevo a partir del contacto de WhatsApp
-  const crearClienteDesdeContacto = async () => {
-    if (!contactoActivo) return;
-    const { data, error } = await supabase
-      .from("clientes")
-      .insert({
-        nombre: contactoActivo.nombre_perfil || "Sin nombre",
-        apellido: "",
-        telefono_celular: contactoActivo.telefono,
-      })
-      .select("id")
-      .single();
-    if (error) return alert("Error creando cliente");
-    await vincularCliente(data.id);
+  const abrirFormularioCliente = () => {
+    setNuevoCliente({
+      nombre: contactoActivo?.nombre_perfil || "",
+      apellido: "",
+      dni: "",
+      cuit_cuil: "",
+      telefono_celular: contactoActivo?.telefono || "",
+      telefono_linea: "",
+      correo_electronico: "",
+      calle: "",
+      numero: "",
+      depto: "",
+      localidad: "",
+      codigo_postal: "",
+      provincia: "",
+      estado_civil: "",
+      profesion: "",
+      fecha_nacimiento: "",
+    });
+    setCreandoClienteManual(true);
+  };
+
+  const guardarClienteManual = async () => {
+    if (!nuevoCliente.nombre.trim() || !nuevoCliente.apellido.trim()) {
+      alert("Nombre y apellido son obligatorios.");
+      return;
+    }
+    setGuardandoCliente(true);
+    try {
+      const { data, error } = await supabase
+        .from("clientes")
+        .insert({
+          ...nuevoCliente,
+          fecha_nacimiento: nuevoCliente.fecha_nacimiento || null,
+        })
+        .select("id")
+        .single();
+      if (error) throw error;
+      await vincularCliente(data.id);
+      setCreandoClienteManual(false);
+    } catch (err) {
+      alert("Error al crear el cliente.");
+    } finally {
+      setGuardandoCliente(false);
+    }
   };
 
   const vincularCliente = async (clienteId: string) => {
@@ -287,15 +359,17 @@ export default function ChatClient({
       .eq("id", seleccionada);
     const vendedor = vendedores.find((v) => v.id === nuevoId) || null;
     setConversaciones((prev) =>
-      prev.map((c) => (c.id === seleccionada ? { ...c, vendedor_id: nuevoId, vendedor } : c))
+      prev.map((c) =>
+        c.id === seleccionada ? { ...c, vendedor_id: nuevoId, vendedor } : c,
+      ),
     );
   };
 
   const tibiosYCalientes = conversaciones.filter(
-    (c) => c.calificacion === "tibio" || c.calificacion === "caliente"
+    (c) => c.calificacion === "tibio" || c.calificacion === "caliente",
   );
   const frios = conversaciones.filter(
-    (c) => c.calificacion !== "tibio" && c.calificacion !== "caliente"
+    (c) => c.calificacion !== "tibio" && c.calificacion !== "caliente",
   );
 
   const colorCalificacion = (calificacion: string | null) => {
@@ -357,7 +431,9 @@ export default function ChatClient({
   return (
     <div className="flex w-full h-full text-slate-800 dark:text-slate-200">
       {/* ================= COLUMNA 1: BANDEJA (Izquierda) ================= */}
-      <div className={`w-full md:w-[320px] flex-col bg-white dark:bg-[#001c55] border-r border-slate-200 dark:border-[#0a2a6b] shrink-0 ${seleccionada ? "hidden md:flex" : "flex"}`}>
+      <div
+        className={`w-full md:w-[320px] flex-col bg-white dark:bg-[#001c55] border-r border-slate-200 dark:border-[#0a2a6b] shrink-0 ${seleccionada ? "hidden md:flex" : "flex"}`}
+      >
         <div className="p-4 border-b border-slate-100 dark:border-[#0a2a6b] flex-shrink-0">
           <h2 className="text-[17px] font-bold text-slate-900 dark:text-white mb-4 flex items-center gap-2">
             Bandeja{" "}
@@ -473,7 +549,9 @@ export default function ChatClient({
             <div className="flex-1 overflow-y-auto p-6 flex flex-col gap-3 custom-scrollbar">
               {loading ? (
                 <div className="flex justify-center py-4">
-                  <span className="text-xs text-slate-500 dark:text-slate-400">Cargando...</span>
+                  <span className="text-xs text-slate-500 dark:text-slate-400">
+                    Cargando...
+                  </span>
                 </div>
               ) : (
                 mensajes.map((m) => {
@@ -580,7 +658,10 @@ export default function ChatClient({
               {conversacionActiva?.origen_ads && (
                 <div className="mt-3 flex items-center gap-1.5 bg-indigo-50 dark:bg-[#002a6e] border border-indigo-200 dark:border-[#0a2a6b] text-indigo-700 dark:text-sky-300 text-[11px] font-bold px-2.5 py-1 rounded-full max-w-full">
                   <Megaphone className="w-3 h-3 shrink-0" />
-                  <span className="truncate" title={conversacionActiva.origen_ads}>
+                  <span
+                    className="truncate"
+                    title={conversacionActiva.origen_ads}
+                  >
                     {conversacionActiva.origen_ads}
                   </span>
                 </div>
@@ -670,7 +751,9 @@ export default function ChatClient({
               >
                 <option value="">Sin asignar</option>
                 {vendedores.map((v) => (
-                  <option key={v.id} value={v.id}>{v.nombre}</option>
+                  <option key={v.id} value={v.id}>
+                    {v.nombre}
+                  </option>
                 ))}
               </select>
             </div>
@@ -684,64 +767,256 @@ export default function ChatClient({
                 : "Vincular a cliente / auto"}
             </button>
             {showVincular && (
-              <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
-                <div className="bg-white dark:bg-[#001c55] rounded-xl p-5 w-full max-w-sm space-y-4">
-                  <h3 className="font-bold text-sm text-slate-900 dark:text-white">Vincular conversación</h3>
-
-                  <div>
-                    <label className="text-xs font-bold text-slate-500 dark:text-slate-400">
-                      Cliente
-                    </label>
-                    <input
-                      value={buscarCliente}
-                      onChange={(e) => buscarClientesFn(e.target.value)}
-                      placeholder="Buscar por nombre..."
-                      className="w-full border border-slate-200 dark:border-[#0a2a6b] bg-white dark:bg-[#00246b] text-slate-900 dark:text-white rounded-lg px-3 py-2 text-sm mt-1"
-                    />
-                    {clientesResult.map((c) => (
-                      <button
-                        key={c.id}
-                        onClick={() => vincularCliente(c.id)}
-                        className="block w-full text-left text-sm text-slate-700 dark:text-slate-200 px-2 py-1.5 hover:bg-slate-50 dark:hover:bg-[#00246b] rounded"
-                      >
-                        {c.nombre} {c.apellido} — {c.telefono_celular}
-                      </button>
-                    ))}
+              <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
+                <div className="bg-white dark:bg-[#001c55] rounded-xl p-5 w-full max-w-md space-y-4 max-h-[90vh] overflow-y-auto custom-scrollbar shadow-2xl">
+                  <div className="flex justify-between items-center">
+                    <h3 className="font-bold text-sm text-slate-900 dark:text-white">
+                      {creandoClienteManual
+                        ? "Nuevo Cliente"
+                        : "Vincular conversación"}
+                    </h3>
                     <button
-                      onClick={crearClienteDesdeContacto}
-                      className="text-xs text-emerald-700 dark:text-emerald-300 font-bold mt-2"
+                      onClick={() => {
+                        setShowVincular(false);
+                        setCreandoClienteManual(false);
+                      }}
+                      className="text-slate-400 hover:text-slate-600 dark:hover:text-slate-300"
                     >
-                      + Crear cliente nuevo con estos datos
+                      <X className="w-4 h-4" />
                     </button>
                   </div>
 
-                  <div>
-                    <label className="text-xs font-bold text-slate-500 dark:text-slate-400">
-                      Vehículo (opcional)
-                    </label>
-                    <input
-                      value={buscarVehiculo}
-                      onChange={(e) => buscarVehiculosFn(e.target.value)}
-                      placeholder="Marca, modelo o patente..."
-                      className="w-full border border-slate-200 dark:border-[#0a2a6b] bg-white dark:bg-[#00246b] text-slate-900 dark:text-white rounded-lg px-3 py-2 text-sm mt-1"
-                    />
-                    {vehiculosResult.map((v) => (
-                      <button
-                        key={v.id}
-                        onClick={() => vincularVehiculo(v.id)}
-                        className="block w-full text-left text-sm text-slate-700 dark:text-slate-200 px-2 py-1.5 hover:bg-slate-50 dark:hover:bg-[#00246b] rounded"
-                      >
-                        {v.marca} {v.modelo} {v.patente ? `(${v.patente})` : ""}
-                      </button>
-                    ))}
-                  </div>
+                  {creandoClienteManual ? (
+                    <div className="space-y-3">
+                      <div className="grid grid-cols-2 gap-2">
+                        <input
+                          className="w-full border border-slate-200 dark:border-[#0a2a6b] bg-white dark:bg-[#00246b] text-slate-900 dark:text-white rounded-lg px-3 py-2 text-sm placeholder:text-slate-400"
+                          placeholder="Nombre *"
+                          value={nuevoCliente.nombre}
+                          onChange={(e) =>
+                            setNuevoCliente({
+                              ...nuevoCliente,
+                              nombre: e.target.value,
+                            })
+                          }
+                        />
+                        <input
+                          className="w-full border border-slate-200 dark:border-[#0a2a6b] bg-white dark:bg-[#00246b] text-slate-900 dark:text-white rounded-lg px-3 py-2 text-sm placeholder:text-slate-400"
+                          placeholder="Apellido *"
+                          value={nuevoCliente.apellido}
+                          onChange={(e) =>
+                            setNuevoCliente({
+                              ...nuevoCliente,
+                              apellido: e.target.value,
+                            })
+                          }
+                        />
+                        <input
+                          className="w-full border border-slate-200 dark:border-[#0a2a6b] bg-white dark:bg-[#00246b] text-slate-900 dark:text-white rounded-lg px-3 py-2 text-sm placeholder:text-slate-400"
+                          placeholder="DNI"
+                          value={nuevoCliente.dni}
+                          onChange={(e) =>
+                            setNuevoCliente({
+                              ...nuevoCliente,
+                              dni: e.target.value,
+                            })
+                          }
+                        />
+                        <input
+                          className="w-full border border-slate-200 dark:border-[#0a2a6b] bg-white dark:bg-[#00246b] text-slate-900 dark:text-white rounded-lg px-3 py-2 text-sm placeholder:text-slate-400"
+                          placeholder="CUIT/CUIL"
+                          value={nuevoCliente.cuit_cuil}
+                          onChange={(e) =>
+                            setNuevoCliente({
+                              ...nuevoCliente,
+                              cuit_cuil: e.target.value,
+                            })
+                          }
+                        />
+                        <input
+                          className="w-full border border-slate-200 dark:border-[#0a2a6b] bg-white dark:bg-[#00246b] text-slate-900 dark:text-white rounded-lg px-3 py-2 text-sm placeholder:text-slate-400"
+                          placeholder="Teléfono celular"
+                          value={nuevoCliente.telefono_celular}
+                          onChange={(e) =>
+                            setNuevoCliente({
+                              ...nuevoCliente,
+                              telefono_celular: e.target.value,
+                            })
+                          }
+                        />
+                        <input
+                          className="w-full border border-slate-200 dark:border-[#0a2a6b] bg-white dark:bg-[#00246b] text-slate-900 dark:text-white rounded-lg px-3 py-2 text-sm placeholder:text-slate-400"
+                          placeholder="Tel. de línea"
+                          value={nuevoCliente.telefono_linea}
+                          onChange={(e) =>
+                            setNuevoCliente({
+                              ...nuevoCliente,
+                              telefono_linea: e.target.value,
+                            })
+                          }
+                        />
+                        <input
+                          className="w-full border border-slate-200 dark:border-[#0a2a6b] bg-white dark:bg-[#00246b] text-slate-900 dark:text-white rounded-lg px-3 py-2 text-sm placeholder:text-slate-400 col-span-2"
+                          placeholder="Correo electrónico"
+                          value={nuevoCliente.correo_electronico}
+                          onChange={(e) =>
+                            setNuevoCliente({
+                              ...nuevoCliente,
+                              correo_electronico: e.target.value,
+                            })
+                          }
+                        />
+                        <input
+                          className="w-full border border-slate-200 dark:border-[#0a2a6b] bg-white dark:bg-[#00246b] text-slate-900 dark:text-white rounded-lg px-3 py-2 text-sm placeholder:text-slate-400 col-span-2"
+                          type="date"
+                          title="Fecha de nacimiento"
+                          value={nuevoCliente.fecha_nacimiento}
+                          onChange={(e) =>
+                            setNuevoCliente({
+                              ...nuevoCliente,
+                              fecha_nacimiento: e.target.value,
+                            })
+                          }
+                        />
+                        <input
+                          className="w-full border border-slate-200 dark:border-[#0a2a6b] bg-white dark:bg-[#00246b] text-slate-900 dark:text-white rounded-lg px-3 py-2 text-sm placeholder:text-slate-400"
+                          placeholder="Calle"
+                          value={nuevoCliente.calle}
+                          onChange={(e) =>
+                            setNuevoCliente({
+                              ...nuevoCliente,
+                              calle: e.target.value,
+                            })
+                          }
+                        />
+                        <input
+                          className="w-full border border-slate-200 dark:border-[#0a2a6b] bg-white dark:bg-[#00246b] text-slate-900 dark:text-white rounded-lg px-3 py-2 text-sm placeholder:text-slate-400"
+                          placeholder="Número"
+                          value={nuevoCliente.numero}
+                          onChange={(e) =>
+                            setNuevoCliente({
+                              ...nuevoCliente,
+                              numero: e.target.value,
+                            })
+                          }
+                        />
+                        <input
+                          className="w-full border border-slate-200 dark:border-[#0a2a6b] bg-white dark:bg-[#00246b] text-slate-900 dark:text-white rounded-lg px-3 py-2 text-sm placeholder:text-slate-400"
+                          placeholder="Depto"
+                          value={nuevoCliente.depto}
+                          onChange={(e) =>
+                            setNuevoCliente({
+                              ...nuevoCliente,
+                              depto: e.target.value,
+                            })
+                          }
+                        />
+                        <input
+                          className="w-full border border-slate-200 dark:border-[#0a2a6b] bg-white dark:bg-[#00246b] text-slate-900 dark:text-white rounded-lg px-3 py-2 text-sm placeholder:text-slate-400"
+                          placeholder="Localidad"
+                          value={nuevoCliente.localidad}
+                          onChange={(e) =>
+                            setNuevoCliente({
+                              ...nuevoCliente,
+                              localidad: e.target.value,
+                            })
+                          }
+                        />
+                        <input
+                          className="w-full border border-slate-200 dark:border-[#0a2a6b] bg-white dark:bg-[#00246b] text-slate-900 dark:text-white rounded-lg px-3 py-2 text-sm placeholder:text-slate-400"
+                          placeholder="C. Postal"
+                          value={nuevoCliente.codigo_postal}
+                          onChange={(e) =>
+                            setNuevoCliente({
+                              ...nuevoCliente,
+                              codigo_postal: e.target.value,
+                            })
+                          }
+                        />
+                        <input
+                          className="w-full border border-slate-200 dark:border-[#0a2a6b] bg-white dark:bg-[#00246b] text-slate-900 dark:text-white rounded-lg px-3 py-2 text-sm placeholder:text-slate-400"
+                          placeholder="Provincia"
+                          value={nuevoCliente.provincia}
+                          onChange={(e) =>
+                            setNuevoCliente({
+                              ...nuevoCliente,
+                              provincia: e.target.value,
+                            })
+                          }
+                        />
+                      </div>
+                      <div className="pt-2">
+                        <button
+                          onClick={guardarClienteManual}
+                          disabled={guardandoCliente}
+                          className="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-2.5 rounded-lg text-[11px] uppercase tracking-widest disabled:opacity-50 transition-colors"
+                        >
+                          {guardandoCliente
+                            ? "Guardando..."
+                            : "Usar este cliente"}
+                        </button>
+                        <button
+                          onClick={() => setCreandoClienteManual(false)}
+                          className="w-full mt-2 text-[11px] font-bold uppercase tracking-widest text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-200 py-2"
+                        >
+                          Volver a buscar
+                        </button>
+                      </div>
+                    </div>
+                  ) : (
+                    <div className="space-y-4">
+                      {/* Búsqueda Cliente actual */}
+                      <div>
+                        <label className="text-xs font-bold text-slate-500 dark:text-slate-400">
+                          Cliente
+                        </label>
+                        <input
+                          value={buscarCliente}
+                          onChange={(e) => buscarClientesFn(e.target.value)}
+                          placeholder="Buscar por nombre..."
+                          className="w-full border border-slate-200 dark:border-[#0a2a6b] bg-white dark:bg-[#00246b] text-slate-900 dark:text-white rounded-lg px-3 py-2 text-sm mt-1"
+                        />
+                        {clientesResult.map((c) => (
+                          <button
+                            key={c.id}
+                            onClick={() => vincularCliente(c.id)}
+                            className="block w-full text-left text-sm text-slate-700 dark:text-slate-200 px-2 py-1.5 hover:bg-slate-50 dark:hover:bg-[#00246b] rounded mt-1"
+                          >
+                            {c.nombre} {c.apellido} — {c.telefono_celular}
+                          </button>
+                        ))}
+                        <button
+                          onClick={abrirFormularioCliente}
+                          className="text-xs text-emerald-700 dark:text-emerald-300 font-bold mt-3"
+                        >
+                          + Crear cliente nuevo con estos datos
+                        </button>
+                      </div>
 
-                  <button
-                    onClick={() => setShowVincular(false)}
-                    className="text-xs text-slate-500 dark:text-slate-400"
-                  >
-                    Cerrar
-                  </button>
+                      {/* Búsqueda Vehículo actual */}
+                      <div className="border-t border-slate-100 dark:border-[#0a2a6b] pt-4">
+                        <label className="text-xs font-bold text-slate-500 dark:text-slate-400">
+                          Vehículo (opcional)
+                        </label>
+                        <input
+                          value={buscarVehiculo}
+                          onChange={(e) => buscarVehiculosFn(e.target.value)}
+                          placeholder="Marca, modelo o patente..."
+                          className="w-full border border-slate-200 dark:border-[#0a2a6b] bg-white dark:bg-[#00246b] text-slate-900 dark:text-white rounded-lg px-3 py-2 text-sm mt-1"
+                        />
+                        {vehiculosResult.map((v) => (
+                          <button
+                            key={v.id}
+                            onClick={() => vincularVehiculo(v.id)}
+                            className="block w-full text-left text-sm text-slate-700 dark:text-slate-200 px-2 py-1.5 hover:bg-slate-50 dark:hover:bg-[#00246b] rounded mt-1"
+                          >
+                            {v.marca} {v.modelo}{" "}
+                            {v.patente ? `(${v.patente})` : ""}
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+                  )}
                 </div>
               </div>
             )}
