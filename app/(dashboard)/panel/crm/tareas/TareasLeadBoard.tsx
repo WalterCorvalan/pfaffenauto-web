@@ -2,6 +2,7 @@
 
 import { useMemo, useState } from "react";
 import Link from "next/link";
+import { useSearchParams } from "next/navigation";
 import { 
   AlertTriangle, Clock, UserPlus, CheckSquare, Phone, 
   LayoutGrid, Calendar, History, Printer, ChevronLeft, ChevronRight, 
@@ -75,7 +76,9 @@ export default function TareasLeadBoard({
   tareasIniciales: any[]; tareasCompletadas: any[]; leadsSinContacto: any[]; vendedores: any[];
 }) {
   const [vista, setVista] = useState<Vista>("tablero");
-  const [vendedorFiltro, setVendedorFiltro] = useState("");
+  // Precargado desde /panel/equipo (link "ver tareas de este vendedor").
+  const vendedorInicial = useSearchParams().get("vendedor") || "";
+  const [vendedorFiltro, setVendedorFiltro] = useState(vendedorInicial);
   const [calificacionFiltro, setCalificacionFiltro] = useState("");
 
   const filtrarPorVendedorYCalificacion = (lista: any[], getVendedorId: (x: any) => string | null, getCalificacion: (x: any) => string | null) =>
@@ -414,8 +417,8 @@ function TareasCalendario({ tareas, completadas }: { tareas: any[]; completadas:
 
   return (
     <div className="max-w-[1400px] mx-auto">
-      <div className="flex items-center justify-between mb-4 print:hidden">
-        <div className="flex items-center gap-2">
+      <div className="flex flex-col gap-3 mb-4 print:hidden sm:flex-row sm:items-center sm:justify-between">
+        <div className="flex items-center gap-2 justify-center sm:justify-start">
           <button onClick={() => setSemanaBase((s) => { const n = new Date(s); n.setDate(n.getDate() - 7); return n; })} className="p-1.5 rounded-lg bg-slate-100 dark:bg-[#00246b] hover:bg-slate-200 dark:hover:bg-[#002a6e] text-slate-600 dark:text-slate-300">
             <ChevronLeft className="w-4 h-4" />
           </button>
@@ -425,38 +428,42 @@ function TareasCalendario({ tareas, completadas }: { tareas: any[]; completadas:
           <button onClick={() => setSemanaBase((s) => { const n = new Date(s); n.setDate(n.getDate() + 7); return n; })} className="p-1.5 rounded-lg bg-slate-100 dark:bg-[#00246b] hover:bg-slate-200 dark:hover:bg-[#002a6e] text-slate-600 dark:text-slate-300">
             <ChevronRight className="w-4 h-4" />
           </button>
+          <span className="text-[13px] font-bold text-slate-700 dark:text-slate-200 whitespace-nowrap ml-1">
+            {dias[0].toLocaleDateString("es-AR", { day: "2-digit", month: "short" })} – {dias[6].toLocaleDateString("es-AR", { day: "2-digit", month: "short" })}
+          </span>
         </div>
-        <span className="text-[13px] font-bold text-slate-700 dark:text-slate-200">
-          {dias[0].toLocaleDateString("es-AR", { day: "2-digit", month: "short" })} - {dias[6].toLocaleDateString("es-AR", { day: "2-digit", month: "short", year: "numeric" })}
-        </span>
-        <div className="flex items-center gap-3 text-[10px] font-bold uppercase text-slate-400 dark:text-slate-500">
+        <div className="flex items-center gap-3 text-[10px] font-bold uppercase text-slate-400 dark:text-slate-500 justify-center sm:justify-end flex-wrap">
           <span className="flex items-center gap-1"><span className="w-2 h-2 rounded-full bg-rose-500" /> Vencida</span>
           <span className="flex items-center gap-1"><span className="w-2 h-2 rounded-full bg-amber-500" /> Pendiente</span>
           <span className="flex items-center gap-1"><span className="w-2 h-2 rounded-full bg-slate-400" /> Completada</span>
         </div>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-7 gap-2">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-7 gap-2">
         {dias.map((dia) => {
           const items = tareasPorDia(dia);
           const esHoy = dia.toDateString() === new Date().toDateString();
           return (
-            <div key={dia.toISOString()} className={`bg-white dark:bg-[#001c55] border rounded-xl overflow-hidden min-h-[150px] ${esHoy ? "border-indigo-400 dark:border-sky-400 ring-1 ring-indigo-400 dark:ring-sky-400" : "border-slate-200 dark:border-[#0a2a6b]"}`}>
+            <div key={dia.toISOString()} className={`bg-white dark:bg-[#001c55] border rounded-xl overflow-hidden ${esHoy ? "border-indigo-400 dark:border-sky-400 ring-1 ring-indigo-400 dark:ring-sky-400" : "border-slate-200 dark:border-[#0a2a6b]"}`}>
               <div className={`px-2 py-1.5 text-center text-[10px] font-bold ${esHoy ? "bg-indigo-600 text-white" : "bg-slate-50 dark:bg-[#00246b] text-slate-500 dark:text-slate-400"}`}>
                 {nombreDia(dia)}
               </div>
-              <div className="p-1.5 space-y-1">
-                {items.map((t) => (
-                  <Link
-                    key={t.id}
-                    href={`/panel/crm/${t.cotizaciones?.id}`}
-                    className={`block ${colorTarea(t)} text-white rounded px-1.5 py-1 text-[10px] leading-tight hover:opacity-90 transition-opacity`}
-                  >
-                    <div className="font-bold">{new Date(t.fecha_vencimiento).toLocaleTimeString("es-AR", { hour: "2-digit", minute: "2-digit" })}</div>
-                    <div className="truncate">{t.cotizaciones?.nombre || "Lead"}</div>
-                  </Link>
-                ))}
-              </div>
+              {items.length === 0 ? (
+                <p className="px-2 py-2.5 text-center text-[10px] text-slate-300 dark:text-slate-600 italic">Sin tareas</p>
+              ) : (
+                <div className="p-1.5 space-y-1">
+                  {items.map((t) => (
+                    <Link
+                      key={t.id}
+                      href={`/panel/crm/${t.cotizaciones?.id}`}
+                      className={`block ${colorTarea(t)} text-white rounded px-1.5 py-1 text-[10px] leading-tight hover:opacity-90 transition-opacity`}
+                    >
+                      <div className="font-bold">{new Date(t.fecha_vencimiento).toLocaleTimeString("es-AR", { hour: "2-digit", minute: "2-digit" })}</div>
+                      <div className="truncate">{t.cotizaciones?.nombre || "Lead"}</div>
+                    </Link>
+                  ))}
+                </div>
+              )}
             </div>
           );
         })}

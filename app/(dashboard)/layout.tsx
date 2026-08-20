@@ -100,6 +100,7 @@ export default function DashboardLayout({
         "/panel/peritajes",
         "/panel/consignaciones",
         "/panel/pedidos",
+        "/panel/equipo",
       ],
       operaciones: [
         "/panel/ventas",
@@ -391,6 +392,13 @@ export default function DashboardLayout({
                     label="Tareas de Leads"
                     href="/panel/crm/tareas"
                   />
+                  {(userProfile.rol === "admin" || userProfile.rol === "encargado") && (
+                    <NavLinkItem
+                      icon={Users}
+                      label="Supervisión de Equipo"
+                      href="/panel/equipo"
+                    />
+                  )}
                   <NavLinkItem
                     icon={MessageSquareCheckIcon}
                     label="Chat"

@@ -13,23 +13,21 @@ import { tienePermiso } from "@/lib/permisos";
 const ITEMS_POR_PAGINA = 10;
 
 const COLOR_ESTADO_BORDE: Record<string, string> = {
-  Disponible: "border-l-emerald-400", Reservado: "border-l-amber-400", Vendido: "border-l-emerald-400",
+  Disponible: "border-l-blue-400", Reservado: "border-l-amber-400", Vendido: "border-l-emerald-400",
   Archivado: "border-l-rose-400", Incompleto: "border-l-rose-400",
 };
 
-// Semáforo de antigüedad en stock: verde hasta 1 mes, amarillo de 1 mes y 1 día a 2 meses, rojo de 2 meses y 1 día en adelante.
-function semaforoAntiguedad(fechaIngreso: string | null): { color: string; label: string } | null {
+// Semáforo de antigüedad en stock: neutro hasta 30 días, amarillo de 31 a 60,
+// rojo de 61 en adelante. Días exactos, no meses calendario (evita que un mes
+// de 28 días dispare antes que uno de 31).
+function semaforoAntiguedad(fechaIngreso: string | null): { color: string; label: string; dias: number } | null {
   if (!fechaIngreso) return null;
   const ingreso = new Date(fechaIngreso);
-  const unMes = new Date(ingreso);
-  unMes.setMonth(unMes.getMonth() + 1);
-  const dosMeses = new Date(ingreso);
-  dosMeses.setMonth(dosMeses.getMonth() + 2);
   const ahora = new Date();
   const dias = Math.floor((ahora.getTime() - ingreso.getTime()) / 86400000);
-  if (ahora > dosMeses) return { color: "bg-rose-500", label: `${dias} días en stock` };
-  if (ahora > unMes) return { color: "bg-amber-400", label: `${dias} días en stock` };
-  return null;
+  if (dias > 60) return { color: "bg-rose-500 text-white", label: `${dias} días en stock`, dias };
+  if (dias > 30) return { color: "bg-amber-400 text-white", label: `${dias} días en stock`, dias };
+  return { color: "bg-slate-100 dark:bg-slate-700 text-slate-500 dark:text-slate-300", label: `${dias} días en stock`, dias };
 }
 
 export default async function PanelPage({ searchParams }: { searchParams: Promise<{ q?: string; sucursal?: string; page?: string }>; }) {
@@ -87,8 +85,8 @@ export default async function PanelPage({ searchParams }: { searchParams: Promis
             <p className="text-[11px] font-medium text-slate-500 dark:text-slate-400 mt-0.5 flex items-center gap-3 flex-wrap">
               Administración del inventario de unidades
               <span className="flex items-center gap-2.5 text-[10px] font-bold uppercase tracking-wide">
-                <span className="flex items-center gap-1"><span className="w-1.5 h-1.5 rounded-full bg-amber-400" />+1 mes</span>
-                <span className="flex items-center gap-1"><span className="w-1.5 h-1.5 rounded-full bg-rose-500" />+2 meses</span>
+                <span className="flex items-center gap-1"><span className="w-1.5 h-1.5 rounded-full bg-amber-400" />+30 días</span>
+                <span className="flex items-center gap-1"><span className="w-1.5 h-1.5 rounded-full bg-rose-500" />+60 días</span>
               </span>
             </p>
           </div>
@@ -150,7 +148,6 @@ export default async function PanelPage({ searchParams }: { searchParams: Promis
                       <div className="flex-1 min-w-0">
                         <span className="text-[10px] uppercase tracking-widest font-bold text-slate-400 mb-0.5 truncate flex items-center gap-1.5">
                           {auto.patente || "S/P"}
-                          {semaforo && <span className={`w-2 h-2 rounded-full ${semaforo.color}`} title={semaforo.label} />}
                         </span>
                         <h3 className="font-bold capitalize text-sm text-slate-900 dark:text-white leading-tight truncate mb-1">{auto.marca} {auto.modelo}</h3>
                         <PrecioEditor autoId={auto.id} autoMarca={auto.marca} autoModelo={auto.modelo} vendedorAsignadoId={auto.vendedor_asignado_id} precioArs={auto.precio_publicado_ars} precioUsd={auto.precio_publicado_usd} puedeGestionar={puedeGestionar} />
@@ -171,17 +168,17 @@ export default async function PanelPage({ searchParams }: { searchParams: Promis
                       </div>
                     </div>
                     <div className="pt-2 flex items-center justify-between gap-2 border-t border-slate-100 dark:border-[#0a2a6b]">
-                      <AccionesAuto autoId={auto.id} autoMarca={auto.marca} autoModelo={auto.modelo} vendedorAsignadoId={auto.vendedor_asignado_id} estadoActual={auto.estado} puedeGestionar={puedeGestionar} />
-                      <div className="flex items-center gap-1.5">
-                        {puedeGestionar && (
-                          <Link href={`/panel/vehiculo/boleto/${auto.id}`} className="p-2 bg-slate-50 dark:bg-[#00246b] border border-slate-200 dark:border-[#0a2a6b] hover:bg-slate-100 dark:hover:bg-[#002a6e] rounded-lg text-slate-500 dark:text-slate-300 hover:text-emerald-600 transition-colors">
-                            <FileText className="w-4 h-4" />
-                          </Link>
+                      <div className="flex items-center gap-2">
+                        <AccionesAuto autoId={auto.id} autoMarca={auto.marca} autoModelo={auto.modelo} vendedorAsignadoId={auto.vendedor_asignado_id} estadoActual={auto.estado} puedeGestionar={puedeGestionar} />
+                        {semaforo && (
+                          <span className={`inline-flex items-center gap-1 text-[10px] font-bold px-2 py-1 rounded-full ${semaforo.color}`}>
+                            {semaforo.dias}d en stock
+                          </span>
                         )}
-                        <Link href={`/panel/vehiculo/editar/${auto.id}`} className="flex items-center gap-1 text-[11px] font-bold uppercase tracking-wider bg-slate-50 dark:bg-[#00246b] border border-slate-200 dark:border-[#0a2a6b] hover:bg-slate-100 dark:hover:bg-[#002a6e] text-slate-600 dark:text-slate-300 px-3 py-1.5 rounded-lg transition-colors">
-                          <Edit2 className="w-3.5 h-3.5" /> Editar
-                        </Link>
                       </div>
+                      <Link href={`/panel/vehiculo/editar/${auto.id}`} className="flex items-center gap-1 text-[11px] font-bold uppercase tracking-wider bg-slate-50 dark:bg-[#00246b] border border-slate-200 dark:border-[#0a2a6b] hover:bg-slate-100 dark:hover:bg-[#002a6e] text-slate-600 dark:text-slate-300 px-3 py-1.5 rounded-lg transition-colors">
+                        <Edit2 className="w-3.5 h-3.5" /> Editar
+                      </Link>
                     </div>
                   </div>
                   );
@@ -225,7 +222,11 @@ export default async function PanelPage({ searchParams }: { searchParams: Promis
                             <div className="min-w-0">
                               <span className="text-[9px] text-slate-400 font-bold uppercase tracking-widest truncate flex items-center gap-1.5">
                                 {auto.patente}
-                                {semaforo && <span className={`w-1.5 h-1.5 rounded-full shrink-0 ${semaforo.color}`} title={semaforo.label} />}
+                                {semaforo && (
+                                  <span className={`shrink-0 inline-flex items-center px-1.5 py-0.5 rounded-full text-[9px] font-bold normal-case tracking-normal ${semaforo.color}`}>
+                                    {semaforo.dias}d
+                                  </span>
+                                )}
                               </span>
                               <span className="font-bold capitalize text-[13px] text-slate-900 dark:text-white block truncate leading-tight">{auto.marca} {auto.modelo}</span>
                             </div>

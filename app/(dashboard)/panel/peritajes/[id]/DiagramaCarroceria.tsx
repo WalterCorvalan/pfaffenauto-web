@@ -77,17 +77,59 @@ const VISTAS: { id: string; titulo: string; zonas: Zona[] }[] = [
   },
 ];
 
-// Silueta genérica de auto (vista lateral simplificada) — se reutiliza en las
-// 3 vistas de perfil/frente/atrás, alcanza para ubicar las zonas clickeables.
-function SiluetaAuto() {
+// Tres siluetas distintas (frente/lateral/atrás) — antes se reutilizaba la
+// misma silueta lateral para las 4 vistas y todas parecían un capot.
+const SILUETA_CLASS = "text-slate-300 dark:text-slate-600";
+
+function SiluetaFrente() {
+  return (
+    <g fill="none" stroke="currentColor" strokeWidth="1.5" className={SILUETA_CLASS}>
+      {/* Capot + parabrisas visto de frente, techo arriba */}
+      <path d="M28,88 Q22,88 22,80 L24,58 Q26,40 38,30 Q44,26 50,26 Q56,26 62,30 Q74,40 76,58 L78,80 Q78,88 72,88 Z" />
+      <path d="M35,30 Q50,20 65,30" />
+      {/* Faros */}
+      <circle cx="30" cy="60" r="4" />
+      <circle cx="70" cy="60" r="4" />
+      {/* Paragolpes */}
+      <path d="M24,80 L76,80" />
+    </g>
+  );
+}
+
+function SiluetaAtras() {
+  return (
+    <g fill="none" stroke="currentColor" strokeWidth="1.5" className={SILUETA_CLASS}>
+      {/* Baúl + luneta vista de atrás — más ancha abajo que el frente */}
+      <path d="M24,88 Q18,88 18,80 L21,56 Q24,38 38,30 Q44,27 50,27 Q56,27 62,30 Q76,38 79,56 L82,80 Q82,88 76,88 Z" />
+      <path d="M33,32 Q50,24 67,32" />
+      {/* Ópticas traseras (rectangulares, distinto de los faros redondos) */}
+      <rect x="25" y="56" width="7" height="10" rx="1.5" />
+      <rect x="68" y="56" width="7" height="10" rx="1.5" />
+      <path d="M21,80 L79,80" />
+    </g>
+  );
+}
+
+function SiluetaLateral() {
   return (
     <path
       d="M20,85 L25,55 Q30,35 50,32 L70,32 Q85,35 90,55 L95,85 Z M20,85 Q15,85 15,80 L15,75 Q15,70 20,70 M95,85 Q100,85 100,80 L100,75 Q100,70 95,70"
       fill="none"
       stroke="currentColor"
       strokeWidth="1.5"
-      className="text-slate-300 dark:text-slate-600"
+      className={SILUETA_CLASS}
     />
+  );
+}
+
+function Silueta({ vista }: { vista: string }) {
+  if (vista === "frente") return <SiluetaFrente />;
+  if (vista === "atras") return <SiluetaAtras />;
+  // lateral_der: espejamos la lateral izquierda para que se note que es el otro costado
+  return (
+    <g transform={vista === "lateral_der" ? "scale(-1,1) translate(-100,0)" : undefined}>
+      <SiluetaLateral />
+    </g>
   );
 }
 
@@ -135,7 +177,7 @@ export default function DiagramaCarroceria({ peritajeId, marcasIniciales }: { pe
             <p className="text-[10px] font-bold uppercase tracking-widest text-slate-400 dark:text-slate-500 text-center mb-1">{vista.titulo}</p>
             <div className="relative bg-slate-50 dark:bg-[#00246b] rounded-xl p-2">
               <svg viewBox="0 0 100 100" className="w-full h-auto">
-                <SiluetaAuto />
+                <Silueta vista={vista.id} />
                 {vista.zonas.map((zona) => {
                   const clave = claveMarca(vista.id, zona.id);
                   const marcada = marcas[clave];

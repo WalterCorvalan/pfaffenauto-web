@@ -148,7 +148,7 @@ export default function AccionesAuto({ autoId, autoMarca, autoModelo, vendedorAs
 
   const colorClasses = `
     ${estadoVisual === "Borrador" ? "bg-amber-50 dark:bg-[#002a6e] text-amber-700 dark:text-amber-300 border-amber-200 dark:border-[#0a2a6b]" : ""}
-    ${estadoVisual === "Disponible" ? "bg-emerald-50 dark:bg-[#002a6e] text-emerald-700 dark:text-emerald-300 border-emerald-200 dark:border-[#0a2a6b]" : ""}
+    ${estadoVisual === "Disponible" ? "bg-blue-50 dark:bg-[#002a6e] text-blue-700 dark:text-sky-300 border-blue-200 dark:border-[#0a2a6b]" : ""}
     ${estadoVisual === "Señado" ? "bg-amber-50 dark:bg-[#002a6e] text-amber-700 dark:text-amber-300 border-amber-200 dark:border-[#0a2a6b]" : ""}
     ${estadoVisual === "Vendido" ? "bg-emerald-50 dark:bg-[#002a6e] text-emerald-700 dark:text-emerald-300 border-emerald-200 dark:border-[#0a2a6b]" : ""}
     ${estadoVisual === "Archivado" ? "bg-rose-50 dark:bg-[#002a6e] text-rose-700 dark:text-rose-300 border-rose-200 dark:border-[#0a2a6b]" : ""}

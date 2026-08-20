@@ -21,10 +21,16 @@ export default function PrecioEditor({ autoId, autoMarca, autoModelo, vendedorAs
   const [ars, setArs] = useState(precioArs?.toString() || "");
   const [usd, setUsd] = useState(precioUsd?.toString() || "");
   const [cargando, setCargando] = useState(false);
+  const [error, setError] = useState("");
 
   const guardarPrecio = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!puedeGestionar) return;
+    setError("");
+    if (!ars.trim() && !usd.trim()) {
+      setError("Cargá al menos un precio (ARS o USD).");
+      return;
+    }
     setCargando(true);
 
     try {
@@ -48,7 +54,7 @@ export default function PrecioEditor({ autoId, autoMarca, autoModelo, vendedorAs
           autoId,
           vendedorAsignadoId: vendedorAsignadoId || null,
           actorId: user?.id || null,
-          mensaje: `Se actualizó el precio del ${nombreAuto}: $ ${updateData.precio_publicado_ars?.toLocaleString("es-AR") ?? "—"}.`,
+          mensaje: `Se actualizó el precio del ${nombreAuto}: ${updateData.precio_publicado_ars ? `$ ${updateData.precio_publicado_ars.toLocaleString("es-AR")}` : updateData.precio_publicado_usd ? `US$ ${updateData.precio_publicado_usd.toLocaleString("en-US")}` : "—"}.`,
           tipo: "precio_actualizado",
         }),
       }).catch((err) => console.error("Error notificando cambio de precio:", err));
@@ -74,15 +80,22 @@ export default function PrecioEditor({ autoId, autoMarca, autoModelo, vendedorAs
       >
         <div className="flex items-center gap-1.5">
           <span className="font-bold text-emerald-700 dark:text-emerald-300 text-[15px]">
-            {precioArs ? `$ ${precioArs.toLocaleString("es-AR")}` : "Sin ARS"}
+            {precioArs
+              ? `$ ${precioArs.toLocaleString("es-AR")}`
+              : precioUsd
+              ? `US$ ${precioUsd.toLocaleString("en-US")}`
+              : "Sin precio"}
           </span>
           {puedeGestionar && (
             <Edit3 className="w-3.5 h-3.5 opacity-0 group-hover:opacity-100 transition-opacity text-slate-400 dark:text-slate-500" />
           )}
         </div>
-        <div className="text-[11px] text-slate-500 dark:text-slate-400 font-semibold">
-          {precioUsd ? `U$S ${precioUsd.toLocaleString("en-US")}` : "Sin USD"}
-        </div>
+        {/* Solo mostramos la segunda moneda si el precio principal ya mostró la primera */}
+        {precioArs && precioUsd && (
+          <div className="text-[11px] text-slate-500 dark:text-slate-400 font-semibold">
+            US$ {precioUsd.toLocaleString("en-US")}
+          </div>
+        )}
       </div>
 
       {isEditing && puedeGestionar && (
@@ -114,6 +127,12 @@ export default function PrecioEditor({ autoId, autoMarca, autoModelo, vendedorAs
                   <input type="number" value={ars} onChange={(e) => setArs(e.target.value)} placeholder="Ej: 24500000" className="w-full bg-transparent py-2.5 text-sm text-slate-900 dark:text-white outline-none placeholder:text-slate-400 dark:placeholder:text-slate-500 font-mono" />
                 </div>
               </div>
+
+              {error && (
+                <p className="text-[12px] font-semibold text-rose-600 dark:text-rose-400 bg-rose-50 dark:bg-rose-400/10 border border-rose-200 dark:border-rose-400/20 rounded-lg px-3 py-2">
+                  {error}
+                </p>
+              )}
 
               <div className="pt-4 mt-2 border-t border-slate-100 dark:border-[#0a2a6b] flex gap-3">
                 <button type="button" onClick={() => setIsEditing(false)} className="flex-1 py-2.5 text-xs font-bold uppercase tracking-widest bg-white dark:bg-[#00246b] border border-slate-200 dark:border-[#0a2a6b] hover:bg-slate-50 dark:hover:bg-[#002a6e] text-slate-600 dark:text-slate-300 rounded-xl transition-colors">Cancelar</button>

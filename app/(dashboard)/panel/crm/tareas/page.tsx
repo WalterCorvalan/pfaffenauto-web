@@ -18,7 +18,7 @@ export default async function TareasLeadPage() {
     supabase
       .from("cotizaciones")
       .select("id, nombre, telefono, vendedor_id, created_at, calificacion")
-      .eq("estado", "Nuevo")
+      .in("estado", ["Nuevo", "Pendiente"])
       .order("created_at", { ascending: false }),
     supabase.from("perfiles").select("id, nombre").order("nombre"),
   ]);

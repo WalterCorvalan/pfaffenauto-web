@@ -7,7 +7,7 @@ import { supabase } from "@/lib/supabase/client";
 import { ESTADOS_ITEM_PERITAJE, ESTADO_NEUMATICO_RECAPABLE, ACCESORIOS_PERITAJE, calcularPuntaje } from "@/lib/peritajeChecklist";
 import DiagramaCarroceria from "./DiagramaCarroceria";
 import {
-  ArrowLeft, ClipboardCheck, CarFront, User, Phone, Paperclip, Loader2, CheckCircle2, Printer, Wrench,
+  ArrowLeft, ClipboardCheck, CarFront, User, Phone, Paperclip, Loader2, CheckCircle2, Printer, Wrench, X,
 } from "lucide-react";
 
 const COLOR_ESTADO_ITEM: Record<string, string> = {
@@ -265,9 +265,19 @@ export default function PeritajeClient({ peritaje, itemsIniciales }: { peritaje:
                       />
                     )}
                     {item.foto_url && (
-                      <a href={item.foto_url} target="_blank" rel="noopener noreferrer" className="inline-block">
-                        <img src={item.foto_url} alt={item.item} className="h-16 w-16 object-cover rounded-lg border border-slate-200 dark:border-[#0a2a6b]" />
-                      </a>
+                      <div className="relative inline-block w-16 h-16">
+                        <a href={item.foto_url} target="_blank" rel="noopener noreferrer" className="block">
+                          <img src={item.foto_url} alt={item.item} className="h-16 w-16 object-cover rounded-lg border border-slate-200 dark:border-[#0a2a6b]" />
+                        </a>
+                        <button
+                          type="button"
+                          onClick={() => actualizarItem(item.id, { foto_url: "" })}
+                          className="absolute -top-1.5 -right-1.5 w-5 h-5 rounded-full bg-rose-500 hover:bg-rose-600 text-white flex items-center justify-center shadow-sm"
+                          title="Quitar foto"
+                        >
+                          <X className="w-3 h-3" />
+                        </button>
+                      </div>
                     )}
                   </div>
                 ))}
@@ -304,7 +314,37 @@ export default function PeritajeClient({ peritaje, itemsIniciales }: { peritaje:
                           {e === ESTADO_NEUMATICO_RECAPABLE ? "Rec" : e}
                         </button>
                       ))}
+                      <button
+                        onClick={() => fileInputsRef.current[item.id]?.click()}
+                        disabled={subiendoFotoId === item.id}
+                        className="p-1.5 rounded-lg border border-slate-200 dark:border-[#0a2a6b] text-slate-400 dark:text-slate-500 hover:text-indigo-600 dark:hover:text-sky-300 hover:border-indigo-300 dark:hover:border-sky-400/50 transition-colors disabled:opacity-50"
+                        title="Adjuntar foto"
+                      >
+                        {subiendoFotoId === item.id ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Paperclip className="w-3.5 h-3.5" />}
+                      </button>
+                      <input
+                        ref={(el) => { fileInputsRef.current[item.id] = el; }}
+                        type="file"
+                        accept="image/*"
+                        className="hidden"
+                        onChange={(e) => e.target.files?.[0] && subirFoto(item.id, e.target.files[0])}
+                      />
                     </div>
+                    {item.foto_url && (
+                      <div className="relative inline-block w-16 h-16">
+                        <a href={item.foto_url} target="_blank" rel="noopener noreferrer" className="block">
+                          <img src={item.foto_url} alt={item.item} className="h-16 w-16 object-cover rounded-lg border border-slate-200 dark:border-[#0a2a6b]" />
+                        </a>
+                        <button
+                          type="button"
+                          onClick={() => actualizarItem(item.id, { foto_url: "" })}
+                          className="absolute -top-1.5 -right-1.5 w-5 h-5 rounded-full bg-rose-500 hover:bg-rose-600 text-white flex items-center justify-center shadow-sm"
+                          title="Quitar foto"
+                        >
+                          <X className="w-3 h-3" />
+                        </button>
+                      </div>
+                    )}
                   </div>
                 ))}
               </div>
