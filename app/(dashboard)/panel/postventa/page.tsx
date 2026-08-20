@@ -1,22 +1,12 @@
 import { createServerClient } from "@supabase/ssr";
 import { cookies } from "next/headers";
-import { Wrench, Phone, CarFront, Calendar, BellRing } from "lucide-react";
+import { Wrench, Phone, CarFront, BellRing } from "lucide-react";
 import NuevoCasoPostventaModal from "./NuevoCasoPostventaModal";
-import EstadoCasoSelector from "./EstadoCasoSelector";
 import CrearRecordatorioButton from "./CrearRecordatorioButton";
+import CasosPostventa from "./CasosPostventa";
 import NotificacionesBell from "../../NotificacionesBell";
 
 const DIAS_RECORDATORIO_SERVICE_DEFAULT = 180;
-
-const TIPO_COLOR: Record<string, string> = {
-  Service: "bg-blue-500 text-white",
-  Reclamo: "bg-rose-500 text-white",
-  Garantia: "bg-purple-500 text-white",
-};
-
-const ESTADO_BORDE: Record<string, string> = {
-  Pendiente: "border-l-amber-400", "En proceso": "border-l-sky-400", Resuelto: "border-l-emerald-400",
-};
 
 export default async function PostventaPage() {
   const cookieStore = await cookies();
@@ -82,7 +72,7 @@ export default async function PostventaPage() {
         </div>
         <div className="flex items-center gap-2">
           <NotificacionesBell seccion="postventa" />
-          <NuevoCasoPostventaModal vehiculos={vehiculos || []} />
+          <NuevoCasoPostventaModal vehiculos={vehiculos || []} ventas={ventasConCliente || []} />
         </div>
       </header>
 
@@ -107,6 +97,7 @@ export default async function PostventaPage() {
                     <div className="flex items-center gap-2 flex-wrap">
                       <CrearRecordatorioButton
                         vehiculoId={r.vehiculoId}
+                        ventaId={r.ventaId}
                         nombreContacto={r.cliente?.nombre || ""}
                         telefonoContacto={r.cliente?.telefono_celular || ""}
                       />
@@ -127,47 +118,7 @@ export default async function PostventaPage() {
             </div>
           )}
 
-          <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
-          {casos?.map((c) => (
-            <div key={c.id} className={`bg-white dark:bg-[#001c55] border border-slate-200 dark:border-[#0a2a6b] border-l-4 rounded-xl p-4 shadow-sm hover:shadow-md transition-shadow ${ESTADO_BORDE[c.estado] || "border-l-slate-200"}`}>
-              <div className="flex justify-between items-start mb-3">
-                <span className={`text-[9px] font-bold uppercase tracking-widest px-2 py-1 rounded-lg ${TIPO_COLOR[c.tipo] || TIPO_COLOR.Service}`}>
-                  {c.tipo}
-                </span>
-                <EstadoCasoSelector id={c.id} estado={c.estado} />
-              </div>
-
-              <h3 className="font-bold text-[14px] text-slate-900 dark:text-white mb-1">{c.nombre_contacto}</h3>
-              <p className="text-[11px] text-slate-500 dark:text-slate-400 flex items-center gap-1 mb-2">
-                <Phone className="w-3 h-3" /> {c.telefono_contacto}
-              </p>
-
-              {c.vehiculos && (
-                <p className="text-[11px] text-slate-600 dark:text-slate-300 font-medium flex items-center gap-1 mb-2">
-                  <CarFront className="w-3 h-3 text-slate-400 dark:text-slate-500" /> {c.vehiculos.marca} {c.vehiculos.modelo} {c.vehiculos.patente ? `(${c.vehiculos.patente})` : ""}
-                </p>
-              )}
-
-              {c.descripcion && (
-                <p className="text-[12px] text-slate-600 dark:text-slate-300 bg-slate-50 dark:bg-[#00246b] border border-slate-100 dark:border-[#0a2a6b] rounded-lg p-2.5 mb-2 line-clamp-3">
-                  {c.descripcion}
-                </p>
-              )}
-
-              <p className="text-[10px] text-slate-400 dark:text-slate-500 flex items-center gap-1 mt-2">
-                <Calendar className="w-3 h-3" /> {new Date(`${c.fecha}T12:00:00Z`).toLocaleDateString("es-AR", { timeZone: "UTC" })}
-              </p>
-            </div>
-          ))}
-
-          {(!casos || casos.length === 0) && (
-            <div className="col-span-full py-20 flex flex-col items-center justify-center text-center border-2 border-dashed border-slate-200 dark:border-[#0a2a6b] rounded-2xl bg-white dark:bg-[#001c55]">
-              <Wrench className="w-10 h-10 text-slate-300 dark:text-slate-600 mb-3" />
-              <h3 className="text-[15px] font-bold text-slate-700 dark:text-slate-200">Sin casos de postventa</h3>
-              <p className="text-slate-500 dark:text-slate-400 text-xs mt-1">Los turnos de service, reclamos y garantías aparecerán acá.</p>
-            </div>
-          )}
-          </div>
+          <CasosPostventa casos={casos || []} />
         </div>
       </div>
     </div>

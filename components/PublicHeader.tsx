@@ -3,7 +3,10 @@
 import { useState, useEffect } from "react";
 import Link from "next/link";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
-import { Menu, X, Heart, ChevronRight, Search, Sparkles, Landmark } from "lucide-react";
+import { 
+  Menu, X, Heart, ChevronRight, Search, Sparkles, 
+  Landmark, Home, CarFront, ShieldCheck, Tag 
+} from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 
 export default function PublicHeader() {
@@ -42,11 +45,12 @@ export default function PublicHeader() {
     setIsSearchMobileOpen(false);
   }, [pathname, searchParams]);
 
+  // Se agregaron íconos a todas las opciones para unificar el menú móvil
   const navLinks = [
-    { name: "Inicio", href: "/" },
-    { name: "0KM", href: "/0km" },
-    { name: "Usados Seleccionados", href: "/catalogo?q=usados-seleccionados" },
-    { name: "Outlet", href: "/outlet", badge: "Ofertas" },
+    { name: "Inicio", href: "/", icon: Home },
+    { name: "0KM", href: "/0km", icon: CarFront },
+    { name: "Usados Seleccionados", href: "/catalogo?q=usados-seleccionados", icon: ShieldCheck },
+    { name: "Outlet", href: "/outlet", badge: "Ofertas", icon: Tag },
     { name: "Nuestra Historia", href: "/nosotros", icon: Landmark },
   ];
 
@@ -77,11 +81,9 @@ export default function PublicHeader() {
           : "bg-white/40 dark:bg-black/50 backdrop-blur-xl border-white/40 dark:border-white/5 shadow-sm"
       }`}
     >
-      {/* Contenedor estirado a los laterales para aprovechar espacio */}
-      <div className="w-full px-4 md:px-8 h-20 grid grid-cols-[auto_1fr_auto] items-center gap-2">
+      <div className="w-full px-4 md:px-8 h-20 grid grid-cols-[auto_1fr_auto] items-center gap-2 relative z-20">
         {/* ================= COLUMNA IZQUIERDA: LOGOS ================= */}
         <div className="flex items-center gap-3 md:gap-4 justify-start shrink-0">
-          {/* Logo Pfaffen */}
           <Link href="/" className="relative flex items-center group shrink-0">
             <img
               src="/logo.png"
@@ -97,7 +99,6 @@ export default function PublicHeader() {
 
           <span className="h-6 w-[1px] bg-slate-300/75 dark:bg-white/15 hidden sm:block"></span>
 
-          {/* Grupo de concesionarios oficiales */}
           <div className="flex items-center gap-1.5 sm:gap-2.5 sm:bg-white/30 dark:sm:bg-white/5 sm:border sm:border-white/50 dark:sm:border-white/10 rounded-full sm:pl-3 sm:pr-3 sm:py-1 min-w-0">
             <span className="text-[7px] sm:text-[8px] md:text-[9px] font-black uppercase tracking-wide sm:tracking-widest text-slate-600 dark:text-slate-300 whitespace-nowrap shrink-0 leading-none">
               Concesionario oficial
@@ -129,7 +130,7 @@ export default function PublicHeader() {
           </div>
         </div>
 
-        {/* ================= COLUMNA CENTRO: MENÚ / BUSCADOR (CENTRADO EXACTO) ================= */}
+        {/* ================= COLUMNA CENTRO: MENÚ / BUSCADOR (CENTRADO) ================= */}
         <div className="flex justify-center items-center w-full">
           <AnimatePresence mode="popLayout">
             {!isScrolled ? (
@@ -248,21 +249,21 @@ export default function PublicHeader() {
 
           <button
             onClick={toggleMenu}
-            className="lg:hidden p-2.5 text-navy dark:text-white hover:bg-white/60 dark:hover:bg-white/10 rounded-full transition-all"
+            className="lg:hidden p-2.5 text-navy dark:text-white hover:bg-white/60 dark:hover:bg-white/10 rounded-full transition-all ml-2"
           >
             {isOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
           </button>
         </div>
       </div>
 
-      {/* Menús desplegables móviles */}
+      {/* ================= BUSCADOR MÓVIL ================= */}
       <AnimatePresence>
         {isSearchMobileOpen && (
           <motion.div
             initial={{ opacity: 0, height: 0 }}
             animate={{ opacity: 1, height: "auto" }}
             exit={{ opacity: 0, height: 0 }}
-            className="lg:hidden bg-white/70 dark:bg-black/80 backdrop-blur-3xl border-t border-white/60 dark:border-white/10 overflow-hidden"
+            className="lg:hidden bg-white/70 dark:bg-black/80 backdrop-blur-3xl border-t border-white/60 dark:border-white/10 overflow-hidden absolute w-full z-10"
           >
             <form onSubmit={handleSearch} className="p-4 relative">
               <input
@@ -278,46 +279,69 @@ export default function PublicHeader() {
         )}
       </AnimatePresence>
 
+      {/* ================= MENÚ HAMBURGUESA MÓVIL (NUEVO DISEÑO NATIVO) ================= */}
       <AnimatePresence>
         {isOpen && (
           <motion.div
             initial={{ opacity: 0, height: 0 }}
             animate={{ opacity: 1, height: "auto" }}
             exit={{ opacity: 0, height: 0 }}
-            className="lg:hidden bg-white dark:bg-black border-t border-slate-200 dark:border-white/10 shadow-xl overflow-hidden absolute w-full"
+            className="lg:hidden bg-white dark:bg-[#0a0a0f] border-t border-slate-200 dark:border-white/5 shadow-2xl absolute w-full left-0 z-10 overflow-hidden"
           >
-            <div className="flex flex-col px-4 py-6 gap-3">
-              {navLinks.map((link) => (
-                <Link
-                  key={link.name}
-                  href={link.href}
-                  onClick={() => setIsOpen(false)}
-                  className="flex items-center justify-between p-4 rounded-[20px] bg-slate-50 dark:bg-white/5 border border-slate-200 dark:border-white/10 text-navy dark:text-white font-black uppercase tracking-widest text-sm"
-                >
-                  <span className="flex items-center gap-2.5">
-                    {link.icon && <link.icon className="w-4 h-4 text-primary dark:text-sky-400 shrink-0" />}
-                    {link.name}
-                  </span>
-                  <ChevronRight className="w-4 h-4 text-primary dark:text-sky-400" />
-                </Link>
-              ))}
+            {/* Se agrega un padding top leve para darle aire respecto a elementos flotantes externos (como el botón de dark mode) */}
+            <div className="flex flex-col pt-4 pb-6 px-6">
+              
+              {/* Lista de navegación principal */}
+              <div className="divide-y divide-slate-100 dark:divide-white/5">
+                {navLinks.map((link) => (
+                  <Link
+                    key={link.name}
+                    href={link.href}
+                    onClick={() => setIsOpen(false)}
+                    className="flex items-center justify-between py-4 text-navy dark:text-white group"
+                  >
+                    <div className="flex items-center gap-4">
+                      {link.icon && (
+                        <div className="w-9 h-9 rounded-full bg-slate-50 dark:bg-white/5 flex items-center justify-center text-[#0145F2] dark:text-sky-400 group-hover:bg-[#0145F2] group-hover:text-white transition-colors">
+                          <link.icon className="w-[18px] h-[18px]" />
+                        </div>
+                      )}
+                      <span className="font-black uppercase tracking-widest text-[12px]">
+                        {link.name}
+                      </span>
+                      {link.badge && (
+                        <span className="bg-gradient-to-r from-orange-500 to-red-500 text-white text-[9px] font-bold px-2 py-0.5 rounded-full shadow-sm ml-1">
+                          {link.badge}
+                        </span>
+                      )}
+                    </div>
+                    <ChevronRight className="w-4 h-4 text-slate-300 dark:text-slate-600 group-hover:text-[#0145F2] dark:group-hover:text-sky-400 transition-colors" />
+                  </Link>
+                ))}
 
-              <Link
-                href="/favoritos"
-                onClick={() => setIsOpen(false)}
-                className="flex items-center justify-between p-4 rounded-[20px] bg-slate-50 dark:bg-white/5 border border-slate-200 dark:border-white/10 text-navy dark:text-white font-black uppercase tracking-widest text-sm"
-              >
-                <span className="flex items-center gap-2">
-                  <Heart className={`w-4 h-4 ${favCount > 0 ? "fill-red-500 text-red-500" : "text-slate-400"}`} />
-                  Mis Favoritos
-                  {favCount > 0 && (
-                    <span className="bg-red-500 text-white text-[10px] font-black w-5 h-5 flex items-center justify-center rounded-full">
-                      {favCount}
+                {/* Sección Favoritos */}
+                <Link
+                  href="/favoritos"
+                  onClick={() => setIsOpen(false)}
+                  className="flex items-center justify-between py-4 text-navy dark:text-white group"
+                >
+                  <div className="flex items-center gap-4">
+                    <div className={`w-9 h-9 rounded-full flex items-center justify-center transition-colors ${favCount > 0 ? "bg-red-50 dark:bg-red-500/10 text-red-500" : "bg-slate-50 dark:bg-white/5 text-slate-400 dark:text-slate-500"}`}>
+                      <Heart className={`w-[18px] h-[18px] ${favCount > 0 ? "fill-red-500" : ""}`} />
+                    </div>
+                    <span className="font-black uppercase tracking-widest text-[12px] flex items-center gap-2">
+                      Mis Favoritos
+                      {favCount > 0 && (
+                        <span className="bg-red-500 text-white text-[10px] font-black w-5 h-5 flex items-center justify-center rounded-full shadow-sm">
+                          {favCount}
+                        </span>
+                      )}
                     </span>
-                  )}
-                </span>
-                <ChevronRight className="w-4 h-4 text-primary dark:text-sky-400" />
-              </Link>
+                  </div>
+                  <ChevronRight className="w-4 h-4 text-slate-300 dark:text-slate-600 group-hover:text-red-500 transition-colors" />
+                </Link>
+              </div>
+
             </div>
           </motion.div>
         )}

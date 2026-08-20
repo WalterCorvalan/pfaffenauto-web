@@ -15,7 +15,7 @@ export default async function CeroKmPage() {
     .select(CAMPOS_VEHICULO_PUBLICO)
     .in("estado", ["Disponible", "Reservado"])
     .eq("kilometraje", 0)
-    .not("precio_publicado_ars", "is", null)
+    .or("precio_publicado_ars.not.is.null,precio_publicado_usd.not.is.null")
     .order("created_at", { ascending: false });
 
   return (

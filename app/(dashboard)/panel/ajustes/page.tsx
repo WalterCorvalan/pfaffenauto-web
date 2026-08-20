@@ -1,6 +1,7 @@
 import { createServerClient } from "@supabase/ssr";
 import { cookies } from "next/headers";
 import { Settings, User, Bell, Palette } from "lucide-react";
+import PerfilForm from "./PerfilForm";
 
 export default async function AjustesPage() {
   const cookieStore = await cookies();
@@ -51,52 +52,16 @@ export default async function AjustesPage() {
               <User className="w-5 h-5 text-indigo-600 dark:text-sky-300" />
               <h2 className="text-sm font-bold text-slate-900 dark:text-white">Perfil de Usuario</h2>
             </div>
-            <div className="p-5 grid grid-cols-1 md:grid-cols-2 gap-5">
-              <div>
-                <label className="text-[11px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-widest block mb-1.5">
-                  Nombre Completo
-                </label>
-                <input
-                  type="text"
-                  disabled
-                  defaultValue={perfil?.nombre || ""}
-                  className="w-full bg-slate-50 dark:bg-[#00246b] border border-slate-200 dark:border-[#0a2a6b] rounded-xl px-3 py-2.5 text-sm text-slate-500 dark:text-slate-400 cursor-not-allowed"
-                />
-              </div>
-              <div>
-                <label className="text-[11px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-widest block mb-1.5">
-                  Correo Electrónico
-                </label>
-                <input
-                  type="email"
-                  disabled
-                  defaultValue={user?.email || ""}
-                  className="w-full bg-slate-50 dark:bg-[#00246b] border border-slate-200 dark:border-[#0a2a6b] rounded-xl px-3 py-2.5 text-sm text-slate-500 dark:text-slate-400 cursor-not-allowed"
-                />
-              </div>
-              <div>
-                <label className="text-[11px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-widest block mb-1.5">
-                  Rol Asignado
-                </label>
-                <input
-                  type="text"
-                  disabled
-                  defaultValue={perfil?.rol || ""}
-                  className="w-full bg-slate-50 dark:bg-[#00246b] border border-slate-200 dark:border-[#0a2a6b] rounded-xl px-3 py-2.5 text-sm text-slate-500 dark:text-slate-400 cursor-not-allowed capitalize"
-                />
-              </div>
-              <div>
-                <label className="text-[11px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-widest block mb-1.5">
-                  Seguridad
-                </label>
-                <button
-                  type="button"
-                  className="w-full bg-white dark:bg-[#001c55] border border-slate-200 dark:border-[#0a2a6b] hover:bg-slate-50 dark:hover:bg-[#00246b] text-slate-700 dark:text-slate-300 font-bold text-[12px] uppercase tracking-widest rounded-xl px-3 py-2.5 transition-colors"
-                >
-                  Cambiar Contraseña
-                </button>
-              </div>
-            </div>
+            {user && (
+              <PerfilForm
+                perfilId={user.id}
+                emailActual={user.email || ""}
+                rol={perfil?.rol || ""}
+                nombreInicial={perfil?.nombre || ""}
+                telefonoInicial={perfil?.telefono || ""}
+                avatarInicial={perfil?.avatar_url || ""}
+              />
+            )}
           </div>
 
           {/* Notificaciones */}

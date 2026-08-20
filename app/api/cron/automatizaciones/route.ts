@@ -111,6 +111,52 @@ async function nudgeSinRespuesta() {
   }
 }
 
+// D. Documentación pendiente hace 5+ días en una venta ya cerrada — avisa a los
+// encargados que hay que ir a buscar/reclamar ese papel (cédula, VTV, etc).
+async function alertarDocumentacionPendiente() {
+  const hace5dias = new Date(Date.now() - 5 * 24 * 3600 * 1000).toISOString().split("T")[0];
+  const { data: boletosViejos } = await supabase
+    .from("boletos_venta")
+    .select("id, numero, apellido, nombre, fecha")
+    .lte("fecha", hace5dias);
+
+  for (const b of boletosViejos || []) {
+    const { data: pendientes } = await supabase
+      .from("documentacion_ventas")
+      .select("tipo_documento")
+      .eq("venta_id", b.id)
+      .eq("estado", "Pendiente");
+    if (!pendientes || pendientes.length === 0) continue;
+
+    if (await yaSeEnvio("doc_pendiente_venta", b.id)) continue;
+    const listaDocs = pendientes.map((d) => d.tipo_documento).join(", ");
+    const mensaje = `Venta N° ${b.numero} (${b.apellido}, ${b.nombre}) tiene documentación pendiente hace 5+ días: ${listaDocs}.`;
+    await notificarEncargados(supabase, mensaje, `/panel/ventas/seguimiento/${b.id}`, "boletos", "doc_pendiente_venta");
+    await registrarEnvio("doc_pendiente_venta", b.id);
+  }
+}
+
+// E. Cuota de financiación por vencer en los próximos 3 días — recordatorio
+// interno a encargados (no le mandamos nada al cliente automáticamente, es
+// un aviso para que lo gestionen/cobren a tiempo).
+async function alertarCuotasPorVencer() {
+  const hoy = new Date().toISOString().split("T")[0];
+  const en3dias = new Date(Date.now() + 3 * 24 * 3600 * 1000).toISOString().split("T")[0];
+  const { data: financiaciones } = await supabase
+    .from("financiaciones")
+    .select("id, entidad, monto, fecha_vencimiento, venta_id")
+    .eq("estado", "Pendiente")
+    .gte("fecha_vencimiento", hoy)
+    .lte("fecha_vencimiento", en3dias);
+
+  for (const f of financiaciones || []) {
+    if (await yaSeEnvio("cuota_por_vencer", f.id)) continue;
+    const mensaje = `Cuota de financiación (${f.entidad || "sin entidad"}) por $${Number(f.monto).toLocaleString("es-AR")} vence el ${new Date(`${f.fecha_vencimiento}T12:00:00Z`).toLocaleDateString("es-AR", { timeZone: "UTC" })}.`;
+    await notificarEncargados(supabase, mensaje, "/panel/ventas/financiaciones", "boletos", "cuota_por_vencer");
+    await registrarEnvio("cuota_por_vencer", f.id);
+  }
+}
+
 export async function GET(req: Request) {
   const url = new URL(req.url);
   const token = url.searchParams.get("token");
@@ -122,6 +168,8 @@ export async function GET(req: Request) {
     escalarLeadsCalientesSinAtender().catch((err) => console.error("[cron] error escalarLeadsCalientesSinAtender:", err)),
     agradecerVentasRecientes().catch((err) => console.error("[cron] error agradecerVentasRecientes:", err)),
     nudgeSinRespuesta().catch((err) => console.error("[cron] error nudgeSinRespuesta:", err)),
+    alertarDocumentacionPendiente().catch((err) => console.error("[cron] error alertarDocumentacionPendiente:", err)),
+    alertarCuotasPorVencer().catch((err) => console.error("[cron] error alertarCuotasPorVencer:", err)),
   ]);
 
   return Response.json({ ok: true, ranAt: new Date().toISOString() });

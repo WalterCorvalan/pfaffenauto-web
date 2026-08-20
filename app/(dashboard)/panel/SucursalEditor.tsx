@@ -82,8 +82,8 @@ export default function SucursalEditor({ autoId, sucursalActualId, sucursalActua
                 <label className="text-[11px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-widest mb-1.5 block">Nueva Ubicación</label>
                 <div className="flex items-center bg-slate-50 dark:bg-[#00246b] border border-slate-200 dark:border-[#0a2a6b] rounded-xl px-3 focus-within:border-indigo-500 transition-colors shadow-sm">
                   <select value={nuevaSucursal} onChange={(e) => setNuevaSucursal(e.target.value)} className="w-full bg-transparent py-3 text-sm text-slate-900 dark:text-white outline-none appearance-none cursor-pointer">
-                    <option value="" disabled>Seleccionar sucursal...</option>
-                    {sucursales.map(s => (<option key={s.id} value={s.id}>{s.nombre}</option>))}
+                    <option value="" disabled className="bg-white dark:bg-[#001c55] text-slate-900 dark:text-white">Seleccionar sucursal...</option>
+                    {sucursales.map(s => (<option key={s.id} value={s.id} className="bg-white dark:bg-[#001c55] text-slate-900 dark:text-white">{s.nombre}</option>))}
                   </select>
                 </div>
               </div>

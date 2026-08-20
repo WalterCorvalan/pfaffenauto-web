@@ -1,7 +1,9 @@
 import { createServerClient } from "@supabase/ssr";
 import { cookies } from "next/headers";
+import Link from "next/link";
 import {
   FileBarChart, CarFront, DollarSign, TrendingUp, AlertTriangle, Trophy, Wallet, Calendar,
+  Flame, ClipboardList, Wrench, Clock,
 } from "lucide-react";
 import { obtenerDatosMes } from "@/lib/informes";
 import ReporteIA from "./ReporteIA";
@@ -25,6 +27,28 @@ export default async function InformesGlobalesPage() {
     .order("generado_en", { ascending: false })
     .limit(6);
 
+  // ================= "LO URGENTE HOY" =================
+  const hace30dias = new Date(Date.now() - 30 * 24 * 3600 * 1000).toISOString();
+  const ahoraIso = new Date().toISOString();
+  const [
+    { count: leadsSinAtender },
+    { count: stockViejo },
+    { count: tareasVencidas },
+    { count: postventaPendiente },
+  ] = await Promise.all([
+    supabase.from("cotizaciones").select("id", { count: "exact", head: true }).in("estado", ["Nuevo", "Pendiente"]),
+    supabase.from("vehiculos").select("id", { count: "exact", head: true }).in("estado", ["Disponible", "Reservado"]).lte("fecha_ingreso", hace30dias.split("T")[0]),
+    supabase.from("tareas_lead").select("id", { count: "exact", head: true }).eq("completada", false).lt("fecha_vencimiento", ahoraIso),
+    supabase.from("postventa_casos").select("id", { count: "exact", head: true }).neq("estado", "Resuelto"),
+  ]);
+
+  const urgentes = [
+    { label: "Leads sin atender", valor: leadsSinAtender || 0, icono: Flame, href: "/panel/crm", color: "rose" },
+    { label: "Stock con 30+ días", valor: stockViejo || 0, icono: Clock, href: "/panel", color: "amber" },
+    { label: "Tareas vencidas", valor: tareasVencidas || 0, icono: ClipboardList, href: "/panel/crm/tareas", color: "amber" },
+    { label: "Postventa pendiente", valor: postventaPendiente || 0, icono: Wrench, href: "/panel/postventa", color: "indigo" },
+  ];
+
   return (
     <div className="flex flex-col h-full w-full bg-white dark:bg-[#001233] overflow-hidden">
       <header className="flex flex-col md:flex-row md:items-center justify-between border-b border-slate-200 dark:border-[#0a2a6b] px-6 py-4 bg-white dark:bg-[#001c55] shrink-0 gap-4">
@@ -43,6 +67,32 @@ export default async function InformesGlobalesPage() {
 
       <div className="flex-1 overflow-y-auto p-6 bg-[#F9FAFB] dark:bg-[#001233] custom-scrollbar">
         <div className="max-w-[1200px] mx-auto space-y-6">
+
+          {/* ================= LO URGENTE HOY ================= */}
+          <div>
+            <h2 className="text-[11px] font-bold uppercase tracking-widest text-slate-400 dark:text-slate-500 mb-3">Lo urgente hoy</h2>
+            <div className="grid grid-cols-2 xl:grid-cols-4 gap-4">
+              {urgentes.map((u) => {
+                const Icono = u.icono;
+                const colorMap: Record<string, string> = {
+                  rose: "bg-rose-50 dark:bg-[#002a6e] border-rose-100 dark:border-[#0a2a6b] text-rose-600 dark:text-rose-300",
+                  amber: "bg-amber-50 dark:bg-[#002a6e] border-amber-100 dark:border-[#0a2a6b] text-amber-600 dark:text-amber-300",
+                  indigo: "bg-indigo-50 dark:bg-[#002a6e] border-indigo-100 dark:border-[#0a2a6b] text-indigo-600 dark:text-sky-300",
+                };
+                return (
+                  <Link
+                    key={u.label}
+                    href={u.href}
+                    className="bg-white dark:bg-[#001c55] border border-slate-200 dark:border-[#0a2a6b] rounded-2xl p-5 shadow-sm hover:shadow-md hover:border-indigo-300 dark:hover:border-sky-400/50 transition-all"
+                  >
+                    <div className={`w-9 h-9 rounded-lg border flex items-center justify-center mb-3 ${colorMap[u.color]}`}><Icono className="w-4 h-4" /></div>
+                    <span className="text-[10px] uppercase tracking-widest font-bold text-slate-400 dark:text-slate-500">{u.label}</span>
+                    <h3 className="text-2xl font-black text-slate-900 dark:text-white mt-1 font-mono">{u.valor}</h3>
+                  </Link>
+                );
+              })}
+            </div>
+          </div>
 
           {/* ================= RESUMEN PRINCIPAL ================= */}
           <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4">

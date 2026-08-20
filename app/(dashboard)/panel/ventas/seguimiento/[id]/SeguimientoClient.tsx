@@ -303,9 +303,9 @@ export default function SeguimientoClient({ venta, documentosIniciales }: { vent
                     }`}
                     title="¿Quién verificó este documento?"
                   >
-                    <option value="">¿Quién verificó?</option>
-                    <option value="Agencia">Agencia</option>
-                    <option value="Cliente">Cliente</option>
+                    <option value="" className="bg-white dark:bg-[#001c55] text-slate-900 dark:text-white">¿Quién verificó?</option>
+                    <option value="Agencia" className="bg-white dark:bg-[#001c55] text-slate-900 dark:text-white">Agencia</option>
+                    <option value="Cliente" className="bg-white dark:bg-[#001c55] text-slate-900 dark:text-white">Cliente</option>
                   </select>
                 )}
 

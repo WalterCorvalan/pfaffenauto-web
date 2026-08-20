@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import { useState, useEffect } from "react";
 import { supabase } from "@/lib/supabase/client";
@@ -146,9 +146,9 @@ export default function LiquidadorClient({
             <div>
               <label className="text-[11px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-widest mb-1.5 block">Empleado</label>
               <select value={empleadoId} onChange={(e) => setEmpleadoId(e.target.value)} className="w-full bg-slate-50 dark:bg-[#00246b] border border-slate-200 dark:border-[#0a2a6b] rounded-xl px-3.5 py-2.5 text-sm outline-none focus:border-indigo-500 focus:bg-white dark:focus:bg-[#002a6e] text-slate-900 dark:text-white">
-                <option value="">Seleccionar...</option>
+                <option value="" className="bg-white dark:bg-[#001c55] text-slate-900 dark:text-white">Seleccionar...</option>
                 {empleados.map((e) => (
-                  <option key={e.id} value={e.id}>{e.nombre} {e.categorias_empleado ? `— ${e.categorias_empleado.nombre}` : "(sin categoría)"}</option>
+                  <option key={e.id} value={e.id} className="bg-white dark:bg-[#001c55] text-slate-900 dark:text-white">{e.nombre} {e.categorias_empleado ? `— ${e.categorias_empleado.nombre}` : "(sin categoría)"}</option>
                 ))}
               </select>
             </div>

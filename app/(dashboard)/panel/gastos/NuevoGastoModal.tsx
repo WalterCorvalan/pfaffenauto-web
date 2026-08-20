@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import { useState } from "react";
 import { supabase } from "@/lib/supabase/client";
@@ -163,8 +163,8 @@ export default function NuevoGastoModal({
                     onChange={e => setCategoriaId(e.target.value)}
                     className="w-full bg-white dark:bg-[#001c55] border border-slate-200 dark:border-[#0a2a6b] p-3 rounded-xl text-slate-900 dark:text-white text-[13px] outline-none focus:border-rose-500 transition-colors appearance-none cursor-pointer"
                   >
-                    <option value="" disabled>Seleccionar de la lista...</option>
-                    {categorias.map(c => <option key={c.id} value={c.id}>{c.nombre}</option>)}
+                    <option value="" disabled className="bg-white dark:bg-[#001c55] text-slate-900 dark:text-white">Seleccionar de la lista...</option>
+                    {categorias.map(c => <option key={c.id} value={c.id} className="bg-white dark:bg-[#001c55] text-slate-900 dark:text-white">{c.nombre}</option>)}
                   </select>
                 )}
               </div>
@@ -191,8 +191,8 @@ export default function NuevoGastoModal({
                     onChange={e => setSucursalId(e.target.value)}
                     className="w-full bg-slate-50 dark:bg-[#00246b] border border-slate-200 dark:border-[#0a2a6b] p-3 rounded-xl text-slate-900 dark:text-white text-[13px] outline-none focus:border-rose-500 focus:bg-white dark:focus:bg-[#00246b] transition-colors appearance-none cursor-pointer"
                   >
-                    <option value="" disabled>Seleccionar...</option>
-                    {sucursales.map(s => <option key={s.id} value={s.id}>{s.nombre}</option>)}
+                    <option value="" disabled className="bg-white dark:bg-[#001c55] text-slate-900 dark:text-white">Seleccionar...</option>
+                    {sucursales.map(s => <option key={s.id} value={s.id} className="bg-white dark:bg-[#001c55] text-slate-900 dark:text-white">{s.nombre}</option>)}
                   </select>
                 </div>
 
@@ -204,8 +204,8 @@ export default function NuevoGastoModal({
                       onChange={e => setCuentaId(e.target.value)}
                       className="w-full bg-slate-50 dark:bg-[#00246b] border border-slate-200 dark:border-[#0a2a6b] p-3 rounded-xl text-slate-900 dark:text-white text-[13px] outline-none focus:border-rose-500 focus:bg-white dark:focus:bg-[#00246b] transition-colors appearance-none cursor-pointer"
                     >
-                      <option value="">Sin especificar</option>
-                      {cuentas.map(c => <option key={c.id} value={c.id}>{c.nombre}</option>)}
+                      <option value="" className="bg-white dark:bg-[#001c55] text-slate-900 dark:text-white">Sin especificar</option>
+                      {cuentas.map(c => <option key={c.id} value={c.id} className="bg-white dark:bg-[#001c55] text-slate-900 dark:text-white">{c.nombre}</option>)}
                     </select>
                   </div>
                 )}

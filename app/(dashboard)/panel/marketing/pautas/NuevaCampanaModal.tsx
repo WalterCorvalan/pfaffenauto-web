@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import { useState } from "react";
 import { supabase } from "@/lib/supabase/client";
@@ -72,9 +72,9 @@ export default function NuevaCampanaModal({ sucursales }: { sucursales: any[] })
                   value={plataforma} onChange={(e) => setPlataforma(e.target.value)}
                   className="w-full bg-slate-50 dark:bg-[#00246b] border border-slate-200 dark:border-[#0a2a6b] p-3 rounded-xl text-slate-900 dark:text-white text-[13px] outline-none focus:border-indigo-500 focus:bg-white dark:focus:bg-[#002a6e] transition-colors appearance-none cursor-pointer"
                 >
-                  <option value="Google Ads">Google Ads</option>
-                  <option value="Meta Ads">Meta Ads</option>
-                  <option value="MercadoLibre">MercadoLibre</option>
+                  <option value="Google Ads" className="bg-white dark:bg-[#001c55] text-slate-900 dark:text-white">Google Ads</option>
+                  <option value="Meta Ads" className="bg-white dark:bg-[#001c55] text-slate-900 dark:text-white">Meta Ads</option>
+                  <option value="MercadoLibre" className="bg-white dark:bg-[#001c55] text-slate-900 dark:text-white">MercadoLibre</option>
                 </select>
               </div>
 
@@ -84,8 +84,8 @@ export default function NuevaCampanaModal({ sucursales }: { sucursales: any[] })
                   value={sucursalId} onChange={(e) => setSucursalId(e.target.value)}
                   className="w-full bg-slate-50 dark:bg-[#00246b] border border-slate-200 dark:border-[#0a2a6b] p-3 rounded-xl text-slate-900 dark:text-white text-[13px] outline-none focus:border-indigo-500 focus:bg-white dark:focus:bg-[#002a6e] transition-colors appearance-none cursor-pointer"
                 >
-                  <option value="">Página general</option>
-                  {sucursales.map((s) => (<option key={s.id} value={s.id}>{s.nombre}</option>))}
+                  <option value="" className="bg-white dark:bg-[#001c55] text-slate-900 dark:text-white">Página general</option>
+                  {sucursales.map((s) => (<option key={s.id} value={s.id} className="bg-white dark:bg-[#001c55] text-slate-900 dark:text-white">{s.nombre}</option>))}
                 </select>
               </div>
 

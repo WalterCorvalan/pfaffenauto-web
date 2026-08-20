@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
@@ -119,8 +119,8 @@ export default function EgresosClient({
             onChange={(e) => setFiltroSucursal(e.target.value)}
             className="bg-slate-50 dark:bg-[#00246b] border border-slate-200 dark:border-[#0a2a6b] rounded-lg px-3 py-2 text-[12px] font-bold text-slate-600 dark:text-slate-300 outline-none focus:border-indigo-500 cursor-pointer"
           >
-            <option value="">Todas las sucursales</option>
-            {sucursales.map((s) => (<option key={s.id} value={s.id}>{s.nombre}</option>))}
+            <option value="" className="bg-white dark:bg-[#001c55] text-slate-900 dark:text-white">Todas las sucursales</option>
+            {sucursales.map((s) => (<option key={s.id} value={s.id} className="bg-white dark:bg-[#001c55] text-slate-900 dark:text-white">{s.nombre}</option>))}
           </select>
           <button
             onClick={() => setShowModal(true)}
@@ -270,8 +270,8 @@ export default function EgresosClient({
               <div>
                 <label className="text-[11px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-widest mb-1.5 block">Sucursal</label>
                 <select name="sucursal_id" className="w-full bg-slate-50 dark:bg-[#00246b] border border-slate-200 dark:border-[#0a2a6b] rounded-xl px-3 py-2.5 text-sm text-slate-900 dark:text-white outline-none focus:border-indigo-500 cursor-pointer">
-                  <option value="">Sin especificar</option>
-                  {sucursales.map((s) => (<option key={s.id} value={s.id}>{s.nombre}</option>))}
+                  <option value="" className="bg-white dark:bg-[#001c55] text-slate-900 dark:text-white">Sin especificar</option>
+                  {sucursales.map((s) => (<option key={s.id} value={s.id} className="bg-white dark:bg-[#001c55] text-slate-900 dark:text-white">{s.nombre}</option>))}
                 </select>
               </div>
 
@@ -296,8 +296,8 @@ export default function EgresosClient({
                   <div>
                     <label className="text-[11px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-widest mb-1.5 block">Vincular a usuario del sistema (opcional)</label>
                     <select name="usuario_id" className="w-full bg-slate-50 dark:bg-[#00246b] border border-slate-200 dark:border-[#0a2a6b] rounded-xl px-3 py-2.5 text-sm text-slate-900 dark:text-white outline-none focus:border-indigo-500 cursor-pointer">
-                      <option value="">Sin vincular</option>
-                      {perfiles.map((p) => (<option key={p.id} value={p.id}>{p.nombre}</option>))}
+                      <option value="" className="bg-white dark:bg-[#001c55] text-slate-900 dark:text-white">Sin vincular</option>
+                      {perfiles.map((p) => (<option key={p.id} value={p.id} className="bg-white dark:bg-[#001c55] text-slate-900 dark:text-white">{p.nombre}</option>))}
                     </select>
                   </div>
                 </div>

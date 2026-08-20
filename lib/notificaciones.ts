@@ -2,7 +2,7 @@ import type { SupabaseClient } from "@supabase/supabase-js";
 
 export type SeccionNotificacion =
   | "senas" | "presupuestos" | "boletos" | "tareas" | "pedidos" | "chat"
-  | "cotizaciones" | "consignaciones" | "crm" | "postventa";
+  | "cotizaciones" | "consignaciones" | "crm" | "postventa" | "financiacion" | "stock" | "postulaciones";
 
 // Avisa a todos los encargados activos (in-app, vía la campanita) — el vendedor
 // no está seguro de un precio y necesita que un encargado lo revise, o llegó
@@ -33,6 +33,24 @@ export async function notificarPersona(
 ) {
   if (!perfilId) return;
   await supabase.from("notificaciones").insert({ perfil_id: perfilId, tipo, mensaje, link, seccion });
+}
+
+// Precio, fotos o estado de un auto cambiaron: avisa a los encargados y, si el
+// auto tiene vendedor asignado y no fue quien hizo el cambio, también a esa
+// persona directo (para que no se le pase algo de "su" auto).
+export async function notificarCambioVehiculo(
+  supabase: SupabaseClient,
+  opts: {
+    autoId: string; vendedorAsignadoId: string | null; actorId: string | null; mensaje: string; tipo: string;
+    seccion?: SeccionNotificacion; link?: string;
+  }
+) {
+  const seccion = opts.seccion || "stock";
+  const link = opts.link || `/panel/vehiculo/editar/${opts.autoId}`;
+  await notificarEncargados(supabase, opts.mensaje, link, seccion, opts.tipo);
+  if (opts.vendedorAsignadoId && opts.vendedorAsignadoId !== opts.actorId) {
+    await notificarPersona(supabase, opts.vendedorAsignadoId, opts.tipo, opts.mensaje, link, seccion);
+  }
 }
 
 // Respuesta de vuelta: el encargado ya revisó el precio (confirmado o corregido),

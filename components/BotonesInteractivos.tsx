@@ -86,9 +86,9 @@ export default function BotonesInteractivos({ auto }: { auto: any }) {
       <button
         onClick={toggleFav}
         className={`flex items-center gap-1.5 px-4 py-2 rounded-full border text-[10px] md:text-xs font-bold uppercase tracking-widest transition-all ${
-          isFav 
-            ? "bg-red-50 border-red-200 text-red-600 shadow-sm" 
-            : "bg-white border-gray-200 text-gray-500 hover:bg-gray-50 hover:border-gray-300"
+          isFav
+            ? "bg-red-50 dark:bg-red-400/10 border-red-200 dark:border-red-400/20 text-red-600 dark:text-red-300 shadow-sm dark:shadow-none"
+            : "bg-white dark:bg-white/5 border-gray-200 dark:border-white/10 text-gray-500 dark:text-slate-400 hover:bg-gray-50 dark:hover:bg-white/10 hover:border-gray-300 dark:hover:border-white/20"
         }`}
       >
         <Heart className={`w-3.5 h-3.5 md:w-4 md:h-4 ${isFav ? "fill-current" : ""}`} />
@@ -97,7 +97,7 @@ export default function BotonesInteractivos({ auto }: { auto: any }) {
 
       <button
         onClick={handleShare}
-        className="flex items-center gap-1.5 px-4 py-2 rounded-full bg-white border border-gray-200 text-gray-500 hover:bg-gray-50 hover:border-gray-300 text-[10px] md:text-xs font-bold uppercase tracking-widest transition-all"
+        className="flex items-center gap-1.5 px-4 py-2 rounded-full bg-white dark:bg-white/5 border border-gray-200 dark:border-white/10 text-gray-500 dark:text-slate-400 hover:bg-gray-50 dark:hover:bg-white/10 hover:border-gray-300 dark:hover:border-white/20 text-[10px] md:text-xs font-bold uppercase tracking-widest transition-all"
       >
         {copied ? <Check className="w-3.5 h-3.5 md:w-4 md:h-4 text-emerald-500" /> : <Share2 className="w-3.5 h-3.5 md:w-4 md:h-4" />}
         {copied ? "¡Copiado!" : "Compartir"}

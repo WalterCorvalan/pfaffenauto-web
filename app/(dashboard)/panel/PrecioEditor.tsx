@@ -7,12 +7,15 @@ import { DollarSign, Edit3, X, Save } from "lucide-react";
 
 interface PrecioEditorProps {
   autoId: string;
+  autoMarca?: string;
+  autoModelo?: string;
+  vendedorAsignadoId?: string | null;
   precioArs: number | null;
   precioUsd: number | null;
   puedeGestionar: boolean;
 }
 
-export default function PrecioEditor({ autoId, precioArs, precioUsd, puedeGestionar }: PrecioEditorProps) {
+export default function PrecioEditor({ autoId, autoMarca, autoModelo, vendedorAsignadoId, precioArs, precioUsd, puedeGestionar }: PrecioEditorProps) {
   const router = useRouter();
   const [isEditing, setIsEditing] = useState(false);
   const [ars, setArs] = useState(precioArs?.toString() || "");
@@ -36,6 +39,19 @@ export default function PrecioEditor({ autoId, precioArs, precioUsd, puedeGestio
         valor_anterior: `ARS: ${precioArs} | USD: ${precioUsd}`, valor_nuevo: `ARS: ${updateData.precio_publicado_ars} | USD: ${updateData.precio_publicado_usd}`,
         usuario_id: user?.id,
       });
+
+      const nombreAuto = `${autoMarca || ""} ${autoModelo || ""}`.trim() || "un auto";
+      fetch("/api/vehiculos/notificar-cambio", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          autoId,
+          vendedorAsignadoId: vendedorAsignadoId || null,
+          actorId: user?.id || null,
+          mensaje: `Se actualizó el precio del ${nombreAuto}: $ ${updateData.precio_publicado_ars?.toLocaleString("es-AR") ?? "—"}.`,
+          tipo: "precio_actualizado",
+        }),
+      }).catch((err) => console.error("Error notificando cambio de precio:", err));
 
       setIsEditing(false);
       router.refresh();

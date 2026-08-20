@@ -2,24 +2,26 @@
 
 import React, { useState } from "react";
 import Link from "next/link";
-import { Calculator, ShieldCheck, CreditCard, ArrowRight } from "lucide-react";
+import { Calculator, ShieldCheck, CreditCard } from "lucide-react";
+import SolicitarFinanciacionForm from "@/components/forms/SolicitarFinanciacionForm";
 
-export default function BannerFinanciacion() {
-  const [meses, setMeses] = useState<number>(60);
-  const [cuentaSueldo, setCuentaSueldo] = useState(false);
+// linkAFinanciacion: en el home, el botón lleva a /financiacion (página completa).
+// En /financiacion mismo, abre el modal de solicitud directo.
+export default function BannerFinanciacion({ linkAFinanciacion = false }: { linkAFinanciacion?: boolean }) {
+  const [meses, setMeses] = useState<number>(48);
+  const [anticipoPorcentaje, setAnticipoPorcentaje] = useState<number>(50);
 
-  // ================= LÍNEA REAL "+AUTOS CON BNA" (préstamo personal, no prendario) =================
-  // Tasas oficiales publicadas en bna.com.ar/home/masautos — sujetas a cambios del banco.
-  const PRECIO_VEHICULO = 28600000;
-  const TNA = cuentaSueldo ? 0.36 : 0.46;
-  const PORCENTAJE_ANTICIPO = 0.50; // Cliente pone la mitad como anticipo
+  // ================= VALORES DE REFERENCIA =================
+  const PRECIO_VEHICULO = 28600000; 
+  const TNA = 0.46; // 46% TNA general simplificada
 
-  const anticipoCliente = PRECIO_VEHICULO * PORCENTAJE_ANTICIPO;
+  const anticipoCliente = (PRECIO_VEHICULO * anticipoPorcentaje) / 100;
   const montoAFinanciar = PRECIO_VEHICULO - anticipoCliente;
 
   const calcularCuota = (plazoMeses: number) => {
+    if (montoAFinanciar <= 0) return 0;
     const tasaMensual = TNA / 12;
-    // Fórmula del Sistema Francés: C = V * (i * (1+i)^n) / ((1+i)^n - 1)
+    // Fórmula del Sistema Francés
     const cuotaPura =
       montoAFinanciar *
       (tasaMensual * Math.pow(1 + tasaMensual, plazoMeses)) /
@@ -29,124 +31,144 @@ export default function BannerFinanciacion() {
   };
 
   const beneficios = [
-    { icon: Calculator, titulo: `Tasa desde ${(TNA * 100).toFixed(0)}% TNA`, texto: "Línea \"+Autos con BNA\" del Banco Nación para 0km y usados, sin prenda." },
-    { icon: CreditCard, titulo: "Hasta $100.000.000 financiables", texto: "Cubre hasta el 100% del valor del vehículo, en hasta 72 cuotas." },
-    { icon: ShieldCheck, titulo: "Cargá tus datos 100% online", texto: "Aprobación ágil. Completá tu información y validala sin moverte de tu casa." },
+    { icon: Calculator, titulo: `Tasa Fija del ${(TNA * 100).toFixed(0)}% TNA`, texto: "Línea \"+Autos con BNA\" del Banco Nación para vehículos 0km y usados." },
+    { icon: CreditCard, titulo: "Financiá hasta 72 meses", texto: "Elegí el plazo que mejor se adapte a tu bolsillo. Sin prenda." },
+    { icon: ShieldCheck, titulo: "Gestión 100% online", texto: "Aprobación ágil. Simulá, cargá tus datos y recibí respuesta sin moverte de tu casa." },
   ];
 
   return (
-    <section className="py-16 md:py-24 bg-[#f8f9fa] dark:bg-[#0a0a0f] border-t border-gray-200 dark:border-transparent">
+    <section className="py-20 lg:py-28 bg-[#f8fafc] dark:bg-[#0a0a0f] border-t border-slate-200 dark:border-white/5 overflow-hidden">
       <div className="max-w-7xl mx-auto px-4 md:px-6">
 
         {/* ================= HEADER ================= */}
-        <div className="flex flex-col md:flex-row justify-between items-start md:items-end gap-8 mb-12">
-          <div className="max-w-2xl">
-            <h2 className="text-3xl md:text-5xl text-gray-900 dark:text-white font-black tracking-tight mb-4 leading-tight">
+        <div className="flex flex-col md:flex-row justify-between items-start md:items-end gap-8 mb-16">
+          <div className="max-w-2xl relative z-10">
+            <span className="inline-flex items-center gap-2 bg-[#0145F2]/10 dark:bg-sky-400/10 text-[#0145F2] dark:text-sky-300 text-[11px] font-black uppercase tracking-widest px-4 py-2 rounded-full mb-6">
+              <ShieldCheck className="w-4 h-4" /> Respaldo Oficial
+            </span>
+            <h2 className="text-4xl md:text-5xl lg:text-6xl text-slate-900 dark:text-white font-black tracking-tight mb-4 leading-[1.1]">
               Pagá tu auto <br className="hidden md:block" />
-              <span className="text-blue-600 dark:text-sky-300">hasta en 72 cuotas.</span>
+              <span className="text-[#0145F2] dark:text-sky-400">hasta en 72 cuotas.</span>
             </h2>
-            <p className="text-base text-gray-500 dark:text-slate-400 font-medium">
-              Línea &quot;+Autos con BNA&quot; del Banco Nación. Simulá tu cuota y solicitalo online.
+            <p className="text-base text-slate-600 dark:text-slate-400 font-medium max-w-lg">
+              Con la línea "+Autos" del Banco Nación, llevarte la llave es mucho más fácil. Simulá tu plan ideal ahora mismo.
             </p>
-          </div>
-
-          <div className="flex items-center gap-4 bg-gray-50 dark:bg-white/5 border border-gray-200 dark:border-white/10 p-4 rounded-xl shrink-0">
-            <div className="flex flex-col items-center justify-center pr-4 border-r border-gray-200 dark:border-white/10">
-              <span className="text-2xl font-black text-gray-900 dark:text-white">{(TNA * 100).toFixed(0)}%</span>
-              <span className="text-[10px] font-bold text-gray-400 dark:text-slate-500 uppercase tracking-widest mt-1">TNA</span>
-            </div>
-            <div className="flex flex-col">
-              <span className="text-sm font-bold text-gray-900 dark:text-white">Banco Nación</span>
-              <span className="text-xs text-gray-500 dark:text-slate-400 font-medium">Tasa vigente publicada</span>
-            </div>
           </div>
         </div>
 
-        {/* ================= CONTENIDO: BENEFICIOS + SIMULADOR ================= */}
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
+        {/* ================= CONTENIDO ================= */}
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-12 items-center">
 
-          {/* Beneficios */}
-          <div className="lg:col-span-5 grid grid-cols-1 gap-4">
+          {/* Columna Izquierda: Beneficios */}
+          <div className="lg:col-span-5 grid grid-cols-1 gap-6">
             {beneficios.map((b) => (
-              <div
-                key={b.titulo}
-                className="bg-white dark:bg-white/5 border border-gray-200 dark:border-white/10 p-5 rounded-2xl hover:border-blue-400 dark:hover:border-sky-400/50 hover:shadow-md transition-all duration-300 flex items-start gap-4"
-              >
-                <div className="w-10 h-10 rounded-full bg-blue-50 dark:bg-sky-400/10 text-blue-700 dark:text-sky-300 flex items-center justify-center shrink-0">
-                  <b.icon className="w-5 h-5" />
+              <div key={b.titulo} className="flex items-start gap-5 group">
+                <div className="w-12 h-12 rounded-2xl bg-white dark:bg-white/5 border border-slate-200 dark:border-white/10 text-[#0145F2] dark:text-sky-400 flex items-center justify-center shrink-0 shadow-sm group-hover:scale-110 group-hover:border-[#0145F2] dark:group-hover:border-sky-400 transition-all duration-300">
+                  <b.icon className="w-6 h-6" />
                 </div>
                 <div>
-                  <h3 className="text-sm font-bold text-gray-900 dark:text-white mb-1">{b.titulo}</h3>
-                  <p className="text-sm text-gray-500 dark:text-slate-400 leading-relaxed">{b.texto}</p>
+                  <h3 className="text-[15px] font-bold text-slate-900 dark:text-white mb-1.5">{b.titulo}</h3>
+                  <p className="text-sm text-slate-500 dark:text-slate-400 leading-relaxed">{b.texto}</p>
                 </div>
               </div>
             ))}
           </div>
 
-          {/* Simulador */}
-          <div className="lg:col-span-7">
-            <div className="bg-white dark:bg-white/5 border border-gray-200 dark:border-white/10 hover:border-blue-400 dark:hover:border-sky-400/50 hover:shadow-md transition-all duration-300 rounded-2xl p-6 sm:p-8 h-full flex flex-col">
+          {/* Columna Derecha: El Simulador "Pop" */}
+          <div className="lg:col-span-7 relative mt-8 lg:mt-0">
+            {/* Sombras y brillos de fondo para que resalte */}
+            <div className="absolute inset-0 bg-gradient-to-tr from-[#0145F2]/30 to-sky-400/20 dark:from-blue-600/30 dark:to-sky-400/20 blur-3xl rounded-[3rem] transform rotate-3 scale-105" />
+            
+            <div className="relative bg-slate-900 dark:bg-[#0a0a0f] border border-slate-800 dark:border-white/10 rounded-[2rem] p-6 sm:p-10 shadow-2xl overflow-hidden">
+              <Calculator className="absolute -top-6 -right-6 w-40 h-40 text-white/5 pointer-events-none transform rotate-12" />
 
-              <div className="flex items-center justify-between mb-6">
-                <h3 className="text-sm font-bold text-gray-900 dark:text-white">Simulá tu cuota</h3>
-                <span className="text-[11px] font-bold text-gray-400 dark:text-slate-500">Valor de referencia $ {PRECIO_VEHICULO.toLocaleString("es-AR")}</span>
+              <div className="flex items-center justify-between mb-8 relative z-10">
+                <h3 className="text-xs font-black uppercase tracking-widest text-sky-400 flex items-center gap-2">
+                  <Calculator className="w-4 h-4" /> Simulador de Referencia
+                </h3>
+                <span className="text-[10px] font-bold text-slate-500 bg-white/5 px-3 py-1 rounded-full border border-white/10">
+                  Vehículo base: $ {PRECIO_VEHICULO.toLocaleString("es-AR")}
+                </span>
               </div>
 
-              <label className="flex items-center gap-2.5 text-xs font-bold text-gray-600 dark:text-slate-300 cursor-pointer bg-gray-50 dark:bg-white/5 border border-gray-200 dark:border-white/10 rounded-xl px-3 py-2.5 w-fit mb-5">
-                <input
-                  type="checkbox"
-                  checked={cuentaSueldo}
-                  onChange={(e) => setCuentaSueldo(e.target.checked)}
-                  className="w-4 h-4 accent-blue-600"
-                />
-                Tengo cuenta sueldo en el Banco Nación
-              </label>
-
-              {/* Selector de plazos */}
-              <div className="flex items-center gap-2 mb-6">
-                {[24, 48, 72].map((plazo) => (
-                  <button
-                    key={plazo}
-                    onClick={() => setMeses(plazo)}
-                    className={`flex-1 py-2.5 rounded-xl text-sm font-bold border transition-colors ${
-                      meses === plazo
-                        ? "bg-blue-600 border-blue-600 text-white"
-                        : "bg-white dark:bg-white/5 border-gray-200 dark:border-white/10 text-gray-500 dark:text-slate-400 hover:border-blue-300 dark:hover:border-sky-400/50"
-                    }`}
-                  >
-                    {plazo} cuotas
-                  </button>
-                ))}
-              </div>
-
-              {/* Resumen */}
-              <dl className="space-y-2.5 text-sm mb-6">
-                <div className="flex items-center justify-between">
-                  <dt className="text-gray-500 dark:text-slate-400">Anticipo (50%)</dt>
-                  <dd className="font-bold text-gray-900 dark:text-white">$ {anticipoCliente.toLocaleString("es-AR")}</dd>
+              <div className="space-y-8 relative z-10">
+                {/* Slider Anticipo */}
+                <div>
+                  <div className="flex justify-between items-end mb-2">
+                    <label className="text-[11px] font-bold text-slate-400 uppercase tracking-widest">
+                      Tu Anticipo ({anticipoPorcentaje}%)
+                    </label>
+                    <span className="text-2xl sm:text-3xl font-black text-white tracking-tight">
+                      $ {anticipoCliente.toLocaleString("es-AR")}
+                    </span>
+                  </div>
+                  <input
+                    type="range"
+                    min="30"
+                    max="80"
+                    step="5"
+                    value={anticipoPorcentaje}
+                    onChange={(e) => setAnticipoPorcentaje(Number(e.target.value))}
+                    className="w-full h-2.5 bg-slate-800 rounded-full appearance-none cursor-pointer accent-sky-400 mt-2"
+                  />
                 </div>
-                <div className="flex items-center justify-between">
-                  <dt className="text-gray-500 dark:text-slate-400">Monto a financiar</dt>
-                  <dd className="font-bold text-gray-900 dark:text-white">$ {montoAFinanciar.toLocaleString("es-AR")}</dd>
-                </div>
-              </dl>
 
-              <div className="flex items-center justify-between mt-auto pt-5 border-t border-gray-100 dark:border-white/10">
-                <span className="text-sm font-bold text-gray-900 dark:text-white">Cuota mensual estimada</span>
-                <span className="text-2xl font-black text-blue-600 dark:text-sky-300">$ {calcularCuota(meses).toLocaleString("es-AR")}</span>
+                {/* Plazos */}
+                <div>
+                  <label className="text-[11px] font-bold text-slate-400 uppercase tracking-widest block mb-3">
+                    Plazo a financiar
+                  </label>
+                  <div className="grid grid-cols-3 gap-3">
+                    {[24, 48, 72].map((plazo) => (
+                      <button
+                        key={plazo}
+                        onClick={() => setMeses(plazo)}
+                        className={`py-3.5 rounded-2xl text-sm font-black transition-all ${
+                          meses === plazo
+                            ? "bg-[#0145F2] text-white shadow-[0_0_20px_rgba(1,69,242,0.4)] scale-105"
+                            : "bg-slate-800 text-slate-400 hover:bg-slate-700 hover:text-white"
+                        }`}
+                      >
+                        {plazo} cuotas
+                      </button>
+                    ))}
+                  </div>
+                </div>
+
+                {/* Resultado */}
+                <div className="bg-white/5 border border-white/10 p-5 rounded-2xl flex flex-col sm:flex-row sm:items-center justify-between gap-4 backdrop-blur-sm mt-4">
+                  <div>
+                    <span className="text-[10px] uppercase font-bold tracking-widest text-slate-400 block mb-1">
+                      Cuota Mensual Estimada
+                    </span>
+                    <span className="text-3xl sm:text-4xl font-black text-white">
+                      $ {calcularCuota(meses).toLocaleString("es-AR")}
+                    </span>
+                  </div>
+                </div>
+
+                {/* Botón */}
+                <div className="pt-2">
+                  {linkAFinanciacion ? (
+                    <Link
+                      href="/financiacion"
+                      className="w-full bg-white hover:bg-slate-100 text-slate-900 font-black text-sm uppercase tracking-widest py-4 rounded-xl flex items-center justify-center gap-2 transition-all active:scale-95 shadow-xl"
+                    >
+                      Iniciar Solicitud Online
+                    </Link>
+                  ) : (
+                    <SolicitarFinanciacionForm
+                      label="Iniciar Solicitud Online"
+                      className="w-full bg-white hover:bg-slate-100 text-slate-900 font-black text-sm uppercase tracking-widest py-4 rounded-xl flex items-center justify-center gap-2 transition-all active:scale-95 shadow-xl"
+                    />
+                  )}
+                  <p className="text-[10px] text-slate-500 font-medium text-center mt-4 px-4">
+                    * Simulación referencial para un vehículo de $ {PRECIO_VEHICULO.toLocaleString("es-AR")}. 
+                    Tasa del {(TNA * 100).toFixed(0)}% TNA sujeta a evaluación crediticia y posibles modificaciones del Banco Nación.
+                  </p>
+                </div>
               </div>
 
-              <Link
-                href="/financiacion"
-                className="mt-6 flex items-center justify-center gap-2 w-full bg-blue-600 hover:bg-blue-700 text-white font-bold text-sm py-3.5 rounded-xl transition-colors active:scale-[0.99]"
-              >
-                Solicitar mi crédito
-                <ArrowRight className="w-4 h-4" />
-              </Link>
-
-              <p className="text-[11px] text-gray-400 dark:text-slate-500 text-center mt-4">
-                * Simulación de referencia, sujeta a evaluación crediticia. Línea &quot;+Autos con BNA&quot;, sistema francés. Tasas oficiales del Banco Nación, sujetas a cambios.
-              </p>
             </div>
           </div>
 

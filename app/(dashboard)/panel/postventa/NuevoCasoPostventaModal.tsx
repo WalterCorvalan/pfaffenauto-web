@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import { useState } from "react";
 import { supabase } from "@/lib/supabase/client";
@@ -6,7 +6,7 @@ import { useRouter } from "next/navigation";
 import { Plus, X, Wrench } from "lucide-react";
 import { notificarEncargados } from "@/lib/notificaciones";
 
-export default function NuevoCasoPostventaModal({ vehiculos }: { vehiculos: any[] }) {
+export default function NuevoCasoPostventaModal({ vehiculos, ventas = [] }: { vehiculos: any[]; ventas?: any[] }) {
   const router = useRouter();
   const [isOpen, setIsOpen] = useState(false);
   const [cargando, setCargando] = useState(false);
@@ -14,6 +14,7 @@ export default function NuevoCasoPostventaModal({ vehiculos }: { vehiculos: any[
   const [nombreContacto, setNombreContacto] = useState("");
   const [telefonoContacto, setTelefonoContacto] = useState("");
   const [vehiculoId, setVehiculoId] = useState("");
+  const [ventaId, setVentaId] = useState("");
   const [tipo, setTipo] = useState("Service");
   const [descripcion, setDescripcion] = useState("");
 
@@ -25,6 +26,7 @@ export default function NuevoCasoPostventaModal({ vehiculos }: { vehiculos: any[
         nombre_contacto: nombreContacto,
         telefono_contacto: telefonoContacto,
         vehiculo_id: vehiculoId || null,
+        venta_id: ventaId || null,
         tipo,
         descripcion,
         estado: "Pendiente",
@@ -41,7 +43,7 @@ export default function NuevoCasoPostventaModal({ vehiculos }: { vehiculos: any[
         ).catch((err) => console.error("[postventa] error notificando:", err));
       }
       setIsOpen(false);
-      setNombreContacto(""); setTelefonoContacto(""); setVehiculoId(""); setDescripcion(""); setTipo("Service");
+      setNombreContacto(""); setTelefonoContacto(""); setVehiculoId(""); setVentaId(""); setDescripcion(""); setTipo("Service");
       router.refresh();
     } catch (err) {
       alert("Error al registrar el caso");
@@ -94,8 +96,23 @@ export default function NuevoCasoPostventaModal({ vehiculos }: { vehiculos: any[
                   value={vehiculoId} onChange={(e) => setVehiculoId(e.target.value)}
                   className="w-full bg-slate-50 dark:bg-[#00246b] border border-slate-200 dark:border-[#0a2a6b] p-3 rounded-xl text-slate-900 dark:text-white text-[13px] outline-none focus:border-indigo-500 focus:bg-white dark:focus:bg-[#002a6e] transition-colors appearance-none cursor-pointer"
                 >
-                  <option value="">Sin especificar</option>
-                  {vehiculos.map((v) => (<option key={v.id} value={v.id}>{v.marca} {v.modelo} {v.patente ? `(${v.patente})` : ""}</option>))}
+                  <option value="" className="bg-white dark:bg-[#001c55] text-slate-900 dark:text-white">Sin especificar</option>
+                  {vehiculos.map((v) => (<option key={v.id} value={v.id} className="bg-white dark:bg-[#001c55] text-slate-900 dark:text-white">{v.marca} {v.modelo} {v.patente ? `(${v.patente})` : ""}</option>))}
+                </select>
+              </div>
+
+              <div>
+                <label className="text-[11px] font-bold uppercase tracking-widest text-slate-500 dark:text-slate-400 mb-1.5 block">Venta relacionada (opcional)</label>
+                <select
+                  value={ventaId} onChange={(e) => setVentaId(e.target.value)}
+                  className="w-full bg-slate-50 dark:bg-[#00246b] border border-slate-200 dark:border-[#0a2a6b] p-3 rounded-xl text-slate-900 dark:text-white text-[13px] outline-none focus:border-indigo-500 focus:bg-white dark:focus:bg-[#002a6e] transition-colors appearance-none cursor-pointer"
+                >
+                  <option value="" className="bg-white dark:bg-[#001c55] text-slate-900 dark:text-white">Sin vincular a una venta</option>
+                  {ventas.map((v) => (
+                    <option key={v.id} value={v.id} className="bg-white dark:bg-[#001c55] text-slate-900 dark:text-white">
+                      N° {v.numero} — {v.apellido} {v.nombre} — {v.marca} {v.modelo}
+                    </option>
+                  ))}
                 </select>
               </div>
 
@@ -105,9 +122,9 @@ export default function NuevoCasoPostventaModal({ vehiculos }: { vehiculos: any[
                   value={tipo} onChange={(e) => setTipo(e.target.value)}
                   className="w-full bg-slate-50 dark:bg-[#00246b] border border-slate-200 dark:border-[#0a2a6b] p-3 rounded-xl text-slate-900 dark:text-white text-[13px] outline-none focus:border-indigo-500 focus:bg-white dark:focus:bg-[#002a6e] transition-colors appearance-none cursor-pointer"
                 >
-                  <option value="Service">Service</option>
-                  <option value="Reclamo">Reclamo</option>
-                  <option value="Garantia">Garantía</option>
+                  <option value="Service" className="bg-white dark:bg-[#001c55] text-slate-900 dark:text-white">Service</option>
+                  <option value="Reclamo" className="bg-white dark:bg-[#001c55] text-slate-900 dark:text-white">Reclamo</option>
+                  <option value="Garantia" className="bg-white dark:bg-[#001c55] text-slate-900 dark:text-white">Garantía</option>
                 </select>
               </div>
 

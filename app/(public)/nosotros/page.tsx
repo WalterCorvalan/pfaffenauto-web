@@ -28,22 +28,22 @@ export default function NosotrosPage() {
       title: "2010",
       content: (
         <div>
-          <h3 className="text-xl md:text-2xl font-black text-navy mb-2 tracking-tight">
+          <h3 className="text-xl md:text-2xl font-black text-navy dark:text-white mb-2 tracking-tight">
             Los Inicios en Casa Central
           </h3>
-          <p className="mb-6 text-sm font-medium text-gray-600 leading-relaxed max-w-2xl">
+          <p className="mb-6 text-sm font-medium text-gray-600 dark:text-slate-400 leading-relaxed max-w-2xl">
             Pfaffen Autos abrió sus puertas en nuestra Casa Central con una visión clara impulsada por nuestro fundador, <strong>Sergio Pfaffezeller</strong>: transformar la compra y venta de vehículos en una experiencia transparente, segura y humana.
           </p>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <img
               src="/VDM.jpeg"
               alt="Sede Casa Central"
-              className="h-40 w-full rounded-2xl object-cover shadow-[0_8px_30px_rgba(0,0,0,0.1)] md:h-52 lg:h-64 border border-white/50"
+              className="h-40 w-full rounded-2xl object-cover shadow-[0_8px_30px_rgba(0,0,0,0.1)] dark:shadow-none md:h-52 lg:h-64 border border-white/50 dark:border-white/10"
             />
             <img
               src="https://images.unsplash.com/photo-1560958089-b8a1929cea89?q=80&w=1200&auto=format&fit=crop"
               alt="Primeros clientes"
-              className="h-40 w-full rounded-2xl object-cover shadow-[0_8px_30px_rgba(0,0,0,0.1)] md:h-52 lg:h-64 border border-white/50"
+              className="h-40 w-full rounded-2xl object-cover shadow-[0_8px_30px_rgba(0,0,0,0.1)] dark:shadow-none md:h-52 lg:h-64 border border-white/50 dark:border-white/10"
             />
           </div>
         </div>
@@ -53,17 +53,17 @@ export default function NosotrosPage() {
       title: "2018",
       content: (
         <div>
-          <h3 className="text-xl md:text-2xl font-black text-navy mb-2 tracking-tight">
+          <h3 className="text-xl md:text-2xl font-black text-navy dark:text-white mb-2 tracking-tight">
             Expansión en Zona Norte
           </h3>
-          <p className="mb-6 text-sm font-medium text-gray-600 leading-relaxed max-w-2xl">
+          <p className="mb-6 text-sm font-medium text-gray-600 dark:text-slate-400 leading-relaxed max-w-2xl">
             Gracias a la confianza inquebrantable de nuestros clientes, inauguramos nuestra sucursal estratégica en <strong>Don Torcuato</strong>. Esto nos consolidó como referentes absolutos en Zona Norte para la comercialización de vehículos 0KM y usados seleccionados de alta gama.
           </p>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <img
               src="/pana.jpg"
               alt="Sucursal Don Torcuato"
-              className="h-40 w-full rounded-2xl object-cover shadow-[0_8px_30px_rgba(0,0,0,0.1)] md:h-52 lg:h-64 border border-white/50"
+              className="h-40 w-full rounded-2xl object-cover shadow-[0_8px_30px_rgba(0,0,0,0.1)] dark:shadow-none md:h-52 lg:h-64 border border-white/50 dark:border-white/10"
             />
           </div>
         </div>
@@ -73,22 +73,22 @@ export default function NosotrosPage() {
       title: "Hoy",
       content: (
         <div>
-          <h3 className="text-xl md:text-2xl font-black text-navy mb-2 tracking-tight">
+          <h3 className="text-xl md:text-2xl font-black text-navy dark:text-white mb-2 tracking-tight">
             Revolución y Servicio Premium
           </h3>
-          <p className="mb-6 text-sm font-medium text-gray-600 leading-relaxed max-w-2xl">
+          <p className="mb-6 text-sm font-medium text-gray-600 dark:text-slate-400 leading-relaxed max-w-2xl">
             Integramos tecnología de punta para ofrecer <strong>cotizaciones en el acto</strong>, un proceso de <strong>consignación sin estrés</strong> y un catálogo 100% digitalizado. Mantenemos intacta la cercanía, el respaldo oficial y la pasión por los motores que nos caracteriza desde el día uno.
           </p>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <img
               src="https://images.unsplash.com/photo-1619767886558-efeb9c0a149f?q=80&w=1200&auto=format&fit=crop"
               alt="Innovación Tecnológica"
-              className="h-40 w-full rounded-2xl object-cover shadow-[0_8px_30px_rgba(0,0,0,0.1)] md:h-52 lg:h-64 border border-white/50"
+              className="h-40 w-full rounded-2xl object-cover shadow-[0_8px_30px_rgba(0,0,0,0.1)] dark:shadow-none md:h-52 lg:h-64 border border-white/50 dark:border-white/10"
             />
             <img
               src="https://images.unsplash.com/photo-1552519507-da3b142c6e3d?q=80&w=1200&auto=format&fit=crop"
               alt="Autos de Alta Gama"
-              className="h-40 w-full rounded-2xl object-cover shadow-[0_8px_30px_rgba(0,0,0,0.1)] md:h-52 lg:h-64 border border-white/50"
+              className="h-40 w-full rounded-2xl object-cover shadow-[0_8px_30px_rgba(0,0,0,0.1)] dark:shadow-none md:h-52 lg:h-64 border border-white/50 dark:border-white/10"
             />
           </div>
           
@@ -106,29 +106,29 @@ export default function NosotrosPage() {
   ];
 
   return (
-    <div className="min-h-screen bg-[#F8FAFC] font-sans text-foreground relative overflow-hidden pb-0 pt-10">
-      
+    <div className="min-h-screen bg-[#F8FAFC] dark:bg-[#0a0a0f] font-sans text-foreground relative overflow-hidden pb-0 pt-10">
+
       {/* ================= EFECTOS ESPACIALES SUPERIORES ================= */}
-      <div className="absolute top-[-10%] left-[-10%] w-[600px] h-[600px] bg-[#0145F2]/5 rounded-full blur-[120px] pointer-events-none z-0"></div>
+      <div className="absolute top-[-10%] left-[-10%] w-[600px] h-[600px] bg-[#0145F2]/5 dark:bg-sky-400/10 rounded-full blur-[120px] pointer-events-none z-0"></div>
       <div className="absolute top-[30%] right-[-10%] w-[500px] h-[500px] bg-sky-300/10 rounded-full blur-[120px] pointer-events-none z-0"></div>
-      
+
       <div className="max-w-7xl mx-auto px-4 md:px-6 relative z-10">
-        
+
         {/* ================= ENCABEZADO ================= */}
         <div className="text-center mb-10 pt-10">
-          <span className="text-[#0145F2] text-[10px] md:text-xs font-black uppercase tracking-[0.2em] bg-blue-50/50 backdrop-blur-md border border-blue-100/50 px-4 py-1.5 rounded-full inline-block shadow-sm mb-4">
+          <span className="text-[#0145F2] dark:text-sky-300 text-[10px] md:text-xs font-black uppercase tracking-[0.2em] bg-blue-50/50 dark:bg-sky-400/10 backdrop-blur-md border border-blue-100/50 dark:border-sky-400/20 px-4 py-1.5 rounded-full inline-block shadow-sm dark:shadow-none mb-4">
             Nuestra Historia
           </span>
-          <h1 className="text-4xl md:text-6xl font-light text-navy tracking-tighter drop-shadow-sm mb-4">
-            Conocé <strong className="font-black text-transparent bg-clip-text bg-gradient-to-r from-navy to-[#0145F2]">Pfaffen Autos</strong>
+          <h1 className="text-4xl md:text-6xl font-light text-navy dark:text-white tracking-tighter drop-shadow-sm mb-4">
+            Conocé <strong className="font-black text-transparent bg-clip-text bg-gradient-to-r from-navy to-[#0145F2] dark:from-white dark:to-sky-400">Pfaffen Autos</strong>
           </h1>
-          <p className="text-slate-500 text-sm md:text-base font-medium max-w-2xl mx-auto">
+          <p className="text-slate-500 dark:text-slate-400 text-sm md:text-base font-medium max-w-2xl mx-auto">
             Desde nuestros primeros pasos hasta convertirnos en la concesionaria referente de Zona Norte. Pasión por los motores, transparencia y el cliente siempre en el centro.
           </p>
         </div>
 
         {/* ================= TIMELINE COMPONENT ================= */}
-        <div className="relative w-full overflow-clip bg-white/40 backdrop-blur-xl border border-white/60 rounded-[40px] shadow-[0_20px_60px_rgba(0,0,0,0.03)] p-4 md:p-8 mb-20">
+        <div className="relative w-full overflow-clip bg-white/40 dark:bg-white/5 backdrop-blur-xl border border-white/60 dark:border-white/10 rounded-[40px] shadow-[0_20px_60px_rgba(0,0,0,0.03)] dark:shadow-none p-4 md:p-8 mb-20">
           <Timeline data={data} />
         </div>
       </div>

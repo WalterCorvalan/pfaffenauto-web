@@ -42,23 +42,23 @@ export default function FavoritosPage() {
   if (!mounted) return null;
 
   return (
-    <div className="min-h-screen bg-[#F8FAFC] font-sans text-navy pt-6 pb-20">
-      
+    <div className="min-h-screen bg-[#F8FAFC] dark:bg-[#0a0a0f] font-sans text-navy dark:text-white pt-6 pb-20">
+
       {/* HEADER ESPACIAL */}
-      <div className="relative w-full bg-gradient-to-b from-blue-50 to-white border-b border-gray-100 overflow-hidden pt-6 pb-12 mb-8">
-        <div className="absolute top-0 right-0 w-96 h-96 bg-blue-100 rounded-full blur-3xl opacity-40 -translate-y-1/2 translate-x-1/3 pointer-events-none"></div>
+      <div className="relative w-full bg-gradient-to-b from-blue-50 dark:from-sky-400/10 to-white dark:to-transparent border-b border-gray-100 dark:border-white/10 overflow-hidden pt-6 pb-12 mb-8">
+        <div className="absolute top-0 right-0 w-96 h-96 bg-blue-100 dark:bg-sky-400/10 rounded-full blur-3xl opacity-40 -translate-y-1/2 translate-x-1/3 pointer-events-none"></div>
         <div className="max-w-7xl mx-auto px-4 md:px-6 relative z-10">
-          <div className="text-xs text-gray-500 font-medium mb-8">
-            <Link href="/" className="hover:text-[#0145F2] transition-colors">Inicio</Link> / <strong className="text-navy">Mis Favoritos</strong>
+          <div className="text-xs text-gray-500 dark:text-slate-400 font-medium mb-8">
+            <Link href="/" className="hover:text-[#0145F2] dark:hover:text-sky-300 transition-colors">Inicio</Link> / <strong className="text-navy dark:text-white">Mis Favoritos</strong>
           </div>
           <div className="flex flex-col md:flex-row md:items-end justify-between gap-6">
             <div>
-              <h1 className="text-3xl md:text-5xl font-black text-navy tracking-tight mb-2 flex items-center gap-3">
+              <h1 className="text-3xl md:text-5xl font-black text-navy dark:text-white tracking-tight mb-2 flex items-center gap-3">
                 <Heart className="w-8 h-8 md:w-10 md:h-10 text-red-500 fill-red-500" />
                 Mis Favoritos
               </h1>
-              <p className="text-sm text-gray-500 font-medium">
-                Tenés <strong className="text-navy">{favoritos.length}</strong> {favoritos.length === 1 ? 'vehículo guardado' : 'vehículos guardados'}
+              <p className="text-sm text-gray-500 dark:text-slate-400 font-medium">
+                Tenés <strong className="text-navy dark:text-white">{favoritos.length}</strong> {favoritos.length === 1 ? 'vehículo guardado' : 'vehículos guardados'}
               </p>
             </div>
             
@@ -89,34 +89,34 @@ export default function FavoritosPage() {
                 className="h-full"
               >
                 <Link href={`/catalogo/${auto.slug}`} className="block group h-full">
-                  <div className="bg-white rounded-2xl border border-gray-200 overflow-hidden flex flex-col h-full shadow-sm hover:shadow-xl hover:-translate-y-1 transition-all duration-300 relative">
-                    
+                  <div className="bg-white dark:bg-white/5 rounded-2xl border border-gray-200 dark:border-white/10 overflow-hidden flex flex-col h-full shadow-sm dark:shadow-none hover:shadow-xl dark:hover:shadow-none hover:-translate-y-1 transition-all duration-300 relative">
+
                     {/* BOTÓN ELIMINAR */}
-                    <button 
+                    <button
                       onClick={(e) => eliminarFavorito(auto.id, e)}
-                      className="absolute top-3 right-3 z-10 bg-white/90 hover:bg-red-50 text-gray-400 hover:text-red-500 p-2 rounded-full shadow-md transition-colors backdrop-blur-md border border-gray-100"
+                      className="absolute top-3 right-3 z-10 bg-white/90 dark:bg-white/10 hover:bg-red-50 dark:hover:bg-red-400/10 text-gray-400 dark:text-slate-400 hover:text-red-500 dark:hover:text-red-400 p-2 rounded-full shadow-md dark:shadow-none transition-colors backdrop-blur-md border border-gray-100 dark:border-white/10"
                       title="Quitar de favoritos"
                     >
                       <Trash2 className="w-4 h-4" />
                     </button>
 
-                    <div className="relative h-[160px] bg-gray-50 flex items-center justify-center overflow-hidden p-2">
+                    <div className="relative h-[160px] bg-gray-50 dark:bg-white/5 flex items-center justify-center overflow-hidden p-2">
                       {auto.imagen ? (
-                        <Image src={auto.imagen} alt={auto.modelo} fill sizes="(max-width: 640px) 50vw, 25vw" className="object-contain mix-blend-multiply group-hover:scale-105 transition-transform duration-500" />
+                        <Image src={auto.imagen} alt={auto.modelo} fill sizes="(max-width: 640px) 50vw, 25vw" className="object-contain mix-blend-multiply dark:mix-blend-normal group-hover:scale-105 transition-transform duration-500" />
                       ) : (
-                        <Car className="w-10 h-10 text-gray-300" />
+                        <Car className="w-10 h-10 text-gray-300 dark:text-slate-600" />
                       )}
                     </div>
 
                     <div className="p-4 md:p-5 flex flex-col flex-grow">
-                      <span className="text-[10px] text-gray-400 font-bold uppercase tracking-widest mb-0.5">{auto.marca}</span>
-                      <h3 className="text-base font-black text-navy uppercase leading-tight line-clamp-1">{auto.modelo}</h3>
-                      
+                      <span className="text-[10px] text-gray-400 dark:text-slate-500 font-bold uppercase tracking-widest mb-0.5">{auto.marca}</span>
+                      <h3 className="text-base font-black text-navy dark:text-white uppercase leading-tight line-clamp-1">{auto.modelo}</h3>
+
                       <div className="mt-auto pt-4">
-                        <div className="bg-gray-50 rounded-xl p-3 mb-3 border border-gray-100">
-                          <span className="text-[9px] text-gray-400 font-bold uppercase tracking-widest block mb-0.5">Precio</span>
+                        <div className="bg-gray-50 dark:bg-white/5 rounded-xl p-3 mb-3 border border-gray-100 dark:border-white/10">
+                          <span className="text-[9px] text-gray-400 dark:text-slate-500 font-bold uppercase tracking-widest block mb-0.5">Precio</span>
                           <div className="flex flex-col">
-                            <span className="text-lg font-black text-navy tracking-tight">
+                            <span className="text-lg font-black text-navy dark:text-white tracking-tight">
                               {auto.precio_usd
                                 ? `US$ ${auto.precio_usd.toLocaleString("en-US")}`
                                 : `$ ${auto.precio_ars?.toLocaleString("es-AR")}`}
@@ -124,7 +124,7 @@ export default function FavoritosPage() {
                           </div>
                         </div>
 
-                        <div className="w-full bg-white text-[#0145F2] border border-blue-100 group-hover:bg-blue-50 font-black text-[10px] uppercase tracking-widest py-2.5 rounded-xl transition-colors flex items-center justify-center gap-1">
+                        <div className="w-full bg-white dark:bg-white/5 text-[#0145F2] dark:text-sky-300 border border-blue-100 dark:border-sky-400/20 group-hover:bg-blue-50 dark:group-hover:bg-sky-400/10 font-black text-[10px] uppercase tracking-widest py-2.5 rounded-xl transition-colors flex items-center justify-center gap-1">
                           Ver unidad <ChevronRight className="w-3.5 h-3.5" />
                         </div>
                       </div>
@@ -137,12 +137,12 @@ export default function FavoritosPage() {
           </motion.div>
         ) : (
           /* ESTADO VACÍO */
-          <div className="bg-white rounded-3xl border border-gray-200 py-20 px-4 text-center shadow-sm max-w-2xl mx-auto">
-            <div className="w-20 h-20 bg-gray-50 rounded-full flex items-center justify-center mx-auto mb-4 border border-gray-100">
-              <Heart className="w-8 h-8 text-gray-300" />
+          <div className="bg-white dark:bg-white/5 rounded-3xl border border-gray-200 dark:border-white/10 py-20 px-4 text-center shadow-sm dark:shadow-none max-w-2xl mx-auto">
+            <div className="w-20 h-20 bg-gray-50 dark:bg-white/5 rounded-full flex items-center justify-center mx-auto mb-4 border border-gray-100 dark:border-white/10">
+              <Heart className="w-8 h-8 text-gray-300 dark:text-slate-600" />
             </div>
-            <h2 className="text-2xl font-black text-navy mb-2">Aún no tenés favoritos</h2>
-            <p className="text-sm text-gray-500 mb-8 max-w-sm mx-auto">
+            <h2 className="text-2xl font-black text-navy dark:text-white mb-2">Aún no tenés favoritos</h2>
+            <p className="text-sm text-gray-500 dark:text-slate-400 mb-8 max-w-sm mx-auto">
               Explorá nuestro catálogo y guardá los vehículos que más te gusten tocando el ícono del corazón para tenerlos a mano.
             </p>
             <Link 

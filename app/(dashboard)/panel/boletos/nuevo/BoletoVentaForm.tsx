@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import { useState, useMemo, useEffect } from "react";
 import { useRouter } from "next/navigation";
@@ -291,9 +291,9 @@ export default function BoletoVentaForm({
             <div className="bg-white dark:bg-[#001c55] border border-slate-200 dark:border-[#0a2a6b] rounded-2xl p-6 shadow-sm space-y-3">
               <h2 className="text-[11px] font-bold uppercase tracking-widest text-slate-500 dark:text-slate-400 border-b border-slate-100 dark:border-[#0a2a6b] pb-3">¿Convertir una seña?</h2>
               <select className={inputClass} value={senaId} onChange={(e) => aplicarSena(e.target.value)}>
-                <option value="">Empezar desde cero</option>
+                <option value="" className="bg-white dark:bg-[#001c55] text-slate-900 dark:text-white">Empezar desde cero</option>
                 {senas.map((s) => (
-                  <option key={s.id} value={s.id}>N° {s.numero} — {s.apellido}, {s.nombre} — {s.marca} {s.modelo}</option>
+                  <option key={s.id} value={s.id} className="bg-white dark:bg-[#001c55] text-slate-900 dark:text-white">N° {s.numero} — {s.apellido}, {s.nombre} — {s.marca} {s.modelo}</option>
                 ))}
               </select>
             </div>
@@ -305,15 +305,15 @@ export default function BoletoVentaForm({
               <div>
                 <label className="text-[11px] font-bold text-slate-500 dark:text-slate-400 uppercase block mb-1.5">Sucursal *</label>
                 <select className={inputClass} value={sucursalId} onChange={(e) => setSucursalId(e.target.value)} required>
-                  <option value="">Seleccionar...</option>
-                  {sucursales.map((s) => (<option key={s.id} value={s.id}>{s.nombre}</option>))}
+                  <option value="" className="bg-white dark:bg-[#001c55] text-slate-900 dark:text-white">Seleccionar...</option>
+                  {sucursales.map((s) => (<option key={s.id} value={s.id} className="bg-white dark:bg-[#001c55] text-slate-900 dark:text-white">{s.nombre}</option>))}
                 </select>
               </div>
               <div>
                 <label className="text-[11px] font-bold text-slate-500 dark:text-slate-400 uppercase block mb-1.5">Vendedor</label>
                 <select className={inputClass} value={vendedorId} onChange={(e) => setVendedorId(e.target.value)}>
-                  <option value="">Vos (usuario actual)</option>
-                  {vendedores.map((v) => (<option key={v.id} value={v.id}>{v.nombre}</option>))}
+                  <option value="" className="bg-white dark:bg-[#001c55] text-slate-900 dark:text-white">Vos (usuario actual)</option>
+                  {vendedores.map((v) => (<option key={v.id} value={v.id} className="bg-white dark:bg-[#001c55] text-slate-900 dark:text-white">{v.nombre}</option>))}
                 </select>
               </div>
             </div>

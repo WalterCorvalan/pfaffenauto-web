@@ -42,12 +42,18 @@ async function intentarAnthropic(
         },
       ];
 
-  const response = await anthropic.messages.create({
-    model: MODELO_ANTHROPIC,
-    max_tokens: 1000,
-    system: systemMsg,
-    messages: finalMsgs,
-  });
+  // timeout corto + sin reintentos propios del SDK: si Anthropic no contesta
+  // rápido (sin crédito, colgado, lo que sea), cae al fallback de OpenRouter
+  // en vez de dejar la respuesta esperando varios minutos.
+  const response = await anthropic.messages.create(
+    {
+      model: MODELO_ANTHROPIC,
+      max_tokens: 1000,
+      system: systemMsg,
+      messages: finalMsgs,
+    },
+    { timeout: 8000, maxRetries: 0 }
+  );
 
   let content = "";
   for (const block of response.content) {
@@ -73,6 +79,7 @@ async function intentarOpenRouter(
       model: process.env.OPENROUTER_MODEL,
       messages: [{ role: "system", content: systemMsg }, ...conversationMsgs],
     }),
+    signal: AbortSignal.timeout(15000),
   });
   if (!res.ok) throw new Error(`OpenRouter respondió ${res.status}: ${await res.text().catch(() => "")}`);
   const data = await res.json();

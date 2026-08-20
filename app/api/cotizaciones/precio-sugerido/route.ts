@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { obtenerDolarOficial } from "@/lib/dolarOficial";
 
 // Descuento sobre el precio de mercado según km, ya definido para el cotizador
 function descuentoPorKm(km: number): number {
@@ -39,10 +40,10 @@ export async function POST(req: Request) {
             role: "system",
             content:
               "Sos un tasador de autos usados en Argentina. Buscá publicaciones comparables reales en MercadoLibre y Kavak para el vehículo indicado, priorizando comparables con kilometraje similar (±20.000km) y misma versión/año. " +
-              "Calculá la media de precios publicados de esos comparables. " +
+              "IMPORTANTE: NO conviertas monedas vos. Separá los comparables según la moneda en la que están publicados y calculá la media de cada grupo por separado — la conversión USD→ARS la hacemos nosotros con una cotización real, no la inventes. " +
               "Respondé ÚNICA Y EXCLUSIVAMENTE un JSON válido, sin texto adicional, sin markdown, sin explicación, con esta forma exacta: " +
-              '{"precio_medio_mercado": number, "cantidad_comparables": number}. ' +
-              "El precio en pesos argentinos, sin decimales.",
+              '{"precio_medio_ars": number|null, "cantidad_ars": number, "precio_medio_usd": number|null, "cantidad_usd": number}. ' +
+              "Si no encontrás comparables en alguna de las dos monedas, esa media va en null y la cantidad en 0. No inventes cifras — si no hay comparables reales, decilo con cantidad 0.",
           },
           { role: "user", content: consulta },
         ],
@@ -67,17 +68,33 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: "Respuesta inesperada de la IA." }, { status: 502 });
     }
 
-    const { precio_medio_mercado, cantidad_comparables } = JSON.parse(match[0]);
-    if (!precio_medio_mercado || typeof precio_medio_mercado !== "number") {
+    const { precio_medio_ars, cantidad_ars, precio_medio_usd, cantidad_usd } = JSON.parse(match[0]);
+    const totalComparables = (Number(cantidad_ars) || 0) + (Number(cantidad_usd) || 0);
+    if (totalComparables === 0) {
       return NextResponse.json({ error: "No se encontraron comparables suficientes." }, { status: 422 });
     }
 
+    // Conversión determinista USD → ARS con cotización real, no con lo que "crea" la IA.
+    let cotizacionUsada: number | null = null;
+    let precioMedioUsdEnArs = 0;
+    if (precio_medio_usd && cantidad_usd > 0) {
+      cotizacionUsada = await obtenerDolarOficial();
+      precioMedioUsdEnArs = precio_medio_usd * cotizacionUsada;
+    }
+
+    // Promedio ponderado por cantidad de comparables de cada grupo.
+    const precioMedioMercado =
+      ((precio_medio_ars || 0) * (cantidad_ars || 0) + precioMedioUsdEnArs * (cantidad_usd || 0)) / totalComparables;
+
     const descuento = descuentoPorKm(Number(kilometraje));
-    const precioSugerido = Math.round(precio_medio_mercado * (1 - descuento));
+    const precioSugerido = Math.round(precioMedioMercado * (1 - descuento));
 
     return NextResponse.json({
-      precio_medio_mercado,
-      cantidad_comparables: cantidad_comparables ?? null,
+      precio_medio_mercado: Math.round(precioMedioMercado),
+      cantidad_comparables: totalComparables,
+      cantidad_ars: cantidad_ars || 0,
+      cantidad_usd: cantidad_usd || 0,
+      cotizacion_dolar_usada: cotizacionUsada,
       descuento_aplicado: descuento,
       precio_sugerido: precioSugerido,
     });

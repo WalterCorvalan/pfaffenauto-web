@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import { useMemo, useState } from "react";
 import Link from "next/link";
@@ -185,16 +185,16 @@ export default function TareasLeadBoard({
               onChange={(e) => setCalificacionFiltro(e.target.value)}
               className="bg-slate-50 dark:bg-[#00246b] border border-slate-200 dark:border-[#0a2a6b] rounded-lg px-3 py-2 text-[13px] outline-none focus:border-indigo-500 text-slate-700 dark:text-slate-200"
             >
-              <option value="">Todo grado de interés</option>
-              {CALIFICACIONES.map((c) => (<option key={c.value} value={c.value}>{c.label}</option>))}
+              <option value="" className="bg-white dark:bg-[#001c55] text-slate-900 dark:text-white">Todo grado de interés</option>
+              {CALIFICACIONES.map((c) => (<option key={c.value} value={c.value} className="bg-white dark:bg-[#001c55] text-slate-900 dark:text-white">{c.label}</option>))}
             </select>
             <select
               value={vendedorFiltro}
               onChange={(e) => setVendedorFiltro(e.target.value)}
               className="bg-slate-50 dark:bg-[#00246b] border border-slate-200 dark:border-[#0a2a6b] rounded-lg px-3 py-2 text-[13px] outline-none focus:border-indigo-500 text-slate-700 dark:text-slate-200"
             >
-              <option value="">Todos los vendedores</option>
-              {vendedores.map((v: any) => (<option key={v.id} value={v.id}>{v.nombre}</option>))}
+              <option value="" className="bg-white dark:bg-[#001c55] text-slate-900 dark:text-white">Todos los vendedores</option>
+              {vendedores.map((v: any) => (<option key={v.id} value={v.id} className="bg-white dark:bg-[#001c55] text-slate-900 dark:text-white">{v.nombre}</option>))}
             </select>
             <button
               onClick={() => window.print()}

@@ -180,7 +180,7 @@ export default async function VehiculoDetallePage({
   };
 
   return (
-    <div className="min-h-screen bg-[#F8FAFC] print:bg-white font-sans text-foreground flex flex-col relative pb-20">
+    <div className="min-h-screen bg-[#F8FAFC] dark:bg-[#0a0a0f] print:bg-white font-sans text-foreground flex flex-col relative pb-20">
       <script
         type="application/ld+json"
         dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLdVehicle) }}
@@ -193,14 +193,14 @@ export default async function VehiculoDetallePage({
 
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 lg:gap-10 items-start mt-2 lg:mt-6">
           <div className="lg:col-span-8 flex flex-col gap-8 order-1 print:col-span-12">
-            <div className="hidden lg:flex text-[10px] sm:text-[11px] text-slate-500 font-bold uppercase tracking-widest items-center gap-2.5 print:hidden">
-              <Link href="/" className="hover:text-[#0145F2] transition-colors">Inicio</Link>
-              <span className="text-slate-300">/</span>
-              <Link href="/catalogo" className="hover:text-[#0145F2] transition-colors">Catálogo</Link>
-              <span className="text-slate-300">/</span>
-              <Link href={`/marcas/${auto.marca.toLowerCase().replace(/\s+/g, "-")}`} className="hover:text-[#0145F2] transition-colors">{auto.marca}</Link>
-              <span className="text-slate-300">/</span>
-              <span className="text-navy font-black">{auto.modelo}</span>
+            <div className="hidden lg:flex text-[10px] sm:text-[11px] text-slate-500 dark:text-slate-400 font-bold uppercase tracking-widest items-center gap-2.5 print:hidden">
+              <Link href="/" className="hover:text-[#0145F2] dark:hover:text-sky-300 transition-colors">Inicio</Link>
+              <span className="text-slate-300 dark:text-slate-600">/</span>
+              <Link href="/catalogo" className="hover:text-[#0145F2] dark:hover:text-sky-300 transition-colors">Catálogo</Link>
+              <span className="text-slate-300 dark:text-slate-600">/</span>
+              <Link href={`/marcas/${auto.marca.toLowerCase().replace(/\s+/g, "-")}`} className="hover:text-[#0145F2] dark:hover:text-sky-300 transition-colors">{auto.marca}</Link>
+              <span className="text-slate-300 dark:text-slate-600">/</span>
+              <span className="text-navy dark:text-white font-black">{auto.modelo}</span>
             </div>
 
             <VehiculoGallery auto={auto} />
@@ -248,10 +248,10 @@ export default async function VehiculoDetallePage({
 function BackgroundEffects() {
   return (
     <div className="absolute inset-0 pointer-events-none z-0 overflow-hidden print:hidden">
-      <div className="absolute inset-0 bg-[linear-gradient(to_right,#e2e8f0_1px,transparent_1px),linear-gradient(to_bottom,#e2e8f0_1px,transparent_1px)] bg-[size:3rem_3rem] [mask-image:radial-gradient(ellipse_80%_50%_at_50%_0%,#000_70%,transparent_100%)] opacity-60"></div>
-      <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[800px] h-[400px] bg-[#0145F2]/5 blur-[120px] rounded-full"></div>
-      <div className="absolute top-[20%] -left-[10%] w-[500px] h-[500px] bg-sky-300/10 blur-[120px] rounded-full"></div>
-      <div className="absolute bottom-[10%] -right-[5%] w-[600px] h-[600px] bg-blue-400/5 blur-[120px] rounded-full"></div>
+      <div className="absolute inset-0 bg-[linear-gradient(to_right,#e2e8f0_1px,transparent_1px),linear-gradient(to_bottom,#e2e8f0_1px,transparent_1px)] dark:bg-[linear-gradient(to_right,rgba(255,255,255,0.06)_1px,transparent_1px),linear-gradient(to_bottom,rgba(255,255,255,0.06)_1px,transparent_1px)] bg-[size:3rem_3rem] [mask-image:radial-gradient(ellipse_80%_50%_at_50%_0%,#000_70%,transparent_100%)] opacity-60"></div>
+      <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[800px] h-[400px] bg-[#0145F2]/5 dark:bg-sky-400/5 blur-[120px] rounded-full"></div>
+      <div className="absolute top-[20%] -left-[10%] w-[500px] h-[500px] bg-sky-300/10 dark:bg-sky-400/5 blur-[120px] rounded-full"></div>
+      <div className="absolute bottom-[10%] -right-[5%] w-[600px] h-[600px] bg-blue-400/5 dark:bg-blue-400/5 blur-[120px] rounded-full"></div>
     </div>
   );
 }
@@ -273,21 +273,21 @@ function PrintHeader({ auto }: { auto: any }) {
 function MobileTitle({ auto }: { auto: any }) {
   return (
     <div className="block lg:hidden mb-2 print:hidden relative z-10">
-      <div className="text-[10px] sm:text-xs text-slate-500 font-bold uppercase tracking-widest mb-3 flex items-center gap-1.5 flex-wrap">
-        <Link href="/" className="hover:text-[#0145F2] transition-colors">Inicio</Link>
-        <span className="text-slate-400">/</span>
-        <Link href="/catalogo" className="hover:text-[#0145F2] transition-colors">Catálogo</Link>
-        <span className="text-slate-400">/</span>
-        <Link href={`/marcas/${auto.marca.toLowerCase().replace(/\s+/g, "-")}`} className="text-slate-500 hover:text-[#0145F2] transition-colors">{auto.marca}</Link>
+      <div className="text-[10px] sm:text-xs text-slate-500 dark:text-slate-400 font-bold uppercase tracking-widest mb-3 flex items-center gap-1.5 flex-wrap">
+        <Link href="/" className="hover:text-[#0145F2] dark:hover:text-sky-300 transition-colors">Inicio</Link>
+        <span className="text-slate-400 dark:text-slate-600">/</span>
+        <Link href="/catalogo" className="hover:text-[#0145F2] dark:hover:text-sky-300 transition-colors">Catálogo</Link>
+        <span className="text-slate-400 dark:text-slate-600">/</span>
+        <Link href={`/marcas/${auto.marca.toLowerCase().replace(/\s+/g, "-")}`} className="text-slate-500 dark:text-slate-400 hover:text-[#0145F2] dark:hover:text-sky-300 transition-colors">{auto.marca}</Link>
       </div>
 
-      <h1 className="text-3xl font-black text-navy uppercase tracking-tighter leading-tight drop-shadow-sm">
+      <h1 className="text-3xl font-black text-navy dark:text-white uppercase tracking-tighter leading-tight drop-shadow-sm">
         {auto.marca}{" "}
-        <span className="text-transparent bg-clip-text bg-gradient-to-r from-navy to-[#0145F2]">
+        <span className="text-transparent bg-clip-text bg-gradient-to-r from-navy to-[#0145F2] dark:from-white dark:to-sky-400">
           {auto.modelo}
         </span>
       </h1>
-      <p className="text-sm font-black text-slate-500 uppercase mt-1">
+      <p className="text-sm font-black text-slate-500 dark:text-slate-400 uppercase mt-1">
         {auto.version || `${auto.tipo || "Vehículo"} • ${auto.transmision || "Manual"}`}
       </p>
 
@@ -300,7 +300,7 @@ function MobileTitle({ auto }: { auto: any }) {
 
 function VehiculoGallery({ auto }: { auto: any }) {
   return (
-    <div className="w-full overflow-hidden shadow-[0_20px_50px_rgba(0,0,0,0.1)] rounded-[20px] md:rounded-[32px] border border-slate-200/50 bg-white print:shadow-none print:border-slate-300">
+    <div className="w-full overflow-hidden shadow-[0_20px_50px_rgba(0,0,0,0.1)] dark:shadow-[0_20px_50px_rgba(0,0,0,0.4)] rounded-[20px] md:rounded-[32px] border border-slate-200/50 dark:border-white/10 bg-white dark:bg-white/5 print:shadow-none print:border-slate-300">
       <div className="print:hidden">
         <GaleriaVehiculo
           imagenes={auto.multimedia_vehiculos || []}
@@ -326,41 +326,41 @@ function VehiculoGallery({ auto }: { auto: any }) {
 
 function VehiculoSpecs({ auto, esCeroKm }: { auto: any; esCeroKm: boolean }) {
   return (
-    <div className="bg-white/60 print:bg-white backdrop-blur-xl border border-white print:border-slate-200 rounded-[24px] p-6 md:p-8 shadow-[0_4px_15px_rgba(0,0,0,0.03)] print:shadow-none grid grid-cols-2 md:flex md:flex-wrap items-center justify-between gap-6 relative z-10">
+    <div className="bg-white/60 dark:bg-white/5 print:bg-white backdrop-blur-xl border border-white dark:border-white/10 print:border-slate-200 rounded-[24px] p-6 md:p-8 shadow-[0_4px_15px_rgba(0,0,0,0.03)] dark:shadow-none print:shadow-none grid grid-cols-2 md:flex md:flex-wrap items-center justify-between gap-6 relative z-10">
       <div className="flex items-center gap-4">
-        <div className="bg-white p-3 rounded-2xl shadow-sm border border-slate-100">
-          <CalendarDays className="w-6 h-6 text-[#0145F2] opacity-80" />
+        <div className="bg-white dark:bg-white/5 p-3 rounded-2xl shadow-sm dark:shadow-none border border-slate-100 dark:border-white/10">
+          <CalendarDays className="w-6 h-6 text-[#0145F2] dark:text-sky-400 opacity-80" />
         </div>
         <div className="flex flex-col">
-          <span className="text-[10px] text-slate-500 font-bold uppercase tracking-widest">Año</span>
-          <span className="text-base font-black text-navy">{auto.anio}</span>
+          <span className="text-[10px] text-slate-500 dark:text-slate-400 font-bold uppercase tracking-widest">Año</span>
+          <span className="text-base font-black text-navy dark:text-white">{auto.anio}</span>
         </div>
       </div>
       <div className="flex items-center gap-4">
-        <div className="bg-white p-3 rounded-2xl shadow-sm border border-slate-100">
-          <Gauge className="w-6 h-6 text-[#0145F2] opacity-80" />
+        <div className="bg-white dark:bg-white/5 p-3 rounded-2xl shadow-sm dark:shadow-none border border-slate-100 dark:border-white/10">
+          <Gauge className="w-6 h-6 text-[#0145F2] dark:text-sky-400 opacity-80" />
         </div>
         <div className="flex flex-col">
-          <span className="text-[10px] text-slate-500 font-bold uppercase tracking-widest">Kilómetros</span>
-          <span className="text-base font-black text-navy">{esCeroKm ? "0 km" : `${auto.kilometraje?.toLocaleString("es-AR")} km`}</span>
+          <span className="text-[10px] text-slate-500 dark:text-slate-400 font-bold uppercase tracking-widest">Kilómetros</span>
+          <span className="text-base font-black text-navy dark:text-white">{esCeroKm ? "0 km" : `${auto.kilometraje?.toLocaleString("es-AR")} km`}</span>
         </div>
       </div>
       <div className="flex items-center gap-4">
-        <div className="bg-white p-3 rounded-2xl shadow-sm border border-slate-100">
-          <Fuel className="w-6 h-6 text-[#0145F2] opacity-80" />
+        <div className="bg-white dark:bg-white/5 p-3 rounded-2xl shadow-sm dark:shadow-none border border-slate-100 dark:border-white/10">
+          <Fuel className="w-6 h-6 text-[#0145F2] dark:text-sky-400 opacity-80" />
         </div>
         <div className="flex flex-col">
-          <span className="text-[10px] text-slate-500 font-bold uppercase tracking-widest">Combustible</span>
-          <span className="text-base font-black text-navy capitalize">{auto.tipo_combustible || "-"}</span>
+          <span className="text-[10px] text-slate-500 dark:text-slate-400 font-bold uppercase tracking-widest">Combustible</span>
+          <span className="text-base font-black text-navy dark:text-white capitalize">{auto.tipo_combustible || "-"}</span>
         </div>
       </div>
       <div className="flex items-center gap-4">
-        <div className="bg-white p-3 rounded-2xl shadow-sm border border-slate-100">
-          <Settings2 className="w-6 h-6 text-[#0145F2] opacity-80" />
+        <div className="bg-white dark:bg-white/5 p-3 rounded-2xl shadow-sm dark:shadow-none border border-slate-100 dark:border-white/10">
+          <Settings2 className="w-6 h-6 text-[#0145F2] dark:text-sky-400 opacity-80" />
         </div>
         <div className="flex flex-col">
-          <span className="text-[10px] text-slate-500 font-bold uppercase tracking-widest">Transmisión</span>
-          <span className="text-base font-black text-navy capitalize">{auto.transmision || "-"}</span>
+          <span className="text-[10px] text-slate-500 dark:text-slate-400 font-bold uppercase tracking-widest">Transmisión</span>
+          <span className="text-base font-black text-navy dark:text-white capitalize">{auto.transmision || "-"}</span>
         </div>
       </div>
     </div>
@@ -375,20 +375,20 @@ function VehiculoPriceCard({
   esCeroKm,
 }: any) {
   return (
-    <div className="bg-white/70 print:bg-white backdrop-blur-3xl border border-white print:border-slate-300 rounded-[32px] p-6 lg:p-8 shadow-[0_12px_40px_rgba(0,0,0,0.05)] print:shadow-none flex flex-col relative overflow-hidden">
-      <div className="absolute inset-0 bg-gradient-to-br from-white/40 to-transparent pointer-events-none z-0 print:hidden"></div>
+    <div className="bg-white/70 dark:bg-white/5 print:bg-white backdrop-blur-3xl border border-white dark:border-white/10 print:border-slate-300 rounded-[32px] p-6 lg:p-8 shadow-[0_12px_40px_rgba(0,0,0,0.05)] dark:shadow-none print:shadow-none flex flex-col relative overflow-hidden">
+      <div className="absolute inset-0 bg-gradient-to-br from-white/40 dark:from-white/[0.03] to-transparent pointer-events-none z-0 print:hidden"></div>
 
-      <div className="hidden lg:block border-b border-slate-200/50 pb-5 mb-6 relative z-10">
-        <span className="text-[10px] text-slate-500 font-black uppercase tracking-widest block mb-2">
+      <div className="hidden lg:block border-b border-slate-200/50 dark:border-white/10 pb-5 mb-6 relative z-10">
+        <span className="text-[10px] text-slate-500 dark:text-slate-400 font-black uppercase tracking-widest block mb-2">
           {esCeroKm ? "0km" : "Usado seleccionado"} | {auto.anio}
         </span>
-        <h1 className="text-3xl lg:text-4xl font-black text-navy uppercase tracking-tighter leading-tight drop-shadow-sm">
+        <h1 className="text-3xl lg:text-4xl font-black text-navy dark:text-white uppercase tracking-tighter leading-tight drop-shadow-sm">
           {auto.marca}{" "}
-          <span className="text-transparent bg-clip-text bg-gradient-to-r from-navy to-[#0145F2]">
+          <span className="text-transparent bg-clip-text bg-gradient-to-r from-navy to-[#0145F2] dark:from-white dark:to-sky-400">
             {auto.modelo}
           </span>
         </h1>
-        <p className="text-sm font-black text-slate-500 uppercase mt-2">
+        <p className="text-sm font-black text-slate-500 dark:text-slate-400 uppercase mt-2">
           {auto.version || `${auto.tipo || "Vehículo"} • ${auto.transmision || "Manual"}`}
         </p>
 
@@ -399,8 +399,8 @@ function VehiculoPriceCard({
 
       <div className="relative z-10 mb-8">
         <div className="flex flex-col gap-2">
-          <span className="text-sm font-medium text-slate-500 block mb-1">Precio al contado</span>
-          <h2 className="text-4xl md:text-5xl font-black text-navy tracking-tighter drop-shadow-sm">
+          <span className="text-sm font-medium text-slate-500 dark:text-slate-400 block mb-1">Precio al contado</span>
+          <h2 className="text-4xl md:text-5xl font-black text-navy dark:text-white tracking-tighter drop-shadow-sm">
             {precioUsd && precioUsd > 0
               ? `US$ ${precioUsd.toLocaleString("en-US")}`
               : `$ ${precioArs.toLocaleString("es-AR")}`}
@@ -421,15 +421,15 @@ function VehiculoPriceCard({
         <AgendarVisitaForm auto={auto} />
       </div>
 
-      <hr className="border-slate-200/50 my-6 relative z-10 print:my-4" />
+      <hr className="border-slate-200/50 dark:border-white/10 my-6 relative z-10 print:my-4" />
 
       <div className="flex flex-col gap-5 relative z-10">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-3">
-            <div className="bg-white p-2 rounded-full border border-slate-100 shadow-sm">
-              <MapPin className="w-4 h-4 text-[#0145F2]" />
+            <div className="bg-white dark:bg-white/5 p-2 rounded-full border border-slate-100 dark:border-white/10 shadow-sm dark:shadow-none">
+              <MapPin className="w-4 h-4 text-[#0145F2] dark:text-sky-400" />
             </div>
-            <span className="text-navy text-xs uppercase tracking-widest font-black">Sucursal</span>
+            <span className="text-navy dark:text-white text-xs uppercase tracking-widest font-black">Sucursal</span>
           </div>
 
           <Link
@@ -438,7 +438,7 @@ function VehiculoPriceCard({
               .replace(/\s+/g, "-")
               .normalize("NFD")
               .replace(/[\u0300-\u036f]/g, "")}`}
-            className="text-sm font-medium text-slate-600 hover:text-[#0145F2] hover:underline transition-colors"
+            className="text-sm font-medium text-slate-600 dark:text-slate-300 hover:text-[#0145F2] dark:hover:text-sky-300 hover:underline transition-colors"
             title="Ver información de esta sucursal"
           >
             {auto.sucursales?.nombre || "Central"}
@@ -447,12 +447,12 @@ function VehiculoPriceCard({
 
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-3">
-            <div className="bg-white p-2 rounded-full border border-slate-100 shadow-sm">
-              <Clock className="w-4 h-4 text-[#0145F2]" />
+            <div className="bg-white dark:bg-white/5 p-2 rounded-full border border-slate-100 dark:border-white/10 shadow-sm dark:shadow-none">
+              <Clock className="w-4 h-4 text-[#0145F2] dark:text-sky-400" />
             </div>
-            <span className="text-navy text-xs uppercase tracking-widest font-black">Entrega</span>
+            <span className="text-navy dark:text-white text-xs uppercase tracking-widest font-black">Entrega</span>
           </div>
-          <span className="text-sm font-medium text-slate-600">Inmediata</span>
+          <span className="text-sm font-medium text-slate-600 dark:text-slate-300">Inmediata</span>
         </div>
       </div>
 
@@ -468,7 +468,7 @@ function VehiculosRelacionados({ titulo, vehiculos }: { titulo: string; vehiculo
 
   return (
     <div className="mt-16 print:hidden relative z-10">
-      <h2 className="text-xl md:text-2xl font-black text-navy tracking-tight mb-5">{titulo}</h2>
+      <h2 className="text-xl md:text-2xl font-black text-navy dark:text-white tracking-tight mb-5">{titulo}</h2>
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 md:gap-5">
         {vehiculos.map((v) => {
           const precioMostrar = v.precio_publicado_usd && !v.precio_publicado_ars
@@ -479,9 +479,9 @@ function VehiculosRelacionados({ titulo, vehiculos }: { titulo: string; vehiculo
             <Link
               key={v.id}
               href={`/catalogo/${v.slug}`}
-              className="block group bg-white/40 backdrop-blur-2xl rounded-[24px] border border-white/60 overflow-hidden shadow-[0_8px_32px_rgba(0,0,0,0.04)] hover:shadow-[0_20px_48px_rgba(1,69,242,0.12)] hover:border-white hover:bg-white/70 transition-all duration-500"
+              className="block group bg-white/40 dark:bg-white/5 backdrop-blur-2xl rounded-[24px] border border-white/60 dark:border-white/10 overflow-hidden shadow-[0_8px_32px_rgba(0,0,0,0.04)] dark:shadow-none hover:shadow-[0_20px_48px_rgba(1,69,242,0.12)] dark:hover:shadow-none hover:border-white dark:hover:border-white/20 hover:bg-white/70 dark:hover:bg-white/10 transition-all duration-500"
             >
-              <div className="relative h-[140px] sm:h-[160px] bg-white/30 overflow-hidden mix-blend-multiply">
+              <div className="relative h-[140px] sm:h-[160px] bg-white/30 dark:bg-white/5 overflow-hidden mix-blend-multiply dark:mix-blend-normal">
                 {v.multimedia_vehiculos?.[0] ? (
                   <Image
                     src={v.multimedia_vehiculos[0].url_archivo}
@@ -491,22 +491,22 @@ function VehiculosRelacionados({ titulo, vehiculos }: { titulo: string; vehiculo
                     className="object-cover group-hover:scale-105 transition-transform duration-700 ease-out"
                   />
                 ) : (
-                  <div className="w-full h-full flex items-center justify-center text-gray-300 text-xs font-medium">Sin foto</div>
+                  <div className="w-full h-full flex items-center justify-center text-gray-300 dark:text-slate-500 text-xs font-medium">Sin foto</div>
                 )}
               </div>
               <div className="p-4 flex flex-col">
-                <span className="text-[10px] text-gray-400 font-black uppercase tracking-widest mb-1">{v.marca}</span>
-                <h3 className="text-sm font-black text-navy leading-tight uppercase truncate">{v.modelo}</h3>
-                <p className="text-[11px] text-gray-500 font-medium mt-0.5">
+                <span className="text-[10px] text-gray-400 dark:text-slate-500 font-black uppercase tracking-widest mb-1">{v.marca}</span>
+                <h3 className="text-sm font-black text-navy dark:text-white leading-tight uppercase truncate">{v.modelo}</h3>
+                <p className="text-[11px] text-gray-500 dark:text-slate-400 font-medium mt-0.5">
                   {v.anio} · {v.kilometraje?.toLocaleString("es-AR")} km · {v.transmision || "—"}
                 </p>
-                <div className="mt-3 pt-3 flex items-center justify-between border-t border-gray-200/50">
-                  <span className="text-base font-black text-navy tracking-tighter">{precioMostrar}</span>
-                  <div className="w-7 h-7 rounded-full bg-white border border-gray-100 shadow-sm group-hover:bg-[#0145F2] group-hover:border-[#0145F2] group-hover:text-white flex items-center justify-center transition-all duration-300 text-gray-400">
+                <div className="mt-3 pt-3 flex items-center justify-between border-t border-gray-200/50 dark:border-white/10">
+                  <span className="text-base font-black text-navy dark:text-white tracking-tighter">{precioMostrar}</span>
+                  <div className="w-7 h-7 rounded-full bg-white dark:bg-white/5 border border-gray-100 dark:border-white/10 shadow-sm dark:shadow-none group-hover:bg-[#0145F2] group-hover:border-[#0145F2] group-hover:text-white flex items-center justify-center transition-all duration-300 text-gray-400 dark:text-slate-500">
                     <ChevronRight className="w-3.5 h-3.5" />
                   </div>
                 </div>
-                <span className="flex items-center gap-1 text-[10px] text-gray-400 font-medium mt-1.5">
+                <span className="flex items-center gap-1 text-[10px] text-gray-400 dark:text-slate-500 font-medium mt-1.5">
                   <MapPin className="w-2.5 h-2.5" /> {v.sucursales?.nombre || "Buenos Aires"}
                 </span>
               </div>
@@ -551,7 +551,7 @@ function VehiculoPermuta() {
 function MobileBottomBar({ auto, linkWhatsApp }: { auto: any; linkWhatsApp: string; }) {
   return (
     <div className="lg:hidden sticky bottom-4 left-0 w-full px-4 z-[40] mt-4 print:hidden">
-      <div className="pointer-events-auto flex items-center gap-3 w-full max-w-md mx-auto bg-white/90 backdrop-blur-xl p-2.5 rounded-2xl shadow-[0_10px_40px_rgba(0,0,0,0.15)] border border-slate-200/60">
+      <div className="pointer-events-auto flex items-center gap-3 w-full max-w-md mx-auto bg-white/90 dark:bg-[#0f172a]/90 backdrop-blur-xl p-2.5 rounded-2xl shadow-[0_10px_40px_rgba(0,0,0,0.15)] dark:shadow-[0_10px_40px_rgba(0,0,0,0.5)] border border-slate-200/60 dark:border-white/10">
         <div className="flex-1 h-[48px]">
           <AgendarVisitaForm auto={auto} isMobile={true} />
         </div>

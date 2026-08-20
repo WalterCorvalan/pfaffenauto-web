@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
@@ -140,8 +140,8 @@ export default function PresupuestoForm({ clientes, vehiculos, vendedores, sucur
               <div>
                 <label className="text-[11px] font-bold text-slate-500 dark:text-slate-400 uppercase block mb-1.5">Sucursal (para cargar un auto nuevo al stock)</label>
                 <select className={inputClass} value={sucursalId} onChange={(e) => setSucursalId(e.target.value)}>
-                  <option value="">Seleccionar...</option>
-                  {sucursales.map((s) => (<option key={s.id} value={s.id}>{s.nombre}</option>))}
+                  <option value="" className="bg-white dark:bg-[#001c55] text-slate-900 dark:text-white">Seleccionar...</option>
+                  {sucursales.map((s) => (<option key={s.id} value={s.id} className="bg-white dark:bg-[#001c55] text-slate-900 dark:text-white">{s.nombre}</option>))}
                 </select>
               </div>
             )}
@@ -162,8 +162,8 @@ export default function PresupuestoForm({ clientes, vehiculos, vendedores, sucur
               <div>
                 <label className="text-[11px] font-bold text-slate-500 dark:text-slate-400 uppercase block mb-1.5">Vendedor</label>
                 <select className={inputClass} value={vendedorId} onChange={(e) => setVendedorId(e.target.value)}>
-                  <option value="">Vos (usuario actual)</option>
-                  {vendedores.map((v) => (<option key={v.id} value={v.id}>{v.nombre}</option>))}
+                  <option value="" className="bg-white dark:bg-[#001c55] text-slate-900 dark:text-white">Vos (usuario actual)</option>
+                  {vendedores.map((v) => (<option key={v.id} value={v.id} className="bg-white dark:bg-[#001c55] text-slate-900 dark:text-white">{v.nombre}</option>))}
                 </select>
               </div>
               <div>

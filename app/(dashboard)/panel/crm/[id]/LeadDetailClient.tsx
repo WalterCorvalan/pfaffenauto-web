@@ -5,11 +5,12 @@ import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { supabase } from "@/lib/supabase/client";
 import { notificarPersona } from "@/lib/notificaciones";
+import { CHECKLIST_PERITAJE } from "@/lib/peritajeChecklist";
 import {
   ArrowLeft, User, Phone, CarFront, Calendar, Plus, X,
   CheckCircle2, Circle, FileText, Ban, Trophy, Clock, AlertTriangle,
   MapPin, StickyNote, Radio, Car, LifeBuoy, History, Edit2, Check,
-  Flame, Snowflake, Minus, Receipt, Wallet, Printer, Paperclip,
+  Flame, Snowflake, Minus, Receipt, Wallet, Printer, Paperclip, ClipboardCheck,
 } from "lucide-react";
 
 const ESTADOS = ["Nuevo", "Contactado", "Interesado", "Cliente", "Perdido"];
@@ -35,13 +36,43 @@ const inputClass = "w-full bg-slate-50 dark:bg-[#00246b] border border-slate-200
 
 export default function LeadDetailClient({
   lead, vendedores, vehiculosStock, motivosCierre, tareasIniciales, testDrivesIniciales, eventos, usuarioActual,
-  presupuestos, senas, boletos,
+  presupuestos, senas, boletos, peritajes,
 }: {
   lead: any; vendedores: any[]; vehiculosStock: any[]; motivosCierre: any[]; tareasIniciales: any[];
   testDrivesIniciales: any[]; eventos: any[]; usuarioActual: { id?: string; rol?: string };
-  presupuestos: any[]; senas: any[]; boletos: any[];
+  presupuestos: any[]; senas: any[]; boletos: any[]; peritajes: any[];
 }) {
   const router = useRouter();
+  const [creandoPeritaje, setCreandoPeritaje] = useState(false);
+
+  const iniciarPeritaje = async () => {
+    setCreandoPeritaje(true);
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      const { data: peritaje, error } = await supabase
+        .from("peritajes")
+        .insert({ cotizacion_id: lead.id, vehiculo_id: lead.vehiculo_id || null, realizado_por: user?.id || null })
+        .select("id")
+        .single();
+      if (error) throw error;
+
+      const items = CHECKLIST_PERITAJE.flatMap((grupo) =>
+        grupo.items.map((item, i) => ({ peritaje_id: peritaje.id, categoria: grupo.categoria, item, orden: i }))
+      );
+      const { error: errorItems } = await supabase.from("peritaje_items").insert(items);
+      if (errorItems) throw errorItems;
+
+      router.push(`/panel/peritajes/${peritaje.id}`);
+    } catch (err) {
+      alert("No se pudo iniciar el peritaje.");
+      setCreandoPeritaje(false);
+    }
+  };
+  // Agrupamos por sucursal preferida del lead para que el encargado encuentre
+  // rápido al vendedor correcto (mismo patrón que VendedorEditor de stock).
+  const vendedoresSucursal = vendedores.filter((v: any) => v.sucursales?.nombre === lead.sucursal_preferida);
+  const vendedoresOtros = vendedores.filter((v: any) => v.sucursales?.nombre !== lead.sucursal_preferida);
+
   const puedeEditar =
     usuarioActual?.rol === "admin" ||
     usuarioActual?.rol === "encargado" ||
@@ -414,8 +445,12 @@ export default function LeadDetailClient({
             onChange={(e) => cambiarVendedor(e.target.value)}
             className={`${inputClass} disabled:opacity-60 disabled:cursor-not-allowed`}
           >
-            <option value="">Sin asignar</option>
-            {vendedores.map((v) => (<option key={v.id} value={v.id}>{v.nombre}</option>))}
+            <option value="" className="bg-white dark:bg-[#001c55] text-slate-900 dark:text-white">Sin asignar</option>
+            {[...vendedoresSucursal, ...vendedoresOtros].map((v: any) => (
+              <option key={v.id} value={v.id} className="bg-white dark:bg-[#001c55] text-slate-900 dark:text-white">
+                {v.nombre}{vendedoresOtros.includes(v) ? " (otra sucursal)" : ""}
+              </option>
+            ))}
           </select>
         </div>
 
@@ -435,9 +470,9 @@ export default function LeadDetailClient({
             onChange={(e) => cambiarVehiculo(e.target.value)}
             className={`${inputClass} disabled:opacity-60 disabled:cursor-not-allowed`}
           >
-            <option value="">Sin vincular</option>
+            <option value="" className="bg-white dark:bg-[#001c55] text-slate-900 dark:text-white">Sin vincular</option>
             {vehiculosSugeridos.map((v: any) => (
-              <option key={v.id} value={v.id}>{v.marca} {v.modelo} {v.patente ? `— ${v.patente}` : ""}</option>
+              <option key={v.id} value={v.id} className="bg-white dark:bg-[#001c55] text-slate-900 dark:text-white">{v.marca} {v.modelo} {v.patente ? `— ${v.patente}` : ""}</option>
             ))}
           </select>
         </div>
@@ -575,6 +610,49 @@ export default function LeadDetailClient({
           )}
         </div>
 
+        {/* Peritaje */}
+        <div className="bg-white dark:bg-[#001c55] border border-slate-200 dark:border-[#0a2a6b] rounded-2xl p-5 shadow-sm space-y-3">
+          <div className="flex items-center justify-between">
+            <h2 className="text-[11px] font-bold uppercase tracking-widest text-slate-500 dark:text-slate-400 flex items-center gap-2">
+              <ClipboardCheck className="w-3.5 h-3.5" /> Peritaje
+            </h2>
+            {puedeEditar && (
+              <button
+                onClick={iniciarPeritaje}
+                disabled={creandoPeritaje}
+                className="flex items-center gap-1 text-[11px] font-bold text-indigo-600 dark:text-sky-300 hover:text-indigo-700 dark:hover:text-sky-200 disabled:opacity-50"
+              >
+                <Plus className="w-3.5 h-3.5" /> {creandoPeritaje ? "Iniciando..." : "Iniciar peritaje"}
+              </button>
+            )}
+          </div>
+          {peritajes.length === 0 ? (
+            <p className="text-[12px] text-slate-400 dark:text-slate-500 italic">Todavía no se hizo un peritaje de este vehículo.</p>
+          ) : (
+            <div className="space-y-2">
+              {peritajes.map((p: any) => (
+                <Link
+                  key={p.id}
+                  href={`/panel/peritajes/${p.id}`}
+                  className="flex items-center justify-between gap-3 bg-slate-50 dark:bg-[#00246b] border border-slate-100 dark:border-[#0a2a6b] rounded-xl p-3 hover:border-indigo-300 dark:hover:border-sky-400/50 transition-colors"
+                >
+                  <span className="text-[13px] font-medium text-slate-700 dark:text-slate-200">
+                    {new Date(p.created_at).toLocaleDateString("es-AR")}
+                  </span>
+                  <span className="flex items-center gap-2 text-[11px] font-bold">
+                    {p.puntaje !== null && p.puntaje !== undefined && (
+                      <span className={p.puntaje >= 70 ? "text-emerald-600 dark:text-emerald-300" : p.puntaje >= 40 ? "text-amber-600 dark:text-amber-300" : "text-rose-600 dark:text-rose-300"}>
+                        {p.puntaje}%
+                      </span>
+                    )}
+                    <span className="text-slate-400 dark:text-slate-500 uppercase tracking-widest">{p.estado}</span>
+                  </span>
+                </Link>
+              ))}
+            </div>
+          )}
+        </div>
+
         {/* Test Drive */}
         <div className="bg-white dark:bg-[#001c55] border border-slate-200 dark:border-[#0a2a6b] rounded-2xl p-5 shadow-sm">
           <div className="flex items-center justify-between mb-3">
@@ -629,8 +707,12 @@ export default function LeadDetailClient({
             onChange={(e) => cambiarVendedor(e.target.value)}
             className={`${inputClass} disabled:opacity-60 disabled:cursor-not-allowed`}
           >
-            <option value="">Sin asignar</option>
-            {vendedores.map((v) => (<option key={v.id} value={v.id}>{v.nombre}</option>))}
+            <option value="" className="bg-white dark:bg-[#001c55] text-slate-900 dark:text-white">Sin asignar</option>
+            {[...vendedoresSucursal, ...vendedoresOtros].map((v: any) => (
+              <option key={v.id} value={v.id} className="bg-white dark:bg-[#001c55] text-slate-900 dark:text-white">
+                {v.nombre}{vendedoresOtros.includes(v) ? " (otra sucursal)" : ""}
+              </option>
+            ))}
           </select>
         </div>
 
@@ -729,8 +811,8 @@ export default function LeadDetailClient({
             <div className="border-t border-slate-100 dark:border-[#0a2a6b] pt-4">
               <label className="text-[11px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-widest mb-1.5 block">Desistido — Motivo *</label>
               <select value={motivoCierreId} onChange={(e) => setMotivoCierreId(e.target.value)} className={inputClass}>
-                <option value="">Seleccionar motivo...</option>
-                {motivos.map((m) => (<option key={m.id} value={m.id}>{m.nombre}</option>))}
+                <option value="" className="bg-white dark:bg-[#001c55] text-slate-900 dark:text-white">Seleccionar motivo...</option>
+                {motivos.map((m) => (<option key={m.id} value={m.id} className="bg-white dark:bg-[#001c55] text-slate-900 dark:text-white">{m.nombre}</option>))}
               </select>
               <div className="flex gap-2 mt-2">
                 <input
@@ -774,8 +856,8 @@ export default function LeadDetailClient({
               <div>
                 <label className="text-[11px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-widest mb-1.5 block">Vehículo</label>
                 <select value={vehiculoTestDriveId} onChange={(e) => setVehiculoTestDriveId(e.target.value)} className={inputClass}>
-                  <option value="">Sin especificar</option>
-                  {vehiculosStock.map((v: any) => (<option key={v.id} value={v.id}>{v.marca} {v.modelo} {v.patente ? `— ${v.patente}` : ""}</option>))}
+                  <option value="" className="bg-white dark:bg-[#001c55] text-slate-900 dark:text-white">Sin especificar</option>
+                  {vehiculosStock.map((v: any) => (<option key={v.id} value={v.id} className="bg-white dark:bg-[#001c55] text-slate-900 dark:text-white">{v.marca} {v.modelo} {v.patente ? `— ${v.patente}` : ""}</option>))}
                 </select>
               </div>
               <div>
@@ -830,8 +912,8 @@ export default function LeadDetailClient({
             </div>
             <label className="text-[11px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-widest mb-1.5 block">Pedirle ayuda a *</label>
             <select value={asistenciaParaId} onChange={(e) => setAsistenciaParaId(e.target.value)} className={inputClass}>
-              <option value="">Seleccionar persona...</option>
-              {vendedores.map((v) => (<option key={v.id} value={v.id}>{v.nombre}</option>))}
+              <option value="" className="bg-white dark:bg-[#001c55] text-slate-900 dark:text-white">Seleccionar persona...</option>
+              {vendedores.map((v) => (<option key={v.id} value={v.id} className="bg-white dark:bg-[#001c55] text-slate-900 dark:text-white">{v.nombre}</option>))}
             </select>
             <label className="text-[11px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-widest mb-1.5 block mt-4">Nota (opcional)</label>
             <textarea rows={3} value={notaAsistencia} onChange={(e) => setNotaAsistencia(e.target.value)} placeholder="Contale qué necesitás..." className={inputClass} />

@@ -18,6 +18,13 @@ export function TemaPublicoProvider({ children }: { children: React.ReactNode })
     setOscuro(localStorage.getItem(STORAGE_KEY) === "1");
   }, []);
 
+  // El body vive por encima del wrapper que lleva la clase .dark, así que sin esto
+  // su fondo (--background) nunca ve el override oscuro y queda blanco filtrándose
+  // detrás de elementos translúcidos como el header (overscroll, bordes, blur).
+  useEffect(() => {
+    document.documentElement.classList.toggle("dark", oscuro);
+  }, [oscuro]);
+
   const toggleOscuro = () => {
     setOscuro((prev) => {
       const next = !prev;

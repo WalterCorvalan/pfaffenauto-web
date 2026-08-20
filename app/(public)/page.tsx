@@ -50,7 +50,7 @@ export default async function Page() {
       
       {/* 5. Banner CTA de Financiación / Permutas */}
       <div className="max-w-7xl mx-auto w-full px-4 md:px-6">
-        <BannerFinanciacion />
+        <BannerFinanciacion linkAFinanciacion />
       </div>
 
       <div>

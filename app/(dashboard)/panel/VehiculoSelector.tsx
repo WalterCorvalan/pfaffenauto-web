@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import { useState } from "react";
 import { Car, Check, X, Pencil } from "lucide-react";
@@ -176,9 +176,9 @@ export default function VehiculoSelector({
         defaultValue=""
         className="w-full bg-slate-50 dark:bg-[#00246b] border border-slate-200 dark:border-[#0a2a6b] rounded-xl px-3 py-2.5 text-sm outline-none focus:border-indigo-500 cursor-pointer text-slate-900 dark:text-white"
       >
-        <option value="">Elegir del stock...</option>
+        <option value="" className="bg-white dark:bg-[#001c55] text-slate-900 dark:text-white">Elegir del stock...</option>
         {vehiculos.map((v) => (
-          <option key={v.id} value={v.id}>{v.marca} {v.modelo} {v.patente ? `— ${v.patente}` : ""}</option>
+          <option key={v.id} value={v.id} className="bg-white dark:bg-[#001c55] text-slate-900 dark:text-white">{v.marca} {v.modelo} {v.patente ? `— ${v.patente}` : ""}</option>
         ))}
       </select>
       <button

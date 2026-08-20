@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import { useState } from "react";
 import { supabase } from "@/lib/supabase/client";
@@ -8,6 +8,7 @@ import { DollarSign, Edit3, X, Save, Sparkles, Loader2 } from "lucide-react";
 interface PrecioSugeridoEditorProps {
   cotizacionId: string;
   precioSugerido: number | null;
+  monedaSugerida?: string | null;
   marca?: string;
   modelo?: string;
   version?: string;
@@ -15,13 +16,14 @@ interface PrecioSugeridoEditorProps {
   kilometraje?: number;
 }
 
-export default function PrecioSugeridoEditor({ cotizacionId, precioSugerido, marca, modelo, version, anio, kilometraje }: PrecioSugeridoEditorProps) {
+export default function PrecioSugeridoEditor({ cotizacionId, precioSugerido, monedaSugerida, marca, modelo, version, anio, kilometraje }: PrecioSugeridoEditorProps) {
   const router = useRouter();
   const [isEditing, setIsEditing] = useState(false);
   const [precio, setPrecio] = useState(precioSugerido?.toString() || "");
+  const [moneda, setMoneda] = useState(monedaSugerida || "ARS");
   const [cargando, setCargando] = useState(false);
   const [buscandoIA, setBuscandoIA] = useState(false);
-  const [detalleIA, setDetalleIA] = useState<{ precioMedio: number; cantidad: number | null; descuento: number } | null>(null);
+  const [detalleIA, setDetalleIA] = useState<{ precioMedio: number; cantidadArs: number; cantidadUsd: number; cotizacionUsada: number | null; descuento: number } | null>(null);
 
   const buscarConIA = async () => {
     if (!marca || !modelo || !anio || kilometraje == null) return;
@@ -37,7 +39,14 @@ export default function PrecioSugeridoEditor({ cotizacionId, precioSugerido, mar
       if (!res.ok) throw new Error(data.error || "No se pudo calcular el precio.");
 
       setPrecio(String(data.precio_sugerido));
-      setDetalleIA({ precioMedio: data.precio_medio_mercado, cantidad: data.cantidad_comparables, descuento: data.descuento_aplicado });
+      setMoneda("ARS"); // la IA siempre devuelve el resultado ya convertido a ARS
+      setDetalleIA({
+        precioMedio: data.precio_medio_mercado,
+        cantidadArs: data.cantidad_ars,
+        cantidadUsd: data.cantidad_usd,
+        cotizacionUsada: data.cotizacion_dolar_usada,
+        descuento: data.descuento_aplicado,
+      });
     } catch (err) {
       alert(err instanceof Error ? err.message : "Error al buscar precio con IA.");
     } finally {
@@ -52,7 +61,7 @@ export default function PrecioSugeridoEditor({ cotizacionId, precioSugerido, mar
     try {
       const { error } = await supabase
         .from("cotizaciones")
-        .update({ precio_sugerido: precio ? Number(precio) : null })
+        .update({ precio_sugerido: precio ? Number(precio) : null, moneda_sugerida: precio ? moneda : null })
         .eq("id", cotizacionId);
       if (error) throw error;
 
@@ -78,7 +87,7 @@ export default function PrecioSugeridoEditor({ cotizacionId, precioSugerido, mar
           <Edit3 className="w-2.5 h-2.5 opacity-0 group-hover:opacity-100 transition-opacity" />
         </span>
         <span className="text-[13px] font-black text-slate-800 dark:text-white font-mono truncate block">
-          {precioSugerido ? `$ ${precioSugerido.toLocaleString("es-AR")}` : "Sin cargar"}
+          {precioSugerido ? `${monedaSugerida === "USD" ? "US$" : "$"} ${precioSugerido.toLocaleString("es-AR")}` : "Sin cargar"}
         </span>
       </div>
 
@@ -110,16 +119,30 @@ export default function PrecioSugeridoEditor({ cotizacionId, precioSugerido, mar
               <div className="mb-4 p-3 bg-slate-50 dark:bg-[#00246b] border border-slate-200 dark:border-[#0a2a6b] rounded-xl text-[11px] text-slate-600 dark:text-slate-300 space-y-1">
                 <div className="flex justify-between"><span>Media de mercado</span><span className="font-bold text-slate-900 dark:text-white">$ {detalleIA.precioMedio.toLocaleString("es-AR")}</span></div>
                 <div className="flex justify-between"><span>Descuento por km ({(detalleIA.descuento * 100).toFixed(0)}%)</span><span className="font-bold text-slate-900 dark:text-white">$ {precio ? Number(precio).toLocaleString("es-AR") : "-"}</span></div>
-                {detalleIA.cantidad != null && <div className="text-slate-400">Basado en {detalleIA.cantidad} comparables</div>}
+                <div className="text-slate-400">
+                  {detalleIA.cantidadArs} comparables en ARS
+                  {detalleIA.cantidadUsd > 0 && ` + ${detalleIA.cantidadUsd} en USD`}
+                  {detalleIA.cotizacionUsada && ` (dólar oficial $${detalleIA.cotizacionUsada.toLocaleString("es-AR")})`}
+                </div>
               </div>
             )}
 
             <form onSubmit={guardarPrecio} className="space-y-4">
               <div>
-                <label className="text-[11px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-widest mb-1.5 block">Precio sugerido (ARS)</label>
-                <div className="flex items-center bg-slate-50 dark:bg-[#00246b] border border-slate-200 dark:border-[#0a2a6b] rounded-xl px-3 focus-within:border-emerald-500 transition-colors shadow-sm">
-                  <span className="text-slate-400 mr-2 font-bold">$</span>
-                  <input type="number" value={precio} onChange={(e) => setPrecio(e.target.value)} placeholder="Ej: 18000000" className="w-full bg-transparent py-2.5 text-sm text-slate-900 dark:text-white outline-none placeholder:text-slate-400 font-mono" autoFocus />
+                <label className="text-[11px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-widest mb-1.5 block">Precio sugerido</label>
+                <div className="flex items-center gap-2">
+                  <div className="flex items-center flex-1 bg-slate-50 dark:bg-[#00246b] border border-slate-200 dark:border-[#0a2a6b] rounded-xl px-3 focus-within:border-emerald-500 transition-colors shadow-sm">
+                    <span className="text-slate-400 mr-2 font-bold">{moneda === "USD" ? "US$" : "$"}</span>
+                    <input type="number" value={precio} onChange={(e) => setPrecio(e.target.value)} placeholder="Ej: 18000000" className="w-full bg-transparent py-2.5 text-sm text-slate-900 dark:text-white outline-none placeholder:text-slate-400 font-mono" autoFocus />
+                  </div>
+                  <select
+                    value={moneda}
+                    onChange={(e) => setMoneda(e.target.value)}
+                    className="bg-slate-50 dark:bg-[#00246b] border border-slate-200 dark:border-[#0a2a6b] rounded-xl px-2.5 py-2.5 text-sm font-bold text-slate-700 dark:text-white outline-none cursor-pointer"
+                  >
+                    <option value="ARS" className="bg-white dark:bg-[#001c55] text-slate-900 dark:text-white">ARS</option>
+                    <option value="USD" className="bg-white dark:bg-[#001c55] text-slate-900 dark:text-white">USD</option>
+                  </select>
                 </div>
               </div>
 

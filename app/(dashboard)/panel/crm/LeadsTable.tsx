@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import { useState } from "react";
 import Link from "next/link";
@@ -143,9 +143,9 @@ export default function LeadsTable({
                         onChange={(e) => reasignar(lead, e.target.value)}
                         className="bg-slate-50 dark:bg-[#00246b] border border-slate-200 dark:border-[#0a2a6b] rounded-lg px-2.5 py-1.5 text-[12px] font-medium outline-none focus:border-indigo-500 cursor-pointer text-slate-800 dark:text-slate-200 disabled:opacity-50 hover:bg-white dark:hover:bg-[#002a6e] transition-colors"
                       >
-                        <option value="">Sin asignar</option>
+                        <option value="" className="bg-white dark:bg-[#001c55] text-slate-900 dark:text-white">Sin asignar</option>
                         {vendedores.map((v) => (
-                          <option key={v.id} value={v.id}>{v.nombre}</option>
+                          <option key={v.id} value={v.id} className="bg-white dark:bg-[#001c55] text-slate-900 dark:text-white">{v.nombre}</option>
                         ))}
                       </select>
                     </td>
@@ -168,9 +168,9 @@ export default function LeadsTable({
                           onChange={(e) => cambiarSucursal(lead, e.target.value)}
                           className="bg-slate-50 dark:bg-[#00246b] border border-slate-200 dark:border-[#0a2a6b] rounded-lg px-2.5 py-1.5 text-[12px] font-medium outline-none focus:border-indigo-500 cursor-pointer text-slate-800 dark:text-slate-200 disabled:opacity-50 hover:bg-white dark:hover:bg-[#002a6e] transition-colors"
                         >
-                          <option value="">Sin definir</option>
+                          <option value="" className="bg-white dark:bg-[#001c55] text-slate-900 dark:text-white">Sin definir</option>
                           {sucursales.map((s) => (
-                            <option key={s.id} value={s.nombre}>{s.nombre}</option>
+                            <option key={s.id} value={s.nombre} className="bg-white dark:bg-[#001c55] text-slate-900 dark:text-white">{s.nombre}</option>
                           ))}
                         </select>
                       )}

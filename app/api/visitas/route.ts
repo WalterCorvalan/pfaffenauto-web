@@ -1,6 +1,7 @@
 import { createClient } from "@supabase/supabase-js";
 import { verificarTurnstile } from "@/lib/turnstile";
 import { rateLimit, ipDesdeRequest } from "@/lib/rateLimit";
+import { notificarPersona, notificarEncargados } from "@/lib/notificaciones";
 
 const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -40,7 +41,7 @@ export async function POST(req: Request) {
       return Response.json({ error: "Faltan datos obligatorios." }, { status: 400 });
     }
 
-    const { error } = await supabase.from("visitas_agendadas").insert({
+    const { data, error } = await supabase.from("visitas_agendadas").insert({
       vehiculo_id: vehiculo_id || null,
       nombre_cliente: String(nombre_cliente).trim(),
       telefono_cliente: String(telefono_cliente).trim(),
@@ -49,11 +50,19 @@ export async function POST(req: Request) {
       sucursal,
       estado: "Pendiente",
       vendedor_id: vendedor_id || null,
-    });
+    }).select("id").single();
 
     if (error) throw error;
 
-    return Response.json({ ok: true });
+    const mensajeNoti = `Nueva visita agendada: ${nombre_cliente} — ${fecha_visita} ${horario_visita} (${sucursal})`;
+    const linkNoti = "/panel/citas";
+    if (vendedor_id) {
+      notificarPersona(supabase, vendedor_id, "nueva_visita", mensajeNoti, linkNoti, "crm").catch((err) => console.error("[visitas] error notificando vendedor:", err));
+    } else {
+      notificarEncargados(supabase, mensajeNoti, linkNoti, "crm", "nueva_visita").catch((err) => console.error("[visitas] error notificando encargados:", err));
+    }
+
+    return Response.json({ ok: true, id: data.id });
   } catch (err) {
     console.error("[visitas] error:", err);
     return Response.json({ error: "Hubo un problema al agendar la visita." }, { status: 500 });

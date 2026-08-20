@@ -106,7 +106,7 @@ export default function RootLayout({
 
   return (
     // Inyectamos la variable de la NUEVA fuente
-    <html lang="es" className={`${jakarta.variable} scroll-smooth`}>
+    <html lang="es" className={jakarta.variable}>
       <head>
         <link
           rel="stylesheet"

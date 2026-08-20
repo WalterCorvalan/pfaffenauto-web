@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import { useState } from "react";
 import { supabase } from "@/lib/supabase/client";
@@ -73,10 +73,10 @@ export default function NuevaCuentaModal({ sucursales }: { sucursales: any[] }) 
                   value={tipo} onChange={(e) => setTipo(e.target.value)}
                   className="w-full bg-slate-50 dark:bg-[#00246b] border border-slate-200 dark:border-[#0a2a6b] p-3 rounded-xl text-slate-900 dark:text-white text-[13px] outline-none focus:border-indigo-500 focus:bg-white dark:focus:bg-[#00246b] transition-colors appearance-none cursor-pointer"
                 >
-                  <option value="Banco">Banco</option>
-                  <option value="Tarjeta">Tarjeta</option>
-                  <option value="Efectivo">Efectivo</option>
-                  <option value="Otro">Otro</option>
+                  <option value="Banco" className="bg-white dark:bg-[#001c55] text-slate-900 dark:text-white">Banco</option>
+                  <option value="Tarjeta" className="bg-white dark:bg-[#001c55] text-slate-900 dark:text-white">Tarjeta</option>
+                  <option value="Efectivo" className="bg-white dark:bg-[#001c55] text-slate-900 dark:text-white">Efectivo</option>
+                  <option value="Otro" className="bg-white dark:bg-[#001c55] text-slate-900 dark:text-white">Otro</option>
                 </select>
               </div>
 
@@ -95,8 +95,8 @@ export default function NuevaCuentaModal({ sucursales }: { sucursales: any[] }) 
                   value={sucursalId} onChange={(e) => setSucursalId(e.target.value)}
                   className="w-full bg-slate-50 dark:bg-[#00246b] border border-slate-200 dark:border-[#0a2a6b] p-3 rounded-xl text-slate-900 dark:text-white text-[13px] outline-none focus:border-indigo-500 focus:bg-white dark:focus:bg-[#00246b] transition-colors appearance-none cursor-pointer"
                 >
-                  <option value="">Sin especificar</option>
-                  {sucursales.map((s) => (<option key={s.id} value={s.id}>{s.nombre}</option>))}
+                  <option value="" className="bg-white dark:bg-[#001c55] text-slate-900 dark:text-white">Sin especificar</option>
+                  {sucursales.map((s) => (<option key={s.id} value={s.id} className="bg-white dark:bg-[#001c55] text-slate-900 dark:text-white">{s.nombre}</option>))}
                 </select>
               </div>
 

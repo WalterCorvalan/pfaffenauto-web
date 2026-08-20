@@ -2,7 +2,8 @@
 
 import { useMemo, useState } from "react";
 import { supabase } from "@/lib/supabase/client";
-import { Landmark, Car, AlertTriangle, CheckCircle2, Clock, Filter } from "lucide-react";
+import { Landmark, Car, AlertTriangle, CheckCircle2, Clock, Filter, Inbox, Phone, MessageSquareText, CreditCard, ChevronDown, History } from "lucide-react";
+import NotificacionesBell from "../../../NotificacionesBell";
 
 interface Financiacion {
   id: string;
@@ -25,6 +26,29 @@ interface Financiacion {
 
 const ESTADOS = ["Pendiente", "Cobrado", "Vencido"];
 
+// Solicitudes entrantes (leads que piden crédito, todavía no compraron nada)
+const ESTADOS_SOLICITUD = ["Pendiente", "Contactado", "Convertido", "Descartado"];
+
+const badgeSolicitud = (estado: string) => {
+  switch (estado) {
+    case "Convertido": return "bg-emerald-500 text-white border-emerald-500";
+    case "Descartado": return "bg-rose-500 text-white border-rose-500";
+    default: return "bg-amber-500 text-white border-amber-500";
+  }
+};
+
+interface Solicitud {
+  id: string;
+  nombre: string;
+  telefono: string;
+  marca: string;
+  modelo: string;
+  anio: number;
+  version: string | null;
+  sucursal_preferida: string | null;
+  estado: string | null;
+}
+
 const badgeEstado = (estado: string) => {
   switch (estado) {
     case "Cobrado": return "bg-emerald-500 text-white border-emerald-500";
@@ -41,10 +65,27 @@ const bordeEstado = (estado: string) => {
   }
 };
 
-export default function FinanciacionesClient({ financiacionesIniciales }: { financiacionesIniciales: Financiacion[] }) {
+export default function FinanciacionesClient({ financiacionesIniciales, solicitudesIniciales }: { financiacionesIniciales: Financiacion[]; solicitudesIniciales: Solicitud[] }) {
   const [financiaciones, setFinanciaciones] = useState(financiacionesIniciales);
+  const [solicitudes, setSolicitudes] = useState(solicitudesIniciales);
   const [filtroEstado, setFiltroEstado] = useState<string>("todos");
   const [actualizandoId, setActualizandoId] = useState<string | null>(null);
+  const [actualizandoSolicitudId, setActualizandoSolicitudId] = useState<string | null>(null);
+  const [mostrarHistorial, setMostrarHistorial] = useState(false);
+
+  const cambiarEstadoSolicitud = async (id: string, nuevoEstado: string) => {
+    setActualizandoSolicitudId(id);
+    try {
+      const { error } = await supabase.from("cotizaciones").update({ estado: nuevoEstado }).eq("id", id);
+      if (error) throw error;
+      setSolicitudes((prev) => prev.map((s) => (s.id === id ? { ...s, estado: nuevoEstado } : s)));
+    } catch (err) {
+      console.error(err);
+      alert("Error al actualizar la solicitud.");
+    } finally {
+      setActualizandoSolicitudId(null);
+    }
+  };
 
   const hoy = new Date().toISOString().split("T")[0];
 
@@ -57,6 +98,12 @@ export default function FinanciacionesClient({ financiacionesIniciales }: { fina
   });
 
   const filtradas = conVencimientoCalculado.filter((f) => filtroEstado === "todos" || f.estadoVisual === filtroEstado);
+
+  // Solo mostramos las solicitudes activas (Pendiente/Contactado) — una vez que
+  // el encargado la marca Convertida o Descartada, sale de la vista para no
+  // acumularse para siempre.
+  const solicitudesActivas = solicitudes.filter((s) => !s.estado || s.estado === "Pendiente" || s.estado === "Contactado");
+  const solicitudesHistorial = solicitudes.filter((s) => s.estado === "Convertido" || s.estado === "Descartado");
 
   const totales = useMemo(() => {
     const pendiente = conVencimientoCalculado.filter((f) => f.estadoVisual === "Pendiente").reduce((a, f) => a + (Number(f.monto) || 0), 0);
@@ -90,8 +137,15 @@ export default function FinanciacionesClient({ financiacionesIniciales }: { fina
             <h1 className="text-[17px] font-bold text-slate-900 dark:text-white leading-tight">Financiaciones</h1>
             <p className="text-[11px] font-medium text-slate-500 dark:text-slate-400 mt-0.5">Prendas bancarias y planes de pago de las ventas</p>
           </div>
+          {solicitudesActivas.length > 0 && (
+            <div className="hidden sm:flex items-center gap-2 bg-indigo-50 dark:bg-[#002a6e] border border-indigo-200 dark:border-[#0a2a6b] px-3 py-1.5 rounded-lg">
+              <span className="text-sm font-bold text-indigo-700 dark:text-sky-300">{solicitudesActivas.length}</span>
+              <span className="text-xs font-medium text-indigo-600 dark:text-sky-300">Solicitudes de crédito</span>
+            </div>
+          )}
         </div>
         <div className="flex items-center gap-1.5">
+          <NotificacionesBell seccion="financiacion" />
           <Filter className="w-3.5 h-3.5 text-slate-400 dark:text-slate-500 mr-1" />
           {["todos", ...ESTADOS].map((e) => (
             <button
@@ -109,6 +163,55 @@ export default function FinanciacionesClient({ financiacionesIniciales }: { fina
 
       <div className="flex-1 overflow-y-auto p-6 bg-[#F9FAFB] dark:bg-[#001233] custom-scrollbar">
         <div className="max-w-[1200px] mx-auto space-y-6">
+
+          {/* ================= SOLICITUDES ENTRANTES (leads que piden crédito, aún no compraron) ================= */}
+          {solicitudesActivas.length > 0 && (
+            <div>
+              <h2 className="text-[11px] font-bold uppercase tracking-widest text-slate-400 dark:text-slate-500 mb-4 flex items-center gap-2">
+                <Inbox className="w-3.5 h-3.5" /> Solicitudes Entrantes ({solicitudesActivas.length})
+              </h2>
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+                {solicitudesActivas.map((s) => (
+                  <div key={s.id} className="bg-white dark:bg-[#001c55] border border-slate-200 dark:border-[#0a2a6b] rounded-xl p-4 shadow-sm hover:shadow-md transition-shadow">
+                    <div className="flex justify-between items-start mb-3">
+                      <span className="text-[9px] font-bold uppercase tracking-widest px-2 py-0.5 rounded border bg-indigo-50 dark:bg-[#002a6e] text-indigo-700 dark:text-sky-300 border-indigo-200 dark:border-[#0a2a6b] flex items-center gap-1">
+                        <CreditCard className="w-3 h-3" /> Crédito
+                      </span>
+                      <select
+                        value={s.estado || "Pendiente"}
+                        disabled={actualizandoSolicitudId === s.id}
+                        onChange={(e) => cambiarEstadoSolicitud(s.id, e.target.value)}
+                        className={`text-[10px] font-bold uppercase tracking-widest px-2.5 py-1.5 rounded-lg border outline-none cursor-pointer shadow-sm transition-transform hover:scale-105 disabled:opacity-50 ${badgeSolicitud(s.estado || "Pendiente")}`}
+                      >
+                        {ESTADOS_SOLICITUD.map((e) => (<option key={e} value={e} className="bg-white dark:bg-[#001c55] text-slate-900 dark:text-white">{e}</option>))}
+                      </select>
+                    </div>
+                    <h3 className="font-bold text-[14px] text-slate-900 dark:text-white mb-1">{s.nombre}</h3>
+                    <p className="text-[11px] text-slate-500 dark:text-slate-400 flex items-center gap-1 mb-2">
+                      <Phone className="w-3 h-3" /> {s.telefono}
+                    </p>
+                    <p className="text-[11px] text-slate-600 dark:text-slate-300 font-medium flex items-center gap-1 mb-1">
+                      <Car className="w-3 h-3 text-slate-400 dark:text-slate-500" /> {s.marca} {s.modelo} ({s.anio})
+                    </p>
+                    {s.sucursal_preferida && (
+                      <p className="text-[10px] text-slate-400 dark:text-slate-500 mb-2">Deriva a: <strong className="text-slate-600 dark:text-slate-300">{s.sucursal_preferida}</strong></p>
+                    )}
+                    {s.version && (
+                      <p className="text-[10px] text-slate-500 dark:text-slate-400 mb-3 line-clamp-2">{s.version}</p>
+                    )}
+                    <a
+                      href={`https://wa.me/${String(s.telefono).replace(/\D/g, "")}?text=${encodeURIComponent(`¡Hola ${s.nombre}! Te escribimos de Pfaffen Autos por tu solicitud de crédito para el ${s.marca} ${s.modelo}.`)}`}
+                      target="_blank"
+                      rel="noreferrer"
+                      className="inline-flex items-center gap-1.5 bg-emerald-50 dark:bg-[#002a6e] hover:bg-emerald-100 dark:hover:bg-[#00246b] text-emerald-700 dark:text-emerald-300 border border-emerald-200 dark:border-[#0a2a6b] px-3 py-1.5 rounded-lg text-[11px] font-bold transition-colors"
+                    >
+                      <MessageSquareText className="w-3.5 h-3.5" /> Contactar
+                    </a>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
 
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
             <div className="bg-white dark:bg-[#001c55] border border-amber-200 dark:border-[#0a2a6b] rounded-2xl p-5 shadow-sm">
@@ -212,6 +315,48 @@ export default function FinanciacionesClient({ financiacionesIniciales }: { fina
               </div>
             ))}
           </div>
+
+          {/* ================= HISTORIAL DE SOLICITUDES (Convertidas/Descartadas) ================= */}
+          {solicitudesHistorial.length > 0 && (
+            <div>
+              <button
+                type="button"
+                onClick={() => setMostrarHistorial((v) => !v)}
+                className="flex items-center gap-2 text-[11px] font-bold uppercase tracking-widest text-slate-400 dark:text-slate-500 hover:text-slate-600 dark:hover:text-slate-300 transition-colors mb-3"
+              >
+                <History className="w-3.5 h-3.5" /> Historial de solicitudes ({solicitudesHistorial.length})
+                <ChevronDown className={`w-3.5 h-3.5 transition-transform ${mostrarHistorial ? "rotate-180" : ""}`} />
+              </button>
+              {mostrarHistorial && (
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+                  {solicitudesHistorial.map((s) => (
+                    <div key={s.id} className="bg-white dark:bg-[#001c55] border border-slate-200 dark:border-[#0a2a6b] rounded-xl p-4 shadow-sm opacity-70">
+                      <div className="flex justify-between items-start mb-3">
+                        <span className="text-[9px] font-bold uppercase tracking-widest px-2 py-0.5 rounded border bg-indigo-50 dark:bg-[#002a6e] text-indigo-700 dark:text-sky-300 border-indigo-200 dark:border-[#0a2a6b] flex items-center gap-1">
+                          <CreditCard className="w-3 h-3" /> Crédito
+                        </span>
+                        <select
+                          value={s.estado || "Pendiente"}
+                          disabled={actualizandoSolicitudId === s.id}
+                          onChange={(e) => cambiarEstadoSolicitud(s.id, e.target.value)}
+                          className={`text-[10px] font-bold uppercase tracking-widest px-2.5 py-1.5 rounded-lg border outline-none cursor-pointer shadow-sm transition-transform hover:scale-105 disabled:opacity-50 ${badgeSolicitud(s.estado || "Pendiente")}`}
+                        >
+                          {ESTADOS_SOLICITUD.map((e) => (<option key={e} value={e} className="bg-white dark:bg-[#001c55] text-slate-900 dark:text-white">{e}</option>))}
+                        </select>
+                      </div>
+                      <h3 className="font-bold text-[14px] text-slate-900 dark:text-white mb-1">{s.nombre}</h3>
+                      <p className="text-[11px] text-slate-500 dark:text-slate-400 flex items-center gap-1 mb-2">
+                        <Phone className="w-3 h-3" /> {s.telefono}
+                      </p>
+                      <p className="text-[11px] text-slate-600 dark:text-slate-300 font-medium flex items-center gap-1">
+                        <Car className="w-3 h-3 text-slate-400 dark:text-slate-500" /> {s.marca} {s.modelo} ({s.anio})
+                      </p>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          )}
 
         </div>
       </div>

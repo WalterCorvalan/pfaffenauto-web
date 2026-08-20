@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import { useState, useEffect, useRef } from "react";
 import { useRouter } from "next/navigation";
@@ -33,7 +33,7 @@ const formSchema = z.object({
   sucursal_id: z.string().min(1, "Seleccioná una sucursal"),
   precio_costo_ars: z.string().optional(),
   precio_costo_usd: z.string().optional(),
-  precio_publicado_ars: z.string().min(1, "Obligatorio"),
+  precio_publicado_ars: z.string().optional(),
   precio_publicado_usd: z.string().optional(),
   numero_motor: z.string().optional(),
   numero_chasis: z.string().optional(),
@@ -60,6 +60,14 @@ const formSchema = z.object({
   prov_telefono_linea: z.string().optional(),
   prov_telefono_celular: z.string().optional(),
   prov_email: z.string().optional(),
+}).superRefine((data, ctx) => {
+  // Un auto puede publicarse solo en dólares (importados, 0km de marcas chinas, etc.) —
+  // el requisito real es tener AL MENOS uno de los dos precios cargados, no siempre ARS.
+  if (!data.precio_publicado_ars?.trim() && !data.precio_publicado_usd?.trim()) {
+    const mensaje = "Cargá el precio en pesos o en dólares (al menos uno).";
+    ctx.addIssue({ code: z.ZodIssueCode.custom, message: mensaje, path: ["precio_publicado_ars"] });
+    ctx.addIssue({ code: z.ZodIssueCode.custom, message: mensaje, path: ["precio_publicado_usd"] });
+  }
 });
 
 type FormValues = z.infer<typeof formSchema>;
@@ -97,6 +105,7 @@ export default function VehiculoForm({ modo, autoId }: VehiculoFormProps) {
   const [imagenesA_Eliminar, setImagenesA_Eliminar] = useState<string[]>([]);
   const [errorArchivos, setErrorArchivos] = useState("");
   const [sucursales, setSucursales] = useState<{ id: string; nombre: string }[]>([]);
+  const [vendedorAsignadoId, setVendedorAsignadoId] = useState<string | null>(null);
   
   const fileInputRef = useRef<HTMLInputElement>(null);
 
@@ -130,6 +139,7 @@ export default function VehiculoForm({ modo, autoId }: VehiculoFormProps) {
         const { data: proveedor } = await supabase.from("vehiculo_proveedores").select("*").eq("vehiculo_id", autoId).maybeSingle();
         const { data: titularesData } = await supabase.from("vehiculo_titulares").select("*").eq("vehiculo_id", autoId).order("orden");
         if (vehiculo) {
+          setVendedorAsignadoId(vehiculo.vendedor_asignado_id || null);
           reset({
             ...vehiculo,
             patente: vehiculo.patente || "",
@@ -222,7 +232,7 @@ export default function VehiculoForm({ modo, autoId }: VehiculoFormProps) {
         origen: data.origen || null, stock_fisico: data.stock_fisico, sucursal_id: data.sucursal_id,
         precio_costo_ars: data.precio_costo_ars ? Number(data.precio_costo_ars) : null,
         precio_costo_usd: data.precio_costo_usd ? Number(data.precio_costo_usd) : null,
-        precio_publicado_ars: Number(data.precio_publicado_ars),
+        precio_publicado_ars: data.precio_publicado_ars ? Number(data.precio_publicado_ars) : null,
         precio_publicado_usd: data.precio_publicado_usd ? Number(data.precio_publicado_usd) : null,
         numero_motor: data.numero_motor || null, numero_chasis: data.numero_chasis || null,
         marca_motor: data.marca_motor || null, marca_chasis: data.marca_chasis || null,
@@ -311,6 +321,21 @@ export default function VehiculoForm({ modo, autoId }: VehiculoFormProps) {
           tabla: "vehiculos", registro_id: autoId, campo_modificado: rol === "vendedor" ? "galeria_multimedia" : "edicion_completa",
           valor_nuevo: rol === "vendedor" ? "Actualizó multimedia" : "Vehículo editado", usuario_id: user?.id,
         });
+
+        if (rol === "vendedor" || imagenesAInsertar.length > 0 || imagenesA_Eliminar.length > 0) {
+          const nombreAuto = `${data.marca || ""} ${data.modelo || ""}`.trim() || "un auto";
+          fetch("/api/vehiculos/notificar-cambio", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              autoId,
+              vendedorAsignadoId,
+              actorId: user?.id || null,
+              mensaje: `Se actualizaron las fotos del ${nombreAuto}.`,
+              tipo: "fotos_actualizadas",
+            }),
+          }).catch((err) => console.error("Error notificando cambio de fotos:", err));
+        }
       }
 
       router.push("/panel");
@@ -438,37 +463,37 @@ export default function VehiculoForm({ modo, autoId }: VehiculoFormProps) {
               <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
                 <Campo label="Tipo de Vehículo *" error={errors.tipo?.message}>
                   <select {...register("tipo")} className={inputClass}>
-                    <option value="">Seleccionar...</option>
-                    <option value="Auto">Auto</option>
-                    <option value="Pickup">Pickup</option>
-                    <option value="Todo Terreno | SUV">SUV</option>
-                    <option value="Utilitarios">Utilitario</option>
+                    <option value="" className="bg-white dark:bg-[#001c55] text-slate-900 dark:text-white">Seleccionar...</option>
+                    <option value="Auto" className="bg-white dark:bg-[#001c55] text-slate-900 dark:text-white">Auto</option>
+                    <option value="Pickup" className="bg-white dark:bg-[#001c55] text-slate-900 dark:text-white">Pickup</option>
+                    <option value="Todo Terreno | SUV" className="bg-white dark:bg-[#001c55] text-slate-900 dark:text-white">SUV</option>
+                    <option value="Utilitarios" className="bg-white dark:bg-[#001c55] text-slate-900 dark:text-white">Utilitario</option>
                   </select>
                 </Campo>
                 <Campo label="Combustible *" error={errors.tipo_combustible?.message}>
                   <select {...register("tipo_combustible")} className={inputClass}>
-                    <option value="">Seleccionar...</option>
-                    <option value="Nafta">Nafta</option>
-                    <option value="Diesel">Diesel</option>
-                    <option value="GNC">GNC</option>
-                    <option value="Híbrido">Híbrido</option>
+                    <option value="" className="bg-white dark:bg-[#001c55] text-slate-900 dark:text-white">Seleccionar...</option>
+                    <option value="Nafta" className="bg-white dark:bg-[#001c55] text-slate-900 dark:text-white">Nafta</option>
+                    <option value="Diesel" className="bg-white dark:bg-[#001c55] text-slate-900 dark:text-white">Diesel</option>
+                    <option value="GNC" className="bg-white dark:bg-[#001c55] text-slate-900 dark:text-white">GNC</option>
+                    <option value="Híbrido" className="bg-white dark:bg-[#001c55] text-slate-900 dark:text-white">Híbrido</option>
                   </select>
                 </Campo>
                 <Campo label="Transmisión *" error={errors.transmision?.message}>
                   <select {...register("transmision")} className={inputClass}>
-                    <option value="">Seleccionar...</option>
-                    <option value="Manual">Manual</option>
-                    <option value="Automática">Automática</option>
+                    <option value="" className="bg-white dark:bg-[#001c55] text-slate-900 dark:text-white">Seleccionar...</option>
+                    <option value="Manual" className="bg-white dark:bg-[#001c55] text-slate-900 dark:text-white">Manual</option>
+                    <option value="Automática" className="bg-white dark:bg-[#001c55] text-slate-900 dark:text-white">Automática</option>
                   </select>
                 </Campo>
                 <Campo label="Tracción" error={errors.traccion?.message}>
                   <select {...register("traccion")} className={inputClass}>
-                    <option value="">Seleccionar...</option>
-                    <option value="4x2">4x2</option>
-                    <option value="4x4">4x4</option>
-                    <option value="Delantera">Delantera</option>
-                    <option value="Trasera">Trasera</option>
-                    <option value="Integral (AWD)">Integral (AWD)</option>
+                    <option value="" className="bg-white dark:bg-[#001c55] text-slate-900 dark:text-white">Seleccionar...</option>
+                    <option value="4x2" className="bg-white dark:bg-[#001c55] text-slate-900 dark:text-white">4x2</option>
+                    <option value="4x4" className="bg-white dark:bg-[#001c55] text-slate-900 dark:text-white">4x4</option>
+                    <option value="Delantera" className="bg-white dark:bg-[#001c55] text-slate-900 dark:text-white">Delantera</option>
+                    <option value="Trasera" className="bg-white dark:bg-[#001c55] text-slate-900 dark:text-white">Trasera</option>
+                    <option value="Integral (AWD)" className="bg-white dark:bg-[#001c55] text-slate-900 dark:text-white">Integral (AWD)</option>
                   </select>
                 </Campo>
                 <Campo label="Potencia (CV)" error={errors.potencia_cv?.message}>
@@ -476,17 +501,17 @@ export default function VehiculoForm({ modo, autoId }: VehiculoFormProps) {
                 </Campo>
                 <Campo label="Cantidad de plazas" error={errors.cantidad_plazas?.message}>
                   <select {...register("cantidad_plazas")} className={inputClass}>
-                    <option value="">Seleccionar...</option>
+                    <option value="" className="bg-white dark:bg-[#001c55] text-slate-900 dark:text-white">Seleccionar...</option>
                     {[2, 3, 4, 5, 6, 7].map((n) => (
-                      <option key={n} value={n}>{n} plazas</option>
+                      <option key={n} value={n} className="bg-white dark:bg-[#001c55] text-slate-900 dark:text-white">{n} plazas</option>
                     ))}
                   </select>
                 </Campo>
                 <Campo label="Sucursal *" error={errors.sucursal_id?.message}>
                   <select {...register("sucursal_id")} className={inputClass}>
-                    <option value="">Seleccionar...</option>
+                    <option value="" className="bg-white dark:bg-[#001c55] text-slate-900 dark:text-white">Seleccionar...</option>
                     {sucursales.map((s) => (
-                      <option key={s.id} value={s.id}>{s.nombre}</option>
+                      <option key={s.id} value={s.id} className="bg-white dark:bg-[#001c55] text-slate-900 dark:text-white">{s.nombre}</option>
                     ))}
                   </select>
                 </Campo>
@@ -495,16 +520,16 @@ export default function VehiculoForm({ modo, autoId }: VehiculoFormProps) {
                 </Campo>
                 <Campo label="Origen">
                   <select {...register("origen")} className={inputClass}>
-                    <option value="Comprado">Comprado</option>
-                    <option value="Consignado">Consignado</option>
-                    <option value="Permuta">Permuta</option>
+                    <option value="Comprado" className="bg-white dark:bg-[#001c55] text-slate-900 dark:text-white">Comprado</option>
+                    <option value="Consignado" className="bg-white dark:bg-[#001c55] text-slate-900 dark:text-white">Consignado</option>
+                    <option value="Permuta" className="bg-white dark:bg-[#001c55] text-slate-900 dark:text-white">Permuta</option>
                   </select>
                 </Campo>
                 {modo === "crear" && (
                   <Campo label="Estado *" error={errors.estado?.message}>
                     <select {...register("estado")} className={inputClass}>
-                      <option value="Disponible">Disponible</option>
-                      <option value="Señado">Señado</option>
+                      <option value="Disponible" className="bg-white dark:bg-[#001c55] text-slate-900 dark:text-white">Disponible</option>
+                      <option value="Señado" className="bg-white dark:bg-[#001c55] text-slate-900 dark:text-white">Señado</option>
                     </select>
                   </Campo>
                 )}
@@ -517,8 +542,8 @@ export default function VehiculoForm({ modo, autoId }: VehiculoFormProps) {
                   <div className="ml-4 pl-4 border-l-2 border-indigo-500">
                     <Campo label="Condición Web *">
                       <select {...register("condicion_web")} className={inputClass}>
-                        <option value="A comprar">A comprar</option>
-                        <option value="A patentar">A patentar</option>
+                        <option value="A comprar" className="bg-white dark:bg-[#001c55] text-slate-900 dark:text-white">A comprar</option>
+                        <option value="A patentar" className="bg-white dark:bg-[#001c55] text-slate-900 dark:text-white">A patentar</option>
                       </select>
                     </Campo>
                   </div>
@@ -560,11 +585,12 @@ export default function VehiculoForm({ modo, autoId }: VehiculoFormProps) {
           {/* PASO 3 */}
           {!esEdicionVendedor && paso === 3 && (
             <SectionCard title="3. Precios" icon={<DollarSign className="w-4 h-4 text-indigo-600" />}>
+              <p className="text-[11px] text-slate-400 dark:text-slate-500 -mt-2 mb-1 md:col-span-2">Completá al menos uno de los dos precios publicados (ARS o USD).</p>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
-                <Campo label="Precio Publicado ARS *" error={errors.precio_publicado_ars?.message}>
+                <Campo label="Precio Publicado ARS" error={errors.precio_publicado_ars?.message}>
                   <input type="number" {...register("precio_publicado_ars")} className={inputClass} />
                 </Campo>
-                <Campo label="Precio Publicado USD">
+                <Campo label="Precio Publicado USD" error={errors.precio_publicado_usd?.message}>
                   <input type="number" {...register("precio_publicado_usd")} className={inputClass} />
                 </Campo>
 
@@ -620,9 +646,9 @@ export default function VehiculoForm({ modo, autoId }: VehiculoFormProps) {
                 </Campo>
                 <Campo label="Sucursal que Compra">
                   <select {...register("sucursal_compra_id")} className={inputClass}>
-                    <option value="">Seleccionar...</option>
+                    <option value="" className="bg-white dark:bg-[#001c55] text-slate-900 dark:text-white">Seleccionar...</option>
                     {sucursales.map((s) => (
-                      <option key={s.id} value={s.id}>{s.nombre}</option>
+                      <option key={s.id} value={s.id} className="bg-white dark:bg-[#001c55] text-slate-900 dark:text-white">{s.nombre}</option>
                     ))}
                   </select>
                 </Campo>

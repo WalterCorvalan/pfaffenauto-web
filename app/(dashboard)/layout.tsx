@@ -27,6 +27,8 @@ import {
   CarFront,
   LayoutDashboard,
   Inbox,
+  ClipboardCheck,
+  History,
   PieChart,
   LogOut,
   Handshake,
@@ -38,7 +40,6 @@ import {
   Sun,
   FileText,
   ShieldCheck,
-  Settings,
 } from "lucide-react";
 const SECCIONES_INICIALES = {
   inventario: true,
@@ -96,6 +97,7 @@ export default function DashboardLayout({
         "/panel/contactos",
         "/panel/citas",
         "/panel/cotizaciones",
+        "/panel/peritajes",
         "/panel/consignaciones",
         "/panel/pedidos",
       ],
@@ -113,6 +115,8 @@ export default function DashboardLayout({
         "/panel/gastos",
         "/panel/usuarios",
         "/panel/tesoreria",
+        "/panel/logs",
+        "/panel/postulaciones",
       ],
       marketing: ["/panel/metricas", "/panel/marketing"],
       ajustes: ["/panel/ajustes"],
@@ -286,14 +290,6 @@ export default function DashboardLayout({
             Pfaffen CRM
           </span>
           <div className="flex items-center gap-1">
-            <Link
-              href="/panel/ajustes"
-              onClick={() => setIsOpen(false)}
-              className="text-slate-600 dark:text-slate-300 p-2"
-              title="Ajustes"
-            >
-              <Settings className="w-4 h-4" />
-            </Link>
             <button
               onClick={toggleDarkMode}
               className="text-slate-600 dark:text-slate-300 p-2"
@@ -319,7 +315,7 @@ export default function DashboardLayout({
         </div>
         {/* SIDEBAR DESKTOP */}
         <aside
-          className={`fixed md:relative top-14 md:top-0 left-0 h-full w-[225px] bg-[#F9FAFB] dark:bg-[#001c55] border-r border-slate-200 dark:border-[#0a2a6b] transform transition-transform z-40 flex flex-col shrink-0 ${isOpen ? "translate-x-0" : "-translate-x-full md:translate-x-0"}`}
+          className={`fixed md:relative top-14 md:top-0 left-0 h-[calc(100vh-3.5rem)] md:h-full w-[225px] bg-[#F9FAFB] dark:bg-[#001c55] border-r border-slate-200 dark:border-[#0a2a6b] transform transition-transform z-40 flex flex-col shrink-0 ${isOpen ? "translate-x-0" : "-translate-x-full md:translate-x-0"}`}
         >
           {/* Cabecera del Espacio de Trabajo */}
           <div className="h-[60px] flex items-center gap-3 px-4 border-b border-slate-200 dark:border-[#0a2a6b] transition-colors shrink-0">
@@ -374,6 +370,7 @@ export default function DashboardLayout({
                     label="Gestión de Stock"
                     href="/panel"
                     exact
+                    notifications={notifPorSeccion.stock}
                   />
                   <NavLinkItem
                     icon={Wrench}
@@ -413,11 +410,18 @@ export default function DashboardLayout({
                     icon={Inbox}
                     label="Cotizaciones"
                     href="/panel/cotizaciones"
+                    notifications={notifPorSeccion.cotizaciones}
+                  />
+                  <NavLinkItem
+                    icon={ClipboardCheck}
+                    label="Peritajes"
+                    href="/panel/peritajes"
                   />
                   <NavLinkItem
                     icon={Handshake}
                     label="Consignaciones"
                     href="/panel/consignaciones"
+                    notifications={notifPorSeccion.consignaciones}
                   />
                   <NavLinkItem
                     icon={Search}
@@ -455,6 +459,7 @@ export default function DashboardLayout({
                     icon={Landmark}
                     label="Financiaciones"
                     href="/panel/ventas/financiaciones"
+                    notifications={notifPorSeccion.financiacion}
                   />
                   <NavLinkItem
                     icon={UserPlus}
@@ -465,6 +470,7 @@ export default function DashboardLayout({
                     icon={Wrench}
                     label="Postventa"
                     href="/panel/postventa"
+                    notifications={notifPorSeccion.postventa}
                   />
                 </SectionAccordion>
 
@@ -476,6 +482,17 @@ export default function DashboardLayout({
                       icon={FileBarChart}
                       label="Informes Globales"
                       href="/panel/informes"
+                    />
+                    <NavLinkItem
+                      icon={History}
+                      label="Registro de Cambios"
+                      href="/panel/logs"
+                    />
+                    <NavLinkItem
+                      icon={Users}
+                      label="Postulaciones"
+                      href="/panel/postulaciones"
+                      notifications={notifPorSeccion.postulaciones}
                     />
                     {userProfile.rol === "admin" && (
                       <>
@@ -584,7 +601,7 @@ export default function DashboardLayout({
 
               <button
                 onClick={handleLogout}
-                className="text-slate-400 dark:text-slate-300 hover:text-rose-600 dark:hover:text-rose-400 shrink-0 p-3 mr-1 opacity-0 group-hover:opacity-100 transition-opacity"
+                className="text-slate-400 dark:text-slate-300 hover:text-rose-600 dark:hover:text-rose-400 shrink-0 p-3 mr-1 transition-colors"
                 title="Cerrar sesión"
               >
                 <LogOut className="w-4 h-4" />

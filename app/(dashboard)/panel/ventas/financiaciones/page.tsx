@@ -10,10 +10,18 @@ export default async function FinanciacionesPage() {
     { cookies: { getAll: () => cookieStore.getAll() } }
   );
 
-  const { data: financiacionesRaw } = await supabase
-    .from("financiaciones")
-    .select("id, venta_id, tipo, entidad, monto, cuotas, fecha_vencimiento, estado, created_at")
-    .order("fecha_vencimiento", { ascending: true });
+  const [{ data: financiacionesRaw }, { data: solicitudes }] = await Promise.all([
+    supabase
+      .from("financiaciones")
+      .select("id, venta_id, tipo, entidad, monto, cuotas, fecha_vencimiento, estado, created_at")
+      .order("fecha_vencimiento", { ascending: true }),
+    // Solicitudes entrantes: gente que pidió crédito online (aún no compró nada) — tabla cotizaciones
+    supabase
+      .from("cotizaciones")
+      .select("*")
+      .eq("tipo_peritaje", "financiacion")
+      .order("created_at", { ascending: false }),
+  ]);
 
   const ventaIds = [...new Set((financiacionesRaw || []).map((f) => f.venta_id).filter(Boolean))];
   const { data: boletos } = ventaIds.length
@@ -23,5 +31,10 @@ export default async function FinanciacionesPage() {
   const boletosPorId = new Map((boletos || []).map((b) => [b.id, b]));
   const financiaciones = (financiacionesRaw || []).map((f) => ({ ...f, boleto: boletosPorId.get(f.venta_id) || null }));
 
-  return <FinanciacionesClient financiacionesIniciales={financiaciones as any} />;
+  return (
+    <FinanciacionesClient
+      financiacionesIniciales={financiaciones as any}
+      solicitudesIniciales={solicitudes || []}
+    />
+  );
 }

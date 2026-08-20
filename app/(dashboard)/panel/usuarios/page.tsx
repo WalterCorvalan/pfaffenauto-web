@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import { useState, useEffect } from "react";
 import { supabase } from "@/lib/supabase/client";
@@ -408,10 +408,10 @@ export default function UsuariosPage() {
                           onChange={(e) => handleCambiarRolRapido(p, e.target.value)}
                           className={`w-full text-[11px] font-bold uppercase tracking-widest px-2 py-1.5 rounded-md border outline-none cursor-pointer ${getRoleBadgeStyle(p.rol)}`}
                         >
-                          <option value="vendedor">Vendedor</option>
-                          <option value="taller">Taller</option>
-                          <option value="encargado">Encargado</option>
-                          <option value="admin">Administrador</option>
+                          <option value="vendedor" className="bg-white dark:bg-[#001c55] text-slate-900 dark:text-white">Vendedor</option>
+                          <option value="taller" className="bg-white dark:bg-[#001c55] text-slate-900 dark:text-white">Taller</option>
+                          <option value="encargado" className="bg-white dark:bg-[#001c55] text-slate-900 dark:text-white">Encargado</option>
+                          <option value="admin" className="bg-white dark:bg-[#001c55] text-slate-900 dark:text-white">Administrador</option>
                         </select>
                       </div>
                       <div>
@@ -422,8 +422,8 @@ export default function UsuariosPage() {
                           onChange={(e) => handleCambiarSucursalRapida(p, e.target.value)}
                           className="w-full bg-white dark:bg-[#001c55] border border-slate-200 dark:border-[#0a2a6b] rounded-md px-2 py-1.5 text-[11px] font-medium text-slate-700 dark:text-slate-200 outline-none cursor-pointer"
                         >
-                          <option value="">Sin sucursal</option>
-                          {sucursales.map((s) => (<option key={s.id} value={s.id}>{s.nombre}</option>))}
+                          <option value="" className="bg-white dark:bg-[#001c55] text-slate-900 dark:text-white">Sin sucursal</option>
+                          {sucursales.map((s) => (<option key={s.id} value={s.id} className="bg-white dark:bg-[#001c55] text-slate-900 dark:text-white">{s.nombre}</option>))}
                         </select>
                       </div>
                       <div className="col-span-2">
@@ -434,8 +434,8 @@ export default function UsuariosPage() {
                           onChange={(e) => handleCambiarCategoriaRapida(p.id, e.target.value)}
                           className="w-full bg-white dark:bg-[#001c55] border border-slate-200 dark:border-[#0a2a6b] rounded-md px-2 py-1.5 text-[11px] font-medium text-slate-700 dark:text-slate-200 outline-none cursor-pointer"
                         >
-                          <option value="">Sin categoría</option>
-                          {categorias.map((c) => (<option key={c.id} value={c.id}>{c.nombre}</option>))}
+                          <option value="" className="bg-white dark:bg-[#001c55] text-slate-900 dark:text-white">Sin categoría</option>
+                          {categorias.map((c) => (<option key={c.id} value={c.id} className="bg-white dark:bg-[#001c55] text-slate-900 dark:text-white">{c.nombre}</option>))}
                         </select>
                       </div>
                     </div>
@@ -507,10 +507,10 @@ export default function UsuariosPage() {
                                 onBlur={() => setEditandoRolId(null)}
                                 className="bg-white dark:bg-[#001c55] border border-indigo-300 dark:border-indigo-400 rounded-lg px-2 py-1.5 text-[12px] font-medium text-slate-900 dark:text-white outline-none focus:border-indigo-500 cursor-pointer"
                               >
-                                <option value="vendedor">Vendedor</option>
-                                <option value="taller">Taller</option>
-                                <option value="encargado">Encargado</option>
-                                <option value="admin">Administrador</option>
+                                <option value="vendedor" className="bg-white dark:bg-[#001c55] text-slate-900 dark:text-white">Vendedor</option>
+                                <option value="taller" className="bg-white dark:bg-[#001c55] text-slate-900 dark:text-white">Taller</option>
+                                <option value="encargado" className="bg-white dark:bg-[#001c55] text-slate-900 dark:text-white">Encargado</option>
+                                <option value="admin" className="bg-white dark:bg-[#001c55] text-slate-900 dark:text-white">Administrador</option>
                               </select>
                             ) : (
                               <button
@@ -542,9 +542,9 @@ export default function UsuariosPage() {
                                 onBlur={() => setEditandoSucursalId(null)}
                                 className="bg-white dark:bg-[#001c55] border border-indigo-300 dark:border-indigo-400 rounded-lg px-2 py-1.5 text-[12px] font-medium text-slate-900 dark:text-white outline-none focus:border-indigo-500 cursor-pointer"
                               >
-                                <option value="">Sin sucursal fija</option>
+                                <option value="" className="bg-white dark:bg-[#001c55] text-slate-900 dark:text-white">Sin sucursal fija</option>
                                 {sucursales.map(s => (
-                                  <option key={s.id} value={s.id}>{s.nombre}</option>
+                                  <option key={s.id} value={s.id} className="bg-white dark:bg-[#001c55] text-slate-900 dark:text-white">{s.nombre}</option>
                                 ))}
                               </select>
                             ) : (
@@ -571,9 +571,9 @@ export default function UsuariosPage() {
                                 onBlur={() => setEditandoCategoriaId(null)}
                                 className="bg-white dark:bg-[#001c55] border border-indigo-300 dark:border-indigo-400 rounded-lg px-2 py-1.5 text-[12px] font-medium text-slate-900 dark:text-white outline-none focus:border-indigo-500 cursor-pointer"
                               >
-                                <option value="">Sin categoría</option>
+                                <option value="" className="bg-white dark:bg-[#001c55] text-slate-900 dark:text-white">Sin categoría</option>
                                 {categorias.map((c) => (
-                                  <option key={c.id} value={c.id}>{c.nombre}</option>
+                                  <option key={c.id} value={c.id} className="bg-white dark:bg-[#001c55] text-slate-900 dark:text-white">{c.nombre}</option>
                                 ))}
                               </select>
                             ) : (
@@ -715,10 +715,10 @@ export default function UsuariosPage() {
                     onChange={(e) => setRol(e.target.value)}
                     className="w-full bg-slate-50 dark:bg-[#00246b] border border-slate-200 dark:border-[#0a2a6b] rounded-xl px-3.5 py-2.5 text-[13px] text-slate-900 dark:text-white outline-none focus:border-indigo-500 focus:bg-white dark:focus:bg-[#00246b] cursor-pointer transition-colors appearance-none"
                   >
-                    <option value="vendedor">Vendedor</option>
-                    <option value="taller">Taller</option>
-                    <option value="encargado">Encargado</option>
-                    <option value="admin">Administrador</option>
+                    <option value="vendedor" className="bg-white dark:bg-[#001c55] text-slate-900 dark:text-white">Vendedor</option>
+                    <option value="taller" className="bg-white dark:bg-[#001c55] text-slate-900 dark:text-white">Taller</option>
+                    <option value="encargado" className="bg-white dark:bg-[#001c55] text-slate-900 dark:text-white">Encargado</option>
+                    <option value="admin" className="bg-white dark:bg-[#001c55] text-slate-900 dark:text-white">Administrador</option>
                   </select>
                 </div>
 
@@ -729,9 +729,9 @@ export default function UsuariosPage() {
                     onChange={(e) => setSucursalId(e.target.value)}
                     className="w-full bg-slate-50 dark:bg-[#00246b] border border-slate-200 dark:border-[#0a2a6b] rounded-xl px-3.5 py-2.5 text-[13px] text-slate-900 dark:text-white outline-none focus:border-indigo-500 focus:bg-white dark:focus:bg-[#00246b] cursor-pointer transition-colors appearance-none"
                   >
-                    <option value="">Sin sucursal fija</option>
+                    <option value="" className="bg-white dark:bg-[#001c55] text-slate-900 dark:text-white">Sin sucursal fija</option>
                     {sucursales.map(s => (
-                      <option key={s.id} value={s.id}>{s.nombre}</option>
+                      <option key={s.id} value={s.id} className="bg-white dark:bg-[#001c55] text-slate-900 dark:text-white">{s.nombre}</option>
                     ))}
                   </select>
                 </div>
@@ -808,10 +808,10 @@ export default function UsuariosPage() {
                     onChange={(e) => setUsuarioEditando({ ...usuarioEditando, rol: e.target.value })}
                     className="w-full bg-slate-50 dark:bg-[#00246b] border border-slate-200 dark:border-[#0a2a6b] rounded-xl px-3.5 py-2.5 text-[13px] text-slate-900 dark:text-white outline-none focus:border-indigo-500 focus:bg-white dark:focus:bg-[#00246b] cursor-pointer transition-colors appearance-none"
                   >
-                    <option value="vendedor">Vendedor</option>
-                    <option value="taller">Taller</option>
-                    <option value="encargado">Encargado</option>
-                    <option value="admin">Administrador</option>
+                    <option value="vendedor" className="bg-white dark:bg-[#001c55] text-slate-900 dark:text-white">Vendedor</option>
+                    <option value="taller" className="bg-white dark:bg-[#001c55] text-slate-900 dark:text-white">Taller</option>
+                    <option value="encargado" className="bg-white dark:bg-[#001c55] text-slate-900 dark:text-white">Encargado</option>
+                    <option value="admin" className="bg-white dark:bg-[#001c55] text-slate-900 dark:text-white">Administrador</option>
                   </select>
                 </div>
 
@@ -822,9 +822,9 @@ export default function UsuariosPage() {
                     onChange={(e) => setUsuarioEditando({ ...usuarioEditando, sucursal_id: e.target.value })}
                     className="w-full bg-slate-50 dark:bg-[#00246b] border border-slate-200 dark:border-[#0a2a6b] rounded-xl px-3.5 py-2.5 text-[13px] text-slate-900 dark:text-white outline-none focus:border-indigo-500 focus:bg-white dark:focus:bg-[#00246b] cursor-pointer transition-colors appearance-none"
                   >
-                    <option value="">Sin sucursal fija</option>
+                    <option value="" className="bg-white dark:bg-[#001c55] text-slate-900 dark:text-white">Sin sucursal fija</option>
                     {sucursales.map(s => (
-                      <option key={s.id} value={s.id}>{s.nombre}</option>
+                      <option key={s.id} value={s.id} className="bg-white dark:bg-[#001c55] text-slate-900 dark:text-white">{s.nombre}</option>
                     ))}
                   </select>
                 </div>

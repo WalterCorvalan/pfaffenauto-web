@@ -94,6 +94,19 @@ export default function AgendarCitaForm() {
       });
 
       if (errInsert) throw errInsert;
+
+      fetch("/api/visitas/notificar", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          nombreCliente: nombre,
+          fecha,
+          horario,
+          sucursal,
+          vendedorId: vehiculoSeleccionado?.vendedor_asignado_id || null,
+        }),
+      }).catch((err) => console.error("Error notificando visita:", err));
+
       setEnviado(true);
     } catch (err) {
       console.error(err);

@@ -3,6 +3,7 @@ import { NextResponse } from "next/server";
 import { isAiConfigured } from "@/lib/ai";
 import { generarRespuestaAgente, type HistorialMensaje } from "@/lib/ai/agente";
 import { rateLimit, ipDesdeRequest } from "@/lib/rateLimit";
+import { notificarPersona, notificarEncargados } from "@/lib/notificaciones";
 
 // Canal Web Chat: mismo agente de IA que WhatsApp (lib/ai/agente.ts), pero
 // síncrono request/respuesta en vez de webhook. Tablas propias (web_chat_*),
@@ -51,6 +52,16 @@ export async function POST(req: Request) {
     direccion: "in",
     texto: mensaje.trim(),
   });
+
+  // Mismo criterio que WhatsApp: si la conversación ya tiene vendedor, avisale
+  // directo a él/ella; si no, a los encargados.
+  const mensajeNoti = `Chat web: ${mensaje.trim().slice(0, 120)}`;
+  const linkNoti = `/panel/chat?conversacion=${conversacion.id}&canal=webchat`;
+  if (conversacion.vendedor_id) {
+    notificarPersona(supabase, conversacion.vendedor_id, "nuevo_mensaje_chat", mensajeNoti, linkNoti, "chat").catch((err) => console.error("[webchat] error notificando:", err));
+  } else {
+    notificarEncargados(supabase, mensajeNoti, linkNoti, "chat", "nuevo_mensaje_chat").catch((err) => console.error("[webchat] error notificando:", err));
+  }
 
   if (!isAiConfigured()) {
     return NextResponse.json({

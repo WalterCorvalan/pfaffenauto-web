@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import { useState } from "react";
 import { supabase } from "@/lib/supabase/client";
@@ -58,15 +58,15 @@ export default function VendedorVisitaSelector({
         disabled={loading}
         className="w-full bg-slate-50 dark:bg-[#00246b] border border-slate-200 dark:border-[#0a2a6b] text-[11px] font-medium text-slate-700 dark:text-slate-200 rounded-md pl-1.5 pr-6 py-1 outline-none focus:border-indigo-500 transition-colors appearance-none cursor-pointer disabled:opacity-50"
       >
-        <option value="">Sin vendedor</option>
+        <option value="" className="bg-white dark:bg-[#001c55] text-slate-900 dark:text-white">Sin vendedor</option>
         {deLaSucursal.length > 0 && (
           <optgroup label="Misma sucursal">
-            {deLaSucursal.map((v) => (<option key={v.id} value={v.id}>{v.nombre}</option>))}
+            {deLaSucursal.map((v) => (<option key={v.id} value={v.id} className="bg-white dark:bg-[#001c55] text-slate-900 dark:text-white">{v.nombre}</option>))}
           </optgroup>
         )}
         {otros.length > 0 && (
           <optgroup label="Otras sucursales">
-            {otros.map((v) => (<option key={v.id} value={v.id}>{v.nombre}</option>))}
+            {otros.map((v) => (<option key={v.id} value={v.id} className="bg-white dark:bg-[#001c55] text-slate-900 dark:text-white">{v.nombre}</option>))}
           </optgroup>
         )}
       </select>

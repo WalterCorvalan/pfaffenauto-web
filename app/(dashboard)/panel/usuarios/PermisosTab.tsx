@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import { Fragment, useEffect, useState } from "react";
 import { supabase } from "@/lib/supabase/client";
@@ -164,8 +164,8 @@ export default function PermisosTab({ perfiles }: { perfiles: any[] }) {
             onChange={(e) => setUsuarioSeleccionadoId(e.target.value)}
             className="w-full sm:w-72 bg-slate-50 dark:bg-[#00246b] border border-slate-200 dark:border-[#0a2a6b] rounded-lg px-3 py-2 text-sm outline-none focus:border-indigo-500 text-slate-900 dark:text-white"
           >
-            <option value="">Elegir colaborador...</option>
-            {perfiles.map((p) => (<option key={p.id} value={p.id}>{p.nombre} — {p.rol}</option>))}
+            <option value="" className="bg-white dark:bg-[#001c55] text-slate-900 dark:text-white">Elegir colaborador...</option>
+            {perfiles.map((p) => (<option key={p.id} value={p.id} className="bg-white dark:bg-[#001c55] text-slate-900 dark:text-white">{p.nombre} — {p.rol}</option>))}
           </select>
 
           {usuarioSeleccionado && (
@@ -200,9 +200,9 @@ export default function PermisosTab({ perfiles }: { perfiles: any[] }) {
                             onChange={(e) => cambiarExcepcionUsuario(usuarioSeleccionadoId, permiso.clave, e.target.value as any)}
                             className="bg-slate-50 dark:bg-[#00246b] border border-slate-200 dark:border-[#0a2a6b] rounded-lg px-2.5 py-1.5 text-[12px] font-bold outline-none cursor-pointer text-slate-800 dark:text-white disabled:opacity-60"
                           >
-                            <option value="heredado">Heredado del rol</option>
-                            <option value="otorgado">Otorgado</option>
-                            <option value="denegado">Denegado</option>
+                            <option value="heredado" className="bg-white dark:bg-[#001c55] text-slate-900 dark:text-white">Heredado del rol</option>
+                            <option value="otorgado" className="bg-white dark:bg-[#001c55] text-slate-900 dark:text-white">Otorgado</option>
+                            <option value="denegado" className="bg-white dark:bg-[#001c55] text-slate-900 dark:text-white">Denegado</option>
                           </select>
                         </td>
                       </tr>

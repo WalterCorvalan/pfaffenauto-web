@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import { useState, useEffect, useRef } from "react";
 import { useSearchParams } from "next/navigation";
@@ -801,9 +801,9 @@ export default function ChatClient({
                 onChange={(e) => reasignarVendedor(e.target.value)}
                 className="w-full bg-slate-50 dark:bg-[#00246b] border border-slate-200 dark:border-[#0a2a6b] rounded-lg px-3 py-2 text-sm font-medium text-slate-800 dark:text-white outline-none focus:border-emerald-600 cursor-pointer"
               >
-                <option value="">Sin asignar</option>
+                <option value="" className="bg-white dark:bg-[#001c55] text-slate-900 dark:text-white">Sin asignar</option>
                 {vendedores.map((v) => (
-                  <option key={v.id} value={v.id}>
+                  <option key={v.id} value={v.id} className="bg-white dark:bg-[#001c55] text-slate-900 dark:text-white">
                     {v.nombre}
                   </option>
                 ))}

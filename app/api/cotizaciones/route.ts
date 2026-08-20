@@ -1,7 +1,7 @@
 import { createClient } from "@supabase/supabase-js";
 import { verificarTurnstile } from "@/lib/turnstile";
 import { rateLimit, ipDesdeRequest } from "@/lib/rateLimit";
-import { notificarEncargados } from "@/lib/notificaciones";
+import { notificarEncargados, notificarPersona } from "@/lib/notificaciones";
 
 const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -60,6 +60,7 @@ export async function POST(req: Request) {
         tipo_peritaje: tipoPeritajeFinal, // <- Ahora guarda exactamente lo que corresponde
         sucursal_preferida: cotizacion.sucursal_preferida ?? "Casa Central",
         fotos_y_videos: Array.isArray(cotizacion.fotos_y_videos) ? cotizacion.fotos_y_videos : [],
+        vehiculo_id: cotizacion.vehiculo_id ?? null,
       })
       .select("id")
       .single();
@@ -67,7 +68,9 @@ export async function POST(req: Request) {
     if (error) throw error;
 
     const esConsignacion = tipoPeritajeFinal === "consignacion";
+    const esFinanciacion = tipoPeritajeFinal === "financiacion";
     const nombreVehiculo = `${cotizacion.marca} ${cotizacion.modelo}`;
+    const sucursalTexto = esFinanciacion ? ` — ${cotizacion.sucursal_preferida ?? "Casa Central"}` : "";
     notificarEncargados(
       supabase,
       `Nuevo lead: ${cotizacion.nombre} — ${nombreVehiculo}`,
@@ -79,11 +82,37 @@ export async function POST(req: Request) {
       supabase,
       esConsignacion
         ? `Nueva consignación: ${cotizacion.nombre} — ${nombreVehiculo}`
+        : esFinanciacion
+        ? `Nueva solicitud de crédito: ${cotizacion.nombre} — ${nombreVehiculo}${sucursalTexto}`
         : `Nueva cotización: ${cotizacion.nombre} — ${nombreVehiculo}`,
-      esConsignacion ? "/panel/consignaciones" : "/panel/cotizaciones",
-      esConsignacion ? "consignaciones" : "cotizaciones",
+      esConsignacion ? "/panel/consignaciones" : esFinanciacion ? "/panel/ventas/financiaciones" : "/panel/cotizaciones",
+      esConsignacion ? "consignaciones" : esFinanciacion ? "financiacion" : "cotizaciones",
       "nuevo_lead"
     ).catch((err) => console.error("[cotizaciones] error notificando sección:", err));
+
+    // Si el auto ya tiene un vendedor asignado, que se entere directo — no solo
+    // los encargados. Es justo el caso de financiación: el auto ya tiene dueño
+    // de venta y la solicitud le corresponde a él/ella.
+    if (cotizacion.vehiculo_id) {
+      supabase
+        .from("vehiculos")
+        .select("vendedor_asignado_id")
+        .eq("id", cotizacion.vehiculo_id)
+        .maybeSingle()
+        .then(({ data: vehiculo }) => {
+          if (!vehiculo?.vendedor_asignado_id) return;
+          notificarPersona(
+            supabase,
+            vehiculo.vendedor_asignado_id,
+            "nuevo_lead",
+            esFinanciacion
+              ? `Nueva solicitud de crédito para tu ${nombreVehiculo}: ${cotizacion.nombre}.`
+              : `Nuevo lead para tu ${nombreVehiculo}: ${cotizacion.nombre}.`,
+            esFinanciacion ? "/panel/ventas/financiaciones" : `/panel/crm/${data.id}`,
+            esFinanciacion ? "financiacion" : "crm"
+          ).catch((err) => console.error("[cotizaciones] error notificando vendedor asignado:", err));
+        });
+    }
 
     return Response.json({ ok: true, id: data.id });
   } catch (err) {

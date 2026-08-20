@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import { useState } from "react";
 import { supabase } from "@/lib/supabase/client";
@@ -7,11 +7,14 @@ import { X, DollarSign, User, CreditCard, CheckCircle2 } from "lucide-react";
 
 interface AccionesAutoProps {
   autoId: string;
+  autoMarca?: string;
+  autoModelo?: string;
+  vendedorAsignadoId?: string | null;
   estadoActual: string;
   puedeGestionar: boolean;
 }
 
-export default function AccionesAuto({ autoId, estadoActual, puedeGestionar }: AccionesAutoProps) {
+export default function AccionesAuto({ autoId, autoMarca, autoModelo, vendedorAsignadoId, estadoActual, puedeGestionar }: AccionesAutoProps) {
   const router = useRouter();
   const [cargando, setCargando] = useState(false);
   const [showModal, setShowModal] = useState(false);
@@ -44,6 +47,19 @@ export default function AccionesAuto({ autoId, estadoActual, puedeGestionar }: A
         valor_nuevo: nuevoEstado,
         usuario_id: user?.id,
       });
+
+      const nombreAuto = `${autoMarca || ""} ${autoModelo || ""}`.trim() || "un auto";
+      fetch("/api/vehiculos/notificar-cambio", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          autoId,
+          vendedorAsignadoId: vendedorAsignadoId || null,
+          actorId: user?.id || null,
+          mensaje: `El ${nombreAuto} pasó de ${estadoActual} a ${nuevoEstado}.`,
+          tipo: "estado_actualizado",
+        }),
+      }).catch((err) => console.error("Error notificando cambio de estado:", err));
 
       if (nuevoEstado === "Vendido" && datosVenta) {
         let clienteId = null;
@@ -211,9 +227,9 @@ export default function AccionesAuto({ autoId, estadoActual, puedeGestionar }: A
                 <div className="flex items-center bg-slate-50 dark:bg-[#00246b] border border-slate-200 dark:border-[#0a2a6b] rounded-xl px-3 focus-within:border-indigo-500 transition-colors">
                   <CreditCard className="w-4 h-4 text-slate-400 dark:text-slate-500 mr-2" />
                   <select value={formaPago} onChange={(e) => setFormaPago(e.target.value)} className="w-full bg-transparent py-2.5 text-sm text-slate-900 dark:text-white outline-none appearance-none cursor-pointer">
-                    <option value="Contado">Contado (Transf. o Efectivo)</option>
-                    <option value="Financiado">Financiado (Crédito/Prenda)</option>
-                    <option value="Permuta">Permuta (Usado como pago)</option>
+                    <option value="Contado" className="bg-white dark:bg-[#001c55] text-slate-900 dark:text-white">Contado (Transf. o Efectivo)</option>
+                    <option value="Financiado" className="bg-white dark:bg-[#001c55] text-slate-900 dark:text-white">Financiado (Crédito/Prenda)</option>
+                    <option value="Permuta" className="bg-white dark:bg-[#001c55] text-slate-900 dark:text-white">Permuta (Usado como pago)</option>
                   </select>
                 </div>
               </div>

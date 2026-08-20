@@ -18,6 +18,7 @@ export default async function CotizacionesPage() {
     .from("cotizaciones")
     .select("*")
     .neq("tipo_peritaje", "consignacion")
+    .neq("tipo_peritaje", "financiacion")
     .order("created_at", { ascending: false });
 
   // ================= MÉTRICAS INTEGRADAS =================
@@ -95,7 +96,7 @@ export default async function CotizacionesPage() {
                       <Clock className="w-3 h-3" /> Procesando
                     </span>
                   )}
-                  
+
                   <span className={`text-[9px] font-bold uppercase tracking-widest px-2 py-0.5 rounded flex items-center gap-1 border ${esPresencial ? "bg-blue-50 text-blue-700 border-blue-200" : "bg-slate-100 dark:bg-[#00246b] text-slate-500 dark:text-slate-300 border-slate-200 dark:border-[#0a2a6b]"}`}>
                     {esPresencial ? <MapPin className="w-3 h-3" /> : <ImageIcon className="w-3 h-3" />}
                     {esPresencial ? "Presencial" : "Online"}
@@ -132,11 +133,12 @@ export default async function CotizacionesPage() {
 
                 {/* Footer: Precio, Fotos y Acción */}
                 <div className="pt-3 border-t border-slate-100 dark:border-[#0a2a6b] flex items-center justify-between gap-2 mt-auto">
-                  
+
                   {/* Precio */}
                   <PrecioSugeridoEditor
                     cotizacionId={cot.id}
                     precioSugerido={cot.precio_sugerido}
+                    monedaSugerida={cot.moneda_sugerida}
                     marca={cot.marca}
                     modelo={cot.modelo}
                     version={cot.version}

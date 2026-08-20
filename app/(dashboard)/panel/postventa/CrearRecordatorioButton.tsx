@@ -7,10 +7,12 @@ import { Wrench } from "lucide-react";
 
 export default function CrearRecordatorioButton({
   vehiculoId,
+  ventaId,
   nombreContacto,
   telefonoContacto,
 }: {
   vehiculoId: string;
+  ventaId?: string;
   nombreContacto: string;
   telefonoContacto: string;
 }) {
@@ -22,6 +24,7 @@ export default function CrearRecordatorioButton({
     try {
       const { error } = await supabase.from("postventa_casos").insert({
         vehiculo_id: vehiculoId,
+        venta_id: ventaId || null,
         nombre_contacto: nombreContacto,
         telefono_contacto: telefonoContacto,
         tipo: "Service",

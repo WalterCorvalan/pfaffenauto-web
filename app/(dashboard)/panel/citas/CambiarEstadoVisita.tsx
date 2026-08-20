@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import { useState } from "react";
 import { supabase } from "@/lib/supabase/client";
@@ -44,10 +44,10 @@ export default function CambiarEstadoVisita({
         disabled={loading}
         className="w-full bg-white dark:bg-[#00246b] border border-slate-200 dark:border-[#0a2a6b] text-[11px] font-bold text-slate-600 dark:text-slate-300 rounded-md px-2 py-1.5 outline-none focus:border-indigo-500 transition-colors appearance-none cursor-pointer pr-8 disabled:opacity-50"
       >
-        <option value="Pendiente">Pendiente</option>
-        <option value="Confirmada">Confirmada</option>
-        <option value="Asistió">Asistió</option>
-        <option value="Cancelada">Cancelada</option>
+        <option value="Pendiente" className="bg-white dark:bg-[#001c55] text-slate-900 dark:text-white">Pendiente</option>
+        <option value="Confirmada" className="bg-white dark:bg-[#001c55] text-slate-900 dark:text-white">Confirmada</option>
+        <option value="Asistió" className="bg-white dark:bg-[#001c55] text-slate-900 dark:text-white">Asistió</option>
+        <option value="Cancelada" className="bg-white dark:bg-[#001c55] text-slate-900 dark:text-white">Cancelada</option>
       </select>
       {loading && (
         <Loader2 className="w-3 h-3 text-indigo-500 animate-spin absolute right-2 top-1/2 -translate-y-1/2 pointer-events-none" />

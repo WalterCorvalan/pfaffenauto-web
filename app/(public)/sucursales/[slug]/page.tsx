@@ -61,7 +61,7 @@ export default async function SucursalPage({ params }: { params: Promise<{ slug:
   const nombreSucursal = sucursal.nombre;
 
   return (
-    <div className="w-full bg-[#f8f9fa] min-h-screen flex flex-col">
+    <div className="w-full bg-[#f8f9fa] dark:bg-[#0a0a0f] min-h-screen flex flex-col">
       <SucursalHeroAnimated
         slug={slug}
         nombre={nombreSucursal}
@@ -72,7 +72,7 @@ export default async function SucursalPage({ params }: { params: Promise<{ slug:
       />
 
       <div className="max-w-7xl mx-auto w-full px-4 md:px-6 pt-10">
-        <h2 className="text-xl md:text-2xl font-black text-gray-900 tracking-tight">Stock disponible en esta sucursal</h2>
+        <h2 className="text-xl md:text-2xl font-black text-gray-900 dark:text-white tracking-tight">Stock disponible en esta sucursal</h2>
       </div>
       <VehiculosGrid vehiculos={vehiculos} />
     </div>

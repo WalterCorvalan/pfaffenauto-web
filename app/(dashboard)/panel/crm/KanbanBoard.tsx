@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import { useState } from "react";
 import { supabase } from "@/lib/supabase/client";
@@ -217,7 +217,7 @@ export default function KanbanBoard({ leadsIniciales, motivosCierre, miRol, miId
       <div className="flex-1 overflow-x-auto overflow-y-hidden p-6 bg-[#F9FAFB] dark:bg-[#001233] flex gap-5 custom-scrollbar">
 
         {COLUMNAS.map((columna, index) => {
-          const leadsEnColumna = leadsFiltrados.filter((l) => (l.estado || "Pendiente") === columna);
+          const leadsEnColumna = leadsFiltrados.filter((l) => (l.estado === "Pendiente" ? "Nuevo" : l.estado) === columna);
 
           return (
             <div
@@ -314,7 +314,7 @@ export default function KanbanBoard({ leadsIniciales, motivosCierre, miRol, miId
                       {/* Footer de la tarjeta */}
                       <div className="flex items-center justify-between border-t border-slate-100 dark:border-[#0a2a6b] pt-2.5 mt-3">
                         <span className="text-[11px] font-bold text-slate-700 dark:text-slate-200 font-mono bg-slate-50 dark:bg-[#00246b] px-2 py-0.5 rounded border border-slate-100 dark:border-[#0a2a6b]">
-                          {lead.precio_sugerido ? `USD ${lead.precio_sugerido.toLocaleString("es-AR")}` : "A tasar"}
+                          {lead.precio_sugerido ? `${lead.moneda_sugerida === "USD" ? "US$" : "$"} ${lead.precio_sugerido.toLocaleString("es-AR")}` : "A tasar"}
                         </span>
                         <a
                           href={`https://wa.me/${lead.telefono.replace(/\D/g, '')}?text=${encodeURIComponent(`¡Hola ${lead.nombre}! Somos de Pfaffen Autos. Te escribo por el ${lead.marca} ${lead.modelo}.`)}`}
@@ -363,8 +363,8 @@ export default function KanbanBoard({ leadsIniciales, motivosCierre, miRol, miId
               onChange={(e) => setMotivoCierreId(e.target.value)}
               className="w-full bg-slate-50 dark:bg-[#00246b] border border-slate-200 dark:border-[#0a2a6b] rounded-xl px-3.5 py-2.5 text-sm outline-none focus:border-indigo-500 focus:bg-white dark:focus:bg-[#002a6e] text-slate-900 dark:text-white mb-4"
             >
-              <option value="">Seleccionar motivo...</option>
-              {motivosCierre.map((m) => (<option key={m.id} value={m.id}>{m.nombre}</option>))}
+              <option value="" className="bg-white dark:bg-[#001c55] text-slate-900 dark:text-white">Seleccionar motivo...</option>
+              {motivosCierre.map((m) => (<option key={m.id} value={m.id} className="bg-white dark:bg-[#001c55] text-slate-900 dark:text-white">{m.nombre}</option>))}
             </select>
             <button
               onClick={confirmarCierreConMotivo}

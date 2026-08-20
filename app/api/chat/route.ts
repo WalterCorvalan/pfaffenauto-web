@@ -158,12 +158,17 @@ REGLAS:
     let replyText = "";
     try {
       // Haiku: el modelo barato de Anthropic. Alcanza de sobra para este chat.
-      const response = await anthropic.messages.create({
-        model: "claude-haiku-4-5-20251001",
-        max_tokens: 2000,
-        system: SYSTEM_PROMPT,
-        messages: formattedMessages,
-      });
+      // timeout corto + sin reintentos propios del SDK: si no contesta rápido,
+      // cae al fallback de OpenRouter en vez de dejar al cliente esperando.
+      const response = await anthropic.messages.create(
+        {
+          model: "claude-haiku-4-5-20251001",
+          max_tokens: 2000,
+          system: SYSTEM_PROMPT,
+          messages: formattedMessages,
+        },
+        { timeout: 8000, maxRetries: 0 }
+      );
 
       if (response.stop_reason === "refusal") {
         logPregunta(preguntaOriginal, false);
@@ -189,6 +194,7 @@ REGLAS:
           model: process.env.OPENROUTER_MODEL,
           messages: [{ role: "system", content: SYSTEM_PROMPT }, ...formattedMessages],
         }),
+        signal: AbortSignal.timeout(15000),
       });
       if (!res.ok) throw err;
       const data = await res.json();

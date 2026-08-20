@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
@@ -144,9 +144,9 @@ export default function NuevoClientePage() {
                       {...register("sucursal", { required: "Requerido" })}
                       className={`${inputClass} appearance-none cursor-pointer`}
                     >
-                      <option value="" disabled>Seleccionar sucursal...</option>
+                      <option value="" disabled className="bg-white dark:bg-[#001c55] text-slate-900 dark:text-white">Seleccionar sucursal...</option>
                       {sucursales.map((s) => (
-                        <option key={s.id} value={s.id}>{s.nombre}</option>
+                        <option key={s.id} value={s.id} className="bg-white dark:bg-[#001c55] text-slate-900 dark:text-white">{s.nombre}</option>
                       ))}
                     </select>
                   </Campo>
@@ -204,11 +204,11 @@ export default function NuevoClientePage() {
 
                 <Campo label="Estado Civil">
                   <select {...register("estado_civil")} className={`${inputClass} appearance-none cursor-pointer`}>
-                    <option value="">Seleccionar...</option>
-                    <option value="Soltero/a">Soltero/a</option>
-                    <option value="Casado/a">Casado/a</option>
-                    <option value="Divorciado/a">Divorciado/a</option>
-                    <option value="Viudo/a">Viudo/a</option>
+                    <option value="" className="bg-white dark:bg-[#001c55] text-slate-900 dark:text-white">Seleccionar...</option>
+                    <option value="Soltero/a" className="bg-white dark:bg-[#001c55] text-slate-900 dark:text-white">Soltero/a</option>
+                    <option value="Casado/a" className="bg-white dark:bg-[#001c55] text-slate-900 dark:text-white">Casado/a</option>
+                    <option value="Divorciado/a" className="bg-white dark:bg-[#001c55] text-slate-900 dark:text-white">Divorciado/a</option>
+                    <option value="Viudo/a" className="bg-white dark:bg-[#001c55] text-slate-900 dark:text-white">Viudo/a</option>
                   </select>
                 </Campo>
                 <Campo label="Profesión">
@@ -274,11 +274,11 @@ export default function NuevoClientePage() {
                     <div>
                       <Campo label="Provincia">
                         <select {...register("provincia")} className={`${inputClass} appearance-none cursor-pointer`}>
-                          <option value="">Seleccionar...</option>
-                          <option value="Buenos Aires">Buenos Aires</option>
-                          <option value="CABA">CABA</option>
-                          <option value="Córdoba">Córdoba</option>
-                          <option value="Santa Fe">Santa Fe</option>
+                          <option value="" className="bg-white dark:bg-[#001c55] text-slate-900 dark:text-white">Seleccionar...</option>
+                          <option value="Buenos Aires" className="bg-white dark:bg-[#001c55] text-slate-900 dark:text-white">Buenos Aires</option>
+                          <option value="CABA" className="bg-white dark:bg-[#001c55] text-slate-900 dark:text-white">CABA</option>
+                          <option value="Córdoba" className="bg-white dark:bg-[#001c55] text-slate-900 dark:text-white">Córdoba</option>
+                          <option value="Santa Fe" className="bg-white dark:bg-[#001c55] text-slate-900 dark:text-white">Santa Fe</option>
                         </select>
                       </Campo>
                     </div>
