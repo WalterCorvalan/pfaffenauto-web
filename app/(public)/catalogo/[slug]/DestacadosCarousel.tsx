@@ -1,4 +1,5 @@
 import Link from "next/link";
+import Image from "next/image";
 import { Sparkles } from "lucide-react";
 
 interface Destacado {
@@ -35,12 +36,14 @@ export default function DestacadosCarousel({ vehiculos }: { vehiculos: Destacado
               href={`/catalogo/${auto.slug}`}
               className="min-w-[220px] max-w-[220px] shrink-0 snap-start bg-white/60 dark:bg-white/5 backdrop-blur-xl border border-white dark:border-white/10 hover:border-[#0145F2]/40 dark:hover:border-sky-400/40 hover:bg-white dark:hover:bg-white/10 rounded-2xl overflow-hidden shadow-sm dark:shadow-none hover:shadow-md dark:hover:shadow-none transition-all group"
             >
-              <div className="h-32 bg-white/40 dark:bg-white/5 overflow-hidden mix-blend-multiply dark:mix-blend-normal">
+              <div className="relative h-32 bg-white/40 dark:bg-white/5 overflow-hidden mix-blend-multiply dark:mix-blend-normal">
                 {auto.multimedia_vehiculos?.[0]?.url_archivo ? (
-                  <img
+                  <Image
                     src={auto.multimedia_vehiculos[0].url_archivo}
                     alt={`${auto.marca} ${auto.modelo}`}
-                    className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+                    fill
+                    sizes="220px"
+                    className="object-cover group-hover:scale-105 transition-transform duration-500"
                   />
                 ) : (
                   <div className="w-full h-full flex items-center justify-center text-gray-400 dark:text-slate-500 text-[10px] font-bold">Sin foto</div>

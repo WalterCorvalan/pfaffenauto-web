@@ -1,9 +1,9 @@
 "use client";
 
-import { useState } from "react";
+import { useRef, useState } from "react";
 import { supabase } from "@/lib/supabase/client";
 import { buscarClienteDuplicado } from "@/lib/clienteDedupe";
-import { Search, UserPlus, X, Check } from "lucide-react";
+import { Search, UserPlus, X, Check, ScanLine, Loader2 } from "lucide-react";
 
 export interface ClienteSeleccionado {
   id: string;
@@ -39,11 +39,47 @@ export default function ClienteBuscador({
   const [busqueda, setBusqueda] = useState("");
   const [creandoNuevo, setCreandoNuevo] = useState(false);
   const [guardando, setGuardando] = useState(false);
+  const [escaneando, setEscaneando] = useState(false);
+  const [errorEscaneo, setErrorEscaneo] = useState("");
+  const inputDniRef = useRef<HTMLInputElement>(null);
   const [nuevo, setNuevo] = useState({
     nombre: "", apellido: "", dni: "", cuit_cuil: "", telefono_celular: "", telefono_linea: "",
     correo_electronico: "", calle: "", numero: "", depto: "", localidad: "", codigo_postal: "",
     provincia: "", estado_civil: "", profesion: "", fecha_nacimiento: "",
   });
+
+  const escanearDNI = async (file: File) => {
+    setErrorEscaneo("");
+    setEscaneando(true);
+    try {
+      const formData = new FormData();
+      formData.append("file", file);
+      const res = await fetch("/api/ocr-dni", { method: "POST", body: formData });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || "No se pudo leer el DNI.");
+
+      // Solo pisamos los campos que la IA efectivamente leyó — si el usuario ya
+      // había tipeado algo (ej. escaneó el frente y después el dorso para el
+      // domicilio), no lo borramos con un null.
+      setNuevo((prev) => ({
+        ...prev,
+        nombre: data.nombre || prev.nombre,
+        apellido: data.apellido || prev.apellido,
+        dni: data.dni || prev.dni,
+        fecha_nacimiento: data.fecha_nacimiento || prev.fecha_nacimiento,
+        calle: data.domicilio_calle || prev.calle,
+        numero: data.domicilio_numero || prev.numero,
+        localidad: data.localidad || prev.localidad,
+        provincia: data.provincia || prev.provincia,
+        codigo_postal: data.codigo_postal || prev.codigo_postal,
+      }));
+    } catch (err) {
+      setErrorEscaneo(err instanceof Error ? err.message : "Error al escanear el DNI.");
+    } finally {
+      setEscaneando(false);
+      if (inputDniRef.current) inputDniRef.current.value = "";
+    }
+  };
 
   const filtrados = clientes.filter((c) => {
     const q = busqueda.toLowerCase();
@@ -116,6 +152,30 @@ export default function ClienteBuscador({
             <X className="w-4 h-4" />
           </button>
         </div>
+
+        <button
+          type="button"
+          onClick={() => inputDniRef.current?.click()}
+          disabled={escaneando}
+          className="w-full flex items-center justify-center gap-2 bg-indigo-50 dark:bg-[#002a6e] hover:bg-indigo-100 dark:hover:bg-[#0a2a6b] text-indigo-700 dark:text-sky-300 border border-indigo-200 dark:border-[#0a2a6b] font-bold py-2.5 rounded-lg text-[11px] uppercase tracking-widest disabled:opacity-50 transition-colors"
+        >
+          {escaneando ? <><Loader2 className="w-3.5 h-3.5 animate-spin" /> Leyendo DNI...</> : <><ScanLine className="w-3.5 h-3.5" /> Escanear DNI (foto)</>}
+        </button>
+        <input
+          ref={inputDniRef}
+          type="file"
+          accept="image/*"
+          capture="environment"
+          className="hidden"
+          onChange={(e) => e.target.files?.[0] && escanearDNI(e.target.files[0])}
+        />
+        {errorEscaneo && (
+          <p className="text-[11px] text-rose-600 dark:text-rose-400 font-medium">{errorEscaneo}</p>
+        )}
+        <p className="text-[10px] text-slate-400 dark:text-slate-500 -mt-1">
+          Sacale foto al frente (nombre, DNI) y después al dorso (domicilio) — completa lo que falte, no pisa lo que ya escaneaste.
+        </p>
+
         <div className="grid grid-cols-2 gap-2">
           <input className={inputClass} placeholder="Nombre *" value={nuevo.nombre} onChange={(e) => setNuevo({ ...nuevo, nombre: e.target.value })} />
           <input className={inputClass} placeholder="Apellido *" value={nuevo.apellido} onChange={(e) => setNuevo({ ...nuevo, apellido: e.target.value })} />

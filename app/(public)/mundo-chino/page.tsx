@@ -3,8 +3,15 @@ import { CAMPOS_VEHICULO_PUBLICO } from "@/lib/vehiculos";
 import VehiculosGrid, { MARCAS_CHINAS } from "@/components/VehiculosGrid";
 import { Globe2, AlertCircle } from "lucide-react";
 import Link from "next/link";
+import type { Metadata } from "next";
 
 export const revalidate = 60;
+
+export const metadata: Metadata = {
+  title: "Mundo Chino | BAIC, Chery, Changan, JAC, BYD | Pfaffen Autos",
+  description: "Descubrí nuestra selección de marcas chinas: BAIC, Chery, Changan, JAC, BYD y más, con respaldo oficial en Pfaffen Autos.",
+  alternates: { canonical: "https://pfaffenautos.com.ar/mundo-chino" },
+};
 
 export default async function MundoChinoPage() {
   const supabase = await createClient();

@@ -3,6 +3,7 @@ import { cookies } from "next/headers";
 import Link from "next/link";
 import { Plus, Car, Search, Edit2, ChevronLeft, ChevronRight, FileText, LayoutGrid, Megaphone } from "lucide-react";
 import AccionesAuto from "./AccionesAuto";
+import PublicarRedesBoton from "./PublicarRedesBoton";
 import MiniaturaAuto from "./MiniaturaAuto";
 import PrecioEditor from "./PrecioEditor";
 import SucursalEditor from "./SucursalEditor";
@@ -170,6 +171,7 @@ export default async function PanelPage({ searchParams }: { searchParams: Promis
                     <div className="pt-2 flex items-center justify-between gap-2 border-t border-slate-100 dark:border-[#0a2a6b]">
                       <div className="flex items-center gap-2">
                         <AccionesAuto autoId={auto.id} autoMarca={auto.marca} autoModelo={auto.modelo} vendedorAsignadoId={auto.vendedor_asignado_id} estadoActual={auto.estado} puedeGestionar={puedeGestionar} />
+                        {puedeGestionar && <PublicarRedesBoton vehiculoId={auto.id} yaPublicado={!!auto.publicado_redes_at} />}
                         {semaforo && (
                           <span className={`inline-flex items-center gap-1 text-[10px] font-bold px-2 py-1 rounded-full ${semaforo.color}`}>
                             {semaforo.dias}d en stock
@@ -247,7 +249,8 @@ export default async function PanelPage({ searchParams }: { searchParams: Promis
                         <td className="p-4">
                           <div className="flex items-center justify-end gap-3">
                             <AccionesAuto autoId={auto.id} autoMarca={auto.marca} autoModelo={auto.modelo} vendedorAsignadoId={auto.vendedor_asignado_id} estadoActual={auto.estado} puedeGestionar={puedeGestionar} />
-                            
+                            {puedeGestionar && <PublicarRedesBoton vehiculoId={auto.id} yaPublicado={!!auto.publicado_redes_at} />}
+
                             <div className="flex items-center gap-1 border-l border-slate-200 dark:border-[#0a2a6b] pl-3">
                               {puedeGestionar && (
                                 <Link href={`/panel/vehiculo/boleto/${auto.id}`} className="p-1.5 text-slate-400 dark:text-slate-300 hover:text-emerald-600 transition-colors" title="Generar Boleto">

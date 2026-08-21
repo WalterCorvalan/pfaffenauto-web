@@ -12,8 +12,7 @@ const supabase = createClient(
 );
 
 const AgradecimientoSchema = z.object({
-  venta_id: z.string().uuid().optional().nullable(),
-  boleto_id: z.string().uuid().optional().nullable(),
+  boleto_id: z.string().uuid(),
 });
 
 function isWhatsappEnvioConfigurado(): boolean {
@@ -40,50 +39,23 @@ export async function POST(req: Request) {
     if (!user) return Response.json({ error: "No autorizado." }, { status: 401 });
 
     const parsed = AgradecimientoSchema.safeParse(await req.json());
-    if (!parsed.success || (!parsed.data.venta_id && !parsed.data.boleto_id)) {
-      return Response.json({ error: "Falta venta_id o boleto_id." }, { status: 400 });
+    if (!parsed.success) {
+      return Response.json({ error: "Falta boleto_id." }, { status: 400 });
     }
-    const { venta_id, boleto_id } = parsed.data;
+    const { boleto_id } = parsed.data;
 
-    let nombreCliente: string | undefined;
-    let telefono: string | undefined;
-    let marca: string | undefined;
-    let modelo: string | undefined;
-
-    if (boleto_id) {
-      const { data: boleto, error } = await supabase
-        .from("boletos_venta")
-        .select("nombre, apellido, telefono_celular, marca, modelo")
-        .eq("id", boleto_id)
-        .single();
-      if (error || !boleto) {
-        return Response.json({ error: "Venta no encontrada." }, { status: 404 });
-      }
-      nombreCliente = boleto.nombre;
-      telefono = boleto.telefono_celular;
-      marca = boleto.marca;
-      modelo = boleto.modelo;
-    } else {
-      const { data: venta, error } = await supabase
-        .from("ventas")
-        .select(`
-          clientes ( nombre, telefono_celular ),
-          vehiculos ( marca, modelo )
-        `)
-        .eq("id", venta_id)
-        .single();
-
-      if (error || !venta) {
-        return Response.json({ error: "Venta no encontrada." }, { status: 404 });
-      }
-
-      const cliente = venta.clientes as any;
-      const vehiculo = venta.vehiculos as any;
-      nombreCliente = cliente?.nombre;
-      telefono = cliente?.telefono_celular;
-      marca = vehiculo?.marca;
-      modelo = vehiculo?.modelo;
+    const { data: boleto, error } = await supabase
+      .from("boletos_venta")
+      .select("nombre, apellido, telefono_celular, marca, modelo")
+      .eq("id", boleto_id)
+      .single();
+    if (error || !boleto) {
+      return Response.json({ error: "Venta no encontrada." }, { status: 404 });
     }
+    const nombreCliente = boleto.nombre;
+    const telefono = boleto.telefono_celular;
+    const marca = boleto.marca;
+    const modelo = boleto.modelo;
 
     if (!telefono) {
       return Response.json({ enviado: false, motivo: "Sin teléfono del cliente." });

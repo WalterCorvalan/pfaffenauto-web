@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
+import Image from "next/image";
 import Link from "next/link";
 import { ArrowLeft, ArrowRight } from "lucide-react";
 import { Barlow_Condensed, JetBrains_Mono } from "next/font/google";
@@ -172,9 +173,11 @@ export default function VehiculosCarousel({
           className="absolute inset-x-0 flex items-center justify-center pointer-events-none select-none"
           style={{ zIndex: 2, top: "16%" }}
         >
-          <img
+          <Image
             src={logoSrc}
             alt={logoAlt}
+            width={220}
+            height={80}
             className={!enMovimiento ? "vc-logo-respira" : ""}
             style={{
               width: "clamp(120px, 16vw, 220px)",
@@ -218,11 +221,13 @@ export default function VehiculosCarousel({
               transform: "translateX(-50%)",
             }}
           >
-            <img
+            <Image
               src={items[saliente.index].src}
               alt={items[saliente.index].name}
+              fill
               draggable={false}
-              style={{ width: "100%", height: "100%", objectFit: "contain", objectPosition: "bottom center" }}
+              sizes="60vh"
+              style={{ objectFit: "contain", objectPosition: "bottom center" }}
             />
           </div>
         )}
@@ -243,11 +248,14 @@ export default function VehiculosCarousel({
               transform: fase === "idle" ? "translateX(-50%) scale(1)" : undefined,
             }}
           >
-            <img
+            <Image
               src={activo.src}
               alt={activo.name}
+              fill
               draggable={false}
-              style={{ width: "100%", height: "100%", objectFit: "contain", objectPosition: "bottom center" }}
+              sizes="60vh"
+              priority
+              style={{ objectFit: "contain", objectPosition: "bottom center" }}
             />
           </div>
         )}

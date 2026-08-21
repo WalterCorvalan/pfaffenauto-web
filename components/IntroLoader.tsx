@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import Image from "next/image";
 import { AnimatePresence, motion } from "framer-motion";
 
 const STORAGE_KEY = "pfaffen_intro_visto";
@@ -64,8 +65,8 @@ export default function IntroLoader() {
             className="absolute inset-0 flex flex-col items-center justify-center gap-3"
           >
             <div className="relative">
-              <img src="/logo.png" alt="Pfaffen Autos" className="h-8 md:h-10 w-auto object-contain brightness-0 invert drop-shadow-[0_0_25px_rgba(77,166,255,0.6)]" />
-              <img src="/r.png" alt="" className="absolute -top-1 -right-3 w-2.5 h-2.5 object-contain brightness-0 invert" />
+              <Image src="/logo.png" alt="Pfaffen Autos" width={668} height={173} priority className="h-8 md:h-10 w-auto object-contain brightness-0 invert drop-shadow-[0_0_25px_rgba(77,166,255,0.6)]" />
+              <Image src="/r.png" alt="" width={66} height={66} className="absolute -top-1 -right-3 w-2.5 h-2.5 object-contain brightness-0 invert" />
             </div>
             <motion.span
               initial={{ scaleX: 0, opacity: 0 }}

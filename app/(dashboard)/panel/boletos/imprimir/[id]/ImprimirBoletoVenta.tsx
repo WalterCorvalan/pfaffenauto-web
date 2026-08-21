@@ -6,11 +6,13 @@ import Link from "next/link";
 import { supabase } from "@/lib/supabase/client";
 import { notificarRespuestaPrecio } from "@/lib/notificaciones";
 import ConfirmarPrecioEncargadoModal from "../../../ConfirmarPrecioEncargadoModal";
+import FirmaCanvas from "../../../FirmaCanvas";
 
 export default function ImprimirBoletoVenta({ boleto: b }: { boleto: any }) {
   const [precioConfirmado, setPrecioConfirmado] = useState(b.precio_confirmado);
   const [ventaArs, setVentaArs] = useState(b.venta_ars);
   const [ventaUsd, setVentaUsd] = useState(b.venta_usd);
+  const [firmaUrl, setFirmaUrl] = useState(b.firma_url);
   const [mostrarModal, setMostrarModal] = useState(false);
   const [confirmando, setConfirmando] = useState(false);
 
@@ -329,12 +331,15 @@ export default function ImprimirBoletoVenta({ boleto: b }: { boleto: any }) {
           El vehículo objeto del presente Boleto de Compraventa se entrega en el estado en que se encuentra y que El Comprador declara conocer y aceptar de plena conformidad tras su revisión. La transferencia de la titularidad del dominio es obligatoria e ineludible.
         </p>
 
-        <div className="grid grid-cols-2 gap-16 mt-20 px-8">
-          <div className="text-center border-t border-slate-400 pt-3">
-            <span className="block font-bold text-sm">Firma del Comprador</span>
-            <span className="block text-[10px] font-bold text-slate-400 mt-1 uppercase tracking-widest">Aclaración y DNI</span>
+        <div className="grid grid-cols-2 gap-16 mt-12 px-8">
+          <div>
+            <FirmaCanvas tabla="boletos_venta" id={b.id} firmaUrlActual={firmaUrl} onGuardada={setFirmaUrl} />
+            <div className="text-center border-t border-slate-400 pt-3 mt-2">
+              <span className="block font-bold text-sm">Firma Digital del Comprador</span>
+              <span className="block text-[10px] font-bold text-slate-400 mt-1 uppercase tracking-widest">Aclaración y DNI</span>
+            </div>
           </div>
-          <div className="text-center border-t border-slate-400 pt-3">
+          <div className="text-center border-t border-slate-400 pt-3 self-end">
             <span className="block font-bold text-sm">Por Pfaffen Autos</span>
             <span className="block text-[10px] font-bold text-slate-400 mt-1 uppercase tracking-widest">{vendedor}</span>
           </div>

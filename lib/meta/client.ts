@@ -64,6 +64,28 @@ export async function sendImageMessage(phoneNumberId: string, token: string, to:
   });
 }
 
+// Instagram: publicación en el feed. Dos pasos obligatorios de la Content
+// Publishing API — primero se crea el contenedor con la imagen, después se
+// publica ese contenedor (no se puede publicar en un solo llamado).
+export async function publishInstagramPost(igUserId: string, token: string, imageUrl: string, caption: string) {
+  const contenedor = await graphRequest<{ id: string }>(`${igUserId}/media`, token, {
+    method: "POST",
+    body: JSON.stringify({ image_url: imageUrl, caption }),
+  });
+  return graphRequest<{ id: string }>(`${igUserId}/media_publish`, token, {
+    method: "POST",
+    body: JSON.stringify({ creation_id: contenedor.id }),
+  });
+}
+
+// Facebook: publicación con foto en el feed de la página (un solo llamado).
+export async function publishFacebookPost(pageId: string, token: string, imageUrl: string, caption: string) {
+  return graphRequest<{ id: string; post_id: string }>(`${pageId}/photos`, token, {
+    method: "POST",
+    body: JSON.stringify({ url: imageUrl, caption }),
+  });
+}
+
 // Instagram: respuesta privada (DM) a un comentario puntual — es el mecanismo
 // "comentaste, te mando un privado" tipo ManyChat, hecho directo con la API de Meta.
 export async function sendInstagramPrivateReply(commentId: string, token: string, text: string) {

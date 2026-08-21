@@ -4,7 +4,7 @@ import { useState, MouseEvent } from "react";
 import Link from "next/link";
 import { Search, CarFront, Zap, Users, Grid, Wand2, Sparkles } from "lucide-react";
 import { useRouter } from "next/navigation";
-import { motion, useMotionTemplate, useMotionValue } from "framer-motion";
+import { motion, useMotionTemplate, useMotionValue, useReducedMotion } from "framer-motion";
 
 // ================= VALORES FIJOS PARA EVITAR HYDRATION MISMATCH =================
 const speedTrails = [
@@ -21,6 +21,7 @@ const speedTrails = [
 export default function Hero() {
   const [searchTerm, setSearchTerm] = useState("");
   const router = useRouter();
+  const prefiereMenosMovimiento = useReducedMotion();
 
   // ================= LÓGICA DEL FOCO INTERACTIVO (SPOTLIGHT) =================
   const mouseX = useMotionValue(0);
@@ -63,46 +64,51 @@ export default function Hero() {
 
       {/* ================= EFECTOS ADICIONALES ================= */}
       
-      {/* 1. Spotlight interactivo (Sigue al mouse) */}
-      <motion.div
-        className="pointer-events-none absolute inset-0 z-0 transition-opacity duration-300"
-        style={{
-          background: useMotionTemplate`
-            radial-gradient(
-              650px circle at ${mouseX}px ${mouseY}px,
-              rgba(1, 69, 242, 0.12),
-              transparent 80%
-            )
-          `,
-        }}
-      />
+      {/* 1. Spotlight interactivo (Sigue al mouse) — se salta si el usuario pide menos movimiento */}
+      {!prefiereMenosMovimiento && (
+        <motion.div
+          className="pointer-events-none absolute inset-0 z-0 transition-opacity duration-300"
+          style={{
+            background: useMotionTemplate`
+              radial-gradient(
+                650px circle at ${mouseX}px ${mouseY}px,
+                rgba(1, 69, 242, 0.12),
+                transparent 80%
+              )
+            `,
+          }}
+        />
+      )}
 
       {/* 2. Grilla arquitectónica ultra sutil superpuesta al video */}
       <div className="absolute inset-0 bg-[linear-gradient(to_right,#e2e8f0_1px,transparent_1px),linear-gradient(to_bottom,#e2e8f0_1px,transparent_1px)] dark:bg-[linear-gradient(to_right,#1e293b_1px,transparent_1px),linear-gradient(to_bottom,#1e293b_1px,transparent_1px)] bg-[size:3rem_3rem] [mask-image:radial-gradient(ellipse_60%_60%_at_50%_40%,#000_70%,transparent_100%)] z-0 opacity-50 dark:opacity-40"></div>
 
-      {/* 3. Líneas de velocidad */}
-      <div className="absolute inset-0 overflow-hidden pointer-events-none z-0">
-        {speedTrails.map((trail, i) => (
-          <motion.div
-            key={i}
-            className="absolute h-[1px] bg-gradient-to-r from-transparent via-[#0145F2]/40 dark:via-sky-400/50 to-transparent"
-            style={{
-              top: `${trail.top}%`,
-              width: `${trail.width}%`,
-              left: "-50%",
-            }}
-            animate={{
-              x: ["0vw", "200vw"],
-            }}
-            transition={{
-              duration: trail.duration,
-              repeat: Infinity,
-              ease: "linear",
-              delay: trail.delay,
-            }}
-          />
-        ))}
-      </div>
+      {/* 3. Líneas de velocidad — 8 loops infinitos, se saltan del todo si el
+         usuario pide menos movimiento (nada que animar, nada que calcular). */}
+      {!prefiereMenosMovimiento && (
+        <div className="absolute inset-0 overflow-hidden pointer-events-none z-0">
+          {speedTrails.map((trail, i) => (
+            <motion.div
+              key={i}
+              className="absolute h-[1px] bg-gradient-to-r from-transparent via-[#0145F2]/40 dark:via-sky-400/50 to-transparent"
+              style={{
+                top: `${trail.top}%`,
+                width: `${trail.width}%`,
+                left: "-50%",
+              }}
+              animate={{
+                x: ["0vw", "200vw"],
+              }}
+              transition={{
+                duration: trail.duration,
+                repeat: Infinity,
+                ease: "linear",
+                delay: trail.delay,
+              }}
+            />
+          ))}
+        </div>
+      )}
 
 
       {/* ================= CONTENIDO PRINCIPAL ================= */}

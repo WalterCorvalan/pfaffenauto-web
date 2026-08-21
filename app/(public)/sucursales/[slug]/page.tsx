@@ -7,7 +7,8 @@ import { MapPin, Phone, Clock, ArrowLeft } from "lucide-react";
 // Importamos tu FadeIn por si lo necesitas después, aunque usaremos framer internamente
 import FadeIn from "@/components/FadeIn"; 
 // Importación crucial para permitir Framer Motion en Next.js App Router (Client Component Inline)
-import SucursalHeroAnimated from "./SucursalHeroAnimated"; 
+import SucursalHeroAnimated from "./SucursalHeroAnimated";
+import type { Metadata } from "next";
 
 const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -33,6 +34,17 @@ const FALLBACK_DATA: Record<
     horario: "Lun a Sáb - 9:00 a 19:00hs",
   },
 };
+
+export async function generateMetadata({ params }: { params: Promise<{ slug: string }> }): Promise<Metadata> {
+  const { slug } = await params;
+  const { data: sucursal } = await supabase.from("sucursales").select("nombre, direccion").eq("slug", slug).single();
+  const nombre = sucursal?.nombre || slug;
+  return {
+    title: `${nombre} | Sucursal Pfaffen Autos`,
+    description: `Visitá nuestra sucursal ${nombre}${sucursal?.direccion ? ` en ${sucursal.direccion}` : ""}. Stock disponible, financiación y respaldo oficial.`,
+    alternates: { canonical: `https://pfaffenautos.com.ar/sucursales/${slug}` },
+  };
+}
 
 export default async function SucursalPage({ params }: { params: Promise<{ slug: string }> }) {
   const { slug } = await params;

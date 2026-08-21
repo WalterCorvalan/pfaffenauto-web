@@ -1,9 +1,21 @@
 import { createClient } from "@/lib/supabase/server";
 import Link from "next/link";
+import Image from "next/image";
 import { ShieldCheck } from "lucide-react";
 import VehiculosGrid from "@/components/VehiculosGrid";
 import { CAMPOS_VEHICULO_PUBLICO } from "@/lib/vehiculos";
+import type { Metadata } from "next";
 export const revalidate = 60;
+
+export async function generateMetadata({ params }: { params: Promise<{ marca: string }> }): Promise<Metadata> {
+  const { marca } = await params;
+  const marcaName = marca.charAt(0).toUpperCase() + marca.slice(1).toLowerCase();
+  return {
+    title: `Autos ${marcaName} en Zona Norte | Pfaffen Autos`,
+    description: `Encontrá vehículos ${marcaName} 0KM y usados seleccionados, con financiación y respaldo oficial en Pfaffen Autos.`,
+    alternates: { canonical: `https://pfaffenautos.com.ar/marcas/${marca.toLowerCase()}` },
+  };
+}
 
 // Diccionario para personalizar textos y logos por marca de forma elegante
 const BRAND_DATA: Record<
@@ -118,17 +130,21 @@ export default async function MarcaPage({
               <div className="relative w-24 h-24 md:w-28 md:h-28 bg-white/60 dark:bg-white/10 backdrop-blur-md rounded-[24px] shadow-[0_4px_20px_rgba(0,0,0,0.05)] dark:shadow-none border border-white/80 dark:border-white/10 flex items-center justify-center p-5 mb-6">
                 
                 {/* Logo Principal */}
-                <img
+                <Image
                   src={marcaInfo.logo}
                   alt={`Logo ${marcaName}`}
-                  className="w-full h-full object-contain mix-blend-multiply drop-shadow-sm"
+                  fill
+                  sizes="112px"
+                  className="object-contain mix-blend-multiply drop-shadow-sm"
                 />
-                
+
                 {/* R de Marca Registrada: brightness-0 la fuerza a ser NEGRA */}
                 {marcaInfo.logoR && (
-                  <img
+                  <Image
                     src={marcaInfo.logoR}
                     alt="Marca Registrada"
+                    width={66}
+                    height={66}
                     className="absolute top-10.5 right-1.5 w-2.5 h-2.5 object-contain brightness-0 opacity-80"
                   />
                 )}

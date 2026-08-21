@@ -116,6 +116,7 @@ export default function LandingKarry() {
             </div>
             
             <a href="#contacto" className="hover:text-gray-300 transition-colors py-5">Prueba de manejo</a>
+            <a href="#historia" className="hover:text-gray-300 transition-colors py-5">Historia</a>
             <a href="#institucional" className="hover:text-gray-300 transition-colors py-5">Institucional</a>
             <a href="#contacto" className="hover:text-gray-300 transition-colors py-5">Contacto</a>
           </nav>
@@ -184,6 +185,7 @@ export default function LandingKarry() {
             <div className="lg:hidden absolute top-[calc(100%+10px)] left-0 w-full bg-[#111] rounded-2xl shadow-2xl border border-white/10 text-white p-5 animate-fadeIn cursor-default flex flex-col gap-1">
               <a href="#modelos" onClick={() => setIsMobileNavOpen(false)} className="px-3 py-3 rounded-xl hover:bg-white/5 font-bold text-sm uppercase tracking-wide">Modelos</a>
               <a href="#contacto" onClick={() => setIsMobileNavOpen(false)} className="px-3 py-3 rounded-xl hover:bg-white/5 font-bold text-sm uppercase tracking-wide">Prueba de manejo</a>
+              <a href="#historia" onClick={() => setIsMobileNavOpen(false)} className="px-3 py-3 rounded-xl hover:bg-white/5 font-bold text-sm uppercase tracking-wide">Historia</a>
               <a href="#institucional" onClick={() => setIsMobileNavOpen(false)} className="px-3 py-3 rounded-xl hover:bg-white/5 font-bold text-sm uppercase tracking-wide">Institucional</a>
               <a href="#contacto" onClick={() => setIsMobileNavOpen(false)} className="px-3 py-3 rounded-xl hover:bg-white/5 font-bold text-sm uppercase tracking-wide">Contacto</a>
             </div>
@@ -319,6 +321,22 @@ export default function LandingKarry() {
               </div>
             </div>
           ))}
+        </div>
+      </section>
+
+      {/* ================= HISTORIA ================= */}
+      {/* TODO (Walter): reemplazar por el texto real de la marca — este es un placeholder */}
+      <section id="historia" className="bg-black py-12 md:py-20 border-b border-white/10">
+        <div className="mx-auto max-w-4xl px-6 text-center">
+          <span className="inline-flex items-center gap-2 bg-[#0145F2]/10 text-[#4d8bff] text-[10px] font-bold uppercase tracking-widest px-4 py-1.5 rounded-full mb-6 border border-[#0145F2]/20">
+            Nuestra Historia
+          </span>
+          <h2 className="text-2xl md:text-4xl font-bold text-white tracking-tight mb-6">
+            Karry en Argentina, con el respaldo de Pfaffen Autos
+          </h2>
+          <p className="text-slate-400 text-sm md:text-base leading-relaxed max-w-2xl mx-auto">
+            Pfaffen Autos es concesionario oficial de Karry en el país, garantizando unidades 0KM con documentación al día, service oficial y repuestos originales. Elegimos representar la marca por su relación precio-utilidad, pensada para quienes necesitan una herramienta de trabajo confiable desde el primer día.
+          </p>
         </div>
       </section>
 

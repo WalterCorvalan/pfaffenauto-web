@@ -108,10 +108,6 @@ export default function RootLayout({
     // Inyectamos la variable de la NUEVA fuente
     <html lang="es" className={jakarta.variable}>
       <head>
-        <link
-          rel="stylesheet"
-          href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@3.19.0/dist/tabler-icons.min.css"
-        />
         <script
           type="application/ld+json"
           dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}

@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import Image from "next/image";
 import Link from "next/link";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { 
@@ -85,14 +86,19 @@ export default function PublicHeader() {
         {/* ================= COLUMNA IZQUIERDA: LOGOS ================= */}
         <div className="flex items-center gap-3 md:gap-4 justify-start shrink-0">
           <Link href="/" className="relative flex items-center group shrink-0">
-            <img
+            <Image
               src="/logo.png"
               alt="Pfaffen Autos"
+              width={668}
+              height={173}
+              priority
               className="h-6 md:h-7 w-auto transition-transform duration-500 group-hover:scale-105 drop-shadow-sm dark:brightness-0 dark:invert"
             />
-            <img
+            <Image
               src="/r.png"
               alt="Marca Registrada"
+              width={66}
+              height={66}
               className="absolute -top-1 -right-2.5 md:-right-2.5 w-2 h-2 object-contain brightness-0 dark:invert opacity-80"
             />
           </Link>
@@ -109,9 +115,11 @@ export default function PublicHeader() {
                 className="flex items-center h-full group shrink-0 rounded-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#0145F2] focus-visible:ring-offset-1"
                 title="Rely"
               >
-                <img
+                <Image
                   src="/RelyLogo.png"
                   alt="Rely"
+                  width={1536}
+                  height={1024}
                   className="h-8 sm:h-10 md:h-12.5 w-auto object-contain transition-transform group-hover:scale-105 -my-1.5 sm:-my-2 md:-my-2.5 dark:brightness-0 dark:invert"
                 />
               </Link>
@@ -120,9 +128,11 @@ export default function PublicHeader() {
                 className="flex items-center h-full group shrink-0 rounded-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#0145F2] focus-visible:ring-offset-1"
                 title="Karry"
               >
-                <img
+                <Image
                   src="/logo-karry.webp"
                   alt="Karry"
+                  width={500}
+                  height={240}
                   className="h-5 sm:h-10 md:h-7.5 w-auto object-contain transition-transform group-hover:scale-105 -my-1.5 sm:-my-2 md:-my-2.5"
                 />
               </Link>

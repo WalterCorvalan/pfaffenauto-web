@@ -91,6 +91,7 @@ export default function LandingRely() {
             </div>
 
             <a href="#contacto" className="hover:text-gray-300 transition-colors py-5">Prueba de manejo</a>
+            <a href="#historia" className="hover:text-gray-300 transition-colors py-5">Historia</a>
             <a href="#institucional" className="hover:text-gray-300 transition-colors py-5">Institucional</a>
             <a href="#contacto" className="hover:text-gray-300 transition-colors py-5">Contacto</a>
           </nav>
@@ -262,6 +263,22 @@ export default function LandingRely() {
               </div>
             </div>
           ))}
+        </div>
+      </section>
+
+      {/* ================= HISTORIA ================= */}
+      {/* TODO (Walter): reemplazar por el texto real de la marca — este es un placeholder */}
+      <section id="historia" className="bg-black py-20 border-b border-white/10">
+        <div className="mx-auto max-w-4xl px-6 text-center">
+          <span className="inline-flex items-center gap-2 bg-[#F26B1D]/10 text-[#F26B1D] text-[10px] font-bold uppercase tracking-widest px-4 py-1.5 rounded-full mb-6 border border-[#F26B1D]/20">
+            Nuestra Historia
+          </span>
+          <h2 className="text-3xl md:text-4xl font-bold text-white tracking-tight mb-6">
+            Rely en Argentina, con el respaldo de Pfaffen Autos
+          </h2>
+          <p className="text-slate-400 text-sm md:text-base leading-relaxed max-w-2xl mx-auto">
+            Pfaffen Autos es concesionario oficial de Rely en el país, garantizando unidades 0KM con documentación al día, service oficial y repuestos originales. Elegimos representar la marca porque combina el precio más accesible del segmento pick-up mediana con la robustez que necesita el trabajo diario.
+          </p>
         </div>
       </section>
 

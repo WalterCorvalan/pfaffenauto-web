@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import Image from "next/image";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 
 interface Version {
@@ -30,7 +31,7 @@ export default function VersionDetailClient({ version }: { version: Version }) {
       {/* Galería */}
       <div>
         <div className="relative bg-[#eef0f2] rounded-2xl overflow-hidden aspect-[4/3] flex items-center justify-center">
-          <img src={galeria[indice]} alt={`${version.name} - foto ${indice + 1}`} className="w-full h-full object-cover" />
+          <Image src={galeria[indice]} alt={`${version.name} - foto ${indice + 1}`} fill sizes="(max-width: 1024px) 100vw, 50vw" className="object-cover" />
 
           {galeria.length > 1 && (
             <>
@@ -68,11 +69,11 @@ export default function VersionDetailClient({ version }: { version: Version }) {
               <button
                 key={img}
                 onClick={() => setIndice(i)}
-                className={`aspect-square rounded-lg overflow-hidden border-2 transition-colors ${
+                className={`relative aspect-square rounded-lg overflow-hidden border-2 transition-colors ${
                   i === indice ? "border-[#1273b9]" : "border-transparent hover:border-slate-300"
                 }`}
               >
-                <img src={img} alt="" className="w-full h-full object-cover" />
+                <Image src={img} alt="" fill sizes="80px" className="object-cover" />
               </button>
             ))}
           </div>

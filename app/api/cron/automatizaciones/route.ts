@@ -1,5 +1,5 @@
 import { createClient } from "@supabase/supabase-js";
-import { sendTextMessage } from "@/lib/meta/client";
+import { sendTextMessage, publishInstagramPost } from "@/lib/meta/client";
 import { notificarPersona, notificarEncargados } from "@/lib/notificaciones";
 import { registrarError } from "@/lib/logger";
 
@@ -158,6 +158,48 @@ async function alertarCuotasPorVencer() {
   }
 }
 
+// F. Resumen semanal de stock nuevo a Instagram — lunes 9am (12hs UTC,
+// Argentina UTC-3). Ventana de una hora entera porque el cron corre cada 15
+// min y necesitamos que entre en al menos una corrida sin depender del minuto
+// exacto; el registro en automatizaciones_wa evita que se repita esa misma
+// semana aunque varias corridas caigan dentro de la ventana.
+async function publicarResumenStockSemanal() {
+  const ahora = new Date();
+  if (ahora.getUTCDay() !== 1 || ahora.getUTCHours() !== 12) return;
+
+  const inicioSemana = `${ahora.getUTCFullYear()}-W${String(Math.ceil(ahora.getUTCDate() / 7)).padStart(2, "0")}-${ahora.getUTCMonth() + 1}`;
+  if (await yaSeEnvio("resumen_stock_semanal", inicioSemana)) return;
+
+  if (!process.env.META_INSTAGRAM_TOKEN || !process.env.META_INSTAGRAM_USER_ID) return;
+
+  const hace7dias = new Date(Date.now() - 7 * 24 * 3600 * 1000).toISOString();
+  const { data: autosNuevos } = await supabase
+    .from("vehiculos")
+    .select("marca, modelo, anio, multimedia_vehiculos ( url_archivo )")
+    .eq("estado", "Disponible")
+    .gte("created_at", hace7dias)
+    .order("created_at", { ascending: false });
+
+  if (!autosNuevos || autosNuevos.length === 0) return;
+
+  const fotoUrl = (autosNuevos[0].multimedia_vehiculos as any)?.[0]?.url_archivo;
+  if (!fotoUrl) return;
+
+  const listado = autosNuevos.map((v: any) => `${v.marca} ${v.modelo} ${v.anio || ""}`.trim()).join("\n");
+  const caption = [
+    `🚗 ${autosNuevos.length} ${autosNuevos.length === 1 ? "auto nuevo" : "autos nuevos"} esta semana en Pfaffen Autos`,
+    listado,
+    "Consultanos por el que te interesa 👇",
+  ].join("\n\n");
+
+  try {
+    await publishInstagramPost(process.env.META_INSTAGRAM_USER_ID, process.env.META_INSTAGRAM_TOKEN, fotoUrl, caption);
+    await registrarEnvio("resumen_stock_semanal", inicioSemana);
+  } catch (err) {
+    registrarError("api/cron publicarResumenStockSemanal", err);
+  }
+}
+
 // Housekeeping de logs_errores: el cron corre cada 15 min, pero solo hace
 // falta purgar una vez por día — se limita a la ventana 03:00-03:14 UTC para
 // no pegarle un DELETE a la tabla en cada corrida.
@@ -180,6 +222,7 @@ export async function GET(req: Request) {
     nudgeSinRespuesta().catch((err) => registrarError("api/cron nudgeSinRespuesta", err)),
     alertarDocumentacionPendiente().catch((err) => registrarError("api/cron alertarDocumentacionPendiente", err)),
     alertarCuotasPorVencer().catch((err) => registrarError("api/cron alertarCuotasPorVencer", err)),
+    publicarResumenStockSemanal().catch((err) => registrarError("api/cron publicarResumenStockSemanal", err)),
     limpiarLogsAntiguos().catch((err) => registrarError("api/cron limpiarLogsAntiguos", err)),
   ]);
 

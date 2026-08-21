@@ -1,6 +1,7 @@
 "use client";
 
 import { Play, Camera, ArrowUpRight } from "lucide-react";
+import Image from "next/image";
 
 // TODO (Walter): reemplazar por publicaciones/videos reales de Instagram (imagen o thumbnail + link al posteo)
 const PUBLICACIONES = [
@@ -68,10 +69,12 @@ export default function VentasRealizadas() {
               // CORRECCIÓN: Unificado a rounded-[24px] y sombras de sistema
               className="group relative aspect-[4/5] rounded-[24px] overflow-hidden border border-gray-200 dark:border-white/10 shadow-sm hover:border-blue-400 dark:hover:border-sky-400/50 hover:shadow-md hover:-translate-y-1 transition-all duration-300 block focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-[#0145F2]"
             >
-              <img
+              <Image
                 src={p.imagen}
                 alt={p.titulo}
-                className="absolute inset-0 w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+                fill
+                sizes="(max-width: 640px) 50vw, 25vw"
+                className="object-cover group-hover:scale-105 transition-transform duration-500"
               />
               <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/10 to-transparent"></div>
 

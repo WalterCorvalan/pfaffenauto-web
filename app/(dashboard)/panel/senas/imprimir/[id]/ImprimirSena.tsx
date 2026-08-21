@@ -6,6 +6,7 @@ import Link from "next/link";
 import { supabase } from "@/lib/supabase/client";
 import { notificarRespuestaPrecio } from "@/lib/notificaciones";
 import ConfirmarPrecioEncargadoModal from "../../../ConfirmarPrecioEncargadoModal";
+import FirmaCanvas from "../../../FirmaCanvas";
 
 export default function ImprimirSena({ sena: s }: { sena: any }) {
   const [precioConfirmado, setPrecioConfirmado] = useState(s.precio_confirmado);
@@ -13,6 +14,7 @@ export default function ImprimirSena({ sena: s }: { sena: any }) {
   const [ventaUsd, setVentaUsd] = useState(s.venta_usd);
   const [mostrarModal, setMostrarModal] = useState(false);
   const [confirmando, setConfirmando] = useState(false);
+  const [firmaUrl, setFirmaUrl] = useState<string | null>(s.firma_url ?? null);
 
   const confirmarPrecio = async (nuevoArs: number | null, nuevoUsd: number | null) => {
     setConfirmando(true);
@@ -241,12 +243,20 @@ export default function ImprimirSena({ sena: s }: { sena: any }) {
           La suma entregada en este acto en concepto de <strong>SEÑA Y PRINCIPIO DE EJECUCIÓN DE COMPRA</strong> otorga a El Comprador el derecho a la reserva de la unidad. El saldo restante deberá ser abonado dentro de los próximos <strong>siete (7) días hábiles</strong>. En caso de que El Comprador desistiera de la operación o no integrara el saldo en el plazo estipulado, perderá la suma entregada en concepto de indemnización, quedando La Agencia en libre disponibilidad del vehículo.
         </p>
 
-        <div className="grid grid-cols-2 gap-16 mt-20 px-8">
-          <div className="text-center border-t border-slate-400 pt-3">
-            <span className="block font-bold text-sm">Firma del Comprador</span>
-            <span className="block text-[10px] font-bold text-slate-400 mt-1 uppercase tracking-widest">Aclaración y DNI</span>
+        <div className="grid grid-cols-2 gap-16 mt-12 px-8">
+          <div>
+            <FirmaCanvas
+              tabla="senas"
+              id={s.id}
+              firmaUrlActual={firmaUrl}
+              onGuardada={setFirmaUrl}
+            />
+            <div className="text-center border-t border-slate-400 pt-3 mt-2">
+              <span className="block font-bold text-sm">Firma Digital del Comprador</span>
+              <span className="block text-[10px] font-bold text-slate-400 mt-1 uppercase tracking-widest">Aclaración y DNI</span>
+            </div>
           </div>
-          <div className="text-center border-t border-slate-400 pt-3">
+          <div className="text-center border-t border-slate-400 pt-3 self-end">
             <span className="block font-bold text-sm">Por Pfaffen Autos</span>
             <span className="block text-[10px] font-bold text-slate-400 mt-1 uppercase tracking-widest">{vendedor}</span>
           </div>

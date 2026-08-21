@@ -1,4 +1,5 @@
 import { ArrowRight, Zap } from "lucide-react";
+import Image from "next/image";
 import Link from "next/link";
 import { createClient } from "@/lib/supabase/server";
 
@@ -34,14 +35,18 @@ export default async function OutletBanner() {
               </h2>
               {/* LOGO PFAFFEN INYECTADO */}
               <div className="relative flex items-center mt-2 sm:mt-0">
-                <img
+                <Image
                   src="/logo.png"
                   alt="Pfaffen Autos"
+                  width={668}
+                  height={173}
                   className="h-8 md:h-11 w-auto invert brightness-0"
                 />
-                <img
+                <Image
                   src="/r.png"
                   alt="Marca Registrada"
+                  width={66}
+                  height={66}
                   className="absolute -top-1 -right-3 md:-right-4 w-3 h-3 md:w-3.5 md:h-3.5 object-contain invert brightness-0 opacity-80"
                 />
               </div>
