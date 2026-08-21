@@ -36,27 +36,24 @@ export default async function Page() {
       {/* 1. Hero Principal */}
       <Hero />
 
-      {/* 3. Marcas con las que trabajan */}
+      {/* 2. Catálogo Destacado (Stock) — lo que la mayoría vino a buscar, justo
+         después del Hero en vez de competir con un banner promocional primero */}
+      <Stock vehiculos={vehiculos || []} />
+
+      {/* 3. Banners de sucursales / promos */}
       <BannersPublicitarios />
 
-      {/* 2. Catálogo Destacado (Stock) */}
-      <Stock vehiculos={vehiculos || []} />
-      
-      {/* 3. Marcas con las que trabajan */}
+      {/* 4. Marcas con las que trabajan */}
       <Marcas />
-      
-      {/* 4. Propuesta de Valor / Servicios */}
+
+      {/* 5. Propuesta de Valor / Servicios */}
       <Servicios />
-      
-      {/* 5. Banner CTA de Financiación / Permutas */}
+
+      {/* 6. Banner CTA de Financiación / Permutas */}
       <div className="max-w-7xl mx-auto w-full px-4 md:px-6">
         <BannerFinanciacion linkAFinanciacion />
       </div>
 
-      <div>
-        <Seguimiento />
-      </div>
-      
       {/* 7. Reseñas de Clientes */}
       <Testimonials />
 
@@ -64,8 +61,14 @@ export default async function Page() {
 
       <Location />
 
+      {/* Seguimiento de compra: utilidad post-venta, no es lo primero que
+         necesita un visitante nuevo — más abajo, cerca del cierre */}
+      <div>
+        <Seguimiento />
+      </div>
+
       <AgendarCitaForm />
-      
+
       {/* 8. Preguntas Frecuentes */}
       <FAQ />
       

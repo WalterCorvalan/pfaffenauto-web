@@ -46,7 +46,7 @@ export default function FAQ() {
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(faqSchema) }} />
 
       {/* Efectos ambientales sutiles */}
-      <div className="absolute bottom-0 right-0 w-[400px] h-[400px] bg-blue-400/5 dark:bg-sky-400/5 rounded-full blur-[120px] pointer-events-none"></div>
+      <div className="absolute bottom-0 right-0 w-[350px] h-[350px] bg-blue-400/5 dark:bg-sky-400/5 rounded-full blur-3xl pointer-events-none"></div>
 
       <div className="max-w-4xl mx-auto px-4 md:px-6 relative z-10">
 

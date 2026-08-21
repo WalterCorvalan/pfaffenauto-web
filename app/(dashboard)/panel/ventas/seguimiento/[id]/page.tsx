@@ -27,7 +27,7 @@ export default async function SeguimientoVentaPage({
 
   const { data: documentos } = await supabase
     .from("documentacion_ventas")
-    .select("id, tipo_documento, estado, fecha_recibido, archivo_url, etapa, verificado_por")
+    .select("id, tipo_documento, estado, fecha_recibido, archivo_url, etapa, verificado_por, documentacion_ventas_archivos ( id, url, nombre_archivo, created_at )")
     .eq("venta_id", id)
     .order("created_at", { ascending: true });
 

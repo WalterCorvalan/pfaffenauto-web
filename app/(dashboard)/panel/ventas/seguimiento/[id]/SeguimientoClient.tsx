@@ -4,9 +4,16 @@ import { useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { supabase } from "@/lib/supabase/client";
-import { CheckCircle2, Circle, Copy, ArrowLeft, FileText, Paperclip, Loader2, ExternalLink, Printer, Save } from "lucide-react";
+import { CheckCircle2, Circle, Copy, ArrowLeft, FileText, Paperclip, Loader2, ExternalLink, Printer, Save, X } from "lucide-react";
 
 const ETAPAS = ["Seña", "Documentación", "Patentamiento", "Transferencia", "Entrega", "Completado"];
+
+interface ArchivoDocumento {
+  id: string;
+  url: string;
+  nombre_archivo: string | null;
+  created_at: string;
+}
 
 interface Documento {
   id: string;
@@ -16,6 +23,7 @@ interface Documento {
   archivo_url: string | null;
   etapa: string | null;
   verificado_por: string | null;
+  documentacion_ventas_archivos: ArchivoDocumento[];
 }
 
 // Patentamiento y Transferencia comparten los mismos ítems (aranceles, informes) —
@@ -116,20 +124,46 @@ export default function SeguimientoClient({ venta, documentosIniciales }: { vent
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || "No se pudo subir el archivo");
 
+      // Se agrega como un archivo más, no reemplaza a los que ya estaban.
+      const { data: nuevoArchivo, error } = await supabase
+        .from("documentacion_ventas_archivos")
+        .insert({ documento_id: doc.id, url: data.publicUrl, nombre_archivo: file.name })
+        .select("id, url, nombre_archivo, created_at")
+        .single();
+      if (error) throw error;
+
       const hoy = new Date().toISOString().split("T")[0];
       await supabase
         .from("documentacion_ventas")
-        .update({ archivo_url: data.publicUrl, estado: "Recibido", fecha_recibido: hoy })
+        .update({ estado: "Recibido", fecha_recibido: hoy })
         .eq("id", doc.id);
 
       setDocumentos((prev) =>
-        prev.map((d) => (d.id === doc.id ? { ...d, archivo_url: data.publicUrl, estado: "Recibido", fecha_recibido: hoy } : d))
+        prev.map((d) => (d.id === doc.id ? { ...d, estado: "Recibido", fecha_recibido: hoy, documentacion_ventas_archivos: [...d.documentacion_ventas_archivos, nuevoArchivo] } : d))
       );
     } catch (err) {
       alert(err instanceof Error ? err.message : "Error al subir el archivo.");
     } finally {
       setSubiendoId(null);
     }
+  };
+
+  const eliminarArchivo = async (doc: Documento, archivoId: string) => {
+    if (!confirm("¿Quitar este archivo?")) return;
+    const { error } = await supabase.from("documentacion_ventas_archivos").delete().eq("id", archivoId);
+    if (error) {
+      alert("No se pudo quitar el archivo.");
+      return;
+    }
+    setDocumentos((prev) =>
+      prev.map((d) => (d.id === doc.id ? { ...d, documentacion_ventas_archivos: d.documentacion_ventas_archivos.filter((a) => a.id !== archivoId) } : d))
+    );
+  };
+
+  const copiarCodigo = () => {
+    if (!venta.codigo_seguimiento) return;
+    navigator.clipboard.writeText(venta.codigo_seguimiento);
+    alert("Código copiado");
   };
 
   const copiarLink = () => {
@@ -166,9 +200,14 @@ export default function SeguimientoClient({ venta, documentosIniciales }: { vent
               <p className="text-sm text-slate-500 dark:text-slate-400">{venta.nombre} {venta.apellido}</p>
             </div>
             {venta.codigo_seguimiento && (
-              <button onClick={copiarLink} className="flex items-center gap-1.5 text-[11px] font-bold text-indigo-600 dark:text-sky-300 bg-indigo-50 dark:bg-[#002a6e] border border-indigo-100 dark:border-[#0a2a6b] px-3 py-1.5 rounded-lg hover:bg-indigo-100 dark:hover:bg-[#00246b] transition-colors">
-                <Copy className="w-3.5 h-3.5" /> {venta.codigo_seguimiento}
-              </button>
+              <div className="flex items-center gap-1.5 shrink-0">
+                <button onClick={copiarCodigo} title="Copiar solo el código" className="flex items-center gap-1.5 text-[11px] font-bold text-indigo-600 dark:text-sky-300 bg-indigo-50 dark:bg-[#002a6e] border border-indigo-100 dark:border-[#0a2a6b] px-3 py-1.5 rounded-lg hover:bg-indigo-100 dark:hover:bg-[#00246b] transition-colors">
+                  <Copy className="w-3.5 h-3.5" /> {venta.codigo_seguimiento}
+                </button>
+                <button onClick={copiarLink} title="Copiar link para compartir" className="flex items-center justify-center text-indigo-600 dark:text-sky-300 bg-indigo-50 dark:bg-[#002a6e] border border-indigo-100 dark:border-[#0a2a6b] p-1.5 rounded-lg hover:bg-indigo-100 dark:hover:bg-[#00246b] transition-colors">
+                  <ExternalLink className="w-3.5 h-3.5" />
+                </button>
+              </div>
             )}
           </div>
 
@@ -274,71 +313,76 @@ export default function SeguimientoClient({ venta, documentosIniciales }: { vent
 
           <div className="space-y-1">
             {documentosVisibles.map((doc) => (
-              <div key={doc.id} className="flex items-center gap-3 py-2.5 px-2 rounded-lg hover:bg-slate-50 dark:hover:bg-[#00246b] transition-colors">
-                <button onClick={() => toggleDocumento(doc)} className="shrink-0">
-                  {doc.estado === "Recibido" ? (
-                    <CheckCircle2 className="w-5 h-5 text-emerald-600 dark:text-emerald-300" />
-                  ) : (
-                    <Circle className="w-5 h-5 text-slate-300 dark:text-slate-600" />
+              <div key={doc.id} className="py-2.5 px-2 rounded-lg hover:bg-slate-50 dark:hover:bg-[#00246b] transition-colors">
+                <div className="flex items-center gap-3">
+                  <button onClick={() => toggleDocumento(doc)} className="shrink-0">
+                    {doc.estado === "Recibido" ? (
+                      <CheckCircle2 className="w-5 h-5 text-emerald-600 dark:text-emerald-300" />
+                    ) : (
+                      <Circle className="w-5 h-5 text-slate-300 dark:text-slate-600" />
+                    )}
+                  </button>
+                  <span
+                    onClick={() => toggleDocumento(doc)}
+                    className={`text-sm font-medium cursor-pointer flex-1 ${doc.estado === "Recibido" ? "text-slate-400 dark:text-slate-500 line-through" : "text-slate-700 dark:text-slate-200"}`}
+                  >
+                    {doc.tipo_documento}
+                  </span>
+                  {doc.fecha_recibido && (
+                    <span className="text-[10px] text-slate-400 dark:text-slate-500">{doc.fecha_recibido}</span>
                   )}
-                </button>
-                <span
-                  onClick={() => toggleDocumento(doc)}
-                  className={`text-sm font-medium cursor-pointer flex-1 ${doc.estado === "Recibido" ? "text-slate-400 dark:text-slate-500 line-through" : "text-slate-700 dark:text-slate-200"}`}
-                >
-                  {doc.tipo_documento}
-                </span>
-                {doc.fecha_recibido && (
-                  <span className="text-[10px] text-slate-400 dark:text-slate-500">{doc.fecha_recibido}</span>
-                )}
 
-                {doc.estado === "Recibido" && (
-                  <select
-                    value={doc.verificado_por || ""}
-                    onChange={(e) => cambiarVerificadoPor(doc, e.target.value)}
-                    className={`text-[10px] font-bold uppercase tracking-widest px-2 py-1 rounded border outline-none cursor-pointer shrink-0 ${
-                      doc.verificado_por === "Agencia" ? "bg-emerald-50 dark:bg-[#002a6e] text-emerald-700 dark:text-emerald-300 border-emerald-200 dark:border-[#0a2a6b]" :
-                      doc.verificado_por === "Cliente" ? "bg-amber-50 dark:bg-[#002a6e] text-amber-700 dark:text-amber-300 border-amber-200 dark:border-[#0a2a6b]" :
-                      "bg-slate-50 dark:bg-[#00246b] text-slate-400 dark:text-slate-500 border-slate-200 dark:border-[#0a2a6b]"
-                    }`}
-                    title="¿Quién verificó este documento?"
+                  {doc.estado === "Recibido" && (
+                    <select
+                      value={doc.verificado_por || ""}
+                      onChange={(e) => cambiarVerificadoPor(doc, e.target.value)}
+                      className={`text-[10px] font-bold uppercase tracking-widest px-2 py-1 rounded border outline-none cursor-pointer shrink-0 ${
+                        doc.verificado_por === "Agencia" ? "bg-emerald-50 dark:bg-[#002a6e] text-emerald-700 dark:text-emerald-300 border-emerald-200 dark:border-[#0a2a6b]" :
+                        doc.verificado_por === "Cliente" ? "bg-amber-50 dark:bg-[#002a6e] text-amber-700 dark:text-amber-300 border-amber-200 dark:border-[#0a2a6b]" :
+                        "bg-slate-50 dark:bg-[#00246b] text-slate-400 dark:text-slate-500 border-slate-200 dark:border-[#0a2a6b]"
+                      }`}
+                      title="¿Quién verificó este documento?"
+                    >
+                      <option value="" className="bg-white dark:bg-[#001c55] text-slate-900 dark:text-white">¿Quién verificó?</option>
+                      <option value="Agencia" className="bg-white dark:bg-[#001c55] text-slate-900 dark:text-white">Agencia</option>
+                      <option value="Cliente" className="bg-white dark:bg-[#001c55] text-slate-900 dark:text-white">Cliente</option>
+                    </select>
+                  )}
+
+                  <input
+                    ref={(el) => { inputsRef.current[doc.id] = el; }}
+                    type="file"
+                    className="hidden"
+                    onChange={(e) => {
+                      const file = e.target.files?.[0];
+                      if (file) subirArchivo(doc, file);
+                      e.target.value = "";
+                    }}
+                  />
+                  <button
+                    onClick={() => inputsRef.current[doc.id]?.click()}
+                    disabled={subiendoId === doc.id}
+                    className="p-1.5 text-slate-400 dark:text-slate-500 hover:text-indigo-600 dark:hover:text-sky-300 hover:bg-indigo-50 dark:hover:bg-[#00246b] rounded-md transition-colors shrink-0 disabled:opacity-50"
+                    title={doc.documentacion_ventas_archivos.length > 0 ? "Adjuntar otro archivo" : "Adjuntar archivo"}
                   >
-                    <option value="" className="bg-white dark:bg-[#001c55] text-slate-900 dark:text-white">¿Quién verificó?</option>
-                    <option value="Agencia" className="bg-white dark:bg-[#001c55] text-slate-900 dark:text-white">Agencia</option>
-                    <option value="Cliente" className="bg-white dark:bg-[#001c55] text-slate-900 dark:text-white">Cliente</option>
-                  </select>
-                )}
+                    {subiendoId === doc.id ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Paperclip className="w-3.5 h-3.5" />}
+                  </button>
+                </div>
 
-                {doc.archivo_url && (
-                  <a
-                    href={doc.archivo_url}
-                    target="_blank"
-                    rel="noreferrer"
-                    className="p-1.5 text-indigo-500 dark:text-sky-300 hover:text-indigo-700 dark:hover:text-sky-200 hover:bg-indigo-50 dark:hover:bg-[#00246b] rounded-md transition-colors shrink-0"
-                    title="Ver archivo adjunto"
-                  >
-                    <ExternalLink className="w-3.5 h-3.5" />
-                  </a>
+                {doc.documentacion_ventas_archivos.length > 0 && (
+                  <div className="flex flex-wrap gap-1.5 mt-1.5 ml-8">
+                    {doc.documentacion_ventas_archivos.map((archivo, i) => (
+                      <span key={archivo.id} className="inline-flex items-center gap-1 bg-indigo-50 dark:bg-[#002a6e] border border-indigo-100 dark:border-[#0a2a6b] rounded-md pl-2 pr-1 py-1 text-[10px] font-medium text-indigo-600 dark:text-sky-300">
+                        <a href={archivo.url} target="_blank" rel="noreferrer" className="hover:underline flex items-center gap-1" title={archivo.nombre_archivo || "Ver archivo"}>
+                          <ExternalLink className="w-3 h-3" /> {archivo.nombre_archivo || `Archivo ${i + 1}`}
+                        </a>
+                        <button onClick={() => eliminarArchivo(doc, archivo.id)} className="p-0.5 hover:text-rose-600 dark:hover:text-rose-400 transition-colors" title="Quitar">
+                          <X className="w-3 h-3" />
+                        </button>
+                      </span>
+                    ))}
+                  </div>
                 )}
-
-                <input
-                  ref={(el) => { inputsRef.current[doc.id] = el; }}
-                  type="file"
-                  className="hidden"
-                  onChange={(e) => {
-                    const file = e.target.files?.[0];
-                    if (file) subirArchivo(doc, file);
-                    e.target.value = "";
-                  }}
-                />
-                <button
-                  onClick={() => inputsRef.current[doc.id]?.click()}
-                  disabled={subiendoId === doc.id}
-                  className="p-1.5 text-slate-400 dark:text-slate-500 hover:text-indigo-600 dark:hover:text-sky-300 hover:bg-indigo-50 dark:hover:bg-[#00246b] rounded-md transition-colors shrink-0 disabled:opacity-50"
-                  title={doc.archivo_url ? "Reemplazar archivo" : "Adjuntar archivo"}
-                >
-                  {subiendoId === doc.id ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Paperclip className="w-3.5 h-3.5" />}
-                </button>
               </div>
             ))}
             {documentosVisibles.length === 0 && (

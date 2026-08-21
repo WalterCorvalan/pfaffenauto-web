@@ -44,7 +44,9 @@ import {
 const SECCIONES_INICIALES = {
   inventario: true,
   crm: true,
+  solicitudes: true,
   operaciones: true,
+  equipo: false,
   administracion: true,
   marketing: false,
   ajustes: false,
@@ -96,28 +98,33 @@ export default function DashboardLayout({
         "/panel/chat",
         "/panel/contactos",
         "/panel/citas",
+        "/panel/clientes",
+      ],
+      solicitudes: [
         "/panel/cotizaciones",
         "/panel/peritajes",
         "/panel/consignaciones",
         "/panel/pedidos",
-        "/panel/equipo",
       ],
       operaciones: [
         "/panel/ventas",
-        "/panel/clientes",
         "/panel/postventa",
         "/panel/presupuestos",
         "/panel/senas",
         "/panel/boletos",
         "/panel/resp-civil",
       ],
+      equipo: [
+        "/panel/equipo",
+        "/panel/usuarios",
+        "/panel/postulaciones",
+      ],
       administracion: [
         "/panel/informes",
         "/panel/gastos",
-        "/panel/usuarios",
         "/panel/tesoreria",
         "/panel/logs",
-        "/panel/postulaciones",
+        "/panel/sueldos",
       ],
       marketing: ["/panel/metricas", "/panel/marketing"],
       ajustes: ["/panel/ajustes"],
@@ -380,7 +387,7 @@ export default function DashboardLayout({
                   />
                 </SectionAccordion>
 
-                {/* 💬 CRM */}
+                {/* 💬 CRM — pipeline y comunicación del día a día */}
                 <SectionAccordion id="crm" label="CRM & Leads">
                   <NavLinkItem
                     icon={LayoutDashboard}
@@ -392,13 +399,6 @@ export default function DashboardLayout({
                     label="Tareas de Leads"
                     href="/panel/crm/tareas"
                   />
-                  {(userProfile.rol === "admin" || userProfile.rol === "encargado") && (
-                    <NavLinkItem
-                      icon={Users}
-                      label="Supervisión de Equipo"
-                      href="/panel/equipo"
-                    />
-                  )}
                   <NavLinkItem
                     icon={MessageSquareCheckIcon}
                     label="Chat"
@@ -414,6 +414,15 @@ export default function DashboardLayout({
                     label="Agenda de Visitas"
                     href="/panel/citas"
                   />
+                  <NavLinkItem
+                    icon={UserPlus}
+                    label="Nuevo Cliente"
+                    href="/panel/clientes/nuevo"
+                  />
+                </SectionAccordion>
+
+                {/* 📥 SOLICITUDES — tipos de leads entrantes desde el sitio público */}
+                <SectionAccordion id="solicitudes" label="Solicitudes">
                   <NavLinkItem
                     icon={Inbox}
                     label="Cotizaciones"
@@ -438,8 +447,8 @@ export default function DashboardLayout({
                   />
                 </SectionAccordion>
 
-                {/* 🧾 VENTAS */}
-                <SectionAccordion id="operaciones" label="Operaciones">
+                {/* 🧾 VENTAS — desde el presupuesto hasta la postventa */}
+                <SectionAccordion id="operaciones" label="Ventas">
                   <NavLinkItem
                     icon={FileText}
                     label="Presupuestos"
@@ -470,17 +479,36 @@ export default function DashboardLayout({
                     notifications={notifPorSeccion.financiacion}
                   />
                   <NavLinkItem
-                    icon={UserPlus}
-                    label="Nuevo Cliente"
-                    href="/panel/clientes/nuevo"
-                  />
-                  <NavLinkItem
                     icon={Wrench}
                     label="Postventa"
                     href="/panel/postventa"
                     notifications={notifPorSeccion.postventa}
                   />
                 </SectionAccordion>
+
+                {/* 👥 EQUIPO — todo lo relacionado a las personas que trabajan acá */}
+                {(userProfile.rol === "admin" || userProfile.rol === "encargado") && (
+                  <SectionAccordion id="equipo" label="Equipo">
+                    <NavLinkItem
+                      icon={Users}
+                      label="Supervisión de Equipo"
+                      href="/panel/equipo"
+                    />
+                    <NavLinkItem
+                      icon={Users}
+                      label="Postulaciones"
+                      href="/panel/postulaciones"
+                      notifications={notifPorSeccion.postulaciones}
+                    />
+                    {userProfile.rol === "admin" && (
+                      <NavLinkItem
+                        icon={UsersRound}
+                        label="Usuarios y Roles"
+                        href="/panel/usuarios"
+                      />
+                    )}
+                  </SectionAccordion>
+                )}
 
                 {/* 💼 ADMINISTRACIÓN */}
                 {(userProfile.rol === "admin" ||
@@ -495,12 +523,6 @@ export default function DashboardLayout({
                       icon={History}
                       label="Registro de Cambios"
                       href="/panel/logs"
-                    />
-                    <NavLinkItem
-                      icon={Users}
-                      label="Postulaciones"
-                      href="/panel/postulaciones"
-                      notifications={notifPorSeccion.postulaciones}
                     />
                     {userProfile.rol === "admin" && (
                       <>
@@ -528,11 +550,6 @@ export default function DashboardLayout({
                           icon={Tags}
                           label="Categorías de Empleado"
                           href="/panel/sueldos/categorias"
-                        />
-                        <NavLinkItem
-                          icon={Users}
-                          label="Gestión de Equipo"
-                          href="/panel/usuarios"
                         />
                       </>
                     )}

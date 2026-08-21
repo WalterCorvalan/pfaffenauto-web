@@ -291,16 +291,24 @@ export default function PeritajeClient({ peritaje, itemsIniciales }: { peritaje:
               <div className="px-5 py-3 bg-slate-50 dark:bg-[#00246b] border-b border-slate-100 dark:border-[#0a2a6b]">
                 <h2 className="text-[12px] font-bold uppercase tracking-widest text-slate-600 dark:text-slate-300">Neumáticos</h2>
               </div>
-              <div className="divide-y divide-slate-100 dark:divide-[#0a2a6b]">
-                {neumaticos.map((item: any) => (
-                  <div key={item.id} className="p-4 flex items-center gap-3 flex-wrap">
-                    <span className="text-[13px] font-medium text-slate-800 dark:text-slate-100 w-40 shrink-0">{item.item}</span>
+              <div>
+                {[
+                  { titulo: "Delanteros", items: neumaticos.filter((n: any) => n.item.startsWith("Delantero")) },
+                  { titulo: "Traseros", items: neumaticos.filter((n: any) => n.item.startsWith("Trasero")) },
+                  { titulo: "Auxilio", items: neumaticos.filter((n: any) => !n.item.startsWith("Delantero") && !n.item.startsWith("Trasero")) },
+                ].filter((grupo) => grupo.items.length > 0).map((grupo, i) => (
+                  <div key={grupo.titulo} className={i > 0 ? "border-t-4 border-slate-100 dark:border-[#0a2a6b]" : ""}>
+                    <p className="px-4 pt-3 pb-1 text-[9px] font-black uppercase tracking-widest text-slate-400 dark:text-slate-500">{grupo.titulo}</p>
+                    <div className="divide-y divide-slate-100 dark:divide-[#0a2a6b]">
+                      {grupo.items.map((item: any) => (
+                  <div key={item.id} className="p-4 flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-3">
+                    <span className="text-[13px] font-medium text-slate-800 dark:text-slate-100 sm:w-40 sm:shrink-0">{item.item}</span>
                     <input
                       type="text"
                       defaultValue={item.observacion || ""}
                       onBlur={(e) => e.target.value !== (item.observacion || "") && actualizarItem(item.id, { observacion: e.target.value })}
                       placeholder="Marca..."
-                      className="flex-1 min-w-[120px] bg-slate-50 dark:bg-[#00246b] border border-slate-200 dark:border-[#0a2a6b] rounded-lg px-3 py-1.5 text-[12px] text-slate-800 dark:text-white outline-none focus:border-indigo-500 transition-colors placeholder:text-slate-400"
+                      className="w-28 sm:flex-1 sm:min-w-[120px] bg-slate-50 dark:bg-[#00246b] border border-slate-200 dark:border-[#0a2a6b] rounded-lg px-3 py-1.5 text-[12px] text-slate-800 dark:text-white outline-none focus:border-indigo-500 transition-colors placeholder:text-slate-400"
                     />
                     <div className="flex items-center gap-1.5 flex-wrap">
                       {[...ESTADOS_ITEM_PERITAJE, ESTADO_NEUMATICO_RECAPABLE].map((e) => (
@@ -345,6 +353,9 @@ export default function PeritajeClient({ peritaje, itemsIniciales }: { peritaje:
                         </button>
                       </div>
                     )}
+                  </div>
+                      ))}
+                    </div>
                   </div>
                 ))}
               </div>

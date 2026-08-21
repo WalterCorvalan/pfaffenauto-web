@@ -4,6 +4,7 @@ import { useState } from "react";
 import Link from "next/link";
 import Image from "next/image";
 import { ChevronRight, ShieldCheck, Sparkles } from "lucide-react";
+import { LOGOS_MARCAS } from "@/lib/marcasLogos";
 
 // ================= SUBCOMPONENTE DE TARJETA ESTÁNDAR =================
 function MarcaCard({ marca }: { marca: { nombre: string; slug: string; logo: string } }) {
@@ -95,36 +96,36 @@ export default function Marcas() {
 
   const marcas = [
     // Marcas Tradicionales
-    { nombre: "Volkswagen", slug: "volkswagen", logo: "https://upload.wikimedia.org/wikipedia/commons/6/6d/Volkswagen_logo_2019.svg" },
-    { nombre: "Chevrolet", slug: "chevrolet", logo: "https://upload.wikimedia.org/wikipedia/commons/1/1e/Chevrolet-logo.png" },
-    { nombre: "Toyota", slug: "toyota", logo: "https://upload.wikimedia.org/wikipedia/commons/9/9d/Toyota_carlogo.svg" },
-    { nombre: "Ford", slug: "ford", logo: "https://upload.wikimedia.org/wikipedia/commons/a/a0/Ford_Motor_Company_Logo.svg" },
-    { nombre: "Peugeot", slug: "peugeot", logo: "https://upload.wikimedia.org/wikipedia/commons/f/f7/Peugeot_Logo.svg" },
-    { nombre: "Renault", slug: "renault", logo: "https://upload.wikimedia.org/wikipedia/commons/b/b7/Renault_2021_logo.svg" },
-    { nombre: "Fiat", slug: "fiat", logo: "https://upload.wikimedia.org/wikipedia/commons/1/12/Fiat_Automobiles_logo.svg" },
-    { nombre: "Nissan", slug: "nissan", logo: "https://upload.wikimedia.org/wikipedia/commons/8/8c/Nissan_logo.png" },
-    { nombre: "Honda", slug: "honda", logo: "https://upload.wikimedia.org/wikipedia/commons/3/38/Honda.svg" },
-    { nombre: "Citroën", slug: "citroen", logo: "https://upload.wikimedia.org/wikipedia/commons/6/69/Citroen_2021_Logo.svg" },
-    { nombre: "Hyundai", slug: "hyundai", logo: "https://upload.wikimedia.org/wikipedia/commons/4/44/Hyundai_Motor_Company_logo.svg" },
-    { nombre: "Kia", slug: "kia", logo: "https://upload.wikimedia.org/wikipedia/commons/4/47/KIA_logo2.svg" },
-    { nombre: "Jeep", slug: "jeep", logo: "https://upload.wikimedia.org/wikipedia/commons/0/0b/Jeep_logo.svg" },
-    { nombre: "RAM", slug: "ram", logo: "https://upload.wikimedia.org/wikipedia/commons/1/1d/Ram_Trucks_logo.svg" },
-    { nombre: "Suzuki", slug: "suzuki", logo: "https://upload.wikimedia.org/wikipedia/commons/1/12/Suzuki_logo_2.svg" },
-    { nombre: "Mitsubishi", slug: "mitsubishi", logo: "https://upload.wikimedia.org/wikipedia/commons/5/5a/Mitsubishi_logo.svg" },
-    
+    { nombre: "Volkswagen", slug: "volkswagen", logo: LOGOS_MARCAS["Volkswagen"] },
+    { nombre: "Chevrolet", slug: "chevrolet", logo: LOGOS_MARCAS["Chevrolet"] },
+    { nombre: "Toyota", slug: "toyota", logo: LOGOS_MARCAS["Toyota"] },
+    { nombre: "Ford", slug: "ford", logo: LOGOS_MARCAS["Ford"] },
+    { nombre: "Peugeot", slug: "peugeot", logo: LOGOS_MARCAS["Peugeot"] },
+    { nombre: "Renault", slug: "renault", logo: LOGOS_MARCAS["Renault"] },
+    { nombre: "Fiat", slug: "fiat", logo: LOGOS_MARCAS["Fiat"] },
+    { nombre: "Nissan", slug: "nissan", logo: LOGOS_MARCAS["Nissan"] },
+    { nombre: "Honda", slug: "honda", logo: LOGOS_MARCAS["Honda"] },
+    { nombre: "Citroën", slug: "citroen", logo: LOGOS_MARCAS["Citroën"] },
+    { nombre: "Hyundai", slug: "hyundai", logo: LOGOS_MARCAS["Hyundai"] },
+    { nombre: "Kia", slug: "kia", logo: LOGOS_MARCAS["Kia"] },
+    { nombre: "Jeep", slug: "jeep", logo: LOGOS_MARCAS["Jeep"] },
+    { nombre: "RAM", slug: "ram", logo: LOGOS_MARCAS["RAM"] },
+    { nombre: "Suzuki", slug: "suzuki", logo: LOGOS_MARCAS["Suzuki"] },
+    { nombre: "Mitsubishi", slug: "mitsubishi", logo: LOGOS_MARCAS["Mitsubishi"] },
+
     // Marcas Chinas / Asiáticas
-    { nombre: "BAIC", slug: "baic", logo: "https://upload.wikimedia.org/wikipedia/commons/9/90/BAIC_logo.svg" },
-    { nombre: "Chery", slug: "chery", logo: "https://upload.wikimedia.org/wikipedia/commons/2/23/Chery_logo.svg" },
-    { nombre: "Changan", slug: "changan", logo: "https://upload.wikimedia.org/wikipedia/commons/2/29/Changan_Auto_logo.svg" },
-    { nombre: "BYD", slug: "byd", logo: "https://upload.wikimedia.org/wikipedia/commons/f/fb/BYD_logo.svg" },
-    { nombre: "Geely", slug: "geely", logo: "https://upload.wikimedia.org/wikipedia/commons/a/af/Geely_logo.svg" },
-    { nombre: "Haval", slug: "haval", logo: "https://upload.wikimedia.org/wikipedia/commons/0/05/Haval_logo.svg" },
-    { nombre: "JAC", slug: "jac", logo: "https://upload.wikimedia.org/wikipedia/commons/0/0c/JAC_Motors_logo.svg" },
-    
+    { nombre: "BAIC", slug: "baic", logo: LOGOS_MARCAS["BAIC"] },
+    { nombre: "Chery", slug: "chery", logo: LOGOS_MARCAS["Chery"] },
+    { nombre: "Changan", slug: "changan", logo: LOGOS_MARCAS["Changan"] },
+    { nombre: "BYD", slug: "byd", logo: LOGOS_MARCAS["BYD"] },
+    { nombre: "Geely", slug: "geely", logo: LOGOS_MARCAS["Geely"] },
+    { nombre: "Haval", slug: "haval", logo: LOGOS_MARCAS["Haval"] },
+    { nombre: "JAC", slug: "jac", logo: LOGOS_MARCAS["JAC"] },
+
     // Alta Gama
-    { nombre: "Audi", slug: "audi", logo: "https://upload.wikimedia.org/wikipedia/commons/9/92/Audi-Logo_2016.svg" },
-    { nombre: "BMW", slug: "bmw", logo: "https://upload.wikimedia.org/wikipedia/commons/4/44/BMW.svg" },
-    { nombre: "Mercedes-Benz", slug: "mercedes-benz", logo: "https://upload.wikimedia.org/wikipedia/commons/9/90/Mercedes-Logo.svg" },
+    { nombre: "Audi", slug: "audi", logo: LOGOS_MARCAS["Audi"] },
+    { nombre: "BMW", slug: "bmw", logo: LOGOS_MARCAS["BMW"] },
+    { nombre: "Mercedes-Benz", slug: "mercedes-benz", logo: LOGOS_MARCAS["Mercedes-Benz"] },
   ];
 
   return (
@@ -156,9 +157,9 @@ export default function Marcas() {
           <span className="text-[10px] font-black uppercase tracking-widest text-blue-600 dark:text-sky-300 bg-blue-50 dark:bg-sky-400/10 border border-blue-200/60 dark:border-sky-400/20 px-3 py-1 rounded-full inline-block mb-3">
             Concesionarios Oficiales
           </span>
-          <div className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-4">
+          <div className="grid grid-cols-2 sm:grid-cols-2 md:flex md:justify-center gap-4">
             {marcasDestacadas.map((marca) => (
-              <div key={marca.slug} className="h-full">
+              <div key={marca.slug} className="h-full md:w-56">
                 <MarcaDestacadaCard marca={marca} />
               </div>
             ))}

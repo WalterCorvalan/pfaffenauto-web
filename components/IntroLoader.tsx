@@ -3,10 +3,17 @@
 import { useEffect, useState } from "react";
 import { AnimatePresence, motion } from "framer-motion";
 
+const STORAGE_KEY = "pfaffen_intro_visto";
+
 export default function IntroLoader() {
   const [visible, setVisible] = useState(false);
 
   useEffect(() => {
+    // Solo una vez por sesión de navegador — un visitante que vuelve a entrar
+    // varias veces no debería ver la misma animación de 2s cada vez.
+    if (sessionStorage.getItem(STORAGE_KEY)) return;
+    sessionStorage.setItem(STORAGE_KEY, "1");
+
     setVisible(true);
     const timer = setTimeout(() => setVisible(false), 2000);
     return () => clearTimeout(timer);

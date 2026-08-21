@@ -106,7 +106,10 @@ export default function Hero() {
 
 
       {/* ================= CONTENIDO PRINCIPAL ================= */}
-      <div className="relative z-10 max-w-5xl mx-auto px-4 md:px-6 flex flex-col items-center text-center">
+      {/* Asimétrico en desktop: el bloque de texto ocupa la mitad izquierda,
+         dejando que el video respire del lado derecho — sin esto el Hero
+         quedaba perfectamente centrado, el patrón más genérico posible. */}
+      <div className="relative z-10 max-w-5xl mx-auto lg:mx-0 lg:ml-[6%] lg:max-w-2xl px-4 md:px-6 flex flex-col items-center lg:items-start text-center lg:text-left">
         
         {/* Etiqueta animada */}
         <motion.div 
@@ -138,7 +141,7 @@ export default function Hero() {
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.5, delay: 0.2 }}
           onSubmit={handleSearch}
-          className="w-full max-w-3xl bg-white/70 dark:bg-white/5 backdrop-blur-3xl rounded-3xl shadow-[0_8px_32px_0_rgba(31,38,135,0.07)] dark:shadow-[0_8px_32px_0_rgba(0,0,0,0.4)] border border-white dark:border-white/10 p-2 flex flex-col md:flex-row items-center gap-2 mb-10 group transition-all hover:bg-white/90 dark:hover:bg-white/10"
+          className="w-full bg-white/70 dark:bg-white/5 backdrop-blur-3xl rounded-3xl shadow-[0_8px_32px_0_rgba(31,38,135,0.07)] dark:shadow-[0_8px_32px_0_rgba(0,0,0,0.4)] border border-white dark:border-white/10 p-2 flex flex-col md:flex-row items-center gap-2 mb-10 group transition-all hover:bg-white/90 dark:hover:bg-white/10"
         >
           <div className="flex items-center w-full px-4 py-3 md:py-2 relative z-10">
             <Search className="w-6 h-6 text-primary dark:text-sky-400 mr-4 shrink-0" />
@@ -168,7 +171,7 @@ export default function Hero() {
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           transition={{ duration: 0.5, delay: 0.3 }}
-          className="flex flex-wrap justify-center gap-3 max-w-[48rem]"
+          className="flex flex-wrap justify-center lg:justify-start gap-3"
         >
           <Pill icon={<CarFront className="w-4 h-4"/>} text="SUVs" href="/catalogo?q=SUV" />
           <Pill icon={<CarFront className="w-4 h-4"/>} text="Sedanes" href="/catalogo?q=Sedan" />

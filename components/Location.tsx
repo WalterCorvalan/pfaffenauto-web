@@ -50,8 +50,8 @@ export default function Location() {
     <section className="py-12 md:py-24 bg-transparent dark:bg-[#0a0a0f] border-t border-transparent relative overflow-hidden">
 
       {/* ================= LUCES AMBIENTALES (SPATIAL UI) ================= */}
-      <div className="absolute top-[10%] left-[-5%] w-[600px] h-[600px] bg-sky-300/15 dark:bg-sky-500/10 rounded-full blur-[120px] pointer-events-none"></div>
-      <div className="absolute bottom-[-10%] right-[-5%] w-[500px] h-[500px] bg-[#0145F2]/10 dark:bg-[#0145F2]/15 rounded-full blur-[100px] pointer-events-none"></div>
+      <div className="absolute top-[10%] left-[-5%] w-[450px] h-[450px] bg-sky-300/15 dark:bg-sky-500/10 rounded-full blur-3xl pointer-events-none"></div>
+      <div className="absolute bottom-[-10%] right-[-5%] w-[400px] h-[400px] bg-[#0145F2]/10 dark:bg-[#0145F2]/15 rounded-full blur-3xl pointer-events-none"></div>
 
       <div className="max-w-7xl mx-auto px-4 md:px-6 relative z-10">
         

@@ -3,6 +3,7 @@
 import React from "react";
 import { WobbleCard } from "./ui/wobble-card";
 import Link from "next/link";
+import Image from "next/image";
 import { ArrowRight, ShieldCheck, Banknote, CarFront, Sparkles } from "lucide-react";
 
 export default function Servicios() {
@@ -10,8 +11,8 @@ export default function Servicios() {
     <section className="py-12 md:py-24 bg-transparent dark:bg-[#0a0a0f] relative overflow-hidden border-t border-transparent">
       
       {/* ================= LUCES AMBIENTALES ================= */}
-      <div className="absolute top-[10%] left-[-5%] w-[500px] h-[500px] bg-slate-900/5 dark:bg-sky-400/5 rounded-full blur-[120px] pointer-events-none z-0"></div>
-      <div className="absolute bottom-[-10%] right-[-5%] w-[600px] h-[600px] bg-sky-900/5 dark:bg-sky-400/5 rounded-full blur-[120px] pointer-events-none z-0"></div>
+      <div className="absolute top-[10%] left-[-5%] w-[400px] h-[400px] bg-slate-900/5 dark:bg-sky-400/5 rounded-full blur-3xl pointer-events-none z-0"></div>
+      <div className="absolute bottom-[-10%] right-[-5%] w-[450px] h-[450px] bg-sky-900/5 dark:bg-sky-400/5 rounded-full blur-3xl pointer-events-none z-0"></div>
 
       <div className="max-w-7xl mx-auto px-4 md:px-6 relative z-10">
 
@@ -59,10 +60,12 @@ export default function Servicios() {
             <div className="absolute right-0 bottom-0 w-full h-[60%] lg:w-[60%] lg:h-full z-0 overflow-hidden pointer-events-none">
               {/* Gradiente para fundir la imagen con el fondo oscuro */}
               <div className="absolute inset-0 bg-gradient-to-t lg:bg-gradient-to-l from-transparent via-[#0d1631]/80 to-[#0d1631] z-10"></div>
-              <img
+              <Image
                 src="https://images.unsplash.com/photo-1560958089-b8a1929cea89?q=80&w=800&auto=format&fit=crop"
                 alt="Consignar auto"
-                className="w-full h-full object-cover object-right-bottom opacity-50 mix-blend-screen group-hover:opacity-70 transition-all duration-700 ease-out"
+                fill
+                sizes="(max-width: 1024px) 100vw, 60vw"
+                className="object-cover object-right-bottom opacity-50 mix-blend-screen group-hover:opacity-70 transition-all duration-700 ease-out"
               />
             </div>
           </WobbleCard>
@@ -124,10 +127,12 @@ export default function Servicios() {
             <div className="absolute right-0 bottom-0 w-full h-[55%] lg:w-[55%] lg:h-full z-0 overflow-hidden pointer-events-none">
               {/* Gradiente para fundir la imagen con el fondo oscuro */}
               <div className="absolute inset-0 bg-gradient-to-t lg:bg-gradient-to-l from-transparent via-[#1e293b]/90 to-[#1e293b] z-10"></div>
-              <img
+              <Image
                 src="https://images.unsplash.com/photo-1552519507-da3b142c6e3d?q=80&w=1000&auto=format&fit=crop"
                 alt="Vender auto de forma segura"
-                className="w-full h-full object-cover object-center opacity-60 mix-blend-screen group-hover:opacity-80 transition-all duration-700 ease-out"
+                fill
+                sizes="(max-width: 1024px) 100vw, 55vw"
+                className="object-cover object-center opacity-60 mix-blend-screen group-hover:opacity-80 transition-all duration-700 ease-out"
               />
             </div>
           </WobbleCard>

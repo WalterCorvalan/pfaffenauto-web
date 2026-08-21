@@ -2,6 +2,7 @@
 
 import React, { useState, useEffect } from "react";
 import Link from "next/link";
+import Image from "next/image";
 import { ChevronRight, ArrowUpRight, Clock, Scale, X, MapPin } from "lucide-react";
 import { motion, AnimatePresence, Variants } from "framer-motion";
 import ComparadorModal from "@/components/modals/ComparadorModal";
@@ -164,8 +165,8 @@ export default function Stock({ vehiculos }: StockProps) {
       className="py-12 bg-transparent dark:bg-[#0a0a0f] relative border-t border-transparent overflow-hidden"
     >
       {/* Luces Ambientales (Spatial UI) */}
-      <div className="absolute top-0 left-[-5%] w-[600px] h-[600px] bg-[#0145F2]/5 dark:bg-[#0145F2]/10 rounded-full blur-[120px] pointer-events-none"></div>
-      <div className="absolute bottom-[20%] right-[-5%] w-[500px] h-[500px] bg-sky-300/10 dark:bg-sky-500/10 rounded-full blur-[100px] pointer-events-none"></div>
+      <div className="absolute top-0 left-[-5%] w-[500px] h-[500px] bg-[#0145F2]/5 dark:bg-[#0145F2]/10 rounded-full blur-3xl pointer-events-none"></div>
+      <div className="absolute bottom-[20%] right-[-5%] w-[400px] h-[400px] bg-sky-300/10 dark:bg-sky-500/10 rounded-full blur-3xl pointer-events-none"></div>
 
       <div className="max-w-7xl mx-auto px-4 md:px-6 space-y-24 relative z-10">
         {/* ================= SECCIÓN 1: SUVs (GRILLA TRADICIONAL) ================= */}
@@ -251,13 +252,15 @@ export default function Stock({ vehiculos }: StockProps) {
                     <Scale className="w-4 h-4" />
                   </button>
                   <div className="absolute inset-0 bg-slate-100 dark:bg-slate-900 z-0"></div>
-                  <img
+                  <Image
                     src={
                       urbanosYSedanes[0].multimedia_vehiculos?.[0]
                         ?.url_archivo || "/placeholder.jpg"
                     }
                     alt={urbanosYSedanes[0].modelo}
-                    className="absolute inset-0 w-full h-full object-cover group-hover:scale-105 transition-transform duration-700 ease-out mix-blend-multiply dark:mix-blend-normal opacity-90 dark:opacity-80 z-0"
+                    fill
+                    sizes="(max-width: 768px) 100vw, 66vw"
+                    className="object-cover group-hover:scale-105 transition-transform duration-700 ease-out mix-blend-multiply dark:mix-blend-normal opacity-90 dark:opacity-80 z-0"
                   />
                   <div className="absolute inset-0 bg-gradient-to-t from-navy/90 via-navy/30 to-transparent dark:from-black dark:via-black/40 dark:to-transparent z-10"></div>
 
@@ -323,10 +326,12 @@ export default function Stock({ vehiculos }: StockProps) {
                           className="bg-white/60 dark:bg-white/5 backdrop-blur-md border border-white/80 dark:border-white/10 rounded-2xl p-2.5 flex gap-3 items-center group hover:bg-white dark:hover:bg-white/10 hover:border-[#0145F2]/40 dark:hover:border-sky-400/30 transition-all shadow-sm focus:outline-none"
                         >
                           <div className="h-14 w-16 shrink-0 rounded-xl overflow-hidden relative bg-white/50 dark:bg-white/5 mix-blend-multiply dark:mix-blend-normal">
-                            <img
+                            <Image
                               src={imagenSrc}
                               alt={auto.modelo}
-                              className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+                              fill
+                              sizes="64px"
+                              className="object-cover group-hover:scale-105 transition-transform duration-500"
                             />
                           </div>
                           <div className="flex flex-col justify-center w-full min-w-0 pr-1">
@@ -395,13 +400,15 @@ export default function Stock({ vehiculos }: StockProps) {
                     <Scale className="w-4 h-4" />
                   </button>
                   <div className="absolute inset-0 bg-slate-200 dark:bg-slate-900 z-0"></div>
-                  <img
+                  <Image
                     src={
                       auto.multimedia_vehiculos?.[0]?.url_archivo ||
                       "/placeholder.jpg"
                     }
                     alt={auto.modelo}
-                    className="absolute inset-0 w-full h-full object-cover group-hover:scale-105 transition-transform duration-700 ease-out z-0 mix-blend-multiply dark:mix-blend-normal opacity-90 dark:opacity-85"
+                    fill
+                    sizes="(max-width: 768px) 280px, 360px"
+                    className="object-cover group-hover:scale-105 transition-transform duration-700 ease-out z-0 mix-blend-multiply dark:mix-blend-normal opacity-90 dark:opacity-85"
                   />
                   <div className="absolute inset-0 bg-gradient-to-b from-black/70 via-transparent to-black/80 dark:from-black/80 dark:to-black/90 z-10" />
 
@@ -451,14 +458,17 @@ export default function Stock({ vehiculos }: StockProps) {
                   {autosComparar.map((auto, i) => (
                     <div
                       key={i}
-                      className="w-10 h-10 md:w-12 md:h-12 rounded-full border-2 border-gray-900 overflow-hidden bg-white shadow-sm shrink-0"
+                      className="relative w-10 h-10 md:w-12 md:h-12 rounded-full border-2 border-gray-900 overflow-hidden bg-white shadow-sm shrink-0"
                     >
-                      <img
+                      <Image
                         src={
                           auto.multimedia_vehiculos?.[0]?.url_archivo ||
                           "/placeholder.jpg"
                         }
-                        className="w-full h-full object-cover"
+                        alt={auto.modelo || "Auto"}
+                        fill
+                        sizes="48px"
+                        className="object-cover"
                       />
                     </div>
                   ))}
@@ -625,10 +635,12 @@ export function VehicleCard({
 
         <div className="relative h-[160px] sm:h-[180px] bg-white/30 dark:bg-white/5 flex items-center justify-center overflow-hidden mix-blend-multiply dark:mix-blend-normal">
           {auto.multimedia_vehiculos?.[0] ? (
-            <img
+            <Image
               src={auto.multimedia_vehiculos[0].url_archivo}
               alt={`${auto.marca} ${auto.modelo}`}
-              className="w-full h-full object-cover object-center group-hover:scale-105 transition-transform duration-700 ease-out"
+              fill
+              sizes="(max-width: 640px) 50vw, (max-width: 1024px) 25vw, 300px"
+              className="object-cover object-center group-hover:scale-105 transition-transform duration-700 ease-out"
             />
           ) : (
             <div className="w-full h-full flex items-center justify-center text-gray-300 dark:text-slate-500 text-xs font-medium">

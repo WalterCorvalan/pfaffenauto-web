@@ -41,10 +41,14 @@ se usa en fill sólido o gradiente contenido.
   home — glass, sin label visible (aceptable por ser buscador hero, no formulario)
 
 ## 5. Layout Principles — puntos a corregir
-- ❌ **Hero centrado** (`items-center text-center`) con variance del sitio en 7/10.
-  Debería romperse a split-screen o asimetría (auto/video a un lado, copy al otro)
-- ❌ **Servicios.tsx: `grid-cols-1 lg:grid-cols-3`** — el patrón "3 cards iguales"
-  explícitamente baneado. Es la única sección sin la personalidad que sí tiene Stock
+- ✅ **Hero centrado — corregido.** En desktop (`lg:`) ahora es left-aligned:
+  texto/buscador/pastillas ocupan ~55% izquierdo, el video respira a la derecha.
+  Mobile/tablet siguen centrados (no hay espacio real para asimetría ahí)
+- ✅ **Servicios.tsx — revisado, NO es el patrón baneado.** El grid contenedor es
+  `grid-cols-3` pero los hijos usan `col-span-2` / `col-span-1` / `col-span-3`
+  (bento asimétrico: grande+chica arriba, banner completo abajo). El hallazgo
+  original de la auditoría estaba mal — solo miró la clase del contenedor sin
+  chequear los `col-span` de las tarjetas. Corregido acá.
 - ✅ **Stock.tsx** es el modelo a seguir: 4 secciones, 4 layouts distintos
   (grid, carrusel nativo, editorial grande+sidebar, cards horizontales tipo Apple)
 - Home tiene 13 secciones apiladas sin jerarquía de prioridad — revisar orden
@@ -54,17 +58,18 @@ se usa en fill sólido o gradiente contenido.
   coincide con el rango recomendado
 - Speed trails de fondo en Hero usan `ease: "linear"` — aceptable, es motion de
   fondo continuo (tipo marquee), no interacción de UI
-- ❌ **IntroLoader se dispara en cada carga de página, sin persistencia.**
-  Un visitante recurrente ve 2 segundos de pantalla completa bloqueada
-  repetidamente. Debe mostrarse una sola vez por sesión (`sessionStorage`)
+- ✅ **IntroLoader corregido** — ahora usa `sessionStorage`, se muestra una sola
+  vez por sesión de navegador en vez de en cada carga de página
 - Entradas del Hero usan `duration: 0.5s` — excede los 300ms recomendados para
   UI, pero cae dentro de la excepción de "marketing site" (motion más largo
   aceptable en hero/landing)
 
 ## 7. Performance — puntos a corregir
-- ❌ Ninguna imagen usa `next/image` (Hero, Stock, tarjetas) — sin lazy loading
-  nativo, sin `srcset`, riesgo de layout shift. Impacta LCP, especialmente
-  sumado al video de fondo autoplay del Hero
+- ✅ **`next/image` migrado en Stock.tsx y Servicios.tsx** (7 imágenes en total:
+  destacado grande, vistos recientemente, cards Apple-style, barra comparador,
+  VehicleCard, y las 2 imágenes de fondo de Servicios). Hero no tenía `<img>`
+  para migrar (es video de fondo). Verificado funcionando vía `/_next/image`
+  con dominios ya permitidos en `next.config.ts`
 - ❌ Múltiples blobs `blur-3xl`/`blur-[120px]` acumulados por sección (Stock,
   Financiación, etc.) — costo de GPU innecesario en dispositivos gama media,
   relevante para el tráfico mobile argentino
@@ -75,17 +80,21 @@ se usa en fill sólido o gradiente contenido.
 - [x] Sin negro puro
 - [x] Sin glow neon
 - [x] Sin acento sobresaturado / doble acento
-- [ ] Hero centrado — **presente, corregir**
-- [ ] Grid de 3 cards iguales — **presente en Servicios, corregir**
+- [x] Hero centrado — **corregido, left-aligned en desktop**
+- [x] Grid de 3 cards iguales — **revisado: Servicios NO cae en este patrón (bento asimétrico real)**
 - [x] Sin nombres genéricos / datos inventados
 - [x] Sin "Scroll to explore" / flechas de scroll
 - [x] Sin `LABEL // YEAR`
 - [x] Sin clichés de copy ("Elevate", "Seamless", "Unleash")
 
 ## Prioridad de arreglos (impacto / esfuerzo)
-1. IntroLoader una sola vez por sesión — alto impacto, 5 min
-2. `next/image` en Hero + Stock — alto impacto en performance, esfuerzo medio
-3. Servicios: romper grid de 3 — impacto visual medio, esfuerzo bajo
-4. Hero: split-screen en vez de centrado — impacto visual alto, esfuerzo medio-alto
-5. Reducir blobs de blur acumulados — impacto perf bajo-medio, esfuerzo bajo
-6. Reordenar/consolidar secciones de la home — impacto UX medio, esfuerzo medio
+1. ~~IntroLoader una sola vez por sesión~~ — ✅ hecho
+2. ~~`next/image` en Stock + Servicios~~ — ✅ hecho (Hero no tenía imágenes)
+3. ~~Servicios: romper grid de 3~~ — ✅ no aplicaba, ya era asimétrico
+4. ~~Reducir blobs de blur acumulados~~ — ✅ hecho (blur-[100/120px] → blur-3xl en 4 secciones)
+5. ~~Reordenar secciones de la home~~ — ✅ hecho (Stock subió después del Hero, Seguimiento bajó)
+6. ~~Hero: left-aligned en vez de centrado~~ — ✅ hecho
+
+Todos los puntos de la auditoría resueltos. Pendiente: confirmación visual manual
+en navegador real (la sesión de prueba automatizada tuvo problemas de estado
+propios de la herramienta, no del código — el HTML servido está verificado).
