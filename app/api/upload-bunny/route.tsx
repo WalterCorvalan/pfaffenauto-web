@@ -2,11 +2,18 @@ import { NextResponse } from "next/server";
 import { createServerClient } from "@supabase/ssr";
 import { cookies } from "next/headers";
 import { subirArchivoR2 } from "@/lib/storage/r2";
+import { rateLimit, ipDesdeRequest } from "@/lib/rateLimit";
+import { registrarError } from "@/lib/logger";
 
 const MAX_MB = 15;
 
 export async function POST(request: Request) {
   try {
+    const limite = rateLimit(ipDesdeRequest(request), { limite: 20, ventanaMs: 60 * 1000 });
+    if (!limite.ok) {
+      return NextResponse.json({ error: "Demasiadas subidas. Esperá un momento." }, { status: 429 });
+    }
+
     const cookieStore = await cookies();
     const supabase = createServerClient(
       process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -42,7 +49,7 @@ export async function POST(request: Request) {
     return NextResponse.json({ publicUrl });
 
   } catch (error) {
-    console.error("Error en /api/upload:", error);
+    registrarError("api/upload-bunny", error);
     return NextResponse.json({ error: "Error interno subiendo la imagen" }, { status: 500 });
   }
 }

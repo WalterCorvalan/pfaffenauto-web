@@ -35,7 +35,15 @@ const modelosPorMarca: Record<string, string[]> = {
 
 const aniosDisponibles = Array.from({ length: 20 }, (_, i) => 2026 - i);
 
-export default function CotizadorForm() {
+interface VehiculoObjetivo {
+  id: string;
+  marca: string;
+  modelo: string;
+  precio: number;
+  moneda: "ARS" | "USD";
+}
+
+export default function CotizadorForm({ vehiculoObjetivo }: { vehiculoObjetivo?: VehiculoObjetivo } = {}) {
   const [step, setStep] = useState(1);
 
   // Estados del vehículo
@@ -194,6 +202,7 @@ export default function CotizadorForm() {
           puede_venir_sucursal: puedeVenir === true,
           fotos_y_videos: archivosSubidos.map((a) => a.url),
           sucursal_preferida: "Casa Central",
+          ...(vehiculoObjetivo ? { tipo_peritaje: "permuta", vehiculo_id: vehiculoObjetivo.id } : {}),
         }),
       });
 
@@ -240,6 +249,16 @@ export default function CotizadorForm() {
 
         <div className="lg:col-span-5 flex justify-center w-full">
           <div className="bg-white/70 dark:bg-white/5 backdrop-blur-2xl border border-white dark:border-white/10 rounded-[32px] shadow-[0_20px_50px_rgba(0,0,0,0.06)] dark:shadow-none p-6 md:p-8 w-full max-w-md relative">
+
+            {!enviado && vehiculoObjetivo && (
+              <div className="mb-4 flex items-center gap-2.5 bg-emerald-50 dark:bg-emerald-400/10 border border-emerald-200 dark:border-emerald-400/20 rounded-xl px-3.5 py-2.5">
+                <CarFront className="w-4 h-4 text-emerald-600 dark:text-emerald-400 shrink-0" />
+                <p className="text-[11px] font-bold text-emerald-800 dark:text-emerald-300 leading-tight">
+                  Cotizando tu auto como parte de pago para el{" "}
+                  <span className="font-black">{vehiculoObjetivo.marca} {vehiculoObjetivo.modelo}</span>
+                </p>
+              </div>
+            )}
 
             {!enviado && (
               <div className="mb-4">

@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { rateLimit, ipDesdeRequest } from "@/lib/rateLimit";
 import { subirArchivoR2 } from "@/lib/storage/r2";
+import { registrarError } from "@/lib/logger";
 
 // Fotos/videos que manda el cliente en el cotizador cuando no puede venir a sucursal.
 export async function POST(request: Request) {
@@ -17,6 +18,10 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: "No se encontró ningún archivo." }, { status: 400 });
     }
 
+    if (!file.type.startsWith("image/") && !file.type.startsWith("video/")) {
+      return NextResponse.json({ error: "Solo se permiten fotos o videos." }, { status: 400 });
+    }
+
     const MAX_BYTES = 100 * 1024 * 1024; // 100MB, cubre fotos y videos cortos de celular
     if (file.size > MAX_BYTES) {
       return NextResponse.json({ error: "El archivo pesa demasiado (máximo 100MB)." }, { status: 400 });
@@ -30,7 +35,7 @@ export async function POST(request: Request) {
 
     return NextResponse.json({ publicUrl });
   } catch (error) {
-    console.error("Error en /api/upload-cotizacion:", error);
+    registrarError("api/upload-cotizacion", error);
     return NextResponse.json({ error: "Error interno subiendo el archivo" }, { status: 500 });
   }
 }

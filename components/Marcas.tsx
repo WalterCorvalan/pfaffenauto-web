@@ -46,23 +46,26 @@ function MarcaDestacadaCard({ marca }: { marca: { nombre: string; slug: string; 
   const [imgError, setImgError] = useState(false);
 
   return (
-    <Link 
-      href={`/${marca.slug}`} 
-      className="relative flex flex-col items-center justify-center gap-3 bg-gradient-to-br from-blue-50/80 via-white to-sky-50/50 dark:from-sky-400/10 dark:via-white/5 dark:to-blue-500/10 border-2 border-blue-500/40 dark:border-sky-400/30 rounded-2xl py-6 hover:border-blue-600 dark:hover:border-sky-400 hover:shadow-xl hover:scale-[1.02] transition-all duration-300 group h-full focus:outline-none overflow-hidden"
+    <Link
+      href={`/${marca.slug}`}
+      className="relative flex flex-col items-center justify-center gap-2 md:gap-3 bg-gradient-to-br from-blue-50/80 via-white to-sky-50/50 dark:from-sky-400/10 dark:via-white/5 dark:to-blue-500/10 border-2 border-blue-500/40 dark:border-sky-400/30 rounded-2xl py-5 md:py-6 hover:border-blue-600 dark:hover:border-sky-400 hover:shadow-xl hover:scale-[1.02] transition-all duration-300 group h-full focus:outline-none overflow-hidden"
     >
       {/* Badge superior destello */}
       <div className="absolute top-2 right-2 bg-blue-600 dark:bg-sky-500 text-white text-[8px] font-black uppercase tracking-widest px-2 py-0.5 rounded-full shadow-sm flex items-center gap-1">
         <Sparkles className="w-2.5 h-2.5" /> Oficial
       </div>
 
-      <div className="relative w-16 h-16 md:w-20 md:h-20 flex items-center justify-center transition-transform duration-300 group-hover:scale-110 p-2">
+      {/* Ícono más grande solo en mobile (w-24 base, vuelve a w-20 desde md);
+         el padding/gap de la tarjeta se achicó un poco para compensar y que
+         la tarjeta en sí no crezca. */}
+      <div className="relative w-28 h-28 md:w-36 md:h-36 flex items-center justify-center transition-transform duration-300 group-hover:scale-110 p-2">
         {!imgError ? (
           <Image
             src={marca.logo}
             alt={`Logo de ${marca.nombre}`}
             fill
-            sizes="80px"
-            className="object-contain drop-shadow-sm"
+            sizes="144px"
+            className={`object-contain drop-shadow-sm ${marca.slug === "rely" ? "dark:brightness-0 dark:invert" : ""}`}
             onError={() => setImgError(true)}
           />
         ) : (
@@ -116,7 +119,6 @@ export default function Marcas() {
     // Marcas Chinas / Asiáticas
     { nombre: "BAIC", slug: "baic", logo: LOGOS_MARCAS["BAIC"] },
     { nombre: "Chery", slug: "chery", logo: LOGOS_MARCAS["Chery"] },
-    { nombre: "Changan", slug: "changan", logo: LOGOS_MARCAS["Changan"] },
     { nombre: "BYD", slug: "byd", logo: LOGOS_MARCAS["BYD"] },
     { nombre: "Geely", slug: "geely", logo: LOGOS_MARCAS["Geely"] },
     { nombre: "Haval", slug: "haval", logo: LOGOS_MARCAS["Haval"] },

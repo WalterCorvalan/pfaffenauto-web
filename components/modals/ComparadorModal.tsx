@@ -1,5 +1,7 @@
 "use client";
 
+import { useEffect, useState } from "react";
+import { createPortal } from "react-dom";
 import { X } from "lucide-react";
 import Link from "next/link";
 import Image from "next/image";
@@ -18,7 +20,10 @@ interface ComparadorModalProps {
 }
 
 export default function ComparadorModal({ isOpen, onClose, autos, removerAuto }: ComparadorModalProps) {
-  if (!isOpen) return null;
+  const [mounted, setMounted] = useState(false);
+  useEffect(() => setMounted(true), []);
+
+  if (!isOpen || !mounted) return null;
 
   // Rellenamos hasta 3 espacios vacíos si hay menos de 3 autos seleccionados
   const auto1 = autos[0];
@@ -34,7 +39,12 @@ export default function ComparadorModal({ isOpen, onClose, autos, removerAuto }:
     </div>
   );
 
-  return (
+  // Portal a document.body: renderizado en el lugar del árbol donde vive
+  // VehiculosGrid (adentro de <main>), un position:fixed acá puede quedar
+  // atrapado por el stacking context de algún ancestro y terminar pintado
+  // detrás del header sticky pese al z-index más alto. Con portal esquiva
+  // ese problema por completo, sin depender de encontrar el ancestro exacto.
+  return createPortal(
     <AnimatePresence>
       <div className="fixed inset-0 z-[100] flex items-center justify-center p-2 md:p-6">
         <motion.div 
@@ -140,6 +150,7 @@ export default function ComparadorModal({ isOpen, onClose, autos, removerAuto }:
 
         </motion.div>
       </div>
-    </AnimatePresence>
+    </AnimatePresence>,
+    document.body
   );
 }

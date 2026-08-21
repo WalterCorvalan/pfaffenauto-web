@@ -1,12 +1,25 @@
+import { z } from "zod";
 import { createClient } from "@supabase/supabase-js";
 import { verificarTurnstile } from "@/lib/turnstile";
 import { rateLimit, ipDesdeRequest } from "@/lib/rateLimit";
 import { notificarPersona, notificarEncargados } from "@/lib/notificaciones";
+import { registrarError } from "@/lib/logger";
 
 const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
   process.env.SUPABASE_SERVICE_ROLE_KEY!
 );
+
+const VisitaSchema = z.object({
+  turnstileToken: z.string().min(1, "Falta verificación anti-spam."),
+  vehiculo_id: z.string().uuid().optional().nullable(),
+  nombre_cliente: z.string().trim().min(1).max(100),
+  telefono_cliente: z.string().trim().min(6).max(20),
+  fecha_visita: z.string().trim().min(1).max(20),
+  horario_visita: z.string().trim().min(1).max(20),
+  sucursal: z.string().trim().min(1).max(60),
+  vendedor_id: z.string().uuid().optional().nullable(),
+});
 
 export async function POST(req: Request) {
   try {
@@ -17,6 +30,10 @@ export async function POST(req: Request) {
     }
 
     const payload = await req.json();
+    const parsed = VisitaSchema.safeParse(payload);
+    if (!parsed.success) {
+      return Response.json({ error: "Faltan datos obligatorios o tienen un formato inválido." }, { status: 400 });
+    }
     const {
       turnstileToken,
       vehiculo_id,
@@ -26,19 +43,11 @@ export async function POST(req: Request) {
       horario_visita,
       sucursal,
       vendedor_id,
-    } = payload;
-
-    if (!turnstileToken) {
-      return Response.json({ error: "Falta verificación anti-spam." }, { status: 400 });
-    }
+    } = parsed.data;
 
     const humano = await verificarTurnstile(turnstileToken, ip);
     if (!humano) {
       return Response.json({ error: "No pudimos verificar que sos humano. Reintentá." }, { status: 400 });
-    }
-
-    if (!nombre_cliente || !telefono_cliente || !fecha_visita || !horario_visita || !sucursal) {
-      return Response.json({ error: "Faltan datos obligatorios." }, { status: 400 });
     }
 
     const { data, error } = await supabase.from("visitas_agendadas").insert({
@@ -64,7 +73,7 @@ export async function POST(req: Request) {
 
     return Response.json({ ok: true, id: data.id });
   } catch (err) {
-    console.error("[visitas] error:", err);
+    registrarError("api/visitas", err);
     return Response.json({ error: "Hubo un problema al agendar la visita." }, { status: 500 });
   }
 }

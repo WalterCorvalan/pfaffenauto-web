@@ -1,7 +1,27 @@
+import { z } from "zod";
 import { createServerClient } from "@supabase/ssr";
 import { createClient } from "@supabase/supabase-js";
 import { cookies } from "next/headers";
 import { NextResponse } from "next/server";
+import { rateLimit, ipDesdeRequest } from "@/lib/rateLimit";
+import { registrarError } from "@/lib/logger";
+
+const VehiculoIncompletoSchema = z.object({
+  patente: z.string().trim().max(20).optional().nullable(),
+  marca: z.string().trim().min(1).max(60),
+  modelo: z.string().trim().min(1).max(60),
+  anio: z.coerce.number().int().min(1950).max(new Date().getFullYear() + 1).optional().nullable(),
+  color: z.string().trim().max(40).optional().nullable(),
+  tipo: z.string().trim().max(40).optional().nullable(),
+  tipo_combustible: z.string().trim().max(40).optional().nullable(),
+  numero_motor: z.string().trim().max(60).optional().nullable(),
+  numero_chasis: z.string().trim().max(60).optional().nullable(),
+  marca_motor: z.string().trim().max(60).optional().nullable(),
+  marca_chasis: z.string().trim().max(60).optional().nullable(),
+  segmento: z.string().trim().max(40).optional().nullable(),
+  sucursal_id: z.string().uuid(),
+  origen: z.string().trim().max(40).optional().nullable(),
+});
 
 const generarSlug = (marca: string, modelo: string, anio: number) => {
   const base = `${marca}-${modelo}-${anio}`
@@ -14,6 +34,11 @@ const generarSlug = (marca: string, modelo: string, anio: number) => {
 };
 
 export async function POST(req: Request) {
+  const limite = rateLimit(ipDesdeRequest(req), { limite: 20, ventanaMs: 60 * 1000 });
+  if (!limite.ok) {
+    return NextResponse.json({ error: "Demasiadas solicitudes. Esperá un momento." }, { status: 429 });
+  }
+
   const cookieStore = await cookies();
   const supabaseAuth = createServerClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -23,12 +48,11 @@ export async function POST(req: Request) {
   const { data: { user } } = await supabaseAuth.auth.getUser();
   if (!user) return NextResponse.json({ error: "No autenticado." }, { status: 401 });
 
-  const body = await req.json();
-  const { patente, marca, modelo, anio, color, tipo, tipo_combustible, numero_motor, numero_chasis, marca_motor, marca_chasis, segmento, sucursal_id, origen } = body;
-
-  if (!marca || !modelo || !sucursal_id) {
-    return NextResponse.json({ error: "Faltan marca, modelo o sucursal." }, { status: 400 });
+  const parsed = VehiculoIncompletoSchema.safeParse(await req.json());
+  if (!parsed.success) {
+    return NextResponse.json({ error: "Faltan marca, modelo o sucursal, o tienen formato inválido." }, { status: 400 });
   }
+  const { patente, marca, modelo, anio, color, tipo, tipo_combustible, numero_motor, numero_chasis, marca_motor, marca_chasis, segmento, sucursal_id, origen } = parsed.data;
 
   const anioNum = anio ? Number(anio) : new Date().getFullYear();
   const slug = generarSlug(marca, modelo, anioNum);
@@ -48,6 +72,9 @@ export async function POST(req: Request) {
     .select("id")
     .single();
 
-  if (error) return NextResponse.json({ error: error.message }, { status: 500 });
+  if (error) {
+    registrarError("api/vehiculos/crear-incompleto", error);
+    return NextResponse.json({ error: "No se pudo crear el vehículo." }, { status: 500 });
+  }
   return NextResponse.json({ id: data.id });
 }

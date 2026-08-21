@@ -1,11 +1,21 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
+import Script from "next/script";
 import { supabase } from "@/lib/supabase/client";
-import { 
-  CalendarCheck, Clock, MapPin, User, Phone, CheckCircle2, 
-  ChevronDown, Car, Coffee, ShieldCheck 
+import {
+  CalendarCheck, Clock, MapPin, User, Phone, CheckCircle2,
+  ChevronDown, Car, Coffee, ShieldCheck
 } from "lucide-react";
+
+declare global {
+  interface Window {
+    turnstile?: {
+      render: (container: HTMLElement, options: Record<string, unknown>) => string;
+      reset: (widgetId?: string) => void;
+    };
+  }
+}
 
 const HORA_INICIO = 9;
 const HORA_FIN = 18;
@@ -35,7 +45,26 @@ export default function AgendarCitaForm() {
   const [enviado, setEnviado] = useState(false);
   const [error, setError] = useState("");
 
+  // Turnstile (anti-spam) — antes este form insertaba directo a Supabase con
+  // la anon key, sin captcha ni rate limit. Ahora pasa por /api/visitas.
+  const [turnstileToken, setTurnstileToken] = useState("");
+  const [turnstileListo, setTurnstileListo] = useState(false);
+  const turnstileRef = useRef<HTMLDivElement>(null);
+  const turnstileWidgetId = useRef<string | null>(null);
+
   const hoy = new Date().toISOString().split("T")[0];
+
+  useEffect(() => {
+    if (!turnstileListo || !turnstileRef.current || !window.turnstile) return;
+    if (turnstileWidgetId.current) return;
+
+    turnstileWidgetId.current = window.turnstile.render(turnstileRef.current, {
+      sitekey: process.env.NEXT_PUBLIC_TURNSTILE_SITE_KEY || "",
+      callback: (token: string) => setTurnstileToken(token),
+      "expired-callback": () => setTurnstileToken(""),
+      "error-callback": () => setTurnstileToken(""),
+    });
+  }, [turnstileListo]);
 
   useEffect(() => {
     supabase.from("sucursales").select("id, nombre").then(({ data }) => {
@@ -77,40 +106,41 @@ export default function AgendarCitaForm() {
       setError("Por favor, completá todos los campos obligatorios.");
       return;
     }
+    if (!turnstileToken) {
+      setError("Completá la verificación anti-spam antes de continuar.");
+      return;
+    }
 
     setCargando(true);
     try {
       const vehiculoSeleccionado = vehiculos.find((v) => v.id === vehiculoId);
 
-      const { error: errInsert } = await supabase.from("visitas_agendadas").insert({
-        vehiculo_id: vehiculoId || null,
-        nombre_cliente: nombre,
-        telefono_cliente: telefono,
-        fecha_visita: fecha,
-        horario_visita: horario,
-        sucursal,
-        estado: "Pendiente",
-        vendedor_id: vehiculoSeleccionado?.vendedor_asignado_id || null,
-      });
-
-      if (errInsert) throw errInsert;
-
-      fetch("/api/visitas/notificar", {
+      const response = await fetch("/api/visitas", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          nombreCliente: nombre,
-          fecha,
-          horario,
+          turnstileToken,
+          vehiculo_id: vehiculoId || null,
+          nombre_cliente: nombre,
+          telefono_cliente: telefono,
+          fecha_visita: fecha,
+          horario_visita: horario,
           sucursal,
-          vendedorId: vehiculoSeleccionado?.vendedor_asignado_id || null,
+          vendedor_id: vehiculoSeleccionado?.vendedor_asignado_id || null,
         }),
-      }).catch((err) => console.error("Error notificando visita:", err));
+      });
+
+      const data = await response.json();
+      if (!response.ok) throw new Error(data.error || "Error al agendar la visita");
 
       setEnviado(true);
     } catch (err) {
       console.error(err);
-      setError("Hubo un error al agendar la cita. Por favor, intentá nuevamente.");
+      setError(err instanceof Error ? err.message : "Hubo un error al agendar la cita. Por favor, intentá nuevamente.");
+      if (turnstileWidgetId.current && window.turnstile) {
+        window.turnstile.reset(turnstileWidgetId.current);
+      }
+      setTurnstileToken("");
     } finally {
       setCargando(false);
     }
@@ -332,9 +362,11 @@ export default function AgendarCitaForm() {
                 </div>
               )}
 
+              <div ref={turnstileRef} className="mb-6 flex justify-center" />
+
               <button
                 type="submit"
-                disabled={cargando}
+                disabled={cargando || !turnstileToken}
                 className="w-full bg-[#0145F2] hover:bg-indigo-700 text-white font-black text-sm uppercase tracking-widest py-4 rounded-xl transition-all shadow-lg shadow-blue-500/20 disabled:opacity-60 disabled:cursor-not-allowed active:scale-[0.99]"
               >
                 {cargando ? "Procesando..." : "Confirmar mi visita"}
@@ -344,6 +376,12 @@ export default function AgendarCitaForm() {
 
         </div>
       </div>
+
+      <Script
+        src="https://challenges.cloudflare.com/turnstile/v0/api.js"
+        strategy="lazyOnload"
+        onLoad={() => setTurnstileListo(true)}
+      />
     </section>
   );
 }

@@ -1,6 +1,7 @@
 import { createServerClient } from "@supabase/ssr";
 import { cookies } from "next/headers";
-import { ClipboardList, CheckCircle, Clock, Image as ImageIcon, Video, MapPin, MessageSquareText, Calculator } from "lucide-react";
+import { ClipboardList, CheckCircle, Clock, Image as ImageIcon, Video, MapPin, MessageSquareText, Calculator, ArrowRightLeft, Printer } from "lucide-react";
+import Link from "next/link";
 import PrecioSugeridoEditor from "./PrecioSugeridoEditor";
 import HistorialTasacionBadge from "./HistorialTasacionBadge";
 import NotificacionesBell from "../../NotificacionesBell";
@@ -34,6 +35,15 @@ export default async function CotizacionesPage() {
     lista.push(c);
     historialPorTelefono.set(c.telefono, lista);
   });
+
+  // Permuta: cada cotización con vehiculo_id apunta al auto que el cliente
+  // quiere comprar — traemos precio/marca/modelo de esos autos para mostrar
+  // "resta $X" sin que el vendedor tenga que ir a buscar el precio a mano.
+  const idsVehiculosObjetivo = [...new Set((cotizaciones || []).filter((c) => c.vehiculo_id).map((c) => c.vehiculo_id as string))];
+  const { data: vehiculosObjetivo } = idsVehiculosObjetivo.length
+    ? await supabase.from("vehiculos").select("id, marca, modelo, precio_publicado_ars, precio_publicado_usd").in("id", idsVehiculosObjetivo)
+    : { data: [] as any[] };
+  const vehiculoObjetivoPorId = new Map((vehiculosObjetivo || []).map((v) => [v.id, v]));
 
   return (
     <div className="flex flex-col h-full w-full bg-white dark:bg-[#001233] overflow-hidden">
@@ -79,6 +89,11 @@ export default async function CotizacionesPage() {
             const esPresencial = cot.tipo_peritaje?.toLowerCase().includes("presencial");
             const anteriores = (historialPorTelefono.get(cot.telefono) || [])
               .filter((c) => c.id !== cot.id && new Date(c.created_at) < new Date(cot.created_at));
+            const vehiculoObjetivo = cot.vehiculo_id ? vehiculoObjetivoPorId.get(cot.vehiculo_id) : null;
+            const precioObjetivo = vehiculoObjetivo?.precio_publicado_ars || null;
+            const resta = vehiculoObjetivo && cot.precio_sugerido && precioObjetivo
+              ? precioObjetivo - cot.precio_sugerido
+              : null;
 
             return (
               <div
@@ -131,6 +146,25 @@ export default async function CotizacionesPage() {
                   </p>
                 </div>
 
+                {/* Permuta: auto que el cliente quiere comprar + cuánto le resta pagar */}
+                {vehiculoObjetivo && (
+                  <div className="bg-indigo-50 dark:bg-indigo-400/10 border border-indigo-100 dark:border-indigo-400/20 p-2.5 rounded-lg mb-4 -mt-2">
+                    <span className="flex items-center gap-1 text-[9px] uppercase tracking-widest font-bold text-indigo-500 dark:text-indigo-300 mb-1">
+                      <ArrowRightLeft className="w-3 h-3" /> Permuta por
+                    </span>
+                    <p className="text-[12px] font-bold text-indigo-900 dark:text-indigo-200 truncate">
+                      {vehiculoObjetivo.marca} {vehiculoObjetivo.modelo}
+                    </p>
+                    {resta != null ? (
+                      <p className="text-[12px] font-black text-indigo-700 dark:text-indigo-300 mt-0.5">
+                        Resta $ {resta.toLocaleString("es-AR")}
+                      </p>
+                    ) : (
+                      <p className="text-[10px] text-indigo-500/70 dark:text-indigo-300/60 mt-0.5">Falta tasación para calcular el resto</p>
+                    )}
+                  </div>
+                )}
+
                 {/* Footer: Precio, Fotos y Acción */}
                 <div className="pt-3 border-t border-slate-100 dark:border-[#0a2a6b] flex items-center justify-between gap-2 mt-auto">
 
@@ -176,6 +210,16 @@ export default async function CotizacionesPage() {
                   >
                     <MessageSquareText className="w-[18px] h-[18px]" strokeWidth={2.5} />
                   </a>
+
+                  {/* Imprimir / PDF */}
+                  <Link
+                    href={`/panel/cotizaciones/imprimir/${cot.id}`}
+                    target="_blank"
+                    className="bg-slate-50 dark:bg-[#00246b] hover:bg-slate-100 dark:hover:bg-[#0a2a6b] text-slate-500 dark:text-slate-300 p-1.5 rounded-md transition-colors shrink-0"
+                    title="Imprimir / PDF"
+                  >
+                    <Printer className="w-[18px] h-[18px]" strokeWidth={2.5} />
+                  </Link>
                 </div>
 
               </div>

@@ -5,6 +5,7 @@ import { generarRespuestaAgente } from "@/lib/ai/agente";
 import { sendTextMessage, sendImageMessage } from "@/lib/meta/client"; // ya lo tenés de antes
 import { decrypt } from "@/lib/crypto"; // ya lo tenés de antes
 import { notificarPersona, notificarEncargados } from "@/lib/notificaciones";
+import { registrarError } from "@/lib/logger";
 
 const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -121,7 +122,7 @@ async function ingestarMensaje({ waId, nombrePerfil, msg }: { waId: string; nomb
 
   if (error) {
     if (error.code === "23505") return;
-    console.error("[ingest] error insertando mensaje:", error);
+    registrarError("api/webhooks/wa ingest", error);
     return;
   }
 
@@ -244,10 +245,10 @@ async function ejecutarAgente(conversacionId: string, contactoId: string) {
       content: m.texto as string,
     }));
 
-  const result = await generarRespuestaAgente(historial);
+  const result = await generarRespuestaAgente(historial, "api/webhooks/wa");
 
   if (!result.ok) {
-    console.error("[agente] error:", result.error);
+    registrarError("api/webhooks/wa agente", result.error);
     // Fallback básico sin IA (ej: sin crédito en Anthropic) — mejor una respuesta
     // genérica que dejar al cliente sin nada.
     const { data: mensajeFallback } = await supabase
@@ -370,7 +371,7 @@ async function enviarYActualizarMensaje(mensajeId: string, contactoId: string, t
       .update({ status: "sent", wa_message_id: resultado.messages?.[0]?.id })
       .eq("id", mensajeId);
   } catch (err) {
-    console.error("[whatsapp] error enviando mensaje:", err);
+    registrarError("api/webhooks/wa enviando mensaje", err);
     await supabase.from("whatsapp_mensajes").update({ status: "failed" }).eq("id", mensajeId);
   }
 }
@@ -394,7 +395,7 @@ async function enviarFoto(contactoId: string, imageUrl: string) {
       imageUrl
     );
   } catch (err) {
-    console.error("[whatsapp] error enviando foto:", err);
+    registrarError("api/webhooks/wa enviando foto", err);
   }
 }
 

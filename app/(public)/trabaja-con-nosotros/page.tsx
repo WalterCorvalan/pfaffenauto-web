@@ -1,11 +1,12 @@
 "use client";
 
-import React, { useState, useRef } from "react";
+import React, { useState, useRef, useEffect } from "react";
 import Link from "next/link";
-import { 
-  Users, 
-  UploadCloud, 
-  CheckCircle2, 
+import Script from "next/script";
+import {
+  Users,
+  UploadCloud,
+  CheckCircle2,
   Loader2,
   FileText,
   ArrowLeft,
@@ -18,6 +19,15 @@ import {
   Building2
 } from "lucide-react";
 import { supabase } from "@/lib/supabase/client";
+
+declare global {
+  interface Window {
+    turnstile?: {
+      render: (container: HTMLElement, options: Record<string, unknown>) => string;
+      reset: (widgetId?: string) => void;
+    };
+  }
+}
 
 export default function TrabajaConNosotrosPage() {
   const [loading, setLoading] = useState(false);
@@ -32,10 +42,33 @@ export default function TrabajaConNosotrosPage() {
   const [puesto, setPuesto] = useState("Ventas / Comercial");
   const [archivoCV, setArchivoCV] = useState<File | null>(null);
 
+  // Turnstile (anti-spam) — antes este form insertaba directo a Supabase con
+  // la anon key, sin captcha ni rate limit.
+  const [turnstileToken, setTurnstileToken] = useState("");
+  const [turnstileListo, setTurnstileListo] = useState(false);
+  const turnstileRef = useRef<HTMLDivElement>(null);
+  const turnstileWidgetId = useRef<string | null>(null);
+
+  useEffect(() => {
+    if (!turnstileListo || !turnstileRef.current || !window.turnstile) return;
+    if (turnstileWidgetId.current) return;
+
+    turnstileWidgetId.current = window.turnstile.render(turnstileRef.current, {
+      sitekey: process.env.NEXT_PUBLIC_TURNSTILE_SITE_KEY || "",
+      callback: (token: string) => setTurnstileToken(token),
+      "expired-callback": () => setTurnstileToken(""),
+      "error-callback": () => setTurnstileToken(""),
+    });
+  }, [turnstileListo]);
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!nombre || !apellido || !email || !telefono || !archivoCV) {
       alert("Por favor completá todos los campos y adjuntá tu CV.");
+      return;
+    }
+    if (!turnstileToken) {
+      alert("Completá la verificación anti-spam antes de continuar.");
       return;
     }
 
@@ -58,29 +91,27 @@ export default function TrabajaConNosotrosPage() {
         .from('cvs')
         .getPublicUrl(filePath);
 
-      // 2. Guardar los datos en la tabla 'postulaciones'
-      const { error: dbError } = await supabase
-        .from('postulaciones')
-        .insert([{
+      // 2. Guardar los datos vía API (Turnstile + zod + rate limit del lado servidor)
+      const response = await fetch("/api/postulaciones", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          turnstileToken,
           nombre: nombre.trim(),
           apellido: apellido.trim(),
           email: email.trim(),
           telefono: telefono.trim(),
-          puesto: puesto,
-          cv_url: publicUrlData.publicUrl
-        }]);
+          puesto,
+          cv_url: publicUrlData.publicUrl,
+        }),
+      });
 
-      if (dbError) throw dbError;
-
-      fetch("/api/postulaciones/notificar", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ nombre: nombre.trim(), apellido: apellido.trim(), puesto }),
-      }).catch((err) => console.error("Error notificando postulación:", err));
+      const data = await response.json();
+      if (!response.ok) throw new Error(data.error || "Error al enviar la postulación");
 
       // Éxito
       setSuccess(true);
-      
+
       // Reseteamos el formulario pero mantenemos el mensaje de éxito unos segundos más
       setTimeout(() => {
         setSuccess(false);
@@ -89,7 +120,11 @@ export default function TrabajaConNosotrosPage() {
 
     } catch (error) {
       console.error("Error al enviar postulación:", error);
-      alert("Hubo un error al enviar tu postulación. Por favor intentá nuevamente.");
+      alert(error instanceof Error ? error.message : "Hubo un error al enviar tu postulación. Por favor intentá nuevamente.");
+      if (turnstileWidgetId.current && window.turnstile) {
+        window.turnstile.reset(turnstileWidgetId.current);
+      }
+      setTurnstileToken("");
     } finally {
       setLoading(false);
     }
@@ -328,11 +363,13 @@ export default function TrabajaConNosotrosPage() {
                     </div>
                   </div>
 
+                  <div ref={turnstileRef} className="flex justify-center" />
+
                   {/* Botón Submit */}
                   <div className="pt-2">
                     <button
                       type="submit"
-                      disabled={loading || !archivoCV}
+                      disabled={loading || !archivoCV || !turnstileToken}
                       className="w-full py-4 bg-[#0145F2] text-white font-black text-xs uppercase tracking-widest rounded-xl hover:bg-blue-700 transition-all shadow-[0_8px_20px_rgba(1,69,242,0.25)] disabled:opacity-50 disabled:shadow-none active:scale-[0.98] flex items-center justify-center gap-2"
                     >
                       {loading && <Loader2 className="w-4 h-4 animate-spin" />}
@@ -345,6 +382,12 @@ export default function TrabajaConNosotrosPage() {
           </div>
         </div>
       </div>
+
+      <Script
+        src="https://challenges.cloudflare.com/turnstile/v0/api.js"
+        strategy="lazyOnload"
+        onLoad={() => setTurnstileListo(true)}
+      />
     </main>
   );
 }

@@ -1,9 +1,26 @@
 import { NextResponse } from "next/server";
-import Anthropic from "@anthropic-ai/sdk";
 import { createClient } from "@supabase/supabase-js";
 import { NEGOCIO_CONFIG } from "@/data/NegocioConfig";
 import { rateLimit, ipDesdeRequest } from "@/lib/rateLimit";
-import { registrarCostoIA } from "@/lib/ai/costoTracker";
+import { registrarError } from "@/lib/logger";
+import { chatJson, isAiConfigured } from "@/lib/ai";
+import { z } from "zod";
+
+const ChatBodySchema = z.object({
+  messages: z
+    .array(
+      z.object({
+        role: z.string().max(20).optional(),
+        sender: z.string().max(20).optional(),
+        content: z.string().max(4000).optional(),
+        text: z.string().max(4000).optional(),
+      })
+    )
+    .max(50)
+    .default([]),
+});
+
+const ReplySchema = z.object({ reply: z.string() });
 
 // =====================================================================
 // 🎛️ BUSCADOR HÍBRIDO
@@ -12,10 +29,6 @@ import { registrarCostoIA } from "@/lib/ai/costoTracker";
 // 2. Si nada matchea con confianza, recién ahí cae a la IA (Claude + stock
 //    en vivo) para interpretar lenguaje natural más complejo.
 // =====================================================================
-
-const anthropic = new Anthropic({
-  apiKey: process.env.ANTHROPIC_API_KEY || "",
-});
 
 const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL || "",
@@ -39,8 +52,11 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: "Demasiados mensajes. Esperá un momento." }, { status: 429 });
     }
 
-    const body = await request.json();
-    const rawMessages = body.messages || [];
+    const parsedBody = ChatBodySchema.safeParse(await request.json());
+    if (!parsedBody.success) {
+      return NextResponse.json({ error: "Formato de mensajes inválido." }, { status: 400 });
+    }
+    const rawMessages = parsedBody.data.messages;
     const preguntaOriginal = rawMessages[rawMessages.length - 1]?.content || "";
     const ultimoMensaje = preguntaOriginal.toLowerCase();
 
@@ -107,7 +123,7 @@ export async function POST(request: Request) {
     // =================================================================
     // PASO 2: nada matcheó con confianza → cae a la IA (con tokens)
     // =================================================================
-    if (!process.env.ANTHROPIC_API_KEY && !process.env.OPENROUTER_API_TOKEN) {
+    if (!isAiConfigured()) {
       const generica = `👋 ¡Hola! Soy el asistente virtual de **${NEGOCIO_CONFIG.nombre}**.\n\nPodés preguntarme por nuestro stock de vehículos, horarios, sucursales o planes de financiación. ¿En qué te ayudo hoy?`;
       logPregunta(preguntaOriginal, false);
       return NextResponse.json({ reply: generica });
@@ -134,81 +150,40 @@ ${stockContext}
 
 REGLAS:
 - Responde siempre en español rioplatense de forma natural, comercial y vendedora.
-- Usa la información oficial del negocio para responder consultas sobre financiación, consignación o sucursales.`;
+- Usa la información oficial del negocio para responder consultas sobre financiación, consignación o sucursales.
+- Respondé ÚNICAMENTE con JSON: {"reply": "tu respuesta en texto acá"}.`;
 
     const formattedMessages = rawMessages
       .map((msg: any) => {
-        const role =
-          msg.role === "assistant" || msg.sender === "bot"
-            ? "assistant"
-            : "user";
-        const content = msg.content || msg.text || "";
-
-        return {
-          role,
-          content: typeof content === "string" ? content.trim() : content,
-        };
+        const role: "user" | "assistant" =
+          msg.role === "assistant" || msg.sender === "bot" ? "assistant" : "user";
+        const content = (msg.content || msg.text || "").trim();
+        return { role, content };
       })
-      .filter((msg: any) => {
-        if (typeof msg.content === "string") return msg.content.length > 0;
-        if (Array.isArray(msg.content)) return msg.content.length > 0;
-        return false;
-      });
+      .filter((msg) => msg.content.length > 0);
 
-    let replyText = "";
-    try {
-      // Haiku: el modelo barato de Anthropic. Alcanza de sobra para este chat.
-      // timeout corto + sin reintentos propios del SDK: si no contesta rápido,
-      // cae al fallback de OpenRouter en vez de dejar al cliente esperando.
-      const response = await anthropic.messages.create(
-        {
-          model: "claude-haiku-4-5-20251001",
-          max_tokens: 2000,
-          system: SYSTEM_PROMPT,
-          messages: formattedMessages,
-        },
-        { timeout: 8000, maxRetries: 0 }
-      );
+    // Mismo cliente compartido que usa el bot de WhatsApp/webchat/buscador —
+    // antes este endpoint tenía su propio cliente Anthropic + fallback
+    // OpenRouter copiados a mano, duplicando lógica y quedando sin el cost
+    // tracking que ya tiene lib/ai/index.ts.
+    const resultado = await chatJson(
+      ReplySchema,
+      [{ role: "system", content: SYSTEM_PROMPT }, ...formattedMessages],
+      { origen: "api/chat" }
+    );
 
-      if (response.stop_reason === "refusal") {
-        logPregunta(preguntaOriginal, false);
-        return NextResponse.json(
-          { error: "No puedo responder esa consulta. Probá reformularla." },
-          { status: 422 },
-        );
-      }
-
-      for (const block of response.content) {
-        if (block.type === "text") replyText += (block as any).text;
-      }
-    } catch (err) {
-      // Anthropic falló (sin crédito, etc.) — respaldo gratis por OpenRouter.
-      if (!process.env.OPENROUTER_API_TOKEN) throw err;
-      const res = await fetch(`${process.env.OPENROUTER_BASE_URL}/v1/chat/completions`, {
-        method: "POST",
-        headers: {
-          Authorization: `Bearer ${process.env.OPENROUTER_API_TOKEN}`,
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          model: process.env.OPENROUTER_MODEL,
-          messages: [{ role: "system", content: SYSTEM_PROMPT }, ...formattedMessages],
-        }),
-        signal: AbortSignal.timeout(15000),
-      });
-      if (!res.ok) throw err;
-      const data = await res.json();
-      registrarCostoIA(data.usage?.cost).catch(() => {});
-      replyText = data.choices?.[0]?.message?.content ?? "";
+    if (!resultado.ok) {
+      registrarError("api/chat modelo", new Error(resultado.error));
+      return NextResponse.json({ error: "No pude generar una respuesta. Probá de nuevo." }, { status: 502 });
     }
 
     logPregunta(preguntaOriginal, true);
-    return NextResponse.json({ reply: replyText });
+    return NextResponse.json({ reply: resultado.data.reply });
 
   } catch (error: any) {
-    console.error("Error en la API de chat web:", error);
+    registrarError("api/chat", error);
     return NextResponse.json(
-      { error: error.message || "Error interno del servidor" },
+      { error: "Error interno del servidor" },
       { status: 500 },
     );
   }

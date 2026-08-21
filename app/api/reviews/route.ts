@@ -1,6 +1,13 @@
 import { NextResponse } from "next/server";
+import { rateLimit, ipDesdeRequest } from "@/lib/rateLimit";
+import { registrarError } from "@/lib/logger";
 
-export async function GET() {
+export async function GET(req: Request) {
+  const limite = rateLimit(ipDesdeRequest(req), { limite: 30, ventanaMs: 60 * 1000 });
+  if (!limite.ok) {
+    return NextResponse.json({ error: "Demasiadas solicitudes." }, { status: 429 });
+  }
+
   const PLACE_ID = process.env.GOOGLE_PLACE_ID;
   const API_KEY = process.env.GOOGLE_MAPS_API_KEY;
 
@@ -38,7 +45,7 @@ export async function GET() {
       total: data.result.user_ratings_total,
     });
   } catch (err) {
-  console.error("Error interno /api/reviews:", err);
+  registrarError("api/reviews", err);
   return NextResponse.json({ error: "Error interno del servidor" }, { status: 500 });
 }
 }

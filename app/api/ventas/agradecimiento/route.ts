@@ -1,10 +1,20 @@
+import { z } from "zod";
 import { createClient } from "@supabase/supabase-js";
+import { createServerClient } from "@supabase/ssr";
+import { cookies } from "next/headers";
 import { sendTextMessage } from "@/lib/meta/client";
+import { rateLimit, ipDesdeRequest } from "@/lib/rateLimit";
+import { registrarError } from "@/lib/logger";
 
 const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
   process.env.SUPABASE_SERVICE_ROLE_KEY!
 );
+
+const AgradecimientoSchema = z.object({
+  venta_id: z.string().uuid().optional().nullable(),
+  boleto_id: z.string().uuid().optional().nullable(),
+});
 
 function isWhatsappEnvioConfigurado(): boolean {
   return !!process.env.META_WHATSAPP_TOKEN && !!process.env.META_WHATSAPP_PHONE_NUMBER_ID;
@@ -15,10 +25,25 @@ function isWhatsappEnvioConfigurado(): boolean {
 // no rompe el flujo de venta, simplemente no envía nada (igual que el resto del bot).
 export async function POST(req: Request) {
   try {
-    const { venta_id, boleto_id } = await req.json();
-    if (!venta_id && !boleto_id) {
+    const limite = rateLimit(ipDesdeRequest(req), { limite: 20, ventanaMs: 60 * 1000 });
+    if (!limite.ok) {
+      return Response.json({ error: "Demasiadas solicitudes. Esperá un momento." }, { status: 429 });
+    }
+
+    const cookieStore = await cookies();
+    const supabaseAuth = createServerClient(
+      process.env.NEXT_PUBLIC_SUPABASE_URL!,
+      process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY!,
+      { cookies: { getAll: () => cookieStore.getAll() } }
+    );
+    const { data: { user } } = await supabaseAuth.auth.getUser();
+    if (!user) return Response.json({ error: "No autorizado." }, { status: 401 });
+
+    const parsed = AgradecimientoSchema.safeParse(await req.json());
+    if (!parsed.success || (!parsed.data.venta_id && !parsed.data.boleto_id)) {
       return Response.json({ error: "Falta venta_id o boleto_id." }, { status: 400 });
     }
+    const { venta_id, boleto_id } = parsed.data;
 
     let nombreCliente: string | undefined;
     let telefono: string | undefined;
@@ -83,7 +108,7 @@ export async function POST(req: Request) {
 
     return Response.json({ enviado: true });
   } catch (err) {
-    console.error("[ventas/agradecimiento] error:", err);
+    registrarError("api/ventas/agradecimiento", err);
     return Response.json({ enviado: false, motivo: "Error interno." }, { status: 500 });
   }
 }

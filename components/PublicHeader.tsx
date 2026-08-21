@@ -93,7 +93,7 @@ export default function PublicHeader() {
             <img
               src="/r.png"
               alt="Marca Registrada"
-              className="absolute -top-1 -right-2.5 md:-right-3.5 w-2 h-2 object-contain brightness-0 dark:invert opacity-80"
+              className="absolute -top-1 -right-2.5 md:-right-2.5 w-2 h-2 object-contain brightness-0 dark:invert opacity-80"
             />
           </Link>
 
@@ -212,14 +212,6 @@ export default function PublicHeader() {
 
         {/* ================= COLUMNA DERECHA: ACCIONES ================= */}
         <div className="flex items-center gap-0 md:gap-3 justify-end shrink-0">
-          <button
-            onClick={toggleSearchMobile}
-            className="lg:hidden p-2.5 text-primary dark:text-sky-300 bg-white/40 dark:bg-white/5 backdrop-blur-md border border-white/60 dark:border-white/10 rounded-full shadow-sm"
-            title="Buscar"
-          >
-            <Search className="w-3.5 h-3.5 md:w-5 md:h-5" />
-          </button>
-
           <Link
             href="/favoritos"
             className="hidden lg:flex relative p-2.5 text-slate-500 dark:text-slate-300 hover:text-red-500 dark:hover:text-red-400 rounded-full transition-all"
@@ -248,8 +240,16 @@ export default function PublicHeader() {
           </Link>
 
           <button
+            onClick={toggleSearchMobile}
+            className="lg:hidden p-2.5 text-primary dark:text-sky-300 bg-white/40 dark:bg-white/5 backdrop-blur-md border border-white/60 dark:border-white/10 rounded-full shadow-sm"
+            title="Buscar"
+          >
+            <Search className="w-3.5 h-3.5 md:w-5 md:h-5" />
+          </button>
+
+          <button
             onClick={toggleMenu}
-            className="lg:hidden p-2.5 text-navy dark:text-white hover:bg-white/60 dark:hover:bg-white/10 rounded-full transition-all ml-2"
+            className="lg:hidden p-2.5 text-navy dark:text-white hover:bg-white/60 dark:hover:bg-white/10 rounded-full transition-all ml-[-2]"
           >
             {isOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
           </button>

@@ -1,6 +1,12 @@
+import { z } from "zod";
 import { createClient } from "@supabase/supabase-js";
 import { interpretarBusqueda, isBuscadorIaDisponible } from "@/lib/ai/buscador";
 import { rateLimit, ipDesdeRequest } from "@/lib/rateLimit";
+import { registrarError } from "@/lib/logger";
+
+const BusquedaSchema = z.object({
+  termino: z.string().trim().min(1).max(200),
+});
 
 const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -18,10 +24,11 @@ export async function POST(req: Request) {
       return Response.json({ error: "Buscador con IA no disponible." }, { status: 400 });
     }
 
-    const { termino } = await req.json();
-    if (!termino || typeof termino !== "string") {
+    const parsed = BusquedaSchema.safeParse(await req.json());
+    if (!parsed.success) {
       return Response.json({ error: "Falta el término de búsqueda." }, { status: 400 });
     }
+    const { termino } = parsed.data;
 
     const resultado = await interpretarBusqueda(termino);
     if (!resultado.ok) {
@@ -49,7 +56,7 @@ export async function POST(req: Request) {
 
     return Response.json({ ok: true, vehiculos: data || [], count: count || 0, interpretacion: filtros });
   } catch (error: any) {
-    console.error("[buscar-ia] error:", error);
-    return Response.json({ error: error.message || "Error interno" }, { status: 500 });
+    registrarError("api/buscar-ia", error);
+    return Response.json({ error: "Error interno. Intentá de nuevo en unos minutos." }, { status: 500 });
   }
 }

@@ -3,8 +3,8 @@
 // para no duplicar la lista en dos lugares y que se desincronicen.
 export const LOGOS_MARCAS: Record<string, string> = {
   "Volkswagen": "https://upload.wikimedia.org/wikipedia/commons/6/6d/Volkswagen_logo_2019.svg",
-  "Chevrolet": "https://upload.wikimedia.org/wikipedia/commons/1/1e/Chevrolet-logo.png",
-  "Toyota": "https://upload.wikimedia.org/wikipedia/commons/9/9d/Toyota_carlogo.svg",
+  "Chevrolet": "/logos-marcas/chevrolet-icon.svg",
+  "Toyota": "/logos-marcas/toyota-icon.svg",
   "Ford": "https://upload.wikimedia.org/wikipedia/commons/a/a0/Ford_Motor_Company_Logo.svg",
   "Peugeot": "https://upload.wikimedia.org/wikipedia/commons/f/f7/Peugeot_Logo.svg",
   "Renault": "https://upload.wikimedia.org/wikipedia/commons/a/a5/Renault_2021.svg",
@@ -18,9 +18,8 @@ export const LOGOS_MARCAS: Record<string, string> = {
   "RAM": "https://upload.wikimedia.org/wikipedia/commons/d/d3/Ram_Trucks_2025_wordmark.svg",
   "Suzuki": "https://upload.wikimedia.org/wikipedia/commons/3/31/Suzuki_Motor_Corporation_logo.svg",
   "Mitsubishi": "https://upload.wikimedia.org/wikipedia/commons/5/5a/Mitsubishi_logo.svg",
-  "BAIC": "https://upload.wikimedia.org/wikipedia/commons/0/06/BAIC_logo_%282024%29.png",
+  "BAIC": "/logos-marcas/baic-icon.png",
   "Chery": "https://upload.wikimedia.org/wikipedia/commons/b/b6/Chery_logo.svg",
-  "Changan": "https://upload.wikimedia.org/wikipedia/commons/d/da/Changan-mazda_logo.png",
   "BYD": "https://upload.wikimedia.org/wikipedia/commons/9/99/BYD_Company%2C_Ltd._-_Logo.svg",
   "Geely": "https://upload.wikimedia.org/wikipedia/commons/b/bc/Geely_Auto_2023.svg",
   "Haval": "https://upload.wikimedia.org/wikipedia/commons/d/da/Haval_2023_logo.svg",

@@ -106,10 +106,9 @@ export default function Hero() {
 
 
       {/* ================= CONTENIDO PRINCIPAL ================= */}
-      {/* Asimétrico en desktop: el bloque de texto ocupa la mitad izquierda,
-         dejando que el video respire del lado derecho — sin esto el Hero
-         quedaba perfectamente centrado, el patrón más genérico posible. */}
-      <div className="relative z-10 max-w-5xl mx-auto lg:mx-0 lg:ml-[6%] lg:max-w-2xl px-4 md:px-6 flex flex-col items-center lg:items-start text-center lg:text-left">
+      {/* Estructura en cono: cada bloque va más angosto que el anterior de
+         arriba hacia abajo (badge > título > buscador > pills), todo centrado. */}
+      <div className="relative z-10 max-w-5xl mx-auto px-4 md:px-6 flex flex-col items-center text-center">
         
         {/* Etiqueta animada */}
         <motion.div 
@@ -141,7 +140,7 @@ export default function Hero() {
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.5, delay: 0.2 }}
           onSubmit={handleSearch}
-          className="w-full bg-white/70 dark:bg-white/5 backdrop-blur-3xl rounded-3xl shadow-[0_8px_32px_0_rgba(31,38,135,0.07)] dark:shadow-[0_8px_32px_0_rgba(0,0,0,0.4)] border border-white dark:border-white/10 p-2 flex flex-col md:flex-row items-center gap-2 mb-10 group transition-all hover:bg-white/90 dark:hover:bg-white/10"
+          className="w-full max-w-3xl mx-auto bg-white/70 dark:bg-white/5 backdrop-blur-3xl rounded-3xl shadow-[0_8px_32px_0_rgba(31,38,135,0.07)] dark:shadow-[0_8px_32px_0_rgba(0,0,0,0.4)] border border-white dark:border-white/10 p-2 flex flex-col md:flex-row items-center gap-2 mb-10 group transition-all hover:bg-white/90 dark:hover:bg-white/10"
         >
           <div className="flex items-center w-full px-4 py-3 md:py-2 relative z-10">
             <Search className="w-6 h-6 text-primary dark:text-sky-400 mr-4 shrink-0" />
@@ -171,22 +170,25 @@ export default function Hero() {
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           transition={{ duration: 0.5, delay: 0.3 }}
-          className="flex flex-wrap justify-center lg:justify-start gap-3"
+          className="flex flex-wrap justify-center gap-3 max-w-xl mx-auto"
         >
-          <Pill icon={<CarFront className="w-4 h-4"/>} text="SUVs" href="/catalogo?q=SUV" />
-          <Pill icon={<CarFront className="w-4 h-4"/>} text="Sedanes" href="/catalogo?q=Sedan" />
-          <Pill icon={<CarFront className="w-4 h-4" />} text="Pick-ups" href="/catalogo?q=Pick-up" />
-          <Pill icon={<Zap className="w-4 h-4 text-amber-500 dark:text-amber-400" fill="currentColor"/>} text="Híbridos / Eléctricos" href="/catalogo?q=Hibrido" />
-          <div className="w-full h-2 md:hidden"></div> {/* Break en móvil */}
-          <Pill icon={<Users className="w-4 h-4 text-emerald-600 dark:text-emerald-400" />} text="Consignar Mi Auto" borderClass="border-white dark:border-emerald-400/20 bg-emerald-50/80 dark:bg-emerald-400/10 hover:bg-emerald-100/90 dark:hover:bg-emerald-400/20 text-emerald-900 dark:text-emerald-300" href="/consignacion" />
-          {/* Pill de 0KM renovada con estilo exclusivo */}
+          {/* En mobile el 0KM va donde estaba Híbridos y viceversa — todos los
+             ítems llevan order explícito para que no choquen con el default
+             (order 0); en desktop (md+) vuelven al orden original de fuente. */}
+          <Pill icon={<CarFront className="w-4 h-4"/>} text="SUVs" href="/catalogo?q=SUV" className="order-1 md:order-none" />
+          <Pill icon={<CarFront className="w-4 h-4"/>} text="Sedanes" href="/catalogo?q=Sedan" className="order-2 md:order-none" />
+          <Pill icon={<CarFront className="w-4 h-4" />} text="Pick-ups" href="/catalogo?q=Pick-up" className="order-3 md:order-none" />
           <Pill
             icon={<CarFront className="w-4 h-4 text-amber-400 dark:text-amber-300" fill="currentColor"/>}
             text="0KM"
             borderClass="border-gray-900 dark:border-white/20 bg-gray-900 dark:bg-white text-white dark:text-black hover:bg-gray-800 dark:hover:bg-slate-200 shadow-md"
             href="/catalogo?q=0km"
+            className="order-4 md:order-none"
           />
-          <Pill icon={<Grid className="w-4 h-4 text-[#0145F2] dark:text-sky-300"/>} text="Ver Catálogo" borderClass="border-white dark:border-sky-400/20 bg-blue-50/80 dark:bg-sky-400/10 hover:bg-blue-100/90 dark:hover:bg-sky-400/20 text-[#0145F2] dark:text-sky-300" href="/catalogo" />
+          <div className="w-full h-2 md:hidden order-5 md:order-none"></div> {/* Break en móvil */}
+          <Pill icon={<Zap className="w-4 h-4 text-amber-500 dark:text-amber-400" fill="currentColor"/>} text="Híbridos / Eléctricos" href="/catalogo?q=Hibrido" className="order-6 md:order-none" />
+          <Pill icon={<Users className="w-4 h-4 text-emerald-600 dark:text-emerald-400" />} text="Consignar Mi Auto" borderClass="border-white dark:border-emerald-400/20 bg-emerald-50/80 dark:bg-emerald-400/10 hover:bg-emerald-100/90 dark:hover:bg-emerald-400/20 text-emerald-900 dark:text-emerald-300" href="/consignacion" className="order-7 md:order-none" />
+          <Pill icon={<Grid className="w-4 h-4 text-[#0145F2] dark:text-sky-300"/>} text="Ver Catálogo" borderClass="border-white dark:border-sky-400/20 bg-blue-50/80 dark:bg-sky-400/10 hover:bg-blue-100/90 dark:hover:bg-sky-400/20 text-[#0145F2] dark:text-sky-300" href="/catalogo" className="order-8 md:order-none" />
         </motion.div>
 
       </div>
@@ -195,9 +197,9 @@ export default function Hero() {
 }
 
 // Componente Pill actualizado
-function Pill({ icon, text, borderClass = "border-white dark:border-white/15 bg-white/60 dark:bg-white/10 hover:bg-white/90 dark:hover:bg-white/20 text-navy dark:text-white", href = "/catalogo" }: { icon: React.ReactNode, text: string, borderClass?: string, href?: string }) {
+function Pill({ icon, text, borderClass = "border-white dark:border-white/15 bg-white/60 dark:bg-white/10 hover:bg-white/90 dark:hover:bg-white/20 text-navy dark:text-white", href = "/catalogo", className = "" }: { icon: React.ReactNode, text: string, borderClass?: string, href?: string, className?: string }) {
   return (
-    <Link href={href}>
+    <Link href={href} className={className}>
       <div className={`backdrop-blur-md border shadow-[0_4px_12px_rgba(0,0,0,0.04)] dark:shadow-[0_4px_12px_rgba(0,0,0,0.3)] rounded-2xl px-5 py-3 flex items-center gap-2.5 text-[13px] font-black tracking-wide transition-all duration-300 hover:-translate-y-1 hover:shadow-lg cursor-pointer ${borderClass}`}>
         {icon}
         <span>{text}</span>

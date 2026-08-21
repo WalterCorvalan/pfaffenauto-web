@@ -1,6 +1,7 @@
 import { createClient } from "@supabase/supabase-js";
 import { sendTextMessage } from "@/lib/meta/client";
 import { notificarPersona, notificarEncargados } from "@/lib/notificaciones";
+import { registrarError } from "@/lib/logger";
 
 // Corre cada 15 min vía pg_cron (ver SQL de configuración). Idempotente: cada
 // automatización se registra en `automatizaciones_wa` (tipo, referencia_id
@@ -36,7 +37,7 @@ async function enviarWA(telefono: string, texto: string) {
     await sendTextMessage(process.env.META_WHATSAPP_PHONE_NUMBER_ID!, process.env.META_WHATSAPP_TOKEN!, telefono, texto);
     return true;
   } catch (err) {
-    console.error("[cron-automatizaciones] error enviando WA:", err);
+    registrarError("api/cron/automatizaciones enviarWA", err);
     return false;
   }
 }
@@ -157,6 +158,15 @@ async function alertarCuotasPorVencer() {
   }
 }
 
+// Housekeeping de logs_errores: el cron corre cada 15 min, pero solo hace
+// falta purgar una vez por día — se limita a la ventana 03:00-03:14 UTC para
+// no pegarle un DELETE a la tabla en cada corrida.
+async function limpiarLogsAntiguos() {
+  if (new Date().getUTCHours() !== 3) return;
+  const hace30dias = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString();
+  await supabase.from("logs_errores").delete().lt("created_at", hace30dias);
+}
+
 export async function GET(req: Request) {
   const url = new URL(req.url);
   const token = url.searchParams.get("token");
@@ -165,11 +175,12 @@ export async function GET(req: Request) {
   }
 
   await Promise.all([
-    escalarLeadsCalientesSinAtender().catch((err) => console.error("[cron] error escalarLeadsCalientesSinAtender:", err)),
-    agradecerVentasRecientes().catch((err) => console.error("[cron] error agradecerVentasRecientes:", err)),
-    nudgeSinRespuesta().catch((err) => console.error("[cron] error nudgeSinRespuesta:", err)),
-    alertarDocumentacionPendiente().catch((err) => console.error("[cron] error alertarDocumentacionPendiente:", err)),
-    alertarCuotasPorVencer().catch((err) => console.error("[cron] error alertarCuotasPorVencer:", err)),
+    escalarLeadsCalientesSinAtender().catch((err) => registrarError("api/cron escalarLeadsCalientesSinAtender", err)),
+    agradecerVentasRecientes().catch((err) => registrarError("api/cron agradecerVentasRecientes", err)),
+    nudgeSinRespuesta().catch((err) => registrarError("api/cron nudgeSinRespuesta", err)),
+    alertarDocumentacionPendiente().catch((err) => registrarError("api/cron alertarDocumentacionPendiente", err)),
+    alertarCuotasPorVencer().catch((err) => registrarError("api/cron alertarCuotasPorVencer", err)),
+    limpiarLogsAntiguos().catch((err) => registrarError("api/cron limpiarLogsAntiguos", err)),
   ]);
 
   return Response.json({ ok: true, ranAt: new Date().toISOString() });

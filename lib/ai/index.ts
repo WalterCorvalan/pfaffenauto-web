@@ -1,6 +1,7 @@
 import { z } from "zod";
 import Anthropic from "@anthropic-ai/sdk";
 import { registrarCostoIA } from "./costoTracker";
+import { registrarUsoAnthropic } from "./usageLogger";
 
 const anthropic = new Anthropic({
   apiKey: process.env.ANTHROPIC_API_KEY || "",
@@ -30,7 +31,8 @@ function extractJson(text: string): string {
 async function intentarAnthropic(
   systemMsg: string,
   conversationMsgs: { role: "user" | "assistant"; content: string }[],
-  intentoCorreccion: boolean
+  intentoCorreccion: boolean,
+  origen: string
 ): Promise<string> {
   const finalMsgs = !intentoCorreccion
     ? conversationMsgs
@@ -54,6 +56,11 @@ async function intentarAnthropic(
     },
     { timeout: 8000, maxRetries: 0 }
   );
+
+  registrarUsoAnthropic(origen, {
+    inputTokens: response.usage?.input_tokens || 0,
+    outputTokens: response.usage?.output_tokens || 0,
+  });
 
   let content = "";
   for (const block of response.content) {
@@ -90,8 +97,9 @@ async function intentarOpenRouter(
 export async function chatJson<T>(
   schema: z.ZodType<T>,
   messages: ChatMessage[],
-  opts?: { maxRetries?: number }
+  opts?: { maxRetries?: number; origen?: string }
 ): Promise<{ ok: true; data: T } | { ok: false; error: string }> {
+  const origen = opts?.origen ?? "desconocido";
   if (!isAiConfigured()) return { ok: false, error: "No hay ninguna IA configurada (ni ANTHROPIC_API_KEY ni OPENROUTER_API_TOKEN)" };
 
   const maxRetries = opts?.maxRetries ?? 2;
@@ -111,7 +119,7 @@ export async function chatJson<T>(
       try {
         const content =
           proveedor === "anthropic"
-            ? await intentarAnthropic(systemMsg, conversationMsgs, attempt > 0)
+            ? await intentarAnthropic(systemMsg, conversationMsgs, attempt > 0, origen)
             : await intentarOpenRouter(systemMsg, conversationMsgs);
 
         const jsonStr = extractJson(content);

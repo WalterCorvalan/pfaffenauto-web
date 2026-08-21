@@ -3,6 +3,13 @@ import { createServerClient } from "@supabase/ssr";
 import { cookies } from "next/headers";
 import { createClient } from "@supabase/supabase-js";
 import { sendTextMessage } from "@/lib/meta/client";
+import { rateLimit, ipDesdeRequest } from "@/lib/rateLimit";
+import { z } from "zod";
+
+const EnviarWhatsappSchema = z.object({
+  conversacionId: z.string().uuid(),
+  texto: z.string().trim().min(1).max(4000),
+});
 
 const supabaseAdmin = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -12,6 +19,11 @@ const supabaseAdmin = createClient(
 // El vendedor responde manualmente desde /panel/chat — a diferencia del bot,
 // esto sí requiere sesión de staff logueada.
 export async function POST(request: Request) {
+  const limite = rateLimit(ipDesdeRequest(request), { limite: 30, ventanaMs: 60 * 1000 });
+  if (!limite.ok) {
+    return NextResponse.json({ error: "Demasiados mensajes. Esperá un momento." }, { status: 429 });
+  }
+
   const cookieStore = await cookies();
   const supabase = createServerClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -23,10 +35,11 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: "No autorizado." }, { status: 401 });
   }
 
-  const { conversacionId, texto } = await request.json();
-  if (!conversacionId || !texto?.trim()) {
+  const parsed = EnviarWhatsappSchema.safeParse(await request.json());
+  if (!parsed.success) {
     return NextResponse.json({ error: "Falta conversacionId o texto." }, { status: 400 });
   }
+  const { conversacionId, texto } = parsed.data;
 
   const { data: conversacion } = await supabaseAdmin
     .from("whatsapp_conversaciones")

@@ -60,14 +60,14 @@ export async function buscarStockReal(marca: string, modelo: string): Promise<{ 
 
 // Dos pasadas: 1) extrae qué auto nombró el cliente, 2) si nombró uno, busca stock
 // real y le pide a la IA que redacte la respuesta final SOLO con esos datos.
-export async function generarRespuestaAgente(historial: HistorialMensaje[]): Promise<
+export async function generarRespuestaAgente(historial: HistorialMensaje[], canal: string = "agente"): Promise<
   | { ok: true; data: AgentReply; fotoParaEnviar: string | null }
   | { ok: false; error: string }
 > {
   const result = await chatJson(AgentReplySchema, [
     { role: "system", content: buildSystemPrompt() },
     ...historial,
-  ]);
+  ], { origen: canal });
 
   if (!result.ok) return { ok: false, error: result.error };
 
@@ -84,7 +84,7 @@ export async function generarRespuestaAgente(historial: HistorialMensaje[]): Pro
     const result2 = await chatJson(AgentReplySchema, [
       { role: "system", content: buildSystemPrompt(undefined, resultados) },
       ...historial,
-    ]);
+    ], { origen: canal });
 
     if (result2.ok) {
       respuesta = { ...respuesta, reply: result2.data.reply, handoff: result2.data.handoff, calificacion: result2.data.calificacion };

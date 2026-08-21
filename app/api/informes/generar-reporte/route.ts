@@ -2,6 +2,8 @@ import { createClient } from "@supabase/supabase-js";
 import { chatJson, isAiConfigured } from "@/lib/ai";
 import { obtenerDatosMes } from "@/lib/informes";
 import { z } from "zod";
+import { rateLimit, ipDesdeRequest } from "@/lib/rateLimit";
+import { registrarError } from "@/lib/logger";
 
 const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -12,8 +14,13 @@ const ReporteSchema = z.object({
   resumen: z.string(),
 });
 
-export async function POST() {
+export async function POST(req: Request) {
   try {
+    const limite = rateLimit(ipDesdeRequest(req), { limite: 10, ventanaMs: 60 * 1000 });
+    if (!limite.ok) {
+      return Response.json({ error: "Demasiadas solicitudes. Esperá un momento." }, { status: 429 });
+    }
+
     if (!isAiConfigured()) {
       return Response.json({ error: "ANTHROPIC_API_KEY no configurado." }, { status: 400 });
     }
@@ -36,7 +43,7 @@ Respondé ÚNICAMENTE con JSON: {"resumen": "..."}`;
     const resultado = await chatJson(ReporteSchema, [
       { role: "system", content: "Sos un analista financiero conciso, nunca inventás datos que no te dieron." },
       { role: "user", content: prompt },
-    ]);
+    ], { origen: "api/informes/generar-reporte" });
 
     if (!resultado.ok) {
       return Response.json({ error: resultado.error }, { status: 500 });
@@ -52,7 +59,7 @@ Respondé ÚNICAMENTE con JSON: {"resumen": "..."}`;
 
     return Response.json({ ok: true, reporte: guardado });
   } catch (error: any) {
-    console.error("[informes] error generando reporte:", error);
-    return Response.json({ error: error.message || "Error interno" }, { status: 500 });
+    registrarError("api/informes/generar-reporte", error);
+    return Response.json({ error: "No se pudo generar el reporte. Intentá de nuevo." }, { status: 500 });
   }
 }

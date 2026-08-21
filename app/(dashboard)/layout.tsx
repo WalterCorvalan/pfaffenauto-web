@@ -40,6 +40,7 @@ import {
   Sun,
   FileText,
   ShieldCheck,
+  AlertTriangle,
 } from "lucide-react";
 const SECCIONES_INICIALES = {
   inventario: true,
@@ -67,6 +68,7 @@ export default function DashboardLayout({
   const [notifPorSeccion, setNotifPorSeccion] = useState<
     Record<string, number>
   >({});
+  const [erroresUltimas24h, setErroresUltimas24h] = useState(0);
   const [seccionesAbiertas, setSeccionesAbiertas] =
     useState<Record<string, boolean>>(SECCIONES_INICIALES);
   const [darkMode, setDarkMode] = useState(false);
@@ -220,6 +222,19 @@ export default function DashboardLayout({
       supabase.removeChannel(canal);
     };
   }, [userId]);
+
+  // Badge de "salud del sistema": cuántos errores cayeron en logs_errores en
+  // las últimas 24h, para que admin/encargado lo vean sin tener que entrar a
+  // /panel/errores a mirar.
+  useEffect(() => {
+    if (userProfile.rol !== "admin" && userProfile.rol !== "encargado") return;
+    const desde = new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString();
+    supabase
+      .from("logs_errores")
+      .select("id", { count: "exact", head: true })
+      .gte("created_at", desde)
+      .then(({ count }) => setErroresUltimas24h(count || 0));
+  }, [userProfile.rol]);
 
   const handleLogout = async () => {
     await supabase.auth.signOut();
@@ -523,6 +538,12 @@ export default function DashboardLayout({
                       icon={History}
                       label="Registro de Cambios"
                       href="/panel/logs"
+                    />
+                    <NavLinkItem
+                      icon={AlertTriangle}
+                      label="Errores del Sistema"
+                      href="/panel/errores"
+                      notifications={erroresUltimas24h || undefined}
                     />
                     {userProfile.rol === "admin" && (
                       <>

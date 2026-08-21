@@ -47,5 +47,5 @@ Respondé ÚNICAMENTE con el JSON.`;
   return chatJson(InterpretacionSchema, [
     { role: "system", content: "Sos un asistente que traduce búsquedas en lenguaje natural a filtros estructurados de un catálogo de autos. Nunca inventás valores fuera de la lista permitida." },
     { role: "user", content: prompt },
-  ]);
+  ], { origen: "api/buscar-ia" });
 }

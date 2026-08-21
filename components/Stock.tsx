@@ -606,34 +606,39 @@ export function VehicleCard({
         : `US$ ${auto.precio_publicado_usd?.toLocaleString("es-AR")}`;
 
   return (
-    <Link
-      href={`/catalogo/${auto.slug}`}
-      className="block group h-full focus:outline-none"
-    >
-      <div
-        className={`bg-white/40 dark:bg-white/5 backdrop-blur-2xl rounded-2xl overflow-hidden flex flex-col h-full shadow-[0_8px_32px_rgba(0,0,0,0.04)] dark:shadow-[0_8px_32px_rgba(0,0,0,0.4)] hover:shadow-[0_20px_48px_rgba(1,69,242,0.12)] dark:hover:shadow-[0_20px_48px_rgba(1,69,242,0.2)] hover:bg-white/70 dark:hover:bg-white/10 transition-all duration-500 relative transform group-hover:-translate-y-1 border ${
-          estaSeleccionado
-            ? "border-[#0145F2] ring-1 ring-[#0145F2]"
-            : "border-white/60 dark:border-white/10 hover:border-white dark:hover:border-white/20"
-        }`}
+    <div className="relative h-full group">
+      {/* El botón de comparar va afuera del <Link> a propósito: un <button>
+         anidado dentro de un <a> es HTML inválido y el click se filtra a la
+         navegación en varios navegadores incluso con stopPropagation. Como
+         hermano posicionado encima, nunca puede disparar el Link. */}
+      {onToggleComparar && (
+        <button
+          onClick={(e) => onToggleComparar(e, auto)}
+          className={`absolute top-3.5 left-3.5 z-30 p-2 rounded-full shadow-sm transition-all duration-300 border hover:scale-110 active:scale-95 ${
+            estaSeleccionado
+              ? "bg-[#0145F2] text-white border-[#0145F2]"
+              : "bg-white/80 dark:bg-black/40 backdrop-blur-md text-gray-400 dark:text-slate-300 hover:text-[#0145F2] dark:hover:text-sky-300 border-white/60 dark:border-white/15"
+          }`}
+          title="Comparar vehículo"
+        >
+          <Scale className="w-3.5 h-3.5" />
+        </button>
+      )}
+
+      <Link
+        href={`/catalogo/${auto.slug}`}
+        className="block h-full focus:outline-none"
       >
-        <div className="absolute inset-0 bg-gradient-to-tr from-transparent via-white/40 dark:via-white/10 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-700 pointer-events-none z-20"></div>
+        <div
+          className={`bg-white/40 dark:bg-white/5 backdrop-blur-2xl rounded-2xl overflow-hidden flex flex-col h-full shadow-[0_8px_32px_rgba(0,0,0,0.04)] dark:shadow-[0_8px_32px_rgba(0,0,0,0.4)] hover:shadow-[0_20px_48px_rgba(1,69,242,0.12)] dark:hover:shadow-[0_20px_48px_rgba(1,69,242,0.2)] hover:bg-white/70 dark:hover:bg-white/10 transition-all duration-500 relative transform group-hover:-translate-y-1 border ${
+            estaSeleccionado
+              ? "border-[#0145F2] ring-1 ring-[#0145F2]"
+              : "border-white/60 dark:border-white/10 hover:border-white dark:hover:border-white/20"
+          }`}
+        >
+          <div className="absolute inset-0 bg-gradient-to-tr from-transparent via-white/40 dark:via-white/10 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-700 pointer-events-none z-20"></div>
 
-        {onToggleComparar && (
-          <button
-            onClick={(e) => onToggleComparar(e, auto)}
-            className={`absolute top-3.5 left-3.5 z-30 p-2 rounded-full shadow-sm transition-all duration-300 border hover:scale-110 active:scale-95 ${
-              estaSeleccionado
-                ? "bg-[#0145F2] text-white border-[#0145F2]"
-                : "bg-white/80 dark:bg-black/40 backdrop-blur-md text-gray-400 dark:text-slate-300 hover:text-[#0145F2] dark:hover:text-sky-300 border-white/60 dark:border-white/15"
-            }`}
-            title="Comparar vehículo"
-          >
-            <Scale className="w-3.5 h-3.5" />
-          </button>
-        )}
-
-        <div className="relative h-[160px] sm:h-[180px] bg-white/30 dark:bg-white/5 flex items-center justify-center overflow-hidden mix-blend-multiply dark:mix-blend-normal">
+          <div className="relative h-[160px] sm:h-[180px] bg-white/30 dark:bg-white/5 flex items-center justify-center overflow-hidden mix-blend-multiply dark:mix-blend-normal">
           {auto.multimedia_vehiculos?.[0] ? (
             <Image
               src={auto.multimedia_vehiculos[0].url_archivo}
@@ -682,7 +687,8 @@ export function VehicleCard({
             </p>
           )}
         </div>
-      </div>
-    </Link>
+        </div>
+      </Link>
+    </div>
   );
 }

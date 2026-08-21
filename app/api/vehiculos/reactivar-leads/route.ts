@@ -3,6 +3,13 @@ import { createServerClient } from "@supabase/ssr";
 import { cookies } from "next/headers";
 import { createClient } from "@supabase/supabase-js";
 import { sendTextMessage } from "@/lib/meta/client";
+import { rateLimit, ipDesdeRequest } from "@/lib/rateLimit";
+import { registrarError } from "@/lib/logger";
+import { z } from "zod";
+
+const ReactivarLeadsSchema = z.object({
+  vehiculoId: z.string().uuid(),
+});
 
 const supabaseAdmin = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -15,6 +22,11 @@ const LIMITE_LEADS = 20;
 // habían quedado "fríos"/perdidos preguntando por la misma marca y modelo —
 // reactiva leads que de otra forma quedan muertos en la base para siempre.
 export async function POST(request: Request) {
+  const limite = rateLimit(ipDesdeRequest(request), { limite: 10, ventanaMs: 60 * 1000 });
+  if (!limite.ok) {
+    return NextResponse.json({ error: "Demasiadas solicitudes. Esperá un momento." }, { status: 429 });
+  }
+
   const cookieStore = await cookies();
   const supabase = createServerClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -24,8 +36,9 @@ export async function POST(request: Request) {
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) return NextResponse.json({ error: "No autorizado." }, { status: 401 });
 
-  const { vehiculoId } = await request.json();
-  if (!vehiculoId) return NextResponse.json({ error: "Falta vehiculoId." }, { status: 400 });
+  const parsed = ReactivarLeadsSchema.safeParse(await request.json());
+  if (!parsed.success) return NextResponse.json({ error: "Falta vehiculoId." }, { status: 400 });
+  const { vehiculoId } = parsed.data;
 
   const { data: vehiculo } = await supabaseAdmin
     .from("vehiculos")
@@ -80,7 +93,7 @@ export async function POST(request: Request) {
       await supabaseAdmin.from("automatizaciones_wa").insert({ tipo: tipoAutomatizacion, referencia_id: c.id });
       notificados++;
     } catch (err) {
-      console.error("[reactivar-leads] error enviando WA:", err);
+      registrarError("api/vehiculos/reactivar-leads", err);
     }
   }
 

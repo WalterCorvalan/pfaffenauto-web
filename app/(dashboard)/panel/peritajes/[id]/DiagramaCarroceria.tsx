@@ -39,6 +39,7 @@ const IMAGENES_VISTA: Record<string, { src: string; width: number; height: numbe
   lateral_izq: { src: "/diagramas/lateral-izquierdo.png", width: 2120, height: 642 },
   lateral_der: { src: "/diagramas/lateral-derecho.png", width: 1917, height: 593 },
   atras: { src: "/diagramas/detras.png", width: 1266, height: 979 },
+  arriba: { src: "/diagramas/arriba.png", width: 687, height: 1636 },
 };
 
 const VISTAS: { id: string; titulo: string; zonas: Zona[] }[] = [
@@ -88,6 +89,19 @@ const VISTAS: { id: string; titulo: string; zonas: Zona[] }[] = [
       { id: "luneta", label: "Luneta", x: 50.3, y: 11.1 },
     ],
   },
+  {
+    id: "arriba",
+    titulo: "Arriba",
+    zonas: [
+      { id: "capot", label: "Capot", x: 50, y: 15 },
+      { id: "techo", label: "Techo", x: 50, y: 35 },
+      { id: "puerta_del_izq", label: "Puerta delantera izquierda", x: 12, y: 55 },
+      { id: "puerta_del_der", label: "Puerta delantera derecha", x: 88, y: 55 },
+      { id: "puerta_tras_izq", label: "Puerta trasera izquierda", x: 12, y: 75 },
+      { id: "puerta_tras_der", label: "Puerta trasera derecha", x: 88, y: 75 },
+      { id: "baul", label: "Baúl", x: 50, y: 91 },
+    ],
+  },
 ];
 
 export default function DiagramaCarroceria({ peritajeId, marcasIniciales }: { peritajeId: string; marcasIniciales: Record<string, string> }) {
@@ -133,10 +147,18 @@ export default function DiagramaCarroceria({ peritajeId, marcasIniciales }: { pe
         {VISTAS.map((vista) => {
           const img = IMAGENES_VISTA[vista.id];
           const esLateral = vista.id.startsWith("lateral");
+          // "arriba" es un silueta angosta y alta (auto visto desde el techo) —
+          // necesita su propio ancho máximo, si no hereda el de frente/atrás y
+          // queda gigante de alto.
+          const maxWidthClass = esLateral
+            ? "max-w-[420px] sm:max-w-[440px]"
+            : vista.id === "arriba"
+              ? "max-w-[150px] sm:max-w-[170px]"
+              : "max-w-[220px] sm:max-w-[240px]";
           return (
             <div key={vista.id} className="flex flex-col items-center w-full sm:w-auto">
               <p className="text-[10px] font-bold uppercase tracking-widest text-slate-400 dark:text-slate-500 text-center mb-1">{vista.titulo}</p>
-              <div className={`relative bg-white rounded-xl p-2 border border-slate-100 w-full ${esLateral ? "max-w-[420px] sm:max-w-[440px]" : "max-w-[220px] sm:max-w-[240px]"}`}>
+              <div className={`relative bg-white rounded-xl p-2 border border-slate-100 w-full ${maxWidthClass}`}>
                 <div className="relative w-full" style={{ aspectRatio: `${img.width} / ${img.height}` }}>
                   <Image src={img.src} alt={`Diagrama ${vista.titulo}`} fill sizes="400px" className="object-contain pointer-events-none select-none" />
                   {vista.zonas.map((zona) => {

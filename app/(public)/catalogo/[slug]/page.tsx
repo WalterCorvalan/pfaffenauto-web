@@ -225,11 +225,11 @@ export default async function VehiculoDetallePage({
             />
           </div>
         </div>
+        
+        <VehiculoPermuta vehiculoId={auto.id} />
 
         <VehiculosRelacionados titulo="También te podría interesar" vehiculos={tambienTeInteresa || []} />
         <VehiculosRelacionados titulo="Autos con precio similar" vehiculos={precioSimilar || []} />
-
-        <VehiculoPermuta />
 
         <div className="mt-16">
           <DestacadosCarousel vehiculos={destacados || []} />
@@ -518,7 +518,7 @@ function VehiculosRelacionados({ titulo, vehiculos }: { titulo: string; vehiculo
   );
 }
 
-function VehiculoPermuta() {
+function VehiculoPermuta({ vehiculoId }: { vehiculoId: string }) {
   return (
     <div className="mt-24 print:hidden relative z-10">
       <div className="bg-gradient-to-r from-navy to-[#0145F2] rounded-[32px] px-6 py-6 md:px-10 md:py-8 flex flex-col md:flex-row items-center justify-between gap-6 shadow-[0_12px_40px_rgba(1,69,242,0.2)] relative overflow-hidden">
@@ -535,7 +535,7 @@ function VehiculoPermuta() {
           </p>
         </div>
         <a
-          href="/cotizador"
+          href={`/cotizador?permuta=${vehiculoId}`}
           target="_blank"
           rel="noopener noreferrer"
           className="relative z-10 shrink-0 bg-white/10 backdrop-blur-xl border border-white/40 hover:bg-white text-white hover:text-navy font-black text-[10px] md:text-xs uppercase tracking-widest px-8 py-4 rounded-full transition-all duration-300 shadow-[0_8px_25px_rgba(0,0,0,0.2)] hover:shadow-[0_8px_30px_rgba(255,255,255,0.3)] flex items-center gap-2 active:scale-95 group"

@@ -4,6 +4,13 @@ import { isAiConfigured } from "@/lib/ai";
 import { generarRespuestaAgente, type HistorialMensaje } from "@/lib/ai/agente";
 import { rateLimit, ipDesdeRequest } from "@/lib/rateLimit";
 import { notificarPersona, notificarEncargados } from "@/lib/notificaciones";
+import { registrarError } from "@/lib/logger";
+import { z } from "zod";
+
+const WebchatSchema = z.object({
+  sessionId: z.string().trim().min(1).max(100),
+  mensaje: z.string().trim().min(1).max(2000),
+});
 
 // Canal Web Chat: mismo agente de IA que WhatsApp (lib/ai/agente.ts), pero
 // síncrono request/respuesta en vez de webhook. Tablas propias (web_chat_*),
@@ -21,11 +28,11 @@ export async function POST(req: Request) {
   }
 
   const body = await req.json().catch(() => null);
-  const sessionId = body?.sessionId;
-  const mensaje = body?.mensaje;
-  if (!sessionId || typeof sessionId !== "string" || !mensaje || typeof mensaje !== "string" || !mensaje.trim()) {
+  const parsed = WebchatSchema.safeParse(body);
+  if (!parsed.success) {
     return NextResponse.json({ error: "Faltan sessionId o mensaje." }, { status: 400 });
   }
+  const { sessionId, mensaje } = parsed.data;
 
   let { data: conversacion } = await supabase
     .from("web_chat_conversaciones")
@@ -81,10 +88,10 @@ export async function POST(req: Request) {
     content: m.texto,
   }));
 
-  const result = await generarRespuestaAgente(historial);
+  const result = await generarRespuestaAgente(historial, "api/webchat");
 
   if (!result.ok) {
-    console.error("[webchat] error del agente:", result.error);
+    registrarError("api/webchat agente", result.error);
     return NextResponse.json({ reply: "Perdón, tuve un problema para responder. ¿Podés reformular tu consulta?" });
   }
 

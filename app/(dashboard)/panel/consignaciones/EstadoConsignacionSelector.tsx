@@ -13,7 +13,7 @@ const COLOR: Record<string, string> = {
   "Descartado": "bg-rose-500 text-white border-rose-500",
 };
 
-export default function EstadoConsignacionSelector({ id, estado }: { id: string; estado: string }) {
+export default function EstadoConsignacionSelector({ id, estado }: { id: string; estado: string | null }) {
   const router = useRouter();
   const [actual, setActual] = useState(estado || "Pendiente");
   const [cargando, setCargando] = useState(false);
@@ -25,7 +25,7 @@ export default function EstadoConsignacionSelector({ id, estado }: { id: string;
     setCargando(false);
     if (error) {
       alert("Error al cambiar el estado");
-      setActual(estado);
+      setActual(estado || "Pendiente");
       return;
     }
     router.refresh();

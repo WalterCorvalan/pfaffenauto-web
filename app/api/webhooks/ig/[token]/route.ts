@@ -3,6 +3,7 @@ import { createClient } from "@supabase/supabase-js";
 import { generarRespuestaAgente } from "@/lib/ai/agente";
 import { sendInstagramPrivateReply, sendInstagramMessage } from "@/lib/meta/client";
 import { notificarPersona, notificarEncargados } from "@/lib/notificaciones";
+import { registrarError } from "@/lib/logger";
 
 // Comentario en un post → respuesta privada automática (estilo ManyChat), y a
 // partir de ahí la conversación sigue como un DM normal, atendido por el mismo
@@ -165,7 +166,7 @@ async function procesarMensajeDirecto(msg: any) {
     status: "received",
   });
   if (error && error.code !== "23505") {
-    console.error("[ig-webhook] error insertando mensaje:", error);
+    registrarError("api/webhooks/ig insertando mensaje", error);
     return;
   }
   if (error?.code === "23505") return; // duplicado, Meta reintentó el mismo evento
@@ -205,9 +206,9 @@ async function ejecutarAgente(conversacionId: string, igUserId: string) {
     .filter((m) => m.texto)
     .map((m) => ({ role: (m.direccion === "in" ? "user" : "assistant") as "user" | "assistant", content: m.texto as string }));
 
-  const result = await generarRespuestaAgente(historial);
+  const result = await generarRespuestaAgente(historial, "api/webhooks/ig");
   if (!result.ok) {
-    console.error("[ig-agente] error:", result.error);
+    registrarError("api/webhooks/ig agente", result.error);
     return;
   }
 
@@ -244,7 +245,7 @@ async function ejecutarAgente(conversacionId: string, igUserId: string) {
       await sendInstagramMessage(process.env.META_INSTAGRAM_USER_ID!, process.env.META_INSTAGRAM_TOKEN!, igUserId, reply);
       await supabase.from("instagram_mensajes").update({ status: "sent" }).eq("id", mensajeSaliente.id);
     } catch (err) {
-      console.error("[ig-agente] error enviando DM:", err);
+      registrarError("api/webhooks/ig enviando DM", err);
       await supabase.from("instagram_mensajes").update({ status: "failed" }).eq("id", mensajeSaliente.id);
     }
   }

@@ -1,10 +1,36 @@
+import { z } from "zod";
 import { NextResponse } from "next/server";
 import { createServerClient } from "@supabase/ssr";
 import { cookies } from "next/headers";
-import { createClient } from "@supabase/supabase-js"; 
+import { createClient } from "@supabase/supabase-js";
+import { rateLimit, ipDesdeRequest } from "@/lib/rateLimit";
+import { registrarError } from "@/lib/logger";
+
+const RolSchema = z.enum(["admin", "encargado", "vendedor", "taller"]);
+
+const CrearUsuarioSchema = z.object({
+  email: z.string().trim().email().max(150),
+  password: z.string().min(8).max(72),
+  nombre: z.string().trim().min(1).max(100),
+  rol: RolSchema,
+  sucursal_id: z.string().uuid().optional().nullable(),
+});
+
+const ActualizarUsuarioSchema = z.object({
+  id: z.string().uuid(),
+  nombre: z.string().trim().min(1).max(100),
+  rol: RolSchema,
+  sucursal_id: z.string().uuid().optional().nullable(),
+  activo: z.boolean().optional(),
+});
 
 export async function POST(request: Request) {
   try {
+    const limite = rateLimit(ipDesdeRequest(request), { limite: 20, ventanaMs: 60 * 1000 });
+    if (!limite.ok) {
+      return NextResponse.json({ error: "Demasiadas solicitudes. Esperá un momento." }, { status: 429 });
+    }
+
     const cookieStore = await cookies();
     
     // 1. Cliente normal (con cookies) para saber QUIÉN hace la petición
@@ -40,8 +66,11 @@ export async function POST(request: Request) {
       process.env.SUPABASE_SERVICE_ROLE_KEY! 
     );
 
-    const body = await request.json();
-    const { email, password, nombre, rol, sucursal_id } = body;
+    const parsed = CrearUsuarioSchema.safeParse(await request.json());
+    if (!parsed.success) {
+      return NextResponse.json({ error: "Datos de usuario inválidos." }, { status: 400 });
+    }
+    const { email, password, nombre, rol, sucursal_id } = parsed.data;
 
     // Crear usuario real en Supabase Auth
     const { data: newUser, error: createError } = await supabaseAdmin.auth.admin.createUser({
@@ -62,8 +91,8 @@ export async function POST(request: Request) {
 
     return NextResponse.json({ success: true, user: newUser.user });
   } catch (error: any) {
-    console.error("Error API Usuarios:", error);
-    return NextResponse.json({ error: error.message }, { status: 400 });
+    registrarError("api/usuarios POST", error);
+    return NextResponse.json({ error: "No se pudo crear el usuario." }, { status: 400 });
   }
 }
 
@@ -90,12 +119,19 @@ async function verificarAdmin() {
 
 export async function PATCH(request: Request) {
   try {
+    const limite = rateLimit(ipDesdeRequest(request), { limite: 20, ventanaMs: 60 * 1000 });
+    if (!limite.ok) {
+      return NextResponse.json({ error: "Demasiadas solicitudes. Esperá un momento." }, { status: 429 });
+    }
+
     const { user, error } = await verificarAdmin();
     if (error) return error;
 
-    const body = await request.json();
-    const { id, nombre, rol, sucursal_id, activo } = body;
-    if (!id) return NextResponse.json({ error: "Falta el id del usuario" }, { status: 400 });
+    const parsed = ActualizarUsuarioSchema.safeParse(await request.json());
+    if (!parsed.success) {
+      return NextResponse.json({ error: "Datos de usuario inválidos." }, { status: 400 });
+    }
+    const { id, nombre, rol, sucursal_id, activo } = parsed.data;
 
     const supabaseAdmin = createClient(
       process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -114,13 +150,18 @@ export async function PATCH(request: Request) {
 
     return NextResponse.json({ success: true });
   } catch (error: any) {
-    console.error("Error API Usuarios (PATCH):", error);
-    return NextResponse.json({ error: error.message }, { status: 400 });
+    registrarError("api/usuarios PATCH", error);
+    return NextResponse.json({ error: "No se pudo actualizar el usuario." }, { status: 400 });
   }
 }
 
 export async function DELETE(request: Request) {
   try {
+    const limite = rateLimit(ipDesdeRequest(request), { limite: 20, ventanaMs: 60 * 1000 });
+    if (!limite.ok) {
+      return NextResponse.json({ error: "Demasiadas solicitudes. Esperá un momento." }, { status: 429 });
+    }
+
     const { user, error } = await verificarAdmin();
     if (error) return error;
 
@@ -144,7 +185,7 @@ export async function DELETE(request: Request) {
 
     return NextResponse.json({ success: true });
   } catch (error: any) {
-    console.error("Error API Usuarios (DELETE):", error);
-    return NextResponse.json({ error: error.message }, { status: 400 });
+    registrarError("api/usuarios DELETE", error);
+    return NextResponse.json({ error: "No se pudo eliminar el usuario." }, { status: 400 });
   }
 }
