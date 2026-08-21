@@ -325,7 +325,6 @@ export default function LandingKarry() {
       </section>
 
       {/* ================= HISTORIA ================= */}
-      {/* TODO (Walter): reemplazar por el texto real de la marca — este es un placeholder */}
       <section id="historia" className="bg-black py-12 md:py-20 border-b border-white/10">
         <div className="mx-auto max-w-4xl px-6 text-center">
           <span className="inline-flex items-center gap-2 bg-[#0145F2]/10 text-[#4d8bff] text-[10px] font-bold uppercase tracking-widest px-4 py-1.5 rounded-full mb-6 border border-[#0145F2]/20">
@@ -335,7 +334,7 @@ export default function LandingKarry() {
             Karry en Argentina, con el respaldo de Pfaffen Autos
           </h2>
           <p className="text-slate-400 text-sm md:text-base leading-relaxed max-w-2xl mx-auto">
-            Pfaffen Autos es concesionario oficial de Karry en el país, garantizando unidades 0KM con documentación al día, service oficial y repuestos originales. Elegimos representar la marca por su relación precio-utilidad, pensada para quienes necesitan una herramienta de trabajo confiable desde el primer día.
+            Karry es la marca de utilitarios del Chery Group, creada en 2009 para cubrir pick-ups, furgones y vehículos de carga liviana. Forma parte de la red que llevó al Grupo Chery a exportar a más de 80 países. En Argentina apunta directo a la última milla: la logística y el transporte de mercadería que mueve al comercio y al e-commerce del día a día. Pfaffen Autos es concesionario oficial de Karry en el país, garantizando unidades 0KM con documentación al día, service oficial y repuestos originales.
           </p>
         </div>
       </section>

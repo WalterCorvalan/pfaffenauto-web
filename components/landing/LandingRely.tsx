@@ -267,7 +267,6 @@ export default function LandingRely() {
       </section>
 
       {/* ================= HISTORIA ================= */}
-      {/* TODO (Walter): reemplazar por el texto real de la marca — este es un placeholder */}
       <section id="historia" className="bg-black py-20 border-b border-white/10">
         <div className="mx-auto max-w-4xl px-6 text-center">
           <span className="inline-flex items-center gap-2 bg-[#F26B1D]/10 text-[#F26B1D] text-[10px] font-bold uppercase tracking-widest px-4 py-1.5 rounded-full mb-6 border border-[#F26B1D]/20">
@@ -277,7 +276,7 @@ export default function LandingRely() {
             Rely en Argentina, con el respaldo de Pfaffen Autos
           </h2>
           <p className="text-slate-400 text-sm md:text-base leading-relaxed max-w-2xl mx-auto">
-            Pfaffen Autos es concesionario oficial de Rely en el país, garantizando unidades 0KM con documentación al día, service oficial y repuestos originales. Elegimos representar la marca porque combina el precio más accesible del segmento pick-up mediana con la robustez que necesita el trabajo diario.
+            Rely nace en 2009 como una de las marcas del Chery Group, el mayor exportador de autos de pasajeros de China durante 22 años consecutivos. Su nombre resume el espíritu de la marca: <em className="not-italic text-slate-300">Rebuild, Explore, Link, Yield</em> — reconstruir, explorar, conectar, rendir. Hoy se especializa en pick-ups medianas, con la ingeniería que respalda a todo el Grupo Chery. Pfaffen Autos es concesionario oficial de Rely en el país, garantizando unidades 0KM con documentación al día, service oficial y repuestos originales.
           </p>
         </div>
       </section>
