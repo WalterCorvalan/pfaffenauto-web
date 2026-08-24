@@ -43,6 +43,7 @@ import {
   AlertTriangle,
   Camera,
 } from "lucide-react";
+import DolarBlueBadge from "./DolarBlueBadge";
 const SECCIONES_INICIALES = {
   inventario: true,
   crm: true,
@@ -243,34 +244,47 @@ export default function DashboardLayout({
   };
 
   // Enlace Minimalista estilo "Vocero"
+  // Colores por flujo de negocio (calcados del sitio público, para que el
+  // panel no sea "un quilombo" de colores random): cotizar = azul, consignar
+  // = verde, vender = naranja. El resto de las secciones se queda con el
+  // esquema neutro de siempre.
+  const COLORES_NAV: Record<string, { bg: string; text: string; textActive: string; badge: string }> = {
+    blue: { bg: "bg-blue-50 dark:bg-[#002a6e]", text: "text-blue-900 dark:text-white", textActive: "text-[#0145F2] dark:text-sky-300", badge: "bg-[#0145F2] text-white" },
+    emerald: { bg: "bg-emerald-50 dark:bg-[#002a6e]", text: "text-emerald-900 dark:text-white", textActive: "text-emerald-700 dark:text-emerald-300", badge: "bg-emerald-700 text-white" },
+    orange: { bg: "bg-orange-50 dark:bg-[#002a6e]", text: "text-orange-900 dark:text-white", textActive: "text-orange-600 dark:text-orange-300", badge: "bg-orange-600 text-white" },
+    default: { bg: "bg-emerald-50 dark:bg-[#002a6e]", text: "text-emerald-900 dark:text-white", textActive: "text-emerald-700 dark:text-sky-300", badge: "bg-emerald-800 text-white" },
+  };
+
   const NavLinkItem = ({
     icon: Icon,
     label,
     href,
     exact = false,
     notifications,
+    color = "default",
   }: any) => {
     const isActive = exact ? pathname === href : pathname?.startsWith(href);
+    const c = COLORES_NAV[color] || COLORES_NAV.default;
     return (
       <Link
         href={href}
         onClick={() => setIsOpen(false)}
         className={`flex items-center justify-between px-3 py-2 mx-2 rounded-md transition-colors ${
           isActive
-            ? "bg-emerald-50 dark:bg-[#002a6e] text-emerald-900 dark:text-white font-medium"
+            ? `${c.bg} ${c.text} font-medium`
             : "text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-[#002a6e] hover:text-slate-900 dark:hover:text-white"
         }`}
       >
         <div className="flex items-center gap-3">
           <Icon
-            className={`w-[18px] h-[18px] ${isActive ? "text-emerald-700 dark:text-sky-300" : "text-slate-400 dark:text-slate-400"}`}
+            className={`w-[18px] h-[18px] ${isActive ? c.textActive : "text-slate-400 dark:text-slate-400"}`}
             strokeWidth={isActive ? 2.5 : 2}
           />
           <span className="text-[13px]">{label}</span>
         </div>
         {notifications && (
           <span
-            className={`text-[10px] font-bold px-1.5 py-0.5 rounded-full ${isActive ? "bg-emerald-800 text-white" : "bg-slate-200 dark:bg-[#0a2a6b] text-slate-600 dark:text-slate-300"}`}
+            className={`text-[10px] font-bold px-1.5 py-0.5 rounded-full ${isActive ? c.badge : "bg-slate-200 dark:bg-[#0a2a6b] text-slate-600 dark:text-slate-300"}`}
           >
             {notifications}
           </span>
@@ -313,7 +327,8 @@ export default function DashboardLayout({
           <span className="font-bold text-slate-900 dark:text-white">
             Pfaffen CRM
           </span>
-          <div className="flex items-center gap-1">
+          <div className="flex items-center gap-2">
+            <DolarBlueBadge compacto />
             <button
               onClick={toggleDarkMode}
               className="text-slate-600 dark:text-slate-300 p-2"
@@ -371,6 +386,10 @@ export default function DashboardLayout({
                 <Moon className="w-4 h-4" />
               )}
             </button>
+          </div>
+
+          <div className="hidden md:flex px-4 py-2.5 border-b border-slate-200 dark:border-[#0a2a6b] shrink-0">
+            <DolarBlueBadge />
           </div>
 
           {/* Links de Navegación Completos (Scrollable) */}
@@ -444,6 +463,7 @@ export default function DashboardLayout({
                     label="Cotizaciones"
                     href="/panel/cotizaciones"
                     notifications={notifPorSeccion.cotizaciones}
+                    color="blue"
                   />
                   <NavLinkItem
                     icon={ClipboardCheck}
@@ -455,6 +475,14 @@ export default function DashboardLayout({
                     label="Consignaciones"
                     href="/panel/consignaciones"
                     notifications={notifPorSeccion.consignaciones}
+                    color="emerald"
+                  />
+                  <NavLinkItem
+                    icon={Wallet}
+                    label="Comprar"
+                    href="/panel/comprar"
+                    notifications={notifPorSeccion.comprar}
+                    color="orange"
                   />
                   <NavLinkItem
                     icon={Search}

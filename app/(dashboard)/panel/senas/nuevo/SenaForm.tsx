@@ -12,7 +12,7 @@ import ConfirmarPrecioModal from "../../ConfirmarPrecioModal";
 
 const inputClass = "w-full bg-slate-50 dark:bg-[#00246b] border border-slate-200 dark:border-[#0a2a6b] rounded-xl px-3 py-2.5 text-sm outline-none focus:border-indigo-500 focus:bg-white dark:focus:bg-[#002a6e] transition-colors text-slate-900 dark:text-white placeholder:text-slate-400 dark:placeholder:text-slate-500";
 
-export default function SenaForm({ clientes, vehiculos, vendedores, sucursales, cotizacionId }: { clientes: any[]; vehiculos: any[]; vendedores: any[]; sucursales: any[]; cotizacionId?: string | null }) {
+export default function SenaForm({ clientes, vehiculos, vendedores, sucursales, vinculoLead }: { clientes: any[]; vehiculos: any[]; vendedores: any[]; sucursales: any[]; vinculoLead?: { campo: string; id: string } | null }) {
   const router = useRouter();
   const [guardando, setGuardando] = useState(false);
 
@@ -66,7 +66,7 @@ export default function SenaForm({ clientes, vehiculos, vendedores, sucursales, 
         sucursal_id: sucursalId,
         vendedor_id: vendedorId || user?.id,
         estado: "Activa",
-        cotizacion_id: cotizacionId || null,
+        ...(vinculoLead ? { [vinculoLead.campo]: vinculoLead.id } : {}),
         cliente_id: cliente.id,
         dni: cliente.dni,
         fecha_nacimiento: cliente.fecha_nacimiento || null,

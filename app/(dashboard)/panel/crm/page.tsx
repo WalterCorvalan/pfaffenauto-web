@@ -17,13 +17,10 @@ export default async function CRMPage() {
     miRol = perfil?.rol || "vendedor";
   }
 
-  const [{ data: cotizaciones }, { data: motivosCierre }] = await Promise.all([
-    supabase
-      .from("cotizaciones")
-      .select("*, perfiles:perfiles!cotizaciones_vendedor_id_fkey ( nombre ), vehiculos ( marca, modelo, sucursales!vehiculos_sucursal_id_fkey ( nombre ) )") // incluye asistencia_solicitada/atendida vía *
-      .order("created_at", { ascending: false }),
-    supabase.from("motivos_cierre").select("*").eq("activo", true).order("nombre"),
-  ]);
+  // Leads del CRM = solo contacto directo (WhatsApp/Web Chat) — nunca cotizaciones,
+  // consignaciones o compras: esas ya tienen su propia sección del panel y traerlas
+  // acá duplicaba la gestión y mezclaba "interesado en comprar" con "nos ofrece su auto".
+  const { data: motivosCierre } = await supabase.from("motivos_cierre").select("*").eq("activo", true).order("nombre");
 
   const { data: vendedores } = await supabase.from("perfiles").select("id, nombre").eq("rol", "vendedor").eq("activo", true).order("nombre");
   const { data: sucursales } = await supabase.from("sucursales").select("id, nombre").order("nombre");
@@ -80,9 +77,7 @@ export default async function CRMPage() {
     vehiculos: c.vehiculos,
   }));
 
-  const leadsCotizaciones = (cotizaciones || []).map((c: any) => ({ ...c, origen: "cotizacion" }));
-
-  let leadsUnificados = [...leadsCotizaciones, ...leadsWa, ...leadsWeb];
+  let leadsUnificados = [...leadsWa, ...leadsWeb];
 
   // Vendedor: solo ve sus leads asignados + los sin asignar (para poder tomarlos). Nunca los de otro vendedor.
   // Admin siempre ve todo. Encargado ve todo por default, con toggle "Mis leads" en el Kanban (client-side).

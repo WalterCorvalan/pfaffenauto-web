@@ -2,7 +2,7 @@ import type { SupabaseClient } from "@supabase/supabase-js";
 
 export type SeccionNotificacion =
   | "senas" | "presupuestos" | "boletos" | "tareas" | "pedidos" | "chat"
-  | "cotizaciones" | "consignaciones" | "crm" | "postventa" | "financiacion" | "stock" | "postulaciones";
+  | "cotizaciones" | "consignaciones" | "comprar" | "crm" | "postventa" | "financiacion" | "stock" | "postulaciones";
 
 // Avisa a todos los encargados activos (in-app, vía la campanita) — el vendedor
 // no está seguro de un precio y necesita que un encargado lo revise, o llegó

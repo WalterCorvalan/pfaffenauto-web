@@ -34,8 +34,8 @@ export default async function ConsignacionesPage() {
       {/* ================= HEADER FIJO ================= */}
       <header className="flex items-center justify-between border-b border-slate-200 dark:border-[#0a2a6b] px-6 py-4 bg-white dark:bg-[#001c55] shrink-0">
         <div className="flex items-center gap-4">
-          <div className="w-10 h-10 rounded-lg bg-indigo-50 dark:bg-[#002a6e] border border-indigo-100 dark:border-[#0a2a6b] flex items-center justify-center shrink-0">
-            <Handshake className="w-5 h-5 text-indigo-600 dark:text-sky-300" />
+          <div className="w-10 h-10 rounded-lg bg-emerald-50 dark:bg-[#002a6e] border border-emerald-100 dark:border-[#0a2a6b] flex items-center justify-center shrink-0">
+            <Handshake className="w-5 h-5 text-emerald-600 dark:text-emerald-300" />
           </div>
           <div>
             <h1 className="text-lg font-bold text-slate-900 dark:text-white leading-tight">

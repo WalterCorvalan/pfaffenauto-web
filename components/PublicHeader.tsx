@@ -300,7 +300,7 @@ export default function PublicHeader() {
           >
             {/* Se agrega un padding top leve para darle aire respecto a elementos flotantes externos (como el botón de dark mode) */}
             <div className="flex flex-col pt-4 pb-6 px-6">
-              
+
               {/* Lista de navegación principal */}
               <div className="divide-y divide-slate-100 dark:divide-white/5">
                 {navLinks.map((link) => (

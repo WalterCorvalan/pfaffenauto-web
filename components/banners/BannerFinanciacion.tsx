@@ -79,14 +79,14 @@ export default function BannerFinanciacion({ linkAFinanciacion = false }: { link
             {/* Sombras y brillos de fondo para que resalte */}
             <div className="absolute inset-0 bg-gradient-to-tr from-[#0145F2]/30 to-sky-400/20 dark:from-blue-600/30 dark:to-sky-400/20 blur-3xl rounded-[3rem] transform rotate-3 scale-105" />
             
-            <div className="relative bg-slate-900 dark:bg-[#0a0a0f] border border-slate-800 dark:border-white/10 rounded-[2rem] p-6 sm:p-10 shadow-2xl overflow-hidden">
-              <Calculator className="absolute -top-6 -right-6 w-40 h-40 text-white/5 pointer-events-none transform rotate-12" />
+            <div className="relative bg-white dark:bg-[#111520] border border-slate-200 dark:border-white/10 rounded-[2rem] p-6 sm:p-10 shadow-2xl overflow-hidden">
+              <Calculator className="absolute -top-6 -right-6 w-40 h-40 text-slate-900/5 dark:text-white/5 pointer-events-none transform rotate-12" />
 
               <div className="flex items-center justify-between mb-8 relative z-10">
-                <h3 className="text-xs font-black uppercase tracking-widest text-sky-400 flex items-center gap-2">
+                <h3 className="text-xs font-black uppercase tracking-widest text-[#0145F2] dark:text-sky-400 flex items-center gap-2">
                   <Calculator className="w-4 h-4" /> Simulador de Referencia
                 </h3>
-                <span className="text-[10px] font-bold text-slate-500 bg-white/5 px-3 py-1 rounded-full border border-white/10">
+                <span className="text-[10px] font-bold text-slate-500 dark:text-slate-400 bg-slate-50 dark:bg-white/5 px-3 py-1 rounded-full border border-slate-200 dark:border-white/10">
                   Vehículo base: $ {PRECIO_VEHICULO.toLocaleString("es-AR")}
                 </span>
               </div>
@@ -95,10 +95,10 @@ export default function BannerFinanciacion({ linkAFinanciacion = false }: { link
                 {/* Slider Anticipo */}
                 <div>
                   <div className="flex justify-between items-end mb-2">
-                    <label className="text-[11px] font-bold text-slate-400 uppercase tracking-widest">
+                    <label className="text-[11px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-widest">
                       Tu Anticipo ({anticipoPorcentaje}%)
                     </label>
-                    <span className="text-2xl sm:text-3xl font-black text-white tracking-tight">
+                    <span className="text-2xl sm:text-3xl font-black text-slate-900 dark:text-white tracking-tight">
                       $ {anticipoCliente.toLocaleString("es-AR")}
                     </span>
                   </div>
@@ -109,13 +109,13 @@ export default function BannerFinanciacion({ linkAFinanciacion = false }: { link
                     step="5"
                     value={anticipoPorcentaje}
                     onChange={(e) => setAnticipoPorcentaje(Number(e.target.value))}
-                    className="w-full h-2.5 bg-slate-800 rounded-full appearance-none cursor-pointer accent-sky-400 mt-2"
+                    className="w-full h-2.5 bg-slate-200 dark:bg-slate-800 rounded-full appearance-none cursor-pointer accent-[#0145F2] dark:accent-sky-400 mt-2"
                   />
                 </div>
 
                 {/* Plazos */}
                 <div>
-                  <label className="text-[11px] font-bold text-slate-400 uppercase tracking-widest block mb-3">
+                  <label className="text-[11px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-widest block mb-3">
                     Plazo a financiar
                   </label>
                   <div className="grid grid-cols-3 gap-3">
@@ -126,7 +126,7 @@ export default function BannerFinanciacion({ linkAFinanciacion = false }: { link
                         className={`py-3.5 rounded-2xl text-sm font-black transition-all ${
                           meses === plazo
                             ? "bg-[#0145F2] text-white shadow-[0_0_20px_rgba(1,69,242,0.4)] scale-105"
-                            : "bg-slate-800 text-slate-400 hover:bg-slate-700 hover:text-white"
+                            : "bg-slate-100 dark:bg-slate-800 text-slate-500 dark:text-slate-400 hover:bg-slate-200 dark:hover:bg-slate-700 hover:text-slate-900 dark:hover:text-white"
                         }`}
                       >
                         {plazo} cuotas
@@ -136,12 +136,12 @@ export default function BannerFinanciacion({ linkAFinanciacion = false }: { link
                 </div>
 
                 {/* Resultado */}
-                <div className="bg-white/5 border border-white/10 p-5 rounded-2xl flex flex-col sm:flex-row sm:items-center justify-between gap-4 backdrop-blur-sm mt-4">
+                <div className="bg-slate-50 dark:bg-white/5 border border-slate-200 dark:border-white/10 p-5 rounded-2xl flex flex-col sm:flex-row sm:items-center justify-between gap-4 backdrop-blur-sm mt-4">
                   <div>
-                    <span className="text-[10px] uppercase font-bold tracking-widest text-slate-400 block mb-1">
+                    <span className="text-[10px] uppercase font-bold tracking-widest text-slate-500 dark:text-slate-400 block mb-1">
                       Cuota Mensual Estimada
                     </span>
-                    <span className="text-3xl sm:text-4xl font-black text-white">
+                    <span className="text-3xl sm:text-4xl font-black text-slate-900 dark:text-white">
                       $ {calcularCuota(meses).toLocaleString("es-AR")}
                     </span>
                   </div>
@@ -152,18 +152,18 @@ export default function BannerFinanciacion({ linkAFinanciacion = false }: { link
                   {linkAFinanciacion ? (
                     <Link
                       href="/financiacion"
-                      className="w-full bg-white hover:bg-slate-100 text-slate-900 font-black text-sm uppercase tracking-widest py-4 rounded-xl flex items-center justify-center gap-2 transition-all active:scale-95 shadow-xl"
+                      className="w-full bg-[#0145F2] hover:bg-blue-700 text-white font-black text-sm uppercase tracking-widest py-4 rounded-xl flex items-center justify-center gap-2 transition-all active:scale-95 shadow-xl"
                     >
                       Iniciar Solicitud Online
                     </Link>
                   ) : (
                     <SolicitarFinanciacionForm
                       label="Iniciar Solicitud Online"
-                      className="w-full bg-white hover:bg-slate-100 text-slate-900 font-black text-sm uppercase tracking-widest py-4 rounded-xl flex items-center justify-center gap-2 transition-all active:scale-95 shadow-xl"
+                      className="w-full bg-[#0145F2] hover:bg-blue-700 text-white font-black text-sm uppercase tracking-widest py-4 rounded-xl flex items-center justify-center gap-2 transition-all active:scale-95 shadow-xl"
                     />
                   )}
-                  <p className="text-[10px] text-slate-500 font-medium text-center mt-4 px-4">
-                    * Simulación referencial para un vehículo de $ {PRECIO_VEHICULO.toLocaleString("es-AR")}. 
+                  <p className="text-[10px] text-slate-400 dark:text-slate-500 font-medium text-center mt-4 px-4">
+                    * Simulación referencial para un vehículo de $ {PRECIO_VEHICULO.toLocaleString("es-AR")}.
                     Tasa del {(TNA * 100).toFixed(0)}% TNA sujeta a evaluación crediticia y posibles modificaciones del Banco Nación.
                   </p>
                 </div>

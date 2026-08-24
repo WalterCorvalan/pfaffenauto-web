@@ -103,8 +103,11 @@ export default function VehiculosCarousel({
   const activo = items[activeIndex];
   const enMovimiento = fase !== "idle";
 
-  const altoAuto = isMobile ? "88%" : "140%";
-  const bottomAuto = isMobile ? "24%" : "8%";
+  // En mobile el tamaño se fija por ANCHO (no alto): fijar el alto con este
+  // aspect-ratio angosto (0.6:1) daba un ancho mayor al viewport y recortaba
+  // el auto por los costados contra el overflow-hidden del contenedor.
+  const tamanoAuto = isMobile ? { width: "60vw" as const } : { height: "140%" as const };
+  const bottomAuto = isMobile ? "26%" : "8%";
 
   return (
     <div
@@ -214,7 +217,7 @@ export default function VehiculosCarousel({
             style={{
               left: "50%",
               bottom: bottomAuto,
-              height: altoAuto,
+              ...tamanoAuto,
               aspectRatio: "0.6 / 1",
               zIndex: 15,
               transformOrigin: "bottom center",
@@ -241,7 +244,7 @@ export default function VehiculosCarousel({
               position: "absolute",
               left: "50%",
               bottom: bottomAuto,
-              height: altoAuto,
+              ...tamanoAuto,
               aspectRatio: "0.6 / 1",
               zIndex: 20,
               transformOrigin: "bottom center",

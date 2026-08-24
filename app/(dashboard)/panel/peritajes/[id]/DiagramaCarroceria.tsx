@@ -1,9 +1,9 @@
 "use client";
 
-import { useState } from "react";
+import { useRef, useState } from "react";
 import Image from "next/image";
 import { supabase } from "@/lib/supabase/client";
-import { Loader2 } from "lucide-react";
+import { Loader2, Move, Copy, Check } from "lucide-react";
 
 // Símbolos calcados del papel: Rayado (—), Elemento a cambiar (X),
 // Pintura quemada (○), Pintura cuarteada (□).
@@ -109,7 +109,37 @@ export default function DiagramaCarroceria({ peritajeId, marcasIniciales }: { pe
   const [popupAbierto, setPopupAbierto] = useState<{ vista: string; zona: Zona } | null>(null);
   const [guardando, setGuardando] = useState(false);
 
+  // Modo calibración: permite arrastrar los puntos sobre la imagen para
+  // reubicarlos con el mouse en vez de tocar los % a mano en el código.
+  // Las posiciones ajustadas se guardan solo en este componente (no en DB,
+  // las zonas son fijas para todos los peritajes) — el botón "Copiar" exporta
+  // el JSON final para pegarlo en el array VISTAS y dejarlo permanente.
+  const [modoAjuste, setModoAjuste] = useState(false);
+  const [overrides, setOverrides] = useState<Record<string, { x: number; y: number }>>({});
+  const [copiado, setCopiado] = useState(false);
+  const arrastrando = useRef<{ vista: string; zonaId: string } | null>(null);
+
   const claveMarca = (vista: string, zonaId: string) => `${vista}:${zonaId}`;
+
+  const posicionZona = (vistaId: string, zona: Zona) => overrides[claveMarca(vistaId, zona.id)] || { x: zona.x, y: zona.y };
+
+  const moverA = (vistaId: string, zonaId: string, e: React.PointerEvent<HTMLDivElement>) => {
+    if (arrastrando.current?.vista !== vistaId) return;
+    const rect = e.currentTarget.getBoundingClientRect();
+    const x = Math.min(100, Math.max(0, ((e.clientX - rect.left) / rect.width) * 100));
+    const y = Math.min(100, Math.max(0, ((e.clientY - rect.top) / rect.height) * 100));
+    setOverrides((prev) => ({ ...prev, [claveMarca(vistaId, zonaId)]: { x: Math.round(x * 10) / 10, y: Math.round(y * 10) / 10 } }));
+  };
+
+  const copiarJson = () => {
+    const resultado = VISTAS.map((v) => ({
+      ...v,
+      zonas: v.zonas.map((z) => ({ ...z, ...posicionZona(v.id, z) })),
+    }));
+    navigator.clipboard.writeText(JSON.stringify(resultado, null, 2));
+    setCopiado(true);
+    setTimeout(() => setCopiado(false), 2000);
+  };
 
   const elegirSimbolo = async (simbolo: string | null) => {
     if (!popupAbierto) return;
@@ -140,10 +170,31 @@ export default function DiagramaCarroceria({ peritajeId, marcasIniciales }: { pe
               </span>
             ))}
           </div>
+          {modoAjuste && Object.keys(overrides).length > 0 && (
+            <button
+              type="button"
+              onClick={copiarJson}
+              className="flex items-center gap-1 text-[10px] font-bold text-indigo-600 dark:text-sky-300 bg-indigo-50 dark:bg-sky-400/10 border border-indigo-100 dark:border-sky-400/20 px-2.5 py-1.5 rounded-lg hover:bg-indigo-100 transition-colors"
+            >
+              {copiado ? <Check className="w-3 h-3" /> : <Copy className="w-3 h-3" />} {copiado ? "Copiado" : "Copiar JSON"}
+            </button>
+          )}
+          <button
+            type="button"
+            onClick={() => setModoAjuste((v) => !v)}
+            title="Arrastrar puntos para reubicarlos"
+            className={`flex items-center gap-1 text-[10px] font-bold px-2.5 py-1.5 rounded-lg border transition-colors ${
+              modoAjuste
+                ? "bg-indigo-600 text-white border-indigo-600"
+                : "bg-white dark:bg-transparent text-slate-500 dark:text-slate-400 border-slate-200 dark:border-[#0a2a6b] hover:border-indigo-400"
+            }`}
+          >
+            <Move className="w-3 h-3" /> {modoAjuste ? "Ajustando puntos" : "Ajustar puntos"}
+          </button>
         </div>
       </div>
 
-      <div className="p-4 flex flex-wrap items-end justify-center gap-4">
+      <div className="p-4 flex flex-wrap items-end justify-center gap-4 lg:grid lg:[grid-template-columns:repeat(auto-fill,minmax(260px,1fr))] lg:items-stretch lg:gap-5">
         {VISTAS.map((vista) => {
           const img = IMAGENES_VISTA[vista.id];
           const esLateral = vista.id.startsWith("lateral");
@@ -156,25 +207,43 @@ export default function DiagramaCarroceria({ peritajeId, marcasIniciales }: { pe
               ? "max-w-[150px] sm:max-w-[170px]"
               : "max-w-[220px] sm:max-w-[240px]";
           return (
-            <div key={vista.id} className="flex flex-col items-center w-full sm:w-auto">
+            <div key={vista.id} className="flex flex-col items-center w-full sm:w-auto lg:w-full lg:bg-slate-50 lg:dark:bg-[#00246b] lg:border lg:border-slate-100 lg:dark:border-[#0a2a6b] lg:rounded-xl lg:p-3">
               <p className="text-[10px] font-bold uppercase tracking-widest text-slate-400 dark:text-slate-500 text-center mb-1">{vista.titulo}</p>
-              <div className={`relative bg-white rounded-xl p-2 border border-slate-100 w-full ${maxWidthClass}`}>
-                <div className="relative w-full" style={{ aspectRatio: `${img.width} / ${img.height}` }}>
+              <div className={`relative bg-white rounded-xl p-2 lg:p-1 border border-slate-100 w-full lg:max-w-none ${maxWidthClass}`}>
+                <div
+                  className="relative w-full lg:h-64 lg:!aspect-auto"
+                  style={{ aspectRatio: `${img.width} / ${img.height}` }}
+                  onPointerMove={(e) => moverA(vista.id, arrastrando.current?.zonaId || "", e)}
+                  onPointerUp={() => { arrastrando.current = null; }}
+                  onPointerLeave={() => { arrastrando.current = null; }}
+                >
                   <Image src={img.src} alt={`Diagrama ${vista.titulo}`} fill sizes="400px" className="object-contain pointer-events-none select-none" />
                   {vista.zonas.map((zona) => {
                     const clave = claveMarca(vista.id, zona.id);
                     const marcada = marcas[clave];
                     const simboloInfo = marcada ? SIMBOLOS.find((s) => s.clave === marcada) : null;
+                    const pos = posicionZona(vista.id, zona);
                     return (
                       <button
                         key={zona.id}
                         type="button"
-                        onClick={() => setPopupAbierto({ vista: vista.id, zona })}
+                        onClick={() => { if (!modoAjuste) setPopupAbierto({ vista: vista.id, zona }); }}
+                        onPointerDown={(e) => {
+                          if (!modoAjuste) return;
+                          e.preventDefault();
+                          arrastrando.current = { vista: vista.id, zonaId: zona.id };
+                        }}
                         title={zona.label}
-                        className={`absolute -translate-x-1/2 -translate-y-1/2 w-4 h-4 rounded-full border transition-all flex items-center justify-center ${marcada ? "bg-rose-500/20 border-rose-500" : "bg-transparent border-slate-300 hover:bg-indigo-500/10 hover:border-indigo-400"}`}
-                        style={{ left: `${zona.x}%`, top: `${zona.y}%` }}
+                        className={`absolute -translate-x-1/2 -translate-y-1/2 w-4 h-4 lg:w-5 lg:h-5 rounded-full border shadow-sm transition-all flex items-center justify-center ${
+                          modoAjuste
+                            ? "bg-indigo-500/20 border-indigo-500 cursor-grab active:cursor-grabbing"
+                            : marcada
+                              ? "bg-rose-500/20 border-rose-500"
+                              : "bg-white/90 border-slate-400 hover:bg-indigo-500/10 hover:border-indigo-500"
+                        }`}
+                        style={{ left: `${pos.x}%`, top: `${pos.y}%` }}
                       >
-                        {simboloInfo && (
+                        {!modoAjuste && simboloInfo && (
                           <span className={`${COLOR_SIMBOLO[simboloInfo.clave]} text-[11px] font-black leading-none`}>{simboloInfo.glifo}</span>
                         )}
                       </button>

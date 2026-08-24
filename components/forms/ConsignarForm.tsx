@@ -3,7 +3,8 @@
 import { useState, useEffect, useRef } from "react";
 import Link from "next/link";
 import Script from "next/script";
-import { ArrowLeft, Loader2, CheckCircle2, ChevronDown, X } from "lucide-react";
+import { ArrowLeft, Loader2, ChevronDown, X } from "lucide-react";
+import EnvioExitoso from "@/components/EnvioExitoso";
 
 declare global {
   interface Window {
@@ -199,7 +200,7 @@ export default function ConsignarForm() {
             {!enviado && (
               <div className="mb-4">
                 <h2 className="text-xl font-black text-navy dark:text-white tracking-tight">
-                  Iniciá el proceso en {segundos} {segundos === 1 ? "segundo" : "segundos"}
+                  {segundos > 1 ? `Iniciá el proceso en ${segundos} segundos` : "Ya casi terminás, dale para adelante"}
                 </h2>
                 <p className="text-xs text-slate-400 font-medium">
                   {step === 1 && "Ingresá los datos del vehículo a consignar"}
@@ -448,20 +449,15 @@ export default function ConsignarForm() {
               </div>
             ) : (
               /* ÉXITO */
-              <div className="text-center py-12 animate-fadeIn space-y-4">
-                <div className="w-16 h-16 bg-emerald-100 dark:bg-emerald-400/10 text-emerald-600 dark:text-emerald-300 rounded-full flex items-center justify-center mx-auto mb-2">
-                  <CheckCircle2 className="w-8 h-8" />
-                </div>
-                <h3 className="text-2xl font-black text-navy dark:text-white uppercase tracking-tighter">¡Solicitud recibida!</h3>
-                <p className="text-slate-500 dark:text-slate-400 text-xs leading-relaxed max-w-xs mx-auto">
-                  Hemos recibido los datos de tu vehículo y uno de nuestros expertos en consignación te contactará a la brevedad para coordinar.
-                </p>
-                <div className="pt-4">
-                  <Link href="/" className="inline-block py-3.5 px-8 bg-gradient-to-r from-emerald-600 to-teal-500 text-white font-black rounded-2xl text-xs uppercase tracking-widest shadow-lg shadow-emerald-500/20">
-                    Volver al inicio
-                  </Link>
-                </div>
-              </div>
+              <EnvioExitoso
+                color="emerald"
+                titulo="¡Solicitud recibida!"
+                mensaje="Hemos recibido los datos de tu vehículo y uno de nuestros expertos en consignación te contactará a la brevedad para coordinar."
+              >
+                <Link href="/" className="inline-block py-3.5 px-8 bg-gradient-to-r from-emerald-600 to-teal-500 text-white font-black rounded-2xl text-xs uppercase tracking-widest shadow-lg shadow-emerald-500/20">
+                  Volver al inicio
+                </Link>
+              </EnvioExitoso>
             )}
 
           </div>

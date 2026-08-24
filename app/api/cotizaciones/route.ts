@@ -118,15 +118,12 @@ export async function POST(req: Request) {
     const esConsignacion = tipoPeritajeFinal === "consignacion";
     const esFinanciacion = tipoPeritajeFinal === "financiacion";
     const esPermuta = tipoPeritajeFinal === "permuta";
+    // "venta": nos ofrecen SU auto para comprárselo (no confundir con "Ventas"
+    // del panel, que son los boletos de autos que NOSOTROS vendemos del stock).
+    // Vive en su propia sección "Comprar" del panel.
+    const esVenta = tipoPeritajeFinal === "venta";
     const nombreVehiculo = `${cotizacion.marca} ${cotizacion.modelo}`;
     const sucursalTexto = esFinanciacion ? ` — ${cotizacion.sucursal_preferida ?? "Casa Central"}` : "";
-    notificarEncargados(
-      supabase,
-      `Nuevo lead: ${cotizacion.nombre} — ${nombreVehiculo}`,
-      `/panel/crm/${data.id}`,
-      "crm",
-      "nuevo_lead"
-    ).catch((err) => console.error("[cotizaciones] error notificando crm:", err));
     notificarEncargados(
       supabase,
       esConsignacion
@@ -135,9 +132,11 @@ export async function POST(req: Request) {
         ? `Nueva solicitud de crédito: ${cotizacion.nombre} — ${nombreVehiculo}${sucursalTexto}`
         : esPermuta
         ? `Nueva permuta: ${cotizacion.nombre} ofrece su ${nombreVehiculo}`
+        : esVenta
+        ? `Nueva oferta de compra: ${cotizacion.nombre} quiere vendernos su ${nombreVehiculo}`
         : `Nueva cotización: ${cotizacion.nombre} — ${nombreVehiculo}`,
-      esConsignacion ? "/panel/consignaciones" : esFinanciacion ? "/panel/ventas/financiaciones" : "/panel/cotizaciones",
-      esConsignacion ? "consignaciones" : esFinanciacion ? "financiacion" : "cotizaciones",
+      esConsignacion ? "/panel/consignaciones" : esFinanciacion ? "/panel/ventas/financiaciones" : esVenta ? "/panel/comprar" : "/panel/cotizaciones",
+      esConsignacion ? "consignaciones" : esFinanciacion ? "financiacion" : esVenta ? "comprar" : "cotizaciones",
       "nuevo_lead"
     ).catch((err) => console.error("[cotizaciones] error notificando sección:", err));
 
@@ -168,8 +167,8 @@ export async function POST(req: Request) {
               : esPermuta
               ? mensajePermuta
               : `Nuevo lead para tu ${nombreVehiculoObjetivo}: ${cotizacion.nombre}.`,
-            esFinanciacion ? "/panel/ventas/financiaciones" : `/panel/crm/${data.id}`,
-            esFinanciacion ? "financiacion" : "crm"
+            esFinanciacion ? "/panel/ventas/financiaciones" : "/panel/cotizaciones",
+            esFinanciacion ? "financiacion" : "cotizaciones"
           ).catch((err) => console.error("[cotizaciones] error notificando vendedor asignado:", err));
         });
     }

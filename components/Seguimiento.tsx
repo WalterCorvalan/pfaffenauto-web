@@ -34,7 +34,7 @@ export default function Seguimiento() {
             </div>
             
             <h2 className="text-3xl sm:text-4xl lg:text-5xl font-black text-slate-900 dark:text-white tracking-tight leading-[1.1] mb-6">
-              Seguí el camino de tu nuevo auto.
+              Seguí el camino de tu operacion.
             </h2>
             
             <p className="text-slate-600 dark:text-slate-400 text-[15px] leading-relaxed mb-10 max-w-lg mx-auto lg:mx-0">

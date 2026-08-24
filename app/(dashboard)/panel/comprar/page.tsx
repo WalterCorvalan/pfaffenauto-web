@@ -1,12 +1,14 @@
 import { createServerClient } from "@supabase/ssr";
 import { cookies } from "next/headers";
-import { ClipboardList, CheckCircle, Clock, Image as ImageIcon, Video, MapPin, MessageSquareText, Calculator, ArrowRightLeft } from "lucide-react";
-import PrecioSugeridoEditor from "./PrecioSugeridoEditor";
-import HistorialTasacionBadge from "./HistorialTasacionBadge";
-import GaleriaFotos from "./GaleriaFotos";
+import { Wallet, CheckCircle, Clock, ImageIcon, MapPin, MessageSquareText, Calculator } from "lucide-react";
+import PrecioSugeridoEditor from "../cotizaciones/PrecioSugeridoEditor";
+import HistorialTasacionBadge from "../cotizaciones/HistorialTasacionBadge";
+import GaleriaFotos from "../cotizaciones/GaleriaFotos";
 import NotificacionesBell from "../../NotificacionesBell";
 
-export default async function CotizacionesPage() {
+// "Comprar": nos ofrecen SU auto para comprárselo (tipo_peritaje = "venta").
+// No confundir con /panel/boletos ("Ventas" — nosotros vendiendo del stock).
+export default async function ComprarPage() {
   const cookieStore = await cookies();
   const supabase = createServerClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -14,23 +16,17 @@ export default async function CotizacionesPage() {
     { cookies: { getAll: () => cookieStore.getAll() } }
   );
 
-  // FILTRO LOGÍSTICO: tasaciones/permutas — "venta" (nos ofrecen su auto para
-  // comprarlo) tiene su propia sección "Comprar" del panel.
   const { data: cotizaciones } = await supabase
     .from("cotizaciones")
     .select("*")
-    .neq("tipo_peritaje", "consignacion")
-    .neq("tipo_peritaje", "financiacion")
-    .neq("tipo_peritaje", "venta")
+    .eq("tipo_peritaje", "venta")
     .order("created_at", { ascending: false });
 
-  // ================= MÉTRICAS INTEGRADAS =================
   const total = cotizaciones?.length || 0;
-  const tasados = cotizaciones?.filter(c => c.precio_sugerido).length || 0;
+  const tasados = cotizaciones?.filter((c) => c.precio_sugerido).length || 0;
   const pendientes = total - tasados;
-  const presenciales = cotizaciones?.filter(c => c.tipo_peritaje?.toLowerCase().includes("presencial")).length || 0;
+  const presenciales = cotizaciones?.filter((c) => c.puede_venir_sucursal).length || 0;
 
-  // Historial: agrupamos por teléfono para detectar clientes con más de una tasación
   const historialPorTelefono = new Map<string, typeof cotizaciones>();
   (cotizaciones || []).forEach((c) => {
     const lista = historialPorTelefono.get(c.telefono) || [];
@@ -38,39 +34,29 @@ export default async function CotizacionesPage() {
     historialPorTelefono.set(c.telefono, lista);
   });
 
-  // Permuta: cada cotización con vehiculo_id apunta al auto que el cliente
-  // quiere comprar — traemos precio/marca/modelo de esos autos para mostrar
-  // "resta $X" sin que el vendedor tenga que ir a buscar el precio a mano.
-  const idsVehiculosObjetivo = [...new Set((cotizaciones || []).filter((c) => c.vehiculo_id).map((c) => c.vehiculo_id as string))];
-  const { data: vehiculosObjetivo } = idsVehiculosObjetivo.length
-    ? await supabase.from("vehiculos").select("id, marca, modelo, precio_publicado_ars, precio_publicado_usd").in("id", idsVehiculosObjetivo)
-    : { data: [] as any[] };
-  const vehiculoObjetivoPorId = new Map((vehiculosObjetivo || []).map((v) => [v.id, v]));
-
   return (
     <div className="flex flex-col h-full w-full bg-white dark:bg-[#001233] overflow-hidden">
 
       {/* ================= HEADER Y MÉTRICAS ================= */}
       <header className="flex flex-col md:flex-row md:items-center justify-between border-b border-slate-200 dark:border-[#0a2a6b] px-6 py-3.5 bg-white dark:bg-[#001c55] shrink-0 gap-4">
         <div className="flex items-center gap-4">
-          <div className="w-10 h-10 rounded-lg bg-blue-50 dark:bg-[#002a6e] border border-blue-100 dark:border-[#0a2a6b] flex items-center justify-center shrink-0">
-            <ClipboardList className="w-5 h-5 text-[#0145F2] dark:text-sky-300" />
+          <div className="w-10 h-10 rounded-lg bg-orange-50 dark:bg-[#002a6e] border border-orange-100 dark:border-[#0a2a6b] flex items-center justify-center shrink-0">
+            <Wallet className="w-5 h-5 text-orange-600 dark:text-orange-300" />
           </div>
           <div>
             <h1 className="text-[17px] font-bold text-slate-900 dark:text-white leading-tight">
-              Solicitudes de Tasación
+              Comprar
             </h1>
             <p className="text-[11px] font-medium text-slate-500 dark:text-slate-400 mt-0.5">
-              Vehículos ingresados para venta directa o permuta
+              Particulares que nos ofrecen su auto para comprarlo
             </p>
           </div>
         </div>
 
-        {/* Resumen de Métricas tipo Badges */}
         <div className="flex items-center gap-2 overflow-x-auto custom-scrollbar pb-1 md:pb-0">
-          <NotificacionesBell seccion="cotizaciones" />
+          <NotificacionesBell seccion="comprar" />
           <div className="flex items-center gap-1.5 bg-slate-50 dark:bg-[#00246b] border border-slate-200 dark:border-[#0a2a6b] px-2.5 py-1 rounded-md text-[11px] font-bold text-slate-600 dark:text-slate-300 whitespace-nowrap">
-            <ClipboardList className="w-3.5 h-3.5 text-slate-400" /> {total} Recibidas
+            <Wallet className="w-3.5 h-3.5 text-slate-400" /> {total} Recibidas
           </div>
           <div className="flex items-center gap-1.5 bg-amber-50 border border-amber-200 px-2.5 py-1 rounded-md text-[11px] font-bold text-amber-700 whitespace-nowrap">
             <Clock className="w-3.5 h-3.5 text-amber-500" /> {pendientes} Procesando
@@ -78,8 +64,8 @@ export default async function CotizacionesPage() {
           <div className="flex items-center gap-1.5 bg-emerald-50 border border-emerald-200 px-2.5 py-1 rounded-md text-[11px] font-bold text-emerald-700 whitespace-nowrap">
             <CheckCircle className="w-3.5 h-3.5 text-emerald-500" /> {tasados} Tasados
           </div>
-          <div className="flex items-center gap-1.5 bg-blue-50 border border-blue-200 px-2.5 py-1 rounded-md text-[11px] font-bold text-blue-700 whitespace-nowrap">
-            <MapPin className="w-3.5 h-3.5 text-blue-500" /> {presenciales} Presenciales
+          <div className="flex items-center gap-1.5 bg-orange-50 border border-orange-200 px-2.5 py-1 rounded-md text-[11px] font-bold text-orange-700 whitespace-nowrap">
+            <MapPin className="w-3.5 h-3.5 text-orange-500" /> {presenciales} Presenciales
           </div>
         </div>
       </header>
@@ -88,19 +74,13 @@ export default async function CotizacionesPage() {
       <div className="flex-1 overflow-y-auto p-6 bg-[#F9FAFB] dark:bg-[#001233] custom-scrollbar">
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5 gap-4 max-w-[1800px] mx-auto">
           {cotizaciones?.map((cot) => {
-            const esPresencial = cot.tipo_peritaje?.toLowerCase().includes("presencial");
             const anteriores = (historialPorTelefono.get(cot.telefono) || [])
               .filter((c) => c.id !== cot.id && new Date(c.created_at) < new Date(cot.created_at));
-            const vehiculoObjetivo = cot.vehiculo_id ? vehiculoObjetivoPorId.get(cot.vehiculo_id) : null;
-            const precioObjetivo = vehiculoObjetivo?.precio_publicado_ars || null;
-            const resta = vehiculoObjetivo && cot.precio_sugerido && precioObjetivo
-              ? precioObjetivo - cot.precio_sugerido
-              : null;
 
             return (
               <div
                 key={cot.id}
-                className={`bg-white dark:bg-[#001c55] border border-slate-200 dark:border-[#0a2a6b] border-t-4 rounded-xl p-4 flex flex-col shadow-sm hover:shadow-md hover:border-emerald-500/30 transition-all group ${cot.precio_sugerido ? "border-t-emerald-400" : "border-t-amber-400"}`}
+                className={`bg-white dark:bg-[#001c55] border border-slate-200 dark:border-[#0a2a6b] border-t-4 rounded-xl p-4 flex flex-col shadow-sm hover:shadow-md hover:border-orange-500/30 transition-all group ${cot.precio_sugerido ? "border-t-emerald-400" : "border-t-amber-400"}`}
               >
                 {/* Top: Estado y Modalidad */}
                 <div className="flex justify-between items-start mb-3">
@@ -114,15 +94,15 @@ export default async function CotizacionesPage() {
                     </span>
                   )}
 
-                  <span className={`text-[9px] font-bold uppercase tracking-widest px-2 py-0.5 rounded flex items-center gap-1 border ${esPresencial ? "bg-blue-50 text-blue-700 border-blue-200" : "bg-slate-100 dark:bg-[#00246b] text-slate-500 dark:text-slate-300 border-slate-200 dark:border-[#0a2a6b]"}`}>
-                    {esPresencial ? <MapPin className="w-3 h-3" /> : <ImageIcon className="w-3 h-3" />}
-                    {esPresencial ? "Presencial" : "Online"}
+                  <span className={`text-[9px] font-bold uppercase tracking-widest px-2 py-0.5 rounded flex items-center gap-1 border ${cot.puede_venir_sucursal ? "bg-orange-50 text-orange-700 border-orange-200" : "bg-slate-100 dark:bg-[#00246b] text-slate-500 dark:text-slate-300 border-slate-200 dark:border-[#0a2a6b]"}`}>
+                    {cot.puede_venir_sucursal ? <MapPin className="w-3 h-3" /> : <ImageIcon className="w-3 h-3" />}
+                    {cot.puede_venir_sucursal ? "Presencial" : "Online"}
                   </span>
                 </div>
 
                 {/* Info Cliente */}
                 <div className="flex items-center gap-2 mb-3">
-                  <div className="w-7 h-7 rounded-full bg-emerald-500 text-white flex items-center justify-center font-bold text-xs shrink-0">
+                  <div className="w-7 h-7 rounded-full bg-orange-500 text-white flex items-center justify-center font-bold text-xs shrink-0">
                     {cot.nombre.substring(0, 2).toUpperCase()}
                   </div>
                   <h3 className="font-bold text-[14px] text-slate-900 dark:text-white truncate">
@@ -140,7 +120,7 @@ export default async function CotizacionesPage() {
                     </span>
                     <span className="text-[10px] font-bold text-slate-500 dark:text-slate-400">{cot.kilometraje.toLocaleString()} km</span>
                   </div>
-                  <p className="text-[13px] font-semibold text-emerald-700 dark:text-emerald-400 leading-tight truncate">
+                  <p className="text-[13px] font-semibold text-orange-700 dark:text-orange-400 leading-tight truncate">
                     {cot.modelo}
                   </p>
                   <p className="text-[11px] text-slate-500 dark:text-slate-400 truncate mt-0.5">
@@ -148,29 +128,9 @@ export default async function CotizacionesPage() {
                   </p>
                 </div>
 
-                {/* Permuta: auto que el cliente quiere comprar + cuánto le resta pagar */}
-                {vehiculoObjetivo && (
-                  <div className="bg-indigo-50 dark:bg-indigo-400/10 border border-indigo-100 dark:border-indigo-400/20 p-2.5 rounded-lg mb-4 -mt-2">
-                    <span className="flex items-center gap-1 text-[9px] uppercase tracking-widest font-bold text-indigo-500 dark:text-indigo-300 mb-1">
-                      <ArrowRightLeft className="w-3 h-3" /> Permuta por
-                    </span>
-                    <p className="text-[12px] font-bold text-indigo-900 dark:text-indigo-200 truncate">
-                      {vehiculoObjetivo.marca} {vehiculoObjetivo.modelo}
-                    </p>
-                    {resta != null ? (
-                      <p className="text-[12px] font-black text-indigo-700 dark:text-indigo-300 mt-0.5">
-                        Resta $ {resta.toLocaleString("es-AR")}
-                      </p>
-                    ) : (
-                      <p className="text-[10px] text-indigo-500/70 dark:text-indigo-300/60 mt-0.5">Falta tasación para calcular el resto</p>
-                    )}
-                  </div>
-                )}
-
                 {/* Footer: Precio, Fotos y Acción */}
                 <div className="pt-3 border-t border-slate-100 dark:border-[#0a2a6b] flex items-center justify-between gap-2 mt-auto">
 
-                  {/* Precio */}
                   <PrecioSugeridoEditor
                     cotizacionId={cot.id}
                     precioSugerido={cot.precio_sugerido}
@@ -182,14 +142,12 @@ export default async function CotizacionesPage() {
                     kilometraje={cot.kilometraje}
                   />
 
-                  {/* Miniaturas → galería con lightbox */}
                   {cot.fotos_y_videos && cot.fotos_y_videos.length > 0 && (
                     <GaleriaFotos urls={cot.fotos_y_videos} />
                   )}
 
-                  {/* Botón WhatsApp */}
                   <a
-                    href={`https://wa.me/${cot.telefono.replace(/\D/g, "")}?text=${encodeURIComponent(`¡Hola ${cot.nombre}! Te escribimos de Pfaffen Autos respecto a la tasación de tu ${cot.marca} ${cot.modelo}.`)}`}
+                    href={`https://wa.me/${cot.telefono.replace(/\D/g, "")}?text=${encodeURIComponent(`¡Hola ${cot.nombre}! Te escribimos de Pfaffen Autos respecto a la compra de tu ${cot.marca} ${cot.modelo}.`)}`}
                     target="_blank"
                     rel="noreferrer"
                     className="bg-green-50 hover:bg-green-100 text-green-600 p-1.5 rounded-md transition-colors shrink-0 ml-1"
@@ -202,13 +160,13 @@ export default async function CotizacionesPage() {
               </div>
             );
           })}
-          
+
           {/* Estado Vacío */}
           {(!cotizaciones || cotizaciones.length === 0) && (
             <div className="col-span-full py-20 flex flex-col items-center justify-center text-center border-2 border-dashed border-slate-200 dark:border-[#0a2a6b] rounded-2xl bg-white dark:bg-[#001c55]">
               <Calculator className="w-10 h-10 text-slate-300 mb-3" />
-              <h3 className="text-[15px] font-bold text-slate-700 dark:text-slate-200">Sin cotizaciones activas</h3>
-              <p className="text-slate-500 text-xs mt-1">Las tasaciones de compra o permuta aparecerán aquí.</p>
+              <h3 className="text-[15px] font-bold text-slate-700 dark:text-slate-200">Sin ofertas de compra</h3>
+              <p className="text-slate-500 text-xs mt-1">Los particulares que quieran vendernos su auto aparecerán acá.</p>
             </div>
           )}
         </div>

@@ -51,7 +51,7 @@ export default function LeadDetailClient({
       const { data: { user } } = await supabase.auth.getUser();
       const { data: peritaje, error } = await supabase
         .from("peritajes")
-        .insert({ cotizacion_id: lead.id, vehiculo_id: lead.vehiculo_id || null, realizado_por: user?.id || null })
+        .insert({ [campoFk]: lead.id, vehiculo_id: lead.vehiculo_id || null, realizado_por: user?.id || null })
         .select("id")
         .single();
       if (error) throw error;
@@ -119,18 +119,28 @@ export default function LeadDetailClient({
     ? `https://wa.me/549${numeroLimpio}?text=${encodeURIComponent(`¡Hola ${lead.nombre}! Te escribimos de Pfaffen Autos por tu consulta.`)}`
     : null;
 
+  // Leads de WhatsApp/Web Chat viven en otras tablas (sin cotizacion_id real) —
+  // tareas, test drives, peritajes, historial comercial y eventos usan la
+  // misma tabla de siempre, solo cambia qué columna de vínculo se completa.
+  const esCotizacion = lead.origen === "cotizacion";
+  const tabla = lead.origen === "whatsapp" ? "whatsapp_conversaciones" : lead.origen === "webchat" ? "web_chat_conversaciones" : "cotizaciones";
+  const campoEstado = esCotizacion ? "estado" : "estado_pipeline";
+  const campoFk = lead.origen === "whatsapp" ? "whatsapp_conversacion_id" : lead.origen === "webchat" ? "web_chat_conversacion_id" : "cotizacion_id";
+  const paramsLead = `${campoFk}=${lead.id}`;
+
   const registrarEvento = async (tipo: string, descripcion: string) => {
     const { data: { user } } = await supabase.auth.getUser();
-    await supabase.from("eventos_lead").insert({ cotizacion_id: lead.id, tipo, descripcion, creado_por: user?.id });
+    const { error } = await supabase.from("eventos_lead").insert({ [campoFk]: lead.id, tipo, descripcion, creado_por: user?.id });
+    if (error) console.error("[crm] error registrando evento:", error.message);
   };
 
   const cambiarEstado = async (nuevo: string) => {
-    if (nuevo === "Perdido") {
+    if (nuevo === "Perdido" && esCotizacion) {
       setShowCierreModal(true);
       return;
     }
     setGuardandoEstado(true);
-    await supabase.from("cotizaciones").update({ estado: nuevo }).eq("id", lead.id);
+    await supabase.from(tabla).update({ [campoEstado]: nuevo }).eq("id", lead.id);
     await registrarEvento("estado", `Estado cambiado a "${nuevo}"`);
     setGuardandoEstado(false);
     router.refresh();
@@ -158,7 +168,7 @@ export default function LeadDetailClient({
 
   const cambiarCalificacion = async (nueva: string) => {
     setGuardandoCalificacion(true);
-    await supabase.from("cotizaciones").update({ calificacion: nueva || null }).eq("id", lead.id);
+    await supabase.from(tabla).update({ calificacion: nueva || null }).eq("id", lead.id);
     const label = CALIFICACIONES.find((c) => c.value === nueva)?.label || "Sin calificar";
     await registrarEvento("calificacion", `Grado de interés cambiado a "${label}"`);
     setGuardandoCalificacion(false);
@@ -167,7 +177,7 @@ export default function LeadDetailClient({
 
   const cambiarVendedor = async (vendedorId: string) => {
     setGuardandoVendedor(true);
-    await supabase.from("cotizaciones").update({ vendedor_id: vendedorId || null }).eq("id", lead.id);
+    await supabase.from(tabla).update({ vendedor_id: vendedorId || null }).eq("id", lead.id);
     const nombreVendedor = vendedores.find((v) => v.id === vendedorId)?.nombre;
     await registrarEvento("asignacion", vendedorId ? `Reasignado a ${nombreVendedor}` : "Vendedor removido");
     setGuardandoVendedor(false);
@@ -176,7 +186,7 @@ export default function LeadDetailClient({
 
   const cambiarVehiculo = async (vehiculoId: string) => {
     setGuardandoVehiculo(true);
-    await supabase.from("cotizaciones").update({ vehiculo_id: vehiculoId || null }).eq("id", lead.id);
+    await supabase.from(tabla).update({ vehiculo_id: vehiculoId || null }).eq("id", lead.id);
     const v = vehiculosStock.find((x) => x.id === vehiculoId);
     await registrarEvento("vehiculo", vehiculoId ? `Vinculado a ${v?.marca} ${v?.modelo}` : "Vehículo desvinculado");
     setGuardandoVehiculo(false);
@@ -201,7 +211,7 @@ export default function LeadDetailClient({
     setGuardandoTestDrive(true);
     try {
       const { data, error } = await supabase.from("test_drives").insert({
-        cotizacion_id: lead.id,
+        [campoFk]: lead.id,
         vehiculo_id: vehiculoTestDriveId || null,
         fecha_hora: new Date(fechaTestDrive).toISOString(),
       }).select("*").single();
@@ -229,7 +239,7 @@ export default function LeadDetailClient({
   const pedirAsistencia = async () => {
     if (!asistenciaParaId) return alert("Elegí a quién pedirle ayuda.");
     setGuardandoAsistencia(true);
-    await supabase.from("cotizaciones").update({
+    await supabase.from(tabla).update({
       asistencia_solicitada: true,
       asistencia_nota: notaAsistencia || null,
       asistencia_para: asistenciaParaId,
@@ -268,7 +278,7 @@ export default function LeadDetailClient({
   };
 
   const marcarAsistenciaAtendida = async () => {
-    await supabase.from("cotizaciones").update({ asistencia_atendida: true }).eq("id", lead.id);
+    await supabase.from(tabla).update({ asistencia_atendida: true }).eq("id", lead.id);
     await registrarEvento("asistencia", "Asistencia atendida");
     router.refresh();
   };
@@ -287,8 +297,12 @@ export default function LeadDetailClient({
     setGuardandoTarea(true);
     try {
       const { data: { user } } = await supabase.auth.getUser();
+      const fkTarea =
+        lead.origen === "whatsapp" ? { whatsapp_conversacion_id: lead.id } :
+        lead.origen === "webchat" ? { web_chat_conversacion_id: lead.id } :
+        { cotizacion_id: lead.id };
       const { data, error } = await supabase.from("tareas_lead").insert({
-        cotizacion_id: lead.id,
+        ...fkTarea,
         tipo: tipoTarea,
         titulo: tituloTarea || null,
         fecha_vencimiento: new Date(fechaTarea).toISOString(),
@@ -355,7 +369,9 @@ export default function LeadDetailClient({
           <div className="flex items-start justify-between gap-3 mb-3">
             <div>
               <h1 className="text-xl font-bold text-slate-900 dark:text-white">{lead.nombre}</h1>
-              <p className="text-[12px] text-slate-500 dark:text-slate-400 mt-0.5">{lead.tipo_peritaje === "online" ? "Cotización web" : lead.tipo_peritaje}</p>
+              <p className="text-[12px] text-slate-500 dark:text-slate-400 mt-0.5">
+                {lead.origen === "whatsapp" ? "Consulta por WhatsApp" : lead.origen === "webchat" ? "Consulta por Web Chat" : lead.tipo_peritaje === "online" ? "Cotización web" : lead.tipo_peritaje}
+              </p>
             </div>
             <select
               value={lead.estado || "Nuevo"}
@@ -478,6 +494,7 @@ export default function LeadDetailClient({
         </div>
 
         {/* Prospecto */}
+        {esCotizacion && (
         <div className="bg-white dark:bg-[#001c55] border border-slate-200 dark:border-[#0a2a6b] rounded-2xl p-5 shadow-sm space-y-4">
           <h2 className="text-[11px] font-bold uppercase tracking-widest text-slate-500 dark:text-slate-400 flex items-center gap-2">
             <MapPin className="w-3.5 h-3.5" /> Prospecto
@@ -515,6 +532,7 @@ export default function LeadDetailClient({
             )}
           </div>
         </div>
+        )}
 
         {/* Canal de ingreso */}
         <div className="bg-white dark:bg-[#001c55] border border-slate-200 dark:border-[#0a2a6b] rounded-2xl p-5 shadow-sm">
@@ -597,13 +615,13 @@ export default function LeadDetailClient({
 
           {puedeEditar && (
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-2 pt-2 border-t border-slate-100 dark:border-[#0a2a6b]">
-              <Link href={`/panel/presupuestos/nuevo?cotizacion_id=${lead.id}`} className="flex items-center justify-center gap-1.5 bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-2 rounded-xl text-[11px] uppercase tracking-widest transition-colors">
+              <Link href={`/panel/presupuestos/nuevo?${paramsLead}`} className="flex items-center justify-center gap-1.5 bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-2 rounded-xl text-[11px] uppercase tracking-widest transition-colors">
                 <Plus className="w-3.5 h-3.5" /> Presupuesto
               </Link>
-              <Link href={`/panel/senas/nuevo?cotizacion_id=${lead.id}`} className="flex items-center justify-center gap-1.5 bg-slate-700 hover:bg-slate-800 dark:bg-[#00246b] dark:hover:bg-[#002a6e] text-white font-bold py-2 rounded-xl text-[11px] uppercase tracking-widest transition-colors">
+              <Link href={`/panel/senas/nuevo?${paramsLead}`} className="flex items-center justify-center gap-1.5 bg-slate-700 hover:bg-slate-800 dark:bg-[#00246b] dark:hover:bg-[#002a6e] text-white font-bold py-2 rounded-xl text-[11px] uppercase tracking-widest transition-colors">
                 <Plus className="w-3.5 h-3.5" /> Seña
               </Link>
-              <Link href={`/panel/boletos/nuevo?cotizacion_id=${lead.id}`} className="flex items-center justify-center gap-1.5 bg-emerald-600 hover:bg-emerald-700 text-white font-bold py-2 rounded-xl text-[11px] uppercase tracking-widest transition-colors">
+              <Link href={`/panel/boletos/nuevo?${paramsLead}`} className="flex items-center justify-center gap-1.5 bg-emerald-600 hover:bg-emerald-700 text-white font-bold py-2 rounded-xl text-[11px] uppercase tracking-widest transition-colors">
                 <Plus className="w-3.5 h-3.5" /> Venta
               </Link>
             </div>
@@ -743,7 +761,7 @@ export default function LeadDetailClient({
         {/* Cerrar */}
         {lead.estado !== "Perdido" && lead.estado !== "Cliente" && puedeEditar && (
           <button
-            onClick={() => setShowCierreModal(true)}
+            onClick={() => (esCotizacion ? setShowCierreModal(true) : cambiarEstado("Perdido"))}
             className="flex items-center justify-center gap-2 w-full bg-white dark:bg-[#001c55] border border-rose-200 dark:border-rose-800 hover:bg-rose-50 dark:hover:bg-[#002a6e] text-rose-600 dark:text-rose-300 font-bold py-2.5 rounded-xl text-[12px] uppercase tracking-widest transition-colors"
           >
             <Ban className="w-4 h-4" /> Cerrar lead

@@ -132,7 +132,8 @@ export default function PeritajeClient({ peritaje, itemsIniciales }: { peritaje:
   };
 
   const vehiculo = peritaje.vehiculos || peritaje.cotizaciones;
-  const volverA = peritaje.cotizacion_id ? `/panel/crm/${peritaje.cotizacion_id}` : "/panel/peritajes";
+  const idLeadOrigen = peritaje.cotizacion_id || peritaje.whatsapp_conversacion_id || peritaje.web_chat_conversacion_id;
+  const volverA = idLeadOrigen ? `/panel/crm/${idLeadOrigen}` : "/panel/peritajes";
 
   return (
     <div className="flex flex-col h-full w-full bg-white dark:bg-[#001233] overflow-hidden">

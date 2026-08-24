@@ -1,142 +1,143 @@
 "use client";
 
 import React from "react";
-import { WobbleCard } from "./ui/wobble-card";
 import Link from "next/link";
 import Image from "next/image";
-import { ArrowRight, ShieldCheck, Banknote, CarFront, Sparkles } from "lucide-react";
+import { ArrowRight, ShieldCheck, Banknote, CarFront, Zap, Tag } from "lucide-react";
 
 export default function Servicios() {
   return (
-    <section className="py-12 md:py-24 bg-transparent dark:bg-[#0a0a0f] relative overflow-hidden border-t border-transparent">
-      
-      {/* ================= LUCES AMBIENTALES ================= */}
-      <div className="absolute top-[10%] left-[-5%] w-[400px] h-[400px] bg-slate-900/5 dark:bg-sky-400/5 rounded-full blur-3xl pointer-events-none z-0"></div>
-      <div className="absolute bottom-[-10%] right-[-5%] w-[450px] h-[450px] bg-sky-900/5 dark:bg-sky-400/5 rounded-full blur-3xl pointer-events-none z-0"></div>
+    <section className="py-16 md:py-24 bg-[#f8fafc] dark:bg-[#0a0a0f] border-t border-slate-200 dark:border-white/5">
+      <div className="max-w-7xl mx-auto px-4 md:px-6">
 
-      <div className="max-w-7xl mx-auto px-4 md:px-6 relative z-10">
-
-        {/* ================= ENCABEZADO ================= */}
-        <div className="text-center mb-16 relative z-10">
-          <span className="text-[#0145F2] dark:text-sky-300 text-[10px] md:text-xs font-black uppercase tracking-[0.2em] bg-blue-50/50 dark:bg-sky-400/10 backdrop-blur-xl border border-blue-100/50 dark:border-sky-400/20 px-4 py-1.5 rounded-full inline-block shadow-sm mb-4">
-            <Sparkles className="w-3.5 h-3.5 inline mr-1" /> Nuestros Servicios
-          </span>
-          <h2 className="text-3xl md:text-5xl font-light text-navy dark:text-white tracking-tighter drop-shadow-sm">
-            Soluciones a <strong className="font-black text-transparent bg-clip-text bg-gradient-to-r from-navy dark:from-sky-300 to-[#0145F2] dark:to-sky-500">tu medida</strong>
-          </h2>
+        {/* ================= ENCABEZADO E-COMMERCE ================= */}
+        <div className="flex flex-col md:flex-row justify-between items-start md:items-end gap-6 mb-12">
+          <div>
+            <div className="flex items-center gap-2 text-[#0145F2] dark:text-sky-400 font-black uppercase tracking-widest text-[10px] mb-3">
+              <Zap className="w-4 h-4" /> Soluciones integrales
+            </div>
+            <h2 className="text-3xl md:text-5xl font-black text-slate-900 dark:text-white tracking-tight">
+              Más que comprar un auto.
+            </h2>
+          </div>
+          <Link 
+            href="/contacto" 
+            className="hidden md:flex items-center gap-2 text-sm font-bold text-slate-500 hover:text-[#0145F2] dark:hover:text-sky-400 transition-colors group"
+          >
+            Contactar asesor <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
+          </Link>
         </div>
 
-        {/* ================= GRILLA DE WOBBLE CARDS ================= */}
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 max-w-7xl mx-auto w-full">
-          
-          {/* TARJETA 1: CONSIGNAR / COMPRAMOS TU AUTO */}
-          {/* CORRECCIÓN: Unificado a rounded-[24px] y sombras de sistema */}
-          <WobbleCard
-            containerClassName="col-span-1 lg:col-span-2 h-full bg-[#0d1631] relative overflow-hidden group shadow-md hover:shadow-xl hover:-translate-y-1 transition-all duration-500 border border-slate-700/40 rounded-[24px]"
-            className="p-6 md:p-10 flex flex-col h-full min-h-[420px]"
-          >
-            {/* Contenido (Textos y Botón) por encima de todo */}
-            <div className="relative z-20 flex flex-col flex-1">
-              <div className="w-12 h-12 bg-white/5 border border-white/10 rounded-[14px] flex items-center justify-center mb-6 shadow-inner">
-                <CarFront className="w-5 h-5 text-sky-400" />
+        {/* ================= BENTO GRID PROMOCIONAL ================= */}
+        <div className="grid grid-cols-1 md:grid-cols-12 gap-6">
+
+          {/* BANNER 1: VENDER (Destacado - 8 columnas) */}
+          <div className="md:col-span-8 bg-white dark:bg-[#111520] rounded-[2rem] p-8 md:p-12 relative overflow-hidden group shadow-sm hover:shadow-xl dark:shadow-none border border-slate-200/80 dark:border-white/10 transition-all duration-500 flex flex-col justify-center min-h-[380px]">
+            <div className="relative z-20 max-w-md">
+              <span className="inline-flex items-center gap-1.5 bg-rose-50 dark:bg-rose-500/10 text-rose-600 dark:text-rose-400 font-black uppercase tracking-widest text-[10px] px-3 py-1.5 rounded-full mb-6">
+                <Tag className="w-3 h-3" /> Mejor precio del mercado
+              </span>
+              <h3 className="text-3xl md:text-4xl font-black text-slate-900 dark:text-white leading-tight mb-4">
+                Vendé tu auto hoy.<br />Efectivo inmediato.
+              </h3>
+              <p className="text-slate-500 dark:text-slate-400 font-medium text-sm leading-relaxed mb-8">
+                Efectivo en el acto, transferencia segura y 100% formal. Vendé tu unidad de forma directa y sin complicaciones ni intermediarios.
+              </p>
+              <Link
+                href="/vender"
+                className="inline-flex items-center justify-center gap-2 bg-[#0145F2] hover:bg-blue-700 text-white font-black text-xs uppercase tracking-widest px-8 py-4 rounded-xl transition-all shadow-lg shadow-blue-500/20 active:scale-95 group/btn"
+              >
+                Vender mi auto <ArrowRight className="w-4 h-4 group-hover/btn:translate-x-1 transition-transform" />
+              </Link>
+            </div>
+
+            {/* Imagen a sangre derecha */}
+            <div className="absolute right-0 bottom-0 w-full h-[50%] md:w-[50%] md:h-full z-0 overflow-hidden pointer-events-none">
+              <div className="absolute inset-0 bg-gradient-to-t md:bg-gradient-to-l from-transparent via-white/80 dark:via-[#111520]/90 to-white dark:to-[#111520] z-10"></div>
+              <Image
+                src="https://images.unsplash.com/photo-1580273916550-e323be2ae537?q=80&w=1000&auto=format&fit=crop"
+                alt="Entrega de llaves al vender tu auto"
+                fill
+                sizes="(max-width: 768px) 100vw, 50vw"
+                className="object-cover object-center opacity-90 dark:opacity-50 group-hover:scale-105 transition-transform duration-700 ease-out"
+              />
+            </div>
+          </div>
+
+          {/* BANNER 2: SEGUROS (4 columnas - Vertical) */}
+          <div className="md:col-span-4 bg-[#0a0a0f] rounded-[2rem] p-8 relative overflow-hidden group shadow-sm border border-slate-800 transition-all duration-500 flex flex-col justify-end min-h-[380px]">
+            <div className="absolute inset-0 z-0">
+              <div className="absolute inset-0 bg-gradient-to-t from-black via-black/80 to-transparent z-10"></div>
+              <Image
+                src="https://images.unsplash.com/photo-1549317661-bd32c8ce0db2?q=80&w=800&auto=format&fit=crop"
+                alt="Seguros de auto"
+                fill
+                sizes="(max-width: 768px) 100vw, 33vw"
+                className="object-cover opacity-60 group-hover:scale-105 transition-transform duration-700 ease-out"
+              />
+            </div>
+            <div className="relative z-20">
+              <div className="w-10 h-10 bg-white/10 backdrop-blur-md rounded-xl flex items-center justify-center mb-6 border border-white/20">
+                <ShieldCheck className="w-5 h-5 text-emerald-400" />
               </div>
-              <h2 className="text-left text-balance text-3xl md:text-4xl lg:text-5xl font-black tracking-tight text-white mb-4 leading-tight drop-shadow-md">
-                Compramos tu auto <br className="hidden md:block" />en el momento.
-              </h2>
-              <p className="text-left text-sm md:text-base text-slate-300 font-medium mb-8 leading-relaxed max-w-sm">
+              <h3 className="text-2xl font-black text-white leading-tight mb-3">
+                Asegurá tu auto <br />con La Caja.
+              </h3>
+              <p className="text-slate-400 font-medium text-xs leading-relaxed mb-6">
+                Salí de la concesionaria 100% protegido. Cotizá la mejor cobertura.
+              </p>
+              <a 
+                href="https://www.lacaja.com.ar" 
+                target="_blank"
+                rel="noopener noreferrer"
+                className="w-full inline-flex items-center justify-center gap-2 bg-white hover:bg-slate-200 text-slate-900 font-black text-[10px] uppercase tracking-widest px-6 py-3.5 rounded-xl transition-all active:scale-95"
+              >
+                Ver Coberturas <ArrowRight className="w-3.5 h-3.5" />
+              </a>
+            </div>
+          </div>
+
+          {/* BANNER 3: CONSIGNAR (Horizontal Full - 12 columnas) */}
+          <div className="md:col-span-12 bg-[#0145F2] rounded-[2rem] p-8 md:p-12 relative overflow-hidden group shadow-lg shadow-blue-500/20 transition-all duration-500 flex flex-col justify-center min-h-[300px]">
+            <div className="relative z-20 max-w-xl">
+              <span className="inline-flex items-center gap-1.5 bg-black/20 text-white font-black uppercase tracking-widest text-[10px] px-3 py-1.5 rounded-full mb-6 backdrop-blur-sm border border-white/10">
+                <Banknote className="w-3 h-3" /> Rentabilidad Garantizada
+              </span>
+              <h3 className="text-3xl md:text-4xl font-black text-white leading-tight mb-4">
+                Compramos o consignamos tu auto al instante.
+              </h3>
+              <p className="text-blue-100 font-medium text-sm leading-relaxed mb-8 max-w-md">
                 Dejanos tu vehículo en consignación para obtener la máxima rentabilidad, o te lo compramos en efectivo hoy mismo sin vueltas.
               </p>
-              <div className="mt-auto">
+              <div className="flex flex-col sm:flex-row gap-3">
                 <Link 
                   href="/consignacion" 
-                  className="inline-flex items-center gap-2 bg-white text-navy hover:bg-slate-100 font-black text-[10px] md:text-xs uppercase tracking-widest px-6 py-3.5 rounded-full transition-all active:scale-95 shadow-md hover:shadow-lg group/btn"
+                  className="inline-flex items-center justify-center gap-2 bg-white text-[#0145F2] hover:bg-slate-100 font-black text-[10px] sm:text-xs uppercase tracking-widest px-8 py-4 rounded-xl transition-all active:scale-95"
                 >
-                  Consignar Auto <ArrowRight className="w-4 h-4 group-hover/btn:translate-x-1 transition-transform" />
+                  Consignar Vehículo
+                </Link>
+                <Link 
+                  href="/contacto" 
+                  className="inline-flex items-center justify-center gap-2 bg-black/20 text-white hover:bg-black/30 font-black text-[10px] sm:text-xs uppercase tracking-widest px-8 py-4 rounded-xl transition-all backdrop-blur-sm border border-white/10 active:scale-95"
+                >
+                  Contactar Asesor
                 </Link>
               </div>
             </div>
             
-            {/* Imagen de Fondo (Mitad inferior) */}
-            <div className="absolute right-0 bottom-0 w-full h-[60%] lg:w-[60%] lg:h-full z-0 overflow-hidden pointer-events-none">
-              {/* Gradiente para fundir la imagen con el fondo oscuro */}
-              <div className="absolute inset-0 bg-gradient-to-t lg:bg-gradient-to-l from-transparent via-[#0d1631]/80 to-[#0d1631] z-10"></div>
+            {/* Imagen a sangre derecha */}
+            <div className="absolute right-0 bottom-0 w-full h-[60%] md:w-[50%] md:h-full z-0 overflow-hidden pointer-events-none">
+              <div className="absolute inset-0 bg-gradient-to-t md:bg-gradient-to-l from-transparent via-[#0145F2]/80 to-[#0145F2] z-10"></div>
               <Image
-                src="https://images.unsplash.com/photo-1560958089-b8a1929cea89?q=80&w=800&auto=format&fit=crop"
-                alt="Consignar auto"
+                src="https://images.unsplash.com/photo-1494905998402-395d579af36f?q=80&w=1000&auto=format&fit=crop"
+                alt="Lote de autos en consignación"
                 fill
-                sizes="(max-width: 1024px) 100vw, 60vw"
-                className="object-cover object-right-bottom opacity-50 mix-blend-screen group-hover:opacity-70 transition-all duration-700 ease-out"
+                sizes="(max-width: 768px) 100vw, 50vw"
+                className="object-cover object-center opacity-40 mix-blend-multiply group-hover:scale-105 transition-transform duration-700 ease-out"
               />
             </div>
-          </WobbleCard>
+          </div>
 
-          {/* TARJETA 2: SEGUROS (LA CAJA) */}
-          <WobbleCard 
-            containerClassName="col-span-1 bg-[#111520] relative overflow-hidden flex flex-col justify-center shadow-md hover:shadow-xl hover:-translate-y-1 transition-all duration-500 border border-slate-700/50 group rounded-[24px]"
-            className="p-6 md:p-10 flex flex-col h-full min-h-[380px]"
-          >
-            <div className="relative z-20 flex flex-col flex-1">
-              <div className="w-12 h-12 bg-white/5 border border-white/10 rounded-[14px] flex items-center justify-center mb-6 shadow-inner">
-                <ShieldCheck className="w-5 h-5 text-emerald-400" />
-              </div>
-              <h2 className="text-left text-balance text-3xl md:text-4xl font-black tracking-tight text-white mb-4 leading-tight drop-shadow-md">
-                Asegurá tu auto <br className="hidden md:block"/>con La Caja.
-              </h2>
-              <p className="text-left text-sm md:text-base text-slate-400 font-medium mb-8 leading-relaxed max-w-[26rem]">
-                Llevate tu vehículo 100% protegido desde el primer kilómetro. Cotizá en el acto la mejor cobertura del mercado.
-              </p>
-              <div className="mt-auto">
-                <a 
-                  href="https://www.lacaja.com.ar" 
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="inline-flex items-center gap-2 bg-slate-700/60 hover:bg-slate-600 border border-slate-600/50 text-white backdrop-blur-md font-black text-[10px] md:text-xs uppercase tracking-widest px-6 py-3.5 rounded-full transition-all active:scale-95 shadow-md hover:shadow-lg group/btn"
-                >
-                  Cotizar en La Caja <ArrowRight className="w-4 h-4 group-hover/btn:translate-x-1 transition-transform" />
-                </a>
-              </div>
-            </div>
-          </WobbleCard>
-
-          {/* TARJETA 3: VENDER MI AUTO */}
-          <WobbleCard 
-            containerClassName="col-span-1 lg:col-span-3 bg-[#1e293b] relative overflow-hidden group shadow-md hover:shadow-xl hover:-translate-y-1 transition-all duration-500 border border-slate-600/40 rounded-[24px]"
-            className="p-6 md:p-10 flex flex-col h-full min-h-[420px]"
-          >
-            <div className="relative z-20 flex flex-col flex-1 w-full lg:w-1/2">
-              <div className="w-12 h-12 bg-white/5 border border-white/10 rounded-[14px] flex items-center justify-center mb-6 shadow-inner">
-                <Banknote className="w-5 h-5 text-sky-400" />
-              </div>
-              <h2 className="text-left text-balance text-3xl md:text-4xl lg:text-5xl font-black tracking-tighter text-white mb-4 leading-tight drop-shadow-md">
-                Vendé tu auto: <br />Cotización rápida y segura.
-              </h2>
-              <p className="text-left text-sm md:text-base text-slate-300 font-medium mb-8 leading-relaxed max-w-md">
-                Efectivo inmediato, transferencia segura y 100% formal. Vende tu unidad de forma directa y sin complicaciones al mejor precio del mercado.
-              </p>
-              <div className="mt-auto">
-                <Link 
-                  href="/vender" 
-                  className="inline-flex items-center gap-2 bg-white text-navy hover:bg-slate-100 font-black text-[10px] md:text-xs uppercase tracking-widest px-6 py-3.5 rounded-full transition-all active:scale-95 shadow-md hover:shadow-lg group/btn2"
-                >
-                  Vender Mi Auto <ArrowRight className="w-4 h-4 group-hover/btn2:translate-x-1 transition-transform" />
-                </Link>
-              </div>
-            </div>
-
-            {/* Imagen de Fondo (Mitad derecha/inferior) */}
-            <div className="absolute right-0 bottom-0 w-full h-[55%] lg:w-[55%] lg:h-full z-0 overflow-hidden pointer-events-none">
-              {/* Gradiente para fundir la imagen con el fondo oscuro */}
-              <div className="absolute inset-0 bg-gradient-to-t lg:bg-gradient-to-l from-transparent via-[#1e293b]/90 to-[#1e293b] z-10"></div>
-              <Image
-                src="https://images.unsplash.com/photo-1552519507-da3b142c6e3d?q=80&w=1000&auto=format&fit=crop"
-                alt="Vender auto de forma segura"
-                fill
-                sizes="(max-width: 1024px) 100vw, 55vw"
-                className="object-cover object-center opacity-60 mix-blend-screen group-hover:opacity-80 transition-all duration-700 ease-out"
-              />
-            </div>
-          </WobbleCard>
-          
         </div>
       </div>
     </section>

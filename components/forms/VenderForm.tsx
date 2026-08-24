@@ -3,7 +3,8 @@
 import { useState, useEffect, useRef } from "react";
 import Link from "next/link";
 import Script from "next/script";
-import { ArrowLeft, Loader2, CheckCircle2, ChevronDown, X } from "lucide-react";
+import { ArrowLeft, Loader2, ChevronDown, X } from "lucide-react";
+import EnvioExitoso from "@/components/EnvioExitoso";
 
 declare global {
   interface Window {
@@ -196,7 +197,7 @@ export default function VenderForm() {
             {!enviado && (
               <div className="mb-4">
                 <h2 className="text-xl font-black text-navy dark:text-white tracking-tight">
-                  Iniciá la venta en {segundos} {segundos === 1 ? "segundo" : "segundos"}
+                  {segundos > 1 ? `Iniciá la venta en ${segundos} segundos` : "Ya casi terminás, dale para adelante"}
                 </h2>
                 <p className="text-xs text-slate-400 font-medium">
                   {step === 1 && "Ingresá los datos del vehículo que querés vender"}
@@ -421,6 +422,9 @@ export default function VenderForm() {
                     </div>
 
                     <div className="pt-1 flex justify-center">
+                      {!turnstileListo && (
+                        <span className="text-[10px] text-slate-400 font-medium">Cargando verificación...</span>
+                      )}
                       <div ref={turnstileRef} />
                     </div>
 
@@ -445,20 +449,15 @@ export default function VenderForm() {
               </div>
             ) : (
               /* ÉXITO */
-              <div className="text-center py-12 animate-fadeIn space-y-4">
-                <div className="w-16 h-16 bg-orange-100 dark:bg-orange-400/10 text-orange-600 dark:text-orange-300 rounded-full flex items-center justify-center mx-auto mb-2">
-                  <CheckCircle2 className="w-8 h-8" />
-                </div>
-                <h3 className="text-2xl font-black text-navy dark:text-white uppercase tracking-tighter">¡Solicitud de venta recibida!</h3>
-                <p className="text-slate-500 dark:text-slate-400 text-xs leading-relaxed max-w-xs mx-auto">
-                  Hemos registrado tu interés en vender el vehículo y nos comunicaremos en la brevedad para coordinar la tasación y la oferta final.
-                </p>
-                <div className="pt-4">
-                  <Link href="/" className="inline-block py-3.5 px-8 bg-gradient-to-r from-orange-600 to-amber-500 text-white font-black rounded-2xl text-xs uppercase tracking-widest shadow-lg shadow-orange-500/20">
-                    Volver al inicio
-                  </Link>
-                </div>
-              </div>
+              <EnvioExitoso
+                color="orange"
+                titulo="¡Solicitud de venta recibida!"
+                mensaje="Hemos registrado tu interés en vender el vehículo y nos comunicaremos en la brevedad para coordinar la tasación y la oferta final."
+              >
+                <Link href="/" className="inline-block py-3.5 px-8 bg-gradient-to-r from-orange-600 to-amber-500 text-white font-black rounded-2xl text-xs uppercase tracking-widest shadow-lg shadow-orange-500/20">
+                  Volver al inicio
+                </Link>
+              </EnvioExitoso>
             )}
 
           </div>

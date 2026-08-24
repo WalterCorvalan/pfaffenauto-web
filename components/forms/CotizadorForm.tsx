@@ -3,7 +3,8 @@
 import { useState, useEffect, useRef } from "react";
 import Link from "next/link";
 import Script from "next/script";
-import { ArrowLeft, Loader2, CheckCircle2, ChevronDown, CarFront, User, Phone, Upload, X, FileVideo, ImageIcon, Building2, Camera, AlertTriangle } from "lucide-react";
+import { ArrowLeft, Loader2, ChevronDown, CarFront, User, Phone, Upload, X, FileVideo, ImageIcon, Building2, Camera, AlertTriangle } from "lucide-react";
+import EnvioExitoso from "@/components/EnvioExitoso";
 
 declare global {
   interface Window {
@@ -263,7 +264,7 @@ export default function CotizadorForm({ vehiculoObjetivo }: { vehiculoObjetivo?:
             {!enviado && (
               <div className="mb-4">
                 <h2 className="text-xl font-black text-navy dark:text-white tracking-tight">
-                  Cotiza tu auto en menos de {segundos} {segundos === 1 ? "segundo" : "segundos"}
+                  {segundos > 1 ? `Cotiza tu auto en menos de ${segundos} segundos` : "Ya casi terminás, dale para adelante"}
                 </h2>
                 <p className="text-xs text-slate-400 font-medium">
                   {step === 1 && "Ingresá los datos del vehículo"}
@@ -601,20 +602,15 @@ export default function CotizadorForm({ vehiculoObjetivo }: { vehiculoObjetivo?:
 
               </div>
             ) : (
-              <div className="text-center py-12 animate-fadeIn space-y-4">
-                <div className="w-16 h-16 bg-blue-50 dark:bg-sky-400/10 text-[#0145F2] dark:text-sky-300 rounded-full flex items-center justify-center mx-auto mb-2">
-                  <CheckCircle2 className="w-8 h-8" />
-                </div>
-                <h3 className="text-2xl font-black text-navy dark:text-white uppercase tracking-tighter">¡Cotización enviada!</h3>
-                <p className="text-slate-500 dark:text-slate-400 text-xs leading-relaxed max-w-xs mx-auto">
-                  Recibimos los datos de tu vehículo y un asesor comercial se pondrá en contacto a la brevedad.
-                </p>
-                <div className="pt-4">
-                  <Link href="/" className="inline-block py-3.5 px-8 bg-gradient-to-r from-[#0145F2] to-blue-600 text-white font-black rounded-2xl text-xs uppercase tracking-widest shadow-lg shadow-blue-500/20">
-                    Volver al inicio
-                  </Link>
-                </div>
-              </div>
+              <EnvioExitoso
+                color="blue"
+                titulo="¡Cotización enviada!"
+                mensaje="Recibimos los datos de tu vehículo y un asesor comercial se pondrá en contacto a la brevedad."
+              >
+                <Link href="/" className="inline-block py-3.5 px-8 bg-gradient-to-r from-[#0145F2] to-blue-600 text-white font-black rounded-2xl text-xs uppercase tracking-widest shadow-lg shadow-blue-500/20">
+                  Volver al inicio
+                </Link>
+              </EnvioExitoso>
             )}
 
           </div>

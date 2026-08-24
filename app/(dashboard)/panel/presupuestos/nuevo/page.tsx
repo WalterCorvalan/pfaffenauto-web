@@ -2,8 +2,10 @@ import { createServerClient } from "@supabase/ssr";
 import { cookies } from "next/headers";
 import PresupuestoForm from "./PresupuestoForm";
 
-export default async function NuevoPresupuestoPage({ searchParams }: { searchParams: Promise<{ cotizacion_id?: string }> }) {
-  const { cotizacion_id } = await searchParams;
+export default async function NuevoPresupuestoPage({ searchParams }: { searchParams: Promise<{ cotizacion_id?: string; whatsapp_conversacion_id?: string; web_chat_conversacion_id?: string }> }) {
+  const { cotizacion_id, whatsapp_conversacion_id, web_chat_conversacion_id } = await searchParams;
+  const campoFk = whatsapp_conversacion_id ? "whatsapp_conversacion_id" : web_chat_conversacion_id ? "web_chat_conversacion_id" : cotizacion_id ? "cotizacion_id" : null;
+  const idLead = whatsapp_conversacion_id || web_chat_conversacion_id || cotizacion_id || null;
   const cookieStore = await cookies();
   const supabase = createServerClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -19,12 +21,13 @@ export default async function NuevoPresupuestoPage({ searchParams }: { searchPar
   ]);
 
   let vehiculoInicial = null;
-  if (cotizacion_id) {
-    const { data: cotizacion } = await supabase.from("cotizaciones").select("vehiculo_id").eq("id", cotizacion_id).maybeSingle();
-    if (cotizacion?.vehiculo_id) {
-      vehiculoInicial = (vehiculos || []).find((v) => v.id === cotizacion.vehiculo_id) || null;
+  if (campoFk && idLead) {
+    const tablaOrigen = campoFk === "cotizacion_id" ? "cotizaciones" : campoFk === "whatsapp_conversacion_id" ? "whatsapp_conversaciones" : "web_chat_conversaciones";
+    const { data: origenLead } = await supabase.from(tablaOrigen).select("vehiculo_id").eq("id", idLead).maybeSingle();
+    if (origenLead?.vehiculo_id) {
+      vehiculoInicial = (vehiculos || []).find((v) => v.id === origenLead.vehiculo_id) || null;
     }
   }
 
-  return <PresupuestoForm clientes={clientes || []} vehiculos={vehiculos || []} vendedores={vendedores || []} sucursales={sucursales || []} vehiculoInicial={vehiculoInicial} cotizacionId={cotizacion_id || null} />;
+  return <PresupuestoForm clientes={clientes || []} vehiculos={vehiculos || []} vendedores={vendedores || []} sucursales={sucursales || []} vehiculoInicial={vehiculoInicial} vinculoLead={campoFk && idLead ? { campo: campoFk, id: idLead } : null} />;
 }

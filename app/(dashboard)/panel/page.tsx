@@ -123,6 +123,7 @@ export default async function PanelPage({ searchParams }: { searchParams: Promis
       {/* ÁREA SCROLLABLE */}
       <div className="flex-1 overflow-y-auto bg-[#F9FAFB] dark:bg-[#001233] custom-scrollbar">
         <div className="w-full h-full flex flex-col">
+
           {vehiculos && vehiculos.length > 0 ? (
             <>
               {/* VISTA MÓVIL */}

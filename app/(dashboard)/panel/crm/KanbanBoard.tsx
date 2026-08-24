@@ -1,6 +1,6 @@
 ﻿"use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { supabase } from "@/lib/supabase/client";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
@@ -20,6 +20,39 @@ export default function KanbanBoard({ leadsIniciales, motivosCierre, miRol, miId
   const [soloMisLeads, setSoloMisLeads] = useState(false);
   const [vista, setVista] = useState<"kanban" | "tabla" | "reporte">("kanban");
   const puedeAlternarVista = miRol === "admin" || miRol === "encargado";
+
+  // Si el server nos manda leads nuevos (por el router.refresh() de más abajo),
+  // sincronizamos el estado local — sin esto el useState solo toma el valor
+  // inicial y nunca ve las actualizaciones del prop.
+  useEffect(() => {
+    setLeads(leadsIniciales);
+  }, [leadsIniciales]);
+
+  // Tablero en vivo: cualquier cambio en cotizaciones/whatsapp/web-chat (nuevo
+  // lead, alguien mueve una tarjeta) refresca el board solo, sin recargar la
+  // página. Reconstruir los leads unificados (3 tablas + joins) client-side
+  // sería duplicar la lógica del server — más simple y robusto pedirle al
+  // server que la vuelva a correr con router.refresh().
+  useEffect(() => {
+    let timeoutId: ReturnType<typeof setTimeout>;
+    const refrescarConDebounce = () => {
+      clearTimeout(timeoutId);
+      timeoutId = setTimeout(() => router.refresh(), 400);
+    };
+
+    const canal = supabase
+      .channel("crm-leads-realtime")
+      .on("postgres_changes", { event: "*", schema: "public", table: "cotizaciones" }, refrescarConDebounce)
+      .on("postgres_changes", { event: "*", schema: "public", table: "whatsapp_conversaciones" }, refrescarConDebounce)
+      .on("postgres_changes", { event: "*", schema: "public", table: "web_chat_conversaciones" }, refrescarConDebounce)
+      .subscribe();
+
+    return () => {
+      clearTimeout(timeoutId);
+      supabase.removeChannel(canal);
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   // Filtro activo: "todos" | "cotizacion" | "consignacion" | "dormidos"
   const [filtroActivo, setFiltroActivo] = useState<string>("todos");
@@ -112,13 +145,7 @@ export default function KanbanBoard({ leadsIniciales, motivosCierre, miRol, miId
     if (filtroActivo === "dormidos") {
       return diasInactivo >= 7 && lead.estado !== "Perdido";
     }
-    if (filtroActivo === "todos") return true;
-
-    // Asumimos que los que no dicen "consignacion", son cotizaciones de venta
-    if (filtroActivo === "cotizacion") {
-      return lead.tipo_peritaje !== "consignacion";
-    }
-    return lead.tipo_peritaje === filtroActivo;
+    return true;
   });
 
   return (
@@ -139,18 +166,6 @@ export default function KanbanBoard({ leadsIniciales, motivosCierre, miRol, miId
               className={`px-3 py-1.5 rounded-md text-[13px] font-medium transition-colors ${filtroActivo === "todos" ? "bg-slate-100 dark:bg-[#00246b] text-slate-900 dark:text-white" : "text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white hover:bg-slate-50 dark:hover:bg-[#00246b]"}`}
             >
               Todos
-            </button>
-            <button
-              onClick={() => setFiltroActivo("cotizacion")}
-              className={`px-3 py-1.5 rounded-md text-[13px] font-medium transition-colors ${filtroActivo === "cotizacion" ? "bg-slate-100 dark:bg-[#00246b] text-slate-900 dark:text-white" : "text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white hover:bg-slate-50 dark:hover:bg-[#00246b]"}`}
-            >
-              Cotizaciones
-            </button>
-            <button
-              onClick={() => setFiltroActivo("consignacion")}
-              className={`px-3 py-1.5 rounded-md text-[13px] font-medium transition-colors ${filtroActivo === "consignacion" ? "bg-slate-100 dark:bg-[#00246b] text-slate-900 dark:text-white" : "text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white hover:bg-slate-50 dark:hover:bg-[#00246b]"}`}
-            >
-              Consignaciones
             </button>
             <button
               onClick={() => setFiltroActivo("dormidos")}
@@ -254,8 +269,8 @@ export default function KanbanBoard({ leadsIniciales, motivosCierre, miRol, miId
                   const diasInactivo = Math.floor((new Date().getTime() - new Date(lead.created_at).getTime()) / (1000 * 60 * 60 * 24));
                   const esDormido = diasInactivo >= 7 && lead.estado !== "Perdido";
 
-                  const CardWrapper = esCotizacion ? Link : "div";
-                  const wrapperProps = esCotizacion ? { href: `/panel/crm/${lead.id}` } : {};
+                  const CardWrapper = Link;
+                  const wrapperProps = { href: `/panel/crm/${lead.id}` };
                   const necesitaAyuda = lead.asistencia_solicitada && !lead.asistencia_atendida;
 
                   return (

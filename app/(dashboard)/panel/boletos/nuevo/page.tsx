@@ -2,8 +2,10 @@ import { createServerClient } from "@supabase/ssr";
 import { cookies } from "next/headers";
 import BoletoVentaForm from "./BoletoVentaForm";
 
-export default async function NuevoBoletoPage({ searchParams }: { searchParams: Promise<{ cotizacion_id?: string }> }) {
-  const { cotizacion_id } = await searchParams;
+export default async function NuevoBoletoPage({ searchParams }: { searchParams: Promise<{ cotizacion_id?: string; whatsapp_conversacion_id?: string; web_chat_conversacion_id?: string }> }) {
+  const { cotizacion_id, whatsapp_conversacion_id, web_chat_conversacion_id } = await searchParams;
+  const campoFk = whatsapp_conversacion_id ? "whatsapp_conversacion_id" : web_chat_conversacion_id ? "web_chat_conversacion_id" : cotizacion_id ? "cotizacion_id" : null;
+  const idLead = whatsapp_conversacion_id || web_chat_conversacion_id || cotizacion_id || null;
   const cookieStore = await cookies();
   const supabase = createServerClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -26,7 +28,7 @@ export default async function NuevoBoletoPage({ searchParams }: { searchParams: 
       vendedores={vendedores || []}
       sucursales={sucursales || []}
       senas={senas || []}
-      cotizacionId={cotizacion_id || null}
+      vinculoLead={campoFk && idLead ? { campo: campoFk, id: idLead } : null}
     />
   );
 }
