@@ -6,17 +6,17 @@ import type { WalkState } from "./useWalkState";
 
 const ALTURA_OJOS = 1.6;
 const VELOCIDAD = 3.2; // unidades por segundo
-const LIMITE_Z = { min: 1.8, max: 6.5 }; // no dejar que se meta adentro de los autos (z=0) ni se aleje de más
 
 type Props = {
   activo: boolean;
   walk: WalkState;
   limiteX: { min: number; max: number };
+  limiteZ: { min: number; max: number };
   posicionInicial: { x: number; z: number };
   resetId: number; // cambia cada vez que hay que reubicar al usuario (nueva marca, "volver a la fila")
 };
 
-export default function WalkControls({ activo, walk, limiteX, posicionInicial, resetId }: Props) {
+export default function WalkControls({ activo, walk, limiteX, limiteZ, posicionInicial, resetId }: Props) {
   const { camera } = useThree();
   const pos = useRef({ x: posicionInicial.x, z: posicionInicial.z });
   const lastResetId = useRef(-1);
@@ -46,7 +46,7 @@ export default function WalkControls({ activo, walk, limiteX, posicionInicial, r
       pos.current.z += (forwardZ * -mz + rightZ * mx) * paso;
 
       pos.current.x = Math.max(limiteX.min, Math.min(limiteX.max, pos.current.x));
-      pos.current.z = Math.max(LIMITE_Z.min, Math.min(LIMITE_Z.max, pos.current.z));
+      pos.current.z = Math.max(limiteZ.min, Math.min(limiteZ.max, pos.current.z));
     }
 
     camera.position.set(pos.current.x, ALTURA_OJOS, pos.current.z);

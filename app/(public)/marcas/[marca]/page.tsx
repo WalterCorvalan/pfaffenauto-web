@@ -178,7 +178,7 @@ export default async function MarcaPage({
             {/* Logo de la marca agrandado y destacado */}
             <div className="relative w-56 h-28 sm:w-72 sm:h-36 md:w-80 md:h-40 flex items-center justify-center mb-6 transition-transform duration-500 hover:scale-105">
               <div
-                className="absolute inset-0 rounded-full blur-3xl opacity-30 dark:opacity-40"
+                className="absolute -inset-16 rounded-full blur-[80px] opacity-[0.18] dark:opacity-25"
                 style={{ background: color }}
               />
               <div className="relative w-full h-full flex items-center justify-center p-1">

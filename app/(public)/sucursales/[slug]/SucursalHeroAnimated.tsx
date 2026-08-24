@@ -1,6 +1,7 @@
 import Link from "next/link";
 import Image from "next/image";
-import { MapPin, Phone, Clock, ArrowLeft } from "lucide-react";
+import { MapPin, Phone, Clock, ArrowLeft, Navigation } from "lucide-react";
+import WhatsAppIcon from "@/components/icons/WhatsAppIcon";
 
 interface HeroProps {
   slug: string;
@@ -57,13 +58,28 @@ export default function SucursalHeroAnimated({ slug, nombre, imagen, direccion, 
           {/* Info formal: Le damos flex-col y justify-center para que se centre verticalmente */}
           <div className="lg:col-span-5 bg-white dark:bg-white/5 border border-gray-200 dark:border-white/10 rounded-2xl divide-y divide-gray-100 dark:divide-white/10 flex flex-col justify-center">
             <InfoRow icon={<MapPin className="w-4 h-4" />} label="Dirección" value={direccion} />
-            <InfoRow
-              icon={<Phone className="w-4 h-4" />}
-              label="Teléfono"
-              value={telefono}
-              href={`https://wa.me/549${telefono.replace(/\D/g, "")}`}
-            />
+            <InfoRow icon={<Phone className="w-4 h-4" />} label="Teléfono" value={telefono} />
             <InfoRow icon={<Clock className="w-4 h-4" />} label="Horario de atención" value={horario} />
+            <div className="flex divide-x divide-gray-100 dark:divide-white/10">
+              {ubicacion?.navLink && (
+                <a
+                  href={ubicacion.navLink}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="flex-1 flex items-center justify-center gap-2 p-4 text-blue-700 dark:text-sky-300 font-bold text-xs uppercase tracking-widest hover:bg-blue-50/50 dark:hover:bg-sky-400/5 transition-colors"
+                >
+                  <Navigation className="w-4 h-4" /> Cómo llegar
+                </a>
+              )}
+              <a
+                href={`https://wa.me/549${telefono.replace(/\D/g, "")}`}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="flex-1 flex items-center justify-center gap-2 p-4 text-emerald-600 dark:text-emerald-400 font-bold text-xs uppercase tracking-widest hover:bg-emerald-50/50 dark:hover:bg-emerald-400/5 transition-colors"
+              >
+                <WhatsAppIcon className="w-4 h-4" /> Contactar
+              </a>
+            </div>
           </div>
 
           {/* Mapa de ubicación: relative y h-full con el iframe en absolute */}

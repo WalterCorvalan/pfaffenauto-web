@@ -27,7 +27,9 @@ export default function WalkJoystick({ walk }: { walk: WalkState }) {
       dy = (dy / dist) * RADIO;
     }
     setStick({ x: dx, y: dy });
-    walk.mover.current = { x: dx / RADIO, z: dy / RADIO };
+    // Adelante/atrás (z) ya funcionaba bien tal cual venía — solo izquierda/
+    // derecha (x) estaba invertido.
+    walk.mover.current = { x: -dx / RADIO, z: dy / RADIO };
   };
 
   const soltar = () => {

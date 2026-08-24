@@ -4,6 +4,7 @@ import PublicHeader from "@/components/PublicHeader";
 import Footer from "@/components/Footer";
 import UtmTracker from "@/components/UtmTracker";
 import FloatingChatbot from "@/components/FloatingChatbot";
+import CookieBanner from "@/components/CookieBanner";
 import RouteProgress from "@/components/ui/RouteProgress";
 import { TemaPublicoProvider } from "@/components/TemaPublicoContext";
 import TemaPublicoRoot from "@/components/TemaPublicoRoot";
@@ -33,6 +34,7 @@ export default function PublicLayout({
           </main>
           <Footer />
           <FloatingChatbot />
+          <CookieBanner />
         </div>
       </TemaPublicoRoot>
     </TemaPublicoProvider>

@@ -136,5 +136,5 @@ export async function POST(req: Request) {
     ai_generado: true,
   });
 
-  return NextResponse.json({ reply, fotoUrl: result.fotoParaEnviar });
+  return NextResponse.json({ reply, link: result.linkParaEnviar });
 }

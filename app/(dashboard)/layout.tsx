@@ -41,6 +41,7 @@ import {
   FileText,
   ShieldCheck,
   AlertTriangle,
+  Camera,
 } from "lucide-react";
 const SECCIONES_INICIALES = {
   inventario: true,
@@ -610,6 +611,11 @@ export default function DashboardLayout({
                       icon={Bot}
                       label="Asistente Virtual"
                       href="/panel/marketing/chatbot"
+                    />
+                    <NavLinkItem
+                      icon={Camera}
+                      label="Métricas de Instagram"
+                      href="/panel/marketing/instagram"
                     />
                   </SectionAccordion>
                 )}

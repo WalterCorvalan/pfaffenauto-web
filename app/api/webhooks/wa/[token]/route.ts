@@ -2,7 +2,7 @@ import { createHmac, timingSafeEqual } from "crypto";
 import { createClient } from "@supabase/supabase-js";
 import { isAiConfigured } from "@/lib/ai";
 import { generarRespuestaAgente } from "@/lib/ai/agente";
-import { sendTextMessage, sendImageMessage } from "@/lib/meta/client"; // ya lo tenés de antes
+import { sendTextMessage } from "@/lib/meta/client"; // ya lo tenés de antes
 import { decrypt } from "@/lib/crypto"; // ya lo tenés de antes
 import { notificarPersona, notificarEncargados } from "@/lib/notificaciones";
 import { registrarError } from "@/lib/logger";
@@ -270,11 +270,12 @@ async function ejecutarAgente(conversacionId: string, contactoId: string) {
   }
 
   const { reply, handoff, calificacion, vehiculo_mencionado } = result.data;
-  const fotoParaEnviar = result.fotoParaEnviar;
+  const linkParaEnviar = result.linkParaEnviar;
 
-  const estadoSegunCalificacion =
-    calificacion === "caliente" ? "Interesado" :
-    calificacion === "frio" ? "Perdido" : "Contactado";
+  // Frío no es "perdido" — es solo temperatura baja, sigue en el pipeline y
+  // puede reactivarse solo (ver api/vehiculos/reactivar-leads). "Perdido" es
+  // un estado que solo pone el vendedor a mano cuando confirma que se cayó.
+  const estadoSegunCalificacion = calificacion === "caliente" ? "Interesado" : "Contactado";
 
   await supabase
     .from("whatsapp_conversaciones")
@@ -323,8 +324,8 @@ async function ejecutarAgente(conversacionId: string, contactoId: string) {
     await enviarYActualizarMensaje(mensajeSaliente.id, contactoId, reply);
   }
 
-  if (fotoParaEnviar) {
-    await enviarFoto(contactoId, fotoParaEnviar);
+  if (linkParaEnviar) {
+    await enviarLink(contactoId, linkParaEnviar);
   }
 
   if (handoff) {
@@ -376,8 +377,10 @@ async function enviarYActualizarMensaje(mensajeId: string, contactoId: string, t
   }
 }
 
-// Best-effort: si falla el envío de la foto no rompe la conversación, ya se mandó el texto.
-async function enviarFoto(contactoId: string, imageUrl: string) {
+// Best-effort: si falla el envío del link no rompe la conversación, ya se mandó el texto.
+// Le pasamos la ficha real del catálogo (fotos completas, specs, precio
+// actualizado) en vez de una sola foto suelta.
+async function enviarLink(contactoId: string, link: string) {
   if (!isWhatsappEnvioConfigurado()) return;
 
   const { data: contacto } = await supabase
@@ -388,14 +391,14 @@ async function enviarFoto(contactoId: string, imageUrl: string) {
   if (!contacto) return;
 
   try {
-    await sendImageMessage(
+    await sendTextMessage(
       process.env.META_WHATSAPP_PHONE_NUMBER_ID!,
       process.env.META_WHATSAPP_TOKEN!,
       contacto.telefono,
-      imageUrl
+      `Mirá todos los detalles acá: ${link}`
     );
   } catch (err) {
-    registrarError("api/webhooks/wa enviando foto", err);
+    registrarError("api/webhooks/wa enviando link", err);
   }
 }
 

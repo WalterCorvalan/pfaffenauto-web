@@ -32,10 +32,10 @@ export type HistorialMensaje = { role: "user" | "assistant"; content: string };
 
 // Búsqueda real de stock para el agente. Nunca inventa: si no hay filas, el prompt
 // le dice a la IA que lo diga con honestidad en vez de simular disponibilidad.
-export async function buscarStockReal(marca: string, modelo: string): Promise<{ resultados: ResultadoStock[]; fotoUrl: string | null }> {
+export async function buscarStockReal(marca: string, modelo: string): Promise<{ resultados: ResultadoStock[]; linkPublicacion: string | null }> {
   const { data } = await supabase
     .from("vehiculos")
-    .select("marca, modelo, anio, precio_publicado_ars, precio_publicado_usd, sucursales!vehiculos_sucursal_id_fkey ( nombre ), multimedia_vehiculos ( url_archivo, orden )")
+    .select("marca, modelo, anio, slug, precio_publicado_ars, precio_publicado_usd, sucursales!vehiculos_sucursal_id_fkey ( nombre )")
     .ilike("marca", `%${marca}%`)
     .ilike("modelo", `%${modelo}%`)
     .in("estado", ["Disponible", "Reservado"])
@@ -50,18 +50,18 @@ export async function buscarStockReal(marca: string, modelo: string): Promise<{ 
     sucursal: v.sucursales?.nombre ?? null,
   }));
 
-  const primeraFoto = (data ?? [])
-    .flatMap((v: any) => v.multimedia_vehiculos ?? [])
-    .sort((a: any, b: any) => (a.orden ?? 999) - (b.orden ?? 999))[0];
-  const fotoUrl = primeraFoto?.url_archivo ?? null;
+  // Le mandamos el link a la ficha real del catálogo (no una foto suelta) —
+  // así el cliente ve precio, fotos completas y specs actualizados en la web.
+  const primerAuto = (data ?? [])[0] as any;
+  const linkPublicacion = primerAuto?.slug ? `https://pfaffenautos.com.ar/catalogo/${primerAuto.slug}` : null;
 
-  return { resultados, fotoUrl };
+  return { resultados, linkPublicacion };
 }
 
 // Dos pasadas: 1) extrae qué auto nombró el cliente, 2) si nombró uno, busca stock
 // real y le pide a la IA que redacte la respuesta final SOLO con esos datos.
 export async function generarRespuestaAgente(historial: HistorialMensaje[], canal: string = "agente"): Promise<
-  | { ok: true; data: AgentReply; fotoParaEnviar: string | null }
+  | { ok: true; data: AgentReply; linkParaEnviar: string | null }
   | { ok: false; error: string }
 > {
   const result = await chatJson(AgentReplySchema, [
@@ -72,14 +72,14 @@ export async function generarRespuestaAgente(historial: HistorialMensaje[], cana
   if (!result.ok) return { ok: false, error: result.error };
 
   let respuesta = result.data;
-  let fotoParaEnviar: string | null = null;
+  let linkParaEnviar: string | null = null;
 
   if (respuesta.vehiculo_mencionado?.marca && respuesta.vehiculo_mencionado?.modelo) {
-    const { resultados, fotoUrl } = await buscarStockReal(
+    const { resultados, linkPublicacion } = await buscarStockReal(
       respuesta.vehiculo_mencionado.marca,
       respuesta.vehiculo_mencionado.modelo
     );
-    fotoParaEnviar = fotoUrl;
+    linkParaEnviar = linkPublicacion;
 
     const result2 = await chatJson(AgentReplySchema, [
       { role: "system", content: buildSystemPrompt(undefined, resultados) },
@@ -93,5 +93,5 @@ export async function generarRespuestaAgente(historial: HistorialMensaje[], cana
     }
   }
 
-  return { ok: true, data: respuesta, fotoParaEnviar };
+  return { ok: true, data: respuesta, linkParaEnviar };
 }

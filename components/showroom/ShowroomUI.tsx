@@ -5,7 +5,6 @@ import Link from "next/link";
 import type { ShowroomVehicle, ShowroomView } from "@/lib/showroom/types";
 
 type Props = {
-  marca: "karry" | "rely";
   modelos: ShowroomVehicle[];
   activo: ShowroomVehicle | null;
   onSeleccionar: (v: ShowroomVehicle) => void;
@@ -13,7 +12,7 @@ type Props = {
   onVista: (view: ShowroomView) => void;
 };
 
-export default function ShowroomUI({ marca, modelos, activo, onSeleccionar, onVolver, onVista }: Props) {
+export default function ShowroomUI({ modelos, activo, onSeleccionar, onVolver, onVista }: Props) {
   return (
     <div className="pointer-events-none absolute inset-0 flex flex-col justify-between p-6 text-white">
       {/* header: marca + selector de modelos */}
@@ -23,8 +22,8 @@ export default function ShowroomUI({ marca, modelos, activo, onSeleccionar, onVo
             ← Volver a la fila
           </button>
         ) : (
-          <Link href={`/marcas/${marca}`} className="text-sm uppercase tracking-widest opacity-70 hover:opacity-100">
-            ← {marca}
+          <Link href="/catalogo" className="text-sm uppercase tracking-widest opacity-70 hover:opacity-100">
+            ← Catálogo
           </Link>
         )}
         <div className="flex gap-2">

@@ -86,6 +86,55 @@ export async function publishFacebookPost(pageId: string, token: string, imageUr
   });
 }
 
+// Instagram: métricas de la cuenta (requiere permiso instagram_manage_insights
+// de Meta, distinto de instagram_basic que ya se usa para publicar/mensajear).
+// reach/profile_views/website_clicks son diarias; follower_count sirve como
+// serie para el gráfico de crecimiento acumulado.
+export async function getInstagramAccountInsights(igUserId: string, token: string, since: number, until: number) {
+  return graphRequest<{
+    data: { name: string; period: string; values: { value: number; end_time: string }[] }[];
+  }>(
+    `${igUserId}/insights?metric=reach,profile_views,follower_count&period=day&since=${since}&until=${until}`,
+    token
+  );
+}
+
+// Datos base de la cuenta: seguidores actuales, cantidad de publicaciones.
+export async function getInstagramAccountSummary(igUserId: string, token: string) {
+  return graphRequest<{ followers_count: number; media_count: number; username: string }>(
+    `${igUserId}?fields=followers_count,media_count,username`,
+    token
+  );
+}
+
+// Publicaciones recientes con sus datos básicos (likes/comments vienen en el
+// campo mismo; para reach/saved/shares hay que pedir insights por post aparte).
+export async function getInstagramMedia(igUserId: string, token: string, limit = 12) {
+  return graphRequest<{
+    data: {
+      id: string;
+      caption?: string;
+      media_type: string;
+      media_url?: string;
+      permalink: string;
+      timestamp: string;
+      like_count?: number;
+      comments_count?: number;
+    }[];
+  }>(
+    `${igUserId}/media?fields=id,caption,media_type,media_url,permalink,timestamp,like_count,comments_count&limit=${limit}`,
+    token
+  );
+}
+
+// Insights de un post puntual — reach y engagement real (guardados/compartidos).
+export async function getInstagramMediaInsights(mediaId: string, token: string) {
+  return graphRequest<{ data: { name: string; values: { value: number }[] }[] }>(
+    `${mediaId}/insights?metric=reach,saved,shares`,
+    token
+  );
+}
+
 // Instagram: respuesta privada (DM) a un comentario puntual — es el mecanismo
 // "comentaste, te mando un privado" tipo ManyChat, hecho directo con la API de Meta.
 export async function sendInstagramPrivateReply(commentId: string, token: string, text: string) {

@@ -2,7 +2,7 @@
 
 import { Suspense, useRef, useState, useEffect } from "react";
 import { Canvas } from "@react-three/fiber";
-import { ContactShadows, Loader } from "@react-three/drei";
+import { ContactShadows, Loader, Grid } from "@react-three/drei";
 import Image from "next/image";
 import CameraRig, { type CameraRigHandle } from "./CameraRig";
 import VehiculoPlaceholder from "./VehiculoPlaceholder";
@@ -10,17 +10,18 @@ import WalkControls from "./WalkControls";
 import WalkJoystick from "./WalkJoystick";
 import { useWalkState } from "./useWalkState";
 import ShowroomUI from "./ShowroomUI";
-import { SHOWROOM_VEHICULOS, type ShowroomVehicle } from "@/lib/showroom/types";
+import type { ShowroomVehicle } from "@/lib/showroom/types";
 
-const ESPACIADO_FILA = 3.2; // distancia entre autos en la fila
-const Z_INICIAL = 4; // dónde arranca parado el visitante (vereda frente a la fila)
+const COLUMNAS = 5; // autos por fila — a partir de acá arma filas hacia atrás, no una línea infinita
+const ESPACIADO_COLUMNA = 3.2; // distancia entre autos de una misma fila (eje X)
+const ESPACIADO_FILA_Z = 6; // distancia entre una fila y la siguiente (eje Z) — deja pasillo para caminar entre filas
+const Z_INICIAL = 4; // dónde arranca parado el visitante (vereda frente a la primera fila)
 
-export default function Showroom3D({ marca }: { marca: "karry" | "rely" }) {
-  const modelos = SHOWROOM_VEHICULOS.filter((v) => v.marca === marca);
-  // Una entrada por unidad disponible, para que la fila muestre 1 caja por auto real en stock.
-  const instancias = modelos.flatMap((v) =>
-    Array.from({ length: v.disponibles ?? 1 }, (_, unidad) => ({ vehiculo: v, unidad }))
-  );
+export default function Showroom3D({ vehiculos }: { vehiculos: ShowroomVehicle[] }) {
+  const modelos = vehiculos;
+  // Stock real: cada vehículo ya es una unidad física individual (disponibles
+  // siempre 1), así que acá no hay que repetir instancias por cantidad.
+  const instancias = modelos.map((v) => ({ vehiculo: v, unidad: 0 }));
   // null = estamos caminando por la fila en primera persona, sin selección confirmada.
   const [activo, setActivo] = useState<ShowroomVehicle | null>(null);
   // auto tocado en la fila, esperando confirmación en la tarjeta flotante.
@@ -29,7 +30,14 @@ export default function Showroom3D({ marca }: { marca: "karry" | "rely" }) {
   const rigRef = useRef<CameraRigHandle>(null);
   const walk = useWalkState();
 
-  const limiteX = { min: -(instancias.length - 1) / 2 * ESPACIADO_FILA - 2, max: (instancias.length - 1) / 2 * ESPACIADO_FILA + 2 };
+  const filas = Math.max(1, Math.ceil(instancias.length / COLUMNAS));
+
+  // Salón abierto: el ancho es siempre el de una fila completa (5 autos) y el
+  // fondo crece con la cantidad de filas — así hay lugar para caminar libre
+  // incluso con pocas unidades, y espacio real detrás de cada fila con muchas.
+  const anchoSalon = (COLUMNAS - 1) / 2 * ESPACIADO_COLUMNA + 2;
+  const limiteX = { min: -Math.max(anchoSalon, 14), max: Math.max(anchoSalon, 14) };
+  const limiteZ = { min: -(filas * ESPACIADO_FILA_Z) - 2, max: Z_INICIAL + 2 };
 
   useEffect(() => {
     rigRef.current?.goTo("cenital");
@@ -71,6 +79,9 @@ export default function Showroom3D({ marca }: { marca: "karry" | "rely" }) {
     >
       <Canvas shadows camera={{ position: [0, 1.6, Z_INICIAL], fov: 60 }}>
         <Suspense fallback={null}>
+          <color attach="background" args={["#14161f"]} />
+          <fog attach="fog" args={["#14161f", 10, 34]} />
+
           <ambientLight intensity={0.5} />
           <directionalLight
             position={[6, 8, 4]}
@@ -80,18 +91,44 @@ export default function Showroom3D({ marca }: { marca: "karry" | "rely" }) {
           />
           <directionalLight position={[-6, 4, -4]} intensity={0.5} />
 
+          {/* Piso: sin esto el suelo era el mismo negro que el fondo, imposible
+              distinguir dónde termina uno y empieza el otro (sin sensación de
+              profundidad). La grilla marca distancia recorrida al caminar. */}
+          <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, 0, -50]} receiveShadow>
+            <planeGeometry args={[160, 160]} />
+            <meshStandardMaterial color="#1f2230" />
+          </mesh>
+          <Grid
+            position={[0, 0.01, 0]}
+            args={[160, 160]}
+            cellSize={1}
+            cellThickness={0.5}
+            cellColor="#3a3f56"
+            sectionSize={5}
+            sectionThickness={1}
+            sectionColor="#565d80"
+            fadeDistance={60}
+            fadeStrength={1.5}
+            infiniteGrid
+          />
+
           {activo ? (
             <VehiculoPlaceholder key={activo.id} vehiculo={activo} />
           ) : (
-            instancias.map(({ vehiculo: v, unidad }, i) => (
-              <VehiculoPlaceholder
-                key={`${v.id}-${unidad}`}
-                vehiculo={v}
-                posicionX={(i - (instancias.length - 1) / 2) * ESPACIADO_FILA}
-                onClick={() => setCandidato(v)}
-                mostrarMarcador
-              />
-            ))
+            instancias.map(({ vehiculo: v, unidad }, i) => {
+              const col = i % COLUMNAS;
+              const fila = Math.floor(i / COLUMNAS);
+              return (
+                <VehiculoPlaceholder
+                  key={`${v.id}-${unidad}`}
+                  vehiculo={v}
+                  posicionX={(col - (COLUMNAS - 1) / 2) * ESPACIADO_COLUMNA}
+                  posicionZ={-fila * ESPACIADO_FILA_Z}
+                  onClick={() => setCandidato(v)}
+                  mostrarMarcador
+                />
+              );
+            })
           )}
 
           <ContactShadows position={[0, 0, 0]} opacity={0.5} scale={24} blur={2} far={4} />
@@ -100,6 +137,7 @@ export default function Showroom3D({ marca }: { marca: "karry" | "rely" }) {
             activo={!activo}
             walk={walk}
             limiteX={limiteX}
+            limiteZ={limiteZ}
             posicionInicial={{ x: 0, z: Z_INICIAL }}
             resetId={resetId}
           />
@@ -141,7 +179,6 @@ export default function Showroom3D({ marca }: { marca: "karry" | "rely" }) {
       )}
 
       <ShowroomUI
-        marca={marca}
         modelos={modelos}
         activo={activo}
         onSeleccionar={confirmarSeleccion}

@@ -51,8 +51,11 @@ export default function TallerClient({ vehiculosIniciales }: { vehiculosIniciale
     setAgregandoId(v.id);
     try {
       const { data: { user } } = await supabase.auth.getUser();
-      const { error } = await supabase.from("vehiculos").update({ etapa_preparacion: "Ingreso" }).eq("id", v.id);
+      // RLS bloqueado no tira error, devuelve 0 filas — hay que chequear que
+      // realmente vino una fila de vuelta antes de creer que se guardó.
+      const { data, error } = await supabase.from("vehiculos").update({ etapa_preparacion: "Ingreso" }).eq("id", v.id).select("id");
       if (error) throw error;
+      if (!data || data.length === 0) throw new Error("No tenés permiso para hacer esto.");
 
       await supabase.from("historial_cambios").insert({
         tabla: "vehiculos",
@@ -82,8 +85,9 @@ export default function TallerClient({ vehiculosIniciales }: { vehiculosIniciale
     try {
       const { data: { user } } = await supabase.auth.getUser();
 
-      const { error } = await supabase.from("vehiculos").update({ etapa_preparacion: nuevaEtapa }).eq("id", v.id);
+      const { data, error } = await supabase.from("vehiculos").update({ etapa_preparacion: nuevaEtapa }).eq("id", v.id).select("id");
       if (error) throw error;
+      if (!data || data.length === 0) throw new Error("No tenés permiso para hacer esto.");
 
       await supabase.from("historial_cambios").insert({
         tabla: "vehiculos",

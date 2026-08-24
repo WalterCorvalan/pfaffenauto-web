@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { Heart, Share2, Check } from "lucide-react";
+import { trackEvent } from "@/lib/analytics";
 
 export default function BotonesInteractivos({ auto }: { auto: any }) {
   const [isFav, setIsFav] = useState(false);
@@ -58,12 +59,14 @@ export default function BotonesInteractivos({ auto }: { auto: any }) {
       });
       localStorage.setItem("pfaffen_favs", JSON.stringify(favs));
       setIsFav(true);
+      trackEvent("agregar_favorito", { auto_id: auto.id, marca: auto.marca, modelo: auto.modelo });
     }
   };
 
   const handleShare = async () => {
     const url = window.location.href;
     const title = `${auto.marca} ${auto.modelo} - Pfaffen Autos`;
+    trackEvent("compartir_auto", { auto_id: auto.id, marca: auto.marca, modelo: auto.modelo });
 
     if (navigator.share) {
       try {

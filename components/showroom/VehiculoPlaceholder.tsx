@@ -7,19 +7,20 @@ import type { ShowroomVehicle } from "@/lib/showroom/types";
 // Vista "interior" no funciona con placeholder (mesh sólido, sin cabina hueca) — pendiente hasta cargar .glb real.
 type Props = {
   vehiculo: ShowroomVehicle;
-  posicionX?: number; // offset horizontal, para la fila cenital
+  posicionX?: number; // offset horizontal (columna)
+  posicionZ?: number; // offset de profundidad (fila)
   onClick?: () => void;
   mostrarMarcador?: boolean; // pin clickeable tipo Street View, para el modo caminata
 };
 
-export default function VehiculoPlaceholder({ vehiculo, posicionX = 0, onClick, mostrarMarcador = false }: Props) {
+export default function VehiculoPlaceholder({ vehiculo, posicionX = 0, posicionZ = 0, onClick, mostrarMarcador = false }: Props) {
   const { largo, ancho, alto } = vehiculo.dimensiones;
 
   return (
     <group
-      position={[posicionX, alto / 2, 0]}
+      position={[posicionX, alto / 2, posicionZ]}
       onClick={onClick ? (e) => { e.stopPropagation(); onClick(); } : undefined}
-      onPointerOver={onClick ? (e) => { e.stopPropagation(); document.body.style.cursor = "pointer"; } : undefined}
+      onPointerOver={onClick ? () => { document.body.style.cursor = "pointer"; } : undefined}
       onPointerOut={onClick ? () => { document.body.style.cursor = "auto"; } : undefined}
     >
       {mostrarMarcador && (

@@ -16,6 +16,7 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 
 import BotonesInteractivos from "@/components/BotonesInteractivos";
+import WhatsAppIcon from "@/components/icons/WhatsAppIcon";
 import AgendarVisitaForm from "@/components/forms/AgendarVisitaForm";
 import GaleriaVehiculo from "@/components/GaleriaVehiculo";
 import SimuladorFinanciacion from "@/components/SimuladorFinanciacion";
@@ -414,9 +415,9 @@ function VehiculoPriceCard({
           href={linkWhatsApp}
           target="_blank"
           rel="noopener noreferrer"
-          className="block w-full bg-gradient-to-r from-[#0145F2] to-sky-500 hover:from-blue-600 hover:to-sky-400 text-white font-black text-sm uppercase tracking-widest text-center py-4 rounded-2xl shadow-[0_8px_20px_rgba(1,69,242,0.3)] hover:shadow-[0_12px_25px_rgba(1,69,242,0.4)] transition-all duration-300 active:scale-95"
+          className="w-full bg-[#25D366] hover:bg-[#1EBE5D] text-white font-black text-sm uppercase tracking-widest text-center py-4 rounded-2xl shadow-[0_8px_20px_rgba(37,211,102,0.3)] hover:shadow-[0_12px_25px_rgba(37,211,102,0.4)] transition-all duration-300 active:scale-95 flex items-center justify-center gap-2"
         >
-          Consultar por WhatsApp
+          <WhatsAppIcon className="w-4 h-4" /> Consultar
         </a>
         <AgendarVisitaForm auto={auto} />
       </div>

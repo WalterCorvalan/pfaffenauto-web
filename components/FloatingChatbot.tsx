@@ -2,13 +2,13 @@
 
 import { useState, useRef, useEffect } from "react";
 import { usePathname } from "next/navigation";
-import Image from "next/image";
 import { MessageSquare, X, Send, Bot, User } from "lucide-react";
+import { trackEvent } from "@/lib/analytics";
 
 interface Message {
   role: "user" | "assistant";
   content: string;
-  imagen?: string | null;
+  link?: string | null;
 }
 
 const MENSAJE_INICIAL: Message = {
@@ -69,7 +69,7 @@ export default function FloatingChatbot() {
       const data = await res.json();
       setMessages((prev) => [
         ...prev,
-        { role: "assistant", content: data.reply || "Perdón, no pude responder. Probá de nuevo.", imagen: data.fotoUrl || null },
+        { role: "assistant", content: data.reply || "Perdón, no pude responder. Probá de nuevo.", link: data.link || null },
       ]);
     } catch {
       setMessages((prev) => [...prev, { role: "assistant", content: "Perdón, hubo un error de conexión. Probá de nuevo en un momento." }]);
@@ -83,7 +83,7 @@ export default function FloatingChatbot() {
       {/* Botón flotante para abrir/cerrar */}
       {!isOpen && (
         <button
-          onClick={() => setIsOpen(true)}
+          onClick={() => { setIsOpen(true); trackEvent("abrir_chat_ia"); }}
           className="bg-[#0145F2] hover:bg-blue-700 text-white p-4 rounded-full shadow-2xl flex items-center justify-center transition-all duration-300 hover:scale-110 group cursor-pointer border-2 border-white/20"
           aria-label="Abrir chat de asistencia"
         >
@@ -153,10 +153,15 @@ export default function FloatingChatbot() {
                   >
                     {m.content}
                   </div>
-                  {m.imagen && (
-                    <div className="relative w-full h-32 rounded-xl overflow-hidden border border-slate-100">
-                      <Image src={m.imagen} alt="Foto del vehículo" fill className="object-cover" sizes="300px" />
-                    </div>
+                  {m.link && (
+                    <a
+                      href={m.link}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="block text-center bg-[#0145F2] hover:bg-blue-600 text-white text-xs font-bold px-4 py-2.5 rounded-xl transition-colors"
+                    >
+                      Ver ficha completa
+                    </a>
                   )}
                 </div>
                 {m.role === "user" && (

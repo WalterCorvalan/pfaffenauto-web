@@ -15,7 +15,10 @@ export function TemaPublicoProvider({ children }: { children: React.ReactNode })
   const [oscuro, setOscuro] = useState(false);
 
   useEffect(() => {
-    setOscuro(localStorage.getItem(STORAGE_KEY) === "1");
+    const guardado = localStorage.getItem(STORAGE_KEY);
+    // Sin preferencia guardada todavía: arranca según el modo del sistema/teléfono.
+    const inicial = guardado !== null ? guardado === "1" : window.matchMedia("(prefers-color-scheme: dark)").matches;
+    setOscuro(inicial);
   }, []);
 
   // El body vive por encima del wrapper que lleva la clase .dark, así que sin esto

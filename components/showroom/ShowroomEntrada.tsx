@@ -4,13 +4,16 @@ import { useRef } from "react";
 import Image from "next/image";
 import { motion, useScroll, useTransform } from "framer-motion";
 import Showroom3D from "./Showroom3D";
+import type { ShowroomVehicle } from "@/lib/showroom/types";
 
 export default function ShowroomEntrada({
-  marca,
+  sucursalNombre,
   fachadaSrc,
+  vehiculos,
 }: {
-  marca: "karry" | "rely";
+  sucursalNombre: string;
   fachadaSrc: string;
+  vehiculos: ShowroomVehicle[];
 }) {
   const containerRef = useRef<HTMLDivElement>(null);
 
@@ -30,7 +33,7 @@ export default function ShowroomEntrada({
         <motion.div style={{ scale, opacity }} className="absolute inset-0">
           <Image
             src={fachadaSrc}
-            alt={`Fachada concesionaria ${marca}`}
+            alt={`Fachada Pfaffen Autos ${sucursalNombre}`}
             fill
             priority
             className="object-cover"
@@ -52,7 +55,7 @@ export default function ShowroomEntrada({
 
       {/* el showroom 3D queda debajo, se revela cuando la fachada termina de desvanecerse */}
       <div className="absolute inset-x-0 top-[100vh] h-[100dvh]">
-        <Showroom3D marca={marca} />
+        <Showroom3D vehiculos={vehiculos} />
       </div>
     </div>
   );
