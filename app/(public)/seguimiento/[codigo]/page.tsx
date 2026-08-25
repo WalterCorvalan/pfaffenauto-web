@@ -26,7 +26,7 @@ export default async function SeguimientoPublicoPage({
 
   const { data: venta } = await supabase
     .from("boletos_venta")
-    .select("etapa_seguimiento, marca, modelo")
+    .select("id, numero, etapa_seguimiento, marca, modelo, vendedor_id")
     .eq("codigo_seguimiento", codigo.toUpperCase())
     .maybeSingle();
 
@@ -34,9 +34,27 @@ export default async function SeguimientoPublicoPage({
     ? { data: null }
     : await supabase
         .from("senas")
-        .select("estado, marca, modelo")
+        .select("id, numero, estado, marca, modelo, vendedor_id")
         .eq("codigo_seguimiento", codigo.toUpperCase())
         .maybeSingle();
+
+  if (venta?.vendedor_id) {
+    await supabase.from("notificaciones").insert({
+      perfil_id: venta.vendedor_id,
+      tipo: "vista_seguimiento",
+      mensaje: `El cliente abrió el seguimiento de la Venta N° ${venta.numero} (${venta.marca} ${venta.modelo}).`,
+      link: `/panel/ventas/seguimiento/${venta.id}`,
+      seccion: "boletos",
+    });
+  } else if (sena?.vendedor_id) {
+    await supabase.from("notificaciones").insert({
+      perfil_id: sena.vendedor_id,
+      tipo: "vista_seguimiento",
+      mensaje: `El cliente abrió el seguimiento de la Seña N° ${sena.numero} (${sena.marca} ${sena.modelo}).`,
+      link: `/panel/senas/imprimir/${sena.id}`,
+      seccion: "senas",
+    });
+  }
 
   const indexActual = venta ? ETAPAS.indexOf(venta.etapa_seguimiento || "Seña") : -1;
 

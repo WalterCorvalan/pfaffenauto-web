@@ -4,7 +4,7 @@ import { useEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import { useRouter } from "next/navigation";
 import { supabase } from "@/lib/supabase/client";
-import { Bell, Check } from "lucide-react";
+import { Bell, Check, CheckCheck, Users, ClipboardList, Car, MessageCircle, FileText, Bell as BellIcon } from "lucide-react";
 
 interface Notificacion {
   id: string;
@@ -86,6 +86,50 @@ export default function NotificacionesBell({ seccion }: { seccion?: string }) {
     }
   };
 
+  const marcarTodasLeidas = async () => {
+    const idsNoLeidas = notificaciones.filter((n) => !n.leida).map((n) => n.id);
+    if (idsNoLeidas.length === 0) return;
+    setNotificaciones((prev) => prev.map((x) => ({ ...x, leida: true })));
+    await supabase.from("notificaciones").update({ leida: true }).in("id", idsNoLeidas);
+  };
+
+  const iconoSeccion = (s: string | null) => {
+    switch (s) {
+      case "crm":
+        return Users;
+      case "tareas":
+        return ClipboardList;
+      case "stock":
+      case "comprar":
+        return Car;
+      case "chat":
+        return MessageCircle;
+      case "peritajes":
+      case "presupuestos":
+        return FileText;
+      default:
+        return BellIcon;
+    }
+  };
+
+  const etiquetaGrupo = (fecha: Date) => {
+    const hoy = new Date();
+    const ayer = new Date();
+    ayer.setDate(hoy.getDate() - 1);
+    const mismodia = (a: Date, b: Date) => a.toDateString() === b.toDateString();
+    if (mismodia(fecha, hoy)) return "Hoy";
+    if (mismodia(fecha, ayer)) return "Ayer";
+    return fecha.toLocaleDateString("es-AR", { day: "2-digit", month: "short" });
+  };
+
+  const grupos: { etiqueta: string; items: Notificacion[] }[] = [];
+  for (const n of notificaciones) {
+    const etiqueta = etiquetaGrupo(new Date(n.created_at));
+    const grupo = grupos.find((g) => g.etiqueta === etiqueta);
+    if (grupo) grupo.items.push(n);
+    else grupos.push({ etiqueta, items: [n] });
+  }
+
   if (!userId) return null;
 
   return (
@@ -112,34 +156,65 @@ export default function NotificacionesBell({ seccion }: { seccion?: string }) {
             style={{ top: posicion.top, left: posicion.left }}
             className="fixed w-80 max-h-[70vh] overflow-y-auto bg-white dark:bg-[#001c55] border border-slate-200 dark:border-[#0a2a6b] rounded-xl shadow-xl z-[101] custom-scrollbar"
           >
-            <div className="px-4 py-3 border-b border-slate-100 dark:border-[#0a2a6b] flex items-center justify-between">
+            <div className="px-4 py-3 border-b border-slate-100 dark:border-[#0a2a6b] flex items-center justify-between sticky top-0 bg-white dark:bg-[#001c55] z-10">
               <span className="text-[11px] font-bold uppercase tracking-widest text-slate-500 dark:text-slate-400">Notificaciones</span>
-              {noLeidas > 0 && <span className="text-[10px] font-bold text-rose-500">{noLeidas} nuevas</span>}
+              {noLeidas > 0 ? (
+                <button
+                  type="button"
+                  onClick={marcarTodasLeidas}
+                  className="flex items-center gap-1 text-[10px] font-bold text-indigo-500 hover:text-indigo-700 dark:text-sky-400 dark:hover:text-sky-300 transition-colors"
+                >
+                  <CheckCheck className="w-3 h-3" /> Marcar todas
+                </button>
+              ) : (
+                <span className="text-[10px] text-slate-400">al día</span>
+              )}
             </div>
             {notificaciones.length === 0 ? (
               <p className="text-[12px] text-slate-400 italic text-center py-8 px-4">Sin notificaciones.</p>
             ) : (
-              <div className="divide-y divide-slate-100 dark:divide-[#0a2a6b]">
-                {notificaciones.map((n) => (
-                  <button
-                    key={n.id}
-                    onClick={() => marcarLeida(n)}
-                    className={`w-full text-left px-4 py-3 flex items-start gap-2.5 hover:bg-slate-50 dark:hover:bg-[#00246b] transition-colors ${!n.leida ? "bg-indigo-50/50 dark:bg-[#002a6e]/50" : ""}`}
-                  >
-                    {!n.leida ? (
-                      <span className="w-2 h-2 rounded-full bg-indigo-500 mt-1.5 shrink-0" />
-                    ) : (
-                      <Check className="w-3 h-3 text-slate-300 mt-1 shrink-0" />
-                    )}
-                    <div className="min-w-0">
-                      <p className={`text-[12px] ${!n.leida ? "font-bold text-slate-800 dark:text-white" : "text-slate-500 dark:text-slate-400"}`}>{n.mensaje}</p>
-                      <span className="text-[10px] text-slate-400">
-                        {new Date(n.created_at).toLocaleString("es-AR", { day: "2-digit", month: "short", hour: "2-digit", minute: "2-digit" })}
-                      </span>
-                    </div>
-                  </button>
-                ))}
-              </div>
+              grupos.map((g) => (
+                <div key={g.etiqueta}>
+                  <div className="px-4 pt-2.5 pb-1 text-[9px] font-black uppercase tracking-widest text-slate-400 dark:text-slate-500 bg-slate-50/60 dark:bg-[#001640]">
+                    {g.etiqueta}
+                  </div>
+                  <div className="divide-y divide-slate-100 dark:divide-[#0a2a6b]">
+                    {g.items.map((n) => {
+                      const Icono = iconoSeccion(n.seccion);
+                      return (
+                        <button
+                          key={n.id}
+                          onClick={() => marcarLeida(n)}
+                          className={`group w-full text-left px-4 py-3 flex items-start gap-2.5 border-l-2 hover:bg-slate-50 dark:hover:bg-[#00246b] transition-colors ${
+                            !n.leida
+                              ? "border-l-indigo-500 bg-indigo-50/50 dark:bg-[#002a6e]/50"
+                              : "border-l-transparent"
+                          }`}
+                        >
+                          <span
+                            className={`w-6 h-6 rounded-full flex items-center justify-center shrink-0 mt-0.5 ${
+                              !n.leida
+                                ? "bg-indigo-500 text-white"
+                                : "bg-slate-100 dark:bg-[#0a2a6b] text-slate-400 dark:text-slate-500"
+                            }`}
+                          >
+                            <Icono className="w-3 h-3" />
+                          </span>
+                          <div className="min-w-0 flex-1">
+                            <p className={`text-[12px] ${!n.leida ? "font-bold text-slate-800 dark:text-white" : "text-slate-500 dark:text-slate-400"}`}>{n.mensaje}</p>
+                            <span className="text-[10px] text-slate-400">
+                              {new Date(n.created_at).toLocaleTimeString("es-AR", { hour: "2-digit", minute: "2-digit" })}
+                            </span>
+                          </div>
+                          {!n.leida && (
+                            <Check className="w-3.5 h-3.5 text-slate-300 group-hover:text-indigo-500 dark:text-slate-600 dark:group-hover:text-sky-400 shrink-0 mt-1 transition-colors" />
+                          )}
+                        </button>
+                      );
+                    })}
+                  </div>
+                </div>
+              ))
             )}
           </div>
         </>,

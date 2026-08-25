@@ -12,7 +12,7 @@ const supabase = createClient(
 
 const ReservarSchema = z.object({
   vehiculoId: z.string().uuid(),
-  estado: z.enum(["Reservado", "Disponible"]),
+  estado: z.enum(["Reservado", "Disponible", "Archivado"]),
 });
 
 // Un vendedor puede crear una seña (y con eso, reservar el auto) o hacer que
@@ -41,6 +41,16 @@ export async function POST(req: Request) {
       return Response.json({ error: "Faltan datos o tienen formato inválido." }, { status: 400 });
     }
     const { vehiculoId, estado } = parsed.data;
+
+    // Archivar/desarchivar es decisión manual de inventario (no la dispara
+    // ninguna otra pantalla), a diferencia de Reservado/Disponible que vienen
+    // de Señas — por eso acá sí exigimos rol admin/encargado.
+    if (estado === "Archivado") {
+      const { data: perfil } = await supabaseAuth.from("perfiles").select("rol").eq("id", user.id).maybeSingle();
+      if (perfil?.rol !== "admin" && perfil?.rol !== "encargado") {
+        return Response.json({ error: "No tenés permiso para archivar vehículos." }, { status: 403 });
+      }
+    }
 
     // No pisar un auto ya Vendido (ej. la seña se marca Perdida tarde, después
     // de que el auto se vendió por otra vía).
