@@ -1,10 +1,11 @@
 ﻿"use client";
 
 import { useState, useEffect, useRef } from "react";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { supabase } from "@/lib/supabase/client";
 import { uploadAutoImage } from "@/lib/upload";
 import { ArrowLeft, Save, Upload, X, Car, Shield, DollarSign, FileText, Image as ImageIcon, ChevronRight, ChevronLeft, Loader2 } from "lucide-react";
+import { mostrarToast } from "@/lib/toast";
 import { useForm, SubmitHandler } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
@@ -90,6 +91,7 @@ interface VehiculoFormProps {
 
 export default function VehiculoForm({ modo, autoId }: VehiculoFormProps) {
   const router = useRouter();
+  const searchParams = useSearchParams();
   const [rol, setRol] = useState<string>("vendedor");
   const [puedeEditarCompleto, setPuedeEditarCompleto] = useState(false);
   const [puedeVerCosto, setPuedeVerCosto] = useState(false);
@@ -113,9 +115,15 @@ export default function VehiculoForm({ modo, autoId }: VehiculoFormProps) {
   const { register, handleSubmit, trigger, watch, reset, formState: { errors } } = useForm<FormValues>({
     resolver: zodResolver(formSchema),
     defaultValues: {
-      origen: "Comprado", estado: "Disponible", stock_fisico: true, destacado: false,
+      origen: searchParams.get("origen") || "Comprado", estado: "Disponible", stock_fisico: true, destacado: false,
       pautado: false, canal_pauta: [], razon_pauta: "", // Iniciamos el array vacío
-      anio: String(new Date().getFullYear()), kilometraje: "0",
+      marca: searchParams.get("marca") || "", modelo: searchParams.get("modelo") || "",
+      anio: searchParams.get("anio") || String(new Date().getFullYear()),
+      kilometraje: searchParams.get("kilometraje") || "0",
+      precio_costo_usd: searchParams.get("precio_costo_usd") || "",
+      precio_costo_ars: searchParams.get("precio_costo_ars") || "",
+      prov_nombre: searchParams.get("prov_nombre") || "",
+      prov_telefono_celular: searchParams.get("prov_telefono_celular") || "",
     },
   });
 
@@ -166,6 +174,7 @@ export default function VehiculoForm({ modo, autoId }: VehiculoFormProps) {
             ubicacion: vehiculo.ubicacion || "",
             fecha_compra: vehiculo.fecha_compra || "", sucursal_compra_id: vehiculo.sucursal_compra_id || "",
             importe_patente_anual: vehiculo.importe_patente_anual ? String(vehiculo.importe_patente_anual) : "",
+            razon_pauta: vehiculo.razon_pauta || "",
             prov_nombre: proveedor?.nombre || "", prov_apellido: proveedor?.apellido || "",
             prov_dni: proveedor?.dni || "", prov_fecha_nacimiento: proveedor?.fecha_nacimiento || "",
             prov_cuit_cuil: proveedor?.cuit_cuil || "", prov_calle: proveedor?.calle || "",
@@ -201,6 +210,27 @@ export default function VehiculoForm({ modo, autoId }: VehiculoFormProps) {
 
     const esValido = camposAValidar.length > 0 ? await trigger(camposAValidar) : true;
     if (esValido) setPaso((prev) => Math.min(prev + 1, totalPasos));
+  };
+
+  // El botón "Confirmar" valida el formulario completo (los 7 pasos), pero
+  // solo se ven los campos del paso actual — si falla algo de otro paso
+  // (ej. falta Precio Publicado del paso 3), el submit se bloquea sin que se
+  // note nada. Si eso pasa, saltamos directo al primer paso con error.
+  const PASO_POR_CAMPO: Record<string, number> = {
+    patente: 1, marca: 1, modelo: 1, anio: 1, kilometraje: 1,
+    sucursal_id: 2, segmento: 2, tipo: 2, tipo_combustible: 2, transmision: 2, estado: 2, condicion_web: 2, stock_fisico: 2, destacado: 2,
+    precio_publicado_ars: 3, precio_publicado_usd: 3, precio_costo_ars: 3, precio_costo_usd: 3,
+    numero_motor: 4, numero_chasis: 4, marca_motor: 4, marca_chasis: 4, ubicacion: 4, radicado_localidad: 4, radicado_provincia: 4,
+    fecha_compra: 5, sucursal_compra_id: 5, importe_patente_anual: 5,
+  };
+
+  const onErrorSubmit = (errores: typeof errors) => {
+    const camposConError = Object.keys(errores) as (keyof FormValues)[];
+    const pasoConError = camposConError.map((c) => PASO_POR_CAMPO[c] || totalPasos).sort((a, b) => a - b)[0];
+    if (pasoConError && pasoConError !== paso) {
+      setPaso(pasoConError);
+      alert("Faltan datos obligatorios en un paso anterior. Te llevamos ahí.");
+    }
   };
 
   const handleKeyDown = (e: React.KeyboardEvent) => {
@@ -263,6 +293,10 @@ export default function VehiculoForm({ modo, autoId }: VehiculoFormProps) {
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({ vehiculoId: vehiculoNuevo.id }),
           }).catch(() => {});
+        }
+        const cotizacionOrigenId = searchParams.get("revertir_cotizacion_id");
+        if (cotizacionOrigenId) {
+          await supabase.from("cotizaciones").update({ vehiculo_id: vehiculoNuevo.id }).eq("id", cotizacionOrigenId);
         }
       } else if (modo === "editar" && !esEdicionVendedor) {
         const { error } = await supabase.from("vehiculos")
@@ -340,13 +374,22 @@ export default function VehiculoForm({ modo, autoId }: VehiculoFormProps) {
         }
       }
 
-      router.push("/panel");
-      router.refresh();
+      const destino = data.origen === "Consignado" ? "/panel/consignaciones" : "/panel";
+      if (modo === "editar") {
+        mostrarToast("Vehículo actualizado correctamente.");
+        setTimeout(() => {
+          router.push(destino);
+          router.refresh();
+        }, 1100);
+      } else {
+        router.push(destino);
+        router.refresh();
+      }
     } catch (err: any) {
       if (err?.code === "42501" || /row-level security|permission denied/i.test(err?.message || "")) {
-        alert("No tenés permiso para hacer esto. Consultá con un admin o encargado.");
+        mostrarToast("No tenés permiso para hacer esto. Consultá con un admin o encargado.", "error");
       } else {
-        alert(`Error al ${modo} el vehículo.`);
+        mostrarToast(`Error al ${modo} el vehículo.`, "error");
       }
     } finally {
       setLoading(false);
@@ -393,7 +436,14 @@ export default function VehiculoForm({ modo, autoId }: VehiculoFormProps) {
 
         <button
           type="button"
-          onClick={() => router.back()}
+          onClick={async () => {
+            const revertirId = searchParams.get("revertir_cotizacion_id");
+            const estadoAnterior = searchParams.get("estado_anterior");
+            if (revertirId) {
+              await supabase.from("cotizaciones").update({ estado: estadoAnterior || "Pendiente" }).eq("id", revertirId);
+            }
+            router.back();
+          }}
           className="text-slate-500 dark:text-slate-400 hover:text-indigo-600 dark:hover:text-sky-300 flex items-center gap-2 text-sm transition-colors py-2 mb-4 font-medium"
         >
           <ArrowLeft className="w-4 h-4" /> Volver al inventario
@@ -831,7 +881,7 @@ export default function VehiculoForm({ modo, autoId }: VehiculoFormProps) {
                 ) : (
                   <button
                     type="button"
-                    onClick={handleSubmit(onSubmit)}
+                    onClick={handleSubmit(onSubmit, onErrorSubmit)}
                     disabled={loading}
                     className="w-2/3 bg-emerald-600 hover:bg-emerald-700 py-4 rounded-xl text-xs font-bold flex items-center justify-center gap-2 shadow-sm disabled:opacity-50 text-white"
                   >
@@ -842,7 +892,7 @@ export default function VehiculoForm({ modo, autoId }: VehiculoFormProps) {
             ) : (
               <button
                 type="button"
-                onClick={handleSubmit(onSubmit)}
+                onClick={handleSubmit(onSubmit, onErrorSubmit)}
                 disabled={loading}
                 className="w-full bg-indigo-600 hover:bg-indigo-700 py-4 rounded-xl text-xs font-bold flex items-center justify-center gap-2 shadow-sm disabled:opacity-50 text-white"
               >

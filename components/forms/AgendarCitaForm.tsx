@@ -49,10 +49,28 @@ export default function AgendarCitaForm() {
   // la anon key, sin captcha ni rate limit. Ahora pasa por /api/visitas.
   const [turnstileToken, setTurnstileToken] = useState("");
   const [turnstileListo, setTurnstileListo] = useState(false);
+  const [turnstileError, setTurnstileError] = useState(false);
   const turnstileRef = useRef<HTMLDivElement>(null);
   const turnstileWidgetId = useRef<string | null>(null);
 
   const hoy = new Date().toISOString().split("T")[0];
+
+  // No confiamos solo en el onLoad del <Script>: si otro componente de la
+  // página (ej. AgendarVisitaForm dentro de cada card del stock) ya insertó
+  // el mismo script de Turnstile antes, next/script dedupea el tag y este
+  // onLoad puede no disparar nunca — quedaba "roto" hasta recargar. Con un
+  // poll alcanza igual si window.turnstile ya está disponible.
+  useEffect(() => {
+    if (turnstileListo) return;
+    if (window.turnstile) { setTurnstileListo(true); return; }
+    const intervalo = setInterval(() => {
+      if (window.turnstile) {
+        setTurnstileListo(true);
+        clearInterval(intervalo);
+      }
+    }, 300);
+    return () => clearInterval(intervalo);
+  }, [turnstileListo]);
 
   useEffect(() => {
     if (!turnstileListo || !turnstileRef.current || !window.turnstile) return;
@@ -60,9 +78,13 @@ export default function AgendarCitaForm() {
 
     turnstileWidgetId.current = window.turnstile.render(turnstileRef.current, {
       sitekey: process.env.NEXT_PUBLIC_TURNSTILE_SITE_KEY || "",
-      callback: (token: string) => setTurnstileToken(token),
+      callback: (token: string) => { setTurnstileToken(token); setTurnstileError(false); },
       "expired-callback": () => setTurnstileToken(""),
-      "error-callback": () => setTurnstileToken(""),
+      "error-callback": (code: string) => {
+        setTurnstileToken("");
+        setTurnstileError(true);
+        console.error("[turnstile] error-callback:", code, "— probable causa: el dominio actual no está autorizado para este sitekey en el dashboard de Cloudflare.");
+      },
     });
   }, [turnstileListo]);
 
@@ -333,6 +355,7 @@ export default function AgendarCitaForm() {
                     </label>
                     <input
                       type="text"
+                      autoComplete="name"
                       value={nombre}
                       onChange={(e) => setNombre(e.target.value)}
                       placeholder="Ej: Juan Pérez"
@@ -346,6 +369,7 @@ export default function AgendarCitaForm() {
                     </label>
                     <input
                       type="tel"
+                      autoComplete="tel"
                       value={telefono}
                       onChange={(e) => setTelefono(e.target.value)}
                       placeholder="Ej: 11 2345 6789"
@@ -362,7 +386,14 @@ export default function AgendarCitaForm() {
                 </div>
               )}
 
-              <div ref={turnstileRef} className="mb-6 flex justify-center" />
+              <div className="mb-6 flex flex-col items-center gap-1.5">
+                <div ref={turnstileRef} />
+                {turnstileError && (
+                  <p className="text-rose-500 text-[11px] font-semibold text-center max-w-xs">
+                    No se pudo cargar la verificación anti-spam. Puede ser un bloqueador de anuncios o un problema temporal — probá recargar la página.
+                  </p>
+                )}
+              </div>
 
               <button
                 type="submit"

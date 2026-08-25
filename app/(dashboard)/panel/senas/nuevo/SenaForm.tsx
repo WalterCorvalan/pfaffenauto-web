@@ -6,6 +6,7 @@ import Link from "next/link";
 import { supabase } from "@/lib/supabase/client";
 import { notificarEncargados } from "@/lib/notificaciones";
 import { ArrowLeft, Wallet, Save } from "lucide-react";
+import { mostrarToast } from "@/lib/toast";
 import ClienteBuscador, { ClienteSeleccionado } from "../../ClienteBuscador";
 import VehiculoSelector, { VehiculoDatos } from "../../VehiculoSelector";
 import ConfirmarPrecioModal from "../../ConfirmarPrecioModal";
@@ -49,9 +50,9 @@ export default function SenaForm({ clientes, vehiculos, vendedores, sucursales, 
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    if (!cliente) return alert("Elegí o cargá un cliente.");
-    if (!vehiculo || !vehiculo.marca || !vehiculo.modelo) return alert("Elegí o cargá el vehículo.");
-    if (!sucursalId) return alert("Elegí la sucursal.");
+    if (!cliente) return mostrarToast("Elegí o cargá un cliente.", "error");
+    if (!vehiculo || !vehiculo.marca || !vehiculo.modelo) return mostrarToast("Elegí o cargá el vehículo.", "error");
+    if (!sucursalId) return mostrarToast("Elegí la sucursal.", "error");
     setMostrarModalPrecio(true);
   };
 
@@ -129,7 +130,7 @@ export default function SenaForm({ clientes, vehiculos, vendedores, sucursales, 
           });
           if (!resReservar.ok) throw new Error();
         } catch {
-          alert("La seña se guardó, pero no se pudo marcar el auto como Reservado. Avisá a un encargado para que lo actualice a mano.");
+          mostrarToast("La seña se guardó, pero no se pudo marcar el auto como Reservado. Avisá a un encargado para que lo actualice a mano.", "error");
         }
       }
 
@@ -145,7 +146,7 @@ export default function SenaForm({ clientes, vehiculos, vendedores, sucursales, 
       router.push(`/panel/senas/imprimir/${data.id}`);
     } catch (err) {
       console.error(err);
-      alert("Error al guardar la seña.");
+      mostrarToast("Error al guardar la seña.", "error");
     } finally {
       setGuardando(false);
     }

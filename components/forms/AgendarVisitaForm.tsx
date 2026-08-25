@@ -35,6 +35,7 @@ export default function AgendarVisitaForm({ auto, isMobile = false }: AgendarVis
   // Turnstile (anti-spam)
   const [turnstileToken, setTurnstileToken] = useState("");
   const [turnstileListo, setTurnstileListo] = useState(false);
+  const [turnstileError, setTurnstileError] = useState(false);
   const turnstileRef = useRef<HTMLDivElement>(null);
   const turnstileWidgetId = useRef<string | null>(null);
 
@@ -46,6 +47,22 @@ export default function AgendarVisitaForm({ auto, isMobile = false }: AgendarVis
     setMounted(true);
   }, []);
 
+  // No confiamos solo en el onLoad del <Script>: si otra tarjeta del stock ya
+  // insertó el mismo script de Turnstile antes, next/script dedupea el tag y
+  // este onLoad puede no disparar — con un poll alcanza igual una vez que
+  // window.turnstile está disponible.
+  useEffect(() => {
+    if (!isOpen || turnstileListo) return;
+    if (window.turnstile) { setTurnstileListo(true); return; }
+    const intervalo = setInterval(() => {
+      if (window.turnstile) {
+        setTurnstileListo(true);
+        clearInterval(intervalo);
+      }
+    }, 300);
+    return () => clearInterval(intervalo);
+  }, [isOpen, turnstileListo]);
+
   // Renderiza el widget de Turnstile cuando se abre el modal
   useEffect(() => {
     if (!isOpen || success || !turnstileListo || !turnstileRef.current || !window.turnstile) return;
@@ -53,9 +70,13 @@ export default function AgendarVisitaForm({ auto, isMobile = false }: AgendarVis
 
     turnstileWidgetId.current = window.turnstile.render(turnstileRef.current, {
       sitekey: process.env.NEXT_PUBLIC_TURNSTILE_SITE_KEY || "",
-      callback: (token: string) => setTurnstileToken(token),
+      callback: (token: string) => { setTurnstileToken(token); setTurnstileError(false); },
       "expired-callback": () => setTurnstileToken(""),
-      "error-callback": () => setTurnstileToken(""),
+      "error-callback": (code: string) => {
+        setTurnstileToken("");
+        setTurnstileError(true);
+        console.error("[turnstile] error-callback:", code, "— probable causa: el dominio actual no está autorizado para este sitekey en el dashboard de Cloudflare.");
+      },
     });
   }, [isOpen, success, turnstileListo]);
 
@@ -180,16 +201,16 @@ export default function AgendarVisitaForm({ auto, isMobile = false }: AgendarVis
               <div className="grid grid-cols-2 gap-4">
                 <div className="col-span-2">
                   <label className="text-[10px] font-black text-slate-500 dark:text-slate-400 uppercase tracking-widest mb-1.5 flex items-center gap-1.5"><User className="w-3.5 h-3.5"/> Nombre completo</label>
-                  <input 
-                    type="text" required value={nombre} onChange={(e) => setNombre(e.target.value)}
+                  <input
+                    type="text" required autoComplete="name" value={nombre} onChange={(e) => setNombre(e.target.value)}
                     className="w-full bg-white dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-xl px-4 py-3 text-sm font-semibold text-navy dark:text-white outline-none focus:border-[#0145F2] dark:focus:border-sky-400 focus:ring-4 focus:ring-blue-500/10 dark:focus:ring-sky-400/10 transition-all shadow-sm dark:shadow-none"
                     placeholder="Ej: Juan Pérez"
                   />
                 </div>
                 <div className="col-span-2">
                   <label className="text-[10px] font-black text-slate-500 dark:text-slate-400 uppercase tracking-widest mb-1.5 flex items-center gap-1.5"><Phone className="w-3.5 h-3.5"/> Celular</label>
-                  <input 
-                    type="tel" required value={telefono} onChange={(e) => setTelefono(e.target.value)}
+                  <input
+                    type="tel" required autoComplete="tel" value={telefono} onChange={(e) => setTelefono(e.target.value)}
                     className="w-full bg-white dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-xl px-4 py-3 text-sm font-semibold text-navy dark:text-white outline-none focus:border-[#0145F2] dark:focus:border-sky-400 focus:ring-4 focus:ring-blue-500/10 dark:focus:ring-sky-400/10 transition-all shadow-sm dark:shadow-none"
                     placeholder="Ej: 11 0000 0000"
                   />
@@ -223,8 +244,13 @@ export default function AgendarVisitaForm({ auto, isMobile = false }: AgendarVis
                 </div>
               </div>
 
-              <div className="flex justify-center">
+              <div className="flex flex-col items-center gap-1.5">
                 <div ref={turnstileRef} />
+                {turnstileError && (
+                  <p className="text-rose-500 text-[11px] font-semibold text-center max-w-xs">
+                    No se pudo cargar la verificación anti-spam. Puede ser un bloqueador de anuncios o un problema temporal — probá recargar la página.
+                  </p>
+                )}
               </div>
 
               {error && (

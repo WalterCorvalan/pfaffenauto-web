@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { supabase } from "@/lib/supabase/client";
 import { ArrowLeft, ShieldCheck, Save } from "lucide-react";
+import { mostrarToast } from "@/lib/toast";
 import ClienteBuscador, { ClienteSeleccionado } from "../../ClienteBuscador";
 import VehiculoSelector, { VehiculoDatos } from "../../VehiculoSelector";
 
@@ -27,8 +28,8 @@ export default function RespCivilForm({ clientes, vehiculos, vendedores }: { cli
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!cliente) return alert("Elegí o cargá un cliente.");
-    if (!vehiculo || !vehiculo.marca || !vehiculo.modelo) return alert("Elegí o cargá el vehículo.");
+    if (!cliente) return mostrarToast("Elegí o cargá un cliente.", "error");
+    if (!vehiculo || !vehiculo.marca || !vehiculo.modelo) return mostrarToast("Elegí o cargá el vehículo.", "error");
 
     setGuardando(true);
     try {
@@ -78,7 +79,7 @@ export default function RespCivilForm({ clientes, vehiculos, vendedores }: { cli
       router.push(`/panel/resp-civil/imprimir/${data.id}`);
     } catch (err) {
       console.error(err);
-      alert("Error al guardar el recibo.");
+      mostrarToast("Error al guardar el recibo.", "error");
     } finally {
       setGuardando(false);
     }

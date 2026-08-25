@@ -1,6 +1,7 @@
 import { createServerClient } from "@supabase/ssr";
 import { cookies } from "next/headers";
-import { Handshake, CarFront, DollarSign, MapPin, Tag } from "lucide-react";
+import Link from "next/link";
+import { Handshake, CarFront, DollarSign, MapPin, Tag, Pencil } from "lucide-react";
 import SolicitudesConsignacion from "./SolicitudesConsignacion";
 import NotificacionesBell from "../../NotificacionesBell";
 
@@ -75,10 +76,16 @@ export default async function ConsignacionesPage() {
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-5">
           {consignados?.map((auto) => {
 
-            // Cálculos financieros
-            const precioDuenio = Number(auto.precio_costo_usd) || 0;
-            const precioVenta = Number(auto.precio_publicado_usd) || 0;
-            const comisionAgencia = precioVenta - precioDuenio;
+            // Cálculos financieros — el dueño puede pactar en ARS o en USD,
+            // no siempre en dólares (ej: Hilux publicada solo en pesos).
+            const duenioArs = Number(auto.precio_costo_ars) || 0;
+            const duenioUsd = Number(auto.precio_costo_usd) || 0;
+            const ventaArs = Number(auto.precio_publicado_ars) || 0;
+            const ventaUsd = Number(auto.precio_publicado_usd) || 0;
+            const formatPrecio = (ars: number, usd: number) =>
+              ars ? `$ ${ars.toLocaleString("es-AR")}` : usd ? `USD ${usd.toLocaleString("es-AR")}` : "—";
+            const comisionAgencia = ventaArs || duenioArs ? ventaArs - duenioArs : ventaUsd - duenioUsd;
+            const comisionMoneda = ventaArs || duenioArs ? "$" : "USD";
 
             // Colores por estado
             const esReservado = auto.estado === "Reservado";
@@ -98,9 +105,18 @@ export default async function ConsignacionesPage() {
                     {auto.estado}
                   </span>
 
-                  <span className="text-[10px] font-bold text-slate-400 dark:text-slate-500 flex items-center gap-1 uppercase tracking-widest">
-                    <MapPin className="w-3 h-3" /> {auto.sucursales?.nombre}
-                  </span>
+                  <div className="flex items-center gap-2">
+                    <span className="text-[10px] font-bold text-slate-400 dark:text-slate-500 flex items-center gap-1 uppercase tracking-widest">
+                      <MapPin className="w-3 h-3" /> {auto.sucursales?.nombre}
+                    </span>
+                    <Link
+                      href={`/panel/vehiculo/editar/${auto.id}`}
+                      title="Editar precios pactados y datos del vehículo"
+                      className="text-slate-400 dark:text-slate-500 hover:text-indigo-600 dark:hover:text-sky-300 transition-colors"
+                    >
+                      <Pencil className="w-3.5 h-3.5" />
+                    </Link>
+                  </div>
                 </div>
 
                 {/* Vehículo e Identificación */}
@@ -121,12 +137,12 @@ export default async function ConsignacionesPage() {
 
                   <div className="flex justify-between items-center text-xs">
                     <span className="text-slate-500 dark:text-slate-400 font-medium">Pactado con Dueño:</span>
-                    <strong className="text-slate-700 dark:text-slate-200 font-mono">USD {precioDuenio.toLocaleString("es-AR")}</strong>
+                    <strong className="text-slate-700 dark:text-slate-200 font-mono">{formatPrecio(duenioArs, duenioUsd)}</strong>
                   </div>
 
                   <div className="flex justify-between items-center text-xs">
                     <span className="text-slate-500 dark:text-slate-400 font-medium">Precio Publicado:</span>
-                    <strong className="text-slate-900 dark:text-white font-mono">USD {precioVenta.toLocaleString("es-AR")}</strong>
+                    <strong className="text-slate-900 dark:text-white font-mono">{formatPrecio(ventaArs, ventaUsd)}</strong>
                   </div>
 
                   {/* Divisor */}
@@ -138,7 +154,7 @@ export default async function ConsignacionesPage() {
                       <Tag className="w-3.5 h-3.5"/> Comisión
                     </span>
                     <strong className="text-indigo-700 dark:text-sky-300 font-black font-mono text-[15px]">
-                      USD {comisionAgencia.toLocaleString("es-AR")}
+                      {comisionMoneda} {comisionAgencia.toLocaleString("es-AR")}
                     </strong>
                   </div>
 

@@ -73,6 +73,17 @@ export default function LeadDetailClient({
   const vendedoresSucursal = vendedores.filter((v: any) => v.sucursales?.nombre === lead.sucursal_preferida);
   const vendedoresOtros = vendedores.filter((v: any) => v.sucursales?.nombre !== lead.sucursal_preferida);
 
+  // Comprar/Consignaciones/Financiación viven en la misma tabla "cotizaciones"
+  // que los leads de CRM, distinguidos solo por tipo_peritaje — cualquier
+  // notificación genérica de acá (reasignar vendedor, etc) tiene que mandar
+  // al lugar correcto en vez de siempre a /panel/crm/[id].
+  const destinoSegunTipo = () => {
+    if (lead.tipo_peritaje === "consignacion") return { link: `/panel/consignaciones`, seccion: "consignaciones" as const };
+    if (lead.tipo_peritaje === "financiacion") return { link: `/panel/ventas/financiaciones`, seccion: "financiacion" as const };
+    if (lead.tipo_peritaje === "venta") return { link: `/panel/comprar`, seccion: "comprar" as const };
+    return { link: `/panel/crm/${lead.id}`, seccion: "crm" as const };
+  };
+
   const puedeEditar =
     usuarioActual?.rol === "admin" ||
     usuarioActual?.rol === "encargado" ||
@@ -100,6 +111,8 @@ export default function LeadDetailClient({
 
   const [editandoDomicilio, setEditandoDomicilio] = useState(false);
   const [domicilio, setDomicilio] = useState(lead.domicilio || "");
+  const [editandoCanalOrigen, setEditandoCanalOrigen] = useState(false);
+  const [canalOrigen, setCanalOrigen] = useState(lead.canal_origen || "");
   const [editandoNotas, setEditandoNotas] = useState(false);
   const [notas, setNotas] = useState(lead.notas || "");
 
@@ -185,12 +198,13 @@ export default function LeadDetailClient({
     const nombreVendedor = vendedores.find((v) => v.id === vendedorId)?.nombre;
     await registrarEvento("asignacion", vendedorId ? `Reasignado a ${nombreVendedor}` : "Vendedor removido");
     if (vendedorId) {
+      const destino = destinoSegunTipo();
       notificarPersonaCliente({
         perfilId: vendedorId,
         tipo: "nuevo_lead",
-        mensaje: `Te asignaron el lead de ${lead.nombre}.`,
-        link: `/panel/crm/${lead.id}`,
-        seccion: "crm",
+        mensaje: `Te asignaron ${destino.seccion === "comprar" ? "la oferta de compra" : destino.seccion === "consignaciones" ? "la consignación" : destino.seccion === "financiacion" ? "la solicitud de crédito" : "el lead"} de ${lead.nombre}.`,
+        link: destino.link,
+        seccion: destino.seccion,
       });
     }
     router.refresh();
@@ -209,6 +223,13 @@ export default function LeadDetailClient({
   const guardarDomicilio = async () => {
     await supabase.from("cotizaciones").update({ domicilio }).eq("id", lead.id);
     setEditandoDomicilio(false);
+    router.refresh();
+  };
+
+  const guardarCanalOrigen = async () => {
+    await supabase.from("cotizaciones").update({ canal_origen: canalOrigen || null }).eq("id", lead.id);
+    setEditandoCanalOrigen(false);
+    await registrarEvento("canal_origen", canalOrigen ? `Canal de origen marcado: ${canalOrigen}` : "Canal de origen borrado");
     router.refresh();
   };
 
@@ -573,7 +594,39 @@ export default function LeadDetailClient({
             <Radio className="w-3.5 h-3.5" /> Canal de ingreso
           </h2>
           <div className="grid grid-cols-2 gap-y-2.5 gap-x-4 text-[12px]">
-            <Dato label="Canal de origen" valor={lead.canal_origen} />
+            {lead.origen === "whatsapp" || lead.origen === "instagram" ? (
+              <Dato label="Canal de origen" valor={lead.canal_origen} />
+            ) : (
+              <div>
+                <span className="text-slate-400 dark:text-slate-500 block text-[11px] uppercase tracking-widest font-bold mb-0.5">Canal de origen</span>
+                {editandoCanalOrigen ? (
+                  <div className="flex items-center gap-1.5">
+                    <select
+                      autoFocus
+                      value={canalOrigen}
+                      onChange={(e) => setCanalOrigen(e.target.value)}
+                      className="bg-slate-50 dark:bg-[#00246b] border border-slate-200 dark:border-[#0a2a6b] rounded-lg px-2 py-1 text-[12px] outline-none text-slate-900 dark:text-white"
+                    >
+                      <option value="" className="bg-white dark:bg-[#001c55] text-slate-900 dark:text-white">Sin especificar</option>
+                      <option value="Google Ads" className="bg-white dark:bg-[#001c55] text-slate-900 dark:text-white">Google Ads</option>
+                      <option value="Meta Ads" className="bg-white dark:bg-[#001c55] text-slate-900 dark:text-white">Meta Ads</option>
+                      <option value="MercadoLibre" className="bg-white dark:bg-[#001c55] text-slate-900 dark:text-white">MercadoLibre</option>
+                      <option value="WhatsApp" className="bg-white dark:bg-[#001c55] text-slate-900 dark:text-white">WhatsApp</option>
+                      <option value="Referido" className="bg-white dark:bg-[#001c55] text-slate-900 dark:text-white">Referido</option>
+                    </select>
+                    <button onClick={guardarCanalOrigen} className="text-emerald-600 dark:text-emerald-300 text-[11px] font-bold">Guardar</button>
+                  </div>
+                ) : (
+                  <button
+                    onClick={() => puedeEditar && setEditandoCanalOrigen(true)}
+                    disabled={!puedeEditar}
+                    className={`text-[13px] font-bold text-slate-800 dark:text-white ${puedeEditar ? "hover:underline cursor-pointer" : "cursor-default"}`}
+                  >
+                    {lead.canal_origen || "—"}
+                  </button>
+                )}
+              </div>
+            )}
             <Dato label="Tipo de peritaje" valor={lead.tipo_peritaje} />
             <Dato label="Sucursal preferida" valor={lead.sucursal_preferida} />
             <Dato label="Email" valor={lead.email} />

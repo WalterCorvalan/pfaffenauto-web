@@ -1,6 +1,7 @@
 "use client";
 
 import { useMemo, useState } from "react";
+import { useRouter } from "next/navigation";
 import { supabase } from "@/lib/supabase/client";
 import { Landmark, Car, AlertTriangle, CheckCircle2, Clock, Filter, Inbox, Phone, MessageSquareText, CreditCard, ChevronDown, History } from "lucide-react";
 import NotificacionesBell from "../../../NotificacionesBell";
@@ -66,6 +67,7 @@ const bordeEstado = (estado: string) => {
 };
 
 export default function FinanciacionesClient({ financiacionesIniciales, solicitudesIniciales }: { financiacionesIniciales: Financiacion[]; solicitudesIniciales: Solicitud[] }) {
+  const router = useRouter();
   const [financiaciones, setFinanciaciones] = useState(financiacionesIniciales);
   const [solicitudes, setSolicitudes] = useState(solicitudesIniciales);
   const [filtroEstado, setFiltroEstado] = useState<string>("todos");
@@ -74,11 +76,15 @@ export default function FinanciacionesClient({ financiacionesIniciales, solicitu
   const [mostrarHistorial, setMostrarHistorial] = useState(false);
 
   const cambiarEstadoSolicitud = async (id: string, nuevoEstado: string) => {
+    const estadoPrevio = solicitudes.find((s) => s.id === id)?.estado || "Pendiente";
     setActualizandoSolicitudId(id);
     try {
       const { error } = await supabase.from("cotizaciones").update({ estado: nuevoEstado }).eq("id", id);
       if (error) throw error;
       setSolicitudes((prev) => prev.map((s) => (s.id === id ? { ...s, estado: nuevoEstado } : s)));
+      if (nuevoEstado === "Convertido") {
+        router.push(`/panel/boletos/nuevo?cotizacion_id=${id}&estado_anterior=${encodeURIComponent(estadoPrevio)}`);
+      }
     } catch (err) {
       console.error(err);
       alert("Error al actualizar la solicitud.");

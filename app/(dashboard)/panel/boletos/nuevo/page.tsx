@@ -2,8 +2,8 @@ import { createServerClient } from "@supabase/ssr";
 import { cookies } from "next/headers";
 import BoletoVentaForm from "./BoletoVentaForm";
 
-export default async function NuevoBoletoPage({ searchParams }: { searchParams: Promise<{ cotizacion_id?: string; whatsapp_conversacion_id?: string; instagram_conversacion_id?: string }> }) {
-  const { cotizacion_id, whatsapp_conversacion_id, instagram_conversacion_id } = await searchParams;
+export default async function NuevoBoletoPage({ searchParams }: { searchParams: Promise<{ cotizacion_id?: string; whatsapp_conversacion_id?: string; instagram_conversacion_id?: string; estado_anterior?: string }> }) {
+  const { cotizacion_id, whatsapp_conversacion_id, instagram_conversacion_id, estado_anterior } = await searchParams;
   const campoFk = whatsapp_conversacion_id ? "whatsapp_conversacion_id" : instagram_conversacion_id ? "instagram_conversacion_id" : cotizacion_id ? "cotizacion_id" : null;
   const idLead = whatsapp_conversacion_id || instagram_conversacion_id || cotizacion_id || null;
   const cookieStore = await cookies();
@@ -29,6 +29,7 @@ export default async function NuevoBoletoPage({ searchParams }: { searchParams: 
       sucursales={sucursales || []}
       senas={senas || []}
       vinculoLead={campoFk && idLead ? { campo: campoFk, id: idLead } : null}
+      revertirEstado={cotizacion_id ? { id: cotizacion_id, estadoAnterior: estado_anterior || "Pendiente" } : null}
     />
   );
 }

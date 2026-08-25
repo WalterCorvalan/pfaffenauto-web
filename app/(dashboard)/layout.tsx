@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { supabase } from "@/lib/supabase/client";
@@ -42,8 +42,10 @@ import {
   ShieldCheck,
   AlertTriangle,
   Camera,
+  FileSearch,
 } from "lucide-react";
 import DolarBlueBadge from "./DolarBlueBadge";
+import ToastHost from "./ToastHost";
 const SECCIONES_INICIALES = {
   inventario: true,
   crm: true,
@@ -76,6 +78,14 @@ export default function DashboardLayout({
   const [darkMode, setDarkMode] = useState(false);
   const pathname = usePathname();
   const router = useRouter();
+  const mainRef = useRef<HTMLElement>(null);
+
+  // Next resetea a veces el scroll del sidebar en vez del <main> al navegar
+  // (Link scroll={false} evita eso) — repone manualmente el "ir arriba" solo
+  // en el contenido principal cuando cambia de página real.
+  useEffect(() => {
+    mainRef.current?.scrollTo(0, 0);
+  }, [pathname]);
 
   useEffect(() => {
     const guardado = localStorage.getItem("panelDarkMode");
@@ -113,6 +123,7 @@ export default function DashboardLayout({
       operaciones: [
         "/panel/ventas",
         "/panel/postventa",
+        "/panel/ventas/gestoria",
         "/panel/presupuestos",
         "/panel/senas",
         "/panel/boletos",
@@ -278,6 +289,7 @@ export default function DashboardLayout({
     return (
       <Link
         href={href}
+        scroll={false}
         onClick={() => setIsOpen(false)}
         className={`flex items-center justify-between px-3 py-2 mx-2 rounded-md transition-colors ${
           isActive
@@ -460,11 +472,12 @@ export default function DashboardLayout({
                     icon={CalendarCheck}
                     label="Agenda de Visitas"
                     href="/panel/citas"
+                    notifications={notifPorSeccion.citas}
                   />
                   <NavLinkItem
                     icon={UserPlus}
-                    label="Nuevo Cliente"
-                    href="/panel/clientes/nuevo"
+                    label="Clientes"
+                    href="/panel/clientes"
                   />
                 </SectionAccordion>
 
@@ -539,6 +552,12 @@ export default function DashboardLayout({
                     label="Postventa"
                     href="/panel/postventa"
                     notifications={notifPorSeccion.postventa}
+                  />
+                  <NavLinkItem
+                    icon={FileSearch}
+                    label="Gestoría"
+                    href="/panel/ventas/gestoria"
+                    notifications={notifPorSeccion.gestoria}
                   />
                 </SectionAccordion>
 
@@ -703,10 +722,11 @@ export default function DashboardLayout({
         </aside>{" "}
         {/* <--- ESTA ES LA ETIQUETA QUE FALTABA */}
         {/* ÁREA PRINCIPAL */}
-        <main className="flex-1 min-w-0 h-full flex flex-col bg-white dark:bg-[#001233] relative pt-14 md:pt-0 transition-colors overflow-y-auto print:h-auto print:overflow-visible print:pt-0 print:block">
+        <main ref={mainRef} className="flex-1 min-w-0 h-full flex flex-col bg-white dark:bg-[#001233] relative pt-14 md:pt-0 transition-colors overflow-y-auto print:h-auto print:overflow-visible print:pt-0 print:block">
           {children}
         </main>
       </div>
+      <ToastHost />
     </div>
   );
 }

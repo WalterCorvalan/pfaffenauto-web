@@ -6,6 +6,7 @@ import Link from "next/link";
 import { supabase } from "@/lib/supabase/client";
 import { notificarEncargados } from "@/lib/notificaciones";
 import { ArrowLeft, FileText, Save } from "lucide-react";
+import { mostrarToast } from "@/lib/toast";
 import ClienteBuscador, { ClienteSeleccionado } from "../../ClienteBuscador";
 import VehiculoSelector, { VehiculoDatos } from "../../VehiculoSelector";
 import ConfirmarPrecioModal from "../../ConfirmarPrecioModal";
@@ -61,8 +62,8 @@ export default function PresupuestoForm({ clientes, vehiculos, vendedores, sucur
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    if (!cliente) return alert("Elegí o cargá un cliente.");
-    if (!vehiculo || !vehiculo.marca || !vehiculo.modelo) return alert("Elegí o cargá el vehículo.");
+    if (!cliente) return mostrarToast("Elegí o cargá un cliente.", "error");
+    if (!vehiculo || !vehiculo.marca || !vehiculo.modelo) return mostrarToast("Elegí o cargá el vehículo.", "error");
     setMostrarModalPrecio(true);
   };
 
@@ -115,7 +116,7 @@ export default function PresupuestoForm({ clientes, vehiculos, vendedores, sucur
       router.push(`/panel/presupuestos/imprimir/${data.id}`);
     } catch (err) {
       console.error(err);
-      alert("Error al guardar el presupuesto.");
+      mostrarToast("Error al guardar el presupuesto.", "error");
     } finally {
       setGuardando(false);
     }

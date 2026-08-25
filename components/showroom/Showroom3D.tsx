@@ -2,7 +2,7 @@
 
 import { Suspense, useRef, useState, useEffect } from "react";
 import { Canvas } from "@react-three/fiber";
-import { ContactShadows, Loader, Grid } from "@react-three/drei";
+import { ContactShadows, Loader, Grid, Environment } from "@react-three/drei";
 import Image from "next/image";
 import CameraRig, { type CameraRigHandle } from "./CameraRig";
 import VehiculoPlaceholder from "./VehiculoPlaceholder";
@@ -12,36 +12,28 @@ import { useWalkState } from "./useWalkState";
 import ShowroomUI from "./ShowroomUI";
 import type { ShowroomVehicle } from "@/lib/showroom/types";
 
-const COLUMNAS = 5; // autos por fila — a partir de acá arma filas hacia atrás, no una línea infinita
-const ESPACIADO_COLUMNA = 3.2; // distancia entre autos de una misma fila (eje X)
-const ESPACIADO_FILA_Z = 6; // distancia entre una fila y la siguiente (eje Z) — deja pasillo para caminar entre filas
-const Z_INICIAL = 4; // dónde arranca parado el visitante (vereda frente a la primera fila)
+const COLUMNAS = 5; 
+const ESPACIADO_COLUMNA = 3.2; 
+const ESPACIADO_FILA_Z = 6; 
+const Z_INICIAL = 4; 
 
 export default function Showroom3D({ vehiculos }: { vehiculos: ShowroomVehicle[] }) {
   const modelos = vehiculos;
-  // Stock real: cada vehículo ya es una unidad física individual (disponibles
-  // siempre 1), así que acá no hay que repetir instancias por cantidad.
   const instancias = modelos.map((v) => ({ vehiculo: v, unidad: 0 }));
-  // null = estamos caminando por la fila en primera persona, sin selección confirmada.
+  
   const [activo, setActivo] = useState<ShowroomVehicle | null>(null);
-  // auto tocado en la fila, esperando confirmación en la tarjeta flotante.
   const [candidato, setCandidato] = useState<ShowroomVehicle | null>(null);
   const [resetId, setResetId] = useState(0);
   const rigRef = useRef<CameraRigHandle>(null);
   const walk = useWalkState();
 
   const filas = Math.max(1, Math.ceil(instancias.length / COLUMNAS));
-
-  // Salón abierto: el ancho es siempre el de una fila completa (5 autos) y el
-  // fondo crece con la cantidad de filas — así hay lugar para caminar libre
-  // incluso con pocas unidades, y espacio real detrás de cada fila con muchas.
   const anchoSalon = (COLUMNAS - 1) / 2 * ESPACIADO_COLUMNA + 2;
   const limiteX = { min: -Math.max(anchoSalon, 14), max: Math.max(anchoSalon, 14) };
   const limiteZ = { min: -(filas * ESPACIADO_FILA_Z) - 2, max: Z_INICIAL + 2 };
 
   useEffect(() => {
     rigRef.current?.goTo("cenital");
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   function confirmarSeleccion(v: ShowroomVehicle) {
@@ -57,8 +49,6 @@ export default function Showroom3D({ vehiculos }: { vehiculos: ShowroomVehicle[]
     rigRef.current?.goTo("cenital");
   }
 
-  // Arrastre para mirar alrededor (mouse en desktop, dedo en mobile) — en
-  // toda la pantalla salvo el joystick, que captura su propio puntero.
   const onPointerDown = (e: React.PointerEvent) => {
     if (activo) return;
     walk.iniciarArrastre(e.clientX, e.clientY);
@@ -71,7 +61,7 @@ export default function Showroom3D({ vehiculos }: { vehiculos: ShowroomVehicle[]
 
   return (
     <div
-      className="relative h-[100dvh] w-full bg-neutral-950 touch-none"
+      className="relative h-[100dvh] w-full bg-[#0a0a0f] touch-none"
       onPointerDown={onPointerDown}
       onPointerMove={onPointerMove}
       onPointerUp={onPointerUp}
@@ -79,36 +69,45 @@ export default function Showroom3D({ vehiculos }: { vehiculos: ShowroomVehicle[]
     >
       <Canvas shadows camera={{ position: [0, 1.6, Z_INICIAL], fov: 60 }}>
         <Suspense fallback={null}>
-          <color attach="background" args={["#14161f"]} />
-          <fog attach="fog" args={["#14161f", 10, 34]} />
-
-          <ambientLight intensity={0.5} />
+          
+          {/* ================= ENTORNO 360 (FONDO) ================= */}
+          {/* 
+            Si tienes tu propia foto de la sucursal en 360 grados, colócala en public/ y cambia esto a: 
+            <Environment files="/tu-foto-360.jpg" background /> 
+            
+            Mientras tanto, usamos el preset "warehouse" (depósito) que le da una iluminación 
+            industrial súper realista y reflejos a la carrocería. 
+          */}
+          <Environment preset="warehouse" background blur={0.06} />
+          
+          {/* Luces de refuerzo */}
+          <ambientLight intensity={0.4} />
           <directionalLight
             position={[6, 8, 4]}
-            intensity={1.6}
+            intensity={1.2}
             castShadow
             shadow-mapSize={[2048, 2048]}
           />
-          <directionalLight position={[-6, 4, -4]} intensity={0.5} />
 
-          {/* Piso: sin esto el suelo era el mismo negro que el fondo, imposible
-              distinguir dónde termina uno y empieza el otro (sin sensación de
-              profundidad). La grilla marca distancia recorrida al caminar. */}
+          {/* ================= PISO REFLECTANTE ================= */}
           <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, 0, -50]} receiveShadow>
             <planeGeometry args={[160, 160]} />
-            <meshStandardMaterial color="#1f2230" />
+            {/* Piso oscuro brillante que refleja el entorno y los autos */}
+            <meshStandardMaterial color="#050505" roughness={0.15} metalness={0.6} />
           </mesh>
+          
+          {/* Grilla sutil sobre el piso */}
           <Grid
             position={[0, 0.01, 0]}
             args={[160, 160]}
             cellSize={1}
             cellThickness={0.5}
-            cellColor="#3a3f56"
+            cellColor="#1e293b"
             sectionSize={5}
-            sectionThickness={1}
-            sectionColor="#565d80"
-            fadeDistance={60}
-            fadeStrength={1.5}
+            sectionThickness={1.5}
+            sectionColor="#334155"
+            fadeDistance={40}
+            fadeStrength={2}
             infiniteGrid
           />
 
@@ -131,7 +130,7 @@ export default function Showroom3D({ vehiculos }: { vehiculos: ShowroomVehicle[]
             })
           )}
 
-          <ContactShadows position={[0, 0, 0]} opacity={0.5} scale={24} blur={2} far={4} />
+          <ContactShadows position={[0, 0, 0]} opacity={0.6} scale={24} blur={2.5} far={4} />
           <CameraRig ref={rigRef} autoRotate={false} />
           <WalkControls
             activo={!activo}
@@ -145,33 +144,32 @@ export default function Showroom3D({ vehiculos }: { vehiculos: ShowroomVehicle[]
       </Canvas>
       <Loader />
 
-      {/* joystick táctil — solo en modo caminata */}
       {!activo && !candidato && <WalkJoystick walk={walk} />}
 
-      {/* tarjeta de confirmación al tocar un auto en la fila */}
+      {/* ================= TARJETA FLOTANTE DE CONFIRMACIÓN ================= */}
       {candidato && !activo && (
-        <div className="pointer-events-auto absolute inset-0 z-10 flex items-center justify-center bg-black/40 backdrop-blur-sm">
-          <div className="w-72 rounded-3xl bg-[#0b1440] p-6 text-center text-white shadow-2xl">
-            <span className="mb-4 inline-block rounded-full bg-lime-300 px-3 py-1 text-xs font-bold text-black">
-              {candidato.disponibles ?? 1} disponible{(candidato.disponibles ?? 1) > 1 ? "s" : ""}
+        <div className="pointer-events-auto absolute inset-0 z-10 flex items-center justify-center bg-black/60 backdrop-blur-md">
+          <div className="w-80 rounded-[2rem] border border-white/10 bg-[#0a0a0f]/90 p-8 text-center text-white shadow-2xl">
+            <span className="mb-5 inline-block rounded-full bg-emerald-500/10 border border-emerald-500/20 px-4 py-1.5 text-[10px] font-black tracking-widest text-emerald-400 uppercase">
+              {candidato.disponibles ?? 1} unidad{(candidato.disponibles ?? 1) > 1 ? "es" : ""} lista{(candidato.disponibles ?? 1) > 1 ? "s" : ""}
             </span>
-            <div className="relative mx-auto mb-4 h-28 w-28 overflow-hidden rounded-2xl border-2 border-white/40 bg-white/5">
-              <Image src={candidato.image} alt={candidato.nombre} fill className="object-cover" sizes="112px" />
+            <div className="relative mx-auto mb-6 h-36 w-full overflow-hidden rounded-2xl bg-white/5 shadow-inner">
+              <Image src={candidato.image} alt={candidato.nombre} fill className="object-contain p-2" sizes="256px" />
             </div>
-            <h3 className="text-lg font-bold">{candidato.nombre}</h3>
-            <p className="mb-4 text-sm opacity-70">{candidato.subtitulo}</p>
-            <div className="flex gap-2">
+            <h3 className="text-2xl font-black tracking-tight leading-tight">{candidato.nombre}</h3>
+            <p className="mb-8 mt-1 text-sm font-medium text-slate-400">{candidato.subtitulo}</p>
+            <div className="flex gap-3">
               <button
                 onClick={() => setCandidato(null)}
-                className="flex-1 rounded-full bg-white/10 px-4 py-2 text-sm hover:bg-white/20"
+                className="flex-1 rounded-xl bg-white/10 hover:bg-white/20 px-4 py-3.5 text-[11px] font-black uppercase tracking-widest text-slate-300 transition-colors"
               >
                 Cancelar
               </button>
               <button
                 onClick={() => confirmarSeleccion(candidato)}
-                className="flex-1 rounded-full bg-emerald-500 px-4 py-2 text-sm font-medium text-black hover:bg-emerald-400"
+                className="flex-1 rounded-xl bg-[#0145F2] hover:bg-blue-600 shadow-lg shadow-blue-500/20 px-4 py-3.5 text-[11px] font-black uppercase tracking-widest text-white transition-all active:scale-95"
               >
-                Ver auto
+                Ingresar
               </button>
             </div>
           </div>

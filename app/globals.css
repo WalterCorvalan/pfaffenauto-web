@@ -59,6 +59,22 @@
   animation: shake 0.4s ease-in-out;
 }
 
+/* Toasts globales (ToastHost) */
+@keyframes toastIn {
+  from { opacity: 0; transform: translateX(24px) scale(0.96); }
+  to { opacity: 1; transform: translateX(0) scale(1); }
+}
+.animate-toastIn {
+  animation: toastIn 0.32s cubic-bezier(0.16, 1, 0.3, 1);
+}
+@keyframes toastBar {
+  from { width: 100%; }
+  to { width: 0%; }
+}
+.animate-toastBar {
+  animation: toastBar 3.2s linear forwards;
+}
+
 :root {
   --background: #f8fafc;
   --foreground: #0f172a;

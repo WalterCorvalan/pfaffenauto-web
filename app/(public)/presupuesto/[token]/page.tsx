@@ -2,6 +2,10 @@ import { createClient } from "@supabase/supabase-js";
 import { CarFront, Search } from "lucide-react";
 import Link from "next/link";
 
+// Sin cookies/headers, Next podría cachear esta página estáticamente y dejar
+// de registrar aperturas/notificar en visitas repetidas — forzamos dynamic.
+export const dynamic = "force-dynamic";
+
 // Server-only: usamos service role porque "presupuestos" no tiene policy pública de SELECT.
 const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -26,6 +30,7 @@ export default async function PresupuestoPublicoPage({ params }: { params: Promi
         tipo: "presupuesto_abierto",
         mensaje: `${p.cliente || "El cliente"} abrió el presupuesto N° ${p.numero} (${p.marca} ${p.modelo})`,
         link: `/panel/presupuestos/imprimir/${p.id}`,
+        seccion: "presupuestos",
       });
     }
   }

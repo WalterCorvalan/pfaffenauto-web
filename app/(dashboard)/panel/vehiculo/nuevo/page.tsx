@@ -1,6 +1,7 @@
 import { createServerClient } from "@supabase/ssr";
 import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
+import { Suspense } from "react";
 import VehiculoForm from "../VehiculoForm";
 import { tienePermiso } from "@/lib/permisos";
 
@@ -16,5 +17,9 @@ export default async function NuevoAutoPage() {
     redirect("/panel");
   }
 
-  return <VehiculoForm modo="crear" />;
+  return (
+    <Suspense fallback={null}>
+      <VehiculoForm modo="crear" />
+    </Suspense>
+  );
 }

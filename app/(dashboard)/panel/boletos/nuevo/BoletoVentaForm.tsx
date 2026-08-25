@@ -2,10 +2,10 @@
 
 import { useState, useMemo, useEffect } from "react";
 import { useRouter } from "next/navigation";
-import Link from "next/link";
 import { supabase } from "@/lib/supabase/client";
 import { notificarEncargados } from "@/lib/notificaciones";
 import { ArrowLeft, Receipt, Save } from "lucide-react";
+import { mostrarToast } from "@/lib/toast";
 import ClienteBuscador, { ClienteSeleccionado } from "../../ClienteBuscador";
 import VehiculoSelector, { VehiculoDatos } from "../../VehiculoSelector";
 import ConfirmarPrecioModal from "../../ConfirmarPrecioModal";
@@ -13,9 +13,10 @@ import ConfirmarPrecioModal from "../../ConfirmarPrecioModal";
 const inputClass = "w-full bg-slate-50 dark:bg-[#00246b] border border-slate-200 dark:border-[#0a2a6b] rounded-xl px-3 py-2.5 text-sm outline-none focus:border-indigo-500 focus:bg-white dark:focus:bg-[#002a6e] transition-colors text-slate-900 dark:text-white placeholder:text-slate-400 dark:placeholder:text-slate-500";
 
 export default function BoletoVentaForm({
-  clientes, vehiculos, vendedores, sucursales, senas, vinculoLead,
+  clientes, vehiculos, vendedores, sucursales, senas, vinculoLead, revertirEstado,
 }: {
   clientes: any[]; vehiculos: any[]; vendedores: any[]; sucursales: any[]; senas: any[]; vinculoLead?: { campo: string; id: string } | null;
+  revertirEstado?: { id: string; estadoAnterior: string } | null;
 }) {
   const router = useRouter();
   const [guardando, setGuardando] = useState(false);
@@ -121,9 +122,9 @@ export default function BoletoVentaForm({
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    if (!cliente) return alert("Elegí o cargá un cliente.");
-    if (!vehiculo || !vehiculo.marca || !vehiculo.modelo) return alert("Elegí o cargá el vehículo.");
-    if (!sucursalId) return alert("Elegí la sucursal.");
+    if (!cliente) return mostrarToast("Elegí o cargá un cliente.", "error");
+    if (!vehiculo || !vehiculo.marca || !vehiculo.modelo) return mostrarToast("Elegí o cargá el vehículo.", "error");
+    if (!sucursalId) return mostrarToast("Elegí la sucursal.", "error");
     setMostrarModalPrecio(true);
   };
 
@@ -276,7 +277,7 @@ export default function BoletoVentaForm({
       router.push(`/panel/boletos/imprimir/${data.id}`);
     } catch (err) {
       console.error(err);
-      alert("Error al guardar la venta.");
+      mostrarToast("Error al guardar la venta.", "error");
     } finally {
       setGuardando(false);
     }
@@ -287,9 +288,18 @@ export default function BoletoVentaForm({
       <div className="max-w-3xl mx-auto px-6 py-10">
         <div className="flex items-center justify-between mb-8 border-b border-slate-200 dark:border-[#0a2a6b] pb-4">
           <div>
-            <Link href="/panel/boletos" className="text-slate-400 dark:text-slate-500 hover:text-indigo-600 dark:hover:text-sky-300 flex items-center gap-2 text-sm transition-colors mb-2 font-medium">
+            <button
+              type="button"
+              onClick={async () => {
+                if (revertirEstado) {
+                  await supabase.from("cotizaciones").update({ estado: revertirEstado.estadoAnterior }).eq("id", revertirEstado.id);
+                }
+                router.push("/panel/boletos");
+              }}
+              className="text-slate-400 dark:text-slate-500 hover:text-indigo-600 dark:hover:text-sky-300 flex items-center gap-2 text-sm transition-colors mb-2 font-medium"
+            >
               <ArrowLeft className="w-4 h-4" /> Volver
-            </Link>
+            </button>
             <h1 className="text-2xl font-bold text-slate-900 dark:text-white flex items-center gap-2">
               <Receipt className="w-6 h-6 text-emerald-600 dark:text-emerald-300" /> Nueva Venta
             </h1>

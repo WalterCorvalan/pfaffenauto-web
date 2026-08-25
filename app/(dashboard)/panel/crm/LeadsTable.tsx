@@ -65,12 +65,17 @@ export default function LeadsTable({
     if (error) return alert("Error al reasignar.");
     setOverrideVendedor((prev) => ({ ...prev, [lead.id]: vendedorId || null }));
     if (vendedorId) {
+      const destino =
+        lead.tipo_peritaje === "consignacion" ? { link: `/panel/consignaciones`, seccion: "consignaciones", texto: "la consignación" } :
+        lead.tipo_peritaje === "financiacion" ? { link: `/panel/ventas/financiaciones`, seccion: "financiacion", texto: "la solicitud de crédito" } :
+        lead.tipo_peritaje === "venta" ? { link: `/panel/comprar`, seccion: "comprar", texto: "la oferta de compra" } :
+        { link: `/panel/crm/${lead.id}`, seccion: "crm", texto: "el lead" };
       notificarPersonaCliente({
         perfilId: vendedorId,
         tipo: "nuevo_lead",
-        mensaje: `Te asignaron el lead de ${lead.nombre}.`,
-        link: `/panel/crm/${lead.id}`,
-        seccion: "crm",
+        mensaje: `Te asignaron ${destino.texto} de ${lead.nombre}.`,
+        link: destino.link,
+        seccion: destino.seccion,
       });
     }
   };

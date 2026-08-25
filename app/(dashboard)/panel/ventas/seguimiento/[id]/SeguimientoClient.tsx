@@ -160,6 +160,14 @@ export default function SeguimientoClient({ venta, documentosIniciales }: { vent
     );
   };
 
+  const imprimirArchivo = (url: string) => {
+    const ventana = window.open(url, "_blank");
+    if (!ventana) return;
+    ventana.addEventListener("load", () => {
+      setTimeout(() => ventana.print(), 300);
+    });
+  };
+
   const copiarCodigo = () => {
     if (!venta.codigo_seguimiento) return;
     navigator.clipboard.writeText(venta.codigo_seguimiento);
@@ -376,6 +384,9 @@ export default function SeguimientoClient({ venta, documentosIniciales }: { vent
                         <a href={archivo.url} target="_blank" rel="noreferrer" className="hover:underline flex items-center gap-1" title={archivo.nombre_archivo || "Ver archivo"}>
                           <ExternalLink className="w-3 h-3" /> {archivo.nombre_archivo || `Archivo ${i + 1}`}
                         </a>
+                        <button onClick={() => imprimirArchivo(archivo.url)} className="p-0.5 hover:text-indigo-600 dark:hover:text-sky-300 transition-colors" title="Imprimir este archivo">
+                          <Printer className="w-3 h-3" />
+                        </button>
                         <button onClick={() => eliminarArchivo(doc, archivo.id)} className="p-0.5 hover:text-rose-600 dark:hover:text-rose-400 transition-colors" title="Quitar">
                           <X className="w-3 h-3" />
                         </button>

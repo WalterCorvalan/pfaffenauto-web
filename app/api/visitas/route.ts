@@ -66,9 +66,9 @@ export async function POST(req: Request) {
     const mensajeNoti = `Nueva visita agendada: ${nombre_cliente} — ${fecha_visita} ${horario_visita} (${sucursal})`;
     const linkNoti = "/panel/citas";
     if (vendedor_id) {
-      notificarPersona(supabase, vendedor_id, "nueva_visita", mensajeNoti, linkNoti, "crm").catch((err) => console.error("[visitas] error notificando vendedor:", err));
+      notificarPersona(supabase, vendedor_id, "nueva_visita", mensajeNoti, linkNoti, "citas").catch((err) => console.error("[visitas] error notificando vendedor:", err));
     } else {
-      notificarEncargados(supabase, mensajeNoti, linkNoti, "crm", "nueva_visita").catch((err) => console.error("[visitas] error notificando encargados:", err));
+      notificarEncargados(supabase, mensajeNoti, linkNoti, "citas", "nueva_visita").catch((err) => console.error("[visitas] error notificando encargados:", err));
     }
 
     return Response.json({ ok: true, id: data.id });

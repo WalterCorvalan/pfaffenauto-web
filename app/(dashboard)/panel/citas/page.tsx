@@ -3,6 +3,7 @@ import { cookies } from "next/headers";
 import { CalendarCheck, CarFront, MapPin, Clock, Users, CheckCircle2, XCircle, CalendarClock, MessageSquareText } from "lucide-react";
 import EstadoVisitaSelector from "./EstadoVisitaSelector";
 import VendedorVisitaSelector from "./VendedorVisitaSelector";
+import NotificacionesBell from "../../NotificacionesBell";
 
 export default async function CitasPage() {
   const cookieStore = await cookies();
@@ -164,6 +165,7 @@ export default async function CitasPage() {
           <div className="flex items-center gap-1.5 bg-rose-50 dark:bg-[#002a6e] border border-rose-200 dark:border-[#0a2a6b] px-2.5 py-1 rounded-md text-[11px] font-bold text-rose-700 dark:text-rose-300 whitespace-nowrap">
             <XCircle className="w-3.5 h-3.5 text-rose-500" /> {canceladas} Canceladas
           </div>
+          <NotificacionesBell seccion="citas" />
         </div>
       </header>
 

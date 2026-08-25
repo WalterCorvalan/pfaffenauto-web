@@ -3,6 +3,7 @@ import { cookies } from "next/headers";
 import Link from "next/link";
 import { FileText, Plus, Printer, CarFront, AlertTriangle } from "lucide-react";
 import NotificacionesBell from "../../NotificacionesBell";
+import CompartirPresupuestoBoton from "./CompartirPresupuestoBoton";
 
 export default async function PresupuestosPage() {
   const cookieStore = await cookies();
@@ -12,11 +13,21 @@ export default async function PresupuestosPage() {
     { cookies: { getAll: () => cookieStore.getAll() } }
   );
 
-  const { data: presupuestos } = await supabase
+  const { data: { user } } = await supabase.auth.getUser();
+  const { data: miPerfil } = user
+    ? await supabase.from("perfiles").select("rol").eq("id", user.id).single()
+    : { data: null };
+
+  let query = supabase
     .from("presupuestos")
     .select("*, perfiles ( nombre )")
     .order("created_at", { ascending: false })
     .limit(100);
+  // Un vendedor solo ve sus propios presupuestos; encargado/admin ven todos.
+  if (miPerfil?.rol === "vendedor" && user) {
+    query = query.eq("vendedor_id", user.id);
+  }
+  const { data: presupuestos } = await query;
 
   return (
     <div className="flex flex-col h-full w-full bg-white dark:bg-[#001233] overflow-hidden">
@@ -51,6 +62,7 @@ export default async function PresupuestosPage() {
                     <th className="p-4">Vehículo</th>
                     <th className="p-4">Vendedor</th>
                     <th className="p-4 text-right">Precio</th>
+                    <th className="p-4 text-center">Link</th>
                     <th className="p-4 pr-6 text-center">Imprimir</th>
                   </tr>
                 </thead>
@@ -76,6 +88,9 @@ export default async function PresupuestosPage() {
                       <td className="p-4 text-right font-mono text-[13px] font-bold text-slate-900 dark:text-white">
                         {p.precio_venta_ars ? `$ ${Number(p.precio_venta_ars).toLocaleString("es-AR")}` : (p.precio_venta_usd ? `US$ ${Number(p.precio_venta_usd).toLocaleString("es-AR")}` : "—")}
                       </td>
+                      <td className="p-4 text-center">
+                        <CompartirPresupuestoBoton tokenPublico={p.token_publico} />
+                      </td>
                       <td className="p-4 pr-6 text-center">
                         <Link href={`/panel/presupuestos/imprimir/${p.id}`} className="inline-flex p-2 bg-white dark:bg-[#00246b] hover:bg-indigo-50 dark:hover:bg-[#002a6e] border border-slate-200 dark:border-[#0a2a6b] hover:border-indigo-200 rounded-lg text-slate-400 dark:text-slate-300 hover:text-indigo-600 dark:hover:text-sky-300 transition-all shadow-sm">
                           <Printer className="w-4 h-4" />
@@ -85,7 +100,7 @@ export default async function PresupuestosPage() {
                   ))}
                   {(!presupuestos || presupuestos.length === 0) && (
                     <tr>
-                      <td colSpan={7} className="p-16 text-center text-slate-400 dark:text-slate-500 text-sm italic">
+                      <td colSpan={8} className="p-16 text-center text-slate-400 dark:text-slate-500 text-sm italic">
                         Sin presupuestos cargados todavía.
                       </td>
                     </tr>
@@ -117,9 +132,12 @@ export default async function PresupuestosPage() {
                 <p className="text-[12px] text-slate-600 dark:text-slate-300 flex items-center gap-1.5"><CarFront className="w-3.5 h-3.5 text-slate-400" /> {p.marca} {p.modelo}</p>
                 <div className="flex items-center justify-between text-[12px] text-slate-500 dark:text-slate-400 pt-1 border-t border-slate-100 dark:border-[#0a2a6b]">
                   <span>{p.fecha ? new Date(`${p.fecha}T12:00:00Z`).toLocaleDateString("es-AR", { timeZone: "UTC" }) : "—"} · {p.perfiles?.nombre || "Sin vendedor"}</span>
-                  <Link href={`/panel/presupuestos/imprimir/${p.id}`} className="inline-flex p-1.5 bg-slate-50 dark:bg-[#00246b] border border-slate-200 dark:border-[#0a2a6b] rounded-lg text-slate-400 dark:text-slate-300">
-                    <Printer className="w-3.5 h-3.5" />
-                  </Link>
+                  <div className="flex items-center gap-1.5">
+                    <CompartirPresupuestoBoton tokenPublico={p.token_publico} compacto />
+                    <Link href={`/panel/presupuestos/imprimir/${p.id}`} className="inline-flex p-1.5 bg-slate-50 dark:bg-[#00246b] border border-slate-200 dark:border-[#0a2a6b] rounded-lg text-slate-400 dark:text-slate-300">
+                      <Printer className="w-3.5 h-3.5" />
+                    </Link>
+                  </div>
                 </div>
               </div>
             ))}

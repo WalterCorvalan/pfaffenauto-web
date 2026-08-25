@@ -11,7 +11,7 @@ interface Cambio {
   valor_anterior: string | null;
   valor_nuevo: string | null;
   usuario_id: string | null;
-  created_at: string;
+  fecha_cambio: string;
   perfiles: { nombre: string } | null;
   vehiculo: { marca: string; modelo: string; patente: string | null } | null;
 }
@@ -99,7 +99,7 @@ export default function LogsClient({ cambios }: { cambios: Cambio[] }) {
                       </div>
                     )}
                     <span className="text-[10px] text-slate-400 dark:text-slate-500 mt-1 block">
-                      {new Date(c.created_at).toLocaleString("es-AR", { day: "2-digit", month: "short", year: "numeric", hour: "2-digit", minute: "2-digit" })}
+                      {new Date(c.fecha_cambio).toLocaleString("es-AR", { day: "2-digit", month: "short", year: "numeric", hour: "2-digit", minute: "2-digit" })}
                     </span>
                   </div>
                 </div>

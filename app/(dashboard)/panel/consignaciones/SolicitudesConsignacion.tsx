@@ -13,6 +13,7 @@ interface Solicitud {
   anio: number;
   kilometraje: number | null;
   estado: string | null;
+  vehiculo_id: string | null;
 }
 
 function Tarjeta({ s, atenuada }: { s: Solicitud; atenuada?: boolean }) {
@@ -22,7 +23,7 @@ function Tarjeta({ s, atenuada }: { s: Solicitud; atenuada?: boolean }) {
         <span className="text-[9px] font-bold uppercase tracking-widest px-2 py-0.5 rounded border bg-indigo-50 dark:bg-[#002a6e] text-indigo-700 dark:text-sky-300 border-indigo-200 dark:border-[#0a2a6b]">
           Consignación
         </span>
-        <EstadoConsignacionSelector id={s.id} estado={s.estado} />
+        <EstadoConsignacionSelector s={s} />
       </div>
       <h3 className="font-bold text-[14px] text-slate-900 dark:text-white mb-1">{s.nombre}</h3>
       <p className="text-[11px] text-slate-500 dark:text-slate-400 flex items-center gap-1 mb-2">
@@ -47,7 +48,13 @@ export default function SolicitudesConsignacion({ solicitudes }: { solicitudes: 
   const [mostrarHistorial, setMostrarHistorial] = useState(false);
 
   const activas = solicitudes.filter((s) => !s.estado || s.estado === "Pendiente" || s.estado === "Contactado");
-  const historial = solicitudes.filter((s) => s.estado === "Convertido" || s.estado === "Descartado");
+  // Una vez que la conversión generó el vehículo real en stock, la tarjeta de
+  // la solicitud ya es redundante (el auto se ve en "Unidades en Consignación")
+  // — solo dejamos en historial las Convertidas que quedaron sin vehículo
+  // vinculado (alta abandonada) y las Descartadas.
+  const historial = solicitudes.filter(
+    (s) => s.estado === "Descartado" || (s.estado === "Convertido" && !s.vehiculo_id)
+  );
 
   return (
     <>

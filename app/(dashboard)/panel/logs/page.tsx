@@ -12,8 +12,8 @@ export default async function LogsPage() {
 
   const { data: cambios } = await supabase
     .from("historial_cambios")
-    .select("id, tabla, registro_id, campo_modificado, valor_anterior, valor_nuevo, usuario_id, created_at, perfiles ( nombre )")
-    .order("created_at", { ascending: false })
+    .select("id, tabla, registro_id, campo_modificado, valor_anterior, valor_nuevo, usuario_id, fecha_cambio, perfiles ( nombre )")
+    .order("fecha_cambio", { ascending: false })
     .limit(300);
 
   // "registro_id" es genérico (puede ser un vehículo, un boletos_venta, etc.) —

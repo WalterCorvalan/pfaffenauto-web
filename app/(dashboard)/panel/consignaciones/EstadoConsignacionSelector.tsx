@@ -13,22 +13,47 @@ const COLOR: Record<string, string> = {
   "Descartado": "bg-rose-500 text-white border-rose-500",
 };
 
-export default function EstadoConsignacionSelector({ id, estado }: { id: string; estado: string | null }) {
+interface SolicitudBase {
+  id: string;
+  estado: string | null;
+  nombre: string;
+  telefono: string;
+  marca: string;
+  modelo: string;
+  anio: number;
+  kilometraje: number | null;
+}
+
+export default function EstadoConsignacionSelector({ s }: { s: SolicitudBase }) {
   const router = useRouter();
-  const [actual, setActual] = useState(estado || "Pendiente");
+  const [actual, setActual] = useState(s.estado || "Pendiente");
   const [cargando, setCargando] = useState(false);
 
   const cambiar = async (nuevo: string) => {
     setActual(nuevo);
     setCargando(true);
-    const { error } = await supabase.from("cotizaciones").update({ estado: nuevo }).eq("id", id);
+    const { error } = await supabase.from("cotizaciones").update({ estado: nuevo }).eq("id", s.id);
     setCargando(false);
     if (error) {
       alert("Error al cambiar el estado");
-      setActual(estado || "Pendiente");
+      setActual(s.estado || "Pendiente");
       return;
     }
     router.refresh();
+    if (nuevo === "Convertido") {
+      const params = new URLSearchParams({
+        marca: s.marca || "",
+        modelo: s.modelo || "",
+        anio: s.anio ? String(s.anio) : "",
+        kilometraje: s.kilometraje != null ? String(s.kilometraje) : "",
+        origen: "Consignado",
+        prov_nombre: s.nombre || "",
+        prov_telefono_celular: s.telefono || "",
+        revertir_cotizacion_id: s.id,
+        estado_anterior: s.estado || "Pendiente",
+      });
+      router.push(`/panel/vehiculo/nuevo?${params.toString()}`);
+    }
   };
 
   return (

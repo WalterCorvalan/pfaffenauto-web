@@ -1,6 +1,7 @@
 import { createServerClient } from "@supabase/ssr";
 import { cookies } from "next/headers";
-import { Wallet, CheckCircle, Clock, ImageIcon, MapPin, MessageSquareText, Calculator } from "lucide-react";
+import Link from "next/link";
+import { Wallet, CheckCircle, Clock, ImageIcon, MapPin, MessageSquareText, Calculator, CarFront } from "lucide-react";
 import PrecioSugeridoEditor from "../cotizaciones/PrecioSugeridoEditor";
 import HistorialTasacionBadge from "../cotizaciones/HistorialTasacionBadge";
 import GaleriaFotos from "../cotizaciones/GaleriaFotos";
@@ -144,6 +145,23 @@ export default async function ComprarPage() {
 
                   {cot.fotos_y_videos && cot.fotos_y_videos.length > 0 && (
                     <GaleriaFotos urls={cot.fotos_y_videos} />
+                  )}
+
+                  {cot.precio_sugerido && (
+                    <Link
+                      href={`/panel/vehiculo/nuevo?${new URLSearchParams({
+                        marca: cot.marca || "",
+                        modelo: cot.modelo || "",
+                        anio: cot.anio ? String(cot.anio) : "",
+                        kilometraje: cot.kilometraje != null ? String(cot.kilometraje) : "",
+                        origen: "Comprado",
+                        [cot.moneda_sugerida === "USD" ? "precio_costo_usd" : "precio_costo_ars"]: String(cot.precio_sugerido),
+                      }).toString()}`}
+                      className="bg-orange-50 hover:bg-orange-100 text-orange-600 p-1.5 rounded-md transition-colors shrink-0 ml-1"
+                      title="Convertir a compra (cargar al stock)"
+                    >
+                      <CarFront className="w-[18px] h-[18px]" strokeWidth={2.5} />
+                    </Link>
                   )}
 
                   <a
