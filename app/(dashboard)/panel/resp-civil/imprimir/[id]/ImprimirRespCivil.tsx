@@ -62,7 +62,14 @@ export default function ImprimirRespCivil({ registro: r }: { registro: any }) {
             </div>
             <div className="col-span-2">
               <span className="text-[10px] uppercase tracking-widest font-bold text-slate-400 block">Domicilio</span>
-              <strong className="text-slate-900">{r.calle} {r.numero_calle}{r.depto ? ` Dto. ${r.depto}` : ""}, {r.localidad} ({r.provincia}) {r.codigo_postal ? `- CP ${r.codigo_postal}` : ""}</strong>
+              <strong className="text-slate-900">
+                {[
+                  [r.calle, r.numero_calle].filter(Boolean).join(" ") + (r.depto ? ` Dto. ${r.depto}` : ""),
+                  r.localidad,
+                  r.provincia ? `(${r.provincia})` : "",
+                  r.codigo_postal ? `CP ${r.codigo_postal}` : "",
+                ].filter(Boolean).join(", ") || "N/A"}
+              </strong>
             </div>
             <div>
               <span className="text-[10px] uppercase tracking-widest font-bold text-slate-400 block">Celular</span>

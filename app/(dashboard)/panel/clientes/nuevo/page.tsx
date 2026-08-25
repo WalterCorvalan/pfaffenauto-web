@@ -35,6 +35,7 @@ type ClienteFormValues = {
   telefono_celular: string;
   correo_electronico: string;
   observaciones: string;
+  como_nos_conocio: string;
 };
 
 export default function NuevoClientePage() {
@@ -77,6 +78,7 @@ export default function NuevoClientePage() {
         telefono_celular: data.telefono_celular,
         correo_electronico: data.correo_electronico,
         observaciones: data.observaciones,
+        como_nos_conocio: data.como_nos_conocio || null,
       });
 
       if (error) throw error;
@@ -219,6 +221,20 @@ export default function NuevoClientePage() {
                     placeholder="Ej: Empleado, Comerciante..."
                   />
                 </Campo>
+                <div className="md:col-span-2">
+                  <Campo label="¿Cómo nos conoció?">
+                    <select {...register("como_nos_conocio")} className={`${inputClass} appearance-none cursor-pointer`}>
+                      <option value="" className="bg-white dark:bg-[#001c55] text-slate-900 dark:text-white">Seleccionar...</option>
+                      <option value="MercadoLibre" className="bg-white dark:bg-[#001c55] text-slate-900 dark:text-white">MercadoLibre</option>
+                      <option value="Meta Ads (Instagram/Facebook)" className="bg-white dark:bg-[#001c55] text-slate-900 dark:text-white">Meta Ads (Instagram/Facebook)</option>
+                      <option value="Google Ads" className="bg-white dark:bg-[#001c55] text-slate-900 dark:text-white">Google Ads</option>
+                      <option value="Referido / boca en boca" className="bg-white dark:bg-[#001c55] text-slate-900 dark:text-white">Referido / boca en boca</option>
+                      <option value="Pasó por la sucursal" className="bg-white dark:bg-[#001c55] text-slate-900 dark:text-white">Pasó por la sucursal</option>
+                      <option value="Cliente anterior" className="bg-white dark:bg-[#001c55] text-slate-900 dark:text-white">Cliente anterior</option>
+                      <option value="Otro" className="bg-white dark:bg-[#001c55] text-slate-900 dark:text-white">Otro</option>
+                    </select>
+                  </Campo>
+                </div>
 
                 {/* DOMICILIO INCORPORADO */}
                 <div className="md:col-span-2 mt-2 pt-5 border-t border-slate-100 dark:border-[#0a2a6b]">

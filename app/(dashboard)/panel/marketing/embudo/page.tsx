@@ -18,6 +18,22 @@ export default async function EmbudoPage() {
 
   const datos = leads || [];
 
+  // 1a-bis. Clientes cargados a mano (walk-in / venta) y cómo nos conocieron
+  // — distinto de "leads" (cotizaciones): esto es gente que ya vino o compró,
+  // cargada desde /panel/clientes/nuevo.
+  const { data: clientesConocio } = await supabase
+    .from("clientes")
+    .select("como_nos_conocio")
+    .not("como_nos_conocio", "is", null);
+
+  const conocioMap: Record<string, number> = {};
+  (clientesConocio || []).forEach((c: any) => {
+    const k = c.como_nos_conocio || "Sin especificar";
+    conocioMap[k] = (conocioMap[k] || 0) + 1;
+  });
+  const conocioOrdenado = Object.entries(conocioMap).sort((a, b) => b[1] - a[1]);
+  const totalConocio = (clientesConocio || []).length;
+
   // 1b. Ventas cruzadas con si el auto estaba pautado o no, y de dónde vino
   // la venta cuando NO estaba pautado (a qué conversación quedó atado el
   // boleto, o "Presencial" si no tiene ninguna — vino directo a la sucursal).
@@ -456,6 +472,32 @@ export default async function EmbudoPage() {
                   </div>
                 );
               })}
+            </div>
+          </div>
+
+          {/* ================= CÓMO NOS CONOCIÓ (WALK-IN / CLIENTES CARGADOS) ================= */}
+          <div className="bg-white dark:bg-[#001c55] border border-slate-200 dark:border-[#0a2a6b] rounded-2xl shadow-sm overflow-hidden">
+            <div className="p-6 border-b border-slate-100 dark:border-[#0a2a6b] flex items-center justify-between">
+              <h2 className="text-[11px] font-bold uppercase tracking-widest text-slate-500 dark:text-slate-400 flex items-center gap-2">
+                <Users className="w-4 h-4 text-indigo-500 dark:text-sky-300" /> Cómo nos conocieron — clientes cargados en sucursal
+              </h2>
+              <span className="text-[11px] font-bold text-slate-400 dark:text-slate-500">{totalConocio} con dato cargado</span>
+            </div>
+            <div className="p-6">
+              {conocioOrdenado.length === 0 ? (
+                <p className="text-slate-400 dark:text-slate-500 text-sm italic text-center py-4">
+                  Todavía no hay clientes con "¿Cómo nos conoció?" cargado. Se completa al crear un cliente en Nuevo Cliente.
+                </p>
+              ) : (
+                <div className="divide-y divide-slate-100 dark:divide-[#0a2a6b] border border-slate-100 dark:border-[#0a2a6b] rounded-xl overflow-hidden">
+                  {conocioOrdenado.map(([fuente, cantidad]) => (
+                    <div key={fuente} className="flex items-center justify-between px-4 py-2.5 bg-white dark:bg-[#001c55]">
+                      <span className="text-[12px] font-medium text-slate-700 dark:text-slate-200">{fuente}</span>
+                      <span className="font-mono text-[13px] font-bold text-slate-900 dark:text-white">{cantidad}</span>
+                    </div>
+                  ))}
+                </div>
+              )}
             </div>
           </div>
 
