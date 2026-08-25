@@ -106,7 +106,7 @@ export default function VehiculosCarousel({
   // En mobile el tamaño se fija por ANCHO (no alto): fijar el alto con este
   // aspect-ratio angosto (0.6:1) daba un ancho mayor al viewport y recortaba
   // el auto por los costados contra el overflow-hidden del contenedor.
-  const tamanoAuto = isMobile ? { width: "60vw" as const } : { height: "140%" as const };
+  const tamanoAuto = isMobile ? { width: "95vw" as const } : { height: "140%" as const };
   const bottomAuto = isMobile ? "26%" : "8%";
 
   return (

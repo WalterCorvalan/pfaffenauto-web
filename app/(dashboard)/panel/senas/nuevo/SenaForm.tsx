@@ -28,6 +28,15 @@ export default function SenaForm({ clientes, vehiculos, vendedores, sucursales, 
   const [patentTransf, setPatentTransf] = useState("");
   const [observaciones, setObservaciones] = useState("");
   const [mostrarModalPrecio, setMostrarModalPrecio] = useState(false);
+  const [miId, setMiId] = useState<string | null>(null);
+
+  useEffect(() => {
+    supabase.auth.getUser().then(({ data }) => setMiId(data.user?.id || null));
+  }, []);
+
+  // "Vos (usuario actual)" ya cubre al usuario logueado — si además aparece
+  // en la lista de vendedores, queda duplicado.
+  const vendedoresSinYo = vendedores.filter((v) => v.id !== miId);
 
   // Al elegir un auto del stock, el precio de venta sale directo de su ficha
   // (en pesos, dólares, o ambos según cómo esté publicado) en vez de tipearlo a mano.
@@ -108,6 +117,22 @@ export default function SenaForm({ clientes, vehiculos, vendedores, sucursales, 
 
       if (error) throw error;
 
+      if (vehiculo.vehiculo_id) {
+        // Vía API con service role: RLS de "vehiculos" no deja que un vendedor
+        // cambie el estado directo (solo admin/encargado desde AccionesAuto),
+        // y el UPDATE del cliente se perdía en silencio (éxito, 0 filas).
+        try {
+          const resReservar = await fetch("/api/vehiculos/reservar", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ vehiculoId: vehiculo.vehiculo_id, estado: "Reservado" }),
+          });
+          if (!resReservar.ok) throw new Error();
+        } catch {
+          alert("La seña se guardó, pero no se pudo marcar el auto como Reservado. Avisá a un encargado para que lo actualice a mano.");
+        }
+      }
+
       if (!precioConfirmado) {
         await notificarEncargados(
           supabase,
@@ -155,7 +180,7 @@ export default function SenaForm({ clientes, vehiculos, vendedores, sucursales, 
                 <label className="text-[11px] font-bold text-slate-500 dark:text-slate-400 uppercase block mb-1.5">Vendedor</label>
                 <select className={inputClass} value={vendedorId} onChange={(e) => setVendedorId(e.target.value)}>
                   <option value="" className="bg-white dark:bg-[#001c55] text-slate-900 dark:text-white">Vos (usuario actual)</option>
-                  {vendedores.map((v) => (<option key={v.id} value={v.id} className="bg-white dark:bg-[#001c55] text-slate-900 dark:text-white">{v.nombre}</option>))}
+                  {vendedoresSinYo.map((v) => (<option key={v.id} value={v.id} className="bg-white dark:bg-[#001c55] text-slate-900 dark:text-white">{v.nombre}</option>))}
                 </select>
               </div>
             </div>

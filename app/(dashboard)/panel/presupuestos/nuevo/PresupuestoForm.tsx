@@ -39,6 +39,13 @@ export default function PresupuestoForm({ clientes, vehiculos, vendedores, sucur
   );
   const [vendedorId, setVendedorId] = useState("");
   const [sucursalId, setSucursalId] = useState("");
+  const [miId, setMiId] = useState<string | null>(null);
+
+  useEffect(() => {
+    supabase.auth.getUser().then(({ data }) => setMiId(data.user?.id || null));
+  }, []);
+  const vendedoresSinYo = vendedores.filter((v) => v.id !== miId);
+
   const [precioArs, setPrecioArs] = useState("");
   const [precioUsd, setPrecioUsd] = useState("");
   const [imprimirEn, setImprimirEn] = useState("");
@@ -163,7 +170,7 @@ export default function PresupuestoForm({ clientes, vehiculos, vendedores, sucur
                 <label className="text-[11px] font-bold text-slate-500 dark:text-slate-400 uppercase block mb-1.5">Vendedor</label>
                 <select className={inputClass} value={vendedorId} onChange={(e) => setVendedorId(e.target.value)}>
                   <option value="" className="bg-white dark:bg-[#001c55] text-slate-900 dark:text-white">Vos (usuario actual)</option>
-                  {vendedores.map((v) => (<option key={v.id} value={v.id} className="bg-white dark:bg-[#001c55] text-slate-900 dark:text-white">{v.nombre}</option>))}
+                  {vendedoresSinYo.map((v) => (<option key={v.id} value={v.id} className="bg-white dark:bg-[#001c55] text-slate-900 dark:text-white">{v.nombre}</option>))}
                 </select>
               </div>
               <div>

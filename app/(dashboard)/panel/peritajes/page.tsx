@@ -11,10 +11,27 @@ export default async function PeritajesPage() {
     { cookies: { getAll: () => cookieStore.getAll() } }
   );
 
-  const { data: peritajes } = await supabase
+  const { data: peritajesCrudos } = await supabase
     .from("peritajes")
-    .select("*, cotizaciones ( marca, modelo, anio, nombre ), vehiculos ( marca, modelo, patente ), perfiles ( nombre )")
+    .select(`
+      *,
+      cotizaciones ( marca, modelo, anio, nombre ),
+      vehiculos ( marca, modelo, patente ),
+      perfiles ( nombre ),
+      whatsapp_conversaciones ( whatsapp_contactos ( nombre_perfil, telefono ) ),
+      instagram_conversaciones ( instagram_contactos ( username ) )
+    `)
     .order("created_at", { ascending: false });
+
+  // Nombre del cliente según de dónde vino el lead (cotización, WhatsApp o Instagram).
+  const peritajes = (peritajesCrudos || []).map((p: any) => ({
+    ...p,
+    nombreCliente:
+      p.cotizaciones?.nombre ||
+      p.whatsapp_conversaciones?.whatsapp_contactos?.nombre_perfil ||
+      p.whatsapp_conversaciones?.whatsapp_contactos?.telefono ||
+      (p.instagram_conversaciones?.instagram_contactos?.username ? `@${p.instagram_conversaciones.instagram_contactos.username}` : null),
+  }));
 
   return (
     <div className="flex flex-col h-full w-full bg-white dark:bg-[#001233] overflow-hidden">
@@ -51,9 +68,9 @@ export default async function PeritajesPage() {
                 <p className="text-[13px] font-bold text-slate-900 dark:text-white flex items-center gap-1.5">
                   <CarFront className="w-3.5 h-3.5 text-slate-400 dark:text-slate-500" /> {vehiculo?.marca} {vehiculo?.modelo}
                 </p>
-                {p.cotizaciones?.nombre && (
+                {p.nombreCliente && (
                   <p className="text-[12px] text-slate-500 dark:text-slate-400 flex items-center gap-1.5 mt-1">
-                    <User className="w-3 h-3" /> {p.cotizaciones.nombre}
+                    <User className="w-3 h-3" /> {p.nombreCliente}
                   </p>
                 )}
                 <p className="text-[11px] text-slate-400 dark:text-slate-500 flex items-center gap-1.5 mt-2">

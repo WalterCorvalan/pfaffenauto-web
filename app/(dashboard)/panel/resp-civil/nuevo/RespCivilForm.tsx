@@ -1,6 +1,6 @@
 ﻿"use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { supabase } from "@/lib/supabase/client";
@@ -18,6 +18,12 @@ export default function RespCivilForm({ clientes, vehiculos, vendedores }: { cli
   const [vehiculo, setVehiculo] = useState<VehiculoDatos | null>(null);
   const [vendedorId, setVendedorId] = useState("");
   const [observaciones, setObservaciones] = useState("");
+  const [miId, setMiId] = useState<string | null>(null);
+
+  useEffect(() => {
+    supabase.auth.getUser().then(({ data }) => setMiId(data.user?.id || null));
+  }, []);
+  const vendedoresSinYo = vendedores.filter((v) => v.id !== miId);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -97,7 +103,7 @@ export default function RespCivilForm({ clientes, vehiculos, vendedores }: { cli
             <h2 className="text-[11px] font-bold uppercase tracking-widest text-slate-500 dark:text-slate-400 border-b border-slate-100 dark:border-[#0a2a6b] pb-3">Vendedor</h2>
             <select className={inputClass} value={vendedorId} onChange={(e) => setVendedorId(e.target.value)}>
               <option value="" className="bg-white dark:bg-[#001c55] text-slate-900 dark:text-white">Vos (usuario actual)</option>
-              {vendedores.map((v) => (<option key={v.id} value={v.id} className="bg-white dark:bg-[#001c55] text-slate-900 dark:text-white">{v.nombre}</option>))}
+              {vendedoresSinYo.map((v) => (<option key={v.id} value={v.id} className="bg-white dark:bg-[#001c55] text-slate-900 dark:text-white">{v.nombre}</option>))}
             </select>
           </div>
 

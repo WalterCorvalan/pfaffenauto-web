@@ -83,7 +83,7 @@ export default async function SenasPage() {
                         {s.sena_ars ? `$ ${Number(s.sena_ars).toLocaleString("es-AR")}` : "—"}
                       </td>
                       <td className="p-4 text-center">
-                        <EstadoSenaSelector id={s.id} estado={s.estado} />
+                        <EstadoSenaSelector id={s.id} estado={s.estado} vehiculoId={s.vehiculo_id} />
                       </td>
                       <td className="p-4 pr-6 text-center">
                         <Link href={`/panel/senas/imprimir/${s.id}`} className="inline-flex p-2 bg-white dark:bg-[#00246b] hover:bg-indigo-50 dark:hover:bg-[#002a6e] border border-slate-200 dark:border-[#0a2a6b] hover:border-indigo-200 rounded-lg text-slate-400 dark:text-slate-300 hover:text-indigo-600 dark:hover:text-sky-300 transition-all shadow-sm">
@@ -128,7 +128,7 @@ export default async function SenasPage() {
                 <div className="flex items-center justify-between pt-1 border-t border-slate-100 dark:border-[#0a2a6b]">
                   <div className="flex items-center gap-2">
                     <span className="text-[12px] text-slate-500 dark:text-slate-400">{s.fecha ? new Date(`${s.fecha}T12:00:00Z`).toLocaleDateString("es-AR", { timeZone: "UTC" }) : "—"}</span>
-                    <EstadoSenaSelector id={s.id} estado={s.estado} />
+                    <EstadoSenaSelector id={s.id} estado={s.estado} vehiculoId={s.vehiculo_id} />
                   </div>
                   <Link href={`/panel/senas/imprimir/${s.id}`} className="inline-flex p-1.5 bg-slate-50 dark:bg-[#00246b] border border-slate-200 dark:border-[#0a2a6b] rounded-lg text-slate-400 dark:text-slate-300">
                     <Printer className="w-3.5 h-3.5" />

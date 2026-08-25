@@ -56,6 +56,7 @@ export default function VenderForm() {
   // Turnstile (anti-spam gratuito)
   const [turnstileToken, setTurnstileToken] = useState("");
   const [turnstileListo, setTurnstileListo] = useState(false);
+  const [turnstileError, setTurnstileError] = useState(false);
   const turnstileRef = useRef<HTMLDivElement>(null);
   const turnstileWidgetId = useRef<string | null>(null);
 
@@ -102,9 +103,13 @@ export default function VenderForm() {
 
     turnstileWidgetId.current = window.turnstile.render(turnstileRef.current, {
       sitekey: process.env.NEXT_PUBLIC_TURNSTILE_SITE_KEY || "",
-      callback: (token: string) => setTurnstileToken(token),
+      callback: (token: string) => { setTurnstileToken(token); setTurnstileError(false); },
       "expired-callback": () => setTurnstileToken(""),
-      "error-callback": () => setTurnstileToken(""),
+      "error-callback": (code: string) => {
+        setTurnstileToken("");
+        setTurnstileError(true);
+        console.error("[turnstile] error-callback:", code, "— probable causa: el dominio actual no está autorizado para este sitekey en el dashboard de Cloudflare.");
+      },
     });
   }, [step, turnstileListo]);
 
@@ -421,11 +426,16 @@ export default function VenderForm() {
                       </div>
                     </div>
 
-                    <div className="pt-1 flex justify-center">
+                    <div className="pt-1 flex flex-col items-center gap-1.5">
                       {!turnstileListo && (
                         <span className="text-[10px] text-slate-400 font-medium">Cargando verificación...</span>
                       )}
                       <div ref={turnstileRef} />
+                      {turnstileError && (
+                        <p className="text-[10px] text-rose-500 font-medium text-center max-w-xs">
+                          No se pudo cargar la verificación anti-spam. Puede ser un bloqueador de anuncios o un problema temporal — probá recargar la página.
+                        </p>
+                      )}
                     </div>
 
                     {errorEnvio && (

@@ -45,26 +45,26 @@ export default async function LeadDetailPage({ params }: { params: Promise<{ id:
   }
 
   if (!lead) {
-    const { data: leadWeb } = await supabase
-      .from("web_chat_conversaciones")
-      .select("*, perfiles ( id, nombre ), vehiculos ( id, marca, modelo, patente )")
+    const { data: leadIg } = await supabase
+      .from("instagram_conversaciones")
+      .select("*, perfiles ( id, nombre ), vehiculos ( id, marca, modelo, patente ), instagram_contactos ( username )")
       .eq("id", id)
       .maybeSingle();
-    if (leadWeb) {
+    if (leadIg) {
       lead = {
-        ...leadWeb,
-        origen: "webchat",
-        nombre: leadWeb.nombre || "Consulta Web Chat",
-        estado: leadWeb.estado_pipeline || "Nuevo",
-        marca: leadWeb.vehiculos?.marca || "",
-        modelo: leadWeb.vehiculos?.modelo || "Consulta por Web Chat",
+        ...leadIg,
+        origen: "instagram",
+        nombre: leadIg.instagram_contactos?.username ? `@${leadIg.instagram_contactos.username}` : "Consulta Instagram",
+        estado: leadIg.estado_pipeline || "Nuevo",
+        marca: leadIg.vehiculos?.marca || "",
+        modelo: leadIg.vehiculos?.modelo || "Consulta por Instagram",
       };
     }
   }
 
   if (!lead) notFound();
 
-  const campoFk = lead.origen === "whatsapp" ? "whatsapp_conversacion_id" : lead.origen === "webchat" ? "web_chat_conversacion_id" : "cotizacion_id";
+  const campoFk = lead.origen === "whatsapp" ? "whatsapp_conversacion_id" : lead.origen === "instagram" ? "instagram_conversacion_id" : "cotizacion_id";
 
   const [{ data: vendedores }, { data: vehiculosStock }, { data: motivosCierre }, { data: tareas }, { data: testDrives }, { data: eventos }, { data: miPerfil }, { data: presupuestos }, { data: senas }, { data: boletos }, { data: peritajes }] = await Promise.all([
     supabase.from("perfiles").select("id, nombre, sucursales ( nombre )").order("nombre"),

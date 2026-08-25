@@ -44,7 +44,7 @@ export default function KanbanBoard({ leadsIniciales, motivosCierre, miRol, miId
       .channel("crm-leads-realtime")
       .on("postgres_changes", { event: "*", schema: "public", table: "cotizaciones" }, refrescarConDebounce)
       .on("postgres_changes", { event: "*", schema: "public", table: "whatsapp_conversaciones" }, refrescarConDebounce)
-      .on("postgres_changes", { event: "*", schema: "public", table: "web_chat_conversaciones" }, refrescarConDebounce)
+      .on("postgres_changes", { event: "*", schema: "public", table: "instagram_conversaciones" }, refrescarConDebounce)
       .subscribe();
 
     return () => {
@@ -108,9 +108,9 @@ export default function KanbanBoard({ leadsIniciales, motivosCierre, miRol, miId
 
     try {
       const esWhatsapp = leadActual.origen === "whatsapp";
-      const esWebChat = leadActual.origen === "webchat";
-      const tabla = esWhatsapp ? "whatsapp_conversaciones" : esWebChat ? "web_chat_conversaciones" : "cotizaciones";
-      const campo = esWhatsapp || esWebChat ? "estado_pipeline" : "estado";
+      const esInstagram = leadActual.origen === "instagram";
+      const tabla = esWhatsapp ? "whatsapp_conversaciones" : esInstagram ? "instagram_conversaciones" : "cotizaciones";
+      const campo = esWhatsapp || esInstagram ? "estado_pipeline" : "estado";
       const payload: Record<string, any> = { [campo]: nuevoEstado };
       if (motivoId) payload.motivo_cierre_id = motivoId;
       const { error } = await supabase
@@ -331,16 +331,14 @@ export default function KanbanBoard({ leadsIniciales, motivosCierre, miRol, miId
                         <span className="text-[11px] font-bold text-slate-700 dark:text-slate-200 font-mono bg-slate-50 dark:bg-[#00246b] px-2 py-0.5 rounded border border-slate-100 dark:border-[#0a2a6b]">
                           {lead.precio_sugerido ? `${lead.moneda_sugerida === "USD" ? "US$" : "$"} ${lead.precio_sugerido.toLocaleString("es-AR")}` : "A tasar"}
                         </span>
-                        <a
-                          href={`https://wa.me/${lead.telefono.replace(/\D/g, '')}?text=${encodeURIComponent(`¡Hola ${lead.nombre}! Somos de Pfaffen Autos. Te escribo por el ${lead.marca} ${lead.modelo}.`)}`}
-                          target="_blank"
-                          rel="noopener noreferrer"
+                        <Link
+                          href={`/panel/chat?conversacion=${lead.id}&canal=${lead.origen === "instagram" ? "instagram" : "whatsapp"}`}
                           className="text-slate-400 dark:text-slate-500 hover:text-[#25D366] transition-colors p-1"
-                          title="Contactar por WhatsApp"
+                          title="Abrir chat"
                           onClick={(e) => e.stopPropagation()} // Evita que se dispare el drag al hacer clic
                         >
                           <MessageSquareText className="w-[18px] h-[18px]" strokeWidth={2.5} />
-                        </a>
+                        </Link>
                       </div>
                     </div>
                   );

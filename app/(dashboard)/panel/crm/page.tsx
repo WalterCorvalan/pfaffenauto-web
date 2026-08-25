@@ -17,9 +17,10 @@ export default async function CRMPage() {
     miRol = perfil?.rol || "vendedor";
   }
 
-  // Leads del CRM = solo contacto directo (WhatsApp/Web Chat) — nunca cotizaciones,
-  // consignaciones o compras: esas ya tienen su propia sección del panel y traerlas
-  // acá duplicaba la gestión y mezclaba "interesado en comprar" con "nos ofrece su auto".
+  // Leads del CRM = solo mensajes directos (bot de WhatsApp e Instagram) —
+  // nunca cotizaciones/consignaciones/compras (tienen su propia sección), y
+  // el chat de la web tampoco (eso es /panel/marketing/chatbot, analítica de
+  // preguntas al asistente, no un canal de venta 1 a 1).
   const { data: motivosCierre } = await supabase.from("motivos_cierre").select("*").eq("activo", true).order("nombre");
 
   const { data: vendedores } = await supabase.from("perfiles").select("id, nombre").eq("rol", "vendedor").eq("activo", true).order("nombre");
@@ -52,23 +53,24 @@ export default async function CRMPage() {
     origen_ads: c.origen_ads,
   }));
 
-  const { data: conversacionesWeb } = await supabase
-    .from("web_chat_conversaciones")
+  const { data: conversacionesIg } = await supabase
+    .from("instagram_conversaciones")
     .select(`
-      id, estado_pipeline, created_at, calificacion, vendedor_id, nombre, telefono,
+      id, estado_pipeline, created_at, calificacion, vendedor_id,
+      instagram_contactos ( username ),
       perfiles ( nombre ),
       vehiculos ( marca, modelo, sucursales!vehiculos_sucursal_id_fkey ( nombre ) )
     `)
     .order("created_at", { ascending: false });
 
-  const leadsWeb = (conversacionesWeb || []).map((c: any) => ({
+  const leadsIg = (conversacionesIg || []).map((c: any) => ({
     id: c.id,
-    origen: "webchat",
-    nombre: c.nombre || "Consulta Web Chat",
-    telefono: c.telefono || "",
+    origen: "instagram",
+    nombre: c.instagram_contactos?.username ? `@${c.instagram_contactos.username}` : "Consulta Instagram",
+    telefono: "",
     marca: c.vehiculos?.marca || "",
-    modelo: c.vehiculos?.modelo || "Consulta por Web Chat",
-    tipo_peritaje: "webchat",
+    modelo: c.vehiculos?.modelo || "Consulta por Instagram",
+    tipo_peritaje: "instagram",
     precio_sugerido: null,
     estado: c.estado_pipeline || "Nuevo",
     created_at: c.created_at,
@@ -77,7 +79,7 @@ export default async function CRMPage() {
     vehiculos: c.vehiculos,
   }));
 
-  let leadsUnificados = [...leadsWa, ...leadsWeb];
+  let leadsUnificados = [...leadsWa, ...leadsIg];
 
   // Vendedor: solo ve sus leads asignados + los sin asignar (para poder tomarlos). Nunca los de otro vendedor.
   // Admin siempre ve todo. Encargado ve todo por default, con toggle "Mis leads" en el Kanban (client-side).

@@ -200,6 +200,16 @@ export default function DashboardLayout({
       (data || []).forEach((n: any) => {
         if (n.seccion) conteos[n.seccion] = (conteos[n.seccion] || 0) + 1;
       });
+
+      // Tareas de leads no dispara notificaciones (nadie inserta seccion="tareas"
+      // ahí) — el badge sale de tareas_lead directo. Todas las pendientes, no
+      // solo vencidas/hoy: mismo total que suma el tablero (vencidas+hoy+próximas).
+      const { count: tareasPendientes } = await supabase
+        .from("tareas_lead")
+        .select("id", { count: "exact", head: true })
+        .eq("completada", false);
+      if (tareasPendientes) conteos.tareas = tareasPendientes;
+
       setNotifPorSeccion(conteos);
     };
     cargarConteos();
@@ -321,13 +331,13 @@ export default function DashboardLayout({
 
   return (
     <div className={darkMode ? "dark" : ""}>
-      <div className="flex h-screen w-full bg-white dark:bg-[#001233] text-slate-900 dark:text-slate-100 font-sans overflow-hidden transition-colors">
+      <div className="flex h-screen w-full bg-white dark:bg-[#001233] text-slate-900 dark:text-slate-100 font-sans overflow-hidden transition-colors print:h-auto print:overflow-visible print:block">
         {/* HEADER MÓVIL */}
-        <div className="md:hidden fixed top-0 left-0 right-0 h-14 bg-white dark:bg-[#001c55] border-b border-slate-200 dark:border-[#0a2a6b] flex items-center justify-between px-4 z-50 transition-colors">
-          <span className="font-bold text-slate-900 dark:text-white">
+        <div className="print:hidden md:hidden fixed top-0 left-0 right-0 h-14 bg-white dark:bg-[#001c55] border-b border-slate-200 dark:border-[#0a2a6b] flex items-center justify-between px-4 z-50 transition-colors">
+          <span className="font-bold text-slate-900 dark:text-white truncate mr-2">
             Pfaffen CRM
           </span>
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-2 shrink-0">
             <DolarBlueBadge compacto />
             <button
               onClick={toggleDarkMode}
@@ -354,7 +364,7 @@ export default function DashboardLayout({
         </div>
         {/* SIDEBAR DESKTOP */}
         <aside
-          className={`fixed md:relative top-14 md:top-0 left-0 h-[calc(100vh-3.5rem)] md:h-full w-[225px] bg-[#F9FAFB] dark:bg-[#001c55] border-r border-slate-200 dark:border-[#0a2a6b] transform transition-transform z-40 flex flex-col shrink-0 ${isOpen ? "translate-x-0" : "-translate-x-full md:translate-x-0"}`}
+          className={`print:hidden fixed md:relative top-14 md:top-0 left-0 h-[calc(100vh-3.5rem)] md:h-full w-[225px] bg-[#F9FAFB] dark:bg-[#001c55] border-r border-slate-200 dark:border-[#0a2a6b] transform transition-transform z-40 flex flex-col shrink-0 ${isOpen ? "translate-x-0" : "-translate-x-full md:translate-x-0"}`}
         >
           {/* Cabecera del Espacio de Trabajo */}
           <div className="h-[60px] flex items-center gap-3 px-4 border-b border-slate-200 dark:border-[#0a2a6b] transition-colors shrink-0">
@@ -428,11 +438,13 @@ export default function DashboardLayout({
                     icon={LayoutDashboard}
                     label="Tablero de Leads"
                     href="/panel/crm"
+                    notifications={notifPorSeccion.crm}
                   />
                   <NavLinkItem
                     icon={CheckSquare}
                     label="Tareas de Leads"
                     href="/panel/crm/tareas"
+                    notifications={notifPorSeccion.tareas}
                   />
                   <NavLinkItem
                     icon={MessageSquareCheckIcon}
@@ -691,7 +703,7 @@ export default function DashboardLayout({
         </aside>{" "}
         {/* <--- ESTA ES LA ETIQUETA QUE FALTABA */}
         {/* ÁREA PRINCIPAL */}
-        <main className="flex-1 min-w-0 h-full flex flex-col bg-white dark:bg-[#001233] relative pt-14 md:pt-0 transition-colors overflow-y-auto">
+        <main className="flex-1 min-w-0 h-full flex flex-col bg-white dark:bg-[#001233] relative pt-14 md:pt-0 transition-colors overflow-y-auto print:h-auto print:overflow-visible print:pt-0 print:block">
           {children}
         </main>
       </div>

@@ -4,7 +4,7 @@ import { useState, useMemo } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { supabase } from "@/lib/supabase/client";
-import { notificarPersona } from "@/lib/notificaciones";
+import { notificarPersonaCliente } from "@/lib/notificarPersonaCliente";
 import { CHECKLIST_PERITAJE } from "@/lib/peritajeChecklist";
 import {
   ArrowLeft, User, Phone, CarFront, Calendar, Plus, X,
@@ -123,9 +123,9 @@ export default function LeadDetailClient({
   // tareas, test drives, peritajes, historial comercial y eventos usan la
   // misma tabla de siempre, solo cambia qué columna de vínculo se completa.
   const esCotizacion = lead.origen === "cotizacion";
-  const tabla = lead.origen === "whatsapp" ? "whatsapp_conversaciones" : lead.origen === "webchat" ? "web_chat_conversaciones" : "cotizaciones";
+  const tabla = lead.origen === "whatsapp" ? "whatsapp_conversaciones" : lead.origen === "instagram" ? "instagram_conversaciones" : "cotizaciones";
   const campoEstado = esCotizacion ? "estado" : "estado_pipeline";
-  const campoFk = lead.origen === "whatsapp" ? "whatsapp_conversacion_id" : lead.origen === "webchat" ? "web_chat_conversacion_id" : "cotizacion_id";
+  const campoFk = lead.origen === "whatsapp" ? "whatsapp_conversacion_id" : lead.origen === "instagram" ? "instagram_conversacion_id" : "cotizacion_id";
   const paramsLead = `${campoFk}=${lead.id}`;
 
   const registrarEvento = async (tipo: string, descripcion: string) => {
@@ -140,9 +140,10 @@ export default function LeadDetailClient({
       return;
     }
     setGuardandoEstado(true);
-    await supabase.from(tabla).update({ [campoEstado]: nuevo }).eq("id", lead.id);
-    await registrarEvento("estado", `Estado cambiado a "${nuevo}"`);
+    const { error } = await supabase.from(tabla).update({ [campoEstado]: nuevo }).eq("id", lead.id);
     setGuardandoEstado(false);
+    if (error) { console.error("[crm] error cambiando estado:", error.message); return alert("No se pudo cambiar el estado."); }
+    await registrarEvento("estado", `Estado cambiado a "${nuevo}"`);
     router.refresh();
   };
 
@@ -168,28 +169,40 @@ export default function LeadDetailClient({
 
   const cambiarCalificacion = async (nueva: string) => {
     setGuardandoCalificacion(true);
-    await supabase.from(tabla).update({ calificacion: nueva || null }).eq("id", lead.id);
+    const { error } = await supabase.from(tabla).update({ calificacion: nueva || null }).eq("id", lead.id);
+    setGuardandoCalificacion(false);
+    if (error) { console.error("[crm] error cambiando calificación:", error.message); return alert("No se pudo cambiar el grado de interés."); }
     const label = CALIFICACIONES.find((c) => c.value === nueva)?.label || "Sin calificar";
     await registrarEvento("calificacion", `Grado de interés cambiado a "${label}"`);
-    setGuardandoCalificacion(false);
     router.refresh();
   };
 
   const cambiarVendedor = async (vendedorId: string) => {
     setGuardandoVendedor(true);
-    await supabase.from(tabla).update({ vendedor_id: vendedorId || null }).eq("id", lead.id);
+    const { error } = await supabase.from(tabla).update({ vendedor_id: vendedorId || null }).eq("id", lead.id);
+    setGuardandoVendedor(false);
+    if (error) { console.error("[crm] error cambiando vendedor:", error.message); return alert("No se pudo reasignar el vendedor."); }
     const nombreVendedor = vendedores.find((v) => v.id === vendedorId)?.nombre;
     await registrarEvento("asignacion", vendedorId ? `Reasignado a ${nombreVendedor}` : "Vendedor removido");
-    setGuardandoVendedor(false);
+    if (vendedorId) {
+      notificarPersonaCliente({
+        perfilId: vendedorId,
+        tipo: "nuevo_lead",
+        mensaje: `Te asignaron el lead de ${lead.nombre}.`,
+        link: `/panel/crm/${lead.id}`,
+        seccion: "crm",
+      });
+    }
     router.refresh();
   };
 
   const cambiarVehiculo = async (vehiculoId: string) => {
     setGuardandoVehiculo(true);
-    await supabase.from(tabla).update({ vehiculo_id: vehiculoId || null }).eq("id", lead.id);
+    const { error } = await supabase.from(tabla).update({ vehiculo_id: vehiculoId || null }).eq("id", lead.id);
+    setGuardandoVehiculo(false);
+    if (error) { console.error("[crm] error vinculando vehículo:", error.message); return alert("No se pudo vincular el vehículo."); }
     const v = vehiculosStock.find((x) => x.id === vehiculoId);
     await registrarEvento("vehiculo", vehiculoId ? `Vinculado a ${v?.marca} ${v?.modelo}` : "Vehículo desvinculado");
-    setGuardandoVehiculo(false);
     router.refresh();
   };
 
@@ -231,7 +244,12 @@ export default function LeadDetailClient({
 
   const cambiarEstadoTestDrive = async (td: any, nuevo: string) => {
     setTestDrives((prev) => prev.map((t) => (t.id === td.id ? { ...t, estado: nuevo } : t)));
-    await supabase.from("test_drives").update({ estado: nuevo }).eq("id", td.id);
+    const { error } = await supabase.from("test_drives").update({ estado: nuevo }).eq("id", td.id);
+    if (error) {
+      console.error("[crm] error cambiando estado del test drive:", error.message);
+      setTestDrives((prev) => prev.map((t) => (t.id === td.id ? { ...t, estado: td.estado } : t)));
+      return alert("No se pudo actualizar el test drive.");
+    }
     await registrarEvento("test_drive", `Test drive marcado como "${nuevo}"`);
     router.refresh();
   };
@@ -239,22 +257,26 @@ export default function LeadDetailClient({
   const pedirAsistencia = async () => {
     if (!asistenciaParaId) return alert("Elegí a quién pedirle ayuda.");
     setGuardandoAsistencia(true);
-    await supabase.from(tabla).update({
+    const { error } = await supabase.from(tabla).update({
       asistencia_solicitada: true,
       asistencia_nota: notaAsistencia || null,
       asistencia_para: asistenciaParaId,
       asistencia_atendida: false,
     }).eq("id", lead.id);
+    if (error) {
+      console.error("[crm] error pidiendo asistencia:", error.message);
+      setGuardandoAsistencia(false);
+      return alert("No se pudo pedir asistencia.");
+    }
     const nombreDestinatario = vendedores.find((v) => v.id === asistenciaParaId)?.nombre;
     await registrarEvento("asistencia", `Asistencia pedida a ${nombreDestinatario}` + (notaAsistencia ? `: ${notaAsistencia}` : ""));
-    notificarPersona(
-      supabase,
-      asistenciaParaId,
-      "asistencia_pedida",
-      `Te pidieron asistencia en el lead de ${lead.nombre}` + (notaAsistencia ? `: ${notaAsistencia}` : ""),
-      `/panel/crm/${lead.id}`,
-      "crm"
-    ).catch((err) => console.error("[crm] error notificando asistencia:", err));
+    notificarPersonaCliente({
+      perfilId: asistenciaParaId,
+      tipo: "asistencia_pedida",
+      mensaje: `Te pidieron asistencia en el lead de ${lead.nombre}` + (notaAsistencia ? `: ${notaAsistencia}` : ""),
+      link: `/panel/crm/${lead.id}`,
+      seccion: "crm",
+    });
     setGuardandoAsistencia(false);
     setShowAsistenciaModal(false);
     router.refresh();
@@ -278,7 +300,8 @@ export default function LeadDetailClient({
   };
 
   const marcarAsistenciaAtendida = async () => {
-    await supabase.from(tabla).update({ asistencia_atendida: true }).eq("id", lead.id);
+    const { error } = await supabase.from(tabla).update({ asistencia_atendida: true }).eq("id", lead.id);
+    if (error) { console.error("[crm] error marcando asistencia atendida:", error.message); return alert("No se pudo marcar como atendida."); }
     await registrarEvento("asistencia", "Asistencia atendida");
     router.refresh();
   };
@@ -299,7 +322,7 @@ export default function LeadDetailClient({
       const { data: { user } } = await supabase.auth.getUser();
       const fkTarea =
         lead.origen === "whatsapp" ? { whatsapp_conversacion_id: lead.id } :
-        lead.origen === "webchat" ? { web_chat_conversacion_id: lead.id } :
+        lead.origen === "instagram" ? { instagram_conversacion_id: lead.id } :
         { cotizacion_id: lead.id };
       const { data, error } = await supabase.from("tareas_lead").insert({
         ...fkTarea,
@@ -331,16 +354,26 @@ export default function LeadDetailClient({
       return;
     }
     setTareas((prev) => prev.map((t) => (t.id === tarea.id ? { ...t, completada: false } : t)));
-    await supabase.from("tareas_lead").update({ completada: false }).eq("id", tarea.id);
+    const { error } = await supabase.from("tareas_lead").update({ completada: false }).eq("id", tarea.id);
+    if (error) {
+      console.error("[crm] error descompletando tarea:", error.message);
+      setTareas((prev) => prev.map((t) => (t.id === tarea.id ? { ...t, completada: true } : t)));
+      alert("No se pudo actualizar la tarea.");
+    }
   };
 
   const confirmarCompletarTarea = async () => {
     if (!tareaACompletar) return;
     setGuardandoResultado(true);
     setTareas((prev) => prev.map((t) => (t.id === tareaACompletar.id ? { ...t, completada: true, resultado: resultadoTarea || null } : t)));
-    await supabase.from("tareas_lead").update({ completada: true, resultado: resultadoTarea || null }).eq("id", tareaACompletar.id);
-    await registrarEvento("tarea", `Tarea completada: ${tareaACompletar.tipo}` + (resultadoTarea ? ` — ${resultadoTarea}` : ""));
+    const { error } = await supabase.from("tareas_lead").update({ completada: true, resultado: resultadoTarea || null }).eq("id", tareaACompletar.id);
     setGuardandoResultado(false);
+    if (error) {
+      console.error("[crm] error completando tarea:", error.message);
+      setTareas((prev) => prev.map((t) => (t.id === tareaACompletar.id ? { ...t, completada: false, resultado: null } : t)));
+      return alert("No se pudo completar la tarea.");
+    }
+    await registrarEvento("tarea", `Tarea completada: ${tareaACompletar.tipo}` + (resultadoTarea ? ` — ${resultadoTarea}` : ""));
     setTareaACompletar(null);
     router.refresh();
   };
@@ -370,7 +403,7 @@ export default function LeadDetailClient({
             <div>
               <h1 className="text-xl font-bold text-slate-900 dark:text-white">{lead.nombre}</h1>
               <p className="text-[12px] text-slate-500 dark:text-slate-400 mt-0.5">
-                {lead.origen === "whatsapp" ? "Consulta por WhatsApp" : lead.origen === "webchat" ? "Consulta por Web Chat" : lead.tipo_peritaje === "online" ? "Cotización web" : lead.tipo_peritaje}
+                {lead.origen === "whatsapp" ? "Consulta por WhatsApp" : lead.origen === "instagram" ? "Consulta por Instagram" : lead.tipo_peritaje === "online" ? "Cotización web" : lead.tipo_peritaje}
               </p>
             </div>
             <select

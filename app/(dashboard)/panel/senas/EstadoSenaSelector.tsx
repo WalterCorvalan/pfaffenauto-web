@@ -12,7 +12,7 @@ const COLOR: Record<string, string> = {
   "Perdida": "bg-rose-500 text-white border-rose-500",
 };
 
-export default function EstadoSenaSelector({ id, estado }: { id: string; estado: string }) {
+export default function EstadoSenaSelector({ id, estado, vehiculoId }: { id: string; estado: string; vehiculoId?: string | null }) {
   const router = useRouter();
   const [actual, setActual] = useState(estado || "Activa");
   const [cargando, setCargando] = useState(false);
@@ -21,6 +21,15 @@ export default function EstadoSenaSelector({ id, estado }: { id: string; estado:
     setActual(nuevo);
     setCargando(true);
     const { error } = await supabase.from("senas").update({ estado: nuevo, etapa_seguimiento: nuevo }).eq("id", id);
+    if (!error && nuevo === "Perdida" && vehiculoId) {
+      // Se cayó la seña: liberamos el auto vía API con service role (RLS de
+      // "vehiculos" no deja que un vendedor lo haga directo).
+      fetch("/api/vehiculos/reservar", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ vehiculoId, estado: "Disponible" }),
+      }).catch(() => {});
+    }
     setCargando(false);
     if (error) {
       alert("Error al cambiar el estado");

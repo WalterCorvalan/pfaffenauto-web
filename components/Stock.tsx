@@ -213,6 +213,7 @@ export default function Stock({ vehiculos }: StockProps) {
                         (a) => a.id === auto.id,
                       )}
                       onToggleComparar={toggleComparar}
+                      bordeSuave
                     />
                   </div>
                 ))}
@@ -593,10 +594,12 @@ export function VehicleCard({
   auto,
   estaSeleccionado,
   onToggleComparar,
+  bordeSuave,
 }: {
   auto: any;
   estaSeleccionado?: boolean;
   onToggleComparar?: (e: React.MouseEvent, auto: any) => void;
+  bordeSuave?: boolean;
 }) {
   const precioMostrar =
     auto.precio_publicado_usd && !auto.precio_publicado_ars
@@ -630,10 +633,16 @@ export function VehicleCard({
         className="block h-full focus:outline-none"
       >
         <div
-          className={`bg-white/40 dark:bg-white/5 backdrop-blur-2xl rounded-2xl overflow-hidden flex flex-col h-full shadow-[0_8px_32px_rgba(0,0,0,0.04)] dark:shadow-[0_8px_32px_rgba(0,0,0,0.4)] hover:shadow-[0_20px_48px_rgba(1,69,242,0.12)] dark:hover:shadow-[0_20px_48px_rgba(1,69,242,0.2)] hover:bg-white/70 dark:hover:bg-white/10 transition-all duration-500 relative transform group-hover:-translate-y-1 border ${
+          className={`bg-white/40 dark:bg-white/5 backdrop-blur-2xl rounded-2xl overflow-hidden flex flex-col h-full transition-all duration-500 relative transform group-hover:-translate-y-1 border ${
+            bordeSuave
+              ? "shadow-none dark:shadow-none hover:shadow-md dark:hover:shadow-none hover:bg-white/70 dark:hover:bg-white/[0.07]"
+              : "shadow-[0_8px_32px_rgba(0,0,0,0.04)] dark:shadow-[0_8px_32px_rgba(0,0,0,0.4)] hover:shadow-[0_20px_48px_rgba(1,69,242,0.12)] dark:hover:shadow-[0_20px_48px_rgba(1,69,242,0.2)] hover:bg-white/70 dark:hover:bg-white/10"
+          } ${
             estaSeleccionado
               ? "border-[#0145F2] ring-1 ring-[#0145F2]"
-              : "border-white/60 dark:border-white/10 hover:border-white dark:hover:border-white/20"
+              : bordeSuave
+                ? "border-white/30 dark:border-white/[0.06] hover:border-white/60 dark:hover:border-white/10"
+                : "border-white/60 dark:border-white/10 hover:border-white dark:hover:border-white/20"
           }`}
         >
           <div className="absolute inset-0 bg-gradient-to-tr from-transparent via-white/40 dark:via-white/10 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-700 pointer-events-none z-20"></div>

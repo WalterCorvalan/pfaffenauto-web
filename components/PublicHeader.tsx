@@ -242,6 +242,13 @@ export default function PublicHeader() {
           </Link>
 
           <Link
+            href="/consignacion"
+            className="hidden xl:flex items-center gap-1.5 text-emerald-700 dark:text-emerald-400 hover:text-emerald-800 dark:hover:text-emerald-300 border border-emerald-200 dark:border-emerald-400/30 hover:bg-emerald-50 dark:hover:bg-emerald-400/10 px-4 py-2.5 rounded-full text-xs font-black uppercase tracking-widest transition-all shrink-0"
+          >
+            Consignar
+          </Link>
+
+          <Link
             href="/cotizador"
             className="hidden lg:flex items-center gap-2 bg-[#0145F2] hover:bg-blue-600 dark:hover:bg-blue-500 text-white px-5 py-2.5 rounded-full text-xs font-black uppercase tracking-widest transition-all shadow-[0_4px_15px_rgba(1,69,242,0.3)] shrink-0 relative overflow-hidden group"
           >
@@ -300,6 +307,21 @@ export default function PublicHeader() {
           >
             {/* Se agrega un padding top leve para darle aire respecto a elementos flotantes externos (como el botón de dark mode) */}
             <div className="flex flex-col pt-4 pb-6 px-6">
+
+              <Link
+                href="/cotizador"
+                onClick={() => setIsOpen(false)}
+                className="flex items-center justify-center gap-2 bg-[#0145F2] hover:bg-blue-600 text-white font-black text-[12px] uppercase tracking-widest py-4 rounded-2xl shadow-[0_4px_15px_rgba(1,69,242,0.3)] mb-2"
+              >
+                Cotizá Tu Usado <ChevronRight className="w-4 h-4" />
+              </Link>
+              <Link
+                href="/consignacion"
+                onClick={() => setIsOpen(false)}
+                className="flex items-center justify-center gap-2 text-emerald-700 dark:text-emerald-400 border border-emerald-200 dark:border-emerald-400/30 font-black text-[12px] uppercase tracking-widest py-4 rounded-2xl mb-2"
+              >
+                Consignar
+              </Link>
 
               {/* Lista de navegación principal */}
               <div className="divide-y divide-slate-100 dark:divide-white/5">

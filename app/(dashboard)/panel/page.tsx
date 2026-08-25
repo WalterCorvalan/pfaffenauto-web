@@ -1,7 +1,7 @@
 ﻿import { createServerClient } from "@supabase/ssr";
 import { cookies } from "next/headers";
 import Link from "next/link";
-import { Plus, Car, Search, Edit2, ChevronLeft, ChevronRight, FileText, LayoutGrid, Megaphone } from "lucide-react";
+import { Plus, Car, Search, Edit2, ChevronLeft, ChevronRight, ChevronsLeft, ChevronsRight, FileText, LayoutGrid, Megaphone } from "lucide-react";
 import AccionesAuto from "./AccionesAuto";
 import PublicarRedesBoton from "./PublicarRedesBoton";
 import MiniaturaAuto from "./MiniaturaAuto";
@@ -57,18 +57,28 @@ export default async function PanelPage({ searchParams }: { searchParams: Promis
 
   let query = supabase
     .from("vehiculos")
-    .select(`*, multimedia_vehiculos ( url_archivo ), sucursales!vehiculos_sucursal_id_fkey ( id, nombre ), vendedor:vendedor_asignado_id ( id, nombre )`, { count: "exact" })
+    .select(`*, multimedia_vehiculos ( url_archivo ), sucursales!vehiculos_sucursal_id_fkey ( id, nombre ), vendedor:vendedor_asignado_id ( id, nombre )`)
     .order("created_at", { ascending: false });
 
   if (q) query = query.or(`marca.ilike.%${q}%,modelo.ilike.%${q}%,patente.ilike.%${q}%`);
   if (sucursal) query = query.eq("sucursal_id", sucursal);
 
-  const from = (currentPage - 1) * ITEMS_POR_PAGINA;
-  const to = from + ITEMS_POR_PAGINA - 1;
-  query = query.range(from, to);
-
-  const { data: vehiculos, count, error } = await query;
+  const { data: todosLosVehiculos, error } = await query;
   if (error) console.error("Error cargando autos:", error);
+
+  // Los vendidos no desaparecen (quedan como historial) pero se mandan al
+  // final de la lista — ya no compiten por atención con el stock activo.
+  const ordenados = [...(todosLosVehiculos || [])].sort((a, b) => {
+    const aVendido = a.estado === "Vendido" ? 1 : 0;
+    const bVendido = b.estado === "Vendido" ? 1 : 0;
+    if (aVendido !== bVendido) return aVendido - bVendido;
+    return new Date(b.created_at).getTime() - new Date(a.created_at).getTime();
+  });
+
+  const count = ordenados.length;
+  const from = (currentPage - 1) * ITEMS_POR_PAGINA;
+  const to = from + ITEMS_POR_PAGINA;
+  const vehiculos = ordenados.slice(from, to);
 
   const totalPages = count ? Math.ceil(count / ITEMS_POR_PAGINA) : 1;
 
@@ -279,7 +289,16 @@ export default async function PanelPage({ searchParams }: { searchParams: Promis
                   </p>
                   <div className="flex items-center gap-1.5">
                     {currentPage > 1 ? (
-                      <Link href={`/panel?q=${q}&sucursal=${sucursal}&page=${currentPage - 1}`} className="p-1.5 bg-slate-50 dark:bg-[#00246b] hover:bg-slate-100 dark:hover:bg-[#002a6e] rounded-md border border-slate-200 dark:border-[#0a2a6b] text-slate-600 dark:text-slate-300">
+                      <Link href={`/panel?q=${q}&sucursal=${sucursal}&page=1`} title="Primera página" className="p-1.5 bg-slate-50 dark:bg-[#00246b] hover:bg-slate-100 dark:hover:bg-[#002a6e] rounded-md border border-slate-200 dark:border-[#0a2a6b] text-slate-600 dark:text-slate-300">
+                        <ChevronsLeft className="w-4 h-4" />
+                      </Link>
+                    ) : (
+                      <button disabled className="p-1.5 bg-slate-50 dark:bg-[#00246b] opacity-50 rounded-md border border-slate-200 dark:border-[#0a2a6b] text-slate-400 cursor-not-allowed">
+                        <ChevronsLeft className="w-4 h-4" />
+                      </button>
+                    )}
+                    {currentPage > 1 ? (
+                      <Link href={`/panel?q=${q}&sucursal=${sucursal}&page=${currentPage - 1}`} title="Página anterior" className="p-1.5 bg-slate-50 dark:bg-[#00246b] hover:bg-slate-100 dark:hover:bg-[#002a6e] rounded-md border border-slate-200 dark:border-[#0a2a6b] text-slate-600 dark:text-slate-300">
                         <ChevronLeft className="w-4 h-4" />
                       </Link>
                     ) : (
@@ -287,16 +306,36 @@ export default async function PanelPage({ searchParams }: { searchParams: Promis
                         <ChevronLeft className="w-4 h-4" />
                       </button>
                     )}
-                    <div className="px-3 py-1 bg-indigo-50 dark:bg-[#002a6e] border border-indigo-100 dark:border-[#0a2a6b] rounded-md font-bold text-[11px] text-indigo-600 dark:text-sky-300">
-                      {currentPage} / {totalPages}
-                    </div>
+                    <form method="GET" action="/panel" className="flex items-center gap-1">
+                      <input type="hidden" name="q" value={q} />
+                      <input type="hidden" name="sucursal" value={sucursal} />
+                      <input
+                        type="number"
+                        name="page"
+                        min={1}
+                        max={totalPages}
+                        defaultValue={currentPage}
+                        key={currentPage}
+                        className="w-12 px-1.5 py-1 bg-indigo-50 dark:bg-[#002a6e] border border-indigo-100 dark:border-[#0a2a6b] rounded-md font-bold text-[11px] text-indigo-600 dark:text-sky-300 text-center outline-none focus:border-indigo-400"
+                      />
+                      <span className="text-[11px] font-bold text-slate-400">/ {totalPages}</span>
+                    </form>
                     {currentPage < totalPages ? (
-                      <Link href={`/panel?q=${q}&sucursal=${sucursal}&page=${currentPage + 1}`} className="p-1.5 bg-slate-50 dark:bg-[#00246b] hover:bg-slate-100 dark:hover:bg-[#002a6e] rounded-md border border-slate-200 dark:border-[#0a2a6b] text-slate-600 dark:text-slate-300">
+                      <Link href={`/panel?q=${q}&sucursal=${sucursal}&page=${currentPage + 1}`} title="Página siguiente" className="p-1.5 bg-slate-50 dark:bg-[#00246b] hover:bg-slate-100 dark:hover:bg-[#002a6e] rounded-md border border-slate-200 dark:border-[#0a2a6b] text-slate-600 dark:text-slate-300">
                         <ChevronRight className="w-4 h-4" />
                       </Link>
                     ) : (
                       <button disabled className="p-1.5 bg-slate-50 dark:bg-[#00246b] opacity-50 rounded-md border border-slate-200 dark:border-[#0a2a6b] text-slate-400 cursor-not-allowed">
                         <ChevronRight className="w-4 h-4" />
+                      </button>
+                    )}
+                    {currentPage < totalPages ? (
+                      <Link href={`/panel?q=${q}&sucursal=${sucursal}&page=${totalPages}`} title="Última página" className="p-1.5 bg-slate-50 dark:bg-[#00246b] hover:bg-slate-100 dark:hover:bg-[#002a6e] rounded-md border border-slate-200 dark:border-[#0a2a6b] text-slate-600 dark:text-slate-300">
+                        <ChevronsRight className="w-4 h-4" />
+                      </Link>
+                    ) : (
+                      <button disabled className="p-1.5 bg-slate-50 dark:bg-[#00246b] opacity-50 rounded-md border border-slate-200 dark:border-[#0a2a6b] text-slate-400 cursor-not-allowed">
+                        <ChevronsRight className="w-4 h-4" />
                       </button>
                     )}
                   </div>

@@ -3,6 +3,7 @@
 import { useState } from "react";
 import Link from "next/link";
 import { supabase } from "@/lib/supabase/client";
+import { notificarPersonaCliente } from "@/lib/notificarPersonaCliente";
 import { ExternalLink, MessageCircle, Globe, Handshake } from "lucide-react";
 
 const ESTADOS = ["Nuevo", "Contactado", "Interesado", "Cliente", "Perdido"];
@@ -58,13 +59,24 @@ export default function LeadsTable({
 
   const reasignar = async (lead: any, vendedorId: string) => {
     setReasignando(lead.id);
-    const tabla = lead.origen === "whatsapp" ? "whatsapp_conversaciones" : "cotizaciones";
+    const tabla = lead.origen === "whatsapp" ? "whatsapp_conversaciones" : lead.origen === "instagram" ? "instagram_conversaciones" : "cotizaciones";
     const { error } = await supabase.from(tabla).update({ vendedor_id: vendedorId || null }).eq("id", lead.id);
     setReasignando(null);
     if (error) return alert("Error al reasignar.");
     setOverrideVendedor((prev) => ({ ...prev, [lead.id]: vendedorId || null }));
+    if (vendedorId) {
+      notificarPersonaCliente({
+        perfilId: vendedorId,
+        tipo: "nuevo_lead",
+        mensaje: `Te asignaron el lead de ${lead.nombre}.`,
+        link: `/panel/crm/${lead.id}`,
+        seccion: "crm",
+      });
+    }
   };
 
+  // sucursal_preferida es un campo de cotizaciones — leads de WhatsApp/Instagram
+  // no lo tienen, por eso el selector de sucursal se oculta para ambos orígenes.
   const cambiarSucursal = async (lead: any, sucursalNombre: string) => {
     setGuardandoSucursal(lead.id);
     const { error } = await supabase.from("cotizaciones").update({ sucursal_preferida: sucursalNombre }).eq("id", lead.id);
@@ -106,13 +118,14 @@ export default function LeadsTable({
               {leads.map((lead) => {
                 const vendedorActualId = overrideVendedor[lead.id] !== undefined ? overrideVendedor[lead.id] : lead.vendedor_id;
                 const esWhatsapp = lead.origen === "whatsapp";
+                const esInstagram = lead.origen === "instagram";
                 const estadoActual = esWhatsapp ? (lead.estado_pipeline || lead.estado || "Nuevo") : (lead.estado || "Nuevo");
-                const badgeCalificacion = esWhatsapp && lead.calificacion
+                const badgeCalificacion = (esWhatsapp || esInstagram) && lead.calificacion
                   ? { texto: lead.calificacion.charAt(0).toUpperCase() + lead.calificacion.slice(1), color: ESTILO_CALIFICACION[lead.calificacion] || ESTILO_CALIFICACION.frio }
                   : null;
                 const origen = origenInfo(lead);
                 const sucursalActual = overrideSucursal[lead.id] !== undefined ? overrideSucursal[lead.id] : (lead.sucursal_preferida || "");
-                const href = lead.origen === "cotizacion" ? `/panel/crm/${lead.id}` : `/panel/chat?conversacion=${lead.id}`;
+                const href = lead.origen === "cotizacion" ? `/panel/crm/${lead.id}` : `/panel/chat?conversacion=${lead.id}&canal=${esInstagram ? "instagram" : "whatsapp"}`;
 
                 return (
                   <tr key={lead.id} className={`hover:bg-indigo-50/40 dark:hover:bg-[#00246b] transition-colors border-l-4 ${BORDE_ESTADO[estadoActual] || "border-l-slate-200"}`}>
@@ -159,7 +172,7 @@ export default function LeadsTable({
                       </select>
                     </td>
                     <td className="p-3">
-                      {esWhatsapp ? (
+                      {esWhatsapp || esInstagram ? (
                         <span className="text-[12px] text-slate-400 dark:text-slate-500 italic">—</span>
                       ) : (
                         <select

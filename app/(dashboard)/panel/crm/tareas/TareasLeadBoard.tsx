@@ -89,12 +89,12 @@ export default function TareasLeadBoard({
     });
 
   const tareas = useMemo(
-    () => filtrarPorVendedorYCalificacion(tareasIniciales, (t) => t.cotizaciones?.vendedor_id, (t) => t.cotizaciones?.calificacion),
+    () => filtrarPorVendedorYCalificacion(tareasIniciales, (t) => t.lead?.vendedor_id, (t) => t.lead?.calificacion),
     [tareasIniciales, vendedorFiltro, calificacionFiltro]
   );
 
   const completadas = useMemo(
-    () => filtrarPorVendedorYCalificacion(tareasCompletadas, (t) => t.cotizaciones?.vendedor_id, (t) => t.cotizaciones?.calificacion),
+    () => filtrarPorVendedorYCalificacion(tareasCompletadas, (t) => t.lead?.vendedor_id, (t) => t.lead?.calificacion),
     [tareasCompletadas, vendedorFiltro, calificacionFiltro]
   );
 
@@ -148,13 +148,13 @@ export default function TareasLeadBoard({
     // 3. Carga por Vendedor (Barras Apiladas)
     const vendedoresMap = new Map<string, { Pendientes: number, Completadas: number }>();
     tareas.forEach(t => {
-      const v = getNombreVendedor(t.cotizaciones?.vendedor_id);
+      const v = getNombreVendedor(t.lead?.vendedor_id);
       const data = vendedoresMap.get(v) || { Pendientes: 0, Completadas: 0 };
       data.Pendientes += 1;
       vendedoresMap.set(v, data);
     });
     completadas.forEach(t => {
-      const v = getNombreVendedor(t.cotizaciones?.vendedor_id);
+      const v = getNombreVendedor(t.lead?.vendedor_id);
       const data = vendedoresMap.get(v) || { Pendientes: 0, Completadas: 0 };
       data.Completadas += 1;
       vendedoresMap.set(v, data);
@@ -229,10 +229,11 @@ export default function TareasLeadBoard({
         
         {/* ================= VISTA TABLERO ================= */}
         {vista === "tablero" && (
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-5 max-w-[1400px] mx-auto">
+          <div className="grid grid-cols-1 lg:grid-cols-4 gap-5 max-w-[1800px] mx-auto">
             <Columna titulo="Tareas vencidas" color="rose" icono={<AlertTriangle className="w-4 h-4 text-white" />} items={vencidas} render={(t) => <TareaCard tarea={t} color="rose" />} />
             <Columna titulo="Tareas del día" color="amber" icono={<Clock className="w-4 h-4 text-white" />} items={hoy} render={(t) => <TareaCard tarea={t} color="amber" />} />
-            <Columna titulo="Sin primer contacto" color="sky" icono={<UserPlus className="w-4 h-4 text-white" />} items={sinContacto} render={(l) => <LeadSinContactoCard lead={l} />} />
+            <Columna titulo="Próximas" color="sky" icono={<Calendar className="w-4 h-4 text-white" />} items={proximas} render={(t) => <TareaCard tarea={t} color="sky" />} />
+            <Columna titulo="Sin primer contacto" color="slate" icono={<UserPlus className="w-4 h-4 text-white" />} items={sinContacto} render={(l) => <LeadSinContactoCard lead={l} />} />
           </div>
         )}
 
@@ -325,7 +326,7 @@ export default function TareasLeadBoard({
 // ================= COMPONENTES DE VISTAS EXISTENTES =================
 
 const COLOR_HEADER: Record<string, string> = {
-  rose: "bg-rose-500", amber: "bg-amber-500", sky: "bg-sky-500",
+  rose: "bg-rose-500", amber: "bg-amber-500", sky: "bg-sky-500", slate: "bg-slate-500",
 };
 
 function Columna({ titulo, icono, items, render, color }: { titulo: string; icono: React.ReactNode; items: any[]; render: (item: any) => React.ReactNode; color: string }) {
@@ -351,7 +352,7 @@ const COLOR_BORDE: Record<string, string> = {
 };
 
 function TareaCard({ tarea, color }: { tarea: any; color: string }) {
-  const lead = tarea.cotizaciones;
+  const lead = tarea.lead;
   return (
     <Link href={`/panel/crm/${lead?.id}`} className={`block bg-slate-50 dark:bg-[#00246b] hover:bg-white dark:hover:bg-[#002a6e] hover:shadow-sm border border-slate-200 dark:border-[#0a2a6b] border-l-4 rounded-xl p-3 transition-all ${COLOR_BORDE[color]}`}>
       <p className="text-[12px] font-bold text-slate-800 dark:text-white">{tarea.tipo}</p>
@@ -455,11 +456,11 @@ function TareasCalendario({ tareas, completadas }: { tareas: any[]; completadas:
                   {items.map((t) => (
                     <Link
                       key={t.id}
-                      href={`/panel/crm/${t.cotizaciones?.id}`}
+                      href={`/panel/crm/${t.lead?.id}`}
                       className={`block ${colorTarea(t)} text-white rounded px-1.5 py-1 text-[10px] leading-tight hover:opacity-90 transition-opacity`}
                     >
                       <div className="font-bold">{new Date(t.fecha_vencimiento).toLocaleTimeString("es-AR", { hour: "2-digit", minute: "2-digit" })}</div>
-                      <div className="truncate">{t.cotizaciones?.nombre || "Lead"}</div>
+                      <div className="truncate">{t.lead?.nombre || "Lead"}</div>
                     </Link>
                   ))}
                 </div>
@@ -517,8 +518,8 @@ function TareasHistorial({ completadas }: { completadas: any[] }) {
                     {new Date(t.fecha_vencimiento).toLocaleString("es-AR", { day: "2-digit", month: "short", year: "numeric", hour: "2-digit", minute: "2-digit" })}
                   </td>
                   <td className="p-3 text-[13px] font-bold">
-                    <Link href={`/panel/crm/${t.cotizaciones?.id}`} className="text-indigo-600 dark:text-sky-300 hover:underline">
-                      {t.cotizaciones?.nombre || "Lead"}
+                    <Link href={`/panel/crm/${t.lead?.id}`} className="text-indigo-600 dark:text-sky-300 hover:underline">
+                      {t.lead?.nombre || "Lead"}
                     </Link>
                   </td>
                   <td className="p-3 text-[12px] font-semibold text-slate-700 dark:text-slate-200">

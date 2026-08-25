@@ -4,6 +4,8 @@ import { useEffect, useState } from "react";
 
 export default function DolarBlueBadge({ compacto }: { compacto?: boolean }) {
   const [cotizacion, setCotizacion] = useState<{ compra: number; venta: number } | null>(null);
+  const [mostrando, setMostrando] = useState<"compra" | "venta">("compra");
+  const [visible, setVisible] = useState(true);
 
   useEffect(() => {
     const cargar = () => {
@@ -19,13 +21,28 @@ export default function DolarBlueBadge({ compacto }: { compacto?: boolean }) {
     return () => clearInterval(timer);
   }, []);
 
+  // Alterna compra/venta cada 3s con un pequeño fade, en vez de mostrar las
+  // dos juntas (no entraban en el header móvil sin recortarse).
+  useEffect(() => {
+    const ciclo = setInterval(() => {
+      setVisible(false);
+      setTimeout(() => {
+        setMostrando((m) => (m === "compra" ? "venta" : "compra"));
+        setVisible(true);
+      }, 200);
+    }, 3000);
+    return () => clearInterval(ciclo);
+  }, []);
+
   if (!cotizacion) return null;
+
+  const valor = mostrando === "compra" ? cotizacion.compra : cotizacion.venta;
 
   return (
     <div
       title="Cotización Dólar Blue en tiempo real (dolarapi.com)"
-      className={`group flex items-center bg-white/80 dark:bg-white/5 backdrop-blur-xl border border-slate-200/80 dark:border-white/10 rounded-full shadow-sm hover:shadow-md dark:hover:shadow-[0_0_15px_rgba(52,211,153,0.15)] transition-all cursor-default overflow-hidden ${
-        compacto ? "pl-1.5 pr-3 py-1 gap-2" : "pl-1.5 pr-4 py-1.5 gap-3"
+      className={`group flex items-center shrink-0 bg-white/80 dark:bg-white/5 backdrop-blur-xl border border-slate-200/80 dark:border-white/10 rounded-full shadow-sm hover:shadow-md dark:hover:shadow-[0_0_15px_rgba(52,211,153,0.15)] transition-all cursor-default ${
+        compacto ? "pl-1.5 pr-2.5 py-1 gap-1.5" : "pl-1.5 pr-4 py-1.5 gap-3"
       }`}
     >
       {/* ================= INDICADOR "LIVE" ================= */}
@@ -39,30 +56,18 @@ export default function DolarBlueBadge({ compacto }: { compacto?: boolean }) {
         </span>
       </div>
 
-      {/* ================= VALORES ================= */}
-      <div className="flex items-center gap-2.5">
-        {/* COMPRA */}
-        <div className="flex items-baseline gap-1">
-          <span className="text-[8px] sm:text-[9px] text-slate-400 font-bold uppercase tracking-widest">
-            {compacto ? "C" : "Compra"}
-          </span>
-          <span className="text-xs sm:text-[13px] font-black text-slate-900 dark:text-white font-mono tracking-tight">
-            ${cotizacion.compra.toLocaleString("es-AR")}
-          </span>
-        </div>
-        
-        {/* LÍNEA DIVISORIA SUTIL */}
-        <span className="w-px h-3.5 bg-slate-200 dark:bg-white/20"></span>
-        
-        {/* VENTA */}
-        <div className="flex items-baseline gap-1">
-          <span className="text-[8px] sm:text-[9px] text-slate-400 font-bold uppercase tracking-widest">
-            {compacto ? "V" : "Venta"}
-          </span>
-          <span className="text-xs sm:text-[13px] font-black text-slate-900 dark:text-white font-mono tracking-tight">
-            ${cotizacion.venta.toLocaleString("es-AR")}
-          </span>
-        </div>
+      {/* ================= VALOR (alterna compra/venta) ================= */}
+      <div
+        className={`flex items-baseline gap-1 min-w-[64px] transition-all duration-200 ${
+          visible ? "opacity-100 translate-y-0" : "opacity-0 -translate-y-1"
+        }`}
+      >
+        <span className="text-[8px] sm:text-[9px] text-slate-400 font-bold uppercase tracking-widest">
+          {mostrando === "compra" ? (compacto ? "C" : "Compra") : (compacto ? "V" : "Venta")}
+        </span>
+        <span className="text-xs sm:text-[13px] font-black text-slate-900 dark:text-white font-mono tracking-tight">
+          ${valor.toLocaleString("es-AR")}
+        </span>
       </div>
     </div>
   );

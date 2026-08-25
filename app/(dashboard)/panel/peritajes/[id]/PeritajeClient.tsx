@@ -116,12 +116,25 @@ export default function PeritajeClient({ peritaje, itemsIniciales }: { peritaje:
     }
   };
 
+  const idLeadOrigen = peritaje.cotizacion_id || peritaje.whatsapp_conversacion_id || peritaje.instagram_conversacion_id;
+  const campoFkLead = peritaje.cotizacion_id ? "cotizacion_id" : peritaje.whatsapp_conversacion_id ? "whatsapp_conversacion_id" : "instagram_conversacion_id";
+
   const finalizarPeritaje = async () => {
     setFinalizando(true);
     const { error } = await supabase
       .from("peritajes")
       .update({ estado: "Completado", puntaje, updated_at: new Date().toISOString() })
       .eq("id", peritaje.id);
+    if (!error && idLeadOrigen) {
+      // El peritaje completado es un evento del lead — que quede en su timeline.
+      const { data: { user } } = await supabase.auth.getUser();
+      await supabase.from("eventos_lead").insert({
+        [campoFkLead]: idLeadOrigen,
+        tipo: "peritaje",
+        descripcion: `Peritaje completado — puntaje ${puntaje}%`,
+        creado_por: user?.id,
+      });
+    }
     setFinalizando(false);
     if (error) {
       alert("No se pudo finalizar el peritaje.");
@@ -132,7 +145,6 @@ export default function PeritajeClient({ peritaje, itemsIniciales }: { peritaje:
   };
 
   const vehiculo = peritaje.vehiculos || peritaje.cotizaciones;
-  const idLeadOrigen = peritaje.cotizacion_id || peritaje.whatsapp_conversacion_id || peritaje.web_chat_conversacion_id;
   const volverA = idLeadOrigen ? `/panel/crm/${idLeadOrigen}` : "/panel/peritajes";
 
   return (
@@ -154,7 +166,7 @@ export default function PeritajeClient({ peritaje, itemsIniciales }: { peritaje:
             </h1>
             <p className="text-[11px] font-medium text-slate-500 dark:text-slate-400 mt-0.5 flex items-center gap-1.5">
               <CarFront className="w-3 h-3" /> {vehiculo?.marca} {vehiculo?.modelo} {peritaje.cotizaciones?.anio ? `(${peritaje.cotizaciones.anio})` : ""}
-              {peritaje.cotizaciones?.nombre && <> · <User className="w-3 h-3" /> {peritaje.cotizaciones.nombre}</>}
+              {peritaje.nombreCliente && <> · <User className="w-3 h-3" /> {peritaje.nombreCliente}</>}
             </p>
           </div>
         </div>
