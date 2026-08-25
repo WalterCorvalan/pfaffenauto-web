@@ -14,7 +14,7 @@ export default async function AutosPautadosPage() {
   const { data: vehiculos } = await supabase
     .from("vehiculos")
     .select(`
-      id, marca, modelo, patente, estado, pautado, canal_pauta, precio_publicado_ars,
+      id, marca, modelo, patente, estado, pautado, canal_pauta, razon_pauta, precio_publicado_ars,
       multimedia_vehiculos ( url_archivo ),
       sucursales!vehiculos_sucursal_id_fkey ( nombre )
     `)
@@ -93,6 +93,7 @@ export default async function AutosPautadosPage() {
                   <tr className="bg-slate-50 dark:bg-[#00246b] border-b border-slate-200 dark:border-[#0a2a6b] text-slate-500 dark:text-slate-400 text-[10px] uppercase tracking-widest font-bold">
                     <th className="p-4 pl-6">Vehículo</th>
                     <th className="p-4">Canal</th>
+                    <th className="p-4">Razón</th>
                     <th className="p-4">Sucursal</th>
                     <th className="p-4 text-right">Precio</th>
                     <th className="p-4 pr-6 text-center">Estado</th>
@@ -117,6 +118,7 @@ export default async function AutosPautadosPage() {
                         </Link>
                       </td>
                       <td className="p-4 text-[13px] font-medium text-slate-600 dark:text-slate-300">{v.canal_pauta || "Sin especificar"}</td>
+                      <td className="p-4 text-[13px] text-slate-500 dark:text-slate-400 max-w-[220px] truncate" title={v.razon_pauta || ""}>{v.razon_pauta || "—"}</td>
                       <td className="p-4 text-[13px] text-slate-600 dark:text-slate-300">{v.sucursales?.nombre || "—"}</td>
                       <td className="p-4 text-right">
                         <span className="flex items-center justify-end gap-1 font-mono text-[13px] font-bold text-slate-700 dark:text-slate-200">
@@ -133,7 +135,7 @@ export default async function AutosPautadosPage() {
                   ))}
                   {activos.length === 0 && (
                     <tr>
-                      <td colSpan={5} className="p-10 text-center text-slate-400 dark:text-slate-500 text-sm italic">
+                      <td colSpan={6} className="p-10 text-center text-slate-400 dark:text-slate-500 text-sm italic">
                         No hay unidades pautadas activas. Marcá autos como "pautado" desde la edición del vehículo.
                       </td>
                     </tr>
@@ -169,6 +171,9 @@ export default async function AutosPautadosPage() {
                       {v.estado}
                     </span>
                   </div>
+                  {v.razon_pauta && (
+                    <p className="text-[11px] text-slate-400 dark:text-slate-500 italic">{v.razon_pauta}</p>
+                  )}
                   <div className="flex items-center justify-between pt-2 border-t border-slate-200 dark:border-[#0a2a6b] text-[12px]">
                     <span className="text-slate-500 dark:text-slate-400">{v.canal_pauta || "Sin especificar"} · {v.sucursales?.nombre || "—"}</span>
                     <span className="flex items-center gap-1 font-mono font-bold text-slate-700 dark:text-slate-200">

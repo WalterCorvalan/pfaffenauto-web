@@ -29,6 +29,7 @@ const formSchema = z.object({
   destacado: z.boolean(),
   pautado: z.boolean(),
   canal_pauta: z.array(z.string()).optional(), // Transformado a Array para soportar múltiples checkboxes
+  razon_pauta: z.string().optional(),
   condicion_web: z.string().optional(),
   sucursal_id: z.string().min(1, "Seleccioná una sucursal"),
   precio_costo_ars: z.string().optional(),
@@ -113,7 +114,7 @@ export default function VehiculoForm({ modo, autoId }: VehiculoFormProps) {
     resolver: zodResolver(formSchema),
     defaultValues: {
       origen: "Comprado", estado: "Disponible", stock_fisico: true, destacado: false,
-      pautado: false, canal_pauta: [], // Iniciamos el array vacío
+      pautado: false, canal_pauta: [], razon_pauta: "", // Iniciamos el array vacío
       anio: String(new Date().getFullYear()), kilometraje: "0",
     },
   });
@@ -241,6 +242,7 @@ export default function VehiculoForm({ modo, autoId }: VehiculoFormProps) {
         pautado: data.pautado,
         // Unimos el array con comas para guardarlo como string en la DB
         canal_pauta: data.pautado && data.canal_pauta?.length ? data.canal_pauta.join(", ") : null,
+        razon_pauta: data.pautado && data.razon_pauta ? data.razon_pauta : null,
         fecha_compra: data.fecha_compra || null, sucursal_compra_id: data.sucursal_compra_id || null,
         importe_patente_anual: data.importe_patente_anual ? Number(data.importe_patente_anual) : null,
       };
@@ -575,6 +577,13 @@ export default function VehiculoForm({ modo, autoId }: VehiculoFormProps) {
                           </label>
                         ))}
                       </div>
+                    </Campo>
+                    <Campo label="Razón de la pauta (opcional)">
+                      <input
+                        {...register("razon_pauta")}
+                        placeholder="Ej: temporada de camionetas, rotación rápida, se quiere sacar de encima"
+                        className={inputClass}
+                      />
                     </Campo>
                   </div>
                 )}

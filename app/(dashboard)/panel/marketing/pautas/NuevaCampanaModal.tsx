@@ -13,7 +13,7 @@ export default function NuevaCampanaModal({ sucursales }: { sucursales: any[] })
   const [plataforma, setPlataforma] = useState("Google Ads");
   const [nombreCampana, setNombreCampana] = useState("");
   const [sucursalId, setSucursalId] = useState("");
-  const [periodo, setPeriodo] = useState(() => new Date().toISOString().slice(0, 7)); // YYYY-MM
+  const [periodo, setPeriodo] = useState(() => new Date().toISOString().slice(0, 10)); // YYYY-MM-DD
   const [gasto, setGasto] = useState("");
   const [clics, setClics] = useState("");
   const [leads, setLeads] = useState("");
@@ -27,7 +27,7 @@ export default function NuevaCampanaModal({ sucursales }: { sucursales: any[] })
         plataforma,
         nombre_campana: nombreCampana || null,
         sucursal_id: sucursalId || null,
-        periodo: `${periodo}-01`,
+        periodo,
         gasto: Number(gasto) || 0,
         clics: Number(clics) || 0,
         leads: Number(leads) || 0,
@@ -99,9 +99,9 @@ export default function NuevaCampanaModal({ sucursales }: { sucursales: any[] })
               </div>
 
               <div>
-                <label className="text-[11px] font-bold uppercase tracking-widest text-slate-500 dark:text-slate-400 mb-1.5 block">Mes</label>
+                <label className="text-[11px] font-bold uppercase tracking-widest text-slate-500 dark:text-slate-400 mb-1.5 block">Día</label>
                 <input
-                  type="month" required value={periodo} onChange={(e) => setPeriodo(e.target.value)}
+                  type="date" required value={periodo} onChange={(e) => setPeriodo(e.target.value)}
                   className="w-full bg-slate-50 dark:bg-[#00246b] border border-slate-200 dark:border-[#0a2a6b] p-3 rounded-xl text-slate-900 dark:text-white text-[14px] outline-none focus:border-indigo-500 focus:bg-white dark:focus:bg-[#002a6e] transition-colors"
                 />
               </div>

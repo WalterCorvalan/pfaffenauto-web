@@ -193,7 +193,7 @@ export default async function PautasMarketingPage() {
                     return (
                       <tr key={c.id} className="hover:bg-slate-50/50 dark:hover:bg-[#00246b] transition-colors">
                         <td className="p-4 pl-6 text-[13px] text-slate-600 dark:text-slate-300 capitalize whitespace-nowrap">
-                          {new Date(`${c.periodo}T12:00:00Z`).toLocaleDateString("es-AR", { month: "short", year: "numeric", timeZone: "UTC" })}
+                          {new Date(`${c.periodo}T12:00:00Z`).toLocaleDateString("es-AR", { day: "2-digit", month: "short", year: "numeric", timeZone: "UTC" })}
                         </td>
                         <td className="p-4">
                           <span className={`text-[10px] font-bold uppercase tracking-widest px-2 py-0.5 rounded border ${col.bg} ${col.text} ${col.border}`}>
@@ -240,7 +240,7 @@ export default async function PautasMarketingPage() {
                         {c.plataforma}
                       </span>
                       <span className="text-[11px] text-slate-500 dark:text-slate-400 capitalize font-medium">
-                        {new Date(`${c.periodo}T12:00:00Z`).toLocaleDateString("es-AR", { month: "short", year: "numeric", timeZone: "UTC" })}
+                        {new Date(`${c.periodo}T12:00:00Z`).toLocaleDateString("es-AR", { day: "2-digit", month: "short", year: "numeric", timeZone: "UTC" })}
                       </span>
                     </div>
                     <p className="text-[13px] font-medium text-slate-900 dark:text-white">{c.nombre_campana || "—"}</p>

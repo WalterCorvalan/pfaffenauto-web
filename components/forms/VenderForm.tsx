@@ -5,6 +5,7 @@ import Link from "next/link";
 import Script from "next/script";
 import { ArrowLeft, Loader2, ChevronDown, X } from "lucide-react";
 import EnvioExitoso from "@/components/EnvioExitoso";
+import { getCanalOrigen } from "@/lib/utm";
 
 declare global {
   interface Window {
@@ -137,6 +138,7 @@ export default function VenderForm() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           turnstileToken,
+          canal_origen: getCanalOrigen(),
           marca,
           modelo,
           anio,

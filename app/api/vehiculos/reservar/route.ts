@@ -12,7 +12,7 @@ const supabase = createClient(
 
 const ReservarSchema = z.object({
   vehiculoId: z.string().uuid(),
-  estado: z.enum(["Reservado", "Disponible", "Archivado"]),
+  estado: z.enum(["Reservado", "Disponible", "Archivado", "Vendido"]),
 });
 
 // Un vendedor puede crear una seña (y con eso, reservar el auto) o hacer que

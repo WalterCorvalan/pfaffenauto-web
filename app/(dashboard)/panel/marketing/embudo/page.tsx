@@ -1,6 +1,7 @@
 import { createServerClient } from "@supabase/ssr";
 import { cookies } from "next/headers";
 import { Megaphone, Filter, Users, MessageSquareText, Target, Trophy, ArrowRight, ChevronDown, BarChart3, Globe, TrendingUp, Percent, CheckCircle2 } from "lucide-react";
+import EmbudoCanalChart from "./EmbudoCanalChart";
 
 export default async function EmbudoPage() {
   const cookieStore = await cookies();
@@ -17,16 +18,77 @@ export default async function EmbudoPage() {
 
   const datos = leads || [];
 
-  // 1b. Ventas cruzadas con si el auto estaba pautado o no
+  // 1b. Ventas cruzadas con si el auto estaba pautado o no, y de dónde vino
+  // la venta cuando NO estaba pautado (a qué conversación quedó atado el
+  // boleto, o "Presencial" si no tiene ninguna — vino directo a la sucursal).
   const { data: ventasPauta } = await supabase
     .from("boletos_venta")
-    .select("vehiculo_id, vehiculos ( pautado, canal_pauta )");
+    .select(`
+      fecha, vehiculo_id, sucursal_id, cotizacion_id, whatsapp_conversacion_id, web_chat_conversacion_id, instagram_conversacion_id,
+      vehiculos ( pautado, canal_pauta ),
+      sucursales ( nombre ),
+      cotizaciones ( canal_origen )
+    `);
 
   const totalVentas = ventasPauta?.length || 0;
   const ventasConPauta = (ventasPauta || []).filter((v: any) => v.vehiculos?.pautado).length;
   const ventasSinPauta = totalVentas - ventasConPauta;
   const pctConPauta = totalVentas > 0 ? Math.round((ventasConPauta / totalVentas) * 100) : 0;
   const pctSinPauta = totalVentas > 0 ? 100 - pctConPauta : 0;
+
+  const origenVenta = (v: any) => {
+    if (v.instagram_conversacion_id) return "Instagram / Facebook";
+    if (v.whatsapp_conversacion_id) return "WhatsApp";
+    if (v.web_chat_conversacion_id) return "Chat Web";
+    if (v.cotizaciones?.canal_origen) return v.cotizaciones.canal_origen;
+    if (v.cotizacion_id) return "Formulario Web";
+    return `Presencial — ${v.sucursales?.nombre || "sucursal sin datos"}`;
+  };
+
+  const origenSinPautaMap: Record<string, number> = {};
+  (ventasPauta || [])
+    .filter((v: any) => !v.vehiculos?.pautado)
+    .forEach((v: any) => {
+      const origen = origenVenta(v);
+      origenSinPautaMap[origen] = (origenSinPautaMap[origen] || 0) + 1;
+    });
+  const origenesSinPautaOrdenados = Object.entries(origenSinPautaMap).sort((a, b) => b[1] - a[1]);
+
+  // Canal completo por venta (pautado incluido) — para el gráfico de
+  // tendencia mensual, así se ve de un vistazo si un canal empuja más en
+  // ciertos meses (patrones estacionales, campañas puntuales, etc).
+  const canalCompletoVenta = (v: any) =>
+    v.vehiculos?.pautado ? `Pautado: ${v.vehiculos.canal_pauta || "sin canal"}` : origenVenta(v);
+
+  const ultimos6MesesVentas = Array.from({ length: 6 }).map((_, i) => {
+    const d = new Date();
+    d.setMonth(d.getMonth() - (5 - i));
+    return {
+      label: d.toLocaleDateString("es-AR", { month: "short" }).toUpperCase(),
+      month: d.getMonth(),
+      year: d.getFullYear(),
+      canales: {} as Record<string, number>,
+    };
+  });
+
+  const canalesVentaUnicos = new Set<string>();
+  (ventasPauta || []).forEach((v: any) => {
+    if (!v.fecha) return;
+    const fecha = new Date(`${v.fecha}T12:00:00Z`);
+    const mesObj = ultimos6MesesVentas.find((m) => m.month === fecha.getMonth() && m.year === fecha.getFullYear());
+    if (!mesObj) return;
+    const canal = canalCompletoVenta(v);
+    canalesVentaUnicos.add(canal);
+    mesObj.canales[canal] = (mesObj.canales[canal] || 0) + 1;
+  });
+
+  const chartDataCanales = ultimos6MesesVentas.map((m) => {
+    const punto: any = { name: m.label };
+    Array.from(canalesVentaUnicos).forEach((c) => {
+      punto[c] = m.canales[c] || 0;
+    });
+    return punto;
+  });
 
   // 1c. Embudo por cita, cruzado por vendedor: citó -> asistió -> compró
   const { data: visitasVend } = await supabase
@@ -206,7 +268,24 @@ export default async function EmbudoPage() {
                 <p className="text-[11px] font-bold uppercase tracking-widest text-slate-500 dark:text-slate-400">Sin Pauta ({ventasSinPauta})</p>
               </div>
             </div>
+
+            {origenesSinPautaOrdenados.length > 0 && (
+              <div className="px-6 pb-6">
+                <h3 className="text-[10px] font-bold uppercase tracking-widest text-slate-400 dark:text-slate-500 mb-3">De dónde vinieron las ventas sin pauta</h3>
+                <div className="divide-y divide-slate-100 dark:divide-[#0a2a6b] border border-slate-100 dark:border-[#0a2a6b] rounded-xl overflow-hidden">
+                  {origenesSinPautaOrdenados.map(([origen, cantidad]) => (
+                    <div key={origen} className="flex items-center justify-between px-4 py-2.5 bg-white dark:bg-[#001c55]">
+                      <span className="text-[12px] font-medium text-slate-700 dark:text-slate-200">{origen}</span>
+                      <span className="font-mono text-[13px] font-bold text-slate-900 dark:text-white">{cantidad}</span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
           </div>
+
+          {/* ================= TENDENCIA MENSUAL POR CANAL ================= */}
+          <EmbudoCanalChart data={chartDataCanales} canales={Array.from(canalesVentaUnicos)} />
 
           {/* ================= EMBUDO POR CITA X VENDEDOR ================= */}
           <div className="bg-white dark:bg-[#001c55] border border-slate-200 dark:border-[#0a2a6b] rounded-2xl shadow-sm overflow-hidden">

@@ -27,6 +27,7 @@ const CotizacionSchema = z.object({
   sucursal_preferida: z.string().trim().max(60).optional().nullable(),
   fotos_y_videos: z.array(z.string().url()).max(30).optional(),
   vehiculo_id: z.string().uuid().optional().nullable(),
+  canal_origen: z.string().trim().max(60).optional().nullable(),
 });
 
 export async function POST(req: Request) {
@@ -109,6 +110,7 @@ export async function POST(req: Request) {
         vehiculo_id: cotizacion.vehiculo_id ?? null,
         precio_sugerido: precioSugerido,
         moneda_sugerida: monedaSugerida,
+        canal_origen: cotizacion.canal_origen || null,
       })
       .select("id")
       .single();

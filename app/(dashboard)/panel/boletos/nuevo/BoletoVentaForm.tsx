@@ -222,7 +222,11 @@ export default function BoletoVentaForm({
       }
 
       if (vehiculo.vehiculo_id) {
-        await supabase.from("vehiculos").update({ estado: "Vendido" }).eq("id", vehiculo.vehiculo_id);
+        await fetch("/api/vehiculos/reservar", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ vehiculoId: vehiculo.vehiculo_id, estado: "Vendido" }),
+        }).catch(() => {});
       }
       if (senaId) {
         await supabase.from("senas").update({ estado: "Convertida" }).eq("id", senaId);

@@ -3,6 +3,7 @@
 import { useState, useEffect, useRef } from "react";
 import Script from "next/script";
 import { supabase } from "@/lib/supabase/client";
+import { getCanalOrigen } from "@/lib/utm";
 import { CreditCard, CheckCircle2, Loader2, User, Phone, Mail, ArrowLeft, Search, Car } from "lucide-react";
 
 declare global {
@@ -141,6 +142,7 @@ export default function SimuladorReal() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           turnstileToken,
+          canal_origen: getCanalOrigen(),
           vehiculo_id: vehiculo.id,
           marca: vehiculo.marca,
           modelo: vehiculo.modelo,

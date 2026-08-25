@@ -4,6 +4,7 @@ import { useState, useEffect, useRef } from "react";
 import { createPortal } from "react-dom";
 import Script from "next/script";
 import { supabase } from "@/lib/supabase/client";
+import { getCanalOrigen } from "@/lib/utm";
 import { CreditCard, X, CheckCircle2, Loader2, User, Phone, Mail, ArrowLeft, Search, Car } from "lucide-react";
 
 declare global {
@@ -162,6 +163,7 @@ export default function SolicitarFinanciacionForm({ vehiculoPreseleccionado, cla
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           turnstileToken,
+          canal_origen: getCanalOrigen(),
           vehiculo_id: vehiculo.id,
           marca: vehiculo.marca,
           modelo: vehiculo.modelo,
