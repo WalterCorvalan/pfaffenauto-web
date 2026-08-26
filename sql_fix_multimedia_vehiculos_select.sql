@@ -1,37 +1,25 @@
 -- La policy restrictive "restringir_editar_completo" (sql_rls_multimedia_vehiculos.sql,
--- ya aplicada) es "for all" -- eso incluye SELECT. Como las restrictive se
--- combinan con AND sobre cualquier policy permissive, terminaba bloqueando
--- hasta VER las fotos a cualquier usuario sin el permiso puntual
--- 'vehiculos.editar_completo' (la mayoría de los vendedores). El panel
--- mostraba el ícono de auto de relleno en vez de la miniatura real.
+-- ya aplicada) exigía el permiso 'vehiculos.editar_completo' para TODO
+-- (incluido SELECT) en multimedia_vehiculos. Eso rompía dos cosas:
+--   1. Ver las fotos en el panel -- cualquier vendedor sin ese permiso puntual
+--      veía el ícono de auto de relleno en vez de la miniatura real.
+--   2. Subir/borrar fotos -- el editar_completo es un permiso de más alto
+--      nivel (admin/encargado); los vendedores NO lo tienen por diseño, pero
+--      SÍ tienen que poder cargar/sacar fotos del auto que están gestionando
+--      (VehiculoForm.tsx los manda directo al paso de fotos cuando no tienen
+--      editar_completo -- esa es la única edición que se les permite). La
+--      policy vieja se lo bloqueaba también a nivel DB, aunque la UI se lo
+--      dejaba hacer.
 --
--- Fix: la restricción de permiso solo debe aplicar a escritura (insert/update/delete),
--- no a lectura -- cualquier usuario logueado puede VER fotos del stock.
+-- Fotos: cualquier usuario logueado del panel puede ver/subir/borrar. La
+-- restricción real de "qué auto puede tocar" ya vive en la UI/RLS de la
+-- tabla vehiculos (editar_completo), no hace falta duplicarla acá.
 drop policy if exists "restringir_editar_completo" on public.multimedia_vehiculos;
-
-create policy "restringir_editar_completo"
-  on public.multimedia_vehiculos as restrictive
-  for insert
-  to authenticated
-  with check (public.tiene_permiso(auth.uid(), 'vehiculos.editar_completo'));
-
-create policy "restringir_editar_completo_update"
-  on public.multimedia_vehiculos as restrictive
-  for update
-  to authenticated
-  using (public.tiene_permiso(auth.uid(), 'vehiculos.editar_completo'))
-  with check (public.tiene_permiso(auth.uid(), 'vehiculos.editar_completo'));
-
-create policy "restringir_editar_completo_delete"
-  on public.multimedia_vehiculos as restrictive
-  for delete
-  to authenticated
-  using (public.tiene_permiso(auth.uid(), 'vehiculos.editar_completo'));
-
 drop policy if exists "authenticated_select_multimedia_vehiculos" on public.multimedia_vehiculos;
 
-create policy "authenticated_select_multimedia_vehiculos"
+create policy "authenticated_all_multimedia_vehiculos"
   on public.multimedia_vehiculos
-  for select
+  for all
   to authenticated
-  using (true);
+  using (true)
+  with check (true);
