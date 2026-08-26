@@ -126,6 +126,9 @@ export default function CatalogoClient() {
     const busquedaNormalizada = searchQuery.trim().toLowerCase();
     if (busquedaNormalizada === "0km" || busquedaNormalizada === "0 km") {
       query = query.eq("kilometraje", 0);
+    } else if (busquedaNormalizada === "usados-seleccionados" || busquedaNormalizada === "autos-seleccionados") {
+      // Todo el stock menos 0km y menos los de Outlet (mismo criterio de precio que usa /outlet).
+      query = query.gt("kilometraje", 0).or("precio_publicado_ars.is.null,precio_publicado_ars.gte.10000000");
     } else if (searchQuery) {
       query = query.or(
         `marca.ilike.%${searchQuery}%,modelo.ilike.%${searchQuery}%,tipo.ilike.%${searchQuery}%,segmento.ilike.%${searchQuery}%`,
@@ -372,7 +375,9 @@ export default function CatalogoClient() {
             </span>
             {searchQuery ? (
               <span className="inline-flex items-center gap-1.5 bg-blue-50 dark:bg-sky-400/10 border border-blue-200 dark:border-sky-400/20 text-blue-700 dark:text-sky-300 text-xs font-bold px-3 py-1.5 rounded-full">
-                Búsqueda: "{searchQuery}"
+                {searchQuery.toLowerCase() === "usados-seleccionados" || searchQuery.toLowerCase() === "autos-seleccionados"
+                  ? "Usados Seleccionados"
+                  : `Búsqueda: "${searchQuery}"`}
                 <Link
                   href={condicionQuery ? `/catalogo?condicion=${condicionQuery}` : "/catalogo"}
                   className="hover:bg-blue-100 hover:text-red-500 transition-colors rounded-full p-0.5"
