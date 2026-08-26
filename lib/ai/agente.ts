@@ -32,14 +32,18 @@ export type HistorialMensaje = { role: "user" | "assistant"; content: string };
 
 // Búsqueda real de stock para el agente. Nunca inventa: si no hay filas, el prompt
 // le dice a la IA que lo diga con honestidad en vez de simular disponibilidad.
-export async function buscarStockReal(marca: string, modelo: string): Promise<{ resultados: ResultadoStock[]; linkPublicacion: string | null }> {
-  const { data } = await supabase
+// Marca es opcional: un cliente que dice "un Ranger" sin aclarar "Ford" tiene
+// que poder buscarse igual por modelo solo — exigir las dos cosas dejaba al
+// bot prometiendo "voy a chequear" sin disparar nunca la búsqueda real.
+export async function buscarStockReal(marca: string | null, modelo: string): Promise<{ resultados: ResultadoStock[]; linkPublicacion: string | null }> {
+  let query = supabase
     .from("vehiculos")
     .select("marca, modelo, anio, slug, precio_publicado_ars, precio_publicado_usd, sucursales!vehiculos_sucursal_id_fkey ( nombre )")
-    .ilike("marca", `%${marca}%`)
     .ilike("modelo", `%${modelo}%`)
     .in("estado", ["Disponible", "Reservado"])
     .limit(3);
+  if (marca) query = query.ilike("marca", `%${marca}%`);
+  const { data } = await query;
 
   const resultados: ResultadoStock[] = (data ?? []).map((v: any) => ({
     marca: v.marca,
@@ -74,7 +78,7 @@ export async function generarRespuestaAgente(historial: HistorialMensaje[], cana
   let respuesta = result.data;
   let linkParaEnviar: string | null = null;
 
-  if (respuesta.vehiculo_mencionado?.marca && respuesta.vehiculo_mencionado?.modelo) {
+  if (respuesta.vehiculo_mencionado?.modelo) {
     const { resultados, linkPublicacion } = await buscarStockReal(
       respuesta.vehiculo_mencionado.marca,
       respuesta.vehiculo_mencionado.modelo

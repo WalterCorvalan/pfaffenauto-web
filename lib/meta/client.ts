@@ -33,6 +33,17 @@ async function graphRequest<T>(
   return data as T;
 }
 
+// Meta dejó de requerir el "9" de celular argentino en el parámetro "to" al
+// enviar (aunque el wa_id que llega en los mensajes ENTRANTES lo sigue
+// trayendo, ej. "5493856865979") — mandarlo con el 9 puesto devuelve
+// "Recipient phone number not in allowed list" (#131030) incluso con
+// destinatarios habilitados. Solo se normaliza acá, en el envío: el wa_id
+// guardado en whatsapp_contactos.telefono no se toca (sigue siendo la
+// identidad real del contacto para matchear mensajes entrantes).
+function formatearParaEnvio(to: string): string {
+  return to.replace(/^549(\d{10})$/, "54$1");
+}
+
 export async function validatePhoneNumber(phoneNumberId: string, token: string) {
   return graphRequest<{ display_phone_number: string; verified_name: string; id: string }>(
     `${phoneNumberId}?fields=display_phone_number,verified_name`,
@@ -45,7 +56,7 @@ export async function sendTextMessage(phoneNumberId: string, token: string, to: 
     method: "POST",
     body: JSON.stringify({
       messaging_product: "whatsapp",
-      to,
+      to: formatearParaEnvio(to),
       type: "text",
       text: { body: text },
     }),
@@ -57,7 +68,7 @@ export async function sendImageMessage(phoneNumberId: string, token: string, to:
     method: "POST",
     body: JSON.stringify({
       messaging_product: "whatsapp",
-      to,
+      to: formatearParaEnvio(to),
       type: "image",
       image: { link: imageUrl, ...(caption ? { caption } : {}) },
     }),

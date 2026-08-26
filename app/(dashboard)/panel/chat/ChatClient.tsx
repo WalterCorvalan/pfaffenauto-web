@@ -1,7 +1,7 @@
 ﻿"use client";
 
 import { useState, useEffect, useRef } from "react";
-import { useSearchParams } from "next/navigation";
+import { useSearchParams, useRouter } from "next/navigation";
 import { supabase } from "@/lib/supabase/client";
 import { buscarClienteDuplicado } from "@/lib/clienteDedupe";
 import {
@@ -81,6 +81,44 @@ export default function ChatClient({
 
   const mensajesEndRef = useRef<HTMLDivElement>(null);
   const searchParams = useSearchParams();
+  const router = useRouter();
+
+  // El server (page.tsx) manda la lista inicial por props — sin este efecto,
+  // un router.refresh() (ej. disparado por el realtime de abajo) trae props
+  // nuevas pero el useState de más arriba nunca las toma, así que una
+  // conversación nueva no aparecía hasta recargar la página a mano.
+  useEffect(() => {
+    setConversacionesWA(conversacionesIniciales);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [conversacionesIniciales]);
+
+  useEffect(() => {
+    setConversacionesIG(conversacionesInstagramIniciales);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [conversacionesInstagramIniciales]);
+
+  // Bandeja en vivo: cualquier conversación nueva o actualizada (nuevo
+  // contacto que escribe por primera vez, cambio de last_message_at, etc)
+  // refresca la lista sin que haya que recargar la página a mano.
+  useEffect(() => {
+    let timeoutId: ReturnType<typeof setTimeout>;
+    const refrescarConDebounce = () => {
+      clearTimeout(timeoutId);
+      timeoutId = setTimeout(() => router.refresh(), 400);
+    };
+
+    const canalBandeja = supabase
+      .channel(`bandeja-chat-${Math.random().toString(36).slice(2)}`)
+      .on("postgres_changes", { event: "*", schema: "public", table: "whatsapp_conversaciones" }, refrescarConDebounce)
+      .on("postgres_changes", { event: "*", schema: "public", table: "instagram_conversaciones" }, refrescarConDebounce)
+      .subscribe();
+
+    return () => {
+      clearTimeout(timeoutId);
+      supabase.removeChannel(canalBandeja);
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   // Deep link desde /panel/contactos o una notificación: /panel/chat?conversacion=<id>&canal=instagram
   useEffect(() => {
@@ -245,6 +283,16 @@ export default function ChatClient({
   };
 
   const conversacionActiva = conversaciones.find((c) => c.id === seleccionada);
+
+  const toggleIA = async () => {
+    if (!conversacionActiva) return;
+    const nuevoValor = !conversacionActiva.ai_habilitada;
+    setConversaciones((prev) => prev.map((c) => (c.id === conversacionActiva.id ? { ...c, ai_habilitada: nuevoValor } : c)));
+    const { error } = await supabase.from(tablaConversaciones).update({ ai_habilitada: nuevoValor }).eq("id", conversacionActiva.id);
+    if (error) {
+      setConversaciones((prev) => prev.map((c) => (c.id === conversacionActiva.id ? { ...c, ai_habilitada: !nuevoValor } : c)));
+    }
+  };
   const contactoActivoRaw = canal === "whatsapp" ? conversacionActiva?.whatsapp_contactos : conversacionActiva?.instagram_contactos;
   const contactoActivo = contactoActivoRaw
     ? {
@@ -731,11 +779,13 @@ export default function ChatClient({
                     {conversacionActiva?.ai_habilitada ? "Activada" : "Pausada"}
                   </p>
                 </div>
-                <div
+                <button
+                  type="button"
+                  onClick={toggleIA}
                   className={`w-11 h-6 rounded-full flex items-center px-1 cursor-pointer transition-colors ${conversacionActiva?.ai_habilitada ? "bg-emerald-700 justify-end" : "bg-slate-300 dark:bg-[#00246b] justify-start"}`}
                 >
                   <div className="w-4 h-4 bg-white rounded-full shadow-sm"></div>
-                </div>
+                </button>
               </div>
               {!conversacionActiva?.ai_habilitada && (
                 <div className="bg-amber-50 dark:bg-[#002a6e] border border-amber-200 dark:border-[#0a2a6b] p-3 rounded-lg flex gap-2">

@@ -7,17 +7,24 @@ import { AnimatePresence, motion } from "framer-motion";
 const STORAGE_KEY = "pfaffen_intro_visto";
 
 export default function IntroLoader() {
-  const [visible, setVisible] = useState(false);
+  // Solo una vez por sesión de navegador — un visitante que vuelve a entrar
+  // varias veces no debería ver la misma animación de 2s cada vez. Se decide
+  // acá (no dentro del useEffect) porque en dev React Strict Mode monta el
+  // efecto dos veces: si el chequeo de sessionStorage vive en el efecto, la
+  // segunda pasada lo encuentra ya marcado y corta antes de armar el timer,
+  // dejando el loader visible para siempre sin nada que lo apague.
+  const [visible, setVisible] = useState(() => {
+    if (typeof window === "undefined") return false;
+    if (sessionStorage.getItem(STORAGE_KEY)) return false;
+    sessionStorage.setItem(STORAGE_KEY, "1");
+    return true;
+  });
 
   useEffect(() => {
-    // Solo una vez por sesión de navegador — un visitante que vuelve a entrar
-    // varias veces no debería ver la misma animación de 2s cada vez.
-    if (sessionStorage.getItem(STORAGE_KEY)) return;
-    sessionStorage.setItem(STORAGE_KEY, "1");
-
-    setVisible(true);
+    if (!visible) return;
     const timer = setTimeout(() => setVisible(false), 2000);
     return () => clearTimeout(timer);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   return (

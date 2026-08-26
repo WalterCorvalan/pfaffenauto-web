@@ -14,6 +14,8 @@ const VehiculoIncompletoSchema = z.object({
   color: z.string().trim().max(40).optional().nullable(),
   tipo: z.string().trim().max(40).optional().nullable(),
   tipo_combustible: z.string().trim().max(40).optional().nullable(),
+  transmision: z.string().trim().max(40).optional().nullable(),
+  traccion: z.string().trim().max(40).optional().nullable(),
   numero_motor: z.string().trim().max(60).optional().nullable(),
   numero_chasis: z.string().trim().max(60).optional().nullable(),
   marca_motor: z.string().trim().max(60).optional().nullable(),
@@ -52,7 +54,7 @@ export async function POST(req: Request) {
   if (!parsed.success) {
     return NextResponse.json({ error: "Faltan marca, modelo o sucursal, o tienen formato inválido." }, { status: 400 });
   }
-  const { patente, marca, modelo, anio, color, tipo, tipo_combustible, numero_motor, numero_chasis, marca_motor, marca_chasis, segmento, sucursal_id, origen } = parsed.data;
+  const { patente, marca, modelo, anio, color, tipo, tipo_combustible, transmision, traccion, numero_motor, numero_chasis, marca_motor, marca_chasis, segmento, sucursal_id, origen } = parsed.data;
 
   const anioNum = anio ? Number(anio) : new Date().getFullYear();
   const slug = generarSlug(marca, modelo, anioNum);
@@ -63,6 +65,7 @@ export async function POST(req: Request) {
     .insert({
       patente: patente || null, marca, modelo, anio: anioNum, kilometraje: 0,
       color: color || null, tipo: tipo || null, tipo_combustible: tipo_combustible || null,
+      transmision: transmision || null, traccion: traccion || null,
       numero_motor: numero_motor || null, numero_chasis: numero_chasis || null,
       marca_motor: marca_motor || null, marca_chasis: marca_chasis || null,
       segmento: segmento || null, sucursal_id, origen: origen || "Comprado",

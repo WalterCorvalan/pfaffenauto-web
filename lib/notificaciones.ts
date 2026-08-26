@@ -14,7 +14,7 @@ export async function notificarEncargados(
   seccion: SeccionNotificacion,
   tipo: string = "precio_a_confirmar"
 ) {
-  const { data: encargados } = await supabase.from("perfiles").select("id").eq("rol", "encargado").eq("activo", true);
+  const { data: encargados } = await supabase.from("perfiles").select("id").in("rol", ["encargado", "admin"]).eq("activo", true);
   if (!encargados || encargados.length === 0) return;
 
   await supabase.from("notificaciones").insert(

@@ -4,7 +4,7 @@ import { Fragment, useEffect, useState } from "react";
 import { supabase } from "@/lib/supabase/client";
 import { ShieldCheck, User, Search } from "lucide-react";
 
-const ROLES = ["admin", "encargado", "vendedor", "taller"];
+const ROLES = ["admin", "encargado", "vendedor", "taller", "gestoria"];
 
 interface PermisoDef {
   clave: string;

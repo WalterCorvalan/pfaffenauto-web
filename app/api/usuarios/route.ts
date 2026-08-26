@@ -6,7 +6,7 @@ import { createClient } from "@supabase/supabase-js";
 import { rateLimit, ipDesdeRequest } from "@/lib/rateLimit";
 import { registrarError } from "@/lib/logger";
 
-const RolSchema = z.enum(["admin", "encargado", "vendedor", "taller"]);
+const RolSchema = z.enum(["admin", "encargado", "vendedor", "taller", "gestoria"]);
 
 const CrearUsuarioSchema = z.object({
   email: z.string().trim().email().max(150),

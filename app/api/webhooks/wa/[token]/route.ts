@@ -279,7 +279,7 @@ async function ejecutarAgente(conversacionId: string, contactoId: string) {
 
   await supabase
     .from("whatsapp_conversaciones")
-    .update({ calificacion, estado: estadoSegunCalificacion })
+    .update({ calificacion, estado_pipeline: estadoSegunCalificacion })
     .eq("id", conversacionId);
 
   if (vehiculo_mencionado?.marca && vehiculo_mencionado?.modelo) {

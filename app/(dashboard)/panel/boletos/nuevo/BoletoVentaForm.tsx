@@ -113,6 +113,7 @@ export default function BoletoVentaForm({
       marca_motor: s.marca_motor || "", numero_motor: s.numero_motor || "",
       marca_chasis: s.marca_chasis || "", numero_chasis: s.numero_chasis || "",
       modelo_anio: String(s.modelo_anio || ""), color: s.color || "", kilometros: "", combustible: "",
+      transmision: "", traccion: "",
     });
     if (s.cliente_id) {
       const c = clientes.find((x) => x.id === s.cliente_id);
@@ -370,19 +371,19 @@ export default function BoletoVentaForm({
             <div className="grid grid-cols-2 gap-4">
               <div>
                 <label className="text-[11px] font-bold text-slate-500 dark:text-slate-400 uppercase block mb-1.5">Venta ($)</label>
-                <input type="number" step="0.01" className={inputClass} value={ventaArs} onChange={(e) => setVentaArs(e.target.value)} placeholder="0" />
+                <input type="number" step="0.01" className={`${inputClass} disabled:opacity-50 disabled:cursor-not-allowed`} value={ventaArs} onChange={(e) => setVentaArs(e.target.value)} disabled={!!ventaUsd} placeholder="0" />
               </div>
               <div>
                 <label className="text-[11px] font-bold text-slate-500 dark:text-slate-400 uppercase block mb-1.5">Venta (US$)</label>
-                <input type="number" step="0.01" className={inputClass} value={ventaUsd} onChange={(e) => setVentaUsd(e.target.value)} placeholder="0" />
+                <input type="number" step="0.01" className={`${inputClass} disabled:opacity-50 disabled:cursor-not-allowed`} value={ventaUsd} onChange={(e) => setVentaUsd(e.target.value)} disabled={!!ventaArs} placeholder="0" />
               </div>
               <div>
                 <label className="text-[11px] font-bold text-slate-500 dark:text-slate-400 uppercase block mb-1.5">Seña ($)</label>
-                <input type="number" step="0.01" className={inputClass} value={senaArs} onChange={(e) => setSenaArs(e.target.value)} placeholder="0" />
+                <input type="number" step="0.01" className={`${inputClass} disabled:opacity-50 disabled:cursor-not-allowed`} value={senaArs} onChange={(e) => setSenaArs(e.target.value)} disabled={!!senaUsd} placeholder="0" />
               </div>
               <div>
                 <label className="text-[11px] font-bold text-slate-500 dark:text-slate-400 uppercase block mb-1.5">Seña (US$)</label>
-                <input type="number" step="0.01" className={inputClass} value={senaUsd} onChange={(e) => setSenaUsd(e.target.value)} placeholder="0" />
+                <input type="number" step="0.01" className={`${inputClass} disabled:opacity-50 disabled:cursor-not-allowed`} value={senaUsd} onChange={(e) => setSenaUsd(e.target.value)} disabled={!!senaArs} placeholder="0" />
               </div>
               <div>
                 <label className="text-[11px] font-bold text-slate-500 dark:text-slate-400 uppercase block mb-1.5">Tipo de cambio</label>

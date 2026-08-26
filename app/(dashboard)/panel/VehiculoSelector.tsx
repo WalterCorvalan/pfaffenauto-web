@@ -1,7 +1,7 @@
 ﻿"use client";
 
 import { useState } from "react";
-import { Car, Check, X, Pencil } from "lucide-react";
+import { Car, Check, X, Pencil, Search } from "lucide-react";
 
 export interface VehiculoDatos {
   vehiculo_id: string | null;
@@ -18,6 +18,8 @@ export interface VehiculoDatos {
   color: string;
   kilometros: string;
   combustible: string;
+  transmision: string;
+  traccion: string;
   precio_publicado_ars?: number | null;
   precio_publicado_usd?: number | null;
 }
@@ -25,7 +27,7 @@ export interface VehiculoDatos {
 const VACIO: VehiculoDatos = {
   vehiculo_id: null, dominio: "", segmento: "", marca: "", modelo: "", tipo: "",
   marca_motor: "", numero_motor: "", marca_chasis: "", numero_chasis: "",
-  modelo_anio: "", color: "", kilometros: "", combustible: "",
+  modelo_anio: "", color: "", kilometros: "", combustible: "", transmision: "", traccion: "",
   precio_publicado_ars: null, precio_publicado_usd: null,
 };
 
@@ -50,6 +52,7 @@ export default function VehiculoSelector({
 }) {
   const [modoManual, setModoManual] = useState(soloManual);
   const [guardandoManual, setGuardandoManual] = useState(false);
+  const [busquedaStock, setBusquedaStock] = useState("");
 
   const seleccionarDeStock = (id: string) => {
     if (!id) return;
@@ -70,6 +73,8 @@ export default function VehiculoSelector({
       color: v.color || "",
       kilometros: String(v.kilometraje || ""),
       combustible: v.tipo_combustible || "",
+      transmision: v.transmision || "",
+      traccion: v.traccion || "",
       precio_publicado_ars: v.precio_publicado_ars ?? null,
       precio_publicado_usd: v.precio_publicado_usd ?? null,
     });
@@ -115,7 +120,8 @@ export default function VehiculoSelector({
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           patente: d.dominio, marca: d.marca, modelo: d.modelo, anio: d.modelo_anio, color: d.color,
-          tipo: d.tipo, tipo_combustible: d.combustible, numero_motor: d.numero_motor, numero_chasis: d.numero_chasis,
+          tipo: d.tipo, tipo_combustible: d.combustible, transmision: d.transmision, traccion: d.traccion,
+          numero_motor: d.numero_motor, numero_chasis: d.numero_chasis,
           marca_motor: d.marca_motor, marca_chasis: d.marca_chasis, segmento: d.segmento, sucursal_id: sucursalId, origen,
         }),
       });
@@ -147,11 +153,36 @@ export default function VehiculoSelector({
           <input className={inputClass} placeholder="Segmento" value={d.segmento} onChange={(e) => onCambiar({ ...d, segmento: e.target.value })} />
           <input className={inputClass} placeholder="Marca *" value={d.marca} onChange={(e) => onCambiar({ ...d, marca: e.target.value })} />
           <input className={inputClass} placeholder="Modelo *" value={d.modelo} onChange={(e) => onCambiar({ ...d, modelo: e.target.value })} />
-          <input className={inputClass} placeholder="Tipo" value={d.tipo} onChange={(e) => onCambiar({ ...d, tipo: e.target.value })} />
+          <select className={`${inputClass} cursor-pointer`} value={d.tipo} onChange={(e) => onCambiar({ ...d, tipo: e.target.value })}>
+            <option value="">Tipo de vehículo...</option>
+            <option value="Auto">Auto</option>
+            <option value="Pickup">Pickup</option>
+            <option value="Todo Terreno | SUV">SUV</option>
+            <option value="Utilitarios">Utilitario</option>
+          </select>
           <input className={inputClass} placeholder="Año" value={d.modelo_anio} onChange={(e) => onCambiar({ ...d, modelo_anio: e.target.value })} />
           <input className={inputClass} placeholder="Color" value={d.color} onChange={(e) => onCambiar({ ...d, color: e.target.value })} />
           <input className={inputClass} placeholder="Kilómetros" value={d.kilometros} onChange={(e) => onCambiar({ ...d, kilometros: e.target.value })} />
-          <input className={inputClass} placeholder="Combustible" value={d.combustible} onChange={(e) => onCambiar({ ...d, combustible: e.target.value })} />
+          <select className={`${inputClass} cursor-pointer`} value={d.combustible} onChange={(e) => onCambiar({ ...d, combustible: e.target.value })}>
+            <option value="">Combustible...</option>
+            <option value="Nafta">Nafta</option>
+            <option value="Diesel">Diesel</option>
+            <option value="GNC">GNC</option>
+            <option value="Híbrido">Híbrido</option>
+          </select>
+          <select className={`${inputClass} cursor-pointer`} value={d.transmision} onChange={(e) => onCambiar({ ...d, transmision: e.target.value })}>
+            <option value="">Transmisión...</option>
+            <option value="Manual">Manual</option>
+            <option value="Automática">Automática</option>
+          </select>
+          <select className={`${inputClass} cursor-pointer`} value={d.traccion} onChange={(e) => onCambiar({ ...d, traccion: e.target.value })}>
+            <option value="">Tracción...</option>
+            <option value="4x2">4x2</option>
+            <option value="4x4">4x4</option>
+            <option value="Delantera">Delantera</option>
+            <option value="Trasera">Trasera</option>
+            <option value="Integral (AWD)">Integral (AWD)</option>
+          </select>
           <input className={inputClass} placeholder="Marca de motor" value={d.marca_motor} onChange={(e) => onCambiar({ ...d, marca_motor: e.target.value })} />
           <input className={inputClass} placeholder="Número de motor" value={d.numero_motor} onChange={(e) => onCambiar({ ...d, numero_motor: e.target.value })} />
           <input className={inputClass} placeholder="Marca de chasis" value={d.marca_chasis} onChange={(e) => onCambiar({ ...d, marca_chasis: e.target.value })} />
@@ -169,18 +200,39 @@ export default function VehiculoSelector({
     );
   }
 
+  const vehiculosFiltrados = vehiculos.filter((v) => {
+    const q = busquedaStock.trim().toLowerCase();
+    if (!q) return true;
+    return `${v.marca} ${v.modelo} ${v.patente || ""}`.toLowerCase().includes(q);
+  });
+
   return (
     <div className="space-y-2">
-      <select
-        onChange={(e) => seleccionarDeStock(e.target.value)}
-        defaultValue=""
-        className="w-full bg-slate-50 dark:bg-[#00246b] border border-slate-200 dark:border-[#0a2a6b] rounded-xl px-3 py-2.5 text-sm outline-none focus:border-indigo-500 cursor-pointer text-slate-900 dark:text-white"
-      >
-        <option value="" className="bg-white dark:bg-[#001c55] text-slate-900 dark:text-white">Elegir del stock...</option>
-        {vehiculos.map((v) => (
-          <option key={v.id} value={v.id} className="bg-white dark:bg-[#001c55] text-slate-900 dark:text-white">{v.marca} {v.modelo} {v.patente ? `— ${v.patente}` : ""}</option>
+      <div className="relative">
+        <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400 dark:text-slate-500" />
+        <input
+          value={busquedaStock}
+          onChange={(e) => setBusquedaStock(e.target.value)}
+          placeholder="Buscar en stock por marca, modelo o patente..."
+          className="w-full bg-slate-50 dark:bg-[#00246b] border border-slate-200 dark:border-[#0a2a6b] rounded-xl pl-9 pr-3 py-2.5 text-sm outline-none focus:border-indigo-500 text-slate-900 dark:text-white placeholder:text-slate-400 dark:placeholder:text-slate-500"
+        />
+      </div>
+      <div className="max-h-48 overflow-y-auto border border-slate-200 dark:border-[#0a2a6b] rounded-xl divide-y divide-slate-100 dark:divide-[#0a2a6b]">
+        {vehiculosFiltrados.slice(0, 30).map((v) => (
+          <button
+            key={v.id}
+            type="button"
+            onClick={() => seleccionarDeStock(v.id)}
+            className="w-full text-left px-3 py-2.5 hover:bg-indigo-50 dark:hover:bg-[#00246b] transition-colors flex items-center justify-between gap-2"
+          >
+            <span className="text-sm font-medium text-slate-800 dark:text-white truncate">{v.marca} {v.modelo}</span>
+            <span className="text-[11px] text-slate-400 dark:text-slate-500 shrink-0">{v.patente || "S/P"}</span>
+          </button>
         ))}
-      </select>
+        {vehiculosFiltrados.length === 0 && (
+          <p className="px-3 py-3 text-[13px] text-slate-400 dark:text-slate-500 italic">Sin resultados.</p>
+        )}
+      </div>
       <button
         type="button"
         onClick={() => setModoManual(true)}

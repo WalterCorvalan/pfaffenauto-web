@@ -192,6 +192,9 @@ export default function DashboardLayout({
         if (userRol === "taller" && !pathname?.startsWith("/panel/taller")) {
           router.replace("/panel/taller");
         }
+        if (userRol === "gestoria" && !pathname?.startsWith("/panel/ventas/gestoria")) {
+          router.replace("/panel/ventas/gestoria");
+        }
       }
     };
     fetchUser();
@@ -426,7 +429,25 @@ export default function DashboardLayout({
               />
             )}
 
-            {userProfile.rol !== "taller" && (
+            {/* 📋 GESTORÍA (rol exclusivo, sin acceso al resto del panel) */}
+            {userProfile.rol === "gestoria" && (
+              <>
+                <NavLinkItem
+                  icon={FileSearch}
+                  label="Gestoría"
+                  href="/panel/ventas/gestoria"
+                  exact
+                />
+                <NavLinkItem
+                  icon={ClipboardCheck}
+                  label="Aprobaciones"
+                  href="/panel/ventas/gestoria/aprobaciones"
+                  notifications={notifPorSeccion.gestoria}
+                />
+              </>
+            )}
+
+            {userProfile.rol !== "taller" && userProfile.rol !== "gestoria" && (
               <>
                 {/* 📦 STOCK */}
                 <SectionAccordion id="inventario" label="Inventario">
@@ -559,6 +580,13 @@ export default function DashboardLayout({
                     href="/panel/ventas/gestoria"
                     notifications={notifPorSeccion.gestoria}
                   />
+                  {(userProfile.rol === "admin" || userProfile.rol === "encargado") && (
+                    <NavLinkItem
+                      icon={ClipboardCheck}
+                      label="Aprobaciones"
+                      href="/panel/ventas/gestoria/aprobaciones"
+                    />
+                  )}
                 </SectionAccordion>
 
                 {/* 👥 EQUIPO — todo lo relacionado a las personas que trabajan acá */}
@@ -675,6 +703,11 @@ export default function DashboardLayout({
                       icon={Camera}
                       label="Métricas de Instagram"
                       href="/panel/marketing/instagram"
+                    />
+                    <NavLinkItem
+                      icon={MessageSquareCheckIcon}
+                      label="Métricas de WhatsApp"
+                      href="/panel/marketing/whatsapp-metricas"
                     />
                   </SectionAccordion>
                 )}

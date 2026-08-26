@@ -58,13 +58,6 @@ export default async function DashboardIntegralPage({
   // 4. Traer TODAS las ventas
   const ventasRaw = await getVentasPanel(supabase);
 
-  // 5. Traer últimos leads
-  const { data: ultimosLeads } = await supabase
-    .from("cotizaciones")
-    .select("id, nombre, marca, modelo, tipo_peritaje, created_at")
-    .order("created_at", { ascending: false })
-    .limit(4);
-
   // ---- FILTRADO POR SUCURSAL ----
   const vehiculos = sucursal
     ? vehiculosRaw?.filter((v) => v.sucursal_id === sucursal)
@@ -373,9 +366,9 @@ export default async function DashboardIntegralPage({
           </div>
 
           {/* ================= FILA 3: VENTAS, OBJETIVOS Y LEADS ================= */}
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+          <div className="grid grid-cols-1 gap-6">
 
-            <div className="lg:col-span-2 space-y-6">
+            <div className="space-y-6">
 
               {/* Panel Objetivo de Ventas */}
               <div className="bg-white dark:bg-[#001c55] border border-slate-200 dark:border-[#0a2a6b] p-6 rounded-2xl shadow-sm relative">
@@ -486,60 +479,6 @@ export default async function DashboardIntegralPage({
                 </div>
               </div>
 
-            </div>
-
-            {/* COLUMNA 3: Últimos Leads */}
-            <div className="bg-white dark:bg-[#001c55] border border-slate-200 dark:border-[#0a2a6b] rounded-2xl shadow-sm flex flex-col h-full">
-              <div className="px-6 py-4 border-b border-slate-100 dark:border-[#0a2a6b] flex justify-between items-center bg-white dark:bg-[#001c55]">
-                <h3 className="text-[11px] font-bold uppercase tracking-widest text-slate-500 dark:text-slate-400 flex items-center gap-2">
-                  <Users className="w-4 h-4 text-indigo-600 dark:text-sky-300" /> Últimos Leads (Web)
-                </h3>
-              </div>
-
-              <div className="p-4 flex-1 flex flex-col gap-3">
-                {ultimosLeads && ultimosLeads.length > 0 ? (
-                  ultimosLeads.map((lead) => (
-                    <div
-                      key={lead.id}
-                      className="bg-slate-50 dark:bg-[#00246b] border border-slate-200 dark:border-[#0a2a6b] p-3.5 rounded-xl hover:border-indigo-300 dark:hover:border-sky-700 transition-colors"
-                    >
-                      <div className="flex justify-between items-start mb-1">
-                        <span className="text-[10px] uppercase font-bold tracking-widest text-slate-400 dark:text-slate-500">
-                          {new Date(lead.created_at).toLocaleDateString("es-AR")}
-                        </span>
-                        <span
-                          className={`text-[9px] font-bold uppercase tracking-widest px-2 py-0.5 rounded border ${
-                            lead.tipo_peritaje === "consignacion" ?
-                            "bg-emerald-50 dark:bg-[#002a6e] text-emerald-700 dark:text-emerald-300 border-emerald-200 dark:border-[#0a2a6b]" :
-                            "bg-indigo-50 dark:bg-[#002a6e] text-indigo-700 dark:text-sky-300 border-indigo-200 dark:border-[#0a2a6b]"
-                          }`}
-                        >
-                          {lead.tipo_peritaje === "online" ? "cotización" : lead.tipo_peritaje}
-                        </span>
-                      </div>
-                      <p className="font-bold text-[13px] text-slate-900 dark:text-white mb-0.5 truncate">
-                        {lead.nombre}
-                      </p>
-                      <p className="text-xs text-indigo-600 dark:text-sky-300 font-medium truncate">
-                        {lead.marca} {lead.modelo}
-                      </p>
-                    </div>
-                  ))
-                ) : (
-                  <div className="flex-1 flex items-center justify-center text-slate-400 dark:text-slate-500 text-sm p-6 text-center italic">
-                    No hay solicitudes recientes.
-                  </div>
-                )}
-              </div>
-
-              <div className="p-4 border-t border-slate-100 dark:border-[#0a2a6b]">
-                <Link
-                  href="/panel/crm"
-                  className="w-full flex items-center justify-center gap-2 text-xs font-bold uppercase tracking-widest bg-slate-50 dark:bg-[#00246b] hover:bg-slate-100 dark:hover:bg-[#002a6e] text-slate-700 dark:text-slate-200 py-3 rounded-xl transition-colors border border-slate-200 dark:border-[#0a2a6b]"
-                >
-                  Ver todos los leads <ArrowRight className="w-3.5 h-3.5" />
-                </Link>
-              </div>
             </div>
 
           </div>

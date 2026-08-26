@@ -254,6 +254,8 @@ export default function UsuariosPage() {
         return "bg-teal-50 text-teal-700 border-teal-200";
       case "taller":
         return "bg-orange-50 text-orange-700 border-orange-200";
+      case "gestoria":
+        return "bg-purple-50 text-purple-700 border-purple-200";
       case "vendedor":
       default:
         return "bg-indigo-50 text-indigo-700 border-indigo-200";
@@ -353,7 +355,7 @@ export default function UsuariosPage() {
               />
             </div>
             <div className="flex gap-1.5 overflow-x-auto">
-              {["todos", "admin", "encargado", "vendedor", "taller"].map((r) => (
+              {["todos", "admin", "encargado", "vendedor", "taller", "gestoria"].map((r) => (
                 <button
                   key={r}
                   onClick={() => setFiltroRol(r)}
@@ -410,6 +412,7 @@ export default function UsuariosPage() {
                         >
                           <option value="vendedor" className="bg-white dark:bg-[#001c55] text-slate-900 dark:text-white">Vendedor</option>
                           <option value="taller" className="bg-white dark:bg-[#001c55] text-slate-900 dark:text-white">Taller</option>
+                          <option value="gestoria" className="bg-white dark:bg-[#001c55] text-slate-900 dark:text-white">Gestoría</option>
                           <option value="encargado" className="bg-white dark:bg-[#001c55] text-slate-900 dark:text-white">Encargado</option>
                           <option value="admin" className="bg-white dark:bg-[#001c55] text-slate-900 dark:text-white">Administrador</option>
                         </select>
@@ -509,6 +512,7 @@ export default function UsuariosPage() {
                               >
                                 <option value="vendedor" className="bg-white dark:bg-[#001c55] text-slate-900 dark:text-white">Vendedor</option>
                                 <option value="taller" className="bg-white dark:bg-[#001c55] text-slate-900 dark:text-white">Taller</option>
+                          <option value="gestoria" className="bg-white dark:bg-[#001c55] text-slate-900 dark:text-white">Gestoría</option>
                                 <option value="encargado" className="bg-white dark:bg-[#001c55] text-slate-900 dark:text-white">Encargado</option>
                                 <option value="admin" className="bg-white dark:bg-[#001c55] text-slate-900 dark:text-white">Administrador</option>
                               </select>
@@ -717,6 +721,7 @@ export default function UsuariosPage() {
                   >
                     <option value="vendedor" className="bg-white dark:bg-[#001c55] text-slate-900 dark:text-white">Vendedor</option>
                     <option value="taller" className="bg-white dark:bg-[#001c55] text-slate-900 dark:text-white">Taller</option>
+                          <option value="gestoria" className="bg-white dark:bg-[#001c55] text-slate-900 dark:text-white">Gestoría</option>
                     <option value="encargado" className="bg-white dark:bg-[#001c55] text-slate-900 dark:text-white">Encargado</option>
                     <option value="admin" className="bg-white dark:bg-[#001c55] text-slate-900 dark:text-white">Administrador</option>
                   </select>
@@ -810,6 +815,7 @@ export default function UsuariosPage() {
                   >
                     <option value="vendedor" className="bg-white dark:bg-[#001c55] text-slate-900 dark:text-white">Vendedor</option>
                     <option value="taller" className="bg-white dark:bg-[#001c55] text-slate-900 dark:text-white">Taller</option>
+                          <option value="gestoria" className="bg-white dark:bg-[#001c55] text-slate-900 dark:text-white">Gestoría</option>
                     <option value="encargado" className="bg-white dark:bg-[#001c55] text-slate-900 dark:text-white">Encargado</option>
                     <option value="admin" className="bg-white dark:bg-[#001c55] text-slate-900 dark:text-white">Administrador</option>
                   </select>

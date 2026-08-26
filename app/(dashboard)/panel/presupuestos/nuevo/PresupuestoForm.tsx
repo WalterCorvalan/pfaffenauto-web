@@ -35,6 +35,8 @@ export default function PresupuestoForm({ clientes, vehiculos, vendedores, sucur
           color: vehiculoInicial.color || "",
           kilometros: String(vehiculoInicial.kilometraje || ""),
           combustible: vehiculoInicial.tipo_combustible || "",
+          transmision: vehiculoInicial.transmision || "",
+          traccion: vehiculoInicial.traccion || "",
         }
       : null
   );
@@ -161,11 +163,11 @@ export default function PresupuestoForm({ clientes, vehiculos, vendedores, sucur
             <div className="grid grid-cols-2 gap-4">
               <div>
                 <label className="text-[11px] font-bold text-slate-500 dark:text-slate-400 uppercase block mb-1.5">Precio de venta ($)</label>
-                <input type="number" step="0.01" className={inputClass} value={precioArs} onChange={(e) => setPrecioArs(e.target.value)} placeholder="0" />
+                <input type="number" step="0.01" className={`${inputClass} disabled:opacity-50 disabled:cursor-not-allowed`} value={precioArs} onChange={(e) => setPrecioArs(e.target.value)} disabled={!!precioUsd} placeholder="0" />
               </div>
               <div>
                 <label className="text-[11px] font-bold text-slate-500 dark:text-slate-400 uppercase block mb-1.5">Precio de venta (US$)</label>
-                <input type="number" step="0.01" className={inputClass} value={precioUsd} onChange={(e) => setPrecioUsd(e.target.value)} placeholder="0" />
+                <input type="number" step="0.01" className={`${inputClass} disabled:opacity-50 disabled:cursor-not-allowed`} value={precioUsd} onChange={(e) => setPrecioUsd(e.target.value)} disabled={!!precioArs} placeholder="0" />
               </div>
               <div>
                 <label className="text-[11px] font-bold text-slate-500 dark:text-slate-400 uppercase block mb-1.5">Vendedor</label>

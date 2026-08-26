@@ -1,7 +1,10 @@
 import { createServerClient } from "@supabase/ssr";
 import { cookies } from "next/headers";
-import { Megaphone, TrendingUp, TrendingDown, Minus, MousePointerClick, Users, DollarSign } from "lucide-react";
+import { Megaphone, TrendingUp, TrendingDown, Minus, MousePointerClick, Users, DollarSign, Zap, ZapOff } from "lucide-react";
 import NuevaCampanaModal from "./NuevaCampanaModal";
+import { metaAdsConfigurado } from "@/lib/ads/meta";
+import { googleAdsConfigurado } from "@/lib/ads/google";
+import { mercadoLibreAdsConfigurado } from "@/lib/ads/mercadolibre";
 
 const PLATAFORMAS = ["Google Ads", "Meta Ads", "MercadoLibre"] as const;
 
@@ -63,6 +66,12 @@ export default async function PautasMarketingPage() {
 
   const nombreMesActual = new Date(mesActualInicio).toLocaleDateString("es-AR", { month: "long", year: "numeric", timeZone: "UTC" });
 
+  const estadoSync = [
+    { plataforma: "Meta Ads", ok: metaAdsConfigurado() },
+    { plataforma: "Google Ads", ok: googleAdsConfigurado() },
+    { plataforma: "MercadoLibre", ok: mercadoLibreAdsConfigurado() },
+  ];
+
   return (
     <div className="flex flex-col h-full w-full bg-white dark:bg-[#001233] overflow-hidden">
       <header className="flex flex-col md:flex-row md:items-center justify-between border-b border-slate-200 dark:border-[#0a2a6b] px-6 py-4 bg-white dark:bg-[#001c55] shrink-0 gap-4">
@@ -80,6 +89,24 @@ export default async function PautasMarketingPage() {
 
       <div className="flex-1 overflow-y-auto p-6 bg-[#F9FAFB] dark:bg-[#001233] custom-scrollbar">
         <div className="max-w-[1400px] mx-auto space-y-6">
+
+          {/* ================= ESTADO DE SINCRONIZACIÓN AUTOMÁTICA ================= */}
+          <div className="flex flex-wrap items-center gap-2 bg-white dark:bg-[#001c55] border border-slate-200 dark:border-[#0a2a6b] rounded-xl px-4 py-2.5">
+            <span className="text-[10px] font-bold uppercase tracking-widest text-slate-400 dark:text-slate-500 mr-1">Sincronización automática</span>
+            {estadoSync.map((e) => (
+              <span
+                key={e.plataforma}
+                className={`inline-flex items-center gap-1.5 text-[11px] font-bold px-2.5 py-1 rounded-lg border ${
+                  e.ok
+                    ? "bg-emerald-50 dark:bg-[#002a6e] text-emerald-700 dark:text-emerald-300 border-emerald-200 dark:border-[#0a2a6b]"
+                    : "bg-slate-50 dark:bg-[#00246b] text-slate-400 dark:text-slate-500 border-slate-200 dark:border-[#0a2a6b]"
+                }`}
+                title={e.ok ? "Configurado, sincroniza solo" : "Faltan las variables de entorno — ver .env.local"}
+              >
+                {e.ok ? <Zap className="w-3 h-3" /> : <ZapOff className="w-3 h-3" />} {e.plataforma}
+              </span>
+            ))}
+          </div>
 
           {/* ================= RESUMEN GLOBAL DEL MES ================= */}
           <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-4">

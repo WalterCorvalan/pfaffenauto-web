@@ -50,8 +50,6 @@ interface Venta {
   dominio: string | null;
   venta_ars: number | null;
   observaciones: string | null;
-  comision_ars: number | null;
-  porcentaje_comision: number | null;
 }
 
 export default function SeguimientoClient({ venta, documentosIniciales }: { venta: Venta; documentosIniciales: Documento[] }) {
@@ -69,11 +67,6 @@ export default function SeguimientoClient({ venta, documentosIniciales }: { vent
   const [observaciones, setObservaciones] = useState(venta.observaciones || "");
   const [guardandoObservaciones, setGuardandoObservaciones] = useState(false);
 
-  const [porcentajeComision, setPorcentajeComision] = useState(venta.porcentaje_comision?.toString() || "");
-  const [guardandoComision, setGuardandoComision] = useState(false);
-
-  const comisionCalculada = (Number(venta.venta_ars) || 0) * (Number(porcentajeComision) || 0) / 100;
-
   const guardarContacto = async () => {
     setGuardandoContacto(true);
     await supabase.from("boletos_venta").update({ telefono_celular: telefono || null, correo_electronico: correo || null }).eq("id", venta.id);
@@ -86,14 +79,6 @@ export default function SeguimientoClient({ venta, documentosIniciales }: { vent
     setGuardandoObservaciones(false);
   };
 
-  const guardarComision = async () => {
-    setGuardandoComision(true);
-    await supabase.from("boletos_venta").update({
-      porcentaje_comision: porcentajeComision ? Number(porcentajeComision) : null,
-      comision_ars: comisionCalculada || null,
-    }).eq("id", venta.id);
-    setGuardandoComision(false);
-  };
 
   const cambiarEtapa = async (nuevaEtapa: string) => {
     setEtapaActual(nuevaEtapa);
@@ -278,36 +263,6 @@ export default function SeguimientoClient({ venta, documentosIniciales }: { vent
             className="flex items-center gap-1.5 text-[11px] font-bold text-white bg-indigo-600 hover:bg-indigo-700 px-3 py-1.5 rounded-lg transition-colors disabled:opacity-50"
           >
             {guardandoObservaciones ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Save className="w-3.5 h-3.5" />} Guardar observaciones
-          </button>
-        </div>
-
-        <div className="bg-white dark:bg-[#001c55] border border-slate-200 dark:border-[#0a2a6b] rounded-2xl p-6 shadow-sm">
-          <h2 className="text-[11px] font-bold uppercase tracking-widest text-slate-400 dark:text-slate-500 mb-4">Comisión del vendedor</h2>
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mb-3">
-            <div>
-              <label className="text-[11px] font-bold text-slate-500 dark:text-slate-400 uppercase block mb-1.5">% Comisión</label>
-              <input
-                type="number"
-                step="0.01"
-                value={porcentajeComision}
-                onChange={(e) => setPorcentajeComision(e.target.value)}
-                placeholder="0"
-                className="w-full bg-slate-50 dark:bg-[#00246b] border border-slate-200 dark:border-[#0a2a6b] rounded-xl px-3 py-2.5 text-sm outline-none focus:border-indigo-500 text-slate-900 dark:text-white placeholder:text-slate-400 dark:placeholder:text-slate-500"
-              />
-            </div>
-            <div>
-              <label className="text-[11px] font-bold text-slate-500 dark:text-slate-400 uppercase block mb-1.5">Monto calculado</label>
-              <div className="w-full bg-slate-100 dark:bg-[#002a6e] border border-slate-200 dark:border-[#0a2a6b] rounded-xl px-3 py-2.5 text-sm font-mono font-bold text-slate-700 dark:text-slate-200">
-                $ {comisionCalculada.toLocaleString("es-AR")}
-              </div>
-            </div>
-          </div>
-          <button
-            onClick={guardarComision}
-            disabled={guardandoComision}
-            className="flex items-center gap-1.5 text-[11px] font-bold text-white bg-indigo-600 hover:bg-indigo-700 px-3 py-1.5 rounded-lg transition-colors disabled:opacity-50"
-          >
-            {guardandoComision ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Save className="w-3.5 h-3.5" />} Guardar comisión
           </button>
         </div>
 
