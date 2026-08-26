@@ -11,7 +11,7 @@ const CSP = [
   "img-src 'self' data: blob: https://*.b-cdn.net https://upload.wikimedia.org https://images.unsplash.com https://*.r2.dev https://*.r2.cloudflarestorage.com",
   "media-src 'self'",
   "font-src 'self' data: https://cdn.jsdelivr.net",
-  "connect-src 'self' https://challenges.cloudflare.com",
+  "connect-src 'self' https://challenges.cloudflare.com https://*.supabase.co wss://*.supabase.co",
   "frame-src https://challenges.cloudflare.com https://www.google.com https://maps.google.com",
   "object-src 'none'",
   "base-uri 'self'",
