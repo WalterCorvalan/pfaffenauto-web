@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import Image from "next/image";
 import { Printer, ArrowLeft, AlertTriangle, CheckCircle2 } from "lucide-react";
 import Link from "next/link";
 import { supabase } from "@/lib/supabase/client";
@@ -13,8 +14,18 @@ export default function ImprimirBoletoVenta({ boleto: b }: { boleto: any }) {
   const [ventaArs, setVentaArs] = useState(b.venta_ars);
   const [ventaUsd, setVentaUsd] = useState(b.venta_usd);
   const [firmaUrl, setFirmaUrl] = useState(b.firma_url);
+  const [firmaVendedorUrl, setFirmaVendedorUrl] = useState(b.firma_vendedor_url ?? null);
+  const [observaciones, setObservaciones] = useState(b.observaciones || "");
+  const [guardandoObs, setGuardandoObs] = useState(false);
   const [mostrarModal, setMostrarModal] = useState(false);
   const [confirmando, setConfirmando] = useState(false);
+
+  const guardarObservaciones = async () => {
+    if (observaciones === (b.observaciones || "")) return;
+    setGuardandoObs(true);
+    await supabase.from("boletos_venta").update({ observaciones }).eq("id", b.id);
+    setGuardandoObs(false);
+  };
 
   const confirmarPrecio = async (nuevoArs: number | null, nuevoUsd: number | null) => {
     setConfirmando(true);
@@ -87,10 +98,13 @@ export default function ImprimirBoletoVenta({ boleto: b }: { boleto: any }) {
 
       <div className="max-w-[210mm] min-h-[297mm] mx-auto bg-white p-[15mm] shadow-lg border border-slate-200 print:shadow-none print:border-none print:p-0 print:m-0">
         <div className="flex justify-between items-start border-b-[3px] border-slate-900 pb-5 mb-6">
-          <div>
-            <h1 className="text-3xl font-black text-slate-900 tracking-tighter uppercase">Pfaffen Autos</h1>
-            <p className="text-[11px] font-bold text-slate-500 uppercase tracking-widest mt-1">{b.sucursales?.nombre || "Casa Central"}</p>
-            <p className="text-[11px] text-slate-500 mt-1">{b.sucursales?.direccion || "Buenos Aires, Argentina"}</p>
+          <div className="flex items-center gap-3">
+            <Image src="/logo.png" alt="Pfaffen Autos" width={48} height={48} className="rounded-full shrink-0" />
+            <div>
+              <h1 className="text-3xl font-black text-slate-900 tracking-tighter uppercase">Pfaffen Autos</h1>
+              <p className="text-[11px] font-bold text-slate-500 uppercase tracking-widest mt-1">{b.sucursales?.nombre || "Casa Central"}</p>
+              <p className="text-[11px] text-slate-500 mt-1">{b.sucursales?.direccion || "Buenos Aires, Argentina"}</p>
+            </div>
           </div>
           <div className="text-right">
             <h2 className="text-[15px] font-bold text-slate-800 uppercase tracking-widest border-2 border-slate-200 px-4 py-1.5 rounded-lg bg-slate-50">Boleto de Compraventa</h2>
@@ -325,14 +339,19 @@ export default function ImprimirBoletoVenta({ boleto: b }: { boleto: any }) {
           </div>
         )}
 
-        {b.observaciones && (
-          <div className="mb-10">
-            <h3 className="text-[10px] font-black uppercase tracking-widest text-slate-400 border-b border-slate-200 pb-1 mb-2">Observaciones</h3>
-            <p className="text-[11px] text-slate-600 leading-relaxed whitespace-pre-wrap bg-slate-50 p-4 rounded-xl border border-slate-200 print:bg-white print:border-slate-300">
-              {b.observaciones}
-            </p>
-          </div>
-        )}
+        <div className="mb-10">
+          <h3 className="text-[10px] font-black uppercase tracking-widest text-slate-400 border-b border-slate-200 pb-1 mb-2">
+            Observaciones {guardandoObs && <span className="normal-case font-normal text-slate-400">(guardando...)</span>}
+          </h3>
+          <textarea
+            value={observaciones}
+            onChange={(e) => setObservaciones(e.target.value)}
+            onBlur={guardarObservaciones}
+            placeholder="Escribí acá cualquier observación adicional..."
+            rows={3}
+            className="w-full text-[11px] text-slate-600 leading-relaxed whitespace-pre-wrap bg-slate-50 p-4 rounded-xl border border-slate-200 print:bg-white print:border-slate-300 print:p-0 outline-none focus:border-indigo-400 resize-none"
+          />
+        </div>
 
         <p className="text-[11px] text-slate-600 leading-relaxed text-justify mb-10">
           El vehículo objeto del presente Boleto de Compraventa se entrega en el estado en que se encuentra y que El Comprador declara conocer y aceptar de plena conformidad tras su revisión. La transferencia de la titularidad del dominio es obligatoria e ineludible.
@@ -346,9 +365,12 @@ export default function ImprimirBoletoVenta({ boleto: b }: { boleto: any }) {
               <span className="block text-[10px] font-bold text-slate-400 mt-1 uppercase tracking-widest">Aclaración y DNI</span>
             </div>
           </div>
-          <div className="text-center border-t border-slate-400 pt-3 self-end">
-            <span className="block font-bold text-sm">Por Pfaffen Autos</span>
-            <span className="block text-[10px] font-bold text-slate-400 mt-1 uppercase tracking-widest">{vendedor}</span>
+          <div>
+            <FirmaCanvas tabla="boletos_venta" id={b.id} campo="firma_vendedor_url" firmaUrlActual={firmaVendedorUrl} onGuardada={setFirmaVendedorUrl} />
+            <div className="text-center border-t border-slate-400 pt-3 mt-2">
+              <span className="block font-bold text-sm">Por Pfaffen Autos</span>
+              <span className="block text-[10px] font-bold text-slate-400 mt-1 uppercase tracking-widest">{vendedor}</span>
+            </div>
           </div>
         </div>
       </div>

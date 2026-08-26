@@ -56,6 +56,13 @@ export default function CotizadorForm({ vehiculoObjetivo }: { vehiculoObjetivo?:
   const [km, setKm] = useState("");
   const [gnc, setGnc] = useState("");
 
+  // Estimación de precio con IA (paso previo al peritaje): la IA busca
+  // comparables reales y ofrecemos el 80% de esa media. Si el cliente acepta,
+  // nos saltamos el paso de peritaje presencial/fotos.
+  const [estimandoPrecio, setEstimandoPrecio] = useState(false);
+  const [precioOferta, setPrecioOferta] = useState<number | null>(null);
+  const [acuerdoPrecio, setAcuerdoPrecio] = useState<boolean | null>(null);
+
   // Estado del peritaje (¿puede venir a sucursal, o manda fotos/videos?)
   const [puedeVenir, setPuedeVenir] = useState<boolean | null>(null);
   const [archivosSubidos, setArchivosSubidos] = useState<{ nombre: string; url: string; tipo: "imagen" | "video" }[]>([]);
@@ -110,6 +117,31 @@ export default function CotizadorForm({ vehiculoObjetivo }: { vehiculoObjetivo?:
 
   const validarPaso1 = () => {
     return anio && marca && modelo && version && km;
+  };
+
+  // Al confirmar los datos del vehículo, intentamos estimar un precio con IA
+  // antes de seguir. Si no hay comparables (o falla), no bloqueamos: saltamos
+  // directo al flujo normal de peritaje.
+  const continuarDesdePaso1 = async () => {
+    setEstimandoPrecio(true);
+    try {
+      const res = await fetch("/api/cotizaciones/estimar-precio", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ marca, modelo, version, anio, kilometraje: km }),
+      });
+      const data = await res.json();
+      if (data.ok && data.oferta) {
+        setPrecioOferta(data.oferta);
+        setStep(1.5);
+      } else {
+        setStep(2);
+      }
+    } catch {
+      setStep(2);
+    } finally {
+      setEstimandoPrecio(false);
+    }
   };
 
   // Renderiza el widget de Turnstile cuando llegamos al paso de contacto
@@ -210,6 +242,7 @@ export default function CotizadorForm({ vehiculoObjetivo }: { vehiculoObjetivo?:
           puede_venir_sucursal: puedeVenir === true,
           fotos_y_videos: archivosSubidos.map((a) => a.url),
           sucursal_preferida: "Casa Central",
+          acepta_precio_ofrecido: acuerdoPrecio,
           ...(vehiculoObjetivo ? { tipo_peritaje: "permuta", vehiculo_id: vehiculoObjetivo.id } : {}),
         }),
       });
@@ -275,6 +308,7 @@ export default function CotizadorForm({ vehiculoObjetivo }: { vehiculoObjetivo?:
                 </h2>
                 <p className="text-xs text-slate-400 font-medium">
                   {step === 1 && "Ingresá los datos del vehículo"}
+                  {step === 1.5 && "Esto es lo que te podemos ofrecer"}
                   {step === 2 && "¿Tu auto tiene o tuvo GNC?"}
                   {step === 3 && "¿Podés venir a una sucursal?"}
                   {step === 4 && "Dejanos tus datos de contacto"}
@@ -390,23 +424,61 @@ export default function CotizadorForm({ vehiculoObjetivo }: { vehiculoObjetivo?:
                     </div>
 
                     <div className="pt-2">
-                      <button 
-                        type="button" 
-                        disabled={!validarPaso1()}
-                        onClick={() => setStep(2)}
-                        className="w-full py-4 bg-gradient-to-r from-[#0145F2] to-blue-600 hover:from-blue-600 hover:to-sky-500 disabled:opacity-50 text-white font-black rounded-2xl uppercase tracking-widest text-xs transition-all shadow-lg shadow-blue-500/20 cursor-pointer active:scale-95"
+                      <button
+                        type="button"
+                        disabled={!validarPaso1() || estimandoPrecio}
+                        onClick={continuarDesdePaso1}
+                        className="w-full py-4 bg-gradient-to-r from-[#0145F2] to-blue-600 hover:from-blue-600 hover:to-sky-500 disabled:opacity-50 text-white font-black rounded-2xl uppercase tracking-widest text-xs transition-all shadow-lg shadow-blue-500/20 cursor-pointer active:scale-95 flex items-center justify-center gap-2"
                       >
-                        Continuar
+                        {estimandoPrecio && <Loader2 className="w-4 h-4 animate-spin" />}
+                        {estimandoPrecio ? "Buscando precios de mercado..." : "Continuar"}
                       </button>
                     </div>
 
                   </div>
                 )}
 
+                {step === 1.5 && (
+                  <div className="space-y-5 animate-fadeIn py-2">
+                    <div>
+                      <button onClick={() => setStep(1)} className="text-xs font-bold text-[#0145F2] flex items-center gap-1 mb-2 hover:underline">
+                        <ArrowLeft className="w-3.5 h-3.5" /> Volver
+                      </button>
+                    </div>
+
+                    <div className="bg-blue-50 dark:bg-sky-400/10 border border-blue-100 dark:border-sky-400/20 rounded-2xl p-5 text-center space-y-1.5">
+                      <p className="text-[11px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-widest">Oferta estimada</p>
+                      <p className="text-3xl font-black text-[#0145F2] dark:text-sky-300">
+                        ${precioOferta?.toLocaleString("es-AR")}
+                      </p>
+                      <p className="text-[11px] text-slate-500 dark:text-slate-400 font-medium leading-relaxed">
+                        Estimación automática en base a precios de mercado. El monto final se confirma con un peritaje.
+                      </p>
+                    </div>
+
+                    <div className="space-y-3">
+                      <button
+                        type="button"
+                        onClick={() => { setAcuerdoPrecio(true); setStep(2); }}
+                        className="w-full py-4 bg-gradient-to-r from-[#0145F2] to-blue-600 hover:from-blue-600 hover:to-sky-500 text-white font-black rounded-2xl uppercase tracking-widest text-xs transition-all shadow-lg shadow-blue-500/20 cursor-pointer active:scale-95"
+                      >
+                        Estoy de acuerdo con este precio
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => { setAcuerdoPrecio(false); setStep(2); }}
+                        className="w-full py-4 bg-white/60 dark:bg-white/5 border border-white dark:border-white/10 text-slate-700 dark:text-slate-300 font-black rounded-2xl uppercase tracking-widest text-xs transition-all cursor-pointer active:scale-95"
+                      >
+                        Prefiero un peritaje presencial
+                      </button>
+                    </div>
+                  </div>
+                )}
+
                 {step === 2 && (
                   <div className="space-y-6 animate-fadeIn py-2">
                     <div>
-                      <button onClick={() => setStep(1)} className="text-xs font-bold text-[#0145F2] flex items-center gap-1 mb-2 hover:underline">
+                      <button onClick={() => setStep(precioOferta ? 1.5 : 1)} className="text-xs font-bold text-[#0145F2] flex items-center gap-1 mb-2 hover:underline">
                         <ArrowLeft className="w-3.5 h-3.5" /> Volver
                       </button>
                     </div>
@@ -423,10 +495,10 @@ export default function CotizadorForm({ vehiculoObjetivo }: { vehiculoObjetivo?:
                       ))}
                     </div>
 
-                    <button 
+                    <button
                       type="button"
                       disabled={!gnc}
-                      onClick={() => setStep(3)}
+                      onClick={() => setStep(acuerdoPrecio === true ? 4 : 3)}
                       className="w-full py-4 bg-gradient-to-r from-[#0145F2] to-blue-600 hover:from-blue-600 hover:to-sky-500 disabled:opacity-50 text-white font-black rounded-2xl uppercase tracking-widest text-xs transition-all shadow-lg shadow-blue-500/20 cursor-pointer active:scale-95"
                     >
                       Continuar
@@ -527,7 +599,7 @@ export default function CotizadorForm({ vehiculoObjetivo }: { vehiculoObjetivo?:
                 {step === 4 && (
                   <form onSubmit={enviarCotizacion} className="space-y-4 animate-fadeIn">
                     <div>
-                      <button type="button" onClick={() => setStep(3)} className="text-xs font-bold text-[#0145F2] flex items-center gap-1 mb-2 hover:underline">
+                      <button type="button" onClick={() => setStep(acuerdoPrecio === true ? 2 : 3)} className="text-xs font-bold text-[#0145F2] flex items-center gap-1 mb-2 hover:underline">
                         <ArrowLeft className="w-3.5 h-3.5" /> Volver
                       </button>
                     </div>

@@ -143,9 +143,8 @@ async function ingestarMensaje({ waId, nombrePerfil, msg }: { waId: string; nomb
   const linkNoti = `/panel/chat?conversacion=${conversacion.id}&canal=whatsapp`;
   if (conversacion.vendedor_id) {
     notificarPersona(supabase, conversacion.vendedor_id, "nuevo_mensaje_chat", mensajeNoti, linkNoti, "chat").catch((err) => console.error("[wa] error notificando:", err));
-  } else {
-    notificarEncargados(supabase, mensajeNoti, linkNoti, "chat", "nuevo_mensaje_chat").catch((err) => console.error("[wa] error notificando:", err));
   }
+  notificarEncargados(supabase, mensajeNoti, linkNoti, "chat", "nuevo_mensaje_chat").catch((err) => console.error("[wa] error notificando:", err));
 
   await ejecutarAgente(conversacion.id, contacto.id);
 }

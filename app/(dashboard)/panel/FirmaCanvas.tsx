@@ -13,11 +13,13 @@ export default function FirmaCanvas({
   id,
   firmaUrlActual,
   onGuardada,
+  campo = "firma_url",
 }: {
   tabla: string;
   id: string;
   firmaUrlActual: string | null;
   onGuardada: (url: string) => void;
+  campo?: string;
 }) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const dibujando = useRef(false);
@@ -97,7 +99,7 @@ export default function FirmaCanvas({
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || "No se pudo subir la firma.");
 
-      const { error: dbError } = await supabase.from(tabla).update({ firma_url: data.publicUrl }).eq("id", id);
+      const { error: dbError } = await supabase.from(tabla).update({ [campo]: data.publicUrl }).eq("id", id);
       if (dbError) throw dbError;
 
       setRefirmando(false);

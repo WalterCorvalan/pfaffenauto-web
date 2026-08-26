@@ -2,6 +2,7 @@ import { z } from "zod";
 import { createClient } from "@supabase/supabase-js";
 import { chatJson } from "@/lib/ai";
 import { buildSystemPrompt, type ResultadoStock } from "@/lib/ai/prompts";
+import { obtenerDolarOficial } from "@/lib/dolarOficial";
 
 // Agente de ventas compartido entre canales (WhatsApp, Web Chat). Cada canal
 // guarda su propio historial/estado en sus propias tablas — este módulo solo
@@ -25,6 +26,10 @@ export const AgentReplySchema = z.object({
     marca: z.string().nullable(),
     modelo: z.string().nullable(),
   }).nullable(),
+  presupuesto_mencionado: z.object({
+    monto: z.number().positive(),
+    moneda: z.enum(["USD", "ARS"]),
+  }).nullable(),
 });
 
 export type AgentReply = z.infer<typeof AgentReplySchema>;
@@ -35,14 +40,40 @@ export type HistorialMensaje = { role: "user" | "assistant"; content: string };
 // Marca es opcional: un cliente que dice "un Ranger" sin aclarar "Ford" tiene
 // que poder buscarse igual por modelo solo — exigir las dos cosas dejaba al
 // bot prometiendo "voy a chequear" sin disparar nunca la búsqueda real.
-export async function buscarStockReal(marca: string | null, modelo: string): Promise<{ resultados: ResultadoStock[]; linkPublicacion: string | null }> {
+export async function buscarStockReal(
+  marca: string | null,
+  modelo: string | null,
+  presupuesto?: { monto: number; moneda: "USD" | "ARS" } | null
+): Promise<{ resultados: ResultadoStock[]; linkPublicacion: string | null }> {
   let query = supabase
     .from("vehiculos")
     .select("marca, modelo, anio, slug, precio_publicado_ars, precio_publicado_usd, sucursales!vehiculos_sucursal_id_fkey ( nombre )")
-    .ilike("modelo", `%${modelo}%`)
     .in("estado", ["Disponible", "Reservado"])
-    .limit(3);
+    .limit(modelo ? 3 : 6);
   if (marca) query = query.ilike("marca", `%${marca}%`);
+  if (modelo) query = query.ilike("modelo", `%${modelo}%`);
+
+  // Presupuesto: convertimos con la cotización real (nunca "adivina" la IA) y
+  // filtramos por cualquiera de las dos monedas publicadas — mismo criterio
+  // que usa el catálogo público, así "15000 dólares" matchea también autos
+  // listados en pesos por debajo del equivalente.
+  if (presupuesto) {
+    const dolar = await obtenerDolarOficial().catch(() => null);
+    let presupuestoUsd: number | null = null;
+    let presupuestoArs: number | null = null;
+    if (presupuesto.moneda === "USD") {
+      presupuestoUsd = presupuesto.monto;
+      presupuestoArs = dolar ? presupuesto.monto * dolar : null;
+    } else {
+      presupuestoArs = presupuesto.monto;
+      presupuestoUsd = dolar ? presupuesto.monto / dolar : null;
+    }
+    const condiciones: string[] = [];
+    if (presupuestoArs) condiciones.push(`precio_publicado_ars.lte.${Math.round(presupuestoArs)}`);
+    if (presupuestoUsd) condiciones.push(`precio_publicado_usd.lte.${Math.round(presupuestoUsd)}`);
+    if (condiciones.length > 0) query = query.or(condiciones.join(","));
+  }
+
   const { data } = await query;
 
   const resultados: ResultadoStock[] = (data ?? []).map((v: any) => ({
@@ -78,10 +109,11 @@ export async function generarRespuestaAgente(historial: HistorialMensaje[], cana
   let respuesta = result.data;
   let linkParaEnviar: string | null = null;
 
-  if (respuesta.vehiculo_mencionado?.modelo) {
+  if (respuesta.vehiculo_mencionado?.modelo || respuesta.presupuesto_mencionado) {
     const { resultados, linkPublicacion } = await buscarStockReal(
-      respuesta.vehiculo_mencionado.marca,
-      respuesta.vehiculo_mencionado.modelo
+      respuesta.vehiculo_mencionado?.marca ?? null,
+      respuesta.vehiculo_mencionado?.modelo ?? null,
+      respuesta.presupuesto_mencionado
     );
     linkParaEnviar = linkPublicacion;
 
