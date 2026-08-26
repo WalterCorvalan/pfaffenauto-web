@@ -14,7 +14,7 @@ export default async function ImprimirSenaPage({ params }: { params: Promise<{ i
 
   const { data: sena } = await supabase
     .from("senas")
-    .select("*, perfiles ( nombre ), sucursales ( nombre )")
+    .select("*, perfiles ( nombre ), sucursales ( nombre ), permuta_vehiculo:vehiculos!senas_permuta_vehiculo_id_fkey ( marca, modelo, patente, anio )")
     .eq("id", id)
     .maybeSingle();
 

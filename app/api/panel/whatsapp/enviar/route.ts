@@ -43,7 +43,7 @@ export async function POST(request: Request) {
 
   const { data: conversacion } = await supabaseAdmin
     .from("whatsapp_conversaciones")
-    .select("contacto_id, whatsapp_contactos(telefono)")
+    .select("contacto_id, ai_habilitada, whatsapp_contactos(telefono)")
     .eq("id", conversacionId)
     .single();
 
@@ -52,13 +52,22 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: "No se encontró el teléfono del contacto." }, { status: 404 });
   }
 
+  // Con la IA pausada, un humano está respondiendo — le agregamos su nombre
+  // adelante para que quede claro quién habla (igual que hacen las cuentas de
+  // empresa de WhatsApp con varios agentes). Con la IA activa no hace falta.
+  let textoFinal = texto;
+  if (conversacion?.ai_habilitada === false) {
+    const { data: perfil } = await supabaseAdmin.from("perfiles").select("nombre").eq("id", user.id).maybeSingle();
+    if (perfil?.nombre) textoFinal = `[${perfil.nombre}]\n${texto}`;
+  }
+
   const { data: mensaje, error: insertError } = await supabaseAdmin
     .from("whatsapp_mensajes")
     .insert({
       conversacion_id: conversacionId,
       direccion: "out",
       tipo: "text",
-      texto,
+      texto: textoFinal,
       status: "pending",
       ai_generado: false,
     })
@@ -79,7 +88,7 @@ export async function POST(request: Request) {
       process.env.META_WHATSAPP_PHONE_NUMBER_ID,
       process.env.META_WHATSAPP_TOKEN,
       telefono,
-      texto
+      textoFinal
     );
     await supabaseAdmin
       .from("whatsapp_mensajes")

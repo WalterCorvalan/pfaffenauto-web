@@ -562,12 +562,14 @@ export default function DashboardLayout({
                     label="Resp. Civil"
                     href="/panel/resp-civil"
                   />
-                  <NavLinkItem
-                    icon={Landmark}
-                    label="Financiaciones"
-                    href="/panel/ventas/financiaciones"
-                    notifications={notifPorSeccion.financiacion}
-                  />
+                  {userProfile.rol === "admin" && (
+                    <NavLinkItem
+                      icon={Landmark}
+                      label="Financiaciones"
+                      href="/panel/ventas/financiaciones"
+                      notifications={notifPorSeccion.financiacion}
+                    />
+                  )}
                   <NavLinkItem
                     icon={Wrench}
                     label="Postventa"

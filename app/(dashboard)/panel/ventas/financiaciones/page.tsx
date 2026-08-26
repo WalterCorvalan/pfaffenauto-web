@@ -1,5 +1,6 @@
 import { createServerClient } from "@supabase/ssr";
 import { cookies } from "next/headers";
+import { redirect } from "next/navigation";
 import FinanciacionesClient from "./FinanciacionesClient";
 
 export default async function FinanciacionesPage() {
@@ -9,6 +10,10 @@ export default async function FinanciacionesPage() {
     process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY!,
     { cookies: { getAll: () => cookieStore.getAll() } }
   );
+
+  const { data: { user } } = await supabase.auth.getUser();
+  const { data: perfil } = user ? await supabase.from("perfiles").select("rol").eq("id", user.id).maybeSingle() : { data: null };
+  if (perfil?.rol !== "admin") redirect("/panel");
 
   const [{ data: financiacionesRaw }, { data: solicitudes }] = await Promise.all([
     supabase

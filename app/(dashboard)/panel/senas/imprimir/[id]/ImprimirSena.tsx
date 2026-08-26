@@ -235,6 +235,17 @@ export default function ImprimirSena({ sena: s }: { sena: any }) {
           </div>
         </div>
 
+        {s.cuenta_orden_apellido_nombre && (
+          <div className="mb-6">
+            <h3 className="text-[10px] font-black uppercase tracking-widest text-slate-400 border-b border-slate-200 pb-1 mb-3">Por Cuenta y Orden de</h3>
+            <div className="grid grid-cols-3 gap-4 text-xs">
+              <div><span className="text-slate-400 font-bold text-[9px] uppercase block">Apellido y Nombre</span><strong className="text-slate-900">{s.cuenta_orden_apellido_nombre}</strong></div>
+              <div><span className="text-slate-400 font-bold text-[9px] uppercase block">DNI</span><strong className="text-slate-900">{s.cuenta_orden_dni}</strong></div>
+              <div><span className="text-slate-400 font-bold text-[9px] uppercase block">Dirección</span><strong className="text-slate-900">{s.cuenta_orden_direccion}</strong></div>
+            </div>
+          </div>
+        )}
+
         <div className="mb-6 flex gap-6">
           <div className="flex-1 border border-slate-300 rounded-xl overflow-hidden">
             <h3 className="bg-slate-50 px-4 py-2 text-[10px] font-black uppercase tracking-widest text-slate-500 border-b border-slate-300">Datos Comerciales</h3>
@@ -262,6 +273,92 @@ export default function ImprimirSena({ sena: s }: { sena: any }) {
             </div>
           </div>
         </div>
+
+        {(s.efectivo_ars > 0 || s.efectivo_usd > 0 || s.permuta_vehiculo_id || s.remanente_ars > 0) && (
+          <div className="mb-6 flex gap-6">
+            <div className="flex-1 border border-slate-300 rounded-xl overflow-hidden">
+              <h3 className="bg-slate-50 px-4 py-2 text-[10px] font-black uppercase tracking-widest text-slate-500 border-b border-slate-300">Forma de Pago</h3>
+              <div className="p-4 space-y-3 text-xs">
+                {(s.efectivo_ars > 0 || s.efectivo_usd > 0) && (
+                  <div className="flex justify-between items-center text-slate-600 font-medium">
+                    <span>En Efectivo:</span>
+                    <strong className="text-slate-900">{formatMoney(s.efectivo_ars)} {s.efectivo_usd ? `/ US$ ${Number(s.efectivo_usd).toLocaleString("es-AR")}` : ""}</strong>
+                  </div>
+                )}
+                {s.permuta_vehiculo && (
+                  <div className="flex justify-between items-center text-slate-600 font-medium">
+                    <span>Auto en Permuta:</span>
+                    <strong className="text-slate-900">{s.permuta_vehiculo.marca} {s.permuta_vehiculo.modelo} {s.permuta_vehiculo.patente ? `(${s.permuta_vehiculo.patente})` : ""} — Tasado {formatMoney(s.permuta_tasado_ars)}</strong>
+                  </div>
+                )}
+                <div className="flex justify-between items-center border-t-2 border-slate-900 pt-3 mt-3">
+                  <span className="font-bold text-[13px] uppercase tracking-widest">Remanente:</span>
+                  <strong className="text-[14px]">{formatMoney(s.remanente_ars)}</strong>
+                </div>
+                {s.cant_cuotas_remanente > 0 && (
+                  <>
+                    <div className="flex justify-between items-center text-slate-600 font-medium">
+                      <span>Fecha 1ª Cuota:</span>
+                      <strong className="text-slate-900">{s.fecha_primera_cuota_remanente ? new Date(`${s.fecha_primera_cuota_remanente}T12:00:00Z`).toLocaleDateString("es-AR", { timeZone: "UTC" }) : "-"}</strong>
+                    </div>
+                    <div className="flex justify-between items-center text-slate-600 font-medium">
+                      <span>Cant. de Cuotas:</span>
+                      <strong className="text-slate-900">{s.cant_cuotas_remanente}</strong>
+                    </div>
+                    <div className="flex justify-between items-center text-slate-600 font-medium">
+                      <span>Cuota:</span>
+                      <strong className="text-slate-900">{formatMoney(s.cuota_remanente_ars)}</strong>
+                    </div>
+                  </>
+                )}
+              </div>
+            </div>
+          </div>
+        )}
+
+        {(s.banco_prenda || s.prenda_monto > 0) && (
+          <div className="mb-6 flex gap-6">
+            <div className="flex-1 border border-slate-300 rounded-xl overflow-hidden">
+              <h3 className="bg-slate-50 px-4 py-2 text-[10px] font-black uppercase tracking-widest text-slate-500 border-b border-slate-300">Datos de Prenda</h3>
+              <div className="p-4 space-y-3 text-xs">
+                <div className="flex justify-between items-center text-slate-600 font-medium">
+                  <span>Banco de la Prenda:</span>
+                  <strong className="text-slate-900">{s.banco_prenda || "-"}</strong>
+                </div>
+                <div className="flex justify-between items-center text-slate-600 font-medium">
+                  <span>Prenda:</span>
+                  <strong className="text-slate-900">{formatMoney(s.prenda_monto)}</strong>
+                </div>
+                <div className="flex justify-between items-center text-slate-600 font-medium">
+                  <span>Cant. Cuotas Prenda:</span>
+                  <strong className="text-slate-900">{s.cant_cuotas_prenda || "-"}</strong>
+                </div>
+                <div className="flex justify-between items-center text-slate-600 font-medium">
+                  <span>Cuota de Prenda:</span>
+                  <strong className="text-slate-900">{formatMoney(s.cuota_prenda_ars)}</strong>
+                </div>
+                <div className="flex justify-between items-center text-slate-600 font-medium">
+                  <span>Seguro de Prenda:</span>
+                  <strong className="text-slate-900">{formatMoney(s.seguro_prenda_ars)}</strong>
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
+
+        <div className="mb-6 bg-slate-900 rounded-xl p-4 flex justify-between items-center">
+          <span className="font-bold text-[13px] uppercase tracking-widest text-white">Saldo a Abonar:</span>
+          <strong className="text-xl font-black text-white bg-white/10 px-3 py-1 rounded">
+            {formatMoney(s.saldo_abonar_ars)}
+          </strong>
+        </div>
+
+        {s.seguro_compania && (
+          <div className="mb-6 text-xs">
+            <h3 className="text-[10px] font-black uppercase tracking-widest text-slate-400 border-b border-slate-200 pb-1 mb-2">Seguro</h3>
+            <p className="text-slate-700">{s.seguro_compania} — {formatMoney(s.seguro_importe_mensual)}/mes</p>
+          </div>
+        )}
 
         <div className="mb-10">
           <h3 className="text-[10px] font-black uppercase tracking-widest text-slate-400 border-b border-slate-200 pb-1 mb-2">
