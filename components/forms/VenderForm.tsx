@@ -17,9 +17,34 @@ declare global {
 }
 
 const marcasDisponibles = [
-  "Audi", "BAIC", "BMW", "Changan", "Chery", "Chevrolet", "Citroen",
-  "Fiat", "Ford", "Honda", "Hyundai", "Jeep", "Mercedes Benz",
-  "Nissan", "Peugeot", "Renault", "Toyota", "Volkswagen", "Otro"
+  "Abarth", "Acura", "Agrale", "AION", "Aixam", "Alfa Romeo",
+  "Alpine", "AMC", "Anasagasti", "Arcfox", "ARO", "Asia Motors",
+  "Aston Martin", "Audi", "Austin", "Austin-Healey", "Autoar", "BAIC",
+  "BAW", "Bentley", "BMW", "Borgward", "Brilliance", "Buick",
+  "BYD", "Cadillac", "Changan", "Chery", "Chevrolet", "Chrysler",
+  "Cisitalia", "Citroen", "Dacia", "Daewoo", "Daihatsu", "Datsun",
+  "De Carlo", "DeLorean", "DFSK", "DKW", "Dodge", "Domy",
+  "Dongfeng", "DS Automobiles", "Eagle", "FAW", "Ferrari", "Fiat",
+  "Fonix", "Ford", "Forthing", "Foton", "FSO / Polonez", "GAC Motor",
+  "Galloper", "GAZ", "Geely", "Genesis", "Geo", "GMC",
+  "Gonow", "Great Wall", "GreenGo", "GWM", "Hafei", "Hamelbot",
+  "Haval", "Heibao", "Hillman", "Honda", "Hummer", "Hyundai",
+  "IES", "IKA", "Infiniti", "Innocenti", "Isard", "Isuzu",
+  "Iveco", "JAC", "Jaguar", "Jeep", "Jetour", "JMC",
+  "JMEV", "Kaiyi", "Karry", "KGM / SsangYong", "Kia", "KYC",
+  "Lada", "Lamborghini", "Lancia", "Land Rover", "Leapmotor", "Lexus",
+  "Lifan", "Lincoln", "Lotus", "Lynk & Co", "Mahindra", "Maserati",
+  "Maxus", "Mazda", "McLaren", "Mercedes Benz", "Mercury", "MG",
+  "MINI", "Mitsubishi", "Morris", "Nissan", "NSU", "Oldsmobile",
+  "Opel", "ORA", "Pagani", "Peugeot", "Plymouth", "Pontiac",
+  "Porsche", "Proton", "Pur Sang", "RAM", "Rambler", "Rastrojero",
+  "Rely", "Renault", "Rolls-Royce", "Rover", "Saab", "Santana",
+  "SEAT", "Sero Electric", "Shineray", "Siam Di Tella", "Simca", "Škoda",
+  "Skywell", "smart", "Soeast", "Subaru", "Suzuki", "SWM",
+  "Tank", "Tata", "Tesla", "TITO / Coradir", "Torino", "Toyota",
+  "Triumph", "UAZ", "Valiant", "Vauxhall", "Volkswagen", "Volt Motors",
+  "Volvo", "Willys", "Wuling", "XEV", "Yuejin", "Zanella Utilitarios",
+  "Zastava", "Zotye", "ZX Auto", "Otro"
 ];
 
 const modelosPorMarca: Record<string, string[]> = {
