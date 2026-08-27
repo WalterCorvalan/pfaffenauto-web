@@ -210,20 +210,20 @@ export default async function PanelPage({ searchParams }: { searchParams: Promis
                       </div>
                       <div className="min-w-0">
                         <span className="block text-slate-400 uppercase tracking-widest font-bold mb-0.5">Sucursal</span>
-                        <div className="flex items-center justify-between gap-2">
-                          <SucursalEditor autoId={auto.id} sucursalActualId={auto.sucursal_id} sucursalActualNombre={auto.sucursales?.nombre} sucursales={sucursales || []} puedeGestionar={puedeGestionar} />
-                          <AccionesAuto autoId={auto.id} autoMarca={auto.marca} autoModelo={auto.modelo} vendedorAsignadoId={auto.vendedor_asignado_id} estadoActual={auto.estado} puedeGestionar={puedeGestionar} mostrarBadge={false} />
-                        </div>
+                        <SucursalEditor autoId={auto.id} sucursalActualId={auto.sucursal_id} sucursalActualNombre={auto.sucursales?.nombre} sucursales={sucursales || []} puedeGestionar={puedeGestionar} />
                       </div>
                       <div className="min-w-0 col-span-2">
                         <span className="block text-slate-400 uppercase tracking-widest font-bold mb-0.5">Asignado a</span>
                         <div className="flex items-center justify-between gap-2">
                           <VendedorEditor autoId={auto.id} autoMarca={auto.marca} autoModelo={auto.modelo} autoSucursalId={auto.sucursal_id} vendedorActualId={auto.vendedor_asignado_id} vendedorActualNombre={auto.vendedor?.nombre} vendedores={vendedores || []} puedeGestionar={puedeGestionar} />
-                          {semaforo && (
-                            <span className={`shrink-0 inline-flex items-center gap-1 text-[10px] font-bold px-2 py-1 rounded-full ${semaforo.color}`}>
-                              {semaforo.dias}d
-                            </span>
-                          )}
+                          <div className="flex items-center gap-1.5 shrink-0">
+                            {semaforo && (
+                              <span className={`inline-flex items-center gap-1 text-[10px] font-bold px-2 py-1 rounded-full ${semaforo.color}`}>
+                                {semaforo.dias}d
+                              </span>
+                            )}
+                            <AccionesAuto autoId={auto.id} autoMarca={auto.marca} autoModelo={auto.modelo} vendedorAsignadoId={auto.vendedor_asignado_id} estadoActual={auto.estado} puedeGestionar={puedeGestionar} mostrarBadge={false} />
+                          </div>
                         </div>
                       </div>
                     </div>
