@@ -3,7 +3,7 @@
 import { useState, useMemo, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { supabase } from "@/lib/supabase/client";
-import { notificarEncargados } from "@/lib/notificaciones";
+import { notificarEncargados, notificarGestoria } from "@/lib/notificaciones";
 import { ArrowLeft, Receipt, Save, Upload, Loader2 } from "lucide-react";
 import { mostrarToast } from "@/lib/toast";
 import ClienteBuscador, { ClienteSeleccionado } from "../../ClienteBuscador";
@@ -281,6 +281,12 @@ export default function BoletoVentaForm({
           });
           if (errorMov) {
             mostrarToast("La venta se guardó, pero no se pudo registrar el cobro en Tesorería. Cargalo a mano en Gastos.", "error");
+          } else {
+            await notificarGestoria(
+              supabase,
+              `Nuevo cobro pendiente de aprobar — Venta N° ${siguienteNumero} (${cliente.nombre} ${cliente.apellido}, $${montoMovimiento.toLocaleString("es-AR")})`,
+              "/panel/ventas/gestoria/aprobaciones"
+            );
           }
         }
       }

@@ -1,8 +1,17 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 
-export type SeccionNotificacion =
-  | "senas" | "presupuestos" | "boletos" | "tareas" | "pedidos" | "chat"
-  | "cotizaciones" | "consignaciones" | "comprar" | "crm" | "postventa" | "financiacion" | "stock" | "postulaciones" | "citas";
+// Única fuente de verdad de las secciones válidas — antes estaba duplicada a
+// mano (como array literal) en api/notificaciones/persona y
+// api/vehiculos/notificar-cambio, y ya habían quedado desincronizadas
+// (les faltaban "citas"/"comprar"/"gestoria" según el archivo). Ahora esos
+// dos importan este mismo array en vez de tener su propia copia.
+export const SECCIONES_NOTIFICACION = [
+  "senas", "presupuestos", "boletos", "tareas", "pedidos", "chat",
+  "cotizaciones", "consignaciones", "comprar", "crm", "postventa",
+  "financiacion", "stock", "postulaciones", "citas", "gestoria",
+] as const;
+
+export type SeccionNotificacion = typeof SECCIONES_NOTIFICACION[number];
 
 // Avisa a todos los encargados activos (in-app, vía la campanita) — el vendedor
 // no está seguro de un precio y necesita que un encargado lo revise, o llegó
@@ -19,6 +28,19 @@ export async function notificarEncargados(
 
   await supabase.from("notificaciones").insert(
     encargados.map((e) => ({ perfil_id: e.id, tipo, mensaje, link, seccion }))
+  );
+}
+
+// Avisa a quien puede aprobar movimientos de Tesorería (admin, encargado y el
+// rol dedicado "gestoria") — separado de notificarEncargados para no hacer que
+// "gestoria" empiece a recibir TODAS las notificaciones genéricas de encargado
+// (leads, postventa, etc), que no le corresponden.
+export async function notificarGestoria(supabase: SupabaseClient, mensaje: string, link: string, tipo: string = "movimiento_pendiente") {
+  const { data: destinatarios } = await supabase.from("perfiles").select("id").in("rol", ["admin", "encargado", "gestoria"]).eq("activo", true);
+  if (!destinatarios || destinatarios.length === 0) return;
+
+  await supabase.from("notificaciones").insert(
+    destinatarios.map((d) => ({ perfil_id: d.id, tipo, mensaje, link, seccion: "gestoria" as SeccionNotificacion }))
   );
 }
 

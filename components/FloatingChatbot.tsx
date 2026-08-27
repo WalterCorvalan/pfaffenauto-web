@@ -16,16 +16,6 @@ const MENSAJE_INICIAL: Message = {
   content: "¡Hola! Soy el asistente virtual de Pfaffen Autos. Contame qué auto estás buscando y te cuento si lo tenemos en stock.",
 };
 
-function obtenerSessionId(): string {
-  const KEY = "pfaffen_webchat_session";
-  let id = localStorage.getItem(KEY);
-  if (!id) {
-    id = crypto.randomUUID();
-    localStorage.setItem(KEY, id);
-  }
-  return id;
-}
-
 export default function FloatingChatbot() {
   const pathname = usePathname();
   const enDetalleVehiculo = pathname?.startsWith("/catalogo/") ?? false;
@@ -46,7 +36,6 @@ export default function FloatingChatbot() {
   }, [messages, isOpen]);
 
   const limpiarChat = () => {
-    localStorage.removeItem("pfaffen_webchat_session");
     setMessages([MENSAJE_INICIAL]);
   };
 
@@ -60,16 +49,17 @@ export default function FloatingChatbot() {
     setLoading(true);
 
     try {
-      const sessionId = obtenerSessionId();
-      const res = await fetch("/api/webchat", {
+      const historialParaApi = [...messages, { role: "user" as const, content: texto }]
+        .map((m) => ({ role: m.role, content: m.content }));
+      const res = await fetch("/api/chat", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ sessionId, mensaje: texto }),
+        body: JSON.stringify({ messages: historialParaApi }),
       });
       const data = await res.json();
       setMessages((prev) => [
         ...prev,
-        { role: "assistant", content: data.reply || "Perdón, no pude responder. Probá de nuevo.", link: data.link || null },
+        { role: "assistant", content: data.reply || data.error || "Perdón, no pude responder. Probá de nuevo." },
       ]);
     } catch {
       setMessages((prev) => [...prev, { role: "assistant", content: "Perdón, hubo un error de conexión. Probá de nuevo en un momento." }]);

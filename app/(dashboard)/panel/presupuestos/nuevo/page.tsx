@@ -22,7 +22,7 @@ export default async function NuevoPresupuestoPage({ searchParams }: { searchPar
 
   let vehiculoInicial = null;
   if (campoFk && idLead) {
-    const tablaOrigen = campoFk === "cotizacion_id" ? "cotizaciones" : campoFk === "whatsapp_conversacion_id" ? "whatsapp_conversaciones" : "web_chat_conversaciones";
+    const tablaOrigen = campoFk === "cotizacion_id" ? "cotizaciones" : campoFk === "whatsapp_conversacion_id" ? "whatsapp_conversaciones" : "instagram_conversaciones";
     const { data: origenLead } = await supabase.from(tablaOrigen).select("vehiculo_id").eq("id", idLead).maybeSingle();
     if (origenLead?.vehiculo_id) {
       vehiculoInicial = (vehiculos || []).find((v) => v.id === origenLead.vehiculo_id) || null;

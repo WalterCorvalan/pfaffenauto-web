@@ -4,7 +4,7 @@ import { createServerClient } from "@supabase/ssr";
 import { cookies } from "next/headers";
 import { rateLimit, ipDesdeRequest } from "@/lib/rateLimit";
 import { registrarError } from "@/lib/logger";
-import type { SeccionNotificacion } from "@/lib/notificaciones";
+import { SECCIONES_NOTIFICACION } from "@/lib/notificaciones";
 
 const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -16,10 +16,7 @@ const NotificarPersonaSchema = z.object({
   tipo: z.string().trim().min(1).max(50),
   mensaje: z.string().trim().min(1).max(300),
   link: z.string().trim().max(200),
-  seccion: z.enum([
-    "senas", "presupuestos", "boletos", "tareas", "pedidos", "chat",
-    "cotizaciones", "consignaciones", "comprar", "crm", "postventa", "financiacion", "stock", "postulaciones",
-  ] satisfies readonly SeccionNotificacion[]),
+  seccion: z.enum(SECCIONES_NOTIFICACION),
 });
 
 // Un usuario no puede insertarle una notificación a OTRO vía RLS (por diseño:

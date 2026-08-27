@@ -4,6 +4,7 @@ import { useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import { supabase } from "@/lib/supabase/client";
 import { mostrarToast } from "@/lib/toast";
+import { notificarGestoria } from "@/lib/notificaciones";
 import { Landmark, Car, AlertTriangle, CheckCircle2, Clock, Filter, Inbox, Phone, MessageSquareText, CreditCard, ChevronDown, History, Upload, Loader2, X } from "lucide-react";
 import NotificacionesBell from "../../../NotificacionesBell";
 
@@ -169,7 +170,15 @@ export default function FinanciacionesClient({ financiacionesIniciales, solicitu
           comprobante_url: comprobanteUrl,
           observaciones: `Cuota financiación (${f.entidad || f.tipo || "—"}) — ${f.boleto?.marca} ${f.boleto?.modelo}`,
         });
-        if (errorMov) mostrarToast("Se marcó cobrado, pero no se pudo registrar en Tesorería. Cargalo a mano en Gastos.", "error");
+        if (errorMov) {
+          mostrarToast("Se marcó cobrado, pero no se pudo registrar en Tesorería. Cargalo a mano en Gastos.", "error");
+        } else {
+          await notificarGestoria(
+            supabase,
+            `Nuevo cobro pendiente de aprobar — cuota financiación (${f.boleto?.marca} ${f.boleto?.modelo}, $${Number(f.monto).toLocaleString("es-AR")})`,
+            "/panel/ventas/gestoria/aprobaciones"
+          );
+        }
       }
 
       setFinanciacionACobrar(null);

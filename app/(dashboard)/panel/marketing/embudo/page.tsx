@@ -40,7 +40,7 @@ export default async function EmbudoPage() {
   const { data: ventasPauta } = await supabase
     .from("boletos_venta")
     .select(`
-      fecha, vehiculo_id, sucursal_id, cotizacion_id, whatsapp_conversacion_id, web_chat_conversacion_id, instagram_conversacion_id,
+      fecha, vehiculo_id, sucursal_id, cotizacion_id, whatsapp_conversacion_id, instagram_conversacion_id,
       vehiculos ( pautado, canal_pauta ),
       sucursales ( nombre ),
       cotizaciones ( canal_origen )
@@ -55,7 +55,6 @@ export default async function EmbudoPage() {
   const origenVenta = (v: any) => {
     if (v.instagram_conversacion_id) return "Instagram / Facebook";
     if (v.whatsapp_conversacion_id) return "WhatsApp";
-    if (v.web_chat_conversacion_id) return "Chat Web";
     if (v.cotizaciones?.canal_origen) return v.cotizaciones.canal_origen;
     if (v.cotizacion_id) return "Formulario Web";
     return `Presencial — ${v.sucursales?.nombre || "sucursal sin datos"}`;

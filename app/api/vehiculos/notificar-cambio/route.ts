@@ -2,7 +2,7 @@ import { z } from "zod";
 import { createClient } from "@supabase/supabase-js";
 import { createServerClient } from "@supabase/ssr";
 import { cookies } from "next/headers";
-import { notificarCambioVehiculo, type SeccionNotificacion } from "@/lib/notificaciones";
+import { notificarCambioVehiculo, SECCIONES_NOTIFICACION } from "@/lib/notificaciones";
 import { rateLimit, ipDesdeRequest } from "@/lib/rateLimit";
 import { registrarError } from "@/lib/logger";
 
@@ -17,10 +17,7 @@ const NotificarCambioSchema = z.object({
   actorId: z.string().uuid().optional().nullable(),
   mensaje: z.string().trim().min(1).max(300),
   tipo: z.string().trim().min(1).max(50),
-  seccion: z.enum([
-    "senas", "presupuestos", "boletos", "tareas", "pedidos", "chat",
-    "cotizaciones", "consignaciones", "crm", "postventa", "financiacion", "stock", "postulaciones",
-  ] satisfies readonly SeccionNotificacion[]).optional().nullable(),
+  seccion: z.enum(SECCIONES_NOTIFICACION).optional().nullable(),
   link: z.string().trim().max(200).optional().nullable(),
 });
 
