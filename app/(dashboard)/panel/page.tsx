@@ -1,7 +1,7 @@
 ﻿import { createServerClient } from "@supabase/ssr";
 import { cookies } from "next/headers";
 import Link from "next/link";
-import { Plus, Car, Search, Edit2, ChevronLeft, ChevronRight, ChevronsLeft, ChevronsRight, FileText, LayoutGrid, Megaphone } from "lucide-react";
+import { Plus, Car, Search, Edit2, ChevronLeft, ChevronRight, ChevronsLeft, ChevronsRight, LayoutGrid, Megaphone, Wallet } from "lucide-react";
 import AccionesAuto from "./AccionesAuto";
 import PublicarRedesBoton from "./PublicarRedesBoton";
 import MiniaturaAuto from "./MiniaturaAuto";
@@ -31,9 +31,9 @@ function semaforoAntiguedad(fechaIngreso: string | null): { color: string; label
   return { color: "bg-slate-100 dark:bg-slate-700 text-slate-500 dark:text-slate-300", label: `${dias} días en stock`, dias };
 }
 
-export default async function PanelPage({ searchParams }: { searchParams: Promise<{ q?: string; sucursal?: string; page?: string }>; }) {
+export default async function PanelPage({ searchParams }: { searchParams: Promise<{ q?: string; sucursal?: string; page?: string; estado?: string }>; }) {
   const cookieStore = await cookies();
-  const { q = "", sucursal = "", page = "1" } = await searchParams;
+  const { q = "", sucursal = "", page = "1", estado = "" } = await searchParams;
   const currentPage = parseInt(page, 10) || 1;
 
   const supabase = createServerClient(
@@ -62,6 +62,7 @@ export default async function PanelPage({ searchParams }: { searchParams: Promis
 
   if (q) query = query.or(`marca.ilike.%${q}%,modelo.ilike.%${q}%,patente.ilike.%${q}%`);
   if (sucursal) query = query.eq("sucursal_id", sucursal);
+  if (estado) query = query.eq("estado", estado);
 
   const { data: todosLosVehiculos, error } = await query;
   if (error) console.error("Error cargando autos:", error);
@@ -86,28 +87,34 @@ export default async function PanelPage({ searchParams }: { searchParams: Promis
     <div className="flex flex-col h-full w-full bg-white dark:bg-[#001233] overflow-hidden">
 
       {/* HEADER Y FILTROS */}
-      <header className="flex flex-col md:flex-row md:items-center justify-between border-b border-slate-200 dark:border-[#0a2a6b] px-6 py-4 bg-white dark:bg-[#001c55] shrink-0 gap-4">
-        <div className="flex items-center gap-4">
-          <div className="w-10 h-10 rounded-lg bg-indigo-50 dark:bg-[#002a6e] border border-indigo-100 dark:border-[#0a2a6b] flex items-center justify-center shrink-0">
-            <LayoutGrid className="w-5 h-5 text-indigo-600 dark:text-sky-300" />
+      <header className="flex flex-col md:flex-row md:items-center justify-between border-b border-slate-200 dark:border-[#0a2a6b] px-6 py-4 bg-white dark:bg-[#001c55] shrink-0 gap-3 md:gap-4">
+        <div className="flex items-center justify-between gap-4">
+          <div className="flex items-center gap-4">
+            <div className="w-10 h-10 rounded-lg bg-indigo-50 dark:bg-[#002a6e] border border-indigo-100 dark:border-[#0a2a6b] flex items-center justify-center shrink-0">
+              <LayoutGrid className="w-5 h-5 text-indigo-600 dark:text-sky-300" />
+            </div>
+            <div>
+              <h1 className="text-[17px] font-bold text-slate-900 dark:text-white leading-tight">Gestión de Stock</h1>
+              <p className="text-[11px] font-medium text-slate-500 dark:text-slate-400 mt-0.5 flex items-center gap-3 flex-wrap">
+                Administración del inventario de unidades
+                <span className="flex items-center gap-2.5 text-[10px] font-bold uppercase tracking-wide">
+                  <span className="flex items-center gap-1"><span className="w-1.5 h-1.5 rounded-full bg-amber-400" />+30 días</span>
+                  <span className="flex items-center gap-1"><span className="w-1.5 h-1.5 rounded-full bg-rose-500" />+60 días</span>
+                </span>
+              </p>
+            </div>
           </div>
-          <div>
-            <h1 className="text-[17px] font-bold text-slate-900 dark:text-white leading-tight">Gestión de Stock</h1>
-            <p className="text-[11px] font-medium text-slate-500 dark:text-slate-400 mt-0.5 flex items-center gap-3 flex-wrap">
-              Administración del inventario de unidades
-              <span className="flex items-center gap-2.5 text-[10px] font-bold uppercase tracking-wide">
-                <span className="flex items-center gap-1"><span className="w-1.5 h-1.5 rounded-full bg-amber-400" />+30 días</span>
-                <span className="flex items-center gap-1"><span className="w-1.5 h-1.5 rounded-full bg-rose-500" />+60 días</span>
-              </span>
-            </p>
+          <div className="shrink-0 md:hidden">
+            <NotificacionesBell seccion="stock" />
           </div>
         </div>
-        
-        <div className="flex items-center gap-2">
+
+        <div className="hidden md:block shrink-0">
           <NotificacionesBell seccion="stock" />
         </div>
 
         <form method="GET" action="/panel" className="flex flex-col sm:flex-row gap-2">
+          <input type="hidden" name="estado" value={estado} />
           <div className="relative flex items-stretch gap-2">
             <div className="relative flex-1 sm:flex-none">
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
@@ -129,6 +136,33 @@ export default async function PanelPage({ searchParams }: { searchParams: Promis
           )}
         </form>
       </header>
+
+      {/* FILTROS RÁPIDOS POR ESTADO */}
+      <div className="flex items-center gap-2 px-6 py-2.5 border-b border-slate-200 dark:border-[#0a2a6b] bg-white dark:bg-[#001c55] overflow-x-auto custom-scrollbar shrink-0">
+        {[
+          { value: "", label: "Todos", activo: "bg-indigo-600 text-white border-indigo-600", inactivo: "bg-indigo-50 dark:bg-[#002a6e] text-indigo-600 dark:text-sky-300 border-indigo-200 dark:border-[#0a2a6b] hover:bg-indigo-100 dark:hover:bg-[#00246b]" },
+          { value: "Disponible", label: "Disponible", activo: "bg-blue-600 text-white border-blue-600", inactivo: "bg-blue-50 dark:bg-[#002a6e] text-blue-700 dark:text-sky-300 border-blue-200 dark:border-[#0a2a6b] hover:bg-blue-100 dark:hover:bg-[#00246b]" },
+          { value: "Reservado", label: "Señado", activo: "bg-amber-500 text-white border-amber-500", inactivo: "bg-amber-50 dark:bg-[#002a6e] text-amber-700 dark:text-amber-300 border-amber-200 dark:border-[#0a2a6b] hover:bg-amber-100 dark:hover:bg-[#00246b]" },
+          { value: "Vendido", label: "Vendido", activo: "bg-emerald-600 text-white border-emerald-600", inactivo: "bg-emerald-50 dark:bg-[#002a6e] text-emerald-700 dark:text-emerald-300 border-emerald-200 dark:border-[#0a2a6b] hover:bg-emerald-100 dark:hover:bg-[#00246b]" },
+          { value: "Archivado", label: "Archivado", activo: "bg-rose-600 text-white border-rose-600", inactivo: "bg-rose-50 dark:bg-[#002a6e] text-rose-700 dark:text-rose-300 border-rose-200 dark:border-[#0a2a6b] hover:bg-rose-100 dark:hover:bg-[#00246b]" },
+        ].map((chip) => {
+          const params = new URLSearchParams();
+          if (q) params.set("q", q);
+          if (sucursal) params.set("sucursal", sucursal);
+          if (chip.value) params.set("estado", chip.value);
+          const href = `/panel${params.toString() ? `?${params.toString()}` : ""}`;
+          const activo = estado === chip.value;
+          return (
+            <Link
+              key={chip.value || "todos"}
+              href={href}
+              className={`shrink-0 px-3 py-1.5 rounded-lg text-[12px] font-bold border transition-colors ${activo ? chip.activo : chip.inactivo}`}
+            >
+              {chip.label}
+            </Link>
+          );
+        })}
+      </div>
 
       {/* ÁREA SCROLLABLE */}
       <div className="flex-1 overflow-y-auto bg-[#F9FAFB] dark:bg-[#001233] custom-scrollbar">
@@ -164,6 +198,10 @@ export default async function PanelPage({ searchParams }: { searchParams: Promis
                         <h3 className="font-bold capitalize text-sm text-slate-900 dark:text-white leading-tight truncate mb-1">{auto.marca} {auto.modelo}</h3>
                         <PrecioEditor autoId={auto.id} autoMarca={auto.marca} autoModelo={auto.modelo} vendedorAsignadoId={auto.vendedor_asignado_id} precioArs={auto.precio_publicado_ars} precioUsd={auto.precio_publicado_usd} puedeGestionar={puedeGestionar} />
                       </div>
+                      <div className="shrink-0 flex flex-col items-end gap-1.5">
+                        <AccionesAuto autoId={auto.id} autoMarca={auto.marca} autoModelo={auto.modelo} vendedorAsignadoId={auto.vendedor_asignado_id} estadoActual={auto.estado} puedeGestionar={puedeGestionar} mostrarArchivar={false} />
+                        {puedeGestionar && <PublicarRedesBoton vehiculoId={auto.id} yaPublicado={!!auto.publicado_redes_at} />}
+                      </div>
                     </div>
                     <div className="grid grid-cols-2 gap-2 text-[11px] bg-slate-50 dark:bg-[#00246b] border border-slate-100 dark:border-[#0a2a6b] p-2.5 rounded-lg">
                       <div className="min-w-0">
@@ -171,25 +209,31 @@ export default async function PanelPage({ searchParams }: { searchParams: Promis
                         <span className="font-bold text-slate-700 dark:text-slate-200 truncate block">{auto.anio} • {auto.kilometraje?.toLocaleString()} km</span>
                       </div>
                       <div className="min-w-0">
-                        <span className="block text-slate-400 uppercase tracking-widest font-bold mb-0.5">Ubicación</span>
-                        <SucursalEditor autoId={auto.id} sucursalActualId={auto.sucursal_id} sucursalActualNombre={auto.sucursales?.nombre} sucursales={sucursales || []} puedeGestionar={puedeGestionar} />
+                        <span className="block text-slate-400 uppercase tracking-widest font-bold mb-0.5">Sucursal</span>
+                        <div className="flex items-center justify-between gap-2">
+                          <SucursalEditor autoId={auto.id} sucursalActualId={auto.sucursal_id} sucursalActualNombre={auto.sucursales?.nombre} sucursales={sucursales || []} puedeGestionar={puedeGestionar} />
+                          <AccionesAuto autoId={auto.id} autoMarca={auto.marca} autoModelo={auto.modelo} vendedorAsignadoId={auto.vendedor_asignado_id} estadoActual={auto.estado} puedeGestionar={puedeGestionar} mostrarBadge={false} />
+                        </div>
                       </div>
                       <div className="min-w-0 col-span-2">
-                        <span className="block text-slate-400 uppercase tracking-widest font-bold mb-0.5">Vendedor</span>
-                        <VendedorEditor autoId={auto.id} autoMarca={auto.marca} autoModelo={auto.modelo} autoSucursalId={auto.sucursal_id} vendedorActualId={auto.vendedor_asignado_id} vendedorActualNombre={auto.vendedor?.nombre} vendedores={vendedores || []} puedeGestionar={puedeGestionar} />
+                        <span className="block text-slate-400 uppercase tracking-widest font-bold mb-0.5">Asignado a</span>
+                        <div className="flex items-center justify-between gap-2">
+                          <VendedorEditor autoId={auto.id} autoMarca={auto.marca} autoModelo={auto.modelo} autoSucursalId={auto.sucursal_id} vendedorActualId={auto.vendedor_asignado_id} vendedorActualNombre={auto.vendedor?.nombre} vendedores={vendedores || []} puedeGestionar={puedeGestionar} />
+                          {semaforo && (
+                            <span className={`shrink-0 inline-flex items-center gap-1 text-[10px] font-bold px-2 py-1 rounded-full ${semaforo.color}`}>
+                              {semaforo.dias}d
+                            </span>
+                          )}
+                        </div>
                       </div>
                     </div>
-                    <div className="pt-2 flex items-center justify-between gap-2 border-t border-slate-100 dark:border-[#0a2a6b]">
-                      <div className="flex items-center gap-2">
-                        <AccionesAuto autoId={auto.id} autoMarca={auto.marca} autoModelo={auto.modelo} vendedorAsignadoId={auto.vendedor_asignado_id} estadoActual={auto.estado} puedeGestionar={puedeGestionar} />
-                        {puedeGestionar && <PublicarRedesBoton vehiculoId={auto.id} yaPublicado={!!auto.publicado_redes_at} />}
-                        {semaforo && (
-                          <span className={`inline-flex items-center gap-1 text-[10px] font-bold px-2 py-1 rounded-full ${semaforo.color}`}>
-                            {semaforo.dias}d en stock
-                          </span>
-                        )}
-                      </div>
-                      <Link href={`/panel/vehiculo/editar/${auto.id}`} className="flex items-center gap-1 text-[11px] font-bold uppercase tracking-wider bg-slate-50 dark:bg-[#00246b] border border-slate-200 dark:border-[#0a2a6b] hover:bg-slate-100 dark:hover:bg-[#002a6e] text-slate-600 dark:text-slate-300 px-3 py-1.5 rounded-lg transition-colors">
+                    <div className="pt-2.5 flex items-center gap-2 border-t border-slate-100 dark:border-[#0a2a6b]">
+                      {auto.estado === "Disponible" && (
+                        <Link href={`/panel/senas/nuevo?vehiculo_id=${auto.id}`} className="flex-1 flex items-center justify-center gap-1.5 text-[11px] font-bold uppercase tracking-wider bg-amber-500 hover:bg-amber-600 text-white px-3 py-2 rounded-lg transition-colors shadow-sm">
+                          <Wallet className="w-3.5 h-3.5" /> Señar
+                        </Link>
+                      )}
+                      <Link href={`/panel/vehiculo/editar/${auto.id}`} className="flex-1 flex items-center justify-center gap-1.5 text-[11px] font-bold uppercase tracking-wider border border-slate-200 dark:border-[#0a2a6b] hover:bg-slate-50 dark:hover:bg-[#002a6e] text-slate-600 dark:text-slate-300 px-3 py-2 rounded-lg transition-colors">
                         <Edit2 className="w-3.5 h-3.5" /> Editar
                       </Link>
                     </div>
@@ -203,11 +247,11 @@ export default async function PanelPage({ searchParams }: { searchParams: Promis
                 <table className="w-full text-left border-collapse min-w-[900px]">
                   <thead>
                     <tr className="bg-slate-800 dark:bg-[#00246b] border-b border-slate-200 dark:border-[#0a2a6b] text-white dark:text-slate-300 text-[10px] uppercase tracking-widest font-bold">
-                      <th className="p-4 whitespace-nowrap font-bold">Vehículo</th>
+                      <th className="p-4 whitespace-nowrap font-bold w-full">Vehículo</th>
                       <th className="p-4 whitespace-nowrap font-bold">Año / Km</th>
                       <th className="p-4 whitespace-nowrap font-bold">Precio (ARS / USD)</th>
                       <th className="p-4 whitespace-nowrap font-bold">Sucursal</th>
-                      <th className="p-4 whitespace-nowrap font-bold">Vendedor</th>
+                      <th className="p-4 whitespace-nowrap font-bold">Asignado a</th>
                       <th className="p-4 text-right whitespace-nowrap font-bold">Estado / Acciones</th>
                     </tr>
                   </thead>
@@ -257,16 +301,18 @@ export default async function PanelPage({ searchParams }: { searchParams: Promis
                         <td className="p-4 whitespace-nowrap">
                           <VendedorEditor autoId={auto.id} autoMarca={auto.marca} autoModelo={auto.modelo} autoSucursalId={auto.sucursal_id} vendedorActualId={auto.vendedor_asignado_id} vendedorActualNombre={auto.vendedor?.nombre} vendedores={vendedores || []} puedeGestionar={puedeGestionar} />
                         </td>
-                        <td className="p-4">
+                        <td className="p-4 w-px whitespace-nowrap">
                           <div className="flex items-center justify-end gap-3">
                             <AccionesAuto autoId={auto.id} autoMarca={auto.marca} autoModelo={auto.modelo} vendedorAsignadoId={auto.vendedor_asignado_id} estadoActual={auto.estado} puedeGestionar={puedeGestionar} />
                             {puedeGestionar && <PublicarRedesBoton vehiculoId={auto.id} yaPublicado={!!auto.publicado_redes_at} />}
 
                             <div className="flex items-center gap-1 border-l border-slate-200 dark:border-[#0a2a6b] pl-3">
-                              {puedeGestionar && (
-                                <Link href={`/panel/vehiculo/boleto/${auto.id}`} className="p-1.5 text-slate-400 dark:text-slate-300 hover:text-emerald-600 transition-colors" title="Generar Boleto">
-                                  <FileText className="w-4 h-4" />
+                              {auto.estado === "Disponible" ? (
+                                <Link href={`/panel/senas/nuevo?vehiculo_id=${auto.id}`} className="p-1.5 text-slate-400 dark:text-slate-300 hover:text-amber-600 transition-colors" title="Señar">
+                                  <Wallet className="w-4 h-4" />
                                 </Link>
+                              ) : (
+                                <span className="p-1.5 w-7 h-7" aria-hidden="true" />
                               )}
                               <Link href={`/panel/vehiculo/editar/${auto.id}`} className="p-1.5 text-slate-400 dark:text-slate-300 hover:text-indigo-600 transition-colors" title="Editar">
                                 <Edit2 className="w-4 h-4" />
@@ -289,7 +335,7 @@ export default async function PanelPage({ searchParams }: { searchParams: Promis
                   </p>
                   <div className="flex items-center gap-1.5">
                     {currentPage > 1 ? (
-                      <Link href={`/panel?q=${q}&sucursal=${sucursal}&page=1`} title="Primera página" className="p-1.5 bg-slate-50 dark:bg-[#00246b] hover:bg-slate-100 dark:hover:bg-[#002a6e] rounded-md border border-slate-200 dark:border-[#0a2a6b] text-slate-600 dark:text-slate-300">
+                      <Link href={`/panel?q=${q}&sucursal=${sucursal}&estado=${estado}&page=1`} title="Primera página" className="p-1.5 bg-slate-50 dark:bg-[#00246b] hover:bg-slate-100 dark:hover:bg-[#002a6e] rounded-md border border-slate-200 dark:border-[#0a2a6b] text-slate-600 dark:text-slate-300">
                         <ChevronsLeft className="w-4 h-4" />
                       </Link>
                     ) : (
@@ -298,7 +344,7 @@ export default async function PanelPage({ searchParams }: { searchParams: Promis
                       </button>
                     )}
                     {currentPage > 1 ? (
-                      <Link href={`/panel?q=${q}&sucursal=${sucursal}&page=${currentPage - 1}`} title="Página anterior" className="p-1.5 bg-slate-50 dark:bg-[#00246b] hover:bg-slate-100 dark:hover:bg-[#002a6e] rounded-md border border-slate-200 dark:border-[#0a2a6b] text-slate-600 dark:text-slate-300">
+                      <Link href={`/panel?q=${q}&sucursal=${sucursal}&estado=${estado}&page=${currentPage - 1}`} title="Página anterior" className="p-1.5 bg-slate-50 dark:bg-[#00246b] hover:bg-slate-100 dark:hover:bg-[#002a6e] rounded-md border border-slate-200 dark:border-[#0a2a6b] text-slate-600 dark:text-slate-300">
                         <ChevronLeft className="w-4 h-4" />
                       </Link>
                     ) : (
@@ -309,6 +355,7 @@ export default async function PanelPage({ searchParams }: { searchParams: Promis
                     <form method="GET" action="/panel" className="flex items-center gap-1">
                       <input type="hidden" name="q" value={q} />
                       <input type="hidden" name="sucursal" value={sucursal} />
+                      <input type="hidden" name="estado" value={estado} />
                       <input
                         type="number"
                         name="page"
@@ -321,7 +368,7 @@ export default async function PanelPage({ searchParams }: { searchParams: Promis
                       <span className="text-[11px] font-bold text-slate-400">/ {totalPages}</span>
                     </form>
                     {currentPage < totalPages ? (
-                      <Link href={`/panel?q=${q}&sucursal=${sucursal}&page=${currentPage + 1}`} title="Página siguiente" className="p-1.5 bg-slate-50 dark:bg-[#00246b] hover:bg-slate-100 dark:hover:bg-[#002a6e] rounded-md border border-slate-200 dark:border-[#0a2a6b] text-slate-600 dark:text-slate-300">
+                      <Link href={`/panel?q=${q}&sucursal=${sucursal}&estado=${estado}&page=${currentPage + 1}`} title="Página siguiente" className="p-1.5 bg-slate-50 dark:bg-[#00246b] hover:bg-slate-100 dark:hover:bg-[#002a6e] rounded-md border border-slate-200 dark:border-[#0a2a6b] text-slate-600 dark:text-slate-300">
                         <ChevronRight className="w-4 h-4" />
                       </Link>
                     ) : (
@@ -330,7 +377,7 @@ export default async function PanelPage({ searchParams }: { searchParams: Promis
                       </button>
                     )}
                     {currentPage < totalPages ? (
-                      <Link href={`/panel?q=${q}&sucursal=${sucursal}&page=${totalPages}`} title="Última página" className="p-1.5 bg-slate-50 dark:bg-[#00246b] hover:bg-slate-100 dark:hover:bg-[#002a6e] rounded-md border border-slate-200 dark:border-[#0a2a6b] text-slate-600 dark:text-slate-300">
+                      <Link href={`/panel?q=${q}&sucursal=${sucursal}&estado=${estado}&page=${totalPages}`} title="Última página" className="p-1.5 bg-slate-50 dark:bg-[#00246b] hover:bg-slate-100 dark:hover:bg-[#002a6e] rounded-md border border-slate-200 dark:border-[#0a2a6b] text-slate-600 dark:text-slate-300">
                         <ChevronsRight className="w-4 h-4" />
                       </Link>
                     ) : (

@@ -2,8 +2,8 @@ import { createServerClient } from "@supabase/ssr";
 import { cookies } from "next/headers";
 import SenaForm from "./SenaForm";
 
-export default async function NuevaSenaPage({ searchParams }: { searchParams: Promise<{ cotizacion_id?: string; whatsapp_conversacion_id?: string; instagram_conversacion_id?: string }> }) {
-  const { cotizacion_id, whatsapp_conversacion_id, instagram_conversacion_id } = await searchParams;
+export default async function NuevaSenaPage({ searchParams }: { searchParams: Promise<{ cotizacion_id?: string; whatsapp_conversacion_id?: string; instagram_conversacion_id?: string; vehiculo_id?: string }> }) {
+  const { cotizacion_id, whatsapp_conversacion_id, instagram_conversacion_id, vehiculo_id } = await searchParams;
   const campoFk = whatsapp_conversacion_id ? "whatsapp_conversacion_id" : instagram_conversacion_id ? "instagram_conversacion_id" : cotizacion_id ? "cotizacion_id" : null;
   const idLead = whatsapp_conversacion_id || instagram_conversacion_id || cotizacion_id || null;
   const cookieStore = await cookies();
@@ -21,5 +21,7 @@ export default async function NuevaSenaPage({ searchParams }: { searchParams: Pr
     supabase.from("cuentas").select("id, nombre, moneda").eq("activa", true).order("nombre"),
   ]);
 
-  return <SenaForm clientes={clientes || []} vehiculos={vehiculos || []} vendedores={vendedores || []} sucursales={sucursales || []} cuentas={cuentas || []} vinculoLead={campoFk && idLead ? { campo: campoFk, id: idLead } : null} />;
+  const vehiculoInicial = vehiculo_id ? (vehiculos || []).find((v) => v.id === vehiculo_id) || null : null;
+
+  return <SenaForm clientes={clientes || []} vehiculos={vehiculos || []} vendedores={vendedores || []} sucursales={sucursales || []} cuentas={cuentas || []} vehiculoInicial={vehiculoInicial} vinculoLead={campoFk && idLead ? { campo: campoFk, id: idLead } : null} />;
 }

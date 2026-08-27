@@ -10,6 +10,8 @@ interface AccionesAutoProps {
   vendedorAsignadoId?: string | null;
   estadoActual: string;
   puedeGestionar: boolean;
+  mostrarBadge?: boolean;
+  mostrarArchivar?: boolean;
 }
 
 // Solo lectura a propósito: el estado del auto ya no se toca a mano desde
@@ -19,7 +21,7 @@ interface AccionesAutoProps {
 // Excepción: Archivado/Disponible es la única transición manual que queda,
 // porque ningún otro módulo la dispara — requiere admin/encargado (ver
 // /api/vehiculos/reservar).
-export default function AccionesAuto({ autoId, estadoActual, puedeGestionar }: AccionesAutoProps) {
+export default function AccionesAuto({ autoId, estadoActual, puedeGestionar, mostrarBadge = true, mostrarArchivar = true }: AccionesAutoProps) {
   const [estado, setEstado] = useState(estadoActual);
   const [cargando, setCargando] = useState(false);
   const estadoVisual = estado === "Reservado" ? "Señado" : estado;
@@ -54,13 +56,15 @@ export default function AccionesAuto({ autoId, estadoActual, puedeGestionar }: A
 
   return (
     <div className="inline-flex items-center gap-1.5">
-      <div
-        title="El estado lo definen las acciones (seña, venta, etc.) — no se edita a mano"
-        className={`inline-flex items-center justify-center text-[10px] md:text-[11px] font-bold px-3 py-1 rounded-full border shadow-sm cursor-default uppercase tracking-wider ${colorClasses}`}
-      >
-        {estadoVisual}
-      </div>
-      {puedeArchivar && (
+      {mostrarBadge && (
+        <div
+          title="El estado lo definen las acciones (seña, venta, etc.) — no se edita a mano"
+          className={`inline-flex items-center justify-center text-[10px] md:text-[11px] font-bold px-3 py-1 rounded-full border shadow-sm cursor-default uppercase tracking-wider ${colorClasses}`}
+        >
+          {estadoVisual}
+        </div>
+      )}
+      {mostrarArchivar && puedeArchivar && (
         <button
           type="button"
           onClick={toggleArchivado}

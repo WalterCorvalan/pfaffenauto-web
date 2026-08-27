@@ -13,13 +13,34 @@ import ConfirmarPrecioModal from "../../ConfirmarPrecioModal";
 
 const inputClass = "w-full bg-slate-50 dark:bg-[#00246b] border border-slate-200 dark:border-[#0a2a6b] rounded-xl px-3 py-2.5 text-sm outline-none focus:border-indigo-500 focus:bg-white dark:focus:bg-[#002a6e] transition-colors text-slate-900 dark:text-white placeholder:text-slate-400 dark:placeholder:text-slate-500";
 
-export default function SenaForm({ clientes, vehiculos, vendedores, sucursales, cuentas, vinculoLead }: { clientes: any[]; vehiculos: any[]; vendedores: any[]; sucursales: any[]; cuentas: any[]; vinculoLead?: { campo: string; id: string } | null }) {
+export default function SenaForm({ clientes, vehiculos, vendedores, sucursales, cuentas, vehiculoInicial, vinculoLead }: { clientes: any[]; vehiculos: any[]; vendedores: any[]; sucursales: any[]; cuentas: any[]; vehiculoInicial?: any | null; vinculoLead?: { campo: string; id: string } | null }) {
   const router = useRouter();
   const [guardando, setGuardando] = useState(false);
 
+  // Viene de "Señar" directo desde /panel (Gestión de Stock) — el auto y la
+  // sucursal ya llegan resueltos, no hay que volver a buscarlos.
   const [cliente, setCliente] = useState<ClienteSeleccionado | null>(null);
-  const [vehiculo, setVehiculo] = useState<VehiculoDatos | null>(null);
-  const [sucursalId, setSucursalId] = useState("");
+  const [vehiculo, setVehiculo] = useState<VehiculoDatos | null>(vehiculoInicial ? {
+    vehiculo_id: vehiculoInicial.id,
+    dominio: vehiculoInicial.patente || "",
+    segmento: vehiculoInicial.segmento || "",
+    marca: vehiculoInicial.marca || "",
+    modelo: vehiculoInicial.modelo || "",
+    tipo: vehiculoInicial.tipo || "",
+    marca_motor: vehiculoInicial.marca_motor || "",
+    numero_motor: vehiculoInicial.numero_motor || "",
+    marca_chasis: vehiculoInicial.marca_chasis || "",
+    numero_chasis: vehiculoInicial.numero_chasis || "",
+    modelo_anio: String(vehiculoInicial.anio || ""),
+    color: vehiculoInicial.color || "",
+    kilometros: String(vehiculoInicial.kilometraje || ""),
+    combustible: vehiculoInicial.tipo_combustible || "",
+    transmision: vehiculoInicial.transmision || "",
+    traccion: vehiculoInicial.traccion || "",
+    precio_publicado_ars: vehiculoInicial.precio_publicado_ars ?? null,
+    precio_publicado_usd: vehiculoInicial.precio_publicado_usd ?? null,
+  } : null);
+  const [sucursalId, setSucursalId] = useState(vehiculoInicial?.sucursal_id || "");
   const [vendedorId, setVendedorId] = useState("");
   const [ventaArs, setVentaArs] = useState("");
   const [ventaUsd, setVentaUsd] = useState("");

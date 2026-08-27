@@ -79,21 +79,21 @@ export default function PrecioEditor({ autoId, autoMarca, autoModelo, vendedorAs
         title={puedeGestionar ? "Tocar para editar precios" : ""}
       >
         <div className="flex items-center gap-1.5">
-          <span className="font-bold text-emerald-700 dark:text-emerald-300 text-[15px]">
+          <span className="font-bold text-emerald-700 dark:text-emerald-300 text-[15px] whitespace-nowrap">
             {precioArs
-              ? `$ ${precioArs.toLocaleString("es-AR")}`
+              ? `$ ${precioArs.toLocaleString("es-AR")}`
               : precioUsd
-              ? `US$ ${precioUsd.toLocaleString("en-US")}`
+              ? `US$ ${precioUsd.toLocaleString("en-US")}`
               : "Sin precio"}
           </span>
           {puedeGestionar && (
-            <Edit3 className="w-3.5 h-3.5 opacity-0 group-hover:opacity-100 transition-opacity text-slate-400 dark:text-slate-500" />
+            <Edit3 className="w-3.5 h-3.5 opacity-0 group-hover:opacity-100 transition-opacity text-slate-400 dark:text-slate-500 shrink-0" />
           )}
         </div>
         {/* Solo mostramos la segunda moneda si el precio principal ya mostró la primera */}
         {precioArs && precioUsd && (
-          <div className="text-[11px] text-slate-500 dark:text-slate-400 font-semibold">
-            US$ {precioUsd.toLocaleString("en-US")}
+          <div className="text-[11px] text-slate-500 dark:text-slate-400 font-semibold whitespace-nowrap">
+            US$&nbsp;{precioUsd.toLocaleString("en-US")}
           </div>
         )}
       </div>

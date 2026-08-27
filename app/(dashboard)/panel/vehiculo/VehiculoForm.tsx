@@ -42,7 +42,6 @@ const formSchema = z.object({
   numero_chasis: z.string().optional(),
   marca_motor: z.string().optional(),
   marca_chasis: z.string().optional(),
-  ubicacion: z.string().optional(),
   radicado_localidad: z.string().optional(),
   radicado_provincia: z.string().optional(),
   observaciones_internas: z.string().optional(),
@@ -195,7 +194,6 @@ export default function VehiculoForm({ modo, autoId }: VehiculoFormProps) {
             numero_chasis: vehiculo.numero_chasis || "", radicado_localidad: vehiculo.radicado_localidad || "",
             radicado_provincia: vehiculo.radicado_provincia || "", observaciones_internas: vehiculo.observaciones_internas || "",
             marca_motor: vehiculo.marca_motor || "", marca_chasis: vehiculo.marca_chasis || "",
-            ubicacion: vehiculo.ubicacion || "",
             fecha_compra: vehiculo.fecha_compra || "", sucursal_compra_id: vehiculo.sucursal_compra_id || "",
             importe_patente_anual: vehiculo.importe_patente_anual ? String(vehiculo.importe_patente_anual) : "",
             razon_pauta: vehiculo.razon_pauta || "",
@@ -229,7 +227,7 @@ export default function VehiculoForm({ modo, autoId }: VehiculoFormProps) {
     if (paso === 1) camposAValidar = ["patente", "marca", "modelo", "anio", "kilometraje"];
     else if (paso === 2) camposAValidar = ["sucursal_id", "segmento", "tipo", "tipo_combustible", "transmision", "estado", "condicion_web", "stock_fisico", "destacado"];
     else if (paso === 3) camposAValidar = ["precio_publicado_ars", "precio_publicado_usd", "precio_costo_ars", "precio_costo_usd"];
-    else if (paso === 4) camposAValidar = ["numero_motor", "numero_chasis", "marca_motor", "marca_chasis", "ubicacion", "radicado_localidad", "radicado_provincia"];
+    else if (paso === 4) camposAValidar = ["numero_motor", "numero_chasis", "marca_motor", "marca_chasis", "radicado_localidad", "radicado_provincia"];
     else if (paso === 5) camposAValidar = ["fecha_compra", "sucursal_compra_id", "importe_patente_anual"];
 
     const esValido = camposAValidar.length > 0 ? await trigger(camposAValidar) : true;
@@ -244,7 +242,7 @@ export default function VehiculoForm({ modo, autoId }: VehiculoFormProps) {
     patente: 1, marca: 1, modelo: 1, anio: 1, kilometraje: 1,
     sucursal_id: 2, segmento: 2, tipo: 2, tipo_combustible: 2, transmision: 2, estado: 2, condicion_web: 2, stock_fisico: 2, destacado: 2,
     precio_publicado_ars: 3, precio_publicado_usd: 3, precio_costo_ars: 3, precio_costo_usd: 3,
-    numero_motor: 4, numero_chasis: 4, marca_motor: 4, marca_chasis: 4, ubicacion: 4, radicado_localidad: 4, radicado_provincia: 4,
+    numero_motor: 4, numero_chasis: 4, marca_motor: 4, marca_chasis: 4, radicado_localidad: 4, radicado_provincia: 4,
     fecha_compra: 5, sucursal_compra_id: 5, importe_patente_anual: 5,
   };
 
@@ -291,7 +289,6 @@ export default function VehiculoForm({ modo, autoId }: VehiculoFormProps) {
         precio_publicado_usd: data.precio_publicado_usd ? Number(data.precio_publicado_usd) : null,
         numero_motor: data.numero_motor || null, numero_chasis: data.numero_chasis || null,
         marca_motor: data.marca_motor || null, marca_chasis: data.marca_chasis || null,
-        ubicacion: data.ubicacion || null,
         radicado_localidad: data.radicado_localidad || null, radicado_provincia: data.radicado_provincia || null, destacado: data.destacado,
         pautado: data.pautado,
         // Unimos el array con comas para guardarlo como string en la DB
@@ -741,9 +738,6 @@ export default function VehiculoForm({ modo, autoId }: VehiculoFormProps) {
                 </Campo>
                 <Campo label="Número de Chasis">
                   <input {...register("numero_chasis")} className={inputClass} />
-                </Campo>
-                <Campo label="Ubicación (playón/predio)">
-                  <input {...register("ubicacion")} className={inputClass} />
                 </Campo>
                 <Campo label="Radicado - Localidad">
                   <input {...register("radicado_localidad")} className={inputClass} />
