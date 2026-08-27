@@ -3,7 +3,8 @@
 import { useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import { supabase } from "@/lib/supabase/client";
-import { Landmark, Car, AlertTriangle, CheckCircle2, Clock, Filter, Inbox, Phone, MessageSquareText, CreditCard, ChevronDown, History } from "lucide-react";
+import { mostrarToast } from "@/lib/toast";
+import { Landmark, Car, AlertTriangle, CheckCircle2, Clock, Filter, Inbox, Phone, MessageSquareText, CreditCard, ChevronDown, History, Upload, Loader2, X } from "lucide-react";
 import NotificacionesBell from "../../../NotificacionesBell";
 
 interface Financiacion {
@@ -22,6 +23,9 @@ interface Financiacion {
     marca: string | null;
     modelo: string | null;
     dominio: string | null;
+    sucursal_id: string | null;
+    cliente_id: string | null;
+    vendedor_id: string | null;
   } | null;
 }
 
@@ -66,7 +70,7 @@ const bordeEstado = (estado: string) => {
   }
 };
 
-export default function FinanciacionesClient({ financiacionesIniciales, solicitudesIniciales }: { financiacionesIniciales: Financiacion[]; solicitudesIniciales: Solicitud[] }) {
+export default function FinanciacionesClient({ financiacionesIniciales, solicitudesIniciales, cuentas }: { financiacionesIniciales: Financiacion[]; solicitudesIniciales: Solicitud[]; cuentas: any[] }) {
   const router = useRouter();
   const [financiaciones, setFinanciaciones] = useState(financiacionesIniciales);
   const [solicitudes, setSolicitudes] = useState(solicitudesIniciales);
@@ -74,6 +78,7 @@ export default function FinanciacionesClient({ financiacionesIniciales, solicitu
   const [actualizandoId, setActualizandoId] = useState<string | null>(null);
   const [actualizandoSolicitudId, setActualizandoSolicitudId] = useState<string | null>(null);
   const [mostrarHistorial, setMostrarHistorial] = useState(false);
+  const [financiacionACobrar, setFinanciacionACobrar] = useState<Financiacion | null>(null);
 
   const cambiarEstadoSolicitud = async (id: string, nuevoEstado: string) => {
     const estadoPrevio = solicitudes.find((s) => s.id === id)?.estado || "Pendiente";
@@ -119,6 +124,13 @@ export default function FinanciacionesClient({ financiacionesIniciales, solicitu
   }, [conVencimientoCalculado]);
 
   const cambiarEstado = async (id: string, nuevoEstado: string) => {
+    // Pasar a "Cobrado" es plata real entrando — se pide cuenta destino antes
+    // de confirmar, para que quede registrada en Tesorería (antes se perdía).
+    if (nuevoEstado === "Cobrado") {
+      const f = financiaciones.find((x) => x.id === id);
+      if (f) setFinanciacionACobrar(f);
+      return;
+    }
     setActualizandoId(id);
     try {
       const { error } = await supabase.from("financiaciones").update({ estado: nuevoEstado }).eq("id", id);
@@ -127,6 +139,43 @@ export default function FinanciacionesClient({ financiacionesIniciales, solicitu
     } catch (err) {
       console.error(err);
       alert("Error al actualizar el estado.");
+    } finally {
+      setActualizandoId(null);
+    }
+  };
+
+  const confirmarCobro = async (cuentaId: string | null, comprobanteUrl: string | null) => {
+    const f = financiacionACobrar;
+    if (!f) return;
+    setActualizandoId(f.id);
+    try {
+      const { error } = await supabase.from("financiaciones").update({ estado: "Cobrado" }).eq("id", f.id);
+      if (error) throw error;
+      setFinanciaciones((prev) => prev.map((x) => (x.id === f.id ? { ...x, estado: "Cobrado" } : x)));
+
+      if (cuentaId) {
+        const { error: errorMov } = await supabase.from("movimientos_caja").insert({
+          tipo: "ingreso",
+          monto: Number(f.monto) || 0,
+          forma_pago: "Transferencia",
+          fecha: new Date().toISOString().split("T")[0],
+          sucursal_id: f.boleto?.sucursal_id || null,
+          cuenta_id: cuentaId,
+          cliente_id: f.boleto?.cliente_id || null,
+          patente: f.boleto?.dominio || null,
+          vendedor_id: f.boleto?.vendedor_id || null,
+          venta_id: f.venta_id,
+          tipo_movimiento: "Pago Financiación",
+          comprobante_url: comprobanteUrl,
+          observaciones: `Cuota financiación (${f.entidad || f.tipo || "—"}) — ${f.boleto?.marca} ${f.boleto?.modelo}`,
+        });
+        if (errorMov) mostrarToast("Se marcó cobrado, pero no se pudo registrar en Tesorería. Cargalo a mano en Gastos.", "error");
+      }
+
+      setFinanciacionACobrar(null);
+    } catch (err) {
+      console.error(err);
+      alert("Error al marcar como cobrado.");
     } finally {
       setActualizandoId(null);
     }
@@ -364,6 +413,95 @@ export default function FinanciacionesClient({ financiacionesIniciales, solicitu
             </div>
           )}
 
+        </div>
+      </div>
+
+      {financiacionACobrar && (
+        <ModalCobrarFinanciacion
+          financiacion={financiacionACobrar}
+          cuentas={cuentas}
+          guardando={actualizandoId === financiacionACobrar.id}
+          onConfirmar={confirmarCobro}
+          onCancelar={() => setFinanciacionACobrar(null)}
+        />
+      )}
+    </div>
+  );
+}
+
+function ModalCobrarFinanciacion({
+  financiacion, cuentas, guardando, onConfirmar, onCancelar,
+}: {
+  financiacion: Financiacion; cuentas: any[]; guardando: boolean;
+  onConfirmar: (cuentaId: string | null, comprobanteUrl: string | null) => void;
+  onCancelar: () => void;
+}) {
+  const [cuentaId, setCuentaId] = useState("");
+  const [comprobanteUrl, setComprobanteUrl] = useState("");
+  const [subiendo, setSubiendo] = useState(false);
+
+  const subirComprobante = async (file: File) => {
+    setSubiendo(true);
+    try {
+      const formData = new FormData();
+      formData.append("file", file);
+      const res = await fetch("/api/upload-documento", { method: "POST", body: formData });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || "No se pudo subir el comprobante.");
+      setComprobanteUrl(data.publicUrl);
+    } catch {
+      mostrarToast("No se pudo subir el comprobante.", "error");
+    } finally {
+      setSubiendo(false);
+    }
+  };
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/40 backdrop-blur-sm">
+      <div className="bg-white dark:bg-[#001c55] border border-slate-200 dark:border-[#0a2a6b] p-6 rounded-2xl w-full max-w-md shadow-2xl">
+        <div className="flex justify-between items-center mb-4 border-b border-slate-100 dark:border-[#0a2a6b] pb-3">
+          <h3 className="text-lg font-bold text-slate-900 dark:text-white flex items-center gap-2">
+            <CheckCircle2 className="w-5 h-5 text-emerald-600" /> Registrar cobro
+          </h3>
+          <button onClick={onCancelar} className="text-slate-400 hover:text-slate-700 dark:hover:text-white bg-slate-50 dark:bg-[#00246b] hover:bg-slate-100 dark:hover:bg-[#002a6e] p-1.5 rounded-lg border border-slate-200 dark:border-[#0a2a6b]">
+            <X className="w-4 h-4" />
+          </button>
+        </div>
+        <p className="text-[13px] text-slate-600 dark:text-slate-300 mb-4">
+          Cuota de <strong>${Number(financiacion.monto).toLocaleString("es-AR")}</strong> — {financiacion.boleto?.marca} {financiacion.boleto?.modelo}
+        </p>
+
+        <div className="space-y-3">
+          <div>
+            <label className="text-[11px] font-bold text-slate-500 dark:text-slate-400 uppercase block mb-1.5">Cuenta destino</label>
+            <select value={cuentaId} onChange={(e) => setCuentaId(e.target.value)} className="w-full bg-slate-50 dark:bg-[#00246b] border border-slate-200 dark:border-[#0a2a6b] rounded-xl px-3 py-2.5 text-sm outline-none focus:border-indigo-500 text-slate-900 dark:text-white">
+              <option value="" className="bg-white dark:bg-[#001c55] text-slate-900 dark:text-white">No registrar en Tesorería</option>
+              {cuentas.map((c) => (<option key={c.id} value={c.id} className="bg-white dark:bg-[#001c55] text-slate-900 dark:text-white">{c.nombre} ({c.moneda})</option>))}
+            </select>
+          </div>
+          {cuentaId && (
+            <div>
+              <label className="text-[11px] font-bold text-slate-500 dark:text-slate-400 uppercase block mb-1.5">Comprobante</label>
+              <label className="flex items-center gap-2 bg-slate-50 dark:bg-[#00246b] border border-dashed border-slate-300 dark:border-[#0a2a6b] rounded-xl px-3 py-2.5 text-sm cursor-pointer hover:bg-slate-100 dark:hover:bg-[#002a6e] transition-colors">
+                {subiendo ? <Loader2 className="w-4 h-4 animate-spin text-slate-400" /> : <Upload className="w-4 h-4 text-slate-400" />}
+                <span className="text-slate-500 dark:text-slate-400 truncate">{comprobanteUrl ? "Comprobante cargado ✓" : subiendo ? "Subiendo..." : "Subir comprobante"}</span>
+                <input type="file" accept="image/*,.pdf" className="hidden" disabled={subiendo} onChange={(e) => e.target.files?.[0] && subirComprobante(e.target.files[0])} />
+              </label>
+            </div>
+          )}
+        </div>
+
+        <div className="flex gap-2 mt-6 pt-4 border-t border-slate-100 dark:border-[#0a2a6b]">
+          <button onClick={onCancelar} className="flex-1 py-2.5 rounded-xl text-[12px] font-bold uppercase tracking-widest border border-slate-200 dark:border-[#0a2a6b] text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-[#002a6e]">
+            Cancelar
+          </button>
+          <button
+            onClick={() => onConfirmar(cuentaId || null, comprobanteUrl || null)}
+            disabled={guardando || subiendo}
+            className="flex-1 py-2.5 rounded-xl text-[12px] font-bold uppercase tracking-widest bg-indigo-600 hover:bg-indigo-700 text-white disabled:opacity-50"
+          >
+            {guardando ? "Guardando..." : "Confirmar"}
+          </button>
         </div>
       </div>
     </div>

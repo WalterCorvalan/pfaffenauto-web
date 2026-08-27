@@ -13,12 +13,13 @@ export default async function NuevoBoletoPage({ searchParams }: { searchParams: 
     { cookies: { getAll: () => cookieStore.getAll() } }
   );
 
-  const [{ data: clientes }, { data: vehiculos }, { data: vendedores }, { data: sucursales }, { data: senas }] = await Promise.all([
+  const [{ data: clientes }, { data: vehiculos }, { data: vendedores }, { data: sucursales }, { data: senas }, { data: cuentas }] = await Promise.all([
     supabase.from("clientes").select("*").order("apellido"),
     supabase.from("vehiculos").select("*").in("estado", ["Disponible", "Reservado"]).order("marca"),
     supabase.from("perfiles").select("id, nombre").order("nombre"),
     supabase.from("sucursales").select("id, nombre").order("nombre"),
     supabase.from("senas").select("*").eq("estado", "Activa").order("numero", { ascending: false }),
+    supabase.from("cuentas").select("id, nombre, moneda").eq("activa", true).order("nombre"),
   ]);
 
   return (
@@ -28,6 +29,7 @@ export default async function NuevoBoletoPage({ searchParams }: { searchParams: 
       vendedores={vendedores || []}
       sucursales={sucursales || []}
       senas={senas || []}
+      cuentas={cuentas || []}
       vinculoLead={campoFk && idLead ? { campo: campoFk, id: idLead } : null}
       revertirEstado={cotizacion_id ? { id: cotizacion_id, estadoAnterior: estado_anterior || "Pendiente" } : null}
     />

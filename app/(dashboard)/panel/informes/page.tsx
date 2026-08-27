@@ -3,7 +3,7 @@ import { cookies } from "next/headers";
 import Link from "next/link";
 import {
   FileBarChart, CarFront, DollarSign, TrendingUp, AlertTriangle, Trophy, Wallet, Calendar,
-  Flame, ClipboardList, Wrench, Clock,
+  Flame, ClipboardList, Wrench, Clock, Receipt,
 } from "lucide-react";
 import { obtenerDatosMes } from "@/lib/informes";
 import ReporteIA from "./ReporteIA";
@@ -17,7 +17,7 @@ export default async function InformesGlobalesPage() {
   );
 
   const {
-    nombreMes, cantidadVendidos, ingresosTotales, ventaMasCara,
+    nombreMes, cantidadVendidos, ingresosTotales, ticketPromedio, ventaMasCara,
     egresosTotales, gastosMasCaros, gastosAtipicos, netoDelMes,
   } = await obtenerDatosMes(supabase as any);
 
@@ -95,11 +95,16 @@ export default async function InformesGlobalesPage() {
           </div>
 
           {/* ================= RESUMEN PRINCIPAL ================= */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-5 gap-4">
             <div className="bg-white dark:bg-[#001c55] border border-slate-200 dark:border-[#0a2a6b] rounded-2xl p-5 shadow-sm">
               <div className="w-9 h-9 rounded-lg bg-indigo-50 dark:bg-[#002a6e] border border-indigo-100 dark:border-[#0a2a6b] flex items-center justify-center mb-3"><CarFront className="w-4 h-4 text-indigo-600 dark:text-sky-300" /></div>
               <span className="text-[10px] uppercase tracking-widest font-bold text-slate-400 dark:text-slate-500">Autos Vendidos</span>
               <h3 className="text-2xl font-black text-slate-900 dark:text-white mt-1 font-mono">{cantidadVendidos}</h3>
+            </div>
+            <div className="bg-white dark:bg-[#001c55] border border-slate-200 dark:border-[#0a2a6b] rounded-2xl p-5 shadow-sm">
+              <div className="w-9 h-9 rounded-lg bg-amber-50 dark:bg-[#002a6e] border border-amber-100 dark:border-[#0a2a6b] flex items-center justify-center mb-3"><Receipt className="w-4 h-4 text-amber-600 dark:text-amber-300" /></div>
+              <span className="text-[10px] uppercase tracking-widest font-bold text-slate-400 dark:text-slate-500">Ticket Promedio</span>
+              <h3 className="text-2xl font-black text-slate-900 dark:text-white mt-1 font-mono">$ {ticketPromedio.toLocaleString("es-AR", { maximumFractionDigits: 0 })}</h3>
             </div>
             <div className="bg-white dark:bg-[#001c55] border border-emerald-200 dark:border-[#0a2a6b] rounded-2xl p-5 shadow-sm">
               <div className="w-9 h-9 rounded-lg bg-emerald-50 dark:bg-[#002a6e] border border-emerald-100 dark:border-[#0a2a6b] flex items-center justify-center mb-3"><DollarSign className="w-4 h-4 text-emerald-600 dark:text-emerald-300" /></div>

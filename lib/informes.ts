@@ -21,6 +21,7 @@ export interface DatosMes {
   nombreMes: string;
   cantidadVendidos: number;
   ingresosTotales: number;
+  ticketPromedio: number;
   ventaMasCara: any | null;
   egresosDelMes: Egreso[];
   egresosTotales: number;
@@ -29,38 +30,44 @@ export interface DatosMes {
   netoDelMes: number;
 }
 
-// Reutilizada por /panel/informes (vista) y /api/informes/generar-reporte (IA)
-export async function obtenerDatosMes(supabase: SupabaseClient, fecha: Date = new Date()): Promise<DatosMes> {
+// Reutilizada por /panel/informes (vista), /panel/gastos (caja del mes, filtrable
+// por sucursal) y /api/informes/generar-reporte (IA) — única fuente de verdad
+// para "egresos del mes", así los 3 lugares nunca muestran números distintos.
+export async function obtenerDatosMes(supabase: SupabaseClient, fecha: Date = new Date(), sucursalId?: string): Promise<DatosMes> {
   const mes = fecha.getMonth();
   const anio = fecha.getFullYear();
   const primerDiaMes = new Date(anio, mes, 1).toISOString().split("T")[0];
   const ultimoDiaMes = new Date(anio, mes + 1, 0).toISOString().split("T")[0];
   const nombreMes = fecha.toLocaleDateString("es-AR", { month: "long", year: "numeric" });
 
-  const { data: ventasMes } = await supabase
+  let queryVentas = supabase
     .from("boletos_venta")
     .select(`
-      id, venta_ars, fecha,
+      id, venta_ars, fecha, sucursal_id,
       marca, modelo,
       apellido, nombre
     `)
     .gte("fecha", primerDiaMes)
     .lte("fecha", ultimoDiaMes);
+  if (sucursalId) queryVentas = queryVentas.eq("sucursal_id", sucursalId);
+  const { data: ventasMes } = await queryVentas;
 
   const ventas = ventasMes || [];
   const cantidadVendidos = ventas.length;
   const ingresosTotales = ventas.reduce((acc, v: any) => acc + (Number(v.venta_ars) || 0), 0);
+  const ticketPromedio = cantidadVendidos > 0 ? ingresosTotales / cantidadVendidos : 0;
   const ventaMasCara = [...ventas].sort((a: any, b: any) => (Number(b.venta_ars) || 0) - (Number(a.venta_ars) || 0))[0] as any || null;
 
   const resultados = await Promise.all(
-    CATEGORIAS_EGRESO.map((cat) =>
-      supabase
+    CATEGORIAS_EGRESO.map((cat) => {
+      let query = supabase
         .from(cat.tabla)
         .select("*")
         .gte("fecha", primerDiaMes)
-        .lte("fecha", ultimoDiaMes)
-        .then((r) => ({ cat, rows: r.data || [] }))
-    )
+        .lte("fecha", ultimoDiaMes);
+      if (sucursalId) query = query.eq("sucursal_id", sucursalId);
+      return query.then((r) => ({ cat, rows: r.data || [] }));
+    })
   );
 
   const seisMesesAtras = new Date(anio, mes - 6, 1).toISOString().split("T")[0];
@@ -100,7 +107,7 @@ export async function obtenerDatosMes(supabase: SupabaseClient, fecha: Date = ne
   const netoDelMes = ingresosTotales - egresosTotales;
 
   return {
-    nombreMes, cantidadVendidos, ingresosTotales, ventaMasCara,
+    nombreMes, cantidadVendidos, ingresosTotales, ticketPromedio, ventaMasCara,
     egresosDelMes, egresosTotales, gastosMasCaros, gastosAtipicos, netoDelMes,
   };
 }

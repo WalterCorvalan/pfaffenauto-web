@@ -35,7 +35,10 @@ export default async function TesoreriaPage() {
     saldo: Number(c.saldo_inicial) + saldoPorCuenta(c.id),
   }));
 
-  const saldoTotal = cuentasConSaldo.reduce((acc, c) => acc + c.saldo, 0);
+  // Cada cuenta es de una sola moneda — sumar todo junto en un solo "$" mezclaba
+  // ARS y USD sin sentido. Totalizamos por separado.
+  const saldoTotalArs = cuentasConSaldo.filter((c) => (c.moneda || "ARS") === "ARS").reduce((acc, c) => acc + c.saldo, 0);
+  const saldoTotalUsd = cuentasConSaldo.filter((c) => c.moneda === "USD").reduce((acc, c) => acc + c.saldo, 0);
 
   return (
     <div className="flex flex-col h-full w-full bg-white dark:bg-[#001233] overflow-hidden">
@@ -55,11 +58,19 @@ export default async function TesoreriaPage() {
       <div className="flex-1 overflow-y-auto p-6 bg-[#F9FAFB] dark:bg-[#001233] custom-scrollbar">
         <div className="max-w-[1400px] mx-auto space-y-6">
 
-          <div className="bg-white dark:bg-[#001c55] border border-slate-200 dark:border-[#0a2a6b] rounded-2xl p-6 shadow-sm">
-            <span className="text-[10px] uppercase tracking-widest font-bold text-slate-400">Saldo Total (todas las cuentas)</span>
-            <h3 className={`text-3xl font-black mt-1 font-mono ${saldoTotal >= 0 ? "text-slate-900 dark:text-white" : "text-rose-600"}`}>
-              $ {saldoTotal.toLocaleString("es-AR")}
-            </h3>
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <div className="bg-white dark:bg-[#001c55] border border-slate-200 dark:border-[#0a2a6b] rounded-2xl p-6 shadow-sm">
+              <span className="text-[10px] uppercase tracking-widest font-bold text-slate-400">Saldo Total en Pesos</span>
+              <h3 className={`text-3xl font-black mt-1 font-mono ${saldoTotalArs >= 0 ? "text-slate-900 dark:text-white" : "text-rose-600"}`}>
+                $ {saldoTotalArs.toLocaleString("es-AR")}
+              </h3>
+            </div>
+            <div className="bg-white dark:bg-[#001c55] border border-slate-200 dark:border-[#0a2a6b] rounded-2xl p-6 shadow-sm">
+              <span className="text-[10px] uppercase tracking-widest font-bold text-slate-400">Saldo Total en Dólares</span>
+              <h3 className={`text-3xl font-black mt-1 font-mono ${saldoTotalUsd >= 0 ? "text-emerald-600 dark:text-emerald-300" : "text-rose-600"}`}>
+                US$ {saldoTotalUsd.toLocaleString("en-US")}
+              </h3>
+            </div>
           </div>
 
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
@@ -71,13 +82,18 @@ export default async function TesoreriaPage() {
                     <div className="w-9 h-9 rounded-lg bg-indigo-50 dark:bg-[#002a6e] border border-indigo-100 dark:border-[#0a2a6b] flex items-center justify-center">
                       <Icono className="w-4 h-4 text-indigo-600 dark:text-sky-300" />
                     </div>
-                    <span className="text-[9px] font-bold uppercase tracking-widest text-slate-400 bg-slate-50 dark:bg-[#00246b] border border-slate-200 dark:border-[#0a2a6b] px-2 py-0.5 rounded">
-                      {c.tipo}
-                    </span>
+                    <div className="flex items-center gap-1.5">
+                      <span className="text-[9px] font-bold uppercase tracking-widest text-slate-400 bg-slate-50 dark:bg-[#00246b] border border-slate-200 dark:border-[#0a2a6b] px-2 py-0.5 rounded">
+                        {c.tipo}
+                      </span>
+                      <span className="text-[9px] font-bold uppercase tracking-widest text-indigo-600 dark:text-sky-300 bg-indigo-50 dark:bg-[#002a6e] border border-indigo-100 dark:border-[#0a2a6b] px-2 py-0.5 rounded">
+                        {c.moneda || "ARS"}
+                      </span>
+                    </div>
                   </div>
                   <h3 className="font-bold text-[14px] text-slate-900 dark:text-white mb-1">{c.nombre}</h3>
                   <p className={`text-xl font-black font-mono ${c.saldo >= 0 ? "text-slate-900 dark:text-white" : "text-rose-600"}`}>
-                    $ {c.saldo.toLocaleString("es-AR")}
+                    {c.moneda === "USD" ? "US$" : "$"} {c.saldo.toLocaleString(c.moneda === "USD" ? "en-US" : "es-AR")}
                   </p>
                 </div>
               );

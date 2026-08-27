@@ -6,6 +6,7 @@ import { Wallet, FileText, Printer, ArrowDownRight, ArrowUpRight, Search, Activi
 import NuevoGastoModal from "./NuevoGastoModal";
 import SucursalFilterHeader from "../SucursalFilterHeader";
 import { getVentasPanel } from "@/lib/ventas";
+import { obtenerDatosMes } from "@/lib/informes";
 
 export default async function CajaYGastosPage({
   searchParams,
@@ -70,28 +71,9 @@ export default async function CajaYGastosPage({
 
   const saldoPendienteCalle = operaciones?.reduce((acc, op) => acc + (Number(op.saldo_pendiente) || 0), 0) || 0;
 
-  // 3. Egresos del mes: movimientos_caja (gastos manuales) + las 5 categorías especializadas
-  const primerDiaMes = new Date(anoActual, mesActual, 1).toISOString().split("T")[0];
-  const ultimoDiaMes = new Date(anoActual, mesActual + 1, 0).toISOString().split("T")[0];
-
-  const [movCaja, patentes, transferencias, repuestos, gastosVarios, sueldos] = await Promise.all([
-    supabase.from("movimientos_caja").select("monto, sucursal_id").eq("tipo", "egreso").gte("fecha", primerDiaMes).lte("fecha", ultimoDiaMes),
-    supabase.from("patentes").select("importe, sucursal_id").gte("fecha", primerDiaMes).lte("fecha", ultimoDiaMes),
-    supabase.from("transferencias_patentamientos").select("importe, sucursal_id").gte("fecha", primerDiaMes).lte("fecha", ultimoDiaMes),
-    supabase.from("repuestos_reparaciones").select("importe, sucursal_id").gte("fecha", primerDiaMes).lte("fecha", ultimoDiaMes),
-    supabase.from("gastos_varios").select("importe, sucursal_id").gte("fecha", primerDiaMes).lte("fecha", ultimoDiaMes),
-    supabase.from("sueldos").select("importe, sucursal_id").gte("fecha", primerDiaMes).lte("fecha", ultimoDiaMes),
-  ]);
-
-  const filtrarPorSucursal = (rows: any[] | null) => (rows || []).filter((r) => !sucursal || r.sucursal_id === sucursal);
-
-  const egresosDelMes =
-    filtrarPorSucursal(movCaja.data).reduce((acc, r) => acc + (Number(r.monto) || 0), 0) +
-    filtrarPorSucursal(patentes.data).reduce((acc, r) => acc + (Number(r.importe) || 0), 0) +
-    filtrarPorSucursal(transferencias.data).reduce((acc, r) => acc + (Number(r.importe) || 0), 0) +
-    filtrarPorSucursal(repuestos.data).reduce((acc, r) => acc + (Number(r.importe) || 0), 0) +
-    filtrarPorSucursal(gastosVarios.data).reduce((acc, r) => acc + (Number(r.importe) || 0), 0) +
-    filtrarPorSucursal(sueldos.data).reduce((acc, r) => acc + (Number(r.importe) || 0), 0);
+  // 3. Egresos del mes: misma función que usa /panel/informes — única fuente de
+  // verdad para "egresos del mes" en todo el panel, así nunca se desincronizan.
+  const { egresosTotales: egresosDelMes } = await obtenerDatosMes(supabase as any, hoy, sucursal || undefined);
 
   const netoDelMes = ingresosCajaMes - egresosDelMes;
 
@@ -125,8 +107,8 @@ export default async function CajaYGastosPage({
       {/* ================= HEADER Y FILTROS ================= */}
       <SucursalFilterHeader
         icon={<Wallet className="w-5 h-5 text-indigo-600" />}
-        titulo="Tesorería y Control de Caja"
-        subtitulo="Gestión financiera multi-sucursal e ingresos del mes"
+        titulo="Gastos y Caja"
+        subtitulo="Ingresos, egresos y operaciones del mes, multi-sucursal"
         basePath="/panel/gastos"
         sucursales={sucursales || []}
         sucursalActual={sucursal}

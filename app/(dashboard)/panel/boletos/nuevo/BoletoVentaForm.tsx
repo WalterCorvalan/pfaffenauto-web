@@ -4,7 +4,7 @@ import { useState, useMemo, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { supabase } from "@/lib/supabase/client";
 import { notificarEncargados } from "@/lib/notificaciones";
-import { ArrowLeft, Receipt, Save } from "lucide-react";
+import { ArrowLeft, Receipt, Save, Upload, Loader2 } from "lucide-react";
 import { mostrarToast } from "@/lib/toast";
 import ClienteBuscador, { ClienteSeleccionado } from "../../ClienteBuscador";
 import VehiculoSelector, { VehiculoDatos } from "../../VehiculoSelector";
@@ -13,9 +13,9 @@ import ConfirmarPrecioModal from "../../ConfirmarPrecioModal";
 const inputClass = "w-full bg-slate-50 dark:bg-[#00246b] border border-slate-200 dark:border-[#0a2a6b] rounded-xl px-3 py-2.5 text-sm outline-none focus:border-indigo-500 focus:bg-white dark:focus:bg-[#002a6e] transition-colors text-slate-900 dark:text-white placeholder:text-slate-400 dark:placeholder:text-slate-500";
 
 export default function BoletoVentaForm({
-  clientes, vehiculos, vendedores, sucursales, senas, vinculoLead, revertirEstado,
+  clientes, vehiculos, vendedores, sucursales, senas, cuentas, vinculoLead, revertirEstado,
 }: {
-  clientes: any[]; vehiculos: any[]; vendedores: any[]; sucursales: any[]; senas: any[]; vinculoLead?: { campo: string; id: string } | null;
+  clientes: any[]; vehiculos: any[]; vendedores: any[]; sucursales: any[]; senas: any[]; cuentas: any[]; vinculoLead?: { campo: string; id: string } | null;
   revertirEstado?: { id: string; estadoAnterior: string } | null;
 }) {
   const router = useRouter();
@@ -56,6 +56,27 @@ export default function BoletoVentaForm({
 
   const [observaciones, setObservaciones] = useState("");
   const [mostrarModalPrecio, setMostrarModalPrecio] = useState(false);
+
+  const [cuentaId, setCuentaId] = useState("");
+  const [comprobanteUrl, setComprobanteUrl] = useState("");
+  const [subiendoComprobante, setSubiendoComprobante] = useState(false);
+  const cuentaSeleccionada = cuentas.find((c) => c.id === cuentaId);
+
+  const subirComprobante = async (file: File) => {
+    setSubiendoComprobante(true);
+    try {
+      const formData = new FormData();
+      formData.append("file", file);
+      const res = await fetch("/api/upload-documento", { method: "POST", body: formData });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || "No se pudo subir el comprobante.");
+      setComprobanteUrl(data.publicUrl);
+    } catch {
+      mostrarToast("No se pudo subir el comprobante.", "error");
+    } finally {
+      setSubiendoComprobante(false);
+    }
+  };
 
   const [efectivoArs, setEfectivoArs] = useState("");
   const [efectivoUsd, setEfectivoUsd] = useState("");
@@ -232,6 +253,36 @@ export default function BoletoVentaForm({
       }
       if (senaId) {
         await supabase.from("senas").update({ estado: "Convertida" }).eq("id", senaId);
+      }
+
+      // Cobro real de la venta: si se eligió cuenta destino, el efectivo cobrado
+      // hoy (no el saldo financiado a futuro) queda registrado en Tesorería,
+      // pendiente de aprobación. Opcional — sin cuenta no se genera nada.
+      if (cuentaId) {
+        const montoMovimiento = cuentaSeleccionada?.moneda === "USD" ? Number(efectivoUsd) || 0 : Number(efectivoArs) || 0;
+        if (montoMovimiento > 0) {
+          const { error: errorMov } = await supabase.from("movimientos_caja").insert({
+            tipo: "ingreso",
+            monto: montoMovimiento,
+            forma_pago: "Transferencia",
+            fecha: new Date().toISOString().split("T")[0],
+            vehiculo_id: vehiculo.vehiculo_id,
+            sucursal_id: sucursalId,
+            cuenta_id: cuentaId,
+            cliente_id: cliente.id,
+            cuit_dni: cliente.dni,
+            telefono: cliente.telefono_celular,
+            patente: vehiculo.dominio,
+            vendedor_id: vendedorId || user?.id,
+            venta_id: data.id,
+            tipo_movimiento: "Pago Venta",
+            comprobante_url: comprobanteUrl || null,
+            observaciones: `Venta N° ${siguienteNumero} — ${vehiculo.marca} ${vehiculo.modelo}`,
+          });
+          if (errorMov) {
+            mostrarToast("La venta se guardó, pero no se pudo registrar el cobro en Tesorería. Cargalo a mano en Gastos.", "error");
+          }
+        }
       }
 
       const documentosDocumentacion = [
@@ -413,6 +464,30 @@ export default function BoletoVentaForm({
               <div>
                 <label className="text-[11px] font-bold text-slate-500 dark:text-slate-400 uppercase block mb-1.5">En Efectivo (US$)</label>
                 <input type="number" step="0.01" className={inputClass} value={efectivoUsd} onChange={(e) => setEfectivoUsd(e.target.value)} placeholder="0" />
+              </div>
+            </div>
+
+            <div className="border-t border-slate-100 dark:border-[#0a2a6b] pt-4 space-y-3">
+              <p className="text-[11px] font-bold uppercase tracking-widest text-slate-500 dark:text-slate-400">Registrar cobro en Tesorería (opcional)</p>
+              <p className="text-[11px] text-slate-500 dark:text-slate-400">Si elegís una cuenta, lo cobrado en efectivo hoy queda cargado en Tesorería (pendiente de aprobación).</p>
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className="text-[11px] font-bold text-slate-500 dark:text-slate-400 uppercase block mb-1.5">Cuenta destino</label>
+                  <select className={inputClass} value={cuentaId} onChange={(e) => setCuentaId(e.target.value)}>
+                    <option value="" className="bg-white dark:bg-[#001c55] text-slate-900 dark:text-white">No registrar en Tesorería</option>
+                    {cuentas.map((c) => (<option key={c.id} value={c.id} className="bg-white dark:bg-[#001c55] text-slate-900 dark:text-white">{c.nombre} ({c.moneda})</option>))}
+                  </select>
+                </div>
+                {cuentaId && (
+                  <div>
+                    <label className="text-[11px] font-bold text-slate-500 dark:text-slate-400 uppercase block mb-1.5">Comprobante</label>
+                    <label className="flex items-center gap-2 bg-slate-50 dark:bg-[#00246b] border border-dashed border-slate-300 dark:border-[#0a2a6b] rounded-xl px-3 py-2.5 text-sm cursor-pointer hover:bg-slate-100 dark:hover:bg-[#002a6e] transition-colors">
+                      {subiendoComprobante ? <Loader2 className="w-4 h-4 animate-spin text-slate-400" /> : <Upload className="w-4 h-4 text-slate-400" />}
+                      <span className="text-slate-500 dark:text-slate-400 truncate">{comprobanteUrl ? "Comprobante cargado ✓" : subiendoComprobante ? "Subiendo..." : "Subir comprobante"}</span>
+                      <input type="file" accept="image/*,.pdf" className="hidden" disabled={subiendoComprobante} onChange={(e) => e.target.files?.[0] && subirComprobante(e.target.files[0])} />
+                    </label>
+                  </div>
+                )}
               </div>
             </div>
 

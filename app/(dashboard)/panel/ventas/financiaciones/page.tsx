@@ -15,7 +15,7 @@ export default async function FinanciacionesPage() {
   const { data: perfil } = user ? await supabase.from("perfiles").select("rol").eq("id", user.id).maybeSingle() : { data: null };
   if (perfil?.rol !== "admin") redirect("/panel");
 
-  const [{ data: financiacionesRaw }, { data: solicitudes }] = await Promise.all([
+  const [{ data: financiacionesRaw }, { data: solicitudes }, { data: cuentas }] = await Promise.all([
     supabase
       .from("financiaciones")
       .select("id, venta_id, tipo, entidad, monto, cuotas, fecha_vencimiento, estado, created_at")
@@ -26,11 +26,12 @@ export default async function FinanciacionesPage() {
       .select("*")
       .eq("tipo_peritaje", "financiacion")
       .order("created_at", { ascending: false }),
+    supabase.from("cuentas").select("id, nombre, moneda").eq("activa", true).order("nombre"),
   ]);
 
   const ventaIds = [...new Set((financiacionesRaw || []).map((f) => f.venta_id).filter(Boolean))];
   const { data: boletos } = ventaIds.length
-    ? await supabase.from("boletos_venta").select("id, nombre, apellido, marca, modelo, dominio").in("id", ventaIds)
+    ? await supabase.from("boletos_venta").select("id, nombre, apellido, marca, modelo, dominio, sucursal_id, cliente_id, vendedor_id").in("id", ventaIds)
     : { data: [] as any[] };
 
   const boletosPorId = new Map((boletos || []).map((b) => [b.id, b]));
@@ -40,6 +41,7 @@ export default async function FinanciacionesPage() {
     <FinanciacionesClient
       financiacionesIniciales={financiaciones as any}
       solicitudesIniciales={solicitudes || []}
+      cuentas={cuentas || []}
     />
   );
 }

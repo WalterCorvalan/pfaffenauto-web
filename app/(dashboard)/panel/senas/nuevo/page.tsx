@@ -13,12 +13,13 @@ export default async function NuevaSenaPage({ searchParams }: { searchParams: Pr
     { cookies: { getAll: () => cookieStore.getAll() } }
   );
 
-  const [{ data: clientes }, { data: vehiculos }, { data: vendedores }, { data: sucursales }] = await Promise.all([
+  const [{ data: clientes }, { data: vehiculos }, { data: vendedores }, { data: sucursales }, { data: cuentas }] = await Promise.all([
     supabase.from("clientes").select("*").order("apellido"),
     supabase.from("vehiculos").select("*").in("estado", ["Disponible", "Reservado"]).order("marca"),
     supabase.from("perfiles").select("id, nombre").order("nombre"),
     supabase.from("sucursales").select("id, nombre").order("nombre"),
+    supabase.from("cuentas").select("id, nombre, moneda").eq("activa", true).order("nombre"),
   ]);
 
-  return <SenaForm clientes={clientes || []} vehiculos={vehiculos || []} vendedores={vendedores || []} sucursales={sucursales || []} vinculoLead={campoFk && idLead ? { campo: campoFk, id: idLead } : null} />;
+  return <SenaForm clientes={clientes || []} vehiculos={vehiculos || []} vendedores={vendedores || []} sucursales={sucursales || []} cuentas={cuentas || []} vinculoLead={campoFk && idLead ? { campo: campoFk, id: idLead } : null} />;
 }

@@ -12,6 +12,7 @@ export default function NuevaCuentaModal({ sucursales }: { sucursales: any[] }) 
 
   const [nombre, setNombre] = useState("");
   const [tipo, setTipo] = useState("Banco");
+  const [moneda, setMoneda] = useState("ARS");
   const [saldoInicial, setSaldoInicial] = useState("");
   const [sucursalId, setSucursalId] = useState("");
 
@@ -22,12 +23,13 @@ export default function NuevaCuentaModal({ sucursales }: { sucursales: any[] }) 
       const { error } = await supabase.from("cuentas").insert({
         nombre,
         tipo,
+        moneda,
         saldo_inicial: Number(saldoInicial) || 0,
         sucursal_id: sucursalId || null,
       });
       if (error) throw error;
       setIsOpen(false);
-      setNombre(""); setSaldoInicial(""); setSucursalId(""); setTipo("Banco");
+      setNombre(""); setSaldoInicial(""); setSucursalId(""); setTipo("Banco"); setMoneda("ARS");
       router.refresh();
     } catch (err) {
       alert("Error al crear la cuenta");
@@ -81,7 +83,18 @@ export default function NuevaCuentaModal({ sucursales }: { sucursales: any[] }) 
               </div>
 
               <div>
-                <label className="text-[11px] font-bold uppercase tracking-widest text-slate-500 dark:text-slate-400 mb-1.5 block">Saldo inicial ($)</label>
+                <label className="text-[11px] font-bold uppercase tracking-widest text-slate-500 dark:text-slate-400 mb-1.5 block">Moneda</label>
+                <select
+                  value={moneda} onChange={(e) => setMoneda(e.target.value)}
+                  className="w-full bg-slate-50 dark:bg-[#00246b] border border-slate-200 dark:border-[#0a2a6b] p-3 rounded-xl text-slate-900 dark:text-white text-[13px] outline-none focus:border-indigo-500 focus:bg-white dark:focus:bg-[#00246b] transition-colors appearance-none cursor-pointer"
+                >
+                  <option value="ARS" className="bg-white dark:bg-[#001c55] text-slate-900 dark:text-white">Pesos (ARS)</option>
+                  <option value="USD" className="bg-white dark:bg-[#001c55] text-slate-900 dark:text-white">Dólares (USD)</option>
+                </select>
+              </div>
+
+              <div>
+                <label className="text-[11px] font-bold uppercase tracking-widest text-slate-500 dark:text-slate-400 mb-1.5 block">Saldo inicial ({moneda === "USD" ? "US$" : "$"})</label>
                 <input
                   type="number" step="0.01" value={saldoInicial} onChange={(e) => setSaldoInicial(e.target.value)}
                   className="w-full bg-slate-50 dark:bg-[#00246b] border border-slate-200 dark:border-[#0a2a6b] p-3 rounded-xl text-slate-900 dark:text-white text-[14px] font-mono outline-none focus:border-indigo-500 focus:bg-white dark:focus:bg-[#00246b] transition-colors"
