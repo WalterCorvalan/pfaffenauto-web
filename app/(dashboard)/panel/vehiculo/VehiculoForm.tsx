@@ -1,6 +1,7 @@
 ﻿"use client";
 
 import { useState, useEffect, useRef } from "react";
+import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { supabase } from "@/lib/supabase/client";
 import { uploadAutoImage } from "@/lib/upload";
@@ -525,9 +526,19 @@ export default function VehiculoForm({ modo, autoId }: VehiculoFormProps) {
                   Paso {paso} de {totalPasos}
                 </p>
               </div>
-              <span className="text-xs font-bold text-indigo-600 dark:text-sky-300 bg-indigo-50 dark:bg-[#002a6e] px-3 py-1 rounded-md border border-indigo-100 dark:border-[#0a2a6b]">
-                {Math.round((paso / totalPasos) * 100)}%
-              </span>
+              <div className="flex items-center gap-2">
+                {modo === "editar" && autoId && (rol === "admin" || rol === "encargado" || rol === "gestoria") && (
+                  <Link
+                    href={`/panel/vehiculo/${autoId}/documentacion`}
+                    className="flex items-center gap-1.5 text-[11px] font-bold text-indigo-600 dark:text-sky-300 bg-indigo-50 dark:bg-[#002a6e] px-3 py-1.5 rounded-md border border-indigo-100 dark:border-[#0a2a6b] hover:bg-indigo-100 dark:hover:bg-[#00246b] transition-colors"
+                  >
+                    <FileText className="w-3.5 h-3.5" /> Documentación
+                  </Link>
+                )}
+                <span className="text-xs font-bold text-indigo-600 dark:text-sky-300 bg-indigo-50 dark:bg-[#002a6e] px-3 py-1 rounded-md border border-indigo-100 dark:border-[#0a2a6b]">
+                  {Math.round((paso / totalPasos) * 100)}%
+                </span>
+              </div>
             </div>
             <div className="w-full bg-slate-200 dark:bg-[#00246b] h-1.5 rounded-full mb-8 overflow-hidden">
               <div

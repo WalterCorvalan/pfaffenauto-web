@@ -1,6 +1,12 @@
 import { createClient } from "@supabase/supabase-js";
 import Link from "next/link";
-import { CheckCircle2, Circle, CarFront, Search, Clock, XCircle } from "lucide-react";
+import { CheckCircle2, Circle, CarFront, Search, Clock, XCircle, Wallet, PackageCheck } from "lucide-react";
+
+const MENSAJE_TRAMITE: Record<string, { texto: string; color: string; icono: typeof PackageCheck } | undefined> = {
+  "Listo para retirar": { texto: "Tu documentación está lista para retirar.", color: "text-emerald-600 bg-emerald-50", icono: PackageCheck },
+  "Entregado": { texto: "Ya retiraste tu documentación. ¡Gracias!", color: "text-emerald-600 bg-emerald-50", icono: CheckCircle2 },
+  "Finalizado": { texto: "Tu trámite está finalizado. Pronto vas a poder retirar la documentación.", color: "text-emerald-600 bg-emerald-50", icono: CheckCircle2 },
+};
 
 const ETAPAS = ["Seña", "Documentación", "Patentamiento", "Transferencia", "Entrega", "Completado"];
 
@@ -29,6 +35,29 @@ export default async function SeguimientoPublicoPage({
     .select("id, numero, etapa_seguimiento, marca, modelo, vendedor_id")
     .eq("codigo_seguimiento", codigo.toUpperCase())
     .maybeSingle();
+
+  // Estado del trámite de gestoría (transferencia/patentamiento) + cuánto
+  // falta pagar al retirar — sin exponer costos internos ni ganancia, solo
+  // lo que el cliente necesita saber.
+  let tramite: { estado: string } | null = null;
+  let montoPendiente = 0;
+  if (venta) {
+    const { data: t } = await supabase
+      .from("tramites_gestoria")
+      .select("id, estado")
+      .eq("venta_id", venta.id)
+      .maybeSingle();
+    if (t) {
+      tramite = { estado: t.estado };
+      const { data: pendientes } = await supabase
+        .from("movimientos_caja")
+        .select("monto")
+        .eq("tramite_id", t.id)
+        .eq("tipo", "ingreso")
+        .eq("medio_pago", "Pendiente");
+      montoPendiente = (pendientes || []).reduce((acc, m) => acc + Number(m.monto), 0);
+    }
+  }
 
   const { data: sena } = venta
     ? { data: null }
@@ -131,6 +160,27 @@ export default async function SeguimientoPublicoPage({
                 );
               })}
             </div>
+
+            {(tramite && MENSAJE_TRAMITE[tramite.estado] || montoPendiente > 0) && (
+              <div className="mt-6 space-y-2">
+                {tramite && MENSAJE_TRAMITE[tramite.estado] && (() => {
+                  const info = MENSAJE_TRAMITE[tramite.estado]!;
+                  const Icono = info.icono;
+                  return (
+                    <div className={`flex items-center gap-3 rounded-2xl p-4 ${info.color}`}>
+                      <Icono className="w-5 h-5 shrink-0" />
+                      <p className="text-sm font-bold">{info.texto}</p>
+                    </div>
+                  );
+                })()}
+                {montoPendiente > 0 && (
+                  <div className="flex items-center gap-3 rounded-2xl p-4 text-amber-700 bg-amber-50">
+                    <Wallet className="w-5 h-5 shrink-0" />
+                    <p className="text-sm font-bold">Monto pendiente a abonar al retirar: $ {montoPendiente.toLocaleString("es-AR")}</p>
+                  </div>
+                )}
+              </div>
+            )}
 
             <p className="text-[11px] text-slate-400 text-center mt-8">
               ¿Dudas? Escribinos por WhatsApp y te contamos el detalle.

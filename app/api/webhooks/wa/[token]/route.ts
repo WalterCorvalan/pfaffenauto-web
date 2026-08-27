@@ -220,8 +220,24 @@ function isWhatsappEnvioConfigurado(): boolean {
   return !!process.env.META_WHATSAPP_TOKEN && !!process.env.META_WHATSAPP_PHONE_NUMBER_ID;
 }
 
+// Horario de atención del bot: 8:00 a 22:00 hora Argentina. Fuera de ese
+// rango no contesta solo — el mensaje queda guardado igual para que un
+// humano lo retome. Se calcula en la zona horaria real, no la del server
+// (Vercel corre en UTC), para que no dependa de dónde esté deployado.
+function estaEnHorarioAtencion(): boolean {
+  const hora = Number(
+    new Intl.DateTimeFormat("en-US", {
+      timeZone: "America/Argentina/Buenos_Aires",
+      hour: "numeric",
+      hourCycle: "h23",
+    }).format(new Date())
+  );
+  return hora >= 8 && hora < 22;
+}
+
 async function ejecutarAgente(conversacionId: string, contactoId: string) {
   if (!isAiConfigured()) return;
+  if (!estaEnHorarioAtencion()) return;
 
   const { data: conversacionActual } = await supabase
     .from("whatsapp_conversaciones")

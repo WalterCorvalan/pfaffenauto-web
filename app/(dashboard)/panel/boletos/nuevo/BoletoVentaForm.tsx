@@ -4,6 +4,7 @@ import { useState, useMemo, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { supabase } from "@/lib/supabase/client";
 import { notificarEncargados, notificarGestoria } from "@/lib/notificaciones";
+import { crearTramite } from "@/lib/tramites";
 import { ArrowLeft, Receipt, Save, Upload, Loader2 } from "lucide-react";
 import { mostrarToast } from "@/lib/toast";
 import ClienteBuscador, { ClienteSeleccionado } from "../../ClienteBuscador";
@@ -311,6 +312,12 @@ export default function BoletoVentaForm({
         ...documentosDocumentacion.map((tipo_documento) => ({ venta_id: data.id, tipo_documento, etapa: "Documentación" })),
         ...documentosPatentamiento.map((tipo_documento) => ({ venta_id: data.id, tipo_documento, etapa: "Patentamiento" })),
       ]);
+
+      // Toda venta genera su trámite de gestoría (transferencia) — nace ya
+      // conectado al vehículo y a esta venta, sin pedirle nada de nuevo a Gestoría.
+      if (vehiculo?.vehiculo_id) {
+        await crearTramite(supabase, { vehiculoId: vehiculo.vehiculo_id, ventaId: data.id, tipoTramite: "Transferencia" });
+      }
 
       if (bancoPrenda && Number(prendaMonto) > 0) {
         const primerVencimiento = new Date();

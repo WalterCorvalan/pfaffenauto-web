@@ -28,6 +28,7 @@ import {
   LayoutDashboard,
   Inbox,
   ClipboardCheck,
+  ClipboardList,
   History,
   PieChart,
   LogOut,
@@ -79,12 +80,26 @@ export default function DashboardLayout({
   const pathname = usePathname();
   const router = useRouter();
   const mainRef = useRef<HTMLElement>(null);
+  const navRef = useRef<HTMLDivElement>(null);
+  const navScrollRef = useRef(0);
 
   // Next resetea a veces el scroll del sidebar en vez del <main> al navegar
   // (Link scroll={false} evita eso) — repone manualmente el "ir arriba" solo
   // en el contenido principal cuando cambia de página real.
   useEffect(() => {
     mainRef.current?.scrollTo(0, 0);
+  }, [pathname]);
+
+  // El sidebar es hermano del contenido, no ancestro — algo (fuera de nuestro
+  // control) lo lleva a 0 en cada navegación de todos modos. Guardamos su
+  // posición al vuelo y la reponemos después de cada cambio de página. El
+  // rAF es por si lo que lo resetea corre después de este efecto.
+  useEffect(() => {
+    if (navRef.current) navRef.current.scrollTop = navScrollRef.current;
+    const id = requestAnimationFrame(() => {
+      if (navRef.current) navRef.current.scrollTop = navScrollRef.current;
+    });
+    return () => cancelAnimationFrame(id);
   }, [pathname]);
 
   useEffect(() => {
@@ -192,7 +207,11 @@ export default function DashboardLayout({
         if (userRol === "taller" && !pathname?.startsWith("/panel/taller")) {
           router.replace("/panel/taller");
         }
-        if (userRol === "gestoria" && !pathname?.startsWith("/panel/ventas/gestoria")) {
+        if (
+          userRol === "gestoria" &&
+          !pathname?.startsWith("/panel/ventas/gestoria") &&
+          !pathname?.includes("/documentacion")
+        ) {
           router.replace("/panel/ventas/gestoria");
         }
       }
@@ -418,7 +437,11 @@ export default function DashboardLayout({
           </div>
 
           {/* Links de Navegación Completos (Scrollable) */}
-          <div className="flex-1 overflow-y-auto py-3 custom-scrollbar">
+          <div
+            ref={navRef}
+            onScroll={(e) => { navScrollRef.current = e.currentTarget.scrollTop; }}
+            className="flex-1 overflow-y-auto py-3 custom-scrollbar"
+          >
             {/* 🔧 TALLER (rol exclusivo, sin acceso al resto del panel) */}
             {userProfile.rol === "taller" && (
               <NavLinkItem
@@ -437,6 +460,16 @@ export default function DashboardLayout({
                   label="Gestoría"
                   href="/panel/ventas/gestoria"
                   exact
+                />
+                <NavLinkItem
+                  icon={ClipboardList}
+                  label="Trámites"
+                  href="/panel/ventas/gestoria/tramites"
+                />
+                <NavLinkItem
+                  icon={Wallet}
+                  label="Caja de Gestoría"
+                  href="/panel/ventas/gestoria/caja"
                 />
                 <NavLinkItem
                   icon={ClipboardCheck}
@@ -580,14 +613,27 @@ export default function DashboardLayout({
                     icon={FileSearch}
                     label="Gestoría"
                     href="/panel/ventas/gestoria"
+                    exact
                     notifications={notifPorSeccion.gestoria}
                   />
+                  <NavLinkItem
+                    icon={ClipboardList}
+                    label="Trámites"
+                    href="/panel/ventas/gestoria/tramites"
+                  />
                   {(userProfile.rol === "admin" || userProfile.rol === "encargado") && (
-                    <NavLinkItem
-                      icon={ClipboardCheck}
-                      label="Aprobaciones"
-                      href="/panel/ventas/gestoria/aprobaciones"
-                    />
+                    <>
+                      <NavLinkItem
+                        icon={Wallet}
+                        label="Caja de Gestoría"
+                        href="/panel/ventas/gestoria/caja"
+                      />
+                      <NavLinkItem
+                        icon={ClipboardCheck}
+                        label="Aprobaciones"
+                        href="/panel/ventas/gestoria/aprobaciones"
+                      />
+                    </>
                   )}
                 </SectionAccordion>
 
