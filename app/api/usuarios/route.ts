@@ -10,7 +10,7 @@ const RolSchema = z.enum(["admin", "encargado", "vendedor", "taller", "gestoria"
 
 const CrearUsuarioSchema = z.object({
   email: z.string().trim().email().max(150),
-  password: z.string().min(8).max(72),
+  password: z.string().min(6).max(72),
   nombre: z.string().trim().min(1).max(100),
   rol: RolSchema,
   sucursal_id: z.string().uuid().optional().nullable(),
@@ -81,13 +81,16 @@ export async function POST(request: Request) {
 
     if (createError) throw createError;
 
-    // Actualizar el perfil público vinculado a ese usuario
-    const { error: updateError } = await supabaseAdmin
+    // upsert, no update: si no hay un trigger que ya haya insertado la fila
+    // en perfiles al crear el usuario en Auth, un UPDATE no matchea nada, no
+    // tira error, y la fila queda sin crear — pasó justo eso con un usuario
+    // de gestoría real (Auth lo tenía, perfiles no). Esto lo hace a prueba
+    // de que exista o no ese trigger.
+    const { error: upsertError } = await supabaseAdmin
       .from("perfiles")
-      .update({ nombre, rol, sucursal_id })
-      .eq("id", newUser.user.id);
+      .upsert({ id: newUser.user.id, nombre, rol, sucursal_id, activo: true });
 
-    if (updateError) throw updateError;
+    if (upsertError) throw upsertError;
 
     return NextResponse.json({ success: true, user: newUser.user });
   } catch (error: any) {
