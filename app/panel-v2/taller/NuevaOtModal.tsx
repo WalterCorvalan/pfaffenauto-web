@@ -31,6 +31,10 @@ export default function NuevaOtModal({ mecanicos, onClose }: { mecanicos: any[];
   ]);
 
   const guardarOT = async () => {
+    if (!formData.cliente_nombre.trim() || !formData.marca.trim() || !formData.modelo.trim()) {
+      alert("Faltan datos obligatorios: Cliente, Marca y Modelo.");
+      return;
+    }
     setCargando(true);
     try {
       const { data: { user } } = await supabase2.auth.getUser();

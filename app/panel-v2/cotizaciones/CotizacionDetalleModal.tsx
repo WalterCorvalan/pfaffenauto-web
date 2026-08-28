@@ -31,8 +31,8 @@ function Fila({ label, children }: { label: string; children: React.ReactNode })
 }
 
 export default function CotizacionDetalleModal({
-  cotizacion: c, vendedorNombre, onClose, onComentar, onEliminar, onEditar,
-}: { cotizacion: Cotizacion; vendedorNombre: string; onClose: () => void; onComentar: (texto: string) => void; onEliminar: () => void; onEditar: () => void }) {
+  cotizacion: c, vendedorNombre, soyAdmin, onClose, onComentar, onEliminar, onEditar,
+}: { cotizacion: Cotizacion; vendedorNombre: string; soyAdmin: boolean; onClose: () => void; onComentar: (texto: string) => void; onEliminar: () => void; onEditar: () => void }) {
   const [comentario, setComentario] = useState("");
 
   const enviarComentario = () => {
@@ -101,7 +101,7 @@ export default function CotizacionDetalleModal({
           <button onClick={onClose} className="px-3 py-2 text-xs font-semibold bg-white dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-lg text-slate-600 dark:text-slate-300">Cerrar</button>
           <button disabled title="Todavía no construido" className="flex items-center gap-1.5 px-3 py-2 text-xs font-semibold bg-white dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-lg text-slate-400 opacity-60 cursor-not-allowed"><Download className="w-3.5 h-3.5" /> PDF</button>
           <a href={`https://wa.me/?text=${encodeURIComponent(`Cotización ${c.cliente_nombre} — ${c.vehiculo_descripcion || ""} — ${c.moneda} ${(c.precio_aprobado ?? c.precio_sugerido).toLocaleString("es-AR")}`)}`} target="_blank" rel="noopener noreferrer" className="flex items-center gap-1.5 px-3 py-2 text-xs font-semibold bg-emerald-50 dark:bg-emerald-500/10 border border-emerald-200 dark:border-emerald-500/20 text-emerald-700 dark:text-emerald-300 rounded-lg"><MessageCircle className="w-3.5 h-3.5" /> WhatsApp</a>
-          <button onClick={onEliminar} className="flex items-center gap-1.5 px-3 py-2 text-xs font-semibold bg-white dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-lg text-rose-600"><Trash2 className="w-3.5 h-3.5" /> Eliminar</button>
+          {soyAdmin && <button onClick={onEliminar} className="flex items-center gap-1.5 px-3 py-2 text-xs font-semibold bg-white dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-lg text-rose-600"><Trash2 className="w-3.5 h-3.5" /> Eliminar</button>}
           {c.estado === "aprobada" && <a href={`/panel-v2/ventas?cotizacion=${c.id}`} className="flex items-center gap-1.5 px-3 py-2 text-xs font-bold bg-rose-600 hover:bg-rose-700 text-white rounded-lg ml-auto"><ShoppingCart className="w-3.5 h-3.5" /> Convertir a venta</a>}
           <button onClick={onEditar} className={`flex items-center gap-1.5 px-3 py-2 text-xs font-semibold bg-white dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-lg text-slate-600 dark:text-slate-300 ${c.estado === "aprobada" ? "" : "ml-auto"}`}><Pencil className="w-3.5 h-3.5" /> Editar</button>
         </div>

@@ -48,10 +48,11 @@ const GRUPOS: { titulo: string; items: { href?: string; label: string; icon: any
   {
     titulo: "Operación",
     items: [
-      { label: "Pedidos", icon: SearchCode },
+      { href: "/panel-v2/pedidos", label: "Pedidos", icon: SearchCode },
+      { href: "/panel-v2/pedidos-busqueda", label: "Pedidos (búsquedas)", icon: Search },
       { href: "/panel-v2/postventa", label: "Postventa", icon: PackageCheck },
-      { label: "Expedientes", icon: FolderKanban },
-      { label: "Reclamos", icon: MessageSquareWarning },
+      { href: "/panel-v2/expedientes", label: "Expedientes", icon: FolderKanban },
+      { href: "/panel-v2/reclamos", label: "Reclamos", icon: MessageSquareWarning },
       { label: "Gestoría", icon: ClipboardList },
       { label: "Consignaciones", icon: KeyRound },
       { label: "Infracciones", icon: Landmark },
@@ -73,7 +74,7 @@ const GRUPOS: { titulo: string; items: { href?: string; label: string; icon: any
     titulo: "Colaboración",
     items: [
       { label: "Mensajes", icon: MessagesSquare },
-      { label: "WhatsApp", icon: Smartphone },
+      { href: "/panel-v2/whatsapp", label: "WhatsApp", icon: Smartphone },
       { label: "Correos", icon: Mail },
       { label: "NPS", icon: ThumbsUp },
     ],

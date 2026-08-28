@@ -1,10 +1,22 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { supabase2 } from "@/lib/supabase2/client";
-import { X, Loader2, Save, Trash2, Plus } from "lucide-react";
-import { hoyLocalISO, parseFechaLocal } from "@/lib/panelV2/fechas";
+import { X, Loader2, Save, Trash2, Plus, Bell, Star } from "lucide-react";
+import { hoyLocalISO, parseFechaLocal, fmtFechaLocal } from "@/lib/panelV2/fechas";
 import { crearAlerta } from "@/lib/panelV2/alertas";
+
+const TIPOS_RECORDATORIO: { value: string; label: string }[] = [
+  { value: "llamada_seguimiento", label: "📞 Llamada de seguimiento" },
+  { value: "control_post_entrega", label: "🚗 Control post-entrega" },
+  { value: "vtv", label: "🔍 VTV / Revisión técnica" },
+  { value: "service", label: "🔧 Service / Mantenimiento" },
+  { value: "seguro", label: "🛡️ Renovación de seguro" },
+  { value: "patente", label: "📄 Patente / Impuesto vehicular" },
+  { value: "garantia", label: "⚠️ Fin de garantía" },
+  { value: "cumpleanos", label: "🎂 Cumpleaños del cliente" },
+  { value: "otro", label: "📌 Otro recordatorio" },
+];
 
 interface Vehiculo { id: string; marca: string; modelo: string; anio: number; patente: string | null; km: number | null; precio_venta: number; moneda_venta: string; estado: string; color: string | null; condicion: string }
 interface Cliente { id: string; nombre: string; telefono: string | null; email: string | null; dni_cuit: string | null }
@@ -27,6 +39,7 @@ interface Props {
   vehiculos: Vehiculo[];
   miId: string;
   initial?: VentaPrefill;
+  editando?: any;
   onClose: () => void;
   onCreado: (venta: any) => void;
 }
@@ -35,64 +48,94 @@ const CAJAS = ["Caja USD", "Caja ARS", "Banco", "Otro"];
 const CONDICIONES = ["0km", "Excelente", "Muy bueno", "Bueno", "Regular"];
 const nuevaPermuta = (): Permuta => ({ valor: "", moneda: "USD", precioPublicacion: "", marca: "", modelo: "", anio: "", km: "", patente: "", color: "", condicion: "Muy bueno", cargarAlStock: true, duenoNombre: "" });
 
-export default function NuevaVentaModal({ perfiles, clientes, vehiculos, miId, initial, onClose, onCreado }: Props) {
+export default function NuevaVentaModal({ perfiles, clientes, vehiculos, miId, initial, editando, onClose, onCreado }: Props) {
+  const esEdicion = !!editando;
   const miPerfil = perfiles.find((p) => p.id === miId);
   const puedeGenerarCuotas = miPerfil?.roles?.some((r) => r === "admin" || r === "finanzas") ?? false;
 
   const [cargaManual, setCargaManual] = useState(false);
   const [abreExpedienteManual, setAbreExpedienteManual] = useState(false);
 
-  const [vehiculoId, setVehiculoId] = useState(initial?.vehiculoId || "");
-  const [vMarca, setVMarca] = useState(initial?.vehiculoDescripcion?.split(" ")[0] || "");
-  const [vModelo, setVModelo] = useState(initial?.vehiculoDescripcion?.split(" ").slice(1).join(" ") || "");
-  const [vAnio, setVAnio] = useState("");
-  const [vPatente, setVPatente] = useState("");
-  const [vColor, setVColor] = useState("");
-  const [vCondicion, setVCondicion] = useState("Muy bueno");
-  const [km, setKm] = useState("");
-  const [estado, setEstado] = useState("borrador");
+  const [vehiculoId, setVehiculoId] = useState(editando?.vehiculo_id || initial?.vehiculoId || "");
+  const [vMarca, setVMarca] = useState(editando?.vehiculo_marca || initial?.vehiculoDescripcion?.split(" ")[0] || "");
+  const [vModelo, setVModelo] = useState(editando?.vehiculo_modelo || initial?.vehiculoDescripcion?.split(" ").slice(1).join(" ") || "");
+  const [vAnio, setVAnio] = useState(editando?.vehiculo_anio ? String(editando.vehiculo_anio) : "");
+  const [vPatente, setVPatente] = useState(editando?.vehiculo_patente || "");
+  const [vColor, setVColor] = useState(editando?.vehiculo_color || "");
+  const [vCondicion, setVCondicion] = useState(editando?.vehiculo_condicion || "Muy bueno");
+  const [km, setKm] = useState(editando?.km ? String(editando.km) : "");
+  const [estado, setEstado] = useState(editando?.estado || "borrador");
   const [estadoTocado, setEstadoTocado] = useState(false);
-  const [precioVenta, setPrecioVenta] = useState(initial?.precioVenta || "");
-  const [monedaVenta, setMonedaVenta] = useState(initial?.monedaVenta || "USD");
-  const [vendedorId, setVendedorId] = useState("");
-  const [fechaCierre, setFechaCierre] = useState(hoyLocalISO());
+  const [precioVenta, setPrecioVenta] = useState(editando?.precio_venta ? String(editando.precio_venta) : initial?.precioVenta || "");
+  const [monedaVenta, setMonedaVenta] = useState(editando?.moneda_venta || initial?.monedaVenta || "USD");
+  const [vendedorId, setVendedorId] = useState(editando?.vendedor_id || "");
+  const [fechaCierre, setFechaCierre] = useState(editando?.fecha_cierre || hoyLocalISO());
 
-  const [clienteId, setClienteId] = useState("");
-  const [compradorNombre, setCompradorNombre] = useState(initial?.compradorNombre || "");
-  const [compradorTelefono, setCompradorTelefono] = useState("");
-  const [compradorEmail, setCompradorEmail] = useState("");
-  const [compradorDni, setCompradorDni] = useState("");
-  const [propietarioNombre, setPropietarioNombre] = useState("");
-  const [propietarioTelefono, setPropietarioTelefono] = useState("");
+  const [clienteId, setClienteId] = useState(editando?.cliente_id || "");
+  const [compradorNombre, setCompradorNombre] = useState(editando?.comprador_nombre || initial?.compradorNombre || "");
+  const [compradorTelefono, setCompradorTelefono] = useState(editando?.comprador_telefono || "");
+  const [compradorEmail, setCompradorEmail] = useState(editando?.comprador_email || "");
+  const [compradorDni, setCompradorDni] = useState(editando?.comprador_dni || "");
+  const [propietarioNombre, setPropietarioNombre] = useState(editando?.propietario_nombre || "");
+  const [propietarioTelefono, setPropietarioTelefono] = useState(editando?.propietario_telefono || "");
 
   const [senas, setSenas] = useState<Seña[]>([]);
-  const [metodoPago, setMetodoPago] = useState("");
-  const [cuotasPlazo, setCuotasPlazo] = useState("");
-  const [montoFinanciacion, setMontoFinanciacion] = useState("");
+  const [metodoPago, setMetodoPago] = useState(editando?.metodo_pago || "");
+  const [cuotasPlazo, setCuotasPlazo] = useState(editando?.cuotas_plazo ? String(editando.cuotas_plazo) : "");
+  const [montoFinanciacion, setMontoFinanciacion] = useState(editando?.monto_financiacion ? String(editando.monto_financiacion) : "");
 
   const [incluirPermuta, setIncluirPermuta] = useState(false);
   const [permutas, setPermutas] = useState<Permuta[]>([]);
 
-  const [responsableConsignacion, setResponsableConsignacion] = useState("");
-  const [gestorAsignado, setGestorAsignado] = useState("");
+  const [responsableConsignacion, setResponsableConsignacion] = useState(editando?.responsable_consignacion_id || "");
+  const [gestorAsignado, setGestorAsignado] = useState(editando?.gestor_asignado_id || "");
 
-  const [comisionManual, setComisionManual] = useState(false);
-  const [comisionVendedorPct, setComisionVendedorPct] = useState("1");
-  const [comisionConsignacionPct, setComisionConsignacionPct] = useState("0.5");
-  const [extraMonto, setExtraMonto] = useState("");
-  const [extraMoneda, setExtraMoneda] = useState("USD");
-  const [vendedorCompartido, setVendedorCompartido] = useState(false);
-  const [companeroId, setCompaneroId] = useState("");
-  const [companeroPct, setCompaneroPct] = useState("0.5");
+  const [comisionManual, setComisionManual] = useState(editando?.comision_manual || false);
+  const [comisionVendedorPct, setComisionVendedorPct] = useState(editando?.comision_vendedor_pct != null ? String(editando.comision_vendedor_pct) : "1");
+  const [comisionConsignacionPct, setComisionConsignacionPct] = useState(editando?.comision_consignacion_pct != null ? String(editando.comision_consignacion_pct) : "0.5");
+  const [extraMonto, setExtraMonto] = useState(editando?.extra_cobrado_monto ? String(editando.extra_cobrado_monto) : "");
+  const [extraMoneda, setExtraMoneda] = useState(editando?.extra_cobrado_moneda || "USD");
+  const [vendedorCompartido, setVendedorCompartido] = useState(editando?.vendedor_compartido || false);
+  const [companeroId, setCompaneroId] = useState(editando?.vendedor_compartido_id || "");
+  const [companeroPct, setCompaneroPct] = useState(editando?.vendedor_compartido_pct != null ? String(editando.vendedor_compartido_pct) : "0.5");
 
-  const [entregaTuerca, setEntregaTuerca] = useState(false);
-  const [entregaLlave, setEntregaLlave] = useState(false);
-  const [entregaManuales, setEntregaManuales] = useState(false);
-  const [entregaCedula, setEntregaCedula] = useState(false);
-  const [fechaEntrega, setFechaEntrega] = useState("");
-  const [notas, setNotas] = useState("");
-  const [comentarioGestoria, setComentarioGestoria] = useState("");
-  const [comentarioFinanzas, setComentarioFinanzas] = useState("");
+  const [entregaTuerca, setEntregaTuerca] = useState(editando?.entrega_tuerca_seguridad || false);
+  const [entregaLlave, setEntregaLlave] = useState(editando?.entrega_duplicado_llave || false);
+  const [entregaManuales, setEntregaManuales] = useState(editando?.entrega_manuales || false);
+  const [entregaCedula, setEntregaCedula] = useState(editando?.entrega_cedula || false);
+  const [fechaEntrega, setFechaEntrega] = useState(editando?.fecha_entrega || "");
+  const [notas, setNotas] = useState(editando?.notas || "");
+  const [comentarioGestoria, setComentarioGestoria] = useState(editando?.comentario_gestoria || "");
+  const [comentarioFinanzas, setComentarioFinanzas] = useState(editando?.comentario_finanzas || "");
+
+  const [recordatorios, setRecordatorios] = useState<any[]>([]);
+  const [recordatoriosNuevos, setRecordatoriosNuevos] = useState<{ tipo: string; fecha: string; notas: string }[]>([]);
+  const [rTipo, setRTipo] = useState("llamada_seguimiento");
+  const [rFecha, setRFecha] = useState("");
+  const [rNotas, setRNotas] = useState("");
+  const [calificacionPedida, setCalificacionPedida] = useState(editando?.calificacion_pedida || false);
+
+  useEffect(() => {
+    if (!esEdicion) return;
+    supabase2.from("venta_recordatorios").select("*").eq("venta_id", editando.id).eq("estado", "pendiente").order("fecha_vencimiento").then(({ data }) => setRecordatorios(data || []));
+  }, [esEdicion, editando?.id]);
+
+  const agregarRecordatorio = () => {
+    if (!rFecha) return;
+    setRecordatoriosNuevos((prev) => [...prev, { tipo: rTipo, fecha: rFecha, notas: rNotas.trim() }]);
+    setRFecha(""); setRNotas("");
+  };
+  const quitarRecordatorioNuevo = (i: number) => setRecordatoriosNuevos((prev) => prev.filter((_, idx) => idx !== i));
+
+  const generarRecordatoriosAutomaticos = () => {
+    const base = fechaEntrega ? parseFechaLocal(fechaEntrega) : parseFechaLocal(fechaCierre);
+    const sumarDias = (d: Date, dias: number) => { const n = new Date(d); n.setDate(n.getDate() + dias); return `${n.getFullYear()}-${String(n.getMonth() + 1).padStart(2, "0")}-${String(n.getDate()).padStart(2, "0")}`; };
+    setRecordatoriosNuevos((prev) => [
+      ...prev,
+      { tipo: "control_post_entrega", fecha: sumarDias(base, 7), notas: "Llamado de control a los 7 días de la entrega." },
+      { tipo: "service", fecha: sumarDias(base, 180), notas: "Recordar service/mantenimiento a los 6 meses." },
+    ]);
+  };
 
   const [guardando, setGuardando] = useState(false);
   const [error, setError] = useState("");
@@ -152,7 +195,57 @@ export default function NuevaVentaModal({ perfiles, clientes, vehiculos, miId, i
     return nuevo?.id || null;
   };
 
+  const guardarEdicion = async () => {
+    if (!precioVenta || !compradorNombre.trim()) {
+      setError("Completá al menos el precio de venta y el nombre del comprador.");
+      return;
+    }
+    setGuardando(true);
+    setError("");
+    try {
+      const payload: any = {
+        vehiculo_marca: vMarca || null, vehiculo_modelo: vModelo || null, vehiculo_anio: vAnio ? Number(vAnio) : null,
+        vehiculo_patente: vPatente || null, vehiculo_color: vColor || null, vehiculo_condicion: vCondicion || null,
+        km: km ? Number(km) : null, precio_venta: Number(precioVenta), moneda_venta: monedaVenta,
+        vendedor_id: vendedorId || null, fecha_cierre: fechaCierre,
+        comprador_nombre: compradorNombre.trim(), comprador_telefono: compradorTelefono || null,
+        comprador_email: compradorEmail || null, comprador_dni: compradorDni || null,
+        propietario_nombre: vehiculoId ? null : (propietarioNombre || null), propietario_telefono: vehiculoId ? null : (propietarioTelefono || null),
+        metodo_pago: metodoPago || null, cuotas_plazo: metodoPago === "Financiado" && cuotasPlazo ? Number(cuotasPlazo) : null,
+        monto_financiacion: montoFinanciacion ? Number(montoFinanciacion) : null,
+        responsable_consignacion_id: responsableConsignacion || null,
+        gestor_asignado_id: gestorAsignado || null,
+        comision_manual: comisionManual, comision_vendedor_pct: Number(comisionVendedorEfectiva), comision_consignacion_pct: Number(comisionConsignacionPct),
+        vendedor_compartido: vendedorCompartido, vendedor_compartido_id: vendedorCompartido ? (companeroId || null) : null,
+        vendedor_compartido_pct: vendedorCompartido ? Number(companeroPct) : null,
+        extra_cobrado_monto: extraMonto ? Number(extraMonto) : null, extra_cobrado_moneda: extraMoneda,
+        entrega_tuerca_seguridad: entregaTuerca, entrega_duplicado_llave: entregaLlave, entrega_manuales: entregaManuales, entrega_cedula: entregaCedula,
+        fecha_entrega: fechaEntrega || null, notas: notas || null, comentario_gestoria: comentarioGestoria || null, comentario_finanzas: comentarioFinanzas || null,
+        calificacion_pedida: calificacionPedida,
+        calificacion_pedida_en: calificacionPedida && !editando.calificacion_pedida ? new Date().toISOString() : (calificacionPedida ? editando.calificacion_pedida_en : null),
+      };
+
+      const { data: venta, error: dbError } = await supabase2.from("ventas").update(payload).eq("id", editando.id).select().single();
+      if (dbError) throw dbError;
+
+      if (recordatoriosNuevos.length > 0) {
+        await supabase2.from("venta_recordatorios").insert(
+          recordatoriosNuevos.map((r) => ({ venta_id: editando.id, tipo: r.tipo, fecha_vencimiento: r.fecha, notas: r.notas || null, creado_por: miId || null }))
+        );
+      }
+
+      onCreado(venta);
+      onClose();
+    } catch (err) {
+      console.error(err);
+      setError("No se pudo guardar los cambios.");
+    } finally {
+      setGuardando(false);
+    }
+  };
+
   const guardar = async (forzarBorrador: boolean) => {
+    if (esEdicion) return guardarEdicion();
     if (!precioVenta || !compradorNombre.trim()) {
       setError("Completá al menos el precio de venta y el nombre del comprador.");
       return;
@@ -224,7 +317,7 @@ export default function NuevaVentaModal({ perfiles, clientes, vehiculos, miId, i
 
       if (metodoPago === "Financiado" && cuotasPlazo && Number(cuotasPlazo) > 0) {
         if (!puedeGenerarCuotas) {
-          setComentarioFinanzas((prev) => `${prev ? prev + " — " : ""}Pedirle a Finanzas que genere el plan de cuotas (${cuotasPlazo} cuotas).`);
+          setComentarioFinanzas((prev: string) => `${prev ? prev + " — " : ""}Pedirle a Finanzas que genere el plan de cuotas (${cuotasPlazo} cuotas).`);
         } else {
           const totalSenas = senas.reduce((acc, s) => acc + Number(s.monto || 0), 0);
           const saldo = Number(precioVenta) - totalSenas - totalPermutas;
@@ -243,9 +336,9 @@ export default function NuevaVentaModal({ perfiles, clientes, vehiculos, miId, i
         await supabase2.from("vehiculos").update({ estado: "vendido" }).eq("id", vehiculoId);
       }
 
-      if (estadoFinal === "cerrada" && (cargaManual ? abreExpedienteManual : true)) {
-        await supabase2.from("expedientes").insert({ venta_id: venta.id, creado_por: miId || null });
-      }
+      // El expediente (con hitos + alerta al gestor) lo abre solo el trigger
+      // abrir_expediente_al_cerrar_venta al insertar/actualizar la venta en
+      // estado 'cerrada' — no hace falta insertarlo a mano acá.
 
       if (miId) {
         crearAlerta(supabase2, miId, `Nueva venta registrada — ${venta.comprador_nombre}`, {
@@ -273,20 +366,22 @@ export default function NuevaVentaModal({ perfiles, clientes, vehiculos, miId, i
       <div className="absolute inset-0 bg-slate-900/50 backdrop-blur-sm" onClick={() => !guardando && onClose()} />
       <div className="relative bg-white dark:bg-[#141414] border border-slate-200 dark:border-white/10 w-full max-w-2xl max-h-[90vh] rounded-2xl shadow-2xl flex flex-col overflow-hidden">
         <div className="flex justify-between items-start p-6 pb-0 shrink-0">
-          <p className="text-xs text-slate-500 dark:text-slate-400 pr-4">Se crea en estado Activa si hay vehículo del stock asignado, caso contrario Borrador. El estado se cambia después desde el detalle.</p>
+          <p className="text-xs text-slate-500 dark:text-slate-400 pr-4">{esEdicion ? "Editando la venta. El estado se cambia desde el detalle, no acá." : "Se crea en estado Activa si hay vehículo del stock asignado, caso contrario Borrador. El estado se cambia después desde el detalle."}</p>
           <button onClick={onClose} className="text-slate-400 hover:text-slate-700 dark:hover:text-white p-1.5 rounded-lg hover:bg-slate-100 dark:hover:bg-white/10 shrink-0"><X className="w-4 h-4" /></button>
         </div>
 
         <div className="space-y-4 px-6 py-4 overflow-y-auto overflow-x-hidden flex-1 min-h-0">
-          <label className={`flex items-start gap-2.5 px-3 py-2.5 rounded-xl border cursor-pointer ${cargaManual ? "bg-amber-50 dark:bg-amber-500/10 border-amber-300 dark:border-amber-500/30" : "bg-white dark:bg-white/5 border-slate-200 dark:border-white/10"}`}>
-            <input type="checkbox" checked={cargaManual} onChange={(e) => setCargaManual(e.target.checked)} className="w-4 h-4 mt-0.5 accent-rose-600" />
-            <span>
-              <span className="flex items-center gap-1.5 text-xs font-bold text-slate-700 dark:text-slate-200">↓ Carga manual <span className="font-normal text-slate-400">(venta vieja importada desde Excel)</span></span>
-              <span className="block text-[10px] text-slate-500 dark:text-slate-400 mt-0.5">Para registrar ventas históricas: permite cargar el vehículo a mano (sin ficha en stock) y la venta nace en estado <strong>Cerrada</strong> directamente. El resto del formulario queda igual.</span>
-            </span>
-          </label>
+          {!esEdicion && (
+            <label className={`flex items-start gap-2.5 px-3 py-2.5 rounded-xl border cursor-pointer ${cargaManual ? "bg-amber-50 dark:bg-amber-500/10 border-amber-300 dark:border-amber-500/30" : "bg-white dark:bg-white/5 border-slate-200 dark:border-white/10"}`}>
+              <input type="checkbox" checked={cargaManual} onChange={(e) => setCargaManual(e.target.checked)} className="w-4 h-4 mt-0.5 accent-rose-600" />
+              <span>
+                <span className="flex items-center gap-1.5 text-xs font-bold text-slate-700 dark:text-slate-200">↓ Carga manual <span className="font-normal text-slate-400">(venta vieja importada desde Excel)</span></span>
+                <span className="block text-[10px] text-slate-500 dark:text-slate-400 mt-0.5">Para registrar ventas históricas: permite cargar el vehículo a mano (sin ficha en stock) y la venta nace en estado <strong>Cerrada</strong> directamente. El resto del formulario queda igual.</span>
+              </span>
+            </label>
+          )}
 
-          {cargaManual && (
+          {!esEdicion && cargaManual && (
             <label className="flex items-start gap-2.5 px-3 py-2.5 rounded-xl border border-slate-200 dark:border-white/10 cursor-pointer">
               <input type="checkbox" checked={abreExpedienteManual} onChange={(e) => setAbreExpedienteManual(e.target.checked)} className="w-4 h-4 mt-0.5 accent-rose-600" />
               <span>
@@ -308,10 +403,16 @@ export default function NuevaVentaModal({ perfiles, clientes, vehiculos, miId, i
               </div>
               <div>
                 <label className={labelClass}>Estado</label>
-                <select value={estado} onChange={(e) => { setEstado(e.target.value); setEstadoTocado(true); }} disabled={cargaManual} className={inputClass}>
-                  {cargaManual ? <option value="cerrada">Cerrada</option> : ["borrador", "activa", "reserva", "cerrada", "cancelada"].map((s) => <option key={s} value={s}>{s.charAt(0).toUpperCase() + s.slice(1)}</option>)}
+                <select value={estado} onChange={(e) => { setEstado(e.target.value); setEstadoTocado(true); }} disabled={cargaManual || esEdicion} className={inputClass}>
+                  {cargaManual ? <option value="cerrada">Cerrada</option> : ["borrador", "activa", "reserva", "cerrada", "caida", "cancelada"].map((s) => <option key={s} value={s}>{s.charAt(0).toUpperCase() + s.slice(1)}</option>)}
                 </select>
-                <p className="text-[10px] text-slate-400 mt-1">{cargaManual ? "Carga manual nace Cerrada (paridad v1)" : "Por default según vehículo. Cambialo si la venta arranca en otro estado."}</p>
+                {esEdicion ? (
+                  <p className="text-[11px] text-amber-700 dark:text-amber-300 bg-amber-50 dark:bg-amber-500/10 border border-amber-200 dark:border-amber-500/20 rounded-lg px-2.5 py-2 mt-1.5">
+                    El estado actual es <strong>{estado.charAt(0).toUpperCase() + estado.slice(1)}</strong>. Para cambiarlo, cerrá este modal y usá el botón "Cambiar status" del detalle — el flow valida las transiciones permitidas y pide motivo cuando corresponde.
+                  </p>
+                ) : (
+                  <p className="text-[10px] text-slate-400 mt-1">{cargaManual ? "Carga manual nace Cerrada (paridad v1)" : "Por default según vehículo. Cambialo si la venta arranca en otro estado."}</p>
+                )}
               </div>
 
               {cargaManual && (
@@ -383,6 +484,10 @@ export default function NuevaVentaModal({ perfiles, clientes, vehiculos, miId, i
           )}
 
           <>
+              {esEdicion && (
+                <p className="text-[11px] text-slate-400 bg-slate-50 dark:bg-white/5 rounded-lg px-3 py-2">Señas y permutas se gestionan desde el expediente de la venta, no desde acá.</p>
+              )}
+              {!esEdicion && (
               <div>
                 <p className={seccionClass}>Pago</p>
                 <div className="bg-amber-50/60 dark:bg-amber-500/5 border border-amber-100 dark:border-amber-500/20 rounded-xl p-3.5">
@@ -415,6 +520,7 @@ export default function NuevaVentaModal({ perfiles, clientes, vehiculos, miId, i
                   )}
                 </div>
               </div>
+              )}
 
               <div className="grid grid-cols-2 gap-3">
                 <div>
@@ -437,6 +543,7 @@ export default function NuevaVentaModal({ perfiles, clientes, vehiculos, miId, i
                 )}
               </div>
 
+              {!esEdicion && (
               <div>
                 <div className="flex items-center justify-between mb-2">
                   <p className="text-[11px] font-black uppercase tracking-widest text-slate-400">Permuta</p>
@@ -481,6 +588,7 @@ export default function NuevaVentaModal({ perfiles, clientes, vehiculos, miId, i
                   </div>
                 )}
               </div>
+              )}
 
               <div>
                 <p className={seccionClass}>🤝 Consignación</p>
@@ -590,14 +698,83 @@ export default function NuevaVentaModal({ perfiles, clientes, vehiculos, miId, i
             <div><label className={labelClass}>Comentario para finanzas</label><textarea value={comentarioFinanzas} onChange={(e) => setComentarioFinanzas(e.target.value)} rows={2} placeholder="Forma de pago al propietario, plazos, retenciones..." className={`${inputClass} resize-none`} /></div>
           </div>
 
+          {esEdicion && (
+            <>
+              <div>
+                <p className={seccionClass}><Bell className="w-3 h-3 inline -mt-0.5" /> Recordatorios post-venta</p>
+                {recordatorios.length === 0 && recordatoriosNuevos.length === 0 ? (
+                  <div className="text-center py-4 bg-slate-50 dark:bg-white/5 rounded-xl border border-slate-100 dark:border-white/10">
+                    <p className="text-2xl">🔔</p>
+                    <p className="text-xs text-slate-400 mt-1">Sin recordatorios para esta venta.</p>
+                    <button type="button" onClick={generarRecordatoriosAutomaticos} className="mt-2 px-3 py-1.5 rounded-lg bg-indigo-50 dark:bg-indigo-500/10 text-indigo-600 dark:text-indigo-300 text-xs font-bold">✨ Generar recordatorios automáticos</button>
+                  </div>
+                ) : (
+                  <div className="space-y-1.5 mb-2">
+                    {recordatorios.map((r) => (
+                      <div key={r.id} className="flex items-center justify-between bg-slate-50 dark:bg-white/5 border border-slate-100 dark:border-white/10 rounded-lg px-3 py-2">
+                        <span className="text-xs text-slate-700 dark:text-slate-200">{TIPOS_RECORDATORIO.find((t) => t.value === r.tipo)?.label || r.tipo}</span>
+                        <span className="text-[10px] text-slate-400">{fmtFechaLocal(r.fecha_vencimiento)}</span>
+                      </div>
+                    ))}
+                    {recordatoriosNuevos.map((r, i) => (
+                      <div key={i} className="flex items-center justify-between bg-indigo-50 dark:bg-indigo-500/10 border border-indigo-100 dark:border-indigo-500/20 rounded-lg px-3 py-2">
+                        <span className="text-xs text-indigo-700 dark:text-indigo-300">{TIPOS_RECORDATORIO.find((t) => t.value === r.tipo)?.label || r.tipo} <span className="text-[10px] text-indigo-400">(sin guardar)</span></span>
+                        <div className="flex items-center gap-2">
+                          <span className="text-[10px] text-indigo-400">{fmtFechaLocal(r.fecha)}</span>
+                          <button type="button" onClick={() => quitarRecordatorioNuevo(i)} className="text-indigo-300 hover:text-rose-500"><Trash2 className="w-3 h-3" /></button>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
+
+                <div className="bg-slate-50 dark:bg-white/5 border border-slate-100 dark:border-white/10 rounded-xl p-3 mt-2">
+                  <p className="text-[10px] font-bold uppercase tracking-widest text-slate-400 mb-2">Agregar recordatorio</p>
+                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
+                    <div>
+                      <label className={labelClass}>Tipo</label>
+                      <select value={rTipo} onChange={(e) => setRTipo(e.target.value)} className={inputClass}>
+                        {TIPOS_RECORDATORIO.map((t) => <option key={t.value} value={t.value}>{t.label}</option>)}
+                      </select>
+                    </div>
+                    <div>
+                      <label className={labelClass}>Fecha</label>
+                      <input type="date" value={rFecha} onChange={(e) => setRFecha(e.target.value)} className={inputClass} />
+                    </div>
+                    <div>
+                      <label className={labelClass}>Notas (opcional)</label>
+                      <input value={rNotas} onChange={(e) => setRNotas(e.target.value)} placeholder="Aclaración..." className={inputClass} />
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-3 mt-2">
+                    <button type="button" onClick={agregarRecordatorio} disabled={!rFecha} className="px-3 py-1.5 rounded-lg bg-rose-600 hover:bg-rose-700 text-white text-xs font-bold disabled:opacity-50">+ Agregar</button>
+                    {(recordatorios.length > 0 || recordatoriosNuevos.length > 0) && <button type="button" onClick={generarRecordatoriosAutomaticos} className="text-xs font-bold text-indigo-600 dark:text-indigo-300">Generar recordatorios automáticos</button>}
+                  </div>
+                  <p className="text-[10px] text-slate-400 mt-1.5">Los cambios en recordatorios se guardan al apretar "Guardar cambios".</p>
+                </div>
+              </div>
+
+              <div>
+                <div className="flex items-center justify-between mb-2">
+                  <p className={seccionClass}><Star className="w-3 h-3 inline -mt-0.5" /> Calificación del cliente</p>
+                  <span className={`text-[10px] font-bold px-2 py-1 rounded-full ${calificacionPedida ? "bg-emerald-50 dark:bg-emerald-500/10 text-emerald-700 dark:text-emerald-300" : "bg-slate-100 dark:bg-white/10 text-slate-500"}`}>{calificacionPedida ? "Pedida" : "Sin pedir aún"}</span>
+                </div>
+                <label className="flex items-start gap-2.5 px-3 py-2.5 rounded-xl bg-slate-50 dark:bg-white/5 border border-slate-200 dark:border-white/10 cursor-pointer">
+                  <input type="checkbox" checked={calificacionPedida} onChange={(e) => setCalificacionPedida(e.target.checked)} className="w-4 h-4 mt-0.5 accent-rose-600" />
+                  <span className="block text-[10px] text-slate-500 dark:text-slate-400">Se le pidió calificación al cliente (google review / encuesta NPS / formulario interno).</span>
+                </label>
+              </div>
+            </>
+          )}
+
           {error && <p className="text-xs font-semibold text-rose-600 bg-rose-50 dark:bg-rose-500/10 rounded-lg px-3 py-2">{error}</p>}
         </div>
 
         <div className="flex gap-2 p-6 pt-3 border-t border-slate-100 dark:border-white/10 shrink-0">
           <button type="button" onClick={onClose} className="px-4 py-2.5 text-sm font-semibold bg-white dark:bg-white/5 border border-slate-200 dark:border-white/10 hover:bg-slate-50 dark:hover:bg-white/10 text-slate-600 dark:text-slate-300 rounded-xl">Cancelar</button>
-          <button type="button" onClick={() => guardar(true)} disabled={guardando} className="flex-1 py-2.5 flex items-center justify-center gap-2 text-sm font-semibold bg-white dark:bg-white/5 border border-slate-200 dark:border-white/10 hover:bg-slate-50 dark:hover:bg-white/10 text-slate-600 dark:text-slate-300 rounded-xl disabled:opacity-50"><Save className="w-4 h-4" /> Guardar borrador</button>
+          {!esEdicion && <button type="button" onClick={() => guardar(true)} disabled={guardando} className="flex-1 py-2.5 flex items-center justify-center gap-2 text-sm font-semibold bg-white dark:bg-white/5 border border-slate-200 dark:border-white/10 hover:bg-slate-50 dark:hover:bg-white/10 text-slate-600 dark:text-slate-300 rounded-xl disabled:opacity-50"><Save className="w-4 h-4" /> Guardar borrador</button>}
           <button type="button" onClick={() => guardar(false)} disabled={guardando} className="flex-1 py-2.5 flex items-center justify-center gap-2 text-sm font-bold bg-rose-600 hover:bg-rose-700 text-white rounded-xl disabled:opacity-50">
-            {guardando ? <Loader2 className="w-4 h-4 animate-spin" /> : <><Save className="w-4 h-4" /> Crear venta</>}
+            {guardando ? <Loader2 className="w-4 h-4 animate-spin" /> : <><Save className="w-4 h-4" /> {esEdicion ? "Guardar cambios" : "Crear venta"}</>}
           </button>
         </div>
       </div>

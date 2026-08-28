@@ -160,7 +160,7 @@ export default async function WhatsappMetricasPage({
                 return (
                   <Link
                     key={c.id}
-                    href={`/panel/chat?conversacion=${c.id}&canal=whatsapp`}
+                    href={`/panel-v2/whatsapp?conversacion=${c.id}`}
                     className={`border rounded-2xl p-4 shadow-sm hover:shadow-md transition-all ${color.borde} ${color.fondo}`}
                   >
                     <div className="flex items-center justify-between mb-3">
@@ -197,7 +197,7 @@ export default async function WhatsappMetricasPage({
             {totalPaginas > 1 && (
               <div className="flex items-center justify-center gap-3 mt-5">
                 <Link
-                  href={`/panel/marketing/whatsapp-metricas?p=${paginaActual - 1}`}
+                  href={`/panel-v2/marketing/whatsapp-metricas?p=${paginaActual - 1}`}
                   aria-disabled={paginaActual <= 1}
                   className={`flex items-center gap-1 text-[11px] font-bold uppercase tracking-widest px-3 py-2 rounded-lg border transition-colors ${
                     paginaActual <= 1
@@ -211,7 +211,7 @@ export default async function WhatsappMetricasPage({
                   Página {paginaActual} de {totalPaginas}
                 </span>
                 <Link
-                  href={`/panel/marketing/whatsapp-metricas?p=${paginaActual + 1}`}
+                  href={`/panel-v2/marketing/whatsapp-metricas?p=${paginaActual + 1}`}
                   aria-disabled={paginaActual >= totalPaginas}
                   className={`flex items-center gap-1 text-[11px] font-bold uppercase tracking-widest px-3 py-2 rounded-lg border transition-colors ${
                     paginaActual >= totalPaginas

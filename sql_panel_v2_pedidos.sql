@@ -70,7 +70,7 @@ begin
       insert into public.alertas (destinatario_id, tipo, prioridad, titulo, link)
       values (v_pedido.vendedor_id, 'pedido_match', 'alta', 'Entró un auto para ' || v_pedido.nombre_cliente || ' (' || new.marca || ' ' || new.modelo || ')', v_link);
     else
-      for v_encargado in select id from public.perfiles where rol in ('encargado', 'admin') and activo = true loop
+      for v_encargado in select id from public.perfiles where ('encargado' = any(roles) or 'admin' = any(roles)) and activo = true loop
         insert into public.alertas (destinatario_id, tipo, prioridad, titulo, link)
         values (v_encargado.id, 'pedido_match', 'alta', 'Entró un auto para ' || v_pedido.nombre_cliente || ' (' || new.marca || ' ' || new.modelo || ')', v_link);
       end loop;

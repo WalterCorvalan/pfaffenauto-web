@@ -274,11 +274,13 @@ export default function CotizacionesClient({
         <CotizacionDetalleModal
           cotizacion={cotizaciones.find((x) => x.id === detalle.id) || detalle}
           vendedorNombre={detalle.vendedor_id ? perfilMap[detalle.vendedor_id] : "Sin vendedor"}
+          soyAdmin={soyAdmin}
           onClose={() => setDetalle(null)}
           onComentar={(texto) => comentar(detalle, texto)}
           onEliminar={async () => {
             if (!confirm("¿Eliminar esta cotización? No se puede deshacer.")) return;
-            await supabase2.from("cotizaciones").delete().eq("id", detalle.id);
+            const { error, count } = await supabase2.from("cotizaciones").delete({ count: "exact" }).eq("id", detalle.id);
+            if (error || !count) { alert("No se pudo eliminar (sin permiso o ya no existe)."); return; }
             setCotizaciones((prev) => prev.filter((x) => x.id !== detalle.id));
             setDetalle(null);
           }}

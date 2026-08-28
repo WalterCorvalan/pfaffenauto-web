@@ -132,6 +132,11 @@ export default function NuevoClienteModal({ perfiles, disponibilidad, miId, edit
         vendedor_id: vendedorFinal,
         direccion: direccion || null,
         observaciones: observaciones || null,
+        // Reasignación manual (admin cambiando el vendedor a mano) resetea el
+        // reloj del cron de reasignación por timeout — sino un lead recién
+        // reasignado a mano puede volver a soltarse solo poco después, porque
+        // el cron mide desde created_at si nadie tocó este campo.
+        ...(esEdicion && vendedorFinal !== editando.vendedor_id ? { ultima_reasignacion_en: new Date().toISOString() } : {}),
       };
 
       const { data, error: dbError } = esEdicion

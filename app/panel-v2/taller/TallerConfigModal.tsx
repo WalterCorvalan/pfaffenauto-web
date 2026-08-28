@@ -67,7 +67,7 @@ export default function TallerConfigModal({
         id: "default",
         capacidad_diaria: config.capacidad_diaria ? parseInt(config.capacidad_diaria) : 0,
         iva_pct: config.iva_pct ? parseFloat(config.iva_pct) : null,
-        extra_vendedor_pct: config.extra_vendedor_pct ? parseFloat(config.extra_vendedor_pct) : 0,
+        extra_vendedor_pct: config.extra_vendedor_pct ? parseFloat(config.extra_vendedor_pct) : 50,
         garantia_dias: config.garantia_dias ? parseInt(config.garantia_dias) : null,
         garantia_km: config.garantia_km ? parseInt(config.garantia_km) : null,
         validez_presupuesto_dias: config.validez_presupuesto_dias ? parseInt(config.validez_presupuesto_dias) : 0,
