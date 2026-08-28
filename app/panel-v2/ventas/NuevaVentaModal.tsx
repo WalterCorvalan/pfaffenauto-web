@@ -4,6 +4,7 @@ import { useState } from "react";
 import { supabase2 } from "@/lib/supabase2/client";
 import { X, Loader2, Save, Trash2, Plus } from "lucide-react";
 import { hoyLocalISO, parseFechaLocal } from "@/lib/panelV2/fechas";
+import { crearAlerta } from "@/lib/panelV2/alertas";
 
 interface Vehiculo { id: string; marca: string; modelo: string; anio: number; patente: string | null; km: number | null; precio_venta: number; moneda_venta: string; estado: string; color: string | null; condicion: string }
 interface Cliente { id: string; nombre: string; telefono: string | null; email: string | null; dni_cuit: string | null }
@@ -244,6 +245,13 @@ export default function NuevaVentaModal({ perfiles, clientes, vehiculos, miId, i
 
       if (estadoFinal === "cerrada" && (cargaManual ? abreExpedienteManual : true)) {
         await supabase2.from("expedientes").insert({ venta_id: venta.id, creado_por: miId || null });
+      }
+
+      if (miId) {
+        crearAlerta(supabase2, miId, `Nueva venta registrada — ${venta.comprador_nombre}`, {
+          mensaje: `${venta.vehiculo_marca || ""} ${venta.vehiculo_modelo || ""} · ${venta.moneda_venta} ${Number(venta.precio_venta).toLocaleString("es-AR")}.`,
+          link: "/panel-v2/ventas", tipo: "venta", prioridad: "novedad",
+        });
       }
 
       onCreado(venta);

@@ -4,6 +4,7 @@ import { useState } from "react";
 import * as XLSX from "xlsx";
 import { supabase2 } from "@/lib/supabase2/client";
 import { X, Upload, Loader2, CheckCircle2, AlertTriangle } from "lucide-react";
+import { crearAlerta } from "@/lib/panelV2/alertas";
 
 interface Props {
   miId: string;
@@ -74,7 +75,14 @@ export default function ImportarExcelModal({ miId, onClose, onImportadas }: Prop
         else insertadas = data || [];
       }
       setResultado({ ok: insertadas.length, errores });
-      if (insertadas.length > 0) onImportadas(insertadas);
+      if (insertadas.length > 0) {
+        onImportadas(insertadas);
+        if (miId) {
+          crearAlerta(supabase2, miId, `${insertadas.length} compra${insertadas.length === 1 ? "" : "s"} importada${insertadas.length === 1 ? "" : "s"} desde Excel`, {
+            link: "/panel-v2/postventa", tipo: "cliente", prioridad: "novedad",
+          });
+        }
+      }
     } catch (err) {
       console.error(err);
       setResultado({ ok: 0, errores: ["No se pudo leer el archivo. Verificá que sea un .xlsx válido."] });

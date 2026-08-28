@@ -54,7 +54,7 @@ const GRUPOS: { titulo: string; items: { href?: string; label: string; icon: any
       { label: "Gestoría", icon: ClipboardList },
       { label: "Consignaciones", icon: KeyRound },
       { label: "Infracciones", icon: Landmark },
-      { label: "Taller", icon: Wrench },
+      { href: "/panel-v2/taller", label: "Taller", icon: Wrench },
       { label: "Service", icon: Hammer },
       { label: "Reclamos", icon: MessageSquareWarning },
     ],
@@ -80,7 +80,7 @@ const GRUPOS: { titulo: string; items: { href?: string; label: string; icon: any
       { label: "Sugerencias", icon: Lightbulb },
       { label: "Mi Correo", icon: Mail },
       { label: "Conversaciones", icon: MessageCircle },
-      { label: "Teléfonos útiles", icon: BookUser },
+      { href: "/panel-v2/telefonos", label: "Teléfonos útiles", icon: BookUser },
     ],
   },
   {

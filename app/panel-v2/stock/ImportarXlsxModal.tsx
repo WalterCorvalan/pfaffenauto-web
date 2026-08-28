@@ -4,6 +4,7 @@ import { useState } from "react";
 import * as XLSX from "xlsx";
 import { supabase2 } from "@/lib/supabase2/client";
 import { X, Upload, Download, Loader2, CheckCircle2, AlertTriangle } from "lucide-react";
+import { crearAlerta } from "@/lib/panelV2/alertas";
 
 interface Props {
   miId: string;
@@ -110,7 +111,14 @@ export default function ImportarXlsxModal({ miId, onClose, onImportados }: Props
       }
 
       setResultado({ ok: insertados.length, errores });
-      if (insertados.length > 0) onImportados(insertados);
+      if (insertados.length > 0) {
+        onImportados(insertados);
+        if (miId) {
+          crearAlerta(supabase2, miId, `${insertados.length} vehículo${insertados.length === 1 ? "" : "s"} importado${insertados.length === 1 ? "" : "s"} desde Excel`, {
+            link: "/panel-v2/stock", tipo: "vehiculo", prioridad: "novedad",
+          });
+        }
+      }
     } catch (err) {
       console.error(err);
       setResultado({ ok: 0, errores: ["No se pudo leer el archivo. Verificá que sea un .xlsx válido."] });

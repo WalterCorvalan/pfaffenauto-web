@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { supabase2 } from "@/lib/supabase2/client";
 import { X, Loader2, Printer } from "lucide-react";
+import { crearAlerta } from "@/lib/panelV2/alertas";
 import { hoyLocalISO } from "@/lib/panelV2/fechas";
 
 interface Props {
@@ -90,6 +91,13 @@ export default function NuevoMandatoModal({ miId, miNombre, onClose, onCreado }:
         if (vError) throw vError;
         vehiculoCreado = vehiculo;
         await supabase2.from("mandatos").update({ vehiculo_id: vehiculo.id }).eq("id", mandato.id);
+      }
+
+      if (miId) {
+        crearAlerta(supabase2, miId, `Nuevo mandato — ${mandato.vehiculo_marca} ${mandato.vehiculo_modelo}`, {
+          mensaje: `Mandante: ${mandato.mandante_nombre}. ${vehiculoCreado ? "Se agregó al stock." : ""}`,
+          link: "/panel-v2/stock", tipo: "vehiculo", prioridad: "novedad",
+        });
       }
 
       onCreado(mandato, vehiculoCreado);

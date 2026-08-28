@@ -4,6 +4,7 @@ import { useState } from "react";
 import { supabase2 } from "@/lib/supabase2/client";
 import { X, Loader2, Camera } from "lucide-react";
 import { hoyLocalISO } from "@/lib/panelV2/fechas";
+import { crearAlerta } from "@/lib/panelV2/alertas";
 
 interface Props {
   miId: string;
@@ -45,6 +46,12 @@ export default function EscanearBoletoModal({ miId, onClose, onCreado }: Props) 
         .select()
         .single();
       if (dbError) throw dbError;
+      if (miId) {
+        crearAlerta(supabase2, miId, `Nueva compra registrada — ${data.comprador_nombre}`, {
+          mensaje: `${data.vehiculo_marca || ""} ${data.vehiculo_modelo || ""} (postventa).`,
+          link: "/panel-v2/postventa", tipo: "cliente", prioridad: "novedad",
+        });
+      }
       onCreado(data);
       onClose();
     } catch (err) {
