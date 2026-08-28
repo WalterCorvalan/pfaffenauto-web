@@ -272,7 +272,11 @@ export default function StockClient({
                             <td className="px-4 py-3">
                               <div className="flex items-center gap-2">
                                 <p className="text-sm font-bold text-slate-900 dark:text-white whitespace-nowrap">{v.marca} {v.modelo}</p>
-                                {aRevisar(v) && v.estado === "disponible" && <AlertTriangle className="w-3.5 h-3.5 text-amber-500 shrink-0" title="Datos incompletos: revisar publicación/foto/precio" />}
+                                {aRevisar(v) && v.estado === "disponible" && (
+                                  <span title="Datos incompletos: revisar publicación/foto/precio">
+                                    <AlertTriangle className="w-3.5 h-3.5 text-amber-500 shrink-0" />
+                                  </span>
+                                )}
                               </div>
                               {v.color && <p className="text-[11px] text-slate-400">{v.color}</p>}
                             </td>

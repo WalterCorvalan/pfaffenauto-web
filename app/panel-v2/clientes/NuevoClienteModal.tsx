@@ -45,7 +45,7 @@ async function elegirPorRotacion(canal: string, disponibles: Perfil[]) {
   });
 
   let elegido = disponibles[0];
-  let elegidoFecha = ultimaAsignacion[elegido.id];
+  let elegidoFecha: string | undefined = ultimaAsignacion[elegido.id];
   for (const p of disponibles) {
     const f = ultimaAsignacion[p.id];
     if (!f) { elegido = p; elegidoFecha = undefined; break; }
