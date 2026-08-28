@@ -283,7 +283,7 @@ export default function DashboardLayout({
 
   const handleLogout = async () => {
     await supabase.auth.signOut();
-    router.push("/panel-v2/login");
+    router.push("/login");
   };
 
   // Enlace Minimalista estilo "Vocero"

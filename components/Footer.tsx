@@ -115,9 +115,14 @@ export default function Footer() {
                 Volver a la Web <ArrowUpRight className="w-3.5 h-3.5" />
               </Link>
             ) : (
-              <Link href="/panel-v2/login" className="inline-flex items-center gap-2 text-blue-600 hover:text-blue-700 text-sm font-black transition-colors">
-                Acceso Staff <ArrowUpRight className="w-3.5 h-3.5" />
-              </Link>
+              <div className="flex flex-col gap-2">
+                <Link href="/login" className="inline-flex items-center gap-2 text-blue-600 hover:text-blue-700 text-sm font-black transition-colors">
+                  Acceso Staff <ArrowUpRight className="w-3.5 h-3.5" />
+                </Link>
+                <Link href="/panel-v2/login" className="inline-flex items-center gap-2 text-blue-600 hover:text-blue-700 text-sm font-black transition-colors">
+                  Acceso Staff 2 <ArrowUpRight className="w-3.5 h-3.5" />
+                </Link>
+              </div>
             )}
           </div>
 
