@@ -6,7 +6,7 @@ import { supabase2 } from "@/lib/supabase2/client";
 import {
   Search, Users, UserPlus, Phone, Mail, List, Columns3, TrendingUp,
   PieChart, Trophy, CheckCircle2, Circle, MessageCircle, Download, Upload,
-  Sun, Palmtree, Thermometer, X, ShoppingBag,
+  Sun, Palmtree, Thermometer, X, ShoppingBag, Pencil, Trash2,
 } from "lucide-react";
 import NuevoClienteModal from "./NuevoClienteModal";
 import DisponibilidadModal from "./DisponibilidadModal";
@@ -37,6 +37,16 @@ const PIPELINE_COLUMNAS = [
 
 const ESTADO_ICON: Record<string, any> = { disponible: Sun, vacaciones: Palmtree, enfermo: Thermometer };
 const ESTADO_LABEL: Record<string, string> = { disponible: "Disponible", vacaciones: "De vacaciones", enfermo: "Enfermo" };
+
+function tiempoRelativo(iso: string) {
+  const ms = Date.now() - new Date(iso).getTime();
+  const min = Math.floor(ms / 60000);
+  if (min < 1) return "ahora";
+  if (min < 60) return `${min}min`;
+  const h = Math.floor(min / 60);
+  if (h < 24) return `${h}h`;
+  return `${Math.floor(h / 24)}d`;
+}
 
 function fmtFecha(iso: string | null) {
   if (!iso) return "";
@@ -100,12 +110,29 @@ function rangoPeriodo(p: Periodo): { desde: Date | null; hasta: Date | null; des
 }
 
 export default function ClientesClient({
-  clientesIniciales, perfiles, disponibilidadInicial, miId,
-}: { clientesIniciales: Cliente[]; perfiles: Perfil[]; disponibilidadInicial: Disponibilidad[]; miId: string }) {
+  clientesIniciales, perfiles, disponibilidadInicial, ventas, miId,
+}: { clientesIniciales: Cliente[]; perfiles: Perfil[]; disponibilidadInicial: Disponibilidad[]; ventas: { id: string; cliente_id: string | null }[]; miId: string }) {
   const router = useRouter();
   const searchParams = useSearchParams();
 
   const [clientes, setClientes] = useState(clientesIniciales);
+  const [editando, setEditando] = useState<Cliente | null>(null);
+  const [eliminandoId, setEliminandoId] = useState<string | null>(null);
+
+  const opsMap = useMemo(() => {
+    const acc: Record<string, number> = {};
+    ventas.forEach((v) => { if (v.cliente_id) acc[v.cliente_id] = (acc[v.cliente_id] || 0) + 1; });
+    return acc;
+  }, [ventas]);
+
+  const eliminarCliente = async (c: Cliente) => {
+    if (!confirm(`¿Eliminar a ${c.nombre}? Esta acción no se puede deshacer.`)) return;
+    setEliminandoId(c.id);
+    const { error } = await supabase2.from("clientes").delete().eq("id", c.id);
+    if (!error) setClientes((prev) => prev.filter((x) => x.id !== c.id));
+    else alert("No se pudo eliminar (puede que solo admin pueda borrar clientes).");
+    setEliminandoId(null);
+  };
   const [disponibilidad, setDisponibilidad] = useState(disponibilidadInicial);
   const [vista, setVista] = useState<Vista>("lista");
   const [tabLista, setTabLista] = useState<TabLista>("todos");
@@ -134,7 +161,7 @@ export default function ClientesClient({
   const miDisponibilidad = disponibilidad.find((d) => d.vendedor_id === miId);
   const esAdmin = perfiles.find((p) => p.id === miId)?.roles?.includes("admin") ?? false;
 
-  const onCreado = (c: Cliente) => setClientes((prev) => [c, ...prev]);
+  const onCreado = (c: Cliente) => setClientes((prev) => (prev.some((x) => x.id === c.id) ? prev.map((x) => (x.id === c.id ? c : x)) : [c, ...prev]));
   const onDisponibilidadGuardada = (d: Disponibilidad) =>
     setDisponibilidad((prev) => [...prev.filter((x) => x.vendedor_id !== d.vendedor_id), d]);
 
@@ -360,10 +387,13 @@ export default function ClientesClient({
                       <tr className="bg-slate-50 dark:bg-white/[0.03] border-b border-slate-200 dark:border-white/5">
                         <th className="px-4 py-3 text-[10px] font-black uppercase tracking-widest text-slate-500 dark:text-slate-400">Cliente</th>
                         <th className="px-4 py-3 text-[10px] font-black uppercase tracking-widest text-slate-500 dark:text-slate-400">Contacto</th>
+                        <th className="px-4 py-3 text-[10px] font-black uppercase tracking-widest text-slate-500 dark:text-slate-400">Tipo</th>
                         <th className="px-4 py-3 text-[10px] font-black uppercase tracking-widest text-slate-500 dark:text-slate-400">Origen</th>
+                        <th className="px-4 py-3 text-[10px] font-black uppercase tracking-widest text-slate-500 dark:text-slate-400">Interés</th>
                         <th className="px-4 py-3 text-[10px] font-black uppercase tracking-widest text-slate-500 dark:text-slate-400">Vendedor</th>
-                        <th className="px-4 py-3 text-[10px] font-black uppercase tracking-widest text-slate-500 dark:text-slate-400">Etapa</th>
-                        <th className="px-4 py-3 w-px"></th>
+                        <th className="px-4 py-3 text-[10px] font-black uppercase tracking-widest text-slate-500 dark:text-slate-400">Último contacto</th>
+                        <th className="px-4 py-3 text-[10px] font-black uppercase tracking-widest text-slate-500 dark:text-slate-400">Ops.</th>
+                        <th className="px-4 py-3 w-px">Acciones</th>
                       </tr>
                     </thead>
                     <tbody>
@@ -380,6 +410,9 @@ export default function ClientesClient({
                                 <div className="min-w-0">
                                   <p className={`text-sm font-bold truncate ${vacio ? "text-slate-400 italic" : "text-slate-900 dark:text-white"}`}>{vacio ? "Cliente sin nombre" : c.nombre}</p>
                                   {c.dni_cuit && <p className="text-[10px] font-semibold text-slate-400">DNI {c.dni_cuit}</p>}
+                                  {!contactado && (
+                                    <p className="flex items-center gap-1 text-[10px] font-semibold text-emerald-500 mt-0.5"><span className="w-1.5 h-1.5 rounded-full bg-emerald-500 shrink-0" /> Sin contactar: {tiempoRelativo(c.created_at)}</p>
+                                  )}
                                 </div>
                               </div>
                             </td>
@@ -389,15 +422,23 @@ export default function ClientesClient({
                                 {c.email && <span className="flex items-center gap-1.5 text-[11px] text-slate-500 dark:text-slate-400 truncate max-w-[200px]"><Mail className="w-3 h-3 shrink-0" /> {c.email}</span>}
                               </div>
                             </td>
+                            <td className="px-4 py-3"><span className="text-[10px] font-bold px-2 py-1 rounded-full bg-slate-100 dark:bg-white/10 text-slate-600 dark:text-slate-300">{c.tipo}</span></td>
                             <td className="px-4 py-3"><span className="text-[11px] font-semibold text-slate-500 dark:text-slate-400">{c.origen}</span></td>
+                            <td className="px-4 py-3"><span className="text-[11px] text-slate-500 dark:text-slate-400">{[c.busca_marca, c.busca_modelo].filter(Boolean).join(" ") || c.vehiculo_interes_texto || "—"}</span></td>
                             <td className="px-4 py-3"><span className="text-[11px] font-semibold text-slate-500 dark:text-slate-400">{c.vendedor_id ? perfilMap[c.vendedor_id] || "—" : "Sin asignar"}</span></td>
+                            <td className="px-4 py-3"><span className="text-[11px] text-slate-500 dark:text-slate-400">{c.ultimo_contacto ? fmtFecha(c.ultimo_contacto) : "—"}</span></td>
                             <td className="px-4 py-3">
-                              <button onClick={() => toggleContacto(c)} disabled={actualizando === c.id} title={contactado ? "Marcar como Sin contactar" : "Marcar como Contactado"} className={`flex items-center gap-1.5 text-[10px] font-bold px-2.5 py-1.5 rounded-lg border whitespace-nowrap disabled:opacity-50 ${contactado ? "bg-emerald-50 dark:bg-emerald-500/10 text-emerald-700 dark:text-emerald-300 border-emerald-200 dark:border-emerald-500/20" : "bg-amber-50 dark:bg-amber-500/10 text-amber-700 dark:text-amber-300 border-amber-200 dark:border-amber-500/20"}`}>
-                                {contactado ? <CheckCircle2 className="w-3.5 h-3.5 shrink-0" /> : <Circle className="w-3.5 h-3.5 shrink-0" />} {col?.label}
-                              </button>
+                              {opsMap[c.id] ? <span title={`${opsMap[c.id]} operación(es)`} className="inline-flex items-center gap-1 text-[10px] font-black bg-indigo-50 dark:bg-indigo-500/10 text-indigo-600 dark:text-indigo-300 px-2 py-1 rounded-lg border border-indigo-100 dark:border-indigo-500/20"><ShoppingBag className="w-3 h-3" /> {opsMap[c.id]}</span> : <span className="text-[11px] text-slate-300 dark:text-slate-600">0</span>}
                             </td>
                             <td className="px-4 py-3 w-px whitespace-nowrap">
-                              {telLimpio && <a href={`https://wa.me/${telLimpio}`} target="_blank" rel="noopener noreferrer" title="Contactar por WhatsApp" className="p-2 bg-emerald-500 hover:bg-emerald-600 text-white rounded-lg inline-flex"><MessageCircle className="w-3.5 h-3.5" /></a>}
+                              <div className="flex items-center gap-1">
+                                <button onClick={() => toggleContacto(c)} disabled={actualizando === c.id} title={contactado ? "Marcar como Sin contactar" : "Marcar como Contactado"} className={`flex items-center gap-1.5 text-[10px] font-bold px-2.5 py-1.5 rounded-lg border whitespace-nowrap disabled:opacity-50 ${contactado ? "bg-emerald-50 dark:bg-emerald-500/10 text-emerald-700 dark:text-emerald-300 border-emerald-200 dark:border-emerald-500/20" : "bg-amber-50 dark:bg-amber-500/10 text-amber-700 dark:text-amber-300 border-amber-200 dark:border-amber-500/20"}`}>
+                                  {contactado ? <CheckCircle2 className="w-3.5 h-3.5 shrink-0" /> : <Circle className="w-3.5 h-3.5 shrink-0" />} {col?.label}
+                                </button>
+                                {telLimpio && <a href={`https://wa.me/${telLimpio}`} target="_blank" rel="noopener noreferrer" title="Contactar por WhatsApp" className="p-2 bg-emerald-500 hover:bg-emerald-600 text-white rounded-lg inline-flex"><MessageCircle className="w-3.5 h-3.5" /></a>}
+                                <button onClick={() => setEditando(c)} title="Editar cliente" className="p-2 text-slate-400 hover:text-indigo-600 dark:hover:text-indigo-300 hover:bg-slate-50 dark:hover:bg-white/5 rounded-lg"><Pencil className="w-3.5 h-3.5" /></button>
+                                <button onClick={() => eliminarCliente(c)} disabled={eliminandoId === c.id} title="Eliminar cliente" className="p-2 text-slate-400 hover:text-rose-600 hover:bg-slate-50 dark:hover:bg-white/5 rounded-lg disabled:opacity-50"><Trash2 className="w-3.5 h-3.5" /></button>
+                              </div>
                             </td>
                           </tr>
                         );
@@ -646,7 +687,7 @@ export default function ClientesClient({
         </div>
       </div>
 
-      {modalNuevo && <NuevoClienteModal perfiles={perfiles} disponibilidad={disponibilidad} miId={miId} onClose={() => setModalNuevo(false)} onCreado={onCreado} />}
+      {(modalNuevo || editando) && <NuevoClienteModal perfiles={perfiles} disponibilidad={disponibilidad} miId={miId} editando={editando || undefined} onClose={() => { setModalNuevo(false); setEditando(null); }} onCreado={onCreado} />}
       {modalDisponibilidad && <DisponibilidadModal perfiles={perfiles} disponibilidad={disponibilidad} miId={miId} esAdmin={esAdmin} onClose={() => setModalDisponibilidad(false)} onGuardado={onDisponibilidadGuardada} />}
     </div>
   );

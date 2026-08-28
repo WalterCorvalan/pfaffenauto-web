@@ -12,11 +12,20 @@ interface Perfil { id: string; nombre: string; roles: string[] }
 interface Seña { monto: string; moneda: string; fecha: string; cajaDestino: string }
 interface Permuta { valor: string; moneda: string; precioPublicacion: string; marca: string; modelo: string; anio: string; km: string; patente: string; color: string; condicion: string; cargarAlStock: boolean; duenoNombre: string }
 
+export interface VentaPrefill {
+  compradorNombre?: string;
+  vehiculoDescripcion?: string;
+  precioVenta?: string;
+  monedaVenta?: string;
+  vehiculoId?: string;
+}
+
 interface Props {
   perfiles: Perfil[];
   clientes: Cliente[];
   vehiculos: Vehiculo[];
   miId: string;
+  initial?: VentaPrefill;
   onClose: () => void;
   onCreado: (venta: any) => void;
 }
@@ -25,16 +34,16 @@ const CAJAS = ["Caja USD", "Caja ARS", "Banco", "Otro"];
 const CONDICIONES = ["0km", "Excelente", "Muy bueno", "Bueno", "Regular"];
 const nuevaPermuta = (): Permuta => ({ valor: "", moneda: "USD", precioPublicacion: "", marca: "", modelo: "", anio: "", km: "", patente: "", color: "", condicion: "Muy bueno", cargarAlStock: true, duenoNombre: "" });
 
-export default function NuevaVentaModal({ perfiles, clientes, vehiculos, miId, onClose, onCreado }: Props) {
+export default function NuevaVentaModal({ perfiles, clientes, vehiculos, miId, initial, onClose, onCreado }: Props) {
   const miPerfil = perfiles.find((p) => p.id === miId);
   const puedeGenerarCuotas = miPerfil?.roles?.some((r) => r === "admin" || r === "finanzas") ?? false;
 
   const [cargaManual, setCargaManual] = useState(false);
   const [abreExpedienteManual, setAbreExpedienteManual] = useState(false);
 
-  const [vehiculoId, setVehiculoId] = useState("");
-  const [vMarca, setVMarca] = useState("");
-  const [vModelo, setVModelo] = useState("");
+  const [vehiculoId, setVehiculoId] = useState(initial?.vehiculoId || "");
+  const [vMarca, setVMarca] = useState(initial?.vehiculoDescripcion?.split(" ")[0] || "");
+  const [vModelo, setVModelo] = useState(initial?.vehiculoDescripcion?.split(" ").slice(1).join(" ") || "");
   const [vAnio, setVAnio] = useState("");
   const [vPatente, setVPatente] = useState("");
   const [vColor, setVColor] = useState("");
@@ -42,13 +51,13 @@ export default function NuevaVentaModal({ perfiles, clientes, vehiculos, miId, o
   const [km, setKm] = useState("");
   const [estado, setEstado] = useState("borrador");
   const [estadoTocado, setEstadoTocado] = useState(false);
-  const [precioVenta, setPrecioVenta] = useState("");
-  const [monedaVenta, setMonedaVenta] = useState("USD");
+  const [precioVenta, setPrecioVenta] = useState(initial?.precioVenta || "");
+  const [monedaVenta, setMonedaVenta] = useState(initial?.monedaVenta || "USD");
   const [vendedorId, setVendedorId] = useState("");
   const [fechaCierre, setFechaCierre] = useState(hoyLocalISO());
 
   const [clienteId, setClienteId] = useState("");
-  const [compradorNombre, setCompradorNombre] = useState("");
+  const [compradorNombre, setCompradorNombre] = useState(initial?.compradorNombre || "");
   const [compradorTelefono, setCompradorTelefono] = useState("");
   const [compradorEmail, setCompradorEmail] = useState("");
   const [compradorDni, setCompradorDni] = useState("");
@@ -145,6 +154,10 @@ export default function NuevaVentaModal({ perfiles, clientes, vehiculos, miId, o
   const guardar = async (forzarBorrador: boolean) => {
     if (!precioVenta || !compradorNombre.trim()) {
       setError("Completá al menos el precio de venta y el nombre del comprador.");
+      return;
+    }
+    if (!forzarBorrador && !vendedorId) {
+      setError("Falta el vendedor que cerró la venta.");
       return;
     }
     setGuardando(true);
@@ -314,12 +327,12 @@ export default function NuevaVentaModal({ perfiles, clientes, vehiculos, miId, o
               <div>
                 <label className={labelClass}>Precio de Venta (al comprador) *</label>
                 <div className="flex gap-2">
-                  <select value={monedaVenta} onChange={(e) => setMonedaVenta(e.target.value)} className={`${inputClass} w-24 shrink-0`}><option value="USD">USD</option><option value="ARS">ARS</option></select>
-                  <input type="number" value={precioVenta} onChange={(e) => setPrecioVenta(e.target.value)} className={inputClass} />
+                  <select value={monedaVenta} onChange={(e) => setMonedaVenta(e.target.value)} className={`${inputClass} !w-24 shrink-0`}><option value="USD">USD</option><option value="ARS">ARS</option></select>
+                  <input type="number" value={precioVenta} onChange={(e) => setPrecioVenta(e.target.value)} className={`${inputClass} flex-1 min-w-0`} />
                 </div>
               </div>
               <div>
-                <label className={labelClass}>Vendedor (cerró la venta)</label>
+                <label className={labelClass}>Vendedor (cerró la venta) *</label>
                 <select value={vendedorId} onChange={(e) => setVendedorId(e.target.value)} className={inputClass}>
                   <option value="">—</option>
                   {perfiles.map((p) => <option key={p.id} value={p.id}>{p.nombre}</option>)}
@@ -380,7 +393,7 @@ export default function NuevaVentaModal({ perfiles, clientes, vehiculos, miId, o
                         <div key={i} className="bg-white dark:bg-white/5 rounded-lg p-3 border border-amber-100 dark:border-amber-500/10 relative">
                           <button type="button" onClick={() => quitarSeña(i)} className="absolute top-2 right-2 text-slate-300 hover:text-rose-500"><Trash2 className="w-3.5 h-3.5" /></button>
                           <div className="grid grid-cols-2 gap-2 pr-6">
-                            <div><label className={labelClass}>Monto</label><div className="flex gap-1"><select value={s.moneda} onChange={(e) => actualizarSeña(i, "moneda", e.target.value)} className={`${inputClass} w-20 shrink-0 py-2`}><option value="USD">USD</option><option value="ARS">ARS</option></select><input type="number" value={s.monto} onChange={(e) => actualizarSeña(i, "monto", e.target.value)} className={inputClass} /></div></div>
+                            <div><label className={labelClass}>Monto</label><div className="flex gap-1"><select value={s.moneda} onChange={(e) => actualizarSeña(i, "moneda", e.target.value)} className={`${inputClass} !w-20 shrink-0 py-2`}><option value="USD">USD</option><option value="ARS">ARS</option></select><input type="number" value={s.monto} onChange={(e) => actualizarSeña(i, "monto", e.target.value)} className={`${inputClass} flex-1 min-w-0`} /></div></div>
                             <div><label className={labelClass}>Fecha</label><input type="date" value={s.fecha} onChange={(e) => actualizarSeña(i, "fecha", e.target.value)} className={inputClass} /></div>
                             <div><label className={labelClass}>Caja destino</label><select value={s.cajaDestino} onChange={(e) => actualizarSeña(i, "cajaDestino", e.target.value)} className={inputClass}><option value="">— elegir —</option>{CAJAS.map((c) => <option key={c} value={c}>{c}</option>)}</select></div>
                             <div>
@@ -430,7 +443,7 @@ export default function NuevaVentaModal({ perfiles, clientes, vehiculos, miId, o
                         {i > 0 && <p className="text-xs font-bold text-indigo-600 dark:text-indigo-300 mb-2">Permuta #{i + 1}</p>}
                         {i > 0 && <button type="button" onClick={() => quitarPermuta(i)} className="absolute top-3 right-3 text-slate-300 hover:text-rose-500"><Trash2 className="w-3.5 h-3.5" /></button>}
                         <div className="grid grid-cols-2 sm:grid-cols-3 gap-2.5">
-                          <div><label className={labelClass}>{i === 0 ? "Valor de la permuta" : "Valor de la toma"}</label><div className="flex gap-1"><select value={p.moneda} onChange={(e) => actualizarPermuta(i, "moneda", e.target.value)} className={`${inputClass} w-20 shrink-0`}><option value="USD">USD</option><option value="ARS">ARS</option></select><input type="number" value={p.valor} onChange={(e) => actualizarPermuta(i, "valor", e.target.value)} className={inputClass} /></div></div>
+                          <div><label className={labelClass}>{i === 0 ? "Valor de la permuta" : "Valor de la toma"}</label><div className="flex gap-1"><select value={p.moneda} onChange={(e) => actualizarPermuta(i, "moneda", e.target.value)} className={`${inputClass} !w-20 shrink-0`}><option value="USD">USD</option><option value="ARS">ARS</option></select><input type="number" value={p.valor} onChange={(e) => actualizarPermuta(i, "valor", e.target.value)} className={`${inputClass} flex-1 min-w-0`} /></div></div>
                           <div><label className={labelClass}>Precio de publicación</label><input type="number" value={p.precioPublicacion} onChange={(e) => actualizarPermuta(i, "precioPublicacion", e.target.value)} placeholder="A cuánto se va a publicar" className={inputClass} /></div>
                           <div><label className={labelClass}>Marca</label><input value={p.marca} onChange={(e) => actualizarPermuta(i, "marca", e.target.value)} className={inputClass} /></div>
                           <div><label className={labelClass}>Modelo</label><input value={p.modelo} onChange={(e) => actualizarPermuta(i, "modelo", e.target.value)} className={inputClass} /></div>
@@ -501,7 +514,7 @@ export default function NuevaVentaModal({ perfiles, clientes, vehiculos, miId, o
                   </div>
                   <div>
                     <label className={labelClass}>Extra cobrado al cliente (bruto)</label>
-                    <div className="flex gap-1"><select value={extraMoneda} onChange={(e) => setExtraMoneda(e.target.value)} className={`${inputClass} w-20 shrink-0`}><option value="USD">USD</option><option value="ARS">ARS</option></select><input type="number" value={extraMonto} onChange={(e) => setExtraMonto(e.target.value)} placeholder="Monto fijo" className={inputClass} /></div>
+                    <div className="flex gap-1"><select value={extraMoneda} onChange={(e) => setExtraMoneda(e.target.value)} className={`${inputClass} !w-20 shrink-0`}><option value="USD">USD</option><option value="ARS">ARS</option></select><input type="number" value={extraMonto} onChange={(e) => setExtraMonto(e.target.value)} placeholder="Monto fijo" className={`${inputClass} flex-1 min-w-0`} /></div>
                     <p className="text-[10px] text-slate-400 mt-1">Recargo a favor de la agencia. De acá se liquida la parte del vendedor según el % de abajo.</p>
                   </div>
                 </div>

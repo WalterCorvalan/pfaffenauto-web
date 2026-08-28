@@ -6,7 +6,7 @@ import * as XLSX from "xlsx";
 import { supabase2 } from "@/lib/supabase2/client";
 import {
   Search, Car, Globe, Download, Upload, FileText, Plus, Edit2, ClipboardCheck,
-  AlertTriangle, Clock,
+  AlertTriangle, Clock, CheckCircle2, Tag, Trash2, TrendingUp,
 } from "lucide-react";
 import NuevoVehiculoModal from "./NuevoVehiculoModal";
 import NuevoMandatoModal from "./NuevoMandatoModal";
@@ -41,7 +41,7 @@ function diasEnStock(iso: string) {
   return Math.floor((Date.now() - new Date(iso).getTime()) / 86400000);
 }
 function fmtPrecio(n: number, moneda: string) {
-  return `${moneda} ${n.toLocaleString("es-AR")}`;
+  return moneda === "ARS" ? `$ ${n.toLocaleString("es-AR")}` : `${moneda} ${n.toLocaleString("es-AR")}`;
 }
 function aRevisar(v: Vehiculo) {
   return !v.publicado_ml || v.fotos.length === 0 || !v.precio_venta;
@@ -66,6 +66,8 @@ export default function StockClient({
   const [modalCatalogo, setModalCatalogo] = useState(false);
   const [modalImportar, setModalImportar] = useState(false);
   const [peritajeVehiculo, setPeritajeVehiculo] = useState<Vehiculo | null>(null);
+  const [editando, setEditando] = useState<Vehiculo | null>(null);
+  const [ocupadoId, setOcupadoId] = useState<string | null>(null);
 
   useEffect(() => {
     if (searchParams.get("nuevo") === "1") {
@@ -78,7 +80,23 @@ export default function StockClient({
   const perfilMap = useMemo(() => Object.fromEntries(perfiles.map((p) => [p.id, p.nombre])), [perfiles]);
   const miNombre = perfilMap[miId] || "Usuario";
 
-  const onCreadoVehiculo = (v: Vehiculo) => setVehiculos((prev) => [v, ...prev]);
+  const onCreadoVehiculo = (v: Vehiculo) => setVehiculos((prev) => (prev.some((x) => x.id === v.id) ? prev.map((x) => (x.id === v.id ? v : x)) : [v, ...prev]));
+
+  const eliminarVehiculo = async (v: Vehiculo) => {
+    if (!confirm(`¿Eliminar ${v.marca} ${v.modelo}? Esta acción no se puede deshacer.`)) return;
+    setOcupadoId(v.id);
+    const { error } = await supabase2.from("vehiculos").delete().eq("id", v.id);
+    if (!error) setVehiculos((prev) => prev.filter((x) => x.id !== v.id));
+    else alert("No se pudo eliminar (puede que solo admin pueda borrar vehículos).");
+    setOcupadoId(null);
+  };
+
+  const señarVehiculo = async (v: Vehiculo) => {
+    setOcupadoId(v.id);
+    const { error } = await supabase2.from("vehiculos").update({ estado: "señado" }).eq("id", v.id);
+    if (!error) setVehiculos((prev) => prev.map((x) => (x.id === v.id ? { ...x, estado: "señado" } : x)));
+    setOcupadoId(null);
+  };
   const onCreadoMandato = (m: Mandato, v: Vehiculo | null) => {
     setMandatos((prev) => [m, ...prev]);
     if (v) setVehiculos((prev) => [v, ...prev]);
@@ -113,6 +131,8 @@ export default function StockClient({
   }, [disponibles]);
   const estancados = vehiculos.filter((v) => diasEnStock(v.created_at) >= 90 && v.estado === "disponible").length;
   const publicadoPct = disponibles.length ? Math.round((disponibles.filter((v) => v.publicado_ml).length / disponibles.length) * 100) : 0;
+  const diasProm = disponibles.length ? Math.round(disponibles.reduce((acc, v) => acc + diasEnStock(v.created_at), 0) / disponibles.length) : 0;
+  const aRevisarCount = disponibles.filter(aRevisar).length;
 
   const exportarXlsx = () => {
     const filas = filtrados.map((v) => ({
@@ -146,12 +166,14 @@ export default function StockClient({
             </div>
           </div>
 
-          <div className="flex items-center gap-4 bg-white dark:bg-white/[0.02] border border-slate-200 dark:border-white/5 rounded-xl px-4 py-3 mb-4">
-            <span className="flex items-center gap-1.5 text-xs font-bold text-emerald-600 dark:text-emerald-400"><Car className="w-3.5 h-3.5" /> {disponibles.length} disponibles</span>
-            <span className="text-xs font-semibold text-slate-400">
-              VALOR ACTIVO (disponible): {Object.keys(valorActivoPorMoneda).length === 0 ? "—" : Object.entries(valorActivoPorMoneda).map(([m, n]) => fmtPrecio(n, m)).join(" · ")}
+          <div className="flex flex-wrap items-center gap-2 mb-4">
+            <span className="flex items-center gap-1.5 text-[11px] font-bold px-3 py-1.5 rounded-full bg-emerald-50 dark:bg-emerald-500/10 text-emerald-700 dark:text-emerald-300 border border-emerald-100 dark:border-emerald-500/20"><Car className="w-3.5 h-3.5" /> {disponibles.length} disponibles</span>
+            <span className="flex items-center gap-1.5 text-[11px] font-bold px-3 py-1.5 rounded-full bg-slate-50 dark:bg-white/5 text-slate-600 dark:text-slate-300 border border-slate-200 dark:border-white/10"><Clock className="w-3.5 h-3.5" /> {diasProm}d prom.</span>
+            <span className={`flex items-center gap-1.5 text-[11px] font-bold px-3 py-1.5 rounded-full border ${publicadoPct === 100 ? "bg-emerald-50 dark:bg-emerald-500/10 text-emerald-700 dark:text-emerald-300 border-emerald-100 dark:border-emerald-500/20" : "bg-amber-50 dark:bg-amber-500/10 text-amber-700 dark:text-amber-300 border-amber-100 dark:border-amber-500/20"}`}><TrendingUp className="w-3.5 h-3.5" /> {publicadoPct}% publicado</span>
+            {aRevisarCount > 0 && <span className="flex items-center gap-1.5 text-[11px] font-bold px-3 py-1.5 rounded-full bg-amber-50 dark:bg-amber-500/10 text-amber-700 dark:text-amber-300 border border-amber-100 dark:border-amber-500/20"><AlertTriangle className="w-3.5 h-3.5" /> {aRevisarCount} a revisar</span>}
+            <span className="text-xs font-semibold text-slate-500 dark:text-slate-400 ml-auto">
+              VALOR ACTIVO (disponible): <strong className="text-slate-800 dark:text-white">{Object.keys(valorActivoPorMoneda).length === 0 ? "—" : Object.entries(valorActivoPorMoneda).map(([m, n]) => fmtPrecio(n, m)).join(" · ")}</strong>
             </span>
-            {publicadoPct < 100 && disponibles.length > 0 && <span className="text-xs font-semibold text-amber-600 dark:text-amber-400 ml-auto">{publicadoPct}% publicado</span>}
           </div>
 
           <div className="flex items-center gap-1 mb-4 border-b border-slate-200 dark:border-white/10">
@@ -219,16 +241,26 @@ export default function StockClient({
                   <p className="text-xs text-slate-500 dark:text-slate-400">Todavía no hay vehículos en el stock. Cargá el primero con el botón Nuevo vehículo.</p>
                 </div>
               ) : (
-                <div className="bg-white dark:bg-white/[0.02] border border-slate-200 dark:border-white/5 rounded-2xl overflow-hidden">
+                <>
+                  <div className="bg-white dark:bg-white/[0.02] border border-slate-200 dark:border-white/5 rounded-xl px-4 py-2.5 mb-3 text-xs font-semibold text-slate-500 dark:text-slate-400">
+                    {filtrados.length} vehículo{filtrados.length === 1 ? "" : "s"} en lista · {Object.entries(filtrados.reduce((acc: Record<string, number>, v) => { acc[v.moneda_venta] = (acc[v.moneda_venta] || 0) + Number(v.precio_venta || 0); return acc; }, {})).map(([m, n]) => fmtPrecio(n, m)).join(" · ")}
+                  </div>
+                  <div className="bg-white dark:bg-white/[0.02] border border-slate-200 dark:border-white/5 rounded-2xl overflow-x-auto">
                   <table className="w-full text-left border-collapse">
                     <thead>
                       <tr className="bg-slate-50 dark:bg-white/[0.03] border-b border-slate-200 dark:border-white/5">
                         <th className="px-4 py-3 text-[10px] font-black uppercase tracking-widest text-slate-500 dark:text-slate-400">Vehículo</th>
+                        <th className="px-4 py-3 text-[10px] font-black uppercase tracking-widest text-slate-500 dark:text-slate-400">Año</th>
+                        <th className="px-4 py-3 text-[10px] font-black uppercase tracking-widest text-slate-500 dark:text-slate-400">Patente/VIN</th>
+                        <th className="px-4 py-3 text-[10px] font-black uppercase tracking-widest text-slate-500 dark:text-slate-400">KM</th>
                         <th className="px-4 py-3 text-[10px] font-black uppercase tracking-widest text-slate-500 dark:text-slate-400">Precio</th>
-                        <th className="px-4 py-3 text-[10px] font-black uppercase tracking-widest text-slate-500 dark:text-slate-400">Ubicación</th>
-                        <th className="px-4 py-3 text-[10px] font-black uppercase tracking-widest text-slate-500 dark:text-slate-400">Días</th>
+                        <th className="px-4 py-3 text-[10px] font-black uppercase tracking-widest text-slate-500 dark:text-slate-400">Consig.</th>
                         <th className="px-4 py-3 text-[10px] font-black uppercase tracking-widest text-slate-500 dark:text-slate-400">Estado</th>
-                        <th className="px-4 py-3 w-px"></th>
+                        <th className="px-4 py-3 text-[10px] font-black uppercase tracking-widest text-slate-500 dark:text-slate-400">Ubicación</th>
+                        <th className="px-4 py-3 text-[10px] font-black uppercase tracking-widest text-slate-500 dark:text-slate-400">Ingreso</th>
+                        <th className="px-4 py-3 text-[10px] font-black uppercase tracking-widest text-slate-500 dark:text-slate-400">Días</th>
+                        <th className="px-4 py-3 text-[10px] font-black uppercase tracking-widest text-slate-500 dark:text-slate-400">ML</th>
+                        <th className="px-4 py-3 w-px">Acciones</th>
                       </tr>
                     </thead>
                     <tbody>
@@ -239,19 +271,27 @@ export default function StockClient({
                           <tr key={v.id} className="border-b border-slate-100 dark:border-white/5 last:border-0 hover:bg-slate-50 dark:hover:bg-white/[0.02]">
                             <td className="px-4 py-3">
                               <div className="flex items-center gap-2">
-                                <p className="text-sm font-bold text-slate-900 dark:text-white">{v.marca} {v.modelo}</p>
-                                {aRevisar(v) && v.estado === "disponible" && <AlertTriangle className="w-3.5 h-3.5 text-amber-500" title="Datos incompletos: revisar publicación/foto/precio" />}
+                                <p className="text-sm font-bold text-slate-900 dark:text-white whitespace-nowrap">{v.marca} {v.modelo}</p>
+                                {aRevisar(v) && v.estado === "disponible" && <AlertTriangle className="w-3.5 h-3.5 text-amber-500 shrink-0" title="Datos incompletos: revisar publicación/foto/precio" />}
                               </div>
-                              <p className="text-[11px] text-slate-400">{v.anio} · {v.patente || "s/patente"} · {v.km?.toLocaleString("es-AR") ?? "—"} km{v.consignado_por ? ` · Consig. ${perfilMap[v.consignado_por] || ""}` : ""}</p>
+                              {v.color && <p className="text-[11px] text-slate-400">{v.color}</p>}
                             </td>
-                            <td className="px-4 py-3 text-sm font-bold text-slate-700 dark:text-slate-200">{fmtPrecio(v.precio_venta, v.moneda_venta)}</td>
-                            <td className="px-4 py-3 text-xs text-slate-500 dark:text-slate-400">{v.ubicacion}</td>
-                            <td className={`px-4 py-3 text-xs ${diasColor}`}>{dias}d</td>
-                            <td className="px-4 py-3"><span className={`text-[10px] font-bold px-2 py-1 rounded-full border ${ESTADO_COLOR[v.estado]}`}>{ESTADO_LABEL[v.estado]}</span></td>
+                            <td className="px-4 py-3 text-xs text-slate-500 dark:text-slate-400 whitespace-nowrap">{v.anio}</td>
+                            <td className="px-4 py-3 text-xs text-slate-500 dark:text-slate-400 whitespace-nowrap">{v.patente || "s/patente"}</td>
+                            <td className="px-4 py-3 text-xs text-slate-500 dark:text-slate-400 whitespace-nowrap">{v.km?.toLocaleString("es-AR") ?? "—"}</td>
+                            <td className="px-4 py-3 text-sm font-bold text-slate-700 dark:text-slate-200 whitespace-nowrap">{fmtPrecio(v.precio_venta, v.moneda_venta)}</td>
+                            <td className="px-4 py-3 text-xs text-slate-500 dark:text-slate-400 whitespace-nowrap">{v.consignado_por ? perfilMap[v.consignado_por] || "—" : "—"}</td>
+                            <td className="px-4 py-3"><span className={`text-[10px] font-bold px-2 py-1 rounded-full border whitespace-nowrap ${ESTADO_COLOR[v.estado]}`}>{ESTADO_LABEL[v.estado]}</span></td>
+                            <td className="px-4 py-3 text-xs text-slate-500 dark:text-slate-400 whitespace-nowrap">{v.ubicacion}</td>
+                            <td className="px-4 py-3 text-xs text-slate-500 dark:text-slate-400 whitespace-nowrap">{new Date(v.created_at).toLocaleDateString("es-AR")}</td>
+                            <td className={`px-4 py-3 text-xs whitespace-nowrap ${diasColor}`}>{dias}d</td>
+                            <td className="px-4 py-3">{v.publicado_ml ? <CheckCircle2 className="w-4 h-4 text-emerald-500" /> : <span className="text-slate-300 dark:text-slate-600">—</span>}</td>
                             <td className="px-4 py-3 w-px whitespace-nowrap">
                               <div className="flex items-center gap-1">
                                 <button onClick={() => setPeritajeVehiculo(v)} title="Cargar peritaje" className="p-2 bg-slate-50 dark:bg-white/5 hover:bg-indigo-600 hover:text-white text-slate-400 rounded-lg"><ClipboardCheck className="w-3.5 h-3.5" /></button>
-                                <button disabled title="Edición completa: próximamente" className="p-2 bg-slate-50 dark:bg-white/5 text-slate-300 dark:text-slate-600 rounded-lg cursor-not-allowed"><Edit2 className="w-3.5 h-3.5" /></button>
+                                <button onClick={() => setEditando(v)} title="Editar" className="p-2 bg-slate-50 dark:bg-white/5 hover:bg-slate-200 dark:hover:bg-white/10 text-slate-500 rounded-lg"><Edit2 className="w-3.5 h-3.5" /></button>
+                                {v.estado === "disponible" && <button onClick={() => señarVehiculo(v)} disabled={ocupadoId === v.id} title="Marcar como señado" className="p-2 bg-slate-50 dark:bg-white/5 hover:bg-amber-500 hover:text-white text-slate-400 rounded-lg disabled:opacity-50"><Tag className="w-3.5 h-3.5" /></button>}
+                                <button onClick={() => eliminarVehiculo(v)} disabled={ocupadoId === v.id} title="Eliminar" className="p-2 bg-slate-50 dark:bg-white/5 hover:bg-rose-600 hover:text-white text-slate-400 rounded-lg disabled:opacity-50"><Trash2 className="w-3.5 h-3.5" /></button>
                               </div>
                             </td>
                           </tr>
@@ -259,14 +299,15 @@ export default function StockClient({
                       })}
                     </tbody>
                   </table>
-                </div>
+                  </div>
+                </>
               )}
             </>
           )}
         </div>
       </div>
 
-      {modalNuevo && <NuevoVehiculoModal perfiles={perfiles} clientes={clientes} miId={miId} onClose={() => setModalNuevo(false)} onCreado={onCreadoVehiculo} />}
+      {(modalNuevo || editando) && <NuevoVehiculoModal perfiles={perfiles} clientes={clientes} miId={miId} editando={editando || undefined} onClose={() => { setModalNuevo(false); setEditando(null); }} onCreado={onCreadoVehiculo} />}
       {modalMandato && <NuevoMandatoModal miId={miId} miNombre={miNombre} onClose={() => setModalMandato(false)} onCreado={onCreadoMandato} />}
       {modalCatalogo && <TuCatalogoModal config={catalogoConfig} esAdmin={esAdmin} onClose={() => setModalCatalogo(false)} onConfigActualizada={setCatalogoConfig} />}
       {modalImportar && <ImportarXlsxModal miId={miId} onClose={() => setModalImportar(false)} onImportados={(nuevos) => setVehiculos((prev) => [...nuevos, ...prev])} />}

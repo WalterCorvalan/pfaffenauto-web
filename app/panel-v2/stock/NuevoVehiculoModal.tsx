@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { supabase2 } from "@/lib/supabase2/client";
 import { X, Loader2, ScanLine, ClipboardPaste } from "lucide-react";
+import { crearAlerta } from "@/lib/panelV2/alertas";
 
 export const MARCAS = ["Toyota", "Volkswagen", "Ford", "Chevrolet", "Renault", "Peugeot", "Fiat", "Honda", "Hyundai", "Nissan", "Jeep", "Citroën", "BMW", "Mercedes-Benz", "Audi", "Otra"];
 const CATEGORIAS = ["Auto", "Camioneta", "SUV", "Moto", "Otro"];
@@ -22,47 +23,49 @@ interface Props {
   perfiles: Perfil[];
   clientes: Cliente[];
   miId: string;
+  editando?: any;
   onClose: () => void;
   onCreado: (v: any) => void;
 }
 
-export default function NuevoVehiculoModal({ perfiles, clientes, miId, onClose, onCreado }: Props) {
-  const [categoria, setCategoria] = useState("Auto");
-  const [marca, setMarca] = useState("");
-  const [modelo, setModelo] = useState("");
-  const [anio, setAnio] = useState(String(new Date().getFullYear()));
-  const [patente, setPatente] = useState("");
-  const [condicion, setCondicion] = useState("Muy bueno");
-  const [color, setColor] = useState("");
-  const [km, setKm] = useState("");
-  const [precioVenta, setPrecioVenta] = useState("");
-  const [monedaVenta, setMonedaVenta] = useState("USD");
-  const [precioCompra, setPrecioCompra] = useState("");
-  const [monedaCompra, setMonedaCompra] = useState("USD");
-  const [estadoInicial, setEstadoInicial] = useState("disponible");
-  const [ubicacion, setUbicacion] = useState("Salón Principal");
-  const [duenosAnteriores, setDuenosAnteriores] = useState("1");
-  const [propioAgencia, setPropioAgencia] = useState(false);
-  const [propietarioNombre, setPropietarioNombre] = useState("");
-  const [clienteVinculadoId, setClienteVinculadoId] = useState("");
-  const [propietarioTelefono, setPropietarioTelefono] = useState("");
-  const [propietarioEmail, setPropietarioEmail] = useState("");
-  const [consignadoPor, setConsignadoPor] = useState("");
+export default function NuevoVehiculoModal({ perfiles, clientes, miId, editando, onClose, onCreado }: Props) {
+  const esEdicion = !!editando;
+  const [categoria, setCategoria] = useState(editando?.categoria || "Auto");
+  const [marca, setMarca] = useState(editando?.marca || "");
+  const [modelo, setModelo] = useState(editando?.modelo || "");
+  const [anio, setAnio] = useState(editando?.anio ? String(editando.anio) : String(new Date().getFullYear()));
+  const [patente, setPatente] = useState(editando?.patente || "");
+  const [condicion, setCondicion] = useState(editando?.condicion || "Muy bueno");
+  const [color, setColor] = useState(editando?.color || "");
+  const [km, setKm] = useState(editando?.km ? String(editando.km) : "");
+  const [precioVenta, setPrecioVenta] = useState(editando?.precio_venta ? String(editando.precio_venta) : "");
+  const [monedaVenta, setMonedaVenta] = useState(editando?.moneda_venta || "USD");
+  const [precioCompra, setPrecioCompra] = useState(editando?.precio_compra ? String(editando.precio_compra) : "");
+  const [monedaCompra, setMonedaCompra] = useState(editando?.moneda_compra || "USD");
+  const [estadoInicial, setEstadoInicial] = useState(editando?.estado || "disponible");
+  const [ubicacion, setUbicacion] = useState(editando?.ubicacion || "Salón Principal");
+  const [duenosAnteriores, setDuenosAnteriores] = useState(editando?.["dueños_anteriores"] ? String(editando["dueños_anteriores"]) : "1");
+  const [propioAgencia, setPropioAgencia] = useState(editando?.propio_agencia || false);
+  const [propietarioNombre, setPropietarioNombre] = useState(editando?.propietario_nombre || "");
+  const [clienteVinculadoId, setClienteVinculadoId] = useState(editando?.cliente_vinculado_id || "");
+  const [propietarioTelefono, setPropietarioTelefono] = useState(editando?.propietario_telefono || "");
+  const [propietarioEmail, setPropietarioEmail] = useState(editando?.propietario_email || "");
+  const [consignadoPor, setConsignadoPor] = useState(editando?.consignado_por || "");
   const [motorNro, setMotorNro] = useState("");
   const [chasisNro, setChasisNro] = useState("");
-  const [combustible, setCombustible] = useState("");
-  const [transmision, setTransmision] = useState("");
-  const [carroceria, setCarroceria] = useState("");
-  const [puertas, setPuertas] = useState("");
-  const [motorCilindrada, setMotorCilindrada] = useState("");
-  const [version, setVersion] = useState("");
-  const [manuales, setManuales] = useState(false);
-  const [duplicadoLlaves, setDuplicadoLlaves] = useState(false);
-  const [serviciosOficiales, setServiciosOficiales] = useState(false);
-  const [publicadoMl, setPublicadoMl] = useState(false);
-  const [publicadoPor, setPublicadoPor] = useState("");
-  const [linkMl, setLinkMl] = useState("");
-  const [notas, setNotas] = useState("");
+  const [combustible, setCombustible] = useState(editando?.combustible || "");
+  const [transmision, setTransmision] = useState(editando?.transmision || "");
+  const [carroceria, setCarroceria] = useState(editando?.carroceria || "");
+  const [puertas, setPuertas] = useState(editando?.puertas ? String(editando.puertas) : "");
+  const [motorCilindrada, setMotorCilindrada] = useState(editando?.motor_cilindrada || "");
+  const [version, setVersion] = useState(editando?.version || "");
+  const [manuales, setManuales] = useState(editando?.manuales || false);
+  const [duplicadoLlaves, setDuplicadoLlaves] = useState(editando?.duplicado_llaves || false);
+  const [serviciosOficiales, setServiciosOficiales] = useState(editando?.servicios_oficiales || false);
+  const [publicadoMl, setPublicadoMl] = useState(editando?.publicado_ml || false);
+  const [publicadoPor, setPublicadoPor] = useState(editando?.publicado_por || "");
+  const [linkMl, setLinkMl] = useState(editando?.link_ml || "");
+  const [notas, setNotas] = useState(editando?.notas || "");
   const [guardando, setGuardando] = useState(false);
   const [error, setError] = useState("");
 
@@ -75,29 +78,33 @@ export default function NuevoVehiculoModal({ perfiles, clientes, miId, onClose, 
     setGuardando(true);
     setError("");
     try {
-      const { data, error: dbError } = await supabase2
-        .from("vehiculos")
-        .insert({
-          categoria, marca: marca.trim(), modelo: modelo.trim(), anio: Number(anio), patente: patente.trim().toUpperCase(),
-          condicion, color: color.trim(), km: Number(km), precio_venta: Number(precioVenta), moneda_venta: monedaVenta,
-          precio_compra: precioCompra ? Number(precioCompra) : null, moneda_compra: monedaCompra,
-          ubicacion, estado: estadoInicial, dueños_anteriores: duenosAnteriores ? Number(duenosAnteriores) : null,
-          propio_agencia: propioAgencia,
-          propietario_nombre: propioAgencia ? null : (propietarioNombre || null),
-          cliente_vinculado_id: clienteVinculadoId || null,
-          propietario_telefono: propioAgencia ? null : (propietarioTelefono || null),
-          propietario_email: propioAgencia ? null : (propietarioEmail || null),
-          consignado_por: consignadoPor || null,
-          combustible: combustible || null, transmision: transmision || null, carroceria: carroceria || null,
-          puertas: puertas ? Number(puertas) : null, motor_cilindrada: motorCilindrada || null, version: version || null,
-          manuales, duplicado_llaves: duplicadoLlaves, servicios_oficiales: serviciosOficiales,
-          publicado_ml: publicadoMl, publicado_por: publicadoPor || null, link_ml: linkMl || null,
-          notas: notas || null,
-          creado_por: miId || null,
-        })
-        .select()
-        .single();
+      const payload = {
+        categoria, marca: marca.trim(), modelo: modelo.trim(), anio: Number(anio), patente: patente.trim().toUpperCase(),
+        condicion, color: color.trim(), km: Number(km), precio_venta: Number(precioVenta), moneda_venta: monedaVenta,
+        precio_compra: precioCompra ? Number(precioCompra) : null, moneda_compra: monedaCompra,
+        ubicacion, estado: estadoInicial, "dueños_anteriores": duenosAnteriores ? Number(duenosAnteriores) : null,
+        propio_agencia: propioAgencia,
+        propietario_nombre: propioAgencia ? null : (propietarioNombre || null),
+        cliente_vinculado_id: clienteVinculadoId || null,
+        propietario_telefono: propioAgencia ? null : (propietarioTelefono || null),
+        propietario_email: propioAgencia ? null : (propietarioEmail || null),
+        consignado_por: consignadoPor || null,
+        combustible: combustible || null, transmision: transmision || null, carroceria: carroceria || null,
+        puertas: puertas ? Number(puertas) : null, motor_cilindrada: motorCilindrada || null, version: version || null,
+        manuales, duplicado_llaves: duplicadoLlaves, servicios_oficiales: serviciosOficiales,
+        publicado_ml: publicadoMl, publicado_por: publicadoPor || null, link_ml: linkMl || null,
+        notas: notas || null,
+      };
+      const { data, error: dbError } = esEdicion
+        ? await supabase2.from("vehiculos").update(payload).eq("id", editando.id).select().single()
+        : await supabase2.from("vehiculos").insert({ ...payload, creado_por: miId || null }).select().single();
       if (dbError) throw dbError;
+      if (!esEdicion && miId) {
+        crearAlerta(supabase2, miId, `Nuevo vehículo en stock — ${data.marca} ${data.modelo} ${data.anio}`, {
+          mensaje: `Ingresó hoy. Estado: ${ESTADOS.find((e) => e.value === data.estado)?.label || data.estado}. Precio: ${data.moneda_venta} ${Number(data.precio_venta).toLocaleString("es-AR")}.`,
+          link: "/panel-v2/stock", tipo: "vehiculo", prioridad: "novedad",
+        });
+      }
       onCreado(data);
       onClose();
     } catch (err) {
@@ -118,7 +125,7 @@ export default function NuevoVehiculoModal({ perfiles, clientes, miId, onClose, 
       <div className="relative bg-white dark:bg-[#141414] border border-slate-200 dark:border-white/10 w-full max-w-2xl max-h-[90vh] overflow-y-auto rounded-2xl shadow-2xl p-6">
         <div className="flex justify-between items-start mb-1">
           <div>
-            <h3 className="text-lg font-bold text-slate-900 dark:text-white">Nuevo vehículo</h3>
+            <h3 className="text-lg font-bold text-slate-900 dark:text-white">{esEdicion ? "Editar vehículo" : "Nuevo vehículo"}</h3>
             <p className="text-xs text-slate-500 dark:text-slate-400">Datos básicos del vehículo. Fotos y cédula verde se cargan luego de crear el vehículo.</p>
           </div>
           <button onClick={onClose} className="text-slate-400 hover:text-slate-700 dark:hover:text-white p-1.5 rounded-lg hover:bg-slate-100 dark:hover:bg-white/10">
@@ -360,7 +367,7 @@ export default function NuevoVehiculoModal({ perfiles, clientes, miId, onClose, 
           <div className="pt-3 border-t border-slate-100 dark:border-white/10 flex gap-3">
             <button type="button" onClick={onClose} className="flex-1 py-2.5 text-sm font-semibold bg-white dark:bg-white/5 border border-slate-200 dark:border-white/10 hover:bg-slate-50 dark:hover:bg-white/10 text-slate-600 dark:text-slate-300 rounded-xl transition-colors">Cancelar</button>
             <button type="submit" disabled={guardando} className="flex-1 py-2.5 flex items-center justify-center gap-2 text-sm font-bold bg-rose-600 hover:bg-rose-700 text-white rounded-xl transition-colors disabled:opacity-50">
-              {guardando ? <Loader2 className="w-4 h-4 animate-spin" /> : "Dar de alta"}
+              {guardando ? <Loader2 className="w-4 h-4 animate-spin" /> : esEdicion ? "Guardar cambios" : "Dar de alta"}
             </button>
           </div>
         </form>

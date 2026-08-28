@@ -4,8 +4,9 @@ import { useEffect, useMemo, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import * as XLSX from "xlsx";
 import { Search, Briefcase, Download, Plus, Wrench, ShoppingCart } from "lucide-react";
-import NuevaVentaModal from "./NuevaVentaModal";
+import NuevaVentaModal, { type VentaPrefill } from "./NuevaVentaModal";
 import { fmtFechaLocal } from "@/lib/panelV2/fechas";
+import { supabase2 } from "@/lib/supabase2/client";
 
 interface Venta {
   id: string; estado: string; vehiculo_marca: string | null; vehiculo_modelo: string | null; vehiculo_anio: number | null;
@@ -45,10 +46,28 @@ export default function VentasClient({
   const [soloPermuta, setSoloPermuta] = useState(false);
   const [mes, setMes] = useState("");
   const [modalNueva, setModalNueva] = useState(false);
+  const [prefill, setPrefill] = useState<VentaPrefill | null>(null);
 
   useEffect(() => {
     if (searchParams.get("nueva") === "1") {
       setModalNueva(true);
+      router.replace("/panel-v2/ventas");
+      return;
+    }
+    const cotizacionId = searchParams.get("cotizacion");
+    if (cotizacionId) {
+      supabase2.from("cotizaciones").select("*").eq("id", cotizacionId).single().then(({ data }) => {
+        if (data) {
+          setPrefill({
+            compradorNombre: data.cliente_nombre || "",
+            vehiculoDescripcion: data.vehiculo_descripcion || "",
+            precioVenta: data.precio_sugerido ? String(data.precio_sugerido) : "",
+            monedaVenta: data.moneda || "USD",
+            vehiculoId: data.vehiculo_id || "",
+          });
+          setModalNueva(true);
+        }
+      });
       router.replace("/panel-v2/ventas");
     }
   }, [searchParams, router]);
@@ -188,7 +207,7 @@ export default function VentasClient({
         </div>
       </div>
 
-      {modalNueva && <NuevaVentaModal perfiles={perfiles} clientes={clientes} vehiculos={vehiculos} miId={miId} onClose={() => setModalNueva(false)} onCreado={(v) => setVentas((prev) => [v, ...prev])} />}
+      {modalNueva && <NuevaVentaModal perfiles={perfiles} clientes={clientes} vehiculos={vehiculos} miId={miId} initial={prefill || undefined} onClose={() => { setModalNueva(false); setPrefill(null); }} onCreado={(v) => setVentas((prev) => [v, ...prev])} />}
     </div>
   );
 }

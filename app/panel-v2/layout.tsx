@@ -5,7 +5,7 @@ import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { supabase2 } from "@/lib/supabase2/client";
 import {
-  Search, Moon, Sun, Bell, LogOut, RotateCw, Menu, X,
+  Search, Moon, Sun, LogOut, RotateCw, Menu, X,
   LayoutDashboard, CalendarDays, BellRing, LineChart, Megaphone, Folder,
   Car, Users, FileText, Briefcase, Trophy, SearchCode, Handshake, PackageCheck,
   BedDouble, Repeat, Star, FolderKanban, ClipboardList, KeyRound, Landmark,
@@ -14,6 +14,7 @@ import {
   MessageCircle, BookUser, Settings, Trash2,
 } from "lucide-react";
 import QuickActionsButton from "@/components/panelV2/QuickActionsButton";
+import NotificationBell from "@/components/panelV2/NotificationBell";
 import MensajesBubble from "@/components/panelV2/MensajesBubble";
 
 // Grupos calcados del índice del manual del CRM viejo — todo lo que todavía
@@ -36,7 +37,7 @@ const GRUPOS: { titulo: string; items: { href?: string; label: string; icon: any
     items: [
       { href: "/panel-v2/stock", label: "Stock", icon: Car },
       { href: "/panel-v2/clientes", label: "Clientes", icon: Users },
-      { label: "Cotizaciones", icon: FileText },
+      { href: "/panel-v2/cotizaciones", label: "Cotizaciones", icon: FileText },
       { href: "/panel-v2/ventas", label: "Ventas", icon: Briefcase },
       { label: "Mis ventas", icon: Trophy },
       { label: "Pedidos", icon: SearchCode },
@@ -109,12 +110,16 @@ export default function PanelV2Layout({ children }: { children: React.ReactNode 
   const [nombre, setNombre] = useState("Cargando...");
   const [roles, setRoles] = useState<string[]>([]);
   const [miId, setMiId] = useState<string | null>(null);
-  const [alertasSinLeer, setAlertasSinLeer] = useState(0);
+  const [autosDisponibles, setAutosDisponibles] = useState<number | null>(null);
   const [toast, setToast] = useState<{ id: string; titulo: string; mensaje: string | null; link: string | null } | null>(null);
 
   useEffect(() => {
     const guardado = localStorage.getItem("panelV2DarkMode");
     if (guardado === "true") setDarkMode(true);
+  }, []);
+
+  useEffect(() => {
+    supabase2.from("vehiculos").select("id", { count: "exact", head: true }).eq("estado", "disponible").then(({ count }) => setAutosDisponibles(count ?? 0));
   }, []);
 
   useEffect(() => {
@@ -127,22 +132,15 @@ export default function PanelV2Layout({ children }: { children: React.ReactNode 
     });
   }, []);
 
-  // Contador de la campana + toast de alertas urgentes en vivo (se cierra
-  // solo a los 10s, o con click) — igual que describe el manual.
+  // Toast de alertas urgentes en vivo (se cierra solo a los 10s, o con
+  // click) — el contador de la campana lo maneja NotificationBell aparte.
   useEffect(() => {
     if (!miId) return;
 
-    const cargarConteo = async () => {
-      const { count } = await supabase2.from("alertas").select("id", { count: "exact", head: true }).eq("destinatario_id", miId).eq("leida", false);
-      setAlertasSinLeer(count || 0);
-    };
-    cargarConteo();
-
     const canal = supabase2
       .channel(`alertas-${miId}-${Math.random().toString(36).slice(2)}`)
-      .on("postgres_changes", { event: "*", schema: "public", table: "alertas", filter: `destinatario_id=eq.${miId}` }, (payload) => {
-        cargarConteo();
-        if (payload.eventType === "INSERT" && payload.new.prioridad === "alta") {
+      .on("postgres_changes", { event: "INSERT", schema: "public", table: "alertas", filter: `destinatario_id=eq.${miId}` }, (payload) => {
+        if (payload.new.prioridad === "alta") {
           setToast({ id: payload.new.id, titulo: payload.new.titulo, mensaje: payload.new.mensaje, link: payload.new.link });
           setTimeout(() => setToast((prev) => (prev?.id === payload.new.id ? null : prev)), 10000);
         }
@@ -258,18 +256,16 @@ export default function PanelV2Layout({ children }: { children: React.ReactNode 
             <div className="flex items-center gap-1.5 bg-emerald-50 dark:bg-emerald-500/10 border border-emerald-100 dark:border-emerald-500/20 rounded-full px-3 py-1.5 text-[11px] font-semibold text-emerald-700 dark:text-emerald-300 whitespace-nowrap">
               <span className="w-1.5 h-1.5 rounded-full bg-emerald-500" /> Caja: USD 0 · ARS 0
             </div>
+            {autosDisponibles !== null && (
+              <div className="hidden md:flex items-center gap-1.5 bg-blue-50 dark:bg-blue-500/10 border border-blue-100 dark:border-blue-500/20 rounded-full px-3 py-1.5 text-[11px] font-semibold text-blue-700 dark:text-blue-300 whitespace-nowrap">
+                <Car className="w-3 h-3" /> {autosDisponibles} auto{autosDisponibles === 1 ? "" : "s"} en stock disponible{autosDisponibles === 1 ? "" : "s"}
+              </div>
+            )}
 
             <button onClick={toggleDarkMode} className="p-2 rounded-lg hover:bg-slate-100 dark:hover:bg-white/10 text-slate-500 dark:text-slate-300 shrink-0" title={darkMode ? "Modo claro" : "Modo oscuro"}>
               {darkMode ? <Sun className="w-4 h-4" /> : <Moon className="w-4 h-4" />}
             </button>
-            <Link href="/panel-v2/alertas" className="relative p-2 rounded-lg hover:bg-slate-100 dark:hover:bg-white/10 text-slate-500 dark:text-slate-300 shrink-0" title="Centro de Alertas">
-              <Bell className="w-4 h-4" />
-              {alertasSinLeer > 0 && (
-                <span className="absolute -top-0.5 -right-0.5 min-w-[16px] h-4 px-1 rounded-full bg-rose-600 text-white text-[9px] font-bold flex items-center justify-center">
-                  {alertasSinLeer > 9 ? "9+" : alertasSinLeer}
-                </span>
-              )}
-            </Link>
+            <NotificationBell miId={miId || ""} />
             <div className="flex items-center gap-2 shrink-0">
               <div className="w-8 h-8 rounded-full bg-rose-500 text-white flex items-center justify-center text-sm font-bold">{nombre.charAt(0).toUpperCase()}</div>
               <span className="text-xs font-bold hidden lg:inline">{nombre}</span>

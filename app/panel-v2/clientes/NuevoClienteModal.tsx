@@ -5,6 +5,7 @@ import { supabase2 } from "@/lib/supabase2/client";
 import { X, Loader2, DoorOpen, Globe, ScanLine, Search } from "lucide-react";
 import EscanearDniModal, { type DatosDni } from "./EscanearDniModal";
 import { parseFechaLocal } from "@/lib/panelV2/fechas";
+import { crearAlerta } from "@/lib/panelV2/alertas";
 
 export const ORIGENES = ["Instagram", "Facebook", "Web", "Referido", "Showroom", "WhatsApp", "Otro"];
 const ETAPAS = [
@@ -22,6 +23,7 @@ interface Props {
   perfiles: Perfil[];
   disponibilidad: Disponibilidad[];
   miId: string;
+  editando?: any;
   onClose: () => void;
   onCreado: (cliente: any) => void;
 }
@@ -52,28 +54,29 @@ async function elegirPorRotacion(canal: string, disponibles: Perfil[]) {
   return elegido.id;
 }
 
-export default function NuevoClienteModal({ perfiles, disponibilidad, miId, onClose, onCreado }: Props) {
-  const [canalIngreso, setCanalIngreso] = useState<"walk_in" | "lead_digital">("lead_digital");
-  const [nombre, setNombre] = useState("");
-  const [tipo, setTipo] = useState("Regular");
-  const [sexo, setSexo] = useState("");
-  const [dniCuit, setDniCuit] = useState("");
-  const [telefono, setTelefono] = useState("");
-  const [email, setEmail] = useState("");
-  const [origen, setOrigen] = useState("Showroom");
-  const [etapa, setEtapa] = useState("sin_contactar");
-  const [vehiculoTexto, setVehiculoTexto] = useState("");
-  const [buscaMarca, setBuscaMarca] = useState("");
-  const [buscaModelo, setBuscaModelo] = useState("");
-  const [buscaMoneda, setBuscaMoneda] = useState("USD");
-  const [buscaAnioDesde, setBuscaAnioDesde] = useState("");
-  const [buscaAnioHasta, setBuscaAnioHasta] = useState("");
-  const [buscaPresupuesto, setBuscaPresupuesto] = useState("");
-  const [fechaNacimiento, setFechaNacimiento] = useState("");
-  const [ultimoContacto, setUltimoContacto] = useState("");
-  const [vendedorId, setVendedorId] = useState("");
-  const [direccion, setDireccion] = useState("");
-  const [observaciones, setObservaciones] = useState("");
+export default function NuevoClienteModal({ perfiles, disponibilidad, miId, editando, onClose, onCreado }: Props) {
+  const esEdicion = !!editando;
+  const [canalIngreso, setCanalIngreso] = useState<"walk_in" | "lead_digital">(editando?.canal_ingreso || "lead_digital");
+  const [nombre, setNombre] = useState(editando?.nombre || "");
+  const [tipo, setTipo] = useState(editando?.tipo || "Regular");
+  const [sexo, setSexo] = useState(editando?.sexo || "");
+  const [dniCuit, setDniCuit] = useState(editando?.dni_cuit || "");
+  const [telefono, setTelefono] = useState(editando?.telefono || "");
+  const [email, setEmail] = useState(editando?.email || "");
+  const [origen, setOrigen] = useState(editando?.origen || "Showroom");
+  const [etapa, setEtapa] = useState(editando?.pipeline_stage || "sin_contactar");
+  const [vehiculoTexto, setVehiculoTexto] = useState(editando?.vehiculo_interes_texto || "");
+  const [buscaMarca, setBuscaMarca] = useState(editando?.busca_marca || "");
+  const [buscaModelo, setBuscaModelo] = useState(editando?.busca_modelo || "");
+  const [buscaMoneda, setBuscaMoneda] = useState(editando?.busca_moneda || "USD");
+  const [buscaAnioDesde, setBuscaAnioDesde] = useState(editando?.busca_anio_desde ? String(editando.busca_anio_desde) : "");
+  const [buscaAnioHasta, setBuscaAnioHasta] = useState(editando?.busca_anio_hasta ? String(editando.busca_anio_hasta) : "");
+  const [buscaPresupuesto, setBuscaPresupuesto] = useState(editando?.busca_presupuesto_max ? String(editando.busca_presupuesto_max) : "");
+  const [fechaNacimiento, setFechaNacimiento] = useState(editando?.fecha_nacimiento || "");
+  const [ultimoContacto, setUltimoContacto] = useState(editando?.ultimo_contacto ? String(editando.ultimo_contacto).slice(0, 10) : "");
+  const [vendedorId, setVendedorId] = useState(editando?.vendedor_id || "");
+  const [direccion, setDireccion] = useState(editando?.direccion || "");
+  const [observaciones, setObservaciones] = useState(editando?.observaciones || "");
   const [guardando, setGuardando] = useState(false);
   const [error, setError] = useState("");
   const [modalEscaner, setModalEscaner] = useState(false);
@@ -98,7 +101,7 @@ export default function NuevoClienteModal({ perfiles, disponibilidad, miId, onCl
     setError("");
     try {
       let vendedorFinal = vendedorId || null;
-      if (!vendedorFinal) {
+      if (!vendedorFinal && !esEdicion) {
         const disponibles = perfiles.filter((p) => {
           const d = disponibilidad.find((x) => x.vendedor_id === p.id);
           return !d || d.recibir_leads !== false;
@@ -106,36 +109,41 @@ export default function NuevoClienteModal({ perfiles, disponibilidad, miId, onCl
         vendedorFinal = await elegirPorRotacion(canalIngreso, disponibles);
       }
 
-      const { data, error: dbError } = await supabase2
-        .from("clientes")
-        .insert({
-          nombre: nombre.trim(),
-          tipo,
-          sexo: sexo || null,
-          dni_cuit: dniCuit || null,
-          telefono: telefono || null,
-          email: email || null,
-          origen,
-          canal_ingreso: canalIngreso,
-          pipeline_stage: etapa,
-          pipeline_stage_manual: etapa !== "sin_contactar",
-          vehiculo_interes_texto: vehiculoTexto || null,
-          busca_marca: buscaMarca || null,
-          busca_modelo: buscaModelo || null,
-          busca_moneda: buscaMoneda,
-          busca_anio_desde: buscaAnioDesde ? Number(buscaAnioDesde) : null,
-          busca_anio_hasta: buscaAnioHasta ? Number(buscaAnioHasta) : null,
-          busca_presupuesto_max: buscaPresupuesto ? Number(buscaPresupuesto) : null,
-          fecha_nacimiento: fechaNacimiento || null,
-          ultimo_contacto: ultimoContacto ? parseFechaLocal(ultimoContacto).toISOString() : null,
-          vendedor_id: vendedorFinal,
-          direccion: direccion || null,
-          observaciones: observaciones || null,
-          creado_por: miId || null,
-        })
-        .select()
-        .single();
+      const payload = {
+        nombre: nombre.trim(),
+        tipo,
+        sexo: sexo || null,
+        dni_cuit: dniCuit || null,
+        telefono: telefono || null,
+        email: email || null,
+        origen,
+        canal_ingreso: canalIngreso,
+        pipeline_stage: etapa,
+        pipeline_stage_manual: esEdicion ? editando.pipeline_stage_manual : etapa !== "sin_contactar",
+        vehiculo_interes_texto: vehiculoTexto || null,
+        busca_marca: buscaMarca || null,
+        busca_modelo: buscaModelo || null,
+        busca_moneda: buscaMoneda,
+        busca_anio_desde: buscaAnioDesde ? Number(buscaAnioDesde) : null,
+        busca_anio_hasta: buscaAnioHasta ? Number(buscaAnioHasta) : null,
+        busca_presupuesto_max: buscaPresupuesto ? Number(buscaPresupuesto) : null,
+        fecha_nacimiento: fechaNacimiento || null,
+        ultimo_contacto: ultimoContacto ? parseFechaLocal(ultimoContacto).toISOString() : null,
+        vendedor_id: vendedorFinal,
+        direccion: direccion || null,
+        observaciones: observaciones || null,
+      };
+
+      const { data, error: dbError } = esEdicion
+        ? await supabase2.from("clientes").update(payload).eq("id", editando.id).select().single()
+        : await supabase2.from("clientes").insert({ ...payload, creado_por: miId || null }).select().single();
       if (dbError) throw dbError;
+      if (!esEdicion && miId) {
+        crearAlerta(supabase2, miId, `Nuevo cliente registrado — ${data.nombre}`, {
+          mensaje: `Cargado hoy. Origen: ${data.origen}.${data.telefono ? ` Tel: ${data.telefono}.` : ""}`,
+          link: "/panel-v2/clientes", tipo: "cliente", prioridad: "novedad",
+        });
+      }
       onCreado(data);
       onClose();
     } catch (err) {
@@ -155,7 +163,7 @@ export default function NuevoClienteModal({ perfiles, disponibilidad, miId, onCl
       <div className="relative bg-white dark:bg-[#141414] border border-slate-200 dark:border-white/10 w-full max-w-2xl max-h-[90vh] overflow-y-auto rounded-2xl shadow-2xl p-6">
         <div className="flex justify-between items-start mb-1">
           <div>
-            <h3 className="text-lg font-bold text-slate-900 dark:text-white">Nuevo cliente</h3>
+            <h3 className="text-lg font-bold text-slate-900 dark:text-white">{esEdicion ? "Editar cliente" : "Nuevo cliente"}</h3>
             <p className="text-xs text-slate-500 dark:text-slate-400">Campos mínimos: nombre. El resto se puede completar más tarde.</p>
           </div>
           <button onClick={onClose} className="text-slate-400 hover:text-slate-700 dark:hover:text-white p-1.5 rounded-lg hover:bg-slate-100 dark:hover:bg-white/10">
@@ -316,7 +324,7 @@ export default function NuevoClienteModal({ perfiles, disponibilidad, miId, onCl
           <div className="pt-3 border-t border-slate-100 dark:border-white/10 flex gap-3">
             <button type="button" onClick={onClose} className="flex-1 py-2.5 text-sm font-semibold bg-white dark:bg-white/5 border border-slate-200 dark:border-white/10 hover:bg-slate-50 dark:hover:bg-white/10 text-slate-600 dark:text-slate-300 rounded-xl transition-colors">Cancelar</button>
             <button type="submit" disabled={guardando} className="flex-1 py-2.5 flex items-center justify-center gap-2 text-sm font-bold bg-rose-600 hover:bg-rose-700 text-white rounded-xl transition-colors disabled:opacity-50">
-              {guardando ? <Loader2 className="w-4 h-4 animate-spin" /> : "Agregar cliente"}
+              {guardando ? <Loader2 className="w-4 h-4 animate-spin" /> : esEdicion ? "Guardar cambios" : "Agregar cliente"}
             </button>
           </div>
         </form>
