@@ -12,7 +12,7 @@ export default async function EquipoPage() {
   );
 
   const { data: { user } } = await supabase.auth.getUser();
-  if (!user) redirect("/login");
+  if (!user) redirect("/panel-v2/login");
 
   const { data: miPerfil } = await supabase.from("perfiles").select("rol, sucursal_id, nombre").eq("id", user.id).single();
   if (!miPerfil || (miPerfil.rol !== "admin" && miPerfil.rol !== "encargado")) redirect("/panel");
