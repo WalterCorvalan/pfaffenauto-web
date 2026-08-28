@@ -20,6 +20,9 @@ import MensajesBubble from "@/components/panelV2/MensajesBubble";
 // Grupos calcados del índice del manual del CRM viejo — todo lo que todavía
 // no construimos queda listado pero deshabilitado, para que el mapa completo
 // se vea desde ahora y cada módulo se "prenda" cuando lo hagamos.
+// Grupos reorganizados según el nuevo índice del panel Principal.
+// Marketing ya está habilitado apuntando a /panel-v2/marketing.
+// Grupos calcados del esquema principal solicitado
 const GRUPOS: { titulo: string; items: { href?: string; label: string; icon: any }[] }[] = [
   {
     titulo: "Principal",
@@ -28,7 +31,7 @@ const GRUPOS: { titulo: string; items: { href?: string; label: string; icon: any
       { href: "/panel-v2/calendario", label: "Calendario", icon: CalendarDays },
       { href: "/panel-v2/alertas", label: "Alertas", icon: BellRing },
       { label: "Reportes", icon: LineChart },
-      { label: "Marketing", icon: Megaphone },
+      { href: "/panel-v2/marketing/embudo", label: "Marketing", icon: Megaphone },
       { label: "Mi Espacio", icon: Folder },
     ],
   },
@@ -40,54 +43,51 @@ const GRUPOS: { titulo: string; items: { href?: string; label: string; icon: any
       { href: "/panel-v2/cotizaciones", label: "Cotizaciones", icon: FileText },
       { href: "/panel-v2/ventas", label: "Ventas", icon: Briefcase },
       { label: "Mis ventas", icon: Trophy },
-      { label: "Pedidos", icon: SearchCode },
-      { label: "Oportunidades", icon: Handshake },
-      { href: "/panel-v2/postventa", label: "Postventa", icon: PackageCheck },
-      { label: "Clientes Dormidos", icon: BedDouble },
-      { label: "Recontactos", icon: Repeat },
     ],
   },
   {
-    titulo: "Operación y trámites",
+    titulo: "Operación",
     items: [
+      { label: "Pedidos", icon: SearchCode },
+      { href: "/panel-v2/postventa", label: "Postventa", icon: PackageCheck },
       { label: "Expedientes", icon: FolderKanban },
+      { label: "Reclamos", icon: MessageSquareWarning },
       { label: "Gestoría", icon: ClipboardList },
       { label: "Consignaciones", icon: KeyRound },
       { label: "Infracciones", icon: Landmark },
+      { href: "/panel-v2/telefonos", label: "Teléfonos útiles", icon: BookUser },
       { href: "/panel-v2/taller", label: "Taller", icon: Wrench },
       { label: "Service", icon: Hammer },
-      { label: "Reclamos", icon: MessageSquareWarning },
     ],
   },
   {
-    titulo: "Finanzas y cobros",
+    titulo: "Finanzas",
     items: [
       { label: "Finanzas", icon: Banknote },
       { label: "Tesorería", icon: PiggyBank },
       { label: "Liquidaciones", icon: Coins },
-      { label: "Cobros", icon: Coins },
-      { label: "Autorizaciones", icon: ShieldCheck },
-      { label: "Reportes", icon: BarChart3 },
       { label: "Mis Comisiones", icon: DollarSign },
     ],
   },
   {
-    titulo: "Comunicación",
+    titulo: "Colaboración",
     items: [
       { label: "Mensajes", icon: MessagesSquare },
       { label: "WhatsApp", icon: Smartphone },
+      { label: "Correos", icon: Mail },
       { label: "NPS", icon: ThumbsUp },
-      { label: "Sugerencias", icon: Lightbulb },
-      { label: "Mi Correo", icon: Mail },
-      { label: "Conversaciones", icon: MessageCircle },
-      { href: "/panel-v2/telefonos", label: "Teléfonos útiles", icon: BookUser },
     ],
   },
   {
     titulo: "Administración",
     items: [
-      { label: "Configuración", icon: Settings },
+      { label: "Autorizaciones", icon: ShieldCheck },
+      { label: "Dormidos", icon: BedDouble },
+      { label: "Recontactos", icon: Repeat },
+      { label: "Sugerencias", icon: Lightbulb },
       { label: "Papelera", icon: Trash2 },
+      { label: "Configuración", icon: Settings },
+      { label: "Oportunidades", icon: Handshake },
     ],
   },
 ];
