@@ -64,7 +64,15 @@ export async function POST(req: Request, { params }: { params: Promise<{ token: 
   }
 
   const payload = JSON.parse(rawBody);
-  procesarEvento(payload).catch((err) => console.error("[webhook-v2] error procesando:", err));
+  // Hay que esperar el procesamiento antes de responder: en el runtime
+  // serverless de Vercel, la función se congela apenas se devuelve la
+  // respuesta, así que "fire and forget" nunca llega a terminar y el
+  // mensaje entrante se pierde sin guardarse.
+  try {
+    await procesarEvento(payload);
+  } catch (err) {
+    console.error("[webhook-v2] error procesando:", err);
+  }
 
   return Response.json({ received: true });
 }
