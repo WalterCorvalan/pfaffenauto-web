@@ -11,7 +11,7 @@ import {
   BedDouble, Repeat, Star, FolderKanban, ClipboardList, KeyRound, Landmark,
   Wrench, Hammer, MessageSquareWarning, Banknote, PiggyBank, Coins, ShieldCheck,
   BarChart3, DollarSign, MessagesSquare, Smartphone, ThumbsUp, Lightbulb, Mail,
-  MessageCircle, BookUser, Settings, Trash2,
+  MessageCircle, BookUser, Settings, Trash2, Bot,
 } from "lucide-react";
 import QuickActionsButton from "@/components/panelV2/QuickActionsButton";
 import NotificationBell from "@/components/panelV2/NotificationBell";
@@ -53,8 +53,8 @@ const GRUPOS: { titulo: string; items: { href?: string; label: string; icon: any
       { href: "/panel-v2/postventa", label: "Postventa", icon: PackageCheck },
       { href: "/panel-v2/expedientes", label: "Expedientes", icon: FolderKanban },
       { href: "/panel-v2/reclamos", label: "Reclamos", icon: MessageSquareWarning },
-      { label: "Gestoría", icon: ClipboardList },
-      { label: "Consignaciones", icon: KeyRound },
+      { href: "/panel-v2/gestoria", label: "Gestoría", icon: ClipboardList },
+      { href: "/panel-v2/consignaciones", label: "Consignaciones", icon: KeyRound },
       { label: "Infracciones", icon: Landmark },
       { href: "/panel-v2/telefonos", label: "Teléfonos útiles", icon: BookUser },
       { href: "/panel-v2/taller", label: "Taller", icon: Wrench },
@@ -67,7 +67,7 @@ const GRUPOS: { titulo: string; items: { href?: string; label: string; icon: any
       { label: "Finanzas", icon: Banknote },
       { label: "Tesorería", icon: PiggyBank },
       { label: "Liquidaciones", icon: Coins },
-      { label: "Mis Comisiones", icon: DollarSign },
+      { href: "/panel-v2/comisiones", label:"Mis Comisiones", icon: DollarSign },
     ],
   },
   {
@@ -75,6 +75,7 @@ const GRUPOS: { titulo: string; items: { href?: string; label: string; icon: any
     items: [
       { label: "Mensajes", icon: MessagesSquare },
       { href: "/panel-v2/whatsapp", label: "WhatsApp", icon: Smartphone },
+      { href: "/panel-v2/rodi", label: "Rodi (chat web)", icon: Bot },
       { label: "Correos", icon: Mail },
       { label: "NPS", icon: ThumbsUp },
     ],
@@ -87,8 +88,9 @@ const GRUPOS: { titulo: string; items: { href?: string; label: string; icon: any
       { label: "Recontactos", icon: Repeat },
       { label: "Sugerencias", icon: Lightbulb },
       { label: "Papelera", icon: Trash2 },
-      { label: "Configuración", icon: Settings },
+      { href: "/panel-v2/configuracion/whatsapp", label: "Configuración", icon: Settings },
       { label: "Oportunidades", icon: Handshake },
+      { href: "/panel-v2/postulaciones", label: "Postulaciones", icon: Users },
     ],
   },
 ];

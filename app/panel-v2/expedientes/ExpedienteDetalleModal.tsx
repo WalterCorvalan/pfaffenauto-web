@@ -2,8 +2,9 @@
 
 import { useState, useEffect } from "react";
 import { supabase2 } from "@/lib/supabase2/client";
-import { X, Loader2, ChevronDown, MoreVertical, Lock, MessageCircle, Check } from "lucide-react";
+import { X, Loader2, ChevronDown, MoreVertical, Lock, MessageCircle, Check, Upload } from "lucide-react";
 import { fmtFechaLocal } from "@/lib/panelV2/fechas";
+import BoletoModal from "./BoletoModal";
 
 const SECTORES = [
   { value: "ventas", label: "Ventas" }, { value: "gestoria", label: "Gestoría" }, { value: "finanzas", label: "Finanzas" },
@@ -31,9 +32,12 @@ export default function ExpedienteDetalleModal({ expedienteId, miId, perfiles, s
   const [expediente, setExpediente] = useState<any>(null);
   const [venta, setVenta] = useState<any>(null);
   const [hitos, setHitos] = useState<any[]>([]);
+  const [checklist, setChecklist] = useState<any[]>([]);
   const [observaciones, setObservaciones] = useState<any[]>([]);
   const [senas, setSenas] = useState<any[]>([]);
   const [cargando, setCargando] = useState(true);
+  const [subiendoTitulo, setSubiendoTitulo] = useState(false);
+  const [boletoTipo, setBoletoTipo] = useState<"venta" | "compra" | null>(null);
   const [tab, setTab] = useState("Resumen");
   const [mostrarMenu, setMostrarMenu] = useState(false);
   const [mostrarPedido, setMostrarPedido] = useState(false);
@@ -52,6 +56,7 @@ export default function ExpedienteDetalleModal({ expedienteId, miId, perfiles, s
   const [comentarioFinanzas, setComentarioFinanzas] = useState("");
   const [precioPropietario, setPrecioPropietario] = useState("");
   const [precioPropietarioMoneda, setPrecioPropietarioMoneda] = useState("USD");
+  const [vencimiento, setVencimiento] = useState("");
 
   const cargar = async () => {
     const { data: e } = await supabase2.from("expedientes").select("*, venta:ventas(*)").eq("id", expedienteId).single();
@@ -66,13 +71,16 @@ export default function ExpedienteDetalleModal({ expedienteId, miId, perfiles, s
     setComentarioFinanzas(e.venta?.comentario_finanzas || "");
     setPrecioPropietario(e.precio_propietario != null ? String(e.precio_propietario) : "");
     setPrecioPropietarioMoneda(e.precio_propietario_moneda || "USD");
+    setVencimiento(e.vencimiento || "");
 
-    const [{ data: h }, { data: o }, { data: s }] = await Promise.all([
+    const [{ data: h }, { data: cl }, { data: o }, { data: s }] = await Promise.all([
       supabase2.from("expediente_hitos").select("*").eq("expediente_id", expedienteId).order("orden"),
+      supabase2.from("expediente_checklist").select("*").eq("expediente_id", expedienteId).order("parte,orden"),
       supabase2.from("expediente_observaciones").select("*, autor:perfiles(nombre)").eq("expediente_id", expedienteId).order("created_at", { ascending: false }),
       e.venta ? supabase2.from("venta_senas").select("*").eq("venta_id", e.venta.id) : Promise.resolve({ data: [] }),
     ]);
     setHitos(h || []);
+    setChecklist(cl || []);
     setObservaciones(o || []);
     setSenas(s || []);
     setCargando(false);
@@ -84,6 +92,30 @@ export default function ExpedienteDetalleModal({ expedienteId, miId, perfiles, s
     const nuevo = !h.completado;
     await supabase2.from("expediente_hitos").update({ completado: nuevo, completado_en: nuevo ? new Date().toISOString() : null }).eq("id", h.id);
     setHitos((prev) => prev.map((x) => (x.id === h.id ? { ...x, completado: nuevo } : x)));
+  };
+
+  const toggleChecklistItem = async (item: any) => {
+    const nuevo = !item.completado;
+    await supabase2.rpc("expediente_checklist_tildar", { p_item_id: item.id, p_completado: nuevo });
+    setChecklist((prev) => prev.map((x) => (x.id === item.id ? { ...x, completado: nuevo } : x)));
+  };
+
+  const subirTitulo = async (file: File) => {
+    setSubiendoTitulo(true);
+    try {
+      const formData = new FormData();
+      formData.append("file", file);
+      formData.append("carpeta", "expedientes");
+      const res = await fetch("/api/panel-v2/upload", { method: "POST", body: formData });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || "Error subiendo el archivo");
+      const { data: upd } = await supabase2.from("expedientes").update({ titulo_transferido_url: data.publicUrl }).eq("id", expedienteId).select("*, venta:ventas(*)").single();
+      if (upd) { setExpediente(upd); onActualizado(upd); }
+    } catch (e: any) {
+      alert(e?.message || "No se pudo subir el archivo.");
+    } finally {
+      setSubiendoTitulo(false);
+    }
   };
 
   const confirmarParte = async (parte: "comprador" | "consignacion") => {
@@ -106,7 +138,7 @@ export default function ExpedienteDetalleModal({ expedienteId, miId, perfiles, s
     setGuardando(true);
     try {
       const { data } = await supabase2.from("expedientes").update({
-        titulo: titulo.trim() || null, estado, fecha_apertura: fechaApertura || null,
+        titulo: titulo.trim() || null, estado, fecha_apertura: fechaApertura || null, vencimiento: vencimiento || null,
         precio_propietario: precioPropietario ? Number(precioPropietario) : null, precio_propietario_moneda: precioPropietarioMoneda,
       }).eq("id", expedienteId).select("*, venta:ventas(*)").single();
 
@@ -157,14 +189,13 @@ export default function ExpedienteDetalleModal({ expedienteId, miId, perfiles, s
 
   const pedirAtencion = async () => {
     if (!sectorPedido) return;
-    const { data: destinatarios } = await supabase2.from("perfiles").select("id").contains("roles", [sectorPedido]).eq("activo", true);
-    const link = `/panel-v2/expedientes?expediente=${expedienteId}`;
-    for (const d of destinatarios || []) {
-      await supabase2.from("alertas").insert({ destinatario_id: d.id, tipo: "expediente_pedido_atencion", prioridad: "alta", titulo: `Te piden atención en el expediente ${titulo}`, mensaje: mensajePedido.trim() || null, link });
-    }
+    await supabase2.from("expediente_observaciones").insert({
+      expediente_id: expedienteId, texto: mensajePedido.trim() || `Pedido de atención a ${sectorPedido}`, tipo: "pedido_atencion", sector: sectorPedido, autor_id: miId,
+    });
     setMostrarPedido(false);
     setSectorPedido("");
     setMensajePedido("");
+    await cargar();
   };
 
   if (cargando || !expediente) {
@@ -191,7 +222,17 @@ export default function ExpedienteDetalleModal({ expedienteId, miId, perfiles, s
         </div>
 
         <div className="px-5 pb-5 space-y-4">
-          <span className={`text-sm font-bold ${PRIORIDAD_COLOR[expediente.prioridad]}`}>🟡 {expediente.prioridad}</span>
+          <div className="flex items-center gap-2 flex-wrap">
+            <span className={`text-sm font-bold ${PRIORIDAD_COLOR[expediente.prioridad]}`}>🟡 {expediente.prioridad}</span>
+            {expediente.vencimiento && <span className="text-xs font-semibold text-slate-500 dark:text-slate-400">📅 Vence: {fmtFechaLocal(expediente.vencimiento)}</span>}
+          </div>
+
+          {expediente.pedido_atencion_sector && (
+            <div className="bg-indigo-50 dark:bg-indigo-500/10 border border-indigo-200 dark:border-indigo-500/20 rounded-xl p-3">
+              <p className="text-xs font-bold text-indigo-700 dark:text-indigo-300">🔔 Pedido de atención a {SECTORES.find((s) => s.value === expediente.pedido_atencion_sector)?.label || expediente.pedido_atencion_sector}</p>
+              {expediente.pedido_atencion_mensaje && <p className="text-xs text-indigo-700/80 dark:text-indigo-300/70 mt-0.5">{expediente.pedido_atencion_mensaje}</p>}
+            </div>
+          )}
 
           {pendienteConfirmacion && (
             <div className="bg-amber-50 dark:bg-amber-500/10 border border-amber-200 dark:border-amber-500/20 rounded-xl p-4">
@@ -239,9 +280,7 @@ export default function ExpedienteDetalleModal({ expedienteId, miId, perfiles, s
             ))}
           </div>
 
-          {tab !== "Resumen" ? (
-            <div className="py-12 text-center text-sm text-slate-400">Pestaña "{tab}" — todavía no construida, llega en la próxima entrega.</div>
-          ) : (
+          {tab === "Resumen" && (
             <>
               <div>
                 <div className="flex items-center justify-between">
@@ -380,18 +419,74 @@ export default function ExpedienteDetalleModal({ expedienteId, miId, perfiles, s
               </div>
 
               <div className="grid grid-cols-2 gap-3">
-                <div className="bg-slate-50 dark:bg-white/5 border border-slate-100 dark:border-white/10 rounded-xl p-3">
-                  <p className="text-xs font-bold flex items-center justify-between">Docs Vendedor <span className="text-slate-400">0/6</span></p>
-                  <div className="h-1.5 bg-slate-200 dark:bg-white/10 rounded-full mt-1.5"><div className="h-1.5 bg-rose-500 rounded-full" style={{ width: "0%" }} /></div>
-                  <p className="text-[10px] text-slate-400 mt-1">0% completado</p>
-                </div>
-                <div className="bg-slate-50 dark:bg-white/5 border border-slate-100 dark:border-white/10 rounded-xl p-3">
-                  <p className="text-xs font-bold flex items-center justify-between">Docs Comprador <span className="text-slate-400">0/4</span></p>
-                  <div className="h-1.5 bg-slate-200 dark:bg-white/10 rounded-full mt-1.5"><div className="h-1.5 bg-rose-500 rounded-full" style={{ width: "0%" }} /></div>
-                  <p className="text-[10px] text-slate-400 mt-1">0% completado</p>
-                </div>
+                {(() => {
+                  const vendedora = checklist.filter((x) => x.parte === "vendedora");
+                  const compradora = checklist.filter((x) => x.parte === "compradora");
+                  const pctV = vendedora.length ? Math.round((vendedora.filter((x) => x.completado).length / vendedora.length) * 100) : 0;
+                  const pctC = compradora.length ? Math.round((compradora.filter((x) => x.completado).length / compradora.length) * 100) : 0;
+                  return (
+                    <>
+                      <div className="bg-slate-50 dark:bg-white/5 border border-slate-100 dark:border-white/10 rounded-xl p-3">
+                        <p className="text-xs font-bold flex items-center justify-between">Docs Vendedor <span className="text-slate-400">{vendedora.filter((x) => x.completado).length}/{vendedora.length}</span></p>
+                        <div className="h-1.5 bg-slate-200 dark:bg-white/10 rounded-full mt-1.5"><div className="h-1.5 bg-rose-500 rounded-full" style={{ width: `${pctV}%` }} /></div>
+                        <p className="text-[10px] text-slate-400 mt-1">{pctV}% completado</p>
+                      </div>
+                      <div className="bg-slate-50 dark:bg-white/5 border border-slate-100 dark:border-white/10 rounded-xl p-3">
+                        <p className="text-xs font-bold flex items-center justify-between">Docs Comprador <span className="text-slate-400">{compradora.filter((x) => x.completado).length}/{compradora.length}</span></p>
+                        <div className="h-1.5 bg-slate-200 dark:bg-white/10 rounded-full mt-1.5"><div className="h-1.5 bg-rose-500 rounded-full" style={{ width: `${pctC}%` }} /></div>
+                        <p className="text-[10px] text-slate-400 mt-1">{pctC}% completado</p>
+                      </div>
+                    </>
+                  );
+                })()}
               </div>
             </>
+          )}
+
+          {tab === "Gestoría" && (
+            <div className="space-y-4">
+              <div>
+                <label className="text-xs font-semibold text-slate-500 dark:text-slate-400 block mb-1">Vencimiento del trámite</label>
+                <input type="date" value={vencimiento} onChange={(e) => setVencimiento(e.target.value)} className="w-full sm:w-56 bg-slate-50 dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-lg px-3 py-2 text-sm" />
+                <p className="text-[10px] text-slate-400 mt-1">Se usa para las alertas de "vencidos" / "vencen 7 días" del tablero de Gestoría. Guardá los cambios abajo.</p>
+              </div>
+
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                {["vendedora", "compradora"].map((parte) => {
+                  const items = checklist.filter((x) => x.parte === parte);
+                  return (
+                    <div key={parte} className={`border rounded-xl p-3 ${parte === "vendedora" ? "bg-purple-50/60 dark:bg-purple-500/5 border-purple-100 dark:border-purple-500/20" : "bg-emerald-50/60 dark:bg-emerald-500/5 border-emerald-100 dark:border-emerald-500/20"}`}>
+                      <p className="text-xs font-bold mb-2">{parte === "vendedora" ? "🔑 Parte Vendedora" : `👤 ${venta?.comprador_nombre || "Parte Compradora"}`} <span className="text-[10px] font-normal text-slate-400">{items.filter((x) => x.completado).length}/{items.length}</span></p>
+                      <div className="space-y-1.5">
+                        {items.map((item) => (
+                          <button key={item.id} onClick={() => toggleChecklistItem(item)} className="flex items-center gap-1.5 w-full text-left">
+                            <span className={`w-2 h-2 rounded-full shrink-0 ${item.completado ? "bg-emerald-500" : "bg-amber-400"}`} />
+                            <span className={`text-xs ${item.completado ? "text-slate-400 line-through" : "text-slate-600 dark:text-slate-300"}`}>{item.nombre}</span>
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+
+              <div>
+                <p className="text-[11px] font-black uppercase tracking-widest text-slate-400 mb-1.5">Título del automotor transferido</p>
+                <p className="text-[10px] text-slate-400 mb-2">Mismo comprobante que exige Liquidaciones para finalizar la transferencia y cobrar. Se sincroniza solo entre las dos secciones.</p>
+                {expediente.titulo_transferido_url ? (
+                  <a href={expediente.titulo_transferido_url} target="_blank" rel="noreferrer" className="inline-flex items-center gap-1.5 text-xs font-bold text-emerald-600 bg-emerald-50 dark:bg-emerald-500/10 px-3 py-2 rounded-lg">✅ Ver título subido</a>
+                ) : (
+                  <label className="inline-flex items-center gap-1.5 text-xs font-bold text-slate-600 dark:text-slate-300 bg-slate-50 dark:bg-white/5 border border-dashed border-slate-300 dark:border-white/20 px-3 py-2 rounded-lg cursor-pointer">
+                    {subiendoTitulo ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Upload className="w-3.5 h-3.5" />} Subir título
+                    <input type="file" accept="image/*,.pdf" className="hidden" onChange={(e) => e.target.files?.[0] && subirTitulo(e.target.files[0])} />
+                  </label>
+                )}
+              </div>
+            </div>
+          )}
+
+          {tab !== "Resumen" && tab !== "Gestoría" && (
+            <div className="py-12 text-center text-sm text-slate-400">Pestaña "{tab}" — todavía no construida, llega en la próxima entrega.</div>
           )}
 
           {mostrarPedido && (
@@ -436,8 +531,8 @@ export default function ExpedienteDetalleModal({ expedienteId, miId, perfiles, s
             )}
           </div>
           <button disabled title="Todavía no construido" className="px-3 py-2 text-xs font-semibold rounded-lg border border-slate-200 dark:border-white/10 text-slate-300 opacity-60 cursor-not-allowed">Editar venta</button>
-          <button disabled title="Todavía no construido" className="px-3 py-2 text-xs font-semibold rounded-lg border border-slate-200 dark:border-white/10 text-slate-300 opacity-60 cursor-not-allowed">Boleto compra</button>
-          <button disabled title="Todavía no construido" className="px-3 py-2 text-xs font-semibold rounded-lg border border-slate-200 dark:border-white/10 text-slate-300 opacity-60 cursor-not-allowed">Boleto venta</button>
+          <button onClick={() => setBoletoTipo("compra")} className="px-3 py-2 text-xs font-semibold rounded-lg border border-slate-200 dark:border-white/10 text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-white/5">Boleto compra</button>
+          <button onClick={() => setBoletoTipo("venta")} className="px-3 py-2 text-xs font-semibold rounded-lg border border-slate-200 dark:border-white/10 text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-white/5">Boleto venta</button>
           <button disabled title="Todavía no construido" className="px-3 py-2 text-xs font-semibold rounded-lg border border-slate-200 dark:border-white/10 text-slate-300 opacity-60 cursor-not-allowed">Reseña comprador</button>
           <button disabled title="Todavía no construido" className="px-3 py-2 text-xs font-semibold rounded-lg border border-slate-200 dark:border-white/10 text-slate-300 opacity-60 cursor-not-allowed">Reseña ex-dueño</button>
           <div className="flex-1" />
@@ -445,6 +540,17 @@ export default function ExpedienteDetalleModal({ expedienteId, miId, perfiles, s
           <button onClick={guardarCambios} disabled={guardando} className="px-4 py-2 rounded-lg bg-rose-600 hover:bg-rose-700 text-white text-xs font-bold disabled:opacity-50 flex items-center gap-1.5">{guardando ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : null} Guardar Cambios</button>
         </div>
       </div>
+
+      {boletoTipo && (
+        <BoletoModal
+          tipo={boletoTipo}
+          expediente={expediente}
+          venta={venta}
+          checklist={checklist}
+          miNombre={perfiles.find((p) => p.id === miId)?.nombre || ""}
+          onClose={() => setBoletoTipo(null)}
+        />
+      )}
     </div>
   );
 }

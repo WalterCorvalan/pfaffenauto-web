@@ -13,8 +13,20 @@ interface Message {
 
 const MENSAJE_INICIAL: Message = {
   role: "assistant",
-  content: "¡Hola! Soy el asistente virtual de Pfaffen Autos. Contame qué auto estás buscando y te cuento si lo tenemos en stock.",
+  content: "¡Hola! Soy Rodi, el asistente virtual de Pfaffen Autos. Contame qué auto estás buscando y te cuento si lo tenemos en stock.",
 };
+
+const SESSION_KEY = "rodi_session_id";
+
+function obtenerSessionId(): string {
+  if (typeof window === "undefined") return "";
+  let id = localStorage.getItem(SESSION_KEY);
+  if (!id) {
+    id = crypto.randomUUID();
+    localStorage.setItem(SESSION_KEY, id);
+  }
+  return id;
+}
 
 export default function FloatingChatbot() {
   const pathname = usePathname();
@@ -24,6 +36,7 @@ export default function FloatingChatbot() {
   const [input, setInput] = useState("");
   const [loading, setLoading] = useState(false);
   const [messages, setMessages] = useState<Message[]>([MENSAJE_INICIAL]);
+  const [handoff, setHandoff] = useState(false);
 
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
@@ -37,11 +50,15 @@ export default function FloatingChatbot() {
 
   const limpiarChat = () => {
     setMessages([MENSAJE_INICIAL]);
+    setHandoff(false);
+    // Nueva sesión: si limpia el chat, que arranque una conversación nueva
+    // en vez de seguir mandando mensajes a la vieja en el CRM.
+    if (typeof window !== "undefined") localStorage.removeItem(SESSION_KEY);
   };
 
   const handleSend = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!input.trim() || loading) return;
+    if (!input.trim() || loading || handoff) return;
 
     const texto = input.trim();
     setInput("");
@@ -49,18 +66,18 @@ export default function FloatingChatbot() {
     setLoading(true);
 
     try {
-      const historialParaApi = [...messages, { role: "user" as const, content: texto }]
-        .map((m) => ({ role: m.role, content: m.content }));
-      const res = await fetch("/api/chat", {
+      const res = await fetch("/api/panel-v2/rodi/mensaje", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ messages: historialParaApi }),
+        body: JSON.stringify({ sessionId: obtenerSessionId(), texto, origenPagina: pathname }),
       });
       const data = await res.json();
-      setMessages((prev) => [
-        ...prev,
-        { role: "assistant", content: data.reply || data.error || "Perdón, no pude responder. Probá de nuevo." },
-      ]);
+      if (!res.ok) {
+        setMessages((prev) => [...prev, { role: "assistant", content: data.error || "Perdón, no pude responder. Probá de nuevo." }]);
+        return;
+      }
+      if (data.reply) setMessages((prev) => [...prev, { role: "assistant", content: data.reply }]);
+      if (data.handoff) setHandoff(true);
     } catch {
       setMessages((prev) => [...prev, { role: "assistant", content: "Perdón, hubo un error de conexión. Probá de nuevo en un momento." }]);
     } finally {
@@ -94,7 +111,7 @@ export default function FloatingChatbot() {
               </div>
               <div>
                 <h3 className="font-black text-sm tracking-wide">
-                  Pfaffen Asistente
+                  Rodi · Pfaffen Autos
                 </h3>
                 <span className="text-[10px] text-emerald-400 font-bold uppercase tracking-widest flex items-center gap-1">
                   <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>{" "}
@@ -176,6 +193,12 @@ export default function FloatingChatbot() {
             <div ref={messagesEndRef} />
           </div>
 
+          {handoff && (
+            <div className="px-4 py-2.5 bg-emerald-50 border-t border-emerald-100 text-[11px] font-semibold text-emerald-700 text-center shrink-0">
+              Un asesor de Pfaffen Autos te va a contactar en breve. 🚗
+            </div>
+          )}
+
           {/* Input de envío */}
           <form
             onSubmit={handleSend}
@@ -185,12 +208,13 @@ export default function FloatingChatbot() {
               type="text"
               value={input}
               onChange={(e) => setInput(e.target.value)}
-              placeholder="Escribí tu consulta..."
-              className="flex-1 bg-slate-100 border border-transparent focus:border-[#0145F2] focus:bg-white text-xs px-4 py-3 rounded-xl outline-none transition-all text-slate-800 placeholder:text-slate-400 font-medium"
+              placeholder={handoff ? "Un asesor te va a escribir por acá..." : "Escribí tu consulta..."}
+              disabled={handoff}
+              className="flex-1 bg-slate-100 border border-transparent focus:border-[#0145F2] focus:bg-white text-xs px-4 py-3 rounded-xl outline-none transition-all text-slate-800 placeholder:text-slate-400 font-medium disabled:opacity-60"
             />
             <button
               type="submit"
-              disabled={loading || !input.trim()}
+              disabled={loading || !input.trim() || handoff}
               className="bg-[#0145F2] hover:bg-blue-700 disabled:opacity-40 text-white p-3 rounded-xl transition-all shadow-md active:scale-95 flex items-center justify-center cursor-pointer shrink-0"
             >
               <Send className="w-4 h-4" />

@@ -1,0 +1,93 @@
+import {
+  User, Car, FileText, BarChart3, CreditCard, Bell, DollarSign, FolderKanban,
+  MessageSquareWarning, BellRing, SearchCode, Repeat, AlarmClock, MessageCircle,
+  PhoneCall, Gift, AlertTriangle, Bot, Briefcase, KeyRound,
+} from "lucide-react";
+
+// Mapeo único de tipo de alerta -> ícono/color/link, compartido por
+// NotificationBell y el Centro de Alertas. Antes cada uno tenía su propia
+// copia con solo 5 tipos mapeados (cliente/vehiculo/cotizacion/resumen/
+// suscripcion) — los otros 14 tipos que fue sumando cada módulo (ventas,
+// expedientes, reclamos, pedidos, comisiones, chat) caían todos en el mismo
+// ícono de campana gris genérico. Sumarlos acá, en un solo lugar, evita que
+// un tipo nuevo quede sin mapear en un componente y sí en el otro.
+export const TIPO_ICON: Record<string, any> = {
+  cliente: User,
+  vehiculo: Car,
+  cotizacion: FileText,
+  resumen: BarChart3,
+  suscripcion: CreditCard,
+  venta: DollarSign,
+  expediente_nuevo: FolderKanban,
+  expediente_pedido_atencion: BellRing,
+  reclamo_asignado: MessageSquareWarning,
+  reclamo_pedido_atencion: BellRing,
+  pedido_match: SearchCode,
+  pedido_busqueda_match: SearchCode,
+  pedido_reasignado: Repeat,
+  pedido_reconfirmar: AlarmClock,
+  nuevo_mensaje_chat: MessageCircle,
+  handoff_chat: PhoneCall,
+  comision_pedido_cambio: DollarSign,
+  comision_bono_pedido: Gift,
+  operacion_caida_devolver_sena: AlertTriangle,
+  rodi_nuevo_mensaje: Bot,
+  rodi_handoff: Bot,
+  postulacion: Briefcase,
+  consignacion_nueva: KeyRound,
+};
+
+export const TIPO_COLOR: Record<string, string> = {
+  cliente: "bg-purple-100 text-purple-600 dark:bg-purple-500/15 dark:text-purple-300",
+  vehiculo: "bg-blue-100 text-blue-600 dark:bg-blue-500/15 dark:text-blue-300",
+  cotizacion: "bg-amber-100 text-amber-600 dark:bg-amber-500/15 dark:text-amber-300",
+  resumen: "bg-indigo-100 text-indigo-600 dark:bg-indigo-500/15 dark:text-indigo-300",
+  suscripcion: "bg-rose-100 text-rose-600 dark:bg-rose-500/15 dark:text-rose-300",
+  venta: "bg-emerald-100 text-emerald-600 dark:bg-emerald-500/15 dark:text-emerald-300",
+  expediente_nuevo: "bg-violet-100 text-violet-600 dark:bg-violet-500/15 dark:text-violet-300",
+  expediente_pedido_atencion: "bg-violet-100 text-violet-600 dark:bg-violet-500/15 dark:text-violet-300",
+  reclamo_asignado: "bg-red-100 text-red-600 dark:bg-red-500/15 dark:text-red-300",
+  reclamo_pedido_atencion: "bg-red-100 text-red-600 dark:bg-red-500/15 dark:text-red-300",
+  pedido_match: "bg-teal-100 text-teal-600 dark:bg-teal-500/15 dark:text-teal-300",
+  pedido_busqueda_match: "bg-teal-100 text-teal-600 dark:bg-teal-500/15 dark:text-teal-300",
+  pedido_reasignado: "bg-slate-100 text-slate-500 dark:bg-white/10 dark:text-slate-400",
+  pedido_reconfirmar: "bg-amber-100 text-amber-600 dark:bg-amber-500/15 dark:text-amber-300",
+  nuevo_mensaje_chat: "bg-emerald-100 text-emerald-600 dark:bg-emerald-500/15 dark:text-emerald-300",
+  handoff_chat: "bg-rose-100 text-rose-600 dark:bg-rose-500/15 dark:text-rose-300",
+  comision_pedido_cambio: "bg-amber-100 text-amber-600 dark:bg-amber-500/15 dark:text-amber-300",
+  comision_bono_pedido: "bg-amber-100 text-amber-600 dark:bg-amber-500/15 dark:text-amber-300",
+  operacion_caida_devolver_sena: "bg-orange-100 text-orange-600 dark:bg-orange-500/15 dark:text-orange-300",
+  rodi_nuevo_mensaje: "bg-cyan-100 text-cyan-600 dark:bg-cyan-500/15 dark:text-cyan-300",
+  rodi_handoff: "bg-rose-100 text-rose-600 dark:bg-rose-500/15 dark:text-rose-300",
+  postulacion: "bg-teal-100 text-teal-600 dark:bg-teal-500/15 dark:text-teal-300",
+  consignacion_nueva: "bg-purple-100 text-purple-600 dark:bg-purple-500/15 dark:text-purple-300",
+};
+
+export const TIPO_VER: Record<string, string> = {
+  cliente: "Ver Clientes",
+  vehiculo: "Ver Stock",
+  cotizacion: "Ver Cotizaciones",
+  resumen: "Ver resumen",
+  suscripcion: "Ir a Configuración",
+  venta: "Ver Ventas",
+  expediente_nuevo: "Ver Expedientes",
+  expediente_pedido_atencion: "Ver Expedientes",
+  reclamo_asignado: "Ver Reclamos",
+  reclamo_pedido_atencion: "Ver Reclamos",
+  pedido_match: "Ver Pedidos",
+  pedido_busqueda_match: "Ver Pedidos",
+  pedido_reasignado: "Ver Pedidos",
+  pedido_reconfirmar: "Ver Pedidos",
+  nuevo_mensaje_chat: "Ver Conversaciones",
+  handoff_chat: "Ver Conversaciones",
+  comision_pedido_cambio: "Ver Comisiones",
+  comision_bono_pedido: "Ver Comisiones",
+  operacion_caida_devolver_sena: "Ver Ventas",
+  rodi_nuevo_mensaje: "Ver Rodi",
+  rodi_handoff: "Ver Rodi",
+  postulacion: "Ver Postulaciones",
+  consignacion_nueva: "Ver Consignaciones",
+};
+
+export const ICONO_DEFECTO = Bell;
+export const COLOR_DEFECTO = "bg-slate-100 text-slate-500 dark:bg-white/10 dark:text-slate-300";

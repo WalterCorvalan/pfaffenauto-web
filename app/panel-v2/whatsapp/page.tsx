@@ -1,46 +1,34 @@
 import { createClient } from "@/lib/supabase2/server";
+import ConversacionesShell from "./ConversacionesShell";
 
-// Placeholder — backend listo (sql_panel_v2_whatsapp_chat.sql + alertas), frontend definitivo lo hace Gemini.
 export default async function WhatsappPage() {
   const supabase = await createClient();
-  const { data: conversaciones } = await supabase
-    .from("whatsapp_conversaciones")
-    .select("id, last_message_at, unread_count, calificacion, ai_habilitada, handoff_at, whatsapp_contactos(nombre_perfil, telefono)")
-    .order("last_message_at", { ascending: false, nullsFirst: false });
+
+  const [waRes, igRes, vendedoresRes] = await Promise.all([
+    supabase
+      .from("whatsapp_conversaciones")
+      .select(`
+        id, last_message_at, unread_count, handoff_at, ai_habilitada, calificacion, origen_ads, notas, estado_pipeline, estado_lead,
+        whatsapp_contactos ( id, telefono, nombre_perfil ), cliente_id, vehiculo_id,
+        vendedor_id, vendedor:perfiles!whatsapp_conversaciones_vendedor_id_fkey ( id, nombre )
+      `)
+      .order("last_message_at", { ascending: false }),
+    supabase
+      .from("instagram_conversaciones")
+      .select(`
+        id, last_message_at, unread_count, handoff_at, ai_habilitada, calificacion, origen_ads, notas, estado_pipeline, estado_lead,
+        instagram_contactos ( id, ig_user_id, username ), cliente_id, vehiculo_id,
+        vendedor_id, vendedor:perfiles!instagram_conversaciones_vendedor_id_fkey ( id, nombre )
+      `)
+      .order("last_message_at", { ascending: false }),
+    supabase.from("perfiles").select("id, nombre, roles").eq("activo", true).order("nombre"),
+  ]);
 
   return (
-    <div className="p-6">
-      <h1 className="text-lg font-bold mb-1">WhatsApp — Bandeja</h1>
-      <p className="text-xs text-slate-400 mb-4">Vista provisoria — diseño definitivo lo hace Gemini (calcado de /panel/chat de v1).</p>
-      <div className="overflow-x-auto">
-        <table className="min-w-full text-sm border border-slate-200 dark:border-white/10">
-          <thead>
-            <tr className="bg-slate-50 dark:bg-white/5 text-left">
-              <th className="px-3 py-2">Contacto</th>
-              <th className="px-3 py-2">Calificación</th>
-              <th className="px-3 py-2">IA</th>
-              <th className="px-3 py-2">Sin leer</th>
-              <th className="px-3 py-2">Handoff</th>
-              <th className="px-3 py-2">Último mensaje</th>
-            </tr>
-          </thead>
-          <tbody>
-            {(conversaciones || []).map((c: any) => (
-              <tr key={c.id} className="border-t border-slate-100 dark:border-white/5">
-                <td className="px-3 py-2">{c.whatsapp_contactos?.nombre_perfil || c.whatsapp_contactos?.telefono || "—"}</td>
-                <td className="px-3 py-2">{c.calificacion || "—"}</td>
-                <td className="px-3 py-2">{c.ai_habilitada ? "Activa" : "Pausada"}</td>
-                <td className="px-3 py-2">{c.unread_count}</td>
-                <td className="px-3 py-2">{c.handoff_at ? "Sí" : "No"}</td>
-                <td className="px-3 py-2">{c.last_message_at ? new Date(c.last_message_at).toLocaleString("es-AR") : "—"}</td>
-              </tr>
-            ))}
-            {(!conversaciones || conversaciones.length === 0) && (
-              <tr><td colSpan={6} className="px-3 py-6 text-center text-slate-400">Sin conversaciones todavía (bot v2 no está escribiendo aún).</td></tr>
-            )}
-          </tbody>
-        </table>
-      </div>
-    </div>
+    <ConversacionesShell
+      conversacionesIniciales={waRes.data || []}
+      conversacionesInstagramIniciales={igRes.data || []}
+      vendedores={(vendedoresRes.data || []).filter((p) => p.roles?.includes("ventas") || p.roles?.includes("admin"))}
+    />
   );
 }

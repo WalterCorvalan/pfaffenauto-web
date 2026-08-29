@@ -3,20 +3,12 @@
 import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { supabase2 } from "@/lib/supabase2/client";
-import { Bell, Check, User, Car, FileText, BarChart3, CreditCard, ExternalLink } from "lucide-react";
+import { Bell, Check, ExternalLink } from "lucide-react";
+import { TIPO_ICON, TIPO_COLOR, ICONO_DEFECTO, COLOR_DEFECTO } from "./alertaMeta";
 
 interface Alerta {
   id: string; tipo: string; prioridad: string; titulo: string; mensaje: string | null; link: string | null; leida: boolean; created_at: string;
 }
-
-const TIPO_ICON: Record<string, any> = { cliente: User, vehiculo: Car, cotizacion: FileText, resumen: BarChart3, suscripcion: CreditCard };
-const TIPO_COLOR: Record<string, string> = {
-  cliente: "bg-purple-100 text-purple-600 dark:bg-purple-500/15 dark:text-purple-300",
-  vehiculo: "bg-blue-100 text-blue-600 dark:bg-blue-500/15 dark:text-blue-300",
-  cotizacion: "bg-amber-100 text-amber-600 dark:bg-amber-500/15 dark:text-amber-300",
-  resumen: "bg-indigo-100 text-indigo-600 dark:bg-indigo-500/15 dark:text-indigo-300",
-  suscripcion: "bg-rose-100 text-rose-600 dark:bg-rose-500/15 dark:text-rose-300",
-};
 
 function tiempoRelativo(iso: string) {
   const ms = Date.now() - new Date(iso).getTime();
@@ -100,8 +92,8 @@ export default function NotificationBell({ miId }: { miId: string }) {
               <p className="text-xs text-slate-400 text-center py-8">Sin notificaciones.</p>
             ) : (
               alertas.map((a) => {
-                const Icon = TIPO_ICON[a.tipo] || Bell;
-                const color = TIPO_COLOR[a.tipo] || "bg-slate-100 text-slate-500 dark:bg-white/10 dark:text-slate-300";
+                const Icon = TIPO_ICON[a.tipo] || ICONO_DEFECTO;
+                const color = TIPO_COLOR[a.tipo] || COLOR_DEFECTO;
                 return (
                   <button key={a.id} onClick={() => abrirAlerta(a)} className={`w-full flex items-start gap-2.5 px-4 py-3 text-left border-b border-slate-50 dark:border-white/5 last:border-0 hover:bg-slate-50 dark:hover:bg-white/5 ${!a.leida ? "bg-slate-50/60 dark:bg-white/[0.03]" : ""}`}>
                     <span className={`w-8 h-8 rounded-full flex items-center justify-center shrink-0 ${color}`}><Icon className="w-4 h-4" /></span>

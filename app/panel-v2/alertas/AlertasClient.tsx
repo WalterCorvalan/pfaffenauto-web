@@ -3,7 +3,8 @@
 import { useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import { supabase2 } from "@/lib/supabase2/client";
-import { CheckCircle2, X, Trash2, ChevronDown, User, Car, FileText, BarChart3, CreditCard, Bell, ArrowRight } from "lucide-react";
+import { CheckCircle2, X, Trash2, ChevronDown, ArrowRight } from "lucide-react";
+import { TIPO_ICON, TIPO_COLOR, TIPO_VER, ICONO_DEFECTO, COLOR_DEFECTO } from "@/components/panelV2/alertaMeta";
 
 interface Alerta {
   id: string;
@@ -24,15 +25,6 @@ const PRIORIDAD_INFO: Record<string, { label: string; dot: string; badge: string
 };
 const ORDEN = ["alta", "novedad", "media", "baja"] as const;
 
-const TIPO_ICON: Record<string, any> = { cliente: User, vehiculo: Car, cotizacion: FileText, resumen: BarChart3, suscripcion: CreditCard };
-const TIPO_COLOR: Record<string, string> = {
-  cliente: "bg-purple-100 text-purple-600 dark:bg-purple-500/15 dark:text-purple-300",
-  vehiculo: "bg-blue-100 text-blue-600 dark:bg-blue-500/15 dark:text-blue-300",
-  cotizacion: "bg-amber-100 text-amber-600 dark:bg-amber-500/15 dark:text-amber-300",
-  resumen: "bg-indigo-100 text-indigo-600 dark:bg-indigo-500/15 dark:text-indigo-300",
-  suscripcion: "bg-rose-100 text-rose-600 dark:bg-rose-500/15 dark:text-rose-300",
-};
-const TIPO_VER: Record<string, string> = { cliente: "Ver Clientes", vehiculo: "Ver Stock", cotizacion: "Ver Cotizaciones", resumen: "Ver resumen", suscripcion: "Ir a Configuración" };
 
 export default function AlertasClient({ alertasIniciales }: { alertasIniciales: Alerta[]; miId: string }) {
   const router = useRouter();
@@ -134,8 +126,8 @@ export default function AlertasClient({ alertasIniciales }: { alertasIniciales: 
                   ) : (
                     <div className="space-y-2">
                       {items.map((a) => {
-                        const Icon = TIPO_ICON[a.tipo] || Bell;
-                        const color = TIPO_COLOR[a.tipo] || "bg-slate-100 text-slate-500 dark:bg-white/10 dark:text-slate-300";
+                        const Icon = TIPO_ICON[a.tipo] || ICONO_DEFECTO;
+                        const color = TIPO_COLOR[a.tipo] || COLOR_DEFECTO;
                         return (
                           <div key={a.id} className={`flex items-start gap-3 rounded-xl p-4 border ${info.badge} border-transparent`}>
                             <span className={`w-8 h-8 rounded-lg flex items-center justify-center shrink-0 ${color}`}><Icon className="w-4 h-4" /></span>

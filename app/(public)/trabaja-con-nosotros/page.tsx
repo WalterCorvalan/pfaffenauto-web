@@ -18,7 +18,7 @@ import {
   Phone,
   Building2
 } from "lucide-react";
-import { supabase } from "@/lib/supabase/client";
+import { supabase2 } from "@/lib/supabase2/client";
 
 declare global {
   interface Window {
@@ -80,19 +80,19 @@ export default function TrabajaConNosotrosPage() {
       const fileName = `${Date.now()}_${nombre.trim()}_${apellido.trim()}.${fileExt}`;
       const filePath = `${fileName.replace(/\s+/g, '')}`;
 
-      const { error: uploadError } = await supabase.storage
+      const { error: uploadError } = await supabase2.storage
         .from('cvs')
         .upload(filePath, archivoCV);
 
       if (uploadError) throw uploadError;
 
       // Obtener la URL pública del CV
-      const { data: publicUrlData } = supabase.storage
+      const { data: publicUrlData } = supabase2.storage
         .from('cvs')
         .getPublicUrl(filePath);
 
       // 2. Guardar los datos vía API (Turnstile + zod + rate limit del lado servidor)
-      const response = await fetch("/api/postulaciones", {
+      const response = await fetch("/api/panel-v2/postulaciones", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
