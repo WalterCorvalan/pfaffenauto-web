@@ -16,20 +16,14 @@ export default function ConversacionesShell({
 
   return (
     <div className="w-full h-full flex flex-col overflow-hidden bg-white dark:bg-[#0A0A0A]">
-      <div className="px-6 pt-3 pb-2 border-b border-slate-200 dark:border-white/10 shrink-0">
-        <div className="flex items-center justify-between flex-wrap gap-2">
-          <div>
-            <h1 className="text-base font-bold text-slate-900 dark:text-white">Conversaciones (WhatsApp)</h1>
-            <p className="text-[11px] text-slate-400">{leadsConConversacion} lead{leadsConConversacion === 1 ? "" : "s"} con conversación · sync cada 1 min</p>
-          </div>
-          <span className="flex items-center gap-1.5 px-3 py-1 rounded-full bg-emerald-50 dark:bg-emerald-500/10 text-emerald-600 dark:text-emerald-300 text-xs font-bold">
-            <MessageSquareText className="w-3.5 h-3.5" /> WhatsApp
-          </span>
-        </div>
-
-        <div className="flex items-center gap-1 mt-2">
+      <div className="px-4 py-2 border-b border-slate-200 dark:border-white/10 shrink-0 flex items-center gap-3 flex-wrap">
+        <h1 className="text-sm font-bold text-slate-900 dark:text-white flex items-center gap-1.5 shrink-0">
+          <MessageSquareText className="w-4 h-4 text-emerald-600" /> Conversaciones
+        </h1>
+        <p className="text-[10px] text-slate-400 shrink-0 hidden sm:block">{leadsConConversacion} lead{leadsConConversacion === 1 ? "" : "s"} con conversación</p>
+        <div className="flex items-center gap-1 ml-auto">
           {[{ v: "bandeja" as const, l: "Bandeja" }, { v: "leads" as const, l: "Leads" }, { v: "nuevo" as const, l: "Nuevo mensaje" }].map((t) => (
-            <button key={t.v} onClick={() => setTab(t.v)} className={`px-3.5 py-1.5 text-sm font-semibold rounded-lg transition-colors ${tab === t.v ? "bg-slate-900 dark:bg-white/10 text-white" : "bg-white dark:bg-transparent border border-slate-200 dark:border-white/10 text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-white/5"}`}>
+            <button key={t.v} onClick={() => setTab(t.v)} className={`px-3 py-1 text-xs font-semibold rounded-lg transition-colors ${tab === t.v ? "bg-slate-900 dark:bg-white/10 text-white" : "bg-white dark:bg-transparent border border-slate-200 dark:border-white/10 text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-white/5"}`}>
               {t.l}
             </button>
           ))}

@@ -46,7 +46,7 @@ export async function POST(request: Request) {
 
   const { data: conversacion } = await supabaseAdmin
     .from("whatsapp_conversaciones")
-    .select("contacto_id, ai_habilitada, whatsapp_contactos(telefono)")
+    .select("contacto_id, ai_habilitada, estado_pipeline, whatsapp_contactos(telefono)")
     .eq("id", conversacionId)
     .single();
 
@@ -81,7 +81,14 @@ export async function POST(request: Request) {
     const token = decrypt(config.token_cifrado, config.token_iv, config.token_tag);
     const resultado = await sendTextMessage(config.phone_number_id, token, telefono, textoFinal);
     await supabaseAdmin.from("whatsapp_mensajes").update({ status: "sent", wa_message_id: resultado.messages?.[0]?.id }).eq("id", mensaje.id);
-    await supabaseAdmin.from("whatsapp_conversaciones").update({ last_message_at: new Date().toISOString() }).eq("id", conversacionId);
+
+    // Un vendedor respondiendo a mano toma la charla: se pausa el bot (si no
+    // lo estaba ya) para que no le pise la respuesta, y si el lead seguía
+    // "Sin contactar" pasa a "Contactado" solo.
+    const patchConversacion: Record<string, unknown> = { last_message_at: new Date().toISOString() };
+    if (conversacion?.ai_habilitada !== false) patchConversacion.ai_habilitada = false;
+    if (!conversacion?.estado_pipeline || conversacion.estado_pipeline === "sin_contactar") patchConversacion.estado_pipeline = "contactado";
+    await supabaseAdmin.from("whatsapp_conversaciones").update(patchConversacion).eq("id", conversacionId);
   } catch (err: any) {
     await supabaseAdmin.from("whatsapp_mensajes").update({ status: "failed" }).eq("id", mensaje.id);
     return NextResponse.json({ error: err?.message ?? "Error enviando el mensaje." }, { status: 502 });
