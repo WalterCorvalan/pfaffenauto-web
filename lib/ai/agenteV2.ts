@@ -116,8 +116,8 @@ function respuestaSeguraConStockReal(resultados: ResultadoStockV2[], esAlternati
   const lista = resultados.slice(0, 3)
     .map((v) => `🚗 ${v.marca} ${v.modelo} ${v.anio} — 💰 ${v.moneda_venta} ${v.precio_venta.toLocaleString("es-AR")}`)
     .join("\n");
-  const intro = esAlternativa ? "Ese modelo puntual no lo tengo ahora, pero estas son opciones que sí tengo disponibles:" : "¡Excelente! Estas son las opciones disponibles:";
-  return `${intro}\n\n${lista}${SEPARADOR_MENSAJES}¿Te interesa alguna de estas opciones o buscás algo en particular, como un año o color específico?`;
+  const intro = esAlternativa ? "Ese modelo puntual no lo tengo ahora, pero estas son opciones que sí tengo disponibles:" : "Estas son las opciones disponibles:";
+  return `${intro}\n\n${lista}\n\n¿Alguna te interesa, o buscás un año o versión en particular?`;
 }
 
 export async function generarRespuestaAgenteV2(historial: HistorialMensaje[], canal: string = "whatsapp-v2", nombreBot?: string): Promise<
