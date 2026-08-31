@@ -5,7 +5,7 @@ import { supabase2 } from "@/lib/supabase2/client";
 import { hoyLocalISO } from "@/lib/panelV2/fechas";
 import {
   Trophy, Wallet, FileText, DollarSign, Star, ChevronLeft, ChevronRight, Calendar, Award,
-  Hourglass, Car, Target, ChevronDown, ChevronUp,
+  Hourglass, Car, Target, ChevronDown, ChevronUp, Download, Loader2,
 } from "lucide-react";
 import ReciboModal from "./ReciboModal";
 import BoletoModal from "../expedientes/BoletoModal";
@@ -36,6 +36,7 @@ export default function MisVentasClient({ vendedores, miId, miNombre, esAdmin }:
   const [consigAbierto, setConsigAbierto] = useState(true);
   const [modalRecibo, setModalRecibo] = useState(false);
   const [modalBoleto, setModalBoleto] = useState(false);
+  const [generandoReporte, setGenerandoReporte] = useState(false);
 
   const hoy = new Date();
   const esUltimoDiaDelMes = hoy.getDate() === new Date(hoy.getFullYear(), hoy.getMonth() + 1, 0).getDate();
@@ -143,6 +144,55 @@ export default function MisVentasClient({ vendedores, miId, miNombre, esAdmin }:
   const vendedorActual = vendedores.find((v) => v.id === vendedorId);
   const nombreVendedorActual = vendedorId === miId ? miNombre : vendedorActual?.nombre || "";
 
+  const descargarReporte = async () => {
+    setGenerandoReporte(true);
+    try {
+      const { default: jsPDF } = await import("jspdf");
+      const doc = new jsPDF({ unit: "mm", format: "a4" });
+      const margen = 18;
+      let y = 20;
+      const anchoTexto = 210 - margen * 2;
+
+      const linea = (texto: string, opts: { size?: number; bold?: boolean; gap?: number } = {}) => {
+        doc.setFontSize(opts.size || 10);
+        doc.setFont("helvetica", opts.bold ? "bold" : "normal");
+        const splitLines = doc.splitTextToSize(texto, anchoTexto);
+        doc.text(splitLines, margen, y);
+        y += splitLines.length * (opts.size ? opts.size * 0.42 : 4.6) + (opts.gap ?? 2);
+      };
+
+      linea(`Reporte de ${rango.label} — ${nombreVendedorActual}`, { size: 14, bold: true, gap: 6 });
+
+      if (tier) linea(`Tier del mes: ${tier.tier_emoji} ${tier.tier_actual} (${tier.pct_actual}x) — ${tier.ventas_equivalentes} ventas equivalentes`, { gap: 3 });
+
+      linea(`Ventas: ${ventas.length}`, { gap: 1 });
+      linea(`Facturado: ${Object.entries(facturadoPorMoneda).map(([m, n]) => fmt(n, m)).join(" + ") || "—"}`, { gap: 1 });
+      linea(`Comisión total: ${Object.entries(comisionTotalPorMoneda).map(([m, n]) => fmt(n, m)).join(" + ") || "—"}`, { gap: 1 });
+      if (comisionesPendientes.cantidad > 0) {
+        linea(`Comisiones pendientes de cobro: ${comisionesPendientes.cantidad} — ${Object.entries(comisionesPendientes.totalPorMoneda).map(([m, n]) => fmt(n, m)).join(" + ")}`, { gap: 1 });
+      }
+      linea(`Consignaciones traídas: ${consignaciones.length}`, { gap: 6 });
+
+      const miRanking = ranking.find((r) => r.vendedor_id === vendedorId);
+      if (miRanking) linea(`Ranking del mes: #${miRanking.posicion} de ${ranking.length}`, { gap: 1 });
+      linea(`Funnel del mes: ${funnel.leads} leads · ${funnel.contactados} contactados · ${funnel.vendidos} vendidos`, { gap: 1 });
+      linea(`Reseñas pedidas: ${pctResenas}%`, { gap: 6 });
+
+      if (ventas.length > 0) {
+        linea("Detalle de ventas", { bold: true, gap: 2 });
+        ventas.forEach((v) => {
+          linea(`${new Date(v.fecha_cierre + "T12:00:00Z").toLocaleDateString("es-AR", { timeZone: "UTC" })} — ${v.vehiculo_marca} ${v.vehiculo_modelo} — ${fmt(Number(v.precio_venta), v.moneda_venta)} — ${v.rol} — ${Object.entries(v.comisionPorMoneda).map(([m, n]) => fmt(n as number, m)).join(" + ") || "—"} (${v.estadoComision})`, { size: 9, gap: 1 });
+        });
+      }
+
+      doc.save(`reporte-${nombreVendedorActual.replace(/\s+/g, "-").toLowerCase()}-${desdeStr}.pdf`);
+    } catch (e) {
+      alert("No se pudo generar el reporte.");
+    } finally {
+      setGenerandoReporte(false);
+    }
+  };
+
   return (
     <div className="flex flex-col h-full overflow-hidden">
       <header className="flex flex-col md:flex-row md:items-center justify-between gap-3 border-b border-slate-200 dark:border-white/5 px-6 py-4 bg-white dark:bg-white/[0.02] shrink-0">
@@ -171,6 +221,9 @@ export default function MisVentasClient({ vendedores, miId, miNombre, esAdmin }:
               ))}
             </div>
           )}
+          <button onClick={descargarReporte} disabled={generandoReporte} className="flex items-center gap-1.5 px-3.5 py-2 text-sm font-bold bg-white dark:bg-white/5 border border-slate-200 dark:border-white/10 hover:bg-slate-50 dark:hover:bg-white/10 rounded-xl transition-colors disabled:opacity-50">
+            {generandoReporte ? <Loader2 className="w-4 h-4 animate-spin" /> : <Download className="w-4 h-4" />} Reporte del mes
+          </button>
         </div>
       </header>
 
