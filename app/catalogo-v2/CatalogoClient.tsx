@@ -43,9 +43,11 @@ export default function CatalogoClient({ vehiculos, mostrarPrecios }: { vehiculo
     if (!termino || termino === ultimoTerminoLogueado.current) return;
     const timeout = setTimeout(() => {
       ultimoTerminoLogueado.current = termino;
-      supabase2.from("busquedas_log").insert({ termino, resultados_encontrados: filtrados.length }).then(({ error }) => {
-        if (error) console.error("Error registrando búsqueda:", error);
-      });
+      fetch("/api/panel-v2/busquedas", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ termino, resultadosEncontrados: filtrados.length }),
+      }).catch((err) => console.error("Error registrando búsqueda:", err));
     }, 800);
     return () => clearTimeout(timeout);
   }, [query, filtrados.length]);
