@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { supabase2 } from "@/lib/supabase2/client";
 import { Car, Search, X, MessageCircle, Gauge, Calendar, MapPin } from "lucide-react";
 
@@ -33,6 +33,22 @@ export default function CatalogoClient({ vehiculos, mostrarPrecios }: { vehiculo
     }
     return lista;
   }, [vehiculos, categoria, query]);
+
+  // Log de búsqueda para Marketing → Búsquedas Web — debounced, uno por
+  // término distinto (mismo criterio que v1: solo cuando el usuario deja de
+  // tipear, no en cada tecla).
+  const ultimoTerminoLogueado = useRef("");
+  useEffect(() => {
+    const termino = query.trim();
+    if (!termino || termino === ultimoTerminoLogueado.current) return;
+    const timeout = setTimeout(() => {
+      ultimoTerminoLogueado.current = termino;
+      supabase2.from("busquedas_log").insert({ termino, resultados_encontrados: filtrados.length }).then(({ error }) => {
+        if (error) console.error("Error registrando búsqueda:", error);
+      });
+    }, 800);
+    return () => clearTimeout(timeout);
+  }, [query, filtrados.length]);
 
   const abrirFicha = async (v: Vehiculo) => {
     setSeleccionado(v);

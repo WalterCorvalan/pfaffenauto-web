@@ -31,7 +31,7 @@ const GRUPOS: { titulo: string; items: { href?: string; label: string; icon: any
       { href: "/panel-v2/calendario", label: "Calendario", icon: CalendarDays },
       { href: "/panel-v2/alertas", label: "Alertas", icon: BellRing },
       { label: "Reportes", icon: LineChart },
-      { href: "/panel-v2/marketing/embudo", label: "Marketing", icon: Megaphone },
+      { href: "/panel-v2/marketing/generales", label: "Marketing", icon: Megaphone },
       { label: "Mi Espacio", icon: Folder },
     ],
   },
