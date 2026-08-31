@@ -4,7 +4,7 @@
 -- (única fuente de verdad ya compartida con v1 — no se duplica acá el listado
 -- en TS, se siembra igual en SQL para que ambos queden sincronizados).
 
-create table if not exists public.peritajes (
+create table if not exists public.peritajes_lead (
   id uuid primary key default gen_random_uuid(),
   cotizacion_id uuid references public.cotizaciones(id) on delete set null,
   whatsapp_conversacion_id uuid references public.whatsapp_conversaciones(id) on delete set null,
@@ -30,17 +30,17 @@ create table if not exists public.peritajes (
 
 -- Un lead (cualquiera de los tres orígenes) solo puede tener un peritaje —
 -- así "leads sin peritaje" es simplemente el que no matchea acá.
-create unique index if not exists peritajes_cotizacion_unq on public.peritajes(cotizacion_id) where cotizacion_id is not null;
-create unique index if not exists peritajes_whatsapp_unq on public.peritajes(whatsapp_conversacion_id) where whatsapp_conversacion_id is not null;
-create unique index if not exists peritajes_instagram_unq on public.peritajes(instagram_conversacion_id) where instagram_conversacion_id is not null;
+create unique index if not exists peritajes_lead_cotizacion_unq on public.peritajes_lead(cotizacion_id) where cotizacion_id is not null;
+create unique index if not exists peritajes_lead_whatsapp_unq on public.peritajes_lead(whatsapp_conversacion_id) where whatsapp_conversacion_id is not null;
+create unique index if not exists peritajes_lead_instagram_unq on public.peritajes_lead(instagram_conversacion_id) where instagram_conversacion_id is not null;
 
-alter table public.peritajes enable row level security;
-drop policy if exists "equipo_peritajes" on public.peritajes;
-create policy "equipo_peritajes" on public.peritajes for all to authenticated using (true) with check (true);
+alter table public.peritajes_lead enable row level security;
+drop policy if exists "equipo_peritajes_lead" on public.peritajes_lead;
+create policy "equipo_peritajes_lead" on public.peritajes_lead for all to authenticated using (true) with check (true);
 
-create table if not exists public.peritaje_items (
+create table if not exists public.peritaje_lead_items (
   id uuid primary key default gen_random_uuid(),
-  peritaje_id uuid not null references public.peritajes(id) on delete cascade,
+  peritaje_id uuid not null references public.peritajes_lead(id) on delete cascade,
   categoria text not null,
   item text not null,
   orden int not null,
@@ -51,11 +51,11 @@ create table if not exists public.peritaje_items (
   gastos_reparacion numeric
 );
 
-create index if not exists peritaje_items_peritaje_idx on public.peritaje_items(peritaje_id, orden);
+create index if not exists peritaje_lead_items_peritaje_idx on public.peritaje_lead_items(peritaje_id, orden);
 
-alter table public.peritaje_items enable row level security;
-drop policy if exists "equipo_peritaje_items" on public.peritaje_items;
-create policy "equipo_peritaje_items" on public.peritaje_items for all to authenticated using (true) with check (true);
+alter table public.peritaje_lead_items enable row level security;
+drop policy if exists "equipo_peritaje_lead_items" on public.peritaje_lead_items;
+create policy "equipo_peritaje_lead_items" on public.peritaje_lead_items for all to authenticated using (true) with check (true);
 
 -- Crea el peritaje desde un lead + siembra el checklist fijo (mismo listado
 -- que lib/peritajeChecklist.ts). Exactamente uno de los tres orígenes debe
@@ -78,11 +78,11 @@ begin
     raise exception 'Un peritaje nace de exactamente un lead: cotización, WhatsApp o Instagram.';
   end if;
 
-  insert into public.peritajes (cotizacion_id, whatsapp_conversacion_id, instagram_conversacion_id, realizado_por)
+  insert into public.peritajes_lead (cotizacion_id, whatsapp_conversacion_id, instagram_conversacion_id, realizado_por)
   values (p_cotizacion_id, p_whatsapp_conversacion_id, p_instagram_conversacion_id, p_realizado_por)
   returning id into v_id;
 
-  insert into public.peritaje_items (peritaje_id, categoria, item, orden)
+  insert into public.peritaje_lead_items (peritaje_id, categoria, item, orden)
   values
     (v_id, 'Motor', 'Estado general', 1),
     (v_id, 'Transmisión', 'Embrague', 2),
@@ -140,7 +140,7 @@ begin
 end;
 $$;
 
-drop trigger if exists trg_peritaje_completado on public.peritajes;
+drop trigger if exists trg_peritaje_completado on public.peritajes_lead;
 create trigger trg_peritaje_completado
-  after update on public.peritajes
+  after update on public.peritajes_lead
   for each row execute function public.peritaje_notificar_completado();
