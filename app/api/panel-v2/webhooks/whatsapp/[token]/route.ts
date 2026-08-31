@@ -1,7 +1,7 @@
 import { createHmac, timingSafeEqual } from "crypto";
 import { createClient } from "@supabase/supabase-js";
 import { isAiConfiguredV2 } from "@/lib/ai/indexV2";
-import { generarRespuestaAgenteV2 } from "@/lib/ai/agenteV2";
+import { generarRespuestaAgenteV2, dividirRespuestaEnMensajes } from "@/lib/ai/agenteV2";
 import { sendTextMessage } from "@/lib/meta/client";
 import { decrypt } from "@/lib/crypto";
 
@@ -184,8 +184,13 @@ async function ejecutarAgente(conversacionId: string) {
   if (estadoSegunCalificacion) patchConversacion.estado_lead = estadoSegunCalificacion;
   await supabase.from("whatsapp_conversaciones").update(patchConversacion).eq("id", conversacionId);
 
-  const { data: mensajeSaliente } = await supabase.from("whatsapp_mensajes").insert({ conversacion_id: conversacionId, direccion: "out", tipo: "text", texto: reply, status: "pending", ai_generado: true }).select("id").single();
-  if (mensajeSaliente) await enviarYActualizarMensaje(mensajeSaliente.id, conversacionId, reply, config);
+  // Cuando el agente muestra opciones de stock, "reply" viene partido en
+  // varias burbujas (lista de autos + pregunta corta abajo) — se mandan como
+  // mensajes de WhatsApp separados, en orden, no todo apelotonado en uno.
+  for (const parte of dividirRespuestaEnMensajes(reply)) {
+    const { data: mensajeSaliente } = await supabase.from("whatsapp_mensajes").insert({ conversacion_id: conversacionId, direccion: "out", tipo: "text", texto: parte, status: "pending", ai_generado: true }).select("id").single();
+    if (mensajeSaliente) await enviarYActualizarMensaje(mensajeSaliente.id, conversacionId, parte, config);
+  }
 
   if (handoff) {
     await supabase.from("whatsapp_conversaciones").update({ handoff_at: new Date().toISOString(), handoff_reason: "cliente_pidio_humano", ai_habilitada: false }).eq("id", conversacionId);

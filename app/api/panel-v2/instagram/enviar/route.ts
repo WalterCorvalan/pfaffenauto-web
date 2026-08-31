@@ -42,7 +42,7 @@ export async function POST(request: Request) {
 
   const { data: conversacion } = await supabaseAdmin
     .from("instagram_conversaciones")
-    .select("contacto_id, instagram_contactos(ig_user_id)")
+    .select("contacto_id, ai_habilitada, estado_pipeline, instagram_contactos(ig_user_id)")
     .eq("id", conversacionId)
     .single();
 
@@ -71,7 +71,11 @@ export async function POST(request: Request) {
     const token = decrypt(config.token_cifrado, config.token_iv, config.token_tag);
     await sendInstagramMessage(config.ig_user_id, token, igUserId, texto);
     await supabaseAdmin.from("instagram_mensajes").update({ status: "sent" }).eq("id", mensaje.id);
-    await supabaseAdmin.from("instagram_conversaciones").update({ last_message_at: new Date().toISOString() }).eq("id", conversacionId);
+
+    const patchConversacion: Record<string, unknown> = { last_message_at: new Date().toISOString() };
+    if (conversacion?.ai_habilitada !== false) patchConversacion.ai_habilitada = false;
+    if (!conversacion?.estado_pipeline || conversacion.estado_pipeline === "sin_contactar") patchConversacion.estado_pipeline = "contactado";
+    await supabaseAdmin.from("instagram_conversaciones").update(patchConversacion).eq("id", conversacionId);
   } catch (err: any) {
     await supabaseAdmin.from("instagram_mensajes").update({ status: "failed" }).eq("id", mensaje.id);
     return NextResponse.json({ error: err?.message ?? "Error enviando el mensaje." }, { status: 502 });

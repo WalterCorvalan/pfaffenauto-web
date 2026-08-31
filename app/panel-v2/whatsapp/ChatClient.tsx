@@ -27,6 +27,7 @@ export default function ChatClient({
   vendedores?: { id: string; nombre: string }[];
 }) {
   const [canal, setCanal] = useState<"whatsapp" | "instagram">("whatsapp");
+  const esIG = canal === "instagram";
   const [conversacionesWA, setConversacionesWA] = useState(conversacionesIniciales);
   const [conversacionesIG, setConversacionesIG] = useState(conversacionesInstagramIniciales);
   const conversaciones = canal === "whatsapp" ? conversacionesWA : conversacionesIG;
@@ -141,6 +142,14 @@ export default function ChatClient({
       if (!res.ok) {
         console.error("Error al enviar", data.error);
         setMensajes((prev) => prev.map((m) => (m.id === tempId ? { ...m, status: "failed" } : m)));
+      } else {
+        // Responder a mano toma la charla: refleja acá lo que el endpoint ya
+        // hizo en la base (pausar la IA + pasar a "Contactado" si estaba
+        // "Sin contactar"), sin esperar al round-trip de realtime.
+        setConversaciones((prev) => prev.map((c) => (c.id === seleccionada
+          ? { ...c, ai_habilitada: false, estado_pipeline: !c.estado_pipeline || c.estado_pipeline === "sin_contactar" ? "contactado" : c.estado_pipeline }
+          : c)));
+        setEtapaActual((prev) => (!prev || prev === "sin_contactar" ? "contactado" : prev));
       }
     } catch (err) {
       console.error("Error al enviar", err);
@@ -334,31 +343,23 @@ export default function ChatClient({
     <div className="flex w-full h-full text-slate-800 dark:text-slate-200">
       {/* COLUMNA 1: BANDEJA */}
       <div className={`w-full md:w-[280px] flex-col bg-white dark:bg-[#111] border-r border-slate-200 dark:border-white/10 shrink-0 ${seleccionada ? "hidden md:flex" : "flex"}`}>
-        <div className="p-4 border-b border-slate-100 dark:border-white/10 shrink-0">
-          <h2 className="text-[17px] font-bold text-slate-900 dark:text-white mb-4 flex items-center gap-2">
-            Bandeja <span className="text-sm font-normal text-slate-400 dark:text-slate-500">{conversaciones.length}</span>
-          </h2>
-
-          <div className="flex gap-2 mb-4">
-            <button onClick={() => { setCanal("whatsapp"); setSeleccionada(null); }} className={`flex-1 flex items-center justify-center gap-1.5 px-3 py-1.5 text-xs font-bold rounded-lg transition-colors ${canal === "whatsapp" ? "bg-emerald-700 text-white" : "bg-slate-50 dark:bg-white/5 border border-slate-200 dark:border-white/10 text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-white/10"}`}>
+        <div className="p-2.5 border-b border-slate-100 dark:border-white/10 shrink-0 space-y-2">
+          <div className="flex gap-1.5">
+            <button onClick={() => { setCanal("whatsapp"); setSeleccionada(null); }} className={`flex-1 flex items-center justify-center gap-1.5 px-2 py-1.5 text-xs font-bold rounded-lg transition-colors ${canal === "whatsapp" ? "bg-emerald-700 text-white" : "bg-slate-50 dark:bg-white/5 border border-slate-200 dark:border-white/10 text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-white/10"}`}>
               <MessageSquareText className="w-3.5 h-3.5" /> WhatsApp {conversacionesWA.length}
             </button>
-            <button onClick={() => { setCanal("instagram"); setSeleccionada(null); }} className={`flex-1 flex items-center justify-center gap-1.5 px-3 py-1.5 text-xs font-bold rounded-lg transition-colors ${canal === "instagram" ? "bg-emerald-700 text-white" : "bg-slate-50 dark:bg-white/5 border border-slate-200 dark:border-white/10 text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-white/10"}`}>
+            <button onClick={() => { setCanal("instagram"); setSeleccionada(null); }} className={`flex-1 flex items-center justify-center gap-1.5 px-2 py-1.5 text-xs font-bold rounded-lg transition-colors ${canal === "instagram" ? "bg-gradient-to-tr from-amber-500 via-pink-600 to-purple-600 text-white" : "bg-slate-50 dark:bg-white/5 border border-slate-200 dark:border-white/10 text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-white/10"}`}>
               <AtSign className="w-3.5 h-3.5" /> Instagram {conversacionesIG.length}
             </button>
           </div>
 
-          <div className="relative mb-4">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400 dark:text-slate-500" />
-            <input type="text" value={busqueda} onChange={(e) => setBusqueda(e.target.value)} placeholder="Buscar conversación..." className="w-full bg-slate-50 dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-lg py-1.5 pl-9 pr-4 text-sm text-slate-900 dark:text-white outline-none focus:border-emerald-500 transition-colors placeholder:text-slate-400 dark:placeholder:text-slate-500" />
-          </div>
-
-          <div className="flex gap-2">
-            <button onClick={() => setFiltro("todas")} className={`px-3 py-1 text-xs font-semibold rounded-full transition-colors ${filtro === "todas" ? "bg-slate-800 dark:bg-white/10 text-white" : "bg-white dark:bg-transparent border border-slate-200 dark:border-white/10 text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-white/5"}`}>
-              Todas {conversaciones.length}
-            </button>
-            <button onClick={() => setFiltro("no-leidas")} className={`px-3 py-1 text-xs font-semibold rounded-full transition-colors flex items-center gap-1 ${filtro === "no-leidas" ? "bg-slate-800 dark:bg-white/10 text-white" : "bg-white dark:bg-transparent border border-slate-200 dark:border-white/10 text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-white/5"}`}>
-              No leídas <span className="text-[10px] bg-slate-100 dark:bg-white/10 text-slate-600 dark:text-slate-300 px-1.5 py-0.5 rounded-full">{noLeidasTotal}</span>
+          <div className="flex items-center gap-1.5">
+            <div className="relative flex-1">
+              <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-slate-400 dark:text-slate-500" />
+              <input type="text" value={busqueda} onChange={(e) => setBusqueda(e.target.value)} placeholder="Buscar..." className="w-full bg-slate-50 dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-lg py-1.5 pl-8 pr-3 text-xs text-slate-900 dark:text-white outline-none focus:border-emerald-500 transition-colors placeholder:text-slate-400 dark:placeholder:text-slate-500" />
+            </div>
+            <button onClick={() => setFiltro(filtro === "todas" ? "no-leidas" : "todas")} title="No leídas" className={`shrink-0 px-2 py-1.5 text-[11px] font-semibold rounded-lg transition-colors flex items-center gap-1 ${filtro === "no-leidas" ? "bg-slate-800 dark:bg-white/10 text-white" : "bg-slate-50 dark:bg-white/5 border border-slate-200 dark:border-white/10 text-slate-500 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-white/10"}`}>
+              {noLeidasTotal > 0 && <span className="w-1.5 h-1.5 rounded-full bg-emerald-500" />} {noLeidasTotal}
             </button>
           </div>
         </div>
@@ -381,48 +382,51 @@ export default function ChatClient({
       </div>
 
       {/* COLUMNA 2: CHAT */}
-      <div className={`flex-1 flex flex-col bg-[#F0F2F5] dark:bg-[#0A0A0A] relative ${!seleccionada ? "hidden md:flex" : "flex"}`}>
+      <div className={`flex-1 flex flex-col relative ${!seleccionada ? "hidden md:flex" : "flex"} ${esIG ? "bg-[#fafafa] dark:bg-[#0A0A0A]" : "bg-[#e5ddd4] dark:bg-[#0b141a]"}`}
+        style={!esIG ? { backgroundImage: "url(\"data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='100' height='100' viewBox='0 0 100 100'%3E%3Cg fill='%23000000' fill-opacity='0.03'%3E%3Cpath d='M11 18c3.866 0 7-3.134 7-7s-3.134-7-7-7-7 3.134-7 7 3.134 7 7 7zm48 25c3.866 0 7-3.134 7-7s-3.134-7-7-7-7 3.134-7 7 3.134 7 7 7zm-43-7c1.657 0 3-1.343 3-3s-1.343-3-3-3-3 1.343-3 3 1.343 3 3 3zm63 31c1.657 0 3-1.343 3-3s-1.343-3-3-3-3 1.343-3 3 1.343 3 3 3zM34 90c1.657 0 3-1.343 3-3s-1.343-3-3-3-3 1.343-3 3 1.343 3 3 3zm56-76c1.657 0 3-1.343 3-3s-1.343-3-3-3-3 1.343-3 3 1.343 3 3 3zM12 86c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm28-65c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm23-11c2.76 0 5-2.24 5-5s-2.24-5-5-5-5 2.24-5 5 2.24 5 5 5zm-6 60c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm29 22c2.76 0 5-2.24 5-5s-2.24-5-5-5-5 2.24-5 5 2.24 5 5 5zM32 63c2.76 0 5-2.24 5-5s-2.24-5-5-5-5 2.24-5 5 2.24 5 5 5zm57-13c2.76 0 5-2.24 5-5s-2.24-5-5-5-5 2.24-5 5 2.24 5 5 5zm-9-21c1.105 0 2-.895 2-2s-.895-2-2-2-2 .895-2 2 .895 2 2 2zM60 91c1.105 0 2-.895 2-2s-.895-2-2-2-2 .895-2 2 .895 2 2 2zM35 41c1.105 0 2-.895 2-2s-.895-2-2-2-2 .895-2 2 .895 2 2 2zM12 60c1.105 0 2-.895 2-2s-.895-2-2-2-2 .895-2 2 .895 2 2 2z'/%3E%3C/g%3E%3C/svg%3E\")" } : undefined}>
         {!seleccionada ? (
           <div className="flex-1 flex flex-col items-center justify-center text-slate-400 dark:text-slate-500">
             <p className="text-sm font-medium">Elige una conversación para ver el hilo</p>
           </div>
         ) : (
           <>
-            <div className="h-[60px] bg-white dark:bg-[#111] border-b border-slate-200 dark:border-white/10 flex justify-between items-center px-6 shrink-0 shadow-sm z-10">
+            <div className={`h-[56px] flex justify-between items-center px-4 shrink-0 shadow-sm z-10 ${esIG ? "bg-white dark:bg-[#111] border-b border-slate-200 dark:border-white/10" : "bg-emerald-700 dark:bg-[#202c33]"}`}>
               <div className="flex items-center gap-3">
-                <div className="w-9 h-9 rounded-full bg-slate-600 flex items-center justify-center font-bold text-white text-xs">
+                <div className={`w-9 h-9 rounded-full flex items-center justify-center font-bold text-white text-xs shrink-0 ${esIG ? "bg-gradient-to-tr from-amber-500 via-pink-600 to-purple-600" : "bg-emerald-900/40 dark:bg-white/10"}`}>
                   {(contactoActivo?.nombre_perfil || contactoActivo?.telefono || "?").substring(0, 2).toUpperCase()}
                 </div>
                 <div>
-                  <h3 className="font-bold text-slate-900 dark:text-white text-[15px] leading-tight">{contactoActivo?.nombre_perfil || "Cliente"}</h3>
-                  <p className="text-[11px] text-slate-500 dark:text-slate-400 font-medium">{contactoActivo?.telefono}</p>
+                  <h3 className={`font-bold text-[15px] leading-tight ${esIG ? "text-slate-900 dark:text-white" : "text-white"}`}>{contactoActivo?.nombre_perfil || "Cliente"}</h3>
+                  <p className={`text-[11px] font-medium ${esIG ? "text-slate-500 dark:text-slate-400" : "text-emerald-100/80"}`}>{contactoActivo?.telefono}</p>
                 </div>
               </div>
               <div className="flex items-center gap-2">
-                <button className="md:hidden text-emerald-700 dark:text-emerald-300 text-sm font-bold" onClick={() => setSeleccionada(null)}>Atrás</button>
+                <button className={`md:hidden text-sm font-bold ${esIG ? "text-emerald-700 dark:text-emerald-300" : "text-white"}`} onClick={() => setSeleccionada(null)}>Atrás</button>
                 {!panelAbierto && (
-                  <button onClick={() => setPanelAbierto(true)} className="hidden lg:flex p-1.5 text-slate-400 dark:text-slate-500 hover:bg-slate-100 dark:hover:bg-white/5 hover:text-slate-700 dark:hover:text-slate-200 rounded-md transition-colors" title="Mostrar detalles">
+                  <button onClick={() => setPanelAbierto(true)} className={`hidden lg:flex p-1.5 rounded-md transition-colors ${esIG ? "text-slate-400 dark:text-slate-500 hover:bg-slate-100 dark:hover:bg-white/5 hover:text-slate-700 dark:hover:text-slate-200" : "text-emerald-100 hover:bg-white/10"}`} title="Mostrar detalles">
                     <PanelRight className="w-5 h-5" />
                   </button>
                 )}
               </div>
             </div>
 
-            <div className="flex-1 overflow-y-auto p-6 flex flex-col gap-3 custom-scrollbar">
+            <div className="flex-1 overflow-y-auto p-4 sm:p-6 flex flex-col gap-1.5 custom-scrollbar">
               {loading ? (
                 <div className="flex justify-center py-4"><span className="text-xs text-slate-500 dark:text-slate-400">Cargando...</span></div>
               ) : (
                 mensajes.map((m) => {
                   const out = m.direccion === "out";
+                  const burbujaOut = esIG ? "bg-gradient-to-br from-pink-500 to-purple-600 text-white border-transparent" : "bg-[#d9fdd3] dark:bg-[#005c4b] border-transparent text-slate-800 dark:text-white";
+                  const burbujaIn = "bg-white dark:bg-[#1f2c34] border-slate-100 dark:border-white/5 text-slate-800 dark:text-slate-100";
                   return (
                     <div key={m.id} className={`flex ${out ? "justify-end" : "justify-start"}`}>
                       <div className={`max-w-[80%] xl:max-w-[65%] flex flex-col ${out ? "items-end" : "items-start"}`}>
-                        <div className={`rounded-[10px] px-4 py-2.5 text-[15px] shadow-sm border bg-white dark:bg-[#111] border-slate-200 dark:border-white/10 text-slate-800 dark:text-slate-100 ${out ? "rounded-tr-none" : "rounded-tl-none"}`}>
+                        <div className={`rounded-[10px] px-3 py-2 text-[14.5px] shadow-sm border ${out ? burbujaOut : burbujaIn} ${out ? "rounded-tr-none" : "rounded-tl-none"}`}>
                           <p className="leading-relaxed whitespace-pre-wrap">{m.texto}</p>
-                          <div className="flex items-center justify-end gap-1 mt-1 opacity-70">
-                            {out && m.ai_generado && <Bot className="w-3 h-3 text-slate-400 dark:text-slate-500" />}
-                            <span className="text-[10px] text-slate-400 dark:text-slate-500 font-medium">{formatDate(m.created_at)}</span>
-                            {out && (m.status === "failed" ? <X className="w-3.5 h-3.5 text-rose-500" /> : <Check className="w-3.5 h-3.5 text-blue-500" />)}
+                          <div className={`flex items-center justify-end gap-1 mt-1 ${out && !esIG ? "opacity-60" : "opacity-70"}`}>
+                            {out && m.ai_generado && <Bot className="w-3 h-3" />}
+                            <span className="text-[10px] font-medium">{formatDate(m.created_at)}</span>
+                            {out && (m.status === "failed" ? <X className="w-3.5 h-3.5 text-rose-500" /> : <Check className={`w-3.5 h-3.5 ${esIG ? "" : "text-blue-500 dark:text-sky-300"}`} />)}
                           </div>
                         </div>
                       </div>
@@ -433,7 +437,7 @@ export default function ChatClient({
               <div ref={mensajesEndRef} />
             </div>
 
-            <div className="p-4 bg-[#F0F2F5] dark:bg-[#0A0A0A] relative">
+            <div className={`p-3 relative ${esIG ? "bg-[#fafafa] dark:bg-[#0A0A0A]" : "bg-transparent"}`}>
               {mostrarPlantillas && (
                 <div className="absolute bottom-full left-4 right-4 mb-2 bg-white dark:bg-[#1A1A1A] border border-slate-200 dark:border-white/10 rounded-xl shadow-xl max-h-56 overflow-y-auto z-20">
                   {plantillas.length === 0 ? (

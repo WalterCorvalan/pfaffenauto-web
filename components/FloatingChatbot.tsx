@@ -76,7 +76,7 @@ export default function FloatingChatbot() {
         setMessages((prev) => [...prev, { role: "assistant", content: data.error || "Perdón, no pude responder. Probá de nuevo." }]);
         return;
       }
-      if (data.reply) setMessages((prev) => [...prev, { role: "assistant", content: data.reply }]);
+      if (data.replies?.length) setMessages((prev) => [...prev, ...data.replies.map((content: string) => ({ role: "assistant" as const, content }))]);
       if (data.handoff) setHandoff(true);
     } catch {
       setMessages((prev) => [...prev, { role: "assistant", content: "Perdón, hubo un error de conexión. Probá de nuevo en un momento." }]);

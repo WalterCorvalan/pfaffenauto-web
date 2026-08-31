@@ -1,7 +1,7 @@
 import { z } from "zod";
 import { createClient } from "@supabase/supabase-js";
 import { chatJsonV2 } from "@/lib/ai/indexV2";
-import { buildSystemPromptV2, type ResultadoStockV2 } from "@/lib/ai/promptsV2";
+import { buildSystemPromptV2, SEPARADOR_MENSAJES, type ResultadoStockV2 } from "@/lib/ai/promptsV2";
 
 // Agente de ventas panel-v2 — lo usan tanto WhatsApp como Rodi (comparten el
 // mismo prompt base, cada uno con su propio historial). Fork de
@@ -35,11 +35,19 @@ export const AgentReplySchemaV2 = z.object({
 export type AgentReplyV2 = z.infer<typeof AgentReplySchemaV2>;
 export type HistorialMensaje = { role: "user" | "assistant"; content: string };
 
-export async function buscarStockRealV2(
+// El prompt separa "reply" en varias burbujas con SEPARADOR_MENSAJES cuando
+// muestra opciones de stock (lista + pregunta corta abajo, como mandaría una
+// persona) — los canales (WhatsApp, Rodi) usan esto para mandar cada parte
+// como un mensaje separado en vez de un solo bloque de texto largo.
+export function dividirRespuestaEnMensajes(reply: string): string[] {
+  return reply.split(SEPARADOR_MENSAJES).map((s) => s.trim()).filter(Boolean);
+}
+
+async function ejecutarBusquedaStock(
   marca: string | null,
   modelo: string | null,
   presupuesto?: { monto: number; moneda: "USD" | "ARS" } | null
-): Promise<{ resultados: ResultadoStockV2[] }> {
+): Promise<ResultadoStockV2[]> {
   let query = supabase
     .from("vehiculos")
     .select("marca, modelo, anio, precio_venta, moneda_venta, patente")
@@ -55,7 +63,61 @@ export async function buscarStockRealV2(
   }
 
   const { data } = await query;
-  return { resultados: (data ?? []) as ResultadoStockV2[] };
+  return (data ?? []) as ResultadoStockV2[];
+}
+
+// Buscar exacto (marca+modelo) primero; si no hay nada, no le devolvemos al
+// modelo una lista vacía sin salida — probamos alternativas reales (misma
+// marca, cualquier modelo) para que el bot pueda ofrecerlas directo en vez
+// de quedarse pidiendo año/presupuesto sin tener nada real que mostrar.
+export async function buscarStockRealV2(
+  marca: string | null,
+  modelo: string | null,
+  presupuesto?: { monto: number; moneda: "USD" | "ARS" } | null
+): Promise<{ resultados: ResultadoStockV2[]; esAlternativa: boolean }> {
+  const exacto = await ejecutarBusquedaStock(marca, modelo, presupuesto);
+  if (exacto.length > 0 || !modelo) return { resultados: exacto, esAlternativa: false };
+
+  if (marca) {
+    const porMarca = await ejecutarBusquedaStock(marca, null, presupuesto);
+    if (porMarca.length > 0) return { resultados: porMarca, esAlternativa: true };
+  }
+
+  const general = await ejecutarBusquedaStock(null, null, presupuesto);
+  return { resultados: general, esAlternativa: true };
+}
+
+// Red de seguridad anti-alucinación: el prompt ya prohíbe inventar stock,
+// pero un modelo chico (Haiku) a veces igual fabrica un auto "más lindo" en
+// vez de mostrar los resultados reales que se le pasaron — visto en pruebas
+// reales (pidió "Chevrolet Tracker" sin stock, el modelo inventó dos
+// unidades con precio y año de la nada). No confiamos en el prompt solo:
+// si la respuesta menciona un precio/año de 4+ dígitos que no aparece en
+// los resultados reales, la descartamos y mostramos el stock real armado
+// por código en su lugar.
+function extraerNumerosRelevantes(texto: string): number[] {
+  return Array.from(texto.matchAll(/\d[\d.,]*\d|\d/g))
+    .map((m) => Number(m[0].replace(/[.,]/g, "")))
+    .filter((n) => n >= 1900);
+}
+
+function respuestaMencionaStockInventado(reply: string, resultados: ResultadoStockV2[]): boolean {
+  const numerosReply = extraerNumerosRelevantes(reply);
+  if (numerosReply.length === 0) return false;
+  const numerosReales = new Set<number>();
+  for (const v of resultados) { numerosReales.add(v.precio_venta); numerosReales.add(v.anio); }
+  return numerosReply.some((n) => !numerosReales.has(n));
+}
+
+function respuestaSeguraConStockReal(resultados: ResultadoStockV2[], esAlternativa: boolean): string {
+  if (resultados.length === 0) {
+    return "Por ahora no tengo esa unidad en stock. ¿Querés que te avise apenas entre una, o te muestro otras opciones que sí tengo?";
+  }
+  const lista = resultados.slice(0, 3)
+    .map((v) => `🚗 ${v.marca} ${v.modelo} ${v.anio} — 💰 ${v.moneda_venta} ${v.precio_venta.toLocaleString("es-AR")}`)
+    .join("\n");
+  const intro = esAlternativa ? "Ese modelo puntual no lo tengo ahora, pero estas son opciones que sí tengo disponibles:" : "¡Excelente! Estas son las opciones disponibles:";
+  return `${intro}\n\n${lista}${SEPARADOR_MENSAJES}¿Te interesa alguna de estas opciones o buscás algo en particular, como un año o color específico?`;
 }
 
 export async function generarRespuestaAgenteV2(historial: HistorialMensaje[], canal: string = "whatsapp-v2", nombreBot?: string): Promise<
@@ -71,20 +133,23 @@ export async function generarRespuestaAgenteV2(historial: HistorialMensaje[], ca
 
   let respuesta = result.data;
 
-  if (respuesta.vehiculo_mencionado?.modelo || respuesta.presupuesto_mencionado) {
-    const { resultados } = await buscarStockRealV2(
+  if (respuesta.vehiculo_mencionado?.modelo || respuesta.vehiculo_mencionado?.marca || respuesta.presupuesto_mencionado) {
+    const { resultados, esAlternativa } = await buscarStockRealV2(
       respuesta.vehiculo_mencionado?.marca ?? null,
       respuesta.vehiculo_mencionado?.modelo ?? null,
       respuesta.presupuesto_mencionado
     );
 
     const result2 = await chatJsonV2(AgentReplySchemaV2, [
-      { role: "system", content: buildSystemPromptV2(undefined, resultados, nombreBot) },
+      { role: "system", content: buildSystemPromptV2(undefined, resultados, nombreBot, esAlternativa) },
       ...historial,
     ], { origen: canal });
 
     if (result2.ok) {
-      respuesta = { ...respuesta, reply: result2.data.reply, handoff: result2.data.handoff, calificacion: result2.data.calificacion };
+      const reply = respuestaMencionaStockInventado(result2.data.reply, resultados)
+        ? respuestaSeguraConStockReal(resultados, esAlternativa)
+        : result2.data.reply;
+      respuesta = { ...respuesta, reply, handoff: result2.data.handoff, calificacion: result2.data.calificacion };
     } else {
       console.error("[agenteV2] error en 2da pasada (stock):", result2.error);
     }
