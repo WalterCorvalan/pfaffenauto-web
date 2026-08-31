@@ -270,15 +270,22 @@ export default function StockClient({
                         return (
                           <tr key={v.id} className="border-b border-slate-100 dark:border-white/5 last:border-0 hover:bg-slate-50 dark:hover:bg-white/[0.02]">
                             <td className="px-4 py-3">
-                              <div className="flex items-center gap-2">
-                                <p className="text-sm font-bold text-slate-900 dark:text-white whitespace-nowrap">{v.marca} {v.modelo}</p>
-                                {aRevisar(v) && v.estado === "disponible" && (
-                                  <span title="Datos incompletos: revisar publicación/foto/precio">
-                                    <AlertTriangle className="w-3.5 h-3.5 text-amber-500 shrink-0" />
-                                  </span>
-                                )}
+                              <div className="flex items-center gap-3">
+                                <div className="w-11 h-11 rounded-lg bg-slate-100 dark:bg-white/5 border border-slate-200 dark:border-white/10 flex items-center justify-center shrink-0 overflow-hidden">
+                                  {v.fotos?.[0] ? <img src={v.fotos[0]} alt="" className="w-full h-full object-cover" /> : <Car className="w-5 h-5 text-slate-300 dark:text-slate-600" />}
+                                </div>
+                                <div>
+                                  <div className="flex items-center gap-2">
+                                    <p className="text-sm font-bold text-slate-900 dark:text-white whitespace-nowrap">{v.marca} {v.modelo}</p>
+                                    {aRevisar(v) && v.estado === "disponible" && (
+                                      <span title="Datos incompletos: revisar publicación/foto/precio">
+                                        <AlertTriangle className="w-3.5 h-3.5 text-amber-500 shrink-0" />
+                                      </span>
+                                    )}
+                                  </div>
+                                  {v.color && <p className="text-[11px] text-slate-400">{v.color}</p>}
+                                </div>
                               </div>
-                              {v.color && <p className="text-[11px] text-slate-400">{v.color}</p>}
                             </td>
                             <td className="px-4 py-3 text-xs text-slate-500 dark:text-slate-400 whitespace-nowrap">{v.anio}</td>
                             <td className="px-4 py-3 text-xs text-slate-500 dark:text-slate-400 whitespace-nowrap">{v.patente || "s/patente"}</td>

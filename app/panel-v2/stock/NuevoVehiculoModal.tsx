@@ -1,8 +1,8 @@
 "use client";
 
-import { useState } from "react";
+import { useRef, useState } from "react";
 import { supabase2 } from "@/lib/supabase2/client";
-import { X, Loader2, ScanLine, ClipboardPaste } from "lucide-react";
+import { X, Loader2, ScanLine, ClipboardPaste, ImagePlus } from "lucide-react";
 import { crearAlerta } from "@/lib/panelV2/alertas";
 
 export const MARCAS = ["Toyota", "Volkswagen", "Ford", "Chevrolet", "Renault", "Peugeot", "Fiat", "Honda", "Hyundai", "Nissan", "Jeep", "Citroën", "BMW", "Mercedes-Benz", "Audi", "Otra"];
@@ -69,6 +69,34 @@ export default function NuevoVehiculoModal({ perfiles, clientes, sucursales, miI
   const [guardando, setGuardando] = useState(false);
   const [error, setError] = useState("");
 
+  const [fotos, setFotos] = useState<string[]>(editando?.fotos || []);
+  const [subiendoFotos, setSubiendoFotos] = useState(false);
+  const fileRef = useRef<HTMLInputElement>(null);
+
+  const subirFotos = async (files: FileList) => {
+    setSubiendoFotos(true);
+    try {
+      const subidas: string[] = [];
+      for (const file of Array.from(files)) {
+        const formData = new FormData();
+        formData.append("file", file);
+        formData.append("carpeta", "vehiculos");
+        const res = await fetch("/api/panel-v2/upload", { method: "POST", body: formData });
+        const data = await res.json();
+        if (!res.ok) throw new Error(data.error || "Error subiendo la imagen");
+        subidas.push(data.publicUrl);
+      }
+      setFotos((prev) => [...prev, ...subidas]);
+    } catch (err: any) {
+      setError(err?.message || "No se pudieron subir una o más fotos.");
+    } finally {
+      setSubiendoFotos(false);
+      if (fileRef.current) fileRef.current.value = "";
+    }
+  };
+
+  const quitarFoto = (url: string) => setFotos((prev) => prev.filter((f) => f !== url));
+
   // Técnicos (sumados a v2 — v1 los tenía)
   const [segmento, setSegmento] = useState(editando?.segmento || "");
   const [traccion, setTraccion] = useState(editando?.traccion || "");
@@ -130,7 +158,7 @@ export default function NuevoVehiculoModal({ perfiles, clientes, sucursales, miI
         puertas: puertas ? Number(puertas) : null, motor_cilindrada: motorCilindrada || null, version: version || null,
         manuales, duplicado_llaves: duplicadoLlaves, servicios_oficiales: serviciosOficiales,
         publicado_ml: publicadoMl, publicado_por: publicadoPor || null, link_ml: linkMl || null,
-        notas: notas || null,
+        notas: notas || null, fotos,
         segmento: segmento || null, traccion: traccion || null,
         potencia_cv: potenciaCv ? Number(potenciaCv) : null, cantidad_plazas: cantidadPlazas ? Number(cantidadPlazas) : null,
         origen: origen || null, numero_motor: numeroMotor || null, marca_motor: marcaMotor || null,
@@ -193,6 +221,26 @@ export default function NuevoVehiculoModal({ perfiles, clientes, sucursales, miI
           <button type="button" disabled title="Necesita la API de Google Vision, todavía no conectada" className="w-full flex items-center justify-center gap-2 px-3 py-2.5 rounded-xl bg-emerald-50 dark:bg-emerald-500/10 border border-emerald-200 dark:border-emerald-500/20 text-emerald-700 dark:text-emerald-300 text-xs font-semibold opacity-60 cursor-not-allowed">
             <ScanLine className="w-4 h-4" /> Escanear cédula verde (opcional)
           </button>
+
+          <div>
+            <p className={seccionClass}>Fotos</p>
+            <div className="grid grid-cols-3 sm:grid-cols-4 gap-2">
+              {fotos.map((url) => (
+                <div key={url} className="relative aspect-square rounded-lg overflow-hidden border border-slate-200 dark:border-white/10 group">
+                  <img src={url} alt="" className="w-full h-full object-cover" />
+                  <button type="button" onClick={() => quitarFoto(url)} className="absolute top-1 right-1 p-1 rounded-full bg-black/60 text-white opacity-0 group-hover:opacity-100 transition-opacity">
+                    <X className="w-3 h-3" />
+                  </button>
+                </div>
+              ))}
+              <label className={`aspect-square rounded-lg border-2 border-dashed flex flex-col items-center justify-center gap-1 cursor-pointer transition-colors ${subiendoFotos ? "opacity-60 pointer-events-none" : "hover:bg-slate-50 dark:hover:bg-white/5"} border-slate-300 dark:border-white/20`}>
+                {subiendoFotos ? <Loader2 className="w-5 h-5 text-slate-400 animate-spin" /> : <ImagePlus className="w-5 h-5 text-slate-400" />}
+                <span className="text-[10px] font-semibold text-slate-400">{subiendoFotos ? "Subiendo..." : "Agregar"}</span>
+                <input ref={fileRef} type="file" accept="image/*" multiple disabled={subiendoFotos} className="hidden" onChange={(e) => e.target.files?.length && subirFotos(e.target.files)} />
+              </label>
+            </div>
+            <p className="text-[10px] text-slate-400 mt-1.5">La primera foto es la que se usa como miniatura en el listado y en el catálogo.</p>
+          </div>
 
           <div>
             <p className={seccionClass}>Identidad</p>
