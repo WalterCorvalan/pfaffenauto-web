@@ -36,6 +36,26 @@ export const AgentReplySchemaV2 = z.object({
 export type AgentReplyV2 = z.infer<typeof AgentReplySchemaV2>;
 export type HistorialMensaje = { role: "user" | "assistant"; content: string };
 
+// Tope de mensajes por conversación — evita charlas eternas (costo de API y
+// vendedores esperando el handoff) cuando hay muchas consultas a la vez.
+// SUAVE: a partir de este mensaje del cliente, el prompt empieza a
+// sugerirle cerrar rápido con lo que necesita. DURO: a partir de acá se
+// corta directo, sin llamar a la IA — se deriva con un mensaje fijo.
+const LIMITE_MENSAJES_SUAVE = 12;
+const LIMITE_MENSAJES_DURO = 25;
+
+function respuestaLimiteAlcanzado(): AgentReplyV2 {
+  return {
+    reply: "Veo que ya llevamos bastante conversación — para no hacerte esperar más, en este momento te comunico con un asesor que sigue en persona con todo esto.",
+    handoff: true,
+    intencion: null,
+    calificacion: null,
+    datos_detectados: { timing: null, forma_pago: null, tiene_permuta: null },
+    vehiculo_mencionado: null,
+    presupuesto_mencionado: null,
+  };
+}
+
 // El prompt separa "reply" en varias burbujas con SEPARADOR_MENSAJES cuando
 // muestra opciones de stock (lista + pregunta corta abajo, como mandaría una
 // persona) — los canales (WhatsApp, Rodi) usan esto para mandar cada parte
@@ -130,10 +150,16 @@ export async function generarRespuestaAgenteV2(historial: HistorialMensaje[], ca
   | { ok: true; data: AgentReplyV2 }
   | { ok: false; error: string }
 > {
+  const mensajesCliente = historial.filter((h) => h.role === "user").length;
+  if (mensajesCliente > LIMITE_MENSAJES_DURO) {
+    return { ok: true, data: respuestaLimiteAlcanzado() };
+  }
+  const sugerirCierre = mensajesCliente >= LIMITE_MENSAJES_SUAVE;
+
   const sucursales = await fetchSucursalesInfo();
 
   const result = await chatJsonV2(AgentReplySchemaV2, [
-    { role: "system", content: buildSystemPromptV2(undefined, undefined, nombreBot, undefined, sucursales) },
+    { role: "system", content: buildSystemPromptV2(undefined, undefined, nombreBot, undefined, sucursales, sugerirCierre) },
     ...historial,
   ], { origen: canal });
 
@@ -156,7 +182,7 @@ export async function generarRespuestaAgenteV2(historial: HistorialMensaje[], ca
     );
 
     const result2 = await chatJsonV2(AgentReplySchemaV2, [
-      { role: "system", content: buildSystemPromptV2(undefined, resultados, nombreBot, esAlternativa, sucursales) },
+      { role: "system", content: buildSystemPromptV2(undefined, resultados, nombreBot, esAlternativa, sucursales, sugerirCierre) },
       ...historial,
     ], { origen: canal });
 
