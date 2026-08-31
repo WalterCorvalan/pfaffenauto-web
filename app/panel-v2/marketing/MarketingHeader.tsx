@@ -4,11 +4,11 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { Megaphone } from "lucide-react";
 
-const TABS = [
+const TABS: { label: string; href?: string }[] = [
   { label: "Embudo", href: "/panel-v2/marketing/embudo" },
   { label: "Pautas", href: "/panel-v2/marketing/pautas" },
   { label: "Autos Pautados", href: "/panel-v2/marketing/pautados" },
-  { label: "Búsquedas", href: "/panel-v2/marketing/busquedas" },
+  { label: "Búsquedas" }, // todavía no construida — sin href para no dar 404
   { label: "Asistente IA", href: "/panel-v2/marketing/chatbot" },
   { label: "Instagram", href: "/panel-v2/marketing/instagram" },
   { label: "WhatsApp", href: "/panel-v2/marketing/whatsapp-metricas" },
@@ -33,6 +33,13 @@ export default function MarketingHeader() {
 
       <div className="flex items-center gap-6 overflow-x-auto custom-scrollbar">
         {TABS.map((tab) => {
+          if (!tab.href) {
+            return (
+              <span key={tab.label} title="Todavía no construido" className="pb-3 text-[13px] font-bold border-b-2 border-transparent text-slate-300 dark:text-slate-600 whitespace-nowrap cursor-not-allowed">
+                {tab.label}
+              </span>
+            );
+          }
           const activo = pathname?.startsWith(tab.href);
           return (
             <Link
