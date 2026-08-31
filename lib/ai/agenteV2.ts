@@ -1,7 +1,7 @@
 import { z } from "zod";
 import { createClient } from "@supabase/supabase-js";
 import { chatJsonV2 } from "@/lib/ai/indexV2";
-import { buildSystemPromptV2, SEPARADOR_MENSAJES, type ResultadoStockV2 } from "@/lib/ai/promptsV2";
+import { buildSystemPromptV2, SEPARADOR_MENSAJES, type ResultadoStockV2, type SucursalInfo } from "@/lib/ai/promptsV2";
 
 // Agente de ventas panel-v2 — lo usan tanto WhatsApp como Rodi (comparten el
 // mismo prompt base, cada uno con su propio historial). Fork de
@@ -121,12 +121,19 @@ function respuestaSeguraConStockReal(resultados: ResultadoStockV2[], esAlternati
   return `${intro}\n\n${lista}\n\n¿Alguna te interesa, o buscás un año o versión en particular?`;
 }
 
+async function fetchSucursalesInfo(): Promise<SucursalInfo[]> {
+  const { data } = await supabase.from("sucursales").select("nombre, direccion, telefono_encargado, google_maps_url").order("nombre");
+  return (data ?? []) as SucursalInfo[];
+}
+
 export async function generarRespuestaAgenteV2(historial: HistorialMensaje[], canal: string = "whatsapp-v2", nombreBot?: string): Promise<
   | { ok: true; data: AgentReplyV2 }
   | { ok: false; error: string }
 > {
+  const sucursales = await fetchSucursalesInfo();
+
   const result = await chatJsonV2(AgentReplySchemaV2, [
-    { role: "system", content: buildSystemPromptV2(undefined, undefined, nombreBot) },
+    { role: "system", content: buildSystemPromptV2(undefined, undefined, nombreBot, undefined, sucursales) },
     ...historial,
   ], { origen: canal });
 
@@ -149,7 +156,7 @@ export async function generarRespuestaAgenteV2(historial: HistorialMensaje[], ca
     );
 
     const result2 = await chatJsonV2(AgentReplySchemaV2, [
-      { role: "system", content: buildSystemPromptV2(undefined, resultados, nombreBot, esAlternativa) },
+      { role: "system", content: buildSystemPromptV2(undefined, resultados, nombreBot, esAlternativa, sucursales) },
       ...historial,
     ], { origen: canal });
 
