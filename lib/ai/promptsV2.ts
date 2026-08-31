@@ -34,19 +34,35 @@ function formatearResultadosStock(resultados: ResultadoStockV2[], esAlternativa:
   return `\n${encabezado}:\n${lista}`;
 }
 
-export type SucursalInfo = { nombre: string; direccion: string | null; telefono_encargado: string | null; google_maps_url: string | null };
+export type SucursalInfo = { nombre: string; direccion: string | null; telefono_encargado: string | null; google_maps_url: string | null; encargado_nombre?: string | null };
 
 function formatearSucursales(sucursales: SucursalInfo[]): string {
   const conDatos = sucursales.filter((s) => s.direccion || s.telefono_encargado || s.google_maps_url);
   if (conDatos.length === 0) return "";
   const lista = conDatos
     .map((s) => {
-      const partes = [s.direccion, s.telefono_encargado ? `tel. ${s.telefono_encargado}` : null, s.google_maps_url].filter(Boolean);
+      const partes = [
+        s.direccion,
+        s.telefono_encargado ? `tel. ${s.telefono_encargado}` : null,
+        s.encargado_nombre ? `encargado: ${s.encargado_nombre}` : null,
+        s.google_maps_url,
+      ].filter(Boolean);
       return `- ${s.nombre}${partes.length ? `: ${partes.join(" — ")}` : ""}`;
     })
     .join("\n");
-  return `\nSUCURSALES (datos reales — usalos con confianza si preguntan dirección, teléfono, o cuál les queda más cerca; si el cliente da su zona/barrio, recomendale la sucursal que te parezca más cercana según la dirección):\n${lista}`;
+  return `\nSUCURSALES (datos reales — usalos con confianza si preguntan dirección, teléfono, encargado, o cuál les queda más cerca; si el cliente da su zona/barrio, recomendale la sucursal que te parezca más cercana según la dirección):\n${lista}`;
 }
+
+// Info fija del equipo — no cambia seguido, no amerita ida y vuelta a la
+// base. Es solo para que el bot pueda responder con confianza si preguntan
+// "quién me atiende" o "quién es el dueño" — nunca para prometer que ESA
+// persona puntual va a responder (la asignación real de vendedor es
+// automática y separada de esto).
+const EQUIPO_PFAFFEN = `\nEQUIPO PFAFFEN AUTOS (dato real, usalo si preguntan quién los atiende o info del equipo — no prometas que te va a atender una persona específica, la asignación de vendedor es automática):
+- Vendedores: Julián y Federico.
+- Encargado Casa Central: Gabriel Pfaffen.
+- Encargado Don Torcuato: Lucas Gatti.
+- Dueño: Sergio Pfaffen.`;
 
 export function buildSystemPromptV2(vehiculoInfo?: string, resultadosStock?: ResultadoStockV2[], nombreBot?: string, resultadosSonAlternativa?: boolean, sucursales?: SucursalInfo[], sugerirCierre?: boolean): string {
   return `${nombreBot ? `Te llamás ${nombreBot}, el` : "Sos el"} asistente virtual oficial de Pfaffen Autos, concesionaria de vehículos 0km y usados.
@@ -67,6 +83,7 @@ INTENCIONES: COMPRA, VENTA, CONSIGNACION, COMPRA_CON_PERMUTA, HABLAR_CON_ASESOR,
 ${vehiculoInfo ? `El cliente está consultando sobre: ${vehiculoInfo}` : ""}
 ${resultadosStock ? formatearResultadosStock(resultadosStock, !!resultadosSonAlternativa) : ""}
 ${sucursales ? formatearSucursales(sucursales) : ""}
+${EQUIPO_PFAFFEN}
 ${sugerirCierre ? `\nLa charla ya viene larga y en este momento hay mucha gente escribiendo a la vez — sé más eficiente: resumí en una sola pregunta lo que falta para cerrar el tema (en vez de ir pregunta por pregunta), y si el cliente ya dio lo esencial, ofrecé derivarlo con un asesor para resolver el resto más rápido en persona. Podés mencionar con naturalidad que hay bastante consulta en este momento, sin sonar como excusa robótica.` : ""}
 
 REGLA ABSOLUTA — NUNCA preguntes el año (ni color, ni versión, ni ninguna otra característica) como filtro ANTES de mostrar opciones. Esto no es negociable, ni con Chevrolet Tracker, Toyota Hilux, ni ningún otro modelo:

@@ -142,7 +142,7 @@ function respuestaSeguraConStockReal(resultados: ResultadoStockV2[], esAlternati
 }
 
 async function fetchSucursalesInfo(): Promise<SucursalInfo[]> {
-  const { data } = await supabase.from("sucursales").select("nombre, direccion, telefono_encargado, google_maps_url").order("nombre");
+  const { data } = await supabase.from("sucursales").select("nombre, direccion, telefono_encargado, google_maps_url, encargado_nombre").order("nombre");
   return (data ?? []) as SucursalInfo[];
 }
 
