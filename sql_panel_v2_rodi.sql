@@ -167,13 +167,23 @@ begin
   v_link := '/panel-v2/rodi?conversacion=' || new.conversacion_id;
   v_titulo := v_nombre || ': ' || coalesce(left(new.texto, 80), 'envió un mensaje');
 
+  -- Igual que WhatsApp: si el visitante manda varios mensajes seguidos, se
+  -- actualiza la alerta sin leer en vez de apilar una por mensaje.
   if v_vendedor_id is not null then
-    insert into public.alertas (destinatario_id, tipo, prioridad, titulo, link)
-    values (v_vendedor_id, 'rodi_nuevo_mensaje', 'media', v_titulo, v_link);
+    update public.alertas set titulo = v_titulo, created_at = now()
+    where destinatario_id = v_vendedor_id and tipo = 'rodi_nuevo_mensaje' and link = v_link and leida = false;
+    if not found then
+      insert into public.alertas (destinatario_id, tipo, prioridad, titulo, link)
+      values (v_vendedor_id, 'rodi_nuevo_mensaje', 'media', v_titulo, v_link);
+    end if;
   else
     for v_encargado in select id from public.perfiles where ('encargado' = any(roles) or 'admin' = any(roles)) and activo = true loop
-      insert into public.alertas (destinatario_id, tipo, prioridad, titulo, link)
-      values (v_encargado.id, 'rodi_nuevo_mensaje', 'media', v_titulo, v_link);
+      update public.alertas set titulo = v_titulo, created_at = now()
+      where destinatario_id = v_encargado.id and tipo = 'rodi_nuevo_mensaje' and link = v_link and leida = false;
+      if not found then
+        insert into public.alertas (destinatario_id, tipo, prioridad, titulo, link)
+        values (v_encargado.id, 'rodi_nuevo_mensaje', 'media', v_titulo, v_link);
+      end if;
     end loop;
   end if;
 

@@ -1,7 +1,7 @@
--- Panel v2 — Notificaciones de WhatsApp (nuevo mensaje entrante + handoff).
--- Base nova. Triggers en vez de código de API porque el bot v2 escribe directo
--- a las tablas con service role (sin pasar por nuestra API) — así la alerta
--- sale pase lo que pase, igual que notificarPersona/notificarEncargados en v1.
+-- Fix: la campana no debe llenarse con una alerta por cada mensaje que
+-- manda un mismo cliente — solo la primera vez, y se actualiza (sube al
+-- tope, cambia el texto) mientras siga sin leerse. Redefine las dos
+-- funciones de notificación (WhatsApp y Rodi) con esa lógica.
 
 create or replace function public.whatsapp_notificar_mensaje_entrante()
 returns trigger
@@ -30,9 +30,6 @@ begin
   v_link := '/panel-v2/whatsapp?conversacion=' || new.conversacion_id;
   v_titulo := coalesce(v_nombre, v_telefono, 'Cliente') || ': ' || coalesce(left(new.texto, 80), 'envió un mensaje');
 
-  -- Un cliente mandando varios mensajes seguidos no debe generar una alerta
-  -- por cada uno — mientras la anterior siga sin leer, se actualiza (nuevo
-  -- texto, sube al tope) en vez de apilar filas nuevas.
   if v_vendedor_id is not null then
     update public.alertas set titulo = v_titulo, created_at = now()
     where destinatario_id = v_vendedor_id and tipo = 'nuevo_mensaje_chat' and link = v_link and leida = false;
@@ -55,42 +52,49 @@ begin
 end;
 $$;
 
-drop trigger if exists trg_whatsapp_mensaje_entrante on public.whatsapp_mensajes;
-create trigger trg_whatsapp_mensaje_entrante
-  after insert on public.whatsapp_mensajes
-  for each row execute function public.whatsapp_notificar_mensaje_entrante();
-
-create or replace function public.whatsapp_notificar_handoff()
+create or replace function public.rodi_notificar_mensaje_entrante()
 returns trigger
 language plpgsql
 security definer
 set search_path = public
 as $$
 declare
-  v_encargado record;
+  v_vendedor_id uuid;
+  v_nombre text;
   v_link text;
+  v_titulo text;
+  v_encargado record;
 begin
-  if new.handoff_at is null or old.handoff_at is not null then
+  if new.direccion <> 'in' then
     return new;
   end if;
 
-  v_link := '/panel-v2/whatsapp?conversacion=' || new.id;
+  select c.vendedor_id, coalesce(c.nombre_contacto, 'Visitante del sitio')
+    into v_vendedor_id, v_nombre
+  from public.rodi_conversaciones c
+  where c.id = new.conversacion_id;
 
-  if new.vendedor_id is not null then
-    insert into public.alertas (destinatario_id, tipo, prioridad, titulo, link)
-    values (new.vendedor_id, 'handoff_chat', 'alta', 'El cliente pidió hablar con una persona', v_link);
+  v_link := '/panel-v2/rodi?conversacion=' || new.conversacion_id;
+  v_titulo := v_nombre || ': ' || coalesce(left(new.texto, 80), 'envió un mensaje');
+
+  if v_vendedor_id is not null then
+    update public.alertas set titulo = v_titulo, created_at = now()
+    where destinatario_id = v_vendedor_id and tipo = 'rodi_nuevo_mensaje' and link = v_link and leida = false;
+    if not found then
+      insert into public.alertas (destinatario_id, tipo, prioridad, titulo, link)
+      values (v_vendedor_id, 'rodi_nuevo_mensaje', 'media', v_titulo, v_link);
+    end if;
   else
     for v_encargado in select id from public.perfiles where ('encargado' = any(roles) or 'admin' = any(roles)) and activo = true loop
-      insert into public.alertas (destinatario_id, tipo, prioridad, titulo, link)
-      values (v_encargado.id, 'handoff_chat', 'alta', 'El cliente pidió hablar con una persona', v_link);
+      update public.alertas set titulo = v_titulo, created_at = now()
+      where destinatario_id = v_encargado.id and tipo = 'rodi_nuevo_mensaje' and link = v_link and leida = false;
+      if not found then
+        insert into public.alertas (destinatario_id, tipo, prioridad, titulo, link)
+        values (v_encargado.id, 'rodi_nuevo_mensaje', 'media', v_titulo, v_link);
+      end if;
     end loop;
   end if;
 
   return new;
 end;
 $$;
-
-drop trigger if exists trg_whatsapp_handoff on public.whatsapp_conversaciones;
-create trigger trg_whatsapp_handoff
-  after update on public.whatsapp_conversaciones
-  for each row execute function public.whatsapp_notificar_handoff();
