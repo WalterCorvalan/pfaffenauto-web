@@ -56,7 +56,7 @@ const GRUPOS: { titulo: string; items: { href?: string; label: string; icon: any
       { href: "/panel-v2/gestoria", label: "Gestoría", icon: ClipboardList },
       { href: "/panel-v2/consignaciones", label: "Consignaciones", icon: KeyRound },
       { href: "/panel-v2/peritajes", label: "Peritajes", icon: ClipboardCheck },
-      { label: "Infracciones", icon: Landmark },
+      { href: "/panel-v2/infracciones", label: "Infracciones", icon: Landmark },
       { href: "/panel-v2/telefonos", label: "Teléfonos útiles", icon: BookUser },
       { href: "/panel-v2/taller", label: "Taller", icon: Wrench },
       { label: "Service", icon: Hammer },
