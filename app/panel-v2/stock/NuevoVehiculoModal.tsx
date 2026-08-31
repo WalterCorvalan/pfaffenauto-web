@@ -210,7 +210,7 @@ export default function NuevoVehiculoModal({ perfiles, clientes, sucursales, miI
         <div className="flex justify-between items-start mb-1">
           <div>
             <h3 className="text-lg font-bold text-slate-900 dark:text-white">{esEdicion ? "Editar vehículo" : "Nuevo vehículo"}</h3>
-            <p className="text-xs text-slate-500 dark:text-slate-400">Datos básicos del vehículo. Fotos y cédula verde se cargan luego de crear el vehículo.</p>
+            <p className="text-xs text-slate-500 dark:text-slate-400">Datos básicos del vehículo. Escaneo de cédula verde disponible luego de crear el vehículo.</p>
           </div>
           <button onClick={onClose} className="text-slate-400 hover:text-slate-700 dark:hover:text-white p-1.5 rounded-lg hover:bg-slate-100 dark:hover:bg-white/10">
             <X className="w-4 h-4" />
