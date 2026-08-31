@@ -86,6 +86,7 @@ Respondé SIEMPRE en este formato JSON exacto, sin texto fuera del JSON:
 {
   "reply": "tu respuesta al cliente",
   "handoff": false,
+  "intencion": null o "COMPRA" | "VENTA" | "CONSIGNACION" | "COMPRA_CON_PERMUTA" | "HABLAR_CON_ASESOR" | "OTRA_CONSULTA" — la intención detectada en ESTE momento de la charla. Importante: si el cliente quiere VENDER o CONSIGNAR su propio auto y lo menciona (marca/modelo/año), ese auto va en "vehiculo_mencionado" igual, pero la intención debe quedar en "VENTA" o "CONSIGNACION" — nunca "COMPRA" — para que no se confunda con una búsqueda de stock,
   "calificacion": null o "caliente" | "tibio" | "frio",
   "datos_detectados": { "timing": null o string, "forma_pago": null o string, "tiene_permuta": null o boolean },
   "vehiculo_mencionado": null o { "marca": string o null, "modelo": string o null } si el cliente nombró una marca y/o un modelo puntual (alguno de los dos alcanza para completar este campo y disparar la búsqueda),

@@ -16,6 +16,7 @@ const supabase = createClient(
 export const AgentReplySchemaV2 = z.object({
   reply: z.string(),
   handoff: z.boolean(),
+  intencion: z.enum(["COMPRA", "VENTA", "CONSIGNACION", "COMPRA_CON_PERMUTA", "HABLAR_CON_ASESOR", "OTRA_CONSULTA"]).nullable(),
   calificacion: z.enum(["caliente", "tibio", "frio"]).nullable(),
   datos_detectados: z.object({
     timing: z.string().nullable(),
@@ -133,7 +134,14 @@ export async function generarRespuestaAgenteV2(historial: HistorialMensaje[], ca
 
   let respuesta = result.data;
 
-  if (respuesta.vehiculo_mencionado?.modelo || respuesta.vehiculo_mencionado?.marca || respuesta.presupuesto_mencionado) {
+  // El vehículo que el cliente menciona cuando quiere VENDER o CONSIGNAR el
+  // suyo NO es una búsqueda de stock para comprar — es el auto que él
+  // ofrece. Sin este filtro, "quiero vender mi Corolla 2019" disparaba una
+  // búsqueda de Corollas en stock y el bot terminaba mostrándole autos para
+  // comprar en respuesta a que quería vender el propio.
+  const esIntencionDeCompra = respuesta.intencion !== "VENTA" && respuesta.intencion !== "CONSIGNACION";
+
+  if (esIntencionDeCompra && (respuesta.vehiculo_mencionado?.modelo || respuesta.vehiculo_mencionado?.marca || respuesta.presupuesto_mencionado)) {
     const { resultados, esAlternativa } = await buscarStockRealV2(
       respuesta.vehiculo_mencionado?.marca ?? null,
       respuesta.vehiculo_mencionado?.modelo ?? null,
