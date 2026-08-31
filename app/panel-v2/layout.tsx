@@ -11,7 +11,7 @@ import {
   BedDouble, Repeat, Star, FolderKanban, ClipboardList, ClipboardCheck, KeyRound, Landmark,
   Wrench, Hammer, MessageSquareWarning, Banknote, PiggyBank, Coins, ShieldCheck,
   BarChart3, DollarSign, MessagesSquare, Smartphone, ThumbsUp, Lightbulb, Mail,
-  MessageCircle, BookUser, Settings, Trash2, Bot,
+  MessageCircle, BookUser, Settings, Trash2, Bot, Wallet, Tag,
 } from "lucide-react";
 import QuickActionsButton from "@/components/panelV2/QuickActionsButton";
 import NotificationBell from "@/components/panelV2/NotificationBell";
@@ -93,6 +93,8 @@ const GRUPOS: { titulo: string; items: { href?: string; label: string; icon: any
       { href: "/panel-v2/configuracion/whatsapp", label: "Configuración", icon: Settings },
       { label: "Oportunidades", icon: Handshake },
       { href: "/panel-v2/postulaciones", label: "Postulaciones", icon: Users },
+      { label: "Liquidador de Sueldos", icon: Wallet },
+      { label: "Categorías de Empleados", icon: Tag },
     ],
   },
 ];
