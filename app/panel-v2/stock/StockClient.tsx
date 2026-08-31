@@ -6,7 +6,7 @@ import * as XLSX from "xlsx";
 import { supabase2 } from "@/lib/supabase2/client";
 import {
   Search, Car, Globe, Download, Upload, FileText, Plus, Edit2, ClipboardCheck,
-  AlertTriangle, Clock, CheckCircle2, Tag, Trash2, TrendingUp,
+  AlertTriangle, Clock, CheckCircle2, Tag, Trash2, TrendingUp, ChevronLeft, ChevronRight,
 } from "lucide-react";
 import NuevoVehiculoModal from "./NuevoVehiculoModal";
 import NuevoMandatoModal from "./NuevoMandatoModal";
@@ -67,7 +67,7 @@ export default function StockClient({
   const [modalImportar, setModalImportar] = useState(false);
   const [peritajeVehiculo, setPeritajeVehiculo] = useState<Vehiculo | null>(null);
   const [editando, setEditando] = useState<Vehiculo | null>(null);
-  const [fotoAmpliada, setFotoAmpliada] = useState<string | null>(null);
+  const [galeria, setGaleria] = useState<{ fotos: string[]; index: number } | null>(null);
   const [ocupadoId, setOcupadoId] = useState<string | null>(null);
 
   useEffect(() => {
@@ -274,7 +274,7 @@ export default function StockClient({
                               <div className="flex items-center gap-3">
                                 <div
                                   className={`w-11 h-11 rounded-lg bg-slate-100 dark:bg-white/5 border border-slate-200 dark:border-white/10 flex items-center justify-center shrink-0 overflow-hidden ${v.fotos?.[0] ? "cursor-zoom-in" : ""}`}
-                                  onClick={(e) => { if (v.fotos?.[0]) { e.stopPropagation(); setFotoAmpliada(v.fotos[0]); } }}
+                                  onClick={(e) => { if (v.fotos?.[0]) { e.stopPropagation(); setGaleria({ fotos: v.fotos, index: 0 }); } }}
                                 >
                                   {v.fotos?.[0] ? <img src={v.fotos[0]} alt="" className="w-full h-full object-cover" /> : <Car className="w-5 h-5 text-slate-300 dark:text-slate-600" />}
                                 </div>
@@ -324,9 +324,43 @@ export default function StockClient({
 
       {(modalNuevo || editando) && <NuevoVehiculoModal perfiles={perfiles} clientes={clientes} sucursales={sucursales} miId={miId} editando={editando || undefined} onClose={() => { setModalNuevo(false); setEditando(null); }} onCreado={onCreadoVehiculo} />}
 
-      {fotoAmpliada && (
-        <div className="fixed inset-0 z-[60] bg-black/80 flex items-center justify-center p-6 cursor-zoom-out" onClick={() => setFotoAmpliada(null)}>
-          <img src={fotoAmpliada} alt="" className="max-w-full max-h-full rounded-xl object-contain" />
+      {galeria && (
+        <div className="fixed inset-0 z-[60] bg-black/80 flex flex-col items-center justify-center p-6 gap-4" onClick={() => setGaleria(null)}>
+          <div className="relative flex items-center justify-center w-full max-w-3xl" onClick={(e) => e.stopPropagation()}>
+            {galeria.fotos.length > 1 && (
+              <button
+                type="button"
+                onClick={() => setGaleria((g) => g && { ...g, index: (g.index - 1 + g.fotos.length) % g.fotos.length })}
+                className="absolute left-0 z-10 p-2 rounded-full bg-black/50 text-white hover:bg-black/70 ml-2"
+              >
+                <ChevronLeft className="w-5 h-5" />
+              </button>
+            )}
+            <img src={galeria.fotos[galeria.index]} alt="" className="max-w-full max-h-[75vh] rounded-xl object-contain cursor-zoom-out" onClick={() => setGaleria(null)} />
+            {galeria.fotos.length > 1 && (
+              <button
+                type="button"
+                onClick={() => setGaleria((g) => g && { ...g, index: (g.index + 1) % g.fotos.length })}
+                className="absolute right-0 z-10 p-2 rounded-full bg-black/50 text-white hover:bg-black/70 mr-2"
+              >
+                <ChevronRight className="w-5 h-5" />
+              </button>
+            )}
+          </div>
+          {galeria.fotos.length > 1 && (
+            <div className="flex items-center gap-2" onClick={(e) => e.stopPropagation()}>
+              {galeria.fotos.map((f, i) => (
+                <button
+                  key={f + i}
+                  type="button"
+                  onClick={() => setGaleria((g) => g && { ...g, index: i })}
+                  className={`w-12 h-12 rounded-lg overflow-hidden border-2 ${i === galeria.index ? "border-white" : "border-transparent opacity-60"}`}
+                >
+                  <img src={f} alt="" className="w-full h-full object-cover" />
+                </button>
+              ))}
+            </div>
+          )}
         </div>
       )}
       {modalMandato && <NuevoMandatoModal miId={miId} miNombre={miNombre} onClose={() => setModalMandato(false)} onCreado={onCreadoMandato} />}
