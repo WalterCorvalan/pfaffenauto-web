@@ -67,6 +67,7 @@ export default function StockClient({
   const [modalImportar, setModalImportar] = useState(false);
   const [peritajeVehiculo, setPeritajeVehiculo] = useState<Vehiculo | null>(null);
   const [editando, setEditando] = useState<Vehiculo | null>(null);
+  const [fotoAmpliada, setFotoAmpliada] = useState<string | null>(null);
   const [ocupadoId, setOcupadoId] = useState<string | null>(null);
 
   useEffect(() => {
@@ -271,7 +272,10 @@ export default function StockClient({
                           <tr key={v.id} className="border-b border-slate-100 dark:border-white/5 last:border-0 hover:bg-slate-50 dark:hover:bg-white/[0.02]">
                             <td className="px-4 py-3">
                               <div className="flex items-center gap-3">
-                                <div className="w-11 h-11 rounded-lg bg-slate-100 dark:bg-white/5 border border-slate-200 dark:border-white/10 flex items-center justify-center shrink-0 overflow-hidden">
+                                <div
+                                  className={`w-11 h-11 rounded-lg bg-slate-100 dark:bg-white/5 border border-slate-200 dark:border-white/10 flex items-center justify-center shrink-0 overflow-hidden ${v.fotos?.[0] ? "cursor-zoom-in" : ""}`}
+                                  onClick={(e) => { if (v.fotos?.[0]) { e.stopPropagation(); setFotoAmpliada(v.fotos[0]); } }}
+                                >
                                   {v.fotos?.[0] ? <img src={v.fotos[0]} alt="" className="w-full h-full object-cover" /> : <Car className="w-5 h-5 text-slate-300 dark:text-slate-600" />}
                                 </div>
                                 <div>
@@ -319,6 +323,12 @@ export default function StockClient({
       </div>
 
       {(modalNuevo || editando) && <NuevoVehiculoModal perfiles={perfiles} clientes={clientes} sucursales={sucursales} miId={miId} editando={editando || undefined} onClose={() => { setModalNuevo(false); setEditando(null); }} onCreado={onCreadoVehiculo} />}
+
+      {fotoAmpliada && (
+        <div className="fixed inset-0 z-[60] bg-black/80 flex items-center justify-center p-6 cursor-zoom-out" onClick={() => setFotoAmpliada(null)}>
+          <img src={fotoAmpliada} alt="" className="max-w-full max-h-full rounded-xl object-contain" />
+        </div>
+      )}
       {modalMandato && <NuevoMandatoModal miId={miId} miNombre={miNombre} onClose={() => setModalMandato(false)} onCreado={onCreadoMandato} />}
       {modalCatalogo && <TuCatalogoModal config={catalogoConfig} esAdmin={esAdmin} onClose={() => setModalCatalogo(false)} onConfigActualizada={setCatalogoConfig} />}
       {modalImportar && <ImportarXlsxModal miId={miId} onClose={() => setModalImportar(false)} onImportados={(nuevos) => setVehiculos((prev) => [...nuevos, ...prev])} />}
