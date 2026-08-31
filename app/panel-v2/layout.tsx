@@ -93,7 +93,7 @@ const GRUPOS: { titulo: string; items: { href?: string; label: string; icon: any
       { label: "Oportunidades", icon: Handshake },
       { href: "/panel-v2/postulaciones", label: "Postulaciones", icon: Users },
       { label: "Liquidador de Sueldos", icon: Wallet },
-      { label: "Categorías de Empleados", icon: Tag },
+      { href: "/panel-v2/sueldos/categorias", label: "Categorías de Empleados", icon: Tag },
     ],
   },
 ];
