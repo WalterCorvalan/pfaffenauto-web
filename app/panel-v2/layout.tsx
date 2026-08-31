@@ -43,7 +43,7 @@ const GRUPOS: { titulo: string; items: { href?: string; label: string; icon: any
       { href: "/panel-v2/clientes", label: "Clientes", icon: Users },
       { href: "/panel-v2/cotizaciones", label: "Cotizaciones", icon: FileText },
       { href: "/panel-v2/ventas", label: "Ventas", icon: Briefcase },
-      { label: "Mis ventas", icon: Trophy },
+      { href: "/panel-v2/mis-ventas", label: "Mis ventas", icon: Trophy },
     ],
   },
   {
