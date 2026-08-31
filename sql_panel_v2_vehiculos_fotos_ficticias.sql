@@ -55,7 +55,7 @@ update public.vehiculos set fotos = array[
 ] where patente = 'EP127IO'; -- Chevrolet Onix Joy Plus (hatchback)
 
 update public.vehiculos set fotos = array[
-  'https://images.unsplash.com/photo-1573710459621-bb101783ca0f?w=1200&q=80&auto=format&fit=crop',
+  'https://images.unsplash.com/photo-1567784431148-dbcd19d0ddce?w=1200&q=80&auto=format&fit=crop',
   'https://images.unsplash.com/photo-1678305346329-8d24240d0bf6?w=1200&q=80&auto=format&fit=crop'
 ] where patente = 'KS887QE'; -- Chevrolet Cruze LTZ (sedán)
 
@@ -70,12 +70,12 @@ update public.vehiculos set fotos = array[
 ] where patente = 'GW646MK'; -- Ford Ranger XLT (pickup)
 
 update public.vehiculos set fotos = array[
-  'https://images.unsplash.com/photo-1573710459621-bb101783ca0f?w=1200&q=80&auto=format&fit=crop',
+  'https://images.unsplash.com/photo-1567784431148-dbcd19d0ddce?w=1200&q=80&auto=format&fit=crop',
   'https://images.unsplash.com/photo-1678305346329-8d24240d0bf6?w=1200&q=80&auto=format&fit=crop'
 ] where patente = 'JY389UB'; -- VW Vento GLI (sedán)
 
 update public.vehiculos set fotos = array[
-  'https://images.unsplash.com/photo-1573710459621-bb101783ca0f?w=1200&q=80&auto=format&fit=crop',
+  'https://images.unsplash.com/photo-1567784431148-dbcd19d0ddce?w=1200&q=80&auto=format&fit=crop',
   'https://images.unsplash.com/photo-1678305346329-8d24240d0bf6?w=1200&q=80&auto=format&fit=crop'
 ] where patente = 'MM167JV'; -- Toyota Corolla XEI (sedán)
 
