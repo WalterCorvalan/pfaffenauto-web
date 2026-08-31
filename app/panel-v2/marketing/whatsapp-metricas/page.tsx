@@ -1,5 +1,4 @@
-import { createServerClient } from "@supabase/ssr";
-import { cookies } from "next/headers";
+import { createClient } from "@/lib/supabase2/server";
 import Link from "next/link";
 import { MessageSquareText, ArrowDownToLine, ArrowUpFromLine, Users, Bot, ChevronLeft, ChevronRight } from "lucide-react";
 
@@ -29,12 +28,7 @@ export default async function WhatsappMetricasPage({
   const desde = (paginaActual - 1) * POR_PAGINA;
   const hasta = desde + POR_PAGINA - 1;
 
-  const cookieStore = await cookies();
-  const supabase = createServerClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY!,
-    { cookies: { getAll: () => cookieStore.getAll() } }
-  );
+  const supabase = await createClient();
 
   const desdeHoy = inicioDia(0);
   const desde7dias = inicioDia(7);
