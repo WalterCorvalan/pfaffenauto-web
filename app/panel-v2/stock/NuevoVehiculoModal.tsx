@@ -18,17 +18,19 @@ const ESTADOS = [
 
 interface Perfil { id: string; nombre: string }
 interface Cliente { id: string; nombre: string; telefono: string | null; dni_cuit: string | null }
+interface Sucursal { id: string; nombre: string }
 
 interface Props {
   perfiles: Perfil[];
   clientes: Cliente[];
+  sucursales: Sucursal[];
   miId: string;
   editando?: any;
   onClose: () => void;
   onCreado: (v: any) => void;
 }
 
-export default function NuevoVehiculoModal({ perfiles, clientes, miId, editando, onClose, onCreado }: Props) {
+export default function NuevoVehiculoModal({ perfiles, clientes, sucursales, miId, editando, onClose, onCreado }: Props) {
   const esEdicion = !!editando;
   const [categoria, setCategoria] = useState(editando?.categoria || "Auto");
   const [marca, setMarca] = useState(editando?.marca || "");
@@ -51,8 +53,6 @@ export default function NuevoVehiculoModal({ perfiles, clientes, miId, editando,
   const [propietarioTelefono, setPropietarioTelefono] = useState(editando?.propietario_telefono || "");
   const [propietarioEmail, setPropietarioEmail] = useState(editando?.propietario_email || "");
   const [consignadoPor, setConsignadoPor] = useState(editando?.consignado_por || "");
-  const [motorNro, setMotorNro] = useState("");
-  const [chasisNro, setChasisNro] = useState("");
   const [combustible, setCombustible] = useState(editando?.combustible || "");
   const [transmision, setTransmision] = useState(editando?.transmision || "");
   const [carroceria, setCarroceria] = useState(editando?.carroceria || "");
@@ -68,6 +68,43 @@ export default function NuevoVehiculoModal({ perfiles, clientes, miId, editando,
   const [notas, setNotas] = useState(editando?.notas || "");
   const [guardando, setGuardando] = useState(false);
   const [error, setError] = useState("");
+
+  // Técnicos (sumados a v2 — v1 los tenía)
+  const [segmento, setSegmento] = useState(editando?.segmento || "");
+  const [traccion, setTraccion] = useState(editando?.traccion || "");
+  const [potenciaCv, setPotenciaCv] = useState(editando?.potencia_cv ? String(editando.potencia_cv) : "");
+  const [cantidadPlazas, setCantidadPlazas] = useState(editando?.cantidad_plazas ? String(editando.cantidad_plazas) : "");
+  const [origen, setOrigen] = useState(editando?.origen || "");
+  const [numeroMotor, setNumeroMotor] = useState(editando?.numero_motor || "");
+  const [marcaMotor, setMarcaMotor] = useState(editando?.marca_motor || "");
+  const [numeroChasis, setNumeroChasis] = useState(editando?.numero_chasis || "");
+  const [marcaChasis, setMarcaChasis] = useState(editando?.marca_chasis || "");
+  const [radicadoLocalidad, setRadicadoLocalidad] = useState(editando?.radicado_localidad || "");
+  const [radicadoProvincia, setRadicadoProvincia] = useState(editando?.radicado_provincia || "");
+
+  // Gestión comercial
+  const [stockFisico, setStockFisico] = useState(editando?.stock_fisico ?? true);
+  const [destacado, setDestacado] = useState(editando?.destacado || false);
+  const [fechaCompra, setFechaCompra] = useState(editando?.fecha_compra || "");
+  const [importePatenteAnual, setImportePatenteAnual] = useState(editando?.importe_patente_anual ? String(editando.importe_patente_anual) : "");
+  const [sucursalId, setSucursalId] = useState(editando?.sucursal_id || "");
+  const [sucursalCompraId, setSucursalCompraId] = useState(editando?.sucursal_compra_id || "");
+
+  // Precio publicado (el que se ve en el catálogo, distinto del venta interno)
+  const [precioPublicadoUsd, setPrecioPublicadoUsd] = useState(editando?.precio_publicado_usd ? String(editando.precio_publicado_usd) : "");
+
+  // Proveedor / dueño anterior — datos extra (nombre/teléfono/email ya
+  // estaban arriba, esto suma lo que faltaba de v1)
+  const [propietarioApellido, setPropietarioApellido] = useState(editando?.propietario_apellido || "");
+  const [propietarioFechaNacimiento, setPropietarioFechaNacimiento] = useState(editando?.propietario_fecha_nacimiento || "");
+  const [propietarioCuitCuil, setPropietarioCuitCuil] = useState(editando?.propietario_cuit_cuil || "");
+  const [propietarioCalle, setPropietarioCalle] = useState(editando?.propietario_calle || "");
+  const [propietarioNumero, setPropietarioNumero] = useState(editando?.propietario_numero || "");
+  const [propietarioDepto, setPropietarioDepto] = useState(editando?.propietario_depto || "");
+  const [propietarioLocalidad, setPropietarioLocalidad] = useState(editando?.propietario_localidad || "");
+  const [propietarioCodigoPostal, setPropietarioCodigoPostal] = useState(editando?.propietario_codigo_postal || "");
+  const [propietarioProvincia, setPropietarioProvincia] = useState(editando?.propietario_provincia || "");
+  const [propietarioTelefonoCelular, setPropietarioTelefonoCelular] = useState(editando?.propietario_telefono_celular || "");
 
   const guardar = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -94,6 +131,25 @@ export default function NuevoVehiculoModal({ perfiles, clientes, miId, editando,
         manuales, duplicado_llaves: duplicadoLlaves, servicios_oficiales: serviciosOficiales,
         publicado_ml: publicadoMl, publicado_por: publicadoPor || null, link_ml: linkMl || null,
         notas: notas || null,
+        segmento: segmento || null, traccion: traccion || null,
+        potencia_cv: potenciaCv ? Number(potenciaCv) : null, cantidad_plazas: cantidadPlazas ? Number(cantidadPlazas) : null,
+        origen: origen || null, numero_motor: numeroMotor || null, marca_motor: marcaMotor || null,
+        numero_chasis: numeroChasis || null, marca_chasis: marcaChasis || null,
+        radicado_localidad: radicadoLocalidad || null, radicado_provincia: radicadoProvincia || null,
+        stock_fisico: stockFisico, destacado, fecha_compra: fechaCompra || null,
+        importe_patente_anual: importePatenteAnual ? Number(importePatenteAnual) : null,
+        sucursal_id: sucursalId || null, sucursal_compra_id: sucursalCompraId || null,
+        precio_publicado_usd: precioPublicadoUsd ? Number(precioPublicadoUsd) : null,
+        propietario_apellido: propioAgencia ? null : (propietarioApellido || null),
+        propietario_fecha_nacimiento: propioAgencia ? null : (propietarioFechaNacimiento || null),
+        propietario_cuit_cuil: propioAgencia ? null : (propietarioCuitCuil || null),
+        propietario_calle: propioAgencia ? null : (propietarioCalle || null),
+        propietario_numero: propioAgencia ? null : (propietarioNumero || null),
+        propietario_depto: propioAgencia ? null : (propietarioDepto || null),
+        propietario_localidad: propioAgencia ? null : (propietarioLocalidad || null),
+        propietario_codigo_postal: propioAgencia ? null : (propietarioCodigoPostal || null),
+        propietario_provincia: propioAgencia ? null : (propietarioProvincia || null),
+        propietario_telefono_celular: propioAgencia ? null : (propietarioTelefonoCelular || null),
       };
       const { data, error: dbError } = esEdicion
         ? await supabase2.from("vehiculos").update(payload).eq("id", editando.id).select().single()
@@ -210,6 +266,11 @@ export default function NuevoVehiculoModal({ perfiles, clientes, miId, editando,
                   {ESTADOS.map((s) => <option key={s.value} value={s.value}>{s.label}</option>)}
                 </select>
               </div>
+              <div>
+                <label className={labelClass}>Precio publicado USD (opcional)</label>
+                <input type="number" value={precioPublicadoUsd} onChange={(e) => setPrecioPublicadoUsd(e.target.value)} className={inputClass} />
+                <p className="text-[10px] text-slate-400 mt-1">Para catálogo/pautas, distinto del precio de venta interno.</p>
+              </div>
             </div>
           </div>
 
@@ -223,6 +284,42 @@ export default function NuevoVehiculoModal({ perfiles, clientes, miId, editando,
               <div>
                 <label className={labelClass}>Dueños anteriores</label>
                 <input type="number" value={duenosAnteriores} onChange={(e) => setDuenosAnteriores(e.target.value)} className={inputClass} />
+              </div>
+              <div>
+                <label className={labelClass}>Sucursal</label>
+                <select value={sucursalId} onChange={(e) => setSucursalId(e.target.value)} className={inputClass}>
+                  <option value="">— Sin asignar —</option>
+                  {sucursales.map((s) => <option key={s.id} value={s.id}>{s.nombre}</option>)}
+                </select>
+              </div>
+              <div>
+                <label className={labelClass}>Sucursal de compra</label>
+                <select value={sucursalCompraId} onChange={(e) => setSucursalCompraId(e.target.value)} className={inputClass}>
+                  <option value="">— Sin asignar —</option>
+                  {sucursales.map((s) => <option key={s.id} value={s.id}>{s.nombre}</option>)}
+                </select>
+              </div>
+            </div>
+          </div>
+
+          <div>
+            <p className={seccionClass}>Gestión comercial</p>
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+              <div>
+                <label className={labelClass}>Stock físico</label>
+                <select value={stockFisico ? "Si" : "No"} onChange={(e) => setStockFisico(e.target.value === "Si")} className={inputClass}><option value="Si">Sí</option><option value="No">No</option></select>
+              </div>
+              <div>
+                <label className={labelClass}>Destacado</label>
+                <select value={destacado ? "Si" : "No"} onChange={(e) => setDestacado(e.target.value === "Si")} className={inputClass}><option value="No">No</option><option value="Si">Sí</option></select>
+              </div>
+              <div>
+                <label className={labelClass}>Fecha de compra</label>
+                <input type="date" value={fechaCompra} onChange={(e) => setFechaCompra(e.target.value)} className={inputClass} />
+              </div>
+              <div>
+                <label className={labelClass}>Patente anual</label>
+                <input type="number" value={importePatenteAnual} onChange={(e) => setImportePatenteAnual(e.target.value)} className={inputClass} />
               </div>
             </div>
           </div>
@@ -265,13 +362,49 @@ export default function NuevoVehiculoModal({ perfiles, clientes, miId, editando,
                   </select>
                   <p className="text-[10px] text-slate-400 mt-1">Vendedor responsable de la consignación</p>
                 </div>
+              </div>
+            )}
+            {!propioAgencia && (
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mt-3">
                 <div>
-                  <label className={labelClass}>Nº motor</label>
-                  <input value={motorNro} onChange={(e) => setMotorNro(e.target.value)} className={inputClass} />
+                  <label className={labelClass}>Apellido</label>
+                  <input value={propietarioApellido} onChange={(e) => setPropietarioApellido(e.target.value)} className={inputClass} />
                 </div>
                 <div>
-                  <label className={labelClass}>Nº chasis</label>
-                  <input value={chasisNro} onChange={(e) => setChasisNro(e.target.value)} className={inputClass} />
+                  <label className={labelClass}>Fecha de nacimiento</label>
+                  <input type="date" value={propietarioFechaNacimiento} onChange={(e) => setPropietarioFechaNacimiento(e.target.value)} className={inputClass} />
+                </div>
+                <div>
+                  <label className={labelClass}>CUIT/CUIL</label>
+                  <input value={propietarioCuitCuil} onChange={(e) => setPropietarioCuitCuil(e.target.value)} placeholder="20-12345678-9" className={inputClass} />
+                </div>
+                <div>
+                  <label className={labelClass}>Celular</label>
+                  <input value={propietarioTelefonoCelular} onChange={(e) => setPropietarioTelefonoCelular(e.target.value)} className={inputClass} />
+                </div>
+                <div>
+                  <label className={labelClass}>Calle</label>
+                  <input value={propietarioCalle} onChange={(e) => setPropietarioCalle(e.target.value)} className={inputClass} />
+                </div>
+                <div>
+                  <label className={labelClass}>Número</label>
+                  <input value={propietarioNumero} onChange={(e) => setPropietarioNumero(e.target.value)} className={inputClass} />
+                </div>
+                <div>
+                  <label className={labelClass}>Depto</label>
+                  <input value={propietarioDepto} onChange={(e) => setPropietarioDepto(e.target.value)} className={inputClass} />
+                </div>
+                <div>
+                  <label className={labelClass}>Localidad</label>
+                  <input value={propietarioLocalidad} onChange={(e) => setPropietarioLocalidad(e.target.value)} className={inputClass} />
+                </div>
+                <div>
+                  <label className={labelClass}>Código postal</label>
+                  <input value={propietarioCodigoPostal} onChange={(e) => setPropietarioCodigoPostal(e.target.value)} className={inputClass} />
+                </div>
+                <div>
+                  <label className={labelClass}>Provincia</label>
+                  <input value={propietarioProvincia} onChange={(e) => setPropietarioProvincia(e.target.value)} className={inputClass} />
                 </div>
               </div>
             )}
@@ -317,6 +450,62 @@ export default function NuevoVehiculoModal({ perfiles, clientes, miId, editando,
               <div>
                 <label className={labelClass}>Versión</label>
                 <input value={version} onChange={(e) => setVersion(e.target.value)} placeholder="Ej: Titanium" className={inputClass} />
+              </div>
+              <div>
+                <label className={labelClass}>Segmento</label>
+                <input value={segmento} onChange={(e) => setSegmento(e.target.value)} placeholder="Ej: Sedán compacto" className={inputClass} />
+              </div>
+              <div>
+                <label className={labelClass}>Tracción</label>
+                <select value={traccion} onChange={(e) => setTraccion(e.target.value)} className={inputClass}>
+                  <option value="">— Sin especificar —</option>
+                  <option>4x2</option><option>4x4</option><option>AWD</option>
+                </select>
+              </div>
+              <div>
+                <label className={labelClass}>Potencia (CV)</label>
+                <input type="number" value={potenciaCv} onChange={(e) => setPotenciaCv(e.target.value)} className={inputClass} />
+              </div>
+              <div>
+                <label className={labelClass}>Cantidad de plazas</label>
+                <input type="number" value={cantidadPlazas} onChange={(e) => setCantidadPlazas(e.target.value)} className={inputClass} />
+              </div>
+              <div>
+                <label className={labelClass}>Origen</label>
+                <select value={origen} onChange={(e) => setOrigen(e.target.value)} className={inputClass}>
+                  <option value="">— Sin especificar —</option>
+                  <option>Nacional</option><option>Importado</option>
+                </select>
+              </div>
+            </div>
+          </div>
+
+          <div>
+            <p className={seccionClass}>Motor, chasis y radicación</p>
+            <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
+              <div>
+                <label className={labelClass}>Nº motor</label>
+                <input value={numeroMotor} onChange={(e) => setNumeroMotor(e.target.value)} className={inputClass} />
+              </div>
+              <div>
+                <label className={labelClass}>Marca motor</label>
+                <input value={marcaMotor} onChange={(e) => setMarcaMotor(e.target.value)} className={inputClass} />
+              </div>
+              <div>
+                <label className={labelClass}>Nº chasis</label>
+                <input value={numeroChasis} onChange={(e) => setNumeroChasis(e.target.value)} className={inputClass} />
+              </div>
+              <div>
+                <label className={labelClass}>Marca chasis</label>
+                <input value={marcaChasis} onChange={(e) => setMarcaChasis(e.target.value)} className={inputClass} />
+              </div>
+              <div>
+                <label className={labelClass}>Radicado — localidad</label>
+                <input value={radicadoLocalidad} onChange={(e) => setRadicadoLocalidad(e.target.value)} className={inputClass} />
+              </div>
+              <div>
+                <label className={labelClass}>Radicado — provincia</label>
+                <input value={radicadoProvincia} onChange={(e) => setRadicadoProvincia(e.target.value)} className={inputClass} />
               </div>
             </div>
           </div>

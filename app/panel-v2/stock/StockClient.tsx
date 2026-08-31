@@ -48,8 +48,8 @@ function aRevisar(v: Vehiculo) {
 }
 
 export default function StockClient({
-  vehiculosIniciales, mandatosIniciales, perfiles, clientes, catalogoConfigInicial, miId,
-}: { vehiculosIniciales: Vehiculo[]; mandatosIniciales: Mandato[]; perfiles: Perfil[]; clientes: Cliente[]; catalogoConfigInicial: CatalogoConfig | null; miId: string }) {
+  vehiculosIniciales, mandatosIniciales, perfiles, clientes, catalogoConfigInicial, sucursales, miId,
+}: { vehiculosIniciales: Vehiculo[]; mandatosIniciales: Mandato[]; perfiles: Perfil[]; clientes: Cliente[]; catalogoConfigInicial: CatalogoConfig | null; sucursales: { id: string; nombre: string }[]; miId: string }) {
   const router = useRouter();
   const searchParams = useSearchParams();
   const [vehiculos, setVehiculos] = useState(vehiculosIniciales);
@@ -311,7 +311,7 @@ export default function StockClient({
         </div>
       </div>
 
-      {(modalNuevo || editando) && <NuevoVehiculoModal perfiles={perfiles} clientes={clientes} miId={miId} editando={editando || undefined} onClose={() => { setModalNuevo(false); setEditando(null); }} onCreado={onCreadoVehiculo} />}
+      {(modalNuevo || editando) && <NuevoVehiculoModal perfiles={perfiles} clientes={clientes} sucursales={sucursales} miId={miId} editando={editando || undefined} onClose={() => { setModalNuevo(false); setEditando(null); }} onCreado={onCreadoVehiculo} />}
       {modalMandato && <NuevoMandatoModal miId={miId} miNombre={miNombre} onClose={() => setModalMandato(false)} onCreado={onCreadoMandato} />}
       {modalCatalogo && <TuCatalogoModal config={catalogoConfig} esAdmin={esAdmin} onClose={() => setModalCatalogo(false)} onConfigActualizada={setCatalogoConfig} />}
       {modalImportar && <ImportarXlsxModal miId={miId} onClose={() => setModalImportar(false)} onImportados={(nuevos) => setVehiculos((prev) => [...nuevos, ...prev])} />}
