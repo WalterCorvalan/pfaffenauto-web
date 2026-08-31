@@ -25,7 +25,7 @@ function fmt(n: number, moneda: string) {
   return moneda === "ARS" ? `$ ${n.toLocaleString("es-AR")}` : `${moneda} ${n.toLocaleString("es-AR")}`;
 }
 
-export default function LiquidadorClient({ empleados, liquidacionesPrevias }: { empleados: Empleado[]; liquidacionesPrevias: any[] }) {
+export default function LiquidadorClient({ empleados, liquidacionesPrevias, categorias }: { empleados: Empleado[]; liquidacionesPrevias: any[]; categorias: { id: string; nombre: string }[] }) {
   const router = useRouter();
   const hoy = new Date();
   const mesActual = `${hoy.getFullYear()}-${String(hoy.getMonth() + 1).padStart(2, "0")}`;
@@ -34,6 +34,8 @@ export default function LiquidadorClient({ empleados, liquidacionesPrevias }: { 
   const [mes, setMes] = useState(mesActual);
   const [calculando, setCalculando] = useState(false);
   const [guardando, setGuardando] = useState(false);
+  const [categoriaAAsignar, setCategoriaAAsignar] = useState("");
+  const [asignando, setAsignando] = useState(false);
 
   const [comisionUsd, setComisionUsd] = useState(0);
   const [comisionArs, setComisionArs] = useState(0);
@@ -78,6 +80,21 @@ export default function LiquidadorClient({ empleados, liquidacionesPrevias }: { 
     };
     calcular();
   }, [empleadoId, mes, categoria]);
+
+  const asignarCategoria = async () => {
+    if (!categoriaAAsignar || !empleadoId) return;
+    setAsignando(true);
+    try {
+      const { error } = await supabase2.from("perfiles").update({ categoria_id: categoriaAAsignar }).eq("id", empleadoId);
+      if (error) throw error;
+      router.refresh();
+    } catch (err) {
+      console.error(err);
+      alert("No se pudo asignar la categoría.");
+    } finally {
+      setAsignando(false);
+    }
+  };
 
   const guardar = async () => {
     if (!empleadoId) return alert("Elegí un empleado.");
@@ -146,9 +163,20 @@ export default function LiquidadorClient({ empleados, liquidacionesPrevias }: { 
           </div>
 
           {empleadoId && !categoria && (
-            <p className="mt-4 text-xs text-amber-700 dark:text-amber-300 bg-amber-50 dark:bg-amber-500/10 border border-amber-200 dark:border-amber-500/20 rounded-lg px-3.5 py-2.5">
-              Este empleado no tiene categoría asignada. Asignale una en Categorías de Empleados antes de liquidar.
-            </p>
+            <div className="mt-4 flex flex-col sm:flex-row sm:items-center gap-2.5 text-xs text-amber-700 dark:text-amber-300 bg-amber-50 dark:bg-amber-500/10 border border-amber-200 dark:border-amber-500/20 rounded-lg px-3.5 py-2.5">
+              <span className="flex-1">Este empleado no tiene categoría asignada.</span>
+              <div className="flex items-center gap-2">
+                <select value={categoriaAAsignar} onChange={(e) => setCategoriaAAsignar(e.target.value)} className="bg-white dark:bg-white/10 border border-amber-300 dark:border-amber-500/30 rounded-lg px-2 py-1.5 text-xs outline-none text-slate-900 dark:text-white">
+                  <option value="">Elegir categoría...</option>
+                  {categorias.map((c) => (
+                    <option key={c.id} value={c.id}>{c.nombre}</option>
+                  ))}
+                </select>
+                <button onClick={asignarCategoria} disabled={!categoriaAAsignar || asignando} className="px-3 py-1.5 text-xs font-bold bg-amber-600 hover:bg-amber-700 text-white rounded-lg transition-colors disabled:opacity-50 shrink-0">
+                  {asignando ? "Asignando..." : "Asignar"}
+                </button>
+              </div>
+            </div>
           )}
         </div>
 
@@ -238,7 +266,7 @@ export default function LiquidadorClient({ empleados, liquidacionesPrevias }: { 
                   {liquidacionesPrevias.map((l) => (
                     <tr key={l.id} className="hover:bg-slate-50/50 dark:hover:bg-white/5">
                       <td className="px-6 py-3 font-bold text-slate-800 dark:text-white text-[13px]">{l.perfiles?.nombre || "—"}</td>
-                      <td className="px-6 py-3 text-slate-500 dark:text-slate-400 text-[13px]">{new Date(l.mes).toLocaleDateString("es-AR", { month: "long", year: "numeric" })}</td>
+                      <td className="px-6 py-3 text-slate-500 dark:text-slate-400 text-[13px]">{new Date(l.mes).toLocaleDateString("es-AR", { month: "long", year: "numeric", timeZone: "UTC" })}</td>
                       <td className="px-6 py-3 text-right font-mono font-bold text-rose-600 dark:text-rose-400 text-[13px]">{fmt(Number(l.total_final), l.moneda_total)}</td>
                     </tr>
                   ))}

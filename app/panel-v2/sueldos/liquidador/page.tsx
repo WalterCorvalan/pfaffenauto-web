@@ -14,14 +14,20 @@ export default async function LiquidadorPage() {
 
   const { data: liquidacionesPrevias } = await supabase
     .from("liquidaciones_sueldo")
-    .select("*, perfiles ( nombre )")
+    .select("*, perfiles!liquidaciones_sueldo_perfil_id_fkey ( nombre )")
     .order("mes", { ascending: false })
     .limit(30);
+
+  const { data: categorias } = await supabase
+    .from("categorias_empleado")
+    .select("id, nombre")
+    .order("orden", { ascending: true })
+    .order("nombre", { ascending: true });
 
   const empleadosNormalizados = (empleados || []).map((e: any) => ({
     ...e,
     categorias_empleado: Array.isArray(e.categorias_empleado) ? e.categorias_empleado[0] || null : e.categorias_empleado,
   }));
 
-  return <LiquidadorClient empleados={empleadosNormalizados} liquidacionesPrevias={liquidacionesPrevias || []} />;
+  return <LiquidadorClient empleados={empleadosNormalizados} liquidacionesPrevias={liquidacionesPrevias || []} categorias={categorias || []} />;
 }
