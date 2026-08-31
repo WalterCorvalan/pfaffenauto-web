@@ -6,7 +6,7 @@ import { usePathname, useRouter } from "next/navigation";
 import { supabase2 } from "@/lib/supabase2/client";
 import {
   Search, Moon, Sun, LogOut, RotateCw, Menu, X,
-  LayoutDashboard, CalendarDays, BellRing, LineChart, Megaphone, Folder,
+  LayoutDashboard, CalendarDays, CalendarCheck, BellRing, LineChart, Megaphone, Folder,
   Car, Users, FileText, Briefcase, Trophy, SearchCode, Handshake, PackageCheck,
   BedDouble, Repeat, Star, FolderKanban, ClipboardList, KeyRound, Landmark,
   Wrench, Hammer, MessageSquareWarning, Banknote, PiggyBank, Coins, ShieldCheck,
@@ -39,6 +39,7 @@ const GRUPOS: { titulo: string; items: { href?: string; label: string; icon: any
     titulo: "Comercial",
     items: [
       { href: "/panel-v2/stock", label: "Stock", icon: Car },
+      { href: "/panel-v2/visitas", label: "Visitas", icon: CalendarCheck },
       { href: "/panel-v2/clientes", label: "Clientes", icon: Users },
       { href: "/panel-v2/cotizaciones", label: "Cotizaciones", icon: FileText },
       { href: "/panel-v2/ventas", label: "Ventas", icon: Briefcase },

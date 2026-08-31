@@ -3,6 +3,7 @@
 import { useState, useEffect, useRef } from "react";
 import Script from "next/script";
 import { supabase } from "@/lib/supabase/client";
+import { supabase2 } from "@/lib/supabase2/client";
 import {
   CalendarCheck, Clock, MapPin, User, Phone, CheckCircle2,
   ChevronDown, Car, Coffee, ShieldCheck
@@ -107,14 +108,10 @@ export default function AgendarCitaForm() {
       setOcupadas([]);
       return;
     }
-    supabase
-      .from("visitas_agendadas")
-      .select("horario_visita")
-      .eq("sucursal", sucursal)
-      .eq("fecha_visita", fecha)
-      .neq("estado", "Cancelada")
+    supabase2
+      .rpc("visitas_horarios_ocupados", { p_sucursal: sucursal, p_fecha: fecha })
       .then(({ data }) => {
-        setOcupadas(data?.map((v) => v.horario_visita) || []);
+        setOcupadas(data?.map((v: { horario_visita: string }) => v.horario_visita) || []);
       });
   }, [sucursal, fecha]);
 
@@ -137,18 +134,20 @@ export default function AgendarCitaForm() {
     try {
       const vehiculoSeleccionado = vehiculos.find((v) => v.id === vehiculoId);
 
-      const response = await fetch("/api/visitas", {
+      const response = await fetch("/api/panel-v2/visitas", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           turnstileToken,
           vehiculo_id: vehiculoId || null,
+          vehiculo_marca: vehiculoSeleccionado?.marca || null,
+          vehiculo_modelo: vehiculoSeleccionado?.modelo || null,
+          vehiculo_patente: vehiculoSeleccionado?.patente || null,
           nombre_cliente: nombre,
           telefono_cliente: telefono,
           fecha_visita: fecha,
           horario_visita: horario,
           sucursal,
-          vendedor_id: vehiculoSeleccionado?.vendedor_asignado_id || null,
         }),
       });
 

@@ -102,18 +102,20 @@ export default function AgendarVisitaForm({ auto, isMobile = false }: AgendarVis
     setLoading(true);
 
     try {
-      const response = await fetch("/api/visitas", {
+      const response = await fetch("/api/panel-v2/visitas", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           turnstileToken,
           vehiculo_id: auto.id,
+          vehiculo_marca: auto.marca,
+          vehiculo_modelo: auto.modelo,
+          vehiculo_patente: auto.patente || null,
           nombre_cliente: nombre.trim(),
           telefono_cliente: telefono.trim(),
           fecha_visita: fecha,
           horario_visita: horario,
           sucursal: sucursalNombre,
-          vendedor_id: auto?.vendedor_asignado_id || null,
         }),
       });
 

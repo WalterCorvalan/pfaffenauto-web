@@ -1,7 +1,7 @@
 import {
   User, Car, FileText, BarChart3, CreditCard, Bell, DollarSign, FolderKanban,
   MessageSquareWarning, BellRing, SearchCode, Repeat, AlarmClock, MessageCircle,
-  PhoneCall, Gift, AlertTriangle, Bot, Briefcase, KeyRound,
+  PhoneCall, Gift, AlertTriangle, Bot, Briefcase, KeyRound, CalendarCheck,
 } from "lucide-react";
 
 // Mapeo único de tipo de alerta -> ícono/color/link, compartido por
@@ -35,6 +35,7 @@ export const TIPO_ICON: Record<string, any> = {
   rodi_handoff: Bot,
   postulacion: Briefcase,
   consignacion_nueva: KeyRound,
+  visita_nueva: CalendarCheck,
 };
 
 export const TIPO_COLOR: Record<string, string> = {
@@ -61,6 +62,7 @@ export const TIPO_COLOR: Record<string, string> = {
   rodi_handoff: "bg-rose-100 text-rose-600 dark:bg-rose-500/15 dark:text-rose-300",
   postulacion: "bg-teal-100 text-teal-600 dark:bg-teal-500/15 dark:text-teal-300",
   consignacion_nueva: "bg-purple-100 text-purple-600 dark:bg-purple-500/15 dark:text-purple-300",
+  visita_nueva: "bg-indigo-100 text-indigo-600 dark:bg-indigo-500/15 dark:text-indigo-300",
 };
 
 export const TIPO_VER: Record<string, string> = {
@@ -87,6 +89,7 @@ export const TIPO_VER: Record<string, string> = {
   rodi_handoff: "Ver Rodi",
   postulacion: "Ver Postulaciones",
   consignacion_nueva: "Ver Consignaciones",
+  visita_nueva: "Ver Visitas",
 };
 
 export const ICONO_DEFECTO = Bell;
