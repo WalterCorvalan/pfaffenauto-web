@@ -50,7 +50,6 @@ const GRUPOS: { titulo: string; items: { href?: string; label: string; icon: any
     titulo: "Operación",
     items: [
       { href: "/panel-v2/pedidos", label: "Pedidos", icon: SearchCode },
-      { href: "/panel-v2/pedidos-busqueda", label: "Pedidos (búsquedas)", icon: Search },
       { href: "/panel-v2/postventa", label: "Postventa", icon: PackageCheck },
       { href: "/panel-v2/expedientes", label: "Expedientes", icon: FolderKanban },
       { href: "/panel-v2/reclamos", label: "Reclamos", icon: MessageSquareWarning },
