@@ -21,29 +21,19 @@ alter table public.clientes
   add column if not exists no_contactar boolean not null default false;
 
 -- ============================================================
--- 2) Configuración de la empresa (singleton, mismo patrón que catalogo_config)
+-- 2) Configuración de la empresa — la tabla YA EXISTE (singleton id=true,
+-- creada en sql_panel_v2_pedidos_busqueda.sql para Pedidos). Se suma acá
+-- 100% aditivo, sin tocar columnas/políticas existentes.
 -- ============================================================
-create table if not exists public.configuracion_empresa (
-  id text primary key default 'default',
-  plazo_recontacto_meses int not null default 4,
-  asignar_al_enviar boolean not null default false,
-  envio_automatico_recontactos boolean not null default false,
-  plantilla_busca_auto text not null default 'Hola {nombre}! Soy {vendedor} de Pfaffen Autos. Vi que hace un tiempo consultaste por el {vehiculo} — ¿seguís buscando? Tenemos stock nuevo, te puedo mandar opciones.',
-  plantilla_quiere_vender text not null default 'Hola {nombre}! Soy {vendedor} de Pfaffen Autos. Hace un tiempo nos consultaste para tasar tu auto — ¿todavía te interesa? Te hacemos una oferta sin compromiso.',
-  plantilla_taller_service text not null default 'Hola {nombre}! Soy {vendedor} de Pfaffen Autos. Hace tiempo no sabemos de vos — ¿cómo va tu auto? Cualquier cosa de service o mantenimiento, contanos.',
-  plantilla_consulta_general text not null default 'Hola {nombre}! Soy {vendedor} de Pfaffen Autos. Hace un tiempo nos consultaste y no volvimos a hablar — ¿en qué te podemos ayudar hoy?',
-  updated_at timestamptz not null default now()
-);
-
-insert into public.configuracion_empresa (id) values ('default') on conflict (id) do nothing;
-
-alter table public.configuracion_empresa enable row level security;
-drop policy if exists "ver_configuracion_empresa" on public.configuracion_empresa;
-create policy "ver_configuracion_empresa" on public.configuracion_empresa for select to authenticated using (true);
-drop policy if exists "editar_configuracion_empresa" on public.configuracion_empresa;
-create policy "editar_configuracion_empresa" on public.configuracion_empresa for update to authenticated
-  using (exists (select 1 from public.perfiles p where p.id = auth.uid() and 'admin' = any(p.roles)))
-  with check (exists (select 1 from public.perfiles p where p.id = auth.uid() and 'admin' = any(p.roles)));
+alter table public.configuracion_empresa
+  add column if not exists plazo_recontacto_meses int not null default 4,
+  add column if not exists asignar_al_enviar boolean not null default false,
+  add column if not exists envio_automatico_recontactos boolean not null default false,
+  add column if not exists plantilla_busca_auto text not null default 'Hola {nombre}! Soy {vendedor} de Pfaffen Autos. Vi que hace un tiempo consultaste por el {vehiculo} — ¿seguís buscando? Tenemos stock nuevo, te puedo mandar opciones.',
+  add column if not exists plantilla_quiere_vender text not null default 'Hola {nombre}! Soy {vendedor} de Pfaffen Autos. Hace un tiempo nos consultaste para tasar tu auto — ¿todavía te interesa? Te hacemos una oferta sin compromiso.',
+  add column if not exists plantilla_taller_service text not null default 'Hola {nombre}! Soy {vendedor} de Pfaffen Autos. Hace tiempo no sabemos de vos — ¿cómo va tu auto? Cualquier cosa de service o mantenimiento, contanos.',
+  add column if not exists plantilla_consulta_general text not null default 'Hola {nombre}! Soy {vendedor} de Pfaffen Autos. Hace un tiempo nos consultaste y no volvimos a hablar — ¿en qué te podemos ayudar hoy?';
+-- RLS ya existe ("equipo_config_empresa", FOR ALL a authenticated) — no se toca.
 
 -- ============================================================
 -- 3) Recontactos — un registro por mensaje mandado
