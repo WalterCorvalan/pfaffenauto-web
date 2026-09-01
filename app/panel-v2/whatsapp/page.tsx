@@ -3,6 +3,7 @@ import ConversacionesShell from "./ConversacionesShell";
 
 export default async function WhatsappPage() {
   const supabase = await createClient();
+  const { data: { user } } = await supabase.auth.getUser();
 
   const [waRes, igRes, vendedoresRes] = await Promise.all([
     supabase
@@ -29,6 +30,7 @@ export default async function WhatsappPage() {
       conversacionesIniciales={waRes.data || []}
       conversacionesInstagramIniciales={igRes.data || []}
       vendedores={(vendedoresRes.data || []).filter((p) => p.roles?.includes("ventas") || p.roles?.includes("admin"))}
+      miId={user?.id || ""}
     />
   );
 }

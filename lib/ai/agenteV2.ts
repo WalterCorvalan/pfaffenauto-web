@@ -42,7 +42,7 @@ export type HistorialMensaje = { role: "user" | "assistant"; content: string };
 // sugerirle cerrar rápido con lo que necesita. DURO: a partir de acá se
 // corta directo, sin llamar a la IA — se deriva con un mensaje fijo.
 const LIMITE_MENSAJES_SUAVE = 12;
-const LIMITE_MENSAJES_DURO = 25;
+const LIMITE_MENSAJES_DURO = 35;
 
 function respuestaLimiteAlcanzado(): AgentReplyV2 {
   return {
@@ -71,7 +71,7 @@ async function ejecutarBusquedaStock(
 ): Promise<ResultadoStockV2[]> {
   let query = supabase
     .from("vehiculos")
-    .select("marca, modelo, anio, precio_venta, moneda_venta, patente")
+    .select("marca, modelo, anio, precio_venta, moneda_venta, patente, color, km, version, transmision, combustible")
     .in("estado", ["disponible", "reservado"])
     .limit(modelo ? 3 : 6);
   if (marca) query = query.ilike("marca", `%${marca}%`);

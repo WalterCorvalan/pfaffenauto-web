@@ -8,8 +8,8 @@ import LeadsTab from "./LeadsTab";
 interface Perfil { id: string; nombre: string; roles: string[] }
 
 export default function ConversacionesShell({
-  conversacionesIniciales, conversacionesInstagramIniciales, vendedores,
-}: { conversacionesIniciales: any[]; conversacionesInstagramIniciales: any[]; vendedores: Perfil[] }) {
+  conversacionesIniciales, conversacionesInstagramIniciales, vendedores, miId,
+}: { conversacionesIniciales: any[]; conversacionesInstagramIniciales: any[]; vendedores: Perfil[]; miId: string }) {
   const [tab, setTab] = useState<"bandeja" | "leads" | "nuevo">("bandeja");
   const leadsConConversacion = conversacionesIniciales.filter((c) => c.estado_lead && c.estado_lead !== "nuevo").length
     + conversacionesInstagramIniciales.filter((c) => c.estado_lead && c.estado_lead !== "nuevo").length;
@@ -17,16 +17,18 @@ export default function ConversacionesShell({
   return (
     <div className="w-full h-full flex flex-col overflow-hidden bg-white dark:bg-[#0A0A0A]">
       <div className="px-4 py-2 border-b border-slate-200 dark:border-white/10 shrink-0 flex items-center gap-3 flex-wrap">
-        <h1 className="text-sm font-bold text-slate-900 dark:text-white flex items-center gap-1.5 shrink-0">
-          <MessageSquareText className="w-4 h-4 text-emerald-600" /> Conversaciones
-        </h1>
-        <p className="text-[10px] text-slate-400 shrink-0 hidden sm:block">{leadsConConversacion} lead{leadsConConversacion === 1 ? "" : "s"} con conversación</p>
-        <div className="flex items-center gap-1 ml-auto">
+        <div className="flex items-center gap-1">
           {[{ v: "bandeja" as const, l: "Bandeja" }, { v: "leads" as const, l: "Leads" }, { v: "nuevo" as const, l: "Nuevo mensaje" }].map((t) => (
             <button key={t.v} onClick={() => setTab(t.v)} className={`px-3 py-1 text-xs font-semibold rounded-lg transition-colors ${tab === t.v ? "bg-slate-900 dark:bg-white/10 text-white" : "bg-white dark:bg-transparent border border-slate-200 dark:border-white/10 text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-white/5"}`}>
               {t.l}
             </button>
           ))}
+        </div>
+        <div className="flex items-center gap-3 ml-auto">
+          <p className="text-[10px] text-slate-400 shrink-0 hidden sm:block">{leadsConConversacion} lead{leadsConConversacion === 1 ? "" : "s"} con conversación</p>
+          <h1 className="text-sm font-bold text-slate-900 dark:text-white flex items-center gap-1.5 shrink-0">
+            <MessageSquareText className="w-4 h-4 text-emerald-600" /> Conversaciones
+          </h1>
         </div>
       </div>
 
@@ -35,7 +37,7 @@ export default function ConversacionesShell({
           <ChatClient conversacionesIniciales={conversacionesIniciales} conversacionesInstagramIniciales={conversacionesInstagramIniciales} vendedores={vendedores} />
         )}
         {tab === "leads" && (
-          <LeadsTab conversacionesIniciales={conversacionesIniciales} vendedores={vendedores} />
+          <LeadsTab conversacionesIniciales={conversacionesIniciales} vendedores={vendedores} miId={miId} />
         )}
         {tab === "nuevo" && (
           <div className="p-6">
