@@ -16,6 +16,7 @@ import {
 import QuickActionsButton from "@/components/panelV2/QuickActionsButton";
 import NotificationBell from "@/components/panelV2/NotificationBell";
 import MensajesBubble from "@/components/panelV2/MensajesBubble";
+import TopTicker from "@/components/panelV2/TopTicker";
 
 // Grupos calcados del índice del manual del CRM viejo — todo lo que todavía
 // no construimos queda listado pero deshabilitado, para que el mapa completo
@@ -117,7 +118,6 @@ export default function PanelV2Layout({ children }: { children: React.ReactNode 
   const [nombre, setNombre] = useState("Cargando...");
   const [roles, setRoles] = useState<string[]>([]);
   const [miId, setMiId] = useState<string | null>(null);
-  const [autosDisponibles, setAutosDisponibles] = useState<number | null>(null);
   const [toast, setToast] = useState<{ id: string; titulo: string; mensaje: string | null; link: string | null } | null>(null);
   // Feedback de "toqué esto, se está cargando" en la navegación del sidebar —
   // sin esto, un click tarda ~1-2s en mostrar algo y parece que no pasó nada.
@@ -140,10 +140,6 @@ export default function PanelV2Layout({ children }: { children: React.ReactNode 
       return !prev;
     });
   };
-
-  useEffect(() => {
-    supabase2.from("vehiculos").select("id", { count: "exact", head: true }).eq("estado", "disponible").then(({ count }) => setAutosDisponibles(count ?? 0));
-  }, []);
 
   useEffect(() => {
     supabase2.auth.getUser().then(async ({ data: { user } }) => {
@@ -272,34 +268,23 @@ export default function PanelV2Layout({ children }: { children: React.ReactNode 
         {/* CONTENIDO */}
         <div className="flex-1 min-w-0 h-full flex flex-col pt-14 md:pt-0">
           {/* TOPBAR */}
-          <div className="hidden md:flex items-center gap-3 px-4 py-3 border-b border-slate-200 dark:border-white/10 bg-white dark:bg-[#111] shrink-0">
-            <div className="relative flex-1 max-w-md">
+          <div className="hidden md:flex items-center gap-3 px-4 py-2 border-b border-slate-200 dark:border-white/10 bg-white dark:bg-[#111] shrink-0">
+            <div className="relative w-64 shrink-0">
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-slate-400" />
               <input
                 disabled
-                placeholder="Buscar clientes, vehículos, ventas..."
+                placeholder="Buscar clientes, patentes, etc..."
                 title="El buscador global se conecta cuando construyamos esos módulos"
-                className="w-full bg-slate-50 dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-full py-2 pl-9 pr-3 text-xs outline-none text-slate-900 dark:text-white placeholder:text-slate-400 disabled:cursor-not-allowed"
+                className="w-full bg-slate-50 dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-full py-1.5 pl-9 pr-3 text-[11px] outline-none text-slate-900 dark:text-white placeholder:text-slate-400 disabled:cursor-not-allowed"
               />
             </div>
 
-            <div className="flex items-center gap-1.5 bg-emerald-50 dark:bg-emerald-500/10 border border-emerald-100 dark:border-emerald-500/20 rounded-full px-3 py-1.5 text-[11px] font-semibold text-emerald-700 dark:text-emerald-300 whitespace-nowrap">
-              <span className="w-1.5 h-1.5 rounded-full bg-emerald-500" /> Caja: USD 0 · ARS 0
-            </div>
-            {autosDisponibles !== null && (
-              <div className="hidden md:flex items-center gap-1.5 bg-blue-50 dark:bg-blue-500/10 border border-blue-100 dark:border-blue-500/20 rounded-full px-3 py-1.5 text-[11px] font-semibold text-blue-700 dark:text-blue-300 whitespace-nowrap">
-                <Car className="w-3 h-3" /> {autosDisponibles} auto{autosDisponibles === 1 ? "" : "s"} en stock disponible{autosDisponibles === 1 ? "" : "s"}
-              </div>
-            )}
+            <TopTicker />
 
-            <button onClick={toggleDarkMode} className="p-2 rounded-lg hover:bg-slate-100 dark:hover:bg-white/10 text-slate-500 dark:text-slate-300 shrink-0" title={darkMode ? "Modo claro" : "Modo oscuro"}>
+            <button onClick={toggleDarkMode} className="p-1.5 rounded-lg hover:bg-slate-100 dark:hover:bg-white/10 text-slate-500 dark:text-slate-300 shrink-0" title={darkMode ? "Modo claro" : "Modo oscuro"}>
               {darkMode ? <Sun className="w-4 h-4" /> : <Moon className="w-4 h-4" />}
             </button>
             <NotificationBell miId={miId || ""} />
-            <div className="flex items-center gap-2 shrink-0">
-              <div className="w-8 h-8 rounded-full bg-rose-500 text-white flex items-center justify-center text-sm font-bold">{nombre.charAt(0).toUpperCase()}</div>
-              <span className="text-xs font-bold hidden lg:inline">{nombre}</span>
-            </div>
           </div>
 
           <main className="relative flex-1 min-w-0 overflow-y-auto bg-[#F8FAFC] dark:bg-[#0A0A0A]">
