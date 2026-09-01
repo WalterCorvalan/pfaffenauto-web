@@ -1,9 +1,18 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
+import Script from "next/script";
 import { Search, User, Phone, CarFront, Send, X, Loader2 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
-import { supabase } from "@/lib/supabase/client"; // Importamos tu cliente de Supabase
+
+declare global {
+  interface Window {
+    turnstile?: {
+      render: (container: HTMLElement, options: Record<string, unknown>) => string;
+      reset: (widgetId?: string) => void;
+    };
+  }
+}
 
 interface BuscadorFallbackProps {
   isOpen: boolean;
@@ -16,50 +25,75 @@ export default function BuscadorFallback({ isOpen, onClose, busquedaPrevia = "" 
   const [nombre, setNombre] = useState("");
   const [telefono, setTelefono] = useState("");
   const [loading, setLoading] = useState(false);
+  const [error, setError] = useState("");
+
+  // Turnstile (anti-spam gratuito) — mismo patrón que el resto de los forms públicos.
+  const [turnstileToken, setTurnstileToken] = useState("");
+  const [turnstileListo, setTurnstileListo] = useState(false);
+  const turnstileRef = useRef<HTMLDivElement>(null);
+  const turnstileWidgetId = useRef<string | null>(null);
 
   // Actualizar el estado interno si cambia la búsqueda previa desde afuera
   useEffect(() => {
     setBusqueda(busquedaPrevia);
   }, [busquedaPrevia]);
 
+  useEffect(() => {
+    if (!isOpen || !turnstileListo || !turnstileRef.current || !window.turnstile) return;
+    if (turnstileWidgetId.current) return; // ya renderizado
+
+    turnstileWidgetId.current = window.turnstile.render(turnstileRef.current, {
+      sitekey: process.env.NEXT_PUBLIC_TURNSTILE_SITE_KEY,
+      callback: (token: string) => setTurnstileToken(token),
+      "expired-callback": () => setTurnstileToken(""),
+      "error-callback": () => setTurnstileToken(""),
+    });
+  }, [isOpen, turnstileListo]);
+
   const handleAvisame = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!busqueda.trim() || !nombre.trim() || !telefono.trim()) {
-      alert("Por favor completá todos los campos para que podamos comunicarnos con vos.");
+      setError("Completá todos los campos para que podamos comunicarnos con vos.");
+      return;
+    }
+    if (!turnstileToken) {
+      setError("Esperá que cargue la verificación anti-spam y volvé a intentar.");
       return;
     }
 
     setLoading(true);
+    setError("");
 
     try {
-      // 1. Guardar en la nueva tabla de pedidos especiales en Supabase
-      const { error } = await supabase.from("pedidos_especiales").insert({
-        nombre,
-        telefono,
-        busqueda,
-        estado: "Buscando",
+      const res = await fetch("/api/panel-v2/pedidos", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ turnstileToken, nombre, telefono, busqueda }),
       });
-
-      if (error) {
-        console.error("Error guardando pedido especial:", error);
-      }
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || "No se pudo enviar tu pedido.");
     } catch (err) {
-      console.error("Error de red o base de datos:", err);
+      console.error("Error guardando pedido:", err);
+      setError("No se pudo enviar tu pedido. Igual te abrimos WhatsApp para que nos escribas directo.");
     } finally {
       setLoading(false);
+      if (turnstileWidgetId.current && window.turnstile) {
+        window.turnstile.reset(turnstileWidgetId.current);
+      }
+      setTurnstileToken("");
     }
 
-    // 2. Abrir WhatsApp con el mensaje prearmado
-    const numeroOficial = "5491121907000"; 
+    // Abrir WhatsApp con el mensaje prearmado
+    const numeroOficial = "5491121907000";
     const mensaje = `¡Hola Pfaffen Autos! 🚘\nNo encontré el auto que buscaba en la web y necesito ayuda.\n\n*Me llamo:* ${nombre}\n*Mi teléfono es:* ${telefono}\n*Estoy buscando:* ${busqueda}\n\n¡Espero su contacto!`;
     const waLink = `https://wa.me/${numeroOficial}?text=${encodeURIComponent(mensaje)}`;
-    
+
     window.open(waLink, "_blank");
-    
+
     setBusqueda("");
     setNombre("");
     setTelefono("");
-    onClose(); 
+    onClose();
   };
 
   const tituloDinamico = busquedaPrevia 
@@ -149,10 +183,14 @@ export default function BuscadorFallback({ isOpen, onClose, busquedaPrevia = "" 
                 />
               </div>
 
+              {error && <p className="text-rose-600 text-xs font-semibold text-center">{error}</p>}
+
+              <div ref={turnstileRef} className="flex justify-center" />
+
               <div className="pt-2">
                 <button
                   type="submit"
-                  disabled={loading}
+                  disabled={loading || !turnstileToken}
                   className="w-full bg-gradient-to-r from-[#0145F2] to-blue-600 hover:from-blue-600 hover:to-sky-500 active:scale-95 text-white font-black text-[11px] sm:text-xs uppercase tracking-widest px-6 py-3.5 rounded-xl flex items-center justify-center gap-2 transition-all shadow-lg shadow-blue-500/30 disabled:opacity-50"
                 >
                   {loading ? (
@@ -164,6 +202,8 @@ export default function BuscadorFallback({ isOpen, onClose, busquedaPrevia = "" 
               </div>
             </form>
           </motion.div>
+
+          <Script src="https://challenges.cloudflare.com/turnstile/v0/api.js" strategy="lazyOnload" onLoad={() => setTurnstileListo(true)} />
         </div>
       )}
     </AnimatePresence>
