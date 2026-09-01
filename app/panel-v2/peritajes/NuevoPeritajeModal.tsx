@@ -103,7 +103,7 @@ export default function NuevoPeritajeModal({ leads }: { leads: Lead[] }) {
                 <div className="flex-1 overflow-y-auto space-y-2">
                   {leadsFiltrados.length === 0 && (
                     <p className="text-center text-sm text-slate-500 dark:text-slate-400 py-8">
-                      {leads.length === 0 ? "No hay leads de WhatsApp o AtSign pendientes de peritaje." : "Ningún lead coincide con la búsqueda."}
+                      {leads.length === 0 ? "No hay leads de WhatsApp o Instagram pendientes de peritaje." : "Ningún lead coincide con la búsqueda."}
                     </p>
                   )}
                   {leadsFiltrados.map((l) => (

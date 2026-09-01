@@ -9,6 +9,10 @@ import { fmtFechaLocal } from "@/lib/panelV2/fechas";
 
 interface Perfil { id: string; nombre: string; roles: string[] }
 
+// Plazo legal estándar para transferir un vehículo en Argentina — no hay
+// campo "plazo_dias" en expedientes, es una constante fija igual para todos.
+const PLAZO_TRANSFERENCIA_DIAS = 15;
+
 const ESTADO_LABEL: Record<string, string> = { abierto: "En proceso", en_tramite: "En proceso", cerrado: "Finalizado" };
 const ESTADO_CLASS: Record<string, string> = {
   abierto: "bg-blue-50 text-blue-700 dark:bg-blue-500/10 dark:text-blue-300",
@@ -149,31 +153,48 @@ export default function ExpedientesClient({
                 const hitosPct = 0; // se calcula real dentro del detalle
                 return (
                   <tr key={e.id} onClick={() => setDetalleId(e.id)} className={`border-b border-slate-50 dark:border-white/5 last:border-0 cursor-pointer hover:bg-slate-50 dark:hover:bg-white/5 ${pendiente ? "bg-rose-50/60 dark:bg-rose-500/5 border-l-4 border-l-rose-500" : ""}`}>
-                    <td className="px-4 py-3">
-                      <div className="flex items-center gap-1.5">
+                    <td className="px-4 py-3 min-w-[220px]">
+                      <div className="flex items-center gap-1.5 flex-wrap">
                         <p className="text-sm font-bold text-slate-900 dark:text-white">{e.titulo || `EXP — ${v.vehiculo_marca || ""} ${v.vehiculo_modelo || ""}`}</p>
                         {v.vehiculo_patente && <span className="text-[9px] font-bold bg-slate-100 dark:bg-white/10 px-1.5 py-0.5 rounded">{v.vehiculo_patente}</span>}
                       </div>
-                      {pendiente && <p className="text-[9px] font-black uppercase text-rose-600 mt-1">🔒 Bloqueado hasta confirmación de las partes</p>}
-                      <p className="text-[11px] text-slate-400 mt-0.5">{[v.vehiculo_marca, v.vehiculo_modelo, v.vehiculo_anio].filter(Boolean).join(" ")}</p>
-                      <p className="text-[10px] text-slate-400">{fmtFechaLocal(e.fecha_apertura || e.created_at)} · Día {dias} {e.plazo_dias ? `de ${e.plazo_dias}` : ""}</p>
+                      {pendiente && (
+                        <span className="inline-block text-[9px] font-black uppercase tracking-wide text-rose-700 dark:text-rose-300 bg-rose-100 dark:bg-rose-500/20 px-2 py-1 rounded-md mt-1.5">
+                          🔒 Bloqueado hasta confirmación de las partes
+                        </span>
+                      )}
+                      <p className="text-[12px] font-semibold text-slate-600 dark:text-slate-300 mt-1.5">{[v.vehiculo_marca, v.vehiculo_modelo, v.vehiculo_anio].filter(Boolean).join(" ")}</p>
+                      <p className="text-[11px] text-slate-400">{fmtFechaLocal(e.fecha_apertura || e.created_at)}</p>
+                      <div className="mt-1.5">
+                        <div className="flex items-center justify-between text-[10px] font-bold text-emerald-600 dark:text-emerald-400 mb-0.5">
+                          <span>Día {dias} de {PLAZO_TRANSFERENCIA_DIAS}</span>
+                          <span>{Math.min(100, Math.round((dias / PLAZO_TRANSFERENCIA_DIAS) * 100))}%</span>
+                        </div>
+                        <div className="w-full h-1.5 bg-slate-100 dark:bg-white/10 rounded-full overflow-hidden">
+                          <div className={`h-full rounded-full ${dias > PLAZO_TRANSFERENCIA_DIAS ? "bg-rose-500" : "bg-emerald-500"}`} style={{ width: `${Math.min(100, Math.round((dias / PLAZO_TRANSFERENCIA_DIAS) * 100))}%` }} />
+                        </div>
+                      </div>
                     </td>
                     <td className="px-4 py-3 text-xs text-slate-600 dark:text-slate-300">{[v.vehiculo_marca, v.vehiculo_modelo, v.vehiculo_anio].filter(Boolean).join(" ") || "—"}</td>
-                    <td className="px-4 py-3 text-xs text-indigo-600 dark:text-indigo-300 font-semibold">{v.responsable_consignacion_id ? perfilMap[v.responsable_consignacion_id] : "—"}</td>
+                    <td className="px-4 py-3 text-xs">
+                      {v.responsable_consignacion_id ? (
+                        <span className="inline-block text-[11px] font-bold text-indigo-700 dark:text-indigo-300 bg-indigo-100 dark:bg-indigo-500/20 px-2 py-1 rounded-full">{perfilMap[v.responsable_consignacion_id]}</span>
+                      ) : "—"}
+                    </td>
                     <td className="px-4 py-3 text-xs">
                       {v.propietario_nombre ? <span className="text-slate-700 dark:text-slate-200">{v.propietario_nombre}</span> : "—"}
-                      <p className={`text-[9px] font-bold ${e.confirmado_consignacion ? "text-emerald-500" : "text-amber-500"}`}>{e.confirmado_consignacion ? "✅ Confirmado" : "⏳ Pendiente"}</p>
+                      <p className="mt-0.5"><span className={`text-[9px] font-bold px-1.5 py-0.5 rounded-full ${e.confirmado_consignacion ? "bg-emerald-100 dark:bg-emerald-500/20 text-emerald-700 dark:text-emerald-400" : "bg-amber-100 dark:bg-amber-500/20 text-amber-700 dark:text-amber-400"}`}>{e.confirmado_consignacion ? "✅ Confirmado" : "⏳ Pendiente"}</span></p>
                     </td>
                     <td className="px-4 py-3 text-xs">
                       <span className="text-slate-700 dark:text-slate-200">{v.comprador_nombre || "—"}</span>
-                      <p className={`text-[9px] font-bold ${e.confirmado_comprador ? "text-emerald-500" : "text-amber-500"}`}>{e.confirmado_comprador ? "✅ Confirmado" : "⏳ Pendiente"}</p>
+                      <p className="mt-0.5"><span className={`text-[9px] font-bold px-1.5 py-0.5 rounded-full ${e.confirmado_comprador ? "bg-emerald-100 dark:bg-emerald-500/20 text-emerald-700 dark:text-emerald-400" : "bg-amber-100 dark:bg-amber-500/20 text-amber-700 dark:text-amber-400"}`}>{e.confirmado_comprador ? "✅ Confirmado" : "⏳ Pendiente"}</span></p>
                     </td>
                     <td className="px-4 py-3"><span className={`text-[10px] font-bold px-2 py-1 rounded-full ${ESTADO_CLASS[e.estado]}`}>{ESTADO_LABEL[e.estado] || e.estado}</span></td>
                     <td className="px-4 py-3 text-[10px] text-slate-400">Vend: {gastos.vendedor > 0 ? gastos.vendedor.toLocaleString("es-AR") : "—"}<br />Comp: {gastos.comprador > 0 ? gastos.comprador.toLocaleString("es-AR") : "—"}</td>
                     <td className="px-4 py-3 w-px" onClick={(ev) => ev.stopPropagation()}>
                       <div className="flex items-center gap-1">
-                        <button onClick={() => setDetalleId(e.id)} className="p-2 bg-slate-50 dark:bg-white/5 hover:bg-slate-200 dark:hover:bg-white/10 rounded-lg text-slate-600 dark:text-slate-300"><Pencil className="w-3.5 h-3.5" /></button>
-                        {soyAdmin && <button onClick={() => eliminar(e)} className="p-2 bg-slate-50 dark:bg-white/5 hover:bg-rose-600 hover:text-white text-rose-500 rounded-lg"><Trash2 className="w-3.5 h-3.5" /></button>}
+                        <button onClick={() => setDetalleId(e.id)} className="p-2 bg-white dark:bg-white/5 border border-slate-200 dark:border-white/10 hover:bg-slate-100 dark:hover:bg-white/10 rounded-lg text-slate-600 dark:text-slate-300"><Pencil className="w-3.5 h-3.5" /></button>
+                        {soyAdmin && <button onClick={() => eliminar(e)} className="p-2 bg-rose-600 hover:bg-rose-700 text-white rounded-lg"><Trash2 className="w-3.5 h-3.5" /></button>}
                       </div>
                     </td>
                   </tr>
