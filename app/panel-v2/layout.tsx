@@ -11,7 +11,7 @@ import {
   BedDouble, Repeat, Star, FolderKanban, ClipboardList, ClipboardCheck, KeyRound, Landmark,
   Wrench, Hammer, MessageSquareWarning, Banknote, PiggyBank, Coins, ShieldCheck,
   BarChart3, DollarSign, MessagesSquare, Smartphone, ThumbsUp, Lightbulb, Mail,
-  MessageCircle, BookUser, Settings, Trash2, Bot, Wallet, Tag,
+  MessageCircle, BookUser, Settings, Trash2, Bot, Wallet, Tag, AlertTriangle,
 } from "lucide-react";
 import QuickActionsButton from "@/components/panelV2/QuickActionsButton";
 import NotificationBell from "@/components/panelV2/NotificationBell";
@@ -95,6 +95,7 @@ const GRUPOS: { titulo: string; items: { href?: string; label: string; icon: any
       { href: "/panel-v2/postulaciones", label: "Postulaciones", icon: Users },
       { href: "/panel-v2/sueldos/liquidador", label: "Liquidador de Sueldos", icon: Wallet },
       { href: "/panel-v2/sueldos/categorias", label: "Categorías de Empleados", icon: Tag },
+      { href: "/panel-v2/errores", label: "Errores del sistema", icon: AlertTriangle },
     ],
   },
 ];
