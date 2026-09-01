@@ -11,6 +11,11 @@ export type ResultadoStockV2 = {
   precio_venta: number;
   moneda_venta: "USD" | "ARS";
   patente: string | null;
+  color: string | null;
+  km: number | null;
+  version: string | null;
+  transmision: string | null;
+  combustible: string | null;
 };
 
 export type PresupuestoMencionado = { monto: number; moneda: "USD" | "ARS" } | null;
@@ -26,7 +31,10 @@ function formatearResultadosStock(resultados: ResultadoStockV2[], esAlternativa:
     return `\nBúsqueda en stock: NO hay ninguna unidad disponible ahora mismo, ni siquiera de la misma marca. Decíselo con honestidad al cliente — no inventes alternativas — y preguntale si le interesa ver otras marcas.`;
   }
   const lista = resultados
-    .map((v) => `🚗 ${v.marca} ${v.modelo} ${v.anio} — 💰 ${v.moneda_venta} ${v.precio_venta.toLocaleString("es-AR")}`)
+    .map((v) => {
+      const extra = [v.version, v.color, v.km != null ? `${v.km.toLocaleString("es-AR")} km` : null, v.transmision, v.combustible].filter(Boolean).join(" · ");
+      return `🚗 ${v.marca} ${v.modelo} ${v.anio}${extra ? ` (${extra})` : ""} — 💰 ${v.moneda_venta} ${v.precio_venta.toLocaleString("es-AR")}`;
+    })
     .join("\n");
   const encabezado = esAlternativa
     ? "Búsqueda en stock — el modelo exacto que pidió no está, pero estas son alternativas REALES disponibles ahora mismo (misma marca u otra similar). Mostraselas directo, no seguís preguntando año/presupuesto"
@@ -94,9 +102,11 @@ Si no hay NADA de esa marca en stock (ni alternativas), un solo mensaje honesto 
 
 REGLAS GENERALES
 - Recordá y reutilizá todo dato que el cliente ya dio. Si dio varios datos juntos, registralos todos y preguntá solo lo que falta. Nunca repitas una pregunta ya respondida.
-- EL ÚLTIMO auto que nombra el cliente es el foco actual y REEMPLAZA a cualquier auto mencionado antes — no lo arrastres ni lo mezcles.
+- EL ÚLTIMO auto que nombra el cliente es el foco actual y REEMPLAZA a cualquier auto mencionado antes — no lo arrastres ni lo mezcles. EXCEPCIÓN — el auto de PERMUTA: cuando el cliente ya tiene un vehículo en foco para comprar y menciona el suyo propio para entregar en parte de pago, ese auto propio NUNCA reemplaza al foco de compra ni va en "vehiculo_mencionado" (eso dispararía una búsqueda de stock equivocada sobre el auto que quiere vender, no comprar) — marcá "tiene_permuta": true en "datos_detectados", dejá "vehiculo_mencionado" en null, y seguí la charla sobre el auto que ya estaba mostrando.
+- Si el cliente solo está CONFIRMANDO un auto que vos ya le mostraste en esta misma charla (ej: "quiero esa", "esa misma", "esa camioneta", "sí, esa"), NO es una mención nueva — dejá "vehiculo_mencionado" en null (no hay que volver a buscar ni mostrar la lista de nuevo) y avanzá la conversación (forma de pago, permuta, o lo que falte) dando por hecho cuál auto es, usando su nombre.
 - Si el cliente dice explícitamente que NO quiere un auto, sacalo del foco YA, en esta misma respuesta.
 - PROHIBIDO inventar vehículos, stock, precios, kilometrajes, versiones, promociones, financiación, tiempos de contacto, o que un nombre dado por el cliente "es" tal marca/modelo sin que el cliente o el catálogo lo confirmen.
+- Cuando preguntan color, versión, kilometraje, transmisión o combustible de una unidad que ya mostraste, esos datos (si vinieron en la búsqueda de stock, entre paréntesis junto al auto) son reales — respondé con confianza, no derives a un asesor por eso. Solo derivá si el dato puntual que piden no vino en la búsqueda (ej: interior, service, dueños anteriores).
 - Solo presentá vehículos que vinieron en la búsqueda de stock real de este prompt. Si no te pasaron resultados de stock, es porque falta el nombre del modelo — pedíselo directo, nunca digas "dejame chequear"/"voy a verificar"/"un momento": la búsqueda ya se ejecutó sola en este mismo mensaje si había datos suficientes.
 - Si el cliente ya te dio un dato accionable (modelo puntual o presupuesto), priorizá buscar y mostrar opciones concretas con ese dato — no sigas pidiendo timing/forma de pago/permuta en el mismo mensaje.
 - Si el cliente menciona un monto de dinero disponible, extraelo en "presupuesto_mencionado" aunque no haya dicho marca ni modelo.
@@ -125,7 +135,7 @@ Respondé SIEMPRE en este formato JSON exacto, sin texto fuera del JSON:
   "intencion": null o "COMPRA" | "VENTA" | "CONSIGNACION" | "COMPRA_CON_PERMUTA" | "HABLAR_CON_ASESOR" | "OTRA_CONSULTA" — la intención detectada en ESTE momento de la charla. Importante: si el cliente quiere VENDER o CONSIGNAR su propio auto y lo menciona (marca/modelo/año), ese auto va en "vehiculo_mencionado" igual, pero la intención debe quedar en "VENTA" o "CONSIGNACION" — nunca "COMPRA" — para que no se confunda con una búsqueda de stock,
   "calificacion": null o "caliente" | "tibio" | "frio",
   "datos_detectados": { "timing": null o string, "forma_pago": null o string, "tiene_permuta": null o boolean },
-  "vehiculo_mencionado": null o { "marca": string o null, "modelo": string o null } si el cliente nombró una marca y/o un modelo puntual (alguno de los dos alcanza para completar este campo y disparar la búsqueda),
+  "vehiculo_mencionado": null o { "marca": string o null, "modelo": string o null } si el cliente nombró una marca y/o un modelo puntual PARA COMPRAR (alguno de los dos alcanza para completar este campo y disparar la búsqueda) — null si solo está confirmando un auto ya mostrado, o si lo que mencionó es su propio auto de permuta,
   "presupuesto_mencionado": null o { "monto": number, "moneda": "USD" | "ARS" } si el cliente mencionó un monto de dinero disponible
 }`;
 }
