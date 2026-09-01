@@ -5,7 +5,6 @@ import Link from "next/link";
 import Script from "next/script";
 import { ArrowLeft, Loader2, ChevronDown, X } from "lucide-react";
 import EnvioExitoso from "@/components/EnvioExitoso";
-import { getCanalOrigen } from "@/lib/utm";
 
 declare global {
   interface Window {
@@ -153,28 +152,19 @@ export default function ConsignarForm() {
     setLoading(true);
 
     try {
-      // Reutilizamos el endpoint de cotizaciones, pero le mandamos un flag especial si lo necesitas,
-      // o tu endpoint ya maneja "consignaciones". Por ahora usamos la misma lógica que CotizadorForm.
-      const response = await fetch("/api/cotizaciones", {
+      const response = await fetch("/api/panel-v2/consignaciones", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           turnstileToken,
-          canal_origen: getCanalOrigen(),
           marca,
           modelo,
           anio,
-          version: `${version} - GNC: ${gnc || 'No'}`, // Combinamos versión y gnc para el CRM
-          gnc,
+          version: `${version}${gnc ? ` - GNC: ${gnc}` : ""}`,
           kilometraje: km,
           nombre: `${nombre.trim()} ${apellido.trim()}`,
           email: email.trim(),
           telefono: tel.trim(),
-          // Al ser consignación forzamos estos datos para que el endpoint lo procese correctamente
-          puede_venir_sucursal: true, 
-          fotos_y_videos: [],
-          sucursal_preferida: "Casa Central",
-          tipo_peritaje: "consignacion" // Flag útil si tu backend lo lee
         }),
       });
 
