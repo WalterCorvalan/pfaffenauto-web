@@ -5,12 +5,12 @@ import { useRouter } from "next/navigation";
 import { Plus, X, FileText, Receipt, Calculator, Car, UserPlus, ShoppingCart } from "lucide-react";
 
 // Botón "+" flotante global (calcado del CRM viejo) — despliega los 6 accesos
-// directos de creación rápida. Solo "Nuevo cliente" está conectado; el resto
-// espera a que existan esos módulos (Boletos, Recibos, Cotizaciones, Stock, Ventas).
+// directos de creación rápida. "Nuevo boleto" espera al módulo Boletos (venta
+// formal), todavía no construido.
 const ACCIONES = [
   { label: "Nuevo boleto", icon: FileText, color: "bg-sky-100 text-sky-600 dark:bg-sky-500/15 dark:text-sky-300", href: null },
-  { label: "Nuevo recibo", icon: Receipt, color: "bg-emerald-100 text-emerald-600 dark:bg-emerald-500/15 dark:text-emerald-300", href: null },
-  { label: "Nuevo presupuesto", icon: Calculator, color: "bg-amber-100 text-amber-600 dark:bg-amber-500/15 dark:text-amber-300", href: "/panel-v2/cotizaciones?nuevo=1" },
+  { label: "Nuevo recibo (seña)", icon: Receipt, color: "bg-emerald-100 text-emerald-600 dark:bg-emerald-500/15 dark:text-emerald-300", href: "/panel-v2/senas?nuevo=1" },
+  { label: "Nuevo presupuesto", icon: Calculator, color: "bg-amber-100 text-amber-600 dark:bg-amber-500/15 dark:text-amber-300", href: "/panel-v2/presupuestos?nuevo=1" },
   { label: "Nuevo vehículo", icon: Car, color: "bg-blue-100 text-blue-600 dark:bg-blue-500/15 dark:text-blue-300", href: "/panel-v2/stock?nuevo=1" },
   { label: "Nuevo cliente", icon: UserPlus, color: "bg-emerald-100 text-emerald-600 dark:bg-emerald-500/15 dark:text-emerald-300", href: "/panel-v2/clientes?nuevo=1" },
   { label: "Nueva venta", icon: ShoppingCart, color: "bg-orange-100 text-orange-600 dark:bg-orange-500/15 dark:text-orange-300", href: "/panel-v2/ventas?nueva=1" },

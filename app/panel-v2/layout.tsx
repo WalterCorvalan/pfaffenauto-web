@@ -43,6 +43,8 @@ const GRUPOS: { titulo: string; items: { href?: string; label: string; icon: any
       { href: "/panel-v2/visitas", label: "Visitas", icon: CalendarCheck },
       { href: "/panel-v2/clientes", label: "Clientes", icon: Users },
       { href: "/panel-v2/cotizaciones", label: "Cotizaciones", icon: FileText },
+      { href: "/panel-v2/senas", label: "Señas", icon: Wallet },
+      { href: "/panel-v2/presupuestos", label: "Presupuestos", icon: FileText },
       { href: "/panel-v2/ventas", label: "Ventas", icon: Briefcase },
       { href: "/panel-v2/mis-ventas", label: "Mis ventas", icon: Trophy },
     ],
@@ -67,7 +69,7 @@ const GRUPOS: { titulo: string; items: { href?: string; label: string; icon: any
     titulo: "Finanzas",
     items: [
       { label: "Finanzas", icon: Banknote },
-      { label: "Tesorería", icon: PiggyBank },
+      { href: "/panel-v2/tesoreria", label: "Tesorería", icon: PiggyBank },
       { label: "Liquidaciones", icon: Coins },
       { href: "/panel-v2/comisiones", label:"Mis Comisiones", icon: DollarSign },
     ],
