@@ -86,7 +86,7 @@ const GRUPOS: { titulo: string; items: { href?: string; label: string; icon: any
     titulo: "Administración",
     items: [
       { label: "Autorizaciones", icon: ShieldCheck },
-      { label: "Dormidos", icon: BedDouble },
+      { href: "/panel-v2/dormidos", label: "Dormidos", icon: BedDouble },
       { href: "/panel-v2/recontactos", label: "Recontactos", icon: Repeat },
       { label: "Sugerencias", icon: Lightbulb },
       { label: "Papelera", icon: Trash2 },
