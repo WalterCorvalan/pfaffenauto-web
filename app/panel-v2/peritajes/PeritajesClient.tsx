@@ -5,10 +5,11 @@ import { ClipboardCheck, CarFront, User, Calendar } from "lucide-react";
 import NuevoPeritajeModal from "./NuevoPeritajeModal";
 
 interface Lead {
-  origen: "whatsapp" | "instagram";
+  origen: "whatsapp" | "instagram" | "tasacion";
   id: string;
   nombre: string;
   created_at: string;
+  vehiculoDescripcion?: string;
 }
 
 export default function PeritajesClient({ peritajes, leadsSinPeritaje }: { peritajes: any[]; leadsSinPeritaje: Lead[] }) {

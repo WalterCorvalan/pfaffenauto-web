@@ -3,13 +3,14 @@
 import { useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import { supabase2 } from "@/lib/supabase2/client";
-import { Plus, Search, X, User, Loader2, MessageCircle, AtSign } from "lucide-react";
+import { Plus, Search, X, User, Loader2, MessageCircle, AtSign, Tag } from "lucide-react";
 
 interface Lead {
-  origen: "whatsapp" | "instagram";
+  origen: "whatsapp" | "instagram" | "tasacion";
   id: string;
   nombre: string;
   created_at: string;
+  vehiculoDescripcion?: string;
 }
 
 export default function NuevoPeritajeModal({ leads }: { leads: Lead[] }) {
@@ -49,6 +50,7 @@ export default function NuevoPeritajeModal({ leads }: { leads: Lead[] }) {
         p_whatsapp_conversacion_id: leadElegido.origen === "whatsapp" ? leadElegido.id : null,
         p_instagram_conversacion_id: leadElegido.origen === "instagram" ? leadElegido.id : null,
         p_realizado_por: user?.id || null,
+        p_lead_tasacion_id: leadElegido.origen === "tasacion" ? leadElegido.id : null,
       });
       if (errRpc) throw errRpc;
 
@@ -103,17 +105,17 @@ export default function NuevoPeritajeModal({ leads }: { leads: Lead[] }) {
                 <div className="flex-1 overflow-y-auto space-y-2">
                   {leadsFiltrados.length === 0 && (
                     <p className="text-center text-sm text-slate-500 dark:text-slate-400 py-8">
-                      {leads.length === 0 ? "No hay leads de WhatsApp o Instagram pendientes de peritaje." : "Ningún lead coincide con la búsqueda."}
+                      {leads.length === 0 ? "No hay leads de WhatsApp, Instagram o tasación web pendientes de peritaje." : "Ningún lead coincide con la búsqueda."}
                     </p>
                   )}
                   {leadsFiltrados.map((l) => (
                     <button
                       key={`${l.origen}-${l.id}`}
-                      onClick={() => setLeadElegido(l)}
+                      onClick={() => { setLeadElegido(l); if (l.vehiculoDescripcion) setVehiculoDescripcion(l.vehiculoDescripcion); }}
                       className="w-full text-left flex items-center justify-between gap-3 rounded-xl border border-slate-200 dark:border-white/10 px-4 py-3 hover:border-rose-300 dark:hover:border-rose-500/50 hover:bg-rose-50/50 dark:hover:bg-white/5 transition-colors"
                     >
                       <div className="min-w-0 flex items-center gap-2.5">
-                        {l.origen === "whatsapp" ? <MessageCircle className="w-4 h-4 text-emerald-500 shrink-0" /> : <AtSign className="w-4 h-4 text-fuchsia-500 shrink-0" />}
+                        {l.origen === "whatsapp" ? <MessageCircle className="w-4 h-4 text-emerald-500 shrink-0" /> : l.origen === "instagram" ? <AtSign className="w-4 h-4 text-fuchsia-500 shrink-0" /> : <Tag className="w-4 h-4 text-indigo-500 shrink-0" />}
                         <div className="min-w-0">
                           <p className="text-[13px] font-bold text-slate-900 dark:text-white truncate">{l.nombre}</p>
                           <p className="text-[11px] text-slate-400">{new Date(l.created_at).toLocaleDateString("es-AR")}</p>

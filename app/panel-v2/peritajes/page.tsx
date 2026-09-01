@@ -12,16 +12,18 @@ export default async function PeritajesPage() {
       *,
       perfiles ( nombre ),
       whatsapp_conversaciones ( whatsapp_contactos ( nombre_perfil, telefono ) ),
-      instagram_conversaciones ( instagram_contactos ( username ) )
+      instagram_conversaciones ( instagram_contactos ( username ) ),
+      leads_tasacion ( nombre, telefono )
     `)
     .order("created_at", { ascending: false });
 
   const idsConPeritaje = {
     whatsapp: new Set((peritajesCrudos || []).map((p: any) => p.whatsapp_conversacion_id).filter(Boolean)),
     instagram: new Set((peritajesCrudos || []).map((p: any) => p.instagram_conversacion_id).filter(Boolean)),
+    tasacion: new Set((peritajesCrudos || []).map((p: any) => p.lead_tasacion_id).filter(Boolean)),
   };
 
-  const [{ data: wa }, { data: ig }] = await Promise.all([
+  const [{ data: wa }, { data: ig }, { data: leadsTasacion }] = await Promise.all([
     supabase
       .from("whatsapp_conversaciones")
       .select("id, created_at, whatsapp_contactos ( nombre_perfil, telefono )")
@@ -30,6 +32,12 @@ export default async function PeritajesPage() {
     supabase
       .from("instagram_conversaciones")
       .select("id, created_at, instagram_contactos ( username )")
+      .order("created_at", { ascending: false })
+      .limit(100),
+    supabase
+      .from("leads_tasacion")
+      .select("id, nombre, marca, modelo, anio, created_at")
+      .eq("estado", "nuevo")
       .order("created_at", { ascending: false })
       .limit(100),
   ]);
@@ -51,6 +59,15 @@ export default async function PeritajesPage() {
         nombre: c.instagram_contactos?.username ? `@${c.instagram_contactos.username}` : "Contacto de Instagram",
         created_at: c.created_at,
       })),
+    ...(leadsTasacion || [])
+      .filter((c: any) => !idsConPeritaje.tasacion.has(c.id))
+      .map((c: any) => ({
+        origen: "tasacion" as const,
+        id: c.id,
+        nombre: `${c.nombre} — ${[c.marca, c.modelo, c.anio].filter(Boolean).join(" ")}`,
+        created_at: c.created_at,
+        vehiculoDescripcion: [c.marca, c.modelo, c.anio].filter(Boolean).join(" "),
+      })),
   ].sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
 
   const peritajes = (peritajesCrudos || []).map((p: any) => ({
@@ -58,7 +75,8 @@ export default async function PeritajesPage() {
     nombreCliente:
       p.whatsapp_conversaciones?.whatsapp_contactos?.nombre_perfil ||
       p.whatsapp_conversaciones?.whatsapp_contactos?.telefono ||
-      (p.instagram_conversaciones?.instagram_contactos?.username ? `@${p.instagram_conversaciones.instagram_contactos.username}` : null),
+      (p.instagram_conversaciones?.instagram_contactos?.username ? `@${p.instagram_conversaciones.instagram_contactos.username}` : null) ||
+      p.leads_tasacion?.nombre,
   }));
 
   return <PeritajesClient peritajes={peritajes} leadsSinPeritaje={leadsSinPeritaje} />;

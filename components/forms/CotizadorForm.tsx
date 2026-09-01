@@ -3,9 +3,11 @@
 import { useState, useEffect, useRef } from "react";
 import Link from "next/link";
 import Script from "next/script";
-import { ArrowLeft, Loader2, ChevronDown, CarFront, User, Phone, Upload, X, FileVideo, ImageIcon, Building2, Camera, AlertTriangle } from "lucide-react";
+import { ArrowLeft, Loader2, ChevronDown, CarFront, User, Phone, Upload, X, FileVideo, ImageIcon, Building2, Camera, AlertTriangle, MapPin, CalendarDays, Clock } from "lucide-react";
 import EnvioExitoso from "@/components/EnvioExitoso";
 import { getCanalOrigen } from "@/lib/utm";
+import { supabase2 } from "@/lib/supabase2/client";
+import { calcularOferta } from "@/lib/panelV2/descuentoPorKm";
 
 declare global {
   interface Window {
@@ -80,11 +82,12 @@ export default function CotizadorForm({ vehiculoObjetivo }: { vehiculoObjetivo?:
   const [version, setVersion] = useState("");
   const [km, setKm] = useState("");
   const [gnc, setGnc] = useState("");
+  const [precioEsperado, setPrecioEsperado] = useState("");
 
-  // Estimación de precio con IA (paso previo al peritaje): la IA busca
-  // comparables reales y ofrecemos el 80% de esa media. Si el cliente acepta,
-  // nos saltamos el paso de peritaje presencial/fotos.
-  const [estimandoPrecio, setEstimandoPrecio] = useState(false);
+  // Oferta instantánea: precio que el cliente espera, menos el descuento
+  // según los km (escala fija del equipo — antes acá se buscaban
+  // comparables de mercado con IA, ya no).
+  const [descuentoPct, setDescuentoPct] = useState<number | null>(null);
   const [precioOferta, setPrecioOferta] = useState<number | null>(null);
   const [acuerdoPrecio, setAcuerdoPrecio] = useState<boolean | null>(null);
 
@@ -94,6 +97,27 @@ export default function CotizadorForm({ vehiculoObjetivo }: { vehiculoObjetivo?:
   const [subiendoArchivo, setSubiendoArchivo] = useState(false);
   const [errorArchivo, setErrorArchivo] = useState("");
   const inputArchivoRef = useRef<HTMLInputElement>(null);
+
+  // Reserva de visita real (cuando puede venir a sucursal) — mismo motor que
+  // ya usa /api/panel-v2/visitas.
+  const [sucursales, setSucursales] = useState<{ id: string; nombre: string }[]>([]);
+  const [sucursalVisita, setSucursalVisita] = useState("");
+  const [fechaVisita, setFechaVisita] = useState("");
+  const [horarioVisita, setHorarioVisita] = useState("");
+  const [horariosOcupados, setHorariosOcupados] = useState<string[]>([]);
+
+  useEffect(() => {
+    supabase2.from("sucursales").select("id, nombre").then(({ data }) => { if (data) setSucursales(data); });
+  }, []);
+
+  useEffect(() => {
+    if (!sucursalVisita || !fechaVisita) { setHorariosOcupados([]); return; }
+    supabase2.rpc("visitas_horarios_ocupados", { p_sucursal: sucursalVisita, p_fecha: fechaVisita }).then(({ data }) => {
+      setHorariosOcupados((data || []).map((v: { horario_visita: string }) => v.horario_visita));
+    });
+  }, [sucursalVisita, fechaVisita]);
+
+  const franjasHorario = ["09:00", "09:30", "10:00", "10:30", "11:00", "11:30", "12:00", "14:00", "14:30", "15:00", "15:30", "16:00", "16:30", "17:00", "17:30"];
 
   // Estados de Contacto
   const [nombre, setNombre] = useState("");
@@ -141,32 +165,16 @@ export default function CotizadorForm({ vehiculoObjetivo }: { vehiculoObjetivo?:
   }
 
   const validarPaso1 = () => {
-    return anio && marca && modelo && version && km;
+    return anio && marca && modelo && version && km && precioEsperado;
   };
 
-  // Al confirmar los datos del vehículo, intentamos estimar un precio con IA
-  // antes de seguir. Si no hay comparables (o falla), no bloqueamos: saltamos
-  // directo al flujo normal de peritaje.
-  const continuarDesdePaso1 = async () => {
-    setEstimandoPrecio(true);
-    try {
-      const res = await fetch("/api/cotizaciones/estimar-precio", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ marca, modelo, version, anio, kilometraje: km }),
-      });
-      const data = await res.json();
-      if (data.ok && data.oferta) {
-        setPrecioOferta(data.oferta);
-        setStep(1.5);
-      } else {
-        setStep(2);
-      }
-    } catch {
-      setStep(2);
-    } finally {
-      setEstimandoPrecio(false);
-    }
+  // Oferta instantánea: precio que puso el cliente, menos el % de descuento
+  // según los km — sin llamada al servidor, al toque.
+  const continuarDesdePaso1 = () => {
+    const { descuentoPct: pct, oferta } = calcularOferta(Number(precioEsperado), Number(km));
+    setDescuentoPct(pct);
+    setPrecioOferta(oferta);
+    setStep(1.5);
   };
 
   // Renderiza el widget de Turnstile cuando llegamos al paso de contacto
@@ -227,6 +235,7 @@ export default function CotizadorForm({ vehiculoObjetivo }: { vehiculoObjetivo?:
   const validarPaso3 = () => {
     if (puedeVenir === null) return false;
     if (puedeVenir === false && archivosSubidos.length === 0) return false;
+    if (puedeVenir === true && (!sucursalVisita || !fechaVisita || !horarioVisita)) return false;
     return true;
   };
 
@@ -249,26 +258,28 @@ export default function CotizadorForm({ vehiculoObjetivo }: { vehiculoObjetivo?:
     setLoading(true);
 
     try {
-      const response = await fetch("/api/cotizaciones", {
+      const response = await fetch("/api/panel-v2/leads-tasacion", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           turnstileToken,
-          canal_origen: getCanalOrigen(),
+          canalOrigen: getCanalOrigen(),
           marca,
           modelo,
           anio,
           version,
           gnc,
           kilometraje: km,
+          precioEsperado,
+          descuentoPct,
+          ofertaCalculada: precioOferta,
+          aceptaOferta: acuerdoPrecio,
           nombre: `${nombre.trim()} ${apellido.trim()}`,
           email: email.trim(),
           telefono: tel.trim(),
-          puede_venir_sucursal: puedeVenir === true,
-          fotos_y_videos: archivosSubidos.map((a) => a.url),
-          sucursal_preferida: "Casa Central",
-          acepta_precio_ofrecido: acuerdoPrecio,
-          ...(vehiculoObjetivo ? { tipo_peritaje: "permuta", vehiculo_id: vehiculoObjetivo.id } : {}),
+          fotosYVideos: archivosSubidos.map((a) => a.url),
+          ...(puedeVenir === true ? { visita: { sucursal: sucursalVisita, fecha: fechaVisita, horario: horarioVisita } } : {}),
+          ...(vehiculoObjetivo ? { tipo: "permuta", vehiculoObjetivoId: vehiculoObjetivo.id } : {}),
         }),
       });
 
@@ -448,15 +459,24 @@ export default function CotizadorForm({ vehiculoObjetivo }: { vehiculoObjetivo?:
                       />
                     </div>
 
+                    <div>
+                      <input
+                        type="number"
+                        placeholder="¿Cuánto esperás por tu auto? ($)"
+                        value={precioEsperado}
+                        onChange={(e) => setPrecioEsperado(e.target.value)}
+                        className="w-full bg-white/60 dark:bg-white/5 backdrop-blur-md border border-white dark:border-white/10 rounded-2xl px-4 py-3.5 text-sm font-semibold text-navy dark:text-white placeholder:text-slate-400 dark:placeholder:text-slate-500 outline-none focus:border-[#0145F2] dark:focus:border-sky-400 transition-all shadow-sm dark:shadow-none"
+                      />
+                    </div>
+
                     <div className="pt-2">
                       <button
                         type="button"
-                        disabled={!validarPaso1() || estimandoPrecio}
+                        disabled={!validarPaso1()}
                         onClick={continuarDesdePaso1}
                         className="w-full py-4 bg-gradient-to-r from-[#0145F2] to-blue-600 hover:from-blue-600 hover:to-sky-500 disabled:opacity-50 text-white font-black rounded-2xl uppercase tracking-widest text-xs transition-all shadow-lg shadow-blue-500/20 cursor-pointer active:scale-95 flex items-center justify-center gap-2"
                       >
-                        {estimandoPrecio && <Loader2 className="w-4 h-4 animate-spin" />}
-                        {estimandoPrecio ? "Buscando precios de mercado..." : "Continuar"}
+                        Continuar
                       </button>
                     </div>
 
@@ -477,7 +497,7 @@ export default function CotizadorForm({ vehiculoObjetivo }: { vehiculoObjetivo?:
                         ${precioOferta?.toLocaleString("es-AR")}
                       </p>
                       <p className="text-[11px] text-slate-500 dark:text-slate-400 font-medium leading-relaxed">
-                        Estimación automática en base a precios de mercado. El monto final se confirma con un peritaje.
+                        Sobre los ${Number(precioEsperado).toLocaleString("es-AR")} que esperás, aplicamos un {descuentoPct}% según los km. El monto final se confirma con un peritaje.
                       </p>
                     </div>
 
@@ -564,6 +584,46 @@ export default function CotizadorForm({ vehiculoObjetivo }: { vehiculoObjetivo?:
                         No, prefiero mandar fotos y videos
                       </div>
                     </div>
+
+                    {puedeVenir === true && (
+                      <div className="space-y-3 animate-fadeIn">
+                        <div className="relative">
+                          <label className="text-[11px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-widest mb-1.5 flex items-center gap-1.5"><MapPin className="w-3.5 h-3.5" /> Sucursal</label>
+                          <select
+                            value={sucursalVisita}
+                            onChange={(e) => { setSucursalVisita(e.target.value); setHorarioVisita(""); }}
+                            className="w-full bg-white/60 dark:bg-white/5 backdrop-blur-md border border-white dark:border-white/10 rounded-2xl px-4 py-3 text-xs font-semibold text-navy dark:text-white outline-none focus:border-[#0145F2] dark:focus:border-sky-400 shadow-sm dark:shadow-none cursor-pointer"
+                          >
+                            <option value="">Seleccioná el local</option>
+                            {sucursales.map((s) => <option key={s.id} value={s.nombre}>{s.nombre}</option>)}
+                          </select>
+                        </div>
+                        <div className="grid grid-cols-2 gap-3">
+                          <div>
+                            <label className="text-[11px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-widest mb-1.5 flex items-center gap-1.5"><CalendarDays className="w-3.5 h-3.5" /> Día</label>
+                            <input
+                              type="date"
+                              min={new Date().toISOString().split("T")[0]}
+                              value={fechaVisita}
+                              onChange={(e) => { setFechaVisita(e.target.value); setHorarioVisita(""); }}
+                              className="w-full bg-white/60 dark:bg-white/5 backdrop-blur-md border border-white dark:border-white/10 rounded-2xl px-3 py-3 text-xs font-semibold text-navy dark:text-white outline-none focus:border-[#0145F2] dark:focus:border-sky-400 shadow-sm dark:shadow-none dark:[color-scheme:dark]"
+                            />
+                          </div>
+                          <div>
+                            <label className="text-[11px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-widest mb-1.5 flex items-center gap-1.5"><Clock className="w-3.5 h-3.5" /> Horario</label>
+                            <select
+                              value={horarioVisita}
+                              onChange={(e) => setHorarioVisita(e.target.value)}
+                              disabled={!sucursalVisita || !fechaVisita}
+                              className="w-full bg-white/60 dark:bg-white/5 backdrop-blur-md border border-white dark:border-white/10 rounded-2xl px-3 py-3 text-xs font-semibold text-navy dark:text-white outline-none focus:border-[#0145F2] dark:focus:border-sky-400 shadow-sm dark:shadow-none disabled:opacity-50 cursor-pointer dark:[color-scheme:dark]"
+                            >
+                              <option value="">{!sucursalVisita || !fechaVisita ? "Elegí sucursal y día" : "Elegir..."}</option>
+                              {franjasHorario.map((f) => <option key={f} value={f} disabled={horariosOcupados.includes(f)}>{f} {horariosOcupados.includes(f) ? "(ocupado)" : ""}</option>)}
+                            </select>
+                          </div>
+                        </div>
+                      </div>
+                    )}
 
                     {puedeVenir === false && (
                       <div className="space-y-3 animate-fadeIn">
