@@ -6,7 +6,7 @@ export default async function StockPage() {
   const { data: { user } } = await supabase.auth.getUser();
 
   const [{ data: vehiculos }, { data: mandatos }, { data: perfiles }, { data: clientes }, { data: catalogoConfig }, { data: sucursales }] = await Promise.all([
-    supabase.from("vehiculos").select("*").order("created_at", { ascending: false }),
+    supabase.from("vehiculos").select("*, sucursal:sucursal_id ( nombre )").order("created_at", { ascending: false }),
     supabase.from("mandatos").select("*").order("created_at", { ascending: false }),
     supabase.from("perfiles").select("id, nombre, roles").eq("activo", true).order("nombre"),
     supabase.from("clientes").select("id, nombre, telefono, dni_cuit").order("nombre"),

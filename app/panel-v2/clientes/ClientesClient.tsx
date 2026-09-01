@@ -6,7 +6,7 @@ import { supabase2 } from "@/lib/supabase2/client";
 import {
   Search, Users, UserPlus, Phone, Mail, List, Columns3, TrendingUp,
   PieChart, Trophy, CheckCircle2, Circle, MessageCircle, Download, Upload,
-  Sun, Palmtree, Thermometer, X, ShoppingBag, Pencil, Trash2,
+  Sun, Palmtree, Plane, Thermometer, X, ShoppingBag, Pencil, Trash2,
 } from "lucide-react";
 import NuevoClienteModal from "./NuevoClienteModal";
 import DisponibilidadModal from "./DisponibilidadModal";
@@ -35,8 +35,8 @@ const PIPELINE_COLUMNAS = [
   { key: "perdido", label: "Perdido", desc: "Dijo que no, o hace 90 días que no responde", color: "border-slate-300 dark:border-white/10 bg-slate-50 dark:bg-white/[0.03]" },
 ] as const;
 
-const ESTADO_ICON: Record<string, any> = { disponible: Sun, vacaciones: Palmtree, enfermo: Thermometer };
-const ESTADO_LABEL: Record<string, string> = { disponible: "Disponible", vacaciones: "De vacaciones", enfermo: "Enfermo" };
+const ESTADO_ICON: Record<string, any> = { disponible: Sun, ausente: Palmtree, vacaciones: Plane, enfermo: Thermometer };
+const ESTADO_LABEL: Record<string, string> = { disponible: "Disponible", ausente: "Ausente", vacaciones: "Vacaciones", enfermo: "Enfermo" };
 
 function tiempoRelativo(iso: string) {
   const ms = Date.now() - new Date(iso).getTime();

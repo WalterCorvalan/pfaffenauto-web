@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { supabase2 } from "@/lib/supabase2/client";
-import { X, Loader2, Sun, Palmtree, Thermometer } from "lucide-react";
+import { X, Loader2, Sun, Palmtree, Plane, Thermometer } from "lucide-react";
 
 interface Perfil { id: string; nombre: string; roles: string[] }
 interface Disponibilidad { vendedor_id: string; estado: string; desde: string | null; hasta: string | null; recibir_leads: boolean }
@@ -18,7 +18,8 @@ interface Props {
 
 const ESTADOS = [
   { value: "disponible", label: "Disponible", icon: Sun, color: "bg-emerald-100 border-emerald-300 text-emerald-800 dark:bg-emerald-500/15 dark:border-emerald-500/30 dark:text-emerald-300" },
-  { value: "vacaciones", label: "De vacaciones", icon: Palmtree, color: "bg-amber-100 border-amber-300 text-amber-800 dark:bg-amber-500/15 dark:border-amber-500/30 dark:text-amber-300" },
+  { value: "ausente", label: "Ausente", icon: Palmtree, color: "bg-amber-100 border-amber-300 text-amber-800 dark:bg-amber-500/15 dark:border-amber-500/30 dark:text-amber-300" },
+  { value: "vacaciones", label: "Vacaciones", icon: Plane, color: "bg-sky-100 border-sky-300 text-sky-800 dark:bg-sky-500/15 dark:border-sky-500/30 dark:text-sky-300" },
   { value: "enfermo", label: "Enfermo", icon: Thermometer, color: "bg-rose-100 border-rose-300 text-rose-800 dark:bg-rose-500/15 dark:border-rose-500/30 dark:text-rose-300" },
 ];
 
@@ -85,7 +86,7 @@ export default function DisponibilidadModal({ perfiles, disponibilidad, miId, es
             </div>
           )}
 
-          <div className="grid grid-cols-3 gap-2">
+          <div className="grid grid-cols-2 gap-2">
             {ESTADOS.map((e) => {
               const Icon = e.icon;
               const activo = estado === e.value;
