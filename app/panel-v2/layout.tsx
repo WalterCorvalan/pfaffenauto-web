@@ -87,7 +87,7 @@ const GRUPOS: { titulo: string; items: { href?: string; label: string; icon: any
     items: [
       { label: "Autorizaciones", icon: ShieldCheck },
       { label: "Dormidos", icon: BedDouble },
-      { label: "Recontactos", icon: Repeat },
+      { href: "/panel-v2/recontactos", label: "Recontactos", icon: Repeat },
       { label: "Sugerencias", icon: Lightbulb },
       { label: "Papelera", icon: Trash2 },
       { href: "/panel-v2/configuracion/whatsapp", label: "Configuración", icon: Settings },
