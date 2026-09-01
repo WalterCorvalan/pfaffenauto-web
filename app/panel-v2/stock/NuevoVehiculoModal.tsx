@@ -116,6 +116,7 @@ export default function NuevoVehiculoModal({ perfiles, clientes, sucursales, miI
   const [fechaCompra, setFechaCompra] = useState(editando?.fecha_compra || "");
   const [importePatenteAnual, setImportePatenteAnual] = useState(editando?.importe_patente_anual ? String(editando.importe_patente_anual) : "");
   const [sucursalId, setSucursalId] = useState(editando?.sucursal_id || "");
+  const [vendedorAsignadoId, setVendedorAsignadoId] = useState(editando?.vendedor_asignado_id || "");
   const [sucursalCompraId, setSucursalCompraId] = useState(editando?.sucursal_compra_id || "");
 
   // Precio publicado (el que se ve en el catálogo, distinto del venta interno)
@@ -167,6 +168,7 @@ export default function NuevoVehiculoModal({ perfiles, clientes, sucursales, miI
         stock_fisico: stockFisico, destacado, fecha_compra: fechaCompra || null,
         importe_patente_anual: importePatenteAnual ? Number(importePatenteAnual) : null,
         sucursal_id: sucursalId || null, sucursal_compra_id: sucursalCompraId || null,
+        vendedor_asignado_id: vendedorAsignadoId || null,
         precio_publicado_usd: precioPublicadoUsd ? Number(precioPublicadoUsd) : null,
         propietario_apellido: propioAgencia ? null : (propietarioApellido || null),
         propietario_fecha_nacimiento: propioAgencia ? null : (propietarioFechaNacimiento || null),
@@ -180,8 +182,8 @@ export default function NuevoVehiculoModal({ perfiles, clientes, sucursales, miI
         propietario_telefono_celular: propioAgencia ? null : (propietarioTelefonoCelular || null),
       };
       const { data, error: dbError } = esEdicion
-        ? await supabase2.from("vehiculos").update(payload).eq("id", editando.id).select().single()
-        : await supabase2.from("vehiculos").insert({ ...payload, creado_por: miId || null }).select().single();
+        ? await supabase2.from("vehiculos").update(payload).eq("id", editando.id).select("*, sucursal:sucursal_id ( nombre )").single()
+        : await supabase2.from("vehiculos").insert({ ...payload, creado_por: miId || null }).select("*, sucursal:sucursal_id ( nombre )").single();
       if (dbError) throw dbError;
       if (!esEdicion && miId) {
         crearAlerta(supabase2, miId, `Nuevo vehículo en stock — ${data.marca} ${data.modelo} ${data.anio}`, {
@@ -338,6 +340,13 @@ export default function NuevoVehiculoModal({ perfiles, clientes, sucursales, miI
                 <select value={sucursalId} onChange={(e) => setSucursalId(e.target.value)} className={inputClass}>
                   <option value="">— Sin asignar —</option>
                   {sucursales.map((s) => <option key={s.id} value={s.id}>{s.nombre}</option>)}
+                </select>
+              </div>
+              <div>
+                <label className={labelClass}>Vendedor asignado</label>
+                <select value={vendedorAsignadoId} onChange={(e) => setVendedorAsignadoId(e.target.value)} className={inputClass}>
+                  <option value="">— Sin asignar —</option>
+                  {perfiles.map((p) => <option key={p.id} value={p.id}>{p.nombre}</option>)}
                 </select>
               </div>
               <div>
