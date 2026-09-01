@@ -118,6 +118,13 @@ export default function PanelV2Layout({ children }: { children: React.ReactNode 
   const [miId, setMiId] = useState<string | null>(null);
   const [autosDisponibles, setAutosDisponibles] = useState<number | null>(null);
   const [toast, setToast] = useState<{ id: string; titulo: string; mensaje: string | null; link: string | null } | null>(null);
+  // Feedback de "toqué esto, se está cargando" en la navegación del sidebar —
+  // sin esto, un click tarda ~1-2s en mostrar algo y parece que no pasó nada.
+  const [navegandoA, setNavegandoA] = useState<string | null>(null);
+
+  useEffect(() => {
+    setNavegandoA(null);
+  }, [pathname]);
 
   useEffect(() => {
     const guardado = localStorage.getItem("panelV2DarkMode");
@@ -211,16 +218,17 @@ export default function PanelV2Layout({ children }: { children: React.ReactNode 
                       </div>
                     );
                   }
+                  const cargando = navegandoA === item.href && !activo;
                   return (
                     <Link
                       key={item.label}
                       href={item.href}
-                      onClick={() => setIsOpen(false)}
-                      className={`flex items-center gap-3 px-4 py-2 mx-2 rounded-lg text-sm transition-colors ${
-                        activo ? "bg-indigo-50 dark:bg-indigo-500/10 text-indigo-700 dark:text-indigo-300 font-semibold" : "text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-white/5"
+                      onClick={() => { setIsOpen(false); if (!activo) setNavegandoA(item.href!); }}
+                      className={`flex items-center gap-3 px-4 py-2 mx-2 rounded-lg text-sm transition-all active:scale-[0.97] ${
+                        activo ? "bg-indigo-50 dark:bg-indigo-500/10 text-indigo-700 dark:text-indigo-300 font-semibold" : cargando ? "bg-slate-100 dark:bg-white/10 text-slate-500 dark:text-slate-300" : "text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-white/5"
                       }`}
                     >
-                      <Icon className="w-4 h-4" /> {item.label}
+                      {cargando ? <RotateCw className="w-4 h-4 animate-spin" /> : <Icon className="w-4 h-4" />} {item.label}
                     </Link>
                   );
                 })}
@@ -278,7 +286,12 @@ export default function PanelV2Layout({ children }: { children: React.ReactNode 
             </div>
           </div>
 
-          <main className="flex-1 min-w-0 overflow-y-auto bg-[#F8FAFC] dark:bg-[#0A0A0A]">
+          <main className="relative flex-1 min-w-0 overflow-y-auto bg-[#F8FAFC] dark:bg-[#0A0A0A]">
+            {navegandoA && (
+              <div className="absolute top-0 left-0 right-0 h-0.5 z-50 overflow-hidden bg-indigo-100 dark:bg-indigo-500/10">
+                <div className="h-full w-1/3 bg-indigo-600 dark:bg-indigo-400 animate-barra-carga" />
+              </div>
+            )}
             {children}
           </main>
         </div>

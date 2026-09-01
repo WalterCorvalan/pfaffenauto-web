@@ -39,6 +39,17 @@
   100% { transform: translateX(150%); }
 }
 
+/* Barra de carga en la navegación del sidebar de panel-v2 — feedback de
+   "esto ya arrancó" mientras carga la página siguiente */
+@keyframes barraCarga {
+  0% { transform: translateX(-100%); }
+  50% { transform: translateX(100%); }
+  100% { transform: translateX(250%); }
+}
+.animate-barra-carga {
+  animation: barraCarga 0.9s ease-in-out infinite;
+}
+
 /* Usado en decenas de componentes (modales, pasos de formulario, estados de éxito) */
 @keyframes fadeIn {
   from { opacity: 0; transform: translateY(6px); }
