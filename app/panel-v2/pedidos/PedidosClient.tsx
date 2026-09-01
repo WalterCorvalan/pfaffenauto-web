@@ -3,7 +3,7 @@
 import { useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import { supabase2 } from "@/lib/supabase2/client";
-import { Search, Clock, MessageSquareText, CarFront, Filter, Plus, Star, CheckCircle2, Sparkles } from "lucide-react";
+import { Search, Clock, MessageSquareText, Filter, Plus, Star, CheckCircle2, Sparkles } from "lucide-react";
 import NuevoPedidoModal from "./NuevoPedidoModal";
 
 const ESTADO_LABEL: Record<string, string> = { activo: "Activo", cumplido: "Cumplido", cancelado: "Cancelado" };
@@ -108,88 +108,91 @@ export default function PedidosClient({ pedidosIniciales, vendedores, clientes, 
       </div>
 
       <div className="flex-1 overflow-y-auto p-6 bg-slate-50 dark:bg-[#141414]">
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 max-w-[1800px] mx-auto">
-          {filtrados.map((p) => {
-            const tieneMatch = p.vehiculo_match_id && p.estado === "activo";
-            const sinConfirmar = p.estado === "activo" && !p.contacto_confirmado_at;
-            return (
-              <div
-                key={p.id}
-                onClick={() => abrirEdicion(p)}
-                className={`bg-white dark:bg-white/[0.02] border border-slate-200 dark:border-white/10 border-t-4 rounded-xl p-4 flex flex-col shadow-sm hover:shadow-md hover:border-rose-300 dark:hover:border-rose-500/40 transition-all cursor-pointer ${ESTADO_BORDER[p.estado]}`}
-              >
-                <div className="flex justify-between items-start mb-2 gap-2">
-                  <div className="flex items-center gap-1.5 flex-wrap">
-                    <span className={`text-[10px] font-bold uppercase tracking-widest px-2 py-0.5 rounded border ${ESTADO_STYLES[p.estado]}`}>{ESTADO_LABEL[p.estado]}</span>
-                    <span className="text-[10px] font-bold uppercase tracking-widest px-2 py-0.5 rounded bg-slate-100 dark:bg-white/10 text-slate-500 dark:text-slate-400">{TIPO_LABEL[p.tipo] || p.tipo}</span>
-                    {p.wishlist && <Star className="w-3.5 h-3.5 text-amber-400 fill-amber-400" />}
-                  </div>
-                  <span className="text-[10px] font-medium text-slate-400 flex items-center gap-1 shrink-0">
-                    <Clock className="w-3 h-3" /> {new Date(p.created_at).toLocaleDateString("es-AR", { day: "2-digit", month: "short" })}
-                  </span>
-                </div>
-
-                <div className="flex items-center gap-2 mb-3">
-                  <div className="w-7 h-7 rounded-full bg-rose-500 text-white flex items-center justify-center font-bold text-xs shrink-0">{(p.nombre_cliente || "?").substring(0, 2).toUpperCase()}</div>
-                  <h3 className="font-bold text-[14px] text-slate-900 dark:text-white truncate">{p.nombre_cliente}</h3>
-                </div>
-
-                {tieneMatch && (
-                  <div className="bg-emerald-50 dark:bg-emerald-500/10 border border-emerald-200 dark:border-emerald-500/20 rounded-lg p-2.5 mb-2.5 flex items-center gap-1.5">
-                    <Sparkles className="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400 shrink-0" />
-                    <p className="text-[11px] font-bold text-emerald-700 dark:text-emerald-400">
-                      ¡Match! {p.vehiculo_match?.marca} {p.vehiculo_match?.modelo} {p.vehiculo_match?.anio}
-                    </p>
-                  </div>
-                )}
-
-                <div className="bg-slate-50 dark:bg-white/5 border border-slate-100 dark:border-white/10 p-3 rounded-lg mb-3 flex-1">
-                  <span className="text-[9px] uppercase tracking-widest font-bold text-slate-400 block mb-1 flex items-center gap-1"><CarFront className="w-3 h-3" /> Vehículo buscado</span>
-                  <p className="text-[13px] font-semibold text-rose-700 dark:text-rose-400 leading-tight">{busquedaTexto(p) || "—"}</p>
-                  {p.presupuesto_max && <p className="text-[11px] text-slate-500 dark:text-slate-400 mt-1">Hasta {fmtMoneda(p.presupuesto_max, p.moneda)}</p>}
-                </div>
-
-                {p.reserva_senada && <p className="text-[10px] font-bold text-indigo-600 dark:text-indigo-400 mb-2">💰 Reserva señada</p>}
-                {sinConfirmar && (
-                  <button onClick={(e) => { e.stopPropagation(); confirmarContacto(p); }} className="flex items-center justify-center gap-1.5 text-[11px] font-bold text-amber-700 dark:text-amber-400 bg-amber-50 dark:bg-amber-500/10 border border-amber-200 dark:border-amber-500/20 rounded-lg py-1.5 mb-2 hover:bg-amber-100 dark:hover:bg-amber-500/20 transition-colors">
-                    <CheckCircle2 className="w-3.5 h-3.5" /> Confirmé contacto
-                  </button>
-                )}
-
-                <div className="pt-2 border-t border-slate-100 dark:border-white/10 flex items-center justify-between gap-2 mt-auto" onClick={(e) => e.stopPropagation()}>
-                  <select
-                    value={p.estado}
-                    onChange={(e) => cambiarEstado(p.id, e.target.value)}
-                    className={`text-[11px] font-bold uppercase tracking-widest rounded-lg px-2.5 py-1.5 outline-none cursor-pointer flex-1 border ${ESTADO_STYLES[p.estado]}`}
-                  >
-                    <option value="activo" className="bg-white text-slate-900">Activo</option>
-                    <option value="cumplido" className="bg-white text-slate-900">Cumplido</option>
-                    <option value="cancelado" className="bg-white text-slate-900">Cancelado</option>
-                  </select>
-                  {p.telefono && (
-                    <a
-                      href={`https://wa.me/${p.telefono.replace(/\D/g, "")}?text=${encodeURIComponent(`¡Hola ${p.nombre_cliente}! Te contactamos de Pfaffen Autos respecto a tu búsqueda: ${busquedaTexto(p)}.`)}`}
-                      target="_blank"
-                      rel="noreferrer"
-                      className="bg-emerald-50 dark:bg-emerald-500/10 hover:bg-emerald-100 dark:hover:bg-emerald-500/20 text-emerald-600 dark:text-emerald-400 p-1.5 rounded-md transition-colors shrink-0"
-                      title="Contactar por WhatsApp"
-                    >
-                      <MessageSquareText className="w-[18px] h-[18px]" strokeWidth={2.5} />
-                    </a>
-                  )}
-                </div>
-              </div>
-            );
-          })}
-
-          {filtrados.length === 0 && (
-            <div className="col-span-full py-20 flex flex-col items-center justify-center text-center border-2 border-dashed border-slate-200 dark:border-white/10 rounded-2xl bg-white dark:bg-white/[0.02]">
-              <Search className="w-10 h-10 text-slate-300 dark:text-slate-600 mb-3" />
-              <h3 className="text-[15px] font-bold text-slate-700 dark:text-slate-200">Sin pedidos</h3>
-              <p className="text-slate-500 dark:text-slate-400 text-xs mt-1">Con este filtro no se encontraron resultados.</p>
+        {filtrados.length === 0 ? (
+          <div className="py-20 flex flex-col items-center justify-center text-center border-2 border-dashed border-slate-200 dark:border-white/10 rounded-2xl bg-white dark:bg-white/[0.02]">
+            <Search className="w-10 h-10 text-slate-300 dark:text-slate-600 mb-3" />
+            <h3 className="text-[15px] font-bold text-slate-700 dark:text-slate-200">Sin pedidos</h3>
+            <p className="text-slate-500 dark:text-slate-400 text-xs mt-1">Con este filtro no se encontraron resultados.</p>
+          </div>
+        ) : (
+          <div className="bg-white dark:bg-white/[0.02] border border-slate-200 dark:border-white/5 rounded-2xl overflow-hidden">
+            <div className="overflow-x-auto">
+              <table className="w-full text-left border-collapse">
+                <thead>
+                  <tr className="bg-slate-50 dark:bg-white/5 text-slate-400 text-[10px] uppercase tracking-widest font-bold border-b border-slate-100 dark:border-white/10">
+                    <th className="px-4 py-3">Cliente</th>
+                    <th className="px-4 py-3">Vehículo buscado</th>
+                    <th className="px-4 py-3">Presupuesto</th>
+                    <th className="px-4 py-3">Tipo</th>
+                    <th className="px-4 py-3">Match</th>
+                    <th className="px-4 py-3">Fecha</th>
+                    <th className="px-4 py-3">Estado</th>
+                    <th className="px-4 py-3 w-px"></th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-slate-100 dark:divide-white/10">
+                  {filtrados.map((p) => {
+                    const tieneMatch = p.vehiculo_match_id && p.estado === "activo";
+                    const sinConfirmar = p.estado === "activo" && !p.contacto_confirmado_at;
+                    return (
+                      <tr key={p.id} onClick={() => abrirEdicion(p)} className="hover:bg-slate-50/50 dark:hover:bg-white/5 cursor-pointer">
+                        <td className="px-4 py-3">
+                          <div className="flex items-center gap-2">
+                            <div className="w-6 h-6 rounded-full bg-rose-500 text-white flex items-center justify-center font-bold text-[10px] shrink-0">{(p.nombre_cliente || "?").substring(0, 2).toUpperCase()}</div>
+                            <div className="min-w-0">
+                              <p className="text-[13px] font-bold text-slate-900 dark:text-white truncate flex items-center gap-1">{p.nombre_cliente} {p.wishlist && <Star className="w-3 h-3 text-amber-400 fill-amber-400 shrink-0" />}</p>
+                              {p.reserva_senada && <p className="text-[10px] font-bold text-indigo-600 dark:text-indigo-400">💰 Señada</p>}
+                            </div>
+                          </div>
+                        </td>
+                        <td className="px-4 py-3 text-[13px] text-slate-700 dark:text-slate-200 font-medium">{busquedaTexto(p) || "—"}</td>
+                        <td className="px-4 py-3 text-[13px] text-slate-500 dark:text-slate-400">{p.presupuesto_max ? fmtMoneda(p.presupuesto_max, p.moneda) : "—"}</td>
+                        <td className="px-4 py-3"><span className="text-[10px] font-bold uppercase tracking-widest px-2 py-1 rounded-full bg-slate-100 dark:bg-white/10 text-slate-500 dark:text-slate-400">{TIPO_LABEL[p.tipo] || p.tipo}</span></td>
+                        <td className="px-4 py-3">
+                          {tieneMatch ? (
+                            <span className="inline-flex items-center gap-1 text-[11px] font-bold text-emerald-700 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-500/10 border border-emerald-200 dark:border-emerald-500/20 px-2 py-1 rounded-full">
+                              <Sparkles className="w-3 h-3" /> {p.vehiculo_match?.marca} {p.vehiculo_match?.modelo}
+                            </span>
+                          ) : "—"}
+                        </td>
+                        <td className="px-4 py-3 text-[12px] text-slate-400 flex items-center gap-1"><Clock className="w-3 h-3" /> {new Date(p.created_at).toLocaleDateString("es-AR", { day: "2-digit", month: "short" })}</td>
+                        <td className="px-4 py-3" onClick={(e) => e.stopPropagation()}>
+                          <select
+                            value={p.estado}
+                            onChange={(e) => cambiarEstado(p.id, e.target.value)}
+                            className={`text-[10px] font-bold uppercase tracking-widest rounded-lg px-2 py-1.5 outline-none cursor-pointer border ${ESTADO_STYLES[p.estado]}`}
+                          >
+                            <option value="activo" className="bg-white text-slate-900">Activo</option>
+                            <option value="cumplido" className="bg-white text-slate-900">Cumplido</option>
+                            <option value="cancelado" className="bg-white text-slate-900">Cancelado</option>
+                          </select>
+                          {sinConfirmar && (
+                            <button onClick={(e) => { e.stopPropagation(); confirmarContacto(p); }} className="mt-1 flex items-center gap-1 text-[10px] font-bold text-amber-700 dark:text-amber-400 hover:underline">
+                              <CheckCircle2 className="w-3 h-3" /> Confirmé contacto
+                            </button>
+                          )}
+                        </td>
+                        <td className="px-4 py-3 w-px" onClick={(e) => e.stopPropagation()}>
+                          {p.telefono && (
+                            <a
+                              href={`https://wa.me/${p.telefono.replace(/\D/g, "")}?text=${encodeURIComponent(`¡Hola ${p.nombre_cliente}! Te contactamos de Pfaffen Autos respecto a tu búsqueda: ${busquedaTexto(p)}.`)}`}
+                              target="_blank"
+                              rel="noreferrer"
+                              className="bg-emerald-50 dark:bg-emerald-500/10 hover:bg-emerald-100 dark:hover:bg-emerald-500/20 text-emerald-600 dark:text-emerald-400 p-1.5 rounded-md transition-colors inline-flex"
+                              title="Contactar por WhatsApp"
+                            >
+                              <MessageSquareText className="w-4 h-4" strokeWidth={2.5} />
+                            </a>
+                          )}
+                        </td>
+                      </tr>
+                    );
+                  })}
+                </tbody>
+              </table>
             </div>
-          )}
-        </div>
+          </div>
+        )}
       </div>
 
       {modalAbierto && (
