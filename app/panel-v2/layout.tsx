@@ -5,7 +5,7 @@ import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { supabase2 } from "@/lib/supabase2/client";
 import {
-  Search, Moon, Sun, LogOut, RotateCw, Menu, X,
+  Search, Moon, Sun, LogOut, RotateCw, Menu, X, PanelLeftClose, PanelLeftOpen,
   LayoutDashboard, CalendarDays, CalendarCheck, BellRing, LineChart, Megaphone, Folder,
   Car, Users, FileText, Briefcase, Trophy, SearchCode, Handshake, PackageCheck,
   BedDouble, Repeat, Star, FolderKanban, ClipboardList, ClipboardCheck, KeyRound, Landmark,
@@ -112,6 +112,7 @@ export default function PanelV2Layout({ children }: { children: React.ReactNode 
   const pathname = usePathname();
   const router = useRouter();
   const [isOpen, setIsOpen] = useState(false);
+  const [colapsado, setColapsado] = useState(false);
   const [darkMode, setDarkMode] = useState(false);
   const [nombre, setNombre] = useState("Cargando...");
   const [roles, setRoles] = useState<string[]>([]);
@@ -129,7 +130,16 @@ export default function PanelV2Layout({ children }: { children: React.ReactNode 
   useEffect(() => {
     const guardado = localStorage.getItem("panelV2DarkMode");
     if (guardado === "true") setDarkMode(true);
+    const guardadoColapsado = localStorage.getItem("panelV2SidebarColapsado");
+    if (guardadoColapsado === "true") setColapsado(true);
   }, []);
+
+  const toggleColapsado = () => {
+    setColapsado((prev) => {
+      localStorage.setItem("panelV2SidebarColapsado", String(!prev));
+      return !prev;
+    });
+  };
 
   useEffect(() => {
     supabase2.from("vehiculos").select("id", { count: "exact", head: true }).eq("estado", "disponible").then(({ count }) => setAutosDisponibles(count ?? 0));
@@ -190,20 +200,28 @@ export default function PanelV2Layout({ children }: { children: React.ReactNode 
 
         {/* SIDEBAR */}
         <aside
-          className={`fixed md:relative top-14 md:top-0 left-0 h-[calc(100vh-3.5rem)] md:h-full w-[230px] bg-white dark:bg-[#111] border-r border-slate-200 dark:border-white/10 flex flex-col shrink-0 transform transition-transform z-40 ${isOpen ? "translate-x-0" : "-translate-x-full md:translate-x-0"}`}
+          className={`fixed md:relative top-14 md:top-0 left-0 h-[calc(100vh-3.5rem)] md:h-full ${colapsado ? "md:w-[68px]" : "md:w-[230px]"} w-[230px] bg-white dark:bg-[#111] border-r border-slate-200 dark:border-white/10 flex flex-col shrink-0 transform transition-all duration-200 z-40 ${isOpen ? "translate-x-0" : "-translate-x-full md:translate-x-0"}`}
         >
-          <div className="h-[60px] flex items-center gap-2 px-4 border-b border-slate-200 dark:border-white/10 shrink-0">
+          <div className={`h-[60px] flex items-center gap-2 border-b border-slate-200 dark:border-white/10 shrink-0 ${colapsado ? "md:px-2 px-4" : "px-4"}`}>
             <div className="w-8 h-8 rounded-lg bg-indigo-600 text-white flex items-center justify-center font-bold text-xs shrink-0">PV</div>
-            <div>
+            <div className={colapsado ? "md:hidden" : ""}>
               <p className="text-sm font-bold leading-none">Panel v2</p>
               <p className="text-[10px] text-slate-400 leading-none mt-0.5">Pfaffen Autos</p>
             </div>
+            <button
+              onClick={toggleColapsado}
+              title={colapsado ? "Expandir menú" : "Colapsar menú"}
+              className="hidden md:flex ml-auto shrink-0 w-6 h-6 items-center justify-center rounded-md text-slate-400 hover:text-slate-700 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-white/10 transition-colors"
+            >
+              {colapsado ? <PanelLeftOpen className="w-4 h-4" /> : <PanelLeftClose className="w-4 h-4" />}
+            </button>
           </div>
 
           <nav className="flex-1 overflow-y-auto py-2 custom-scrollbar">
             {GRUPOS.map((grupo) => (
               <div key={grupo.titulo} className="mb-1">
-                <p className="px-4 pt-3 pb-1 text-[10px] font-bold uppercase tracking-wider text-slate-400">{grupo.titulo}</p>
+                <p className={`px-4 pt-3 pb-1 text-[10px] font-bold uppercase tracking-wider text-slate-400 ${colapsado ? "md:hidden" : ""}`}>{grupo.titulo}</p>
+                {colapsado && <div className="hidden md:block mx-3 my-1.5 border-t border-slate-100 dark:border-white/5 first:mt-0" />}
                 {grupo.items.map((item) => {
                   const Icon = item.icon;
                   const activo = item.href && (item.href === "/panel-v2" ? pathname === item.href : pathname?.startsWith(item.href));
@@ -212,9 +230,9 @@ export default function PanelV2Layout({ children }: { children: React.ReactNode 
                       <div
                         key={item.label}
                         title="Todavía no construido"
-                        className="flex items-center gap-3 px-4 py-2 mx-2 rounded-lg text-sm text-slate-300 dark:text-slate-600 cursor-not-allowed"
+                        className={`flex items-center gap-3 py-2 mx-2 rounded-lg text-sm text-slate-300 dark:text-slate-600 cursor-not-allowed ${colapsado ? "md:justify-center px-4 md:px-0" : "px-4"}`}
                       >
-                        <Icon className="w-4 h-4" /> {item.label}
+                        <Icon className="w-4 h-4 shrink-0" /> <span className={colapsado ? "md:hidden" : ""}>{item.label}</span>
                       </div>
                     );
                   }
@@ -223,12 +241,13 @@ export default function PanelV2Layout({ children }: { children: React.ReactNode 
                     <Link
                       key={item.label}
                       href={item.href}
+                      title={colapsado ? item.label : undefined}
                       onClick={() => { setIsOpen(false); if (!activo) setNavegandoA(item.href!); }}
-                      className={`flex items-center gap-3 px-4 py-2 mx-2 rounded-lg text-sm transition-all active:scale-[0.97] ${
+                      className={`flex items-center gap-3 py-2 mx-2 rounded-lg text-sm transition-all active:scale-[0.97] ${colapsado ? "md:justify-center px-4 md:px-0" : "px-4"} ${
                         activo ? "bg-indigo-50 dark:bg-indigo-500/10 text-indigo-700 dark:text-indigo-300 font-semibold" : cargando ? "bg-slate-100 dark:bg-white/10 text-slate-500 dark:text-slate-300" : "text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-white/5"
                       }`}
                     >
-                      {cargando ? <RotateCw className="w-4 h-4 animate-spin" /> : <Icon className="w-4 h-4" />} {item.label}
+                      {cargando ? <RotateCw className="w-4 h-4 animate-spin shrink-0" /> : <Icon className="w-4 h-4 shrink-0" />} <span className={colapsado ? "md:hidden" : ""}>{item.label}</span>
                     </Link>
                   );
                 })}
@@ -237,18 +256,15 @@ export default function PanelV2Layout({ children }: { children: React.ReactNode 
           </nav>
 
           <div className="border-t border-slate-200 dark:border-white/10 p-3 shrink-0 space-y-2">
-            <div className="flex items-center gap-2 px-1">
+            <div className={`flex items-center gap-2 px-1 ${colapsado ? "md:justify-center" : ""}`} title={colapsado ? nombre : undefined}>
               <div className="w-7 h-7 rounded-full bg-rose-500 text-white flex items-center justify-center text-xs font-bold shrink-0">{nombre.charAt(0).toUpperCase()}</div>
-              <div className="min-w-0 flex-1">
+              <div className={`min-w-0 flex-1 ${colapsado ? "md:hidden" : ""}`}>
                 <p className="text-xs font-bold truncate">{nombre}</p>
                 {rolPrincipal && <span className={`inline-block text-[9px] font-bold uppercase tracking-wide px-1.5 py-0.5 rounded ${ROL_COLOR[rolPrincipal] || "bg-slate-100 text-slate-600"}`}>{ROL_LABEL[rolPrincipal] || rolPrincipal}</span>}
               </div>
             </div>
-            <button onClick={handleLogout} className="w-full flex items-center gap-2 px-2 py-1.5 text-xs font-semibold text-rose-600 dark:text-rose-400 hover:bg-rose-50 dark:hover:bg-rose-500/10 rounded-lg transition-colors">
-              <LogOut className="w-3.5 h-3.5" /> Cerrar sesión
-            </button>
-            <button onClick={() => router.refresh()} className="w-full flex items-center gap-2 px-2 py-1.5 text-xs font-semibold text-slate-400 hover:bg-slate-50 dark:hover:bg-white/5 rounded-lg transition-colors">
-              <RotateCw className="w-3.5 h-3.5" /> Forzar recarga
+            <button onClick={handleLogout} title={colapsado ? "Cerrar sesión" : undefined} className={`w-full flex items-center gap-2 py-1.5 text-xs font-semibold text-rose-600 dark:text-rose-400 hover:bg-rose-50 dark:hover:bg-rose-500/10 rounded-lg transition-colors ${colapsado ? "md:justify-center px-2" : "px-2"}`}>
+              <LogOut className="w-3.5 h-3.5 shrink-0" /> <span className={colapsado ? "md:hidden" : ""}>Cerrar sesión</span>
             </button>
           </div>
         </aside>
