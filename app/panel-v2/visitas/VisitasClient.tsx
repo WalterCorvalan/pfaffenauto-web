@@ -2,10 +2,14 @@
 
 import { useState, useMemo } from "react";
 import { supabase2 } from "@/lib/supabase2/client";
-import { CalendarCheck, CarFront, MapPin, Clock, User, CheckCircle2, XCircle, CalendarClock, MessageSquareText, Users, Loader2 } from "lucide-react";
+import { CalendarCheck, CarFront, MapPin, Clock, User, CheckCircle2, XCircle, CalendarClock, MessageSquareText, Users, Loader2, Plus } from "lucide-react";
 import { fmtFechaLocal, hoyLocalISO } from "@/lib/panelV2/fechas";
+import NuevaVisitaModal from "./NuevaVisitaModal";
 
 interface Perfil { id: string; nombre: string; roles: string[] }
+interface Sucursal { id: string; nombre: string }
+interface Vehiculo { id: string; marca: string; modelo: string; patente: string | null }
+interface Cliente { id: string; nombre: string; telefono: string | null }
 
 const BADGE_ESTADO: Record<string, string> = {
   Pendiente: "bg-amber-500 text-white border-amber-500",
@@ -64,11 +68,14 @@ function VendedorSelector({ visitaId, vendedorActualId, perfiles, onCambiado }: 
   );
 }
 
-export default function VisitasClient({ visitasIniciales, perfiles }: { visitasIniciales: any[]; perfiles: Perfil[] }) {
+export default function VisitasClient({
+  visitasIniciales, perfiles, sucursales, vehiculos, clientes, miId,
+}: { visitasIniciales: any[]; perfiles: Perfil[]; sucursales: Sucursal[]; vehiculos: Vehiculo[]; clientes: Cliente[]; miId: string }) {
   const [visitas, setVisitas] = useState(visitasIniciales);
+  const [modalNueva, setModalNueva] = useState(false);
   const perfilMap = useMemo(() => Object.fromEntries(perfiles.map((p) => [p.id, p.nombre])), [perfiles]);
 
-  const actualizarUna = (v: any) => setVisitas((prev) => prev.map((x) => (x.id === v.id ? { ...x, ...v } : x)));
+  const actualizarUna = (v: any) => setVisitas((prev) => (prev.some((x) => x.id === v.id) ? prev.map((x) => (x.id === v.id ? { ...x, ...v } : x)) : [v, ...prev]));
 
   const hoy = hoyLocalISO();
   const proximas = visitas.filter((v) => v.fecha_visita >= hoy && v.estado !== "Cancelada");
@@ -126,9 +133,10 @@ export default function VisitasClient({ visitasIniciales, perfiles }: { visitasI
       <div className="flex flex-wrap items-center justify-between gap-3 mb-1">
         <div>
           <h1 className="text-xl font-bold flex items-center gap-2"><CalendarCheck className="w-5 h-5 text-rose-600" /> Agenda de Citas</h1>
-          <p className="text-sm text-slate-400">Visitas reservadas por clientes desde la web</p>
+          <p className="text-sm text-slate-400">Visitas agendadas desde la web o cargadas a mano</p>
         </div>
         <div className="flex items-center gap-2 flex-wrap">
+          <button onClick={() => setModalNueva(true)} className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-bold bg-rose-600 hover:bg-rose-700 text-white rounded-lg shadow-sm"><Plus className="w-3.5 h-3.5" /> Nueva visita</button>
           <div className="flex items-center gap-1.5 bg-slate-50 dark:bg-white/5 border border-slate-200 dark:border-white/10 px-2.5 py-1 rounded-md text-[11px] font-bold text-slate-600 dark:text-slate-300"><Users className="w-3.5 h-3.5" /> {total} Total</div>
           <div className="flex items-center gap-1.5 bg-amber-50 dark:bg-amber-500/10 border border-amber-200 dark:border-amber-500/20 px-2.5 py-1 rounded-md text-[11px] font-bold text-amber-700 dark:text-amber-300"><CalendarClock className="w-3.5 h-3.5" /> {pendientes} Por venir</div>
           <div className="flex items-center gap-1.5 bg-emerald-50 dark:bg-emerald-500/10 border border-emerald-200 dark:border-emerald-500/20 px-2.5 py-1 rounded-md text-[11px] font-bold text-emerald-700 dark:text-emerald-300"><CheckCircle2 className="w-3.5 h-3.5" /> {asistieron} Asistieron</div>
@@ -160,6 +168,18 @@ export default function VisitasClient({ visitasIniciales, perfiles }: { visitasI
             {pasadas.map((v) => <Tarjeta key={v.id} v={v} />)}
           </div>
         </div>
+      )}
+
+      {modalNueva && (
+        <NuevaVisitaModal
+          sucursales={sucursales}
+          vehiculos={vehiculos}
+          clientes={clientes}
+          perfiles={perfiles}
+          miId={miId}
+          onClose={() => setModalNueva(false)}
+          onCreada={actualizarUna}
+        />
       )}
     </div>
   );
