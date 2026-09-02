@@ -11,7 +11,7 @@ import {
   BedDouble, Repeat, Star, FolderKanban, ClipboardList, ClipboardCheck, KeyRound, Landmark,
   Wrench, Hammer, MessageSquareWarning, Banknote, PiggyBank, Coins, ShieldCheck,
   BarChart3, DollarSign, MessagesSquare, Smartphone, ThumbsUp, Lightbulb, Mail,
-  MessageCircle, BookUser, Settings, Trash2, Bot, Wallet, Tag, AlertTriangle,
+  MessageCircle, BookUser, Settings, Trash2, Bot, Wallet, Tag, AlertTriangle, CheckSquare,
 } from "lucide-react";
 import QuickActionsButton from "@/components/panelV2/QuickActionsButton";
 import NotificationBell from "@/components/panelV2/NotificationBell";
@@ -80,6 +80,7 @@ const GRUPOS: { titulo: string; items: { href?: string; label: string; icon: any
       { label: "Mensajes", icon: MessagesSquare },
       { href: "/panel-v2/whatsapp", label: "WhatsApp", icon: Smartphone },
       { href: "/panel-v2/rodi", label: "Rodi (chat web)", icon: Bot },
+      { href: "/panel-v2/tareas", label: "Tareas de Leads", icon: CheckSquare },
       { label: "Correos", icon: Mail },
       { label: "NPS", icon: ThumbsUp },
     ],

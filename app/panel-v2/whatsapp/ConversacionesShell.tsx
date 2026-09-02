@@ -1,6 +1,7 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import { useSearchParams } from "next/navigation";
 import { MessageSquareText } from "lucide-react";
 import ChatClient from "./ChatClient";
 import LeadsTab from "./LeadsTab";
@@ -10,7 +11,12 @@ interface Perfil { id: string; nombre: string; roles: string[] }
 export default function ConversacionesShell({
   conversacionesIniciales, conversacionesInstagramIniciales, vendedores, miId,
 }: { conversacionesIniciales: any[]; conversacionesInstagramIniciales: any[]; vendedores: Perfil[]; miId: string }) {
-  const [tab, setTab] = useState<"bandeja" | "leads" | "nuevo">("bandeja");
+  const searchParams = useSearchParams();
+  const [tab, setTab] = useState<"bandeja" | "leads" | "nuevo">(searchParams.get("tab") === "leads" ? "leads" : "bandeja");
+
+  useEffect(() => {
+    if (searchParams.get("tab") === "leads") setTab("leads");
+  }, [searchParams]);
   const leadsConConversacion = conversacionesIniciales.filter((c) => c.estado_lead && c.estado_lead !== "nuevo").length
     + conversacionesInstagramIniciales.filter((c) => c.estado_lead && c.estado_lead !== "nuevo").length;
 
