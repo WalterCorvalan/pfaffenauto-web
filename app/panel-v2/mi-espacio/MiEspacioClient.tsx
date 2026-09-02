@@ -6,8 +6,21 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { supabase2 } from "@/lib/supabase2/client";
 import {
   BarChart3, Trophy, Flame, ExternalLink, Plus, X, Save, CheckCircle2,
-  CreditCard, Trash2, Pencil, Car, ShoppingCart, Briefcase, Wallet2,
+  CreditCard, Trash2, Pencil, Car, ShoppingCart, Briefcase, Wallet2, ChevronDown,
+  ClipboardCheck, CalendarPlus, Wallet as WalletIcon,
 } from "lucide-react";
+import DeudasTab from "./tabs/DeudasTab";
+import CuotasPagarTab from "./tabs/CuotasPagarTab";
+import CuotasCobrarTab from "./tabs/CuotasCobrarTab";
+import SaldoAgenciaTab from "./tabs/SaldoAgenciaTab";
+import MisAutosTab from "./tabs/MisAutosTab";
+import PatrimonioTab from "./tabs/PatrimonioTab";
+import PendientesTab from "./tabs/PendientesTab";
+import CalendarioTab from "./tabs/CalendarioTab";
+import GastosFijosTab from "./tabs/GastosFijosTab";
+import ContactosTab from "./tabs/ContactosTab";
+import NotificacionesTab from "./tabs/NotificacionesTab";
+import MiWhatsAppTab from "./tabs/MiWhatsAppTab";
 
 const RESUMEN_ITEMS = [
   { key: "ventas_cerradas", label: "Ventas cerradas", desc: "Cerradas en 24h y en la semana" },
@@ -30,20 +43,20 @@ const PANEL_TABS = [
 const FINANZAS_TABS = [
   { grupo: "FINANZAS PERSONALES", value: "urgente", label: "URGENTE", icon: Flame },
   { grupo: "FINANZAS PERSONALES", value: "pagos", label: "Pagos realizados", icon: CreditCard },
-  { grupo: "FINANZAS PERSONALES", value: "deudas", label: "Deudas", disabled: true },
-  { grupo: "FINANZAS PERSONALES", value: "gastos-fijos", label: "Gastos fijos", disabled: true },
-  { grupo: "FINANZAS PERSONALES", value: "cuotas-pagar", label: "Cuotas a pagar", disabled: true },
-  { grupo: "FINANZAS PERSONALES", value: "cuotas-cobrar", label: "Cuotas a cobrar", disabled: true },
-  { grupo: "FINANZAS PERSONALES", value: "saldo-agencia", label: "Saldo agencia", disabled: true },
+  { grupo: "FINANZAS PERSONALES", value: "deudas", label: "Deudas" },
+  { grupo: "FINANZAS PERSONALES", value: "gastos-fijos", label: "Gastos fijos" },
+  { grupo: "FINANZAS PERSONALES", value: "cuotas-pagar", label: "Cuotas a pagar" },
+  { grupo: "FINANZAS PERSONALES", value: "cuotas-cobrar", label: "Cuotas a cobrar" },
+  { grupo: "FINANZAS PERSONALES", value: "saldo-agencia", label: "Saldo agencia" },
 ];
 const OTRAS_TABS = [
-  { grupo: "ORGANIZACIÓN", value: "mis-autos", label: "Mis autos", disabled: true },
-  { grupo: "ORGANIZACIÓN", value: "patrimonio", label: "Patrimonio", disabled: true },
-  { grupo: "ORGANIZACIÓN", value: "pendientes", label: "Pendientes", disabled: true },
-  { grupo: "ORGANIZACIÓN", value: "calendario", label: "Calendario", disabled: true },
-  { grupo: "ORGANIZACIÓN", value: "contactos", label: "Contactos", disabled: true },
-  { grupo: "PREFERENCIAS", value: "notificaciones", label: "Mis notificaciones", disabled: true },
-  { grupo: "PREFERENCIAS", value: "whatsapp", label: "Mi WhatsApp", disabled: true },
+  { grupo: "ORGANIZACIÓN", value: "mis-autos", label: "Mis autos" },
+  { grupo: "ORGANIZACIÓN", value: "patrimonio", label: "Patrimonio" },
+  { grupo: "ORGANIZACIÓN", value: "pendientes", label: "Pendientes" },
+  { grupo: "ORGANIZACIÓN", value: "calendario", label: "Calendario" },
+  { grupo: "ORGANIZACIÓN", value: "contactos", label: "Contactos" },
+  { grupo: "PREFERENCIAS", value: "notificaciones", label: "Mis notificaciones" },
+  { grupo: "PREFERENCIAS", value: "whatsapp", label: "Mi WhatsApp" },
 ];
 
 const inputClass = "w-full bg-slate-50 dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-lg px-3 py-2 text-sm outline-none focus:border-rose-500";
@@ -70,6 +83,8 @@ export default function MiEspacioClient({
   const router = useRouter();
   const searchParams = useSearchParams();
   const [tab, setTab] = useState("mi-dia");
+  const [mostrarAgregar, setMostrarAgregar] = useState(false);
+  const [autoAbrir, setAutoAbrir] = useState<string | null>(null);
   const [urgentes, setUrgentes] = useState(urgentesIniciales);
   const [pagos, setPagos] = useState(pagosIniciales);
   const [recibirResumen, setRecibirResumen] = useState(prefsIniciales?.recibir_resumen ?? true);
@@ -225,8 +240,16 @@ export default function MiEspacioClient({
           <h1 className="text-xl font-bold">Mi Espacio — {miNombre}</h1>
           <p className="text-sm text-slate-400">Tu zona personal — separada de la operación de la agencia. Solo vos ves esto.</p>
         </div>
-        <div className="flex items-center gap-2 shrink-0">
+        <div className="flex items-center gap-2 shrink-0 relative">
           {soyAdmin && <span className="text-[10px] font-bold uppercase px-2 py-1 rounded-full bg-amber-50 dark:bg-amber-500/10 text-amber-700 dark:text-amber-300">Administrador</span>}
+          <button onClick={() => setMostrarAgregar((v) => !v)} className="flex items-center gap-1.5 px-4 py-2 text-sm font-bold bg-rose-600 hover:bg-rose-700 text-white rounded-lg"><Plus className="w-4 h-4" /> Agregar <ChevronDown className="w-3.5 h-3.5" /></button>
+          {mostrarAgregar && (
+            <div className="absolute top-full right-0 mt-1 bg-white dark:bg-[#1A1A1A] border border-slate-200 dark:border-white/10 rounded-xl shadow-xl w-56 py-1 z-20">
+              <button onClick={() => { irATab("pendientes"); setAutoAbrir("pendientes"); setMostrarAgregar(false); }} className="w-full flex items-center gap-2 px-3 py-2 text-sm font-semibold hover:bg-slate-50 dark:hover:bg-white/5"><ClipboardCheck className="w-4 h-4 text-slate-400" /> Pendiente</button>
+              <button onClick={() => { irATab("calendario"); setAutoAbrir("calendario"); setMostrarAgregar(false); }} className="w-full flex items-center gap-2 px-3 py-2 text-sm font-semibold hover:bg-slate-50 dark:hover:bg-white/5"><CalendarPlus className="w-4 h-4 text-slate-400" /> Evento de calendario</button>
+              {soyAdmin && <button onClick={() => { irATab("gastos-fijos"); setAutoAbrir("gastos-fijos"); setMostrarAgregar(false); }} className="w-full flex items-center gap-2 px-3 py-2 text-sm font-semibold hover:bg-slate-50 dark:hover:bg-white/5"><WalletIcon className="w-4 h-4 text-slate-400" /> Gasto fijo</button>}
+            </div>
+          )}
         </div>
       </div>
 
@@ -425,7 +448,20 @@ export default function MiEspacioClient({
         </div>
       )}
 
-      {!soyAdmin && (tab === "urgente" || tab === "pagos") && (
+      {tab === "deudas" && soyAdmin && <DeudasTab miId={miId} />}
+      {tab === "cuotas-pagar" && soyAdmin && <CuotasPagarTab miId={miId} />}
+      {tab === "cuotas-cobrar" && soyAdmin && <CuotasCobrarTab miId={miId} />}
+      {tab === "saldo-agencia" && soyAdmin && <SaldoAgenciaTab miId={miId} />}
+      {tab === "gastos-fijos" && soyAdmin && <GastosFijosTab miId={miId} autoAbrir={autoAbrir === "gastos-fijos"} onAutoAbierto={() => setAutoAbrir(null)} />}
+      {tab === "mis-autos" && <MisAutosTab miId={miId} />}
+      {tab === "patrimonio" && <PatrimonioTab miId={miId} miNombre={miNombre} soyAdmin={soyAdmin} />}
+      {tab === "pendientes" && <PendientesTab miId={miId} autoAbrir={autoAbrir === "pendientes"} onAutoAbierto={() => setAutoAbrir(null)} />}
+      {tab === "calendario" && <CalendarioTab miId={miId} autoAbrir={autoAbrir === "calendario"} onAutoAbierto={() => setAutoAbrir(null)} />}
+      {tab === "contactos" && <ContactosTab miId={miId} />}
+      {tab === "notificaciones" && <NotificacionesTab miId={miId} />}
+      {tab === "whatsapp" && <MiWhatsAppTab miId={miId} />}
+
+      {!soyAdmin && ["urgente", "pagos", "deudas", "cuotas-pagar", "cuotas-cobrar", "saldo-agencia", "gastos-fijos"].includes(tab) && (
         <p className="text-sm text-slate-400 text-center py-16">Esta sección es solo para administradores.</p>
       )}
 
