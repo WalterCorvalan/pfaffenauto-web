@@ -201,10 +201,10 @@ export default function MisVentasClient({ vendedores, miId, miNombre, esAdmin }:
           <h1 className="text-xl font-black text-slate-900 dark:text-white leading-tight">Performance del equipo</h1>
         </div>
         <div className="flex flex-wrap items-center gap-2">
-          <button onClick={() => setModalRecibo(true)} className="flex items-center gap-1.5 px-3.5 py-2 text-sm font-bold bg-white dark:bg-white/5 border border-slate-200 dark:border-white/10 hover:bg-slate-50 dark:hover:bg-white/10 rounded-xl transition-colors">
+          <button onClick={() => setModalRecibo(true)} title="PDF suelto para completar a mano — no se guarda en el CRM" className="flex items-center gap-1.5 px-3.5 py-2 text-sm font-bold bg-white dark:bg-white/5 border border-slate-200 dark:border-white/10 hover:bg-slate-50 dark:hover:bg-white/10 rounded-xl transition-colors">
             <DollarSign className="w-4 h-4" /> Nuevo Recibo
           </button>
-          <button onClick={() => setModalBoleto(true)} className="flex items-center gap-1.5 px-3.5 py-2 text-sm font-bold bg-rose-600 hover:bg-rose-700 text-white rounded-xl transition-colors">
+          <button onClick={() => setModalBoleto(true)} title="PDF suelto para completar a mano — no se guarda en el CRM" className="flex items-center gap-1.5 px-3.5 py-2 text-sm font-bold bg-rose-600 hover:bg-rose-700 text-white rounded-xl transition-colors">
             <FileText className="w-4 h-4" /> Nuevo Boleto
           </button>
           {esAdmin && vendedores.length > 1 && (
