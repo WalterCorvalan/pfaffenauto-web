@@ -4,7 +4,8 @@ import { useState, useMemo } from "react";
 import Link from "next/link";
 import {
   BarChart3, FileText, Receipt, Wallet, Coins, CreditCard, Landmark,
-  TrendingDown, TrendingUp, ArrowLeftRight, ExternalLink, HandCoins, ScrollText,
+  TrendingDown, TrendingUp, ExternalLink, HandCoins, ScrollText, Handshake,
+  ClipboardList, Repeat, SearchCheck, PackageCheck, CheckSquare, Landmark as Afip,
 } from "lucide-react";
 import MovimientosTab from "./tabs/MovimientosTab";
 import CuentasTab from "./tabs/CuentasTab";
@@ -15,6 +16,13 @@ import TarjetaTab from "./tabs/TarjetaTab";
 import RetirosTab from "./tabs/RetirosTab";
 import RentabilidadTab from "./tabs/RentabilidadTab";
 import ChequesTab from "./tabs/ChequesTab";
+import PrestamosTab from "./tabs/PrestamosTab";
+import PresupuestoTab from "./tabs/PresupuestoTab";
+import RecurrenciasTab from "./tabs/RecurrenciasTab";
+import ArqueosTab from "./tabs/ArqueosTab";
+import CierreCajaTab from "./tabs/CierreCajaTab";
+import ConciliacionTab from "./tabs/ConciliacionTab";
+import AfipIvaTab from "./tabs/AfipIvaTab";
 import { fmt } from "./tabs/shared";
 
 const TABS = [
@@ -30,6 +38,13 @@ const TABS = [
   { value: "comisiones", label: "Comisiones", icon: Receipt, externo: "/panel-v2/comisiones" },
   { value: "rentabilidad", label: "Rentabilidad", icon: TrendingUp },
   { value: "cuentas", label: "Cuentas", icon: Landmark },
+  { value: "prestamos", label: "Préstamos", icon: Handshake },
+  { value: "presupuesto", label: "Presupuesto", icon: ClipboardList },
+  { value: "recurrencias", label: "Recurrencias", icon: Repeat },
+  { value: "arqueos", label: "Arqueos", icon: SearchCheck },
+  { value: "cierre-caja", label: "Cierre Caja", icon: PackageCheck },
+  { value: "conciliacion", label: "Conciliación", icon: CheckSquare },
+  { value: "afip-iva", label: "AFIP/IVA", icon: Afip },
 ];
 
 export default function FinanzasClient({
@@ -37,11 +52,13 @@ export default function FinanzasClient({
   cuotasCobrarIniciales, cuotasPagarIniciales, vendedores, clientes, vehiculos, ventas,
   chequesIniciales, pagosDisponiblesIniciales, consumosTarjetaIniciales, retirosIniciales, devolucionesIniciales,
   expedientes, senasActivasPorMoneda,
+  prestamosIniciales, presupuestosIniciales, recurrenciasIniciales, generacionesIniciales, arqueosIniciales, cierresDiariosIniciales, miNombre,
 }: {
   miId: string; soyAdmin: boolean; soyAdminOFinanzas: boolean; cuentasIniciales: any[]; movimientosIniciales: any[]; cierresIniciales: any[];
   cuotasCobrarIniciales: any[]; cuotasPagarIniciales: any[]; vendedores: any[]; clientes: any[]; vehiculos: any[]; ventas: any[];
   chequesIniciales: any[]; pagosDisponiblesIniciales: any[]; consumosTarjetaIniciales: any[]; retirosIniciales: any[]; devolucionesIniciales: any[];
   expedientes: any[]; senasActivasPorMoneda: Record<string, number>;
+  prestamosIniciales: any[]; presupuestosIniciales: any[]; recurrenciasIniciales: any[]; generacionesIniciales: any[]; arqueosIniciales: any[]; cierresDiariosIniciales: any[]; miNombre: string;
 }) {
   const [tab, setTab] = useState("resumen");
   const [cuentas, setCuentas] = useState(cuentasIniciales);
@@ -54,6 +71,12 @@ export default function FinanzasClient({
   const [consumosTarjeta, setConsumosTarjeta] = useState(consumosTarjetaIniciales);
   const [retiros, setRetiros] = useState(retirosIniciales);
   const [devoluciones, setDevoluciones] = useState(devolucionesIniciales);
+  const [prestamos, setPrestamos] = useState(prestamosIniciales);
+  const [presupuestos, setPresupuestos] = useState(presupuestosIniciales);
+  const [recurrencias, setRecurrencias] = useState(recurrenciasIniciales);
+  const [generaciones, setGeneraciones] = useState(generacionesIniciales);
+  const [arqueos, setArqueos] = useState(arqueosIniciales);
+  const [cierresDiarios, setCierresDiarios] = useState(cierresDiariosIniciales);
 
   const totalPorMoneda = useMemo(() => {
     const map: Record<string, number> = {};
@@ -168,6 +191,30 @@ export default function FinanzasClient({
       {tab === "rentabilidad" && (
         <RentabilidadTab movimientos={movimientos} senasActivas={senasActivasPorMoneda} cuotasPendientes={cuotasPendientesPorMoneda} />
       )}
+
+      {tab === "prestamos" && (
+        <PrestamosTab prestamos={prestamos} setPrestamos={setPrestamos} cuentas={cuentas} setCuentas={setCuentas} setMovimientos={setMovimientos} />
+      )}
+
+      {tab === "presupuesto" && (
+        <PresupuestoTab presupuestos={presupuestos} setPresupuestos={setPresupuestos} movimientos={movimientos} />
+      )}
+
+      {tab === "recurrencias" && (
+        <RecurrenciasTab recurrencias={recurrencias} setRecurrencias={setRecurrencias} generaciones={generaciones} setGeneraciones={setGeneraciones} cuentas={cuentas} setCuentas={setCuentas} movimientos={movimientos} setMovimientos={setMovimientos} />
+      )}
+
+      {tab === "arqueos" && (
+        <ArqueosTab arqueos={arqueos} setArqueos={setArqueos} cuentas={cuentas} miNombre={miNombre} />
+      )}
+
+      {tab === "cierre-caja" && (
+        <CierreCajaTab cierres={cierresDiarios} setCierres={setCierresDiarios} />
+      )}
+
+      {tab === "conciliacion" && <ConciliacionTab movimientos={movimientos} />}
+
+      {tab === "afip-iva" && <AfipIvaTab movimientos={movimientos} setMovimientos={setMovimientos} />}
     </div>
   );
 }

@@ -3,9 +3,7 @@
 import { useState, useMemo } from "react";
 import { supabase2 } from "@/lib/supabase2/client";
 import { Plus, X, Save, Trash2, Pencil, ArrowLeftRight, Lock, Download, Search, Paperclip } from "lucide-react";
-import { inputClass, labelClass, fmt } from "./shared";
-
-const CATEGORIAS = ["Venta de vehículo", "Compra de vehículo", "Seña", "Comisión", "Gasto fijo", "Sueldo", "Transferencia", "Cobro de cuota", "Pago de cuota", "Otro"];
+import { inputClass, labelClass, fmt, CATEGORIAS_MOVIMIENTO as CATEGORIAS } from "./shared";
 
 function inicioSemana(d: Date) { const x = new Date(d); const dia = x.getDay(); x.setDate(x.getDate() - (dia === 0 ? 6 : dia - 1)); x.setHours(0, 0, 0, 0); return x; }
 
