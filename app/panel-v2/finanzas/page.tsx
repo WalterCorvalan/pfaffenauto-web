@@ -11,7 +11,7 @@ export default async function FinanzasPage() {
   const soyAdminOFinanzas = miPerfil?.roles?.some((r: string) => r === "admin" || r === "finanzas") ?? false;
   const soyAdmin = miPerfil?.roles?.includes("admin") ?? false;
 
-  const [{ data: cuentas }, { data: cierres }, { data: cuotasCobrar }, { data: cuotasPagar }, { data: vendedores }, { data: clientes }, { data: vehiculos }, { data: ventas }, { data: cheques }, { data: pagosDisponibles }, { data: consumosTarjeta }, { data: retiros }, { data: devoluciones }, { data: expedientes }, { data: prestamos }, { data: presupuestos }, { data: recurrencias }, { data: recurrenciasGeneraciones }, { data: arqueos }, { data: cierresDiarios }] = await Promise.all([
+  const [{ data: cuentas }, { data: cierres }, { data: cuotasCobrar }, { data: cuotasPagar }, { data: vendedores }, { data: clientes }, { data: vehiculos }, { data: ventas }, { data: cheques }, { data: pagosDisponibles }, { data: consumosTarjeta }, { data: retiros }, { data: devoluciones }, { data: expedientes }, { data: prestamos }, { data: presupuestos }, { data: recurrencias }, { data: recurrenciasGeneraciones }, { data: arqueos }, { data: cierresDiarios }, { data: senas }, { data: vehiculosDisponiblesFull }, { data: sucursales }] = await Promise.all([
     supabase.from("cuentas").select("*").eq("activa", true).order("nombre"),
     supabase.from("cierres_mensuales").select("*").order("mes", { ascending: false }),
     supabase.from("cuotas_cobrar_clientes").select("*, cliente:clientes(nombre)").order("vencimiento"),
@@ -32,9 +32,12 @@ export default async function FinanzasPage() {
     supabase.from("finanzas_recurrencias_generaciones").select("*").order("mes", { ascending: false }).limit(500),
     supabase.from("finanzas_arqueos").select("*, cuenta:cuentas(nombre), responsable:perfiles(nombre)").order("fecha", { ascending: false }).limit(200),
     supabase.from("finanzas_cierres_diarios").select("*, detalle:finanzas_cierres_diarios_detalle(*), cerrado_por_perfil:perfiles!finanzas_cierres_diarios_cerrado_por_fkey(nombre)").order("fecha", { ascending: false }).limit(60),
+    supabase.from("senas").select("*, perfiles:vendedor_id ( nombre ), sucursales:sucursal_id ( nombre )").order("created_at", { ascending: false }).limit(100),
+    supabase.from("vehiculos").select("*").eq("estado", "disponible").order("marca"),
+    supabase.from("sucursales").select("id, nombre").order("nombre"),
   ]);
 
-  const { data: senasActivas } = await supabase.from("senas").select("monto, moneda").eq("estado", "activa");
+  const { data: senasActivas } = await supabase.from("senas").select("monto, moneda").ilike("estado", "activa");
   const senasActivasPorMoneda: Record<string, number> = {};
   (senasActivas || []).forEach((s) => { if (s.monto) senasActivasPorMoneda[s.moneda] = (senasActivasPorMoneda[s.moneda] || 0) + Number(s.monto); });
 
@@ -81,6 +84,9 @@ export default async function FinanzasPage() {
       arqueosIniciales={arqueos || []}
       cierresDiariosIniciales={cierresDiarios || []}
       miNombre={miPerfil?.nombre || ""}
+      senasIniciales={senas || []}
+      vehiculosDisponiblesFull={vehiculosDisponiblesFull || []}
+      sucursales={sucursales || []}
     />
   );
 }

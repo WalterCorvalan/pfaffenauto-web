@@ -23,12 +23,13 @@ import ArqueosTab from "./tabs/ArqueosTab";
 import CierreCajaTab from "./tabs/CierreCajaTab";
 import ConciliacionTab from "./tabs/ConciliacionTab";
 import AfipIvaTab from "./tabs/AfipIvaTab";
+import SenasTab from "./tabs/SenasTab";
 import { fmt } from "./tabs/shared";
 
-const TABS = [
+const TABS: { value: string; label: string; icon: any; disabled?: boolean; externo?: string }[] = [
   { value: "resumen", label: "Resumen", icon: BarChart3 },
   { value: "movimientos", label: "Movimientos", icon: FileText },
-  { value: "senas", label: "Señas", icon: Coins, disabled: true },
+  { value: "senas", label: "Señas", icon: Coins },
   { value: "cuotas", label: "Cuotas", icon: Wallet },
   { value: "devol-registro", label: "Devol. Registro", icon: HandCoins },
   { value: "pagos-disp", label: "Pagos Disp.", icon: Coins },
@@ -53,12 +54,14 @@ export default function FinanzasClient({
   chequesIniciales, pagosDisponiblesIniciales, consumosTarjetaIniciales, retirosIniciales, devolucionesIniciales,
   expedientes, senasActivasPorMoneda,
   prestamosIniciales, presupuestosIniciales, recurrenciasIniciales, generacionesIniciales, arqueosIniciales, cierresDiariosIniciales, miNombre,
+  senasIniciales, vehiculosDisponiblesFull, sucursales,
 }: {
   miId: string; soyAdmin: boolean; soyAdminOFinanzas: boolean; cuentasIniciales: any[]; movimientosIniciales: any[]; cierresIniciales: any[];
   cuotasCobrarIniciales: any[]; cuotasPagarIniciales: any[]; vendedores: any[]; clientes: any[]; vehiculos: any[]; ventas: any[];
   chequesIniciales: any[]; pagosDisponiblesIniciales: any[]; consumosTarjetaIniciales: any[]; retirosIniciales: any[]; devolucionesIniciales: any[];
   expedientes: any[]; senasActivasPorMoneda: Record<string, number>;
   prestamosIniciales: any[]; presupuestosIniciales: any[]; recurrenciasIniciales: any[]; generacionesIniciales: any[]; arqueosIniciales: any[]; cierresDiariosIniciales: any[]; miNombre: string;
+  senasIniciales: any[]; vehiculosDisponiblesFull: any[]; sucursales: any[];
 }) {
   const [tab, setTab] = useState("resumen");
   const [cuentas, setCuentas] = useState(cuentasIniciales);
@@ -77,6 +80,7 @@ export default function FinanzasClient({
   const [generaciones, setGeneraciones] = useState(generacionesIniciales);
   const [arqueos, setArqueos] = useState(arqueosIniciales);
   const [cierresDiarios, setCierresDiarios] = useState(cierresDiariosIniciales);
+  const [senas] = useState(senasIniciales);
 
   const totalPorMoneda = useMemo(() => {
     const map: Record<string, number> = {};
@@ -160,6 +164,10 @@ export default function FinanzasClient({
         </div>
       )}
 
+      {tab === "senas" && (
+        <SenasTab senas={senas} clientes={clientes} vehiculos={vehiculosDisponiblesFull} vendedores={vendedores} sucursales={sucursales} cuentas={cuentas} />
+      )}
+
       {tab === "movimientos" && (
         <MovimientosTab miId={miId} soyAdmin={soyAdmin} cuentas={cuentas} movimientos={movimientos} setMovimientos={setMovimientos} cierres={cierres} setCierres={setCierres} ventas={ventas} />
       )}
@@ -167,7 +175,7 @@ export default function FinanzasClient({
       {tab === "cuentas" && <CuentasTab cuentas={cuentas} setCuentas={setCuentas} soyAdmin={soyAdmin} />}
 
       {tab === "cuotas" && (
-        <CuotasTab cuotasCobrar={cuotasCobrar} setCuotasCobrar={setCuotasCobrar} cuotasPagar={cuotasPagar} setCuotasPagar={setCuotasPagar} cuentas={cuentas} setCuentas={setCuentas} setMovimientos={setMovimientos} clientes={clientes} vehiculos={vehiculos} miId={miId} />
+        <CuotasTab cuotasCobrar={cuotasCobrar} setCuotasCobrar={setCuotasCobrar} cuotasPagar={cuotasPagar} setCuotasPagar={setCuotasPagar} cuentas={cuentas} setCuentas={setCuentas} setMovimientos={setMovimientos} clientes={clientes} vehiculos={vehiculos} vendedores={vendedores} miId={miId} />
       )}
 
       {tab === "devol-registro" && (

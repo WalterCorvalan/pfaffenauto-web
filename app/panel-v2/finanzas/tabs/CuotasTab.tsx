@@ -15,13 +15,14 @@ function badge(fecha: string) {
 }
 
 export default function CuotasTab({
-  cuotasCobrar, setCuotasCobrar, cuotasPagar, setCuotasPagar, cuentas, setCuentas, setMovimientos, clientes, vehiculos, miId,
-}: { cuotasCobrar: any[]; setCuotasCobrar: (fn: any) => void; cuotasPagar: any[]; setCuotasPagar: (fn: any) => void; cuentas: any[]; setCuentas: (fn: any) => void; setMovimientos: (fn: any) => void; clientes: any[]; vehiculos: any[]; miId: string }) {
+  cuotasCobrar, setCuotasCobrar, cuotasPagar, setCuotasPagar, cuentas, setCuentas, setMovimientos, clientes, vehiculos, vendedores, miId,
+}: { cuotasCobrar: any[]; setCuotasCobrar: (fn: any) => void; cuotasPagar: any[]; setCuotasPagar: (fn: any) => void; cuentas: any[]; setCuentas: (fn: any) => void; setMovimientos: (fn: any) => void; clientes: any[]; vehiculos: any[]; vendedores: any[]; miId: string }) {
   const [sub, setSub] = useState<"cobrar" | "pagar">("cobrar");
 
   // A cobrar
   const [showNuevaC, setShowNuevaC] = useState(false);
   const [cClienteId, setCClienteId] = useState("");
+  const [cVendedorId, setCVendedorId] = useState("");
   const [cConcepto, setCConcepto] = useState("");
   const [cMoneda, setCMoneda] = useState("USD");
   const [cMonto, setCMonto] = useState("");
@@ -66,12 +67,12 @@ export default function CuotasTab({
     setGuardandoC(true);
     try {
       const { data, error } = await supabase2.from("cuotas_cobrar_clientes").insert({
-        cliente_id: cClienteId || null, concepto: cConcepto.trim(), moneda: cMoneda, monto: Number(cMonto), vencimiento: cVencimiento, creado_por: miId,
+        cliente_id: cClienteId || null, vendedor_id: cVendedorId || null, concepto: cConcepto.trim(), moneda: cMoneda, monto: Number(cMonto), vencimiento: cVencimiento, creado_por: miId,
       }).select("*, cliente:clientes(nombre)").single();
       if (error) throw error;
       setCuotasCobrar((prev: any[]) => [...prev, data]);
       setShowNuevaC(false);
-      setCClienteId(""); setCConcepto(""); setCMonto(""); setCVencimiento("");
+      setCClienteId(""); setCVendedorId(""); setCConcepto(""); setCMonto(""); setCVencimiento("");
     } catch { alert("No se pudo crear la cuota."); } finally { setGuardandoC(false); }
   };
 
@@ -219,8 +220,11 @@ export default function CuotasTab({
         <div className="fixed inset-0 bg-black/40 z-50 flex items-center justify-center p-4" onClick={() => setShowNuevaC(false)}>
           <div onClick={(e) => e.stopPropagation()} className="bg-white dark:bg-[#141414] border border-slate-200 dark:border-white/10 w-full max-w-md rounded-2xl shadow-2xl p-6">
             <div className="flex justify-between items-start mb-4"><h3 className="text-lg font-bold">Nueva cuota a cobrar</h3><button onClick={() => setShowNuevaC(false)}><X className="w-4 h-4 text-slate-400" /></button></div>
-            <label className={labelClass}>Cliente</label>
-            <select value={cClienteId} onChange={(e) => setCClienteId(e.target.value)} className={inputClass}><option value="">— Sin cliente —</option>{clientes.map((c) => <option key={c.id} value={c.id}>{c.nombre}</option>)}</select>
+            <div className="grid grid-cols-2 gap-2">
+              <div><label className={labelClass}>Cliente</label><select value={cClienteId} onChange={(e) => setCClienteId(e.target.value)} className={inputClass}><option value="">— Sin cliente —</option>{clientes.map((c) => <option key={c.id} value={c.id}>{c.nombre}</option>)}</select></div>
+              <div><label className={labelClass}>Vendedor</label><select value={cVendedorId} onChange={(e) => setCVendedorId(e.target.value)} className={inputClass}><option value="">— Sin asignar —</option>{vendedores.map((v) => <option key={v.id} value={v.id}>{v.nombre}</option>)}</select></div>
+            </div>
+            <p className="text-[10px] text-slate-400 mt-0.5">El vendedor ve esta cuota en Cobros. Si viene de una venta, se asigna solo.</p>
             <label className={labelClass + " mt-3"}>Concepto *</label>
             <input value={cConcepto} onChange={(e) => setCConcepto(e.target.value)} placeholder="Financiación saldo, cuota 3/12..." className={inputClass} />
             <div className="grid grid-cols-3 gap-2 mt-3">
