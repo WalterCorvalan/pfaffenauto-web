@@ -20,6 +20,14 @@ export async function notificarGestoria(supabase: SupabaseClient, mensaje: strin
   );
 }
 
+export async function notificarFinanzas(supabase: SupabaseClient, mensaje: string, link: string, tipo: string = "sobrante_registro") {
+  const { data: destinatarios } = await supabase.from("perfiles").select("id").or("roles.cs.{admin},roles.cs.{finanzas}").eq("activo", true);
+  if (!destinatarios || destinatarios.length === 0) return;
+  await supabase.from("alertas").insert(
+    destinatarios.map((d) => ({ destinatario_id: d.id, tipo, titulo: mensaje, link, prioridad: "media" }))
+  );
+}
+
 export async function notificarRespuestaPrecio(supabase: SupabaseClient, vendedorId: string | null, mensaje: string, link: string) {
   if (!vendedorId) return;
   await supabase.from("alertas").insert({ destinatario_id: vendedorId, tipo: "precio_confirmado_respuesta", titulo: mensaje, link, prioridad: "media" });
