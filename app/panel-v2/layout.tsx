@@ -68,7 +68,7 @@ const GRUPOS: { titulo: string; items: { href?: string; label: string; icon: any
   {
     titulo: "Finanzas",
     items: [
-      { label: "Finanzas", icon: Banknote },
+      { href: "/panel-v2/finanzas", label: "Finanzas", icon: Banknote },
       { href: "/panel-v2/tesoreria", label: "Tesorería", icon: PiggyBank },
       { label: "Liquidaciones", icon: Coins },
       { href: "/panel-v2/comisiones", label:"Mis Comisiones", icon: DollarSign },
