@@ -3,7 +3,7 @@
 import { useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import { supabase2 } from "@/lib/supabase2/client";
-import { Search, Clock, MessageSquareText, Filter, Plus, Star, CheckCircle2, Sparkles } from "lucide-react";
+import { Search, Clock, MessageSquareText, Filter, Plus, Star, CheckCircle2, Sparkles, RefreshCw, FlagOff, Flag, X } from "lucide-react";
 import NuevoPedidoModal from "./NuevoPedidoModal";
 
 const ESTADO_LABEL: Record<string, string> = { activo: "Activo", cumplido: "Cumplido", cancelado: "Cancelado" };
@@ -23,13 +23,19 @@ function fmtMoneda(n: number, moneda: string) {
   return moneda === "ARS" ? `$ ${Number(n).toLocaleString("es-AR")}` : `${moneda} ${Number(n).toLocaleString("es-AR")}`;
 }
 
-export default function PedidosClient({ pedidosIniciales, vendedores, clientes, miId }: { pedidosIniciales: any[]; vendedores: any[]; clientes: any[]; miId: string }) {
+export default function PedidosClient({ pedidosIniciales, vendedores, clientes, vehiculosStock, miId }: { pedidosIniciales: any[]; vendedores: any[]; clientes: any[]; vehiculosStock: any[]; miId: string }) {
   const router = useRouter();
   const [pedidos, setPedidos] = useState(pedidosIniciales);
   const [filtroEstado, setFiltroEstado] = useState("activo");
   const [query, setQuery] = useState("");
+  const [vendedorFiltro, setVendedorFiltro] = useState("");
+  const [soloMios, setSoloMios] = useState(false);
   const [modalAbierto, setModalAbierto] = useState(false);
   const [pedidoAEditar, setPedidoAEditar] = useState<any | null>(null);
+  const [reconfirmando, setReconfirmando] = useState<any | null>(null);
+  const [notaReconfirmacion, setNotaReconfirmacion] = useState("");
+  const [guardandoReconfirmacion, setGuardandoReconfirmacion] = useState(false);
+  const [matcheando, setMatcheando] = useState<any | null>(null);
 
   const counts = useMemo(() => ({
     activo: pedidos.filter((p) => p.estado === "activo").length,
@@ -40,12 +46,14 @@ export default function PedidosClient({ pedidosIniciales, vendedores, clientes, 
 
   const filtrados = useMemo(() => {
     let lista = filtroEstado === "todos" ? pedidos : pedidos.filter((p) => p.estado === filtroEstado);
+    if (soloMios) lista = lista.filter((p) => p.vendedor_id === miId);
+    else if (vendedorFiltro) lista = lista.filter((p) => p.vendedor_id === vendedorFiltro);
     if (query.trim()) {
       const q = query.trim().toLowerCase();
       lista = lista.filter((p) => [p.nombre_cliente, p.marca, p.modelo, p.telefono].filter(Boolean).join(" ").toLowerCase().includes(q));
     }
     return lista;
-  }, [pedidos, filtroEstado, query]);
+  }, [pedidos, filtroEstado, query, vendedorFiltro, soloMios, miId]);
 
   const actualizarUno = (p: any) => {
     if (p._eliminado) { setPedidos((prev) => prev.filter((x) => x.id !== p.id)); return; }
@@ -63,6 +71,47 @@ export default function PedidosClient({ pedidosIniciales, vendedores, clientes, 
     actualizarUno({ id: p.id, contacto_confirmado_at: ahora, ultima_reconfirmacion_at: ahora });
     const { error } = await supabase2.from("pedidos").update({ contacto_confirmado_at: ahora, ultima_reconfirmacion_at: ahora }).eq("id", p.id);
     if (error) alert("No se pudo confirmar el contacto.");
+  };
+
+  const toggleReservaSenada = async (p: any) => {
+    const nuevo = !p.reserva_senada;
+    actualizarUno({ id: p.id, reserva_senada: nuevo });
+    const { error } = await supabase2.from("pedidos").update({ reserva_senada: nuevo }).eq("id", p.id);
+    if (error) { alert("No se pudo actualizar."); actualizarUno({ id: p.id, reserva_senada: !nuevo }); }
+  };
+
+  const toggleGestionFinalizada = async (p: any) => {
+    const nuevo = !p.gestion_finalizada;
+    actualizarUno({ id: p.id, gestion_finalizada: nuevo });
+    const { error } = await supabase2.from("pedidos").update({ gestion_finalizada: nuevo }).eq("id", p.id);
+    if (error) { alert("No se pudo actualizar."); actualizarUno({ id: p.id, gestion_finalizada: !nuevo }); }
+  };
+
+  const abrirReconfirmar = (p: any) => { setReconfirmando(p); setNotaReconfirmacion(""); };
+  const guardarReconfirmacion = async () => {
+    if (!reconfirmando) return;
+    setGuardandoReconfirmacion(true);
+    try {
+      const { error: err1 } = await supabase2.from("pedidos_reconfirmaciones").insert({ pedido_id: reconfirmando.id, nota: notaReconfirmacion || null, autor_id: miId });
+      if (err1) throw err1;
+      const ahora = new Date().toISOString();
+      const { error: err2 } = await supabase2.from("pedidos").update({ ultima_reconfirmacion_at: ahora }).eq("id", reconfirmando.id);
+      if (err2) throw err2;
+      actualizarUno({ id: reconfirmando.id, ultima_reconfirmacion_at: ahora });
+      setReconfirmando(null);
+    } catch {
+      alert("No se pudo guardar la reconfirmación.");
+    } finally {
+      setGuardandoReconfirmacion(false);
+    }
+  };
+
+  const asignarMatchManual = async (p: any, vehiculoId: string) => {
+    const vehiculo = vehiculosStock.find((v) => v.id === vehiculoId) || null;
+    actualizarUno({ id: p.id, vehiculo_match_id: vehiculoId || null, vehiculo_match: vehiculo, match_detectado_at: vehiculoId ? new Date().toISOString() : null });
+    const { error } = await supabase2.from("pedidos").update({ vehiculo_match_id: vehiculoId || null, match_detectado_at: vehiculoId ? new Date().toISOString() : null }).eq("id", p.id);
+    if (error) alert("No se pudo vincular el vehículo.");
+    setMatcheando(null);
   };
 
   const abrirNuevo = () => { setPedidoAEditar(null); setModalAbierto(true); };
@@ -107,6 +156,24 @@ export default function PedidosClient({ pedidosIniciales, vendedores, clientes, 
         </div>
       </div>
 
+      <div className="flex items-center gap-2 px-6 pt-2 flex-wrap">
+        <button
+          onClick={() => setSoloMios((v) => !v)}
+          className={`px-3 py-1.5 rounded-lg text-[12px] font-bold transition-colors ${soloMios ? "bg-rose-600 text-white" : "bg-white dark:bg-white/5 border border-slate-200 dark:border-white/10 text-slate-500 dark:text-slate-400"}`}
+        >
+          Solo míos
+        </button>
+        <select
+          value={vendedorFiltro}
+          onChange={(e) => { setVendedorFiltro(e.target.value); setSoloMios(false); }}
+          disabled={soloMios}
+          className="bg-white dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-lg px-2.5 py-1.5 text-[12px] font-semibold outline-none disabled:opacity-50 text-slate-600 dark:text-slate-300"
+        >
+          <option value="">Todos los vendedores</option>
+          {vendedores.map((v) => <option key={v.id} value={v.id}>{v.nombre}</option>)}
+        </select>
+      </div>
+
       <div className="flex-1 overflow-y-auto p-6 bg-slate-50 dark:bg-[#141414]">
         {filtrados.length === 0 ? (
           <div className="py-20 flex flex-col items-center justify-center text-center border-2 border-dashed border-slate-200 dark:border-white/10 rounded-2xl bg-white dark:bg-white/[0.02]">
@@ -141,19 +208,27 @@ export default function PedidosClient({ pedidosIniciales, vendedores, clientes, 
                             <div className="w-6 h-6 rounded-full bg-rose-500 text-white flex items-center justify-center font-bold text-[10px] shrink-0">{(p.nombre_cliente || "?").substring(0, 2).toUpperCase()}</div>
                             <div className="min-w-0">
                               <p className="text-[13px] font-bold text-slate-900 dark:text-white truncate flex items-center gap-1">{p.nombre_cliente} {p.wishlist && <Star className="w-3 h-3 text-amber-400 fill-amber-400 shrink-0" />}</p>
-                              {p.reserva_senada && <p className="text-[10px] font-bold text-indigo-600 dark:text-indigo-400">💰 Señada</p>}
+                              <button onClick={(e) => { e.stopPropagation(); toggleReservaSenada(p); }} className={`text-[10px] font-bold ${p.reserva_senada ? "text-indigo-600 dark:text-indigo-400" : "text-slate-300 dark:text-slate-600 hover:text-indigo-500"}`}>
+                                💰 {p.reserva_senada ? "Señada" : "Marcar señada"}
+                              </button>
+                              {p.gestion_finalizada && <p className="text-[10px] font-bold text-slate-400">🏁 Gestión finalizada</p>}
                             </div>
                           </div>
                         </td>
                         <td className="px-4 py-3 text-[13px] text-slate-700 dark:text-slate-200 font-medium">{busquedaTexto(p) || "—"}</td>
                         <td className="px-4 py-3 text-[13px] text-slate-500 dark:text-slate-400">{p.presupuesto_max ? fmtMoneda(p.presupuesto_max, p.moneda) : "—"}</td>
                         <td className="px-4 py-3"><span className="text-[10px] font-bold uppercase tracking-widest px-2 py-1 rounded-full bg-slate-100 dark:bg-white/10 text-slate-500 dark:text-slate-400">{TIPO_LABEL[p.tipo] || p.tipo}</span></td>
-                        <td className="px-4 py-3">
+                        <td className="px-4 py-3" onClick={(e) => e.stopPropagation()}>
                           {tieneMatch ? (
                             <span className="inline-flex items-center gap-1 text-[11px] font-bold text-emerald-700 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-500/10 border border-emerald-200 dark:border-emerald-500/20 px-2 py-1 rounded-full">
                               <Sparkles className="w-3 h-3" /> {p.vehiculo_match?.marca} {p.vehiculo_match?.modelo}
+                              <button onClick={() => asignarMatchManual(p, "")} title="Quitar match" className="ml-0.5 hover:text-rose-600"><X className="w-3 h-3" /></button>
                             </span>
-                          ) : "—"}
+                          ) : (
+                            <button onClick={() => setMatcheando(p)} className="text-[11px] font-bold text-slate-400 hover:text-rose-600 flex items-center gap-1">
+                              <Sparkles className="w-3 h-3" /> Match manual
+                            </button>
+                          )}
                         </td>
                         <td className="px-4 py-3 text-[12px] text-slate-400 flex items-center gap-1"><Clock className="w-3 h-3" /> {new Date(p.created_at).toLocaleDateString("es-AR", { day: "2-digit", month: "short" })}</td>
                         <td className="px-4 py-3" onClick={(e) => e.stopPropagation()}>
@@ -169,6 +244,16 @@ export default function PedidosClient({ pedidosIniciales, vendedores, clientes, 
                           {sinConfirmar && (
                             <button onClick={(e) => { e.stopPropagation(); confirmarContacto(p); }} className="mt-1 flex items-center gap-1 text-[10px] font-bold text-amber-700 dark:text-amber-400 hover:underline">
                               <CheckCircle2 className="w-3 h-3" /> Confirmé contacto
+                            </button>
+                          )}
+                          {p.estado === "activo" && !p.gestion_finalizada && (
+                            <button onClick={(e) => { e.stopPropagation(); abrirReconfirmar(p); }} className="mt-1 flex items-center gap-1 text-[10px] font-bold text-sky-700 dark:text-sky-400 hover:underline">
+                              <RefreshCw className="w-3 h-3" /> Reconfirmar
+                            </button>
+                          )}
+                          {p.estado === "activo" && (
+                            <button onClick={(e) => { e.stopPropagation(); toggleGestionFinalizada(p); }} className="mt-1 flex items-center gap-1 text-[10px] font-bold text-slate-400 hover:text-slate-700 dark:hover:text-slate-200">
+                              {p.gestion_finalizada ? <><FlagOff className="w-3 h-3" /> Reabrir gestión</> : <><Flag className="w-3 h-3" /> Finalizar gestión</>}
                             </button>
                           )}
                         </td>
@@ -204,6 +289,38 @@ export default function PedidosClient({ pedidosIniciales, vendedores, clientes, 
           onClose={() => setModalAbierto(false)}
           onGuardado={(p) => { actualizarUno(p); setModalAbierto(false); }}
         />
+      )}
+
+      {reconfirmando && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+          <div className="absolute inset-0 bg-slate-900/50 backdrop-blur-sm" onClick={() => !guardandoReconfirmacion && setReconfirmando(null)} />
+          <div className="relative bg-white dark:bg-[#141414] border border-slate-200 dark:border-white/10 w-full max-w-sm rounded-2xl shadow-2xl p-6">
+            <h3 className="text-base font-bold text-slate-900 dark:text-white mb-1">Reconfirmar gestión</h3>
+            <p className="text-xs text-slate-500 dark:text-slate-400 mb-3">{reconfirmando.nombre_cliente} — reinicia el plazo de aviso.</p>
+            <textarea value={notaReconfirmacion} onChange={(e) => setNotaReconfirmacion(e.target.value)} rows={3} placeholder="Nota (opcional)" className="w-full bg-slate-50 dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-xl px-3.5 py-2.5 text-sm outline-none focus:border-rose-500" />
+            <div className="flex justify-end gap-2 mt-4">
+              <button onClick={() => setReconfirmando(null)} disabled={guardandoReconfirmacion} className="px-4 py-2 text-sm font-bold text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-white/10 rounded-xl disabled:opacity-50">Cancelar</button>
+              <button onClick={guardarReconfirmacion} disabled={guardandoReconfirmacion} className="px-4 py-2 text-sm font-bold bg-rose-600 hover:bg-rose-700 text-white rounded-xl disabled:opacity-50">{guardandoReconfirmacion ? "Guardando..." : "Reconfirmar"}</button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {matcheando && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+          <div className="absolute inset-0 bg-slate-900/50 backdrop-blur-sm" onClick={() => setMatcheando(null)} />
+          <div className="relative bg-white dark:bg-[#141414] border border-slate-200 dark:border-white/10 w-full max-w-sm rounded-2xl shadow-2xl p-6">
+            <h3 className="text-base font-bold text-slate-900 dark:text-white mb-1">Match manual</h3>
+            <p className="text-xs text-slate-500 dark:text-slate-400 mb-3">Vincular un vehículo del stock a este pedido de {matcheando.nombre_cliente}.</p>
+            <select onChange={(e) => e.target.value && asignarMatchManual(matcheando, e.target.value)} defaultValue="" className="w-full bg-slate-50 dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-xl px-3.5 py-2.5 text-sm outline-none focus:border-rose-500">
+              <option value="">— Elegir vehículo —</option>
+              {vehiculosStock.map((v) => <option key={v.id} value={v.id}>{v.marca} {v.modelo} {v.anio} — {v.moneda_venta} {Number(v.precio_venta).toLocaleString("es-AR")}</option>)}
+            </select>
+            <div className="flex justify-end mt-4">
+              <button onClick={() => setMatcheando(null)} className="px-4 py-2 text-sm font-bold text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-white/10 rounded-xl">Cerrar</button>
+            </div>
+          </div>
+        </div>
       )}
     </div>
   );

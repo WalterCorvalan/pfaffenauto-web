@@ -1,8 +1,8 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { supabase2 } from "@/lib/supabase2/client";
-import { X, Save, Trash2 } from "lucide-react";
+import { X, Save, Trash2, History } from "lucide-react";
 
 const inputClass = "w-full bg-slate-50 dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-xl px-3.5 py-2.5 text-sm outline-none focus:border-rose-500 text-slate-900 dark:text-white placeholder:text-slate-400";
 const labelClass = "text-xs font-bold text-slate-600 dark:text-slate-300 mb-1.5 block";
@@ -27,6 +27,13 @@ export default function NuevoPedidoModal({ pedido, vendedores, clientes, miId, o
   const [wishlist, setWishlist] = useState(pedido?.wishlist || false);
   const [reservaSenada, setReservaSenada] = useState(pedido?.reserva_senada || false);
   const [notas, setNotas] = useState(pedido?.notas || "");
+  const [reconfirmaciones, setReconfirmaciones] = useState<any[]>([]);
+
+  useEffect(() => {
+    if (!isEditing) return;
+    supabase2.from("pedidos_reconfirmaciones").select("*, autor:perfiles(nombre)").eq("pedido_id", pedido.id).order("created_at", { ascending: false })
+      .then(({ data }) => setReconfirmaciones(data || []));
+  }, [isEditing, pedido?.id]);
 
   const elegirCliente = (id: string) => {
     setClienteId(id);
@@ -157,6 +164,20 @@ export default function NuevoPedidoModal({ pedido, vendedores, clientes, miId, o
             <label className={labelClass}>Notas</label>
             <textarea value={notas} onChange={(e) => setNotas(e.target.value)} rows={3} className={inputClass} />
           </div>
+
+          {isEditing && reconfirmaciones.length > 0 && (
+            <div>
+              <p className={labelClass + " flex items-center gap-1.5"}><History className="w-3.5 h-3.5" /> Historial de reconfirmaciones</p>
+              <div className="space-y-1.5 max-h-32 overflow-y-auto">
+                {reconfirmaciones.map((r) => (
+                  <div key={r.id} className="bg-slate-50 dark:bg-white/5 rounded-lg px-3 py-2 text-xs">
+                    <div className="flex items-center justify-between"><span className="font-bold">{r.autor?.nombre || "—"}</span><span className="text-slate-400">{new Date(r.created_at).toLocaleString("es-AR")}</span></div>
+                    {r.nota && <p className="text-slate-500 dark:text-slate-400 mt-0.5">{r.nota}</p>}
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
         </div>
 
         <div className="flex gap-2 p-6 pt-3 border-t border-slate-100 dark:border-white/10 shrink-0 bg-slate-50 dark:bg-transparent">
