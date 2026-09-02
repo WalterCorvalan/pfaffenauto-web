@@ -202,17 +202,27 @@ export default function NuevaSenaModal({
 
       if (cuentaId) {
         const montoMovimiento = cuentaSeleccionada?.moneda === "USD" ? Number(senaUsd) || 0 : Number(senaArs) || 0;
-        const { error: errorMov } = await supabase2.from("movimientos_caja").insert({
-          tipo: "ingreso", monto: montoMovimiento, forma_pago: "Transferencia", fecha: new Date().toISOString().split("T")[0],
-          vehiculo_id: vehiculo.vehiculo_id, sucursal_id: sucursalId, cuenta_id: cuentaId, cliente_id: cliente.id,
-          cuit_dni: cliente.dni_cuit, telefono: cliente.telefono, patente: vehiculo.dominio, vendedor_id: vendedorId || user?.id,
-          sena_id: data.id, tipo_movimiento: "Seña", comprobante_url: comprobanteUrl || null,
-          observaciones: `Seña N° ${siguienteNumero} — ${vehiculo.marca} ${vehiculo.modelo}`,
-        });
-        if (errorMov) {
-          alert("La seña se guardó, pero no se pudo registrar el cobro en Tesorería. Cargalo a mano.");
-        } else {
-          await notificarGestoria(supabase2, `Nuevo cobro pendiente de aprobar — Seña N° ${siguienteNumero} (${cliente.nombre} ${cliente.apellido || ""}, $${montoMovimiento.toLocaleString("es-AR")})`, "/panel-v2/tesoreria");
+        if (montoMovimiento > 0) {
+          // Antes esto insertaba directo en movimientos_caja: quedaba en
+          // estado "pendiente" por default de columna y no había forma de
+          // aprobarlo en ningún lado de panel-v2 — plata cobrada de verdad
+          // que desaparecía para siempre de Finanzas. Ahora pasa por el RPC
+          // (mismo motor que usa Finanzas), que la deja "aprobada" al toque
+          // por ser un ingreso, y solo después completamos los campos
+          // descriptivos que el RPC no conoce.
+          const { data: movId, error: errorMov } = await supabase2.rpc("registrar_movimiento_caja", {
+            p_tipo: "ingreso", p_monto: montoMovimiento, p_cuenta_id: cuentaId, p_fecha: new Date().toISOString().split("T")[0],
+            p_categoria: "Seña", p_forma_pago: "Transferencia", p_vehiculo_id: vehiculo.vehiculo_id || null, p_cliente_id: cliente.id,
+            p_venta_id: null, p_observaciones: `Seña N° ${siguienteNumero} — ${vehiculo.marca} ${vehiculo.modelo}`,
+          });
+          if (errorMov) {
+            alert("La seña se guardó, pero no se pudo registrar el cobro en Finanzas. Cargalo a mano.");
+          } else {
+            await supabase2.from("movimientos_caja").update({
+              sucursal_id: sucursalId, cuit_dni: cliente.dni_cuit, telefono: cliente.telefono, patente: vehiculo.dominio,
+              vendedor_id: vendedorId || user?.id, sena_id: data.id, comprobante_url: comprobanteUrl || null,
+            }).eq("id", movId);
+          }
         }
       }
 

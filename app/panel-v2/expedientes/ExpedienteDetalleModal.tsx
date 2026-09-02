@@ -303,11 +303,22 @@ export default function ExpedienteDetalleModal({ expedienteId, miId, perfiles, s
       if (error) throw error;
 
       if (extraCobradoMonto && extraCobradoCuentaId) {
-        await supabase2.from("movimientos_caja").insert({
-          tipo: "ingreso", monto: Number(extraCobradoMonto), forma_pago: extraCobradoFormaPago || null, cuenta_id: extraCobradoCuentaId,
-          vehiculo_id: venta.vehiculo_id, cliente_id: venta.cliente_id, telefono: venta.comprador_telefono, patente: venta.vehiculo_patente,
-          tipo_movimiento: "Gastos cobrados al comprador", observaciones: extraCobradoDetalle || `Expediente ${titulo}`,
+        // Antes esto insertaba directo en movimientos_caja: quedaba en
+        // estado "pendiente" por default de columna, sin ningún lugar en
+        // panel-v2 para aprobarlo — plata cobrada de verdad que
+        // desaparecía para siempre de Finanzas. Ahora pasa por el RPC
+        // (mismo motor que Finanzas), que la deja "aprobada" al toque por
+        // ser un ingreso.
+        const { data: movId, error: errorMov } = await supabase2.rpc("registrar_movimiento_caja", {
+          p_tipo: "ingreso", p_monto: Number(extraCobradoMonto), p_cuenta_id: extraCobradoCuentaId, p_fecha: new Date().toISOString().slice(0, 10),
+          p_categoria: "Gastos cobrados al comprador", p_forma_pago: extraCobradoFormaPago || null, p_vehiculo_id: venta.vehiculo_id || null,
+          p_cliente_id: venta.cliente_id || null, p_venta_id: venta.id, p_observaciones: extraCobradoDetalle || `Expediente ${titulo}`,
         });
+        if (errorMov) {
+          alert("El pago se guardó, pero no se pudo registrar el ingreso en Finanzas. Cargalo a mano.");
+        } else {
+          await supabase2.from("movimientos_caja").update({ telefono: venta.comprador_telefono, patente: venta.vehiculo_patente }).eq("id", movId);
+        }
       }
       await cargar();
     } catch {

@@ -4,7 +4,7 @@
 create or replace function public.panel_v2_audit()
 returns jsonb
 language plpgsql
-security definer
+security definer  
 set search_path = public
 as $$
 declare
