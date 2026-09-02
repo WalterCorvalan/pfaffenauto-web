@@ -4,11 +4,17 @@ import { useState, useMemo } from "react";
 import Link from "next/link";
 import {
   BarChart3, FileText, Receipt, Wallet, Coins, CreditCard, Landmark,
-  TrendingDown, TrendingUp, ArrowLeftRight, ExternalLink,
+  TrendingDown, TrendingUp, ArrowLeftRight, ExternalLink, HandCoins, ScrollText,
 } from "lucide-react";
 import MovimientosTab from "./tabs/MovimientosTab";
 import CuentasTab from "./tabs/CuentasTab";
 import CuotasTab from "./tabs/CuotasTab";
+import DevolRegistroTab from "./tabs/DevolRegistroTab";
+import PagosDispTab from "./tabs/PagosDispTab";
+import TarjetaTab from "./tabs/TarjetaTab";
+import RetirosTab from "./tabs/RetirosTab";
+import RentabilidadTab from "./tabs/RentabilidadTab";
+import ChequesTab from "./tabs/ChequesTab";
 import { fmt } from "./tabs/shared";
 
 const TABS = [
@@ -16,21 +22,26 @@ const TABS = [
   { value: "movimientos", label: "Movimientos", icon: FileText },
   { value: "senas", label: "Señas", icon: Coins, disabled: true },
   { value: "cuotas", label: "Cuotas", icon: Wallet },
-  { value: "devol-registro", label: "Devol. Registro", icon: Coins, disabled: true },
-  { value: "pagos-disp", label: "Pagos Disp.", icon: Coins, disabled: true },
-  { value: "tarjeta", label: "Tarjeta", icon: CreditCard, disabled: true },
-  { value: "retiros", label: "Retiros", icon: TrendingDown, disabled: true },
+  { value: "devol-registro", label: "Devol. Registro", icon: HandCoins },
+  { value: "pagos-disp", label: "Pagos Disp.", icon: Coins },
+  { value: "tarjeta", label: "Tarjeta", icon: CreditCard },
+  { value: "retiros", label: "Retiros", icon: TrendingDown },
+  { value: "cheques", label: "Cheques", icon: ScrollText },
   { value: "comisiones", label: "Comisiones", icon: Receipt, externo: "/panel-v2/comisiones" },
-  { value: "rentabilidad", label: "Rentabilidad", icon: TrendingUp, disabled: true },
+  { value: "rentabilidad", label: "Rentabilidad", icon: TrendingUp },
   { value: "cuentas", label: "Cuentas", icon: Landmark },
 ];
 
 export default function FinanzasClient({
   miId, soyAdmin, soyAdminOFinanzas, cuentasIniciales, movimientosIniciales, cierresIniciales,
   cuotasCobrarIniciales, cuotasPagarIniciales, vendedores, clientes, vehiculos, ventas,
+  chequesIniciales, pagosDisponiblesIniciales, consumosTarjetaIniciales, retirosIniciales, devolucionesIniciales,
+  expedientes, senasActivasPorMoneda,
 }: {
   miId: string; soyAdmin: boolean; soyAdminOFinanzas: boolean; cuentasIniciales: any[]; movimientosIniciales: any[]; cierresIniciales: any[];
   cuotasCobrarIniciales: any[]; cuotasPagarIniciales: any[]; vendedores: any[]; clientes: any[]; vehiculos: any[]; ventas: any[];
+  chequesIniciales: any[]; pagosDisponiblesIniciales: any[]; consumosTarjetaIniciales: any[]; retirosIniciales: any[]; devolucionesIniciales: any[];
+  expedientes: any[]; senasActivasPorMoneda: Record<string, number>;
 }) {
   const [tab, setTab] = useState("resumen");
   const [cuentas, setCuentas] = useState(cuentasIniciales);
@@ -38,6 +49,11 @@ export default function FinanzasClient({
   const [cierres, setCierres] = useState(cierresIniciales);
   const [cuotasCobrar, setCuotasCobrar] = useState(cuotasCobrarIniciales);
   const [cuotasPagar, setCuotasPagar] = useState(cuotasPagarIniciales);
+  const [cheques, setCheques] = useState(chequesIniciales);
+  const [pagosDisponibles, setPagosDisponibles] = useState(pagosDisponiblesIniciales);
+  const [consumosTarjeta, setConsumosTarjeta] = useState(consumosTarjetaIniciales);
+  const [retiros, setRetiros] = useState(retirosIniciales);
+  const [devoluciones, setDevoluciones] = useState(devolucionesIniciales);
 
   const totalPorMoneda = useMemo(() => {
     const map: Record<string, number> = {};
@@ -55,6 +71,12 @@ export default function FinanzasClient({
     movimientos.filter((m) => m.tipo === "egreso" && m.estado === "aprobado").forEach((m) => { const mo = m.cuenta?.moneda; if (mo) map[mo] = (map[mo] || 0) + Number(m.monto); });
     return map;
   }, [movimientos]);
+
+  const cuotasPendientesPorMoneda = useMemo(() => {
+    const map: Record<string, number> = {};
+    cuotasCobrar.filter((c) => !c.cobrada).forEach((c) => { map[c.moneda] = (map[c.moneda] || 0) + (Number(c.monto) - Number(c.monto_cobrado)); });
+    return map;
+  }, [cuotasCobrar]);
 
   const pendientesCobrarStats = useMemo(() => {
     const p = cuotasCobrar.filter((c) => !c.cobrada);
@@ -119,10 +141,32 @@ export default function FinanzasClient({
         <MovimientosTab miId={miId} soyAdmin={soyAdmin} cuentas={cuentas} movimientos={movimientos} setMovimientos={setMovimientos} cierres={cierres} setCierres={setCierres} ventas={ventas} />
       )}
 
-      {tab === "cuentas" && <CuentasTab cuentas={cuentas} setCuentas={setCuentas} />}
+      {tab === "cuentas" && <CuentasTab cuentas={cuentas} setCuentas={setCuentas} soyAdmin={soyAdmin} />}
 
       {tab === "cuotas" && (
         <CuotasTab cuotasCobrar={cuotasCobrar} setCuotasCobrar={setCuotasCobrar} cuotasPagar={cuotasPagar} setCuotasPagar={setCuotasPagar} cuentas={cuentas} setCuentas={setCuentas} setMovimientos={setMovimientos} clientes={clientes} vehiculos={vehiculos} miId={miId} />
+      )}
+
+      {tab === "devol-registro" && (
+        <DevolRegistroTab devoluciones={devoluciones} setDevoluciones={setDevoluciones} cuentas={cuentas} setCuentas={setCuentas} setMovimientos={setMovimientos} />
+      )}
+
+      {tab === "pagos-disp" && (
+        <PagosDispTab pagos={pagosDisponibles} setPagos={setPagosDisponibles} cuentas={cuentas} setCuentas={setCuentas} setMovimientos={setMovimientos} expedientes={expedientes} />
+      )}
+
+      {tab === "tarjeta" && (
+        <TarjetaTab consumos={consumosTarjeta} setConsumos={setConsumosTarjeta} cuentas={cuentas} setCuentas={setCuentas} setMovimientos={setMovimientos} />
+      )}
+
+      {tab === "retiros" && (
+        <RetirosTab retiros={retiros} setRetiros={setRetiros} cuentas={cuentas} setCuentas={setCuentas} setMovimientos={setMovimientos} />
+      )}
+
+      {tab === "cheques" && <ChequesTab cheques={cheques} setCheques={setCheques} />}
+
+      {tab === "rentabilidad" && (
+        <RentabilidadTab movimientos={movimientos} senasActivas={senasActivasPorMoneda} cuotasPendientes={cuotasPendientesPorMoneda} />
       )}
     </div>
   );

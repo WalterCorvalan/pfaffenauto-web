@@ -11,7 +11,7 @@ export default async function FinanzasPage() {
   const soyAdminOFinanzas = miPerfil?.roles?.some((r: string) => r === "admin" || r === "finanzas") ?? false;
   const soyAdmin = miPerfil?.roles?.includes("admin") ?? false;
 
-  const [{ data: cuentas }, { data: cierres }, { data: cuotasCobrar }, { data: cuotasPagar }, { data: vendedores }, { data: clientes }, { data: vehiculos }, { data: ventas }] = await Promise.all([
+  const [{ data: cuentas }, { data: cierres }, { data: cuotasCobrar }, { data: cuotasPagar }, { data: vendedores }, { data: clientes }, { data: vehiculos }, { data: ventas }, { data: cheques }, { data: pagosDisponibles }, { data: consumosTarjeta }, { data: retiros }, { data: devoluciones }, { data: expedientes }] = await Promise.all([
     supabase.from("cuentas").select("*").eq("activa", true).order("nombre"),
     supabase.from("cierres_mensuales").select("*").order("mes", { ascending: false }),
     supabase.from("cuotas_cobrar_clientes").select("*, cliente:clientes(nombre)").order("vencimiento"),
@@ -20,7 +20,17 @@ export default async function FinanzasPage() {
     supabase.from("clientes").select("id, nombre").order("nombre").limit(500),
     supabase.from("vehiculos").select("id, marca, modelo, patente").in("estado", ["disponible", "reservado", "señado"]).order("marca"),
     supabase.from("ventas").select("id, comprador_nombre, vehiculo_marca, vehiculo_modelo").order("created_at", { ascending: false }).limit(300),
+    supabase.from("cheques").select("*").order("fecha_cobro", { ascending: false }).limit(300),
+    supabase.from("pagos_disponibles").select("*").order("fecha", { ascending: false }).limit(300),
+    supabase.from("consumos_tarjeta").select("*").order("fecha", { ascending: false }).limit(300),
+    supabase.from("retiros_caja").select("*").order("fecha", { ascending: false }).limit(300),
+    supabase.from("devoluciones_registro").select("*").order("fecha", { ascending: false }).limit(300),
+    supabase.from("expedientes").select("id, titulo").eq("archivado", false).order("created_at", { ascending: false }).limit(300),
   ]);
+
+  const { data: senasActivas } = await supabase.from("senas").select("monto, moneda").eq("estado", "activa");
+  const senasActivasPorMoneda: Record<string, number> = {};
+  (senasActivas || []).forEach((s) => { if (s.monto) senasActivasPorMoneda[s.moneda] = (senasActivasPorMoneda[s.moneda] || 0) + Number(s.monto); });
 
   const cuentasConSaldo = await Promise.all(
     (cuentas || []).map(async (c) => {
@@ -51,6 +61,13 @@ export default async function FinanzasPage() {
       clientes={clientes || []}
       vehiculos={vehiculos || []}
       ventas={ventas || []}
+      chequesIniciales={cheques || []}
+      pagosDisponiblesIniciales={pagosDisponibles || []}
+      consumosTarjetaIniciales={consumosTarjeta || []}
+      retirosIniciales={retiros || []}
+      devolucionesIniciales={devoluciones || []}
+      expedientes={expedientes || []}
+      senasActivasPorMoneda={senasActivasPorMoneda}
     />
   );
 }
