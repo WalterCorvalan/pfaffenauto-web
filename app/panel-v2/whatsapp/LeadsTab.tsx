@@ -1,6 +1,7 @@
 "use client";
 
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
 import { supabase2 } from "@/lib/supabase2/client";
 import { Filter, Search, Bot, MessageCircle, LayoutGrid, List, BarChart3 } from "lucide-react";
 import LeadDetailModal from "./LeadDetailModal";
@@ -58,11 +59,24 @@ function Bar({ label, valor, max, color }: { label: string; valor: number; max: 
 }
 
 export default function LeadsTab({ conversacionesIniciales, vendedores, miId }: { conversacionesIniciales: any[]; vendedores: Perfil[]; miId: string }) {
+  const router = useRouter();
+  const searchParams = useSearchParams();
   const [conversaciones, setConversaciones] = useState(conversacionesIniciales);
   const [filtro, setFiltro] = useState("todos");
   const [busqueda, setBusqueda] = useState("");
   const [vista, setVista] = useState<"grid" | "kanban" | "reportes">("grid");
   const [detalle, setDetalle] = useState<{ id: string; origen: "whatsapp" | "instagram" } | null>(null);
+
+  useEffect(() => {
+    const leadId = searchParams.get("lead");
+    const origen = searchParams.get("origen");
+    if (leadId && (origen === "whatsapp" || origen === "instagram")) setDetalle({ id: leadId, origen });
+  }, [searchParams]);
+
+  const cerrarDetalle = () => {
+    setDetalle(null);
+    if (searchParams.get("lead")) router.replace("/panel-v2/whatsapp?tab=leads");
+  };
 
   const filtrados = useMemo(() => {
     let l = conversaciones;
@@ -230,7 +244,7 @@ export default function LeadsTab({ conversacionesIniciales, vendedores, miId }: 
       )}
 
       {detalle && (
-        <LeadDetailModal leadId={detalle.id} origen={detalle.origen} miId={miId} vendedores={vendedores} onClose={() => setDetalle(null)} onActualizado={actualizarUno} />
+        <LeadDetailModal leadId={detalle.id} origen={detalle.origen} miId={miId} vendedores={vendedores} onClose={cerrarDetalle} onActualizado={actualizarUno} />
       )}
     </div>
   );
