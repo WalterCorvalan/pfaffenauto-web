@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { supabase2 } from "@/lib/supabase2/client";
-import { X, Loader2, Pencil, Trash2, ChevronDown, FileText, Wallet, Star, AlertTriangle } from "lucide-react";
+import { X, Loader2, Pencil, Trash2, ChevronDown, FileText, Wallet, Star, AlertTriangle, ShieldAlert, Check } from "lucide-react";
 import { fmtFechaLocal } from "@/lib/panelV2/fechas";
 
 const ESTADO_LABEL: Record<string, string> = {
@@ -52,6 +52,11 @@ export default function VentaDetalleModal({ ventaId, miId, soyAdmin, puedeOperac
   const [mostrarCaida, setMostrarCaida] = useState(false);
   const [senaQuedaAgencia, setSenaQuedaAgencia] = useState(true);
   const [procesando, setProcesando] = useState(false);
+  const [editandoComision, setEditandoComision] = useState(false);
+  const [comisionVendedorPct, setComisionVendedorPct] = useState("");
+  const [comisionConsignacionPct, setComisionConsignacionPct] = useState("");
+  const [guardandoComision, setGuardandoComision] = useState(false);
+  const [solicitudEnviada, setSolicitudEnviada] = useState(false);
 
   const cargar = async () => {
     const [{ data: v }, { data: s }, { data: h }] = await Promise.all([
@@ -66,6 +71,46 @@ export default function VentaDetalleModal({ ventaId, miId, soyAdmin, puedeOperac
   };
 
   useEffect(() => { cargar(); }, [ventaId]);
+
+  const abrirEdicionComision = () => {
+    setComisionVendedorPct(String(venta.comision_vendedor_pct ?? 0));
+    setComisionConsignacionPct(String(venta.comision_consignacion_pct ?? 0));
+    setEditandoComision(true);
+    setSolicitudEnviada(false);
+  };
+
+  const guardarComision = async () => {
+    setGuardandoComision(true);
+    try {
+      const nuevoVendedor = Number(comisionVendedorPct) || 0;
+      const nuevoConsignacion = Number(comisionConsignacionPct) || 0;
+      if (soyAdmin) {
+        const { data, error } = await supabase2.from("ventas").update({ comision_vendedor_pct: nuevoVendedor, comision_consignacion_pct: nuevoConsignacion }).eq("id", ventaId).select().single();
+        if (error) throw error;
+        setVenta(data);
+        onActualizado(data);
+        setEditandoComision(false);
+      } else {
+        const { error } = await supabase2.from("autorizaciones").insert({
+          tipo: "editar_comision_venta",
+          riesgo: "alto",
+          requiere_pin: true,
+          descripcion: `Editar comisión de la venta de ${venta.comprador_nombre} (${venta.vehiculo_marca} ${venta.vehiculo_modelo})`,
+          entidad_tabla: "ventas",
+          entidad_id: ventaId,
+          datos_antes: { comision_vendedor_pct: venta.comision_vendedor_pct, comision_consignacion_pct: venta.comision_consignacion_pct },
+          datos_despues: { comision_vendedor_pct: nuevoVendedor, comision_consignacion_pct: nuevoConsignacion },
+          solicitado_por: miId,
+        });
+        if (error) throw error;
+        setSolicitudEnviada(true);
+      }
+    } catch {
+      alert("No se pudo guardar el cambio de comisión.");
+    } finally {
+      setGuardandoComision(false);
+    }
+  };
 
   const cambiarEstado = async (nuevoEstado: string) => {
     setProcesando(true);
@@ -157,11 +202,46 @@ export default function VentaDetalleModal({ ventaId, miId, soyAdmin, puedeOperac
           </div>
 
           <div>
-            <p className="text-[11px] font-black uppercase tracking-widest text-slate-400 mb-1.5">Comisión</p>
+            <div className="flex items-center justify-between mb-1.5">
+              <p className="text-[11px] font-black uppercase tracking-widest text-slate-400">Comisión</p>
+              {!editandoComision && (
+                <button onClick={abrirEdicionComision} className="flex items-center gap-1 text-[11px] font-bold text-rose-600 hover:text-rose-700"><Pencil className="w-3 h-3" /> Editar</button>
+              )}
+            </div>
             <Fila label="Vendedor" valor={venta.vendedor_id ? perfilMap[venta.vendedor_id] : null} />
             <Fila label="Comisión" valor={comisionMonto > 0 ? <span className="text-emerald-600 font-bold">{venta.moneda_venta} {comisionMonto.toLocaleString("es-AR")} <span className="font-normal text-slate-400">({comisionPct}%)</span></span> : null} />
             <Fila label="Responsable consignación" valor={venta.responsable_consignacion_id ? perfilMap[venta.responsable_consignacion_id] : null} />
             <Fila label="Gestor asignado" valor={venta.gestor_asignado_id ? perfilMap[venta.gestor_asignado_id] : null} />
+
+            {editandoComision && (
+              <div className="mt-2 bg-slate-50 dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-xl p-3 space-y-2">
+                {!soyAdmin && (
+                  <p className="text-[11px] text-amber-700 dark:text-amber-400 flex items-center gap-1.5 font-semibold"><ShieldAlert className="w-3.5 h-3.5 shrink-0" /> Este cambio necesita aprobación del admin — no se aplica solo.</p>
+                )}
+                {solicitudEnviada ? (
+                  <p className="text-xs font-bold text-emerald-600 flex items-center gap-1.5"><Check className="w-3.5 h-3.5" /> Solicitud enviada, queda pendiente de aprobación en Autorizaciones.</p>
+                ) : (
+                  <>
+                    <div className="grid grid-cols-2 gap-2">
+                      <div>
+                        <label className="text-[10px] font-bold text-slate-500 dark:text-slate-400 block mb-1">Comisión vendedor (%)</label>
+                        <input type="number" step="0.1" value={comisionVendedorPct} onChange={(e) => setComisionVendedorPct(e.target.value)} className="w-full bg-white dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-lg px-2.5 py-1.5 text-sm outline-none" />
+                      </div>
+                      <div>
+                        <label className="text-[10px] font-bold text-slate-500 dark:text-slate-400 block mb-1">Comisión consignación (%)</label>
+                        <input type="number" step="0.1" value={comisionConsignacionPct} onChange={(e) => setComisionConsignacionPct(e.target.value)} className="w-full bg-white dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-lg px-2.5 py-1.5 text-sm outline-none" />
+                      </div>
+                    </div>
+                    <div className="flex justify-end gap-2">
+                      <button onClick={() => setEditandoComision(false)} className="px-3 py-1.5 text-xs font-semibold text-slate-500">Cancelar</button>
+                      <button onClick={guardarComision} disabled={guardandoComision} className="px-3 py-1.5 rounded-lg text-xs font-bold bg-rose-600 hover:bg-rose-700 text-white disabled:opacity-50">
+                        {guardandoComision ? "Guardando..." : soyAdmin ? "Guardar" : "Enviar solicitud"}
+                      </button>
+                    </div>
+                  </>
+                )}
+              </div>
+            )}
           </div>
 
           <div>
