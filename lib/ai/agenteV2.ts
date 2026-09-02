@@ -122,11 +122,25 @@ function extraerNumerosRelevantes(texto: string): number[] {
     .filter((n) => n >= 1900);
 }
 
-function respuestaMencionaStockInventado(reply: string, resultados: ResultadoStockV2[]): boolean {
+// Los números "reales" no son solo precio/año del stock: si la respuesta
+// también menciona una dirección de sucursal (ej: "el Vento está en Av. del
+// Libertador 2067"), esos números vienen del prompt (dato real), no son una
+// alucinación — sin esta lista, "2067" no matchea contra ningún precio/año
+// y toda la respuesta se descarta por error, incluida la dirección real.
+function respuestaMencionaStockInventado(reply: string, resultados: ResultadoStockV2[], sucursales: SucursalInfo[] = []): boolean {
   const numerosReply = extraerNumerosRelevantes(reply);
   if (numerosReply.length === 0) return false;
+
   const numerosReales = new Set<number>();
-  for (const v of resultados) { numerosReales.add(v.precio_venta); numerosReales.add(v.anio); }
+  for (const v of resultados) {
+    numerosReales.add(v.precio_venta);
+    numerosReales.add(v.anio);
+  }
+  for (const s of sucursales) {
+    if (s.direccion) extraerNumerosRelevantes(s.direccion).forEach((n) => numerosReales.add(n));
+    if (s.telefono_encargado) extraerNumerosRelevantes(s.telefono_encargado).forEach((n) => numerosReales.add(n));
+  }
+
   return numerosReply.some((n) => !numerosReales.has(n));
 }
 
@@ -187,10 +201,23 @@ export async function generarRespuestaAgenteV2(historial: HistorialMensaje[], ca
     ], { origen: canal });
 
     if (result2.ok) {
-      const reply = respuestaMencionaStockInventado(result2.data.reply, resultados)
+      const reply = respuestaMencionaStockInventado(result2.data.reply, resultados, sucursales)
         ? respuestaSeguraConStockReal(resultados, esAlternativa)
         : result2.data.reply;
-      respuesta = { ...respuesta, reply, handoff: result2.data.handoff, calificacion: result2.data.calificacion };
+      // La segunda pasada es la que tiene el dato correcto post-reglas
+      // (permuta, confirmación, etc.) — si algo lee estos campos más
+      // adelante (hoy nada los persiste, pero por las dudas), que refleje
+      // la versión final, no la de la primera pasada sin stock inyectado.
+      respuesta = {
+        ...respuesta,
+        reply,
+        handoff: result2.data.handoff,
+        calificacion: result2.data.calificacion,
+        vehiculo_mencionado: result2.data.vehiculo_mencionado,
+        presupuesto_mencionado: result2.data.presupuesto_mencionado,
+        datos_detectados: result2.data.datos_detectados,
+        intencion: result2.data.intencion,
+      };
     } else {
       console.error("[agenteV2] error en 2da pasada (stock):", result2.error);
     }
