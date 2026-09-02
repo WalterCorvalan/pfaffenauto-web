@@ -14,8 +14,8 @@ import {
   MessageCircle, BookUser, Settings, Trash2, Bot, Wallet, Tag, AlertTriangle, CheckSquare,
 } from "lucide-react";
 import QuickActionsButton from "@/components/panelV2/QuickActionsButton";
-import NotificationBell from "@/components/panelV2/NotificationBell";
 import MensajesBubble from "@/components/panelV2/MensajesBubble";
+import NotificationBell from "@/components/panelV2/NotificationBell";
 import TopTicker from "@/components/panelV2/TopTicker";
 
 // Grupos calcados del índice del manual del CRM viejo — todo lo que todavía
@@ -77,7 +77,7 @@ const GRUPOS: { titulo: string; items: { href?: string; label: string; icon: any
   {
     titulo: "Colaboración",
     items: [
-      { label: "Mensajes", icon: MessagesSquare },
+      { href: "/panel-v2/mensajes", label: "Mensajes", icon: MessagesSquare },
       { href: "/panel-v2/whatsapp", label: "WhatsApp", icon: Smartphone },
       { href: "/panel-v2/rodi", label: "Rodi (chat web)", icon: Bot },
       { href: "/panel-v2/tareas", label: "Tareas de Leads", icon: CheckSquare },
@@ -317,8 +317,8 @@ export default function PanelV2Layout({ children }: { children: React.ReactNode 
         </div>
       )}
 
-      <MensajesBubble />
       <QuickActionsButton />
+      <MensajesBubble />
     </div>
   );
 }
