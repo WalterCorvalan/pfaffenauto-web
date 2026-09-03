@@ -503,7 +503,10 @@ export default function ChatClient({
               {conversacionActiva?.handoff_at && (
                 <div className="bg-amber-50 dark:bg-amber-500/10 border border-amber-200 dark:border-amber-500/20 p-3 rounded-lg flex gap-2">
                   <Info className="w-4 h-4 text-amber-500 shrink-0 mt-0.5" />
-                  <p className="text-xs text-amber-800 dark:text-amber-300 leading-relaxed">{conversacionActiva.handoff_reason === "cliente_pidio_humano" ? "El cliente pidió hablar con una persona." : "La IA dejó de responder."}</p>
+                  <div className="text-xs text-amber-800 dark:text-amber-300 leading-relaxed">
+                    <p>{conversacionActiva.handoff_reason === "cliente_pidio_humano" ? "El cliente pidió hablar con una persona." : "La IA dejó de responder."}</p>
+                    {conversacionActiva.handoff_resumen && <p className="mt-1 font-semibold">{conversacionActiva.handoff_resumen}</p>}
+                  </div>
                 </div>
               )}
             </div>

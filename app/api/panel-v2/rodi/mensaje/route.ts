@@ -74,7 +74,7 @@ export async function POST(request: Request) {
     return NextResponse.json({ replies: ["¡Hola! Gracias por escribirnos a Pfaffen Autos. En breve te contacta uno de nuestros asesores. 🚗"], handoff: false });
   }
 
-  const { reply, handoff, calificacion } = result.data;
+  const { reply, handoff, calificacion, resumen_handoff } = result.data;
   const partes = dividirRespuestaEnMensajes(reply);
 
   for (const parte of partes) {
@@ -82,7 +82,10 @@ export async function POST(request: Request) {
   }
   await supabase.from("rodi_conversaciones").update({ calificacion }).eq("id", conversacion.id);
   if (handoff) {
-    await supabase.from("rodi_conversaciones").update({ handoff_at: new Date().toISOString(), handoff_reason: "cliente_pidio_humano", ai_habilitada: false }).eq("id", conversacion.id);
+    await supabase.from("rodi_conversaciones").update({
+      handoff_at: new Date().toISOString(), handoff_reason: "cliente_pidio_humano", ai_habilitada: false,
+      handoff_resumen: resumen_handoff || null,
+    }).eq("id", conversacion.id);
   }
 
   return NextResponse.json({ replies: partes, handoff });

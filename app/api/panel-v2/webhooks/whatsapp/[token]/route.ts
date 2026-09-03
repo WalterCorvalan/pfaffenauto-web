@@ -184,7 +184,7 @@ async function ejecutarAgente(conversacionId: string) {
     return;
   }
 
-  const { reply, handoff, calificacion } = result.data;
+  const { reply, handoff, calificacion, resumen_handoff } = result.data;
 
   const estadoSegunCalificacion = calificacion === "caliente" ? "calificando" : undefined;
   const patchConversacion: Record<string, unknown> = { calificacion };
@@ -200,8 +200,12 @@ async function ejecutarAgente(conversacionId: string) {
   }
 
   if (handoff) {
-    await supabase.from("whatsapp_conversaciones").update({ handoff_at: new Date().toISOString(), handoff_reason: "cliente_pidio_humano", ai_habilitada: false }).eq("id", conversacionId);
-    // La alerta de handoff la dispara el trigger sobre whatsapp_conversaciones.
+    await supabase.from("whatsapp_conversaciones").update({
+      handoff_at: new Date().toISOString(), handoff_reason: "cliente_pidio_humano", ai_habilitada: false,
+      handoff_resumen: resumen_handoff || null,
+    }).eq("id", conversacionId);
+    // La alerta de handoff la dispara el trigger sobre whatsapp_conversaciones,
+    // que ahora incluye este resumen en el mensaje de la alerta.
   }
 }
 

@@ -16,6 +16,7 @@ const supabase = createClient(
 export const AgentReplySchemaV2 = z.object({
   reply: z.string(),
   handoff: z.boolean(),
+  resumen_handoff: z.string().nullable(),
   intencion: z.enum(["COMPRA", "VENTA", "CONSIGNACION", "COMPRA_CON_PERMUTA", "HABLAR_CON_ASESOR", "OTRA_CONSULTA"]).nullable(),
   calificacion: z.enum(["caliente", "tibio", "frio"]).nullable(),
   datos_detectados: z.object({
@@ -48,6 +49,7 @@ function respuestaLimiteAlcanzado(): AgentReplyV2 {
   return {
     reply: "Veo que ya llevamos bastante conversación — para no hacerte esperar más, en este momento te comunico con un asesor que sigue en persona con todo esto.",
     handoff: true,
+    resumen_handoff: "Charla larga (tope de mensajes) — revisar historial del chat para el contexto completo.",
     intencion: null,
     calificacion: null,
     datos_detectados: { timing: null, forma_pago: null, tiene_permuta: null },
@@ -212,6 +214,7 @@ export async function generarRespuestaAgenteV2(historial: HistorialMensaje[], ca
         ...respuesta,
         reply,
         handoff: result2.data.handoff,
+        resumen_handoff: result2.data.resumen_handoff,
         calificacion: result2.data.calificacion,
         vehiculo_mencionado: result2.data.vehiculo_mencionado,
         presupuesto_mencionado: result2.data.presupuesto_mencionado,
