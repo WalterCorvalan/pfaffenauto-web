@@ -41,8 +41,8 @@ export type HistorialMensaje = { role: "user" | "assistant"; content: string };
 // SUAVE: a partir de este mensaje del cliente, el prompt empieza a
 // sugerirle cerrar rápido con lo que necesita. DURO: a partir de acá se
 // corta directo, sin llamar a la IA — se deriva con un mensaje fijo.
-const LIMITE_MENSAJES_SUAVE = 12;
-const LIMITE_MENSAJES_DURO = 35;
+const LIMITE_MENSAJES_SUAVE = 25;
+const LIMITE_MENSAJES_DURO = 70;
 
 function respuestaLimiteAlcanzado(): AgentReplyV2 {
   return {
