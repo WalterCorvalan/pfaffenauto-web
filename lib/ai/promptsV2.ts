@@ -74,6 +74,20 @@ const EQUIPO_PFAFFEN = `\nEQUIPO PFAFFEN AUTOS (dato real, usalo si preguntan qu
 - Encargado Don Torcuato: Lucas Gatti.
 - Dueño: Sergio Pfaffen.`;
 
+// Texto exacto del menú de bienvenida — el LLM a veces lo parafrasea (por
+// ejemplo devuelve "4) Hablar con un asesor" en vez de "4) Permutar mi
+// auto", un menú típico de otros templates que vio en su entrenamiento).
+// Se usa para pisar la respuesta del modelo cuando detecta que está
+// mostrando el menú, así el texto es siempre exacto sin depender de que
+// el modelo lo copie bien.
+export function menuBienvenidaV2(nombreBot?: string): string {
+  return `¡Hola!${nombreBot ? ` Soy ${nombreBot}, el asistente de` : " Bienvenido a"} Pfaffen Autos. ¿Qué te gustaría hacer?
+1) Comprar un vehículo
+2) Vender tu vehículo
+3) Consignar tu vehículo
+4) Permutar mi auto`;
+}
+
 export function buildSystemPromptV2(vehiculoInfo?: string, resultadosStock?: ResultadoStockV2[], nombreBot?: string, resultadosSonAlternativa?: boolean, sucursales?: SucursalInfo[], sugerirCierre?: boolean): string {
   return `${nombreBot ? `Te llamás ${nombreBot}, el` : "Sos el"} asistente virtual oficial de Pfaffen Autos, concesionaria de vehículos 0km y usados.
 

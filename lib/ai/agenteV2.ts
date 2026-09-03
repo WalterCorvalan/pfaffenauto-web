@@ -1,7 +1,7 @@
 import { z } from "zod";
 import { createClient } from "@supabase/supabase-js";
 import { chatJsonV2 } from "@/lib/ai/indexV2";
-import { buildSystemPromptV2, SEPARADOR_MENSAJES, type ResultadoStockV2, type SucursalInfo } from "@/lib/ai/promptsV2";
+import { buildSystemPromptV2, menuBienvenidaV2, SEPARADOR_MENSAJES, type ResultadoStockV2, type SucursalInfo } from "@/lib/ai/promptsV2";
 
 // Agente de ventas panel-v2 — lo usan tanto WhatsApp como Rodi (comparten el
 // mismo prompt base, cada uno con su propio historial). Fork de
@@ -248,6 +248,14 @@ export async function generarRespuestaAgenteV2(historial: HistorialMensaje[], ca
     } else {
       console.error("[agenteV2] error en 2da pasada (stock):", result2.error);
     }
+  }
+
+  // El modelo a veces devuelve el menú de bienvenida parafraseado (mismo
+  // contenido, texto distinto) — si detectamos que ESTO es el menú
+  // (numerado 1-4, arranca con saludo), pisamos con el texto exacto en vez
+  // de confiar en que lo haya copiado bien.
+  if (/^\s*¡?hola/i.test(respuesta.reply) && /1\)/.test(respuesta.reply) && /2\)/.test(respuesta.reply) && /3\)/.test(respuesta.reply) && /4\)/.test(respuesta.reply)) {
+    respuesta = { ...respuesta, reply: menuBienvenidaV2(nombreBot) };
   }
 
   return { ok: true, data: respuesta };
