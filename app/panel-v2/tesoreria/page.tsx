@@ -12,7 +12,11 @@ export default async function TesoreriaPage() {
   const [{ data: cuentas }, { data: sucursales }, { data: movimientos }] = await Promise.all([
     supabase.from("cuentas").select("*").eq("activa", true).order("nombre"),
     supabase.from("sucursales").select("id, nombre").order("nombre"),
-    supabase.from("movimientos_caja").select("cuenta_id, tipo, monto").not("cuenta_id", "is", null),
+    // estado='aprobado' y deleted_at null — mismo filtro que saldo_cuenta()
+    // en Finanzas. Antes esto sumaba TODO (pendientes de aprobación y
+    // eliminados incluidos), así que Tesorería y Finanzas mostraban un
+    // saldo distinto para la misma cuenta.
+    supabase.from("movimientos_caja").select("cuenta_id, tipo, monto").not("cuenta_id", "is", null).eq("estado", "aprobado").is("deleted_at", null),
   ]);
 
   const saldoPorCuenta = (cuentaId: string) => {
