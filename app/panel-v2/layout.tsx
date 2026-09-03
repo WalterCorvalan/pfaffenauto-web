@@ -24,6 +24,16 @@ import TopTicker from "@/components/panelV2/TopTicker";
 // Grupos reorganizados según el nuevo índice del panel Principal.
 // Marketing ya está habilitado apuntando a /panel-v2/marketing.
 // Grupos calcados del esquema principal solicitado
+// Accesos rápidos de la bottom nav en mobile — el resto de los módulos
+// sigue disponible detrás del hamburger (sidebar completa).
+const NAV_MOBILE: { href: string; label: string; icon: any }[] = [
+  { href: "/panel-v2", label: "Dashboard", icon: LayoutDashboard },
+  { href: "/panel-v2/stock", label: "Stock", icon: Car },
+  { href: "/panel-v2/clientes", label: "Clientes", icon: Users },
+  { href: "/panel-v2/ventas", label: "Ventas", icon: Briefcase },
+  { href: "/panel-v2/calendario", label: "Calendario", icon: CalendarDays },
+];
+
 const GRUPOS: { titulo: string; items: { href?: string; label: string; icon: any }[] }[] = [
   {
     titulo: "Principal",
@@ -194,9 +204,21 @@ export default function PanelV2Layout({ children }: { children: React.ReactNode 
   return (
     <div className={darkMode ? "dark" : ""}>
       <div className="flex h-screen w-full bg-[#F8FAFC] dark:bg-[#0A0A0A] text-slate-900 dark:text-slate-100 overflow-hidden">
-        <div className="md:hidden fixed top-0 left-0 right-0 h-14 bg-white dark:bg-[#111] border-b border-slate-200 dark:border-white/10 flex items-center justify-between px-4 z-50">
-          <span className="font-bold">Panel v2</span>
-          <button onClick={() => setIsOpen(!isOpen)}>{isOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}</button>
+        <div className="md:hidden fixed top-0 left-0 right-0 h-14 bg-white dark:bg-[#111] border-b border-slate-200 dark:border-white/10 flex items-center gap-2 px-3 z-50">
+          <button onClick={() => setIsOpen(!isOpen)} className="shrink-0 p-1 text-slate-600 dark:text-slate-300">{isOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}</button>
+          <div className="relative flex-1 min-w-0">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-slate-400" />
+            <input
+              disabled
+              placeholder="Buscar clientes, patentes..."
+              title="El buscador global se conecta cuando construyamos esos módulos"
+              className="w-full bg-slate-50 dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-full py-1.5 pl-9 pr-3 text-[12px] outline-none text-slate-900 dark:text-white placeholder:text-slate-400 disabled:cursor-not-allowed"
+            />
+          </div>
+          <button onClick={toggleDarkMode} className="shrink-0 p-1.5 rounded-lg text-slate-500 dark:text-slate-300" title={darkMode ? "Modo claro" : "Modo oscuro"}>
+            {darkMode ? <Sun className="w-4 h-4" /> : <Moon className="w-4 h-4" />}
+          </button>
+          <NotificationBell miId={miId || ""} />
         </div>
 
         {/* SIDEBAR */}
@@ -292,7 +314,7 @@ export default function PanelV2Layout({ children }: { children: React.ReactNode 
             <NotificationBell miId={miId || ""} />
           </div>
 
-          <main className="relative flex-1 min-w-0 overflow-y-auto bg-[#F8FAFC] dark:bg-[#0A0A0A]">
+          <main className="relative flex-1 min-w-0 overflow-y-auto bg-[#F8FAFC] dark:bg-[#0A0A0A] pb-16 md:pb-0">
             {navegandoA && (
               <div className="absolute top-0 left-0 right-0 h-0.5 z-50 overflow-hidden bg-indigo-100 dark:bg-indigo-500/10">
                 <div className="h-full w-1/3 bg-indigo-600 dark:bg-indigo-400 animate-barra-carga" />
@@ -301,6 +323,25 @@ export default function PanelV2Layout({ children }: { children: React.ReactNode 
             {children}
           </main>
         </div>
+
+        {/* BOTTOM NAV — accesos rápidos en mobile, la barra lateral completa
+            queda detrás del hamburger para lo demás. */}
+        <nav className="md:hidden fixed bottom-0 left-0 right-0 h-16 bg-white dark:bg-[#111] border-t border-slate-200 dark:border-white/10 flex items-stretch z-50">
+          {NAV_MOBILE.map((item) => {
+            const Icon = item.icon;
+            const activo = pathname === item.href;
+            return (
+              <Link
+                key={item.href}
+                href={item.href}
+                className={`flex-1 flex flex-col items-center justify-center gap-0.5 text-[10px] font-semibold ${activo ? "text-rose-600 dark:text-rose-400" : "text-slate-500 dark:text-slate-400"}`}
+              >
+                <Icon className={`w-5 h-5 ${activo ? "text-rose-600 dark:text-rose-400" : ""}`} />
+                {item.label}
+              </Link>
+            );
+          })}
+        </nav>
       </div>
 
       {toast && (
