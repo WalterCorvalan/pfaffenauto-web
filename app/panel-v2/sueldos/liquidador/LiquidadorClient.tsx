@@ -3,7 +3,8 @@
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { supabase2 } from "@/lib/supabase2/client";
-import { Wallet, Calculator, Save, ClipboardList } from "lucide-react";
+import { Wallet, Calculator, Save, ClipboardList, CircleDollarSign, Undo2 } from "lucide-react";
+import { hoyLocalISO } from "@/lib/panelV2/fechas";
 
 interface Categoria {
   id: string;
@@ -25,8 +26,10 @@ function fmt(n: number, moneda: string) {
   return moneda === "ARS" ? `$ ${n.toLocaleString("es-AR")}` : `${moneda} ${n.toLocaleString("es-AR")}`;
 }
 
-export default function LiquidadorClient({ empleados, liquidacionesPrevias, categorias }: { empleados: Empleado[]; liquidacionesPrevias: any[]; categorias: { id: string; nombre: string }[] }) {
+export default function LiquidadorClient({ empleados, liquidacionesPrevias, categorias, cuentas }: { empleados: Empleado[]; liquidacionesPrevias: any[]; categorias: { id: string; nombre: string }[]; cuentas: { id: string; nombre: string; moneda: string }[] }) {
   const router = useRouter();
+  const [liquidaciones, setLiquidaciones] = useState(liquidacionesPrevias);
+  const [pagando, setPagando] = useState<any | null>(null);
   const hoy = new Date();
   const mesActual = `${hoy.getFullYear()}-${String(hoy.getMonth() + 1).padStart(2, "0")}`;
 
@@ -43,6 +46,8 @@ export default function LiquidadorClient({ empleados, liquidacionesPrevias, cate
   const [faltas, setFaltas] = useState("0");
   const [tardanzas, setTardanzas] = useState("0");
   const [descuentoPresentismo, setDescuentoPresentismo] = useState("0");
+
+  useEffect(() => { setLiquidaciones(liquidacionesPrevias); }, [liquidacionesPrevias]);
 
   const empleado = empleados.find((e) => e.id === empleadoId);
   const categoria = empleado?.categorias_empleado;
@@ -96,8 +101,11 @@ export default function LiquidadorClient({ empleados, liquidacionesPrevias, cate
     }
   };
 
+  const yaPagada = liquidaciones.find((l) => l.perfil_id === empleadoId && l.mes === `${mes}-01`)?.estado === "pagada";
+
   const guardar = async () => {
     if (!empleadoId) return alert("Elegí un empleado.");
+    if (yaPagada) return alert("Esta liquidación ya está pagada — no se puede volver a calcular. Revertí el pago primero si necesitás corregirla.");
     setGuardando(true);
     try {
       const { data: { user } } = await supabase2.auth.getUser();
@@ -130,6 +138,13 @@ export default function LiquidadorClient({ empleados, liquidacionesPrevias, cate
     } finally {
       setGuardando(false);
     }
+  };
+
+  const revertirPago = async (id: string) => {
+    if (!confirm("¿Revertir el pago? Esto elimina el egreso de caja asociado.")) return;
+    const { error } = await supabase2.rpc("quitar_pago_liquidacion_sueldo", { p_liquidacion_id: id });
+    if (error) return alert(error.message);
+    router.refresh();
   };
 
   return (
@@ -250,7 +265,7 @@ export default function LiquidadorClient({ empleados, liquidacionesPrevias, cate
             <ClipboardList className="w-4 h-4 text-rose-600 dark:text-rose-400" />
             <h2 className="text-[11px] font-bold uppercase tracking-widest text-slate-500 dark:text-slate-400">Liquidaciones generadas</h2>
           </div>
-          {liquidacionesPrevias.length === 0 ? (
+          {liquidaciones.length === 0 ? (
             <p className="p-6 text-sm text-slate-400 text-center">Todavía no generaste ninguna liquidación.</p>
           ) : (
             <div className="overflow-x-auto">
@@ -260,20 +275,98 @@ export default function LiquidadorClient({ empleados, liquidacionesPrevias, cate
                     <th className="px-6 py-3">Empleado</th>
                     <th className="px-6 py-3">Mes</th>
                     <th className="px-6 py-3 text-right">Total</th>
+                    <th className="px-6 py-3">Estado</th>
+                    <th className="px-6 py-3 text-right">Caja</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-slate-100 dark:divide-white/10">
-                  {liquidacionesPrevias.map((l) => (
+                  {liquidaciones.map((l) => (
                     <tr key={l.id} className="hover:bg-slate-50/50 dark:hover:bg-white/5">
                       <td className="px-6 py-3 font-bold text-slate-800 dark:text-white text-[13px]">{l.perfiles?.nombre || "—"}</td>
                       <td className="px-6 py-3 text-slate-500 dark:text-slate-400 text-[13px]">{new Date(l.mes).toLocaleDateString("es-AR", { month: "long", year: "numeric", timeZone: "UTC" })}</td>
                       <td className="px-6 py-3 text-right font-mono font-bold text-rose-600 dark:text-rose-400 text-[13px]">{fmt(Number(l.total_final), l.moneda_total)}</td>
+                      <td className="px-6 py-3">
+                        {l.estado === "pagada" ? (
+                          <span className="text-[10px] font-bold uppercase tracking-widest text-emerald-700 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-500/10 px-2 py-1 rounded-full">Pagada</span>
+                        ) : (
+                          <span className="text-[10px] font-bold uppercase tracking-widest text-amber-700 dark:text-amber-400 bg-amber-50 dark:bg-amber-500/10 px-2 py-1 rounded-full">Generada</span>
+                        )}
+                      </td>
+                      <td className="px-6 py-3 text-right">
+                        {l.estado === "pagada" ? (
+                          <button onClick={() => revertirPago(l.id)} className="text-[11px] font-bold text-slate-400 hover:text-rose-600 flex items-center gap-1 ml-auto">
+                            <Undo2 className="w-3.5 h-3.5" /> Revertir
+                          </button>
+                        ) : (
+                          <button onClick={() => setPagando(l)} className="text-[11px] font-bold text-emerald-600 hover:text-emerald-700 flex items-center gap-1 ml-auto">
+                            <CircleDollarSign className="w-3.5 h-3.5" /> Marcar pagada
+                          </button>
+                        )}
+                      </td>
                     </tr>
                   ))}
                 </tbody>
               </table>
             </div>
           )}
+        </div>
+      </div>
+
+      {pagando && (
+        <PagoLiquidacionModal liquidacion={pagando} cuentas={cuentas} onClose={() => setPagando(null)} onPagado={() => { setPagando(null); router.refresh(); }} />
+      )}
+    </div>
+  );
+}
+
+function PagoLiquidacionModal({ liquidacion, cuentas, onClose, onPagado }: { liquidacion: any; cuentas: { id: string; nombre: string; moneda: string }[]; onClose: () => void; onPagado: () => void }) {
+  const cuentasMoneda = cuentas.filter((c) => c.moneda === liquidacion.moneda_total);
+  const [cuentaId, setCuentaId] = useState(cuentasMoneda[0]?.id || "");
+  const [fecha, setFecha] = useState(hoyLocalISO());
+  const [cargando, setCargando] = useState(false);
+
+  const confirmar = async () => {
+    if (!cuentaId) return alert("Elegí de qué caja sale el pago.");
+    setCargando(true);
+    try {
+      const { error } = await supabase2.rpc("pagar_liquidacion_sueldo", { p_liquidacion_id: liquidacion.id, p_cuenta_id: cuentaId, p_fecha: fecha });
+      if (error) throw error;
+      onPagado();
+    } catch (err: any) {
+      alert(err.message || "Error al registrar el pago.");
+    } finally {
+      setCargando(false);
+    }
+  };
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+      <div className="absolute inset-0 bg-slate-900/50 backdrop-blur-sm" onClick={() => !cargando && onClose()} />
+      <div className="relative bg-white dark:bg-[#141414] border border-slate-200 dark:border-white/10 w-full max-w-sm rounded-2xl shadow-2xl p-6 space-y-4">
+        <h2 className="text-lg font-bold text-slate-900 dark:text-white flex items-center gap-2">
+          <CircleDollarSign className="w-5 h-5 text-emerald-600" /> Marcar sueldo como pagado
+        </h2>
+        <div className="bg-emerald-50 dark:bg-emerald-500/10 border border-emerald-200 dark:border-emerald-500/20 p-3 rounded-xl text-center">
+          <span className="text-[10px] font-bold uppercase tracking-widest text-emerald-700 dark:text-emerald-400 block mb-1">{liquidacion.perfiles?.nombre}</span>
+          <span className="text-2xl font-black font-mono text-emerald-800 dark:text-emerald-300">{fmt(Number(liquidacion.total_final), liquidacion.moneda_total)}</span>
+        </div>
+        <div>
+          <label className="text-xs font-bold text-slate-600 dark:text-slate-400 mb-1.5 block uppercase tracking-widest">Fecha del pago</label>
+          <input type="date" value={fecha} onChange={(e) => setFecha(e.target.value)} className="w-full bg-slate-50 dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-xl px-3 py-2.5 text-sm outline-none text-slate-900 dark:text-white" />
+        </div>
+        <div>
+          <label className="text-xs font-bold text-slate-600 dark:text-slate-400 mb-1.5 block uppercase tracking-widest">Caja de donde sale ({liquidacion.moneda_total})</label>
+          <select value={cuentaId} onChange={(e) => setCuentaId(e.target.value)} className="w-full bg-slate-50 dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-xl px-3 py-2.5 text-sm outline-none text-slate-900 dark:text-white">
+            <option value="">— Elegí —</option>
+            {cuentasMoneda.map((c) => <option key={c.id} value={c.id}>{c.nombre}</option>)}
+          </select>
+          {cuentasMoneda.length === 0 && <p className="text-[10px] text-rose-500 mt-1">No hay cajas en {liquidacion.moneda_total} — creá una en Finanzas.</p>}
+        </div>
+        <div className="flex gap-2 pt-2">
+          <button onClick={onClose} disabled={cargando} className="flex-1 px-4 py-2.5 text-sm font-bold text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-white/10 rounded-xl transition-colors disabled:opacity-50">Cancelar</button>
+          <button onClick={confirmar} disabled={cargando} className="flex-1 px-4 py-2.5 text-sm font-bold bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl transition-colors disabled:opacity-50">
+            {cargando ? "Guardando..." : "Confirmar Pago"}
+          </button>
         </div>
       </div>
     </div>

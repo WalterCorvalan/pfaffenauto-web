@@ -24,10 +24,16 @@ export default async function LiquidadorPage() {
     .order("orden", { ascending: true })
     .order("nombre", { ascending: true });
 
+  const { data: cuentas } = await supabase
+    .from("cuentas")
+    .select("id, nombre, moneda")
+    .eq("activa", true)
+    .order("nombre");
+
   const empleadosNormalizados = (empleados || []).map((e: any) => ({
     ...e,
     categorias_empleado: Array.isArray(e.categorias_empleado) ? e.categorias_empleado[0] || null : e.categorias_empleado,
   }));
 
-  return <LiquidadorClient empleados={empleadosNormalizados} liquidacionesPrevias={liquidacionesPrevias || []} categorias={categorias || []} />;
+  return <LiquidadorClient empleados={empleadosNormalizados} liquidacionesPrevias={liquidacionesPrevias || []} categorias={categorias || []} cuentas={cuentas || []} />;
 }
