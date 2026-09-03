@@ -27,11 +27,13 @@ export const AgentReplySchemaV2 = z.object({
   vehiculo_mencionado: z.object({
     marca: z.string().nullable(),
     modelo: z.string().nullable(),
+    categoria: z.enum(["Auto", "Pickup/Camioneta", "SUV", "Utilitario"]).nullable(),
   }).nullable(),
   presupuesto_mencionado: z.object({
     monto: z.number().positive(),
     moneda: z.enum(["USD", "ARS"]),
   }).nullable(),
+  pedir_stock_general: z.boolean(),
 });
 
 export type AgentReplyV2 = z.infer<typeof AgentReplySchemaV2>;
@@ -50,6 +52,7 @@ function respuestaLimiteAlcanzado(): AgentReplyV2 {
     reply: "Veo que ya llevamos bastante conversación — para no hacerte esperar más, en este momento te comunico con un asesor que sigue en persona con todo esto.",
     handoff: true,
     resumen_handoff: "Charla larga (tope de mensajes) — revisar historial del chat para el contexto completo.",
+    pedir_stock_general: false,
     intencion: null,
     calificacion: null,
     datos_detectados: { timing: null, forma_pago: null, tiene_permuta: null },
@@ -69,6 +72,7 @@ export function dividirRespuestaEnMensajes(reply: string): string[] {
 async function ejecutarBusquedaStock(
   marca: string | null,
   modelo: string | null,
+  categoria?: string | null,
   presupuesto?: { monto: number; moneda: "USD" | "ARS" } | null
 ): Promise<ResultadoStockV2[]> {
   let query = supabase
@@ -78,6 +82,11 @@ async function ejecutarBusquedaStock(
     .limit(modelo ? 3 : 6);
   if (marca) query = query.ilike("marca", `%${marca}%`);
   if (modelo) query = query.ilike("modelo", `%${modelo}%`);
+  // Categoría (Auto/Camioneta/SUV/Moto/Otro) — el cliente puede acotar por
+  // tipo de vehículo sin dar marca ("busco auto, no camioneta"). Es un
+  // filtro duro: una vez que lo pidió, ninguna alternativa de otra
+  // categoría se le vuelve a mostrar en esta búsqueda.
+  if (categoria) query = query.eq("categoria", categoria);
 
   // Sin conversor de dólar propio en v2 todavía — filtramos solo por la
   // moneda que mencionó el cliente, sin intentar convertir la otra.
@@ -89,25 +98,38 @@ async function ejecutarBusquedaStock(
   return (data ?? []) as ResultadoStockV2[];
 }
 
-// Buscar exacto (marca+modelo) primero; si no hay nada, no le devolvemos al
-// modelo una lista vacía sin salida — probamos alternativas reales (misma
-// marca, cualquier modelo) para que el bot pueda ofrecerlas directo en vez
-// de quedarse pidiendo año/presupuesto sin tener nada real que mostrar.
+// Buscar exacto (marca+modelo+categoría) primero; si no hay nada, no le
+// devolvemos al cliente una lista vacía sin salida — probamos combinaciones
+// cada vez menos específicas hasta encontrar stock real. La categoría es la
+// señal MÁS débil de las tres: si el cliente pidió "Ford" pensando en un
+// auto pero la Ford que hay es una pickup, mostrar esa pickup es mejor que
+// decir "no tenemos Ford" — por eso se relaja antes que marca/modelo.
 export async function buscarStockRealV2(
   marca: string | null,
   modelo: string | null,
+  categoria?: string | null,
   presupuesto?: { monto: number; moneda: "USD" | "ARS" } | null
 ): Promise<{ resultados: ResultadoStockV2[]; esAlternativa: boolean }> {
-  const exacto = await ejecutarBusquedaStock(marca, modelo, presupuesto);
-  if (exacto.length > 0 || !modelo) return { resultados: exacto, esAlternativa: false };
+  const cat = categoria ?? null;
+  const intentos: [string | null, string | null, string | null][] = [
+    [marca, modelo, cat],
+    [marca, modelo, null],
+    [marca, null, cat],
+    [marca, null, null],
+    [null, null, cat],
+    [null, null, null],
+  ];
 
-  if (marca) {
-    const porMarca = await ejecutarBusquedaStock(marca, null, presupuesto);
-    if (porMarca.length > 0) return { resultados: porMarca, esAlternativa: true };
+  const probados = new Set<string>();
+  for (let i = 0; i < intentos.length; i++) {
+    const [m, mo, c] = intentos[i];
+    const clave = `${m}|${mo}|${c}`;
+    if (probados.has(clave)) continue;
+    probados.add(clave);
+    const resultados = await ejecutarBusquedaStock(m, mo, c, presupuesto);
+    if (resultados.length > 0) return { resultados, esAlternativa: i > 0 };
   }
-
-  const general = await ejecutarBusquedaStock(null, null, presupuesto);
-  return { resultados: general, esAlternativa: true };
+  return { resultados: [], esAlternativa: true };
 }
 
 // Red de seguridad anti-alucinación: el prompt ya prohíbe inventar stock,
@@ -190,10 +212,11 @@ export async function generarRespuestaAgenteV2(historial: HistorialMensaje[], ca
   // comprar en respuesta a que quería vender el propio.
   const esIntencionDeCompra = respuesta.intencion !== "VENTA" && respuesta.intencion !== "CONSIGNACION";
 
-  if (esIntencionDeCompra && (respuesta.vehiculo_mencionado?.modelo || respuesta.vehiculo_mencionado?.marca || respuesta.presupuesto_mencionado)) {
+  if (esIntencionDeCompra && (respuesta.vehiculo_mencionado?.modelo || respuesta.vehiculo_mencionado?.marca || respuesta.vehiculo_mencionado?.categoria || respuesta.presupuesto_mencionado || respuesta.pedir_stock_general)) {
     const { resultados, esAlternativa } = await buscarStockRealV2(
       respuesta.vehiculo_mencionado?.marca ?? null,
       respuesta.vehiculo_mencionado?.modelo ?? null,
+      respuesta.vehiculo_mencionado?.categoria ?? null,
       respuesta.presupuesto_mencionado
     );
 
@@ -217,6 +240,7 @@ export async function generarRespuestaAgenteV2(historial: HistorialMensaje[], ca
         resumen_handoff: result2.data.resumen_handoff,
         calificacion: result2.data.calificacion,
         vehiculo_mencionado: result2.data.vehiculo_mencionado,
+        pedir_stock_general: result2.data.pedir_stock_general,
         presupuesto_mencionado: result2.data.presupuesto_mencionado,
         datos_detectados: result2.data.datos_detectados,
         intencion: result2.data.intencion,

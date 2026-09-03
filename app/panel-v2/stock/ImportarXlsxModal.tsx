@@ -29,7 +29,7 @@ export default function ImportarXlsxModal({ miId, onClose, onImportados }: Props
 
   const descargarPlantilla = () => {
     const ws = XLSX.utils.json_to_sheet([
-      { Marca: "Toyota", Modelo: "Hilux SRX 4x4", "Año": 2022, Patente: "AB123CD", KM: 35000, Color: "Blanco", "Condición": "Muy bueno", "Ubicación": "Salón Principal", Precio: 45000, Moneda: "USD", "Precio compra": 38000, "Moneda compra": "USD", "TC ingreso": "", "Consignación": "", Propietario: "", "Categoría": "Camioneta", Notas: "" },
+      { Marca: "Toyota", Modelo: "Hilux SRX 4x4", "Año": 2022, Patente: "AB123CD", KM: 35000, Color: "Blanco", "Condición": "Muy bueno", "Ubicación": "Salón Principal", Precio: 45000, Moneda: "USD", "Precio compra": 38000, "Moneda compra": "USD", "TC ingreso": "", "Consignación": "", Propietario: "", "Categoría": "Pickup/Camioneta", Notas: "" },
     ]);
     const wb = XLSX.utils.book_new();
     XLSX.utils.book_append_sheet(wb, ws, "Plantilla");
@@ -93,7 +93,7 @@ export default function ImportarXlsxModal({ miId, onClose, onImportados }: Props
           precio_compra: precioCompra ? Number(precioCompra) : null, moneda_compra: monedaCompra ? String(monedaCompra).trim().toUpperCase() : "USD",
           tc_ingreso: tcIngreso ? Number(tcIngreso) : null,
           propietario_nombre: propietario ? String(propietario).trim() : null,
-          categoria: categoria && ["Auto", "Camioneta", "SUV", "Moto"].includes(String(categoria).trim()) ? String(categoria).trim() : "Auto",
+          categoria: categoria && ["Auto", "Pickup/Camioneta", "SUV", "Utilitario"].includes(String(categoria).trim()) ? String(categoria).trim() : "Auto",
           notas: notas ? String(notas).trim() : null,
           estado: "disponible", propio_agencia: !propietario,
           creado_por: miId || null,
@@ -169,7 +169,7 @@ export default function ImportarXlsxModal({ miId, onClose, onImportados }: Props
             <span>Precio</span><span>Moneda (USD / ARS)</span>
           </div>
           <p className="font-bold text-slate-600 dark:text-slate-300 mt-3 mb-1">Opcionales:</p>
-          <p className="text-slate-500 dark:text-slate-400">Precio compra, Moneda compra, TC ingreso (si la compra es en ARS, congela el costo en USD), Propietario, Categoría (Auto / Camioneta / SUV / Moto), Notas.</p>
+          <p className="text-slate-500 dark:text-slate-400">Precio compra, Moneda compra, TC ingreso (si la compra es en ARS, congela el costo en USD), Propietario, Categoría (Auto / Pickup-Camioneta / SUV / Utilitario), Notas.</p>
         </div>
 
         <div className="flex items-center justify-between mt-4 pt-4 border-t border-slate-100 dark:border-white/10">

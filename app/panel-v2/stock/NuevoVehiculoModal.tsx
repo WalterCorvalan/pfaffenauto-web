@@ -6,7 +6,7 @@ import { X, Loader2, ScanLine, ClipboardPaste, ImagePlus } from "lucide-react";
 import { crearAlerta } from "@/lib/panelV2/alertas";
 
 export const MARCAS = ["Toyota", "Volkswagen", "Ford", "Chevrolet", "Renault", "Peugeot", "Fiat", "Honda", "Hyundai", "Nissan", "Jeep", "Citroën", "BMW", "Mercedes-Benz", "Audi", "Otra"];
-const CATEGORIAS = ["Auto", "Camioneta", "SUV", "Moto", "Otro"];
+const CATEGORIAS = ["Auto", "Pickup/Camioneta", "SUV", "Utilitario"];
 const CONDICIONES = ["0km", "Excelente", "Muy bueno", "Bueno", "Regular"];
 const ESTADOS = [
   { value: "disponible", label: "Disponible" },
@@ -254,30 +254,30 @@ export default function NuevoVehiculoModal({ perfiles, clientes, sucursales, miI
                 </select>
               </div>
               <div>
-                <label className={labelClass}>Marca *</label>
+                <label className={labelClass}>Marca <span className="text-rose-500">*</span></label>
                 <input list="marcas-vehiculo" value={marca} onChange={(e) => setMarca(e.target.value)} placeholder="Ej: Toyota, BMW" className={inputClass} />
                 <datalist id="marcas-vehiculo">{MARCAS.map((m) => <option key={m} value={m} />)}</datalist>
               </div>
               <div>
-                <label className={labelClass}>Modelo *</label>
+                <label className={labelClass}>Modelo <span className="text-rose-500">*</span></label>
                 <input value={modelo} onChange={(e) => setModelo(e.target.value)} placeholder="Ej: Hilux SRX 4x4" className={inputClass} />
               </div>
               <div>
-                <label className={labelClass}>Año *</label>
+                <label className={labelClass}>Año <span className="text-rose-500">*</span></label>
                 <input type="number" value={anio} onChange={(e) => setAnio(e.target.value)} className={inputClass} />
               </div>
               <div>
-                <label className={labelClass}>Patente / VIN *</label>
+                <label className={labelClass}>Patente / VIN <span className="text-rose-500">*</span></label>
                 <input value={patente} onChange={(e) => setPatente(e.target.value)} placeholder="AB123CD" className={inputClass} />
               </div>
               <div>
-                <label className={labelClass}>Condición *</label>
+                <label className={labelClass}>Condición <span className="text-rose-500">*</span></label>
                 <select value={condicion} onChange={(e) => setCondicion(e.target.value)} className={inputClass}>
                   {CONDICIONES.map((c) => <option key={c} value={c}>{c}</option>)}
                 </select>
               </div>
               <div>
-                <label className={labelClass}>Color *</label>
+                <label className={labelClass}>Color <span className="text-rose-500">*</span></label>
                 <input value={color} onChange={(e) => setColor(e.target.value)} className={inputClass} />
               </div>
             </div>
@@ -287,11 +287,11 @@ export default function NuevoVehiculoModal({ perfiles, clientes, sucursales, miI
             <p className={seccionClass}>Precio y estado</p>
             <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
               <div>
-                <label className={labelClass}>Kilómetros *</label>
+                <label className={labelClass}>Kilómetros <span className="text-rose-500">*</span></label>
                 <input type="number" value={km} onChange={(e) => setKm(e.target.value)} className={inputClass} />
               </div>
               <div>
-                <label className={labelClass}>Precio de venta *</label>
+                <label className={labelClass}>Precio de venta <span className="text-rose-500">*</span></label>
                 <input type="number" value={precioVenta} onChange={(e) => setPrecioVenta(e.target.value)} className={inputClass} />
               </div>
               <div>
@@ -328,7 +328,7 @@ export default function NuevoVehiculoModal({ perfiles, clientes, sucursales, miI
             <p className={seccionClass}>Ubicación y dueños</p>
             <div className="grid grid-cols-2 gap-3">
               <div>
-                <label className={labelClass}>Ubicación *</label>
+                <label className={labelClass}>Ubicación <span className="text-rose-500">*</span></label>
                 <input value={ubicacion} onChange={(e) => setUbicacion(e.target.value)} className={inputClass} />
               </div>
               <div>
