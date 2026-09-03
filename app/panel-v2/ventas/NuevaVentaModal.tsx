@@ -54,7 +54,6 @@ export default function NuevaVentaModal({ perfiles, clientes, vehiculos, miId, i
   const puedeGenerarCuotas = miPerfil?.roles?.some((r) => r === "admin" || r === "finanzas") ?? false;
 
   const [cargaManual, setCargaManual] = useState(false);
-  const [abreExpedienteManual, setAbreExpedienteManual] = useState(false);
 
   const [vehiculoId, setVehiculoId] = useState(editando?.vehiculo_id || initial?.vehiculoId || "");
   const [vMarca, setVMarca] = useState(editando?.vehiculo_marca || initial?.vehiculoDescripcion?.split(" ")[0] || "");
@@ -261,7 +260,7 @@ export default function NuevaVentaModal({ perfiles, clientes, vehiculos, miId, i
       const clienteResueltoId = await resolverCliente(estadoFinal);
 
       const payload: any = {
-        estado: estadoFinal, carga_manual: cargaManual, abre_expediente: cargaManual ? abreExpedienteManual : true,
+        estado: estadoFinal, carga_manual: cargaManual, abre_expediente: true,
         vehiculo_id: vehiculoId || null, vehiculo_marca: vMarca || null, vehiculo_modelo: vModelo || null,
         vehiculo_anio: vAnio ? Number(vAnio) : null, vehiculo_patente: vPatente || null, vehiculo_color: vColor || null, vehiculo_condicion: vCondicion || null,
         km: km ? Number(km) : null, precio_venta: Number(precioVenta), moneda_venta: monedaVenta,
@@ -377,16 +376,6 @@ export default function NuevaVentaModal({ perfiles, clientes, vehiculos, miId, i
               <span>
                 <span className="flex items-center gap-1.5 text-xs font-bold text-slate-700 dark:text-slate-200">↓ Carga manual <span className="font-normal text-slate-400">(venta vieja importada desde Excel)</span></span>
                 <span className="block text-[10px] text-slate-500 dark:text-slate-400 mt-0.5">Para registrar ventas históricas: permite cargar el vehículo a mano (sin ficha en stock) y la venta nace en estado <strong>Cerrada</strong> directamente. El resto del formulario queda igual.</span>
-              </span>
-            </label>
-          )}
-
-          {!esEdicion && cargaManual && (
-            <label className="flex items-start gap-2.5 px-3 py-2.5 rounded-xl border border-slate-200 dark:border-white/10 cursor-pointer">
-              <input type="checkbox" checked={abreExpedienteManual} onChange={(e) => setAbreExpedienteManual(e.target.checked)} className="w-4 h-4 mt-0.5 accent-rose-600" />
-              <span>
-                <span className="block text-xs font-bold text-slate-700 dark:text-slate-200">Igual abrir expediente</span>
-                <span className="block text-[10px] text-slate-500 dark:text-slate-400">Marcá esto si es un <strong>0km vendido</strong> u otra venta que aún necesita trámite registral (transferencia, formularios). Crea el expediente automático al guardar.</span>
               </span>
             </label>
           )}
