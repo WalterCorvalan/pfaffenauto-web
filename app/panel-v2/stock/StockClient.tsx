@@ -15,6 +15,9 @@ import TuCatalogoModal from "./TuCatalogoModal";
 import ImportarXlsxModal from "./ImportarXlsxModal";
 import SenaModal from "./SenaModal";
 import PresupuestoModal from "./PresupuestoModal";
+import PrecioEditor from "./PrecioEditor";
+import SucursalEditor from "./SucursalEditor";
+import VendedorEditor from "./VendedorEditor";
 import { parseFechaLocal } from "@/lib/panelV2/fechas";
 
 interface Vehiculo {
@@ -124,9 +127,10 @@ export default function StockClient({
   }, [baseTab, estadoFiltro, soloEstancados, soloARevisar, marcaFiltro, query]);
 
   const disponibles = vehiculos.filter((v) => v.estado === "disponible");
+  const actualizarVehiculo = (id: string, cambios: Partial<Vehiculo>) => setVehiculos((prev) => prev.map((x) => (x.id === id ? { ...x, ...cambios } : x)));
   const valorTotalPorMoneda = useMemo(() => {
     const acc: Record<string, number> = {};
-    vehiculos.forEach((v) => { acc[v.moneda_venta] = (acc[v.moneda_venta] || 0) + Number(v.precio_venta || 0); });
+    vehiculos.filter((v) => v.estado !== "vendido").forEach((v) => { acc[v.moneda_venta] = (acc[v.moneda_venta] || 0) + Number(v.precio_venta || 0); });
     return acc;
   }, [vehiculos]);
   const estancados = vehiculos.filter((v) => diasEnStock(v.created_at) >= 90 && v.estado === "disponible").length;
@@ -295,17 +299,15 @@ export default function StockClient({
                             <td className="px-4 py-3 text-xs text-slate-500 dark:text-slate-400 whitespace-nowrap">{v.anio}</td>
                             <td className="px-4 py-3 text-xs text-slate-500 dark:text-slate-400 whitespace-nowrap">{v.patente || "s/patente"}</td>
                             <td className="px-4 py-3 text-xs text-slate-500 dark:text-slate-400 whitespace-nowrap">{v.km?.toLocaleString("es-AR") ?? "—"}</td>
-                            <td className="px-4 py-3 text-sm font-bold text-slate-700 dark:text-slate-200 whitespace-nowrap">{fmtPrecio(v.precio_venta, v.moneda_venta)}</td>
+                            <td className="px-4 py-3 text-sm whitespace-nowrap">
+                              <PrecioEditor vehiculoId={v.id} precio={v.precio_venta} moneda={v.moneda_venta} onActualizado={actualizarVehiculo} />
+                            </td>
                             <td className="px-4 py-3"><span className={`text-[10px] font-bold px-2 py-1 rounded-full border whitespace-nowrap ${ESTADO_COLOR[v.estado]}`}>{ESTADO_LABEL[v.estado]}</span></td>
                             <td className="px-4 py-3 text-xs whitespace-nowrap">
-                              {v.sucursal?.nombre ? (
-                                <span className="flex items-center gap-1.5 text-slate-600 dark:text-slate-300 font-semibold"><Building2 className="w-3.5 h-3.5 text-slate-400 shrink-0" /> {v.sucursal.nombre}</span>
-                              ) : <span className="text-slate-300 dark:text-slate-600">Sin asignar</span>}
+                              <SucursalEditor vehiculoId={v.id} sucursalId={v.sucursal_id} sucursalNombre={v.sucursal?.nombre || null} sucursales={sucursales} onActualizado={actualizarVehiculo} />
                             </td>
                             <td className="px-4 py-3 text-xs whitespace-nowrap">
-                              {v.vendedor_asignado_id && perfilMap[v.vendedor_asignado_id] ? (
-                                <span className="flex items-center gap-1.5 text-slate-600 dark:text-slate-300 font-semibold"><UserCircle2 className="w-3.5 h-3.5 text-slate-400 shrink-0" /> {perfilMap[v.vendedor_asignado_id]}</span>
-                              ) : <span className="text-slate-300 dark:text-slate-600">Sin asignar</span>}
+                              <VendedorEditor vehiculoId={v.id} vendedorId={v.vendedor_asignado_id} vendedorNombre={v.vendedor_asignado_id ? perfilMap[v.vendedor_asignado_id] : null} perfiles={perfiles} onActualizado={actualizarVehiculo} />
                             </td>
                             <td className={`px-4 py-3 text-xs whitespace-nowrap ${diasColor}`}>{dias}d</td>
                             <td className="px-4 py-3">{v.publicado_ml ? <CheckCircle2 className="w-4 h-4 text-emerald-500" /> : <span className="text-slate-300 dark:text-slate-600">—</span>}</td>
