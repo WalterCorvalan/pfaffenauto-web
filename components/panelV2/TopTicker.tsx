@@ -9,9 +9,20 @@ export default function TopTicker() {
   const [ventas, setVentas] = useState<number | null>(null);
   const [expedientes, setExpedientes] = useState<number | null>(null);
   const [dolar, setDolar] = useState<{ compra: number; venta: number } | null>(null);
+  const [cajaUsd, setCajaUsd] = useState<number | null>(null);
+  const [cajaArs, setCajaArs] = useState<number | null>(null);
 
   useEffect(() => {
     const cargarMetricas = async () => {
+      supabase2
+        .rpc("saldos_totales_por_moneda")
+        .then(({ data }) => {
+          const porMoneda: Record<string, number> = {};
+          (data || []).forEach((r: any) => { porMoneda[r.moneda] = Number(r.total) || 0; });
+          setCajaUsd(porMoneda.USD || 0);
+          setCajaArs(porMoneda.ARS || 0);
+        });
+
       fetch("/api/dolar-blue")
         .then((res) => res.json())
         .then((data) => {
@@ -53,7 +64,7 @@ export default function TopTicker() {
           <Banknote className="w-3 h-3 text-emerald-600 dark:text-emerald-400" />
         </div>
         <span className="text-[11px] font-medium text-slate-600 dark:text-slate-300 tracking-wide">
-          Caja: <span className="font-bold text-emerald-600 dark:text-emerald-400">USD 0 · ARS 0</span>
+          Caja: <span className="font-bold text-emerald-600 dark:text-emerald-400">USD {(cajaUsd ?? 0).toLocaleString("es-AR")} · ARS {(cajaArs ?? 0).toLocaleString("es-AR")}</span>
         </span>
       </div>
 
