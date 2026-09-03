@@ -11,11 +11,13 @@ export default function ComisionesClient({
   esAdminOFinanzas,
   configuracion,
   vendedores,
+  cuentas,
 }: {
   usuarioActualId: string;
   esAdminOFinanzas: boolean;
   configuracion: any;
   vendedores: any[];
+  cuentas: any[];
 }) {
   const [comisiones, setComisiones] = useState<any[]>([]);
   const [cargando, setCargando] = useState(true);
@@ -276,7 +278,7 @@ export default function ComisionesClient({
       </div>
 
       {modalBono && <BonoModal vendedores={vendedores} usuarioActualId={usuarioActualId} esAdmin={esAdminOFinanzas} onClose={() => { setModalBono(false); cargarComisiones(); }} />}
-      {comisionAPagar && <PagoParcialModal comision={comisionAPagar} onClose={() => { setComisionAPagar(null); cargarComisiones(); }} />}
+      {comisionAPagar && <PagoParcialModal comision={comisionAPagar} cuentas={cuentas} onClose={() => { setComisionAPagar(null); cargarComisiones(); }} />}
     </div>
   );
 }

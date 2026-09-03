@@ -42,12 +42,15 @@ export default async function ComisionesPage() {
 
   const vendedores = (perfiles || []).filter((p) => p.roles.some((r: string) => ["vendedor", "encargado", "admin"].includes(r)));
 
+  const { data: cuentas } = await supabase.from("cuentas").select("id, nombre, moneda").eq("activa", true).order("nombre");
+
   return (
-    <ComisionesClient 
+    <ComisionesClient
       usuarioActualId={user.id}
       esAdminOFinanzas={esAdminOFinanzas}
       configuracion={configuracion}
       vendedores={vendedores}
+      cuentas={cuentas || []}
     />
   );
 }
