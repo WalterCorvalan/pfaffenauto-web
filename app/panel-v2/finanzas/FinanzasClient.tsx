@@ -24,6 +24,7 @@ import CierreCajaTab from "./tabs/CierreCajaTab";
 import ConciliacionTab from "./tabs/ConciliacionTab";
 import AfipIvaTab from "./tabs/AfipIvaTab";
 import SenasTab from "./tabs/SenasTab";
+import ResumenTab from "./tabs/ResumenTab";
 import { fmt } from "./tabs/shared";
 
 const TABS: { value: string; label: string; icon: any; disabled?: boolean; externo?: string }[] = [
@@ -133,35 +134,14 @@ export default function FinanzasClient({
       </div>
 
       {tab === "resumen" && (
-        <div className="space-y-4">
-          <p className="text-[11px] font-black uppercase tracking-widest text-slate-400 flex items-center justify-between">💰 Saldo en cuentas — dinero disponible <span className="font-normal normal-case text-slate-400">Sincronizado con movimientos</span></p>
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-            <div className="bg-white dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-xl p-4"><p className="text-[10px] font-bold uppercase text-indigo-500">Total en ARS</p><p className="text-2xl font-black">{fmt(totalPorMoneda.ARS || 0, "ARS")}</p></div>
-            <div className="bg-white dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-xl p-4"><p className="text-[10px] font-bold uppercase text-indigo-500">Total en USD</p><p className="text-2xl font-black">{fmt(totalPorMoneda.USD || 0, "USD")}</p></div>
-          </div>
-          <div className="space-y-1.5">
-            {cuentas.map((c) => (
-              <button key={c.id} onClick={() => setTab("movimientos")} className="w-full flex items-center justify-between bg-white dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-xl px-4 py-3 hover:border-rose-300">
-                <div className="flex items-center gap-2"><Wallet className="w-4 h-4 text-slate-400" /><div className="text-left"><p className="text-sm font-bold">{c.nombre}</p><p className="text-[11px] text-slate-400">{c.tipo} · {c.moneda}</p></div></div>
-                <span className="font-mono font-bold text-sm">{fmt(c.saldo, c.moneda)} →</span>
-              </button>
-            ))}
-          </div>
-
-          <p className="text-[11px] font-black uppercase tracking-widest text-slate-400 mt-2">📊 Actividad — movimientos acumulados</p>
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-            <div className="bg-white dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-xl p-4"><p className="text-[10px] font-bold uppercase text-emerald-600 flex items-center justify-between">Ingresos totales <TrendingUp className="w-3.5 h-3.5" /></p>{Object.keys(ingresosTotales).length === 0 ? <p className="text-lg">—</p> : Object.entries(ingresosTotales).map(([m, n]) => <p key={m} className="text-lg font-black">{fmt(n, m)}</p>)}</div>
-            <div className="bg-white dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-xl p-4"><p className="text-[10px] font-bold uppercase text-rose-500 flex items-center justify-between">Egresos totales <TrendingDown className="w-3.5 h-3.5" /></p>{Object.keys(egresosTotales).length === 0 ? <p className="text-lg">—</p> : Object.entries(egresosTotales).map(([m, n]) => <p key={m} className="text-lg font-black">{fmt(n, m)}</p>)}</div>
-            <div className="bg-indigo-50 dark:bg-indigo-500/10 border border-indigo-100 dark:border-indigo-500/20 rounded-xl p-4"><p className="text-[10px] font-bold uppercase text-indigo-600">Balance neto (cuentas)</p><p className="text-lg font-black">{fmt(totalPorMoneda.USD || 0, "USD")}</p><p className="text-lg font-black">{fmt(totalPorMoneda.ARS || 0, "ARS")}</p><p className="text-[10px] text-slate-400">Suma de saldos reales</p></div>
-          </div>
-
-          <p className="text-[11px] font-black uppercase tracking-widest text-slate-400 mt-2">🧮 Cuotas — estado de cobro</p>
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-            <button onClick={() => setTab("cuotas")} className="bg-white dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-xl p-4 text-left"><p className="text-[10px] font-bold uppercase text-rose-500">⚠ Vencidas</p><p className="text-lg font-black">{pendientesCobrarStats.vencidas}</p><p className="text-[10px] text-slate-400">{pendientesCobrarStats.vencidas === 0 ? "— sin atrasos" : "pendientes con fecha pasada"}</p></button>
-            <button onClick={() => setTab("cuotas")} className="bg-white dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-xl p-4 text-left"><p className="text-[10px] font-bold uppercase text-amber-600">🕐 Por vencer</p><p className="text-lg font-black">{pendientesCobrarStats.porVencer}</p><p className="text-[10px] text-slate-400">{pendientesCobrarStats.porVencer === 0 ? "— sin atrasos" : "próximos 7 días"}</p></button>
-            <button onClick={() => setTab("cuotas")} className="bg-white dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-xl p-4 text-left"><p className="text-[10px] font-bold uppercase text-emerald-600">✓ En fecha</p><p className="text-lg font-black">{pendientesCobrarStats.enFecha}</p><p className="text-[10px] text-slate-400">a más de 7 días — tranquilo</p></button>
-          </div>
-        </div>
+        <ResumenTab
+          cuentas={cuentas}
+          totalPorMoneda={totalPorMoneda}
+          ingresosTotales={ingresosTotales}
+          egresosTotales={egresosTotales}
+          pendientesCobrarStats={pendientesCobrarStats}
+          setTab={setTab}
+        />
       )}
 
       {tab === "senas" && (
