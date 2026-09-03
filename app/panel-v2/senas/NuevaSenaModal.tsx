@@ -3,7 +3,7 @@
 import { useState, useMemo, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { supabase2 } from "@/lib/supabase2/client";
-import { notificarEncargados, notificarGestoria } from "@/lib/panelV2/notificaciones";
+import { notificarEncargados } from "@/lib/panelV2/notificaciones";
 import { Wallet, Save, Upload, Loader2, X } from "lucide-react";
 import ClienteBuscador, { ClienteSeleccionado } from "@/components/panelV2/ClienteBuscador";
 import VehiculoSelector, { VehiculoDatos } from "@/components/panelV2/VehiculoSelector";
@@ -291,7 +291,7 @@ export default function NuevaSenaModal({
 
           <div className="bg-slate-50 dark:bg-white/[0.02] border border-slate-200 dark:border-white/5 rounded-2xl p-5 space-y-4">
             <h3 className="text-[11px] font-bold uppercase tracking-widest text-slate-500 dark:text-slate-400 border-b border-slate-100 dark:border-white/10 pb-3">Registrar cobro en Tesorería (opcional)</h3>
-            <p className="text-[11px] text-slate-500 dark:text-slate-400">Si elegís una cuenta, el cobro queda cargado en Tesorería (pendiente de aprobación).</p>
+            <p className="text-[11px] text-slate-500 dark:text-slate-400">Si elegís una cuenta, el cobro se acredita al toque en Finanzas.</p>
             <div className="grid grid-cols-2 gap-4">
               <div>
                 <label className={labelClass}>Cuenta destino</label>
