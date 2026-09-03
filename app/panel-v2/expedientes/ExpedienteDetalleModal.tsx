@@ -273,17 +273,21 @@ export default function ExpedienteDetalleModal({ expedienteId, miId, perfiles, s
 
   const guardarEstadoPago = async () => {
     if (!venta) return;
+    if (estadoPagoTesoreria === "pagado" && !cuentaPagoVendedorId) {
+      alert('Elegí de qué caja sale el pago al propietario, o cambiá el estado a "Pendiente"/"En proceso".');
+      return;
+    }
     setGuardandoPago(true);
     try {
-      const { error } = await supabase2.from("ventas").update({
-        estado_pago_tesoreria: estadoPagoTesoreria, fecha_pago_vendedor: fechaPagoVendedor || null,
-        cuenta_pago_vendedor_id: cuentaPagoVendedorId || null, notas_tesoreria: notasTesoreria || null,
-      }).eq("id", venta.id);
+      const { error } = await supabase2.rpc("registrar_pago_vendedor_venta", {
+        p_venta_id: venta.id, p_estado: estadoPagoTesoreria, p_fecha: fechaPagoVendedor || new Date().toISOString().slice(0, 10),
+        p_cuenta_id: estadoPagoTesoreria === "pagado" ? cuentaPagoVendedorId : null, p_notas: notasTesoreria || null,
+      });
       if (error) throw error;
       await cargar();
       onActualizado({ ...expediente, venta: { ...venta, estado_pago_tesoreria: estadoPagoTesoreria } });
-    } catch {
-      alert("No se pudo guardar el estado de pago.");
+    } catch (err: any) {
+      alert(err.message || "No se pudo guardar el estado de pago.");
     } finally {
       setGuardandoPago(false);
     }
@@ -291,38 +295,29 @@ export default function ExpedienteDetalleModal({ expedienteId, miId, perfiles, s
 
   const guardarPagoComprador = async () => {
     if (!venta) return;
+    if (compradorPagoConfirmado && !compradorCuentaId) {
+      alert('Elegí de qué caja entra el pago, o marcá "No — pendiente".');
+      return;
+    }
     setGuardandoPagoComprador(true);
     try {
-      const { error } = await supabase2.from("ventas").update({
-        comprador_pago_confirmado: compradorPagoConfirmado, comprador_pago_fecha: compradorPagoFecha || null,
-        comprador_metodo_pago: compradorMetodoPago || null, comprador_cuenta_id: compradorCuentaId || null,
-        extra_cobrado_monto: extraCobradoMonto ? Number(extraCobradoMonto) : null, extra_cobrado_moneda: extraCobradoMoneda,
-        extra_cobrado_detalle: extraCobradoDetalle || null, extra_cobrado_forma_pago: extraCobradoFormaPago || null,
-        extra_cobrado_cuenta_id: extraCobradoCuentaId || null,
-      }).eq("id", venta.id);
-      if (error) throw error;
+      const { error: errorPago } = await supabase2.rpc("registrar_pago_comprador_venta", {
+        p_venta_id: venta.id, p_confirmado: compradorPagoConfirmado, p_fecha: compradorPagoFecha || new Date().toISOString().slice(0, 10),
+        p_metodo: compradorMetodoPago || null, p_cuenta_id: compradorPagoConfirmado ? compradorCuentaId : null,
+      });
+      if (errorPago) throw errorPago;
 
-      if (extraCobradoMonto && extraCobradoCuentaId) {
-        // Antes esto insertaba directo en movimientos_caja: quedaba en
-        // estado "pendiente" por default de columna, sin ningún lugar en
-        // panel-v2 para aprobarlo — plata cobrada de verdad que
-        // desaparecía para siempre de Finanzas. Ahora pasa por el RPC
-        // (mismo motor que Finanzas), que la deja "aprobada" al toque por
-        // ser un ingreso.
-        const { data: movId, error: errorMov } = await supabase2.rpc("registrar_movimiento_caja", {
-          p_tipo: "ingreso", p_monto: Number(extraCobradoMonto), p_cuenta_id: extraCobradoCuentaId, p_fecha: new Date().toISOString().slice(0, 10),
-          p_categoria: "Gastos cobrados al comprador", p_forma_pago: extraCobradoFormaPago || null, p_vehiculo_id: venta.vehiculo_id || null,
-          p_cliente_id: venta.cliente_id || null, p_venta_id: venta.id, p_observaciones: extraCobradoDetalle || `Expediente ${titulo}`,
-        });
-        if (errorMov) {
-          alert("El pago se guardó, pero no se pudo registrar el ingreso en Finanzas. Cargalo a mano.");
-        } else {
-          await supabase2.from("movimientos_caja").update({ telefono: venta.comprador_telefono, patente: venta.vehiculo_patente }).eq("id", movId);
-        }
-      }
+      // Reversible: si ya había un movimiento de "gastos cobrados" cargado
+      // antes, el RPC lo revierte primero — guardar de nuevo sin cambiar
+      // nada (o corrigiendo el monto) ya no duplica el ingreso en Finanzas.
+      const { error: errorExtra } = await supabase2.rpc("registrar_extra_cobrado_venta", {
+        p_venta_id: venta.id, p_monto: extraCobradoMonto ? Number(extraCobradoMonto) : null, p_moneda: extraCobradoMoneda,
+        p_cuenta_id: extraCobradoCuentaId || null, p_forma_pago: extraCobradoFormaPago || null, p_detalle: extraCobradoDetalle || null,
+      });
+      if (errorExtra) throw errorExtra;
       await cargar();
-    } catch {
-      alert("No se pudo guardar el pago del comprador.");
+    } catch (err: any) {
+      alert(err.message || "No se pudo guardar el pago del comprador.");
     } finally {
       setGuardandoPagoComprador(false);
     }
@@ -675,7 +670,14 @@ export default function ExpedienteDetalleModal({ expedienteId, miId, perfiles, s
                   <div><label className={labelClass}>¿Ya pagó?</label><select value={compradorPagoConfirmado ? "si" : "no"} onChange={(e) => setCompradorPagoConfirmado(e.target.value === "si")} className={inputClass}><option value="no">No — pendiente</option><option value="si">Sí</option></select></div>
                   <div><label className={labelClass}>Fecha del pago</label><input type="date" value={compradorPagoFecha} onChange={(e) => setCompradorPagoFecha(e.target.value)} className={inputClass} /></div>
                   <div><label className={labelClass}>Método de pago</label><select value={compradorMetodoPago} onChange={(e) => setCompradorMetodoPago(e.target.value)} className={inputClass}><option value="">— Seleccionar —</option><option value="Efectivo">Efectivo</option><option value="Transferencia">Transferencia</option><option value="Cheque">Cheque</option><option value="Financiación">Financiación</option></select></div>
-                  <div><label className={labelClass}>Caja donde ingresó</label><select value={compradorCuentaId} onChange={(e) => setCompradorCuentaId(e.target.value)} className={inputClass}><option value="">— Seleccionar —</option>{cuentas.map((c) => <option key={c.id} value={c.id}>{c.nombre} ({c.moneda})</option>)}</select></div>
+                  <div>
+                    <label className={labelClass}>Caja donde ingresó ({venta?.moneda_venta})</label>
+                    <select value={compradorCuentaId} onChange={(e) => setCompradorCuentaId(e.target.value)} className={inputClass}>
+                      <option value="">— Seleccionar —</option>
+                      {cuentasParaMoneda(venta?.moneda_venta || "USD").map((c) => <option key={c.id} value={c.id}>{c.nombre}</option>)}
+                    </select>
+                    {cuentasParaMoneda(venta?.moneda_venta || "USD").length === 0 && <p className="text-[11px] text-amber-600 dark:text-amber-400 mt-1">No hay cajas activas en {venta?.moneda_venta} — creá una en Finanzas → Cuentas.</p>}
+                  </div>
                 </div>
               </div>
 
@@ -692,7 +694,13 @@ export default function ExpedienteDetalleModal({ expedienteId, miId, perfiles, s
                   </div>
                   <div><label className={labelClass}>Detalle de los gastos cobrados</label><input value={extraCobradoDetalle} onChange={(e) => setExtraCobradoDetalle(e.target.value)} placeholder="Ej: transferencia $80mil + sellados $50mil" className={inputClass} /></div>
                   <div><label className={labelClass}>¿Cómo lo pagó?</label><select value={extraCobradoFormaPago} onChange={(e) => setExtraCobradoFormaPago(e.target.value)} className={inputClass}><option value="">— Seleccionar —</option><option value="Efectivo">Efectivo</option><option value="Transferencia">Transferencia</option></select></div>
-                  <div><label className={labelClass}>Caja donde ingresó</label><select value={extraCobradoCuentaId} onChange={(e) => setExtraCobradoCuentaId(e.target.value)} className={inputClass}><option value="">— Seleccionar —</option>{cuentas.map((c) => <option key={c.id} value={c.id}>{c.nombre} ({c.moneda})</option>)}</select></div>
+                  <div>
+                    <label className={labelClass}>Caja donde ingresó ({extraCobradoMoneda})</label>
+                    <select value={extraCobradoCuentaId} onChange={(e) => setExtraCobradoCuentaId(e.target.value)} className={inputClass}>
+                      <option value="">— Seleccionar —</option>
+                      {cuentasParaMoneda(extraCobradoMoneda).map((c) => <option key={c.id} value={c.id}>{c.nombre}</option>)}
+                    </select>
+                  </div>
                 </div>
               </div>
               <div className="flex justify-end"><button onClick={guardarPagoComprador} disabled={guardandoPagoComprador} className="px-4 py-2 rounded-lg bg-rose-600 hover:bg-rose-700 text-white text-xs font-bold disabled:opacity-50">{guardandoPagoComprador ? "Guardando..." : "Guardar cambios"}</button></div>
