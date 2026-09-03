@@ -107,7 +107,9 @@ export default function CotizadorForm({ vehiculoObjetivo }: { vehiculoObjetivo?:
   const [horariosOcupados, setHorariosOcupados] = useState<string[]>([]);
 
   useEffect(() => {
-    supabase2.from("sucursales").select("id, nombre").then(({ data }) => { if (data) setSucursales(data); });
+    // Vía RPC (no select directo): la tabla sucursales tiene RLS cerrada
+    // para el rol anon y esta lectura corre sin sesión, desde la web pública.
+    supabase2.rpc("sucursales_publicas").then(({ data }) => { if (data) setSucursales(data); });
   }, []);
 
   useEffect(() => {
@@ -131,6 +133,18 @@ export default function CotizadorForm({ vehiculoObjetivo }: { vehiculoObjetivo?:
   const [turnstileError, setTurnstileError] = useState(false);
   const turnstileRef = useRef<HTMLDivElement>(null);
   const turnstileWidgetId = useRef<string | null>(null);
+
+  // El <Script onLoad> de más abajo no dispara de nuevo si el script ya
+  // quedó cargado por una navegación anterior (Next dedupea por src) — sin
+  // este poll, turnstileListo se queda en false para siempre y el widget
+  // nunca aparece hasta que se recarga la página entera.
+  useEffect(() => {
+    if (window.turnstile) { setTurnstileListo(true); return; }
+    const intervalo = setInterval(() => {
+      if (window.turnstile) { setTurnstileListo(true); clearInterval(intervalo); }
+    }, 200);
+    return () => clearInterval(intervalo);
+  }, []);
 
   // Controladores de Dropdowns
   const [openDropdown, setOpenDropdown] = useState<string | null>(null);

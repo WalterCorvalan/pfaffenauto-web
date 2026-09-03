@@ -66,6 +66,8 @@ export default async function ReportesPage() {
       miId={miPerfil?.id || ""}
       miNombre={miPerfil?.nombre || ""}
       soyAdmin={miPerfil?.roles?.includes("admin") ?? false}
+      soyFinanzas={miPerfil?.roles?.includes("finanzas") ?? false}
+      soyVentas={miPerfil?.roles?.includes("ventas") ?? false}
       mesInicial={mesActual}
       rankingInicial={ranking || []}
       premios={premios || []}

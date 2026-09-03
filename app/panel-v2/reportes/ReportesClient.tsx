@@ -2,11 +2,11 @@
 
 import { useState, useMemo } from "react";
 import { supabase2 } from "@/lib/supabase2/client";
-import { BarChart3, ChevronLeft, ChevronRight, Trophy, Clock, FolderKanban, Ticket, Wrench, Loader2 } from "lucide-react";
+import { BarChart3, ChevronLeft, ChevronRight, Trophy, Clock, FolderKanban, Ticket, Wrench, Loader2, Lock } from "lucide-react";
 import { BarChart, Bar, XAxis, YAxis, ResponsiveContainer, Tooltip, CartesianGrid } from "recharts";
 
 interface Props {
-  miId: string; miNombre: string; soyAdmin: boolean; mesInicial: string;
+  miId: string; miNombre: string; soyAdmin: boolean; soyFinanzas: boolean; soyVentas: boolean; mesInicial: string;
   rankingInicial: any[]; premios: any[]; rankingVelocidadInicial: any[]; operacionesPorVendedorInicial: any[];
   origenLeadsInicial: any[]; embudoComercialInicial: any; expedientesResumenInicial: any; expedientesPorEstado: any[];
   infraccionesResumenInicial: any; tallerFacturacionInicial: any; ventasPorMes: any[]; ventasPorMarca: any[];
@@ -55,8 +55,18 @@ function StatTile({ label, valor, tono = "" }: { label: string; valor: React.Rea
   );
 }
 
+function SeccionRestringida({ titulo }: { titulo: string }) {
+  return (
+    <div className="bg-white dark:bg-white/[0.02] border border-dashed border-slate-200 dark:border-white/10 rounded-2xl p-5 flex items-center gap-2 text-slate-400">
+      <Lock className="w-4 h-4" />
+      <p className="text-xs font-bold">{titulo} — visible solo para Finanzas / Admin.</p>
+    </div>
+  );
+}
+
 export default function ReportesClient(props: Props) {
-  const { miId, miNombre, premios } = props;
+  const { miId, miNombre, premios, soyAdmin, soyFinanzas } = props;
+  const puedeVerFinanzas = soyAdmin || soyFinanzas;
   const [mesOffset, setMesOffset] = useState(0);
   const [cargando, setCargando] = useState(false);
   const [ranking, setRanking] = useState(props.rankingInicial);
@@ -236,27 +246,29 @@ export default function ReportesClient(props: Props) {
 
       {/* Grid principal */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-        <Card title="Volumen de Ventas por Mes">
-          {/* ARS y USD nunca comparten eje — escalas totalmente distintas. */}
-          <div className="grid grid-cols-2 gap-3">
-            {(["ARS", "USD"] as const).map((moneda) => (
-              <div key={moneda}>
-                <p className="text-[10px] font-bold uppercase text-slate-400 mb-1">{moneda}</p>
-                <div className="h-[140px]">
-                  <ResponsiveContainer width="100%" height="100%">
-                    <BarChart data={ventasPorMesChart}>
-                      <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="currentColor" className="text-slate-100 dark:text-white/10" />
-                      <XAxis dataKey="mes" tick={{ fontSize: 9 }} axisLine={false} tickLine={false} />
-                      <YAxis tick={{ fontSize: 9 }} axisLine={false} tickLine={false} width={30} tickFormatter={(v) => new Intl.NumberFormat("es-AR", { notation: "compact" }).format(v)} />
-                      <Tooltip formatter={(v: any) => [fmtMoneda(Number(v), moneda), moneda]} contentStyle={{ fontSize: 12, borderRadius: 8 }} />
-                      <Bar dataKey={moneda} fill={moneda === "ARS" ? "#6366f1" : "#10b981"} radius={[4, 4, 0, 0]} />
-                    </BarChart>
-                  </ResponsiveContainer>
+        {puedeVerFinanzas ? (
+          <Card title="Volumen de Ventas por Mes">
+            {/* ARS y USD nunca comparten eje — escalas totalmente distintas. */}
+            <div className="grid grid-cols-2 gap-3">
+              {(["ARS", "USD"] as const).map((moneda) => (
+                <div key={moneda}>
+                  <p className="text-[10px] font-bold uppercase text-slate-400 mb-1">{moneda}</p>
+                  <div className="h-[140px]">
+                    <ResponsiveContainer width="100%" height="100%">
+                      <BarChart data={ventasPorMesChart}>
+                        <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="currentColor" className="text-slate-100 dark:text-white/10" />
+                        <XAxis dataKey="mes" tick={{ fontSize: 9 }} axisLine={false} tickLine={false} />
+                        <YAxis tick={{ fontSize: 9 }} axisLine={false} tickLine={false} width={30} tickFormatter={(v) => new Intl.NumberFormat("es-AR", { notation: "compact" }).format(v)} />
+                        <Tooltip formatter={(v: any) => [fmtMoneda(Number(v), moneda), moneda]} contentStyle={{ fontSize: 12, borderRadius: 8 }} />
+                        <Bar dataKey={moneda} fill={moneda === "ARS" ? "#6366f1" : "#10b981"} radius={[4, 4, 0, 0]} />
+                      </BarChart>
+                    </ResponsiveContainer>
+                  </div>
                 </div>
-              </div>
-            ))}
-          </div>
-        </Card>
+              ))}
+            </div>
+          </Card>
+        ) : <SeccionRestringida titulo="Volumen de Ventas por Mes" />}
 
         <Card title="Operaciones por Vendedor">
           {operacionesPorVendedor.map((v: any) => <BarRow key={v.vendedor_id} label={v.vendedor_nombre} valor={Number(v.ventas_mes)} max={maxVentasVendedor} />)}
@@ -273,25 +285,27 @@ export default function ReportesClient(props: Props) {
           {origenLeads.length === 0 && <p className="text-xs text-slate-400 text-center py-4">Sin leads nuevos este mes.</p>}
         </Card>
 
-        <Card title="Top 10 Clientes">
-          <div className="overflow-x-auto">
-            <table className="w-full text-left text-xs">
-              <thead><tr className="text-slate-400 uppercase text-[10px]"><th className="py-1">#</th><th className="py-1">Cliente</th><th className="py-1 text-right">Ops</th><th className="py-1 text-right">USD</th><th className="py-1 text-right">ARS</th></tr></thead>
-              <tbody>
-                {props.topClientes.map((c: any, i: number) => (
-                  <tr key={c.cliente_id} className="border-t border-slate-50 dark:border-white/5">
-                    <td className="py-1.5 text-slate-400">{i + 1}</td>
-                    <td className="py-1.5 font-bold text-slate-700 dark:text-slate-200">{c.nombre}</td>
-                    <td className="py-1.5 text-right font-mono">{c.compras}</td>
-                    <td className="py-1.5 text-right font-mono text-emerald-600">{Number(c.monto_usd) > 0 ? fmtMoneda(Number(c.monto_usd), "USD") : "—"}</td>
-                    <td className="py-1.5 text-right font-mono text-emerald-600">{Number(c.monto_ars) > 0 ? fmtMoneda(Number(c.monto_ars), "ARS") : "—"}</td>
-                  </tr>
-                ))}
-                {props.topClientes.length === 0 && <tr><td colSpan={4} className="py-4 text-center text-slate-400">Sin ventas cerradas todavía.</td></tr>}
-              </tbody>
-            </table>
-          </div>
-        </Card>
+        {puedeVerFinanzas ? (
+          <Card title="Top 10 Clientes">
+            <div className="overflow-x-auto">
+              <table className="w-full text-left text-xs">
+                <thead><tr className="text-slate-400 uppercase text-[10px]"><th className="py-1">#</th><th className="py-1">Cliente</th><th className="py-1 text-right">Ops</th><th className="py-1 text-right">USD</th><th className="py-1 text-right">ARS</th></tr></thead>
+                <tbody>
+                  {props.topClientes.map((c: any, i: number) => (
+                    <tr key={c.cliente_id} className="border-t border-slate-50 dark:border-white/5">
+                      <td className="py-1.5 text-slate-400">{i + 1}</td>
+                      <td className="py-1.5 font-bold text-slate-700 dark:text-slate-200">{c.nombre}</td>
+                      <td className="py-1.5 text-right font-mono">{c.compras}</td>
+                      <td className="py-1.5 text-right font-mono text-emerald-600">{Number(c.monto_usd) > 0 ? fmtMoneda(Number(c.monto_usd), "USD") : "—"}</td>
+                      <td className="py-1.5 text-right font-mono text-emerald-600">{Number(c.monto_ars) > 0 ? fmtMoneda(Number(c.monto_ars), "ARS") : "—"}</td>
+                    </tr>
+                  ))}
+                  {props.topClientes.length === 0 && <tr><td colSpan={4} className="py-4 text-center text-slate-400">Sin ventas cerradas todavía.</td></tr>}
+                </tbody>
+              </table>
+            </div>
+          </Card>
+        ) : <SeccionRestringida titulo="Top 10 Clientes" />}
 
         <Card title="Clientes por Vendedor">
           {props.clientesPorVendedor.map((v: any) => <BarRow key={v.vendedor_id} label={v.vendedor_nombre} valor={Number(v.clientes)} max={maxClientesVend} color="bg-fuchsia-500" />)}
@@ -317,14 +331,16 @@ export default function ReportesClient(props: Props) {
             </div>
             <p className="text-[11px] text-slate-400">Se contactó al {props.servicePosventaInicial.pct_contactadas || 0}% de los compradores.</p>
           </Card>
-          <Card title="Facturación de taller originada en ventas">
-            <div className="grid grid-cols-3 gap-2 mb-2">
-              <StatTile label="Facturado (cobrado)" valor={tallerFacturacion.facturado_cobrado > 0 ? fmtMoneda(Number(tallerFacturacion.facturado_cobrado), "ARS") : "—"} tono="bg-emerald-50 dark:bg-emerald-500/10 border-emerald-100 dark:border-emerald-500/20" />
-              <StatTile label="OTs cobradas" valor={tallerFacturacion.ots_cobradas} />
-              <StatTile label="OTs generadas" valor={tallerFacturacion.ots_generadas} />
-            </div>
-            <p className="text-[11px] text-slate-400">Plata que entró al taller por service vendido tras la compra (cierra el círculo showroom → taller).</p>
-          </Card>
+          {puedeVerFinanzas ? (
+            <Card title="Facturación de taller originada en ventas">
+              <div className="grid grid-cols-3 gap-2 mb-2">
+                <StatTile label="Facturado (cobrado)" valor={tallerFacturacion.facturado_cobrado > 0 ? fmtMoneda(Number(tallerFacturacion.facturado_cobrado), "ARS") : "—"} tono="bg-emerald-50 dark:bg-emerald-500/10 border-emerald-100 dark:border-emerald-500/20" />
+                <StatTile label="OTs cobradas" valor={tallerFacturacion.ots_cobradas} />
+                <StatTile label="OTs generadas" valor={tallerFacturacion.ots_generadas} />
+              </div>
+              <p className="text-[11px] text-slate-400">Plata que entró al taller por service vendido tras la compra (cierra el círculo showroom → taller).</p>
+            </Card>
+          ) : <SeccionRestringida titulo="Facturación de taller" />}
         </div>
       </div>
 
@@ -377,29 +393,33 @@ export default function ReportesClient(props: Props) {
         </Card>
       </div>
 
-      {/* Infracciones */}
-      <div>
-        <p className="text-sm font-bold text-slate-700 dark:text-slate-300 flex items-center gap-2 mb-3">🚦 Infracciones</p>
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-4">
-          <StatTile label="Total registradas" valor={infraccionesResumen.total} />
-          <StatTile label="Pendientes" valor={infraccionesResumen.pendientes} tono="bg-amber-50 dark:bg-amber-500/10 border-amber-100 dark:border-amber-500/20" />
-          <StatTile label="Pagadas" valor={infraccionesResumen.pagadas} tono="bg-emerald-50 dark:bg-emerald-500/10 border-emerald-100 dark:border-emerald-500/20" />
-          <StatTile label="Ganancia total" valor={fmtMoneda(Number(infraccionesResumen.ganancia_total) || 0, "ARS")} tono="bg-indigo-50 dark:bg-indigo-500/10 border-indigo-100 dark:border-indigo-500/20" />
-        </div>
-        <Card title="Infracciones por Mes">
-          <div className="h-[160px]">
-            <ResponsiveContainer width="100%" height="100%">
-              <BarChart data={infraccionesPorMesChart}>
-                <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="currentColor" className="text-slate-100 dark:text-white/10" />
-                <XAxis dataKey="mes" tick={{ fontSize: 10 }} axisLine={false} tickLine={false} />
-                <YAxis tick={{ fontSize: 10 }} axisLine={false} tickLine={false} allowDecimals={false} />
-                <Tooltip contentStyle={{ fontSize: 12, borderRadius: 8 }} />
-                <Bar dataKey="cantidad" fill="#f59e0b" radius={[4, 4, 0, 0]} />
-              </BarChart>
-            </ResponsiveContainer>
+      {/* Infracciones — incluye montos de ganancia, solo Finanzas/Admin */}
+      {puedeVerFinanzas ? (
+        <div>
+          <p className="text-sm font-bold text-slate-700 dark:text-slate-300 flex items-center gap-2 mb-3">🚦 Infracciones</p>
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-4">
+            <StatTile label="Total registradas" valor={infraccionesResumen.total} />
+            <StatTile label="Pendientes" valor={infraccionesResumen.pendientes} tono="bg-amber-50 dark:bg-amber-500/10 border-amber-100 dark:border-amber-500/20" />
+            <StatTile label="Pagadas" valor={infraccionesResumen.pagadas} tono="bg-emerald-50 dark:bg-emerald-500/10 border-emerald-100 dark:border-emerald-500/20" />
+            <StatTile label="Ganancia total" valor={fmtMoneda(Number(infraccionesResumen.ganancia_total) || 0, "ARS")} tono="bg-indigo-50 dark:bg-indigo-500/10 border-indigo-100 dark:border-indigo-500/20" />
           </div>
-        </Card>
-      </div>
+          <Card title="Infracciones por Mes">
+            <div className="h-[160px]">
+              <ResponsiveContainer width="100%" height="100%">
+                <BarChart data={infraccionesPorMesChart}>
+                  <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="currentColor" className="text-slate-100 dark:text-white/10" />
+                  <XAxis dataKey="mes" tick={{ fontSize: 10 }} axisLine={false} tickLine={false} />
+                  <YAxis tick={{ fontSize: 10 }} axisLine={false} tickLine={false} allowDecimals={false} />
+                  <Tooltip contentStyle={{ fontSize: 12, borderRadius: 8 }} />
+                  <Bar dataKey="cantidad" fill="#f59e0b" radius={[4, 4, 0, 0]} />
+                </BarChart>
+              </ResponsiveContainer>
+            </div>
+          </Card>
+        </div>
+      ) : (
+        <SeccionRestringida titulo="Infracciones" />
+      )}
     </div>
   );
 }

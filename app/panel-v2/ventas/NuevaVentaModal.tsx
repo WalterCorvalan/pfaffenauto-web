@@ -113,6 +113,21 @@ export default function NuevaVentaModal({ perfiles, clientes, vehiculos, miId, i
   const [rFecha, setRFecha] = useState("");
   const [rNotas, setRNotas] = useState("");
   const [calificacionPedida, setCalificacionPedida] = useState(editando?.calificacion_pedida || false);
+  const [comisionPresets, setComisionPresets] = useState<number[]>([1, 1.5, 0.5]);
+
+  // Defaults de comisión configurables en Configuración → Empresa →
+  // Comisiones — solo pisan el estado inicial en una venta NUEVA, nunca una
+  // ya guardada (esa mantiene lo que tenía cuando se cerró).
+  useEffect(() => {
+    supabase2.from("configuracion_empresa").select("comision_vendedor_pct_default, comision_consignacion_pct_default, comision_presets").eq("id", true).single().then(({ data }) => {
+      if (!data) return;
+      if (data.comision_presets) setComisionPresets(data.comision_presets);
+      if (!esEdicion) {
+        if (data.comision_vendedor_pct_default != null) setComisionVendedorPct(String(data.comision_vendedor_pct_default));
+        if (data.comision_consignacion_pct_default != null) setComisionConsignacionPct(String(data.comision_consignacion_pct_default));
+      }
+    });
+  }, []);
 
   useEffect(() => {
     if (!esEdicion) return;
@@ -610,7 +625,14 @@ export default function NuevaVentaModal({ perfiles, clientes, vehiculos, miId, i
                   <div>
                     <label className={labelClass}>% vendedor</label>
                     <input type="number" step="0.1" value={comisionVendedorEfectiva} onChange={(e) => setComisionVendedorPct(e.target.value)} disabled={!comisionEditable || vendedorCompartido} className={inputClass} />
-                    <p className="text-[10px] text-slate-400 mt-1">{vendedorCompartido ? "Split — 0.5% por compartir" : comisionEditable ? "Manual — editable" : "Fijo 1% — sin selección manual"}</p>
+                    {comisionEditable && !vendedorCompartido && (
+                      <div className="flex flex-wrap gap-1.5 mt-1.5">
+                        {comisionPresets.map((p) => (
+                          <button key={p} type="button" onClick={() => setComisionVendedorPct(String(p))} className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-slate-100 dark:bg-white/10 text-slate-600 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-white/20">{p}%</button>
+                        ))}
+                      </div>
+                    )}
+                    <p className="text-[10px] text-slate-400 mt-1">{vendedorCompartido ? "Split — 0.5% por compartir" : comisionEditable ? "Manual — editable" : "Fijo — sin selección manual"}</p>
                   </div>
                   <div>
                     <label className={labelClass}>% consignación</label>

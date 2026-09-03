@@ -43,8 +43,8 @@ interface Vehiculo { id: string; marca: string; modelo: string; anio: number; pa
 type Tab = "pendiente" | "aprobada" | "rechazada";
 
 export default function CotizacionesClient({
-  cotizacionesIniciales, perfiles, clientes, vehiculos, miId,
-}: { cotizacionesIniciales: Cotizacion[]; perfiles: Perfil[]; clientes: Cliente[]; vehiculos: Vehiculo[]; miId: string }) {
+  cotizacionesIniciales, perfiles, clientes, vehiculos, miId, slaHoras = 48,
+}: { cotizacionesIniciales: Cotizacion[]; perfiles: Perfil[]; clientes: Cliente[]; vehiculos: Vehiculo[]; miId: string; slaHoras?: number }) {
   const router = useRouter();
   const searchParams = useSearchParams();
 
@@ -195,8 +195,8 @@ export default function CotizacionesClient({
                 <tbody className="divide-y divide-slate-100 dark:divide-white/10">
                   {filtradas.map((c) => {
                     const horas = horasPendiente(c.created_at);
-                    const slaColor = horas >= 48 ? "bg-rose-500" : horas >= 24 ? "bg-amber-500" : "bg-emerald-500";
-                    const slaPct = Math.min(100, (horas / 48) * 100);
+                    const slaColor = horas >= slaHoras ? "bg-rose-500" : horas >= slaHoras / 2 ? "bg-amber-500" : "bg-emerald-500";
+                    const slaPct = Math.min(100, (horas / slaHoras) * 100);
                     return (
                       <tr key={c.id} className="hover:bg-slate-50/50 dark:hover:bg-white/5">
                         <td className="px-4 py-3 align-top cursor-pointer" onClick={() => setDetalle(c)}>
@@ -261,7 +261,7 @@ export default function CotizacionesClient({
                               <div className="h-1.5 bg-slate-100 dark:bg-white/10 rounded-full overflow-hidden mt-1">
                                 <div className={`h-full ${slaColor} rounded-full transition-all`} style={{ width: `${slaPct}%` }} />
                               </div>
-                              <div className="flex justify-between text-[9px] text-slate-300 dark:text-slate-600 mt-0.5"><span>0</span><span>16h</span><span>32h</span><span>48h</span></div>
+                              <div className="flex justify-between text-[9px] text-slate-300 dark:text-slate-600 mt-0.5"><span>0</span><span>{Math.round(slaHoras / 3)}h</span><span>{Math.round((slaHoras / 3) * 2)}h</span><span>{slaHoras}h</span></div>
                             </div>
                           )}
                         </td>

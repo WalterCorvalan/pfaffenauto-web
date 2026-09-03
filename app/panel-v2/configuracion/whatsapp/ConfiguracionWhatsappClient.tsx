@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import Link from "next/link";
 import { MessageCircle, Copy, Check, Loader2, ExternalLink } from "lucide-react";
 
 const inputClass = "w-full bg-slate-50 dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-xl px-3 py-2.5 text-sm outline-none focus:border-rose-500";
@@ -79,6 +80,11 @@ export default function ConfiguracionWhatsappClient() {
 
   return (
     <div className="p-6 max-w-2xl">
+      <div className="flex items-center gap-1 border-b border-slate-200 dark:border-white/10 mb-5">
+        <Link href="/panel-v2/configuracion" className="px-3 py-2.5 text-sm font-bold border-b-2 border-transparent text-slate-500">Usuarios</Link>
+        <Link href="/panel-v2/configuracion/empresa" className="px-3 py-2.5 text-sm font-bold border-b-2 border-transparent text-slate-500">Empresa</Link>
+        <span className="px-3 py-2.5 text-sm font-bold border-b-2 border-rose-600 text-rose-600">WhatsApp</span>
+      </div>
       <h1 className="text-xl font-bold flex items-center gap-2 mb-1"><MessageCircle className="w-5 h-5 text-rose-600" /> Configuración — WhatsApp</h1>
       <p className="text-sm text-slate-400 mb-6">Conectá el número de WhatsApp Business de Meta para recibir los mensajes de los clientes acá (Conversaciones → WhatsApp) y que el asistente automático conteste hasta que un vendedor toma la charla.</p>
 

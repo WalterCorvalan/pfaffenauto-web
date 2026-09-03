@@ -54,8 +54,8 @@ function aRevisar(v: Vehiculo) {
 }
 
 export default function StockClient({
-  vehiculosIniciales, mandatosIniciales, perfiles, clientes, catalogoConfigInicial, sucursales, miId,
-}: { vehiculosIniciales: Vehiculo[]; mandatosIniciales: Mandato[]; perfiles: Perfil[]; clientes: Cliente[]; catalogoConfigInicial: CatalogoConfig | null; sucursales: { id: string; nombre: string }[]; miId: string }) {
+  vehiculosIniciales, mandatosIniciales, perfiles, clientes, catalogoConfigInicial, sucursales, miId, diasEstancado = 90,
+}: { vehiculosIniciales: Vehiculo[]; mandatosIniciales: Mandato[]; perfiles: Perfil[]; clientes: Cliente[]; catalogoConfigInicial: CatalogoConfig | null; sucursales: { id: string; nombre: string }[]; miId: string; diasEstancado?: number }) {
   const router = useRouter();
   const searchParams = useSearchParams();
   const [vehiculos, setVehiculos] = useState(vehiculosIniciales);
@@ -115,7 +115,7 @@ export default function StockClient({
 
   const filtrados = useMemo(() => {
     let lista = baseTab;
-    if (soloEstancados) lista = lista.filter((v) => diasEnStock(v.created_at) >= 90);
+    if (soloEstancados) lista = lista.filter((v) => diasEnStock(v.created_at) >= diasEstancado);
     else if (soloARevisar) lista = lista.filter((v) => aRevisar(v) && v.estado === "disponible");
     else if (estadoFiltro) lista = lista.filter((v) => v.estado === estadoFiltro);
     if (marcaFiltro) lista = lista.filter((v) => v.marca === marcaFiltro);
@@ -133,7 +133,7 @@ export default function StockClient({
     vehiculos.filter((v) => v.estado !== "vendido").forEach((v) => { acc[v.moneda_venta] = (acc[v.moneda_venta] || 0) + Number(v.precio_venta || 0); });
     return acc;
   }, [vehiculos]);
-  const estancados = vehiculos.filter((v) => diasEnStock(v.created_at) >= 90 && v.estado === "disponible").length;
+  const estancados = vehiculos.filter((v) => diasEnStock(v.created_at) >= diasEstancado && v.estado === "disponible").length;
   const publicadoPct = disponibles.length ? Math.round((disponibles.filter((v) => v.publicado_ml).length / disponibles.length) * 100) : 0;
   const diasProm = disponibles.length ? Math.round(disponibles.reduce((acc, v) => acc + diasEnStock(v.created_at), 0) / disponibles.length) : 0;
   const aRevisarCount = disponibles.filter(aRevisar).length;
@@ -272,7 +272,7 @@ export default function StockClient({
                     <tbody>
                       {filtrados.map((v) => {
                         const dias = diasEnStock(v.created_at);
-                        const diasColor = dias >= 90 ? "text-rose-600 dark:text-rose-400 font-black" : dias >= 30 ? "text-amber-600 dark:text-amber-400 font-bold" : "text-slate-500";
+                        const diasColor = dias >= diasEstancado ? "text-rose-600 dark:text-rose-400 font-black" : dias >= 30 ? "text-amber-600 dark:text-amber-400 font-bold" : "text-slate-500";
                         return (
                           <tr key={v.id} className="border-b border-slate-100 dark:border-white/5 last:border-0 hover:bg-slate-50 dark:hover:bg-white/[0.02]">
                             <td className="px-4 py-3">

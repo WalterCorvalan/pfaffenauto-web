@@ -84,6 +84,18 @@ export default function ConsignarForm() {
   const turnstileRef = useRef<HTMLDivElement>(null);
   const turnstileWidgetId = useRef<string | null>(null);
 
+  // El <Script onLoad> de más abajo no dispara de nuevo si el script ya
+  // quedó cargado por una navegación anterior (Next dedupea por src) — sin
+  // este poll, turnstileListo se queda en false para siempre y el widget
+  // nunca aparece hasta que se recarga la página entera.
+  useEffect(() => {
+    if (window.turnstile) { setTurnstileListo(true); return; }
+    const intervalo = setInterval(() => {
+      if (window.turnstile) { setTurnstileListo(true); clearInterval(intervalo); }
+    }, 200);
+    return () => clearInterval(intervalo);
+  }, []);
+
   // Controladores de Dropdowns
   const [openDropdown, setOpenDropdown] = useState<string | null>(null);
   const [busquedaMarca, setBusquedaMarca] = useState("");

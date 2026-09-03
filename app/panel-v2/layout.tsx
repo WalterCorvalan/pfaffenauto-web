@@ -34,15 +34,15 @@ const NAV_MOBILE: { href: string; label: string; icon: any }[] = [
   { href: "/panel-v2/calendario", label: "Calendario", icon: CalendarDays },
 ];
 
-const GRUPOS: { titulo: string; items: { href?: string; label: string; icon: any }[] }[] = [
+const GRUPOS: { titulo: string; items: { href?: string; label: string; icon: any; modulo?: string }[] }[] = [
   {
     titulo: "Principal",
     items: [
       { href: "/panel-v2", label: "Dashboard", icon: LayoutDashboard },
       { href: "/panel-v2/calendario", label: "Calendario", icon: CalendarDays },
       { href: "/panel-v2/alertas", label: "Alertas", icon: BellRing },
-      { href: "/panel-v2/reportes", label: "Reportes", icon: LineChart },
-      { href: "/panel-v2/marketing/generales", label: "Marketing", icon: Megaphone },
+      { href: "/panel-v2/reportes", label: "Reportes", icon: LineChart, modulo: "reportes" },
+      { href: "/panel-v2/marketing/generales", label: "Marketing", icon: Megaphone, modulo: "marketing" },
       { href: "/panel-v2/mi-espacio", label: "Mi Espacio", icon: Folder },
     ],
   },
@@ -52,7 +52,7 @@ const GRUPOS: { titulo: string; items: { href?: string; label: string; icon: any
       { href: "/panel-v2/stock", label: "Stock", icon: Car },
       { href: "/panel-v2/visitas", label: "Visitas", icon: CalendarCheck },
       { href: "/panel-v2/clientes", label: "Clientes", icon: Users },
-      { href: "/panel-v2/cotizaciones", label: "Cotizaciones", icon: FileText },
+      { href: "/panel-v2/cotizaciones", label: "Cotizaciones", icon: FileText, modulo: "cotizaciones" },
       { href: "/panel-v2/senas", label: "Señas", icon: Wallet },
       { href: "/panel-v2/presupuestos", label: "Presupuestos", icon: FileText },
       { href: "/panel-v2/ventas", label: "Ventas", icon: Briefcase },
@@ -62,17 +62,17 @@ const GRUPOS: { titulo: string; items: { href?: string; label: string; icon: any
   {
     titulo: "Operación",
     items: [
-      { href: "/panel-v2/pedidos", label: "Pedidos", icon: SearchCode },
-      { href: "/panel-v2/postventa", label: "Postventa", icon: PackageCheck },
+      { href: "/panel-v2/pedidos", label: "Pedidos", icon: SearchCode, modulo: "pedidos" },
+      { href: "/panel-v2/postventa", label: "Postventa", icon: PackageCheck, modulo: "postventa" },
       { href: "/panel-v2/expedientes", label: "Expedientes", icon: FolderKanban },
-      { href: "/panel-v2/reclamos", label: "Reclamos", icon: MessageSquareWarning },
-      { href: "/panel-v2/gestoria", label: "Gestoría", icon: ClipboardList },
-      { href: "/panel-v2/consignaciones", label: "Consignaciones", icon: KeyRound },
+      { href: "/panel-v2/reclamos", label: "Reclamos", icon: MessageSquareWarning, modulo: "reclamos" },
+      { href: "/panel-v2/gestoria", label: "Gestoría", icon: ClipboardList, modulo: "gestoria" },
+      { href: "/panel-v2/consignaciones", label: "Consignaciones", icon: KeyRound, modulo: "consignaciones" },
       { href: "/panel-v2/peritajes", label: "Peritajes", icon: ClipboardCheck },
-      { href: "/panel-v2/infracciones", label: "Infracciones", icon: Landmark },
-      { href: "/panel-v2/telefonos", label: "Teléfonos útiles", icon: BookUser },
-      { href: "/panel-v2/taller", label: "Taller", icon: Wrench },
-      { label: "Service", icon: Hammer },
+      { href: "/panel-v2/infracciones", label: "Infracciones", icon: Landmark, modulo: "infracciones" },
+      { href: "/panel-v2/telefonos", label: "Teléfonos útiles", icon: BookUser, modulo: "telefonos_utiles" },
+      { href: "/panel-v2/taller", label: "Taller", icon: Wrench, modulo: "taller" },
+      { label: "Service", icon: Hammer, modulo: "service" },
     ],
   },
   {
@@ -80,32 +80,32 @@ const GRUPOS: { titulo: string; items: { href?: string; label: string; icon: any
     items: [
       { href: "/panel-v2/finanzas", label: "Finanzas", icon: Banknote },
       { href: "/panel-v2/cobros", label: "Cobros", icon: Receipt },
-      { href: "/panel-v2/tesoreria", label: "Tesorería", icon: PiggyBank },
-      { href: "/panel-v2/liquidaciones", label: "Liquidaciones", icon: Coins },
+      { href: "/panel-v2/tesoreria", label: "Tesorería", icon: PiggyBank, modulo: "tesoreria" },
+      { href: "/panel-v2/liquidaciones", label: "Liquidaciones", icon: Coins, modulo: "liquidaciones" },
       { href: "/panel-v2/comisiones", label:"Mis Comisiones", icon: DollarSign },
     ],
   },
   {
     titulo: "Colaboración",
     items: [
-      { href: "/panel-v2/mensajes", label: "Mensajes", icon: MessagesSquare },
-      { href: "/panel-v2/whatsapp", label: "WhatsApp", icon: Smartphone },
+      { href: "/panel-v2/mensajes", label: "Mensajes", icon: MessagesSquare, modulo: "mensajes" },
+      { href: "/panel-v2/whatsapp", label: "WhatsApp", icon: Smartphone, modulo: "whatsapp" },
       { href: "/panel-v2/rodi", label: "Rodi (chat web)", icon: Bot },
       { href: "/panel-v2/tareas", label: "Tareas de Leads", icon: CheckSquare },
-      { label: "Correos", icon: Mail },
-      { label: "NPS", icon: ThumbsUp },
+      { label: "Correos", icon: Mail, modulo: "correos" },
+      { label: "NPS", icon: ThumbsUp, modulo: "nps" },
     ],
   },
   {
     titulo: "Administración",
     items: [
       { href: "/panel-v2/autorizaciones", label: "Autorizaciones", icon: ShieldCheck },
-      { href: "/panel-v2/dormidos", label: "Dormidos", icon: BedDouble },
+      { href: "/panel-v2/dormidos", label: "Dormidos", icon: BedDouble, modulo: "dormidos" },
       { href: "/panel-v2/recontactos", label: "Recontactos", icon: Repeat },
-      { label: "Sugerencias", icon: Lightbulb },
+      { label: "Sugerencias", icon: Lightbulb, modulo: "sugerencias" },
       { label: "Papelera", icon: Trash2 },
-      { href: "/panel-v2/configuracion/whatsapp", label: "Configuración", icon: Settings },
-      { label: "Oportunidades", icon: Handshake },
+      { href: "/panel-v2/configuracion", label: "Configuración", icon: Settings },
+      { label: "Oportunidades", icon: Handshake, modulo: "oportunidades" },
       { href: "/panel-v2/postulaciones", label: "Postulaciones", icon: Users },
       { href: "/panel-v2/sueldos/liquidador", label: "Liquidador de Sueldos", icon: Wallet },
       { href: "/panel-v2/sueldos/categorias", label: "Categorías de Empleados", icon: Tag },
@@ -113,6 +113,12 @@ const GRUPOS: { titulo: string; items: { href?: string; label: string; icon: any
     ],
   },
 ];
+
+// Mapea el rol interno de perfiles al "sector" usado en visibilidad_sector —
+// son taxonomías distintas (roles: admin/ventas/finanzas/gestoria; sectores:
+// suman recepcion/taller/cm porque la visibilidad se piensa por puesto de
+// trabajo, no por permiso de datos).
+const ROL_A_SECTOR: Record<string, string> = { ventas: "ventas", finanzas: "finanzas", gestoria: "gestoria", taller: "taller", recepcion: "recepcion" };
 
 const ROL_LABEL: Record<string, string> = { admin: "Administrador", ventas: "Ventas", finanzas: "Finanzas", gestoria: "Gestoría", recepcion: "Recepción", taller: "Taller" };
 const ROL_COLOR: Record<string, string> = {
@@ -166,6 +172,51 @@ export default function PanelV2Layout({ children }: { children: React.ReactNode 
     });
   }, []);
 
+  // Módulos apagados por Empresa → Módulos, y visibilidad por sector —
+  // el admin no se filtra nunca, así que solo hace falta traer esto para
+  // el resto de los roles.
+  const [modulosActivos, setModulosActivos] = useState<Record<string, boolean>>({});
+  const [visibilidadPorModulo, setVisibilidadPorModulo] = useState<Record<string, Record<string, boolean>>>({});
+  useEffect(() => {
+    if (roles.includes("admin")) return;
+    Promise.all([
+      supabase2.from("modulos_config").select("modulo, activo"),
+      supabase2.from("visibilidad_sector").select("modulo, sector, visible"),
+    ]).then(([{ data: modulos }, { data: visibilidad }]) => {
+      setModulosActivos(Object.fromEntries((modulos || []).map((m) => [m.modulo, m.activo])));
+      const porModulo: Record<string, Record<string, boolean>> = {};
+      (visibilidad || []).forEach((v) => {
+        porModulo[v.modulo] = porModulo[v.modulo] || {};
+        porModulo[v.modulo][v.sector] = v.visible;
+      });
+      setVisibilidadPorModulo(porModulo);
+    });
+  }, [roles.join(",")]);
+
+  const esAdmin = roles.includes("admin");
+  const moduloVisible = (modulo?: string) => {
+    if (esAdmin || !modulo) return true;
+    if (modulosActivos[modulo] === false) return false;
+    const sectores = roles.map((r) => ROL_A_SECTOR[r]).filter(Boolean);
+    if (sectores.length === 0) return true;
+    // Multi-rol suma permisos: alcanza con que UN sector del usuario lo vea.
+    return sectores.some((s) => (visibilidadPorModulo[modulo]?.[s] ?? true));
+  };
+
+  // "Mis Comisiones" se esconde para todos (admin incluido, como en el
+  // resto de la agencia) cuando Empresa → Comisiones está en modo "ninguna".
+  const [comisionesActivas, setComisionesActivas] = useState(true);
+  useEffect(() => {
+    supabase2.from("configuracion_empresa").select("modo_comision").eq("id", true).single().then(({ data }) => {
+      if (data) setComisionesActivas(data.modo_comision !== "ninguna");
+    });
+  }, []);
+
+  const itemVisible = (item: { href?: string; modulo?: string }) => {
+    if (item.href === "/panel-v2/comisiones" && !comisionesActivas) return false;
+    return moduloVisible(item.modulo);
+  };
+
   // Toast de alertas urgentes en vivo (se cierra solo a los 10s, o con
   // click) — el contador de la campana lo maneja NotificationBell aparte.
   useEffect(() => {
@@ -198,6 +249,20 @@ export default function PanelV2Layout({ children }: { children: React.ReactNode 
 
   const esLogin = pathname === "/panel-v2/login";
   if (esLogin) return <>{children}</>;
+
+  // Guard de acceso directo por URL: un módulo apagado o sin visibilidad
+  // para el sector del usuario no debe abrirse solo porque conoce el link.
+  const itemDeLaRuta = GRUPOS.flatMap((g) => g.items).find((item) => item.href && (item.href === "/panel-v2" ? pathname === item.href : pathname?.startsWith(item.href)));
+  if (miId && itemDeLaRuta && !itemVisible(itemDeLaRuta)) {
+    return (
+      <div className="min-h-screen flex items-center justify-center text-center p-6">
+        <div>
+          <p className="text-lg font-bold text-slate-700 dark:text-slate-200">Módulo no habilitado</p>
+          <p className="text-sm text-slate-400 mt-1">Esta sección está apagada o no está disponible para tu rol.</p>
+        </div>
+      </div>
+    );
+  }
 
   const rolPrincipal = roles[0] || "";
 
@@ -241,11 +306,11 @@ export default function PanelV2Layout({ children }: { children: React.ReactNode 
           </div>
 
           <nav className="flex-1 overflow-y-auto py-2 custom-scrollbar">
-            {GRUPOS.map((grupo) => (
+            {GRUPOS.map((grupo) => grupo.items.some((item) => itemVisible(item)) && (
               <div key={grupo.titulo} className="mb-1">
                 <p className={`px-4 pt-3 pb-1 text-[10px] font-bold uppercase tracking-wider text-slate-400 ${colapsado ? "md:hidden" : ""}`}>{grupo.titulo}</p>
                 {colapsado && <div className="hidden md:block mx-3 my-1.5 border-t border-slate-100 dark:border-white/5 first:mt-0" />}
-                {grupo.items.map((item) => {
+                {grupo.items.filter((item) => itemVisible(item)).map((item) => {
                   const Icon = item.icon;
                   const activo = item.href && (item.href === "/panel-v2" ? pathname === item.href : pathname?.startsWith(item.href));
                   if (!item.href) {

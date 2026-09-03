@@ -86,6 +86,18 @@ export default function VenderForm() {
   const turnstileRef = useRef<HTMLDivElement>(null);
   const turnstileWidgetId = useRef<string | null>(null);
 
+  // El <Script onLoad> de más abajo no dispara de nuevo si el script ya
+  // quedó cargado por una navegación anterior (Next dedupea por src) — sin
+  // este poll, turnstileListo se queda en false para siempre y el widget
+  // nunca aparece hasta que se recarga la página entera.
+  useEffect(() => {
+    if (window.turnstile) { setTurnstileListo(true); return; }
+    const intervalo = setInterval(() => {
+      if (window.turnstile) { setTurnstileListo(true); clearInterval(intervalo); }
+    }, 200);
+    return () => clearInterval(intervalo);
+  }, []);
+
   // Controladores de Dropdowns
   const [openDropdown, setOpenDropdown] = useState<string | null>(null);
   const [busquedaMarca, setBusquedaMarca] = useState("");
@@ -158,25 +170,22 @@ export default function VenderForm() {
     setLoading(true);
 
     try {
-      const response = await fetch("/api/cotizaciones", {
+      const response = await fetch("/api/panel-v2/leads-tasacion", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           turnstileToken,
-          canal_origen: getCanalOrigen(),
+          canalOrigen: getCanalOrigen(),
           marca,
           modelo,
           anio,
-          version: `${version} - GNC: ${gnc || 'No'}`,
+          version,
           gnc,
           kilometraje: km,
           nombre: `${nombre.trim()} ${apellido.trim()}`,
           email: email.trim(),
           telefono: tel.trim(),
-          puede_venir_sucursal: true,
-          fotos_y_videos: [],
-          sucursal_preferida: "Casa Central",
-          tipo_peritaje: "venta",
+          tipo: "tasacion",
         }),
       });
 
