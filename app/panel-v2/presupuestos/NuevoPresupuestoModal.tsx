@@ -55,12 +55,11 @@ export default function NuevoPresupuestoModal({
     setGuardando(true);
     try {
       const { data: { user } } = await supabase2.auth.getUser();
-      const { data: ultimo } = await supabase2.from("presupuestos").select("numero").order("numero", { ascending: false }).limit(1).maybeSingle();
-      const siguienteNumero = (ultimo?.numero || 0) + 1;
+      // El número lo asigna la base (secuencia real) — ver fix en Señas,
+      // mismo problema: calcularlo acá con max(numero)+1 podía duplicar.
       const tokenPublico = Array.from({ length: 8 }, () => "ABCDEFGHJKLMNPQRSTUVWXYZ23456789"[Math.floor(Math.random() * 32)]).join("");
 
       const { data, error } = await supabase2.from("presupuestos").insert({
-        numero: siguienteNumero,
         fecha: new Date().toISOString().split("T")[0],
         token_publico: tokenPublico,
         vendedor_id: vendedorId || user?.id,
@@ -81,14 +80,14 @@ export default function NuevoPresupuestoModal({
         imprimir_en: imprimirEn || null,
         observaciones: observaciones || null,
         precio_confirmado: precioConfirmado,
-      }).select("id").single();
+      }).select("id, numero").single();
 
       if (error) throw error;
 
       if (!precioConfirmado) {
         await notificarEncargados(
           supabase2,
-          `${cliente.nombre} ${cliente.apellido || ""} — Presupuesto N° ${siguienteNumero}: el vendedor no confirmó el precio ($${(Number(precioArs) || 0).toLocaleString("es-AR")}). Verificalo.`,
+          `${cliente.nombre} ${cliente.apellido || ""} — Presupuesto N° ${data.numero}: el vendedor no confirmó el precio ($${(Number(precioArs) || 0).toLocaleString("es-AR")}). Verificalo.`,
           `/panel-v2/presupuestos/imprimir/${data.id}`
         );
       }

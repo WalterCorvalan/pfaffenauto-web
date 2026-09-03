@@ -113,12 +113,12 @@ export default function NuevaSenaModal({
     setGuardando(true);
     try {
       const { data: { user } } = await supabase2.auth.getUser();
-      const { data: ultimo } = await supabase2.from("senas").select("numero").order("numero", { ascending: false }).limit(1).maybeSingle();
-      const siguienteNumero = (ultimo?.numero || 0) + 1;
+      // El número lo asigna la base (secuencia real, sin condición de
+      // carrera) — antes se calculaba acá con select max(numero)+1, y dos
+      // señas creadas cerca en el tiempo podían terminar con el mismo número.
       const codigoSeguimiento = Array.from({ length: 8 }, () => "ABCDEFGHJKLMNPQRSTUVWXYZ23456789"[Math.floor(Math.random() * 32)]).join("");
 
       const { data, error } = await supabase2.from("senas").insert({
-        numero: siguienteNumero,
         codigo_seguimiento: codigoSeguimiento,
         etapa_seguimiento: "Activa",
         fecha: new Date().toISOString().split("T")[0],
@@ -183,7 +183,7 @@ export default function NuevaSenaModal({
         cuota_remanente_ars: cuotaRemanenteArs ? Number(cuotaRemanenteArs) : null,
         cuenta_id: cuentaId || null,
         comprobante_url: comprobanteUrl || null,
-      }).select("id").single();
+      }).select("id, numero").single();
 
       if (error) throw error;
 
@@ -195,7 +195,7 @@ export default function NuevaSenaModal({
       if (!precioConfirmado) {
         await notificarEncargados(
           supabase2,
-          `${cliente.nombre} ${cliente.apellido || ""} — Seña N° ${siguienteNumero}: el vendedor no confirmó el precio ($${(Number(ventaArs) || 0).toLocaleString("es-AR")}). Verificalo.`,
+          `${cliente.nombre} ${cliente.apellido || ""} — Seña N° ${data.numero}: el vendedor no confirmó el precio ($${(Number(ventaArs) || 0).toLocaleString("es-AR")}). Verificalo.`,
           `/panel-v2/senas/imprimir/${data.id}`
         );
       }
@@ -213,7 +213,7 @@ export default function NuevaSenaModal({
           const { data: movId, error: errorMov } = await supabase2.rpc("registrar_movimiento_caja", {
             p_tipo: "ingreso", p_monto: montoMovimiento, p_cuenta_id: cuentaId, p_fecha: new Date().toISOString().split("T")[0],
             p_categoria: "Seña", p_forma_pago: "Transferencia", p_vehiculo_id: vehiculo.vehiculo_id || null, p_cliente_id: cliente.id,
-            p_venta_id: null, p_observaciones: `Seña N° ${siguienteNumero} — ${vehiculo.marca} ${vehiculo.modelo}`,
+            p_venta_id: null, p_observaciones: `Seña N° ${data.numero} — ${vehiculo.marca} ${vehiculo.modelo}`,
           });
           if (errorMov) {
             alert("La seña se guardó, pero no se pudo registrar el cobro en Finanzas. Cargalo a mano.");
