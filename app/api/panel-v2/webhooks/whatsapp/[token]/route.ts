@@ -201,7 +201,7 @@ async function ejecutarAgente(conversacionId: string) {
 
   if (handoff) {
     await supabase.from("whatsapp_conversaciones").update({
-      handoff_at: new Date().toISOString(), handoff_reason: "cliente_pidio_humano", ai_habilitada: false,
+      handoff_at: new Date().toISOString(), handoff_reason: "cliente_pidio_humano",
       handoff_resumen: resumen_handoff || null,
     }).eq("id", conversacionId);
     // La alerta de handoff la dispara el trigger sobre whatsapp_conversaciones,
