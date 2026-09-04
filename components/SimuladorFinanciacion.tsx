@@ -1,16 +1,29 @@
 "use client";
 
 import { useState } from "react";
-import { Calculator, CheckCircle2, ChevronRight } from "lucide-react";
+import { Calculator, CheckCircle2 } from "lucide-react";
+import SolicitarFinanciacionForm from "@/components/forms/SolicitarFinanciacionForm";
 
-export default function SimuladorFinanciacion({ 
-  precioTotal, 
+interface VehiculoFinanciable {
+  id: string;
+  marca: string;
+  modelo: string;
+  anio: number;
+  km: number | null;
+  precio_publicado_ars: number | null;
+  sucursales: { nombre: string } | null;
+}
+
+export default function SimuladorFinanciacion({
+  precioTotal,
   autoNombre,
-  telefono 
-}: { 
-  precioTotal: number; 
+  telefono,
+  vehiculo,
+}: {
+  precioTotal: number;
   autoNombre: string;
   telefono: string;
+  vehiculo: VehiculoFinanciable;
 }) {
   const [anticipoPorcentaje, setAnticipoPorcentaje] = useState(50);
   const [cuotas, setCuotas] = useState(24);
@@ -28,12 +41,6 @@ export default function SimuladorFinanciacion({
       ? (saldoAFinanciar * tasaMensual) / (1 - Math.pow(1 + tasaMensual, -cuotas))
       : 0;
 
-  // Lógica WhatsApp
-  let numWA = telefono.replace(/\D/g, "");
-  if (!numWA.startsWith("549") && !numWA.startsWith("54")) numWA = "549" + numWA;
-  
-  const mensajeWA = encodeURIComponent(`¡Hola! Estoy viendo el ${autoNombre} en su web. Me interesa la financiación entregando un anticipo de $${montoAnticipo.toLocaleString("es-AR")} en ${cuotas} cuotas. ¿Me pasan los requisitos?`);
-  const linkWA = `https://wa.me/${numWA}?text=${mensajeWA}`;
 
   return (
     <div className="bg-white dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-[24px] p-5 md:p-6 shadow-sm dark:shadow-none mt-6 relative overflow-hidden">
@@ -106,14 +113,11 @@ export default function SimuladorFinanciacion({
           Línea &quot;+Autos con BNA&quot; · TNA {(TNA * 100).toFixed(0)}% ({cuentaSueldo ? "cuenta sueldo" : "cartera abierta"}) · tasas oficiales sujetas a cambios del Banco Nación
         </p>
 
-        <a
-          href={linkWA}
-          target="_blank"
-          rel="noopener noreferrer"
+        <SolicitarFinanciacionForm
+          vehiculoPreseleccionado={vehiculo}
+          label="Solicitar este plan"
           className="w-full bg-[#0145F2] hover:bg-blue-600 text-white font-black text-xs uppercase tracking-widest py-4 rounded-xl flex items-center justify-center gap-2 transition-all active:scale-95 shadow-[0_4px_15px_rgba(1,69,242,0.3)]"
-        >
-          Solicitar este plan <ChevronRight className="w-4 h-4" />
-        </a>
+        />
       </div>
     </div>
   );

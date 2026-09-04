@@ -212,6 +212,15 @@ export default async function VehiculoDetallePage({
                 precioTotal={precioArs}
                 autoNombre={`${auto.marca} ${auto.modelo}`}
                 telefono={numeroLimpio}
+                vehiculo={{
+                  id: auto.id,
+                  marca: auto.marca,
+                  modelo: auto.modelo,
+                  anio: auto.anio,
+                  km: auto.km,
+                  precio_publicado_ars: auto.precio_publicado_ars,
+                  sucursales: auto.sucursales,
+                }}
               />
             </div>
           </div>
