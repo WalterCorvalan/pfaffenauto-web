@@ -2,7 +2,11 @@
 
 import { useState, useRef, useEffect } from "react";
 import Link from "next/link";
-import { Sparkles, Send, Loader2, Trophy, TrendingUp, Handshake, DollarSign } from "lucide-react";
+import { BarChart, Bar, XAxis, YAxis, ResponsiveContainer, Tooltip } from "recharts";
+import {
+  Sparkles, Send, Loader2, Trophy, TrendingUp, Handshake, DollarSign, FileText,
+  Star, Landmark, ClipboardList, Award,
+} from "lucide-react";
 
 interface RankingFila { vendedor_id: string; nombre: string; ventas_equivalentes: number; consignaciones: number }
 interface Props {
@@ -12,6 +16,12 @@ interface Props {
   gananciaPorMoneda: Record<string, number>;
   consignacionesDelMes: number;
   ranking: RankingFila[];
+  cierreMesAnterior: { autos: number; mejorVendedor: string | null; multasArs: number };
+  calificaciones: { promedio: number | null; distribucion: number[]; pedidasSinResponder: number; total: number };
+  gestoriaPorMoneda: Record<string, number>;
+  gananciaPorMes: { mes: string; monto: number }[];
+  resumenAnual: { anio: number; autos: number; usd: number }[];
+  tuOperacion: { ventas: number; usd: number; consignacionesAno: number };
 }
 
 const PREGUNTAS_RAPIDAS = ["¿Qué debería atacar hoy?", "¿Cómo venimos con el stock parado?", "¿Hay leads calientes sin contactar?", "¿Qué comisiones están trabadas?"];
@@ -25,7 +35,17 @@ function fmtPorMoneda(map: Record<string, number>) {
   return entradas.map(([m, v]) => fmtMoneda(v, m)).join(" · ");
 }
 
-export default function CockpitCeoTab({ miNombre, ocultarMontos, diaDelMes, diasEnElMes, ventasDelMes, ventasMesAnterior, gananciaPorMoneda, consignacionesDelMes, ranking }: Props) {
+function MiniStat({ label, valor, sub }: { label: string; valor: React.ReactNode; sub?: string }) {
+  return (
+    <div className="rounded-xl p-3 bg-white/10">
+      <p className="text-lg font-black">{valor}</p>
+      <p className="text-[10px] font-bold uppercase tracking-widest text-indigo-200 mt-0.5">{label}</p>
+      {sub && <p className="text-[10px] text-indigo-200/70 mt-0.5">{sub}</p>}
+    </div>
+  );
+}
+
+export default function CockpitCeoTab({ miNombre, ocultarMontos, diaDelMes, diasEnElMes, ventasDelMes, ventasMesAnterior, gananciaPorMoneda, consignacionesDelMes, ranking, cierreMesAnterior, calificaciones, gestoriaPorMoneda, gananciaPorMes, resumenAnual, tuOperacion }: Props) {
   const [mensajes, setMensajes] = useState<{ role: "user" | "assistant"; content: string; link?: string | null }[]>([]);
   const [pregunta, setPregunta] = useState("");
   const [cargando, setCargando] = useState(false);
@@ -59,6 +79,7 @@ export default function CockpitCeoTab({ miNombre, ocultarMontos, diaDelMes, dias
 
   const avancePct = Math.round((diaDelMes / diasEnElMes) * 100);
   const variacionAnual = ventasMesAnterior > 0 ? Math.round(((ventasDelMes - ventasMesAnterior) / ventasMesAnterior) * 100) : null;
+  const totalEstrellas = calificaciones.distribucion.reduce((a, b) => a + b, 0) || 1;
 
   return (
     <div className="space-y-5">
@@ -120,6 +141,15 @@ export default function CockpitCeoTab({ miNombre, ocultarMontos, diaDelMes, dias
         </div>
       </div>
 
+      <div className="rounded-2xl p-5 bg-gradient-to-br from-violet-50 to-indigo-50 dark:from-violet-500/10 dark:to-indigo-500/10 border border-violet-100 dark:border-violet-500/20">
+        <p className="text-sm font-bold text-slate-800 dark:text-white mb-3 flex items-center gap-1.5"><Award className="w-4 h-4 text-violet-500" /> Cierre del mes anterior</p>
+        <div className="grid grid-cols-3 gap-3">
+          <MiniStat label="Autos vendidos" valor={cierreMesAnterior.autos} />
+          <MiniStat label="Mejor vendedor" valor={cierreMesAnterior.mejorVendedor || "—"} />
+          <MiniStat label="Multas" valor={fmtMoneda(cierreMesAnterior.multasArs, "ARS")} />
+        </div>
+      </div>
+
       <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
         <div className="rounded-2xl p-4 bg-white dark:bg-white/[0.02] border border-slate-200 dark:border-white/5">
           <p className="text-[10px] font-bold uppercase text-slate-400 flex items-center gap-1.5 mb-1"><TrendingUp className="w-3.5 h-3.5" /> Autos vendidos</p>
@@ -129,7 +159,7 @@ export default function CockpitCeoTab({ miNombre, ocultarMontos, diaDelMes, dias
         <div className="rounded-2xl p-4 bg-white dark:bg-white/[0.02] border border-slate-200 dark:border-white/5">
           <p className="text-[10px] font-bold uppercase text-slate-400 flex items-center gap-1.5 mb-1"><DollarSign className="w-3.5 h-3.5" /> Ganancia del mes</p>
           <p className={`text-2xl font-black text-slate-900 dark:text-white ${ocultarMontos ? "blur-sm select-none" : ""}`}>{fmtPorMoneda(gananciaPorMoneda)}</p>
-          <p className="text-[11px] text-slate-400 mt-1">Precio venta − precio propietario (expedientes)</p>
+          <p className="text-[11px] text-slate-400 mt-1">Precio venta − precio propietario</p>
         </div>
         <div className="rounded-2xl p-4 bg-white dark:bg-white/[0.02] border border-slate-200 dark:border-white/5">
           <p className="text-[10px] font-bold uppercase text-slate-400 flex items-center gap-1.5 mb-1"><Handshake className="w-3.5 h-3.5" /> Consignaciones del mes</p>
@@ -140,6 +170,76 @@ export default function CockpitCeoTab({ miNombre, ocultarMontos, diaDelMes, dias
           <p className="text-[10px] font-bold uppercase text-slate-400 flex items-center gap-1.5 mb-1"><Trophy className="w-3.5 h-3.5" /> Mejor vendedor</p>
           <p className="text-lg font-black text-slate-900 dark:text-white truncate">{ranking[0]?.nombre || "—"}</p>
           <p className="text-[11px] text-slate-400 mt-1">{ranking[0] ? `${ranking[0].ventas_equivalentes} venta${ranking[0].ventas_equivalentes === 1 ? "" : "s"}` : "Sin datos todavía"}</p>
+        </div>
+      </div>
+
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div className="rounded-2xl p-5 bg-white dark:bg-white/[0.02] border border-slate-200 dark:border-white/5">
+          <p className="text-sm font-bold text-slate-800 dark:text-white mb-3 flex items-center gap-1.5"><TrendingUp className="w-4 h-4 text-indigo-500" /> Ganancia últimos 12 meses (USD)</p>
+          <div className="h-[160px]">
+            <ResponsiveContainer width="100%" height="100%">
+              <BarChart data={gananciaPorMes}>
+                <XAxis dataKey="mes" tick={{ fontSize: 9 }} axisLine={false} tickLine={false} />
+                <YAxis tick={{ fontSize: 9 }} axisLine={false} tickLine={false} width={40} tickFormatter={(v) => new Intl.NumberFormat("es-AR", { notation: "compact" }).format(v)} />
+                <Tooltip formatter={(v: any) => [`USD ${Number(v).toLocaleString("es-AR")}`, "Ganancia"]} contentStyle={{ fontSize: 12, borderRadius: 8 }} />
+                <Bar dataKey="monto" fill="#6366f1" radius={[4, 4, 0, 0]} />
+              </BarChart>
+            </ResponsiveContainer>
+          </div>
+        </div>
+
+        <div className="rounded-2xl p-5 bg-white dark:bg-white/[0.02] border border-slate-200 dark:border-white/5">
+          <p className="text-sm font-bold text-slate-800 dark:text-white mb-3 flex items-center gap-1.5"><Award className="w-4 h-4 text-indigo-500" /> Resumen anual</p>
+          <div className="grid grid-cols-3 gap-2">
+            {resumenAnual.map((r) => (
+              <div key={r.anio} className={`rounded-xl p-3 ${r.anio === new Date().getFullYear() ? "bg-indigo-50 dark:bg-indigo-500/10 border border-indigo-100 dark:border-indigo-500/20" : "bg-slate-50 dark:bg-white/5"}`}>
+                <p className="text-[10px] font-bold text-slate-400">{r.anio}{r.anio === new Date().getFullYear() ? " · en curso" : ""}</p>
+                <p className="text-lg font-black text-slate-900 dark:text-white">{r.autos} <span className="text-[10px] font-bold text-slate-400 uppercase">autos</span></p>
+                <p className={`text-xs font-bold text-slate-500 ${ocultarMontos ? "blur-sm select-none" : ""}`}>USD {r.usd.toLocaleString("es-AR")}</p>
+              </div>
+            ))}
+          </div>
+        </div>
+      </div>
+
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div className="rounded-2xl p-5 bg-gradient-to-br from-violet-50 to-white dark:from-violet-500/10 dark:to-transparent border border-violet-100 dark:border-violet-500/20">
+          <p className="text-sm font-bold text-slate-800 dark:text-white mb-1 flex items-center gap-1.5"><TrendingUp className="w-4 h-4 text-violet-500" /> Tu operación (año)</p>
+          <div className="flex items-end justify-between mt-2">
+            <div>
+              <p className="text-2xl font-black text-slate-900 dark:text-white">{tuOperacion.ventas}</p>
+              <p className="text-[10px] font-bold uppercase text-slate-400">Ventas cerradas</p>
+            </div>
+            <p className={`text-lg font-black text-violet-600 dark:text-violet-400 ${ocultarMontos ? "blur-sm select-none" : ""}`}>USD {tuOperacion.usd.toLocaleString("es-AR")}</p>
+          </div>
+        </div>
+
+        <div className="rounded-2xl p-5 bg-white dark:bg-white/[0.02] border border-slate-200 dark:border-white/5">
+          <p className="text-sm font-bold text-slate-800 dark:text-white mb-2 flex items-center gap-1.5"><ClipboardList className="w-4 h-4 text-indigo-500" /> Gestoría / Transferencias · mes</p>
+          <p className="text-lg font-black text-slate-900 dark:text-white">{fmtPorMoneda(gestoriaPorMoneda)}</p>
+          <p className="text-[11px] text-slate-400">Total cobrado a compradores por transferencias, gestoría y trámites.</p>
+        </div>
+      </div>
+
+      <div className="rounded-2xl p-5 bg-white dark:bg-white/[0.02] border border-slate-200 dark:border-white/5">
+        <p className="text-sm font-bold text-slate-800 dark:text-white mb-3 flex items-center gap-1.5"><Star className="w-4 h-4 text-amber-500" /> Calificaciones de ventas — mes en curso</p>
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div>
+            <p className="text-[10px] font-bold uppercase text-slate-400">Promedio</p>
+            <p className="text-2xl font-black text-slate-900 dark:text-white">{calificaciones.promedio != null ? calificaciones.promedio.toFixed(1) : "Sin calif."}</p>
+            <p className="text-[11px] text-slate-400">{calificaciones.total} recibidas · {calificaciones.pedidasSinResponder} pedidas sin responder</p>
+          </div>
+          <div className="space-y-1">
+            {[5, 4, 3, 2, 1].map((n) => (
+              <div key={n} className="flex items-center gap-2 text-xs">
+                <span className="w-6 font-bold text-amber-600">{n}★</span>
+                <div className="flex-1 h-1.5 rounded-full bg-slate-100 dark:bg-white/10 overflow-hidden">
+                  <div className="h-full bg-amber-500" style={{ width: `${(calificaciones.distribucion[n - 1] / totalEstrellas) * 100}%` }} />
+                </div>
+                <span className="w-4 text-right text-slate-400">{calificaciones.distribucion[n - 1]}</span>
+              </div>
+            ))}
+          </div>
         </div>
       </div>
 
@@ -166,7 +266,7 @@ export default function CockpitCeoTab({ miNombre, ocultarMontos, diaDelMes, dias
         </table>
       </div>
 
-      <p className="text-xs text-slate-400 text-center">Comparativo con "cierre del mes anterior" completo y objetivos configurables quedan para una próxima tanda.</p>
+      <p className="text-xs text-slate-400 text-center">Objetivos configurables (Configuración → Objetivos) y detalle drill-down por widget quedan para una próxima tanda.</p>
     </div>
   );
 }
