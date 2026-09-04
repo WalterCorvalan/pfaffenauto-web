@@ -77,7 +77,7 @@ async function ejecutarBusquedaStock(
 ): Promise<ResultadoStockV2[]> {
   let query = supabase
     .from("vehiculos")
-    .select("marca, modelo, anio, precio_venta, moneda_venta, patente, color, km, version, transmision, combustible")
+    .select("marca, modelo, anio, precio_venta, moneda_venta, patente, color, km, version, transmision, combustible, sucursales!vehiculos_sucursal_id_fkey ( nombre )")
     .in("estado", ["disponible", "reservado"])
     .limit(modelo ? 3 : 6);
   if (marca) query = query.ilike("marca", `%${marca}%`);
@@ -95,7 +95,7 @@ async function ejecutarBusquedaStock(
   }
 
   const { data } = await query;
-  return (data ?? []) as ResultadoStockV2[];
+  return (data ?? []).map((v: any) => ({ ...v, sucursal: v.sucursales?.nombre ?? null })) as ResultadoStockV2[];
 }
 
 // Buscar exacto (marca+modelo+categoría) primero; si no hay nada, no le
