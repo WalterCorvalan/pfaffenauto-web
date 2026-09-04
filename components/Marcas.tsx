@@ -3,7 +3,7 @@
 import { useState } from "react";
 import Link from "next/link";
 import Image from "next/image";
-import { ChevronRight, ShieldCheck, Sparkles } from "lucide-react";
+import { ChevronRight, ChevronLeft, ShieldCheck, Sparkles } from "lucide-react";
 import { LOGOS_MARCAS } from "@/lib/marcasLogos";
 
 // ================= SUBCOMPONENTE DE TARJETA ESTÁNDAR =================
@@ -89,8 +89,11 @@ function MarcaDestacadaCard({ marca }: { marca: { nombre: string; slug: string; 
   );
 }
 
+const MARCAS_POR_PAGINA = 24;
+
 // ================= COMPONENTE PRINCIPAL =================
 export default function Marcas() {
+  const [pagina, setPagina] = useState(0);
   // Marcas Oficiales Destacadas (Primeras en la fila)
   const marcasDestacadas = [
     { nombre: "Rely", slug: "rely", logo: "/RelyLogo.png" },
@@ -169,6 +172,9 @@ export default function Marcas() {
     { nombre: "Volvo", slug: "volvo", logo: LOGOS_MARCAS["Volvo"] },
   ];
 
+  const totalPaginas = Math.ceil(marcas.length / MARCAS_POR_PAGINA);
+  const marcasPagina = marcas.slice(pagina * MARCAS_POR_PAGINA, pagina * MARCAS_POR_PAGINA + MARCAS_POR_PAGINA);
+
   return (
     <section className="w-full bg-[#f8f9fa] dark:bg-[#0a0a0f] pt-10 pb-10 md:pt-16 md:pb-20">
       <div className="max-w-7xl mx-auto px-4 md:px-6">
@@ -213,12 +219,36 @@ export default function Marcas() {
             Otras marcas y multimarca
           </span>
           <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-5 lg:grid-cols-6 xl:grid-cols-8 gap-3 md:gap-4">
-            {marcas.map((marca) => (
+            {marcasPagina.map((marca) => (
               <div key={marca.slug} className="h-full">
                 <MarcaCard marca={marca} />
               </div>
             ))}
           </div>
+
+          {totalPaginas > 1 && (
+            <div className="flex items-center justify-center gap-3 mt-6">
+              <button
+                onClick={() => setPagina((p) => Math.max(0, p - 1))}
+                disabled={pagina === 0}
+                className="w-9 h-9 flex items-center justify-center rounded-full bg-white dark:bg-white/5 border border-gray-200 dark:border-white/10 text-gray-600 dark:text-slate-300 disabled:opacity-30 disabled:cursor-not-allowed hover:border-blue-500 dark:hover:border-sky-400/50 transition-colors"
+                aria-label="Página anterior"
+              >
+                <ChevronLeft className="w-4 h-4" />
+              </button>
+              <span className="text-xs font-bold text-gray-500 dark:text-slate-400">
+                {pagina + 1} / {totalPaginas}
+              </span>
+              <button
+                onClick={() => setPagina((p) => Math.min(totalPaginas - 1, p + 1))}
+                disabled={pagina === totalPaginas - 1}
+                className="w-9 h-9 flex items-center justify-center rounded-full bg-white dark:bg-white/5 border border-gray-200 dark:border-white/10 text-gray-600 dark:text-slate-300 disabled:opacity-30 disabled:cursor-not-allowed hover:border-blue-500 dark:hover:border-sky-400/50 transition-colors"
+                aria-label="Página siguiente"
+              >
+                <ChevronRight className="w-4 h-4" />
+              </button>
+            </div>
+          )}
         </div>
 
       </div>
