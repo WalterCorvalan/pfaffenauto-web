@@ -25,6 +25,7 @@ import BannersPublicitarios from "@/components/banners/BannerPublicitario";
 export const revalidate = 60;
 
 import { CAMPOS_VEHICULO_PUBLICO } from "@/lib/vehiculos";
+import BannerRRHH from "@/components/banners/BannerRRHH";
 
 export default async function Page() {
   const supabase = await createClient();
@@ -61,13 +62,6 @@ export default async function Page() {
         <BannerFinanciacion linkAFinanciacion />
       </div>
 
-      {/* 7. Reseñas de Clientes */}
-      <Testimonials />
-
-      <VentasRealizadas />
-
-      <Location />
-
       {/* Seguimiento de compra: utilidad post-venta, no es lo primero que
          necesita un visitante nuevo — más abajo, cerca del cierre */}
       <div>
@@ -75,6 +69,15 @@ export default async function Page() {
       </div>
 
       <AgendarCitaForm />
+
+      <BannerRRHH />
+
+      <Location />
+
+      <VentasRealizadas />
+
+      {/* 7. Reseñas de Clientes */}
+      <Testimonials />
 
       {/* 8. Preguntas Frecuentes */}
       <FAQ />
