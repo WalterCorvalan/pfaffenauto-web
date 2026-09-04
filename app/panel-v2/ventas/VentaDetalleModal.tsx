@@ -3,7 +3,7 @@
 import { useState, useEffect } from "react";
 import { supabase2 } from "@/lib/supabase2/client";
 import Link from "next/link";
-import { X, Loader2, Pencil, Trash2, ChevronDown, FileText, Wallet, Star, AlertTriangle, ShieldAlert, Check, Car, User, DollarSign, Percent, KeyRound, FolderKanban, History } from "lucide-react";
+import { X, Loader2, Pencil, Trash2, ChevronDown, AlertTriangle, ShieldAlert, Check, Car, User, DollarSign, Percent, KeyRound, FolderKanban, History } from "lucide-react";
 import { fmtFechaLocal } from "@/lib/panelV2/fechas";
 
 const ESTADO_LABEL: Record<string, string> = {
@@ -211,14 +211,7 @@ export default function VentaDetalleModal({ ventaId, miId, soyAdmin, puedeOperac
             )}
           </div>
 
-          <div className="flex flex-wrap gap-2">
-            <button disabled title="Todavía no construido" className="flex items-center gap-1.5 px-3 py-2 text-xs font-semibold border border-slate-200 dark:border-white/10 rounded-lg text-slate-400 opacity-60 cursor-not-allowed"><FileText className="w-3.5 h-3.5" /> Boleto</button>
-            <button disabled title="Todavía no construido" className="flex items-center gap-1.5 px-3 py-2 text-xs font-semibold border border-slate-200 dark:border-white/10 rounded-lg text-slate-400 opacity-60 cursor-not-allowed"><Wallet className="w-3.5 h-3.5" /> Recibo</button>
-            <button disabled title="Todavía no construido" className="flex items-center gap-1.5 px-3 py-2 text-xs font-semibold border border-slate-200 dark:border-white/10 rounded-lg text-slate-400 opacity-60 cursor-not-allowed"><Star className="w-3.5 h-3.5" /> Reseña comprador</button>
-            {mandato && <button disabled title="Todavía no construido" className="flex items-center gap-1.5 px-3 py-2 text-xs font-semibold border border-slate-200 dark:border-white/10 rounded-lg text-slate-400 opacity-60 cursor-not-allowed"><Star className="w-3.5 h-3.5" /> Reseña ex-dueño</button>}
-          </div>
-
-          <Seccion icono={Car} titulo="Vehículo">
+<Seccion icono={Car} titulo="Vehículo">
             <Fila label="Descripción" valor={[venta.vehiculo_marca, venta.vehiculo_modelo, venta.vehiculo_anio].filter(Boolean).join(" ") || "—"} />
             <Fila label="Patente" valor={venta.vehiculo_patente} />
             {venta.vehiculo_id && <Fila label="ID de stock" valor={<span className="font-mono text-xs text-slate-400">{idCorto(venta.vehiculo_id)}</span>} />}
