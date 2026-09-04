@@ -1,9 +1,9 @@
-import { createHmac, timingSafeEqual } from "crypto";
-import { createClient } from "@supabase/supabase-js";
 import { generarRespuestaAgente } from "@/lib/ai/agente";
-import { sendInstagramPrivateReply, sendInstagramMessage } from "@/lib/meta/client";
-import { notificarPersona, notificarEncargados } from "@/lib/notificaciones";
 import { registrarError } from "@/lib/logger";
+import { sendInstagramMessage, sendInstagramPrivateReply } from "@/lib/meta/client";
+import { notificarEncargados, notificarPersona } from "@/lib/notificaciones";
+import { createClient } from "@supabase/supabase-js";
+import { createHmac, timingSafeEqual } from "crypto";
 
 // Comentario en un post → respuesta privada automática (estilo ManyChat), y a
 // partir de ahí la conversación sigue como un DM normal, atendido por el mismo
@@ -221,7 +221,7 @@ async function ejecutarAgente(conversacionId: string, igUserId: string) {
   if (handoff) {
     const { data: convHandoff } = await supabase
       .from("instagram_conversaciones")
-      .update({ handoff_at: new Date().toISOString(), handoff_reason: "cliente_pidio_humano", ai_habilitada: false })
+      .update({ handoff_at: new Date().toISOString(), handoff_reason: "cliente_pidio_humano" })
       .eq("id", conversacionId)
       .select("vendedor_id")
       .single();

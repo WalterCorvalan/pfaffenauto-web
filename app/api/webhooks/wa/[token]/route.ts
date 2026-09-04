@@ -1,11 +1,10 @@
-import { createHmac, timingSafeEqual } from "crypto";
-import { createClient } from "@supabase/supabase-js";
 import { isAiConfigured } from "@/lib/ai";
 import { generarRespuestaAgente } from "@/lib/ai/agente";
-import { sendTextMessage } from "@/lib/meta/client"; // ya lo tenés de antes
-import { decrypt } from "@/lib/crypto"; // ya lo tenés de antes
-import { notificarPersona, notificarEncargados } from "@/lib/notificaciones";
 import { registrarError } from "@/lib/logger";
+import { sendTextMessage } from "@/lib/meta/client"; // ya lo tenés de antes
+import { notificarEncargados, notificarPersona } from "@/lib/notificaciones";
+import { createClient } from "@supabase/supabase-js";
+import { createHmac, timingSafeEqual } from "crypto";
 
 const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -346,7 +345,7 @@ async function ejecutarAgente(conversacionId: string, contactoId: string) {
   if (handoff) {
     const { data: convHandoff } = await supabase
       .from("whatsapp_conversaciones")
-      .update({ handoff_at: new Date().toISOString(), handoff_reason: "cliente_pidio_humano", ai_habilitada: false })
+      .update({ handoff_at: new Date().toISOString(), handoff_reason: "cliente_pidio_humano" })
       .eq("id", conversacionId)
       .select("vendedor_id")
       .single();
