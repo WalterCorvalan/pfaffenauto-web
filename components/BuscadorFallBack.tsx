@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useRef } from "react";
 import Script from "next/script";
-import { Search, User, Phone, CarFront, Send, X, Loader2 } from "lucide-react";
+import { Search, User, Phone, CarFront, Send, X, Loader2, CheckCircle2 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 
 declare global {
@@ -26,6 +26,7 @@ export default function BuscadorFallback({ isOpen, onClose, busquedaPrevia = "" 
   const [telefono, setTelefono] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
+  const [enviado, setEnviado] = useState(false);
 
   // Turnstile (anti-spam gratuito) — mismo patrón que el resto de los forms públicos.
   const [turnstileToken, setTurnstileToken] = useState("");
@@ -72,9 +73,13 @@ export default function BuscadorFallback({ isOpen, onClose, busquedaPrevia = "" 
       });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || "No se pudo enviar tu pedido.");
+      setEnviado(true);
+      setBusqueda("");
+      setNombre("");
+      setTelefono("");
     } catch (err) {
       console.error("Error guardando pedido:", err);
-      setError("No se pudo enviar tu pedido. Igual te abrimos WhatsApp para que nos escribas directo.");
+      setError("No se pudo enviar tu pedido. Probá de nuevo en unos minutos.");
     } finally {
       setLoading(false);
       if (turnstileWidgetId.current && window.turnstile) {
@@ -82,17 +87,10 @@ export default function BuscadorFallback({ isOpen, onClose, busquedaPrevia = "" 
       }
       setTurnstileToken("");
     }
+  };
 
-    // Abrir WhatsApp con el mensaje prearmado
-    const numeroOficial = "5491121907000";
-    const mensaje = `¡Hola Pfaffen Autos! 🚘\nNo encontré el auto que buscaba en la web y necesito ayuda.\n\n*Me llamo:* ${nombre}\n*Mi teléfono es:* ${telefono}\n*Estoy buscando:* ${busqueda}\n\n¡Espero su contacto!`;
-    const waLink = `https://wa.me/${numeroOficial}?text=${encodeURIComponent(mensaje)}`;
-
-    window.open(waLink, "_blank");
-
-    setBusqueda("");
-    setNombre("");
-    setTelefono("");
+  const cerrarYResetear = () => {
+    setEnviado(false);
     onClose();
   };
 
@@ -108,19 +106,19 @@ export default function BuscadorFallback({ isOpen, onClose, busquedaPrevia = "" 
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            onClick={onClose}
+            onClick={cerrarYResetear}
             className="absolute inset-0 bg-navy/60 backdrop-blur-sm"
           />
 
-          <motion.div 
+          <motion.div
             initial={{ opacity: 0, scale: 0.95, y: 20 }}
             animate={{ opacity: 1, scale: 1, y: 0 }}
             exit={{ opacity: 0, scale: 0.95, y: 20 }}
             transition={{ type: "spring", damping: 25, stiffness: 300 }}
             className="bg-white/80 backdrop-blur-2xl border border-white rounded-[28px] p-6 sm:p-8 w-full max-w-lg shadow-[0_20px_50px_rgba(0,0,0,0.15)] relative overflow-hidden group text-left z-10"
           >
-            <button 
-              onClick={onClose}
+            <button
+              onClick={cerrarYResetear}
               className="absolute top-4 right-4 z-20 p-2 bg-white/50 hover:bg-white text-slate-400 hover:text-navy rounded-full transition-colors border border-white shadow-sm"
             >
               <X className="w-5 h-5" />
@@ -129,6 +127,20 @@ export default function BuscadorFallback({ isOpen, onClose, busquedaPrevia = "" 
             <div className="absolute top-0 right-0 w-48 h-48 bg-[#0145F2]/10 blur-[80px] rounded-full pointer-events-none transition-transform duration-700 group-hover:scale-110"></div>
             <div className="absolute bottom-0 left-0 w-32 h-32 bg-sky-400/10 blur-[60px] rounded-full pointer-events-none"></div>
 
+            {enviado ? (
+              <div className="relative z-10 flex flex-col items-center text-center py-6">
+                <div className="w-14 h-14 bg-emerald-50 border border-emerald-100 rounded-2xl flex items-center justify-center shadow-inner mb-4">
+                  <CheckCircle2 className="w-7 h-7 text-emerald-600" />
+                </div>
+                <h3 className="text-xl sm:text-2xl font-black text-navy tracking-tight mb-1.5">
+                  ¡Listo, recibimos tu pedido!
+                </h3>
+                <p className="text-slate-500 text-xs sm:text-sm font-medium leading-relaxed max-w-sm">
+                  Un asesor va a buscar la unidad que necesitás y se va a comunicar con vos a la brevedad.
+                </p>
+              </div>
+            ) : (
+              <>
             <div className="relative z-10 flex flex-col items-center sm:items-start sm:flex-row gap-4 mb-6">
               <div className="w-12 h-12 bg-blue-50 border border-blue-100 rounded-2xl flex items-center justify-center shrink-0 shadow-inner">
                  <Search className="w-6 h-6 text-[#0145F2] opacity-80" />
@@ -201,6 +213,8 @@ export default function BuscadorFallback({ isOpen, onClose, busquedaPrevia = "" 
                 </button>
               </div>
             </form>
+              </>
+            )}
           </motion.div>
 
           <Script src="https://challenges.cloudflare.com/turnstile/v0/api.js" strategy="lazyOnload" onLoad={() => setTurnstileListo(true)} />
