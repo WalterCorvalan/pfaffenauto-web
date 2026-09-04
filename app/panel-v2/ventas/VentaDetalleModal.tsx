@@ -2,7 +2,8 @@
 
 import { useState, useEffect } from "react";
 import { supabase2 } from "@/lib/supabase2/client";
-import { X, Loader2, Pencil, Trash2, ChevronDown, FileText, Wallet, Star, AlertTriangle, ShieldAlert, Check } from "lucide-react";
+import Link from "next/link";
+import { X, Loader2, Pencil, Trash2, ChevronDown, FileText, Wallet, Star, AlertTriangle, ShieldAlert, Check, Car, User, DollarSign, Percent, KeyRound, FolderKanban, History } from "lucide-react";
 import { fmtFechaLocal } from "@/lib/panelV2/fechas";
 
 const ESTADO_LABEL: Record<string, string> = {
@@ -31,6 +32,24 @@ function Fila({ label, valor }: { label: string; valor: React.ReactNode }) {
   );
 }
 
+function Seccion({ icono: Icono, titulo, accion, children }: { icono: any; titulo: string; accion?: React.ReactNode; children: React.ReactNode }) {
+  return (
+    <div>
+      <div className="flex items-center justify-between mb-1.5">
+        <p className="text-[11px] font-black uppercase tracking-widest text-slate-400 flex items-center gap-1.5"><Icono className="w-3.5 h-3.5" /> {titulo}</p>
+        {accion}
+      </div>
+      <div className="bg-slate-50/60 dark:bg-white/[0.02] border border-slate-100 dark:border-white/5 rounded-xl px-3">
+        {children}
+      </div>
+    </div>
+  );
+}
+
+function idCorto(id: string) {
+  return `#${id.slice(0, 8)}`;
+}
+
 interface Props {
   ventaId: string;
   miId: string;
@@ -47,6 +66,8 @@ export default function VentaDetalleModal({ ventaId, miId, soyAdmin, puedeOperac
   const [venta, setVenta] = useState<any>(null);
   const [senas, setSenas] = useState<any[]>([]);
   const [historial, setHistorial] = useState<any[]>([]);
+  const [expediente, setExpediente] = useState<any>(null);
+  const [mandato, setMandato] = useState<any>(null);
   const [cargando, setCargando] = useState(true);
   const [mostrarStatus, setMostrarStatus] = useState(false);
   const [mostrarCaida, setMostrarCaida] = useState(false);
@@ -59,14 +80,28 @@ export default function VentaDetalleModal({ ventaId, miId, soyAdmin, puedeOperac
   const [solicitudEnviada, setSolicitudEnviada] = useState(false);
 
   const cargar = async () => {
-    const [{ data: v }, { data: s }, { data: h }] = await Promise.all([
+    const [{ data: v }, { data: s }, { data: h }, { data: exp }] = await Promise.all([
       supabase2.from("ventas").select("*").eq("id", ventaId).single(),
       supabase2.from("venta_senas").select("*").eq("venta_id", ventaId).order("fecha"),
       supabase2.from("venta_estado_historial").select("*, autor:perfiles(nombre)").eq("venta_id", ventaId).order("created_at", { ascending: false }),
+      supabase2.from("expedientes").select("id, estado").eq("venta_id", ventaId).maybeSingle(),
     ]);
     setVenta(v);
     setSenas(s || []);
     setHistorial(h || []);
+    setExpediente(exp || null);
+
+    if (v?.vehiculo_id) {
+      const { data: veh } = await supabase2.from("vehiculos").select("mandato_id").eq("id", v.vehiculo_id).maybeSingle();
+      if (veh?.mandato_id) {
+        const { data: m } = await supabase2.from("mandatos").select("mandante_nombre, tipo_tramite, valor, moneda").eq("id", veh.mandato_id).maybeSingle();
+        setMandato(m || null);
+      } else {
+        setMandato(null);
+      }
+    } else {
+      setMandato(null);
+    }
     setCargando(false);
   };
 
@@ -168,46 +203,61 @@ export default function VentaDetalleModal({ ventaId, miId, soyAdmin, puedeOperac
               <span className={`w-2 h-2 rounded-full ${ESTADO_COLOR[venta.estado].replace("text-", "bg-")}`} /> {ESTADO_LABEL[venta.estado]}
             </span>
             {senas.length > 0 && <span className="text-xs font-bold px-2 py-0.5 rounded-full bg-purple-50 dark:bg-purple-500/10 text-purple-600 dark:text-purple-300">Con seña</span>}
+            {mandato?.tipo_tramite === "Consignación" && <span className="text-xs font-bold px-2 py-0.5 rounded-full bg-fuchsia-50 dark:bg-fuchsia-500/10 text-fuchsia-600 dark:text-fuchsia-300">Consignación</span>}
+            {expediente && (
+              <Link href="/panel-v2/expedientes" className="text-xs font-bold px-2 py-0.5 rounded-full bg-emerald-50 dark:bg-emerald-500/10 text-emerald-600 dark:text-emerald-300 flex items-center gap-1 hover:underline">
+                <FolderKanban className="w-3 h-3" /> Expediente {idCorto(expediente.id)}
+              </Link>
+            )}
           </div>
 
           <div className="flex flex-wrap gap-2">
             <button disabled title="Todavía no construido" className="flex items-center gap-1.5 px-3 py-2 text-xs font-semibold border border-slate-200 dark:border-white/10 rounded-lg text-slate-400 opacity-60 cursor-not-allowed"><FileText className="w-3.5 h-3.5" /> Boleto</button>
             <button disabled title="Todavía no construido" className="flex items-center gap-1.5 px-3 py-2 text-xs font-semibold border border-slate-200 dark:border-white/10 rounded-lg text-slate-400 opacity-60 cursor-not-allowed"><Wallet className="w-3.5 h-3.5" /> Recibo</button>
             <button disabled title="Todavía no construido" className="flex items-center gap-1.5 px-3 py-2 text-xs font-semibold border border-slate-200 dark:border-white/10 rounded-lg text-slate-400 opacity-60 cursor-not-allowed"><Star className="w-3.5 h-3.5" /> Reseña comprador</button>
+            {mandato && <button disabled title="Todavía no construido" className="flex items-center gap-1.5 px-3 py-2 text-xs font-semibold border border-slate-200 dark:border-white/10 rounded-lg text-slate-400 opacity-60 cursor-not-allowed"><Star className="w-3.5 h-3.5" /> Reseña ex-dueño</button>}
           </div>
 
-          <div>
-            <p className="text-[11px] font-black uppercase tracking-widest text-slate-400 mb-1.5">Vehículo</p>
+          <Seccion icono={Car} titulo="Vehículo">
             <Fila label="Descripción" valor={[venta.vehiculo_marca, venta.vehiculo_modelo, venta.vehiculo_anio].filter(Boolean).join(" ") || "—"} />
             <Fila label="Patente" valor={venta.vehiculo_patente} />
+            {venta.vehiculo_id && <Fila label="ID de stock" valor={<span className="font-mono text-xs text-slate-400">{idCorto(venta.vehiculo_id)}</span>} />}
             <Fila label="Km" valor={venta.km ? Number(venta.km).toLocaleString("es-AR") : null} />
-          </div>
+          </Seccion>
 
-          <div>
-            <p className="text-[11px] font-black uppercase tracking-widest text-slate-400 mb-1.5">Comprador</p>
+          <Seccion icono={User} titulo="Comprador">
             <Fila label="Nombre" valor={venta.comprador_nombre} />
             <Fila label="Teléfono" valor={venta.comprador_telefono} />
             <Fila label="Email" valor={venta.comprador_email} />
             <Fila label="DNI" valor={venta.comprador_dni} />
-          </div>
+            {venta.cliente_id && <Fila label="Cliente CRM" valor={<span className="font-mono text-xs text-slate-400">{idCorto(venta.cliente_id)}</span>} />}
+          </Seccion>
 
-          <div>
-            <p className="text-[11px] font-black uppercase tracking-widest text-slate-400 mb-1.5">Financiero</p>
+          <Seccion icono={DollarSign} titulo="Financiero">
             <Fila label="Precio" valor={`${venta.moneda_venta} ${Number(venta.precio_venta).toLocaleString("es-AR")}`} />
             <Fila label="Adelanto / seña" valor={totalSenas > 0 ? `${venta.moneda_venta} ${totalSenas.toLocaleString("es-AR")}` : null} />
             <Fila label="Método de pago" valor={venta.metodo_pago} />
             <Fila label="Cuotas" valor={venta.cuotas_plazo} />
             <Fila label="Fecha de venta" valor={fmtFechaLocal(venta.fecha_cierre)} />
             <Fila label="Fecha de entrega" valor={venta.fecha_entrega ? fmtFechaLocal(venta.fecha_entrega) : null} />
-          </div>
+          </Seccion>
 
-          <div>
-            <div className="flex items-center justify-between mb-1.5">
-              <p className="text-[11px] font-black uppercase tracking-widest text-slate-400">Comisión</p>
-              {!editandoComision && (
-                <button onClick={abrirEdicionComision} className="flex items-center gap-1 text-[11px] font-bold text-rose-600 hover:text-rose-700"><Pencil className="w-3 h-3" /> Editar</button>
-              )}
-            </div>
+          {mandato && (
+            <Seccion icono={KeyRound} titulo="Consignación">
+              <Fila label="Precio con propietario" valor={mandato.valor ? `${mandato.moneda} ${Number(mandato.valor).toLocaleString("es-AR")}` : null} />
+              <Fila label="Tipo" valor={mandato.tipo_tramite} />
+              <Fila label="Propietario" valor={mandato.mandante_nombre} />
+              <Fila label="Responsable" valor={venta.responsable_consignacion_id ? perfilMap[venta.responsable_consignacion_id] : null} />
+            </Seccion>
+          )}
+
+          <Seccion
+            icono={Percent}
+            titulo="Comisión"
+            accion={!editandoComision && (
+              <button onClick={abrirEdicionComision} className="flex items-center gap-1 text-[11px] font-bold text-rose-600 hover:text-rose-700"><Pencil className="w-3 h-3" /> Editar</button>
+            )}
+          >
             <Fila label="Vendedor" valor={venta.vendedor_id ? perfilMap[venta.vendedor_id] : null} />
             <Fila label="Comisión" valor={comisionMonto > 0 ? <span className="text-emerald-600 font-bold">{venta.moneda_venta} {comisionMonto.toLocaleString("es-AR")} <span className="font-normal text-slate-400">({comisionPct}%)</span></span> : null} />
             <Fila label="Responsable consignación" valor={venta.responsable_consignacion_id ? perfilMap[venta.responsable_consignacion_id] : null} />
@@ -242,10 +292,10 @@ export default function VentaDetalleModal({ ventaId, miId, soyAdmin, puedeOperac
                 )}
               </div>
             )}
-          </div>
+          </Seccion>
 
           <div>
-            <p className="text-[11px] font-black uppercase tracking-widest text-slate-400 mb-2">Historial de estados ({historial.length})</p>
+            <p className="text-[11px] font-black uppercase tracking-widest text-slate-400 mb-2 flex items-center gap-1.5"><History className="w-3.5 h-3.5" /> Historial de estados ({historial.length})</p>
             <div className="space-y-1.5">
               {historial.map((h) => (
                 <div key={h.id} className="flex items-center justify-between bg-slate-50 dark:bg-white/5 border border-slate-100 dark:border-white/10 rounded-lg px-3 py-2">
