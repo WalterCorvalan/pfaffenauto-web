@@ -1,4 +1,4 @@
-import { createClient } from "@/lib/supabase/server";
+import { createClient } from "@/lib/supabase2/server";
 import { CAMPOS_VEHICULO_PUBLICO } from "@/lib/vehiculos";
 import VehiculosGrid, { MARCAS_CHINAS } from "@/components/VehiculosGrid";
 import { Globe2, AlertCircle } from "lucide-react";
@@ -23,7 +23,7 @@ export default async function MundoChinoPage() {
   const { data: vehiculos } = await supabase
     .from("vehiculos")
     .select(CAMPOS_VEHICULO_PUBLICO)
-    .in("estado", ["Disponible", "Reservado"])
+    .in("estado", ["disponible", "reservado"])
     .or(filtroMarcas)
     .order("created_at", { ascending: false });
 

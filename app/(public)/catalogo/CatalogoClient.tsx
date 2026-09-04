@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect, useRef } from "react";
-import { supabase } from "@/lib/supabase/client";
+import { supabase2 as supabase } from "@/lib/supabase2/client";
 import {
   Search,
   ChevronDown,
@@ -120,15 +120,15 @@ export default function CatalogoClient() {
     let query = supabase
       .from("vehiculos")
       .select(CAMPOS_VEHICULO_PUBLICO, { count: "exact" })
-      .in("estado", ["Disponible", "Reservado"]);
+      .in("estado", ["disponible", "reservado"]);
 
     // Filtros de texto, condición y precio
     const busquedaNormalizada = searchQuery.trim().toLowerCase();
     if (busquedaNormalizada === "0km" || busquedaNormalizada === "0 km") {
-      query = query.eq("kilometraje", 0);
+      query = query.eq("km", 0);
     } else if (busquedaNormalizada === "usados-seleccionados" || busquedaNormalizada === "autos-seleccionados") {
       // Todo el stock menos 0km y menos los de Outlet (mismo criterio de precio que usa /outlet).
-      query = query.gt("kilometraje", 0).or("precio_publicado_ars.is.null,precio_publicado_ars.gte.10000000");
+      query = query.gt("km", 0).or("precio_publicado_ars.is.null,precio_publicado_ars.gte.10000000");
     } else if (searchQuery) {
       query = query.or(
         `marca.ilike.%${searchQuery}%,modelo.ilike.%${searchQuery}%,tipo.ilike.%${searchQuery}%,segmento.ilike.%${searchQuery}%`,
@@ -137,9 +137,9 @@ export default function CatalogoClient() {
 
     if (condicionQuery) {
       if (condicionQuery === "0km") {
-        query = query.eq("kilometraje", 0);
+        query = query.eq("km", 0);
       } else if (condicionQuery === "usados") {
-        query = query.gt("kilometraje", 0);
+        query = query.gt("km", 0);
       }
     }
 
@@ -160,7 +160,7 @@ export default function CatalogoClient() {
     if (transmisionesSeleccionadas.length > 0)
       query = query.in("transmision", transmisionesSeleccionadas);
     if (combustiblesSeleccionados.length > 0)
-      query = query.in("tipo_combustible", combustiblesSeleccionados);
+      query = query.in("combustible", combustiblesSeleccionados);
     if (traccionesSeleccionadas.length > 0)
       query = query.in("traccion", traccionesSeleccionadas);
     if (plazasSeleccionadas.length > 0)
@@ -702,7 +702,7 @@ export default function CatalogoClient() {
                     >
                       <Image
                         src={
-                          auto.multimedia_vehiculos?.[0]?.url_archivo ||
+                          auto.fotos?.[0] ||
                           "/placeholder.jpg"
                         }
                         alt=""
@@ -776,12 +776,7 @@ function FiltrosContent(props: any) {
     "Jeep", "Kia", "Nissan", "Peugeot", "Renault", "Toyota", "Volkswagen"
   ];
   
-  const LISTA_TIPOS = [
-    "Auto", "Buses", "Cabriolet", "Camión", "Camioneta", "Casa Rodante", 
-    "Coupe", "Familiar", "Monovolumen", "Moto", "Náutica", "Pickup", 
-    "Rural 5 Puertas", "Sedan 3p", "Sedan 4p", "Sedan 5p", "Todo Terreno | SUV", 
-    "Utilitarios", "Van | Mini-Van"
-  ];
+  const LISTA_TIPOS = ["SUV", "Hatchback", "Pickup", "Sedán", "Auto", "Utilitarios"];
 
   return (
     <div className="bg-white dark:bg-[#161821] border border-gray-200 dark:border-white/15 rounded-2xl p-6 shadow-sm pb-10 max-h-[85vh] overflow-y-auto custom-scrollbar">

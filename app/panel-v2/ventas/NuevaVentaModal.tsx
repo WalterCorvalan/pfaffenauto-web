@@ -273,9 +273,13 @@ export default function NuevaVentaModal({ perfiles, clientes, vehiculos, miId, i
     try {
       const estadoFinal = forzarBorrador ? "borrador" : cargaManual ? "cerrada" : estado;
       const clienteResueltoId = await resolverCliente(estadoFinal);
+      // Código para que el comprador siga su operación en /seguimiento — mismo
+      // generador que usa NuevaSenaModal, así el cliente usa el mismo tipo de
+      // código sin importar si arrancó con una seña o una venta directa.
+      const codigoSeguimiento = Array.from({ length: 8 }, () => "ABCDEFGHJKLMNPQRSTUVWXYZ23456789"[Math.floor(Math.random() * 32)]).join("");
 
       const payload: any = {
-        estado: estadoFinal, carga_manual: cargaManual, abre_expediente: true,
+        estado: estadoFinal, carga_manual: cargaManual, abre_expediente: true, codigo_seguimiento: codigoSeguimiento,
         vehiculo_id: vehiculoId || null, vehiculo_marca: vMarca || null, vehiculo_modelo: vModelo || null,
         vehiculo_anio: vAnio ? Number(vAnio) : null, vehiculo_patente: vPatente || null, vehiculo_color: vColor || null, vehiculo_condicion: vCondicion || null,
         km: km ? Number(km) : null, precio_venta: Number(precioVenta), moneda_venta: monedaVenta,

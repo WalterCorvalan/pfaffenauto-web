@@ -1,8 +1,8 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { supabase2 } from "@/lib/supabase2/client";
-import { Plus, X, Save, Trash2, Pencil } from "lucide-react";
+import { Plus, X, Save, Trash2 } from "lucide-react";
 import { inputClass, labelClass } from "./shared";
 
 export default function GastosFijosTab({ miId, autoAbrir, onAutoAbierto }: { miId: string; autoAbrir?: boolean; onAutoAbierto?: () => void }) {
@@ -45,13 +45,17 @@ export default function GastosFijosTab({ miId, autoAbrir, onAutoAbierto }: { miI
     setItems((prev) => prev.filter((x) => x.id !== i.id));
   };
 
-  const totalUsd = items.filter((i) => i.moneda === "USD").reduce((a, i) => a + Number(i.monto), 0);
+  const totalPorMoneda = useMemo(() => {
+    const map: Record<string, number> = {};
+    items.forEach((i) => { map[i.moneda] = (map[i.moneda] || 0) + Number(i.monto); });
+    return map;
+  }, [items]);
   if (cargando) return null;
 
   return (
     <div>
       <div className="flex items-center justify-between mb-3">
-        <div><p className="text-lg font-bold">Gastos fijos / Suscripciones — {items.length} items</p><p className="text-xs text-slate-400">Total cargado: USD {totalUsd.toLocaleString("es-AR")}</p></div>
+        <div><p className="text-lg font-bold">Gastos fijos / Suscripciones — {items.length} items</p><p className="text-xs text-slate-400">Total cargado: {Object.keys(totalPorMoneda).length === 0 ? "—" : Object.entries(totalPorMoneda).map(([m, n]) => `${m === "ARS" ? "$" : "USD"} ${n.toLocaleString("es-AR")}`).join(" · ")}</p></div>
         <button onClick={() => setShowNuevo(true)} className="flex items-center gap-1.5 px-4 py-2 text-sm font-bold bg-rose-600 hover:bg-rose-700 text-white rounded-lg shrink-0"><Plus className="w-4 h-4" /> Nuevo gasto fijo</button>
       </div>
 
@@ -62,7 +66,7 @@ export default function GastosFijosTab({ miId, autoAbrir, onAutoAbierto }: { miI
           {items.map((i) => (
             <div key={i.id} className="bg-white dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-xl px-4 py-3 flex items-center justify-between">
               <div><p className="text-sm font-bold">{i.concepto} <span className="text-[10px] font-bold text-indigo-600 bg-indigo-50 dark:bg-indigo-500/10 px-1.5 py-0.5 rounded ml-1">{i.categoria}</span></p><p className="text-sm font-bold text-rose-600">{i.moneda === "ARS" ? "$" : "USD"} {Number(i.monto).toLocaleString("es-AR")} <span className="text-[11px] font-normal text-slate-400">{i.frecuencia.toLowerCase()}{i.dia_del_mes ? ` · día ${i.dia_del_mes}` : ""}</span></p></div>
-              <div className="flex gap-1"><button className="p-1.5 text-slate-400 hover:text-slate-700 dark:hover:text-white"><Pencil className="w-3.5 h-3.5" /></button><button onClick={() => eliminar(i)} className="p-1.5 text-slate-400 hover:text-rose-600"><Trash2 className="w-3.5 h-3.5" /></button></div>
+              <div className="flex gap-1"><button onClick={() => eliminar(i)} className="p-1.5 text-slate-400 hover:text-rose-600"><Trash2 className="w-3.5 h-3.5" /></button></div>
             </div>
           ))}
         </div>

@@ -7,7 +7,7 @@ import { inputClass, labelClass } from "./shared";
 
 const DEFAULT_SALUDO = "Hola {nombre}! 👋 Te escribo de {agencia}. ¿Cómo estás? Quería saber si seguís interesado/a y si te puedo ayudar en algo.";
 
-export default function MiWhatsAppTab({ miId, agenciaNombre = "WCars" }: { miId: string; agenciaNombre?: string }) {
+export default function MiWhatsAppTab({ miId, agenciaNombre = "Pfaffen Autos" }: { miId: string; agenciaNombre?: string }) {
   const [saludo, setSaludo] = useState("");
   const [firma, setFirma] = useState("");
   const [cargando, setCargando] = useState(true);

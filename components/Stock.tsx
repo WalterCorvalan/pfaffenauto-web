@@ -257,8 +257,7 @@ export default function Stock({ vehiculos }: StockProps) {
                   <div className="absolute inset-0 bg-slate-100 dark:bg-slate-900 z-0"></div>
                   <Image
                     src={
-                      urbanosYSedanes[0].multimedia_vehiculos?.[0]
-                        ?.url_archivo || "/placeholder.jpg"
+                      urbanosYSedanes[0].fotos?.[0] || "/placeholder.jpg"
                     }
                     alt={urbanosYSedanes[0].modelo}
                     fill
@@ -319,7 +318,7 @@ export default function Stock({ vehiculos }: StockProps) {
 
                       const imagenSrc =
                         auto.imagen ||
-                        auto.multimedia_vehiculos?.[0]?.url_archivo ||
+                        auto.fotos?.[0] ||
                         "/placeholder.jpg";
 
                       return (
@@ -405,7 +404,7 @@ export default function Stock({ vehiculos }: StockProps) {
                   <div className="absolute inset-0 bg-slate-200 dark:bg-slate-900 z-0"></div>
                   <Image
                     src={
-                      auto.multimedia_vehiculos?.[0]?.url_archivo ||
+                      auto.fotos?.[0] ||
                       "/placeholder.jpg"
                     }
                     alt={auto.modelo}
@@ -428,7 +427,7 @@ export default function Stock({ vehiculos }: StockProps) {
                     <div>
                       <p className="text-white/80 dark:text-white/70 text-xs md:text-sm font-medium mb-1 drop-shadow-md">
                         {auto.anio} •{" "}
-                        {auto.kilometraje?.toLocaleString("es-AR")} km
+                        {auto.km?.toLocaleString("es-AR")} km
                       </p>
                       <p className="text-white font-black text-xl md:text-2xl drop-shadow-lg">
                         $ {auto.precio_publicado_ars?.toLocaleString("es-AR")}
@@ -465,7 +464,7 @@ export default function Stock({ vehiculos }: StockProps) {
                     >
                       <Image
                         src={
-                          auto.multimedia_vehiculos?.[0]?.url_archivo ||
+                          auto.fotos?.[0] ||
                           "/placeholder.jpg"
                         }
                         alt={auto.modelo || "Auto"}
@@ -650,9 +649,9 @@ export function VehicleCard({
           <div className="absolute inset-0 bg-gradient-to-tr from-transparent via-white/40 dark:via-white/10 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-700 pointer-events-none z-20"></div>
 
           <div className="relative h-[160px] sm:h-[180px] bg-white/30 dark:bg-white/5 flex items-center justify-center overflow-hidden mix-blend-multiply dark:mix-blend-normal">
-          {auto.multimedia_vehiculos?.[0] ? (
+          {auto.fotos?.[0] ? (
             <Image
-              src={auto.multimedia_vehiculos[0].url_archivo}
+              src={auto.fotos[0]}
               alt={`${auto.marca} ${auto.modelo}`}
               fill
               sizes="(max-width: 640px) 50vw, (max-width: 1024px) 25vw, 300px"
@@ -672,7 +671,7 @@ export function VehicleCard({
 
         <div className="p-5 sm:p-6 flex flex-col flex-grow relative z-10">
           <p className="text-xs text-gray-500 dark:text-slate-400 font-medium">
-            {auto.anio} • {auto.kilometraje?.toLocaleString("es-AR")} KM
+            {auto.anio} • {auto.km?.toLocaleString("es-AR")} KM
           </p>
           {auto.version && (
             <p className="text-xs text-gray-500 dark:text-slate-400 font-medium">

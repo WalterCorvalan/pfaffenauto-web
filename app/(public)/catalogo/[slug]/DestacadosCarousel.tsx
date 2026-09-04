@@ -9,7 +9,7 @@ interface Destacado {
   slug: string;
   precio_publicado_ars: number | null;
   precio_publicado_usd: number | null;
-  multimedia_vehiculos?: { url_archivo: string }[];
+  fotos?: string[];
 }
 
 export default function DestacadosCarousel({ vehiculos }: { vehiculos: Destacado[] }) {
@@ -37,9 +37,9 @@ export default function DestacadosCarousel({ vehiculos }: { vehiculos: Destacado
               className="min-w-[220px] max-w-[220px] shrink-0 snap-start bg-white/60 dark:bg-white/5 backdrop-blur-xl border border-white dark:border-white/10 hover:border-[#0145F2]/40 dark:hover:border-sky-400/40 hover:bg-white dark:hover:bg-white/10 rounded-2xl overflow-hidden shadow-sm dark:shadow-none hover:shadow-md dark:hover:shadow-none transition-all group"
             >
               <div className="relative h-32 bg-white/40 dark:bg-white/5 overflow-hidden mix-blend-multiply dark:mix-blend-normal">
-                {auto.multimedia_vehiculos?.[0]?.url_archivo ? (
+                {auto.fotos?.[0] ? (
                   <Image
-                    src={auto.multimedia_vehiculos[0].url_archivo}
+                    src={auto.fotos[0]}
                     alt={`${auto.marca} ${auto.modelo}`}
                     fill
                     sizes="220px"

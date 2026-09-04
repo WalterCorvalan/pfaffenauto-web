@@ -56,7 +56,11 @@ export default function CuotasPagarTab({ miId }: { miId: string }) {
   const vencidas = pendientes.filter((c) => diasHasta(c.vencimiento) < 0);
   const mesActual = new Date().toISOString().slice(0, 7);
   const venceEsteMes = pendientes.filter((c) => c.vencimiento.slice(0, 7) === mesActual);
-  const pagadoEsteMes = cuotas.filter((c) => c.pagada && c.vencimiento.slice(0, 7) === mesActual).reduce((a, c) => a + Number(c.monto_pagado), 0);
+  const pagadoEsteMesPorMoneda = useMemo(() => {
+    const map: Record<string, number> = {};
+    cuotas.filter((c) => c.pagada && c.vencimiento.slice(0, 7) === mesActual).forEach((c) => { map[c.moneda] = (map[c.moneda] || 0) + Number(c.monto_pagado); });
+    return map;
+  }, [cuotas, mesActual]);
   const totalAdeudadoPorMoneda = useMemo(() => {
     const map: Record<string, number> = {};
     pendientes.forEach((c) => { map[c.moneda] = (map[c.moneda] || 0) + (Number(c.monto) - Number(c.monto_pagado)); });
@@ -140,7 +144,7 @@ export default function CuotasPagarTab({ miId }: { miId: string }) {
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-4">
         <div className="bg-rose-50 dark:bg-rose-500/10 border border-rose-100 dark:border-rose-500/20 rounded-xl p-4"><p className="text-[10px] font-bold uppercase text-rose-500">Vencidas</p><p className="text-lg font-black">{vencidas.length}</p>{vencidas.length === 0 && <p className="text-[10px] text-emerald-600">Al día ✓</p>}</div>
         <div className="bg-amber-50 dark:bg-amber-500/10 border border-amber-100 dark:border-amber-500/20 rounded-xl p-4"><p className="text-[10px] font-bold uppercase text-amber-600">Vence este mes</p><p className="text-lg font-black">{venceEsteMes.length}</p>{venceEsteMes.length === 0 && <p className="text-[10px] text-slate-400">Sin vencimientos</p>}</div>
-        <div className="bg-emerald-50 dark:bg-emerald-500/10 border border-emerald-100 dark:border-emerald-500/20 rounded-xl p-4"><p className="text-[10px] font-bold uppercase text-emerald-600">Pagado este mes</p><p className="text-lg font-black">USD {pagadoEsteMes.toLocaleString("es-AR")}</p></div>
+        <div className="bg-emerald-50 dark:bg-emerald-500/10 border border-emerald-100 dark:border-emerald-500/20 rounded-xl p-4"><p className="text-[10px] font-bold uppercase text-emerald-600">Pagado este mes</p>{Object.keys(pagadoEsteMesPorMoneda).length === 0 ? <p className="text-sm font-bold">—</p> : Object.entries(pagadoEsteMesPorMoneda).map(([m, n]) => <p key={m} className="text-sm font-black">{fmt(n, m)}</p>)}</div>
         <div className="bg-white dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-xl p-4"><p className="text-[10px] font-bold uppercase text-slate-400">Total adeudado</p>{Object.keys(totalAdeudadoPorMoneda).length === 0 ? <p className="text-sm font-bold">Sin deudas</p> : Object.entries(totalAdeudadoPorMoneda).map(([m, n]) => <p key={m} className="text-sm font-black">{fmt(n, m)}</p>)}</div>
       </div>
 

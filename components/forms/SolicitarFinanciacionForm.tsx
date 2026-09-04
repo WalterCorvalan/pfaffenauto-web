@@ -3,7 +3,7 @@
 import { useState, useEffect, useRef } from "react";
 import { createPortal } from "react-dom";
 import Script from "next/script";
-import { supabase } from "@/lib/supabase/client";
+import { supabase2 as supabase } from "@/lib/supabase2/client";
 import { getCanalOrigen } from "@/lib/utm";
 import { CreditCard, X, CheckCircle2, Loader2, User, Phone, Mail, ArrowLeft, Search, Car } from "lucide-react";
 
@@ -21,7 +21,7 @@ interface VehiculoFinanciable {
   marca: string;
   modelo: string;
   anio: number;
-  kilometraje: number | null;
+  km: number | null;
   precio_publicado_ars: number | null;
   sucursales: { nombre: string } | null;
 }
@@ -110,8 +110,8 @@ export default function SolicitarFinanciacionForm({ vehiculoPreseleccionado, cla
     const timeout = setTimeout(async () => {
       const { data } = await supabase
         .from("vehiculos")
-        .select("id, marca, modelo, anio, kilometraje, precio_publicado_ars, sucursales!vehiculos_sucursal_id_fkey ( nombre )")
-        .eq("estado", "Disponible")
+        .select("id, marca, modelo, anio, km, precio_publicado_ars, sucursales!vehiculos_sucursal_id_fkey ( nombre )")
+        .eq("estado", "disponible")
         .or(`marca.ilike.%${busqueda}%,modelo.ilike.%${busqueda}%`)
         .limit(8);
       setResultados((data as any) || []);
@@ -157,26 +157,22 @@ export default function SolicitarFinanciacionForm({ vehiculoPreseleccionado, cla
     setLoading(true);
     try {
       const cuota = calcularCuota(montoAFinanciar, meses);
-      const sucursalNombre = vehiculo.sucursales?.nombre || "Casa Central";
-      const response = await fetch("/api/cotizaciones", {
+      const response = await fetch("/api/panel-v2/leads-tasacion", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           turnstileToken,
-          canal_origen: getCanalOrigen(),
-          vehiculo_id: vehiculo.id,
+          canalOrigen: getCanalOrigen(),
+          vehiculoObjetivoId: vehiculo.id,
           marca: vehiculo.marca,
           modelo: vehiculo.modelo,
           anio: vehiculo.anio,
-          kilometraje: vehiculo.kilometraje ?? 0,
+          kilometraje: vehiculo.km ?? 0,
           version: `Solicitud de crédito: anticipo $${anticipoCliente.toLocaleString("es-AR")} (${anticipoPorcentaje}%), financia $${montoAFinanciar.toLocaleString("es-AR")} en ${meses} cuotas de $${cuota.toLocaleString("es-AR")} aprox. Crédito preaprobado: ${creditoPreaprobado === "si" ? "Sí" : "No"}.`,
           nombre: nombre.trim(),
           email: email.trim(),
           telefono: telefono.trim(),
-          puede_venir_sucursal: false,
-          fotos_y_videos: [],
-          sucursal_preferida: sucursalNombre,
-          tipo_peritaje: "financiacion",
+          tipo: "financiacion",
         }),
       });
 

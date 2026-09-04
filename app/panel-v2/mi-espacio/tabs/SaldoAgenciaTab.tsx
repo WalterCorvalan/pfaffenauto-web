@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useMemo } from "react";
 import { supabase2 } from "@/lib/supabase2/client";
-import { Plus, X, Save, Trash2, Pencil } from "lucide-react";
+import { Plus, X, Save, Trash2 } from "lucide-react";
 import { inputClass, labelClass } from "./shared";
 
 export default function SaldoAgenciaTab({ miId }: { miId: string }) {
@@ -103,7 +103,6 @@ export default function SaldoAgenciaTab({ miId }: { miId: string }) {
               <span className="font-bold text-sm">{m.moneda} {Number(m.monto).toLocaleString("es-AR")}</span>
               {m.motivo && <span className="text-xs text-slate-400">{m.motivo}</span>}
               <span className="text-[11px] text-slate-400 ml-auto shrink-0">{m.fecha}</span>
-              <button className="p-1.5 text-slate-400"><Pencil className="w-3.5 h-3.5" /></button>
               <button onClick={() => eliminar(m)} className="p-1.5 text-slate-400 hover:text-rose-600"><Trash2 className="w-3.5 h-3.5" /></button>
             </div>
           ))}

@@ -62,7 +62,7 @@ export default function StockClient({
   const [mandatos, setMandatos] = useState(mandatosIniciales);
   const [catalogoConfig, setCatalogoConfig] = useState(catalogoConfigInicial);
   const [tab, setTab] = useState<Tab>("general");
-  const [estadoFiltro, setEstadoFiltro] = useState("disponible");
+  const [estadoFiltro, setEstadoFiltro] = useState("");
   const [soloEstancados, setSoloEstancados] = useState(false);
   const [soloARevisar, setSoloARevisar] = useState(false);
   const [query, setQuery] = useState("");
@@ -123,7 +123,8 @@ export default function StockClient({
       const q = query.trim().toLowerCase();
       lista = lista.filter((v) => [v.marca, v.modelo, v.patente, v.ubicacion, String(v.anio), v.propietario_nombre].filter(Boolean).join(" ").toLowerCase().includes(q));
     }
-    return [...lista].sort((a, b) => diasEnStock(b.created_at) - diasEnStock(a.created_at));
+    const prioridad = (v: Vehiculo) => (v.estado === "señado" ? 0 : v.estado === "vendido" ? 2 : 1);
+    return [...lista].sort((a, b) => prioridad(a) - prioridad(b) || diasEnStock(a.created_at) - diasEnStock(b.created_at));
   }, [baseTab, estadoFiltro, soloEstancados, soloARevisar, marcaFiltro, query]);
 
   const disponibles = vehiculos.filter((v) => v.estado === "disponible");
@@ -223,6 +224,7 @@ export default function StockClient({
           ) : (
             <>
               <div className="flex flex-wrap items-center gap-2 mb-3">
+                <button onClick={() => { setEstadoFiltro(""); setSoloEstancados(false); setSoloARevisar(false); }} className={`px-3 py-1.5 rounded-full text-xs font-bold border ${estadoFiltro === "" && !soloEstancados && !soloARevisar ? "bg-rose-600 border-rose-600 text-white" : "bg-white dark:bg-white/5 border-slate-200 dark:border-white/10 text-slate-600 dark:text-slate-300"}`}>Todos</button>
                 {Object.entries(ESTADO_LABEL).map(([v, label]) => (
                   <button key={v} onClick={() => { setEstadoFiltro(v); setSoloEstancados(false); setSoloARevisar(false); }} className={`px-3 py-1.5 rounded-full text-xs font-bold border ${estadoFiltro === v && !soloEstancados && !soloARevisar ? "bg-rose-600 border-rose-600 text-white" : "bg-white dark:bg-white/5 border-slate-200 dark:border-white/10 text-slate-600 dark:text-slate-300"}`}>{label}</button>
                 ))}

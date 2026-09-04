@@ -1,7 +1,7 @@
 import { ArrowRight, Zap } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
-import { createClient } from "@/lib/supabase/server";
+import { createClient } from "@/lib/supabase2/server";
 
 export default async function OutletBanner() {
   const supabase = await createClient();
@@ -10,7 +10,7 @@ export default async function OutletBanner() {
   const { count: outletCount } = await supabase
     .from("vehiculos")
     .select("*", { count: "exact", head: true })
-    .in("estado", ["Disponible", "Reservado"])
+    .in("estado", ["disponible", "reservado"])
     .lt("precio_publicado_ars", 10000000);
 
   return (

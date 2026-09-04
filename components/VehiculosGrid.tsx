@@ -156,7 +156,7 @@ export default function VehiculosGrid({ vehiculos }: { vehiculos: any[] | null }
                 <div className="flex -space-x-3">
                   {autosComparar.map((auto, i) => (
                     <div key={i} className="relative w-10 h-10 md:w-12 md:h-12 rounded-full border-2 border-gray-900 overflow-hidden bg-white shadow-sm shrink-0">
-                      <Image src={auto.multimedia_vehiculos?.[0]?.url_archivo || "/placeholder.jpg"} alt={`${auto.marca} ${auto.modelo}`} fill sizes="48px" className="object-cover" />
+                      <Image src={auto.fotos?.[0] || "/placeholder.jpg"} alt={`${auto.marca} ${auto.modelo}`} fill sizes="48px" className="object-cover" />
                     </div>
                   ))}
                   {autosComparar.length < 3 && (

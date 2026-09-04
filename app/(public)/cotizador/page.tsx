@@ -1,5 +1,5 @@
 import CotizadorForm from "@/components/forms/CotizadorForm";
-import { createClient } from "@/lib/supabase/server";
+import { createClient } from "@/lib/supabase2/server";
 
 export const metadata = {
   title: "Cotizá tu vehículo | Pfaffen Autos",
@@ -24,7 +24,7 @@ export default async function CotizadorPage({
       .from("vehiculos")
       .select("id, marca, modelo, precio_publicado_ars, precio_publicado_usd")
       .eq("id", permuta)
-      .in("estado", ["Disponible", "Reservado"])
+      .in("estado", ["disponible", "reservado"])
       .maybeSingle();
 
     if (vehiculo) {

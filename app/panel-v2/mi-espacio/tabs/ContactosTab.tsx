@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useMemo } from "react";
 import { supabase2 } from "@/lib/supabase2/client";
-import { Plus, X, Save, Trash2, Pencil, Search, MessageCircle, Phone, Mail } from "lucide-react";
+import { Plus, X, Save, Trash2, Search, MessageCircle, Phone, Mail } from "lucide-react";
 import { inputClass, labelClass } from "./shared";
 
 const ROLES = ["Contador", "Abogado", "Escribano", "Mecánico", "Médico", "Plomero", "Electricista", "Otro"];
@@ -74,7 +74,7 @@ export default function ContactosTab({ miId }: { miId: string }) {
             <div key={c.id} className="bg-white dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-xl p-4">
               <div className="flex items-start justify-between gap-2">
                 <div><p className="text-sm font-bold">{c.nombre}</p>{c.rol && <span className="text-[10px] font-bold text-indigo-600 bg-indigo-50 dark:bg-indigo-500/10 px-1.5 py-0.5 rounded">{c.rol}</span>}</div>
-                <div className="flex gap-1 shrink-0"><button className="p-1.5 text-slate-400 hover:text-slate-700 dark:hover:text-white"><Pencil className="w-3.5 h-3.5" /></button><button onClick={() => eliminar(c)} className="p-1.5 text-slate-400 hover:text-rose-600"><Trash2 className="w-3.5 h-3.5" /></button></div>
+                <div className="flex gap-1 shrink-0"><button onClick={() => eliminar(c)} className="p-1.5 text-slate-400 hover:text-rose-600"><Trash2 className="w-3.5 h-3.5" /></button></div>
               </div>
               {c.empresa && <p className="text-xs text-slate-500 mt-1">🏢 {c.empresa}</p>}
               {c.telefono && <p className="text-xs text-slate-500 flex items-center gap-1"><Phone className="w-3 h-3" /> {c.telefono}</p>}

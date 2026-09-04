@@ -1,12 +1,7 @@
 import { z } from "zod";
 import { chatJson, isAiConfigured } from "./index";
 
-const TIPOS_VALIDOS = [
-  "Auto", "Buses", "Cabriolet", "Camión", "Camioneta", "Casa Rodante",
-  "Coupe", "Familiar", "Monovolumen", "Moto", "Náutica", "Pickup",
-  "Rural 5 Puertas", "Sedan 3p", "Sedan 4p", "Sedan 5p", "Todo Terreno | SUV",
-  "Utilitarios", "Van | Mini-Van",
-] as const;
+const TIPOS_VALIDOS = ["SUV", "Hatchback", "Pickup", "Sedán", "Auto", "Utilitarios"] as const;
 
 const MARCAS_VALIDAS = [
   "Audi", "BMW", "Chevrolet", "Citroën", "Fiat", "Ford", "Hyundai",
@@ -32,7 +27,7 @@ export function isBuscadorIaDisponible(): boolean {
 export async function interpretarBusqueda(termino: string) {
   const prompt = `Un cliente busca un auto en una concesionaria escribiendo en lenguaje natural. Traducí su búsqueda a filtros estructurados, usando ÚNICAMENTE estos valores válidos (si no aplica alguno, poné null):
 
-- tipo: uno de [${TIPOS_VALIDOS.join(", ")}] (ej: "SUV" o "todoterreno" → "Todo Terreno | SUV"; "familiar" → "Familiar" o "Rural 5 Puertas")
+- tipo: uno de [${TIPOS_VALIDOS.join(", ")}] (ej: "todoterreno" o "camioneta alta" → "SUV"; "pick-up" o "camioneta" → "Pickup")
 - marca: uno de [${MARCAS_VALIDAS.join(", ")}]
 - transmision: "Manual" o "Automática"
 - combustible: "Nafta", "Diesel", "Eléctrico", "GNC" o "Híbrido"

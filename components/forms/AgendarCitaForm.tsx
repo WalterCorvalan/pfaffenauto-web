@@ -2,7 +2,6 @@
 
 import { useState, useEffect, useRef } from "react";
 import Script from "next/script";
-import { supabase } from "@/lib/supabase/client";
 import { supabase2 } from "@/lib/supabase2/client";
 import {
   CalendarCheck, Clock, MapPin, User, Phone, CheckCircle2,
@@ -90,13 +89,13 @@ export default function AgendarCitaForm() {
   }, [turnstileListo]);
 
   useEffect(() => {
-    supabase.from("sucursales").select("id, nombre").then(({ data }) => {
+    supabase2.from("sucursales").select("id, nombre").then(({ data }) => {
       if (data) setSucursales(data);
     });
-    supabase
+    supabase2
       .from("vehiculos")
       .select("id, marca, modelo, patente, vendedor_asignado_id")
-      .in("estado", ["Disponible", "Reservado"])
+      .in("estado", ["disponible", "reservado"])
       .order("marca")
       .then(({ data }) => {
         if (data) setVehiculos(data);

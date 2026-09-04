@@ -66,6 +66,11 @@ const LS_KEY = "mi-espacio-ultima-tab";
 function fmt(n: number, moneda = "ARS") {
   return `${moneda === "USD" ? "USD" : "$"} ${Math.round(n).toLocaleString("es-AR")}`;
 }
+function fmtPorMoneda(map: Record<string, number>) {
+  const entradas = Object.entries(map).filter(([, v]) => v !== 0);
+  if (entradas.length === 0) return "—";
+  return entradas.map(([m, v]) => fmt(v, m)).join(" · ");
+}
 
 function diasHasta(fecha: string) {
   const hoy = new Date(); hoy.setHours(0, 0, 0, 0);
@@ -75,10 +80,14 @@ function diasHasta(fecha: string) {
 
 export default function MiEspacioClient({
   miId, miNombre, soyAdmin, agencia, urgentesIniciales, pagosIniciales, prefsIniciales,
+  aCobrarPorMoneda, yaCobrePorMoneda, pendientesCount, eventosHoyCount, eventosSemanaCount, gastosFijosPorMoneda,
 }: {
   miId: string; miNombre: string; soyAdmin: boolean;
   agencia: { stockDisponible: number; ventasDelMes: number; expedientesActivos: number; ingresosDelMesUsd: number } | null;
   urgentesIniciales: any[]; pagosIniciales: any[]; prefsIniciales: any;
+  aCobrarPorMoneda: Record<string, number>; yaCobrePorMoneda: Record<string, number>;
+  pendientesCount: number; eventosHoyCount: number; eventosSemanaCount: number;
+  gastosFijosPorMoneda: Record<string, number>;
 }) {
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -135,8 +144,12 @@ export default function MiEspacioClient({
   const hoyVencen = urgentesPendientes.filter((u) => diasHasta(u.vencimiento) === 0);
 
   const inicioMesStr = new Date().toISOString().slice(0, 7);
-  const aPagarEsteMes = urgentesPendientes.filter((u) => u.vencimiento.slice(0, 7) === inicioMesStr && u.moneda === "ARS").reduce((a, u) => a + (Number(u.monto) - Number(u.monto_pagado)), 0);
-  const yaPagueEsteMes = pagos.filter((p) => p.fecha.slice(0, 7) === inicioMesStr && p.moneda === "ARS").reduce((a, p) => a + Number(p.monto), 0);
+  // Por moneda — nunca sumar ARS y USD bajo un mismo total (bug encontrado
+  // acá: antes ignoraba USD por completo, filtrando solo moneda === "ARS").
+  const aPagarPorMoneda: Record<string, number> = {};
+  urgentesPendientes.filter((u) => u.vencimiento.slice(0, 7) === inicioMesStr).forEach((u) => { aPagarPorMoneda[u.moneda] = (aPagarPorMoneda[u.moneda] || 0) + (Number(u.monto) - Number(u.monto_pagado)); });
+  const yaPaguePorMoneda: Record<string, number> = {};
+  pagos.filter((p) => p.fecha.slice(0, 7) === inicioMesStr).forEach((p) => { yaPaguePorMoneda[p.moneda] = (yaPaguePorMoneda[p.moneda] || 0) + Number(p.monto); });
 
   const crearUrgente = async () => {
     if (!uTitulo.trim() || !uVencimiento) return alert("Completá al menos el título y el vencimiento.");
@@ -247,7 +260,7 @@ export default function MiEspacioClient({
             <div className="absolute top-full right-0 mt-1 bg-white dark:bg-[#1A1A1A] border border-slate-200 dark:border-white/10 rounded-xl shadow-xl w-56 py-1 z-20">
               <button onClick={() => { irATab("pendientes"); setAutoAbrir("pendientes"); setMostrarAgregar(false); }} className="w-full flex items-center gap-2 px-3 py-2 text-sm font-semibold hover:bg-slate-50 dark:hover:bg-white/5"><ClipboardCheck className="w-4 h-4 text-slate-400" /> Pendiente</button>
               <button onClick={() => { irATab("calendario"); setAutoAbrir("calendario"); setMostrarAgregar(false); }} className="w-full flex items-center gap-2 px-3 py-2 text-sm font-semibold hover:bg-slate-50 dark:hover:bg-white/5"><CalendarPlus className="w-4 h-4 text-slate-400" /> Evento de calendario</button>
-              {soyAdmin && <button onClick={() => { irATab("gastos-fijos"); setAutoAbrir("gastos-fijos"); setMostrarAgregar(false); }} className="w-full flex items-center gap-2 px-3 py-2 text-sm font-semibold hover:bg-slate-50 dark:hover:bg-white/5"><WalletIcon className="w-4 h-4 text-slate-400" /> Gasto fijo</button>}
+              <button onClick={() => { irATab("gastos-fijos"); setAutoAbrir("gastos-fijos"); setMostrarAgregar(false); }} className="w-full flex items-center gap-2 px-3 py-2 text-sm font-semibold hover:bg-slate-50 dark:hover:bg-white/5"><WalletIcon className="w-4 h-4 text-slate-400" /> Gasto fijo</button>
             </div>
           )}
         </div>
@@ -255,8 +268,8 @@ export default function MiEspacioClient({
 
       <div className="bg-white dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-xl p-1 my-4 flex items-center gap-1 overflow-x-auto">
         {PANEL_TABS.map(renderTab)}
-        {soyAdmin && <div className="w-px h-5 bg-slate-200 dark:bg-white/10 shrink-0 mx-1" />}
-        {soyAdmin && FINANZAS_TABS.map(renderTab)}
+        <div className="w-px h-5 bg-slate-200 dark:bg-white/10 shrink-0 mx-1" />
+        {FINANZAS_TABS.map(renderTab)}
         <div className="w-px h-5 bg-slate-200 dark:bg-white/10 shrink-0 mx-1" />
         {OTRAS_TABS.map(renderTab)}
       </div>
@@ -274,61 +287,63 @@ export default function MiEspacioClient({
             </div>
           )}
 
+          <p className="text-sm text-slate-500 dark:text-slate-400">Tu resumen — <strong>{new Date().toISOString().slice(0, 7)}</strong></p>
+
+          <div>
+            <p className="text-[11px] font-black uppercase tracking-widest text-slate-400 mb-2">Plata este mes</p>
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+              <div className="bg-rose-50 dark:bg-rose-500/10 border border-rose-100 dark:border-rose-500/20 rounded-xl p-4">
+                <p className="text-lg font-black text-rose-600">{fmtPorMoneda(aPagarPorMoneda)}</p>
+                <p className="text-[10px] font-bold uppercase text-rose-500">A pagar este mes</p>
+                <p className="text-[10px] text-slate-400 mt-0.5">Urgentes que vencen</p>
+              </div>
+              <div className="bg-emerald-50 dark:bg-emerald-500/10 border border-emerald-100 dark:border-emerald-500/20 rounded-xl p-4">
+                <p className="text-lg font-black text-emerald-600">{fmtPorMoneda(yaPaguePorMoneda)}</p>
+                <p className="text-[10px] font-bold uppercase text-emerald-600">Ya pagué este mes</p>
+                <p className="text-[10px] text-slate-400 mt-0.5">Suma de pagos registrados</p>
+              </div>
+              <div className="bg-indigo-50 dark:bg-indigo-500/10 border border-indigo-100 dark:border-indigo-500/20 rounded-xl p-4">
+                <p className="text-lg font-black text-indigo-600">{fmtPorMoneda(aCobrarPorMoneda)}</p>
+                <p className="text-[10px] font-bold uppercase text-indigo-500">A cobrar este mes</p>
+                <p className="text-[10px] text-slate-400 mt-0.5">Cuotas a cobrar que vencen</p>
+              </div>
+              <div className="bg-emerald-50 dark:bg-emerald-500/10 border border-emerald-100 dark:border-emerald-500/20 rounded-xl p-4">
+                <p className="text-lg font-black text-emerald-600">{fmtPorMoneda(yaCobrePorMoneda)}</p>
+                <p className="text-[10px] font-bold uppercase text-emerald-600">Ya cobré este mes</p>
+                <p className="text-[10px] text-slate-400 mt-0.5">Cuotas ya cobradas del mes</p>
+              </div>
+            </div>
+          </div>
+
+          <div>
+            <p className="text-[11px] font-black uppercase tracking-widest text-slate-400 mb-2 flex items-center justify-between">Próximos 7 días <span className="font-normal normal-case text-slate-400">{eventosSemanaCount} evento{eventosSemanaCount === 1 ? "" : "s"}</span></p>
+            {eventosSemanaCount === 0 ? (
+              <div className="bg-white dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-xl px-4 py-3 text-sm text-slate-400">Nada agendado en los próximos 7 días. Aprovechá la calma.</div>
+            ) : (
+              <button onClick={() => irATab("calendario")} className="bg-white dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-xl px-4 py-3 text-sm text-indigo-600 font-semibold hover:bg-slate-50 dark:hover:bg-white/10 w-full text-left">Ver en el calendario →</button>
+            )}
+          </div>
+
           {soyAdmin && agencia && (
-            <>
-              <p className="text-sm text-slate-500 dark:text-slate-400">Tu resumen como administrador — <strong>{new Date().toISOString().slice(0, 7)}</strong></p>
-
-              <div>
-                <p className="text-[11px] font-black uppercase tracking-widest text-slate-400 mb-2">Plata este mes</p>
-                <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-                  <div className="bg-rose-50 dark:bg-rose-500/10 border border-rose-100 dark:border-rose-500/20 rounded-xl p-4">
-                    <p className="text-lg font-black text-rose-600">{fmt(aPagarEsteMes)}</p>
-                    <p className="text-[10px] font-bold uppercase text-rose-500">A pagar este mes</p>
-                    <p className="text-[10px] text-slate-400 mt-0.5">Cuotas + deudas que vencen</p>
-                  </div>
-                  <div className="bg-emerald-50 dark:bg-emerald-500/10 border border-emerald-100 dark:border-emerald-500/20 rounded-xl p-4">
-                    <p className="text-lg font-black text-emerald-600">{fmt(yaPagueEsteMes)}</p>
-                    <p className="text-[10px] font-bold uppercase text-emerald-600">Ya pagué este mes</p>
-                    <p className="text-[10px] text-slate-400 mt-0.5">Suma de pagos registrados</p>
-                  </div>
-                  <div className="bg-indigo-50 dark:bg-indigo-500/10 border border-indigo-100 dark:border-indigo-500/20 rounded-xl p-4">
-                    <p className="text-lg font-black text-indigo-600">$ 0</p>
-                    <p className="text-[10px] font-bold uppercase text-indigo-500">A cobrar este mes</p>
-                    <p className="text-[10px] text-slate-400 mt-0.5">Cuotas a cobrar que vencen</p>
-                  </div>
-                  <div className="bg-emerald-50 dark:bg-emerald-500/10 border border-emerald-100 dark:border-emerald-500/20 rounded-xl p-4">
-                    <p className="text-lg font-black text-emerald-600">$ 0</p>
-                    <p className="text-[10px] font-bold uppercase text-emerald-600">Ya cobré este mes</p>
-                    <p className="text-[10px] text-slate-400 mt-0.5">Suma de cobros registrados</p>
-                  </div>
-                </div>
+            <div>
+              <p className="text-[11px] font-black uppercase tracking-widest text-slate-400 mb-2">Tu agencia</p>
+              <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+                <div className="bg-emerald-50 dark:bg-emerald-500/10 border border-emerald-100 dark:border-emerald-500/20 rounded-xl p-4"><Car className="w-4 h-4 text-emerald-600 mb-1" /><p className="text-lg font-black text-emerald-700 dark:text-emerald-300">{agencia.stockDisponible}</p><p className="text-[10px] font-bold uppercase text-slate-400">Stock disponible</p></div>
+                <div className="bg-indigo-50 dark:bg-indigo-500/10 border border-indigo-100 dark:border-indigo-500/20 rounded-xl p-4"><ShoppingCart className="w-4 h-4 text-indigo-600 mb-1" /><p className="text-lg font-black text-indigo-700 dark:text-indigo-300">{agencia.ventasDelMes}</p><p className="text-[10px] font-bold uppercase text-slate-400">Ventas del mes</p></div>
+                <div className="bg-purple-50 dark:bg-purple-500/10 border border-purple-100 dark:border-purple-500/20 rounded-xl p-4"><Briefcase className="w-4 h-4 text-purple-600 mb-1" /><p className="text-lg font-black text-purple-700 dark:text-purple-300">{agencia.expedientesActivos}</p><p className="text-[10px] font-bold uppercase text-slate-400">Expedientes activos</p></div>
+                <div className="bg-amber-50 dark:bg-amber-500/10 border border-amber-100 dark:border-amber-500/20 rounded-xl p-4"><Wallet2 className="w-4 h-4 text-amber-600 mb-1" /><p className="text-lg font-black text-amber-700 dark:text-amber-300">USD {agencia.ingresosDelMesUsd.toLocaleString("es-AR")}</p><p className="text-[10px] font-bold uppercase text-slate-400">Ingresos del mes</p><p className="text-[10px] text-slate-400">Solo movimientos en USD</p></div>
               </div>
-
-              <div>
-                <p className="text-[11px] font-black uppercase tracking-widest text-slate-400 mb-2 flex items-center justify-between">Próximos 7 días <span className="font-normal normal-case text-slate-400">0 eventos</span></p>
-                <div className="bg-white dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-xl px-4 py-3 text-sm text-slate-400">Nada que vence en los próximos 7 días. Aprovechá la calma.</div>
-              </div>
-
-              <div>
-                <p className="text-[11px] font-black uppercase tracking-widest text-slate-400 mb-2">Tu agencia</p>
-                <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-                  <div className="bg-emerald-50 dark:bg-emerald-500/10 border border-emerald-100 dark:border-emerald-500/20 rounded-xl p-4"><Car className="w-4 h-4 text-emerald-600 mb-1" /><p className="text-lg font-black text-emerald-700 dark:text-emerald-300">{agencia.stockDisponible}</p><p className="text-[10px] font-bold uppercase text-slate-400">Stock disponible</p></div>
-                  <div className="bg-indigo-50 dark:bg-indigo-500/10 border border-indigo-100 dark:border-indigo-500/20 rounded-xl p-4"><ShoppingCart className="w-4 h-4 text-indigo-600 mb-1" /><p className="text-lg font-black text-indigo-700 dark:text-indigo-300">{agencia.ventasDelMes}</p><p className="text-[10px] font-bold uppercase text-slate-400">Ventas del mes</p></div>
-                  <div className="bg-purple-50 dark:bg-purple-500/10 border border-purple-100 dark:border-purple-500/20 rounded-xl p-4"><Briefcase className="w-4 h-4 text-purple-600 mb-1" /><p className="text-lg font-black text-purple-700 dark:text-purple-300">{agencia.expedientesActivos}</p><p className="text-[10px] font-bold uppercase text-slate-400">Expedientes activos</p></div>
-                  <div className="bg-amber-50 dark:bg-amber-500/10 border border-amber-100 dark:border-amber-500/20 rounded-xl p-4"><Wallet2 className="w-4 h-4 text-amber-600 mb-1" /><p className="text-lg font-black text-amber-700 dark:text-amber-300">USD {agencia.ingresosDelMesUsd.toLocaleString("es-AR")}</p><p className="text-[10px] font-bold uppercase text-slate-400">Ingresos del mes</p><p className="text-[10px] text-slate-400">Solo movimientos USD</p></div>
-                </div>
-              </div>
-
-              <div>
-                <p className="text-[11px] font-black uppercase tracking-widest text-slate-400 mb-2">Hoy</p>
-                <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-                  <div className="bg-white dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-xl p-4"><p className="text-lg font-black">0</p><p className="text-[10px] font-bold uppercase text-slate-400">Mis pendientes</p></div>
-                  <div className="bg-white dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-xl p-4"><p className="text-lg font-black">0</p><p className="text-[10px] font-bold uppercase text-slate-400">Eventos hoy</p></div>
-                  <div className="bg-indigo-50 dark:bg-indigo-500/10 border border-indigo-100 dark:border-indigo-500/20 rounded-xl p-4"><p className="text-lg font-black text-indigo-600">USD 0</p><p className="text-[10px] font-bold uppercase text-slate-400">Gastos fijos / mes</p><p className="text-[10px] text-slate-400">Piso comprometido</p></div>
-                </div>
-              </div>
-            </>
+            </div>
           )}
+
+          <div>
+            <p className="text-[11px] font-black uppercase tracking-widest text-slate-400 mb-2">Hoy</p>
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+              <button onClick={() => irATab("pendientes")} className="bg-white dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-xl p-4 text-left hover:bg-slate-50 dark:hover:bg-white/10"><p className="text-lg font-black">{pendientesCount}</p><p className="text-[10px] font-bold uppercase text-slate-400">Mis pendientes</p></button>
+              <button onClick={() => irATab("calendario")} className="bg-white dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-xl p-4 text-left hover:bg-slate-50 dark:hover:bg-white/10"><p className="text-lg font-black">{eventosHoyCount}</p><p className="text-[10px] font-bold uppercase text-slate-400">Eventos hoy</p></button>
+              <div className="bg-indigo-50 dark:bg-indigo-500/10 border border-indigo-100 dark:border-indigo-500/20 rounded-xl p-4"><p className="text-lg font-black text-indigo-600">{fmtPorMoneda(gastosFijosPorMoneda)}</p><p className="text-[10px] font-bold uppercase text-slate-400">Gastos fijos / mes</p><p className="text-[10px] text-slate-400">Piso comprometido</p></div>
+            </div>
+          </div>
         </div>
       )}
 
@@ -357,7 +372,7 @@ export default function MiEspacioClient({
         </div>
       )}
 
-      {tab === "urgente" && soyAdmin && (
+      {tab === "urgente" && (
         <div>
           <div className="flex items-center justify-between mb-3">
             <div><p className="text-lg font-bold">URGENTE — {urgentesPendientes.length} pendiente{urgentesPendientes.length === 1 ? "" : "s"}</p><p className="text-xs text-slate-400">Tus anotaciones de cosas urgentes a pagar. Cada ítem muestra cuántos días faltan para el vencimiento.</p></div>
@@ -400,7 +415,7 @@ export default function MiEspacioClient({
         </div>
       )}
 
-      {tab === "pagos" && soyAdmin && (
+      {tab === "pagos" && (
         <div>
           <div className="flex items-center justify-between mb-3 flex-wrap gap-2">
             <div><p className="text-lg font-bold">Pagos realizados — {pagosFiltrados.length} item{pagosFiltrados.length === 1 ? "" : "s"}</p><p className="text-xs text-slate-400">Todos tus pagos en un solo lugar — los manuales + los parciales que cargaste en Deudas, Urgente y Cuotas a pagar.</p></div>
@@ -448,11 +463,11 @@ export default function MiEspacioClient({
         </div>
       )}
 
-      {tab === "deudas" && soyAdmin && <DeudasTab miId={miId} />}
-      {tab === "cuotas-pagar" && soyAdmin && <CuotasPagarTab miId={miId} />}
-      {tab === "cuotas-cobrar" && soyAdmin && <CuotasCobrarTab miId={miId} />}
-      {tab === "saldo-agencia" && soyAdmin && <SaldoAgenciaTab miId={miId} />}
-      {tab === "gastos-fijos" && soyAdmin && <GastosFijosTab miId={miId} autoAbrir={autoAbrir === "gastos-fijos"} onAutoAbierto={() => setAutoAbrir(null)} />}
+      {tab === "deudas" && <DeudasTab miId={miId} />}
+      {tab === "cuotas-pagar" && <CuotasPagarTab miId={miId} />}
+      {tab === "cuotas-cobrar" && <CuotasCobrarTab miId={miId} />}
+      {tab === "saldo-agencia" && <SaldoAgenciaTab miId={miId} />}
+      {tab === "gastos-fijos" && <GastosFijosTab miId={miId} autoAbrir={autoAbrir === "gastos-fijos"} onAutoAbierto={() => setAutoAbrir(null)} />}
       {tab === "mis-autos" && <MisAutosTab miId={miId} />}
       {tab === "patrimonio" && <PatrimonioTab miId={miId} miNombre={miNombre} soyAdmin={soyAdmin} />}
       {tab === "pendientes" && <PendientesTab miId={miId} autoAbrir={autoAbrir === "pendientes"} onAutoAbierto={() => setAutoAbrir(null)} />}

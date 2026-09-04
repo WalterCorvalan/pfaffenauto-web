@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { supabase2 } from "@/lib/supabase2/client";
-import { Plus, X, Save, Trash2, Pencil, CheckCircle2, Circle } from "lucide-react";
+import { Plus, X, Save, Trash2, CheckCircle2, Circle } from "lucide-react";
 import { inputClass, labelClass } from "./shared";
 
 const PRIORIDAD_COLOR: Record<string, string> = { Baja: "bg-slate-100 dark:bg-white/10 text-slate-500", Media: "bg-amber-100 dark:bg-amber-500/20 text-amber-700 dark:text-amber-300", Alta: "bg-rose-100 dark:bg-rose-500/20 text-rose-700 dark:text-rose-300" };
@@ -71,7 +71,6 @@ export default function PendientesTab({ miId, autoAbrir, onAutoAbierto }: { miId
                 <p className={`text-sm font-bold ${i.completada ? "line-through text-slate-400" : ""}`}>{i.titulo} <span className={`text-[10px] font-bold px-1.5 py-0.5 rounded-full ${PRIORIDAD_COLOR[i.prioridad]}`}>{i.prioridad}</span></p>
                 {i.vencimiento && <p className="text-[11px] text-slate-400">Vence {i.vencimiento}</p>}
               </div>
-              <button className="p-1.5 text-slate-400 hover:text-slate-700 dark:hover:text-white"><Pencil className="w-3.5 h-3.5" /></button>
               <button onClick={() => eliminar(i)} className="p-1.5 text-slate-400 hover:text-rose-600"><Trash2 className="w-3.5 h-3.5" /></button>
             </div>
           ))}

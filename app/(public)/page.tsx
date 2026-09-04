@@ -1,4 +1,4 @@
-import { createClient } from "@/lib/supabase/server";
+import { createClient } from "@/lib/supabase2/server";
 import type { Metadata } from "next";
 
 export const metadata: Metadata = {
@@ -24,14 +24,14 @@ import BannersPublicitarios from "@/components/banners/BannerPublicitario";
 
 export const revalidate = 60;
 
-const CAMPOS_PUBLICOS = "id, marca, modelo, anio, kilometraje, tipo, segmento, estado, slug, precio_publicado_ars, precio_publicado_usd, multimedia_vehiculos ( url_archivo ), sucursales!vehiculos_sucursal_id_fkey ( nombre )";
+import { CAMPOS_VEHICULO_PUBLICO } from "@/lib/vehiculos";
 
 export default async function Page() {
   const supabase = await createClient();
   const { data: vehiculos } = await supabase
     .from("vehiculos")
-    .select(CAMPOS_PUBLICOS)
-    .in("estado", ["Disponible", "Reservado"])
+    .select(CAMPOS_VEHICULO_PUBLICO)
+    .in("estado", ["disponible", "reservado"])
     .order("created_at", { ascending: false });
 
   return (

@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { supabase2 } from "@/lib/supabase2/client";
-import { Plus, X, Save, Trash2, Pencil } from "lucide-react";
+import { Plus, X, Save, Trash2 } from "lucide-react";
 import { inputClass, labelClass } from "./shared";
 
 const CATEGORIA_COLOR: Record<string, string> = {
@@ -69,18 +69,21 @@ export default function CalendarioTab({ miId, autoAbrir, onAutoAbierto }: { miId
       ) : (
         <>
           <p className="text-[10px] font-black uppercase tracking-widest text-slate-400 mb-1.5">Próximos ({proximos.length})</p>
-          <div className="space-y-1.5">
-            {eventos.map((e) => (
-              <div key={e.id} className="bg-white dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-xl px-4 py-3 flex items-center gap-3">
-                <div className="flex-1 min-w-0">
-                  <p className="text-sm font-bold flex items-center gap-1.5">{e.evento} <span className={`text-[10px] font-bold px-1.5 py-0.5 rounded-full ${CATEGORIA_COLOR[e.categoria]}`}>{e.categoria}</span></p>
-                  <p className="text-[11px] text-slate-400">{e.fecha}{e.hora ? ` ${e.hora}` : ""} · 🔔 {e.recordar_antes}</p>
+          {proximos.length === 0 ? (
+            <p className="text-xs text-slate-400 py-4 text-center">Sin eventos próximos.</p>
+          ) : (
+            <div className="space-y-1.5">
+              {proximos.map((e) => (
+                <div key={e.id} className="bg-white dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-xl px-4 py-3 flex items-center gap-3">
+                  <div className="flex-1 min-w-0">
+                    <p className="text-sm font-bold flex items-center gap-1.5">{e.evento} <span className={`text-[10px] font-bold px-1.5 py-0.5 rounded-full ${CATEGORIA_COLOR[e.categoria]}`}>{e.categoria}</span></p>
+                    <p className="text-[11px] text-slate-400">{e.fecha}{e.hora ? ` ${e.hora}` : ""} · 🔔 {e.recordar_antes}</p>
+                  </div>
+                  <button onClick={() => eliminar(e)} className="p-1.5 text-slate-400 hover:text-rose-600"><Trash2 className="w-3.5 h-3.5" /></button>
                 </div>
-                <button className="p-1.5 text-slate-400 hover:text-slate-700 dark:hover:text-white"><Pencil className="w-3.5 h-3.5" /></button>
-                <button onClick={() => eliminar(e)} className="p-1.5 text-slate-400 hover:text-rose-600"><Trash2 className="w-3.5 h-3.5" /></button>
-              </div>
-            ))}
-          </div>
+              ))}
+            </div>
+          )}
         </>
       )}
 

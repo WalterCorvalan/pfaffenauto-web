@@ -29,7 +29,7 @@ export default function BotonesInteractivos({ auto }: { auto: any }) {
         slug: auto.slug,
         precio_publicado_ars: auto.precio_publicado_ars,
         precio_publicado_usd: auto.precio_publicado_usd,
-        imagen: auto.multimedia_vehiculos?.[0]?.url_archivo
+        imagen: auto.fotos?.[0]
       });
       
       // Guardamos solo los últimos 10 para no saturar la memoria
@@ -38,7 +38,7 @@ export default function BotonesInteractivos({ auto }: { auto: any }) {
     } catch (e) {
       console.error("Error guardando en vistos recientes", e);
     }
-  }, [auto.id, auto.marca, auto.modelo, auto.slug, auto.precio_publicado_ars, auto.precio_publicado_usd, auto.multimedia_vehiculos]);
+  }, [auto.id, auto.marca, auto.modelo, auto.slug, auto.precio_publicado_ars, auto.precio_publicado_usd, auto.fotos]);
 
   const toggleFav = () => {
     let favs = JSON.parse(localStorage.getItem("pfaffen_favs") || "[]");
@@ -55,7 +55,7 @@ export default function BotonesInteractivos({ auto }: { auto: any }) {
         slug: auto.slug,
         precio_ars: auto.precio_publicado_ars,
         precio_usd: auto.precio_publicado_usd,
-        imagen: auto.multimedia_vehiculos?.[0]?.url_archivo
+        imagen: auto.fotos?.[0]
       });
       localStorage.setItem("pfaffen_favs", JSON.stringify(favs));
       setIsFav(true);

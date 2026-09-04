@@ -1,4 +1,4 @@
-import { createClient } from "@/lib/supabase/server";
+import { createClient } from "@/lib/supabase2/server";
 import Link from "next/link";
 import Image from "next/image";
 import { ShieldCheck, ChevronRight, Sparkles } from "lucide-react";
@@ -111,7 +111,7 @@ export default async function MarcaPage({
     .from("vehiculos")
     .select(CAMPOS_VEHICULO_PUBLICO)
     .ilike("marca", marca)
-    .in("estado", ["Disponible", "Reservado"])
+    .in("estado", ["disponible", "reservado"])
     .order("precio_publicado_ars", { ascending: true });
 
   // ESTADO VACÍO

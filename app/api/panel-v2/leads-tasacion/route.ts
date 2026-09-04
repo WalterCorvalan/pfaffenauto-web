@@ -25,7 +25,7 @@ const LeadTasacionSchema = z.object({
   aceptaOferta: z.boolean().optional().nullable(),
   fotosYVideos: z.array(z.string().url()).max(30).optional(),
   canalOrigen: z.string().trim().max(60).optional().nullable(),
-  tipo: z.enum(["tasacion", "permuta"]).optional(),
+  tipo: z.enum(["tasacion", "permuta", "financiacion"]).optional(),
   vehiculoObjetivoId: z.string().uuid().optional().nullable(),
   // Si el cliente eligió venir a sucursal, reserva una visita real en el
   // mismo request (misma lógica que /api/panel-v2/visitas).

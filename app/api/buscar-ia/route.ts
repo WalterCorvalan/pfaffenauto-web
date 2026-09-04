@@ -9,8 +9,8 @@ const BusquedaSchema = z.object({
 });
 
 const supabase = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY!
+  process.env.NEXT_PUBLIC_SUPABASE2_URL!,
+  process.env.NEXT_PUBLIC_SUPABASE2_PUBLISHABLE_KEY!
 );
 
 export async function POST(req: Request) {
@@ -39,14 +39,15 @@ export async function POST(req: Request) {
 
     let query = supabase
       .from("vehiculos")
-      .select(`*, multimedia_vehiculos ( url_archivo ), sucursales!vehiculos_sucursal_id_fkey ( nombre )`, { count: "exact" })
-      .in("estado", ["Disponible", "Reservado"]);
+      .select(`*, sucursales!vehiculos_sucursal_id_fkey ( nombre )`, { count: "exact" })
+      .in("estado", ["disponible", "reservado"]);
 
     if (filtros.tipo) query = query.eq("tipo", filtros.tipo);
     if (filtros.marca) query = query.eq("marca", filtros.marca);
     if (filtros.transmision) query = query.eq("transmision", filtros.transmision);
-    if (filtros.combustible) query = query.eq("tipo_combustible", filtros.combustible);
-    if (filtros.condicion) query = query.eq("condicion", filtros.condicion);
+    if (filtros.combustible) query = query.eq("combustible", filtros.combustible);
+    if (filtros.condicion === "0km") query = query.eq("km", 0);
+    else if (filtros.condicion === "usados") query = query.gt("km", 0);
     if (filtros.precio_max_usd) query = query.lte("precio_publicado_usd", filtros.precio_max_usd);
 
     query = query.order("created_at", { ascending: false }).limit(24);

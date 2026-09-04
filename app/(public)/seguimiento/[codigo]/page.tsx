@@ -1,26 +1,20 @@
 import { createClient } from "@supabase/supabase-js";
 import Link from "next/link";
-import { CheckCircle2, Circle, CarFront, Search, Clock, XCircle, Wallet, PackageCheck } from "lucide-react";
+import { CheckCircle2, Circle, CarFront, Search, Wallet } from "lucide-react";
+import { crearAlerta } from "@/lib/panelV2/alertas";
 
-const MENSAJE_TRAMITE: Record<string, { texto: string; color: string; icono: typeof PackageCheck } | undefined> = {
-  "Listo para retirar": { texto: "Tu documentación está lista para retirar.", color: "text-emerald-600 bg-emerald-50", icono: PackageCheck },
-  "Entregado": { texto: "Ya retiraste tu documentación. ¡Gracias!", color: "text-emerald-600 bg-emerald-50", icono: CheckCircle2 },
-  "Finalizado": { texto: "Tu trámite está finalizado. Pronto vas a poder retirar la documentación.", color: "text-emerald-600 bg-emerald-50", icono: CheckCircle2 },
-};
-
-const ETAPAS = ["Seña", "Documentación", "Patentamiento", "Transferencia", "Entrega", "Completado"];
-
-const ESTADO_SENA_INFO: Record<string, { label: string; color: string; icono: typeof Clock }> = {
-  Activa: { label: "Recibimos tu seña — en proceso", color: "text-amber-500 bg-amber-50", icono: Clock },
+const ESTADO_SENA_INFO: Record<string, { label: string; color: string; icono: typeof Wallet }> = {
+  Activa: { label: "Recibimos tu seña — en proceso", color: "text-amber-500 bg-amber-50", icono: Wallet },
   Convertida: { label: "¡Se convirtió en venta! Seguí el resto del proceso con tu asesor.", color: "text-emerald-500 bg-emerald-50", icono: CheckCircle2 },
-  Perdida: { label: "Esta seña ya no está activa.", color: "text-rose-500 bg-rose-50", icono: XCircle },
+  Perdida: { label: "Esta seña ya no está activa.", color: "text-rose-500 bg-rose-50", icono: Search },
 };
 
-// Server-only: usamos service role porque "boletos_venta"/"senas" no tienen policy pública de SELECT.
-// La query solo expone etapa + auto, nunca precios ni datos del cliente.
+// Server-only: usamos service role porque senas/ventas/expedientes no tienen
+// policy pública de SELECT. La query solo expone marca/modelo + progreso,
+// nunca precios internos ni datos del cliente.
 const supabase = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.SUPABASE_SERVICE_ROLE_KEY!
+  process.env.NEXT_PUBLIC_SUPABASE2_URL!,
+  process.env.SUPABASE2_SERVICE_ROLE_KEY!
 );
 
 export default async function SeguimientoPublicoPage({
@@ -29,63 +23,68 @@ export default async function SeguimientoPublicoPage({
   params: Promise<{ codigo: string }>;
 }) {
   const { codigo } = await params;
+  const codigoUpper = codigo.toUpperCase();
 
   const { data: venta } = await supabase
-    .from("boletos_venta")
-    .select("id, numero, etapa_seguimiento, marca, modelo, vendedor_id")
-    .eq("codigo_seguimiento", codigo.toUpperCase())
+    .from("ventas")
+    .select("id, marca:vehiculo_marca, modelo:vehiculo_modelo, vendedor_id, precio_venta, moneda_venta")
+    .eq("codigo_seguimiento", codigoUpper)
     .maybeSingle();
-
-  // Estado del trámite de gestoría (transferencia/patentamiento) + cuánto
-  // falta pagar al retirar — sin exponer costos internos ni ganancia, solo
-  // lo que el cliente necesita saber.
-  let tramite: { estado: string } | null = null;
-  let montoPendiente = 0;
-  if (venta) {
-    const { data: t } = await supabase
-      .from("tramites_gestoria")
-      .select("id, estado")
-      .eq("venta_id", venta.id)
-      .maybeSingle();
-    if (t) {
-      tramite = { estado: t.estado };
-      const { data: pendientes } = await supabase
-        .from("movimientos_caja")
-        .select("monto")
-        .eq("tramite_id", t.id)
-        .eq("tipo", "ingreso")
-        .eq("medio_pago", "Pendiente");
-      montoPendiente = (pendientes || []).reduce((acc, m) => acc + Number(m.monto), 0);
-    }
-  }
 
   const { data: sena } = venta
     ? { data: null }
     : await supabase
         .from("senas")
         .select("id, numero, estado, marca, modelo, vendedor_id")
-        .eq("codigo_seguimiento", codigo.toUpperCase())
+        .eq("codigo_seguimiento", codigoUpper)
         .maybeSingle();
 
+  let hitos: { nombre: string; completado: boolean }[] = [];
+  let montoPendiente = 0;
+  if (venta) {
+    const { data: expediente } = await supabase
+      .from("expedientes")
+      .select("id")
+      .eq("venta_id", venta.id)
+      .maybeSingle();
+
+    if (expediente) {
+      const { data: h } = await supabase
+        .from("expediente_hitos")
+        .select("nombre, completado")
+        .eq("expediente_id", expediente.id)
+        .order("orden");
+      hitos = h || [];
+    }
+
+    // movimientos_caja no tiene columna de moneda propia — la moneda depende
+    // de la cuenta destino, así que hay que joinearla para no mezclar ARS/USD.
+    const { data: movimientos } = await supabase
+      .from("movimientos_caja")
+      .select("monto, cuenta:cuenta_id ( moneda )")
+      .eq("venta_id", venta.id)
+      .eq("tipo", "ingreso")
+      .eq("estado", "aprobado");
+    const cobrado = (movimientos || [])
+      .filter((m: any) => m.cuenta?.moneda === venta.moneda_venta)
+      .reduce((acc: number, m: any) => acc + Number(m.monto), 0);
+    montoPendiente = Math.max(0, Number(venta.precio_venta) - cobrado);
+  }
+
   if (venta?.vendedor_id) {
-    await supabase.from("notificaciones").insert({
-      perfil_id: venta.vendedor_id,
+    await crearAlerta(supabase, venta.vendedor_id, `El cliente abrió el seguimiento de su venta (${venta.marca || ""} ${venta.modelo || ""})`, {
       tipo: "vista_seguimiento",
-      mensaje: `El cliente abrió el seguimiento de la Venta N° ${venta.numero} (${venta.marca} ${venta.modelo}).`,
-      link: `/panel/ventas/seguimiento/${venta.id}`,
-      seccion: "boletos",
+      link: `/panel-v2/ventas`,
     });
   } else if (sena?.vendedor_id) {
-    await supabase.from("notificaciones").insert({
-      perfil_id: sena.vendedor_id,
+    await crearAlerta(supabase, sena.vendedor_id, `El cliente abrió el seguimiento de la Seña N° ${sena.numero} (${sena.marca} ${sena.modelo})`, {
       tipo: "vista_seguimiento",
-      mensaje: `El cliente abrió el seguimiento de la Seña N° ${sena.numero} (${sena.marca} ${sena.modelo}).`,
-      link: `/panel/senas/imprimir/${sena.id}`,
-      seccion: "senas",
+      link: `/panel-v2/senas`,
     });
   }
 
-  const indexActual = venta ? ETAPAS.indexOf(venta.etapa_seguimiento || "Seña") : -1;
+  const totalHitos = hitos.length;
+  const completados = hitos.filter((h) => h.completado).length;
 
   return (
     <div className="min-h-screen bg-[#F8FAFC] pt-24 pb-16 px-4">
@@ -138,49 +137,51 @@ export default async function SeguimientoPublicoPage({
               </div>
             </div>
 
-            <div className="space-y-1">
-              {ETAPAS.map((etapa, i) => {
-                const completada = i < indexActual;
-                const actual = i === indexActual;
-                return (
-                  <div key={etapa} className="flex items-center gap-3 py-2">
-                    {completada ? (
-                      <CheckCircle2 className="w-5 h-5 text-emerald-500 shrink-0" />
-                    ) : actual ? (
-                      <div className="w-5 h-5 rounded-full bg-[#0145F2] flex items-center justify-center shrink-0">
-                        <div className="w-2 h-2 rounded-full bg-white" />
-                      </div>
-                    ) : (
-                      <Circle className="w-5 h-5 text-slate-200 shrink-0" />
-                    )}
-                    <span className={`text-sm font-bold ${actual ? "text-[#0145F2]" : completada ? "text-slate-700" : "text-slate-300"}`}>
-                      {etapa}
-                    </span>
-                  </div>
-                );
-              })}
-            </div>
-
-            {(tramite && MENSAJE_TRAMITE[tramite.estado] || montoPendiente > 0) && (
-              <div className="mt-6 space-y-2">
-                {tramite && MENSAJE_TRAMITE[tramite.estado] && (() => {
-                  const info = MENSAJE_TRAMITE[tramite.estado]!;
-                  const Icono = info.icono;
+            {totalHitos === 0 ? (
+              <div className="flex items-center gap-3 rounded-2xl p-4 text-amber-700 bg-amber-50">
+                <Wallet className="w-5 h-5 shrink-0" />
+                <p className="text-sm font-bold">Tu venta está confirmada. En breve tu asesor va a iniciar la gestión de la documentación.</p>
+              </div>
+            ) : (
+              <div className="space-y-1">
+                {hitos.map((hito, i) => {
+                  const actual = !hito.completado && hitos.slice(0, i).every((h) => h.completado);
                   return (
-                    <div className={`flex items-center gap-3 rounded-2xl p-4 ${info.color}`}>
-                      <Icono className="w-5 h-5 shrink-0" />
-                      <p className="text-sm font-bold">{info.texto}</p>
+                    <div key={hito.nombre} className="flex items-center gap-3 py-2">
+                      {hito.completado ? (
+                        <CheckCircle2 className="w-5 h-5 text-emerald-500 shrink-0" />
+                      ) : actual ? (
+                        <div className="w-5 h-5 rounded-full bg-[#0145F2] flex items-center justify-center shrink-0">
+                          <div className="w-2 h-2 rounded-full bg-white" />
+                        </div>
+                      ) : (
+                        <Circle className="w-5 h-5 text-slate-200 shrink-0" />
+                      )}
+                      <span className={`text-sm font-bold ${actual ? "text-[#0145F2]" : hito.completado ? "text-slate-700" : "text-slate-300"}`}>
+                        {hito.nombre}
+                      </span>
                     </div>
                   );
-                })()}
+                })}
+              </div>
+            )}
+
+            {(completados === totalHitos && totalHitos > 0) || montoPendiente > 0 ? (
+              <div className="mt-6 space-y-2">
+                {completados === totalHitos && totalHitos > 0 && (
+                  <div className="flex items-center gap-3 rounded-2xl p-4 text-emerald-600 bg-emerald-50">
+                    <CheckCircle2 className="w-5 h-5 shrink-0" />
+                    <p className="text-sm font-bold">Tu trámite está finalizado. Pronto vas a poder retirar la documentación.</p>
+                  </div>
+                )}
                 {montoPendiente > 0 && (
                   <div className="flex items-center gap-3 rounded-2xl p-4 text-amber-700 bg-amber-50">
                     <Wallet className="w-5 h-5 shrink-0" />
-                    <p className="text-sm font-bold">Monto pendiente a abonar al retirar: $ {montoPendiente.toLocaleString("es-AR")}</p>
+                    <p className="text-sm font-bold">Monto pendiente a abonar al retirar: {venta.moneda_venta === "ARS" ? "$" : "US$"} {montoPendiente.toLocaleString("es-AR")}</p>
                   </div>
                 )}
               </div>
-            )}
+            ) : null}
 
             <p className="text-[11px] text-slate-400 text-center mt-8">
               ¿Dudas? Escribinos por WhatsApp y te contamos el detalle.

@@ -8,7 +8,7 @@ import { motion, AnimatePresence } from "framer-motion";
 const MotionImage = motion.create(Image);
 
 interface GaleriaProps {
-  imagenes: any[];
+  imagenes: string[];
   altText: string;
 }
 
@@ -45,7 +45,7 @@ export default function GaleriaVehiculo({ imagenes, altText }: GaleriaProps) {
             animate={{ opacity: 1, scale: 1, filter: "blur(0px)" }}
             exit={{ opacity: 0, scale: 1.02, filter: "blur(4px)" }}
             transition={{ duration: 0.3 }}
-            src={imagenes[currentIndex]?.url_archivo}
+            src={imagenes[currentIndex]}
             alt={`${altText} - Foto ${currentIndex + 1}`}
             fill
             sizes="(max-width: 768px) 100vw, 66vw"
@@ -91,7 +91,7 @@ export default function GaleriaVehiculo({ imagenes, altText }: GaleriaProps) {
                   : "opacity-50 hover:opacity-100 grayscale hover:grayscale-0"
               }`}
             >
-              <Image src={img.url_archivo} alt={`Miniatura ${idx + 1}`} fill sizes="112px" className="object-cover" />
+              <Image src={img} alt={`Miniatura ${idx + 1}`} fill sizes="112px" className="object-cover" />
             </button>
           ))}
         </div>

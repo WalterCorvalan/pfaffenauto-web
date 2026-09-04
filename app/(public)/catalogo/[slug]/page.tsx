@@ -1,5 +1,5 @@
 import { cache } from "react";
-import { createClient } from "@/lib/supabase/server";
+import { createClient } from "@/lib/supabase2/server";
 import {
   CalendarDays,
   CarFront,
@@ -53,13 +53,13 @@ export async function generateMetadata({
   const auto = await buscarAuto(slug);
   if (!auto) return { title: "Vehículo no encontrado | Pfaffen Autos" };
 
-  const esCeroKm = auto.kilometraje === 0;
+  const esCeroKm = auto.km === 0;
   const titulo = `${auto.marca} ${auto.modelo} ${auto.anio} ${esCeroKm ? "0KM" : "Usado"} | Pfaffen Autos`;
   const precioTexto = auto.precio_publicado_usd
     ? `US$ ${auto.precio_publicado_usd.toLocaleString("en-US")}`
     : `$${(auto.precio_publicado_ars || 0).toLocaleString("es-AR")}`;
-  const descripcion = `${auto.marca} ${auto.modelo} ${auto.anio}, ${esCeroKm ? "0km" : `${auto.kilometraje?.toLocaleString("es-AR")} km`}. Precio ${precioTexto}. Financiación disponible en Pfaffen Autos.`;
-  const imagen = (auto.multimedia_vehiculos as any)?.[0]?.url_archivo;
+  const descripcion = `${auto.marca} ${auto.modelo} ${auto.anio}, ${esCeroKm ? "0km" : `${auto.km?.toLocaleString("es-AR")} km`}. Precio ${precioTexto}. Financiación disponible en Pfaffen Autos.`;
+  const imagen = (auto.fotos as any)?.[0];
 
   return {
     title: titulo,
@@ -106,23 +106,23 @@ export default async function VehiculoDetallePage({
   );
   const linkWhatsApp = `https://wa.me/${numeroLimpio}?text=${mensajeWhatsApp}`;
 
-  const esCeroKm = auto.kilometraje === 0;
+  const esCeroKm = auto.km === 0;
   const precioArs = auto.precio_publicado_ars || 0;
   const precioUsd = auto.precio_publicado_usd || null;
 
   // ================= 3. QUERIES SECUNDARIAS PARALELIZADAS (PROMISE.ALL) =================
-  const CAMPOS_CARD = `id, marca, modelo, segmento, anio, kilometraje, transmision, precio_publicado_ars, precio_publicado_usd, slug, sucursales!vehiculos_sucursal_id_fkey ( nombre ), multimedia_vehiculos ( url_archivo )`;
+  const CAMPOS_CARD = `id, marca, modelo, segmento, anio, km, transmision, precio_publicado_ars, precio_publicado_usd, slug, sucursales!vehiculos_sucursal_id_fkey ( nombre ), fotos`;
 
   // Disparamos las 3 consultas al mismo tiempo
   const [reqPorMarca, reqPrecioSimilar, reqDestacados] = await Promise.all([
     // A. También te podría interesar (Por Marca)
-    supabase.from("vehiculos").select(CAMPOS_CARD).eq("marca", auto.marca).neq("id", auto.id).in("estado", ["Disponible", "Reservado"]).order("created_at", { ascending: false }).limit(4),
-    
+    supabase.from("vehiculos").select(CAMPOS_CARD).eq("marca", auto.marca).neq("id", auto.id).in("estado", ["disponible", "reservado"]).order("created_at", { ascending: false }).limit(4),
+
     // B. Precio similar (+- 15%)
-    supabase.from("vehiculos").select(CAMPOS_CARD).gte("precio_publicado_ars", precioArs * 0.85).lte("precio_publicado_ars", precioArs * 1.15).neq("id", auto.id).in("estado", ["Disponible", "Reservado"]).limit(4),
-    
+    supabase.from("vehiculos").select(CAMPOS_CARD).gte("precio_publicado_ars", precioArs * 0.85).lte("precio_publicado_ars", precioArs * 1.15).neq("id", auto.id).in("estado", ["disponible", "reservado"]).limit(4),
+
     // C. Autos Destacados
-    supabase.from("vehiculos").select("id, marca, modelo, slug, precio_publicado_ars, precio_publicado_usd, multimedia_vehiculos ( url_archivo )").eq("destacado", true).neq("id", auto.id).in("estado", ["Disponible", "Reservado"]).order("created_at", { ascending: false }).limit(10)
+    supabase.from("vehiculos").select("id, marca, modelo, slug, precio_publicado_ars, precio_publicado_usd, fotos").eq("destacado", true).neq("id", auto.id).in("estado", ["disponible", "reservado"]).order("created_at", { ascending: false }).limit(10)
   ]);
 
   let tambienTeInteresa = reqPorMarca.data || [];
@@ -137,7 +137,7 @@ export default async function VehiculoDetallePage({
       .select(CAMPOS_CARD)
       .eq("tipo", auto.tipo)
       .not("id", "in", `(${idsYaIncluidos.join(",")})`)
-      .in("estado", ["Disponible", "Reservado"])
+      .in("estado", ["disponible", "reservado"])
       .order("created_at", { ascending: false })
       .limit(4 - tambienTeInteresa.length);
     tambienTeInteresa = [...tambienTeInteresa, ...(porTipo || [])];
@@ -149,7 +149,7 @@ export default async function VehiculoDetallePage({
       .from("vehiculos")
       .select(CAMPOS_CARD)
       .neq("id", auto.id)
-      .in("estado", ["Disponible", "Reservado"])
+      .in("estado", ["disponible", "reservado"])
       .order("created_at", { ascending: false })
       .limit(4);
     tambienTeInteresa = ultimosIngresos || [];
@@ -165,12 +165,12 @@ export default async function VehiculoDetallePage({
     vehicleModelDate: String(auto.anio),
     mileageFromOdometer: {
       "@type": "QuantitativeValue",
-      value: auto.kilometraje,
+      value: auto.km,
       unitCode: "KMT",
     },
-    fuelType: auto.tipo_combustible || undefined,
+    fuelType: auto.combustible || undefined,
     vehicleTransmission: auto.transmision || undefined,
-    image: (auto.multimedia_vehiculos || []).map((m: any) => m.url_archivo),
+    image: auto.fotos || [],
     offers: {
       "@type": "Offer",
       priceCurrency: precioUsd ? "USD" : "ARS",
@@ -304,14 +304,14 @@ function VehiculoGallery({ auto }: { auto: any }) {
     <div className="w-full overflow-hidden shadow-[0_20px_50px_rgba(0,0,0,0.1)] dark:shadow-[0_20px_50px_rgba(0,0,0,0.4)] rounded-[20px] md:rounded-[32px] border border-slate-200/50 dark:border-white/10 bg-white dark:bg-white/5 print:shadow-none print:border-slate-300">
       <div className="print:hidden">
         <GaleriaVehiculo
-          imagenes={auto.multimedia_vehiculos || []}
+          imagenes={auto.fotos || []}
           altText={`${auto.marca} ${auto.modelo}`}
         />
       </div>
       <div className="hidden print:block w-full h-[400px]">
-        {auto.multimedia_vehiculos?.[0] ? (
+        {auto.fotos?.[0] ? (
           <img
-            src={auto.multimedia_vehiculos[0].url_archivo}
+            src={auto.fotos[0]}
             className="w-full h-full object-cover"
             alt="Vehículo"
           />
@@ -343,7 +343,7 @@ function VehiculoSpecs({ auto, esCeroKm }: { auto: any; esCeroKm: boolean }) {
         </div>
         <div className="flex flex-col">
           <span className="text-[10px] text-slate-500 dark:text-slate-400 font-bold uppercase tracking-widest">Kilómetros</span>
-          <span className="text-base font-black text-navy dark:text-white">{esCeroKm ? "0 km" : `${auto.kilometraje?.toLocaleString("es-AR")} km`}</span>
+          <span className="text-base font-black text-navy dark:text-white">{esCeroKm ? "0 km" : `${auto.km?.toLocaleString("es-AR")} km`}</span>
         </div>
       </div>
       <div className="flex items-center gap-4">
@@ -352,7 +352,7 @@ function VehiculoSpecs({ auto, esCeroKm }: { auto: any; esCeroKm: boolean }) {
         </div>
         <div className="flex flex-col">
           <span className="text-[10px] text-slate-500 dark:text-slate-400 font-bold uppercase tracking-widest">Combustible</span>
-          <span className="text-base font-black text-navy dark:text-white capitalize">{auto.tipo_combustible || "-"}</span>
+          <span className="text-base font-black text-navy dark:text-white capitalize">{auto.combustible || "-"}</span>
         </div>
       </div>
       <div className="flex items-center gap-4">
@@ -483,9 +483,9 @@ function VehiculosRelacionados({ titulo, vehiculos }: { titulo: string; vehiculo
               className="block group bg-white/40 dark:bg-white/5 backdrop-blur-2xl rounded-[24px] border border-white/60 dark:border-white/10 overflow-hidden shadow-[0_8px_32px_rgba(0,0,0,0.04)] dark:shadow-none hover:shadow-[0_20px_48px_rgba(1,69,242,0.12)] dark:hover:shadow-none hover:border-white dark:hover:border-white/20 hover:bg-white/70 dark:hover:bg-white/10 transition-all duration-500"
             >
               <div className="relative h-[140px] sm:h-[160px] bg-white/30 dark:bg-white/5 overflow-hidden mix-blend-multiply dark:mix-blend-normal">
-                {v.multimedia_vehiculos?.[0] ? (
+                {v.fotos?.[0] ? (
                   <Image
-                    src={v.multimedia_vehiculos[0].url_archivo}
+                    src={v.fotos[0]}
                     alt={`${v.marca} ${v.modelo}`}
                     fill
                     sizes="(max-width: 640px) 50vw, 25vw"
@@ -499,7 +499,7 @@ function VehiculosRelacionados({ titulo, vehiculos }: { titulo: string; vehiculo
                 <span className="text-[10px] text-gray-400 dark:text-slate-500 font-black uppercase tracking-widest mb-1">{v.marca}</span>
                 <h3 className="text-sm font-black text-navy dark:text-white leading-tight uppercase truncate">{v.modelo}</h3>
                 <p className="text-[11px] text-gray-500 dark:text-slate-400 font-medium mt-0.5">
-                  {v.anio} · {v.kilometraje?.toLocaleString("es-AR")} km · {v.transmision || "—"}
+                  {v.anio} · {v.km?.toLocaleString("es-AR")} km · {v.transmision || "—"}
                 </p>
                 <div className="mt-3 pt-3 flex items-center justify-between border-t border-gray-200/50 dark:border-white/10">
                   <span className="text-base font-black text-navy dark:text-white tracking-tighter">{precioMostrar}</span>

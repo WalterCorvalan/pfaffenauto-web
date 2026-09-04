@@ -1,4 +1,4 @@
-import { createClient } from "@/lib/supabase/server";
+import { createClient } from "@/lib/supabase2/server";
 import { CAMPOS_VEHICULO_PUBLICO } from "@/lib/vehiculos";
 import VehiculosGrid from "@/components/VehiculosGrid";
 import { Sparkles, ShieldCheck, ChevronRight, Zap } from "lucide-react";
@@ -20,8 +20,8 @@ export default async function CeroKmPage() {
   const { data: vehiculos } = await supabase
     .from("vehiculos")
     .select(CAMPOS_VEHICULO_PUBLICO)
-    .in("estado", ["Disponible", "Reservado"])
-    .eq("kilometraje", 0)
+    .in("estado", ["disponible", "reservado"])
+    .eq("km", 0)
     .or("precio_publicado_ars.not.is.null,precio_publicado_usd.not.is.null")
     .order("created_at", { ascending: false });
 

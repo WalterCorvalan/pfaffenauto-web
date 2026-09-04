@@ -75,7 +75,7 @@ export default function ComparadorModal({ isOpen, onClose, autos, removerAuto }:
               <div className="flex flex-col relative group">
                 <button onClick={() => removerAuto(auto1.id)} className="absolute -top-2 -right-2 bg-red-600 text-white p-1 rounded-full opacity-0 group-hover:opacity-100 transition-opacity z-10 hidden md:block"><X className="w-3 h-3"/></button>
                 <div className="relative h-14 md:h-24 bg-white/5 rounded-xl overflow-hidden border border-white/10 mb-2 md:mb-3">
-                  <Image src={auto1?.multimedia_vehiculos?.[0]?.url_archivo || "/placeholder.jpg"} alt={auto1?.modelo || ""} fill sizes="200px" className="object-cover" />
+                  <Image src={auto1?.fotos?.[0] || "/placeholder.jpg"} alt={auto1?.modelo || ""} fill sizes="200px" className="object-cover" />
                 </div>
                 <h3 className="text-xs md:text-xl font-black text-white leading-tight truncate">{auto1?.marca} <br className="md:hidden"/>{auto1?.modelo}</h3>
               </div>
@@ -86,7 +86,7 @@ export default function ComparadorModal({ isOpen, onClose, autos, removerAuto }:
                   <>
                     <button onClick={() => removerAuto(auto2.id)} className="absolute -top-2 -right-2 bg-red-600 text-white p-1 rounded-full opacity-0 group-hover:opacity-100 transition-opacity z-10 hidden md:block"><X className="w-3 h-3"/></button>
                     <div className="relative h-14 md:h-24 bg-white/5 rounded-xl overflow-hidden border border-white/10 mb-2 md:mb-3">
-                      <Image src={auto2.multimedia_vehiculos?.[0]?.url_archivo || "/placeholder.jpg"} alt={auto2.modelo} fill sizes="200px" className="object-cover" />
+                      <Image src={auto2.fotos?.[0] || "/placeholder.jpg"} alt={auto2.modelo} fill sizes="200px" className="object-cover" />
                     </div>
                     <h3 className="text-xs md:text-xl font-black text-white leading-tight truncate">{auto2.marca} <br className="md:hidden"/>{auto2.modelo}</h3>
                   </>
@@ -103,7 +103,7 @@ export default function ComparadorModal({ isOpen, onClose, autos, removerAuto }:
                   <>
                     <button onClick={() => removerAuto(auto3.id)} className="absolute -top-2 -right-2 bg-red-600 text-white p-1 rounded-full opacity-0 group-hover:opacity-100 transition-opacity z-10 hidden md:block"><X className="w-3 h-3"/></button>
                     <div className="relative h-14 md:h-24 bg-white/5 rounded-xl overflow-hidden border border-white/10 mb-2 md:mb-3">
-                      <Image src={auto3.multimedia_vehiculos?.[0]?.url_archivo || "/placeholder.jpg"} alt={auto3.modelo} fill sizes="200px" className="object-cover" />
+                      <Image src={auto3.fotos?.[0] || "/placeholder.jpg"} alt={auto3.modelo} fill sizes="200px" className="object-cover" />
                     </div>
                     <h3 className="text-xs md:text-xl font-black text-white leading-tight truncate">{auto3.marca} <br className="md:hidden"/>{auto3.modelo}</h3>
                   </>
@@ -127,11 +127,11 @@ export default function ComparadorModal({ isOpen, onClose, autos, removerAuto }:
             <Row label="Marca" val1={auto1?.marca} val2={auto2?.marca} val3={auto3?.marca} />
             <Row label="Modelo" val1={auto1?.modelo} val2={auto2?.modelo} val3={auto3?.modelo} />
             <Row label="Año" val1={auto1?.anio} val2={auto2?.anio} val3={auto3?.anio} />
-            <Row label="KM" val1={`${auto1?.kilometraje?.toLocaleString("es-AR")} km`} val2={auto2 ? `${auto2.kilometraje?.toLocaleString("es-AR")} km` : null} val3={auto3 ? `${auto3.kilometraje?.toLocaleString("es-AR")} km` : null} />
-            <Row label="Combustible" val1={auto1?.tipo_combustible || "-"} val2={auto2?.tipo_combustible || "-"} val3={auto3?.tipo_combustible || "-"} />
+            <Row label="KM" val1={`${auto1?.km?.toLocaleString("es-AR")} km`} val2={auto2 ? `${auto2.km?.toLocaleString("es-AR")} km` : null} val3={auto3 ? `${auto3.km?.toLocaleString("es-AR")} km` : null} />
+            <Row label="Combustible" val1={auto1?.combustible || "-"} val2={auto2?.combustible || "-"} val3={auto3?.combustible || "-"} />
             <Row label="Transmisión" val1={auto1?.transmision || "-"} val2={auto2?.transmision || "-"} val3={auto3?.transmision || "-"} />
             <Row label="Tipo" val1={auto1?.tipo?.toUpperCase() || "-"} val2={auto2?.tipo?.toUpperCase() || "-"} val3={auto3?.tipo?.toUpperCase() || "-"} />
-            <Row label="Condición" val1={auto1?.kilometraje === 0 ? "0KM" : "Usado"} val2={auto2 ? (auto2.kilometraje === 0 ? "0KM" : "Usado") : null} val3={auto3 ? (auto3.kilometraje === 0 ? "0KM" : "Usado") : null} />
+            <Row label="Condición" val1={auto1?.km === 0 ? "0KM" : "Usado"} val2={auto2 ? (auto2.km === 0 ? "0KM" : "Usado") : null} val3={auto3 ? (auto3.km === 0 ? "0KM" : "Usado") : null} />
             
             {/* ACCIÓN (BOTONES) */}
             <div className="grid grid-cols-[24%_1fr_1fr_1fr] md:grid-cols-[18%_1fr_1fr_1fr] gap-1.5 md:gap-4 py-6 border-b border-white/5 items-center px-3 md:px-8 mt-2">

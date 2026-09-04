@@ -1,4 +1,4 @@
-import { createClient } from "@/lib/supabase/server";
+import { createClient } from "@/lib/supabase2/server";
 import { CAMPOS_VEHICULO_PUBLICO } from "@/lib/vehiculos";
 import VehiculosGrid from "@/components/VehiculosGrid";
 import { Tag, AlertCircle, ChevronRight, Flame } from "lucide-react";
@@ -20,7 +20,7 @@ export default async function OutletPage() {
   const { data: vehiculos } = await supabase
     .from("vehiculos")
     .select(CAMPOS_VEHICULO_PUBLICO)
-    .in("estado", ["Disponible", "Reservado"])
+    .in("estado", ["disponible", "reservado"])
     .not("precio_publicado_ars", "is", null)
     .lt("precio_publicado_ars", 10000000)
     .order("created_at", { ascending: false });

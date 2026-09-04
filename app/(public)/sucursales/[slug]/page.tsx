@@ -11,8 +11,8 @@ import SucursalHeroAnimated from "./SucursalHeroAnimated";
 import type { Metadata } from "next";
 
 const supabase = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY!,
+  process.env.NEXT_PUBLIC_SUPABASE2_URL!,
+  process.env.NEXT_PUBLIC_SUPABASE2_PUBLISHABLE_KEY!,
 );
 
 export const revalidate = 60;
@@ -51,7 +51,7 @@ export default async function SucursalPage({ params }: { params: Promise<{ slug:
 
   const { data: sucursal } = await supabase
     .from("sucursales")
-    .select("id, nombre, direccion, telefono, slug")
+    .select("id, nombre, direccion, telefono:telefono_encargado, slug")
     .eq("slug", slug)
     .single();
 
@@ -61,7 +61,7 @@ export default async function SucursalPage({ params }: { params: Promise<{ slug:
     .from("vehiculos")
     .select(CAMPOS_VEHICULO_PUBLICO)
     .eq("sucursal_id", sucursal.id)
-    .in("estado", ["Disponible", "Reservado"])
+    .in("estado", ["disponible", "reservado"])
     .order("created_at", { ascending: false });
 
   const fallback = FALLBACK_DATA[slug] || FALLBACK_DATA["casa-central"];
