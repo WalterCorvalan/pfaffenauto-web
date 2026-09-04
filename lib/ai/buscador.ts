@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { chatJson, isAiConfigured } from "./index";
+import { chatJsonV2 as chatJson, isAiConfiguredV2 as isAiConfigured } from "./indexV2";
 
 const TIPOS_VALIDOS = ["SUV", "Hatchback", "Pickup", "Sedán", "Auto", "Utilitarios"] as const;
 
