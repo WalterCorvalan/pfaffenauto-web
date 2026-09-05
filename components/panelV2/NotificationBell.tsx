@@ -24,12 +24,20 @@ export default function NotificationBell({ miId }: { miId: string }) {
   const router = useRouter();
   const [open, setOpen] = useState(false);
   const [alertas, setAlertas] = useState<Alerta[]>([]);
+  const [sinLeer, setSinLeer] = useState(0);
   const ref = useRef<HTMLDivElement>(null);
 
+  // El contador va aparte de la lista visible (limitada a 8): si hay más de
+  // 8 alertas mezcladas entre leídas y no leídas, contar solo sobre las 8
+  // más recientes podía mostrar un número más bajo que el real.
   const cargar = async () => {
     if (!miId) return;
-    const { data } = await supabase2.from("alertas").select("*").eq("destinatario_id", miId).order("created_at", { ascending: false }).limit(8);
+    const [{ data }, { count }] = await Promise.all([
+      supabase2.from("alertas").select("*").eq("destinatario_id", miId).order("created_at", { ascending: false }).limit(8),
+      supabase2.from("alertas").select("id", { count: "exact", head: true }).eq("destinatario_id", miId).eq("leida", false),
+    ]);
     setAlertas(data || []);
+    setSinLeer(count || 0);
   };
 
   useEffect(() => { cargar(); }, [miId]);
@@ -51,16 +59,16 @@ export default function NotificationBell({ miId }: { miId: string }) {
     return () => document.removeEventListener("mousedown", onClickFuera);
   }, [open]);
 
-  const sinLeer = alertas.filter((a) => !a.leida).length;
-
   const marcarTodas = async () => {
     setAlertas((prev) => prev.map((a) => ({ ...a, leida: true })));
+    setSinLeer(0);
     await supabase2.from("alertas").update({ leida: true }).eq("destinatario_id", miId).eq("leida", false);
   };
 
   const abrirAlerta = async (a: Alerta) => {
     if (!a.leida) {
       setAlertas((prev) => prev.map((x) => (x.id === a.id ? { ...x, leida: true } : x)));
+      setSinLeer((n) => Math.max(0, n - 1));
       await supabase2.from("alertas").update({ leida: true }).eq("id", a.id);
     }
     setOpen(false);

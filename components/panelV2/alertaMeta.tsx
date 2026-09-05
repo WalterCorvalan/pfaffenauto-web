@@ -2,6 +2,7 @@ import {
   User, Car, FileText, BarChart3, CreditCard, Bell, DollarSign, FolderKanban,
   MessageSquareWarning, BellRing, SearchCode, Repeat, AlarmClock, MessageCircle,
   PhoneCall, Gift, AlertTriangle, Bot, Briefcase, KeyRound, CalendarCheck,
+  Calculator, Eye, CheckCircle2,
 } from "lucide-react";
 
 // Mapeo único de tipo de alerta -> ícono/color/link, compartido por
@@ -36,6 +37,14 @@ export const TIPO_ICON: Record<string, any> = {
   postulacion: Briefcase,
   consignacion_nueva: KeyRound,
   visita_nueva: CalendarCheck,
+  lead_tasacion_nuevo: Calculator,
+  vista_seguimiento: Eye,
+  precio_a_confirmar: DollarSign,
+  precio_confirmado_respuesta: CheckCircle2,
+  precio_actualizado: Car,
+  movimiento_pendiente: DollarSign,
+  sobrante_registro: DollarSign,
+  nuevo_lead: User,
 };
 
 export const TIPO_COLOR: Record<string, string> = {
@@ -63,6 +72,14 @@ export const TIPO_COLOR: Record<string, string> = {
   postulacion: "bg-teal-100 text-teal-600 dark:bg-teal-500/15 dark:text-teal-300",
   consignacion_nueva: "bg-purple-100 text-purple-600 dark:bg-purple-500/15 dark:text-purple-300",
   visita_nueva: "bg-indigo-100 text-indigo-600 dark:bg-indigo-500/15 dark:text-indigo-300",
+  lead_tasacion_nuevo: "bg-amber-100 text-amber-600 dark:bg-amber-500/15 dark:text-amber-300",
+  vista_seguimiento: "bg-sky-100 text-sky-600 dark:bg-sky-500/15 dark:text-sky-300",
+  precio_a_confirmar: "bg-amber-100 text-amber-600 dark:bg-amber-500/15 dark:text-amber-300",
+  precio_confirmado_respuesta: "bg-emerald-100 text-emerald-600 dark:bg-emerald-500/15 dark:text-emerald-300",
+  precio_actualizado: "bg-blue-100 text-blue-600 dark:bg-blue-500/15 dark:text-blue-300",
+  movimiento_pendiente: "bg-amber-100 text-amber-600 dark:bg-amber-500/15 dark:text-amber-300",
+  sobrante_registro: "bg-amber-100 text-amber-600 dark:bg-amber-500/15 dark:text-amber-300",
+  nuevo_lead: "bg-purple-100 text-purple-600 dark:bg-purple-500/15 dark:text-purple-300",
 };
 
 export const TIPO_VER: Record<string, string> = {
@@ -90,6 +107,14 @@ export const TIPO_VER: Record<string, string> = {
   postulacion: "Ver Postulaciones",
   consignacion_nueva: "Ver Consignaciones",
   visita_nueva: "Ver Visitas",
+  lead_tasacion_nuevo: "Ver Peritajes",
+  vista_seguimiento: "Ver operación",
+  precio_a_confirmar: "Revisar precio",
+  precio_confirmado_respuesta: "Ver Ventas",
+  precio_actualizado: "Ver Stock",
+  movimiento_pendiente: "Ver Finanzas",
+  sobrante_registro: "Ver Finanzas",
+  nuevo_lead: "Ver Clientes",
 };
 
 export const ICONO_DEFECTO = Bell;
