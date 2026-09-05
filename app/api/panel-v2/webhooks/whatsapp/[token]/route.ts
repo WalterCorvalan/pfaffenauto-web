@@ -192,12 +192,25 @@ async function ejecutarAgente(conversacionId: string) {
     return;
   }
 
-  const { reply, handoff, calificacion, resumen_handoff } = result.data;
+  const { reply, handoff, calificacion, resumen_handoff, datos_detectados } = result.data;
 
   const estadoSegunCalificacion = calificacion === "caliente" ? "calificando" : undefined;
   const patchConversacion: Record<string, unknown> = { calificacion };
   if (estadoSegunCalificacion) patchConversacion.estado_lead = estadoSegunCalificacion;
   await supabase.from("whatsapp_conversaciones").update(patchConversacion).eq("id", conversacionId);
+
+  // Nombre y mail que el cliente vaya dando durante la charla se guardan en
+  // el contacto apenas se detectan, sin esperar al handoff — así quedan
+  // aunque la charla se corte antes de derivar a un vendedor.
+  if (datos_detectados?.nombre || datos_detectados?.email) {
+    const { data: conv } = await supabase.from("whatsapp_conversaciones").select("contacto_id").eq("id", conversacionId).single();
+    if (conv?.contacto_id) {
+      const patchContacto: Record<string, unknown> = {};
+      if (datos_detectados.nombre) patchContacto.nombre_perfil = datos_detectados.nombre;
+      if (datos_detectados.email) patchContacto.email = datos_detectados.email;
+      await supabase.from("whatsapp_contactos").update(patchContacto).eq("id", conv.contacto_id);
+    }
+  }
 
   // Cuando el agente muestra opciones de stock, "reply" viene partido en
   // varias burbujas (lista de autos + pregunta corta abajo) — se mandan como

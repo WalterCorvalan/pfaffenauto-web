@@ -23,6 +23,8 @@ export const AgentReplySchemaV2 = z.object({
     timing: z.string().nullable(),
     forma_pago: z.string().nullable(),
     tiene_permuta: z.boolean().nullable(),
+    nombre: z.string().nullable(),
+    email: z.string().nullable(),
   }),
   vehiculo_mencionado: z.object({
     marca: z.string().nullable(),
@@ -55,7 +57,7 @@ function respuestaLimiteAlcanzado(): AgentReplyV2 {
     pedir_stock_general: false,
     intencion: null,
     calificacion: null,
-    datos_detectados: { timing: null, forma_pago: null, tiene_permuta: null },
+    datos_detectados: { timing: null, forma_pago: null, tiene_permuta: null, nombre: null, email: null },
     vehiculo_mencionado: null,
     presupuesto_mencionado: null,
   };
