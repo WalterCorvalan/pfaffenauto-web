@@ -91,7 +91,7 @@ export default function GaleriaVehiculo({ imagenes, altText }: GaleriaProps) {
                   : "opacity-50 hover:opacity-100 grayscale hover:grayscale-0"
               }`}
             >
-              <Image src={img} alt={`Miniatura ${idx + 1}`} fill sizes="112px" className="object-cover" />
+              <Image src={img} alt={`${altText} - Miniatura ${idx + 1}`} fill sizes="112px" className="object-cover" />
             </button>
           ))}
         </div>

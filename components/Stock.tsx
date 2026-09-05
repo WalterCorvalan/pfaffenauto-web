@@ -259,7 +259,7 @@ export default function Stock({ vehiculos }: StockProps) {
                     src={
                       urbanosYSedanes[0].fotos?.[0] || "/placeholder.jpg"
                     }
-                    alt={urbanosYSedanes[0].modelo}
+                    alt={`${urbanosYSedanes[0].marca} ${urbanosYSedanes[0].modelo} ${urbanosYSedanes[0].anio}`}
                     fill
                     sizes="(max-width: 768px) 100vw, 66vw"
                     className="object-cover group-hover:scale-105 transition-transform duration-700 ease-out mix-blend-multiply dark:mix-blend-normal opacity-90 dark:opacity-80 z-0"
@@ -330,7 +330,7 @@ export default function Stock({ vehiculos }: StockProps) {
                           <div className="h-14 w-16 shrink-0 rounded-xl overflow-hidden relative bg-white/50 dark:bg-white/5 mix-blend-multiply dark:mix-blend-normal">
                             <Image
                               src={imagenSrc}
-                              alt={auto.modelo}
+                              alt={`${auto.marca} ${auto.modelo}`}
                               fill
                               sizes="64px"
                               className="object-cover group-hover:scale-105 transition-transform duration-500"
@@ -407,7 +407,7 @@ export default function Stock({ vehiculos }: StockProps) {
                       auto.fotos?.[0] ||
                       "/placeholder.jpg"
                     }
-                    alt={auto.modelo}
+                    alt={`${auto.marca} ${auto.modelo} ${auto.anio}`}
                     fill
                     sizes="(max-width: 768px) 280px, 360px"
                     className="object-cover group-hover:scale-105 transition-transform duration-700 ease-out z-0 mix-blend-multiply dark:mix-blend-normal opacity-90 dark:opacity-85"
@@ -467,7 +467,7 @@ export default function Stock({ vehiculos }: StockProps) {
                           auto.fotos?.[0] ||
                           "/placeholder.jpg"
                         }
-                        alt={auto.modelo || "Auto"}
+                        alt={auto.marca && auto.modelo ? `${auto.marca} ${auto.modelo}` : "Auto en comparación"}
                         fill
                         sizes="48px"
                         className="object-cover"
