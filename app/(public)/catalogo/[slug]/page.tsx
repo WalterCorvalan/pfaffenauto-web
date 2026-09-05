@@ -55,7 +55,7 @@ export async function generateMetadata({
 
   const esCeroKm = auto.km === 0;
   const titulo = `${auto.marca} ${auto.modelo} ${auto.anio} ${esCeroKm ? "0KM" : "Usado"} | Pfaffen Autos`;
-  const precioTexto = auto.precio_publicado_usd
+  const precioTexto = auto.precio_publicado_usd && !auto.precio_publicado_ars
     ? `US$ ${auto.precio_publicado_usd.toLocaleString("en-US")}`
     : `$${(auto.precio_publicado_ars || 0).toLocaleString("es-AR")}`;
   const descripcion = `${auto.marca} ${auto.modelo} ${auto.anio}, ${esCeroKm ? "0km" : `${auto.km?.toLocaleString("es-AR")} km`}. Precio ${precioTexto}. Financiación disponible en Pfaffen Autos.`;
@@ -411,7 +411,7 @@ function VehiculoPriceCard({
         <div className="flex flex-col gap-2">
           <span className="text-sm font-medium text-slate-500 dark:text-slate-400 block mb-1">Precio al contado</span>
           <h2 className="text-4xl md:text-5xl font-black text-navy dark:text-white tracking-tighter drop-shadow-sm">
-            {precioUsd && precioUsd > 0
+            {precioUsd && precioUsd > 0 && !precioArs
               ? `US$ ${precioUsd.toLocaleString("en-US")}`
               : `$ ${precioArs.toLocaleString("es-AR")}`}
           </h2>
