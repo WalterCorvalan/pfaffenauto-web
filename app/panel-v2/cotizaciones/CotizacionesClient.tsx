@@ -1,12 +1,13 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
+import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { supabase2 } from "@/lib/supabase2/client";
 import { crearAlerta } from "@/lib/panelV2/alertas";
 import {
   Search, FileText, Wrench, Plus, CheckCircle2, XCircle, BellRing, Repeat,
-  Pencil, MessageSquare,
+  Pencil, MessageSquare, Globe, ExternalLink,
 } from "lucide-react";
 import { fmtFechaLocal } from "@/lib/panelV2/fechas";
 import NuevaCotizacionModal from "./NuevaCotizacionModal";
@@ -39,12 +40,13 @@ function tiempoPendienteLabel(iso: string) {
 interface Perfil { id: string; nombre: string; roles: string[] }
 interface Cliente { id: string; nombre: string; telefono: string | null; dni_cuit: string | null }
 interface Vehiculo { id: string; marca: string; modelo: string; anio: number; patente: string | null; precio_venta: number; moneda_venta: string; estado: string }
+interface LeadWeb { id: string; nombre: string; telefono: string | null; marca: string; modelo: string | null; anio: number | null; oferta_calculada: number | null; precio_esperado_cliente: number | null; estado: string; created_at: string; tipo: string }
 
 type Tab = "pendiente" | "aprobada" | "rechazada";
 
 export default function CotizacionesClient({
-  cotizacionesIniciales, perfiles, clientes, vehiculos, miId, slaHoras = 48,
-}: { cotizacionesIniciales: Cotizacion[]; perfiles: Perfil[]; clientes: Cliente[]; vehiculos: Vehiculo[]; miId: string; slaHoras?: number }) {
+  cotizacionesIniciales, perfiles, clientes, vehiculos, miId, slaHoras = 48, leadsWebIniciales = [],
+}: { cotizacionesIniciales: Cotizacion[]; perfiles: Perfil[]; clientes: Cliente[]; vehiculos: Vehiculo[]; miId: string; slaHoras?: number; leadsWebIniciales?: LeadWeb[] }) {
   const router = useRouter();
   const searchParams = useSearchParams();
 
@@ -160,6 +162,30 @@ export default function CotizacionesClient({
       </div>
 
       <div className="flex-1 overflow-y-auto bg-slate-50 dark:bg-[#141414] p-6">
+        {leadsWebIniciales.length > 0 && (
+          <div className="mb-6 bg-white dark:bg-white/[0.02] border border-slate-200 dark:border-white/5 rounded-2xl overflow-hidden">
+            <div className="flex items-center justify-between px-4 py-3 border-b border-slate-100 dark:border-white/10">
+              <p className="text-[11px] font-black uppercase tracking-widest text-slate-400 flex items-center gap-1.5"><Globe className="w-3.5 h-3.5" /> Tasaciones pedidas desde la web ({leadsWebIniciales.length})</p>
+              <Link href="/panel-v2/peritajes" className="text-[11px] font-bold text-rose-600 hover:text-rose-700 flex items-center gap-1">Gestionar en Peritajes <ExternalLink className="w-3 h-3" /></Link>
+            </div>
+            <p className="text-[11px] text-slate-400 px-4 pt-2">Solo lectura — se gestionan y convierten en peritaje desde el módulo Peritajes.</p>
+            <div className="divide-y divide-slate-50 dark:divide-white/5">
+              {leadsWebIniciales.map((l) => (
+                <div key={l.id} className="flex items-center justify-between px-4 py-2.5 text-sm">
+                  <div className="min-w-0">
+                    <p className="font-bold text-slate-800 dark:text-white truncate">{l.nombre} <span className="text-[10px] font-bold uppercase text-slate-400 ml-1">{l.tipo === "permuta" ? "Permuta" : "Tasación"}</span></p>
+                    <p className="text-[11px] text-slate-400 truncate">{[l.marca, l.modelo, l.anio].filter(Boolean).join(" ") || "—"} · {l.telefono || "sin teléfono"}</p>
+                  </div>
+                  <div className="text-right shrink-0 ml-3">
+                    <p className="font-bold text-slate-700 dark:text-slate-200">{(l.oferta_calculada ?? l.precio_esperado_cliente) ? `$ ${Number(l.oferta_calculada ?? l.precio_esperado_cliente).toLocaleString("es-AR")}` : "—"}</p>
+                    <p className="text-[10px] text-slate-400">{fmtFechaLocal(l.created_at)}</p>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+
         <div className="flex flex-wrap items-center gap-2 mb-4">
           <div className="relative flex-1 min-w-[220px] max-w-sm">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
