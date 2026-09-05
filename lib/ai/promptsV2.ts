@@ -83,12 +83,26 @@ const EQUIPO_PFAFFEN = `\nEQUIPO PFAFFEN AUTOS (dato real, usalo si preguntan qu
 // mostrando el menú, así el texto es siempre exacto sin depender de que
 // el modelo lo copie bien.
 export function menuBienvenidaV2(nombreBot?: string): string {
-  return `¡Hola!${nombreBot ? ` Soy ${nombreBot}, el asistente de` : " Bienvenido a"} Pfaffen Autos. ¿Qué te gustaría hacer?
+  return `${menuBienvenidaSaludoV2(nombreBot)}
 1) Comprar un vehículo
 2) Vender tu vehículo
 3) Consignar tu vehículo
 4) Permutar mi auto`;
 }
+
+// Saludo sin las opciones numeradas — se usa como "body" de la lista
+// interactiva de WhatsApp (las opciones van en las filas de la lista, no
+// repetidas como texto numerado dentro del cuerpo del mensaje).
+export function menuBienvenidaSaludoV2(nombreBot?: string): string {
+  return `¡Hola!${nombreBot ? ` Soy ${nombreBot}, el asistente de` : " Bienvenido a"} Pfaffen Autos. ¿Qué te gustaría hacer?`;
+}
+
+export const MENU_BIENVENIDA_OPCIONES_V2 = [
+  { id: "menu_comprar", titulo: "Comprar un vehículo" },
+  { id: "menu_vender", titulo: "Vender tu vehículo" },
+  { id: "menu_consignar", titulo: "Consignar tu vehículo" },
+  { id: "menu_permutar", titulo: "Permutar mi auto" },
+] as const;
 
 export function buildSystemPromptV2(vehiculoInfo?: string, resultadosStock?: ResultadoStockV2[], nombreBot?: string, resultadosSonAlternativa?: boolean, sucursales?: SucursalInfo[], sugerirCierre?: boolean): string {
   return `${nombreBot ? `Te llamás ${nombreBot}, el` : "Sos el"} asistente virtual oficial de Pfaffen Autos, concesionaria de vehículos 0km y usados.

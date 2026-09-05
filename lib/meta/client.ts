@@ -63,6 +63,37 @@ export async function sendTextMessage(phoneNumberId: string, token: string, to: 
   });
 }
 
+// Lista interactiva de WhatsApp (hasta 10 filas) — usada para el menú de
+// bienvenida en vez de texto plano numerado, así el cliente toca una opción
+// en vez de tipear "1", "2FA autos", etc.
+export async function sendListMessage(
+  phoneNumberId: string,
+  token: string,
+  to: string,
+  params: { bodyText: string; buttonText: string; opciones: { id: string; titulo: string; descripcion?: string }[] }
+) {
+  return graphRequest<{ messages: { id: string }[] }>(`${phoneNumberId}/messages`, token, {
+    method: "POST",
+    body: JSON.stringify({
+      messaging_product: "whatsapp",
+      to: formatearParaEnvio(to),
+      type: "interactive",
+      interactive: {
+        type: "list",
+        body: { text: params.bodyText },
+        action: {
+          button: params.buttonText,
+          sections: [
+            {
+              rows: params.opciones.map((o) => ({ id: o.id, title: o.titulo, ...(o.descripcion ? { description: o.descripcion } : {}) })),
+            },
+          ],
+        },
+      },
+    }),
+  });
+}
+
 export async function sendImageMessage(phoneNumberId: string, token: string, to: string, imageUrl: string, caption?: string) {
   return graphRequest<{ messages: { id: string }[] }>(`${phoneNumberId}/messages`, token, {
     method: "POST",
