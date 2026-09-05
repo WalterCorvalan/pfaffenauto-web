@@ -96,6 +96,14 @@
   --foreground: #f8fafc;
 }
 
+/* Los <select> nativos abren su lista de opciones con estilos del sistema
+   operativo/navegador — el CSS normal no puede repintarla (fondo blanco fijo
+   pase lo que pase con el resto del tema). "color-scheme" es la única forma
+   real de pedirle al navegador que la dibuje en oscuro cuando corresponde. */
+.dark select {
+  color-scheme: dark;
+}
+
 @theme {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
