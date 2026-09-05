@@ -102,6 +102,26 @@ export default function CatalogoClient() {
     router.push(`/catalogo?${params.toString()}`);
   };
 
+  // "Limpiar todo" antes era un <Link href="/catalogo"> que solo cambiaba la
+  // URL (q, condicion) pero dejaba pegado todo el estado de los filtros
+  // avanzados (precio, tipo, marca, etc.) del sidebar — el usuario veía "0
+  // resultados" en una búsqueda nueva sin ningún chip visible que explicara
+  // por qué, porque los filtros viejos seguían aplicados por debajo.
+  const limpiarTodosLosFiltros = () => {
+    setInputBuscador("");
+    setOrden("Relevancia");
+    setPrecioMin(""); setPrecioMax(""); setPrecioMinUsd(""); setPrecioMaxUsd("");
+    setTiposSeleccionados([]);
+    setMarcasSeleccionadas([]);
+    setSucursalesSeleccionadas([]);
+    setTransmisionesSeleccionadas([]);
+    setCombustiblesSeleccionados([]);
+    setTraccionesSeleccionadas([]);
+    setPotenciasSeleccionadas([]);
+    setPlazasSeleccionadas([]);
+    router.push("/catalogo");
+  };
+
   const aplicarSugerencia = (texto: string) => {
     setInputBuscador(texto);
     const params = new URLSearchParams(searchParams.toString());
@@ -406,12 +426,13 @@ export default function CatalogoClient() {
             )}
           </div>
           {(searchQuery || condicionQuery) && (
-            <Link
-              href="/catalogo"
+            <button
+              type="button"
+              onClick={limpiarTodosLosFiltros}
               className="text-xs font-bold text-blue-600 hover:underline transition-all"
             >
               Limpiar todo
-            </Link>
+            </button>
           )}
         </div>
 

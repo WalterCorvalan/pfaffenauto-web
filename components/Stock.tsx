@@ -309,12 +309,11 @@ export default function Stock({ vehiculos }: StockProps) {
                 <div className="flex-1 overflow-y-auto pr-1 space-y-3 custom-scrollbar">
                   {vistosRecientes.length > 0 ? (
                     vistosRecientes.map((auto, idx) => {
-                      const precioMostrar =
-                        auto.precio_publicado_usd && !auto.precio_publicado_ars
+                      const precioMostrar = auto.precio_publicado_ars
+                        ? `$ ${auto.precio_publicado_ars.toLocaleString("es-AR")}`
+                        : auto.precio_publicado_usd
                           ? `US$ ${auto.precio_publicado_usd.toLocaleString("es-AR")}`
-                          : auto.precio_publicado_ars
-                            ? `$ ${auto.precio_publicado_ars.toLocaleString("es-AR")}`
-                            : `US$ ${auto.precio_publicado_usd?.toLocaleString("es-AR")}`;
+                          : "Consultar precio";
 
                       const imagenSrc =
                         auto.imagen ||
@@ -602,12 +601,11 @@ export function VehicleCard({
   onToggleComparar?: (e: React.MouseEvent, auto: any) => void;
   bordeSuave?: boolean;
 }) {
-  const precioMostrar =
-    auto.precio_publicado_usd && !auto.precio_publicado_ars
+  const precioMostrar = auto.precio_publicado_ars
+    ? `$ ${auto.precio_publicado_ars.toLocaleString("es-AR")}`
+    : auto.precio_publicado_usd
       ? `US$ ${auto.precio_publicado_usd.toLocaleString("es-AR")}`
-      : auto.precio_publicado_ars
-        ? `$ ${auto.precio_publicado_ars.toLocaleString("es-AR")}`
-        : `US$ ${auto.precio_publicado_usd?.toLocaleString("es-AR")}`;
+      : "Consultar precio";
 
   return (
     <div className="relative h-full group">
