@@ -83,13 +83,13 @@ const EQUIPO_PFAFFEN = `\nEQUIPO PFAFFEN AUTOS (dato real, usalo si preguntan qu
 // mostrando el menú, así el texto es siempre exacto sin depender de que
 // el modelo lo copie bien.
 export function menuBienvenidaV2(nombreBot?: string): string {
-  return `¡Hola! 👋${nombreBot ? ` Soy ${nombreBot}, el asistente de` : " Bienvenido a"} Pfaffen Autos.
+  return `¡Hola!${nombreBot ? ` Soy ${nombreBot}, el asistente de` : " Bienvenido a"} Pfaffen Autos.
 ¿Qué te gustaría hacer hoy?
 
-1️⃣ Comprar un vehículo 🚗
-2️⃣ Vender tu vehículo 💰
-3️⃣ Consignar tu vehículo 🤝
-4️⃣ Permutar tu auto 🔄
+1. Comprar un vehículo
+2. Vender tu vehículo
+3. Consignar tu vehículo
+4. Permutar tu auto
 
 Respondé con el número de la opción.`;
 }
