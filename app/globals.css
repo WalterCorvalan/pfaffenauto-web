@@ -104,6 +104,14 @@
   color-scheme: dark;
 }
 
+/* color-scheme no alcanza en todos los navegadores (ej. Chrome/Windows sigue
+   dibujando el popup de opciones en blanco pase lo que pase) -- forzamos
+   fondo/texto en las <option> tambien, que sí se respeta más ampliamente. */
+.dark select option {
+  background-color: #16181d;
+  color: #f8fafc;
+}
+
 @theme {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
