@@ -7,7 +7,7 @@ import { Bell, Check, ExternalLink } from "lucide-react";
 import { TIPO_ICON, TIPO_COLOR, ICONO_DEFECTO, COLOR_DEFECTO } from "./alertaMeta";
 
 interface Alerta {
-  id: string; tipo: string; prioridad: string; titulo: string; mensaje: string | null; link: string | null; leida: boolean; created_at: string;
+  id: string; tipo: string; prioridad: string; titulo: string; mensaje: string | null; link: string | null; leida: boolean; created_at: string; contador: number;
 }
 
 function tiempoRelativo(iso: string) {
@@ -108,6 +108,7 @@ export default function NotificationBell({ miId }: { miId: string }) {
                     <span className="min-w-0 flex-1">
                       <span className="flex items-center gap-1.5">
                         <span className="text-xs font-bold text-slate-800 dark:text-white truncate">{a.titulo}</span>
+                        {a.contador > 1 && <span className="shrink-0 text-[10px] font-bold px-1.5 rounded-full bg-rose-600 text-white">x{a.contador}</span>}
                         {!a.leida && <span className="w-1.5 h-1.5 rounded-full bg-rose-500 shrink-0" />}
                       </span>
                       {a.mensaje && <span className="block text-[11px] text-slate-500 dark:text-slate-400 truncate">{a.mensaje}</span>}

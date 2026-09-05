@@ -2,7 +2,7 @@ import { z } from "zod";
 import { createClient } from "@supabase/supabase-js";
 import { verificarTurnstile } from "@/lib/turnstile";
 import { rateLimit, ipDesdeRequest } from "@/lib/rateLimit";
-import { registrarError } from "@/lib/logger";
+import { registrarError } from "@/lib/panelV2/logger";
 
 const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE2_URL!,
@@ -59,6 +59,18 @@ export async function POST(req: Request) {
     }).select("id").single();
 
     if (error) throw error;
+
+    const vehiculoTxt = [vehiculo_marca, vehiculo_modelo].filter(Boolean).join(" ");
+    const titulo = `Nueva visita agendada — ${nombre_cliente}${vehiculoTxt ? ` (${vehiculoTxt})` : ""}`;
+    const link = `/panel-v2/visitas`;
+    if (vendedor_id) {
+      await supabase.from("alertas").insert({ destinatario_id: vendedor_id, tipo: "visita_nueva", prioridad: "media", titulo, link });
+    } else {
+      const { data: destinatarios } = await supabase.from("perfiles").select("id").or("roles.cs.{admin},roles.cs.{encargado}").eq("activo", true);
+      for (const d of destinatarios || []) {
+        await supabase.from("alertas").insert({ destinatario_id: d.id, tipo: "visita_nueva", prioridad: "media", titulo, link });
+      }
+    }
 
     return Response.json({ ok: true, id: data.id });
   } catch (err) {

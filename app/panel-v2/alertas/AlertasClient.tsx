@@ -15,6 +15,7 @@ interface Alerta {
   link: string | null;
   leida: boolean;
   created_at: string;
+  contador: number;
 }
 
 const PRIORIDAD_INFO: Record<string, { label: string; dot: string; badge: string }> = {
@@ -133,7 +134,10 @@ export default function AlertasClient({ alertasIniciales }: { alertasIniciales: 
                             <span className={`w-8 h-8 rounded-lg flex items-center justify-center shrink-0 ${color}`}><Icon className="w-4 h-4" /></span>
                             <div className="min-w-0 flex-1">
                               <div className="flex items-start justify-between gap-2">
-                                <p className="text-sm font-bold text-slate-900 dark:text-white">{a.titulo}</p>
+                                <p className="text-sm font-bold text-slate-900 dark:text-white flex items-center gap-1.5">
+                                  {a.titulo}
+                                  {a.contador > 1 && <span className="text-[10px] font-bold px-1.5 rounded-full bg-rose-600 text-white shrink-0">x{a.contador}</span>}
+                                </p>
                                 <span className={`text-[9px] font-bold uppercase px-1.5 py-0.5 rounded-full shrink-0 ${info.badge}`}>{p === "novedad" ? "Novedad" : info.label}</span>
                               </div>
                               {a.mensaje && <p className="text-xs text-slate-600 dark:text-slate-300 mt-0.5">{a.mensaje}</p>}
