@@ -178,7 +178,25 @@ function respuestaSeguraConStockReal(resultados: ResultadoStockV2[], esAlternati
     .map((v) => `🚗 ${v.marca} ${v.modelo} ${v.anio} — 💰 ${v.moneda_venta} ${v.precio_venta.toLocaleString("es-AR")}`)
     .join("\n");
   const intro = esAlternativa ? "Ese modelo puntual no lo tengo ahora, pero estas son opciones que sí tengo disponibles:" : "Estas son las opciones disponibles:";
-  return `${intro}\n\n${lista}\n\n¿Alguna te interesa, o buscás un año o versión en particular?`;
+  const cierre = resultados.length === 1 ? "Contame si te interesa y seguimos con los detalles." : "Si te interesa alguna, seguimos con los detalles.";
+  return `${intro}\n\n${lista}\n\n${cierre}`;
+}
+
+// El prompt prohíbe estos cierres genéricos y abiertos (regla en
+// promptsV2.ts, sección de listado de stock), pero un modelo chico los
+// repite igual a veces — se detecta y se corta la oración completa que los
+// contiene, dejando el resto de la respuesta intacto.
+const FRASES_CIERRE_PROHIBIDAS = [
+  /¿?alguna te interesa,?\s*o buscás un año o versión en particular\??/i,
+  /¿?alguna (de estas )?te late,?\s*o preferís seguir viendo más opciones\??/i,
+];
+
+function sacarCierreGenericoProhibido(reply: string): string {
+  let limpio = reply;
+  for (const patron of FRASES_CIERRE_PROHIBIDAS) {
+    limpio = limpio.replace(patron, "").trim();
+  }
+  return limpio;
 }
 
 async function fetchSucursalesInfo(): Promise<SucursalInfo[]> {
@@ -251,6 +269,13 @@ export async function generarRespuestaAgenteV2(historial: HistorialMensaje[], ca
       console.error("[agenteV2] error en 2da pasada (stock):", result2.error);
     }
   }
+
+  // El prompt prohíbe explícitamente estos cierres genéricos y abiertos
+  // ("¿alguna te interesa, o buscás un año o versión en particular?", "¿te
+  // late...?"), pero un modelo chico (Haiku) los repite igual de vez en
+  // cuando — se cortan del final de la respuesta como red de seguridad, en
+  // vez de confiar solo en la instrucción.
+  respuesta = { ...respuesta, reply: sacarCierreGenericoProhibido(respuesta.reply) };
 
   // El modelo a veces devuelve el menú de bienvenida parafraseado (mismo
   // contenido, texto distinto) — si detectamos que ESTO es el menú
