@@ -119,8 +119,14 @@ export default function NuevoVehiculoModal({ perfiles, clientes, sucursales, miI
   const [vendedorAsignadoId, setVendedorAsignadoId] = useState(editando?.vendedor_asignado_id || "");
   const [sucursalCompraId, setSucursalCompraId] = useState(editando?.sucursal_compra_id || "");
 
-  // Precio publicado (el que se ve en el catálogo, distinto del venta interno)
-  const [precioPublicadoUsd, setPrecioPublicadoUsd] = useState(editando?.precio_publicado_usd ? String(editando.precio_publicado_usd) : "");
+  // Precio publicado (el que usa el catálogo/simulador de financiación,
+  // distinto del precio de venta interno) — un solo monto + moneda, nunca
+  // ambos a la vez (igual que precio de venta/compra), para que no quede
+  // cargado en una moneda y el sistema siga leyendo la otra por error.
+  const [precioPublicadoMonto, setPrecioPublicadoMonto] = useState(
+    editando?.precio_publicado_ars ? String(editando.precio_publicado_ars) : editando?.precio_publicado_usd ? String(editando.precio_publicado_usd) : ""
+  );
+  const [monedaPublicado, setMonedaPublicado] = useState(editando?.precio_publicado_ars ? "ARS" : "USD");
 
   // Proveedor / dueño anterior — datos extra (nombre/teléfono/email ya
   // estaban arriba, esto suma lo que faltaba de v1)
@@ -169,7 +175,8 @@ export default function NuevoVehiculoModal({ perfiles, clientes, sucursales, miI
         importe_patente_anual: importePatenteAnual ? Number(importePatenteAnual) : null,
         sucursal_id: sucursalId || null, sucursal_compra_id: sucursalCompraId || null,
         vendedor_asignado_id: vendedorAsignadoId || null,
-        precio_publicado_usd: precioPublicadoUsd ? Number(precioPublicadoUsd) : null,
+        precio_publicado_ars: precioPublicadoMonto && monedaPublicado === "ARS" ? Number(precioPublicadoMonto) : null,
+        precio_publicado_usd: precioPublicadoMonto && monedaPublicado === "USD" ? Number(precioPublicadoMonto) : null,
         propietario_apellido: propioAgencia ? null : (propietarioApellido || null),
         propietario_fecha_nacimiento: propioAgencia ? null : (propietarioFechaNacimiento || null),
         propietario_cuit_cuil: propioAgencia ? null : (propietarioCuitCuil || null),
@@ -317,9 +324,15 @@ export default function NuevoVehiculoModal({ perfiles, clientes, sucursales, miI
                 </select>
               </div>
               <div>
-                <label className={labelClass}>Precio publicado USD (opcional)</label>
-                <input type="number" value={precioPublicadoUsd} onChange={(e) => setPrecioPublicadoUsd(e.target.value)} className={inputClass} />
-                <p className="text-[10px] text-slate-400 mt-1">Para catálogo/pautas, distinto del precio de venta interno.</p>
+                <label className={labelClass}>Precio publicado (opcional)</label>
+                <input type="number" value={precioPublicadoMonto} onChange={(e) => setPrecioPublicadoMonto(e.target.value)} className={inputClass} />
+                <p className="text-[10px] text-slate-400 mt-1">Para catálogo/financiación, distinto del precio de venta interno.</p>
+              </div>
+              <div>
+                <label className={labelClass}>Moneda publicado</label>
+                <select value={monedaPublicado} onChange={(e) => setMonedaPublicado(e.target.value)} className={inputClass}>
+                  <option value="USD">USD</option><option value="ARS">ARS</option>
+                </select>
               </div>
             </div>
           </div>
@@ -328,7 +341,7 @@ export default function NuevoVehiculoModal({ perfiles, clientes, sucursales, miI
             <p className={seccionClass}>Ubicación y dueños</p>
             <div className="grid grid-cols-2 gap-3">
               <div>
-                <label className={labelClass}>Ubicación <span className="text-rose-500">*</span></label>
+                <label className={labelClass}>Ubicación</label>
                 <input value={ubicacion} onChange={(e) => setUbicacion(e.target.value)} className={inputClass} />
               </div>
               <div>
