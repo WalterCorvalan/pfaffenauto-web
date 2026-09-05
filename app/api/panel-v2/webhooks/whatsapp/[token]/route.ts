@@ -2,10 +2,9 @@ import { createHmac, timingSafeEqual } from "crypto";
 import { createClient } from "@supabase/supabase-js";
 import { isAiConfiguredV2 } from "@/lib/ai/indexV2";
 import { generarRespuestaAgenteV2, dividirRespuestaEnMensajes } from "@/lib/ai/agenteV2";
-import { sendTextMessage, sendListMessage } from "@/lib/meta/client";
+import { sendTextMessage } from "@/lib/meta/client";
 import { decrypt } from "@/lib/crypto";
 import { rateLimit, ipDesdeRequest } from "@/lib/rateLimit";
-import { menuBienvenidaSaludoV2, MENU_BIENVENIDA_OPCIONES_V2 } from "@/lib/ai/promptsV2";
 
 // Webhook de Meta para el WhatsApp de panel-v2 (Conversaciones → WhatsApp,
 // replica /panel/chat de v1: bandeja de mensajes reales de clientes con
@@ -194,7 +193,6 @@ async function ejecutarAgente(conversacionId: string) {
   }
 
   const { reply, handoff, calificacion, resumen_handoff } = result.data;
-  const esMenuBienvenida = "esMenuBienvenida" in result && result.esMenuBienvenida;
 
   const estadoSegunCalificacion = calificacion === "caliente" ? "calificando" : undefined;
   const patchConversacion: Record<string, unknown> = { calificacion };
@@ -206,12 +204,7 @@ async function ejecutarAgente(conversacionId: string) {
   // mensajes de WhatsApp separados, en orden, no todo apelotonado en uno.
   for (const parte of dividirRespuestaEnMensajes(reply)) {
     const { data: mensajeSaliente } = await supabase.from("whatsapp_mensajes").insert({ conversacion_id: conversacionId, direccion: "out", tipo: "text", texto: parte, status: "pending", ai_generado: true }).select("id").single();
-    if (!mensajeSaliente) continue;
-    if (esMenuBienvenida && parte === reply) {
-      await enviarYActualizarMenuBienvenida(mensajeSaliente.id, conversacionId, config);
-    } else {
-      await enviarYActualizarMensaje(mensajeSaliente.id, conversacionId, parte, config);
-    }
+    if (mensajeSaliente) await enviarYActualizarMensaje(mensajeSaliente.id, conversacionId, parte, config);
   }
 
   if (handoff) {
@@ -241,33 +234,6 @@ async function enviarYActualizarMensaje(mensajeId: string, conversacionId: strin
   } catch (err) {
     console.error("[webhook-v2] error enviando mensaje:", err);
     await supabase.from("whatsapp_mensajes").update({ status: "failed" }).eq("id", mensajeId);
-  }
-}
-
-async function enviarYActualizarMenuBienvenida(mensajeId: string, conversacionId: string, config: any) {
-  if (!isWhatsappEnvioConfigurado(config)) {
-    console.warn("[webhook-v2] WhatsApp no está configurado — mensaje queda 'pending' sin enviar.");
-    return;
-  }
-
-  const { data: conversacion } = await supabase.from("whatsapp_conversaciones").select("contacto_id, whatsapp_contactos(telefono)").eq("id", conversacionId).single();
-  const telefono = (conversacion?.whatsapp_contactos as any)?.telefono;
-  if (!telefono) return;
-
-  try {
-    const tokenPlano = decrypt(config.token_cifrado, config.token_iv, config.token_tag);
-    const resultado = await sendListMessage(config.phone_number_id, tokenPlano, telefono, {
-      bodyText: menuBienvenidaSaludoV2(config.bot_nombre),
-      buttonText: "Ver opciones",
-      opciones: MENU_BIENVENIDA_OPCIONES_V2.map((o) => ({ id: o.id, titulo: o.titulo })),
-    });
-    await supabase.from("whatsapp_mensajes").update({ status: "sent", wa_message_id: resultado.messages?.[0]?.id }).eq("id", mensajeId);
-  } catch (err) {
-    console.error("[webhook-v2] error enviando menú interactivo, fallback a texto:", err);
-    // Si falla la lista interactiva (número no verificado para eso, versión
-    // de API, etc.) no se pierde el mensaje — cae a texto plano normal.
-    const { data: mensaje } = await supabase.from("whatsapp_mensajes").select("texto").eq("id", mensajeId).single();
-    if (mensaje?.texto) await enviarYActualizarMensaje(mensajeId, conversacionId, mensaje.texto, config);
   }
 }
 

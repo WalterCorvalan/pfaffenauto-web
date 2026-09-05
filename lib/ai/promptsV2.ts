@@ -83,26 +83,16 @@ const EQUIPO_PFAFFEN = `\nEQUIPO PFAFFEN AUTOS (dato real, usalo si preguntan qu
 // mostrando el menú, así el texto es siempre exacto sin depender de que
 // el modelo lo copie bien.
 export function menuBienvenidaV2(nombreBot?: string): string {
-  return `${menuBienvenidaSaludoV2(nombreBot)}
-1) Comprar un vehículo
-2) Vender tu vehículo
-3) Consignar tu vehículo
-4) Permutar mi auto`;
-}
+  return `¡Hola! 👋${nombreBot ? ` Soy ${nombreBot}, el asistente de` : " Bienvenido a"} Pfaffen Autos.
+¿Qué te gustaría hacer hoy?
 
-// Saludo sin las opciones numeradas — se usa como "body" de la lista
-// interactiva de WhatsApp (las opciones van en las filas de la lista, no
-// repetidas como texto numerado dentro del cuerpo del mensaje).
-export function menuBienvenidaSaludoV2(nombreBot?: string): string {
-  return `¡Hola!${nombreBot ? ` Soy ${nombreBot}, el asistente de` : " Bienvenido a"} Pfaffen Autos. ¿Qué te gustaría hacer?`;
-}
+1️⃣ Comprar un vehículo 🚗
+2️⃣ Vender tu vehículo 💰
+3️⃣ Consignar tu vehículo 🤝
+4️⃣ Permutar tu auto 🔄
 
-export const MENU_BIENVENIDA_OPCIONES_V2 = [
-  { id: "menu_comprar", titulo: "Comprar un vehículo" },
-  { id: "menu_vender", titulo: "Vender tu vehículo" },
-  { id: "menu_consignar", titulo: "Consignar tu vehículo" },
-  { id: "menu_permutar", titulo: "Permutar mi auto" },
-] as const;
+Respondé con el número de la opción.`;
+}
 
 export function buildSystemPromptV2(vehiculoInfo?: string, resultadosStock?: ResultadoStockV2[], nombreBot?: string, resultadosSonAlternativa?: boolean, sucursales?: SucursalInfo[], sugerirCierre?: boolean): string {
   return `${nombreBot ? `Te llamás ${nombreBot}, el` : "Sos el"} asistente virtual oficial de Pfaffen Autos, concesionaria de vehículos 0km y usados.
@@ -110,12 +100,8 @@ export function buildSystemPromptV2(vehiculoInfo?: string, resultadosStock?: Res
 Tu función: atender consultas de clientes, detectar qué quiere el cliente, buscar vehículos en el stock real, recopilar datos y calificar la oportunidad. Hablá en español argentino con voseo, tono amable, profesional, claro y breve — una o dos preguntas relacionadas por mensaje, nunca un formulario largo. Usá emojis con naturalidad para darle onda (🚗 💰 📅 👍 ✅), uno o dos por mensaje — ni acartonado sin ninguno, ni saturado de emojis.
 
 MENSAJE DE BIENVENIDA
-Si el cliente solo saluda o no expresa una intención concreta, respondé con el menú:
-"¡Hola!${nombreBot ? ` Soy ${nombreBot}, el asistente de` : " Bienvenido a"} Pfaffen Autos. ¿Qué te gustaría hacer?
-1) Comprar un vehículo
-2) Vender tu vehículo
-3) Consignar tu vehículo
-4) Permutar mi auto"
+Si el cliente solo saluda o no expresa una intención concreta, respondé exactamente con este menú (mismo texto, mismos emojis, no lo parafrasees):
+"${menuBienvenidaV2(nombreBot)}"
 Si ya dijo lo que necesita, NO repitas el menú — entrá directo al tema.
 
 INTENCIONES: COMPRA, VENTA, CONSIGNACION, COMPRA_CON_PERMUTA, HABLAR_CON_ASESOR, OTRA_CONSULTA.

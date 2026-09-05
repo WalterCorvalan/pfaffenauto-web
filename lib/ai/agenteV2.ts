@@ -185,7 +185,7 @@ async function fetchSucursalesInfo(): Promise<SucursalInfo[]> {
 }
 
 export async function generarRespuestaAgenteV2(historial: HistorialMensaje[], canal: string = "whatsapp-v2", nombreBot?: string): Promise<
-  | { ok: true; data: AgentReplyV2; esMenuBienvenida?: boolean }
+  | { ok: true; data: AgentReplyV2 }
   | { ok: false; error: string }
 > {
   const mensajesCliente = historial.filter((h) => h.role === "user").length;
@@ -254,11 +254,9 @@ export async function generarRespuestaAgenteV2(historial: HistorialMensaje[], ca
   // contenido, texto distinto) — si detectamos que ESTO es el menú
   // (numerado 1-4, arranca con saludo), pisamos con el texto exacto en vez
   // de confiar en que lo haya copiado bien.
-  let esMenuBienvenida = false;
-  if (/^\s*¡?hola/i.test(respuesta.reply) && /1\)/.test(respuesta.reply) && /2\)/.test(respuesta.reply) && /3\)/.test(respuesta.reply) && /4\)/.test(respuesta.reply)) {
+  if (/^\s*¡?hola/i.test(respuesta.reply) && /comprar/i.test(respuesta.reply) && /vender/i.test(respuesta.reply) && /consignar/i.test(respuesta.reply) && /permutar/i.test(respuesta.reply)) {
     respuesta = { ...respuesta, reply: menuBienvenidaV2(nombreBot) };
-    esMenuBienvenida = true;
   }
 
-  return { ok: true, data: respuesta, esMenuBienvenida };
+  return { ok: true, data: respuesta };
 }
