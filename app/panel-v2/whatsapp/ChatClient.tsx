@@ -5,7 +5,7 @@ import { useSearchParams, useRouter } from "next/navigation";
 import { supabase2 } from "@/lib/supabase2/client";
 import {
   Search, Send, CheckCircle2, Circle, Bot, Check, Info, ChevronRight, PanelRight,
-  Loader2, Megaphone, X, MessageSquareText, AtSign,
+  Loader2, Megaphone, X, MessageSquareText, AtSign, Archive, ArchiveRestore,
 } from "lucide-react";
 
 const ETAPAS_PIPELINE: { value: string; label: string }[] = [
@@ -38,7 +38,7 @@ export default function ChatClient({
   const [seleccionada, setSeleccionada] = useState<string | null>(null);
   const [mensajes, setMensajes] = useState<any[]>([]);
   const [nuevoMensaje, setNuevoMensaje] = useState("");
-  const [filtro, setFiltro] = useState<"todas" | "no-leidas">("todas");
+  const [filtro, setFiltro] = useState<"todas" | "no-leidas" | "archivadas">("todas");
   const [busqueda, setBusqueda] = useState("");
   const [loading, setLoading] = useState(false);
   const [mostrarPlantillas, setMostrarPlantillas] = useState(false);
@@ -285,7 +285,17 @@ export default function ChatClient({
     setConversaciones((prev) => prev.map((c) => (c.id === seleccionada ? { ...c, vendedor_id: nuevoId, vendedor } : c)));
   };
 
+  const archivarConversacion = async () => {
+    if (!seleccionada || !conversacionActiva) return;
+    const nuevoValor = !conversacionActiva.archivada;
+    setConversaciones((prev) => prev.map((c) => (c.id === seleccionada ? { ...c, archivada: nuevoValor } : c)));
+    await supabase2.from(tablaConversaciones).update({ archivada: nuevoValor }).eq("id", seleccionada);
+    if (nuevoValor) setSeleccionada(null);
+  };
+
   const conversacionesFiltradas = conversaciones.filter((c) => {
+    if (filtro === "archivadas") return !!c.archivada;
+    if (c.archivada) return false;
     if (filtro === "no-leidas" && !(c.unread_count > 0)) return false;
     if (busqueda.trim()) {
       const contactoRaw = canal === "whatsapp" ? c.whatsapp_contactos : c.instagram_contactos;
@@ -360,6 +370,9 @@ export default function ChatClient({
             </div>
             <button onClick={() => setFiltro(filtro === "todas" ? "no-leidas" : "todas")} title="No leídas" className={`shrink-0 px-2 py-1.5 text-[11px] font-semibold rounded-lg transition-colors flex items-center gap-1 ${filtro === "no-leidas" ? "bg-slate-800 dark:bg-white/10 text-white" : "bg-slate-50 dark:bg-white/5 border border-slate-200 dark:border-white/10 text-slate-500 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-white/10"}`}>
               {noLeidasTotal > 0 && <span className="w-1.5 h-1.5 rounded-full bg-emerald-500" />} {noLeidasTotal}
+            </button>
+            <button onClick={() => { setFiltro(filtro === "archivadas" ? "todas" : "archivadas"); setSeleccionada(null); }} title="Archivadas" className={`shrink-0 p-1.5 rounded-lg transition-colors ${filtro === "archivadas" ? "bg-slate-800 dark:bg-white/10 text-white" : "bg-slate-50 dark:bg-white/5 border border-slate-200 dark:border-white/10 text-slate-500 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-white/10"}`}>
+              <Archive className="w-3.5 h-3.5" />
             </button>
           </div>
         </div>
@@ -538,9 +551,12 @@ export default function ChatClient({
               </select>
             </div>
 
-            <div className="p-6 pb-0">
+            <div className="p-6 pb-0 space-y-2">
               <button onClick={() => setShowVincular(true)} className="w-full bg-slate-100 dark:bg-white/5 border border-slate-200 dark:border-white/10 hover:bg-slate-200 dark:hover:bg-white/10 text-slate-700 dark:text-slate-200 text-xs font-bold px-4 py-2 rounded-lg">
                 {conversacionActiva?.cliente_id ? "Cliente vinculado ✓" : "Vincular a cliente / auto"}
+              </button>
+              <button onClick={archivarConversacion} className="w-full flex items-center justify-center gap-1.5 bg-slate-100 dark:bg-white/5 border border-slate-200 dark:border-white/10 hover:bg-slate-200 dark:hover:bg-white/10 text-slate-700 dark:text-slate-200 text-xs font-bold px-4 py-2 rounded-lg">
+                {conversacionActiva?.archivada ? <><ArchiveRestore className="w-3.5 h-3.5" /> Desarchivar</> : <><Archive className="w-3.5 h-3.5" /> Archivar conversación</>}
               </button>
             </div>
 
