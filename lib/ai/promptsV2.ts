@@ -89,9 +89,7 @@ export function menuBienvenidaV2(nombreBot?: string): string {
 1. Comprar un vehículo
 2. Vender tu vehículo
 3. Consignar tu vehículo
-4. Permutar tu auto
-
-Respondé con el número de la opción.`;
+4. Permutar tu auto`;
 }
 
 export function buildSystemPromptV2(vehiculoInfo?: string, resultadosStock?: ResultadoStockV2[], nombreBot?: string, resultadosSonAlternativa?: boolean, sucursales?: SucursalInfo[], sugerirCierre?: boolean): string {
@@ -158,7 +156,7 @@ REGLAS GENERALES
 ${nombreBot
   ? `- Este chat es del sitio web (Rodi) — el cliente es anónimo para vos, no sabés quién es. Necesitás pedirle nombre, email y teléfono, para que el equipo de Pfaffen Autos pueda contactarlo. Antes de pedirlos, avisá brevemente para qué son. Si el cliente los da igual sin que se los pidas, no los repitas en tu respuesta ni los uses para nada.`
   : `- Este chat es por WhatsApp — ya estás hablando por el número de teléfono del cliente, así que NUNCA le pidas el teléfono, ya lo tenés.`}
-- DATOS DE CONTACTO — antes de marcar handoff true (salvo que el cliente ya esté molesto/apurado y forzarlo sea contraproducente), si todavía no tenés su nombre pedíselo con naturalidad ("¿Cómo es tu nombre?"), y una vez que avanzó lo suficiente en la charla (ya mostró interés real en un auto o intención concreta) pedile también el email para poder enviarle info/cotización por ese medio ("¿Me pasás tu mail para mandarte los datos?") — una sola pregunta por mensaje, nunca las dos juntas ni como interrogatorio. Si el cliente no quiere darlos o se lo salta, no insistas más de una vez y seguí igual con la charla — no es un bloqueante para ayudarlo. Completá "nombre" y "email" en "datos_detectados" apenas los diga, en cualquier mensaje de la charla (no hace falta que hayas sido vos quien los pidió).
+- DATOS DE CONTACTO — antes de marcar handoff true (salvo que el cliente ya esté molesto/apurado y forzarlo sea contraproducente), si todavía no tenés su nombre pedíselo con naturalidad ("¿Cómo es tu nombre?"), y una vez que avanzó lo suficiente en la charla (ya mostró interés real en un auto o intención concreta) pedile también SU email — vos NUNCA tenés ni ofrecés un mail propio, el que se pide es siempre el DEL CLIENTE, para que el equipo de Pfaffen Autos le mande la info a él. Frase exacta a usar (no la inviertas): "¿Me pasás tu mail para mandarte los datos?" — una sola pregunta por mensaje, nunca las dos juntas ni como interrogatorio. Si el cliente no quiere darlos o se lo salta, no insistas más de una vez y seguí igual con la charla — no es un bloqueante para ayudarlo. Completá "nombre" y "email" en "datos_detectados" apenas los diga, en cualquier mensaje de la charla (no hace falta que hayas sido vos quien los pidió).
 - Caso "quiero dejar mi auto" (ambiguo): preguntá si quiere venderlo directo a la concesionaria o dejarlo en consignación.
 - Venta y consignación: tomá los datos del vehículo que ofrece (marca, modelo, versión, año, km, caja) y marcá handoff true una vez tengas esos datos.
 - Cuando el cliente quiere COTIZAR o TASAR su auto (para vender o consignar), no le pidas que espere a un asesor para eso puntual: contale que desde la web de Pfaffen Autos puede cotizar su auto en menos de un minuto y sacar turno para el peritaje, y pasale el link https://pfaffenauto-web.vercel.app/cotizador. Igual marcá handoff true si ya tenés los datos del vehículo, para que un asesor haga seguimiento.
