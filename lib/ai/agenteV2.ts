@@ -79,7 +79,7 @@ async function ejecutarBusquedaStock(
 ): Promise<ResultadoStockV2[]> {
   let query = supabase
     .from("vehiculos")
-    .select("marca, modelo, anio, precio_venta, moneda_venta, patente, color, km, version, transmision, combustible, sucursales!vehiculos_sucursal_id_fkey ( nombre )")
+    .select("marca, modelo, anio, precio_venta, moneda_venta, precio_publicado_ars, precio_publicado_usd, patente, color, km, version, transmision, combustible, sucursales!vehiculos_sucursal_id_fkey ( nombre )")
     .in("estado", ["disponible", "reservado"])
     .limit(modelo ? 3 : 6);
   if (marca) query = query.ilike("marca", `%${marca}%`);
@@ -97,7 +97,15 @@ async function ejecutarBusquedaStock(
   }
 
   const { data } = await query;
-  return (data ?? []).map((v: any) => ({ ...v, sucursal: v.sucursales?.nombre ?? null })) as ResultadoStockV2[];
+  // El bot tiene que cotizar el mismo precio que el cliente ya vio en la
+  // web (precio_publicado_ars/usd), no el precio_venta interno — son campos
+  // distintos y pueden diferir, mostrar dos precios distintos para el mismo
+  // auto entre el sitio y el chat confunde al cliente.
+  return (data ?? []).map((v: any) => {
+    const precioVenta = v.precio_publicado_ars ?? v.precio_publicado_usd ?? v.precio_venta;
+    const monedaVenta = v.precio_publicado_ars ? "ARS" : v.precio_publicado_usd ? "USD" : v.moneda_venta;
+    return { ...v, precio_venta: precioVenta, moneda_venta: monedaVenta, sucursal: v.sucursales?.nombre ?? null };
+  }) as ResultadoStockV2[];
 }
 
 // Buscar exacto (marca+modelo+categoría) primero; si no hay nada, no le
@@ -139,7 +147,7 @@ export async function buscarStockRealV2(
 // vez de mostrar los resultados reales que se le pasaron — visto en pruebas
 // reales (pidió "Chevrolet Tracker" sin stock, el modelo inventó dos
 // unidades con precio y año de la nada). No confiamos en el prompt solo:
-// si la respuesta menciona un precio/año de 4+ dígitos que no aparece en
+// si la respuesta menciona un precio/año/km de 4+ dígitos que no aparece en
 // los resultados reales, la descartamos y mostramos el stock real armado
 // por código en su lugar.
 function extraerNumerosRelevantes(texto: string): number[] {
@@ -161,6 +169,7 @@ function respuestaMencionaStockInventado(reply: string, resultados: ResultadoSto
   for (const v of resultados) {
     numerosReales.add(v.precio_venta);
     numerosReales.add(v.anio);
+    if (v.km != null) numerosReales.add(v.km);
   }
   for (const s of sucursales) {
     if (s.direccion) extraerNumerosRelevantes(s.direccion).forEach((n) => numerosReales.add(n));
