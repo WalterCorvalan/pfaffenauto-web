@@ -22,7 +22,25 @@ interface VehiculoFinanciable {
   anio: number;
   km: number | null;
   precio_publicado_ars: number | null;
+  precio_publicado_usd: number | null;
+  precio_venta: number | null;
+  moneda_venta: "USD" | "ARS" | null;
   sucursales: { nombre: string } | null;
+}
+
+// precio_publicado_ars es un campo que carga Marketing para avisos (no todos
+// los autos lo tienen) — sin este fallback, un auto sin ese campo cargado
+// simulaba financiación sobre $0. Se resuelve con lo mejor disponible: el
+// publicado en ARS, si no el publicado en USD convertido, si no el precio de
+// venta real convertido (según su moneda).
+function resolverPrecioArs(v: VehiculoFinanciable, dolarVenta: number | null): number {
+  if (v.precio_publicado_ars) return v.precio_publicado_ars;
+  if (v.precio_publicado_usd && dolarVenta) return Math.round(v.precio_publicado_usd * dolarVenta);
+  if (v.precio_venta) {
+    if (v.moneda_venta === "ARS") return v.precio_venta;
+    if (v.moneda_venta === "USD" && dolarVenta) return Math.round(v.precio_venta * dolarVenta);
+  }
+  return 0;
 }
 
 const TNA = 0.46;
@@ -56,6 +74,11 @@ export default function SimuladorReal() {
   const [meses, setMeses] = useState(48);
 
   const [creditoPreaprobado, setCreditoPreaprobado] = useState<"si" | "no" | null>(null);
+  const [dolarVenta, setDolarVenta] = useState<number | null>(null);
+
+  useEffect(() => {
+    fetch("/api/dolar-blue").then((r) => r.json()).then((d) => { if (d.venta) setDolarVenta(d.venta); }).catch(() => {});
+  }, []);
 
   const [nombre, setNombre] = useState("");
   const [email, setEmail] = useState("");
@@ -89,7 +112,7 @@ export default function SimuladorReal() {
     const timeout = setTimeout(async () => {
       let query = supabase
         .from("vehiculos")
-        .select("id, marca, modelo, anio, km, precio_publicado_ars, sucursales!vehiculos_sucursal_id_fkey ( nombre )")
+        .select("id, marca, modelo, anio, km, precio_publicado_ars, precio_publicado_usd, precio_venta, moneda_venta, sucursales!vehiculos_sucursal_id_fkey ( nombre )")
         .eq("estado", "disponible")
         .limit(6);
 
@@ -104,7 +127,7 @@ export default function SimuladorReal() {
     return () => clearTimeout(timeout);
   }, [busqueda, step]);
 
-  const precioVehiculo = vehiculo?.precio_publicado_ars || 0;
+  const precioVehiculo = vehiculo ? resolverPrecioArs(vehiculo, dolarVenta) : 0;
   const anticipoCliente = (precioVehiculo * anticipoPorcentaje) / 100;
   const montoAFinanciar = precioVehiculo - anticipoCliente;
 
@@ -250,7 +273,7 @@ export default function SimuladorReal() {
                       <p className="font-black text-slate-900 dark:text-white text-xs truncate">{v.marca} {v.modelo}</p>
                       <p className="text-[10px] text-slate-500 dark:text-slate-400 font-bold truncate">{v.anio} · {v.sucursales?.nombre || "Casa Central"}</p>
                       <p className="text-xs font-black text-[#0145F2] dark:text-sky-400 mt-0.5">
-                        {v.precio_publicado_ars ? `$ ${v.precio_publicado_ars.toLocaleString("es-AR")}` : "Consultar precio"}
+                        {(() => { const p = resolverPrecioArs(v, dolarVenta); return p > 0 ? `$ ${p.toLocaleString("es-AR")}` : "Consultar precio"; })()}
                       </p>
                     </div>
                   </button>
