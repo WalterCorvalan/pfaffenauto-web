@@ -104,7 +104,7 @@ export default async function PanelV2Home() {
     supabase.from("cuotas_cobrar_clientes").select("vencimiento").eq("cobrada", false),
     supabase.from("expedientes").select("vencimiento").eq("archivado", false).not("vencimiento", "is", null),
     supabase.from("cuentas").select("id, nombre, moneda, saldo_inicial").eq("activa", true),
-    supabase.from("movimientos_caja").select("tipo, monto, moneda, tipo_movimiento, cuenta_id").is("deleted_at", null).eq("estado", "aprobado").gte("fecha", inicioMes).lte("fecha", finMes),
+    supabase.from("movimientos_caja").select("tipo, monto, tipo_movimiento, cuenta_id").is("deleted_at", null).eq("estado", "aprobado").gte("fecha", inicioMes).lte("fecha", finMes),
     supabase.from("visitas").select("id, nombre_cliente, vehiculo_marca, vehiculo_modelo, horario_visita").eq("estado", "Confirmada").eq("fecha_visita", hoyIso),
     supabase.from("pedidos").select("id, marca, modelo, nombre_cliente, vehiculo_match_id, created_at").eq("estado", "activo").not("vehiculo_match_id", "is", null),
     supabase.from("ventas").select("id, vehiculo_marca, vehiculo_modelo, comprador_nombre, precio_venta, moneda_venta, estado, vendedor_id, fecha_cierre").order("created_at", { ascending: false }).limit(8),
@@ -185,14 +185,19 @@ export default async function PanelV2Home() {
     ...(expedientesVencimientos || []).filter((e: any) => e.vencimiento > hoyIso && e.vencimiento <= en7dias),
   ].length;
 
-  // Cash flow del mes + saldos por cuenta (nunca mezclar moneda)
+  // Cash flow del mes + saldos por cuenta (nunca mezclar moneda) — la moneda
+  // vive en la cuenta, no en el movimiento, así que se resuelve por cuenta_id.
+  const monedaPorCuenta: Record<string, string> = {};
+  (cuentasConSaldo || []).forEach((c: any) => { monedaPorCuenta[c.id] = c.moneda; });
   const ingresosPorMoneda: Record<string, number> = {};
   const egresosPorMoneda: Record<string, number> = {};
   const topIngresos: Record<string, number> = {};
   const topEgresos: Record<string, number> = {};
   (movimientosMes || []).forEach((m: any) => {
+    const moneda = monedaPorCuenta[m.cuenta_id];
+    if (!moneda) return;
     const destino = m.tipo === "ingreso" ? ingresosPorMoneda : egresosPorMoneda;
-    destino[m.moneda] = (destino[m.moneda] || 0) + Number(m.monto);
+    destino[moneda] = (destino[moneda] || 0) + Number(m.monto);
     const topDestino = m.tipo === "ingreso" ? topIngresos : topEgresos;
     const key = m.tipo_movimiento || "Sin categoría";
     topDestino[key] = (topDestino[key] || 0) + Number(m.monto);

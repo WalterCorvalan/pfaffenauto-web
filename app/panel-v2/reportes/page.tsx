@@ -40,14 +40,14 @@ export default async function ReportesPage() {
     }),
     supabase.rpc("ranking_ventas", { p_desde: desde, p_hasta: hasta }),
     supabase.from("premios_consignaciones").select("*").order("orden"),
-    supabase.rpc("reportes_ranking_velocidad", { p_mes: mesActual }),
-    supabase.rpc("reportes_operaciones_por_vendedor", { p_mes: mesActual }),
-    supabase.rpc("reportes_origen_leads", { p_mes: mesActual }),
-    supabase.rpc("reportes_embudo_comercial", { p_mes: mesActual }),
-    supabase.rpc("reportes_expedientes_resumen", { p_mes: mesActual }),
-    supabase.rpc("reportes_expedientes_por_estado"),
-    supabase.rpc("reportes_infracciones_resumen", { p_mes: mesActual }),
-    supabase.rpc("reportes_taller_facturacion", { p_mes: mesActual }),
+    supabase.from("v_reportes_ranking_velocidad").select("*"),
+    supabase.from("v_reportes_operaciones_por_vendedor").select("*"),
+    supabase.from("v_reportes_origen_leads").select("*"),
+    supabase.from("v_reportes_embudo_comercial").select("*"),
+    supabase.from("v_reportes_expedientes_resumen").select("*").single(),
+    supabase.from("v_reportes_expedientes_por_estado").select("*"),
+    supabase.from("v_reportes_infracciones_resumen").select("*").single(),
+    supabase.from("v_reportes_taller_facturacion").select("*").single(),
     supabase.from("v_reportes_ventas_por_mes").select("*").limit(12),
     supabase.from("v_reportes_ventas_por_marca").select("*"),
     supabase.from("v_reportes_top_clientes").select("*"),
@@ -75,10 +75,10 @@ export default async function ReportesPage() {
       operacionesPorVendedorInicial={operacionesPorVendedor || []}
       origenLeadsInicial={origenLeads || []}
       embudoComercialInicial={(embudoComercial || [])[0] || { clientes: 0, cotizaciones: 0, ventas: 0 }}
-      expedientesResumenInicial={(expedientesResumen || [])[0] || { total: 0, activos: 0, cerrados: 0, vencidos: 0 }}
+      expedientesResumenInicial={expedientesResumen || { total: 0, activos: 0, cerrados: 0, vencidos: 0 }}
       expedientesPorEstado={expedientesPorEstado || []}
-      infraccionesResumenInicial={(infraccionesResumen || [])[0] || { total: 0, pendientes: 0, pagadas: 0, ganancia_total: 0 }}
-      tallerFacturacionInicial={(tallerFacturacion || [])[0] || { facturado_cobrado: 0, ots_cobradas: 0, ots_generadas: 0 }}
+      infraccionesResumenInicial={infraccionesResumen || { total: 0, pendientes: 0, pagadas: 0, ganancia_total: 0 }}
+      tallerFacturacionInicial={tallerFacturacion || { facturado_cobrado: 0, ots_cobradas: 0, ots_generadas: 0 }}
       ventasPorMes={ventasPorMes || []}
       ventasPorMarca={ventasPorMarca || []}
       topClientes={topClientes || []}

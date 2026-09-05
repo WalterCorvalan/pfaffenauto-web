@@ -85,30 +85,20 @@ export default function ReportesClient(props: Props) {
   const desde = mesStr;
   const hasta = new Date(mesBase.getFullYear(), mesBase.getMonth() + 1, 0).toISOString().slice(0, 10);
 
+  // Solo el ranking de ventas soporta rango de fechas (RPC ranking_ventas).
+  // Las demás vistas (velocidad, operaciones, origen leads, embudo,
+  // expedientes, infracciones, taller) son siempre "mes actual" — están
+  // definidas con date_trunc(now()) en sql_panel_v2_reportes.sql, no
+  // aceptan un mes arbitrario — así que navegar de mes solo mueve el
+  // ranking, el resto se queda con el valor inicial (mes en curso).
   const cargarMes = async (offset: number) => {
     setMesOffset(offset);
     setCargando(true);
     const base = new Date(hoy.getFullYear(), hoy.getMonth() + offset, 1);
     const d = `${base.getFullYear()}-${String(base.getMonth() + 1).padStart(2, "0")}-01`;
     const h = new Date(base.getFullYear(), base.getMonth() + 1, 0).toISOString().slice(0, 10);
-    const [r1, r2, r3, r4, r5, r6, r7] = await Promise.all([
-      supabase2.rpc("ranking_ventas", { p_desde: d, p_hasta: h }),
-      supabase2.rpc("reportes_ranking_velocidad", { p_mes: d }),
-      supabase2.rpc("reportes_operaciones_por_vendedor", { p_mes: d }),
-      supabase2.rpc("reportes_origen_leads", { p_mes: d }),
-      supabase2.rpc("reportes_embudo_comercial", { p_mes: d }),
-      supabase2.rpc("reportes_expedientes_resumen", { p_mes: d }),
-      supabase2.rpc("reportes_infracciones_resumen", { p_mes: d }),
-    ]);
-    const [r8] = await Promise.all([supabase2.rpc("reportes_taller_facturacion", { p_mes: d })]);
-    setRanking(r1.data || []);
-    setRankingVelocidad(r2.data || []);
-    setOperacionesPorVendedor(r3.data || []);
-    setOrigenLeads(r4.data || []);
-    setEmbudoComercial((r5.data || [])[0] || { clientes: 0, cotizaciones: 0, ventas: 0 });
-    setExpedientesResumen((r6.data || [])[0] || { total: 0, activos: 0, cerrados: 0, vencidos: 0 });
-    setInfraccionesResumen((r7.data || [])[0] || { total: 0, pendientes: 0, pagadas: 0, ganancia_total: 0 });
-    setTallerFacturacion((r8.data || [])[0] || { facturado_cobrado: 0, ots_cobradas: 0, ots_generadas: 0 });
+    const { data } = await supabase2.rpc("ranking_ventas", { p_desde: d, p_hasta: h });
+    setRanking(data || []);
     setCargando(false);
   };
 
@@ -208,7 +198,7 @@ export default function ReportesClient(props: Props) {
         <div className="flex items-center justify-between mb-3">
           <div>
             <p className="text-[10px] font-bold uppercase tracking-widest text-teal-200">Ranking de velocidad</p>
-            <p className="text-lg font-black capitalize">{mesLabel}</p>
+            <p className="text-lg font-black capitalize">Mes actual</p>
           </div>
           <Clock className="w-6 h-6 text-teal-200" />
         </div>

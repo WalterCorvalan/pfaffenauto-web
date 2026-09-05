@@ -100,6 +100,7 @@ export default function MiEspacioClient({
   const [items, setItems] = useState<string[]>(prefsIniciales?.items || RESUMEN_ITEMS.map((i) => i.key));
 
   const [showNuevoUrgente, setShowNuevoUrgente] = useState(false);
+  const [editandoUrgente, setEditandoUrgente] = useState<any | null>(null);
   const [uTitulo, setUTitulo] = useState("");
   const [uMoneda, setUMoneda] = useState("ARS");
   const [uMonto, setUMonto] = useState("");
@@ -161,6 +162,34 @@ export default function MiEspacioClient({
       setShowNuevoUrgente(false);
       setUTitulo(""); setUMonto(""); setUVencimiento(""); setUNotas("");
     } catch { alert("No se pudo crear el urgente."); } finally { setGuardandoUrgente(false); }
+  };
+
+  const abrirEdicionUrgente = (u: any) => {
+    setEditandoUrgente(u);
+    setUTitulo(u.titulo);
+    setUMoneda(u.moneda);
+    setUMonto(String(u.monto));
+    setUVencimiento(u.vencimiento);
+    setUNotas(u.notas || "");
+    setShowNuevoUrgente(true);
+  };
+
+  const guardarEdicionUrgente = async () => {
+    if (!editandoUrgente || !uTitulo.trim() || !uVencimiento) return alert("Completá al menos el título y el vencimiento.");
+    setGuardandoUrgente(true);
+    try {
+      const cambios = { titulo: uTitulo.trim(), moneda: uMoneda, monto: Number(uMonto) || 0, vencimiento: uVencimiento, notas: uNotas || null };
+      const { error } = await supabase2.from("espacio_urgentes").update(cambios).eq("id", editandoUrgente.id);
+      if (error) throw error;
+      setUrgentes((prev) => prev.map((u) => (u.id === editandoUrgente.id ? { ...u, ...cambios } : u)).sort((a, b) => a.vencimiento.localeCompare(b.vencimiento)));
+      cerrarModalUrgente();
+    } catch { alert("No se pudo guardar el urgente."); } finally { setGuardandoUrgente(false); }
+  };
+
+  const cerrarModalUrgente = () => {
+    setShowNuevoUrgente(false);
+    setEditandoUrgente(null);
+    setUTitulo(""); setUMonto(""); setUVencimiento(""); setUNotas("");
   };
 
   const eliminarUrgente = async (u: any) => {
@@ -403,7 +432,7 @@ export default function MiEspacioClient({
                       <div className="flex items-center gap-2 mt-2">
                         <button onClick={() => abrirPago(u, false)} className="flex items-center gap-1 px-2.5 py-1.5 text-[11px] font-bold border border-slate-200 dark:border-white/10 rounded-lg hover:bg-slate-50 dark:hover:bg-white/5"><CreditCard className="w-3.5 h-3.5" /> Pago parcial</button>
                         <button onClick={() => abrirPago(u, true)} className="flex items-center gap-1 px-2.5 py-1.5 text-[11px] font-bold border border-slate-200 dark:border-white/10 rounded-lg hover:bg-slate-50 dark:hover:bg-white/5"><CheckCircle2 className="w-3.5 h-3.5" /> Marcar pagado</button>
-                        <button className="p-1.5 text-slate-400 hover:text-slate-700 dark:hover:text-white ml-auto"><Pencil className="w-3.5 h-3.5" /></button>
+                        <button onClick={() => abrirEdicionUrgente(u)} className="p-1.5 text-slate-400 hover:text-slate-700 dark:hover:text-white ml-auto"><Pencil className="w-3.5 h-3.5" /></button>
                         <button onClick={() => eliminarUrgente(u)} className="p-1.5 text-slate-400 hover:text-rose-600"><Trash2 className="w-3.5 h-3.5" /></button>
                       </div>
                     )}
@@ -481,9 +510,9 @@ export default function MiEspacioClient({
       )}
 
       {showNuevoUrgente && (
-        <div className="fixed inset-0 bg-black/40 z-50 flex items-center justify-center p-4" onClick={() => setShowNuevoUrgente(false)}>
+        <div className="fixed inset-0 bg-black/40 z-50 flex items-center justify-center p-4" onClick={cerrarModalUrgente}>
           <div onClick={(e) => e.stopPropagation()} className="bg-white dark:bg-[#141414] border border-slate-200 dark:border-white/10 w-full max-w-md rounded-2xl shadow-2xl p-6">
-            <div className="flex justify-between items-start mb-1"><h3 className="text-lg font-bold">Nuevo urgente</h3><button onClick={() => setShowNuevoUrgente(false)}><X className="w-4 h-4 text-slate-400" /></button></div>
+            <div className="flex justify-between items-start mb-1"><h3 className="text-lg font-bold">{editandoUrgente ? "Editar urgente" : "Nuevo urgente"}</h3><button onClick={cerrarModalUrgente}><X className="w-4 h-4 text-slate-400" /></button></div>
             <p className="text-xs text-slate-400 mb-4">Algo que tenés que pagar / hacer pronto. Solo vos lo ves.</p>
             <label className={labelClass}>Título / Concepto *</label>
             <input value={uTitulo} onChange={(e) => setUTitulo(e.target.value)} placeholder="Pagar la luz" className={inputClass} />
@@ -495,8 +524,8 @@ export default function MiEspacioClient({
             <label className={labelClass + " mt-3"}>Notas</label>
             <textarea value={uNotas} onChange={(e) => setUNotas(e.target.value)} rows={2} placeholder="Detalles, link de pago, sucursal..." className={inputClass} />
             <div className="flex justify-end gap-2 mt-4">
-              <button onClick={() => setShowNuevoUrgente(false)} className="px-4 py-2 text-sm font-bold text-slate-500">Cancelar</button>
-              <button onClick={crearUrgente} disabled={guardandoUrgente} className="flex items-center gap-1.5 px-4 py-2 text-sm font-bold bg-rose-600 hover:bg-rose-700 text-white rounded-lg disabled:opacity-50"><Save className="w-4 h-4" /> Crear</button>
+              <button onClick={cerrarModalUrgente} className="px-4 py-2 text-sm font-bold text-slate-500">Cancelar</button>
+              <button onClick={editandoUrgente ? guardarEdicionUrgente : crearUrgente} disabled={guardandoUrgente} className="flex items-center gap-1.5 px-4 py-2 text-sm font-bold bg-rose-600 hover:bg-rose-700 text-white rounded-lg disabled:opacity-50"><Save className="w-4 h-4" /> {editandoUrgente ? "Guardar" : "Crear"}</button>
             </div>
           </div>
         </div>
