@@ -6,6 +6,7 @@ import UtmTracker from "@/components/UtmTracker";
 import FloatingChatbot from "@/components/FloatingChatbot";
 import CookieBanner from "@/components/CookieBanner";
 import RouteProgress from "@/components/ui/RouteProgress";
+import PageTransition from "@/components/ui/PageTransition";
 import { TemaPublicoProvider } from "@/components/TemaPublicoContext";
 import TemaPublicoRoot from "@/components/TemaPublicoRoot";
 import ToggleTemaPublico from "@/components/ToggleTemaPublico";
@@ -30,7 +31,7 @@ export default function PublicLayout({
             <UtmTracker />
           </Suspense>
           <main className="flex-grow w-full">
-            {children}
+            <PageTransition>{children}</PageTransition>
           </main>
           <Footer />
           <FloatingChatbot />
