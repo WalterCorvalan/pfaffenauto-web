@@ -110,7 +110,7 @@ export async function POST(req: Request) {
         prioridad: "novedad",
         titulo: `Nueva tasación desde la web — ${data.nombre}`,
         mensaje: `${data.marca} ${data.modelo || ""} ${data.anio || ""}`.trim(),
-        link: `/panel-v2/peritajes`,
+        link: `/panel-v2/cotizaciones`,
       });
     }
 

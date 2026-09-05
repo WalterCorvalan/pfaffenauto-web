@@ -107,7 +107,7 @@ export const TIPO_VER: Record<string, string> = {
   postulacion: "Ver Postulaciones",
   consignacion_nueva: "Ver Consignaciones",
   visita_nueva: "Ver Visitas",
-  lead_tasacion_nuevo: "Ver Peritajes",
+  lead_tasacion_nuevo: "Ver Cotizaciones",
   vista_seguimiento: "Ver operación",
   precio_a_confirmar: "Revisar precio",
   precio_confirmado_respuesta: "Ver Ventas",
