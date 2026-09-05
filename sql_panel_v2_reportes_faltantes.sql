@@ -2,7 +2,8 @@
 -- mezclando USD/ARS, pero ReportesClient.tsx pinta columnas separadas
 -- monto_usd/monto_ars — nunca hay que sumar monedas distintas. Se
 -- redefine acá con el desglose real por moneda.
-create or replace view public.v_reportes_top_clientes as
+drop view if exists public.v_reportes_top_clientes;
+create view public.v_reportes_top_clientes as
   select c.id as cliente_id, c.nombre,
     count(v.id) as compras,
     coalesce(sum(v.precio_venta) filter (where v.moneda_venta = 'USD'), 0) as monto_usd,
