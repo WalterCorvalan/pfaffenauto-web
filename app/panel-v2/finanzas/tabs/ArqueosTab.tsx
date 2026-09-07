@@ -4,6 +4,7 @@ import { useState } from "react";
 import { supabase2 } from "@/lib/supabase2/client";
 import { Plus, X, Save } from "lucide-react";
 import { inputClass, labelClass, fmt } from "./shared";
+import TablaResponsiva, { type ColumnaTabla } from "@/components/panelV2/TablaResponsiva";
 
 export default function ArqueosTab({ arqueos, setArqueos, cuentas, miNombre }: { arqueos: any[]; setArqueos: (fn: any) => void; cuentas: any[]; miNombre: string }) {
   const [showNuevo, setShowNuevo] = useState(false);
@@ -46,25 +47,23 @@ export default function ArqueosTab({ arqueos, setArqueos, cuentas, miNombre }: {
       {arqueos.length === 0 ? (
         <div className="bg-white dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-2xl py-16 text-center"><p className="text-sm font-bold">Sin arqueos registrados</p></div>
       ) : (
-        <div className="overflow-x-auto bg-white dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-xl">
-          <table className="w-full text-xs">
-            <thead><tr className="border-b border-slate-100 dark:border-white/10 text-left text-slate-400"><th className="p-2.5">Fecha</th><th className="p-2.5">Caja</th><th className="p-2.5">Moneda</th><th className="p-2.5">Esperado</th><th className="p-2.5">Contado</th><th className="p-2.5">Diferencia</th><th className="p-2.5">Responsable</th><th className="p-2.5">Motivo</th></tr></thead>
-            <tbody>
-              {arqueos.map((a) => (
-                <tr key={a.id} className="border-b border-slate-50 dark:border-white/5">
-                  <td className="p-2.5">{a.fecha}</td>
-                  <td className="p-2.5 font-bold">{a.cuenta?.nombre || cuentas.find((c) => c.id === a.cuenta_id)?.nombre || "—"}</td>
-                  <td className="p-2.5">{a.moneda}</td>
-                  <td className="p-2.5 font-mono">{Math.round(a.saldo_esperado).toLocaleString("es-AR")}</td>
-                  <td className="p-2.5 font-mono">{Math.round(a.contado_real).toLocaleString("es-AR")}</td>
-                  <td className={`p-2.5 font-mono font-bold ${Math.abs(a.diferencia) > 0.009 ? "text-rose-500" : "text-emerald-600"}`}>{Math.round(a.diferencia).toLocaleString("es-AR")}</td>
-                  <td className="p-2.5">{a.responsable?.nombre || "—"}</td>
-                  <td className="p-2.5 text-slate-400">{a.motivo || "—"}</td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
+        <TablaResponsiva<any>
+          filas={arqueos}
+          keyExtractor={(a) => a.id}
+          encabezadoMobile={(a) => <p className="font-bold">{a.cuenta?.nombre || cuentas.find((c) => c.id === a.cuenta_id)?.nombre || "—"}</p>}
+          columnas={
+            [
+              { key: "fecha", header: "Fecha", cell: (a) => a.fecha },
+              { key: "caja", header: "Caja", cell: (a) => a.cuenta?.nombre || cuentas.find((c) => c.id === a.cuenta_id)?.nombre || "—", claseTd: "font-bold", ocultarEnMobile: true },
+              { key: "moneda", header: "Moneda", cell: (a) => a.moneda },
+              { key: "esperado", header: "Esperado", cell: (a) => Math.round(a.saldo_esperado).toLocaleString("es-AR"), claseTd: "font-mono" },
+              { key: "contado", header: "Contado", cell: (a) => Math.round(a.contado_real).toLocaleString("es-AR"), claseTd: "font-mono" },
+              { key: "diferencia", header: "Diferencia", cell: (a) => <span className={`font-mono font-bold ${Math.abs(a.diferencia) > 0.009 ? "text-rose-500" : "text-emerald-600"}`}>{Math.round(a.diferencia).toLocaleString("es-AR")}</span> },
+              { key: "responsable", header: "Responsable", cell: (a) => a.responsable?.nombre || "—" },
+              { key: "motivo", header: "Motivo", cell: (a) => a.motivo || "—", claseTd: "text-slate-400" },
+            ] as ColumnaTabla<any>[]
+          }
+        />
       )}
 
       {showNuevo && (

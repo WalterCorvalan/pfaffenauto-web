@@ -4,6 +4,7 @@ import { useState, useMemo } from "react";
 import { supabase2 } from "@/lib/supabase2/client";
 import { Plus, X, Save } from "lucide-react";
 import { inputClass, labelClass, fmt } from "./shared";
+import TablaResponsiva, { type ColumnaTabla } from "@/components/panelV2/TablaResponsiva";
 
 export default function RetirosTab({
   retiros, setRetiros, cuentas, setCuentas, setMovimientos,
@@ -77,23 +78,21 @@ export default function RetirosTab({
       {retiros.length === 0 ? (
         <div className="bg-white dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-2xl py-16 text-center"><p className="text-sm font-bold">Sin retiros registrados</p></div>
       ) : (
-        <div className="overflow-x-auto bg-white dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-xl">
-          <table className="w-full text-xs">
-            <thead><tr className="border-b border-slate-100 dark:border-white/10 text-left text-slate-400"><th className="p-2.5">Fecha</th><th className="p-2.5">Persona</th><th className="p-2.5">Monto</th><th className="p-2.5">Cuenta</th><th className="p-2.5">Motivo</th><th className="p-2.5">Acciones</th></tr></thead>
-            <tbody>
-              {retiros.map((r) => (
-                <tr key={r.id} className="border-b border-slate-50 dark:border-white/5">
-                  <td className="p-2.5">{r.fecha}</td>
-                  <td className="p-2.5 font-bold">{r.persona}</td>
-                  <td className="p-2.5 font-mono font-bold">{fmt(r.monto, r.moneda)}</td>
-                  <td className="p-2.5">{cuentas.find((c) => c.id === r.cuenta_id)?.nombre || "—"}</td>
-                  <td className="p-2.5 text-slate-400">{r.motivo || "—"}</td>
-                  <td className="p-2.5"><button onClick={() => eliminar(r)} className="text-rose-500 font-bold">Eliminar</button></td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
+        <TablaResponsiva<any>
+          filas={retiros}
+          keyExtractor={(r) => r.id}
+          encabezadoMobile={(r) => <p className="font-bold">{r.persona}</p>}
+          columnas={
+            [
+              { key: "fecha", header: "Fecha", cell: (r) => r.fecha },
+              { key: "persona", header: "Persona", cell: (r) => r.persona, claseTd: "font-bold", ocultarEnMobile: true },
+              { key: "monto", header: "Monto", cell: (r) => fmt(r.monto, r.moneda), claseTd: "font-mono font-bold" },
+              { key: "cuenta", header: "Cuenta", cell: (r) => cuentas.find((c) => c.id === r.cuenta_id)?.nombre || "—" },
+              { key: "motivo", header: "Motivo", cell: (r) => r.motivo || "—", claseTd: "text-slate-400" },
+            ] as ColumnaTabla<any>[]
+          }
+          acciones={(r) => <button onClick={() => eliminar(r)} className="text-rose-500 font-bold">Eliminar</button>}
+        />
       )}
 
       {showNuevo && (
