@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
-import { Wallet, Plus, Printer, CarFront, AlertTriangle } from "lucide-react";
+import { Wallet, Plus, Printer, CarFront, AlertTriangle, Copy, Check } from "lucide-react";
 import EstadoSenaSelector from "./EstadoSenaSelector";
 import NuevaSenaModal from "./NuevaSenaModal";
 
@@ -16,6 +16,13 @@ export default function SenasClient({
   const searchParams = useSearchParams();
   const [senas, setSenas] = useState(senasIniciales);
   const [modalAbierto, setModalAbierto] = useState(false);
+  const [codigoCopiadoId, setCodigoCopiadoId] = useState<string | null>(null);
+
+  const copiarCodigo = (id: string, codigo: string) => {
+    navigator.clipboard.writeText(codigo);
+    setCodigoCopiadoId(id);
+    setTimeout(() => setCodigoCopiadoId((v) => (v === id ? null : v)), 1800);
+  };
 
   useEffect(() => {
     if (searchParams.get("nuevo") === "1") {
@@ -53,6 +60,7 @@ export default function SenasClient({
                     <th className="px-4 py-3 text-[10px] font-black uppercase tracking-widest text-slate-500 dark:text-slate-400">Vehículo</th>
                     <th className="px-4 py-3 text-[10px] font-black uppercase tracking-widest text-slate-500 dark:text-slate-400 text-right">Seña</th>
                     <th className="px-4 py-3 text-[10px] font-black uppercase tracking-widest text-slate-500 dark:text-slate-400 text-center">Estado</th>
+                    <th className="px-4 py-3 text-[10px] font-black uppercase tracking-widest text-slate-500 dark:text-slate-400 text-center">Código</th>
                     <th className="px-4 py-3 text-[10px] font-black uppercase tracking-widest text-slate-500 dark:text-slate-400 text-center">Imprimir</th>
                   </tr>
                 </thead>
@@ -69,11 +77,18 @@ export default function SenasClient({
                       <td className="px-4 py-3 text-[13px] text-slate-700 dark:text-slate-200"><span className="flex items-center gap-1.5"><CarFront className="w-3.5 h-3.5 text-slate-400" /> {s.marca} {s.modelo}</span></td>
                       <td className="px-4 py-3 text-right font-mono text-[13px] font-bold text-slate-900 dark:text-white">{s.sena_ars ? `$ ${Number(s.sena_ars).toLocaleString("es-AR")}` : s.monto ? `${s.moneda} ${Number(s.monto).toLocaleString("es-AR")}` : "—"}</td>
                       <td className="px-4 py-3 text-center"><EstadoSenaSelector id={s.id} estado={s.estado} vehiculoId={s.vehiculo_id} /></td>
+                      <td className="px-4 py-3 text-center">
+                        {s.codigo_seguimiento ? (
+                          <button onClick={() => copiarCodigo(s.id, s.codigo_seguimiento)} title="Copiar código de seguimiento" className={`inline-flex items-center gap-1 px-2 py-1 rounded-md text-[11px] font-bold font-mono border transition-colors ${codigoCopiadoId === s.id ? "bg-emerald-50 dark:bg-emerald-500/10 text-emerald-700 dark:text-emerald-300 border-emerald-200 dark:border-emerald-500/20" : "bg-slate-50 dark:bg-white/5 hover:bg-slate-100 dark:hover:bg-white/10 text-slate-600 dark:text-slate-300 border-slate-200 dark:border-white/10"}`}>
+                            {codigoCopiadoId === s.id ? <Check className="w-3 h-3" /> : <Copy className="w-3 h-3" />} {s.codigo_seguimiento}
+                          </button>
+                        ) : "—"}
+                      </td>
                       <td className="px-4 py-3 text-center"><Link href={`/panel-v2/senas/imprimir/${s.id}`} className="inline-flex p-2 bg-slate-50 dark:bg-white/5 hover:bg-rose-50 dark:hover:bg-rose-500/10 border border-slate-200 dark:border-white/10 hover:border-rose-200 dark:hover:border-rose-500/30 rounded-lg text-slate-400 hover:text-rose-600 dark:hover:text-rose-400 transition-all"><Printer className="w-4 h-4" /></Link></td>
                     </tr>
                   ))}
                   {senas.length === 0 && (
-                    <tr><td colSpan={8} className="px-4 py-16 text-center text-slate-400 dark:text-slate-500 text-sm italic">Sin señas cargadas todavía.</td></tr>
+                    <tr><td colSpan={9} className="px-4 py-16 text-center text-slate-400 dark:text-slate-500 text-sm italic">Sin señas cargadas todavía.</td></tr>
                   )}
                 </tbody>
               </table>
@@ -91,6 +106,11 @@ export default function SenasClient({
                 <p className="text-[13px] font-medium text-slate-900 dark:text-white flex items-center gap-1.5">{s.apellido || s.cliente_nombre}{s.apellido ? `, ${s.nombre}` : ""} {s.precio_confirmado === false && <AlertTriangle className="w-3.5 h-3.5 text-amber-500" />}</p>
                 <p className="text-[12px] text-slate-600 dark:text-slate-300 flex items-center gap-1.5"><CarFront className="w-3.5 h-3.5 text-slate-400" /> {s.marca} {s.modelo}</p>
                 <p className="text-[12px] text-slate-500 dark:text-slate-400">{s.sucursales?.nombre || "Sin sucursal"}</p>
+                {s.codigo_seguimiento && (
+                  <button onClick={() => copiarCodigo(s.id, s.codigo_seguimiento)} className={`inline-flex items-center gap-1 px-2 py-1 rounded-md text-[11px] font-bold font-mono border transition-colors ${codigoCopiadoId === s.id ? "bg-emerald-50 dark:bg-emerald-500/10 text-emerald-700 dark:text-emerald-300 border-emerald-200 dark:border-emerald-500/20" : "bg-slate-50 dark:bg-white/5 text-slate-600 dark:text-slate-300 border-slate-200 dark:border-white/10"}`}>
+                    {codigoCopiadoId === s.id ? <Check className="w-3 h-3" /> : <Copy className="w-3 h-3" />} {s.codigo_seguimiento}
+                  </button>
+                )}
                 <div className="flex items-center justify-between pt-1 border-t border-slate-100 dark:border-white/10">
                   <div className="flex items-center gap-2">
                     <span className="text-[12px] text-slate-500 dark:text-slate-400">{s.fecha ? new Date(`${s.fecha}T12:00:00Z`).toLocaleDateString("es-AR", { timeZone: "UTC" }) : "—"}</span>
