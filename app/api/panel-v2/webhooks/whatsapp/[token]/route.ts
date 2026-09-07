@@ -5,6 +5,7 @@ import { generarRespuestaAgenteV2, dividirRespuestaEnMensajes } from "@/lib/ai/a
 import { sendTextMessage } from "@/lib/meta/client";
 import { decrypt } from "@/lib/crypto";
 import { rateLimit, ipDesdeRequest } from "@/lib/rateLimit";
+import { registrarError } from "@/lib/panelV2/logger";
 
 // Webhook de Meta para el WhatsApp de panel-v2 (Conversaciones → WhatsApp,
 // replica /panel/chat de v1: bandeja de mensajes reales de clientes con
@@ -78,7 +79,7 @@ export async function POST(req: Request, { params }: { params: Promise<{ token: 
   try {
     await procesarEvento(payload);
   } catch (err) {
-    console.error("[webhook-v2] error procesando:", err);
+    registrarError("webhook-v2:procesar-evento", err);
   }
 
   return Response.json({ received: true });
@@ -148,7 +149,7 @@ async function ingestarMensaje({ waId, nombrePerfil, msg }: { waId: string; nomb
   });
   if (error) {
     if (error.code === "23505") return; // duplicado (reintento de Meta)
-    console.error("[webhook-v2] error insertando mensaje:", error);
+    registrarError("webhook-v2:insertar-mensaje", error, { conversacionId: conversacion.id });
     return;
   }
 
@@ -186,7 +187,7 @@ async function ejecutarAgente(conversacionId: string) {
   const { data: config } = await supabase.from("whatsapp_configuracion").select("*").eq("id", true).single();
 
   if (!result.ok) {
-    console.error("[webhook-v2] error del agente:", result.error);
+    registrarError("webhook-v2:agente", result.error, { conversacionId });
     const { data: mensajeFallback } = await supabase.from("whatsapp_mensajes").insert({ conversacion_id: conversacionId, direccion: "out", tipo: "text", texto: RESPUESTA_FALLBACK, status: "pending", ai_generado: false }).select("id").single();
     if (mensajeFallback) await enviarYActualizarMensaje(mensajeFallback.id, conversacionId, RESPUESTA_FALLBACK, config);
     return;
@@ -245,7 +246,7 @@ async function enviarYActualizarMensaje(mensajeId: string, conversacionId: strin
     const resultado = await sendTextMessage(config.phone_number_id, tokenPlano, telefono, texto);
     await supabase.from("whatsapp_mensajes").update({ status: "sent", wa_message_id: resultado.messages?.[0]?.id }).eq("id", mensajeId);
   } catch (err) {
-    console.error("[webhook-v2] error enviando mensaje:", err);
+    registrarError("webhook-v2:enviar-mensaje", err, { conversacionId, mensajeId });
     await supabase.from("whatsapp_mensajes").update({ status: "failed" }).eq("id", mensajeId);
   }
 }

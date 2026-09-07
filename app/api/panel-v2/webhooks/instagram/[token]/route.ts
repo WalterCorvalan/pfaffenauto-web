@@ -5,6 +5,7 @@ import { generarRespuestaAgenteV2, dividirRespuestaEnMensajes } from "@/lib/ai/a
 import { sendInstagramPrivateReply, sendInstagramMessage } from "@/lib/meta/client";
 import { decrypt } from "@/lib/crypto";
 import { rateLimit, ipDesdeRequest } from "@/lib/rateLimit";
+import { registrarError } from "@/lib/panelV2/logger";
 
 // Webhook de Meta para el Instagram de panel-v2 (Conversaciones → Instagram),
 // mismo patrón que /api/panel-v2/webhooks/whatsapp: comentario en un post →
@@ -71,7 +72,7 @@ export async function POST(req: Request, { params }: { params: Promise<{ token: 
   try {
     await procesarEvento(payload);
   } catch (err) {
-    console.error("[webhook-ig-v2] error procesando:", err);
+    registrarError("webhook-ig-v2:procesar-evento", err);
   }
 
   return Response.json({ received: true });
@@ -158,7 +159,7 @@ async function procesarComentario(value: any) {
       ai_generado: false,
     });
   } catch (err) {
-    console.error("[webhook-ig-v2] error enviando respuesta privada:", err);
+    registrarError("webhook-ig-v2:respuesta-privada", err, { conversacionId: refs.conversacionId, commentId });
   }
 }
 
@@ -181,7 +182,7 @@ async function procesarMensajeDirecto(msg: any) {
   });
   if (error) {
     if (error.code === "23505") return; // duplicado, Meta reintentó el mismo evento
-    console.error("[webhook-ig-v2] error insertando mensaje:", error);
+    registrarError("webhook-ig-v2:insertar-mensaje", error, { conversacionId: refs.conversacionId });
     return;
   }
 
@@ -219,7 +220,7 @@ async function ejecutarAgente(conversacionId: string, igUserId: string) {
   const { data: config } = await supabase.from("instagram_configuracion").select("*").eq("id", true).single();
 
   if (!result.ok) {
-    console.error("[webhook-ig-v2] error del agente:", result.error);
+    registrarError("webhook-ig-v2:agente", result.error, { conversacionId });
     const { data: mensajeFallback } = await supabase.from("instagram_mensajes").insert({ conversacion_id: conversacionId, direccion: "out", tipo: "text", texto: RESPUESTA_FALLBACK, status: "pending", ai_generado: false }).select("id").single();
     if (mensajeFallback) await enviarYActualizarMensaje(mensajeFallback.id, igUserId, RESPUESTA_FALLBACK, config);
     return;
@@ -257,7 +258,7 @@ async function enviarYActualizarMensaje(mensajeId: string, igUserId: string, tex
     await sendInstagramMessage(config.ig_user_id, tokenPlano, igUserId, texto);
     await supabase.from("instagram_mensajes").update({ status: "sent" }).eq("id", mensajeId);
   } catch (err) {
-    console.error("[webhook-ig-v2] error enviando DM:", err);
+    registrarError("webhook-ig-v2:enviar-dm", err, { mensajeId, igUserId });
     await supabase.from("instagram_mensajes").update({ status: "failed" }).eq("id", mensajeId);
   }
 }
