@@ -78,7 +78,7 @@ export default function PendientesTab({ miId, autoAbrir, onAutoAbierto }: { miId
       )}
 
       {showNueva && (
-        <div className="fixed inset-0 bg-black/40 z-50 flex items-center justify-center p-4" onClick={() => setShowNueva(false)}>
+        <div className="fixed inset-0 bg-black/40 z-50 flex items-center justify-center p-4" onClick={() => { if (window.innerWidth >= 768) setShowNueva(false); }}>
           <div onClick={(e) => e.stopPropagation()} className="bg-white dark:bg-[#141414] border border-slate-200 dark:border-white/10 w-full max-w-sm rounded-2xl shadow-2xl p-6">
             <div className="flex justify-between items-start mb-1"><h3 className="text-lg font-bold">Nueva tarea</h3><button onClick={() => setShowNueva(false)}><X className="w-4 h-4 text-slate-400" /></button></div>
             <p className="text-xs text-slate-400 mb-4">Tu agenda personal — solo vos ves estas tareas.</p>

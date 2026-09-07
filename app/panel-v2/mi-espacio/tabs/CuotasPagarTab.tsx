@@ -180,7 +180,7 @@ export default function CuotasPagarTab({ miId }: { miId: string }) {
       )}
 
       {showNueva && (
-        <div className="fixed inset-0 bg-black/40 z-50 flex items-center justify-center p-4" onClick={() => setShowNueva(false)}>
+        <div className="fixed inset-0 bg-black/40 z-50 flex items-center justify-center p-4" onClick={() => { if (window.innerWidth >= 768) setShowNueva(false); }}>
           <div onClick={(e) => e.stopPropagation()} className="bg-white dark:bg-[#141414] border border-slate-200 dark:border-white/10 w-full max-w-md rounded-2xl shadow-2xl p-6 max-h-[90vh] overflow-y-auto">
             <div className="flex justify-between items-start mb-1"><h3 className="text-lg font-bold">Nueva cuota</h3><button onClick={() => setShowNueva(false)}><X className="w-4 h-4 text-slate-400" /></button></div>
             <p className="text-xs text-slate-400 mb-4">Tarjeta de crédito, hipoteca, préstamo, leasing, viajes en cuotas...</p>
@@ -210,7 +210,7 @@ export default function CuotasPagarTab({ miId }: { miId: string }) {
       )}
 
       {showPlan && (
-        <div className="fixed inset-0 bg-black/40 z-50 flex items-center justify-center p-4" onClick={() => setShowPlan(false)}>
+        <div className="fixed inset-0 bg-black/40 z-50 flex items-center justify-center p-4" onClick={() => { if (window.innerWidth >= 768) setShowPlan(false); }}>
           <div onClick={(e) => e.stopPropagation()} className="bg-white dark:bg-[#141414] border border-slate-200 dark:border-white/10 w-full max-w-md rounded-2xl shadow-2xl p-6 max-h-[90vh] overflow-y-auto">
             <div className="flex justify-between items-start mb-1"><h3 className="text-lg font-bold">Plan automático</h3><button onClick={() => setShowPlan(false)}><X className="w-4 h-4 text-slate-400" /></button></div>
             <p className="text-xs text-slate-400 mb-4">Crea N cuotas de un saque (hipoteca, crédito, tarjeta en cuotas, etc.) con la frecuencia y monto que elijas.</p>
@@ -236,7 +236,7 @@ export default function CuotasPagarTab({ miId }: { miId: string }) {
       )}
 
       {pagando && (
-        <div className="fixed inset-0 bg-black/40 z-50 flex items-center justify-center p-4" onClick={() => setPagando(null)}>
+        <div className="fixed inset-0 bg-black/40 z-50 flex items-center justify-center p-4" onClick={() => { if (window.innerWidth >= 768) setPagando(null); }}>
           <div onClick={(e) => e.stopPropagation()} className="bg-white dark:bg-[#141414] border border-slate-200 dark:border-white/10 w-full max-w-sm rounded-2xl shadow-2xl p-6">
             <div className="flex justify-between items-start mb-1"><h3 className="text-base font-bold">Pago de "{pagando.concepto}"</h3><button onClick={() => setPagando(null)}><X className="w-4 h-4 text-slate-400" /></button></div>
             <div className="bg-slate-50 dark:bg-white/5 rounded-lg p-3 my-3 space-y-1 text-sm">

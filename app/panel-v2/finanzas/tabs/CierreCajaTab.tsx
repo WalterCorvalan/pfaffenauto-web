@@ -77,7 +77,7 @@ export default function CierreCajaTab({ cierres, setCierres }: { cierres: any[];
       )}
 
       {viendo && (
-        <div className="fixed inset-0 bg-black/40 z-50 flex items-center justify-center p-4" onClick={() => setViendo(null)}>
+        <div className="fixed inset-0 bg-black/40 z-50 flex items-center justify-center p-4" onClick={() => { if (window.innerWidth >= 768) setViendo(null); }}>
           <div onClick={(e) => e.stopPropagation()} className="bg-white dark:bg-[#141414] border border-slate-200 dark:border-white/10 w-full max-w-sm rounded-2xl shadow-2xl p-6">
             <div className="flex justify-between items-start mb-1"><p className="text-xs text-slate-400">Cerrado por {viendo.cerrado_por_perfil?.nombre || "—"} · {new Date(viendo.cerrado_en).toLocaleString("es-AR")}</p><button onClick={() => setViendo(null)}><X className="w-4 h-4 text-slate-400" /></button></div>
             <div className="space-y-1.5 mt-3">

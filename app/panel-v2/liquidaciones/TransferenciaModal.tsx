@@ -209,7 +209,7 @@ export default function TransferenciaModal({
   };
 
   return (
-    <div className="fixed inset-0 bg-black/40 z-50 flex items-center justify-center p-4" onClick={() => !guardando && onClose()}>
+    <div className="fixed inset-0 bg-black/40 z-50 flex items-center justify-center p-4" onClick={() => { if (!guardando && window.innerWidth >= 768) onClose(); }}>
       <div onClick={(e) => e.stopPropagation()} className="bg-white dark:bg-[#141414] border border-slate-200 dark:border-white/10 w-full max-w-2xl rounded-2xl shadow-2xl p-6 max-h-[90vh] overflow-y-auto">
         <div className="flex justify-between items-start mb-1"><h3 className="text-lg font-bold">{editando ? "Editar transferencia" : "Nueva transferencia"}</h3><button onClick={onClose}><X className="w-4 h-4 text-slate-400" /></button></div>
         <p className="text-xs text-slate-400 mb-4">{editando ? "Actualizá los datos de la operación. La comisión gestora y el ingreso agencia se recalculan automáticamente." : "Cargá una operación de gestoría para incluirla en la liquidación del mes."}</p>

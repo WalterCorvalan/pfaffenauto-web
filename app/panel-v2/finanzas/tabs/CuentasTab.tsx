@@ -102,7 +102,7 @@ export default function CuentasTab({ cuentas, setCuentas, soyAdmin }: { cuentas:
       )}
 
       {(showNueva || editando) && (
-        <div className="fixed inset-0 bg-black/40 z-50 flex items-center justify-center p-4" onClick={() => { setShowNueva(false); setEditando(null); }}>
+        <div className="fixed inset-0 bg-black/40 z-50 flex items-center justify-center p-4" onClick={() => { if (window.innerWidth >= 768) { setShowNueva(false); setEditando(null); } }}>
           <div onClick={(e) => e.stopPropagation()} className="bg-white dark:bg-[#141414] border border-slate-200 dark:border-white/10 w-full max-w-sm rounded-2xl shadow-2xl p-6 max-h-[90vh] overflow-y-auto">
             <div className="flex justify-between items-start mb-1"><h3 className="text-lg font-bold">{editando ? "Editar cuenta" : "Nueva cuenta"}</h3><button onClick={() => { setShowNueva(false); setEditando(null); }}><X className="w-4 h-4 text-slate-400" /></button></div>
             <p className="text-xs text-slate-400 mb-4">Creá una nueva caja, banco, tarjeta o billetera. Si arranca con un saldo, lo registramos como un movimiento "Saldo inicial" en el libro diario.</p>
@@ -135,7 +135,7 @@ export default function CuentasTab({ cuentas, setCuentas, soyAdmin }: { cuentas:
       )}
 
       {showDiff && (
-        <div className="fixed inset-0 bg-black/40 z-50 flex items-center justify-center p-4" onClick={() => setShowDiff(false)}>
+        <div className="fixed inset-0 bg-black/40 z-50 flex items-center justify-center p-4" onClick={() => { if (window.innerWidth >= 768) setShowDiff(false); }}>
           <div onClick={(e) => e.stopPropagation()} className="bg-white dark:bg-[#141414] border border-slate-200 dark:border-white/10 w-full max-w-md rounded-2xl shadow-2xl p-6">
             <div className="flex justify-between items-start mb-3"><h3 className="text-base font-bold">Conciliación</h3><button onClick={() => setShowDiff(false)}><X className="w-4 h-4 text-slate-400" /></button></div>
             <p className="text-xs text-slate-400 mb-3">En este sistema el saldo de cada cuenta NUNCA se guarda: se calcula en vivo como saldo inicial + movimientos aprobados cada vez que se muestra. Por diseño no existe un valor "cacheado" que pueda desincronizarse — así que acá nunca vas a ver una cuenta fuera de sync.</p>
@@ -150,7 +150,7 @@ export default function CuentasTab({ cuentas, setCuentas, soyAdmin }: { cuentas:
       )}
 
       {reseteando && (
-        <div className="fixed inset-0 bg-black/40 z-50 flex items-center justify-center p-4" onClick={() => setReseteando(null)}>
+        <div className="fixed inset-0 bg-black/40 z-50 flex items-center justify-center p-4" onClick={() => { if (window.innerWidth >= 768) setReseteando(null); }}>
           <div onClick={(e) => e.stopPropagation()} className="bg-white dark:bg-[#141414] border border-slate-200 dark:border-white/10 w-full max-w-sm rounded-2xl shadow-2xl p-6">
             <p className="text-xs text-slate-400 mb-4">Se resetea el saldo inicial de <b>{reseteando.nombre}</b>: {fmt(reseteando.saldo_inicial, reseteando.moneda)} → {fmt(0, reseteando.moneda)}. Usar SOLO si querés arrancar la contabilidad desde cero (típicamente después de borrar todos los movimientos). Reversible editando la cuenta.</p>
             <div className="flex justify-end gap-2"><button onClick={() => setReseteando(null)} className="px-4 py-2 text-sm font-bold text-slate-500">Cancelar</button><button onClick={confirmarReset} disabled={guardando} className="px-4 py-2 text-sm font-bold bg-rose-600 hover:bg-rose-700 text-white rounded-lg disabled:opacity-50">Resetear saldo</button></div>
