@@ -47,6 +47,11 @@ const ESTADO_COLOR: Record<string, string> = {
 function diasEnStock(iso: string) {
   return Math.floor((Date.now() - new Date(iso).getTime()) / 86400000);
 }
+function bordeAntiguedad(dias: number, diasEstancado: number) {
+  if (dias >= diasEstancado || dias >= 60) return "border-l-rose-500";
+  if (dias >= 30) return "border-l-amber-400";
+  return "border-l-sky-400";
+}
 function fmtPrecio(n: number, moneda: string) {
   return moneda === "ARS" ? `$ ${n.toLocaleString("es-AR")}` : `${moneda} ${n.toLocaleString("es-AR")}`;
 }
@@ -274,12 +279,18 @@ export default function StockClient({
                 </div>
               ) : (
                 <>
-                  <div className="bg-white dark:bg-white/[0.02] border border-slate-200 dark:border-white/5 rounded-xl px-4 py-2.5 mb-3 text-xs font-semibold text-slate-500 dark:text-slate-400">
-                    {filtrados.length} vehículo{filtrados.length === 1 ? "" : "s"} en lista
+                  <div className="bg-white dark:bg-white/[0.02] border border-slate-200 dark:border-white/5 rounded-xl px-4 py-2.5 mb-3 flex items-center justify-between flex-wrap gap-2 text-xs font-semibold text-slate-500 dark:text-slate-400">
+                    <span>{filtrados.length} vehículo{filtrados.length === 1 ? "" : "s"} en lista</span>
+                    <span className="flex items-center gap-3 text-[11px] font-bold">
+                      <span className="flex items-center gap-1.5"><span className="w-2 h-2 rounded-full bg-sky-400" /> En stock</span>
+                      <span className="flex items-center gap-1.5"><span className="w-2 h-2 rounded-full bg-amber-400" /> +30 días</span>
+                      <span className="flex items-center gap-1.5"><span className="w-2 h-2 rounded-full bg-rose-500" /> +60 días</span>
+                    </span>
                   </div>
                   <TablaResponsiva<Vehiculo>
                     filas={filtrados}
                     keyExtractor={(v) => v.id}
+                    claseFila={(v) => `border-l-4 ${bordeAntiguedad(diasEnStock(v.created_at), diasEstancado)}`}
                     encabezadoMobile={renderVehiculoCell}
                     columnas={
                       [
