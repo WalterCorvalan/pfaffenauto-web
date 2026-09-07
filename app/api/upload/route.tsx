@@ -5,6 +5,7 @@ import { isRemoveBgConfigurado, quitarFondo } from "@/lib/removeBg";
 import { subirArchivoR2 } from "@/lib/storage/r2";
 import { rateLimit, ipDesdeRequest } from "@/lib/rateLimit";
 import { registrarError } from "@/lib/logger";
+import { validarYObtenerMimeReal } from "@/lib/validarArchivo";
 
 const MAX_MB = 15;
 
@@ -32,14 +33,15 @@ export async function POST(request: Request) {
     if (!file) {
       return NextResponse.json({ error: "No se encontró ningún archivo." }, { status: 400 });
     }
-    if (!file.type.startsWith("image/")) {
-      return NextResponse.json({ error: "Solo se permiten imágenes." }, { status: 400 });
-    }
     if (file.size > MAX_MB * 1024 * 1024) {
       return NextResponse.json({ error: `La imagen pesa demasiado (máximo ${MAX_MB}MB).` }, { status: 400 });
     }
 
     let buffer: Buffer = Buffer.from(new Uint8Array(await file.arrayBuffer()));
+    const mimeOriginal = validarYObtenerMimeReal(buffer, ["imagen"]);
+    if (!mimeOriginal) {
+      return NextResponse.json({ error: "Solo se permiten imágenes." }, { status: 400 });
+    }
 
     // Fotos de autos: recorte automático de fondo → fondo gris estudio parejo en todas las tomas
     if (isRemoveBgConfigurado()) {
@@ -49,12 +51,14 @@ export async function POST(request: Request) {
         console.error("[remove.bg] no se pudo procesar, se sube la foto original:", err);
       }
     }
+    // remove.bg devuelve PNG; si no se aplicó, re-detectamos sobre el buffer original.
+    const mimeFinal = validarYObtenerMimeReal(buffer, ["imagen"]) ?? "image/png";
 
     // Limpiamos el nombre del archivo
     const cleanFileName = file.name.replace(/[^a-zA-Z0-9.\-_]/g, '');
     const uniqueFileName = `${Date.now()}-${Math.floor(Math.random() * 10000)}-${cleanFileName}`;
-    
-    const publicUrl = await subirArchivoR2(buffer, `vehiculos/${uniqueFileName}`, file.type);
+
+    const publicUrl = await subirArchivoR2(buffer, `vehiculos/${uniqueFileName}`, mimeFinal);
 
     return NextResponse.json({ publicUrl });
 

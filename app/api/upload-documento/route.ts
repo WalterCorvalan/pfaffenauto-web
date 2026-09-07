@@ -4,6 +4,7 @@ import { cookies } from "next/headers";
 import { subirArchivoR2 } from "@/lib/storage/r2";
 import { rateLimit, ipDesdeRequest } from "@/lib/rateLimit";
 import { registrarError } from "@/lib/logger";
+import { validarYObtenerMimeReal } from "@/lib/validarArchivo";
 
 // Adjuntos de documentación de venta (título, formularios, cédulas, etc.) — solo staff logueado.
 export async function POST(request: Request) {
@@ -35,10 +36,14 @@ export async function POST(request: Request) {
     }
 
     const buffer = Buffer.from(new Uint8Array(await file.arrayBuffer()));
+    const mimeReal = validarYObtenerMimeReal(buffer, ["imagen", "pdf"]);
+    if (!mimeReal) {
+      return NextResponse.json({ error: "Solo se permiten fotos o PDF." }, { status: 400 });
+    }
     const cleanFileName = file.name.replace(/[^a-zA-Z0-9.\-_]/g, "");
     const uniqueFileName = `${Date.now()}-${Math.floor(Math.random() * 10000)}-${cleanFileName}`;
 
-    const publicUrl = await subirArchivoR2(buffer, `documentacion/${uniqueFileName}`, file.type || "application/octet-stream");
+    const publicUrl = await subirArchivoR2(buffer, `documentacion/${uniqueFileName}`, mimeReal);
 
     return NextResponse.json({ publicUrl });
   } catch (error) {

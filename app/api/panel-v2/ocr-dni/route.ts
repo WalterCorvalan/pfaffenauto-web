@@ -4,6 +4,7 @@ import { createServerClient } from "@supabase/ssr";
 import { cookies } from "next/headers";
 import { rateLimit, ipDesdeRequest } from "@/lib/rateLimit";
 import { registrarError } from "@/lib/panelV2/logger";
+import { validarYObtenerMimeReal } from "@/lib/validarArchivo";
 
 const MAX_MB = 8;
 
@@ -40,14 +41,15 @@ export async function POST(req: Request) {
     const formData = await req.formData();
     const file = formData.get("file") as File | null;
     if (!file) return NextResponse.json({ error: "No se encontró ninguna imagen." }, { status: 400 });
-    if (!file.type.startsWith("image/")) return NextResponse.json({ error: "Solo se permiten imágenes." }, { status: 400 });
     if (file.size > MAX_MB * 1024 * 1024) return NextResponse.json({ error: `La imagen pesa demasiado (máximo ${MAX_MB}MB).` }, { status: 400 });
 
     const apiKey = process.env.OPENAI_API_KEY;
     if (!apiKey) return NextResponse.json({ error: "OPENAI_API_KEY no configurada." }, { status: 500 });
 
     const buffer = Buffer.from(await file.arrayBuffer());
-    const dataUrl = `data:${file.type};base64,${buffer.toString("base64")}`;
+    const mimeReal = validarYObtenerMimeReal(buffer, ["imagen"]);
+    if (!mimeReal) return NextResponse.json({ error: "Solo se permiten imágenes." }, { status: 400 });
+    const dataUrl = `data:${mimeReal};base64,${buffer.toString("base64")}`;
 
     const response = await fetch("https://api.openai.com/v1/responses", {
       method: "POST",
