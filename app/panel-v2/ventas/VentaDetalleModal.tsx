@@ -3,7 +3,7 @@
 import { useState, useEffect } from "react";
 import { supabase2 } from "@/lib/supabase2/client";
 import Link from "next/link";
-import { X, Loader2, Pencil, Trash2, ChevronDown, AlertTriangle, ShieldAlert, Check, Car, User, DollarSign, Percent, KeyRound, FolderKanban, History } from "lucide-react";
+import { X, Loader2, Pencil, Trash2, ChevronDown, AlertTriangle, ShieldAlert, Check, Car, User, DollarSign, Percent, KeyRound, FolderKanban, History, Copy } from "lucide-react";
 import { fmtFechaLocal } from "@/lib/panelV2/fechas";
 
 const ESTADO_LABEL: Record<string, string> = {
@@ -78,6 +78,7 @@ export default function VentaDetalleModal({ ventaId, miId, soyAdmin, puedeOperac
   const [comisionConsignacionPct, setComisionConsignacionPct] = useState("");
   const [guardandoComision, setGuardandoComision] = useState(false);
   const [solicitudEnviada, setSolicitudEnviada] = useState(false);
+  const [codigoCopiado, setCodigoCopiado] = useState(false);
 
   const cargar = async () => {
     const [{ data: v }, { data: s }, { data: h }, { data: exp }] = await Promise.all([
@@ -169,6 +170,12 @@ export default function VentaDetalleModal({ ventaId, miId, soyAdmin, puedeOperac
     if (data) onActualizado(data);
   };
 
+  const copiarCodigo = () => {
+    navigator.clipboard.writeText(venta.codigo_seguimiento);
+    setCodigoCopiado(true);
+    setTimeout(() => setCodigoCopiado(false), 1800);
+  };
+
   const eliminar = async () => {
     if (!confirm("¿Eliminar esta venta? No se puede deshacer.")) return;
     const { error, count } = await supabase2.from("ventas").delete({ count: "exact" }).eq("id", ventaId);
@@ -208,6 +215,11 @@ export default function VentaDetalleModal({ ventaId, miId, soyAdmin, puedeOperac
               <Link href="/panel-v2/expedientes" className="text-xs font-bold px-2 py-0.5 rounded-full bg-emerald-50 dark:bg-emerald-500/10 text-emerald-600 dark:text-emerald-300 flex items-center gap-1 hover:underline">
                 <FolderKanban className="w-3 h-3" /> Expediente {idCorto(expediente.id)}
               </Link>
+            )}
+            {venta.codigo_seguimiento && (
+              <button onClick={copiarCodigo} title="Copiar código de seguimiento — pasáselo al cliente para /seguimiento" className={`flex items-center gap-1.5 border px-2.5 py-0.5 rounded-full text-xs font-bold font-mono transition-colors ${codigoCopiado ? "bg-emerald-50 dark:bg-emerald-500/10 text-emerald-700 dark:text-emerald-300 border-emerald-200 dark:border-emerald-500/20" : "bg-slate-50 dark:bg-white/5 hover:bg-slate-100 dark:hover:bg-white/10 text-slate-600 dark:text-slate-300 border-slate-200 dark:border-white/10"}`}>
+                {codigoCopiado ? <Check className="w-3 h-3" /> : <Copy className="w-3 h-3" />} {codigoCopiado ? "Copiado" : venta.codigo_seguimiento}
+              </button>
             )}
           </div>
 
