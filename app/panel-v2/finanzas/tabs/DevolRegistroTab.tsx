@@ -4,6 +4,7 @@ import { useState, useMemo } from "react";
 import { supabase2 } from "@/lib/supabase2/client";
 import { X, Save, HandCoins } from "lucide-react";
 import { inputClass, labelClass, fmt } from "./shared";
+import TablaResponsiva, { type ColumnaTabla } from "@/components/panelV2/TablaResponsiva";
 
 type Sub = "por_confirmar" | "acreditada" | "al_cliente" | "todas";
 
@@ -121,28 +122,28 @@ export default function DevolRegistroTab({
           <p className="text-xs text-slate-400 mt-1 max-w-sm mx-auto">Las carga gestoría al finalizar una transferencia, cuando el registro reintegra parte del arancel.</p>
         </div>
       ) : (
-        <div className="overflow-x-auto bg-white dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-xl">
-          <table className="w-full text-xs">
-            <thead><tr className="border-b border-slate-100 dark:border-white/10 text-left text-slate-400"><th className="p-2.5">Fecha</th><th className="p-2.5">Patente</th><th className="p-2.5">Cliente</th><th className="p-2.5">Gestora</th><th className="p-2.5">Monto</th><th className="p-2.5">Estado</th><th className="p-2.5">Acciones</th></tr></thead>
-            <tbody>
-              {lista.map((d) => (
-                <tr key={d.id} className="border-b border-slate-50 dark:border-white/5">
-                  <td className="p-2.5">{d.fecha}</td>
-                  <td className="p-2.5 font-bold">{d.patente || "—"}</td>
-                  <td className="p-2.5">{d.cliente || "—"}</td>
-                  <td className="p-2.5 text-slate-400">{d.gestora || "—"}</td>
-                  <td className="p-2.5 font-mono font-bold">{fmt(d.monto, d.moneda)}</td>
-                  <td className="p-2.5">
-                    {d.estado === "por_confirmar" && <span className="text-[10px] font-bold uppercase px-2 py-0.5 rounded-full bg-amber-100 dark:bg-amber-500/20 text-amber-700">Por confirmar</span>}
-                    {d.estado === "acreditada" && <span className="text-[10px] font-bold uppercase px-2 py-0.5 rounded-full bg-emerald-100 dark:bg-emerald-500/20 text-emerald-700">Acreditada</span>}
-                    {d.estado === "al_cliente" && <span className="text-[10px] font-bold uppercase px-2 py-0.5 rounded-full bg-slate-100 dark:bg-white/10 text-slate-500">Al cliente</span>}
-                  </td>
-                  <td className="p-2.5">{d.estado === "por_confirmar" && <button onClick={() => abrirResolucion(d)} className="text-emerald-600 font-bold">Resolver</button>}</td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
+        <TablaResponsiva<any>
+          filas={lista}
+          keyExtractor={(d) => d.id}
+          encabezadoMobile={(d) => <p className="font-bold">{d.patente || "—"}</p>}
+          columnas={
+            [
+              { key: "fecha", header: "Fecha", cell: (d) => d.fecha },
+              { key: "patente", header: "Patente", cell: (d) => d.patente || "—", claseTd: "font-bold", ocultarEnMobile: true },
+              { key: "cliente", header: "Cliente", cell: (d) => d.cliente || "—" },
+              { key: "gestora", header: "Gestora", cell: (d) => d.gestora || "—", claseTd: "text-slate-400" },
+              { key: "monto", header: "Monto", cell: (d) => fmt(d.monto, d.moneda), claseTd: "font-mono font-bold" },
+              { key: "estado", header: "Estado", cell: (d) => (
+                <>
+                  {d.estado === "por_confirmar" && <span className="text-[10px] font-bold uppercase px-2 py-0.5 rounded-full bg-amber-100 dark:bg-amber-500/20 text-amber-700">Por confirmar</span>}
+                  {d.estado === "acreditada" && <span className="text-[10px] font-bold uppercase px-2 py-0.5 rounded-full bg-emerald-100 dark:bg-emerald-500/20 text-emerald-700">Acreditada</span>}
+                  {d.estado === "al_cliente" && <span className="text-[10px] font-bold uppercase px-2 py-0.5 rounded-full bg-slate-100 dark:bg-white/10 text-slate-500">Al cliente</span>}
+                </>
+              ) },
+            ] as ColumnaTabla<any>[]
+          }
+          acciones={(d) => d.estado === "por_confirmar" && <button onClick={() => abrirResolucion(d)} className="text-emerald-600 font-bold">Resolver</button>}
+        />
       )}
 
       {showNueva && (

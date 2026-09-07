@@ -4,6 +4,7 @@ import { useState, useMemo } from "react";
 import { supabase2 } from "@/lib/supabase2/client";
 import { Plus, X, Save } from "lucide-react";
 import { inputClass, labelClass, fmt, diasHasta } from "./shared";
+import TablaResponsiva, { type ColumnaTabla } from "@/components/panelV2/TablaResponsiva";
 
 const emptyForm = { tipo: "a_cobrar", formato: "fisico", librador: "", numero: "", banco: "", cuitCuil: "", monto: "", moneda: "ARS", estado: "pendiente", fechaEmision: "", fechaCobro: "", cajaBancoPropio: "", notas: "" };
 
@@ -72,31 +73,26 @@ export default function ChequesTab({ cheques, setCheques }: { cheques: any[]; se
           <p className="text-xs text-slate-400 mt-1">Registrá el primero con "Nuevo cheque".</p>
         </div>
       ) : (
-        <div className="overflow-x-auto bg-white dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-xl">
-          <table className="w-full text-xs">
-            <thead><tr className="border-b border-slate-100 dark:border-white/10 text-left text-slate-400"><th className="p-2.5">Fecha cobro</th><th className="p-2.5">N°</th><th className="p-2.5">Librador</th><th className="p-2.5">Monto</th><th className="p-2.5">Formato</th><th className="p-2.5">Estado</th><th className="p-2.5">Acciones</th></tr></thead>
-            <tbody>
-              {lista.map((c) => {
-                const vencido = c.estado === "pendiente" && c.fecha_cobro < hoy;
-                return (
-                  <tr key={c.id} className="border-b border-slate-50 dark:border-white/5">
-                    <td className="p-2.5">{c.fecha_cobro}{vencido && <span className="ml-1 text-rose-500 font-bold">vencido</span>}</td>
-                    <td className="p-2.5 text-slate-400">{c.numero || "—"}</td>
-                    <td className="p-2.5 font-bold">{c.librador}{c.banco ? <span className="text-slate-400 font-normal"> · {c.banco}</span> : ""}</td>
-                    <td className="p-2.5 font-mono font-bold">{fmt(c.monto, c.moneda)}</td>
-                    <td className="p-2.5 text-slate-400">{c.formato === "echeque" ? "ECHEQ" : "Físico"}</td>
-                    <td className="p-2.5">
-                      <select value={c.estado} onChange={(e) => cambiarEstado(c, e.target.value)} className="text-[10px] font-bold uppercase bg-transparent border border-slate-200 dark:border-white/10 rounded-md px-1.5 py-0.5">
-                        <option value="pendiente">Pendiente</option><option value="depositado">Depositado</option><option value="cobrado">Cobrado</option><option value="rechazado">Rechazado</option><option value="endosado">Endosado</option>
-                      </select>
-                    </td>
-                    <td className="p-2.5"><button onClick={() => eliminar(c)} className="text-rose-500 font-bold">Eliminar</button></td>
-                  </tr>
-                );
-              })}
-            </tbody>
-          </table>
-        </div>
+        <TablaResponsiva<any>
+          filas={lista}
+          keyExtractor={(c) => c.id}
+          encabezadoMobile={(c) => <p className="font-bold">{c.librador}{c.banco ? <span className="text-slate-400 font-normal"> · {c.banco}</span> : ""}</p>}
+          columnas={
+            [
+              { key: "fecha_cobro", header: "Fecha cobro", cell: (c) => <>{c.fecha_cobro}{c.estado === "pendiente" && c.fecha_cobro < hoy && <span className="ml-1 text-rose-500 font-bold">vencido</span>}</> },
+              { key: "numero", header: "N°", cell: (c) => c.numero || "—", claseTd: "text-slate-400" },
+              { key: "librador", header: "Librador", cell: (c) => <>{c.librador}{c.banco ? <span className="text-slate-400 font-normal"> · {c.banco}</span> : ""}</>, claseTd: "font-bold", ocultarEnMobile: true },
+              { key: "monto", header: "Monto", cell: (c) => fmt(c.monto, c.moneda), claseTd: "font-mono font-bold" },
+              { key: "formato", header: "Formato", cell: (c) => (c.formato === "echeque" ? "ECHEQ" : "Físico"), claseTd: "text-slate-400" },
+              { key: "estado", header: "Estado", cell: (c) => (
+                <select value={c.estado} onChange={(e) => cambiarEstado(c, e.target.value)} className="text-[10px] font-bold uppercase bg-transparent border border-slate-200 dark:border-white/10 rounded-md px-1.5 py-0.5">
+                  <option value="pendiente">Pendiente</option><option value="depositado">Depositado</option><option value="cobrado">Cobrado</option><option value="rechazado">Rechazado</option><option value="endosado">Endosado</option>
+                </select>
+              ) },
+            ] as ColumnaTabla<any>[]
+          }
+          acciones={(c) => <button onClick={() => eliminar(c)} className="text-rose-500 font-bold">Eliminar</button>}
+        />
       )}
 
       {showNuevo && (
