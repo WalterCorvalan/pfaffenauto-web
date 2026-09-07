@@ -5,7 +5,7 @@ import Link from "next/link";
 import {
   BarChart3, FileText, Receipt, Wallet, Coins, CreditCard, Landmark,
   TrendingDown, TrendingUp, ExternalLink, HandCoins, ScrollText, Handshake,
-  ClipboardList, Repeat, SearchCheck, PackageCheck, CheckSquare, Landmark as Afip,
+  ClipboardList, Repeat, SearchCheck, PackageCheck, CheckSquare, Landmark as Afip, BookOpen,
 } from "lucide-react";
 import MovimientosTab from "./tabs/MovimientosTab";
 import CuentasTab from "./tabs/CuentasTab";
@@ -23,6 +23,7 @@ import ArqueosTab from "./tabs/ArqueosTab";
 import CierreCajaTab from "./tabs/CierreCajaTab";
 import ConciliacionTab from "./tabs/ConciliacionTab";
 import AfipIvaTab from "./tabs/AfipIvaTab";
+import LibrosContablesTab from "./tabs/LibrosContablesTab";
 import SenasTab from "./tabs/SenasTab";
 import ResumenTab from "./tabs/ResumenTab";
 import { fmt } from "./tabs/shared";
@@ -47,6 +48,7 @@ const TABS: { value: string; label: string; icon: any; disabled?: boolean; exter
   { value: "cierre-caja", label: "Cierre Caja", icon: PackageCheck },
   { value: "conciliacion", label: "Conciliación", icon: CheckSquare },
   { value: "afip-iva", label: "AFIP/IVA", icon: Afip },
+  { value: "libros", label: "Libros Contables", icon: BookOpen },
 ];
 
 export default function FinanzasClient({
@@ -203,6 +205,8 @@ export default function FinanzasClient({
       {tab === "conciliacion" && <ConciliacionTab movimientos={movimientos} />}
 
       {tab === "afip-iva" && <AfipIvaTab movimientos={movimientos} setMovimientos={setMovimientos} />}
+
+      {tab === "libros" && <LibrosContablesTab cuentas={cuentas} />}
     </div>
   );
 }

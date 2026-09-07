@@ -31,7 +31,10 @@ interface Props {
 }
 
 export default function NuevoVehiculoModal({ perfiles, clientes, sucursales, miId, editando, onClose, onCreado }: Props) {
-  const esEdicion = !!editando;
+  // Un "editando" sin id es un prefill para alta nueva (ej: desde
+  // Consignaciones, precarga propietario/marca pero crea un vehículo nuevo)
+  // -- no confundir con edición real de un vehículo existente.
+  const esEdicion = !!editando?.id;
   const [categoria, setCategoria] = useState(editando?.categoria || "Auto");
   const [marca, setMarca] = useState(editando?.marca || "");
   const [modelo, setModelo] = useState(editando?.modelo || "");

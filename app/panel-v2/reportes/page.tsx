@@ -33,6 +33,7 @@ export default async function ReportesPage() {
     { data: stockPorMarca },
     { data: infraccionesPorMes },
     { data: servicePosventa },
+    { data: consultasVsVentas },
   ] = await Promise.all([
     supabase.auth.getUser().then(async ({ data }) => {
       if (!data.user) return { data: null };
@@ -59,6 +60,7 @@ export default async function ReportesPage() {
     supabase.from("v_reportes_stock_por_marca").select("*"),
     supabase.from("v_reportes_infracciones_por_mes").select("*").limit(12),
     supabase.from("v_reportes_service_posventa").select("*").single(),
+    supabase.from("v_reportes_consultas_vs_ventas").select("*").limit(20),
   ]);
 
   return (
@@ -90,6 +92,7 @@ export default async function ReportesPage() {
       stockPorMarca={stockPorMarca || []}
       infraccionesPorMes={infraccionesPorMes || []}
       servicePosventaInicial={servicePosventa || { oportunidades: 0, contactadas: 0, pct_contactadas: 0, con_ot: 0 }}
+      consultasVsVentas={consultasVsVentas || []}
     />
   );
 }

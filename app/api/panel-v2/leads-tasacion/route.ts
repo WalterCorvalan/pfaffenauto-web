@@ -25,6 +25,9 @@ const LeadTasacionSchema = z.object({
   aceptaOferta: z.boolean().optional().nullable(),
   fotosYVideos: z.array(z.string().url()).max(30).optional(),
   canalOrigen: z.string().trim().max(60).optional().nullable(),
+  utmSource: z.string().trim().max(100).optional().nullable(),
+  utmMedium: z.string().trim().max(100).optional().nullable(),
+  utmCampaign: z.string().trim().max(150).optional().nullable(),
   tipo: z.enum(["tasacion", "permuta", "financiacion"]).optional(),
   vehiculoObjetivoId: z.string().uuid().optional().nullable(),
   // Si el cliente eligió venir a sucursal, reserva una visita real en el
@@ -96,6 +99,9 @@ export async function POST(req: Request) {
         tipo: data.tipo || "tasacion",
         vehiculo_objetivo_id: data.vehiculoObjetivoId || null,
         canal_origen: data.canalOrigen || null,
+        utm_source: data.utmSource || null,
+        utm_medium: data.utmMedium || null,
+        utm_campaign: data.utmCampaign || null,
       })
       .select("id")
       .single();

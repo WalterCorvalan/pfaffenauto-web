@@ -2,10 +2,13 @@
 
 import { useState, useEffect } from "react";
 import { supabase2 } from "@/lib/supabase2/client";
-import { X, Loader2, ChevronDown, MessageCircle, Phone, Clock } from "lucide-react";
+import { X, Loader2, ChevronDown, MessageCircle, Phone, Clock, PackagePlus, ExternalLink } from "lucide-react";
 import { fmtFechaLocal, hoyLocalISO } from "@/lib/panelV2/fechas";
+import NuevoVehiculoModal from "@/app/panel-v2/stock/NuevoVehiculoModal";
 
 interface Perfil { id: string; nombre: string; roles: string[] }
+interface Cliente { id: string; nombre: string; telefono: string | null; dni_cuit?: string | null }
+interface Sucursal { id: string; nombre: string }
 
 const ESTADOS = [
   { value: "pendiente_contacto", label: "Pendiente contacto", emoji: "⏳", desc: "Todavía no se contactó al dueño." },
@@ -18,9 +21,10 @@ const ESTADOS = [
 ];
 const ESTADO_MAP = Object.fromEntries(ESTADOS.map((e) => [e.value, e]));
 
-export default function ConsignacionDetalleModal({ consignacionId, perfiles, soyAdmin, onClose, onActualizado, onEliminado }: {
-  consignacionId: string; perfiles: Perfil[]; soyAdmin: boolean; onClose: () => void; onActualizado: (c: any) => void; onEliminado: (id: string) => void;
+export default function ConsignacionDetalleModal({ consignacionId, perfiles, clientes, sucursales, miId, soyAdmin, onClose, onActualizado, onEliminado }: {
+  consignacionId: string; perfiles: Perfil[]; clientes: Cliente[]; sucursales: Sucursal[]; miId: string; soyAdmin: boolean; onClose: () => void; onActualizado: (c: any) => void; onEliminado: (id: string) => void;
 }) {
+  const [modalStock, setModalStock] = useState(false);
   const [consignacion, setConsignacion] = useState<any>(null);
   const [cargando, setCargando] = useState(true);
   const [editando, setEditando] = useState(false);
@@ -88,6 +92,31 @@ export default function ConsignacionDetalleModal({ consignacionId, perfiles, soy
     await cambiarEstado("cancelado");
   };
 
+  // Naive: primera palabra de la descripción libre = marca, el resto = modelo
+  // — es solo un punto de partida para no arrancar el form de Stock en
+  // blanco, el vendedor completa/corrige patente, color, km y precio antes
+  // de guardar (esos datos no existen en la descripción de texto libre).
+  const prefillVehiculo = () => {
+    const partes = (consignacion.vehiculo_descripcion || "").trim().split(/\s+/);
+    return {
+      marca: partes[0] || "",
+      modelo: partes.slice(1).join(" ") || "",
+      propio_agencia: false,
+      propietario_nombre: consignacion.cliente_nombre || "",
+      propietario_telefono: consignacion.cliente_telefono || "",
+      propietario_email: consignacion.cliente_email || "",
+      cliente_vinculado_id: consignacion.cliente_id || "",
+      consignado_por: consignacion.vendedor_id || "",
+      notas: `Cargado desde consignación. Descripción original: "${consignacion.vehiculo_descripcion || ""}".`,
+    };
+  };
+
+  const onVehiculoCreado = async (vehiculo: any) => {
+    setModalStock(false);
+    const { data } = await supabase2.from("consignaciones").update({ vehiculo_id: vehiculo.id, publicada: true }).eq("id", consignacionId).select("*, vendedor:perfiles!consignaciones_vendedor_id_fkey ( id, nombre )").single();
+    if (data) { setConsignacion(data); onActualizado(data); }
+  };
+
   const eliminar = async () => {
     if (!confirm("¿Eliminar esta consignación? No se puede deshacer.")) return;
     const { error, count } = await supabase2.from("consignaciones").delete({ count: "exact" }).eq("id", consignacionId);
@@ -134,7 +163,14 @@ export default function ConsignacionDetalleModal({ consignacionId, perfiles, soy
           </div>
 
           <div>
-            <p className="text-[11px] font-black uppercase tracking-widest text-slate-400 mb-1.5">Vehículo a consignar</p>
+            <div className="flex items-center justify-between mb-1.5">
+              <p className="text-[11px] font-black uppercase tracking-widest text-slate-400">Vehículo a consignar</p>
+              {consignacion.vehiculo_id ? (
+                <a href={`/panel-v2/stock?vehiculo=${consignacion.vehiculo_id}`} className="flex items-center gap-1 text-[11px] font-bold text-emerald-600 dark:text-emerald-400"><ExternalLink className="w-3 h-3" /> Ver en Stock</a>
+              ) : (
+                <button onClick={() => setModalStock(true)} className="flex items-center gap-1 text-[11px] font-bold text-indigo-600 dark:text-sky-300"><PackagePlus className="w-3.5 h-3.5" /> Cargar a Stock</button>
+              )}
+            </div>
             {editando ? (
               <textarea value={vehiculoDescripcion} onChange={(e) => setVehiculoDescripcion(e.target.value)} rows={2} className="w-full bg-slate-50 dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-xl p-3 text-sm outline-none" />
             ) : (
@@ -228,6 +264,18 @@ export default function ConsignacionDetalleModal({ consignacionId, perfiles, soy
           )}
         </div>
       </div>
+
+      {modalStock && (
+        <NuevoVehiculoModal
+          perfiles={perfiles}
+          clientes={clientes as any}
+          sucursales={sucursales}
+          miId={miId}
+          editando={prefillVehiculo()}
+          onClose={() => setModalStock(false)}
+          onCreado={onVehiculoCreado}
+        />
+      )}
     </div>
   );
 }

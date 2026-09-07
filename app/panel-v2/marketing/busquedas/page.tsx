@@ -1,15 +1,27 @@
 import { createClient } from "@/lib/supabase2/server";
-import { Search, SearchX, TrendingUp } from "lucide-react";
+import { Search, SearchX, TrendingUp, Bot, Percent } from "lucide-react";
+
+function inicioDia(offsetDias: number) {
+  const d = new Date();
+  d.setUTCHours(0, 0, 0, 0);
+  d.setUTCDate(d.getUTCDate() - offsetDias);
+  return d.toISOString();
+}
 
 export default async function BusquedasWebPage() {
   const supabase = await createClient();
-  const { data: busquedas } = await supabase
-    .from("busquedas_log")
-    .select("termino, resultados_encontrados, created_at")
-    .order("created_at", { ascending: false })
-    .limit(500);
+  const desde30 = inicioDia(30);
+  const [{ data: busquedas }, { data: usoIA30 }] = await Promise.all([
+    supabase.from("busquedas_log").select("termino, resultados_encontrados, created_at").order("created_at", { ascending: false }).limit(500),
+    supabase.from("uso_ia_anthropic").select("input_tokens, output_tokens").eq("origen", "api/buscar-ia").gte("created_at", desde30),
+  ]);
 
   const datos = busquedas || [];
+  const sinResultadosTotal = datos.filter((b) => !b.resultados_encontrados).length;
+  const pctSinResultados = datos.length ? Math.round((sinResultadosTotal / datos.length) * 100) : 0;
+  const tokensIn = (usoIA30 || []).reduce((acc, r) => acc + (r.input_tokens || 0), 0);
+  const tokensOut = (usoIA30 || []).reduce((acc, r) => acc + (r.output_tokens || 0), 0);
+  const costoEstimado30 = (tokensIn / 1_000_000) * 1 + (tokensOut / 1_000_000) * 5;
 
   const terminoMap: Record<string, { veces: number; sinResultados: number }> = {};
   for (const b of datos) {
@@ -27,6 +39,26 @@ export default async function BusquedasWebPage() {
     <div className="p-6">
       <h2 className="text-sm font-bold text-slate-900 dark:text-white flex items-center gap-2 mb-1"><Search className="w-4 h-4 text-rose-600" /> Búsquedas Web</h2>
       <p className="text-xs text-slate-400 mb-4">{datos.length} búsquedas registradas (últimas 500)</p>
+
+      {datos.length > 0 && (
+        <div className="grid grid-cols-2 lg:grid-cols-3 gap-4 mb-4">
+          <div className="bg-white dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-2xl p-4">
+            <Search className="w-5 h-5 text-rose-600 mb-2" />
+            <p className="text-2xl font-black text-slate-900 dark:text-white font-mono">{datos.length}</p>
+            <p className="text-[11px] text-slate-400 mt-0.5">Búsquedas registradas</p>
+          </div>
+          <div className="bg-white dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-2xl p-4">
+            <Percent className="w-5 h-5 text-amber-600 mb-2" />
+            <p className="text-2xl font-black text-slate-900 dark:text-white font-mono">{pctSinResultados}%</p>
+            <p className="text-[11px] text-slate-400 mt-0.5">Sin resultados ({sinResultadosTotal})</p>
+          </div>
+          <div className="bg-white dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-2xl p-4">
+            <Bot className="w-5 h-5 text-indigo-600 dark:text-sky-300 mb-2" />
+            <p className="text-2xl font-black text-slate-900 dark:text-white font-mono">{costoEstimado30 > 0 ? `US$ ${costoEstimado30.toLocaleString("es-AR", { maximumFractionDigits: 2 })}` : "—"}</p>
+            <p className="text-[11px] text-slate-400 mt-0.5">Costo IA del buscador (30d)</p>
+          </div>
+        </div>
+      )}
 
       {datos.length === 0 ? (
         <div className="bg-white dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-2xl py-16 text-center text-sm text-slate-400">Todavía no hay búsquedas registradas en el catálogo.</div>
