@@ -52,6 +52,7 @@ export default function Hero() {
         loop
         muted
         playsInline
+        preload="metadata"
         className="absolute inset-0 w-full h-full object-cover z-0 dark:opacity-70"
       >
         {/* Asegurate de tener este archivo en tu carpeta public/ */}

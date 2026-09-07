@@ -186,6 +186,7 @@ export default function Stock({ vehiculos }: StockProps) {
               vehiculos={suvsDestacadas}
               autosComparar={autosComparar}
               onToggleComparar={toggleComparar}
+              primerasPrioritarias
             />
           </div>
         )}
@@ -564,10 +565,13 @@ function VehicleGrid({
   vehiculos,
   autosComparar,
   onToggleComparar,
+  primerasPrioritarias,
 }: {
   vehiculos: any[];
   autosComparar?: any[];
   onToggleComparar?: (e: React.MouseEvent, auto: any) => void;
+  /** Marca las primeras 4 imágenes (la fila visible sin scrollear, justo debajo del Hero) como priority para que carguen antes en vez de esperar el lazy-load — sin esto son las primeras fotos que ve el visitante y tardan de más. */
+  primerasPrioritarias?: boolean;
 }) {
   return (
     <motion.div
@@ -577,12 +581,13 @@ function VehicleGrid({
       viewport={{ once: true, margin: "-50px" }}
       className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-5 md:gap-6"
     >
-      {vehiculos.map((auto) => (
+      {vehiculos.map((auto, i) => (
         <motion.div variants={itemVariants} key={auto.id} className="h-full">
           <VehicleCard
             auto={auto}
             estaSeleccionado={autosComparar?.some((a) => a.id === auto.id)}
             onToggleComparar={onToggleComparar}
+            prioridad={primerasPrioritarias && i < 4}
           />
         </motion.div>
       ))}
@@ -595,11 +600,13 @@ export function VehicleCard({
   estaSeleccionado,
   onToggleComparar,
   bordeSuave,
+  prioridad,
 }: {
   auto: any;
   estaSeleccionado?: boolean;
   onToggleComparar?: (e: React.MouseEvent, auto: any) => void;
   bordeSuave?: boolean;
+  prioridad?: boolean;
 }) {
   const precioMostrar = auto.precio_publicado_ars
     ? `$ ${auto.precio_publicado_ars.toLocaleString("es-AR")}`
@@ -653,6 +660,7 @@ export function VehicleCard({
               alt={`${auto.marca} ${auto.modelo}`}
               fill
               sizes="(max-width: 640px) 50vw, (max-width: 1024px) 25vw, 300px"
+              priority={prioridad}
               className="object-cover object-center group-hover:scale-105 transition-transform duration-700 ease-out"
             />
           ) : (
