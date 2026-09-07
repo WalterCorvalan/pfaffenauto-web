@@ -6,16 +6,22 @@ export const metadata = { title: "Peritajes | Pfaffen Autos" };
 export default async function PeritajesPage() {
   const supabase = await createClient();
 
-  const { data: peritajesCrudos } = await supabase
+  // "leads_tasacion" sin desambiguar rompe la query entera con PGRST201 (hay
+  // dos FKs entre las tablas: peritajes_lead.lead_tasacion_id -> leads_tasacion,
+  // y leads_tasacion.peritaje_id -> peritajes_lead) -- el error se tragaba
+  // silencioso acá (nunca se leía `error`), la lista quedaba vacía siempre
+  // que hubiera al menos un peritaje nacido de una tasación web.
+  const { data: peritajesCrudos, error: errorPeritajes } = await supabase
     .from("peritajes_lead")
     .select(`
       *,
       perfiles ( nombre ),
       whatsapp_conversaciones ( whatsapp_contactos ( nombre_perfil, telefono ) ),
       instagram_conversaciones ( instagram_contactos ( username ) ),
-      leads_tasacion ( nombre, telefono )
+      leads_tasacion!peritajes_lead_lead_tasacion_id_fkey ( nombre, telefono )
     `)
     .order("created_at", { ascending: false });
+  if (errorPeritajes) console.error("Error cargando peritajes:", errorPeritajes);
 
   const idsConPeritaje = {
     whatsapp: new Set((peritajesCrudos || []).map((p: any) => p.whatsapp_conversacion_id).filter(Boolean)),
