@@ -73,6 +73,11 @@ export default function MovimientosTab({
   filtrados.forEach((m) => {
     const mo = m.cuenta?.moneda;
     if (!mo) return;
+    // Una transferencia entre cajas propias entra como ingreso en una caja y
+    // egreso en la otra -- sumarla acá infla ingresos/egresos brutos sin que
+    // sea plata real que entró o salió de la empresa (el neto no cambia,
+    // pero el bruto miente).
+    if (m.tipo_movimiento === "Transferencia") return;
     if (m.tipo === "ingreso") ingresosPorMoneda[mo] = (ingresosPorMoneda[mo] || 0) + Number(m.monto);
     else egresosPorMoneda[mo] = (egresosPorMoneda[mo] || 0) + Number(m.monto);
   });

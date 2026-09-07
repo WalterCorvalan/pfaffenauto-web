@@ -194,6 +194,9 @@ export default async function PanelV2Home() {
   const topIngresos: Record<string, number> = {};
   const topEgresos: Record<string, number> = {};
   (movimientosMes || []).forEach((m: any) => {
+    // Una transferencia entre cajas propias no es ingreso ni egreso real de
+    // la empresa -- entra en una caja y sale de otra, sumarla infla el bruto.
+    if (m.tipo_movimiento === "Transferencia") return;
     const moneda = monedaPorCuenta[m.cuenta_id];
     if (!moneda) return;
     const destino = m.tipo === "ingreso" ? ingresosPorMoneda : egresosPorMoneda;

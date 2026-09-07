@@ -182,6 +182,9 @@ function EstadoResultados({ desde, hasta }: { desde: string; hasta: string }) {
     movimientos.forEach((m: any) => {
       const moneda = m.cuenta?.moneda;
       if (!moneda) return;
+      // Transferencia entre cajas propias no es ingreso ni egreso real -- es
+      // la misma plata moviéndose de una caja a otra, no afecta el resultado.
+      if (m.tipo_movimiento === "Transferencia") return;
       if (!monedas[moneda]) monedas[moneda] = { ingresos: {}, egresos: {} };
       const bucket = m.tipo === "ingreso" ? monedas[moneda].ingresos : monedas[moneda].egresos;
       const key = m.tipo_movimiento || "Sin categoría";
@@ -234,7 +237,7 @@ function FlujoDeCaja() {
   useEffect(() => {
     const desde = toISO(primerDiaMes(-11));
     supabase2.from("movimientos_caja")
-      .select("fecha, tipo, monto, cuenta:cuentas(moneda)")
+      .select("fecha, tipo, monto, tipo_movimiento, cuenta:cuentas(moneda)")
       .is("deleted_at", null).eq("estado", "aprobado")
       .gte("fecha", desde)
       .then(({ data }) => { setDatos(data || []); setCargando(false); });
@@ -248,6 +251,7 @@ function FlujoDeCaja() {
     }
     const porKey = new Map(meses.map((m) => [m.key, m]));
     datos.forEach((m: any) => {
+      if (m.tipo_movimiento === "Transferencia") return;
       const key = m.fecha.slice(0, 7);
       const fila = porKey.get(key);
       const moneda = m.cuenta?.moneda;
