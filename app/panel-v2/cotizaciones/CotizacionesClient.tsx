@@ -14,6 +14,7 @@ import NuevaCotizacionModal from "./NuevaCotizacionModal";
 import MigrarBorradoresModal from "./MigrarBorradoresModal";
 import CotizacionDetalleModal from "./CotizacionDetalleModal";
 import ModificarCotizacionModal from "./ModificarCotizacionModal";
+import TablaResponsiva, { type ColumnaTabla } from "@/components/panelV2/TablaResponsiva";
 
 interface Cotizacion {
   id: string; cliente_id: string | null; cliente_nombre: string; vehiculo_id: string | null; vehiculo_descripcion: string | null; vendedor_id: string | null;
@@ -206,98 +207,101 @@ export default function CotizacionesClient({
             <p className="text-xs text-slate-500 dark:text-slate-400">Todavía no hay cotizaciones cargadas. Podés crear una desde el botón de arriba.</p>
           </div>
         ) : (
-          <div className="bg-white dark:bg-white/[0.02] border border-slate-200 dark:border-white/5 rounded-2xl overflow-hidden">
-            <div className="overflow-x-auto">
-              <table className="w-full text-left border-collapse">
-                <thead>
-                  <tr className="bg-slate-50 dark:bg-white/5 text-slate-400 text-[10px] uppercase tracking-widest font-bold border-b border-slate-100 dark:border-white/10">
-                    <th className="px-4 py-3">Cliente</th>
-                    <th className="px-4 py-3">Vehículo</th>
-                    <th className="px-4 py-3">Precios</th>
-                    <th className="px-4 py-3">Vendedor</th>
-                    <th className="px-4 py-3">Estado</th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-slate-100 dark:divide-white/10">
-                  {filtradas.map((c) => {
-                    const horas = horasPendiente(c.created_at);
-                    const slaColor = horas >= slaHoras ? "bg-rose-500" : horas >= slaHoras / 2 ? "bg-amber-500" : "bg-emerald-500";
-                    const slaPct = Math.min(100, (horas / slaHoras) * 100);
-                    return (
-                      <tr key={c.id} className="hover:bg-slate-50/50 dark:hover:bg-white/5">
-                        <td className="px-4 py-3 align-top cursor-pointer" onClick={() => setDetalle(c)}>
-                          <p className="text-sm font-bold text-slate-900 dark:text-white">{c.cliente_nombre}</p>
-                          <p className="text-[11px] text-slate-400 mt-0.5">{fmtFechaLocal(c.fecha_emision)}</p>
-                        </td>
-                        <td className="px-4 py-3 align-top cursor-pointer" onClick={() => setDetalle(c)}>
-                          <p className="text-[13px] font-semibold text-slate-700 dark:text-slate-200">{c.vehiculo_descripcion || "—"}</p>
-                          {(c.permuta_marca || c.permuta_modelo || c.permuta_estado) && (
-                            <span className="inline-flex items-center gap-1 mt-1.5 text-[10px] font-bold px-2 py-0.5 rounded-full bg-indigo-50 dark:bg-indigo-500/10 text-indigo-600 dark:text-indigo-300 border border-indigo-100 dark:border-indigo-500/20">
-                              <Repeat className="w-3 h-3" /> PERMUTA: {[c.permuta_marca, c.permuta_modelo].filter(Boolean).join(" ") || c.permuta_estado}{c.permuta_anio ? ` (${c.permuta_anio})` : ""}{c.permuta_km ? ` · ${c.permuta_km.toLocaleString("es-AR")}km` : ""}
-                            </span>
-                          )}
-                        </td>
-                        <td className="px-4 py-3 align-top text-[12px] text-slate-500 dark:text-slate-400 space-y-0.5 cursor-pointer" onClick={() => setDetalle(c)}>
-                          <p><span className="text-slate-400 uppercase text-[9px] font-bold">Sug.</span> <strong className="text-slate-800 dark:text-white">{c.moneda} {c.precio_sugerido.toLocaleString("es-AR")}</strong></p>
-                          {tab !== "pendiente" && <p><span className="text-slate-400 uppercase text-[9px] font-bold">Aprob.</span> {c.precio_aprobado != null ? <span className="text-emerald-600 dark:text-emerald-400 font-bold">{c.moneda} {c.precio_aprobado.toLocaleString("es-AR")}</span> : <span className="text-slate-400">Pendiente</span>}</p>}
-                          {c.permuta_tasacion != null && <p><span className="text-slate-400 uppercase text-[9px] font-bold">Toma</span> <span className="text-indigo-600 dark:text-indigo-300 font-bold">{c.moneda} {c.permuta_tasacion.toLocaleString("es-AR")}</span></p>}
-                        </td>
-                        <td className="px-4 py-3 align-top text-[13px] text-slate-600 dark:text-slate-300 cursor-pointer" onClick={() => setDetalle(c)}>{c.vendedor_id ? perfilMap[c.vendedor_id] : "Sin vendedor"}</td>
-                        <td className="px-4 py-3 align-top min-w-[260px]">
-                          <span className={`inline-block text-[10px] font-bold px-2 py-1 rounded-full border ${tab === "pendiente" ? "bg-slate-100 dark:bg-white/10 text-slate-600 dark:text-slate-300 border-slate-200 dark:border-white/10" : tab === "aprobada" ? "bg-emerald-50 dark:bg-emerald-500/10 text-emerald-700 dark:text-emerald-300 border-emerald-200 dark:border-emerald-500/20" : "bg-rose-50 dark:bg-rose-500/10 text-rose-700 dark:text-rose-300 border-rose-200 dark:border-rose-500/20"}`}>
-                            {tab === "pendiente" ? "Pendiente" : tab === "aprobada" ? "Aprobada" : "Rechazada"}
-                          </span>
-                          {tab !== "pendiente" && <p className="text-[10px] text-slate-400 mt-1">{tab === "aprobada" ? "Aprobada" : "Rechazada"} el {fmtFechaLocal(c.updated_at.slice(0, 10))}</p>}
+          <TablaResponsiva<Cotizacion>
+            filas={filtradas}
+            keyExtractor={(c) => c.id}
+            encabezadoMobile={(c) => (
+              <div onClick={() => setDetalle(c)} className="cursor-pointer">
+                <p className="text-sm font-bold text-slate-900 dark:text-white">{c.cliente_nombre}</p>
+                <p className="text-[11px] text-slate-400 mt-0.5">{fmtFechaLocal(c.fecha_emision)}</p>
+              </div>
+            )}
+            columnas={
+              [
+                { key: "cliente", header: "Cliente", cell: (c) => (
+                  <div className="cursor-pointer" onClick={() => setDetalle(c)}>
+                    <p className="text-sm font-bold text-slate-900 dark:text-white">{c.cliente_nombre}</p>
+                    <p className="text-[11px] text-slate-400 mt-0.5">{fmtFechaLocal(c.fecha_emision)}</p>
+                  </div>
+                ), claseTd: "align-top", ocultarEnMobile: true },
+                { key: "vehiculo", header: "Vehículo", cell: (c) => (
+                  <div className="cursor-pointer" onClick={() => setDetalle(c)}>
+                    <p className="text-[13px] font-semibold text-slate-700 dark:text-slate-200">{c.vehiculo_descripcion || "—"}</p>
+                    {(c.permuta_marca || c.permuta_modelo || c.permuta_estado) && (
+                      <span className="inline-flex items-center gap-1 mt-1.5 text-[10px] font-bold px-2 py-0.5 rounded-full bg-indigo-50 dark:bg-indigo-500/10 text-indigo-600 dark:text-indigo-300 border border-indigo-100 dark:border-indigo-500/20">
+                        <Repeat className="w-3 h-3" /> PERMUTA: {[c.permuta_marca, c.permuta_modelo].filter(Boolean).join(" ") || c.permuta_estado}{c.permuta_anio ? ` (${c.permuta_anio})` : ""}{c.permuta_km ? ` · ${c.permuta_km.toLocaleString("es-AR")}km` : ""}
+                      </span>
+                    )}
+                  </div>
+                ), claseTd: "align-top" },
+                { key: "precios", header: "Precios", cell: (c) => (
+                  <div className="cursor-pointer text-[12px] text-slate-500 dark:text-slate-400 space-y-0.5" onClick={() => setDetalle(c)}>
+                    <p><span className="text-slate-400 uppercase text-[9px] font-bold">Sug.</span> <strong className="text-slate-800 dark:text-white">{c.moneda} {c.precio_sugerido.toLocaleString("es-AR")}</strong></p>
+                    {tab !== "pendiente" && <p><span className="text-slate-400 uppercase text-[9px] font-bold">Aprob.</span> {c.precio_aprobado != null ? <span className="text-emerald-600 dark:text-emerald-400 font-bold">{c.moneda} {c.precio_aprobado.toLocaleString("es-AR")}</span> : <span className="text-slate-400">Pendiente</span>}</p>}
+                    {c.permuta_tasacion != null && <p><span className="text-slate-400 uppercase text-[9px] font-bold">Toma</span> <span className="text-indigo-600 dark:text-indigo-300 font-bold">{c.moneda} {c.permuta_tasacion.toLocaleString("es-AR")}</span></p>}
+                  </div>
+                ), claseTd: "align-top" },
+                { key: "vendedor", header: "Vendedor", cell: (c) => (
+                  <span className="cursor-pointer text-[13px] text-slate-600 dark:text-slate-300" onClick={() => setDetalle(c)}>{c.vendedor_id ? perfilMap[c.vendedor_id] : "Sin vendedor"}</span>
+                ), claseTd: "align-top" },
+                { key: "estado", header: "Estado", anchoCompletoMobile: true, claseTd: "align-top min-w-[260px]", cell: (c) => {
+                  const horas = horasPendiente(c.created_at);
+                  const slaColor = horas >= slaHoras ? "bg-rose-500" : horas >= slaHoras / 2 ? "bg-amber-500" : "bg-emerald-500";
+                  const slaPct = Math.min(100, (horas / slaHoras) * 100);
+                  return (
+                    <>
+                      <span className={`inline-block text-[10px] font-bold px-2 py-1 rounded-full border ${tab === "pendiente" ? "bg-slate-100 dark:bg-white/10 text-slate-600 dark:text-slate-300 border-slate-200 dark:border-white/10" : tab === "aprobada" ? "bg-emerald-50 dark:bg-emerald-500/10 text-emerald-700 dark:text-emerald-300 border-emerald-200 dark:border-emerald-500/20" : "bg-rose-50 dark:bg-rose-500/10 text-rose-700 dark:text-rose-300 border-rose-200 dark:border-rose-500/20"}`}>
+                        {tab === "pendiente" ? "Pendiente" : tab === "aprobada" ? "Aprobada" : "Rechazada"}
+                      </span>
+                      {tab !== "pendiente" && <p className="text-[10px] text-slate-400 mt-1">{tab === "aprobada" ? "Aprobada" : "Rechazada"} el {fmtFechaLocal(c.updated_at.slice(0, 10))}</p>}
 
-                          {c.revision_pedida && (
-                            <span className="flex items-center gap-1 mt-2 text-[10px] font-bold px-2 py-1 rounded-full bg-amber-50 dark:bg-amber-500/10 text-amber-700 dark:text-amber-300 border border-amber-200 dark:border-amber-500/20 w-fit">
-                              <BellRing className="w-3 h-3" /> Revisión pedida{c.revision_mensaje ? `: ${c.revision_mensaje}` : ""}
-                            </span>
-                          )}
+                      {c.revision_pedida && (
+                        <span className="flex items-center gap-1 mt-2 text-[10px] font-bold px-2 py-1 rounded-full bg-amber-50 dark:bg-amber-500/10 text-amber-700 dark:text-amber-300 border border-amber-200 dark:border-amber-500/20 w-fit">
+                          <BellRing className="w-3 h-3" /> Revisión pedida{c.revision_mensaje ? `: ${c.revision_mensaje}` : ""}
+                        </span>
+                      )}
 
-                          <div className="flex flex-wrap items-center gap-1.5 mt-2.5">
-                            {tab === "pendiente" && (
-                              <>
-                                <button onClick={() => cambiarEstado(c, "aprobada")} disabled={actualizandoId === c.id} className="flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-[11px] font-bold bg-emerald-50 dark:bg-emerald-500/10 text-emerald-700 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-500/20 disabled:opacity-50"><CheckCircle2 className="w-3.5 h-3.5" /> Aprobar</button>
-                                <button onClick={() => setModificando(c)} className="flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-[11px] font-bold bg-slate-50 dark:bg-white/5 text-slate-600 dark:text-slate-300 border border-slate-200 dark:border-white/10"><Pencil className="w-3.5 h-3.5" /> Modificar</button>
-                                <button onClick={() => cambiarEstado(c, "rechazada")} disabled={actualizandoId === c.id} className="flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-[11px] font-bold bg-rose-50 dark:bg-rose-500/10 text-rose-700 dark:text-rose-300 border border-rose-200 dark:border-rose-500/20 disabled:opacity-50"><XCircle className="w-3.5 h-3.5" /> Rechazar</button>
-                                <button onClick={() => comentar(c)} className="flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-[11px] font-bold bg-slate-50 dark:bg-white/5 text-slate-600 dark:text-slate-300 border border-slate-200 dark:border-white/10"><MessageSquare className="w-3.5 h-3.5" /> Comentar</button>
-                                {!c.revision_pedida && (
-                                  pidiendoAtencionId === c.id ? (
-                                    <div className="flex items-center gap-1.5 w-full mt-1">
-                                      <input autoFocus value={mensajeAtencion} onChange={(e) => setMensajeAtencion(e.target.value)} placeholder="¿Por qué urge?" className="flex-1 bg-slate-50 dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-lg px-2.5 py-1.5 text-xs outline-none focus:border-rose-500 text-slate-900 dark:text-white" onKeyDown={(e) => e.key === "Enter" && pedirAtencion(c)} />
-                                      <button onClick={() => pedirAtencion(c)} disabled={actualizandoId === c.id} className="px-2.5 py-1.5 rounded-lg text-[11px] font-bold bg-amber-500 hover:bg-amber-600 text-white disabled:opacity-50 shrink-0">Enviar</button>
-                                      <button onClick={() => setPidiendoAtencionId(null)} className="text-[11px] text-slate-400 shrink-0">Cancelar</button>
-                                    </div>
-                                  ) : (
-                                    <button onClick={() => setPidiendoAtencionId(c.id)} className="flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-[11px] font-bold bg-amber-50 dark:bg-amber-500/10 text-amber-700 dark:text-amber-300 border border-amber-200 dark:border-amber-500/20"><BellRing className="w-3.5 h-3.5" /> Pedir atención</button>
-                                  )
-                                )}
-                              </>
+                      <div className="flex flex-wrap items-center gap-1.5 mt-2.5">
+                        {tab === "pendiente" && (
+                          <>
+                            <button onClick={() => cambiarEstado(c, "aprobada")} disabled={actualizandoId === c.id} className="flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-[11px] font-bold bg-emerald-50 dark:bg-emerald-500/10 text-emerald-700 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-500/20 disabled:opacity-50"><CheckCircle2 className="w-3.5 h-3.5" /> Aprobar</button>
+                            <button onClick={() => setModificando(c)} className="flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-[11px] font-bold bg-slate-50 dark:bg-white/5 text-slate-600 dark:text-slate-300 border border-slate-200 dark:border-white/10"><Pencil className="w-3.5 h-3.5" /> Modificar</button>
+                            <button onClick={() => cambiarEstado(c, "rechazada")} disabled={actualizandoId === c.id} className="flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-[11px] font-bold bg-rose-50 dark:bg-rose-500/10 text-rose-700 dark:text-rose-300 border border-rose-200 dark:border-rose-500/20 disabled:opacity-50"><XCircle className="w-3.5 h-3.5" /> Rechazar</button>
+                            <button onClick={() => comentar(c)} className="flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-[11px] font-bold bg-slate-50 dark:bg-white/5 text-slate-600 dark:text-slate-300 border border-slate-200 dark:border-white/10"><MessageSquare className="w-3.5 h-3.5" /> Comentar</button>
+                            {!c.revision_pedida && (
+                              pidiendoAtencionId === c.id ? (
+                                <div className="flex items-center gap-1.5 w-full mt-1">
+                                  <input autoFocus value={mensajeAtencion} onChange={(e) => setMensajeAtencion(e.target.value)} placeholder="¿Por qué urge?" className="flex-1 bg-slate-50 dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-lg px-2.5 py-1.5 text-xs outline-none focus:border-rose-500 text-slate-900 dark:text-white" onKeyDown={(e) => e.key === "Enter" && pedirAtencion(c)} />
+                                  <button onClick={() => pedirAtencion(c)} disabled={actualizandoId === c.id} className="px-2.5 py-1.5 rounded-lg text-[11px] font-bold bg-amber-500 hover:bg-amber-600 text-white disabled:opacity-50 shrink-0">Enviar</button>
+                                  <button onClick={() => setPidiendoAtencionId(null)} className="text-[11px] text-slate-400 shrink-0">Cancelar</button>
+                                </div>
+                              ) : (
+                                <button onClick={() => setPidiendoAtencionId(c.id)} className="flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-[11px] font-bold bg-amber-50 dark:bg-amber-500/10 text-amber-700 dark:text-amber-300 border border-amber-200 dark:border-amber-500/20"><BellRing className="w-3.5 h-3.5" /> Pedir atención</button>
+                              )
                             )}
-                            {tab === "aprobada" && (
-                              <a href={`/panel-v2/ventas?cotizacion=${c.id}`} className="flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-[11px] font-bold bg-rose-50 dark:bg-rose-500/10 text-rose-700 dark:text-rose-300 border border-rose-200 dark:border-rose-500/20"><Repeat className="w-3.5 h-3.5" /> Convertir en venta</a>
-                            )}
-                            {tab !== "pendiente" && <button onClick={() => setEditando(c)} className="flex items-center gap-1 text-[11px] font-semibold text-slate-400 hover:text-slate-600 dark:hover:text-slate-200"><Pencil className="w-3.5 h-3.5" /> Editar</button>}
+                          </>
+                        )}
+                        {tab === "aprobada" && (
+                          <a href={`/panel-v2/ventas?cotizacion=${c.id}`} className="flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-[11px] font-bold bg-rose-50 dark:bg-rose-500/10 text-rose-700 dark:text-rose-300 border border-rose-200 dark:border-rose-500/20"><Repeat className="w-3.5 h-3.5" /> Convertir en venta</a>
+                        )}
+                        {tab !== "pendiente" && <button onClick={() => setEditando(c)} className="flex items-center gap-1 text-[11px] font-semibold text-slate-400 hover:text-slate-600 dark:hover:text-slate-200"><Pencil className="w-3.5 h-3.5" /> Editar</button>}
+                      </div>
+
+                      {tab === "pendiente" && (
+                        <div className="mt-2.5 max-w-[220px]">
+                          <p className="text-[10px] font-semibold text-slate-400">Pendiente hace {tiempoPendienteLabel(c.created_at)}</p>
+                          <div className="h-1.5 bg-slate-100 dark:bg-white/10 rounded-full overflow-hidden mt-1">
+                            <div className={`h-full ${slaColor} rounded-full transition-all`} style={{ width: `${slaPct}%` }} />
                           </div>
-
-                          {tab === "pendiente" && (
-                            <div className="mt-2.5 max-w-[220px]">
-                              <p className="text-[10px] font-semibold text-slate-400">Pendiente hace {tiempoPendienteLabel(c.created_at)}</p>
-                              <div className="h-1.5 bg-slate-100 dark:bg-white/10 rounded-full overflow-hidden mt-1">
-                                <div className={`h-full ${slaColor} rounded-full transition-all`} style={{ width: `${slaPct}%` }} />
-                              </div>
-                              <div className="flex justify-between text-[9px] text-slate-300 dark:text-slate-600 mt-0.5"><span>0</span><span>{Math.round(slaHoras / 3)}h</span><span>{Math.round((slaHoras / 3) * 2)}h</span><span>{slaHoras}h</span></div>
-                            </div>
-                          )}
-                        </td>
-                      </tr>
-                    );
-                  })}
-                </tbody>
-              </table>
-            </div>
-          </div>
+                          <div className="flex justify-between text-[9px] text-slate-300 dark:text-slate-600 mt-0.5"><span>0</span><span>{Math.round(slaHoras / 3)}h</span><span>{Math.round((slaHoras / 3) * 2)}h</span><span>{slaHoras}h</span></div>
+                        </div>
+                      )}
+                    </>
+                  );
+                } },
+              ] as ColumnaTabla<Cotizacion>[]
+            }
+          />
         )}
       </div>
 

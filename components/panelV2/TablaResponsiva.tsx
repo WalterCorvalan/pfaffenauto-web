@@ -16,6 +16,8 @@ export interface ColumnaTabla<T> {
   claseTd?: string;
   /** No se muestra en la tarjeta mobile (para datos redundantes con la cabecera de la tarjeta, o de relleno visual en desktop). */
   ocultarEnMobile?: boolean;
+  /** La columna ocupa las 2 columnas de la tarjeta mobile en vez de la mitad — para contenido rico/multilínea (botones, barras de progreso) que no entra apretado. */
+  anchoCompletoMobile?: boolean;
 }
 
 export default function TablaResponsiva<T>({
@@ -90,9 +92,9 @@ export default function TablaResponsiva<T>({
             <div className="mb-2">{(encabezadoMobile ?? columnasCard[0]?.cell)(fila)}</div>
             <dl className="grid grid-cols-2 gap-x-3 gap-y-1.5">
               {(encabezadoMobile ? columnasCard : columnasCard.slice(1)).map((c) => (
-                <div key={c.key} className="min-w-0">
+                <div key={c.key} className={`min-w-0 ${c.anchoCompletoMobile ? "col-span-2" : ""}`}>
                   <dt className="text-[9px] font-black uppercase tracking-widest text-slate-400 dark:text-slate-500">{c.header}</dt>
-                  <dd className="text-xs text-slate-700 dark:text-slate-300 truncate">{c.cell(fila)}</dd>
+                  <dd className={`text-xs text-slate-700 dark:text-slate-300 ${c.anchoCompletoMobile ? "" : "truncate"}`}>{c.cell(fila)}</dd>
                 </div>
               ))}
             </dl>

@@ -7,6 +7,7 @@ import { Plus, Search, KeyRound } from "lucide-react";
 import NuevaConsignacionModal from "./NuevaConsignacionModal";
 import ConsignacionDetalleModal from "./ConsignacionDetalleModal";
 import { fmtFechaLocal } from "@/lib/panelV2/fechas";
+import TablaResponsiva, { type ColumnaTabla } from "@/components/panelV2/TablaResponsiva";
 
 interface Perfil { id: string; nombre: string; roles: string[] }
 interface Cliente { id: string; nombre: string; telefono: string | null }
@@ -109,37 +110,28 @@ export default function ConsignacionesClient({ consignacionesIniciales, perfiles
           <p className="text-xs text-slate-400 mt-1">Ningún registro matchea este tab/filtro.</p>
         </div>
       ) : (
-        <div className="bg-white dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-2xl overflow-x-auto">
-          <table className="w-full text-left">
-            <thead>
-              <tr className="border-b border-slate-100 dark:border-white/5 text-[10px] font-black uppercase tracking-widest text-slate-400">
-                <th className="px-4 py-3">Fecha</th>
-                <th className="px-4 py-3">Cliente</th>
-                <th className="px-4 py-3">Vehículo</th>
-                <th className="px-4 py-3">Vendedor</th>
-                <th className="px-4 py-3">Último contacto</th>
-                <th className="px-4 py-3">Publicada</th>
-                <th className="px-4 py-3">Estado</th>
-              </tr>
-            </thead>
-            <tbody>
-              {filtradas.map((c) => (
-                <tr key={c.id} onClick={() => setDetalleId(c.id)} className="border-b border-slate-50 dark:border-white/5 last:border-0 cursor-pointer hover:bg-slate-50 dark:hover:bg-white/5">
-                  <td className="px-4 py-3 text-xs text-slate-500 dark:text-slate-400 whitespace-nowrap">{fmtFechaLocal(c.fecha_alta)}</td>
-                  <td className="px-4 py-3">
-                    <p className="text-sm font-bold text-slate-900 dark:text-white">{c.cliente_nombre}</p>
-                    {c.cliente_telefono && <p className="text-[11px] text-slate-400">{c.cliente_telefono}</p>}
-                  </td>
-                  <td className="px-4 py-3 text-xs text-slate-600 dark:text-slate-300">{c.vehiculo_descripcion}</td>
-                  <td className="px-4 py-3 text-xs text-slate-500 dark:text-slate-400">{c.vendedor?.nombre || perfilMap[c.vendedor_id] || "—"}</td>
-                  <td className="px-4 py-3 text-xs text-slate-500 dark:text-slate-400">{c.ultimo_contacto ? fmtFechaLocal(c.ultimo_contacto) : "—"}</td>
-                  <td className="px-4 py-3"><span className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${c.publicada ? "bg-emerald-50 text-emerald-600 dark:bg-emerald-500/10 dark:text-emerald-300" : "bg-slate-100 text-slate-400 dark:bg-white/10"}`}>{c.publicada ? "Sí" : "No"}</span></td>
-                  <td className="px-4 py-3"><span className={`text-[10px] font-bold px-2 py-1 rounded-full ${ESTADO_COLOR[c.estado]}`}>{ESTADO_LABEL[c.estado]}</span></td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
+        <TablaResponsiva<any>
+          filas={filtradas}
+          keyExtractor={(c) => c.id}
+          onRowClick={(c) => setDetalleId(c.id)}
+          encabezadoMobile={(c) => (
+            <div>
+              <p className="text-sm font-bold text-slate-900 dark:text-white">{c.cliente_nombre}</p>
+              {c.cliente_telefono && <p className="text-[11px] text-slate-400">{c.cliente_telefono}</p>}
+            </div>
+          )}
+          columnas={
+            [
+              { key: "fecha", header: "Fecha", cell: (c) => fmtFechaLocal(c.fecha_alta), claseTd: "text-xs text-slate-500 dark:text-slate-400 whitespace-nowrap" },
+              { key: "cliente", header: "Cliente", cell: (c) => <><p className="text-sm font-bold text-slate-900 dark:text-white">{c.cliente_nombre}</p>{c.cliente_telefono && <p className="text-[11px] text-slate-400">{c.cliente_telefono}</p>}</>, ocultarEnMobile: true },
+              { key: "vehiculo", header: "Vehículo", cell: (c) => c.vehiculo_descripcion, claseTd: "text-xs text-slate-600 dark:text-slate-300" },
+              { key: "vendedor", header: "Vendedor", cell: (c) => c.vendedor?.nombre || perfilMap[c.vendedor_id] || "—", claseTd: "text-xs text-slate-500 dark:text-slate-400" },
+              { key: "ultimo_contacto", header: "Último contacto", cell: (c) => (c.ultimo_contacto ? fmtFechaLocal(c.ultimo_contacto) : "—"), claseTd: "text-xs text-slate-500 dark:text-slate-400" },
+              { key: "publicada", header: "Publicada", cell: (c) => <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${c.publicada ? "bg-emerald-50 text-emerald-600 dark:bg-emerald-500/10 dark:text-emerald-300" : "bg-slate-100 text-slate-400 dark:bg-white/10"}`}>{c.publicada ? "Sí" : "No"}</span> },
+              { key: "estado", header: "Estado", cell: (c) => <span className={`text-[10px] font-bold px-2 py-1 rounded-full ${ESTADO_COLOR[c.estado]}`}>{ESTADO_LABEL[c.estado]}</span> },
+            ] as ColumnaTabla<any>[]
+          }
+        />
       )}
 
       {modalNueva && (

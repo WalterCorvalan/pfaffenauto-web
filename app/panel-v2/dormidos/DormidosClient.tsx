@@ -170,57 +170,99 @@ export default function DormidosClient({
               <p className="max-w-sm text-xs text-slate-500 dark:text-slate-400">No hay clientes con última compra hace {plazoFiltro}+ meses que cumplan los filtros.</p>
             </div>
           ) : (
-            <div className="bg-white dark:bg-white/[0.02] border border-slate-200 dark:border-white/5 rounded-2xl overflow-hidden">
-              <table className="w-full text-left border-collapse">
-                <thead>
-                  <tr className="bg-slate-50 dark:bg-white/[0.03] border-b border-slate-200 dark:border-white/5">
-                    <th className="px-4 py-3 w-px">
-                      <input type="checkbox" checked={conTelefono.length > 0 && conTelefono.every((d) => seleccionados.has(d.clienteId))} onChange={toggleTodos} className="w-4 h-4 accent-rose-600" />
-                    </th>
-                    <th className="px-4 py-3 text-[10px] font-black uppercase tracking-widest text-slate-500 dark:text-slate-400">Cliente</th>
-                    <th className="px-4 py-3 text-[10px] font-black uppercase tracking-widest text-slate-500 dark:text-slate-400">Última compra</th>
-                    <th className="px-4 py-3 text-[10px] font-black uppercase tracking-widest text-slate-500 dark:text-slate-400">Precio</th>
-                    <th className="px-4 py-3 text-[10px] font-black uppercase tracking-widest text-slate-500 dark:text-slate-400">Dormido hace</th>
-                    <th className="px-4 py-3 text-[10px] font-black uppercase tracking-widest text-slate-500 dark:text-slate-400">Vendedor</th>
-                    <th className="px-4 py-3 w-px">WA</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {filtrados.map((d) => (
-                    <tr key={d.clienteId} className={`border-b border-slate-100 dark:border-white/5 last:border-0 hover:bg-slate-50 dark:hover:bg-white/[0.02] ${colorFila(d.mesesDormido)}`}>
-                      <td className="px-4 py-3">
-                        {d.telefono && <input type="checkbox" checked={seleccionados.has(d.clienteId)} onChange={() => toggleSeleccion(d.clienteId)} className="w-4 h-4 accent-rose-600" />}
-                      </td>
-                      <td className="px-4 py-3">
+            <>
+              {/* Desktop: tabla completa (sin cambios) */}
+              <div className="hidden md:block bg-white dark:bg-white/[0.02] border border-slate-200 dark:border-white/5 rounded-2xl overflow-hidden">
+                <table className="w-full text-left border-collapse">
+                  <thead>
+                    <tr className="bg-slate-50 dark:bg-white/[0.03] border-b border-slate-200 dark:border-white/5">
+                      <th className="px-4 py-3 w-px">
+                        <input type="checkbox" checked={conTelefono.length > 0 && conTelefono.every((d) => seleccionados.has(d.clienteId))} onChange={toggleTodos} className="w-4 h-4 accent-rose-600" />
+                      </th>
+                      <th className="px-4 py-3 text-[10px] font-black uppercase tracking-widest text-slate-500 dark:text-slate-400">Cliente</th>
+                      <th className="px-4 py-3 text-[10px] font-black uppercase tracking-widest text-slate-500 dark:text-slate-400">Última compra</th>
+                      <th className="px-4 py-3 text-[10px] font-black uppercase tracking-widest text-slate-500 dark:text-slate-400">Precio</th>
+                      <th className="px-4 py-3 text-[10px] font-black uppercase tracking-widest text-slate-500 dark:text-slate-400">Dormido hace</th>
+                      <th className="px-4 py-3 text-[10px] font-black uppercase tracking-widest text-slate-500 dark:text-slate-400">Vendedor</th>
+                      <th className="px-4 py-3 w-px">WA</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {filtrados.map((d) => (
+                      <tr key={d.clienteId} className={`border-b border-slate-100 dark:border-white/5 last:border-0 hover:bg-slate-50 dark:hover:bg-white/[0.02] ${colorFila(d.mesesDormido)}`}>
+                        <td className="px-4 py-3">
+                          {d.telefono && <input type="checkbox" checked={seleccionados.has(d.clienteId)} onChange={() => toggleSeleccion(d.clienteId)} className="w-4 h-4 accent-rose-600" />}
+                        </td>
+                        <td className="px-4 py-3">
+                          <div className="flex items-center gap-1.5">
+                            {d.cantidadCompras >= 2 && <span title="Cliente VIP"><Crown className="w-3.5 h-3.5 text-amber-500 shrink-0" /></span>}
+                            <p className="text-sm font-bold text-slate-900 dark:text-white">{d.nombre}</p>
+                          </div>
+                          <p className={`text-[11px] ${d.telefono ? "text-slate-400" : "text-rose-500 font-semibold"}`}>{d.telefono || "sin teléfono"}</p>
+                        </td>
+                        <td className="px-4 py-3 text-xs text-slate-600 dark:text-slate-300 whitespace-nowrap">{[d.marca, d.modelo].filter(Boolean).join(" ") || "—"}</td>
+                        <td className="px-4 py-3 text-xs font-bold text-slate-700 dark:text-slate-200 whitespace-nowrap">{fmtPrecio(d.precio, d.moneda)}</td>
+                        <td className="px-4 py-3 text-xs whitespace-nowrap">
+                          <span className={`font-bold ${d.mesesDormido >= 30 ? "text-rose-600 dark:text-rose-400" : d.mesesDormido >= 24 ? "text-amber-600 dark:text-amber-400" : "text-slate-500"}`}>{d.mesesDormido}m</span>
+                        </td>
+                        <td className="px-4 py-3 text-xs text-slate-500 dark:text-slate-400 whitespace-nowrap">{d.vendedorId ? perfilMap[d.vendedorId] || "—" : "Sin asignar"}</td>
+                        <td className="px-4 py-3 w-px">
+                          {d.telefono && (
+                            <a
+                              href={`https://wa.me/${d.telefono.replace(/\D/g, "")}?text=${encodeURIComponent(armarMensaje(d))}`}
+                              target="_blank" rel="noopener noreferrer"
+                              title="Mandar WhatsApp"
+                              className="p-2 bg-slate-50 dark:bg-white/5 hover:bg-emerald-600 hover:text-white text-slate-400 rounded-lg inline-flex"
+                            >
+                              <MessageCircle className="w-3.5 h-3.5" />
+                            </a>
+                          )}
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+
+              {/* Mobile: tarjetas, sin scroll horizontal */}
+              <div className="md:hidden flex flex-col gap-2">
+                {conTelefono.length > 0 && (
+                  <label className="flex items-center gap-2 text-xs font-bold text-slate-500 dark:text-slate-400 px-1">
+                    <input type="checkbox" checked={conTelefono.every((d) => seleccionados.has(d.clienteId))} onChange={toggleTodos} className="w-4 h-4 accent-rose-600" />
+                    Seleccionar todos los que tienen teléfono
+                  </label>
+                )}
+                {filtrados.map((d) => (
+                  <div key={d.clienteId} className={`bg-white dark:bg-white/[0.02] border border-slate-200 dark:border-white/5 rounded-2xl p-4 ${colorFila(d.mesesDormido)}`}>
+                    <div className="flex items-start gap-3">
+                      {d.telefono && <input type="checkbox" checked={seleccionados.has(d.clienteId)} onChange={() => toggleSeleccion(d.clienteId)} className="w-4 h-4 accent-rose-600 mt-1 shrink-0" />}
+                      <div className="min-w-0 flex-1">
                         <div className="flex items-center gap-1.5">
                           {d.cantidadCompras >= 2 && <span title="Cliente VIP"><Crown className="w-3.5 h-3.5 text-amber-500 shrink-0" /></span>}
                           <p className="text-sm font-bold text-slate-900 dark:text-white">{d.nombre}</p>
                         </div>
                         <p className={`text-[11px] ${d.telefono ? "text-slate-400" : "text-rose-500 font-semibold"}`}>{d.telefono || "sin teléfono"}</p>
-                      </td>
-                      <td className="px-4 py-3 text-xs text-slate-600 dark:text-slate-300 whitespace-nowrap">{[d.marca, d.modelo].filter(Boolean).join(" ") || "—"}</td>
-                      <td className="px-4 py-3 text-xs font-bold text-slate-700 dark:text-slate-200 whitespace-nowrap">{fmtPrecio(d.precio, d.moneda)}</td>
-                      <td className="px-4 py-3 text-xs whitespace-nowrap">
-                        <span className={`font-bold ${d.mesesDormido >= 30 ? "text-rose-600 dark:text-rose-400" : d.mesesDormido >= 24 ? "text-amber-600 dark:text-amber-400" : "text-slate-500"}`}>{d.mesesDormido}m</span>
-                      </td>
-                      <td className="px-4 py-3 text-xs text-slate-500 dark:text-slate-400 whitespace-nowrap">{d.vendedorId ? perfilMap[d.vendedorId] || "—" : "Sin asignar"}</td>
-                      <td className="px-4 py-3 w-px">
-                        {d.telefono && (
-                          <a
-                            href={`https://wa.me/${d.telefono.replace(/\D/g, "")}?text=${encodeURIComponent(armarMensaje(d))}`}
-                            target="_blank" rel="noopener noreferrer"
-                            title="Mandar WhatsApp"
-                            className="p-2 bg-slate-50 dark:bg-white/5 hover:bg-emerald-600 hover:text-white text-slate-400 rounded-lg inline-flex"
-                          >
-                            <MessageCircle className="w-3.5 h-3.5" />
-                          </a>
-                        )}
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
+                        <dl className="grid grid-cols-2 gap-x-3 gap-y-1.5 mt-2.5">
+                          <div><dt className="text-[9px] font-black uppercase tracking-widest text-slate-400">Última compra</dt><dd className="text-xs text-slate-700 dark:text-slate-300">{[d.marca, d.modelo].filter(Boolean).join(" ") || "—"}</dd></div>
+                          <div><dt className="text-[9px] font-black uppercase tracking-widest text-slate-400">Precio</dt><dd className="text-xs font-bold text-slate-700 dark:text-slate-300">{fmtPrecio(d.precio, d.moneda)}</dd></div>
+                          <div><dt className="text-[9px] font-black uppercase tracking-widest text-slate-400">Dormido hace</dt><dd className={`text-xs font-bold ${d.mesesDormido >= 30 ? "text-rose-600 dark:text-rose-400" : d.mesesDormido >= 24 ? "text-amber-600 dark:text-amber-400" : "text-slate-500"}`}>{d.mesesDormido}m</dd></div>
+                          <div><dt className="text-[9px] font-black uppercase tracking-widest text-slate-400">Vendedor</dt><dd className="text-xs text-slate-700 dark:text-slate-300">{d.vendedorId ? perfilMap[d.vendedorId] || "—" : "Sin asignar"}</dd></div>
+                        </dl>
+                      </div>
+                    </div>
+                    {d.telefono && (
+                      <a
+                        href={`https://wa.me/${d.telefono.replace(/\D/g, "")}?text=${encodeURIComponent(armarMensaje(d))}`}
+                        target="_blank" rel="noopener noreferrer"
+                        className="flex items-center justify-center gap-1.5 mt-3 pt-3 border-t border-slate-100 dark:border-white/5 text-xs font-bold text-emerald-600 dark:text-emerald-400"
+                      >
+                        <MessageCircle className="w-3.5 h-3.5" /> Mandar WhatsApp
+                      </a>
+                    )}
+                  </div>
+                ))}
+              </div>
+            </>
           )}
         </div>
       </div>

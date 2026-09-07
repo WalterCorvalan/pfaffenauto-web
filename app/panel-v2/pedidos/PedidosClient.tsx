@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { supabase2 } from "@/lib/supabase2/client";
 import { Search, Clock, MessageSquareText, Filter, Plus, Star, CheckCircle2, Sparkles, RefreshCw, FlagOff, Flag, X } from "lucide-react";
 import NuevoPedidoModal from "./NuevoPedidoModal";
+import TablaResponsiva, { type ColumnaTabla } from "@/components/panelV2/TablaResponsiva";
 
 const ESTADO_LABEL: Record<string, string> = { activo: "Activo", cumplido: "Cumplido", cancelado: "Cancelado" };
 const ESTADO_STYLES: Record<string, string> = {
@@ -182,101 +183,91 @@ export default function PedidosClient({ pedidosIniciales, vendedores, clientes, 
             <p className="text-slate-500 dark:text-slate-400 text-xs mt-1">Con este filtro no se encontraron resultados.</p>
           </div>
         ) : (
-          <div className="bg-white dark:bg-white/[0.02] border border-slate-200 dark:border-white/5 rounded-2xl overflow-hidden">
-            <div className="overflow-x-auto">
-              <table className="w-full text-left border-collapse">
-                <thead>
-                  <tr className="bg-slate-50 dark:bg-white/5 text-slate-400 text-[10px] uppercase tracking-widest font-bold border-b border-slate-100 dark:border-white/10">
-                    <th className="px-4 py-3">Cliente</th>
-                    <th className="px-4 py-3">Vehículo buscado</th>
-                    <th className="px-4 py-3">Presupuesto</th>
-                    <th className="px-4 py-3">Tipo</th>
-                    <th className="px-4 py-3">Match</th>
-                    <th className="px-4 py-3">Fecha</th>
-                    <th className="px-4 py-3">Estado</th>
-                    <th className="px-4 py-3 w-px"></th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-slate-100 dark:divide-white/10">
-                  {filtrados.map((p) => {
-                    const tieneMatch = p.vehiculo_match_id && p.estado === "activo";
-                    const sinConfirmar = p.estado === "activo" && !p.contacto_confirmado_at;
-                    return (
-                      <tr key={p.id} onClick={() => abrirEdicion(p)} className="hover:bg-slate-50/50 dark:hover:bg-white/5 cursor-pointer">
-                        <td className="px-4 py-3">
-                          <div className="flex items-center gap-2">
-                            <div className="w-6 h-6 rounded-full bg-rose-500 text-white flex items-center justify-center font-bold text-[10px] shrink-0">{(p.nombre_cliente || "?").substring(0, 2).toUpperCase()}</div>
-                            <div className="min-w-0">
-                              <p className="text-[13px] font-bold text-slate-900 dark:text-white truncate flex items-center gap-1">{p.nombre_cliente} {p.wishlist && <Star className="w-3 h-3 text-amber-400 fill-amber-400 shrink-0" />}</p>
-                              <button onClick={(e) => { e.stopPropagation(); toggleReservaSenada(p); }} className={`text-[10px] font-bold ${p.reserva_senada ? "text-indigo-600 dark:text-indigo-400" : "text-slate-300 dark:text-slate-600 hover:text-indigo-500"}`}>
-                                💰 {p.reserva_senada ? "Señada" : "Marcar señada"}
-                              </button>
-                              {p.gestion_finalizada && <p className="text-[10px] font-bold text-slate-400">🏁 Gestión finalizada</p>}
-                            </div>
-                          </div>
-                        </td>
-                        <td className="px-4 py-3 text-[13px] text-slate-700 dark:text-slate-200 font-medium">{busquedaTexto(p) || "—"}</td>
-                        <td className="px-4 py-3 text-[13px] text-slate-500 dark:text-slate-400">{p.presupuesto_max ? fmtMoneda(p.presupuesto_max, p.moneda) : "—"}</td>
-                        <td className="px-4 py-3"><span className="text-[10px] font-bold uppercase tracking-widest px-2 py-1 rounded-full bg-slate-100 dark:bg-white/10 text-slate-500 dark:text-slate-400">{TIPO_LABEL[p.tipo] || p.tipo}</span></td>
-                        <td className="px-4 py-3" onClick={(e) => e.stopPropagation()}>
-                          {tieneMatch ? (
-                            <span className="inline-flex items-center gap-1 text-[11px] font-bold text-emerald-700 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-500/10 border border-emerald-200 dark:border-emerald-500/20 px-2 py-1 rounded-full">
-                              <Sparkles className="w-3 h-3" /> {p.vehiculo_match?.marca} {p.vehiculo_match?.modelo}
-                              <button onClick={() => asignarMatchManual(p, "")} title="Quitar match" className="ml-0.5 hover:text-rose-600"><X className="w-3 h-3" /></button>
-                            </span>
-                          ) : (
-                            <button onClick={() => setMatcheando(p)} className="text-[11px] font-bold text-slate-400 hover:text-rose-600 flex items-center gap-1">
-                              <Sparkles className="w-3 h-3" /> Match manual
-                            </button>
-                          )}
-                        </td>
-                        <td className="px-4 py-3 text-[12px] text-slate-400 flex items-center gap-1"><Clock className="w-3 h-3" /> {new Date(p.created_at).toLocaleDateString("es-AR", { day: "2-digit", month: "short" })}</td>
-                        <td className="px-4 py-3" onClick={(e) => e.stopPropagation()}>
-                          <select
-                            value={p.estado}
-                            onChange={(e) => cambiarEstado(p.id, e.target.value)}
-                            className={`text-[10px] font-bold uppercase tracking-widest rounded-lg px-2 py-1.5 outline-none cursor-pointer border ${ESTADO_STYLES[p.estado]}`}
-                          >
-                            <option value="activo" className="bg-white text-slate-900">Activo</option>
-                            <option value="cumplido" className="bg-white text-slate-900">Cumplido</option>
-                            <option value="cancelado" className="bg-white text-slate-900">Cancelado</option>
-                          </select>
-                          {sinConfirmar && (
-                            <button onClick={(e) => { e.stopPropagation(); confirmarContacto(p); }} className="mt-1 flex items-center gap-1 text-[10px] font-bold text-amber-700 dark:text-amber-400 hover:underline">
-                              <CheckCircle2 className="w-3 h-3" /> Confirmé contacto
-                            </button>
-                          )}
-                          {p.estado === "activo" && !p.gestion_finalizada && (
-                            <button onClick={(e) => { e.stopPropagation(); abrirReconfirmar(p); }} className="mt-1 flex items-center gap-1 text-[10px] font-bold text-sky-700 dark:text-sky-400 hover:underline">
-                              <RefreshCw className="w-3 h-3" /> Reconfirmar
-                            </button>
-                          )}
-                          {p.estado === "activo" && (
-                            <button onClick={(e) => { e.stopPropagation(); toggleGestionFinalizada(p); }} className="mt-1 flex items-center gap-1 text-[10px] font-bold text-slate-400 hover:text-slate-700 dark:hover:text-slate-200">
-                              {p.gestion_finalizada ? <><FlagOff className="w-3 h-3" /> Reabrir gestión</> : <><Flag className="w-3 h-3" /> Finalizar gestión</>}
-                            </button>
-                          )}
-                        </td>
-                        <td className="px-4 py-3 w-px" onClick={(e) => e.stopPropagation()}>
-                          {p.telefono && (
-                            <a
-                              href={`https://wa.me/${p.telefono.replace(/\D/g, "")}?text=${encodeURIComponent(`¡Hola ${p.nombre_cliente}! Te contactamos de Pfaffen Autos respecto a tu búsqueda: ${busquedaTexto(p)}.`)}`}
-                              target="_blank"
-                              rel="noreferrer"
-                              className="bg-emerald-50 dark:bg-emerald-500/10 hover:bg-emerald-100 dark:hover:bg-emerald-500/20 text-emerald-600 dark:text-emerald-400 p-1.5 rounded-md transition-colors inline-flex"
-                              title="Contactar por WhatsApp"
-                            >
-                              <MessageSquareText className="w-4 h-4" strokeWidth={2.5} />
-                            </a>
-                          )}
-                        </td>
-                      </tr>
-                    );
-                  })}
-                </tbody>
-              </table>
-            </div>
-          </div>
+          <TablaResponsiva<any>
+            filas={filtrados}
+            keyExtractor={(p) => p.id}
+            onRowClick={(p) => abrirEdicion(p)}
+            encabezadoMobile={(p) => (
+              <div className="flex items-center gap-2">
+                <div className="w-6 h-6 rounded-full bg-rose-500 text-white flex items-center justify-center font-bold text-[10px] shrink-0">{(p.nombre_cliente || "?").substring(0, 2).toUpperCase()}</div>
+                <div className="min-w-0">
+                  <p className="text-[13px] font-bold text-slate-900 dark:text-white truncate flex items-center gap-1">{p.nombre_cliente} {p.wishlist && <Star className="w-3 h-3 text-amber-400 fill-amber-400 shrink-0" />}</p>
+                  <button onClick={(e) => { e.stopPropagation(); toggleReservaSenada(p); }} className={`text-[10px] font-bold ${p.reserva_senada ? "text-indigo-600 dark:text-indigo-400" : "text-slate-300 dark:text-slate-600 hover:text-indigo-500"}`}>
+                    💰 {p.reserva_senada ? "Señada" : "Marcar señada"}
+                  </button>
+                  {p.gestion_finalizada && <p className="text-[10px] font-bold text-slate-400">🏁 Gestión finalizada</p>}
+                </div>
+              </div>
+            )}
+            columnas={
+              [
+                { key: "cliente", header: "Cliente", cell: (p) => p.nombre_cliente, ocultarEnMobile: true },
+                { key: "vehiculo", header: "Vehículo buscado", cell: (p) => busquedaTexto(p) || "—", claseTd: "text-[13px] text-slate-700 dark:text-slate-200 font-medium" },
+                { key: "presupuesto", header: "Presupuesto", cell: (p) => (p.presupuesto_max ? fmtMoneda(p.presupuesto_max, p.moneda) : "—"), claseTd: "text-[13px] text-slate-500 dark:text-slate-400" },
+                { key: "tipo", header: "Tipo", cell: (p) => <span className="text-[10px] font-bold uppercase tracking-widest px-2 py-1 rounded-full bg-slate-100 dark:bg-white/10 text-slate-500 dark:text-slate-400">{TIPO_LABEL[p.tipo] || p.tipo}</span> },
+                { key: "match", header: "Match", cell: (p) => {
+                  const tieneMatch = p.vehiculo_match_id && p.estado === "activo";
+                  return (
+                    <div onClick={(e) => e.stopPropagation()}>
+                      {tieneMatch ? (
+                        <span className="inline-flex items-center gap-1 text-[11px] font-bold text-emerald-700 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-500/10 border border-emerald-200 dark:border-emerald-500/20 px-2 py-1 rounded-full">
+                          <Sparkles className="w-3 h-3" /> {p.vehiculo_match?.marca} {p.vehiculo_match?.modelo}
+                          <button onClick={() => asignarMatchManual(p, "")} title="Quitar match" className="ml-0.5 hover:text-rose-600"><X className="w-3 h-3" /></button>
+                        </span>
+                      ) : (
+                        <button onClick={() => setMatcheando(p)} className="text-[11px] font-bold text-slate-400 hover:text-rose-600 flex items-center gap-1">
+                          <Sparkles className="w-3 h-3" /> Match manual
+                        </button>
+                      )}
+                    </div>
+                  );
+                } },
+                { key: "fecha", header: "Fecha", cell: (p) => <span className="flex items-center gap-1"><Clock className="w-3 h-3" /> {new Date(p.created_at).toLocaleDateString("es-AR", { day: "2-digit", month: "short" })}</span>, claseTd: "text-[12px] text-slate-400" },
+                { key: "estado", header: "Estado", anchoCompletoMobile: true, cell: (p) => {
+                  const sinConfirmar = p.estado === "activo" && !p.contacto_confirmado_at;
+                  return (
+                    <div onClick={(e) => e.stopPropagation()}>
+                      <select
+                        value={p.estado}
+                        onChange={(e) => cambiarEstado(p.id, e.target.value)}
+                        className={`text-[10px] font-bold uppercase tracking-widest rounded-lg px-2 py-1.5 outline-none cursor-pointer border ${ESTADO_STYLES[p.estado]}`}
+                      >
+                        <option value="activo" className="bg-white text-slate-900">Activo</option>
+                        <option value="cumplido" className="bg-white text-slate-900">Cumplido</option>
+                        <option value="cancelado" className="bg-white text-slate-900">Cancelado</option>
+                      </select>
+                      {sinConfirmar && (
+                        <button onClick={() => confirmarContacto(p)} className="mt-1 flex items-center gap-1 text-[10px] font-bold text-amber-700 dark:text-amber-400 hover:underline">
+                          <CheckCircle2 className="w-3 h-3" /> Confirmé contacto
+                        </button>
+                      )}
+                      {p.estado === "activo" && !p.gestion_finalizada && (
+                        <button onClick={() => abrirReconfirmar(p)} className="mt-1 flex items-center gap-1 text-[10px] font-bold text-sky-700 dark:text-sky-400 hover:underline">
+                          <RefreshCw className="w-3 h-3" /> Reconfirmar
+                        </button>
+                      )}
+                      {p.estado === "activo" && (
+                        <button onClick={() => toggleGestionFinalizada(p)} className="mt-1 flex items-center gap-1 text-[10px] font-bold text-slate-400 hover:text-slate-700 dark:hover:text-slate-200">
+                          {p.gestion_finalizada ? <><FlagOff className="w-3 h-3" /> Reabrir gestión</> : <><Flag className="w-3 h-3" /> Finalizar gestión</>}
+                        </button>
+                      )}
+                    </div>
+                  );
+                } },
+              ] as ColumnaTabla<any>[]
+            }
+            acciones={(p) => p.telefono && (
+              <a
+                href={`https://wa.me/${p.telefono.replace(/\D/g, "")}?text=${encodeURIComponent(`¡Hola ${p.nombre_cliente}! Te contactamos de Pfaffen Autos respecto a tu búsqueda: ${busquedaTexto(p)}.`)}`}
+                target="_blank"
+                rel="noreferrer"
+                className="bg-emerald-50 dark:bg-emerald-500/10 hover:bg-emerald-100 dark:hover:bg-emerald-500/20 text-emerald-600 dark:text-emerald-400 p-1.5 rounded-md transition-colors inline-flex"
+                title="Contactar por WhatsApp"
+              >
+                <MessageSquareText className="w-4 h-4" strokeWidth={2.5} />
+              </a>
+            )}
+          />
         )}
       </div>
 
