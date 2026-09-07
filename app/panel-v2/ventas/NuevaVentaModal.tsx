@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { supabase2 } from "@/lib/supabase2/client";
 import { X, Loader2, Save, Trash2, Plus, Bell, Star } from "lucide-react";
 import { hoyLocalISO, parseFechaLocal, fmtFechaLocal } from "@/lib/panelV2/fechas";
@@ -23,7 +23,7 @@ interface Vehiculo { id: string; marca: string; modelo: string; anio: number; pa
 interface Cliente { id: string; nombre: string; telefono: string | null; email: string | null; dni_cuit: string | null }
 interface Perfil { id: string; nombre: string; roles: string[] }
 
-interface Seña { monto: string; moneda: string; fecha: string; cajaDestino: string }
+interface Seña { monto: string; moneda: string; fecha: string; cajaDestino: string; senaOrigenId?: string | null }
 interface Permuta { valor: string; moneda: string; precioPublicacion: string; marca: string; modelo: string; anio: string; km: string; patente: string; color: string; condicion: string; cargarAlStock: boolean; duenoNombre: string }
 
 export interface VentaPrefill {
@@ -80,6 +80,9 @@ export default function NuevaVentaModal({ perfiles, clientes, vehiculos, miId, i
   const [propietarioTelefono, setPropietarioTelefono] = useState(editando?.propietario_telefono || "");
 
   const [senas, setSenas] = useState<Seña[]>([]);
+  const [senasActivas, setSenasActivas] = useState<any[]>([]);
+  const senasActivasOriginal = useRef<any[]>([]);
+  const [senaAVincular, setSenaAVincular] = useState("");
   const [metodoPago, setMetodoPago] = useState(editando?.metodo_pago || "");
   const [cuotasPlazo, setCuotasPlazo] = useState(editando?.cuotas_plazo ? String(editando.cuotas_plazo) : "");
   const [montoFinanciacion, setMontoFinanciacion] = useState(editando?.monto_financiacion ? String(editando.monto_financiacion) : "");
@@ -135,6 +138,27 @@ export default function NuevaVentaModal({ perfiles, clientes, vehiculos, miId, i
     supabase2.from("venta_recordatorios").select("*").eq("venta_id", editando.id).eq("estado", "pendiente").order("fecha_vencimiento").then(({ data }) => setRecordatorios(data || []));
   }, [esEdicion, editando?.id]);
 
+  // Señas activas del módulo Señas, para vincularlas acá en vez de tipear el
+  // monto de nuevo a mano (esto es lo que causaba que la seña quedara
+  // registrada dos veces y sin conexión real con la venta).
+  useEffect(() => {
+    if (esEdicion) return;
+    supabase2.from("senas").select("id, numero, cliente_nombre, apellido, nombre, sena_ars, sena_usd, monto, moneda, fecha, marca, modelo, vehiculo_id")
+      .eq("estado", "Activa").order("created_at", { ascending: false }).then(({ data }) => { setSenasActivas(data || []); senasActivasOriginal.current = data || []; });
+  }, [esEdicion]);
+
+  const vincularSena = (senaId: string) => {
+    setSenaAVincular(senaId);
+    if (!senaId) return;
+    const s = senasActivas.find((x) => x.id === senaId);
+    if (!s) return;
+    const monto = s.sena_ars ?? s.sena_usd ?? s.monto ?? 0;
+    const moneda = s.sena_ars ? "ARS" : s.sena_usd ? "USD" : s.moneda || monedaVenta;
+    setSenas((prev) => [...prev, { monto: String(monto), moneda, fecha: s.fecha || hoyLocalISO(), cajaDestino: "", senaOrigenId: s.id }]);
+    setSenasActivas((prev) => prev.filter((x) => x.id !== senaId));
+    setSenaAVincular("");
+  };
+
   const agregarRecordatorio = () => {
     if (!rFecha) return;
     setRecordatoriosNuevos((prev) => [...prev, { tipo: rTipo, fecha: rFecha, notas: rNotas.trim() }]);
@@ -177,7 +201,14 @@ export default function NuevaVentaModal({ perfiles, clientes, vehiculos, miId, i
   };
 
   const agregarSeña = () => setSenas((prev) => [...prev, { monto: "", moneda: monedaVenta, fecha: hoyLocalISO(), cajaDestino: "" }]);
-  const quitarSeña = (i: number) => setSenas((prev) => prev.filter((_, idx) => idx !== i));
+  const quitarSeña = (i: number) => setSenas((prev) => {
+    const quitada = prev[i];
+    if (quitada?.senaOrigenId) {
+      const s = senasActivasOriginal.current.find((x) => x.id === quitada.senaOrigenId);
+      if (s) setSenasActivas((act) => [s, ...act]);
+    }
+    return prev.filter((_, idx) => idx !== i);
+  });
   const actualizarSeña = (i: number, campo: keyof Seña, val: string) => setSenas((prev) => prev.map((s, idx) => (idx === i ? { ...s, [campo]: val } : s)));
 
   const togglePermuta = (on: boolean) => {
@@ -305,8 +336,16 @@ export default function NuevaVentaModal({ perfiles, clientes, vehiculos, miId, i
       if (dbError) throw dbError;
 
       if (senas.length > 0) {
-        const filas = senas.filter((s) => s.monto).map((s) => ({ venta_id: venta.id, monto: Number(s.monto), moneda: s.moneda, fecha: s.fecha, caja_destino: s.cajaDestino || null }));
+        const filas = senas.filter((s) => s.monto).map((s) => ({ venta_id: venta.id, monto: Number(s.monto), moneda: s.moneda, fecha: s.fecha, caja_destino: s.cajaDestino || null, sena_origen_id: s.senaOrigenId || null }));
         if (filas.length > 0) await supabase2.from("venta_senas").insert(filas);
+
+        // Las señas vinculadas (no las tipeadas a mano) se marcan Convertida acá
+        // -- antes quedaban huérfanas en el módulo Señas para siempre, sin
+        // ninguna referencia a la venta que terminaron generando.
+        const idsVinculados = senas.filter((s) => s.senaOrigenId).map((s) => s.senaOrigenId as string);
+        if (idsVinculados.length > 0) {
+          await supabase2.from("senas").update({ estado: "Convertida", etapa_seguimiento: "Convertida" }).in("id", idsVinculados);
+        }
       }
 
       let totalPermutas = 0;
@@ -507,6 +546,19 @@ export default function NuevaVentaModal({ perfiles, clientes, vehiculos, miId, i
                     </div>
                     <button type="button" onClick={agregarSeña} className="flex items-center gap-1 px-2.5 py-1.5 rounded-lg bg-amber-100 dark:bg-amber-500/20 text-amber-700 dark:text-amber-300 text-[11px] font-bold shrink-0"><Plus className="w-3.5 h-3.5" /> Agregar seña</button>
                   </div>
+                  {senasActivas.length > 0 && (
+                    <div className="mb-3">
+                      <label className="text-[10px] font-bold uppercase tracking-widest text-amber-700 dark:text-amber-300 block mb-1">¿Ya cargaste esta seña en el módulo Señas? Vinculala en vez de tipearla de nuevo</label>
+                      <select value={senaAVincular} onChange={(e) => vincularSena(e.target.value)} className="w-full bg-white dark:bg-white/5 border border-amber-200 dark:border-amber-500/20 rounded-lg px-2.5 py-2 text-xs outline-none">
+                        <option value="">— Elegir seña activa —</option>
+                        {senasActivas.map((s) => (
+                          <option key={s.id} value={s.id}>
+                            {s.numero ? `N° ${s.numero} — ` : ""}{s.apellido || s.cliente_nombre}{s.apellido ? `, ${s.nombre}` : ""} — {s.marca} {s.modelo} — {s.sena_ars ? `$ ${Number(s.sena_ars).toLocaleString("es-AR")}` : s.sena_usd ? `USD ${Number(s.sena_usd).toLocaleString("es-AR")}` : ""}
+                          </option>
+                        ))}
+                      </select>
+                    </div>
+                  )}
                   {senas.length === 0 ? (
                     <p className="text-[11px] text-amber-700/70 dark:text-amber-300/60 text-center py-2">Sin seña registrada. Si el cliente abonó algo a cuenta, agregalo con el botón de arriba.</p>
                   ) : (
@@ -514,6 +566,7 @@ export default function NuevaVentaModal({ perfiles, clientes, vehiculos, miId, i
                       {senas.map((s, i) => (
                         <div key={i} className="bg-white dark:bg-white/5 rounded-lg p-3 border border-amber-100 dark:border-amber-500/10 relative">
                           <button type="button" onClick={() => quitarSeña(i)} className="absolute top-2 right-2 text-slate-300 hover:text-rose-500"><Trash2 className="w-3.5 h-3.5" /></button>
+                          {s.senaOrigenId && <p className="text-[10px] font-bold text-emerald-600 dark:text-emerald-400 mb-1.5">🔗 Vinculada al módulo Señas — se marca Convertida al guardar</p>}
                           <div className="grid grid-cols-2 gap-2 pr-6">
                             <div><label className={labelClass}>Monto</label><div className="flex gap-1"><select value={s.moneda} onChange={(e) => actualizarSeña(i, "moneda", e.target.value)} className={`${inputClass} !w-20 shrink-0 py-2`}><option value="USD">USD</option><option value="ARS">ARS</option></select><input type="number" value={s.monto} onChange={(e) => actualizarSeña(i, "monto", e.target.value)} className={`${inputClass} flex-1 min-w-0`} /></div></div>
                             <div><label className={labelClass}>Fecha</label><input type="date" value={s.fecha} onChange={(e) => actualizarSeña(i, "fecha", e.target.value)} className={inputClass} /></div>
