@@ -116,6 +116,74 @@ export default function FinanzasClient({
     return { vencidas: p.filter((c) => c.vencimiento < hoy).length, porVencer: p.filter((c) => c.vencimiento >= hoy && c.vencimiento <= en7str).length, enFecha: p.filter((c) => c.vencimiento > en7str).length };
   }, [cuotasCobrar]);
 
+  // "Saldos a cobrar" = plata en la calle por señas Activas: lo que falta
+  // cobrar de la venta total una vez descontada la seña ya recibida.
+  const senasActivasFull = useMemo(() => senas.filter((s: any) => (s.estado || "").toLowerCase() === "activa"), [senas]);
+  const saldosACobrarPorMoneda = useMemo(() => {
+    const map: Record<string, number> = {};
+    senasActivasFull.forEach((s: any) => {
+      const ars = Number(s.venta_ars || 0) - Number(s.sena_ars || 0);
+      const usd = Number(s.venta_usd || 0) - Number(s.sena_usd || 0);
+      if (ars > 0) map.ARS = (map.ARS || 0) + ars;
+      if (usd > 0) map.USD = (map.USD || 0) + usd;
+    });
+    return map;
+  }, [senasActivasFull]);
+
+  // Control de caja por sucursal (este mes): ingresos efectivos (ingresos
+  // aprobados de la cuenta de esa sucursal) + saldos a cobrar de las señas
+  // activas de esa sucursal.
+  const inicioMesActual = new Date(); inicioMesActual.setDate(1); inicioMesActual.setHours(0, 0, 0, 0);
+  const cajaPorSucursal = useMemo(() => {
+    const porSucursal = new Map<string, { nombre: string; ingresos: Record<string, number>; saldosACobrar: Record<string, number> }>();
+    const sucursalPorCuenta = new Map(cuentas.map((c: any) => [c.id, c.sucursal_id]));
+    const nombreSucursal = new Map(sucursales.map((s: any) => [s.id, s.nombre]));
+    sucursales.forEach((s: any) => porSucursal.set(s.id, { nombre: s.nombre, ingresos: {}, saldosACobrar: {} }));
+    movimientos
+      .filter((m: any) => m.tipo === "ingreso" && m.estado === "aprobado" && m.tipo_movimiento !== "Transferencia" && new Date(m.fecha) >= inicioMesActual)
+      .forEach((m: any) => {
+        const sucId = sucursalPorCuenta.get(m.cuenta_id);
+        if (!sucId || !porSucursal.has(sucId)) return;
+        const moneda = m.cuenta?.moneda;
+        if (!moneda) return;
+        const entry = porSucursal.get(sucId)!;
+        entry.ingresos[moneda] = (entry.ingresos[moneda] || 0) + Number(m.monto);
+      });
+    senasActivasFull.forEach((s: any) => {
+      if (!s.sucursal_id || !porSucursal.has(s.sucursal_id)) return;
+      const entry = porSucursal.get(s.sucursal_id)!;
+      const ars = Number(s.venta_ars || 0) - Number(s.sena_ars || 0);
+      const usd = Number(s.venta_usd || 0) - Number(s.sena_usd || 0);
+      if (ars > 0) entry.saldosACobrar.ARS = (entry.saldosACobrar.ARS || 0) + ars;
+      if (usd > 0) entry.saldosACobrar.USD = (entry.saldosACobrar.USD || 0) + usd;
+    });
+    return [...porSucursal.values()];
+  }, [cuentas, sucursales, movimientos, senasActivasFull, inicioMesActual]);
+
+  // Historial de Operaciones: ventas + señas en una sola lista, con lo
+  // mínimo para buscar por cliente/auto/N° y mostrar en una tabla.
+  const historialOperaciones = useMemo(() => {
+    const deVentas = ventas
+      .filter((v: any) => v.estado === "cerrada")
+      .map((v: any) => ({
+        id: v.id, tipo: "Venta" as const, numero: v.id.slice(0, 8).toUpperCase(), fecha: v.fecha_cierre,
+        vehiculo: [v.vehiculo_marca, v.vehiculo_modelo].filter(Boolean).join(" ") || "—",
+        sucursal: v.sucursalNombre || "—",
+        persona: v.comprador_nombre || "—",
+        monto: Number(v.precio_venta || 0), moneda: v.moneda_venta || "ARS",
+        documento: v.codigo_seguimiento ? `/seguimiento/${v.codigo_seguimiento}` : null,
+      }));
+    const deSenas = senas.map((s: any) => ({
+      id: s.id, tipo: "Seña" as const, numero: s.numero ? String(s.numero) : s.id.slice(0, 8).toUpperCase(), fecha: s.fecha,
+      vehiculo: [s.marca, s.modelo].filter(Boolean).join(" ") || "—",
+      sucursal: s.sucursales?.nombre || "—",
+      persona: s.apellido ? `${s.apellido}, ${s.nombre || ""}`.trim() : (s.cliente_nombre || "—"),
+      monto: Number(s.sena_ars || s.sena_usd || s.monto || 0), moneda: s.sena_ars ? "ARS" : s.sena_usd ? "USD" : (s.moneda || "ARS"),
+      documento: `/panel-v2/senas/imprimir/${s.id}`,
+    }));
+    return [...deVentas, ...deSenas].sort((a, b) => (b.fecha || "").localeCompare(a.fecha || ""));
+  }, [ventas, senas]);
+
   return (
     <div className="p-6 max-w-6xl mx-auto">
       <div className="flex items-start justify-between gap-3 mb-1 flex-wrap">
@@ -142,6 +210,9 @@ export default function FinanzasClient({
           ingresosTotales={ingresosTotales}
           egresosTotales={egresosTotales}
           pendientesCobrarStats={pendientesCobrarStats}
+          saldosACobrarPorMoneda={saldosACobrarPorMoneda}
+          cajaPorSucursal={cajaPorSucursal}
+          historialOperaciones={historialOperaciones}
           setTab={setTab}
         />
       )}

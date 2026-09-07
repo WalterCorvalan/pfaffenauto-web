@@ -19,7 +19,7 @@ export default async function FinanzasPage() {
     supabase.from("perfiles").select("id, nombre").eq("activo", true).order("nombre"),
     supabase.from("clientes").select("id, nombre").order("nombre").limit(500),
     supabase.from("vehiculos").select("id, marca, modelo, patente").in("estado", ["disponible", "reservado", "señado"]).order("marca"),
-    supabase.from("ventas").select("id, comprador_nombre, vehiculo_marca, vehiculo_modelo").order("created_at", { ascending: false }).limit(300),
+    supabase.from("ventas").select("id, comprador_nombre, vehiculo_marca, vehiculo_modelo, vehiculo_id, precio_venta, moneda_venta, fecha_cierre, estado, vendedor_id, codigo_seguimiento").order("created_at", { ascending: false }).limit(300),
     supabase.from("cheques").select("*").order("fecha_cobro", { ascending: false }).limit(300),
     supabase.from("pagos_disponibles").select("*").order("fecha", { ascending: false }).limit(300),
     supabase.from("consumos_tarjeta").select("*").order("fecha", { ascending: false }).limit(300),
@@ -40,6 +40,16 @@ export default async function FinanzasPage() {
   const { data: senasActivas } = await supabase.from("senas").select("monto, moneda").ilike("estado", "activa");
   const senasActivasPorMoneda: Record<string, number> = {};
   (senasActivas || []).forEach((s) => { if (s.monto) senasActivasPorMoneda[s.moneda] = (senasActivasPorMoneda[s.moneda] || 0) + Number(s.monto); });
+
+  // Sucursal de cada venta viene del vehículo (ventas no tiene sucursal_id
+  // propia) -- se resuelve aparte porque el vehículo ya puede estar
+  // "vendido" y no aparece en la query de stock disponible de más arriba.
+  const idsVehiculosVentas = [...new Set((ventas || []).map((v: any) => v.vehiculo_id).filter(Boolean))];
+  const { data: vehiculosDeVentas } = idsVehiculosVentas.length
+    ? await supabase.from("vehiculos").select("id, sucursal_id, sucursal:sucursal_id ( nombre )").in("id", idsVehiculosVentas)
+    : { data: [] as any[] };
+  const sucursalPorVehiculo = new Map((vehiculosDeVentas || []).map((v: any) => [v.id, v.sucursal?.nombre || null]));
+  const ventasConSucursal = (ventas || []).map((v: any) => ({ ...v, sucursalNombre: v.vehiculo_id ? sucursalPorVehiculo.get(v.vehiculo_id) || null : null }));
 
   const cuentasConSaldo = await Promise.all(
     (cuentas || []).map(async (c) => {
@@ -69,7 +79,7 @@ export default async function FinanzasPage() {
       vendedores={vendedores || []}
       clientes={clientes || []}
       vehiculos={vehiculos || []}
-      ventas={ventas || []}
+      ventas={ventasConSucursal}
       chequesIniciales={cheques || []}
       pagosDisponiblesIniciales={pagosDisponibles || []}
       consumosTarjetaIniciales={consumosTarjeta || []}
