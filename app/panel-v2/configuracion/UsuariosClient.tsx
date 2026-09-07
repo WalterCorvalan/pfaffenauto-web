@@ -3,6 +3,7 @@
 import { useState, useEffect } from "react";
 import Link from "next/link";
 import { Settings, UserPlus, Pencil, Trash2, Loader2, X } from "lucide-react";
+import TablaResponsiva, { type ColumnaTabla } from "@/components/panelV2/TablaResponsiva";
 
 const ROLES = ["admin", "ventas", "finanzas", "gestoria"] as const;
 const ROL_LABEL: Record<string, string> = { admin: "Admin", ventas: "Ventas", finanzas: "Finanzas", gestoria: "Gestoría" };
@@ -69,44 +70,37 @@ export default function UsuariosClient() {
         {cargando ? (
           <div className="p-8 flex justify-center"><Loader2 className="w-5 h-5 animate-spin text-slate-400" /></div>
         ) : (
-          <div className="overflow-x-auto">
-            <table className="w-full text-left text-sm">
-              <thead>
-                <tr className="text-[10px] uppercase tracking-widest text-slate-400 border-b border-slate-100 dark:border-white/5">
-                  <th className="px-4 py-3 font-bold">Usuario</th>
-                  <th className="px-4 py-3 font-bold">Email</th>
-                  <th className="px-4 py-3 font-bold">Roles</th>
-                  <th className="px-4 py-3 font-bold">Estado</th>
-                  <th className="px-4 py-3 font-bold text-right">Acciones</th>
-                </tr>
-              </thead>
-              <tbody>
-                {usuarios.map((u) => (
-                  <tr key={u.id} className="border-b border-slate-50 dark:border-white/5 last:border-0">
-                    <td className="px-4 py-3 font-bold text-slate-800 dark:text-white">{u.nombre}</td>
-                    <td className="px-4 py-3 text-slate-500 dark:text-slate-400">{u.email}</td>
-                    <td className="px-4 py-3">
-                      <div className="flex flex-wrap gap-1">
-                        {u.roles.map((r) => <span key={r} className={`px-2 py-0.5 rounded-full text-[10px] font-bold ${ROL_COLOR[r] || "bg-slate-100 text-slate-600"}`}>{ROL_LABEL[r] || r}</span>)}
-                      </div>
-                    </td>
-                    <td className="px-4 py-3">
-                      <button onClick={() => toggleActivo(u)} className={`px-2 py-0.5 rounded-full text-[10px] font-bold ${u.activo ? "bg-emerald-100 text-emerald-700 dark:bg-emerald-500/10 dark:text-emerald-300" : "bg-slate-100 text-slate-500"}`}>
-                        {u.activo ? "Activo" : "Inactivo"}
-                      </button>
-                    </td>
-                    <td className="px-4 py-3">
-                      <div className="flex items-center justify-end gap-3 text-xs font-bold">
-                        <button onClick={() => setEditando(u)} className="flex items-center gap-1 text-slate-500 hover:text-slate-800 dark:hover:text-white"><Pencil className="w-3.5 h-3.5" /> Editar</button>
-                        <button onClick={() => eliminar(u)} className="flex items-center gap-1 text-rose-600 hover:text-rose-700"><Trash2 className="w-3.5 h-3.5" /> Eliminar</button>
-                      </div>
-                    </td>
-                  </tr>
-                ))}
-                {usuarios.length === 0 && <tr><td colSpan={5} className="px-4 py-8 text-center text-slate-400">Sin usuarios.</td></tr>}
-              </tbody>
-            </table>
-          </div>
+          usuarios.length === 0 ? (
+            <p className="px-4 py-8 text-center text-slate-400">Sin usuarios.</p>
+          ) : (
+            <TablaResponsiva<Usuario>
+              filas={usuarios}
+              keyExtractor={(u) => u.id}
+              encabezadoMobile={(u) => <p className="font-bold text-slate-800 dark:text-white">{u.nombre}</p>}
+              columnas={
+                [
+                  { key: "usuario", header: "Usuario", cell: (u) => u.nombre, claseTd: "font-bold text-slate-800 dark:text-white", ocultarEnMobile: true },
+                  { key: "email", header: "Email", cell: (u) => u.email, claseTd: "text-slate-500 dark:text-slate-400" },
+                  { key: "roles", header: "Roles", cell: (u) => (
+                    <div className="flex flex-wrap gap-1">
+                      {u.roles.map((r) => <span key={r} className={`px-2 py-0.5 rounded-full text-[10px] font-bold ${ROL_COLOR[r] || "bg-slate-100 text-slate-600"}`}>{ROL_LABEL[r] || r}</span>)}
+                    </div>
+                  ) },
+                  { key: "estado", header: "Estado", cell: (u) => (
+                    <button onClick={() => toggleActivo(u)} className={`px-2 py-0.5 rounded-full text-[10px] font-bold ${u.activo ? "bg-emerald-100 text-emerald-700 dark:bg-emerald-500/10 dark:text-emerald-300" : "bg-slate-100 text-slate-500"}`}>
+                      {u.activo ? "Activo" : "Inactivo"}
+                    </button>
+                  ) },
+                ] as ColumnaTabla<Usuario>[]
+              }
+              acciones={(u) => (
+                <>
+                  <button onClick={() => setEditando(u)} className="flex items-center gap-1 text-xs font-bold text-slate-500 hover:text-slate-800 dark:hover:text-white"><Pencil className="w-3.5 h-3.5" /> Editar</button>
+                  <button onClick={() => eliminar(u)} className="flex items-center gap-1 text-xs font-bold text-rose-600 hover:text-rose-700"><Trash2 className="w-3.5 h-3.5" /> Eliminar</button>
+                </>
+              )}
+            />
+          )
         )}
       </div>
 

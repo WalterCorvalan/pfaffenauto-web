@@ -4,6 +4,7 @@ import { useState, useEffect } from "react";
 import Link from "next/link";
 import { Settings, Loader2 } from "lucide-react";
 import { supabase2 } from "@/lib/supabase2/client";
+import TablaResponsiva, { type ColumnaTabla } from "@/components/panelV2/TablaResponsiva";
 
 const MODULO_LABEL: Record<string, string> = {
   cotizaciones: "Cotizaciones", pedidos: "Pedidos", consignaciones: "Consignaciones", gestoria: "Gestoría",
@@ -102,28 +103,23 @@ export default function EmpresaClient() {
           <div className="bg-white dark:bg-white/[0.02] border border-slate-200 dark:border-white/5 rounded-2xl p-5">
             <p className="text-sm font-bold text-slate-800 dark:text-white mb-1">Visibilidad por sector</p>
             <p className="text-xs text-slate-400 mb-4">Destildar esconde esa sección para ese sector (menú, celular, URL directa). Admin ve siempre todo. Un módulo apagado arriba no aparece para nadie, tenga o no tenga tilde acá.</p>
-            <div className="overflow-x-auto">
-              <table className="w-full text-left text-xs min-w-[700px]">
-                <thead>
-                  <tr className="text-[10px] uppercase tracking-widest text-slate-400 border-b border-slate-100 dark:border-white/5">
-                    <th className="py-2 pr-2">Módulo</th>
-                    {SECTORES.map((s) => <th key={s} className="py-2 px-2 text-center">{SECTOR_LABEL[s]}</th>)}
-                  </tr>
-                </thead>
-                <tbody>
-                  {modulos.map((m) => (
-                    <tr key={m.modulo} className={`border-b border-slate-50 dark:border-white/5 ${!m.activo ? "opacity-40" : ""}`}>
-                      <td className="py-2 pr-2 font-bold text-slate-700 dark:text-slate-200">{MODULO_LABEL[m.modulo] || m.modulo}</td>
-                      {SECTORES.map((s) => (
-                        <td key={s} className="py-2 px-2 text-center">
-                          <input type="checkbox" disabled={!m.activo} checked={esVisible(m.modulo, s)} onChange={() => toggleVisibilidad(m.modulo, s)} className="w-4 h-4 accent-rose-600" />
-                        </td>
-                      ))}
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
+            <TablaResponsiva<Modulo>
+              filas={modulos}
+              keyExtractor={(m) => m.modulo}
+              claseFila={(m) => (!m.activo ? "opacity-40" : "")}
+              encabezadoMobile={(m) => <p className="font-bold text-slate-700 dark:text-slate-200">{MODULO_LABEL[m.modulo] || m.modulo}</p>}
+              columnas={
+                [
+                  { key: "modulo", header: "Módulo", cell: (m) => MODULO_LABEL[m.modulo] || m.modulo, claseTd: "py-2 pr-2 font-bold text-slate-700 dark:text-slate-200", ocultarEnMobile: true },
+                  ...SECTORES.map((s) => ({
+                    key: s,
+                    header: SECTOR_LABEL[s],
+                    claseTd: "py-2 px-2 text-center",
+                    cell: (m: Modulo) => <input type="checkbox" disabled={!m.activo} checked={esVisible(m.modulo, s)} onChange={() => toggleVisibilidad(m.modulo, s)} className="w-4 h-4 accent-rose-600" />,
+                  })),
+                ] as ColumnaTabla<Modulo>[]
+              }
+            />
           </div>
         </>
       ) : subtab === "comisiones" ? (
