@@ -1,7 +1,8 @@
 import { createClient } from "@/lib/supabase2/server";
 import { Megaphone, TrendingUp, TrendingDown, Minus, MousePointerClick, Users, DollarSign, Zap, ZapOff } from "lucide-react";
 import NuevaCampanaModal from "./NuevaCampanaModal";
-import TablaResponsiva, { type ColumnaTabla } from "@/components/panelV2/TablaResponsiva";
+import TablaHistorialCampanas from "./TablaHistorialCampanas";
+import TablaLeadsPorUtm from "./TablaLeadsPorUtm";
 
 // Si estas funciones no existen en tu repo V2, podés reemplazarlas devolviendo "false"
 import { metaAdsConfigurado } from "@/lib/ads/meta";
@@ -191,23 +192,7 @@ export default async function PautasMarketingPage() {
           <h2 className="text-[11px] font-bold uppercase tracking-widest text-slate-500">Leads reales por campaña (UTM)</h2>
           <p className="text-[11px] text-slate-400 mt-0.5">Detectado automáticamente del link con que entró cada lead a Cotizador/Vender/Financiación — a diferencia del historial de abajo, esto no se carga a mano.</p>
         </div>
-        {!leadsPorUtm || leadsPorUtm.length === 0 ? (
-          <p className="p-10 text-center text-slate-400 text-sm italic">Sin leads con UTM detectado todavía.</p>
-        ) : (
-          <TablaResponsiva<any>
-            filas={leadsPorUtm}
-            keyExtractor={(l) => `${l.utm_source}-${l.utm_campaign}-${l.utm_medium}`}
-            encabezadoMobile={(l) => <p className="text-[13px] text-slate-700 dark:text-slate-200 font-bold">{l.utm_campaign}</p>}
-            columnas={
-              [
-                { key: "utm_source", header: "Fuente", cell: (l) => l.utm_source, claseTd: "text-[13px] font-bold text-slate-700 dark:text-slate-200" },
-                { key: "utm_campaign", header: "Campaña", cell: (l) => l.utm_campaign, claseTd: "text-[13px] text-slate-600 dark:text-slate-300", ocultarEnMobile: true },
-                { key: "utm_medium", header: "Medio", cell: (l) => l.utm_medium, claseTd: "text-[13px] text-slate-500 dark:text-slate-400", ocultarEnMobile: true },
-                { key: "leads", header: "Leads", cell: (l) => l.leads, claseTd: "font-mono text-[13px] font-bold text-slate-900 dark:text-white" },
-              ] as ColumnaTabla<any>[]
-            }
-          />
-        )}
+        <TablaLeadsPorUtm leadsPorUtm={leadsPorUtm || []} />
       </div>
 
       {/* HISTORIAL DE CAMPAÑAS CARGADAS */}
@@ -215,25 +200,7 @@ export default async function PautasMarketingPage() {
         <div className="p-4 border-b border-slate-100 dark:border-white/5">
           <h2 className="text-[11px] font-bold uppercase tracking-widest text-slate-500">Historial de cargas manuales</h2>
         </div>
-        {!todas || todas.length === 0 ? (
-          <p className="p-10 text-center text-slate-400 text-sm italic">Sin métricas cargadas todavía.</p>
-        ) : (
-          <TablaResponsiva<any>
-            filas={todas}
-            keyExtractor={(c) => c.id}
-            encabezadoMobile={(c) => <p className="text-[13px] text-slate-700 dark:text-slate-200 font-bold">{c.nombre_campana || "General"}</p>}
-            columnas={
-              [
-                { key: "mes", header: "Mes", cell: (c) => new Date(`${c.periodo}T12:00:00Z`).toLocaleDateString("es-AR", { day: "2-digit", month: "short", year: "numeric", timeZone: "UTC" }), claseTd: "text-[13px] text-slate-600 dark:text-slate-300 capitalize whitespace-nowrap" },
-                { key: "plataforma", header: "Plataforma", cell: (c) => { const col = COLOR_PLATAFORMA[c.plataforma] || COLOR_PLATAFORMA["Google Ads"]; return <span className={`text-[10px] font-bold uppercase tracking-widest px-2 py-0.5 rounded border ${col.bg} ${col.text} ${col.border}`}>{c.plataforma}</span>; } },
-                { key: "campana", header: "Campaña", cell: (c) => c.nombre_campana || "General", claseTd: "text-[13px] text-slate-700 dark:text-slate-200", ocultarEnMobile: true },
-                { key: "gasto", header: "Gasto", cell: (c) => `$ ${Number(c.gasto).toLocaleString("es-AR")}`, claseTd: "font-mono text-[13px] font-bold text-slate-900 dark:text-white" },
-                { key: "clics", header: "Clics", cell: (c) => c.clics, claseTd: "font-mono text-[13px] text-slate-600 dark:text-slate-400" },
-                { key: "leads", header: "Leads", cell: (c) => c.leads, claseTd: "font-mono text-[13px] text-slate-600 dark:text-slate-400" },
-              ] as ColumnaTabla<any>[]
-            }
-          />
-        )}
+        <TablaHistorialCampanas todas={todas || []} />
       </div>
     </div>
   );
