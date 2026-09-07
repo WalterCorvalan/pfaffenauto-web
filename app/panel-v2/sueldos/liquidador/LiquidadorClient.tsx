@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { supabase2 } from "@/lib/supabase2/client";
 import { Wallet, Calculator, Save, ClipboardList, CircleDollarSign, Undo2 } from "lucide-react";
 import { hoyLocalISO } from "@/lib/panelV2/fechas";
+import TablaResponsiva, { type ColumnaTabla } from "@/components/panelV2/TablaResponsiva";
 
 interface Categoria {
   id: string;
@@ -268,46 +269,41 @@ export default function LiquidadorClient({ empleados, liquidacionesPrevias, cate
           {liquidaciones.length === 0 ? (
             <p className="p-6 text-sm text-slate-400 text-center">Todavía no generaste ninguna liquidación.</p>
           ) : (
-            <div className="overflow-x-auto">
-              <table className="w-full text-left border-collapse">
-                <thead>
-                  <tr className="bg-slate-50 dark:bg-white/5 text-slate-400 text-[10px] uppercase tracking-widest font-bold border-b border-slate-100 dark:border-white/10">
-                    <th className="px-6 py-3">Empleado</th>
-                    <th className="px-6 py-3">Mes</th>
-                    <th className="px-6 py-3 text-right">Total</th>
-                    <th className="px-6 py-3">Estado</th>
-                    <th className="px-6 py-3 text-right">Caja</th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-slate-100 dark:divide-white/10">
-                  {liquidaciones.map((l) => (
-                    <tr key={l.id} className="hover:bg-slate-50/50 dark:hover:bg-white/5">
-                      <td className="px-6 py-3 font-bold text-slate-800 dark:text-white text-[13px]">{l.perfiles?.nombre || "—"}</td>
-                      <td className="px-6 py-3 text-slate-500 dark:text-slate-400 text-[13px]">{new Date(l.mes).toLocaleDateString("es-AR", { month: "long", year: "numeric", timeZone: "UTC" })}</td>
-                      <td className="px-6 py-3 text-right font-mono font-bold text-rose-600 dark:text-rose-400 text-[13px]">{fmt(Number(l.total_final), l.moneda_total)}</td>
-                      <td className="px-6 py-3">
-                        {l.estado === "pagada" ? (
-                          <span className="text-[10px] font-bold uppercase tracking-widest text-emerald-700 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-500/10 px-2 py-1 rounded-full">Pagada</span>
-                        ) : (
-                          <span className="text-[10px] font-bold uppercase tracking-widest text-amber-700 dark:text-amber-400 bg-amber-50 dark:bg-amber-500/10 px-2 py-1 rounded-full">Generada</span>
-                        )}
-                      </td>
-                      <td className="px-6 py-3 text-right">
-                        {l.estado === "pagada" ? (
-                          <button onClick={() => revertirPago(l.id)} className="text-[11px] font-bold text-slate-400 hover:text-rose-600 flex items-center gap-1 ml-auto">
-                            <Undo2 className="w-3.5 h-3.5" /> Revertir
-                          </button>
-                        ) : (
-                          <button onClick={() => setPagando(l)} className="text-[11px] font-bold text-emerald-600 hover:text-emerald-700 flex items-center gap-1 ml-auto">
-                            <CircleDollarSign className="w-3.5 h-3.5" /> Marcar pagada
-                          </button>
-                        )}
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
+            <TablaResponsiva<any>
+              filas={liquidaciones}
+              keyExtractor={(l) => l.id}
+              encabezadoMobile={(l) => (
+                <div>
+                  <p className="font-bold text-slate-800 dark:text-white text-[13px]">{l.perfiles?.nombre || "—"}</p>
+                  <p className="text-slate-500 dark:text-slate-400 text-[11px]">{new Date(l.mes).toLocaleDateString("es-AR", { month: "long", year: "numeric", timeZone: "UTC" })}</p>
+                </div>
+              )}
+              columnas={
+                [
+                  { key: "empleado", header: "Empleado", cell: (l) => l.perfiles?.nombre || "—", claseTd: "font-bold text-slate-800 dark:text-white text-[13px]", ocultarEnMobile: true },
+                  { key: "mes", header: "Mes", cell: (l) => new Date(l.mes).toLocaleDateString("es-AR", { month: "long", year: "numeric", timeZone: "UTC" }), claseTd: "text-slate-500 dark:text-slate-400 text-[13px]" },
+                  { key: "total", header: "Total", cell: (l) => fmt(Number(l.total_final), l.moneda_total), claseTd: "text-right font-mono font-bold text-rose-600 dark:text-rose-400 text-[13px]" },
+                  { key: "estado", header: "Estado", cell: (l) => (
+                    l.estado === "pagada" ? (
+                      <span className="text-[10px] font-bold uppercase tracking-widest text-emerald-700 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-500/10 px-2 py-1 rounded-full">Pagada</span>
+                    ) : (
+                      <span className="text-[10px] font-bold uppercase tracking-widest text-amber-700 dark:text-amber-400 bg-amber-50 dark:bg-amber-500/10 px-2 py-1 rounded-full">Generada</span>
+                    )
+                  ) },
+                  { key: "caja", header: "Caja", cell: (l) => (
+                    l.estado === "pagada" ? (
+                      <button onClick={() => revertirPago(l.id)} className="text-[11px] font-bold text-slate-400 hover:text-rose-600 flex items-center gap-1 md:ml-auto">
+                        <Undo2 className="w-3.5 h-3.5" /> Revertir
+                      </button>
+                    ) : (
+                      <button onClick={() => setPagando(l)} className="text-[11px] font-bold text-emerald-600 hover:text-emerald-700 flex items-center gap-1 md:ml-auto">
+                        <CircleDollarSign className="w-3.5 h-3.5" /> Marcar pagada
+                      </button>
+                    )
+                  ), claseTd: "text-right" },
+                ] as ColumnaTabla<any>[]
+              }
+            />
           )}
         </div>
       </div>

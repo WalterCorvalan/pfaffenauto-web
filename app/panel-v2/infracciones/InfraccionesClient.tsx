@@ -4,6 +4,7 @@ import { useEffect, useMemo, useState } from "react";
 import { supabase2 } from "@/lib/supabase2/client";
 import { Landmark, Plus, BarChart3, List, Search } from "lucide-react";
 import NuevaInfraccionModal from "./NuevaInfraccionModal";
+import TablaResponsiva, { type ColumnaTabla } from "@/components/panelV2/TablaResponsiva";
 
 interface Infraccion {
   id: string;
@@ -136,40 +137,30 @@ export default function InfraccionesClient({ infraccionesIniciales, vehiculos, p
                 <p className="text-[13px] font-medium text-slate-500 max-w-sm">Registrá una multa a gestionar con el botón "Nueva operación".</p>
               </div>
             ) : (
-              <div className="bg-white dark:bg-white/[0.02] border border-slate-200 dark:border-white/5 rounded-2xl overflow-hidden">
-                <div className="overflow-x-auto">
-                  <table className="w-full text-left border-collapse">
-                    <thead>
-                      <tr className="bg-slate-50 dark:bg-white/5 text-slate-400 text-[10px] uppercase tracking-widest font-bold border-b border-slate-100 dark:border-white/10">
-                        <th className="px-4 py-3">Fecha</th>
-                        <th className="px-4 py-3">Cliente</th>
-                        <th className="px-4 py-3">Dominio/DNI</th>
-                        <th className="px-4 py-3">Planilla</th>
-                        <th className="px-4 py-3 text-right">Deuda</th>
-                        <th className="px-4 py-3 text-right">Pago cliente</th>
-                        <th className="px-4 py-3 text-right">Pago real</th>
-                        {puedeVerGanancia && <th className="px-4 py-3 text-right">Ganancia</th>}
-                        <th className="px-4 py-3">Estado</th>
-                      </tr>
-                    </thead>
-                    <tbody className="divide-y divide-slate-100 dark:divide-white/10">
-                      {filtradas.map((i) => (
-                        <tr key={i.id} onClick={() => abrirEdicion(i)} className="hover:bg-slate-50/50 dark:hover:bg-white/5 cursor-pointer">
-                          <td className="px-4 py-3 text-[13px] text-slate-600 dark:text-slate-300">{new Date(i.fecha + "T12:00:00Z").toLocaleDateString("es-AR", { timeZone: "UTC" })}</td>
-                          <td className="px-4 py-3 text-[13px] font-bold text-slate-900 dark:text-white">{i.cliente_nombre || "—"}</td>
-                          <td className="px-4 py-3 text-[13px] text-slate-500 dark:text-slate-400 font-mono">{i.dominio_dni || "—"}</td>
-                          <td className="px-4 py-3 text-[13px] text-slate-500 dark:text-slate-400">{i.planilla || "—"}</td>
-                          <td className="px-4 py-3 text-[13px] text-right text-slate-600 dark:text-slate-300 font-mono">{fmtArs(i.deuda_ars)}</td>
-                          <td className="px-4 py-3 text-[13px] text-right text-slate-600 dark:text-slate-300 font-mono">{fmtArs(i.pago_cliente_ars)}</td>
-                          <td className="px-4 py-3 text-[13px] text-right text-slate-600 dark:text-slate-300 font-mono">{fmtArs(i.pago_real_ars)}</td>
-                          {puedeVerGanancia && <td className="px-4 py-3 text-[13px] text-right font-bold text-emerald-600 dark:text-emerald-400 font-mono">{fmtArs(i.ganancia_ars)}</td>}
-                          <td className="px-4 py-3"><span className={`text-[10px] font-bold uppercase tracking-widest px-2 py-1 rounded-full ${ESTADO_COLOR[i.estado] || ""}`}>{i.estado}</span></td>
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
-                </div>
-              </div>
+              <TablaResponsiva<Infraccion>
+                filas={filtradas}
+                keyExtractor={(i) => i.id}
+                onRowClick={(i) => abrirEdicion(i)}
+                encabezadoMobile={(i) => (
+                  <div>
+                    <p className="text-[13px] font-bold text-slate-900 dark:text-white">{i.cliente_nombre || "—"}</p>
+                    <p className="text-[11px] text-slate-400">{new Date(i.fecha + "T12:00:00Z").toLocaleDateString("es-AR", { timeZone: "UTC" })}</p>
+                  </div>
+                )}
+                columnas={
+                  [
+                    { key: "fecha", header: "Fecha", cell: (i) => new Date(i.fecha + "T12:00:00Z").toLocaleDateString("es-AR", { timeZone: "UTC" }), claseTd: "text-[13px] text-slate-600 dark:text-slate-300" },
+                    { key: "cliente", header: "Cliente", cell: (i) => i.cliente_nombre || "—", claseTd: "text-[13px] font-bold text-slate-900 dark:text-white", ocultarEnMobile: true },
+                    { key: "dominio", header: "Dominio/DNI", cell: (i) => i.dominio_dni || "—", claseTd: "text-[13px] text-slate-500 dark:text-slate-400 font-mono" },
+                    { key: "planilla", header: "Planilla", cell: (i) => i.planilla || "—", claseTd: "text-[13px] text-slate-500 dark:text-slate-400" },
+                    { key: "deuda", header: "Deuda", cell: (i) => fmtArs(i.deuda_ars), claseTd: "text-[13px] text-right text-slate-600 dark:text-slate-300 font-mono" },
+                    { key: "pago_cliente", header: "Pago cliente", cell: (i) => fmtArs(i.pago_cliente_ars), claseTd: "text-[13px] text-right text-slate-600 dark:text-slate-300 font-mono" },
+                    { key: "pago_real", header: "Pago real", cell: (i) => fmtArs(i.pago_real_ars), claseTd: "text-[13px] text-right text-slate-600 dark:text-slate-300 font-mono" },
+                    ...(puedeVerGanancia ? [{ key: "ganancia", header: "Ganancia", cell: (i: Infraccion) => fmtArs(i.ganancia_ars), claseTd: "text-[13px] text-right font-bold text-emerald-600 dark:text-emerald-400 font-mono" }] : []),
+                    { key: "estado", header: "Estado", cell: (i) => <span className={`text-[10px] font-bold uppercase tracking-widest px-2 py-1 rounded-full ${ESTADO_COLOR[i.estado] || ""}`}>{i.estado}</span> },
+                  ] as ColumnaTabla<Infraccion>[]
+                }
+              />
             )}
           </>
         ) : (

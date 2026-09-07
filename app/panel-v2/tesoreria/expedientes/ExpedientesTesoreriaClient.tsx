@@ -5,6 +5,7 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { Search, Wallet } from "lucide-react";
 import ExpedienteDetalleModal from "../../expedientes/ExpedienteDetalleModal";
 import { fmtFechaLocal } from "@/lib/panelV2/fechas";
+import TablaResponsiva, { type ColumnaTabla } from "@/components/panelV2/TablaResponsiva";
 
 interface Perfil { id: string; nombre: string; roles: string[] }
 
@@ -81,52 +82,36 @@ export default function ExpedientesTesoreriaClient({
           <p className="text-sm font-bold text-slate-600 dark:text-slate-300">Sin expedientes acá</p>
         </div>
       ) : (
-        <div className="bg-white dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-2xl overflow-x-auto">
-          <table className="w-full text-left">
-            <thead>
-              <tr className="border-b border-slate-100 dark:border-white/5 text-[10px] font-black uppercase tracking-widest text-slate-400">
-                <th className="px-4 py-3">Expediente</th>
-                <th className="px-4 py-3">Vehículo</th>
-                <th className="px-4 py-3">Partes</th>
-                <th className="px-4 py-3">Estado Gestoría</th>
-                <th className="px-4 py-3">Estado Tesorería</th>
-                <th className="px-4 py-3">Gastos</th>
-                <th className="px-4 py-3 w-px"></th>
-              </tr>
-            </thead>
-            <tbody>
-              {filtrados.map((e) => {
-                const v = e.venta || {};
-                const gastos = gastosPorExpediente[e.id] || { vendedor: 0, comprador: 0 };
-                return (
-                  <tr key={e.id} onClick={() => setDetalleId(e.id)} className="border-b border-slate-50 dark:border-white/5 last:border-0 cursor-pointer hover:bg-slate-50 dark:hover:bg-white/5">
-                    <td className="px-4 py-3 min-w-[200px]">
-                      <div className="flex items-center gap-1.5 flex-wrap">
-                        <p className="text-sm font-bold text-slate-900 dark:text-white">{e.titulo || `EXP — ${v.vehiculo_marca || ""} ${v.vehiculo_modelo || ""}`}</p>
-                        {v.vehiculo_patente && <span className="text-[9px] font-bold bg-slate-100 dark:bg-white/10 px-1.5 py-0.5 rounded">{v.vehiculo_patente}</span>}
-                      </div>
-                      <p className="text-[11px] text-slate-400 mt-1">{fmtFechaLocal(e.fecha_apertura || e.created_at)}</p>
-                    </td>
-                    <td className="px-4 py-3 text-xs text-slate-600 dark:text-slate-300">
-                      {[v.vehiculo_marca, v.vehiculo_modelo, v.vehiculo_anio ? `(${v.vehiculo_anio})` : ""].filter(Boolean).join(" ") || "—"}
-                      {v.propietario_nombre && <p className="text-[11px] text-slate-400 mt-0.5">{v.propietario_nombre}</p>}
-                    </td>
-                    <td className="px-4 py-3 text-xs text-slate-700 dark:text-slate-200">
-                      <p>{v.propietario_nombre || "—"}</p>
-                      <p className="text-slate-400">{v.comprador_nombre ? `${v.comprador_nombre} (comprador)` : "—"}</p>
-                    </td>
-                    <td className="px-4 py-3"><span className="text-[10px] font-bold px-2 py-1 rounded-full bg-blue-50 dark:bg-blue-500/10 text-blue-700 dark:text-blue-300">{ESTADO_GESTORIA_LABEL[e.estado] || e.estado}</span></td>
-                    <td className="px-4 py-3"><span className={`text-[10px] font-bold px-2 py-1 rounded-full ${ESTADO_TESORERIA_CLASS[v.estado_pago_tesoreria] || ESTADO_TESORERIA_CLASS.pendiente}`}>{v.estado === "caida" ? "Operación caída" : ESTADO_TESORERIA_LABEL[v.estado_pago_tesoreria] || "Pendiente pago"}</span></td>
-                    <td className="px-4 py-3 text-[10px] text-slate-400">Vend: {gastos.vendedor > 0 ? gastos.vendedor.toLocaleString("es-AR") : "—"}<br />Comp: {gastos.comprador > 0 ? gastos.comprador.toLocaleString("es-AR") : "—"}</td>
-                    <td className="px-4 py-3 w-px" onClick={(ev) => ev.stopPropagation()}>
-                      <button onClick={() => setDetalleId(e.id)} className="px-3 py-2 text-xs font-bold bg-rose-600 hover:bg-rose-700 text-white rounded-lg">Gestionar</button>
-                    </td>
-                  </tr>
-                );
-              })}
-            </tbody>
-          </table>
-        </div>
+        <TablaResponsiva<any>
+          filas={filtrados}
+          keyExtractor={(e) => e.id}
+          onRowClick={(e) => setDetalleId(e.id)}
+          encabezadoMobile={(e) => {
+            const v = e.venta || {};
+            return (
+              <div>
+                <div className="flex items-center gap-1.5 flex-wrap">
+                  <p className="text-sm font-bold text-slate-900 dark:text-white">{e.titulo || `EXP — ${v.vehiculo_marca || ""} ${v.vehiculo_modelo || ""}`}</p>
+                  {v.vehiculo_patente && <span className="text-[9px] font-bold bg-slate-100 dark:bg-white/10 px-1.5 py-0.5 rounded">{v.vehiculo_patente}</span>}
+                </div>
+                <p className="text-[11px] text-slate-400 mt-1">{fmtFechaLocal(e.fecha_apertura || e.created_at)}</p>
+              </div>
+            );
+          }}
+          columnas={
+            [
+              { key: "expediente", header: "Expediente", cell: (e) => { const v = e.venta || {}; return <><div className="flex items-center gap-1.5 flex-wrap"><p className="text-sm font-bold text-slate-900 dark:text-white">{e.titulo || `EXP — ${v.vehiculo_marca || ""} ${v.vehiculo_modelo || ""}`}</p>{v.vehiculo_patente && <span className="text-[9px] font-bold bg-slate-100 dark:bg-white/10 px-1.5 py-0.5 rounded">{v.vehiculo_patente}</span>}</div><p className="text-[11px] text-slate-400 mt-1">{fmtFechaLocal(e.fecha_apertura || e.created_at)}</p></>; }, claseTd: "min-w-[200px]", ocultarEnMobile: true },
+              { key: "vehiculo", header: "Vehículo", cell: (e) => { const v = e.venta || {}; return <>{[v.vehiculo_marca, v.vehiculo_modelo, v.vehiculo_anio ? `(${v.vehiculo_anio})` : ""].filter(Boolean).join(" ") || "—"}{v.propietario_nombre && <p className="text-[11px] text-slate-400 mt-0.5">{v.propietario_nombre}</p>}</>; }, claseTd: "text-xs text-slate-600 dark:text-slate-300" },
+              { key: "partes", header: "Partes", cell: (e) => { const v = e.venta || {}; return <><p>{v.propietario_nombre || "—"}</p><p className="text-slate-400">{v.comprador_nombre ? `${v.comprador_nombre} (comprador)` : "—"}</p></>; }, claseTd: "text-xs text-slate-700 dark:text-slate-200" },
+              { key: "gestoria", header: "Estado Gestoría", cell: (e) => <span className="text-[10px] font-bold px-2 py-1 rounded-full bg-blue-50 dark:bg-blue-500/10 text-blue-700 dark:text-blue-300">{ESTADO_GESTORIA_LABEL[e.estado] || e.estado}</span> },
+              { key: "tesoreria", header: "Estado Tesorería", cell: (e) => { const v = e.venta || {}; return <span className={`text-[10px] font-bold px-2 py-1 rounded-full ${ESTADO_TESORERIA_CLASS[v.estado_pago_tesoreria] || ESTADO_TESORERIA_CLASS.pendiente}`}>{v.estado === "caida" ? "Operación caída" : ESTADO_TESORERIA_LABEL[v.estado_pago_tesoreria] || "Pendiente pago"}</span>; } },
+              { key: "gastos", header: "Gastos", cell: (e) => { const gastos = gastosPorExpediente[e.id] || { vendedor: 0, comprador: 0 }; return <>Vend: {gastos.vendedor > 0 ? gastos.vendedor.toLocaleString("es-AR") : "—"}<br />Comp: {gastos.comprador > 0 ? gastos.comprador.toLocaleString("es-AR") : "—"}</>; }, claseTd: "text-[10px] text-slate-400" },
+            ] as ColumnaTabla<any>[]
+          }
+          acciones={(e) => (
+            <button onClick={() => setDetalleId(e.id)} className="px-3 py-2 text-xs font-bold bg-rose-600 hover:bg-rose-700 text-white rounded-lg">Gestionar</button>
+          )}
+        />
       )}
 
       {detalleId && (
