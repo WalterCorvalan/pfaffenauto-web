@@ -30,6 +30,8 @@ export default async function PanelV2Home() {
   const finMesAnterior = new Date(hoy.getFullYear(), hoy.getMonth(), 0).toISOString().slice(0, 10);
   const inicioAno = `${hoy.getFullYear()}-01-01`;
   const hace7dias = new Date(Date.now() - 7 * 86400000).toISOString().slice(0, 10);
+  const hace30dias = new Date(Date.now() - 30 * 86400000).toISOString();
+  const hace6meses = new Date(hoy.getFullYear(), hoy.getMonth() - 6, 1).toISOString().slice(0, 10);
   const hace12meses = new Date(hoy.getFullYear(), hoy.getMonth() - 11, 1).toISOString().slice(0, 10);
   const en7dias = new Date(Date.now() + 7 * 86400000).toISOString().slice(0, 10);
   const inicioMesAnteriorMismoMesAnoPasado = `${hoy.getFullYear() - 1}-${String(hoy.getMonth() + 1).padStart(2, "0")}-01`;
@@ -72,6 +74,12 @@ export default async function PanelV2Home() {
     { data: visitasHoy },
     { data: pedidosConMatch },
     { data: ultimasOperaciones },
+    // --- "Lo urgente hoy" ---
+    { count: stockEstancadoCount },
+    { count: tareasVencidasCount },
+    { count: postventaPendienteCount },
+    { data: egresosMesDetalle },
+    { data: egresos6MesesPorCategoria },
   ] = await Promise.all([
     supabase.from("ventas").select("precio_venta, moneda_venta, estado").gte("fecha_cierre", inicioMes).lte("fecha_cierre", finMes),
     supabase.from("vehiculos").select("estado"),
@@ -108,6 +116,14 @@ export default async function PanelV2Home() {
     supabase.from("visitas").select("id, nombre_cliente, vehiculo_marca, vehiculo_modelo, horario_visita").eq("estado", "Confirmada").eq("fecha_visita", hoyIso),
     supabase.from("pedidos").select("id, marca, modelo, nombre_cliente, vehiculo_match_id, created_at").eq("estado", "activo").not("vehiculo_match_id", "is", null),
     supabase.from("ventas").select("id, vehiculo_marca, vehiculo_modelo, comprador_nombre, precio_venta, moneda_venta, estado, vendedor_id, fecha_cierre").order("created_at", { ascending: false }).limit(8),
+    // "Lo urgente hoy"
+    supabase.from("vehiculos").select("id", { count: "exact", head: true }).eq("estado", "disponible").lte("created_at", hace30dias),
+    supabase.from("tareas_lead").select("id", { count: "exact", head: true }).eq("completada", false).lt("fecha_vencimiento", hoyIso),
+    supabase.from("postventa_recordatorios").select("id", { count: "exact", head: true }).eq("estado", "pendiente"),
+    // Top 10 gastos del mes + comparación contra el promedio histórico (6
+    // meses) de cada categoría, para detectar gastos atípicos.
+    supabase.from("movimientos_caja").select("id, monto, tipo_movimiento, observaciones, fecha, cuenta_id").eq("tipo", "egreso").is("deleted_at", null).eq("estado", "aprobado").gte("fecha", inicioMes).lte("fecha", finMes),
+    supabase.from("movimientos_caja").select("monto, tipo_movimiento, fecha").eq("tipo", "egreso").is("deleted_at", null).eq("estado", "aprobado").gte("fecha", hace6meses).lt("fecha", inicioMes),
   ]);
 
   const perfilesMap: Record<string, string> = {};
@@ -120,6 +136,12 @@ export default async function PanelV2Home() {
   const ventasCerradas = (ventasMes || []).filter((v) => v.estado === "cerrada");
   const revenuePorMoneda: Record<string, number> = {};
   ventasCerradas.forEach((v) => { revenuePorMoneda[v.moneda_venta] = (revenuePorMoneda[v.moneda_venta] || 0) + Number(v.precio_venta); });
+
+  const ticketPromedioPorMoneda: Record<string, number> = {};
+  Object.entries(revenuePorMoneda).forEach(([m, total]) => {
+    const cantidadEnMoneda = ventasCerradas.filter((v) => v.moneda_venta === m).length;
+    if (cantidadEnMoneda > 0) ticketPromedioPorMoneda[m] = total / cantidadEnMoneda;
+  });
 
   const cuotasPagarPorMoneda: Record<string, number> = {};
   (cuotasPagarMes || []).forEach((c) => { cuotasPagarPorMoneda[c.moneda] = (cuotasPagarPorMoneda[c.moneda] || 0) + Number(c.monto); });
@@ -208,6 +230,44 @@ export default async function PanelV2Home() {
   const netoPorMoneda: Record<string, number> = {};
   ["ARS", "USD"].forEach((m) => { netoPorMoneda[m] = (ingresosPorMoneda[m] || 0) - (egresosPorMoneda[m] || 0); });
 
+  // Top 10 gastos del mes (por monto, cualquier moneda mezclada solo para
+  // ordenar -- el monto se muestra siempre con su moneda real de la cuenta).
+  const top10Gastos = [...(egresosMesDetalle || [])]
+    .sort((a: any, b: any) => Number(b.monto) - Number(a.monto))
+    .slice(0, 10)
+    .map((m: any) => ({
+      concepto: m.observaciones || m.tipo_movimiento || "Sin concepto",
+      categoria: m.tipo_movimiento || "Sin categoría",
+      fecha: m.fecha,
+      monto: Number(m.monto),
+      moneda: monedaPorCuenta[m.cuenta_id] || "ARS",
+    }));
+
+  // Gastos atípicos: total del mes por categoría vs. promedio mensual de esa
+  // misma categoría en los 6 meses anteriores -- si supera el doble, se
+  // marca como atípico (mismo criterio que se ve en el listado v1).
+  const gastosAtipicos: { categoria: string; montoMes: number; promedioHistorico: number; moneda: string }[] = [];
+  {
+    const totalMesPorCategoria: Record<string, { monto: number; moneda: string }> = {};
+    (egresosMesDetalle || []).forEach((m: any) => {
+      const cat = m.tipo_movimiento || "Sin categoría";
+      const moneda = monedaPorCuenta[m.cuenta_id] || "ARS";
+      if (!totalMesPorCategoria[cat]) totalMesPorCategoria[cat] = { monto: 0, moneda };
+      totalMesPorCategoria[cat].monto += Number(m.monto);
+    });
+    const totalHistoricoPorCategoria: Record<string, number> = {};
+    (egresos6MesesPorCategoria || []).forEach((m: any) => {
+      const cat = m.tipo_movimiento || "Sin categoría";
+      totalHistoricoPorCategoria[cat] = (totalHistoricoPorCategoria[cat] || 0) + Number(m.monto);
+    });
+    Object.entries(totalMesPorCategoria).forEach(([cat, { monto, moneda }]) => {
+      const promedioHistorico = (totalHistoricoPorCategoria[cat] || 0) / 6;
+      if (promedioHistorico > 0 && monto > promedioHistorico * 2) {
+        gastosAtipicos.push({ categoria: cat, montoMes: monto, promedioHistorico, moneda });
+      }
+    });
+  }
+
   // Saldo por cuenta individual (no solo total) requiere todo el histórico de
   // movimientos por cuenta, no solo el mes — queda para una vista de Reportes.
 
@@ -266,6 +326,12 @@ export default async function PanelV2Home() {
       visitasHoy={visitasHoy || []}
       pedidosConMatch={(pedidosConMatch || []).map((p: any) => ({ ...p }))}
       ultimasOperaciones={(ultimasOperaciones || []).map((v: any) => ({ ...v, vendedorNombre: perfilesMap[v.vendedor_id] || "—" }))}
+      stockEstancado={stockEstancadoCount ?? 0}
+      tareasVencidas={tareasVencidasCount ?? 0}
+      postventaPendiente={postventaPendienteCount ?? 0}
+      ticketPromedioPorMoneda={ticketPromedioPorMoneda}
+      top10Gastos={top10Gastos}
+      gastosAtipicos={gastosAtipicos}
     />
   );
 }

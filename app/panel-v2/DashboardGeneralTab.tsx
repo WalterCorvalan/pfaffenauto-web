@@ -4,7 +4,8 @@ import Link from "next/link";
 import {
   DollarSign, Car, TrendingUp, Users, ShoppingCart, CreditCard, Wallet,
   CalendarClock, AlertTriangle, Receipt, FolderKanban, Landmark, SearchCode,
-  Trophy, Building2, Key, ListChecks,
+  Trophy, Building2, Key, ListChecks, Flame, Clock, ClipboardList, Wrench,
+  Ticket, TrendingDown, Activity,
 } from "lucide-react";
 import TablaResponsiva, { type ColumnaTabla } from "@/components/panelV2/TablaResponsiva";
 
@@ -28,6 +29,10 @@ interface Props {
   visitasHoy: { id: string; nombre_cliente: string; vehiculo_marca: string | null; vehiculo_modelo: string | null; horario_visita: string | null }[];
   pedidosConMatch: { id: string; marca: string; modelo: string; nombre_cliente: string }[];
   ultimasOperaciones: { id: string; vehiculo_marca: string; vehiculo_modelo: string; comprador_nombre: string | null; precio_venta: number; moneda_venta: string; estado: string; fecha_cierre: string | null; vendedorNombre: string }[];
+  stockEstancado: number; tareasVencidas: number; postventaPendiente: number;
+  ticketPromedioPorMoneda: Record<string, number>;
+  top10Gastos: { concepto: string; categoria: string; fecha: string; monto: number; moneda: string }[];
+  gastosAtipicos: { categoria: string; montoMes: number; promedioHistorico: number; moneda: string }[];
 }
 
 function fmtMoneda(n: number, moneda: string) {
@@ -82,6 +87,21 @@ export default function DashboardGeneralTab(props: Props) {
         </div>
       )}
 
+      <SeccionTitulo>Lo urgente hoy</SeccionTitulo>
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+        <Tile label="Leads sin atender" valor={props.clientesSinContactar} icon={Flame} color="rose" alerta={props.clientesSinContactar > 0} href="/panel-v2/clientes" />
+        <Tile label="Stock con 30+ días" valor={props.stockEstancado} icon={Clock} color="amber" alerta={props.stockEstancado > 0} href="/panel-v2/stock" />
+        <Tile label="Tareas vencidas" valor={props.tareasVencidas} icon={ClipboardList} color="rose" alerta={props.tareasVencidas > 0} href="/panel-v2/tareas" />
+        <Tile label="Postventa pendiente" valor={props.postventaPendiente} icon={Wrench} color="violet" alerta={props.postventaPendiente > 0} href="/panel-v2/postventa" />
+      </div>
+      <div className="grid grid-cols-2 md:grid-cols-5 gap-3">
+        <Tile label="Autos vendidos (mes)" valor={props.ventasDelMes} icon={Car} color="indigo" href="/panel-v2/ventas" />
+        <Tile label="Ticket promedio" valor={fmtPorMoneda(props.ticketPromedioPorMoneda)} icon={Ticket} color="indigo" oculto={props.ocultarMontos} href="/panel-v2/ventas" />
+        <Tile label="Ingresos por ventas" valor={fmtPorMoneda(props.revenuePorMoneda)} icon={TrendingUp} color="emerald" oculto={props.ocultarMontos} href="/panel-v2/finanzas" />
+        <Tile label="Egresos totales" valor={fmtPorMoneda(props.egresosPorMoneda)} icon={TrendingDown} color="rose" oculto={props.ocultarMontos} href="/panel-v2/finanzas" />
+        <Tile label="Neto del mes" valor={fmtPorMoneda(props.netoPorMoneda)} icon={Activity} color="violet" oculto={props.ocultarMontos} href="/panel-v2/finanzas" />
+      </div>
+
       <div className="rounded-2xl p-4 bg-white dark:bg-white/[0.02] border border-slate-200 dark:border-white/5 flex items-center justify-between flex-wrap gap-3">
         <div className="flex items-center gap-3">
           <div className="w-9 h-9 rounded-xl bg-rose-50 dark:bg-rose-500/10 text-rose-600 dark:text-rose-400 flex items-center justify-center"><Users className="w-4 h-4" /></div>
@@ -92,16 +112,6 @@ export default function DashboardGeneralTab(props: Props) {
         </div>
         <Link href="/panel-v2/clientes" className="text-xs font-bold text-rose-600 hover:underline">Ver más →</Link>
       </div>
-
-      {props.clientesSinContactar > 0 ? (
-        <div className="rounded-2xl p-4 bg-amber-50 dark:bg-amber-500/10 border border-amber-200 dark:border-amber-500/20 text-amber-800 dark:text-amber-300 text-sm font-bold flex items-center gap-2">
-          <AlertTriangle className="w-4 h-4" /> {props.clientesSinContactar} lead{props.clientesSinContactar === 1 ? "" : "s"} sin contactar todavía.
-        </div>
-      ) : (
-        <div className="rounded-2xl p-4 bg-emerald-50 dark:bg-emerald-500/10 border border-emerald-200 dark:border-emerald-500/20 text-emerald-800 dark:text-emerald-300 text-sm font-bold flex items-center gap-2">
-          ✓ Todos los leads están contactados y asignados.
-        </div>
-      )}
 
       <SeccionTitulo>Ventas y clientes</SeccionTitulo>
       <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
@@ -129,20 +139,8 @@ export default function DashboardGeneralTab(props: Props) {
 
       <div className="rounded-2xl p-5 bg-white dark:bg-white/[0.02] border border-slate-200 dark:border-white/5">
         <p className="text-sm font-bold text-slate-800 dark:text-white mb-3">Cash Flow del mes</p>
-        <div className="grid grid-cols-3 gap-3 mb-3">
-          <div className="rounded-xl p-3 bg-emerald-50 dark:bg-emerald-500/10">
-            <p className="text-[10px] font-bold uppercase text-emerald-700 dark:text-emerald-400">Ingresos</p>
-            <p className={`text-sm font-black text-slate-900 dark:text-white ${props.ocultarMontos ? "blur-sm select-none" : ""}`}>{fmtPorMoneda(props.ingresosPorMoneda)}</p>
-          </div>
-          <div className="rounded-xl p-3 bg-rose-50 dark:bg-rose-500/10">
-            <p className="text-[10px] font-bold uppercase text-rose-700 dark:text-rose-400">Egresos</p>
-            <p className={`text-sm font-black text-slate-900 dark:text-white ${props.ocultarMontos ? "blur-sm select-none" : ""}`}>{fmtPorMoneda(props.egresosPorMoneda)}</p>
-          </div>
-          <div className="rounded-xl p-3 bg-indigo-50 dark:bg-indigo-500/10">
-            <p className="text-[10px] font-bold uppercase text-indigo-700 dark:text-indigo-400">Neto</p>
-            <p className={`text-sm font-black text-slate-900 dark:text-white ${props.ocultarMontos ? "blur-sm select-none" : ""}`}>{fmtPorMoneda(props.netoPorMoneda)}</p>
-          </div>
-        </div>
+        {/* Ingresos/Egresos/Neto ya están en la tira "Lo urgente hoy" de
+            arriba -- acá solo el detalle que no entra en una tile. */}
         <p className="text-[10px] font-bold uppercase text-slate-400 mb-1">Saldos por caja ({props.cuentas.length})</p>
         <div className="space-y-1">
           {props.cuentas.slice(0, 5).map((c) => (
@@ -166,6 +164,56 @@ export default function DashboardGeneralTab(props: Props) {
                 <div key={k} className="flex justify-between text-[11px] text-slate-500"><span className="truncate">{k}</span><span className={`font-mono ${props.ocultarMontos ? "blur-sm select-none" : ""}`}>{Math.round(v).toLocaleString("es-AR")}</span></div>
               ))}
             </div>
+          </div>
+        )}
+      </div>
+
+      <div className="rounded-2xl p-5 bg-white dark:bg-white/[0.02] border border-slate-200 dark:border-white/5">
+        <p className="text-[11px] font-black uppercase tracking-widest text-slate-400 mb-3">Los 10 gastos más caros del mes</p>
+        {props.top10Gastos.length === 0 ? (
+          <p className="text-xs text-slate-400 italic text-center py-4">Sin egresos registrados este mes.</p>
+        ) : (
+          <div className="overflow-x-auto">
+            <table className="w-full text-left text-xs">
+              <thead>
+                <tr className="text-[10px] font-bold uppercase tracking-widest text-slate-400 border-b border-slate-100 dark:border-white/5">
+                  <th className="py-1.5 pr-2">Concepto</th>
+                  <th className="py-1.5 pr-2">Categoría</th>
+                  <th className="py-1.5 pr-2">Fecha</th>
+                  <th className="py-1.5 text-right">Monto</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-slate-50 dark:divide-white/5">
+                {props.top10Gastos.map((g, i) => (
+                  <tr key={i}>
+                    <td className="py-1.5 pr-2 text-slate-700 dark:text-slate-200 truncate max-w-[200px]">{g.concepto}</td>
+                    <td className="py-1.5 pr-2 text-slate-500">{g.categoria}</td>
+                    <td className="py-1.5 pr-2 text-slate-400">{new Date(`${g.fecha}T12:00:00Z`).toLocaleDateString("es-AR", { timeZone: "UTC" })}</td>
+                    <td className={`py-1.5 text-right font-mono font-bold text-rose-600 dark:text-rose-400 ${props.ocultarMontos ? "blur-sm select-none" : ""}`}>{fmtMoneda(g.monto, g.moneda)}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        )}
+      </div>
+
+      <div className={`rounded-2xl p-5 border ${props.gastosAtipicos.length > 0 ? "bg-rose-50/40 dark:bg-rose-500/5 border-rose-200 dark:border-rose-500/20" : "bg-white dark:bg-white/[0.02] border-slate-200 dark:border-white/5"}`}>
+        <p className="text-[11px] font-black uppercase tracking-widest text-rose-600 dark:text-rose-400 flex items-center gap-1.5 mb-1"><AlertTriangle className="w-3.5 h-3.5" /> Gastos atípicos — más del doble del promedio de su categoría</p>
+        <p className="text-[11px] text-slate-400 mb-3">Comparado contra el promedio histórico de los últimos 6 meses de cada categoría.</p>
+        {props.gastosAtipicos.length === 0 ? (
+          <p className="text-xs text-slate-400 italic text-center py-4">Ningún gasto se salió del promedio este mes. 🎉</p>
+        ) : (
+          <div className="space-y-1.5">
+            {props.gastosAtipicos.map((g) => (
+              <div key={g.categoria} className="flex items-center justify-between text-xs bg-white dark:bg-white/5 rounded-lg px-3 py-2">
+                <span className="font-bold text-slate-700 dark:text-slate-200">{g.categoria}</span>
+                <span className={`font-mono ${props.ocultarMontos ? "blur-sm select-none" : ""}`}>
+                  <span className="font-bold text-rose-600">{fmtMoneda(g.montoMes, g.moneda)}</span>
+                  <span className="text-slate-400"> · prom. {fmtMoneda(g.promedioHistorico, g.moneda)}</span>
+                </span>
+              </div>
+            ))}
           </div>
         )}
       </div>
