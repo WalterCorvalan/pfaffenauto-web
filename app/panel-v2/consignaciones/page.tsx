@@ -5,10 +5,11 @@ export default async function ConsignacionesPage() {
   const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();
 
-  const [consRes, perfilesRes, clientesRes, miPerfil] = await Promise.all([
+  const [consRes, perfilesRes, clientesRes, sucursalesRes, miPerfil] = await Promise.all([
     supabase.from("consignaciones").select("*, vendedor:perfiles!consignaciones_vendedor_id_fkey ( id, nombre )").order("fecha_alta", { ascending: false }),
     supabase.from("perfiles").select("id, nombre, roles").eq("activo", true).order("nombre"),
-    supabase.from("clientes").select("id, nombre, telefono").order("nombre"),
+    supabase.from("clientes").select("id, nombre, telefono, dni_cuit").order("nombre"),
+    supabase.from("sucursales").select("id, nombre").order("nombre"),
     user ? supabase.from("perfiles").select("id, nombre, roles").eq("id", user.id).single().then((r) => r.data) : Promise.resolve(null),
   ]);
 
@@ -17,6 +18,7 @@ export default async function ConsignacionesPage() {
       consignacionesIniciales={consRes.data || []}
       perfiles={perfilesRes.data || []}
       clientes={clientesRes.data || []}
+      sucursales={sucursalesRes.data || []}
       miId={user?.id || ""}
       soyAdmin={miPerfil?.roles?.includes("admin") ?? false}
     />

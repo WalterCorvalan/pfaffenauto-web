@@ -10,7 +10,8 @@ import { fmtFechaLocal } from "@/lib/panelV2/fechas";
 import TablaResponsiva, { type ColumnaTabla } from "@/components/panelV2/TablaResponsiva";
 
 interface Perfil { id: string; nombre: string; roles: string[] }
-interface Cliente { id: string; nombre: string; telefono: string | null }
+interface Cliente { id: string; nombre: string; telefono: string | null; dni_cuit?: string | null }
+interface Sucursal { id: string; nombre: string }
 
 const ESTADO_LABEL: Record<string, string> = {
   pendiente_contacto: "Pendiente contacto", contactado: "Contactado", agendado: "Agendado",
@@ -37,7 +38,7 @@ const TABS: { value: string; label: string }[] = [
   { value: "cancelado", label: "Canceladas" },
 ];
 
-export default function ConsignacionesClient({ consignacionesIniciales, perfiles, clientes, miId, soyAdmin }: { consignacionesIniciales: any[]; perfiles: Perfil[]; clientes: Cliente[]; miId: string; soyAdmin: boolean }) {
+export default function ConsignacionesClient({ consignacionesIniciales, perfiles, clientes, sucursales, miId, soyAdmin }: { consignacionesIniciales: any[]; perfiles: Perfil[]; clientes: Cliente[]; sucursales: Sucursal[]; miId: string; soyAdmin: boolean }) {
   const router = useRouter();
   const searchParams = useSearchParams();
   const [consignaciones, setConsignaciones] = useState(consignacionesIniciales);
@@ -148,6 +149,9 @@ export default function ConsignacionesClient({ consignacionesIniciales, perfiles
         <ConsignacionDetalleModal
           consignacionId={detalleId}
           perfiles={perfiles}
+          clientes={clientes}
+          sucursales={sucursales}
+          miId={miId}
           soyAdmin={soyAdmin}
           onClose={() => { setDetalleId(null); if (searchParams.get("consignacion")) router.replace("/panel-v2/consignaciones"); }}
           onActualizado={(c) => setConsignaciones((prev) => prev.map((x) => (x.id === c.id ? { ...x, ...c } : x)))}
