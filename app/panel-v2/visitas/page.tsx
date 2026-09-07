@@ -6,7 +6,7 @@ export default async function VisitasPage() {
   const { data: { user } } = await supabase.auth.getUser();
 
   const [visitasRes, perfilesRes, sucursalesRes, vehiculosRes, clientesRes] = await Promise.all([
-    supabase.from("visitas").select("*").order("fecha_visita", { ascending: true }).order("horario_visita", { ascending: true }),
+    supabase.from("visitas").select("*").order("created_at", { ascending: false }),
     supabase.from("perfiles").select("id, nombre, roles").eq("activo", true).order("nombre"),
     supabase.from("sucursales").select("id, nombre").order("nombre"),
     supabase.from("vehiculos").select("id, marca, modelo, patente").eq("estado", "disponible").order("marca"),

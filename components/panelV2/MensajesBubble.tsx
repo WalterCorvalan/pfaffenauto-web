@@ -4,12 +4,14 @@ import { useEffect, useState } from "react";
 import { useRouter, usePathname } from "next/navigation";
 import { supabase2 } from "@/lib/supabase2/client";
 import { MessageCircle } from "lucide-react";
+import { useDraggableFab } from "@/lib/panelV2/useDraggableFab";
 
 export default function MensajesBubble() {
   const router = useRouter();
   const pathname = usePathname();
   const [miId, setMiId] = useState("");
   const [noLeidos, setNoLeidos] = useState(0);
+  const { elRef, style, handlers, didDrag } = useDraggableFab<HTMLButtonElement>("panelV2:fab:mensajes");
 
   useEffect(() => {
     supabase2.auth.getUser().then(({ data }) => setMiId(data.user?.id || ""));
@@ -44,9 +46,12 @@ export default function MensajesBubble() {
 
   return (
     <button
-      onClick={() => router.push("/panel-v2/mensajes")}
-      className="fixed bottom-6 right-24 z-40 w-12 h-12 rounded-full bg-white dark:bg-[#1A1A1A] border border-slate-200 dark:border-white/10 shadow-lg flex items-center justify-center hover:scale-105 transition-transform"
-      title="Mensajes"
+      ref={elRef}
+      onClick={() => { if (!didDrag()) router.push("/panel-v2/mensajes"); }}
+      style={style}
+      {...handlers}
+      className="fixed bottom-6 right-24 z-40 w-12 h-12 rounded-full bg-white dark:bg-[#1A1A1A] border border-slate-200 dark:border-white/10 shadow-lg flex items-center justify-center hover:scale-105 transition-transform touch-none cursor-grab active:cursor-grabbing"
+      title="Mensajes (arrastrar para mover)"
     >
       <MessageCircle className="w-5 h-5 text-indigo-600 dark:text-indigo-400" />
       {noLeidos > 0 && (

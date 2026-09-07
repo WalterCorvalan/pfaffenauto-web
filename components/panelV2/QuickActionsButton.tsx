@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { Plus, X, FileText, Receipt, Calculator, Car, UserPlus, ShoppingCart } from "lucide-react";
+import { useDraggableFab } from "@/lib/panelV2/useDraggableFab";
 
 // Botón "+" flotante global (calcado del CRM viejo) — despliega los 6 accesos
 // directos de creación rápida. "Nuevo boleto" espera al módulo Boletos (venta
@@ -19,6 +20,7 @@ const ACCIONES = [
 export default function QuickActionsButton() {
   const [open, setOpen] = useState(false);
   const router = useRouter();
+  const { elRef, style, handlers, didDrag } = useDraggableFab<HTMLDivElement>("panelV2:fab:acciones-rapidas");
 
   const elegir = (href: string | null) => {
     setOpen(false);
@@ -26,7 +28,7 @@ export default function QuickActionsButton() {
   };
 
   return (
-    <div className="fixed bottom-6 right-6 z-40 flex flex-col items-end gap-2">
+    <div ref={elRef} style={style} className="fixed bottom-6 right-6 z-40 flex flex-col items-end gap-2">
       {open && (
         <>
           <div className="fixed inset-0 -z-10" onClick={() => setOpen(false)} />
@@ -57,9 +59,10 @@ export default function QuickActionsButton() {
       )}
       <button
         type="button"
-        onClick={() => setOpen((v) => !v)}
-        className="w-14 h-14 rounded-full bg-rose-600 hover:bg-rose-700 text-white shadow-xl flex items-center justify-center transition-transform active:scale-95"
-        title="Acciones rápidas"
+        onClick={() => { if (!didDrag()) setOpen((v) => !v); }}
+        {...handlers}
+        className="w-14 h-14 rounded-full bg-rose-600 hover:bg-rose-700 text-white shadow-xl flex items-center justify-center transition-transform active:scale-95 touch-none cursor-grab active:cursor-grabbing"
+        title="Acciones rápidas (arrastrar para mover)"
       >
         {open ? <X className="w-6 h-6" /> : <Plus className="w-6 h-6" />}
       </button>

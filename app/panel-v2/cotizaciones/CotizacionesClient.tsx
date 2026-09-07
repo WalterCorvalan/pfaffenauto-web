@@ -179,7 +179,7 @@ export default function CotizacionesClient({
                   </div>
                   <div className="text-right shrink-0 ml-3">
                     <p className="font-bold text-slate-700 dark:text-slate-200">{(l.oferta_calculada ?? l.precio_esperado_cliente) ? `$ ${Number(l.oferta_calculada ?? l.precio_esperado_cliente).toLocaleString("es-AR")}` : "—"}</p>
-                    <p className="text-[10px] text-slate-400">{fmtFechaLocal(l.created_at)}</p>
+                    <p className="text-[10px] text-slate-400">{new Date(l.created_at).toLocaleDateString("es-AR")}</p>
                   </div>
                 </div>
               ))}
