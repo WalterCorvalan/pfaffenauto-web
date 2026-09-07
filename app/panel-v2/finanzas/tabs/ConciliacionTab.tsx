@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { Upload, CheckCircle2, XCircle } from "lucide-react";
 import { fmt } from "./shared";
+import TablaResponsiva, { type ColumnaTabla } from "@/components/panelV2/TablaResponsiva";
 
 type FilaExtracto = { fecha: string; descripcion: string; monto: number; match?: any };
 
@@ -62,27 +63,25 @@ export default function ConciliacionTab({ movimientos }: { movimientos: any[] })
       {filas.length > 0 && (
         <div className="mt-4">
           <p className="text-xs text-slate-400 mb-2">{matcheadas} de {filas.length} filas matcheadas.</p>
-          <div className="overflow-x-auto bg-white dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-xl">
-            <table className="w-full text-xs">
-              <thead><tr className="border-b border-slate-100 dark:border-white/10 text-left text-slate-400"><th className="p-2.5">Fecha extracto</th><th className="p-2.5">Descripción extracto</th><th className="p-2.5">Monto extracto</th><th className="p-2.5">Match</th></tr></thead>
-              <tbody>
-                {filas.map((f, i) => (
-                  <tr key={i} className="border-b border-slate-50 dark:border-white/5">
-                    <td className="p-2.5">{f.fecha}</td>
-                    <td className="p-2.5">{f.descripcion}</td>
-                    <td className="p-2.5 font-mono">{f.monto.toLocaleString("es-AR")}</td>
-                    <td className="p-2.5">
-                      {f.match ? (
-                        <span className="flex items-center gap-1 text-emerald-600 font-bold"><CheckCircle2 className="w-3.5 h-3.5" /> {f.match.tipo_movimiento || f.match.observaciones || "Movimiento"} · {fmt(f.match.monto, f.match.cuenta?.moneda)}</span>
-                      ) : (
-                        <span className="flex items-center gap-1 text-rose-500 font-bold"><XCircle className="w-3.5 h-3.5" /> Sin match</span>
-                      )}
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
+          <TablaResponsiva<FilaExtracto & { _idx: number }>
+            filas={filas.map((f, i) => ({ ...f, _idx: i }))}
+            keyExtractor={(f) => String(f._idx)}
+            encabezadoMobile={(f) => <p className="font-bold">{f.descripcion}</p>}
+            columnas={
+              [
+                { key: "fecha", header: "Fecha extracto", cell: (f) => f.fecha },
+                { key: "descripcion", header: "Descripción extracto", cell: (f) => f.descripcion, ocultarEnMobile: true },
+                { key: "monto", header: "Monto extracto", cell: (f) => f.monto.toLocaleString("es-AR"), claseTd: "font-mono" },
+                { key: "match", header: "Match", cell: (f) => (
+                  f.match ? (
+                    <span className="flex items-center gap-1 text-emerald-600 font-bold"><CheckCircle2 className="w-3.5 h-3.5" /> {f.match.tipo_movimiento || f.match.observaciones || "Movimiento"} · {fmt(f.match.monto, f.match.cuenta?.moneda)}</span>
+                  ) : (
+                    <span className="flex items-center gap-1 text-rose-500 font-bold"><XCircle className="w-3.5 h-3.5" /> Sin match</span>
+                  )
+                ) },
+              ] as ColumnaTabla<FilaExtracto & { _idx: number }>[]
+            }
+          />
         </div>
       )}
     </div>

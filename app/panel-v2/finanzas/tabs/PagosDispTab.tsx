@@ -4,6 +4,7 @@ import { useState, useMemo } from "react";
 import { supabase2 } from "@/lib/supabase2/client";
 import { Plus, X, Save, DollarSign } from "lucide-react";
 import { inputClass, labelClass, fmt } from "./shared";
+import TablaResponsiva, { type ColumnaTabla } from "@/components/panelV2/TablaResponsiva";
 
 type Filtro = "todos" | "sin_cobrar" | "parciales" | "vencidos" | "ya_abonado";
 
@@ -131,32 +132,28 @@ export default function PagosDispTab({
       {filtrados.length === 0 ? (
         <div className="bg-white dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-2xl py-16 text-center"><p className="text-sm font-bold">Sin resultados</p></div>
       ) : (
-        <div className="overflow-x-auto bg-white dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-xl">
-          <table className="w-full text-xs">
-            <thead><tr className="border-b border-slate-100 dark:border-white/10 text-left text-slate-400"><th className="p-2.5">Vehículo</th><th className="p-2.5">Monto</th><th className="p-2.5">Fecha cobro</th><th className="p-2.5">Estado</th><th className="p-2.5">Notas</th><th className="p-2.5">Acciones</th></tr></thead>
-            <tbody>
-              {filtrados.map((p) => {
+        <TablaResponsiva<any>
+          filas={filtrados}
+          keyExtractor={(p) => p.id}
+          encabezadoMobile={(p) => <p className="font-bold">{p.descripcion}{p.cliente_propietario ? <span className="block text-[10px] text-slate-400 font-normal">{p.cliente_propietario}</span> : ""}</p>}
+          columnas={
+            [
+              { key: "vehiculo", header: "Vehículo", cell: (p) => <>{p.descripcion}{p.cliente_propietario ? <span className="block text-[10px] text-slate-400 font-normal">{p.cliente_propietario}</span> : ""}</>, claseTd: "font-bold", ocultarEnMobile: true },
+              { key: "monto", header: "Monto", cell: (p) => { const parcial = !p.cobrado && Number(p.monto_cobrado) > 0; return <>{fmt(p.monto, p.moneda)}{parcial && <span className="block text-[10px] text-slate-400 font-normal">cobrado {fmt(p.monto_cobrado, p.moneda)}</span>}</>; }, claseTd: "font-mono font-bold" },
+              { key: "fecha", header: "Fecha cobro", cell: (p) => p.fecha },
+              { key: "estado", header: "Estado", cell: (p) => {
                 const vencido = !p.cobrado && p.fecha < hoy;
                 const parcial = !p.cobrado && Number(p.monto_cobrado) > 0;
-                return (
-                  <tr key={p.id} className="border-b border-slate-50 dark:border-white/5">
-                    <td className="p-2.5 font-bold">{p.descripcion}{p.cliente_propietario ? <span className="block text-[10px] text-slate-400 font-normal">{p.cliente_propietario}</span> : ""}</td>
-                    <td className="p-2.5 font-mono font-bold">{fmt(p.monto, p.moneda)}{parcial && <span className="block text-[10px] text-slate-400 font-normal">cobrado {fmt(p.monto_cobrado, p.moneda)}</span>}</td>
-                    <td className="p-2.5">{p.fecha}</td>
-                    <td className="p-2.5">
-                      {p.cobrado ? <span className="text-[10px] font-bold uppercase px-2 py-0.5 rounded-full bg-emerald-100 dark:bg-emerald-500/20 text-emerald-700">Abonado</span>
-                        : vencido ? <span className="text-[10px] font-bold uppercase px-2 py-0.5 rounded-full bg-rose-100 dark:bg-rose-500/20 text-rose-700">Vencido</span>
-                        : parcial ? <span className="text-[10px] font-bold uppercase px-2 py-0.5 rounded-full bg-amber-100 dark:bg-amber-500/20 text-amber-700">Parcial</span>
-                        : <span className="text-[10px] font-bold uppercase px-2 py-0.5 rounded-full bg-slate-100 dark:bg-white/10 text-slate-500">Sin cobrar → cobrar</span>}
-                    </td>
-                    <td className="p-2.5 text-slate-400">{p.notas || "—"}</td>
-                    <td className="p-2.5">{!p.cobrado && <button onClick={() => abrirCobro(p)} className="flex items-center gap-1 text-emerald-600 font-bold"><DollarSign className="w-3.5 h-3.5" /> Cobrar</button>}</td>
-                  </tr>
-                );
-              })}
-            </tbody>
-          </table>
-        </div>
+                return p.cobrado ? <span className="text-[10px] font-bold uppercase px-2 py-0.5 rounded-full bg-emerald-100 dark:bg-emerald-500/20 text-emerald-700">Abonado</span>
+                  : vencido ? <span className="text-[10px] font-bold uppercase px-2 py-0.5 rounded-full bg-rose-100 dark:bg-rose-500/20 text-rose-700">Vencido</span>
+                  : parcial ? <span className="text-[10px] font-bold uppercase px-2 py-0.5 rounded-full bg-amber-100 dark:bg-amber-500/20 text-amber-700">Parcial</span>
+                  : <span className="text-[10px] font-bold uppercase px-2 py-0.5 rounded-full bg-slate-100 dark:bg-white/10 text-slate-500">Sin cobrar → cobrar</span>;
+              } },
+              { key: "notas", header: "Notas", cell: (p) => p.notas || "—", claseTd: "text-slate-400" },
+            ] as ColumnaTabla<any>[]
+          }
+          acciones={(p) => !p.cobrado && <button onClick={() => abrirCobro(p)} className="flex items-center gap-1 text-emerald-600 font-bold"><DollarSign className="w-3.5 h-3.5" /> Cobrar</button>}
+        />
       )}
 
       {showNuevo && (
