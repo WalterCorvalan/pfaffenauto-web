@@ -1,5 +1,11 @@
 import { createClient } from "@/lib/supabase2/server";
 import { Megaphone } from "lucide-react";
+import TablaResponsiva, { type ColumnaTabla } from "@/components/panelV2/TablaResponsiva";
+
+interface VehiculoPautado {
+  id: string; marca: string; modelo: string; anio: number; precio_venta: number; moneda_venta: string;
+  canal_pauta: string | null; razon_pauta: string | null; precio_publicado_ars: number | null;
+}
 
 export default async function PautadosPage() {
   const supabase = await createClient();
@@ -16,30 +22,20 @@ export default async function PautadosPage() {
       {!vehiculos || vehiculos.length === 0 ? (
         <div className="bg-white dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-2xl py-16 text-center text-sm text-slate-400">Ningún vehículo marcado como pautado todavía.</div>
       ) : (
-        <div className="bg-white dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-2xl overflow-x-auto">
-          <table className="w-full text-left">
-            <thead>
-              <tr className="border-b border-slate-100 dark:border-white/5 text-[10px] font-black uppercase tracking-widest text-slate-400">
-                <th className="px-4 py-3">Vehículo</th>
-                <th className="px-4 py-3">Precio</th>
-                <th className="px-4 py-3">Canal</th>
-                <th className="px-4 py-3">Precio publicado</th>
-                <th className="px-4 py-3">Razón</th>
-              </tr>
-            </thead>
-            <tbody>
-              {vehiculos.map((v) => (
-                <tr key={v.id} className="border-b border-slate-50 dark:border-white/5 last:border-0">
-                  <td className="px-4 py-3 text-sm font-bold text-slate-900 dark:text-white">{v.marca} {v.modelo} {v.anio}</td>
-                  <td className="px-4 py-3 text-sm text-slate-600 dark:text-slate-300">{v.moneda_venta} {Number(v.precio_venta).toLocaleString("es-AR")}</td>
-                  <td className="px-4 py-3 text-xs text-slate-500 dark:text-slate-400">{v.canal_pauta || "—"}</td>
-                  <td className="px-4 py-3 text-xs text-slate-500 dark:text-slate-400">{v.precio_publicado_ars ? `ARS ${Number(v.precio_publicado_ars).toLocaleString("es-AR")}` : "—"}</td>
-                  <td className="px-4 py-3 text-xs text-slate-500 dark:text-slate-400">{v.razon_pauta || "—"}</td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
+        <TablaResponsiva<VehiculoPautado>
+          filas={vehiculos}
+          keyExtractor={(v) => v.id}
+          encabezadoMobile={(v) => <p className="text-sm font-bold text-slate-900 dark:text-white">{v.marca} {v.modelo} {v.anio}</p>}
+          columnas={
+            [
+              { key: "vehiculo", header: "Vehículo", cell: (v) => `${v.marca} ${v.modelo} ${v.anio}`, claseTd: "text-sm font-bold text-slate-900 dark:text-white", ocultarEnMobile: true },
+              { key: "precio", header: "Precio", cell: (v) => `${v.moneda_venta} ${Number(v.precio_venta).toLocaleString("es-AR")}`, claseTd: "text-sm text-slate-600 dark:text-slate-300" },
+              { key: "canal", header: "Canal", cell: (v) => v.canal_pauta || "—" },
+              { key: "precio_pub", header: "Precio publicado", cell: (v) => (v.precio_publicado_ars ? `ARS ${Number(v.precio_publicado_ars).toLocaleString("es-AR")}` : "—") },
+              { key: "razon", header: "Razón", cell: (v) => v.razon_pauta || "—" },
+            ] as ColumnaTabla<VehiculoPautado>[]
+          }
+        />
       )}
     </div>
   );

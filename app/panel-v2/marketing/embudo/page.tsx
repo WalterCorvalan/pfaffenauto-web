@@ -1,6 +1,7 @@
 import { createClient } from "@/lib/supabase2/server";
 import { Users, MessageSquareText, Target, Trophy, ArrowRight, ChevronDown, BarChart3, Globe, TrendingUp, Percent, CheckCircle2, Filter, Megaphone } from "lucide-react";
 import EmbudoCanalChart from "./EmbudoCanalChart";
+import TablaResponsiva, { type ColumnaTabla } from "@/components/panelV2/TablaResponsiva";
 
 export default async function EmbudoPage() {
   const supabase = await createClient();
@@ -252,42 +253,26 @@ export default async function EmbudoPage() {
             <Users className="w-4 h-4 text-indigo-500" /> Rendimiento por Vendedor
           </h2>
         </div>
-        <div className="overflow-x-auto">
-          <table className="w-full text-left border-collapse">
-            <thead>
-              <tr className="bg-slate-50 dark:bg-white/5 border-b border-slate-200 dark:border-white/10 text-slate-500 text-[10px] uppercase tracking-widest font-bold">
-                <th className="p-4 pl-6 whitespace-nowrap">Vendedor</th>
-                <th className="p-4 text-center whitespace-nowrap">Visitas (Aprox)</th>
-                <th className="p-4 text-center whitespace-nowrap">Compraron</th>
-                <th className="p-4 pr-6 text-right whitespace-nowrap">Cierre Global</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-slate-100 dark:divide-white/5">
-              {embudoPorVendedor.map((v: any) => {
-                const cierre = v.citas > 0 ? Math.round((v.compraron / v.citas) * 100) : 0;
-                return (
-                  <tr key={v.vendedorId} className="hover:bg-slate-50/50 dark:hover:bg-white/[0.02]">
-                    <td className="p-4 pl-6 font-bold text-[13px] text-slate-800 dark:text-white">{v.nombre}</td>
-                    <td className="p-4 text-center font-mono text-[14px] text-slate-600 dark:text-slate-300">{v.citas}</td>
-                    <td className="p-4 text-center font-mono text-[14px] font-bold text-emerald-600 dark:text-emerald-400">{v.compraron}</td>
-                    <td className="p-4 pr-6 text-right">
-                      <span className="inline-flex items-center px-2 py-1 rounded-md text-[11px] font-bold border bg-slate-50 dark:bg-white/5 border-slate-200 dark:border-white/10 text-slate-600 dark:text-slate-300">
-                        <TrendingUp className="w-3 h-3 mr-1 text-slate-400" /> {cierre}%
-                      </span>
-                    </td>
-                  </tr>
-                );
-              })}
-              {embudoPorVendedor.length === 0 && (
-                <tr>
-                  <td colSpan={4} className="p-10 text-center text-slate-400 text-sm italic">
-                    No hay suficientes datos procesados.
-                  </td>
-                </tr>
-              )}
-            </tbody>
-          </table>
-        </div>
+        {embudoPorVendedor.length === 0 ? (
+          <p className="p-10 text-center text-slate-400 text-sm italic">No hay suficientes datos procesados.</p>
+        ) : (
+          <TablaResponsiva<typeof embudoPorVendedor[number]>
+            filas={embudoPorVendedor}
+            keyExtractor={(v) => v.vendedorId}
+            encabezadoMobile={(v) => <p className="font-bold text-[13px] text-slate-800 dark:text-white">{v.nombre}</p>}
+            columnas={
+              [
+                { key: "vendedor", header: "Vendedor", cell: (v) => v.nombre, claseTd: "font-bold text-[13px] text-slate-800 dark:text-white", ocultarEnMobile: true },
+                { key: "visitas", header: "Visitas (Aprox)", cell: (v) => v.citas, claseTd: "font-mono text-[14px] text-slate-600 dark:text-slate-300" },
+                { key: "compraron", header: "Compraron", cell: (v) => v.compraron, claseTd: "font-mono text-[14px] font-bold text-emerald-600 dark:text-emerald-400" },
+                { key: "cierre", header: "Cierre Global", cell: (v) => {
+                  const cierre = v.citas > 0 ? Math.round((v.compraron / v.citas) * 100) : 0;
+                  return <span className="inline-flex items-center px-2 py-1 rounded-md text-[11px] font-bold border bg-slate-50 dark:bg-white/5 border-slate-200 dark:border-white/10 text-slate-600 dark:text-slate-300"><TrendingUp className="w-3 h-3 mr-1 text-slate-400" /> {cierre}%</span>;
+                } },
+              ] as ColumnaTabla<typeof embudoPorVendedor[number]>[]
+            }
+          />
+        )}
       </div>
 
     </div>
