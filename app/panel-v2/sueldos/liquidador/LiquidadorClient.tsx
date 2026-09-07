@@ -3,7 +3,7 @@
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { supabase2 } from "@/lib/supabase2/client";
-import { Wallet, Calculator, Save, ClipboardList, CircleDollarSign, Undo2 } from "lucide-react";
+import { Wallet, Calculator, Save, ClipboardList, CircleDollarSign, Undo2, Trash2 } from "lucide-react";
 import { hoyLocalISO } from "@/lib/panelV2/fechas";
 import TablaResponsiva, { type ColumnaTabla } from "@/components/panelV2/TablaResponsiva";
 
@@ -146,6 +146,18 @@ export default function LiquidadorClient({ empleados, liquidacionesPrevias, cate
     const { error } = await supabase2.rpc("quitar_pago_liquidacion_sueldo", { p_liquidacion_id: id });
     if (error) return alert(error.message);
     router.refresh();
+  };
+
+  // Solo para liquidaciones NO pagadas (nunca tocaron caja) -- si se generó
+  // con el empleado o el mes equivocado, sobreescribir con el correcto no
+  // borra la fila mala (la clave única es perfil_id+mes, distinta), quedaba
+  // huérfana para siempre en la lista. Las pagadas se corrigen con
+  // "Revertir" (arriba), no se borran directo.
+  const eliminarBorrador = async (l: any) => {
+    if (!confirm(`¿Eliminar la liquidación de ${l.perfiles?.nombre || "este empleado"} (${new Date(l.mes).toLocaleDateString("es-AR", { month: "long", year: "numeric", timeZone: "UTC" })})? No se puede deshacer.`)) return;
+    const { error } = await supabase2.from("liquidaciones_sueldo").delete().eq("id", l.id);
+    if (error) return alert("No se pudo eliminar.");
+    setLiquidaciones((prev) => prev.filter((x) => x.id !== l.id));
   };
 
   return (
@@ -296,9 +308,14 @@ export default function LiquidadorClient({ empleados, liquidacionesPrevias, cate
                         <Undo2 className="w-3.5 h-3.5" /> Revertir
                       </button>
                     ) : (
-                      <button onClick={() => setPagando(l)} className="text-[11px] font-bold text-emerald-600 hover:text-emerald-700 flex items-center gap-1 md:ml-auto">
-                        <CircleDollarSign className="w-3.5 h-3.5" /> Marcar pagada
-                      </button>
+                      <div className="flex items-center gap-3 md:ml-auto">
+                        <button onClick={() => setPagando(l)} className="text-[11px] font-bold text-emerald-600 hover:text-emerald-700 flex items-center gap-1">
+                          <CircleDollarSign className="w-3.5 h-3.5" /> Marcar pagada
+                        </button>
+                        <button onClick={() => eliminarBorrador(l)} title="Eliminar liquidación mal cargada" className="text-[11px] font-bold text-slate-400 hover:text-rose-600 flex items-center gap-1">
+                          <Trash2 className="w-3.5 h-3.5" />
+                        </button>
+                      </div>
                     )
                   ), claseTd: "text-right" },
                 ] as ColumnaTabla<any>[]
