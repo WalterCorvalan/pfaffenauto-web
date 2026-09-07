@@ -6,6 +6,7 @@ import {
   CalendarClock, AlertTriangle, Receipt, FolderKanban, Landmark, SearchCode,
   Trophy, Building2, Key, ListChecks,
 } from "lucide-react";
+import TablaResponsiva, { type ColumnaTabla } from "@/components/panelV2/TablaResponsiva";
 
 interface Props {
   esAdmin: boolean; ocultarMontos: boolean;
@@ -242,27 +243,24 @@ export default function DashboardGeneralTab(props: Props) {
 
       <div className="rounded-2xl p-5 bg-white dark:bg-white/[0.02] border border-slate-200 dark:border-white/5">
         <p className="text-sm font-bold text-slate-800 dark:text-white mb-3">Últimas operaciones</p>
-        <div className="overflow-x-auto">
-          <table className="w-full text-left text-xs min-w-[500px]">
-            <thead>
-              <tr className="text-[10px] uppercase tracking-widest text-slate-400 border-b border-slate-100 dark:border-white/5">
-                <th className="py-1.5">Vehículo</th><th className="py-1.5">Cliente</th><th className="py-1.5 text-right">Precio</th><th className="py-1.5">Estado</th><th className="py-1.5">Vendedor</th>
-              </tr>
-            </thead>
-            <tbody>
-              {props.ultimasOperaciones.map((v) => (
-                <tr key={v.id} className="border-b border-slate-50 dark:border-white/5 last:border-0">
-                  <td className="py-1.5 font-bold text-slate-700 dark:text-slate-200">{v.vehiculo_marca} {v.vehiculo_modelo}</td>
-                  <td className="py-1.5 text-slate-500">{v.comprador_nombre || "—"}</td>
-                  <td className={`py-1.5 text-right font-mono font-bold text-indigo-600 ${props.ocultarMontos ? "blur-sm select-none" : ""}`}>{fmtMoneda(Number(v.precio_venta), v.moneda_venta)}</td>
-                  <td className="py-1.5"><span className="px-1.5 py-0.5 rounded bg-slate-100 dark:bg-white/10 text-[10px] font-bold">{v.estado}</span></td>
-                  <td className="py-1.5 text-slate-500">{v.vendedorNombre}</td>
-                </tr>
-              ))}
-              {props.ultimasOperaciones.length === 0 && <tr><td colSpan={5} className="py-4 text-center text-slate-400">Sin operaciones todavía.</td></tr>}
-            </tbody>
-          </table>
-        </div>
+        {props.ultimasOperaciones.length === 0 ? (
+          <p className="py-4 text-center text-slate-400 text-xs">Sin operaciones todavía.</p>
+        ) : (
+          <TablaResponsiva<typeof props.ultimasOperaciones[number]>
+            filas={props.ultimasOperaciones}
+            keyExtractor={(v) => v.id}
+            encabezadoMobile={(v) => <p className="font-bold text-slate-700 dark:text-slate-200">{v.vehiculo_marca} {v.vehiculo_modelo}</p>}
+            columnas={
+              [
+                { key: "vehiculo", header: "Vehículo", cell: (v) => `${v.vehiculo_marca} ${v.vehiculo_modelo}`, claseTd: "font-bold text-slate-700 dark:text-slate-200", ocultarEnMobile: true },
+                { key: "cliente", header: "Cliente", cell: (v) => v.comprador_nombre || "—", claseTd: "text-slate-500" },
+                { key: "precio", header: "Precio", cell: (v) => fmtMoneda(Number(v.precio_venta), v.moneda_venta), claseTd: `text-right font-mono font-bold text-indigo-600 ${props.ocultarMontos ? "blur-sm select-none" : ""}` },
+                { key: "estado", header: "Estado", cell: (v) => <span className="px-1.5 py-0.5 rounded bg-slate-100 dark:bg-white/10 text-[10px] font-bold">{v.estado}</span> },
+                { key: "vendedor", header: "Vendedor", cell: (v) => v.vendedorNombre, claseTd: "text-slate-500" },
+              ] as ColumnaTabla<typeof props.ultimasOperaciones[number]>[]
+            }
+          />
+        )}
       </div>
 
       <p className="text-xs text-slate-400 text-center pt-2">Estás en la app nueva. Las secciones completas van migrando de a una.</p>

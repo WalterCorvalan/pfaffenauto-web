@@ -12,6 +12,7 @@ import {
   BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer,
   PieChart, Pie, Cell, Legend,
 } from "recharts";
+import TablaResponsiva, { type ColumnaTabla } from "@/components/panelV2/TablaResponsiva";
 
 const CALIFICACIONES = [
   { value: "caliente", label: "Caliente" },
@@ -357,28 +358,23 @@ function TareasHistorial({ completadas }: { completadas: any[] }) {
         <span className="text-[11px] font-bold text-slate-400 sm:ml-auto bg-white dark:bg-white/5 border border-slate-200 dark:border-white/10 px-3 py-1.5 rounded-lg">{filtradas.length} tarea(s) completada(s)</span>
       </div>
 
-      <div className="bg-white dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-2xl overflow-hidden shadow-sm">
-        <div className="overflow-x-auto">
-          <table className="w-full text-left border-collapse min-w-[600px]">
-            <thead>
-              <tr className="bg-slate-800 dark:bg-white/10 text-white text-[10px] uppercase tracking-widest font-bold">
-                <th className="p-3 pl-4">Fecha</th><th className="p-3">Lead</th><th className="p-3">Tipo</th><th className="p-3 pr-4">Comentario</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-slate-100 dark:divide-white/10">
-              {filtradas.map((t) => (
-                <tr key={t.id} className="hover:bg-rose-50/40 dark:hover:bg-white/5 transition-colors">
-                  <td className="p-3 pl-4 text-[12px] font-medium text-slate-500 dark:text-slate-400 whitespace-nowrap">{new Date(t.fecha_vencimiento).toLocaleString("es-AR", { day: "2-digit", month: "short", year: "numeric", hour: "2-digit", minute: "2-digit" })}</td>
-                  <td className="p-3 text-[13px] font-bold"><Link href={hrefLead(t.lead)} className="text-rose-600 hover:underline">{t.lead?.nombre || "Lead"}</Link></td>
-                  <td className="p-3 text-[12px] font-semibold text-slate-700 dark:text-slate-200"><span className="bg-slate-100 dark:bg-white/10 text-slate-600 dark:text-slate-300 px-2 py-1 rounded-md">{t.tipo}</span></td>
-                  <td className="p-3 pr-4 text-[12px] text-slate-500 dark:text-slate-400 truncate max-w-xs" title={t.resultado || t.titulo || "—"}>{t.resultado || t.titulo || "—"}</td>
-                </tr>
-              ))}
-              {filtradas.length === 0 && (<tr><td colSpan={4} className="p-8 text-center text-slate-400 text-[13px]">Sin tareas completadas en este rango.</td></tr>)}
-            </tbody>
-          </table>
-        </div>
-      </div>
+      {filtradas.length === 0 ? (
+        <div className="bg-white dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-2xl p-8 text-center text-slate-400 text-[13px] shadow-sm">Sin tareas completadas en este rango.</div>
+      ) : (
+        <TablaResponsiva<typeof filtradas[number]>
+          filas={filtradas}
+          keyExtractor={(t) => t.id}
+          encabezadoMobile={(t) => <Link href={hrefLead(t.lead)} className="text-rose-600 hover:underline text-[13px] font-bold">{t.lead?.nombre || "Lead"}</Link>}
+          columnas={
+            [
+              { key: "fecha", header: "Fecha", cell: (t) => new Date(t.fecha_vencimiento).toLocaleString("es-AR", { day: "2-digit", month: "short", year: "numeric", hour: "2-digit", minute: "2-digit" }), claseTd: "text-[12px] font-medium text-slate-500 dark:text-slate-400 whitespace-nowrap" },
+              { key: "lead", header: "Lead", cell: (t) => <Link href={hrefLead(t.lead)} className="text-rose-600 hover:underline">{t.lead?.nombre || "Lead"}</Link>, claseTd: "text-[13px] font-bold", ocultarEnMobile: true },
+              { key: "tipo", header: "Tipo", cell: (t) => <span className="bg-slate-100 dark:bg-white/10 text-slate-600 dark:text-slate-300 px-2 py-1 rounded-md">{t.tipo}</span>, claseTd: "text-[12px] font-semibold text-slate-700 dark:text-slate-200" },
+              { key: "comentario", header: "Comentario", cell: (t) => t.resultado || t.titulo || "—", claseTd: "text-[12px] text-slate-500 dark:text-slate-400 truncate max-w-xs" },
+            ] as ColumnaTabla<typeof filtradas[number]>[]
+          }
+        />
+      )}
     </div>
   );
 }

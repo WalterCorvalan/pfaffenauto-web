@@ -21,6 +21,7 @@ import GastosFijosTab from "./tabs/GastosFijosTab";
 import ContactosTab from "./tabs/ContactosTab";
 import NotificacionesTab from "./tabs/NotificacionesTab";
 import MiWhatsAppTab from "./tabs/MiWhatsAppTab";
+import TablaResponsiva, { type ColumnaTabla } from "@/components/panelV2/TablaResponsiva";
 
 const RESUMEN_ITEMS = [
   { key: "ventas_cerradas", label: "Ventas cerradas", desc: "Cerradas en 24h y en la semana" },
@@ -468,26 +469,22 @@ export default function MiEspacioClient({
               <button onClick={() => setShowPagoManual(true)} className="px-4 py-2 text-sm font-bold bg-rose-600 hover:bg-rose-700 text-white rounded-lg">+ Registrar pago manual</button>
             </div>
           ) : (
-            <div className="bg-white dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-2xl overflow-hidden">
-              <div className="overflow-x-auto">
-                <table className="w-full text-left">
-                  <thead><tr className="bg-slate-50 dark:bg-white/5 text-[10px] uppercase tracking-widest text-slate-400 font-bold"><th className="px-4 py-3">Fecha</th><th className="px-4 py-3">Concepto</th><th className="px-4 py-3">Origen</th><th className="px-4 py-3">Beneficiario</th><th className="px-4 py-3">Método</th><th className="px-4 py-3">Monto</th><th className="px-4 py-3 w-px">Acciones</th></tr></thead>
-                  <tbody className="divide-y divide-slate-100 dark:divide-white/10">
-                    {pagosFiltrados.map((p) => (
-                      <tr key={p.id}>
-                        <td className="px-4 py-3 text-sm whitespace-nowrap">{p.fecha}</td>
-                        <td className="px-4 py-3 text-sm font-semibold">{p.concepto}</td>
-                        <td className="px-4 py-3"><span className={`text-[10px] font-bold uppercase px-2 py-0.5 rounded-full ${p.origen === "manual" ? "bg-slate-100 dark:bg-white/10 text-slate-500" : "bg-indigo-50 dark:bg-indigo-500/10 text-indigo-600"}`}>{p.origen === "manual" ? "Manual" : "Urgente"}</span></td>
-                        <td className="px-4 py-3 text-sm text-slate-500">{p.beneficiario || "—"}</td>
-                        <td className="px-4 py-3 text-sm text-slate-500">{p.metodo || "—"}</td>
-                        <td className="px-4 py-3 text-sm font-bold">{fmt(p.monto, p.moneda)}</td>
-                        <td className="px-4 py-3">{p.origen === "manual" && <button onClick={() => eliminarPago(p)} className="p-1.5 text-slate-400 hover:text-rose-600"><Trash2 className="w-3.5 h-3.5" /></button>}</td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
-            </div>
+            <TablaResponsiva<any>
+              filas={pagosFiltrados}
+              keyExtractor={(p) => p.id}
+              encabezadoMobile={(p) => <p className="text-sm font-semibold">{p.concepto}</p>}
+              columnas={
+                [
+                  { key: "fecha", header: "Fecha", cell: (p) => p.fecha, claseTd: "text-sm whitespace-nowrap" },
+                  { key: "concepto", header: "Concepto", cell: (p) => p.concepto, claseTd: "text-sm font-semibold", ocultarEnMobile: true },
+                  { key: "origen", header: "Origen", cell: (p) => <span className={`text-[10px] font-bold uppercase px-2 py-0.5 rounded-full ${p.origen === "manual" ? "bg-slate-100 dark:bg-white/10 text-slate-500" : "bg-indigo-50 dark:bg-indigo-500/10 text-indigo-600"}`}>{p.origen === "manual" ? "Manual" : "Urgente"}</span> },
+                  { key: "beneficiario", header: "Beneficiario", cell: (p) => p.beneficiario || "—", claseTd: "text-sm text-slate-500" },
+                  { key: "metodo", header: "Método", cell: (p) => p.metodo || "—", claseTd: "text-sm text-slate-500" },
+                  { key: "monto", header: "Monto", cell: (p) => fmt(p.monto, p.moneda), claseTd: "text-sm font-bold" },
+                ] as ColumnaTabla<any>[]
+              }
+              acciones={(p) => p.origen === "manual" && <button onClick={() => eliminarPago(p)} className="p-1.5 text-slate-400 hover:text-rose-600"><Trash2 className="w-3.5 h-3.5" /></button>}
+            />
           )}
         </div>
       )}
