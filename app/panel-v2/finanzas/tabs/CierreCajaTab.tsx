@@ -4,6 +4,7 @@ import { useState } from "react";
 import { supabase2 } from "@/lib/supabase2/client";
 import { Package, Download, X } from "lucide-react";
 import { fmt } from "./shared";
+import TablaResponsiva, { type ColumnaTabla } from "@/components/panelV2/TablaResponsiva";
 
 export default function CierreCajaTab({ cierres, setCierres }: { cierres: any[]; setCierres: (fn: any) => void }) {
   const [guardando, setGuardando] = useState(false);
@@ -57,27 +58,22 @@ export default function CierreCajaTab({ cierres, setCierres }: { cierres: any[];
       {cierres.length === 0 ? (
         <div className="bg-white dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-2xl py-16 text-center"><p className="text-sm font-bold">Sin cierres diarios</p></div>
       ) : (
-        <div className="overflow-x-auto bg-white dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-xl">
-          <table className="w-full text-xs">
-            <thead><tr className="border-b border-slate-100 dark:border-white/10 text-left text-slate-400"><th className="p-2.5">Fecha</th><th className="p-2.5">Cajas (USD)</th><th className="p-2.5">Cajas (ARS)</th><th className="p-2.5">Total USD</th><th className="p-2.5">Total ARS</th><th className="p-2.5">Responsable</th><th className="p-2.5">Ver detalle</th></tr></thead>
-            <tbody>
-              {cierres.map((c) => {
-                const t = totales(c);
-                return (
-                  <tr key={c.id} className="border-b border-slate-50 dark:border-white/5">
-                    <td className="p-2.5 font-bold">{c.fecha}</td>
-                    <td className="p-2.5">{t.usdCuentas} cuenta{t.usdCuentas === 1 ? "" : "s"}</td>
-                    <td className="p-2.5">{t.arsCuentas} cuenta{t.arsCuentas === 1 ? "" : "s"}</td>
-                    <td className="p-2.5 font-mono font-bold text-indigo-600">{fmt(t.usdTotal, "USD")}</td>
-                    <td className="p-2.5 font-mono font-bold text-rose-500">{fmt(t.arsTotal, "ARS")}</td>
-                    <td className="p-2.5">{c.cerrado_por_perfil?.nombre || "—"}</td>
-                    <td className="p-2.5"><button onClick={() => setViendo(c)} className="text-rose-500 font-bold">Ver detalle →</button></td>
-                  </tr>
-                );
-              })}
-            </tbody>
-          </table>
-        </div>
+        <TablaResponsiva<any>
+          filas={cierres}
+          keyExtractor={(c) => c.id}
+          encabezadoMobile={(c) => <p className="font-bold">{c.fecha}</p>}
+          columnas={
+            [
+              { key: "fecha", header: "Fecha", cell: (c) => c.fecha, claseTd: "font-bold", ocultarEnMobile: true },
+              { key: "usd_cuentas", header: "Cajas (USD)", cell: (c) => { const t = totales(c); return `${t.usdCuentas} cuenta${t.usdCuentas === 1 ? "" : "s"}`; } },
+              { key: "ars_cuentas", header: "Cajas (ARS)", cell: (c) => { const t = totales(c); return `${t.arsCuentas} cuenta${t.arsCuentas === 1 ? "" : "s"}`; } },
+              { key: "usd_total", header: "Total USD", cell: (c) => fmt(totales(c).usdTotal, "USD"), claseTd: "font-mono font-bold text-indigo-600" },
+              { key: "ars_total", header: "Total ARS", cell: (c) => fmt(totales(c).arsTotal, "ARS"), claseTd: "font-mono font-bold text-rose-500" },
+              { key: "responsable", header: "Responsable", cell: (c) => c.cerrado_por_perfil?.nombre || "—" },
+            ] as ColumnaTabla<any>[]
+          }
+          acciones={(c) => <button onClick={() => setViendo(c)} className="text-rose-500 font-bold">Ver detalle →</button>}
+        />
       )}
 
       {viendo && (

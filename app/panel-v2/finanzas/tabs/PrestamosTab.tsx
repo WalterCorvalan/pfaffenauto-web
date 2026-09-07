@@ -4,6 +4,7 @@ import { useState, useMemo } from "react";
 import { supabase2 } from "@/lib/supabase2/client";
 import { Plus, X, Save } from "lucide-react";
 import { inputClass, labelClass, fmt } from "./shared";
+import TablaResponsiva, { type ColumnaTabla } from "@/components/panelV2/TablaResponsiva";
 
 type Sub = "activos" | "devueltos" | "todos";
 
@@ -107,27 +108,27 @@ export default function PrestamosTab({
       {lista.length === 0 ? (
         <div className="bg-white dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-2xl py-16 text-center"><p className="text-sm font-bold">Sin préstamos</p></div>
       ) : (
-        <div className="overflow-x-auto bg-white dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-xl">
-          <table className="w-full text-xs">
-            <thead><tr className="border-b border-slate-100 dark:border-white/10 text-left text-slate-400"><th className="p-2.5">Fecha</th><th className="p-2.5">Persona</th><th className="p-2.5">Monto</th><th className="p-2.5">Devolución esperada</th><th className="p-2.5">Motivo</th><th className="p-2.5">Estado</th><th className="p-2.5">Acciones</th></tr></thead>
-            <tbody>
-              {lista.map((p) => (
-                <tr key={p.id} className="border-b border-slate-50 dark:border-white/5">
-                  <td className="p-2.5">{p.fecha}</td>
-                  <td className="p-2.5 font-bold">{p.persona}</td>
-                  <td className="p-2.5 font-mono font-bold">{fmt(p.monto, p.moneda)}</td>
-                  <td className="p-2.5">{p.devolucion_esperada || "—"}</td>
-                  <td className="p-2.5 text-slate-400">{p.motivo || "—"}</td>
-                  <td className="p-2.5">{p.estado === "pendiente" ? <span className="text-[10px] font-bold uppercase px-2 py-0.5 rounded-full bg-amber-100 dark:bg-amber-500/20 text-amber-700">Pendiente</span> : <span className="text-[10px] font-bold uppercase px-2 py-0.5 rounded-full bg-emerald-100 dark:bg-emerald-500/20 text-emerald-700">Devuelto</span>}</td>
-                  <td className="p-2.5 flex items-center gap-2">
-                    {p.estado === "pendiente" && <button onClick={() => abrirDevolucion(p)} className="text-emerald-600 font-bold">Marcar devuelto</button>}
-                    <button onClick={() => eliminar(p)} className="text-rose-500 font-bold">Eliminar</button>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
+        <TablaResponsiva<any>
+          filas={lista}
+          keyExtractor={(p) => p.id}
+          encabezadoMobile={(p) => <p className="font-bold">{p.persona}</p>}
+          columnas={
+            [
+              { key: "fecha", header: "Fecha", cell: (p) => p.fecha },
+              { key: "persona", header: "Persona", cell: (p) => p.persona, claseTd: "font-bold", ocultarEnMobile: true },
+              { key: "monto", header: "Monto", cell: (p) => fmt(p.monto, p.moneda), claseTd: "font-mono font-bold" },
+              { key: "devolucion", header: "Devolución esperada", cell: (p) => p.devolucion_esperada || "—" },
+              { key: "motivo", header: "Motivo", cell: (p) => p.motivo || "—", claseTd: "text-slate-400" },
+              { key: "estado", header: "Estado", cell: (p) => (p.estado === "pendiente" ? <span className="text-[10px] font-bold uppercase px-2 py-0.5 rounded-full bg-amber-100 dark:bg-amber-500/20 text-amber-700">Pendiente</span> : <span className="text-[10px] font-bold uppercase px-2 py-0.5 rounded-full bg-emerald-100 dark:bg-emerald-500/20 text-emerald-700">Devuelto</span>) },
+            ] as ColumnaTabla<any>[]
+          }
+          acciones={(p) => (
+            <>
+              {p.estado === "pendiente" && <button onClick={() => abrirDevolucion(p)} className="text-emerald-600 font-bold">Marcar devuelto</button>}
+              <button onClick={() => eliminar(p)} className="text-rose-500 font-bold">Eliminar</button>
+            </>
+          )}
+        />
       )}
 
       {showNuevo && (
