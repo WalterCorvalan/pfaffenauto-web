@@ -1,11 +1,13 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
-import { Wallet, Plus, Printer, CarFront, AlertTriangle, Copy, Check } from "lucide-react";
+import { supabase2 } from "@/lib/supabase2/client";
+import { Wallet, Plus, Printer, CarFront, AlertTriangle, Copy, Check, Search, Pencil, Trash2 } from "lucide-react";
 import EstadoSenaSelector from "./EstadoSenaSelector";
 import NuevaSenaModal from "./NuevaSenaModal";
+import EditarSenaModal from "./EditarSenaModal";
 import SenaDetalleModal from "./SenaDetalleModal";
 
 const COLOR_ESTADO: Record<string, string> = { Activa: "border-l-amber-400", Convertida: "border-l-emerald-400", Perdida: "border-l-rose-400" };
@@ -18,7 +20,13 @@ export default function SenasClient({
   const [senas, setSenas] = useState(senasIniciales);
   const [modalAbierto, setModalAbierto] = useState(false);
   const [seleccionada, setSeleccionada] = useState<any>(null);
+  const [editando, setEditando] = useState<any>(null);
   const [codigoCopiadoId, setCodigoCopiadoId] = useState<string | null>(null);
+
+  const [query, setQuery] = useState("");
+  const [vendedorFiltro, setVendedorFiltro] = useState("");
+  const [desde, setDesde] = useState("");
+  const [hasta, setHasta] = useState("");
 
   const copiarCodigo = (id: string, codigo: string) => {
     navigator.clipboard.writeText(codigo);
@@ -32,6 +40,29 @@ export default function SenasClient({
       router.replace("/panel-v2/senas");
     }
   }, [searchParams, router]);
+
+  const filtradas = useMemo(() => {
+    const q = query.trim().toLowerCase();
+    return senas.filter((s: any) => {
+      if (vendedorFiltro && s.vendedor_id !== vendedorFiltro) return false;
+      if (desde && (!s.fecha || s.fecha < desde)) return false;
+      if (hasta && (!s.fecha || s.fecha > hasta)) return false;
+      if (!q) return true;
+      const nombre = `${s.apellido || s.cliente_nombre || ""} ${s.nombre || ""}`.toLowerCase();
+      const vehiculo = `${s.marca || ""} ${s.modelo || ""}`.toLowerCase();
+      return nombre.includes(q) || vehiculo.includes(q) || (s.dni || "").includes(q) || String(s.numero || "").includes(q);
+    });
+  }, [senas, query, vendedorFiltro, desde, hasta]);
+
+  const eliminar = async (s: any) => {
+    if (!confirm(`¿Eliminar la seña${s.numero ? ` N° ${s.numero}` : ""} de ${s.apellido || s.cliente_nombre || "este cliente"}? No se puede deshacer.`)) return;
+    const { error, count } = await supabase2.from("senas").delete({ count: "exact" }).eq("id", s.id);
+    if (error || !count) { alert("No se pudo eliminar."); return; }
+    if (s.vehiculo_id && s.estado === "Activa") {
+      await supabase2.from("vehiculos").update({ estado: "disponible" }).eq("id", s.vehiculo_id);
+    }
+    setSenas((prev) => prev.filter((x) => x.id !== s.id));
+  };
 
   return (
     <div className="flex flex-col h-full w-full overflow-hidden">
@@ -50,6 +81,19 @@ export default function SenasClient({
 
       <div className="flex-1 overflow-y-auto custom-scrollbar p-4 md:p-6">
         <div className="max-w-6xl mx-auto">
+          <div className="flex flex-wrap items-center gap-2 mb-4">
+            <div className="relative flex-1 min-w-[220px] max-w-sm">
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
+              <input value={query} onChange={(e) => setQuery(e.target.value)} placeholder="Cliente, DNI, vehículo, N°..." className="w-full bg-white dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-xl pl-9 pr-3 py-2.5 text-sm outline-none focus:border-rose-500 text-slate-900 dark:text-white placeholder:text-slate-400" />
+            </div>
+            <select value={vendedorFiltro} onChange={(e) => setVendedorFiltro(e.target.value)} className="bg-white dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-xl px-3 py-2.5 text-sm outline-none focus:border-rose-500 text-slate-900 dark:text-white">
+              <option value="">Todos los vendedores</option>
+              {vendedores.map((v) => <option key={v.id} value={v.id}>{v.nombre}</option>)}
+            </select>
+            <input type="date" value={desde} onChange={(e) => setDesde(e.target.value)} className="bg-white dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-xl px-3 py-2.5 text-sm outline-none focus:border-rose-500 text-slate-900 dark:text-white" />
+            <input type="date" value={hasta} onChange={(e) => setHasta(e.target.value)} className="bg-white dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-xl px-3 py-2.5 text-sm outline-none focus:border-rose-500 text-slate-900 dark:text-white" />
+          </div>
+
           <div className="hidden md:block bg-white dark:bg-white/[0.02] border border-slate-200 dark:border-white/5 rounded-2xl overflow-hidden">
             <div className="overflow-x-auto">
               <table className="w-full text-left border-collapse">
@@ -63,11 +107,11 @@ export default function SenasClient({
                     <th className="px-4 py-3 text-[10px] font-black uppercase tracking-widest text-slate-500 dark:text-slate-400 text-right">Seña</th>
                     <th className="px-4 py-3 text-[10px] font-black uppercase tracking-widest text-slate-500 dark:text-slate-400 text-center">Estado</th>
                     <th className="px-4 py-3 text-[10px] font-black uppercase tracking-widest text-slate-500 dark:text-slate-400 text-center">Código</th>
-                    <th className="px-4 py-3 text-[10px] font-black uppercase tracking-widest text-slate-500 dark:text-slate-400 text-center">Imprimir</th>
+                    <th className="px-4 py-3 text-[10px] font-black uppercase tracking-widest text-slate-500 dark:text-slate-400 text-center">Acciones</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-slate-100 dark:divide-white/5">
-                  {senas.map((s: any) => (
+                  {filtradas.map((s: any) => (
                     <tr key={s.id} onClick={() => setSeleccionada(s)} className={`hover:bg-slate-50/50 dark:hover:bg-white/5 transition-colors border-l-4 cursor-pointer ${COLOR_ESTADO[s.estado] || "border-l-slate-200"}`}>
                       <td className="px-4 py-3 font-mono text-[13px] font-bold text-rose-600 dark:text-rose-400">{s.numero || "—"}</td>
                       <td className="px-4 py-3 text-[13px] text-slate-600 dark:text-slate-300 whitespace-nowrap">{s.fecha ? new Date(`${s.fecha}T12:00:00Z`).toLocaleDateString("es-AR", { timeZone: "UTC" }) : "—"}</td>
@@ -86,11 +130,17 @@ export default function SenasClient({
                           </button>
                         ) : "—"}
                       </td>
-                      <td className="px-4 py-3 text-center" onClick={(e) => e.stopPropagation()}><Link href={`/panel-v2/senas/imprimir/${s.id}`} className="inline-flex p-2 bg-slate-50 dark:bg-white/5 hover:bg-rose-50 dark:hover:bg-rose-500/10 border border-slate-200 dark:border-white/10 hover:border-rose-200 dark:hover:border-rose-500/30 rounded-lg text-slate-400 hover:text-rose-600 dark:hover:text-rose-400 transition-all"><Printer className="w-4 h-4" /></Link></td>
+                      <td className="px-4 py-3 text-center" onClick={(e) => e.stopPropagation()}>
+                        <div className="flex items-center justify-center gap-1.5">
+                          <button onClick={() => setEditando(s)} title="Editar" className="inline-flex p-2 bg-slate-50 dark:bg-white/5 hover:bg-indigo-50 dark:hover:bg-indigo-500/10 border border-slate-200 dark:border-white/10 hover:border-indigo-200 dark:hover:border-indigo-500/30 rounded-lg text-slate-400 hover:text-indigo-600 dark:hover:text-indigo-400 transition-all"><Pencil className="w-4 h-4" /></button>
+                          <Link href={`/panel-v2/senas/imprimir/${s.id}`} title="Imprimir" className="inline-flex p-2 bg-slate-50 dark:bg-white/5 hover:bg-rose-50 dark:hover:bg-rose-500/10 border border-slate-200 dark:border-white/10 hover:border-rose-200 dark:hover:border-rose-500/30 rounded-lg text-slate-400 hover:text-rose-600 dark:hover:text-rose-400 transition-all"><Printer className="w-4 h-4" /></Link>
+                          <button onClick={() => eliminar(s)} title="Eliminar" className="inline-flex p-2 bg-slate-50 dark:bg-white/5 hover:bg-rose-50 dark:hover:bg-rose-500/10 border border-slate-200 dark:border-white/10 hover:border-rose-200 dark:hover:border-rose-500/30 rounded-lg text-slate-400 hover:text-rose-600 dark:hover:text-rose-400 transition-all"><Trash2 className="w-4 h-4" /></button>
+                        </div>
+                      </td>
                     </tr>
                   ))}
-                  {senas.length === 0 && (
-                    <tr><td colSpan={9} className="px-4 py-16 text-center text-slate-400 dark:text-slate-500 text-sm italic">Sin señas cargadas todavía.</td></tr>
+                  {filtradas.length === 0 && (
+                    <tr><td colSpan={9} className="px-4 py-16 text-center text-slate-400 dark:text-slate-500 text-sm italic">{senas.length === 0 ? "Sin señas cargadas todavía." : "Ninguna seña coincide con el filtro."}</td></tr>
                   )}
                 </tbody>
               </table>
@@ -98,8 +148,8 @@ export default function SenasClient({
           </div>
 
           <div className="md:hidden space-y-3">
-            {senas.length === 0 && <div className="bg-white dark:bg-white/[0.02] border border-slate-200 dark:border-white/5 rounded-2xl p-8 text-center text-slate-400 text-sm italic">Sin señas cargadas todavía.</div>}
-            {senas.map((s: any) => (
+            {filtradas.length === 0 && <div className="bg-white dark:bg-white/[0.02] border border-slate-200 dark:border-white/5 rounded-2xl p-8 text-center text-slate-400 text-sm italic">{senas.length === 0 ? "Sin señas cargadas todavía." : "Ninguna seña coincide con el filtro."}</div>}
+            {filtradas.map((s: any) => (
               <div key={s.id} onClick={() => setSeleccionada(s)} className={`bg-white dark:bg-white/[0.02] border border-slate-200 dark:border-white/5 rounded-2xl p-4 space-y-2 border-l-4 cursor-pointer active:bg-slate-50 dark:active:bg-white/[0.04] ${COLOR_ESTADO[s.estado] || "border-l-slate-200"}`}>
                 <div className="flex items-center justify-between">
                   <span className="font-mono text-[13px] font-bold text-rose-600 dark:text-rose-400">N° {s.numero || "—"}</span>
@@ -118,7 +168,11 @@ export default function SenasClient({
                     <span className="text-[12px] text-slate-500 dark:text-slate-400">{s.fecha ? new Date(`${s.fecha}T12:00:00Z`).toLocaleDateString("es-AR", { timeZone: "UTC" }) : "—"}</span>
                     <EstadoSenaSelector id={s.id} estado={s.estado} vehiculoId={s.vehiculo_id} />
                   </div>
-                  <Link href={`/panel-v2/senas/imprimir/${s.id}`} className="inline-flex p-1.5 bg-slate-50 dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-lg text-slate-400"><Printer className="w-3.5 h-3.5" /></Link>
+                  <div className="flex items-center gap-1.5">
+                    <button onClick={() => setEditando(s)} className="inline-flex p-1.5 bg-slate-50 dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-lg text-slate-400"><Pencil className="w-3.5 h-3.5" /></button>
+                    <Link href={`/panel-v2/senas/imprimir/${s.id}`} className="inline-flex p-1.5 bg-slate-50 dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-lg text-slate-400"><Printer className="w-3.5 h-3.5" /></Link>
+                    <button onClick={() => eliminar(s)} className="inline-flex p-1.5 bg-slate-50 dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-lg text-slate-400"><Trash2 className="w-3.5 h-3.5" /></button>
+                  </div>
                 </div>
               </div>
             ))}
@@ -130,6 +184,14 @@ export default function SenasClient({
         <NuevaSenaModal
           clientes={clientes} vehiculos={vehiculos} vendedores={vendedores} sucursales={sucursales} cuentas={cuentas}
           onClose={() => setModalAbierto(false)}
+        />
+      )}
+
+      {editando && (
+        <EditarSenaModal
+          sena={editando} vendedores={vendedores} sucursales={sucursales}
+          onClose={() => setEditando(null)}
+          onGuardado={(s) => setSenas((prev) => prev.map((x) => (x.id === s.id ? s : x)))}
         />
       )}
 
