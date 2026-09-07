@@ -47,10 +47,15 @@ const ESTADO_COLOR: Record<string, string> = {
 function diasEnStock(iso: string) {
   return Math.floor((Date.now() - new Date(iso).getTime()) / 86400000);
 }
+// Las tarjetas de TablaResponsiva ya traen "dark:border-white/5" en TODOS los
+// lados -- ese selector con variante dark: compila con más especificidad que
+// un border-l-* plano, así que en modo oscuro le ganaba y el borde de color
+// quedaba invisible (solo se veía en claro). Repetir el mismo color bajo
+// dark: para que empate en especificidad y gane por ser el que va después.
 function bordeAntiguedad(dias: number, diasEstancado: number) {
-  if (dias >= diasEstancado || dias >= 60) return "border-l-rose-500";
-  if (dias >= 30) return "border-l-amber-400";
-  return "border-l-sky-400";
+  if (dias >= diasEstancado || dias >= 60) return "border-l-rose-500 dark:border-l-rose-500";
+  if (dias >= 30) return "border-l-amber-400 dark:border-l-amber-400";
+  return "border-l-sky-400 dark:border-l-sky-400";
 }
 function fmtPrecio(n: number, moneda: string) {
   return moneda === "ARS" ? `$ ${n.toLocaleString("es-AR")}` : `${moneda} ${n.toLocaleString("es-AR")}`;
