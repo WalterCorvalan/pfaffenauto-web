@@ -8,7 +8,7 @@ import {
   Search, Moon, Sun, LogOut, RotateCw, Menu, X, PanelLeftClose, PanelLeftOpen,
   LayoutDashboard, CalendarDays, CalendarCheck, BellRing, LineChart, Megaphone, Folder,
   Car, Users, FileText, Briefcase, Trophy, SearchCode, Handshake, PackageCheck,
-  BedDouble, Repeat, Star, FolderKanban, ClipboardList, ClipboardCheck, KeyRound, Landmark,
+  BedDouble, Repeat, Star, FolderKanban, ClipboardList, ClipboardCheck, KeyRound, Landmark, History,
   Wrench, Hammer, MessageSquareWarning, Banknote, PiggyBank, Coins, ShieldCheck,
   BarChart3, DollarSign, MessagesSquare, Smartphone, ThumbsUp, Lightbulb, Mail,
   MessageCircle, BookUser, Settings, Trash2, Bot, Wallet, Tag, AlertTriangle, CheckSquare, Receipt, CreditCard,
@@ -94,7 +94,7 @@ const GRUPOS: { titulo: string; items: { href?: string; label: string; icon: any
       { href: "/panel-v2/rodi", label: "Rodi (chat web)", icon: Bot },
       { href: "/panel-v2/tareas", label: "Tareas de Leads", icon: CheckSquare },
       { label: "Correos", icon: Mail, modulo: "correos" },
-      { label: "NPS", icon: ThumbsUp, modulo: "nps" },
+      { href: "/panel-v2/nps", label: "NPS", icon: ThumbsUp, modulo: "nps" },
     ],
   },
   {
@@ -111,6 +111,7 @@ const GRUPOS: { titulo: string; items: { href?: string; label: string; icon: any
       { href: "/panel-v2/sueldos/liquidador", label: "Liquidador de Sueldos", icon: Wallet },
       { href: "/panel-v2/sueldos/categorias", label: "Categorías de Empleados", icon: Tag },
       { href: "/panel-v2/errores", label: "Errores del sistema", icon: AlertTriangle },
+      { href: "/panel-v2/logs", label: "Registro de Cambios", icon: History },
     ],
   },
 ];
