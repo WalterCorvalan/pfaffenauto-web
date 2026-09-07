@@ -321,10 +321,22 @@ export default function NuevoVehiculoModal({ perfiles, clientes, sucursales, miI
                 </select>
               </div>
               <div>
-                <label className={labelClass}>Estado inicial</label>
-                <select value={estadoInicial} onChange={(e) => setEstadoInicial(e.target.value)} className={inputClass}>
-                  {ESTADOS.map((s) => <option key={s.value} value={s.value}>{s.label}</option>)}
-                </select>
+                <label className={labelClass}>{esEdicion ? "Estado" : "Estado inicial"}</label>
+                {/* "Señado" y "Vendido" los pone SOLO el flujo real (Señas /
+                    Ventas) -- si se pudiera pisar acá a mano, quedaría un
+                    vehículo marcado vendido/señado sin ninguna seña o venta
+                    real detrás (o viceversa: la seña/venta sigue viva pero
+                    el auto vuelve a aparecer disponible en el catálogo). */}
+                {esEdicion && (estadoInicial === "señado" || estadoInicial === "vendido") ? (
+                  <>
+                    <input value={ESTADOS.find((s) => s.value === estadoInicial)?.label || estadoInicial} disabled className={`${inputClass} opacity-60 cursor-not-allowed`} />
+                    <p className="text-[10px] text-amber-600 dark:text-amber-400 mt-1">Lo pone el módulo de {estadoInicial === "señado" ? "Señas" : "Ventas"} — para liberarlo, cancelá o revertí la operación ahí, no lo cambies acá.</p>
+                  </>
+                ) : (
+                  <select value={estadoInicial} onChange={(e) => setEstadoInicial(e.target.value)} className={inputClass}>
+                    {ESTADOS.map((s) => <option key={s.value} value={s.value}>{s.label}</option>)}
+                  </select>
+                )}
               </div>
               <div>
                 <label className={labelClass}>Precio publicado (opcional)</label>

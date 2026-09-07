@@ -291,6 +291,7 @@ export default function StockClient({
                     filas={filtrados}
                     keyExtractor={(v) => v.id}
                     claseFila={(v) => `border-l-4 ${bordeAntiguedad(diasEnStock(v.created_at), diasEstancado)}`}
+                    onRowClick={(v) => setEditando(v)}
                     encabezadoMobile={renderVehiculoCell}
                     columnas={
                       [
@@ -298,10 +299,10 @@ export default function StockClient({
                         { key: "anio", header: "Año", cell: (v) => v.anio, claseTd: "text-xs text-slate-500 dark:text-slate-400 whitespace-nowrap" },
                         { key: "patente", header: "Patente/VIN", cell: (v) => v.patente || "s/patente", claseTd: "text-xs text-slate-500 dark:text-slate-400 whitespace-nowrap" },
                         { key: "km", header: "KM", cell: (v) => v.km?.toLocaleString("es-AR") ?? "—", claseTd: "text-xs text-slate-500 dark:text-slate-400 whitespace-nowrap" },
-                        { key: "precio", header: "Precio", cell: (v) => <PrecioEditor vehiculoId={v.id} precio={v.precio_venta} moneda={v.moneda_venta} onActualizado={actualizarVehiculo} />, claseTd: "text-sm whitespace-nowrap" },
+                        { key: "precio", header: "Precio", cell: (v) => <span onClick={(e) => e.stopPropagation()}><PrecioEditor vehiculoId={v.id} precio={v.precio_venta} moneda={v.moneda_venta} onActualizado={actualizarVehiculo} /></span>, claseTd: "text-sm whitespace-nowrap" },
                         { key: "estado", header: "Estado", cell: (v) => <span className={`text-[10px] font-bold px-2 py-1 rounded-full border whitespace-nowrap ${ESTADO_COLOR[v.estado]}`}>{ESTADO_LABEL[v.estado]}</span> },
-                        { key: "sucursal", header: "Sucursal", cell: (v) => <SucursalEditor vehiculoId={v.id} sucursalId={v.sucursal_id} sucursalNombre={v.sucursal?.nombre || null} sucursales={sucursales} onActualizado={actualizarVehiculo} />, claseTd: "text-xs whitespace-nowrap" },
-                        { key: "asignado", header: "Asignado", cell: (v) => <VendedorEditor vehiculoId={v.id} vendedorId={v.vendedor_asignado_id} vendedorNombre={v.vendedor_asignado_id ? perfilMap[v.vendedor_asignado_id] : null} perfiles={perfiles} onActualizado={actualizarVehiculo} />, claseTd: "text-xs whitespace-nowrap" },
+                        { key: "sucursal", header: "Sucursal", cell: (v) => <span onClick={(e) => e.stopPropagation()}><SucursalEditor vehiculoId={v.id} sucursalId={v.sucursal_id} sucursalNombre={v.sucursal?.nombre || null} sucursales={sucursales} onActualizado={actualizarVehiculo} /></span>, claseTd: "text-xs whitespace-nowrap" },
+                        { key: "asignado", header: "Asignado", cell: (v) => <span onClick={(e) => e.stopPropagation()}><VendedorEditor vehiculoId={v.id} vendedorId={v.vendedor_asignado_id} vendedorNombre={v.vendedor_asignado_id ? perfilMap[v.vendedor_asignado_id] : null} perfiles={perfiles} onActualizado={actualizarVehiculo} /></span>, claseTd: "text-xs whitespace-nowrap" },
                         { key: "dias", header: "Días", cell: (v) => {
                           const dias = diasEnStock(v.created_at);
                           const diasColor = dias >= diasEstancado ? "text-rose-600 dark:text-rose-400 font-black" : dias >= 30 ? "text-amber-600 dark:text-amber-400 font-bold" : "text-slate-500";
