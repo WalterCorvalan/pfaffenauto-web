@@ -4,7 +4,7 @@ import { createClient } from "@/lib/supabase2/server";
 import { createClient as createAdminClient } from "@supabase/supabase-js";
 import { rateLimit, ipDesdeRequest } from "@/lib/rateLimit";
 
-const ROLES = ["admin", "ventas", "finanzas", "gestoria"] as const;
+const ROLES = ["admin", "ventas", "finanzas", "gestoria", "recepcion", "taller"] as const;
 
 async function verificarAdmin() {
   const supabase = await createClient();
@@ -27,7 +27,7 @@ export async function GET() {
 
   const sb = admin();
   const [{ data: perfiles }, { data: authList }] = await Promise.all([
-    sb.from("perfiles").select("id, nombre, roles, activo, totp_enabled, created_at").order("created_at", { ascending: false }),
+    sb.from("perfiles").select("id, nombre, roles, activo, sucursal_id, created_at").order("created_at", { ascending: false }),
     sb.auth.admin.listUsers({ perPage: 1000 }),
   ]);
 
@@ -41,6 +41,7 @@ const CrearSchema = z.object({
   email: z.string().trim().email().max(150),
   nombre: z.string().trim().min(1).max(100),
   roles: z.array(z.enum(ROLES)).min(1),
+  sucursal_id: z.string().uuid().optional().nullable(),
 });
 
 export async function POST(request: Request) {
@@ -52,13 +53,13 @@ export async function POST(request: Request) {
 
   const parsed = CrearSchema.safeParse(await request.json());
   if (!parsed.success) return NextResponse.json({ error: "Datos inválidos." }, { status: 400 });
-  const { email, nombre, roles } = parsed.data;
+  const { email, nombre, roles, sucursal_id } = parsed.data;
 
   const sb = admin();
   const { data: nuevo, error: createError } = await sb.auth.admin.inviteUserByEmail(email);
   if (createError) return NextResponse.json({ error: createError.message }, { status: 400 });
 
-  const { error: upsertError } = await sb.from("perfiles").upsert({ id: nuevo.user.id, nombre, roles, activo: true });
+  const { error: upsertError } = await sb.from("perfiles").upsert({ id: nuevo.user.id, nombre, roles, activo: true, sucursal_id: sucursal_id || null });
   if (upsertError) return NextResponse.json({ error: upsertError.message }, { status: 400 });
 
   return NextResponse.json({ ok: true, id: nuevo.user.id });
@@ -69,6 +70,7 @@ const ActualizarSchema = z.object({
   nombre: z.string().trim().min(1).max(100).optional(),
   roles: z.array(z.enum(ROLES)).min(1).optional(),
   activo: z.boolean().optional(),
+  sucursal_id: z.string().uuid().nullable().optional(),
 });
 
 export async function PATCH(request: Request) {
