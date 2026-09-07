@@ -133,6 +133,15 @@ export default function StockClient({
     return [...lista].sort((a, b) => prioridad(a) - prioridad(b) || diasEnStock(a.created_at) - diasEnStock(b.created_at));
   }, [baseTab, estadoFiltro, soloEstancados, soloARevisar, marcaFiltro, query]);
 
+  // Antes se renderizaban TODAS las filas de una -- con stock real (77+)
+  // la tabla se hacía larguísima. Paginado simple en memoria, sin tocar el
+  // fetch (ya viene todo el stock de una sola vez desde el server).
+  const POR_PAGINA = 25;
+  const [pagina, setPagina] = useState(1);
+  useEffect(() => { setPagina(1); }, [tab, estadoFiltro, soloEstancados, soloARevisar, marcaFiltro, query]);
+  const totalPaginas = Math.max(1, Math.ceil(filtrados.length / POR_PAGINA));
+  const paginados = useMemo(() => filtrados.slice((pagina - 1) * POR_PAGINA, pagina * POR_PAGINA), [filtrados, pagina]);
+
   const disponibles = vehiculos.filter((v) => v.estado === "disponible");
   const actualizarVehiculo = (id: string, cambios: Partial<Vehiculo>) => setVehiculos((prev) => prev.map((x) => (x.id === id ? { ...x, ...cambios } : x)));
   const valorTotalPorMoneda = useMemo(() => {
@@ -288,7 +297,7 @@ export default function StockClient({
                     </span>
                   </div>
                   <TablaResponsiva<Vehiculo>
-                    filas={filtrados}
+                    filas={paginados}
                     keyExtractor={(v) => v.id}
                     claseFila={(v) => `border-l-4 ${bordeAntiguedad(diasEnStock(v.created_at), diasEstancado)}`}
                     onRowClick={(v) => setEditando(v)}
@@ -326,6 +335,19 @@ export default function StockClient({
                       </>
                     )}
                   />
+                  {totalPaginas > 1 && (
+                    <div className="flex items-center justify-between mt-3 px-1">
+                      <p className="text-xs text-slate-400">Página {pagina} de {totalPaginas} — {filtrados.length} en total</p>
+                      <div className="flex items-center gap-2">
+                        <button onClick={() => setPagina((p) => Math.max(1, p - 1))} disabled={pagina === 1} className="p-2 bg-white dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-lg text-slate-500 disabled:opacity-40 disabled:cursor-not-allowed hover:bg-slate-50 dark:hover:bg-white/10">
+                          <ChevronLeft className="w-4 h-4" />
+                        </button>
+                        <button onClick={() => setPagina((p) => Math.min(totalPaginas, p + 1))} disabled={pagina === totalPaginas} className="p-2 bg-white dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-lg text-slate-500 disabled:opacity-40 disabled:cursor-not-allowed hover:bg-slate-50 dark:hover:bg-white/10">
+                          <ChevronRight className="w-4 h-4" />
+                        </button>
+                      </div>
+                    </div>
+                  )}
                 </>
               )}
             </>
