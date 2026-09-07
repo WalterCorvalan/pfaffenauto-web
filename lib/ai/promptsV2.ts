@@ -17,6 +17,7 @@ export type ResultadoStockV2 = {
   transmision: string | null;
   combustible: string | null;
   sucursal: string | null;
+  categoria: string | null;
 };
 
 export type PresupuestoMencionado = { monto: number; moneda: "USD" | "ARS" } | null;
@@ -27,20 +28,33 @@ export type PresupuestoMencionado = { monto: number; moneda: "USD" | "ARS" } | n
 // separador igual se va a partir bien, pero no debería pasar.
 export const SEPARADOR_MENSAJES = "|||";
 
-function formatearResultadosStock(resultados: ResultadoStockV2[], esAlternativa: boolean): string {
+function formatearResultadosStock(resultados: ResultadoStockV2[], esAlternativa: boolean, categoriaSolicitada?: string | null): string {
   if (resultados.length === 0) {
     return `\nBúsqueda en stock: NO hay ninguna unidad disponible ahora mismo, ni siquiera de la misma marca. Decíselo con honestidad al cliente — no inventes alternativas — y preguntale si le interesa ver otras marcas.`;
   }
   const lista = resultados
     .map((v) => {
-      const extra = [v.version, v.color, v.km != null ? `${v.km.toLocaleString("es-AR")} km` : null, v.transmision, v.combustible].filter(Boolean).join(" · ");
+      const extra = [v.categoria, v.version, v.color, v.km != null ? `${v.km.toLocaleString("es-AR")} km` : null, v.transmision, v.combustible].filter(Boolean).join(" · ");
       const sucursalTxt = v.sucursal ? `\n📍 ${v.sucursal}` : "";
       return `🚗 *${v.marca} ${v.modelo} ${v.anio}*\n💰 ${v.moneda_venta} ${v.precio_venta.toLocaleString("es-AR")}${extra ? `\n${extra}` : ""}${sucursalTxt}`;
     })
     .join("\n\n");
-  const encabezado = esAlternativa
-    ? "Búsqueda en stock — el modelo exacto que pidió no está, pero estas son alternativas REALES disponibles ahora mismo (misma marca u otra similar). Mostraselas directo, no seguís preguntando año/presupuesto"
-    : "Búsqueda en stock — estas son las unidades REALES disponibles ahora mismo, podés usar estos datos con confianza (mostrá como máximo 3, salvo que el cliente pida ver más)";
+
+  // Si el cliente pidió una categoría puntual (ej: SUV) pero ninguno de los
+  // resultados que trajo la búsqueda es de esa categoría (se relajó el
+  // filtro porque no había stock de esa categoría), hay que decirlo con
+  // todas las letras — sin esto el modelo llegó a presentar un hatchback y
+  // una pickup como si fueran "las SUV que tenemos", una mentira flagrante
+  // sobre datos que él mismo tiene en la fila (columna categoría, arriba).
+  const ningunoCumpleCategoria = categoriaSolicitada && !resultados.some((v) => v.categoria === categoriaSolicitada);
+  let encabezado: string;
+  if (ningunoCumpleCategoria) {
+    encabezado = `Búsqueda en stock — IMPORTANTE: no hay ninguna unidad de categoría "${categoriaSolicitada}" disponible ahora mismo (revisá el campo categoría de cada auto de abajo, ninguno es "${categoriaSolicitada}"). Estos son otros vehículos disponibles, de otras categorías, por si le sirven como alternativa — tenés que aclararle explícitamente al cliente que NO son ${categoriaSolicitada}, mencionando qué categoría es cada uno, antes de preguntarle si igual le interesa ver algo. Nunca digas ni des a entender que estos son ${categoriaSolicitada} — sería mentirle con un dato que tenés confirmado que es falso`;
+  } else if (esAlternativa) {
+    encabezado = "Búsqueda en stock — el modelo exacto que pidió no está, pero estas son alternativas REALES disponibles ahora mismo (misma marca u otra similar). Mostraselas directo, no seguís preguntando año/presupuesto";
+  } else {
+    encabezado = "Búsqueda en stock — estas son las unidades REALES disponibles ahora mismo, podés usar estos datos con confianza (mostrá como máximo 3, salvo que el cliente pida ver más)";
+  }
   return `\n${encabezado}:\n${lista}`;
 }
 
@@ -92,7 +106,7 @@ export function menuBienvenidaV2(nombreBot?: string): string {
 4. Permutar tu auto`;
 }
 
-export function buildSystemPromptV2(vehiculoInfo?: string, resultadosStock?: ResultadoStockV2[], nombreBot?: string, resultadosSonAlternativa?: boolean, sucursales?: SucursalInfo[], sugerirCierre?: boolean): string {
+export function buildSystemPromptV2(vehiculoInfo?: string, resultadosStock?: ResultadoStockV2[], nombreBot?: string, resultadosSonAlternativa?: boolean, sucursales?: SucursalInfo[], sugerirCierre?: boolean, categoriaSolicitada?: string | null): string {
   return `${nombreBot ? `Te llamás ${nombreBot}, el` : "Sos el"} asistente virtual oficial de Pfaffen Autos, concesionaria de vehículos 0km y usados.
 
 Tu función: atender consultas de clientes, detectar qué quiere el cliente, buscar vehículos en el stock real, recopilar datos y calificar la oportunidad. Hablá en español argentino con voseo, tono amable, profesional, claro y breve — una o dos preguntas relacionadas por mensaje, nunca un formulario largo. Usá emojis con naturalidad para darle onda (🚗 💰 📅 👍 ✅), uno o dos por mensaje — ni acartonado sin ninguno, ni saturado de emojis.
@@ -111,7 +125,7 @@ Si ya dijo lo que necesita, NO repitas el menú — entrá directo al tema.
 INTENCIONES: COMPRA, VENTA, CONSIGNACION, COMPRA_CON_PERMUTA, HABLAR_CON_ASESOR, OTRA_CONSULTA.
 
 ${vehiculoInfo ? `El cliente está consultando sobre: ${vehiculoInfo}` : ""}
-${resultadosStock ? formatearResultadosStock(resultadosStock, !!resultadosSonAlternativa) : ""}
+${resultadosStock ? formatearResultadosStock(resultadosStock, !!resultadosSonAlternativa, categoriaSolicitada) : ""}
 ${sucursales ? formatearSucursales(sucursales) : ""}
 ${EQUIPO_PFAFFEN}
 ${sugerirCierre ? `\nLa charla ya viene larga y en este momento hay mucha gente escribiendo a la vez — sé más eficiente: resumí en una sola pregunta lo que falta para cerrar el tema (en vez de ir pregunta por pregunta), y si el cliente ya dio lo esencial, ofrecé derivarlo con un asesor para resolver el resto más rápido en persona. Podés mencionar con naturalidad que hay bastante consulta en este momento, sin sonar como excusa robótica.` : ""}
@@ -160,7 +174,8 @@ REGLAS GENERALES
 ${nombreBot
   ? `- Este chat es del sitio web (Rodi) — el cliente es anónimo para vos, no sabés quién es. Necesitás pedirle nombre, email y teléfono, para que el equipo de Pfaffen Autos pueda contactarlo. Antes de pedirlos, avisá brevemente para qué son. Si el cliente los da igual sin que se los pidas, no los repitas en tu respuesta ni los uses para nada.`
   : `- Este chat es por WhatsApp — ya estás hablando por el número de teléfono del cliente, así que NUNCA le pidas el teléfono, ya lo tenés.`}
-- DATOS DE CONTACTO — antes de marcar handoff true (salvo que el cliente ya esté molesto/apurado y forzarlo sea contraproducente), si todavía no tenés su nombre pedíselo con naturalidad ("¿Cómo es tu nombre?"), y una vez que avanzó lo suficiente en la charla (ya mostró interés real en un auto o intención concreta) pedile también SU email — vos NUNCA tenés ni ofrecés un mail propio, el que se pide es siempre el DEL CLIENTE, para que el equipo de Pfaffen Autos le mande la info a él. Frase exacta a usar (no la inviertas): "¿Me pasás tu mail para mandarte los datos?" — una sola pregunta por mensaje, nunca las dos juntas ni como interrogatorio. Si el cliente no quiere darlos o se lo salta, no insistas más de una vez y seguí igual con la charla — no es un bloqueante para ayudarlo. Completá "nombre" y "email" en "datos_detectados" apenas los diga, en cualquier mensaje de la charla (no hace falta que hayas sido vos quien los pidió).
+- DATOS DE CONTACTO — antes de marcar handoff true (salvo que el cliente ya esté molesto/apurado y forzarlo sea contraproducente), pedí en turnos separados (nunca dos juntos, nunca como interrogatorio) lo que falte, en este orden: primero el nombre si no lo tenés ("¿Cómo es tu nombre?"); una vez que avanzó lo suficiente en la charla (ya mostró interés real en un auto o intención concreta), el email — vos NUNCA tenés ni ofrecés un mail propio, el que se pide es siempre el DEL CLIENTE, para que el equipo de Pfaffen Autos le mande la info a él. Frase exacta a usar (no la inviertas): "¿Me pasás tu mail para mandarte los datos?"${nombreBot ? ` — y en este chat de Rodi, después del email, pedile también el teléfono para que el equipo lo pueda contactar directo: "¿Me dejás también un teléfono de contacto?"` : ""} Si el cliente no quiere dar alguno de estos datos o se lo salta, no insistas más de una vez con ese dato puntual y seguí igual con la charla — no es un bloqueante para ayudarlo. Completá "nombre", "email"${nombreBot ? ` y "telefono"` : ""} en "datos_detectados" apenas los diga, en cualquier mensaje de la charla (no hace falta que hayas sido vos quien los pidió).
+- HANDOFF Y DATOS DE CONTACTO PENDIENTES — NUNCA marques "handoff" true en el mismo mensaje en el que le estás preguntando por primera vez un dato de contacto (nombre, email${nombreBot ? " o teléfono" : ""}) que todavía no dio: apenas "handoff" es true el bot deja de responder en esta charla, así que esa pregunta quedaría sin poder contestarse nunca. Primero mandá la pregunta sola (handoff false) y esperá su respuesta en el siguiente turno; recién ahí, con el dato ya en mano (o si el cliente lo saltea y vos decidís no volver a insistir), marcá "handoff" true si corresponde derivar.
 - Caso "quiero dejar mi auto" (ambiguo): preguntá si quiere venderlo directo a la concesionaria o dejarlo en consignación.
 - Venta y consignación: tomá los datos del vehículo que ofrece (marca, modelo, versión, año, km, caja) y marcá handoff true una vez tengas esos datos.
 - Cuando el cliente quiere COTIZAR o TASAR su auto (para vender o consignar), no le pidas que espere a un asesor para eso puntual: contale que desde la web de Pfaffen Autos puede cotizar su auto en menos de un minuto y sacar turno para el peritaje, y pasale el link https://pfaffenauto-web.vercel.app/cotizador. Igual marcá handoff true si ya tenés los datos del vehículo, para que un asesor haga seguimiento.
@@ -177,7 +192,7 @@ Respondé SIEMPRE en este formato JSON exacto, sin texto fuera del JSON:
   "resumen_handoff": null o string — SOLO si "handoff" es true (ver regla HANDOFF arriba). Si "handoff" es false, siempre null,
   "intencion": null o "COMPRA" | "VENTA" | "CONSIGNACION" | "COMPRA_CON_PERMUTA" | "HABLAR_CON_ASESOR" | "OTRA_CONSULTA" — la intención detectada en ESTE momento de la charla. Importante: si el cliente quiere VENDER o CONSIGNAR su propio auto y lo menciona (marca/modelo/año), ese auto va en "vehiculo_mencionado" igual, pero la intención debe quedar en "VENTA" o "CONSIGNACION" — nunca "COMPRA" — para que no se confunda con una búsqueda de stock,
   "calificacion": null o "caliente" | "tibio" | "frio",
-  "datos_detectados": { "timing": null o string, "forma_pago": null o string, "tiene_permuta": null o boolean, "nombre": null o string, "email": null o string },
+  "datos_detectados": { "timing": null o string, "forma_pago": null o string, "tiene_permuta": null o boolean, "nombre": null o string, "email": null o string, "telefono": null o string },
   "vehiculo_mencionado": null o { "marca": string o null, "modelo": string o null, "categoria": null o "Auto" | "Pickup/Camioneta" | "SUV" | "Utilitario" } SOLO si el cliente mencionó una marca, un modelo, y/o un tipo de vehículo PARA COMPRAR en su ÚLTIMO mensaje de esta charla (cualquiera de los tres alcanza para completar este campo y disparar la búsqueda) — null si solo está confirmando un auto ya mostrado, si lo que mencionó es su propio auto de permuta, o si el último mensaje no menciona ningún auto ni tipo de vehículo (aunque se haya hablado de uno en turnos anteriores). NUNCA lo repitas de un turno anterior solo porque "sigue siendo el foco" de la charla,
   "pedir_stock_general": false o true (ver regla PEDIDO GENÉRICO DE OPCIONES arriba),
   "presupuesto_mencionado": null o { "monto": number, "moneda": "USD" | "ARS" } si el cliente mencionó un monto de dinero disponible

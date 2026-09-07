@@ -74,13 +74,26 @@ export async function POST(request: Request) {
     return NextResponse.json({ replies: ["¡Hola! Gracias por escribirnos a Pfaffen Autos. En breve te contacta uno de nuestros asesores. 🚗"], handoff: false });
   }
 
-  const { reply, handoff, calificacion, resumen_handoff } = result.data;
+  const { reply, handoff, calificacion, resumen_handoff, datos_detectados } = result.data;
   const partes = dividirRespuestaEnMensajes(reply);
 
   for (const parte of partes) {
     await supabase.from("rodi_mensajes").insert({ conversacion_id: conversacion.id, direccion: "out", texto: parte, ai_generado: true });
   }
   await supabase.from("rodi_conversaciones").update({ calificacion }).eq("id", conversacion.id);
+
+  // Nombre/email/teléfono que el cliente vaya dando durante la charla se
+  // guardan apenas se detectan, sin esperar al handoff — así quedan aunque
+  // la charla se corte antes de derivar a un vendedor (antes solo se
+  // guardaban si venían en el body inicial del widget, nunca lo que la IA
+  // extraía del texto de la conversación).
+  if (datos_detectados?.nombre || datos_detectados?.email || datos_detectados?.telefono) {
+    const patch: Record<string, unknown> = {};
+    if (datos_detectados.nombre && !conversacion.nombre_contacto) patch.nombre_contacto = datos_detectados.nombre;
+    if (datos_detectados.email && !conversacion.email_contacto) patch.email_contacto = datos_detectados.email;
+    if (datos_detectados.telefono && !conversacion.telefono_contacto) patch.telefono_contacto = datos_detectados.telefono;
+    if (Object.keys(patch).length > 0) await supabase.from("rodi_conversaciones").update(patch).eq("id", conversacion.id);
+  }
   if (handoff) {
     await supabase.from("rodi_conversaciones").update({
       handoff_at: new Date().toISOString(), handoff_reason: "cliente_pidio_humano", ai_habilitada: false,

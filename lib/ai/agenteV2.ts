@@ -25,6 +25,7 @@ export const AgentReplySchemaV2 = z.object({
     tiene_permuta: z.boolean().nullable(),
     nombre: z.string().nullable(),
     email: z.string().nullable(),
+    telefono: z.string().nullable(),
   }),
   vehiculo_mencionado: z.object({
     marca: z.string().nullable(),
@@ -57,7 +58,7 @@ function respuestaLimiteAlcanzado(): AgentReplyV2 {
     pedir_stock_general: false,
     intencion: null,
     calificacion: null,
-    datos_detectados: { timing: null, forma_pago: null, tiene_permuta: null, nombre: null, email: null },
+    datos_detectados: { timing: null, forma_pago: null, tiene_permuta: null, nombre: null, email: null, telefono: null },
     vehiculo_mencionado: null,
     presupuesto_mencionado: null,
   };
@@ -79,7 +80,7 @@ async function ejecutarBusquedaStock(
 ): Promise<ResultadoStockV2[]> {
   let query = supabase
     .from("vehiculos")
-    .select("marca, modelo, anio, precio_venta, moneda_venta, precio_publicado_ars, precio_publicado_usd, patente, color, km, version, transmision, combustible, sucursales!vehiculos_sucursal_id_fkey ( nombre )")
+    .select("marca, modelo, anio, precio_venta, moneda_venta, precio_publicado_ars, precio_publicado_usd, patente, color, km, version, transmision, combustible, categoria, sucursales!vehiculos_sucursal_id_fkey ( nombre )")
     .in("estado", ["disponible", "reservado"])
     .limit(modelo ? 3 : 6);
   if (marca) query = query.ilike("marca", `%${marca}%`);
@@ -242,15 +243,16 @@ export async function generarRespuestaAgenteV2(historial: HistorialMensaje[], ca
   const esIntencionDeCompra = respuesta.intencion !== "VENTA" && respuesta.intencion !== "CONSIGNACION";
 
   if (esIntencionDeCompra && (respuesta.vehiculo_mencionado?.modelo || respuesta.vehiculo_mencionado?.marca || respuesta.vehiculo_mencionado?.categoria || respuesta.presupuesto_mencionado || respuesta.pedir_stock_general)) {
+    const categoriaSolicitada = respuesta.vehiculo_mencionado?.categoria ?? null;
     const { resultados, esAlternativa } = await buscarStockRealV2(
       respuesta.vehiculo_mencionado?.marca ?? null,
       respuesta.vehiculo_mencionado?.modelo ?? null,
-      respuesta.vehiculo_mencionado?.categoria ?? null,
+      categoriaSolicitada,
       respuesta.presupuesto_mencionado
     );
 
     const result2 = await chatJsonV2(AgentReplySchemaV2, [
-      { role: "system", content: buildSystemPromptV2(undefined, resultados, nombreBot, esAlternativa, sucursales, sugerirCierre) },
+      { role: "system", content: buildSystemPromptV2(undefined, resultados, nombreBot, esAlternativa, sucursales, sugerirCierre, categoriaSolicitada) },
       ...historial,
     ], { origen: canal });
 
