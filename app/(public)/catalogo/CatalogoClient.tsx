@@ -266,7 +266,9 @@ export default function CatalogoClient() {
         setVehiculos(data.vehiculos);
         setTotalResultados(data.count);
         setHasMore(false);
-        setSugerenciaIA(data.interpretacion.explicacion);
+        // interpretacion viene null cuando el match salió directo de la DB
+        // (sin gastar IA) -- no hay "la IA entendió esto" que mostrar.
+        if (data.interpretacion?.explicacion) setSugerenciaIA(data.interpretacion.explicacion);
       }
     } catch (err) {
       console.error("Error en búsqueda con IA:", err);
