@@ -2,6 +2,7 @@
 
 import { useMemo } from "react";
 import { fmt } from "./shared";
+import TablaResponsiva, { type ColumnaTabla } from "@/components/panelV2/TablaResponsiva";
 
 export default function ResumenAgenciaTab({ liquidaciones, gananciasOcultas }: { liquidaciones: any[]; gananciasOcultas: boolean }) {
   const finalizadas = liquidaciones.filter((l) => l.estado === "terminado");
@@ -33,23 +34,21 @@ export default function ResumenAgenciaTab({ liquidaciones, gananciasOcultas }: {
         <p className="text-xs text-slate-400 mt-1">{ultimo.ops} operaciones · Comisiones: {fmt(ultimo.comisiones)}</p>
       </div>
 
-      <div className="overflow-x-auto bg-white dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-xl">
-        <table className="w-full text-xs">
-          <thead className="text-left text-slate-400 border-b border-slate-100 dark:border-white/10"><tr><th className="p-2.5">Mes</th><th className="p-2.5">Ops</th><th className="p-2.5">Dif. transf. total</th><th className="p-2.5">Dif. multas total</th><th className="p-2.5">Comisiones gestoras</th><th className="p-2.5">Ingreso neto agencia</th></tr></thead>
-          <tbody>
-            {porMes.map((m) => (
-              <tr key={m.mes} className="border-b border-slate-50 dark:border-white/5">
-                <td className="p-2.5 font-bold">{new Date(m.mes + "-01T12:00:00").toLocaleDateString("es-AR", { month: "long", year: "numeric" })}</td>
-                <td className="p-2.5">{m.ops}</td>
-                <td className="p-2.5 font-mono text-emerald-600">{gananciasOcultas ? "—" : fmt(m.difTransfTotal)}</td>
-                <td className="p-2.5 font-mono">{gananciasOcultas ? "—" : (m.difMultasTotal ? fmt(m.difMultasTotal) : "—")}</td>
-                <td className="p-2.5 font-mono font-bold text-indigo-600">{fmt(m.comisiones)}</td>
-                <td className="p-2.5 font-mono font-bold text-blue-600">{gananciasOcultas ? "—" : fmt(m.ingresoNeto)}</td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-      </div>
+      <TablaResponsiva<typeof porMes[number]>
+        filas={porMes}
+        keyExtractor={(m) => m.mes}
+        encabezadoMobile={(m) => <p className="font-bold">{new Date(m.mes + "-01T12:00:00").toLocaleDateString("es-AR", { month: "long", year: "numeric" })}</p>}
+        columnas={
+          [
+            { key: "mes", header: "Mes", cell: (m) => new Date(m.mes + "-01T12:00:00").toLocaleDateString("es-AR", { month: "long", year: "numeric" }), claseTd: "font-bold", ocultarEnMobile: true },
+            { key: "ops", header: "Ops", cell: (m) => m.ops },
+            { key: "dif_transf", header: "Dif. transf. total", cell: (m) => (gananciasOcultas ? "—" : fmt(m.difTransfTotal)), claseTd: "font-mono text-emerald-600" },
+            { key: "dif_multas", header: "Dif. multas total", cell: (m) => (gananciasOcultas ? "—" : (m.difMultasTotal ? fmt(m.difMultasTotal) : "—")), claseTd: "font-mono" },
+            { key: "comisiones", header: "Comisiones gestoras", cell: (m) => fmt(m.comisiones), claseTd: "font-mono font-bold text-indigo-600" },
+            { key: "ingreso_neto", header: "Ingreso neto agencia", cell: (m) => (gananciasOcultas ? "—" : fmt(m.ingresoNeto)), claseTd: "font-mono font-bold text-blue-600" },
+          ] as ColumnaTabla<typeof porMes[number]>[]
+        }
+      />
     </div>
   );
 }
