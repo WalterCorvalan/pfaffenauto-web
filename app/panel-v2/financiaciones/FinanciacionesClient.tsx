@@ -4,6 +4,7 @@ import { useMemo, useState } from "react";
 import { supabase2 } from "@/lib/supabase2/client";
 import { CreditCard, Search, Filter, Clock, MessageSquareText } from "lucide-react";
 import TablaResponsiva, { type ColumnaTabla } from "@/components/panelV2/TablaResponsiva";
+import FinanciacionDetalleModal from "./FinanciacionDetalleModal";
 
 const ESTADO_LABEL: Record<string, string> = { nuevo: "Nuevo", en_gestion: "En gestión", descartado: "Descartado" };
 const ESTADO_STYLES: Record<string, string> = {
@@ -16,6 +17,7 @@ export default function FinanciacionesClient({ solicitudesIniciales }: { solicit
   const [solicitudes, setSolicitudes] = useState(solicitudesIniciales);
   const [filtroEstado, setFiltroEstado] = useState("nuevo");
   const [query, setQuery] = useState("");
+  const [seleccionada, setSeleccionada] = useState<any>(null);
 
   const counts = useMemo(() => ({
     nuevo: solicitudes.filter((s) => s.estado === "nuevo").length,
@@ -84,6 +86,7 @@ export default function FinanciacionesClient({ solicitudesIniciales }: { solicit
           <TablaResponsiva<any>
             filas={filtradas}
             keyExtractor={(s) => s.id}
+            onRowClick={(s) => setSeleccionada(s)}
             encabezadoMobile={(s) => (
               <div className="flex items-center gap-2">
                 <div className="w-6 h-6 rounded-full bg-rose-500 text-white flex items-center justify-center font-bold text-[10px] shrink-0">{(s.nombre || "?").substring(0, 2).toUpperCase()}</div>
@@ -102,6 +105,7 @@ export default function FinanciacionesClient({ solicitudesIniciales }: { solicit
                 { key: "estado", header: "Estado", cell: (s) => (
                   <select
                     value={s.estado}
+                    onClick={(e) => e.stopPropagation()}
                     onChange={(e) => cambiarEstado(s.id, e.target.value)}
                     className={`text-[10px] font-bold uppercase tracking-widest rounded-lg px-2 py-1.5 outline-none cursor-pointer border ${ESTADO_STYLES[s.estado]}`}
                   >
@@ -126,6 +130,8 @@ export default function FinanciacionesClient({ solicitudesIniciales }: { solicit
           />
         )}
       </div>
+
+      {seleccionada && <FinanciacionDetalleModal solicitud={seleccionada} onClose={() => setSeleccionada(null)} />}
     </div>
   );
 }
