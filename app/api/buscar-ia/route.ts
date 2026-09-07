@@ -30,6 +30,30 @@ export async function POST(req: Request) {
     }
     const { termino } = parsed.data;
 
+    // Primero DB directa (match literal contra marca/modelo/versión) -- la
+    // mayoría de las búsquedas son un modelo tipeado tal cual ("Toyota
+    // Hilux"), no necesitan que la IA las interprete. Solo se gasta un
+    // llamado a la IA cuando el texto libre no matchea nada literal (typos,
+    // sinónimos, "algo barato y automático", etc).
+    // ".or()" de PostgREST usa "," y "()" como separadores propios -- se
+    // sacan del término antes de armar el filtro para no romper la sintaxis
+    // con texto libre que los traiga.
+    const terminoFiltro = termino.replace(/[,()]/g, " ").trim();
+    const { data: matchDirecto, count: countDirecto, error: errorDirecto } = terminoFiltro
+      ? await supabase
+          .from("vehiculos")
+          .select(`*, sucursales!vehiculos_sucursal_id_fkey ( nombre )`, { count: "exact" })
+          .in("estado", ["disponible", "reservado"])
+          .or(`marca.ilike.%${terminoFiltro}%,modelo.ilike.%${terminoFiltro}%,version.ilike.%${terminoFiltro}%`)
+          .order("created_at", { ascending: false })
+          .limit(24)
+      : { data: null, count: 0, error: null };
+    if (errorDirecto) throw errorDirecto;
+
+    if (matchDirecto && matchDirecto.length > 0) {
+      return Response.json({ ok: true, vehiculos: matchDirecto, count: countDirecto || 0, interpretacion: null });
+    }
+
     const resultado = await interpretarBusqueda(termino);
     if (!resultado.ok) {
       return Response.json({ error: resultado.error }, { status: 500 });
