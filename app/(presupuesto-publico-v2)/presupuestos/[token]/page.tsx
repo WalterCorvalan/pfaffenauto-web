@@ -1,6 +1,6 @@
 import { createClient } from "@supabase/supabase-js";
 import { headers } from "next/headers";
-import { Search, MessageCircle, MapPin } from "lucide-react";
+import { Search, MessageCircle, MapPin, Phone, ShieldCheck } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
 import { NEGOCIO_CONFIG } from "@/data/NegocioConfig";
@@ -52,15 +52,29 @@ export default async function PresupuestoPublicoV2Page({ params }: { params: Pro
   }
 
   let nombreVendedor: string | null = null;
+  let sucursal: { nombre: string; direccion: string | null; telefono_encargado: string | null; google_maps_url: string | null } | null = null;
   if (p?.vendedor_id) {
-    const { data: vendedor } = await supabase.from("perfiles").select("nombre").eq("id", p.vendedor_id).maybeSingle();
+    // La dirección/mapa de este presupuesto tienen que ser los de la
+    // sucursal del vendedor que lo generó, no una cualquiera -- antes se
+    // pedía sucursales ordenadas por nombre con limit(1), así que SIEMPRE
+    // salía "Casa Central" (gana alfabéticamente a "Don Torcuato") sin
+    // importar qué vendedor era ni dónde trabaja en realidad.
+    const { data: vendedor } = await supabase.from("perfiles").select("nombre, sucursal_id").eq("id", p.vendedor_id).maybeSingle();
     nombreVendedor = vendedor?.nombre ?? null;
+    if (vendedor?.sucursal_id) {
+      const { data: s } = await supabase.from("sucursales").select("nombre, direccion, telefono_encargado, google_maps_url").eq("id", vendedor.sucursal_id).maybeSingle();
+      sucursal = s ?? null;
+    }
   }
+  if (!sucursal) {
+    // Vendedor sin sucursal asignada (o presupuesto sin vendedor): fallback
+    // a la primera sucursal en vez de dejar la tarjeta sin dirección.
+    const { data: fallback } = await supabase.from("sucursales").select("nombre, direccion, telefono_encargado, google_maps_url").order("nombre").limit(1);
+    sucursal = fallback?.[0] ?? null;
+  }
+  const sucursalNombre = sucursal?.nombre || "Casa Central";
 
-  const { data: sucursalesData } = await supabase.from("sucursales").select("nombre").order("nombre").limit(1);
-  const sucursalNombre = sucursalesData?.[0]?.nombre || "Casa Central";
-
-  const mapaHref = `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(sucursalNombre)}`;
+  const mapaHref = sucursal?.google_maps_url || `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(sucursal?.direccion || sucursalNombre)}`;
   const whatsappHref = `https://wa.me/${NEGOCIO_CONFIG.contacto.whatsapp.replace(/\D/g, "")}${p ? `?text=${encodeURIComponent(`Hola! Consulto por el presupuesto N° ${p.numero} de ${p.marca} ${p.modelo}`)}` : ""}`;
 
   const formatMoney = (val: number) => `$ ${Number(val || 0).toLocaleString("es-AR")}`;
@@ -137,23 +151,33 @@ export default async function PresupuestoPublicoV2Page({ params }: { params: Pro
           </div>
         </div>
 
-        <div className="bg-white border border-slate-100 rounded-3xl shadow-sm p-6 space-y-4">
-          <div className="flex items-center gap-3">
-            <div className="w-14 h-14 rounded-full bg-blue-50 flex items-center justify-center shrink-0"><span className="text-lg font-black text-[#0145F2]">{(nombreVendedor || "PA").slice(0, 2).toUpperCase()}</span></div>
-            <div>
-              <p className="font-black text-navy text-sm">{nombreVendedor || "Equipo Pfaffen Autos"}</p>
-              <p className="text-[11px] text-slate-400">Asesor comercial</p>
+        <div className="bg-white border border-slate-100 rounded-3xl shadow-sm overflow-hidden">
+          <div className="bg-gradient-to-br from-[#0145F2] to-blue-700 p-6 text-white">
+            <div className="flex items-center gap-3">
+              <div className="w-14 h-14 rounded-full bg-white/15 border border-white/20 flex items-center justify-center shrink-0"><span className="text-lg font-black">{(nombreVendedor || "PA").slice(0, 2).toUpperCase()}</span></div>
+              <div>
+                <p className="font-black text-sm">{nombreVendedor || "Equipo Pfaffen Autos"}</p>
+                <p className="text-[11px] text-blue-100 flex items-center gap-1"><ShieldCheck className="w-3 h-3" /> Asesor comercial verificado</p>
+              </div>
             </div>
           </div>
 
-          <a href={whatsappHref} target="_blank" rel="noopener noreferrer" className="flex items-center justify-center gap-2 w-full py-2.5 bg-emerald-500 hover:bg-emerald-600 text-white font-bold rounded-xl text-xs transition-colors"><MessageCircle className="w-4 h-4" /> Escribinos por WhatsApp</a>
+          <div className="p-6 space-y-4">
+            <a href={whatsappHref} target="_blank" rel="noopener noreferrer" className="flex items-center justify-center gap-2 w-full py-3 bg-emerald-500 hover:bg-emerald-600 text-white font-bold rounded-xl text-xs uppercase tracking-widest transition-colors shadow-sm shadow-emerald-500/20"><MessageCircle className="w-4 h-4" /> Escribinos por WhatsApp</a>
 
-          <div className="border-t border-slate-100 pt-4 text-xs text-slate-600 space-y-0.5">
-            <p className="font-black text-navy">Pfaffen Autos</p>
-            <p className="font-bold">{sucursalNombre}</p>
+            <div className="border-t border-slate-100 pt-4 space-y-2.5">
+              <p className="text-[10px] font-black uppercase tracking-widest text-slate-400">Sucursal</p>
+              <p className="font-black text-navy text-sm">{sucursalNombre}</p>
+              {sucursal?.direccion && (
+                <p className="text-xs text-slate-500 flex items-start gap-1.5"><MapPin className="w-3.5 h-3.5 text-slate-400 shrink-0 mt-0.5" /> {sucursal.direccion}</p>
+              )}
+              {sucursal?.telefono_encargado && (
+                <p className="text-xs text-slate-500 flex items-center gap-1.5"><Phone className="w-3.5 h-3.5 text-slate-400 shrink-0" /> {sucursal.telefono_encargado}</p>
+              )}
+            </div>
+
+            <a href={mapaHref} target="_blank" rel="noopener noreferrer" className="flex items-center justify-center gap-2 w-full py-3 bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold rounded-xl text-xs uppercase tracking-widest transition-colors"><MapPin className="w-4 h-4" /> Cómo llegar</a>
           </div>
-
-          <a href={mapaHref} target="_blank" rel="noopener noreferrer" className="flex items-center justify-center gap-2 w-full py-2.5 bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold rounded-xl text-xs transition-colors"><MapPin className="w-4 h-4" /> Abrir en Google Maps</a>
         </div>
       </div>
     </div>
