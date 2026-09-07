@@ -246,6 +246,62 @@ export default async function EmbudoPage() {
       {/* GRÁFICO TENDENCIA MENSUAL */}
       <EmbudoCanalChart data={chartDataCanales} canales={Array.from(canalesVentaUnicos)} />
 
+      {/* LEADS Y CIERRES POR CANAL (calculado, nunca se mostraba) */}
+      <div className="bg-white dark:bg-[#111] border border-slate-200 dark:border-white/10 rounded-2xl shadow-sm overflow-hidden">
+        <div className="p-6 border-b border-slate-100 dark:border-white/5">
+          <h2 className="text-[11px] font-bold uppercase tracking-widest text-slate-500 dark:text-slate-400 flex items-center gap-2">
+            <Globe className="w-4 h-4 text-sky-500" /> Leads y cierres por canal (histórico)
+          </h2>
+        </div>
+        {canalesOrdenados.length === 0 ? (
+          <p className="p-10 text-center text-slate-400 text-sm italic">Sin leads todavía.</p>
+        ) : (
+          <div className="divide-y divide-slate-100 dark:divide-white/5">
+            {canalesOrdenados.map(([canal, stats]: any) => {
+              const tasa = stats.total > 0 ? Math.round((stats.ganados / stats.total) * 100) : 0;
+              return (
+                <div key={canal} className="flex items-center justify-between px-6 py-3">
+                  <span className="text-[13px] font-bold text-slate-700 dark:text-slate-200">{canal}</span>
+                  <div className="flex items-center gap-6 text-xs">
+                    <span className="text-slate-500 dark:text-slate-400">{stats.total} leads</span>
+                    <span className="text-emerald-600 dark:text-emerald-400 font-bold">{stats.ganados} ganados</span>
+                    <span className={`font-mono font-bold ${tasa >= 15 ? "text-emerald-600 dark:text-emerald-400" : tasa > 0 ? "text-amber-600 dark:text-amber-400" : "text-slate-400"}`}>{tasa}%</span>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        )}
+      </div>
+
+      {/* CÓMO NOS CONOCIERON — clientes cargados a mano (walk-in) */}
+      {totalConocio > 0 && (
+        <div className="bg-white dark:bg-[#111] border border-slate-200 dark:border-white/10 rounded-2xl shadow-sm overflow-hidden">
+          <div className="p-6 border-b border-slate-100 dark:border-white/5">
+            <h2 className="text-[11px] font-bold uppercase tracking-widest text-slate-500 dark:text-slate-400 flex items-center gap-2">
+              <Users className="w-4 h-4 text-purple-500" /> Cómo nos conocieron (clientes que llegaron por Showroom)
+            </h2>
+            <p className="text-[11px] text-slate-400 mt-0.5">{totalConocio} clientes cargados a mano en el local, con lo que dijeron que los trajo.</p>
+          </div>
+          <div className="p-6 space-y-2.5">
+            {conocioOrdenado.map(([origen, cantidad]) => {
+              const pct = Math.round((cantidad / totalConocio) * 100);
+              return (
+                <div key={origen}>
+                  <div className="flex items-center justify-between text-xs mb-1">
+                    <span className="text-slate-600 dark:text-slate-300">{origen}</span>
+                    <span className="font-bold text-slate-800 dark:text-white">{cantidad} ({pct}%)</span>
+                  </div>
+                  <div className="h-2 rounded-full bg-slate-100 dark:bg-white/10 overflow-hidden">
+                    <div className="h-full rounded-full bg-purple-500" style={{ width: `${Math.max(2, pct)}%` }} />
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      )}
+
       {/* EMBUDO POR CITA X VENDEDOR */}
       <div className="bg-white dark:bg-[#111] border border-slate-200 dark:border-white/10 rounded-2xl shadow-sm overflow-hidden">
         <div className="p-6 border-b border-slate-100 dark:border-white/5 flex items-center justify-between">

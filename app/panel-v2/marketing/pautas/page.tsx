@@ -47,11 +47,12 @@ export default async function PautasMarketingPage() {
   const mesAnteriorInicio = inicioMes(-1);
   const mesSiguienteInicio = inicioMes(1);
 
-  const [{ data: campanasMesActual }, { data: campanasMesAnterior }, { data: todas }, { data: leadsPorUtm }] = await Promise.all([
+  const [{ data: campanasMesActual }, { data: campanasMesAnterior }, { data: todas }, { data: leadsPorUtm }, { count: leadsRealesMes }] = await Promise.all([
     supabase.from("campanas_marketing").select("*").gte("periodo", mesActualInicio).lt("periodo", mesSiguienteInicio),
     supabase.from("campanas_marketing").select("*").gte("periodo", mesAnteriorInicio).lt("periodo", mesActualInicio),
     supabase.from("campanas_marketing").select("*").order("periodo", { ascending: false }).limit(50),
     supabase.from("v_reportes_leads_por_utm").select("*").limit(30),
+    supabase.from("leads_tasacion").select("id", { count: "exact", head: true }).not("utm_source", "is", null).gte("created_at", mesActualInicio).lt("created_at", mesSiguienteInicio),
   ]);
 
   const actual = campanasMesActual || [];
@@ -61,6 +62,9 @@ export default async function PautasMarketingPage() {
   const totalAnterior = sumar(anterior);
   const varGasto = variacion(totalActual.gasto, totalAnterior.gasto);
   const costoPorLead = totalActual.leads > 0 ? totalActual.gasto / totalActual.leads : 0;
+  const leadsReales = leadsRealesMes || 0;
+  const costoPorLeadReal = leadsReales > 0 ? totalActual.gasto / leadsReales : 0;
+  const discrepanciaLeads = totalActual.leads - leadsReales;
 
   const nombreMesActual = new Date(mesActualInicio).toLocaleDateString("es-AR", { month: "long", year: "numeric", timeZone: "UTC" });
 
@@ -99,7 +103,7 @@ export default async function PautasMarketingPage() {
       </div>
 
       {/* RESUMEN GLOBAL DEL MES */}
-      <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-4">
+      <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-5 gap-4">
         <div className="bg-white dark:bg-[#111] border border-slate-200 dark:border-white/10 rounded-2xl p-5 shadow-sm">
           <span className="text-[10px] uppercase tracking-widest font-bold text-slate-400 flex items-center gap-1.5">
             <DollarSign className="w-3.5 h-3.5" /> Gasto Total
@@ -128,11 +132,22 @@ export default async function PautasMarketingPage() {
         </div>
 
         <div className="bg-white dark:bg-[#111] border border-slate-200 dark:border-white/10 rounded-2xl p-5 shadow-sm">
-          <span className="text-[10px] uppercase tracking-widest font-bold text-slate-400">Costo por Lead</span>
+          <span className="text-[10px] uppercase tracking-widest font-bold text-slate-400">Costo por Lead (carga manual)</span>
           <h3 className="text-2xl font-black text-rose-600 dark:text-rose-400 mt-1 font-mono">
             {costoPorLead > 0 ? `$ ${costoPorLead.toLocaleString("es-AR", { maximumFractionDigits: 0 })}` : "—"}
           </h3>
           <span className="text-[11px] text-slate-400 font-medium mt-1 block">Gasto total / leads del mes</span>
+        </div>
+
+        <div className="bg-white dark:bg-[#111] border border-slate-200 dark:border-white/10 rounded-2xl p-5 shadow-sm">
+          <span className="text-[10px] uppercase tracking-widest font-bold text-slate-400">Leads reales (UTM)</span>
+          <h3 className="text-2xl font-black text-slate-900 dark:text-white mt-1 font-mono">{leadsReales}</h3>
+          <span className={`text-[11px] font-medium mt-1 block ${discrepanciaLeads !== 0 ? "text-amber-600 dark:text-amber-400" : "text-slate-400"}`}>
+            {discrepanciaLeads !== 0
+              ? `Carga manual dice ${totalActual.leads} — diferencia de ${Math.abs(discrepanciaLeads)}`
+              : "Coincide con la carga manual"}
+          </span>
+          {costoPorLeadReal > 0 && <span className="text-[11px] text-slate-400 font-medium block">Costo/lead real: $ {costoPorLeadReal.toLocaleString("es-AR", { maximumFractionDigits: 0 })}</span>}
         </div>
       </div>
 
