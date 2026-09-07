@@ -4,6 +4,7 @@ import { useState, useMemo } from "react";
 import { supabase2 } from "@/lib/supabase2/client";
 import { Plus, X, Save, Trash2, Pencil, ArrowLeftRight, Lock, Download, Search, Paperclip } from "lucide-react";
 import { inputClass, labelClass, fmt, CATEGORIAS_MOVIMIENTO as CATEGORIAS } from "./shared";
+import TablaResponsiva, { type ColumnaTabla } from "@/components/panelV2/TablaResponsiva";
 
 function inicioSemana(d: Date) { const x = new Date(d); const dia = x.getDay(); x.setDate(x.getDate() - (dia === 0 ? 6 : dia - 1)); x.setHours(0, 0, 0, 0); return x; }
 
@@ -227,26 +228,29 @@ export default function MovimientosTab({
       {filtrados.length === 0 ? (
         <div className="bg-white dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-2xl py-16 text-center"><p className="text-sm font-bold">Sin movimientos</p></div>
       ) : (
-        <div className="bg-white dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-2xl overflow-hidden">
-          <div className="overflow-x-auto">
-            <table className="w-full text-left">
-              <thead><tr className="bg-slate-50 dark:bg-white/5 text-[10px] uppercase tracking-widest text-slate-400 font-bold"><th className="px-4 py-3">Fecha</th><th className="px-4 py-3">Descripción</th><th className="px-4 py-3">Categoría</th><th className="px-4 py-3">Caja</th><th className="px-4 py-3">Tipo</th><th className="px-4 py-3">Monto</th><th className="px-4 py-3 w-px">Acciones</th></tr></thead>
-              <tbody className="divide-y divide-slate-100 dark:divide-white/10">
-                {filtrados.map((m) => (
-                  <tr key={m.id}>
-                    <td className="px-4 py-3 text-sm whitespace-nowrap">{m.fecha}</td>
-                    <td className="px-4 py-3 text-sm font-semibold">{m.observaciones || m.tipo_movimiento || "—"} {m.estado === "pendiente" && <span className="text-[9px] font-bold uppercase text-amber-600 bg-amber-50 dark:bg-amber-500/10 px-1.5 py-0.5 rounded ml-1">Pendiente aprobación</span>}</td>
-                    <td className="px-4 py-3 text-sm text-slate-500">{m.tipo_movimiento || "—"}</td>
-                    <td className="px-4 py-3 text-sm text-slate-500">{m.cuenta?.nombre}{m.transferencia_grupo_id && <span className="text-[9px] font-bold text-indigo-600 bg-indigo-50 dark:bg-indigo-500/10 px-1.5 py-0.5 rounded ml-1">Transferencia</span>}</td>
-                    <td className="px-4 py-3"><span className={`text-[10px] font-bold uppercase px-2 py-0.5 rounded-full flex items-center gap-1 w-fit ${m.tipo === "ingreso" ? "bg-emerald-50 dark:bg-emerald-500/10 text-emerald-700" : "bg-rose-50 dark:bg-rose-500/10 text-rose-700"}`}>{m.tipo === "ingreso" ? "↗" : "↘"} {m.tipo === "ingreso" ? "Ingreso" : "Egreso"}</span></td>
-                    <td className={`px-4 py-3 text-sm font-bold ${m.tipo === "ingreso" ? "text-emerald-600" : "text-rose-600"}`}>{m.tipo === "ingreso" ? "+" : "-"}{fmt(m.monto, m.cuenta?.moneda)}</td>
-                    <td className="px-4 py-3 whitespace-nowrap"><button className="text-[11px] font-bold text-slate-500 mr-2"><Pencil className="w-3.5 h-3.5 inline" /></button><button onClick={() => eliminar(m)} className="text-[11px] font-bold text-rose-600">Eliminar</button></td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        </div>
+        <TablaResponsiva<any>
+          filas={filtrados}
+          keyExtractor={(m) => m.id}
+          encabezadoMobile={(m) => (
+            <p className="text-sm font-semibold">{m.observaciones || m.tipo_movimiento || "—"} {m.estado === "pendiente" && <span className="text-[9px] font-bold uppercase text-amber-600 bg-amber-50 dark:bg-amber-500/10 px-1.5 py-0.5 rounded ml-1">Pendiente aprobación</span>}</p>
+          )}
+          columnas={
+            [
+              { key: "fecha", header: "Fecha", cell: (m) => m.fecha, claseTd: "text-sm whitespace-nowrap" },
+              { key: "descripcion", header: "Descripción", cell: (m) => <>{m.observaciones || m.tipo_movimiento || "—"} {m.estado === "pendiente" && <span className="text-[9px] font-bold uppercase text-amber-600 bg-amber-50 dark:bg-amber-500/10 px-1.5 py-0.5 rounded ml-1">Pendiente aprobación</span>}</>, claseTd: "text-sm font-semibold", ocultarEnMobile: true },
+              { key: "categoria", header: "Categoría", cell: (m) => m.tipo_movimiento || "—", claseTd: "text-sm text-slate-500" },
+              { key: "caja", header: "Caja", cell: (m) => <>{m.cuenta?.nombre}{m.transferencia_grupo_id && <span className="text-[9px] font-bold text-indigo-600 bg-indigo-50 dark:bg-indigo-500/10 px-1.5 py-0.5 rounded ml-1">Transferencia</span>}</>, claseTd: "text-sm text-slate-500" },
+              { key: "tipo", header: "Tipo", cell: (m) => <span className={`text-[10px] font-bold uppercase px-2 py-0.5 rounded-full flex items-center gap-1 w-fit ${m.tipo === "ingreso" ? "bg-emerald-50 dark:bg-emerald-500/10 text-emerald-700" : "bg-rose-50 dark:bg-rose-500/10 text-rose-700"}`}>{m.tipo === "ingreso" ? "↗" : "↘"} {m.tipo === "ingreso" ? "Ingreso" : "Egreso"}</span> },
+              { key: "monto", header: "Monto", cell: (m) => <span className={`text-sm font-bold ${m.tipo === "ingreso" ? "text-emerald-600" : "text-rose-600"}`}>{m.tipo === "ingreso" ? "+" : "-"}{fmt(m.monto, m.cuenta?.moneda)}</span> },
+            ] as ColumnaTabla<any>[]
+          }
+          acciones={(m) => (
+            <>
+              <button className="text-[11px] font-bold text-slate-500 mr-2"><Pencil className="w-3.5 h-3.5 inline" /></button>
+              <button onClick={() => eliminar(m)} className="text-[11px] font-bold text-rose-600">Eliminar</button>
+            </>
+          )}
+        />
       )}
 
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 mt-3">
