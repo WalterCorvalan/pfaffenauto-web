@@ -6,6 +6,7 @@ import { supabase2 } from "@/lib/supabase2/client";
 import { ChevronDown, ChevronRight, MessageCircle, Check, ClipboardList, AlertTriangle, Clock, ShieldAlert, Lock } from "lucide-react";
 import ExpedienteDetalleModal from "../expedientes/ExpedienteDetalleModal";
 import { fmtFechaLocal, hoyLocalISO } from "@/lib/panelV2/fechas";
+import TablaResponsiva, { type ColumnaTabla } from "@/components/panelV2/TablaResponsiva";
 
 interface Perfil { id: string; nombre: string; roles: string[] }
 
@@ -131,48 +132,40 @@ export default function GestoriaClient({
           <p className="text-sm font-bold text-slate-600 dark:text-slate-300">Sin expedientes en este tab</p>
         </div>
       ) : vista === "tabla" ? (
-        <div className="bg-white dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-2xl overflow-x-auto">
-          <table className="w-full text-left">
-            <thead>
-              <tr className="border-b border-slate-100 dark:border-white/5 text-[10px] font-black uppercase tracking-widest text-slate-400">
-                <th className="px-4 py-3">Vehículo</th>
-                <th className="px-4 py-3">Comprador</th>
-                <th className="px-4 py-3">Gestor</th>
-                <th className="px-4 py-3">Estado</th>
-                <th className="px-4 py-3">Avance</th>
-                <th className="px-4 py-3">Vence</th>
-                <th className="px-4 py-3">Días</th>
-              </tr>
-            </thead>
-            <tbody>
-              {lista.map((e) => {
-                const v = e.venta || {};
+        <TablaResponsiva<any>
+          filas={lista}
+          keyExtractor={(e) => e.id}
+          onRowClick={(e) => setDetalleId(e.id)}
+          encabezadoMobile={(e) => {
+            const v = e.venta || {};
+            return (
+              <div>
+                <p className="text-sm font-bold text-slate-900 dark:text-white">{v.vehiculo_marca} {v.vehiculo_modelo}</p>
+                <p className="text-[11px] text-slate-400">{v.vehiculo_patente || "s/patente"}</p>
+              </div>
+            );
+          }}
+          columnas={
+            [
+              { key: "vehiculo", header: "Vehículo", cell: (e) => { const v = e.venta || {}; return <><p className="text-sm font-bold text-slate-900 dark:text-white">{v.vehiculo_marca} {v.vehiculo_modelo}</p><p className="text-[11px] text-slate-400">{v.vehiculo_patente || "s/patente"}</p></>; }, ocultarEnMobile: true },
+              { key: "comprador", header: "Comprador", cell: (e) => (e.venta || {}).comprador_nombre || "—", claseTd: "text-xs text-slate-600 dark:text-slate-300" },
+              { key: "gestor", header: "Gestor", cell: (e) => (e.gestor_asignado_id ? perfilMap[e.gestor_asignado_id] : "—"), claseTd: "text-xs text-slate-600 dark:text-slate-300" },
+              { key: "estado", header: "Estado", cell: (e) => <span className={`text-[10px] font-bold px-2 py-1 rounded-full ${ESTADO_CLASS[e.estado]}`}>{ESTADO_LABEL[e.estado] || e.estado}</span> },
+              { key: "avance", header: "Avance", cell: (e) => {
                 const h = hitos[e.id] || [];
                 const pct = h.length ? Math.round((h.filter((x) => x.completado).length / h.length) * 100) : 0;
-                const dias = Math.floor((Date.now() - new Date(e.fecha_apertura || e.created_at).getTime()) / 86400000);
                 return (
-                  <tr key={e.id} onClick={() => setDetalleId(e.id)} className="border-b border-slate-50 dark:border-white/5 last:border-0 cursor-pointer hover:bg-slate-50 dark:hover:bg-white/5">
-                    <td className="px-4 py-3">
-                      <p className="text-sm font-bold text-slate-900 dark:text-white">{v.vehiculo_marca} {v.vehiculo_modelo}</p>
-                      <p className="text-[11px] text-slate-400">{v.vehiculo_patente || "s/patente"}</p>
-                    </td>
-                    <td className="px-4 py-3 text-xs text-slate-600 dark:text-slate-300">{v.comprador_nombre || "—"}</td>
-                    <td className="px-4 py-3 text-xs text-slate-600 dark:text-slate-300">{e.gestor_asignado_id ? perfilMap[e.gestor_asignado_id] : "—"}</td>
-                    <td className="px-4 py-3"><span className={`text-[10px] font-bold px-2 py-1 rounded-full ${ESTADO_CLASS[e.estado]}`}>{ESTADO_LABEL[e.estado] || e.estado}</span></td>
-                    <td className="px-4 py-3">
-                      <div className="flex items-center gap-2 w-28">
-                        <div className="h-1.5 flex-1 bg-slate-200 dark:bg-white/10 rounded-full"><div className="h-1.5 bg-rose-500 rounded-full" style={{ width: `${pct}%` }} /></div>
-                        <span className="text-[10px] text-slate-400">{pct}%</span>
-                      </div>
-                    </td>
-                    <td className="px-4 py-3 text-xs text-slate-500 dark:text-slate-400">{e.vencimiento ? fmtFechaLocal(e.vencimiento) : "—"}</td>
-                    <td className="px-4 py-3 text-xs text-slate-500 dark:text-slate-400">{dias}d</td>
-                  </tr>
+                  <div className="flex items-center gap-2 w-28">
+                    <div className="h-1.5 flex-1 bg-slate-200 dark:bg-white/10 rounded-full"><div className="h-1.5 bg-rose-500 rounded-full" style={{ width: `${pct}%` }} /></div>
+                    <span className="text-[10px] text-slate-400">{pct}%</span>
+                  </div>
                 );
-              })}
-            </tbody>
-          </table>
-        </div>
+              } },
+              { key: "vence", header: "Vence", cell: (e) => (e.vencimiento ? fmtFechaLocal(e.vencimiento) : "—"), claseTd: "text-xs text-slate-500 dark:text-slate-400" },
+              { key: "dias", header: "Días", cell: (e) => `${Math.floor((Date.now() - new Date(e.fecha_apertura || e.created_at).getTime()) / 86400000)}d`, claseTd: "text-xs text-slate-500 dark:text-slate-400" },
+            ] as ColumnaTabla<any>[]
+          }
+        />
       ) : (
         <div className="space-y-3">
           {lista.map((e) => {

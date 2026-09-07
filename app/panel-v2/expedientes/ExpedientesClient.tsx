@@ -6,6 +6,7 @@ import { supabase2 } from "@/lib/supabase2/client";
 import { Search, FolderPlus, Trash2, Pencil, Lock } from "lucide-react";
 import ExpedienteDetalleModal from "./ExpedienteDetalleModal";
 import { fmtFechaLocal } from "@/lib/panelV2/fechas";
+import TablaResponsiva, { type ColumnaTabla } from "@/components/panelV2/TablaResponsiva";
 
 interface Perfil { id: string; nombre: string; roles: string[] }
 
@@ -73,6 +74,36 @@ export default function ExpedientesClient({
 
   const actualizarUno = (e: any) => setExpedientes((prev) => prev.map((x) => (x.id === e.id ? { ...x, ...e } : x)));
 
+  const renderExpedienteCell = (e: any) => {
+    const v = e.venta || {};
+    const pendiente = !e.confirmado_comprador || !e.confirmado_consignacion;
+    const dias = Math.floor((Date.now() - new Date(e.fecha_apertura || e.created_at).getTime()) / 86400000);
+    return (
+      <div>
+        <div className="flex items-center gap-1.5 flex-wrap">
+          <p className="text-sm font-bold text-slate-900 dark:text-white">{e.titulo || `EXP — ${v.vehiculo_marca || ""} ${v.vehiculo_modelo || ""}`}</p>
+          {v.vehiculo_patente && <span className="text-[9px] font-bold bg-slate-100 dark:bg-white/10 px-1.5 py-0.5 rounded">{v.vehiculo_patente}</span>}
+        </div>
+        {pendiente && (
+          <span className="inline-block text-[9px] font-black uppercase tracking-wide text-rose-700 dark:text-rose-300 bg-rose-100 dark:bg-rose-500/20 px-2 py-1 rounded-md mt-1.5">
+            🔒 Bloqueado hasta confirmación de las partes
+          </span>
+        )}
+        <p className="text-[12px] font-semibold text-slate-600 dark:text-slate-300 mt-1.5">{[v.vehiculo_marca, v.vehiculo_modelo, v.vehiculo_anio].filter(Boolean).join(" ")}</p>
+        <p className="text-[11px] text-slate-400">{fmtFechaLocal(e.fecha_apertura || e.created_at)}</p>
+        <div className="mt-1.5">
+          <div className="flex items-center justify-between text-[10px] font-bold text-emerald-600 dark:text-emerald-400 mb-0.5">
+            <span>Día {dias} de {PLAZO_TRANSFERENCIA_DIAS}</span>
+            <span>{Math.min(100, Math.round((dias / PLAZO_TRANSFERENCIA_DIAS) * 100))}%</span>
+          </div>
+          <div className="w-full h-1.5 bg-slate-100 dark:bg-white/10 rounded-full overflow-hidden">
+            <div className={`h-full rounded-full ${dias > PLAZO_TRANSFERENCIA_DIAS ? "bg-rose-500" : "bg-emerald-500"}`} style={{ width: `${Math.min(100, Math.round((dias / PLAZO_TRANSFERENCIA_DIAS) * 100))}%` }} />
+          </div>
+        </div>
+      </div>
+    );
+  };
+
   return (
     <div className="p-6">
       <div className="flex items-start justify-between mb-1">
@@ -130,79 +161,30 @@ export default function ExpedientesClient({
           <p className="text-xs text-slate-400 mt-1 max-w-sm">Los expedientes se generan automáticamente al cerrar una venta — no hay alta manual en v2.</p>
         </div>
       ) : (
-        <div className="bg-white dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-2xl overflow-x-auto">
-          <table className="w-full text-left">
-            <thead>
-              <tr className="border-b border-slate-100 dark:border-white/5 text-[10px] font-black uppercase tracking-widest text-slate-400">
-                <th className="px-4 py-3">Expediente</th>
-                <th className="px-4 py-3">Vehículo</th>
-                <th className="px-4 py-3">Consignador</th>
-                <th className="px-4 py-3">Parte Vendedora</th>
-                <th className="px-4 py-3">Parte Compradora</th>
-                <th className="px-4 py-3">Estado</th>
-                <th className="px-4 py-3">Gastos</th>
-                <th className="px-4 py-3 w-px"></th>
-              </tr>
-            </thead>
-            <tbody>
-              {filtrados.map((e) => {
-                const v = e.venta || {};
-                const pendiente = !e.confirmado_comprador || !e.confirmado_consignacion;
-                const gastos = gastosPorExpediente[e.id] || { vendedor: 0, comprador: 0 };
-                const dias = Math.floor((Date.now() - new Date(e.fecha_apertura || e.created_at).getTime()) / 86400000);
-                const hitosPct = 0; // se calcula real dentro del detalle
-                return (
-                  <tr key={e.id} onClick={() => setDetalleId(e.id)} className={`border-b border-slate-50 dark:border-white/5 last:border-0 cursor-pointer hover:bg-slate-50 dark:hover:bg-white/5 ${pendiente ? "bg-rose-50/60 dark:bg-rose-500/5 border-l-4 border-l-rose-500" : ""}`}>
-                    <td className="px-4 py-3 min-w-[220px]">
-                      <div className="flex items-center gap-1.5 flex-wrap">
-                        <p className="text-sm font-bold text-slate-900 dark:text-white">{e.titulo || `EXP — ${v.vehiculo_marca || ""} ${v.vehiculo_modelo || ""}`}</p>
-                        {v.vehiculo_patente && <span className="text-[9px] font-bold bg-slate-100 dark:bg-white/10 px-1.5 py-0.5 rounded">{v.vehiculo_patente}</span>}
-                      </div>
-                      {pendiente && (
-                        <span className="inline-block text-[9px] font-black uppercase tracking-wide text-rose-700 dark:text-rose-300 bg-rose-100 dark:bg-rose-500/20 px-2 py-1 rounded-md mt-1.5">
-                          🔒 Bloqueado hasta confirmación de las partes
-                        </span>
-                      )}
-                      <p className="text-[12px] font-semibold text-slate-600 dark:text-slate-300 mt-1.5">{[v.vehiculo_marca, v.vehiculo_modelo, v.vehiculo_anio].filter(Boolean).join(" ")}</p>
-                      <p className="text-[11px] text-slate-400">{fmtFechaLocal(e.fecha_apertura || e.created_at)}</p>
-                      <div className="mt-1.5">
-                        <div className="flex items-center justify-between text-[10px] font-bold text-emerald-600 dark:text-emerald-400 mb-0.5">
-                          <span>Día {dias} de {PLAZO_TRANSFERENCIA_DIAS}</span>
-                          <span>{Math.min(100, Math.round((dias / PLAZO_TRANSFERENCIA_DIAS) * 100))}%</span>
-                        </div>
-                        <div className="w-full h-1.5 bg-slate-100 dark:bg-white/10 rounded-full overflow-hidden">
-                          <div className={`h-full rounded-full ${dias > PLAZO_TRANSFERENCIA_DIAS ? "bg-rose-500" : "bg-emerald-500"}`} style={{ width: `${Math.min(100, Math.round((dias / PLAZO_TRANSFERENCIA_DIAS) * 100))}%` }} />
-                        </div>
-                      </div>
-                    </td>
-                    <td className="px-4 py-3 text-xs text-slate-600 dark:text-slate-300">{[v.vehiculo_marca, v.vehiculo_modelo, v.vehiculo_anio].filter(Boolean).join(" ") || "—"}</td>
-                    <td className="px-4 py-3 text-xs">
-                      {v.responsable_consignacion_id ? (
-                        <span className="inline-block text-[11px] font-bold text-indigo-700 dark:text-indigo-300 bg-indigo-100 dark:bg-indigo-500/20 px-2 py-1 rounded-full">{perfilMap[v.responsable_consignacion_id]}</span>
-                      ) : "—"}
-                    </td>
-                    <td className="px-4 py-3 text-xs">
-                      {v.propietario_nombre ? <span className="text-slate-700 dark:text-slate-200">{v.propietario_nombre}</span> : "—"}
-                      <p className="mt-0.5"><span className={`text-[9px] font-bold px-1.5 py-0.5 rounded-full ${e.confirmado_consignacion ? "bg-emerald-100 dark:bg-emerald-500/20 text-emerald-700 dark:text-emerald-400" : "bg-amber-100 dark:bg-amber-500/20 text-amber-700 dark:text-amber-400"}`}>{e.confirmado_consignacion ? "✅ Confirmado" : "⏳ Pendiente"}</span></p>
-                    </td>
-                    <td className="px-4 py-3 text-xs">
-                      <span className="text-slate-700 dark:text-slate-200">{v.comprador_nombre || "—"}</span>
-                      <p className="mt-0.5"><span className={`text-[9px] font-bold px-1.5 py-0.5 rounded-full ${e.confirmado_comprador ? "bg-emerald-100 dark:bg-emerald-500/20 text-emerald-700 dark:text-emerald-400" : "bg-amber-100 dark:bg-amber-500/20 text-amber-700 dark:text-amber-400"}`}>{e.confirmado_comprador ? "✅ Confirmado" : "⏳ Pendiente"}</span></p>
-                    </td>
-                    <td className="px-4 py-3"><span className={`text-[10px] font-bold px-2 py-1 rounded-full ${ESTADO_CLASS[e.estado]}`}>{ESTADO_LABEL[e.estado] || e.estado}</span></td>
-                    <td className="px-4 py-3 text-[10px] text-slate-400">Vend: {gastos.vendedor > 0 ? gastos.vendedor.toLocaleString("es-AR") : "—"}<br />Comp: {gastos.comprador > 0 ? gastos.comprador.toLocaleString("es-AR") : "—"}</td>
-                    <td className="px-4 py-3 w-px" onClick={(ev) => ev.stopPropagation()}>
-                      <div className="flex items-center gap-1">
-                        <button onClick={() => setDetalleId(e.id)} className="p-2 bg-white dark:bg-white/5 border border-slate-200 dark:border-white/10 hover:bg-slate-100 dark:hover:bg-white/10 rounded-lg text-slate-600 dark:text-slate-300"><Pencil className="w-3.5 h-3.5" /></button>
-                        {soyAdmin && <button onClick={() => eliminar(e)} className="p-2 bg-rose-600 hover:bg-rose-700 text-white rounded-lg"><Trash2 className="w-3.5 h-3.5" /></button>}
-                      </div>
-                    </td>
-                  </tr>
-                );
-              })}
-            </tbody>
-          </table>
-        </div>
+        <TablaResponsiva<any>
+          filas={filtrados}
+          keyExtractor={(e) => e.id}
+          onRowClick={(e) => setDetalleId(e.id)}
+          claseFila={(e) => (!e.confirmado_comprador || !e.confirmado_consignacion ? "bg-rose-50/60 dark:bg-rose-500/5 border-l-4 border-l-rose-500" : "")}
+          encabezadoMobile={renderExpedienteCell}
+          columnas={
+            [
+              { key: "expediente", header: "Expediente", cell: renderExpedienteCell, ocultarEnMobile: true, claseTd: "min-w-[220px]" },
+              { key: "vehiculo", header: "Vehículo", cell: (e) => { const v = e.venta || {}; return [v.vehiculo_marca, v.vehiculo_modelo, v.vehiculo_anio].filter(Boolean).join(" ") || "—"; }, claseTd: "text-xs text-slate-600 dark:text-slate-300" },
+              { key: "consignador", header: "Consignador", cell: (e) => { const v = e.venta || {}; return v.responsable_consignacion_id ? <span className="inline-block text-[11px] font-bold text-indigo-700 dark:text-indigo-300 bg-indigo-100 dark:bg-indigo-500/20 px-2 py-1 rounded-full">{perfilMap[v.responsable_consignacion_id]}</span> : "—"; }, claseTd: "text-xs" },
+              { key: "vendedora", header: "Parte Vendedora", cell: (e) => { const v = e.venta || {}; return <>{v.propietario_nombre ? <span className="text-slate-700 dark:text-slate-200">{v.propietario_nombre}</span> : "—"}<p className="mt-0.5"><span className={`text-[9px] font-bold px-1.5 py-0.5 rounded-full ${e.confirmado_consignacion ? "bg-emerald-100 dark:bg-emerald-500/20 text-emerald-700 dark:text-emerald-400" : "bg-amber-100 dark:bg-amber-500/20 text-amber-700 dark:text-amber-400"}`}>{e.confirmado_consignacion ? "✅ Confirmado" : "⏳ Pendiente"}</span></p></>; }, claseTd: "text-xs" },
+              { key: "compradora", header: "Parte Compradora", cell: (e) => { const v = e.venta || {}; return <><span className="text-slate-700 dark:text-slate-200">{v.comprador_nombre || "—"}</span><p className="mt-0.5"><span className={`text-[9px] font-bold px-1.5 py-0.5 rounded-full ${e.confirmado_comprador ? "bg-emerald-100 dark:bg-emerald-500/20 text-emerald-700 dark:text-emerald-400" : "bg-amber-100 dark:bg-amber-500/20 text-amber-700 dark:text-amber-400"}`}>{e.confirmado_comprador ? "✅ Confirmado" : "⏳ Pendiente"}</span></p></>; }, claseTd: "text-xs" },
+              { key: "estado", header: "Estado", cell: (e) => <span className={`text-[10px] font-bold px-2 py-1 rounded-full ${ESTADO_CLASS[e.estado]}`}>{ESTADO_LABEL[e.estado] || e.estado}</span> },
+              { key: "gastos", header: "Gastos", cell: (e) => { const gastos = gastosPorExpediente[e.id] || { vendedor: 0, comprador: 0 }; return <>Vend: {gastos.vendedor > 0 ? gastos.vendedor.toLocaleString("es-AR") : "—"}<br />Comp: {gastos.comprador > 0 ? gastos.comprador.toLocaleString("es-AR") : "—"}</>; }, claseTd: "text-[10px] text-slate-400" },
+            ] as ColumnaTabla<any>[]
+          }
+          acciones={(e) => (
+            <>
+              <button onClick={() => setDetalleId(e.id)} className="p-2 bg-white dark:bg-white/5 border border-slate-200 dark:border-white/10 hover:bg-slate-100 dark:hover:bg-white/10 rounded-lg text-slate-600 dark:text-slate-300"><Pencil className="w-3.5 h-3.5" /></button>
+              {soyAdmin && <button onClick={() => eliminar(e)} className="p-2 bg-rose-600 hover:bg-rose-700 text-white rounded-lg"><Trash2 className="w-3.5 h-3.5" /></button>}
+            </>
+          )}
+        />
       )}
 
       {detalleId && (

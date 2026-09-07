@@ -28,6 +28,7 @@ export default function TablaResponsiva<T>({
   encabezadoMobile,
   acciones,
   vacio,
+  claseFila,
 }: {
   columnas: ColumnaTabla<T>[];
   filas: T[];
@@ -38,6 +39,8 @@ export default function TablaResponsiva<T>({
   /** Botones de acción de la fila — se repiten al final de cada tarjeta mobile y en la última columna desktop. */
   acciones?: (fila: T) => ReactNode;
   vacio?: ReactNode;
+  /** Clases extra por fila (ej: resaltar en rojo una fila pendiente) — se aplican tanto a la fila desktop como a la tarjeta mobile. */
+  claseFila?: (fila: T) => string;
 }) {
   if (filas.length === 0) return vacio ?? null;
 
@@ -63,7 +66,7 @@ export default function TablaResponsiva<T>({
               <tr
                 key={keyExtractor(fila)}
                 onClick={onRowClick ? () => onRowClick(fila) : undefined}
-                className={`border-b border-slate-100 dark:border-white/5 last:border-0 hover:bg-slate-50 dark:hover:bg-white/[0.02] ${onRowClick ? "cursor-pointer" : ""}`}
+                className={`border-b border-slate-100 dark:border-white/5 last:border-0 hover:bg-slate-50 dark:hover:bg-white/[0.02] ${onRowClick ? "cursor-pointer" : ""} ${claseFila?.(fila) || ""}`}
               >
                 {columnas.map((c) => (
                   <td key={c.key} className={`px-4 py-3 ${c.claseTd || ""}`}>
@@ -87,7 +90,7 @@ export default function TablaResponsiva<T>({
           <div
             key={keyExtractor(fila)}
             onClick={onRowClick ? () => onRowClick(fila) : undefined}
-            className={`bg-white dark:bg-white/[0.02] border border-slate-200 dark:border-white/5 rounded-2xl p-4 ${onRowClick ? "cursor-pointer active:bg-slate-50 dark:active:bg-white/[0.04]" : ""}`}
+            className={`bg-white dark:bg-white/[0.02] border border-slate-200 dark:border-white/5 rounded-2xl p-4 ${onRowClick ? "cursor-pointer active:bg-slate-50 dark:active:bg-white/[0.04]" : ""} ${claseFila?.(fila) || ""}`}
           >
             <div className="mb-2">{(encabezadoMobile ?? columnasCard[0]?.cell)(fila)}</div>
             <dl className="grid grid-cols-2 gap-x-3 gap-y-1.5">
