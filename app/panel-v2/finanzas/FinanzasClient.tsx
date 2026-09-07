@@ -26,11 +26,13 @@ import AfipIvaTab from "./tabs/AfipIvaTab";
 import LibrosContablesTab from "./tabs/LibrosContablesTab";
 import SenasTab from "./tabs/SenasTab";
 import ResumenTab from "./tabs/ResumenTab";
+import EgresosCategoriaTab from "./tabs/EgresosCategoriaTab";
 import { fmt } from "./tabs/shared";
 
 const TABS: { value: string; label: string; icon: any; disabled?: boolean; externo?: string }[] = [
   { value: "resumen", label: "Resumen", icon: BarChart3 },
   { value: "movimientos", label: "Movimientos", icon: FileText },
+  { value: "egresos-categoria", label: "Egresos por Categoría", icon: Receipt },
   { value: "senas", label: "Señas", icon: Coins },
   { value: "cuotas", label: "Cuotas", icon: Wallet },
   { value: "devol-registro", label: "Devol. Registro", icon: HandCoins },
@@ -57,14 +59,14 @@ export default function FinanzasClient({
   chequesIniciales, pagosDisponiblesIniciales, consumosTarjetaIniciales, retirosIniciales, devolucionesIniciales,
   expedientes, senasActivasPorMoneda,
   prestamosIniciales, presupuestosIniciales, recurrenciasIniciales, generacionesIniciales, arqueosIniciales, cierresDiariosIniciales, miNombre,
-  senasIniciales, vehiculosDisponiblesFull, sucursales,
+  senasIniciales, vehiculosDisponiblesFull, sucursales, vehiculosTodos,
 }: {
   miId: string; soyAdmin: boolean; soyAdminOFinanzas: boolean; cuentasIniciales: any[]; movimientosIniciales: any[]; cierresIniciales: any[];
   cuotasCobrarIniciales: any[]; cuotasPagarIniciales: any[]; vendedores: any[]; clientes: any[]; vehiculos: any[]; ventas: any[];
   chequesIniciales: any[]; pagosDisponiblesIniciales: any[]; consumosTarjetaIniciales: any[]; retirosIniciales: any[]; devolucionesIniciales: any[];
   expedientes: any[]; senasActivasPorMoneda: Record<string, number>;
   prestamosIniciales: any[]; presupuestosIniciales: any[]; recurrenciasIniciales: any[]; generacionesIniciales: any[]; arqueosIniciales: any[]; cierresDiariosIniciales: any[]; miNombre: string;
-  senasIniciales: any[]; vehiculosDisponiblesFull: any[]; sucursales: any[];
+  senasIniciales: any[]; vehiculosDisponiblesFull: any[]; sucursales: any[]; vehiculosTodos: { id: string; marca: string; modelo: string; anio: number; patente: string | null }[];
 }) {
   const [tab, setTab] = useState("resumen");
   const [cuentas, setCuentas] = useState(cuentasIniciales);
@@ -223,6 +225,10 @@ export default function FinanzasClient({
 
       {tab === "movimientos" && (
         <MovimientosTab miId={miId} soyAdmin={soyAdmin} cuentas={cuentas} movimientos={movimientos} setMovimientos={setMovimientos} cierres={cierres} setCierres={setCierres} ventas={ventas} />
+      )}
+
+      {tab === "egresos-categoria" && (
+        <EgresosCategoriaTab movimientos={movimientos} setMovimientos={setMovimientos} cuentas={cuentas} sucursales={sucursales} vendedores={vendedores} vehiculosTodos={vehiculosTodos} miId={miId} />
       )}
 
       {tab === "cuentas" && <CuentasTab cuentas={cuentas} setCuentas={setCuentas} soyAdmin={soyAdmin} />}

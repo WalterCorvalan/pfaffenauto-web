@@ -37,6 +37,11 @@ export default async function FinanzasPage() {
     supabase.from("sucursales").select("id, nombre").order("nombre"),
   ]);
 
+  // Para Egresos por Categoría (Patentes/Transferencias/Repuestos) hace
+  // falta poder elegir CUALQUIER vehículo, no solo el stock disponible --
+  // un auto ya vendido también puede tener un gasto de patente pendiente.
+  const { data: vehiculosTodos } = await supabase.from("vehiculos").select("id, marca, modelo, anio, patente").order("marca").limit(1000);
+
   const { data: senasActivas } = await supabase.from("senas").select("monto, moneda").ilike("estado", "activa");
   const senasActivasPorMoneda: Record<string, number> = {};
   (senasActivas || []).forEach((s) => { if (s.monto) senasActivasPorMoneda[s.moneda] = (senasActivasPorMoneda[s.moneda] || 0) + Number(s.monto); });
@@ -60,7 +65,7 @@ export default async function FinanzasPage() {
 
   const { data: movimientosRecientes } = await supabase
     .from("movimientos_caja")
-    .select("*, cuenta:cuentas(nombre, moneda)")
+    .select("*, cuenta:cuentas(nombre, moneda), vehiculo:vehiculo_id ( marca, modelo, anio ), vendedor:vendedor_id ( nombre )")
     .is("deleted_at", null)
     .order("fecha", { ascending: false })
     .order("created_at", { ascending: false })
@@ -97,6 +102,7 @@ export default async function FinanzasPage() {
       senasIniciales={senas || []}
       vehiculosDisponiblesFull={vehiculosDisponiblesFull || []}
       sucursales={sucursales || []}
+      vehiculosTodos={vehiculosTodos || []}
     />
   );
 }
