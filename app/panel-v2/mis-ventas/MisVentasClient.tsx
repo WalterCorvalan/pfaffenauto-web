@@ -9,6 +9,7 @@ import {
 } from "lucide-react";
 import ReciboModal from "./ReciboModal";
 import BoletoModal from "../expedientes/BoletoModal";
+import TablaResponsiva, { type ColumnaTabla } from "@/components/panelV2/TablaResponsiva";
 
 interface Vendedor { id: string; nombre: string }
 type Periodo = "mes" | "anio" | "historico";
@@ -357,32 +358,23 @@ export default function MisVentasClient({ vendedores, miId, miNombre, esAdmin }:
                 <p className="text-sm font-bold text-slate-500 dark:text-slate-400">No hay ventas en este período</p>
               </div>
             ) : (
-              <div className="overflow-x-auto">
-                <table className="w-full text-left border-collapse">
-                  <thead>
-                    <tr className="bg-slate-50 dark:bg-white/5 text-slate-400 text-[10px] uppercase tracking-widest font-bold border-b border-slate-100 dark:border-white/10">
-                      <th className="px-5 py-3">Fecha</th>
-                      <th className="px-5 py-3">Vehículo</th>
-                      <th className="px-5 py-3">Precio</th>
-                      <th className="px-5 py-3">Rol</th>
-                      <th className="px-5 py-3">Comisión</th>
-                      <th className="px-5 py-3">Estado</th>
-                    </tr>
-                  </thead>
-                  <tbody className="divide-y divide-slate-100 dark:divide-white/10">
-                    {ventas.map((v) => (
-                      <tr key={v.id}>
-                        <td className="px-5 py-3 text-[13px] text-slate-600 dark:text-slate-300">{new Date(v.fecha_cierre + "T12:00:00Z").toLocaleDateString("es-AR", { timeZone: "UTC" })}</td>
-                        <td className="px-5 py-3 text-[13px] font-bold text-slate-900 dark:text-white">{v.vehiculo_marca} {v.vehiculo_modelo} {v.vehiculo_anio ? `(${v.vehiculo_anio})` : ""}</td>
-                        <td className="px-5 py-3 text-[13px] text-slate-600 dark:text-slate-300">{fmt(Number(v.precio_venta), v.moneda_venta)}</td>
-                        <td className="px-5 py-3"><span className="text-[10px] font-bold uppercase tracking-widest bg-amber-100 dark:bg-amber-500/20 text-amber-700 dark:text-amber-400 px-2 py-1 rounded-full">{v.rol}</span></td>
-                        <td className="px-5 py-3 text-[13px] font-bold text-emerald-600 dark:text-emerald-400">{Object.entries(v.comisionPorMoneda).map(([m, n]) => fmt(n as number, m)).join(" + ") || "—"}</td>
-                        <td className="px-5 py-3"><span className={`text-[10px] font-bold uppercase tracking-widest px-2 py-1 rounded-full ${v.estadoComision === "Pendiente" ? "bg-amber-100 dark:bg-amber-500/20 text-amber-700 dark:text-amber-400" : v.estadoComision === "Cobrada" ? "bg-emerald-100 dark:bg-emerald-500/20 text-emerald-700 dark:text-emerald-400" : "bg-slate-100 dark:bg-white/10 text-slate-400"}`}>{v.estadoComision}</span></td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
+              <TablaResponsiva<any>
+                filas={ventas}
+                keyExtractor={(v) => v.id}
+                encabezadoMobile={(v) => (
+                  <p className="text-[13px] font-bold text-slate-900 dark:text-white">{v.vehiculo_marca} {v.vehiculo_modelo} {v.vehiculo_anio ? `(${v.vehiculo_anio})` : ""}</p>
+                )}
+                columnas={
+                  [
+                    { key: "fecha", header: "Fecha", cell: (v) => new Date(v.fecha_cierre + "T12:00:00Z").toLocaleDateString("es-AR", { timeZone: "UTC" }), claseTd: "text-[13px] text-slate-600 dark:text-slate-300" },
+                    { key: "vehiculo", header: "Vehículo", cell: (v) => `${v.vehiculo_marca} ${v.vehiculo_modelo} ${v.vehiculo_anio ? `(${v.vehiculo_anio})` : ""}`, claseTd: "text-[13px] font-bold text-slate-900 dark:text-white", ocultarEnMobile: true },
+                    { key: "precio", header: "Precio", cell: (v) => fmt(Number(v.precio_venta), v.moneda_venta), claseTd: "text-[13px] text-slate-600 dark:text-slate-300" },
+                    { key: "rol", header: "Rol", cell: (v) => <span className="text-[10px] font-bold uppercase tracking-widest bg-amber-100 dark:bg-amber-500/20 text-amber-700 dark:text-amber-400 px-2 py-1 rounded-full">{v.rol}</span> },
+                    { key: "comision", header: "Comisión", cell: (v) => Object.entries(v.comisionPorMoneda).map(([m, n]) => fmt(n as number, m)).join(" + ") || "—", claseTd: "text-[13px] font-bold text-emerald-600 dark:text-emerald-400" },
+                    { key: "estado", header: "Estado", cell: (v) => <span className={`text-[10px] font-bold uppercase tracking-widest px-2 py-1 rounded-full ${v.estadoComision === "Pendiente" ? "bg-amber-100 dark:bg-amber-500/20 text-amber-700 dark:text-amber-400" : v.estadoComision === "Cobrada" ? "bg-emerald-100 dark:bg-emerald-500/20 text-emerald-700 dark:text-emerald-400" : "bg-slate-100 dark:bg-white/10 text-slate-400"}`}>{v.estadoComision}</span> },
+                  ] as ColumnaTabla<any>[]
+                }
+              />
             )
           )}
         </div>
