@@ -15,7 +15,8 @@ export default async function PeritajePage({ params }: { params: Promise<{ id: s
         *,
         perfiles ( nombre ),
         whatsapp_conversaciones ( whatsapp_contactos ( nombre_perfil, telefono ) ),
-        instagram_conversaciones ( instagram_contactos ( username ) )
+        instagram_conversaciones ( instagram_contactos ( username ) ),
+        leads_tasacion!peritajes_lead_lead_tasacion_id_fkey ( nombre, telefono )
       `)
       .eq("id", id)
       .maybeSingle(),
@@ -27,7 +28,8 @@ export default async function PeritajePage({ params }: { params: Promise<{ id: s
   const nombreCliente =
     peritajeCrudo.whatsapp_conversaciones?.whatsapp_contactos?.nombre_perfil ||
     peritajeCrudo.whatsapp_conversaciones?.whatsapp_contactos?.telefono ||
-    (peritajeCrudo.instagram_conversaciones?.instagram_contactos?.username ? `@${peritajeCrudo.instagram_conversaciones.instagram_contactos.username}` : null);
+    (peritajeCrudo.instagram_conversaciones?.instagram_contactos?.username ? `@${peritajeCrudo.instagram_conversaciones.instagram_contactos.username}` : null) ||
+    peritajeCrudo.leads_tasacion?.nombre;
   const peritaje = { ...peritajeCrudo, nombreCliente };
 
   return <PeritajeClient peritaje={peritaje as any} itemsIniciales={items || []} />;
