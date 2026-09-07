@@ -5,6 +5,7 @@ import { createClient } from "@supabase/supabase-js";
 import { sendInstagramMessage } from "@/lib/meta/client";
 import { decrypt } from "@/lib/crypto";
 import { rateLimit, ipDesdeRequest } from "@/lib/rateLimit";
+import { registrarError } from "@/lib/panelV2/logger";
 import { z } from "zod";
 
 const EnviarSchema = z.object({
@@ -77,6 +78,7 @@ export async function POST(request: Request) {
     if (!conversacion?.estado_pipeline || conversacion.estado_pipeline === "sin_contactar") patchConversacion.estado_pipeline = "contactado";
     await supabaseAdmin.from("instagram_conversaciones").update(patchConversacion).eq("id", conversacionId);
   } catch (err: any) {
+    registrarError("api/panel-v2/instagram/enviar", err, { conversacionId, mensajeId: mensaje.id });
     await supabaseAdmin.from("instagram_mensajes").update({ status: "failed" }).eq("id", mensaje.id);
     return NextResponse.json({ error: err?.message ?? "Error enviando el mensaje." }, { status: 502 });
   }

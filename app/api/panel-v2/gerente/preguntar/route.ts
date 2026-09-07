@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { z } from "zod";
 import { createClient } from "@/lib/supabase2/server";
 import { chatJsonV2, isAiConfiguredV2 } from "@/lib/ai/indexV2";
+import { registrarError } from "@/lib/panelV2/logger";
 
 const RespuestaSchema = z.object({
   reply: z.string(),
@@ -87,6 +88,9 @@ Reglas:
     { role: "user", content: pregunta },
   ], { origen: "gerente_dashboard" });
 
-  if (!resultado.ok) return NextResponse.json({ error: "No se pudo generar una respuesta. Reintentá." }, { status: 500 });
+  if (!resultado.ok) {
+    registrarError("api/panel-v2/gerente/preguntar", resultado.error, { userId: user.id });
+    return NextResponse.json({ error: "No se pudo generar una respuesta. Reintentá." }, { status: 500 });
+  }
   return NextResponse.json(resultado.data);
 }

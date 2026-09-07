@@ -4,6 +4,7 @@ import { z } from "zod";
 import { generarRespuestaAgenteV2, dividirRespuestaEnMensajes } from "@/lib/ai/agenteV2";
 import { isAiConfiguredV2 } from "@/lib/ai/indexV2";
 import { rateLimit, ipDesdeRequest } from "@/lib/rateLimit";
+import { registrarError } from "@/lib/panelV2/logger";
 
 // Endpoint público (sin sesión — lo llama el widget del sitio, un visitante
 // anónimo) que procesa un mensaje de Rodi. Identidad = sessionId generado
@@ -35,6 +36,21 @@ export async function POST(request: Request) {
   }
   const { sessionId, texto, origenPagina, nombre, telefono, email } = parsed.data;
 
+  // Endpoint público del widget del sitio -- si algo revienta acá (red, IA,
+  // supabase) antes no quedaba registro en ningún lado salvo los logs de
+  // Vercel, invisibles desde el panel. Try/catch + registrarError para que
+  // aparezca en Errores del sistema como cualquier otro canal.
+  try {
+    return await procesarMensaje({ sessionId, texto, origenPagina, nombre, telefono, email });
+  } catch (err) {
+    registrarError("api/panel-v2/rodi/mensaje", err, { sessionId });
+    return NextResponse.json({ replies: ["¡Hola! Gracias por escribirnos a Pfaffen Autos. En breve te contacta uno de nuestros asesores. 🚗"], handoff: false });
+  }
+}
+
+async function procesarMensaje({ sessionId, texto, origenPagina, nombre, telefono, email }: {
+  sessionId: string; texto: string; origenPagina?: string; nombre?: string; telefono?: string; email?: string;
+}) {
   let { data: conversacion } = await supabase.from("rodi_conversaciones").select("*").eq("session_id", sessionId).maybeSingle();
 
   if (!conversacion) {
@@ -71,6 +87,7 @@ export async function POST(request: Request) {
   const result = await generarRespuestaAgenteV2(historial, "panel-v2/rodi", "Rodi");
 
   if (!result.ok) {
+    registrarError("api/panel-v2/rodi/mensaje:agente", result.error, { conversacionId: conversacion.id });
     return NextResponse.json({ replies: ["¡Hola! Gracias por escribirnos a Pfaffen Autos. En breve te contacta uno de nuestros asesores. 🚗"], handoff: false });
   }
 

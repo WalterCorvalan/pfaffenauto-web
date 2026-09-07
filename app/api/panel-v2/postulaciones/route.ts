@@ -2,6 +2,7 @@ import { z } from "zod";
 import { createClient } from "@supabase/supabase-js";
 import { verificarTurnstile } from "@/lib/turnstile";
 import { rateLimit, ipDesdeRequest } from "@/lib/rateLimit";
+import { registrarError } from "@/lib/panelV2/logger";
 
 const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE2_URL!,
@@ -55,7 +56,7 @@ export async function POST(req: Request) {
 
     return Response.json({ ok: true, id: data.id });
   } catch (err) {
-    console.error("[api/panel-v2/postulaciones]", err);
+    registrarError("api/panel-v2/postulaciones", err);
     return Response.json({ error: "Hubo un problema al enviar tu postulación." }, { status: 500 });
   }
 }
