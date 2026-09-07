@@ -4,6 +4,7 @@ import { useState, useMemo } from "react";
 import { supabase2 } from "@/lib/supabase2/client";
 import { Plus, X, Save, Send, Download, Trash2, ChevronDown, ChevronRight } from "lucide-react";
 import { inputClass, labelClass, fmt } from "./shared";
+import TablaResponsiva, { type ColumnaTabla } from "@/components/panelV2/TablaResponsiva";
 
 function mesesAtras(n: number) {
   const out: string[] = [];
@@ -231,34 +232,34 @@ export default function RecurrenciasTab({
       {recurrencias.length === 0 ? (
         <div className="bg-white dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-2xl py-16 text-center"><p className="text-sm font-bold">Sin recurrencias creadas</p></div>
       ) : (
-        <div className="overflow-x-auto bg-white dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-xl">
-          <table className="w-full text-xs">
-            <thead><tr className="border-b border-slate-100 dark:border-white/10 text-left text-slate-400"><th className="p-2.5">Nombre</th><th className="p-2.5">Tipo</th><th className="p-2.5">Categoría</th><th className="p-2.5">Monto</th><th className="p-2.5">Día del mes</th><th className="p-2.5">Caja</th><th className="p-2.5">Estado</th><th className="p-2.5">Acciones</th></tr></thead>
-            <tbody>
-              {recurrencias.map((r) => {
-                const yaGenerada = generadasEsteMes.some((g) => g.recurrencia_id === r.id);
-                return (
-                  <tr key={r.id} className="border-b border-slate-50 dark:border-white/5">
-                    <td className="p-2.5 font-bold">🔁 {r.nombre}</td>
-                    <td className="p-2.5"><span className={`text-[10px] font-bold uppercase px-2 py-0.5 rounded-full ${r.tipo === "ingreso" ? "bg-emerald-100 dark:bg-emerald-500/20 text-emerald-700" : "bg-rose-100 dark:bg-rose-500/20 text-rose-700"}`}>{r.tipo}</span></td>
-                    <td className="p-2.5 text-slate-400">{r.categoria || "—"}</td>
-                    <td className="p-2.5 font-mono font-bold">{fmt(r.monto, r.moneda)}</td>
-                    <td className="p-2.5">Día {r.dia_mes}</td>
-                    <td className="p-2.5">{cuentas.find((c) => c.id === r.cuenta_id)?.nombre || "—"}</td>
-                    <td className="p-2.5">{r.estado === "activa" ? <span className="text-[10px] font-bold uppercase px-2 py-0.5 rounded-full bg-emerald-100 dark:bg-emerald-500/20 text-emerald-700">✓ Activa</span> : <span className="text-[10px] font-bold uppercase px-2 py-0.5 rounded-full bg-slate-100 dark:bg-white/10 text-slate-500">Pausada</span>}</td>
-                    <td className="p-2.5"><div className="flex items-center gap-2 flex-wrap">
-                      {r.estado === "activa" && !yaGenerada && <button onClick={() => generar(r)} className="text-emerald-600 font-bold">📤 Generar este mes</button>}
-                      {yaGenerada && <span className="text-slate-400">Ya generada</span>}
-                      <button onClick={() => pausarToggle(r)} className="text-slate-500 font-bold">{r.estado === "activa" ? "Pausar" : "Reactivar"}</button>
-                      <button onClick={() => abrirEditar(r)} className="text-rose-500 font-bold">Editar</button>
-                      <button onClick={() => eliminarRecurrencia(r)} className="text-rose-500 font-bold">Eliminar</button>
-                    </div></td>
-                  </tr>
-                );
-              })}
-            </tbody>
-          </table>
-        </div>
+        <TablaResponsiva<any>
+          filas={recurrencias}
+          keyExtractor={(r) => r.id}
+          encabezadoMobile={(r) => <p className="font-bold">🔁 {r.nombre}</p>}
+          columnas={
+            [
+              { key: "nombre", header: "Nombre", cell: (r) => <>🔁 {r.nombre}</>, claseTd: "font-bold", ocultarEnMobile: true },
+              { key: "tipo", header: "Tipo", cell: (r) => <span className={`text-[10px] font-bold uppercase px-2 py-0.5 rounded-full ${r.tipo === "ingreso" ? "bg-emerald-100 dark:bg-emerald-500/20 text-emerald-700" : "bg-rose-100 dark:bg-rose-500/20 text-rose-700"}`}>{r.tipo}</span> },
+              { key: "categoria", header: "Categoría", cell: (r) => r.categoria || "—", claseTd: "text-slate-400" },
+              { key: "monto", header: "Monto", cell: (r) => fmt(r.monto, r.moneda), claseTd: "font-mono font-bold" },
+              { key: "dia", header: "Día del mes", cell: (r) => `Día ${r.dia_mes}` },
+              { key: "caja", header: "Caja", cell: (r) => cuentas.find((c) => c.id === r.cuenta_id)?.nombre || "—" },
+              { key: "estado", header: "Estado", cell: (r) => (r.estado === "activa" ? <span className="text-[10px] font-bold uppercase px-2 py-0.5 rounded-full bg-emerald-100 dark:bg-emerald-500/20 text-emerald-700">✓ Activa</span> : <span className="text-[10px] font-bold uppercase px-2 py-0.5 rounded-full bg-slate-100 dark:bg-white/10 text-slate-500">Pausada</span>) },
+            ] as ColumnaTabla<any>[]
+          }
+          acciones={(r) => {
+            const yaGenerada = generadasEsteMes.some((g: any) => g.recurrencia_id === r.id);
+            return (
+              <div className="flex items-center gap-2 flex-wrap">
+                {r.estado === "activa" && !yaGenerada && <button onClick={() => generar(r)} className="text-emerald-600 font-bold">📤 Generar este mes</button>}
+                {yaGenerada && <span className="text-slate-400">Ya generada</span>}
+                <button onClick={() => pausarToggle(r)} className="text-slate-500 font-bold">{r.estado === "activa" ? "Pausar" : "Reactivar"}</button>
+                <button onClick={() => abrirEditar(r)} className="text-rose-500 font-bold">Editar</button>
+                <button onClick={() => eliminarRecurrencia(r)} className="text-rose-500 font-bold">Eliminar</button>
+              </div>
+            );
+          }}
+        />
       )}
 
       {showNuevo && (

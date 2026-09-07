@@ -6,6 +6,7 @@ import { Plus, Printer, CarFront, AlertTriangle } from "lucide-react";
 import EstadoSenaSelector from "../../senas/EstadoSenaSelector";
 import NuevaSenaModal from "../../senas/NuevaSenaModal";
 import { fmt } from "./shared";
+import TablaResponsiva, { type ColumnaTabla } from "@/components/panelV2/TablaResponsiva";
 
 const COLOR_ESTADO: Record<string, string> = { Activa: "border-l-amber-400", Convertida: "border-l-emerald-400", Perdida: "border-l-rose-400" };
 
@@ -32,24 +33,27 @@ export default function SenasTab({
       {senas.length === 0 ? (
         <div className="bg-white dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-2xl py-16 text-center"><p className="text-sm font-bold">Sin señas cargadas</p></div>
       ) : (
-        <div className="overflow-x-auto bg-white dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-xl">
-          <table className="w-full text-xs">
-            <thead><tr className="border-b border-slate-100 dark:border-white/10 text-left text-slate-400"><th className="p-2.5">N°</th><th className="p-2.5">Fecha</th><th className="p-2.5">Cliente</th><th className="p-2.5">Vehículo</th><th className="p-2.5">Seña</th><th className="p-2.5">Estado</th><th className="p-2.5">Imprimir</th></tr></thead>
-            <tbody>
-              {senas.map((s: any) => (
-                <tr key={s.id} className={`border-b border-slate-50 dark:border-white/5 border-l-4 ${COLOR_ESTADO[s.estado] || "border-l-slate-200"}`}>
-                  <td className="p-2.5 font-mono font-bold text-rose-600">{s.numero || "—"}</td>
-                  <td className="p-2.5">{s.fecha ? new Date(`${s.fecha}T12:00:00Z`).toLocaleDateString("es-AR", { timeZone: "UTC" }) : "—"}</td>
-                  <td className="p-2.5 font-bold">{s.apellido || s.cliente_nombre}{s.apellido ? `, ${s.nombre}` : ""}{s.precio_confirmado === false && <AlertTriangle className="w-3.5 h-3.5 text-amber-500 inline ml-1" />}</td>
-                  <td className="p-2.5"><span className="flex items-center gap-1.5"><CarFront className="w-3.5 h-3.5 text-slate-400" /> {s.marca} {s.modelo}</span></td>
-                  <td className="p-2.5 font-mono font-bold">{s.sena_ars ? `$ ${Number(s.sena_ars).toLocaleString("es-AR")}` : s.monto ? fmt(s.monto, s.moneda) : "—"}</td>
-                  <td className="p-2.5"><EstadoSenaSelector id={s.id} estado={s.estado} vehiculoId={s.vehiculo_id} /></td>
-                  <td className="p-2.5"><Link href={`/panel-v2/senas/imprimir/${s.id}`} className="inline-flex p-1.5 bg-slate-50 dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-lg text-slate-400 hover:text-rose-600"><Printer className="w-3.5 h-3.5" /></Link></td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
+        <TablaResponsiva<any>
+          filas={senas}
+          keyExtractor={(s) => s.id}
+          claseFila={(s) => `border-l-4 ${COLOR_ESTADO[s.estado] || "border-l-slate-200"}`}
+          encabezadoMobile={(s) => (
+            <p className="font-bold">{s.apellido || s.cliente_nombre}{s.apellido ? `, ${s.nombre}` : ""}{s.precio_confirmado === false && <AlertTriangle className="w-3.5 h-3.5 text-amber-500 inline ml-1" />}</p>
+          )}
+          columnas={
+            [
+              { key: "numero", header: "N°", cell: (s) => s.numero || "—", claseTd: "font-mono font-bold text-rose-600" },
+              { key: "fecha", header: "Fecha", cell: (s) => (s.fecha ? new Date(`${s.fecha}T12:00:00Z`).toLocaleDateString("es-AR", { timeZone: "UTC" }) : "—") },
+              { key: "cliente", header: "Cliente", cell: (s) => <>{s.apellido || s.cliente_nombre}{s.apellido ? `, ${s.nombre}` : ""}{s.precio_confirmado === false && <AlertTriangle className="w-3.5 h-3.5 text-amber-500 inline ml-1" />}</>, claseTd: "font-bold", ocultarEnMobile: true },
+              { key: "vehiculo", header: "Vehículo", cell: (s) => <span className="flex items-center gap-1.5"><CarFront className="w-3.5 h-3.5 text-slate-400" /> {s.marca} {s.modelo}</span> },
+              { key: "sena", header: "Seña", cell: (s) => (s.sena_ars ? `$ ${Number(s.sena_ars).toLocaleString("es-AR")}` : s.monto ? fmt(s.monto, s.moneda) : "—"), claseTd: "font-mono font-bold" },
+              { key: "estado", header: "Estado", cell: (s) => <EstadoSenaSelector id={s.id} estado={s.estado} vehiculoId={s.vehiculo_id} /> },
+            ] as ColumnaTabla<any>[]
+          }
+          acciones={(s) => (
+            <Link href={`/panel-v2/senas/imprimir/${s.id}`} className="inline-flex p-1.5 bg-slate-50 dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-lg text-slate-400 hover:text-rose-600"><Printer className="w-3.5 h-3.5" /></Link>
+          )}
+        />
       )}
 
       {modalAbierto && (
