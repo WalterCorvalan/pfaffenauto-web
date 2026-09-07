@@ -28,10 +28,20 @@ export type PresupuestoMencionado = { monto: number; moneda: "USD" | "ARS" } | n
 // separador igual se va a partir bien, pero no debería pasar.
 export const SEPARADOR_MENSAJES = "|||";
 
-function formatearResultadosStock(resultados: ResultadoStockV2[], esAlternativa: boolean, categoriaSolicitada?: string | null): string {
+function formatearResultadosStock(resultados: ResultadoStockV2[], esAlternativa: boolean, categoriaSolicitada?: string | null, totalReal?: number): string {
   if (resultados.length === 0) {
     return `\nBúsqueda en stock: NO hay ninguna unidad disponible ahora mismo, ni siquiera de la misma marca. Decíselo con honestidad al cliente — no inventes alternativas — y preguntale si le interesa ver otras marcas.`;
   }
+  // La lista de abajo puede venir recortada (tope de la búsqueda) — el total
+  // real de coincidencias es este número, no "cuántas filas ves en la
+  // lista". Sin esto el modelo asumía que la cantidad mostrada ERA el total
+  // y dijo "en total tengo 6 pickups" habiendo 11 en stock real.
+  const hayMasQueLasMostradas = totalReal != null && totalReal > resultados.length;
+  const avisoTotal = totalReal != null
+    ? hayMasQueLasMostradas
+      ? `\nTotal real de coincidencias en stock: ${totalReal} (acá abajo se te muestran solo ${resultados.length}). Si el cliente pregunta "son todas?" o "cuántas tienen", la respuesta correcta es ${totalReal}, no ${resultados.length} — y ofrecele ver el resto en el catálogo: https://pfaffenautos.com.ar/catalogo-v2. NUNCA digas "en total tengo ${resultados.length}" — sería falso.`
+      : `\nTotal real de coincidencias en stock: ${totalReal} (son todas, ya te las mostraron todas acá abajo).`
+    : "";
   const lista = resultados
     .map((v) => {
       const extra = [v.categoria, v.version, v.color, v.km != null ? `${v.km.toLocaleString("es-AR")} km` : null, v.transmision, v.combustible].filter(Boolean).join(" · ");
@@ -55,7 +65,7 @@ function formatearResultadosStock(resultados: ResultadoStockV2[], esAlternativa:
   } else {
     encabezado = "Búsqueda en stock — estas son las unidades REALES disponibles ahora mismo, podés usar estos datos con confianza (mostrá como máximo 3, salvo que el cliente pida ver más)";
   }
-  return `\n${encabezado}:\n${lista}`;
+  return `\n${encabezado}:\n${lista}\n${avisoTotal}`;
 }
 
 export type SucursalInfo = { nombre: string; direccion: string | null; telefono_encargado: string | null; google_maps_url: string | null; encargado_nombre?: string | null };
@@ -106,7 +116,7 @@ export function menuBienvenidaV2(nombreBot?: string): string {
 4. Permutar tu auto`;
 }
 
-export function buildSystemPromptV2(vehiculoInfo?: string, resultadosStock?: ResultadoStockV2[], nombreBot?: string, resultadosSonAlternativa?: boolean, sucursales?: SucursalInfo[], sugerirCierre?: boolean, categoriaSolicitada?: string | null): string {
+export function buildSystemPromptV2(vehiculoInfo?: string, resultadosStock?: ResultadoStockV2[], nombreBot?: string, resultadosSonAlternativa?: boolean, sucursales?: SucursalInfo[], sugerirCierre?: boolean, categoriaSolicitada?: string | null, totalRealStock?: number): string {
   return `${nombreBot ? `Te llamás ${nombreBot}, el` : "Sos el"} asistente virtual oficial de Pfaffen Autos, concesionaria de vehículos 0km y usados.
 
 Tu función: atender consultas de clientes, detectar qué quiere el cliente, buscar vehículos en el stock real, recopilar datos y calificar la oportunidad. Hablá en español argentino con voseo, tono amable, profesional, claro y breve — una o dos preguntas relacionadas por mensaje, nunca un formulario largo. Usá emojis con naturalidad para darle onda (🚗 💰 📅 👍 ✅), uno o dos por mensaje — ni acartonado sin ninguno, ni saturado de emojis.
@@ -125,7 +135,7 @@ Si ya dijo lo que necesita, NO repitas el menú — entrá directo al tema.
 INTENCIONES: COMPRA, VENTA, CONSIGNACION, COMPRA_CON_PERMUTA, HABLAR_CON_ASESOR, OTRA_CONSULTA.
 
 ${vehiculoInfo ? `El cliente está consultando sobre: ${vehiculoInfo}` : ""}
-${resultadosStock ? formatearResultadosStock(resultadosStock, !!resultadosSonAlternativa, categoriaSolicitada) : ""}
+${resultadosStock ? formatearResultadosStock(resultadosStock, !!resultadosSonAlternativa, categoriaSolicitada, totalRealStock) : ""}
 ${sucursales ? formatearSucursales(sucursales) : ""}
 ${EQUIPO_PFAFFEN}
 ${sugerirCierre ? `\nLa charla ya viene larga y en este momento hay mucha gente escribiendo a la vez — sé más eficiente: resumí en una sola pregunta lo que falta para cerrar el tema (en vez de ir pregunta por pregunta), y si el cliente ya dio lo esencial, ofrecé derivarlo con un asesor para resolver el resto más rápido en persona. Podés mencionar con naturalidad que hay bastante consulta en este momento, sin sonar como excusa robótica.` : ""}

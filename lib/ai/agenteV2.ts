@@ -72,41 +72,52 @@ export function dividirRespuestaEnMensajes(reply: string): string[] {
   return reply.split(SEPARADOR_MENSAJES).map((s) => s.trim()).filter(Boolean);
 }
 
+// Devuelve además el total real de coincidencias (sin el limit) — el prompt
+// necesita ese número para no inventar un "en total tengo N" a partir de
+// cuántas filas le tocó ver, que es solo el tope de la query, no el total
+// real de stock (bug detectado: dijo "en total tengo 6 pickups" habiendo 11).
 async function ejecutarBusquedaStock(
   marca: string | null,
   modelo: string | null,
   categoria?: string | null,
   presupuesto?: { monto: number; moneda: "USD" | "ARS" } | null
-): Promise<ResultadoStockV2[]> {
-  let query = supabase
-    .from("vehiculos")
-    .select("marca, modelo, anio, precio_venta, moneda_venta, precio_publicado_ars, precio_publicado_usd, patente, color, km, version, transmision, combustible, categoria, sucursales!vehiculos_sucursal_id_fkey ( nombre )")
-    .in("estado", ["disponible", "reservado"])
-    .limit(modelo ? 3 : 6);
-  if (marca) query = query.ilike("marca", `%${marca}%`);
-  if (modelo) query = query.ilike("modelo", `%${modelo}%`);
-  // Categoría (Auto/Camioneta/SUV/Moto/Otro) — el cliente puede acotar por
-  // tipo de vehículo sin dar marca ("busco auto, no camioneta"). Es un
-  // filtro duro: una vez que lo pidió, ninguna alternativa de otra
-  // categoría se le vuelve a mostrar en esta búsqueda.
-  if (categoria) query = query.eq("categoria", categoria);
+): Promise<{ resultados: ResultadoStockV2[]; total: number }> {
+  const aplicarFiltros = (q: any) => {
+    if (marca) q = q.ilike("marca", `%${marca}%`);
+    if (modelo) q = q.ilike("modelo", `%${modelo}%`);
+    // Categoría (Auto/Camioneta/SUV/Moto/Otro) — el cliente puede acotar por
+    // tipo de vehículo sin dar marca ("busco auto, no camioneta"). Es un
+    // filtro duro: una vez que lo pidió, ninguna alternativa de otra
+    // categoría se le vuelve a mostrar en esta búsqueda.
+    if (categoria) q = q.eq("categoria", categoria);
+    // Sin conversor de dólar propio en v2 todavía — filtramos solo por la
+    // moneda que mencionó el cliente, sin intentar convertir la otra.
+    if (presupuesto) q = q.eq("moneda_venta", presupuesto.moneda).lte("precio_venta", presupuesto.monto);
+    return q;
+  };
 
-  // Sin conversor de dólar propio en v2 todavía — filtramos solo por la
-  // moneda que mencionó el cliente, sin intentar convertir la otra.
-  if (presupuesto) {
-    query = query.eq("moneda_venta", presupuesto.moneda).lte("precio_venta", presupuesto.monto);
-  }
+  const query = aplicarFiltros(
+    supabase
+      .from("vehiculos")
+      .select("marca, modelo, anio, precio_venta, moneda_venta, precio_publicado_ars, precio_publicado_usd, patente, color, km, version, transmision, combustible, categoria, sucursales!vehiculos_sucursal_id_fkey ( nombre )")
+      .in("estado", ["disponible", "reservado"])
+  ).limit(modelo ? 3 : 6);
 
-  const { data } = await query;
+  const queryTotal = aplicarFiltros(
+    supabase.from("vehiculos").select("id", { count: "exact", head: true }).in("estado", ["disponible", "reservado"])
+  );
+
+  const [{ data }, { count }] = await Promise.all([query, queryTotal]);
   // El bot tiene que cotizar el mismo precio que el cliente ya vio en la
   // web (precio_publicado_ars/usd), no el precio_venta interno — son campos
   // distintos y pueden diferir, mostrar dos precios distintos para el mismo
   // auto entre el sitio y el chat confunde al cliente.
-  return (data ?? []).map((v: any) => {
+  const resultados = (data ?? []).map((v: any) => {
     const precioVenta = v.precio_publicado_ars ?? v.precio_publicado_usd ?? v.precio_venta;
     const monedaVenta = v.precio_publicado_ars ? "ARS" : v.precio_publicado_usd ? "USD" : v.moneda_venta;
     return { ...v, precio_venta: precioVenta, moneda_venta: monedaVenta, sucursal: v.sucursales?.nombre ?? null };
   }) as ResultadoStockV2[];
+  return { resultados, total: count ?? resultados.length };
 }
 
 // Buscar exacto (marca+modelo+categoría) primero; si no hay nada, no le
@@ -120,7 +131,7 @@ export async function buscarStockRealV2(
   modelo: string | null,
   categoria?: string | null,
   presupuesto?: { monto: number; moneda: "USD" | "ARS" } | null
-): Promise<{ resultados: ResultadoStockV2[]; esAlternativa: boolean }> {
+): Promise<{ resultados: ResultadoStockV2[]; esAlternativa: boolean; total: number }> {
   const cat = categoria ?? null;
   const intentos: [string | null, string | null, string | null][] = [
     [marca, modelo, cat],
@@ -137,10 +148,10 @@ export async function buscarStockRealV2(
     const clave = `${m}|${mo}|${c}`;
     if (probados.has(clave)) continue;
     probados.add(clave);
-    const resultados = await ejecutarBusquedaStock(m, mo, c, presupuesto);
-    if (resultados.length > 0) return { resultados, esAlternativa: i > 0 };
+    const { resultados, total } = await ejecutarBusquedaStock(m, mo, c, presupuesto);
+    if (resultados.length > 0) return { resultados, esAlternativa: i > 0, total };
   }
-  return { resultados: [], esAlternativa: true };
+  return { resultados: [], esAlternativa: true, total: 0 };
 }
 
 // Red de seguridad anti-alucinación: el prompt ya prohíbe inventar stock,
@@ -244,7 +255,7 @@ export async function generarRespuestaAgenteV2(historial: HistorialMensaje[], ca
 
   if (esIntencionDeCompra && (respuesta.vehiculo_mencionado?.modelo || respuesta.vehiculo_mencionado?.marca || respuesta.vehiculo_mencionado?.categoria || respuesta.presupuesto_mencionado || respuesta.pedir_stock_general)) {
     const categoriaSolicitada = respuesta.vehiculo_mencionado?.categoria ?? null;
-    const { resultados, esAlternativa } = await buscarStockRealV2(
+    const { resultados, esAlternativa, total } = await buscarStockRealV2(
       respuesta.vehiculo_mencionado?.marca ?? null,
       respuesta.vehiculo_mencionado?.modelo ?? null,
       categoriaSolicitada,
@@ -252,7 +263,7 @@ export async function generarRespuestaAgenteV2(historial: HistorialMensaje[], ca
     );
 
     const result2 = await chatJsonV2(AgentReplySchemaV2, [
-      { role: "system", content: buildSystemPromptV2(undefined, resultados, nombreBot, esAlternativa, sucursales, sugerirCierre, categoriaSolicitada) },
+      { role: "system", content: buildSystemPromptV2(undefined, resultados, nombreBot, esAlternativa, sucursales, sugerirCierre, categoriaSolicitada, total) },
       ...historial,
     ], { origen: canal });
 
