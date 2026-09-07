@@ -4,7 +4,7 @@ import { useState, useEffect, useRef } from "react";
 import { useSearchParams, useRouter } from "next/navigation";
 import { supabase2 } from "@/lib/supabase2/client";
 import {
-  Search, Send, CheckCircle2, Circle, Bot, Check, Info, ChevronRight, PanelRight,
+  Search, Send, Bot, Check, Info, ChevronRight, PanelRight,
   Loader2, Megaphone, X, MessageSquareText, AtSign, Archive, ArchiveRestore,
 } from "lucide-react";
 
@@ -525,22 +525,28 @@ export default function ChatClient({
             </div>
 
             <div className="p-6 border-b border-slate-200 dark:border-white/10">
-              <h4 className="text-[11px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-widest mb-4">Etapa del Pipeline</h4>
-              <div className="space-y-4 relative">
-                <div className="absolute left-[9px] top-2 bottom-2 w-[2px] bg-slate-200 dark:bg-white/10 -z-10" />
-                {ETAPAS_PIPELINE.map((etapa, i) => {
-                  const isCompleted = i < indexEtapaActual;
-                  const isCurrent = i === indexEtapaActual;
-                  return (
-                    <div key={etapa.value} onClick={() => cambiarEtapa(etapa.value)} className="flex items-center gap-3 cursor-pointer group">
-                      <div className="bg-white dark:bg-[#111] z-10 flex items-center justify-center">
-                        {isCompleted ? <CheckCircle2 className="w-5 h-5 text-emerald-600 dark:text-emerald-300 group-hover:text-emerald-700 dark:group-hover:text-emerald-200 transition-colors" /> : isCurrent ? <Circle className="w-5 h-5 text-slate-800 dark:text-slate-100 fill-slate-700 dark:fill-slate-200" /> : <Circle className="w-5 h-5 text-slate-300 dark:text-slate-600 group-hover:text-slate-400 dark:group-hover:text-slate-500 transition-colors bg-white dark:bg-[#111]" />}
-                      </div>
-                      <span className={`text-[13px] transition-colors ${isCurrent ? "text-slate-900 dark:text-white font-bold" : isCompleted ? "text-slate-700 dark:text-slate-200 font-medium" : "text-slate-400 dark:text-slate-500 group-hover:text-slate-600 dark:group-hover:text-slate-300"}`}>{etapa.label}</span>
-                    </div>
-                  );
-                })}
+              <div className="flex items-center justify-between mb-2.5">
+                <h4 className="text-[11px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-widest">Etapa del Pipeline</h4>
+                <span className="text-[10px] font-bold text-slate-400">{indexEtapaActual + 1}/{ETAPAS_PIPELINE.length}</span>
               </div>
+              {/* Antes era una lista vertical de 6 filas (una por etapa) que
+                  ocupaba casi toda la altura del panel lateral, dejando poco
+                  lugar al resumen del handoff arriba y al resto de abajo —
+                  ahora es una barra de puntos + un select, una sola fila. */}
+              <div className="flex items-center gap-1 mb-2.5">
+                {ETAPAS_PIPELINE.map((etapa, i) => (
+                  <button
+                    key={etapa.value}
+                    type="button"
+                    onClick={() => cambiarEtapa(etapa.value)}
+                    title={etapa.label}
+                    className={`flex-1 h-1.5 rounded-full transition-colors ${i <= indexEtapaActual ? "bg-emerald-600" : "bg-slate-200 dark:bg-white/10 hover:bg-slate-300 dark:hover:bg-white/20"}`}
+                  />
+                ))}
+              </div>
+              <select value={etapaActual} onChange={(e) => cambiarEtapa(e.target.value)} className="w-full bg-slate-50 dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-lg px-3 py-2 text-sm font-bold text-slate-900 dark:text-white outline-none focus:border-emerald-600 cursor-pointer">
+                {ETAPAS_PIPELINE.map((etapa) => <option key={etapa.value} value={etapa.value}>{etapa.label}</option>)}
+              </select>
             </div>
 
             <div className="p-6 border-b border-slate-200 dark:border-white/10">
