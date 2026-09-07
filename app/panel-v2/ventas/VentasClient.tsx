@@ -8,6 +8,7 @@ import NuevaVentaModal, { type VentaPrefill } from "./NuevaVentaModal";
 import VentaDetalleModal from "./VentaDetalleModal";
 import { fmtFechaLocal } from "@/lib/panelV2/fechas";
 import { supabase2 } from "@/lib/supabase2/client";
+import TablaResponsiva, { type ColumnaTabla } from "@/components/panelV2/TablaResponsiva";
 
 interface Venta {
   id: string; estado: string; vehiculo_marca: string | null; vehiculo_modelo: string | null; vehiculo_anio: number | null;
@@ -211,71 +212,63 @@ export default function VentasClient({
               <p className="text-xs text-slate-500 dark:text-slate-400">Todavía no hay ventas cargadas. Podés crear una desde el botón de arriba.</p>
             </div>
           ) : (
-            <div className="bg-white dark:bg-white/[0.02] border border-slate-200 dark:border-white/5 rounded-2xl overflow-x-auto">
-              <table className="w-full text-left border-collapse">
-                <thead>
-                  <tr className="bg-slate-50 dark:bg-white/[0.03] border-b border-slate-200 dark:border-white/5">
-                    <th className="px-4 py-3 text-[10px] font-black uppercase tracking-widest text-slate-500 dark:text-slate-400 whitespace-nowrap">Fecha</th>
-                    <th className="px-4 py-3 text-[10px] font-black uppercase tracking-widest text-slate-500 dark:text-slate-400 whitespace-nowrap">Vehículo</th>
-                    <th className="px-4 py-3 text-[10px] font-black uppercase tracking-widest text-slate-500 dark:text-slate-400 whitespace-nowrap">Comprador</th>
-                    <th className="px-4 py-3 text-[10px] font-black uppercase tracking-widest text-slate-500 dark:text-slate-400 whitespace-nowrap">Vendedor</th>
-                    <th className="px-4 py-3 text-[10px] font-black uppercase tracking-widest text-slate-500 dark:text-slate-400 whitespace-nowrap">Precio</th>
-                    <th className="px-4 py-3 text-[10px] font-black uppercase tracking-widest text-slate-500 dark:text-slate-400 whitespace-nowrap">Adelanto</th>
-                    <th className="px-4 py-3 text-[10px] font-black uppercase tracking-widest text-slate-500 dark:text-slate-400 whitespace-nowrap">Método</th>
-                    <th className="px-4 py-3 text-[10px] font-black uppercase tracking-widest text-slate-500 dark:text-slate-400 whitespace-nowrap">Comisión</th>
-                    <th className="px-4 py-3 text-[10px] font-black uppercase tracking-widest text-slate-500 dark:text-slate-400 whitespace-nowrap">Entrega</th>
-                    <th className="px-4 py-3 text-[10px] font-black uppercase tracking-widest text-slate-500 dark:text-slate-400 whitespace-nowrap">Status</th>
-                    <th className="px-4 py-3 text-[10px] font-black uppercase tracking-widest text-slate-500 dark:text-slate-400 whitespace-nowrap">Liquidada</th>
-                    <th className="px-4 py-3 w-px whitespace-nowrap">Acciones</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {filtradas.map((v) => {
-                    const adelanto = senasPorVenta[v.id] || 0;
+            <TablaResponsiva<Venta>
+              filas={filtradas}
+              keyExtractor={(v) => v.id}
+              onRowClick={(v) => setEditando(v)}
+              encabezadoMobile={(v) => (
+                <div>
+                  <p className="text-sm font-bold text-slate-900 dark:text-white">{v.comprador_nombre}</p>
+                  {v.comprador_telefono && <p className="text-[11px] text-slate-400">{v.comprador_telefono}</p>}
+                  <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">
+                    {[v.vehiculo_marca, v.vehiculo_modelo, v.vehiculo_anio].filter(Boolean).join(" ") || "—"}
+                    {v.vehiculo_patente ? ` · ${v.vehiculo_patente}` : ""}
+                    {permutaSet.has(v.id) && <span className="ml-1.5 text-[9px] font-bold px-1.5 py-0.5 rounded bg-indigo-50 dark:bg-indigo-500/10 text-indigo-600 dark:text-indigo-300">PERMUTA</span>}
+                  </p>
+                </div>
+              )}
+              columnas={
+                [
+                  { key: "fecha", header: "Fecha", cell: (v) => fmtFechaLocal(v.fecha_cierre), claseTd: "text-xs text-slate-500 dark:text-slate-400 whitespace-nowrap" },
+                  { key: "vehiculo", header: "Vehículo", cell: (v) => <>{[v.vehiculo_marca, v.vehiculo_modelo, v.vehiculo_anio].filter(Boolean).join(" ") || "—"}{v.vehiculo_patente ? ` · ${v.vehiculo_patente}` : ""}{permutaSet.has(v.id) && <span className="ml-1.5 text-[9px] font-bold px-1.5 py-0.5 rounded bg-indigo-50 dark:bg-indigo-500/10 text-indigo-600 dark:text-indigo-300">PERMUTA</span>}</>, claseTd: "text-xs text-slate-600 dark:text-slate-300 whitespace-nowrap", ocultarEnMobile: true },
+                  { key: "comprador", header: "Comprador", cell: (v) => <><p className="text-sm font-bold text-slate-900 dark:text-white whitespace-nowrap">{v.comprador_nombre}</p>{v.comprador_telefono && <p className="text-[11px] text-slate-400">{v.comprador_telefono}</p>}</>, ocultarEnMobile: true },
+                  { key: "vendedor", header: "Vendedor", cell: (v) => (v.vendedor_id ? perfilMap[v.vendedor_id] || "—" : "—"), claseTd: "text-xs text-slate-500 dark:text-slate-400 whitespace-nowrap" },
+                  { key: "precio", header: "Precio", cell: (v) => `${v.moneda_venta} ${Number(v.precio_venta).toLocaleString("es-AR")}`, claseTd: "text-sm font-bold text-slate-700 dark:text-slate-200 whitespace-nowrap" },
+                  { key: "adelanto", header: "Adelanto", cell: (v) => { const adelanto = senasPorVenta[v.id] || 0; return adelanto > 0 ? `${v.moneda_venta} ${adelanto.toLocaleString("es-AR")}` : "—"; }, claseTd: "text-xs text-slate-500 dark:text-slate-400 whitespace-nowrap" },
+                  { key: "metodo", header: "Método", cell: (v) => v.metodo_pago || "—", claseTd: "text-xs text-slate-500 dark:text-slate-400 whitespace-nowrap" },
+                  { key: "comision", header: "Comisión", cell: (v) => {
                     const comisionPct = Number(v.comision_vendedor_pct || 0) + Number(v.comision_consignacion_pct || 0);
                     const comisionMonto = (Number(v.precio_venta) * comisionPct) / 100;
-                    return (
-                      <tr key={v.id} onClick={() => setEditando(v)} className="border-b border-slate-100 dark:border-white/5 last:border-0 hover:bg-slate-50 dark:hover:bg-white/[0.02] cursor-pointer">
-                        <td className="px-4 py-3 text-xs text-slate-500 dark:text-slate-400 whitespace-nowrap">{fmtFechaLocal(v.fecha_cierre)}</td>
-                        <td className="px-4 py-3 text-xs text-slate-600 dark:text-slate-300 whitespace-nowrap">{[v.vehiculo_marca, v.vehiculo_modelo, v.vehiculo_anio].filter(Boolean).join(" ") || "—"}{v.vehiculo_patente ? ` · ${v.vehiculo_patente}` : ""}{permutaSet.has(v.id) && <span className="ml-1.5 text-[9px] font-bold px-1.5 py-0.5 rounded bg-indigo-50 dark:bg-indigo-500/10 text-indigo-600 dark:text-indigo-300">PERMUTA</span>}</td>
-                        <td className="px-4 py-3">
-                          <p className="text-sm font-bold text-slate-900 dark:text-white whitespace-nowrap">{v.comprador_nombre}</p>
-                          {v.comprador_telefono && <p className="text-[11px] text-slate-400">{v.comprador_telefono}</p>}
-                        </td>
-                        <td className="px-4 py-3 text-xs text-slate-500 dark:text-slate-400 whitespace-nowrap">{v.vendedor_id ? perfilMap[v.vendedor_id] || "—" : "—"}</td>
-                        <td className="px-4 py-3 text-sm font-bold text-slate-700 dark:text-slate-200 whitespace-nowrap">{v.moneda_venta} {Number(v.precio_venta).toLocaleString("es-AR")}</td>
-                        <td className="px-4 py-3 text-xs text-slate-500 dark:text-slate-400 whitespace-nowrap">{adelanto > 0 ? `${v.moneda_venta} ${adelanto.toLocaleString("es-AR")}` : "—"}</td>
-                        <td className="px-4 py-3 text-xs text-slate-500 dark:text-slate-400 whitespace-nowrap">{v.metodo_pago || "—"}</td>
-                        <td className="px-4 py-3 text-xs text-slate-500 dark:text-slate-400 whitespace-nowrap">{comisionMonto > 0 ? <>{v.moneda_venta} {comisionMonto.toLocaleString("es-AR")} <span className="text-slate-400">({comisionPct}%)</span></> : "—"}</td>
-                        <td className="px-4 py-3 text-xs text-slate-500 dark:text-slate-400 whitespace-nowrap">{v.fecha_entrega ? fmtFechaLocal(v.fecha_entrega) : "—"}</td>
-                        <td className="px-4 py-3 whitespace-nowrap"><span className={`text-[10px] font-bold px-2 py-1 rounded-full border ${ESTADO_COLOR[v.estado]}`}>{v.estado}</span></td>
-                        <td className="px-4 py-3 whitespace-nowrap" onClick={(e) => e.stopPropagation()}>
-                          {comisionMonto > 0 ? (
-                            <button onClick={() => toggleLiquidada(v)} className={`text-[10px] font-bold px-2 py-1 rounded-full flex items-center gap-1 ${v.comision_liquidada ? "bg-emerald-50 dark:bg-emerald-500/10 text-emerald-700 dark:text-emerald-300" : "bg-amber-50 dark:bg-amber-500/10 text-amber-700 dark:text-amber-300"}`}>
-                              {v.comision_liquidada ? "✅ Liquidada" : "⏳ Pendiente"}
-                            </button>
-                          ) : "—"}
-                        </td>
-                        <td className="px-4 py-3 w-px whitespace-nowrap" onClick={(e) => e.stopPropagation()}>
-                          <div className="flex items-center gap-1">
-                            <button onClick={() => setDetalleId(v.id)} title="Ver" className="p-2 bg-slate-50 dark:bg-white/5 hover:bg-slate-200 dark:hover:bg-white/10 text-slate-600 dark:text-slate-300 rounded-lg"><Eye className="w-3.5 h-3.5" /></button>
-                            <button onClick={() => setEditando(v)} title="Editar" className="p-2 bg-slate-50 dark:bg-white/5 hover:bg-slate-200 dark:hover:bg-white/10 text-slate-600 dark:text-slate-300 rounded-lg"><Pencil className="w-3.5 h-3.5" /></button>
-                            <button disabled title="Boleto — todavía no construido" className="p-2 bg-slate-50 dark:bg-white/5 text-slate-300 dark:text-slate-600 rounded-lg opacity-60 cursor-not-allowed"><FileText className="w-3.5 h-3.5" /></button>
-                            <button disabled title="Recibo/seña — todavía no construido" className="p-2 bg-slate-50 dark:bg-white/5 text-slate-300 dark:text-slate-600 rounded-lg opacity-60 cursor-not-allowed"><Wallet className="w-3.5 h-3.5" /></button>
-                            {v.estado === "cerrada" && v.comprador_telefono && (
-                              <button onClick={() => servicePreEntrega(v)} title="Service pre-entrega" className="p-2 bg-emerald-50 dark:bg-emerald-500/10 hover:bg-emerald-600 hover:text-white text-emerald-600 dark:text-emerald-300 rounded-lg"><Wrench className="w-3.5 h-3.5" /></button>
-                            )}
-                            {soyAdmin && (
-                              <button onClick={() => eliminarRapido(v)} title="Eliminar" className="p-2 bg-slate-50 dark:bg-white/5 hover:bg-rose-600 hover:text-white text-rose-500 rounded-lg"><Trash2 className="w-3.5 h-3.5" /></button>
-                            )}
-                          </div>
-                        </td>
-                      </tr>
-                    );
-                  })}
-                </tbody>
-              </table>
-            </div>
+                    return comisionMonto > 0 ? <>{v.moneda_venta} {comisionMonto.toLocaleString("es-AR")} <span className="text-slate-400">({comisionPct}%)</span></> : "—";
+                  }, claseTd: "text-xs text-slate-500 dark:text-slate-400 whitespace-nowrap" },
+                  { key: "entrega", header: "Entrega", cell: (v) => (v.fecha_entrega ? fmtFechaLocal(v.fecha_entrega) : "—"), claseTd: "text-xs text-slate-500 dark:text-slate-400 whitespace-nowrap" },
+                  { key: "status", header: "Status", cell: (v) => <span className={`text-[10px] font-bold px-2 py-1 rounded-full border ${ESTADO_COLOR[v.estado]}`}>{v.estado}</span> },
+                  { key: "liquidada", header: "Liquidada", cell: (v) => {
+                    const comisionPct = Number(v.comision_vendedor_pct || 0) + Number(v.comision_consignacion_pct || 0);
+                    const comisionMonto = (Number(v.precio_venta) * comisionPct) / 100;
+                    return comisionMonto > 0 ? (
+                      <button onClick={(e) => { e.stopPropagation(); toggleLiquidada(v); }} className={`text-[10px] font-bold px-2 py-1 rounded-full flex items-center gap-1 ${v.comision_liquidada ? "bg-emerald-50 dark:bg-emerald-500/10 text-emerald-700 dark:text-emerald-300" : "bg-amber-50 dark:bg-amber-500/10 text-amber-700 dark:text-amber-300"}`}>
+                        {v.comision_liquidada ? "✅ Liquidada" : "⏳ Pendiente"}
+                      </button>
+                    ) : "—";
+                  } },
+                ] as ColumnaTabla<Venta>[]
+              }
+              acciones={(v) => (
+                <>
+                  <button onClick={() => setDetalleId(v.id)} title="Ver" className="p-2 bg-slate-50 dark:bg-white/5 hover:bg-slate-200 dark:hover:bg-white/10 text-slate-600 dark:text-slate-300 rounded-lg"><Eye className="w-3.5 h-3.5" /></button>
+                  <button onClick={() => setEditando(v)} title="Editar" className="p-2 bg-slate-50 dark:bg-white/5 hover:bg-slate-200 dark:hover:bg-white/10 text-slate-600 dark:text-slate-300 rounded-lg"><Pencil className="w-3.5 h-3.5" /></button>
+                  <button disabled title="Boleto — todavía no construido" className="p-2 bg-slate-50 dark:bg-white/5 text-slate-300 dark:text-slate-600 rounded-lg opacity-60 cursor-not-allowed"><FileText className="w-3.5 h-3.5" /></button>
+                  <button disabled title="Recibo/seña — todavía no construido" className="p-2 bg-slate-50 dark:bg-white/5 text-slate-300 dark:text-slate-600 rounded-lg opacity-60 cursor-not-allowed"><Wallet className="w-3.5 h-3.5" /></button>
+                  {v.estado === "cerrada" && v.comprador_telefono && (
+                    <button onClick={() => servicePreEntrega(v)} title="Service pre-entrega" className="p-2 bg-emerald-50 dark:bg-emerald-500/10 hover:bg-emerald-600 hover:text-white text-emerald-600 dark:text-emerald-300 rounded-lg"><Wrench className="w-3.5 h-3.5" /></button>
+                  )}
+                  {soyAdmin && (
+                    <button onClick={() => eliminarRapido(v)} title="Eliminar" className="p-2 bg-slate-50 dark:bg-white/5 hover:bg-rose-600 hover:text-white text-rose-500 rounded-lg"><Trash2 className="w-3.5 h-3.5" /></button>
+                  )}
+                </>
+              )}
+            />
           )}
         </div>
       </div>

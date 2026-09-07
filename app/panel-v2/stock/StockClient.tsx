@@ -19,6 +19,7 @@ import PrecioEditor from "./PrecioEditor";
 import SucursalEditor from "./SucursalEditor";
 import VendedorEditor from "./VendedorEditor";
 import { parseFechaLocal } from "@/lib/panelV2/fechas";
+import TablaResponsiva, { type ColumnaTabla } from "@/components/panelV2/TablaResponsiva";
 
 interface Vehiculo {
   id: string; categoria: string; marca: string; modelo: string; anio: number; patente: string | null; color: string | null;
@@ -151,6 +152,28 @@ export default function StockClient({
     XLSX.writeFile(wb, `stock-${new Date().toISOString().slice(0, 10)}.xlsx`);
   };
 
+  const renderVehiculoCell = (v: Vehiculo) => (
+    <div className="flex items-center gap-3">
+      <div
+        className={`w-11 h-11 rounded-lg bg-slate-100 dark:bg-white/5 border border-slate-200 dark:border-white/10 flex items-center justify-center shrink-0 overflow-hidden ${v.fotos?.[0] ? "cursor-zoom-in" : ""}`}
+        onClick={(e) => { if (v.fotos?.[0]) { e.stopPropagation(); setGaleria({ fotos: v.fotos, index: 0 }); } }}
+      >
+        {v.fotos?.[0] ? <img src={v.fotos[0]} alt="" className="w-full h-full object-cover" /> : <Car className="w-5 h-5 text-slate-300 dark:text-slate-600" />}
+      </div>
+      <div>
+        <div className="flex items-center gap-2">
+          <p className="text-sm font-bold text-slate-900 dark:text-white whitespace-nowrap">{v.marca} {v.modelo}</p>
+          {aRevisar(v) && v.estado === "disponible" && (
+            <span title="Datos incompletos: revisar publicación/foto/precio">
+              <AlertTriangle className="w-3.5 h-3.5 text-amber-500 shrink-0" />
+            </span>
+          )}
+        </div>
+        {v.color && <p className="text-[11px] text-slate-400">{v.color}</p>}
+      </div>
+    </div>
+  );
+
   return (
     <div className="flex flex-col h-full w-full overflow-hidden">
       <div className="flex-1 overflow-y-auto custom-scrollbar p-4 md:p-6">
@@ -254,85 +277,43 @@ export default function StockClient({
                   <div className="bg-white dark:bg-white/[0.02] border border-slate-200 dark:border-white/5 rounded-xl px-4 py-2.5 mb-3 text-xs font-semibold text-slate-500 dark:text-slate-400">
                     {filtrados.length} vehículo{filtrados.length === 1 ? "" : "s"} en lista
                   </div>
-                  <div className="bg-white dark:bg-white/[0.02] border border-slate-200 dark:border-white/5 rounded-2xl overflow-x-auto">
-                  <table className="w-full text-left border-collapse">
-                    <thead>
-                      <tr className="bg-slate-50 dark:bg-white/[0.03] border-b border-slate-200 dark:border-white/5">
-                        <th className="px-4 py-3 text-[10px] font-black uppercase tracking-widest text-slate-500 dark:text-slate-400">Vehículo</th>
-                        <th className="px-4 py-3 text-[10px] font-black uppercase tracking-widest text-slate-500 dark:text-slate-400">Año</th>
-                        <th className="px-4 py-3 text-[10px] font-black uppercase tracking-widest text-slate-500 dark:text-slate-400">Patente/VIN</th>
-                        <th className="px-4 py-3 text-[10px] font-black uppercase tracking-widest text-slate-500 dark:text-slate-400">KM</th>
-                        <th className="px-4 py-3 text-[10px] font-black uppercase tracking-widest text-slate-500 dark:text-slate-400">Precio</th>
-                        <th className="px-4 py-3 text-[10px] font-black uppercase tracking-widest text-slate-500 dark:text-slate-400">Estado</th>
-                        <th className="px-4 py-3 text-[10px] font-black uppercase tracking-widest text-slate-500 dark:text-slate-400">Sucursal</th>
-                        <th className="px-4 py-3 text-[10px] font-black uppercase tracking-widest text-slate-500 dark:text-slate-400">Asignado</th>
-                        <th className="px-4 py-3 text-[10px] font-black uppercase tracking-widest text-slate-500 dark:text-slate-400">Días</th>
-                        <th className="px-4 py-3 text-[10px] font-black uppercase tracking-widest text-slate-500 dark:text-slate-400">ML</th>
-                        <th className="px-4 py-3 w-px">Acciones</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {filtrados.map((v) => {
-                        const dias = diasEnStock(v.created_at);
-                        const diasColor = dias >= diasEstancado ? "text-rose-600 dark:text-rose-400 font-black" : dias >= 30 ? "text-amber-600 dark:text-amber-400 font-bold" : "text-slate-500";
-                        return (
-                          <tr key={v.id} className="border-b border-slate-100 dark:border-white/5 last:border-0 hover:bg-slate-50 dark:hover:bg-white/[0.02]">
-                            <td className="px-4 py-3">
-                              <div className="flex items-center gap-3">
-                                <div
-                                  className={`w-11 h-11 rounded-lg bg-slate-100 dark:bg-white/5 border border-slate-200 dark:border-white/10 flex items-center justify-center shrink-0 overflow-hidden ${v.fotos?.[0] ? "cursor-zoom-in" : ""}`}
-                                  onClick={(e) => { if (v.fotos?.[0]) { e.stopPropagation(); setGaleria({ fotos: v.fotos, index: 0 }); } }}
-                                >
-                                  {v.fotos?.[0] ? <img src={v.fotos[0]} alt="" className="w-full h-full object-cover" /> : <Car className="w-5 h-5 text-slate-300 dark:text-slate-600" />}
-                                </div>
-                                <div>
-                                  <div className="flex items-center gap-2">
-                                    <p className="text-sm font-bold text-slate-900 dark:text-white whitespace-nowrap">{v.marca} {v.modelo}</p>
-                                    {aRevisar(v) && v.estado === "disponible" && (
-                                      <span title="Datos incompletos: revisar publicación/foto/precio">
-                                        <AlertTriangle className="w-3.5 h-3.5 text-amber-500 shrink-0" />
-                                      </span>
-                                    )}
-                                  </div>
-                                  {v.color && <p className="text-[11px] text-slate-400">{v.color}</p>}
-                                </div>
-                              </div>
-                            </td>
-                            <td className="px-4 py-3 text-xs text-slate-500 dark:text-slate-400 whitespace-nowrap">{v.anio}</td>
-                            <td className="px-4 py-3 text-xs text-slate-500 dark:text-slate-400 whitespace-nowrap">{v.patente || "s/patente"}</td>
-                            <td className="px-4 py-3 text-xs text-slate-500 dark:text-slate-400 whitespace-nowrap">{v.km?.toLocaleString("es-AR") ?? "—"}</td>
-                            <td className="px-4 py-3 text-sm whitespace-nowrap">
-                              <PrecioEditor vehiculoId={v.id} precio={v.precio_venta} moneda={v.moneda_venta} onActualizado={actualizarVehiculo} />
-                            </td>
-                            <td className="px-4 py-3"><span className={`text-[10px] font-bold px-2 py-1 rounded-full border whitespace-nowrap ${ESTADO_COLOR[v.estado]}`}>{ESTADO_LABEL[v.estado]}</span></td>
-                            <td className="px-4 py-3 text-xs whitespace-nowrap">
-                              <SucursalEditor vehiculoId={v.id} sucursalId={v.sucursal_id} sucursalNombre={v.sucursal?.nombre || null} sucursales={sucursales} onActualizado={actualizarVehiculo} />
-                            </td>
-                            <td className="px-4 py-3 text-xs whitespace-nowrap">
-                              <VendedorEditor vehiculoId={v.id} vendedorId={v.vendedor_asignado_id} vendedorNombre={v.vendedor_asignado_id ? perfilMap[v.vendedor_asignado_id] : null} perfiles={perfiles} onActualizado={actualizarVehiculo} />
-                            </td>
-                            <td className={`px-4 py-3 text-xs whitespace-nowrap ${diasColor}`}>{dias}d</td>
-                            <td className="px-4 py-3">{v.publicado_ml ? <CheckCircle2 className="w-4 h-4 text-emerald-500" /> : <span className="text-slate-300 dark:text-slate-600">—</span>}</td>
-                            <td className="px-4 py-3 w-px whitespace-nowrap">
-                              <div className="flex items-center gap-1">
-                                <button onClick={() => setPresupuestoVehiculo(v)} title="Nuevo presupuesto" className="p-2 bg-slate-50 dark:bg-white/5 hover:bg-indigo-600 hover:text-white text-slate-400 rounded-lg"><FileText className="w-3.5 h-3.5" /></button>
-                                <button onClick={() => setEditando(v)} title="Editar" className="p-2 bg-slate-50 dark:bg-white/5 hover:bg-slate-200 dark:hover:bg-white/10 text-slate-500 rounded-lg"><Edit2 className="w-3.5 h-3.5" /></button>
-                                {v.estado === "disponible" && (
-                                  <button onClick={() => setSenaVehiculo(v)} title="Marcar como señado" className="p-2 bg-slate-50 dark:bg-white/5 hover:bg-amber-500 hover:text-white text-slate-400 rounded-lg">
-                                    <Tag className="w-3.5 h-3.5" />
-                                  </button>
-                                )}
-                                <button onClick={() => eliminarVehiculo(v)} disabled={ocupadoId === v.id} title="Eliminar" className="p-2 bg-slate-50 dark:bg-white/5 hover:bg-rose-600 hover:text-white text-slate-400 rounded-lg disabled:opacity-50">
-                                  {ocupadoId === v.id ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Trash2 className="w-3.5 h-3.5" />}
-                                </button>
-                              </div>
-                            </td>
-                          </tr>
-                        );
-                      })}
-                    </tbody>
-                  </table>
-                  </div>
+                  <TablaResponsiva<Vehiculo>
+                    filas={filtrados}
+                    keyExtractor={(v) => v.id}
+                    encabezadoMobile={renderVehiculoCell}
+                    columnas={
+                      [
+                        { key: "vehiculo", header: "Vehículo", cell: renderVehiculoCell, ocultarEnMobile: true },
+                        { key: "anio", header: "Año", cell: (v) => v.anio, claseTd: "text-xs text-slate-500 dark:text-slate-400 whitespace-nowrap" },
+                        { key: "patente", header: "Patente/VIN", cell: (v) => v.patente || "s/patente", claseTd: "text-xs text-slate-500 dark:text-slate-400 whitespace-nowrap" },
+                        { key: "km", header: "KM", cell: (v) => v.km?.toLocaleString("es-AR") ?? "—", claseTd: "text-xs text-slate-500 dark:text-slate-400 whitespace-nowrap" },
+                        { key: "precio", header: "Precio", cell: (v) => <PrecioEditor vehiculoId={v.id} precio={v.precio_venta} moneda={v.moneda_venta} onActualizado={actualizarVehiculo} />, claseTd: "text-sm whitespace-nowrap" },
+                        { key: "estado", header: "Estado", cell: (v) => <span className={`text-[10px] font-bold px-2 py-1 rounded-full border whitespace-nowrap ${ESTADO_COLOR[v.estado]}`}>{ESTADO_LABEL[v.estado]}</span> },
+                        { key: "sucursal", header: "Sucursal", cell: (v) => <SucursalEditor vehiculoId={v.id} sucursalId={v.sucursal_id} sucursalNombre={v.sucursal?.nombre || null} sucursales={sucursales} onActualizado={actualizarVehiculo} />, claseTd: "text-xs whitespace-nowrap" },
+                        { key: "asignado", header: "Asignado", cell: (v) => <VendedorEditor vehiculoId={v.id} vendedorId={v.vendedor_asignado_id} vendedorNombre={v.vendedor_asignado_id ? perfilMap[v.vendedor_asignado_id] : null} perfiles={perfiles} onActualizado={actualizarVehiculo} />, claseTd: "text-xs whitespace-nowrap" },
+                        { key: "dias", header: "Días", cell: (v) => {
+                          const dias = diasEnStock(v.created_at);
+                          const diasColor = dias >= diasEstancado ? "text-rose-600 dark:text-rose-400 font-black" : dias >= 30 ? "text-amber-600 dark:text-amber-400 font-bold" : "text-slate-500";
+                          return <span className={diasColor}>{dias}d</span>;
+                        }, claseTd: "text-xs whitespace-nowrap" },
+                        { key: "ml", header: "ML", cell: (v) => (v.publicado_ml ? <CheckCircle2 className="w-4 h-4 text-emerald-500" /> : <span className="text-slate-300 dark:text-slate-600">—</span>) },
+                      ] as ColumnaTabla<Vehiculo>[]
+                    }
+                    acciones={(v) => (
+                      <>
+                        <button onClick={() => setPresupuestoVehiculo(v)} title="Nuevo presupuesto" className="p-2 bg-slate-50 dark:bg-white/5 hover:bg-indigo-600 hover:text-white text-slate-400 rounded-lg"><FileText className="w-3.5 h-3.5" /></button>
+                        <button onClick={() => setEditando(v)} title="Editar" className="p-2 bg-slate-50 dark:bg-white/5 hover:bg-slate-200 dark:hover:bg-white/10 text-slate-500 rounded-lg"><Edit2 className="w-3.5 h-3.5" /></button>
+                        {v.estado === "disponible" && (
+                          <button onClick={() => setSenaVehiculo(v)} title="Marcar como señado" className="p-2 bg-slate-50 dark:bg-white/5 hover:bg-amber-500 hover:text-white text-slate-400 rounded-lg">
+                            <Tag className="w-3.5 h-3.5" />
+                          </button>
+                        )}
+                        <button onClick={() => eliminarVehiculo(v)} disabled={ocupadoId === v.id} title="Eliminar" className="p-2 bg-slate-50 dark:bg-white/5 hover:bg-rose-600 hover:text-white text-slate-400 rounded-lg disabled:opacity-50">
+                          {ocupadoId === v.id ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Trash2 className="w-3.5 h-3.5" />}
+                        </button>
+                      </>
+                    )}
+                  />
                 </>
               )}
             </>
