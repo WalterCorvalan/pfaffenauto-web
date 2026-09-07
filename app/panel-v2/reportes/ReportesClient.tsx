@@ -2,7 +2,7 @@
 
 import { useState, useMemo } from "react";
 import { supabase2 } from "@/lib/supabase2/client";
-import { BarChart3, ChevronLeft, ChevronRight, Trophy, Clock, FolderKanban, Ticket, Wrench, Loader2, Lock } from "lucide-react";
+import { BarChart3, ChevronLeft, ChevronRight, Trophy, Clock, FolderKanban, Ticket, Wrench, Loader2, Lock, SearchCheck } from "lucide-react";
 import { BarChart, Bar, XAxis, YAxis, ResponsiveContainer, Tooltip, CartesianGrid } from "recharts";
 
 interface Props {
@@ -13,6 +13,7 @@ interface Props {
   topClientes: any[]; clientesPorVendedor: any[]; cotizacionesResumen: any; cotizacionesPorEstado: any[];
   cotizacionesPorVendedor: any[]; stockPorEstado: any[]; stockPorMarca: any[]; infraccionesPorMes: any[];
   servicePosventaInicial: any;
+  consultasVsVentas: any[];
 }
 
 const ESTADO_COT_LABEL: Record<string, string> = { pendiente: "Pendiente", aprobada: "Aprobada", rechazada: "Rechazada" };
@@ -273,6 +274,30 @@ export default function ReportesClient(props: Props) {
         <Card title="Origen de Leads">
           {origenLeads.map((v: any) => <BarRow key={v.origen} label={v.origen} valor={Number(v.cantidad)} max={maxLeads} color="bg-sky-500" />)}
           {origenLeads.length === 0 && <p className="text-xs text-slate-400 text-center py-4">Sin leads nuevos este mes.</p>}
+        </Card>
+
+        <Card title="Consultas vs Ventas por Modelo" icon={SearchCheck}>
+          <p className="text-[11px] text-slate-400 mb-3 -mt-2">Consultas por WhatsApp/Instagram sobre un auto puntual (histórico), cruzadas con ventas cerradas de esa marca/modelo. Ordenado por más consultado — abajo de todo, los que más preguntan pero menos convierten.</p>
+          <div className="overflow-x-auto">
+            <table className="w-full text-left text-xs">
+              <thead><tr className="text-slate-400 uppercase text-[10px]"><th className="py-1">Modelo</th><th className="py-1 text-right">Consultas</th><th className="py-1 text-right">Ventas</th><th className="py-1 text-right">Conversión</th></tr></thead>
+              <tbody>
+                {props.consultasVsVentas.map((c: any, i: number) => {
+                  const pct = Number(c.tasa_conversion_pct) || 0;
+                  const colorPct = pct === 0 ? "text-rose-600" : pct < 15 ? "text-amber-600" : "text-emerald-600";
+                  return (
+                    <tr key={`${c.marca}-${c.modelo}-${i}`} className="border-t border-slate-50 dark:border-white/5">
+                      <td className="py-1.5 font-bold text-slate-700 dark:text-slate-200">{c.marca} {c.modelo}</td>
+                      <td className="py-1.5 text-right font-mono">{c.consultas}</td>
+                      <td className="py-1.5 text-right font-mono">{c.ventas}</td>
+                      <td className={`py-1.5 text-right font-mono font-bold ${colorPct}`}>{pct}%</td>
+                    </tr>
+                  );
+                })}
+                {props.consultasVsVentas.length === 0 && <tr><td colSpan={4} className="py-4 text-center text-slate-400">Sin conversaciones linkeadas a un vehículo todavía.</td></tr>}
+              </tbody>
+            </table>
+          </div>
         </Card>
 
         {puedeVerFinanzas ? (
