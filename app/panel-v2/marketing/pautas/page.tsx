@@ -46,10 +46,11 @@ export default async function PautasMarketingPage() {
   const mesAnteriorInicio = inicioMes(-1);
   const mesSiguienteInicio = inicioMes(1);
 
-  const [{ data: campanasMesActual }, { data: campanasMesAnterior }, { data: todas }] = await Promise.all([
+  const [{ data: campanasMesActual }, { data: campanasMesAnterior }, { data: todas }, { data: leadsPorUtm }] = await Promise.all([
     supabase.from("campanas_marketing").select("*").gte("periodo", mesActualInicio).lt("periodo", mesSiguienteInicio),
     supabase.from("campanas_marketing").select("*").gte("periodo", mesAnteriorInicio).lt("periodo", mesActualInicio),
     supabase.from("campanas_marketing").select("*").order("periodo", { ascending: false }).limit(50),
+    supabase.from("v_reportes_leads_por_utm").select("*").limit(30),
   ]);
 
   const actual = campanasMesActual || [];
@@ -182,6 +183,31 @@ export default async function PautasMarketingPage() {
             );
           })}
         </div>
+      </div>
+
+      {/* LEADS REALES POR UTM (atribución automática, no carga manual) */}
+      <div className="bg-white dark:bg-[#111] border border-slate-200 dark:border-white/10 rounded-2xl shadow-sm overflow-hidden">
+        <div className="p-4 border-b border-slate-100 dark:border-white/5">
+          <h2 className="text-[11px] font-bold uppercase tracking-widest text-slate-500">Leads reales por campaña (UTM)</h2>
+          <p className="text-[11px] text-slate-400 mt-0.5">Detectado automáticamente del link con que entró cada lead a Cotizador/Vender/Financiación — a diferencia del historial de abajo, esto no se carga a mano.</p>
+        </div>
+        {!leadsPorUtm || leadsPorUtm.length === 0 ? (
+          <p className="p-10 text-center text-slate-400 text-sm italic">Sin leads con UTM detectado todavía.</p>
+        ) : (
+          <TablaResponsiva<any>
+            filas={leadsPorUtm}
+            keyExtractor={(l) => `${l.utm_source}-${l.utm_campaign}-${l.utm_medium}`}
+            encabezadoMobile={(l) => <p className="text-[13px] text-slate-700 dark:text-slate-200 font-bold">{l.utm_campaign}</p>}
+            columnas={
+              [
+                { key: "utm_source", header: "Fuente", cell: (l) => l.utm_source, claseTd: "text-[13px] font-bold text-slate-700 dark:text-slate-200" },
+                { key: "utm_campaign", header: "Campaña", cell: (l) => l.utm_campaign, claseTd: "text-[13px] text-slate-600 dark:text-slate-300", ocultarEnMobile: true },
+                { key: "utm_medium", header: "Medio", cell: (l) => l.utm_medium, claseTd: "text-[13px] text-slate-500 dark:text-slate-400", ocultarEnMobile: true },
+                { key: "leads", header: "Leads", cell: (l) => l.leads, claseTd: "font-mono text-[13px] font-bold text-slate-900 dark:text-white" },
+              ] as ColumnaTabla<any>[]
+            }
+          />
+        )}
       </div>
 
       {/* HISTORIAL DE CAMPAÑAS CARGADAS */}
