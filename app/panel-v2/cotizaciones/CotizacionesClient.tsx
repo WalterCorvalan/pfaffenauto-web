@@ -174,7 +174,15 @@ export default function CotizacionesClient({
               {leadsWebIniciales.map((l) => (
                 <div key={l.id} className="flex items-center justify-between px-4 py-2.5 text-sm">
                   <div className="min-w-0">
-                    <p className="font-bold text-slate-800 dark:text-white truncate">{l.nombre} <span className="text-[10px] font-bold uppercase text-slate-400 ml-1">{l.tipo === "permuta" ? "Permuta" : "Tasación"}</span></p>
+                    <p className="font-bold text-slate-800 dark:text-white truncate flex items-center gap-1.5">
+                      {l.nombre}
+                      {/* "Compra" = el cliente nos ofrece SU auto para que se lo compremos
+                          (tipo_peritaje "venta" en v1) -- antes decía "Tasación" a secas,
+                          no dejaba claro de qué lado de la operación viene el pedido. */}
+                      <span className={`text-[9px] font-bold uppercase tracking-widest px-1.5 py-0.5 rounded shrink-0 ${l.tipo === "permuta" ? "bg-indigo-50 dark:bg-indigo-500/10 text-indigo-600 dark:text-indigo-300" : "bg-orange-50 dark:bg-orange-500/10 text-orange-600 dark:text-orange-300"}`}>
+                        {l.tipo === "permuta" ? "Permuta" : "Compra"}
+                      </span>
+                    </p>
                     <p className="text-[11px] text-slate-400 truncate">{[l.marca, l.modelo, l.anio].filter(Boolean).join(" ") || "—"} · {l.telefono || "sin teléfono"}</p>
                   </div>
                   <div className="text-right shrink-0 ml-3">
