@@ -1,6 +1,7 @@
 import { createClient } from "@supabase/supabase-js";
 import Link from "next/link";
 import { headers } from "next/headers";
+import type { Metadata } from "next";
 import { CheckCircle2, Circle, CarFront, Search, Wallet } from "lucide-react";
 import { crearAlerta } from "@/lib/panelV2/alertas";
 import { rateLimit } from "@/lib/rateLimit";
@@ -8,6 +9,14 @@ import { rateLimit } from "@/lib/rateLimit";
 // Fuerza render dinámico: necesitamos leer headers() por request para el
 // rate limit por IP (si no, Next podría servir esta página cacheada).
 export const dynamic = "force-dynamic";
+
+// Códigos de 8 caracteres al azar por cliente: no tiene sentido indexarlos
+// (contenido privado por código, y son URLs "infinitas" que solo desperdician
+// crawl budget).
+export const metadata: Metadata = {
+  title: "Seguí tu operación | Pfaffen Autos",
+  robots: { index: false, follow: false },
+};
 
 const ESTADO_SENA_INFO: Record<string, { label: string; color: string; icono: typeof Wallet }> = {
   Activa: { label: "Recibimos tu seña — en proceso", color: "text-amber-500 bg-amber-50", icono: Wallet },

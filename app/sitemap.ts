@@ -4,8 +4,8 @@ import { KARRY_VERSIONS } from '@/lib/karry-versions';
 import { RELY_VERSIONS } from '@/lib/rely-versions';
 
 const supabase = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY!
+  process.env.NEXT_PUBLIC_SUPABASE2_URL!,
+  process.env.NEXT_PUBLIC_SUPABASE2_PUBLISHABLE_KEY!
 );
 
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
@@ -15,14 +15,13 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     supabase
       .from('vehiculos')
       .select('slug, marca, updated_at')
-      .in('estado', ['Disponible', 'Reservado']),
+      .in('estado', ['disponible', 'reservado']),
     supabase.from('sucursales').select('slug'),
   ]);
 
   const paginasEstaticas: MetadataRoute.Sitemap = [
     { url: baseUrl, lastModified: new Date(), changeFrequency: 'daily', priority: 1.0 },
     { url: `${baseUrl}/catalogo`, lastModified: new Date(), changeFrequency: 'hourly', priority: 0.9 },
-    { url: `${baseUrl}/catalogo-v2`, lastModified: new Date(), changeFrequency: 'hourly', priority: 0.9 },
     { url: `${baseUrl}/0km`, lastModified: new Date(), changeFrequency: 'daily', priority: 0.8 },
     { url: `${baseUrl}/outlet`, lastModified: new Date(), changeFrequency: 'daily', priority: 0.7 },
     { url: `${baseUrl}/mundo-chino`, lastModified: new Date(), changeFrequency: 'daily', priority: 0.7 },

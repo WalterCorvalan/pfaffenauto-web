@@ -7,7 +7,7 @@ export default function robots(): MetadataRoute.Robots {
         userAgent: '*',
         allow: '/',
         // En app/robots.ts cambia esto:
-        disallow: ['/panel/', '/api/'], // Protege el panel interno de vendedores/admins
+        disallow: ['/panel/', '/panel-v2/', '/api/'], // Protege el panel interno de vendedores/admins
       },
       {
         userAgent: 'GPTBot', // Permiso explícito para OpenAI (ChatGPT) - GEO
