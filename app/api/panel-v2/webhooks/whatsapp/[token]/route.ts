@@ -50,7 +50,7 @@ export async function POST(req: Request, { params }: { params: Promise<{ token: 
   // Endpoint público — Meta reintenta legítimo, pero sin límite cualquiera
   // que le pegue directo a la URL puede disparar llamadas pagas a Anthropic
   // sin freno. Generoso (60/min) para no frenar entregas reales de Meta.
-  const limite = rateLimit(ipDesdeRequest(req), { limite: 60, ventanaMs: 60 * 1000 });
+  const limite = await rateLimit(ipDesdeRequest(req), { limite: 60, ventanaMs: 60 * 1000, proyecto: "v2" });
   if (!limite.ok) return new Response("Too many requests", { status: 429 });
 
   const { token } = await params;

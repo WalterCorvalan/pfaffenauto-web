@@ -4,6 +4,7 @@ import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { supabase2 } from "@/lib/supabase2/client";
 import { notificarEncargados } from "@/lib/panelV2/notificaciones";
+import { generarCodigoPublico } from "@/lib/generarCodigoPublico";
 import { FileText, Save, X } from "lucide-react";
 import ClienteBuscador, { ClienteSeleccionado } from "@/components/panelV2/ClienteBuscador";
 import VehiculoSelector, { VehiculoDatos } from "@/components/panelV2/VehiculoSelector";
@@ -57,7 +58,7 @@ export default function NuevoPresupuestoModal({
       const { data: { user } } = await supabase2.auth.getUser();
       // El número lo asigna la base (secuencia real) — ver fix en Señas,
       // mismo problema: calcularlo acá con max(numero)+1 podía duplicar.
-      const tokenPublico = Array.from({ length: 8 }, () => "ABCDEFGHJKLMNPQRSTUVWXYZ23456789"[Math.floor(Math.random() * 32)]).join("");
+      const tokenPublico = generarCodigoPublico();
 
       const { data, error } = await supabase2.from("presupuestos").insert({
         fecha: new Date().toISOString().split("T")[0],

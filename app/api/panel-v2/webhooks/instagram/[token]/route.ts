@@ -47,7 +47,7 @@ export async function GET(req: Request, { params }: { params: Promise<{ token: s
 }
 
 export async function POST(req: Request, { params }: { params: Promise<{ token: string }> }) {
-  const limite = rateLimit(ipDesdeRequest(req), { limite: 60, ventanaMs: 60 * 1000 });
+  const limite = await rateLimit(ipDesdeRequest(req), { limite: 60, ventanaMs: 60 * 1000, proyecto: "v2" });
   if (!limite.ok) return new Response("Too many requests", { status: 429 });
 
   const { token } = await params;

@@ -6,7 +6,7 @@ import { registrarError } from "@/lib/logger";
 // Fotos/videos que manda el cliente en el cotizador cuando no puede venir a sucursal.
 export async function POST(request: Request) {
   try {
-    const limite = rateLimit(ipDesdeRequest(request), { limite: 20, ventanaMs: 10 * 60 * 1000 });
+    const limite = await rateLimit(ipDesdeRequest(request), { limite: 20, ventanaMs: 10 * 60 * 1000 });
     if (!limite.ok) {
       return NextResponse.json({ error: "Demasiados archivos subidos. Esperá un momento." }, { status: 429 });
     }

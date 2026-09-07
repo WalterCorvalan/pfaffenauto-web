@@ -1,7 +1,13 @@
 import { createClient } from "@supabase/supabase-js";
 import Link from "next/link";
+import { headers } from "next/headers";
 import { CheckCircle2, Circle, CarFront, Search, Wallet } from "lucide-react";
 import { crearAlerta } from "@/lib/panelV2/alertas";
+import { rateLimit } from "@/lib/rateLimit";
+
+// Fuerza render dinámico: necesitamos leer headers() por request para el
+// rate limit por IP (si no, Next podría servir esta página cacheada).
+export const dynamic = "force-dynamic";
 
 const ESTADO_SENA_INFO: Record<string, { label: string; color: string; icono: typeof Wallet }> = {
   Activa: { label: "Recibimos tu seña — en proceso", color: "text-amber-500 bg-amber-50", icono: Wallet },
@@ -24,6 +30,20 @@ export default async function SeguimientoPublicoPage({
 }) {
   const { codigo } = await params;
   const codigoUpper = codigo.toUpperCase();
+
+  const ip = (await headers()).get("x-forwarded-for")?.split(",")[0]?.trim() ?? null;
+  const limite = await rateLimit(ip, { limite: 20, ventanaMs: 60 * 1000, proyecto: "v2" });
+  if (!limite.ok) {
+    return (
+      <div className="min-h-screen bg-[#F8FAFC] pt-24 pb-16 px-4">
+        <div className="max-w-lg mx-auto bg-white border border-slate-100 rounded-3xl p-10 text-center shadow-sm">
+          <Search className="w-10 h-10 text-slate-300 mx-auto mb-4" />
+          <h1 className="text-xl font-black text-navy mb-2">Demasiados intentos</h1>
+          <p className="text-sm text-slate-500">Esperá un momento y volvé a intentarlo.</p>
+        </div>
+      </div>
+    );
+  }
 
   const { data: venta } = await supabase
     .from("ventas")

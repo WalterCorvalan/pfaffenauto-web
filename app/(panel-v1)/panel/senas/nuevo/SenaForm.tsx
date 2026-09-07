@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { supabase } from "@/lib/supabase/client";
 import { notificarEncargados, notificarGestoria } from "@/lib/notificaciones";
+import { generarCodigoPublico } from "@/lib/generarCodigoPublico";
 import { ArrowLeft, Wallet, Save, Upload, Loader2 } from "lucide-react";
 import { mostrarToast } from "@/lib/toast";
 import ClienteBuscador, { ClienteSeleccionado } from "../../ClienteBuscador";
@@ -142,9 +143,7 @@ export default function SenaForm({ clientes, vehiculos, vendedores, sucursales, 
       const { data: { user } } = await supabase.auth.getUser();
       const { data: ultimo } = await supabase.from("senas").select("numero").order("numero", { ascending: false }).limit(1).maybeSingle();
       const siguienteNumero = (ultimo?.numero || 0) + 1;
-      const generarCodigoSeguimiento = () =>
-        Array.from({ length: 8 }, () => "ABCDEFGHJKLMNPQRSTUVWXYZ23456789"[Math.floor(Math.random() * 32)]).join("");
-      const codigoSeguimiento = generarCodigoSeguimiento();
+      const codigoSeguimiento = generarCodigoPublico();
 
       const { data, error } = await supabase.from("senas").insert({
         numero: siguienteNumero,

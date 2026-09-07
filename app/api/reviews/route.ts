@@ -3,7 +3,7 @@ import { rateLimit, ipDesdeRequest } from "@/lib/rateLimit";
 import { registrarError } from "@/lib/logger";
 
 export async function GET(req: Request) {
-  const limite = rateLimit(ipDesdeRequest(req), { limite: 30, ventanaMs: 60 * 1000 });
+  const limite = await rateLimit(ipDesdeRequest(req), { limite: 30, ventanaMs: 60 * 1000 });
   if (!limite.ok) {
     return NextResponse.json({ error: "Demasiadas solicitudes." }, { status: 429 });
   }

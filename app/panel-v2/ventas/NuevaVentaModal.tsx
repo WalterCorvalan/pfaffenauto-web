@@ -5,6 +5,7 @@ import { supabase2 } from "@/lib/supabase2/client";
 import { X, Loader2, Save, Trash2, Plus, Bell, Star } from "lucide-react";
 import { hoyLocalISO, parseFechaLocal, fmtFechaLocal } from "@/lib/panelV2/fechas";
 import { crearAlerta } from "@/lib/panelV2/alertas";
+import { generarCodigoPublico } from "@/lib/generarCodigoPublico";
 
 const TIPOS_RECORDATORIO: { value: string; label: string }[] = [
   { value: "llamada_seguimiento", label: "📞 Llamada de seguimiento" },
@@ -276,7 +277,7 @@ export default function NuevaVentaModal({ perfiles, clientes, vehiculos, miId, i
       // Código para que el comprador siga su operación en /seguimiento — mismo
       // generador que usa NuevaSenaModal, así el cliente usa el mismo tipo de
       // código sin importar si arrancó con una seña o una venta directa.
-      const codigoSeguimiento = Array.from({ length: 8 }, () => "ABCDEFGHJKLMNPQRSTUVWXYZ23456789"[Math.floor(Math.random() * 32)]).join("");
+      const codigoSeguimiento = generarCodigoPublico();
 
       const payload: any = {
         estado: estadoFinal, carga_manual: cargaManual, abre_expediente: true, codigo_seguimiento: codigoSeguimiento,

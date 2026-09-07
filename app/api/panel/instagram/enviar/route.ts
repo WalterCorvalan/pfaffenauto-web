@@ -18,7 +18,7 @@ const supabaseAdmin = createClient(
 
 // El vendedor responde manualmente desde /panel/chat — mismo patrón que WhatsApp.
 export async function POST(request: Request) {
-  const limite = rateLimit(ipDesdeRequest(request), { limite: 30, ventanaMs: 60 * 1000 });
+  const limite = await rateLimit(ipDesdeRequest(request), { limite: 30, ventanaMs: 60 * 1000 });
   if (!limite.ok) {
     return NextResponse.json({ error: "Demasiados mensajes. Esperá un momento." }, { status: 429 });
   }

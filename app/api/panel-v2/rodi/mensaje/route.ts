@@ -24,7 +24,7 @@ const MensajeSchema = z.object({
 });
 
 export async function POST(request: Request) {
-  const limite = rateLimit(ipDesdeRequest(request), { limite: 20, ventanaMs: 60 * 1000 });
+  const limite = await rateLimit(ipDesdeRequest(request), { limite: 20, ventanaMs: 60 * 1000, proyecto: "v2" });
   if (!limite.ok) {
     return NextResponse.json({ error: "Demasiados mensajes. Esperá un momento." }, { status: 429 });
   }

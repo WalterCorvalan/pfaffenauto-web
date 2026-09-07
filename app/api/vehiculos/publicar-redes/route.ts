@@ -33,7 +33,7 @@ const armarCaption = (v: any) => {
 // al cargar stock.
 export async function POST(req: Request) {
   try {
-    const limite = rateLimit(ipDesdeRequest(req), { limite: 10, ventanaMs: 60 * 1000 });
+    const limite = await rateLimit(ipDesdeRequest(req), { limite: 10, ventanaMs: 60 * 1000 });
     if (!limite.ok) {
       return Response.json({ error: "Demasiadas solicitudes. Esperá un momento." }, { status: 429 });
     }

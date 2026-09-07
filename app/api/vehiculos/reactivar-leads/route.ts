@@ -22,7 +22,7 @@ const LIMITE_LEADS = 20;
 // habían quedado "fríos"/perdidos preguntando por la misma marca y modelo —
 // reactiva leads que de otra forma quedan muertos en la base para siempre.
 export async function POST(request: Request) {
-  const limite = rateLimit(ipDesdeRequest(request), { limite: 10, ventanaMs: 60 * 1000 });
+  const limite = await rateLimit(ipDesdeRequest(request), { limite: 10, ventanaMs: 60 * 1000 });
   if (!limite.ok) {
     return NextResponse.json({ error: "Demasiadas solicitudes. Esperá un momento." }, { status: 429 });
   }

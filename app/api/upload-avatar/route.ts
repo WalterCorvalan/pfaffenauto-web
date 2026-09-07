@@ -10,7 +10,7 @@ const MAX_MB = 5;
 // Foto de perfil del staff — sin recorte de fondo (no son fotos de autos).
 export async function POST(request: Request) {
   try {
-    const limite = rateLimit(ipDesdeRequest(request), { limite: 15, ventanaMs: 60 * 1000 });
+    const limite = await rateLimit(ipDesdeRequest(request), { limite: 15, ventanaMs: 60 * 1000 });
     if (!limite.ok) {
       return NextResponse.json({ error: "Demasiadas subidas. Esperá un momento." }, { status: 429 });
     }

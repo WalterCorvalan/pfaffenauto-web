@@ -44,7 +44,7 @@ const CrearSchema = z.object({
 });
 
 export async function POST(request: Request) {
-  const limite = rateLimit(ipDesdeRequest(request), { limite: 20, ventanaMs: 60 * 1000 });
+  const limite = await rateLimit(ipDesdeRequest(request), { limite: 20, ventanaMs: 60 * 1000, proyecto: "v2" });
   if (!limite.ok) return NextResponse.json({ error: "Demasiadas solicitudes." }, { status: 429 });
 
   const { error } = await verificarAdmin();
@@ -72,7 +72,7 @@ const ActualizarSchema = z.object({
 });
 
 export async function PATCH(request: Request) {
-  const limite = rateLimit(ipDesdeRequest(request), { limite: 20, ventanaMs: 60 * 1000 });
+  const limite = await rateLimit(ipDesdeRequest(request), { limite: 20, ventanaMs: 60 * 1000, proyecto: "v2" });
   if (!limite.ok) return NextResponse.json({ error: "Demasiadas solicitudes." }, { status: 429 });
 
   const { error } = await verificarAdmin();
@@ -89,7 +89,7 @@ export async function PATCH(request: Request) {
 }
 
 export async function DELETE(request: Request) {
-  const limite = rateLimit(ipDesdeRequest(request), { limite: 20, ventanaMs: 60 * 1000 });
+  const limite = await rateLimit(ipDesdeRequest(request), { limite: 20, ventanaMs: 60 * 1000, proyecto: "v2" });
   if (!limite.ok) return NextResponse.json({ error: "Demasiadas solicitudes." }, { status: 429 });
 
   const { user, error } = await verificarAdmin();

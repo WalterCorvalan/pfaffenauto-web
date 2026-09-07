@@ -17,7 +17,7 @@ const PrecioSugeridoSchema = z.object({
 // y comparte la misma lógica vía lib/tasadorIA.ts.
 export async function POST(req: Request) {
   try {
-    const limite = rateLimit(ipDesdeRequest(req), { limite: 10, ventanaMs: 60 * 1000 });
+    const limite = await rateLimit(ipDesdeRequest(req), { limite: 10, ventanaMs: 60 * 1000 });
     if (!limite.ok) {
       return NextResponse.json({ error: "Demasiadas consultas. Esperá un momento." }, { status: 429 });
     }

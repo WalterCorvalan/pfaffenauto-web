@@ -12,7 +12,7 @@ const MAX_MB = 15;
 // para adjuntos de reclamos/expedientes.
 export async function POST(request: Request) {
   try {
-    const limite = rateLimit(ipDesdeRequest(request), { limite: 20, ventanaMs: 60 * 1000 });
+    const limite = await rateLimit(ipDesdeRequest(request), { limite: 20, ventanaMs: 60 * 1000, proyecto: "v2" });
     if (!limite.ok) {
       return NextResponse.json({ error: "Demasiadas subidas. Esperá un momento." }, { status: 429 });
     }

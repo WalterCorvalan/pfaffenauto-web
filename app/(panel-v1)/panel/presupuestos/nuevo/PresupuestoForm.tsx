@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { supabase } from "@/lib/supabase/client";
 import { notificarEncargados } from "@/lib/notificaciones";
+import { generarCodigoPublico } from "@/lib/generarCodigoPublico";
 import { ArrowLeft, FileText, Save } from "lucide-react";
 import { mostrarToast } from "@/lib/toast";
 import ClienteBuscador, { ClienteSeleccionado } from "../../ClienteBuscador";
@@ -77,7 +78,7 @@ export default function PresupuestoForm({ clientes, vehiculos, vendedores, sucur
       const { data: { user } } = await supabase.auth.getUser();
       const { data: ultimo } = await supabase.from("presupuestos").select("numero").order("numero", { ascending: false }).limit(1).maybeSingle();
       const siguienteNumero = (ultimo?.numero || 0) + 1;
-      const tokenPublico = Array.from({ length: 8 }, () => "ABCDEFGHJKLMNPQRSTUVWXYZ23456789"[Math.floor(Math.random() * 32)]).join("");
+      const tokenPublico = generarCodigoPublico();
 
       const { data, error } = await supabase.from("presupuestos").insert({
         numero: siguienteNumero,

@@ -26,7 +26,7 @@ const ActualizarUsuarioSchema = z.object({
 
 export async function POST(request: Request) {
   try {
-    const limite = rateLimit(ipDesdeRequest(request), { limite: 20, ventanaMs: 60 * 1000 });
+    const limite = await rateLimit(ipDesdeRequest(request), { limite: 20, ventanaMs: 60 * 1000 });
     if (!limite.ok) {
       return NextResponse.json({ error: "Demasiadas solicitudes. Esperá un momento." }, { status: 429 });
     }
@@ -122,7 +122,7 @@ async function verificarAdmin() {
 
 export async function PATCH(request: Request) {
   try {
-    const limite = rateLimit(ipDesdeRequest(request), { limite: 20, ventanaMs: 60 * 1000 });
+    const limite = await rateLimit(ipDesdeRequest(request), { limite: 20, ventanaMs: 60 * 1000 });
     if (!limite.ok) {
       return NextResponse.json({ error: "Demasiadas solicitudes. Esperá un momento." }, { status: 429 });
     }
@@ -160,7 +160,7 @@ export async function PATCH(request: Request) {
 
 export async function DELETE(request: Request) {
   try {
-    const limite = rateLimit(ipDesdeRequest(request), { limite: 20, ventanaMs: 60 * 1000 });
+    const limite = await rateLimit(ipDesdeRequest(request), { limite: 20, ventanaMs: 60 * 1000 });
     if (!limite.ok) {
       return NextResponse.json({ error: "Demasiadas solicitudes. Esperá un momento." }, { status: 429 });
     }

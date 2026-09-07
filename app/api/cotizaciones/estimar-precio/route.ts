@@ -20,7 +20,7 @@ const BodySchema = z.object({
 export async function POST(req: Request) {
   try {
     const ip = ipDesdeRequest(req);
-    const limite = rateLimit(ip, { limite: 8, ventanaMs: 10 * 60 * 1000 });
+    const limite = await rateLimit(ip, { limite: 8, ventanaMs: 10 * 60 * 1000 });
     if (!limite.ok) {
       return Response.json({ ok: false, error: "Demasiadas solicitudes. Reintentá en unos minutos." }, { status: 429 });
     }

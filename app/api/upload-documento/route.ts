@@ -8,7 +8,7 @@ import { registrarError } from "@/lib/logger";
 // Adjuntos de documentación de venta (título, formularios, cédulas, etc.) — solo staff logueado.
 export async function POST(request: Request) {
   try {
-    const limite = rateLimit(ipDesdeRequest(request), { limite: 15, ventanaMs: 60 * 1000 });
+    const limite = await rateLimit(ipDesdeRequest(request), { limite: 15, ventanaMs: 60 * 1000 });
     if (!limite.ok) {
       return NextResponse.json({ error: "Demasiadas subidas. Esperá un momento." }, { status: 429 });
     }

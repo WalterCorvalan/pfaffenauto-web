@@ -4,6 +4,7 @@ import { useState, useMemo, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { supabase2 } from "@/lib/supabase2/client";
 import { notificarEncargados } from "@/lib/panelV2/notificaciones";
+import { generarCodigoPublico } from "@/lib/generarCodigoPublico";
 import { Wallet, Save, Upload, Loader2, X } from "lucide-react";
 import ClienteBuscador, { ClienteSeleccionado } from "@/components/panelV2/ClienteBuscador";
 import VehiculoSelector, { VehiculoDatos } from "@/components/panelV2/VehiculoSelector";
@@ -116,7 +117,7 @@ export default function NuevaSenaModal({
       // El número lo asigna la base (secuencia real, sin condición de
       // carrera) — antes se calculaba acá con select max(numero)+1, y dos
       // señas creadas cerca en el tiempo podían terminar con el mismo número.
-      const codigoSeguimiento = Array.from({ length: 8 }, () => "ABCDEFGHJKLMNPQRSTUVWXYZ23456789"[Math.floor(Math.random() * 32)]).join("");
+      const codigoSeguimiento = generarCodigoPublico();
 
       const { data, error } = await supabase2.from("senas").insert({
         codigo_seguimiento: codigoSeguimiento,

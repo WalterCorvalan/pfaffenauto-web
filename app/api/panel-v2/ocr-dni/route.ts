@@ -23,7 +23,7 @@ const RespuestaOCRSchema = z.object({
 
 export async function POST(req: Request) {
   try {
-    const limite = rateLimit(ipDesdeRequest(req), { limite: 15, ventanaMs: 60 * 1000 });
+    const limite = await rateLimit(ipDesdeRequest(req), { limite: 15, ventanaMs: 60 * 1000, proyecto: "v2" });
     if (!limite.ok) {
       return NextResponse.json({ error: "Demasiados escaneos. Esperá un momento." }, { status: 429 });
     }

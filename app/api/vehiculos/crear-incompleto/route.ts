@@ -36,7 +36,7 @@ const generarSlug = (marca: string, modelo: string, anio: number) => {
 };
 
 export async function POST(req: Request) {
-  const limite = rateLimit(ipDesdeRequest(req), { limite: 20, ventanaMs: 60 * 1000 });
+  const limite = await rateLimit(ipDesdeRequest(req), { limite: 20, ventanaMs: 60 * 1000 });
   if (!limite.ok) {
     return NextResponse.json({ error: "Demasiadas solicitudes. Esperá un momento." }, { status: 429 });
   }

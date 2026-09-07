@@ -1,8 +1,10 @@
 import { createClient } from "@supabase/supabase-js";
+import { headers } from "next/headers";
 import { Search, MessageCircle, MapPin } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
 import { NEGOCIO_CONFIG } from "@/data/NegocioConfig";
+import { rateLimit } from "@/lib/rateLimit";
 
 // Sin cookies/headers para que no se cachee estáticamente y deje de
 // registrar aperturas/notificar en visitas repetidas.
@@ -15,6 +17,20 @@ const supabase = createClient(
 
 export default async function PresupuestoPublicoV2Page({ params }: { params: Promise<{ token: string }> }) {
   const { token } = await params;
+
+  const ip = (await headers()).get("x-forwarded-for")?.split(",")[0]?.trim() ?? null;
+  const limite = await rateLimit(ip, { limite: 20, ventanaMs: 60 * 1000, proyecto: "v2" });
+  if (!limite.ok) {
+    return (
+      <div className="min-h-screen flex items-center justify-center px-4">
+        <div className="bg-white border border-slate-100 rounded-3xl p-10 text-center shadow-sm max-w-md">
+          <Search className="w-10 h-10 text-slate-300 mx-auto mb-4" />
+          <h1 className="text-xl font-black text-navy mb-2">Demasiados intentos</h1>
+          <p className="text-sm text-slate-500">Esperá un momento y volvé a intentarlo.</p>
+        </div>
+      </div>
+    );
+  }
 
   const { data: p } = await supabase
     .from("presupuestos")

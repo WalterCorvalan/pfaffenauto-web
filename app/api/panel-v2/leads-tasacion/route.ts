@@ -39,7 +39,7 @@ const LeadTasacionSchema = z.object({
 export async function POST(req: Request) {
   try {
     const ip = ipDesdeRequest(req);
-    const limite = rateLimit(ip, { limite: 5, ventanaMs: 10 * 60 * 1000 });
+    const limite = await rateLimit(ip, { limite: 5, ventanaMs: 10 * 60 * 1000, proyecto: "v2" });
     if (!limite.ok) {
       return Response.json({ error: "Demasiadas solicitudes. Reintentá en unos minutos." }, { status: 429 });
     }
