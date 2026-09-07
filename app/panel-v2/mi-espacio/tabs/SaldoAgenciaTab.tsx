@@ -110,7 +110,7 @@ export default function SaldoAgenciaTab({ miId }: { miId: string }) {
       )}
 
       {showNuevo && (
-        <div className="fixed inset-0 bg-black/40 z-50 flex items-center justify-center p-4" onClick={() => setShowNuevo(false)}>
+        <div className="fixed inset-0 bg-black/40 z-50 flex items-center justify-center p-4" onClick={() => { if (window.innerWidth >= 768) setShowNuevo(false); }}>
           <div onClick={(e) => e.stopPropagation()} className="bg-white dark:bg-[#141414] border border-slate-200 dark:border-white/10 w-full max-w-md rounded-2xl shadow-2xl p-6">
             <div className="flex justify-between items-start mb-1"><h3 className="text-lg font-bold">Nuevo movimiento</h3><button onClick={() => setShowNuevo(false)}><X className="w-4 h-4 text-slate-400" /></button></div>
             <p className="text-xs text-slate-400 mb-4">Plata que sale o entra de la caja para uso personal.</p>

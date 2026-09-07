@@ -561,8 +561,8 @@ export default function ChatClient({
             </div>
 
             {showVincular && (
-              <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
-                <div className="bg-white dark:bg-[#111] rounded-xl p-5 w-full max-w-md space-y-4 max-h-[90vh] overflow-y-auto custom-scrollbar shadow-2xl">
+              <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4" onClick={() => { if (window.innerWidth >= 768) { setShowVincular(false); setCreandoClienteManual(false); } }}>
+                <div className="bg-white dark:bg-[#111] rounded-xl p-5 w-full max-w-md space-y-4 max-h-[90vh] overflow-y-auto custom-scrollbar shadow-2xl" onClick={(e) => e.stopPropagation()}>
                   <div className="flex justify-between items-center">
                     <h3 className="font-bold text-sm text-slate-900 dark:text-white">{creandoClienteManual ? "Nuevo cliente" : "Vincular conversación"}</h3>
                     <button onClick={() => { setShowVincular(false); setCreandoClienteManual(false); }} className="text-slate-400 hover:text-slate-600 dark:hover:text-slate-300"><X className="w-4 h-4" /></button>

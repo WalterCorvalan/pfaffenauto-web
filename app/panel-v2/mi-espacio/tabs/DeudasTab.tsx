@@ -135,7 +135,7 @@ export default function DeudasTab({ miId }: { miId: string }) {
       )}
 
       {showNueva && (
-        <div className="fixed inset-0 bg-black/40 z-50 flex items-center justify-center p-4" onClick={() => setShowNueva(false)}>
+        <div className="fixed inset-0 bg-black/40 z-50 flex items-center justify-center p-4" onClick={() => { if (window.innerWidth >= 768) setShowNueva(false); }}>
           <div onClick={(e) => e.stopPropagation()} className="bg-white dark:bg-[#141414] border border-slate-200 dark:border-white/10 w-full max-w-md rounded-2xl shadow-2xl p-6">
             <div className="flex justify-between items-start mb-4"><h3 className="text-lg font-bold">Nueva deuda</h3><button onClick={() => setShowNueva(false)}><X className="w-4 h-4 text-slate-400" /></button></div>
             <label className={labelClass}>Acreedor *</label>
@@ -155,7 +155,7 @@ export default function DeudasTab({ miId }: { miId: string }) {
       )}
 
       {pagando && (
-        <div className="fixed inset-0 bg-black/40 z-50 flex items-center justify-center p-4" onClick={() => setPagando(null)}>
+        <div className="fixed inset-0 bg-black/40 z-50 flex items-center justify-center p-4" onClick={() => { if (window.innerWidth >= 768) setPagando(null); }}>
           <div onClick={(e) => e.stopPropagation()} className="bg-white dark:bg-[#141414] border border-slate-200 dark:border-white/10 w-full max-w-sm rounded-2xl shadow-2xl p-6">
             <div className="flex justify-between items-start mb-1"><h3 className="text-base font-bold">Pago parcial sobre la deuda con {pagando.acreedor}.</h3><button onClick={() => setPagando(null)}><X className="w-4 h-4 text-slate-400" /></button></div>
             <div className="bg-slate-50 dark:bg-white/5 rounded-lg p-3 my-3 space-y-1 text-sm">
@@ -175,7 +175,7 @@ export default function DeudasTab({ miId }: { miId: string }) {
       )}
 
       {vinculando && (
-        <div className="fixed inset-0 bg-black/40 z-50 flex items-center justify-center p-4" onClick={() => setVinculando(null)}>
+        <div className="fixed inset-0 bg-black/40 z-50 flex items-center justify-center p-4" onClick={() => { if (window.innerWidth >= 768) setVinculando(null); }}>
           <div onClick={(e) => e.stopPropagation()} className="bg-white dark:bg-[#141414] border border-slate-200 dark:border-white/10 w-full max-w-md rounded-2xl shadow-2xl p-6">
             <div className="flex justify-end"><button onClick={() => setVinculando(null)}><X className="w-4 h-4 text-slate-400" /></button></div>
             <p className="text-xs text-slate-400 mb-4">Marcá las cuotas que son parte de esta deuda. Su saldo se va a derivar de las cuotas vinculadas — los pagos se registran en la tab Cuotas a pagar.</p>

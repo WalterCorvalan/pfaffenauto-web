@@ -324,7 +324,7 @@ export default function StockClient({
       {(modalNuevo || editando) && <NuevoVehiculoModal perfiles={perfiles} clientes={clientes} sucursales={sucursales} miId={miId} editando={editando || undefined} onClose={() => { setModalNuevo(false); setEditando(null); }} onCreado={onCreadoVehiculo} />}
 
       {galeria && (
-        <div className="fixed inset-0 z-[60] bg-black/80 flex flex-col items-center justify-center p-6 gap-4" onClick={() => setGaleria(null)}>
+        <div className="fixed inset-0 z-[60] bg-black/80 flex flex-col items-center justify-center p-6 gap-4" onClick={() => { if (window.innerWidth >= 768) setGaleria(null); }}>
           <div className="relative flex items-center justify-center w-full max-w-3xl" onClick={(e) => e.stopPropagation()}>
             {galeria.fotos.length > 1 && (
               <button

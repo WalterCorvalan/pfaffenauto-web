@@ -15,7 +15,7 @@ export default function ConfirmarPrecioEncargadoModal({
   const [usd, setUsd] = useState(precioUsdActual ? String(precioUsdActual) : "");
 
   return (
-    <div className="fixed inset-0 z-[200] bg-black/50 backdrop-blur-sm flex items-center justify-center p-4" onClick={onClose}>
+    <div className="fixed inset-0 z-[200] bg-black/50 backdrop-blur-sm flex items-center justify-center p-4" onClick={() => { if (!guardando && window.innerWidth >= 768) onClose(); }}>
       <div className="bg-white dark:bg-[#141414] border border-slate-200 dark:border-white/10 rounded-2xl p-6 w-full max-w-sm space-y-4 shadow-2xl" onClick={(e) => e.stopPropagation()}>
         <div className="flex items-center justify-between">
           <h3 className="font-bold text-sm text-slate-900 dark:text-white">Revisar precio</h3>
