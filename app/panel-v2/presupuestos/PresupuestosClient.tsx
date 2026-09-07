@@ -6,6 +6,7 @@ import Link from "next/link";
 import { FileText, Plus, Printer, CarFront, AlertTriangle } from "lucide-react";
 import CompartirPresupuestoBoton from "./CompartirPresupuestoBoton";
 import NuevoPresupuestoModal from "./NuevoPresupuestoModal";
+import PresupuestoDetalleModal from "./PresupuestoDetalleModal";
 
 export default function PresupuestosClient({
   presupuestosIniciales, clientes, vehiculos, vendedores, sucursales,
@@ -14,6 +15,7 @@ export default function PresupuestosClient({
   const searchParams = useSearchParams();
   const [presupuestos, setPresupuestos] = useState(presupuestosIniciales);
   const [modalAbierto, setModalAbierto] = useState(false);
+  const [seleccionado, setSeleccionado] = useState<any>(null);
 
   useEffect(() => {
     if (searchParams.get("nuevo") === "1") {
@@ -54,7 +56,7 @@ export default function PresupuestosClient({
                 </thead>
                 <tbody className="divide-y divide-slate-100 dark:divide-white/5">
                   {presupuestos.map((p: any) => (
-                    <tr key={p.id} className={`hover:bg-slate-50/50 dark:hover:bg-white/5 transition-colors border-l-4 ${p.precio_confirmado === false ? "border-l-amber-400" : "border-l-rose-300"}`}>
+                    <tr key={p.id} onClick={() => setSeleccionado(p)} className={`hover:bg-slate-50/50 dark:hover:bg-white/5 transition-colors border-l-4 cursor-pointer ${p.precio_confirmado === false ? "border-l-amber-400" : "border-l-rose-300"}`}>
                       <td className="px-4 py-3 font-mono text-[13px] font-bold text-rose-600 dark:text-rose-400">{p.numero || "—"}</td>
                       <td className="px-4 py-3 text-[13px] text-slate-600 dark:text-slate-300 whitespace-nowrap">{p.fecha ? new Date(`${p.fecha}T12:00:00Z`).toLocaleDateString("es-AR", { timeZone: "UTC" }) : "—"}</td>
                       <td className="px-4 py-3 text-[13px] font-medium text-slate-900 dark:text-white">
@@ -64,8 +66,8 @@ export default function PresupuestosClient({
                       <td className="px-4 py-3 text-[13px] text-slate-700 dark:text-slate-200"><span className="flex items-center gap-1.5"><CarFront className="w-3.5 h-3.5 text-slate-400" /> {p.marca} {p.modelo}</span></td>
                       <td className="px-4 py-3 text-[13px] text-slate-500 dark:text-slate-400">{p.perfiles?.nombre || "—"}</td>
                       <td className="px-4 py-3 text-right font-mono text-[13px] font-bold text-slate-900 dark:text-white">{p.precio_ars ? `$ ${Number(p.precio_ars).toLocaleString("es-AR")}` : p.precio_usd ? `US$ ${Number(p.precio_usd).toLocaleString("es-AR")}` : "—"}</td>
-                      <td className="px-4 py-3 text-center"><CompartirPresupuestoBoton tokenPublico={p.token_publico} /></td>
-                      <td className="px-4 py-3 text-center"><Link href={`/panel-v2/presupuestos/imprimir/${p.id}`} className="inline-flex p-2 bg-slate-50 dark:bg-white/5 hover:bg-rose-50 dark:hover:bg-rose-500/10 border border-slate-200 dark:border-white/10 hover:border-rose-200 dark:hover:border-rose-500/30 rounded-lg text-slate-400 hover:text-rose-600 dark:hover:text-rose-400 transition-all"><Printer className="w-4 h-4" /></Link></td>
+                      <td className="px-4 py-3 text-center" onClick={(e) => e.stopPropagation()}><CompartirPresupuestoBoton tokenPublico={p.token_publico} /></td>
+                      <td className="px-4 py-3 text-center" onClick={(e) => e.stopPropagation()}><Link href={`/panel-v2/presupuestos/imprimir/${p.id}`} className="inline-flex p-2 bg-slate-50 dark:bg-white/5 hover:bg-rose-50 dark:hover:bg-rose-500/10 border border-slate-200 dark:border-white/10 hover:border-rose-200 dark:hover:border-rose-500/30 rounded-lg text-slate-400 hover:text-rose-600 dark:hover:text-rose-400 transition-all"><Printer className="w-4 h-4" /></Link></td>
                     </tr>
                   ))}
                   {presupuestos.length === 0 && (
@@ -79,14 +81,14 @@ export default function PresupuestosClient({
           <div className="md:hidden space-y-3">
             {presupuestos.length === 0 && <div className="bg-white dark:bg-white/[0.02] border border-slate-200 dark:border-white/5 rounded-2xl p-8 text-center text-slate-400 text-sm italic">Sin presupuestos cargados todavía.</div>}
             {presupuestos.map((p: any) => (
-              <div key={p.id} className={`bg-white dark:bg-white/[0.02] border border-slate-200 dark:border-white/5 rounded-2xl p-4 space-y-2 border-l-4 ${p.precio_confirmado === false ? "border-l-amber-400" : "border-l-rose-300"}`}>
+              <div key={p.id} onClick={() => setSeleccionado(p)} className={`bg-white dark:bg-white/[0.02] border border-slate-200 dark:border-white/5 rounded-2xl p-4 space-y-2 border-l-4 cursor-pointer active:bg-slate-50 dark:active:bg-white/[0.04] ${p.precio_confirmado === false ? "border-l-amber-400" : "border-l-rose-300"}`}>
                 <div className="flex items-center justify-between">
                   <span className="font-mono text-[13px] font-bold text-rose-600 dark:text-rose-400">N° {p.numero || "—"}</span>
                   <span className="font-mono text-[13px] font-bold text-slate-900 dark:text-white">{p.precio_ars ? `$ ${Number(p.precio_ars).toLocaleString("es-AR")}` : p.precio_usd ? `US$ ${Number(p.precio_usd).toLocaleString("es-AR")}` : "—"}</span>
                 </div>
                 <p className="text-[13px] font-medium text-slate-900 dark:text-white flex items-center gap-1.5">{p.cliente_nombre} {p.precio_confirmado === false && <AlertTriangle className="w-3.5 h-3.5 text-amber-500" />}</p>
                 <p className="text-[12px] text-slate-600 dark:text-slate-300 flex items-center gap-1.5"><CarFront className="w-3.5 h-3.5 text-slate-400" /> {p.marca} {p.modelo}</p>
-                <div className="flex items-center justify-between text-[12px] text-slate-500 dark:text-slate-400 pt-1 border-t border-slate-100 dark:border-white/10">
+                <div className="flex items-center justify-between text-[12px] text-slate-500 dark:text-slate-400 pt-1 border-t border-slate-100 dark:border-white/10" onClick={(e) => e.stopPropagation()}>
                   <span>{p.fecha ? new Date(`${p.fecha}T12:00:00Z`).toLocaleDateString("es-AR", { timeZone: "UTC" }) : "—"} · {p.perfiles?.nombre || "Sin vendedor"}</span>
                   <div className="flex items-center gap-1.5">
                     <CompartirPresupuestoBoton tokenPublico={p.token_publico} compacto />
@@ -102,6 +104,8 @@ export default function PresupuestosClient({
       {modalAbierto && (
         <NuevoPresupuestoModal clientes={clientes} vehiculos={vehiculos} vendedores={vendedores} sucursales={sucursales} onClose={() => setModalAbierto(false)} />
       )}
+
+      {seleccionado && <PresupuestoDetalleModal presupuesto={seleccionado} onClose={() => setSeleccionado(null)} />}
     </div>
   );
 }
