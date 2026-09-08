@@ -114,6 +114,7 @@ export default function NuevoReclamoModal({ perfiles, miId, onClose, onCreado }:
           mensaje: titulo.trim(),
           link: `/panel-v2/reclamos?reclamo=${data.id}`,
           tipo: "reclamo_asignado",
+          modulo: "reclamos",
           prioridad: prioridad === "Urgente" || prioridad === "Alta" ? "alta" : "media",
         });
       }

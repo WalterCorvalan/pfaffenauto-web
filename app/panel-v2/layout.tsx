@@ -4,6 +4,7 @@ import MensajesBubble from "@/components/panelV2/MensajesBubble";
 import NotificationBell from "@/components/panelV2/NotificationBell";
 import QuickActionsButton from "@/components/panelV2/QuickActionsButton";
 import TopTicker from "@/components/panelV2/TopTicker";
+import { ROL_A_SECTOR } from "@/lib/panelV2/permisosModulos";
 import { supabase2 } from "@/lib/supabase2/client";
 import {
   AlertTriangle,
@@ -378,19 +379,6 @@ const GRUPOS: {
     ],
   },
 ];
-
-// Mapea el rol interno de perfiles al "sector" usado en visibilidad_sector —
-// son taxonomías distintas (roles: admin/ventas/finanzas/gestoria; sectores:
-// suman recepcion/taller/cm porque la visibilidad se piensa por puesto de
-// trabajo, no por permiso de datos).
-const ROL_A_SECTOR: Record<string, string> = {
-  encargado: "encargado",
-  ventas: "ventas",
-  finanzas: "finanzas",
-  gestoria: "gestoria",
-  taller: "taller",
-  recepcion: "recepcion",
-};
 
 const ROL_LABEL: Record<string, string> = {
   admin: "Administrador",
