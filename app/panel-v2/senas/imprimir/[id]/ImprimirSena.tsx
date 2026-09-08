@@ -104,7 +104,7 @@ export default function ImprimirSena({ sena: s, branding }: { sena: any; brandin
       {/* Calcado del recibo de seña tradicional (Softcars): membrete con logo,
           texto legal con montos en letras, ficha del vehículo en 2 columnas y
           firma digital dual al pie. */}
-      <div className="w-[210mm] max-w-[210mm] min-h-[297mm] print:min-h-0 mx-auto bg-white p-[12mm] shadow-lg border border-slate-200 print:shadow-none print:border-none print:m-0 text-[11px] leading-snug box-border">
+      <div className="w-[210mm] max-w-[210mm] min-h-[297mm] print:min-h-0 mx-auto bg-white p-[12mm] pb-[28mm] shadow-lg border border-slate-200 print:shadow-none print:border-none print:m-0 text-[11px] leading-snug box-border">
         <div className="flex justify-between items-start border-b-2 border-slate-900 pb-2 mb-2.5">
           <div className="flex items-start gap-3">
             {branding?.branding_logo_url ? (
