@@ -26,6 +26,7 @@ const ESTADO_COLOR: Record<string, string> = {
 
 const TIPOS_TAREA = ["Llamar", "Enviar Email", "Enviar SMS", "Enviar WhatsApp", "Visitar al Cliente", "Cliente visita salón"];
 const ESTADOS_TEST_DRIVE = ["Programado", "Realizado", "Cancelado"];
+export const CANALES_ORIGEN = ["Salón", "MercadoLibre", "Rodi", "WhatsApp", "Instagram", "Cliente anterior"];
 const CALIFICACIONES = [
   { value: "", label: "Sin calificar", icono: Minus, color: "text-slate-500 dark:text-slate-400 border-slate-200 dark:border-white/10 bg-slate-50 dark:bg-white/5" },
   { value: "caliente", label: "Caliente", icono: Flame, color: "text-rose-600 dark:text-rose-300 border-rose-200 dark:border-rose-500/20 bg-rose-50 dark:bg-rose-500/10" },
@@ -47,12 +48,28 @@ function Dato({ label, valor }: { label: string; valor?: string | null }) {
   );
 }
 
+interface Sucursal { id: string; nombre: string }
+
+const TABLA_POR_ORIGEN: Record<string, string> = {
+  whatsapp: "whatsapp_conversaciones", instagram: "instagram_conversaciones", rodi: "rodi_conversaciones", manual: "leads_manuales",
+};
+const CAMPO_FK_POR_ORIGEN: Record<string, string> = {
+  whatsapp: "whatsapp_conversacion_id", instagram: "instagram_conversacion_id", rodi: "rodi_conversacion_id", manual: "leads_manuales_id",
+};
+const CONTACTO_TABLA_POR_ORIGEN: Record<string, string | null> = {
+  whatsapp: "whatsapp_contactos", instagram: "instagram_contactos", rodi: null, manual: null,
+};
+const ETIQUETA_ORIGEN: Record<string, string> = { whatsapp: "WhatsApp", instagram: "Instagram", rodi: "Rodi", manual: "carga manual" };
+
 export default function LeadDetailModal({
-  leadId, origen, miId, vendedores, onClose, onActualizado,
-}: { leadId: string; origen: "whatsapp" | "instagram"; miId: string; vendedores: Perfil[]; onClose: () => void; onActualizado: (id: string, patch: any) => void }) {
-  const tabla = origen === "whatsapp" ? "whatsapp_conversaciones" : "instagram_conversaciones";
-  const campoFk = origen === "whatsapp" ? "whatsapp_conversacion_id" : "instagram_conversacion_id";
-  const contactoTabla = origen === "whatsapp" ? "whatsapp_contactos" : "instagram_contactos";
+  leadId, origen, miId, vendedores, sucursales = [], onClose, onActualizado,
+}: { leadId: string; origen: "whatsapp" | "instagram" | "rodi" | "manual"; miId: string; vendedores: Perfil[]; sucursales?: Sucursal[]; onClose: () => void; onActualizado: (id: string, patch: any) => void }) {
+  const tabla = TABLA_POR_ORIGEN[origen];
+  const campoFk = CAMPO_FK_POR_ORIGEN[origen];
+  const contactoTabla = CONTACTO_TABLA_POR_ORIGEN[origen];
+  // rodi/manual no tienen tabla de contacto separada -- nombre/telefono/email
+  // viven directo en la fila del lead (nombre_contacto en rodi, nombre en manual).
+  const soportaPeritaje = origen === "whatsapp" || origen === "instagram";
 
   const [cargando, setCargando] = useState(true);
   const [lead, setLead] = useState<any>(null);
@@ -83,6 +100,8 @@ export default function LeadDetailModal({
   const [domicilio, setDomicilio] = useState("");
   const [editandoCanalOrigen, setEditandoCanalOrigen] = useState(false);
   const [canalOrigen, setCanalOrigen] = useState("");
+  const [editandoSucursal, setEditandoSucursal] = useState(false);
+  const [sucursalId, setSucursalId] = useState("");
   const [editandoNotas, setEditandoNotas] = useState(false);
   const [notas, setNotas] = useState("");
 
@@ -111,11 +130,12 @@ export default function LeadDetailModal({
     setLead(l);
     setDomicilio(l.domicilio || "");
     setCanalOrigen(l.canal_origen || "");
+    setSucursalId(l.sucursal_id || "");
     setNotas(l.notas || "");
     setVehiculoTestDriveId(l.vehiculo_id || "");
 
     const [{ data: c }, { data: v }, { data: vs }, { data: t }, { data: e }, { data: td }, { data: p }, { data: mot }] = await Promise.all([
-      supabase2.from(contactoTabla).select("*").eq("id", l.contacto_id).single(),
+      contactoTabla ? supabase2.from(contactoTabla).select("*").eq("id", l.contacto_id).single() : Promise.resolve({ data: { nombre_perfil: l.nombre_contacto || l.nombre, telefono: l.telefono_contacto || l.telefono, email: l.email_contacto || l.email } }),
       l.vehiculo_id ? supabase2.from("vehiculos").select("id, marca, modelo, anio, patente, sucursal:sucursal_id ( nombre )").eq("id", l.vehiculo_id).single() : Promise.resolve({ data: null }),
       supabase2.from("vehiculos").select("id, marca, modelo, patente, sucursal:sucursal_id ( nombre )").in("estado", ["disponible", "reservado"]).order("marca"),
       supabase2.from("tareas_lead").select("*").eq(campoFk, leadId).order("fecha_vencimiento"),
@@ -231,6 +251,12 @@ export default function LeadDetailModal({
     await registrarEvento("canal_origen", canalOrigen ? `Canal de origen marcado: ${canalOrigen}` : "Canal de origen borrado");
   };
   const guardarNotas = async () => { await patch({ notas }); setEditandoNotas(false); };
+  const guardarSucursal = async () => {
+    await patch({ sucursal_id: sucursalId || null });
+    setEditandoSucursal(false);
+    const nombre = sucursales.find((s) => s.id === sucursalId)?.nombre;
+    await registrarEvento("sucursal", sucursalId ? `Sucursal marcada: ${nombre}` : "Sucursal borrada");
+  };
 
   const crearTarea = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -365,7 +391,7 @@ export default function LeadDetailModal({
             <div className="flex items-start justify-between gap-3 mb-2">
               <div>
                 <h1 className="text-xl font-bold text-slate-900 dark:text-white">{nombre}</h1>
-                <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">Consulta por {origen === "whatsapp" ? "WhatsApp" : "Instagram"}</p>
+                <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">{origen === "manual" ? "Lead cargado a mano" : `Consulta por ${ETIQUETA_ORIGEN[origen]}`}</p>
               </div>
               <select value={lead.estado_lead || "nuevo"} disabled={guardandoEstado} onChange={(e) => cambiarEstado(e.target.value)}
                 className={`text-[10px] font-bold uppercase tracking-widest px-2.5 py-1.5 rounded-lg border outline-none cursor-pointer disabled:opacity-50 shrink-0 ${ESTADO_COLOR[lead.estado_lead] || ESTADO_COLOR.nuevo}`}>
@@ -462,13 +488,24 @@ export default function LeadDetailModal({
                       <div className="flex items-center gap-1.5">
                         <select autoFocus value={canalOrigen} onChange={(e) => setCanalOrigen(e.target.value)} className="bg-white dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-lg px-2 py-1 text-xs outline-none">
                           <option value="">Sin especificar</option>
-                          <option value="Google Ads">Google Ads</option><option value="Meta Ads">Meta Ads</option><option value="MercadoLibre">MercadoLibre</option><option value="WhatsApp">WhatsApp</option><option value="Referido">Referido</option>
+                          {CANALES_ORIGEN.map((c) => <option key={c} value={c}>{c}</option>)}
                         </select>
                         <button onClick={guardarCanalOrigen} className="text-emerald-600 text-[11px] font-bold">Guardar</button>
                       </div>
                     ) : (<button onClick={() => setEditandoCanalOrigen(true)} className="text-[13px] font-bold text-slate-800 dark:text-white hover:underline">{lead.canal_origen || "—"}</button>)}
                   </div>
-                  <Dato label="Sucursal" valor={vehiculo?.sucursal?.nombre} />
+                  <div>
+                    <span className="text-slate-400 block text-[10px] uppercase tracking-widest font-bold mb-0.5">Sucursal</span>
+                    {editandoSucursal ? (
+                      <div className="flex items-center gap-1.5">
+                        <select autoFocus value={sucursalId} onChange={(e) => setSucursalId(e.target.value)} className="bg-white dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-lg px-2 py-1 text-xs outline-none">
+                          <option value="">Sin especificar</option>
+                          {sucursales.map((s) => <option key={s.id} value={s.id}>{s.nombre}</option>)}
+                        </select>
+                        <button onClick={guardarSucursal} className="text-emerald-600 text-[11px] font-bold">Guardar</button>
+                      </div>
+                    ) : (<button onClick={() => setEditandoSucursal(true)} className="text-[13px] font-bold text-slate-800 dark:text-white hover:underline">{sucursales.find((s) => s.id === lead.sucursal_id)?.nombre || vehiculo?.sucursal?.nombre || "—"}</button>)}
+                  </div>
                 </div>
               </div>
             </div>
@@ -544,9 +581,11 @@ export default function LeadDetailModal({
             <div className="bg-slate-50 dark:bg-white/5 border border-slate-100 dark:border-white/10 rounded-2xl p-4 space-y-3">
               <div className="flex items-center justify-between">
                 <h2 className={labelClass + " mb-0"}><ClipboardCheck className="w-3.5 h-3.5" /> Peritaje</h2>
-                <button onClick={iniciarPeritaje} disabled={creandoPeritaje} className="flex items-center gap-1 text-[11px] font-bold text-rose-600 hover:text-rose-700 disabled:opacity-50">
-                  <Plus className="w-3.5 h-3.5" /> {creandoPeritaje ? "Iniciando..." : "Iniciar peritaje"}
-                </button>
+                {soportaPeritaje && (
+                  <button onClick={iniciarPeritaje} disabled={creandoPeritaje} className="flex items-center gap-1 text-[11px] font-bold text-rose-600 hover:text-rose-700 disabled:opacity-50">
+                    <Plus className="w-3.5 h-3.5" /> {creandoPeritaje ? "Iniciando..." : "Iniciar peritaje"}
+                  </button>
+                )}
               </div>
               {peritajes.length === 0 ? <p className="text-xs text-slate-400 italic">Todavía no se hizo un peritaje de este vehículo.</p> : (
                 <div className="space-y-2">

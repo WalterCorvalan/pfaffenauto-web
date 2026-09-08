@@ -11,7 +11,7 @@ import {
   BedDouble, Repeat, Star, FolderKanban, ClipboardList, ClipboardCheck, KeyRound, Landmark, History,
   Wrench, Hammer, MessageSquareWarning, Banknote, PiggyBank, Coins, ShieldCheck,
   BarChart3, DollarSign, MessagesSquare, Smartphone, ThumbsUp, Lightbulb, Mail,
-  MessageCircle, BookUser, Settings, Trash2, Bot, Wallet, Tag, AlertTriangle, CheckSquare, Receipt, CreditCard,
+  MessageCircle, BookUser, Settings, Trash2, Bot, Wallet, Tag, AlertTriangle, CheckSquare, Receipt, CreditCard, Radar,
 } from "lucide-react";
 import QuickActionsButton from "@/components/panelV2/QuickActionsButton";
 import MensajesBubble from "@/components/panelV2/MensajesBubble";
@@ -52,6 +52,7 @@ const GRUPOS: { titulo: string; items: { href?: string; label: string; icon: any
       { href: "/panel-v2/stock", label: "Stock", icon: Car },
       { href: "/panel-v2/visitas", label: "Visitas", icon: CalendarCheck },
       { href: "/panel-v2/clientes", label: "Clientes", icon: Users },
+      { href: "/panel-v2/leads", label: "Leads", icon: Radar },
       { href: "/panel-v2/cotizaciones", label: "Cotizaciones", icon: FileText, modulo: "cotizaciones" },
       { href: "/panel-v2/financiaciones", label: "Financiaciones", icon: CreditCard },
       { href: "/panel-v2/senas", label: "Señas", icon: Wallet },
