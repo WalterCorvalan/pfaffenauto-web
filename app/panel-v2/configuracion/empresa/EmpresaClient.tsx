@@ -5,16 +5,9 @@ import Link from "next/link";
 import { Settings, Loader2 } from "lucide-react";
 import { supabase2 } from "@/lib/supabase2/client";
 import TablaResponsiva, { type ColumnaTabla } from "@/components/panelV2/TablaResponsiva";
+import { MODULOS_CATALOGO, SECTORES, SECTOR_LABEL } from "@/lib/panelV2/modulosCatalogo";
 
-const MODULO_LABEL: Record<string, string> = {
-  cotizaciones: "Cotizaciones", pedidos: "Pedidos", consignaciones: "Consignaciones", gestoria: "Gestoría",
-  taller: "Taller", service: "Service", postventa: "Postventa", reclamos: "Reclamos", infracciones: "Infracciones",
-  telefonos_utiles: "Teléfonos útiles", tesoreria: "Tesorería", liquidaciones: "Liquidaciones", reportes: "Reportes",
-  marketing: "Marketing", mensajes: "Mensajes", whatsapp: "WhatsApp", correos: "Correos", nps: "NPS",
-  sugerencias: "Sugerencias", dormidos: "Dormidos", oportunidades: "Oportunidades",
-};
-const SECTORES = ["ventas", "recepcion", "finanzas", "gestoria", "taller", "cm"] as const;
-const SECTOR_LABEL: Record<string, string> = { ventas: "Ventas", recepcion: "Recepción", finanzas: "Finanzas", gestoria: "Gestoría", taller: "Taller", cm: "CM" };
+const MODULO_LABEL: Record<string, string> = Object.fromEntries(MODULOS_CATALOGO.map((m) => [m.modulo, m.label]));
 
 interface Modulo { modulo: string; activo: boolean; }
 interface Visibilidad { modulo: string; sector: string; visible: boolean; }
