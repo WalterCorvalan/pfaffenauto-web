@@ -156,7 +156,7 @@ export default function ImprimirVenta({ venta: v, branding, senaPrevia }: { vent
           De conformidad se firman dos ejemplares del mismo tenor y a un solo efecto, el día de la fecha: {fecha}
         </p>
 
-        <div className="grid grid-cols-2 gap-16 px-4 mt-14">
+        <div className="grid grid-cols-2 gap-16 px-4 mt-10">
           <div>
             <FirmaCanvas tabla="ventas" id={v.id} firmaUrlActual={firmaUrl} onGuardada={setFirmaUrl} />
             <div className="text-center border-t border-slate-400 pt-1.5 mt-1"><span className="block text-[11px]">firma del comprador</span></div>
