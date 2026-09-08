@@ -80,11 +80,17 @@ export default async function PanelV2Home() {
     { count: postventaPendienteCount },
     { data: egresosMesDetalle },
     { data: egresos6MesesPorCategoria },
+    // --- Proyección de caja + Mi Performance / Cuotas a pagar (mes) ---
+    { data: senasActivasProyeccion },
+    { data: comisionesPendientesDetalle },
+    { count: cuotasPagarVencidasCount },
+    { data: tierMiPerformance },
+    { data: premiosMiPerformance },
   ] = await Promise.all([
     supabase.from("ventas").select("precio_venta, moneda_venta, estado").gte("fecha_cierre", inicioMes).lte("fecha_cierre", finMes),
     supabase.from("vehiculos").select("estado"),
     supabase.from("clientes").select("id", { count: "exact", head: true }).eq("pipeline_stage", "sin_contactar"),
-    supabase.from("cuotas_pagar_agencia").select("monto, moneda").gte("vencimiento", inicioMes).lte("vencimiento", finMes).eq("pagada", false),
+    supabase.from("cuotas_pagar_agencia").select("id, monto, moneda, concepto, acreedor").gte("vencimiento", inicioMes).lte("vencimiento", finMes).eq("pagada", false),
     supabase.rpc("saldos_totales_por_moneda"),
     supabase.from("venta_recordatorios").select("id").eq("fecha_vencimiento", hoyIso).eq("estado", "pendiente"),
     supabase.from("alertas").select("id", { count: "exact", head: true }).eq("destinatario_id", user.id).eq("leida", false),
@@ -124,6 +130,13 @@ export default async function PanelV2Home() {
     // meses) de cada categoría, para detectar gastos atípicos.
     supabase.from("movimientos_caja").select("id, monto, tipo_movimiento, observaciones, fecha, cuenta_id").eq("tipo", "egreso").is("deleted_at", null).eq("estado", "aprobado").gte("fecha", inicioMes).lte("fecha", finMes),
     supabase.from("movimientos_caja").select("monto, tipo_movimiento, fecha").eq("tipo", "egreso").is("deleted_at", null).eq("estado", "aprobado").gte("fecha", hace6meses).lt("fecha", inicioMes),
+    // Proyección de caja: a cobrar (señas activas) y a pagar (comisiones
+    // pendientes + cuotas a pagar de este mes, esta última ya viene arriba).
+    supabase.from("senas").select("id, venta_ars, venta_usd, sena_ars, sena_usd, marca, modelo, apellido, nombre, cliente_nombre").ilike("estado", "activa"),
+    supabase.from("comisiones").select("id, monto, monto_pagado, moneda, concepto, beneficiario:perfiles(nombre)").eq("estado", "pendiente"),
+    supabase.from("cuotas_pagar_agencia").select("id", { count: "exact", head: true }).eq("pagada", false).lt("vencimiento", hoyIso),
+    supabase.rpc("tier_para_vendedor", { p_vendedor_id: user.id, p_desde: inicioMes, p_hasta: finMes }),
+    supabase.rpc("premios_consignaciones_vendedor", { p_vendedor_id: user.id, p_desde: inicioMes, p_hasta: finMes }),
   ]);
 
   const perfilesMap: Record<string, string> = {};
@@ -145,6 +158,40 @@ export default async function PanelV2Home() {
 
   const cuotasPagarPorMoneda: Record<string, number> = {};
   (cuotasPagarMes || []).forEach((c) => { cuotasPagarPorMoneda[c.moneda] = (cuotasPagarPorMoneda[c.moneda] || 0) + Number(c.monto); });
+
+  // Proyección de caja: A cobrar (saldo pendiente de señas activas) y A
+  // pagar (comisiones pendientes + cuotas a pagar del mes) por moneda, más
+  // el top 1 entrada / top 2 salidas individuales para el detalle.
+  const entradasProyeccion = (senasActivasProyeccion || []).map((s: any) => {
+    const ars = Number(s.venta_ars || 0) - Number(s.sena_ars || 0);
+    const usd = Number(s.venta_usd || 0) - Number(s.sena_usd || 0);
+    const moneda = usd > ars ? "USD" : "ARS";
+    const monto = moneda === "USD" ? usd : ars;
+    const nombreCliente = [s.apellido, s.nombre].filter(Boolean).join(", ") || s.cliente_nombre || "Cliente";
+    return { id: s.id, label: s.marca ? `${s.marca} ${s.modelo || ""}`.trim() : nombreCliente, monto, moneda };
+  }).filter((e) => e.monto > 0);
+  const aCobrarPorMoneda: Record<string, number> = {};
+  entradasProyeccion.forEach((e) => { aCobrarPorMoneda[e.moneda] = (aCobrarPorMoneda[e.moneda] || 0) + e.monto; });
+  const topEntradaProyeccion = [...entradasProyeccion].sort((a, b) => b.monto - a.monto)[0] || null;
+
+  const comisionesPendientesProyeccion = (comisionesPendientesDetalle || []).map((c: any) => ({
+    id: c.id, label: c.concepto || c.beneficiario?.nombre || "Comisión", monto: Number(c.monto) - Number(c.monto_pagado || 0), moneda: c.moneda,
+  })).filter((c: any) => c.monto > 0);
+  const cuotasPagarDetalleProyeccion = (cuotasPagarMes || []).map((c: any) => ({ id: c.id, label: c.concepto || c.acreedor || "Cuota", monto: Number(c.monto), moneda: c.moneda }));
+  const salidasProyeccion = [...comisionesPendientesProyeccion, ...cuotasPagarDetalleProyeccion];
+  const aPagarPorMoneda: Record<string, number> = {};
+  salidasProyeccion.forEach((s) => { aPagarPorMoneda[s.moneda] = (aPagarPorMoneda[s.moneda] || 0) + s.monto; });
+  const salidasTopProyeccion = [...salidasProyeccion].sort((a, b) => b.monto - a.monto).slice(0, 2);
+
+  const resultadoProyeccionPorMoneda: Record<string, number> = {};
+  new Set([...Object.keys(aCobrarPorMoneda), ...Object.keys(aPagarPorMoneda)]).forEach((m) => {
+    resultadoProyeccionPorMoneda[m] = (aCobrarPorMoneda[m] || 0) - (aPagarPorMoneda[m] || 0);
+  });
+
+  // Mi Performance (resumen personal del vendedor logueado)
+  const miRankingMes = (ranking || []).find((r: any) => r.vendedor_id === user.id);
+  const miTier = (tierMiPerformance || [])[0] || null;
+  const miPremioSiguiente = (premiosMiPerformance || []).find((p: any) => !p.alcanzado && p.consignaciones_min && p.faltan > 0) || null;
 
   const conteoEstado: Record<string, number> = {};
   (stockPorEstado || []).forEach((v) => { conteoEstado[v.estado] = (conteoEstado[v.estado] || 0) + 1; });
@@ -174,6 +221,23 @@ export default async function PanelV2Home() {
       const d = new Date(hoy.getFullYear(), hoy.getMonth() - i, 1);
       const key = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}`;
       gananciaPorMes.push({ mes: d.toLocaleDateString("es-AR", { month: "short", year: "2-digit" }), monto: Math.round(porMes.get(key) || 0) });
+    }
+  }
+
+  // Cantidad de ventas cerradas por mes, últimos 6 meses (para el gráfico del
+  // Dashboard general) -- reusa ventasPorAno, ya trae hasta 2 años atrás.
+  const ventasPorMes6: { mes: string; cantidad: number }[] = [];
+  {
+    const porMes = new Map<string, number>();
+    (ventasPorAno || []).forEach((v: any) => {
+      const mes = v.fecha_cierre?.slice(0, 7);
+      if (!mes) return;
+      porMes.set(mes, (porMes.get(mes) || 0) + 1);
+    });
+    for (let i = 5; i >= 0; i--) {
+      const d = new Date(hoy.getFullYear(), hoy.getMonth() - i, 1);
+      const key = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}`;
+      ventasPorMes6.push({ mes: d.toLocaleDateString("es-AR", { month: "short" }).toUpperCase().replace(".", ""), cantidad: porMes.get(key) || 0 });
     }
   }
 
@@ -308,6 +372,23 @@ export default async function PanelV2Home() {
       calificaciones={{ promedio: promedioCalificacion, distribucion: distribucionEstrellas, pedidasSinResponder, total: calificadas.length }}
       gestoriaPorMoneda={gestoriaPorMoneda}
       gananciaPorMes={gananciaPorMes}
+      ventasPorMes6={ventasPorMes6}
+      proyeccionCaja={{
+        saldos: saldos || [],
+        aCobrarPorMoneda, aPagarPorMoneda, resultadoPorMoneda: resultadoProyeccionPorMoneda,
+        topEntrada: topEntradaProyeccion, topSalidas: salidasTopProyeccion,
+        cantidadEntradas: entradasProyeccion.length, cantidadSalidas: salidasProyeccion.length,
+      }}
+      miPerformance={{
+        ventas: miRankingMes?.ventas_equivalentes ?? 0,
+        consignaciones: miRankingMes?.consignaciones ?? 0,
+        tierActual: miTier?.tier_actual ?? null, tierEmoji: miTier?.tier_emoji ?? null,
+        ventasParaSiguiente: miTier?.ventas_para_siguiente ?? null, siguienteTier: miTier?.siguiente_tier ?? null,
+        premioSiguiente: miPremioSiguiente ? { faltan: miPremioSiguiente.faltan, meta: miPremioSiguiente.consignaciones_min, premioUsd: miPremioSiguiente.premio_usd ?? null } : null,
+      }}
+      cuotasPagarResumen={{
+        totalPorMoneda: cuotasPagarPorMoneda, cantidadDelMes: (cuotasPagarMes || []).length, vencidas: cuotasPagarVencidasCount ?? 0,
+      }}
       resumenAnual={resumenAnual}
       tuOperacion={{ ventas: misVentasAno.length, usd: Math.round(misVentasUsd), consignacionesAno: consignacionesVendedorAno ?? 0 }}
       clientesIngresadosHoy={clientesIngresados?.length ?? 0}

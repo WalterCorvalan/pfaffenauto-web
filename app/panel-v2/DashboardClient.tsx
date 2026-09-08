@@ -24,6 +24,20 @@ interface Props {
   calificaciones: { promedio: number | null; distribucion: number[]; pedidasSinResponder: number; total: number };
   gestoriaPorMoneda: Record<string, number>;
   gananciaPorMes: { mes: string; monto: number }[];
+  ventasPorMes6: { mes: string; cantidad: number }[];
+  proyeccionCaja: {
+    saldos: { moneda: string; total: number }[];
+    aCobrarPorMoneda: Record<string, number>; aPagarPorMoneda: Record<string, number>; resultadoPorMoneda: Record<string, number>;
+    topEntrada: { id: string; label: string; monto: number; moneda: string } | null;
+    topSalidas: { id: string; label: string; monto: number; moneda: string }[];
+    cantidadEntradas: number; cantidadSalidas: number;
+  };
+  miPerformance: {
+    ventas: number; consignaciones: number;
+    tierActual: string | null; tierEmoji: string | null; ventasParaSiguiente: number | null; siguienteTier: string | null;
+    premioSiguiente: { faltan: number; meta: number; premioUsd: number | null } | null;
+  };
+  cuotasPagarResumen: { totalPorMoneda: Record<string, number>; cantidadDelMes: number; vencidas: number };
   resumenAnual: { anio: number; autos: number; usd: number }[];
   tuOperacion: { ventas: number; usd: number; consignacionesAno: number };
   clientesIngresadosHoy: number; clientesUltimos7dias: number; canalTop: string | null;
@@ -132,6 +146,10 @@ export default function DashboardClient(props: Props) {
           visitasHoy={props.visitasHoy}
           pedidosConMatch={props.pedidosConMatch}
           ultimasOperaciones={props.ultimasOperaciones}
+          ventasPorMes6={props.ventasPorMes6}
+          proyeccionCaja={props.proyeccionCaja}
+          miPerformance={props.miPerformance}
+          cuotasPagarResumen={props.cuotasPagarResumen}
           stockEstancado={props.stockEstancado}
           tareasVencidas={props.tareasVencidas}
           postventaPendiente={props.postventaPendiente}

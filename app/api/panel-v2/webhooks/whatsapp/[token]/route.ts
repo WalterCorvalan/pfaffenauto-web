@@ -6,6 +6,7 @@ import { sendTextMessage } from "@/lib/meta/client";
 import { decrypt } from "@/lib/crypto";
 import { rateLimit, ipDesdeRequest } from "@/lib/rateLimit";
 import { registrarError } from "@/lib/panelV2/logger";
+import { buscarRespuestaMemoria, buscarRespuestaFueraHorario } from "@/lib/panelV2/whatsappMemoria";
 
 // Webhook de Meta para el WhatsApp de panel-v2 (Conversaciones → WhatsApp,
 // replica /panel/chat de v1: bandeja de mensajes reales de clientes con
@@ -173,18 +174,47 @@ function estaEnHorarioAtencion(): boolean {
   return hora >= 8 && hora < 22;
 }
 
-async function ejecutarAgente(conversacionId: string) {
-  if (!isAiConfiguredV2()) return;
-  if (!estaEnHorarioAtencion()) return;
+async function enviarMensajeFijo(conversacionId: string, texto: string, config: any) {
+  const { data: mensajeSaliente } = await supabase.from("whatsapp_mensajes").insert({ conversacion_id: conversacionId, direccion: "out", tipo: "text", texto, status: "pending", ai_generado: false }).select("id").single();
+  if (mensajeSaliente) await enviarYActualizarMensaje(mensajeSaliente.id, conversacionId, texto, config);
+}
 
-  const { data: conversacionActual } = await supabase.from("whatsapp_conversaciones").select("ai_habilitada").eq("id", conversacionId).single();
+async function ejecutarAgente(conversacionId: string) {
+  const { data: conversacionActual } = await supabase.from("whatsapp_conversaciones").select("ai_habilitada, fuera_horario_avisado_fecha").eq("id", conversacionId).single();
   if (conversacionActual?.ai_habilitada === false) return;
+
+  const { data: config } = await supabase.from("whatsapp_configuracion").select("*").eq("id", true).single();
+
+  if (!estaEnHorarioAtencion()) {
+    const hoy = new Date().toISOString().split("T")[0];
+    if (conversacionActual?.fuera_horario_avisado_fecha === hoy) return; // ya se avisó hoy, no repetir
+    const avisoFueraHorario = await buscarRespuestaFueraHorario(supabase);
+    if (avisoFueraHorario) {
+      await enviarMensajeFijo(conversacionId, avisoFueraHorario, config);
+      await supabase.from("whatsapp_conversaciones").update({ fuera_horario_avisado_fecha: hoy }).eq("id", conversacionId);
+    }
+    return;
+  }
 
   const { data: mensajes } = await supabase.from("whatsapp_mensajes").select("direccion, texto").eq("conversacion_id", conversacionId).order("created_at", { ascending: true }).limit(20);
   const historial = (mensajes ?? []).filter((m) => m.texto).map((m) => ({ role: (m.direccion === "in" ? "user" : "assistant") as "user" | "assistant", content: m.texto as string }));
 
+  // "Memoria" primero (palabras clave, sin costo de IA) -- solo se llama a la
+  // IA si la última pregunta del cliente no matchea nada fijo (horarios,
+  // ubicación, formas de pago, datos de la empresa), mismo criterio que
+  // /api/buscar-ia con la DB.
+  const ultimoMensajeCliente = [...historial].reverse().find((m) => m.role === "user")?.content;
+  if (ultimoMensajeCliente) {
+    const respuestaMemoria = await buscarRespuestaMemoria(supabase, ultimoMensajeCliente);
+    if (respuestaMemoria) {
+      await enviarMensajeFijo(conversacionId, respuestaMemoria, config);
+      return;
+    }
+  }
+
+  if (!isAiConfiguredV2()) return;
+
   const result = await generarRespuestaAgenteV2(historial, "panel-v2/webhooks/whatsapp");
-  const { data: config } = await supabase.from("whatsapp_configuracion").select("*").eq("id", true).single();
 
   if (!result.ok) {
     registrarError("webhook-v2:agente", result.error, { conversacionId });

@@ -2,10 +2,119 @@
 
 import { useState, useEffect } from "react";
 import Link from "next/link";
-import { MessageCircle, Copy, Check, Loader2, ExternalLink } from "lucide-react";
+import { MessageCircle, Copy, Check, Loader2, ExternalLink, Brain, Plus, Trash2 } from "lucide-react";
+import { supabase2 } from "@/lib/supabase2/client";
 
 const inputClass = "w-full bg-slate-50 dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-xl px-3 py-2.5 text-sm outline-none focus:border-rose-500";
 const labelClass = "text-xs font-semibold text-slate-600 dark:text-slate-300 block mb-1";
+
+const CATEGORIAS_MEMORIA = [
+  { value: "saludo", label: "Saludo" },
+  { value: "horarios_ubicacion", label: "Horarios y ubicación" },
+  { value: "pagos_financiacion", label: "Formas de pago / financiación" },
+  { value: "datos_empresa", label: "Datos de la empresa" },
+  { value: "fuera_horario", label: "Fuera de horario (automático, sin palabras clave)" },
+] as const;
+
+interface MemoriaFila {
+  id: string;
+  categoria: string;
+  palabras_clave: string[];
+  respuesta: string;
+  activo: boolean;
+  orden: number;
+}
+
+function MemoriaBot() {
+  const [filas, setFilas] = useState<MemoriaFila[]>([]);
+  const [cargando, setCargando] = useState(true);
+  const [nueva, setNueva] = useState<{ categoria: string; palabras: string; respuesta: string }>({ categoria: "horarios_ubicacion", palabras: "", respuesta: "" });
+  const [guardando, setGuardando] = useState(false);
+
+  const cargar = async () => {
+    setCargando(true);
+    const { data } = await supabase2.from("whatsapp_memoria").select("*").order("categoria").order("orden");
+    setFilas(data || []);
+    setCargando(false);
+  };
+  useEffect(() => { cargar(); }, []);
+
+  const agregar = async () => {
+    if (!nueva.respuesta.trim()) return;
+    if (nueva.categoria !== "fuera_horario" && !nueva.palabras.trim()) return;
+    setGuardando(true);
+    const palabras_clave = nueva.palabras.split(",").map((p) => p.trim()).filter(Boolean);
+    const { error } = await supabase2.from("whatsapp_memoria").insert({ categoria: nueva.categoria, palabras_clave, respuesta: nueva.respuesta.trim() });
+    setGuardando(false);
+    if (!error) { setNueva({ categoria: nueva.categoria, palabras: "", respuesta: "" }); cargar(); }
+  };
+
+  const toggleActivo = async (fila: MemoriaFila) => {
+    setFilas((prev) => prev.map((f) => (f.id === fila.id ? { ...f, activo: !f.activo } : f)));
+    await supabase2.from("whatsapp_memoria").update({ activo: !fila.activo }).eq("id", fila.id);
+  };
+
+  const borrar = async (id: string) => {
+    if (!confirm("¿Borrar esta respuesta de memoria?")) return;
+    setFilas((prev) => prev.filter((f) => f.id !== id));
+    await supabase2.from("whatsapp_memoria").delete().eq("id", id);
+  };
+
+  return (
+    <div className="bg-white dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-2xl p-5 space-y-4 mt-5">
+      <div>
+        <p className="text-[11px] font-black uppercase tracking-widest text-slate-400 flex items-center gap-1.5"><Brain className="w-3.5 h-3.5" /> Memoria del bot</p>
+        <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">Preguntas frecuentes que el bot contesta con una respuesta fija, sin gastar un llamado a la IA. Si el mensaje del cliente no matchea ninguna palabra clave de acá, recién ahí pasa a la IA. "Fuera de horario" no usa palabras clave — se manda solo cuando llega un mensaje fuera de las 8 a 22hs (una vez por día por conversación).</p>
+      </div>
+
+      {cargando ? (
+        <div className="flex justify-center py-4"><Loader2 className="w-4 h-4 animate-spin text-slate-400" /></div>
+      ) : (
+        <div className="space-y-2">
+          {filas.length === 0 && <p className="text-xs text-slate-400 italic">Sin respuestas cargadas todavía.</p>}
+          {filas.map((f) => (
+            <div key={f.id} className={`rounded-xl border p-3 text-xs ${f.activo ? "border-slate-200 dark:border-white/10" : "border-slate-100 dark:border-white/5 opacity-50"}`}>
+              <div className="flex items-center justify-between gap-2 mb-1.5">
+                <span className="font-bold text-slate-700 dark:text-slate-200">{CATEGORIAS_MEMORIA.find((c) => c.value === f.categoria)?.label || f.categoria}</span>
+                <div className="flex items-center gap-2 shrink-0">
+                  <button onClick={() => toggleActivo(f)} className={`px-2 py-1 rounded-lg text-[10px] font-bold ${f.activo ? "bg-emerald-50 text-emerald-700 dark:bg-emerald-500/10 dark:text-emerald-300" : "bg-slate-100 text-slate-400 dark:bg-white/5"}`}>{f.activo ? "Activo" : "Inactivo"}</button>
+                  <button onClick={() => borrar(f.id)} className="text-rose-400 hover:text-rose-600 p-1"><Trash2 className="w-3.5 h-3.5" /></button>
+                </div>
+              </div>
+              {f.palabras_clave.length > 0 && (
+                <p className="text-[10px] text-slate-400 mb-1">Palabras clave: {f.palabras_clave.join(", ")}</p>
+              )}
+              <p className="text-slate-600 dark:text-slate-300">{f.respuesta}</p>
+            </div>
+          ))}
+        </div>
+      )}
+
+      <div className="border-t border-slate-100 dark:border-white/10 pt-4 space-y-2.5">
+        <p className="text-[11px] font-black uppercase tracking-widest text-slate-400">Agregar respuesta</p>
+        <div>
+          <label className={labelClass}>Categoría</label>
+          <select value={nueva.categoria} onChange={(e) => setNueva((n) => ({ ...n, categoria: e.target.value }))} className={inputClass}>
+            {CATEGORIAS_MEMORIA.map((c) => <option key={c.value} value={c.value}>{c.label}</option>)}
+          </select>
+        </div>
+        {nueva.categoria !== "fuera_horario" && (
+          <div>
+            <label className={labelClass}>Palabras clave (separadas por coma)</label>
+            <input value={nueva.palabras} onChange={(e) => setNueva((n) => ({ ...n, palabras: e.target.value }))} placeholder="Ej: horario, a que hora abren, hasta que hora" className={inputClass} />
+          </div>
+        )}
+        <div>
+          <label className={labelClass}>Respuesta</label>
+          <textarea value={nueva.respuesta} onChange={(e) => setNueva((n) => ({ ...n, respuesta: e.target.value }))} rows={3} className={inputClass} />
+        </div>
+        <button onClick={agregar} disabled={guardando} className="px-4 py-2.5 rounded-xl bg-rose-600 hover:bg-rose-700 text-white text-sm font-bold disabled:opacity-50 flex items-center gap-1.5">
+          {guardando ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Plus className="w-3.5 h-3.5" />} Agregar
+        </button>
+      </div>
+    </div>
+  );
+}
 
 export default function ConfiguracionWhatsappClient() {
   const [cargando, setCargando] = useState(true);
@@ -145,6 +254,8 @@ export default function ConfiguracionWhatsappClient() {
           Abrir Meta for Developers <ExternalLink className="w-3.5 h-3.5" />
         </a>
       </div>
+
+      <MemoriaBot />
     </div>
   );
 }

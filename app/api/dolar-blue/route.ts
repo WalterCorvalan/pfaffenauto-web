@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 
 let cache: { compra: number; venta: number; obtenidoEn: number } | null = null;
-const TTL_MS = 5 * 60 * 1000;
+const TTL_MS = 60 * 60 * 1000;
 
 export async function GET() {
   if (cache && Date.now() - cache.obtenidoEn < TTL_MS) {

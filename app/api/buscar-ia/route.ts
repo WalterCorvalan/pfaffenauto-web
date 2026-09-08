@@ -54,6 +54,20 @@ export async function POST(req: Request) {
       return Response.json({ ok: true, vehiculos: matchDirecto, count: countDirecto || 0, interpretacion: null });
     }
 
+    // Límite aparte para el fallback con IA (más estricto que el general de
+    // arriba, que cubre casi siempre búsquedas directas contra la DB sin
+    // costo) -- por IP y también un tope global diario compartido entre
+    // todos, para no dejar el gasto de IA abierto a un ataque distribuido.
+    const ip = ipDesdeRequest(req);
+    const limiteIaIp = await rateLimit(ip, { limite: 5, ventanaMs: 60 * 1000, proyecto: "v2" });
+    if (!limiteIaIp.ok) {
+      return Response.json({ error: "Demasiadas búsquedas con IA. Esperá un momento." }, { status: 429 });
+    }
+    const limiteIaGlobal = await rateLimit("buscar-ia-global", { limite: 300, ventanaMs: 24 * 60 * 60 * 1000, proyecto: "v2" });
+    if (!limiteIaGlobal.ok) {
+      return Response.json({ error: "El buscador con IA alcanzó su límite de uso por hoy. Probá con una búsqueda más directa (marca y modelo)." }, { status: 429 });
+    }
+
     const resultado = await interpretarBusqueda(termino);
     if (!resultado.ok) {
       return Response.json({ error: resultado.error }, { status: 500 });

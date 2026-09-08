@@ -6,13 +6,16 @@ export default async function ImprimirPresupuestoPage({ params }: { params: Prom
   const { id } = await params;
   const supabase = await createClient();
 
-  const { data: presupuesto } = await supabase
-    .from("presupuestos")
-    .select("*, perfiles:vendedor_id ( nombre )")
-    .eq("id", id)
-    .maybeSingle();
+  const [{ data: presupuesto }, { data: config }] = await Promise.all([
+    supabase
+      .from("presupuestos")
+      .select("*, perfiles:vendedor_id ( nombre )")
+      .eq("id", id)
+      .maybeSingle(),
+    supabase.from("configuracion_empresa").select("branding_nombre, branding_domicilio, branding_telefono, branding_cuit").eq("id", true).maybeSingle(),
+  ]);
 
   if (!presupuesto) notFound();
 
-  return <ImprimirPresupuesto presupuesto={presupuesto} />;
+  return <ImprimirPresupuesto presupuesto={presupuesto} branding={config} />;
 }

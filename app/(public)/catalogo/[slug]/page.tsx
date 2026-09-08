@@ -21,7 +21,6 @@ import AgendarVisitaForm from "@/components/forms/AgendarVisitaForm";
 import GaleriaVehiculo from "@/components/GaleriaVehiculo";
 import SimuladorFinanciacion from "@/components/SimuladorFinanciacion";
 import { CAMPOS_VEHICULO_DETALLE } from "@/lib/vehiculos";
-import DestacadosCarousel from "./DestacadosCarousel";
 
 export const revalidate = 60;
 
@@ -113,21 +112,17 @@ export default async function VehiculoDetallePage({
   // ================= 3. QUERIES SECUNDARIAS PARALELIZADAS (PROMISE.ALL) =================
   const CAMPOS_CARD = `id, marca, modelo, segmento, anio, km, transmision, precio_publicado_ars, precio_publicado_usd, slug, sucursales!vehiculos_sucursal_id_fkey ( nombre ), fotos`;
 
-  // Disparamos las 3 consultas al mismo tiempo
-  const [reqPorMarca, reqPrecioSimilar, reqDestacados] = await Promise.all([
+  // Disparamos las consultas al mismo tiempo
+  const [reqPorMarca, reqPrecioSimilar] = await Promise.all([
     // A. También te podría interesar (Por Marca)
     supabase.from("vehiculos").select(CAMPOS_CARD).eq("marca", auto.marca).neq("id", auto.id).in("estado", ["disponible", "reservado"]).order("created_at", { ascending: false }).limit(4),
 
     // B. Precio similar (+- 15%)
     supabase.from("vehiculos").select(CAMPOS_CARD).gte("precio_publicado_ars", precioArs * 0.85).lte("precio_publicado_ars", precioArs * 1.15).neq("id", auto.id).in("estado", ["disponible", "reservado"]).limit(4),
-
-    // C. Autos Destacados
-    supabase.from("vehiculos").select("id, marca, modelo, slug, precio_publicado_ars, precio_publicado_usd, fotos").eq("destacado", true).neq("id", auto.id).in("estado", ["disponible", "reservado"]).order("created_at", { ascending: false }).limit(10)
   ]);
 
   let tambienTeInteresa = reqPorMarca.data || [];
   let precioSimilar = reqPrecioSimilar.data || [];
-  const destacados = reqDestacados.data || [];
 
   // Fallback 1: Si no hay 4 autos de la misma marca, completamos con el mismo "tipo" (SUV, Pick-up, etc)
   if (tambienTeInteresa.length < 4 && auto.tipo) {
@@ -245,10 +240,6 @@ export default async function VehiculoDetallePage({
 
         <VehiculosRelacionados titulo="También te podría interesar" vehiculos={tambienTeInteresa || []} />
         <VehiculosRelacionados titulo="Autos con precio similar" vehiculos={precioSimilar || []} />
-
-        <div className="mt-16">
-          <DestacadosCarousel vehiculos={destacados || []} />
-        </div>
       </div>
 
       <MobileBottomBar auto={auto} linkWhatsApp={linkWhatsApp} />

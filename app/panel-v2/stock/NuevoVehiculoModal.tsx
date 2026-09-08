@@ -1,6 +1,6 @@
 "use client";
 
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { supabase2 } from "@/lib/supabase2/client";
 import { X, Loader2, ScanLine, ClipboardPaste, ImagePlus } from "lucide-react";
 import { crearAlerta } from "@/lib/panelV2/alertas";
@@ -144,6 +144,18 @@ export default function NuevoVehiculoModal({ perfiles, clientes, sucursales, miI
   const [propietarioProvincia, setPropietarioProvincia] = useState(editando?.propietario_provincia || "");
   const [propietarioTelefonoCelular, setPropietarioTelefonoCelular] = useState(editando?.propietario_telefono_celular || "");
 
+  // Titulares (dueños que figuran en el título, N dinámico, con % de
+  // propiedad) — separado del proveedor/propietario de arriba.
+  const [titulares, setTitulares] = useState<{ nombre: string; porcentaje: string; cuit_cuil: string }[]>([]);
+
+  useEffect(() => {
+    if (!editando?.id) return;
+    supabase2.from("vehiculo_titulares").select("*").eq("vehiculo_id", editando.id).order("orden").then(({ data }) => {
+      if (data) setTitulares(data.map((t: any) => ({ nombre: t.nombre || "", porcentaje: t.porcentaje != null ? String(t.porcentaje) : "", cuit_cuil: t.cuit_cuil || "" })));
+    });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [editando?.id]);
+
   const guardar = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!marca.trim() || !modelo.trim() || !anio || !patente.trim() || !color.trim() || !km || !precioVenta) {
@@ -195,6 +207,18 @@ export default function NuevoVehiculoModal({ perfiles, clientes, sucursales, miI
         ? await supabase2.from("vehiculos").update(payload).eq("id", editando.id).select("*, sucursal:sucursal_id ( nombre )").single()
         : await supabase2.from("vehiculos").insert({ ...payload, creado_por: miId || null }).select("*, sucursal:sucursal_id ( nombre )").single();
       if (dbError) throw dbError;
+
+      await supabase2.from("vehiculo_titulares").delete().eq("vehiculo_id", data.id);
+      const titularesConDatos = titulares.filter((t) => t.nombre.trim() || t.cuit_cuil.trim());
+      if (titularesConDatos.length > 0) {
+        await supabase2.from("vehiculo_titulares").insert(
+          titularesConDatos.map((t, i) => ({
+            vehiculo_id: data.id, orden: i, nombre: t.nombre.trim() || null,
+            porcentaje: t.porcentaje ? Number(t.porcentaje) : null, cuit_cuil: t.cuit_cuil.trim() || null,
+          }))
+        );
+      }
+
       if (!esEdicion && miId) {
         crearAlerta(supabase2, miId, `Nuevo vehículo en stock — ${data.marca} ${data.modelo} ${data.anio}`, {
           mensaje: `Ingresó hoy. Estado: ${ESTADOS.find((e) => e.value === data.estado)?.label || data.estado}. Precio: ${data.moneda_venta} ${Number(data.precio_venta).toLocaleString("es-AR")}.`,
@@ -493,6 +517,60 @@ export default function NuevoVehiculoModal({ perfiles, clientes, sucursales, miI
                 </div>
               </div>
             )}
+          </div>
+
+          <div>
+            <div className="flex items-center justify-between mb-2">
+              <p className={seccionClass + " mt-0 mb-0"}>Titulares</p>
+              <button
+                type="button"
+                onClick={() => setTitulares((prev) => [...prev, { nombre: "", porcentaje: "", cuit_cuil: "" }])}
+                className="text-[11px] font-bold text-rose-600 dark:text-sky-300 hover:text-rose-700 dark:hover:text-sky-200"
+              >
+                + Agregar titular
+              </button>
+            </div>
+            <div className="space-y-2">
+              {titulares.map((t, i) => (
+                <div key={i} className="grid grid-cols-1 sm:grid-cols-[2fr_1fr_1fr_auto] gap-2 items-end bg-slate-50 dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-xl p-3">
+                  <div>
+                    <label className={labelClass}>{`Titular #${i + 1}`}</label>
+                    <input
+                      value={t.nombre}
+                      onChange={(e) => setTitulares((prev) => prev.map((x, idx) => (idx === i ? { ...x, nombre: e.target.value } : x)))}
+                      className={inputClass}
+                    />
+                  </div>
+                  <div>
+                    <label className={labelClass}>Porcet. (%)</label>
+                    <input
+                      type="number"
+                      value={t.porcentaje}
+                      onChange={(e) => setTitulares((prev) => prev.map((x, idx) => (idx === i ? { ...x, porcentaje: e.target.value } : x)))}
+                      className={inputClass}
+                    />
+                  </div>
+                  <div>
+                    <label className={labelClass}>Cuit/Cuil</label>
+                    <input
+                      value={t.cuit_cuil}
+                      onChange={(e) => setTitulares((prev) => prev.map((x, idx) => (idx === i ? { ...x, cuit_cuil: e.target.value } : x)))}
+                      className={inputClass}
+                    />
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => setTitulares((prev) => prev.filter((_, idx) => idx !== i))}
+                    className="text-rose-500 hover:text-rose-600 p-2.5"
+                  >
+                    <X className="w-4 h-4" />
+                  </button>
+                </div>
+              ))}
+              {titulares.length === 0 && (
+                <p className="text-[12px] text-slate-400 dark:text-slate-500 italic">Sin titulares cargados.</p>
+              )}
+            </div>
           </div>
 
           <div>

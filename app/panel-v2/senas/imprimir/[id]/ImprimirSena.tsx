@@ -8,7 +8,10 @@ import { notificarRespuestaPrecio } from "@/lib/panelV2/notificaciones";
 import ConfirmarPrecioEncargadoModal from "@/components/panelV2/ConfirmarPrecioEncargadoModal";
 import FirmaCanvas from "@/components/panelV2/FirmaCanvas";
 
-export default function ImprimirSena({ sena: s }: { sena: any }) {
+interface Branding { branding_nombre?: string | null; branding_domicilio?: string | null; branding_telefono?: string | null; branding_cuit?: string | null }
+
+export default function ImprimirSena({ sena: s, branding }: { sena: any; branding?: Branding | null }) {
+  const nombreEmpresa = branding?.branding_nombre || "Pfaffen Autos";
   const [precioConfirmado, setPrecioConfirmado] = useState(s.precio_confirmado);
   const [ventaArs, setVentaArs] = useState(s.venta_ars);
   const [ventaUsd, setVentaUsd] = useState(s.venta_usd);
@@ -93,8 +96,15 @@ export default function ImprimirSena({ sena: s }: { sena: any }) {
       <div className="max-w-[210mm] min-h-[297mm] mx-auto bg-white p-[15mm] shadow-lg border border-slate-200 print:shadow-none print:border-none print:p-0 print:m-0">
         <div className="flex justify-between items-start border-b-[3px] border-slate-900 pb-5 mb-6">
           <div>
-            <h1 className="text-3xl font-black text-slate-900 tracking-tighter uppercase">Pfaffen Autos</h1>
+            <h1 className="text-3xl font-black text-slate-900 tracking-tighter uppercase">{nombreEmpresa}</h1>
             <p className="text-[11px] font-bold text-slate-500 uppercase tracking-widest mt-1">{s.sucursales?.nombre || "Casa Central"}</p>
+            {(branding?.branding_domicilio || branding?.branding_telefono || branding?.branding_cuit) && (
+              <p className="text-[9px] text-slate-400 mt-1 space-x-2">
+                {branding?.branding_domicilio && <span>{branding.branding_domicilio}</span>}
+                {branding?.branding_telefono && <span>Tel: {branding.branding_telefono}</span>}
+                {branding?.branding_cuit && <span>CUIT: {branding.branding_cuit}</span>}
+              </p>
+            )}
           </div>
           <div className="text-right">
             <h2 className="text-[15px] font-bold text-slate-800 uppercase tracking-widest border-2 border-slate-200 px-4 py-1.5 rounded-lg bg-slate-50">Recibo de Seña</h2>
@@ -221,7 +231,7 @@ export default function ImprimirSena({ sena: s }: { sena: any }) {
           </div>
           <div>
             <FirmaCanvas tabla="senas" id={s.id} campo="firma_vendedor_url" firmaUrlActual={firmaVendedorUrl} onGuardada={setFirmaVendedorUrl} />
-            <div className="text-center border-t border-slate-400 pt-3 mt-2"><span className="block font-bold text-sm">Por Pfaffen Autos</span><span className="block text-[10px] font-bold text-slate-400 mt-1 uppercase tracking-widest">{vendedor}</span></div>
+            <div className="text-center border-t border-slate-400 pt-3 mt-2"><span className="block font-bold text-sm">Por {nombreEmpresa}</span><span className="block text-[10px] font-bold text-slate-400 mt-1 uppercase tracking-widest">{vendedor}</span></div>
           </div>
         </div>
       </div>
