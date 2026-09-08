@@ -39,6 +39,7 @@ export async function GET() {
 
 const CrearSchema = z.object({
   email: z.string().trim().email().max(150),
+  password: z.string().min(6).max(72),
   nombre: z.string().trim().min(1).max(100),
   roles: z.array(z.enum(ROLES)).min(1),
   sucursal_id: z.string().uuid().optional().nullable(),
@@ -53,10 +54,12 @@ export async function POST(request: Request) {
 
   const parsed = CrearSchema.safeParse(await request.json());
   if (!parsed.success) return NextResponse.json({ error: "Datos inválidos." }, { status: 400 });
-  const { email, nombre, roles, sucursal_id } = parsed.data;
+  const { email, password, nombre, roles, sucursal_id } = parsed.data;
 
   const sb = admin();
-  const { data: nuevo, error: createError } = await sb.auth.admin.inviteUserByEmail(email);
+  // Igual que v1 (app/api/usuarios) -- el admin carga la contraseña acá
+  // mismo, no le llega invitación por mail al usuario nuevo.
+  const { data: nuevo, error: createError } = await sb.auth.admin.createUser({ email, password, email_confirm: true });
   if (createError) return NextResponse.json({ error: createError.message }, { status: 400 });
 
   const { error: upsertError } = await sb.from("perfiles").upsert({ id: nuevo.user.id, nombre, roles, activo: true, sucursal_id: sucursal_id || null });

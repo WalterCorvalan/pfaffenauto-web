@@ -235,6 +235,7 @@ function ModalShell({ titulo, onClose, children }: { titulo: string; onClose: ()
 
 function ModalNuevoUsuario({ sucursales, onClose, onSaved }: { sucursales: Sucursal[]; onClose: () => void; onSaved: () => void }) {
   const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
   const [nombre, setNombre] = useState("");
   const [roles, setRoles] = useState<string[]>(["ventas"]);
   const [sucursalId, setSucursalId] = useState("");
@@ -244,10 +245,11 @@ function ModalNuevoUsuario({ sucursales, onClose, onSaved }: { sucursales: Sucur
   const toggleRol = (r: string) => setRoles((prev) => (prev.includes(r) ? prev.filter((x) => x !== r) : [...prev, r]));
 
   const guardar = async () => {
-    if (!email || !nombre || roles.length === 0) return setError("Completá email, nombre y al menos un rol.");
+    if (!email || !password || !nombre || roles.length === 0) return setError("Completá email, contraseña, nombre y al menos un rol.");
+    if (password.length < 6) return setError("La contraseña necesita al menos 6 caracteres.");
     setGuardando(true);
     setError("");
-    const res = await fetch("/api/panel-v2/usuarios", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ email, nombre, roles, sucursal_id: sucursalId || null }) });
+    const res = await fetch("/api/panel-v2/usuarios", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ email, password, nombre, roles, sucursal_id: sucursalId || null }) });
     const data = await res.json();
     if (!res.ok) { setError(data.error || "No se pudo crear."); setGuardando(false); return; }
     onSaved();
@@ -263,7 +265,11 @@ function ModalNuevoUsuario({ sucursales, onClose, onSaved }: { sucursales: Sucur
         <div>
           <label className="text-xs font-semibold text-slate-500 block mb-1">Email</label>
           <input type="email" value={email} onChange={(e) => setEmail(e.target.value)} className="w-full bg-slate-50 dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-lg px-3 py-2 text-sm outline-none" />
-          <p className="text-[11px] text-slate-400 mt-1">Le llega una invitación por mail para activar su cuenta.</p>
+        </div>
+        <div>
+          <label className="text-xs font-semibold text-slate-500 block mb-1">Contraseña</label>
+          <input type="text" value={password} onChange={(e) => setPassword(e.target.value)} placeholder="Mínimo 6 caracteres" className="w-full bg-slate-50 dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-lg px-3 py-2 text-sm outline-none" />
+          <p className="text-[11px] text-slate-400 mt-1">La cargás vos acá -- no le llega ninguna invitación por mail, la cuenta queda activa directo.</p>
         </div>
         <div>
           <label className="text-xs font-semibold text-slate-500 block mb-1">Roles</label>
