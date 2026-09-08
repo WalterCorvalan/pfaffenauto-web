@@ -1,17 +1,45 @@
 import { createClient } from "@/lib/supabase2/server";
-import { Users, MessageSquareText, Target, Trophy, ArrowRight, ChevronDown, BarChart3, Globe, Percent, CheckCircle2, Filter, Megaphone } from "lucide-react";
+import { Users, MessageSquareText, Target, Trophy, ArrowRight, ChevronDown, BarChart3, Globe, Percent, CheckCircle2, Filter, Megaphone, Radar } from "lucide-react";
 import EmbudoCanalChart from "./EmbudoCanalChart";
 import TablaEmbudoVendedor from "./TablaEmbudoVendedor";
+import FiltroFechas from "./FiltroFechas";
 
-export default async function EmbudoPage() {
+export default async function EmbudoPage({ searchParams }: { searchParams: Promise<{ desde?: string; hasta?: string }> }) {
   const supabase = await createClient();
+  const { desde, hasta } = await searchParams;
 
   // 1. Traemos clientes (leads) de v2 para medir el pipeline
-  const { data: clientes } = await supabase
+  let queryClientes = supabase
     .from("clientes")
     .select("id, origen, canal_ingreso, pipeline_stage, created_at, vendedor_id");
+  if (desde) queryClientes = queryClientes.gte("created_at", desde);
+  if (hasta) queryClientes = queryClientes.lte("created_at", `${hasta}T23:59:59`);
+  const { data: clientes } = await queryClientes;
 
   const datos = clientes || [];
+
+  // 1a-tris. Leads_tasacion es la ÚNICA fuente con tracking real de UTM en
+  // toda la app (viene de los 3 forms públicos vía lib/utm.ts) -- hasta acá
+  // esta página nunca la miraba, así que el gasto pautado en Google/Meta/
+  // MercadoLibre quedaba sin ningún lead real atribuido. canal_origen ya
+  // viene normalizado ("Google Ads"/"Meta Ads"/"MercadoLibre"/dominio
+  // orgánico) por getCanalOrigen() en el momento del submit.
+  let queryLeadsTasacion = supabase
+    .from("leads_tasacion")
+    .select("id, canal_origen, utm_source, utm_medium, utm_campaign, estado, created_at");
+  if (desde) queryLeadsTasacion = queryLeadsTasacion.gte("created_at", desde);
+  if (hasta) queryLeadsTasacion = queryLeadsTasacion.lte("created_at", `${hasta}T23:59:59`);
+  const { data: leadsTasacion } = await queryLeadsTasacion;
+
+  const leadsConTracking = (leadsTasacion || []).filter((l: any) => l.canal_origen || l.utm_source);
+  const canalesTasacionMap: Record<string, { total: number; conCampana: number }> = {};
+  (leadsTasacion || []).forEach((l: any) => {
+    const canal = l.canal_origen || "Sin identificar";
+    if (!canalesTasacionMap[canal]) canalesTasacionMap[canal] = { total: 0, conCampana: 0 };
+    canalesTasacionMap[canal].total += 1;
+    if (l.utm_campaign) canalesTasacionMap[canal].conCampana += 1;
+  });
+  const canalesTasacionOrdenados = Object.entries(canalesTasacionMap).sort((a: any, b: any) => b[1].total - a[1].total);
 
   // 1a-bis. Clientes cargados a mano (walk-in) y su origen
   const walkIns = datos.filter((c: any) => c.canal_ingreso === "walk_in");
@@ -24,13 +52,16 @@ export default async function EmbudoPage() {
   const totalConocio = walkIns.length;
 
   // 1b. Ventas cruzadas con vehículos (adaptación V2: pautado = publicado_ml)
-  const { data: ventas } = await supabase
+  let queryVentas = supabase
     .from("ventas")
     .select(`
       id, fecha_cierre, cliente_id, vehiculo_id,
       vehiculos ( publicado_ml )
     `)
     .eq("estado", "cerrada");
+  if (desde) queryVentas = queryVentas.gte("fecha_cierre", desde);
+  if (hasta) queryVentas = queryVentas.lte("fecha_cierre", hasta);
+  const { data: ventas } = await queryVentas;
 
   const ventasTotalesArr = ventas || [];
   const totalVentas = ventasTotalesArr.length;
@@ -138,9 +169,7 @@ export default async function EmbudoPage() {
           <BarChart3 className="w-3.5 h-3.5 text-slate-400 dark:text-slate-500" />
           Tasa de Cierre Global: <span className="text-rose-600 dark:text-rose-400 text-[13px] ml-1">{tasaCierre}%</span>
         </div>
-        <button className="flex items-center gap-2 bg-white dark:bg-white/5 border border-slate-200 dark:border-white/10 px-3 py-1.5 rounded-lg text-xs font-bold text-slate-600 dark:text-slate-300 hover:bg-slate-50 transition-colors">
-          <Filter className="w-3.5 h-3.5" /> Filtrar
-        </button>
+        <FiltroFechas desde={desde} hasta={hasta} />
       </div>
 
       {/* VISUALIZACIÓN DEL EMBUDO */}
@@ -270,6 +299,33 @@ export default async function EmbudoPage() {
                 </div>
               );
             })}
+          </div>
+        )}
+      </div>
+
+      {/* LEADS CON TRACKING REAL — leads_tasacion, única fuente con UTM real */}
+      <div className="bg-white dark:bg-[#111] border border-slate-200 dark:border-white/10 rounded-2xl shadow-sm overflow-hidden">
+        <div className="p-6 border-b border-slate-100 dark:border-white/5">
+          <h2 className="text-[11px] font-bold uppercase tracking-widest text-slate-500 dark:text-slate-400 flex items-center gap-2">
+            <Radar className="w-4 h-4 text-emerald-500" /> Leads con tracking real (Google/Meta/MercadoLibre Ads)
+          </h2>
+          <p className="text-[11px] text-slate-400 mt-0.5">
+            De los formularios públicos (Tasación, Financiación, Vender) — {leadsConTracking.length} de {(leadsTasacion || []).length} llegaron con canal identificado. Esto no pasa por "origen" de Clientes (ese lo tipea el vendedor a mano); acá el canal lo detecta la URL de entrada, sin intervención humana.
+          </p>
+        </div>
+        {canalesTasacionOrdenados.length === 0 ? (
+          <p className="p-10 text-center text-slate-400 text-sm italic">Sin leads de tasación/financiación todavía.</p>
+        ) : (
+          <div className="divide-y divide-slate-100 dark:divide-white/5">
+            {canalesTasacionOrdenados.map(([canal, stats]: any) => (
+              <div key={canal} className="flex items-center justify-between px-6 py-3">
+                <span className="text-[13px] font-bold text-slate-700 dark:text-slate-200">{canal}</span>
+                <div className="flex items-center gap-6 text-xs">
+                  <span className="text-slate-500 dark:text-slate-400">{stats.total} leads</span>
+                  {stats.conCampana > 0 && <span className="text-emerald-600 dark:text-emerald-400 font-bold">{stats.conCampana} con campaña puntual</span>}
+                </div>
+              </div>
+            ))}
           </div>
         )}
       </div>
