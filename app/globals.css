@@ -91,7 +91,11 @@
    margen de impresión por defecto arriba de eso. */
 @media print {
   @page {
+    size: A4;
     margin: 0;
+  }
+  html, body {
+    width: 210mm;
   }
 }
 

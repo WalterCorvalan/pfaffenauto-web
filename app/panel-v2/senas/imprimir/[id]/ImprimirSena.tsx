@@ -104,7 +104,7 @@ export default function ImprimirSena({ sena: s, branding }: { sena: any; brandin
       {/* Calcado del recibo de seña tradicional (Softcars): membrete con logo,
           texto legal con montos en letras, ficha del vehículo en 2 columnas y
           firma digital dual al pie. */}
-      <div className="max-w-[210mm] min-h-[297mm] mx-auto bg-white p-[15mm] shadow-lg border border-slate-200 print:shadow-none print:border-none print:p-0 print:m-0 text-[12px] leading-snug">
+      <div className="w-[210mm] max-w-[210mm] min-h-[297mm] mx-auto bg-white p-[15mm] shadow-lg border border-slate-200 print:shadow-none print:border-none print:m-0 text-[12px] leading-snug box-border">
         <div className="flex justify-between items-start border-b-2 border-slate-900 pb-3 mb-4">
           <div className="flex items-start gap-3">
             {branding?.branding_logo_url ? (
@@ -149,10 +149,10 @@ export default function ImprimirSena({ sena: s, branding }: { sena: any; brandin
         <p className="mb-3">como reserva y ad referendum de la firma vendedora</p>
 
         <div className="space-y-1.5 mb-4">
-          <div className="flex items-baseline gap-2"><span className="w-64 shrink-0">la Cantidad de:</span><strong className="text-[14px]">{formatMoney(s.sena_ars)}</strong><span className="text-slate-500 italic">{enLetras(s.sena_ars)}</span></div>
-          <div className="flex items-baseline gap-2"><span className="w-64 shrink-0">por un precio de venta establecido en:</span><strong className="text-[14px]">{formatMoney(ventaArs)}</strong><span className="text-slate-500 italic">{enLetras(ventaArs)}</span></div>
-          <div className="flex items-baseline gap-2"><span className="w-64 shrink-0">más un adicional por Transferencia y/o Patentamiento de:</span><strong className="text-[14px]">{formatMoney(adicionalTransferencia)}</strong><span className="text-slate-500 italic">{enLetras(adicionalTransferencia)}</span></div>
-          <div className="flex items-baseline gap-2 pt-1.5 border-t border-slate-900"><span className="w-64 shrink-0 font-bold">Quedando un <em>Saldo</em> a abonar de:</span><strong className="text-[15px]">{formatMoney(saldoAbonar)}</strong><span className="text-slate-500 italic">{enLetras(saldoAbonar)}</span></div>
+          <div className="flex items-baseline gap-2 flex-wrap"><span className="w-64 shrink-0">la Cantidad de:</span><strong className="text-[14px]">{formatMoney(s.sena_ars)}</strong><span className="text-slate-500 italic">{enLetras(s.sena_ars)}</span></div>
+          <div className="flex items-baseline gap-2 flex-wrap"><span className="w-64 shrink-0">por un precio de venta establecido en:</span><strong className="text-[14px]">{formatMoney(ventaArs)}</strong><span className="text-slate-500 italic">{enLetras(ventaArs)}</span></div>
+          <div className="flex items-baseline gap-2 flex-wrap"><span className="w-64 shrink-0">más un adicional por Transferencia y/o Patentamiento de:</span><strong className="text-[14px]">{formatMoney(adicionalTransferencia)}</strong><span className="text-slate-500 italic">{enLetras(adicionalTransferencia)}</span></div>
+          <div className="flex items-baseline gap-2 flex-wrap pt-1.5 border-t border-slate-900"><span className="w-64 shrink-0 font-bold">Quedando un <em>Saldo</em> a abonar de:</span><strong className="text-[15px]">{formatMoney(saldoAbonar)}</strong><span className="text-slate-500 italic">{enLetras(saldoAbonar)}</span></div>
         </div>
 
         <p className="mb-4 text-justify">
