@@ -184,7 +184,12 @@ export default async function VehiculoDetallePage({
     <div className="min-h-screen bg-[#F8FAFC] dark:bg-[#0a0a0f] print:bg-white font-sans text-foreground flex flex-col relative pb-20">
       <script
         type="application/ld+json"
-        dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLdVehicle) }}
+        // JSON.stringify no escapa "</" -- si marca/modelo (cargados por
+        // cualquier usuario autenticado del panel, sin restricción de
+        // caracteres) trajeran algo como "</script><script>...", rompería
+        // el tag y ejecutaría JS en la página pública del auto. <
+        // neutraliza cualquier "<" sin tocar el JSON-LD en sí.
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLdVehicle).replace(/</g, "\\u003c") }}
       />
       <BackgroundEffects />
       <PrintHeader auto={auto} />

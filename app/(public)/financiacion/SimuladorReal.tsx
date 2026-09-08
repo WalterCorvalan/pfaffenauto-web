@@ -2,7 +2,6 @@
 
 import { useState, useEffect, useRef } from "react";
 import Script from "next/script";
-import { supabase2 as supabase } from "@/lib/supabase2/client";
 import { getCanalOrigen, getUtmRaw } from "@/lib/utm";
 import { CreditCard, CheckCircle2, Loader2, User, Phone, Mail, ArrowLeft, Search, Car } from "lucide-react";
 
@@ -21,26 +20,10 @@ interface VehiculoFinanciable {
   modelo: string;
   anio: number;
   km: number | null;
-  precio_publicado_ars: number | null;
-  precio_publicado_usd: number | null;
-  precio_venta: number | null;
-  moneda_venta: "USD" | "ARS" | null;
-  sucursales: { nombre: string } | null;
-}
-
-// precio_publicado_ars es un campo que carga Marketing para avisos (no todos
-// los autos lo tienen) — sin este fallback, un auto sin ese campo cargado
-// simulaba financiación sobre $0. Se resuelve con lo mejor disponible: el
-// publicado en ARS, si no el publicado en USD convertido, si no el precio de
-// venta real convertido (según su moneda).
-function resolverPrecioArs(v: VehiculoFinanciable, dolarVenta: number | null): number {
-  if (v.precio_publicado_ars) return v.precio_publicado_ars;
-  if (v.precio_publicado_usd && dolarVenta) return Math.round(v.precio_publicado_usd * dolarVenta);
-  if (v.precio_venta) {
-    if (v.moneda_venta === "ARS") return v.precio_venta;
-    if (v.moneda_venta === "USD" && dolarVenta) return Math.round(v.precio_venta * dolarVenta);
-  }
-  return 0;
+  sucursal: string | null;
+  // Precio ya resuelto server-side (/api/simulador-vehiculos) -- el precio
+  // interno (precio_venta) nunca llega al navegador, solo este número final.
+  precioArs: number;
 }
 
 const TNA = 0.46;
@@ -110,24 +93,22 @@ export default function SimuladorReal() {
     if (step !== 1) return;
     setBuscando(true);
     const timeout = setTimeout(async () => {
-      let query = supabase
-        .from("vehiculos")
-        .select("id, marca, modelo, anio, km, precio_publicado_ars, precio_publicado_usd, precio_venta, moneda_venta, sucursales!vehiculos_sucursal_id_fkey ( nombre )")
-        .eq("estado", "disponible")
-        .limit(6);
-
-      query = busqueda.trim().length >= 2
-        ? query.or(`marca.ilike.%${busqueda}%,modelo.ilike.%${busqueda}%`)
-        : query.order("destacado", { ascending: false });
-
-      const { data } = await query;
-      setResultados((data as any) || []);
+      const params = new URLSearchParams();
+      if (busqueda.trim().length >= 2) params.set("q", busqueda.trim());
+      if (dolarVenta) params.set("dolar", String(dolarVenta));
+      try {
+        const res = await fetch(`/api/simulador-vehiculos?${params.toString()}`);
+        const data = await res.json();
+        setResultados(res.ok ? data.vehiculos || [] : []);
+      } catch {
+        setResultados([]);
+      }
       setBuscando(false);
     }, 300);
     return () => clearTimeout(timeout);
-  }, [busqueda, step]);
+  }, [busqueda, step, dolarVenta]);
 
-  const precioVehiculo = vehiculo ? resolverPrecioArs(vehiculo, dolarVenta) : 0;
+  const precioVehiculo = vehiculo?.precioArs || 0;
   const anticipoCliente = (precioVehiculo * anticipoPorcentaje) / 100;
   const montoAFinanciar = precioVehiculo - anticipoCliente;
 
@@ -224,7 +205,7 @@ export default function SimuladorReal() {
           </div>
           <h3 className="text-xl font-black text-slate-900 dark:text-white mb-2">¡Solicitud enviada!</h3>
           <p className="text-slate-500 dark:text-slate-400 text-xs max-w-sm mb-6">
-            Un asesor de {vehiculo?.sucursales?.nombre || "Pfaffen Autos"} te va a contactar a la brevedad para avanzar con tu crédito.
+            Un asesor de {vehiculo?.sucursal || "Pfaffen Autos"} te va a contactar a la brevedad para avanzar con tu crédito.
           </p>
           <button
             type="button"
@@ -274,9 +255,9 @@ export default function SimuladorReal() {
                     </div>
                     <div className="min-w-0 flex-1">
                       <p className="font-black text-slate-900 dark:text-white text-xs truncate">{v.marca} {v.modelo}</p>
-                      <p className="text-[10px] text-slate-500 dark:text-slate-400 font-bold truncate">{v.anio} · {v.sucursales?.nombre || "Casa Central"}</p>
+                      <p className="text-[10px] text-slate-500 dark:text-slate-400 font-bold truncate">{v.anio} · {v.sucursal || "Casa Central"}</p>
                       <p className="text-xs font-black text-[#0145F2] dark:text-sky-400 mt-0.5">
-                        {(() => { const p = resolverPrecioArs(v, dolarVenta); return p > 0 ? `$ ${p.toLocaleString("es-AR")}` : "Consultar precio"; })()}
+                        {v.precioArs > 0 ? `$ ${v.precioArs.toLocaleString("es-AR")}` : "Consultar precio"}
                       </p>
                     </div>
                   </button>
