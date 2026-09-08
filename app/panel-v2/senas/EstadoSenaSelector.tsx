@@ -4,7 +4,12 @@ import { useState } from "react";
 import { supabase2 } from "@/lib/supabase2/client";
 import { useRouter } from "next/navigation";
 
-const ESTADOS = ["Activa", "Convertida", "Perdida"];
+// "Convertida" no es un estado que se elija a mano -- lo pone solo el
+// sistema cuando una Venta se vincula a esta seña (NuevaVentaModal.tsx). Acá
+// solo se puede pasar manualmente entre Pendiente y Perdida; si ya está
+// Realizada queda como badge fijo, sin selector.
+const ESTADOS = ["Activa", "Perdida"];
+const LABEL: Record<string, string> = { Activa: "Pendiente", Convertida: "Realizada", Perdida: "Perdida" };
 const COLOR: Record<string, string> = {
   Activa: "bg-amber-500 text-white border-amber-500",
   Convertida: "bg-emerald-500 text-white border-emerald-500",
@@ -15,6 +20,14 @@ export default function EstadoSenaSelector({ id, estado, vehiculoId }: { id: str
   const router = useRouter();
   const [actual, setActual] = useState(estado || "Activa");
   const [cargando, setCargando] = useState(false);
+
+  if (actual === "Convertida") {
+    return (
+      <span className={`text-[10px] font-bold uppercase tracking-widest px-2.5 py-1.5 rounded-lg border inline-block ${COLOR.Convertida}`} title="Se marcó sola al vincular la venta — no se puede cambiar a mano">
+        {LABEL.Convertida}
+      </span>
+    );
+  }
 
   const cambiar = async (nuevo: string) => {
     setActual(nuevo);
@@ -40,7 +53,7 @@ export default function EstadoSenaSelector({ id, estado, vehiculoId }: { id: str
       onChange={(e) => cambiar(e.target.value)}
       className={`text-[10px] font-bold uppercase tracking-widest px-2.5 py-1.5 rounded-lg border outline-none cursor-pointer transition-transform hover:scale-105 disabled:opacity-50 ${COLOR[actual] || COLOR.Activa}`}
     >
-      {ESTADOS.map((e) => <option key={e} value={e} className="bg-white dark:bg-[#141414] text-slate-900 dark:text-white">{e}</option>)}
+      {ESTADOS.map((e) => <option key={e} value={e} className="bg-white dark:bg-[#141414] text-slate-900 dark:text-white">{LABEL[e]}</option>)}
     </select>
   );
 }

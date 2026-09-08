@@ -3,6 +3,8 @@
 import Link from "next/link";
 import { X, Wallet, Printer, MessageSquareText } from "lucide-react";
 
+const LABEL_ESTADO: Record<string, string> = { Activa: "Pendiente", Convertida: "Realizada", Perdida: "Perdida" };
+
 function Fila({ label, valor }: { label: string; valor: React.ReactNode }) {
   return (
     <div className="grid grid-cols-3 gap-2 py-1.5 border-b border-slate-50 dark:border-white/5 last:border-0">
@@ -64,7 +66,7 @@ export default function SenaDetalleModal({ sena: s, onClose }: { sena: any; onCl
             <Fila label="Sucursal" valor={s.sucursales?.nombre} />
             <Fila label="Vendedor" valor={s.perfiles?.nombre} />
             <Fila label="Fecha" valor={s.fecha ? new Date(`${s.fecha}T12:00:00Z`).toLocaleDateString("es-AR", { timeZone: "UTC" }) : null} />
-            <Fila label="Estado" valor={s.estado} />
+            <Fila label="Estado" valor={LABEL_ESTADO[s.estado] || s.estado} />
             <Fila label="Precio confirmado" valor={s.precio_confirmado === false ? "⚠️ A confirmar" : s.precio_confirmado === true ? "Sí" : null} />
           </Seccion>
 
