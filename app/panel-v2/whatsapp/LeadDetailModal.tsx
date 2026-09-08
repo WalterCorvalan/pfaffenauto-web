@@ -6,7 +6,7 @@ import { supabase2 } from "@/lib/supabase2/client";
 import {
   X, User, Phone, CarFront, Calendar, Plus, CheckCircle2, Circle, FileText,
   Ban, Clock, AlertTriangle, MapPin, StickyNote, Radio, Car, LifeBuoy, History,
-  Edit2, Check, Flame, Snowflake, Minus, Receipt, Wallet, ClipboardCheck, Loader2, MessageCircle,
+  Edit2, Check, Flame, Snowflake, Minus, Receipt, Wallet, ClipboardCheck, Loader2, MessageCircle, Bot, Building2,
 } from "lucide-react";
 
 const ESTADOS_LEAD = [
@@ -98,10 +98,8 @@ export default function LeadDetailModal({
 
   const [editandoDomicilio, setEditandoDomicilio] = useState(false);
   const [domicilio, setDomicilio] = useState("");
-  const [editandoCanalOrigen, setEditandoCanalOrigen] = useState(false);
-  const [canalOrigen, setCanalOrigen] = useState("");
-  const [editandoSucursal, setEditandoSucursal] = useState(false);
-  const [sucursalId, setSucursalId] = useState("");
+  const [guardandoCanalOrigen, setGuardandoCanalOrigen] = useState(false);
+  const [guardandoSucursal, setGuardandoSucursal] = useState(false);
   const [editandoNotas, setEditandoNotas] = useState(false);
   const [notas, setNotas] = useState("");
 
@@ -129,8 +127,6 @@ export default function LeadDetailModal({
     if (!l) { setCargando(false); return; }
     setLead(l);
     setDomicilio(l.domicilio || "");
-    setCanalOrigen(l.canal_origen || "");
-    setSucursalId(l.sucursal_id || "");
     setNotas(l.notas || "");
     setVehiculoTestDriveId(l.vehiculo_id || "");
 
@@ -245,17 +241,21 @@ export default function LeadDetailModal({
   };
 
   const guardarDomicilio = async () => { await patch({ domicilio }); setEditandoDomicilio(false); };
-  const guardarCanalOrigen = async () => {
-    await patch({ canal_origen: canalOrigen || null });
-    setEditandoCanalOrigen(false);
-    await registrarEvento("canal_origen", canalOrigen ? `Canal de origen marcado: ${canalOrigen}` : "Canal de origen borrado");
+  const cambiarCanalOrigen = async (nuevo: string) => {
+    setGuardandoCanalOrigen(true);
+    try {
+      await patch({ canal_origen: nuevo || null });
+      await registrarEvento("canal_origen", nuevo ? `Canal de origen marcado: ${nuevo}` : "Canal de origen borrado");
+    } finally { setGuardandoCanalOrigen(false); }
   };
   const guardarNotas = async () => { await patch({ notas }); setEditandoNotas(false); };
-  const guardarSucursal = async () => {
-    await patch({ sucursal_id: sucursalId || null });
-    setEditandoSucursal(false);
-    const nombre = sucursales.find((s) => s.id === sucursalId)?.nombre;
-    await registrarEvento("sucursal", sucursalId ? `Sucursal marcada: ${nombre}` : "Sucursal borrada");
+  const cambiarSucursal = async (nuevaId: string) => {
+    setGuardandoSucursal(true);
+    try {
+      await patch({ sucursal_id: nuevaId || null });
+      const nombre = sucursales.find((s) => s.id === nuevaId)?.nombre;
+      await registrarEvento("sucursal", nuevaId ? `Sucursal marcada: ${nombre}` : "Sucursal borrada");
+    } finally { setGuardandoSucursal(false); }
   };
 
   const crearTarea = async (e: React.FormEvent) => {
@@ -479,35 +479,48 @@ export default function LeadDetailModal({
                 </div>
               </div>
 
-              <div className="bg-slate-50 dark:bg-white/5 border border-slate-100 dark:border-white/10 rounded-2xl p-4">
-                <h2 className={labelClass}><Radio className="w-3.5 h-3.5" /> Canal de ingreso</h2>
-                <div className="grid grid-cols-2 gap-y-2.5 gap-x-4 text-[12px]">
-                  <div>
-                    <span className="text-slate-400 block text-[10px] uppercase tracking-widest font-bold mb-0.5">Canal de origen</span>
-                    {editandoCanalOrigen ? (
-                      <div className="flex items-center gap-1.5">
-                        <select autoFocus value={canalOrigen} onChange={(e) => setCanalOrigen(e.target.value)} className="bg-white dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-lg px-2 py-1 text-xs outline-none">
-                          <option value="">Sin especificar</option>
-                          {CANALES_ORIGEN.map((c) => <option key={c} value={c}>{c}</option>)}
-                        </select>
-                        <button onClick={guardarCanalOrigen} className="text-emerald-600 text-[11px] font-bold">Guardar</button>
-                      </div>
-                    ) : (<button onClick={() => setEditandoCanalOrigen(true)} className="text-[13px] font-bold text-slate-800 dark:text-white hover:underline">{lead.canal_origen || "—"}</button>)}
+              <div className="bg-slate-50 dark:bg-white/5 border border-slate-100 dark:border-white/10 rounded-2xl p-4 space-y-3">
+                <div>
+                  <h2 className={labelClass}><Radio className="w-3.5 h-3.5" /> Canal de origen</h2>
+                  <div className="relative">
+                    <select
+                      value={lead.canal_origen || ""}
+                      disabled={guardandoCanalOrigen}
+                      onChange={(e) => cambiarCanalOrigen(e.target.value)}
+                      className={`${inputClass} appearance-none pr-8 disabled:opacity-50`}
+                    >
+                      <option value="">Sin especificar</option>
+                      {CANALES_ORIGEN.map((c) => <option key={c} value={c}>{c}</option>)}
+                    </select>
+                    {guardandoCanalOrigen && <Loader2 className="w-3.5 h-3.5 animate-spin text-slate-400 absolute right-2.5 top-1/2 -translate-y-1/2 pointer-events-none" />}
                   </div>
-                  <div>
-                    <span className="text-slate-400 block text-[10px] uppercase tracking-widest font-bold mb-0.5">Sucursal</span>
-                    {editandoSucursal ? (
-                      <div className="flex items-center gap-1.5">
-                        <select autoFocus value={sucursalId} onChange={(e) => setSucursalId(e.target.value)} className="bg-white dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-lg px-2 py-1 text-xs outline-none">
-                          <option value="">Sin especificar</option>
-                          {sucursales.map((s) => <option key={s.id} value={s.id}>{s.nombre}</option>)}
-                        </select>
-                        <button onClick={guardarSucursal} className="text-emerald-600 text-[11px] font-bold">Guardar</button>
-                      </div>
-                    ) : (<button onClick={() => setEditandoSucursal(true)} className="text-[13px] font-bold text-slate-800 dark:text-white hover:underline">{sucursales.find((s) => s.id === lead.sucursal_id)?.nombre || vehiculo?.sucursal?.nombre || "—"}</button>)}
+                </div>
+                <div>
+                  <h2 className={labelClass}><Building2 className="w-3.5 h-3.5" /> Sucursal</h2>
+                  <div className="relative">
+                    <select
+                      value={lead.sucursal_id || ""}
+                      disabled={guardandoSucursal}
+                      onChange={(e) => cambiarSucursal(e.target.value)}
+                      className={`${inputClass} appearance-none pr-8 disabled:opacity-50`}
+                    >
+                      <option value="">{vehiculo?.sucursal?.nombre ? `Sin especificar (auto: ${vehiculo.sucursal.nombre})` : "Sin especificar"}</option>
+                      {sucursales.map((s) => <option key={s.id} value={s.id}>{s.nombre}</option>)}
+                    </select>
+                    {guardandoSucursal && <Loader2 className="w-3.5 h-3.5 animate-spin text-slate-400 absolute right-2.5 top-1/2 -translate-y-1/2 pointer-events-none" />}
                   </div>
                 </div>
               </div>
+
+              {lead.handoff_resumen && (
+                <div className="bg-indigo-50 dark:bg-indigo-500/10 border border-indigo-200 dark:border-indigo-500/20 rounded-2xl p-4">
+                  <h2 className="text-[11px] font-bold uppercase tracking-widest text-indigo-500 dark:text-indigo-300 mb-1 flex items-center gap-1.5"><Bot className="w-3.5 h-3.5" /> Resumen de la IA</h2>
+                  {lead.handoff_reason && (
+                    <p className="text-[11px] text-indigo-700 dark:text-indigo-300 mb-1">{lead.handoff_reason === "cliente_pidio_humano" ? "El cliente pidió hablar con una persona." : "La IA dejó de responder."}</p>
+                  )}
+                  <p className="text-[13px] text-indigo-900 dark:text-indigo-100 leading-relaxed">{lead.handoff_resumen}</p>
+                </div>
+              )}
             </div>
 
             <div className="space-y-4">

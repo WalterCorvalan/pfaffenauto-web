@@ -2,7 +2,7 @@
 
 import { useState, useMemo, useEffect } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
-import { Filter, Search, Radar, MessageCircle, AtSign, Bot, User, Plus } from "lucide-react";
+import { Filter, Search, Radar, MessageCircle, AtSign, Bot, User, Plus, Radio, Building2, ChevronDown } from "lucide-react";
 import LeadDetailModal, { CANALES_ORIGEN } from "../whatsapp/LeadDetailModal";
 import NuevoLeadManualModal from "./NuevoLeadManualModal";
 
@@ -107,18 +107,29 @@ export default function LeadsUnificadosClient({ leadsIniciales, vendedores, sucu
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-slate-400" />
           <input value={busqueda} onChange={(e) => setBusqueda(e.target.value)} placeholder="Buscar por nombre o teléfono..." className="w-full bg-white dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-xl pl-9 pr-3 py-2.5 text-sm outline-none" />
         </div>
-        <select value={filtroOrigen} onChange={(e) => setFiltroOrigen(e.target.value as any)} className="bg-white dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-xl px-3 py-2.5 text-sm outline-none">
-          <option value="todos">Todos los orígenes</option>
-          <option value="whatsapp">WhatsApp</option><option value="instagram">Instagram</option><option value="rodi">Rodi</option><option value="manual">Manual</option>
-        </select>
-        <select value={filtroCanal} onChange={(e) => setFiltroCanal(e.target.value)} className="bg-white dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-xl px-3 py-2.5 text-sm outline-none">
-          <option value="">Todos los canales</option>
-          {CANALES_ORIGEN.map((c) => <option key={c} value={c}>{c}</option>)}
-        </select>
-        <select value={filtroSucursal} onChange={(e) => setFiltroSucursal(e.target.value)} className="bg-white dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-xl px-3 py-2.5 text-sm outline-none">
-          <option value="">Todas las sucursales</option>
-          {sucursales.map((s) => <option key={s.id} value={s.id}>{s.nombre}</option>)}
-        </select>
+        <div className="relative">
+          <select value={filtroOrigen} onChange={(e) => setFiltroOrigen(e.target.value as any)} className="appearance-none bg-white dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-xl pl-3 pr-8 py-2.5 text-sm outline-none">
+            <option value="todos">Todos los orígenes</option>
+            <option value="whatsapp">WhatsApp</option><option value="instagram">Instagram</option><option value="rodi">Rodi</option><option value="manual">Manual</option>
+          </select>
+          <ChevronDown className="w-3.5 h-3.5 text-slate-400 absolute right-2.5 top-1/2 -translate-y-1/2 pointer-events-none" />
+        </div>
+        <div className="relative">
+          <Radio className="w-3.5 h-3.5 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none" />
+          <select value={filtroCanal} onChange={(e) => setFiltroCanal(e.target.value)} className="appearance-none bg-white dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-xl pl-9 pr-8 py-2.5 text-sm outline-none">
+            <option value="">Todos los canales</option>
+            {CANALES_ORIGEN.map((c) => <option key={c} value={c}>{c}</option>)}
+          </select>
+          <ChevronDown className="w-3.5 h-3.5 text-slate-400 absolute right-2.5 top-1/2 -translate-y-1/2 pointer-events-none" />
+        </div>
+        <div className="relative">
+          <Building2 className="w-3.5 h-3.5 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none" />
+          <select value={filtroSucursal} onChange={(e) => setFiltroSucursal(e.target.value)} className="appearance-none bg-white dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-xl pl-9 pr-8 py-2.5 text-sm outline-none">
+            <option value="">Todas las sucursales</option>
+            {sucursales.map((s) => <option key={s.id} value={s.id}>{s.nombre}</option>)}
+          </select>
+          <ChevronDown className="w-3.5 h-3.5 text-slate-400 absolute right-2.5 top-1/2 -translate-y-1/2 pointer-events-none" />
+        </div>
       </div>
 
       {filtrados.length === 0 ? (
