@@ -64,8 +64,9 @@ export default function ImprimirVenta({ venta: v, branding, senaPrevia }: { vent
             {branding?.branding_logo_url ? (
               <img src={branding.branding_logo_url} alt={nombreEmpresa} className="h-14 w-auto object-contain shrink-0" />
             ) : (
-              <div className="h-14 w-14 rounded-lg bg-slate-900 text-white flex items-center justify-center font-black text-lg shrink-0">
-                {nombreEmpresa.slice(0, 2).toUpperCase()}
+              <div className="relative shrink-0">
+                <img src="/logo.png" alt={nombreEmpresa} className="h-8 w-auto object-contain" />
+                <img src="/r.png" alt="Marca Registrada" className="absolute -top-1 -right-2 w-2 h-2 object-contain opacity-80" />
               </div>
             )}
             <div>
