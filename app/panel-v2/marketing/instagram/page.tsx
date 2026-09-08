@@ -1,6 +1,7 @@
 import { createClient } from "@/lib/supabase2/server";
 import Link from "next/link";
-import { AtSign, ArrowDownToLine, ArrowUpFromLine, Users, Bot, PhoneCall, Flame } from "lucide-react";
+import { AtSign, ArrowDownToLine, ArrowUpFromLine, Users, PhoneCall, Flame } from "lucide-react";
+import TarjetaCostoIA from "@/components/panelV2/TarjetaCostoIA";
 
 function inicioDia(offsetDias: number) {
   const d = new Date();
@@ -59,12 +60,6 @@ export default async function InstagramMetricasPage() {
     { label: "Leads calientes", valor: totalCalientes ?? 0, icon: Flame, color: "text-rose-600" },
     { label: "Leads tibios", valor: totalTibios ?? 0, icon: Flame, color: "text-amber-500" },
     { label: "Pidieron humano", valor: `${pctHandoff}%`, icon: PhoneCall, color: "text-amber-600" },
-    {
-      label: "Costo IA (30d)",
-      valor: costoEstimado30 > 0 ? `US$ ${costoEstimado30.toLocaleString("es-AR", { maximumFractionDigits: 2 })}` : "—",
-      icon: Bot,
-      color: "text-pink-600",
-    },
   ];
 
   return (
@@ -82,6 +77,7 @@ export default async function InstagramMetricasPage() {
             <p className="text-[11px] font-bold uppercase tracking-widest text-slate-400 mt-1">{t.label}</p>
           </div>
         ))}
+        <TarjetaCostoIA costo={costoEstimado30} label="Costo IA (30d)" />
       </div>
 
       <div>

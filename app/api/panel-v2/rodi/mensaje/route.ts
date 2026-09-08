@@ -77,8 +77,23 @@ async function procesarMensaje({ sessionId, texto, origenPagina, nombre, telefon
     unread_count: (conversacion.unread_count ?? 0) + 1,
   }).eq("id", conversacion.id);
 
-  if (conversacion.ai_habilitada === false || !isAiConfiguredV2()) {
-    return NextResponse.json({ replies: [], handoff: conversacion.ai_habilitada === false });
+  if (conversacion.ai_habilitada === false) {
+    // Se reactiva sola 6hs después de haberse pausado (handoff, mensaje
+    // manual de un vendedor, o apagado a mano) -- si el visitante vuelve
+    // más tarde, arranca de nuevo con el bot en vez de quedar en silencio
+    // para siempre. Se resuelve acá mismo, sin depender de un cron.
+    const SEIS_HORAS_MS = 6 * 60 * 60 * 1000;
+    const pausadaHaceMs = conversacion.ai_pausada_en ? Date.now() - new Date(conversacion.ai_pausada_en).getTime() : null;
+    if (pausadaHaceMs !== null && pausadaHaceMs >= SEIS_HORAS_MS) {
+      await supabase.from("rodi_conversaciones").update({ ai_habilitada: true, ai_pausada_en: null, handoff_at: null, handoff_reason: null, handoff_resumen: null }).eq("id", conversacion.id);
+      conversacion = { ...conversacion, ai_habilitada: true };
+    } else {
+      return NextResponse.json({ replies: [], handoff: true });
+    }
+  }
+
+  if (!isAiConfiguredV2()) {
+    return NextResponse.json({ replies: [], handoff: false });
   }
 
   const { data: mensajesPrevios } = await supabase.from("rodi_mensajes").select("direccion, texto").eq("conversacion_id", conversacion.id).order("created_at", { ascending: true }).limit(20);
@@ -113,7 +128,7 @@ async function procesarMensaje({ sessionId, texto, origenPagina, nombre, telefon
   }
   if (handoff) {
     await supabase.from("rodi_conversaciones").update({
-      handoff_at: new Date().toISOString(), handoff_reason: "cliente_pidio_humano", ai_habilitada: false,
+      handoff_at: new Date().toISOString(), handoff_reason: "cliente_pidio_humano", ai_habilitada: false, ai_pausada_en: new Date().toISOString(),
       handoff_resumen: resumen_handoff || null,
     }).eq("id", conversacion.id);
   }

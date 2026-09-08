@@ -63,7 +63,7 @@ export default function RodiBandeja({ conversacionesIniciales, vendedores }: { c
     const optimista = { id: crypto.randomUUID(), conversacion_id: seleccionada, direccion: "out", texto, ai_generado: false, created_at: new Date().toISOString() };
     setMensajes((prev) => [...prev, optimista]);
     await supabase2.from("rodi_mensajes").insert({ conversacion_id: seleccionada, direccion: "out", texto, ai_generado: false });
-    await supabase2.from("rodi_conversaciones").update({ ai_habilitada: false, last_message_at: new Date().toISOString() }).eq("id", seleccionada);
+    await supabase2.from("rodi_conversaciones").update({ ai_habilitada: false, ai_pausada_en: new Date().toISOString(), last_message_at: new Date().toISOString() }).eq("id", seleccionada);
     setConversaciones((prev) => prev.map((c) => (c.id === seleccionada ? { ...c, ai_habilitada: false } : c)));
   };
 
@@ -71,7 +71,9 @@ export default function RodiBandeja({ conversacionesIniciales, vendedores }: { c
     if (!conversacionActiva) return;
     const nuevoValor = !conversacionActiva.ai_habilitada;
     setConversaciones((prev) => prev.map((c) => (c.id === conversacionActiva.id ? { ...c, ai_habilitada: nuevoValor } : c)));
-    await supabase2.from("rodi_conversaciones").update({ ai_habilitada: nuevoValor }).eq("id", conversacionActiva.id);
+    // Al pausar guarda cuándo, para el auto-reinicio a las 6hs; al reactivar
+    // a mano se limpia -- ya no hace falta que el reinicio automático corra.
+    await supabase2.from("rodi_conversaciones").update({ ai_habilitada: nuevoValor, ai_pausada_en: nuevoValor ? null : new Date().toISOString() }).eq("id", conversacionActiva.id);
   };
 
   const guardarNotas = async () => {

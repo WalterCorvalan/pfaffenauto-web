@@ -1,5 +1,6 @@
 import { createClient } from "@/lib/supabase2/server";
-import { Bot, MessageCircle, Flame, PhoneCall, DollarSign } from "lucide-react";
+import { Bot, MessageCircle, Flame, PhoneCall } from "lucide-react";
+import TarjetaCostoIA from "@/components/panelV2/TarjetaCostoIA";
 
 function inicioDia(offsetDias: number) {
   const d = new Date();
@@ -43,12 +44,6 @@ export default async function ChatbotMetricasPage() {
     { label: "Leads tibios (7d)", valor: tibios7 ?? 0, icon: Flame, color: "text-amber-500" },
     { label: "Pidieron humano (7d)", valor: handoffs7 ?? 0, icon: PhoneCall, color: "text-amber-600" },
     { label: "Tasa de derivación (histórico)", valor: `${pctHandoffGlobal}%`, icon: PhoneCall, color: "text-amber-600" },
-    {
-      label: "Costo IA (30d)",
-      valor: costoEstimado30 > 0 ? `US$ ${costoEstimado30.toLocaleString("es-AR", { maximumFractionDigits: 2 })}` : "—",
-      icon: DollarSign,
-      color: "text-emerald-600",
-    },
   ];
 
   return (
@@ -65,6 +60,7 @@ export default async function ChatbotMetricasPage() {
             <p className="text-[11px] text-slate-400 mt-0.5">{t.label}</p>
           </div>
         ))}
+        <TarjetaCostoIA costo={costoEstimado30} label="Costo IA (30d)" />
       </div>
     </div>
   );

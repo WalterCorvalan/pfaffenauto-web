@@ -1,5 +1,6 @@
 import { createClient } from "@/lib/supabase2/server";
-import { Search, SearchX, TrendingUp, Bot, Percent } from "lucide-react";
+import { Search, SearchX, TrendingUp, Percent } from "lucide-react";
+import TarjetaCostoIA from "@/components/panelV2/TarjetaCostoIA";
 
 function inicioDia(offsetDias: number) {
   const d = new Date();
@@ -52,11 +53,7 @@ export default async function BusquedasWebPage() {
             <p className="text-2xl font-black text-slate-900 dark:text-white font-mono">{pctSinResultados}%</p>
             <p className="text-[11px] text-slate-400 mt-0.5">Sin resultados ({sinResultadosTotal})</p>
           </div>
-          <div className="bg-white dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-2xl p-4">
-            <Bot className="w-5 h-5 text-indigo-600 dark:text-sky-300 mb-2" />
-            <p className="text-2xl font-black text-slate-900 dark:text-white font-mono">{costoEstimado30 > 0 ? `US$ ${costoEstimado30.toLocaleString("es-AR", { maximumFractionDigits: 2 })}` : "—"}</p>
-            <p className="text-[11px] text-slate-400 mt-0.5">Costo IA del buscador (30d)</p>
-          </div>
+          <TarjetaCostoIA costo={costoEstimado30} label="Costo IA del buscador (30d)" />
         </div>
       )}
 

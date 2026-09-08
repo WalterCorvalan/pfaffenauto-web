@@ -1,6 +1,7 @@
 import { createClient } from "@/lib/supabase2/server";
 import Link from "next/link";
-import { BarChart3, MessageSquareText, AtSign, Bot, Megaphone, Search, DollarSign, TrendingUp, ArrowRight, Sparkles } from "lucide-react";
+import { BarChart3, MessageSquareText, AtSign, Bot, Megaphone, Search, DollarSign, TrendingUp, ArrowRight } from "lucide-react";
+import TarjetaCostoIA from "@/components/panelV2/TarjetaCostoIA";
 
 function inicioDia(offsetDias: number) {
   const d = new Date();
@@ -101,11 +102,7 @@ export default async function MetricasGeneralesPage() {
           <p className="text-2xl font-black font-mono">{tasaCierreGlobal}%</p>
           <p className="text-[11px] text-indigo-100 mt-0.5">Tasa de cierre global ({leadsGanados ?? 0} de {leadsTotal ?? 0} leads)</p>
         </div>
-        <div className="bg-white dark:bg-white/[0.02] border border-slate-200 dark:border-white/5 rounded-2xl p-5">
-          <Sparkles className="w-5 h-5 text-indigo-600 dark:text-sky-300 mb-2" />
-          <p className="text-2xl font-black text-slate-900 dark:text-white font-mono">{costoIaTotal30 > 0 ? `US$ ${costoIaTotal30.toLocaleString("es-AR", { maximumFractionDigits: 2 })}` : "—"}</p>
-          <p className="text-[11px] text-slate-400 mt-0.5">Costo IA total — todos los bots (30d)</p>
-        </div>
+        <TarjetaCostoIA costo={costoIaTotal30} label="Costo IA total — todos los bots (30d)" limite={20} />
         <div className="bg-white dark:bg-white/[0.02] border border-slate-200 dark:border-white/5 rounded-2xl p-5">
           <DollarSign className="w-5 h-5 text-amber-600 mb-2" />
           <p className="text-2xl font-black text-slate-900 dark:text-white font-mono">$ {gastoMes.toLocaleString("es-AR")}</p>
