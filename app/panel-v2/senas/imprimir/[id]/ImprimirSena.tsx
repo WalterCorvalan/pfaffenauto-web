@@ -7,8 +7,12 @@ import { supabase2 } from "@/lib/supabase2/client";
 import { notificarRespuestaPrecio } from "@/lib/panelV2/notificaciones";
 import ConfirmarPrecioEncargadoModal from "@/components/panelV2/ConfirmarPrecioEncargadoModal";
 import FirmaCanvas from "@/components/panelV2/FirmaCanvas";
+import { numeroALetras } from "@/lib/numeroALetras";
 
-interface Branding { branding_nombre?: string | null; branding_domicilio?: string | null; branding_telefono?: string | null; branding_cuit?: string | null }
+interface Branding {
+  branding_nombre?: string | null; branding_domicilio?: string | null; branding_telefono?: string | null; branding_cuit?: string | null;
+  branding_logo_url?: string | null; branding_email?: string | null; branding_web?: string | null; branding_ingresos_brutos?: string | null;
+}
 
 export default function ImprimirSena({ sena: s, branding }: { sena: any; branding?: Branding | null }) {
   const nombreEmpresa = branding?.branding_nombre || "Pfaffen Autos";
@@ -61,9 +65,13 @@ export default function ImprimirSena({ sena: s, branding }: { sena: any; brandin
   };
 
   const vendedor = s.perfiles?.nombre || "Administración";
-  const formatMoney = (val: number) => `$ ${Number(val || 0).toLocaleString("es-AR")}`;
+  const formatMoney = (val: number) => `$ ${Number(val || 0).toLocaleString("es-AR", { minimumFractionDigits: 2 })} .-`;
+  const enLetras = (val: number) => `(${numeroALetras(Number(val || 0))})`;
   const fecha = s.fecha ? new Date(`${s.fecha}T12:00:00Z`).toLocaleDateString("es-AR", { timeZone: "UTC" }) : "—";
   const fechaNacimiento = s.fecha_nacimiento ? new Date(`${s.fecha_nacimiento}T12:00:00Z`).toLocaleDateString("es-AR", { timeZone: "UTC" }) : "N/A";
+  const domicilioCliente = [[s.calle, s.numero_calle].filter(Boolean).join(" ") + (s.depto ? ` Dto. ${s.depto}` : ""), s.localidad, s.provincia ? `(${s.provincia})` : ""].filter(Boolean).join(", ");
+  const adicionalTransferencia = Number(s.patentamiento_transferencia_ars || 0);
+  const saldoAbonar = Number(s.saldo_abonar_ars || 0);
 
   return (
     <div className="min-h-screen pb-20 text-slate-800 bg-[#F9FAFB] dark:bg-[#0A0A0A] print:bg-white pt-8 font-sans">
@@ -93,145 +101,138 @@ export default function ImprimirSena({ sena: s, branding }: { sena: any; brandin
         </div>
       </div>
 
-      <div className="max-w-[210mm] min-h-[297mm] mx-auto bg-white p-[15mm] shadow-lg border border-slate-200 print:shadow-none print:border-none print:p-0 print:m-0">
-        <div className="flex justify-between items-start border-b-[3px] border-slate-900 pb-5 mb-6">
-          <div>
-            <h1 className="text-3xl font-black text-slate-900 tracking-tighter uppercase">{nombreEmpresa}</h1>
-            <p className="text-[11px] font-bold text-slate-500 uppercase tracking-widest mt-1">{s.sucursales?.nombre || "Casa Central"}</p>
-            {(branding?.branding_domicilio || branding?.branding_telefono || branding?.branding_cuit) && (
-              <p className="text-[9px] text-slate-400 mt-1 space-x-2">
-                {branding?.branding_domicilio && <span>{branding.branding_domicilio}</span>}
-                {branding?.branding_telefono && <span>Tel: {branding.branding_telefono}</span>}
-                {branding?.branding_cuit && <span>CUIT: {branding.branding_cuit}</span>}
-              </p>
+      {/* Calcado del recibo de seña tradicional (Softcars): membrete con logo,
+          texto legal con montos en letras, ficha del vehículo en 2 columnas y
+          firma digital dual al pie. */}
+      <div className="max-w-[210mm] min-h-[297mm] mx-auto bg-white p-[15mm] shadow-lg border border-slate-200 print:shadow-none print:border-none print:p-0 print:m-0 text-[12px] leading-snug">
+        <div className="flex justify-between items-start border-b-2 border-slate-900 pb-3 mb-4">
+          <div className="flex items-start gap-3">
+            {branding?.branding_logo_url ? (
+              <img src={branding.branding_logo_url} alt={nombreEmpresa} className="h-14 w-auto object-contain shrink-0" />
+            ) : (
+              <div className="h-14 w-14 rounded-lg bg-slate-900 text-white flex items-center justify-center font-black text-lg shrink-0">
+                {nombreEmpresa.slice(0, 2).toUpperCase()}
+              </div>
             )}
-          </div>
-          <div className="text-right">
-            <h2 className="text-[15px] font-bold text-slate-800 uppercase tracking-widest border-2 border-slate-200 px-4 py-1.5 rounded-lg bg-slate-50">Recibo de Seña</h2>
-            <div className="mt-3 text-[11px] text-slate-500 font-medium space-y-1 uppercase tracking-widest">
-              <p>Número: <span className="font-mono font-bold text-slate-900">{s.numero}</span></p>
-              <p>Fecha: <span className="font-bold text-slate-900">{fecha}</span></p>
-              <p>Vendedor: <span className="font-bold text-slate-900">{vendedor}</span></p>
-            </div>
-          </div>
-        </div>
-
-        <div className="mb-6">
-          <h3 className="text-[10px] font-black uppercase tracking-widest text-slate-400 border-b border-slate-200 pb-1 mb-3">Información del Cliente</h3>
-          <div className="grid grid-cols-4 gap-y-3 gap-x-4 text-xs">
-            <div className="col-span-2"><span className="text-[10px] uppercase tracking-widest font-bold text-slate-400 block">Apellido y Nombre</span><strong className="text-slate-900 text-[13px]">{s.apellido}, {s.nombre}</strong></div>
-            <div><span className="text-[10px] uppercase tracking-widest font-bold text-slate-400 block">D.N.I.</span><strong className="text-slate-900 text-[13px]">{s.dni || "N/A"}</strong></div>
-            <div><span className="text-[10px] uppercase tracking-widest font-bold text-slate-400 block">Fecha de Nacimiento</span><strong className="text-slate-900">{fechaNacimiento}</strong></div>
-            <div><span className="text-[10px] uppercase tracking-widest font-bold text-slate-400 block">Cuit/Cuil</span><strong className="text-slate-900">{s.cuit_cuil || "N/A"}</strong></div>
-            <div className="col-span-2">
-              <span className="text-[10px] uppercase tracking-widest font-bold text-slate-400 block">Domicilio</span>
-              <strong className="text-slate-900">
-                {[[s.calle, s.numero_calle].filter(Boolean).join(" ") + (s.depto ? ` Dto. ${s.depto}` : ""), s.localidad, s.provincia ? `(${s.provincia})` : "", s.codigo_postal ? `CP ${s.codigo_postal}` : ""].filter(Boolean).join(", ") || "N/A"}
-              </strong>
-            </div>
-            <div><span className="text-[10px] uppercase tracking-widest font-bold text-slate-400 block">Celular</span><strong className="text-slate-900">{s.telefono_celular || "N/A"}</strong></div>
-            <div><span className="text-[10px] uppercase tracking-widest font-bold text-slate-400 block">Teléfono de Línea</span><strong className="text-slate-900">{s.telefono_linea || "N/A"}</strong></div>
-            <div className="col-span-2"><span className="text-[10px] uppercase tracking-widest font-bold text-slate-400 block">Email</span><strong className="text-slate-900">{s.correo_electronico || "No registrado"}</strong></div>
-            <div><span className="text-[10px] uppercase tracking-widest font-bold text-slate-400 block">Estado Civil</span><strong className="text-slate-900 capitalize">{s.estado_civil || "N/A"}</strong></div>
-            <div><span className="text-[10px] uppercase tracking-widest font-bold text-slate-400 block">Profesión</span><strong className="text-slate-900 capitalize">{s.profesion || "N/A"}</strong></div>
-          </div>
-        </div>
-
-        <div className="mb-6">
-          <h3 className="text-[10px] font-black uppercase tracking-widest text-slate-400 border-b border-slate-200 pb-1 mb-3">Información del Vehículo</h3>
-          <div className="grid grid-cols-4 gap-y-4 gap-x-4 text-xs bg-slate-50 p-4 rounded-xl border border-slate-200 print:bg-white print:border-slate-300">
-            <div><span className="text-slate-400 font-bold tracking-widest text-[9px] uppercase block mb-0.5">Dominio</span><strong className="text-[14px] font-black uppercase">{s.dominio || "0KM"}</strong></div>
-            <div className="col-span-2"><span className="text-slate-400 font-bold tracking-widest text-[9px] uppercase block mb-0.5">Marca y Modelo</span><strong className="text-[14px] font-black uppercase">{s.marca} {s.modelo}</strong></div>
-            <div><span className="text-slate-400 font-bold tracking-widest text-[9px] uppercase block mb-0.5">Año</span><strong className="text-[14px] font-black">{s.modelo_anio}</strong></div>
-            <div><span className="text-slate-400 font-bold tracking-widest text-[9px] uppercase block mb-0.5">Segmento</span><strong className="text-slate-900 capitalize">{s.segmento || "-"}</strong></div>
-            <div><span className="text-slate-400 font-bold tracking-widest text-[9px] uppercase block mb-0.5">Tipo</span><strong className="text-slate-900 capitalize">{s.tipo || "-"}</strong></div>
-            <div><span className="text-slate-400 font-bold tracking-widest text-[9px] uppercase block mb-0.5">Color</span><strong className="text-slate-900 capitalize">{s.color || "-"}</strong></div>
-            <div><span className="text-slate-400 font-bold tracking-widest text-[9px] uppercase block mb-0.5">Marca de Motor</span><strong className="text-slate-900 uppercase">{s.marca_motor || "-"}</strong></div>
-            <div><span className="text-slate-400 font-bold tracking-widest text-[9px] uppercase block mb-0.5">Nro. de Motor</span><strong className="text-slate-900 font-mono uppercase">{s.numero_motor || "A verificar"}</strong></div>
-            <div><span className="text-slate-400 font-bold tracking-widest text-[9px] uppercase block mb-0.5">Marca de Chasis</span><strong className="text-slate-900 uppercase">{s.marca_chasis || "-"}</strong></div>
-            <div><span className="text-slate-400 font-bold tracking-widest text-[9px] uppercase block mb-0.5">Nro. de Chasis</span><strong className="text-slate-900 font-mono uppercase">{s.numero_chasis || "A verificar"}</strong></div>
-          </div>
-        </div>
-
-        <div className="mb-6 flex gap-6">
-          <div className="flex-1 border border-slate-300 rounded-xl overflow-hidden">
-            <h3 className="bg-slate-50 px-4 py-2 text-[10px] font-black uppercase tracking-widest text-slate-500 border-b border-slate-300">Datos Comerciales</h3>
-            <div className="p-4 space-y-3 text-xs">
-              <div className="flex justify-between items-center"><span className="text-slate-600 font-medium">Venta:</span><strong className="text-[14px]">{formatMoney(ventaArs)} {ventaUsd ? `/ US$ ${Number(ventaUsd).toLocaleString("es-AR")}` : ""}</strong></div>
-              <div className="flex justify-between items-center border-t-2 border-slate-900 pt-3 mt-3">
-                <span className="font-bold text-[13px] uppercase tracking-widest">SEÑA:</span>
-                <strong className="text-xl font-black text-slate-900 bg-slate-100 px-3 py-1 rounded">{formatMoney(s.sena_ars)} {s.sena_usd ? `/ US$ ${Number(s.sena_usd).toLocaleString("es-AR")}` : ""}</strong>
-              </div>
-              {!!s.tipo_cambio && <div className="flex justify-between items-center"><span className="text-slate-600 font-medium">Tipo de Cambio:</span><strong className="text-[13px]">$ {Number(s.tipo_cambio).toLocaleString("es-AR")}</strong></div>}
-              <div className="flex justify-between items-center"><span className="text-slate-600 font-medium">Patent. / Transf.:</span><strong className="text-[13px]">{formatMoney(s.patentamiento_transferencia_ars)}</strong></div>
-            </div>
-          </div>
-        </div>
-
-        {(s.efectivo_ars > 0 || s.efectivo_usd > 0 || s.permuta_vehiculo_id || s.remanente_ars > 0) && (
-          <div className="mb-6 flex gap-6">
-            <div className="flex-1 border border-slate-300 rounded-xl overflow-hidden">
-              <h3 className="bg-slate-50 px-4 py-2 text-[10px] font-black uppercase tracking-widest text-slate-500 border-b border-slate-300">Forma de Pago</h3>
-              <div className="p-4 space-y-3 text-xs">
-                {(s.efectivo_ars > 0 || s.efectivo_usd > 0) && <div className="flex justify-between items-center text-slate-600 font-medium"><span>En Efectivo:</span><strong className="text-slate-900">{formatMoney(s.efectivo_ars)} {s.efectivo_usd ? `/ US$ ${Number(s.efectivo_usd).toLocaleString("es-AR")}` : ""}</strong></div>}
-                {s.permuta_vehiculo && <div className="flex justify-between items-center text-slate-600 font-medium"><span>Auto en Permuta:</span><strong className="text-slate-900">{s.permuta_vehiculo.marca} {s.permuta_vehiculo.modelo} {s.permuta_vehiculo.patente ? `(${s.permuta_vehiculo.patente})` : ""} — Tasado {formatMoney(s.permuta_tasado_ars)}</strong></div>}
-                <div className="flex justify-between items-center border-t-2 border-slate-900 pt-3 mt-3"><span className="font-bold text-[13px] uppercase tracking-widest">Remanente:</span><strong className="text-[14px]">{formatMoney(s.remanente_ars)}</strong></div>
-                {s.cant_cuotas_remanente > 0 && (
-                  <>
-                    <div className="flex justify-between items-center text-slate-600 font-medium"><span>Fecha 1ª Cuota:</span><strong className="text-slate-900">{s.fecha_primera_cuota_remanente ? new Date(`${s.fecha_primera_cuota_remanente}T12:00:00Z`).toLocaleDateString("es-AR", { timeZone: "UTC" }) : "-"}</strong></div>
-                    <div className="flex justify-between items-center text-slate-600 font-medium"><span>Cant. de Cuotas:</span><strong className="text-slate-900">{s.cant_cuotas_remanente}</strong></div>
-                    <div className="flex justify-between items-center text-slate-600 font-medium"><span>Cuota:</span><strong className="text-slate-900">{formatMoney(s.cuota_remanente_ars)}</strong></div>
-                  </>
+            <div>
+              <p className="text-[10px] text-slate-600">
+                {branding?.branding_domicilio && <span className="block">{branding.branding_domicilio}</span>}
+                {(branding?.branding_telefono || branding?.branding_email || branding?.branding_web) && (
+                  <span className="block">{[branding?.branding_telefono, branding?.branding_email, branding?.branding_web].filter(Boolean).join(" / ")}</span>
                 )}
-              </div>
+              </p>
             </div>
           </div>
-        )}
-
-        {(s.banco_prenda || s.prenda_monto > 0) && (
-          <div className="mb-6 flex gap-6">
-            <div className="flex-1 border border-slate-300 rounded-xl overflow-hidden">
-              <h3 className="bg-slate-50 px-4 py-2 text-[10px] font-black uppercase tracking-widest text-slate-500 border-b border-slate-300">Datos de Prenda</h3>
-              <div className="p-4 space-y-3 text-xs">
-                <div className="flex justify-between items-center text-slate-600 font-medium"><span>Banco de la Prenda:</span><strong className="text-slate-900">{s.banco_prenda || "-"}</strong></div>
-                <div className="flex justify-between items-center text-slate-600 font-medium"><span>Prenda:</span><strong className="text-slate-900">{formatMoney(s.prenda_monto)}</strong></div>
-                <div className="flex justify-between items-center text-slate-600 font-medium"><span>Cant. Cuotas Prenda:</span><strong className="text-slate-900">{s.cant_cuotas_prenda || "-"}</strong></div>
-                <div className="flex justify-between items-center text-slate-600 font-medium"><span>Cuota de Prenda:</span><strong className="text-slate-900">{formatMoney(s.cuota_prenda_ars)}</strong></div>
-                <div className="flex justify-between items-center text-slate-600 font-medium"><span>Seguro de Prenda:</span><strong className="text-slate-900">{formatMoney(s.seguro_prenda_ars)}</strong></div>
-              </div>
-            </div>
+          <h1 className="text-xl font-black text-slate-900 tracking-tight uppercase self-center">{nombreEmpresa}</h1>
+          <div className="text-right shrink-0">
+            <h2 className="text-[13px] font-black uppercase tracking-wide">RECIBO de Seña Nro. {s.numero}</h2>
+            <p className="text-[10px] text-slate-600 mt-1">FECHA: {fecha}</p>
+            {branding?.branding_cuit && <p className="text-[10px] text-slate-600">Cuit: {branding.branding_cuit}</p>}
+            {branding?.branding_ingresos_brutos && <p className="text-[10px] text-slate-600">Ing. Brutos: {branding.branding_ingresos_brutos}</p>}
           </div>
-        )}
-
-        <div className="mb-6 bg-slate-900 rounded-xl p-4 flex justify-between items-center">
-          <span className="font-bold text-[13px] uppercase tracking-widest text-white">Saldo a Abonar:</span>
-          <strong className="text-xl font-black text-white bg-white/10 px-3 py-1 rounded">{formatMoney(s.saldo_abonar_ars)}</strong>
         </div>
 
-        {s.seguro_compania && (
-          <div className="mb-6 text-xs">
-            <h3 className="text-[10px] font-black uppercase tracking-widest text-slate-400 border-b border-slate-200 pb-1 mb-2">Seguro</h3>
-            <p className="text-slate-700">{s.seguro_compania} — {formatMoney(s.seguro_importe_mensual)}/mes</p>
-          </div>
-        )}
+        <p className="italic mb-3">En el día de la fecha recibi(mos) de:</p>
 
-        <div className="mb-10">
-          <h3 className="text-[10px] font-black uppercase tracking-widest text-slate-400 border-b border-slate-200 pb-1 mb-2">Observaciones {guardandoObs && <span className="normal-case font-normal text-slate-400">(guardando...)</span>}</h3>
-          <textarea value={observaciones} onChange={(e) => setObservaciones(e.target.value)} onBlur={guardarObservaciones} placeholder="Escribí acá cualquier observación adicional..." rows={3} className="w-full text-[11px] text-slate-600 leading-relaxed whitespace-pre-wrap font-bold uppercase bg-slate-50 p-4 rounded-xl border border-slate-200 print:bg-white print:border-slate-300 print:p-0 outline-none focus:border-rose-400 resize-none" />
+        <div className="grid grid-cols-2 gap-x-8 gap-y-1.5 mb-4">
+          <div className="flex justify-between border-b border-dotted border-slate-300 pb-0.5"><span className="text-slate-500">Apellido y Nombre</span><strong>{s.apellido}, {s.nombre}</strong></div>
+          <div className="flex justify-between border-b border-dotted border-slate-300 pb-0.5"><span className="text-slate-500">DNI Nro.</span><strong>{s.dni || "N/A"}</strong></div>
+          <div className="flex justify-between border-b border-dotted border-slate-300 pb-0.5"><span className="text-slate-500">Teléfono de Línea</span><strong>{s.telefono_linea || "—"}</strong></div>
+          <div className="flex justify-between border-b border-dotted border-slate-300 pb-0.5"><span className="text-slate-500">Teléfono Celular</span><strong>{s.telefono_celular || "—"}</strong></div>
+          <div className="flex justify-between border-b border-dotted border-slate-300 pb-0.5"><span className="text-slate-500">Email</span><strong>{s.correo_electronico || "—"}</strong></div>
+          <div className="flex justify-between border-b border-dotted border-slate-300 pb-0.5"><span className="text-slate-500">Cuit/Cuil</span><strong>{s.cuit_cuil || "N/A"}</strong></div>
+          <div className="flex justify-between border-b border-dotted border-slate-300 pb-0.5"><span className="text-slate-500">Estado Civil</span><strong className="capitalize">{s.estado_civil || "N/A"}</strong></div>
+          <div className="flex justify-between border-b border-dotted border-slate-300 pb-0.5"><span className="text-slate-500">Profesión</span><strong className="capitalize">{s.profesion || "N/A"}</strong></div>
+          {domicilioCliente && <div className="col-span-2 flex justify-between border-b border-dotted border-slate-300 pb-0.5"><span className="text-slate-500">Domicilio</span><strong>{domicilioCliente}</strong></div>}
         </div>
 
-        <p className="text-[11px] text-slate-600 leading-relaxed text-justify mb-10">
-          La suma entregada en este acto en concepto de <strong>SEÑA Y PRINCIPIO DE EJECUCIÓN DE COMPRA</strong> otorga a El Comprador el derecho a la reserva de la unidad. El saldo restante deberá ser abonado dentro de los próximos <strong>siete (7) días hábiles</strong>. En caso de que El Comprador desistiera de la operación o no integrara el saldo en el plazo estipulado, perderá la suma entregada en concepto de indemnización, quedando La Agencia en libre disponibilidad del vehículo.
+        <p className="mb-3">como reserva y ad referendum de la firma vendedora</p>
+
+        <div className="space-y-1.5 mb-4">
+          <div className="flex items-baseline gap-2"><span className="w-64 shrink-0">la Cantidad de:</span><strong className="text-[14px]">{formatMoney(s.sena_ars)}</strong><span className="text-slate-500 italic">{enLetras(s.sena_ars)}</span></div>
+          <div className="flex items-baseline gap-2"><span className="w-64 shrink-0">por un precio de venta establecido en:</span><strong className="text-[14px]">{formatMoney(ventaArs)}</strong><span className="text-slate-500 italic">{enLetras(ventaArs)}</span></div>
+          <div className="flex items-baseline gap-2"><span className="w-64 shrink-0">más un adicional por Transferencia y/o Patentamiento de:</span><strong className="text-[14px]">{formatMoney(adicionalTransferencia)}</strong><span className="text-slate-500 italic">{enLetras(adicionalTransferencia)}</span></div>
+          <div className="flex items-baseline gap-2 pt-1.5 border-t border-slate-900"><span className="w-64 shrink-0 font-bold">Quedando un <em>Saldo</em> a abonar de:</span><strong className="text-[15px]">{formatMoney(saldoAbonar)}</strong><span className="text-slate-500 italic">{enLetras(saldoAbonar)}</span></div>
+        </div>
+
+        <p className="mb-4 text-justify">
+          Establecidos como precio por la venta de un(a) <strong className="uppercase">{s.segmento || "vehículo"}</strong>, <strong className="uppercase">{Number(s.modelo_anio) >= new Date().getFullYear() ? "0KM" : "usado"}</strong>, en las condiciones vistas y que se encuentra libre de todo gravamen y/o deudas nacionales, municipales o provinciales, el cual ha sido revisado y probado a su entera satisfacción.
         </p>
 
-        <div className="grid grid-cols-2 gap-16 mt-12 px-8">
+        <div className="grid grid-cols-2 gap-x-8 gap-y-1.5 mb-4">
+          <div className="flex justify-between border-b border-dotted border-slate-300 pb-0.5"><span className="text-slate-500">Segmento</span><strong>{s.segmento || "-"}</strong></div>
+          <div className="flex justify-between border-b border-dotted border-slate-300 pb-0.5"><span className="text-slate-500">Marca</span><strong>{s.marca}</strong></div>
+          <div className="flex justify-between border-b border-dotted border-slate-300 pb-0.5"><span className="text-slate-500">Modelo</span><strong>{s.modelo}</strong></div>
+          <div className="flex justify-between border-b border-dotted border-slate-300 pb-0.5"><span className="text-slate-500">Tipo</span><strong>{s.tipo || "-"}</strong></div>
+          <div className="flex justify-between border-b border-dotted border-slate-300 pb-0.5"><span className="text-slate-500">Motor Marca</span><strong>{s.marca_motor || "-"}</strong></div>
+          <div className="flex justify-between border-b border-dotted border-slate-300 pb-0.5"><span className="text-slate-500">Número de Motor</span><strong className="font-mono">{s.numero_motor || "A verificar"}</strong></div>
+          <div className="flex justify-between border-b border-dotted border-slate-300 pb-0.5"><span className="text-slate-500">Chasis Marca</span><strong>{s.marca_chasis || "-"}</strong></div>
+          <div className="flex justify-between border-b border-dotted border-slate-300 pb-0.5"><span className="text-slate-500">Número de Chasis</span><strong className="font-mono">{s.numero_chasis || "A verificar"}</strong></div>
+          <div className="flex justify-between border-b border-dotted border-slate-300 pb-0.5"><span className="text-slate-500">Dominio</span><strong className="uppercase">{s.dominio || "0KM"}</strong></div>
+          <div className="flex justify-between border-b border-dotted border-slate-300 pb-0.5"><span className="text-slate-500">Color</span><strong className="capitalize">{s.color || "-"}</strong></div>
+          <div className="flex justify-between border-b border-dotted border-slate-300 pb-0.5"><span className="text-slate-500">Año</span><strong>{s.modelo_anio}</strong></div>
+          <div className="flex justify-between border-b border-dotted border-slate-300 pb-0.5"><span className="text-slate-500">de la Localidad de</span><strong>{s.localidad || s.sucursales?.nombre || "-"}</strong></div>
+        </div>
+
+        <p className="text-[10.5px] text-slate-700 leading-relaxed text-justify mb-1.5">
+          El comprador deberá abonar el saldo de su compra en el domicilio del vendedor dentro de los ______ días a contar desde la fecha sin necesidad de ningún requerimiento.
+        </p>
+        <p className="text-[10.5px] text-slate-700 leading-relaxed text-justify mb-1.5">
+          En el caso que el comprador no abonara el saldo de precio dentro del plazo establecido incurrirá en mora de pleno derecho por el mero vencimiento del plazo pactado y automáticamente sin necesidad de requerimiento alguno, el vendedor queda facultado para dar por rescindido sin más trámite el contrato, sin necesidad de intervención judicial alguna, quedando a su exclusivo beneficio la suma percibida como reserva. En las operaciones de créditos los gastos de Estampillado y Prenda son POR CUENTA EXCLUSIVA DEL COMPRADOR.
+        </p>
+        <p className="text-[10.5px] text-slate-700 leading-relaxed text-justify mb-1.5">
+          Se deja constancia al día de la fecha y con conformidad de ambas partes, en caso que el dólar blue sufriese un incremento en su cotización superior al 1%, se realizará el ajuste pertinente en referencia a la cotización de dicha moneda al día de la seña.
+        </p>
+        <p className="text-[10.5px] text-slate-700 leading-relaxed text-justify mb-4">
+          A su vez estableciendo sintonía con el mercado de cambio de divisas, se le notifica al cliente que todos los billetes deben estar en buenas condiciones esto implica no tener manchas de humedad, roturas, sellos y queda terminantemente prohibida la recepción de billetes de denominación vieja (conocidos como cara chica). Por consiguiente que los billetes que presenten alguno de estos síntomas se solicitará su reemplazo o bien se procederá a una quita del 6% de su valor.
+        </p>
+
+        {(s.efectivo_ars > 0 || s.efectivo_usd > 0 || s.permuta_vehiculo_id || s.remanente_ars > 0 || s.banco_prenda || s.prenda_monto > 0) && (
+          <div className="mb-4 space-y-1.5">
+            {(s.efectivo_ars > 0 || s.efectivo_usd > 0) && <div className="flex justify-between border-b border-dotted border-slate-300 pb-0.5"><span className="text-slate-500">En Efectivo</span><strong>{formatMoney(s.efectivo_ars)} {s.efectivo_usd ? `/ US$ ${Number(s.efectivo_usd).toLocaleString("es-AR")}` : ""}</strong></div>}
+            {s.permuta_vehiculo && <div className="flex justify-between border-b border-dotted border-slate-300 pb-0.5"><span className="text-slate-500">Auto en Permuta</span><strong>{s.permuta_vehiculo.marca} {s.permuta_vehiculo.modelo} {s.permuta_vehiculo.patente ? `(${s.permuta_vehiculo.patente})` : ""} — Tasado {formatMoney(s.permuta_tasado_ars)}</strong></div>}
+            {s.remanente_ars > 0 && <div className="flex justify-between border-b border-dotted border-slate-300 pb-0.5"><span className="text-slate-500">Remanente</span><strong>{formatMoney(s.remanente_ars)}</strong></div>}
+            {s.cant_cuotas_remanente > 0 && (
+              <>
+                <div className="flex justify-between border-b border-dotted border-slate-300 pb-0.5"><span className="text-slate-500">Fecha 1ª Cuota</span><strong>{s.fecha_primera_cuota_remanente ? new Date(`${s.fecha_primera_cuota_remanente}T12:00:00Z`).toLocaleDateString("es-AR", { timeZone: "UTC" }) : "-"}</strong></div>
+                <div className="flex justify-between border-b border-dotted border-slate-300 pb-0.5"><span className="text-slate-500">Cant. de Cuotas / Cuota</span><strong>{s.cant_cuotas_remanente} de {formatMoney(s.cuota_remanente_ars)}</strong></div>
+              </>
+            )}
+            {(s.banco_prenda || s.prenda_monto > 0) && (
+              <>
+                <div className="flex justify-between border-b border-dotted border-slate-300 pb-0.5"><span className="text-slate-500">Banco de la Prenda</span><strong>{s.banco_prenda || "-"}</strong></div>
+                <div className="flex justify-between border-b border-dotted border-slate-300 pb-0.5"><span className="text-slate-500">Prenda</span><strong>{formatMoney(s.prenda_monto)}</strong></div>
+                <div className="flex justify-between border-b border-dotted border-slate-300 pb-0.5"><span className="text-slate-500">Cuotas / Cuota de Prenda</span><strong>{s.cant_cuotas_prenda || "-"} de {formatMoney(s.cuota_prenda_ars)}</strong></div>
+                <div className="flex justify-between border-b border-dotted border-slate-300 pb-0.5"><span className="text-slate-500">Seguro de Prenda</span><strong>{formatMoney(s.seguro_prenda_ars)}</strong></div>
+              </>
+            )}
+            {s.seguro_compania && <div className="flex justify-between border-b border-dotted border-slate-300 pb-0.5"><span className="text-slate-500">Seguro</span><strong>{s.seguro_compania} — {formatMoney(s.seguro_importe_mensual)}/mes</strong></div>}
+          </div>
+        )}
+
+        <div className="grid grid-cols-2 gap-x-8 mb-3">
+          <div className="flex justify-between border-b border-dotted border-slate-300 pb-0.5"><span className="text-slate-500">Vendedor</span><strong>{vendedor}</strong></div>
+          {branding?.branding_telefono && <div className="flex justify-between border-b border-dotted border-slate-300 pb-0.5"><span className="text-slate-500">Teléfono</span><strong>{branding.branding_telefono}</strong></div>}
+        </div>
+
+        <div className="mb-8">
+          <p className="text-slate-500 mb-1">Observaciones Adicionales:</p>
+          <textarea value={observaciones} onChange={(e) => setObservaciones(e.target.value)} onBlur={guardarObservaciones} placeholder="Sin observaciones." rows={2} className="w-full text-[11px] font-bold text-slate-800 leading-relaxed bg-transparent outline-none focus:bg-slate-50 print:bg-transparent resize-none border-b border-dotted border-slate-300 pb-1" />
+          {guardandoObs && <span className="text-[9px] text-slate-400 print:hidden">guardando...</span>}
+        </div>
+
+        <p className="text-[10.5px] text-slate-700 mb-10">
+          De conformidad se firman dos ejemplares del mismo tenor y a un solo efecto, el día de la fecha: {fecha}
+        </p>
+
+        <div className="grid grid-cols-2 gap-16 px-4">
           <div>
             <FirmaCanvas tabla="senas" id={s.id} firmaUrlActual={firmaUrl} onGuardada={setFirmaUrl} />
-            <div className="text-center border-t border-slate-400 pt-3 mt-2"><span className="block font-bold text-sm">Firma Digital del Comprador</span><span className="block text-[10px] font-bold text-slate-400 mt-1 uppercase tracking-widest">Aclaración y DNI</span></div>
+            <div className="text-center border-t border-slate-400 pt-1.5 mt-1"><span className="block text-[11px]">firma del comprador</span></div>
           </div>
           <div>
             <FirmaCanvas tabla="senas" id={s.id} campo="firma_vendedor_url" firmaUrlActual={firmaVendedorUrl} onGuardada={setFirmaVendedorUrl} />
-            <div className="text-center border-t border-slate-400 pt-3 mt-2"><span className="block font-bold text-sm">Por {nombreEmpresa}</span><span className="block text-[10px] font-bold text-slate-400 mt-1 uppercase tracking-widest">{vendedor}</span></div>
+            <div className="text-center border-t border-slate-400 pt-1.5 mt-1"><span className="block text-[11px]">firma del vendedor</span></div>
           </div>
         </div>
       </div>

@@ -563,17 +563,43 @@ function ResumenDiarioConfig() {
 
 function BrandingConfig() {
   const { config, cargando, mensaje, guardar } = useConfigEmpresa();
+  const [subiendoLogo, setSubiendoLogo] = useState(false);
   if (cargando || !config) return <div className="p-8 flex justify-center"><Loader2 className="w-5 h-5 animate-spin text-slate-400" /></div>;
   const inputClass = "w-full bg-slate-50 dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-lg px-3 py-2 text-sm outline-none";
+
+  const subirLogo = async (file: File) => {
+    setSubiendoLogo(true);
+    try {
+      const formData = new FormData();
+      formData.append("file", file);
+      formData.append("carpeta", "branding");
+      const res = await fetch("/api/panel-v2/upload", { method: "POST", body: formData });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || "Error subiendo el logo");
+      await guardar({ branding_logo_url: data.publicUrl });
+    } catch (err: any) {
+      alert(err?.message || "No se pudo subir el logo.");
+    } finally {
+      setSubiendoLogo(false);
+    }
+  };
 
   return (
     <div className="space-y-4">
       <div className="bg-white dark:bg-white/[0.02] border border-slate-200 dark:border-white/5 rounded-2xl p-5 space-y-4">
         <div>
           <p className="text-sm font-bold text-slate-800 dark:text-white">Branding de la agencia</p>
-          <p className="text-xs text-amber-600 dark:text-amber-400 bg-amber-50 dark:bg-amber-500/10 border border-amber-100 dark:border-amber-500/20 rounded-lg px-3 py-2 mt-2">
-            Guarda estos datos, pero el generador de boleto/recibo/mandato todavía no los lee (usa texto fijo de la versión anterior) — conectarlo es un cambio aparte, más grande.
-          </p>
+          <p className="text-xs text-slate-400 mt-1">Estos datos ya se usan en los recibos de seña y presupuesto (imprimibles). El generador de boleto/mandato de v1 todavía no los lee.</p>
+        </div>
+        <div>
+          <label className="text-xs font-semibold text-slate-500 block mb-1">Logo (aparece en el encabezado de los recibos)</label>
+          <div className="flex items-center gap-3">
+            {config.branding_logo_url && <img src={config.branding_logo_url} alt="Logo" className="h-12 w-12 object-contain rounded-lg border border-slate-200 dark:border-white/10 bg-white" />}
+            <label className={`px-3 py-2 rounded-lg border border-slate-200 dark:border-white/10 text-xs font-bold cursor-pointer ${subiendoLogo ? "opacity-50 pointer-events-none" : "hover:bg-slate-50 dark:hover:bg-white/5"}`}>
+              {subiendoLogo ? <Loader2 className="w-3.5 h-3.5 animate-spin inline" /> : (config.branding_logo_url ? "Cambiar logo" : "Subir logo")}
+              <input type="file" accept="image/*" disabled={subiendoLogo} className="hidden" onChange={(e) => e.target.files?.[0] && subirLogo(e.target.files[0])} />
+            </label>
+          </div>
         </div>
         <div>
           <label className="text-xs font-semibold text-slate-500 block mb-1">Nombre de la agencia</label>
@@ -591,6 +617,18 @@ function BrandingConfig() {
           <div>
             <label className="text-xs font-semibold text-slate-500 block mb-1">CUIT</label>
             <input type="text" defaultValue={config.branding_cuit || ""} onBlur={(e) => guardar({ branding_cuit: e.target.value || null })} className={inputClass} />
+          </div>
+          <div>
+            <label className="text-xs font-semibold text-slate-500 block mb-1">Email</label>
+            <input type="text" defaultValue={config.branding_email || ""} onBlur={(e) => guardar({ branding_email: e.target.value || null })} className={inputClass} />
+          </div>
+          <div>
+            <label className="text-xs font-semibold text-slate-500 block mb-1">Web</label>
+            <input type="text" defaultValue={config.branding_web || ""} onBlur={(e) => guardar({ branding_web: e.target.value || null })} className={inputClass} />
+          </div>
+          <div>
+            <label className="text-xs font-semibold text-slate-500 block mb-1">Ingresos Brutos</label>
+            <input type="text" defaultValue={config.branding_ingresos_brutos || ""} onBlur={(e) => guardar({ branding_ingresos_brutos: e.target.value || null })} className={inputClass} />
           </div>
         </div>
       </div>
