@@ -106,9 +106,16 @@ export async function DELETE(request: Request) {
   if (id === user!.id) return NextResponse.json({ error: "No podés eliminar tu propio usuario." }, { status: 400 });
 
   const sb = admin();
+
+  const { error: deletePerfilError } = await sb.from("perfiles").delete().eq("id", id);
+  if (deletePerfilError) {
+    return NextResponse.json({ error: `No se pudo eliminar el perfil: ${deletePerfilError.message}` }, { status: 400 });
+  }
+
   const { error: deleteAuthError } = await sb.auth.admin.deleteUser(id);
-  if (deleteAuthError) return NextResponse.json({ error: deleteAuthError.message }, { status: 400 });
-  await sb.from("perfiles").delete().eq("id", id);
+  if (deleteAuthError) {
+    return NextResponse.json({ error: `No se pudo eliminar de Auth: ${deleteAuthError.message}` }, { status: 400 });
+  }
 
   return NextResponse.json({ ok: true });
 }

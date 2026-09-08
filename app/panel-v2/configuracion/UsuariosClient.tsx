@@ -32,6 +32,7 @@ export default function UsuariosClient() {
   const [filtroRol, setFiltroRol] = useState("todos");
   const [editandoSucursalId, setEditandoSucursalId] = useState<string | null>(null);
   const [guardandoSucursal, setGuardandoSucursal] = useState(false);
+  const [eliminandoId, setEliminandoId] = useState<string | null>(null);
 
   const cargar = async () => {
     setCargando(true);
@@ -50,10 +51,15 @@ export default function UsuariosClient() {
 
   const eliminar = async (u: Usuario) => {
     if (!confirm(`¿Eliminar a ${u.nombre}? Esta acción no se puede deshacer.`)) return;
-    const res = await fetch(`/api/panel-v2/usuarios?id=${u.id}`, { method: "DELETE" });
-    const data = await res.json();
-    if (!res.ok) return alert(data.error || "No se pudo eliminar.");
-    cargar();
+    setEliminandoId(u.id);
+    try {
+      const res = await fetch(`/api/panel-v2/usuarios?id=${u.id}`, { method: "DELETE" });
+      const data = await res.json();
+      if (!res.ok) return alert(data.error || "No se pudo eliminar.");
+      await cargar();
+    } finally {
+      setEliminandoId(null);
+    }
   };
 
   const toggleActivo = async (u: Usuario) => {
@@ -155,8 +161,11 @@ export default function UsuariosClient() {
                 )}
                 acciones={(u) => (
                   <div className="flex items-center gap-3 text-xs font-bold">
-                    <button onClick={() => setEditando(u)} className="flex items-center gap-1 text-slate-500 hover:text-slate-800 dark:hover:text-white"><Pencil className="w-3.5 h-3.5" /> Editar</button>
-                    <button onClick={() => eliminar(u)} className="flex items-center gap-1 text-rose-600 hover:text-rose-700"><Trash2 className="w-3.5 h-3.5" /> Eliminar</button>
+                    <button onClick={() => setEditando(u)} disabled={eliminandoId === u.id} className="flex items-center gap-1 text-slate-500 hover:text-slate-800 dark:hover:text-white disabled:opacity-50"><Pencil className="w-3.5 h-3.5" /> Editar</button>
+                    <button onClick={() => eliminar(u)} disabled={eliminandoId === u.id} className="flex items-center gap-1 text-rose-600 hover:text-rose-700 disabled:opacity-50">
+                      {eliminandoId === u.id ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Trash2 className="w-3.5 h-3.5" />}
+                      {eliminandoId === u.id ? "Eliminando..." : "Eliminar"}
+                    </button>
                   </div>
                 )}
                 columnas={
