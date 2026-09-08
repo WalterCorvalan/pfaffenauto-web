@@ -104,8 +104,8 @@ export default function ImprimirSena({ sena: s, branding }: { sena: any; brandin
       {/* Calcado del recibo de seña tradicional (Softcars): membrete con logo,
           texto legal con montos en letras, ficha del vehículo en 2 columnas y
           firma digital dual al pie. */}
-      <div className="w-[210mm] max-w-[210mm] min-h-[297mm] mx-auto bg-white p-[15mm] shadow-lg border border-slate-200 print:shadow-none print:border-none print:m-0 text-[12px] leading-snug box-border">
-        <div className="flex justify-between items-start border-b-2 border-slate-900 pb-3 mb-4">
+      <div className="w-[210mm] max-w-[210mm] min-h-[297mm] print:min-h-0 mx-auto bg-white p-[12mm] shadow-lg border border-slate-200 print:shadow-none print:border-none print:m-0 text-[11px] leading-snug box-border">
+        <div className="flex justify-between items-start border-b-2 border-slate-900 pb-2 mb-2.5">
           <div className="flex items-start gap-3">
             {branding?.branding_logo_url ? (
               <img src={branding.branding_logo_url} alt={nombreEmpresa} className="h-14 w-auto object-contain shrink-0" />
@@ -132,9 +132,9 @@ export default function ImprimirSena({ sena: s, branding }: { sena: any; brandin
           </div>
         </div>
 
-        <p className="italic mb-3">En el día de la fecha recibi(mos) de:</p>
+        <p className="italic mb-2">En el día de la fecha recibi(mos) de:</p>
 
-        <div className="grid grid-cols-2 gap-x-8 gap-y-1.5 mb-4">
+        <div className="grid grid-cols-2 gap-x-8 gap-y-1 mb-2.5">
           <div className="flex justify-between border-b border-dotted border-slate-300 pb-0.5"><span className="text-slate-500">Apellido y Nombre</span><strong>{s.apellido}, {s.nombre}</strong></div>
           <div className="flex justify-between border-b border-dotted border-slate-300 pb-0.5"><span className="text-slate-500">DNI Nro.</span><strong>{s.dni || "N/A"}</strong></div>
           <div className="flex justify-between border-b border-dotted border-slate-300 pb-0.5"><span className="text-slate-500">Teléfono de Línea</span><strong>{s.telefono_linea || "—"}</strong></div>
@@ -146,20 +146,20 @@ export default function ImprimirSena({ sena: s, branding }: { sena: any; brandin
           {domicilioCliente && <div className="col-span-2 flex justify-between border-b border-dotted border-slate-300 pb-0.5"><span className="text-slate-500">Domicilio</span><strong>{domicilioCliente}</strong></div>}
         </div>
 
-        <p className="mb-3">como reserva y ad referendum de la firma vendedora</p>
+        <p className="mb-2">como reserva y ad referendum de la firma vendedora</p>
 
-        <div className="space-y-1.5 mb-4">
+        <div className="space-y-1 mb-2.5">
           <div className="flex items-baseline gap-2 flex-wrap"><span className="w-64 shrink-0">la Cantidad de:</span><strong className="text-[14px]">{formatMoney(s.sena_ars)}</strong><span className="text-slate-500 italic">{enLetras(s.sena_ars)}</span></div>
           <div className="flex items-baseline gap-2 flex-wrap"><span className="w-64 shrink-0">por un precio de venta establecido en:</span><strong className="text-[14px]">{formatMoney(ventaArs)}</strong><span className="text-slate-500 italic">{enLetras(ventaArs)}</span></div>
           <div className="flex items-baseline gap-2 flex-wrap"><span className="w-64 shrink-0">más un adicional por Transferencia y/o Patentamiento de:</span><strong className="text-[14px]">{formatMoney(adicionalTransferencia)}</strong><span className="text-slate-500 italic">{enLetras(adicionalTransferencia)}</span></div>
           <div className="flex items-baseline gap-2 flex-wrap pt-1.5 border-t border-slate-900"><span className="w-64 shrink-0 font-bold">Quedando un <em>Saldo</em> a abonar de:</span><strong className="text-[15px]">{formatMoney(saldoAbonar)}</strong><span className="text-slate-500 italic">{enLetras(saldoAbonar)}</span></div>
         </div>
 
-        <p className="mb-4 text-justify">
+        <p className="mb-2.5 text-justify">
           Establecidos como precio por la venta de un(a) <strong className="uppercase">{s.segmento || "vehículo"}</strong>, <strong className="uppercase">{Number(s.modelo_anio) >= new Date().getFullYear() ? "0KM" : "usado"}</strong>, en las condiciones vistas y que se encuentra libre de todo gravamen y/o deudas nacionales, municipales o provinciales, el cual ha sido revisado y probado a su entera satisfacción.
         </p>
 
-        <div className="grid grid-cols-2 gap-x-8 gap-y-1.5 mb-4">
+        <div className="grid grid-cols-2 gap-x-8 gap-y-1 mb-2.5">
           <div className="flex justify-between border-b border-dotted border-slate-300 pb-0.5"><span className="text-slate-500">Segmento</span><strong>{s.segmento || "-"}</strong></div>
           <div className="flex justify-between border-b border-dotted border-slate-300 pb-0.5"><span className="text-slate-500">Marca</span><strong>{s.marca}</strong></div>
           <div className="flex justify-between border-b border-dotted border-slate-300 pb-0.5"><span className="text-slate-500">Modelo</span><strong>{s.modelo}</strong></div>
@@ -174,21 +174,21 @@ export default function ImprimirSena({ sena: s, branding }: { sena: any; brandin
           <div className="flex justify-between border-b border-dotted border-slate-300 pb-0.5"><span className="text-slate-500">de la Localidad de</span><strong>{s.localidad || s.sucursales?.nombre || "-"}</strong></div>
         </div>
 
-        <p className="text-[10.5px] text-slate-700 leading-relaxed text-justify mb-1.5">
+        <p className="text-[9.5px] text-slate-700 leading-snug text-justify mb-1">
           El comprador deberá abonar el saldo de su compra en el domicilio del vendedor dentro de los ______ días a contar desde la fecha sin necesidad de ningún requerimiento.
         </p>
-        <p className="text-[10.5px] text-slate-700 leading-relaxed text-justify mb-1.5">
+        <p className="text-[9.5px] text-slate-700 leading-snug text-justify mb-1">
           En el caso que el comprador no abonara el saldo de precio dentro del plazo establecido incurrirá en mora de pleno derecho por el mero vencimiento del plazo pactado y automáticamente sin necesidad de requerimiento alguno, el vendedor queda facultado para dar por rescindido sin más trámite el contrato, sin necesidad de intervención judicial alguna, quedando a su exclusivo beneficio la suma percibida como reserva. En las operaciones de créditos los gastos de Estampillado y Prenda son POR CUENTA EXCLUSIVA DEL COMPRADOR.
         </p>
-        <p className="text-[10.5px] text-slate-700 leading-relaxed text-justify mb-1.5">
+        <p className="text-[9.5px] text-slate-700 leading-snug text-justify mb-1">
           Se deja constancia al día de la fecha y con conformidad de ambas partes, en caso que el dólar blue sufriese un incremento en su cotización superior al 1%, se realizará el ajuste pertinente en referencia a la cotización de dicha moneda al día de la seña.
         </p>
-        <p className="text-[10.5px] text-slate-700 leading-relaxed text-justify mb-4">
+        <p className="text-[9.5px] text-slate-700 leading-snug text-justify mb-2.5">
           A su vez estableciendo sintonía con el mercado de cambio de divisas, se le notifica al cliente que todos los billetes deben estar en buenas condiciones esto implica no tener manchas de humedad, roturas, sellos y queda terminantemente prohibida la recepción de billetes de denominación vieja (conocidos como cara chica). Por consiguiente que los billetes que presenten alguno de estos síntomas se solicitará su reemplazo o bien se procederá a una quita del 6% de su valor.
         </p>
 
         {(s.efectivo_ars > 0 || s.efectivo_usd > 0 || s.permuta_vehiculo_id || s.remanente_ars > 0 || s.banco_prenda || s.prenda_monto > 0) && (
-          <div className="mb-4 space-y-1.5">
+          <div className="mb-2.5 space-y-1">
             {(s.efectivo_ars > 0 || s.efectivo_usd > 0) && <div className="flex justify-between border-b border-dotted border-slate-300 pb-0.5"><span className="text-slate-500">En Efectivo</span><strong>{formatMoney(s.efectivo_ars)} {s.efectivo_usd ? `/ US$ ${Number(s.efectivo_usd).toLocaleString("es-AR")}` : ""}</strong></div>}
             {s.permuta_vehiculo && <div className="flex justify-between border-b border-dotted border-slate-300 pb-0.5"><span className="text-slate-500">Auto en Permuta</span><strong>{s.permuta_vehiculo.marca} {s.permuta_vehiculo.modelo} {s.permuta_vehiculo.patente ? `(${s.permuta_vehiculo.patente})` : ""} — Tasado {formatMoney(s.permuta_tasado_ars)}</strong></div>}
             {s.remanente_ars > 0 && <div className="flex justify-between border-b border-dotted border-slate-300 pb-0.5"><span className="text-slate-500">Remanente</span><strong>{formatMoney(s.remanente_ars)}</strong></div>}
@@ -210,18 +210,18 @@ export default function ImprimirSena({ sena: s, branding }: { sena: any; brandin
           </div>
         )}
 
-        <div className="grid grid-cols-2 gap-x-8 mb-3">
+        <div className="grid grid-cols-2 gap-x-8 mb-2">
           <div className="flex justify-between border-b border-dotted border-slate-300 pb-0.5"><span className="text-slate-500">Vendedor</span><strong>{vendedor}</strong></div>
           {branding?.branding_telefono && <div className="flex justify-between border-b border-dotted border-slate-300 pb-0.5"><span className="text-slate-500">Teléfono</span><strong>{branding.branding_telefono}</strong></div>}
         </div>
 
-        <div className="mb-8">
+        <div className="mb-4">
           <p className="text-slate-500 mb-1">Observaciones Adicionales:</p>
-          <textarea value={observaciones} onChange={(e) => setObservaciones(e.target.value)} onBlur={guardarObservaciones} placeholder="Sin observaciones." rows={2} className="w-full text-[11px] font-bold text-slate-800 leading-relaxed bg-transparent outline-none focus:bg-slate-50 print:bg-transparent resize-none border-b border-dotted border-slate-300 pb-1" />
+          <textarea value={observaciones} onChange={(e) => setObservaciones(e.target.value)} onBlur={guardarObservaciones} placeholder="Sin observaciones." rows={2} className="w-full text-[10px] font-bold text-slate-800 leading-snug bg-transparent outline-none focus:bg-slate-50 print:bg-transparent resize-none border-b border-dotted border-slate-300 pb-1" />
           {guardandoObs && <span className="text-[9px] text-slate-400 print:hidden">guardando...</span>}
         </div>
 
-        <p className="text-[10.5px] text-slate-700 mb-10">
+        <p className="text-[9.5px] text-slate-700 mb-4">
           De conformidad se firman dos ejemplares del mismo tenor y a un solo efecto, el día de la fecha: {fecha}
         </p>
 
