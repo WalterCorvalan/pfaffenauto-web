@@ -3,10 +3,22 @@
 import { useState } from "react";
 import { supabase2 } from "@/lib/supabase2/client";
 import { X, Loader2 } from "lucide-react";
+import { crearAlerta } from "@/lib/panelV2/alertas";
 
 export const TIPOS_EVENTO = ["Reunión", "Turno", "Entrega", "Vencimiento", "Recordatorio", "Otro"];
 export const SECTORES = ["Ventas", "Gestoría", "Finanzas", "Administración", "Recepción"];
 export const COLORES = ["#6366f1", "#22c55e", "#f59e0b", "#ef4444", "#3b82f6", "#a855f7", "#ec4899", "#14b8a6"];
+
+// Sector elegido en el form -> valores de perfiles.roles que lo cubren.
+// No hay un rol 1:1 para "Recepción" todavía, así que ese sector no
+// notifica a nadie hasta que exista (mejor eso que fallar en silencio a
+// TODO el mundo).
+const SECTOR_A_ROLES: Record<string, string[]> = {
+  Ventas: ["vendedor", "admin"],
+  Gestoría: ["gestoria", "admin"],
+  Finanzas: ["finanzas", "admin"],
+  Administración: ["admin"],
+};
 
 interface Perfil {
   id: string;
@@ -79,6 +91,33 @@ export default function NuevoEventoModal({ fechaInicial, perfiles, miId, onClose
         .select()
         .single();
       if (dbError) throw dbError;
+
+      // La UI prometía avisos (responsable/sector/personas) pero el insert
+      // nunca disparaba ninguno -- se resuelve acá, apenas se crea el evento.
+      const fechaLegible = new Date(`${fecha}T12:00:00Z`).toLocaleDateString("es-AR", { timeZone: "UTC" });
+      const tituloAlerta = `Nuevo evento: ${titulo.trim()}${hora ? ` — ${fechaLegible} ${hora}` : ` — ${fechaLegible}`}`;
+      const link = "/panel-v2/calendario";
+      const destinatarios = new Set<string>();
+
+      if (responsableId && responsableId !== miId) destinatarios.add(responsableId);
+
+      if (notificarPor === "personas") {
+        personas.forEach((id) => { if (id !== miId) destinatarios.add(id); });
+      } else if (notificarPor === "sector" && sectores.length > 0) {
+        const rolesBuscados = sectores.flatMap((s) => SECTOR_A_ROLES[s] || []);
+        if (rolesBuscados.length > 0) {
+          perfiles.forEach((p) => {
+            if (p.id !== miId && p.roles?.some((r) => rolesBuscados.includes(r))) destinatarios.add(p.id);
+          });
+        }
+      }
+
+      await Promise.all(
+        Array.from(destinatarios).map((destinatarioId) =>
+          crearAlerta(supabase2, destinatarioId, tituloAlerta, { mensaje: descripcion || undefined, link, tipo: "evento_calendario", prioridad: "media" })
+        )
+      );
+
       onCreado(data);
       onClose();
     } catch (err) {
