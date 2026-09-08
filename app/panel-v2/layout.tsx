@@ -384,6 +384,7 @@ const GRUPOS: {
 // suman recepcion/taller/cm porque la visibilidad se piensa por puesto de
 // trabajo, no por permiso de datos).
 const ROL_A_SECTOR: Record<string, string> = {
+  encargado: "encargado",
   ventas: "ventas",
   finanzas: "finanzas",
   gestoria: "gestoria",
@@ -393,6 +394,7 @@ const ROL_A_SECTOR: Record<string, string> = {
 
 const ROL_LABEL: Record<string, string> = {
   admin: "Administrador",
+  encargado: "Encargado",
   ventas: "Ventas",
   finanzas: "Finanzas",
   gestoria: "Gestoría",
@@ -401,6 +403,7 @@ const ROL_LABEL: Record<string, string> = {
 };
 const ROL_COLOR: Record<string, string> = {
   admin: "bg-rose-100 text-rose-700 dark:bg-rose-500/15 dark:text-rose-300",
+  encargado: "bg-indigo-100 text-indigo-700 dark:bg-indigo-500/15 dark:text-indigo-300",
   ventas: "bg-blue-100 text-blue-700 dark:bg-blue-500/15 dark:text-blue-300",
   finanzas:
     "bg-emerald-100 text-emerald-700 dark:bg-emerald-500/15 dark:text-emerald-300",
