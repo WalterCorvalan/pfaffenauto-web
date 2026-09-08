@@ -58,7 +58,7 @@ export default function ImprimirVenta({ venta: v, branding, senaPrevia }: { vent
       {/* Calcado del recibo de venta tradicional (Softcars) -- mismo formato
           que el recibo de seña, con el bloque de montos y forma de pago
           propio de una venta cerrada (descuenta señas ya aplicadas). */}
-      <div className="w-[210mm] max-w-[210mm] min-h-[297mm] print:min-h-0 mx-auto bg-white p-[12mm] pb-[28mm] shadow-lg border border-slate-200 print:shadow-none print:border-none print:m-0 text-[11px] leading-snug box-border">
+      <div className="w-[210mm] max-w-[210mm] min-h-[297mm] print:min-h-0 mx-auto bg-white p-[12mm] pb-[14mm] shadow-lg border border-slate-200 print:shadow-none print:border-none print:m-0 text-[11px] leading-snug box-border">
         <div className="flex justify-between items-start border-b-2 border-slate-900 pb-2 mb-2.5">
           <div className="flex items-start gap-3">
             {branding?.branding_logo_url ? (
@@ -156,7 +156,7 @@ export default function ImprimirVenta({ venta: v, branding, senaPrevia }: { vent
           De conformidad se firman dos ejemplares del mismo tenor y a un solo efecto, el día de la fecha: {fecha}
         </p>
 
-        <div className="grid grid-cols-2 gap-16 px-4 mt-10">
+        <div className="grid grid-cols-2 gap-16 px-4 mt-10 break-inside-avoid">
           <div>
             <FirmaCanvas tabla="ventas" id={v.id} firmaUrlActual={firmaUrl} onGuardada={setFirmaUrl} />
             <div className="text-center border-t border-slate-400 pt-1.5 mt-1"><span className="block text-[11px]">firma del comprador</span></div>

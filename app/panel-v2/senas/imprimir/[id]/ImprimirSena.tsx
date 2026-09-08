@@ -104,7 +104,7 @@ export default function ImprimirSena({ sena: s, branding }: { sena: any; brandin
       {/* Calcado del recibo de seña tradicional (Softcars): membrete con logo,
           texto legal con montos en letras, ficha del vehículo en 2 columnas y
           firma digital dual al pie. */}
-      <div className="w-[210mm] max-w-[210mm] min-h-[297mm] print:min-h-0 mx-auto bg-white p-[12mm] pb-[28mm] shadow-lg border border-slate-200 print:shadow-none print:border-none print:m-0 text-[11px] leading-snug box-border">
+      <div className="w-[210mm] max-w-[210mm] min-h-[297mm] print:min-h-0 mx-auto bg-white p-[12mm] pb-[14mm] shadow-lg border border-slate-200 print:shadow-none print:border-none print:m-0 text-[11px] leading-snug box-border">
         <div className="flex justify-between items-start border-b-2 border-slate-900 pb-2 mb-2.5">
           <div className="flex items-start gap-3">
             {branding?.branding_logo_url ? (
@@ -225,7 +225,7 @@ export default function ImprimirSena({ sena: s, branding }: { sena: any; brandin
           De conformidad se firman dos ejemplares del mismo tenor y a un solo efecto, el día de la fecha: {fecha}
         </p>
 
-        <div className="grid grid-cols-2 gap-16 px-4 mt-10">
+        <div className="grid grid-cols-2 gap-16 px-4 mt-10 break-inside-avoid">
           <div>
             <FirmaCanvas tabla="senas" id={s.id} firmaUrlActual={firmaUrl} onGuardada={setFirmaUrl} />
             <div className="text-center border-t border-slate-400 pt-1.5 mt-1"><span className="block text-[11px]">firma del comprador</span></div>
