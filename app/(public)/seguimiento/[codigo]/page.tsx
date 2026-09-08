@@ -38,7 +38,7 @@ export default async function SeguimientoPublicoPage({
   params: Promise<{ codigo: string }>;
 }) {
   const { codigo } = await params;
-  const codigoUpper = codigo.toUpperCase();
+  const codigoUpper = codigo.trim().toUpperCase();
 
   const ip = (await headers()).get("x-forwarded-for")?.split(",")[0]?.trim() ?? null;
   const limite = await rateLimit(ip, { limite: 20, ventanaMs: 60 * 1000, proyecto: "v2" });

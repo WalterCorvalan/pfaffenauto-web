@@ -150,7 +150,7 @@ export default function DashboardGeneralTab(props: Props) {
             <ResponsiveContainer width="100%" height="100%">
               <BarChart data={props.ventasPorMes6}>
                 <XAxis dataKey="mes" tick={{ fontSize: 10 }} axisLine={false} tickLine={false} />
-                <Tooltip formatter={(v: number) => [v, "Ventas"]} labelStyle={{ color: "#0f172a" }} contentStyle={{ fontSize: 12, borderRadius: 8 }} />
+                <Tooltip formatter={(v: any) => [String(v ?? 0), "Ventas"]} labelStyle={{ color: "#0f172a" }} contentStyle={{ fontSize: 12, borderRadius: 8 }} />
                 <Bar dataKey="cantidad" fill="#6366f1" radius={[4, 4, 0, 0]} />
               </BarChart>
             </ResponsiveContainer>
