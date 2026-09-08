@@ -7,13 +7,14 @@ import { Plus, X, Megaphone, Save } from "lucide-react";
 
 const inputClass = "w-full bg-slate-50 dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-xl px-3 py-2.5 text-sm outline-none focus:border-rose-500 text-slate-900 dark:text-white placeholder:text-slate-400";
 
-export default function NuevaCampanaModal() {
+export default function NuevaCampanaModal({ sucursales = [] }: { sucursales?: { id: string; nombre: string }[] }) {
   const router = useRouter();
   const [isOpen, setIsOpen] = useState(false);
   const [cargando, setCargando] = useState(false);
 
   const [plataforma, setPlataforma] = useState("Google Ads");
   const [nombreCampana, setNombreCampana] = useState("");
+  const [sucursalId, setSucursalId] = useState("");
   const [periodo, setPeriodo] = useState(() => new Date().toISOString().slice(0, 10));
   const [gasto, setGasto] = useState("");
   const [clics, setClics] = useState("");
@@ -27,6 +28,7 @@ export default function NuevaCampanaModal() {
       const { error } = await supabase2.from("campanas_marketing").insert({
         plataforma,
         nombre_campana: nombreCampana || null,
+        sucursal_id: sucursalId || null,
         periodo,
         gasto: Number(gasto) || 0,
         clics: Number(clics) || 0,
@@ -35,7 +37,7 @@ export default function NuevaCampanaModal() {
       });
       if (error) throw error;
       setIsOpen(false);
-      setNombreCampana(""); setGasto(""); setClics(""); setLeads("");
+      setNombreCampana(""); setSucursalId(""); setGasto(""); setClics(""); setLeads("");
       router.refresh();
     } catch (err) {
       alert("Error al registrar la campaña.");
@@ -74,6 +76,14 @@ export default function NuevaCampanaModal() {
                   <option value="Google Ads">Google Ads</option>
                   <option value="Meta Ads">Meta Ads</option>
                   <option value="MercadoLibre">MercadoLibre</option>
+                </select>
+              </div>
+
+              <div>
+                <label className="text-xs font-bold text-slate-600 dark:text-slate-400 uppercase tracking-widest mb-1.5 block">Destino</label>
+                <select value={sucursalId} onChange={(e) => setSucursalId(e.target.value)} className={`${inputClass} cursor-pointer`}>
+                  <option value="">Página general</option>
+                  {sucursales.map((s) => <option key={s.id} value={s.id}>{s.nombre}</option>)}
                 </select>
               </div>
 

@@ -25,6 +25,7 @@ export default function TablaHistorialCampanas({ todas }: { todas: any[] }) {
           { key: "mes", header: "Mes", cell: (c) => new Date(`${c.periodo}T12:00:00Z`).toLocaleDateString("es-AR", { day: "2-digit", month: "short", year: "numeric", timeZone: "UTC" }), claseTd: "text-[13px] text-slate-600 dark:text-slate-300 capitalize whitespace-nowrap" },
           { key: "plataforma", header: "Plataforma", cell: (c) => { const col = COLOR_PLATAFORMA[c.plataforma] || COLOR_PLATAFORMA["Google Ads"]; return <span className={`text-[10px] font-bold uppercase tracking-widest px-2 py-0.5 rounded border ${col.bg} ${col.text} ${col.border}`}>{c.plataforma}</span>; } },
           { key: "campana", header: "Campaña", cell: (c) => c.nombre_campana || "General", claseTd: "text-[13px] text-slate-700 dark:text-slate-200", ocultarEnMobile: true },
+          { key: "sucursal", header: "Destino", cell: (c) => c.sucursal?.nombre || "Página general", claseTd: "text-[12px] text-slate-500 dark:text-slate-400", ocultarEnMobile: true },
           { key: "gasto", header: "Gasto", cell: (c) => `$ ${Number(c.gasto).toLocaleString("es-AR")}`, claseTd: "font-mono text-[13px] font-bold text-slate-900 dark:text-white" },
           { key: "clics", header: "Clics", cell: (c) => c.clics, claseTd: "font-mono text-[13px] text-slate-600 dark:text-slate-400" },
           { key: "leads", header: "Leads", cell: (c) => c.leads, claseTd: "font-mono text-[13px] text-slate-600 dark:text-slate-400" },

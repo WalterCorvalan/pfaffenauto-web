@@ -47,12 +47,13 @@ export default async function PautasMarketingPage() {
   const mesAnteriorInicio = inicioMes(-1);
   const mesSiguienteInicio = inicioMes(1);
 
-  const [{ data: campanasMesActual }, { data: campanasMesAnterior }, { data: todas }, { data: leadsPorUtm }, { count: leadsRealesMes }] = await Promise.all([
+  const [{ data: campanasMesActual }, { data: campanasMesAnterior }, { data: todas }, { data: leadsPorUtm }, { count: leadsRealesMes }, { data: sucursales }] = await Promise.all([
     supabase.from("campanas_marketing").select("*").gte("periodo", mesActualInicio).lt("periodo", mesSiguienteInicio),
     supabase.from("campanas_marketing").select("*").gte("periodo", mesAnteriorInicio).lt("periodo", mesActualInicio),
-    supabase.from("campanas_marketing").select("*").order("periodo", { ascending: false }).limit(50),
+    supabase.from("campanas_marketing").select("*, sucursal:sucursal_id ( nombre )").order("periodo", { ascending: false }).limit(50),
     supabase.from("v_reportes_leads_por_utm").select("*").limit(30),
     supabase.from("leads_tasacion").select("id", { count: "exact", head: true }).not("utm_source", "is", null).gte("created_at", mesActualInicio).lt("created_at", mesSiguienteInicio),
+    supabase.from("sucursales").select("id, nombre").order("nombre"),
   ]);
 
   const actual = campanasMesActual || [];
@@ -81,7 +82,7 @@ export default async function PautasMarketingPage() {
           <h2 className="text-sm font-bold text-slate-900 dark:text-white">Rendimiento publicitario</h2>
           <p className="text-xs text-slate-500 dark:text-slate-400 capitalize">{nombreMesActual}</p>
         </div>
-        <NuevaCampanaModal />
+        <NuevaCampanaModal sucursales={sucursales || []} />
       </div>
 
       {/* ESTADO DE SINCRONIZACIÓN AUTOMÁTICA */}

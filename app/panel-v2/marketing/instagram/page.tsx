@@ -1,7 +1,58 @@
 import { createClient } from "@/lib/supabase2/server";
 import Link from "next/link";
-import { AtSign, ArrowDownToLine, ArrowUpFromLine, Users, PhoneCall, Flame } from "lucide-react";
+import { AtSign, ArrowDownToLine, ArrowUpFromLine, Users, PhoneCall, Flame, AlertTriangle } from "lucide-react";
 import TarjetaCostoIA from "@/components/panelV2/TarjetaCostoIA";
+import InstagramMetricsClient from "./InstagramMetricsClient";
+import {
+  getInstagramAccountSummary,
+  getInstagramAccountInsights,
+  getInstagramMedia,
+  getInstagramMediaInsights,
+} from "@/lib/meta/client";
+
+// Métricas REALES de la cuenta (Meta Graph API) -- v1 las tenía, v2 solo
+// mostraba el inbox de DMs. Se calcan acá, independientes del inbox de abajo
+// (que sigue siendo lo que muestra esta página desde que se migró).
+async function cargarMetricasCuenta() {
+  const igUserId = process.env.META_INSTAGRAM_USER_ID;
+  const token = process.env.META_INSTAGRAM_TOKEN;
+  if (!igUserId || !token) return { ok: false as const, motivo: "Faltan META_INSTAGRAM_USER_ID / META_INSTAGRAM_TOKEN en las variables de entorno." };
+
+  try {
+    const ahora = Math.floor(Date.now() / 1000);
+    const hace30dias = ahora - 30 * 24 * 3600;
+    const [resumen, insights, media] = await Promise.all([
+      getInstagramAccountSummary(igUserId, token),
+      getInstagramAccountInsights(igUserId, token, hace30dias, ahora),
+      getInstagramMedia(igUserId, token, 12),
+    ]);
+
+    const reachSerie = insights.data.find((m: any) => m.name === "reach")?.values ?? [];
+    const visitasSerie = insights.data.find((m: any) => m.name === "profile_views")?.values ?? [];
+    const serie = reachSerie.map((v: any, i: number) => ({
+      fecha: new Date(v.end_time).toLocaleDateString("es-AR", { day: "2-digit", month: "2-digit" }),
+      alcance: v.value,
+      visitasPerfil: visitasSerie[i]?.value ?? 0,
+    }));
+
+    const postsConInsights = await Promise.all(
+      media.data.slice(0, 6).map(async (p: any) => {
+        try {
+          const ins = await getInstagramMediaInsights(p.id, token);
+          const reach = ins.data.find((m: any) => m.name === "reach")?.values[0]?.value;
+          const saved = ins.data.find((m: any) => m.name === "saved")?.values[0]?.value;
+          return { ...p, reach, saved };
+        } catch {
+          return { ...p, reach: undefined, saved: undefined };
+        }
+      })
+    );
+
+    return { ok: true as const, resumen, serie, posts: postsConInsights };
+  } catch (err) {
+    return { ok: false as const, motivo: err instanceof Error ? err.message : "Error desconocido al conectar con la API de Meta." };
+  }
+}
 
 function inicioDia(offsetDias: number) {
   const d = new Date();
@@ -48,6 +99,8 @@ export default async function InstagramMetricasPage() {
       .limit(6),
   ]);
 
+  const metricasCuenta = await cargarMetricasCuenta();
+
   const tokensIn = (usoIA30 || []).reduce((acc, r) => acc + (r.input_tokens || 0), 0);
   const tokensOut = (usoIA30 || []).reduce((acc, r) => acc + (r.output_tokens || 0), 0);
   const costoEstimado30 = (tokensIn / 1_000_000) * 1 + (tokensOut / 1_000_000) * 5;
@@ -78,6 +131,27 @@ export default async function InstagramMetricasPage() {
           </div>
         ))}
         <TarjetaCostoIA costo={costoEstimado30} label="Costo IA (30d)" />
+      </div>
+
+      <div>
+        <h2 className="text-[11px] font-bold uppercase tracking-widest text-slate-500 dark:text-slate-400 mb-3">Rendimiento de la cuenta (Meta)</h2>
+        {metricasCuenta.ok ? (
+          <InstagramMetricsClient
+            seguidores={metricasCuenta.resumen.followers_count}
+            cantidadPosts={metricasCuenta.resumen.media_count}
+            username={metricasCuenta.resumen.username}
+            serie={metricasCuenta.serie}
+            posts={metricasCuenta.posts}
+          />
+        ) : (
+          <div className="bg-white dark:bg-white/[0.02] border border-amber-200 dark:border-amber-500/20 rounded-2xl p-5 flex items-start gap-3">
+            <AlertTriangle className="w-5 h-5 text-amber-500 shrink-0 mt-0.5" />
+            <div>
+              <p className="text-sm font-bold text-slate-800 dark:text-white">No se pudieron cargar las métricas de la cuenta</p>
+              <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">{metricasCuenta.motivo}</p>
+            </div>
+          </div>
+        )}
       </div>
 
       <div>
