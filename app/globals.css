@@ -86,6 +86,15 @@
   animation: toastBar 3.2s linear forwards;
 }
 
+/* Los imprimibles del panel (recibo de seña/presupuesto) traen su propio
+   tamaño de hoja (210mm) y padding -- sin esto el navegador agrega su
+   margen de impresión por defecto arriba de eso. */
+@media print {
+  @page {
+    margin: 0;
+  }
+}
+
 :root {
   --background: #f8fafc;
   --foreground: #0f172a;

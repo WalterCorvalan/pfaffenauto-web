@@ -270,8 +270,8 @@ export default function PanelV2Layout({ children }: { children: React.ReactNode 
 
   return (
     <div className={darkMode ? "dark" : ""}>
-      <div className="flex h-screen w-full bg-[#F8FAFC] dark:bg-[#0A0A0A] text-slate-900 dark:text-slate-100 overflow-hidden">
-        <div className="md:hidden fixed top-0 left-0 right-0 h-14 bg-white dark:bg-[#111] border-b border-slate-200 dark:border-white/10 flex items-center gap-2 px-3 z-50">
+      <div className="flex h-screen w-full bg-[#F8FAFC] dark:bg-[#0A0A0A] text-slate-900 dark:text-slate-100 overflow-hidden print:h-auto print:overflow-visible print:block">
+        <div className="md:hidden print:hidden fixed top-0 left-0 right-0 h-14 bg-white dark:bg-[#111] border-b border-slate-200 dark:border-white/10 flex items-center gap-2 px-3 z-50">
           <button onClick={() => setIsOpen(!isOpen)} className="shrink-0 p-1 text-slate-600 dark:text-slate-300">{isOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}</button>
           <div className="relative flex-1 min-w-0">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-slate-400" />
@@ -290,7 +290,7 @@ export default function PanelV2Layout({ children }: { children: React.ReactNode 
 
         {/* SIDEBAR */}
         <aside
-          className={`fixed md:relative top-14 md:top-0 left-0 h-[calc(100vh-3.5rem)] md:h-full ${colapsado ? "md:w-[68px]" : "md:w-[230px]"} w-[230px] bg-white dark:bg-[#111] border-r border-slate-200 dark:border-white/10 flex flex-col shrink-0 transform transition-all duration-200 z-40 ${isOpen ? "translate-x-0" : "-translate-x-full md:translate-x-0"}`}
+          className={`print:hidden fixed md:relative top-14 md:top-0 left-0 h-[calc(100vh-3.5rem)] md:h-full ${colapsado ? "md:w-[68px]" : "md:w-[230px]"} w-[230px] bg-white dark:bg-[#111] border-r border-slate-200 dark:border-white/10 flex flex-col shrink-0 transform transition-all duration-200 z-40 ${isOpen ? "translate-x-0" : "-translate-x-full md:translate-x-0"}`}
         >
           <div className={`h-[60px] flex items-center gap-2 border-b border-slate-200 dark:border-white/10 shrink-0 ${colapsado ? "md:px-2 px-4" : "px-4"}`}>
             <div className="w-8 h-8 rounded-lg bg-indigo-600 text-white flex items-center justify-center font-bold text-xs shrink-0">PV</div>
@@ -360,9 +360,9 @@ export default function PanelV2Layout({ children }: { children: React.ReactNode 
         </aside>
 
         {/* CONTENIDO */}
-        <div className="flex-1 min-w-0 h-full flex flex-col pt-14 md:pt-0">
+        <div className="flex-1 min-w-0 h-full flex flex-col pt-14 md:pt-0 print:pt-0 print:h-auto print:block">
           {/* TOPBAR */}
-          <div className="hidden md:flex items-center gap-3 px-4 py-2 border-b border-slate-200 dark:border-white/10 bg-white dark:bg-[#111] shrink-0">
+          <div className="hidden md:flex print:hidden items-center gap-3 px-4 py-2 border-b border-slate-200 dark:border-white/10 bg-white dark:bg-[#111] shrink-0">
             <div className="relative w-64 shrink-0">
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-slate-400" />
               <input
@@ -381,7 +381,7 @@ export default function PanelV2Layout({ children }: { children: React.ReactNode 
             <NotificationBell miId={miId || ""} />
           </div>
 
-          <main className="relative flex-1 min-w-0 overflow-y-auto bg-[#F8FAFC] dark:bg-[#0A0A0A] pb-16 md:pb-0">
+          <main className="relative flex-1 min-w-0 overflow-y-auto bg-[#F8FAFC] dark:bg-[#0A0A0A] pb-16 md:pb-0 print:overflow-visible print:pb-0 print:bg-white">
             {navegandoA && (
               <div className="absolute top-0 left-0 right-0 h-0.5 z-50 overflow-hidden bg-indigo-100 dark:bg-indigo-500/10">
                 <div className="h-full w-1/3 bg-indigo-600 dark:bg-indigo-400 animate-barra-carga" />
@@ -393,7 +393,7 @@ export default function PanelV2Layout({ children }: { children: React.ReactNode 
 
         {/* BOTTOM NAV — accesos rápidos en mobile, la barra lateral completa
             queda detrás del hamburger para lo demás. */}
-        <nav className="md:hidden fixed bottom-0 left-0 right-0 h-16 bg-white dark:bg-[#111] border-t border-slate-200 dark:border-white/10 flex items-stretch z-50">
+        <nav className="md:hidden print:hidden fixed bottom-0 left-0 right-0 h-16 bg-white dark:bg-[#111] border-t border-slate-200 dark:border-white/10 flex items-stretch z-50">
           {NAV_MOBILE.map((item) => {
             const Icon = item.icon;
             const activo = pathname === item.href;
@@ -414,7 +414,7 @@ export default function PanelV2Layout({ children }: { children: React.ReactNode 
       {toast && (
         <div
           onClick={() => { if (toast.link) router.push(toast.link); setToast(null); }}
-          className="fixed top-4 right-4 z-[100] w-80 bg-white dark:bg-[#1A1A1A] border border-rose-200 dark:border-rose-500/30 rounded-xl shadow-2xl p-4 cursor-pointer animate-fadeIn"
+          className="print:hidden fixed top-4 right-4 z-[100] w-80 bg-white dark:bg-[#1A1A1A] border border-rose-200 dark:border-rose-500/30 rounded-xl shadow-2xl p-4 cursor-pointer animate-fadeIn"
         >
           <div className="flex items-start justify-between gap-2">
             <p className="text-sm font-bold text-rose-600 dark:text-rose-400">{toast.titulo}</p>

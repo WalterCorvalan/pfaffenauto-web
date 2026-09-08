@@ -25,7 +25,7 @@ export default function QuickActionsButton() {
   };
 
   return (
-    <div className="fixed bottom-6 right-6 z-40 flex flex-col items-end gap-2">
+    <div className="print:hidden fixed bottom-6 right-6 z-40 flex flex-col items-end gap-2">
       {open && (
         <>
           <div className="fixed inset-0 -z-10" onClick={() => setOpen(false)} />
