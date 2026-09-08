@@ -8,11 +8,14 @@ import TablaResponsiva, { type ColumnaTabla } from "@/components/panelV2/TablaRe
 
 const emptyForm = { tipo: "a_cobrar", formato: "fisico", librador: "", numero: "", banco: "", cuitCuil: "", monto: "", moneda: "ARS", estado: "pendiente", fechaEmision: "", fechaCobro: "", cajaBancoPropio: "", notas: "" };
 
-export default function ChequesTab({ cheques, setCheques }: { cheques: any[]; setCheques: (fn: any) => void }) {
+export default function ChequesTab({ cheques, setCheques, cuentas }: { cheques: any[]; setCheques: (fn: any) => void; cuentas: any[] }) {
   const [sub, setSub] = useState<"a_cobrar" | "emitido">("a_cobrar");
   const [showNuevo, setShowNuevo] = useState(false);
   const [form, setForm] = useState(emptyForm);
   const [guardando, setGuardando] = useState(false);
+  const [chequeParaCobrar, setChequeParaCobrar] = useState<any>(null);
+  const [cuentaCobro, setCuentaCobro] = useState("");
+  const [cambiandoEstado, setCambiandoEstado] = useState(false);
 
   const lista = cheques.filter((c) => c.tipo === sub);
   const hoy = new Date().toISOString().slice(0, 10);
@@ -42,9 +45,33 @@ export default function ChequesTab({ cheques, setCheques }: { cheques: any[]; se
     } catch { alert("No se pudo registrar el cheque."); } finally { setGuardando(false); }
   };
 
+  // "Cobrado" es el único estado que mueve plata real -- entra/sale de una
+  // cuenta, así que antes de aplicarlo hay que elegir cuál. Los demás
+  // estados (pendiente/depositado/rechazado/endosado) no tocan caja.
   const cambiarEstado = async (c: any, estado: string) => {
-    await supabase2.from("cheques").update({ estado }).eq("id", c.id);
-    setCheques((prev: any[]) => prev.map((x) => (x.id === c.id ? { ...x, estado } : x)));
+    if (estado === "cobrado" && c.estado !== "cobrado") {
+      setChequeParaCobrar(c);
+      setCuentaCobro(cuentas.find((x) => x.moneda === c.moneda)?.id || "");
+      return;
+    }
+    const { error } = await supabase2.rpc("cambiar_estado_cheque", { p_cheque_id: c.id, p_estado: estado });
+    if (error) return alert(error.message);
+    setCheques((prev: any[]) => prev.map((x) => (x.id === c.id ? { ...x, estado, movimiento_id: estado === "cobrado" ? x.movimiento_id : null } : x)));
+  };
+
+  const confirmarCobro = async () => {
+    if (!chequeParaCobrar || !cuentaCobro) return alert("Elegí una cuenta.");
+    setCambiandoEstado(true);
+    try {
+      const { error } = await supabase2.rpc("cambiar_estado_cheque", { p_cheque_id: chequeParaCobrar.id, p_estado: "cobrado", p_cuenta_id: cuentaCobro });
+      if (error) throw error;
+      setCheques((prev: any[]) => prev.map((x) => (x.id === chequeParaCobrar.id ? { ...x, estado: "cobrado", cuenta_id: cuentaCobro } : x)));
+      setChequeParaCobrar(null);
+    } catch (err: any) {
+      alert(err.message || "No se pudo cambiar el estado.");
+    } finally {
+      setCambiandoEstado(false);
+    }
   };
 
   const eliminar = async (c: any) => {
@@ -99,7 +126,7 @@ export default function ChequesTab({ cheques, setCheques }: { cheques: any[]; se
         <div className="fixed inset-0 bg-black/40 z-50 flex items-center justify-center p-4" onClick={() => { if (window.innerWidth >= 768) setShowNuevo(false); }}>
           <div onClick={(e) => e.stopPropagation()} className="bg-white dark:bg-[#141414] border border-slate-200 dark:border-white/10 w-full max-w-md rounded-2xl shadow-2xl p-6 max-h-[90vh] overflow-y-auto">
             <div className="flex justify-between items-start mb-1"><h3 className="text-lg font-bold">Nuevo cheque</h3><button onClick={() => setShowNuevo(false)}><X className="w-4 h-4 text-slate-400" /></button></div>
-            <p className="text-xs text-slate-400 mb-4">Registro de cheque. No mueve saldos de cajas — sirve para llevar el control de vencimientos e importes.</p>
+            <p className="text-xs text-slate-400 mb-4">Registro de cheque. Al cargarlo todavía no mueve saldos — eso pasa cuando lo marqués "Cobrado" y elijas la cuenta.</p>
             <div className="grid grid-cols-2 gap-2">
               <div><label className={labelClass}>Tipo de cheque *</label><select value={form.tipo} onChange={(e) => setForm({ ...form, tipo: e.target.value })} className={inputClass}><option value="a_cobrar">A cobrar (lo recibo)</option><option value="emitido">Emitido (lo pago)</option></select></div>
               <div><label className={labelClass}>Formato</label><select value={form.formato} onChange={(e) => setForm({ ...form, formato: e.target.value })} className={inputClass}><option value="fisico">Físico</option><option value="echeque">ECHEQ</option></select></div>
@@ -125,6 +152,24 @@ export default function ChequesTab({ cheques, setCheques }: { cheques: any[]; se
             <label className={labelClass + " mt-3"}>Notas</label>
             <textarea value={form.notas} onChange={(e) => setForm({ ...form, notas: e.target.value })} rows={2} placeholder="Detalle, operación vinculada, etc." className={inputClass} />
             <div className="flex justify-end gap-2 mt-4"><button onClick={() => setShowNuevo(false)} className="px-4 py-2 text-sm font-bold text-slate-500">Cancelar</button><button onClick={crear} disabled={guardando} className="flex items-center gap-1.5 px-4 py-2 text-sm font-bold bg-rose-600 hover:bg-rose-700 text-white rounded-lg disabled:opacity-50"><Save className="w-4 h-4" /> Registrar cheque</button></div>
+          </div>
+        </div>
+      )}
+
+      {chequeParaCobrar && (
+        <div className="fixed inset-0 bg-black/40 z-50 flex items-center justify-center p-4" onClick={() => setChequeParaCobrar(null)}>
+          <div onClick={(e) => e.stopPropagation()} className="bg-white dark:bg-[#141414] border border-slate-200 dark:border-white/10 w-full max-w-sm rounded-2xl shadow-2xl p-6">
+            <div className="flex justify-between items-start mb-1"><h3 className="text-lg font-bold">Marcar cobrado</h3><button onClick={() => setChequeParaCobrar(null)}><X className="w-4 h-4 text-slate-400" /></button></div>
+            <p className="text-xs text-slate-400 mb-4">{chequeParaCobrar.tipo === "a_cobrar" ? "Entra" : "Sale"} {fmt(chequeParaCobrar.monto, chequeParaCobrar.moneda)} de la cuenta que elijas — se registra como movimiento real en Finanzas.</p>
+            <label className={labelClass}>Cuenta *</label>
+            <select value={cuentaCobro} onChange={(e) => setCuentaCobro(e.target.value)} className={inputClass}>
+              <option value="">— Elegí —</option>
+              {cuentas.filter((c) => c.moneda === chequeParaCobrar.moneda).map((c) => <option key={c.id} value={c.id}>{c.nombre}</option>)}
+            </select>
+            <div className="flex justify-end gap-2 mt-4">
+              <button onClick={() => setChequeParaCobrar(null)} className="px-4 py-2 text-sm font-bold text-slate-500">Cancelar</button>
+              <button onClick={confirmarCobro} disabled={cambiandoEstado} className="flex items-center gap-1.5 px-4 py-2 text-sm font-bold bg-rose-600 hover:bg-rose-700 text-white rounded-lg disabled:opacity-50"><Save className="w-4 h-4" /> Confirmar</button>
+            </div>
           </div>
         </div>
       )}

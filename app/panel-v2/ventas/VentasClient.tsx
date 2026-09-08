@@ -35,8 +35,8 @@ const ESTADO_COLOR: Record<string, string> = {
 };
 
 export default function VentasClient({
-  ventasIniciales, perfiles, clientes, vehiculos, ventaIdsConPermuta, senasPorVenta, miId, soyAdmin, puedeOperacionCaida,
-}: { ventasIniciales: Venta[]; perfiles: Perfil[]; clientes: Cliente[]; vehiculos: Vehiculo[]; ventaIdsConPermuta: string[]; senasPorVenta: Record<string, number>; miId: string; soyAdmin: boolean; puedeOperacionCaida: boolean }) {
+  ventasIniciales, perfiles, clientes, vehiculos, ventaIdsConPermuta, senasPorVenta, miId, soyAdmin, puedeOperacionCaida, cuentas,
+}: { ventasIniciales: Venta[]; perfiles: Perfil[]; clientes: Cliente[]; vehiculos: Vehiculo[]; ventaIdsConPermuta: string[]; senasPorVenta: Record<string, number>; miId: string; soyAdmin: boolean; puedeOperacionCaida: boolean; cuentas: any[] }) {
   const router = useRouter();
   const searchParams = useSearchParams();
   const [ventas, setVentas] = useState(ventasIniciales);
@@ -295,6 +295,7 @@ export default function VentasClient({
           miId={miId}
           soyAdmin={soyAdmin}
           puedeOperacionCaida={puedeOperacionCaida}
+          cuentas={cuentas}
           perfilMap={perfilMap}
           onClose={() => { setDetalleId(null); if (searchParams.get("venta")) router.replace("/panel-v2/ventas"); }}
           onActualizado={(v) => setVentas((prev) => prev.map((x) => (x.id === v.id ? { ...x, ...v } : x)))}

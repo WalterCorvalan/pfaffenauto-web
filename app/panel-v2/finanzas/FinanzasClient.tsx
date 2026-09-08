@@ -259,7 +259,7 @@ export default function FinanzasClient({
         <RetirosTab retiros={retiros} setRetiros={setRetiros} cuentas={cuentas} setCuentas={setCuentas} setMovimientos={setMovimientos} />
       )}
 
-      {tab === "cheques" && <ChequesTab cheques={cheques} setCheques={setCheques} />}
+      {tab === "cheques" && <ChequesTab cheques={cheques} setCheques={setCheques} cuentas={cuentas} />}
 
       {tab === "rentabilidad" && (
         <RentabilidadTab movimientos={movimientos} senasActivas={senasActivasPorMoneda} cuotasPendientes={cuotasPendientesPorMoneda} />

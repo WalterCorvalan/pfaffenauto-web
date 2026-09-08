@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { supabase2 } from "@/lib/supabase2/client";
-import { DollarSign, Plus, Filter, MessageSquare, Star, CheckCircle2, Clock, Wallet, Lock, Search, ShieldAlert, History } from "lucide-react";
+import { DollarSign, Plus, Filter, MessageSquare, Star, CheckCircle2, Clock, Wallet, Lock, Search, ShieldAlert, History, X } from "lucide-react";
 import BonoModal from "./BonoModal";
 import PagoParcialModal from "./PagoParcialModal";
 import TablaResponsiva, { type ColumnaTabla } from "@/components/panelV2/TablaResponsiva";
@@ -29,6 +29,10 @@ export default function ComisionesClient({
 
   const [modalBono, setModalBono] = useState(false);
   const [comisionAPagar, setComisionAPagar] = useState<any>(null);
+  const [comisionParaCobrar, setComisionParaCobrar] = useState<any>(null);
+  const [cuentaCobro, setCuentaCobro] = useState("");
+  const [forzarSinResena, setForzarSinResena] = useState(false);
+  const [cobrando, setCobrando] = useState(false);
 
   const cargarComisiones = async () => {
     setCargando(true);
@@ -83,6 +87,13 @@ export default function ComisionesClient({
           if (!confirm("Falta la reseña del cliente. ¿Forzar el pago como administrador?")) return;
         }
 
+        const restante = Number(c.monto) - Number(c.monto_pagado || 0);
+        if (restante > 0) {
+          setComisionParaCobrar(c);
+          setForzarSinResena(faltaResena && esAdminOFinanzas);
+          setCuentaCobro(cuentas.find((x) => x.moneda === c.moneda)?.id || "");
+          return;
+        }
         const { error } = await supabase2.rpc("marcar_comision_cobrada", { p_comision_id: c.id, p_forzar_sin_resena: faltaResena && esAdminOFinanzas });
         if (error) throw error;
       } else {
@@ -96,6 +107,21 @@ export default function ComisionesClient({
       cargarComisiones();
     } catch (err: any) {
       alert(err.message || "Error al cambiar estado.");
+    }
+  };
+
+  const confirmarCobroComision = async () => {
+    if (!comisionParaCobrar || !cuentaCobro) return alert("Elegí de qué caja sale el pago.");
+    setCobrando(true);
+    try {
+      const { error } = await supabase2.rpc("marcar_comision_cobrada", { p_comision_id: comisionParaCobrar.id, p_forzar_sin_resena: forzarSinResena, p_cuenta_id: cuentaCobro });
+      if (error) throw error;
+      setComisionParaCobrar(null);
+      cargarComisiones();
+    } catch (err: any) {
+      alert(err.message || "No se pudo marcar cobrada.");
+    } finally {
+      setCobrando(false);
     }
   };
 
@@ -268,6 +294,24 @@ export default function ComisionesClient({
 
       {modalBono && <BonoModal vendedores={vendedores} usuarioActualId={usuarioActualId} esAdmin={esAdminOFinanzas} onClose={() => { setModalBono(false); cargarComisiones(); }} />}
       {comisionAPagar && <PagoParcialModal comision={comisionAPagar} cuentas={cuentas} onClose={() => { setComisionAPagar(null); cargarComisiones(); }} />}
+
+      {comisionParaCobrar && (
+        <div className="fixed inset-0 bg-black/40 z-50 flex items-center justify-center p-4" onClick={() => setComisionParaCobrar(null)}>
+          <div onClick={(e) => e.stopPropagation()} className="bg-white dark:bg-[#141414] border border-slate-200 dark:border-white/10 w-full max-w-sm rounded-2xl shadow-2xl p-6">
+            <div className="flex justify-between items-start mb-1"><h3 className="text-lg font-bold">Marcar cobrada</h3><button onClick={() => setComisionParaCobrar(null)}><X className="w-4 h-4 text-slate-400" /></button></div>
+            <p className="text-xs text-slate-400 mb-4">Sale {comisionParaCobrar.moneda} {(Number(comisionParaCobrar.monto) - Number(comisionParaCobrar.monto_pagado || 0)).toLocaleString()} de la cuenta que elijas.</p>
+            <label className="text-xs font-bold text-slate-600 dark:text-slate-400 mb-1.5 block uppercase tracking-widest">Caja *</label>
+            <select value={cuentaCobro} onChange={(e) => setCuentaCobro(e.target.value)} className="w-full bg-slate-50 dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-xl px-3 py-2.5 text-sm outline-none">
+              <option value="">— Elegí —</option>
+              {cuentas.filter((c) => c.moneda === comisionParaCobrar.moneda).map((c) => <option key={c.id} value={c.id}>{c.nombre}</option>)}
+            </select>
+            <div className="flex justify-end gap-2 mt-4">
+              <button onClick={() => setComisionParaCobrar(null)} className="px-4 py-2 text-sm font-bold text-slate-500">Cancelar</button>
+              <button onClick={confirmarCobroComision} disabled={cobrando} className="px-4 py-2 text-sm font-bold bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg disabled:opacity-50">{cobrando ? "Guardando..." : "Confirmar"}</button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

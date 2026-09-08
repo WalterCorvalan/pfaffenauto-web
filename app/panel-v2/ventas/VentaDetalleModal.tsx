@@ -55,6 +55,7 @@ interface Props {
   miId: string;
   soyAdmin: boolean;
   puedeOperacionCaida: boolean;
+  cuentas: any[];
   perfilMap: Record<string, string>;
   onClose: () => void;
   onActualizado: (v: any) => void;
@@ -62,9 +63,13 @@ interface Props {
   onEditar: (v: any) => void;
 }
 
-export default function VentaDetalleModal({ ventaId, miId, soyAdmin, puedeOperacionCaida, perfilMap, onClose, onActualizado, onEliminado, onEditar }: Props) {
+export default function VentaDetalleModal({ ventaId, miId, soyAdmin, puedeOperacionCaida, cuentas, perfilMap, onClose, onActualizado, onEliminado, onEditar }: Props) {
   const [venta, setVenta] = useState<any>(null);
   const [senas, setSenas] = useState<any[]>([]);
+  const [cuotas, setCuotas] = useState<any[]>([]);
+  const [cuotaParaCobrar, setCuotaParaCobrar] = useState<any>(null);
+  const [cuentaCobroCuota, setCuentaCobroCuota] = useState("");
+  const [cobrandoCuota, setCobrandoCuota] = useState(false);
   const [historial, setHistorial] = useState<any[]>([]);
   const [expediente, setExpediente] = useState<any>(null);
   const [mandato, setMandato] = useState<any>(null);
@@ -81,16 +86,18 @@ export default function VentaDetalleModal({ ventaId, miId, soyAdmin, puedeOperac
   const [codigoCopiado, setCodigoCopiado] = useState(false);
 
   const cargar = async () => {
-    const [{ data: v }, { data: s }, { data: h }, { data: exp }] = await Promise.all([
+    const [{ data: v }, { data: s }, { data: h }, { data: exp }, { data: c }] = await Promise.all([
       supabase2.from("ventas").select("*").eq("id", ventaId).single(),
       supabase2.from("venta_senas").select("*").eq("venta_id", ventaId).order("fecha"),
       supabase2.from("venta_estado_historial").select("*, autor:perfiles(nombre)").eq("venta_id", ventaId).order("created_at", { ascending: false }),
       supabase2.from("expedientes").select("id, estado").eq("venta_id", ventaId).maybeSingle(),
+      supabase2.from("venta_cuotas").select("*").eq("venta_id", ventaId).order("numero"),
     ]);
     setVenta(v);
     setSenas(s || []);
     setHistorial(h || []);
     setExpediente(exp || null);
+    setCuotas(c || []);
 
     if (v?.vehiculo_id) {
       const { data: veh } = await supabase2.from("vehiculos").select("mandato_id").eq("id", v.vehiculo_id).maybeSingle();
@@ -184,6 +191,21 @@ export default function VentaDetalleModal({ ventaId, miId, soyAdmin, puedeOperac
     onClose();
   };
 
+  const confirmarCobroCuota = async () => {
+    if (!cuotaParaCobrar || !cuentaCobroCuota) return alert("Elegí de qué cuenta entra el pago.");
+    setCobrandoCuota(true);
+    try {
+      const { error } = await supabase2.rpc("cobrar_venta_cuota", { p_cuota_id: cuotaParaCobrar.id, p_cuenta_id: cuentaCobroCuota });
+      if (error) throw error;
+      setCuotas((prev) => prev.map((c) => (c.id === cuotaParaCobrar.id ? { ...c, estado: "pagada", fecha_pago: new Date().toISOString().slice(0, 10) } : c)));
+      setCuotaParaCobrar(null);
+    } catch (err: any) {
+      alert(err.message || "No se pudo cobrar la cuota.");
+    } finally {
+      setCobrandoCuota(false);
+    }
+  };
+
   if (cargando || !venta) {
     return (
       <div className="fixed inset-0 bg-black/40 backdrop-blur-sm z-[100] flex items-center justify-center">
@@ -246,6 +268,29 @@ export default function VentaDetalleModal({ ventaId, miId, soyAdmin, puedeOperac
             <Fila label="Fecha de venta" valor={fmtFechaLocal(venta.fecha_cierre)} />
             <Fila label="Fecha de entrega" valor={venta.fecha_entrega ? fmtFechaLocal(venta.fecha_entrega) : null} />
           </Seccion>
+
+          {cuotas.length > 0 && (
+            <Seccion icono={DollarSign} titulo={`Cuotas (${cuotas.filter((c) => c.estado === "pagada").length}/${cuotas.length} cobradas)`}>
+              {cuotas.map((c) => (
+                <div key={c.id} className="grid grid-cols-3 gap-2 py-1.5 border-b border-slate-50 dark:border-white/5 last:border-0 items-center">
+                  <p className="text-sm text-slate-800 dark:text-white col-span-1">Cuota N° {c.numero} {c.vencimiento ? `· vence ${fmtFechaLocal(c.vencimiento)}` : ""}</p>
+                  <p className="text-sm text-slate-800 dark:text-white col-span-1">{c.moneda} {Number(c.monto).toLocaleString("es-AR")}</p>
+                  <div className="col-span-1 text-right">
+                    {c.estado === "pagada" ? (
+                      <span className="text-[10px] font-bold uppercase text-emerald-600 bg-emerald-50 dark:bg-emerald-500/10 px-2 py-1 rounded-full">Cobrada {c.fecha_pago ? fmtFechaLocal(c.fecha_pago) : ""}</span>
+                    ) : (
+                      <button
+                        onClick={() => { setCuotaParaCobrar(c); setCuentaCobroCuota(cuentas.find((x) => x.moneda === c.moneda)?.id || ""); }}
+                        className="text-[11px] font-bold text-emerald-600 hover:text-emerald-700 px-2 py-1 rounded-lg border border-emerald-200 dark:border-emerald-500/20"
+                      >
+                        Cobrar
+                      </button>
+                    )}
+                  </div>
+                </div>
+              ))}
+            </Seccion>
+          )}
 
           {mandato && (
             <Seccion icono={KeyRound} titulo="Consignación">
@@ -357,6 +402,24 @@ export default function VentaDetalleModal({ ventaId, miId, soyAdmin, puedeOperac
           </div>
         </div>
       </div>
+
+      {cuotaParaCobrar && (
+        <div className="fixed inset-0 bg-black/40 z-[110] flex items-center justify-center p-4" onClick={() => setCuotaParaCobrar(null)}>
+          <div onClick={(e) => e.stopPropagation()} className="bg-white dark:bg-[#141414] border border-slate-200 dark:border-white/10 w-full max-w-sm rounded-2xl shadow-2xl p-6">
+            <div className="flex justify-between items-start mb-1"><h3 className="text-lg font-bold">Cobrar cuota N° {cuotaParaCobrar.numero}</h3><button onClick={() => setCuotaParaCobrar(null)}><X className="w-4 h-4 text-slate-400" /></button></div>
+            <p className="text-xs text-slate-400 mb-4">Entra {cuotaParaCobrar.moneda} {Number(cuotaParaCobrar.monto).toLocaleString("es-AR")} a la cuenta que elijas.</p>
+            <label className="text-xs font-bold text-slate-600 dark:text-slate-400 mb-1.5 block uppercase tracking-widest">Cuenta *</label>
+            <select value={cuentaCobroCuota} onChange={(e) => setCuentaCobroCuota(e.target.value)} className="w-full bg-slate-50 dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-xl px-3 py-2.5 text-sm outline-none">
+              <option value="">— Elegí —</option>
+              {cuentas.filter((c) => c.moneda === cuotaParaCobrar.moneda).map((c) => <option key={c.id} value={c.id}>{c.nombre}</option>)}
+            </select>
+            <div className="flex justify-end gap-2 mt-4">
+              <button onClick={() => setCuotaParaCobrar(null)} className="px-4 py-2 text-sm font-bold text-slate-500">Cancelar</button>
+              <button onClick={confirmarCobroCuota} disabled={cobrandoCuota} className="px-4 py-2 text-sm font-bold bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg disabled:opacity-50">{cobrandoCuota ? "Guardando..." : "Confirmar"}</button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
