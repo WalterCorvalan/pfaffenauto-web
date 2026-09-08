@@ -86,9 +86,10 @@ const NAV_MOBILE: { href: string; label: string; icon: any }[] = [
 
 // Todo item necesita "modulo" para que la visibilidad por sector
 // (visibilidad_sector) pueda apagarlo -- sin modulo, moduloVisible() lo
-// deja pasar para cualquier rol (ver itemVisible más abajo). Dashboard
-// queda sin modulo a propósito: es donde cae cualquiera después del login,
-// no puede desaparecer para ningún rol.
+// deja pasar para cualquier rol (ver itemVisible más abajo). Dashboard SÍ
+// puede apagarse por rol (solo admin/finanzas) -- el login manda siempre
+// a "/panel-v2", así que hay un useEffect más abajo que reenvía a quien
+// no lo tenga habilitado al primer módulo que sí vea.
 const GRUPOS: {
   titulo: string;
   items: { href?: string; label: string; icon: any; modulo?: string }[];
@@ -96,7 +97,12 @@ const GRUPOS: {
   {
     titulo: "Principal",
     items: [
-      { href: "/panel-v2", label: "Dashboard", icon: LayoutDashboard },
+      {
+        href: "/panel-v2",
+        label: "Dashboard",
+        icon: LayoutDashboard,
+        modulo: "dashboard",
+      },
       {
         href: "/panel-v2/calendario",
         label: "Calendario",
@@ -386,8 +392,6 @@ const ROL_LABEL: Record<string, string> = {
   ventas: "Ventas",
   finanzas: "Finanzas",
   gestoria: "Gestoría",
-  recepcion: "Recepción",
-  taller: "Taller",
 };
 const ROL_COLOR: Record<string, string> = {
   admin: "bg-rose-100 text-rose-700 dark:bg-rose-500/15 dark:text-rose-300",
@@ -397,10 +401,6 @@ const ROL_COLOR: Record<string, string> = {
     "bg-emerald-100 text-emerald-700 dark:bg-emerald-500/15 dark:text-emerald-300",
   gestoria:
     "bg-purple-100 text-purple-700 dark:bg-purple-500/15 dark:text-purple-300",
-  recepcion:
-    "bg-amber-100 text-amber-700 dark:bg-amber-500/15 dark:text-amber-300",
-  taller:
-    "bg-orange-100 text-orange-700 dark:bg-orange-500/15 dark:text-orange-300",
 };
 
 export default function PanelV2Layout({
@@ -520,6 +520,21 @@ export default function PanelV2Layout({
     return moduloVisible(item.modulo);
   };
 
+  // El login manda siempre a "/panel-v2" (Dashboard) sin importar el rol --
+  // ahora que Dashboard puede estar apagado para un rol (solo admin/finanzas
+  // lo ven), a alguien sin acceso lo mandaríamos directo a la pantalla de
+  // "Módulo no habilitado" apenas entra. En vez de eso, lo reenviamos solo
+  // ahí al primer módulo que sí tenga habilitado.
+  useEffect(() => {
+    if (!miId || pathname !== "/panel-v2") return;
+    if (moduloVisible("dashboard")) return;
+    const primerVisible = GRUPOS.flatMap((g) => g.items).find(
+      (item) => item.href && item.href !== "/panel-v2" && itemVisible(item),
+    );
+    if (primerVisible?.href) router.replace(primerVisible.href);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [miId, pathname, roles.join(",")]);
+
   // Toast de alertas urgentes en vivo (se cierra solo a los 10s, o con
   // click) — el contador de la campana lo maneja NotificationBell aparte.
   useEffect(() => {
@@ -583,6 +598,11 @@ export default function PanelV2Layout({
         : pathname?.startsWith(item.href)),
   );
   if (miId && itemDeLaRuta && !itemVisible(itemDeLaRuta)) {
+    // "/panel-v2" (Dashboard) es a donde manda el login sin importar el
+    // rol -- si no lo tiene habilitado, el useEffect de arriba ya lo está
+    // reenviando a otro lado; no mostrar el cartel de bloqueo acá, solo
+    // parpadearía un instante antes de la redirección.
+    if (pathname === "/panel-v2") return null;
     return (
       <div className="min-h-screen flex items-center justify-center text-center p-6">
         <div>

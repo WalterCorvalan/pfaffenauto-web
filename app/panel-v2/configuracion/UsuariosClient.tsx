@@ -7,16 +7,14 @@ import { supabase2 } from "@/lib/supabase2/client";
 import TablaResponsiva, { type ColumnaTabla } from "@/components/panelV2/TablaResponsiva";
 import PermisosTab from "./PermisosTab";
 
-const ROLES = ["admin", "encargado", "ventas", "finanzas", "gestoria", "recepcion", "taller"] as const;
-const ROL_LABEL: Record<string, string> = { admin: "Admin", encargado: "Encargado", ventas: "Ventas", finanzas: "Finanzas", gestoria: "Gestoría", recepcion: "Recepción", taller: "Taller" };
+const ROLES = ["admin", "encargado", "ventas", "finanzas", "gestoria"] as const;
+const ROL_LABEL: Record<string, string> = { admin: "Admin", encargado: "Encargado", ventas: "Ventas", finanzas: "Finanzas", gestoria: "Gestoría" };
 const ROL_COLOR: Record<string, string> = {
   admin: "bg-rose-100 text-rose-700 dark:bg-rose-500/10 dark:text-rose-300",
   encargado: "bg-indigo-100 text-indigo-700 dark:bg-indigo-500/10 dark:text-indigo-300",
   ventas: "bg-blue-100 text-blue-700 dark:bg-blue-500/10 dark:text-blue-300",
   finanzas: "bg-emerald-100 text-emerald-700 dark:bg-emerald-500/10 dark:text-emerald-300",
   gestoria: "bg-amber-100 text-amber-700 dark:bg-amber-500/10 dark:text-amber-300",
-  recepcion: "bg-teal-100 text-teal-700 dark:bg-teal-500/10 dark:text-teal-300",
-  taller: "bg-orange-100 text-orange-700 dark:bg-orange-500/10 dark:text-orange-300",
 };
 
 interface Usuario { id: string; nombre: string; email: string; roles: string[]; activo: boolean; sucursal_id: string | null; }
