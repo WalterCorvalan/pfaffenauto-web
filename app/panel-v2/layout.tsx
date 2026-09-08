@@ -491,12 +491,13 @@ export default function PanelV2Layout({
     if (modulosActivos[modulo] === false) return false;
 
     const sectores = roles.map((r) => ROL_A_SECTOR[r]).filter(Boolean);
-    if (sectores.length === 0) return false;
+    if (sectores.length === 0) return true;
 
-    // Seguridad defensiva: si no hay una fila en visibilidad_sector para
-    // ese módulo y sector, el módulo queda oculto. Así el panel no deja
-    // pasar “visible por default” cuando la base está vacía o sin regla.
-    return sectores.some((s) => visibilidadPorModulo[modulo]?.[s] ?? false);
+    // Sin fila en visibilidad_sector para ese módulo+sector, el módulo
+    // queda VISIBLE por default -- solo se apaga con una fila explícita en
+    // false (ver sql_panel_v2_permisos_sector_ventas.sql/_encargado.sql).
+    // Multi-rol suma permisos: alcanza que UN sector del usuario lo vea.
+    return sectores.some((s) => visibilidadPorModulo[modulo]?.[s] ?? true);
   };
 
   // "Mis Comisiones" se esconde para todos (admin incluido, como en el
