@@ -13,7 +13,9 @@ export default async function PautadosPage() {
     .eq("pautado", true)
     .order("created_at", { ascending: false });
 
-  const datos = vehiculos || [];
+  // El join de Supabase tipa "sucursal" como array aunque sea 1:1 -- se
+  // achata acá para que coincida con lo que espera TablaPautados.
+  const datos = (vehiculos || []).map((v: any) => ({ ...v, sucursal: Array.isArray(v.sucursal) ? v.sucursal[0] || null : v.sucursal }));
   const activos = datos.filter((v: any) => v.estado === "disponible" || v.estado === "reservado" || v.estado === "señado");
   const vendidos = datos.filter((v: any) => v.estado === "vendido");
 
