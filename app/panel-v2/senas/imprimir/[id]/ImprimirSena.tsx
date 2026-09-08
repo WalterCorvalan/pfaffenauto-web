@@ -112,7 +112,7 @@ export default function ImprimirSena({ sena: s, branding }: { sena: any; brandin
             ) : (
               <div className="relative shrink-0">
                 <img src="/logo.png" alt={nombreEmpresa} className="h-8 w-auto object-contain" />
-                <img src="/r.png" alt="Marca Registrada" className="absolute -top-1 -right-2 w-2 h-2 object-contain opacity-80" />
+                <img src="/r.png" alt="Marca Registrada" className="absolute -top-1 -right-2 w-2 h-2 object-contain brightness-0 opacity-80" />
               </div>
             )}
             <div>
