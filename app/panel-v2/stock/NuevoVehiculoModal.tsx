@@ -26,11 +26,12 @@ interface Props {
   sucursales: Sucursal[];
   miId: string;
   editando?: any;
+  soloFotos?: boolean;
   onClose: () => void;
   onCreado: (v: any) => void;
 }
 
-export default function NuevoVehiculoModal({ perfiles, clientes, sucursales, miId, editando, onClose, onCreado }: Props) {
+export default function NuevoVehiculoModal({ perfiles, clientes, sucursales, miId, editando, soloFotos = false, onClose, onCreado }: Props) {
   // Un "editando" sin id es un prefill para alta nueva (ej: desde
   // Consignaciones, precarga propietario/marca pero crea un vehículo nuevo)
   // -- no confundir con edición real de un vehículo existente.
@@ -156,8 +157,28 @@ export default function NuevoVehiculoModal({ perfiles, clientes, sucursales, miI
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [editando?.id]);
 
+  // Vendedor sin "vehiculos.editar_completo" solo puede tocar fotos --
+  // ni valida el resto de los campos obligatorios (no los va a tocar) ni
+  // manda el payload completo, así ni un intento manual de re-habilitar
+  // inputs por devtools termina pisando specs/precio/datos legales.
   const guardar = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (soloFotos && esEdicion) {
+      setGuardando(true);
+      setError("");
+      try {
+        const { data, error: dbError } = await supabase2.from("vehiculos").update({ fotos }).eq("id", editando.id).select("*, sucursal:sucursal_id ( nombre )").single();
+        if (dbError) throw dbError;
+        onCreado(data);
+        onClose();
+      } catch (err) {
+        console.error(err);
+        setError("No se pudieron guardar las fotos.");
+      } finally {
+        setGuardando(false);
+      }
+      return;
+    }
     if (!marca.trim() || !modelo.trim() || !anio || !patente.trim() || !color.trim() || !km || !precioVenta) {
       setError("Completá marca, modelo, año, patente, color, kilómetros y precio de venta.");
       return;
@@ -258,6 +279,12 @@ export default function NuevoVehiculoModal({ perfiles, clientes, sucursales, miI
             <ScanLine className="w-4 h-4" /> Escanear cédula verde (opcional)
           </button>
 
+          {soloFotos && (
+            <p className="text-xs font-semibold text-slate-500 dark:text-slate-400 bg-slate-50 dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-xl px-3 py-2">
+              {marca} {modelo} {anio} · {patente || "s/patente"} — solo podés actualizar las fotos de este vehículo.
+            </p>
+          )}
+
           <div>
             <p className={seccionClass}>Fotos</p>
             <div className="grid grid-cols-3 sm:grid-cols-4 gap-2">
@@ -278,6 +305,18 @@ export default function NuevoVehiculoModal({ perfiles, clientes, sucursales, miI
             <p className="text-[10px] text-slate-400 mt-1.5">La primera foto es la que se usa como miniatura en el listado y en el catálogo.</p>
           </div>
 
+          {soloFotos ? (
+            <>
+              {error && <p className="text-xs font-semibold text-rose-600 bg-rose-50 dark:bg-rose-500/10 rounded-lg px-3 py-2">{error}</p>}
+              <div className="pt-3 border-t border-slate-100 dark:border-white/10 flex gap-3">
+                <button type="button" onClick={onClose} className="flex-1 py-2.5 text-sm font-semibold bg-white dark:bg-white/5 border border-slate-200 dark:border-white/10 hover:bg-slate-50 dark:hover:bg-white/10 text-slate-600 dark:text-slate-300 rounded-xl transition-colors">Cancelar</button>
+                <button type="submit" disabled={guardando} className="flex-1 py-2.5 flex items-center justify-center gap-2 text-sm font-bold bg-rose-600 hover:bg-rose-700 text-white rounded-xl transition-colors disabled:opacity-50">
+                  {guardando ? <Loader2 className="w-4 h-4 animate-spin" /> : "Guardar fotos"}
+                </button>
+              </div>
+            </>
+          ) : (
+          <>
           <div>
             <p className={seccionClass}>Identidad</p>
             <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
@@ -722,6 +761,8 @@ export default function NuevoVehiculoModal({ perfiles, clientes, sucursales, miI
               {guardando ? <Loader2 className="w-4 h-4 animate-spin" /> : esEdicion ? "Guardar cambios" : "Dar de alta"}
             </button>
           </div>
+          </>
+          )}
         </form>
       </div>
     </div>

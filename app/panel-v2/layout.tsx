@@ -1,22 +1,71 @@
 "use client";
 
-import { useState, useEffect } from "react";
-import Link from "next/link";
-import { usePathname, useRouter } from "next/navigation";
-import { supabase2 } from "@/lib/supabase2/client";
-import {
-  Search, Moon, Sun, LogOut, RotateCw, Menu, X, PanelLeftClose, PanelLeftOpen,
-  LayoutDashboard, CalendarDays, CalendarCheck, BellRing, LineChart, Megaphone, Folder,
-  Car, Users, FileText, Briefcase, Trophy, SearchCode, Handshake, PackageCheck,
-  BedDouble, Repeat, Star, FolderKanban, ClipboardList, ClipboardCheck, KeyRound, Landmark, History,
-  Wrench, Hammer, MessageSquareWarning, Banknote, PiggyBank, Coins, ShieldCheck,
-  BarChart3, DollarSign, MessagesSquare, Smartphone, ThumbsUp, Lightbulb, Mail,
-  MessageCircle, BookUser, Settings, Trash2, Bot, Wallet, Tag, AlertTriangle, CheckSquare, Receipt, CreditCard, Radar,
-} from "lucide-react";
-import QuickActionsButton from "@/components/panelV2/QuickActionsButton";
 import MensajesBubble from "@/components/panelV2/MensajesBubble";
 import NotificationBell from "@/components/panelV2/NotificationBell";
+import QuickActionsButton from "@/components/panelV2/QuickActionsButton";
 import TopTicker from "@/components/panelV2/TopTicker";
+import { supabase2 } from "@/lib/supabase2/client";
+import {
+  AlertTriangle,
+  Banknote,
+  BedDouble,
+  BellRing,
+  BookUser,
+  Bot,
+  Briefcase,
+  CalendarCheck,
+  CalendarDays,
+  Car,
+  CheckSquare,
+  ClipboardCheck,
+  ClipboardList,
+  Coins,
+  CreditCard,
+  DollarSign,
+  FileText,
+  Folder,
+  FolderKanban,
+  Hammer,
+  Handshake,
+  History,
+  KeyRound,
+  Landmark,
+  LayoutDashboard,
+  Lightbulb,
+  LineChart,
+  LogOut,
+  Mail,
+  Megaphone,
+  Menu,
+  MessageSquareWarning,
+  MessagesSquare,
+  Moon,
+  PackageCheck,
+  PanelLeftClose,
+  PanelLeftOpen,
+  PiggyBank,
+  Radar,
+  Receipt,
+  Repeat,
+  RotateCw,
+  Search,
+  SearchCode,
+  Settings,
+  ShieldCheck,
+  Smartphone,
+  Sun,
+  Tag,
+  ThumbsUp,
+  Trash2,
+  Trophy,
+  Users,
+  Wallet,
+  Wrench,
+  X,
+} from "lucide-react";
+import Link from "next/link";
+import { usePathname, useRouter } from "next/navigation";
+import { useEffect, useState } from "react";
 
 // Grupos calcados del índice del manual del CRM viejo — todo lo que todavía
 // no construimos queda listado pero deshabilitado, para que el mapa completo
@@ -34,66 +83,234 @@ const NAV_MOBILE: { href: string; label: string; icon: any }[] = [
   { href: "/panel-v2/calendario", label: "Calendario", icon: CalendarDays },
 ];
 
-const GRUPOS: { titulo: string; items: { href?: string; label: string; icon: any; modulo?: string }[] }[] = [
+// Todo item necesita "modulo" para que la visibilidad por sector
+// (visibilidad_sector) pueda apagarlo -- sin modulo, moduloVisible() lo
+// deja pasar para cualquier rol (ver itemVisible más abajo). Dashboard
+// queda sin modulo a propósito: es donde cae cualquiera después del login,
+// no puede desaparecer para ningún rol.
+const GRUPOS: {
+  titulo: string;
+  items: { href?: string; label: string; icon: any; modulo?: string }[];
+}[] = [
   {
     titulo: "Principal",
     items: [
       { href: "/panel-v2", label: "Dashboard", icon: LayoutDashboard },
-      { href: "/panel-v2/calendario", label: "Calendario", icon: CalendarDays },
-      { href: "/panel-v2/alertas", label: "Alertas", icon: BellRing },
-      { href: "/panel-v2/reportes", label: "Reportes", icon: LineChart, modulo: "reportes" },
-      { href: "/panel-v2/marketing/generales", label: "Marketing", icon: Megaphone, modulo: "marketing" },
-      { href: "/panel-v2/mi-espacio", label: "Mi Espacio", icon: Folder },
+      {
+        href: "/panel-v2/calendario",
+        label: "Calendario",
+        icon: CalendarDays,
+        modulo: "calendario",
+      },
+      {
+        href: "/panel-v2/alertas",
+        label: "Alertas",
+        icon: BellRing,
+        modulo: "alertas",
+      },
+      {
+        href: "/panel-v2/reportes",
+        label: "Reportes",
+        icon: LineChart,
+        modulo: "reportes",
+      },
+      {
+        href: "/panel-v2/marketing/generales",
+        label: "Marketing",
+        icon: Megaphone,
+        modulo: "marketing",
+      },
+      {
+        href: "/panel-v2/mi-espacio",
+        label: "Mi Espacio",
+        icon: Folder,
+        modulo: "mi_espacio",
+      },
     ],
   },
   {
     titulo: "Comercial",
     items: [
-      { href: "/panel-v2/stock", label: "Stock", icon: Car },
-      { href: "/panel-v2/visitas", label: "Visitas", icon: CalendarCheck },
-      { href: "/panel-v2/clientes", label: "Clientes", icon: Users },
-      { href: "/panel-v2/leads", label: "Leads", icon: Radar },
-      { href: "/panel-v2/cotizaciones", label: "Cotizaciones", icon: FileText, modulo: "cotizaciones" },
-      { href: "/panel-v2/financiaciones", label: "Financiaciones", icon: CreditCard },
-      { href: "/panel-v2/senas", label: "Señas", icon: Wallet },
-      { href: "/panel-v2/presupuestos", label: "Presupuestos", icon: FileText },
-      { href: "/panel-v2/ventas", label: "Ventas", icon: Briefcase },
-      { href: "/panel-v2/mis-ventas", label: "Mis ventas", icon: Trophy },
+      { href: "/panel-v2/stock", label: "Stock", icon: Car, modulo: "stock" },
+      {
+        href: "/panel-v2/visitas",
+        label: "Visitas",
+        icon: CalendarCheck,
+        modulo: "visitas",
+      },
+      {
+        href: "/panel-v2/clientes",
+        label: "Clientes",
+        icon: Users,
+        modulo: "clientes",
+      },
+      { href: "/panel-v2/leads", label: "Leads", icon: Radar, modulo: "leads" },
+      {
+        href: "/panel-v2/cotizaciones",
+        label: "Cotizaciones",
+        icon: FileText,
+        modulo: "cotizaciones",
+      },
+      {
+        href: "/panel-v2/financiaciones",
+        label: "Financiaciones",
+        icon: CreditCard,
+        modulo: "financiaciones",
+      },
+      {
+        href: "/panel-v2/senas",
+        label: "Señas",
+        icon: Wallet,
+        modulo: "senas",
+      },
+      {
+        href: "/panel-v2/presupuestos",
+        label: "Presupuestos",
+        icon: FileText,
+        modulo: "presupuestos",
+      },
+      {
+        href: "/panel-v2/ventas",
+        label: "Ventas",
+        icon: Briefcase,
+        modulo: "ventas",
+      },
+      {
+        href: "/panel-v2/mis-ventas",
+        label: "Mis ventas",
+        icon: Trophy,
+        modulo: "mis_ventas",
+      },
     ],
   },
   {
     titulo: "Operación",
     items: [
-      { href: "/panel-v2/pedidos", label: "Pedidos", icon: SearchCode, modulo: "pedidos" },
-      { href: "/panel-v2/postventa", label: "Postventa", icon: PackageCheck, modulo: "postventa" },
-      { href: "/panel-v2/expedientes", label: "Expedientes", icon: FolderKanban },
-      { href: "/panel-v2/reclamos", label: "Reclamos", icon: MessageSquareWarning, modulo: "reclamos" },
-      { href: "/panel-v2/gestoria", label: "Gestoría", icon: ClipboardList, modulo: "gestoria" },
-      { href: "/panel-v2/consignaciones", label: "Consignaciones", icon: KeyRound, modulo: "consignaciones" },
-      { href: "/panel-v2/peritajes", label: "Peritajes", icon: ClipboardCheck },
-      { href: "/panel-v2/infracciones", label: "Infracciones", icon: Landmark, modulo: "infracciones" },
-      { href: "/panel-v2/telefonos", label: "Teléfonos útiles", icon: BookUser, modulo: "telefonos_utiles" },
-      { href: "/panel-v2/taller", label: "Taller", icon: Wrench, modulo: "taller" },
+      {
+        href: "/panel-v2/pedidos",
+        label: "Pedidos",
+        icon: SearchCode,
+        modulo: "pedidos",
+      },
+      {
+        href: "/panel-v2/postventa",
+        label: "Postventa",
+        icon: PackageCheck,
+        modulo: "postventa",
+      },
+      {
+        href: "/panel-v2/expedientes",
+        label: "Expedientes",
+        icon: FolderKanban,
+        modulo: "expedientes",
+      },
+      {
+        href: "/panel-v2/reclamos",
+        label: "Reclamos",
+        icon: MessageSquareWarning,
+        modulo: "reclamos",
+      },
+      {
+        href: "/panel-v2/gestoria",
+        label: "Gestoría",
+        icon: ClipboardList,
+        modulo: "gestoria",
+      },
+      {
+        href: "/panel-v2/consignaciones",
+        label: "Consignaciones",
+        icon: KeyRound,
+        modulo: "consignaciones",
+      },
+      {
+        href: "/panel-v2/peritajes",
+        label: "Peritajes",
+        icon: ClipboardCheck,
+        modulo: "peritajes",
+      },
+      {
+        href: "/panel-v2/infracciones",
+        label: "Infracciones",
+        icon: Landmark,
+        modulo: "infracciones",
+      },
+      {
+        href: "/panel-v2/telefonos",
+        label: "Teléfonos útiles",
+        icon: BookUser,
+        modulo: "telefonos_utiles",
+      },
+      {
+        href: "/panel-v2/taller",
+        label: "Taller",
+        icon: Wrench,
+        modulo: "taller",
+      },
       { label: "Service", icon: Hammer, modulo: "service" },
     ],
   },
   {
     titulo: "Finanzas",
     items: [
-      { href: "/panel-v2/finanzas", label: "Finanzas", icon: Banknote },
-      { href: "/panel-v2/cobros", label: "Cobros", icon: Receipt },
-      { href: "/panel-v2/tesoreria", label: "Tesorería", icon: PiggyBank, modulo: "tesoreria" },
-      { href: "/panel-v2/liquidaciones", label: "Liquidaciones", icon: Coins, modulo: "liquidaciones" },
-      { href: "/panel-v2/comisiones", label:"Mis Comisiones", icon: DollarSign },
+      {
+        href: "/panel-v2/finanzas",
+        label: "Finanzas",
+        icon: Banknote,
+        modulo: "finanzas",
+      },
+      {
+        href: "/panel-v2/cobros",
+        label: "Cobros",
+        icon: Receipt,
+        modulo: "cobros",
+      },
+      {
+        href: "/panel-v2/tesoreria",
+        label: "Tesorería",
+        icon: PiggyBank,
+        modulo: "tesoreria",
+      },
+      {
+        href: "/panel-v2/liquidaciones",
+        label: "Liquidaciones",
+        icon: Coins,
+        modulo: "liquidaciones",
+      },
+      {
+        href: "/panel-v2/comisiones",
+        label: "Mis Comisiones",
+        icon: DollarSign,
+        modulo: "comisiones",
+      },
     ],
   },
   {
     titulo: "Colaboración",
     items: [
-      { href: "/panel-v2/mensajes", label: "Mensajes", icon: MessagesSquare, modulo: "mensajes" },
-      { href: "/panel-v2/whatsapp", label: "WhatsApp", icon: Smartphone, modulo: "whatsapp" },
-      { href: "/panel-v2/rodi", label: "Rodi (chat web)", icon: Bot },
-      { href: "/panel-v2/tareas", label: "Tareas de Leads", icon: CheckSquare },
+      {
+        href: "/panel-v2/mensajes",
+        label: "Mensajes",
+        icon: MessagesSquare,
+        modulo: "mensajes",
+      },
+      {
+        href: "/panel-v2/whatsapp",
+        label: "WhatsApp",
+        icon: Smartphone,
+        modulo: "whatsapp",
+      },
+      {
+        href: "/panel-v2/rodi",
+        label: "Rodi (chat web)",
+        icon: Bot,
+        modulo: "rodi",
+      },
+      {
+        href: "/panel-v2/tareas",
+        label: "Tareas de Leads",
+        icon: CheckSquare,
+        modulo: "tareas_leads",
+      },
       { label: "Correos", icon: Mail, modulo: "correos" },
       { href: "/panel-v2/nps", label: "NPS", icon: ThumbsUp, modulo: "nps" },
     ],
@@ -101,18 +318,63 @@ const GRUPOS: { titulo: string; items: { href?: string; label: string; icon: any
   {
     titulo: "Administración",
     items: [
-      { href: "/panel-v2/autorizaciones", label: "Autorizaciones", icon: ShieldCheck },
-      { href: "/panel-v2/dormidos", label: "Dormidos", icon: BedDouble, modulo: "dormidos" },
-      { href: "/panel-v2/recontactos", label: "Recontactos", icon: Repeat },
+      {
+        href: "/panel-v2/autorizaciones",
+        label: "Autorizaciones",
+        icon: ShieldCheck,
+        modulo: "autorizaciones",
+      },
+      {
+        href: "/panel-v2/dormidos",
+        label: "Dormidos",
+        icon: BedDouble,
+        modulo: "dormidos",
+      },
+      {
+        href: "/panel-v2/recontactos",
+        label: "Recontactos",
+        icon: Repeat,
+        modulo: "recontactos",
+      },
       { label: "Sugerencias", icon: Lightbulb, modulo: "sugerencias" },
-      { label: "Papelera", icon: Trash2 },
-      { href: "/panel-v2/configuracion", label: "Configuración", icon: Settings },
+      { label: "Papelera", icon: Trash2, modulo: "papelera" },
+      {
+        href: "/panel-v2/configuracion",
+        label: "Configuración",
+        icon: Settings,
+        modulo: "configuracion",
+      },
       { label: "Oportunidades", icon: Handshake, modulo: "oportunidades" },
-      { href: "/panel-v2/postulaciones", label: "Postulaciones", icon: Users },
-      { href: "/panel-v2/sueldos/liquidador", label: "Liquidador de Sueldos", icon: Wallet },
-      { href: "/panel-v2/sueldos/categorias", label: "Categorías de Empleados", icon: Tag },
-      { href: "/panel-v2/errores", label: "Errores del sistema", icon: AlertTriangle },
-      { href: "/panel-v2/logs", label: "Registro de Cambios", icon: History },
+      {
+        href: "/panel-v2/postulaciones",
+        label: "Postulaciones",
+        icon: Users,
+        modulo: "postulaciones",
+      },
+      {
+        href: "/panel-v2/sueldos/liquidador",
+        label: "Liquidador de Sueldos",
+        icon: Wallet,
+        modulo: "liquidador_sueldos",
+      },
+      {
+        href: "/panel-v2/sueldos/categorias",
+        label: "Categorías de Empleados",
+        icon: Tag,
+        modulo: "categorias_empleados",
+      },
+      {
+        href: "/panel-v2/errores",
+        label: "Errores del sistema",
+        icon: AlertTriangle,
+        modulo: "errores_sistema",
+      },
+      {
+        href: "/panel-v2/logs",
+        label: "Registro de Cambios",
+        icon: History,
+        modulo: "logs",
+      },
     ],
   },
 ];
@@ -121,19 +383,40 @@ const GRUPOS: { titulo: string; items: { href?: string; label: string; icon: any
 // son taxonomías distintas (roles: admin/ventas/finanzas/gestoria; sectores:
 // suman recepcion/taller/cm porque la visibilidad se piensa por puesto de
 // trabajo, no por permiso de datos).
-const ROL_A_SECTOR: Record<string, string> = { ventas: "ventas", finanzas: "finanzas", gestoria: "gestoria", taller: "taller", recepcion: "recepcion" };
+const ROL_A_SECTOR: Record<string, string> = {
+  ventas: "ventas",
+  finanzas: "finanzas",
+  gestoria: "gestoria",
+  taller: "taller",
+  recepcion: "recepcion",
+};
 
-const ROL_LABEL: Record<string, string> = { admin: "Administrador", ventas: "Ventas", finanzas: "Finanzas", gestoria: "Gestoría", recepcion: "Recepción", taller: "Taller" };
+const ROL_LABEL: Record<string, string> = {
+  admin: "Administrador",
+  ventas: "Ventas",
+  finanzas: "Finanzas",
+  gestoria: "Gestoría",
+  recepcion: "Recepción",
+  taller: "Taller",
+};
 const ROL_COLOR: Record<string, string> = {
   admin: "bg-rose-100 text-rose-700 dark:bg-rose-500/15 dark:text-rose-300",
   ventas: "bg-blue-100 text-blue-700 dark:bg-blue-500/15 dark:text-blue-300",
-  finanzas: "bg-emerald-100 text-emerald-700 dark:bg-emerald-500/15 dark:text-emerald-300",
-  gestoria: "bg-purple-100 text-purple-700 dark:bg-purple-500/15 dark:text-purple-300",
-  recepcion: "bg-amber-100 text-amber-700 dark:bg-amber-500/15 dark:text-amber-300",
-  taller: "bg-orange-100 text-orange-700 dark:bg-orange-500/15 dark:text-orange-300",
+  finanzas:
+    "bg-emerald-100 text-emerald-700 dark:bg-emerald-500/15 dark:text-emerald-300",
+  gestoria:
+    "bg-purple-100 text-purple-700 dark:bg-purple-500/15 dark:text-purple-300",
+  recepcion:
+    "bg-amber-100 text-amber-700 dark:bg-amber-500/15 dark:text-amber-300",
+  taller:
+    "bg-orange-100 text-orange-700 dark:bg-orange-500/15 dark:text-orange-300",
 };
 
-export default function PanelV2Layout({ children }: { children: React.ReactNode }) {
+export default function PanelV2Layout({
+  children,
+}: {
+  children: React.ReactNode;
+}) {
   const pathname = usePathname();
   const router = useRouter();
   const [isOpen, setIsOpen] = useState(false);
@@ -142,7 +425,12 @@ export default function PanelV2Layout({ children }: { children: React.ReactNode 
   const [nombre, setNombre] = useState("Cargando...");
   const [roles, setRoles] = useState<string[]>([]);
   const [miId, setMiId] = useState<string | null>(null);
-  const [toast, setToast] = useState<{ id: string; titulo: string; mensaje: string | null; link: string | null } | null>(null);
+  const [toast, setToast] = useState<{
+    id: string;
+    titulo: string;
+    mensaje: string | null;
+    link: string | null;
+  } | null>(null);
   // Feedback de "toqué esto, se está cargando" en la navegación del sidebar —
   // sin esto, un click tarda ~1-2s en mostrar algo y parece que no pasó nada.
   const [navegandoA, setNavegandoA] = useState<string | null>(null);
@@ -169,7 +457,11 @@ export default function PanelV2Layout({ children }: { children: React.ReactNode 
     supabase2.auth.getUser().then(async ({ data: { user } }) => {
       if (!user) return;
       setMiId(user.id);
-      const { data } = await supabase2.from("perfiles").select("nombre, roles").eq("id", user.id).single();
+      const { data } = await supabase2
+        .from("perfiles")
+        .select("nombre, roles")
+        .eq("id", user.id)
+        .single();
       setNombre(data?.nombre || "Usuario");
       setRoles(data?.roles || []);
     });
@@ -178,15 +470,21 @@ export default function PanelV2Layout({ children }: { children: React.ReactNode 
   // Módulos apagados por Empresa → Módulos, y visibilidad por sector —
   // el admin no se filtra nunca, así que solo hace falta traer esto para
   // el resto de los roles.
-  const [modulosActivos, setModulosActivos] = useState<Record<string, boolean>>({});
-  const [visibilidadPorModulo, setVisibilidadPorModulo] = useState<Record<string, Record<string, boolean>>>({});
+  const [modulosActivos, setModulosActivos] = useState<Record<string, boolean>>(
+    {},
+  );
+  const [visibilidadPorModulo, setVisibilidadPorModulo] = useState<
+    Record<string, Record<string, boolean>>
+  >({});
   useEffect(() => {
     if (roles.includes("admin")) return;
     Promise.all([
       supabase2.from("modulos_config").select("modulo, activo"),
       supabase2.from("visibilidad_sector").select("modulo, sector, visible"),
     ]).then(([{ data: modulos }, { data: visibilidad }]) => {
-      setModulosActivos(Object.fromEntries((modulos || []).map((m) => [m.modulo, m.activo])));
+      setModulosActivos(
+        Object.fromEntries((modulos || []).map((m) => [m.modulo, m.activo])),
+      );
       const porModulo: Record<string, Record<string, boolean>> = {};
       (visibilidad || []).forEach((v) => {
         porModulo[v.modulo] = porModulo[v.modulo] || {};
@@ -200,23 +498,33 @@ export default function PanelV2Layout({ children }: { children: React.ReactNode 
   const moduloVisible = (modulo?: string) => {
     if (esAdmin || !modulo) return true;
     if (modulosActivos[modulo] === false) return false;
+
     const sectores = roles.map((r) => ROL_A_SECTOR[r]).filter(Boolean);
-    if (sectores.length === 0) return true;
-    // Multi-rol suma permisos: alcanza con que UN sector del usuario lo vea.
-    return sectores.some((s) => (visibilidadPorModulo[modulo]?.[s] ?? true));
+    if (sectores.length === 0) return false;
+
+    // Seguridad defensiva: si no hay una fila en visibilidad_sector para
+    // ese módulo y sector, el módulo queda oculto. Así el panel no deja
+    // pasar “visible por default” cuando la base está vacía o sin regla.
+    return sectores.some((s) => visibilidadPorModulo[modulo]?.[s] ?? false);
   };
 
   // "Mis Comisiones" se esconde para todos (admin incluido, como en el
   // resto de la agencia) cuando Empresa → Comisiones está en modo "ninguna".
   const [comisionesActivas, setComisionesActivas] = useState(true);
   useEffect(() => {
-    supabase2.from("configuracion_empresa").select("modo_comision").eq("id", true).single().then(({ data }) => {
-      if (data) setComisionesActivas(data.modo_comision !== "ninguna");
-    });
+    supabase2
+      .from("configuracion_empresa")
+      .select("modo_comision")
+      .eq("id", true)
+      .single()
+      .then(({ data }) => {
+        if (data) setComisionesActivas(data.modo_comision !== "ninguna");
+      });
   }, []);
 
   const itemVisible = (item: { href?: string; modulo?: string }) => {
-    if (item.href === "/panel-v2/comisiones" && !comisionesActivas) return false;
+    if (item.href === "/panel-v2/comisiones" && !comisionesActivas)
+      return false;
     return moduloVisible(item.modulo);
   };
 
@@ -227,15 +535,35 @@ export default function PanelV2Layout({ children }: { children: React.ReactNode 
 
     const canal = supabase2
       .channel(`alertas-${miId}-${Math.random().toString(36).slice(2)}`)
-      .on("postgres_changes", { event: "INSERT", schema: "public", table: "alertas", filter: `destinatario_id=eq.${miId}` }, (payload) => {
-        if (payload.new.prioridad === "alta") {
-          setToast({ id: payload.new.id, titulo: payload.new.titulo, mensaje: payload.new.mensaje, link: payload.new.link });
-          setTimeout(() => setToast((prev) => (prev?.id === payload.new.id ? null : prev)), 10000);
-        }
-      })
+      .on(
+        "postgres_changes",
+        {
+          event: "INSERT",
+          schema: "public",
+          table: "alertas",
+          filter: `destinatario_id=eq.${miId}`,
+        },
+        (payload) => {
+          if (payload.new.prioridad === "alta") {
+            setToast({
+              id: payload.new.id,
+              titulo: payload.new.titulo,
+              mensaje: payload.new.mensaje,
+              link: payload.new.link,
+            });
+            setTimeout(
+              () =>
+                setToast((prev) => (prev?.id === payload.new.id ? null : prev)),
+              10000,
+            );
+          }
+        },
+      )
       .subscribe();
 
-    return () => { supabase2.removeChannel(canal); };
+    return () => {
+      supabase2.removeChannel(canal);
+    };
   }, [miId]);
 
   const toggleDarkMode = () => {
@@ -255,13 +583,23 @@ export default function PanelV2Layout({ children }: { children: React.ReactNode 
 
   // Guard de acceso directo por URL: un módulo apagado o sin visibilidad
   // para el sector del usuario no debe abrirse solo porque conoce el link.
-  const itemDeLaRuta = GRUPOS.flatMap((g) => g.items).find((item) => item.href && (item.href === "/panel-v2" ? pathname === item.href : pathname?.startsWith(item.href)));
+  const itemDeLaRuta = GRUPOS.flatMap((g) => g.items).find(
+    (item) =>
+      item.href &&
+      (item.href === "/panel-v2"
+        ? pathname === item.href
+        : pathname?.startsWith(item.href)),
+  );
   if (miId && itemDeLaRuta && !itemVisible(itemDeLaRuta)) {
     return (
       <div className="min-h-screen flex items-center justify-center text-center p-6">
         <div>
-          <p className="text-lg font-bold text-slate-700 dark:text-slate-200">Módulo no habilitado</p>
-          <p className="text-sm text-slate-400 mt-1">Esta sección está apagada o no está disponible para tu rol.</p>
+          <p className="text-lg font-bold text-slate-700 dark:text-slate-200">
+            Módulo no habilitado
+          </p>
+          <p className="text-sm text-slate-400 mt-1">
+            Esta sección está apagada o no está disponible para tu rol.
+          </p>
         </div>
       </div>
     );
@@ -273,7 +611,12 @@ export default function PanelV2Layout({ children }: { children: React.ReactNode 
     <div className={darkMode ? "dark" : ""}>
       <div className="flex h-screen w-full bg-[#F8FAFC] dark:bg-[#0A0A0A] text-slate-900 dark:text-slate-100 overflow-hidden print:h-auto print:overflow-visible print:block">
         <div className="md:hidden print:hidden fixed top-0 left-0 right-0 h-14 bg-white dark:bg-[#111] border-b border-slate-200 dark:border-white/10 flex items-center gap-2 px-3 z-50">
-          <button onClick={() => setIsOpen(!isOpen)} className="shrink-0 p-1 text-slate-600 dark:text-slate-300">{isOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}</button>
+          <button
+            onClick={() => setIsOpen(!isOpen)}
+            className="shrink-0 p-1 text-slate-600 dark:text-slate-300"
+          >
+            {isOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
+          </button>
           <div className="relative flex-1 min-w-0">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-slate-400" />
             <input
@@ -283,8 +626,16 @@ export default function PanelV2Layout({ children }: { children: React.ReactNode 
               className="w-full bg-slate-50 dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-full py-1.5 pl-9 pr-3 text-[12px] outline-none text-slate-900 dark:text-white placeholder:text-slate-400 disabled:cursor-not-allowed"
             />
           </div>
-          <button onClick={toggleDarkMode} className="shrink-0 p-1.5 rounded-lg text-slate-500 dark:text-slate-300" title={darkMode ? "Modo claro" : "Modo oscuro"}>
-            {darkMode ? <Sun className="w-4 h-4" /> : <Moon className="w-4 h-4" />}
+          <button
+            onClick={toggleDarkMode}
+            className="shrink-0 p-1.5 rounded-lg text-slate-500 dark:text-slate-300"
+            title={darkMode ? "Modo claro" : "Modo oscuro"}
+          >
+            {darkMode ? (
+              <Sun className="w-4 h-4" />
+            ) : (
+              <Moon className="w-4 h-4" />
+            )}
           </button>
           <NotificationBell miId={miId || ""} />
         </div>
@@ -293,69 +644,129 @@ export default function PanelV2Layout({ children }: { children: React.ReactNode 
         <aside
           className={`print:hidden fixed md:relative top-14 md:top-0 left-0 h-[calc(100vh-3.5rem)] md:h-full ${colapsado ? "md:w-[68px]" : "md:w-[230px]"} w-[230px] bg-white dark:bg-[#111] border-r border-slate-200 dark:border-white/10 flex flex-col shrink-0 transform transition-all duration-200 z-40 ${isOpen ? "translate-x-0" : "-translate-x-full md:translate-x-0"}`}
         >
-          <div className={`h-[60px] flex items-center gap-2 border-b border-slate-200 dark:border-white/10 shrink-0 ${colapsado ? "md:px-2 px-4" : "px-4"}`}>
-            <div className="w-8 h-8 rounded-lg bg-indigo-600 text-white flex items-center justify-center font-bold text-xs shrink-0">PV</div>
+          <div
+            className={`h-[60px] flex items-center gap-2 border-b border-slate-200 dark:border-white/10 shrink-0 ${colapsado ? "md:px-2 px-4" : "px-4"}`}
+          >
+            <div className="w-8 h-8 rounded-lg bg-indigo-600 text-white flex items-center justify-center font-bold text-xs shrink-0">
+              PV
+            </div>
             <div className={colapsado ? "md:hidden" : ""}>
               <p className="text-sm font-bold leading-none">Panel v2</p>
-              <p className="text-[10px] text-slate-400 leading-none mt-0.5">Pfaffen Autos</p>
+              <p className="text-[10px] text-slate-400 leading-none mt-0.5">
+                Pfaffen Autos
+              </p>
             </div>
             <button
               onClick={toggleColapsado}
               title={colapsado ? "Expandir menú" : "Colapsar menú"}
               className="hidden md:flex ml-auto shrink-0 w-6 h-6 items-center justify-center rounded-md text-slate-400 hover:text-slate-700 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-white/10 transition-colors"
             >
-              {colapsado ? <PanelLeftOpen className="w-4 h-4" /> : <PanelLeftClose className="w-4 h-4" />}
+              {colapsado ? (
+                <PanelLeftOpen className="w-4 h-4" />
+              ) : (
+                <PanelLeftClose className="w-4 h-4" />
+              )}
             </button>
           </div>
 
           <nav className="flex-1 overflow-y-auto py-2 custom-scrollbar">
-            {GRUPOS.map((grupo) => grupo.items.some((item) => itemVisible(item)) && (
-              <div key={grupo.titulo} className="mb-1">
-                <p className={`px-4 pt-3 pb-1 text-[10px] font-bold uppercase tracking-wider text-slate-400 ${colapsado ? "md:hidden" : ""}`}>{grupo.titulo}</p>
-                {colapsado && <div className="hidden md:block mx-3 my-1.5 border-t border-slate-100 dark:border-white/5 first:mt-0" />}
-                {grupo.items.filter((item) => itemVisible(item)).map((item) => {
-                  const Icon = item.icon;
-                  const activo = item.href && (item.href === "/panel-v2" ? pathname === item.href : pathname?.startsWith(item.href));
-                  if (!item.href) {
-                    return (
-                      <div
-                        key={item.label}
-                        title="Todavía no construido"
-                        className={`flex items-center gap-3 py-2 mx-2 rounded-lg text-sm text-slate-300 dark:text-slate-600 cursor-not-allowed ${colapsado ? "md:justify-center px-4 md:px-0" : "px-4"}`}
-                      >
-                        <Icon className="w-4 h-4 shrink-0" /> <span className={colapsado ? "md:hidden" : ""}>{item.label}</span>
-                      </div>
-                    );
-                  }
-                  const cargando = navegandoA === item.href && !activo;
-                  return (
-                    <Link
-                      key={item.label}
-                      href={item.href}
-                      title={colapsado ? item.label : undefined}
-                      onClick={() => { setIsOpen(false); if (!activo) setNavegandoA(item.href!); }}
-                      className={`flex items-center gap-3 py-2 mx-2 rounded-lg text-sm transition-all active:scale-[0.97] ${colapsado ? "md:justify-center px-4 md:px-0" : "px-4"} ${
-                        activo ? "bg-indigo-50 dark:bg-indigo-500/10 text-indigo-700 dark:text-indigo-300 font-semibold" : cargando ? "bg-slate-100 dark:bg-white/10 text-slate-500 dark:text-slate-300" : "text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-white/5"
-                      }`}
+            {GRUPOS.map(
+              (grupo) =>
+                grupo.items.some((item) => itemVisible(item)) && (
+                  <div key={grupo.titulo} className="mb-1">
+                    <p
+                      className={`px-4 pt-3 pb-1 text-[10px] font-bold uppercase tracking-wider text-slate-400 ${colapsado ? "md:hidden" : ""}`}
                     >
-                      {cargando ? <RotateCw className="w-4 h-4 animate-spin shrink-0" /> : <Icon className="w-4 h-4 shrink-0" />} <span className={colapsado ? "md:hidden" : ""}>{item.label}</span>
-                    </Link>
-                  );
-                })}
-              </div>
-            ))}
+                      {grupo.titulo}
+                    </p>
+                    {colapsado && (
+                      <div className="hidden md:block mx-3 my-1.5 border-t border-slate-100 dark:border-white/5 first:mt-0" />
+                    )}
+                    {grupo.items
+                      .filter((item) => itemVisible(item))
+                      .map((item) => {
+                        const Icon = item.icon;
+                        const activo =
+                          item.href &&
+                          (item.href === "/panel-v2"
+                            ? pathname === item.href
+                            : pathname?.startsWith(item.href));
+                        if (!item.href) {
+                          return (
+                            <div
+                              key={item.label}
+                              title="Todavía no construido"
+                              className={`flex items-center gap-3 py-2 mx-2 rounded-lg text-sm text-slate-300 dark:text-slate-600 cursor-not-allowed ${colapsado ? "md:justify-center px-4 md:px-0" : "px-4"}`}
+                            >
+                              <Icon className="w-4 h-4 shrink-0" />{" "}
+                              <span className={colapsado ? "md:hidden" : ""}>
+                                {item.label}
+                              </span>
+                            </div>
+                          );
+                        }
+                        const cargando = navegandoA === item.href && !activo;
+                        return (
+                          <Link
+                            key={item.label}
+                            href={item.href}
+                            title={colapsado ? item.label : undefined}
+                            onClick={() => {
+                              setIsOpen(false);
+                              if (!activo) setNavegandoA(item.href!);
+                            }}
+                            className={`flex items-center gap-3 py-2 mx-2 rounded-lg text-sm transition-all active:scale-[0.97] ${colapsado ? "md:justify-center px-4 md:px-0" : "px-4"} ${
+                              activo
+                                ? "bg-indigo-50 dark:bg-indigo-500/10 text-indigo-700 dark:text-indigo-300 font-semibold"
+                                : cargando
+                                  ? "bg-slate-100 dark:bg-white/10 text-slate-500 dark:text-slate-300"
+                                  : "text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-white/5"
+                            }`}
+                          >
+                            {cargando ? (
+                              <RotateCw className="w-4 h-4 animate-spin shrink-0" />
+                            ) : (
+                              <Icon className="w-4 h-4 shrink-0" />
+                            )}{" "}
+                            <span className={colapsado ? "md:hidden" : ""}>
+                              {item.label}
+                            </span>
+                          </Link>
+                        );
+                      })}
+                  </div>
+                ),
+            )}
           </nav>
 
           <div className="border-t border-slate-200 dark:border-white/10 p-3 shrink-0 space-y-2">
-            <div className={`flex items-center gap-2 px-1 ${colapsado ? "md:justify-center" : ""}`} title={colapsado ? nombre : undefined}>
-              <div className="w-7 h-7 rounded-full bg-rose-500 text-white flex items-center justify-center text-xs font-bold shrink-0">{nombre.charAt(0).toUpperCase()}</div>
+            <div
+              className={`flex items-center gap-2 px-1 ${colapsado ? "md:justify-center" : ""}`}
+              title={colapsado ? nombre : undefined}
+            >
+              <div className="w-7 h-7 rounded-full bg-rose-500 text-white flex items-center justify-center text-xs font-bold shrink-0">
+                {nombre.charAt(0).toUpperCase()}
+              </div>
               <div className={`min-w-0 flex-1 ${colapsado ? "md:hidden" : ""}`}>
                 <p className="text-xs font-bold truncate">{nombre}</p>
-                {rolPrincipal && <span className={`inline-block text-[9px] font-bold uppercase tracking-wide px-1.5 py-0.5 rounded ${ROL_COLOR[rolPrincipal] || "bg-slate-100 text-slate-600"}`}>{ROL_LABEL[rolPrincipal] || rolPrincipal}</span>}
+                {rolPrincipal && (
+                  <span
+                    className={`inline-block text-[9px] font-bold uppercase tracking-wide px-1.5 py-0.5 rounded ${ROL_COLOR[rolPrincipal] || "bg-slate-100 text-slate-600"}`}
+                  >
+                    {ROL_LABEL[rolPrincipal] || rolPrincipal}
+                  </span>
+                )}
               </div>
             </div>
-            <button onClick={handleLogout} title={colapsado ? "Cerrar sesión" : undefined} className={`w-full flex items-center gap-2 py-1.5 text-xs font-semibold text-rose-600 dark:text-rose-400 hover:bg-rose-50 dark:hover:bg-rose-500/10 rounded-lg transition-colors ${colapsado ? "md:justify-center px-2" : "px-2"}`}>
-              <LogOut className="w-3.5 h-3.5 shrink-0" /> <span className={colapsado ? "md:hidden" : ""}>Cerrar sesión</span>
+            <button
+              onClick={handleLogout}
+              title={colapsado ? "Cerrar sesión" : undefined}
+              className={`w-full flex items-center gap-2 py-1.5 text-xs font-semibold text-rose-600 dark:text-rose-400 hover:bg-rose-50 dark:hover:bg-rose-500/10 rounded-lg transition-colors ${colapsado ? "md:justify-center px-2" : "px-2"}`}
+            >
+              <LogOut className="w-3.5 h-3.5 shrink-0" />{" "}
+              <span className={colapsado ? "md:hidden" : ""}>
+                Cerrar sesión
+              </span>
             </button>
           </div>
         </aside>
@@ -376,8 +787,16 @@ export default function PanelV2Layout({ children }: { children: React.ReactNode 
 
             <TopTicker />
 
-            <button onClick={toggleDarkMode} className="p-1.5 rounded-lg hover:bg-slate-100 dark:hover:bg-white/10 text-slate-500 dark:text-slate-300 shrink-0" title={darkMode ? "Modo claro" : "Modo oscuro"}>
-              {darkMode ? <Sun className="w-4 h-4" /> : <Moon className="w-4 h-4" />}
+            <button
+              onClick={toggleDarkMode}
+              className="p-1.5 rounded-lg hover:bg-slate-100 dark:hover:bg-white/10 text-slate-500 dark:text-slate-300 shrink-0"
+              title={darkMode ? "Modo claro" : "Modo oscuro"}
+            >
+              {darkMode ? (
+                <Sun className="w-4 h-4" />
+              ) : (
+                <Moon className="w-4 h-4" />
+              )}
             </button>
             <NotificationBell miId={miId || ""} />
           </div>
@@ -404,7 +823,9 @@ export default function PanelV2Layout({ children }: { children: React.ReactNode 
                 href={item.href}
                 className={`flex-1 flex flex-col items-center justify-center gap-0.5 text-[10px] font-semibold ${activo ? "text-rose-600 dark:text-rose-400" : "text-slate-500 dark:text-slate-400"}`}
               >
-                <Icon className={`w-5 h-5 ${activo ? "text-rose-600 dark:text-rose-400" : ""}`} />
+                <Icon
+                  className={`w-5 h-5 ${activo ? "text-rose-600 dark:text-rose-400" : ""}`}
+                />
                 {item.label}
               </Link>
             );
@@ -414,16 +835,31 @@ export default function PanelV2Layout({ children }: { children: React.ReactNode 
 
       {toast && (
         <div
-          onClick={() => { if (toast.link) router.push(toast.link); setToast(null); }}
+          onClick={() => {
+            if (toast.link) router.push(toast.link);
+            setToast(null);
+          }}
           className="print:hidden fixed top-4 right-4 z-[100] w-80 bg-white dark:bg-[#1A1A1A] border border-rose-200 dark:border-rose-500/30 rounded-xl shadow-2xl p-4 cursor-pointer animate-fadeIn"
         >
           <div className="flex items-start justify-between gap-2">
-            <p className="text-sm font-bold text-rose-600 dark:text-rose-400">{toast.titulo}</p>
-            <button onClick={(e) => { e.stopPropagation(); setToast(null); }} className="text-slate-400 hover:text-slate-700 dark:hover:text-white shrink-0">
+            <p className="text-sm font-bold text-rose-600 dark:text-rose-400">
+              {toast.titulo}
+            </p>
+            <button
+              onClick={(e) => {
+                e.stopPropagation();
+                setToast(null);
+              }}
+              className="text-slate-400 hover:text-slate-700 dark:hover:text-white shrink-0"
+            >
               <X className="w-4 h-4" />
             </button>
           </div>
-          {toast.mensaje && <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">{toast.mensaje}</p>}
+          {toast.mensaje && (
+            <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">
+              {toast.mensaje}
+            </p>
+          )}
         </div>
       )}
 

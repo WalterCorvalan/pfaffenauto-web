@@ -19,6 +19,7 @@ import PrecioEditor from "./PrecioEditor";
 import SucursalEditor from "./SucursalEditor";
 import VendedorEditor from "./VendedorEditor";
 import { parseFechaLocal } from "@/lib/panelV2/fechas";
+import { tienePermiso } from "@/lib/permisos";
 import TablaResponsiva, { type ColumnaTabla } from "@/components/panelV2/TablaResponsiva";
 
 interface Vehiculo {
@@ -87,6 +88,19 @@ export default function StockClient({
   const [editando, setEditando] = useState<Vehiculo | null>(null);
   const [galeria, setGaleria] = useState<{ fotos: string[]; index: number } | null>(null);
   const [ocupadoId, setOcupadoId] = useState<string | null>(null);
+
+  // Por default true (optimista) para no tapar los botones un instante a
+  // los que sí tienen permiso mientras se resuelve la consulta -- un
+  // vendedor sin "vehiculos.editar_completo/.crear/.eliminar" los pierde
+  // apenas responde tienePermiso().
+  const [puedeEditarCompleto, setPuedeEditarCompleto] = useState(true);
+  const [puedeCrear, setPuedeCrear] = useState(true);
+  const [puedeEliminar, setPuedeEliminar] = useState(true);
+  useEffect(() => {
+    tienePermiso(supabase2, "vehiculos.editar_completo").then(setPuedeEditarCompleto);
+    tienePermiso(supabase2, "vehiculos.crear").then(setPuedeCrear);
+    tienePermiso(supabase2, "vehiculos.eliminar").then(setPuedeEliminar);
+  }, []);
 
   useEffect(() => {
     if (searchParams.get("nuevo") === "1") {
@@ -211,8 +225,8 @@ export default function StockClient({
               <button onClick={() => setModalCatalogo(true)} className="flex items-center gap-1.5 px-3 py-2 text-xs font-semibold bg-white dark:bg-white/5 border border-slate-200 dark:border-white/10 hover:bg-slate-50 dark:hover:bg-white/10 rounded-lg text-slate-600 dark:text-slate-300"><Globe className="w-3.5 h-3.5" /> Tu catálogo</button>
               <button onClick={exportarXlsx} className="flex items-center gap-1.5 px-3 py-2 text-xs font-semibold bg-white dark:bg-white/5 border border-slate-200 dark:border-white/10 hover:bg-slate-50 dark:hover:bg-white/10 rounded-lg text-slate-600 dark:text-slate-300"><Download className="w-3.5 h-3.5" /> Exportar XLSX</button>
               <button onClick={() => setModalImportar(true)} className="flex items-center gap-1.5 px-3 py-2 text-xs font-semibold bg-white dark:bg-white/5 border border-slate-200 dark:border-white/10 hover:bg-slate-50 dark:hover:bg-white/10 rounded-lg text-slate-600 dark:text-slate-300"><Upload className="w-3.5 h-3.5" /> Importar XLSX</button>
-              <button onClick={() => setModalMandato(true)} className="flex items-center gap-1.5 px-3 py-2 text-xs font-semibold bg-white dark:bg-white/5 border border-slate-200 dark:border-white/10 hover:bg-slate-50 dark:hover:bg-white/10 rounded-lg text-slate-600 dark:text-slate-300"><FileText className="w-3.5 h-3.5" /> Nuevo mandato + Stock</button>
-              <button onClick={() => setModalNuevo(true)} className="flex items-center gap-1.5 px-4 py-2 text-xs font-bold bg-rose-600 hover:bg-rose-700 text-white rounded-lg shadow-sm"><Plus className="w-3.5 h-3.5" /> Nuevo vehículo</button>
+              {puedeCrear && <button onClick={() => setModalMandato(true)} className="flex items-center gap-1.5 px-3 py-2 text-xs font-semibold bg-white dark:bg-white/5 border border-slate-200 dark:border-white/10 hover:bg-slate-50 dark:hover:bg-white/10 rounded-lg text-slate-600 dark:text-slate-300"><FileText className="w-3.5 h-3.5" /> Nuevo mandato + Stock</button>}
+              {puedeCrear && <button onClick={() => setModalNuevo(true)} className="flex items-center gap-1.5 px-4 py-2 text-xs font-bold bg-rose-600 hover:bg-rose-700 text-white rounded-lg shadow-sm"><Plus className="w-3.5 h-3.5" /> Nuevo vehículo</button>}
             </div>
           </div>
 
@@ -313,10 +327,10 @@ export default function StockClient({
                         { key: "anio", header: "Año", cell: (v) => v.anio, claseTd: "text-xs text-slate-500 dark:text-slate-400 whitespace-nowrap" },
                         { key: "patente", header: "Patente/VIN", cell: (v) => v.patente || "s/patente", claseTd: "text-xs text-slate-500 dark:text-slate-400 whitespace-nowrap" },
                         { key: "km", header: "KM", cell: (v) => v.km?.toLocaleString("es-AR") ?? "—", claseTd: "text-xs text-slate-500 dark:text-slate-400 whitespace-nowrap" },
-                        { key: "precio", header: "Precio", cell: (v) => <span onClick={(e) => e.stopPropagation()}><PrecioEditor vehiculoId={v.id} precio={v.precio_venta} moneda={v.moneda_venta} onActualizado={actualizarVehiculo} /></span>, claseTd: "text-sm whitespace-nowrap" },
+                        { key: "precio", header: "Precio", cell: (v) => puedeEditarCompleto ? <span onClick={(e) => e.stopPropagation()}><PrecioEditor vehiculoId={v.id} precio={v.precio_venta} moneda={v.moneda_venta} onActualizado={actualizarVehiculo} /></span> : <span>{fmtPrecio(v.precio_venta, v.moneda_venta)}</span>, claseTd: "text-sm whitespace-nowrap" },
                         { key: "estado", header: "Estado", cell: (v) => <span className={`text-[10px] font-bold px-2 py-1 rounded-full border whitespace-nowrap ${ESTADO_COLOR[v.estado]}`}>{ESTADO_LABEL[v.estado]}</span> },
-                        { key: "sucursal", header: "Sucursal", cell: (v) => <span onClick={(e) => e.stopPropagation()}><SucursalEditor vehiculoId={v.id} sucursalId={v.sucursal_id} sucursalNombre={v.sucursal?.nombre || null} sucursales={sucursales} onActualizado={actualizarVehiculo} /></span>, claseTd: "text-xs whitespace-nowrap" },
-                        { key: "asignado", header: "Asignado", cell: (v) => <span onClick={(e) => e.stopPropagation()}><VendedorEditor vehiculoId={v.id} vendedorId={v.vendedor_asignado_id} vendedorNombre={v.vendedor_asignado_id ? perfilMap[v.vendedor_asignado_id] : null} perfiles={perfiles} onActualizado={actualizarVehiculo} /></span>, claseTd: "text-xs whitespace-nowrap" },
+                        { key: "sucursal", header: "Sucursal", cell: (v) => puedeEditarCompleto ? <span onClick={(e) => e.stopPropagation()}><SucursalEditor vehiculoId={v.id} sucursalId={v.sucursal_id} sucursalNombre={v.sucursal?.nombre || null} sucursales={sucursales} onActualizado={actualizarVehiculo} /></span> : <span>{v.sucursal?.nombre || "—"}</span>, claseTd: "text-xs whitespace-nowrap" },
+                        { key: "asignado", header: "Asignado", cell: (v) => puedeEditarCompleto ? <span onClick={(e) => e.stopPropagation()}><VendedorEditor vehiculoId={v.id} vendedorId={v.vendedor_asignado_id} vendedorNombre={v.vendedor_asignado_id ? perfilMap[v.vendedor_asignado_id] : null} perfiles={perfiles} onActualizado={actualizarVehiculo} /></span> : <span>{v.vendedor_asignado_id ? perfilMap[v.vendedor_asignado_id] : "—"}</span>, claseTd: "text-xs whitespace-nowrap" },
                         { key: "dias", header: "Días", cell: (v) => {
                           const dias = diasEnStock(v.created_at);
                           const diasColor = dias >= diasEstancado ? "text-rose-600 dark:text-rose-400 font-black" : dias >= 30 ? "text-amber-600 dark:text-amber-400 font-bold" : "text-slate-500";
@@ -334,9 +348,11 @@ export default function StockClient({
                             <Tag className="w-3.5 h-3.5" />
                           </button>
                         )}
-                        <button onClick={() => eliminarVehiculo(v)} disabled={ocupadoId === v.id} title="Eliminar" className="p-2 bg-slate-50 dark:bg-white/5 hover:bg-rose-600 hover:text-white text-slate-400 rounded-lg disabled:opacity-50">
-                          {ocupadoId === v.id ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Trash2 className="w-3.5 h-3.5" />}
-                        </button>
+                        {puedeEliminar && (
+                          <button onClick={() => eliminarVehiculo(v)} disabled={ocupadoId === v.id} title="Eliminar" className="p-2 bg-slate-50 dark:bg-white/5 hover:bg-rose-600 hover:text-white text-slate-400 rounded-lg disabled:opacity-50">
+                            {ocupadoId === v.id ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Trash2 className="w-3.5 h-3.5" />}
+                          </button>
+                        )}
                       </>
                     )}
                   />
@@ -360,7 +376,7 @@ export default function StockClient({
         </div>
       </div>
 
-      {(modalNuevo || editando) && <NuevoVehiculoModal perfiles={perfiles} clientes={clientes} sucursales={sucursales} miId={miId} editando={editando || undefined} onClose={() => { setModalNuevo(false); setEditando(null); }} onCreado={onCreadoVehiculo} />}
+      {(modalNuevo || editando) && <NuevoVehiculoModal perfiles={perfiles} clientes={clientes} sucursales={sucursales} miId={miId} editando={editando || undefined} soloFotos={!puedeEditarCompleto} onClose={() => { setModalNuevo(false); setEditando(null); }} onCreado={onCreadoVehiculo} />}
 
       {galeria && (
         <div className="fixed inset-0 z-[60] bg-black/80 flex flex-col items-center justify-center p-6 gap-4" onClick={() => { if (window.innerWidth >= 768) setGaleria(null); }}>
