@@ -19,9 +19,9 @@ export const metadata: Metadata = {
 };
 
 const ESTADO_SENA_INFO: Record<string, { label: string; color: string; icono: typeof Wallet }> = {
-  Activa: { label: "Recibimos tu seña — en proceso", color: "text-amber-500 bg-amber-50", icono: Wallet },
-  Convertida: { label: "¡Se convirtió en venta! Seguí el resto del proceso con tu asesor.", color: "text-emerald-500 bg-emerald-50", icono: CheckCircle2 },
-  Perdida: { label: "Esta seña ya no está activa.", color: "text-rose-500 bg-rose-50", icono: Search },
+  Activa: { label: "Recibimos tu seña — en proceso", color: "text-amber-500 dark:text-amber-400 bg-amber-50 dark:bg-amber-500/10", icono: Wallet },
+  Convertida: { label: "¡Se convirtió en venta! Seguí el resto del proceso con tu asesor.", color: "text-emerald-500 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-500/10", icono: CheckCircle2 },
+  Perdida: { label: "Esta seña ya no está activa.", color: "text-rose-500 dark:text-rose-400 bg-rose-50 dark:bg-rose-500/10", icono: Search },
 };
 
 // Server-only: usamos service role porque senas/ventas/expedientes no tienen
@@ -44,11 +44,11 @@ export default async function SeguimientoPublicoPage({
   const limite = await rateLimit(ip, { limite: 20, ventanaMs: 60 * 1000, proyecto: "v2" });
   if (!limite.ok) {
     return (
-      <div className="min-h-screen bg-[#F8FAFC] pt-24 pb-16 px-4">
-        <div className="max-w-lg mx-auto bg-white border border-slate-100 rounded-3xl p-10 text-center shadow-sm">
-          <Search className="w-10 h-10 text-slate-300 mx-auto mb-4" />
-          <h1 className="text-xl font-black text-navy mb-2">Demasiados intentos</h1>
-          <p className="text-sm text-slate-500">Esperá un momento y volvé a intentarlo.</p>
+      <div className="min-h-screen bg-[#F8FAFC] dark:bg-[#0a0a0f] pt-24 pb-16 px-4">
+        <div className="max-w-lg mx-auto bg-white dark:bg-white/5 border border-slate-100 dark:border-white/10 rounded-3xl p-10 text-center shadow-sm">
+          <Search className="w-10 h-10 text-slate-300 dark:text-slate-500 mx-auto mb-4" />
+          <h1 className="text-xl font-black text-navy dark:text-white mb-2">Demasiados intentos</h1>
+          <p className="text-sm text-slate-500 dark:text-slate-400">Esperá un momento y volvé a intentarlo.</p>
         </div>
       </div>
     );
@@ -116,17 +116,17 @@ export default async function SeguimientoPublicoPage({
   const completados = hitos.filter((h) => h.completado).length;
 
   return (
-    <div className="min-h-screen bg-[#F8FAFC] pt-24 pb-16 px-4">
+    <div className="min-h-screen bg-[#F8FAFC] dark:bg-[#0a0a0f] pt-24 pb-16 px-4">
       <div className="max-w-lg mx-auto">
         {sena ? (
-          <div className="bg-white border border-slate-100 rounded-3xl p-8 shadow-sm">
+          <div className="bg-white dark:bg-white/5 border border-slate-100 dark:border-white/10 rounded-3xl p-8 shadow-sm">
             <div className="flex items-center gap-3 mb-8">
-              <div className="w-12 h-12 rounded-full bg-blue-50 flex items-center justify-center shrink-0">
-                <CarFront className="w-6 h-6 text-[#0145F2]" />
+              <div className="w-12 h-12 rounded-full bg-blue-50 dark:bg-sky-500/10 flex items-center justify-center shrink-0">
+                <CarFront className="w-6 h-6 text-[#0145F2] dark:text-sky-400" />
               </div>
               <div>
-                <p className="text-[10px] font-black uppercase tracking-widest text-slate-400">Seguimiento de tu seña</p>
-                <h1 className="text-lg font-black text-navy">{sena.marca} {sena.modelo}</h1>
+                <p className="text-[10px] font-black uppercase tracking-widest text-slate-400 dark:text-slate-500">Seguimiento de tu seña</p>
+                <h1 className="text-lg font-black text-navy dark:text-white">{sena.marca} {sena.modelo}</h1>
               </div>
             </div>
             {(() => {
@@ -139,35 +139,35 @@ export default async function SeguimientoPublicoPage({
                 </div>
               );
             })()}
-            <p className="text-[11px] text-slate-400 text-center mt-8">
+            <p className="text-[11px] text-slate-400 dark:text-slate-500 text-center mt-8">
               ¿Dudas? Escribinos por WhatsApp y te contamos el detalle.
             </p>
           </div>
         ) : !venta ? (
-          <div className="bg-white border border-slate-100 rounded-3xl p-10 text-center shadow-sm">
-            <Search className="w-10 h-10 text-slate-300 mx-auto mb-4" />
-            <h1 className="text-xl font-black text-navy mb-2">Código no encontrado</h1>
-            <p className="text-sm text-slate-500 mb-6">Revisá el código que te compartió tu asesor e intentá de nuevo.</p>
+          <div className="bg-white dark:bg-white/5 border border-slate-100 dark:border-white/10 rounded-3xl p-10 text-center shadow-sm">
+            <Search className="w-10 h-10 text-slate-300 dark:text-slate-500 mx-auto mb-4" />
+            <h1 className="text-xl font-black text-navy dark:text-white mb-2">Código no encontrado</h1>
+            <p className="text-sm text-slate-500 dark:text-slate-400 mb-6">Revisá el código que te compartió tu asesor e intentá de nuevo.</p>
             <Link href="/seguimiento" className="inline-block bg-[#0145F2] text-white font-black text-xs uppercase tracking-widest px-6 py-3 rounded-xl">
               Probar de nuevo
             </Link>
           </div>
         ) : (
-          <div className="bg-white border border-slate-100 rounded-3xl p-8 shadow-sm">
+          <div className="bg-white dark:bg-white/5 border border-slate-100 dark:border-white/10 rounded-3xl p-8 shadow-sm">
             <div className="flex items-center gap-3 mb-8">
-              <div className="w-12 h-12 rounded-full bg-blue-50 flex items-center justify-center shrink-0">
-                <CarFront className="w-6 h-6 text-[#0145F2]" />
+              <div className="w-12 h-12 rounded-full bg-blue-50 dark:bg-sky-500/10 flex items-center justify-center shrink-0">
+                <CarFront className="w-6 h-6 text-[#0145F2] dark:text-sky-400" />
               </div>
               <div>
-                <p className="text-[10px] font-black uppercase tracking-widest text-slate-400">Seguimiento de tu operación</p>
-                <h1 className="text-lg font-black text-navy">
+                <p className="text-[10px] font-black uppercase tracking-widest text-slate-400 dark:text-slate-500">Seguimiento de tu operación</p>
+                <h1 className="text-lg font-black text-navy dark:text-white">
                   {venta.marca} {venta.modelo}
                 </h1>
               </div>
             </div>
 
             {totalHitos === 0 ? (
-              <div className="flex items-center gap-3 rounded-2xl p-4 text-amber-700 bg-amber-50">
+              <div className="flex items-center gap-3 rounded-2xl p-4 text-amber-700 dark:text-amber-400 bg-amber-50 dark:bg-amber-500/10">
                 <Wallet className="w-5 h-5 shrink-0" />
                 <p className="text-sm font-bold">Tu venta está confirmada. En breve tu asesor va a iniciar la gestión de la documentación.</p>
               </div>
@@ -184,9 +184,9 @@ export default async function SeguimientoPublicoPage({
                           <div className="w-2 h-2 rounded-full bg-white" />
                         </div>
                       ) : (
-                        <Circle className="w-5 h-5 text-slate-200 shrink-0" />
+                        <Circle className="w-5 h-5 text-slate-200 dark:text-white/10 shrink-0" />
                       )}
-                      <span className={`text-sm font-bold ${actual ? "text-[#0145F2]" : hito.completado ? "text-slate-700" : "text-slate-300"}`}>
+                      <span className={`text-sm font-bold ${actual ? "text-[#0145F2] dark:text-sky-400" : hito.completado ? "text-slate-700 dark:text-slate-200" : "text-slate-300 dark:text-slate-600"}`}>
                         {hito.nombre}
                       </span>
                     </div>
@@ -198,13 +198,13 @@ export default async function SeguimientoPublicoPage({
             {(completados === totalHitos && totalHitos > 0) || montoPendiente > 0 ? (
               <div className="mt-6 space-y-2">
                 {completados === totalHitos && totalHitos > 0 && (
-                  <div className="flex items-center gap-3 rounded-2xl p-4 text-emerald-600 bg-emerald-50">
+                  <div className="flex items-center gap-3 rounded-2xl p-4 text-emerald-600 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-500/10">
                     <CheckCircle2 className="w-5 h-5 shrink-0" />
                     <p className="text-sm font-bold">Tu trámite está finalizado. Pronto vas a poder retirar la documentación.</p>
                   </div>
                 )}
                 {montoPendiente > 0 && (
-                  <div className="flex items-center gap-3 rounded-2xl p-4 text-amber-700 bg-amber-50">
+                  <div className="flex items-center gap-3 rounded-2xl p-4 text-amber-700 dark:text-amber-400 bg-amber-50 dark:bg-amber-500/10">
                     <Wallet className="w-5 h-5 shrink-0" />
                     <p className="text-sm font-bold">Monto pendiente a abonar al retirar: {venta.moneda_venta === "ARS" ? "$" : "US$"} {montoPendiente.toLocaleString("es-AR")}</p>
                   </div>
@@ -212,7 +212,7 @@ export default async function SeguimientoPublicoPage({
               </div>
             ) : null}
 
-            <p className="text-[11px] text-slate-400 text-center mt-8">
+            <p className="text-[11px] text-slate-400 dark:text-slate-500 text-center mt-8">
               ¿Dudas? Escribinos por WhatsApp y te contamos el detalle.
             </p>
           </div>
