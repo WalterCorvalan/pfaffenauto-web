@@ -3,7 +3,7 @@
 import { useState, useEffect } from "react";
 import { supabase2 } from "@/lib/supabase2/client";
 import Link from "next/link";
-import { X, Loader2, Pencil, Trash2, ChevronDown, AlertTriangle, ShieldAlert, Check, Car, User, DollarSign, Percent, KeyRound, FolderKanban, History, Copy } from "lucide-react";
+import { X, Loader2, Pencil, Trash2, ChevronDown, AlertTriangle, ShieldAlert, Check, Car, User, DollarSign, Percent, KeyRound, FolderKanban, History, Copy, Printer } from "lucide-react";
 import { fmtFechaLocal } from "@/lib/panelV2/fechas";
 
 const ESTADO_LABEL: Record<string, string> = {
@@ -351,6 +351,7 @@ export default function VentaDetalleModal({ ventaId, miId, soyAdmin, puedeOperac
               → Cambiar status <ChevronDown className="w-3.5 h-3.5" />
             </button>
             <div className="flex-1" />
+            <Link href={`/panel-v2/ventas/imprimir/${venta.id}`} className="flex items-center gap-1.5 px-4 py-2 text-xs font-bold bg-white dark:bg-white/5 border border-slate-200 dark:border-white/10 hover:bg-slate-50 dark:hover:bg-white/10 text-slate-600 dark:text-slate-300 rounded-lg"><Printer className="w-3.5 h-3.5" /> Recibo</Link>
             <button onClick={() => onEditar(venta)} className="flex items-center gap-1.5 px-4 py-2 text-xs font-bold bg-rose-600 hover:bg-rose-700 text-white rounded-lg"><Pencil className="w-3.5 h-3.5" /> Editar</button>
             {soyAdmin && <button onClick={eliminar} className="flex items-center gap-1.5 px-4 py-2 text-xs font-bold bg-white dark:bg-white/5 border border-rose-200 dark:border-rose-500/20 hover:bg-rose-50 dark:hover:bg-rose-500/10 text-rose-600 rounded-lg"><Trash2 className="w-3.5 h-3.5" /> Eliminar</button>}
           </div>

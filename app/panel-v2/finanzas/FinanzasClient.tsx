@@ -27,11 +27,13 @@ import LibrosContablesTab from "./tabs/LibrosContablesTab";
 import SenasTab from "./tabs/SenasTab";
 import ResumenTab from "./tabs/ResumenTab";
 import EgresosCategoriaTab from "./tabs/EgresosCategoriaTab";
+import CajaGrandeChicaTab from "./tabs/CajaGrandeChicaTab";
 import { fmt } from "./tabs/shared";
 
 const TABS: { value: string; label: string; icon: any; disabled?: boolean; externo?: string }[] = [
   { value: "resumen", label: "Resumen", icon: BarChart3 },
   { value: "movimientos", label: "Movimientos", icon: FileText },
+  { value: "caja-grande-chica", label: "Caja Grande/Chica", icon: Wallet },
   { value: "egresos-categoria", label: "Egresos por Categoría", icon: Receipt },
   { value: "senas", label: "Señas", icon: Coins },
   { value: "cuotas", label: "Cuotas", icon: Wallet },
@@ -225,6 +227,10 @@ export default function FinanzasClient({
 
       {tab === "movimientos" && (
         <MovimientosTab miId={miId} soyAdmin={soyAdmin} cuentas={cuentas} movimientos={movimientos} setMovimientos={setMovimientos} cierres={cierres} setCierres={setCierres} ventas={ventas} />
+      )}
+
+      {tab === "caja-grande-chica" && (
+        <CajaGrandeChicaTab miId={miId} soyAdmin={soyAdmin} cuentas={cuentas} setCuentas={setCuentas} movimientos={movimientos} setMovimientos={setMovimientos} sucursales={sucursales} vendedores={vendedores} />
       )}
 
       {tab === "egresos-categoria" && (
