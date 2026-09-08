@@ -10,7 +10,7 @@ export async function crearAlerta(
   titulo: string,
   opciones?: { mensaje?: string; link?: string; tipo?: string; prioridad?: PrioridadAlerta }
 ) {
-  await supabase.from("alertas").insert({
+  const { error } = await supabase.from("alertas").insert({
     destinatario_id: destinatarioId,
     titulo,
     mensaje: opciones?.mensaje || null,
@@ -18,4 +18,8 @@ export async function crearAlerta(
     tipo: opciones?.tipo || "general",
     prioridad: opciones?.prioridad || "novedad",
   });
+  // Antes se ignoraba el error de insert (ej: RLS bloqueando el destinatario)
+  // sin dejar rastro -- la alerta simplemente no aparecía y no había forma
+  // de saber por qué.
+  if (error) console.error("[crearAlerta] no se pudo insertar", error);
 }

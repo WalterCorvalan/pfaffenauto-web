@@ -99,15 +99,19 @@ export default function NuevoEventoModal({ fechaInicial, perfiles, miId, onClose
       const link = "/panel-v2/calendario";
       const destinatarios = new Set<string>();
 
-      if (responsableId && responsableId !== miId) destinatarios.add(responsableId);
+      // El responsable SIEMPRE recibe el aviso (así lo dice la UI, sin
+      // excepción) -- incluso si el responsable es quien está creando el
+      // evento. A diferencia de otros módulos (WhatsApp, Rodi), acá el punto
+      // es justamente recordarte a vos mismo tu propio evento.
+      if (responsableId) destinatarios.add(responsableId);
 
       if (notificarPor === "personas") {
-        personas.forEach((id) => { if (id !== miId) destinatarios.add(id); });
+        personas.forEach((id) => destinatarios.add(id));
       } else if (notificarPor === "sector" && sectores.length > 0) {
         const rolesBuscados = sectores.flatMap((s) => SECTOR_A_ROLES[s] || []);
         if (rolesBuscados.length > 0) {
           perfiles.forEach((p) => {
-            if (p.id !== miId && p.roles?.some((r) => rolesBuscados.includes(r))) destinatarios.add(p.id);
+            if (p.roles?.some((r) => rolesBuscados.includes(r))) destinatarios.add(p.id);
           });
         }
       }
