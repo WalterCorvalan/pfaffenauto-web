@@ -17,7 +17,7 @@ export default async function PresupuestosPage() {
     query,
     supabase.from("clientes").select("*").order("nombre"),
     supabase.from("vehiculos").select("*").eq("estado", "disponible").order("marca"),
-    supabase.from("perfiles").select("id, nombre").eq("activo", true).order("nombre"),
+    supabase.from("perfiles").select("id, nombre, sucursal_id").eq("activo", true).order("nombre"),
     supabase.from("sucursales").select("id, nombre").order("nombre"),
   ]);
 

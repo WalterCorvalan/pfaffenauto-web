@@ -197,7 +197,9 @@ export default function NuevaSenaModal({
         await notificarEncargados(
           supabase2,
           `${cliente.nombre} ${cliente.apellido || ""} — Seña N° ${data.numero}: el vendedor no confirmó el precio ($${(Number(ventaArs) || 0).toLocaleString("es-AR")}). Verificalo.`,
-          `/panel-v2/senas/imprimir/${data.id}`
+          `/panel-v2/senas/imprimir/${data.id}`,
+          "precio_a_confirmar",
+          sucursalId
         );
       }
 
