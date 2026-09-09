@@ -38,8 +38,16 @@ export default function NuevoPresupuestoModal({
 
   useEffect(() => {
     if (!vehiculo?.vehiculo_id) return;
+    // "Precio publicado" es un campo aparte para catálogo/financiación que
+    // casi nunca se carga -- la inmensa mayoría del stock solo tiene
+    // precio_venta (el interno), así que sin este fallback el precio
+    // quedaba en 0 para casi cualquier auto real.
     if (vehiculo.precio_publicado_ars) setPrecioArs(String(vehiculo.precio_publicado_ars));
-    if (vehiculo.precio_publicado_usd) setPrecioUsd(String(vehiculo.precio_publicado_usd));
+    else if (vehiculo.precio_publicado_usd) setPrecioUsd(String(vehiculo.precio_publicado_usd));
+    else if (vehiculo.precio_venta) {
+      if (vehiculo.moneda_venta === "ARS") setPrecioArs(String(vehiculo.precio_venta));
+      else setPrecioUsd(String(vehiculo.precio_venta));
+    }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [vehiculo?.vehiculo_id]);
 
