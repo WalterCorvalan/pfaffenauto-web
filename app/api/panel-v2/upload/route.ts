@@ -52,7 +52,7 @@ export async function POST(request: Request) {
 
     return NextResponse.json({ publicUrl, nombre: file.name });
   } catch (error) {
-    registrarError("api/panel-v2/upload", error);
+    registrarError("api/panel/upload", error);
     return NextResponse.json({ error: "Error interno subiendo el archivo" }, { status: 500 });
   }
 }

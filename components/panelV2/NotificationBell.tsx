@@ -120,7 +120,7 @@ export default function NotificationBell({ miId }: { miId: string }) {
             )}
           </div>
 
-          <a href="/panel-v2/alertas" onClick={() => setOpen(false)} className="flex items-center justify-center gap-1.5 px-4 py-2.5 text-xs font-bold text-rose-600 hover:bg-rose-50 dark:hover:bg-rose-500/10 border-t border-slate-100 dark:border-white/10">
+          <a href="/panel/alertas" onClick={() => setOpen(false)} className="flex items-center justify-center gap-1.5 px-4 py-2.5 text-xs font-bold text-rose-600 hover:bg-rose-50 dark:hover:bg-rose-500/10 border-t border-slate-100 dark:border-white/10">
             Ver Centro de Alertas <ExternalLink className="w-3 h-3" />
           </a>
         </div>

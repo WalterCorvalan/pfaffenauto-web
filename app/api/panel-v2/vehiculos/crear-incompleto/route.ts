@@ -77,7 +77,7 @@ export async function POST(req: Request) {
     if (error) throw error;
     return NextResponse.json({ id: data.id });
   } catch (err) {
-    registrarError("api/panel-v2/vehiculos/crear-incompleto", err);
+    registrarError("api/panel/vehiculos/crear-incompleto", err);
     return NextResponse.json({ error: "Error al crear el vehículo." }, { status: 500 });
   }
 }

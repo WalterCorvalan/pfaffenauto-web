@@ -1,0 +1,921 @@
+"use client";
+
+import MensajesBubble from "@/components/panelV2/MensajesBubble";
+import MobileNavProgress from "@/components/panelV2/MobileNavProgress";
+import NotificationBell from "@/components/panelV2/NotificationBell";
+import QuickActionsButton from "@/components/panelV2/QuickActionsButton";
+import TopTicker from "@/components/panelV2/TopTicker";
+import { ROL_A_SECTOR } from "@/lib/panelV2/permisosModulos";
+import { supabase2 } from "@/lib/supabase2/client";
+import {
+  AlertTriangle,
+  Banknote,
+  BedDouble,
+  BellRing,
+  BookUser,
+  Bot,
+  Briefcase,
+  CalendarCheck,
+  CalendarDays,
+  Car,
+  CheckSquare,
+  ClipboardCheck,
+  ClipboardList,
+  Coins,
+  CreditCard,
+  DollarSign,
+  FileText,
+  Folder,
+  FolderKanban,
+  Hammer,
+  Handshake,
+  History,
+  KeyRound,
+  Landmark,
+  LayoutDashboard,
+  Lightbulb,
+  LineChart,
+  LogOut,
+  Mail,
+  Megaphone,
+  Menu,
+  MessageSquareWarning,
+  MessagesSquare,
+  Moon,
+  PackageCheck,
+  PanelLeftClose,
+  PanelLeftOpen,
+  PiggyBank,
+  Radar,
+  Receipt,
+  Repeat,
+  RotateCw,
+  Search,
+  SearchCode,
+  Settings,
+  ShieldCheck,
+  Smartphone,
+  Sun,
+  Tag,
+  ThumbsUp,
+  Trash2,
+  Trophy,
+  UserCircle2,
+  Users,
+  Wallet,
+  Wrench,
+  X,
+} from "lucide-react";
+import Link from "next/link";
+import { usePathname, useRouter } from "next/navigation";
+import { useEffect, useState } from "react";
+
+// Grupos calcados del índice del manual del CRM viejo — todo lo que todavía
+// no construimos queda listado pero deshabilitado, para que el mapa completo
+// se vea desde ahora y cada módulo se "prenda" cuando lo hagamos.
+// Grupos reorganizados según el nuevo índice del panel Principal.
+// Marketing ya está habilitado apuntando a /panel/marketing.
+// Grupos calcados del esquema principal solicitado
+// Accesos rápidos de la bottom nav en mobile — el resto de los módulos
+// sigue disponible detrás del hamburger (sidebar completa).
+const NAV_MOBILE: { href: string; label: string; icon: any }[] = [
+  { href: "/panel", label: "Dashboard", icon: LayoutDashboard },
+  { href: "/panel/stock", label: "Stock", icon: Car },
+  { href: "/panel/clientes", label: "Clientes", icon: Users },
+  { href: "/panel/ventas", label: "Ventas", icon: Briefcase },
+  { href: "/panel/calendario", label: "Calendario", icon: CalendarDays },
+];
+
+// Todo item necesita "modulo" para que la visibilidad por sector
+// (visibilidad_sector) pueda apagarlo -- sin modulo, moduloVisible() lo
+// deja pasar para cualquier rol (ver itemVisible más abajo). Dashboard SÍ
+// puede apagarse por rol (solo admin/finanzas) -- el login manda siempre
+// a "/panel", así que hay un useEffect más abajo que reenvía a quien
+// no lo tenga habilitado al primer módulo que sí vea.
+const GRUPOS: {
+  titulo: string;
+  items: { href?: string; label: string; icon: any; modulo?: string }[];
+}[] = [
+  {
+    titulo: "Principal",
+    items: [
+      {
+        href: "/panel",
+        label: "Dashboard",
+        icon: LayoutDashboard,
+        modulo: "dashboard",
+      },
+      {
+        href: "/panel/calendario",
+        label: "Calendario",
+        icon: CalendarDays,
+        modulo: "calendario",
+      },
+      {
+        href: "/panel/alertas",
+        label: "Alertas",
+        icon: BellRing,
+        modulo: "alertas",
+      },
+      {
+        href: "/panel/reportes",
+        label: "Reportes",
+        icon: LineChart,
+        modulo: "reportes",
+      },
+      {
+        href: "/panel/mi-espacio",
+        label: "Mi Espacio",
+        icon: Folder,
+        modulo: "mi_espacio",
+      },
+      {
+        href: "/panel/mi-perfil",
+        label: "Mi Perfil",
+        icon: UserCircle2,
+        modulo: "mi_perfil",
+      },
+    ],
+  },
+  {
+    titulo: "Comercial",
+    items: [
+      { href: "/panel/stock", label: "Stock", icon: Car, modulo: "stock" },
+      {
+        href: "/panel/visitas",
+        label: "Visitas",
+        icon: CalendarCheck,
+        modulo: "visitas",
+      },
+      {
+        href: "/panel/clientes",
+        label: "Clientes",
+        icon: Users,
+        modulo: "clientes",
+      },
+      { href: "/panel/leads", label: "Leads", icon: Radar, modulo: "leads" },
+      {
+        href: "/panel/cotizaciones",
+        label: "Cotizaciones",
+        icon: FileText,
+        modulo: "cotizaciones",
+      },
+      {
+        href: "/panel/financiaciones",
+        label: "Financiaciones",
+        icon: CreditCard,
+        modulo: "financiaciones",
+      },
+      {
+        href: "/panel/senas",
+        label: "Señas",
+        icon: Wallet,
+        modulo: "senas",
+      },
+      {
+        href: "/panel/presupuestos",
+        label: "Presupuestos",
+        icon: FileText,
+        modulo: "presupuestos",
+      },
+      {
+        href: "/panel/ventas",
+        label: "Ventas",
+        icon: Briefcase,
+        modulo: "ventas",
+      },
+      {
+        href: "/panel/mis-ventas",
+        label: "Mis ventas",
+        icon: Trophy,
+        modulo: "mis_ventas",
+      },
+      {
+        href: "/panel/dormidos",
+        label: "Dormidos",
+        icon: BedDouble,
+        modulo: "dormidos",
+      },
+      {
+        href: "/panel/recontactos",
+        label: "Recontactos",
+        icon: Repeat,
+        modulo: "recontactos",
+      },
+    ],
+  },
+  {
+    titulo: "Marketing",
+    items: [
+      {
+        href: "/panel/marketing/generales",
+        label: "Marketing",
+        icon: Megaphone,
+        modulo: "marketing",
+      },
+    ],
+  },
+  {
+    titulo: "Operación",
+    items: [
+      {
+        href: "/panel/pedidos",
+        label: "Pedidos",
+        icon: SearchCode,
+        modulo: "pedidos",
+      },
+      {
+        href: "/panel/postventa",
+        label: "Postventa",
+        icon: PackageCheck,
+        modulo: "postventa",
+      },
+      {
+        href: "/panel/expedientes",
+        label: "Expedientes",
+        icon: FolderKanban,
+        modulo: "expedientes",
+      },
+      {
+        href: "/panel/reclamos",
+        label: "Reclamos",
+        icon: MessageSquareWarning,
+        modulo: "reclamos",
+      },
+      {
+        href: "/panel/gestoria",
+        label: "Gestoría",
+        icon: ClipboardList,
+        modulo: "gestoria",
+      },
+      {
+        href: "/panel/consignaciones",
+        label: "Consignaciones",
+        icon: KeyRound,
+        modulo: "consignaciones",
+      },
+      {
+        href: "/panel/peritajes",
+        label: "Peritajes",
+        icon: ClipboardCheck,
+        modulo: "peritajes",
+      },
+      {
+        href: "/panel/infracciones",
+        label: "Infracciones",
+        icon: Landmark,
+        modulo: "infracciones",
+      },
+      {
+        href: "/panel/telefonos",
+        label: "Teléfonos útiles",
+        icon: BookUser,
+        modulo: "telefonos_utiles",
+      },
+      {
+        href: "/panel/taller",
+        label: "Taller",
+        icon: Wrench,
+        modulo: "taller",
+      },
+      { label: "Service", icon: Hammer, modulo: "service" },
+    ],
+  },
+  {
+    titulo: "Finanzas",
+    items: [
+      {
+        href: "/panel/finanzas",
+        label: "Finanzas",
+        icon: Banknote,
+        modulo: "finanzas",
+      },
+      {
+        href: "/panel/cobros",
+        label: "Cobros",
+        icon: Receipt,
+        modulo: "cobros",
+      },
+      {
+        href: "/panel/tesoreria",
+        label: "Tesorería",
+        icon: PiggyBank,
+        modulo: "tesoreria",
+      },
+      {
+        href: "/panel/liquidaciones",
+        label: "Liquidaciones",
+        icon: Coins,
+        modulo: "liquidaciones",
+      },
+      {
+        href: "/panel/comisiones",
+        label: "Mis Comisiones",
+        icon: DollarSign,
+        modulo: "comisiones",
+      },
+    ],
+  },
+  {
+    titulo: "Colaboración",
+    items: [
+      {
+        href: "/panel/mensajes",
+        label: "Mensajes",
+        icon: MessagesSquare,
+        modulo: "mensajes",
+      },
+      {
+        href: "/panel/whatsapp",
+        label: "WhatsApp",
+        icon: Smartphone,
+        modulo: "whatsapp",
+      },
+      {
+        href: "/panel/rodi",
+        label: "Rodi (chat web)",
+        icon: Bot,
+        modulo: "rodi",
+      },
+      {
+        href: "/panel/tareas",
+        label: "Tareas de Leads",
+        icon: CheckSquare,
+        modulo: "tareas_leads",
+      },
+      { label: "Correos", icon: Mail, modulo: "correos" },
+      { href: "/panel/nps", label: "NPS", icon: ThumbsUp, modulo: "nps" },
+    ],
+  },
+  {
+    titulo: "Administración",
+    items: [
+      {
+        href: "/panel/autorizaciones",
+        label: "Autorizaciones",
+        icon: ShieldCheck,
+        modulo: "autorizaciones",
+      },
+      { label: "Sugerencias", icon: Lightbulb, modulo: "sugerencias" },
+      { label: "Papelera", icon: Trash2, modulo: "papelera" },
+      {
+        href: "/panel/configuracion",
+        label: "Configuración",
+        icon: Settings,
+        modulo: "configuracion",
+      },
+      { label: "Oportunidades", icon: Handshake, modulo: "oportunidades" },
+      {
+        href: "/panel/errores",
+        label: "Errores del sistema",
+        icon: AlertTriangle,
+        modulo: "errores_sistema",
+      },
+      {
+        href: "/panel/logs",
+        label: "Registro de Cambios",
+        icon: History,
+        modulo: "logs",
+      },
+    ],
+  },
+  {
+    titulo: "RRHH",
+    items: [
+      {
+        href: "/panel/postulaciones",
+        label: "Postulaciones",
+        icon: Users,
+        modulo: "postulaciones",
+      },
+      {
+        href: "/panel/sueldos/liquidador",
+        label: "Liquidador de Sueldos",
+        icon: Wallet,
+        modulo: "liquidador_sueldos",
+      },
+      {
+        href: "/panel/sueldos/categorias",
+        label: "Categorías de Empleados",
+        icon: Tag,
+        modulo: "categorias_empleados",
+      },
+    ],
+  },
+];
+
+const ROL_LABEL: Record<string, string> = {
+  admin: "Administrador",
+  encargado: "Encargado",
+  ventas: "Ventas",
+  finanzas: "Finanzas",
+  gestoria: "Gestoría",
+};
+const ROL_COLOR: Record<string, string> = {
+  admin: "bg-rose-100 text-rose-700 dark:bg-rose-500/15 dark:text-rose-300",
+  encargado: "bg-indigo-100 text-indigo-700 dark:bg-indigo-500/15 dark:text-indigo-300",
+  ventas: "bg-blue-100 text-blue-700 dark:bg-blue-500/15 dark:text-blue-300",
+  finanzas:
+    "bg-emerald-100 text-emerald-700 dark:bg-emerald-500/15 dark:text-emerald-300",
+  gestoria:
+    "bg-purple-100 text-purple-700 dark:bg-purple-500/15 dark:text-purple-300",
+};
+
+export default function PanelV2Layout({
+  children,
+}: {
+  children: React.ReactNode;
+}) {
+  const pathname = usePathname();
+  const router = useRouter();
+  const [isOpen, setIsOpen] = useState(false);
+  const [colapsado, setColapsado] = useState(false);
+  const [darkMode, setDarkMode] = useState(false);
+  const [nombre, setNombre] = useState("Cargando...");
+  const [roles, setRoles] = useState<string[]>([]);
+  const [miId, setMiId] = useState<string | null>(null);
+  const [toast, setToast] = useState<{
+    id: string;
+    titulo: string;
+    mensaje: string | null;
+    link: string | null;
+  } | null>(null);
+  // Feedback de "toqué esto, se está cargando" en la navegación del sidebar —
+  // sin esto, un click tarda ~1-2s en mostrar algo y parece que no pasó nada.
+  const [navegandoA, setNavegandoA] = useState<string | null>(null);
+
+  useEffect(() => {
+    setNavegandoA(null);
+  }, [pathname]);
+
+  useEffect(() => {
+    const guardado = localStorage.getItem("panelV2DarkMode");
+    if (guardado === "true") setDarkMode(true);
+    const guardadoColapsado = localStorage.getItem("panelV2SidebarColapsado");
+    if (guardadoColapsado === "true") setColapsado(true);
+  }, []);
+
+  const toggleColapsado = () => {
+    setColapsado((prev) => {
+      localStorage.setItem("panelV2SidebarColapsado", String(!prev));
+      return !prev;
+    });
+  };
+
+  useEffect(() => {
+    const cargarPerfil = async (userId: string) => {
+      setMiId(userId);
+      const { data } = await supabase2
+        .from("perfiles")
+        .select("nombre, roles")
+        .eq("id", userId)
+        .single();
+      setNombre(data?.nombre || "Usuario");
+      setRoles(data?.roles || []);
+    };
+
+    supabase2.auth.getUser().then(({ data: { user } }) => {
+      if (user) cargarPerfil(user.id);
+    });
+
+    // El layout envuelve /panel/login y no se remonta al navegar a
+    // /panel tras el login (misma instancia de layout) -- sin este
+    // listener, getUser() de arriba corre una sola vez con user=null
+    // (corrió mientras estaba en /login sin sesión) y roles nunca se
+    // vuelve a pedir hasta un F5 real. onAuthStateChange reacciona al
+    // SIGNED_IN aunque no haya remount.
+    const { data: sub } = supabase2.auth.onAuthStateChange((event, session) => {
+      if (event === "SIGNED_IN" && session?.user) {
+        cargarPerfil(session.user.id);
+      } else if (event === "SIGNED_OUT") {
+        setMiId(null);
+        setRoles([]);
+      }
+    });
+
+    return () => sub.subscription.unsubscribe();
+  }, []);
+
+  // Módulos apagados por Empresa → Módulos, y visibilidad por sector —
+  // el admin no se filtra nunca, así que solo hace falta traer esto para
+  // el resto de los roles.
+  const [modulosActivos, setModulosActivos] = useState<Record<string, boolean>>(
+    {},
+  );
+  const [visibilidadPorModulo, setVisibilidadPorModulo] = useState<
+    Record<string, Record<string, boolean>>
+  >({});
+  useEffect(() => {
+    if (roles.includes("admin")) return;
+    Promise.all([
+      supabase2.from("modulos_config").select("modulo, activo"),
+      supabase2.from("visibilidad_sector").select("modulo, sector, visible"),
+    ]).then(([{ data: modulos }, { data: visibilidad }]) => {
+      setModulosActivos(
+        Object.fromEntries((modulos || []).map((m) => [m.modulo, m.activo])),
+      );
+      const porModulo: Record<string, Record<string, boolean>> = {};
+      (visibilidad || []).forEach((v) => {
+        porModulo[v.modulo] = porModulo[v.modulo] || {};
+        porModulo[v.modulo][v.sector] = v.visible;
+      });
+      setVisibilidadPorModulo(porModulo);
+    });
+  }, [roles.join(",")]);
+
+  const esAdmin = roles.includes("admin");
+  const moduloVisible = (modulo?: string) => {
+    if (esAdmin || !modulo) return true;
+    if (modulosActivos[modulo] === false) return false;
+
+    const sectores = roles.map((r) => ROL_A_SECTOR[r]).filter(Boolean);
+    if (sectores.length === 0) return true;
+
+    // Sin fila en visibilidad_sector para ese módulo+sector, el módulo
+    // queda VISIBLE por default -- solo se apaga con una fila explícita en
+    // false (ver sql_panel_v2_permisos_sector_ventas.sql/_encargado.sql).
+    // Multi-rol suma permisos: alcanza que UN sector del usuario lo vea.
+    return sectores.some((s) => visibilidadPorModulo[modulo]?.[s] ?? true);
+  };
+
+  // "Mis Comisiones" se esconde para todos (admin incluido, como en el
+  // resto de la agencia) cuando Empresa → Comisiones está en modo "ninguna".
+  const [comisionesActivas, setComisionesActivas] = useState(true);
+  useEffect(() => {
+    supabase2
+      .from("configuracion_empresa")
+      .select("modo_comision")
+      .eq("id", true)
+      .single()
+      .then(({ data }) => {
+        if (data) setComisionesActivas(data.modo_comision !== "ninguna");
+      });
+  }, []);
+
+  const itemVisible = (item: { href?: string; modulo?: string }) => {
+    if (item.href === "/panel/comisiones" && !comisionesActivas)
+      return false;
+    return moduloVisible(item.modulo);
+  };
+
+  // El login manda siempre a "/panel" (Dashboard) sin importar el rol --
+  // ahora que Dashboard puede estar apagado para un rol (solo admin/finanzas
+  // lo ven), a alguien sin acceso lo mandaríamos directo a la pantalla de
+  // "Módulo no habilitado" apenas entra. En vez de eso, lo reenviamos solo
+  // ahí al primer módulo que sí tenga habilitado.
+  useEffect(() => {
+    if (!miId || pathname !== "/panel") return;
+    if (moduloVisible("dashboard")) return;
+    const primerVisible = GRUPOS.flatMap((g) => g.items).find(
+      (item) => item.href && item.href !== "/panel" && itemVisible(item),
+    );
+    if (primerVisible?.href) router.replace(primerVisible.href);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [miId, pathname, roles.join(",")]);
+
+  // Toast de alertas urgentes en vivo (se cierra solo a los 10s, o con
+  // click) — el contador de la campana lo maneja NotificationBell aparte.
+  useEffect(() => {
+    if (!miId) return;
+
+    const canal = supabase2
+      .channel(`alertas-${miId}-${Math.random().toString(36).slice(2)}`)
+      .on(
+        "postgres_changes",
+        {
+          event: "INSERT",
+          schema: "public",
+          table: "alertas",
+          filter: `destinatario_id=eq.${miId}`,
+        },
+        (payload) => {
+          if (payload.new.prioridad === "alta") {
+            setToast({
+              id: payload.new.id,
+              titulo: payload.new.titulo,
+              mensaje: payload.new.mensaje,
+              link: payload.new.link,
+            });
+            setTimeout(
+              () =>
+                setToast((prev) => (prev?.id === payload.new.id ? null : prev)),
+              10000,
+            );
+          }
+        },
+      )
+      .subscribe();
+
+    return () => {
+      supabase2.removeChannel(canal);
+    };
+  }, [miId]);
+
+  const toggleDarkMode = () => {
+    setDarkMode((prev) => {
+      localStorage.setItem("panelV2DarkMode", String(!prev));
+      return !prev;
+    });
+  };
+
+  const handleLogout = async () => {
+    await supabase2.auth.signOut();
+    router.push("/panel/login");
+  };
+
+  const esLogin = pathname === "/panel/login";
+  if (esLogin) return <>{children}</>;
+
+  // Guard de acceso directo por URL: un módulo apagado o sin visibilidad
+  // para el sector del usuario no debe abrirse solo porque conoce el link.
+  const itemDeLaRuta = GRUPOS.flatMap((g) => g.items).find(
+    (item) =>
+      item.href &&
+      (item.href === "/panel"
+        ? pathname === item.href
+        : pathname?.startsWith(item.href)),
+  );
+  if (miId && itemDeLaRuta && !itemVisible(itemDeLaRuta)) {
+    // "/panel" (Dashboard) es a donde manda el login sin importar el
+    // rol -- si no lo tiene habilitado, el useEffect de arriba ya lo está
+    // reenviando a otro lado; no mostrar el cartel de bloqueo acá, solo
+    // parpadearía un instante antes de la redirección.
+    if (pathname === "/panel") return null;
+    return (
+      <div className="min-h-screen flex items-center justify-center text-center p-6">
+        <div>
+          <p className="text-lg font-bold text-slate-700 dark:text-slate-200">
+            Módulo no habilitado
+          </p>
+          <p className="text-sm text-slate-400 mt-1">
+            Esta sección está apagada o no está disponible para tu rol.
+          </p>
+        </div>
+      </div>
+    );
+  }
+
+  const rolPrincipal = roles[0] || "";
+
+  return (
+    <div className={darkMode ? "dark" : ""}>
+      <div className="panel-v2-root flex h-screen w-full bg-[#F8FAFC] dark:bg-[#0A0A0A] text-slate-900 dark:text-slate-100 overflow-hidden print:h-auto print:overflow-visible print:block">
+        <div className="md:hidden print:hidden fixed top-0 left-0 right-0 h-14 bg-white dark:bg-[#111] border-b border-slate-200 dark:border-white/10 flex items-center gap-2 px-3 z-50">
+          <button
+            onClick={() => setIsOpen(!isOpen)}
+            className="shrink-0 p-1 text-slate-600 dark:text-slate-300"
+          >
+            {isOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
+          </button>
+          <div className="relative flex-1 min-w-0">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-slate-400" />
+            <input
+              disabled
+              placeholder="Buscar clientes, patentes..."
+              title="El buscador global se conecta cuando construyamos esos módulos"
+              className="w-full bg-slate-50 dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-full py-1.5 pl-9 pr-3 text-[12px] outline-none text-slate-900 dark:text-white placeholder:text-slate-400 disabled:cursor-not-allowed"
+            />
+          </div>
+          <button
+            onClick={toggleDarkMode}
+            className="shrink-0 p-1.5 rounded-lg text-slate-500 dark:text-slate-300"
+            title={darkMode ? "Modo claro" : "Modo oscuro"}
+          >
+            {darkMode ? (
+              <Sun className="w-4 h-4" />
+            ) : (
+              <Moon className="w-4 h-4" />
+            )}
+          </button>
+          <NotificationBell miId={miId || ""} />
+        </div>
+
+        {/* SIDEBAR */}
+        <aside
+          className={`print:hidden fixed md:relative top-14 md:top-0 left-0 h-[calc(100vh-3.5rem)] md:h-full ${colapsado ? "md:w-[68px]" : "md:w-[230px]"} w-[230px] bg-white dark:bg-[#111] border-r border-slate-200 dark:border-white/10 flex flex-col shrink-0 transform transition-all duration-200 z-40 ${isOpen ? "translate-x-0" : "-translate-x-full md:translate-x-0"}`}
+        >
+          <div
+            className={`h-[60px] flex items-center gap-2 border-b border-slate-200 dark:border-white/10 shrink-0 ${colapsado ? "md:px-2 px-4" : "px-4"}`}
+          >
+            <div className="w-8 h-8 rounded-lg bg-indigo-600 text-white flex items-center justify-center font-bold text-xs shrink-0">
+              P
+            </div>
+            <div className={colapsado ? "md:hidden" : ""}>
+              <p className="text-sm font-bold leading-none">Panel</p>
+              <p className="text-[10px] text-slate-400 leading-none mt-0.5">
+                Pfaffen Autos
+              </p>
+            </div>
+            <button
+              onClick={toggleColapsado}
+              title={colapsado ? "Expandir menú" : "Colapsar menú"}
+              className="hidden md:flex ml-auto shrink-0 w-6 h-6 items-center justify-center rounded-md text-slate-400 hover:text-slate-700 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-white/10 transition-colors"
+            >
+              {colapsado ? (
+                <PanelLeftOpen className="w-4 h-4" />
+              ) : (
+                <PanelLeftClose className="w-4 h-4" />
+              )}
+            </button>
+          </div>
+
+          <nav className="flex-1 overflow-y-auto py-2 custom-scrollbar">
+            {GRUPOS.map(
+              (grupo) =>
+                grupo.items.some((item) => itemVisible(item)) && (
+                  <div key={grupo.titulo} className="mb-1">
+                    <p
+                      className={`px-4 pt-3 pb-1 text-[10px] font-bold uppercase tracking-wider text-slate-400 ${colapsado ? "md:hidden" : ""}`}
+                    >
+                      {grupo.titulo}
+                    </p>
+                    {colapsado && (
+                      <div className="hidden md:block mx-3 my-1.5 border-t border-slate-100 dark:border-white/5 first:mt-0" />
+                    )}
+                    {grupo.items
+                      .filter((item) => itemVisible(item))
+                      .map((item) => {
+                        const Icon = item.icon;
+                        const activo =
+                          item.href &&
+                          (item.href === "/panel"
+                            ? pathname === item.href
+                            : pathname?.startsWith(item.href));
+                        if (!item.href) {
+                          return (
+                            <div
+                              key={item.label}
+                              title="Todavía no construido"
+                              className={`flex items-center gap-3 py-2 mx-2 rounded-lg text-sm text-slate-300 dark:text-slate-600 cursor-not-allowed ${colapsado ? "md:justify-center px-4 md:px-0" : "px-4"}`}
+                            >
+                              <Icon className="w-4 h-4 shrink-0" />{" "}
+                              <span className={colapsado ? "md:hidden" : ""}>
+                                {item.label}
+                              </span>
+                            </div>
+                          );
+                        }
+                        const cargando = navegandoA === item.href && !activo;
+                        return (
+                          <Link
+                            key={item.label}
+                            href={item.href}
+                            title={colapsado ? item.label : undefined}
+                            onClick={() => {
+                              setIsOpen(false);
+                              if (!activo) setNavegandoA(item.href!);
+                            }}
+                            className={`flex items-center gap-3 py-2 mx-2 rounded-lg text-sm transition-all active:scale-[0.97] ${colapsado ? "md:justify-center px-4 md:px-0" : "px-4"} ${
+                              activo
+                                ? "bg-indigo-50 dark:bg-indigo-500/10 text-indigo-700 dark:text-indigo-300 font-semibold"
+                                : cargando
+                                  ? "bg-slate-100 dark:bg-white/10 text-slate-500 dark:text-slate-300"
+                                  : "text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-white/5"
+                            }`}
+                          >
+                            {cargando ? (
+                              <RotateCw className="w-4 h-4 animate-spin shrink-0" />
+                            ) : (
+                              <Icon className="w-4 h-4 shrink-0" />
+                            )}{" "}
+                            <span className={colapsado ? "md:hidden" : ""}>
+                              {item.label}
+                            </span>
+                          </Link>
+                        );
+                      })}
+                  </div>
+                ),
+            )}
+          </nav>
+
+          <div className="border-t border-slate-200 dark:border-white/10 p-3 shrink-0 space-y-2">
+            <div
+              className={`flex items-center gap-2 px-1 ${colapsado ? "md:justify-center" : ""}`}
+              title={colapsado ? nombre : undefined}
+            >
+              <div className="w-7 h-7 rounded-full bg-rose-500 text-white flex items-center justify-center text-xs font-bold shrink-0">
+                {nombre.charAt(0).toUpperCase()}
+              </div>
+              <div className={`min-w-0 flex-1 ${colapsado ? "md:hidden" : ""}`}>
+                <p className="text-xs font-bold truncate">{nombre}</p>
+                {rolPrincipal && (
+                  <span
+                    className={`inline-block text-[9px] font-bold uppercase tracking-wide px-1.5 py-0.5 rounded ${ROL_COLOR[rolPrincipal] || "bg-slate-100 text-slate-600"}`}
+                  >
+                    {ROL_LABEL[rolPrincipal] || rolPrincipal}
+                  </span>
+                )}
+              </div>
+            </div>
+            <button
+              onClick={handleLogout}
+              title={colapsado ? "Cerrar sesión" : undefined}
+              className={`w-full flex items-center gap-2 py-1.5 text-xs font-semibold text-rose-600 dark:text-rose-400 hover:bg-rose-50 dark:hover:bg-rose-500/10 rounded-lg transition-colors ${colapsado ? "md:justify-center px-2" : "px-2"}`}
+            >
+              <LogOut className="w-3.5 h-3.5 shrink-0" />{" "}
+              <span className={colapsado ? "md:hidden" : ""}>
+                Cerrar sesión
+              </span>
+            </button>
+          </div>
+        </aside>
+
+        {/* CONTENIDO */}
+        <div className="flex-1 min-w-0 h-full flex flex-col pt-14 md:pt-0 print:pt-0 print:h-auto print:block">
+          {/* TOPBAR */}
+          <div className="hidden md:flex print:hidden items-center gap-3 px-4 py-2 border-b border-slate-200 dark:border-white/10 bg-white dark:bg-[#111] shrink-0">
+            <div className="relative w-64 shrink-0">
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-slate-400" />
+              <input
+                disabled
+                placeholder="Buscar clientes, patentes, etc..."
+                title="El buscador global se conecta cuando construyamos esos módulos"
+                className="w-full bg-slate-50 dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-full py-1.5 pl-9 pr-3 text-[11px] outline-none text-slate-900 dark:text-white placeholder:text-slate-400 disabled:cursor-not-allowed"
+              />
+            </div>
+
+            <TopTicker />
+
+            <button
+              onClick={toggleDarkMode}
+              className="p-1.5 rounded-lg hover:bg-slate-100 dark:hover:bg-white/10 text-slate-500 dark:text-slate-300 shrink-0"
+              title={darkMode ? "Modo claro" : "Modo oscuro"}
+            >
+              {darkMode ? (
+                <Sun className="w-4 h-4" />
+              ) : (
+                <Moon className="w-4 h-4" />
+              )}
+            </button>
+            <NotificationBell miId={miId || ""} />
+          </div>
+
+          <main className="relative flex-1 min-w-0 overflow-y-auto bg-[#F8FAFC] dark:bg-[#0A0A0A] pb-16 md:pb-0 print:overflow-visible print:pb-0 print:bg-white">
+            {navegandoA && (
+              <div className="absolute top-0 left-0 right-0 h-0.5 z-50 overflow-hidden bg-indigo-100 dark:bg-indigo-500/10">
+                <div className="h-full w-1/3 bg-indigo-600 dark:bg-indigo-400 animate-barra-carga" />
+              </div>
+            )}
+            {children}
+          </main>
+        </div>
+
+        {/* BOTTOM NAV — accesos rápidos en mobile, la barra lateral completa
+            queda detrás del hamburger para lo demás. */}
+        <nav className={`md:hidden print:hidden fixed bottom-0 left-0 right-0 h-16 bg-white dark:bg-[#111] border-t border-slate-200 dark:border-white/10 items-stretch z-50 ${isOpen ? "hidden" : "flex"}`}>
+          {NAV_MOBILE.map((item) => {
+            const Icon = item.icon;
+            const activo = pathname === item.href;
+            return (
+              <Link
+                key={item.href}
+                href={item.href}
+                className={`flex-1 flex flex-col items-center justify-center gap-0.5 text-[10px] font-semibold ${activo ? "text-rose-600 dark:text-rose-400" : "text-slate-500 dark:text-slate-400"}`}
+              >
+                <Icon
+                  className={`w-5 h-5 ${activo ? "text-rose-600 dark:text-rose-400" : ""}`}
+                />
+                {item.label}
+              </Link>
+            );
+          })}
+        </nav>
+      </div>
+
+      {toast && (
+        <div
+          onClick={() => {
+            if (toast.link) router.push(toast.link);
+            setToast(null);
+          }}
+          className="print:hidden fixed top-4 right-4 z-[100] w-80 bg-white dark:bg-[#1A1A1A] border border-rose-200 dark:border-rose-500/30 rounded-xl shadow-2xl p-4 cursor-pointer animate-fadeIn"
+        >
+          <div className="flex items-start justify-between gap-2">
+            <p className="text-sm font-bold text-rose-600 dark:text-rose-400">
+              {toast.titulo}
+            </p>
+            <button
+              onClick={(e) => {
+                e.stopPropagation();
+                setToast(null);
+              }}
+              className="text-slate-400 hover:text-slate-700 dark:hover:text-white shrink-0"
+            >
+              <X className="w-4 h-4" />
+            </button>
+          </div>
+          {toast.mensaje && (
+            <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">
+              {toast.mensaje}
+            </p>
+          )}
+        </div>
+      )}
+
+      <QuickActionsButton />
+      <MensajesBubble />
+      <MobileNavProgress />
+    </div>
+  );
+}

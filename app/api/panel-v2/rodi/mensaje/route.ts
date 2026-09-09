@@ -43,7 +43,7 @@ export async function POST(request: Request) {
   try {
     return await procesarMensaje({ sessionId, texto, origenPagina, nombre, telefono, email });
   } catch (err) {
-    registrarError("api/panel-v2/rodi/mensaje", err, { sessionId });
+    registrarError("api/panel/rodi/mensaje", err, { sessionId });
     return NextResponse.json({ replies: ["¡Hola! Gracias por escribirnos a Pfaffen Autos. En breve te contacta uno de nuestros asesores. 🚗"], handoff: false });
   }
 }
@@ -102,7 +102,7 @@ async function procesarMensaje({ sessionId, texto, origenPagina, nombre, telefon
   const result = await generarRespuestaAgenteV2(historial, "panel-v2/rodi", "Rodi");
 
   if (!result.ok) {
-    registrarError("api/panel-v2/rodi/mensaje:agente", result.error, { conversacionId: conversacion.id });
+    registrarError("api/panel/rodi/mensaje:agente", result.error, { conversacionId: conversacion.id });
     return NextResponse.json({ replies: ["¡Hola! Gracias por escribirnos a Pfaffen Autos. En breve te contacta uno de nuestros asesores. 🚗"], handoff: false });
   }
 

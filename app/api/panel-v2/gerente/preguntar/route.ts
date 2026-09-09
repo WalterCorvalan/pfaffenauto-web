@@ -77,8 +77,8 @@ ${JSON.stringify(snapshot, null, 2)}
 Reglas:
 - Los números de arriba son la única fuente de verdad. Nunca los corrijas ni compares con datos externos (no tenés acceso a internet en esta versión).
 - Si preguntan algo que no está en estos datos, decilo con honestidad en vez de inventar.
-- Si conviene ir a una sección del panel para actuar, sugerí un link relativo (ej: "/panel-v2/clientes") en el campo "link", si no aplica dejalo en null.
-- Devolvé SOLO este JSON: {"reply": "...", "link": "/panel-v2/... o null"}`;
+- Si conviene ir a una sección del panel para actuar, sugerí un link relativo (ej: "/panel/clientes") en el campo "link", si no aplica dejalo en null.
+- Devolvé SOLO este JSON: {"reply": "...", "link": "/panel/... o null"}`;
 
   const historialMsgs = Array.isArray(historial) ? historial.slice(-6).map((m: any) => ({ role: m.role === "assistant" ? "assistant" as const : "user" as const, content: String(m.content || "") })) : [];
 
@@ -89,7 +89,7 @@ Reglas:
   ], { origen: "gerente_dashboard" });
 
   if (!resultado.ok) {
-    registrarError("api/panel-v2/gerente/preguntar", resultado.error, { userId: user.id });
+    registrarError("api/panel/gerente/preguntar", resultado.error, { userId: user.id });
     return NextResponse.json({ error: "No se pudo generar una respuesta. Reintentá." }, { status: 500 });
   }
   return NextResponse.json(resultado.data);

@@ -62,7 +62,7 @@ export async function POST(req: Request) {
 
     const vehiculoTxt = [vehiculo_marca, vehiculo_modelo].filter(Boolean).join(" ");
     const titulo = `Nueva visita agendada — ${nombre_cliente}${vehiculoTxt ? ` (${vehiculoTxt})` : ""}`;
-    const link = `/panel-v2/visitas`;
+    const link = `/panel/visitas`;
     if (vendedor_id) {
       await supabase.from("alertas").insert({ destinatario_id: vendedor_id, tipo: "visita_nueva", prioridad: "media", titulo, link });
     } else {
@@ -74,7 +74,7 @@ export async function POST(req: Request) {
 
     return Response.json({ ok: true, id: data.id });
   } catch (err) {
-    registrarError("api/panel-v2/visitas", err);
+    registrarError("api/panel/visitas", err);
     return Response.json({ error: "Hubo un problema al agendar la visita." }, { status: 500 });
   }
 }

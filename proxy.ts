@@ -1,52 +1,11 @@
 import { NextResponse, type NextRequest } from 'next/server'
 import { createServerClient } from '@supabase/ssr'
 
-// panel-v2 es OTRO proyecto Supabase, con su propio login — antes de
-// "startsWith('/panel')" hay que sacarlo del camino, si no matchea también
-// "/panel-v2" y lo redirige con la sesión/DB de panel-v1 (login equivocado).
-function esRutaPanelV2(pathname: string) {
-  return pathname === '/panel-v2' || pathname.startsWith('/panel-v2/');
+function esRutaPanel(pathname: string) {
+  return pathname === '/panel' || pathname.startsWith('/panel/');
 }
 
-async function proxyPanelV1(request: NextRequest) {
-  const { pathname } = request.nextUrl;
-  let response = NextResponse.next({ request });
-
-  const supabase = createServerClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY!,
-    {
-      cookies: {
-        getAll: () => request.cookies.getAll(),
-        setAll: (cookiesToSet) => {
-          cookiesToSet.forEach(({ name, value }) => request.cookies.set(name, value));
-          response = NextResponse.next({ request });
-          cookiesToSet.forEach(({ name, value, options }) =>
-            response.cookies.set(name, value, options)
-          );
-        },
-      },
-    }
-  );
-
-  const { data: { user } } = await supabase.auth.getUser();
-
-  if (!user && pathname.startsWith('/panel')) {
-    const url = request.nextUrl.clone();
-    url.pathname = '/login';
-    return NextResponse.redirect(url);
-  }
-
-  if (user && pathname === '/login') {
-    const url = request.nextUrl.clone();
-    url.pathname = '/panel';
-    return NextResponse.redirect(url);
-  }
-
-  return response;
-}
-
-async function proxyPanelV2(request: NextRequest) {
+async function proxyPanel(request: NextRequest) {
   const { pathname } = request.nextUrl;
   let response = NextResponse.next({ request });
 
@@ -75,15 +34,15 @@ async function proxyPanelV2(request: NextRequest) {
 
   const { data: { user } } = await supabase.auth.getUser();
 
-  if (!user && pathname !== '/panel-v2/login') {
+  if (!user && pathname !== '/panel/login') {
     const url = request.nextUrl.clone();
-    url.pathname = '/panel-v2/login';
+    url.pathname = '/panel/login';
     return NextResponse.redirect(url);
   }
 
-  if (user && pathname === '/panel-v2/login') {
+  if (user && pathname === '/panel/login') {
     const url = request.nextUrl.clone();
-    url.pathname = '/panel-v2';
+    url.pathname = '/panel';
     return NextResponse.redirect(url);
   }
 
@@ -91,10 +50,10 @@ async function proxyPanelV2(request: NextRequest) {
 }
 
 export async function proxy(request: NextRequest) {
-  if (esRutaPanelV2(request.nextUrl.pathname)) {
-    return proxyPanelV2(request);
+  if (esRutaPanel(request.nextUrl.pathname)) {
+    return proxyPanel(request);
   }
-  return proxyPanelV1(request);
+  return NextResponse.next({ request });
 }
 
 export const config = {

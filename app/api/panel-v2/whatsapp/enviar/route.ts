@@ -18,7 +18,7 @@ const supabaseAdmin = createClient(
   process.env.SUPABASE2_SERVICE_ROLE_KEY!
 );
 
-// El vendedor responde manualmente desde /panel-v2/whatsapp — a diferencia
+// El vendedor responde manualmente desde /panel/whatsapp — a diferencia
 // del bot, esto requiere sesión de staff logueada. Las credenciales de Meta
 // viven cifradas en whatsapp_configuracion (Configuración → WhatsApp), no en
 // variables de entorno como en v1.
@@ -91,7 +91,7 @@ export async function POST(request: Request) {
     if (!conversacion?.estado_pipeline || conversacion.estado_pipeline === "sin_contactar") patchConversacion.estado_pipeline = "contactado";
     await supabaseAdmin.from("whatsapp_conversaciones").update(patchConversacion).eq("id", conversacionId);
   } catch (err: any) {
-    registrarError("api/panel-v2/whatsapp/enviar", err, { conversacionId, mensajeId: mensaje.id });
+    registrarError("api/panel/whatsapp/enviar", err, { conversacionId, mensajeId: mensaje.id });
     await supabaseAdmin.from("whatsapp_mensajes").update({ status: "failed" }).eq("id", mensaje.id);
     return NextResponse.json({ error: err?.message ?? "Error enviando el mensaje." }, { status: 502 });
   }

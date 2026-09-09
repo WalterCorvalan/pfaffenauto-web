@@ -117,13 +117,13 @@ export async function POST(req: Request) {
         prioridad: "novedad",
         titulo: `Nueva tasación desde la web — ${data.nombre}`,
         mensaje: `${data.marca} ${data.modelo || ""} ${data.anio || ""}`.trim(),
-        link: `/panel-v2/cotizaciones`,
+        link: `/panel/cotizaciones`,
       });
     }
 
     return Response.json({ ok: true, id: lead.id });
   } catch (err) {
-    registrarError("api/panel-v2/leads-tasacion", err);
+    registrarError("api/panel/leads-tasacion", err);
     return Response.json({ error: "Hubo un problema al enviar tu solicitud." }, { status: 500 });
   }
 }

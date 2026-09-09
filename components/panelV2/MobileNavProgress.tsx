@@ -18,7 +18,7 @@ export default function MobileNavProgress() {
       const link = (e.target as HTMLElement)?.closest("a[href]") as HTMLAnchorElement | null;
       if (!link) return;
       const href = link.getAttribute("href") || "";
-      if (!href.startsWith("/panel-v2") || href === pathname) return;
+      if (!href.startsWith("/panel") || href === pathname) return;
       if (link.target === "_blank" || e.metaKey || e.ctrlKey) return;
       setActiva(true);
       if (timeoutRef.current) clearTimeout(timeoutRef.current);

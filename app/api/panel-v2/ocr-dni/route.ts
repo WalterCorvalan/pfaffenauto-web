@@ -111,7 +111,7 @@ export async function POST(req: Request) {
 
     return NextResponse.json(parsed.data);
   } catch (err) {
-    registrarError("api/panel-v2/ocr-dni", err);
+    registrarError("api/panel/ocr-dni", err);
     return NextResponse.json({ error: "Error interno del servidor." }, { status: 500 });
   }
 }

@@ -38,7 +38,7 @@ export async function POST(req: Request) {
 
     return Response.json({ ok: true });
   } catch (err) {
-    registrarError("api/panel-v2/busquedas", err);
+    registrarError("api/panel/busquedas", err);
     return Response.json({ error: "No se pudo registrar la búsqueda." }, { status: 500 });
   }
 }

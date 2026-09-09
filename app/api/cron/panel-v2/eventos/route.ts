@@ -49,7 +49,7 @@ export async function GET(req: Request) {
   for (const e of aProcesar) {
     const fechaLegible = new Date(`${e.fecha}T12:00:00Z`).toLocaleDateString("es-AR", { timeZone: "UTC" });
     const titulo = `Evento hoy: ${e.titulo}${e.hora ? ` — ${fechaLegible} ${e.hora}` : ` — ${fechaLegible}`}`;
-    const link = "/panel-v2/calendario";
+    const link = "/panel/calendario";
     const destinatarios = new Set<string>();
 
     if (e.responsable_id) destinatarios.add(e.responsable_id);
