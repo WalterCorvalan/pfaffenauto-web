@@ -10,10 +10,8 @@ const CATEGORIAS = ["Auto", "Pickup/Camioneta", "SUV", "Utilitario"];
 const CONDICIONES = ["0km", "Excelente", "Muy bueno", "Bueno", "Regular"];
 const ESTADOS = [
   { value: "disponible", label: "Disponible" },
-  { value: "reservado", label: "Reservado" },
   { value: "señado", label: "Señado" },
   { value: "vendido", label: "Vendido" },
-  { value: "en_preparacion", label: "En preparación" },
 ];
 
 interface Perfil { id: string; nombre: string; sucursal_id?: string | null }
@@ -53,6 +51,7 @@ export default function NuevoVehiculoModal({ perfiles, clientes, sucursales, miI
   const [duenosAnteriores, setDuenosAnteriores] = useState(editando?.["dueños_anteriores"] ? String(editando["dueños_anteriores"]) : "1");
   const [propioAgencia, setPropioAgencia] = useState(editando?.propio_agencia || false);
   const [propietarioNombre, setPropietarioNombre] = useState(editando?.propietario_nombre || "");
+  const [propietarioDni, setPropietarioDni] = useState(editando?.propietario_dni || "");
   const [clienteVinculadoId, setClienteVinculadoId] = useState(editando?.cliente_vinculado_id || "");
   const [propietarioTelefono, setPropietarioTelefono] = useState(editando?.propietario_telefono || "");
   const [propietarioEmail, setPropietarioEmail] = useState(editando?.propietario_email || "");
@@ -167,7 +166,7 @@ export default function NuevoVehiculoModal({ perfiles, clientes, sucursales, miI
       setGuardando(true);
       setError("");
       try {
-        const { data, error: dbError } = await supabase2.from("vehiculos").update({ fotos }).eq("id", editando.id).select("*, sucursal:sucursal_id ( nombre )").single();
+        const { data, error: dbError } = await supabase2.from("vehiculos").update({ fotos, actualizado_por: miId || null }).eq("id", editando.id).select("*, sucursal:sucursal_id ( nombre )").single();
         if (dbError) throw dbError;
         onCreado(data);
         onClose();
@@ -193,6 +192,7 @@ export default function NuevoVehiculoModal({ perfiles, clientes, sucursales, miI
         ubicacion, estado: estadoInicial, "dueños_anteriores": duenosAnteriores ? Number(duenosAnteriores) : null,
         propio_agencia: propioAgencia,
         propietario_nombre: propioAgencia ? null : (propietarioNombre || null),
+        propietario_dni: propioAgencia ? null : (propietarioDni || null),
         cliente_vinculado_id: clienteVinculadoId || null,
         propietario_telefono: propioAgencia ? null : (propietarioTelefono || null),
         propietario_email: propioAgencia ? null : (propietarioEmail || null),
@@ -223,6 +223,7 @@ export default function NuevoVehiculoModal({ perfiles, clientes, sucursales, miI
         propietario_codigo_postal: propioAgencia ? null : (propietarioCodigoPostal || null),
         propietario_provincia: propioAgencia ? null : (propietarioProvincia || null),
         propietario_telefono_celular: propioAgencia ? null : (propietarioTelefonoCelular || null),
+        actualizado_por: miId || null,
       };
       const { data, error: dbError } = esEdicion
         ? await supabase2.from("vehiculos").update(payload).eq("id", editando.id).select("*, sucursal:sucursal_id ( nombre )").single()
@@ -268,6 +269,12 @@ export default function NuevoVehiculoModal({ perfiles, clientes, sucursales, miI
           <div>
             <h3 className="text-lg font-bold text-slate-900 dark:text-white">{esEdicion ? "Editar vehículo" : "Nuevo vehículo"}</h3>
             <p className="text-xs text-slate-500 dark:text-slate-400">Datos básicos del vehículo. Escaneo de cédula verde disponible luego de crear el vehículo.</p>
+            {esEdicion && editando?.updated_at && (
+              <p className="text-[10px] text-slate-400 mt-1">
+                Última actualización: {new Date(editando.updated_at).toLocaleDateString("es-AR")} {new Date(editando.updated_at).toLocaleTimeString("es-AR", { hour: "2-digit", minute: "2-digit" })}
+                {editando.actualizado_por && ` · ${perfiles.find((p) => p.id === editando.actualizado_por)?.nombre || "—"}`}
+              </p>
+            )}
           </div>
           <button onClick={onClose} className="text-slate-400 hover:text-slate-700 dark:hover:text-white p-1.5 rounded-lg hover:bg-slate-100 dark:hover:bg-white/10">
             <X className="w-4 h-4" />
@@ -492,6 +499,10 @@ export default function NuevoVehiculoModal({ perfiles, clientes, sucursales, miI
                 <div>
                   <label className={labelClass}>Nombre</label>
                   <input value={propietarioNombre} onChange={(e) => setPropietarioNombre(e.target.value)} className={inputClass} />
+                </div>
+                <div>
+                  <label className={labelClass}>D.N.I.</label>
+                  <input value={propietarioDni} onChange={(e) => setPropietarioDni(e.target.value)} className={inputClass} />
                 </div>
                 <div>
                   <label className={labelClass}>Cliente vinculado</label>

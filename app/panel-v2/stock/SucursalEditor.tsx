@@ -2,17 +2,25 @@
 
 import { useState } from "react";
 import { supabase2 } from "@/lib/supabase2/client";
-import { Building2, X, Save } from "lucide-react";
+import { Building2, X, Save, AlertTriangle } from "lucide-react";
 
 export default function SucursalEditor({
-  vehiculoId, sucursalId, sucursalNombre, sucursales, onActualizado,
+  vehiculoId, sucursalId, sucursalNombre, vendedorId, vendedorNombre, perfiles, sucursales, onActualizado,
 }: {
   vehiculoId: string; sucursalId: string | null; sucursalNombre: string | null;
+  vendedorId?: string | null; vendedorNombre?: string | null;
+  perfiles?: { id: string; sucursal_id?: string | null }[];
   sucursales: { id: string; nombre: string }[]; onActualizado: (id: string, cambios: any) => void;
 }) {
   const [editando, setEditando] = useState(false);
   const [nueva, setNueva] = useState(sucursalId || "");
   const [guardando, setGuardando] = useState(false);
+
+  // Mismo aviso que VendedorEditor pero al revés: mover el AUTO de sucursal
+  // deja al vendedor ya asignado del otro lado -- pasa el mismo caso, en
+  // sentido contrario (antes cambiaba la sucursal sin avisar nada).
+  const vendedorSucursalId = vendedorId ? perfiles?.find((p) => p.id === vendedorId)?.sucursal_id : null;
+  const quedaDesalineado = !!vendedorId && !!nueva && !!vendedorSucursalId && vendedorSucursalId !== nueva;
 
   const guardar = async () => {
     if (nueva === (sucursalId || "")) return setEditando(false);
@@ -45,6 +53,11 @@ export default function SucursalEditor({
           <option value="">Sin asignar</option>
           {sucursales.map((s) => <option key={s.id} value={s.id}>{s.nombre}</option>)}
         </select>
+        {quedaDesalineado && (
+          <p className="text-[11px] text-amber-600 dark:text-amber-400 font-semibold flex items-center gap-1.5 -mt-2">
+            <AlertTriangle className="w-3.5 h-3.5 shrink-0" /> {vendedorNombre || "El vendedor asignado"} no pertenece a esta sucursal.
+          </p>
+        )}
         <div className="flex gap-2">
           <button onClick={() => setEditando(false)} disabled={guardando} className="flex-1 py-2 text-xs font-bold text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-white/10 rounded-xl disabled:opacity-50">Cancelar</button>
           <button onClick={guardar} disabled={guardando} className="flex-1 py-2 flex items-center justify-center gap-1.5 text-xs font-bold bg-rose-600 hover:bg-rose-700 text-white rounded-xl disabled:opacity-50">

@@ -36,13 +36,11 @@ interface CatalogoConfig { id: string; mostrar_precios: boolean; visitas_totales
 
 type Tab = "general" | "consignaciones" | "0km" | "mandatos";
 
-const ESTADO_LABEL: Record<string, string> = { disponible: "Disponible", reservado: "Reservado", "señado": "Señado", vendido: "Vendido", en_preparacion: "En preparación" };
+const ESTADO_LABEL: Record<string, string> = { disponible: "Disponible", "señado": "Señado", vendido: "Vendido" };
 const ESTADO_COLOR: Record<string, string> = {
   disponible: "bg-emerald-50 text-emerald-700 border-emerald-200 dark:bg-emerald-500/10 dark:text-emerald-300 dark:border-emerald-500/20",
-  reservado: "bg-blue-50 text-blue-700 border-blue-200 dark:bg-blue-500/10 dark:text-blue-300 dark:border-blue-500/20",
   "señado": "bg-amber-50 text-amber-700 border-amber-200 dark:bg-amber-500/10 dark:text-amber-300 dark:border-amber-500/20",
   vendido: "bg-slate-100 text-slate-600 border-slate-200 dark:bg-white/5 dark:text-slate-400 dark:border-white/10",
-  en_preparacion: "bg-purple-50 text-purple-700 border-purple-200 dark:bg-purple-500/10 dark:text-purple-300 dark:border-purple-500/20",
 };
 
 function diasEnStock(iso: string) {
@@ -79,6 +77,7 @@ export default function StockClient({
   const [soloARevisar, setSoloARevisar] = useState(false);
   const [query, setQuery] = useState("");
   const [marcaFiltro, setMarcaFiltro] = useState("");
+  const [sucursalFiltro, setSucursalFiltro] = useState("");
   const [modalNuevo, setModalNuevo] = useState(false);
   const [modalMandato, setModalMandato] = useState(false);
   const [modalCatalogo, setModalCatalogo] = useState(false);
@@ -145,20 +144,21 @@ export default function StockClient({
     else if (soloARevisar) lista = lista.filter((v) => aRevisar(v) && v.estado === "disponible");
     else if (estadoFiltro) lista = lista.filter((v) => v.estado === estadoFiltro);
     if (marcaFiltro) lista = lista.filter((v) => v.marca === marcaFiltro);
+    if (sucursalFiltro) lista = lista.filter((v) => v.sucursal_id === sucursalFiltro);
     if (query.trim()) {
       const q = query.trim().toLowerCase();
       lista = lista.filter((v) => [v.marca, v.modelo, v.patente, v.ubicacion, String(v.anio), v.propietario_nombre].filter(Boolean).join(" ").toLowerCase().includes(q));
     }
     const prioridad = (v: Vehiculo) => (v.estado === "señado" ? 0 : v.estado === "vendido" ? 2 : 1);
     return [...lista].sort((a, b) => prioridad(a) - prioridad(b) || diasEnStock(a.created_at) - diasEnStock(b.created_at));
-  }, [baseTab, estadoFiltro, soloEstancados, soloARevisar, marcaFiltro, query]);
+  }, [baseTab, estadoFiltro, soloEstancados, soloARevisar, marcaFiltro, sucursalFiltro, query]);
 
   // Antes se renderizaban TODAS las filas de una -- con stock real (77+)
   // la tabla se hacía larguísima. Paginado simple en memoria, sin tocar el
   // fetch (ya viene todo el stock de una sola vez desde el server).
   const POR_PAGINA = 25;
   const [pagina, setPagina] = useState(1);
-  useEffect(() => { setPagina(1); }, [tab, estadoFiltro, soloEstancados, soloARevisar, marcaFiltro, query]);
+  useEffect(() => { setPagina(1); }, [tab, estadoFiltro, soloEstancados, soloARevisar, marcaFiltro, sucursalFiltro, query]);
   const totalPaginas = Math.max(1, Math.ceil(filtrados.length / POR_PAGINA));
   const paginados = useMemo(() => filtrados.slice((pagina - 1) * POR_PAGINA, pagina * POR_PAGINA), [filtrados, pagina]);
 
@@ -211,7 +211,7 @@ export default function StockClient({
   return (
     <div className="flex flex-col h-full w-full overflow-hidden">
       <div className="flex-1 overflow-y-auto custom-scrollbar p-4 md:p-6">
-        <div className="max-w-7xl mx-auto">
+        <div className="max-w-[80rem] 2xl:max-w-[110rem] mx-auto">
           <div className="flex flex-col md:flex-row md:items-center justify-between gap-3 mb-4">
             <div className="flex items-center gap-4">
               <div className="w-10 h-10 rounded-xl bg-rose-50 dark:bg-rose-500/10 border border-rose-100 dark:border-rose-500/20 flex items-center justify-center shrink-0">
@@ -324,6 +324,10 @@ export default function StockClient({
                   <option value="">Todas las marcas</option>
                   {marcas.map((m) => <option key={m} value={m}>{m}</option>)}
                 </select>
+                <select value={sucursalFiltro} onChange={(e) => setSucursalFiltro(e.target.value)} className="bg-white dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-lg px-3 py-2 text-xs font-semibold text-slate-600 dark:text-slate-300">
+                  <option value="">Todas las sucursales</option>
+                  {sucursales.map((s) => <option key={s.id} value={s.id}>{s.nombre}</option>)}
+                </select>
               </div>
 
               {filtrados.length === 0 ? (
@@ -356,7 +360,7 @@ export default function StockClient({
                         { key: "km", header: "KM", cell: (v) => v.km?.toLocaleString("es-AR") ?? "—", claseTd: "text-xs text-slate-500 dark:text-slate-400 whitespace-nowrap" },
                         { key: "precio", header: "Precio", cell: (v) => puedeEditarCompleto ? <span onClick={(e) => e.stopPropagation()}><PrecioEditor vehiculoId={v.id} precio={v.precio_venta} moneda={v.moneda_venta} onActualizado={actualizarVehiculo} /></span> : <span>{fmtPrecio(v.precio_venta, v.moneda_venta)}</span>, claseTd: "text-sm whitespace-nowrap" },
                         { key: "estado", header: "Estado", cell: (v) => <span className={`text-[10px] font-bold px-2 py-1 rounded-full border whitespace-nowrap ${ESTADO_COLOR[v.estado]}`}>{ESTADO_LABEL[v.estado]}</span> },
-                        { key: "sucursal", header: "Sucursal", cell: (v) => puedeEditarCompleto ? <span onClick={(e) => e.stopPropagation()}><SucursalEditor vehiculoId={v.id} sucursalId={v.sucursal_id} sucursalNombre={v.sucursal?.nombre || null} sucursales={sucursales} onActualizado={actualizarVehiculo} /></span> : <span>{v.sucursal?.nombre || "—"}</span>, claseTd: "text-xs whitespace-nowrap" },
+                        { key: "sucursal", header: "Sucursal", cell: (v) => puedeEditarCompleto ? <span onClick={(e) => e.stopPropagation()}><SucursalEditor vehiculoId={v.id} sucursalId={v.sucursal_id} sucursalNombre={v.sucursal?.nombre || null} vendedorId={v.vendedor_asignado_id} vendedorNombre={v.vendedor_asignado_id ? perfilMap[v.vendedor_asignado_id] : null} perfiles={perfiles} sucursales={sucursales} onActualizado={actualizarVehiculo} /></span> : <span>{v.sucursal?.nombre || "—"}</span>, claseTd: "text-xs whitespace-nowrap" },
                         { key: "asignado", header: "Asignado", cell: (v) => puedeEditarCompleto ? <span onClick={(e) => e.stopPropagation()}><VendedorEditor vehiculoId={v.id} vendedorId={v.vendedor_asignado_id} vendedorNombre={v.vendedor_asignado_id ? perfilMap[v.vendedor_asignado_id] : null} vehiculoSucursalId={v.sucursal_id} perfiles={perfiles} onActualizado={actualizarVehiculo} /></span> : <span>{v.vendedor_asignado_id ? perfilMap[v.vendedor_asignado_id] : "—"}</span>, claseTd: "text-xs whitespace-nowrap" },
                         { key: "dias", header: "Días", cell: (v) => {
                           const dias = diasEnStock(v.created_at);
