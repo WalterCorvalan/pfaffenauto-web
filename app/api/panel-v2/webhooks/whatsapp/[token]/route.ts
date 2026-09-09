@@ -7,7 +7,7 @@ import { decrypt } from "@/lib/crypto";
 import { rateLimit, ipDesdeRequest } from "@/lib/rateLimit";
 import { registrarError } from "@/lib/panel/logger";
 import { buscarRespuestaMemoria, buscarRespuestaFueraHorario } from "@/lib/panel/whatsappMemoria";
-import { notificarPersona, notificarEncargados } from "@/lib/panel/notificaciones";
+import { notificarPersona, notificarEncargados, notificarVendedoresDisponibles } from "@/lib/panel/notificaciones";
 
 // Webhook de Meta para el WhatsApp de panel-v2 (Conversaciones → WhatsApp,
 // replica /panel/chat de v1: bandeja de mensajes reales de clientes con
@@ -165,8 +165,12 @@ async function ingestarMensaje({ waId, nombrePerfil, msg }: { waId: string; nomb
   const linkNoti = `/panel/whatsapp?conversacion=${conversacion.id}`;
   if (convActual?.vendedor_id) {
     notificarPersona(supabase, convActual.vendedor_id, "whatsapp_nuevo_mensaje", mensajeNoti, linkNoti).catch((err) => console.error("[webhook-v2] error notificando:", err));
+    notificarEncargados(supabase, mensajeNoti, linkNoti, "whatsapp_nuevo_mensaje").catch((err) => console.error("[webhook-v2] error notificando:", err));
+  } else {
+    // Lead sin vendedor asignado todavía -- avisa a todos por igual en vez
+    // de solo a encargados, para que se tome más rápido.
+    notificarVendedoresDisponibles(supabase, mensajeNoti, linkNoti, "whatsapp_nuevo_mensaje").catch((err) => console.error("[webhook-v2] error notificando:", err));
   }
-  notificarEncargados(supabase, mensajeNoti, linkNoti, "whatsapp_nuevo_mensaje").catch((err) => console.error("[webhook-v2] error notificando:", err));
 
   await ejecutarAgente(conversacion.id);
 }

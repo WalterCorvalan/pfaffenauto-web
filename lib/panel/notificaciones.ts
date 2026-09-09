@@ -28,6 +28,27 @@ export async function notificarEncargados(supabase: SupabaseClient, mensaje: str
   );
 }
 
+// Lead nuevo sin vendedor asignado todavía (el "hola" inicial): antes solo
+// avisaba a encargados, que después reasignan a mano -- se pierden minutos
+// valiosos. Avisa a TODOS los vendedores por igual (mismo criterio que
+// disponibilidad_vendedor.recibir_leads usa el resto del sistema para lead
+// routing) para que el primero que lo vea lo tome, no solo quien está de
+// turno como encargado.
+export async function notificarVendedoresDisponibles(supabase: SupabaseClient, mensaje: string, link: string, tipo: string) {
+  const { data: disponibilidad } = await supabase.from("disponibilidad_vendedor").select("vendedor_id, recibir_leads");
+  const noDisponibles = new Set((disponibilidad || []).filter((d) => d.recibir_leads === false).map((d) => d.vendedor_id));
+
+  const { data: candidatos } = await supabase.from("perfiles").select("id, roles").or("roles.cs.{admin},roles.cs.{encargado},roles.cs.{ventas}").eq("activo", true);
+  if (!candidatos || candidatos.length === 0) return;
+
+  const destinatarios = candidatos.filter((p) => !noDisponibles.has(p.id));
+  if (destinatarios.length === 0) return;
+
+  await supabase.from("alertas").insert(
+    destinatarios.map((d) => ({ destinatario_id: d.id, tipo, titulo: mensaje, link, prioridad: "media" }))
+  );
+}
+
 export async function notificarGestoria(supabase: SupabaseClient, mensaje: string, link: string, tipo: string = "movimiento_pendiente") {
   const { data: destinatarios } = await supabase.from("perfiles").select("id").or("roles.cs.{admin},roles.cs.{encargado},roles.cs.{gestoria}").eq("activo", true);
   if (!destinatarios || destinatarios.length === 0) return;
