@@ -67,10 +67,22 @@ export default function ComisionesClient({
     cargarComisiones();
   }, [mesFiltro, vendedorFiltro]);
 
-  // KPIs
-  const totalACobrar = comisiones.reduce((acc, c) => acc + Number(c.monto), 0);
-  const totalCobrado = comisiones.reduce((acc, c) => acc + Number(c.monto_pagado), 0);
-  const totalPendiente = totalACobrar - totalCobrado;
+  // KPIs -- separados por moneda: sumar ARS+USD sin distinguir daba un
+  // número sin sentido apenas hubiera una comisión en cada moneda.
+  const sumaPorMoneda = (campo: "monto" | "monto_pagado") =>
+    comisiones.reduce((acc, c) => {
+      const moneda = c.moneda || "USD";
+      acc[moneda] = (acc[moneda] || 0) + Number(c[campo] || 0);
+      return acc;
+    }, {} as Record<string, number>);
+  const aCobrarPorMoneda = sumaPorMoneda("monto");
+  const cobradoPorMoneda = sumaPorMoneda("monto_pagado");
+  const monedasPresentes = Array.from(new Set([...Object.keys(aCobrarPorMoneda), ...Object.keys(cobradoPorMoneda)]));
+  const prefijoMoneda = (m: string) => (m === "ARS" ? "$" : "US$");
+  const fmtPorMoneda = (porMoneda: Record<string, number>) =>
+    monedasPresentes.length === 0
+      ? "US$ 0"
+      : monedasPresentes.map((m) => `${prefijoMoneda(m)} ${(porMoneda[m] || 0).toLocaleString()}`).join(" · ");
 
   // Acciones
   const alternarEstado = async (c: any) => {
@@ -127,18 +139,23 @@ export default function ComisionesClient({
 
   const pedirResena = async (venta_id: string, tipo: string, telefono: string) => {
     try {
-      await supabase2.from("venta_resenas_solicitudes").insert({
+      const { error } = await supabase2.from("venta_resenas_solicitudes").insert({
         venta_id,
         tipo,
         solicitado_por: usuarioActualId
       });
-      // Abrimos WhatsApp con texto prearmado
-      const texto = encodeURIComponent("¡Hola! Quería pedirte un favor enorme. ¿Nos dejarías una reseña en Google contando cómo te fue? Nos ayuda un montón. ¡Gracias!");
-      window.open(`https://wa.me/${telefono}?text=${texto}`, "_blank");
+      if (error) throw error;
       cargarComisiones();
-    } catch (error) {
+    } catch (error: any) {
       console.error(error);
+      alert(error.message || "No se pudo registrar el pedido de reseña.");
+      return;
     }
+    // Abrimos WhatsApp con texto prearmado -- fuera del try: si esto falla
+    // (bloqueo de popup, etc.) no debe reportarse como error de la solicitud,
+    // que ya se guardó bien.
+    const texto = encodeURIComponent("¡Hola! Quería pedirte un favor enorme. ¿Nos dejarías una reseña en Google contando cómo te fue? Nos ayuda un montón. ¡Gracias!");
+    window.open(`https://wa.me/${telefono}?text=${texto}`, "_blank");
   };
 
   if (!configuracion.paga_comisiones) {
@@ -171,15 +188,17 @@ export default function ComisionesClient({
         <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
           <div className="bg-slate-50 dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-2xl p-4 flex flex-col justify-center">
             <span className="text-[10px] font-bold uppercase tracking-widest text-slate-500">Total a cobrar</span>
-            <span className="text-2xl font-black font-mono text-slate-900 dark:text-white mt-1">US$ {totalACobrar.toLocaleString()}</span>
+            <span className="text-xl font-black font-mono text-slate-900 dark:text-white mt-1">{fmtPorMoneda(aCobrarPorMoneda)}</span>
           </div>
           <div className="bg-rose-50 dark:bg-rose-500/10 border border-rose-200 dark:border-rose-500/20 rounded-2xl p-4 flex flex-col justify-center">
             <span className="text-[10px] font-bold uppercase tracking-widest text-rose-600">Pendiente</span>
-            <span className="text-2xl font-black font-mono text-rose-700 dark:text-rose-400 mt-1">US$ {totalPendiente.toLocaleString()}</span>
+            <span className="text-xl font-black font-mono text-rose-700 dark:text-rose-400 mt-1">
+              {monedasPresentes.map((m) => `${prefijoMoneda(m)} ${((aCobrarPorMoneda[m] || 0) - (cobradoPorMoneda[m] || 0)).toLocaleString()}`).join(" · ") || "US$ 0"}
+            </span>
           </div>
           <div className="bg-emerald-50 dark:bg-emerald-500/10 border border-emerald-200 dark:border-emerald-500/20 rounded-2xl p-4 flex flex-col justify-center">
             <span className="text-[10px] font-bold uppercase tracking-widest text-emerald-600">Ya cobrado</span>
-            <span className="text-2xl font-black font-mono text-emerald-700 dark:text-emerald-400 mt-1">US$ {totalCobrado.toLocaleString()}</span>
+            <span className="text-xl font-black font-mono text-emerald-700 dark:text-emerald-400 mt-1">{fmtPorMoneda(cobradoPorMoneda)}</span>
           </div>
 
           {/* FILTROS */}

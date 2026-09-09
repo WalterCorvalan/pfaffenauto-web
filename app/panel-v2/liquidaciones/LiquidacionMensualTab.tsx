@@ -48,7 +48,7 @@ export default function LiquidacionMensualTab({ liquidaciones, setLiquidaciones,
               <p className="text-xs text-slate-400">{filas.length} operación{filas.length === 1 ? "" : "es"} · <span className="text-indigo-600 font-bold">Comisiones: {fmt(comisionesMes)}</span> · <span className="text-blue-600 font-bold">Agencia: {gananciasOcultas ? "—" : fmt(agenciaMes)}</span></p>
             </div>
             <table className="w-full text-xs">
-              <thead className="text-left text-slate-400"><tr><th className="p-2.5"></th><th className="p-2.5">Gestora</th><th className="p-2.5">Ops</th><th className="p-2.5">Fijo (40K×ops)</th><th className="p-2.5">10% Transf.</th><th className="p-2.5">10% Multas</th><th className="p-2.5">Total a cobrar</th><th className="p-2.5">Ing. agencia</th><th className="p-2.5">Estado</th><th className="p-2.5">Acción</th></tr></thead>
+              <thead className="text-left text-slate-400"><tr><th className="p-2.5"></th><th className="p-2.5">Gestora</th><th className="p-2.5">Ops</th><th className="p-2.5">Fijo</th><th className="p-2.5">% Transf.</th><th className="p-2.5">% Multas</th><th className="p-2.5">Total a cobrar</th><th className="p-2.5">Ing. agencia</th><th className="p-2.5">Estado</th><th className="p-2.5">Acción</th></tr></thead>
               <tbody>
                 {Object.entries(porGestora).map(([g, fs]) => {
                   const key = `${mes}::${g}`;
