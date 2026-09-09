@@ -1,7 +1,7 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 
 // Única fuente de la verdad para "rol interno de perfiles -> sector de
-// visibilidad_sector" -- antes vivía duplicado a mano en app/panel-v2/layout.tsx
+// visibilidad_sector" -- antes vivía duplicado a mano en app/panel/layout.tsx
 // (sidebar) y en ningún lado más, así que una alerta podía avisarle a un
 // destinatario sobre un módulo que su rol tiene apagado (ver moduloVisible()
 // en layout.tsx). Server-safe: sin hooks, usable desde API routes y desde

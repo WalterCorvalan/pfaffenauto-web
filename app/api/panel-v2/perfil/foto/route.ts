@@ -42,7 +42,7 @@ export async function POST(request: Request) {
 
     return NextResponse.json({ publicUrl });
   } catch (error) {
-    registrarError("api/panel-v2/perfil/foto", error);
+    registrarError("api/panel/perfil/foto", error);
     return NextResponse.json({ error: "Error interno subiendo la imagen." }, { status: 500 });
   }
 }

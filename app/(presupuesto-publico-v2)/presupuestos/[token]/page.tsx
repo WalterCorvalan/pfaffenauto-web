@@ -45,7 +45,7 @@ export default async function PresupuestoPublicoV2Page({ params }: { params: Pro
         tipo: "presupuesto_abierto",
         prioridad: "media",
         titulo: `${p.cliente_nombre || "El cliente"} abrió el presupuesto N° ${p.numero} (${p.marca} ${p.modelo})`,
-        link: `/panel-v2/presupuestos/imprimir/${p.id}`,
+        link: `/panel/presupuestos/imprimir/${p.id}`,
       });
     }
   }

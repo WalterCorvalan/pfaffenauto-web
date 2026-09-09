@@ -51,12 +51,12 @@ export async function POST(req: Request) {
     const { data: destinatarios } = await supabase.from("perfiles").select("id").or("roles.cs.{admin},roles.cs.{encargado}").eq("activo", true);
     const titulo = `Nueva postulación: ${postulacion.nombre} ${postulacion.apellido} — ${postulacion.puesto}.`;
     for (const d of destinatarios || []) {
-      await supabase.from("alertas").insert({ destinatario_id: d.id, tipo: "postulacion", prioridad: "novedad", titulo, link: "/panel-v2/postulaciones" });
+      await supabase.from("alertas").insert({ destinatario_id: d.id, tipo: "postulacion", prioridad: "novedad", titulo, link: "/panel/postulaciones" });
     }
 
     return Response.json({ ok: true, id: data.id });
   } catch (err) {
-    registrarError("api/panel-v2/postulaciones", err);
+    registrarError("api/panel/postulaciones", err);
     return Response.json({ error: "Hubo un problema al enviar tu postulación." }, { status: 500 });
   }
 }

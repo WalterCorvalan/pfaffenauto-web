@@ -1,5 +1,5 @@
 // Catálogo completo de módulos del sidebar (calcado de GRUPOS en
-// app/panel-v2/layout.tsx) -- única fuente para la pantalla de
+// app/panel/layout.tsx) -- única fuente para la pantalla de
 // Configuración > Empresa > Módulos. Antes esa pantalla solo listaba los
 // ~20 módulos que ya tenían fila en modulos_config (los "apagables" desde
 // el vamos) y se perdía todo lo que se fue etiquetando después (stock,
@@ -60,7 +60,7 @@ export const MODULOS_CATALOGO: { modulo: string; label: string }[] = [
 ];
 
 // Sectores = los roles que efectivamente se le pueden asignar a alguien
-// hoy (ver ROLES en app/panel-v2/configuracion/UsuariosClient.tsx),
+// hoy (ver ROLES en app/panel/configuracion/UsuariosClient.tsx),
 // mapeados 1 a 1 vía ROL_A_SECTOR en permisosModulos.ts. Admin no entra
 // porque nunca se filtra.
 export const SECTORES = ["ventas", "encargado", "finanzas", "gestoria"] as const;

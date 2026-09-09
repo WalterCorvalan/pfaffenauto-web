@@ -67,7 +67,7 @@ export async function POST(request: Request) {
 
     return NextResponse.json({ config: data });
   } catch (error) {
-    registrarError("api/panel-v2/instagram/configuracion", error);
+    registrarError("api/panel/instagram/configuracion", error);
     return NextResponse.json({ error: "Error interno guardando la configuración." }, { status: 500 });
   }
 }

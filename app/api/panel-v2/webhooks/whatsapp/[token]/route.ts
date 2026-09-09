@@ -162,7 +162,7 @@ async function ingestarMensaje({ waId, nombrePerfil, msg }: { waId: string; nomb
   // "handoff_chat" de Rodi (chatbot del sitio) — módulos separados.
   const nombreLead = nombrePerfil || waId;
   const mensajeNoti = `${nombreLead}: ${texto || "envió un mensaje"}`;
-  const linkNoti = `/panel-v2/whatsapp?conversacion=${conversacion.id}`;
+  const linkNoti = `/panel/whatsapp?conversacion=${conversacion.id}`;
   if (convActual?.vendedor_id) {
     notificarPersona(supabase, convActual.vendedor_id, "whatsapp_nuevo_mensaje", mensajeNoti, linkNoti).catch((err) => console.error("[webhook-v2] error notificando:", err));
   }
@@ -267,7 +267,7 @@ async function ejecutarAgente(conversacionId: string) {
     }).eq("id", conversacionId);
 
     const { data: convHandoff } = await supabase.from("whatsapp_conversaciones").select("vendedor_id").eq("id", conversacionId).single();
-    const linkNoti = `/panel-v2/whatsapp?conversacion=${conversacionId}`;
+    const linkNoti = `/panel/whatsapp?conversacion=${conversacionId}`;
     const mensajeNoti = resumen_handoff || "El cliente pidió hablar con una persona — la IA dejó de responder.";
     if (convHandoff?.vendedor_id) {
       notificarPersona(supabase, convHandoff.vendedor_id, "whatsapp_handoff", mensajeNoti, linkNoti).catch((err) => console.error("[webhook-v2] error notificando handoff:", err));

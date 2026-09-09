@@ -40,11 +40,11 @@ export default function MensajesBubble() {
     return () => { supabase2.removeChannel(canal); };
   }, [miId]);
 
-  if (pathname === "/panel-v2/mensajes") return null;
+  if (pathname === "/panel/mensajes") return null;
 
   return (
     <button
-      onClick={() => router.push("/panel-v2/mensajes")}
+      onClick={() => router.push("/panel/mensajes")}
       className="print:hidden hidden md:flex fixed bottom-24 right-6 z-40 w-12 h-12 rounded-full bg-white dark:bg-[#1A1A1A] border border-slate-200 dark:border-white/10 shadow-lg items-center justify-center hover:scale-105 transition-transform"
       title="Mensajes"
     >

@@ -69,13 +69,13 @@ export async function POST(req: Request) {
         prioridad: "novedad",
         titulo: `Nueva consignación desde la web — ${nombre}`,
         mensaje: vehiculoDescripcion,
-        link: `/panel-v2/consignaciones?consignacion=${data.id}`,
+        link: `/panel/consignaciones?consignacion=${data.id}`,
       });
     }
 
     return Response.json({ ok: true, id: data.id });
   } catch (err) {
-    registrarError("api/panel-v2/consignaciones", err);
+    registrarError("api/panel/consignaciones", err);
     return Response.json({ error: "Hubo un problema al enviar tu solicitud." }, { status: 500 });
   }
 }
