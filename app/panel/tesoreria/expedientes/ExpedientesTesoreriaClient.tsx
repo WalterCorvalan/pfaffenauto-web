@@ -19,7 +19,7 @@ const ESTADO_TESORERIA_CLASS: Record<string, string> = {
 
 export default function ExpedientesTesoreriaClient({
   expedientesIniciales, perfiles, miId, miPerfil, gastosPorExpediente,
-}: { expedientesIniciales: any[]; perfiles: Perfil[]; miId: string; miPerfil: any; gastosPorExpediente: Record<string, { vendedor: number; comprador: number }>; cuentas: any[] }) {
+}: { expedientesIniciales: any[]; perfiles: Perfil[]; miId: string; miPerfil: any; gastosPorExpediente: Record<string, { vendedor: Record<string, number>; comprador: Record<string, number> }>; cuentas: any[] }) {
   const router = useRouter();
   const searchParams = useSearchParams();
   const [expedientes, setExpedientes] = useState(expedientesIniciales);
@@ -105,7 +105,15 @@ export default function ExpedientesTesoreriaClient({
               { key: "partes", header: "Partes", cell: (e) => { const v = e.venta || {}; return <><p>{v.propietario_nombre || "—"}</p><p className="text-slate-400">{v.comprador_nombre ? `${v.comprador_nombre} (comprador)` : "—"}</p></>; }, claseTd: "text-xs text-slate-700 dark:text-slate-200" },
               { key: "gestoria", header: "Estado Gestoría", cell: (e) => <span className="text-[10px] font-bold px-2 py-1 rounded-full bg-blue-50 dark:bg-blue-500/10 text-blue-700 dark:text-blue-300">{ESTADO_GESTORIA_LABEL[e.estado] || e.estado}</span> },
               { key: "tesoreria", header: "Estado Tesorería", cell: (e) => { const v = e.venta || {}; return <span className={`text-[10px] font-bold px-2 py-1 rounded-full ${ESTADO_TESORERIA_CLASS[v.estado_pago_tesoreria] || ESTADO_TESORERIA_CLASS.pendiente}`}>{v.estado === "caida" ? "Operación caída" : ESTADO_TESORERIA_LABEL[v.estado_pago_tesoreria] || "Pendiente pago"}</span>; } },
-              { key: "gastos", header: "Gastos", cell: (e) => { const gastos = gastosPorExpediente[e.id] || { vendedor: 0, comprador: 0 }; return <>Vend: {gastos.vendedor > 0 ? gastos.vendedor.toLocaleString("es-AR") : "—"}<br />Comp: {gastos.comprador > 0 ? gastos.comprador.toLocaleString("es-AR") : "—"}</>; }, claseTd: "text-[10px] text-slate-400" },
+              { key: "gastos", header: "Gastos", cell: (e) => {
+                const gastos = gastosPorExpediente[e.id] || { vendedor: {}, comprador: {} };
+                const fmt = (porMoneda: Record<string, number>) => {
+                  const entradas = Object.entries(porMoneda).filter(([, v]) => v > 0);
+                  if (entradas.length === 0) return "—";
+                  return entradas.map(([m, v]) => `${m === "ARS" ? "$" : "US$"} ${v.toLocaleString("es-AR")}`).join(" · ");
+                };
+                return <>Vend: {fmt(gastos.vendedor)}<br />Comp: {fmt(gastos.comprador)}</>;
+              }, claseTd: "text-[10px] text-slate-400" },
             ] as ColumnaTabla<any>[]
           }
           acciones={(e) => (

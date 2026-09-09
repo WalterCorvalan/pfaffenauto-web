@@ -26,7 +26,7 @@ interface Props {
   vencidos: number; venceHoy: number; venceProx7d: number;
   ingresosPorMoneda: Record<string, number>; egresosPorMoneda: Record<string, number>; netoPorMoneda: Record<string, number>;
   topIngresos: Record<string, number>; topEgresos: Record<string, number>;
-  cuentas: { id: string; nombre: string; moneda: string; saldo_inicial: number }[];
+  cuentas: { id: string; nombre: string; moneda: string; saldo: number }[];
   visitasHoy: { id: string; nombre_cliente: string; vehiculo_marca: string | null; vehiculo_modelo: string | null; horario_visita: string | null }[];
   pedidosConMatch: { id: string; marca: string; modelo: string; nombre_cliente: string }[];
   ultimasOperaciones: { id: string; vehiculo_marca: string; vehiculo_modelo: string; comprador_nombre: string | null; precio_venta: number; moneda_venta: string; estado: string; fecha_cierre: string | null; vendedorNombre: string }[];
@@ -240,7 +240,7 @@ export default function DashboardGeneralTab(props: Props) {
           {props.cuentas.slice(0, 5).map((c) => (
             <div key={c.id} className="flex items-center justify-between text-xs">
               <span className="text-slate-600 dark:text-slate-300">{c.nombre}</span>
-              <span className={`font-mono font-bold text-slate-800 dark:text-white ${props.ocultarMontos ? "blur-sm select-none" : ""}`}>{fmtMoneda(Number(c.saldo_inicial), c.moneda)}</span>
+              <span className={`font-mono font-bold text-slate-800 dark:text-white ${props.ocultarMontos ? "blur-sm select-none" : ""}`}>{fmtMoneda(Number(c.saldo), c.moneda)}</span>
             </div>
           ))}
         </div>
@@ -460,7 +460,7 @@ export default function DashboardGeneralTab(props: Props) {
           {props.cuentas.slice(0, 2).map((c) => (
             <div key={c.id} className="flex justify-between text-[11px] mb-1">
               <span className="text-slate-500">{c.nombre}</span>
-              <span className={`font-mono font-bold text-slate-700 dark:text-slate-300 ${props.ocultarMontos ? "blur-sm select-none" : ""}`}>{fmtMoneda(Number(c.saldo_inicial), c.moneda)}</span>
+              <span className={`font-mono font-bold text-slate-700 dark:text-slate-300 ${props.ocultarMontos ? "blur-sm select-none" : ""}`}>{fmtMoneda(Number(c.saldo), c.moneda)}</span>
             </div>
           ))}
         </div>

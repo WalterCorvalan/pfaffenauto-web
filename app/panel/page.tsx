@@ -118,7 +118,7 @@ export default async function PanelV2Home() {
     supabase.from("eventos_calendario").select("id, titulo, fecha").eq("responsable_id", user.id).gte("fecha", hoyIso).lte("fecha", en7dias).order("fecha"),
     supabase.from("cuotas_cobrar_clientes").select("vencimiento").eq("cobrada", false),
     supabase.from("expedientes").select("vencimiento").eq("archivado", false).not("vencimiento", "is", null),
-    supabase.from("cuentas").select("id, nombre, moneda, saldo_inicial").eq("activa", true),
+    supabase.from("cuentas").select("id, nombre, moneda").eq("activa", true),
     supabase.from("movimientos_caja").select("tipo, monto, tipo_movimiento, cuenta_id").is("deleted_at", null).eq("estado", "aprobado").gte("fecha", inicioMes).lte("fecha", finMes),
     supabase.from("visitas").select("id, nombre_cliente, vehiculo_marca, vehiculo_modelo, horario_visita").eq("estado", "Confirmada").eq("fecha_visita", hoyIso),
     supabase.from("pedidos").select("id, marca, modelo, nombre_cliente, vehiculo_match_id, created_at").eq("estado", "activo").not("vehiculo_match_id", "is", null),
@@ -144,6 +144,16 @@ export default async function PanelV2Home() {
   const perfilesMap: Record<string, string> = {};
   (await supabase.from("perfiles").select("id, nombre")).data?.forEach((p: any) => { perfilesMap[p.id] = p.nombre; });
 
+  // Saldo real por cuenta -- NUNCA se guarda cacheado (ver Finanzas → Cuentas),
+  // se calcula en vivo vía RPC. Mostrar saldo_inicial acá (como antes) era
+  // literalmente el monto de apertura de la caja, no lo que tiene hoy.
+  const cuentasConSaldoReal = await Promise.all(
+    (cuentasConSaldo || []).map(async (c: any) => {
+      const { data: saldo } = await supabase.rpc("saldo_cuenta", { p_cuenta_id: c.id });
+      return { ...c, saldo: Number(saldo) || 0 };
+    })
+  );
+
   const gananciaPorMoneda = margenPorMoneda(expedientesConMargen || [], inicioMes, finMes);
   const gananciaMesAnteriorInfracciones: Record<string, number> = {};
   (infraccionesMesAnterior || []).forEach((i: any) => { if (i.estado === "Pagado") gananciaMesAnteriorInfracciones.ARS = (gananciaMesAnteriorInfracciones.ARS || 0) + Number(i.ganancia_ars || 0); });
@@ -164,14 +174,20 @@ export default async function PanelV2Home() {
   // Proyección de caja: A cobrar (saldo pendiente de señas activas) y A
   // pagar (comisiones pendientes + cuotas a pagar del mes) por moneda, más
   // el top 1 entrada / top 2 salidas individuales para el detalle.
-  const entradasProyeccion = (senasActivasProyeccion || []).map((s: any) => {
+  // Una seña puede tener saldo pendiente en las dos monedas a la vez (parte
+  // pactada en ARS, parte en USD) -- comparar "cuál es mayor" y quedarse con
+  // una sola descartaba la otra del cálculo (no solo las mezclaba, las
+  // perdía). Ahora emite una entrada por cada moneda con saldo real.
+  const entradasProyeccion = (senasActivasProyeccion || []).flatMap((s: any) => {
     const ars = Number(s.venta_ars || 0) - Number(s.sena_ars || 0);
     const usd = Number(s.venta_usd || 0) - Number(s.sena_usd || 0);
-    const moneda = usd > ars ? "USD" : "ARS";
-    const monto = moneda === "USD" ? usd : ars;
     const nombreCliente = [s.apellido, s.nombre].filter(Boolean).join(", ") || s.cliente_nombre || "Cliente";
-    return { id: s.id, label: s.marca ? `${s.marca} ${s.modelo || ""}`.trim() : nombreCliente, monto, moneda };
-  }).filter((e) => e.monto > 0);
+    const label = s.marca ? `${s.marca} ${s.modelo || ""}`.trim() : nombreCliente;
+    const entradas: { id: string; label: string; monto: number; moneda: string }[] = [];
+    if (ars > 0) entradas.push({ id: `${s.id}-ars`, label, monto: ars, moneda: "ARS" });
+    if (usd > 0) entradas.push({ id: `${s.id}-usd`, label, monto: usd, moneda: "USD" });
+    return entradas;
+  });
   const aCobrarPorMoneda: Record<string, number> = {};
   entradasProyeccion.forEach((e) => { aCobrarPorMoneda[e.moneda] = (aCobrarPorMoneda[e.moneda] || 0) + e.monto; });
   const topEntradaProyeccion = [...entradasProyeccion].sort((a, b) => b.monto - a.monto)[0] || null;
@@ -406,7 +422,7 @@ export default async function PanelV2Home() {
       netoPorMoneda={netoPorMoneda}
       topIngresos={topIngresos}
       topEgresos={topEgresos}
-      cuentas={cuentasConSaldo || []}
+      cuentas={cuentasConSaldoReal}
       visitasHoy={visitasHoy || []}
       pedidosConMatch={(pedidosConMatch || []).map((p: any) => ({ ...p }))}
       ultimasOperaciones={(ultimasOperaciones || []).map((v: any) => ({ ...v, vendedorNombre: perfilesMap[v.vendedor_id] || "—" }))}

@@ -45,7 +45,7 @@ interface Props {
   vencidos: number; venceHoy: number; venceProx7d: number;
   ingresosPorMoneda: Record<string, number>; egresosPorMoneda: Record<string, number>; netoPorMoneda: Record<string, number>;
   topIngresos: Record<string, number>; topEgresos: Record<string, number>;
-  cuentas: { id: string; nombre: string; moneda: string; saldo_inicial: number }[];
+  cuentas: { id: string; nombre: string; moneda: string; saldo: number }[];
   visitasHoy: { id: string; nombre_cliente: string; vehiculo_marca: string | null; vehiculo_modelo: string | null; horario_visita: string | null }[];
   pedidosConMatch: { id: string; marca: string; modelo: string; nombre_cliente: string }[];
   ultimasOperaciones: { id: string; vehiculo_marca: string; vehiculo_modelo: string; comprador_nombre: string | null; precio_venta: number; moneda_venta: string; estado: string; fecha_cierre: string | null; vendedorNombre: string }[];

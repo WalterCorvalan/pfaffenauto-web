@@ -219,7 +219,10 @@ export default function CockpitCeoTab({ miNombre, ocultarMontos, diaDelMes, dias
               <p className="text-2xl font-black text-slate-900 dark:text-white">{tuOperacion.ventas}</p>
               <p className="text-[10px] font-bold uppercase text-slate-400">Ventas cerradas</p>
             </div>
-            <p className={`text-lg font-black text-violet-600 dark:text-violet-400 ${ocultarMontos ? "blur-sm select-none" : ""}`}>USD {tuOperacion.usd.toLocaleString("es-AR")}</p>
+            <div className="text-right">
+              <p className={`text-lg font-black text-violet-600 dark:text-violet-400 ${ocultarMontos ? "blur-sm select-none" : ""}`}>USD {tuOperacion.usd.toLocaleString("es-AR")}</p>
+              <p className="text-[9px] text-slate-400">solo ventas en USD</p>
+            </div>
           </div>
         </div>
 

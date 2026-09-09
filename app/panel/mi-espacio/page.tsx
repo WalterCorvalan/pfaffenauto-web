@@ -20,15 +20,18 @@ export default async function MiEspacioPage() {
       supabase.from("vehiculos").select("id", { count: "exact", head: true }).eq("estado", "disponible"),
       supabase.from("ventas").select("id", { count: "exact", head: true }).gte("fecha_cierre", inicioMes.toISOString().slice(0, 10)).lt("fecha_cierre", finMes.toISOString().slice(0, 10)),
       supabase.from("expedientes").select("id", { count: "exact", head: true }).neq("estado", "cerrado").eq("archivado", false),
-      // Solo USD — nunca sumar junto con movimientos en ARS bajo una sola
-      // etiqueta "USD" (bug encontrado acá: antes sumaba las dos monedas).
-      supabase.from("movimientos_caja").select("monto").eq("tipo", "ingreso").eq("moneda", "USD").gte("created_at", inicioMes.toISOString()).lt("created_at", finMes.toISOString()),
+      // movimientos_caja no tiene columna "moneda" propia -- depende de la
+      // cuenta destino (filtrar por m.moneda='USD' directo, como estaba
+      // antes, filtraba una columna inexistente y esto siempre daba 0).
+      // También faltaba excluir pendientes/borrados, igual que el resto del
+      // sistema.
+      supabase.from("movimientos_caja").select("monto, cuenta:cuenta_id(moneda)").eq("tipo", "ingreso").eq("estado", "aprobado").is("deleted_at", null).gte("created_at", inicioMes.toISOString()).lt("created_at", finMes.toISOString()),
     ]);
     agencia = {
       stockDisponible: stockDisponible || 0,
       ventasDelMes: ventasDelMes || 0,
       expedientesActivos: expedientesActivos || 0,
-      ingresosDelMesUsd: (ingresos || []).reduce((a, m) => a + Number(m.monto), 0),
+      ingresosDelMesUsd: (ingresos || []).filter((m: any) => m.cuenta?.moneda === "USD").reduce((a, m) => a + Number(m.monto), 0),
     };
   }
 

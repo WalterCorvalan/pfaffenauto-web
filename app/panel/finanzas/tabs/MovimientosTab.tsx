@@ -71,6 +71,10 @@ export default function MovimientosTab({
   const ingresosPorMoneda: Record<string, number> = {};
   const egresosPorMoneda: Record<string, number> = {};
   filtrados.forEach((m) => {
+    // Un egreso/ingreso "pendiente" (esperando aprobación por superar el
+    // umbral configurado) todavía no es plata real movida -- sumarlo acá
+    // desincronizaba este total del de Resumen/Tesorería, que sí lo excluyen.
+    if (m.estado !== "aprobado") return;
     const mo = m.cuenta?.moneda;
     if (!mo) return;
     // Una transferencia entre cajas propias entra como ingreso en una caja y

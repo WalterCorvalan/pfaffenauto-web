@@ -443,6 +443,12 @@ export default function ExpedienteDetalleModal({ expedienteId, miId, perfiles, s
       ) : (
         <div className="col-span-2"><p className="text-slate-400 font-bold uppercase text-[10px]">Señas</p>{senas.map((s) => <p key={s.id} className="text-slate-700 dark:text-slate-200">{s.moneda} {Number(s.monto).toLocaleString("es-AR")}</p>)}</div>
       )}
+      {venta?.prenda_banco && (
+        <div className="col-span-2"><p className="text-slate-400 font-bold uppercase text-[10px]">Prenda</p><p className="text-slate-700 dark:text-slate-200">{venta.prenda_banco}{venta.prenda_monto ? ` — $ ${Number(venta.prenda_monto).toLocaleString("es-AR")}` : ""}{venta.prenda_cuota_monto ? ` (cuota $ ${Number(venta.prenda_cuota_monto).toLocaleString("es-AR")})` : ""}</p></div>
+      )}
+      {venta?.seguro_contratado && (
+        <div className="col-span-2"><p className="text-slate-400 font-bold uppercase text-[10px]">Seguro</p><p className="text-slate-700 dark:text-slate-200">{venta.seguro_compania || "Contratado"}{venta.seguro_importe_mensual ? ` — $ ${Number(venta.seguro_importe_mensual).toLocaleString("es-AR")}/mes` : ""}</p></div>
+      )}
     </div>
   );
 

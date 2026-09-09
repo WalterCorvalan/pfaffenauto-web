@@ -252,21 +252,21 @@ export default function NuevaVentaModal({ perfiles, clientes, vehiculos, miId, i
   });
   const actualizarPermuta = (i: number, campo: keyof Permuta, val: string | boolean) => setPermutas((prev) => prev.map((p, idx) => (idx === i ? { ...p, [campo]: val } : p)));
 
-  const resolverCliente = async (estadoFinal: string): Promise<string | null> => {
-    if (clienteId) return clienteId;
-    if (!compradorNombre.trim() || (!compradorTelefono.trim() && !compradorDni.trim())) return null;
+  const resolverCliente = async (estadoFinal: string): Promise<{ id: string | null; creadoNuevo: boolean }> => {
+    if (clienteId) return { id: clienteId, creadoNuevo: false };
+    if (!compradorNombre.trim() || (!compradorTelefono.trim() && !compradorDni.trim())) return { id: null, creadoNuevo: false };
     const filtros: string[] = [];
     if (compradorTelefono.trim()) filtros.push(`telefono.eq.${compradorTelefono.trim()}`);
     if (compradorDni.trim()) filtros.push(`dni_cuit.eq.${compradorDni.trim()}`);
     const { data: existentes } = await supabase2.from("clientes").select("id").or(filtros.join(","));
-    if (existentes && existentes.length > 0) return existentes[0].id;
+    if (existentes && existentes.length > 0) return { id: existentes[0].id, creadoNuevo: false };
 
     const { data: nuevo } = await supabase2.from("clientes").insert({
       nombre: compradorNombre.trim(), telefono: compradorTelefono || null, email: compradorEmail || null, dni_cuit: compradorDni || null,
       origen: "Showroom", canal_ingreso: "walk_in", pipeline_stage: estadoFinal === "cerrada" ? "cerrado" : "negociacion", pipeline_stage_manual: true,
       vendedor_id: vendedorId || null, creado_por: miId || null,
     }).select().single();
-    return nuevo?.id || null;
+    return { id: nuevo?.id || null, creadoNuevo: !!nuevo };
   };
 
   const guardarEdicion = async () => {
@@ -344,7 +344,7 @@ export default function NuevaVentaModal({ perfiles, clientes, vehiculos, miId, i
     setError("");
     try {
       const estadoFinal = forzarBorrador ? "borrador" : cargaManual ? "cerrada" : estado;
-      const clienteResueltoId = await resolverCliente(estadoFinal);
+      const { id: clienteResueltoId, creadoNuevo: clienteCreadoNuevo } = await resolverCliente(estadoFinal);
       // Código para que el comprador siga su operación en /seguimiento — mismo
       // generador que usa NuevaSenaModal, así el cliente usa el mismo tipo de
       // código sin importar si arrancó con una seña o una venta directa.
@@ -385,7 +385,16 @@ export default function NuevaVentaModal({ perfiles, clientes, vehiculos, miId, i
       };
 
       const { data: venta, error: dbError } = await supabase2.from("ventas").insert(payload).select().single();
-      if (dbError) throw dbError;
+      if (dbError) {
+        // Si el cliente se creó recién en resolverCliente(), ya quedó con
+        // pipeline_stage="cerrado" aunque la venta nunca se guardó -- lo
+        // revierte para no dejar el Kanban mintiendo sobre una venta que
+        // no existe.
+        if (clienteCreadoNuevo && clienteResueltoId) {
+          await supabase2.from("clientes").update({ pipeline_stage: "negociacion" }).eq("id", clienteResueltoId);
+        }
+        throw dbError;
+      }
 
       if (senas.length > 0) {
         const filas = senas.filter((s) => s.monto).map((s) => ({ venta_id: venta.id, monto: Number(s.monto), moneda: s.moneda, fecha: s.fecha, caja_destino: s.cajaDestino || null, sena_origen_id: s.senaOrigenId || null }));
@@ -407,7 +416,7 @@ export default function NuevaVentaModal({ perfiles, clientes, vehiculos, miId, i
           totalPermutas += Number(p.valor || 0);
           let vehiculoCreadoId: string | null = null;
           if (p.cargarAlStock && p.marca && p.modelo) {
-            const { data: vCreado } = await supabase2.from("vehiculos").insert({
+            const { data: vCreado, error: errVehiculo } = await supabase2.from("vehiculos").insert({
               categoria: "Auto", marca: p.marca.trim(), modelo: p.modelo.trim(), anio: p.anio ? Number(p.anio) : new Date().getFullYear(),
               km: p.km ? Number(p.km) : 0, patente: (p.patente || `PERMUTA-${venta.id.slice(0, 8)}`).toUpperCase(), color: p.color || "—",
               condicion: p.condicion, precio_venta: p.precioPublicacion ? Number(p.precioPublicacion) : Number(p.valor || 0), moneda_venta: p.moneda,
@@ -417,12 +426,16 @@ export default function NuevaVentaModal({ perfiles, clientes, vehiculos, miId, i
               radicado_localidad: p.radicadoLocalidad || null, radicado_provincia: p.radicadoProvincia || null,
               creado_por: miId || null,
             }).select().single();
+            if (errVehiculo) alert(`La permuta se guardó, pero no se pudo cargar el auto al stock: ${errVehiculo.message}. Avisá a un encargado para cargarlo a mano.`);
             vehiculoCreadoId = vCreado?.id || null;
           }
+          // cargar_a_stock refleja si el vehículo realmente se creó, no el
+          // checkbox tal cual (marca/modelo vacíos o el insert fallando
+          // dejaban esto en true sin que exista ningún vehiculo_creado_id).
           await supabase2.from("venta_permutas").insert({
             venta_id: venta.id, valor: p.valor ? Number(p.valor) : null, moneda: p.moneda, precio_publicacion: p.precioPublicacion ? Number(p.precioPublicacion) : null,
             marca: p.marca || null, modelo: p.modelo || null, anio: p.anio ? Number(p.anio) : null, km: p.km ? Number(p.km) : null,
-            patente: p.patente || null, color: p.color || null, condicion: p.condicion, cargar_a_stock: p.cargarAlStock, dueno_nombre: p.duenoNombre || null,
+            patente: p.patente || null, color: p.color || null, condicion: p.condicion, cargar_a_stock: !!vehiculoCreadoId, dueno_nombre: p.duenoNombre || null,
             vehiculo_creado_id: vehiculoCreadoId,
             segmento: p.segmento || null, tipo: p.tipo || null, marca_motor: p.marcaMotor || null, numero_motor: p.numeroMotor || null,
             marca_chasis: p.marcaChasis || null, numero_chasis: p.numeroChasis || null, combustible: p.combustible || null,
