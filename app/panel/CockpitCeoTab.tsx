@@ -12,7 +12,7 @@ interface RankingFila { vendedor_id: string; nombre: string; ventas_equivalentes
 interface Props {
   miNombre: string; ocultarMontos: boolean;
   diaDelMes: number; diasEnElMes: number;
-  ventasDelMes: number; ventasMesAnterior: number;
+  ventasDelMes: number; ventasMesAnterior: number; objetivoVentasMensual: number | null;
   gananciaPorMoneda: Record<string, number>;
   consignacionesDelMes: number;
   ranking: RankingFila[];
@@ -45,7 +45,7 @@ function MiniStat({ label, valor, sub }: { label: string; valor: React.ReactNode
   );
 }
 
-export default function CockpitCeoTab({ miNombre, ocultarMontos, diaDelMes, diasEnElMes, ventasDelMes, ventasMesAnterior, gananciaPorMoneda, consignacionesDelMes, ranking, cierreMesAnterior, calificaciones, gestoriaPorMoneda, gananciaPorMes, resumenAnual, tuOperacion }: Props) {
+export default function CockpitCeoTab({ miNombre, ocultarMontos, diaDelMes, diasEnElMes, ventasDelMes, ventasMesAnterior, objetivoVentasMensual, gananciaPorMoneda, consignacionesDelMes, ranking, cierreMesAnterior, calificaciones, gestoriaPorMoneda, gananciaPorMes, resumenAnual, tuOperacion }: Props) {
   const [mensajes, setMensajes] = useState<{ role: "user" | "assistant"; content: string; link?: string | null }[]>([]);
   const [pregunta, setPregunta] = useState("");
   const [cargando, setCargando] = useState(false);
@@ -153,8 +153,17 @@ export default function CockpitCeoTab({ miNombre, ocultarMontos, diaDelMes, dias
       <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
         <div className="rounded-2xl p-4 bg-white dark:bg-white/[0.02] border border-slate-200 dark:border-white/5">
           <p className="text-[10px] font-bold uppercase text-slate-400 flex items-center gap-1.5 mb-1"><TrendingUp className="w-3.5 h-3.5" /> Autos vendidos</p>
-          <p className="text-2xl font-black text-slate-900 dark:text-white">{ventasDelMes}</p>
-          {variacionAnual !== null && <p className={`text-[11px] mt-1 font-bold ${variacionAnual >= 0 ? "text-emerald-600" : "text-rose-600"}`}>{variacionAnual >= 0 ? "+" : ""}{variacionAnual}% vs mismo mes año anterior</p>}
+          <p className="text-2xl font-black text-slate-900 dark:text-white">{ventasDelMes}{objetivoVentasMensual ? <span className="text-sm font-bold text-slate-400"> / {objetivoVentasMensual}</span> : null}</p>
+          {objetivoVentasMensual ? (
+            <>
+              <div className="w-full h-1.5 bg-slate-100 dark:bg-white/10 rounded-full overflow-hidden mt-2">
+                <div className={`h-full rounded-full ${ventasDelMes >= objetivoVentasMensual ? "bg-emerald-500" : "bg-indigo-500"}`} style={{ width: `${Math.min(100, Math.round((ventasDelMes / objetivoVentasMensual) * 100))}%` }} />
+              </div>
+              <p className="text-[11px] text-slate-400 mt-1">{Math.round((ventasDelMes / objetivoVentasMensual) * 100)}% del objetivo mensual</p>
+            </>
+          ) : (
+            variacionAnual !== null && <p className={`text-[11px] mt-1 font-bold ${variacionAnual >= 0 ? "text-emerald-600" : "text-rose-600"}`}>{variacionAnual >= 0 ? "+" : ""}{variacionAnual}% vs mismo mes año anterior</p>
+          )}
         </div>
         <div className="rounded-2xl p-4 bg-white dark:bg-white/[0.02] border border-slate-200 dark:border-white/5">
           <p className="text-[10px] font-bold uppercase text-slate-400 flex items-center gap-1.5 mb-1"><DollarSign className="w-3.5 h-3.5" /> Ganancia del mes</p>
@@ -266,7 +275,9 @@ export default function CockpitCeoTab({ miNombre, ocultarMontos, diaDelMes, dias
         </table>
       </div>
 
-      <p className="text-xs text-slate-400 text-center">Objetivos configurables (Configuración → Objetivos) y detalle drill-down por widget quedan para una próxima tanda.</p>
+      {!objetivoVentasMensual && (
+        <p className="text-xs text-slate-400 text-center">Cargá el objetivo mensual de ventas en Configuración → Empresa para ver el progreso acá.</p>
+      )}
     </div>
   );
 }

@@ -9,7 +9,7 @@ import Link from "next/link";
 interface Props {
   miNombre: string; esAdmin: boolean; gananciasOcultas: boolean;
   revenuePorMoneda: Record<string, number>;
-  ventasDelMes: number; operacionesDelMes: number;
+  ventasDelMes: number; operacionesDelMes: number; objetivoVentasMensual: number | null;
   stockDisponible: number; stockReservado: number; stockSenado: number; stockVendido: number; stockEnPreparacion: number;
   clientesSinContactar: number;
   cuotasPagarPorMoneda: Record<string, number>;
@@ -97,6 +97,7 @@ export default function DashboardClient(props: Props) {
           diaDelMes={props.diaDelMes}
           diasEnElMes={props.diasEnElMes}
           ventasDelMes={props.ventasDelMes}
+          objetivoVentasMensual={props.objetivoVentasMensual}
           ventasMesAnterior={props.ventasMesAnterior}
           gananciaPorMoneda={props.gananciaPorMoneda}
           consignacionesDelMes={props.consignacionesDelMes}

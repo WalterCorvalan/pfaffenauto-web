@@ -58,6 +58,7 @@ const ConfigEmpresaSchema = z.object({
   resumen_diario_telefono_dueno: z.string().trim().max(30).optional().nullable(),
   resumen_diario_plantilla_meta: z.string().trim().max(60).optional(),
   resumen_diario_idioma: z.string().trim().max(10).optional(),
+  objetivo_ventas_mensual: z.coerce.number().min(0).optional().nullable(),
 });
 
 export async function PATCH(request: Request) {

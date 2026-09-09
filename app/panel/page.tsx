@@ -86,6 +86,7 @@ export default async function PanelV2Home() {
     { count: cuotasPagarVencidasCount },
     { data: tierMiPerformance },
     { data: premiosMiPerformance },
+    { data: configEmpresa },
   ] = await Promise.all([
     supabase.from("ventas").select("precio_venta, moneda_venta, estado").gte("fecha_cierre", inicioMes).lte("fecha_cierre", finMes),
     supabase.from("vehiculos").select("estado"),
@@ -137,6 +138,7 @@ export default async function PanelV2Home() {
     supabase.from("cuotas_pagar_agencia").select("id", { count: "exact", head: true }).eq("pagada", false).lt("vencimiento", hoyIso),
     supabase.rpc("tier_para_vendedor", { p_vendedor_id: user.id, p_desde: inicioMes, p_hasta: finMes }),
     supabase.rpc("premios_consignaciones_vendedor", { p_vendedor_id: user.id, p_desde: inicioMes, p_hasta: finMes }),
+    supabase.from("configuracion_empresa").select("objetivo_ventas_mensual").eq("id", true).maybeSingle(),
   ]);
 
   const perfilesMap: Record<string, string> = {};
@@ -342,6 +344,7 @@ export default async function PanelV2Home() {
       gananciasOcultas={miPerfil?.ganancias_ocultas ?? false}
       revenuePorMoneda={revenuePorMoneda}
       ventasDelMes={ventasCerradas.length}
+      objetivoVentasMensual={configEmpresa?.objetivo_ventas_mensual ?? null}
       operacionesDelMes={(ventasMes || []).length}
       stockDisponible={conteoEstado.disponible || 0}
       stockReservado={conteoEstado.reservado || 0}

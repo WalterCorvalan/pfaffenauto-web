@@ -27,7 +27,7 @@ interface Vehiculo {
   id: string; categoria: string; marca: string; modelo: string; anio: number; patente: string | null; color: string | null;
   condicion: string; km: number | null; precio_venta: number; moneda_venta: string; ubicacion: string; estado: string;
   propio_agencia: boolean; propietario_nombre: string | null; consignado_por: string | null; publicado_ml: boolean;
-  ml_publicar_error: string | null;
+  ml_publicar_error: string | null; precio_compra: number | null; moneda_compra: string | null;
   fotos: string[]; notas: string | null; created_at: string;
   sucursal_id: string | null; sucursal: { nombre: string } | null; vendedor_asignado_id: string | null;
 }
@@ -361,6 +361,14 @@ export default function StockClient({
                         { key: "patente", header: "Patente/VIN", cell: (v) => v.patente || "s/patente", claseTd: "text-xs text-slate-500 dark:text-slate-400 whitespace-nowrap" },
                         { key: "km", header: "KM", cell: (v) => v.km?.toLocaleString("es-AR") ?? "—", claseTd: "text-xs text-slate-500 dark:text-slate-400 whitespace-nowrap" },
                         { key: "precio", header: "Precio", cell: (v) => puedeEditarCompleto ? <span onClick={(e) => e.stopPropagation()}><PrecioEditor vehiculoId={v.id} precio={v.precio_venta} moneda={v.moneda_venta} onActualizado={actualizarVehiculo} /></span> : <span>{fmtPrecio(v.precio_venta, v.moneda_venta)}</span>, claseTd: "text-sm whitespace-nowrap" },
+                        ...(puedeEditarCompleto ? [
+                          { key: "costo", header: "Costo", cell: (v: Vehiculo) => v.precio_compra ? <span className="text-slate-500 dark:text-slate-400">{fmtPrecio(v.precio_compra, v.moneda_compra || v.moneda_venta)}</span> : <span className="text-slate-300 dark:text-slate-600">—</span>, claseTd: "text-sm whitespace-nowrap" },
+                          { key: "ganancia", header: "Ganancia", cell: (v: Vehiculo) => {
+                            if (!v.precio_compra || !v.precio_venta || v.moneda_compra !== v.moneda_venta) return <span className="text-slate-300 dark:text-slate-600">—</span>;
+                            const g = v.precio_venta - v.precio_compra;
+                            return <span className={`font-bold ${g >= 0 ? "text-emerald-600 dark:text-emerald-400" : "text-rose-600 dark:text-rose-400"}`}>{fmtPrecio(g, v.moneda_venta)}</span>;
+                          }, claseTd: "text-sm whitespace-nowrap" },
+                        ] as ColumnaTabla<Vehiculo>[] : []),
                         { key: "estado", header: "Estado", cell: (v) => <span className={`text-[10px] font-bold px-2 py-1 rounded-full border whitespace-nowrap ${ESTADO_COLOR[v.estado]}`}>{ESTADO_LABEL[v.estado]}</span> },
                         { key: "sucursal", header: "Sucursal", cell: (v) => puedeEditarCompleto ? <span onClick={(e) => e.stopPropagation()}><SucursalEditor vehiculoId={v.id} sucursalId={v.sucursal_id} sucursalNombre={v.sucursal?.nombre || null} vendedorId={v.vendedor_asignado_id} vendedorNombre={v.vendedor_asignado_id ? perfilMap[v.vendedor_asignado_id] : null} perfiles={perfiles} sucursales={sucursales} onActualizado={actualizarVehiculo} /></span> : <span>{v.sucursal?.nombre || "—"}</span>, claseTd: "text-xs whitespace-nowrap" },
                         { key: "asignado", header: "Asignado", cell: (v) => puedeEditarCompleto ? <span onClick={(e) => e.stopPropagation()}><VendedorEditor vehiculoId={v.id} vendedorId={v.vendedor_asignado_id} vendedorNombre={v.vendedor_asignado_id ? perfilMap[v.vendedor_asignado_id] : null} vehiculoSucursalId={v.sucursal_id} perfiles={perfiles} onActualizado={actualizarVehiculo} /></span> : <span>{v.vendedor_asignado_id ? perfilMap[v.vendedor_asignado_id] : "—"}</span>, claseTd: "text-xs whitespace-nowrap" },

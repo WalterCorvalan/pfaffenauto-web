@@ -272,6 +272,7 @@ interface ConfigPlazos {
   reasignar_pedidos: boolean;
   plazo_reasignacion_pedidos_horas: number;
   plazo_reconfirmacion_pedidos_dias: number;
+  objetivo_ventas_mensual: number | null;
 }
 
 function PlazosConfig() {
@@ -317,6 +318,11 @@ function PlazosConfig() {
             <label className="text-xs font-semibold text-slate-500 block mb-1">Stock estancado (días)</label>
             <input type="number" defaultValue={config.stock_dias_estancado} onBlur={(e) => guardar({ stock_dias_estancado: Number(e.target.value) })} className={inputClass} />
             <p className="text-[11px] text-slate-400 mt-1">Días en stock a partir de los que un vehículo se marca como estancado.</p>
+          </div>
+          <div>
+            <label className="text-xs font-semibold text-slate-500 block mb-1">Objetivo de ventas del mes (autos)</label>
+            <input type="number" defaultValue={config.objetivo_ventas_mensual ?? ""} onBlur={(e) => guardar({ objetivo_ventas_mensual: e.target.value === "" ? null : Number(e.target.value) })} className={inputClass} placeholder="Sin objetivo cargado" />
+            <p className="text-[11px] text-slate-400 mt-1">Cantidad de autos a vender en el mes — barra de progreso en Dashboard → Cockpit CEO.</p>
           </div>
           <div>
             <label className="text-xs font-semibold text-slate-500 block mb-1">Recontacto de clientes (meses)</label>
