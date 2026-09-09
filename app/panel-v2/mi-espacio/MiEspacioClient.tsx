@@ -21,7 +21,6 @@ import GastosFijosTab from "./tabs/GastosFijosTab";
 import ContactosTab from "./tabs/ContactosTab";
 import NotificacionesTab from "./tabs/NotificacionesTab";
 import MiWhatsAppTab from "./tabs/MiWhatsAppTab";
-import PerfilTab from "./tabs/PerfilTab";
 import TablaResponsiva, { type ColumnaTabla } from "@/components/panelV2/TablaResponsiva";
 
 const RESUMEN_ITEMS = [
@@ -57,7 +56,6 @@ const OTRAS_TABS = [
   { grupo: "ORGANIZACIÓN", value: "pendientes", label: "Pendientes" },
   { grupo: "ORGANIZACIÓN", value: "calendario", label: "Calendario" },
   { grupo: "ORGANIZACIÓN", value: "contactos", label: "Contactos" },
-  { grupo: "PREFERENCIAS", value: "perfil", label: "Mi Perfil" },
   { grupo: "PREFERENCIAS", value: "notificaciones", label: "Mis notificaciones" },
   { grupo: "PREFERENCIAS", value: "whatsapp", label: "Mi WhatsApp" },
 ];
@@ -501,7 +499,6 @@ export default function MiEspacioClient({
       {tab === "pendientes" && <PendientesTab miId={miId} autoAbrir={autoAbrir === "pendientes"} onAutoAbierto={() => setAutoAbrir(null)} />}
       {tab === "calendario" && <CalendarioTab miId={miId} autoAbrir={autoAbrir === "calendario"} onAutoAbierto={() => setAutoAbrir(null)} />}
       {tab === "contactos" && <ContactosTab miId={miId} />}
-      {tab === "perfil" && <PerfilTab miId={miId} />}
       {tab === "notificaciones" && <NotificacionesTab miId={miId} />}
       {tab === "whatsapp" && <MiWhatsAppTab miId={miId} />}
 
