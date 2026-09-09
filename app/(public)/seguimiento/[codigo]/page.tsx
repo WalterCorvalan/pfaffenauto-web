@@ -184,7 +184,7 @@ export default async function SeguimientoPublicoPage({
     const tono = TONOS[info.color];
     return (
       <div className="min-h-screen bg-[#F8FAFC] dark:bg-[#0a0a0f]">
-        <div className="relative bg-gradient-to-br from-[#0f293e] via-[#0145F2] to-[#26bae0] pt-28 pb-24 px-4 overflow-hidden">
+        <div className="relative bg-gradient-to-br from-[#0f293e] via-[#0145F2] to-[#26bae0] pt-28 pb-12 px-4 overflow-hidden">
           <div className="absolute inset-0 opacity-[0.07] bg-[radial-gradient(circle_at_20%_20%,white,transparent_35%),radial-gradient(circle_at_80%_60%,white,transparent_30%)]" />
           <div className="relative max-w-lg mx-auto text-center">
             <p className="text-[11px] font-black uppercase tracking-[0.2em] text-white/60 mb-3">Seguimiento de tu seña</p>
@@ -192,7 +192,7 @@ export default async function SeguimientoPublicoPage({
           </div>
         </div>
 
-        <div className="max-w-lg mx-auto px-4 -mt-14 pb-16">
+        <div className="max-w-lg mx-auto px-4 pt-8 pb-16">
           <div className="bg-white dark:bg-[#111] border border-slate-100 dark:border-white/10 rounded-3xl p-7 md:p-8 shadow-2xl shadow-slate-300/40 dark:shadow-none">
             <div className={`flex items-center gap-4 rounded-2xl p-5 ring-1 ${tono.bg} ${tono.ring}`}>
               <div className={`w-12 h-12 rounded-2xl flex items-center justify-center shrink-0 bg-white dark:bg-white/10 shadow-sm`}>
@@ -214,7 +214,7 @@ export default async function SeguimientoPublicoPage({
   // ============= VENTA (con timeline de hitos) =============
   return (
     <div className="min-h-screen bg-[#F8FAFC] dark:bg-[#0a0a0f]">
-      <div className="relative bg-gradient-to-br from-[#0f293e] via-[#0145F2] to-[#26bae0] pt-28 pb-28 px-4 overflow-hidden">
+      <div className="relative bg-gradient-to-br from-[#0f293e] via-[#0145F2] to-[#26bae0] pt-28 pb-12 px-4 overflow-hidden">
         <div className="absolute inset-0 opacity-[0.07] bg-[radial-gradient(circle_at_20%_20%,white,transparent_35%),radial-gradient(circle_at_80%_60%,white,transparent_30%)]" />
         <div className="relative max-w-lg mx-auto text-center">
           <div className="w-14 h-14 rounded-2xl bg-white/10 backdrop-blur-sm border border-white/20 flex items-center justify-center mx-auto mb-4">
@@ -237,7 +237,7 @@ export default async function SeguimientoPublicoPage({
         </div>
       </div>
 
-      <div className="max-w-lg mx-auto px-4 -mt-16 pb-16">
+      <div className="max-w-lg mx-auto px-4 pt-8 pb-16">
         <div className="bg-white dark:bg-[#111] border border-slate-100 dark:border-white/10 rounded-3xl p-7 md:p-8 shadow-2xl shadow-slate-300/40 dark:shadow-none">
           {totalHitos === 0 ? (
             <div className="flex items-center gap-4 rounded-2xl p-5 ring-1 bg-amber-50 dark:bg-amber-500/10 ring-amber-200 dark:ring-amber-500/20">

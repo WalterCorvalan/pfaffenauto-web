@@ -121,7 +121,7 @@ export default async function PresupuestoPublicoPage({ params }: { params: Promi
   return (
     <div className="min-h-screen bg-[#F1F5F9]">
       {/* ================= HERO ================= */}
-      <div className="relative bg-gradient-to-br from-[#0f293e] via-[#0145F2] to-[#26bae0] pt-10 pb-28 px-4 overflow-hidden">
+      <div className="relative bg-gradient-to-br from-[#0f293e] via-[#0145F2] to-[#26bae0] pt-10 pb-14 px-4 overflow-hidden">
         <div className="absolute inset-0 opacity-[0.07] bg-[radial-gradient(circle_at_15%_25%,white,transparent_35%),radial-gradient(circle_at_85%_65%,white,transparent_30%)]" />
         <div className="relative max-w-4xl mx-auto">
           <div className="flex items-center gap-3 mb-10">
@@ -143,7 +143,7 @@ export default async function PresupuestoPublicoPage({ params }: { params: Promi
       </div>
 
       {/* ================= CONTENIDO ================= */}
-      <div className="max-w-4xl mx-auto px-4 -mt-16 pb-16 grid grid-cols-1 lg:grid-cols-[1fr_320px] gap-6 items-start">
+      <div className="max-w-4xl mx-auto px-4 pt-8 pb-16 grid grid-cols-1 lg:grid-cols-[1fr_320px] gap-6 items-start">
         <div className="bg-white border border-slate-100 rounded-3xl shadow-xl shadow-slate-200/50 overflow-hidden">
           <div className="p-6 md:p-8 space-y-6">
             <div className="border border-slate-200 rounded-2xl px-5 py-4 flex items-center justify-between">
