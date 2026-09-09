@@ -2,6 +2,7 @@ import Link from "next/link";
 import Image from "next/image";
 import { MapPin, Phone, Clock, ArrowLeft, Navigation } from "lucide-react";
 import WhatsAppIcon from "@/components/icons/WhatsAppIcon";
+import EstadoHorario from "./EstadoHorario";
 
 interface HeroProps {
   slug: string;
@@ -59,7 +60,16 @@ export default function SucursalHeroAnimated({ slug, nombre, imagen, direccion, 
           <div className="lg:col-span-5 bg-white dark:bg-white/5 border border-gray-200 dark:border-white/10 rounded-2xl divide-y divide-gray-100 dark:divide-white/10 flex flex-col justify-center">
             <InfoRow icon={<MapPin className="w-4 h-4" />} label="Dirección" value={direccion} />
             <InfoRow icon={<Phone className="w-4 h-4" />} label="Teléfono" value={telefono} />
-            <InfoRow icon={<Clock className="w-4 h-4" />} label="Horario de atención" value={horario} />
+            <div className="flex items-center gap-4 p-5">
+              <div className="w-10 h-10 rounded-full bg-blue-50 dark:bg-sky-400/10 text-blue-700 dark:text-sky-300 flex items-center justify-center shrink-0">
+                <Clock className="w-4 h-4" />
+              </div>
+              <div className="min-w-0">
+                <span className="text-[11px] font-bold text-gray-400 dark:text-slate-500 uppercase tracking-widest block mb-0.5">Horario de atención</span>
+                <span className="text-sm font-bold block text-gray-900 dark:text-white">{horario}</span>
+                <EstadoHorario />
+              </div>
+            </div>
             <div className="flex divide-x divide-gray-100 dark:divide-white/10">
               {ubicacion?.navLink && (
                 <a
