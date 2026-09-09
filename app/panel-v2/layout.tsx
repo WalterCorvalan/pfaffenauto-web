@@ -124,12 +124,6 @@ const GRUPOS: {
         modulo: "reportes",
       },
       {
-        href: "/panel-v2/marketing/generales",
-        label: "Marketing",
-        icon: Megaphone,
-        modulo: "marketing",
-      },
-      {
         href: "/panel-v2/mi-espacio",
         label: "Mi Espacio",
         icon: Folder,
@@ -195,6 +189,29 @@ const GRUPOS: {
         label: "Mis ventas",
         icon: Trophy,
         modulo: "mis_ventas",
+      },
+      {
+        href: "/panel-v2/dormidos",
+        label: "Dormidos",
+        icon: BedDouble,
+        modulo: "dormidos",
+      },
+      {
+        href: "/panel-v2/recontactos",
+        label: "Recontactos",
+        icon: Repeat,
+        modulo: "recontactos",
+      },
+    ],
+  },
+  {
+    titulo: "Marketing",
+    items: [
+      {
+        href: "/panel-v2/marketing/generales",
+        label: "Marketing",
+        icon: Megaphone,
+        modulo: "marketing",
       },
     ],
   },
@@ -339,18 +356,6 @@ const GRUPOS: {
         icon: ShieldCheck,
         modulo: "autorizaciones",
       },
-      {
-        href: "/panel-v2/dormidos",
-        label: "Dormidos",
-        icon: BedDouble,
-        modulo: "dormidos",
-      },
-      {
-        href: "/panel-v2/recontactos",
-        label: "Recontactos",
-        icon: Repeat,
-        modulo: "recontactos",
-      },
       { label: "Sugerencias", icon: Lightbulb, modulo: "sugerencias" },
       { label: "Papelera", icon: Trash2, modulo: "papelera" },
       {
@@ -360,6 +365,23 @@ const GRUPOS: {
         modulo: "configuracion",
       },
       { label: "Oportunidades", icon: Handshake, modulo: "oportunidades" },
+      {
+        href: "/panel-v2/errores",
+        label: "Errores del sistema",
+        icon: AlertTriangle,
+        modulo: "errores_sistema",
+      },
+      {
+        href: "/panel-v2/logs",
+        label: "Registro de Cambios",
+        icon: History,
+        modulo: "logs",
+      },
+    ],
+  },
+  {
+    titulo: "RRHH",
+    items: [
       {
         href: "/panel-v2/postulaciones",
         label: "Postulaciones",
@@ -377,18 +399,6 @@ const GRUPOS: {
         label: "Categorías de Empleados",
         icon: Tag,
         modulo: "categorias_empleados",
-      },
-      {
-        href: "/panel-v2/errores",
-        label: "Errores del sistema",
-        icon: AlertTriangle,
-        modulo: "errores_sistema",
-      },
-      {
-        href: "/panel-v2/logs",
-        label: "Registro de Cambios",
-        icon: History,
-        modulo: "logs",
       },
     ],
   },

@@ -86,10 +86,17 @@ export default function NuevoPresupuestoModal({
       if (error) throw error;
 
       if (!precioConfirmado) {
+        // Encargado de la sucursal del VENDEDOR que armó el presupuesto (no
+        // el del auto cargado manualmente, que es otro campo del form) --
+        // mismo criterio que el resto de la cadena vehículo/vendedor/sucursal.
+        const vendedorFinalId = vendedorId || user?.id;
+        const sucursalVendedor = vendedores.find((v) => v.id === vendedorFinalId)?.sucursal_id || null;
         await notificarEncargados(
           supabase2,
           `${cliente.nombre} ${cliente.apellido || ""} — Presupuesto N° ${data.numero}: el vendedor no confirmó el precio ($${(Number(precioArs) || 0).toLocaleString("es-AR")}). Verificalo.`,
-          `/panel-v2/presupuestos/imprimir/${data.id}`
+          `/panel-v2/presupuestos/imprimir/${data.id}`,
+          "precio_a_confirmar",
+          sucursalVendedor
         );
       }
 

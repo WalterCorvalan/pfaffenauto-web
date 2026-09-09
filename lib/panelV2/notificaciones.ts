@@ -8,11 +8,23 @@ export async function notificarPersona(supabase: SupabaseClient, destinatarioId:
   await supabase.from("alertas").insert({ destinatario_id: destinatarioId, tipo, titulo: mensaje, link, prioridad: "media" });
 }
 
-export async function notificarEncargados(supabase: SupabaseClient, mensaje: string, link: string, tipo: string = "precio_a_confirmar") {
-  const { data: encargados } = await supabase.from("perfiles").select("id").or("roles.cs.{admin},roles.cs.{encargado}").eq("activo", true);
-  if (!encargados || encargados.length === 0) return;
+// sucursalId opcional: si se pasa, prioriza al/los encargado(s) de ESA
+// sucursal (admin siempre recibe, sea cual sea). Si nadie de esa sucursal
+// tiene el rol "encargado" (hoy nadie lo tiene asignado todavía), cae al
+// comportamiento viejo -- avisar a TODOS los admin/encargado -- para no
+// perder silenciosamente un aviso importante mientras se carga esa data.
+export async function notificarEncargados(supabase: SupabaseClient, mensaje: string, link: string, tipo: string = "precio_a_confirmar", sucursalId?: string | null) {
+  const { data: candidatos } = await supabase.from("perfiles").select("id, roles, sucursal_id").or("roles.cs.{admin},roles.cs.{encargado}").eq("activo", true);
+  if (!candidatos || candidatos.length === 0) return;
+
+  let destinatarios = candidatos;
+  if (sucursalId) {
+    const filtrados = candidatos.filter((p) => p.roles.includes("admin") || p.sucursal_id === sucursalId);
+    if (filtrados.some((p) => p.roles.includes("encargado"))) destinatarios = filtrados;
+  }
+
   await supabase.from("alertas").insert(
-    encargados.map((e) => ({ destinatario_id: e.id, tipo, titulo: mensaje, link, prioridad: "media" }))
+    destinatarios.map((e) => ({ destinatario_id: e.id, tipo, titulo: mensaje, link, prioridad: "media" }))
   );
 }
 

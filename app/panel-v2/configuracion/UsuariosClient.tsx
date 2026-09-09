@@ -2,10 +2,9 @@
 
 import { useState, useEffect } from "react";
 import Link from "next/link";
-import { Settings, UserPlus, Pencil, Trash2, Loader2, X, Users, UserCheck, UserX, MapPin, Search, ShieldCheck } from "lucide-react";
+import { Settings, UserPlus, Pencil, Trash2, Loader2, X, Users, UserCheck, UserX, MapPin, Search } from "lucide-react";
 import { supabase2 } from "@/lib/supabase2/client";
 import TablaResponsiva, { type ColumnaTabla } from "@/components/panelV2/TablaResponsiva";
-import PermisosTab from "./PermisosTab";
 
 const ROLES = ["admin", "encargado", "ventas", "finanzas", "gestoria"] as const;
 const ROL_LABEL: Record<string, string> = { admin: "Admin", encargado: "Encargado", ventas: "Ventas", finanzas: "Finanzas", gestoria: "Gestoría" };
@@ -21,7 +20,6 @@ interface Usuario { id: string; nombre: string; email: string; roles: string[]; 
 interface Sucursal { id: string; nombre: string; }
 
 export default function UsuariosClient() {
-  const [vista, setVista] = useState<"equipo" | "permisos">("equipo");
   const [usuarios, setUsuarios] = useState<Usuario[]>([]);
   const [sucursales, setSucursales] = useState<Sucursal[]>([]);
   const [cargando, setCargando] = useState(true);
@@ -91,14 +89,11 @@ export default function UsuariosClient() {
           <h1 className="text-xl font-black text-slate-900 dark:text-white flex items-center gap-2"><Settings className="w-5 h-5 text-indigo-600" /> Configuración</h1>
           <p className="text-sm text-slate-400">Usuarios, roles y permisos del equipo.</p>
         </div>
-        {vista === "equipo" && (
-          <button onClick={() => setNuevo(true)} className="flex items-center gap-1.5 px-4 py-2 text-sm font-bold bg-rose-600 hover:bg-rose-700 text-white rounded-lg"><UserPlus className="w-4 h-4" /> Nuevo usuario</button>
-        )}
+        <button onClick={() => setNuevo(true)} className="flex items-center gap-1.5 px-4 py-2 text-sm font-bold bg-rose-600 hover:bg-rose-700 text-white rounded-lg"><UserPlus className="w-4 h-4" /> Nuevo usuario</button>
       </div>
 
       <div className="flex items-center gap-1 border-b border-slate-200 dark:border-white/10 overflow-x-auto">
-        <button onClick={() => setVista("equipo")} className={`px-3 py-2.5 text-sm font-bold border-b-2 -mb-px whitespace-nowrap ${vista === "equipo" ? "border-rose-600 text-rose-600" : "border-transparent text-slate-500 hover:text-slate-700 dark:hover:text-slate-300"}`}>Colaboradores</button>
-        <button onClick={() => setVista("permisos")} className={`px-3 py-2.5 text-sm font-bold border-b-2 -mb-px whitespace-nowrap flex items-center gap-1.5 ${vista === "permisos" ? "border-rose-600 text-rose-600" : "border-transparent text-slate-500 hover:text-slate-700 dark:hover:text-slate-300"}`}><ShieldCheck className="w-3.5 h-3.5" /> Permisos</button>
+        <span className="px-3 py-2.5 text-sm font-bold border-b-2 border-rose-600 text-rose-600 whitespace-nowrap">Colaboradores</span>
         <Link href="/panel-v2/configuracion/empresa" className="px-3 py-2.5 text-sm font-bold border-b-2 border-transparent text-slate-500 whitespace-nowrap">Empresa</Link>
         <Link href="/panel-v2/configuracion/whatsapp" className="px-3 py-2.5 text-sm font-bold border-b-2 border-transparent text-slate-500 whitespace-nowrap">WhatsApp</Link>
         <Link href="/panel-v2/configuracion/instagram" className="px-3 py-2.5 text-sm font-bold border-b-2 border-transparent text-slate-500 whitespace-nowrap">Instagram</Link>
@@ -106,10 +101,7 @@ export default function UsuariosClient() {
 
       {error && <div className="text-rose-600 text-sm bg-rose-50 dark:bg-rose-500/10 p-3 rounded-lg">{error}</div>}
 
-      {vista === "permisos" ? (
-        <PermisosTab usuarios={usuarios} roles={ROLES as unknown as string[]} rolLabel={ROL_LABEL} />
-      ) : (
-        <>
+      <>
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
             <div className="bg-white dark:bg-white/[0.02] border border-slate-200 dark:border-white/5 rounded-2xl p-4">
               <span className="block text-[10px] font-bold uppercase tracking-widest text-slate-400 mb-1">Total</span>
@@ -217,8 +209,7 @@ export default function UsuariosClient() {
             )}
             {!cargando && usuariosFiltrados.length === 0 && <p className="px-4 py-8 text-center text-slate-400 text-sm">Ningún colaborador coincide con la búsqueda.</p>}
           </div>
-        </>
-      )}
+      </>
 
       {nuevo && <ModalNuevoUsuario sucursales={sucursales} onClose={() => setNuevo(false)} onSaved={() => { setNuevo(false); cargar(); }} />}
       {editando && <ModalEditarUsuario usuario={editando} sucursales={sucursales} onClose={() => setEditando(null)} onSaved={() => { setEditando(null); cargar(); }} />}
