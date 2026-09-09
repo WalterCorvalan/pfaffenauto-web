@@ -1,4 +1,4 @@
-import { createClient } from "@/lib/supabase/server";
+import { createClient } from "@/lib/supabase2/server";
 import { notFound } from "next/navigation";
 import ShowroomEntrada from "@/components/showroom/ShowroomEntrada";
 import { vehiculoRealAShowroom } from "@/lib/showroom/mapear";
@@ -23,7 +23,7 @@ export default async function ShowroomTestPage({
   const supabase = await createClient();
   const { data: sucursalRow } = await supabase
     .from("sucursales")
-    .select("id, nombre")
+    .select("id, nombre, telefono:telefono_encargado")
     .eq("slug", sucursal)
     .maybeSingle();
   if (!sucursalRow) notFound();
@@ -32,11 +32,11 @@ export default async function ShowroomTestPage({
     .from("vehiculos")
     .select(CAMPOS_VEHICULO_PUBLICO)
     .eq("sucursal_id", sucursalRow.id)
-    .in("estado", ["Disponible", "Reservado"])
+    .in("estado", ["disponible", "reservado"])
     .order("created_at", { ascending: false })
     .limit(20);
 
-  const vehiculos = (data || []).map((v) => vehiculoRealAShowroom(v, v.marca));
+  const vehiculos = (data || []).map((v) => vehiculoRealAShowroom(v, v.marca, sucursalRow.telefono));
 
   return <ShowroomEntrada sucursalNombre={sucursalRow.nombre} fachadaSrc={fachadaSrc} vehiculos={vehiculos} />;
 }

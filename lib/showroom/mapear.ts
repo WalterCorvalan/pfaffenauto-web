@@ -17,18 +17,21 @@ const COLOR_PLACEHOLDER = "#8a8f9c";
 
 // Fila de vehículos reales del stock (Disponible/Reservado) transformados al
 // formato que ya consume el showroom 3D — cada unidad física es una caja.
-export function vehiculoRealAShowroom(v: any, marca: string): ShowroomVehicle {
-  const esCeroKm = v.kilometraje === 0;
+export function vehiculoRealAShowroom(v: any, marca: string, telefonoSucursal?: string | null): ShowroomVehicle {
+  const esCeroKm = v.km === 0;
   const precioTexto = v.precio_publicado_usd
     ? `US$ ${Number(v.precio_publicado_usd).toLocaleString("en-US")}`
     : `$${Number(v.precio_publicado_ars || 0).toLocaleString("es-AR")}`;
 
   const specs = [
-    `${v.anio} · ${esCeroKm ? "0km" : `${Number(v.kilometraje).toLocaleString("es-AR")} km`}`,
+    `${v.anio} · ${esCeroKm ? "0km" : `${Number(v.km).toLocaleString("es-AR")} km`}`,
     precioTexto,
     v.transmision ? `Transmisión ${v.transmision}` : null,
     v.sucursales?.nombre ? `Sucursal: ${v.sucursales.nombre}` : null,
   ].filter(Boolean) as string[];
+
+  let numeroLimpio = (telefonoSucursal || "1121907000").replace(/\D/g, "");
+  if (!numeroLimpio.startsWith("549")) numeroLimpio = numeroLimpio.replace(/^54/, "") ? "549" + numeroLimpio.replace(/^54/, "") : "549" + numeroLimpio;
 
   return {
     id: v.id,
@@ -37,9 +40,9 @@ export function vehiculoRealAShowroom(v: any, marca: string): ShowroomVehicle {
     subtitulo: `${v.anio} · ${esCeroKm ? "0km" : "Usado"}`,
     colorPlaceholder: COLOR_PLACEHOLDER,
     dimensiones: DIMENSIONES_POR_TIPO[v.tipo] ?? DIMENSIONES_POR_TIPO.default,
-    image: v.multimedia_vehiculos?.[0]?.url_archivo || "/logo.png",
+    image: v.fotos?.[0] || "/logo.png",
     specs,
-    whatsappLink: `https://wa.me/5491121907000?text=${encodeURIComponent(
+    whatsappLink: `https://wa.me/${numeroLimpio}?text=${encodeURIComponent(
       `Hola, quiero cotizar el ${v.marca} ${v.modelo} ${v.anio} que vi en el showroom.`
     )}`,
     disponibles: 1,
