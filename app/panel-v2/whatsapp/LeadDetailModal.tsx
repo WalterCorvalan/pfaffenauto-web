@@ -380,7 +380,7 @@ export default function LeadDetailModal({
     );
 
   return (
-    <div className="fixed inset-0 bg-black/40 backdrop-blur-sm z-[100] flex items-center justify-center p-4" onClick={() => { if (window.innerWidth >= 768) onClose(); }}>
+    <div className="fixed inset-0 bg-black/40 backdrop-blur-sm z-[100] flex items-center justify-center p-4" onClick={() => onClose()}>
       <div className="bg-white dark:bg-[#111] border border-slate-200 dark:border-white/10 rounded-2xl w-full max-w-3xl max-h-[90vh] overflow-y-auto shadow-2xl" onClick={(e) => e.stopPropagation()}>
         <div className="flex justify-end px-5 pt-4 sticky top-0 bg-white dark:bg-[#111] z-10">
           <button onClick={onClose} className="text-slate-400 hover:text-slate-700 dark:hover:text-white"><X className="w-5 h-5" /></button>
@@ -643,7 +643,7 @@ export default function LeadDetailModal({
         </div>
 
         {showTareaModal && (
-          <div className="fixed inset-0 bg-black/40 z-[110] flex items-center justify-center p-4" onClick={() => { if (window.innerWidth >= 768) setShowTareaModal(false); }}>
+          <div className="fixed inset-0 bg-black/40 z-[110] flex items-center justify-center p-4" onClick={() => setShowTareaModal(false)}>
             <form onSubmit={crearTarea} onClick={(e) => e.stopPropagation()} className="bg-white dark:bg-[#1A1A1A] rounded-2xl p-5 w-full max-w-sm space-y-3">
               <h3 className="font-bold text-sm">Nueva tarea</h3>
               <select value={tipoTarea} onChange={(e) => setTipoTarea(e.target.value)} className={inputClass}>{TIPOS_TAREA.map((t) => <option key={t} value={t}>{t}</option>)}</select>
@@ -655,7 +655,7 @@ export default function LeadDetailModal({
         )}
 
         {tareaACompletar && (
-          <div className="fixed inset-0 bg-black/40 z-[110] flex items-center justify-center p-4" onClick={() => { if (window.innerWidth >= 768) setTareaACompletar(null); }}>
+          <div className="fixed inset-0 bg-black/40 z-[110] flex items-center justify-center p-4" onClick={() => setTareaACompletar(null)}>
             <div onClick={(e) => e.stopPropagation()} className="bg-white dark:bg-[#1A1A1A] rounded-2xl p-5 w-full max-w-sm space-y-3">
               <h3 className="font-bold text-sm">Completar: {tareaACompletar.tipo}</h3>
               <textarea value={resultadoTarea} onChange={(e) => setResultadoTarea(e.target.value)} rows={3} placeholder="Resultado (opcional)" className={inputClass} />
@@ -665,7 +665,7 @@ export default function LeadDetailModal({
         )}
 
         {showTestDriveModal && (
-          <div className="fixed inset-0 bg-black/40 z-[110] flex items-center justify-center p-4" onClick={() => { if (window.innerWidth >= 768) setShowTestDriveModal(false); }}>
+          <div className="fixed inset-0 bg-black/40 z-[110] flex items-center justify-center p-4" onClick={() => setShowTestDriveModal(false)}>
             <form onSubmit={agendarTestDrive} onClick={(e) => e.stopPropagation()} className="bg-white dark:bg-[#1A1A1A] rounded-2xl p-5 w-full max-w-sm space-y-3">
               <h3 className="font-bold text-sm">Agendar test drive</h3>
               <select value={vehiculoTestDriveId} onChange={(e) => setVehiculoTestDriveId(e.target.value)} className={inputClass}>
@@ -679,7 +679,7 @@ export default function LeadDetailModal({
         )}
 
         {showAsistenciaModal && (
-          <div className="fixed inset-0 bg-black/40 z-[110] flex items-center justify-center p-4" onClick={() => { if (window.innerWidth >= 768) setShowAsistenciaModal(false); }}>
+          <div className="fixed inset-0 bg-black/40 z-[110] flex items-center justify-center p-4" onClick={() => setShowAsistenciaModal(false)}>
             <div onClick={(e) => e.stopPropagation()} className="bg-white dark:bg-[#1A1A1A] rounded-2xl p-5 w-full max-w-sm space-y-3">
               <h3 className="font-bold text-sm flex items-center gap-1.5"><LifeBuoy className="w-4 h-4" /> Pedir asistencia</h3>
               <select value={asistenciaParaId} onChange={(e) => setAsistenciaParaId(e.target.value)} className={inputClass}>
@@ -693,7 +693,7 @@ export default function LeadDetailModal({
         )}
 
         {showCierreModal && (
-          <div className="fixed inset-0 bg-black/40 z-[110] flex items-center justify-center p-4" onClick={() => { if (window.innerWidth >= 768) setShowCierreModal(false); }}>
+          <div className="fixed inset-0 bg-black/40 z-[110] flex items-center justify-center p-4" onClick={() => setShowCierreModal(false)}>
             <div onClick={(e) => e.stopPropagation()} className="bg-white dark:bg-[#1A1A1A] rounded-2xl p-5 w-full max-w-sm space-y-3">
               <h3 className="font-bold text-sm">¿Por qué se pierde este lead?</h3>
               <select value={motivoCierreId} onChange={(e) => setMotivoCierreId(e.target.value)} className={inputClass}>

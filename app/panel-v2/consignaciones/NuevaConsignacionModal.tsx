@@ -93,7 +93,7 @@ export default function NuevaConsignacionModal({ perfiles, clientes, miId, onClo
   const labelClass = "text-xs font-semibold text-slate-600 dark:text-slate-300 block mb-1";
 
   return (
-    <div className="fixed inset-0 bg-black/40 backdrop-blur-sm z-[100] flex items-center justify-center p-4" onClick={() => { if (!guardando && window.innerWidth >= 768) onClose(); }}>
+    <div className="fixed inset-0 bg-black/40 backdrop-blur-sm z-[100] flex items-center justify-center p-4" onClick={() => { if (!guardando) onClose(); }}>
       <div className="bg-white dark:bg-[#111] border border-slate-200 dark:border-white/10 rounded-2xl w-full max-w-md max-h-[90vh] overflow-y-auto shadow-2xl" onClick={(e) => e.stopPropagation()}>
         <div className="flex items-start justify-between px-5 py-4 border-b border-slate-100 dark:border-white/10 sticky top-0 bg-white dark:bg-[#111] z-10">
           <p className="text-xs text-slate-500 dark:text-slate-400 pr-4">Datos iniciales del vehículo que el cliente quiere consignar. Una vez que ingrese al local podés actualizar el estado desde el detalle.</p>

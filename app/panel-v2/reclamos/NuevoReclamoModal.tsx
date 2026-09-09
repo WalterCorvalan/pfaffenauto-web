@@ -133,7 +133,7 @@ export default function NuevoReclamoModal({ perfiles, miId, onClose, onCreado }:
   const seccionClass = "text-[11px] font-black uppercase tracking-widest text-slate-400 mt-1 mb-2";
 
   return (
-    <div className="fixed inset-0 bg-black/40 backdrop-blur-sm z-[100] flex items-center justify-center p-4" onClick={() => { if (!guardando && window.innerWidth >= 768) onClose(); }}>
+    <div className="fixed inset-0 bg-black/40 backdrop-blur-sm z-[100] flex items-center justify-center p-4" onClick={() => { if (!guardando) onClose(); }}>
       <div className="bg-white dark:bg-[#111] border border-slate-200 dark:border-white/10 rounded-2xl w-full max-w-lg max-h-[90vh] overflow-y-auto shadow-2xl" onClick={(e) => e.stopPropagation()}>
         <div className="flex items-start justify-between px-5 py-4 border-b border-slate-100 dark:border-white/10 sticky top-0 bg-white dark:bg-[#111] z-10">
           <div>

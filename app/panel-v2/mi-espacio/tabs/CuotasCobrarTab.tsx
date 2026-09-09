@@ -152,7 +152,7 @@ export default function CuotasCobrarTab({ miId }: { miId: string }) {
       )}
 
       {showNueva && (
-        <div className="fixed inset-0 bg-black/40 z-50 flex items-center justify-center p-4" onClick={() => { if (window.innerWidth >= 768) setShowNueva(false); }}>
+        <div className="fixed inset-0 bg-black/40 z-50 flex items-center justify-center p-4" onClick={() => setShowNueva(false)}>
           <div onClick={(e) => e.stopPropagation()} className="bg-white dark:bg-[#141414] border border-slate-200 dark:border-white/10 w-full max-w-md rounded-2xl shadow-2xl p-6 max-h-[90vh] overflow-y-auto">
             <div className="flex justify-between items-start mb-4"><h3 className="text-lg font-bold">Nueva cuota a cobrar</h3><button onClick={() => setShowNueva(false)}><X className="w-4 h-4 text-slate-400" /></button></div>
             <label className={labelClass}>Concepto *</label>
@@ -175,7 +175,7 @@ export default function CuotasCobrarTab({ miId }: { miId: string }) {
       )}
 
       {showPlan && (
-        <div className="fixed inset-0 bg-black/40 z-50 flex items-center justify-center p-4" onClick={() => { if (window.innerWidth >= 768) setShowPlan(false); }}>
+        <div className="fixed inset-0 bg-black/40 z-50 flex items-center justify-center p-4" onClick={() => setShowPlan(false)}>
           <div onClick={(e) => e.stopPropagation()} className="bg-white dark:bg-[#141414] border border-slate-200 dark:border-white/10 w-full max-w-md rounded-2xl shadow-2xl p-6 max-h-[90vh] overflow-y-auto">
             <div className="flex justify-between items-start mb-4"><h3 className="text-lg font-bold">Plan automático</h3><button onClick={() => setShowPlan(false)}><X className="w-4 h-4 text-slate-400" /></button></div>
             <label className={labelClass}>Concepto base *</label>
@@ -200,7 +200,7 @@ export default function CuotasCobrarTab({ miId }: { miId: string }) {
       )}
 
       {cobrando && (
-        <div className="fixed inset-0 bg-black/40 z-50 flex items-center justify-center p-4" onClick={() => { if (window.innerWidth >= 768) setCobrando(null); }}>
+        <div className="fixed inset-0 bg-black/40 z-50 flex items-center justify-center p-4" onClick={() => setCobrando(null)}>
           <div onClick={(e) => e.stopPropagation()} className="bg-white dark:bg-[#141414] border border-slate-200 dark:border-white/10 w-full max-w-sm rounded-2xl shadow-2xl p-6">
             <div className="flex justify-between items-start mb-1"><h3 className="text-base font-bold">Cobro de "{cobrando.concepto}"</h3><button onClick={() => setCobrando(null)}><X className="w-4 h-4 text-slate-400" /></button></div>
             <div className="bg-slate-50 dark:bg-white/5 rounded-lg p-3 my-3 space-y-1 text-sm">

@@ -217,7 +217,7 @@ export default function CuotasTab({
       )}
 
       {showNuevaC && (
-        <div className="fixed inset-0 bg-black/40 z-50 flex items-center justify-center p-4" onClick={() => { if (window.innerWidth >= 768) setShowNuevaC(false); }}>
+        <div className="fixed inset-0 bg-black/40 z-50 flex items-center justify-center p-4" onClick={() => setShowNuevaC(false)}>
           <div onClick={(e) => e.stopPropagation()} className="bg-white dark:bg-[#141414] border border-slate-200 dark:border-white/10 w-full max-w-md rounded-2xl shadow-2xl p-6">
             <div className="flex justify-between items-start mb-4"><h3 className="text-lg font-bold">Nueva cuota a cobrar</h3><button onClick={() => setShowNuevaC(false)}><X className="w-4 h-4 text-slate-400" /></button></div>
             <div className="grid grid-cols-2 gap-2">
@@ -238,7 +238,7 @@ export default function CuotasTab({
       )}
 
       {showNuevaP && (
-        <div className="fixed inset-0 bg-black/40 z-50 flex items-center justify-center p-4" onClick={() => { if (window.innerWidth >= 768) setShowNuevaP(false); }}>
+        <div className="fixed inset-0 bg-black/40 z-50 flex items-center justify-center p-4" onClick={() => setShowNuevaP(false)}>
           <div onClick={(e) => e.stopPropagation()} className="bg-white dark:bg-[#141414] border border-slate-200 dark:border-white/10 w-full max-w-md rounded-2xl shadow-2xl p-6 max-h-[90vh] overflow-y-auto">
             <div className="flex justify-between items-start mb-1"><h3 className="text-lg font-bold">Nueva deuda en cuotas</h3><button onClick={() => setShowNuevaP(false)}><X className="w-4 h-4 text-slate-400" /></button></div>
             <p className="text-xs text-slate-400 mb-4">Lo que la agencia va a pagar en cuotas. Se generan los vencimientos solos.</p>
@@ -270,7 +270,7 @@ export default function CuotasTab({
       )}
 
       {pagando && (
-        <div className="fixed inset-0 bg-black/40 z-50 flex items-center justify-center p-4" onClick={() => { if (window.innerWidth >= 768) setPagando(null); }}>
+        <div className="fixed inset-0 bg-black/40 z-50 flex items-center justify-center p-4" onClick={() => setPagando(null)}>
           <div onClick={(e) => e.stopPropagation()} className="bg-white dark:bg-[#141414] border border-slate-200 dark:border-white/10 w-full max-w-sm rounded-2xl shadow-2xl p-6">
             <div className="flex justify-between items-start mb-3"><h3 className="text-base font-bold">{pagando.direccion === "cobrar" ? "Cobrar" : "Pagar"} cuota</h3><button onClick={() => setPagando(null)}><X className="w-4 h-4 text-slate-400" /></button></div>
             <div className="grid grid-cols-2 gap-2">
