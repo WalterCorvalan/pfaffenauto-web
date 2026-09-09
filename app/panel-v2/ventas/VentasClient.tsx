@@ -3,7 +3,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import * as XLSX from "xlsx";
-import { Search, Briefcase, Download, Plus, Wrench, ShoppingCart, Eye, Pencil, FileText, Wallet, Trash2, Globe } from "lucide-react";
+import { Search, Briefcase, Download, Plus, Wrench, ShoppingCart, Eye, Pencil, FileText, Wallet, Trash2, Globe, SlidersHorizontal } from "lucide-react";
 import NuevaVentaModal, { type VentaPrefill } from "./NuevaVentaModal";
 import VentaDetalleModal from "./VentaDetalleModal";
 import { fmtFechaLocal } from "@/lib/panelV2/fechas";
@@ -53,6 +53,7 @@ export default function VentasClient({
   const [prefill, setPrefill] = useState<VentaPrefill | null>(null);
   const [detalleId, setDetalleId] = useState<string | null>(null);
   const [editando, setEditando] = useState<any>(null);
+  const [filtrosAbiertos, setFiltrosAbiertos] = useState(false);
 
   useEffect(() => {
     if (searchParams.get("nueva") === "1") {
@@ -103,6 +104,7 @@ export default function VentasClient({
     return lista;
   }, [ventas, tab, soloMias, miId, query, queryVendedor, metodoFiltro, desde, hasta, soloPermuta, mes, perfilMap, permutaSet]);
 
+  const filtrosSecundariosActivos = [queryVendedor, metodoFiltro, desde, hasta, mes].filter(Boolean).length + (soloPermuta ? 1 : 0);
   const enCurso = ventas.filter((v) => ["activa", "reserva"].includes(v.estado)).length;
   const cerradas = ventas.filter((v) => v.estado === "cerrada").length;
   const misVentas = ventas.filter((v) => v.vendedor_id === miId).length;
@@ -176,8 +178,23 @@ export default function VentasClient({
             ))}
           </div>
 
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-2 mb-4">
-            <div className="relative">
+          {/* En mobile antes esto eran 5+ campos apilados a lo largo (grid
+              1 columna) que empujaban la lista de ventas fuera de pantalla
+              -- ahora solo la búsqueda principal queda a la vista, el resto
+              se pliega detrás de "Filtros". En desktop no cambia nada. */}
+          <div className="flex gap-2 mb-2 md:hidden">
+            <div className="relative flex-1">
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-slate-400" />
+              <input value={query} onChange={(e) => setQuery(e.target.value)} placeholder="Comprador, vehículo, DNI, teléfono..." className="w-full bg-white dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-lg py-2 pl-9 pr-3 text-xs outline-none focus:border-rose-500 text-slate-900 dark:text-white placeholder:text-slate-400" />
+            </div>
+            <button onClick={() => setFiltrosAbiertos((v) => !v)} className={`shrink-0 flex items-center gap-1.5 px-3 py-2 rounded-lg text-xs font-bold border ${filtrosAbiertos ? "bg-rose-600 border-rose-600 text-white" : "bg-white dark:bg-white/5 border-slate-200 dark:border-white/10 text-slate-600 dark:text-slate-300"}`}>
+              <SlidersHorizontal className="w-3.5 h-3.5" /> Filtros
+              {filtrosSecundariosActivos > 0 && <span className={`text-[9px] px-1.5 rounded-full ${filtrosAbiertos ? "bg-white/20" : "bg-rose-100 dark:bg-rose-500/20 text-rose-600 dark:text-rose-300"}`}>{filtrosSecundariosActivos}</span>}
+            </button>
+          </div>
+
+          <div className={`grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-2 mb-4 ${filtrosAbiertos ? "grid" : "hidden"} md:grid`}>
+            <div className="relative hidden md:block">
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-slate-400" />
               <input value={query} onChange={(e) => setQuery(e.target.value)} placeholder="Comprador, vehículo, DNI, teléfono..." className="w-full bg-white dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-lg py-2 pl-9 pr-3 text-xs outline-none focus:border-rose-500 text-slate-900 dark:text-white placeholder:text-slate-400" />
             </div>
@@ -195,7 +212,7 @@ export default function VentasClient({
             </div>
             <label className="flex items-center gap-1.5 text-xs font-semibold text-slate-500 dark:text-slate-400"><input type="checkbox" checked={soloPermuta} onChange={(e) => setSoloPermuta(e.target.checked)} className="w-4 h-4 accent-rose-600" /> Solo con permuta</label>
           </div>
-          <div className="flex items-center gap-2 mb-4">
+          <div className={`items-center gap-2 mb-4 ${filtrosAbiertos ? "flex" : "hidden"} md:flex`}>
             <label className="text-xs font-semibold text-slate-500 dark:text-slate-400">Mes:</label>
             <input type="month" value={mes} onChange={(e) => setMes(e.target.value)} className="bg-white dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-lg px-3 py-1.5 text-xs text-slate-900 dark:text-white" />
           </div>
