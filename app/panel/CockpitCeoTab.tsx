@@ -146,7 +146,7 @@ export default function CockpitCeoTab({ miNombre, ocultarMontos, diaDelMes, dias
         <div className="grid grid-cols-3 gap-3">
           <MiniStat label="Autos vendidos" valor={cierreMesAnterior.autos} />
           <MiniStat label="Mejor vendedor" valor={cierreMesAnterior.mejorVendedor || "—"} />
-          <MiniStat label="Multas" valor={fmtMoneda(cierreMesAnterior.multasArs, "ARS")} />
+          <MiniStat label="Ganancia por multas" valor={fmtMoneda(cierreMesAnterior.multasArs, "ARS")} />
         </div>
       </div>
 

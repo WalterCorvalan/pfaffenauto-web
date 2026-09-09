@@ -95,16 +95,25 @@ export default function FinanzasClient({
     return map;
   }, [cuentas]);
 
+  // Los tiles dicen "(mes)" -- `movimientos` acá es solo "los últimos 200
+  // registros" (para la pestaña Movimientos), no necesariamente todos caen
+  // en el mes en curso. Sin este filtro, con suficiente volumen los 200 más
+  // recientes pueden no cubrir todo el mes, o traer meses viejos mezclados.
+  const movimientosDelMes = useMemo(() => {
+    const inicioMes = new Date(); inicioMes.setDate(1); inicioMes.setHours(0, 0, 0, 0);
+    const inicioMesStr = inicioMes.toISOString().slice(0, 10);
+    return movimientos.filter((m) => m.fecha >= inicioMesStr);
+  }, [movimientos]);
   const ingresosTotales = useMemo(() => {
     const map: Record<string, number> = {};
-    movimientos.filter((m) => m.tipo === "ingreso" && m.estado === "aprobado").forEach((m) => { const mo = m.cuenta?.moneda; if (mo) map[mo] = (map[mo] || 0) + Number(m.monto); });
+    movimientosDelMes.filter((m) => m.tipo === "ingreso" && m.estado === "aprobado").forEach((m) => { const mo = m.cuenta?.moneda; if (mo) map[mo] = (map[mo] || 0) + Number(m.monto); });
     return map;
-  }, [movimientos]);
+  }, [movimientosDelMes]);
   const egresosTotales = useMemo(() => {
     const map: Record<string, number> = {};
-    movimientos.filter((m) => m.tipo === "egreso" && m.estado === "aprobado").forEach((m) => { const mo = m.cuenta?.moneda; if (mo) map[mo] = (map[mo] || 0) + Number(m.monto); });
+    movimientosDelMes.filter((m) => m.tipo === "egreso" && m.estado === "aprobado").forEach((m) => { const mo = m.cuenta?.moneda; if (mo) map[mo] = (map[mo] || 0) + Number(m.monto); });
     return map;
-  }, [movimientos]);
+  }, [movimientosDelMes]);
 
   const cuotasPendientesPorMoneda = useMemo(() => {
     const map: Record<string, number> = {};

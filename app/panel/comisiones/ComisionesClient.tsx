@@ -187,7 +187,7 @@ export default function ComisionesClient({
 
         <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
           <div className="bg-slate-50 dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-2xl p-4 flex flex-col justify-center">
-            <span className="text-[10px] font-bold uppercase tracking-widest text-slate-500">Total a cobrar</span>
+            <span className="text-[10px] font-bold uppercase tracking-widest text-slate-500">Total generado (bruto)</span>
             <span className="text-xl font-black font-mono text-slate-900 dark:text-white mt-1">{fmtPorMoneda(aCobrarPorMoneda)}</span>
           </div>
           <div className="bg-rose-50 dark:bg-rose-500/10 border border-rose-200 dark:border-rose-500/20 rounded-2xl p-4 flex flex-col justify-center">

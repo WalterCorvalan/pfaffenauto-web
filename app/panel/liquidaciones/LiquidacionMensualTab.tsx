@@ -76,11 +76,10 @@ export default function LiquidacionMensualTab({ liquidaciones, setLiquidaciones,
                       {isOpen && fs.map((f) => (
                         <tr key={f.id} className="text-slate-500 border-t border-slate-50 dark:border-white/5">
                           <td className="p-2.5"></td>
-                          <td className="p-2.5 pl-4 font-bold">{f.dominio}</td>
-                          <td className="p-2.5">{f.anio}</td>
-                          <td className="p-2.5">{f.cliente_comprador}</td>
+                          <td className="p-2.5 pl-4 font-bold" colSpan={2}>{f.dominio} · {f.anio} — {f.cliente_comprador}</td>
                           <td className="p-2.5 font-mono">{fmt(f.comision_fija_aplicada)}</td>
                           <td className="p-2.5 font-mono">{fmt((f.pct_gestora_aplicado / 100) * f.diferencia_transferencia)}</td>
+                          <td className="p-2.5 font-mono">{f.diferencia_multas ? fmt((f.pct_gestora_aplicado / 100) * f.diferencia_multas) : "—"}</td>
                           <td className="p-2.5 font-mono">{fmt(f.comision_gestora)}</td>
                           <td className="p-2.5 font-mono">{gananciasOcultas ? "—" : fmt(f.ingreso_agencia)}</td>
                           <td className="p-2.5" colSpan={2}></td>

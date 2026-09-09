@@ -228,7 +228,7 @@ export default function DashboardGeneralTab(props: Props) {
         <Tile label="Cuotas a pagar (mes)" valor={fmtPorMoneda(props.cuotasPagarPorMoneda)} icon={CreditCard} color="rose" oculto={props.ocultarMontos} href="/panel/finanzas" />
         <Tile label="Balance neto USD" valor={fmtMoneda(saldoUsd, "USD")} icon={Wallet} color="violet" oculto={props.ocultarMontos} href="/panel/finanzas" />
         <Tile label="Balance neto ARS" valor={fmtMoneda(saldoArs, "ARS")} icon={Wallet} color="violet" oculto={props.ocultarMontos} href="/panel/finanzas" />
-        <Tile label="Comisiones pendientes" valor={props.comisionesPendientes} icon={DollarSign} color="violet" oculto={props.ocultarMontos} href="/panel/comisiones" />
+        <Tile label="Comisiones pendientes (cant.)" valor={props.comisionesPendientes} icon={Receipt} color="violet" href="/panel/comisiones" />
       </div>
 
       <div className="rounded-2xl p-5 bg-white dark:bg-white/[0.02] border border-slate-200 dark:border-white/5">
