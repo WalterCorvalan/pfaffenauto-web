@@ -432,6 +432,12 @@ export default function ExpedienteDetalleModal({ expedienteId, miId, perfiles, s
       <div><p className="text-slate-400 font-bold uppercase text-[10px]">Vehículo</p><p className="text-slate-700 dark:text-slate-200">{venta?.vehiculo_marca} {venta?.vehiculo_modelo} ({venta?.vehiculo_anio})</p></div>
       <div><p className="text-slate-400 font-bold uppercase text-[10px]">Vendedor/Propietario</p><p className="text-slate-700 dark:text-slate-200">{venta?.propietario_nombre || "—"}</p></div>
       <div><p className="text-slate-400 font-bold uppercase text-[10px]">Comprador</p><p className="text-slate-700 dark:text-slate-200">{venta?.comprador_nombre || "—"}</p></div>
+      <div><p className="text-slate-400 font-bold uppercase text-[10px]">DNI / CUIT-CUIL</p><p className="text-slate-700 dark:text-slate-200">{venta?.comprador_dni || "—"}{venta?.comprador_cuit_cuil ? ` · ${venta.comprador_cuit_cuil}` : ""}</p></div>
+      <div><p className="text-slate-400 font-bold uppercase text-[10px]">Estado civil / Profesión</p><p className="text-slate-700 dark:text-slate-200">{[venta?.comprador_estado_civil, venta?.comprador_profesion].filter(Boolean).join(" · ") || "—"}</p></div>
+      <div className="col-span-2"><p className="text-slate-400 font-bold uppercase text-[10px]">Domicilio del comprador</p><p className="text-slate-700 dark:text-slate-200">{[venta?.comprador_calle && `${venta.comprador_calle} ${venta.comprador_numero || ""}`.trim(), venta?.comprador_depto, venta?.comprador_localidad, venta?.comprador_provincia, venta?.comprador_codigo_postal].filter(Boolean).join(", ") || "—"}</p></div>
+      {venta?.patentamiento_transferencia_monto && (
+        <div><p className="text-slate-400 font-bold uppercase text-[10px]">Patentamiento / Transferencia</p><p className="text-slate-700 dark:text-slate-200">$ {Number(venta.patentamiento_transferencia_monto).toLocaleString("es-AR")}</p></div>
+      )}
       {senas.length === 0 ? (
         <p className="col-span-2 text-slate-400 italic">Sin seña registrada para esta operación.</p>
       ) : (

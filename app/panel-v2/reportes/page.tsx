@@ -34,6 +34,7 @@ export default async function ReportesPage() {
     { data: infraccionesPorMes },
     { data: servicePosventa },
     { data: consultasVsVentas },
+    { data: composicionVentas },
   ] = await Promise.all([
     supabase.auth.getUser().then(async ({ data }) => {
       if (!data.user) return { data: null };
@@ -61,6 +62,7 @@ export default async function ReportesPage() {
     supabase.from("v_reportes_infracciones_por_mes").select("*").limit(12),
     supabase.from("v_reportes_service_posventa").select("*").single(),
     supabase.from("v_reportes_consultas_vs_ventas").select("*").limit(20),
+    supabase.from("v_reportes_composicion_ventas").select("*").single(),
   ]);
 
   return (
@@ -93,6 +95,7 @@ export default async function ReportesPage() {
       infraccionesPorMes={infraccionesPorMes || []}
       servicePosventaInicial={servicePosventa || { oportunidades: 0, contactadas: 0, pct_contactadas: 0, con_ot: 0 }}
       consultasVsVentas={consultasVsVentas || []}
+      composicionVentas={composicionVentas || { total_cerradas: 0, con_financiacion: 0, pct_financiadas: 0, con_seguro: 0, pct_seguro: 0, con_permuta: 0, pct_permuta: 0 }}
     />
   );
 }

@@ -9,7 +9,7 @@ interface Props {
   miId: string; miNombre: string; soyAdmin: boolean; soyFinanzas: boolean; soyVentas: boolean; mesInicial: string;
   rankingInicial: any[]; premios: any[]; rankingVelocidadInicial: any[]; operacionesPorVendedorInicial: any[];
   origenLeadsInicial: any[]; embudoComercialInicial: any; expedientesResumenInicial: any; expedientesPorEstado: any[];
-  infraccionesResumenInicial: any; tallerFacturacionInicial: any; ventasPorMes: any[]; ventasPorMarca: any[];
+  infraccionesResumenInicial: any; tallerFacturacionInicial: any; ventasPorMes: any[]; ventasPorMarca: any[]; composicionVentas: any;
   topClientes: any[]; clientesPorVendedor: any[]; cotizacionesResumen: any; cotizacionesPorEstado: any[];
   cotizacionesPorVendedor: any[]; stockPorEstado: any[]; stockPorMarca: any[]; infraccionesPorMes: any[];
   servicePosventaInicial: any;
@@ -269,6 +269,15 @@ export default function ReportesClient(props: Props) {
         <Card title="Ventas por Marca">
           {props.ventasPorMarca.map((v: any) => <BarRow key={v.marca} label={v.marca} valor={Number(v.ventas_ponderadas)} max={maxMarca} color="bg-violet-500" />)}
           {props.ventasPorMarca.length === 0 && <p className="text-xs text-slate-400 text-center py-4">Sin ventas cerradas todavía.</p>}
+        </Card>
+
+        <Card title="Composición de Ventas">
+          <div className="grid grid-cols-3 gap-2">
+            <StatTile label="Financiadas" valor={`${props.composicionVentas.con_financiacion} · ${props.composicionVentas.pct_financiadas || 0}%`} tono="bg-blue-50 dark:bg-blue-500/10 border-blue-100 dark:border-blue-500/20" />
+            <StatTile label="Con seguro" valor={`${props.composicionVentas.con_seguro} · ${props.composicionVentas.pct_seguro || 0}%`} tono="bg-emerald-50 dark:bg-emerald-500/10 border-emerald-100 dark:border-emerald-500/20" />
+            <StatTile label="Con permuta" valor={`${props.composicionVentas.con_permuta} · ${props.composicionVentas.pct_permuta || 0}%`} tono="bg-indigo-50 dark:bg-indigo-500/10 border-indigo-100 dark:border-indigo-500/20" />
+          </div>
+          {props.composicionVentas.total_cerradas === 0 && <p className="text-xs text-slate-400 text-center py-4">Sin ventas cerradas todavía.</p>}
         </Card>
 
         <Card title="Origen de Leads">
