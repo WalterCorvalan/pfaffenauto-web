@@ -121,6 +121,7 @@ export default function ConfiguracionWhatsappClient() {
   const [guardando, setGuardando] = useState(false);
   const [config, setConfig] = useState<any>(null);
   const [phoneNumberId, setPhoneNumberId] = useState("");
+  const [wabaId, setWabaId] = useState("");
   const [accessToken, setAccessToken] = useState("");
   const [botNombre, setBotNombre] = useState("");
   const [copiado, setCopiado] = useState<"webhook" | "verify" | null>(null);
@@ -133,6 +134,7 @@ export default function ConfiguracionWhatsappClient() {
     if (res.ok) {
       setConfig(data.config);
       setPhoneNumberId(data.config?.phone_number_id || "");
+      setWabaId(data.config?.waba_id || "");
       setBotNombre(data.config?.bot_nombre || "");
     }
     setCargando(false);
@@ -147,7 +149,7 @@ export default function ConfiguracionWhatsappClient() {
       const res = await fetch("/api/panel-v2/whatsapp/configuracion", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ phoneNumberId, accessToken, botNombre }),
+        body: JSON.stringify({ phoneNumberId, wabaId, accessToken, botNombre }),
       });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || "No se pudo guardar.");
@@ -210,6 +212,11 @@ export default function ConfiguracionWhatsappClient() {
           <p className="text-[10px] text-slate-400 mt-1">Meta → WhatsApp → Configuración de la API → "Identificador de número de teléfono".</p>
         </div>
         <div>
+          <label className={labelClass}>WABA ID (WhatsApp Business Account)</label>
+          <input value={wabaId} onChange={(e) => setWabaId(e.target.value)} placeholder="Ej: 123456789012345" className={inputClass} />
+          <p className="text-[10px] text-slate-400 mt-1">Meta Business Suite → Cuentas de WhatsApp — es distinto del phone_number_id. Lo pide el envío de plantillas (fuera de la ventana de 24hs).</p>
+        </div>
+        <div>
           <label className={labelClass}>Access Token</label>
           <input type="password" value={accessToken} onChange={(e) => setAccessToken(e.target.value)} placeholder={config?.listo ? "•••••••• (dejalo vacío para no cambiarlo)" : "Pegá el token temporal o permanente"} className={inputClass} />
           <p className="text-[10px] text-slate-400 mt-1">Se guarda cifrado. El token temporal de Meta vence en 24hs — para producción generá uno permanente (System User) en Meta Business Suite.</p>
@@ -255,7 +262,143 @@ export default function ConfiguracionWhatsappClient() {
         </a>
       </div>
 
+      <PlantillasWhatsapp />
       <MemoriaBot />
+    </div>
+  );
+}
+
+interface Plantilla {
+  id: string;
+  nombre: string;
+  idioma: string;
+  categoria: string;
+  cuerpo: string;
+  estado: "pending" | "approved" | "rejected";
+  motivo_rechazo: string | null;
+}
+
+const ESTADO_LABEL: Record<Plantilla["estado"], { texto: string; clase: string }> = {
+  approved: { texto: "Aprobada", clase: "bg-emerald-50 text-emerald-700 dark:bg-emerald-500/10 dark:text-emerald-300" },
+  pending: { texto: "Pendiente en Meta", clase: "bg-amber-50 text-amber-700 dark:bg-amber-500/10 dark:text-amber-300" },
+  rejected: { texto: "Rechazada", clase: "bg-rose-50 text-rose-700 dark:bg-rose-500/10 dark:text-rose-300" },
+};
+
+function PlantillasWhatsapp() {
+  const [plantillas, setPlantillas] = useState<Plantilla[]>([]);
+  const [cargando, setCargando] = useState(true);
+  const [sincronizando, setSincronizando] = useState(false);
+  const [creando, setCreando] = useState(false);
+  const [error, setError] = useState("");
+  const [nueva, setNueva] = useState({ nombre: "", idioma: "es_AR", categoria: "UTILITY", cuerpo: "" });
+
+  const cargar = async () => {
+    setCargando(true);
+    const res = await fetch("/api/panel-v2/whatsapp/templates");
+    const data = await res.json();
+    if (res.ok) setPlantillas(data.templates || []);
+    setCargando(false);
+  };
+  useEffect(() => { cargar(); }, []);
+
+  const sincronizar = async () => {
+    setSincronizando(true);
+    setError("");
+    try {
+      const res = await fetch("/api/panel-v2/whatsapp/templates/sync", { method: "POST" });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error);
+      await cargar();
+    } catch (e: any) {
+      setError(e.message || "Error sincronizando con Meta.");
+    } finally {
+      setSincronizando(false);
+    }
+  };
+
+  const crear = async () => {
+    if (!nueva.nombre.trim() || !nueva.cuerpo.trim()) return;
+    setCreando(true);
+    setError("");
+    try {
+      const res = await fetch("/api/panel-v2/whatsapp/templates", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(nueva),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error);
+      setNueva({ nombre: "", idioma: "es_AR", categoria: "UTILITY", cuerpo: "" });
+      await cargar();
+    } catch (e: any) {
+      setError(e.message || "Error creando la plantilla.");
+    } finally {
+      setCreando(false);
+    }
+  };
+
+  return (
+    <div className="bg-white dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-2xl p-5 space-y-4 mt-5">
+      <div className="flex items-center justify-between gap-2">
+        <div>
+          <p className="text-[11px] font-black uppercase tracking-widest text-slate-400">Plantillas (fuera de ventana 24hs)</p>
+          <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">Cuando pasaron 24hs desde el último mensaje del cliente, Meta rechaza texto libre — hay que usar una plantilla aprobada. Se crean acá, Meta tarda en aprobarlas (minutos a horas); "Sincronizar" trae el estado actualizado.</p>
+        </div>
+        <button onClick={sincronizar} disabled={sincronizando} className="shrink-0 px-3 py-2 rounded-xl border border-slate-200 dark:border-white/10 text-xs font-bold text-slate-600 dark:text-slate-300 disabled:opacity-50 flex items-center gap-1.5">
+          {sincronizando ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : null} Sincronizar
+        </button>
+      </div>
+
+      {error && <p className="text-xs font-semibold text-rose-600">{error}</p>}
+
+      {cargando ? (
+        <div className="flex justify-center py-4"><Loader2 className="w-4 h-4 animate-spin text-slate-400" /></div>
+      ) : (
+        <div className="space-y-2">
+          {plantillas.length === 0 && <p className="text-xs text-slate-400 italic">Sin plantillas creadas todavía.</p>}
+          {plantillas.map((p) => (
+            <div key={p.id} className="rounded-xl border border-slate-200 dark:border-white/10 p-3 text-xs">
+              <div className="flex items-center justify-between gap-2 mb-1.5">
+                <span className="font-bold text-slate-700 dark:text-slate-200 font-mono">{p.nombre}</span>
+                <span className={`px-2 py-1 rounded-lg text-[10px] font-bold shrink-0 ${ESTADO_LABEL[p.estado].clase}`}>{ESTADO_LABEL[p.estado].texto}</span>
+              </div>
+              <p className="text-slate-600 dark:text-slate-300">{p.cuerpo}</p>
+              {p.estado === "rejected" && p.motivo_rechazo && (
+                <p className="text-[10px] text-rose-500 mt-1">Motivo: {p.motivo_rechazo}</p>
+              )}
+            </div>
+          ))}
+        </div>
+      )}
+
+      <div className="border-t border-slate-100 dark:border-white/10 pt-4 space-y-2.5">
+        <p className="text-[11px] font-black uppercase tracking-widest text-slate-400">Crear plantilla</p>
+        <div>
+          <label className={labelClass}>Nombre (sin espacios ni tildes)</label>
+          <input value={nueva.nombre} onChange={(e) => setNueva((n) => ({ ...n, nombre: e.target.value }))} placeholder="Ej: seguimiento_consulta" className={inputClass} />
+        </div>
+        <div className="grid grid-cols-2 gap-2.5">
+          <div>
+            <label className={labelClass}>Idioma</label>
+            <input value={nueva.idioma} onChange={(e) => setNueva((n) => ({ ...n, idioma: e.target.value }))} className={inputClass} />
+          </div>
+          <div>
+            <label className={labelClass}>Categoría</label>
+            <select value={nueva.categoria} onChange={(e) => setNueva((n) => ({ ...n, categoria: e.target.value }))} className={inputClass}>
+              <option value="UTILITY">Utilidad</option>
+              <option value="MARKETING">Marketing</option>
+            </select>
+          </div>
+        </div>
+        <div>
+          <label className={labelClass}>Cuerpo del mensaje</label>
+          <textarea value={nueva.cuerpo} onChange={(e) => setNueva((n) => ({ ...n, cuerpo: e.target.value }))} rows={3} placeholder="Hola {{1}}, seguimos en contacto por tu consulta en Pfaffen Autos." className={inputClass} />
+          <p className="text-[10px] text-slate-400 mt-1">Máximo una variable, tiene que ser exactamente {"{{1}}"}.</p>
+        </div>
+        <button onClick={crear} disabled={creando} className="px-4 py-2.5 rounded-xl bg-rose-600 hover:bg-rose-700 text-white text-sm font-bold disabled:opacity-50 flex items-center gap-1.5">
+          {creando ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Plus className="w-3.5 h-3.5" />} Enviar a aprobación de Meta
+        </button>
+      </div>
     </div>
   );
 }

@@ -7,6 +7,7 @@ import { decrypt } from "@/lib/crypto";
 import { rateLimit, ipDesdeRequest } from "@/lib/rateLimit";
 import { registrarError } from "@/lib/panelV2/logger";
 import { buscarRespuestaMemoria, buscarRespuestaFueraHorario } from "@/lib/panelV2/whatsappMemoria";
+import { notificarPersona, notificarEncargados } from "@/lib/panelV2/notificaciones";
 
 // Webhook de Meta para el WhatsApp de panel-v2 (Conversaciones → WhatsApp,
 // replica /panel/chat de v1: bandeja de mensajes reales de clientes con
@@ -154,10 +155,18 @@ async function ingestarMensaje({ waId, nombrePerfil, msg }: { waId: string; nomb
     return;
   }
 
-  const { data: convActual } = await supabase.from("whatsapp_conversaciones").select("unread_count").eq("id", conversacion.id).single();
+  const { data: convActual } = await supabase.from("whatsapp_conversaciones").select("unread_count, vendedor_id").eq("id", conversacion.id).single();
   await supabase.from("whatsapp_conversaciones").update({ last_inbound_at: new Date().toISOString(), last_message_at: new Date().toISOString(), unread_count: (convActual?.unread_count ?? 0) + 1 }).eq("id", conversacion.id);
-  // Las alertas de "nuevo mensaje" y "handoff" las dispara el trigger sobre
-  // whatsapp_mensajes/whatsapp_conversaciones — no hace falta repetirlas acá.
+
+  // Tipos propios ("whatsapp_*"), sin mezclar con "nuevo_mensaje_chat" /
+  // "handoff_chat" de Rodi (chatbot del sitio) — módulos separados.
+  const nombreLead = nombrePerfil || waId;
+  const mensajeNoti = `${nombreLead}: ${texto || "envió un mensaje"}`;
+  const linkNoti = `/panel-v2/whatsapp?conversacion=${conversacion.id}`;
+  if (convActual?.vendedor_id) {
+    notificarPersona(supabase, convActual.vendedor_id, "whatsapp_nuevo_mensaje", mensajeNoti, linkNoti).catch((err) => console.error("[webhook-v2] error notificando:", err));
+  }
+  notificarEncargados(supabase, mensajeNoti, linkNoti, "whatsapp_nuevo_mensaje").catch((err) => console.error("[webhook-v2] error notificando:", err));
 
   await ejecutarAgente(conversacion.id);
 }
@@ -256,8 +265,15 @@ async function ejecutarAgente(conversacionId: string) {
       handoff_at: new Date().toISOString(), handoff_reason: "cliente_pidio_humano",
       handoff_resumen: resumen_handoff || null,
     }).eq("id", conversacionId);
-    // La alerta de handoff la dispara el trigger sobre whatsapp_conversaciones,
-    // que ahora incluye este resumen en el mensaje de la alerta.
+
+    const { data: convHandoff } = await supabase.from("whatsapp_conversaciones").select("vendedor_id").eq("id", conversacionId).single();
+    const linkNoti = `/panel-v2/whatsapp?conversacion=${conversacionId}`;
+    const mensajeNoti = resumen_handoff || "El cliente pidió hablar con una persona — la IA dejó de responder.";
+    if (convHandoff?.vendedor_id) {
+      notificarPersona(supabase, convHandoff.vendedor_id, "whatsapp_handoff", mensajeNoti, linkNoti).catch((err) => console.error("[webhook-v2] error notificando handoff:", err));
+    } else {
+      notificarEncargados(supabase, mensajeNoti, linkNoti, "whatsapp_handoff").catch((err) => console.error("[webhook-v2] error notificando handoff:", err));
+    }
   }
 }
 

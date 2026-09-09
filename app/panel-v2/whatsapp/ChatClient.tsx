@@ -5,7 +5,7 @@ import { useSearchParams, useRouter } from "next/navigation";
 import { supabase2 } from "@/lib/supabase2/client";
 import {
   Search, Send, Bot, Check, Info, ChevronRight, PanelRight,
-  Loader2, Megaphone, X, MessageSquareText, AtSign, Archive, ArchiveRestore,
+  Loader2, Megaphone, X, MessageSquareText, AtSign, Archive, ArchiveRestore, FileCheck2,
 } from "lucide-react";
 
 const ETAPAS_PIPELINE: { value: string; label: string }[] = [
@@ -44,11 +44,21 @@ export default function ChatClient({
   const [mostrarPlantillas, setMostrarPlantillas] = useState(false);
   const [plantillas, setPlantillas] = useState<any[]>([]);
 
+  // Distinto de "plantillas" de arriba (respuestas rápidas propias, texto
+  // libre) -- estas son plantillas APROBADAS por Meta, obligatorias para
+  // responder cuando pasaron 24hs desde el último mensaje del cliente.
+  const [plantillasAprobadas, setPlantillasAprobadas] = useState<any[]>([]);
+  const [mostrarSelectorAprobadas, setMostrarSelectorAprobadas] = useState(false);
+  const [templateElegido, setTemplateElegido] = useState("");
+  const [variablePlantilla, setVariablePlantilla] = useState("");
+  const [enviandoPlantilla, setEnviandoPlantilla] = useState(false);
+
   const [creandoClienteManual, setCreandoClienteManual] = useState(false);
   const [guardandoCliente, setGuardandoCliente] = useState(false);
   const [nuevoCliente, setNuevoCliente] = useState({ nombre: "", telefono: "", email: "", dni_cuit: "" });
 
   const [panelAbierto, setPanelAbierto] = useState(true);
+  const [mostrarDetallesMobile, setMostrarDetallesMobile] = useState(false);
   const [etapaActual, setEtapaActual] = useState("sin_contactar");
   const [notasLocales, setNotasLocales] = useState("");
   const [guardandoNotas, setGuardandoNotas] = useState(false);
@@ -124,6 +134,32 @@ export default function ChatClient({
   useEffect(() => {
     supabase2.from("whatsapp_plantillas").select("*").eq("activa", true).order("sector").then(({ data }) => setPlantillas(data || []));
   }, []);
+
+  useEffect(() => {
+    if (canal !== "whatsapp") return;
+    supabase2.from("whatsapp_templates").select("*").eq("estado", "approved").then(({ data }) => setPlantillasAprobadas(data || []));
+  }, [canal]);
+
+  const enviarConPlantilla = async () => {
+    if (!seleccionada || !templateElegido) return;
+    setEnviandoPlantilla(true);
+    try {
+      const res = await fetch("/api/panel-v2/whatsapp/enviar-plantilla", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ conversacionId: seleccionada, templateId: templateElegido, variable: variablePlantilla || undefined }),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error);
+      setMostrarSelectorAprobadas(false);
+      setTemplateElegido("");
+      setVariablePlantilla("");
+    } catch (err: any) {
+      alert(err.message || "Error enviando la plantilla.");
+    } finally {
+      setEnviandoPlantilla(false);
+    }
+  };
 
   const enviarMensaje = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -415,6 +451,9 @@ export default function ChatClient({
               </div>
               <div className="flex items-center gap-2">
                 <button className={`md:hidden text-sm font-bold ${esIG ? "text-emerald-700 dark:text-emerald-300" : "text-white"}`} onClick={() => setSeleccionada(null)}>Atrás</button>
+                <button onClick={() => setMostrarDetallesMobile(true)} className={`lg:hidden p-1.5 rounded-md transition-colors ${esIG ? "text-slate-400 dark:text-slate-500 hover:bg-slate-100 dark:hover:bg-white/5 hover:text-slate-700 dark:hover:text-slate-200" : "text-emerald-100 hover:bg-white/10"}`} title="Ver detalles">
+                  <PanelRight className="w-5 h-5" />
+                </button>
                 {!panelAbierto && (
                   <button onClick={() => setPanelAbierto(true)} className={`hidden lg:flex p-1.5 rounded-md transition-colors ${esIG ? "text-slate-400 dark:text-slate-500 hover:bg-slate-100 dark:hover:bg-white/5 hover:text-slate-700 dark:hover:text-slate-200" : "text-emerald-100 hover:bg-white/10"}`} title="Mostrar detalles">
                     <PanelRight className="w-5 h-5" />
@@ -439,7 +478,11 @@ export default function ChatClient({
                           <div className={`flex items-center justify-end gap-1 mt-1 ${out && !esIG ? "opacity-60" : "opacity-70"}`}>
                             {out && m.ai_generado && <Bot className="w-3 h-3" />}
                             <span className="text-[10px] font-medium">{formatDate(m.created_at)}</span>
-                            {out && (m.status === "failed" ? <X className="w-3.5 h-3.5 text-rose-500" /> : <Check className={`w-3.5 h-3.5 ${esIG ? "" : "text-blue-500 dark:text-sky-300"}`} />)}
+                            {out && (m.status === "failed" ? (
+                              <button type="button" onClick={() => setMostrarSelectorAprobadas(true)} title="Falló el envío — probablemente ventana de 24hs vencida. Click para reintentar con plantilla." className="hover:opacity-70">
+                                <X className="w-3.5 h-3.5 text-rose-500" />
+                              </button>
+                            ) : <Check className={`w-3.5 h-3.5 ${esIG ? "" : "text-blue-500 dark:text-sky-300"}`} />)}
                           </div>
                         </div>
                       </div>
@@ -469,6 +512,11 @@ export default function ChatClient({
                 <button type="button" onClick={() => setMostrarPlantillas((v) => !v)} title="Plantillas" className="p-2 text-slate-400 hover:text-emerald-600 dark:hover:text-emerald-300 shrink-0">
                   <MessageSquareText className="w-4 h-4" />
                 </button>
+                {!esIG && (
+                  <button type="button" onClick={() => setMostrarSelectorAprobadas(true)} title="Plantilla aprobada (ventana de 24hs vencida)" className="p-2 text-slate-400 hover:text-amber-600 dark:hover:text-amber-300 shrink-0">
+                    <FileCheck2 className="w-4 h-4" />
+                  </button>
+                )}
                 <input type="text" value={nuevoMensaje} onChange={(e) => setNuevoMensaje(e.target.value)} placeholder="Escribe un mensaje..." className="flex-1 bg-transparent px-1 py-2 text-[15px] text-slate-800 dark:text-white outline-none" autoComplete="off" />
                 <button type="submit" disabled={!nuevoMensaje.trim()} className="bg-emerald-700 hover:bg-emerald-800 text-white p-2.5 rounded-lg transition-colors disabled:opacity-40 disabled:cursor-not-allowed shrink-0">
                   <Send className="w-4 h-4" />
@@ -479,60 +527,81 @@ export default function ChatClient({
         )}
       </div>
 
-      {/* COLUMNA 3: DETALLES */}
-      {seleccionada && panelAbierto && (
-        <div className="w-[260px] bg-white dark:bg-[#111] border-l border-slate-200 dark:border-white/10 flex-col hidden lg:flex shrink-0">
-          <div className="h-[60px] p-4 border-b border-slate-200 dark:border-white/10 flex items-center justify-between shrink-0">
-            <h3 className="text-[11px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-widest">Detalles</h3>
-            <button onClick={() => setPanelAbierto(false)} className="text-slate-400 dark:text-slate-500 hover:text-slate-700 dark:hover:text-slate-200 p-1 rounded-md hover:bg-slate-100 dark:hover:bg-white/5 transition-colors">
-              <ChevronRight className="w-4 h-4" />
-            </button>
-          </div>
-
-          <div className="flex-1 overflow-y-auto custom-scrollbar">
-            <div className="p-6 border-b border-slate-200 dark:border-white/10 flex flex-col items-center text-center">
-              <div className="w-16 h-16 rounded-full bg-slate-600 text-xl font-bold flex items-center justify-center text-white mb-3 shadow-sm">
-                {(contactoActivo?.nombre_perfil || contactoActivo?.telefono || "?").substring(0, 2).toUpperCase()}
-              </div>
-              <h3 className="font-bold text-slate-900 dark:text-white text-lg">{contactoActivo?.nombre_perfil || "Cliente"}</h3>
-              <p className="text-sm text-slate-500 dark:text-slate-400 mt-1">{contactoActivo?.telefono}</p>
-              {conversacionActiva?.origen_ads && (
-                <div className="mt-3 flex items-center gap-1.5 bg-indigo-50 dark:bg-indigo-500/10 border border-indigo-200 dark:border-indigo-500/20 text-indigo-700 dark:text-sky-300 text-[11px] font-bold px-2.5 py-1 rounded-full max-w-full">
-                  <Megaphone className="w-3 h-3 shrink-0" /> <span className="truncate" title={conversacionActiva.origen_ads}>{conversacionActiva.origen_ads}</span>
-                </div>
-              )}
+      {/* COLUMNA 3: DETALLES -- dock fijo en desktop (lg+), drawer superpuesto
+          en mobile/tablet. Antes esta columna entera era "hidden lg:flex":
+          en celular no había forma de cambiar vendedor, etapa, pausar la IA
+          ni archivar. Mismo contenido, dos formas de mostrarlo. */}
+      {seleccionada && (panelAbierto || mostrarDetallesMobile) && (
+        <>
+          {mostrarDetallesMobile && (
+            <div className="fixed inset-0 bg-black/50 z-40 lg:hidden" onClick={() => setMostrarDetallesMobile(false)} />
+          )}
+          <div className={`bg-white dark:bg-[#111] border-l border-slate-200 dark:border-white/10 flex-col shrink-0
+            ${mostrarDetallesMobile ? "fixed inset-y-0 right-0 z-50 w-[88vw] max-w-[320px] flex shadow-2xl" : "hidden"}
+            ${panelAbierto ? "lg:flex lg:static lg:z-auto lg:w-[300px] lg:max-w-none lg:shadow-none" : "lg:hidden"}`}>
+            <div className="h-[52px] px-4 border-b border-slate-200 dark:border-white/10 flex items-center justify-between shrink-0">
+              <h3 className="text-[11px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-widest">Detalles</h3>
+              <button onClick={() => { setPanelAbierto(false); setMostrarDetallesMobile(false); }} className="text-slate-400 dark:text-slate-500 hover:text-slate-700 dark:hover:text-slate-200 p-1 rounded-md hover:bg-slate-100 dark:hover:bg-white/5 transition-colors">
+                <ChevronRight className="w-4 h-4" />
+              </button>
             </div>
 
-            <div className="p-6 border-b border-slate-200 dark:border-white/10">
-              <div className="flex items-center justify-between mb-4">
+            <div className="flex-1 overflow-y-auto custom-scrollbar">
+              <div className="p-4 border-b border-slate-200 dark:border-white/10 flex items-center gap-3">
+                <div className="w-11 h-11 rounded-full bg-slate-600 text-sm font-bold flex items-center justify-center text-white shrink-0 shadow-sm">
+                  {(contactoActivo?.nombre_perfil || contactoActivo?.telefono || "?").substring(0, 2).toUpperCase()}
+                </div>
+                <div className="min-w-0">
+                  <h3 className="font-bold text-slate-900 dark:text-white text-sm truncate">{contactoActivo?.nombre_perfil || "Cliente"}</h3>
+                  <p className="text-xs text-slate-500 dark:text-slate-400 truncate">{contactoActivo?.telefono}</p>
+                </div>
+              </div>
+
+              {/* Resumen: antes esto vivía repartido (chip de origen suelto
+                  arriba, resumen de handoff solo si había handoff activo) --
+                  ahora es una sola tarjeta con lo que importa para entender
+                  la conversación de un vistazo: calificación, de dónde vino,
+                  y el resumen de la IA si lo generó. */}
+              <div className="p-4 border-b border-slate-200 dark:border-white/10 space-y-2.5">
+                <div className="flex items-center gap-1.5 flex-wrap">
+                  {conversacionActiva?.calificacion && (
+                    <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${conversacionActiva.calificacion === "caliente" ? "bg-rose-50 text-rose-700 dark:bg-rose-500/10 dark:text-rose-300" : conversacionActiva.calificacion === "tibio" ? "bg-amber-50 text-amber-700 dark:bg-amber-500/10 dark:text-amber-300" : "bg-slate-100 text-slate-500 dark:bg-white/5 dark:text-slate-400"}`}>
+                      {conversacionActiva.calificacion === "caliente" ? "🔥 Caliente" : conversacionActiva.calificacion === "tibio" ? "Tibio" : "Frío"}
+                    </span>
+                  )}
+                  {conversacionActiva?.origen_ads && (
+                    <span title={conversacionActiva.origen_ads} className="inline-flex items-center gap-1 bg-indigo-50 dark:bg-indigo-500/10 text-indigo-700 dark:text-sky-300 text-[10px] font-bold px-2 py-0.5 rounded-full max-w-full">
+                      <Megaphone className="w-2.5 h-2.5 shrink-0" /> <span className="truncate">{conversacionActiva.origen_ads}</span>
+                    </span>
+                  )}
+                  {conversacionActiva?.handoff_at && (
+                    <span className="inline-flex items-center gap-1 bg-amber-50 dark:bg-amber-500/10 text-amber-700 dark:text-amber-300 text-[10px] font-bold px-2 py-0.5 rounded-full">
+                      <Info className="w-2.5 h-2.5 shrink-0" /> {conversacionActiva.handoff_reason === "cliente_pidio_humano" ? "Pidió hablar con alguien" : "IA en pausa"}
+                    </span>
+                  )}
+                </div>
+                {conversacionActiva?.handoff_resumen ? (
+                  <p className="text-xs text-slate-600 dark:text-slate-300 leading-relaxed">{conversacionActiva.handoff_resumen}</p>
+                ) : (
+                  <p className="text-xs text-slate-400 italic">Sin resumen todavía — lo genera la IA al derivar a un vendedor.</p>
+                )}
+              </div>
+
+              <div className="p-4 border-b border-slate-200 dark:border-white/10 flex items-center justify-between">
                 <div>
-                  <h4 className="text-sm font-bold text-slate-900 dark:text-white">IA en esta conversación</h4>
+                  <h4 className="text-xs font-bold text-slate-900 dark:text-white">IA en esta conversación</h4>
                   <p className="text-[11px] text-slate-500 dark:text-slate-400 mt-0.5">{conversacionActiva?.ai_habilitada ? "Activada" : "Pausada"}</p>
                 </div>
-                <button type="button" onClick={toggleIA} className={`w-11 h-6 rounded-full flex items-center px-1 cursor-pointer transition-colors ${conversacionActiva?.ai_habilitada ? "bg-emerald-700 justify-end" : "bg-slate-300 dark:bg-white/10 justify-start"}`}>
+                <button type="button" onClick={toggleIA} className={`w-11 h-6 rounded-full flex items-center px-1 cursor-pointer transition-colors shrink-0 ${conversacionActiva?.ai_habilitada ? "bg-emerald-700 justify-end" : "bg-slate-300 dark:bg-white/10 justify-start"}`}>
                   <div className="w-4 h-4 bg-white rounded-full shadow-sm" />
                 </button>
               </div>
-              {conversacionActiva?.handoff_at && (
-                <div className="bg-amber-50 dark:bg-amber-500/10 border border-amber-200 dark:border-amber-500/20 p-3 rounded-lg flex gap-2">
-                  <Info className="w-4 h-4 text-amber-500 shrink-0 mt-0.5" />
-                  <div className="text-xs text-amber-800 dark:text-amber-300 leading-relaxed">
-                    <p>{conversacionActiva.handoff_reason === "cliente_pidio_humano" ? "El cliente pidió hablar con una persona." : "La IA dejó de responder."}</p>
-                    {conversacionActiva.handoff_resumen && <p className="mt-1 font-semibold">{conversacionActiva.handoff_resumen}</p>}
-                  </div>
-                </div>
-              )}
-            </div>
 
-            <div className="p-6 border-b border-slate-200 dark:border-white/10">
+            <div className="p-4 border-b border-slate-200 dark:border-white/10">
               <div className="flex items-center justify-between mb-2.5">
                 <h4 className="text-[11px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-widest">Etapa del Pipeline</h4>
                 <span className="text-[10px] font-bold text-slate-400">{indexEtapaActual + 1}/{ETAPAS_PIPELINE.length}</span>
               </div>
-              {/* Antes era una lista vertical de 6 filas (una por etapa) que
-                  ocupaba casi toda la altura del panel lateral, dejando poco
-                  lugar al resumen del handoff arriba y al resto de abajo —
-                  ahora es una barra de puntos + un select, una sola fila. */}
               <div className="flex items-center gap-1 mb-2.5">
                 {ETAPAS_PIPELINE.map((etapa, i) => (
                   <button
@@ -549,15 +618,15 @@ export default function ChatClient({
               </select>
             </div>
 
-            <div className="p-6 border-b border-slate-200 dark:border-white/10">
-              <h4 className="text-[11px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-widest mb-3">Vendedor asignado</h4>
+            <div className="p-4 border-b border-slate-200 dark:border-white/10">
+              <h4 className="text-[11px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-widest mb-2">Vendedor asignado</h4>
               <select value={conversacionActiva?.vendedor_id || ""} onChange={(e) => reasignarVendedor(e.target.value)} className="w-full bg-slate-50 dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-lg px-3 py-2 text-sm font-medium text-slate-800 dark:text-white outline-none focus:border-emerald-600 cursor-pointer">
                 <option value="">Sin asignar</option>
                 {vendedores.map((v) => <option key={v.id} value={v.id}>{v.nombre}</option>)}
               </select>
             </div>
 
-            <div className="p-6 pb-0 space-y-2">
+            <div className="p-4 pb-0 space-y-2">
               <button onClick={() => setShowVincular(true)} className="w-full bg-slate-100 dark:bg-white/5 border border-slate-200 dark:border-white/10 hover:bg-slate-200 dark:hover:bg-white/10 text-slate-700 dark:text-slate-200 text-xs font-bold px-4 py-2 rounded-lg">
                 {conversacionActiva?.cliente_id ? "Cliente vinculado ✓" : "Vincular a cliente / auto"}
               </button>
@@ -567,7 +636,7 @@ export default function ChatClient({
             </div>
 
             {showVincular && (
-              <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4" onClick={() => { if (window.innerWidth >= 768) { setShowVincular(false); setCreandoClienteManual(false); } }}>
+              <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4" onClick={() => { setShowVincular(false); setCreandoClienteManual(false); }}>
                 <div className="bg-white dark:bg-[#111] rounded-xl p-5 w-full max-w-md space-y-4 max-h-[90vh] overflow-y-auto custom-scrollbar shadow-2xl" onClick={(e) => e.stopPropagation()}>
                   <div className="flex justify-between items-center">
                     <h3 className="font-bold text-sm text-slate-900 dark:text-white">{creandoClienteManual ? "Nuevo cliente" : "Vincular conversación"}</h3>
@@ -619,6 +688,42 @@ export default function ChatClient({
               <textarea value={notasLocales} onChange={(e) => setNotasLocales(e.target.value)} placeholder="Notas internas sobre este contacto..." className="w-full h-32 bg-slate-50 dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-xl p-3 text-[13px] text-slate-700 dark:text-slate-200 outline-none focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/10 transition-all resize-none custom-scrollbar" />
               <button onClick={guardarNotas} disabled={guardandoNotas} className="mt-3 bg-slate-100 dark:bg-white/5 border border-slate-200 dark:border-white/10 hover:bg-slate-200 dark:hover:bg-white/10 text-slate-700 dark:text-slate-200 text-xs font-bold px-4 py-2 rounded-lg transition-colors flex items-center justify-center gap-2 w-max">
                 {guardandoNotas && <Loader2 className="w-3 h-3 animate-spin" />} {guardandoNotas ? "Guardando..." : "Guardar notas"}
+              </button>
+            </div>
+          </div>
+          </div>
+        </>
+      )}
+
+      {mostrarSelectorAprobadas && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4" onClick={() => setMostrarSelectorAprobadas(false)}>
+          <div className="bg-white dark:bg-[#1A1A1A] rounded-2xl p-5 w-full max-w-md space-y-3" onClick={(e) => e.stopPropagation()}>
+            <h3 className="font-bold text-slate-900 dark:text-white">Enviar plantilla aprobada</h3>
+            <p className="text-xs text-slate-500 dark:text-slate-400">Se usa cuando pasaron 24hs desde el último mensaje del cliente — Meta rechaza texto libre fuera de esa ventana.</p>
+            {plantillasAprobadas.length === 0 ? (
+              <p className="text-xs text-amber-600 dark:text-amber-400">Sin plantillas aprobadas todavía. Configuración → WhatsApp → Plantillas.</p>
+            ) : (
+              <>
+                <select value={templateElegido} onChange={(e) => setTemplateElegido(e.target.value)} className="w-full bg-slate-50 dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-xl px-3 py-2.5 text-sm outline-none">
+                  <option value="">Elegí una plantilla...</option>
+                  {plantillasAprobadas.map((t) => (
+                    <option key={t.id} value={t.id}>{t.nombre}</option>
+                  ))}
+                </select>
+                {templateElegido && (
+                  <>
+                    <p className="text-xs text-slate-500 dark:text-slate-400 italic">{plantillasAprobadas.find((t) => t.id === templateElegido)?.cuerpo}</p>
+                    {plantillasAprobadas.find((t) => t.id === templateElegido)?.cuerpo?.includes("{{1}}") && (
+                      <input value={variablePlantilla} onChange={(e) => setVariablePlantilla(e.target.value)} placeholder="Valor de {{1}}, ej: nombre del cliente" className="w-full bg-slate-50 dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-xl px-3 py-2.5 text-sm outline-none" />
+                    )}
+                  </>
+                )}
+              </>
+            )}
+            <div className="flex justify-end gap-2 pt-2">
+              <button onClick={() => setMostrarSelectorAprobadas(false)} className="px-3 py-2 rounded-xl text-xs font-bold text-slate-500">Cancelar</button>
+              <button onClick={enviarConPlantilla} disabled={!templateElegido || enviandoPlantilla} className="px-4 py-2 rounded-xl bg-emerald-700 hover:bg-emerald-800 text-white text-xs font-bold disabled:opacity-50 flex items-center gap-1.5">
+                {enviandoPlantilla && <Loader2 className="w-3.5 h-3.5 animate-spin" />} Enviar
               </button>
             </div>
           </div>
