@@ -95,8 +95,14 @@ export default function NuevaSenaModal({
 
   useEffect(() => {
     if (!vehiculo?.vehiculo_id) return;
+    // Mismo fallback que Presupuestos: "precio publicado" casi nunca se
+    // carga, la mayoría del stock solo tiene precio_venta.
     if (vehiculo.precio_publicado_ars) setVentaArs(String(vehiculo.precio_publicado_ars));
-    if (vehiculo.precio_publicado_usd) setVentaUsd(String(vehiculo.precio_publicado_usd));
+    else if (vehiculo.precio_publicado_usd) setVentaUsd(String(vehiculo.precio_publicado_usd));
+    else if (vehiculo.precio_venta) {
+      if (vehiculo.moneda_venta === "ARS") setVentaArs(String(vehiculo.precio_venta));
+      else setVentaUsd(String(vehiculo.precio_venta));
+    }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [vehiculo?.vehiculo_id]);
 

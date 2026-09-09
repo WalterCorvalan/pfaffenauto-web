@@ -9,13 +9,14 @@ export interface VehiculoDatos {
   marca_motor: string; numero_motor: string; marca_chasis: string; numero_chasis: string;
   modelo_anio: string; color: string; kilometros: string; combustible: string; transmision: string; traccion: string;
   precio_publicado_ars?: number | null; precio_publicado_usd?: number | null;
+  precio_venta?: number | null; moneda_venta?: string | null;
 }
 
 const VACIO: VehiculoDatos = {
   vehiculo_id: null, dominio: "", segmento: "", marca: "", modelo: "", tipo: "",
   marca_motor: "", numero_motor: "", marca_chasis: "", numero_chasis: "",
   modelo_anio: "", color: "", kilometros: "", combustible: "", transmision: "", traccion: "",
-  precio_publicado_ars: null, precio_publicado_usd: null,
+  precio_publicado_ars: null, precio_publicado_usd: null, precio_venta: null, moneda_venta: null,
 };
 
 const inputClass = "w-full bg-slate-50 dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-xl px-3 py-2.5 text-sm outline-none focus:border-rose-500 focus:bg-white dark:focus:bg-white/10 transition-colors text-slate-900 dark:text-white placeholder:text-slate-400";
@@ -40,6 +41,7 @@ export default function VehiculoSelector({
       marca_chasis: v.marca_chasis || "", numero_chasis: v.numero_chasis || "", modelo_anio: String(v.anio || ""),
       color: v.color || "", kilometros: String(v.km || ""), combustible: v.combustible || "", transmision: v.transmision || "",
       traccion: v.traccion || "", precio_publicado_ars: v.precio_publicado_ars ?? null, precio_publicado_usd: v.precio_publicado_usd ?? null,
+      precio_venta: v.precio_venta ?? null, moneda_venta: v.moneda_venta ?? null,
     });
   };
 
