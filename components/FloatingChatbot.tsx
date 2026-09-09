@@ -2,7 +2,7 @@
 
 import { useState, useRef, useEffect } from "react";
 import { usePathname } from "next/navigation";
-import { MessageSquare, X, Send, Bot, User } from "lucide-react";
+import { X, Send, Bot, User } from "lucide-react";
 import { trackEvent } from "@/lib/analytics";
 
 interface Message {
@@ -94,7 +94,7 @@ export default function FloatingChatbot() {
           className="bg-[#0145F2] hover:bg-blue-700 text-white p-4 rounded-full shadow-2xl flex items-center justify-center transition-all duration-300 hover:scale-110 group cursor-pointer border-2 border-white/20"
           aria-label="Abrir chat de asistencia"
         >
-          <MessageSquare className="w-6 h-6 group-hover:rotate-12 transition-transform" />
+          <Bot className="w-6 h-6 group-hover:rotate-12 transition-transform" />
           <span className="absolute -top-1 -right-1 w-3 h-3 bg-emerald-500 rounded-full animate-ping"></span>
           <span className="absolute -top-1 -right-1 w-3 h-3 bg-emerald-500 rounded-full"></span>
         </button>
