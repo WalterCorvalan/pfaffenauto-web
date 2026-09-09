@@ -19,6 +19,7 @@ interface Cliente {
   fecha_nacimiento: string | null; ultimo_contacto: string | null; vendedor_id: string | null;
   direccion: string | null; observaciones: string | null; pipeline_stage: string;
   pipeline_stage_manual: boolean; importado_excel: boolean; created_at: string;
+  estado_relacion: "lead" | "cliente";
 }
 interface Perfil { id: string; nombre: string; roles: string[] }
 interface Disponibilidad { vendedor_id: string; estado: string; desde: string | null; hasta: string | null; recibir_leads: boolean }
@@ -202,7 +203,7 @@ export default function ClientesClient({
     if (tabLista === "mis_clientes") lista = lista.filter((c) => c.vendedor_id === miId);
     if (tabLista === "sin_contactar") lista = lista.filter((c) => c.pipeline_stage === "sin_contactar");
     if (tabLista === "contactados") lista = lista.filter((c) => ["contactado", "visita", "negociacion"].includes(c.pipeline_stage));
-    if (tabLista === "compraron") lista = lista.filter((c) => c.pipeline_stage === "cerrado");
+    if (tabLista === "compraron") lista = lista.filter((c) => c.estado_relacion === "cliente");
     if (tabLista === "perdidos") lista = lista.filter((c) => c.pipeline_stage === "perdido");
     if (origenFiltro) lista = lista.filter((c) => c.origen === origenFiltro);
     if (sexoFiltro) lista = lista.filter((c) => c.sexo === sexoFiltro);
@@ -214,7 +215,13 @@ export default function ClientesClient({
   }, [clientes, tabLista, origenFiltro, sexoFiltro, query, miId]);
 
   // ---------- PIPELINE ----------
-  const clientesPipeline = useMemo(() => (vendedorFiltroPipeline === "todos" ? clientes : clientes.filter((c) => c.vendedor_id === vendedorFiltroPipeline)), [clientes, vendedorFiltroPipeline]);
+  // El pipeline es de LEADS -- un cliente que ya compró (estado_relacion
+  // pasado a 'cliente' por el trigger de la venta real) se gradúa y sale
+  // del tablero, no queda arrastrable a mano entre columnas para siempre.
+  const clientesPipeline = useMemo(() => {
+    const base = clientes.filter((c) => c.estado_relacion !== "cliente");
+    return vendedorFiltroPipeline === "todos" ? base : base.filter((c) => c.vendedor_id === vendedorFiltroPipeline);
+  }, [clientes, vendedorFiltroPipeline]);
 
   // ---------- INGRESOS ----------
   const { desde, hasta, desdeAnt, hastaAnt } = rangoPeriodo(periodo);
@@ -392,7 +399,10 @@ export default function ClientesClient({
                       <div className="flex items-center gap-3 min-w-0">
                         <div className="w-9 h-9 rounded-full bg-slate-100 dark:bg-white/5 text-slate-600 dark:text-slate-300 flex items-center justify-center font-black text-xs shrink-0 border border-slate-200 dark:border-white/10">{vacio ? "?" : c.nombre.charAt(0).toUpperCase()}</div>
                         <div className="min-w-0">
-                          <p className={`text-sm font-bold truncate ${vacio ? "text-slate-400 italic" : "text-slate-900 dark:text-white"}`}>{vacio ? "Cliente sin nombre" : c.nombre}</p>
+                          <p className={`text-sm font-bold truncate flex items-center gap-1.5 ${vacio ? "text-slate-400 italic" : "text-slate-900 dark:text-white"}`}>
+                            {vacio ? "Cliente sin nombre" : c.nombre}
+                            {c.estado_relacion === "cliente" && <span className="text-[9px] font-black uppercase px-1.5 py-0.5 rounded-full bg-emerald-100 dark:bg-emerald-500/10 text-emerald-700 dark:text-emerald-400 shrink-0 not-italic">Cliente</span>}
+                          </p>
                           {c.dni_cuit && <p className="text-[10px] font-semibold text-slate-400">DNI {c.dni_cuit}</p>}
                           {!contactado && (
                             <p className="flex items-center gap-1 text-[10px] font-semibold text-emerald-500 mt-0.5"><span className="w-1.5 h-1.5 rounded-full bg-emerald-500 shrink-0" /> Sin contactar: {tiempoRelativo(c.created_at)}</p>
