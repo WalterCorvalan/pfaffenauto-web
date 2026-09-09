@@ -19,7 +19,7 @@ export default function PublicLayout({
   return (
     <TemaPublicoProvider>
       <TemaPublicoRoot>
-        <div className="relative min-h-screen flex flex-col bg-background text-foreground selection:bg-primary selection:text-white">
+        <div className="public-root relative min-h-screen flex flex-col bg-background text-foreground selection:bg-primary selection:text-white">
           <Suspense fallback={null}>
             <RouteProgress />
           </Suspense>
