@@ -358,20 +358,20 @@ export default function StockClient({
                       [
                         { key: "vehiculo", header: "Vehículo", cell: renderVehiculoCell, ocultarEnMobile: true },
                         { key: "anio", header: "Año", cell: (v) => v.anio, claseTd: "text-xs text-slate-500 dark:text-slate-400 whitespace-nowrap" },
-                        { key: "patente", header: "Patente/VIN", cell: (v) => v.patente || "s/patente", claseTd: "text-xs text-slate-500 dark:text-slate-400 whitespace-nowrap" },
+                        { key: "patente", header: "Patente/VIN", cell: (v) => v.patente || "s/patente", claseTd: "text-xs text-slate-500 dark:text-slate-400 whitespace-nowrap", ocultarEnMobile: true },
                         { key: "km", header: "KM", cell: (v) => v.km?.toLocaleString("es-AR") ?? "—", claseTd: "text-xs text-slate-500 dark:text-slate-400 whitespace-nowrap" },
                         { key: "precio", header: "Precio", cell: (v) => puedeEditarCompleto ? <span onClick={(e) => e.stopPropagation()}><PrecioEditor vehiculoId={v.id} precio={v.precio_venta} moneda={v.moneda_venta} onActualizado={actualizarVehiculo} /></span> : <span>{fmtPrecio(v.precio_venta, v.moneda_venta)}</span>, claseTd: "text-sm whitespace-nowrap" },
                         ...(puedeEditarCompleto ? [
-                          { key: "costo", header: "Costo", cell: (v: Vehiculo) => v.precio_compra ? <span className="text-slate-500 dark:text-slate-400">{fmtPrecio(v.precio_compra, v.moneda_compra || v.moneda_venta)}</span> : <span className="text-slate-300 dark:text-slate-600">—</span>, claseTd: "text-sm whitespace-nowrap" },
+                          { key: "costo", header: "Costo", cell: (v: Vehiculo) => v.precio_compra ? <span className="text-slate-500 dark:text-slate-400">{fmtPrecio(v.precio_compra, v.moneda_compra || v.moneda_venta)}</span> : <span className="text-slate-300 dark:text-slate-600">—</span>, claseTd: "text-sm whitespace-nowrap", ocultarEnMobile: true },
                           { key: "ganancia", header: "Ganancia", cell: (v: Vehiculo) => {
                             if (!v.precio_compra || !v.precio_venta || v.moneda_compra !== v.moneda_venta) return <span className="text-slate-300 dark:text-slate-600">—</span>;
                             const g = v.precio_venta - v.precio_compra;
                             return <span className={`font-bold ${g >= 0 ? "text-emerald-600 dark:text-emerald-400" : "text-rose-600 dark:text-rose-400"}`}>{fmtPrecio(g, v.moneda_venta)}</span>;
-                          }, claseTd: "text-sm whitespace-nowrap" },
+                          }, claseTd: "text-sm whitespace-nowrap", ocultarEnMobile: true },
                         ] as ColumnaTabla<Vehiculo>[] : []),
                         { key: "estado", header: "Estado", cell: (v) => <span className={`text-[10px] font-bold px-2 py-1 rounded-full border whitespace-nowrap ${ESTADO_COLOR[v.estado]}`}>{ESTADO_LABEL[v.estado]}</span> },
-                        { key: "sucursal", header: "Sucursal", cell: (v) => puedeEditarCompleto ? <span onClick={(e) => e.stopPropagation()}><SucursalEditor vehiculoId={v.id} sucursalId={v.sucursal_id} sucursalNombre={v.sucursal?.nombre || null} vendedorId={v.vendedor_asignado_id} vendedorNombre={v.vendedor_asignado_id ? perfilMap[v.vendedor_asignado_id] : null} perfiles={perfiles} sucursales={sucursales} onActualizado={actualizarVehiculo} /></span> : <span>{v.sucursal?.nombre || "—"}</span>, claseTd: "text-xs whitespace-nowrap" },
-                        { key: "asignado", header: "Asignado", cell: (v) => puedeEditarCompleto ? <span onClick={(e) => e.stopPropagation()}><VendedorEditor vehiculoId={v.id} vendedorId={v.vendedor_asignado_id} vendedorNombre={v.vendedor_asignado_id ? perfilMap[v.vendedor_asignado_id] : null} vehiculoSucursalId={v.sucursal_id} perfiles={perfiles} onActualizado={actualizarVehiculo} /></span> : <span>{v.vendedor_asignado_id ? perfilMap[v.vendedor_asignado_id] : "—"}</span>, claseTd: "text-xs whitespace-nowrap" },
+                        { key: "sucursal", header: "Sucursal", cell: (v) => puedeEditarCompleto ? <span onClick={(e) => e.stopPropagation()}><SucursalEditor vehiculoId={v.id} sucursalId={v.sucursal_id} sucursalNombre={v.sucursal?.nombre || null} vendedorId={v.vendedor_asignado_id} vendedorNombre={v.vendedor_asignado_id ? perfilMap[v.vendedor_asignado_id] : null} perfiles={perfiles} sucursales={sucursales} onActualizado={actualizarVehiculo} /></span> : <span>{v.sucursal?.nombre || "—"}</span>, claseTd: "text-xs whitespace-nowrap", ocultarEnMobile: true },
+                        { key: "asignado", header: "Asignado", cell: (v) => puedeEditarCompleto ? <span onClick={(e) => e.stopPropagation()}><VendedorEditor vehiculoId={v.id} vendedorId={v.vendedor_asignado_id} vendedorNombre={v.vendedor_asignado_id ? perfilMap[v.vendedor_asignado_id] : null} vehiculoSucursalId={v.sucursal_id} perfiles={perfiles} onActualizado={actualizarVehiculo} /></span> : <span>{v.vendedor_asignado_id ? perfilMap[v.vendedor_asignado_id] : "—"}</span>, claseTd: "text-xs whitespace-nowrap", ocultarEnMobile: true },
                         { key: "dias", header: "Días", cell: (v) => {
                           const dias = diasEnStock(v.created_at);
                           const diasColor = dias >= diasEstancado ? "text-rose-600 dark:text-rose-400 font-black" : dias >= 30 ? "text-amber-600 dark:text-amber-400 font-bold" : "text-slate-500";
@@ -381,7 +381,7 @@ export default function StockClient({
                           <span onClick={(e) => e.stopPropagation()}>
                             <BotonPublicarML vehiculoId={v.id} publicado={v.publicado_ml} error={v.ml_publicar_error} onPublicado={(id) => actualizarVehiculo(id, { publicado_ml: true, ml_publicar_error: null })} />
                           </span>
-                        ) },
+                        ), ocultarEnMobile: true },
                       ] as ColumnaTabla<Vehiculo>[]
                     }
                     acciones={(v) => (

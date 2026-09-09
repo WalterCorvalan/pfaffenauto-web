@@ -420,11 +420,11 @@ export default function ClientesClient({
                           {c.email && <span className="flex items-center gap-1.5 text-[11px] text-slate-500 dark:text-slate-400 truncate max-w-[200px]"><Mail className="w-3 h-3 shrink-0" /> {c.email}</span>}
                         </div>
                       ) },
-                      { key: "tipo", header: "Tipo", cell: (c) => <span className="text-[10px] font-bold px-2 py-1 rounded-full bg-slate-100 dark:bg-white/10 text-slate-600 dark:text-slate-300">{c.tipo}</span> },
+                      { key: "tipo", header: "Tipo", cell: (c) => <span className="text-[10px] font-bold px-2 py-1 rounded-full bg-slate-100 dark:bg-white/10 text-slate-600 dark:text-slate-300">{c.tipo}</span>, ocultarEnMobile: true },
                       { key: "origen", header: "Origen", cell: (c) => <span className="text-[11px] font-semibold text-slate-500 dark:text-slate-400">{c.origen}</span> },
-                      { key: "interes", header: "Interés", cell: (c) => <span className="text-[11px] text-slate-500 dark:text-slate-400">{[c.busca_marca, c.busca_modelo].filter(Boolean).join(" ") || c.vehiculo_interes_texto || "—"}</span> },
+                      { key: "interes", header: "Interés", cell: (c) => <span className="text-[11px] text-slate-500 dark:text-slate-400">{[c.busca_marca, c.busca_modelo].filter(Boolean).join(" ") || c.vehiculo_interes_texto || "—"}</span>, ocultarEnMobile: true },
                       { key: "vendedor", header: "Vendedor", cell: (c) => <span className="text-[11px] font-semibold text-slate-500 dark:text-slate-400">{c.vendedor_id ? perfilMap[c.vendedor_id] || "—" : "Sin asignar"}</span> },
-                      { key: "ultimo_contacto", header: "Último contacto", cell: (c) => <span className="text-[11px] text-slate-500 dark:text-slate-400">{c.ultimo_contacto ? fmtFecha(c.ultimo_contacto) : "—"}</span> },
+                      { key: "ultimo_contacto", header: "Último contacto", cell: (c) => <span className="text-[11px] text-slate-500 dark:text-slate-400">{c.ultimo_contacto ? fmtFecha(c.ultimo_contacto) : "—"}</span>, ocultarEnMobile: true },
                       { key: "ops", header: "Ops.", cell: (c) => (
                         opsMap[c.id] ? <span title={`${opsMap[c.id]} operación(es)`} className="inline-flex items-center gap-1 text-[10px] font-black bg-indigo-50 dark:bg-indigo-500/10 text-indigo-600 dark:text-indigo-300 px-2 py-1 rounded-lg border border-indigo-100 dark:border-indigo-500/20"><ShoppingBag className="w-3 h-3" /> {opsMap[c.id]}</span> : <span className="text-[11px] text-slate-300 dark:text-slate-600">0</span>
                       ) },
