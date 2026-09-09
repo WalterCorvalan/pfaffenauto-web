@@ -1,9 +1,16 @@
+import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase2/server";
 import GestoriaClient from "./GestoriaClient";
+
+const ROLES_GESTORIA = ["admin", "finanzas", "gestoria", "encargado"];
 
 export default async function GestoriaPage() {
   const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();
+  if (!user) redirect("/panel-v2/login");
+
+  const { data: miPerfilRoles } = await supabase.from("perfiles").select("roles").eq("id", user.id).single();
+  if (!miPerfilRoles?.roles?.some((r: string) => ROLES_GESTORIA.includes(r))) redirect("/panel-v2");
 
   const [expedientesRes, perfilesRes, miPerfil] = await Promise.all([
     supabase.from("expedientes").select("*, venta:ventas(*)").eq("archivado", false).eq("es_reventa", false).order("fecha_apertura", { ascending: false }),

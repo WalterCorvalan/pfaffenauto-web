@@ -414,7 +414,7 @@ export default function DashboardGeneralTab(props: Props) {
               {props.miPerformance.siguienteTier && (
                 <>
                   <div className="w-full h-1.5 bg-slate-100 dark:bg-white/10 rounded-full overflow-hidden my-2">
-                    <div className="h-full bg-emerald-500 rounded-full" style={{ width: `${Math.min(100, (props.miPerformance.ventas / (props.miPerformance.ventas + (props.miPerformance.ventasParaSiguiente || 0))) * 100)}%` }} />
+                    <div className="h-full bg-emerald-500 rounded-full" style={{ width: `${props.miPerformance.ventas + (props.miPerformance.ventasParaSiguiente || 0) > 0 ? Math.min(100, (props.miPerformance.ventas / (props.miPerformance.ventas + (props.miPerformance.ventasParaSiguiente || 0))) * 100) : 0}%` }} />
                   </div>
                   <div className="flex justify-between text-[10px] text-slate-400 mb-2">
                     <span>{props.miPerformance.ventas} ventas</span>

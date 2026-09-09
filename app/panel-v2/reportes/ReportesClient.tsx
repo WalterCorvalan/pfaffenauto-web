@@ -347,10 +347,9 @@ export default function ReportesClient(props: Props) {
         <p className="text-sm font-bold text-slate-700 dark:text-slate-300 flex items-center gap-2 mb-3"><Wrench className="w-4 h-4 text-slate-400" /> Service (posventa)</p>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <Card title="Embudo de service">
-            <div className="grid grid-cols-4 gap-2 mb-2">
+            <div className="grid grid-cols-3 gap-2 mb-2">
               <StatTile label="Oportunidades" valor={props.servicePosventaInicial.oportunidades} />
               <StatTile label="Contactadas" valor={`${props.servicePosventaInicial.contactadas} · ${props.servicePosventaInicial.pct_contactadas || 0}%`} tono="bg-blue-50 dark:bg-blue-500/10 border-blue-100 dark:border-blue-500/20" />
-              <StatTile label="Aceptaron" valor={`0 · 0%`} tono="bg-emerald-50 dark:bg-emerald-500/10 border-emerald-100 dark:border-emerald-500/20" />
               <StatTile label="Con OT" valor={props.servicePosventaInicial.con_ot} tono="bg-indigo-50 dark:bg-indigo-500/10 border-indigo-100 dark:border-indigo-500/20" />
             </div>
             <p className="text-[11px] text-slate-400">Se contactó al {props.servicePosventaInicial.pct_contactadas || 0}% de los compradores.</p>
