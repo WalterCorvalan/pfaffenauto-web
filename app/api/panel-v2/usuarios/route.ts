@@ -109,6 +109,12 @@ export async function DELETE(request: Request) {
 
   const { error: deletePerfilError } = await sb.from("perfiles").delete().eq("id", id);
   if (deletePerfilError) {
+    if (deletePerfilError.code === "23503") {
+      return NextResponse.json(
+        { error: "Este usuario tiene historial y no se puede eliminar, usá Inactivar." },
+        { status: 400 },
+      );
+    }
     return NextResponse.json({ error: `No se pudo eliminar el perfil: ${deletePerfilError.message}` }, { status: 400 });
   }
 
