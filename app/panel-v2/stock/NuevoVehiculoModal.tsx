@@ -16,7 +16,7 @@ const ESTADOS = [
   { value: "en_preparacion", label: "En preparación" },
 ];
 
-interface Perfil { id: string; nombre: string }
+interface Perfil { id: string; nombre: string; sucursal_id?: string | null }
 interface Cliente { id: string; nombre: string; telefono: string | null; dni_cuit: string | null }
 interface Sucursal { id: string; nombre: string }
 
@@ -437,8 +437,14 @@ export default function NuevoVehiculoModal({ perfiles, clientes, sucursales, miI
                 <label className={labelClass}>Vendedor asignado</label>
                 <select value={vendedorAsignadoId} onChange={(e) => setVendedorAsignadoId(e.target.value)} className={inputClass}>
                   <option value="">— Sin asignar —</option>
-                  {perfiles.map((p) => <option key={p.id} value={p.id}>{p.nombre}</option>)}
+                  {perfiles.map((p) => <option key={p.id} value={p.id}>{p.nombre}{sucursalId && p.sucursal_id && p.sucursal_id !== sucursalId ? " (otra sucursal)" : ""}</option>)}
                 </select>
+                {vendedorAsignadoId && sucursalId && (() => {
+                  const elegido = perfiles.find((p) => p.id === vendedorAsignadoId);
+                  return elegido?.sucursal_id && elegido.sucursal_id !== sucursalId ? (
+                    <p className="text-[11px] text-amber-600 dark:text-amber-400 font-semibold mt-1">⚠️ Esta persona no pertenece a la sucursal del auto.</p>
+                  ) : null;
+                })()}
               </div>
               <div>
                 <label className={labelClass}>Sucursal de compra</label>

@@ -30,7 +30,7 @@ interface Vehiculo {
   sucursal_id: string | null; sucursal: { nombre: string } | null; vendedor_asignado_id: string | null;
 }
 interface Mandato { id: string; mandante_nombre: string; vehiculo_marca: string; vehiculo_modelo: string; vehiculo_anio: number; fecha: string; plazo_dias: number; tipo_tramite: string; valor: number | null; moneda: string; vehiculo_id: string | null }
-interface Perfil { id: string; nombre: string }
+interface Perfil { id: string; nombre: string; sucursal_id?: string | null }
 interface Cliente { id: string; nombre: string; telefono: string | null; dni_cuit: string | null }
 interface CatalogoConfig { id: string; mostrar_precios: boolean; visitas_totales: number; fichas_vistas_totales: number; consultas_whatsapp_totales: number }
 
@@ -357,7 +357,7 @@ export default function StockClient({
                         { key: "precio", header: "Precio", cell: (v) => puedeEditarCompleto ? <span onClick={(e) => e.stopPropagation()}><PrecioEditor vehiculoId={v.id} precio={v.precio_venta} moneda={v.moneda_venta} onActualizado={actualizarVehiculo} /></span> : <span>{fmtPrecio(v.precio_venta, v.moneda_venta)}</span>, claseTd: "text-sm whitespace-nowrap" },
                         { key: "estado", header: "Estado", cell: (v) => <span className={`text-[10px] font-bold px-2 py-1 rounded-full border whitespace-nowrap ${ESTADO_COLOR[v.estado]}`}>{ESTADO_LABEL[v.estado]}</span> },
                         { key: "sucursal", header: "Sucursal", cell: (v) => puedeEditarCompleto ? <span onClick={(e) => e.stopPropagation()}><SucursalEditor vehiculoId={v.id} sucursalId={v.sucursal_id} sucursalNombre={v.sucursal?.nombre || null} sucursales={sucursales} onActualizado={actualizarVehiculo} /></span> : <span>{v.sucursal?.nombre || "—"}</span>, claseTd: "text-xs whitespace-nowrap" },
-                        { key: "asignado", header: "Asignado", cell: (v) => puedeEditarCompleto ? <span onClick={(e) => e.stopPropagation()}><VendedorEditor vehiculoId={v.id} vendedorId={v.vendedor_asignado_id} vendedorNombre={v.vendedor_asignado_id ? perfilMap[v.vendedor_asignado_id] : null} perfiles={perfiles} onActualizado={actualizarVehiculo} /></span> : <span>{v.vendedor_asignado_id ? perfilMap[v.vendedor_asignado_id] : "—"}</span>, claseTd: "text-xs whitespace-nowrap" },
+                        { key: "asignado", header: "Asignado", cell: (v) => puedeEditarCompleto ? <span onClick={(e) => e.stopPropagation()}><VendedorEditor vehiculoId={v.id} vendedorId={v.vendedor_asignado_id} vendedorNombre={v.vendedor_asignado_id ? perfilMap[v.vendedor_asignado_id] : null} vehiculoSucursalId={v.sucursal_id} perfiles={perfiles} onActualizado={actualizarVehiculo} /></span> : <span>{v.vendedor_asignado_id ? perfilMap[v.vendedor_asignado_id] : "—"}</span>, claseTd: "text-xs whitespace-nowrap" },
                         { key: "dias", header: "Días", cell: (v) => {
                           const dias = diasEnStock(v.created_at);
                           const diasColor = dias >= diasEstancado ? "text-rose-600 dark:text-rose-400 font-black" : dias >= 30 ? "text-amber-600 dark:text-amber-400 font-bold" : "text-slate-500";
