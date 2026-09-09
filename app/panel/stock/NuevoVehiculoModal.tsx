@@ -1,9 +1,9 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import { supabase2 } from "@/lib/supabase2/client";
+import { supabase2 } from "@/lib/supabase/client";
 import { X, Loader2, ScanLine, ClipboardPaste, ImagePlus } from "lucide-react";
-import { crearAlerta } from "@/lib/panelV2/alertas";
+import { crearAlerta } from "@/lib/panel/alertas";
 
 export const MARCAS = ["Toyota", "Volkswagen", "Ford", "Chevrolet", "Renault", "Peugeot", "Fiat", "Honda", "Hyundai", "Nissan", "Jeep", "Citroën", "BMW", "Mercedes-Benz", "Audi", "Otra"];
 const CATEGORIAS = ["Auto", "Pickup/Camioneta", "SUV", "Utilitario"];

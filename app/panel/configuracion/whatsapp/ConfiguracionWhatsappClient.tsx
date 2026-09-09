@@ -3,7 +3,7 @@
 import { useState, useEffect } from "react";
 import Link from "next/link";
 import { MessageCircle, Copy, Check, Loader2, ExternalLink, Brain, Plus, Trash2 } from "lucide-react";
-import { supabase2 } from "@/lib/supabase2/client";
+import { supabase2 } from "@/lib/supabase/client";
 
 const inputClass = "w-full bg-slate-50 dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-xl px-3 py-2.5 text-sm outline-none focus:border-rose-500";
 const labelClass = "text-xs font-semibold text-slate-600 dark:text-slate-300 block mb-1";

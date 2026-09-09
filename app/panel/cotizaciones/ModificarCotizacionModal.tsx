@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { supabase2 } from "@/lib/supabase2/client";
+import { supabase2 } from "@/lib/supabase/client";
 import { X, CheckCircle2, XCircle, MessageCircle, Loader2 } from "lucide-react";
 
 interface Cotizacion {

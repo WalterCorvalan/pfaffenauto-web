@@ -1,10 +1,10 @@
 "use client";
 
 import { useMemo, useState } from "react";
-import { supabase2 } from "@/lib/supabase2/client";
+import { supabase2 } from "@/lib/supabase/client";
 import { FileBadge, ArrowLeftRight, Wrench, Receipt, Users, Building2, Car, Plus, X } from "lucide-react";
 import { fmt } from "./shared";
-import { hoyLocalISO } from "@/lib/panelV2/fechas";
+import { hoyLocalISO } from "@/lib/panel/fechas";
 
 // Calcado de v1 (panel/gastos/egresos) pero sin tablas nuevas: en vez de 5
 // tablas separadas (patentes, transferencias_patentamientos, ...) reusa

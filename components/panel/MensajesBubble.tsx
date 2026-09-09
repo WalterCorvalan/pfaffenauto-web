@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { useRouter, usePathname } from "next/navigation";
-import { supabase2 } from "@/lib/supabase2/client";
+import { supabase2 } from "@/lib/supabase/client";
 import { MessageCircle } from "lucide-react";
 
 export default function MensajesBubble() {

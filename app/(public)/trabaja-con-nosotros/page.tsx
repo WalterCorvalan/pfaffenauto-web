@@ -1,6 +1,6 @@
 "use client";
 
-import { supabase2 } from "@/lib/supabase2/client";
+import { supabase2 } from "@/lib/supabase/client";
 import {
   ArrowLeft,
   Briefcase,

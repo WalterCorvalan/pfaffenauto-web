@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useMemo } from "react";
 import Link from "next/link";
-import { supabase2 } from "@/lib/supabase2/client";
+import { supabase2 } from "@/lib/supabase/client";
 import {
   X, User, Phone, CarFront, Calendar, Plus, CheckCircle2, Circle, FileText,
   Ban, Clock, AlertTriangle, MapPin, StickyNote, Radio, Car, LifeBuoy, History,

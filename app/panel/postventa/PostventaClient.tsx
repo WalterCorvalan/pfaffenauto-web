@@ -1,14 +1,14 @@
 "use client";
 
 import { useMemo, useState } from "react";
-import { supabase2 } from "@/lib/supabase2/client";
+import { supabase2 } from "@/lib/supabase/client";
 import {
   Phone, Repeat, Search, Camera, Upload, X, Loader2, Check,
   PhoneCall, Truck, ScanSearch, Wrench, Shield, FileText, TriangleAlert, Cake, Pin,
 } from "lucide-react";
 import EscanearBoletoModal from "./EscanearBoletoModal";
 import ImportarExcelModal from "./ImportarExcelModal";
-import { hoyLocalISO, parseFechaLocal, fmtFechaLocal } from "@/lib/panelV2/fechas";
+import { hoyLocalISO, parseFechaLocal, fmtFechaLocal } from "@/lib/panel/fechas";
 
 interface Compra {
   id: string; comprador_nombre: string; comprador_telefono: string | null; comprador_dni: string | null;

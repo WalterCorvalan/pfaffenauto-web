@@ -1,7 +1,7 @@
 import { createClient } from "@supabase/supabase-js";
 import { decrypt } from "@/lib/crypto";
 import { createMessageTemplate, listMessageTemplates, sendTemplateMessage, MetaApiError } from "@/lib/meta/client";
-import { registrarError } from "@/lib/panelV2/logger";
+import { registrarError } from "@/lib/panel/logger";
 
 // Puerto del patrón de plantillas de Vocero CRM (src/server/whatsapp/templates.ts)
 // a Supabase2 -- resuelve el mismo caso: enviar cuando la ventana de 24h de

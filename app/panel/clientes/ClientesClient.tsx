@@ -2,7 +2,7 @@
 
 import { useEffect, useMemo, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
-import { supabase2 } from "@/lib/supabase2/client";
+import { supabase2 } from "@/lib/supabase/client";
 import {
   Search, Users, UserPlus, Phone, Mail, List, Columns3, TrendingUp,
   PieChart, Trophy, CheckCircle2, Circle, MessageCircle, Download, Upload,
@@ -10,7 +10,7 @@ import {
 } from "lucide-react";
 import NuevoClienteModal from "./NuevoClienteModal";
 import DisponibilidadModal from "./DisponibilidadModal";
-import TablaResponsiva, { type ColumnaTabla } from "@/components/panelV2/TablaResponsiva";
+import TablaResponsiva, { type ColumnaTabla } from "@/components/panel/TablaResponsiva";
 
 interface Cliente {
   id: string; nombre: string; tipo: string; sexo: string | null; dni_cuit: string | null;

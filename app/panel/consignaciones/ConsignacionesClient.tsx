@@ -2,12 +2,12 @@
 
 import { useState, useMemo, useEffect } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
-import { supabase2 } from "@/lib/supabase2/client";
+import { supabase2 } from "@/lib/supabase/client";
 import { Plus, Search, KeyRound } from "lucide-react";
 import NuevaConsignacionModal from "./NuevaConsignacionModal";
 import ConsignacionDetalleModal from "./ConsignacionDetalleModal";
-import { fmtFechaLocal } from "@/lib/panelV2/fechas";
-import TablaResponsiva, { type ColumnaTabla } from "@/components/panelV2/TablaResponsiva";
+import { fmtFechaLocal } from "@/lib/panel/fechas";
+import TablaResponsiva, { type ColumnaTabla } from "@/components/panel/TablaResponsiva";
 
 interface Perfil { id: string; nombre: string; roles: string[] }
 interface Cliente { id: string; nombre: string; telefono: string | null; dni_cuit?: string | null }

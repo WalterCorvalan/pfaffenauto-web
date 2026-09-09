@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useMemo } from "react";
-import { supabase2 } from "@/lib/supabase2/client";
+import { supabase2 } from "@/lib/supabase/client";
 import { BarChart3, ChevronLeft, ChevronRight, Trophy, Clock, FolderKanban, Ticket, Wrench, Loader2, Lock, SearchCheck } from "lucide-react";
 import { BarChart, Bar, XAxis, YAxis, ResponsiveContainer, Tooltip, CartesianGrid } from "recharts";
 

@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { supabase2 } from "@/lib/supabase2/client";
+import { supabase2 } from "@/lib/supabase/client";
 import { X, Loader2, Sun, Palmtree, Plane, Thermometer } from "lucide-react";
 
 interface Perfil { id: string; nombre: string; roles: string[] }

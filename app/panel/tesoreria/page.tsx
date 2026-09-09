@@ -1,4 +1,4 @@
-import { createClient } from "@/lib/supabase2/server";
+import { createClient } from "@/lib/supabase/server";
 import { Landmark, CreditCard, Wallet, HelpCircle } from "lucide-react";
 import NuevaCuentaModal from "./NuevaCuentaModal";
 

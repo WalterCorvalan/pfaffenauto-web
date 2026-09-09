@@ -1,10 +1,10 @@
 "use client";
 
 import { useState, useMemo } from "react";
-import { supabase2 } from "@/lib/supabase2/client";
+import { supabase2 } from "@/lib/supabase/client";
 import { Plus, X, Save, Trash2, Pencil, ArrowLeftRight, Lock, Download, Search, Paperclip } from "lucide-react";
 import { inputClass, labelClass, fmt, CATEGORIAS_MOVIMIENTO as CATEGORIAS } from "./shared";
-import TablaResponsiva, { type ColumnaTabla } from "@/components/panelV2/TablaResponsiva";
+import TablaResponsiva, { type ColumnaTabla } from "@/components/panel/TablaResponsiva";
 
 function inicioSemana(d: Date) { const x = new Date(d); const dia = x.getDay(); x.setDate(x.getDate() - (dia === 0 ? 6 : dia - 1)); x.setHours(0, 0, 0, 0); return x; }
 

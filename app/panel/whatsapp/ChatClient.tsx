@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useRef } from "react";
 import { useSearchParams, useRouter } from "next/navigation";
-import { supabase2 } from "@/lib/supabase2/client";
+import { supabase2 } from "@/lib/supabase/client";
 import {
   Search, Send, Bot, Check, Info, ChevronRight, PanelRight,
   Loader2, Megaphone, X, MessageSquareText, AtSign, Archive, ArchiveRestore, FileCheck2,

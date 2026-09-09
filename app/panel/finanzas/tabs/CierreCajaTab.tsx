@@ -1,10 +1,10 @@
 "use client";
 
 import { useState } from "react";
-import { supabase2 } from "@/lib/supabase2/client";
+import { supabase2 } from "@/lib/supabase/client";
 import { Package, Download, X } from "lucide-react";
 import { fmt } from "./shared";
-import TablaResponsiva, { type ColumnaTabla } from "@/components/panelV2/TablaResponsiva";
+import TablaResponsiva, { type ColumnaTabla } from "@/components/panel/TablaResponsiva";
 
 export default function CierreCajaTab({ cierres, setCierres }: { cierres: any[]; setCierres: (fn: any) => void }) {
   const [guardando, setGuardando] = useState(false);

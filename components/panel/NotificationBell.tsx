@@ -2,7 +2,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
-import { supabase2 } from "@/lib/supabase2/client";
+import { supabase2 } from "@/lib/supabase/client";
 import { Bell, Check, ExternalLink } from "lucide-react";
 import { TIPO_ICON, TIPO_COLOR, ICONO_DEFECTO, COLOR_DEFECTO } from "./alertaMeta";
 

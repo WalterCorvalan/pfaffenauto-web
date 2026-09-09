@@ -2,7 +2,7 @@ import { z } from "zod";
 import { createClient } from "@supabase/supabase-js";
 import { verificarTurnstile } from "@/lib/turnstile";
 import { rateLimit, ipDesdeRequest } from "@/lib/rateLimit";
-import { registrarError } from "@/lib/panelV2/logger";
+import { registrarError } from "@/lib/panel/logger";
 
 const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE2_URL!,

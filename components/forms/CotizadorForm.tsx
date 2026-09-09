@@ -6,8 +6,8 @@ import Script from "next/script";
 import { ArrowLeft, Loader2, ChevronDown, CarFront, User, Phone, Upload, X, FileVideo, ImageIcon, Building2, Camera, AlertTriangle, MapPin, CalendarDays, Clock } from "lucide-react";
 import EnvioExitoso from "@/components/EnvioExitoso";
 import { getCanalOrigen, getUtmRaw } from "@/lib/utm";
-import { supabase2 } from "@/lib/supabase2/client";
-import { calcularOferta } from "@/lib/panelV2/descuentoPorKm";
+import { supabase2 } from "@/lib/supabase/client";
+import { calcularOferta } from "@/lib/panel/descuentoPorKm";
 
 declare global {
   interface Window {

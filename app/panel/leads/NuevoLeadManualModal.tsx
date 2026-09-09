@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { supabase2 } from "@/lib/supabase2/client";
+import { supabase2 } from "@/lib/supabase/client";
 import { X, Save, Radar } from "lucide-react";
 import { CANALES_ORIGEN } from "../whatsapp/LeadDetailModal";
 

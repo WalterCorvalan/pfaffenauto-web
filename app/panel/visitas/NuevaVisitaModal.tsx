@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { supabase2 } from "@/lib/supabase2/client";
+import { supabase2 } from "@/lib/supabase/client";
 import { X, Loader2, CalendarCheck } from "lucide-react";
 
 interface Sucursal { id: string; nombre: string }

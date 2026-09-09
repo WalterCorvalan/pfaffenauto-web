@@ -1,4 +1,4 @@
-import { createClient } from "@/lib/supabase2/server";
+import { createClient } from "@/lib/supabase/server";
 import { Megaphone, TrendingUp, TrendingDown, Minus, MousePointerClick, Users, DollarSign, Zap, ZapOff } from "lucide-react";
 import NuevaCampanaModal from "./NuevaCampanaModal";
 import TablaHistorialCampanas from "./TablaHistorialCampanas";

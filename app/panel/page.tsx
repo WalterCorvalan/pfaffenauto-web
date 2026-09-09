@@ -1,4 +1,4 @@
-import { createClient } from "@/lib/supabase2/server";
+import { createClient } from "@/lib/supabase/server";
 import DashboardClient from "./DashboardClient";
 
 export const metadata = { title: "Dashboard | Pfaffen Autos" };

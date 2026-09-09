@@ -1,4 +1,4 @@
-import { createClient } from "@/lib/supabase2/server";
+import { createClient } from "@/lib/supabase/server";
 import { Users, Briefcase, Phone, Mail, FileText } from "lucide-react";
 
 export default async function PostulacionesPage() {

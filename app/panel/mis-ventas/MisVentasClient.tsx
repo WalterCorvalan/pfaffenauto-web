@@ -1,15 +1,15 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
-import { supabase2 } from "@/lib/supabase2/client";
-import { hoyLocalISO } from "@/lib/panelV2/fechas";
+import { supabase2 } from "@/lib/supabase/client";
+import { hoyLocalISO } from "@/lib/panel/fechas";
 import {
   Trophy, Wallet, FileText, DollarSign, Star, ChevronLeft, ChevronRight, Calendar, Award,
   Hourglass, Car, Target, ChevronDown, ChevronUp, Download, Loader2,
 } from "lucide-react";
 import ReciboModal from "./ReciboModal";
 import BoletoModal from "../expedientes/BoletoModal";
-import TablaResponsiva, { type ColumnaTabla } from "@/components/panelV2/TablaResponsiva";
+import TablaResponsiva, { type ColumnaTabla } from "@/components/panel/TablaResponsiva";
 
 interface Vendedor { id: string; nombre: string }
 type Periodo = "mes" | "anio" | "historico";

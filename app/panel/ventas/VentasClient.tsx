@@ -6,9 +6,9 @@ import * as XLSX from "xlsx";
 import { Search, Briefcase, Download, Plus, Wrench, ShoppingCart, Eye, Pencil, FileText, Wallet, Trash2, Globe, SlidersHorizontal } from "lucide-react";
 import NuevaVentaModal, { type VentaPrefill } from "./NuevaVentaModal";
 import VentaDetalleModal from "./VentaDetalleModal";
-import { fmtFechaLocal } from "@/lib/panelV2/fechas";
-import { supabase2 } from "@/lib/supabase2/client";
-import TablaResponsiva, { type ColumnaTabla } from "@/components/panelV2/TablaResponsiva";
+import { fmtFechaLocal } from "@/lib/panel/fechas";
+import { supabase2 } from "@/lib/supabase/client";
+import TablaResponsiva, { type ColumnaTabla } from "@/components/panel/TablaResponsiva";
 
 interface Venta {
   id: string; estado: string; vehiculo_marca: string | null; vehiculo_modelo: string | null; vehiculo_anio: number | null;

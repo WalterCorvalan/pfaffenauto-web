@@ -2,10 +2,10 @@
 
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
-import { supabase2 } from "@/lib/supabase2/client";
+import { supabase2 } from "@/lib/supabase/client";
 import { Wallet, Calculator, Save, ClipboardList, CircleDollarSign, Undo2, Trash2 } from "lucide-react";
-import { hoyLocalISO } from "@/lib/panelV2/fechas";
-import TablaResponsiva, { type ColumnaTabla } from "@/components/panelV2/TablaResponsiva";
+import { hoyLocalISO } from "@/lib/panel/fechas";
+import TablaResponsiva, { type ColumnaTabla } from "@/components/panel/TablaResponsiva";
 
 interface Categoria {
   id: string;

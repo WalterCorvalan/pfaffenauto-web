@@ -3,10 +3,10 @@
 import { useState } from "react";
 import { Printer, ArrowLeft, AlertTriangle, CheckCircle2, Copy, Check } from "lucide-react";
 import Link from "next/link";
-import { supabase2 } from "@/lib/supabase2/client";
-import { notificarRespuestaPrecio } from "@/lib/panelV2/notificaciones";
-import ConfirmarPrecioEncargadoModal from "@/components/panelV2/ConfirmarPrecioEncargadoModal";
-import FirmaCanvas from "@/components/panelV2/FirmaCanvas";
+import { supabase2 } from "@/lib/supabase/client";
+import { notificarRespuestaPrecio } from "@/lib/panel/notificaciones";
+import ConfirmarPrecioEncargadoModal from "@/components/panel/ConfirmarPrecioEncargadoModal";
+import FirmaCanvas from "@/components/panel/FirmaCanvas";
 import { numeroALetras } from "@/lib/numeroALetras";
 
 interface Branding {

@@ -4,7 +4,7 @@ import { z } from "zod";
 import { generarRespuestaAgenteV2, dividirRespuestaEnMensajes } from "@/lib/ai/agenteV2";
 import { isAiConfiguredV2 } from "@/lib/ai/indexV2";
 import { rateLimit, ipDesdeRequest } from "@/lib/rateLimit";
-import { registrarError } from "@/lib/panelV2/logger";
+import { registrarError } from "@/lib/panel/logger";
 
 // Endpoint público (sin sesión — lo llama el widget del sitio, un visitante
 // anónimo) que procesa un mensaje de Rodi. Identidad = sessionId generado

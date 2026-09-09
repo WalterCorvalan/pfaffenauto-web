@@ -1,8 +1,8 @@
 import { NextResponse } from "next/server";
 import { z } from "zod";
-import { createClient } from "@/lib/supabase2/server";
+import { createClient } from "@/lib/supabase/server";
 import { createClient as createAdminClient } from "@supabase/supabase-js";
-import { MODULOS_CATALOGO, SECTORES } from "@/lib/panelV2/modulosCatalogo";
+import { MODULOS_CATALOGO, SECTORES } from "@/lib/panel/modulosCatalogo";
 
 async function verificarAdmin() {
   const supabase = await createClient();

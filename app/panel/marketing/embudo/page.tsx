@@ -1,4 +1,4 @@
-import { createClient } from "@/lib/supabase2/server";
+import { createClient } from "@/lib/supabase/server";
 import { Users, MessageSquareText, Target, Trophy, ArrowRight, ChevronDown, BarChart3, Globe, Percent, CheckCircle2, Filter, Megaphone, Radar } from "lucide-react";
 import EmbudoCanalChart from "./EmbudoCanalChart";
 import TablaEmbudoVendedor from "./TablaEmbudoVendedor";

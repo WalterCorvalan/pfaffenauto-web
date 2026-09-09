@@ -1,5 +1,5 @@
 import CotizadorForm from "@/components/forms/CotizadorForm";
-import { createClient } from "@/lib/supabase2/server";
+import { createClient } from "@/lib/supabase/server";
 
 export const metadata = {
   title: "Cotizá tu vehículo | Pfaffen Autos",

@@ -3,9 +3,9 @@
 import { useState, useEffect } from "react";
 import Link from "next/link";
 import { Settings, Loader2 } from "lucide-react";
-import { supabase2 } from "@/lib/supabase2/client";
-import TablaResponsiva, { type ColumnaTabla } from "@/components/panelV2/TablaResponsiva";
-import { MODULOS_CATALOGO, SECTORES, SECTOR_LABEL } from "@/lib/panelV2/modulosCatalogo";
+import { supabase2 } from "@/lib/supabase/client";
+import TablaResponsiva, { type ColumnaTabla } from "@/components/panel/TablaResponsiva";
+import { MODULOS_CATALOGO, SECTORES, SECTOR_LABEL } from "@/lib/panel/modulosCatalogo";
 
 const MODULO_LABEL: Record<string, string> = Object.fromEntries(MODULOS_CATALOGO.map((m) => [m.modulo, m.label]));
 

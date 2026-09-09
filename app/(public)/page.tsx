@@ -1,4 +1,4 @@
-import { createClient } from "@/lib/supabase2/server";
+import { createClient } from "@/lib/supabase/server";
 import type { Metadata } from "next";
 
 export const metadata: Metadata = {
@@ -57,11 +57,6 @@ export default async function Page() {
       {/* 5. Propuesta de Valor / Servicios */}
       <Servicios />
 
-      {/* 6. Banner CTA de Financiación / Permutas */}
-      <div className="max-w-7xl mx-auto w-full px-4 md:px-6">
-        <BannerFinanciacion linkAFinanciacion />
-      </div>
-
       {/* Seguimiento de compra: utilidad post-venta, no es lo primero que
          necesita un visitante nuevo — más abajo, cerca del cierre */}
       <div>
@@ -70,11 +65,16 @@ export default async function Page() {
 
       <AgendarCitaForm />
 
-      <BannerRRHH />
+      {/* 6. Banner CTA de Financiación / Permutas */}
+      <div className="max-w-7xl mx-auto w-full px-4 md:px-6">
+        <BannerFinanciacion linkAFinanciacion />
+      </div>
 
       <Location />
 
       <VentasRealizadas />
+
+      <BannerRRHH />
 
       {/* 7. Reseñas de Clientes */}
       <Testimonials />

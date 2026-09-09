@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useMemo } from "react";
-import { supabase2 } from "@/lib/supabase2/client";
+import { supabase2 } from "@/lib/supabase/client";
 import { Plus, X, Save } from "lucide-react";
 import { inputClass, labelClass, fmt, CATEGORIAS_MOVIMIENTO } from "./shared";
 

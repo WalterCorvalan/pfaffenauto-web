@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useRef } from "react";
 import Script from "next/script";
-import { supabase2 } from "@/lib/supabase2/client";
+import { supabase2 } from "@/lib/supabase/client";
 import {
   CalendarCheck, Clock, MapPin, User, Phone, CheckCircle2,
   ChevronDown, Car, Coffee, ShieldCheck

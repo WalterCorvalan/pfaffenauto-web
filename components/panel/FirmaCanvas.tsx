@@ -1,7 +1,7 @@
 "use client";
 
 import { useRef, useState, useEffect } from "react";
-import { supabase2 } from "@/lib/supabase2/client";
+import { supabase2 } from "@/lib/supabase/client";
 import { Eraser, Check, Loader2, PenLine } from "lucide-react";
 
 // Firma digital genérica: el cliente firma con el dedo/mouse sobre un canvas,

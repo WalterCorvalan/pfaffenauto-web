@@ -2,10 +2,10 @@
 
 import { useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
-import { supabase2 } from "@/lib/supabase2/client";
+import { supabase2 } from "@/lib/supabase/client";
 import { Search, Clock, MessageSquareText, Filter, Plus, Star, CheckCircle2, Sparkles, RefreshCw, FlagOff, Flag, X } from "lucide-react";
 import NuevoPedidoModal from "./NuevoPedidoModal";
-import TablaResponsiva, { type ColumnaTabla } from "@/components/panelV2/TablaResponsiva";
+import TablaResponsiva, { type ColumnaTabla } from "@/components/panel/TablaResponsiva";
 
 const ESTADO_LABEL: Record<string, string> = { activo: "Activo", cumplido: "Cumplido", cancelado: "Cancelado" };
 const ESTADO_STYLES: Record<string, string> = {

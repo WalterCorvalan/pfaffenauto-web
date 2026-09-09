@@ -1,9 +1,9 @@
 "use client";
 
 import { useMemo, useState } from "react";
-import { supabase2 } from "@/lib/supabase2/client";
+import { supabase2 } from "@/lib/supabase/client";
 import { CreditCard, Search, Filter, Clock, MessageSquareText } from "lucide-react";
-import TablaResponsiva, { type ColumnaTabla } from "@/components/panelV2/TablaResponsiva";
+import TablaResponsiva, { type ColumnaTabla } from "@/components/panel/TablaResponsiva";
 import FinanciacionDetalleModal from "./FinanciacionDetalleModal";
 
 const ESTADO_LABEL: Record<string, string> = { nuevo: "Nuevo", en_gestion: "En gestión", descartado: "Descartado" };

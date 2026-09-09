@@ -1,7 +1,7 @@
 "use client";
 
 import { ExternalLink, Car } from "lucide-react";
-import TablaResponsiva, { type ColumnaTabla } from "@/components/panelV2/TablaResponsiva";
+import TablaResponsiva, { type ColumnaTabla } from "@/components/panel/TablaResponsiva";
 
 interface VehiculoPautado {
   id: string; marca: string; modelo: string; anio: number; patente: string | null; estado: string;

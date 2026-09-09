@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect, useRef } from "react";
-import { supabase2 as supabase } from "@/lib/supabase2/client";
+import { supabase2 as supabase } from "@/lib/supabase/client";
 import {
   Search,
   ChevronDown,

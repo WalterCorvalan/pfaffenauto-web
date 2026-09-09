@@ -1,9 +1,9 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { supabase2 } from "@/lib/supabase2/client";
+import { supabase2 } from "@/lib/supabase/client";
 import { X, Loader2, ChevronDown, MoreVertical, Lock, MessageCircle, Check, Upload, Plus, FileDown, Paperclip } from "lucide-react";
-import { fmtFechaLocal } from "@/lib/panelV2/fechas";
+import { fmtFechaLocal } from "@/lib/panel/fechas";
 import BoletoModal from "./BoletoModal";
 
 const SECTORES = [

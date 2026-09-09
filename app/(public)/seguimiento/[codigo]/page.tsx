@@ -3,9 +3,9 @@ import Link from "next/link";
 import { headers } from "next/headers";
 import type { Metadata } from "next";
 import { CheckCircle2, Circle, CarFront, Search, Wallet, MessageCircle } from "lucide-react";
-import { crearAlerta } from "@/lib/panelV2/alertas";
+import { crearAlerta } from "@/lib/panel/alertas";
 import { rateLimit } from "@/lib/rateLimit";
-import { resolverContacto } from "@/lib/panelV2/contactoVehiculo";
+import { resolverContacto } from "@/lib/panel/contactoVehiculo";
 
 // Fuerza render dinámico: necesitamos leer headers() por request para el
 // rate limit por IP (si no, Next podría servir esta página cacheada).

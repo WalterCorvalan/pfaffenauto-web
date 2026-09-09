@@ -1,8 +1,8 @@
 "use client";
 
 import { useState, useEffect, useMemo } from "react";
-import { supabase2 } from "@/lib/supabase2/client";
-import { notificarFinanzas } from "@/lib/panelV2/notificaciones";
+import { supabase2 } from "@/lib/supabase/client";
+import { notificarFinanzas } from "@/lib/panel/notificaciones";
 import { X, Save, Lock, Paperclip, CheckCircle2 } from "lucide-react";
 import { inputClass, labelClass, fmt } from "./shared";
 

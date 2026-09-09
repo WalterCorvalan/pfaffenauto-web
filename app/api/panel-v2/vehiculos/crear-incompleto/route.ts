@@ -3,7 +3,7 @@ import { NextResponse } from "next/server";
 import { createServerClient } from "@supabase/ssr";
 import { cookies } from "next/headers";
 import { createClient } from "@supabase/supabase-js";
-import { registrarError } from "@/lib/panelV2/logger";
+import { registrarError } from "@/lib/panel/logger";
 
 const supabaseAdmin = createClient(
   process.env.NEXT_PUBLIC_SUPABASE2_URL!,

@@ -3,7 +3,7 @@ import { createServerClient } from "@supabase/ssr";
 import { cookies } from "next/headers";
 import { randomBytes } from "crypto";
 import { encrypt } from "@/lib/crypto";
-import { registrarError } from "@/lib/panelV2/logger";
+import { registrarError } from "@/lib/panel/logger";
 
 async function clienteAutenticado() {
   const cookieStore = await cookies();

@@ -1,10 +1,10 @@
 "use client";
 
 import { useState, useMemo } from "react";
-import { supabase2 } from "@/lib/supabase2/client";
+import { supabase2 } from "@/lib/supabase/client";
 import { X, Save, HandCoins } from "lucide-react";
 import { inputClass, labelClass, fmt } from "./shared";
-import TablaResponsiva, { type ColumnaTabla } from "@/components/panelV2/TablaResponsiva";
+import TablaResponsiva, { type ColumnaTabla } from "@/components/panel/TablaResponsiva";
 
 type Sub = "por_confirmar" | "acreditada" | "al_cliente" | "todas";
 

@@ -1,4 +1,4 @@
-import { createClient } from "@/lib/supabase2/server";
+import { createClient } from "@/lib/supabase/server";
 import AlertasClient from "./AlertasClient";
 
 export default async function AlertasPage() {

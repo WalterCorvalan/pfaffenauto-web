@@ -3,18 +3,18 @@
 import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
-import { supabase2 } from "@/lib/supabase2/client";
-import { crearAlerta } from "@/lib/panelV2/alertas";
+import { supabase2 } from "@/lib/supabase/client";
+import { crearAlerta } from "@/lib/panel/alertas";
 import {
   Search, FileText, Wrench, Plus, CheckCircle2, XCircle, BellRing, Repeat,
   Pencil, MessageSquare, Globe, ExternalLink,
 } from "lucide-react";
-import { fmtFechaLocal } from "@/lib/panelV2/fechas";
+import { fmtFechaLocal } from "@/lib/panel/fechas";
 import NuevaCotizacionModal from "./NuevaCotizacionModal";
 import MigrarBorradoresModal from "./MigrarBorradoresModal";
 import CotizacionDetalleModal from "./CotizacionDetalleModal";
 import ModificarCotizacionModal from "./ModificarCotizacionModal";
-import TablaResponsiva, { type ColumnaTabla } from "@/components/panelV2/TablaResponsiva";
+import TablaResponsiva, { type ColumnaTabla } from "@/components/panel/TablaResponsiva";
 
 interface Cotizacion {
   id: string; cliente_id: string | null; cliente_nombre: string; vehiculo_id: string | null; vehiculo_descripcion: string | null; vendedor_id: string | null;

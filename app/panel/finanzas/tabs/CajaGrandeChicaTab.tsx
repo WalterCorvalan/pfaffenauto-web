@@ -1,10 +1,10 @@
 "use client";
 
 import { useState, useMemo } from "react";
-import { supabase2 } from "@/lib/supabase2/client";
+import { supabase2 } from "@/lib/supabase/client";
 import { Plus, X, Save, ArrowLeftRight, Landmark, Wallet, Paperclip, Search } from "lucide-react";
 import { inputClass, labelClass, fmt, CATEGORIAS_CAJA_CHICA } from "./shared";
-import TablaResponsiva, { type ColumnaTabla } from "@/components/panelV2/TablaResponsiva";
+import TablaResponsiva, { type ColumnaTabla } from "@/components/panel/TablaResponsiva";
 
 // Caja Grande / Caja Chica -- no son tablas nuevas: cada una es una fila más
 // de `cuentas` (tipo="Efectivo", con sucursal_id + rol_caja), y la reposición

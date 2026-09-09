@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { supabase2 } from "@/lib/supabase2/client";
+import { supabase2 } from "@/lib/supabase/client";
 import { X, Send } from "lucide-react";
 
 export default function EnviarEncuestaModal({ clientes, configuracion, miId, onClose }: { clientes: any[], configuracion: any, miId: string, onClose: () => void }) {

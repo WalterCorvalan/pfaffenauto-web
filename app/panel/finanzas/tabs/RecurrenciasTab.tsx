@@ -1,10 +1,10 @@
 "use client";
 
 import { useState, useMemo } from "react";
-import { supabase2 } from "@/lib/supabase2/client";
+import { supabase2 } from "@/lib/supabase/client";
 import { Plus, X, Save, Send, Download, Trash2, ChevronDown, ChevronRight } from "lucide-react";
 import { inputClass, labelClass, fmt } from "./shared";
-import TablaResponsiva, { type ColumnaTabla } from "@/components/panelV2/TablaResponsiva";
+import TablaResponsiva, { type ColumnaTabla } from "@/components/panel/TablaResponsiva";
 
 function mesesAtras(n: number) {
   const out: string[] = [];

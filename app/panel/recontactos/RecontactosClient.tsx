@@ -2,7 +2,7 @@
 
 import { useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
-import { supabase2 } from "@/lib/supabase2/client";
+import { supabase2 } from "@/lib/supabase/client";
 import {
   UserSearch, Search, MessageCircle, Ban, ThumbsUp, ThumbsDown, Undo2,
   Car, Handshake, Wrench, MessagesSquare, Send,

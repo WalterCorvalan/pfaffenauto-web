@@ -3,8 +3,8 @@
 import { useState, useEffect } from "react";
 import Link from "next/link";
 import { Settings, UserPlus, Pencil, Trash2, Loader2, X, Users, UserCheck, UserX, MapPin, Search } from "lucide-react";
-import { supabase2 } from "@/lib/supabase2/client";
-import TablaResponsiva, { type ColumnaTabla } from "@/components/panelV2/TablaResponsiva";
+import { supabase2 } from "@/lib/supabase/client";
+import TablaResponsiva, { type ColumnaTabla } from "@/components/panel/TablaResponsiva";
 
 const ROLES = ["admin", "encargado", "ventas", "finanzas", "gestoria"] as const;
 const ROL_LABEL: Record<string, string> = { admin: "Admin", encargado: "Encargado", ventas: "Ventas", finanzas: "Finanzas", gestoria: "Gestoría" };

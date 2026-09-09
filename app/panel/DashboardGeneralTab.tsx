@@ -8,7 +8,7 @@ import {
   Ticket, TrendingDown, Activity, BarChart3,
 } from "lucide-react";
 import { BarChart, Bar, XAxis, ResponsiveContainer, Tooltip } from "recharts";
-import TablaResponsiva, { type ColumnaTabla } from "@/components/panelV2/TablaResponsiva";
+import TablaResponsiva, { type ColumnaTabla } from "@/components/panel/TablaResponsiva";
 
 interface Props {
   esAdmin: boolean; ocultarMontos: boolean;

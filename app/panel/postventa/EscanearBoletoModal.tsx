@@ -1,10 +1,10 @@
 "use client";
 
 import { useState } from "react";
-import { supabase2 } from "@/lib/supabase2/client";
+import { supabase2 } from "@/lib/supabase/client";
 import { X, Loader2, Camera } from "lucide-react";
-import { hoyLocalISO } from "@/lib/panelV2/fechas";
-import { crearAlerta } from "@/lib/panelV2/alertas";
+import { hoyLocalISO } from "@/lib/panel/fechas";
+import { crearAlerta } from "@/lib/panel/alertas";
 
 interface Props {
   miId: string;

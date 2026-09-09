@@ -1,9 +1,9 @@
 "use client";
 
 import { useState, useMemo } from "react";
-import { supabase2 } from "@/lib/supabase2/client";
+import { supabase2 } from "@/lib/supabase/client";
 import { CalendarCheck, CarFront, MapPin, Clock, User, CheckCircle2, XCircle, CalendarClock, MessageSquareText, Users, Loader2, Plus } from "lucide-react";
-import { fmtFechaLocal, hoyLocalISO } from "@/lib/panelV2/fechas";
+import { fmtFechaLocal, hoyLocalISO } from "@/lib/panel/fechas";
 import NuevaVisitaModal from "./NuevaVisitaModal";
 
 interface Perfil { id: string; nombre: string; roles: string[] }

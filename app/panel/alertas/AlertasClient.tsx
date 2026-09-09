@@ -2,9 +2,9 @@
 
 import { useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
-import { supabase2 } from "@/lib/supabase2/client";
+import { supabase2 } from "@/lib/supabase/client";
 import { CheckCircle2, X, Trash2, ChevronDown, ArrowRight } from "lucide-react";
-import { TIPO_ICON, TIPO_COLOR, TIPO_VER, ICONO_DEFECTO, COLOR_DEFECTO } from "@/components/panelV2/alertaMeta";
+import { TIPO_ICON, TIPO_COLOR, TIPO_VER, ICONO_DEFECTO, COLOR_DEFECTO } from "@/components/panel/alertaMeta";
 
 interface Alerta {
   id: string;

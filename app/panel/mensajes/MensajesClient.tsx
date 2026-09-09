@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect, useMemo, useRef, useCallback } from "react";
-import { supabase2 } from "@/lib/supabase2/client";
+import { supabase2 } from "@/lib/supabase/client";
 import { Search, Paperclip, Smile, Send, Plus, Users, Globe, X, Trash2, ArrowLeft, Check, CheckCheck } from "lucide-react";
 
 interface Perfil { id: string; nombre: string; roles?: string[] }

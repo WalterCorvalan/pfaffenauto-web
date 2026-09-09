@@ -1,11 +1,11 @@
 "use client";
 
 import { useState } from "react";
-import { supabase2 } from "@/lib/supabase2/client";
+import { supabase2 } from "@/lib/supabase/client";
 import { X, Loader2, Save, Calculator } from "lucide-react";
-import { hoyLocalISO } from "@/lib/panelV2/fechas";
+import { hoyLocalISO } from "@/lib/panel/fechas";
 import TasarUsadoModal from "./TasarUsadoModal";
-import { crearAlerta } from "@/lib/panelV2/alertas";
+import { crearAlerta } from "@/lib/panel/alertas";
 
 interface Cliente { id: string; nombre: string; telefono: string | null; dni_cuit: string | null }
 interface Vehiculo { id: string; marca: string; modelo: string; anio: number; patente: string | null; precio_venta: number; moneda_venta: string; estado: string }

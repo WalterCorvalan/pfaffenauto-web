@@ -3,7 +3,7 @@
 import { useState, useMemo, useRef } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { supabase2 } from "@/lib/supabase2/client";
+import { supabase2 } from "@/lib/supabase/client";
 import { ESTADOS_ITEM_PERITAJE, ESTADO_NEUMATICO_RECAPABLE, ACCESORIOS_PERITAJE, calcularPuntaje } from "@/lib/peritajeChecklist";
 import DiagramaCarroceria from "./DiagramaCarroceria";
 import {

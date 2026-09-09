@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect, useMemo } from "react";
-import { supabase2 } from "@/lib/supabase2/client";
+import { supabase2 } from "@/lib/supabase/client";
 import { Plus, X, Save, Trash2, Pencil, TrendingUp, Landmark, CreditCard } from "lucide-react";
 import { inputClass, labelClass } from "./shared";
 

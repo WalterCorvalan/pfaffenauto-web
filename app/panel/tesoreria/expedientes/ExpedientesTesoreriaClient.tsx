@@ -4,8 +4,8 @@ import { useState, useMemo, useEffect } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { Search, Wallet } from "lucide-react";
 import ExpedienteDetalleModal from "../../expedientes/ExpedienteDetalleModal";
-import { fmtFechaLocal } from "@/lib/panelV2/fechas";
-import TablaResponsiva, { type ColumnaTabla } from "@/components/panelV2/TablaResponsiva";
+import { fmtFechaLocal } from "@/lib/panel/fechas";
+import TablaResponsiva, { type ColumnaTabla } from "@/components/panel/TablaResponsiva";
 
 interface Perfil { id: string; nombre: string; roles: string[] }
 

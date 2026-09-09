@@ -1,9 +1,9 @@
 "use client";
 
 import { useState, useEffect, useRef } from "react";
-import { supabase2 } from "@/lib/supabase2/client";
+import { supabase2 } from "@/lib/supabase/client";
 import { X, Loader2, Pencil, MessageCircle, PlayCircle, BellRing, CheckCircle2, RotateCcw, Paperclip, Send } from "lucide-react";
-import { crearAlerta } from "@/lib/panelV2/alertas";
+import { crearAlerta } from "@/lib/panel/alertas";
 
 const SECTORES = [
   { value: "ventas", label: "Ventas" },

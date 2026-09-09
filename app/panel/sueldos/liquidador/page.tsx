@@ -1,4 +1,4 @@
-import { createClient } from "@/lib/supabase2/server";
+import { createClient } from "@/lib/supabase/server";
 import LiquidadorClient from "./LiquidadorClient";
 
 export const metadata = { title: "Liquidador de sueldos | Pfaffen Autos" };

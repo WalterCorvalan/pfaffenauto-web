@@ -5,9 +5,9 @@ import { generarRespuestaAgenteV2, dividirRespuestaEnMensajes } from "@/lib/ai/a
 import { sendTextMessage } from "@/lib/meta/client";
 import { decrypt } from "@/lib/crypto";
 import { rateLimit, ipDesdeRequest } from "@/lib/rateLimit";
-import { registrarError } from "@/lib/panelV2/logger";
-import { buscarRespuestaMemoria, buscarRespuestaFueraHorario } from "@/lib/panelV2/whatsappMemoria";
-import { notificarPersona, notificarEncargados } from "@/lib/panelV2/notificaciones";
+import { registrarError } from "@/lib/panel/logger";
+import { buscarRespuestaMemoria, buscarRespuestaFueraHorario } from "@/lib/panel/whatsappMemoria";
+import { notificarPersona, notificarEncargados } from "@/lib/panel/notificaciones";
 
 // Webhook de Meta para el WhatsApp de panel-v2 (Conversaciones → WhatsApp,
 // replica /panel/chat de v1: bandeja de mensajes reales de clientes con

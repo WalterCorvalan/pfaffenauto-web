@@ -5,7 +5,7 @@ import { generarRespuestaAgenteV2, dividirRespuestaEnMensajes } from "@/lib/ai/a
 import { sendInstagramPrivateReply, sendInstagramMessage } from "@/lib/meta/client";
 import { decrypt } from "@/lib/crypto";
 import { rateLimit, ipDesdeRequest } from "@/lib/rateLimit";
-import { registrarError } from "@/lib/panelV2/logger";
+import { registrarError } from "@/lib/panel/logger";
 
 // Webhook de Meta para el Instagram de panel-v2 (Conversaciones → Instagram),
 // mismo patrón que /api/panel-v2/webhooks/whatsapp: comentario en un post →

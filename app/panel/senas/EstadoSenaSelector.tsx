@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { supabase2 } from "@/lib/supabase2/client";
+import { supabase2 } from "@/lib/supabase/client";
 import { useRouter } from "next/navigation";
 
 // "Convertida" no es un estado que se elija a mano -- lo pone solo el

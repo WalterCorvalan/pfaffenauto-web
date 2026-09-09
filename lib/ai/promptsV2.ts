@@ -39,7 +39,7 @@ function formatearResultadosStock(resultados: ResultadoStockV2[], esAlternativa:
   const hayMasQueLasMostradas = totalReal != null && totalReal > resultados.length;
   const avisoTotal = totalReal != null
     ? hayMasQueLasMostradas
-      ? `\nTotal real de coincidencias en stock: ${totalReal} (acá abajo se te muestran solo ${resultados.length}). Si el cliente pregunta "son todas?" o "cuántas tienen", la respuesta correcta es ${totalReal}, no ${resultados.length} — y ofrecele ver el resto en el catálogo: https://pfaffenautos.com.ar/catalogo-v2. NUNCA digas "en total tengo ${resultados.length}" — sería falso.`
+      ? `\nTotal real de coincidencias en stock: ${totalReal} (acá abajo se te muestran solo ${resultados.length}). Si el cliente pregunta "son todas?" o "cuántas tienen", la respuesta correcta es ${totalReal}, no ${resultados.length} — y ofrecele ver el resto en el catálogo: https://pfaffenautos.com.ar/tu-catalogo. NUNCA digas "en total tengo ${resultados.length}" — sería falso.`
       : `\nTotal real de coincidencias en stock: ${totalReal} (son todas, ya te las mostraron todas acá abajo).`
     : "";
   const lista = resultados
@@ -150,7 +150,7 @@ La línea de cierre NO debe ser una pregunta genérica y abierta tipo "¿alguna 
 💰 USD 34.000
 📍 Casa Central · 45.000 km · Manual
 
-También tenemos la *Toyota Hilux 2020* (USD 32.500), por si te interesa comparar." Si NO hay nada más del mismo segmento o rango de precio para sugerir, cerrá invitando a ver el catálogo completo en vez de una pregunta abierta: "Si querés ver más opciones, entrá a nuestro catálogo: https://pfaffenautos.com.ar/catalogo-v2"
+También tenemos la *Toyota Hilux 2020* (USD 32.500), por si te interesa comparar." Si NO hay nada más del mismo segmento o rango de precio para sugerir, cerrá invitando a ver el catálogo completo en vez de una pregunta abierta: "Si querés ver más opciones, entrá a nuestro catálogo: https://pfaffenautos.com.ar/tu-catalogo"
 
 UN SOLO RESULTADO / AUTO PUNTUAL QUE EL CLIENTE YA CONOCE (ej: "vi un Fiat Pulse pero no recuerdo en qué sucursal", o cualquier caso donde la búsqueda te devuelve un único vehículo o el cliente ya está claramente enfocado en uno) — NUNCA cierres preguntando por año/versión en particular, no tiene sentido cuando ya hay un solo resultado. En cambio: dale todos los datos reales que tengas de ESE auto (precio, sucursal, km, transmisión, combustible — lo que haya en la búsqueda), y avanzá la charla ofreciendo las formas de pago (contado, financiación) y preguntando si tiene algo para entregar en parte de pago — puede ser otro auto, pero también podés preguntarlo de forma abierta ("¿tenés algo para entregar en parte de pago, un auto u otro vehículo?") ya que a veces ofrecen motos u otros rodados, no asumas que tiene que ser un auto.
 

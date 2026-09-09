@@ -1,9 +1,9 @@
 "use client";
 
 import { useState, useEffect, useRef } from "react";
-import { supabase2 } from "@/lib/supabase2/client";
+import { supabase2 } from "@/lib/supabase/client";
 import { X, Loader2 } from "lucide-react";
-import { hoyLocalISO } from "@/lib/panelV2/fechas";
+import { hoyLocalISO } from "@/lib/panel/fechas";
 
 interface Perfil { id: string; nombre: string; roles: string[] }
 interface Cliente { id: string; nombre: string; telefono: string | null }

@@ -1,6 +1,6 @@
 "use client";
 
-import TablaResponsiva, { type ColumnaTabla } from "@/components/panelV2/TablaResponsiva";
+import TablaResponsiva, { type ColumnaTabla } from "@/components/panel/TablaResponsiva";
 
 export default function TablaLeadsPorUtm({ leadsPorUtm }: { leadsPorUtm: any[] }) {
   if (!leadsPorUtm || leadsPorUtm.length === 0) {

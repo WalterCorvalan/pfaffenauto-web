@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { X, Download, MessageCircle, Trash2, ShoppingCart, Pencil, Send } from "lucide-react";
-import { fmtFechaLocal } from "@/lib/panelV2/fechas";
+import { fmtFechaLocal } from "@/lib/panel/fechas";
 
 interface Cotizacion {
   id: string; cliente_nombre: string; vehiculo_descripcion: string | null;

@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { supabase2 } from "@/lib/supabase2/client";
+import { supabase2 } from "@/lib/supabase/client";
 import { X, Save, Trash2 } from "lucide-react";
 
 const CATEGORIAS_PERMITIDAS = [

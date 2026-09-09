@@ -5,7 +5,7 @@ import { createClient } from "@supabase/supabase-js";
 import { sendTextMessage } from "@/lib/meta/client";
 import { decrypt } from "@/lib/crypto";
 import { rateLimit, ipDesdeRequest } from "@/lib/rateLimit";
-import { registrarError } from "@/lib/panelV2/logger";
+import { registrarError } from "@/lib/panel/logger";
 import { z } from "zod";
 
 const EnviarSchema = z.object({

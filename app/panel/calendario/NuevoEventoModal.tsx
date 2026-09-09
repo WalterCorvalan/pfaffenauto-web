@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { supabase2 } from "@/lib/supabase2/client";
+import { supabase2 } from "@/lib/supabase/client";
 import { X, Loader2 } from "lucide-react";
 
 export const TIPOS_EVENTO = ["Reunión", "Turno", "Entrega", "Vencimiento", "Recordatorio", "Otro"];

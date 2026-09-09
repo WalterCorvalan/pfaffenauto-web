@@ -5,7 +5,7 @@ import { cookies } from "next/headers";
 import { subirArchivoR2 } from "@/lib/storage/r2";
 import { validarYObtenerMimeReal } from "@/lib/validarArchivo";
 import { rateLimit, ipDesdeRequest } from "@/lib/rateLimit";
-import { registrarError } from "@/lib/panelV2/logger";
+import { registrarError } from "@/lib/panel/logger";
 
 const MAX_MB = 8;
 

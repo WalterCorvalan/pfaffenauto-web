@@ -2,13 +2,13 @@
 
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
-import { supabase2 } from "@/lib/supabase2/client";
-import { notificarEncargados } from "@/lib/panelV2/notificaciones";
+import { supabase2 } from "@/lib/supabase/client";
+import { notificarEncargados } from "@/lib/panel/notificaciones";
 import { generarCodigoPublico } from "@/lib/generarCodigoPublico";
 import { FileText, Save, X } from "lucide-react";
-import ClienteBuscador, { ClienteSeleccionado } from "@/components/panelV2/ClienteBuscador";
-import VehiculoSelector, { VehiculoDatos } from "@/components/panelV2/VehiculoSelector";
-import ConfirmarPrecioModal from "@/components/panelV2/ConfirmarPrecioModal";
+import ClienteBuscador, { ClienteSeleccionado } from "@/components/panel/ClienteBuscador";
+import VehiculoSelector, { VehiculoDatos } from "@/components/panel/VehiculoSelector";
+import ConfirmarPrecioModal from "@/components/panel/ConfirmarPrecioModal";
 
 const inputClass = "w-full bg-slate-50 dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-xl px-3 py-2.5 text-sm outline-none focus:border-rose-500 focus:bg-white dark:focus:bg-white/10 transition-colors text-slate-900 dark:text-white placeholder:text-slate-400";
 const labelClass = "text-[11px] font-bold text-slate-500 dark:text-slate-400 uppercase block mb-1.5";

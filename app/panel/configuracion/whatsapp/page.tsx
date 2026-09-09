@@ -1,4 +1,4 @@
-import { createClient } from "@/lib/supabase2/server";
+import { createClient } from "@/lib/supabase/server";
 import { redirect } from "next/navigation";
 import ConfiguracionWhatsappClient from "./ConfiguracionWhatsappClient";
 

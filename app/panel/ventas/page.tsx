@@ -1,4 +1,4 @@
-import { createClient } from "@/lib/supabase2/server";
+import { createClient } from "@/lib/supabase/server";
 import VentasClient from "./VentasClient";
 
 export default async function VentasPage() {

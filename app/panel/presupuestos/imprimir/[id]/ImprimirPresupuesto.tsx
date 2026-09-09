@@ -3,9 +3,9 @@
 import { useState } from "react";
 import { Printer, ArrowLeft, Share2, AlertTriangle, CheckCircle2 } from "lucide-react";
 import Link from "next/link";
-import { supabase2 } from "@/lib/supabase2/client";
-import { notificarRespuestaPrecio } from "@/lib/panelV2/notificaciones";
-import ConfirmarPrecioEncargadoModal from "@/components/panelV2/ConfirmarPrecioEncargadoModal";
+import { supabase2 } from "@/lib/supabase/client";
+import { notificarRespuestaPrecio } from "@/lib/panel/notificaciones";
+import ConfirmarPrecioEncargadoModal from "@/components/panel/ConfirmarPrecioEncargadoModal";
 
 interface Branding { branding_nombre?: string | null; branding_domicilio?: string | null; branding_telefono?: string | null; branding_cuit?: string | null }
 

@@ -1,4 +1,4 @@
-import { createClient } from "@/lib/supabase2/server";
+import { createClient } from "@/lib/supabase/server";
 import ErroresClient from "./ErroresClient";
 
 export const metadata = { title: "Errores del sistema | Pfaffen Autos" };

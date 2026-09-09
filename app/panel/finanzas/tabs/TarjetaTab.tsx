@@ -1,10 +1,10 @@
 "use client";
 
 import { useState, useMemo } from "react";
-import { supabase2 } from "@/lib/supabase2/client";
+import { supabase2 } from "@/lib/supabase/client";
 import { Plus, X, Save } from "lucide-react";
 import { inputClass, labelClass, fmt } from "./shared";
-import TablaResponsiva, { type ColumnaTabla } from "@/components/panelV2/TablaResponsiva";
+import TablaResponsiva, { type ColumnaTabla } from "@/components/panel/TablaResponsiva";
 
 export default function TarjetaTab({
   consumos, setConsumos, cuentas, setCuentas, setMovimientos,

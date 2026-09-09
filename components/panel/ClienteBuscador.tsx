@@ -1,8 +1,8 @@
 "use client";
 
 import { useRef, useState } from "react";
-import { supabase2 } from "@/lib/supabase2/client";
-import { buscarClienteDuplicado } from "@/lib/panelV2/clienteDedupe";
+import { supabase2 } from "@/lib/supabase/client";
+import { buscarClienteDuplicado } from "@/lib/panel/clienteDedupe";
 import { Search, UserPlus, X, Check, ScanLine, Loader2 } from "lucide-react";
 
 export interface ClienteSeleccionado {

@@ -1,10 +1,10 @@
 "use client";
 
 import { useState } from "react";
-import { supabase2 } from "@/lib/supabase2/client";
+import { supabase2 } from "@/lib/supabase/client";
 import { Plus, X, Save } from "lucide-react";
 import { inputClass, labelClass, fmt } from "./shared";
-import TablaResponsiva, { type ColumnaTabla } from "@/components/panelV2/TablaResponsiva";
+import TablaResponsiva, { type ColumnaTabla } from "@/components/panel/TablaResponsiva";
 
 export default function ArqueosTab({ arqueos, setArqueos, cuentas, miNombre }: { arqueos: any[]; setArqueos: (fn: any) => void; cuentas: any[]; miNombre: string }) {
   const [showNuevo, setShowNuevo] = useState(false);

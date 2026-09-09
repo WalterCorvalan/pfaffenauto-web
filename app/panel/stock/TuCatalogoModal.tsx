@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import QRCode from "qrcode";
-import { supabase2 } from "@/lib/supabase2/client";
+import { supabase2 } from "@/lib/supabase/client";
 import { X, Copy, Check, MessageCircle, ExternalLink, Tag, Eye, Car, MessageSquare } from "lucide-react";
 
 interface CatalogoConfig { id: string; mostrar_precios: boolean; visitas_totales: number; fichas_vistas_totales: number; consultas_whatsapp_totales: number }
@@ -18,7 +18,7 @@ export default function TuCatalogoModal({ config, esAdmin, onClose, onConfigActu
   const [copiado, setCopiado] = useState(false);
   const [qrUrl, setQrUrl] = useState("");
   const [guardandoToggle, setGuardandoToggle] = useState(false);
-  const url = typeof window !== "undefined" ? `${window.location.origin}/catalogo-v2` : "/catalogo-v2";
+  const url = typeof window !== "undefined" ? `${window.location.origin}/tu-catalogo` : "/tu-catalogo";
 
   useEffect(() => {
     QRCode.toDataURL(url, { width: 240, margin: 1, color: { dark: "#1e293b", light: "#ffffff" } }).then(setQrUrl);

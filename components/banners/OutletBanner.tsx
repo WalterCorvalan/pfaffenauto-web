@@ -1,7 +1,7 @@
 import { ArrowRight, Zap } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
-import { createClient } from "@/lib/supabase2/server";
+import { createClient } from "@/lib/supabase/server";
 
 export default async function OutletBanner() {
   const supabase = await createClient();

@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useMemo } from "react";
-import { supabase2 } from "@/lib/supabase2/client";
+import { supabase2 } from "@/lib/supabase/client";
 import { Filter, Search, Bot, User } from "lucide-react";
 
 interface Perfil { id: string; nombre: string; roles: string[] }

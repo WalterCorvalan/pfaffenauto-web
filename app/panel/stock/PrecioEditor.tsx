@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { supabase2 } from "@/lib/supabase2/client";
+import { supabase2 } from "@/lib/supabase/client";
 import { DollarSign, X, Save } from "lucide-react";
 
 function fmtPrecio(n: number, moneda: string) {

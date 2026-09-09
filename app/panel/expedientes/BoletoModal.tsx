@@ -1,10 +1,10 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { supabase2 } from "@/lib/supabase2/client";
+import { supabase2 } from "@/lib/supabase/client";
 import { X, FileDown, AlertTriangle } from "lucide-react";
-import { numeroALetras } from "@/lib/panelV2/numeroALetras";
-import { hoyLocalISO } from "@/lib/panelV2/fechas";
+import { numeroALetras } from "@/lib/panel/numeroALetras";
+import { hoyLocalISO } from "@/lib/panel/fechas";
 
 const inputClass = "w-full bg-white dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-lg px-3 py-2.5 text-sm outline-none focus:border-rose-500";
 const labelClass = "text-xs text-slate-500 dark:text-slate-400 block mb-1";

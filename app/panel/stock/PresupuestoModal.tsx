@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { supabase2 } from "@/lib/supabase2/client";
+import { supabase2 } from "@/lib/supabase/client";
 import { X, Loader2, FileText } from "lucide-react";
 
 interface Vehiculo { id: string; marca: string; modelo: string; precio_venta: number; moneda_venta: string }

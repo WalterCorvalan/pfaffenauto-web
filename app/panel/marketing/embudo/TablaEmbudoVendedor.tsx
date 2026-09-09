@@ -1,7 +1,7 @@
 "use client";
 
 import { TrendingUp } from "lucide-react";
-import TablaResponsiva, { type ColumnaTabla } from "@/components/panelV2/TablaResponsiva";
+import TablaResponsiva, { type ColumnaTabla } from "@/components/panel/TablaResponsiva";
 
 type FilaVendedor = { vendedorId: string; nombre: string; citas: number; asistieron: number; compraron: number };
 

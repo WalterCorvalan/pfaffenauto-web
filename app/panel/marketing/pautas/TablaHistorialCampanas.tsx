@@ -1,6 +1,6 @@
 "use client";
 
-import TablaResponsiva, { type ColumnaTabla } from "@/components/panelV2/TablaResponsiva";
+import TablaResponsiva, { type ColumnaTabla } from "@/components/panel/TablaResponsiva";
 
 const COLOR_PLATAFORMA: Record<string, { bg: string; text: string; border: string }> = {
   "Google Ads": { bg: "bg-blue-50 dark:bg-blue-500/10", text: "text-blue-700 dark:text-blue-400", border: "border-blue-200 dark:border-blue-500/20" },

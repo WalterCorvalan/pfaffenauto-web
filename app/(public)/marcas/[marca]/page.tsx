@@ -1,4 +1,4 @@
-import { createClient } from "@/lib/supabase2/server";
+import { createClient } from "@/lib/supabase/server";
 import Link from "next/link";
 import Image from "next/image";
 import { ShieldCheck, ChevronRight, Sparkles } from "lucide-react";

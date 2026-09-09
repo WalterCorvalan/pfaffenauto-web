@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useMemo } from "react";
-import { supabase2 } from "@/lib/supabase2/client";
+import { supabase2 } from "@/lib/supabase/client";
 import { List, Receipt as ReceiptIcon, Building2, RefreshCw, Trash2, Plus } from "lucide-react";
 import TransferenciasTab from "./TransferenciasTab";
 import LiquidacionMensualTab from "./LiquidacionMensualTab";

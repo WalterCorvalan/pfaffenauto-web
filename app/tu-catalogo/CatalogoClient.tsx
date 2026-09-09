@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useRef, useState } from "react";
-import { supabase2 } from "@/lib/supabase2/client";
+import { supabase2 } from "@/lib/supabase/client";
 import { Car, Search, X, MessageCircle, Gauge, Calendar, MapPin } from "lucide-react";
 
 interface Vehiculo {

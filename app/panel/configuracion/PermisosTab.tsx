@@ -1,7 +1,7 @@
 "use client";
 
 import { Fragment, useEffect, useState } from "react";
-import { supabase2 } from "@/lib/supabase2/client";
+import { supabase2 } from "@/lib/supabase/client";
 import { ShieldCheck, User, Search, Loader2 } from "lucide-react";
 
 interface PermisoDef { clave: string; nombre: string; descripcion: string | null; categoria: string; }

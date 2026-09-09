@@ -1,4 +1,4 @@
-import { createClient } from "@/lib/supabase2/server";
+import { createClient } from "@/lib/supabase/server";
 import { notFound } from "next/navigation";
 import ShowroomEntrada from "@/components/showroom/ShowroomEntrada";
 import { vehiculoRealAShowroom } from "@/lib/showroom/mapear";

@@ -1,5 +1,5 @@
 import { redirect } from "next/navigation";
-import { createClient } from "@/lib/supabase2/server";
+import { createClient } from "@/lib/supabase/server";
 import GestoriaClient from "./GestoriaClient";
 
 const ROLES_GESTORIA = ["admin", "finanzas", "gestoria", "encargado"];

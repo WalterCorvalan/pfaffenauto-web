@@ -1,4 +1,4 @@
-import { createClient } from "@/lib/supabase2/server";
+import { createClient } from "@/lib/supabase/server";
 import ReclamosClient from "./ReclamosClient";
 
 export default async function ReclamosPage() {

@@ -1,5 +1,5 @@
 import { cache } from "react";
-import { createClient } from "@/lib/supabase2/server";
+import { createClient } from "@/lib/supabase/server";
 import {
   CalendarDays,
   CarFront,

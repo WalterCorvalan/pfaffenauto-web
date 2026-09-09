@@ -1,11 +1,11 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { supabase2 } from "@/lib/supabase2/client";
+import { supabase2 } from "@/lib/supabase/client";
 import { DollarSign, Plus, Filter, MessageSquare, Star, CheckCircle2, Clock, Wallet, Lock, Search, ShieldAlert, History, X } from "lucide-react";
 import BonoModal from "./BonoModal";
 import PagoParcialModal from "./PagoParcialModal";
-import TablaResponsiva, { type ColumnaTabla } from "@/components/panelV2/TablaResponsiva";
+import TablaResponsiva, { type ColumnaTabla } from "@/components/panel/TablaResponsiva";
 
 export default function ComisionesClient({
   usuarioActualId,

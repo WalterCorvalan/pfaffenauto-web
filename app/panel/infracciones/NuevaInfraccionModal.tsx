@@ -1,8 +1,8 @@
 "use client";
 
 import { useState } from "react";
-import { supabase2 } from "@/lib/supabase2/client";
-import { hoyLocalISO } from "@/lib/panelV2/fechas";
+import { supabase2 } from "@/lib/supabase/client";
+import { hoyLocalISO } from "@/lib/panel/fechas";
 import { X, UserPlus, Trash2 } from "lucide-react";
 
 const inputClass = "w-full bg-slate-50 dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-xl px-3.5 py-2.5 text-sm outline-none focus:border-rose-500 text-slate-900 dark:text-white placeholder:text-slate-400";

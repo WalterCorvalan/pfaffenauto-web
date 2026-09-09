@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { registrarError } from "@/lib/panelV2/logger";
+import { registrarError } from "@/lib/panel/logger";
 
 // Recibe errores del cliente (global-error.tsx) — no se puede llamar al
 // logger directo desde el browser porque usa la service role.

@@ -2,7 +2,7 @@
 
 import { useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
-import { supabase2 } from "@/lib/supabase2/client";
+import { supabase2 } from "@/lib/supabase/client";
 import { Plus, Search, X, User, Loader2, MessageCircle, AtSign, Tag } from "lucide-react";
 
 interface Lead {

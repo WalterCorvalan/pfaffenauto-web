@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { sincronizarPlantillas, TemplateError } from "@/lib/panelV2/whatsappTemplates";
+import { sincronizarPlantillas, TemplateError } from "@/lib/panel/whatsappTemplates";
 
 export async function POST() {
   try {

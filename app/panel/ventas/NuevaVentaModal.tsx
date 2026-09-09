@@ -1,10 +1,10 @@
 "use client";
 
 import { useState, useEffect, useRef } from "react";
-import { supabase2 } from "@/lib/supabase2/client";
+import { supabase2 } from "@/lib/supabase/client";
 import { X, Loader2, Save, Trash2, Plus, Bell, Star } from "lucide-react";
-import { hoyLocalISO, parseFechaLocal, fmtFechaLocal } from "@/lib/panelV2/fechas";
-import { crearAlerta } from "@/lib/panelV2/alertas";
+import { hoyLocalISO, parseFechaLocal, fmtFechaLocal } from "@/lib/panel/fechas";
+import { crearAlerta } from "@/lib/panel/alertas";
 import { generarCodigoPublico } from "@/lib/generarCodigoPublico";
 
 const TIPOS_RECORDATORIO: { value: string; label: string }[] = [

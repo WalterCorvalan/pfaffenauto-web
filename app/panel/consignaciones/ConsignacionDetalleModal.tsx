@@ -1,9 +1,9 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { supabase2 } from "@/lib/supabase2/client";
+import { supabase2 } from "@/lib/supabase/client";
 import { X, Loader2, ChevronDown, MessageCircle, Phone, Clock, PackagePlus, ExternalLink } from "lucide-react";
-import { fmtFechaLocal, hoyLocalISO } from "@/lib/panelV2/fechas";
+import { fmtFechaLocal, hoyLocalISO } from "@/lib/panel/fechas";
 import NuevoVehiculoModal from "@/app/panel/stock/NuevoVehiculoModal";
 
 interface Perfil { id: string; nombre: string; roles: string[] }

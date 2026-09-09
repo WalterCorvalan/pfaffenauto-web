@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useMemo } from "react";
-import { supabase2 } from "@/lib/supabase2/client";
+import { supabase2 } from "@/lib/supabase/client";
 import { inputClass, fmt } from "./shared";
 
 const CATS = ["A", "B", "C", "Exenta"] as const;

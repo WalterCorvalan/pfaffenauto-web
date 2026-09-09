@@ -2,7 +2,7 @@
 
 import React, { useState, useMemo } from "react";
 import { ChevronDown, ChevronRight, CheckCircle2 } from "lucide-react";
-import { supabase2 } from "@/lib/supabase2/client";
+import { supabase2 } from "@/lib/supabase/client";
 import { fmt } from "./shared";
 
 export default function LiquidacionMensualTab({ liquidaciones, setLiquidaciones, gananciasOcultas, soyAdminOFinanzas }: { liquidaciones: any[]; setLiquidaciones: (fn: any) => void; gananciasOcultas: boolean; soyAdminOFinanzas: boolean }) {

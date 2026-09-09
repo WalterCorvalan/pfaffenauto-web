@@ -3,7 +3,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import * as XLSX from "xlsx";
-import { supabase2 } from "@/lib/supabase2/client";
+import { supabase2 } from "@/lib/supabase/client";
 import {
   Search, Car, Globe, Download, Upload, FileText, Plus, Edit2,
   AlertTriangle, Clock, CheckCircle2, Tag, Trash2, TrendingUp, ChevronLeft, ChevronRight,
@@ -12,20 +12,22 @@ import {
 import NuevoVehiculoModal from "./NuevoVehiculoModal";
 import NuevoMandatoModal from "./NuevoMandatoModal";
 import TuCatalogoModal from "./TuCatalogoModal";
+import BotonPublicarML from "./BotonPublicarML";
 import ImportarXlsxModal from "./ImportarXlsxModal";
 import SenaModal from "./SenaModal";
 import PresupuestoModal from "./PresupuestoModal";
 import PrecioEditor from "./PrecioEditor";
 import SucursalEditor from "./SucursalEditor";
 import VendedorEditor from "./VendedorEditor";
-import { parseFechaLocal } from "@/lib/panelV2/fechas";
+import { parseFechaLocal } from "@/lib/panel/fechas";
 import { tienePermiso } from "@/lib/permisos";
-import TablaResponsiva, { type ColumnaTabla } from "@/components/panelV2/TablaResponsiva";
+import TablaResponsiva, { type ColumnaTabla } from "@/components/panel/TablaResponsiva";
 
 interface Vehiculo {
   id: string; categoria: string; marca: string; modelo: string; anio: number; patente: string | null; color: string | null;
   condicion: string; km: number | null; precio_venta: number; moneda_venta: string; ubicacion: string; estado: string;
   propio_agencia: boolean; propietario_nombre: string | null; consignado_por: string | null; publicado_ml: boolean;
+  ml_publicar_error: string | null;
   fotos: string[]; notas: string | null; created_at: string;
   sucursal_id: string | null; sucursal: { nombre: string } | null; vendedor_asignado_id: string | null;
 }
@@ -367,7 +369,11 @@ export default function StockClient({
                           const diasColor = dias >= diasEstancado ? "text-rose-600 dark:text-rose-400 font-black" : dias >= 30 ? "text-amber-600 dark:text-amber-400 font-bold" : "text-slate-500";
                           return <span className={diasColor}>{dias}d</span>;
                         }, claseTd: "text-xs whitespace-nowrap" },
-                        { key: "ml", header: "ML", cell: (v) => (v.publicado_ml ? <CheckCircle2 className="w-4 h-4 text-emerald-500" /> : <span className="text-slate-300 dark:text-slate-600">—</span>) },
+                        { key: "ml", header: "ML", cell: (v) => (
+                          <span onClick={(e) => e.stopPropagation()}>
+                            <BotonPublicarML vehiculoId={v.id} publicado={v.publicado_ml} error={v.ml_publicar_error} onPublicado={(id) => actualizarVehiculo(id, { publicado_ml: true, ml_publicar_error: null })} />
+                          </span>
+                        ) },
                       ] as ColumnaTabla<Vehiculo>[]
                     }
                     acciones={(v) => (

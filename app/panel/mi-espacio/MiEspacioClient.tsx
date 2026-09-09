@@ -3,7 +3,7 @@
 import { useState, useEffect, useMemo } from "react";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
-import { supabase2 } from "@/lib/supabase2/client";
+import { supabase2 } from "@/lib/supabase/client";
 import {
   BarChart3, Trophy, Flame, ExternalLink, Plus, X, Save, CheckCircle2,
   CreditCard, Trash2, Pencil, Car, ShoppingCart, Briefcase, Wallet2, ChevronDown,
@@ -21,7 +21,7 @@ import GastosFijosTab from "./tabs/GastosFijosTab";
 import ContactosTab from "./tabs/ContactosTab";
 import NotificacionesTab from "./tabs/NotificacionesTab";
 import MiWhatsAppTab from "./tabs/MiWhatsAppTab";
-import TablaResponsiva, { type ColumnaTabla } from "@/components/panelV2/TablaResponsiva";
+import TablaResponsiva, { type ColumnaTabla } from "@/components/panel/TablaResponsiva";
 
 const RESUMEN_ITEMS = [
   { key: "ventas_cerradas", label: "Ventas cerradas", desc: "Cerradas en 24h y en la semana" },

@@ -1,5 +1,5 @@
 import type { Instrumentation } from "next";
-import { registrarError } from "@/lib/panelV2/logger";
+import { registrarError } from "@/lib/panel/logger";
 
 // Hook nativo de Next.js (no depende de Sentry ni de nada externo) — captura
 // errores de Server Components/Route Handlers/Server Actions que no fueron

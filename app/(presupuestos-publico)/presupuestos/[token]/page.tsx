@@ -14,7 +14,7 @@ const supabase = createClient(
   process.env.SUPABASE2_SERVICE_ROLE_KEY!
 );
 
-export default async function PresupuestoPublicoV2Page({ params }: { params: Promise<{ token: string }> }) {
+export default async function PresupuestoPublicoPage({ params }: { params: Promise<{ token: string }> }) {
   const { token } = await params;
 
   const ip = (await headers()).get("x-forwarded-for")?.split(",")[0]?.trim() ?? null;

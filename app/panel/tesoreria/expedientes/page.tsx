@@ -1,4 +1,4 @@
-import { createClient } from "@/lib/supabase2/server";
+import { createClient } from "@/lib/supabase/server";
 import ExpedientesTesoreriaClient from "./ExpedientesTesoreriaClient";
 
 export const metadata = { title: "Expedientes Tesorería | Pfaffen Autos" };

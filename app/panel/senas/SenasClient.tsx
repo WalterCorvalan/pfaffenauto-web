@@ -3,7 +3,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
-import { supabase2 } from "@/lib/supabase2/client";
+import { supabase2 } from "@/lib/supabase/client";
 import { Wallet, Plus, Printer, CarFront, AlertTriangle, Copy, Check, Search, Pencil, Trash2, SlidersHorizontal } from "lucide-react";
 import EstadoSenaSelector from "./EstadoSenaSelector";
 import NuevaSenaModal from "./NuevaSenaModal";

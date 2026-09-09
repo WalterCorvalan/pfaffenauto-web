@@ -1,4 +1,4 @@
-import { createClient } from "@/lib/supabase2/server";
+import { createClient } from "@/lib/supabase/server";
 import DormidosClient from "./DormidosClient";
 
 export const metadata = { title: "Clientes Dormidos | Pfaffen Autos" };

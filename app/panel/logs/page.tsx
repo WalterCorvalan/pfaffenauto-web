@@ -1,4 +1,4 @@
-import { createClient } from "@/lib/supabase2/server";
+import { createClient } from "@/lib/supabase/server";
 import LogsClient from "./LogsClient";
 
 export const metadata = { title: "Registro de Cambios | Pfaffen Autos" };

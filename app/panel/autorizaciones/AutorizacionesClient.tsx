@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { supabase2 } from "@/lib/supabase2/client";
+import { supabase2 } from "@/lib/supabase/client";
 import { ShieldAlert, CheckCircle2, XCircle, KeyRound, Save, History, Inbox } from "lucide-react";
 
 const RIESGO_COLOR: Record<string, string> = {

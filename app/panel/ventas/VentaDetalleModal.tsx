@@ -1,10 +1,10 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { supabase2 } from "@/lib/supabase2/client";
+import { supabase2 } from "@/lib/supabase/client";
 import Link from "next/link";
 import { X, Loader2, Pencil, Trash2, ChevronDown, AlertTriangle, ShieldAlert, Check, Car, User, DollarSign, Percent, KeyRound, FolderKanban, History, Copy, Printer } from "lucide-react";
-import { fmtFechaLocal } from "@/lib/panelV2/fechas";
+import { fmtFechaLocal } from "@/lib/panel/fechas";
 
 const ESTADO_LABEL: Record<string, string> = {
   borrador: "Borrador", activa: "Activa", reserva: "Reserva", cerrada: "Cerrada", caida: "Caída", cancelada: "Cancelada",

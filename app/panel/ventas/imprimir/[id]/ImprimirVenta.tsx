@@ -3,8 +3,8 @@
 import { useState } from "react";
 import { Printer, ArrowLeft } from "lucide-react";
 import Link from "next/link";
-import { supabase2 } from "@/lib/supabase2/client";
-import FirmaCanvas from "@/components/panelV2/FirmaCanvas";
+import { supabase2 } from "@/lib/supabase/client";
+import FirmaCanvas from "@/components/panel/FirmaCanvas";
 import { numeroALetras } from "@/lib/numeroALetras";
 
 interface Branding {

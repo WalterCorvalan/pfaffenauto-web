@@ -1,4 +1,4 @@
-import { createClient } from "@/lib/supabase2/server";
+import { createClient } from "@/lib/supabase/server";
 import LeadsUnificadosClient from "./LeadsUnificadosClient";
 
 export default async function LeadsPage() {

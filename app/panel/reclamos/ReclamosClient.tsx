@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useMemo, useEffect } from "react";
-import { supabase2 } from "@/lib/supabase2/client";
+import { supabase2 } from "@/lib/supabase/client";
 import { Plus, Search } from "lucide-react";
 import NuevoReclamoModal from "./NuevoReclamoModal";
 import ReclamoDetalleModal from "./ReclamoDetalleModal";

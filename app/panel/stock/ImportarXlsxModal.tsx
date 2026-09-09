@@ -2,9 +2,9 @@
 
 import { useState } from "react";
 import * as XLSX from "xlsx";
-import { supabase2 } from "@/lib/supabase2/client";
+import { supabase2 } from "@/lib/supabase/client";
 import { X, Upload, Download, Loader2, CheckCircle2, AlertTriangle } from "lucide-react";
-import { crearAlerta } from "@/lib/panelV2/alertas";
+import { crearAlerta } from "@/lib/panel/alertas";
 
 interface Props {
   miId: string;

@@ -2,11 +2,11 @@
 
 import { useState, useMemo, useEffect } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
-import { supabase2 } from "@/lib/supabase2/client";
+import { supabase2 } from "@/lib/supabase/client";
 import { ChevronDown, ChevronRight, MessageCircle, Check, ClipboardList, AlertTriangle, Clock, ShieldAlert, Lock } from "lucide-react";
 import ExpedienteDetalleModal from "../expedientes/ExpedienteDetalleModal";
-import { fmtFechaLocal, hoyLocalISO } from "@/lib/panelV2/fechas";
-import TablaResponsiva, { type ColumnaTabla } from "@/components/panelV2/TablaResponsiva";
+import { fmtFechaLocal, hoyLocalISO } from "@/lib/panel/fechas";
+import TablaResponsiva, { type ColumnaTabla } from "@/components/panel/TablaResponsiva";
 
 interface Perfil { id: string; nombre: string; roles: string[] }
 

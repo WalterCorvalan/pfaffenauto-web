@@ -2,7 +2,7 @@
 
 import { useState, useMemo } from "react";
 import { Pencil, Trash2, Folder } from "lucide-react";
-import { supabase2 } from "@/lib/supabase2/client";
+import { supabase2 } from "@/lib/supabase/client";
 import { fmt, ESTADO_LABEL, ESTADO_COLOR } from "./shared";
 
 type Col = "dominio" | "fecha_operacion" | "transf_cliente" | "comision_gestora" | "ingreso_agencia";

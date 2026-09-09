@@ -2,7 +2,7 @@
 
 import { useState, useMemo, useEffect } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
-import { supabase2 } from "@/lib/supabase2/client";
+import { supabase2 } from "@/lib/supabase/client";
 import { Filter, Search, Bot, MessageCircle, LayoutGrid, List, BarChart3 } from "lucide-react";
 import LeadDetailModal from "./LeadDetailModal";
 

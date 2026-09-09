@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 import { createServerClient } from "@supabase/ssr";
 import { cookies } from "next/headers";
 import { createClient } from "@supabase/supabase-js";
-import { crearPlantilla, TemplateError } from "@/lib/panelV2/whatsappTemplates";
+import { crearPlantilla, TemplateError } from "@/lib/panel/whatsappTemplates";
 import { z } from "zod";
 
 const CrearSchema = z.object({

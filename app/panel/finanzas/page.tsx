@@ -1,4 +1,4 @@
-import { createClient } from "@/lib/supabase2/server";
+import { createClient } from "@/lib/supabase/server";
 import FinanzasClient from "./FinanzasClient";
 
 export const metadata = { title: "Finanzas | Pfaffen Autos" };

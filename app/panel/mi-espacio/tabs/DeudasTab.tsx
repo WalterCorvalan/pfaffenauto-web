@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect, useMemo } from "react";
-import { supabase2 } from "@/lib/supabase2/client";
+import { supabase2 } from "@/lib/supabase/client";
 import { Plus, X, Save, Link2, Trash2, DollarSign } from "lucide-react";
 import { inputClass, labelClass, fmt, badgeVencimiento } from "./shared";
 

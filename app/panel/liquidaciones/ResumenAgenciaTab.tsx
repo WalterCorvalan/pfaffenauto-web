@@ -2,7 +2,7 @@
 
 import { useMemo } from "react";
 import { fmt } from "./shared";
-import TablaResponsiva, { type ColumnaTabla } from "@/components/panelV2/TablaResponsiva";
+import TablaResponsiva, { type ColumnaTabla } from "@/components/panel/TablaResponsiva";
 
 export default function ResumenAgenciaTab({ liquidaciones, gananciasOcultas }: { liquidaciones: any[]; gananciasOcultas: boolean }) {
   const finalizadas = liquidaciones.filter((l) => l.estado === "terminado");

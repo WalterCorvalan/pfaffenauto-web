@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useMemo } from "react";
-import { supabase2 } from "@/lib/supabase2/client";
+import { supabase2 } from "@/lib/supabase/client";
 import { AlertTriangle, Clock, DollarSign, X, Save } from "lucide-react";
 
 function fmt(n: number, moneda = "ARS") {

@@ -3,7 +3,7 @@
 import { useState, useEffect, useRef } from "react";
 import { createPortal } from "react-dom";
 import Script from "next/script";
-import { supabase2 as supabase } from "@/lib/supabase2/client";
+import { supabase2 as supabase } from "@/lib/supabase/client";
 import { getCanalOrigen, getUtmRaw } from "@/lib/utm";
 import { CreditCard, X, CheckCircle2, Loader2, User, Phone, Mail, ArrowLeft, Search, Car } from "lucide-react";
 

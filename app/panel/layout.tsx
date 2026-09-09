@@ -1,12 +1,12 @@
 "use client";
 
-import MensajesBubble from "@/components/panelV2/MensajesBubble";
-import MobileNavProgress from "@/components/panelV2/MobileNavProgress";
-import NotificationBell from "@/components/panelV2/NotificationBell";
-import QuickActionsButton from "@/components/panelV2/QuickActionsButton";
-import TopTicker from "@/components/panelV2/TopTicker";
-import { ROL_A_SECTOR } from "@/lib/panelV2/permisosModulos";
-import { supabase2 } from "@/lib/supabase2/client";
+import MensajesBubble from "@/components/panel/MensajesBubble";
+import MobileNavProgress from "@/components/panel/MobileNavProgress";
+import NotificationBell from "@/components/panel/NotificationBell";
+import QuickActionsButton from "@/components/panel/QuickActionsButton";
+import TopTicker from "@/components/panel/TopTicker";
+import { ROL_A_SECTOR } from "@/lib/panel/permisosModulos";
+import { supabase2 } from "@/lib/supabase/client";
 import {
   AlertTriangle,
   Banknote,

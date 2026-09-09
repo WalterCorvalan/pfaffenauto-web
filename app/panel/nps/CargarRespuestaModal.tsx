@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { supabase2 } from "@/lib/supabase2/client";
+import { supabase2 } from "@/lib/supabase/client";
 import { X, Save } from "lucide-react";
 
 export default function CargarRespuestaModal({ clientes, vendedores, esAdminORecepcion, miId, onClose }: { clientes: any[], vendedores: any[], esAdminORecepcion: boolean, miId: string, onClose: () => void }) {

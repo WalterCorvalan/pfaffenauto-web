@@ -1,11 +1,11 @@
 "use client";
 
 import { useState } from "react";
-import { supabase2 } from "@/lib/supabase2/client";
+import { supabase2 } from "@/lib/supabase/client";
 import { X, Loader2, DoorOpen, Globe, ScanLine, Search } from "lucide-react";
 import EscanearDniModal, { type DatosDni } from "./EscanearDniModal";
-import { parseFechaLocal } from "@/lib/panelV2/fechas";
-import { crearAlerta } from "@/lib/panelV2/alertas";
+import { parseFechaLocal } from "@/lib/panel/fechas";
+import { crearAlerta } from "@/lib/panel/alertas";
 
 export const ORIGENES = ["Instagram", "Facebook", "Web", "Referido", "Showroom", "WhatsApp", "Otro"];
 const ETAPAS = [

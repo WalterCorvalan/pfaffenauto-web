@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { Upload, CheckCircle2, XCircle } from "lucide-react";
 import { fmt } from "./shared";
-import TablaResponsiva, { type ColumnaTabla } from "@/components/panelV2/TablaResponsiva";
+import TablaResponsiva, { type ColumnaTabla } from "@/components/panel/TablaResponsiva";
 
 type FilaExtracto = { fecha: string; descripcion: string; monto: number; match?: any };
 

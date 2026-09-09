@@ -1,7 +1,7 @@
-import { createClient } from "@/lib/supabase2/server";
+import { createClient } from "@/lib/supabase/server";
 import Link from "next/link";
 import { MessageSquareText, ArrowDownToLine, ArrowUpFromLine, Users, ChevronLeft, ChevronRight, PhoneCall, Flame } from "lucide-react";
-import TarjetaCostoIA from "@/components/panelV2/TarjetaCostoIA";
+import TarjetaCostoIA from "@/components/panel/TarjetaCostoIA";
 
 function inicioDia(offsetDias: number) {
   const d = new Date();

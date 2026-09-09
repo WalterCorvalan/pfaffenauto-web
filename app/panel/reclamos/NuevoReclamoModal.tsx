@@ -1,9 +1,9 @@
 "use client";
 
 import { useState, useEffect, useRef } from "react";
-import { supabase2 } from "@/lib/supabase2/client";
+import { supabase2 } from "@/lib/supabase/client";
 import { X, Loader2, Search } from "lucide-react";
-import { crearAlerta } from "@/lib/panelV2/alertas";
+import { crearAlerta } from "@/lib/panel/alertas";
 
 const TIPOS = ["Transferencia", "Pago", "Gestoría", "Documentación", "Administrativo", "Otro"];
 const PRIORIDADES = ["Baja", "Normal", "Alta", "Urgente"];

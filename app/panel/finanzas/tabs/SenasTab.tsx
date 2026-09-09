@@ -6,7 +6,7 @@ import { Plus, Printer, CarFront, AlertTriangle } from "lucide-react";
 import EstadoSenaSelector from "../../senas/EstadoSenaSelector";
 import NuevaSenaModal from "../../senas/NuevaSenaModal";
 import { fmt } from "./shared";
-import TablaResponsiva, { type ColumnaTabla } from "@/components/panelV2/TablaResponsiva";
+import TablaResponsiva, { type ColumnaTabla } from "@/components/panel/TablaResponsiva";
 
 const COLOR_ESTADO: Record<string, string> = { Activa: "border-l-amber-400", Convertida: "border-l-emerald-400", Perdida: "border-l-rose-400" };
 

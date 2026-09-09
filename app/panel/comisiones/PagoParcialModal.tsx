@@ -1,9 +1,9 @@
 "use client";
 
 import { useState } from "react";
-import { supabase2 } from "@/lib/supabase2/client";
+import { supabase2 } from "@/lib/supabase/client";
 import { X, Save, Wallet } from "lucide-react";
-import { hoyLocalISO } from "@/lib/panelV2/fechas";
+import { hoyLocalISO } from "@/lib/panel/fechas";
 
 export default function PagoParcialModal({
   comision,

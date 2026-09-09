@@ -1,7 +1,7 @@
-import { createClient } from "@/lib/supabase2/server";
+import { createClient } from "@/lib/supabase/server";
 import Link from "next/link";
 import { AtSign, ArrowDownToLine, ArrowUpFromLine, Users, PhoneCall, Flame, AlertTriangle } from "lucide-react";
-import TarjetaCostoIA from "@/components/panelV2/TarjetaCostoIA";
+import TarjetaCostoIA from "@/components/panel/TarjetaCostoIA";
 import InstagramMetricsClient from "./InstagramMetricsClient";
 import {
   getInstagramAccountSummary,

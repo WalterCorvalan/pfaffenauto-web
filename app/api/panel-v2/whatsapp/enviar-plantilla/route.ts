@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 import { createServerClient } from "@supabase/ssr";
 import { cookies } from "next/headers";
 import { rateLimit, ipDesdeRequest } from "@/lib/rateLimit";
-import { enviarPlantilla, TemplateError } from "@/lib/panelV2/whatsappTemplates";
+import { enviarPlantilla, TemplateError } from "@/lib/panel/whatsappTemplates";
 import { z } from "zod";
 
 const EnviarSchema = z.object({

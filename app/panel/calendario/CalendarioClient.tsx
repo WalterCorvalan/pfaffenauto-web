@@ -1,7 +1,7 @@
 "use client";
 
 import { useMemo, useState } from "react";
-import { supabase2 } from "@/lib/supabase2/client";
+import { supabase2 } from "@/lib/supabase/client";
 import { ChevronLeft, ChevronRight, CalendarPlus, CalendarDays, Search, X, Info } from "lucide-react";
 import NuevoEventoModal, { TIPOS_EVENTO } from "./NuevoEventoModal";
 

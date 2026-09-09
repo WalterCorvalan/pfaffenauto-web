@@ -1,6 +1,6 @@
 import { createClient } from "@supabase/supabase-js";
-import { crearAlerta } from "@/lib/panelV2/alertas";
-import { SECTOR_A_ROLES } from "@/lib/panelV2/calendarioSectores";
+import { crearAlerta } from "@/lib/panel/alertas";
+import { SECTOR_A_ROLES } from "@/lib/panel/calendarioSectores";
 
 // Corre cada 5 min vía pg_cron (ver sql_panel_v2_calendario_notificacion_programada.sql).
 // Manda el aviso de un evento del calendario recién cuando llega su

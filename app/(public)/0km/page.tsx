@@ -1,4 +1,4 @@
-import { createClient } from "@/lib/supabase2/server";
+import { createClient } from "@/lib/supabase/server";
 import { CAMPOS_VEHICULO_PUBLICO } from "@/lib/vehiculos";
 import VehiculosGrid from "@/components/VehiculosGrid";
 import { Sparkles, ShieldCheck, ChevronRight, Zap } from "lucide-react";
