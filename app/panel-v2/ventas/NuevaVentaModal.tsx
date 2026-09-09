@@ -24,7 +24,10 @@ interface Cliente { id: string; nombre: string; telefono: string | null; email: 
 interface Perfil { id: string; nombre: string; roles: string[] }
 
 interface Seña { monto: string; moneda: string; fecha: string; cajaDestino: string; senaOrigenId?: string | null }
-interface Permuta { valor: string; moneda: string; precioPublicacion: string; marca: string; modelo: string; anio: string; km: string; patente: string; color: string; condicion: string; cargarAlStock: boolean; duenoNombre: string }
+interface Permuta {
+  valor: string; moneda: string; precioPublicacion: string; marca: string; modelo: string; anio: string; km: string; patente: string; color: string; condicion: string; cargarAlStock: boolean; duenoNombre: string;
+  segmento: string; tipo: string; marcaMotor: string; numeroMotor: string; marcaChasis: string; numeroChasis: string; combustible: string; radicadoLocalidad: string; radicadoProvincia: string; tasadoEn: string;
+}
 
 export interface VentaPrefill {
   compradorNombre?: string;
@@ -47,7 +50,10 @@ interface Props {
 
 const CAJAS = ["Caja USD", "Caja ARS", "Banco", "Otro"];
 const CONDICIONES = ["0km", "Excelente", "Muy bueno", "Bueno", "Regular"];
-const nuevaPermuta = (): Permuta => ({ valor: "", moneda: "USD", precioPublicacion: "", marca: "", modelo: "", anio: "", km: "", patente: "", color: "", condicion: "Muy bueno", cargarAlStock: true, duenoNombre: "" });
+const nuevaPermuta = (): Permuta => ({
+  valor: "", moneda: "USD", precioPublicacion: "", marca: "", modelo: "", anio: "", km: "", patente: "", color: "", condicion: "Muy bueno", cargarAlStock: true, duenoNombre: "",
+  segmento: "", tipo: "", marcaMotor: "", numeroMotor: "", marcaChasis: "", numeroChasis: "", combustible: "", radicadoLocalidad: "", radicadoProvincia: "", tasadoEn: "",
+});
 
 export default function NuevaVentaModal({ perfiles, clientes, vehiculos, miId, initial, editando, onClose, onCreado }: Props) {
   const esEdicion = !!editando;
@@ -76,6 +82,17 @@ export default function NuevaVentaModal({ perfiles, clientes, vehiculos, miId, i
   const [compradorTelefono, setCompradorTelefono] = useState(editando?.comprador_telefono || "");
   const [compradorEmail, setCompradorEmail] = useState(editando?.comprador_email || "");
   const [compradorDni, setCompradorDni] = useState(editando?.comprador_dni || "");
+  const [compradorTelefonoCelular, setCompradorTelefonoCelular] = useState(editando?.comprador_telefono_celular || "");
+  const [compradorFechaNacimiento, setCompradorFechaNacimiento] = useState(editando?.comprador_fecha_nacimiento || "");
+  const [compradorCuitCuil, setCompradorCuitCuil] = useState(editando?.comprador_cuit_cuil || "");
+  const [compradorEstadoCivil, setCompradorEstadoCivil] = useState(editando?.comprador_estado_civil || "");
+  const [compradorProfesion, setCompradorProfesion] = useState(editando?.comprador_profesion || "");
+  const [compradorCalle, setCompradorCalle] = useState(editando?.comprador_calle || "");
+  const [compradorNumero, setCompradorNumero] = useState(editando?.comprador_numero || "");
+  const [compradorDepto, setCompradorDepto] = useState(editando?.comprador_depto || "");
+  const [compradorLocalidad, setCompradorLocalidad] = useState(editando?.comprador_localidad || "");
+  const [compradorCodigoPostal, setCompradorCodigoPostal] = useState(editando?.comprador_codigo_postal || "");
+  const [compradorProvincia, setCompradorProvincia] = useState(editando?.comprador_provincia || "");
   const [propietarioNombre, setPropietarioNombre] = useState(editando?.propietario_nombre || "");
   const [propietarioTelefono, setPropietarioTelefono] = useState(editando?.propietario_telefono || "");
 
@@ -86,6 +103,17 @@ export default function NuevaVentaModal({ perfiles, clientes, vehiculos, miId, i
   const [metodoPago, setMetodoPago] = useState(editando?.metodo_pago || "");
   const [cuotasPlazo, setCuotasPlazo] = useState(editando?.cuotas_plazo ? String(editando.cuotas_plazo) : "");
   const [montoFinanciacion, setMontoFinanciacion] = useState(editando?.monto_financiacion ? String(editando.monto_financiacion) : "");
+  const [prendaBanco, setPrendaBanco] = useState(editando?.prenda_banco || "");
+  const [prendaMonto, setPrendaMonto] = useState(editando?.prenda_monto ? String(editando.prenda_monto) : "");
+  const [prendaCuotaMonto, setPrendaCuotaMonto] = useState(editando?.prenda_cuota_monto ? String(editando.prenda_cuota_monto) : "");
+  const [prendaSeguroMonto, setPrendaSeguroMonto] = useState(editando?.prenda_seguro_monto ? String(editando.prenda_seguro_monto) : "");
+  const [seguroContratado, setSeguroContratado] = useState(editando?.seguro_contratado || false);
+  const [seguroCompania, setSeguroCompania] = useState(editando?.seguro_compania || "");
+  const [seguroImporteMensual, setSeguroImporteMensual] = useState(editando?.seguro_importe_mensual ? String(editando.seguro_importe_mensual) : "");
+  const [pagoEfectivoArs, setPagoEfectivoArs] = useState(editando?.pago_efectivo_ars ? String(editando.pago_efectivo_ars) : "");
+  const [pagoEfectivoUsd, setPagoEfectivoUsd] = useState(editando?.pago_efectivo_usd ? String(editando.pago_efectivo_usd) : "");
+  const [tipoCambio, setTipoCambio] = useState(editando?.tipo_cambio ? String(editando.tipo_cambio) : "");
+  const [patentamientoMonto, setPatentamientoMonto] = useState(editando?.patentamiento_transferencia_monto ? String(editando.patentamiento_transferencia_monto) : "");
 
   const [incluirPermuta, setIncluirPermuta] = useState(false);
   const [permutas, setPermutas] = useState<Permuta[]>([]);
@@ -256,9 +284,21 @@ export default function NuevaVentaModal({ perfiles, clientes, vehiculos, miId, i
         vendedor_id: vendedorId || null, fecha_cierre: fechaCierre,
         comprador_nombre: compradorNombre.trim(), comprador_telefono: compradorTelefono || null,
         comprador_email: compradorEmail || null, comprador_dni: compradorDni || null,
+        comprador_telefono_celular: compradorTelefonoCelular || null, comprador_fecha_nacimiento: compradorFechaNacimiento || null,
+        comprador_cuit_cuil: compradorCuitCuil || null, comprador_estado_civil: compradorEstadoCivil || null, comprador_profesion: compradorProfesion || null,
+        comprador_calle: compradorCalle || null, comprador_numero: compradorNumero || null, comprador_depto: compradorDepto || null,
+        comprador_localidad: compradorLocalidad || null, comprador_codigo_postal: compradorCodigoPostal || null, comprador_provincia: compradorProvincia || null,
         propietario_nombre: vehiculoId ? null : (propietarioNombre || null), propietario_telefono: vehiculoId ? null : (propietarioTelefono || null),
         metodo_pago: metodoPago || null, cuotas_plazo: metodoPago === "Financiado" && cuotasPlazo ? Number(cuotasPlazo) : null,
         monto_financiacion: montoFinanciacion ? Number(montoFinanciacion) : null,
+        prenda_banco: metodoPago === "Financiado" ? (prendaBanco || null) : null,
+        prenda_monto: metodoPago === "Financiado" && prendaMonto ? Number(prendaMonto) : null,
+        prenda_cuota_monto: metodoPago === "Financiado" && prendaCuotaMonto ? Number(prendaCuotaMonto) : null,
+        prenda_seguro_monto: metodoPago === "Financiado" && prendaSeguroMonto ? Number(prendaSeguroMonto) : null,
+        seguro_contratado: seguroContratado, seguro_compania: seguroContratado ? (seguroCompania || null) : null,
+        seguro_importe_mensual: seguroContratado && seguroImporteMensual ? Number(seguroImporteMensual) : null,
+        pago_efectivo_ars: pagoEfectivoArs ? Number(pagoEfectivoArs) : null, pago_efectivo_usd: pagoEfectivoUsd ? Number(pagoEfectivoUsd) : null,
+        tipo_cambio: tipoCambio ? Number(tipoCambio) : null, patentamiento_transferencia_monto: patentamientoMonto ? Number(patentamientoMonto) : null,
         responsable_consignacion_id: responsableConsignacion || null,
         gestor_asignado_id: gestorAsignado || null,
         comision_manual: comisionManual, comision_vendedor_pct: Number(comisionVendedorEfectiva), comision_consignacion_pct: Number(comisionConsignacionPct),
@@ -318,9 +358,21 @@ export default function NuevaVentaModal({ perfiles, clientes, vehiculos, miId, i
         vendedor_id: vendedorId || null, fecha_cierre: fechaCierre,
         cliente_id: clienteResueltoId, comprador_nombre: compradorNombre.trim(), comprador_telefono: compradorTelefono || null,
         comprador_email: compradorEmail || null, comprador_dni: compradorDni || null,
+        comprador_telefono_celular: compradorTelefonoCelular || null, comprador_fecha_nacimiento: compradorFechaNacimiento || null,
+        comprador_cuit_cuil: compradorCuitCuil || null, comprador_estado_civil: compradorEstadoCivil || null, comprador_profesion: compradorProfesion || null,
+        comprador_calle: compradorCalle || null, comprador_numero: compradorNumero || null, comprador_depto: compradorDepto || null,
+        comprador_localidad: compradorLocalidad || null, comprador_codigo_postal: compradorCodigoPostal || null, comprador_provincia: compradorProvincia || null,
         propietario_nombre: vehiculoId ? null : (propietarioNombre || null), propietario_telefono: vehiculoId ? null : (propietarioTelefono || null),
         metodo_pago: metodoPago || null, cuotas_plazo: metodoPago === "Financiado" && cuotasPlazo ? Number(cuotasPlazo) : null,
         monto_financiacion: montoFinanciacion ? Number(montoFinanciacion) : null,
+        prenda_banco: metodoPago === "Financiado" ? (prendaBanco || null) : null,
+        prenda_monto: metodoPago === "Financiado" && prendaMonto ? Number(prendaMonto) : null,
+        prenda_cuota_monto: metodoPago === "Financiado" && prendaCuotaMonto ? Number(prendaCuotaMonto) : null,
+        prenda_seguro_monto: metodoPago === "Financiado" && prendaSeguroMonto ? Number(prendaSeguroMonto) : null,
+        seguro_contratado: seguroContratado, seguro_compania: seguroContratado ? (seguroCompania || null) : null,
+        seguro_importe_mensual: seguroContratado && seguroImporteMensual ? Number(seguroImporteMensual) : null,
+        pago_efectivo_ars: pagoEfectivoArs ? Number(pagoEfectivoArs) : null, pago_efectivo_usd: pagoEfectivoUsd ? Number(pagoEfectivoUsd) : null,
+        tipo_cambio: tipoCambio ? Number(tipoCambio) : null, patentamiento_transferencia_monto: patentamientoMonto ? Number(patentamientoMonto) : null,
         responsable_consignacion_id: responsableConsignacion || null,
         gestor_asignado_id: gestorAsignado || null,
         comision_manual: comisionManual, comision_vendedor_pct: Number(comisionVendedorEfectiva), comision_consignacion_pct: Number(comisionConsignacionPct),
@@ -360,6 +412,9 @@ export default function NuevaVentaModal({ perfiles, clientes, vehiculos, miId, i
               km: p.km ? Number(p.km) : 0, patente: (p.patente || `PERMUTA-${venta.id.slice(0, 8)}`).toUpperCase(), color: p.color || "—",
               condicion: p.condicion, precio_venta: p.precioPublicacion ? Number(p.precioPublicacion) : Number(p.valor || 0), moneda_venta: p.moneda,
               estado: "disponible", propio_agencia: true, propietario_nombre: p.duenoNombre || compradorNombre.trim(),
+              segmento: p.segmento || null, tipo: p.tipo || null, marca_motor: p.marcaMotor || null, numero_motor: p.numeroMotor || null,
+              marca_chasis: p.marcaChasis || null, numero_chasis: p.numeroChasis || null, combustible: p.combustible || null,
+              radicado_localidad: p.radicadoLocalidad || null, radicado_provincia: p.radicadoProvincia || null,
               creado_por: miId || null,
             }).select().single();
             vehiculoCreadoId = vCreado?.id || null;
@@ -369,6 +424,9 @@ export default function NuevaVentaModal({ perfiles, clientes, vehiculos, miId, i
             marca: p.marca || null, modelo: p.modelo || null, anio: p.anio ? Number(p.anio) : null, km: p.km ? Number(p.km) : null,
             patente: p.patente || null, color: p.color || null, condicion: p.condicion, cargar_a_stock: p.cargarAlStock, dueno_nombre: p.duenoNombre || null,
             vehiculo_creado_id: vehiculoCreadoId,
+            segmento: p.segmento || null, tipo: p.tipo || null, marca_motor: p.marcaMotor || null, numero_motor: p.numeroMotor || null,
+            marca_chasis: p.marcaChasis || null, numero_chasis: p.numeroChasis || null, combustible: p.combustible || null,
+            radicado_localidad: p.radicadoLocalidad || null, radicado_provincia: p.radicadoProvincia || null, tasado_en: p.tasadoEn || null,
           });
         }
       }
@@ -513,11 +571,26 @@ export default function NuevaVentaModal({ perfiles, clientes, vehiculos, miId, i
                 </select>
               </div>
               <div><label className={labelClass}>Nombre *</label><input value={compradorNombre} onChange={(e) => setCompradorNombre(e.target.value)} className={inputClass} /></div>
-              <div><label className={labelClass}>Teléfono</label><input value={compradorTelefono} onChange={(e) => setCompradorTelefono(e.target.value)} placeholder="+54 11 5555 5555" className={inputClass} /></div>
+              <div><label className={labelClass}>Teléfono de línea</label><input value={compradorTelefono} onChange={(e) => setCompradorTelefono(e.target.value)} placeholder="+54 11 5555 5555" className={inputClass} /></div>
+              <div><label className={labelClass}>Celular</label><input value={compradorTelefonoCelular} onChange={(e) => setCompradorTelefonoCelular(e.target.value)} className={inputClass} /></div>
               <div><label className={labelClass}>Email</label><input value={compradorEmail} onChange={(e) => setCompradorEmail(e.target.value)} className={inputClass} /></div>
               <div><label className={labelClass}>DNI</label><input value={compradorDni} onChange={(e) => setCompradorDni(e.target.value)} className={inputClass} /></div>
+              <div><label className={labelClass}>CUIT/CUIL</label><input value={compradorCuitCuil} onChange={(e) => setCompradorCuitCuil(e.target.value)} placeholder="20-12345678-9" className={inputClass} /></div>
+              <div><label className={labelClass}>Fecha de nacimiento</label><input type="date" value={compradorFechaNacimiento} onChange={(e) => setCompradorFechaNacimiento(e.target.value)} className={inputClass} /></div>
+              <div><label className={labelClass}>Estado civil</label><input value={compradorEstadoCivil} onChange={(e) => setCompradorEstadoCivil(e.target.value)} className={inputClass} /></div>
+              <div><label className={labelClass}>Profesión</label><input value={compradorProfesion} onChange={(e) => setCompradorProfesion(e.target.value)} className={inputClass} /></div>
             </div>
             {!clienteId && compradorNombre && (compradorTelefono || compradorDni) && <p className="text-[10px] text-indigo-500 mt-1.5">Se engancha solo a un cliente existente por teléfono/DNI, o se crea uno nuevo en Clientes.</p>}
+
+            <p className="text-[10px] font-black uppercase tracking-widest text-slate-400 mt-3 mb-1.5">Domicilio</p>
+            <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
+              <div><label className={labelClass}>Calle</label><input value={compradorCalle} onChange={(e) => setCompradorCalle(e.target.value)} className={inputClass} /></div>
+              <div><label className={labelClass}>Número</label><input value={compradorNumero} onChange={(e) => setCompradorNumero(e.target.value)} className={inputClass} /></div>
+              <div><label className={labelClass}>Depto</label><input value={compradorDepto} onChange={(e) => setCompradorDepto(e.target.value)} className={inputClass} /></div>
+              <div><label className={labelClass}>Localidad</label><input value={compradorLocalidad} onChange={(e) => setCompradorLocalidad(e.target.value)} className={inputClass} /></div>
+              <div><label className={labelClass}>Código postal</label><input value={compradorCodigoPostal} onChange={(e) => setCompradorCodigoPostal(e.target.value)} className={inputClass} /></div>
+              <div><label className={labelClass}>Provincia</label><input value={compradorProvincia} onChange={(e) => setCompradorProvincia(e.target.value)} className={inputClass} /></div>
+            </div>
           </div>
 
           {!vehiculoId && (
@@ -605,6 +678,42 @@ export default function NuevaVentaModal({ perfiles, clientes, vehiculos, miId, i
                 )}
               </div>
 
+              {metodoPago === "Financiado" && (
+                <div>
+                  <p className={seccionClass}>🏦 Datos de la prenda</p>
+                  <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+                    <div className="col-span-2"><label className={labelClass}>Banco de la prenda</label><input value={prendaBanco} onChange={(e) => setPrendaBanco(e.target.value)} className={inputClass} /></div>
+                    <div><label className={labelClass}>Prenda ($)</label><input type="number" value={prendaMonto} onChange={(e) => setPrendaMonto(e.target.value)} className={inputClass} /></div>
+                    <div><label className={labelClass}>Cuota de prenda ($)</label><input type="number" value={prendaCuotaMonto} onChange={(e) => setPrendaCuotaMonto(e.target.value)} className={inputClass} /></div>
+                    <div className="col-span-2 sm:col-span-1"><label className={labelClass}>Seguro de prenda ($)</label><input type="number" value={prendaSeguroMonto} onChange={(e) => setPrendaSeguroMonto(e.target.value)} className={inputClass} /></div>
+                  </div>
+                  <p className="text-[10px] text-slate-400 mt-1">La cantidad de cuotas es la misma de "Cuotas (plazo)" de arriba.</p>
+                </div>
+              )}
+
+              <div>
+                <div className="flex items-center justify-between mb-2">
+                  <p className={seccionClass + " mt-0 mb-0"}>🛡️ ¿Contrata seguro?</p>
+                  <label className="flex items-center gap-2 text-xs font-semibold text-slate-600 dark:text-slate-300 cursor-pointer"><input type="checkbox" checked={seguroContratado} onChange={(e) => setSeguroContratado(e.target.checked)} className="w-4 h-4 accent-rose-600" /> Sí</label>
+                </div>
+                {seguroContratado && (
+                  <div className="grid grid-cols-2 gap-3">
+                    <div><label className={labelClass}>Compañía</label><input value={seguroCompania} onChange={(e) => setSeguroCompania(e.target.value)} className={inputClass} /></div>
+                    <div><label className={labelClass}>Importe mensual</label><input type="number" value={seguroImporteMensual} onChange={(e) => setSeguroImporteMensual(e.target.value)} className={inputClass} /></div>
+                  </div>
+                )}
+              </div>
+
+              <div>
+                <p className={seccionClass}>Desglose de forma de pago</p>
+                <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+                  <div><label className={labelClass}>En efectivo $ (ARS)</label><input type="number" value={pagoEfectivoArs} onChange={(e) => setPagoEfectivoArs(e.target.value)} className={inputClass} /></div>
+                  <div><label className={labelClass}>En efectivo u$s</label><input type="number" value={pagoEfectivoUsd} onChange={(e) => setPagoEfectivoUsd(e.target.value)} className={inputClass} /></div>
+                  <div><label className={labelClass}>Tipo de cambio</label><input type="number" value={tipoCambio} onChange={(e) => setTipoCambio(e.target.value)} className={inputClass} /></div>
+                  <div><label className={labelClass}>Patent. / Transf. ($)</label><input type="number" value={patentamientoMonto} onChange={(e) => setPatentamientoMonto(e.target.value)} className={inputClass} /></div>
+                </div>
+              </div>
+
               {!esEdicion && (
               <div>
                 <div className="flex items-center justify-between mb-2">
@@ -629,6 +738,16 @@ export default function NuevaVentaModal({ perfiles, clientes, vehiculos, miId, i
                           <div><label className={labelClass}>Patente</label><input value={p.patente} onChange={(e) => actualizarPermuta(i, "patente", e.target.value)} className={inputClass} /></div>
                           <div><label className={labelClass}>Color</label><input value={p.color} onChange={(e) => actualizarPermuta(i, "color", e.target.value)} className={inputClass} /></div>
                           <div><label className={labelClass}>Condición</label><select value={p.condicion} onChange={(e) => actualizarPermuta(i, "condicion", e.target.value)} className={inputClass}>{CONDICIONES.map((c) => <option key={c} value={c}>{c}</option>)}</select></div>
+                          <div><label className={labelClass}>Segmento</label><input value={p.segmento} onChange={(e) => actualizarPermuta(i, "segmento", e.target.value)} className={inputClass} /></div>
+                          <div><label className={labelClass}>Tipo</label><input value={p.tipo} onChange={(e) => actualizarPermuta(i, "tipo", e.target.value)} placeholder="Ej: Sedan 5p" className={inputClass} /></div>
+                          <div><label className={labelClass}>Combustible</label><input value={p.combustible} onChange={(e) => actualizarPermuta(i, "combustible", e.target.value)} className={inputClass} /></div>
+                          <div><label className={labelClass}>Marca motor</label><input value={p.marcaMotor} onChange={(e) => actualizarPermuta(i, "marcaMotor", e.target.value)} className={inputClass} /></div>
+                          <div><label className={labelClass}>Nº motor</label><input value={p.numeroMotor} onChange={(e) => actualizarPermuta(i, "numeroMotor", e.target.value)} className={inputClass} /></div>
+                          <div><label className={labelClass}>Marca chasis</label><input value={p.marcaChasis} onChange={(e) => actualizarPermuta(i, "marcaChasis", e.target.value)} className={inputClass} /></div>
+                          <div><label className={labelClass}>Nº chasis</label><input value={p.numeroChasis} onChange={(e) => actualizarPermuta(i, "numeroChasis", e.target.value)} className={inputClass} /></div>
+                          <div><label className={labelClass}>Radicado — localidad</label><input value={p.radicadoLocalidad} onChange={(e) => actualizarPermuta(i, "radicadoLocalidad", e.target.value)} className={inputClass} /></div>
+                          <div><label className={labelClass}>Radicado — provincia</label><input value={p.radicadoProvincia} onChange={(e) => actualizarPermuta(i, "radicadoProvincia", e.target.value)} className={inputClass} /></div>
+                          <div><label className={labelClass}>Tasado en</label><input value={p.tasadoEn} onChange={(e) => actualizarPermuta(i, "tasadoEn", e.target.value)} placeholder="Ej: Casa Central" className={inputClass} /></div>
                         </div>
                         <p className="text-[11px] font-bold text-amber-600 dark:text-amber-400 mt-3 mb-1.5">Cédula Verde del vehículo de permuta</p>
                         <div className="grid grid-cols-2 gap-2">

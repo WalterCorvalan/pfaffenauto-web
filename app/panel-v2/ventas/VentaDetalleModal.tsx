@@ -71,6 +71,7 @@ export default function VentaDetalleModal({ ventaId, miId, soyAdmin, puedeOperac
   const [cuentaCobroCuota, setCuentaCobroCuota] = useState("");
   const [cobrandoCuota, setCobrandoCuota] = useState(false);
   const [historial, setHistorial] = useState<any[]>([]);
+  const [permutas, setPermutas] = useState<any[]>([]);
   const [expediente, setExpediente] = useState<any>(null);
   const [mandato, setMandato] = useState<any>(null);
   const [cargando, setCargando] = useState(true);
@@ -86,18 +87,20 @@ export default function VentaDetalleModal({ ventaId, miId, soyAdmin, puedeOperac
   const [codigoCopiado, setCodigoCopiado] = useState(false);
 
   const cargar = async () => {
-    const [{ data: v }, { data: s }, { data: h }, { data: exp }, { data: c }] = await Promise.all([
+    const [{ data: v }, { data: s }, { data: h }, { data: exp }, { data: c }, { data: perm }] = await Promise.all([
       supabase2.from("ventas").select("*").eq("id", ventaId).single(),
       supabase2.from("venta_senas").select("*").eq("venta_id", ventaId).order("fecha"),
       supabase2.from("venta_estado_historial").select("*, autor:perfiles(nombre)").eq("venta_id", ventaId).order("created_at", { ascending: false }),
       supabase2.from("expedientes").select("id, estado").eq("venta_id", ventaId).maybeSingle(),
       supabase2.from("venta_cuotas").select("*").eq("venta_id", ventaId).order("numero"),
+      supabase2.from("venta_permutas").select("*").eq("venta_id", ventaId),
     ]);
     setVenta(v);
     setSenas(s || []);
     setHistorial(h || []);
     setExpediente(exp || null);
     setCuotas(c || []);
+    setPermutas(perm || []);
 
     if (v?.vehiculo_id) {
       const { data: veh } = await supabase2.from("vehiculos").select("mandato_id").eq("id", v.vehiculo_id).maybeSingle();
@@ -255,8 +258,14 @@ export default function VentaDetalleModal({ ventaId, miId, soyAdmin, puedeOperac
           <Seccion icono={User} titulo="Comprador">
             <Fila label="Nombre" valor={venta.comprador_nombre} />
             <Fila label="Teléfono" valor={venta.comprador_telefono} />
+            <Fila label="Celular" valor={venta.comprador_telefono_celular} />
             <Fila label="Email" valor={venta.comprador_email} />
             <Fila label="DNI" valor={venta.comprador_dni} />
+            <Fila label="CUIT/CUIL" valor={venta.comprador_cuit_cuil} />
+            <Fila label="Fecha de nacimiento" valor={venta.comprador_fecha_nacimiento ? fmtFechaLocal(venta.comprador_fecha_nacimiento) : null} />
+            <Fila label="Estado civil" valor={venta.comprador_estado_civil} />
+            <Fila label="Profesión" valor={venta.comprador_profesion} />
+            <Fila label="Domicilio" valor={[venta.comprador_calle && `${venta.comprador_calle} ${venta.comprador_numero || ""}`.trim(), venta.comprador_depto, venta.comprador_localidad, venta.comprador_provincia, venta.comprador_codigo_postal].filter(Boolean).join(", ") || null} />
             {venta.cliente_id && <Fila label="Cliente CRM" valor={<span className="font-mono text-xs text-slate-400">{idCorto(venta.cliente_id)}</span>} />}
           </Seccion>
 
@@ -265,9 +274,46 @@ export default function VentaDetalleModal({ ventaId, miId, soyAdmin, puedeOperac
             <Fila label="Adelanto / seña" valor={totalSenas > 0 ? `${venta.moneda_venta} ${totalSenas.toLocaleString("es-AR")}` : null} />
             <Fila label="Método de pago" valor={venta.metodo_pago} />
             <Fila label="Cuotas" valor={venta.cuotas_plazo} />
+            <Fila label="En efectivo $ (ARS)" valor={venta.pago_efectivo_ars ? `$ ${Number(venta.pago_efectivo_ars).toLocaleString("es-AR")}` : null} />
+            <Fila label="En efectivo u$s" valor={venta.pago_efectivo_usd ? `u$s ${Number(venta.pago_efectivo_usd).toLocaleString("es-AR")}` : null} />
+            <Fila label="Tipo de cambio" valor={venta.tipo_cambio ? `$ ${Number(venta.tipo_cambio).toLocaleString("es-AR")}` : null} />
+            <Fila label="Patent. / Transf." valor={venta.patentamiento_transferencia_monto ? `$ ${Number(venta.patentamiento_transferencia_monto).toLocaleString("es-AR")}` : null} />
             <Fila label="Fecha de venta" valor={fmtFechaLocal(venta.fecha_cierre)} />
             <Fila label="Fecha de entrega" valor={venta.fecha_entrega ? fmtFechaLocal(venta.fecha_entrega) : null} />
           </Seccion>
+
+          {(venta.prenda_banco || venta.prenda_monto) && (
+            <Seccion icono={DollarSign} titulo="Prenda">
+              <Fila label="Banco" valor={venta.prenda_banco} />
+              <Fila label="Prenda" valor={venta.prenda_monto ? `$ ${Number(venta.prenda_monto).toLocaleString("es-AR")}` : null} />
+              <Fila label="Cuota de prenda" valor={venta.prenda_cuota_monto ? `$ ${Number(venta.prenda_cuota_monto).toLocaleString("es-AR")}` : null} />
+              <Fila label="Seguro de prenda" valor={venta.prenda_seguro_monto ? `$ ${Number(venta.prenda_seguro_monto).toLocaleString("es-AR")}` : null} />
+            </Seccion>
+          )}
+
+          {venta.seguro_contratado && (
+            <Seccion icono={ShieldAlert} titulo="Seguro contratado">
+              <Fila label="Compañía" valor={venta.seguro_compania} />
+              <Fila label="Importe mensual" valor={venta.seguro_importe_mensual ? `$ ${Number(venta.seguro_importe_mensual).toLocaleString("es-AR")}` : null} />
+            </Seccion>
+          )}
+
+          {permutas.map((p, i) => (
+            <Seccion key={p.id} icono={Car} titulo={`Permuta${permutas.length > 1 ? ` #${i + 1}` : ""}`}>
+              <Fila label="Vehículo" valor={[p.marca, p.modelo, p.anio].filter(Boolean).join(" ") || null} />
+              <Fila label="Patente" valor={p.patente} />
+              <Fila label="Valor tomado" valor={p.valor ? `${p.moneda} ${Number(p.valor).toLocaleString("es-AR")}` : null} />
+              <Fila label="Precio publicación" valor={p.precio_publicacion ? `${p.moneda} ${Number(p.precio_publicacion).toLocaleString("es-AR")}` : null} />
+              <Fila label="Segmento / Tipo" valor={[p.segmento, p.tipo].filter(Boolean).join(" · ") || null} />
+              <Fila label="Combustible" valor={p.combustible} />
+              <Fila label="Motor" valor={[p.marca_motor, p.numero_motor].filter(Boolean).join(" · ") || null} />
+              <Fila label="Chasis" valor={[p.marca_chasis, p.numero_chasis].filter(Boolean).join(" · ") || null} />
+              <Fila label="Radicado" valor={[p.radicado_localidad, p.radicado_provincia].filter(Boolean).join(", ") || null} />
+              <Fila label="Tasado en" valor={p.tasado_en} />
+              <Fila label="Dueño" valor={p.dueno_nombre} />
+              {p.vehiculo_creado_id && <Fila label="Cargado a Stock" valor={<span className="font-mono text-xs text-emerald-500">{idCorto(p.vehiculo_creado_id)}</span>} />}
+            </Seccion>
+          ))}
 
           {cuotas.length > 0 && (
             <Seccion icono={DollarSign} titulo={`Cuotas (${cuotas.filter((c) => c.estado === "pagada").length}/${cuotas.length} cobradas)`}>
