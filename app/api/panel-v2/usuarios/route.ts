@@ -27,7 +27,7 @@ export async function GET() {
 
   const sb = admin();
   const [{ data: perfiles }, { data: authList }] = await Promise.all([
-    sb.from("perfiles").select("id, nombre, roles, activo, sucursal_id, created_at").order("created_at", { ascending: false }),
+    sb.from("perfiles").select("id, nombre, roles, activo, sucursal_id, whatsapp, created_at").order("created_at", { ascending: false }),
     sb.auth.admin.listUsers({ perPage: 1000 }),
   ]);
 
@@ -43,6 +43,7 @@ const CrearSchema = z.object({
   nombre: z.string().trim().min(1).max(100),
   roles: z.array(z.enum(ROLES)).min(1),
   sucursal_id: z.string().uuid().optional().nullable(),
+  whatsapp: z.string().trim().regex(/^\d+$/).max(20).optional().nullable(),
 });
 
 export async function POST(request: Request) {
@@ -54,7 +55,7 @@ export async function POST(request: Request) {
 
   const parsed = CrearSchema.safeParse(await request.json());
   if (!parsed.success) return NextResponse.json({ error: "Datos inválidos." }, { status: 400 });
-  const { email, password, nombre, roles, sucursal_id } = parsed.data;
+  const { email, password, nombre, roles, sucursal_id, whatsapp } = parsed.data;
 
   const sb = admin();
   // Igual que v1 (app/api/usuarios) -- el admin carga la contraseña acá
@@ -62,7 +63,7 @@ export async function POST(request: Request) {
   const { data: nuevo, error: createError } = await sb.auth.admin.createUser({ email, password, email_confirm: true });
   if (createError) return NextResponse.json({ error: createError.message }, { status: 400 });
 
-  const { error: upsertError } = await sb.from("perfiles").upsert({ id: nuevo.user.id, nombre, roles, activo: true, sucursal_id: sucursal_id || null });
+  const { error: upsertError } = await sb.from("perfiles").upsert({ id: nuevo.user.id, nombre, roles, activo: true, sucursal_id: sucursal_id || null, whatsapp: whatsapp || null });
   if (upsertError) return NextResponse.json({ error: upsertError.message }, { status: 400 });
 
   return NextResponse.json({ ok: true, id: nuevo.user.id });
@@ -74,6 +75,7 @@ const ActualizarSchema = z.object({
   roles: z.array(z.enum(ROLES)).min(1).optional(),
   activo: z.boolean().optional(),
   sucursal_id: z.string().uuid().nullable().optional(),
+  whatsapp: z.string().trim().regex(/^\d+$/).max(20).nullable().optional(),
 });
 
 export async function PATCH(request: Request) {
@@ -109,6 +111,12 @@ export async function DELETE(request: Request) {
 
   const { error: deletePerfilError } = await sb.from("perfiles").delete().eq("id", id);
   if (deletePerfilError) {
+    if (deletePerfilError.code === "23503") {
+      return NextResponse.json(
+        { error: "Este usuario tiene historial y no se puede eliminar, usá Inactivar." },
+        { status: 400 },
+      );
+    }
     return NextResponse.json({ error: `No se pudo eliminar el perfil: ${deletePerfilError.message}` }, { status: 400 });
   }
 

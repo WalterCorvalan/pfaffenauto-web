@@ -87,7 +87,7 @@ export default function ReciboModal({ miNombre, onClose }: { miNombre: string; o
   };
 
   return (
-    <div className="fixed inset-0 bg-black/40 backdrop-blur-sm z-[110] flex items-center justify-center p-4" onClick={() => { if (!generando && window.innerWidth >= 768) onClose(); }}>
+    <div className="fixed inset-0 bg-black/40 backdrop-blur-sm z-[110] flex items-center justify-center p-4" onClick={() => { if (!generando) onClose(); }}>
       <div className="bg-white dark:bg-[#111] border border-slate-200 dark:border-white/10 rounded-2xl w-full max-w-lg max-h-[90vh] overflow-y-auto shadow-2xl relative" onClick={(e) => e.stopPropagation()}>
         <div className="flex items-center justify-between px-5 pt-4">
           <p className="text-xs text-slate-400">{new Date(fecha + "T00:00:00").toLocaleDateString("es-AR", { day: "numeric", month: "long", year: "numeric" })}</p>

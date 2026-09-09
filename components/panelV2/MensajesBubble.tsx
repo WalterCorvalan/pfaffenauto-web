@@ -45,7 +45,7 @@ export default function MensajesBubble() {
   return (
     <button
       onClick={() => router.push("/panel-v2/mensajes")}
-      className="print:hidden fixed bottom-6 right-24 z-40 w-12 h-12 rounded-full bg-white dark:bg-[#1A1A1A] border border-slate-200 dark:border-white/10 shadow-lg flex items-center justify-center hover:scale-105 transition-transform"
+      className="print:hidden hidden md:flex fixed bottom-24 right-6 z-40 w-12 h-12 rounded-full bg-white dark:bg-[#1A1A1A] border border-slate-200 dark:border-white/10 shadow-lg items-center justify-center hover:scale-105 transition-transform"
       title="Mensajes"
     >
       <MessageCircle className="w-5 h-5 text-indigo-600 dark:text-indigo-400" />

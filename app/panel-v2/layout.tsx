@@ -1,6 +1,7 @@
 "use client";
 
 import MensajesBubble from "@/components/panelV2/MensajesBubble";
+import MobileNavProgress from "@/components/panelV2/MobileNavProgress";
 import NotificationBell from "@/components/panelV2/NotificationBell";
 import QuickActionsButton from "@/components/panelV2/QuickActionsButton";
 import TopTicker from "@/components/panelV2/TopTicker";
@@ -59,6 +60,7 @@ import {
   ThumbsUp,
   Trash2,
   Trophy,
+  UserCircle2,
   Users,
   Wallet,
   Wrench,
@@ -132,6 +134,12 @@ const GRUPOS: {
         label: "Mi Espacio",
         icon: Folder,
         modulo: "mi_espacio",
+      },
+      {
+        href: "/panel-v2/mi-perfil",
+        label: "Mi Perfil",
+        icon: UserCircle2,
+        modulo: "mi_perfil",
       },
     ],
   },
@@ -445,17 +453,37 @@ export default function PanelV2Layout({
   };
 
   useEffect(() => {
-    supabase2.auth.getUser().then(async ({ data: { user } }) => {
-      if (!user) return;
-      setMiId(user.id);
+    const cargarPerfil = async (userId: string) => {
+      setMiId(userId);
       const { data } = await supabase2
         .from("perfiles")
         .select("nombre, roles")
-        .eq("id", user.id)
+        .eq("id", userId)
         .single();
       setNombre(data?.nombre || "Usuario");
       setRoles(data?.roles || []);
+    };
+
+    supabase2.auth.getUser().then(({ data: { user } }) => {
+      if (user) cargarPerfil(user.id);
     });
+
+    // El layout envuelve /panel-v2/login y no se remonta al navegar a
+    // /panel-v2 tras el login (misma instancia de layout) -- sin este
+    // listener, getUser() de arriba corre una sola vez con user=null
+    // (corrió mientras estaba en /login sin sesión) y roles nunca se
+    // vuelve a pedir hasta un F5 real. onAuthStateChange reacciona al
+    // SIGNED_IN aunque no haya remount.
+    const { data: sub } = supabase2.auth.onAuthStateChange((event, session) => {
+      if (event === "SIGNED_IN" && session?.user) {
+        cargarPerfil(session.user.id);
+      } else if (event === "SIGNED_OUT") {
+        setMiId(null);
+        setRoles([]);
+      }
+    });
+
+    return () => sub.subscription.unsubscribe();
   }, []);
 
   // Módulos apagados por Empresa → Módulos, y visibilidad por sector —
@@ -621,7 +649,7 @@ export default function PanelV2Layout({
 
   return (
     <div className={darkMode ? "dark" : ""}>
-      <div className="flex h-screen w-full bg-[#F8FAFC] dark:bg-[#0A0A0A] text-slate-900 dark:text-slate-100 overflow-hidden print:h-auto print:overflow-visible print:block">
+      <div className="panel-v2-root flex h-screen w-full bg-[#F8FAFC] dark:bg-[#0A0A0A] text-slate-900 dark:text-slate-100 overflow-hidden print:h-auto print:overflow-visible print:block">
         <div className="md:hidden print:hidden fixed top-0 left-0 right-0 h-14 bg-white dark:bg-[#111] border-b border-slate-200 dark:border-white/10 flex items-center gap-2 px-3 z-50">
           <button
             onClick={() => setIsOpen(!isOpen)}
@@ -825,7 +853,7 @@ export default function PanelV2Layout({
 
         {/* BOTTOM NAV — accesos rápidos en mobile, la barra lateral completa
             queda detrás del hamburger para lo demás. */}
-        <nav className="md:hidden print:hidden fixed bottom-0 left-0 right-0 h-16 bg-white dark:bg-[#111] border-t border-slate-200 dark:border-white/10 flex items-stretch z-50">
+        <nav className={`md:hidden print:hidden fixed bottom-0 left-0 right-0 h-16 bg-white dark:bg-[#111] border-t border-slate-200 dark:border-white/10 items-stretch z-50 ${isOpen ? "hidden" : "flex"}`}>
           {NAV_MOBILE.map((item) => {
             const Icon = item.icon;
             const activo = pathname === item.href;
@@ -877,6 +905,7 @@ export default function PanelV2Layout({
 
       <QuickActionsButton />
       <MensajesBubble />
+      <MobileNavProgress />
     </div>
   );
 }

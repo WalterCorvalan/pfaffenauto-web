@@ -22,12 +22,12 @@ export async function GET() {
   const { supabase, esAdmin } = await clienteAutenticado();
   if (!esAdmin) return NextResponse.json({ error: "Solo Admin puede ver esto." }, { status: 403 });
 
-  let { data } = await supabase.from("whatsapp_configuracion").select("phone_number_id, listo, bot_nombre, webhook_verify_token, updated_at").eq("id", true).single();
+  let { data } = await supabase.from("whatsapp_configuracion").select("phone_number_id, waba_id, listo, bot_nombre, webhook_verify_token, updated_at").eq("id", true).single();
 
   if (data && !data.webhook_verify_token) {
     const verifyToken = randomBytes(24).toString("hex");
     const { data: actualizado } = await supabase.from("whatsapp_configuracion").update({ webhook_verify_token: verifyToken }).eq("id", true)
-      .select("phone_number_id, listo, bot_nombre, webhook_verify_token, updated_at").single();
+      .select("phone_number_id, waba_id, listo, bot_nombre, webhook_verify_token, updated_at").single();
     data = actualizado;
   }
 
@@ -41,13 +41,14 @@ export async function POST(request: Request) {
 
     const body = await request.json();
     const phoneNumberId = String(body.phoneNumberId || "").trim();
+    const wabaId = String(body.wabaId || "").trim() || null;
     const accessToken = String(body.accessToken || "").trim();
     const botNombre = String(body.botNombre || "").trim() || null;
     const regenerarVerifyToken = !!body.regenerarVerifyToken;
 
     if (!phoneNumberId) return NextResponse.json({ error: "Falta el Identificador del número (phone_number_id)." }, { status: 400 });
 
-    const patch: Record<string, unknown> = { phone_number_id: phoneNumberId, bot_nombre: botNombre, updated_at: new Date().toISOString() };
+    const patch: Record<string, unknown> = { phone_number_id: phoneNumberId, waba_id: wabaId, bot_nombre: botNombre, updated_at: new Date().toISOString() };
 
     if (accessToken) {
       const { cipher, iv, tag } = encrypt(accessToken);
@@ -63,7 +64,7 @@ export async function POST(request: Request) {
     const { data: actual } = await supabase.from("whatsapp_configuracion").select("token_cifrado").eq("id", true).single();
     patch.listo = !!(phoneNumberId && (accessToken || actual?.token_cifrado));
 
-    const { data, error } = await supabase.from("whatsapp_configuracion").update(patch).eq("id", true).select("phone_number_id, listo, bot_nombre, webhook_verify_token, updated_at").single();
+    const { data, error } = await supabase.from("whatsapp_configuracion").update(patch).eq("id", true).select("phone_number_id, waba_id, listo, bot_nombre, webhook_verify_token, updated_at").single();
     if (error) throw error;
 
     return NextResponse.json({ config: data });

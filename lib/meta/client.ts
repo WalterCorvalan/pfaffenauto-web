@@ -63,6 +63,61 @@ export async function sendTextMessage(phoneNumberId: string, token: string, to: 
   });
 }
 
+// Plantillas de mensaje: viven en el WABA (Business Account), no en el
+// phone_number_id -- por eso reciben wabaId aparte.
+export async function createMessageTemplate(
+  wabaId: string,
+  token: string,
+  input: { name: string; language: string; category: string; body: string; hasVariable: boolean }
+) {
+  return graphRequest<{ id?: string; status?: string }>(`${wabaId}/message_templates`, token, {
+    method: "POST",
+    body: JSON.stringify({
+      name: input.name,
+      language: input.language,
+      category: input.category,
+      components: [
+        {
+          type: "BODY",
+          text: input.body,
+          ...(input.hasVariable ? { example: { body_text: [["ejemplo"]] } } : {}),
+        },
+      ],
+    }),
+  });
+}
+
+export async function listMessageTemplates(wabaId: string, token: string) {
+  return graphRequest<{
+    data: { id?: string; name?: string; language?: string; status?: string; rejected_reason?: string }[];
+  }>(`${wabaId}/message_templates`, token);
+}
+
+export async function sendTemplateMessage(
+  phoneNumberId: string,
+  token: string,
+  to: string,
+  name: string,
+  language: string,
+  variable?: string
+) {
+  return graphRequest<{ messages: { id: string }[] }>(`${phoneNumberId}/messages`, token, {
+    method: "POST",
+    body: JSON.stringify({
+      messaging_product: "whatsapp",
+      to: formatearParaEnvio(to),
+      type: "template",
+      template: {
+        name,
+        language: { code: language },
+        ...(variable
+          ? { components: [{ type: "body", parameters: [{ type: "text", text: variable }] }] }
+          : {}),
+      },
+    }),
+  });
+}
+
 export async function sendImageMessage(phoneNumberId: string, token: string, to: string, imageUrl: string, caption?: string) {
   return graphRequest<{ messages: { id: string }[] }>(`${phoneNumberId}/messages`, token, {
     method: "POST",

@@ -2,9 +2,10 @@ import { createClient } from "@supabase/supabase-js";
 import Link from "next/link";
 import { headers } from "next/headers";
 import type { Metadata } from "next";
-import { CheckCircle2, Circle, CarFront, Search, Wallet } from "lucide-react";
+import { CheckCircle2, Circle, CarFront, Search, Wallet, MessageCircle } from "lucide-react";
 import { crearAlerta } from "@/lib/panelV2/alertas";
 import { rateLimit } from "@/lib/rateLimit";
+import { resolverContacto } from "@/lib/panelV2/contactoVehiculo";
 
 // Fuerza render dinámico: necesitamos leer headers() por request para el
 // rate limit por IP (si no, Next podría servir esta página cacheada).
@@ -115,6 +116,15 @@ export default async function SeguimientoPublicoPage({
   const totalHitos = hitos.length;
   const completados = hitos.filter((h) => h.completado).length;
 
+  // Antes esto era solo texto ("Escribinos por WhatsApp") sin link -- el
+  // número real es el del vendedor asignado a esta venta/seña, o si no
+  // cargó uno propio, el de la sucursal.
+  const contacto = await resolverContacto(supabase, { vendedorId: venta?.vendedor_id || sena?.vendedor_id || null });
+  const nombreAuto = venta ? `${venta.marca || ""} ${venta.modelo || ""}`.trim() : sena ? `${sena.marca} ${sena.modelo}`.trim() : "";
+  const whatsappHref = contacto.numero
+    ? `https://wa.me/${contacto.numero.replace(/\D/g, "")}?text=${encodeURIComponent(`Hola! Te escribo por el seguimiento de mi ${nombreAuto || "operación"} (código ${codigoUpper}).`)}`
+    : null;
+
   return (
     <div className="min-h-screen bg-[#F8FAFC] dark:bg-[#0a0a0f] pt-24 pb-16 px-4">
       <div className="max-w-lg mx-auto">
@@ -139,9 +149,27 @@ export default async function SeguimientoPublicoPage({
                 </div>
               );
             })()}
-            <p className="text-[11px] text-slate-400 dark:text-slate-500 text-center mt-8">
-              ¿Dudas? Escribinos por WhatsApp y te contamos el detalle.
-            </p>
+            {whatsappHref ? (
+              <div className="mt-8 space-y-2">
+                {contacto.nombreVendedor && (
+                  <div className="flex items-center gap-2.5 justify-center">
+                    {contacto.fotoVendedor ? (
+                      <img src={contacto.fotoVendedor} alt={contacto.nombreVendedor} className="w-8 h-8 rounded-full object-cover border border-slate-200 dark:border-white/10" />
+                    ) : (
+                      <div className="w-8 h-8 rounded-full bg-blue-50 dark:bg-sky-500/10 flex items-center justify-center text-[#0145F2] dark:text-sky-400 font-bold text-xs">{contacto.nombreVendedor.charAt(0).toUpperCase()}</div>
+                    )}
+                    <p className="text-xs text-slate-500 dark:text-slate-400">Tu asesor: <strong className="text-slate-700 dark:text-slate-200">{contacto.nombreVendedor}</strong></p>
+                  </div>
+                )}
+                <a href={whatsappHref} target="_blank" rel="noopener noreferrer" className="flex items-center justify-center gap-2 w-full py-3 bg-emerald-500 hover:bg-emerald-600 text-white font-bold rounded-xl text-xs uppercase tracking-widest transition-colors">
+                  <MessageCircle className="w-4 h-4" /> {contacto.nombreVendedor ? `Escribile a ${contacto.nombreVendedor.split(" ")[0]}` : "Escribinos por WhatsApp"}
+                </a>
+              </div>
+            ) : (
+              <p className="text-[11px] text-slate-400 dark:text-slate-500 text-center mt-8">
+                ¿Dudas? Escribinos por WhatsApp y te contamos el detalle.
+              </p>
+            )}
           </div>
         ) : !venta ? (
           <div className="bg-white dark:bg-white/5 border border-slate-100 dark:border-white/10 rounded-3xl p-10 text-center shadow-sm">
@@ -212,9 +240,27 @@ export default async function SeguimientoPublicoPage({
               </div>
             ) : null}
 
-            <p className="text-[11px] text-slate-400 dark:text-slate-500 text-center mt-8">
-              ¿Dudas? Escribinos por WhatsApp y te contamos el detalle.
-            </p>
+            {whatsappHref ? (
+              <div className="mt-8 space-y-2">
+                {contacto.nombreVendedor && (
+                  <div className="flex items-center gap-2.5 justify-center">
+                    {contacto.fotoVendedor ? (
+                      <img src={contacto.fotoVendedor} alt={contacto.nombreVendedor} className="w-8 h-8 rounded-full object-cover border border-slate-200 dark:border-white/10" />
+                    ) : (
+                      <div className="w-8 h-8 rounded-full bg-blue-50 dark:bg-sky-500/10 flex items-center justify-center text-[#0145F2] dark:text-sky-400 font-bold text-xs">{contacto.nombreVendedor.charAt(0).toUpperCase()}</div>
+                    )}
+                    <p className="text-xs text-slate-500 dark:text-slate-400">Tu asesor: <strong className="text-slate-700 dark:text-slate-200">{contacto.nombreVendedor}</strong></p>
+                  </div>
+                )}
+                <a href={whatsappHref} target="_blank" rel="noopener noreferrer" className="flex items-center justify-center gap-2 w-full py-3 bg-emerald-500 hover:bg-emerald-600 text-white font-bold rounded-xl text-xs uppercase tracking-widest transition-colors">
+                  <MessageCircle className="w-4 h-4" /> {contacto.nombreVendedor ? `Escribile a ${contacto.nombreVendedor.split(" ")[0]}` : "Escribinos por WhatsApp"}
+                </a>
+              </div>
+            ) : (
+              <p className="text-[11px] text-slate-400 dark:text-slate-500 text-center mt-8">
+                ¿Dudas? Escribinos por WhatsApp y te contamos el detalle.
+              </p>
+            )}
           </div>
         )}
       </div>

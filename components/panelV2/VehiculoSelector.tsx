@@ -96,7 +96,7 @@ export default function VehiculoSelector({
           <span className="text-[11px] font-bold uppercase tracking-widest text-slate-500 dark:text-slate-400">Datos del vehículo</span>
           {!soloManual && <button type="button" onClick={() => setModoManual(false)} className="text-slate-400 hover:text-slate-700 dark:hover:text-slate-200"><X className="w-4 h-4" /></button>}
         </div>
-        <div className="grid grid-cols-2 gap-2">
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
           <input className={inputClass} placeholder="Dominio" value={d.dominio} onChange={(e) => onCambiar({ ...d, dominio: e.target.value })} />
           <input className={inputClass} placeholder="Segmento" value={d.segmento} onChange={(e) => onCambiar({ ...d, segmento: e.target.value })} />
           <input className={inputClass} placeholder="Marca *" value={d.marca} onChange={(e) => onCambiar({ ...d, marca: e.target.value })} />

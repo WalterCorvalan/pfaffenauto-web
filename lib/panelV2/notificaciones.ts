@@ -4,6 +4,10 @@ import type { SupabaseClient } from "@supabase/supabase-js";
 // vez de "notificaciones" (v1), y roles como array (perfiles.roles) en vez
 // de columna singular "rol".
 
+export async function notificarPersona(supabase: SupabaseClient, destinatarioId: string, tipo: string, mensaje: string, link: string) {
+  await supabase.from("alertas").insert({ destinatario_id: destinatarioId, tipo, titulo: mensaje, link, prioridad: "media" });
+}
+
 export async function notificarEncargados(supabase: SupabaseClient, mensaje: string, link: string, tipo: string = "precio_a_confirmar") {
   const { data: encargados } = await supabase.from("perfiles").select("id").or("roles.cs.{admin},roles.cs.{encargado}").eq("activo", true);
   if (!encargados || encargados.length === 0) return;

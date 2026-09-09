@@ -507,7 +507,7 @@ export default function MiEspacioClient({
       )}
 
       {showNuevoUrgente && (
-        <div className="fixed inset-0 bg-black/40 z-50 flex items-center justify-center p-4" onClick={() => { if (window.innerWidth >= 768) cerrarModalUrgente(); }}>
+        <div className="fixed inset-0 bg-black/40 z-50 flex items-center justify-center p-4" onClick={() => cerrarModalUrgente()}>
           <div onClick={(e) => e.stopPropagation()} className="bg-white dark:bg-[#141414] border border-slate-200 dark:border-white/10 w-full max-w-md rounded-2xl shadow-2xl p-6">
             <div className="flex justify-between items-start mb-1"><h3 className="text-lg font-bold">{editandoUrgente ? "Editar urgente" : "Nuevo urgente"}</h3><button onClick={cerrarModalUrgente}><X className="w-4 h-4 text-slate-400" /></button></div>
             <p className="text-xs text-slate-400 mb-4">Algo que tenés que pagar / hacer pronto. Solo vos lo ves.</p>
@@ -529,7 +529,7 @@ export default function MiEspacioClient({
       )}
 
       {pagando && (
-        <div className="fixed inset-0 bg-black/40 z-50 flex items-center justify-center p-4" onClick={() => { if (window.innerWidth >= 768) setPagando(null); }}>
+        <div className="fixed inset-0 bg-black/40 z-50 flex items-center justify-center p-4" onClick={() => setPagando(null)}>
           <div onClick={(e) => e.stopPropagation()} className="bg-white dark:bg-[#141414] border border-slate-200 dark:border-white/10 w-full max-w-sm rounded-2xl shadow-2xl p-6">
             <div className="flex justify-between items-start mb-3"><h3 className="text-base font-bold">Pago sobre "{pagando.titulo}"</h3><button onClick={() => setPagando(null)}><X className="w-4 h-4 text-slate-400" /></button></div>
             <div className="bg-slate-50 dark:bg-white/5 rounded-lg p-3 mb-3 flex items-center justify-between text-sm">
@@ -552,7 +552,7 @@ export default function MiEspacioClient({
       )}
 
       {showPagoManual && (
-        <div className="fixed inset-0 bg-black/40 z-50 flex items-center justify-center p-4" onClick={() => { if (window.innerWidth >= 768) setShowPagoManual(false); }}>
+        <div className="fixed inset-0 bg-black/40 z-50 flex items-center justify-center p-4" onClick={() => setShowPagoManual(false)}>
           <div onClick={(e) => e.stopPropagation()} className="bg-white dark:bg-[#141414] border border-slate-200 dark:border-white/10 w-full max-w-md rounded-2xl shadow-2xl p-6">
             <div className="flex justify-between items-start mb-1"><h3 className="text-lg font-bold">Registrar pago manual</h3><button onClick={() => setShowPagoManual(false)}><X className="w-4 h-4 text-slate-400" /></button></div>
             <p className="text-xs text-slate-400 mb-4">Anotalo acá para tener registro. No afecta finanzas de la agencia.</p>

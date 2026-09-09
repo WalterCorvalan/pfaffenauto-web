@@ -143,7 +143,7 @@ export default function ClienteBuscador({
         {errorEscaneo && <p className="text-[11px] text-rose-600 dark:text-rose-400 font-medium">{errorEscaneo}</p>}
         <p className="text-[10px] text-slate-400 -mt-1">Sacale foto al frente (nombre, DNI) y después al dorso (domicilio) — completa lo que falte, no pisa lo que ya escaneaste.</p>
 
-        <div className="grid grid-cols-2 gap-2">
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
           <input className={inputClass} placeholder="Nombre *" value={nuevo.nombre} onChange={(e) => setNuevo({ ...nuevo, nombre: e.target.value })} />
           <input className={inputClass} placeholder="Apellido *" value={nuevo.apellido} onChange={(e) => setNuevo({ ...nuevo, apellido: e.target.value })} />
           <input className={inputClass} placeholder="DNI" value={nuevo.dni_cuit} onChange={(e) => setNuevo({ ...nuevo, dni_cuit: e.target.value })} />

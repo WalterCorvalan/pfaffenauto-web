@@ -17,7 +17,7 @@ const ROL_COLOR: Record<string, string> = {
   gestoria: "bg-amber-100 text-amber-700 dark:bg-amber-500/10 dark:text-amber-300",
 };
 
-interface Usuario { id: string; nombre: string; email: string; roles: string[]; activo: boolean; sucursal_id: string | null; }
+interface Usuario { id: string; nombre: string; email: string; roles: string[]; activo: boolean; sucursal_id: string | null; whatsapp?: string | null; }
 interface Sucursal { id: string; nombre: string; }
 
 export default function UsuariosClient() {
@@ -228,7 +228,7 @@ export default function UsuariosClient() {
 
 function ModalShell({ titulo, onClose, children }: { titulo: string; onClose: () => void; children: React.ReactNode }) {
   return (
-    <div className="fixed inset-0 z-50 bg-black/40 flex items-center justify-center p-4" onClick={() => { if (window.innerWidth >= 768) onClose(); }}>
+    <div className="fixed inset-0 z-50 bg-black/40 flex items-center justify-center p-4" onClick={() => onClose()}>
       <div className="bg-white dark:bg-[#111] rounded-2xl p-6 max-w-md w-full max-h-[90vh] overflow-y-auto" onClick={(e) => e.stopPropagation()}>
         <div className="flex items-center justify-between mb-4">
           <h2 className="text-lg font-black text-slate-900 dark:text-white">{titulo}</h2>
@@ -246,6 +246,7 @@ function ModalNuevoUsuario({ sucursales, onClose, onSaved }: { sucursales: Sucur
   const [nombre, setNombre] = useState("");
   const [roles, setRoles] = useState<string[]>(["ventas"]);
   const [sucursalId, setSucursalId] = useState("");
+  const [whatsapp, setWhatsapp] = useState("");
   const [guardando, setGuardando] = useState(false);
   const [error, setError] = useState("");
 
@@ -256,7 +257,7 @@ function ModalNuevoUsuario({ sucursales, onClose, onSaved }: { sucursales: Sucur
     if (password.length < 6) return setError("La contraseña necesita al menos 6 caracteres.");
     setGuardando(true);
     setError("");
-    const res = await fetch("/api/panel-v2/usuarios", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ email, password, nombre, roles, sucursal_id: sucursalId || null }) });
+    const res = await fetch("/api/panel-v2/usuarios", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ email, password, nombre, roles, sucursal_id: sucursalId || null, whatsapp: whatsapp.replace(/\D/g, "") || null }) });
     const data = await res.json();
     if (!res.ok) { setError(data.error || "No se pudo crear."); setGuardando(false); return; }
     onSaved();
@@ -295,6 +296,11 @@ function ModalNuevoUsuario({ sucursales, onClose, onSaved }: { sucursales: Sucur
             {sucursales.map((s) => <option key={s.id} value={s.id}>{s.nombre}</option>)}
           </select>
         </div>
+        <div>
+          <label className="text-xs font-semibold text-slate-500 block mb-1">WhatsApp propio (opcional)</label>
+          <input value={whatsapp} onChange={(e) => setWhatsapp(e.target.value)} placeholder="Ej: 5491137564398" className="w-full bg-slate-50 dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-lg px-3 py-2 text-sm outline-none" />
+          <p className="text-[11px] text-slate-400 mt-1">Es el número que ve el cliente en el sitio público si le asignan un auto a esta persona. Si lo dejás vacío, se usa el de la sucursal.</p>
+        </div>
         {error && <p className="text-xs text-rose-600">{error}</p>}
         <button onClick={guardar} disabled={guardando} className="w-full bg-rose-600 hover:bg-rose-700 text-white font-bold py-2.5 rounded-lg text-sm disabled:opacity-50">
           {guardando ? "Creando..." : "Crear usuario"}
@@ -308,6 +314,7 @@ function ModalEditarUsuario({ usuario, sucursales, onClose, onSaved }: { usuario
   const [nombre, setNombre] = useState(usuario.nombre);
   const [roles, setRoles] = useState<string[]>(usuario.roles);
   const [sucursalId, setSucursalId] = useState(usuario.sucursal_id || "");
+  const [whatsapp, setWhatsapp] = useState(usuario.whatsapp || "");
   const [guardando, setGuardando] = useState(false);
   const [error, setError] = useState("");
 
@@ -316,7 +323,7 @@ function ModalEditarUsuario({ usuario, sucursales, onClose, onSaved }: { usuario
   const guardar = async () => {
     if (!nombre || roles.length === 0) return setError("Completá nombre y al menos un rol.");
     setGuardando(true);
-    const res = await fetch("/api/panel-v2/usuarios", { method: "PATCH", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ id: usuario.id, nombre, roles, sucursal_id: sucursalId || null }) });
+    const res = await fetch("/api/panel-v2/usuarios", { method: "PATCH", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ id: usuario.id, nombre, roles, sucursal_id: sucursalId || null, whatsapp: whatsapp.replace(/\D/g, "") || null }) });
     const data = await res.json();
     if (!res.ok) { setError(data.error || "No se pudo guardar."); setGuardando(false); return; }
     onSaved();
@@ -345,6 +352,11 @@ function ModalEditarUsuario({ usuario, sucursales, onClose, onSaved }: { usuario
             <option value="">Sin sucursal fija</option>
             {sucursales.map((s) => <option key={s.id} value={s.id}>{s.nombre}</option>)}
           </select>
+        </div>
+        <div>
+          <label className="text-xs font-semibold text-slate-500 block mb-1">WhatsApp propio (opcional)</label>
+          <input value={whatsapp} onChange={(e) => setWhatsapp(e.target.value)} placeholder="Ej: 5491137564398" className="w-full bg-slate-50 dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-lg px-3 py-2 text-sm outline-none" />
+          <p className="text-[11px] text-slate-400 mt-1">Es el número que ve el cliente en el sitio público si le asignan un auto a esta persona. Si lo dejás vacío, se usa el de la sucursal.</p>
         </div>
         {error && <p className="text-xs text-rose-600">{error}</p>}
         <button onClick={guardar} disabled={guardando} className="w-full bg-rose-600 hover:bg-rose-700 text-white font-bold py-2.5 rounded-lg text-sm disabled:opacity-50">

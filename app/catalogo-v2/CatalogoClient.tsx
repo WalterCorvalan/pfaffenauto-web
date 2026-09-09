@@ -8,16 +8,15 @@ interface Vehiculo {
   id: string; categoria: string; marca: string; modelo: string; anio: number; color: string | null; condicion: string;
   km: number | null; precio_venta: number; moneda_venta: string; ubicacion: string; fotos: string[]; version: string | null;
   combustible: string | null; transmision: string | null; carroceria: string | null;
+  whatsapp_contacto: string | null; vendedor_nombre: string | null; vendedor_foto: string | null;
 }
-
-const WHATSAPP_AGENCIA = "5491100000000"; // TODO: reemplazar por el número real de la agencia cuando esté en Configuración.
 
 function fmtPrecio(v: Vehiculo, mostrarPrecios: boolean) {
   if (!mostrarPrecios) return "Consultar";
   return `${v.moneda_venta} ${v.precio_venta.toLocaleString("es-AR")}`;
 }
 
-export default function CatalogoClient({ vehiculos, mostrarPrecios }: { vehiculos: Vehiculo[]; mostrarPrecios: boolean }) {
+export default function CatalogoClient({ vehiculos, mostrarPrecios, whatsappGeneral }: { vehiculos: Vehiculo[]; mostrarPrecios: boolean; whatsappGeneral: string | null }) {
   const [query, setQuery] = useState("");
   const [categoria, setCategoria] = useState("");
   const [seleccionado, setSeleccionado] = useState<Vehiculo | null>(null);
@@ -58,9 +57,11 @@ export default function CatalogoClient({ vehiculos, mostrarPrecios }: { vehiculo
   };
 
   const consultarWhatsapp = async (v: Vehiculo) => {
+    const numero = v.whatsapp_contacto || whatsappGeneral;
+    if (!numero) return;
     await supabase2.rpc("incrementar_stat_catalogo", { campo: "whatsapp" });
     const texto = encodeURIComponent(`Hola! Me interesa el ${v.marca} ${v.modelo} ${v.anio} que vi en el catálogo.`);
-    window.open(`https://wa.me/${WHATSAPP_AGENCIA}?text=${texto}`, "_blank");
+    window.open(`https://wa.me/${numero}?text=${texto}`, "_blank");
   };
 
   return (
@@ -74,7 +75,9 @@ export default function CatalogoClient({ vehiculos, mostrarPrecios }: { vehiculo
               <p className="text-[11px] text-slate-400 leading-none mt-0.5">{vehiculos.length} vehículos disponibles</p>
             </div>
           </div>
-          <a href={`https://wa.me/${WHATSAPP_AGENCIA}`} target="_blank" rel="noopener noreferrer" className="flex items-center gap-1.5 px-3 py-2 rounded-full bg-emerald-500 hover:bg-emerald-600 text-white text-xs font-bold"><MessageCircle className="w-3.5 h-3.5" /> WhatsApp</a>
+          {whatsappGeneral && (
+            <a href={`https://wa.me/${whatsappGeneral}`} target="_blank" rel="noopener noreferrer" className="flex items-center gap-1.5 px-3 py-2 rounded-full bg-emerald-500 hover:bg-emerald-600 text-white text-xs font-bold"><MessageCircle className="w-3.5 h-3.5" /> WhatsApp</a>
+          )}
         </div>
       </header>
 
@@ -135,7 +138,17 @@ export default function CatalogoClient({ vehiculos, mostrarPrecios }: { vehiculo
                 {seleccionado.combustible && <span className="text-slate-500 dark:text-slate-400">{seleccionado.combustible}</span>}
                 {seleccionado.transmision && <span className="text-slate-500 dark:text-slate-400">{seleccionado.transmision}</span>}
               </div>
-              <button onClick={() => consultarWhatsapp(seleccionado)} className="w-full flex items-center justify-center gap-2 py-3 rounded-xl bg-emerald-500 hover:bg-emerald-600 text-white text-sm font-bold">
+              {seleccionado.vendedor_nombre && (
+                <div className="flex items-center gap-2.5 mb-3">
+                  {seleccionado.vendedor_foto ? (
+                    <img src={seleccionado.vendedor_foto} alt={seleccionado.vendedor_nombre} className="w-9 h-9 rounded-full object-cover border border-slate-200 dark:border-white/10" />
+                  ) : (
+                    <div className="w-9 h-9 rounded-full bg-rose-50 dark:bg-rose-500/10 flex items-center justify-center text-rose-600 dark:text-rose-300 font-bold text-xs">{seleccionado.vendedor_nombre.charAt(0).toUpperCase()}</div>
+                  )}
+                  <p className="text-xs text-slate-500 dark:text-slate-400">Te atiende: <strong className="text-slate-700 dark:text-slate-200">{seleccionado.vendedor_nombre}</strong></p>
+                </div>
+              )}
+              <button onClick={() => consultarWhatsapp(seleccionado)} disabled={!seleccionado.whatsapp_contacto && !whatsappGeneral} className="w-full flex items-center justify-center gap-2 py-3 rounded-xl bg-emerald-500 hover:bg-emerald-600 text-white text-sm font-bold disabled:opacity-50 disabled:cursor-not-allowed">
                 <MessageCircle className="w-4 h-4" /> Consultar por WhatsApp
               </button>
             </div>

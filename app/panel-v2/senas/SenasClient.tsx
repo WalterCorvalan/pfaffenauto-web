@@ -4,7 +4,7 @@ import { useEffect, useMemo, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
 import { supabase2 } from "@/lib/supabase2/client";
-import { Wallet, Plus, Printer, CarFront, AlertTriangle, Copy, Check, Search, Pencil, Trash2 } from "lucide-react";
+import { Wallet, Plus, Printer, CarFront, AlertTriangle, Copy, Check, Search, Pencil, Trash2, SlidersHorizontal } from "lucide-react";
 import EstadoSenaSelector from "./EstadoSenaSelector";
 import NuevaSenaModal from "./NuevaSenaModal";
 import EditarSenaModal from "./EditarSenaModal";
@@ -27,6 +27,8 @@ export default function SenasClient({
   const [vendedorFiltro, setVendedorFiltro] = useState("");
   const [desde, setDesde] = useState("");
   const [hasta, setHasta] = useState("");
+  const [filtrosAbiertos, setFiltrosAbiertos] = useState(false);
+  const filtrosSecundariosActivos = [vendedorFiltro, desde, hasta].filter(Boolean).length;
 
   const copiarCodigo = (id: string, codigo: string) => {
     navigator.clipboard.writeText(codigo);
@@ -81,17 +83,28 @@ export default function SenasClient({
 
       <div className="flex-1 overflow-y-auto custom-scrollbar p-4 md:p-6">
         <div className="max-w-6xl mx-auto">
-          <div className="flex flex-wrap items-center gap-2 mb-4">
-            <div className="relative flex-1 min-w-[220px] max-w-sm">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
-              <input value={query} onChange={(e) => setQuery(e.target.value)} placeholder="Cliente, DNI, vehículo, N°..." className="w-full bg-white dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-xl pl-9 pr-3 py-2.5 text-sm outline-none focus:border-rose-500 text-slate-900 dark:text-white placeholder:text-slate-400" />
+          {/* Mobile: solo la búsqueda queda a la vista, el resto (vendedor +
+              rango de fechas) se pliega detrás de "Filtros" -- antes los 4
+              campos se amontonaban en varias filas desparejas al wrapear. */}
+          <div className="mb-4 md:flex md:items-center md:flex-wrap md:gap-2">
+            <div className="flex items-center gap-2">
+              <div className="relative flex-1 md:min-w-[220px] md:max-w-sm">
+                <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
+                <input value={query} onChange={(e) => setQuery(e.target.value)} placeholder="Cliente, DNI, vehículo, N°..." className="w-full bg-white dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-xl pl-9 pr-3 py-2.5 text-sm outline-none focus:border-rose-500 text-slate-900 dark:text-white placeholder:text-slate-400" />
+              </div>
+              <button onClick={() => setFiltrosAbiertos((v) => !v)} className={`md:hidden shrink-0 flex items-center gap-1.5 px-3 py-2.5 rounded-xl text-sm font-bold border ${filtrosAbiertos ? "bg-rose-600 border-rose-600 text-white" : "bg-white dark:bg-white/5 border-slate-200 dark:border-white/10 text-slate-600 dark:text-slate-300"}`}>
+                <SlidersHorizontal className="w-4 h-4" /> Filtros
+                {filtrosSecundariosActivos > 0 && <span className={`text-[9px] px-1.5 rounded-full ${filtrosAbiertos ? "bg-white/20" : "bg-rose-100 dark:bg-rose-500/20 text-rose-600 dark:text-rose-300"}`}>{filtrosSecundariosActivos}</span>}
+              </button>
             </div>
-            <select value={vendedorFiltro} onChange={(e) => setVendedorFiltro(e.target.value)} className="bg-white dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-xl px-3 py-2.5 text-sm outline-none focus:border-rose-500 text-slate-900 dark:text-white">
-              <option value="">Todos los vendedores</option>
-              {vendedores.map((v) => <option key={v.id} value={v.id}>{v.nombre}</option>)}
-            </select>
-            <input type="date" value={desde} onChange={(e) => setDesde(e.target.value)} className="bg-white dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-xl px-3 py-2.5 text-sm outline-none focus:border-rose-500 text-slate-900 dark:text-white" />
-            <input type="date" value={hasta} onChange={(e) => setHasta(e.target.value)} className="bg-white dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-xl px-3 py-2.5 text-sm outline-none focus:border-rose-500 text-slate-900 dark:text-white" />
+            <div className={`flex flex-col gap-2 mt-2 md:mt-0 md:contents ${filtrosAbiertos ? "" : "hidden md:contents"}`}>
+              <select value={vendedorFiltro} onChange={(e) => setVendedorFiltro(e.target.value)} className="bg-white dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-xl px-3 py-2.5 text-sm outline-none focus:border-rose-500 text-slate-900 dark:text-white">
+                <option value="">Todos los vendedores</option>
+                {vendedores.map((v) => <option key={v.id} value={v.id}>{v.nombre}</option>)}
+              </select>
+              <input type="date" value={desde} onChange={(e) => setDesde(e.target.value)} className="bg-white dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-xl px-3 py-2.5 text-sm outline-none focus:border-rose-500 text-slate-900 dark:text-white" />
+              <input type="date" value={hasta} onChange={(e) => setHasta(e.target.value)} className="bg-white dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-xl px-3 py-2.5 text-sm outline-none focus:border-rose-500 text-slate-900 dark:text-white" />
+            </div>
           </div>
 
           <div className="hidden md:block bg-white dark:bg-white/[0.02] border border-slate-200 dark:border-white/5 rounded-2xl overflow-hidden">

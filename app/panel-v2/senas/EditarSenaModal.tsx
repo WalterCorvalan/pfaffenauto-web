@@ -58,7 +58,7 @@ export default function EditarSenaModal({ sena, vendedores, sucursales, onClose,
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
-      <div className="absolute inset-0 bg-slate-900/50 backdrop-blur-sm" onClick={() => { if (!guardando && window.innerWidth >= 768) onClose(); }} />
+      <div className="absolute inset-0 bg-slate-900/50 backdrop-blur-sm" onClick={() => { if (!guardando) onClose(); }} />
       <div className="relative bg-white dark:bg-[#141414] border border-slate-200 dark:border-white/10 w-full max-w-lg max-h-[90vh] rounded-2xl shadow-2xl flex flex-col overflow-hidden">
         <div className="p-5 pb-4 shrink-0 flex items-start justify-between border-b border-slate-100 dark:border-white/10">
           <h2 className="text-lg font-bold text-slate-900 dark:text-white flex items-center gap-2"><Wallet className="w-5 h-5 text-rose-600" /> Editar Seña {sena.numero ? `N° ${sena.numero}` : ""}</h2>

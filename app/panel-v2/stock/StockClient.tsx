@@ -7,7 +7,7 @@ import { supabase2 } from "@/lib/supabase2/client";
 import {
   Search, Car, Globe, Download, Upload, FileText, Plus, Edit2,
   AlertTriangle, Clock, CheckCircle2, Tag, Trash2, TrendingUp, ChevronLeft, ChevronRight,
-  Building2, UserCircle2, Loader2, Handshake,
+  Building2, UserCircle2, Loader2, Handshake, MoreVertical,
 } from "lucide-react";
 import NuevoVehiculoModal from "./NuevoVehiculoModal";
 import NuevoMandatoModal from "./NuevoMandatoModal";
@@ -30,7 +30,7 @@ interface Vehiculo {
   sucursal_id: string | null; sucursal: { nombre: string } | null; vendedor_asignado_id: string | null;
 }
 interface Mandato { id: string; mandante_nombre: string; vehiculo_marca: string; vehiculo_modelo: string; vehiculo_anio: number; fecha: string; plazo_dias: number; tipo_tramite: string; valor: number | null; moneda: string; vehiculo_id: string | null }
-interface Perfil { id: string; nombre: string }
+interface Perfil { id: string; nombre: string; sucursal_id?: string | null }
 interface Cliente { id: string; nombre: string; telefono: string | null; dni_cuit: string | null }
 interface CatalogoConfig { id: string; mostrar_precios: boolean; visitas_totales: number; fichas_vistas_totales: number; consultas_whatsapp_totales: number }
 
@@ -88,6 +88,7 @@ export default function StockClient({
   const [editando, setEditando] = useState<Vehiculo | null>(null);
   const [galeria, setGaleria] = useState<{ fotos: string[]; index: number } | null>(null);
   const [ocupadoId, setOcupadoId] = useState<string | null>(null);
+  const [menuMobileAbierto, setMenuMobileAbierto] = useState(false);
 
   // Por default true (optimista) para no tapar los botones un instante a
   // los que sí tienen permiso mientras se resuelve la consulta -- un
@@ -221,28 +222,54 @@ export default function StockClient({
                 <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">{disponibles.length} vehículos disponibles para vender</p>
               </div>
             </div>
-            <div className="flex items-center gap-2 flex-wrap">
-              <button onClick={() => setModalCatalogo(true)} className="flex items-center gap-1.5 px-3 py-2 text-xs font-semibold bg-white dark:bg-white/5 border border-slate-200 dark:border-white/10 hover:bg-slate-50 dark:hover:bg-white/10 rounded-lg text-slate-600 dark:text-slate-300"><Globe className="w-3.5 h-3.5" /> Tu catálogo</button>
-              <button onClick={exportarXlsx} className="flex items-center gap-1.5 px-3 py-2 text-xs font-semibold bg-white dark:bg-white/5 border border-slate-200 dark:border-white/10 hover:bg-slate-50 dark:hover:bg-white/10 rounded-lg text-slate-600 dark:text-slate-300"><Download className="w-3.5 h-3.5" /> Exportar XLSX</button>
-              <button onClick={() => setModalImportar(true)} className="flex items-center gap-1.5 px-3 py-2 text-xs font-semibold bg-white dark:bg-white/5 border border-slate-200 dark:border-white/10 hover:bg-slate-50 dark:hover:bg-white/10 rounded-lg text-slate-600 dark:text-slate-300"><Upload className="w-3.5 h-3.5" /> Importar XLSX</button>
-              {puedeCrear && <button onClick={() => setModalMandato(true)} className="flex items-center gap-1.5 px-3 py-2 text-xs font-semibold bg-white dark:bg-white/5 border border-slate-200 dark:border-white/10 hover:bg-slate-50 dark:hover:bg-white/10 rounded-lg text-slate-600 dark:text-slate-300"><FileText className="w-3.5 h-3.5" /> Nuevo mandato + Stock</button>}
-              {puedeCrear && <button onClick={() => setModalNuevo(true)} className="flex items-center gap-1.5 px-4 py-2 text-xs font-bold bg-rose-600 hover:bg-rose-700 text-white rounded-lg shadow-sm"><Plus className="w-3.5 h-3.5" /> Nuevo vehículo</button>}
+            <div className="flex items-center gap-2">
+              {/* Desktop: todas las acciones sueltas. Mobile: solo la
+                  primaria a la vista + el resto en un menú, antes eran 5
+                  pills que se amontonaban en 2-3 líneas arriba de todo. */}
+              <div className="hidden md:flex items-center gap-2 flex-wrap">
+                <button onClick={() => setModalCatalogo(true)} className="flex items-center gap-1.5 px-3 py-2 text-xs font-semibold bg-white dark:bg-white/5 border border-slate-200 dark:border-white/10 hover:bg-slate-50 dark:hover:bg-white/10 rounded-lg text-slate-600 dark:text-slate-300"><Globe className="w-3.5 h-3.5" /> Tu catálogo</button>
+                <button onClick={exportarXlsx} className="flex items-center gap-1.5 px-3 py-2 text-xs font-semibold bg-white dark:bg-white/5 border border-slate-200 dark:border-white/10 hover:bg-slate-50 dark:hover:bg-white/10 rounded-lg text-slate-600 dark:text-slate-300"><Download className="w-3.5 h-3.5" /> Exportar XLSX</button>
+                <button onClick={() => setModalImportar(true)} className="flex items-center gap-1.5 px-3 py-2 text-xs font-semibold bg-white dark:bg-white/5 border border-slate-200 dark:border-white/10 hover:bg-slate-50 dark:hover:bg-white/10 rounded-lg text-slate-600 dark:text-slate-300"><Upload className="w-3.5 h-3.5" /> Importar XLSX</button>
+                {puedeCrear && <button onClick={() => setModalMandato(true)} className="flex items-center gap-1.5 px-3 py-2 text-xs font-semibold bg-white dark:bg-white/5 border border-slate-200 dark:border-white/10 hover:bg-slate-50 dark:hover:bg-white/10 rounded-lg text-slate-600 dark:text-slate-300"><FileText className="w-3.5 h-3.5" /> Nuevo mandato + Stock</button>}
+              </div>
+
+              <div className="relative md:hidden">
+                <button onClick={() => setMenuMobileAbierto((v) => !v)} className="p-2.5 bg-white dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-lg text-slate-500 dark:text-slate-300">
+                  <MoreVertical className="w-4 h-4" />
+                </button>
+                {menuMobileAbierto && (
+                  <>
+                    <div className="fixed inset-0 z-30" onClick={() => setMenuMobileAbierto(false)} />
+                    <div className="absolute right-0 top-full mt-1 z-40 w-56 bg-white dark:bg-[#1A1A1A] border border-slate-200 dark:border-white/10 rounded-xl shadow-xl overflow-hidden">
+                      <button onClick={() => { setModalCatalogo(true); setMenuMobileAbierto(false); }} className="w-full flex items-center gap-2.5 px-4 py-3 text-xs font-semibold text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-white/5"><Globe className="w-3.5 h-3.5" /> Tu catálogo</button>
+                      <button onClick={() => { exportarXlsx(); setMenuMobileAbierto(false); }} className="w-full flex items-center gap-2.5 px-4 py-3 text-xs font-semibold text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-white/5"><Download className="w-3.5 h-3.5" /> Exportar XLSX</button>
+                      <button onClick={() => { setModalImportar(true); setMenuMobileAbierto(false); }} className="w-full flex items-center gap-2.5 px-4 py-3 text-xs font-semibold text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-white/5"><Upload className="w-3.5 h-3.5" /> Importar XLSX</button>
+                      {puedeCrear && <button onClick={() => { setModalMandato(true); setMenuMobileAbierto(false); }} className="w-full flex items-center gap-2.5 px-4 py-3 text-xs font-semibold text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-white/5"><FileText className="w-3.5 h-3.5" /> Nuevo mandato + Stock</button>}
+                    </div>
+                  </>
+                )}
+              </div>
+
+              {puedeCrear && <button onClick={() => setModalNuevo(true)} className="flex items-center gap-1.5 px-4 py-2 text-xs font-bold bg-rose-600 hover:bg-rose-700 text-white rounded-lg shadow-sm shrink-0"><Plus className="w-3.5 h-3.5" /> Nuevo vehículo</button>}
             </div>
           </div>
 
-          <div className="flex flex-wrap items-center gap-2 mb-4">
-            <span className="flex items-center gap-1.5 text-[11px] font-bold px-3 py-1.5 rounded-full bg-emerald-50 dark:bg-emerald-500/10 text-emerald-700 dark:text-emerald-300 border border-emerald-100 dark:border-emerald-500/20"><Car className="w-3.5 h-3.5" /> {disponibles.length} disponibles</span>
-            <span className="flex items-center gap-1.5 text-[11px] font-bold px-3 py-1.5 rounded-full bg-slate-50 dark:bg-white/5 text-slate-600 dark:text-slate-300 border border-slate-200 dark:border-white/10"><Clock className="w-3.5 h-3.5" /> {diasProm}d prom.</span>
-            <span className={`flex items-center gap-1.5 text-[11px] font-bold px-3 py-1.5 rounded-full border ${publicadoPct === 100 ? "bg-emerald-50 dark:bg-emerald-500/10 text-emerald-700 dark:text-emerald-300 border-emerald-100 dark:border-emerald-500/20" : "bg-amber-50 dark:bg-amber-500/10 text-amber-700 dark:text-amber-300 border-amber-100 dark:border-amber-500/20"}`}><TrendingUp className="w-3.5 h-3.5" /> {publicadoPct}% publicado</span>
-            {aRevisarCount > 0 && <span className="flex items-center gap-1.5 text-[11px] font-bold px-3 py-1.5 rounded-full bg-amber-50 dark:bg-amber-500/10 text-amber-700 dark:text-amber-300 border border-amber-100 dark:border-amber-500/20"><AlertTriangle className="w-3.5 h-3.5" /> {aRevisarCount} a revisar</span>}
-            <span className="text-xs font-semibold text-slate-500 dark:text-slate-400 ml-auto">
+          <div className="flex items-center gap-2 mb-2 md:mb-4 overflow-x-auto pb-1 md:flex-wrap md:overflow-visible md:pb-0 -mx-4 px-4 md:mx-0 md:px-0">
+            <span className="shrink-0 flex items-center gap-1.5 text-[11px] font-bold px-3 py-1.5 rounded-full bg-emerald-50 dark:bg-emerald-500/10 text-emerald-700 dark:text-emerald-300 border border-emerald-100 dark:border-emerald-500/20 whitespace-nowrap"><Car className="w-3.5 h-3.5" /> {disponibles.length} disponibles</span>
+            <span className="shrink-0 flex items-center gap-1.5 text-[11px] font-bold px-3 py-1.5 rounded-full bg-slate-50 dark:bg-white/5 text-slate-600 dark:text-slate-300 border border-slate-200 dark:border-white/10 whitespace-nowrap"><Clock className="w-3.5 h-3.5" /> {diasProm}d prom.</span>
+            <span className={`shrink-0 flex items-center gap-1.5 text-[11px] font-bold px-3 py-1.5 rounded-full border whitespace-nowrap ${publicadoPct === 100 ? "bg-emerald-50 dark:bg-emerald-500/10 text-emerald-700 dark:text-emerald-300 border-emerald-100 dark:border-emerald-500/20" : "bg-amber-50 dark:bg-amber-500/10 text-amber-700 dark:text-amber-300 border-amber-100 dark:border-amber-500/20"}`}><TrendingUp className="w-3.5 h-3.5" /> {publicadoPct}% publicado</span>
+            {aRevisarCount > 0 && <span className="shrink-0 flex items-center gap-1.5 text-[11px] font-bold px-3 py-1.5 rounded-full bg-amber-50 dark:bg-amber-500/10 text-amber-700 dark:text-amber-300 border border-amber-100 dark:border-amber-500/20 whitespace-nowrap"><AlertTriangle className="w-3.5 h-3.5" /> {aRevisarCount} a revisar</span>}
+            <span className="hidden md:inline text-xs font-semibold text-slate-500 dark:text-slate-400 ml-auto whitespace-nowrap">
               VALOR TOTAL DEL STOCK: <strong className="text-slate-800 dark:text-white">{Object.keys(valorTotalPorMoneda).length === 0 ? "—" : Object.entries(valorTotalPorMoneda).map(([m, n]) => fmtPrecio(n, m)).join(" · ")}</strong>
             </span>
           </div>
+          <p className="md:hidden text-xs font-semibold text-slate-500 dark:text-slate-400 mb-4">
+            VALOR TOTAL: <strong className="text-slate-800 dark:text-white">{Object.keys(valorTotalPorMoneda).length === 0 ? "—" : Object.entries(valorTotalPorMoneda).map(([m, n]) => fmtPrecio(n, m)).join(" · ")}</strong>
+          </p>
 
-          <div className="flex items-center gap-1 mb-4 border-b border-slate-200 dark:border-white/10">
+          <div className="flex items-center gap-1 mb-4 border-b border-slate-200 dark:border-white/10 overflow-x-auto -mx-4 px-4 md:mx-0 md:px-0">
             {[["general", "Stock general"], ["consignaciones", "Consignaciones"], ["0km", "0 km"], ["mandatos", "Mandatos"]].map(([v, label]) => (
-              <button key={v} onClick={() => setTab(v as Tab)} className={`px-3 py-2 text-sm font-bold border-b-2 -mb-px transition-colors ${tab === v ? "border-rose-600 text-rose-600" : "border-transparent text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-200"}`}>{label}</button>
+              <button key={v} onClick={() => setTab(v as Tab)} className={`shrink-0 whitespace-nowrap px-3 py-2 text-sm font-bold border-b-2 -mb-px transition-colors ${tab === v ? "border-rose-600 text-rose-600" : "border-transparent text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-200"}`}>{label}</button>
             ))}
           </div>
 
@@ -279,13 +306,13 @@ export default function StockClient({
             </>
           ) : (
             <>
-              <div className="flex flex-wrap items-center gap-2 mb-3">
-                <button onClick={() => { setEstadoFiltro(""); setSoloEstancados(false); setSoloARevisar(false); }} className={`px-3 py-1.5 rounded-full text-xs font-bold border ${estadoFiltro === "" && !soloEstancados && !soloARevisar ? "bg-rose-600 border-rose-600 text-white" : "bg-white dark:bg-white/5 border-slate-200 dark:border-white/10 text-slate-600 dark:text-slate-300"}`}>Todos</button>
+              <div className="flex items-center gap-2 mb-3 overflow-x-auto pb-1 md:flex-wrap md:overflow-visible md:pb-0 -mx-4 px-4 md:mx-0 md:px-0">
+                <button onClick={() => { setEstadoFiltro(""); setSoloEstancados(false); setSoloARevisar(false); }} className={`shrink-0 whitespace-nowrap px-3 py-1.5 rounded-full text-xs font-bold border ${estadoFiltro === "" && !soloEstancados && !soloARevisar ? "bg-rose-600 border-rose-600 text-white" : "bg-white dark:bg-white/5 border-slate-200 dark:border-white/10 text-slate-600 dark:text-slate-300"}`}>Todos</button>
                 {Object.entries(ESTADO_LABEL).map(([v, label]) => (
-                  <button key={v} onClick={() => { setEstadoFiltro(v); setSoloEstancados(false); setSoloARevisar(false); }} className={`px-3 py-1.5 rounded-full text-xs font-bold border ${estadoFiltro === v && !soloEstancados && !soloARevisar ? "bg-rose-600 border-rose-600 text-white" : "bg-white dark:bg-white/5 border-slate-200 dark:border-white/10 text-slate-600 dark:text-slate-300"}`}>{label}</button>
+                  <button key={v} onClick={() => { setEstadoFiltro(v); setSoloEstancados(false); setSoloARevisar(false); }} className={`shrink-0 whitespace-nowrap px-3 py-1.5 rounded-full text-xs font-bold border ${estadoFiltro === v && !soloEstancados && !soloARevisar ? "bg-rose-600 border-rose-600 text-white" : "bg-white dark:bg-white/5 border-slate-200 dark:border-white/10 text-slate-600 dark:text-slate-300"}`}>{label}</button>
                 ))}
-                <button onClick={() => { setSoloEstancados((v) => !v); setSoloARevisar(false); }} className={`flex items-center gap-1 px-3 py-1.5 rounded-full text-xs font-bold border ${soloEstancados ? "bg-rose-600 border-rose-600 text-white" : "bg-white dark:bg-white/5 border-slate-200 dark:border-white/10 text-slate-500"}`}><Clock className="w-3 h-3" /> Estancados (+90d) · {estancados}</button>
-                <button onClick={() => { setSoloARevisar((v) => !v); setSoloEstancados(false); }} className={`flex items-center gap-1 px-3 py-1.5 rounded-full text-xs font-bold border ${soloARevisar ? "bg-rose-600 border-rose-600 text-white" : "bg-white dark:bg-white/5 border-slate-200 dark:border-white/10 text-slate-500"}`}><AlertTriangle className="w-3 h-3" /> A revisar</button>
+                <button onClick={() => { setSoloEstancados((v) => !v); setSoloARevisar(false); }} className={`shrink-0 whitespace-nowrap flex items-center gap-1 px-3 py-1.5 rounded-full text-xs font-bold border ${soloEstancados ? "bg-rose-600 border-rose-600 text-white" : "bg-white dark:bg-white/5 border-slate-200 dark:border-white/10 text-slate-500"}`}><Clock className="w-3 h-3" /> Estancados (+90d) · {estancados}</button>
+                <button onClick={() => { setSoloARevisar((v) => !v); setSoloEstancados(false); }} className={`shrink-0 whitespace-nowrap flex items-center gap-1 px-3 py-1.5 rounded-full text-xs font-bold border ${soloARevisar ? "bg-rose-600 border-rose-600 text-white" : "bg-white dark:bg-white/5 border-slate-200 dark:border-white/10 text-slate-500"}`}><AlertTriangle className="w-3 h-3" /> A revisar</button>
               </div>
 
               <div className="flex flex-col sm:flex-row gap-2 mb-4">
@@ -330,7 +357,7 @@ export default function StockClient({
                         { key: "precio", header: "Precio", cell: (v) => puedeEditarCompleto ? <span onClick={(e) => e.stopPropagation()}><PrecioEditor vehiculoId={v.id} precio={v.precio_venta} moneda={v.moneda_venta} onActualizado={actualizarVehiculo} /></span> : <span>{fmtPrecio(v.precio_venta, v.moneda_venta)}</span>, claseTd: "text-sm whitespace-nowrap" },
                         { key: "estado", header: "Estado", cell: (v) => <span className={`text-[10px] font-bold px-2 py-1 rounded-full border whitespace-nowrap ${ESTADO_COLOR[v.estado]}`}>{ESTADO_LABEL[v.estado]}</span> },
                         { key: "sucursal", header: "Sucursal", cell: (v) => puedeEditarCompleto ? <span onClick={(e) => e.stopPropagation()}><SucursalEditor vehiculoId={v.id} sucursalId={v.sucursal_id} sucursalNombre={v.sucursal?.nombre || null} sucursales={sucursales} onActualizado={actualizarVehiculo} /></span> : <span>{v.sucursal?.nombre || "—"}</span>, claseTd: "text-xs whitespace-nowrap" },
-                        { key: "asignado", header: "Asignado", cell: (v) => puedeEditarCompleto ? <span onClick={(e) => e.stopPropagation()}><VendedorEditor vehiculoId={v.id} vendedorId={v.vendedor_asignado_id} vendedorNombre={v.vendedor_asignado_id ? perfilMap[v.vendedor_asignado_id] : null} perfiles={perfiles} onActualizado={actualizarVehiculo} /></span> : <span>{v.vendedor_asignado_id ? perfilMap[v.vendedor_asignado_id] : "—"}</span>, claseTd: "text-xs whitespace-nowrap" },
+                        { key: "asignado", header: "Asignado", cell: (v) => puedeEditarCompleto ? <span onClick={(e) => e.stopPropagation()}><VendedorEditor vehiculoId={v.id} vendedorId={v.vendedor_asignado_id} vendedorNombre={v.vendedor_asignado_id ? perfilMap[v.vendedor_asignado_id] : null} vehiculoSucursalId={v.sucursal_id} perfiles={perfiles} onActualizado={actualizarVehiculo} /></span> : <span>{v.vendedor_asignado_id ? perfilMap[v.vendedor_asignado_id] : "—"}</span>, claseTd: "text-xs whitespace-nowrap" },
                         { key: "dias", header: "Días", cell: (v) => {
                           const dias = diasEnStock(v.created_at);
                           const diasColor = dias >= diasEstancado ? "text-rose-600 dark:text-rose-400 font-black" : dias >= 30 ? "text-amber-600 dark:text-amber-400 font-bold" : "text-slate-500";
@@ -379,7 +406,7 @@ export default function StockClient({
       {(modalNuevo || editando) && <NuevoVehiculoModal perfiles={perfiles} clientes={clientes} sucursales={sucursales} miId={miId} editando={editando || undefined} soloFotos={!puedeEditarCompleto} onClose={() => { setModalNuevo(false); setEditando(null); }} onCreado={onCreadoVehiculo} />}
 
       {galeria && (
-        <div className="fixed inset-0 z-[60] bg-black/80 flex flex-col items-center justify-center p-6 gap-4" onClick={() => { if (window.innerWidth >= 768) setGaleria(null); }}>
+        <div className="fixed inset-0 z-[60] bg-black/80 flex flex-col items-center justify-center p-6 gap-4" onClick={() => setGaleria(null)}>
           <div className="relative flex items-center justify-center w-full max-w-3xl" onClick={(e) => e.stopPropagation()}>
             {galeria.fotos.length > 1 && (
               <button
