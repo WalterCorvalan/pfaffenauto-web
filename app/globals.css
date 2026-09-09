@@ -72,6 +72,19 @@
   overflow-x: hidden;
 }
 
+/* Monitores grandes (1920x1080+): el layout de "netbook" (max-w-6xl/7xl
+   centrado) dejaba franjas enormes sin usar a los costados. A partir de
+   2xl (1536px) los mismos contenedores de siempre se ensanchan solos --
+   no hace falta tocar cada módulo uno por uno. */
+@media (min-width: 1536px) {
+  .panel-v2-root .max-w-6xl {
+    max-width: 87.5rem; /* 1400px, antes 1152px */
+  }
+  .panel-v2-root .max-w-7xl {
+    max-width: 100rem; /* 1600px, antes 1280px */
+  }
+}
+
 /* Barra de carga en la navegación del sidebar de panel-v2 — feedback de
    "esto ya arrancó" mientras carga la página siguiente */
 @keyframes barraCarga {

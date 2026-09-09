@@ -12,6 +12,8 @@ export default function PerfilClient({ miId }: { miId: string }) {
   const [nombre, setNombre] = useState("");
   const [whatsapp, setWhatsapp] = useState("");
   const [email, setEmail] = useState("");
+  const [empresa, setEmpresa] = useState("");
+  const [sucursalNombre, setSucursalNombre] = useState<string | null>(null);
   const [fotoUrl, setFotoUrl] = useState<string | null>(null);
   const [subiendoFoto, setSubiendoFoto] = useState(false);
   const [guardando, setGuardando] = useState(false);
@@ -22,6 +24,8 @@ export default function PerfilClient({ miId }: { miId: string }) {
       setNombre(perfil?.nombre || "");
       setWhatsapp(perfil?.whatsapp || "");
       setEmail(perfil?.email || "");
+      setEmpresa(perfil?.empresa || "");
+      setSucursalNombre(perfil?.sucursal_nombre || null);
       setFotoUrl(perfil?.foto_url || null);
       setCargando(false);
     });
@@ -106,6 +110,17 @@ export default function PerfilClient({ miId }: { miId: string }) {
             </div>
 
             <div className="bg-white dark:bg-white/[0.02] border border-slate-200 dark:border-white/5 rounded-2xl p-5 space-y-3">
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className={labelClass}>Empresa</label>
+                  <input value={empresa} disabled className={`${inputClass} opacity-60 cursor-not-allowed`} />
+                </div>
+                <div>
+                  <label className={labelClass}>Sucursal</label>
+                  <input value={sucursalNombre || "Sin asignar"} disabled className={`${inputClass} opacity-60 cursor-not-allowed`} />
+                  <p className="text-[10px] text-slate-400 mt-1">La asigna un admin en Configuración → Usuarios.</p>
+                </div>
+              </div>
               <div>
                 <label className={labelClass}>Nombre completo</label>
                 <input value={nombre} onChange={(e) => setNombre(e.target.value)} className={inputClass} />

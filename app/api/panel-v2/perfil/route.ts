@@ -28,8 +28,20 @@ export async function GET() {
   const user = await usuarioActual();
   if (!user) return NextResponse.json({ error: "No autorizado." }, { status: 401 });
 
-  const { data } = await admin().from("perfiles").select("id, nombre, whatsapp, foto_url, sucursal_id").eq("id", user.id).single();
-  return NextResponse.json({ perfil: { ...data, email: user.email } });
+  const sb = admin();
+  const [{ data }, { data: empresa }] = await Promise.all([
+    sb.from("perfiles").select("id, nombre, whatsapp, foto_url, sucursal_id, sucursal:sucursal_id ( nombre )").eq("id", user.id).single(),
+    sb.from("configuracion_empresa").select("branding_nombre").eq("id", true).maybeSingle(),
+  ]);
+
+  return NextResponse.json({
+    perfil: {
+      ...data,
+      email: user.email,
+      empresa: empresa?.branding_nombre || "Pfaffen Autos",
+      sucursal_nombre: (data as any)?.sucursal?.nombre || null,
+    },
+  });
 }
 
 const ActualizarSchema = z.object({
