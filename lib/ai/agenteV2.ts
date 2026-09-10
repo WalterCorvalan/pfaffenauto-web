@@ -259,11 +259,25 @@ function respuestaSeguraConStockReal(resultados: ResultadoStockV2[], esAlternati
     return "Por ahora no tengo esa unidad en stock. ¿Querés que te avise apenas entre una, o te muestro otras opciones que sí tengo?";
   }
   const lista = resultados.slice(0, 3)
-    .map((v) => `🚗 ${v.marca} ${v.modelo} ${v.anio} — 💰 ${v.moneda_venta} ${v.precio_venta.toLocaleString("es-AR")}`)
+    .map((v) => `🚗 ${v.marca} ${v.modelo} ${v.anio} — 💰 ${v.precio_venta > 0 ? `${v.moneda_venta === "USD" ? "US$" : "$"} ${v.precio_venta.toLocaleString("es-AR")}` : "Consultar precio"}`)
     .join("\n");
   const intro = esAlternativa ? "Ese modelo puntual no lo tengo ahora, pero estas son opciones que sí tengo disponibles:" : "Estas son las opciones disponibles:";
   const cierre = resultados.length === 1 ? "Contame si te interesa y seguimos con los detalles." : "Si te interesa alguna, seguimos con los detalles.";
   return `${intro}\n\n${lista}\n\n${cierre}`;
+}
+
+// Red de seguridad: el prompt ya prohíbe pedir más precisión (año/modelo/
+// categoría) ANTES de mostrar opciones reales cuando ya hay resultados de
+// una búsqueda -- pero un modelo chico a veces igual responde con una
+// pregunta de "¿qué tipo buscás?" en vez de listar el stock real que ya se
+// le pasó (visto en pruebas: dijo "tenemos varios Fiat" y preguntó
+// auto/pickup/modelo en vez de mostrar la lista). Se detecta comparando si
+// la respuesta menciona al menos uno de los autos reales encontrados -- si
+// no menciona ninguno habiendo resultados, se pisa con la lista real.
+function respuestaNoMuestraStockReal(reply: string, resultados: ResultadoStockV2[]): boolean {
+  if (resultados.length === 0) return false;
+  const textoNormalizado = reply.toLowerCase();
+  return !resultados.some((v) => textoNormalizado.includes(v.modelo.toLowerCase().split(/\s+/)[0]));
 }
 
 // El prompt prohíbe estos cierres genéricos y abiertos (regla en
@@ -356,6 +370,8 @@ export async function generarRespuestaAgenteV2(historial: HistorialMensaje[], ca
 
     if (result2.ok) {
       const reply = respuestaMencionaStockInventado(result2.data.reply, resultados, sucursales)
+        ? respuestaSeguraConStockReal(resultados, esAlternativa)
+        : !result2.data.pedir_fotos && respuestaNoMuestraStockReal(result2.data.reply, resultados)
         ? respuestaSeguraConStockReal(resultados, esAlternativa)
         : result2.data.reply;
       // La segunda pasada es la que tiene el dato correcto post-reglas
