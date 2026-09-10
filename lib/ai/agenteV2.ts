@@ -211,6 +211,9 @@ function respuestaSeguraConStockReal(resultados: ResultadoStockV2[], esAlternati
 const FRASES_CIERRE_PROHIBIDAS = [
   /¿?alguna te interesa,?\s*o buscás un año o versión en particular\??/i,
   /¿?alguna (de estas )?te (late|gusta),?\s*o preferís seguir viendo más opciones\??/i,
+  // Catch-all: cualquier variante de "¿te late/interesa/gusta ESTO, o preferís/querés VER/SEGUIR/EXPLORAR otra cosa?"
+  // -- el modelo reformula la frase prohibida en vez de repetirla igual, así que se banea la estructura completa, no el texto exacto.
+  /¿?te (late|interesa|gusta)\b[^?]*\b(o\s+(preferís|querés))\b[^?]*\?/i,
   /¿?te interesa conocer más[^?]*\?/i,
   /¿?(preferís|querés) explorar otras marcas\??/i,
   /¿?hay algo más que quieras (saber|preguntar)[^?]*\?/i,
