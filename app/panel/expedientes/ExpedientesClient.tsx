@@ -23,7 +23,7 @@ const ESTADO_CLASS: Record<string, string> = {
 
 export default function ExpedientesClient({
   expedientesIniciales, perfiles, miId, miPerfil, gastosPorExpediente,
-}: { expedientesIniciales: any[]; perfiles: Perfil[]; miId: string; miPerfil: any; gastosPorExpediente: Record<string, { vendedor: number; comprador: number }> }) {
+}: { expedientesIniciales: any[]; perfiles: Perfil[]; miId: string; miPerfil: any; gastosPorExpediente: Record<string, { vendedor: Record<string, number>; comprador: Record<string, number> }> }) {
   const router = useRouter();
   const searchParams = useSearchParams();
   const [expedientes, setExpedientes] = useState(expedientesIniciales);
@@ -175,7 +175,15 @@ export default function ExpedientesClient({
               { key: "vendedora", header: "Parte Vendedora", cell: (e) => { const v = e.venta || {}; return <>{v.propietario_nombre ? <span className="text-slate-700 dark:text-slate-200">{v.propietario_nombre}</span> : "—"}<p className="mt-0.5"><span className={`text-[9px] font-bold px-1.5 py-0.5 rounded-full ${e.confirmado_consignacion ? "bg-emerald-100 dark:bg-emerald-500/20 text-emerald-700 dark:text-emerald-400" : "bg-amber-100 dark:bg-amber-500/20 text-amber-700 dark:text-amber-400"}`}>{e.confirmado_consignacion ? "✅ Confirmado" : "⏳ Pendiente"}</span></p></>; }, claseTd: "text-xs" },
               { key: "compradora", header: "Parte Compradora", cell: (e) => { const v = e.venta || {}; return <><span className="text-slate-700 dark:text-slate-200">{v.comprador_nombre || "—"}</span><p className="mt-0.5"><span className={`text-[9px] font-bold px-1.5 py-0.5 rounded-full ${e.confirmado_comprador ? "bg-emerald-100 dark:bg-emerald-500/20 text-emerald-700 dark:text-emerald-400" : "bg-amber-100 dark:bg-amber-500/20 text-amber-700 dark:text-amber-400"}`}>{e.confirmado_comprador ? "✅ Confirmado" : "⏳ Pendiente"}</span></p></>; }, claseTd: "text-xs" },
               { key: "estado", header: "Estado", cell: (e) => <span className={`text-[10px] font-bold px-2 py-1 rounded-full ${ESTADO_CLASS[e.estado]}`}>{ESTADO_LABEL[e.estado] || e.estado}</span> },
-              { key: "gastos", header: "Gastos", cell: (e) => { const gastos = gastosPorExpediente[e.id] || { vendedor: 0, comprador: 0 }; return <>Vend: {gastos.vendedor > 0 ? gastos.vendedor.toLocaleString("es-AR") : "—"}<br />Comp: {gastos.comprador > 0 ? gastos.comprador.toLocaleString("es-AR") : "—"}</>; }, claseTd: "text-[10px] text-slate-400" },
+              { key: "gastos", header: "Gastos", cell: (e) => {
+                const gastos = gastosPorExpediente[e.id] || { vendedor: {}, comprador: {} };
+                const fmt = (porMoneda: Record<string, number>) => {
+                  const entradas = Object.entries(porMoneda).filter(([, v]) => v > 0);
+                  if (entradas.length === 0) return "—";
+                  return entradas.map(([m, v]) => `${m === "ARS" ? "$" : "US$"} ${v.toLocaleString("es-AR")}`).join(" · ");
+                };
+                return <>Vend: {fmt(gastos.vendedor)}<br />Comp: {fmt(gastos.comprador)}</>;
+              }, claseTd: "text-[10px] text-slate-400" },
             ] as ColumnaTabla<any>[]
           }
           acciones={(e) => (

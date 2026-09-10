@@ -314,24 +314,56 @@ async function ejecutarAgente(conversacionId: string) {
       handoff_resumen: resumen_handoff || null, ai_habilitada: false,
     }).eq("id", conversacionId);
 
-    const { data: convHandoff } = await supabase.from("whatsapp_conversaciones").select("vendedor_id").eq("id", conversacionId).single();
+    const { data: convHandoff } = await supabase.from("whatsapp_conversaciones").select("vendedor_id, contacto_id, whatsapp_contactos(telefono, nombre_perfil)").eq("id", conversacionId).single();
     const linkNoti = `/panel/whatsapp?conversacion=${conversacionId}`;
     const mensajeNoti = resumen_handoff || "El cliente pidió hablar con una persona — la IA dejó de responder.";
-    if (convHandoff?.vendedor_id) {
-      notificarPersona(supabase, convHandoff.vendedor_id, "whatsapp_handoff", mensajeNoti, linkNoti).catch((err) => console.error("[webhook-v2] error notificando handoff:", err));
+    let vendedorAsignado = convHandoff?.vendedor_id ?? null;
+
+    // Venta/consignación/permuta del auto del cliente: si la charla no tiene
+    // vendedor (nunca hubo un vehiculo_id de stock que dispare la asignación
+    // por sucursal), pero SÍ sabemos la zona elegida, asignamos ahora mismo
+    // por la misma ronda de esa sucursal -- antes esto cascadeaba a
+    // "todos los encargados" sin ningún criterio real.
+    let sucursalElegida: { id: string; nombre: string } | null = null;
+    if (datos_detectados?.zona) {
+      const { data } = await supabase.from("sucursales").select("id, nombre").eq("slug", datos_detectados.zona).maybeSingle();
+      sucursalElegida = data;
+    }
+    if (!vendedorAsignado && sucursalElegida) {
+      const { data: nuevoVendedorId } = await supabase.rpc("asignar_vendedor_ronda_whatsapp_por_sucursal", { p_sucursal_id: sucursalElegida.id });
+      if (nuevoVendedorId) {
+        vendedorAsignado = nuevoVendedorId;
+        await supabase.from("whatsapp_conversaciones").update({ vendedor_id: nuevoVendedorId, estado_lead: "asignado" }).eq("id", conversacionId);
+      }
+    }
+
+    if (vendedorAsignado) {
+      notificarPersona(supabase, vendedorAsignado, sucursalElegida ? "whatsapp_venta_zona" : "whatsapp_handoff", mensajeNoti, linkNoti).catch((err) => console.error("[webhook-v2] error notificando handoff:", err));
+    } else if (sucursalElegida) {
+      // Ni un vendedor ni un encargado disponible en esa sucursal -- último
+      // recurso, avisar en general (prioridad alta igual, es venta real).
+      notificarEncargados(supabase, mensajeNoti, linkNoti, "whatsapp_venta_zona", sucursalElegida.id, "alta").catch((err) => console.error("[webhook-v2] error notificando zona:", err));
     } else {
       notificarEncargados(supabase, mensajeNoti, linkNoti, "whatsapp_handoff").catch((err) => console.error("[webhook-v2] error notificando handoff:", err));
     }
 
-    // Venta/consignación/permuta del auto del cliente: avisa puntual al
-    // encargado de la sucursal que el cliente eligió (Villa de Mayo/Casa
-    // Central o Don Torcuato), prioridad alta -- dispara el cartelito de 5s
-    // además de la campanita, para que no se pierda un auto que puede entrar.
-    if (datos_detectados?.zona) {
-      const { data: sucursalElegida } = await supabase.from("sucursales").select("id").eq("slug", datos_detectados.zona).maybeSingle();
-      if (sucursalElegida) {
-        notificarEncargados(supabase, mensajeNoti, linkNoti, "whatsapp_venta_zona", sucursalElegida.id, "alta").catch((err) => console.error("[webhook-v2] error notificando zona:", err));
-      }
+    // Día/horario confirmado para acercarse: se agenda como visita real en
+    // el módulo Visitas, no queda solo en el texto de la charla para que el
+    // vendedor tenga que volver a preguntarlo.
+    if (datos_detectados?.dia_visita && datos_detectados?.horario_visita) {
+      const telefonoCliente = (convHandoff?.whatsapp_contactos as any)?.telefono;
+      const nombreCliente = datos_detectados?.nombre || (convHandoff?.whatsapp_contactos as any)?.nombre_perfil || "Cliente de WhatsApp";
+      await supabase.from("visitas").insert({
+        vehiculo_marca: datos_detectados?.vehiculo_propio?.marca || null,
+        vehiculo_modelo: datos_detectados?.vehiculo_propio?.modelo || null,
+        nombre_cliente: nombreCliente,
+        telefono_cliente: telefonoCliente || "sin dato",
+        fecha_visita: datos_detectados.dia_visita,
+        horario_visita: datos_detectados.horario_visita,
+        sucursal: sucursalElegida?.nombre || "Sin especificar",
+        estado: "Pendiente",
+        vendedor_id: vendedorAsignado,
+      });
     }
   }
 }

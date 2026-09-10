@@ -5,7 +5,7 @@ import { generarRespuestaAgenteV2, dividirRespuestaEnMensajes } from "@/lib/ai/a
 import { isAiConfiguredV2 } from "@/lib/ai/indexV2";
 import { rateLimit, ipDesdeRequest } from "@/lib/rateLimit";
 import { registrarError } from "@/lib/panel/logger";
-import { notificarEncargados } from "@/lib/panel/notificaciones";
+import { notificarEncargados, notificarPersona } from "@/lib/panel/notificaciones";
 
 // Endpoint público (sin sesión — lo llama el widget del sitio, un visitante
 // anónimo) que procesa un mensaje de Rodi. Identidad = sessionId generado
@@ -153,15 +153,52 @@ async function procesarMensaje({ sessionId, texto, origenPagina, nombre, telefon
       handoff_resumen: resumen_handoff || null,
     }).eq("id", conversacion.id);
 
-    // Venta/consignación/permuta: mismo criterio que WhatsApp -- avisa
-    // puntual al encargado de la sucursal elegida, prioridad alta (dispara
-    // el cartelito de 5s además de la campanita).
+    const linkNoti = `/panel/rodi?conversacion=${conversacion.id}`;
+    const mensajeNoti = resumen_handoff || "Cliente de Rodi ofrece su auto";
+    let vendedorAsignado: string | null = conversacion.vendedor_id ?? null;
+
+    // Venta/consignación/permuta: mismo criterio que WhatsApp -- si todavía
+    // no hay vendedor, asignar por ronda de la sucursal elegida en vez de
+    // avisar en bloque a todos los encargados sin ningún criterio.
+    let sucursalElegida: { id: string; nombre: string } | null = null;
     if (datos_detectados?.zona) {
-      const { data: sucursalElegida } = await supabase.from("sucursales").select("id").eq("slug", datos_detectados.zona).maybeSingle();
-      if (sucursalElegida) {
-        const linkNoti = `/panel/rodi?conversacion=${conversacion.id}`;
-        notificarEncargados(supabase, resumen_handoff || "Cliente de Rodi ofrece su auto", linkNoti, "rodi_venta_zona", sucursalElegida.id, "alta").catch((err) => console.error("[rodi] error notificando zona:", err));
+      const { data } = await supabase.from("sucursales").select("id, nombre").eq("slug", datos_detectados.zona).maybeSingle();
+      sucursalElegida = data;
+    }
+    if (!vendedorAsignado && sucursalElegida) {
+      const { data: nuevoVendedorId } = await supabase.rpc("asignar_vendedor_ronda_rodi_por_sucursal", { p_sucursal_id: sucursalElegida.id });
+      if (nuevoVendedorId) {
+        vendedorAsignado = nuevoVendedorId;
+        await supabase.from("rodi_conversaciones").update({ vendedor_id: nuevoVendedorId, estado_lead: "asignado" }).eq("id", conversacion.id);
       }
+    }
+
+    // Ojo: el handoff "normal" (compra) ya lo notifica trg_rodi_handoff en
+    // la base -- acá solo se manda aviso de más cuando SÍ hay zona (venta/
+    // consignación/permuta), que es un caso nuevo que ese trigger no conoce.
+    if (sucursalElegida) {
+      if (vendedorAsignado) {
+        notificarPersona(supabase, vendedorAsignado, "rodi_venta_zona", mensajeNoti, linkNoti).catch((err) => console.error("[rodi] error notificando handoff:", err));
+      } else {
+        notificarEncargados(supabase, mensajeNoti, linkNoti, "rodi_venta_zona", sucursalElegida.id, "alta").catch((err) => console.error("[rodi] error notificando zona:", err));
+      }
+    }
+
+    // Día/horario confirmado: agenda visita real.
+    if (datos_detectados?.dia_visita && datos_detectados?.horario_visita) {
+      const nombreCliente = datos_detectados?.nombre || conversacion.nombre_contacto || "Visitante de Rodi";
+      const telefonoCliente = datos_detectados?.telefono || conversacion.telefono_contacto || "sin dato";
+      await supabase.from("visitas").insert({
+        vehiculo_marca: datos_detectados?.vehiculo_propio?.marca || null,
+        vehiculo_modelo: datos_detectados?.vehiculo_propio?.modelo || null,
+        nombre_cliente: nombreCliente,
+        telefono_cliente: telefonoCliente,
+        fecha_visita: datos_detectados.dia_visita,
+        horario_visita: datos_detectados.horario_visita,
+        sucursal: sucursalElegida?.nombre || "Sin especificar",
+        estado: "Pendiente",
+        vendedor_id: vendedorAsignado,
+      });
     }
   }
 

@@ -22,16 +22,21 @@ export default async function WhatsappPage() {
         vendedor_id, vendedor:perfiles!instagram_conversaciones_vendedor_id_fkey ( id, nombre )
       `)
       .order("last_message_at", { ascending: false }),
-    supabase.from("perfiles").select("id, nombre, roles").eq("activo", true).order("nombre"),
-    user?.id ? supabase.from("perfiles").select("roles").eq("id", user.id).single() : Promise.resolve({ data: null }),
+    supabase.from("perfiles").select("id, nombre, roles, sucursal_id").eq("activo", true).order("nombre"),
+    user?.id ? supabase.from("perfiles").select("roles, sucursal_id").eq("id", user.id).single() : Promise.resolve({ data: null }),
   ]);
 
-  // Un vendedor (rol "ventas" sin "admin") solo puede reasignar entre otros
-  // vendedores -- no ve encargados/admin en el selector. Admin ve todos.
+  // Admin ve a todos. Encargado ve solo a los vendedores de SU sucursal (sus
+  // vendedores asignados). Un vendedor sin ninguno de esos roles solo ve a
+  // otros vendedores (no admin/encargado), sin importar sucursal.
   const soyAdmin = miPerfilRes.data?.roles?.includes("admin") ?? false;
-  const vendedores = (vendedoresRes.data || []).filter((p) =>
-    soyAdmin ? p.roles?.includes("ventas") || p.roles?.includes("admin") : p.roles?.includes("ventas")
-  );
+  const soyEncargado = miPerfilRes.data?.roles?.includes("encargado") ?? false;
+  const miSucursalId = miPerfilRes.data?.sucursal_id ?? null;
+  const vendedores = (vendedoresRes.data || []).filter((p) => {
+    if (soyAdmin) return p.roles?.includes("ventas") || p.roles?.includes("admin");
+    if (soyEncargado) return p.roles?.includes("ventas") && p.sucursal_id === miSucursalId;
+    return p.roles?.includes("ventas");
+  });
 
   return (
     <ConversacionesShell

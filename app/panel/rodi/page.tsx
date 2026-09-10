@@ -10,16 +10,20 @@ export default async function RodiPage() {
       .from("rodi_conversaciones")
       .select("*, vendedor:perfiles!rodi_conversaciones_vendedor_id_fkey ( id, nombre )")
       .order("last_message_at", { ascending: false, nullsFirst: false }),
-    supabase.from("perfiles").select("id, nombre, roles").eq("activo", true).order("nombre"),
+    supabase.from("perfiles").select("id, nombre, roles, sucursal_id").eq("activo", true).order("nombre"),
   ]);
-  const { data: miPerfil } = user?.id ? await supabase.from("perfiles").select("roles").eq("id", user.id).single() : { data: null };
+  const { data: miPerfil } = user?.id ? await supabase.from("perfiles").select("roles, sucursal_id").eq("id", user.id).single() : { data: null };
 
-  // Un vendedor (rol "ventas" sin "admin") solo ve otros vendedores en el
-  // selector de reasignación -- admin ve a todos.
+  // Admin ve a todos. Encargado ve solo a los vendedores de SU sucursal.
+  // Un vendedor sin esos roles solo ve a otros vendedores.
   const soyAdmin = miPerfil?.roles?.includes("admin") ?? false;
-  const vendedores = (vendedoresRes.data || []).filter((p) =>
-    soyAdmin ? p.roles?.includes("ventas") || p.roles?.includes("admin") : p.roles?.includes("ventas")
-  );
+  const soyEncargado = miPerfil?.roles?.includes("encargado") ?? false;
+  const miSucursalId = miPerfil?.sucursal_id ?? null;
+  const vendedores = (vendedoresRes.data || []).filter((p) => {
+    if (soyAdmin) return p.roles?.includes("ventas") || p.roles?.includes("admin");
+    if (soyEncargado) return p.roles?.includes("ventas") && p.sucursal_id === miSucursalId;
+    return p.roles?.includes("ventas");
+  });
 
   return (
     <RodiShell

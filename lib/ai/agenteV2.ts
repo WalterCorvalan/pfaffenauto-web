@@ -29,6 +29,13 @@ export const AgentReplySchemaV2 = z.object({
     cuil: z.string().nullable().optional(),
     precio_pedido: z.string().nullable().optional(),
     zona: z.enum(["casa-central", "don-torcuato"]).nullable().optional(),
+    dia_visita: z.string().nullable().optional(),
+    horario_visita: z.string().nullable().optional(),
+    vehiculo_propio: z.object({
+      marca: z.string().nullable(),
+      modelo: z.string().nullable(),
+      anio: z.string().nullable(),
+    }).nullable().optional(),
   }),
   vehiculo_mencionado: z.object({
     marca: z.string().nullable(),
