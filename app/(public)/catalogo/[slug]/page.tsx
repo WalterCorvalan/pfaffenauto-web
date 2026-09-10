@@ -153,11 +153,12 @@ export default async function VehiculoDetallePage({
   // ================= 4. RENDERIZADO =================
   const jsonLdVehicle = {
     "@context": "https://schema.org",
-    "@type": "Vehicle",
+    "@type": "Car",
     name: `${auto.marca} ${auto.modelo}`,
     brand: auto.marca,
     model: auto.modelo,
     vehicleModelDate: String(auto.anio),
+    bodyType: auto.tipo || undefined,
     mileageFromOdometer: {
       "@type": "QuantitativeValue",
       value: auto.km,

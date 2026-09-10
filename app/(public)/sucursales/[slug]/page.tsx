@@ -35,6 +35,28 @@ const FALLBACK_DATA: Record<
   },
 };
 
+// Parsea "Calle 1234, C1614 Localidad, Provincia" en los campos de
+// PostalAddress que pide schema.org -- las direcciones reales ya vienen en
+// este formato consistente en la tabla sucursales.
+function parseDireccion(direccion: string) {
+  const partes = direccion.split(",").map((p) => p.trim());
+  const streetAddress = partes[0] || direccion;
+  const addressRegion = partes[partes.length - 1] || undefined;
+  let postalCode: string | undefined;
+  let addressLocality: string | undefined;
+  if (partes.length >= 2) {
+    const medio = partes[1];
+    const m = medio.match(/^([A-Z]\d{4})\s+(.+)$/);
+    if (m) {
+      postalCode = m[1];
+      addressLocality = m[2];
+    } else {
+      addressLocality = medio;
+    }
+  }
+  return { streetAddress, addressLocality, addressRegion, postalCode };
+}
+
 export async function generateMetadata({ params }: { params: Promise<{ slug: string }> }): Promise<Metadata> {
   const { slug } = await params;
   const { data: sucursal } = await supabase.from("sucursales").select("nombre, direccion").eq("slug", slug).single();
@@ -51,7 +73,7 @@ export default async function SucursalPage({ params }: { params: Promise<{ slug:
 
   const { data: sucursal } = await supabase
     .from("sucursales")
-    .select("id, nombre, direccion, telefono:telefono_encargado, slug")
+    .select("id, nombre, direccion, telefono:telefono_encargado, slug, google_maps_url")
     .eq("slug", slug)
     .single();
 
@@ -72,8 +94,35 @@ export default async function SucursalPage({ params }: { params: Promise<{ slug:
   const horario = fallback.horario;
   const nombreSucursal = sucursal.nombre;
 
+  const { streetAddress, addressLocality, addressRegion, postalCode } = parseDireccion(direccion);
+  const jsonLd = {
+    "@context": "https://schema.org",
+    "@type": "AutoDealer",
+    "@id": `https://pfaffenautos.com.ar/sucursales/${slug}`,
+    name: `Pfaffen Autos ${nombreSucursal}`,
+    url: `https://pfaffenautos.com.ar/sucursales/${slug}`,
+    telephone: telefono,
+    parentOrganization: { "@type": "Organization", name: "Pfaffen Autos", url: "https://pfaffenautos.com.ar" },
+    address: {
+      "@type": "PostalAddress",
+      streetAddress,
+      addressLocality,
+      addressRegion,
+      postalCode,
+      addressCountry: "AR",
+    },
+    ...(sucursal.google_maps_url ? { hasMap: sucursal.google_maps_url } : {}),
+    openingHoursSpecification: {
+      "@type": "OpeningHoursSpecification",
+      dayOfWeek: ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"],
+      opens: "09:00",
+      closes: "19:00",
+    },
+  };
+
   return (
     <div className="w-full bg-[#f8f9fa] dark:bg-[#0a0a0f] min-h-screen flex flex-col">
+      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }} />
       <SucursalHeroAnimated
         slug={slug}
         nombre={nombreSucursal}

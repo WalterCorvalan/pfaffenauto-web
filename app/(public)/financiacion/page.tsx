@@ -15,6 +15,7 @@ import SimuladorReal from "./SimuladorReal";
 export const metadata = {
   title: "Financiación Oficial | Pfaffen Autos",
   description: "Créditos personales del Banco Nación con tasa preferencial. Simulá tu cuota sobre un auto real del stock y solicitalo online.",
+  alternates: { canonical: "https://pfaffenautos.com.ar/financiacion" },
 };
 
 const PASOS = [

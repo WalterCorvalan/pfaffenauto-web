@@ -96,6 +96,12 @@ export default function RootLayout({
     url: "https://pfaffenautos.com.ar",
     telephone: "+541145001200",
     priceRange: "$$$",
+    logo: "https://pfaffenautos.com.ar/logo.png",
+    sameAs: [
+      "https://www.instagram.com/pfaffenautomotores/",
+      "https://facebook.com/pfaffenautos",
+      "https://tiktok.com/@pfaffenautos",
+    ],
     areaServed: [
       "Zona Norte, Buenos Aires",
       "Casa Central, Malvinas Argentinas",

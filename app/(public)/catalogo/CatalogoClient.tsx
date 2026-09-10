@@ -26,7 +26,12 @@ import { VehicleCard } from "@/components/Stock";
 
 const ITEMS_POR_PAGINA = 12;
 
-export default function CatalogoClient() {
+interface Props {
+  vehiculosIniciales?: any[];
+  totalInicial?: number;
+}
+
+export default function CatalogoClient({ vehiculosIniciales = [], totalInicial = 0 }: Props) {
   const searchParams = useSearchParams();
   const router = useRouter();
   const searchQuery = searchParams.get("q") || "";
@@ -36,8 +41,11 @@ export default function CatalogoClient() {
   const [inputBuscador, setInputBuscador] = useState(searchQuery);
 
   const [isFallbackModalOpen, setIsFallbackModalOpen] = useState(false);
-  const [vehiculos, setVehiculos] = useState<any[]>([]);
-  const [loading, setLoading] = useState(true);
+  // Seedeado con lo que ya trajo el server component (sin filtros) -- así el
+  // primer HTML no llega vacío para crawlers/IA. Si el cliente llegó con
+  // filtros/búsqueda en la URL, el useEffect de abajo pisa esto enseguida.
+  const [vehiculos, setVehiculos] = useState<any[]>(vehiculosIniciales);
+  const [loading, setLoading] = useState(vehiculosIniciales.length === 0);
   const [loadingMore, setLoadingMore] = useState(false);
   const [isFilterOpen, setIsFilterOpen] = useState(false);
   const [orden, setOrden] = useState("Relevancia");
@@ -61,8 +69,8 @@ export default function CatalogoClient() {
 
   // ESTADOS DE PAGINACIÓN
   const [pagina, setPagina] = useState(0);
-  const [hasMore, setHasMore] = useState(false);
-  const [totalResultados, setTotalResultados] = useState(0);
+  const [hasMore, setHasMore] = useState(vehiculosIniciales.length === ITEMS_POR_PAGINA);
+  const [totalResultados, setTotalResultados] = useState(totalInicial);
 
   // ESTADOS PARA EL COMPARADOR (Ahora soporta hasta 3 autos)
   const [autosComparar, setAutosComparar] = useState<any[]>([]);
