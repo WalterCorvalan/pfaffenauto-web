@@ -134,7 +134,10 @@ async function ejecutarBusquedaStock(
   // distintos y pueden diferir, mostrar dos precios distintos para el mismo
   // auto entre el sitio y el chat confunde al cliente.
   const resultados = (data ?? []).map((v: any) => {
-    const precioVenta = v.precio_publicado_ars ?? v.precio_publicado_usd ?? v.precio_venta;
+    // "||" a propósito, no "??": un precio en 0 significa "todavía sin
+    // cargar" (sentinela real en la base), no un precio válido -- con "??"
+    // 0 pasaba como si fuera el precio real y mostraba "ARS 0" al cliente.
+    const precioVenta = v.precio_publicado_ars || v.precio_publicado_usd || v.precio_venta;
     const monedaVenta = v.precio_publicado_ars ? "ARS" : v.precio_publicado_usd ? "USD" : v.moneda_venta;
     return { ...v, precio_venta: precioVenta, moneda_venta: monedaVenta, sucursal: v.sucursales?.nombre ?? null };
   }) as ResultadoStockV2[];
@@ -320,7 +323,13 @@ export async function generarRespuestaAgenteV2(historial: HistorialMensaje[], ca
   // comprar en respuesta a que quería vender el propio.
   const esIntencionDeCompra = respuesta.intencion !== "VENTA" && respuesta.intencion !== "CONSIGNACION";
 
-  const noEncontroNadaParaBuscar = esIntencionDeCompra && !respuesta.vehiculo_mencionado?.modelo && !respuesta.vehiculo_mencionado?.marca && !respuesta.vehiculo_mencionado?.categoria && !respuesta.vehiculo_mencionado?.puertas && !respuesta.presupuesto_mencionado && !respuesta.pedir_stock_general;
+  // Si este mismo turno el modelo ya marcó que el cliente está hablando de
+  // SU auto (permuta/venta/consignación) o completó vehiculo_propio, el
+  // fallback NO debe buscar nada -- es ciego al contexto, solo mira texto
+  // plano, y "tengo un Honda Civic" terminaba disparando una búsqueda de
+  // Civics en stock como si el cliente quisiera COMPRAR uno.
+  const hablandoDeAutoPropio = !!respuesta.datos_detectados?.tiene_permuta || !!respuesta.datos_detectados?.vehiculo_propio;
+  const noEncontroNadaParaBuscar = esIntencionDeCompra && !hablandoDeAutoPropio && !respuesta.vehiculo_mencionado?.modelo && !respuesta.vehiculo_mencionado?.marca && !respuesta.vehiculo_mencionado?.categoria && !respuesta.vehiculo_mencionado?.puertas && !respuesta.presupuesto_mencionado && !respuesta.pedir_stock_general;
   if (noEncontroNadaParaBuscar) {
     const ultimoMensajeCliente = [...historial].reverse().find((h) => h.role === "user")?.content;
     const fallback = ultimoMensajeCliente ? await extraerVehiculoFallback(ultimoMensajeCliente) : null;
