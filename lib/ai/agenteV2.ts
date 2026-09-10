@@ -37,6 +37,7 @@ export const AgentReplySchemaV2 = z.object({
     moneda: z.enum(["USD", "ARS"]),
   }).nullable(),
   pedir_stock_general: z.boolean(),
+  pedir_fotos: z.boolean().optional(),
 });
 
 export type AgentReplyV2 = z.infer<typeof AgentReplySchemaV2>;
@@ -99,7 +100,7 @@ async function ejecutarBusquedaStock(
   const query = aplicarFiltros(
     supabase
       .from("vehiculos")
-      .select("marca, modelo, anio, precio_venta, moneda_venta, precio_publicado_ars, precio_publicado_usd, patente, color, km, version, transmision, combustible, categoria, sucursales!vehiculos_sucursal_id_fkey ( nombre )")
+      .select("id, marca, modelo, anio, precio_venta, moneda_venta, precio_publicado_ars, precio_publicado_usd, patente, color, km, version, transmision, combustible, categoria, fotos, sucursales!vehiculos_sucursal_id_fkey ( nombre )")
       .in("estado", ["disponible", "reservado"])
   ).limit(modelo ? 3 : 6);
 
@@ -209,7 +210,10 @@ function respuestaSeguraConStockReal(resultados: ResultadoStockV2[], esAlternati
 // contiene, dejando el resto de la respuesta intacto.
 const FRASES_CIERRE_PROHIBIDAS = [
   /¿?alguna te interesa,?\s*o buscás un año o versión en particular\??/i,
-  /¿?alguna (de estas )?te late,?\s*o preferís seguir viendo más opciones\??/i,
+  /¿?alguna (de estas )?te (late|gusta),?\s*o preferís seguir viendo más opciones\??/i,
+  /¿?te interesa conocer más[^?]*\?/i,
+  /¿?(preferís|querés) explorar otras marcas\??/i,
+  /¿?hay algo más que quieras (saber|preguntar)[^?]*\?/i,
 ];
 
 function sacarCierreGenericoProhibido(reply: string): string {
@@ -225,13 +229,13 @@ async function fetchSucursalesInfo(): Promise<SucursalInfo[]> {
   return (data ?? []) as SucursalInfo[];
 }
 
-export async function generarRespuestaAgenteV2(historial: HistorialMensaje[], canal: string = "whatsapp-v2", nombreBot?: string): Promise<
-  | { ok: true; data: AgentReplyV2 }
+export async function generarRespuestaAgenteV2(historial: HistorialMensaje[], canal: string = "whatsapp-v2", nombreBot?: string, vehiculoEnFocoId?: string | null): Promise<
+  | { ok: true; data: AgentReplyV2; fotosParaEnviar: string[]; vehiculoFocoId: string | null }
   | { ok: false; error: string }
 > {
   const mensajesCliente = historial.filter((h) => h.role === "user").length;
   if (mensajesCliente > LIMITE_MENSAJES_DURO) {
-    return { ok: true, data: respuestaLimiteAlcanzado() };
+    return { ok: true, data: respuestaLimiteAlcanzado(), fotosParaEnviar: [], vehiculoFocoId: null };
   }
   const sugerirCierre = mensajesCliente >= LIMITE_MENSAJES_SUAVE;
 
@@ -245,6 +249,7 @@ export async function generarRespuestaAgenteV2(historial: HistorialMensaje[], ca
   if (!result.ok) return { ok: false, error: result.error };
 
   let respuesta = result.data;
+  let resultadosBusqueda: ResultadoStockV2[] = [];
 
   // El vehículo que el cliente menciona cuando quiere VENDER o CONSIGNAR el
   // suyo NO es una búsqueda de stock para comprar — es el auto que él
@@ -261,6 +266,7 @@ export async function generarRespuestaAgenteV2(historial: HistorialMensaje[], ca
       categoriaSolicitada,
       respuesta.presupuesto_mencionado
     );
+    resultadosBusqueda = resultados;
 
     const result2 = await chatJsonV2(AgentReplySchemaV2, [
       { role: "system", content: buildSystemPromptV2(undefined, resultados, nombreBot, esAlternativa, sucursales, sugerirCierre, categoriaSolicitada, total) },
@@ -283,6 +289,7 @@ export async function generarRespuestaAgenteV2(historial: HistorialMensaje[], ca
         calificacion: result2.data.calificacion,
         vehiculo_mencionado: result2.data.vehiculo_mencionado,
         pedir_stock_general: result2.data.pedir_stock_general,
+        pedir_fotos: result2.data.pedir_fotos,
         presupuesto_mencionado: result2.data.presupuesto_mencionado,
         datos_detectados: result2.data.datos_detectados,
         intencion: result2.data.intencion,
@@ -307,5 +314,31 @@ export async function generarRespuestaAgenteV2(historial: HistorialMensaje[], ca
     respuesta = { ...respuesta, reply: menuBienvenidaV2(nombreBot) };
   }
 
-  return { ok: true, data: respuesta };
+  // Auto en foco de la charla: si esta búsqueda trajo un solo resultado
+  // claro, ese pasa a ser el foco (se persiste en la conversación) — así un
+  // pedido de fotos SIN volver a nombrar marca/modelo ("pásame fotos") sigue
+  // sabiendo de qué auto se trata.
+  let vehiculoFocoId: string | null = resultadosBusqueda.length === 1 ? resultadosBusqueda[0].id : null;
+
+  let fotosParaEnviar: string[] = [];
+  if (respuesta.pedir_fotos) {
+    if (resultadosBusqueda.length >= 1) {
+      // Si esta misma búsqueda trajo varios, preferimos el que matchea el
+      // nombre que el cliente dijo; si no hay match claro, el primero.
+      const nombreBuscado = `${respuesta.vehiculo_mencionado?.marca ?? ""} ${respuesta.vehiculo_mencionado?.modelo ?? ""}`.trim().toLowerCase();
+      const match = resultadosBusqueda.find((v) => nombreBuscado && `${v.marca} ${v.modelo}`.toLowerCase().includes(nombreBuscado)) ?? resultadosBusqueda[0];
+      fotosParaEnviar = (match.fotos ?? []).slice(0, 3);
+      vehiculoFocoId = match.id;
+    } else if (vehiculoEnFocoId) {
+      // Pidió fotos sin repetir marca/modelo — usamos el auto que ya
+      // estaba en foco de charlas anteriores.
+      const { data: vehiculoFoco } = await supabase.from("vehiculos").select("id, fotos").eq("id", vehiculoEnFocoId).maybeSingle();
+      if (vehiculoFoco) {
+        fotosParaEnviar = (vehiculoFoco.fotos ?? []).slice(0, 3);
+        vehiculoFocoId = vehiculoFoco.id;
+      }
+    }
+  }
+
+  return { ok: true, data: respuesta, fotosParaEnviar, vehiculoFocoId };
 }

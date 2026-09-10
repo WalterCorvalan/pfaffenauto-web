@@ -2,7 +2,7 @@ import { createHmac, timingSafeEqual } from "crypto";
 import { createClient } from "@supabase/supabase-js";
 import { isAiConfiguredV2 } from "@/lib/ai/indexV2";
 import { generarRespuestaAgenteV2, dividirRespuestaEnMensajes } from "@/lib/ai/agenteV2";
-import { sendTextMessage } from "@/lib/meta/client";
+import { sendTextMessage, sendImageMessage } from "@/lib/meta/client";
 import { decrypt } from "@/lib/crypto";
 import { rateLimit, ipDesdeRequest } from "@/lib/rateLimit";
 import { registrarError } from "@/lib/panel/logger";
@@ -184,7 +184,7 @@ async function enviarMensajeFijo(conversacionId: string, texto: string, config: 
 }
 
 async function ejecutarAgente(conversacionId: string) {
-  const { data: conversacionActual } = await supabase.from("whatsapp_conversaciones").select("ai_habilitada, fuera_horario_avisado_fecha").eq("id", conversacionId).single();
+  const { data: conversacionActual } = await supabase.from("whatsapp_conversaciones").select("ai_habilitada, fuera_horario_avisado_fecha, vehiculo_id").eq("id", conversacionId).single();
   if (conversacionActual?.ai_habilitada === false) return;
 
   const { data: config } = await supabase.from("whatsapp_configuracion").select("*").eq("id", true).single();
@@ -218,7 +218,7 @@ async function ejecutarAgente(conversacionId: string) {
 
   if (!isAiConfiguredV2()) return;
 
-  const result = await generarRespuestaAgenteV2(historial, "panel-v2/webhooks/whatsapp");
+  const result = await generarRespuestaAgenteV2(historial, "panel-v2/webhooks/whatsapp", undefined, conversacionActual?.vehiculo_id ?? null);
 
   if (!result.ok) {
     registrarError("webhook-v2:agente", result.error, { conversacionId });
@@ -228,10 +228,12 @@ async function ejecutarAgente(conversacionId: string) {
   }
 
   const { reply, handoff, calificacion, resumen_handoff, datos_detectados } = result.data;
+  const { fotosParaEnviar, vehiculoFocoId } = result;
 
   const estadoSegunCalificacion = calificacion === "caliente" ? "calificando" : undefined;
   const patchConversacion: Record<string, unknown> = { calificacion };
   if (estadoSegunCalificacion) patchConversacion.estado_lead = estadoSegunCalificacion;
+  if (vehiculoFocoId) patchConversacion.vehiculo_id = vehiculoFocoId;
   await supabase.from("whatsapp_conversaciones").update(patchConversacion).eq("id", conversacionId);
 
   // Nombre y mail que el cliente vaya dando durante la charla se guardan en
@@ -255,10 +257,15 @@ async function ejecutarAgente(conversacionId: string) {
     if (mensajeSaliente) await enviarYActualizarMensaje(mensajeSaliente.id, conversacionId, parte, config);
   }
 
+  for (const fotoUrl of fotosParaEnviar) {
+    const { data: mensajeFoto } = await supabase.from("whatsapp_mensajes").insert({ conversacion_id: conversacionId, direccion: "out", tipo: "image", media_url: fotoUrl, status: "pending", ai_generado: true }).select("id").single();
+    if (mensajeFoto) await enviarYActualizarImagen(mensajeFoto.id, conversacionId, fotoUrl, config);
+  }
+
   if (handoff) {
     await supabase.from("whatsapp_conversaciones").update({
       handoff_at: new Date().toISOString(), handoff_reason: "cliente_pidio_humano",
-      handoff_resumen: resumen_handoff || null,
+      handoff_resumen: resumen_handoff || null, ai_habilitada: false,
     }).eq("id", conversacionId);
 
     const { data: convHandoff } = await supabase.from("whatsapp_conversaciones").select("vendedor_id").eq("id", conversacionId).single();
@@ -288,6 +295,26 @@ async function enviarYActualizarMensaje(mensajeId: string, conversacionId: strin
     await supabase.from("whatsapp_mensajes").update({ status: "sent", wa_message_id: resultado.messages?.[0]?.id }).eq("id", mensajeId);
   } catch (err) {
     registrarError("webhook-v2:enviar-mensaje", err, { conversacionId, mensajeId });
+    await supabase.from("whatsapp_mensajes").update({ status: "failed" }).eq("id", mensajeId);
+  }
+}
+
+// Best-effort: si falla el envío de la foto no rompe la conversación, ya se
+// mandó el texto antes. La URL de la foto ya es pública (mismo storage que
+// usa el catálogo web), Meta la descarga directo del link.
+async function enviarYActualizarImagen(mensajeId: string, conversacionId: string, imageUrl: string, config: any) {
+  if (!isWhatsappEnvioConfigurado(config)) return;
+
+  const { data: conversacion } = await supabase.from("whatsapp_conversaciones").select("contacto_id, whatsapp_contactos(telefono)").eq("id", conversacionId).single();
+  const telefono = (conversacion?.whatsapp_contactos as any)?.telefono;
+  if (!telefono) return;
+
+  try {
+    const tokenPlano = decrypt(config.token_cifrado, config.token_iv, config.token_tag);
+    const resultado = await sendImageMessage(config.phone_number_id, tokenPlano, telefono, imageUrl);
+    await supabase.from("whatsapp_mensajes").update({ status: "sent", wa_message_id: resultado.messages?.[0]?.id }).eq("id", mensajeId);
+  } catch (err) {
+    registrarError("webhook-v2:enviar-imagen", err, { conversacionId, mensajeId });
     await supabase.from("whatsapp_mensajes").update({ status: "failed" }).eq("id", mensajeId);
   }
 }

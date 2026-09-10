@@ -345,7 +345,7 @@ async function ejecutarAgente(conversacionId: string, contactoId: string) {
   if (handoff) {
     const { data: convHandoff } = await supabase
       .from("whatsapp_conversaciones")
-      .update({ handoff_at: new Date().toISOString(), handoff_reason: "cliente_pidio_humano" })
+      .update({ handoff_at: new Date().toISOString(), handoff_reason: "cliente_pidio_humano", ai_habilitada: false })
       .eq("id", conversacionId)
       .select("vendedor_id")
       .single();
