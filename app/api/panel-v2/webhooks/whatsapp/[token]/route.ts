@@ -105,6 +105,23 @@ async function procesarEvento(payload: any) {
   }
 }
 
+// Antes, cualquier mensaje que no fuera texto/interactive (audio, foto,
+// video, documento) se guardaba con texto=null y quedaba invisible para el
+// agente -- ejecutarAgente arma el historial filtrando ".filter(m => m.texto)",
+// así que el cliente mandaba un audio y el bot se quedaba en silencio total,
+// sin ni siquiera avisar que no pudo escucharlo. Se resuelve un texto real
+// para cada tipo -- sin transcripción automática de audio (a propósito: se
+// notifica al vendedor para que lo escuche él mismo, ver notificarAudioRecibido).
+function resolverTextoMensaje(msg: any): string | null {
+  if (msg.type === "text") return msg.text?.body ?? null;
+  if (msg.type === "interactive") return msg.interactive?.list_reply?.title ?? msg.interactive?.button_reply?.title ?? null;
+  if (msg.type === "audio") return "[Cliente envió un audio 🎤 -- escuchalo en tu WhatsApp]";
+  if (msg.type === "image") return msg.image?.caption?.trim() || "[Cliente envió una foto sin descripción]";
+  if (msg.type === "video") return msg.video?.caption?.trim() || "[Cliente envió un video]";
+  if (msg.type === "document") return msg.document?.caption?.trim() || msg.document?.filename || "[Cliente envió un documento]";
+  return null;
+}
+
 async function ingestarMensaje({ waId, nombrePerfil, msg }: { waId: string; nombrePerfil: string | null; msg: any }) {
   // Solo se completa nombre_perfil al crear el contacto por primera vez --
   // si ya existe, NO se pisa con el nombre de perfil de WhatsApp en cada
@@ -145,11 +162,7 @@ async function ingestarMensaje({ waId, nombrePerfil, msg }: { waId: string; nomb
   // bienvenida, Meta manda type "interactive" con interactive.list_reply en
   // vez de texto — se usa el título de la opción como si lo hubiera tipeado,
   // así el agente lo procesa igual que cualquier mensaje de texto.
-  const texto = msg.type === "text"
-    ? msg.text?.body
-    : msg.type === "interactive"
-      ? (msg.interactive?.list_reply?.title ?? msg.interactive?.button_reply?.title ?? null)
-      : null;
+  const texto = resolverTextoMensaje(msg);
   const { error } = await supabase.from("whatsapp_mensajes").insert({
     conversacion_id: conversacion.id,
     wa_message_id: msg.id,

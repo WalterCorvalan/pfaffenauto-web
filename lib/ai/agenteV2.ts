@@ -121,6 +121,29 @@ async function ejecutarBusquedaStock(
   return { resultados, total: count ?? resultados.length };
 }
 
+// Red de seguridad: el modelo (Haiku) a veces no completa "vehiculo_mencionado"
+// cuando la mención viene en frase indirecta ("buscaba un Toyota", "no tienen
+// Hilux?", pasado en vez de presente) aunque la regla del prompt lo pida
+// explícito -- en vez de perder el mensaje, se busca por texto plano la
+// marca/modelo real (de stock actual) que aparezca en el último mensaje del
+// cliente. Solo se usa cuando el modelo no encontró nada por su cuenta.
+async function extraerVehiculoFallback(ultimoMensaje: string): Promise<{ marca: string | null; modelo: string | null } | null> {
+  const texto = ultimoMensaje.toLowerCase();
+  const { data } = await supabase.from("vehiculos").select("marca, modelo").in("estado", ["disponible", "reservado"]);
+  if (!data) return null;
+
+  const marcas = Array.from(new Set(data.map((v) => v.marca).filter(Boolean)));
+  const modelos = Array.from(new Set(data.map((v) => v.modelo).filter(Boolean)));
+
+  // Modelo primero (más específico) -- si el cliente nombra el modelo, la
+  // marca no hace falta para buscar bien.
+  const modeloMatch = modelos.find((m) => m.length >= 3 && texto.includes(m.toLowerCase()));
+  const marcaMatch = marcas.find((m) => texto.includes(m.toLowerCase()));
+
+  if (!modeloMatch && !marcaMatch) return null;
+  return { marca: marcaMatch ?? null, modelo: modeloMatch ?? null };
+}
+
 // Buscar exacto (marca+modelo+categoría) primero; si no hay nada, no le
 // devolvemos al cliente una lista vacía sin salida — probamos combinaciones
 // cada vez menos específicas hasta encontrar stock real. La categoría es la
@@ -260,6 +283,15 @@ export async function generarRespuestaAgenteV2(historial: HistorialMensaje[], ca
   // búsqueda de Corollas en stock y el bot terminaba mostrándole autos para
   // comprar en respuesta a que quería vender el propio.
   const esIntencionDeCompra = respuesta.intencion !== "VENTA" && respuesta.intencion !== "CONSIGNACION";
+
+  const noEncontroNadaParaBuscar = esIntencionDeCompra && !respuesta.vehiculo_mencionado?.modelo && !respuesta.vehiculo_mencionado?.marca && !respuesta.vehiculo_mencionado?.categoria && !respuesta.presupuesto_mencionado && !respuesta.pedir_stock_general;
+  if (noEncontroNadaParaBuscar) {
+    const ultimoMensajeCliente = [...historial].reverse().find((h) => h.role === "user")?.content;
+    const fallback = ultimoMensajeCliente ? await extraerVehiculoFallback(ultimoMensajeCliente) : null;
+    if (fallback) {
+      respuesta = { ...respuesta, vehiculo_mencionado: { marca: fallback.marca, modelo: fallback.modelo, categoria: respuesta.vehiculo_mencionado?.categoria ?? null } };
+    }
+  }
 
   if (esIntencionDeCompra && (respuesta.vehiculo_mencionado?.modelo || respuesta.vehiculo_mencionado?.marca || respuesta.vehiculo_mencionado?.categoria || respuesta.presupuesto_mencionado || respuesta.pedir_stock_general)) {
     const categoriaSolicitada = respuesta.vehiculo_mencionado?.categoria ?? null;

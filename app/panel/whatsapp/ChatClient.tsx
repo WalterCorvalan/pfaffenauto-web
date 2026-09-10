@@ -380,6 +380,11 @@ export default function ChatClient({
             <p className="text-[13px] text-slate-500 dark:text-slate-400 truncate mb-1.5">{c.vendedor?.nombre ? `Asignado a ${c.vendedor.nombre}` : "Sin asignar"}</p>
             {c.unread_count > 0 && <span className="text-[10px] font-bold bg-emerald-600 text-white px-1.5 py-0.5 rounded-full shrink-0">{c.unread_count}</span>}
           </div>
+          {c.handoff_at && !c.ai_habilitada && (
+            <span className="inline-flex items-center gap-1 text-[10px] font-bold text-amber-700 dark:text-amber-300 bg-amber-50 dark:bg-amber-500/10 px-1.5 py-0.5 rounded-full mt-0.5">
+              ⚠️ IA en pausa
+            </span>
+          )}
         </div>
       </button>
     );
@@ -461,6 +466,16 @@ export default function ChatClient({
                 )}
               </div>
             </div>
+
+            {conversacionActiva?.handoff_at && !conversacionActiva?.ai_habilitada && (
+              <div className="bg-amber-500 text-white px-4 py-2 flex items-center gap-2 shrink-0 shadow-sm z-10">
+                <Info className="w-4 h-4 shrink-0" />
+                <p className="text-xs font-bold flex-1">
+                  ⚠️ IA en pausa — {conversacionActiva.handoff_reason === "cliente_pidio_humano" ? "el cliente pidió hablar con una persona" : "esperando que atiendas vos"}.
+                  {conversacionActiva.handoff_resumen ? ` ${conversacionActiva.handoff_resumen}` : ""}
+                </p>
+              </div>
+            )}
 
             <div className="flex-1 overflow-y-auto p-4 sm:p-6 flex flex-col gap-1.5 custom-scrollbar">
               {loading ? (
