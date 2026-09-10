@@ -35,6 +35,13 @@ const FALLBACK_DATA: Record<
   },
 };
 
+// Coordenadas reales, resueltas a mano desde el link corto de Google Maps de
+// cada sucursal (sucursales.google_maps_url) -- no hay lat/long en la DB.
+const GEO_SUCURSALES: Record<string, { latitude: number; longitude: number }> = {
+  "casa-central": { latitude: -34.4889306, longitude: -58.6614257 },
+  "don-torcuato": { latitude: -34.4840351, longitude: -58.619739 },
+};
+
 // Parsea "Calle 1234, C1614 Localidad, Provincia" en los campos de
 // PostalAddress que pide schema.org -- las direcciones reales ya vienen en
 // este formato consistente en la tabla sucursales.
@@ -112,6 +119,7 @@ export default async function SucursalPage({ params }: { params: Promise<{ slug:
       addressCountry: "AR",
     },
     ...(sucursal.google_maps_url ? { hasMap: sucursal.google_maps_url } : {}),
+    ...(GEO_SUCURSALES[slug] ? { geo: { "@type": "GeoCoordinates", ...GEO_SUCURSALES[slug] } } : {}),
     openingHoursSpecification: {
       "@type": "OpeningHoursSpecification",
       dayOfWeek: ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"],
