@@ -269,15 +269,16 @@ function respuestaSeguraConStockReal(resultados: ResultadoStockV2[], esAlternati
 // Red de seguridad: el prompt ya prohíbe pedir más precisión (año/modelo/
 // categoría) ANTES de mostrar opciones reales cuando ya hay resultados de
 // una búsqueda -- pero un modelo chico a veces igual responde con una
-// pregunta de "¿qué tipo buscás?" en vez de listar el stock real que ya se
-// le pasó (visto en pruebas: dijo "tenemos varios Fiat" y preguntó
-// auto/pickup/modelo en vez de mostrar la lista). Se detecta comparando si
-// la respuesta menciona al menos uno de los autos reales encontrados -- si
-// no menciona ninguno habiendo resultados, se pisa con la lista real.
+// pregunta de "¿qué modelo te interesa?" en vez de listar el stock real que
+// ya se le pasó, incluso NOMBRANDO modelos reales de ejemplo sin precio ni
+// datos ("¿Argo, Pulse o Cronos?") -- esto hace inútil chequear solo si
+// menciona el nombre de un modelo real, porque lo hace igual sin mostrar
+// nada. Señal más fuerte: una lista de verdad siempre trae el PRECIO real de
+// al menos un resultado; una pregunta de "cuál preferís" nunca lo trae.
 function respuestaNoMuestraStockReal(reply: string, resultados: ResultadoStockV2[]): boolean {
   if (resultados.length === 0) return false;
-  const textoNormalizado = reply.toLowerCase();
-  return !resultados.some((v) => textoNormalizado.includes(v.modelo.toLowerCase().split(/\s+/)[0]));
+  const numerosReply = new Set(extraerNumerosRelevantes(reply));
+  return !resultados.some((v) => numerosReply.has(v.precio_venta) || numerosReply.has(v.anio));
 }
 
 // El prompt prohíbe estos cierres genéricos y abiertos (regla en
