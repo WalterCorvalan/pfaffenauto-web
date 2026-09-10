@@ -338,12 +338,13 @@ export async function generarRespuestaAgenteV2(historial: HistorialMensaje[], ca
   // comprar en respuesta a que quería vender el propio.
   const esIntencionDeCompra = respuesta.intencion !== "VENTA" && respuesta.intencion !== "CONSIGNACION";
 
-  // Si este mismo turno el modelo ya marcó que el cliente está hablando de
-  // SU auto (permuta/venta/consignación) o completó vehiculo_propio, el
-  // fallback NO debe buscar nada -- es ciego al contexto, solo mira texto
-  // plano, y "tengo un Honda Civic" terminaba disparando una búsqueda de
-  // Civics en stock como si el cliente quisiera COMPRAR uno.
-  const hablandoDeAutoPropio = !!respuesta.datos_detectados?.tiene_permuta || !!respuesta.datos_detectados?.vehiculo_propio;
+  // Ojo: NO se usa "tiene_permuta" acá -- ese flag queda en true durante TODA
+  // la charla de permuta (no solo en el mensaje donde describe su auto), así
+  // que apagaba el fallback en cualquier mensaje posterior aunque el cliente
+  // ya esté buscando qué comprar ("busco solo fiat" mid-permuta se colaba).
+  // La señal correcta es que "vehiculo_propio" se haya completado JUSTO en
+  // este turno -- eso sí es específico del mensaje, no del estado general.
+  const hablandoDeAutoPropio = !!respuesta.datos_detectados?.vehiculo_propio?.marca || !!respuesta.datos_detectados?.vehiculo_propio?.modelo;
   const noEncontroNadaParaBuscar = esIntencionDeCompra && !hablandoDeAutoPropio && !respuesta.vehiculo_mencionado?.modelo && !respuesta.vehiculo_mencionado?.marca && !respuesta.vehiculo_mencionado?.categoria && !respuesta.vehiculo_mencionado?.puertas && !respuesta.presupuesto_mencionado && !respuesta.pedir_stock_general;
   if (noEncontroNadaParaBuscar) {
     const ultimoMensajeCliente = [...historial].reverse().find((h) => h.role === "user")?.content;
