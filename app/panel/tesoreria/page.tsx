@@ -9,24 +9,23 @@ const ICONO_TIPO: Record<string, any> = { Banco: Landmark, Tarjeta: CreditCard, 
 export default async function TesoreriaPage() {
   const supabase = await createClient();
 
-  const [{ data: cuentas }, { data: sucursales }, { data: movimientos }] = await Promise.all([
+  const [{ data: cuentas }, { data: sucursales }] = await Promise.all([
     supabase.from("cuentas").select("*").eq("activa", true).order("nombre"),
     supabase.from("sucursales").select("id, nombre").order("nombre"),
-    // estado='aprobado' y deleted_at null — mismo filtro que saldo_cuenta()
-    // en Finanzas. Antes esto sumaba TODO (pendientes de aprobación y
-    // eliminados incluidos), así que Tesorería y Finanzas mostraban un
-    // saldo distinto para la misma cuenta.
-    supabase.from("movimientos_caja").select("cuenta_id, tipo, monto").not("cuenta_id", "is", null).eq("estado", "aprobado").is("deleted_at", null),
   ]);
 
-  const saldoPorCuenta = (cuentaId: string) => {
-    const movs = (movimientos || []).filter((m) => m.cuenta_id === cuentaId);
-    return movs.reduce((acc, m) => acc + (m.tipo === "ingreso" ? Number(m.monto) : -Number(m.monto)), 0);
-  };
-
-  const cuentasConSaldo = (cuentas || [])
-    .map((c) => ({ ...c, saldo: Number(c.saldo_inicial) + saldoPorCuenta(c.id) }))
-    .sort((a, b) => b.saldo - a.saldo);
+  // Saldo real vía RPC saldo_cuenta (misma que usa Finanzas/Dashboard) en vez
+  // de traer TODOS los movimientos_caja de toda la historia y sumarlos acá --
+  // esa tabla solo crece, sin límite ni filtro de fecha era un problema de
+  // escalabilidad real.
+  const cuentasConSaldo = (
+    await Promise.all(
+      (cuentas || []).map(async (c) => {
+        const { data: saldo } = await supabase.rpc("saldo_cuenta", { p_cuenta_id: c.id });
+        return { ...c, saldo: Number(saldo ?? c.saldo_inicial) };
+      })
+    )
+  ).sort((a, b) => b.saldo - a.saldo);
   const saldoTotalArs = cuentasConSaldo.filter((c) => (c.moneda || "ARS") === "ARS").reduce((acc, c) => acc + c.saldo, 0);
   const saldoTotalUsd = cuentasConSaldo.filter((c) => c.moneda === "USD").reduce((acc, c) => acc + c.saldo, 0);
   const maxSaldoArs = Math.max(1, ...cuentasConSaldo.filter((c) => (c.moneda || "ARS") === "ARS").map((c) => Math.abs(c.saldo)));

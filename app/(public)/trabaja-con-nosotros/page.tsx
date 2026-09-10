@@ -1,6 +1,5 @@
 "use client";
 
-import { supabase2 } from "@/lib/supabase/client";
 import {
   ArrowLeft,
   Briefcase,
@@ -88,21 +87,16 @@ export default function TrabajaConNosotrosPage() {
     setLoading(true);
 
     try {
-      // 1. Subir el CV a Supabase Storage (Bucket: 'cvs')
-      const fileExt = archivoCV.name.split(".").pop();
-      const fileName = `${Date.now()}_${nombre.trim()}_${apellido.trim()}.${fileExt}`;
-      const filePath = `${fileName.replace(/\s+/g, "")}`;
-
-      const { error: uploadError } = await supabase2.storage
-        .from("cvs")
-        .upload(filePath, archivoCV);
-
-      if (uploadError) throw uploadError;
-
-      // Obtener la URL pública del CV
-      const { data: publicUrlData } = supabase2.storage
-        .from("cvs")
-        .getPublicUrl(filePath);
+      // 1. Subir el CV vía API server-side (Turnstile + rate limit + PDF
+      // real por magic bytes) -- antes se subía directo del navegador a
+      // Supabase Storage con la anon key, sin ninguna de esas validaciones.
+      const formDataCV = new FormData();
+      formDataCV.append("file", archivoCV);
+      formDataCV.append("turnstileToken", turnstileToken);
+      const uploadRes = await fetch("/api/upload-cv", { method: "POST", body: formDataCV });
+      const uploadData = await uploadRes.json();
+      if (!uploadRes.ok) throw new Error(uploadData.error || "No se pudo subir el CV.");
+      const publicUrlData = { publicUrl: uploadData.publicUrl };
 
       // 2. Guardar los datos vía API (Turnstile + zod + rate limit del lado servidor)
       const response = await fetch("/api/panel-v2/postulaciones", {

@@ -94,8 +94,11 @@ export default function ChatClient({
     if (!seleccionada) return;
     setLoading(true);
 
-    supabase2.from(tablaMensajes).select("*").eq("conversacion_id", seleccionada).order("created_at", { ascending: true }).then(({ data }) => {
-      setMensajes(data || []);
+    // Últimos 500 mensajes (desc + limit, después se da vuelta) en vez de
+    // todo el historial sin límite -- un lead muy viejo con charla larga
+    // podía traer miles de filas de una.
+    supabase2.from(tablaMensajes).select("*").eq("conversacion_id", seleccionada).order("created_at", { ascending: false }).limit(500).then(({ data }) => {
+      setMensajes((data || []).slice().reverse());
       setLoading(false);
     });
 

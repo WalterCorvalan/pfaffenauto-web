@@ -13,7 +13,8 @@ export default async function WhatsappPage() {
         whatsapp_contactos ( id, telefono, nombre_perfil ), cliente_id, vehiculo_id,
         vendedor_id, vendedor:perfiles!whatsapp_conversaciones_vendedor_id_fkey ( id, nombre )
       `)
-      .order("last_message_at", { ascending: false }),
+      .order("last_message_at", { ascending: false })
+      .limit(3000),
     supabase
       .from("instagram_conversaciones")
       .select(`
@@ -21,7 +22,8 @@ export default async function WhatsappPage() {
         instagram_contactos ( id, ig_user_id, username ), cliente_id, vehiculo_id,
         vendedor_id, vendedor:perfiles!instagram_conversaciones_vendedor_id_fkey ( id, nombre )
       `)
-      .order("last_message_at", { ascending: false }),
+      .order("last_message_at", { ascending: false })
+      .limit(3000),
     supabase.from("perfiles").select("id, nombre, roles, sucursal_id").eq("activo", true).order("nombre"),
     user?.id ? supabase.from("perfiles").select("roles, sucursal_id").eq("id", user.id).single() : Promise.resolve({ data: null }),
   ]);

@@ -17,6 +17,9 @@ async function usuarioActual() {
     { cookies: { getAll: () => cookieStore.getAll() } }
   );
   const { data: { user } } = await supabase.auth.getUser();
+  if (!user) return null;
+  const { data: perfil } = await supabase.from("perfiles").select("roles").eq("id", user.id).single();
+  if (!perfil?.roles?.includes("admin") && !perfil?.roles?.includes("encargado")) return null;
   return user;
 }
 
@@ -24,7 +27,7 @@ const BodySchema = z.object({ vehiculoId: z.string().uuid() });
 
 export async function POST(request: Request) {
   const user = await usuarioActual();
-  if (!user) return NextResponse.json({ error: "No autorizado." }, { status: 401 });
+  if (!user) return NextResponse.json({ error: "No autorizado — publicar en MercadoLibre requiere rol admin o encargado." }, { status: 403 });
 
   if (!mercadoLibrePublishConfigurado()) {
     return NextResponse.json({ error: "MercadoLibre no está configurado todavía (faltan credenciales)." }, { status: 400 });

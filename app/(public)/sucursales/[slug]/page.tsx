@@ -130,7 +130,7 @@ export default async function SucursalPage({ params }: { params: Promise<{ slug:
 
   return (
     <div className="w-full bg-[#f8f9fa] dark:bg-[#0a0a0f] min-h-screen flex flex-col">
-      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }} />
+      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd).replace(/</g, "\\u003c") }} />
       <SucursalHeroAnimated
         slug={slug}
         nombre={nombreSucursal}

@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { createClient } from "@supabase/supabase-js";
 import { rateLimit, ipDesdeRequest } from "@/lib/rateLimit";
+import { obtenerDolarBlue } from "@/lib/dolarBlue";
 
 // El simulador de /financiacion (público, sin login) antes consultaba
 // "vehiculos" directo desde el cliente con la anon key, trayendo
@@ -34,7 +35,10 @@ export async function GET(req: Request) {
   const busquedaRaw = (url.searchParams.get("q") || "").trim().slice(0, 100);
   // ".or()" de PostgREST usa "," y "()" como separadores propios.
   const busqueda = busquedaRaw.replace(/[,()]/g, " ").trim();
-  const dolarVenta = Number(url.searchParams.get("dolar")) || null;
+  // Antes se confiaba en "?dolar=" mandado por el cliente -- cualquiera podía
+  // pasar cualquier valor y el precio en ARS mostrado quedaba a su merced.
+  // Se resuelve server-side con la misma cotización real que usa /api/dolar-blue.
+  const dolarVenta = await obtenerDolarBlue().then((d) => d.venta).catch(() => null);
 
   let query = supabase
     .from("vehiculos")

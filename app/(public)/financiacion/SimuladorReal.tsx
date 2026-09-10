@@ -95,7 +95,6 @@ export default function SimuladorReal() {
     const timeout = setTimeout(async () => {
       const params = new URLSearchParams();
       if (busqueda.trim().length >= 2) params.set("q", busqueda.trim());
-      if (dolarVenta) params.set("dolar", String(dolarVenta));
       try {
         const res = await fetch(`/api/simulador-vehiculos?${params.toString()}`);
         const data = await res.json();
