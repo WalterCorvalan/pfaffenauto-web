@@ -106,11 +106,21 @@ async function procesarEvento(payload: any) {
 }
 
 async function ingestarMensaje({ waId, nombrePerfil, msg }: { waId: string; nombrePerfil: string | null; msg: any }) {
-  const { data: contacto } = await supabase
-    .from("whatsapp_contactos")
-    .upsert({ telefono: waId, nombre_perfil: nombrePerfil }, { onConflict: "telefono", ignoreDuplicates: false })
-    .select("id")
-    .single();
+  // Solo se completa nombre_perfil al crear el contacto por primera vez --
+  // si ya existe, NO se pisa con el nombre de perfil de WhatsApp en cada
+  // mensaje entrante, porque eso borraba el nombre real que el cliente ya
+  // había dado en la charla (el agente lo guarda apenas lo detecta).
+  let { data: contacto } = await supabase.from("whatsapp_contactos").select("id").eq("telefono", waId).maybeSingle();
+  if (!contacto) {
+    const { data: nuevo, error: errInsert } = await supabase.from("whatsapp_contactos").insert({ telefono: waId, nombre_perfil: nombrePerfil }).select("id").single();
+    if (errInsert && errInsert.code === "23505") {
+      // Dos mensajes casi simultáneos del mismo contacto nuevo -- el otro ya
+      // lo insertó primero, lo buscamos de nuevo en vez de fallar.
+      ({ data: contacto } = await supabase.from("whatsapp_contactos").select("id").eq("telefono", waId).maybeSingle());
+    } else {
+      contacto = nuevo;
+    }
+  }
   if (!contacto) return;
 
   let { data: conversacion } = await supabase
