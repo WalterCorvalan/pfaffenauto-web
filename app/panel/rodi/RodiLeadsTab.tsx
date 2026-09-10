@@ -3,6 +3,7 @@
 import { useState, useMemo } from "react";
 import { supabase2 } from "@/lib/supabase/client";
 import { Filter, Search, Bot, User } from "lucide-react";
+import LeadDetailModal from "../whatsapp/LeadDetailModal";
 
 interface Perfil { id: string; nombre: string; roles: string[] }
 
@@ -24,10 +25,13 @@ const ESTADO_COLOR: Record<string, string> = {
 };
 const CALIFICACION_DOT: Record<string, string> = { caliente: "bg-rose-500", tibio: "bg-amber-500", frio: "bg-slate-300" };
 
-export default function RodiLeadsTab({ conversacionesIniciales, vendedores }: { conversacionesIniciales: any[]; vendedores: Perfil[] }) {
+export default function RodiLeadsTab({ conversacionesIniciales, vendedores, miId }: { conversacionesIniciales: any[]; vendedores: Perfil[]; miId: string }) {
   const [conversaciones, setConversaciones] = useState(conversacionesIniciales);
   const [filtro, setFiltro] = useState("todos");
   const [busqueda, setBusqueda] = useState("");
+  const [detalleId, setDetalleId] = useState<string | null>(null);
+
+  const actualizarUno = (id: string, patch: any) => setConversaciones((prev) => prev.map((c) => (c.id === id ? { ...c, ...patch } : c)));
 
   const filtrados = useMemo(() => {
     let l = conversaciones;
@@ -71,7 +75,7 @@ export default function RodiLeadsTab({ conversacionesIniciales, vendedores }: { 
       ) : (
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
           {filtrados.map((c) => (
-            <div key={c.id} className="bg-white dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-2xl p-4">
+            <button key={c.id} onClick={() => setDetalleId(c.id)} className="text-left bg-white dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-2xl p-4 hover:border-rose-300 dark:hover:border-rose-500/40 transition-colors">
               <div className="flex items-center justify-between mb-2">
                 <div className="flex items-center gap-2 min-w-0">
                   <span className={`w-2 h-2 rounded-full shrink-0 ${CALIFICACION_DOT[c.calificacion] || "bg-slate-300"}`} />
@@ -81,16 +85,20 @@ export default function RodiLeadsTab({ conversacionesIniciales, vendedores }: { 
               </div>
               <p className="text-xs text-slate-400 mb-1">{[c.telefono_contacto, c.email_contacto].filter(Boolean).join(" · ") || "Sin datos de contacto todavía"}</p>
               {c.origen_pagina && <p className="text-[10px] text-slate-400 mb-3">📍 {c.origen_pagina}</p>}
-              <div className="flex items-center gap-2 mt-2">
+              <div className="flex items-center gap-2 mt-2" onClick={(e) => e.stopPropagation()}>
                 <User className="w-3.5 h-3.5 text-slate-400 shrink-0" />
                 <select value={c.vendedor_id || ""} onChange={(e) => reasignar(c.id, e.target.value)} className="flex-1 bg-slate-50 dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-lg px-2 py-1.5 text-xs font-semibold outline-none">
                   <option value="">Sin asignar</option>
                   {vendedores.map((v) => <option key={v.id} value={v.id}>{v.nombre}</option>)}
                 </select>
               </div>
-            </div>
+            </button>
           ))}
         </div>
+      )}
+
+      {detalleId && (
+        <LeadDetailModal leadId={detalleId} origen="rodi" miId={miId} vendedores={vendedores} onClose={() => setDetalleId(null)} onActualizado={actualizarUno} />
       )}
     </div>
   );

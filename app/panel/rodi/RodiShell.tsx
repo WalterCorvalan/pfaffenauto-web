@@ -7,7 +7,7 @@ import RodiLeadsTab from "./RodiLeadsTab";
 
 interface Perfil { id: string; nombre: string; roles: string[] }
 
-export default function RodiShell({ conversacionesIniciales, vendedores }: { conversacionesIniciales: any[]; vendedores: Perfil[] }) {
+export default function RodiShell({ conversacionesIniciales, vendedores, miId }: { conversacionesIniciales: any[]; vendedores: Perfil[]; miId: string }) {
   const [tab, setTab] = useState<"bandeja" | "leads">("bandeja");
   const leadsConConversacion = conversacionesIniciales.filter((c) => c.estado_lead && c.estado_lead !== "nuevo").length;
 
@@ -34,7 +34,7 @@ export default function RodiShell({ conversacionesIniciales, vendedores }: { con
       </div>
 
       <div className="flex-1 min-h-0">
-        {tab === "bandeja" ? <RodiBandeja conversacionesIniciales={conversacionesIniciales} vendedores={vendedores} /> : <RodiLeadsTab conversacionesIniciales={conversacionesIniciales} vendedores={vendedores} />}
+        {tab === "bandeja" ? <RodiBandeja conversacionesIniciales={conversacionesIniciales} vendedores={vendedores} miId={miId} /> : <RodiLeadsTab conversacionesIniciales={conversacionesIniciales} vendedores={vendedores} miId={miId} />}
       </div>
     </div>
   );

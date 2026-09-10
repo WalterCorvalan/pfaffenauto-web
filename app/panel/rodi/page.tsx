@@ -4,7 +4,8 @@ import RodiShell from "./RodiShell";
 export default async function RodiPage() {
   const supabase = await createClient();
 
-  const [convRes, vendedoresRes] = await Promise.all([
+  const [{ data: { user } }, convRes, vendedoresRes] = await Promise.all([
+    supabase.auth.getUser(),
     supabase
       .from("rodi_conversaciones")
       .select("*, vendedor:perfiles!rodi_conversaciones_vendedor_id_fkey ( id, nombre )")
@@ -16,6 +17,7 @@ export default async function RodiPage() {
     <RodiShell
       conversacionesIniciales={convRes.data || []}
       vendedores={(vendedoresRes.data || []).filter((p) => p.roles?.includes("ventas") || p.roles?.includes("admin"))}
+      miId={user?.id || ""}
     />
   );
 }

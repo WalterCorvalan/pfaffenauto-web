@@ -3,11 +3,12 @@
 import { useState, useEffect, useRef } from "react";
 import { useSearchParams } from "next/navigation";
 import { supabase2 } from "@/lib/supabase/client";
-import { Search, Send, Bot, Check, Info, ChevronRight, PanelRight, Megaphone } from "lucide-react";
+import { Search, Send, Bot, Check, Info, ChevronRight, PanelRight, Megaphone, Maximize2 } from "lucide-react";
+import LeadDetailModal from "../whatsapp/LeadDetailModal";
 
 interface Perfil { id: string; nombre: string; roles: string[] }
 
-export default function RodiBandeja({ conversacionesIniciales, vendedores }: { conversacionesIniciales: any[]; vendedores: Perfil[] }) {
+export default function RodiBandeja({ conversacionesIniciales, vendedores, miId }: { conversacionesIniciales: any[]; vendedores: Perfil[]; miId: string }) {
   const [conversaciones, setConversaciones] = useState(conversacionesIniciales);
   const [seleccionada, setSeleccionada] = useState<string | null>(null);
   const [mensajes, setMensajes] = useState<any[]>([]);
@@ -18,6 +19,7 @@ export default function RodiBandeja({ conversacionesIniciales, vendedores }: { c
   const [panelAbierto, setPanelAbierto] = useState(true);
   const [notasLocales, setNotasLocales] = useState("");
   const [guardandoNotas, setGuardandoNotas] = useState(false);
+  const [detalleAbierto, setDetalleAbierto] = useState(false);
   const mensajesEndRef = useRef<HTMLDivElement>(null);
   const searchParams = useSearchParams();
 
@@ -205,7 +207,10 @@ export default function RodiBandeja({ conversacionesIniciales, vendedores }: { c
         <div className="w-[300px] bg-white dark:bg-[#111] border-l border-slate-200 dark:border-white/10 flex-col hidden lg:flex shrink-0">
           <div className="h-[60px] p-4 border-b border-slate-200 dark:border-white/10 flex items-center justify-between shrink-0">
             <h3 className="text-[11px] font-bold text-slate-400 uppercase tracking-widest">Detalles</h3>
-            <button onClick={() => setPanelAbierto(false)} className="text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 p-1 rounded-md hover:bg-slate-100 dark:hover:bg-white/5"><ChevronRight className="w-4 h-4" /></button>
+            <div className="flex items-center gap-1">
+              <button onClick={() => setDetalleAbierto(true)} title="Ver ficha completa (tareas, test drives, historial)" className="text-slate-400 hover:text-rose-600 p-1 rounded-md hover:bg-slate-100 dark:hover:bg-white/5"><Maximize2 className="w-4 h-4" /></button>
+              <button onClick={() => setPanelAbierto(false)} className="text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 p-1 rounded-md hover:bg-slate-100 dark:hover:bg-white/5"><ChevronRight className="w-4 h-4" /></button>
+            </div>
           </div>
           <div className="flex-1 overflow-y-auto custom-scrollbar">
             <div className="p-6 border-b border-slate-200 dark:border-white/10 flex flex-col items-center text-center">
@@ -257,6 +262,17 @@ export default function RodiBandeja({ conversacionesIniciales, vendedores }: { c
             </div>
           </div>
         </div>
+      )}
+
+      {detalleAbierto && seleccionada && (
+        <LeadDetailModal
+          leadId={seleccionada}
+          origen="rodi"
+          miId={miId}
+          vendedores={vendedores}
+          onClose={() => setDetalleAbierto(false)}
+          onActualizado={(id, patch) => setConversaciones((prev) => prev.map((c) => (c.id === id ? { ...c, ...patch } : c)))}
+        />
       )}
     </div>
   );
