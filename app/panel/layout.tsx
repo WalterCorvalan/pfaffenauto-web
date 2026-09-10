@@ -599,7 +599,7 @@ export default function PanelV2Layout({
             setTimeout(
               () =>
                 setToast((prev) => (prev?.id === payload.new.id ? null : prev)),
-              10000,
+              5000,
             );
           }
         },

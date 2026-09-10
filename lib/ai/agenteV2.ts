@@ -26,11 +26,15 @@ export const AgentReplySchemaV2 = z.object({
     nombre: z.string().nullable(),
     email: z.string().nullable(),
     telefono: z.string().nullable(),
+    cuil: z.string().nullable().optional(),
+    precio_pedido: z.string().nullable().optional(),
+    zona: z.enum(["casa-central", "don-torcuato"]).nullable().optional(),
   }),
   vehiculo_mencionado: z.object({
     marca: z.string().nullable(),
     modelo: z.string().nullable(),
     categoria: z.enum(["Auto", "Pickup/Camioneta", "SUV", "Utilitario"]).nullable(),
+    puertas: z.number().nullable().optional(),
   }).nullable(),
   presupuesto_mencionado: z.object({
     monto: z.number().positive(),
@@ -38,6 +42,13 @@ export const AgentReplySchemaV2 = z.object({
   }).nullable(),
   pedir_stock_general: z.boolean(),
   pedir_fotos: z.boolean().optional(),
+  pedido_stock: z.object({
+    marca: z.string().nullable(),
+    modelo: z.string().nullable(),
+    presupuesto_max: z.number().nullable(),
+    moneda: z.enum(["USD", "ARS"]).nullable(),
+    puertas: z.number().nullable(),
+  }).nullable().optional(),
 });
 
 export type AgentReplyV2 = z.infer<typeof AgentReplySchemaV2>;
@@ -81,7 +92,8 @@ async function ejecutarBusquedaStock(
   marca: string | null,
   modelo: string | null,
   categoria?: string | null,
-  presupuesto?: { monto: number; moneda: "USD" | "ARS" } | null
+  presupuesto?: { monto: number; moneda: "USD" | "ARS" } | null,
+  puertas?: number | null
 ): Promise<{ resultados: ResultadoStockV2[]; total: number }> {
   const aplicarFiltros = (q: any) => {
     if (marca) q = q.ilike("marca", `%${marca}%`);
@@ -91,6 +103,7 @@ async function ejecutarBusquedaStock(
     // filtro duro: una vez que lo pidió, ninguna alternativa de otra
     // categoría se le vuelve a mostrar en esta búsqueda.
     if (categoria) q = q.eq("categoria", categoria);
+    if (puertas) q = q.eq("puertas", puertas);
     // Sin conversor de dólar propio en v2 todavía — filtramos solo por la
     // moneda que mencionó el cliente, sin intentar convertir la otra.
     if (presupuesto) q = q.eq("moneda_venta", presupuesto.moneda).lte("precio_venta", presupuesto.monto);
@@ -100,7 +113,7 @@ async function ejecutarBusquedaStock(
   const query = aplicarFiltros(
     supabase
       .from("vehiculos")
-      .select("id, marca, modelo, anio, precio_venta, moneda_venta, precio_publicado_ars, precio_publicado_usd, patente, color, km, version, transmision, combustible, categoria, fotos, sucursales!vehiculos_sucursal_id_fkey ( nombre )")
+      .select("id, marca, modelo, anio, precio_venta, moneda_venta, precio_publicado_ars, precio_publicado_usd, patente, color, km, version, transmision, combustible, categoria, puertas, fotos, sucursales!vehiculos_sucursal_id_fkey ( nombre )")
       .in("estado", ["disponible", "reservado"])
   ).limit(modelo ? 3 : 6);
 
@@ -136,8 +149,16 @@ async function extraerVehiculoFallback(ultimoMensaje: string): Promise<{ marca: 
   const modelos = Array.from(new Set(data.map((v) => v.modelo).filter(Boolean)));
 
   // Modelo primero (más específico) -- si el cliente nombra el modelo, la
-  // marca no hace falta para buscar bien.
-  const modeloMatch = modelos.find((m) => m.length >= 3 && texto.includes(m.toLowerCase()));
+  // marca no hace falta para buscar bien. Se compara solo la PRIMERA palabra
+  // del modelo real ("RANGER" de "RANGER XL 3.0 TDI S/C 4X2 PLUS"), no el
+  // nombre completo -- un mensaje corto tipo "la Ranger" nunca iba a
+  // contener la ficha técnica entera, así nunca matcheaba nada.
+  const escapeRegex = (s: string) => s.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+  const modeloMatch = modelos.find((m) => {
+    const primeraPalabra = m.split(/\s+/)[0];
+    if (primeraPalabra.length < 3) return false;
+    return new RegExp(`\\b${escapeRegex(primeraPalabra.toLowerCase())}\\b`).test(texto);
+  });
   const marcaMatch = marcas.find((m) => texto.includes(m.toLowerCase()));
 
   if (!modeloMatch && !marcaMatch) return null;
@@ -154,7 +175,8 @@ export async function buscarStockRealV2(
   marca: string | null,
   modelo: string | null,
   categoria?: string | null,
-  presupuesto?: { monto: number; moneda: "USD" | "ARS" } | null
+  presupuesto?: { monto: number; moneda: "USD" | "ARS" } | null,
+  puertas?: number | null
 ): Promise<{ resultados: ResultadoStockV2[]; esAlternativa: boolean; total: number }> {
   const cat = categoria ?? null;
   const intentos: [string | null, string | null, string | null][] = [
@@ -166,14 +188,21 @@ export async function buscarStockRealV2(
     [null, null, null],
   ];
 
-  const probados = new Set<string>();
-  for (let i = 0; i < intentos.length; i++) {
-    const [m, mo, c] = intentos[i];
-    const clave = `${m}|${mo}|${c}`;
-    if (probados.has(clave)) continue;
-    probados.add(clave);
-    const { resultados, total } = await ejecutarBusquedaStock(m, mo, c, presupuesto);
-    if (resultados.length > 0) return { resultados, esAlternativa: i > 0, total };
+  // Puertas es el filtro más débil de todos -- hoy no todo el stock tiene
+  // ese dato cargado, así que se prueba primero CON el filtro y, si no
+  // aparece nada en ninguna combinación, se repite toda la secuencia SIN
+  // puertas antes de rendirse (evita decir "no hay" solo porque falta cargar
+  // ese campo en un auto que sí está disponible).
+  for (const puertasIntento of puertas ? [puertas, null] : [null]) {
+    const probados = new Set<string>();
+    for (let i = 0; i < intentos.length; i++) {
+      const [m, mo, c] = intentos[i];
+      const clave = `${m}|${mo}|${c}`;
+      if (probados.has(clave)) continue;
+      probados.add(clave);
+      const { resultados, total } = await ejecutarBusquedaStock(m, mo, c, presupuesto, puertasIntento);
+      if (resultados.length > 0) return { resultados, esAlternativa: i > 0 || puertasIntento === null, total };
+    }
   }
   return { resultados: [], esAlternativa: true, total: 0 };
 }
@@ -256,12 +285,12 @@ async function fetchSucursalesInfo(): Promise<SucursalInfo[]> {
 }
 
 export async function generarRespuestaAgenteV2(historial: HistorialMensaje[], canal: string = "whatsapp-v2", nombreBot?: string, vehiculoEnFocoId?: string | null): Promise<
-  | { ok: true; data: AgentReplyV2; fotosParaEnviar: string[]; vehiculoFocoId: string | null }
+  | { ok: true; data: AgentReplyV2; fotosParaEnviar: string[]; vehiculoFocoId: string | null; pedidoStock: AgentReplyV2["pedido_stock"] }
   | { ok: false; error: string }
 > {
   const mensajesCliente = historial.filter((h) => h.role === "user").length;
   if (mensajesCliente > LIMITE_MENSAJES_DURO) {
-    return { ok: true, data: respuestaLimiteAlcanzado(), fotosParaEnviar: [], vehiculoFocoId: null };
+    return { ok: true, data: respuestaLimiteAlcanzado(), fotosParaEnviar: [], vehiculoFocoId: null, pedidoStock: null };
   }
   const sugerirCierre = mensajesCliente >= LIMITE_MENSAJES_SUAVE;
 
@@ -284,7 +313,7 @@ export async function generarRespuestaAgenteV2(historial: HistorialMensaje[], ca
   // comprar en respuesta a que quería vender el propio.
   const esIntencionDeCompra = respuesta.intencion !== "VENTA" && respuesta.intencion !== "CONSIGNACION";
 
-  const noEncontroNadaParaBuscar = esIntencionDeCompra && !respuesta.vehiculo_mencionado?.modelo && !respuesta.vehiculo_mencionado?.marca && !respuesta.vehiculo_mencionado?.categoria && !respuesta.presupuesto_mencionado && !respuesta.pedir_stock_general;
+  const noEncontroNadaParaBuscar = esIntencionDeCompra && !respuesta.vehiculo_mencionado?.modelo && !respuesta.vehiculo_mencionado?.marca && !respuesta.vehiculo_mencionado?.categoria && !respuesta.vehiculo_mencionado?.puertas && !respuesta.presupuesto_mencionado && !respuesta.pedir_stock_general;
   if (noEncontroNadaParaBuscar) {
     const ultimoMensajeCliente = [...historial].reverse().find((h) => h.role === "user")?.content;
     const fallback = ultimoMensajeCliente ? await extraerVehiculoFallback(ultimoMensajeCliente) : null;
@@ -293,13 +322,14 @@ export async function generarRespuestaAgenteV2(historial: HistorialMensaje[], ca
     }
   }
 
-  if (esIntencionDeCompra && (respuesta.vehiculo_mencionado?.modelo || respuesta.vehiculo_mencionado?.marca || respuesta.vehiculo_mencionado?.categoria || respuesta.presupuesto_mencionado || respuesta.pedir_stock_general)) {
+  if (esIntencionDeCompra && (respuesta.vehiculo_mencionado?.modelo || respuesta.vehiculo_mencionado?.marca || respuesta.vehiculo_mencionado?.categoria || respuesta.vehiculo_mencionado?.puertas || respuesta.presupuesto_mencionado || respuesta.pedir_stock_general)) {
     const categoriaSolicitada = respuesta.vehiculo_mencionado?.categoria ?? null;
     const { resultados, esAlternativa, total } = await buscarStockRealV2(
       respuesta.vehiculo_mencionado?.marca ?? null,
       respuesta.vehiculo_mencionado?.modelo ?? null,
       categoriaSolicitada,
-      respuesta.presupuesto_mencionado
+      respuesta.presupuesto_mencionado,
+      respuesta.vehiculo_mencionado?.puertas ?? null
     );
     resultadosBusqueda = resultados;
 
@@ -328,6 +358,7 @@ export async function generarRespuestaAgenteV2(historial: HistorialMensaje[], ca
         presupuesto_mencionado: result2.data.presupuesto_mencionado,
         datos_detectados: result2.data.datos_detectados,
         intencion: result2.data.intencion,
+        pedido_stock: result2.data.pedido_stock,
       };
     } else {
       console.error("[agenteV2] error en 2da pasada (stock):", result2.error);
@@ -375,5 +406,14 @@ export async function generarRespuestaAgenteV2(historial: HistorialMensaje[], ca
     }
   }
 
-  return { ok: true, data: respuesta, fotosParaEnviar, vehiculoFocoId };
+  // Link al cotizador con el auto de compra ya en foco: si hay permuta en
+  // juego y ya sabemos qué auto quiere comprar, el link debe pre-cargar esa
+  // referencia (?permuta=<id>, mismo parámetro que usa el botón "¿tenés un
+  // usado para entregar?" del detalle de auto) -- sin esto el cliente entra
+  // al cotizador a ciegas aunque el bot ya sabía perfectamente qué auto buscaba.
+  if (vehiculoFocoId && respuesta.datos_detectados?.tiene_permuta && respuesta.reply.includes("/cotizador")) {
+    respuesta = { ...respuesta, reply: respuesta.reply.replace(/\/cotizador(?!\?)/g, `/cotizador?permuta=${vehiculoFocoId}`) };
+  }
+
+  return { ok: true, data: respuesta, fotosParaEnviar, vehiculoFocoId, pedidoStock: respuesta.pedido_stock ?? null };
 }

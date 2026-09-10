@@ -5,6 +5,7 @@ import { generarRespuestaAgenteV2, dividirRespuestaEnMensajes } from "@/lib/ai/a
 import { isAiConfiguredV2 } from "@/lib/ai/indexV2";
 import { rateLimit, ipDesdeRequest } from "@/lib/rateLimit";
 import { registrarError } from "@/lib/panel/logger";
+import { notificarEncargados } from "@/lib/panel/notificaciones";
 
 // Endpoint público (sin sesión — lo llama el widget del sitio, un visitante
 // anónimo) que procesa un mensaje de Rodi. Identidad = sessionId generado
@@ -107,6 +108,7 @@ async function procesarMensaje({ sessionId, texto, origenPagina, nombre, telefon
   }
 
   const { reply, handoff, calificacion, resumen_handoff, datos_detectados } = result.data;
+  const { pedidoStock } = result;
   const partes = dividirRespuestaEnMensajes(reply);
 
   for (const parte of partes) {
@@ -119,18 +121,48 @@ async function procesarMensaje({ sessionId, texto, origenPagina, nombre, telefon
   // la charla se corte antes de derivar a un vendedor (antes solo se
   // guardaban si venían en el body inicial del widget, nunca lo que la IA
   // extraía del texto de la conversación).
-  if (datos_detectados?.nombre || datos_detectados?.email || datos_detectados?.telefono) {
+  if (datos_detectados?.nombre || datos_detectados?.email || datos_detectados?.telefono || datos_detectados?.cuil) {
     const patch: Record<string, unknown> = {};
     if (datos_detectados.nombre && !conversacion.nombre_contacto) patch.nombre_contacto = datos_detectados.nombre;
     if (datos_detectados.email && !conversacion.email_contacto) patch.email_contacto = datos_detectados.email;
     if (datos_detectados.telefono && !conversacion.telefono_contacto) patch.telefono_contacto = datos_detectados.telefono;
+    if (datos_detectados.cuil) patch.cuil = datos_detectados.cuil;
     if (Object.keys(patch).length > 0) await supabase.from("rodi_conversaciones").update(patch).eq("id", conversacion.id);
+  }
+
+  // Sin stock que coincida: mismo criterio que WhatsApp -- registrar el
+  // pedido con lo que se sabe, para avisar apenas entre algo que coincida.
+  if (pedidoStock && (pedidoStock.marca || pedidoStock.modelo || pedidoStock.presupuesto_max || pedidoStock.puertas)) {
+    const telefonoOEmail = datos_detectados?.telefono || conversacion.telefono_contacto || datos_detectados?.email || conversacion.email_contacto;
+    if (telefonoOEmail) {
+      const { data: convVendedor } = await supabase.from("rodi_conversaciones").select("vendedor_id").eq("id", conversacion.id).single();
+      await supabase.from("pedidos").insert({
+        telefono: datos_detectados?.telefono || conversacion.telefono_contacto || null,
+        nombre_cliente: datos_detectados?.nombre || conversacion.nombre_contacto || null,
+        marca: pedidoStock.marca, modelo: pedidoStock.modelo,
+        presupuesto_max: pedidoStock.presupuesto_max, moneda: pedidoStock.moneda,
+        puertas: pedidoStock.puertas,
+        vendedor_id: convVendedor?.vendedor_id ?? null,
+        origen: "Rodi", tipo: "avisame", estado: "activo",
+      });
+    }
   }
   if (handoff) {
     await supabase.from("rodi_conversaciones").update({
       handoff_at: new Date().toISOString(), handoff_reason: "cliente_pidio_humano", ai_habilitada: false, ai_pausada_en: new Date().toISOString(),
       handoff_resumen: resumen_handoff || null,
     }).eq("id", conversacion.id);
+
+    // Venta/consignación/permuta: mismo criterio que WhatsApp -- avisa
+    // puntual al encargado de la sucursal elegida, prioridad alta (dispara
+    // el cartelito de 5s además de la campanita).
+    if (datos_detectados?.zona) {
+      const { data: sucursalElegida } = await supabase.from("sucursales").select("id").eq("slug", datos_detectados.zona).maybeSingle();
+      if (sucursalElegida) {
+        const linkNoti = `/panel/rodi?conversacion=${conversacion.id}`;
+        notificarEncargados(supabase, resumen_handoff || "Cliente de Rodi ofrece su auto", linkNoti, "rodi_venta_zona", sucursalElegida.id, "alta").catch((err) => console.error("[rodi] error notificando zona:", err));
+      }
+    }
   }
 
   return NextResponse.json({ replies: partes, handoff });

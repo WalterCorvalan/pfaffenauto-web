@@ -311,6 +311,8 @@ export default function LeadDetailModal({
     await registrarEvento("test_drive", `Test drive marcado como "${nuevo}"`);
   };
 
+  const LINK_ORIGEN: Record<string, string> = { whatsapp: "/panel/whatsapp", instagram: "/panel/whatsapp?canal=instagram", rodi: "/panel/rodi", manual: "/panel/clientes" };
+
   const pedirAsistencia = async () => {
     if (!asistenciaParaId) return alert("Elegí a quién pedirle ayuda.");
     setGuardandoAsistencia(true);
@@ -318,6 +320,15 @@ export default function LeadDetailModal({
       await patch({ asistencia_solicitada: true, asistencia_nota: notaAsistencia || null, asistencia_para: asistenciaParaId, asistencia_atendida: false });
       const nombre = vendedores.find((v) => v.id === asistenciaParaId)?.nombre;
       await registrarEvento("asistencia", `Asistencia pedida a ${nombre}` + (notaAsistencia ? `: ${notaAsistencia}` : ""));
+      // Prioridad alta = dispara el cartelito de 5s (no solo la campanita) --
+      // pedir ayuda es urgente, no debería depender de que el otro vendedor
+      // entre a mirar la campana por las suyas.
+      await supabase2.from("alertas").insert({
+        destinatario_id: asistenciaParaId, tipo: "asistencia_pedida",
+        titulo: `Un compañero te pidió ayuda con ${contacto?.nombre_perfil || "un lead"}` + (notaAsistencia ? `: ${notaAsistencia}` : ""),
+        link: `${LINK_ORIGEN[origen] || "/panel/whatsapp"}?conversacion=${leadId}`,
+        prioridad: "alta",
+      });
       setShowAsistenciaModal(false); setNotaAsistencia("");
     } catch { alert("No se pudo pedir asistencia."); } finally { setGuardandoAsistencia(false); }
   };

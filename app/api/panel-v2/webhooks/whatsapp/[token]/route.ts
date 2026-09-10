@@ -251,7 +251,7 @@ async function ejecutarAgente(conversacionId: string) {
   }
 
   const { reply, handoff, calificacion, resumen_handoff, datos_detectados } = result.data;
-  const { fotosParaEnviar, vehiculoFocoId } = result;
+  const { fotosParaEnviar, vehiculoFocoId, pedidoStock } = result;
 
   const estadoSegunCalificacion = calificacion === "caliente" ? "calificando" : undefined;
   const patchConversacion: Record<string, unknown> = { calificacion };
@@ -262,13 +262,36 @@ async function ejecutarAgente(conversacionId: string) {
   // Nombre y mail que el cliente vaya dando durante la charla se guardan en
   // el contacto apenas se detectan, sin esperar al handoff — así quedan
   // aunque la charla se corte antes de derivar a un vendedor.
-  if (datos_detectados?.nombre || datos_detectados?.email) {
+  let contactoIdActual: string | null = null;
+  if (datos_detectados?.nombre || datos_detectados?.email || datos_detectados?.cuil) {
     const { data: conv } = await supabase.from("whatsapp_conversaciones").select("contacto_id").eq("id", conversacionId).single();
-    if (conv?.contacto_id) {
+    contactoIdActual = conv?.contacto_id ?? null;
+    if (contactoIdActual) {
       const patchContacto: Record<string, unknown> = {};
       if (datos_detectados.nombre) patchContacto.nombre_perfil = datos_detectados.nombre;
       if (datos_detectados.email) patchContacto.email = datos_detectados.email;
-      await supabase.from("whatsapp_contactos").update(patchContacto).eq("id", conv.contacto_id);
+      if (datos_detectados.cuil) patchContacto.cuil = datos_detectados.cuil;
+      await supabase.from("whatsapp_contactos").update(patchContacto).eq("id", contactoIdActual);
+    }
+  }
+
+  // Sin stock que coincida: el bot ya avisó que va a notificar apenas entre
+  // un auto así -- queda registrado en Pedidos con lo que se sabe hasta
+  // ahora (aunque sea parcial), para que reasignar_pedidos_vencidos y el
+  // match automático de stock nuevo lo tengan en cuenta.
+  if (pedidoStock && (pedidoStock.marca || pedidoStock.modelo || pedidoStock.presupuesto_max || pedidoStock.puertas)) {
+    const { data: convParaPedido } = await supabase.from("whatsapp_conversaciones").select("vendedor_id, contacto_id, whatsapp_contactos(telefono, nombre_perfil)").eq("id", conversacionId).single();
+    const telefonoContacto = (convParaPedido?.whatsapp_contactos as any)?.telefono;
+    if (telefonoContacto) {
+      await supabase.from("pedidos").insert({
+        telefono: telefonoContacto,
+        nombre_cliente: datos_detectados?.nombre || (convParaPedido?.whatsapp_contactos as any)?.nombre_perfil || null,
+        marca: pedidoStock.marca, modelo: pedidoStock.modelo,
+        presupuesto_max: pedidoStock.presupuesto_max, moneda: pedidoStock.moneda,
+        puertas: pedidoStock.puertas,
+        vendedor_id: convParaPedido?.vendedor_id ?? null,
+        origen: "WhatsApp", tipo: "avisame", estado: "activo",
+      });
     }
   }
 
@@ -298,6 +321,17 @@ async function ejecutarAgente(conversacionId: string) {
       notificarPersona(supabase, convHandoff.vendedor_id, "whatsapp_handoff", mensajeNoti, linkNoti).catch((err) => console.error("[webhook-v2] error notificando handoff:", err));
     } else {
       notificarEncargados(supabase, mensajeNoti, linkNoti, "whatsapp_handoff").catch((err) => console.error("[webhook-v2] error notificando handoff:", err));
+    }
+
+    // Venta/consignación/permuta del auto del cliente: avisa puntual al
+    // encargado de la sucursal que el cliente eligió (Villa de Mayo/Casa
+    // Central o Don Torcuato), prioridad alta -- dispara el cartelito de 5s
+    // además de la campanita, para que no se pierda un auto que puede entrar.
+    if (datos_detectados?.zona) {
+      const { data: sucursalElegida } = await supabase.from("sucursales").select("id").eq("slug", datos_detectados.zona).maybeSingle();
+      if (sucursalElegida) {
+        notificarEncargados(supabase, mensajeNoti, linkNoti, "whatsapp_venta_zona", sucursalElegida.id, "alta").catch((err) => console.error("[webhook-v2] error notificando zona:", err));
+      }
     }
   }
 }

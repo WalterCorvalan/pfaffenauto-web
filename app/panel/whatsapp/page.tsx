@@ -5,7 +5,7 @@ export default async function WhatsappPage() {
   const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();
 
-  const [waRes, igRes, vendedoresRes] = await Promise.all([
+  const [waRes, igRes, vendedoresRes, miPerfilRes] = await Promise.all([
     supabase
       .from("whatsapp_conversaciones")
       .select(`
@@ -23,13 +23,21 @@ export default async function WhatsappPage() {
       `)
       .order("last_message_at", { ascending: false }),
     supabase.from("perfiles").select("id, nombre, roles").eq("activo", true).order("nombre"),
+    user?.id ? supabase.from("perfiles").select("roles").eq("id", user.id).single() : Promise.resolve({ data: null }),
   ]);
+
+  // Un vendedor (rol "ventas" sin "admin") solo puede reasignar entre otros
+  // vendedores -- no ve encargados/admin en el selector. Admin ve todos.
+  const soyAdmin = miPerfilRes.data?.roles?.includes("admin") ?? false;
+  const vendedores = (vendedoresRes.data || []).filter((p) =>
+    soyAdmin ? p.roles?.includes("ventas") || p.roles?.includes("admin") : p.roles?.includes("ventas")
+  );
 
   return (
     <ConversacionesShell
       conversacionesIniciales={waRes.data || []}
       conversacionesInstagramIniciales={igRes.data || []}
-      vendedores={(vendedoresRes.data || []).filter((p) => p.roles?.includes("ventas") || p.roles?.includes("admin"))}
+      vendedores={vendedores}
       miId={user?.id || ""}
     />
   );

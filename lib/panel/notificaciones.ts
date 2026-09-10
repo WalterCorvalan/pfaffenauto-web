@@ -13,7 +13,7 @@ export async function notificarPersona(supabase: SupabaseClient, destinatarioId:
 // tiene el rol "encargado" (hoy nadie lo tiene asignado todavía), cae al
 // comportamiento viejo -- avisar a TODOS los admin/encargado -- para no
 // perder silenciosamente un aviso importante mientras se carga esa data.
-export async function notificarEncargados(supabase: SupabaseClient, mensaje: string, link: string, tipo: string = "precio_a_confirmar", sucursalId?: string | null) {
+export async function notificarEncargados(supabase: SupabaseClient, mensaje: string, link: string, tipo: string = "precio_a_confirmar", sucursalId?: string | null, prioridad: string = "media") {
   const { data: candidatos } = await supabase.from("perfiles").select("id, roles, sucursal_id").or("roles.cs.{admin},roles.cs.{encargado}").eq("activo", true);
   if (!candidatos || candidatos.length === 0) return;
 
@@ -24,7 +24,7 @@ export async function notificarEncargados(supabase: SupabaseClient, mensaje: str
   }
 
   await supabase.from("alertas").insert(
-    destinatarios.map((e) => ({ destinatario_id: e.id, tipo, titulo: mensaje, link, prioridad: "media" }))
+    destinatarios.map((e) => ({ destinatario_id: e.id, tipo, titulo: mensaje, link, prioridad }))
   );
 }
 
