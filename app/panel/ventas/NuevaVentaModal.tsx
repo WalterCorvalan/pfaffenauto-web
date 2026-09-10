@@ -44,6 +44,7 @@ interface Props {
   miId: string;
   initial?: VentaPrefill;
   editando?: any;
+  cuentas: any[];
   onClose: () => void;
   onCreado: (venta: any) => void;
 }
@@ -55,7 +56,7 @@ const nuevaPermuta = (): Permuta => ({
   segmento: "", tipo: "", marcaMotor: "", numeroMotor: "", marcaChasis: "", numeroChasis: "", combustible: "", radicadoLocalidad: "", radicadoProvincia: "", tasadoEn: "",
 });
 
-export default function NuevaVentaModal({ perfiles, clientes, vehiculos, miId, initial, editando, onClose, onCreado }: Props) {
+export default function NuevaVentaModal({ perfiles, clientes, vehiculos, miId, initial, editando, cuentas, onClose, onCreado }: Props) {
   const esEdicion = !!editando;
   const miPerfil = perfiles.find((p) => p.id === miId);
   const puedeGenerarCuotas = miPerfil?.roles?.some((r) => r === "admin" || r === "finanzas") ?? false;
@@ -112,6 +113,8 @@ export default function NuevaVentaModal({ perfiles, clientes, vehiculos, miId, i
   const [seguroImporteMensual, setSeguroImporteMensual] = useState(editando?.seguro_importe_mensual ? String(editando.seguro_importe_mensual) : "");
   const [pagoEfectivoArs, setPagoEfectivoArs] = useState(editando?.pago_efectivo_ars ? String(editando.pago_efectivo_ars) : "");
   const [pagoEfectivoUsd, setPagoEfectivoUsd] = useState(editando?.pago_efectivo_usd ? String(editando.pago_efectivo_usd) : "");
+  const [pagoEfectivoArsCuentaId, setPagoEfectivoArsCuentaId] = useState(editando?.pago_efectivo_ars_cuenta_id || "");
+  const [pagoEfectivoUsdCuentaId, setPagoEfectivoUsdCuentaId] = useState(editando?.pago_efectivo_usd_cuenta_id || "");
   const [tipoCambio, setTipoCambio] = useState(editando?.tipo_cambio ? String(editando.tipo_cambio) : "");
   const [patentamientoMonto, setPatentamientoMonto] = useState(editando?.patentamiento_transferencia_monto ? String(editando.patentamiento_transferencia_monto) : "");
 
@@ -269,9 +272,30 @@ export default function NuevaVentaModal({ perfiles, clientes, vehiculos, miId, i
     return { id: nuevo?.id || null, creadoNuevo: !!nuevo };
   };
 
+  const guardarPagoEfectivo = async (ventaId: string) => {
+    const { error } = await supabase2.rpc("registrar_pago_efectivo_venta", {
+      p_venta_id: ventaId,
+      p_monto_ars: pagoEfectivoArs ? Number(pagoEfectivoArs) : null,
+      p_cuenta_ars_id: pagoEfectivoArs ? (pagoEfectivoArsCuentaId || null) : null,
+      p_monto_usd: pagoEfectivoUsd ? Number(pagoEfectivoUsd) : null,
+      p_cuenta_usd_id: pagoEfectivoUsd ? (pagoEfectivoUsdCuentaId || null) : null,
+      p_tipo_cambio: tipoCambio ? Number(tipoCambio) : null,
+      p_fecha: fechaCierre,
+    });
+    if (error) throw error;
+  };
+
   const guardarEdicion = async () => {
     if (!precioVenta || !compradorNombre.trim()) {
       setError("Completá al menos el precio de venta y el nombre del comprador.");
+      return;
+    }
+    if (pagoEfectivoArs && !pagoEfectivoArsCuentaId) {
+      setError("Elegí a qué caja entra el efectivo en ARS.");
+      return;
+    }
+    if (pagoEfectivoUsd && !pagoEfectivoUsdCuentaId) {
+      setError("Elegí a qué caja entra el efectivo en USD.");
       return;
     }
     setGuardando(true);
@@ -297,8 +321,7 @@ export default function NuevaVentaModal({ perfiles, clientes, vehiculos, miId, i
         prenda_seguro_monto: metodoPago === "Financiado" && prendaSeguroMonto ? Number(prendaSeguroMonto) : null,
         seguro_contratado: seguroContratado, seguro_compania: seguroContratado ? (seguroCompania || null) : null,
         seguro_importe_mensual: seguroContratado && seguroImporteMensual ? Number(seguroImporteMensual) : null,
-        pago_efectivo_ars: pagoEfectivoArs ? Number(pagoEfectivoArs) : null, pago_efectivo_usd: pagoEfectivoUsd ? Number(pagoEfectivoUsd) : null,
-        tipo_cambio: tipoCambio ? Number(tipoCambio) : null, patentamiento_transferencia_monto: patentamientoMonto ? Number(patentamientoMonto) : null,
+        patentamiento_transferencia_monto: patentamientoMonto ? Number(patentamientoMonto) : null,
         responsable_consignacion_id: responsableConsignacion || null,
         gestor_asignado_id: gestorAsignado || null,
         comision_manual: comisionManual, comision_vendedor_pct: Number(comisionVendedorEfectiva), comision_consignacion_pct: Number(comisionConsignacionPct),
@@ -313,6 +336,8 @@ export default function NuevaVentaModal({ perfiles, clientes, vehiculos, miId, i
 
       const { data: venta, error: dbError } = await supabase2.from("ventas").update(payload).eq("id", editando.id).select().single();
       if (dbError) throw dbError;
+
+      await guardarPagoEfectivo(editando.id);
 
       if (recordatoriosNuevos.length > 0) {
         await supabase2.from("venta_recordatorios").insert(
@@ -338,6 +363,14 @@ export default function NuevaVentaModal({ perfiles, clientes, vehiculos, miId, i
     }
     if (!forzarBorrador && !vendedorId) {
       setError("Falta el vendedor que cerró la venta.");
+      return;
+    }
+    if (pagoEfectivoArs && !pagoEfectivoArsCuentaId) {
+      setError("Elegí a qué caja entra el efectivo en ARS.");
+      return;
+    }
+    if (pagoEfectivoUsd && !pagoEfectivoUsdCuentaId) {
+      setError("Elegí a qué caja entra el efectivo en USD.");
       return;
     }
     setGuardando(true);
@@ -371,8 +404,7 @@ export default function NuevaVentaModal({ perfiles, clientes, vehiculos, miId, i
         prenda_seguro_monto: metodoPago === "Financiado" && prendaSeguroMonto ? Number(prendaSeguroMonto) : null,
         seguro_contratado: seguroContratado, seguro_compania: seguroContratado ? (seguroCompania || null) : null,
         seguro_importe_mensual: seguroContratado && seguroImporteMensual ? Number(seguroImporteMensual) : null,
-        pago_efectivo_ars: pagoEfectivoArs ? Number(pagoEfectivoArs) : null, pago_efectivo_usd: pagoEfectivoUsd ? Number(pagoEfectivoUsd) : null,
-        tipo_cambio: tipoCambio ? Number(tipoCambio) : null, patentamiento_transferencia_monto: patentamientoMonto ? Number(patentamientoMonto) : null,
+        patentamiento_transferencia_monto: patentamientoMonto ? Number(patentamientoMonto) : null,
         responsable_consignacion_id: responsableConsignacion || null,
         gestor_asignado_id: gestorAsignado || null,
         comision_manual: comisionManual, comision_vendedor_pct: Number(comisionVendedorEfectiva), comision_consignacion_pct: Number(comisionConsignacionPct),
@@ -385,6 +417,11 @@ export default function NuevaVentaModal({ perfiles, clientes, vehiculos, miId, i
       };
 
       const { data: venta, error: dbError } = await supabase2.from("ventas").insert(payload).select().single();
+      if (!dbError && venta && (pagoEfectivoArs || pagoEfectivoUsd)) {
+        try { await guardarPagoEfectivo(venta.id); } catch (errEfectivo: any) {
+          alert(`La venta se guardó, pero no se pudo acreditar el efectivo en Tesorería: ${errEfectivo.message}. Cargalo a mano desde la edición de la venta.`);
+        }
+      }
       if (dbError) {
         // Si el cliente se creó recién en resolverCliente(), ya quedó con
         // pipeline_stage="cerrado" aunque la venta nunca se guardó -- lo
@@ -725,6 +762,28 @@ export default function NuevaVentaModal({ perfiles, clientes, vehiculos, miId, i
                   <div><label className={labelClass}>Tipo de cambio</label><input type="number" value={tipoCambio} onChange={(e) => setTipoCambio(e.target.value)} className={inputClass} /></div>
                   <div><label className={labelClass}>Patent. / Transf. ($)</label><input type="number" value={patentamientoMonto} onChange={(e) => setPatentamientoMonto(e.target.value)} className={inputClass} /></div>
                 </div>
+                {(!!pagoEfectivoArs || !!pagoEfectivoUsd) && (
+                  <div className="grid grid-cols-2 gap-3 mt-3">
+                    {!!pagoEfectivoArs && (
+                      <div>
+                        <label className={labelClass}>Caja destino (ARS) *</label>
+                        <select value={pagoEfectivoArsCuentaId} onChange={(e) => setPagoEfectivoArsCuentaId(e.target.value)} className={inputClass}>
+                          <option value="">— elegir —</option>
+                          {cuentas.filter((c) => c.moneda === "ARS").map((c) => <option key={c.id} value={c.id}>{c.nombre}</option>)}
+                        </select>
+                      </div>
+                    )}
+                    {!!pagoEfectivoUsd && (
+                      <div>
+                        <label className={labelClass}>Caja destino (USD) *</label>
+                        <select value={pagoEfectivoUsdCuentaId} onChange={(e) => setPagoEfectivoUsdCuentaId(e.target.value)} className={inputClass}>
+                          <option value="">— elegir —</option>
+                          {cuentas.filter((c) => c.moneda === "USD").map((c) => <option key={c.id} value={c.id}>{c.nombre}</option>)}
+                        </select>
+                      </div>
+                    )}
+                  </div>
+                )}
               </div>
 
               {!esEdicion && (

@@ -292,7 +292,7 @@ export default function VentasClient({
 
       {modalNueva && (
         <NuevaVentaModal
-          perfiles={perfiles} clientes={clientes} vehiculos={vehiculos} miId={miId} initial={prefill || undefined}
+          perfiles={perfiles} clientes={clientes} vehiculos={vehiculos} miId={miId} initial={prefill || undefined} cuentas={cuentas}
           onClose={() => { setModalNueva(false); setPrefill(null); }}
           onCreado={(v) => setVentas((prev) => [v, ...prev])}
         />
@@ -300,7 +300,7 @@ export default function VentasClient({
 
       {editando && (
         <NuevaVentaModal
-          perfiles={perfiles} clientes={clientes} vehiculos={vehiculos} miId={miId} editando={editando}
+          perfiles={perfiles} clientes={clientes} vehiculos={vehiculos} miId={miId} editando={editando} cuentas={cuentas}
           onClose={() => setEditando(null)}
           onCreado={(v) => { setVentas((prev) => prev.map((x) => (x.id === v.id ? { ...x, ...v } : x))); setEditando(null); }}
         />
