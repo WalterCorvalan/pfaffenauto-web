@@ -474,7 +474,10 @@ export default function ChatClient({
                     <div key={m.id} className={`flex ${out ? "justify-end" : "justify-start"}`}>
                       <div className={`max-w-[80%] xl:max-w-[65%] flex flex-col ${out ? "items-end" : "items-start"}`}>
                         <div className={`rounded-[10px] px-3 py-2 text-[14.5px] shadow-sm border ${out ? burbujaOut : burbujaIn} ${out ? "rounded-tr-none" : "rounded-tl-none"}`}>
-                          <p className="leading-relaxed whitespace-pre-wrap">{m.texto}</p>
+                          {m.tipo === "image" && m.media_url && (
+                            <img src={m.media_url} alt="Foto del vehículo" className="rounded-lg max-w-[260px] max-h-[260px] object-cover mb-1" />
+                          )}
+                          {m.texto && <p className="leading-relaxed whitespace-pre-wrap">{m.texto}</p>}
                           <div className={`flex items-center justify-end gap-1 mt-1 ${out && !esIG ? "opacity-60" : "opacity-70"}`}>
                             {out && m.ai_generado && <Bot className="w-3 h-3" />}
                             <span className="text-[10px] font-medium">{formatDate(m.created_at)}</span>
