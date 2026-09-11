@@ -260,7 +260,7 @@ async function ejecutarAgente(conversacionId: string) {
     return;
   }
 
-  const { reply, handoff, calificacion, resumen_handoff, datos_detectados } = result.data;
+  const { reply, handoff, pausar_sin_notificar, calificacion, resumen_handoff, datos_detectados } = result.data;
   const { fotosParaEnviar, vehiculoFocoId, pedidoStock } = result;
 
   const estadoSegunCalificacion = calificacion === "caliente" ? "calificando" : undefined;
@@ -281,7 +281,8 @@ async function ejecutarAgente(conversacionId: string) {
       if (datos_detectados.nombre) patchContacto.nombre_perfil = datos_detectados.nombre;
       if (datos_detectados.email) patchContacto.email = datos_detectados.email;
       if (datos_detectados.cuil) patchContacto.cuil = datos_detectados.cuil;
-      await supabase.from("whatsapp_contactos").update(patchContacto).eq("id", contactoIdActual);
+      const { error: errorContacto } = await supabase.from("whatsapp_contactos").update(patchContacto).eq("id", contactoIdActual);
+      if (errorContacto) registrarError("webhook-v2:patch-contacto", errorContacto, { conversacionId });
     }
   }
 
@@ -325,10 +326,18 @@ async function ejecutarAgente(conversacionId: string) {
   }
 
   if (handoff) {
+    // CLIENTE OFENSIVO -- el bot ya respondió con altura y se pausa (misma
+    // mecánica que un handoff normal, ai_habilitada false), pero A PROPÓSITO
+    // no se asigna vendedor, no se notifica a nadie, ni se crea visita: es
+    // una charla que se enfría sola, no una venta real para avisarle a un
+    // vendedor. Si más adelante el cliente escribe algo normal, el flujo de
+    // "reactivar tras pausa" ya existente lo retoma como cualquier otro.
     await supabase.from("whatsapp_conversaciones").update({
-      handoff_at: new Date().toISOString(), handoff_reason: "cliente_pidio_humano",
+      handoff_at: new Date().toISOString(), handoff_reason: pausar_sin_notificar ? "cliente_ofensivo" : "cliente_pidio_humano",
       handoff_resumen: resumen_handoff || null, ai_habilitada: false,
     }).eq("id", conversacionId);
+
+    if (pausar_sin_notificar) return;
 
     const { data: convHandoff } = await supabase.from("whatsapp_conversaciones").select("vendedor_id, contacto_id, whatsapp_contactos(telefono, nombre_perfil)").eq("id", conversacionId).single();
     const linkNoti = `/panel/whatsapp?conversacion=${conversacionId}`;

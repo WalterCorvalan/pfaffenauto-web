@@ -112,7 +112,7 @@ async function procesarMensaje({ sessionId, texto, origenPagina, nombre, telefon
     return NextResponse.json({ replies: ["¡Hola! Gracias por escribirnos a Pfaffen Autos. En breve te contacta uno de nuestros asesores. 🚗"], handoff: false });
   }
 
-  const { reply, handoff, calificacion, resumen_handoff, datos_detectados } = result.data;
+  const { reply, handoff, pausar_sin_notificar, calificacion, resumen_handoff, datos_detectados } = result.data;
   const { pedidoStock, vehiculoFocoId } = result;
   const partes = dividirRespuestaEnMensajes(reply);
 
@@ -134,7 +134,10 @@ async function procesarMensaje({ sessionId, texto, origenPagina, nombre, telefon
     if (datos_detectados.email && !conversacion.email_contacto) patch.email_contacto = datos_detectados.email;
     if (datos_detectados.telefono && !conversacion.telefono_contacto) patch.telefono_contacto = datos_detectados.telefono;
     if (datos_detectados.cuil) patch.cuil = datos_detectados.cuil;
-    if (Object.keys(patch).length > 0) await supabase.from("rodi_conversaciones").update(patch).eq("id", conversacion.id);
+    if (Object.keys(patch).length > 0) {
+      const { error: errorPatch } = await supabase.from("rodi_conversaciones").update(patch).eq("id", conversacion.id);
+      if (errorPatch) registrarError("api/panel/rodi/mensaje:patch-contacto", errorPatch, { conversacionId: conversacion.id });
+    }
   }
 
   // Sin stock que coincida: mismo criterio que WhatsApp -- registrar el
@@ -165,10 +168,17 @@ async function procesarMensaje({ sessionId, texto, origenPagina, nombre, telefon
     }
   }
   if (handoff) {
+    // CLIENTE OFENSIVO -- mismo criterio que WhatsApp: se pausa, pero no se
+    // asigna vendedor ni se notifica a nadie, se enfría sola. handoff_reason
+    // distinto para que el trigger de la base (trg_rodi_handoff, notifica en
+    // CUALQUIER handoff normal) lo pueda excluir -- ver migración
+    // sql_lookup_trigger_rodi_handoff.sql.
     await supabase.from("rodi_conversaciones").update({
-      handoff_at: new Date().toISOString(), handoff_reason: "cliente_pidio_humano", ai_habilitada: false, ai_pausada_en: new Date().toISOString(),
+      handoff_at: new Date().toISOString(), handoff_reason: pausar_sin_notificar ? "cliente_ofensivo" : "cliente_pidio_humano", ai_habilitada: false, ai_pausada_en: new Date().toISOString(),
       handoff_resumen: resumen_handoff || null,
     }).eq("id", conversacion.id);
+
+    if (pausar_sin_notificar) return NextResponse.json({ replies: partes, handoff });
 
     const linkNoti = `/panel/rodi?conversacion=${conversacion.id}`;
     const mensajeNoti = resumen_handoff || "Cliente de Rodi ofrece su auto";

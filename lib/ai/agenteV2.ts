@@ -16,6 +16,7 @@ const supabase = createClient(
 export const AgentReplySchemaV2 = z.object({
   reply: z.string(),
   handoff: z.boolean(),
+  pausar_sin_notificar: z.boolean().optional(),
   resumen_handoff: z.string().nullable(),
   intencion: z.enum(["COMPRA", "VENTA", "CONSIGNACION", "COMPRA_CON_PERMUTA", "HABLAR_CON_ASESOR", "OTRA_CONSULTA"]).nullable(),
   calificacion: z.enum(["caliente", "tibio", "frio"]).nullable(),
