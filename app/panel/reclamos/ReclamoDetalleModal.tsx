@@ -63,6 +63,14 @@ export default function ReclamoDetalleModal({ reclamoId, miId, perfiles, onClose
   const [notaCierre, setNotaCierre] = useState("");
   const [subiendo, setSubiendo] = useState(false);
   const fileRef = useRef<HTMLInputElement>(null);
+  const [editando, setEditando] = useState(false);
+  const [guardandoEdicion, setGuardandoEdicion] = useState(false);
+  const [edCliente, setEdCliente] = useState("");
+  const [edTelefono, setEdTelefono] = useState("");
+  const [edEmail, setEdEmail] = useState("");
+  const [edReferencia, setEdReferencia] = useState("");
+  const [edDescripcion, setEdDescripcion] = useState("");
+  const [edPrioridad, setEdPrioridad] = useState("Normal");
 
   const cargar = async () => {
     const [{ data: r }, { data: s }, { data: a }] = await Promise.all([
@@ -159,6 +167,43 @@ export default function ReclamoDetalleModal({ reclamoId, miId, perfiles, onClose
     );
   };
 
+  const abrirEdicion = () => {
+    setEdCliente(reclamo.cliente_nombre || "");
+    setEdTelefono(reclamo.cliente_telefono || "");
+    setEdEmail(reclamo.cliente_email || "");
+    setEdReferencia(reclamo.referencia || "");
+    setEdDescripcion(reclamo.descripcion || "");
+    setEdPrioridad(reclamo.prioridad || "Normal");
+    setEditando(true);
+  };
+
+  const guardarEdicion = async () => {
+    if (!edCliente.trim()) return;
+    setGuardandoEdicion(true);
+    try {
+      const { data, error } = await supabase2
+        .from("reclamos")
+        .update({
+          cliente_nombre: edCliente.trim(),
+          cliente_telefono: edTelefono.trim() || null,
+          cliente_email: edEmail.trim() || null,
+          referencia: edReferencia.trim() || null,
+          descripcion: edDescripcion.trim() || null,
+          prioridad: edPrioridad,
+        })
+        .eq("id", reclamoId)
+        .select("*, asignado:perfiles!reclamos_asignado_a_fkey(id, nombre)")
+        .single();
+      if (error) throw error;
+      if (data) { setReclamo(data); onActualizado(data); }
+      setEditando(false);
+    } catch {
+      alert("No se pudo guardar la edición.");
+    } finally {
+      setGuardandoEdicion(false);
+    }
+  };
+
   const subirArchivo = async (file: File) => {
     setSubiendo(true);
     try {
@@ -214,24 +259,61 @@ export default function ReclamoDetalleModal({ reclamoId, miId, perfiles, onClose
             </div>
           )}
 
-          <div className="bg-slate-50 dark:bg-white/5 border border-slate-100 dark:border-white/10 rounded-xl p-3.5">
-            <div className="grid grid-cols-2 gap-3 mb-3">
-              <div>
-                <p className="text-[10px] uppercase font-bold text-slate-400">Cliente</p>
-                <p className="text-sm font-bold text-slate-900 dark:text-white">{reclamo.cliente_nombre}</p>
-                <p className="text-xs text-slate-400">{[reclamo.cliente_telefono, reclamo.cliente_email].filter(Boolean).join(" · ")}</p>
+          {editando ? (
+            <div className="bg-slate-50 dark:bg-white/5 border border-slate-100 dark:border-white/10 rounded-xl p-3.5 space-y-2.5">
+              <div className="grid grid-cols-2 gap-2.5">
+                <div>
+                  <label className="text-[10px] uppercase font-bold text-slate-400 block mb-1">Cliente *</label>
+                  <input value={edCliente} onChange={(e) => setEdCliente(e.target.value)} className="w-full bg-white dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-lg px-2.5 py-1.5 text-sm outline-none" />
+                </div>
+                <div>
+                  <label className="text-[10px] uppercase font-bold text-slate-400 block mb-1">Prioridad</label>
+                  <select value={edPrioridad} onChange={(e) => setEdPrioridad(e.target.value)} className="w-full bg-white dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-lg px-2.5 py-1.5 text-sm outline-none">
+                    {Object.keys(PRIORIDAD_CLASS).map((p) => <option key={p} value={p}>{p}</option>)}
+                  </select>
+                </div>
+                <div>
+                  <label className="text-[10px] uppercase font-bold text-slate-400 block mb-1">Teléfono</label>
+                  <input value={edTelefono} onChange={(e) => setEdTelefono(e.target.value)} className="w-full bg-white dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-lg px-2.5 py-1.5 text-sm outline-none" />
+                </div>
+                <div>
+                  <label className="text-[10px] uppercase font-bold text-slate-400 block mb-1">Email</label>
+                  <input value={edEmail} onChange={(e) => setEdEmail(e.target.value)} className="w-full bg-white dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-lg px-2.5 py-1.5 text-sm outline-none" />
+                </div>
               </div>
               <div>
-                <p className="text-[10px] uppercase font-bold text-slate-400">Referencia</p>
-                <p className="text-sm text-slate-700 dark:text-slate-300">{reclamo.referencia || "—"}</p>
+                <label className="text-[10px] uppercase font-bold text-slate-400 block mb-1">Referencia</label>
+                <input value={edReferencia} onChange={(e) => setEdReferencia(e.target.value)} className="w-full bg-white dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-lg px-2.5 py-1.5 text-sm outline-none" />
+              </div>
+              <div>
+                <label className="text-[10px] uppercase font-bold text-slate-400 block mb-1">Descripción</label>
+                <textarea value={edDescripcion} onChange={(e) => setEdDescripcion(e.target.value)} rows={3} className="w-full bg-white dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-lg px-2.5 py-1.5 text-sm outline-none" />
+              </div>
+              <div className="flex gap-2 justify-end pt-1">
+                <button onClick={() => setEditando(false)} className="px-3 py-1.5 text-xs font-semibold text-slate-500">Cancelar</button>
+                <button onClick={guardarEdicion} disabled={guardandoEdicion} className="px-3.5 py-1.5 text-xs font-bold bg-rose-600 hover:bg-rose-700 text-white rounded-lg disabled:opacity-50">{guardandoEdicion ? "Guardando..." : "Guardar"}</button>
               </div>
             </div>
-            <p className="text-[10px] uppercase font-bold text-slate-400">Descripción</p>
-            <p className="text-sm text-slate-700 dark:text-slate-300">{reclamo.descripcion || "—"}</p>
-          </div>
+          ) : (
+            <div className="bg-slate-50 dark:bg-white/5 border border-slate-100 dark:border-white/10 rounded-xl p-3.5">
+              <div className="grid grid-cols-2 gap-3 mb-3">
+                <div>
+                  <p className="text-[10px] uppercase font-bold text-slate-400">Cliente</p>
+                  <p className="text-sm font-bold text-slate-900 dark:text-white">{reclamo.cliente_nombre}</p>
+                  <p className="text-xs text-slate-400">{[reclamo.cliente_telefono, reclamo.cliente_email].filter(Boolean).join(" · ")}</p>
+                </div>
+                <div>
+                  <p className="text-[10px] uppercase font-bold text-slate-400">Referencia</p>
+                  <p className="text-sm text-slate-700 dark:text-slate-300">{reclamo.referencia || "—"}</p>
+                </div>
+              </div>
+              <p className="text-[10px] uppercase font-bold text-slate-400">Descripción</p>
+              <p className="text-sm text-slate-700 dark:text-slate-300">{reclamo.descripcion || "—"}</p>
+            </div>
+          )}
 
           <div className="flex flex-wrap gap-2">
-            <button className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold border border-slate-200 dark:border-white/10 text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-white/5">
+            <button onClick={abrirEdicion} className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold border border-slate-200 dark:border-white/10 text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-white/5">
               <Pencil className="w-3.5 h-3.5" /> Editar
             </button>
             {whatsappHref && (
