@@ -15,6 +15,11 @@ import { crearAlerta } from "@/lib/panel/alertas";
 //      ya usa ReclamosClient.tsx para el contador de la UI).
 //   6) Tareas de leads vencidas.
 //   7) Cuotas (a cobrar de clientes, a pagar de la agencia) por vencer.
+//   8) Recordatorios de venta (venta_recordatorios) vencidos -- antes solo
+//      se contaban para una tarjeta del Dashboard, nadie recibía aviso.
+//   9) Mandatos de consignación por vencer -- Stock ya lo promete
+//      ("van a aparecer acá con alertas de vencimiento") pero solo si
+//      alguien entra a mirar esa pestaña.
 
 const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE2_URL!,
@@ -254,6 +259,67 @@ async function avisarCuotasPorVencer(): Promise<number> {
   return avisados;
 }
 
+async function avisarRecordatoriosVentaVencidos(): Promise<number> {
+  const hoy = fechaHoyIso();
+  const { data: recordatorios } = await supabase
+    .from("venta_recordatorios")
+    .select("id, venta_id, tipo, fecha_vencimiento, notas, estado, creado_por, aviso_enviado")
+    .eq("estado", "pendiente")
+    .eq("aviso_enviado", false)
+    .lte("fecha_vencimiento", hoy);
+
+  if (!recordatorios || recordatorios.length === 0) return 0;
+  const ventaIds = [...new Set(recordatorios.map((r) => r.venta_id))];
+  const { data: ventas } = await supabase.from("ventas").select("id, comprador_nombre, vehiculo_marca, vehiculo_modelo").in("id", ventaIds);
+  const ventaMap = new Map((ventas ?? []).map((v) => [v.id, v]));
+
+  let avisados = 0;
+  for (const r of recordatorios) {
+    if (!r.creado_por) continue;
+    const venta = ventaMap.get(r.venta_id);
+    await crearAlerta(supabase, r.creado_por, `Recordatorio de venta: ${r.tipo} — ${venta?.comprador_nombre || "cliente"}`, {
+      mensaje: [venta ? `${venta.vehiculo_marca || ""} ${venta.vehiculo_modelo || ""}`.trim() : null, r.notas].filter(Boolean).join(" · ") || undefined,
+      link: "/panel/ventas",
+      tipo: "venta_recordatorio_vencido",
+      prioridad: "media",
+      categoriaNotif: "ventas",
+    });
+    await supabase.from("venta_recordatorios").update({ aviso_enviado: true }).eq("id", r.id);
+    avisados++;
+  }
+  return avisados;
+}
+
+const DIAS_AVISO_MANDATO = 7;
+
+async function avisarMandatosPorVencer(): Promise<number> {
+  const { data: mandatos } = await supabase
+    .from("mandatos")
+    .select("id, vehiculo_marca, vehiculo_modelo, mandante_nombre, fecha, plazo_dias, creado_por, aviso_vencimiento_enviado");
+
+  let avisados = 0;
+  for (const m of mandatos ?? []) {
+    if (!m.creado_por || !m.fecha || m.plazo_dias == null) continue;
+    const vence = new Date(`${m.fecha}T12:00:00Z`);
+    vence.setUTCDate(vence.getUTCDate() + m.plazo_dias);
+    const diasRestantes = Math.ceil((vence.getTime() - Date.now()) / 86400000);
+    if (diasRestantes > DIAS_AVISO_MANDATO) continue;
+    if (m.aviso_vencimiento_enviado) continue;
+
+    const vencido = diasRestantes < 0;
+    await crearAlerta(supabase, m.creado_por, `Mandato ${vencido ? "vencido" : "por vencer"}: ${m.vehiculo_marca || ""} ${m.vehiculo_modelo || ""}`.trim(), {
+      mensaje: `${m.mandante_nombre} — ${vencido ? `vencido hace ${-diasRestantes} días` : `vence en ${diasRestantes} días`}.`,
+      link: "/panel/stock?tab=mandatos",
+      tipo: "mandato_por_vencer",
+      prioridad: vencido ? "alta" : "media",
+      categoriaNotif: "stock",
+    });
+    await supabase.from("mandatos").update({ aviso_vencimiento_enviado: true }).eq("id", m.id);
+    avisados++;
+  }
+  return avisados;
+}
+
 export async function GET(req: Request) {
   const url = new URL(req.url);
   const token = url.searchParams.get("token");
@@ -261,7 +327,7 @@ export async function GET(req: Request) {
     return new Response("Unauthorized", { status: 401 });
   }
 
-  const [consignaciones, expedientes, recordatorios, service, reclamosEstancados, tareasVencidas, cuotasPorVencer] = await Promise.all([
+  const [consignaciones, expedientes, recordatorios, service, reclamosEstancados, tareasVencidas, cuotasPorVencer, recordatoriosVenta, mandatosPorVencer] = await Promise.all([
     avisarConsignacionesSinContacto(),
     avisarExpedientesPorVencer(),
     avisarRecordatoriosPostventaVencidos(),
@@ -269,7 +335,9 @@ export async function GET(req: Request) {
     avisarReclamosEstancados(),
     avisarTareasVencidas(),
     avisarCuotasPorVencer(),
+    avisarRecordatoriosVentaVencidos(),
+    avisarMandatosPorVencer(),
   ]);
 
-  return Response.json({ ok: true, consignaciones, expedientes, recordatorios, service, reclamosEstancados, tareasVencidas, cuotasPorVencer });
+  return Response.json({ ok: true, consignaciones, expedientes, recordatorios, service, reclamosEstancados, tareasVencidas, cuotasPorVencer, recordatoriosVenta, mandatosPorVencer });
 }
