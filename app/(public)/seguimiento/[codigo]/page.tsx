@@ -105,11 +105,13 @@ export default async function SeguimientoPublicoPage({
     await crearAlerta(supabase, venta.vendedor_id, `El cliente abrió el seguimiento de su venta (${venta.marca || ""} ${venta.modelo || ""})`, {
       tipo: "vista_seguimiento",
       link: `/panel/ventas`,
+      categoriaNotif: "ventas",
     });
   } else if (sena?.vendedor_id) {
     await crearAlerta(supabase, sena.vendedor_id, `El cliente abrió el seguimiento de la Seña N° ${sena.numero} (${sena.marca} ${sena.modelo})`, {
       tipo: "vista_seguimiento",
       link: `/panel/senas`,
+      categoriaNotif: "ventas",
     });
   }
 

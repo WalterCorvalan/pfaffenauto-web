@@ -111,7 +111,7 @@ export default function CotizacionesClient({
       for (const admin of admins) {
         await crearAlerta(supabase2, admin.id, `Revisión pedida: ${c.cliente_nombre}`, {
           mensaje: mensajeAtencion || `${miNombre} pidió atención en una cotización.`,
-          link: "/panel/cotizaciones", tipo: "cotizacion", prioridad: "alta",
+          link: "/panel/cotizaciones", tipo: "cotizacion", prioridad: "alta", categoriaNotif: "cotizaciones",
         });
       }
     }

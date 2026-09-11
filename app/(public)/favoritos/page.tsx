@@ -31,7 +31,7 @@ export default function FavoritosPage() {
     favoritos.forEach((fav, index) => {
       mensaje += `*${index + 1}. ${fav.marca} ${fav.modelo}*%0A`;
       mensaje += `💵 Precio: ${fav.precio_usd ? `US$${fav.precio_usd.toLocaleString("en-US")}` : `$${fav.precio_ars?.toLocaleString("es-AR")}`}%0A`;
-      mensaje += `🔗 Link: https://pfaffenautos.com.ar/catalogo/${fav.slug}%0A%0A`;
+      mensaje += `🔗 Link: https://www.pfaffencars.com/catalogo/${fav.slug}%0A%0A`;
     });
 
     mensaje += "Me gustaría recibir más información. ¡Gracias!";

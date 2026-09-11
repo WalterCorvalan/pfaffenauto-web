@@ -22,6 +22,6 @@ export default function robots(): MetadataRoute.Robots {
         allow: '/',
       },
     ],
-    sitemap: 'https://pfaffenautos.com.ar/sitemap.xml',
+    sitemap: 'https://www.pfaffencars.com/sitemap.xml',
   };
 }

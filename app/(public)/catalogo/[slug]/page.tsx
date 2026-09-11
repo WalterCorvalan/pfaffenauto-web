@@ -172,7 +172,7 @@ export default async function VehiculoDetallePage({
       priceCurrency: precioUsd ? "USD" : "ARS",
       price: precioUsd || precioArs,
       availability: "https://schema.org/InStock",
-      url: `https://pfaffenautos.com.ar/catalogo/${auto.slug}`,
+      url: `https://www.pfaffencars.com/catalogo/${auto.slug}`,
     },
   };
 
@@ -464,7 +464,7 @@ function VehiculoPriceCard({
       </div>
 
       <div className="hidden print:block mt-8 text-center text-xs text-slate-500">
-        Documento generado automáticamente desde pfaffenautos.com.ar. Precios sujetos a modificación sin previo aviso.
+        Documento generado automáticamente desde www.pfaffencars.com. Precios sujetos a modificación sin previo aviso.
       </div>
     </div>
   );

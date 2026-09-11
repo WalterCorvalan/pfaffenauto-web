@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { supabase2 } from "@/lib/supabase/client";
 import { X, Save } from "lucide-react";
+import { crearAlerta } from "@/lib/panel/alertas";
 
 export default function CargarRespuestaModal({ clientes, vendedores, esAdminORecepcion, miId, onClose }: { clientes: any[], vendedores: any[], esAdminORecepcion: boolean, miId: string, onClose: () => void }) {
   const [cargando, setCargando] = useState(false);
@@ -27,6 +28,24 @@ export default function CargarRespuestaModal({ clientes, vendedores, esAdminORec
         origen: "manual",
         creado_por: miId
       });
+
+      // Categoría "nps" de Mi Espacio → Notificaciones prometía avisar en
+      // nota baja, pero nada lo hacía -- esta es la única vía de carga que
+      // existe hoy (no hay encuesta pública), así que se avisa acá mismo al
+      // guardar, no hace falta un cron aparte.
+      if (Number(formData.puntaje) <= 6) {
+        const cliente = clientes.find((c) => c.id === formData.cliente_id);
+        const { data: admins } = await supabase2.from("perfiles").select("id").eq("activo", true).contains("roles", ["admin"]);
+        for (const admin of admins ?? []) {
+          await crearAlerta(supabase2, admin.id, `NPS con nota baja${cliente ? `: ${cliente.nombre}` : ""}`, {
+            mensaje: `Puntaje ${formData.puntaje}/10 (${formData.contexto}).${formData.comentario ? ` "${formData.comentario}"` : ""}`,
+            link: "/panel/nps",
+            tipo: "nps_nota_baja",
+            prioridad: "alta",
+            categoriaNotif: "nps",
+          });
+        }
+      }
       onClose();
     } catch (error) {
       alert("Error al cargar la respuesta.");

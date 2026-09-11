@@ -146,7 +146,7 @@ export default function NuevoClienteModal({ perfiles, disponibilidad, miId, edit
       if (!esEdicion && miId) {
         crearAlerta(supabase2, miId, `Nuevo cliente registrado — ${data.nombre}`, {
           mensaje: `Cargado hoy. Origen: ${data.origen}.${data.telefono ? ` Tel: ${data.telefono}.` : ""}`,
-          link: "/panel/clientes", tipo: "cliente", prioridad: "novedad",
+          link: "/panel/clientes", tipo: "cliente", prioridad: "novedad", categoriaNotif: "clientes",
         });
       }
       onCreado(data);

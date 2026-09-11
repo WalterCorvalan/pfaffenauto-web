@@ -4,7 +4,7 @@ import { createClient } from "@/lib/supabase/server";
 export const metadata = {
   title: "Cotizá tu vehículo | Pfaffen Autos",
   description: "Dejanos los datos de tu vehículo y te garantizamos la venta en tiempo récord o cotizá online.",
-  alternates: { canonical: "https://pfaffenautos.com.ar/cotizador" },
+  alternates: { canonical: "https://www.pfaffencars.com/cotizador" },
 };
 
 // ?permuta=<vehiculoId> desde el botón "¿Tenés un usado para entregar?" del

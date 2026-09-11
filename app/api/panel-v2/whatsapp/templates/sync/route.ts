@@ -22,8 +22,8 @@ export async function POST() {
   if (!user) return NextResponse.json({ error: "No autorizado." }, { status: 401 });
 
   try {
-    const actualizadas = await sincronizarPlantillas();
-    return NextResponse.json({ ok: true, actualizadas });
+    const { actualizadas, importadas } = await sincronizarPlantillas();
+    return NextResponse.json({ ok: true, actualizadas, importadas });
   } catch (err) {
     if (err instanceof TemplateError) {
       return NextResponse.json({ error: err.message }, { status: err.code === "not_connected" ? 409 : 422 });

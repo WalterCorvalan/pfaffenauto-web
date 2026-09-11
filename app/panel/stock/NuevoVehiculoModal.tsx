@@ -254,7 +254,7 @@ export default function NuevoVehiculoModal({ perfiles, clientes, sucursales, miI
       if (!esEdicion && miId) {
         crearAlerta(supabase2, miId, `Nuevo vehículo en stock — ${data.marca} ${data.modelo} ${data.anio}`, {
           mensaje: `Ingresó hoy. Estado: ${ESTADOS.find((e) => e.value === data.estado)?.label || data.estado}. Precio: ${data.moneda_venta} ${Number(data.precio_venta).toLocaleString("es-AR")}.`,
-          link: "/panel/stock", tipo: "vehiculo", prioridad: "novedad",
+          link: "/panel/stock", tipo: "vehiculo", prioridad: "novedad", categoriaNotif: "stock",
         });
       }
       onCreado(data);

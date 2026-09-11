@@ -309,6 +309,11 @@ function PlantillasWhatsapp() {
       const data = await res.json();
       if (!res.ok) throw new Error(data.error);
       await cargar();
+      if (data.importadas > 0 || data.actualizadas > 0) {
+        alert(`Sincronizado con Meta: ${data.importadas} plantilla${data.importadas === 1 ? "" : "s"} nueva${data.importadas === 1 ? "" : "s"} importada${data.importadas === 1 ? "" : "s"}, ${data.actualizadas} actualizada${data.actualizadas === 1 ? "" : "s"}.`);
+      } else {
+        alert("Ya estaba todo al día — no había plantillas nuevas ni cambios de estado en Meta.");
+      }
     } catch (e: any) {
       setError(e.message || "Error sincronizando con Meta.");
     } finally {

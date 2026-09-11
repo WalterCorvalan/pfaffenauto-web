@@ -9,7 +9,7 @@ const supabase = createClient(
 );
 
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
-  const baseUrl = 'https://pfaffenautos.com.ar';
+  const baseUrl = 'https://www.pfaffencars.com';
 
   const [{ data: vehiculos }, { data: sucursales }] = await Promise.all([
     supabase

@@ -551,7 +551,7 @@ function ResumenDiarioConfig() {
                 </div>
               </div>
             )}
-            <p className="text-[11px] text-amber-600 dark:text-amber-400">El armado y envío automático (cron + "Enviar prueba ahora") todavía no está construido — esto guarda la configuración para cuando se arme esa parte.</p>
+            <p className="text-[11px] text-slate-400">El resumen se arma y se manda solo, todos los días a la hora que elegiste arriba (alerta en el panel para los admin, y por WhatsApp si activaste esa opción). Todavía no hay un botón de "Enviar prueba ahora" para probarlo sin esperar a la hora configurada.</p>
           </>
         )}
       </div>

@@ -96,7 +96,7 @@ export default function NuevoMandatoModal({ miId, miNombre, onClose, onCreado }:
       if (miId) {
         crearAlerta(supabase2, miId, `Nuevo mandato — ${mandato.vehiculo_marca} ${mandato.vehiculo_modelo}`, {
           mensaje: `Mandante: ${mandato.mandante_nombre}. ${vehiculoCreado ? "Se agregó al stock." : ""}`,
-          link: "/panel/stock", tipo: "vehiculo", prioridad: "novedad",
+          link: "/panel/stock", tipo: "vehiculo", prioridad: "novedad", categoriaNotif: "stock",
         });
       }
 

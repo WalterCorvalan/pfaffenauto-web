@@ -98,7 +98,13 @@ function mapearEstadoMeta(status: string | undefined): "approved" | "rejected" |
 
 // Pull de estados -- igual que Vocero, es la vía universal porque el webhook
 // de message_template_status_update no está cableado en v2 todavía.
-export async function sincronizarPlantillas(): Promise<number> {
+//
+// Además de actualizar el estado de las que ya tenemos, IMPORTA las
+// plantillas que ya existen aprobadas en el WABA de Meta pero que nunca se
+// crearon localmente (ej: quedaron cargadas de Vocero/otro sistema, o se
+// crearon a mano desde el Administrador de Meta) -- si no, quedaban
+// aprobadas del lado de Meta pero invisibles/inutilizables desde acá.
+export async function sincronizarPlantillas(): Promise<{ actualizadas: number; importadas: number }> {
   const config = await getConfig();
   if (!config?.waba_id || !config.token_cifrado) {
     throw new TemplateError("not_connected", "Falta configurar WhatsApp o el WABA ID.");
@@ -115,20 +121,40 @@ export async function sincronizarPlantillas(): Promise<number> {
 
   const { data: locales } = await supabaseAdmin.from("whatsapp_templates").select("*");
   let actualizadas = 0;
+  let importadas = 0;
   for (const r of remoto.data ?? []) {
     const estado = mapearEstadoMeta(r.status);
     if (!estado) continue;
     const match = (locales ?? []).find(
       (t) => (r.id && t.wa_template_id === r.id) || (t.nombre === r.name && t.idioma === r.language)
     );
-    if (!match || match.estado === estado) continue;
-    await supabaseAdmin
-      .from("whatsapp_templates")
-      .update({ estado, motivo_rechazo: r.rejected_reason ?? null, wa_template_id: match.wa_template_id ?? r.id ?? null, updated_at: new Date().toISOString() })
-      .eq("id", match.id);
-    actualizadas += 1;
+    if (match) {
+      if (match.estado === estado) continue;
+      await supabaseAdmin
+        .from("whatsapp_templates")
+        .update({ estado, motivo_rechazo: r.rejected_reason ?? null, wa_template_id: match.wa_template_id ?? r.id ?? null, updated_at: new Date().toISOString() })
+        .eq("id", match.id);
+      actualizadas += 1;
+      continue;
+    }
+
+    // No existe localmente -- la importamos con el cuerpo real que devuelve
+    // Meta (componente BODY) para que quede lista para usar/enviar.
+    if (!r.name || !r.language) continue;
+    const cuerpo = r.components?.find((c) => c.type === "BODY")?.text?.trim();
+    if (!cuerpo) continue;
+    await supabaseAdmin.from("whatsapp_templates").insert({
+      nombre: r.name,
+      idioma: r.language,
+      categoria: r.category ?? "UTILITY",
+      cuerpo,
+      estado,
+      wa_template_id: r.id ?? null,
+      motivo_rechazo: r.rejected_reason ?? null,
+    });
+    importadas += 1;
   }
-  return actualizadas;
+  return { actualizadas, importadas };
 }
 
 export async function enviarPlantilla(input: { conversacionId: string; templateId: string; variable?: string }) {

@@ -10,7 +10,7 @@ export const revalidate = 60;
 export const metadata: Metadata = {
   title: "Mundo Chino | BAIC, Chery, Changan, JAC, BYD | Pfaffen Autos",
   description: "Descubrí nuestra selección de marcas chinas: BAIC, Chery, Changan, JAC, BYD y más, con respaldo oficial en Pfaffen Autos.",
-  alternates: { canonical: "https://pfaffenautos.com.ar/mundo-chino" },
+  alternates: { canonical: "https://www.pfaffencars.com/mundo-chino" },
 };
 
 export default async function MundoChinoPage() {

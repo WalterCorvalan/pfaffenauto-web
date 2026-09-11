@@ -24,7 +24,7 @@ const armarCaption = (v: any) => {
     `${v.marca} ${v.modelo} ${v.anio}`,
     `${km} · ${precio}`,
     "Financiación disponible. Consultanos.",
-    `👉 pfaffenautos.com.ar/catalogo/${v.slug}`,
+    `👉 www.pfaffencars.com/catalogo/${v.slug}`,
   ].join("\n\n");
 };
 

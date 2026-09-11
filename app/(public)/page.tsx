@@ -4,7 +4,7 @@ import type { Metadata } from "next";
 export const metadata: Metadata = {
   title: "Pfaffen Autos | Concesionaria de 0KM y Usados en Zona Norte",
   description: "Comprá o vendé tu auto con la concesionaria líder de Zona Norte. Stock de 0KM y usados seleccionados, financiación propia y respaldo oficial.",
-  alternates: { canonical: "https://pfaffenautos.com.ar" },
+  alternates: { canonical: "https://www.pfaffencars.com" },
 };
 
 // ================= COMPONENTES DE LA LANDING =================

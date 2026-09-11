@@ -15,7 +15,7 @@ export async function generateMetadata({ params }: { params: Promise<{ marca: st
   return {
     title: `Autos ${marcaName} en Zona Norte | Pfaffen Autos`,
     description: `Encontrá vehículos ${marcaName} 0KM y usados seleccionados, con financiación y respaldo oficial en Pfaffen Autos.`,
-    alternates: { canonical: `https://pfaffenautos.com.ar/marcas/${marca.toLowerCase()}` },
+    alternates: { canonical: `https://www.pfaffencars.com/marcas/${marca.toLowerCase()}` },
   };
 }
 

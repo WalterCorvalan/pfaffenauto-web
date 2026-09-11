@@ -115,7 +115,7 @@ export default function ImportarXlsxModal({ miId, onClose, onImportados }: Props
         onImportados(insertados);
         if (miId) {
           crearAlerta(supabase2, miId, `${insertados.length} vehículo${insertados.length === 1 ? "" : "s"} importado${insertados.length === 1 ? "" : "s"} desde Excel`, {
-            link: "/panel/stock", tipo: "vehiculo", prioridad: "novedad",
+            link: "/panel/stock", tipo: "vehiculo", prioridad: "novedad", categoriaNotif: "stock",
           });
         }
       }

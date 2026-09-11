@@ -11,6 +11,7 @@ import {
 import NuevoClienteModal from "./NuevoClienteModal";
 import DisponibilidadModal from "./DisponibilidadModal";
 import TablaResponsiva, { type ColumnaTabla } from "@/components/panel/TablaResponsiva";
+import { renderSaludoWhatsApp } from "@/lib/panel/whatsappSaludo";
 
 interface Cliente {
   id: string; nombre: string; tipo: string; sexo: string | null; dni_cuit: string | null;
@@ -162,6 +163,17 @@ export default function ClientesClient({
   const perfilMap = useMemo(() => Object.fromEntries(perfiles.map((p) => [p.id, p.nombre])), [perfiles]);
   const miDisponibilidad = disponibilidad.find((d) => d.vendedor_id === miId);
   const esAdmin = perfiles.find((p) => p.id === miId)?.roles?.includes("admin") ?? false;
+
+  // Saludo + firma personal (Mi Espacio → Mi WhatsApp) para el botón de
+  // contacto rápido -- antes ese botón mandaba sin ningún texto.
+  const [whatsappPrefs, setWhatsappPrefs] = useState<{ saludo_seguimiento: string | null; firma: string | null } | null>(null);
+  const [agenciaNombre, setAgenciaNombre] = useState("la agencia");
+  useEffect(() => {
+    supabase2.from("espacio_whatsapp_prefs").select("saludo_seguimiento, firma").eq("perfil_id", miId).maybeSingle().then(({ data }) => setWhatsappPrefs(data));
+    supabase2.from("configuracion_empresa").select("branding_nombre").eq("id", true).maybeSingle().then(({ data }) => { if (data?.branding_nombre) setAgenciaNombre(data.branding_nombre); });
+  }, [miId]);
+  const mensajeWhatsApp = (nombreCliente: string) =>
+    renderSaludoWhatsApp(whatsappPrefs, { nombre: nombreCliente.split(" ")[0] || nombreCliente, agencia: agenciaNombre, vendedor: perfilMap[miId] });
 
   const onCreado = (c: Cliente) => setClientes((prev) => (prev.some((x) => x.id === c.id) ? prev.map((x) => (x.id === c.id ? c : x)) : [c, ...prev]));
   const onDisponibilidadGuardada = (d: Disponibilidad) =>
@@ -439,7 +451,7 @@ export default function ClientesClient({
                         <button onClick={() => toggleContacto(c)} disabled={actualizando === c.id} title={contactado ? "Marcar como Sin contactar" : "Marcar como Contactado"} className={`flex items-center gap-1.5 text-[10px] font-bold px-2.5 py-1.5 rounded-lg border whitespace-nowrap disabled:opacity-50 ${contactado ? "bg-emerald-50 dark:bg-emerald-500/10 text-emerald-700 dark:text-emerald-300 border-emerald-200 dark:border-emerald-500/20" : "bg-amber-50 dark:bg-amber-500/10 text-amber-700 dark:text-amber-300 border-amber-200 dark:border-amber-500/20"}`}>
                           {contactado ? <CheckCircle2 className="w-3.5 h-3.5 shrink-0" /> : <Circle className="w-3.5 h-3.5 shrink-0" />} {col?.label}
                         </button>
-                        {telLimpio && <a href={`https://wa.me/${telLimpio}`} target="_blank" rel="noopener noreferrer" title="Contactar por WhatsApp" className="p-2 bg-emerald-500 hover:bg-emerald-600 text-white rounded-lg inline-flex"><MessageCircle className="w-3.5 h-3.5" /></a>}
+                        {telLimpio && <a href={`https://wa.me/${telLimpio}?text=${encodeURIComponent(mensajeWhatsApp(c.nombre))}`} target="_blank" rel="noopener noreferrer" title="Contactar por WhatsApp" className="p-2 bg-emerald-500 hover:bg-emerald-600 text-white rounded-lg inline-flex"><MessageCircle className="w-3.5 h-3.5" /></a>}
                         <button onClick={() => setEditando(c)} title="Editar cliente" className="p-2 text-slate-400 hover:text-indigo-600 dark:hover:text-indigo-300 hover:bg-slate-50 dark:hover:bg-white/5 rounded-lg"><Pencil className="w-3.5 h-3.5" /></button>
                         <button onClick={() => eliminarCliente(c)} disabled={eliminandoId === c.id} title="Eliminar cliente" className="p-2 text-slate-400 hover:text-rose-600 hover:bg-slate-50 dark:hover:bg-white/5 rounded-lg disabled:opacity-50"><Trash2 className="w-3.5 h-3.5" /></button>
                       </>

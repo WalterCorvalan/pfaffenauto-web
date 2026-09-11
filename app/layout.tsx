@@ -12,7 +12,7 @@ const jakarta = Plus_Jakarta_Sans({
 
 // ================= METADATA SEO OPTIMIZADA =================
 export const metadata: Metadata = {
-  metadataBase: new URL("https://pfaffenautos.com.ar"),
+  metadataBase: new URL("https://www.pfaffencars.com"),
   title: "Pfaffen Autos | Concesionaria de 0KM y Usados en Zona Norte",
   description:
     "Comprá o vendé tu auto de forma fácil y segura. Amplio catálogo de 0KM y usados seleccionados de alta gama (Toyota, Volkswagen, BMW, Audi). Sucursales en Casa Central y Don Torcuato.",
@@ -60,11 +60,11 @@ export const metadata: Metadata = {
     title: "Pfaffen Autos | Concesionaria de 0KM y Usados en Zona Norte",
     description:
       "Comprá o vendé tu auto de forma fácil y segura. Amplio catálogo de 0KM y usados seleccionados de alta gama.",
-    url: "https://pfaffenautos.com.ar",
+    url: "https://www.pfaffencars.com",
     siteName: "Pfaffen Autos",
     images: [
       {
-        url: "https://pfaffenautos.com.ar/logo.png",
+        url: "https://www.pfaffencars.com/logo.png",
         width: 1200,
         height: 630,
         alt: "Pfaffen Autos",
@@ -78,7 +78,7 @@ export const metadata: Metadata = {
     title: "Pfaffen Autos | Concesionaria de 0KM y Usados en Zona Norte",
     description:
       "Comprá o vendé tu auto de forma fácil y segura. Amplio catálogo de 0KM y usados seleccionados de alta gama.",
-    images: ["https://pfaffenautos.com.ar/logo.png"],
+    images: ["https://www.pfaffencars.com/logo.png"],
   },
 };
 
@@ -91,12 +91,12 @@ export default function RootLayout({
     "@context": "https://schema.org",
     "@type": "AutoDealer",
     name: "Pfaffen Autos",
-    image: "https://pfaffenautos.com.ar/logo.png",
-    "@id": "https://pfaffenautos.com.ar",
-    url: "https://pfaffenautos.com.ar",
+    image: "https://www.pfaffencars.com/logo.png",
+    "@id": "https://www.pfaffencars.com",
+    url: "https://www.pfaffencars.com",
     telephone: "+541145001200",
     priceRange: "$$$",
-    logo: "https://pfaffenautos.com.ar/logo.png",
+    logo: "https://www.pfaffencars.com/logo.png",
     sameAs: [
       "https://www.instagram.com/pfaffenautomotores/",
       "https://facebook.com/pfaffenautos",

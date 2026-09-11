@@ -37,7 +37,7 @@ export default function MiWhatsAppTab({ miId, agenciaNombre = "Pfaffen Autos" }:
     <div className="max-w-lg">
       <div className="bg-emerald-50 dark:bg-emerald-500/10 border border-emerald-100 dark:border-emerald-500/20 rounded-xl p-4 mb-4">
         <p className="text-sm font-bold flex items-center gap-1.5"><MessageCircle className="w-4 h-4" /> Mi WhatsApp</p>
-        <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">Tu saludo de seguimiento y tu firma personales. Los usa el botón "Escribir por WhatsApp" del detalle del cliente. Si no completás nada, se usa un saludo genérico sin firma.</p>
+        <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">Tu saludo de seguimiento y tu firma personales. Los usa el botón de WhatsApp en la lista de Clientes. Si no completás nada, se usa un saludo genérico sin firma.</p>
       </div>
 
       <label className={labelClass}>Saludo de seguimiento</label>

@@ -4,7 +4,7 @@ import Link from "next/link";
 export const metadata: Metadata = {
   title: "Política de Privacidad | Pfaffen Autos",
   description: "Cómo Pfaffen Autos recopila, usa y protege tus datos personales.",
-  alternates: { canonical: "https://pfaffenautos.com.ar/privacidad" },
+  alternates: { canonical: "https://www.pfaffencars.com/privacidad" },
 };
 
 export default function PrivacidadPage() {
@@ -28,7 +28,7 @@ export default function PrivacidadPage() {
             <p>
               Pfaffen Autos es una concesionaria de vehículos 0KM y usados con sucursales en Casa Central y Don Torcuato,
               Buenos Aires, Argentina. Esta política explica qué datos recopilamos a través de{" "}
-              <strong>pfaffenautos.com.ar</strong>, para qué los usamos y qué derechos tenés sobre ellos, conforme a la
+              <strong>www.pfaffencars.com</strong>, para qué los usamos y qué derechos tenés sobre ellos, conforme a la
               Ley 25.326 de Protección de Datos Personales de la República Argentina.
             </p>
           </section>
@@ -76,8 +76,8 @@ export default function PrivacidadPage() {
             <p>
               Podés pedirnos en cualquier momento acceder, corregir o eliminar tus datos personales, o retirar tu
               consentimiento para recibir comunicaciones. Escribinos a{" "}
-              <a href="mailto:info@pfaffenautos.com.ar" className="text-[#0145F2] dark:text-sky-300 font-medium hover:underline">
-                info@pfaffenautos.com.ar
+              <a href="mailto:info@pfaffencars.com" className="text-[#0145F2] dark:text-sky-300 font-medium hover:underline">
+                info@pfaffencars.com
               </a>{" "}
               o por WhatsApp y lo resolvemos.
             </p>

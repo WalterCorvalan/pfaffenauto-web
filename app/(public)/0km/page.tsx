@@ -10,7 +10,7 @@ export const revalidate = 60;
 export const metadata: Metadata = {
   title: "Autos 0KM | Pfaffen Autos",
   description: "Comprá tu auto 0KM con garantía oficial de fábrica, financiación a medida y entrega inmediata en Pfaffen Autos.",
-  alternates: { canonical: "https://pfaffenautos.com.ar/0km" },
+  alternates: { canonical: "https://www.pfaffencars.com/0km" },
 };
 
 export default async function CeroKmPage() {

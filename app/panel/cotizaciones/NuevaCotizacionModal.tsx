@@ -93,7 +93,7 @@ export default function NuevaCotizacionModal({ clientes, vehiculos, perfiles, mi
       if (!esEdicion && miId) {
         crearAlerta(supabase2, miId, `Nueva cotización — ${data.cliente_nombre}`, {
           mensaje: `${miNombre} creó una cotización por ${data.moneda} ${Number(data.precio_sugerido).toLocaleString("es-AR")}.`,
-          link: "/panel/cotizaciones", tipo: "cotizacion", prioridad: "novedad",
+          link: "/panel/cotizaciones", tipo: "cotizacion", prioridad: "novedad", categoriaNotif: "cotizaciones",
         });
       }
       onCreado(data);

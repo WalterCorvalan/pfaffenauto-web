@@ -509,7 +509,7 @@ export default function NuevaVentaModal({ perfiles, clientes, vehiculos, miId, i
       if (miId) {
         crearAlerta(supabase2, miId, `Nueva venta registrada — ${venta.comprador_nombre}`, {
           mensaje: `${venta.vehiculo_marca || ""} ${venta.vehiculo_modelo || ""} · ${venta.moneda_venta} ${Number(venta.precio_venta).toLocaleString("es-AR")}.`,
-          link: "/panel/ventas", tipo: "venta", prioridad: "novedad",
+          link: "/panel/ventas", tipo: "venta", prioridad: "novedad", categoriaNotif: "ventas",
         });
       }
 

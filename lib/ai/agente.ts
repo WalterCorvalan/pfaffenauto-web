@@ -88,7 +88,7 @@ export async function buscarStockReal(
   // Le mandamos el link a la ficha real del catálogo (no una foto suelta) —
   // así el cliente ve precio, fotos completas y specs actualizados en la web.
   const primerAuto = (data ?? [])[0] as any;
-  const linkPublicacion = primerAuto?.slug ? `https://pfaffenautos.com.ar/catalogo/${primerAuto.slug}` : null;
+  const linkPublicacion = primerAuto?.slug ? `https://www.pfaffencars.com/catalogo/${primerAuto.slug}` : null;
 
   return { resultados, linkPublicacion };
 }

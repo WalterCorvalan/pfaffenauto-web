@@ -4,6 +4,7 @@ import { useState, useEffect, useRef } from "react";
 import { supabase2 } from "@/lib/supabase/client";
 import { X, Loader2, Pencil, MessageCircle, PlayCircle, BellRing, CheckCircle2, RotateCcw, Paperclip, Send } from "lucide-react";
 import { crearAlerta } from "@/lib/panel/alertas";
+import { ROL_A_SECTOR } from "@/lib/panel/permisosModulos";
 
 const SECTORES = [
   { value: "ventas", label: "Ventas" },
@@ -121,13 +122,41 @@ export default function ReclamoDetalleModal({ reclamoId, miId, perfiles, onClose
 
   const pedirAtencion = async () => {
     if (!sectorPedido) return;
-    await registrarMovimiento("pedido_atencion", mensajePedido.trim() || `${autorNombre} pidió atención de ${SECTORES.find((s) => s.value === sectorPedido)?.label}`, sectorPedido);
+    const mensaje = mensajePedido.trim() || `${autorNombre} pidió atención de ${SECTORES.find((s) => s.value === sectorPedido)?.label}`;
+    // Antes solo quedaba en el timeline (reclamo_seguimiento) -- el cartel
+    // ámbar de "pedido a X sector" que muestra este mismo modal más abajo
+    // lee reclamos.pedido_atencion_sector/mensaje, así que sin este update
+    // ni el propio indicador funcionaba. Y nadie del sector se enteraba:
+    // ahora se avisa a todos los perfiles de ese sector (o a los admin, si
+    // el pedido es para "Admin").
+    const { data: r } = await supabase2
+      .from("reclamos")
+      .update({ pedido_atencion_sector: sectorPedido, pedido_atencion_mensaje: mensaje })
+      .eq("id", reclamoId)
+      .select("*, asignado:perfiles!reclamos_asignado_a_fkey(id, nombre)")
+      .single();
+    await registrarMovimiento("pedido_atencion", mensaje, sectorPedido);
     setMostrarPedido(false);
     setSectorPedido("");
     setMensajePedido("");
-    await cargar();
-    const { data: r } = await supabase2.from("reclamos").select("*, asignado:perfiles!reclamos_asignado_a_fkey(id, nombre)").eq("id", reclamoId).single();
     if (r) { setReclamo(r); onActualizado(r); }
+    await cargar();
+
+    const destinatarios = perfiles.filter((p) =>
+      sectorPedido === "admin" ? p.roles?.includes("admin") : p.roles?.some((rol) => ROL_A_SECTOR[rol] === sectorPedido)
+    );
+    await Promise.all(
+      destinatarios.map((p) =>
+        crearAlerta(supabase2, p.id, `${autorNombre} pidió atención en un reclamo`, {
+          mensaje,
+          link: `/panel/reclamos?reclamo=${reclamoId}`,
+          tipo: "reclamo_pedido_atencion",
+          modulo: "reclamos",
+          categoriaNotif: "pedidos_atencion_expedientes",
+          prioridad: "alta",
+        })
+      )
+    );
   };
 
   const subirArchivo = async (file: File) => {

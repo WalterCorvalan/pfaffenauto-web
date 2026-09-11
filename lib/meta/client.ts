@@ -89,7 +89,10 @@ export async function createMessageTemplate(
 
 export async function listMessageTemplates(wabaId: string, token: string) {
   return graphRequest<{
-    data: { id?: string; name?: string; language?: string; status?: string; rejected_reason?: string }[];
+    data: {
+      id?: string; name?: string; language?: string; status?: string; rejected_reason?: string; category?: string;
+      components?: { type: string; text?: string }[];
+    }[];
   }>(`${wabaId}/message_templates`, token);
 }
 

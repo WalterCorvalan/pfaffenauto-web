@@ -54,6 +54,21 @@ export default function MisAutosTab({ miId }: { miId: string }) {
 
   const valorTotal = autos.reduce((a, x) => a + Number(x.valor_estimado_usd || 0), 0);
 
+  const hoy = new Date().toISOString().slice(0, 10);
+  const en7dias = new Date(Date.now() + 7 * 86400000).toISOString().slice(0, 10);
+  const estadoVencimiento = (fecha: string | null): "vencido" | "por_vencer" | null => {
+    if (!fecha) return null;
+    if (fecha < hoy) return "vencido";
+    if (fecha <= en7dias) return "por_vencer";
+    return null;
+  };
+  const badgeVencimiento = (label: string, fecha: string | null) => {
+    const estado = estadoVencimiento(fecha);
+    if (!estado) return `${label}: ${fecha}`;
+    const color = estado === "vencido" ? "text-rose-600 font-bold" : "text-amber-600 font-bold";
+    return <span className={color}>{label}: {fecha} {estado === "vencido" ? "· vencida" : "· por vencer"}</span>;
+  };
+
   if (cargando) return null;
 
   return (
@@ -74,7 +89,11 @@ export default function MisAutosTab({ miId }: { miId: string }) {
                 <div className="flex gap-1 shrink-0"><button onClick={() => abrirEdicion(a)} className="p-1.5 text-slate-400 hover:text-slate-700 dark:hover:text-white"><Pencil className="w-3.5 h-3.5" /></button><button onClick={() => eliminar(a)} className="p-1.5 text-slate-400 hover:text-rose-600"><Trash2 className="w-3.5 h-3.5" /></button></div>
               </div>
               <p className="text-xs text-slate-500 mt-1">Titular: {a.titular || "—"} {a.km ? `· ${Number(a.km).toLocaleString("es-AR")} km` : ""} {a.valor_estimado_usd ? <span className="font-bold text-emerald-600">· USD {Number(a.valor_estimado_usd).toLocaleString("es-AR")}</span> : ""}</p>
-              <p className="text-[11px] text-slate-400 mt-1">{a.vence_vtv && `VTV: ${a.vence_vtv}`} {a.vence_seguro && ` · Seguro: ${a.vence_seguro}${a.compania_seguro ? ` (${a.compania_seguro})` : ""}`} {a.vence_patente && ` · Patente: ${a.vence_patente}`}</p>
+              <p className="text-[11px] text-slate-400 mt-1 flex flex-wrap gap-x-1">
+                {a.vence_vtv && <>{badgeVencimiento("VTV", a.vence_vtv)} ·</>}
+                {a.vence_seguro && <>{badgeVencimiento("Seguro", a.vence_seguro)}{a.compania_seguro ? ` (${a.compania_seguro})` : ""} ·</>}
+                {a.vence_patente && badgeVencimiento("Patente", a.vence_patente)}
+              </p>
             </div>
           ))}
         </div>

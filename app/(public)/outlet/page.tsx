@@ -10,7 +10,7 @@ export const revalidate = 60;
 export const metadata: Metadata = {
   title: "Outlet | Vehículos en Liquidación | Pfaffen Autos",
   description: "Vehículos seleccionados a precios de liquidación en Pfaffen Autos. Ideales como primer auto, proyectos o herramienta de trabajo.",
-  alternates: { canonical: "https://pfaffenautos.com.ar/outlet" },
+  alternates: { canonical: "https://www.pfaffencars.com/outlet" },
 };
 
 export default async function OutletPage() {

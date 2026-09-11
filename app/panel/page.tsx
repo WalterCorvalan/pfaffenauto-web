@@ -35,7 +35,11 @@ export default async function PanelV2Home() {
   const hace12meses = new Date(hoy.getFullYear(), hoy.getMonth() - 11, 1).toISOString().slice(0, 10);
   const en7dias = new Date(Date.now() + 7 * 86400000).toISOString().slice(0, 10);
   const inicioMesAnteriorMismoMesAnoPasado = `${hoy.getFullYear() - 1}-${String(hoy.getMonth() + 1).padStart(2, "0")}-01`;
-  const finMesMismoMesAnoPasado = `${hoy.getFullYear() - 1}-${String(hoy.getMonth() + 1).padStart(2, "0")}-${String(finMes.split("-")[2])}`;
+  // Antes reusaba el día final del mes ACTUAL (finMes.split("-")[2]) -- en
+  // febrero de año bisiesto vs. no bisiesto (o viceversa) el mes del año
+  // pasado no tiene esa misma cantidad de días, perdiendo o sumando un día
+  // de más en la comparación interanual.
+  const finMesMismoMesAnoPasado = new Date(hoy.getFullYear() - 1, hoy.getMonth() + 1, 0).toISOString().slice(0, 10);
 
   const [
     { data: ventasMes },
@@ -102,7 +106,12 @@ export default async function PanelV2Home() {
     supabase.from("pedidos").select("id", { count: "exact", head: true }).eq("estado", "activo"),
     supabase.rpc("ranking_ventas", { p_desde: inicioMes, p_hasta: finMes }),
     supabase.from("expedientes").select("precio_propietario, precio_propietario_moneda, venta:venta_id(precio_venta, moneda_venta, fecha_cierre, estado)").not("precio_propietario", "is", null),
-    supabase.from("vehiculos").select("id", { count: "exact", head: true }).eq("propio_agencia", false).gte("created_at", inicioMes),
+    // Antes contaba vehiculos.propio_agencia=false, que también se pone en
+    // false desde mandatos (NuevoMandatoModal) e importaciones con dueño
+    // cargado (ImportarXlsxModal) -- inflaba el número mezclando conceptos
+    // de negocio distintos. La métrica real de "consignaciones" es la
+    // propia tabla consignaciones.
+    supabase.from("consignaciones").select("id", { count: "exact", head: true }).gte("created_at", inicioMes),
     supabase.from("ventas").select("id", { count: "exact", head: true }).eq("estado", "cerrada").gte("fecha_cierre", inicioMesAnteriorMismoMesAnoPasado).lte("fecha_cierre", finMesMismoMesAnoPasado),
     supabase.rpc("ranking_ventas", { p_desde: inicioMesAnterior, p_hasta: finMesAnterior }),
     supabase.from("infracciones").select("ganancia_ars, estado, fecha").gte("fecha", inicioMesAnterior).lte("fecha", finMesAnterior),
@@ -111,7 +120,7 @@ export default async function PanelV2Home() {
     supabase.from("expedientes").select("precio_propietario, precio_propietario_moneda, venta:venta_id(precio_venta, moneda_venta, fecha_cierre, estado)").not("precio_propietario", "is", null).gte("venta.fecha_cierre", hace12meses),
     supabase.from("ventas").select("id, precio_venta, moneda_venta, fecha_cierre, estado").eq("estado", "cerrada").gte("fecha_cierre", `${hoy.getFullYear() - 2}-01-01`),
     supabase.from("ventas").select("id, precio_venta, moneda_venta").eq("estado", "cerrada").eq("vendedor_id", user.id).gte("fecha_cierre", inicioAno),
-    supabase.from("vehiculos").select("id", { count: "exact", head: true }).eq("propio_agencia", false).gte("created_at", inicioAno),
+    supabase.from("consignaciones").select("id", { count: "exact", head: true }).gte("created_at", inicioAno),
     // dashboard general
     supabase.from("clientes").select("id, created_at, canal_ingreso").gte("created_at", `${hoyIso}T00:00:00`),
     supabase.from("clientes").select("id", { count: "exact", head: true }).gte("created_at", `${hace7dias}T00:00:00`),
