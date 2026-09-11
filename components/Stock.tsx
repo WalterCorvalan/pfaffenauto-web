@@ -85,19 +85,10 @@ export default function Stock({ vehiculos }: StockProps) {
   }, []);
 
   // ================= FILTROS INTELIGENTES Y ROBUSTOS =================
-  const suvsDestacadas = listaVehiculos
-    .filter((auto) => {
-      const t = normalizar(auto.tipo);
-      const m = normalizar(auto.modelo);
-      return (
-        t.includes("suv") ||
-        t.includes("terreno") ||
-        m.includes("sw4") ||
-        m.includes("tracker") ||
-        m.includes("taos") ||
-        m.includes("t-cross")
-      );
-    })
+  // Antes filtraba por tipo/modelo (SUVs) -- ahora muestra los que el
+  // vendedor marcó a mano como "Destacado" en el form de Stock del panel.
+  const autosDestacados = listaVehiculos
+    .filter((auto) => auto.destacado)
     .slice(0, 4);
 
   const pickipsCarrusel = listaVehiculos
@@ -129,7 +120,7 @@ export default function Stock({ vehiculos }: StockProps) {
     .slice(0, 4);
 
   const idsMostrados = new Set([
-    ...suvsDestacadas.map((a) => a.id),
+    ...autosDestacados.map((a) => a.id),
     ...pickipsCarrusel.map((a) => a.id),
     ...urbanosYSedanes.map((a) => a.id),
   ]);
@@ -171,19 +162,19 @@ export default function Stock({ vehiculos }: StockProps) {
       <div className="absolute bottom-[20%] right-[-5%] w-[400px] h-[400px] bg-sky-300/10 dark:bg-sky-500/10 rounded-full blur-3xl pointer-events-none"></div>
 
       <div className="max-w-7xl mx-auto px-4 md:px-6 space-y-24 relative z-10">
-        {/* ================= SECCIÓN 1: SUVs (GRILLA TRADICIONAL) ================= */}
-        {suvsDestacadas.length > 0 && (
+        {/* ================= SECCIÓN 1: Destacados (GRILLA TRADICIONAL) ================= */}
+        {autosDestacados.length > 0 && (
           <div>
             <SectionHeader
               pillText="Selección exclusiva"
               pillColor="text-sky-600 dark:text-sky-300 bg-sky-50/50 dark:bg-sky-400/10 border-sky-100/50 dark:border-sky-400/20"
-              titleLight="SUVs"
-              titleBold="Destacadas"
-              linkHref="/catalogo?q=SUV"
-              linkLabel="Ver todas las SUVs"
+              titleLight="Autos"
+              titleBold="Destacados"
+              linkHref="/catalogo"
+              linkLabel="Ver todo el stock"
             />
             <VehicleGrid
-              vehiculos={suvsDestacadas}
+              vehiculos={autosDestacados}
               autosComparar={autosComparar}
               onToggleComparar={toggleComparar}
               primerasPrioritarias
