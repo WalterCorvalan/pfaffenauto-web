@@ -1,6 +1,7 @@
 import { createClient } from "@/lib/supabase/server";
 import { CAMPOS_VEHICULO_PUBLICO } from "@/lib/vehiculos";
-import VehiculosGrid, { MARCAS_CHINAS } from "@/components/VehiculosGrid";
+import VehiculosGrid from "@/components/VehiculosGrid";
+import { MARCAS_CHINAS } from "@/lib/marcasChinas";
 import { Globe2, AlertCircle } from "lucide-react";
 import Link from "next/link";
 import type { Metadata } from "next";

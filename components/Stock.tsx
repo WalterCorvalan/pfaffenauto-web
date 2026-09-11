@@ -6,6 +6,7 @@ import Image from "next/image";
 import { ChevronRight, ArrowUpRight, Clock, Scale, X, MapPin } from "lucide-react";
 import { motion, AnimatePresence, Variants } from "framer-motion";
 import ComparadorModal from "@/components/modals/ComparadorModal";
+import { MARCAS_CHINAS } from "@/lib/marcasChinas";
 
 interface StockProps {
   vehiculos: any[] | null;
@@ -45,7 +46,11 @@ const itemVariants: Variants = {
 };
 
 export default function Stock({ vehiculos }: StockProps) {
-  const listaVehiculos = vehiculos || [];
+  // Las marcas de Mundo Chino tienen su propia sección dedicada -- si se
+  // mezclan acá sin ese contexto, un Haval aparece como "SUV" cualquiera en
+  // el home sin la promesa de Mundo Chino (garantía/equipamiento) detrás.
+  // Catálogo general sí los sigue mostrando, esto es solo el home.
+  const listaVehiculos = (vehiculos || []).filter((auto) => !MARCAS_CHINAS.has(normalizar(auto.marca)));
 
   // Estado para la lista de "Vistos recientemente"
   const [vistosRecientes, setVistosRecientes] = useState<any[]>([]);

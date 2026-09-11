@@ -7,16 +7,12 @@ import { ChevronRight, ChevronLeft, Scale, X } from "lucide-react";
 import { AnimatePresence, motion } from "framer-motion";
 import ComparadorModal from "@/components/modals/ComparadorModal";
 import { VehicleCard } from "@/components/Stock";
+import { MARCAS_CHINAS } from "@/lib/marcasChinas";
 
 const ITEMS_POR_PAGINA = 9;
 
 const normalizar = (texto: string) =>
   texto?.toLowerCase().normalize("NFD").replace(/[̀-ͯ]/g, "").trim() || "";
-
-export const MARCAS_CHINAS = new Set([
-  "baic", "changan", "chery", "jac", "haval", "gwm", "great wall",
-  "dfsk", "dfm", "mg", "byd", "geely", "foton", "jetour", "omoda",
-]);
 
 function categoriaDe(tipo: string, marca?: string): string {
   if (marca && MARCAS_CHINAS.has(normalizar(marca))) return "Mundo Chino";
