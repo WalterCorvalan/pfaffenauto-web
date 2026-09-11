@@ -6,6 +6,7 @@ import { isAiConfiguredV2 } from "@/lib/ai/indexV2";
 import { rateLimit, ipDesdeRequest } from "@/lib/rateLimit";
 import { registrarError } from "@/lib/panel/logger";
 import { notificarEncargados, notificarPersona } from "@/lib/panel/notificaciones";
+import { resolverFechaVisita } from "@/lib/fechas";
 
 // Endpoint público (sin sesión — lo llama el widget del sitio, un visitante
 // anónimo) que procesa un mensaje de Rodi. Identidad = sessionId generado
@@ -188,17 +189,18 @@ async function procesarMensaje({ sessionId, texto, origenPagina, nombre, telefon
     if (datos_detectados?.dia_visita && datos_detectados?.horario_visita) {
       const nombreCliente = datos_detectados?.nombre || conversacion.nombre_contacto || "Visitante de Rodi";
       const telefonoCliente = datos_detectados?.telefono || conversacion.telefono_contacto || "sin dato";
-      await supabase.from("visitas").insert({
+      const { error: errorVisita } = await supabase.from("visitas").insert({
         vehiculo_marca: datos_detectados?.vehiculo_propio?.marca || null,
         vehiculo_modelo: datos_detectados?.vehiculo_propio?.modelo || null,
         nombre_cliente: nombreCliente,
         telefono_cliente: telefonoCliente,
-        fecha_visita: datos_detectados.dia_visita,
+        fecha_visita: resolverFechaVisita(datos_detectados.dia_visita),
         horario_visita: datos_detectados.horario_visita,
         sucursal: sucursalElegida?.nombre || "Sin especificar",
         estado: "Pendiente",
         vendedor_id: vendedorAsignado,
       });
+      if (errorVisita) registrarError("api/panel/rodi/mensaje:crear-visita", errorVisita);
     }
   }
 

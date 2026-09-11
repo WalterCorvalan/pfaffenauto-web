@@ -8,6 +8,7 @@ import { rateLimit, ipDesdeRequest } from "@/lib/rateLimit";
 import { registrarError } from "@/lib/panel/logger";
 import { buscarRespuestaMemoria, buscarRespuestaFueraHorario } from "@/lib/panel/whatsappMemoria";
 import { notificarPersona, notificarEncargados } from "@/lib/panel/notificaciones";
+import { resolverFechaVisita } from "@/lib/fechas";
 
 // Webhook de Meta para el WhatsApp de panel-v2 (Conversaciones → WhatsApp,
 // replica /panel/chat de v1: bandeja de mensajes reales de clientes con
@@ -353,17 +354,18 @@ async function ejecutarAgente(conversacionId: string) {
     if (datos_detectados?.dia_visita && datos_detectados?.horario_visita) {
       const telefonoCliente = (convHandoff?.whatsapp_contactos as any)?.telefono;
       const nombreCliente = datos_detectados?.nombre || (convHandoff?.whatsapp_contactos as any)?.nombre_perfil || "Cliente de WhatsApp";
-      await supabase.from("visitas").insert({
+      const { error: errorVisita } = await supabase.from("visitas").insert({
         vehiculo_marca: datos_detectados?.vehiculo_propio?.marca || null,
         vehiculo_modelo: datos_detectados?.vehiculo_propio?.modelo || null,
         nombre_cliente: nombreCliente,
         telefono_cliente: telefonoCliente || "sin dato",
-        fecha_visita: datos_detectados.dia_visita,
+        fecha_visita: resolverFechaVisita(datos_detectados.dia_visita),
         horario_visita: datos_detectados.horario_visita,
         sucursal: sucursalElegida?.nombre || "Sin especificar",
         estado: "Pendiente",
         vendedor_id: vendedorAsignado,
       });
+      if (errorVisita) registrarError("webhook-v2:crear-visita", errorVisita);
     }
   }
 }
