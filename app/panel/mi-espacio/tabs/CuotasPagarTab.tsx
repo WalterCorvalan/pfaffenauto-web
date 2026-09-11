@@ -80,7 +80,7 @@ export default function CuotasPagarTab({ miId }: { miId: string }) {
       setCuotas((prev) => [...prev, data].sort((a, b) => a.vencimiento.localeCompare(b.vencimiento)));
       setShowNueva(false);
       setConcepto(""); setMonto(""); setVencimiento(""); setCuotaActual(""); setCuotaTotal(""); setDeudaId(""); setAcreedorBanco(""); setNotas("");
-    } catch { alert("No se pudo crear la cuota."); } finally { setGuardando(false); }
+    } catch (err: any) { console.error(err); alert(err?.message ? `No se pudo crear la cuota: ${err.message}` : "No se pudo crear la cuota."); } finally { setGuardando(false); }
   };
 
   const crearPlan = async () => {
@@ -102,7 +102,7 @@ export default function CuotasPagarTab({ miId }: { miId: string }) {
       setCuotas((prev) => [...prev, ...(data || [])].sort((a, b) => a.vencimiento.localeCompare(b.vencimiento)));
       setShowPlan(false);
       setPConceptoBase(""); setPAcreedor(""); setPMontoCuota(""); setPNotas("");
-    } catch { alert("No se pudo crear el plan."); } finally { setCreandoPlan(false); }
+    } catch (err: any) { console.error(err); alert(err?.message ? `No se pudo crear el plan: ${err.message}` : "No se pudo crear el plan."); } finally { setCreandoPlan(false); }
   };
 
   const eliminar = async (c: any) => {
@@ -126,7 +126,7 @@ export default function CuotasPagarTab({ miId }: { miId: string }) {
       await supabase2.from("espacio_cuotas_pagar").update({ monto_pagado: nuevoPagado, pagada: pagadaCompleto }).eq("id", pagando.id);
       setCuotas((prev) => prev.map((c) => (c.id === pagando.id ? { ...c, monto_pagado: nuevoPagado, pagada: pagadaCompleto } : c)));
       setPagando(null);
-    } catch { alert("No se pudo registrar el pago."); } finally { setGuardandoPago(false); }
+    } catch (err: any) { console.error(err); alert(err?.message ? `No se pudo registrar el pago: ${err.message}` : "No se pudo registrar el pago."); } finally { setGuardandoPago(false); }
   };
 
   if (cargando) return null;
@@ -187,7 +187,7 @@ export default function CuotasPagarTab({ miId }: { miId: string }) {
             <label className={labelClass}>Concepto *</label>
             <input value={concepto} onChange={(e) => setConcepto(e.target.value)} placeholder="Visa, hipoteca casa, préstamo BBVA..." className={inputClass} />
             <div className="grid grid-cols-2 gap-2 mt-3">
-              <div><label className={labelClass}>Monto *</label><input type="number" value={monto} onChange={(e) => setMonto(e.target.value)} className={inputClass} /></div>
+              <div><label className={labelClass}>Monto *</label><input type="text" inputMode="numeric" value={monto} onChange={(e) => setMonto(e.target.value.replace(/\D/g, ""))} className={inputClass} /></div>
               <div><label className={labelClass}>Moneda</label><select value={moneda} onChange={(e) => setMoneda(e.target.value)} className={inputClass}><option value="USD">USD</option><option value="ARS">ARS</option></select></div>
             </div>
             <div className="grid grid-cols-2 gap-2 mt-3">
@@ -223,7 +223,7 @@ export default function CuotasPagarTab({ miId }: { miId: string }) {
               <div><label className={labelClass}>Frecuencia *</label><select value={pFrecuencia} onChange={(e) => setPFrecuencia(e.target.value)} className={inputClass}><option value="Mensual">Mensual</option><option value="Bimestral">Bimestral</option><option value="Anual">Anual</option></select></div>
             </div>
             <div className="grid grid-cols-2 gap-2 mt-3">
-              <div><label className={labelClass}>Monto por cuota *</label><input type="number" value={pMontoCuota} onChange={(e) => setPMontoCuota(e.target.value)} className={inputClass} /></div>
+              <div><label className={labelClass}>Monto por cuota *</label><input type="text" inputMode="numeric" value={pMontoCuota} onChange={(e) => setPMontoCuota(e.target.value.replace(/\D/g, ""))} className={inputClass} /></div>
               <div><label className={labelClass}>Moneda *</label><select value={pMoneda} onChange={(e) => setPMoneda(e.target.value)} className={inputClass}><option value="USD">USD</option><option value="ARS">ARS</option></select></div>
             </div>
             <label className={labelClass + " mt-3"}>Primer vencimiento *</label>
@@ -245,7 +245,7 @@ export default function CuotasPagarTab({ miId }: { miId: string }) {
             </div>
             <div className="grid grid-cols-2 gap-2">
               <div><label className={labelClass}>Fecha *</label><input type="date" value={pagoFecha} onChange={(e) => setPagoFecha(e.target.value)} className={inputClass} /></div>
-              <div><label className={labelClass}>Monto ({pagando.moneda}) *</label><input type="number" value={pagoMonto} onChange={(e) => setPagoMonto(e.target.value)} className={inputClass} /></div>
+              <div><label className={labelClass}>Monto ({pagando.moneda}) *</label><input type="text" inputMode="numeric" value={pagoMonto} onChange={(e) => setPagoMonto(e.target.value.replace(/\D/g, ""))} className={inputClass} /></div>
             </div>
             <label className={labelClass + " mt-3"}>Notas (opcional)</label>
             <textarea value={pagoNotas} onChange={(e) => setPagoNotas(e.target.value)} rows={2} className={inputClass} />

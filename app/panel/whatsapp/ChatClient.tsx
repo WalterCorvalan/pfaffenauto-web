@@ -180,7 +180,13 @@ export default function ChatClient({
       const data = await res.json();
       if (!res.ok) {
         console.error("Error al enviar", data.error);
-        setMensajes((prev) => prev.map((m) => (m.id === tempId ? { ...m, status: "failed" } : m)));
+        setMensajes((prev) => prev.filter((m) => m.id !== tempId));
+        if (res.status === 422) {
+          alert(data.error || "Mensaje bloqueado.");
+          setNuevoMensaje(texto);
+        } else {
+          setMensajes((prev) => [...prev, { ...tempMsg, status: "failed" }]);
+        }
       } else {
         // Responder a mano toma la charla: refleja acá lo que el endpoint ya
         // hizo en la base (pausar la IA + pasar a "Contactado" si estaba

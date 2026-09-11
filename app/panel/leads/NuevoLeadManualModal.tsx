@@ -35,9 +35,9 @@ export default function NuevoLeadManualModal({ vendedores, sucursales, miId, onC
       }).select("*").single();
       if (dbError) throw dbError;
       onCreado(data);
-    } catch (err) {
+    } catch (err: any) {
       console.error(err);
-      setError("No se pudo crear el lead.");
+      setError(err?.message ? `No se pudo crear el lead: ${err.message}` : "No se pudo crear el lead.");
     } finally {
       setGuardando(false);
     }

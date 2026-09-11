@@ -39,8 +39,8 @@ export default function NuevaCampanaModal({ sucursales = [] }: { sucursales?: { 
       setIsOpen(false);
       setNombreCampana(""); setSucursalId(""); setGasto(""); setClics(""); setLeads("");
       router.refresh();
-    } catch (err) {
-      alert("Error al registrar la campaña.");
+    } catch (err: any) {
+      alert(err?.message ? `Error al registrar la campaña: ${err.message}` : "Error al registrar la campaña.");
     } finally {
       setCargando(false);
     }
@@ -103,7 +103,7 @@ export default function NuevaCampanaModal({ sucursales = [] }: { sucursales?: { 
               <div className="grid grid-cols-3 gap-3">
                 <div>
                   <label className="text-xs font-bold text-slate-600 dark:text-slate-400 uppercase tracking-widest mb-1.5 block">Gasto ($)</label>
-                  <input type="number" step="0.01" required value={gasto} onChange={(e) => setGasto(e.target.value)} className={`${inputClass} font-mono`} placeholder="0" />
+                  <input type="text" inputMode="numeric" required value={gasto} onChange={(e) => setGasto(e.target.value.replace(/\D/g, ""))} className={`${inputClass} font-mono`} placeholder="0" />
                 </div>
                 <div>
                   <label className="text-xs font-bold text-slate-600 dark:text-slate-400 uppercase tracking-widest mb-1.5 block">Clics</label>

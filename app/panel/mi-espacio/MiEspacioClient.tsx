@@ -164,7 +164,7 @@ export default function MiEspacioClient({
       setUrgentes((prev) => [...prev, data].sort((a, b) => a.vencimiento.localeCompare(b.vencimiento)));
       setShowNuevoUrgente(false);
       setUTitulo(""); setUMonto(""); setUVencimiento(""); setUNotas("");
-    } catch { alert("No se pudo crear el urgente."); } finally { setGuardandoUrgente(false); }
+    } catch (err: any) { console.error(err); alert(err?.message ? `No se pudo crear el urgente: ${err.message}` : "No se pudo crear el urgente."); } finally { setGuardandoUrgente(false); }
   };
 
   const abrirEdicionUrgente = (u: any) => {
@@ -186,7 +186,7 @@ export default function MiEspacioClient({
       if (error) throw error;
       setUrgentes((prev) => prev.map((u) => (u.id === editandoUrgente.id ? { ...u, ...cambios } : u)).sort((a, b) => a.vencimiento.localeCompare(b.vencimiento)));
       cerrarModalUrgente();
-    } catch { alert("No se pudo guardar el urgente."); } finally { setGuardandoUrgente(false); }
+    } catch (err: any) { console.error(err); alert(err?.message ? `No se pudo guardar el urgente: ${err.message}` : "No se pudo guardar el urgente."); } finally { setGuardandoUrgente(false); }
   };
 
   const cerrarModalUrgente = () => {
@@ -227,7 +227,7 @@ export default function MiEspacioClient({
       setPagos((prev) => [pago, ...prev]);
       setUrgentes((prev) => prev.map((u) => (u.id === pagando.id ? { ...u, monto_pagado: nuevoPagado, pagado: pagadoCompleto } : u)));
       setPagando(null);
-    } catch { alert("No se pudo registrar el pago."); } finally { setGuardandoPago(false); }
+    } catch (err: any) { console.error(err); alert(err?.message ? `No se pudo registrar el pago: ${err.message}` : "No se pudo registrar el pago."); } finally { setGuardandoPago(false); }
   };
 
   const registrarPagoManual = async () => {
@@ -245,7 +245,7 @@ export default function MiEspacioClient({
         setPagos((prev) => [data, ...prev]);
       }
       cerrarModalPagoManual();
-    } catch { alert("No se pudo guardar el pago."); } finally { setGuardandoPagoManual(false); }
+    } catch (err: any) { console.error(err); alert(err?.message ? `No se pudo guardar el pago: ${err.message}` : "No se pudo guardar el pago."); } finally { setGuardandoPagoManual(false); }
   };
 
   const abrirEditarPago = (p: any) => {
@@ -540,7 +540,7 @@ export default function MiEspacioClient({
             <input value={uTitulo} onChange={(e) => setUTitulo(e.target.value)} placeholder="Pagar la luz" className={inputClass} />
             <div className="grid grid-cols-3 gap-2 mt-3">
               <div><label className={labelClass}>Moneda</label><select value={uMoneda} onChange={(e) => setUMoneda(e.target.value)} className={inputClass}><option value="ARS">ARS</option><option value="USD">USD</option></select></div>
-              <div><label className={labelClass}>Monto</label><input type="number" value={uMonto} onChange={(e) => setUMonto(e.target.value)} className={inputClass} /></div>
+              <div><label className={labelClass}>Monto</label><input type="text" inputMode="numeric" value={uMonto} onChange={(e) => setUMonto(e.target.value.replace(/\D/g, ""))} className={inputClass} /></div>
               <div><label className={labelClass}>Vencimiento *</label><input type="date" value={uVencimiento} onChange={(e) => setUVencimiento(e.target.value)} className={inputClass} /></div>
             </div>
             <label className={labelClass + " mt-3"}>Notas</label>
@@ -563,7 +563,7 @@ export default function MiEspacioClient({
             <div className="flex items-center justify-between text-sm mb-3"><span className="text-slate-500">Saldo pendiente</span><strong className="text-amber-600">{fmt(saldoPendiente, pagando.moneda)}</strong></div>
             <div className="grid grid-cols-2 gap-2">
               <div><label className={labelClass}>Fecha *</label><input type="date" value={pagoFecha} onChange={(e) => setPagoFecha(e.target.value)} className={inputClass} /></div>
-              <div><label className={labelClass}>Monto ({pagando.moneda}) *</label><input type="number" value={pagoMonto} onChange={(e) => setPagoMonto(e.target.value)} className={inputClass} /></div>
+              <div><label className={labelClass}>Monto ({pagando.moneda}) *</label><input type="text" inputMode="numeric" value={pagoMonto} onChange={(e) => setPagoMonto(e.target.value.replace(/\D/g, ""))} className={inputClass} /></div>
             </div>
             <label className={labelClass + " mt-3"}>Notas (opcional)</label>
             <textarea value={pagoNotas} onChange={(e) => setPagoNotas(e.target.value)} rows={2} placeholder="Transferencia, efectivo, etc." className={inputClass} />
@@ -589,7 +589,7 @@ export default function MiEspacioClient({
             <input value={pmConcepto} onChange={(e) => setPmConcepto(e.target.value)} placeholder="Compra dólares, pago auto, etc." className={inputClass} />
             <div className="grid grid-cols-3 gap-2 mt-3">
               <div><label className={labelClass}>Moneda</label><select value={pmMoneda} onChange={(e) => setPmMoneda(e.target.value)} className={inputClass}><option value="USD">USD</option><option value="ARS">ARS</option></select></div>
-              <div className="col-span-2"><label className={labelClass}>Monto *</label><input type="number" value={pmMonto} onChange={(e) => setPmMonto(e.target.value)} className={inputClass} /></div>
+              <div className="col-span-2"><label className={labelClass}>Monto *</label><input type="text" inputMode="numeric" value={pmMonto} onChange={(e) => setPmMonto(e.target.value.replace(/\D/g, ""))} className={inputClass} /></div>
             </div>
             <label className={labelClass + " mt-3"}>Beneficiario</label>
             <input value={pmBeneficiario} onChange={(e) => setPmBeneficiario(e.target.value)} placeholder="A quién" className={inputClass} />

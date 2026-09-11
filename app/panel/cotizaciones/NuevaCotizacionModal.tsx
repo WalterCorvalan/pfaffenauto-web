@@ -106,9 +106,9 @@ export default function NuevaCotizacionModal({ clientes, vehiculos, perfiles, mi
         window.open(tel ? `https://wa.me/${tel}?text=${texto}` : `https://wa.me/?text=${texto}`, "_blank");
       }
       onClose();
-    } catch (err) {
+    } catch (err: any) {
       console.error(err);
-      setError("No se pudo guardar la cotización.");
+      setError(err?.message ? `No se pudo guardar la cotización: ${err.message}` : "No se pudo guardar la cotización.");
     } finally {
       setGuardando(false);
     }
@@ -166,7 +166,7 @@ export default function NuevaCotizacionModal({ clientes, vehiculos, perfiles, mi
               <div><label className={labelClass}>Marca</label><input value={permutaMarca} onChange={(e) => setPermutaMarca(e.target.value)} placeholder="BMW, Audi, Toyota..." className={inputClass} /></div>
               <div><label className={labelClass}>Modelo</label><input value={permutaModelo} onChange={(e) => setPermutaModelo(e.target.value)} placeholder="X3, A4, Hilux..." className={inputClass} /></div>
               <div><label className={labelClass}>Año</label><input type="number" value={permutaAnio} onChange={(e) => setPermutaAnio(e.target.value)} placeholder="2020" className={inputClass} /></div>
-              <div><label className={labelClass}>Kilómetros</label><input type="number" value={permutaKm} onChange={(e) => setPermutaKm(e.target.value)} placeholder="50000" className={inputClass} /></div>
+              <div><label className={labelClass}>Kilómetros</label><input type="text" inputMode="numeric" value={permutaKm} onChange={(e) => setPermutaKm(e.target.value.replace(/\D/g, ""))} placeholder="50000" className={inputClass} /></div>
               <div>
                 <label className={labelClass}>Estado general</label>
                 <select value={permutaEstado} onChange={(e) => setPermutaEstado(e.target.value)} className={inputClass}>{CONDICIONES.map((c) => <option key={c} value={c}>{c}</option>)}</select>
@@ -182,7 +182,7 @@ export default function NuevaCotizacionModal({ clientes, vehiculos, perfiles, mi
               <div>
                 <label className={labelClass}>Precio sugerido *</label>
                 <div className="flex gap-1">
-                  <input type="number" value={precioSugerido} onChange={(e) => setPrecioSugerido(e.target.value)} className={`${inputClass} flex-1 min-w-0`} />
+                  <input type="text" inputMode="numeric" value={precioSugerido} onChange={(e) => setPrecioSugerido(e.target.value.replace(/\D/g, ""))} placeholder="15000000" className={`${inputClass} flex-1 min-w-0`} />
                   <select value={moneda} onChange={(e) => setMoneda(e.target.value)} className={`${inputClass} !w-20 shrink-0`}><option value="USD">USD</option><option value="ARS">ARS</option></select>
                 </div>
               </div>

@@ -73,7 +73,7 @@ export default function CuotasTab({
       setCuotasCobrar((prev: any[]) => [...prev, data]);
       setShowNuevaC(false);
       setCClienteId(""); setCVendedorId(""); setCConcepto(""); setCMonto(""); setCVencimiento("");
-    } catch { alert("No se pudo crear la cuota."); } finally { setGuardandoC(false); }
+    } catch (err: any) { alert(err?.message ? `No se pudo crear la cuota: ${err.message}` : "No se pudo crear la cuota."); } finally { setGuardandoC(false); }
   };
 
   const crearCuotaPagar = async () => {
@@ -94,7 +94,7 @@ export default function CuotasTab({
       setCuotasPagar((prev: any[]) => [...prev, ...(data || [])]);
       setShowNuevaP(false);
       setPAcreedor(""); setPConcepto(""); setPVehiculoId(""); setPMontoCuota(""); setPNotas("");
-    } catch { alert("No se pudo crear la deuda."); } finally { setGuardandoP(false); }
+    } catch (err: any) { alert(err?.message ? `No se pudo crear la deuda: ${err.message}` : "No se pudo crear la deuda."); } finally { setGuardandoP(false); }
   };
 
   const abrirPago = (cuota: any, direccion: "cobrar" | "pagar") => {
@@ -228,7 +228,7 @@ export default function CuotasTab({
             <label className={labelClass + " mt-3"}>Concepto *</label>
             <input value={cConcepto} onChange={(e) => setCConcepto(e.target.value)} placeholder="Financiación saldo, cuota 3/12..." className={inputClass} />
             <div className="grid grid-cols-3 gap-2 mt-3">
-              <div><label className={labelClass}>Monto *</label><input type="number" value={cMonto} onChange={(e) => setCMonto(e.target.value)} className={inputClass} /></div>
+              <div><label className={labelClass}>Monto *</label><input type="text" inputMode="numeric" value={cMonto} onChange={(e) => setCMonto(e.target.value.replace(/\D/g, ""))} placeholder="147000" className={inputClass} /></div>
               <div><label className={labelClass}>Moneda</label><select value={cMoneda} onChange={(e) => setCMoneda(e.target.value)} className={inputClass}><option value="USD">USD</option><option value="ARS">ARS</option></select></div>
               <div><label className={labelClass}>Vencimiento *</label><input type="date" value={cVencimiento} onChange={(e) => setCVencimiento(e.target.value)} className={inputClass} /></div>
             </div>
@@ -253,7 +253,7 @@ export default function CuotasTab({
               <><label className={labelClass + " mt-3"}>Vincular auto del stock</label><select value={pVehiculoId} onChange={(e) => setPVehiculoId(e.target.value)} className={inputClass}><option value="">— Sin vincular —</option>{vehiculos.map((v) => <option key={v.id} value={v.id}>{v.marca} {v.modelo} {v.patente ? `— ${v.patente}` : ""}</option>)}</select></>
             )}
             <div className="grid grid-cols-2 gap-2 mt-3">
-              <div><label className={labelClass}>Importe de cada cuota *</label><input type="number" value={pMontoCuota} onChange={(e) => setPMontoCuota(e.target.value)} placeholder="2500" className={inputClass} /></div>
+              <div><label className={labelClass}>Importe de cada cuota *</label><input type="text" inputMode="numeric" value={pMontoCuota} onChange={(e) => setPMontoCuota(e.target.value.replace(/\D/g, ""))} placeholder="2500" className={inputClass} /></div>
               <div><label className={labelClass}>Moneda</label><select value={pMoneda} onChange={(e) => setPMoneda(e.target.value)} className={inputClass}><option value="USD">USD</option><option value="ARS">ARS</option></select></div>
             </div>
             <div className="grid grid-cols-2 gap-2 mt-3">
@@ -274,7 +274,7 @@ export default function CuotasTab({
           <div onClick={(e) => e.stopPropagation()} className="bg-white dark:bg-[#141414] border border-slate-200 dark:border-white/10 w-full max-w-sm rounded-2xl shadow-2xl p-6">
             <div className="flex justify-between items-start mb-3"><h3 className="text-base font-bold">{pagando.direccion === "cobrar" ? "Cobrar" : "Pagar"} cuota</h3><button onClick={() => setPagando(null)}><X className="w-4 h-4 text-slate-400" /></button></div>
             <div className="grid grid-cols-2 gap-2">
-              <div><label className={labelClass}>Monto ({pagando.cuota.moneda}) *</label><input type="number" value={pgMonto} onChange={(e) => setPgMonto(e.target.value)} className={inputClass} /></div>
+              <div><label className={labelClass}>Monto ({pagando.cuota.moneda}) *</label><input type="text" inputMode="numeric" value={pgMonto} onChange={(e) => setPgMonto(e.target.value.replace(/\D/g, ""))} placeholder="147000" className={inputClass} /></div>
               <div><label className={labelClass}>Caja *</label><select value={pgCajaId} onChange={(e) => setPgCajaId(e.target.value)} className={inputClass}><option value="">— Elegí —</option>{cuentas.filter((c) => c.moneda === pagando.cuota.moneda).map((c) => <option key={c.id} value={c.id}>{c.nombre}</option>)}</select></div>
             </div>
             <div className="grid grid-cols-2 gap-2 mt-3">

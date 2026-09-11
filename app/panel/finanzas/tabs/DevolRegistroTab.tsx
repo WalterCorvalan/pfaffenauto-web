@@ -59,7 +59,7 @@ export default function DevolRegistroTab({
       if (error) throw error;
       setDevoluciones((prev: any[]) => [data, ...prev]);
       setShowNueva(false);
-    } catch { alert("No se pudo registrar la devolución."); } finally { setGuardando(false); }
+    } catch (err: any) { alert(err?.message ? `No se pudo registrar la devolución: ${err.message}` : "No se pudo registrar la devolución."); } finally { setGuardando(false); }
   };
 
   const abrirResolucion = (d: any) => { setResolviendo(d); setRsDestino("acreditada"); setRsCuentaId(cuentas.find((c) => c.moneda === d.moneda)?.id || ""); };
@@ -158,7 +158,7 @@ export default function DevolRegistroTab({
             <label className={labelClass + " mt-3"}>Gestora</label>
             <input value={gestora} onChange={(e) => setGestora(e.target.value)} className={inputClass} />
             <div className="grid grid-cols-2 gap-2 mt-3">
-              <div><label className={labelClass}>Monto *</label><input type="number" value={monto} onChange={(e) => setMonto(e.target.value)} className={inputClass} /></div>
+              <div><label className={labelClass}>Monto *</label><input type="text" inputMode="numeric" value={monto} onChange={(e) => setMonto(e.target.value.replace(/\D/g, ""))} placeholder="147000" className={inputClass} /></div>
               <div><label className={labelClass}>Moneda *</label><select value={moneda} onChange={(e) => setMoneda(e.target.value)} className={inputClass}><option value="ARS">ARS</option><option value="USD">USD</option></select></div>
             </div>
             <label className={labelClass + " mt-3"}>Notas</label>

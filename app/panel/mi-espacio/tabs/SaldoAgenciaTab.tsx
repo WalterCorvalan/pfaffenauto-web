@@ -47,7 +47,7 @@ export default function SaldoAgenciaTab({ miId }: { miId: string }) {
       setMovs((prev) => [data, ...prev]);
       setShowNuevo(false);
       setMonto(""); setMotivo(""); setNotas("");
-    } catch { alert("No se pudo crear el movimiento."); } finally { setGuardando(false); }
+    } catch (err: any) { console.error(err); alert(err?.message ? `No se pudo crear el movimiento: ${err.message}` : "No se pudo crear el movimiento."); } finally { setGuardando(false); }
   };
 
   const toggleSaldado = async (m: any) => {
@@ -120,7 +120,7 @@ export default function SaldoAgenciaTab({ miId }: { miId: string }) {
               <option value="aporte">Puse de mi bolsillo (yo → agencia)</option>
             </select>
             <div className="grid grid-cols-2 gap-2 mt-3">
-              <div><label className={labelClass}>Monto *</label><input type="number" value={monto} onChange={(e) => setMonto(e.target.value)} className={inputClass} /></div>
+              <div><label className={labelClass}>Monto *</label><input type="text" inputMode="numeric" value={monto} onChange={(e) => setMonto(e.target.value.replace(/\D/g, ""))} className={inputClass} /></div>
               <div><label className={labelClass}>Moneda</label><select value={moneda} onChange={(e) => setMoneda(e.target.value)} className={inputClass}><option value="USD">USD</option><option value="ARS">ARS</option></select></div>
             </div>
             <label className={labelClass + " mt-3"}>Fecha *</label>

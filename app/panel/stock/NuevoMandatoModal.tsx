@@ -102,9 +102,9 @@ export default function NuevoMandatoModal({ miId, miNombre, onClose, onCreado }:
 
       onCreado(mandato, vehiculoCreado);
       onClose();
-    } catch (err) {
+    } catch (err: any) {
       console.error(err);
-      setError("No se pudo generar el mandato.");
+      setError(err?.message ? `No se pudo generar el mandato: ${err.message}` : "No se pudo generar el mandato.");
     } finally {
       setGuardando(false);
     }
@@ -148,7 +148,7 @@ export default function NuevoMandatoModal({ miId, miNombre, onClose, onCreado }:
               <div><label className={labelClass}>Año *</label><input type="number" value={anio} onChange={(e) => setAnio(e.target.value)} className={inputClass} /></div>
               <div><label className={labelClass}>Color</label><input value={color} onChange={(e) => setColor(e.target.value)} className={inputClass} /></div>
               <div><label className={labelClass}>Patente</label><input value={patente} onChange={(e) => setPatente(e.target.value)} className={inputClass} /></div>
-              <div><label className={labelClass}>Kilómetros</label><input type="number" value={km} onChange={(e) => setKm(e.target.value)} className={inputClass} /></div>
+              <div><label className={labelClass}>Kilómetros</label><input type="text" inputMode="numeric" value={km} onChange={(e) => setKm(e.target.value.replace(/\D/g, ""))} placeholder="147000" className={inputClass} /></div>
             </div>
           </div>
 
@@ -198,7 +198,7 @@ export default function NuevoMandatoModal({ miId, miNombre, onClose, onCreado }:
                 <label className={labelClass}>Auxilio</label>
                 <select value={auxilio} onChange={(e) => setAuxilio(e.target.value)} className={inputClass}><option value="No trae">No trae</option><option value="Trae">Trae</option></select>
               </div>
-              <div><label className={labelClass}>Valor</label><input type="number" value={valor} onChange={(e) => setValor(e.target.value)} className={inputClass} /></div>
+              <div><label className={labelClass}>Valor</label><input type="text" inputMode="numeric" value={valor} onChange={(e) => setValor(e.target.value.replace(/\D/g, ""))} className={inputClass} /></div>
               <div>
                 <label className={labelClass}>Moneda</label>
                 <select value={moneda} onChange={(e) => setMoneda(e.target.value)} className={inputClass}><option value="USD">USD</option><option value="ARS">ARS</option></select>

@@ -62,7 +62,7 @@ export default function TasarUsadoModal({ marcaInicial, modeloInicial, anioInici
           <div><label className={labelClass}>Marca</label><input value={marca} onChange={(e) => setMarca(e.target.value)} className={inputClass} /></div>
           <div><label className={labelClass}>Modelo</label><input value={modelo} onChange={(e) => setModelo(e.target.value)} className={inputClass} /></div>
           <div><label className={labelClass}>Año</label><input type="number" value={anio} onChange={(e) => setAnio(e.target.value)} className={inputClass} /></div>
-          <div><label className={labelClass}>Kilómetros</label><input type="number" value={km} onChange={(e) => setKm(e.target.value)} className={inputClass} /></div>
+          <div><label className={labelClass}>Kilómetros</label><input type="text" inputMode="numeric" value={km} onChange={(e) => setKm(e.target.value.replace(/\D/g, ""))} className={inputClass} /></div>
         </div>
 
         <button type="button" onClick={tasar} disabled={tasando || (!marca.trim() && !modelo.trim())} className="w-full flex items-center justify-center gap-2 py-3 rounded-xl bg-rose-600 hover:bg-rose-700 text-white text-sm font-bold disabled:opacity-50">

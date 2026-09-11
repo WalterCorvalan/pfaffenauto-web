@@ -86,9 +86,9 @@ export default function NuevoPedidoModal({ pedido, vendedores, clientes, miId, o
       const { error: err } = await supabase2.from("pedidos").delete().eq("id", pedido.id);
       if (err) throw err;
       onGuardado({ ...pedido, _eliminado: true });
-    } catch (err) {
+    } catch (err: any) {
       console.error(err);
-      setError("No se pudo eliminar el pedido.");
+      setError(err?.message ? `No se pudo eliminar el pedido: ${err.message}` : "No se pudo eliminar el pedido.");
       setCargando(false);
     }
   };
@@ -138,7 +138,7 @@ export default function NuevoPedidoModal({ pedido, vendedores, clientes, miId, o
             </div>
             <div className="mt-3"><label className={labelClass}>Color preferido</label><input value={colorPreferido} onChange={(e) => setColorPreferido(e.target.value)} className={inputClass} /></div>
             <div className="grid grid-cols-2 gap-3 mt-3">
-              <div><label className={labelClass}>Presupuesto máx.</label><input type="number" value={presupuestoMax} onChange={(e) => setPresupuestoMax(e.target.value)} className={inputClass} /></div>
+              <div><label className={labelClass}>Presupuesto máx.</label><input type="text" inputMode="numeric" value={presupuestoMax} onChange={(e) => setPresupuestoMax(e.target.value.replace(/\D/g, ""))} className={inputClass} /></div>
               <div><label className={labelClass}>Moneda</label><select value={moneda} onChange={(e) => setMoneda(e.target.value)} className={`${inputClass} cursor-pointer`}><option value="USD">USD</option><option value="ARS">ARS</option></select></div>
             </div>
           </div>

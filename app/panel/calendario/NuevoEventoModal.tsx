@@ -86,9 +86,9 @@ export default function NuevoEventoModal({ fechaInicial, perfiles, miId, onClose
 
       onCreado(data);
       onClose();
-    } catch (err) {
+    } catch (err: any) {
       console.error(err);
-      setError("No se pudo crear el evento.");
+      setError(err?.message ? `No se pudo crear el evento: ${err.message}` : "No se pudo crear el evento.");
     } finally {
       setGuardando(false);
     }

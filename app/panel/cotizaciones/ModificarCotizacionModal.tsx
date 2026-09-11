@@ -64,7 +64,7 @@ export default function ModificarCotizacionModal({ cotizacion: c, vendedorNombre
     const { data, error } = await supabase2.from("cotizaciones").update(payload).eq("id", c.id).select().single();
     setGuardando(false);
     if (!error) { onDecidido(data); onClose(); }
-    else alert("No se pudo guardar la decisión.");
+    else alert(error?.message ? `No se pudo guardar la decisión: ${error.message}` : "No se pudo guardar la decisión.");
   };
 
   const inputClass = "w-full bg-slate-50 dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-xl px-3 py-2.5 text-sm outline-none focus:border-rose-500 text-slate-900 dark:text-white";
@@ -111,7 +111,7 @@ export default function ModificarCotizacionModal({ cotizacion: c, vendedorNombre
             <div>
               <label className="text-xs font-semibold text-slate-600 dark:text-slate-300 block mb-1">Precio a aprobar</label>
               <div className="flex gap-1">
-                <input type="number" value={precio} onChange={(e) => setPrecio(e.target.value)} className={`${inputClass} flex-1 min-w-0`} />
+                <input type="text" inputMode="numeric" value={precio} onChange={(e) => setPrecio(e.target.value.replace(/\D/g, ""))} className={`${inputClass} flex-1 min-w-0`} />
                 <select value={moneda} onChange={(e) => setMoneda(e.target.value)} className={`${inputClass} !w-20 shrink-0`}><option value="USD">USD</option><option value="ARS">ARS</option></select>
               </div>
               {tieneTomaVieja && <p className="text-[11px] font-semibold text-indigo-600 dark:text-indigo-300 mt-1">Toma con este precio (-15%): {moneda} {tomaSugerida.toLocaleString("es-AR")}</p>}

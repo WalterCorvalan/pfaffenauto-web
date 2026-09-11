@@ -61,7 +61,7 @@ export default function CuotasCobrarTab({ miId }: { miId: string }) {
       setCuotas((prev) => [...prev, data].sort((a, b) => a.vencimiento.localeCompare(b.vencimiento)));
       setShowNueva(false);
       setConcepto(""); setMonto(""); setVencimiento(""); setCuotaActual(""); setCuotaTotal(""); setDeudor(""); setNotas("");
-    } catch { alert("No se pudo crear la cuota."); } finally { setGuardando(false); }
+    } catch (err: any) { console.error(err); alert(err?.message ? `No se pudo crear la cuota: ${err.message}` : "No se pudo crear la cuota."); } finally { setGuardando(false); }
   };
 
   const crearPlan = async () => {
@@ -83,7 +83,7 @@ export default function CuotasCobrarTab({ miId }: { miId: string }) {
       setCuotas((prev) => [...prev, ...(data || [])].sort((a, b) => a.vencimiento.localeCompare(b.vencimiento)));
       setShowPlan(false);
       setPConceptoBase(""); setPDeudor(""); setPMontoCuota(""); setPNotas("");
-    } catch { alert("No se pudo crear el plan."); } finally { setCreandoPlan(false); }
+    } catch (err: any) { console.error(err); alert(err?.message ? `No se pudo crear el plan: ${err.message}` : "No se pudo crear el plan."); } finally { setCreandoPlan(false); }
   };
 
   const eliminar = async (c: any) => {
@@ -106,7 +106,7 @@ export default function CuotasCobrarTab({ miId }: { miId: string }) {
       await supabase2.from("espacio_cuotas_cobrar").update({ monto_cobrado: nuevoCobrado, cobrada: cobradaCompleto }).eq("id", cobrando.id);
       setCuotas((prev) => prev.map((c) => (c.id === cobrando.id ? { ...c, monto_cobrado: nuevoCobrado, cobrada: cobradaCompleto } : c)));
       setCobrando(null);
-    } catch { alert("No se pudo registrar el cobro."); } finally { setGuardandoCobro(false); }
+    } catch (err: any) { console.error(err); alert(err?.message ? `No se pudo registrar el cobro: ${err.message}` : "No se pudo registrar el cobro."); } finally { setGuardandoCobro(false); }
   };
 
   if (cargando) return null;
@@ -158,7 +158,7 @@ export default function CuotasCobrarTab({ miId }: { miId: string }) {
             <label className={labelClass}>Concepto *</label>
             <input value={concepto} onChange={(e) => setConcepto(e.target.value)} placeholder="Préstamo, venta en cuotas..." className={inputClass} />
             <div className="grid grid-cols-2 gap-2 mt-3">
-              <div><label className={labelClass}>Monto *</label><input type="number" value={monto} onChange={(e) => setMonto(e.target.value)} className={inputClass} /></div>
+              <div><label className={labelClass}>Monto *</label><input type="text" inputMode="numeric" value={monto} onChange={(e) => setMonto(e.target.value.replace(/\D/g, ""))} className={inputClass} /></div>
               <div><label className={labelClass}>Moneda</label><select value={moneda} onChange={(e) => setMoneda(e.target.value)} className={inputClass}><option value="USD">USD</option><option value="ARS">ARS</option></select></div>
             </div>
             <div className="grid grid-cols-2 gap-2 mt-3">
@@ -187,7 +187,7 @@ export default function CuotasCobrarTab({ miId }: { miId: string }) {
               <div><label className={labelClass}>Frecuencia *</label><select value={pFrecuencia} onChange={(e) => setPFrecuencia(e.target.value)} className={inputClass}><option value="Mensual">Mensual</option><option value="Bimestral">Bimestral</option><option value="Anual">Anual</option></select></div>
             </div>
             <div className="grid grid-cols-2 gap-2 mt-3">
-              <div><label className={labelClass}>Monto por cuota *</label><input type="number" value={pMontoCuota} onChange={(e) => setPMontoCuota(e.target.value)} className={inputClass} /></div>
+              <div><label className={labelClass}>Monto por cuota *</label><input type="text" inputMode="numeric" value={pMontoCuota} onChange={(e) => setPMontoCuota(e.target.value.replace(/\D/g, ""))} className={inputClass} /></div>
               <div><label className={labelClass}>Moneda *</label><select value={pMoneda} onChange={(e) => setPMoneda(e.target.value)} className={inputClass}><option value="USD">USD</option><option value="ARS">ARS</option></select></div>
             </div>
             <label className={labelClass + " mt-3"}>Primer vencimiento *</label>
@@ -209,7 +209,7 @@ export default function CuotasCobrarTab({ miId }: { miId: string }) {
             </div>
             <div className="grid grid-cols-2 gap-2">
               <div><label className={labelClass}>Fecha *</label><input type="date" value={cobroFecha} onChange={(e) => setCobroFecha(e.target.value)} className={inputClass} /></div>
-              <div><label className={labelClass}>Monto ({cobrando.moneda}) *</label><input type="number" value={cobroMonto} onChange={(e) => setCobroMonto(e.target.value)} className={inputClass} /></div>
+              <div><label className={labelClass}>Monto ({cobrando.moneda}) *</label><input type="text" inputMode="numeric" value={cobroMonto} onChange={(e) => setCobroMonto(e.target.value.replace(/\D/g, ""))} className={inputClass} /></div>
             </div>
             <label className={labelClass + " mt-3"}>Notas</label>
             <textarea value={cobroNotas} onChange={(e) => setCobroNotas(e.target.value)} rows={2} className={inputClass} />

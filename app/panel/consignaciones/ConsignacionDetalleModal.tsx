@@ -80,8 +80,8 @@ export default function ConsignacionDetalleModal({ consignacionId, perfiles, cli
       setConsignacion(data);
       onActualizado(data);
       setEditando(false);
-    } catch {
-      alert("No se pudo guardar.");
+    } catch (err: any) {
+      alert(err?.message ? `No se pudo guardar: ${err.message}` : "No se pudo guardar.");
     } finally {
       setGuardando(false);
     }

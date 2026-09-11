@@ -122,7 +122,7 @@ export default function PeritajeClient({ peritaje, itemsIniciales }: { peritaje:
       .eq("id", peritaje.id);
     setFinalizando(false);
     if (error) {
-      alert("No se pudo finalizar el peritaje.");
+      alert(error?.message ? `No se pudo finalizar el peritaje: ${error.message}` : "No se pudo finalizar el peritaje.");
       return;
     }
     setEstadoPeritaje("Completado");
@@ -410,19 +410,19 @@ export default function PeritajeClient({ peritaje, itemsIniciales }: { peritaje:
               <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
                 <div>
                   <label className="text-[10px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-widest mb-1 block">Valor de retoma</label>
-                  <input type="number" value={usoInterno.valor_retoma} onChange={(e) => setUsoInterno((p) => ({ ...p, valor_retoma: e.target.value }))} className={inputClass} placeholder="$" />
+                  <input type="text" inputMode="numeric" value={usoInterno.valor_retoma} onChange={(e) => setUsoInterno((p) => ({ ...p, valor_retoma: e.target.value.replace(/\D/g, "") }))} className={inputClass} placeholder="$" />
                 </div>
                 <div>
                   <label className="text-[10px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-widest mb-1 block">+ Gastos Rep.</label>
-                  <input type="number" value={usoInterno.gastos_reparacion} onChange={(e) => setUsoInterno((p) => ({ ...p, gastos_reparacion: e.target.value }))} className={inputClass} placeholder="$" />
+                  <input type="text" inputMode="numeric" value={usoInterno.gastos_reparacion} onChange={(e) => setUsoInterno((p) => ({ ...p, gastos_reparacion: e.target.value.replace(/\D/g, "") }))} className={inputClass} placeholder="$" />
                 </div>
                 <div>
                   <label className="text-[10px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-widest mb-1 block">+ Gastos Prep.</label>
-                  <input type="number" value={usoInterno.gastos_preparacion} onChange={(e) => setUsoInterno((p) => ({ ...p, gastos_preparacion: e.target.value }))} className={inputClass} placeholder="$" />
+                  <input type="text" inputMode="numeric" value={usoInterno.gastos_preparacion} onChange={(e) => setUsoInterno((p) => ({ ...p, gastos_preparacion: e.target.value.replace(/\D/g, "") }))} className={inputClass} placeholder="$" />
                 </div>
                 <div>
                   <label className="text-[10px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-widest mb-1 block">Precio de venta</label>
-                  <input type="number" value={usoInterno.precio_venta} onChange={(e) => setUsoInterno((p) => ({ ...p, precio_venta: e.target.value }))} className={inputClass} placeholder="$" />
+                  <input type="text" inputMode="numeric" value={usoInterno.precio_venta} onChange={(e) => setUsoInterno((p) => ({ ...p, precio_venta: e.target.value.replace(/\D/g, "") }))} className={inputClass} placeholder="$" />
                 </div>
               </div>
 

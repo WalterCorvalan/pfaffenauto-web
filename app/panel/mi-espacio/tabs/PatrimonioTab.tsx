@@ -87,7 +87,7 @@ export default function PatrimonioTab({ miId, miNombre, soyAdmin }: { miId: stri
         setCuentas((prev) => [...prev, data]);
       }
       setShowNueva(false);
-    } catch { alert("No se pudo guardar."); } finally { setGuardando(false); }
+    } catch (err: any) { console.error(err); alert(err?.message ? `No se pudo guardar: ${err.message}` : "No se pudo guardar."); } finally { setGuardando(false); }
   };
 
   const eliminar = async (c: any) => {
@@ -163,7 +163,7 @@ export default function PatrimonioTab({ miId, miNombre, soyAdmin }: { miId: stri
               <div><label className={labelClass}>Moneda</label><select value={moneda} onChange={(e) => setMoneda(e.target.value)} className={inputClass}><option value="USD">USD</option><option value="ARS">ARS</option></select></div>
             </div>
             <label className={labelClass + " mt-3"}>Saldo actual</label>
-            <input type="number" value={saldo} onChange={(e) => setSaldo(e.target.value)} className={inputClass} />
+            <input type="text" inputMode="numeric" value={saldo} onChange={(e) => setSaldo(e.target.value.replace(/\D/g, ""))} className={inputClass} />
             <label className={labelClass + " mt-3"}>Notas</label>
             <textarea value={notas} onChange={(e) => setNotas(e.target.value)} rows={2} placeholder="Banco, alias, número de cuenta..." className={inputClass} />
             <div className="flex justify-end gap-2 mt-4"><button onClick={() => setShowNueva(false)} className="px-4 py-2 text-sm font-bold text-slate-500">Cancelar</button><button onClick={guardar} disabled={guardando} className="flex items-center gap-1.5 px-4 py-2 text-sm font-bold bg-rose-600 hover:bg-rose-700 text-white rounded-lg disabled:opacity-50"><Save className="w-4 h-4" /> {editando ? "Guardar cambios" : "Crear"}</button></div>

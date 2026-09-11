@@ -49,8 +49,9 @@ export default function EditarSenaModal({ sena, vendedores, sucursales, onClose,
       if (error) throw error;
       onGuardado(data);
       onClose();
-    } catch {
-      alert("No se pudo guardar el cambio.");
+    } catch (err: any) {
+      console.error(err);
+      alert(err?.message ? `No se pudo guardar el cambio: ${err.message}` : "No se pudo guardar el cambio.");
     } finally {
       setGuardando(false);
     }
@@ -85,10 +86,10 @@ export default function EditarSenaModal({ sena, vendedores, sucursales, onClose,
           </div>
 
           <div className="grid grid-cols-2 gap-3">
-            <div><label className={labelClass}>Venta ($)</label><input type="number" step="0.01" className={inputClass} value={ventaArs} onChange={(e) => setVentaArs(e.target.value)} /></div>
-            <div><label className={labelClass}>Venta (US$)</label><input type="number" step="0.01" className={inputClass} value={ventaUsd} onChange={(e) => setVentaUsd(e.target.value)} /></div>
-            <div><label className={labelClass}>Seña ($)</label><input type="number" step="0.01" className={inputClass} value={senaArs} onChange={(e) => setSenaArs(e.target.value)} /></div>
-            <div><label className={labelClass}>Seña (US$)</label><input type="number" step="0.01" className={inputClass} value={senaUsd} onChange={(e) => setSenaUsd(e.target.value)} /></div>
+            <div><label className={labelClass}>Venta ($)</label><input type="text" inputMode="numeric" className={inputClass} value={ventaArs} onChange={(e) => setVentaArs(e.target.value.replace(/\D/g, ""))} /></div>
+            <div><label className={labelClass}>Venta (US$)</label><input type="text" inputMode="numeric" className={inputClass} value={ventaUsd} onChange={(e) => setVentaUsd(e.target.value.replace(/\D/g, ""))} /></div>
+            <div><label className={labelClass}>Seña ($)</label><input type="text" inputMode="numeric" className={inputClass} value={senaArs} onChange={(e) => setSenaArs(e.target.value.replace(/\D/g, ""))} /></div>
+            <div><label className={labelClass}>Seña (US$)</label><input type="text" inputMode="numeric" className={inputClass} value={senaUsd} onChange={(e) => setSenaUsd(e.target.value.replace(/\D/g, ""))} /></div>
           </div>
           <p className="text-[10px] text-amber-600 dark:text-amber-400">Si corregís el monto de la seña acá, no se ajusta solo el movimiento ya registrado en Finanzas (si lo hubo) — avisá a Tesorería si hace falta.</p>
 

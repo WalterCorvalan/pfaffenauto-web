@@ -41,9 +41,9 @@ export default function SenaModal({ vehiculo, miId, onClose, onGuardada }: Props
 
       onGuardada(vehiculo.id);
       onClose();
-    } catch (err) {
+    } catch (err: any) {
       console.error(err);
-      setError("No se pudo registrar la seña.");
+      setError(err?.message ? `No se pudo registrar la seña: ${err.message}` : "No se pudo registrar la seña.");
     } finally {
       setGuardando(false);
     }
@@ -74,7 +74,7 @@ export default function SenaModal({ vehiculo, miId, onClose, onGuardada }: Props
           <div className="grid grid-cols-2 gap-3">
             <div>
               <label className={labelClass}>Monto (opcional)</label>
-              <input type="number" value={monto} onChange={(e) => setMonto(e.target.value)} placeholder="0" className={inputClass} />
+              <input type="text" inputMode="numeric" value={monto} onChange={(e) => setMonto(e.target.value.replace(/\D/g, ""))} placeholder="0" className={inputClass} />
             </div>
             <div>
               <label className={labelClass}>Moneda</label>

@@ -237,9 +237,9 @@ export default function NuevaSenaModal({
 
       onClose();
       router.push(`/panel/senas/imprimir/${data.id}`);
-    } catch (err) {
+    } catch (err: any) {
       console.error(err);
-      alert("Error al guardar la seña.");
+      alert(`Error al guardar la seña: ${err?.message || "error desconocido"}.`);
     } finally {
       setGuardando(false);
     }
@@ -289,12 +289,12 @@ export default function NuevaSenaModal({
           <div className="bg-slate-50 dark:bg-white/[0.02] border border-slate-200 dark:border-white/5 rounded-2xl p-5 space-y-4">
             <h3 className="text-[11px] font-bold uppercase tracking-widest text-slate-500 dark:text-slate-400 border-b border-slate-100 dark:border-white/10 pb-3">Datos comerciales</h3>
             <div className="grid grid-cols-2 gap-4">
-              <div><label className={labelClass}>Venta ($)</label><input type="number" step="0.01" className={`${inputClass} disabled:opacity-50`} value={ventaArs} onChange={(e) => setVentaArs(e.target.value)} disabled={!!ventaUsd} placeholder="0" /></div>
-              <div><label className={labelClass}>Venta (US$)</label><input type="number" step="0.01" className={`${inputClass} disabled:opacity-50`} value={ventaUsd} onChange={(e) => setVentaUsd(e.target.value)} disabled={!!ventaArs} placeholder="0" /></div>
-              <div><label className={labelClass}>Seña ($)</label><input type="number" step="0.01" className={`${inputClass} disabled:opacity-50`} value={senaArs} onChange={(e) => setSenaArs(e.target.value)} disabled={!!senaUsd} placeholder="0" /></div>
-              <div><label className={labelClass}>Seña (US$)</label><input type="number" step="0.01" className={`${inputClass} disabled:opacity-50`} value={senaUsd} onChange={(e) => setSenaUsd(e.target.value)} disabled={!!senaArs} placeholder="0" /></div>
-              <div><label className={labelClass}>Tipo de cambio</label><input type="number" step="0.01" className={inputClass} value={tipoCambio} onChange={(e) => setTipoCambio(e.target.value)} placeholder="0" /></div>
-              <div><label className={labelClass}>Patentamiento / Transferencia ($)</label><input type="number" step="0.01" className={inputClass} value={patentTransf} onChange={(e) => setPatentTransf(e.target.value)} placeholder="0" /></div>
+              <div><label className={labelClass}>Venta ($)</label><input type="text" inputMode="numeric" className={`${inputClass} disabled:opacity-50`} value={ventaArs} onChange={(e) => setVentaArs(e.target.value.replace(/\D/g, ""))} disabled={!!ventaUsd} placeholder="0" /></div>
+              <div><label className={labelClass}>Venta (US$)</label><input type="text" inputMode="numeric" className={`${inputClass} disabled:opacity-50`} value={ventaUsd} onChange={(e) => setVentaUsd(e.target.value.replace(/\D/g, ""))} disabled={!!ventaArs} placeholder="0" /></div>
+              <div><label className={labelClass}>Seña ($)</label><input type="text" inputMode="numeric" className={`${inputClass} disabled:opacity-50`} value={senaArs} onChange={(e) => setSenaArs(e.target.value.replace(/\D/g, ""))} disabled={!!senaUsd} placeholder="0" /></div>
+              <div><label className={labelClass}>Seña (US$)</label><input type="text" inputMode="numeric" className={`${inputClass} disabled:opacity-50`} value={senaUsd} onChange={(e) => setSenaUsd(e.target.value.replace(/\D/g, ""))} disabled={!!senaArs} placeholder="0" /></div>
+              <div><label className={labelClass}>Tipo de cambio</label><input type="text" inputMode="decimal" className={inputClass} value={tipoCambio} onChange={(e) => setTipoCambio(e.target.value.replace(",", ".").replace(/[^\d.]/g, "").replace(/(\..*)\./g, "$1"))} placeholder="0" /></div>
+              <div><label className={labelClass}>Patentamiento / Transferencia ($)</label><input type="text" inputMode="numeric" className={inputClass} value={patentTransf} onChange={(e) => setPatentTransf(e.target.value.replace(/\D/g, ""))} placeholder="0" /></div>
             </div>
           </div>
 
@@ -325,8 +325,8 @@ export default function NuevaSenaModal({
           <div className="bg-slate-50 dark:bg-white/[0.02] border border-slate-200 dark:border-white/5 rounded-2xl p-5 space-y-4">
             <h3 className="text-[11px] font-bold uppercase tracking-widest text-slate-500 dark:text-slate-400 border-b border-slate-100 dark:border-white/10 pb-3">Forma de Pago</h3>
             <div className="grid grid-cols-2 gap-4">
-              <div><label className={labelClass}>En Efectivo ($)</label><input type="number" step="0.01" className={inputClass} value={efectivoArs} onChange={(e) => setEfectivoArs(e.target.value)} placeholder="0" /></div>
-              <div><label className={labelClass}>En Efectivo (US$)</label><input type="number" step="0.01" className={inputClass} value={efectivoUsd} onChange={(e) => setEfectivoUsd(e.target.value)} placeholder="0" /></div>
+              <div><label className={labelClass}>En Efectivo ($)</label><input type="text" inputMode="numeric" className={inputClass} value={efectivoArs} onChange={(e) => setEfectivoArs(e.target.value.replace(/\D/g, ""))} placeholder="0" /></div>
+              <div><label className={labelClass}>En Efectivo (US$)</label><input type="text" inputMode="numeric" className={inputClass} value={efectivoUsd} onChange={(e) => setEfectivoUsd(e.target.value.replace(/\D/g, ""))} placeholder="0" /></div>
             </div>
 
             <label className="flex items-center gap-3 text-sm text-slate-700 dark:text-slate-200 cursor-pointer bg-white dark:bg-white/5 border border-slate-200 dark:border-white/10 p-4 rounded-xl hover:bg-slate-50 dark:hover:bg-white/10 w-fit transition-colors font-medium">
@@ -336,7 +336,7 @@ export default function NuevaSenaModal({
             {recibePermuta && (
               <div className="pl-4 border-l-2 border-rose-200 dark:border-rose-500/30 space-y-4">
                 <VehiculoSelector vehiculos={[]} datos={vehiculoPermuta} onCambiar={setVehiculoPermuta} persistirManual soloManual sucursalId={sucursalId} origen="Permuta" />
-                <div><label className={labelClass}>Tasado en ($)</label><input type="number" step="0.01" className={inputClass} value={permutaTasadoArs} onChange={(e) => setPermutaTasadoArs(e.target.value)} placeholder="0" /></div>
+                <div><label className={labelClass}>Tasado en ($)</label><input type="text" inputMode="numeric" className={inputClass} value={permutaTasadoArs} onChange={(e) => setPermutaTasadoArs(e.target.value.replace(/\D/g, ""))} placeholder="0" /></div>
               </div>
             )}
 
@@ -349,7 +349,7 @@ export default function NuevaSenaModal({
               <div className="grid grid-cols-3 gap-4">
                 <div><label className={labelClass}>Fecha 1ª Cuota</label><input type="date" className={inputClass} value={fechaPrimeraCuotaRemanente} onChange={(e) => setFechaPrimeraCuotaRemanente(e.target.value)} /></div>
                 <div><label className={labelClass}>Cant. de Cuotas</label><input type="number" className={inputClass} value={cantCuotasRemanente} onChange={(e) => setCantCuotasRemanente(e.target.value)} placeholder="0" /></div>
-                <div><label className={labelClass}>Cuota ($)</label><input type="number" step="0.01" className={inputClass} value={cuotaRemanenteArs} onChange={(e) => setCuotaRemanenteArs(e.target.value)} placeholder="0" /></div>
+                <div><label className={labelClass}>Cuota ($)</label><input type="text" inputMode="numeric" className={inputClass} value={cuotaRemanenteArs} onChange={(e) => setCuotaRemanenteArs(e.target.value.replace(/\D/g, ""))} placeholder="0" /></div>
               </div>
             )}
           </div>
@@ -358,10 +358,10 @@ export default function NuevaSenaModal({
             <h3 className="text-[11px] font-bold uppercase tracking-widest text-slate-500 dark:text-slate-400 border-b border-slate-100 dark:border-white/10 pb-3">Prenda (opcional)</h3>
             <div className="grid grid-cols-2 gap-4">
               <input className={inputClass} placeholder="Banco de la prenda" value={bancoPrenda} onChange={(e) => setBancoPrenda(e.target.value)} />
-              <input type="number" step="0.01" className={inputClass} placeholder="Monto de la prenda" value={prendaMonto} onChange={(e) => setPrendaMonto(e.target.value)} />
+              <input type="text" inputMode="numeric" className={inputClass} placeholder="Monto de la prenda" value={prendaMonto} onChange={(e) => setPrendaMonto(e.target.value.replace(/\D/g, ""))} />
               <input type="number" className={inputClass} placeholder="Cantidad de cuotas" value={cuotasPrenda} onChange={(e) => setCuotasPrenda(e.target.value)} />
-              <input type="number" step="0.01" className={inputClass} placeholder="Cuota de prenda ($)" value={cuotaPrendaArs} onChange={(e) => setCuotaPrendaArs(e.target.value)} />
-              <input type="number" step="0.01" className={inputClass} placeholder="Seguro de prenda ($)" value={seguroPrendaArs} onChange={(e) => setSeguroPrendaArs(e.target.value)} />
+              <input type="text" inputMode="numeric" className={inputClass} placeholder="Cuota de prenda ($)" value={cuotaPrendaArs} onChange={(e) => setCuotaPrendaArs(e.target.value.replace(/\D/g, ""))} />
+              <input type="text" inputMode="numeric" className={inputClass} placeholder="Seguro de prenda ($)" value={seguroPrendaArs} onChange={(e) => setSeguroPrendaArs(e.target.value.replace(/\D/g, ""))} />
             </div>
           </div>
 
@@ -369,7 +369,7 @@ export default function NuevaSenaModal({
             <h3 className="text-[11px] font-bold uppercase tracking-widest text-slate-500 dark:text-slate-400 border-b border-slate-100 dark:border-white/10 pb-3">¿Contrata seguro?</h3>
             <div className="grid grid-cols-2 gap-4">
               <input className={inputClass} placeholder="Compañía" value={seguroCompania} onChange={(e) => setSeguroCompania(e.target.value)} />
-              <input type="number" step="0.01" className={inputClass} placeholder="Importe mensual" value={seguroImporte} onChange={(e) => setSeguroImporte(e.target.value)} />
+              <input type="text" inputMode="numeric" className={inputClass} placeholder="Importe mensual" value={seguroImporte} onChange={(e) => setSeguroImporte(e.target.value.replace(/\D/g, ""))} />
             </div>
           </div>
 

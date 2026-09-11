@@ -110,9 +110,9 @@ export default function NuevoPresupuestoModal({
 
       onClose();
       router.push(`/panel/presupuestos/imprimir/${data.id}`);
-    } catch (err) {
+    } catch (err: any) {
       console.error(err);
-      alert("Error al guardar el presupuesto.");
+      alert(err?.message ? `Error al guardar el presupuesto: ${err.message}` : "Error al guardar el presupuesto.");
     } finally {
       setGuardando(false);
     }
@@ -151,8 +151,8 @@ export default function NuevoPresupuestoModal({
             <div className="bg-slate-50 dark:bg-white/[0.02] border border-slate-200 dark:border-white/5 rounded-2xl p-5 space-y-4">
               <h3 className="text-[11px] font-bold uppercase tracking-widest text-slate-500 dark:text-slate-400 border-b border-slate-100 dark:border-white/10 pb-3">Datos comerciales</h3>
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                <div><label className={labelClass}>Precio de venta ($)</label><input type="number" step="0.01" className={`${inputClass} disabled:opacity-50`} value={precioArs} onChange={(e) => setPrecioArs(e.target.value)} disabled={!!precioUsd} placeholder="0" /></div>
-                <div><label className={labelClass}>Precio de venta (US$)</label><input type="number" step="0.01" className={`${inputClass} disabled:opacity-50`} value={precioUsd} onChange={(e) => setPrecioUsd(e.target.value)} disabled={!!precioArs} placeholder="0" /></div>
+                <div><label className={labelClass}>Precio de venta ($)</label><input type="text" inputMode="numeric" className={`${inputClass} disabled:opacity-50`} value={precioArs} onChange={(e) => setPrecioArs(e.target.value.replace(/\D/g, ""))} disabled={!!precioUsd} placeholder="0" /></div>
+                <div><label className={labelClass}>Precio de venta (US$)</label><input type="text" inputMode="numeric" className={`${inputClass} disabled:opacity-50`} value={precioUsd} onChange={(e) => setPrecioUsd(e.target.value.replace(/\D/g, ""))} disabled={!!precioArs} placeholder="0" /></div>
                 <div>
                   <label className={labelClass}>Vendedor</label>
                   <select className={inputClass} value={vendedorId} onChange={(e) => setVendedorId(e.target.value)}>

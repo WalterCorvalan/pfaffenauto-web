@@ -43,7 +43,7 @@ export default function MisAutosTab({ miId }: { miId: string }) {
         setAutos((prev) => [data, ...prev]);
       }
       setShowNuevo(false);
-    } catch { alert("No se pudo guardar."); } finally { setGuardando(false); }
+    } catch (err: any) { console.error(err); alert(err?.message ? `No se pudo guardar: ${err.message}` : "No se pudo guardar."); } finally { setGuardando(false); }
   };
 
   const eliminar = async (a: any) => {
@@ -93,10 +93,10 @@ export default function MisAutosTab({ miId }: { miId: string }) {
             <div className="grid grid-cols-3 gap-2 mt-3">
               <div><label className={labelClass}>Patente</label><input value={f.patente || ""} onChange={(e) => setF({ ...f, patente: e.target.value })} className={inputClass} /></div>
               <div><label className={labelClass}>Titular</label><input value={f.titular || ""} onChange={(e) => setF({ ...f, titular: e.target.value })} className={inputClass} /></div>
-              <div><label className={labelClass}>Kilómetros</label><input type="number" value={f.km || ""} onChange={(e) => setF({ ...f, km: e.target.value })} className={inputClass} /></div>
+              <div><label className={labelClass}>Kilómetros</label><input type="text" inputMode="numeric" value={f.km || ""} onChange={(e) => setF({ ...f, km: e.target.value.replace(/\D/g, "") })} className={inputClass} /></div>
             </div>
             <label className={labelClass + " mt-3"}>Valor estimado (USD)</label>
-            <input type="number" value={f.valor_estimado_usd || ""} onChange={(e) => setF({ ...f, valor_estimado_usd: e.target.value })} className={inputClass} />
+            <input type="text" inputMode="numeric" value={f.valor_estimado_usd || ""} onChange={(e) => setF({ ...f, valor_estimado_usd: e.target.value.replace(/\D/g, "") })} className={inputClass} />
             <div className="grid grid-cols-3 gap-2 mt-3">
               <div><label className={labelClass}>Vence VTV</label><input type="date" value={f.vence_vtv || ""} onChange={(e) => setF({ ...f, vence_vtv: e.target.value })} className={inputClass} /></div>
               <div><label className={labelClass}>Vence Seguro</label><input type="date" value={f.vence_seguro || ""} onChange={(e) => setF({ ...f, vence_seguro: e.target.value })} className={inputClass} /></div>

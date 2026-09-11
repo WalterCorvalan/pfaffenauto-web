@@ -103,7 +103,7 @@ export default function ClienteBuscador({
       onSeleccionar(data as any);
       setCreandoNuevo(false);
     } catch (err) {
-      alert("Error al crear el cliente.");
+      alert(err instanceof Error ? err.message : "Error al crear el cliente.");
     } finally {
       setGuardando(false);
     }

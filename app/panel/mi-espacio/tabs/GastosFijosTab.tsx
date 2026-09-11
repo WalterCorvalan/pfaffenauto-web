@@ -36,7 +36,7 @@ export default function GastosFijosTab({ miId, autoAbrir, onAutoAbierto }: { miI
       setItems((prev) => [...prev, data]);
       setShowNuevo(false);
       setConcepto(""); setMonto(""); setDiaDelMes(""); setNotas("");
-    } catch { alert("No se pudo crear el gasto fijo."); } finally { setGuardando(false); }
+    } catch (err: any) { console.error(err); alert(err?.message ? `No se pudo crear el gasto fijo: ${err.message}` : "No se pudo crear el gasto fijo."); } finally { setGuardando(false); }
   };
 
   const eliminar = async (i: any) => {
@@ -80,7 +80,7 @@ export default function GastosFijosTab({ miId, autoAbrir, onAutoAbierto }: { miI
             <label className={labelClass}>Concepto *</label>
             <input value={concepto} onChange={(e) => setConcepto(e.target.value)} placeholder="Alquiler casa, Netflix, ABL..." className={inputClass} />
             <div className="grid grid-cols-2 gap-2 mt-3">
-              <div><label className={labelClass}>Monto *</label><input type="number" value={monto} onChange={(e) => setMonto(e.target.value)} className={inputClass} /></div>
+              <div><label className={labelClass}>Monto *</label><input type="text" inputMode="numeric" value={monto} onChange={(e) => setMonto(e.target.value.replace(/\D/g, ""))} className={inputClass} /></div>
               <div><label className={labelClass}>Moneda</label><select value={moneda} onChange={(e) => setMoneda(e.target.value)} className={inputClass}><option value="USD">USD</option><option value="ARS">ARS</option></select></div>
             </div>
             <div className="grid grid-cols-2 gap-2 mt-3">

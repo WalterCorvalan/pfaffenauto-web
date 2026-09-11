@@ -42,7 +42,7 @@ export default function ChequesTab({ cheques, setCheques, cuentas }: { cheques: 
       if (error) throw error;
       setCheques((prev: any[]) => [data, ...prev]);
       setShowNuevo(false);
-    } catch { alert("No se pudo registrar el cheque."); } finally { setGuardando(false); }
+    } catch (err: any) { alert(err?.message ? `No se pudo registrar el cheque: ${err.message}` : "No se pudo registrar el cheque."); } finally { setGuardando(false); }
   };
 
   // "Cobrado" es el único estado que mueve plata real -- entra/sale de una
@@ -139,7 +139,7 @@ export default function ChequesTab({ cheques, setCheques, cuentas }: { cheques: 
               <div><label className={labelClass}>CUIT/CUIL</label><input value={form.cuitCuil} onChange={(e) => setForm({ ...form, cuitCuil: e.target.value })} placeholder="20-12345678-9" className={inputClass} /></div>
             </div>
             <div className="grid grid-cols-3 gap-2 mt-3">
-              <div><label className={labelClass}>Monto *</label><input type="number" value={form.monto} onChange={(e) => setForm({ ...form, monto: e.target.value })} className={inputClass} /></div>
+              <div><label className={labelClass}>Monto *</label><input type="text" inputMode="numeric" value={form.monto} onChange={(e) => setForm({ ...form, monto: e.target.value.replace(/\D/g, "") })} placeholder="147000" className={inputClass} /></div>
               <div><label className={labelClass}>Moneda *</label><select value={form.moneda} onChange={(e) => setForm({ ...form, moneda: e.target.value })} className={inputClass}><option value="ARS">ARS</option><option value="USD">USD</option></select></div>
               <div><label className={labelClass}>Estado *</label><select value={form.estado} onChange={(e) => setForm({ ...form, estado: e.target.value })} className={inputClass}><option value="pendiente">Pendiente</option><option value="depositado">Depositado</option><option value="cobrado">Cobrado</option><option value="rechazado">Rechazado</option><option value="endosado">Endosado</option></select></div>
             </div>

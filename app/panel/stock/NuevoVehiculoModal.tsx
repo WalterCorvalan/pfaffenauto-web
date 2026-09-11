@@ -249,9 +249,11 @@ export default function NuevoVehiculoModal({ perfiles, clientes, sucursales, miI
       }
       onCreado(data);
       onClose();
-    } catch (err) {
+    } catch (err: any) {
       console.error(err);
-      setError("No se pudo guardar el vehículo. Revisá que la patente no esté repetida.");
+      const codigo = err?.code;
+      if (codigo === "23505") setError("No se pudo guardar: la patente ya está registrada en otro vehículo.");
+      else setError(err?.message ? `No se pudo guardar el vehículo: ${err.message}` : "No se pudo guardar el vehículo.");
     } finally {
       setGuardando(false);
     }
@@ -368,11 +370,11 @@ export default function NuevoVehiculoModal({ perfiles, clientes, sucursales, miI
             <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
               <div>
                 <label className={labelClass}>Kilómetros <span className="text-rose-500">*</span></label>
-                <input type="number" value={km} onChange={(e) => setKm(e.target.value)} className={inputClass} />
+                <input type="text" inputMode="numeric" value={km} onChange={(e) => setKm(e.target.value.replace(/\D/g, ""))} placeholder="147000" className={inputClass} />
               </div>
               <div>
                 <label className={labelClass}>Precio de venta <span className="text-rose-500">*</span></label>
-                <input type="number" value={precioVenta} onChange={(e) => setPrecioVenta(e.target.value)} className={inputClass} />
+                <input type="text" inputMode="numeric" value={precioVenta} onChange={(e) => setPrecioVenta(e.target.value.replace(/\D/g, ""))} placeholder="15000000" className={inputClass} />
               </div>
               <div>
                 <label className={labelClass}>Moneda venta</label>
@@ -382,7 +384,7 @@ export default function NuevoVehiculoModal({ perfiles, clientes, sucursales, miI
               </div>
               <div>
                 <label className={labelClass}>Precio compra (opcional)</label>
-                <input type="number" value={precioCompra} onChange={(e) => setPrecioCompra(e.target.value)} className={inputClass} />
+                <input type="text" inputMode="numeric" value={precioCompra} onChange={(e) => setPrecioCompra(e.target.value.replace(/\D/g, ""))} placeholder="12000000" className={inputClass} />
               </div>
               <div>
                 <label className={labelClass}>Moneda compra</label>
@@ -410,7 +412,7 @@ export default function NuevoVehiculoModal({ perfiles, clientes, sucursales, miI
               </div>
               <div>
                 <label className={labelClass}>Precio publicado (opcional)</label>
-                <input type="number" value={precioPublicadoMonto} onChange={(e) => setPrecioPublicadoMonto(e.target.value)} className={inputClass} />
+                <input type="text" inputMode="numeric" value={precioPublicadoMonto} onChange={(e) => setPrecioPublicadoMonto(e.target.value.replace(/\D/g, ""))} placeholder="15000000" className={inputClass} />
                 <p className="text-[10px] text-slate-400 mt-1">Para catálogo/financiación, distinto del precio de venta interno.</p>
               </div>
               <div>

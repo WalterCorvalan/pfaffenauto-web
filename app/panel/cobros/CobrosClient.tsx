@@ -112,7 +112,7 @@ export default function CobrosClient({ miId, soyAdminOFinanzas, cuotasIniciales,
             <label className={labelClass}>Fecha real de cobro *</label>
             <input type="date" value={cbFecha} onChange={(e) => setCbFecha(e.target.value)} className={inputClass} />
             <div className="grid grid-cols-2 gap-2 mt-3">
-              <div><label className={labelClass}>Monto ({cobrando.moneda}) *</label><input type="number" value={cbMonto} onChange={(e) => setCbMonto(e.target.value)} className={inputClass} /></div>
+              <div><label className={labelClass}>Monto ({cobrando.moneda}) *</label><input type="text" inputMode="numeric" value={cbMonto} onChange={(e) => setCbMonto(e.target.value.replace(/\D/g, ""))} className={inputClass} /></div>
               <div><label className={labelClass}>Caja *</label><select value={cbCuentaId} onChange={(e) => setCbCuentaId(e.target.value)} className={inputClass}><option value="">— Elegí —</option>{cuentas.filter((ct) => ct.moneda === cobrando.moneda).map((ct) => <option key={ct.id} value={ct.id}>{ct.nombre}</option>)}</select></div>
             </div>
             <p className="text-[10px] text-slate-400 mt-2">La cuota sale de pendientes y queda registrada con esta fecha.</p>

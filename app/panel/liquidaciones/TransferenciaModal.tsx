@@ -117,7 +117,7 @@ export default function TransferenciaModal({
   const adjuntarArancel = async (file: File) => {
     setSubiendoArancel(true);
     try { setArancelUrl(await subirArchivo(file, "liquidaciones-arancel")); }
-    catch { alert("No se pudo subir el comprobante."); }
+    catch (err: any) { alert(err?.message ? `No se pudo subir el comprobante: ${err.message}` : "No se pudo subir el comprobante."); }
     finally { setSubiendoArancel(false); }
   };
 
@@ -127,7 +127,7 @@ export default function TransferenciaModal({
       const url = await subirArchivo(file, "liquidaciones-titulo");
       setTituloUrl(url);
       if (expedienteId) await supabase2.from("expedientes").update({ titulo_transferido_url: url }).eq("id", expedienteId);
-    } catch { alert("No se pudo subir el título."); }
+    } catch (err: any) { alert(err?.message ? `No se pudo subir el título: ${err.message}` : "No se pudo subir el título."); }
     finally { setSubiendoTitulo(false); }
   };
 
@@ -250,8 +250,8 @@ export default function TransferenciaModal({
           </div>
         )}
         <div className="grid grid-cols-3 gap-2">
-          <div><label className={labelClass}>Cobrado al cliente (ARS)</label><input type="number" value={transfCliente} onChange={(e) => setTransfCliente(e.target.value)} className={inputClass} /></div>
-          <div><label className={labelClass}>Costo real registro (ARS)</label><input type="number" value={transfRegistro} onChange={(e) => setTransfRegistro(e.target.value)} className={inputClass} /></div>
+          <div><label className={labelClass}>Cobrado al cliente (ARS)</label><input type="text" inputMode="numeric" value={transfCliente} onChange={(e) => setTransfCliente(e.target.value.replace(/\D/g, ""))} className={inputClass} /></div>
+          <div><label className={labelClass}>Costo real registro (ARS)</label><input type="text" inputMode="numeric" value={transfRegistro} onChange={(e) => setTransfRegistro(e.target.value.replace(/\D/g, ""))} className={inputClass} /></div>
           <div><label className={labelClass}>Diferencia (auto)</label><div className="bg-slate-50 dark:bg-white/5 rounded-lg px-3 py-2 text-sm font-bold text-emerald-600">{fmt(diferenciaTransf)}</div><p className="text-[10px] text-slate-400">transfCliente − transfRegistro</p></div>
         </div>
         <div className="grid grid-cols-2 gap-2 mt-2">
@@ -261,12 +261,12 @@ export default function TransferenciaModal({
 
         <p className="text-[10px] font-black uppercase tracking-widest text-slate-400 mb-2 mt-4">Importes — multas</p>
         <div className="grid grid-cols-3 gap-2">
-          <div><label className={labelClass}>Multas cobradas al cliente</label><input type="number" value={multasCliente} onChange={(e) => setMultasCliente(e.target.value)} className={inputClass} /></div>
-          <div><label className={labelClass}>Costo real de multas</label><input type="number" value={multasCostoReal} onChange={(e) => setMultasCostoReal(e.target.value)} className={inputClass} /></div>
+          <div><label className={labelClass}>Multas cobradas al cliente</label><input type="text" inputMode="numeric" value={multasCliente} onChange={(e) => setMultasCliente(e.target.value.replace(/\D/g, ""))} className={inputClass} /></div>
+          <div><label className={labelClass}>Costo real de multas</label><input type="text" inputMode="numeric" value={multasCostoReal} onChange={(e) => setMultasCostoReal(e.target.value.replace(/\D/g, ""))} className={inputClass} /></div>
           <div><label className={labelClass}>Diferencia multas (auto)</label><div className="bg-slate-50 dark:bg-white/5 rounded-lg px-3 py-2 text-sm font-bold text-emerald-600">{fmt(diferenciaMultas)}</div></div>
         </div>
         <label className={labelClass + " mt-2"}>Deuda de patente</label>
-        <input type="number" value={deudaPatente} onChange={(e) => setDeudaPatente(e.target.value)} className={inputClass} />
+        <input type="text" inputMode="numeric" value={deudaPatente} onChange={(e) => setDeudaPatente(e.target.value.replace(/\D/g, ""))} className={inputClass} />
 
         <p className="text-[10px] font-black uppercase tracking-widest text-slate-400 mb-2 mt-4">Resumen automático</p>
         <div className="grid grid-cols-2 gap-3">
@@ -309,7 +309,7 @@ export default function TransferenciaModal({
         </div>
         {huboDevolucion === true && (
           <div className="mt-2 space-y-2">
-            <div><label className={labelClass}>Cuánto sobró (ARS)</label><input type="number" value={sobranteRegistro} onChange={(e) => setSobranteRegistro(e.target.value)} className={inputClass} /></div>
+            <div><label className={labelClass}>Cuánto sobró (ARS)</label><input type="text" inputMode="numeric" value={sobranteRegistro} onChange={(e) => setSobranteRegistro(e.target.value.replace(/\D/g, ""))} className={inputClass} /></div>
             <div><label className={labelClass}>Qué pasó</label><textarea value={sobranteComentario} onChange={(e) => setSobranteComentario(e.target.value)} rows={2} placeholder="Ej: el arancel se pagó estimado y el registro reintegró la diferencia." className={inputClass} /></div>
             <div><label className={labelClass}>Se solicitó la devolución a</label><select value={devolucionDestino} onChange={(e) => setDevolucionDestino(e.target.value)} className={inputClass}><option value="">Elegí el destino...</option><option value="cuenta_agencia">Cuenta de la agencia</option><option value="cuenta_cliente">Cuenta del cliente</option></select></div>
           </div>

@@ -33,7 +33,7 @@ export default function ArqueosTab({ arqueos, setArqueos, cuentas, miNombre }: {
       if (error) throw error;
       setArqueos((prev: any[]) => [data, ...prev]);
       setShowNuevo(false);
-    } catch { alert("No se pudo guardar el arqueo."); } finally { setGuardando(false); }
+    } catch (err: any) { alert(err?.message ? `No se pudo guardar el arqueo: ${err.message}` : "No se pudo guardar el arqueo."); } finally { setGuardando(false); }
   };
 
   return (
@@ -81,7 +81,7 @@ export default function ArqueosTab({ arqueos, setArqueos, cuentas, miNombre }: {
             </div>
             <div className="grid grid-cols-2 gap-2 mt-3">
               <div><label className={labelClass}>Saldo esperado (calc.)</label><input value={cuentaId ? Math.round(saldoEsperado).toLocaleString("es-AR") : ""} disabled className={inputClass} placeholder="Auto-calculado al elegir caja" /></div>
-              <div><label className={labelClass}>Contado físico real *</label><input type="number" value={contadoReal} onChange={(e) => setContadoReal(e.target.value)} className={inputClass} /></div>
+              <div><label className={labelClass}>Contado físico real *</label><input type="text" inputMode="numeric" value={contadoReal} onChange={(e) => setContadoReal(e.target.value.replace(/\D/g, ""))} placeholder="147000" className={inputClass} /></div>
             </div>
             {contadoReal !== "" && cuentaId && (
               <div className={`mt-3 p-3 rounded-lg text-xs font-bold ${hayDiferencia ? "bg-amber-50 dark:bg-amber-500/10 text-amber-700" : "bg-emerald-50 dark:bg-emerald-500/10 text-emerald-700"}`}>

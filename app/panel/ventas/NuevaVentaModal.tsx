@@ -347,9 +347,9 @@ export default function NuevaVentaModal({ perfiles, clientes, vehiculos, miId, i
 
       onCreado(venta);
       onClose();
-    } catch (err) {
+    } catch (err: any) {
       console.error(err);
-      setError("No se pudo guardar los cambios.");
+      setError(err?.message ? `No se pudo guardar los cambios: ${err.message}` : "No se pudo guardar los cambios.");
     } finally {
       setGuardando(false);
     }
@@ -515,9 +515,9 @@ export default function NuevaVentaModal({ perfiles, clientes, vehiculos, miId, i
 
       onCreado(venta);
       onClose();
-    } catch (err) {
+    } catch (err: any) {
       console.error(err);
-      setError("No se pudo guardar la venta.");
+      setError(err?.message ? `No se pudo guardar la venta: ${err.message}` : "No se pudo guardar la venta.");
     } finally {
       setGuardando(false);
     }
@@ -584,7 +584,7 @@ export default function NuevaVentaModal({ perfiles, clientes, vehiculos, miId, i
 
               <div>
                 <label className={labelClass}>Kilometraje del vehículo</label>
-                <input type="number" value={km} onChange={(e) => setKm(e.target.value)} placeholder="Ej: 45000" className={inputClass} />
+                <input type="text" inputMode="numeric" value={km} onChange={(e) => setKm(e.target.value.replace(/\D/g, ""))} placeholder="Ej: 45000" className={inputClass} />
                 <p className="text-[10px] text-slate-400 mt-1">Km del auto vendido al momento de la operación.</p>
               </div>
               <div />
@@ -593,7 +593,7 @@ export default function NuevaVentaModal({ perfiles, clientes, vehiculos, miId, i
                 <label className={labelClass}>Precio de Venta (al comprador) *</label>
                 <div className="flex gap-2">
                   <select value={monedaVenta} onChange={(e) => setMonedaVenta(e.target.value)} className={`${inputClass} !w-24 shrink-0`}><option value="USD">USD</option><option value="ARS">ARS</option></select>
-                  <input type="number" value={precioVenta} onChange={(e) => setPrecioVenta(e.target.value)} className={`${inputClass} flex-1 min-w-0`} />
+                  <input type="text" inputMode="numeric" value={precioVenta} onChange={(e) => setPrecioVenta(e.target.value.replace(/\D/g, ""))} className={`${inputClass} flex-1 min-w-0`} />
                 </div>
               </div>
               <div>

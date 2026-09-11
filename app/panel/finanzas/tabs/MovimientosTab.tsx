@@ -294,7 +294,7 @@ export default function MovimientosTab({
               <div><label className={labelClass}>Fecha *</label><input type="date" value={rFecha} onChange={(e) => setRFecha(e.target.value)} className={inputClass} /></div>
             </div>
             <label className={labelClass + " mt-3"}>Monto *</label>
-            <input type="number" value={rMonto} onChange={(e) => setRMonto(e.target.value)} className={inputClass} />
+            <input type="text" inputMode="numeric" value={rMonto} onChange={(e) => setRMonto(e.target.value.replace(/\D/g, ""))} placeholder="147000" className={inputClass} />
             <label className={labelClass + " mt-3"}>Caja *</label>
             <select value={rCajaId} onChange={(e) => setRCajaId(e.target.value)} className={inputClass}>
               <option value="">— Elegí una caja —</option>
@@ -333,13 +333,13 @@ export default function MovimientosTab({
             <label className={labelClass + " mt-3"}>Fecha *</label>
             <input type="date" value={tFecha} onChange={(e) => setTFecha(e.target.value)} className={inputClass} />
             <div className="grid grid-cols-2 gap-2 mt-3">
-              <div><label className={labelClass}>Monto origen ({tMonedaOrigen}) *</label><input type="number" value={tMontoOrigen} onChange={(e) => { setTMontoOrigen(e.target.value); if (tMonedaOrigen === tMonedaDestino) setTMontoDestino(e.target.value); }} className={inputClass} /></div>
+              <div><label className={labelClass}>Monto origen ({tMonedaOrigen}) *</label><input type="text" inputMode="numeric" value={tMontoOrigen} onChange={(e) => { const v = e.target.value.replace(/\D/g, ""); setTMontoOrigen(v); if (tMonedaOrigen === tMonedaDestino) setTMontoDestino(v); }} placeholder="147000" className={inputClass} /></div>
               <div>
                 <label className={labelClass}>Monto destino {tMonedaOrigen === tMonedaDestino ? "" : `(${tMonedaDestino})`}</label>
                 {tMonedaOrigen === tMonedaDestino ? (
                   <><input disabled value={tMontoOrigen} className={inputClass + " opacity-60"} /><p className="text-[10px] text-slate-400 mt-0.5">En la misma moneda entra exactamente lo que sale — no se puede fabricar diferencia.</p></>
                 ) : (
-                  <input type="number" value={tMontoDestino} onChange={(e) => setTMontoDestino(e.target.value)} className={inputClass} />
+                  <input type="text" inputMode="numeric" value={tMontoDestino} onChange={(e) => setTMontoDestino(e.target.value.replace(/\D/g, ""))} placeholder="147000" className={inputClass} />
                 )}
               </div>
             </div>

@@ -76,9 +76,9 @@ export default function NuevaVisitaModal({ sucursales, vehiculos, clientes, perf
       if (err) throw err;
       onCreada(data);
       onClose();
-    } catch (err) {
+    } catch (err: any) {
       console.error(err);
-      setError("No se pudo agendar la visita.");
+      setError(err?.message ? `No se pudo agendar la visita: ${err.message}` : "No se pudo agendar la visita.");
     } finally {
       setGuardando(false);
     }

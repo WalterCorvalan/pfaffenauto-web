@@ -84,9 +84,9 @@ export default function NuevaInfraccionModal({ infraccion, vehiculos, onClose, o
       const { error: err } = await supabase2.from("infracciones").delete().eq("id", infraccion.id);
       if (err) throw err;
       onGuardada({ ...infraccion, _eliminada: true });
-    } catch (err) {
+    } catch (err: any) {
       console.error(err);
-      setError("No se pudo eliminar (puede que solo admin pueda borrar infracciones).");
+      setError(err?.message ? `No se pudo eliminar: ${err.message}` : "No se pudo eliminar (puede que solo admin pueda borrar infracciones).");
       setCargando(false);
     }
   };
@@ -135,9 +135,9 @@ export default function NuevaInfraccionModal({ infraccion, vehiculos, onClose, o
           <div>
             <p className="text-[11px] font-black uppercase tracking-widest text-slate-400 mb-2">Pagos</p>
             <div className="grid grid-cols-3 gap-3">
-              <div><label className={labelClass}>Deuda (ARS)</label><input type="number" value={deudaArs} onChange={(e) => setDeudaArs(e.target.value)} placeholder="0" className={inputClass} /></div>
-              <div><label className={labelClass}>Pago del cliente (ARS)</label><input type="number" value={pagoClienteArs} onChange={(e) => setPagoClienteArs(e.target.value)} placeholder="0" className={inputClass} /></div>
-              <div><label className={labelClass}>Pago real (ARS)</label><input type="number" value={pagoRealArs} onChange={(e) => setPagoRealArs(e.target.value)} placeholder="0" className={inputClass} /></div>
+              <div><label className={labelClass}>Deuda (ARS)</label><input type="text" inputMode="numeric" value={deudaArs} onChange={(e) => setDeudaArs(e.target.value.replace(/\D/g, ""))} placeholder="0" className={inputClass} /></div>
+              <div><label className={labelClass}>Pago del cliente (ARS)</label><input type="text" inputMode="numeric" value={pagoClienteArs} onChange={(e) => setPagoClienteArs(e.target.value.replace(/\D/g, ""))} placeholder="0" className={inputClass} /></div>
+              <div><label className={labelClass}>Pago real (ARS)</label><input type="text" inputMode="numeric" value={pagoRealArs} onChange={(e) => setPagoRealArs(e.target.value.replace(/\D/g, ""))} placeholder="0" className={inputClass} /></div>
             </div>
             <div className="mt-3"><label className={labelClass}>Medio de pago</label><input value={medioPago} onChange={(e) => setMedioPago(e.target.value)} placeholder="Transferencia, Efectivo, M..." className={inputClass} /></div>
           </div>

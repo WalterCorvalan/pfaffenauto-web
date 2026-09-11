@@ -151,9 +151,9 @@ export default function NuevoClienteModal({ perfiles, disponibilidad, miId, edit
       }
       onCreado(data);
       onClose();
-    } catch (err) {
+    } catch (err: any) {
       console.error(err);
-      setError("No se pudo guardar el cliente.");
+      setError(err?.message ? `No se pudo guardar el cliente: ${err.message}` : "No se pudo guardar el cliente.");
     } finally {
       setGuardando(false);
     }
@@ -291,7 +291,7 @@ export default function NuevoClienteModal({ perfiles, disponibilidad, miId, edit
                 </div>
                 <div>
                   <label className={labelClass}>Presupuesto máx</label>
-                  <input type="number" value={buscaPresupuesto} onChange={(e) => setBuscaPresupuesto(e.target.value)} placeholder="25000" className={inputClass} />
+                  <input type="text" inputMode="numeric" value={buscaPresupuesto} onChange={(e) => setBuscaPresupuesto(e.target.value.replace(/\D/g, ""))} placeholder="25000" className={inputClass} />
                 </div>
               </div>
             </div>

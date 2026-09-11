@@ -95,7 +95,7 @@ export default function PresupuestoTab({ presupuestos, setPresupuestos, movimien
             <label className={labelClass + " mt-3"}>Categoría *</label>
             <select value={categoria} onChange={(e) => setCategoria(e.target.value)} className={inputClass} disabled={!!editando}><option value="">— Elegí una categoría —</option>{CATEGORIAS_MOVIMIENTO.map((c) => <option key={c} value={c}>{c}</option>)}</select>
             <label className={labelClass + " mt-3"}>Monto presupuestado *</label>
-            <input type="number" value={monto} onChange={(e) => setMonto(e.target.value)} placeholder="Ej: 50000" className={inputClass} />
+            <input type="text" inputMode="numeric" value={monto} onChange={(e) => setMonto(e.target.value.replace(/\D/g, ""))} placeholder="Ej: 50000" className={inputClass} />
             <label className={labelClass + " mt-3"}>Notas</label>
             <textarea value={notas} onChange={(e) => setNotas(e.target.value)} rows={2} placeholder="Observaciones — supuestos, plan de ajuste, etc." className={inputClass} />
             <p className="text-[10px] text-slate-400 mt-2">El consumo real se computa al vuelo a partir de los movimientos que comparten mes, categoría, moneda y tipo — no se persiste en este doc.</p>

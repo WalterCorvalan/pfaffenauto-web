@@ -78,7 +78,7 @@ export default function RecurrenciasTab({
         setRecurrencias((prev: any[]) => [data, ...prev]);
       }
       setShowNuevo(false);
-    } catch { alert("No se pudo guardar la recurrencia."); } finally { setGuardando(false); }
+    } catch (err: any) { alert(err?.message ? `No se pudo guardar la recurrencia: ${err.message}` : "No se pudo guardar la recurrencia."); } finally { setGuardando(false); }
   };
 
   const pausarToggle = async (r: any) => {
@@ -274,7 +274,7 @@ export default function RecurrenciasTab({
               <div><label className={labelClass}>Categoría</label><input value={categoria} onChange={(e) => setCategoria(e.target.value)} placeholder="Alquiler, Sueldo..." className={inputClass} /></div>
             </div>
             <div className="grid grid-cols-3 gap-2 mt-3">
-              <div><label className={labelClass}>Monto *</label><input type="number" value={monto} onChange={(e) => setMonto(e.target.value)} className={inputClass} /></div>
+              <div><label className={labelClass}>Monto *</label><input type="text" inputMode="numeric" value={monto} onChange={(e) => setMonto(e.target.value.replace(/\D/g, ""))} placeholder="147000" className={inputClass} /></div>
               <div><label className={labelClass}>Moneda *</label><select value={moneda} onChange={(e) => setMoneda(e.target.value)} className={inputClass}><option value="USD">USD</option><option value="ARS">ARS</option></select></div>
               <div><label className={labelClass}>Día del mes</label><input type="number" min={1} max={28} value={diaMes} onChange={(e) => setDiaMes(e.target.value)} className={inputClass} /></div>
             </div>

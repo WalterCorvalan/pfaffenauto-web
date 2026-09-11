@@ -69,7 +69,7 @@ export default function PagosDispTab({
       if (error) throw error;
       setPagos((prev: any[]) => [data, ...prev]);
       setShowNuevo(false);
-    } catch { alert("No se pudo registrar el pago."); } finally { setGuardando(false); }
+    } catch (err: any) { alert(err?.message ? `No se pudo registrar el pago: ${err.message}` : "No se pudo registrar el pago."); } finally { setGuardando(false); }
   };
 
   const abrirCobro = (p: any) => {
@@ -164,7 +164,7 @@ export default function PagosDispTab({
             <label className={labelClass}>Descripción / Vehículo *</label>
             <input value={descripcion} onChange={(e) => setDescripcion(e.target.value)} className={inputClass} />
             <div className="grid grid-cols-2 gap-2 mt-3">
-              <div><label className={labelClass}>Monto *</label><input type="number" value={monto} onChange={(e) => setMonto(e.target.value)} className={inputClass} /></div>
+              <div><label className={labelClass}>Monto *</label><input type="text" inputMode="numeric" value={monto} onChange={(e) => setMonto(e.target.value.replace(/\D/g, ""))} placeholder="147000" className={inputClass} /></div>
               <div><label className={labelClass}>Moneda *</label><select value={moneda} onChange={(e) => setMoneda(e.target.value)} className={inputClass}><option value="USD">USD</option><option value="ARS">ARS</option></select></div>
             </div>
             <label className={labelClass + " mt-3"}>Fecha registro</label>
@@ -189,7 +189,7 @@ export default function PagosDispTab({
             <div className="flex justify-between items-start mb-3"><h3 className="text-base font-bold">Pagar al propietario</h3><button onClick={() => setCobrando(null)}><X className="w-4 h-4 text-slate-400" /></button></div>
             <p className="text-sm font-bold mb-2">{cobrando.descripcion}</p>
             <div className="grid grid-cols-2 gap-2">
-              <div><label className={labelClass}>Monto ({cobrando.moneda}) *</label><input type="number" value={cbMonto} onChange={(e) => setCbMonto(e.target.value)} className={inputClass} /></div>
+              <div><label className={labelClass}>Monto ({cobrando.moneda}) *</label><input type="text" inputMode="numeric" value={cbMonto} onChange={(e) => setCbMonto(e.target.value.replace(/\D/g, ""))} placeholder="147000" className={inputClass} /></div>
               <div><label className={labelClass}>Caja *</label><select value={cbCuentaId} onChange={(e) => setCbCuentaId(e.target.value)} className={inputClass}><option value="">— Elegí —</option>{cuentas.filter((c) => c.moneda === cobrando.moneda).map((c) => <option key={c.id} value={c.id}>{c.nombre} · saldo {fmt(c.saldo, c.moneda)}</option>)}</select></div>
             </div>
             <div className="flex justify-end gap-2 mt-4"><button onClick={() => setCobrando(null)} className="px-4 py-2 text-sm font-bold text-slate-500">Cancelar</button><button onClick={confirmarCobro} disabled={guardando} className="flex items-center gap-1.5 px-4 py-2 text-sm font-bold bg-rose-600 hover:bg-rose-700 text-white rounded-lg disabled:opacity-50"><Save className="w-4 h-4" /> Confirmar</button></div>

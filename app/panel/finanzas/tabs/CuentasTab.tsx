@@ -32,7 +32,7 @@ export default function CuentasTab({ cuentas, setCuentas, soyAdmin }: { cuentas:
       if (error) throw error;
       setCuentas((prev: any[]) => [...prev, { ...data, saldo: Number(form.saldoInicial) || 0 }]);
       setShowNueva(false);
-    } catch { alert("No se pudo crear la caja."); } finally { setGuardando(false); }
+    } catch (err: any) { alert(err?.message ? `No se pudo crear la caja: ${err.message}` : "No se pudo crear la caja."); } finally { setGuardando(false); }
   };
 
   const guardarEdicion = async () => {
@@ -48,7 +48,7 @@ export default function CuentasTab({ cuentas, setCuentas, soyAdmin }: { cuentas:
       const { data: nuevoSaldo } = await supabase2.rpc("saldo_cuenta", { p_cuenta_id: editando.id });
       setCuentas((prev: any[]) => prev.map((c) => (c.id === editando.id ? { ...c, ...patch, saldo: Number(nuevoSaldo) || 0 } : c)).filter((c) => c.activa));
       setEditando(null);
-    } catch { alert("No se pudo guardar."); } finally { setGuardando(false); }
+    } catch (err: any) { alert(err?.message ? `No se pudo guardar: ${err.message}` : "No se pudo guardar."); } finally { setGuardando(false); }
   };
 
   const desactivar = async (c: any) => {
@@ -113,7 +113,7 @@ export default function CuentasTab({ cuentas, setCuentas, soyAdmin }: { cuentas:
               <div><label className={labelClass}>Moneda *</label><select value={form.moneda} onChange={(e) => setForm({ ...form, moneda: e.target.value })} className={inputClass}><option value="USD">USD</option><option value="ARS">ARS</option></select></div>
             </div>
             <label className={labelClass + " mt-3"}>Saldo {editando ? "inicial" : "de apertura"}</label>
-            <input type="number" value={form.saldoInicial} onChange={(e) => setForm({ ...form, saldoInicial: e.target.value })} className={inputClass} />
+            <input type="text" inputMode="numeric" value={form.saldoInicial} onChange={(e) => setForm({ ...form, saldoInicial: e.target.value.replace(/\D/g, "") })} placeholder="147000" className={inputClass} />
             <div className="grid grid-cols-2 gap-2 mt-3">
               <div><label className={labelClass}>Entidad (opcional)</label><input value={form.entidad} onChange={(e) => setForm({ ...form, entidad: e.target.value })} placeholder="Galicia, Mercado Pago, Visa..." className={inputClass} /></div>
               <div><label className={labelClass}>Número / CBU / Alias (opcional)</label><input value={form.numeroCuenta} onChange={(e) => setForm({ ...form, numeroCuenta: e.target.value })} placeholder="0001-23456-7" className={inputClass} /></div>

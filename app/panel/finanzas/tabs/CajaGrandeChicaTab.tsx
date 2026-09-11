@@ -317,7 +317,7 @@ export default function CajaGrandeChicaTab({ miId, soyAdmin, cuentas, setCuentas
             <input value={rConcepto} onChange={(e) => setRConcepto(e.target.value)} placeholder={rTipoMov === "gasto" ? rCategoria : "Descripción del movimiento"} className={inputClass} />
 
             <div className="grid grid-cols-2 gap-2 mt-3">
-              <div><label className={labelClass}>Monto *</label><input type="number" value={rMonto} onChange={(e) => setRMonto(e.target.value)} className={inputClass} /></div>
+              <div><label className={labelClass}>Monto *</label><input type="text" inputMode="numeric" value={rMonto} onChange={(e) => setRMonto(e.target.value.replace(/\D/g, ""))} placeholder="147000" className={inputClass} /></div>
               <div><label className={labelClass}>Fecha *</label><input type="date" value={rFecha} onChange={(e) => setRFecha(e.target.value)} className={inputClass} /></div>
             </div>
 

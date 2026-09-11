@@ -24,11 +24,11 @@ export default function ConfirmarPrecioEncargadoModal({
         <p className="text-[12px] text-slate-500 dark:text-slate-400">Dejalo como está si el precio es correcto, o corregilo antes de confirmar.</p>
         <div>
           <label className="text-[11px] text-slate-400 font-bold uppercase tracking-wider mb-1 block">Venta ($)</label>
-          <input type="number" step="0.01" className={inputClass} value={ars} onChange={(e) => setArs(e.target.value)} placeholder="0" />
+          <input type="text" inputMode="numeric" className={inputClass} value={ars} onChange={(e) => setArs(e.target.value.replace(/\D/g, ""))} placeholder="0" />
         </div>
         <div>
           <label className="text-[11px] text-slate-400 font-bold uppercase tracking-wider mb-1 block">Venta (US$)</label>
-          <input type="number" step="0.01" className={inputClass} value={usd} onChange={(e) => setUsd(e.target.value)} placeholder="0" />
+          <input type="text" inputMode="numeric" className={inputClass} value={usd} onChange={(e) => setUsd(e.target.value.replace(/\D/g, ""))} placeholder="0" />
         </div>
         <button onClick={() => onConfirmar(ars ? Number(ars) : null, usd ? Number(usd) : null)} disabled={guardando} className="w-full bg-emerald-600 hover:bg-emerald-700 text-white font-bold py-2.5 rounded-lg text-[11px] uppercase tracking-widest transition-colors disabled:opacity-50 flex items-center justify-center gap-2">
           <CheckCircle2 className="w-4 h-4" /> {guardando ? "Guardando..." : "Confirmar precio"}

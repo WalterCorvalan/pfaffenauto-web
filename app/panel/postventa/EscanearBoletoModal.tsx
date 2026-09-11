@@ -54,9 +54,9 @@ export default function EscanearBoletoModal({ miId, onClose, onCreado }: Props) 
       }
       onCreado(data);
       onClose();
-    } catch (err) {
+    } catch (err: any) {
       console.error(err);
-      setError("No se pudo guardar la compra.");
+      setError(err?.message ? `No se pudo guardar la compra: ${err.message}` : "No se pudo guardar la compra.");
     } finally {
       setGuardando(false);
     }
@@ -89,7 +89,7 @@ export default function EscanearBoletoModal({ miId, onClose, onCreado }: Props) 
           <div><label className={labelClass}>Modelo</label><input value={modelo} onChange={(e) => setModelo(e.target.value)} className={inputClass} /></div>
           <div><label className={labelClass}>Año</label><input type="number" value={anio} onChange={(e) => setAnio(e.target.value)} className={inputClass} /></div>
           <div><label className={labelClass}>Fecha de venta</label><input type="date" value={fechaVenta} onChange={(e) => setFechaVenta(e.target.value)} className={inputClass} /></div>
-          <div><label className={labelClass}>Precio</label><input type="number" value={precio} onChange={(e) => setPrecio(e.target.value)} className={inputClass} /></div>
+          <div><label className={labelClass}>Precio</label><input type="text" inputMode="numeric" value={precio} onChange={(e) => setPrecio(e.target.value.replace(/\D/g, ""))} placeholder="15000000" className={inputClass} /></div>
           <div>
             <label className={labelClass}>Moneda</label>
             <select value={moneda} onChange={(e) => setMoneda(e.target.value)} className={inputClass}><option value="USD">USD</option><option value="ARS">ARS</option></select>

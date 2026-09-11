@@ -52,9 +52,9 @@ export default function PeritajeModal({ vehiculo, miId, onClose }: Props) {
       if (dbError) throw dbError;
       setGuardado(true);
       setTimeout(onClose, 1200);
-    } catch (err) {
+    } catch (err: any) {
       console.error(err);
-      setError("No se pudo guardar el peritaje.");
+      setError(err?.message ? `No se pudo guardar el peritaje: ${err.message}` : "No se pudo guardar el peritaje.");
     } finally {
       setGuardando(false);
     }

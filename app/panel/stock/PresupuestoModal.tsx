@@ -37,9 +37,9 @@ export default function PresupuestoModal({ vehiculo, miId, onClose }: Props) {
       });
       if (errInsert) throw errInsert;
       setGuardado(true);
-    } catch (err) {
+    } catch (err: any) {
       console.error(err);
-      setError("No se pudo guardar el presupuesto.");
+      setError(err?.message ? `No se pudo guardar el presupuesto: ${err.message}` : "No se pudo guardar el presupuesto.");
     } finally {
       setGuardando(false);
     }
@@ -72,11 +72,11 @@ export default function PresupuestoModal({ vehiculo, miId, onClose }: Props) {
             <div className="grid grid-cols-2 gap-3">
               <div>
                 <label className={labelClass}>Precio ($)</label>
-                <input type="number" value={precioArs} onChange={(e) => setPrecioArs(e.target.value)} placeholder="0" className={inputClass} />
+                <input type="text" inputMode="numeric" value={precioArs} onChange={(e) => setPrecioArs(e.target.value.replace(/\D/g, ""))} placeholder="0" className={inputClass} />
               </div>
               <div>
                 <label className={labelClass}>Precio (US$)</label>
-                <input type="number" value={precioUsd} onChange={(e) => setPrecioUsd(e.target.value)} placeholder="0" className={inputClass} />
+                <input type="text" inputMode="numeric" value={precioUsd} onChange={(e) => setPrecioUsd(e.target.value.replace(/\D/g, ""))} placeholder="0" className={inputClass} />
               </div>
             </div>
             <div>

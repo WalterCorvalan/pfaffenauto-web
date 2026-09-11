@@ -204,7 +204,7 @@ export default function EgresosCategoriaTab({
             <form onSubmit={guardar} className="space-y-4">
               <div className="grid grid-cols-2 gap-3">
                 <div><label className="text-[11px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-widest mb-1.5 block">Fecha</label><input type="date" required value={fFecha} onChange={(e) => setFFecha(e.target.value)} className="w-full bg-slate-50 dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-xl px-3 py-2.5 text-sm outline-none focus:border-rose-500" /></div>
-                <div><label className="text-[11px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-widest mb-1.5 block">Importe</label><input type="number" required min="0" step="0.01" placeholder="0" value={fImporte} onChange={(e) => setFImporte(e.target.value)} className="w-full bg-slate-50 dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-xl px-3 py-2.5 text-sm outline-none focus:border-rose-500" /></div>
+                <div><label className="text-[11px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-widest mb-1.5 block">Importe</label><input type="text" inputMode="numeric" required placeholder="147000" value={fImporte} onChange={(e) => setFImporte(e.target.value.replace(/\D/g, ""))} className="w-full bg-slate-50 dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-xl px-3 py-2.5 text-sm outline-none focus:border-rose-500" /></div>
               </div>
               <div>
                 <label className="text-[11px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-widest mb-1.5 block">Caja de la que sale</label>

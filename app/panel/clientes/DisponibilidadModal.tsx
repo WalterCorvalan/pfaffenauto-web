@@ -57,9 +57,9 @@ export default function DisponibilidadModal({ perfiles, disponibilidad, miId, es
       if (error) throw error;
       onGuardado(data);
       onClose();
-    } catch (err) {
+    } catch (err: any) {
       console.error(err);
-      alert("No se pudo guardar la disponibilidad.");
+      alert(err?.message ? `No se pudo guardar la disponibilidad: ${err.message}` : "No se pudo guardar la disponibilidad.");
     } finally {
       setGuardando(false);
     }

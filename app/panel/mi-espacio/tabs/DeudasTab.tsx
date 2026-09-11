@@ -63,7 +63,7 @@ export default function DeudasTab({ miId }: { miId: string }) {
         setDeudas((prev) => [...prev, data]);
       }
       cerrarModalDeuda();
-    } catch { alert("No se pudo guardar la deuda."); } finally { setGuardando(false); }
+    } catch (err: any) { console.error(err); alert(err?.message ? `No se pudo guardar la deuda: ${err.message}` : "No se pudo guardar la deuda."); } finally { setGuardando(false); }
   };
 
   const abrirEdicion = (d: any) => {
@@ -99,7 +99,7 @@ export default function DeudasTab({ miId }: { miId: string }) {
       await supabase2.from("espacio_deudas").update({ monto_pagado: nuevoPagado, pagada: pagadaCompleto }).eq("id", pagando.id);
       setDeudas((prev) => prev.map((d) => (d.id === pagando.id ? { ...d, monto_pagado: nuevoPagado, pagada: pagadaCompleto } : d)));
       setPagando(null);
-    } catch { alert("No se pudo registrar el pago."); } finally { setGuardandoPago(false); }
+    } catch (err: any) { console.error(err); alert(err?.message ? `No se pudo registrar el pago: ${err.message}` : "No se pudo registrar el pago."); } finally { setGuardandoPago(false); }
   };
 
   const cuotasVinculables = useMemo(() => vinculando ? cuotas.filter((c) => !c.deuda_id || c.deuda_id === vinculando.id) : [], [cuotas, vinculando]);
@@ -164,7 +164,7 @@ export default function DeudasTab({ miId }: { miId: string }) {
             <input value={concepto} onChange={(e) => setConcepto(e.target.value)} placeholder="Television, préstamo, etc." className={inputClass} />
             <div className="grid grid-cols-3 gap-2 mt-3">
               <div><label className={labelClass}>Moneda</label><select value={moneda} onChange={(e) => setMoneda(e.target.value)} className={inputClass}><option value="ARS">ARS</option><option value="USD">USD</option></select></div>
-              <div><label className={labelClass}>Monto</label><input type="number" value={monto} onChange={(e) => setMonto(e.target.value)} className={inputClass} /></div>
+              <div><label className={labelClass}>Monto</label><input type="text" inputMode="numeric" value={monto} onChange={(e) => setMonto(e.target.value.replace(/\D/g, ""))} className={inputClass} /></div>
               <div><label className={labelClass}>Vencimiento</label><input type="date" value={vencimiento} onChange={(e) => setVencimiento(e.target.value)} className={inputClass} /></div>
             </div>
             <label className={labelClass + " mt-3"}>Notas</label>
@@ -184,7 +184,7 @@ export default function DeudasTab({ miId }: { miId: string }) {
             </div>
             <div className="grid grid-cols-2 gap-2">
               <div><label className={labelClass}>Fecha del pago *</label><input type="date" value={pagoFecha} onChange={(e) => setPagoFecha(e.target.value)} className={inputClass} /></div>
-              <div><label className={labelClass}>Monto ({pagando.moneda}) *</label><input type="number" value={pagoMonto} onChange={(e) => setPagoMonto(e.target.value)} className={inputClass} /></div>
+              <div><label className={labelClass}>Monto ({pagando.moneda}) *</label><input type="text" inputMode="numeric" value={pagoMonto} onChange={(e) => setPagoMonto(e.target.value.replace(/\D/g, ""))} className={inputClass} /></div>
             </div>
             <label className={labelClass + " mt-3"}>Notas (opcional)</label>
             <textarea value={pagoNotas} onChange={(e) => setPagoNotas(e.target.value)} rows={2} placeholder="Transferencia, efectivo, etc." className={inputClass} />

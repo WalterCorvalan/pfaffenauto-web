@@ -6,6 +6,7 @@ import { sendTextMessage } from "@/lib/meta/client";
 import { decrypt } from "@/lib/crypto";
 import { rateLimit, ipDesdeRequest } from "@/lib/rateLimit";
 import { registrarError } from "@/lib/panel/logger";
+import { contieneLenguajeInapropiado } from "@/lib/panel/moderacion";
 import { z } from "zod";
 
 const EnviarSchema = z.object({
@@ -44,6 +45,11 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: "Falta conversacionId o texto." }, { status: 400 });
   }
   const { conversacionId, texto } = parsed.data;
+
+  const moderacion = contieneLenguajeInapropiado(texto);
+  if (moderacion.bloqueado) {
+    return NextResponse.json({ error: moderacion.motivo }, { status: 422 });
+  }
 
   const { data: conversacion } = await supabaseAdmin
     .from("whatsapp_conversaciones")

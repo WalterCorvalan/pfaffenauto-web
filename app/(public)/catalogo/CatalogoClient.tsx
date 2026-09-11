@@ -824,17 +824,19 @@ function FiltrosContent(props: any) {
         </label>
         <div className="grid grid-cols-2 gap-2">
           <input
-            type="number"
+            type="text"
+            inputMode="numeric"
             placeholder="Desde $"
             value={props.precioMin}
-            onChange={(e) => props.setPrecioMin(e.target.value)}
+            onChange={(e) => props.setPrecioMin(e.target.value.replace(/\D/g, ""))}
             className="w-full bg-gray-50 dark:bg-white/5 border border-gray-200 dark:border-white/15 rounded-lg px-3 py-2.5 text-xs font-bold text-gray-900 dark:text-white outline-none focus:bg-white focus:border-blue-500 transition-colors placeholder:font-medium"
           />
           <input
-            type="number"
+            type="text"
+            inputMode="numeric"
             placeholder="Hasta $"
             value={props.precioMax}
-            onChange={(e) => props.setPrecioMax(e.target.value)}
+            onChange={(e) => props.setPrecioMax(e.target.value.replace(/\D/g, ""))}
             className="w-full bg-gray-50 dark:bg-white/5 border border-gray-200 dark:border-white/15 rounded-lg px-3 py-2.5 text-xs font-bold text-gray-900 dark:text-white outline-none focus:bg-white focus:border-blue-500 transition-colors placeholder:font-medium"
           />
         </div>
@@ -846,17 +848,19 @@ function FiltrosContent(props: any) {
         </label>
         <div className="grid grid-cols-2 gap-2">
           <input
-            type="number"
+            type="text"
+            inputMode="numeric"
             placeholder="Desde US$"
             value={props.precioMinUsd}
-            onChange={(e) => props.setPrecioMinUsd(e.target.value)}
+            onChange={(e) => props.setPrecioMinUsd(e.target.value.replace(/\D/g, ""))}
             className="w-full bg-gray-50 dark:bg-white/5 border border-gray-200 dark:border-white/15 rounded-lg px-3 py-2.5 text-xs font-bold text-gray-900 dark:text-white outline-none focus:bg-white focus:border-emerald-500 transition-colors placeholder:font-medium"
           />
           <input
-            type="number"
+            type="text"
+            inputMode="numeric"
             placeholder="Hasta US$"
             value={props.precioMaxUsd}
-            onChange={(e) => props.setPrecioMaxUsd(e.target.value)}
+            onChange={(e) => props.setPrecioMaxUsd(e.target.value.replace(/\D/g, ""))}
             className="w-full bg-gray-50 dark:bg-white/5 border border-gray-200 dark:border-white/15 rounded-lg px-3 py-2.5 text-xs font-bold text-gray-900 dark:text-white outline-none focus:bg-white focus:border-emerald-500 transition-colors placeholder:font-medium"
           />
         </div>

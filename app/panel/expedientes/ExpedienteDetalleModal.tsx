@@ -264,8 +264,8 @@ export default function ExpedienteDetalleModal({ expedienteId, miId, perfiles, s
 
       if (data) { setExpediente(data); onActualizado(data); }
       await cargar();
-    } catch {
-      alert("No se pudo guardar.");
+    } catch (err: any) {
+      alert(err?.message ? `No se pudo guardar: ${err.message}` : "No se pudo guardar.");
     } finally {
       setGuardando(false);
     }
@@ -332,8 +332,8 @@ export default function ExpedienteDetalleModal({ expedienteId, miId, perfiles, s
         tipo_acuerdo_consignacion: tipoAcuerdoConsignacion,
       }).eq("id", expedienteId).select("*, venta:ventas(*)").single();
       if (data) { setExpediente(data); onActualizado(data); }
-    } catch {
-      alert("No se pudo guardar la consignación.");
+    } catch (err: any) {
+      alert(err?.message ? `No se pudo guardar la consignación: ${err.message}` : "No se pudo guardar la consignación.");
     } finally {
       setGuardandoConsignacion(false);
     }
@@ -700,7 +700,7 @@ export default function ExpedienteDetalleModal({ expedienteId, miId, perfiles, s
                   <div>
                     <label className={labelClass}>Total gastos cobrados</label>
                     <div className="flex gap-2">
-                      <input type="number" value={extraCobradoMonto} onChange={(e) => setExtraCobradoMonto(e.target.value)} placeholder="0" className={inputClass} />
+                      <input type="text" inputMode="numeric" value={extraCobradoMonto} onChange={(e) => setExtraCobradoMonto(e.target.value.replace(/\D/g, ""))} placeholder="0" className={inputClass} />
                       <select value={extraCobradoMoneda} onChange={(e) => setExtraCobradoMoneda(e.target.value)} className="bg-slate-50 dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-lg px-2 text-sm w-20"><option value="ARS">ARS</option><option value="USD">USD</option></select>
                     </div>
                   </div>
@@ -845,7 +845,7 @@ export default function ExpedienteDetalleModal({ expedienteId, miId, perfiles, s
                       <div className="mt-3 flex flex-col gap-2 bg-white dark:bg-white/5 rounded-lg p-3">
                         <input value={nuevoGastoConcepto} onChange={(e) => setNuevoGastoConcepto(e.target.value)} placeholder="Concepto (Ej: Sellado, patentamiento)" className={inputClass} />
                         <div className="flex gap-2">
-                          <input type="number" value={nuevoGastoMonto} onChange={(e) => setNuevoGastoMonto(e.target.value)} placeholder="Monto" className={inputClass} />
+                          <input type="text" inputMode="numeric" value={nuevoGastoMonto} onChange={(e) => setNuevoGastoMonto(e.target.value.replace(/\D/g, ""))} placeholder="Monto" className={inputClass} />
                           <select value={nuevoGastoMoneda} onChange={(e) => setNuevoGastoMoneda(e.target.value)} className="bg-slate-50 dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-lg px-2 text-sm w-20"><option value="ARS">ARS</option><option value="USD">USD</option></select>
                         </div>
                         <div className="flex justify-end gap-2"><button onClick={() => setNuevoGastoParte(null)} className="px-3 py-1.5 text-xs font-semibold text-slate-500">Cancelar</button><button onClick={agregarGasto} className="px-3 py-1.5 rounded-lg bg-rose-600 hover:bg-rose-700 text-white text-xs font-bold">Guardar gasto</button></div>
@@ -885,7 +885,7 @@ export default function ExpedienteDetalleModal({ expedienteId, miId, perfiles, s
                   <div>
                     <label className={labelClass}>Precio acordado *</label>
                     <div className="flex gap-2">
-                      <input type="number" value={precioPropietario} onChange={(e) => setPrecioPropietario(e.target.value)} placeholder="0" className={inputClass} />
+                      <input type="text" inputMode="numeric" value={precioPropietario} onChange={(e) => setPrecioPropietario(e.target.value.replace(/\D/g, ""))} placeholder="0" className={inputClass} />
                       <select value={precioPropietarioMoneda} onChange={(e) => setPrecioPropietarioMoneda(e.target.value)} className="bg-slate-50 dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-lg px-2 text-sm w-20"><option value="USD">USD</option><option value="ARS">ARS</option></select>
                     </div>
                   </div>
