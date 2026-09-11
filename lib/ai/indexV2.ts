@@ -53,7 +53,7 @@ async function intentarOpenRouter(systemMsg: string, conversationMsgs: { role: "
     method: "POST",
     headers: { Authorization: `Bearer ${process.env.OPENROUTER_API_TOKEN}`, "Content-Type": "application/json" },
     body: JSON.stringify({ model: process.env.OPENROUTER_MODEL, messages: [{ role: "system", content: systemMsg }, ...conversationMsgs] }),
-    signal: AbortSignal.timeout(15000),
+    signal: AbortSignal.timeout(20000),
   });
   if (!res.ok) throw new Error(`OpenRouter respondió ${res.status}: ${await res.text().catch(() => "")}`);
   const data = await res.json();
