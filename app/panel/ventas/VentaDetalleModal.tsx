@@ -92,7 +92,7 @@ export default function VentaDetalleModal({ ventaId, miId, soyAdmin, puedeOperac
       supabase2.from("venta_senas").select("*").eq("venta_id", ventaId).order("fecha"),
       supabase2.from("venta_estado_historial").select("*, autor:perfiles(nombre)").eq("venta_id", ventaId).order("created_at", { ascending: false }),
       supabase2.from("expedientes").select("id, estado").eq("venta_id", ventaId).maybeSingle(),
-      supabase2.from("venta_cuotas").select("*").eq("venta_id", ventaId).order("numero"),
+      supabase2.from("cuotas_cobrar_clientes").select("*").eq("venta_id", ventaId).order("vencimiento"),
       supabase2.from("venta_permutas").select("*").eq("venta_id", ventaId),
     ]);
     setVenta(v);
@@ -198,9 +198,10 @@ export default function VentaDetalleModal({ ventaId, miId, soyAdmin, puedeOperac
     if (!cuotaParaCobrar || !cuentaCobroCuota) return alert("Elegí de qué cuenta entra el pago.");
     setCobrandoCuota(true);
     try {
-      const { error } = await supabase2.rpc("cobrar_venta_cuota", { p_cuota_id: cuotaParaCobrar.id, p_cuenta_id: cuentaCobroCuota });
+      const pendiente = Number(cuotaParaCobrar.monto) - Number(cuotaParaCobrar.monto_cobrado);
+      const { error } = await supabase2.rpc("cobrar_cuota_cliente", { p_cuota_id: cuotaParaCobrar.id, p_monto: pendiente, p_cuenta_id: cuentaCobroCuota, p_fecha: new Date().toISOString().slice(0, 10) });
       if (error) throw error;
-      setCuotas((prev) => prev.map((c) => (c.id === cuotaParaCobrar.id ? { ...c, estado: "pagada", fecha_pago: new Date().toISOString().slice(0, 10) } : c)));
+      setCuotas((prev) => prev.map((c) => (c.id === cuotaParaCobrar.id ? { ...c, cobrada: true, monto_cobrado: c.monto } : c)));
       setCuotaParaCobrar(null);
     } catch (err: any) {
       alert(err.message || "No se pudo cobrar la cuota.");
@@ -316,14 +317,14 @@ export default function VentaDetalleModal({ ventaId, miId, soyAdmin, puedeOperac
           ))}
 
           {cuotas.length > 0 && (
-            <Seccion icono={DollarSign} titulo={`Cuotas (${cuotas.filter((c) => c.estado === "pagada").length}/${cuotas.length} cobradas)`}>
+            <Seccion icono={DollarSign} titulo={`Cuotas (${cuotas.filter((c) => c.cobrada).length}/${cuotas.length} cobradas)`}>
               {cuotas.map((c) => (
                 <div key={c.id} className="grid grid-cols-3 gap-2 py-1.5 border-b border-slate-50 dark:border-white/5 last:border-0 items-center">
-                  <p className="text-sm text-slate-800 dark:text-white col-span-1">Cuota N° {c.numero} {c.vencimiento ? `· vence ${fmtFechaLocal(c.vencimiento)}` : ""}</p>
+                  <p className="text-sm text-slate-800 dark:text-white col-span-1">Cuota {c.cuota_actual}/{c.cuota_total} {c.vencimiento ? `· vence ${fmtFechaLocal(c.vencimiento)}` : ""}</p>
                   <p className="text-sm text-slate-800 dark:text-white col-span-1">{c.moneda} {Number(c.monto).toLocaleString("es-AR")}</p>
                   <div className="col-span-1 text-right">
-                    {c.estado === "pagada" ? (
-                      <span className="text-[10px] font-bold uppercase text-emerald-600 bg-emerald-50 dark:bg-emerald-500/10 px-2 py-1 rounded-full">Cobrada {c.fecha_pago ? fmtFechaLocal(c.fecha_pago) : ""}</span>
+                    {c.cobrada ? (
+                      <span className="text-[10px] font-bold uppercase text-emerald-600 bg-emerald-50 dark:bg-emerald-500/10 px-2 py-1 rounded-full">Cobrada</span>
                     ) : (
                       <button
                         onClick={() => { setCuotaParaCobrar(c); setCuentaCobroCuota(cuentas.find((x) => x.moneda === c.moneda)?.id || ""); }}
@@ -452,7 +453,7 @@ export default function VentaDetalleModal({ ventaId, miId, soyAdmin, puedeOperac
       {cuotaParaCobrar && (
         <div className="fixed inset-0 bg-black/40 z-[110] flex items-center justify-center p-4" onClick={() => setCuotaParaCobrar(null)}>
           <div onClick={(e) => e.stopPropagation()} className="bg-white dark:bg-[#141414] border border-slate-200 dark:border-white/10 w-full max-w-sm rounded-2xl shadow-2xl p-6">
-            <div className="flex justify-between items-start mb-1"><h3 className="text-lg font-bold">Cobrar cuota N° {cuotaParaCobrar.numero}</h3><button onClick={() => setCuotaParaCobrar(null)}><X className="w-4 h-4 text-slate-400" /></button></div>
+            <div className="flex justify-between items-start mb-1"><h3 className="text-lg font-bold">Cobrar cuota {cuotaParaCobrar.cuota_actual}/{cuotaParaCobrar.cuota_total}</h3><button onClick={() => setCuotaParaCobrar(null)}><X className="w-4 h-4 text-slate-400" /></button></div>
             <p className="text-xs text-slate-400 mb-4">Entra {cuotaParaCobrar.moneda} {Number(cuotaParaCobrar.monto).toLocaleString("es-AR")} a la cuenta que elijas.</p>
             <label className="text-xs font-bold text-slate-600 dark:text-slate-400 mb-1.5 block uppercase tracking-widest">Cuenta *</label>
             <select value={cuentaCobroCuota} onChange={(e) => setCuentaCobroCuota(e.target.value)} className="w-full bg-slate-50 dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-xl px-3 py-2.5 text-sm outline-none">

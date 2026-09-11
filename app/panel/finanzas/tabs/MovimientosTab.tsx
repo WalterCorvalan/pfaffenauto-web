@@ -129,11 +129,16 @@ export default function MovimientosTab({
   const borrarTodos = async () => {
     if (!soyAdmin) return;
     if (!confirm(`¿Eliminar los ${filtrados.length} movimientos de esta lista? No se puede deshacer fácil.`)) return;
+    const idsBorrados: string[] = [];
+    const fallidos: string[] = [];
     for (const m of filtrados) {
-      await supabase2.rpc("eliminar_movimiento_caja", { p_movimiento_id: m.id, p_motivo: "Borrado masivo" });
+      const { error } = await supabase2.rpc("eliminar_movimiento_caja", { p_movimiento_id: m.id, p_motivo: "Borrado masivo" });
+      if (error) fallidos.push(m.id);
+      else idsBorrados.push(m.id);
     }
-    const idsBorrados = new Set(filtrados.map((m) => m.id));
-    setMovimientos((prev: any[]) => prev.filter((x) => !idsBorrados.has(x.id)));
+    const idsSet = new Set(idsBorrados);
+    setMovimientos((prev: any[]) => prev.filter((x) => !idsSet.has(x.id)));
+    if (fallidos.length > 0) alert(`${idsBorrados.length} eliminados, ${fallidos.length} fallaron (quizás mes cerrado). Revisá la lista.`);
   };
 
   const exportarCsv = () => {

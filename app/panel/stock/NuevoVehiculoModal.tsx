@@ -6,8 +6,13 @@ import { X, Loader2, ScanLine, ClipboardPaste, ImagePlus } from "lucide-react";
 import { crearAlerta } from "@/lib/panel/alertas";
 
 export const MARCAS = ["Toyota", "Volkswagen", "Ford", "Chevrolet", "Renault", "Peugeot", "Fiat", "Honda", "Hyundai", "Nissan", "Jeep", "Citroën", "BMW", "Mercedes-Benz", "Audi", "Otra"];
-const CATEGORIAS = ["Auto", "Pickup/Camioneta", "SUV", "Utilitario"];
-const CONDICIONES = ["0km", "Excelente", "Muy bueno", "Bueno", "Regular"];
+const CATEGORIAS = ["Auto", "Pickup/Camioneta", "SUV", "Utilitario", "Moto"];
+const ORIGENES = ["Compra", "Consignación", "Permuta", "Otro"];
+const PROVINCIAS = [
+  "Buenos Aires", "CABA", "Catamarca", "Chaco", "Chubut", "Córdoba", "Corrientes", "Entre Ríos", "Formosa", "Jujuy",
+  "La Pampa", "La Rioja", "Mendoza", "Misiones", "Neuquén", "Río Negro", "Salta", "San Juan", "San Luis", "Santa Cruz",
+  "Santa Fe", "Santiago del Estero", "Tierra del Fuego", "Tucumán",
+];
 const ESTADOS = [
   { value: "disponible", label: "Disponible" },
   { value: "señado", label: "Señado" },
@@ -39,7 +44,6 @@ export default function NuevoVehiculoModal({ perfiles, clientes, sucursales, miI
   const [modelo, setModelo] = useState(editando?.modelo || "");
   const [anio, setAnio] = useState(editando?.anio ? String(editando.anio) : String(new Date().getFullYear()));
   const [patente, setPatente] = useState(editando?.patente || "");
-  const [condicion, setCondicion] = useState(editando?.condicion || "Muy bueno");
   const [color, setColor] = useState(editando?.color || "");
   const [km, setKm] = useState(editando?.km ? String(editando.km) : "");
   const [precioVenta, setPrecioVenta] = useState(editando?.precio_venta ? String(editando.precio_venta) : "");
@@ -47,7 +51,8 @@ export default function NuevoVehiculoModal({ perfiles, clientes, sucursales, miI
   const [precioCompra, setPrecioCompra] = useState(editando?.precio_compra ? String(editando.precio_compra) : "");
   const [monedaCompra, setMonedaCompra] = useState(editando?.moneda_compra || "USD");
   const [estadoInicial, setEstadoInicial] = useState(editando?.estado || "disponible");
-  const [ubicacion, setUbicacion] = useState(editando?.ubicacion || "Salón Principal");
+  const [ubicacion, setUbicacion] = useState(editando?.ubicacion || "");
+  const [provincia, setProvincia] = useState(editando?.provincia || "");
   const [duenosAnteriores, setDuenosAnteriores] = useState(editando?.["dueños_anteriores"] ? String(editando["dueños_anteriores"]) : "1");
   const [propioAgencia, setPropioAgencia] = useState(editando?.propio_agencia || false);
   const [propietarioNombre, setPropietarioNombre] = useState(editando?.propietario_nombre || "");
@@ -60,6 +65,7 @@ export default function NuevoVehiculoModal({ perfiles, clientes, sucursales, miI
   const [transmision, setTransmision] = useState(editando?.transmision || "");
   const [carroceria, setCarroceria] = useState(editando?.carroceria || "");
   const [puertas, setPuertas] = useState(editando?.puertas ? String(editando.puertas) : "");
+  const [origen, setOrigen] = useState(editando?.origen || "");
   const [motorCilindrada, setMotorCilindrada] = useState(editando?.motor_cilindrada || "");
   const [version, setVersion] = useState(editando?.version || "");
   const [manuales, setManuales] = useState(editando?.manuales || false);
@@ -105,7 +111,6 @@ export default function NuevoVehiculoModal({ perfiles, clientes, sucursales, miI
   const [traccion, setTraccion] = useState(editando?.traccion || "");
   const [potenciaCv, setPotenciaCv] = useState(editando?.potencia_cv ? String(editando.potencia_cv) : "");
   const [cantidadPlazas, setCantidadPlazas] = useState(editando?.cantidad_plazas ? String(editando.cantidad_plazas) : "");
-  const [origen, setOrigen] = useState(editando?.origen || "");
   const [numeroMotor, setNumeroMotor] = useState(editando?.numero_motor || "");
   const [marcaMotor, setMarcaMotor] = useState(editando?.marca_motor || "");
   const [numeroChasis, setNumeroChasis] = useState(editando?.numero_chasis || "");
@@ -120,16 +125,6 @@ export default function NuevoVehiculoModal({ perfiles, clientes, sucursales, miI
   const [importePatenteAnual, setImportePatenteAnual] = useState(editando?.importe_patente_anual ? String(editando.importe_patente_anual) : "");
   const [sucursalId, setSucursalId] = useState(editando?.sucursal_id || "");
   const [vendedorAsignadoId, setVendedorAsignadoId] = useState(editando?.vendedor_asignado_id || "");
-  const [sucursalCompraId, setSucursalCompraId] = useState(editando?.sucursal_compra_id || "");
-
-  // Precio publicado (el que usa el catálogo/simulador de financiación,
-  // distinto del precio de venta interno) — un solo monto + moneda, nunca
-  // ambos a la vez (igual que precio de venta/compra), para que no quede
-  // cargado en una moneda y el sistema siga leyendo la otra por error.
-  const [precioPublicadoMonto, setPrecioPublicadoMonto] = useState(
-    editando?.precio_publicado_ars ? String(editando.precio_publicado_ars) : editando?.precio_publicado_usd ? String(editando.precio_publicado_usd) : ""
-  );
-  const [monedaPublicado, setMonedaPublicado] = useState(editando?.precio_publicado_ars ? "ARS" : "USD");
 
   // Proveedor / dueño anterior — datos extra (nombre/teléfono/email ya
   // estaban arriba, esto suma lo que faltaba de v1)
@@ -187,9 +182,9 @@ export default function NuevoVehiculoModal({ perfiles, clientes, sucursales, miI
     try {
       const payload = {
         categoria, marca: marca.trim(), modelo: modelo.trim(), anio: Number(anio), patente: patente.trim().toUpperCase(),
-        condicion, color: color.trim(), km: Number(km), precio_venta: Number(precioVenta), moneda_venta: monedaVenta,
+        origen: origen || null, color: color.trim(), km: Number(km), precio_venta: Number(precioVenta), moneda_venta: monedaVenta,
         precio_compra: precioCompra ? Number(precioCompra) : null, moneda_compra: monedaCompra,
-        ubicacion, estado: estadoInicial, "dueños_anteriores": duenosAnteriores ? Number(duenosAnteriores) : null,
+        ubicacion: ubicacion || null, provincia: provincia || null, estado: estadoInicial, "dueños_anteriores": duenosAnteriores ? Number(duenosAnteriores) : null,
         propio_agencia: propioAgencia,
         propietario_nombre: propioAgencia ? null : (propietarioNombre || null),
         propietario_dni: propioAgencia ? null : (propietarioDni || null),
@@ -204,25 +199,18 @@ export default function NuevoVehiculoModal({ perfiles, clientes, sucursales, miI
         notas: notas || null, fotos,
         segmento: segmento || null, traccion: traccion || null,
         potencia_cv: potenciaCv ? Number(potenciaCv) : null, cantidad_plazas: cantidadPlazas ? Number(cantidadPlazas) : null,
-        origen: origen || null, numero_motor: numeroMotor || null, marca_motor: marcaMotor || null,
+        numero_motor: numeroMotor || null, marca_motor: marcaMotor || null,
         numero_chasis: numeroChasis || null, marca_chasis: marcaChasis || null,
         radicado_localidad: radicadoLocalidad || null, radicado_provincia: radicadoProvincia || null,
         stock_fisico: stockFisico, destacado, fecha_compra: fechaCompra || null,
         importe_patente_anual: importePatenteAnual ? Number(importePatenteAnual) : null,
-        sucursal_id: sucursalId || null, sucursal_compra_id: sucursalCompraId || null,
+        sucursal_id: sucursalId || null,
         vendedor_asignado_id: vendedorAsignadoId || null,
-        // Si no cargan un precio publicado aparte, el catálogo público y el
-        // simulador de financiación (que leen SOLO estos dos campos, nunca
-        // precio_venta) se publican con el mismo precio de venta interno --
-        // sin este default, un vehículo nuevo sin este campo aparte cargado
-        // queda invisible/"Consultar precio" en la web aunque tenga precio
-        // de venta real cargado, algo que no es obvio desde este formulario.
-        precio_publicado_ars: precioPublicadoMonto
-          ? (monedaPublicado === "ARS" ? Number(precioPublicadoMonto) : null)
-          : (monedaVenta === "ARS" ? Number(precioVenta) : null),
-        precio_publicado_usd: precioPublicadoMonto
-          ? (monedaPublicado === "USD" ? Number(precioPublicadoMonto) : null)
-          : (monedaVenta === "USD" ? Number(precioVenta) : null),
+        // El catálogo público y el simulador de financiación leen SOLO estos
+        // dos campos, nunca precio_venta directo -- siempre se publica el
+        // mismo precio de venta interno, sin override manual.
+        precio_publicado_ars: monedaVenta === "ARS" ? Number(precioVenta) : null,
+        precio_publicado_usd: monedaVenta === "USD" ? Number(precioVenta) : null,
         propietario_apellido: propioAgencia ? null : (propietarioApellido || null),
         propietario_fecha_nacimiento: propioAgencia ? null : (propietarioFechaNacimiento || null),
         propietario_cuit_cuil: propioAgencia ? null : (propietarioCuitCuil || null),
@@ -363,14 +351,15 @@ export default function NuevoVehiculoModal({ perfiles, clientes, sucursales, miI
                 <input value={patente} onChange={(e) => setPatente(e.target.value)} placeholder="AB123CD" className={inputClass} />
               </div>
               <div>
-                <label className={labelClass}>Condición <span className="text-rose-500">*</span></label>
-                <select value={condicion} onChange={(e) => setCondicion(e.target.value)} className={inputClass}>
-                  {CONDICIONES.map((c) => <option key={c} value={c}>{c}</option>)}
-                </select>
-              </div>
-              <div>
                 <label className={labelClass}>Color <span className="text-rose-500">*</span></label>
                 <input value={color} onChange={(e) => setColor(e.target.value)} className={inputClass} />
+              </div>
+              <div>
+                <label className={labelClass}>Origen</label>
+                <select value={origen} onChange={(e) => setOrigen(e.target.value)} className={inputClass}>
+                  <option value="">— Sin especificar —</option>
+                  {ORIGENES.map((o) => <option key={o} value={o}>{o}</option>)}
+                </select>
               </div>
             </div>
           </div>
@@ -420,17 +409,6 @@ export default function NuevoVehiculoModal({ perfiles, clientes, sucursales, miI
                   </select>
                 )}
               </div>
-              <div>
-                <label className={labelClass}>Precio publicado (opcional)</label>
-                <input type="text" inputMode="numeric" value={precioPublicadoMonto} onChange={(e) => setPrecioPublicadoMonto(e.target.value.replace(/\D/g, ""))} placeholder="15000000" className={inputClass} />
-                <p className="text-[10px] text-slate-400 mt-1">Para catálogo/financiación — si lo dejás vacío, se publica el mismo precio de venta de arriba. Completalo solo si querés mostrar un precio distinto en la web.</p>
-              </div>
-              <div>
-                <label className={labelClass}>Moneda publicado</label>
-                <select value={monedaPublicado} onChange={(e) => setMonedaPublicado(e.target.value)} className={inputClass}>
-                  <option value="USD">USD</option><option value="ARS">ARS</option>
-                </select>
-              </div>
             </div>
           </div>
 
@@ -440,6 +418,13 @@ export default function NuevoVehiculoModal({ perfiles, clientes, sucursales, miI
               <div>
                 <label className={labelClass}>Ubicación</label>
                 <input value={ubicacion} onChange={(e) => setUbicacion(e.target.value)} className={inputClass} />
+              </div>
+              <div>
+                <label className={labelClass}>Provincia</label>
+                <select value={provincia} onChange={(e) => setProvincia(e.target.value)} className={inputClass}>
+                  <option value="">— Sin especificar —</option>
+                  {PROVINCIAS.map((p) => <option key={p} value={p}>{p}</option>)}
+                </select>
               </div>
               <div>
                 <label className={labelClass}>Dueños anteriores</label>
@@ -464,13 +449,6 @@ export default function NuevoVehiculoModal({ perfiles, clientes, sucursales, miI
                     <p className="text-[11px] text-amber-600 dark:text-amber-400 font-semibold mt-1">⚠️ Esta persona no pertenece a la sucursal del auto.</p>
                   ) : null;
                 })()}
-              </div>
-              <div>
-                <label className={labelClass}>Sucursal de compra</label>
-                <select value={sucursalCompraId} onChange={(e) => setSucursalCompraId(e.target.value)} className={inputClass}>
-                  <option value="">— Sin asignar —</option>
-                  {sucursales.map((s) => <option key={s.id} value={s.id}>{s.nombre}</option>)}
-                </select>
               </div>
             </div>
           </div>
@@ -700,13 +678,6 @@ export default function NuevoVehiculoModal({ perfiles, clientes, sucursales, miI
               <div>
                 <label className={labelClass}>Cantidad de plazas</label>
                 <input type="number" value={cantidadPlazas} onChange={(e) => setCantidadPlazas(e.target.value)} className={inputClass} />
-              </div>
-              <div>
-                <label className={labelClass}>Origen</label>
-                <select value={origen} onChange={(e) => setOrigen(e.target.value)} className={inputClass}>
-                  <option value="">— Sin especificar —</option>
-                  <option>Nacional</option><option>Importado</option>
-                </select>
               </div>
             </div>
           </div>

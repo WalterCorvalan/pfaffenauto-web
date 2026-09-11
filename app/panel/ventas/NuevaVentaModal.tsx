@@ -492,9 +492,17 @@ export default function NuevaVentaModal({ perfiles, clientes, vehiculos, miId, i
           const primerVencimiento = parseFechaLocal(fechaCierre);
           const filas = Array.from({ length: n }, (_, i) => {
             const v = new Date(primerVencimiento); v.setMonth(v.getMonth() + i + 1);
-            return { venta_id: venta.id, numero: i + 1, monto: cuotaMonto, moneda: monedaVenta, vencimiento: `${v.getFullYear()}-${String(v.getMonth() + 1).padStart(2, "0")}-${String(v.getDate()).padStart(2, "0")}` };
+            return {
+              venta_id: venta.id, cliente_id: clienteResueltoId, vendedor_id: vendedorId || null, creado_por: miId || null,
+              concepto: `Cuota financiación — ${vMarca || ""} ${vModelo || ""}`.trim(), cuota_actual: i + 1, cuota_total: n,
+              moneda: monedaVenta, monto: cuotaMonto, vencimiento: `${v.getFullYear()}-${String(v.getMonth() + 1).padStart(2, "0")}-${String(v.getDate()).padStart(2, "0")}`,
+            };
           });
-          await supabase2.from("venta_cuotas").insert(filas);
+          // Antes iba a venta_cuotas (tabla muerta, sin estado/pagada ni
+          // wiring de cobro/vencimiento). Se une al mismo flujo que Cobros/
+          // CuotasTab así la cuota se puede cobrar y el cron de vencimientos
+          // la agarra igual que cualquier otra.
+          await supabase2.from("cuotas_cobrar_clientes").insert(filas);
         }
       }
 

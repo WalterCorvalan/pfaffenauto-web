@@ -137,26 +137,11 @@ async function alertarDocumentacionPendiente() {
   }
 }
 
-// E. Cuota de financiación por vencer en los próximos 3 días — recordatorio
-// interno a encargados (no le mandamos nada al cliente automáticamente, es
-// un aviso para que lo gestionen/cobren a tiempo).
-async function alertarCuotasPorVencer() {
-  const hoy = new Date().toISOString().split("T")[0];
-  const en3dias = new Date(Date.now() + 3 * 24 * 3600 * 1000).toISOString().split("T")[0];
-  const { data: financiaciones } = await supabase
-    .from("financiaciones")
-    .select("id, entidad, monto, fecha_vencimiento, venta_id")
-    .eq("estado", "Pendiente")
-    .gte("fecha_vencimiento", hoy)
-    .lte("fecha_vencimiento", en3dias);
-
-  for (const f of financiaciones || []) {
-    if (await yaSeEnvio("cuota_por_vencer", f.id)) continue;
-    const mensaje = `Cuota de financiación (${f.entidad || "sin entidad"}) por $${Number(f.monto).toLocaleString("es-AR")} vence el ${new Date(`${f.fecha_vencimiento}T12:00:00Z`).toLocaleDateString("es-AR", { timeZone: "UTC" })}.`;
-    await notificarEncargados(supabase, mensaje, "/panel/ventas/financiaciones", "boletos", "cuota_por_vencer");
-    await registrarEnvio("cuota_por_vencer", f.id);
-  }
-}
+// E. Cuota de financiación por vencer -- movido a
+// app/api/cron/panel-v2/seguimientos/route.ts (avisarCuotasPorVencer), que ya
+// cubre cuotas_cobrar_clientes -- tabla donde ahora también caen las cuotas
+// generadas al cerrar una venta financiada (antes iban a `financiaciones`,
+// tabla huérfana que nada insertaba).
 
 // F. Resumen semanal de stock nuevo a Instagram — lunes 9am (12hs UTC,
 // Argentina UTC-3). Ventana de una hora entera porque el cron corre cada 15
@@ -221,7 +206,6 @@ export async function GET(req: Request) {
     agradecerVentasRecientes().catch((err) => registrarError("api/cron agradecerVentasRecientes", err)),
     nudgeSinRespuesta().catch((err) => registrarError("api/cron nudgeSinRespuesta", err)),
     alertarDocumentacionPendiente().catch((err) => registrarError("api/cron alertarDocumentacionPendiente", err)),
-    alertarCuotasPorVencer().catch((err) => registrarError("api/cron alertarCuotasPorVencer", err)),
     publicarResumenStockSemanal().catch((err) => registrarError("api/cron publicarResumenStockSemanal", err)),
     limpiarLogsAntiguos().catch((err) => registrarError("api/cron limpiarLogsAntiguos", err)),
   ]);
