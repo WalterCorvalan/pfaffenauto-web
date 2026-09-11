@@ -10,10 +10,20 @@ const supabaseLogs = createClient(
 export function registrarError(origen: string, error: unknown, contexto?: Record<string, unknown>) {
   console.error(`[${origen}]`, error);
 
-  const mensaje = error instanceof Error ? error.message : String(error);
+  // Los errores de Supabase/PostgREST son objetos planos con .message
+  // (PostgrestError), no instancias de Error -- "instanceof Error" da falso
+  // y String(error) tira "[object Object]", perdiendo el motivo real. Se
+  // busca .message en cualquier objeto, no solo en Error de verdad.
+  const mensaje = error instanceof Error
+    ? error.message
+    : (error && typeof error === "object" && "message" in error && typeof (error as any).message === "string")
+    ? (error as any).message
+    : String(error);
   const detalle = {
     ...(contexto || {}),
     stack: error instanceof Error ? error.stack : undefined,
+    codigoPostgres: error && typeof error === "object" && "code" in error ? (error as any).code : undefined,
+    hint: error && typeof error === "object" && "hint" in error ? (error as any).hint : undefined,
   };
 
   supabaseLogs

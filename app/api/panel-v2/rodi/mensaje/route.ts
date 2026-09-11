@@ -155,7 +155,11 @@ async function procesarMensaje({ sessionId, texto, origenPagina, nombre, telefon
         presupuesto_max: pedidoStock.presupuesto_max, moneda: pedidoStock.moneda || "ARS",
         puertas: pedidoStock.puertas,
         vendedor_id: convVendedor?.vendedor_id ?? null,
-        origen: "Rodi", tipo: "avisame", estado: "activo",
+        // "pedidos.origen" tiene un check constraint que solo permite
+        // whatsapp/web/manual/instagram -- "Rodi" (el nombre del bot del
+        // sitio) no es un valor válido, rompía el insert. Rodi ES el chat de
+        // la web, así que el origen real es "web".
+        origen: "web", tipo: "avisame", estado: "activo",
       });
       if (errorPedido) registrarError("api/panel/rodi/mensaje:crear-pedido", errorPedido);
     }

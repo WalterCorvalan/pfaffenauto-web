@@ -305,7 +305,7 @@ async function ejecutarAgente(conversacionId: string) {
         presupuesto_max: pedidoStock.presupuesto_max, moneda: pedidoStock.moneda || "ARS",
         puertas: pedidoStock.puertas,
         vendedor_id: convParaPedido?.vendedor_id ?? null,
-        origen: "WhatsApp", tipo: "avisame", estado: "activo",
+        origen: "whatsapp", tipo: "avisame", estado: "activo",
       });
       if (errorPedido) registrarError("webhook-v2:crear-pedido", errorPedido);
     }
