@@ -30,6 +30,22 @@ export default function EstadoSenaSelector({ id, estado, vehiculoId }: { id: str
   }
 
   const cambiar = async (nuevo: string) => {
+    // Al recibir la seña se cargó un ingreso real en Finanzas
+    // (movimientos_caja.sena_id = id). Si se pierde y el depósito se
+    // devuelve al cliente, ese ingreso hay que revertirlo -- si no, la plata
+    // queda contabilizada como ingreso para siempre sin que haya entrado
+    // nada. Si en cambio queda en la agencia (arras, gasto administrativo),
+    // el movimiento se deja intacto, igual que en una venta caída.
+    if (nuevo === "Perdida") {
+      const devuelta = confirm("La seña se marca como perdida. ¿El depósito se devuelve al cliente? Aceptar = se devuelve (revierte el ingreso en Finanzas). Cancelar = queda en la agencia (no se toca Finanzas).");
+      if (devuelta) {
+        const { data: mov } = await supabase2.from("movimientos_caja").select("id").eq("sena_id", id).is("deleted_at", null).maybeSingle();
+        if (mov) {
+          const { error: errorRev } = await supabase2.rpc("eliminar_movimiento_caja", { p_movimiento_id: mov.id, p_motivo: "Seña perdida — depósito devuelto al cliente" });
+          if (errorRev) { alert(`No se pudo revertir el ingreso en Finanzas: ${errorRev.message}`); return; }
+        }
+      }
+    }
     setActual(nuevo);
     setCargando(true);
     const { error } = await supabase2.from("senas").update({ estado: nuevo, etapa_seguimiento: nuevo }).eq("id", id);

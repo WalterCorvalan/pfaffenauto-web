@@ -75,7 +75,20 @@ export default function ChequesTab({ cheques, setCheques, cuentas }: { cheques: 
   };
 
   const eliminar = async (c: any) => {
-    if (!confirm(`¿Eliminar el cheque de ${c.librador}?`)) return;
+    // Un cheque "cobrado" ya generó un movimiento real de caja (c.movimiento_id)
+    // -- borrarlo sin revertir ese movimiento lo dejaba huérfano (plata que
+    // quedó contabilizada sin el cheque de origen). Se revierte primero con el
+    // mismo RPC que usa Movimientos para eliminar, y recién después se borra
+    // el cheque.
+    const esCobrado = c.estado === "cobrado" && c.movimiento_id;
+    const mensaje = esCobrado
+      ? `El cheque de ${c.librador} ya está cobrado y generó un movimiento real en Finanzas. Al eliminarlo también se revierte ese movimiento. ¿Confirmás?`
+      : `¿Eliminar el cheque de ${c.librador}?`;
+    if (!confirm(mensaje)) return;
+    if (esCobrado) {
+      const { error } = await supabase2.rpc("eliminar_movimiento_caja", { p_movimiento_id: c.movimiento_id, p_motivo: `Cheque de ${c.librador} eliminado` });
+      if (error) return alert(`No se pudo revertir el movimiento de caja vinculado: ${error.message}`);
+    }
     await supabase2.from("cheques").delete().eq("id", c.id);
     setCheques((prev: any[]) => prev.filter((x) => x.id !== c.id));
   };

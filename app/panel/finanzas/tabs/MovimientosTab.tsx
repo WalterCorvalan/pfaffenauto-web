@@ -2,7 +2,7 @@
 
 import { useState, useMemo } from "react";
 import { supabase2 } from "@/lib/supabase/client";
-import { Plus, X, Save, Trash2, Pencil, ArrowLeftRight, Lock, Download, Search, Paperclip } from "lucide-react";
+import { Plus, X, Save, Trash2, ArrowLeftRight, Lock, Download, Search, Paperclip } from "lucide-react";
 import { inputClass, labelClass, fmt, CATEGORIAS_MOVIMIENTO as CATEGORIAS } from "./shared";
 import TablaResponsiva, { type ColumnaTabla } from "@/components/panel/TablaResponsiva";
 
@@ -254,10 +254,7 @@ export default function MovimientosTab({
             ] as ColumnaTabla<any>[]
           }
           acciones={(m) => (
-            <>
-              <button className="text-[11px] font-bold text-slate-500 mr-2"><Pencil className="w-3.5 h-3.5 inline" /></button>
-              <button onClick={() => eliminar(m)} className="text-[11px] font-bold text-rose-600">Eliminar</button>
-            </>
+            <button onClick={() => eliminar(m)} className="text-[11px] font-bold text-rose-600">Eliminar</button>
           )}
         />
       )}
