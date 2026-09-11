@@ -39,6 +39,20 @@ export function resolverFechaVisita(texto: string, ahora: Date = new Date()): st
 
   const diaEncontrado = DIAS.find((nombre) => t.includes(nombre));
   if (diaEncontrado) {
+    // "lunes 14" -- el prompt ahora pide siempre la fecha puntual junto con
+    // el día de la semana. Si viene un número de día del mes suelto en el
+    // texto, confiamos en ESE número (no en calcular "el próximo lunes"),
+    // usando el mes actual o el que viene si ese día ya pasó este mes.
+    const numeroDia = t.match(/\b(\d{1,2})\b/);
+    if (numeroDia) {
+      const dia = Number(numeroDia[1]);
+      if (dia >= 1 && dia <= 31) {
+        const d = new Date(ahora.getFullYear(), ahora.getMonth(), dia);
+        if (d < ahora) d.setMonth(d.getMonth() + 1);
+        if (!Number.isNaN(d.getTime())) return aIso(d);
+      }
+    }
+
     const objetivo = DIA_A_INDICE[diaEncontrado];
     const d = new Date(ahora);
     let delta = (objetivo - d.getDay() + 7) % 7;

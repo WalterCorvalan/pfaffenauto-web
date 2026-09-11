@@ -211,8 +211,18 @@ export default function NuevoVehiculoModal({ perfiles, clientes, sucursales, miI
         importe_patente_anual: importePatenteAnual ? Number(importePatenteAnual) : null,
         sucursal_id: sucursalId || null, sucursal_compra_id: sucursalCompraId || null,
         vendedor_asignado_id: vendedorAsignadoId || null,
-        precio_publicado_ars: precioPublicadoMonto && monedaPublicado === "ARS" ? Number(precioPublicadoMonto) : null,
-        precio_publicado_usd: precioPublicadoMonto && monedaPublicado === "USD" ? Number(precioPublicadoMonto) : null,
+        // Si no cargan un precio publicado aparte, el catálogo público y el
+        // simulador de financiación (que leen SOLO estos dos campos, nunca
+        // precio_venta) se publican con el mismo precio de venta interno --
+        // sin este default, un vehículo nuevo sin este campo aparte cargado
+        // queda invisible/"Consultar precio" en la web aunque tenga precio
+        // de venta real cargado, algo que no es obvio desde este formulario.
+        precio_publicado_ars: precioPublicadoMonto
+          ? (monedaPublicado === "ARS" ? Number(precioPublicadoMonto) : null)
+          : (monedaVenta === "ARS" ? Number(precioVenta) : null),
+        precio_publicado_usd: precioPublicadoMonto
+          ? (monedaPublicado === "USD" ? Number(precioPublicadoMonto) : null)
+          : (monedaVenta === "USD" ? Number(precioVenta) : null),
         propietario_apellido: propioAgencia ? null : (propietarioApellido || null),
         propietario_fecha_nacimiento: propioAgencia ? null : (propietarioFechaNacimiento || null),
         propietario_cuit_cuil: propioAgencia ? null : (propietarioCuitCuil || null),
@@ -413,7 +423,7 @@ export default function NuevoVehiculoModal({ perfiles, clientes, sucursales, miI
               <div>
                 <label className={labelClass}>Precio publicado (opcional)</label>
                 <input type="text" inputMode="numeric" value={precioPublicadoMonto} onChange={(e) => setPrecioPublicadoMonto(e.target.value.replace(/\D/g, ""))} placeholder="15000000" className={inputClass} />
-                <p className="text-[10px] text-slate-400 mt-1">Para catálogo/financiación, distinto del precio de venta interno.</p>
+                <p className="text-[10px] text-slate-400 mt-1">Para catálogo/financiación — si lo dejás vacío, se publica el mismo precio de venta de arriba. Completalo solo si querés mostrar un precio distinto en la web.</p>
               </div>
               <div>
                 <label className={labelClass}>Moneda publicado</label>

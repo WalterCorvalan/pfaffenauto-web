@@ -227,7 +227,13 @@ async function ejecutarAgente(conversacionId: string) {
     return;
   }
 
-  const { data: mensajes } = await supabase.from("whatsapp_mensajes").select("direccion, texto").eq("conversacion_id", conversacionId).order("created_at", { ascending: true }).limit(20);
+  // Ojo: ascending+limit trae los primeros 20 mensajes de TODA la charla,
+  // no los últimos 20 -- en una charla larga el bot quedaba viendo siempre
+  // el arranque de la conversación y nunca lo que se habló después. Se pide
+  // descendente (los más recientes) y se da vuelta para volver a dejarlos en
+  // orden cronológico antes de mandarlos como historial.
+  const { data: mensajesDesc } = await supabase.from("whatsapp_mensajes").select("direccion, texto").eq("conversacion_id", conversacionId).order("created_at", { ascending: false }).limit(20);
+  const mensajes = mensajesDesc ? [...mensajesDesc].reverse() : mensajesDesc;
   const historial = (mensajes ?? []).filter((m) => m.texto).map((m) => ({ role: (m.direccion === "in" ? "user" : "assistant") as "user" | "assistant", content: m.texto as string }));
 
   // "Memoria" primero (palabras clave, sin costo de IA) -- solo se llama a la
@@ -283,19 +289,25 @@ async function ejecutarAgente(conversacionId: string) {
   // un auto así -- queda registrado en Pedidos con lo que se sabe hasta
   // ahora (aunque sea parcial), para que reasignar_pedidos_vencidos y el
   // match automático de stock nuevo lo tengan en cuenta.
-  if (pedidoStock && (pedidoStock.marca || pedidoStock.modelo || pedidoStock.presupuesto_max || pedidoStock.puertas)) {
+  if (pedidoStock?.marca) {
     const { data: convParaPedido } = await supabase.from("whatsapp_conversaciones").select("vendedor_id, contacto_id, whatsapp_contactos(telefono, nombre_perfil)").eq("id", conversacionId).single();
     const telefonoContacto = (convParaPedido?.whatsapp_contactos as any)?.telefono;
     if (telefonoContacto) {
-      await supabase.from("pedidos").insert({
+      // "nombre_cliente" es NOT NULL en "pedidos" -- fallback para no perder
+      // el pedido si todavía no tenemos el nombre. "marca" también es NOT
+      // NULL, pero esa la exige el prompt antes de completar pedido_stock
+      // (ver regla SIN STOCK QUE COINCIDA) -- no se rellena con un fallback
+      // acá porque un pedido con marca inventada no sirve para nada.
+      const { error: errorPedido } = await supabase.from("pedidos").insert({
         telefono: telefonoContacto,
-        nombre_cliente: datos_detectados?.nombre || (convParaPedido?.whatsapp_contactos as any)?.nombre_perfil || null,
+        nombre_cliente: datos_detectados?.nombre || (convParaPedido?.whatsapp_contactos as any)?.nombre_perfil || "Cliente de WhatsApp",
         marca: pedidoStock.marca, modelo: pedidoStock.modelo,
-        presupuesto_max: pedidoStock.presupuesto_max, moneda: pedidoStock.moneda,
+        presupuesto_max: pedidoStock.presupuesto_max, moneda: pedidoStock.moneda || "ARS",
         puertas: pedidoStock.puertas,
         vendedor_id: convParaPedido?.vendedor_id ?? null,
         origen: "WhatsApp", tipo: "avisame", estado: "activo",
       });
+      if (errorPedido) registrarError("webhook-v2:crear-pedido", errorPedido);
     }
   }
 

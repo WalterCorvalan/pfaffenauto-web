@@ -66,7 +66,7 @@ export type HistorialMensaje = { role: "user" | "assistant"; content: string };
 // SUAVE: a partir de este mensaje del cliente, el prompt empieza a
 // sugerirle cerrar rápido con lo que necesita. DURO: a partir de acá se
 // corta directo, sin llamar a la IA — se deriva con un mensaje fijo.
-const LIMITE_MENSAJES_SUAVE = 25;
+const LIMITE_MENSAJES_SUAVE = 50;
 const LIMITE_MENSAJES_DURO = 70;
 
 function respuestaLimiteAlcanzado(): AgentReplyV2 {
@@ -122,22 +122,20 @@ async function ejecutarBusquedaStock(
       .from("vehiculos")
       .select("id, marca, modelo, anio, precio_venta, moneda_venta, precio_publicado_ars, precio_publicado_usd, patente, color, km, version, transmision, combustible, categoria, puertas, fotos, sucursales!vehiculos_sucursal_id_fkey ( nombre )")
       .in("estado", ["disponible", "reservado"])
-  ).limit(modelo ? 3 : 6);
+  ).limit(6);
 
   const queryTotal = aplicarFiltros(
     supabase.from("vehiculos").select("id", { count: "exact", head: true }).in("estado", ["disponible", "reservado"])
   );
 
   const [{ data }, { count }] = await Promise.all([query, queryTotal]);
-  // El bot tiene que cotizar el mismo precio que el cliente ya vio en la
-  // web (precio_publicado_ars/usd), no el precio_venta interno — son campos
-  // distintos y pueden diferir, mostrar dos precios distintos para el mismo
-  // auto entre el sitio y el chat confunde al cliente.
+  // El bot es de cara al cliente -- SOLO puede usar el precio publicado
+  // (precio_publicado_ars/usd), el mismo que ve cualquiera en la web. Nunca
+  // precio_venta: es el precio interno de negociación, no es para afuera. Si
+  // un auto no tiene precio publicado cargado, se muestra "Consultar precio"
+  // (0 fuerza ese camino más abajo) en vez de filtrar por el interno.
   const resultados = (data ?? []).map((v: any) => {
-    // "||" a propósito, no "??": un precio en 0 significa "todavía sin
-    // cargar" (sentinela real en la base), no un precio válido -- con "??"
-    // 0 pasaba como si fuera el precio real y mostraba "ARS 0" al cliente.
-    const precioVenta = v.precio_publicado_ars || v.precio_publicado_usd || v.precio_venta;
+    const precioVenta = v.precio_publicado_ars || v.precio_publicado_usd || 0;
     const monedaVenta = v.precio_publicado_ars ? "ARS" : v.precio_publicado_usd ? "USD" : v.moneda_venta;
     return { ...v, precio_venta: precioVenta, moneda_venta: monedaVenta, sucursal: v.sucursales?.nombre ?? null };
   }) as ResultadoStockV2[];
@@ -361,17 +359,12 @@ export async function generarRespuestaAgenteV2(historial: HistorialMensaje[], ca
     }
   }
 
-  if (esIntencionDeCompra && (respuesta.vehiculo_mencionado?.modelo || respuesta.vehiculo_mencionado?.marca || respuesta.vehiculo_mencionado?.categoria || respuesta.vehiculo_mencionado?.puertas || respuesta.presupuesto_mencionado || respuesta.pedir_stock_general)) {
-    const categoriaSolicitada = respuesta.vehiculo_mencionado?.categoria ?? null;
-    const { resultados, esAlternativa, total } = await buscarStockRealV2(
-      respuesta.vehiculo_mencionado?.marca ?? null,
-      respuesta.vehiculo_mencionado?.modelo ?? null,
-      categoriaSolicitada,
-      respuesta.presupuesto_mencionado,
-      respuesta.vehiculo_mencionado?.puertas ?? null
-    );
+  // 2da pasada con stock real inyectado -- misma llamada se usa en dos
+  // casos: (a) el cliente mencionó algo nuevo para buscar, o (b) no mencionó
+  // nada nuevo pero hay un auto en foco de turnos anteriores (ver más abajo).
+  // Se factoriza acá para no duplicar el pass2+redes de seguridad dos veces.
+  const correrPasada2 = async (resultados: ResultadoStockV2[], esAlternativa: boolean, total: number, categoriaSolicitada: string | null) => {
     resultadosBusqueda = resultados;
-
     const result2 = await chatJsonV2(AgentReplySchemaV2, [
       { role: "system", content: buildSystemPromptV2(undefined, resultados, nombreBot, esAlternativa, sucursales, sugerirCierre, categoriaSolicitada, total) },
       ...historial,
@@ -403,6 +396,41 @@ export async function generarRespuestaAgenteV2(historial: HistorialMensaje[], ca
       };
     } else {
       console.error("[agenteV2] error en 2da pasada (stock):", result2.error);
+    }
+  };
+
+  const mencionaAlgoParaBuscar = esIntencionDeCompra && (respuesta.vehiculo_mencionado?.modelo || respuesta.vehiculo_mencionado?.marca || respuesta.vehiculo_mencionado?.categoria || respuesta.vehiculo_mencionado?.puertas || respuesta.presupuesto_mencionado || respuesta.pedir_stock_general);
+
+  if (mencionaAlgoParaBuscar) {
+    const categoriaSolicitada = respuesta.vehiculo_mencionado?.categoria ?? null;
+    const { resultados, esAlternativa, total } = await buscarStockRealV2(
+      respuesta.vehiculo_mencionado?.marca ?? null,
+      respuesta.vehiculo_mencionado?.modelo ?? null,
+      categoriaSolicitada,
+      respuesta.presupuesto_mencionado,
+      respuesta.vehiculo_mencionado?.puertas ?? null
+    );
+    await correrPasada2(resultados, esAlternativa, total, categoriaSolicitada);
+  } else if (esIntencionDeCompra && !hablandoDeAutoPropio && vehiculoEnFocoId) {
+    // No mencionó auto/marca/modelo nuevo, pero hay un auto en foco de
+    // turnos anteriores (ej: "y el color?", "cuánto sale" sin repetir
+    // nombre) -- sin esto, el bot solo tenía el historial de texto para
+    // "acordarse" del auto, y con un modelo chico (Haiku) eso se pierde o se
+    // confunde a los pocos mensajes. Le volvemos a pasar los datos REALES y
+    // actuales de ese auto puntual en este prompt, en vez de depender de que
+    // recuerde bien lo que él mismo dijo antes.
+    const { data: vehiculoFoco } = await supabase
+      .from("vehiculos")
+      .select("id, marca, modelo, anio, precio_venta, moneda_venta, precio_publicado_ars, precio_publicado_usd, patente, color, km, version, transmision, combustible, categoria, puertas, fotos, sucursales!vehiculos_sucursal_id_fkey ( nombre )")
+      .eq("id", vehiculoEnFocoId)
+      .in("estado", ["disponible", "reservado"])
+      .maybeSingle();
+    if (vehiculoFoco) {
+      const v: any = vehiculoFoco;
+      const precioVenta = v.precio_publicado_ars || v.precio_publicado_usd || 0;
+      const monedaVenta = v.precio_publicado_ars ? "ARS" : v.precio_publicado_usd ? "USD" : v.moneda_venta;
+      const resultado = { ...v, precio_venta: precioVenta, moneda_venta: monedaVenta, sucursal: v.sucursales?.nombre ?? null } as ResultadoStockV2;
+      await correrPasada2([resultado], false, 1, null);
     }
   }
 
@@ -452,8 +480,9 @@ export async function generarRespuestaAgenteV2(historial: HistorialMensaje[], ca
   // referencia (?permuta=<id>, mismo parámetro que usa el botón "¿tenés un
   // usado para entregar?" del detalle de auto) -- sin esto el cliente entra
   // al cotizador a ciegas aunque el bot ya sabía perfectamente qué auto buscaba.
-  if (vehiculoFocoId && respuesta.datos_detectados?.tiene_permuta && respuesta.reply.includes("/cotizador")) {
-    respuesta = { ...respuesta, reply: respuesta.reply.replace(/\/cotizador(?!\?)/g, `/cotizador?permuta=${vehiculoFocoId}`) };
+  const focoParaCotizador = vehiculoFocoId ?? vehiculoEnFocoId ?? null;
+  if (focoParaCotizador && respuesta.datos_detectados?.tiene_permuta && respuesta.reply.includes("/cotizador")) {
+    respuesta = { ...respuesta, reply: respuesta.reply.replace(/\/cotizador(?!\?)/g, `/cotizador?permuta=${focoParaCotizador}`) };
   }
 
   return { ok: true, data: respuesta, fotosParaEnviar, vehiculoFocoId, pedidoStock: respuesta.pedido_stock ?? null };

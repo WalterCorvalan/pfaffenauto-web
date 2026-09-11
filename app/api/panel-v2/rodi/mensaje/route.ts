@@ -98,10 +98,14 @@ async function procesarMensaje({ sessionId, texto, origenPagina, nombre, telefon
     return NextResponse.json({ replies: [], handoff: false });
   }
 
-  const { data: mensajesPrevios } = await supabase.from("rodi_mensajes").select("direccion, texto").eq("conversacion_id", conversacion.id).order("created_at", { ascending: true }).limit(20);
+  // Mismo fix que WhatsApp: ascending+limit traía los primeros 20 mensajes
+  // de toda la charla en vez de los últimos 20 -- en una charla larga el bot
+  // nunca veía lo hablado después del mensaje 20.
+  const { data: mensajesDesc } = await supabase.from("rodi_mensajes").select("direccion, texto").eq("conversacion_id", conversacion.id).order("created_at", { ascending: false }).limit(20);
+  const mensajesPrevios = mensajesDesc ? [...mensajesDesc].reverse() : mensajesDesc;
   const historial = (mensajesPrevios ?? []).map((m) => ({ role: (m.direccion === "in" ? "user" : "assistant") as "user" | "assistant", content: m.texto }));
 
-  const result = await generarRespuestaAgenteV2(historial, "panel-v2/rodi", "Rodi");
+  const result = await generarRespuestaAgenteV2(historial, "panel-v2/rodi", "Rodi", conversacion.vehiculo_id ?? null);
 
   if (!result.ok) {
     registrarError("api/panel/rodi/mensaje:agente", result.error, { conversacionId: conversacion.id });
@@ -109,13 +113,15 @@ async function procesarMensaje({ sessionId, texto, origenPagina, nombre, telefon
   }
 
   const { reply, handoff, calificacion, resumen_handoff, datos_detectados } = result.data;
-  const { pedidoStock } = result;
+  const { pedidoStock, vehiculoFocoId } = result;
   const partes = dividirRespuestaEnMensajes(reply);
 
   for (const parte of partes) {
     await supabase.from("rodi_mensajes").insert({ conversacion_id: conversacion.id, direccion: "out", texto: parte, ai_generado: true });
   }
-  await supabase.from("rodi_conversaciones").update({ calificacion }).eq("id", conversacion.id);
+  const patchCalificacion: Record<string, unknown> = { calificacion };
+  if (vehiculoFocoId) patchCalificacion.vehiculo_id = vehiculoFocoId;
+  await supabase.from("rodi_conversaciones").update(patchCalificacion).eq("id", conversacion.id);
 
   // Nombre/email/teléfono que el cliente vaya dando durante la charla se
   // guardan apenas se detectan, sin esperar al handoff — así quedan aunque
@@ -133,19 +139,25 @@ async function procesarMensaje({ sessionId, texto, origenPagina, nombre, telefon
 
   // Sin stock que coincida: mismo criterio que WhatsApp -- registrar el
   // pedido con lo que se sabe, para avisar apenas entre algo que coincida.
-  if (pedidoStock && (pedidoStock.marca || pedidoStock.modelo || pedidoStock.presupuesto_max || pedidoStock.puertas)) {
+  if (pedidoStock?.marca) {
     const telefonoOEmail = datos_detectados?.telefono || conversacion.telefono_contacto || datos_detectados?.email || conversacion.email_contacto;
     if (telefonoOEmail) {
       const { data: convVendedor } = await supabase.from("rodi_conversaciones").select("vendedor_id").eq("id", conversacion.id).single();
-      await supabase.from("pedidos").insert({
+      // "nombre_cliente" es NOT NULL en "pedidos" -- fallback para no perder
+      // el pedido si todavía no tenemos el nombre. "marca" también es NOT
+      // NULL, pero esa la exige el prompt antes de completar pedido_stock
+      // (ver regla SIN STOCK QUE COINCIDA) -- no se rellena con un fallback
+      // acá porque un pedido con marca inventada no sirve para nada.
+      const { error: errorPedido } = await supabase.from("pedidos").insert({
         telefono: datos_detectados?.telefono || conversacion.telefono_contacto || null,
-        nombre_cliente: datos_detectados?.nombre || conversacion.nombre_contacto || null,
+        nombre_cliente: datos_detectados?.nombre || conversacion.nombre_contacto || "Visitante de Rodi",
         marca: pedidoStock.marca, modelo: pedidoStock.modelo,
-        presupuesto_max: pedidoStock.presupuesto_max, moneda: pedidoStock.moneda,
+        presupuesto_max: pedidoStock.presupuesto_max, moneda: pedidoStock.moneda || "ARS",
         puertas: pedidoStock.puertas,
         vendedor_id: convVendedor?.vendedor_id ?? null,
         origen: "Rodi", tipo: "avisame", estado: "activo",
       });
+      if (errorPedido) registrarError("api/panel/rodi/mensaje:crear-pedido", errorPedido);
     }
   }
   if (handoff) {
