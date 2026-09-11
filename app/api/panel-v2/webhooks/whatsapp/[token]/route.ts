@@ -197,9 +197,12 @@ function isWhatsappEnvioConfigurado(config: any): boolean {
 }
 
 // Horario de atención: 8 a 22, hora Argentina — mismo criterio que v1.
+// TEMPORAL (pedido de Walter, 2026-09-10): desactivado para poder probar el
+// bot de noche. Volver a activar la línea de abajo cuando termine de probar.
 function estaEnHorarioAtencion(): boolean {
-  const hora = Number(new Intl.DateTimeFormat("en-US", { timeZone: "America/Argentina/Buenos_Aires", hour: "numeric", hourCycle: "h23" }).format(new Date()));
-  return hora >= 8 && hora < 22;
+  return true;
+  // const hora = Number(new Intl.DateTimeFormat("en-US", { timeZone: "America/Argentina/Buenos_Aires", hour: "numeric", hourCycle: "h23" }).format(new Date()));
+  // return hora >= 8 && hora < 22;
 }
 
 async function enviarMensajeFijo(conversacionId: string, texto: string, config: any) {
