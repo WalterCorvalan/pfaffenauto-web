@@ -34,7 +34,10 @@ async function intentarAnthropic(
     : [...conversationMsgs, { role: "user" as const, content: "IMPORTANTE: tu respuesta anterior no era JSON válido. Respondé ÚNICAMENTE con el JSON, sin texto extra ni backticks." }];
 
   const response = await anthropic.messages.create(
-    { model: MODELO_ANTHROPIC, max_tokens: 1000, system: systemMsg, messages: finalMsgs },
+    // 1500, no 1000: una respuesta con un listado de 3-4 autos + el resto de
+    // los campos del JSON puede acercarse al límite viejo y cortar la
+    // respuesta a mitad de frase (visto en pruebas reales).
+    { model: MODELO_ANTHROPIC, max_tokens: 1500, system: systemMsg, messages: finalMsgs },
     { timeout: 8000, maxRetries: 0 }
   );
 

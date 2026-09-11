@@ -305,7 +305,16 @@ const FRASES_CIERRE_PROHIBIDAS = [
 function sacarCierreGenericoProhibido(reply: string): string {
   let limpio = reply;
   for (const patron of FRASES_CIERRE_PROHIBIDAS) {
-    limpio = limpio.replace(patron, "").trim();
+    const match = limpio.match(patron);
+    if (!match || match.index == null) continue;
+    // No alcanza con sacar solo la frase prohibida: eso dejaba colgado el
+    // principio de la pregunta que la contenía (ej: reply terminaba en
+    // "¿Alguno de estos Fiat" a mitad de camino, sin el cierre que se
+    // recortó). Se corta desde el inicio de ESA pregunta/oración (el último
+    // "¿" o salto de línea antes de la frase encontrada), no solo la frase.
+    const antes = limpio.slice(0, match.index);
+    const inicioOracion = Math.max(antes.lastIndexOf("¿"), antes.lastIndexOf("\n"));
+    limpio = (inicioOracion === -1 ? antes : antes.slice(0, inicioOracion)).trim();
   }
   return limpio;
 }
@@ -371,10 +380,19 @@ export async function generarRespuestaAgenteV2(historial: HistorialMensaje[], ca
       ...historial,
     ], { origen: canal });
 
+    // Auto único ya en foco (no alternativa, un solo resultado): esto es el
+    // caso de "y el color?", "cuánto sale" sobre un auto puntual que ya se
+    // venía hablando -- acá NO tiene sentido la red de "no mostró stock
+    // real", porque una respuesta honesta a una pregunta puntual (o un
+    // "no tengo ese dato, te derivo") no tiene por qué mencionar precio/año,
+    // y forzar el listado canned de vuelta es justamente el bug que se
+    // estaba reportando (relistea en vez de contestar la pregunta puntual).
+    const autoUnicoYaEnFoco = !esAlternativa && resultados.length === 1;
+
     if (result2.ok) {
       const reply = respuestaMencionaStockInventado(result2.data.reply, resultados, sucursales)
         ? respuestaSeguraConStockReal(resultados, esAlternativa)
-        : !result2.data.pedir_fotos && respuestaNoMuestraStockReal(result2.data.reply, resultados)
+        : !result2.data.pedir_fotos && !result2.data.handoff && !autoUnicoYaEnFoco && respuestaNoMuestraStockReal(result2.data.reply, resultados)
         ? respuestaSeguraConStockReal(resultados, esAlternativa)
         : result2.data.reply;
       // La segunda pasada es la que tiene el dato correcto post-reglas
