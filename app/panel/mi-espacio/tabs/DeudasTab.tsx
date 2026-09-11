@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useMemo } from "react";
 import { supabase2 } from "@/lib/supabase/client";
-import { Plus, X, Save, Link2, Trash2, DollarSign } from "lucide-react";
+import { Plus, X, Save, Link2, Trash2, DollarSign, Pencil } from "lucide-react";
 import { inputClass, labelClass, fmt, badgeVencimiento } from "./shared";
 
 export default function DeudasTab({ miId }: { miId: string }) {
@@ -17,6 +17,7 @@ export default function DeudasTab({ miId }: { miId: string }) {
   const [vencimiento, setVencimiento] = useState("");
   const [notas, setNotas] = useState("");
   const [guardando, setGuardando] = useState(false);
+  const [editando, setEditando] = useState<any>(null);
 
   const [pagando, setPagando] = useState<any | null>(null);
   const [pagoMonto, setPagoMonto] = useState("");
@@ -51,12 +52,30 @@ export default function DeudasTab({ miId }: { miId: string }) {
     if (!acreedor.trim()) return alert("Completá el acreedor.");
     setGuardando(true);
     try {
-      const { data, error } = await supabase2.from("espacio_deudas").insert({ perfil_id: miId, acreedor: acreedor.trim(), concepto: concepto || null, moneda, monto: Number(monto) || 0, vencimiento: vencimiento || null, notas: notas || null }).select().single();
-      if (error) throw error;
-      setDeudas((prev) => [...prev, data]);
-      setShowNueva(false);
-      setAcreedor(""); setConcepto(""); setMonto(""); setVencimiento(""); setNotas("");
-    } catch { alert("No se pudo crear la deuda."); } finally { setGuardando(false); }
+      const campos = { acreedor: acreedor.trim(), concepto: concepto || null, moneda, monto: Number(monto) || 0, vencimiento: vencimiento || null, notas: notas || null };
+      if (editando) {
+        const { data, error } = await supabase2.from("espacio_deudas").update(campos).eq("id", editando.id).select().single();
+        if (error) throw error;
+        setDeudas((prev) => prev.map((x) => (x.id === editando.id ? data : x)));
+      } else {
+        const { data, error } = await supabase2.from("espacio_deudas").insert({ perfil_id: miId, ...campos }).select().single();
+        if (error) throw error;
+        setDeudas((prev) => [...prev, data]);
+      }
+      cerrarModalDeuda();
+    } catch { alert("No se pudo guardar la deuda."); } finally { setGuardando(false); }
+  };
+
+  const abrirEdicion = (d: any) => {
+    setEditando(d);
+    setAcreedor(d.acreedor); setConcepto(d.concepto || ""); setMoneda(d.moneda); setMonto(String(d.monto)); setVencimiento(d.vencimiento || ""); setNotas(d.notas || "");
+    setShowNueva(true);
+  };
+
+  const cerrarModalDeuda = () => {
+    setShowNueva(false);
+    setEditando(null);
+    setAcreedor(""); setConcepto(""); setMoneda("ARS"); setMonto(""); setVencimiento(""); setNotas("");
   };
 
   const eliminar = async (d: any) => {
@@ -125,7 +144,8 @@ export default function DeudasTab({ miId }: { miId: string }) {
                   <div className="flex items-center gap-2 mt-2 flex-wrap">
                     {ligadas.length === 0 && <button onClick={() => abrirPago(d)} className="flex items-center gap-1 px-2.5 py-1.5 text-[11px] font-bold bg-rose-600 hover:bg-rose-700 text-white rounded-lg"><DollarSign className="w-3.5 h-3.5" /> Registrar pago</button>}
                     <button onClick={() => setVinculando(d)} className="flex items-center gap-1 px-2.5 py-1.5 text-[11px] font-bold border border-slate-200 dark:border-white/10 rounded-lg hover:bg-slate-50 dark:hover:bg-white/5"><Link2 className="w-3.5 h-3.5" /> Vincular cuotas</button>
-                    <button onClick={() => eliminar(d)} className="p-1.5 text-slate-400 hover:text-rose-600 ml-auto"><Trash2 className="w-3.5 h-3.5" /></button>
+                    <button onClick={() => abrirEdicion(d)} className="p-1.5 text-slate-400 hover:text-slate-700 dark:hover:text-white ml-auto"><Pencil className="w-3.5 h-3.5" /></button>
+                    <button onClick={() => eliminar(d)} className="p-1.5 text-slate-400 hover:text-rose-600"><Trash2 className="w-3.5 h-3.5" /></button>
                   </div>
                 )}
               </div>
@@ -135,9 +155,9 @@ export default function DeudasTab({ miId }: { miId: string }) {
       )}
 
       {showNueva && (
-        <div className="fixed inset-0 bg-black/40 z-50 flex items-center justify-center p-4" onClick={() => setShowNueva(false)}>
+        <div className="fixed inset-0 bg-black/40 z-50 flex items-center justify-center p-4" onClick={cerrarModalDeuda}>
           <div onClick={(e) => e.stopPropagation()} className="bg-white dark:bg-[#141414] border border-slate-200 dark:border-white/10 w-full max-w-md rounded-2xl shadow-2xl p-6">
-            <div className="flex justify-between items-start mb-4"><h3 className="text-lg font-bold">Nueva deuda</h3><button onClick={() => setShowNueva(false)}><X className="w-4 h-4 text-slate-400" /></button></div>
+            <div className="flex justify-between items-start mb-4"><h3 className="text-lg font-bold">{editando ? "Editar deuda" : "Nueva deuda"}</h3><button onClick={cerrarModalDeuda}><X className="w-4 h-4 text-slate-400" /></button></div>
             <label className={labelClass}>Acreedor *</label>
             <input value={acreedor} onChange={(e) => setAcreedor(e.target.value)} placeholder="On city, un amigo, etc." className={inputClass} />
             <label className={labelClass + " mt-3"}>Concepto</label>
@@ -149,7 +169,7 @@ export default function DeudasTab({ miId }: { miId: string }) {
             </div>
             <label className={labelClass + " mt-3"}>Notas</label>
             <textarea value={notas} onChange={(e) => setNotas(e.target.value)} rows={2} className={inputClass} />
-            <div className="flex justify-end gap-2 mt-4"><button onClick={() => setShowNueva(false)} className="px-4 py-2 text-sm font-bold text-slate-500">Cancelar</button><button onClick={crear} disabled={guardando} className="flex items-center gap-1.5 px-4 py-2 text-sm font-bold bg-rose-600 hover:bg-rose-700 text-white rounded-lg disabled:opacity-50"><Save className="w-4 h-4" /> Crear</button></div>
+            <div className="flex justify-end gap-2 mt-4"><button onClick={cerrarModalDeuda} className="px-4 py-2 text-sm font-bold text-slate-500">Cancelar</button><button onClick={crear} disabled={guardando} className="flex items-center gap-1.5 px-4 py-2 text-sm font-bold bg-rose-600 hover:bg-rose-700 text-white rounded-lg disabled:opacity-50"><Save className="w-4 h-4" /> {editando ? "Guardar" : "Crear"}</button></div>
           </div>
         </div>
       )}

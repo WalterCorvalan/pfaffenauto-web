@@ -34,6 +34,7 @@ const RESUMEN_ITEMS = [
   { key: "clientes_sin_contactar", label: "Clientes sin contactar", desc: "Leads que esperan atención" },
   { key: "reclamos_abiertos", label: "Reclamos abiertos", desc: "Abiertos y estancados (sin moverse)" },
   { key: "autorizaciones_pendientes", label: "Autorizaciones pendientes", desc: "", sensible: true },
+  { key: "saldos_caja", label: "Saldos de caja", desc: "Saldo por moneda (USD/ARS)", sensible: true },
 ];
 
 const PANEL_TABS = [
@@ -124,6 +125,7 @@ export default function MiEspacioClient({
   const [pmBeneficiario, setPmBeneficiario] = useState("");
   const [pmNotas, setPmNotas] = useState("");
   const [guardandoPagoManual, setGuardandoPagoManual] = useState(false);
+  const [editandoPago, setEditandoPago] = useState<any>(null);
   const [mesFiltro, setMesFiltro] = useState(() => new Date().toISOString().slice(0, 7));
   const [verTodos, setVerTodos] = useState(false);
 
@@ -232,14 +234,32 @@ export default function MiEspacioClient({
     if (!pmConcepto.trim() || !pmMonto) return alert("Completá concepto y monto.");
     setGuardandoPagoManual(true);
     try {
-      const { data, error } = await supabase2.from("espacio_pagos").insert({
-        perfil_id: miId, fecha: pmFecha, metodo: pmMetodo || null, concepto: pmConcepto.trim(), moneda: pmMoneda, monto: Number(pmMonto), beneficiario: pmBeneficiario || null, notas: pmNotas || null, origen: "manual",
-      }).select().single();
-      if (error) throw error;
-      setPagos((prev) => [data, ...prev]);
-      setShowPagoManual(false);
-      setPmMetodo(""); setPmConcepto(""); setPmMonto(""); setPmBeneficiario(""); setPmNotas("");
-    } catch { alert("No se pudo registrar el pago."); } finally { setGuardandoPagoManual(false); }
+      const campos = { fecha: pmFecha, metodo: pmMetodo || null, concepto: pmConcepto.trim(), moneda: pmMoneda, monto: Number(pmMonto), beneficiario: pmBeneficiario || null, notas: pmNotas || null };
+      if (editandoPago) {
+        const { data, error } = await supabase2.from("espacio_pagos").update(campos).eq("id", editandoPago.id).select().single();
+        if (error) throw error;
+        setPagos((prev) => prev.map((x) => (x.id === editandoPago.id ? data : x)));
+      } else {
+        const { data, error } = await supabase2.from("espacio_pagos").insert({ perfil_id: miId, ...campos, origen: "manual" }).select().single();
+        if (error) throw error;
+        setPagos((prev) => [data, ...prev]);
+      }
+      cerrarModalPagoManual();
+    } catch { alert("No se pudo guardar el pago."); } finally { setGuardandoPagoManual(false); }
+  };
+
+  const abrirEditarPago = (p: any) => {
+    setEditandoPago(p);
+    setPmFecha(p.fecha); setPmMetodo(p.metodo || ""); setPmConcepto(p.concepto); setPmMoneda(p.moneda);
+    setPmMonto(String(p.monto)); setPmBeneficiario(p.beneficiario || ""); setPmNotas(p.notas || "");
+    setShowPagoManual(true);
+  };
+
+  const cerrarModalPagoManual = () => {
+    setShowPagoManual(false);
+    setEditandoPago(null);
+    setPmFecha(new Date().toISOString().slice(0, 10));
+    setPmMetodo(""); setPmConcepto(""); setPmMoneda("USD"); setPmMonto(""); setPmBeneficiario(""); setPmNotas("");
   };
 
   const eliminarPago = async (p: any) => {
@@ -483,7 +503,12 @@ export default function MiEspacioClient({
                   { key: "monto", header: "Monto", cell: (p) => fmt(p.monto, p.moneda), claseTd: "text-sm font-bold" },
                 ] as ColumnaTabla<any>[]
               }
-              acciones={(p) => p.origen === "manual" && <button onClick={() => eliminarPago(p)} className="p-1.5 text-slate-400 hover:text-rose-600"><Trash2 className="w-3.5 h-3.5" /></button>}
+              acciones={(p) => p.origen === "manual" && (
+                <div className="flex items-center gap-1">
+                  <button onClick={() => abrirEditarPago(p)} className="p-1.5 text-slate-400 hover:text-rose-600"><Pencil className="w-3.5 h-3.5" /></button>
+                  <button onClick={() => eliminarPago(p)} className="p-1.5 text-slate-400 hover:text-rose-600"><Trash2 className="w-3.5 h-3.5" /></button>
+                </div>
+              )}
             />
           )}
         </div>
@@ -552,9 +577,9 @@ export default function MiEspacioClient({
       )}
 
       {showPagoManual && (
-        <div className="fixed inset-0 bg-black/40 z-50 flex items-center justify-center p-4" onClick={() => setShowPagoManual(false)}>
+        <div className="fixed inset-0 bg-black/40 z-50 flex items-center justify-center p-4" onClick={cerrarModalPagoManual}>
           <div onClick={(e) => e.stopPropagation()} className="bg-white dark:bg-[#141414] border border-slate-200 dark:border-white/10 w-full max-w-md rounded-2xl shadow-2xl p-6">
-            <div className="flex justify-between items-start mb-1"><h3 className="text-lg font-bold">Registrar pago manual</h3><button onClick={() => setShowPagoManual(false)}><X className="w-4 h-4 text-slate-400" /></button></div>
+            <div className="flex justify-between items-start mb-1"><h3 className="text-lg font-bold">{editandoPago ? "Editar pago" : "Registrar pago manual"}</h3><button onClick={cerrarModalPagoManual}><X className="w-4 h-4 text-slate-400" /></button></div>
             <p className="text-xs text-slate-400 mb-4">Anotalo acá para tener registro. No afecta finanzas de la agencia.</p>
             <div className="grid grid-cols-2 gap-2">
               <div><label className={labelClass}>Fecha *</label><input type="date" value={pmFecha} onChange={(e) => setPmFecha(e.target.value)} className={inputClass} /></div>
@@ -571,8 +596,8 @@ export default function MiEspacioClient({
             <label className={labelClass + " mt-3"}>Notas</label>
             <textarea value={pmNotas} onChange={(e) => setPmNotas(e.target.value)} rows={2} placeholder="Cotización, comprobante, contexto..." className={inputClass} />
             <div className="flex justify-end gap-2 mt-4">
-              <button onClick={() => setShowPagoManual(false)} className="px-4 py-2 text-sm font-bold text-slate-500">Cancelar</button>
-              <button onClick={registrarPagoManual} disabled={guardandoPagoManual} className="flex items-center gap-1.5 px-4 py-2 text-sm font-bold bg-rose-600 hover:bg-rose-700 text-white rounded-lg disabled:opacity-50"><Save className="w-4 h-4" /> Registrar</button>
+              <button onClick={cerrarModalPagoManual} className="px-4 py-2 text-sm font-bold text-slate-500">Cancelar</button>
+              <button onClick={registrarPagoManual} disabled={guardandoPagoManual} className="flex items-center gap-1.5 px-4 py-2 text-sm font-bold bg-rose-600 hover:bg-rose-700 text-white rounded-lg disabled:opacity-50"><Save className="w-4 h-4" /> {editandoPago ? "Guardar" : "Registrar"}</button>
             </div>
           </div>
         </div>
