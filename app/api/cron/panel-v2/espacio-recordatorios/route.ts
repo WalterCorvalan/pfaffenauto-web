@@ -8,6 +8,7 @@ import { crearAlerta } from "@/lib/panel/alertas";
 //      que el usuario elige al cargar el evento.
 //   2) Vencimientos de autos personales (espacio_autos_personales) -- VTV,
 //      seguro y patente, avisa 7 días antes.
+//   3) Tareas personales (espacio_pendientes) con fecha de vencimiento.
 
 const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE2_URL!,
@@ -100,6 +101,30 @@ async function avisarVencimientosAutos(hoy: string): Promise<number> {
   return avisados;
 }
 
+async function avisarPendientesVencidos(hoy: string): Promise<number> {
+  const { data: pendientes } = await supabase
+    .from("espacio_pendientes")
+    .select("id, perfil_id, titulo, prioridad, vencimiento, notas, completada, aviso_enviado")
+    .eq("completada", false)
+    .eq("aviso_enviado", false)
+    .lte("vencimiento", hoy)
+    .not("vencimiento", "is", null);
+
+  let avisados = 0;
+  for (const p of pendientes ?? []) {
+    await crearAlerta(supabase, p.perfil_id, `Tarea vencida: ${p.titulo}`, {
+      mensaje: p.notas || undefined,
+      link: "/panel/mi-espacio?tab=pendientes",
+      tipo: "espacio_pendiente_vencido",
+      prioridad: p.prioridad === "Alta" ? "media" : "baja",
+      modulo: "mi_espacio",
+    });
+    await supabase.from("espacio_pendientes").update({ aviso_enviado: true }).eq("id", p.id);
+    avisados++;
+  }
+  return avisados;
+}
+
 export async function GET(req: Request) {
   const url = new URL(req.url);
   const token = url.searchParams.get("token");
@@ -108,7 +133,7 @@ export async function GET(req: Request) {
   }
 
   const hoy = hoyArgentina();
-  const [calendario, vencimientos] = await Promise.all([avisarCalendarioPersonal(hoy), avisarVencimientosAutos(hoy)]);
+  const [calendario, vencimientos, pendientes] = await Promise.all([avisarCalendarioPersonal(hoy), avisarVencimientosAutos(hoy), avisarPendientesVencidos(hoy)]);
 
-  return Response.json({ ok: true, calendario, vencimientos });
+  return Response.json({ ok: true, calendario, vencimientos, pendientes });
 }
