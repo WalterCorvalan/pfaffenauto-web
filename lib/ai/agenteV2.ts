@@ -211,7 +211,14 @@ export async function buscarStockRealV2(
       if (probados.has(clave)) continue;
       probados.add(clave);
       const { resultados, total } = await ejecutarBusquedaStock(m, mo, c, presupuesto, puertasIntento);
-      if (resultados.length > 0) return { resultados, esAlternativa: i > 0 || puertasIntento === null, total };
+      // esAlternativa solo debe subir por puertas cuando el cliente SÍ pidió
+      // puertas y hubo que soltar ese filtro para encontrar algo -- si nunca
+      // pidió puertas, puertasIntento es null desde el arranque (no es una
+      // "alternativa", es la búsqueda normal) y antes igual se marcaba como
+      // alternativa siempre, haciendo que CASI toda búsqueda exacta mostrara
+      // "ese modelo puntual no lo tengo" aunque fuera un match real.
+      const bajoPorPuertas = puertas != null && puertasIntento === null;
+      if (resultados.length > 0) return { resultados, esAlternativa: i > 0 || bajoPorPuertas, total };
     }
   }
   return { resultados: [], esAlternativa: true, total: 0 };
