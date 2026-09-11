@@ -46,7 +46,10 @@ export default function SucursalHeroAnimated({ slug, nombre, imagen, direccion, 
 
           <div>
             <span className="text-white/60 text-xs font-bold uppercase tracking-widest block mb-1">Sucursal</span>
-            <h1 className="text-3xl md:text-5xl lg:text-6xl font-black text-white tracking-tight">{nombre}</h1>
+            <h1 className="text-3xl md:text-5xl lg:text-6xl font-black text-white tracking-tight">
+              {nombre}
+              <span className="block text-sm md:text-lg lg:text-xl font-semibold text-white/70 tracking-normal mt-1.5">Autos 0KM y usados en Buenos Aires</span>
+            </h1>
           </div>
         </div>
       </section>

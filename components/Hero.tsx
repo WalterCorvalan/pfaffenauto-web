@@ -141,6 +141,18 @@ export default function Hero() {
           confiable de comprar o vender<span className="font-black bg-clip-text text-transparent bg-gradient-to-r from-[#0145F2] to-sky-500 dark:from-sky-400 dark:to-blue-300"> TU AUTO</span>
         </motion.h1>
 
+        {/* Refuerza keyword real (0KM/usados + zona) cerca del H1 sin tocar
+           el título de marca -- ese queda igual, esto solo suma contexto
+           para SEO. */}
+        <motion.p
+          initial={{ opacity: 0, y: 10 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.5, delay: 0.2 }}
+          className="text-sm md:text-base text-navy/70 dark:text-white/60 font-semibold -mt-6 mb-8"
+        >
+          Autos 0KM y usados seleccionados en Zona Norte, Buenos Aires
+        </motion.p>
+
         {/* ================= BUSCADOR ESPACIAL (GLASSMORPHISM) ================= */}
         <motion.form 
           initial={{ opacity: 0, y: 20 }}

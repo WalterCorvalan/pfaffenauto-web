@@ -8,8 +8,8 @@ import type { Metadata } from "next";
 export const revalidate = 60;
 
 export const metadata: Metadata = {
-  title: "Outlet | Vehículos en Liquidación | Pfaffen Autos",
-  description: "Vehículos seleccionados a precios de liquidación en Pfaffen Autos. Ideales como primer auto, proyectos o herramienta de trabajo.",
+  title: "Outlet de Autos Usados Baratos en Zona Norte | Pfaffen Autos",
+  description: "Autos usados a precios de liquidación en Buenos Aires. Ideales como primer auto, proyectos o herramienta de trabajo.",
   alternates: { canonical: "https://www.pfaffencars.com/outlet" },
 };
 
