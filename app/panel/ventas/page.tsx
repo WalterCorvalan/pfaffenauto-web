@@ -5,8 +5,14 @@ export default async function VentasPage() {
   const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();
 
+  // Traer todo el historial de ventas desde siempre pesa cada vez más --
+  // se pagina a los últimos 6 meses, que es lo que realmente se usa a
+  // diario (el resto queda disponible vía filtros/búsqueda si hace falta).
+  const desde6Meses = new Date();
+  desde6Meses.setMonth(desde6Meses.getMonth() - 6);
+
   const [ventasRes, perfilesRes, clientesRes, vehiculosRes, permutasRes, senasRes, miPerfil, cuentasRes] = await Promise.all([
-    supabase.from("ventas").select("*").order("created_at", { ascending: false }),
+    supabase.from("ventas").select("*").gte("created_at", desde6Meses.toISOString()).order("created_at", { ascending: false }),
     supabase.from("perfiles").select("id, nombre, roles").eq("activo", true).order("nombre"),
     supabase.from("clientes").select("id, nombre, telefono, email, dni_cuit").order("nombre"),
     supabase.from("vehiculos").select("id, marca, modelo, anio, patente, km, precio_venta, moneda_venta, estado, color, condicion").in("estado", ["disponible", "reservado", "señado"]).order("marca"),

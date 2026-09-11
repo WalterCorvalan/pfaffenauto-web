@@ -6,6 +6,13 @@ export const metadata = { title: "Tareas de Leads | Pfaffen Autos" };
 export default async function TareasLeadPage() {
   const supabase = await createClient();
 
+  // Igual que Ventas/Expedientes -- se pagina a los últimos 6 meses. Una
+  // tarea pendiente de hace más de 6 meses ya está tan vencida que no
+  // cambia nada tenerla en pantalla; lo que sí importa es no cargar años
+  // de tareas completadas en cada visita al tablero.
+  const desde6Meses = new Date();
+  desde6Meses.setMonth(desde6Meses.getMonth() - 6);
+
   const [{ data: todasLasTareas }, { data: leadsWaNuevos }, { data: leadsIgNuevos }, { data: vendedores }] = await Promise.all([
     supabase
       .from("tareas_lead")
@@ -14,6 +21,7 @@ export default async function TareasLeadPage() {
         whatsapp_conversaciones ( id, vendedor_id, calificacion, whatsapp_contactos ( nombre_perfil, telefono ) ),
         instagram_conversaciones ( id, vendedor_id, calificacion, instagram_contactos ( username ) )
       `)
+      .gte("fecha_vencimiento", desde6Meses.toISOString().slice(0, 10))
       .order("fecha_vencimiento", { ascending: true }),
     supabase
       .from("whatsapp_conversaciones")

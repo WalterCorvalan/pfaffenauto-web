@@ -11,14 +11,18 @@ export default async function FinanzasPage() {
   const soyAdminOFinanzas = miPerfil?.roles?.some((r: string) => r === "admin" || r === "finanzas") ?? false;
   const soyAdmin = miPerfil?.roles?.includes("admin") ?? false;
 
-  const [{ data: cuentas }, { data: cierres }, { data: cuotasCobrar }, { data: cuotasPagar }, { data: vendedores }, { data: clientes }, { data: vehiculos }, { data: ventas }, { data: cheques }, { data: pagosDisponibles }, { data: consumosTarjeta }, { data: retiros }, { data: devoluciones }, { data: expedientes }, { data: prestamos }, { data: presupuestos }, { data: recurrencias }, { data: recurrenciasGeneraciones }, { data: arqueos }, { data: cierresDiarios }, { data: senas }, { data: vehiculosDisponiblesFull }, { data: sucursales }] = await Promise.all([
+  const [{ data: cuentas }, { data: cierres }, { data: cuotasCobrar }, { data: cuotasPagar }, { data: vendedores }, { data: clientes }, { data: vehiculosEnJuego }, { data: ventas }, { data: cheques }, { data: pagosDisponibles }, { data: consumosTarjeta }, { data: retiros }, { data: devoluciones }, { data: expedientes }, { data: prestamos }, { data: presupuestos }, { data: recurrencias }, { data: recurrenciasGeneraciones }, { data: arqueos }, { data: cierresDiarios }, { data: senas }, { data: sucursales }] = await Promise.all([
     supabase.from("cuentas").select("*").eq("activa", true).order("nombre"),
     supabase.from("cierres_mensuales").select("*").order("mes", { ascending: false }),
     supabase.from("cuotas_cobrar_clientes").select("*, cliente:clientes(nombre)").order("vencimiento"),
     supabase.from("cuotas_pagar_agencia").select("*").order("vencimiento"),
     supabase.from("perfiles").select("id, nombre").eq("activo", true).order("nombre"),
     supabase.from("clientes").select("id, nombre").order("nombre").limit(500),
-    supabase.from("vehiculos").select("id, marca, modelo, patente").in("estado", ["disponible", "reservado", "señado"]).order("marca"),
+    // Antes eran 2 queries separadas a "vehiculos" (una angosta con
+    // disponible+reservado+señado para Cuotas, otra full-row solo
+    // disponible para Señas) -- se pide una sola vez con el superset y
+    // cada tab deriva su recorte abajo, sin perder el alcance de ninguna.
+    supabase.from("vehiculos").select("*").in("estado", ["disponible", "reservado", "señado"]).order("marca"),
     supabase.from("ventas").select("id, comprador_nombre, vehiculo_marca, vehiculo_modelo, vehiculo_id, precio_venta, moneda_venta, fecha_cierre, estado, vendedor_id, codigo_seguimiento").order("created_at", { ascending: false }).limit(300),
     supabase.from("cheques").select("*").order("fecha_cobro", { ascending: false }).limit(300),
     supabase.from("pagos_disponibles").select("*").order("fecha", { ascending: false }).limit(300),
@@ -33,16 +37,18 @@ export default async function FinanzasPage() {
     supabase.from("finanzas_arqueos").select("*, cuenta:cuentas(nombre), responsable:perfiles(nombre)").order("fecha", { ascending: false }).limit(200),
     supabase.from("finanzas_cierres_diarios").select("*, detalle:finanzas_cierres_diarios_detalle(*), cerrado_por_perfil:perfiles!finanzas_cierres_diarios_cerrado_por_fkey(nombre)").order("fecha", { ascending: false }).limit(60),
     supabase.from("senas").select("*, perfiles:vendedor_id ( nombre ), sucursales:sucursal_id ( nombre )").order("created_at", { ascending: false }).limit(100),
-    supabase.from("vehiculos").select("*").eq("estado", "disponible").order("marca"),
     supabase.from("sucursales").select("id, nombre").order("nombre"),
   ]);
+
+  const vehiculos = (vehiculosEnJuego || []).map((v: any) => ({ id: v.id, marca: v.marca, modelo: v.modelo, patente: v.patente }));
+  const vehiculosDisponiblesFull = (vehiculosEnJuego || []).filter((v: any) => v.estado === "disponible");
 
   // Para Egresos por Categoría (Patentes/Transferencias/Repuestos) hace
   // falta poder elegir CUALQUIER vehículo, no solo el stock disponible --
   // un auto ya vendido también puede tener un gasto de patente pendiente.
   const { data: vehiculosTodos } = await supabase.from("vehiculos").select("id, marca, modelo, anio, patente").order("marca").limit(1000);
 
-  const { data: senasActivas } = await supabase.from("senas").select("monto, moneda").ilike("estado", "activa");
+  const { data: senasActivas } = await supabase.from("senas").select("monto, moneda").eq("estado", "Activa");
   const senasActivasPorMoneda: Record<string, number> = {};
   (senasActivas || []).forEach((s) => { if (s.monto) senasActivasPorMoneda[s.moneda] = (senasActivasPorMoneda[s.moneda] || 0) + Number(s.monto); });
 

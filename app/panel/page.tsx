@@ -142,7 +142,7 @@ export default async function PanelV2Home() {
     supabase.from("movimientos_caja").select("monto, tipo_movimiento, fecha").eq("tipo", "egreso").is("deleted_at", null).eq("estado", "aprobado").gte("fecha", hace6meses).lt("fecha", inicioMes),
     // Proyección de caja: a cobrar (señas activas) y a pagar (comisiones
     // pendientes + cuotas a pagar de este mes, esta última ya viene arriba).
-    supabase.from("senas").select("id, venta_ars, venta_usd, sena_ars, sena_usd, marca, modelo, apellido, nombre, cliente_nombre").ilike("estado", "activa"),
+    supabase.from("senas").select("id, venta_ars, venta_usd, sena_ars, sena_usd, marca, modelo, apellido, nombre, cliente_nombre").eq("estado", "Activa"),
     supabase.from("comisiones").select("id, monto, monto_pagado, moneda, concepto, beneficiario:perfiles(nombre)").eq("estado", "pendiente"),
     supabase.from("cuotas_pagar_agencia").select("id", { count: "exact", head: true }).eq("pagada", false).lt("vencimiento", hoyIso),
     supabase.rpc("tier_para_vendedor", { p_vendedor_id: user.id, p_desde: inicioMes, p_hasta: finMes }),
