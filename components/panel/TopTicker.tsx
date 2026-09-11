@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { supabase2 } from "@/lib/supabase/client";
-import { Car, FolderKanban, Trophy, Banknote, Landmark } from "lucide-react";
+import { Car, FolderKanban, Trophy, Banknote, Landmark, MessageCircleMore, FileClock, KeyRound } from "lucide-react";
 
 export default function TopTicker() {
   const [stock, setStock] = useState<number | null>(null);
@@ -11,6 +11,9 @@ export default function TopTicker() {
   const [dolar, setDolar] = useState<{ compra: number; venta: number } | null>(null);
   const [cajaUsd, setCajaUsd] = useState<number | null>(null);
   const [cajaArs, setCajaArs] = useState<number | null>(null);
+  const [leadsSinContactar, setLeadsSinContactar] = useState<number | null>(null);
+  const [presupuestosPendientes, setPresupuestosPendientes] = useState<number | null>(null);
+  const [senasActivas, setSenasActivas] = useState<number | null>(null);
 
   useEffect(() => {
     const cargarMetricas = async () => {
@@ -50,6 +53,23 @@ export default function TopTicker() {
         .select("id", { count: "exact", head: true })
         .neq("estado", "cerrado")
         .then(({ count }) => setExpedientes(count || 0));
+
+      Promise.all([
+        supabase2.from("whatsapp_conversaciones").select("id", { count: "exact", head: true }).eq("estado_lead", "nuevo"),
+        supabase2.from("instagram_conversaciones").select("id", { count: "exact", head: true }).eq("estado_lead", "nuevo"),
+      ]).then(([wa, ig]) => setLeadsSinContactar((wa.count || 0) + (ig.count || 0)));
+
+      supabase2
+        .from("presupuestos")
+        .select("id", { count: "exact", head: true })
+        .eq("precio_confirmado", false)
+        .then(({ count }) => setPresupuestosPendientes(count || 0));
+
+      supabase2
+        .from("senas")
+        .select("id", { count: "exact", head: true })
+        .eq("estado", "Activa")
+        .then(({ count }) => setSenasActivas(count || 0));
     };
 
     cargarMetricas();
@@ -105,6 +125,33 @@ export default function TopTicker() {
         </div>
         <span className="text-[11px] font-medium text-slate-600 dark:text-slate-300 tracking-wide">
           Dólar Blue: <span className="font-bold text-amber-600 dark:text-amber-400">C ${dolar?.compra || "-"} · V ${dolar?.venta || "-"}</span>
+        </span>
+      </div>
+
+      <div className="flex items-center gap-2 px-4 border-r border-indigo-100/50 dark:border-white/5 shrink-0">
+        <div className="bg-sky-100 dark:bg-sky-500/20 p-1 rounded-md">
+          <MessageCircleMore className="w-3 h-3 text-sky-600 dark:text-sky-400" />
+        </div>
+        <span className="text-[11px] font-medium text-slate-600 dark:text-slate-300 tracking-wide">
+          <span className="font-black text-sky-600 dark:text-sky-400">{leadsSinContactar !== null ? leadsSinContactar : "-"}</span> leads sin contactar
+        </span>
+      </div>
+
+      <div className="flex items-center gap-2 px-4 border-r border-indigo-100/50 dark:border-white/5 shrink-0">
+        <div className="bg-teal-100 dark:bg-teal-500/20 p-1 rounded-md">
+          <FileClock className="w-3 h-3 text-teal-600 dark:text-teal-400" />
+        </div>
+        <span className="text-[11px] font-medium text-slate-600 dark:text-slate-300 tracking-wide">
+          <span className="font-black text-teal-600 dark:text-teal-400">{presupuestosPendientes !== null ? presupuestosPendientes : "-"}</span> presupuestos pendientes
+        </span>
+      </div>
+
+      <div className="flex items-center gap-2 px-4 border-r border-indigo-100/50 dark:border-white/5 shrink-0">
+        <div className="bg-fuchsia-100 dark:bg-fuchsia-500/20 p-1 rounded-md">
+          <KeyRound className="w-3 h-3 text-fuchsia-600 dark:text-fuchsia-400" />
+        </div>
+        <span className="text-[11px] font-medium text-slate-600 dark:text-slate-300 tracking-wide">
+          <span className="font-black text-fuchsia-600 dark:text-fuchsia-400">{senasActivas !== null ? senasActivas : "-"}</span> señas activas
         </span>
       </div>
     </>
