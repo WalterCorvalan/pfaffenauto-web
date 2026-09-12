@@ -1,5 +1,14 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
-import { registrarError } from "@/lib/panel/logger";
+
+// Ojo: este archivo lo importan tanto Server Components como componentes
+// "use client" (ImprimirSena, NuevaSenaModal, etc.) -- NUNCA importar acá
+// lib/panel/logger.ts (usa SUPABASE2_SERVICE_ROLE_KEY, la key de servicio)
+// porque Next.js lo mete igual en el bundle del cliente y el navegador
+// revienta con "supabaseKey is required." apenas se carga el módulo, antes
+// de que se ejecute ninguna función. Loguear con console.error alcanza acá.
+function registrarError(origen: string, error: unknown, contexto?: Record<string, unknown>) {
+  console.error(`[${origen}]`, error, contexto);
+}
 
 // Equivalentes de lib/notificaciones.ts (v1) pero sobre "alertas" (nova) en
 // vez de "notificaciones" (v1), y roles como array (perfiles.roles) en vez
