@@ -506,7 +506,7 @@ export default function ChatClient({
                             {out && m.ai_generado && <Bot className="w-3 h-3" />}
                             <span className="text-[10px] font-medium">{formatDate(m.created_at)}</span>
                             {out && (m.status === "failed" ? (
-                              <button type="button" onClick={() => setMostrarSelectorAprobadas(true)} title="Falló el envío — probablemente ventana de 24hs vencida. Click para reintentar con plantilla." className="hover:opacity-70">
+                              <button type="button" onClick={() => setMostrarSelectorAprobadas(true)} title={m.error_detalle ? `Falló: ${m.error_detalle}. Click para reintentar con plantilla.` : "Falló el envío — probablemente ventana de 24hs vencida. Click para reintentar con plantilla."} className="hover:opacity-70">
                                 <X className="w-3.5 h-3.5 text-rose-500" />
                               </button>
                             ) : <Check className={`w-3.5 h-3.5 ${esIG ? "" : "text-blue-500 dark:text-sky-300"}`} />)}

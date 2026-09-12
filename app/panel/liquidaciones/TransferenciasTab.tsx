@@ -45,7 +45,8 @@ export default function TransferenciasTab({
 
   const eliminar = async (row: any) => {
     if (!confirm(`¿Eliminar la transferencia de ${row.dominio}?`)) return;
-    await supabase2.from("liquidaciones_gestoria").delete().eq("id", row.id);
+    const { error } = await supabase2.from("liquidaciones_gestoria").delete().eq("id", row.id);
+    if (error) { alert(`No se pudo eliminar: ${error.message}`); return; }
     setLiquidaciones((prev: any[]) => prev.filter((x) => x.id !== row.id));
   };
 

@@ -129,10 +129,10 @@ export function menuBienvenidaV2(nombreBot?: string): string {
 4. Permutar tu auto`;
 }
 
-export function buildSystemPromptV2(vehiculoInfo?: string, resultadosStock?: ResultadoStockV2[], nombreBot?: string, resultadosSonAlternativa?: boolean, sucursales?: SucursalInfo[], sugerirCierre?: boolean, categoriaSolicitada?: string | null, totalRealStock?: number): string {
+export function buildSystemPromptV2(vehiculoInfo?: string, resultadosStock?: ResultadoStockV2[], nombreBot?: string, resultadosSonAlternativa?: boolean, sucursales?: SucursalInfo[], sugerirCierre?: boolean, categoriaSolicitada?: string | null, totalRealStock?: number, tono?: string | null): string {
   return `${nombreBot ? `Te llamás ${nombreBot}, el` : "Sos el"} asistente virtual oficial de Pfaffen Autos, concesionaria de vehículos 0km y usados.
 
-Tu función: atender consultas de clientes, detectar qué quiere el cliente, buscar vehículos en el stock real, recopilar datos y calificar la oportunidad. Hablá en español argentino con voseo, tono amable, profesional, claro y breve — una o dos preguntas relacionadas por mensaje, nunca un formulario largo. Usá emojis con naturalidad para darle onda (🚗 💰 📅 👍 ✅), uno o dos por mensaje — ni acartonado sin ninguno, ni saturado de emojis.
+Tu función: atender consultas de clientes, detectar qué quiere el cliente, buscar vehículos en el stock real, recopilar datos y calificar la oportunidad. Hablá en español argentino con voseo, ${tono?.trim() || "tono amable, profesional, claro y breve"} — una o dos preguntas relacionadas por mensaje, nunca un formulario largo. Usá emojis con naturalidad para darle onda (🚗 💰 📅 👍 ✅), uno o dos por mensaje — ni acartonado sin ninguno, ni saturado de emojis.
 
 ESTILO VISUAL (WhatsApp soporta *negrita*, _cursiva_ y saltos de línea — usalos, un mensaje todo en texto plano se lee como un muro):
 - Poné en *negrita* (asteriscos) el dato más importante de cada línea: nombre+año del auto, precio, y palabras clave cuando cierres o confirmes algo importante.

@@ -28,6 +28,18 @@ export default function LiquidacionesClient({
     return <div className="p-6 max-w-2xl mx-auto text-center py-24"><p className="text-sm font-bold">No tenés acceso a Liquidaciones.</p><p className="text-xs text-slate-400 mt-1">Es para Finanzas, Gestoría y Admin.</p></div>;
   }
 
+  // Mismo criterio que el fetch inicial (page.tsx): en_proceso sin límite de
+  // fecha, terminadas acotadas a los últimos 6 meses.
+  const refetchLiquidaciones = async () => {
+    const desde6Meses = new Date();
+    desde6Meses.setMonth(desde6Meses.getMonth() - 6);
+    const { data } = await supabase2.from("liquidaciones_gestoria")
+      .select("*, expediente:expedientes(titulo_transferido_url), vendedor:perfiles!liquidaciones_gestoria_vendedor_interno_id_fkey(nombre)")
+      .or(`estado.eq.en_proceso,created_at.gte.${desde6Meses.toISOString()}`)
+      .order("created_at", { ascending: false });
+    return data;
+  };
+
   const guardarFila = (row: any) => {
     setLiquidaciones((prev: any[]) => {
       const existe = prev.some((x) => x.id === row.id);
@@ -43,12 +55,15 @@ export default function LiquidacionesClient({
     try {
       const sinExpediente = liquidaciones.filter((l) => !l.expediente_id);
       let actualizadas = 0;
+      // Antes se repetía esta misma consulta en cada vuelta del for -- se
+      // trae una sola vez afuera del loop, el resultado no cambia entre
+      // iteraciones (nada de lo que hace este loop toca "expedientes").
+      const { data: expedientesDisponibles } = await supabase2
+        .from("expedientes")
+        .select("id, venta:ventas(propietario_nombre, comprador_nombre, vehiculo_marca, vehiculo_modelo, vehiculo_anio, vendedor_id, vehiculo_patente)")
+        .eq("archivado", false).order("fecha_apertura", { ascending: false }).limit(80);
       for (const l of sinExpediente) {
-        const { data } = await supabase2
-          .from("expedientes")
-          .select("id, venta:ventas(propietario_nombre, comprador_nombre, vehiculo_marca, vehiculo_modelo, vehiculo_anio, vendedor_id, vehiculo_patente)")
-          .eq("archivado", false).order("fecha_apertura", { ascending: false }).limit(80);
-        const match = (data || []).find((e: any) => (e.venta?.vehiculo_patente || "").toLowerCase() === (l.dominio || "").toLowerCase());
+        const match = (expedientesDisponibles || []).find((e: any) => (e.venta?.vehiculo_patente || "").toLowerCase() === (l.dominio || "").toLowerCase());
         if (match) {
           const v: any = match.venta;
           const patch: any = { expediente_id: match.id };
@@ -62,7 +77,7 @@ export default function LiquidacionesClient({
         }
       }
       if (actualizadas > 0) {
-        const { data: fresh } = await supabase2.from("liquidaciones_gestoria").select("*, expediente:expedientes(titulo_transferido_url), vendedor:perfiles!liquidaciones_gestoria_vendedor_interno_id_fkey(nombre)").order("created_at", { ascending: false }).limit(500);
+        const fresh = await refetchLiquidaciones();
         setLiquidaciones(fresh || []);
       }
       alert(`Auto-sync con expedientes: ${actualizadas} actualizadas.`);
@@ -75,7 +90,7 @@ export default function LiquidacionesClient({
     try {
       const { data: n, error } = await supabase2.rpc("limpiar_duplicadas_liquidaciones");
       if (error) throw error;
-      const { data: fresh } = await supabase2.from("liquidaciones_gestoria").select("*, expediente:expedientes(titulo_transferido_url), vendedor:perfiles!liquidaciones_gestoria_vendedor_interno_id_fkey(nombre)").order("created_at", { ascending: false }).limit(500);
+      const fresh = await refetchLiquidaciones();
       setLiquidaciones(fresh || []);
       alert(`${n} duplicadas eliminadas.`);
     } catch (err: any) {

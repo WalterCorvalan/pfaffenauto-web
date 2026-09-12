@@ -74,23 +74,28 @@ export default function TallerConfigModal({
         condiciones_pago: config.condiciones_pago || null,
         updated_at: new Date().toISOString()
       };
-      await supabase2.from("taller_config").upsert(payloadConfig);
+      const errores: string[] = [];
+
+      const { error: errConfig } = await supabase2.from("taller_config").upsert(payloadConfig);
+      if (errConfig) errores.push(`configuración general (${errConfig.message})`);
 
       // 2. Mecánicos
       const validMecanicos = mecanicos.filter(m => m.nombre.trim());
       if (validMecanicos.length > 0) {
-        await supabase2.from("taller_mecanicos").upsert(
+        const { error: errMecanicos } = await supabase2.from("taller_mecanicos").upsert(
           validMecanicos.map(m => ({ id: m._estado === 'nuevo' ? undefined : m.id, nombre: m.nombre, activo: true }))
         );
+        if (errMecanicos) errores.push(`mecánicos (${errMecanicos.message})`);
       }
       if (mecanicosBorrados.length > 0) {
-        await supabase2.from("taller_mecanicos").update({ activo: false }).in("id", mecanicosBorrados);
+        const { error: errBorradoMecanicos } = await supabase2.from("taller_mecanicos").update({ activo: false }).in("id", mecanicosBorrados);
+        if (errBorradoMecanicos) errores.push(`baja de mecánicos (${errBorradoMecanicos.message})`);
       }
 
       // 3. Servicios
       const validServicios = servicios.filter(s => s.nombre.trim());
       if (validServicios.length > 0) {
-        await supabase2.from("taller_servicios").upsert(
+        const { error: errServicios } = await supabase2.from("taller_servicios").upsert(
           validServicios.map(s => ({
             id: s._estado === 'nuevo' ? undefined : s.id,
             nombre: s.nombre,
@@ -99,9 +104,16 @@ export default function TallerConfigModal({
             activo: true
           }))
         );
+        if (errServicios) errores.push(`servicios (${errServicios.message})`);
       }
       if (serviciosBorrados.length > 0) {
-        await supabase2.from("taller_servicios").update({ activo: false }).in("id", serviciosBorrados);
+        const { error: errBorradoServicios } = await supabase2.from("taller_servicios").update({ activo: false }).in("id", serviciosBorrados);
+        if (errBorradoServicios) errores.push(`baja de servicios (${errBorradoServicios.message})`);
+      }
+
+      if (errores.length > 0) {
+        alert(`Algo no se guardó bien:\n${errores.join("\n")}`);
+        return;
       }
 
       router.refresh();

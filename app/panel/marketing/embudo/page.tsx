@@ -8,11 +8,19 @@ export default async function EmbudoPage({ searchParams }: { searchParams: Promi
   const supabase = await createClient();
   const { desde, hasta } = await searchParams;
 
+  // Sin filtro explícito del usuario, acotamos a los últimos 6 meses -- antes
+  // esta página traía el historial completo (todas las clientes/ventas/leads
+  // desde el inicio) apenas se entraba sin filtros, mismo patrón ya corregido
+  // en ventas/expedientes esta sesión.
+  const desde6MesesDefault = new Date();
+  desde6MesesDefault.setMonth(desde6MesesDefault.getMonth() - 6);
+  const desdeEfectivo = desde || desde6MesesDefault.toISOString().split("T")[0];
+
   // 1. Traemos clientes (leads) de v2 para medir el pipeline
   let queryClientes = supabase
     .from("clientes")
-    .select("id, origen, canal_ingreso, pipeline_stage, created_at, vendedor_id");
-  if (desde) queryClientes = queryClientes.gte("created_at", desde);
+    .select("id, origen, canal_ingreso, pipeline_stage, created_at, vendedor_id")
+    .gte("created_at", desdeEfectivo);
   if (hasta) queryClientes = queryClientes.lte("created_at", `${hasta}T23:59:59`);
   const { data: clientes } = await queryClientes;
 
@@ -26,8 +34,8 @@ export default async function EmbudoPage({ searchParams }: { searchParams: Promi
   // orgánico) por getCanalOrigen() en el momento del submit.
   let queryLeadsTasacion = supabase
     .from("leads_tasacion")
-    .select("id, canal_origen, utm_source, utm_medium, utm_campaign, estado, created_at");
-  if (desde) queryLeadsTasacion = queryLeadsTasacion.gte("created_at", desde);
+    .select("id, canal_origen, utm_source, utm_medium, utm_campaign, estado, created_at")
+    .gte("created_at", desdeEfectivo);
   if (hasta) queryLeadsTasacion = queryLeadsTasacion.lte("created_at", `${hasta}T23:59:59`);
   const { data: leadsTasacion } = await queryLeadsTasacion;
 
@@ -58,8 +66,8 @@ export default async function EmbudoPage({ searchParams }: { searchParams: Promi
       id, fecha_cierre, cliente_id, vehiculo_id,
       vehiculos ( publicado_ml )
     `)
-    .eq("estado", "cerrada");
-  if (desde) queryVentas = queryVentas.gte("fecha_cierre", desde);
+    .eq("estado", "cerrada")
+    .gte("fecha_cierre", desdeEfectivo);
   if (hasta) queryVentas = queryVentas.lte("fecha_cierre", hasta);
   const { data: ventas } = await queryVentas;
 

@@ -1,11 +1,13 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
+import { registrarError } from "@/lib/panel/logger";
 
 // Equivalentes de lib/notificaciones.ts (v1) pero sobre "alertas" (nova) en
 // vez de "notificaciones" (v1), y roles como array (perfiles.roles) en vez
 // de columna singular "rol".
 
 export async function notificarPersona(supabase: SupabaseClient, destinatarioId: string, tipo: string, mensaje: string, link: string) {
-  await supabase.from("alertas").insert({ destinatario_id: destinatarioId, tipo, titulo: mensaje, link, prioridad: "media" });
+  const { error } = await supabase.from("alertas").insert({ destinatario_id: destinatarioId, tipo, titulo: mensaje, link, prioridad: "media" });
+  if (error) registrarError("notificaciones:notificarPersona", error, { destinatarioId, tipo });
 }
 
 // sucursalId opcional: si se pasa, prioriza al/los encargado(s) de ESA
@@ -23,9 +25,10 @@ export async function notificarEncargados(supabase: SupabaseClient, mensaje: str
     if (filtrados.some((p) => p.roles.includes("encargado"))) destinatarios = filtrados;
   }
 
-  await supabase.from("alertas").insert(
+  const { error } = await supabase.from("alertas").insert(
     destinatarios.map((e) => ({ destinatario_id: e.id, tipo, titulo: mensaje, link, prioridad }))
   );
+  if (error) registrarError("notificaciones:notificarEncargados", error, { tipo, sucursalId });
 }
 
 // Lead nuevo sin vendedor asignado todavía (el "hola" inicial): antes solo
@@ -44,28 +47,32 @@ export async function notificarVendedoresDisponibles(supabase: SupabaseClient, m
   const destinatarios = candidatos.filter((p) => !noDisponibles.has(p.id));
   if (destinatarios.length === 0) return;
 
-  await supabase.from("alertas").insert(
+  const { error } = await supabase.from("alertas").insert(
     destinatarios.map((d) => ({ destinatario_id: d.id, tipo, titulo: mensaje, link, prioridad: "media" }))
   );
+  if (error) registrarError("notificaciones:notificarVendedoresDisponibles", error, { tipo });
 }
 
 export async function notificarGestoria(supabase: SupabaseClient, mensaje: string, link: string, tipo: string = "movimiento_pendiente") {
   const { data: destinatarios } = await supabase.from("perfiles").select("id").or("roles.cs.{admin},roles.cs.{encargado},roles.cs.{gestoria}").eq("activo", true);
   if (!destinatarios || destinatarios.length === 0) return;
-  await supabase.from("alertas").insert(
+  const { error } = await supabase.from("alertas").insert(
     destinatarios.map((d) => ({ destinatario_id: d.id, tipo, titulo: mensaje, link, prioridad: "media" }))
   );
+  if (error) registrarError("notificaciones:notificarGestoria", error, { tipo });
 }
 
 export async function notificarFinanzas(supabase: SupabaseClient, mensaje: string, link: string, tipo: string = "sobrante_registro") {
   const { data: destinatarios } = await supabase.from("perfiles").select("id").or("roles.cs.{admin},roles.cs.{finanzas}").eq("activo", true);
   if (!destinatarios || destinatarios.length === 0) return;
-  await supabase.from("alertas").insert(
+  const { error } = await supabase.from("alertas").insert(
     destinatarios.map((d) => ({ destinatario_id: d.id, tipo, titulo: mensaje, link, prioridad: "media" }))
   );
+  if (error) registrarError("notificaciones:notificarFinanzas", error, { tipo });
 }
 
 export async function notificarRespuestaPrecio(supabase: SupabaseClient, vendedorId: string | null, mensaje: string, link: string) {
   if (!vendedorId) return;
-  await supabase.from("alertas").insert({ destinatario_id: vendedorId, tipo: "precio_confirmado_respuesta", titulo: mensaje, link, prioridad: "media" });
+  const { error } = await supabase.from("alertas").insert({ destinatario_id: vendedorId, tipo: "precio_confirmado_respuesta", titulo: mensaje, link, prioridad: "media" });
+  if (error) registrarError("notificaciones:notificarRespuestaPrecio", error, { vendedorId });
 }
