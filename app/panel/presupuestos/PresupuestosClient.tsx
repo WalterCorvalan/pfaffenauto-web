@@ -1,12 +1,32 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
-import { FileText, Plus, Printer, CarFront, AlertTriangle } from "lucide-react";
+import { FileText, Plus, Printer, CarFront, AlertTriangle, Search, X } from "lucide-react";
 import CompartirPresupuestoBoton from "./CompartirPresupuestoBoton";
 import NuevoPresupuestoModal from "./NuevoPresupuestoModal";
 import PresupuestoDetalleModal from "./PresupuestoDetalleModal";
+
+type Periodo = "todos" | "hoy" | "7dias" | "este_mes" | "mes_pasado";
+
+function rangoDe(periodo: Periodo): { desde: Date | null; hasta: Date | null } {
+  const hoy = new Date();
+  const inicioDia = (d: Date) => new Date(d.getFullYear(), d.getMonth(), d.getDate());
+  const finDia = (d: Date) => new Date(d.getFullYear(), d.getMonth(), d.getDate(), 23, 59, 59, 999);
+  switch (periodo) {
+    case "hoy":
+      return { desde: inicioDia(hoy), hasta: finDia(hoy) };
+    case "7dias":
+      return { desde: inicioDia(new Date(hoy.getTime() - 6 * 86400000)), hasta: finDia(hoy) };
+    case "este_mes":
+      return { desde: new Date(hoy.getFullYear(), hoy.getMonth(), 1), hasta: finDia(hoy) };
+    case "mes_pasado":
+      return { desde: new Date(hoy.getFullYear(), hoy.getMonth() - 1, 1), hasta: finDia(new Date(hoy.getFullYear(), hoy.getMonth(), 0)) };
+    default:
+      return { desde: null, hasta: null };
+  }
+}
 
 export default function PresupuestosClient({
   presupuestosIniciales, clientes, vehiculos, vendedores, sucursales,
@@ -17,12 +37,53 @@ export default function PresupuestosClient({
   const [modalAbierto, setModalAbierto] = useState(false);
   const [seleccionado, setSeleccionado] = useState<any>(null);
 
+  const [query, setQuery] = useState("");
+  const [vendedorFiltro, setVendedorFiltro] = useState("todos");
+  const [periodo, setPeriodo] = useState<Periodo>("todos");
+  const [desdeCustom, setDesdeCustom] = useState("");
+  const [hastaCustom, setHastaCustom] = useState("");
+
   useEffect(() => {
     if (searchParams.get("nuevo") === "1") {
       setModalAbierto(true);
       router.replace("/panel/presupuestos");
     }
   }, [searchParams, router]);
+
+  const presupuestosFiltrados = useMemo(() => {
+    let lista = presupuestos;
+
+    if (vendedorFiltro !== "todos") lista = lista.filter((p) => p.vendedor_id === vendedorFiltro);
+
+    // El período rápido y el rango manual son excluyentes -- si el usuario
+    // toca "Desde"/"Hasta" a mano, eso pisa el botón de período rápido.
+    if (desdeCustom || hastaCustom) {
+      if (desdeCustom) lista = lista.filter((p) => p.fecha && p.fecha >= desdeCustom);
+      if (hastaCustom) lista = lista.filter((p) => p.fecha && p.fecha <= hastaCustom);
+    } else if (periodo !== "todos") {
+      const { desde, hasta } = rangoDe(periodo);
+      lista = lista.filter((p) => {
+        if (!p.fecha) return false;
+        const f = new Date(`${p.fecha}T12:00:00Z`);
+        return (!desde || f >= desde) && (!hasta || f <= hasta);
+      });
+    }
+
+    if (query.trim()) {
+      const q = query.trim().toLowerCase();
+      lista = lista.filter((p) =>
+        (p.cliente_nombre || "").toLowerCase().includes(q) ||
+        (p.marca || "").toLowerCase().includes(q) ||
+        (p.modelo || "").toLowerCase().includes(q) ||
+        (p.dominio || "").toLowerCase().includes(q)
+      );
+    }
+
+    return lista;
+  }, [presupuestos, query, vendedorFiltro, periodo, desdeCustom, hastaCustom]);
+
+  const hayFiltrosActivos = query.trim() !== "" || vendedorFiltro !== "todos" || periodo !== "todos" || desdeCustom !== "" || hastaCustom !== "";
+  const limpiarFiltros = () => { setQuery(""); setVendedorFiltro("todos"); setPeriodo("todos"); setDesdeCustom(""); setHastaCustom(""); };
 
   return (
     <div className="flex flex-col h-full w-full overflow-hidden">
@@ -39,6 +100,50 @@ export default function PresupuestosClient({
 
       <div className="flex-1 overflow-y-auto custom-scrollbar p-4 md:p-6">
         <div className="max-w-6xl mx-auto">
+
+          {/* ===================== FILTROS ===================== */}
+          <div className="bg-white dark:bg-white/[0.02] border border-slate-200 dark:border-white/5 rounded-2xl p-4 mb-4 space-y-3">
+            <div className="flex flex-col md:flex-row gap-3">
+              <div className="relative flex-1">
+                <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-slate-400" />
+                <input
+                  value={query}
+                  onChange={(e) => setQuery(e.target.value)}
+                  placeholder="Buscar por cliente, marca, modelo o dominio..."
+                  className="w-full bg-slate-50 dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-lg py-2 pl-9 pr-3 text-xs outline-none focus:border-rose-500 text-slate-900 dark:text-white placeholder:text-slate-400"
+                />
+              </div>
+              <select value={vendedorFiltro} onChange={(e) => setVendedorFiltro(e.target.value)} className="bg-slate-50 dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-lg px-3 py-2 text-xs font-semibold text-slate-600 dark:text-slate-300 outline-none">
+                <option value="todos">Todos los vendedores</option>
+                {vendedores.map((v: any) => <option key={v.id} value={v.id}>{v.nombre}</option>)}
+              </select>
+            </div>
+
+            <div className="flex flex-wrap items-center gap-2">
+              {([["todos", "Todos"], ["hoy", "Hoy"], ["7dias", "Últimos 7 días"], ["este_mes", "Este mes"], ["mes_pasado", "Mes pasado"]] as [Periodo, string][]).map(([key, label]) => (
+                <button
+                  key={key}
+                  onClick={() => { setPeriodo(key); setDesdeCustom(""); setHastaCustom(""); }}
+                  className={`px-2.5 py-1.5 rounded-lg text-[11px] font-bold transition-colors ${periodo === key && !desdeCustom && !hastaCustom ? "bg-rose-600 text-white" : "bg-slate-50 dark:bg-white/5 text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-white/10"}`}
+                >
+                  {label}
+                </button>
+              ))}
+              <div className="flex items-center gap-1.5 ml-1">
+                <span className="text-[11px] font-bold text-slate-400">Desde</span>
+                <input type="date" value={desdeCustom} onChange={(e) => setDesdeCustom(e.target.value)} className="bg-slate-50 dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-lg px-2 py-1.5 text-[11px] text-slate-600 dark:text-slate-300 outline-none" />
+                <span className="text-[11px] font-bold text-slate-400">Hasta</span>
+                <input type="date" value={hastaCustom} onChange={(e) => setHastaCustom(e.target.value)} className="bg-slate-50 dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-lg px-2 py-1.5 text-[11px] text-slate-600 dark:text-slate-300 outline-none" />
+              </div>
+              {hayFiltrosActivos && (
+                <button onClick={limpiarFiltros} className="flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-[11px] font-bold text-rose-600 dark:text-rose-400 hover:bg-rose-50 dark:hover:bg-rose-500/10">
+                  <X className="w-3 h-3" /> Limpiar
+                </button>
+              )}
+              <span className="text-[11px] text-slate-400 ml-auto">{presupuestosFiltrados.length} de {presupuestos.length}</span>
+            </div>
+          </div>
+
           <div className="hidden md:block bg-white dark:bg-white/[0.02] border border-slate-200 dark:border-white/5 rounded-2xl overflow-hidden">
             <div className="overflow-x-auto">
               <table className="w-full text-left border-collapse">
@@ -55,7 +160,7 @@ export default function PresupuestosClient({
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-slate-100 dark:divide-white/5">
-                  {presupuestos.map((p: any) => (
+                  {presupuestosFiltrados.map((p: any) => (
                     <tr key={p.id} onClick={() => setSeleccionado(p)} className={`hover:bg-slate-50/50 dark:hover:bg-white/5 transition-colors border-l-4 cursor-pointer ${p.precio_confirmado === false ? "border-l-amber-400" : "border-l-rose-300"}`}>
                       <td className="px-4 py-3 font-mono text-[13px] font-bold text-rose-600 dark:text-rose-400">{p.numero || "—"}</td>
                       <td className="px-4 py-3 text-[13px] text-slate-600 dark:text-slate-300 whitespace-nowrap">{p.fecha ? new Date(`${p.fecha}T12:00:00Z`).toLocaleDateString("es-AR", { timeZone: "UTC" }) : "—"}</td>
@@ -70,8 +175,8 @@ export default function PresupuestosClient({
                       <td className="px-4 py-3 text-center" onClick={(e) => e.stopPropagation()}><Link href={`/panel/presupuestos/imprimir/${p.id}`} className="inline-flex p-2 bg-slate-50 dark:bg-white/5 hover:bg-rose-50 dark:hover:bg-rose-500/10 border border-slate-200 dark:border-white/10 hover:border-rose-200 dark:hover:border-rose-500/30 rounded-lg text-slate-400 hover:text-rose-600 dark:hover:text-rose-400 transition-all"><Printer className="w-4 h-4" /></Link></td>
                     </tr>
                   ))}
-                  {presupuestos.length === 0 && (
-                    <tr><td colSpan={8} className="px-4 py-16 text-center text-slate-400 dark:text-slate-500 text-sm italic">Sin presupuestos cargados todavía.</td></tr>
+                  {presupuestosFiltrados.length === 0 && (
+                    <tr><td colSpan={8} className="px-4 py-16 text-center text-slate-400 dark:text-slate-500 text-sm italic">{presupuestos.length === 0 ? "Sin presupuestos cargados todavía." : "Ningún presupuesto coincide con estos filtros."}</td></tr>
                   )}
                 </tbody>
               </table>
@@ -79,8 +184,8 @@ export default function PresupuestosClient({
           </div>
 
           <div className="md:hidden space-y-3">
-            {presupuestos.length === 0 && <div className="bg-white dark:bg-white/[0.02] border border-slate-200 dark:border-white/5 rounded-2xl p-8 text-center text-slate-400 text-sm italic">Sin presupuestos cargados todavía.</div>}
-            {presupuestos.map((p: any) => (
+            {presupuestosFiltrados.length === 0 && <div className="bg-white dark:bg-white/[0.02] border border-slate-200 dark:border-white/5 rounded-2xl p-8 text-center text-slate-400 text-sm italic">{presupuestos.length === 0 ? "Sin presupuestos cargados todavía." : "Ningún presupuesto coincide con estos filtros."}</div>}
+            {presupuestosFiltrados.map((p: any) => (
               <div key={p.id} onClick={() => setSeleccionado(p)} className={`bg-white dark:bg-white/[0.02] border border-slate-200 dark:border-white/5 rounded-2xl p-4 space-y-2 border-l-4 cursor-pointer active:bg-slate-50 dark:active:bg-white/[0.04] ${p.precio_confirmado === false ? "border-l-amber-400" : "border-l-rose-300"}`}>
                 <div className="flex items-center justify-between">
                   <span className="font-mono text-[13px] font-bold text-rose-600 dark:text-rose-400">N° {p.numero || "—"}</span>
