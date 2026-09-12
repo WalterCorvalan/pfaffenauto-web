@@ -7,6 +7,7 @@ import {
   Search, Users, UserPlus, Phone, Mail, List, Columns3, TrendingUp,
   PieChart, Trophy, CheckCircle2, Circle, MessageCircle, Download, Upload,
   Sun, Palmtree, Plane, Thermometer, X, ShoppingBag, Pencil, Trash2,
+  ChevronLeft, ChevronRight,
 } from "lucide-react";
 import NuevoClienteModal from "./NuevoClienteModal";
 import DisponibilidadModal from "./DisponibilidadModal";
@@ -226,6 +227,18 @@ export default function ClientesClient({
     return lista;
   }, [clientes, tabLista, origenFiltro, sexoFiltro, query, miId]);
 
+  // Paginado simple en memoria -- con miles de clientes importados del
+  // sistema anterior, renderizar la lista completa de una sola vez hacía
+  // la página pesadísima (mismo criterio que Stock).
+  const POR_PAGINA_CLIENTES = 25;
+  const [paginaClientes, setPaginaClientes] = useState(1);
+  useEffect(() => { setPaginaClientes(1); }, [tabLista, origenFiltro, sexoFiltro, query]);
+  const totalPaginasClientes = Math.max(1, Math.ceil(clientesFiltrados.length / POR_PAGINA_CLIENTES));
+  const clientesPaginados = useMemo(
+    () => clientesFiltrados.slice((paginaClientes - 1) * POR_PAGINA_CLIENTES, paginaClientes * POR_PAGINA_CLIENTES),
+    [clientesFiltrados, paginaClientes]
+  );
+
   // ---------- PIPELINE ----------
   // El pipeline es de LEADS -- un cliente que ya compró (estado_relacion
   // pasado a 'cliente' por el trigger de la venta real) se gradúa y sale
@@ -402,7 +415,7 @@ export default function ClientesClient({
                 </div>
               ) : (
                 <TablaResponsiva<Cliente>
-                  filas={clientesFiltrados}
+                  filas={clientesPaginados}
                   keyExtractor={(c) => c.id}
                   encabezadoMobile={(c) => {
                     const contactado = c.pipeline_stage !== "sin_contactar";
@@ -458,6 +471,20 @@ export default function ClientesClient({
                     );
                   }}
                 />
+              )}
+
+              {totalPaginasClientes > 1 && (
+                <div className="grid grid-cols-3 items-center mt-3 px-1">
+                  <p className="text-xs text-slate-400">Página {paginaClientes} de {totalPaginasClientes} — {clientesFiltrados.length} en total</p>
+                  <div className="flex items-center justify-center gap-2 col-start-2">
+                    <button onClick={() => setPaginaClientes((p) => Math.max(1, p - 1))} disabled={paginaClientes === 1} className="p-2 bg-white dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-lg text-slate-500 disabled:opacity-40 disabled:cursor-not-allowed hover:bg-slate-50 dark:hover:bg-white/10">
+                      <ChevronLeft className="w-4 h-4" />
+                    </button>
+                    <button onClick={() => setPaginaClientes((p) => Math.min(totalPaginasClientes, p + 1))} disabled={paginaClientes === totalPaginasClientes} className="p-2 bg-white dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-lg text-slate-500 disabled:opacity-40 disabled:cursor-not-allowed hover:bg-slate-50 dark:hover:bg-white/10">
+                      <ChevronRight className="w-4 h-4" />
+                    </button>
+                  </div>
+                </div>
               )}
             </>
           )}

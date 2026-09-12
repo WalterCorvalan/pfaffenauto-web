@@ -397,9 +397,9 @@ export default function StockClient({
                     )}
                   />
                   {totalPaginas > 1 && (
-                    <div className="flex items-center justify-between mt-3 px-1">
+                    <div className="grid grid-cols-3 items-center mt-3 px-1">
                       <p className="text-xs text-slate-400">Página {pagina} de {totalPaginas} — {filtrados.length} en total</p>
-                      <div className="flex items-center gap-2">
+                      <div className="flex items-center justify-center gap-2 col-start-2">
                         <button onClick={() => setPagina((p) => Math.max(1, p - 1))} disabled={pagina === 1} className="p-2 bg-white dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-lg text-slate-500 disabled:opacity-40 disabled:cursor-not-allowed hover:bg-slate-50 dark:hover:bg-white/10">
                           <ChevronLeft className="w-4 h-4" />
                         </button>

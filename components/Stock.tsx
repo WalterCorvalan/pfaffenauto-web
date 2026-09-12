@@ -130,17 +130,14 @@ export default function Stock({ vehiculos }: StockProps) {
     ...urbanosYSedanes.map((a) => a.id),
   ]);
 
-  // Si después de filtrar por categoría sigue habiendo autos sin mostrar,
-  // los mandamos a "otrosVehiculos" para que NUNCA aparezca vacío el stock.
-  let otrosVehiculos = listaVehiculos.filter(
-    (auto) => !idsMostrados.has(auto.id),
-  );
-
-  if (otrosVehiculos.length === 0 && listaVehiculos.length > 0) {
-    otrosVehiculos = listaVehiculos.slice(0, 6);
-  } else {
-    otrosVehiculos = otrosVehiculos.slice(0, 6);
-  }
+  // Esta sección se titula "0KM" -- antes mostraba cualquier auto que
+  // hubiera quedado sin clasificar en las categorías de arriba (incluso
+  // usados con 100.000km), que es justo lo que el título prometía que NO
+  // iba a pasar. Ahora filtra por la condición real ("0km" en vehiculos,
+  // el mismo campo que ya usa el tab "0km" del panel de Stock).
+  const otrosVehiculos = listaVehiculos
+    .filter((auto) => auto.condicion === "0km")
+    .slice(0, 6);
 
   if (listaVehiculos.length === 0) {
     return (

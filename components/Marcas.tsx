@@ -5,6 +5,7 @@ import Link from "next/link";
 import Image from "next/image";
 import { ChevronRight, ChevronLeft, ShieldCheck, Sparkles } from "lucide-react";
 import { LOGOS_MARCAS } from "@/lib/marcasLogos";
+import { normalizarMarca } from "@/lib/vehiculos";
 
 // ================= SUBCOMPONENTE DE TARJETA ESTÁNDAR =================
 function MarcaCard({ marca }: { marca: { nombre: string; slug: string; logo: string } }) {
@@ -92,8 +93,9 @@ function MarcaDestacadaCard({ marca }: { marca: { nombre: string; slug: string; 
 const MARCAS_POR_PAGINA = 24;
 
 // ================= COMPONENTE PRINCIPAL =================
-export default function Marcas() {
+export default function Marcas({ marcasEnStock }: { marcasEnStock: string[] }) {
   const [pagina, setPagina] = useState(0);
+  const stockSet = new Set(marcasEnStock);
   // Marcas Oficiales Destacadas (Primeras en la fila)
   const marcasDestacadas = [
     { nombre: "Rely", slug: "rely", logo: "/RelyLogo.png" },
@@ -172,8 +174,16 @@ export default function Marcas() {
     { nombre: "Volvo", slug: "volvo", logo: LOGOS_MARCAS["Volvo"] },
   ];
 
-  const totalPaginas = Math.ceil(marcas.length / MARCAS_POR_PAGINA);
-  const marcasPagina = marcas.slice(pagina * MARCAS_POR_PAGINA, pagina * MARCAS_POR_PAGINA + MARCAS_POR_PAGINA);
+  // Solo se muestran marcas con al menos un vehículo en stock (nunca se
+  // "sacan" del listado — el día que entra una unidad, vuelven a aparecer
+  // solas). "KGM / SsangYong" y "Lynk & Co" son nombres compuestos: alcanza
+  // con que matchee cualquiera de sus partes.
+  const marcasConStock = marcas.filter((marca) =>
+    marca.nombre.split(/[/&]/).some((parte) => stockSet.has(normalizarMarca(parte)))
+  );
+
+  const totalPaginas = Math.ceil(marcasConStock.length / MARCAS_POR_PAGINA);
+  const marcasPagina = marcasConStock.slice(pagina * MARCAS_POR_PAGINA, pagina * MARCAS_POR_PAGINA + MARCAS_POR_PAGINA);
 
   return (
     <section className="w-full bg-[#f8f9fa] dark:bg-[#0a0a0f] pt-10 pb-10 md:pt-16 md:pb-20">

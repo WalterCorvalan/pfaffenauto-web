@@ -1,9 +1,22 @@
+const REGEX_DIACRITICOS = new RegExp("[̀-ͯ]", "g");
+
+// Compara nombres de marca contra el valor real de vehiculos.marca sin
+// depender de que coincidan letra a letra (tildes, mayúsculas, "Citroën" vs
+// "Citroen", etc.) — deja solo letras/números en minúscula sin acentos.
+export function normalizarMarca(texto: string): string {
+  return texto
+    .toLowerCase()
+    .normalize("NFD")
+    .replace(REGEX_DIACRITICOS, "")
+    .replace(/[^a-z0-9]/g, "");
+}
+
 // Columnas públicas de "vehiculos" para queries del lado público. Nunca incluir
 // precio_costo_ars/usd, observaciones_internas ni vendedor_asignado_id — son
 // internos y no deben viajar al cliente (select("*") los expone sin querer).
 export const CAMPOS_VEHICULO_PUBLICO =
-  "id, marca, modelo, anio, km, tipo, segmento, estado, slug, precio_publicado_ars, precio_publicado_usd, traccion, potencia_cv, cantidad_plazas, transmision, combustible, destacado, fotos, sucursales!vehiculos_sucursal_id_fkey ( nombre )" as const;
+  "id, marca, modelo, anio, km, condicion, tipo, segmento, estado, slug, precio_publicado_ars, precio_publicado_usd, traccion, potencia_cv, cantidad_plazas, transmision, combustible, destacado, fotos, sucursales!vehiculos_sucursal_id_fkey ( nombre )" as const;
 
 // Ficha de auto (/catalogo/[slug]): igual que arriba + datos de contacto de la sucursal.
 export const CAMPOS_VEHICULO_DETALLE =
-  "id, marca, modelo, anio, km, tipo, segmento, estado, slug, precio_publicado_ars, precio_publicado_usd, traccion, potencia_cv, cantidad_plazas, transmision, combustible, destacado, fotos, sucursales!vehiculos_sucursal_id_fkey ( nombre, direccion, telefono:telefono_encargado )" as const;
+  "id, marca, modelo, anio, km, condicion, tipo, segmento, estado, slug, precio_publicado_ars, precio_publicado_usd, traccion, potencia_cv, cantidad_plazas, transmision, combustible, destacado, fotos, sucursales!vehiculos_sucursal_id_fkey ( nombre, direccion, telefono:telefono_encargado )" as const;

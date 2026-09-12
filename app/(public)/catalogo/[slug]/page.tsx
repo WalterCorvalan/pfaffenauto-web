@@ -21,6 +21,7 @@ import AgendarVisitaForm from "@/components/forms/AgendarVisitaForm";
 import GaleriaVehiculo from "@/components/GaleriaVehiculo";
 import SimuladorFinanciacion from "@/components/SimuladorFinanciacion";
 import { CAMPOS_VEHICULO_DETALLE } from "@/lib/vehiculos";
+import { obtenerDolarBlue } from "@/lib/dolarBlue";
 
 export const revalidate = 60;
 
@@ -52,7 +53,10 @@ export async function generateMetadata({
   const auto = await buscarAuto(slug);
   if (!auto) return { title: "Vehículo no encontrado | Pfaffen Autos" };
 
-  const esCeroKm = auto.km === 0;
+  // Ojo: NO usar "auto.km === 0" -- muchos usados todavía no tienen el km
+  // cargado y quedan en 0/null por defecto, no por ser 0km reales.
+  // "condicion" es el único campo confiable para esto.
+  const esCeroKm = auto.condicion === "0km";
   const titulo = `${auto.marca} ${auto.modelo} ${auto.anio} ${esCeroKm ? "0KM" : "Usado"} | Pfaffen Autos`;
   const precioTexto = auto.precio_publicado_usd && !auto.precio_publicado_ars
     ? `US$ ${auto.precio_publicado_usd.toLocaleString("en-US")}`
@@ -105,9 +109,25 @@ export default async function VehiculoDetallePage({
   );
   const linkWhatsApp = `https://wa.me/${numeroLimpio}?text=${mensajeWhatsApp}`;
 
-  const esCeroKm = auto.km === 0;
-  const precioArs = auto.precio_publicado_ars || 0;
+  // Ojo: NO usar "auto.km === 0" -- muchos usados todavía no tienen el km
+  // cargado y quedan en 0/null por defecto, no por ser 0km reales.
+  // "condicion" es el único campo confiable para esto.
+  const esCeroKm = auto.condicion === "0km";
   const precioUsd = auto.precio_publicado_usd || null;
+  // Si el auto solo tiene precio cargado en USD (sin ARS), "precioArs || 0"
+  // dejaba el simulador de crédito en $0 -- convertimos con el dólar blue
+  // real, mismo criterio que /financiacion (SimuladorReal.tsx).
+  let precioArs = auto.precio_publicado_ars || 0;
+  if (!auto.precio_publicado_ars && precioUsd) {
+    try {
+      const { venta } = await obtenerDolarBlue();
+      precioArs = Math.round(precioUsd * venta);
+    } catch {
+      // Sin cotización disponible: se muestra "Precio similar" y comparador
+      // con 0, pero el simulador de crédito queda con el mensaje de "cargá
+      // el precio" en vez de romper la página entera.
+    }
+  }
 
   // ================= 3. QUERIES SECUNDARIAS PARALELIZADAS (PROMISE.ALL) =================
   const CAMPOS_CARD = `id, marca, modelo, segmento, anio, km, transmision, precio_publicado_ars, precio_publicado_usd, slug, sucursales!vehiculos_sucursal_id_fkey ( nombre ), fotos`;

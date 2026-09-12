@@ -24,7 +24,7 @@ import BannersPublicitarios from "@/components/banners/BannerPublicitario";
 
 export const revalidate = 60;
 
-import { CAMPOS_VEHICULO_PUBLICO } from "@/lib/vehiculos";
+import { CAMPOS_VEHICULO_PUBLICO, normalizarMarca } from "@/lib/vehiculos";
 import BannerRRHH from "@/components/banners/BannerRRHH";
 
 export default async function Page() {
@@ -34,6 +34,8 @@ export default async function Page() {
     .select(CAMPOS_VEHICULO_PUBLICO)
     .in("estado", ["disponible", "reservado"])
     .order("created_at", { ascending: false });
+
+  const marcasEnStock = [...new Set((vehiculos || []).map((v: any) => normalizarMarca(v.marca || "")))];
 
   return (
     // Usamos el fondo claro premium que definimos para el resto de la web
@@ -52,7 +54,7 @@ export default async function Page() {
       <BannersPublicitarios />
 
       {/* 4. Marcas con las que trabajan */}
-      <Marcas />
+      <Marcas marcasEnStock={marcasEnStock} />
 
       {/* 5. Propuesta de Valor / Servicios */}
       <Servicios />
