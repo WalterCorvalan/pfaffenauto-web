@@ -64,7 +64,7 @@ function MemoriaBot() {
     <div className="bg-white dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-2xl p-5 space-y-4 mt-5">
       <div>
         <p className="text-[11px] font-black uppercase tracking-widest text-slate-400 flex items-center gap-1.5"><Brain className="w-3.5 h-3.5" /> Memoria del bot</p>
-        <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">Preguntas frecuentes que el bot contesta con una respuesta fija, sin gastar un llamado a la IA. Si el mensaje del cliente no matchea ninguna palabra clave de acá, recién ahí pasa a la IA. "Fuera de horario" no usa palabras clave — se manda solo cuando llega un mensaje fuera de las 8 a 22hs (una vez por día por conversación).</p>
+        <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">Preguntas frecuentes que el bot contesta con una respuesta fija, sin gastar un llamado a la IA. Si el mensaje del cliente no matchea ninguna palabra clave de acá, recién ahí pasa a la IA. "Fuera de horario" no usa palabras clave — se manda solo cuando llega un mensaje fuera del horario de atención configurado arriba (una vez por día por conversación).</p>
       </div>
 
       {cargando ? (
@@ -124,6 +124,9 @@ export default function ConfiguracionWhatsappClient() {
   const [wabaId, setWabaId] = useState("");
   const [accessToken, setAccessToken] = useState("");
   const [botNombre, setBotNombre] = useState("");
+  const [tono, setTono] = useState("");
+  const [horarioInicio, setHorarioInicio] = useState(8);
+  const [horarioFin, setHorarioFin] = useState(22);
   const [copiado, setCopiado] = useState<"webhook" | "verify" | null>(null);
   const [mensaje, setMensaje] = useState("");
 
@@ -136,6 +139,9 @@ export default function ConfiguracionWhatsappClient() {
       setPhoneNumberId(data.config?.phone_number_id || "");
       setWabaId(data.config?.waba_id || "");
       setBotNombre(data.config?.bot_nombre || "");
+      setTono(data.config?.tono || "");
+      setHorarioInicio(data.config?.horario_inicio ?? 8);
+      setHorarioFin(data.config?.horario_fin ?? 22);
     }
     setCargando(false);
   };
@@ -149,7 +155,7 @@ export default function ConfiguracionWhatsappClient() {
       const res = await fetch("/api/panel-v2/whatsapp/configuracion", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ phoneNumberId, wabaId, accessToken, botNombre }),
+        body: JSON.stringify({ phoneNumberId, wabaId, accessToken, botNombre, tono, horarioInicio, horarioFin }),
       });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || "No se pudo guardar.");
@@ -225,6 +231,26 @@ export default function ConfiguracionWhatsappClient() {
           <label className={labelClass}>Nombre del bot (opcional)</label>
           <input value={botNombre} onChange={(e) => setBotNombre(e.target.value)} placeholder="Sin nombre propio — responde como Pfaffen Autos" className={inputClass} />
           <p className="text-[10px] text-slate-400 mt-1">No tiene relación con Rodi (el chatbot del sitio público). Este es solo el asistente que contesta acá, en WhatsApp.</p>
+        </div>
+        <div>
+          <label className={labelClass}>Tono de conversación (opcional)</label>
+          <input value={tono} onChange={(e) => setTono(e.target.value)} placeholder="Ej: cercano y directo, sin formalismos" className={inputClass} />
+          <p className="text-[10px] text-slate-400 mt-1">Reemplaza el tono por defecto ("amable, profesional, claro y breve") en las respuestas de la IA. Dejalo vacío para usar el default.</p>
+        </div>
+        <div className="grid grid-cols-2 gap-2.5">
+          <div>
+            <label className={labelClass}>Horario de atención — desde</label>
+            <select value={horarioInicio} onChange={(e) => setHorarioInicio(Number(e.target.value))} className={inputClass}>
+              {Array.from({ length: 24 }, (_, h) => <option key={h} value={h}>{String(h).padStart(2, "0")}:00</option>)}
+            </select>
+          </div>
+          <div>
+            <label className={labelClass}>Horario de atención — hasta</label>
+            <select value={horarioFin} onChange={(e) => setHorarioFin(Number(e.target.value))} className={inputClass}>
+              {Array.from({ length: 24 }, (_, h) => h + 1).map((h) => <option key={h} value={h}>{String(h % 24).padStart(2, "0")}:00</option>)}
+            </select>
+          </div>
+          <p className="text-[10px] text-slate-400 col-span-2 -mt-1">Fuera de este rango, la IA no responde y se envía el aviso de "fuera de horario" configurado abajo (una vez por día por conversación).</p>
         </div>
         {mensaje && <p className="text-xs font-semibold text-slate-600 dark:text-slate-300">{mensaje}</p>}
         <button onClick={guardar} disabled={guardando} className="px-4 py-2.5 rounded-xl bg-rose-600 hover:bg-rose-700 text-white text-sm font-bold disabled:opacity-50 flex items-center gap-1.5">

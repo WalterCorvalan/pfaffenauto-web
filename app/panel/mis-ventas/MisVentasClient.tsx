@@ -38,6 +38,7 @@ export default function MisVentasClient({ vendedores, miId, miNombre, esAdmin }:
   const [modalRecibo, setModalRecibo] = useState(false);
   const [modalBoleto, setModalBoleto] = useState(false);
   const [generandoReporte, setGenerandoReporte] = useState(false);
+  const [errorCarga, setErrorCarga] = useState<string | null>(null);
 
   const hoy = new Date();
   const esUltimoDiaDelMes = hoy.getDate() === new Date(hoy.getFullYear(), hoy.getMonth() + 1, 0).getDate();
@@ -69,16 +70,8 @@ export default function MisVentasClient({ vendedores, miId, miNombre, esAdmin }:
     let cancelado = false;
     const cargar = async () => {
       setCargando(true);
-      const [
-        { data: tierData },
-        { data: bonoData },
-        { data: premiosData },
-        { data: rankingData },
-        { data: funnelData },
-        { data: tiempoData },
-        { data: resenasData },
-        { data: ventasData },
-      ] = await Promise.all([
+      setErrorCarga(null);
+      const resultados = await Promise.all([
         supabase2.rpc("tier_para_vendedor", { p_vendedor_id: vendedorId, p_desde: desdeMesActualStr, p_hasta: hastaMesActualStr }),
         supabase2.rpc("bono_retroactivo_proyectado", { p_vendedor_id: vendedorId, p_desde: desdeMesActualStr, p_hasta: hastaMesActualStr }),
         supabase2.rpc("premios_consignaciones_vendedor", { p_vendedor_id: vendedorId, p_desde: desdeMesActualStr, p_hasta: hastaMesActualStr }),
@@ -96,6 +89,23 @@ export default function MisVentasClient({ vendedores, miId, miNombre, esAdmin }:
           .order("fecha_cierre", { ascending: false }),
       ]);
       if (cancelado) return;
+
+      const [
+        { data: tierData, error: errTier },
+        { data: bonoData, error: errBono },
+        { data: premiosData, error: errPremios },
+        { data: rankingData, error: errRanking },
+        { data: funnelData, error: errFunnel },
+        { data: tiempoData, error: errTiempo },
+        { data: resenasData, error: errResenas },
+        { data: ventasData, error: errVentas },
+      ] = resultados;
+
+      const primerError = errTier || errBono || errPremios || errRanking || errFunnel || errTiempo || errResenas || errVentas;
+      if (primerError) {
+        console.error("[MisVentasClient] error cargando datos:", primerError);
+        setErrorCarga("No se pudieron cargar todos los datos — puede que algunas cifras estén incompletas. Probá recargar la página.");
+      }
 
       setTier((tierData || [])[0] || null);
       setBonoProyectado(Number(bonoData) || 0);
@@ -227,6 +237,11 @@ export default function MisVentasClient({ vendedores, miId, miNombre, esAdmin }:
           </button>
         </div>
       </header>
+      {errorCarga && (
+        <div className="mx-6 mt-3 px-3 py-2 rounded-lg text-xs font-bold bg-amber-50 text-amber-700 dark:bg-amber-500/10 dark:text-amber-300 shrink-0">
+          {errorCarga}
+        </div>
+      )}
 
       <div className="flex-1 overflow-y-auto bg-slate-50 dark:bg-[#141414] p-6 space-y-6">
         {tier && (

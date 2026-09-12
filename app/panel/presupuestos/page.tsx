@@ -15,7 +15,7 @@ export default async function PresupuestosPage() {
 
   const [{ data: presupuestos }, { data: clientes }, { data: vehiculos }, { data: vendedores }, { data: sucursales }] = await Promise.all([
     query,
-    supabase.from("clientes").select("*").order("nombre"),
+    supabase.from("clientes").select("*").order("nombre").limit(2000),
     supabase.from("vehiculos").select("*").eq("estado", "disponible").order("marca"),
     supabase.from("perfiles").select("id, nombre, sucursal_id").eq("activo", true).order("nombre"),
     supabase.from("sucursales").select("id, nombre").order("nombre"),

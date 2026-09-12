@@ -12,8 +12,16 @@ export default async function LiquidacionesPage() {
   const soyAdmin = miPerfil?.roles?.includes("admin") ?? false;
   const soyAdminOFinanzas = miPerfil?.roles?.some((r: string) => r === "admin" || r === "finanzas") ?? false;
 
+  const desde6Meses = new Date();
+  desde6Meses.setMonth(desde6Meses.getMonth() - 6);
+
   const [{ data: liquidaciones }, { data: vendedores }, { data: config }] = await Promise.all([
-    supabase.from("liquidaciones_gestoria").select("*, expediente:expedientes(titulo_transferido_url), vendedor:perfiles!liquidaciones_gestoria_vendedor_interno_id_fkey(nombre)").order("created_at", { ascending: false }).limit(500),
+    // Una liquidación "en_proceso" puede seguir abierta hace más de 6 meses --
+    // solo acotamos por fecha las ya terminadas, nunca las en curso (mismo
+    // criterio ya usado en Pedidos esta sesión).
+    supabase.from("liquidaciones_gestoria").select("*, expediente:expedientes(titulo_transferido_url), vendedor:perfiles!liquidaciones_gestoria_vendedor_interno_id_fkey(nombre)")
+      .or(`estado.eq.en_proceso,created_at.gte.${desde6Meses.toISOString()}`)
+      .order("created_at", { ascending: false }),
     supabase.from("perfiles").select("id, nombre").eq("activo", true).order("nombre"),
     supabase.from("configuracion_empresa").select("liquidaciones_comision_fija, liquidaciones_pct_gestora, liquidaciones_pct_agencia").eq("id", true).single(),
   ]);

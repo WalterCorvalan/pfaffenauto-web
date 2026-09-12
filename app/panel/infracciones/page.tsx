@@ -7,8 +7,11 @@ export default async function InfraccionesPage() {
   const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();
 
+  const desde6Meses = new Date();
+  desde6Meses.setMonth(desde6Meses.getMonth() - 6);
+
   const [{ data: infracciones }, { data: miPerfil }, { data: vehiculos }] = await Promise.all([
-    supabase.from("infracciones").select("*").order("fecha", { ascending: false }).limit(300),
+    supabase.from("infracciones").select("*").gte("fecha", desde6Meses.toISOString().split("T")[0]).order("fecha", { ascending: false }),
     supabase.from("perfiles").select("roles").eq("id", user?.id || "").maybeSingle(),
     supabase.from("vehiculos").select("id, marca, modelo, patente").order("marca"),
   ]);

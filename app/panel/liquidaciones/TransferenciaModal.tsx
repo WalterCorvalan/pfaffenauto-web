@@ -175,17 +175,23 @@ export default function TransferenciaModal({
         }
 
         const patch: any = {
-          dominio: dominio.trim(), fecha_operacion: fechaOperacion, expediente_id: expedienteId,
+          mes: `${mes}-01`, dominio: dominio.trim(), fecha_operacion: fechaOperacion, expediente_id: expedienteId,
           cliente_vendedor: clienteVendedor || null, cliente_comprador: clienteComprador || null,
           marca: marca || null, modelo: modelo || null, anio: anio || null,
           vendedor_interno_id: vendedorInternoId || null, radicacion_actual: radicacionActual || null, radicacion_futura: radicacionFutura || null,
           deuda_patente: Number(deudaPatente) || 0, gestora: gestora || null,
           hubo_devolucion_registro: huboDevolucion, sobrante_registro: huboDevolucion ? Number(sobranteRegistro) || 0 : null,
           sobrante_comentario: huboDevolucion ? sobranteComentario || null : null, devolucion_destino: huboDevolucion ? devolucionDestino || null : null,
-          arancel_comprobante_url: arancelUrl, observaciones: observaciones || null, updated_at: new Date().toISOString(),
+          arancel_comprobante_url: arancelUrl, observaciones: observaciones || null,
+          // Antes solo se guardaban si "importesCambiaron" era true (vía la
+          // RPC de importes) -- si el usuario editaba SOLO estas fechas sin
+          // tocar montos, el cambio se perdía en silencio.
+          fecha_pago_registro: fechaPagoRegistro || null, fecha_ingreso_registro: fechaIngresoRegistro || null,
+          updated_at: new Date().toISOString(),
         };
         if (estado !== "terminado") patch.estado = estado;
-        await supabase2.from("liquidaciones_gestoria").update(patch).eq("id", id);
+        const { error: errPatch } = await supabase2.from("liquidaciones_gestoria").update(patch).eq("id", id);
+        if (errPatch) throw errPatch;
 
         if (huboDevolucion && devolucionDestino === "cuenta_agencia" && editando.devolucion_destino !== "cuenta_agencia") {
           await notificarFinanzas(supabase2, `Sobrante de registro a confirmar — ${dominio} ($${Number(sobranteRegistro).toLocaleString("es-AR")})`, "/panel/liquidaciones");

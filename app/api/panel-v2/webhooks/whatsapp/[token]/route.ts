@@ -196,10 +196,10 @@ function isWhatsappEnvioConfigurado(config: any): boolean {
   return !!config?.listo && !!config?.token_cifrado && !!config?.token_iv && !!config?.token_tag && !!config?.phone_number_id;
 }
 
-// Horario de atención: 8 a 22, hora Argentina — mismo criterio que v1.
-function estaEnHorarioAtencion(): boolean {
+// Horario de atención configurable desde Configuración → WhatsApp (default 8 a 22, hora Argentina).
+function estaEnHorarioAtencion(horaInicio: number = 8, horaFin: number = 22): boolean {
   const hora = Number(new Intl.DateTimeFormat("en-US", { timeZone: "America/Argentina/Buenos_Aires", hour: "numeric", hourCycle: "h23" }).format(new Date()));
-  return hora >= 8 && hora < 22;
+  return hora >= horaInicio && hora < horaFin;
 }
 
 async function enviarMensajeFijo(conversacionId: string, texto: string, config: any) {
@@ -213,7 +213,7 @@ async function ejecutarAgente(conversacionId: string) {
 
   const { data: config } = await supabase.from("whatsapp_configuracion").select("*").eq("id", true).single();
 
-  if (!estaEnHorarioAtencion()) {
+  if (!estaEnHorarioAtencion(config?.horario_inicio ?? 8, config?.horario_fin ?? 22)) {
     const hoy = new Date().toISOString().split("T")[0];
     if (conversacionActual?.fuera_horario_avisado_fecha === hoy) return; // ya se avisó hoy, no repetir
     const avisoFueraHorario = await buscarRespuestaFueraHorario(supabase);
@@ -248,7 +248,7 @@ async function ejecutarAgente(conversacionId: string) {
 
   if (!isAiConfiguredV2()) return;
 
-  const result = await generarRespuestaAgenteV2(historial, "panel-v2/webhooks/whatsapp", undefined, conversacionActual?.vehiculo_id ?? null);
+  const result = await generarRespuestaAgenteV2(historial, "panel-v2/webhooks/whatsapp", undefined, conversacionActual?.vehiculo_id ?? null, config?.tono ?? null);
 
   if (!result.ok) {
     registrarError("webhook-v2:agente", result.error, { conversacionId });
@@ -437,7 +437,13 @@ async function actualizarEstadoMensaje(status: any) {
   if (!msg) return;
 
   if (status.status === "failed") {
-    await supabase.from("whatsapp_mensajes").update({ status: "failed" }).eq("id", msg.id);
+    // Meta manda el motivo real acá (status.errors) -- antes se descartaba y
+    // quedaba solo el status "failed" sin ninguna pista de por qué.
+    const detalleError = Array.isArray(status.errors)
+      ? status.errors.map((e: any) => `#${e.code} ${e.title}${e.error_data?.details ? ` — ${e.error_data.details}` : ""}`).join(" | ")
+      : null;
+    await supabase.from("whatsapp_mensajes").update({ status: "failed", error_detalle: detalleError }).eq("id", msg.id);
+    if (detalleError) registrarError("webhook-v2:mensaje-fallido", new Error(detalleError), { waMessageId: status.id, mensajeId: msg.id });
     return;
   }
   const actualIdx = orden.indexOf(msg.status);
