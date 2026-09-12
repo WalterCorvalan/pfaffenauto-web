@@ -3,6 +3,7 @@
 import MensajesBubble from "@/components/panel/MensajesBubble";
 import MobileNavProgress from "@/components/panel/MobileNavProgress";
 import NotificationBell from "@/components/panel/NotificationBell";
+import ToastHost from "@/components/panel/ToastHost";
 import QuickActionsButton from "@/components/panel/QuickActionsButton";
 import TopTicker from "@/components/panel/TopTicker";
 import { ROL_A_SECTOR } from "@/lib/panel/permisosModulos";
@@ -918,6 +919,7 @@ export default function PanelV2Layout({
       <QuickActionsButton />
       <MensajesBubble />
       <MobileNavProgress />
+      <ToastHost />
     </div>
   );
 }

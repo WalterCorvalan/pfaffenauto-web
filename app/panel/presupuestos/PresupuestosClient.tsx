@@ -3,7 +3,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
-import { FileText, Plus, Printer, CarFront, AlertTriangle, Search, X } from "lucide-react";
+import { FileText, Plus, Printer, CarFront, AlertTriangle, Search, X, ChevronLeft, ChevronRight } from "lucide-react";
 import CompartirPresupuestoBoton from "./CompartirPresupuestoBoton";
 import NuevoPresupuestoModal from "./NuevoPresupuestoModal";
 import PresupuestoDetalleModal from "./PresupuestoDetalleModal";
@@ -85,6 +85,16 @@ export default function PresupuestosClient({
   const hayFiltrosActivos = query.trim() !== "" || vendedorFiltro !== "todos" || periodo !== "todos" || desdeCustom !== "" || hastaCustom !== "";
   const limpiarFiltros = () => { setQuery(""); setVendedorFiltro("todos"); setPeriodo("todos"); setDesdeCustom(""); setHastaCustom(""); };
 
+  // Paginado simple en memoria -- mismo criterio que Stock/Clientes.
+  const POR_PAGINA = 25;
+  const [pagina, setPagina] = useState(1);
+  useEffect(() => { setPagina(1); }, [query, vendedorFiltro, periodo, desdeCustom, hastaCustom]);
+  const totalPaginas = Math.max(1, Math.ceil(presupuestosFiltrados.length / POR_PAGINA));
+  const presupuestosPaginados = useMemo(
+    () => presupuestosFiltrados.slice((pagina - 1) * POR_PAGINA, pagina * POR_PAGINA),
+    [presupuestosFiltrados, pagina]
+  );
+
   return (
     <div className="flex flex-col h-full w-full overflow-hidden">
       <header className="flex flex-col md:flex-row md:items-center justify-between gap-3 border-b border-slate-200 dark:border-white/5 px-6 py-4 bg-white dark:bg-white/[0.02] shrink-0">
@@ -160,7 +170,7 @@ export default function PresupuestosClient({
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-slate-100 dark:divide-white/5">
-                  {presupuestosFiltrados.map((p: any) => (
+                  {presupuestosPaginados.map((p: any) => (
                     <tr key={p.id} onClick={() => setSeleccionado(p)} className={`hover:bg-slate-50/50 dark:hover:bg-white/5 transition-colors border-l-4 cursor-pointer ${p.precio_confirmado === false ? "border-l-amber-400" : "border-l-rose-300"}`}>
                       <td className="px-4 py-3 font-mono text-[13px] font-bold text-rose-600 dark:text-rose-400">{p.numero || "—"}</td>
                       <td className="px-4 py-3 text-[13px] text-slate-600 dark:text-slate-300 whitespace-nowrap">{p.fecha ? new Date(`${p.fecha}T12:00:00Z`).toLocaleDateString("es-AR", { timeZone: "UTC" }) : "—"}</td>
@@ -185,7 +195,7 @@ export default function PresupuestosClient({
 
           <div className="md:hidden space-y-3">
             {presupuestosFiltrados.length === 0 && <div className="bg-white dark:bg-white/[0.02] border border-slate-200 dark:border-white/5 rounded-2xl p-8 text-center text-slate-400 text-sm italic">{presupuestos.length === 0 ? "Sin presupuestos cargados todavía." : "Ningún presupuesto coincide con estos filtros."}</div>}
-            {presupuestosFiltrados.map((p: any) => (
+            {presupuestosPaginados.map((p: any) => (
               <div key={p.id} onClick={() => setSeleccionado(p)} className={`bg-white dark:bg-white/[0.02] border border-slate-200 dark:border-white/5 rounded-2xl p-4 space-y-2 border-l-4 cursor-pointer active:bg-slate-50 dark:active:bg-white/[0.04] ${p.precio_confirmado === false ? "border-l-amber-400" : "border-l-rose-300"}`}>
                 <div className="flex items-center justify-between">
                   <span className="font-mono text-[13px] font-bold text-rose-600 dark:text-rose-400">N° {p.numero || "—"}</span>
@@ -203,6 +213,20 @@ export default function PresupuestosClient({
               </div>
             ))}
           </div>
+
+          {totalPaginas > 1 && (
+            <div className="grid grid-cols-3 items-center mt-3 px-1">
+              <p className="text-xs text-slate-400">Página {pagina} de {totalPaginas} — {presupuestosFiltrados.length} en total</p>
+              <div className="flex items-center justify-center gap-2 col-start-2">
+                <button onClick={() => setPagina((p) => Math.max(1, p - 1))} disabled={pagina === 1} className="p-2 bg-white dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-lg text-slate-500 disabled:opacity-40 disabled:cursor-not-allowed hover:bg-slate-50 dark:hover:bg-white/10">
+                  <ChevronLeft className="w-4 h-4" />
+                </button>
+                <button onClick={() => setPagina((p) => Math.min(totalPaginas, p + 1))} disabled={pagina === totalPaginas} className="p-2 bg-white dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-lg text-slate-500 disabled:opacity-40 disabled:cursor-not-allowed hover:bg-slate-50 dark:hover:bg-white/10">
+                  <ChevronRight className="w-4 h-4" />
+                </button>
+              </div>
+            </div>
+          )}
         </div>
       </div>
 

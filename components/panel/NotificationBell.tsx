@@ -46,7 +46,17 @@ export default function NotificationBell({ miId }: { miId: string }) {
     if (!miId) return;
     const canal = supabase2
       .channel(`bell-${miId}-${Math.random().toString(36).slice(2)}`)
-      .on("postgres_changes", { event: "*", schema: "public", table: "alertas", filter: `destinatario_id=eq.${miId}` }, cargar)
+      // INSERT aparte de "*" -- una alerta nueva de verdad dispara además un
+      // toast visible (ToastHost), no solo el número de la campana. Un
+      // UPDATE (ej: marcar leída) no debe volver a mostrar el toast.
+      .on("postgres_changes", { event: "INSERT", schema: "public", table: "alertas", filter: `destinatario_id=eq.${miId}` }, (payload: any) => {
+        const nueva = payload.new;
+        if (nueva?.titulo) {
+          window.dispatchEvent(new CustomEvent("app-toast-alerta", { detail: { mensaje: nueva.titulo, link: nueva.link } }));
+        }
+        cargar();
+      })
+      .on("postgres_changes", { event: "UPDATE", schema: "public", table: "alertas", filter: `destinatario_id=eq.${miId}` }, cargar)
       .subscribe();
     return () => { supabase2.removeChannel(canal); };
     // eslint-disable-next-line react-hooks/exhaustive-deps

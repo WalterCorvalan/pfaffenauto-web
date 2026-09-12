@@ -2,7 +2,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import { supabase2 } from "@/lib/supabase/client";
-import { X, Loader2, ScanLine, ClipboardPaste, ImagePlus } from "lucide-react";
+import { X, Loader2, ScanLine, ClipboardPaste, ImagePlus, Upload, CheckCircle2, AlertTriangle } from "lucide-react";
 import { crearAlerta } from "@/lib/panel/alertas";
 
 export const MARCAS = ["Toyota", "Volkswagen", "Ford", "Chevrolet", "Renault", "Peugeot", "Fiat", "Honda", "Hyundai", "Nissan", "Jeep", "Citroën", "BMW", "Mercedes-Benz", "Audi", "Otra"];
@@ -74,6 +74,29 @@ export default function NuevoVehiculoModal({ perfiles, clientes, sucursales, miI
   const [publicadoMl, setPublicadoMl] = useState(editando?.publicado_ml || false);
   const [publicadoPor, setPublicadoPor] = useState(editando?.publicado_por || "");
   const [linkMl, setLinkMl] = useState(editando?.link_ml || "");
+  const [mlError, setMlError] = useState<string | null>(editando?.ml_publicar_error || null);
+  const [publicandoMl, setPublicandoMl] = useState(false);
+
+  const publicarEnML = async () => {
+    if (!editando?.id) return;
+    setPublicandoMl(true);
+    setMlError(null);
+    try {
+      const res = await fetch("/api/panel-v2/ml/publicar", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ vehiculoId: editando.id }),
+      });
+      const data = await res.json();
+      if (!res.ok) { setMlError(data.error || "No se pudo publicar."); return; }
+      setPublicadoMl(true);
+      if (data.permalink) setLinkMl(data.permalink);
+    } catch {
+      setMlError("Error de red publicando en MercadoLibre.");
+    } finally {
+      setPublicandoMl(false);
+    }
+  };
   const [notas, setNotas] = useState(editando?.notas || "");
   const [guardando, setGuardando] = useState(false);
   const [error, setError] = useState("");
@@ -732,6 +755,23 @@ export default function NuevoVehiculoModal({ perfiles, clientes, sucursales, miI
 
           <div>
             <p className={seccionClass}>Publicación</p>
+            {editando?.id && (
+              <div className="mb-3 flex items-center gap-2">
+                <button
+                  type="button"
+                  onClick={publicarEnML}
+                  disabled={publicandoMl}
+                  className="flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs font-bold bg-blue-600 hover:bg-blue-700 text-white disabled:opacity-50"
+                >
+                  {publicandoMl ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : publicadoMl ? <CheckCircle2 className="w-3.5 h-3.5" /> : <Upload className="w-3.5 h-3.5" />}
+                  {publicadoMl ? "Volver a publicar en MercadoLibre" : "Publicar en MercadoLibre"}
+                </button>
+                {mlError && <span className="flex items-center gap-1 text-[11px] font-semibold text-rose-600"><AlertTriangle className="w-3.5 h-3.5" /> {mlError}</span>}
+              </div>
+            )}
+            {!editando?.id && (
+              <p className="text-[11px] text-slate-400 mb-3">Guardá el vehículo primero para poder publicarlo en MercadoLibre.</p>
+            )}
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
               <div>
                 <label className={labelClass}>¿Publicado en MercadoLibre?</label>
@@ -739,7 +779,10 @@ export default function NuevoVehiculoModal({ perfiles, clientes, sucursales, miI
               </div>
               <div>
                 <label className={labelClass}>Publicado por</label>
-                <input value={publicadoPor} onChange={(e) => setPublicadoPor(e.target.value)} placeholder="Ej: Richi, Lucía..." className={inputClass} />
+                <select value={publicadoPor} onChange={(e) => setPublicadoPor(e.target.value)} className={inputClass}>
+                  <option value="">Sin especificar</option>
+                  {perfiles.map((p) => <option key={p.id} value={p.nombre}>{p.nombre}</option>)}
+                </select>
               </div>
               <div className="sm:col-span-2">
                 <label className={labelClass}>Link de MercadoLibre</label>
