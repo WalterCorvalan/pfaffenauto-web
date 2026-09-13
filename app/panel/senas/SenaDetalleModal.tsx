@@ -31,6 +31,15 @@ function moneda(ars?: number | null, usd?: number | null) {
   return null;
 }
 
+// Saldo/remanente quedan calculados en la moneda de la venta (venta_ars xor
+// venta_usd), no siempre en pesos — mostrarlos con "$" fijo confundía una
+// venta en USD con saldo cero.
+function montoEnMonedaVenta(sena: { venta_ars?: number | null; venta_usd?: number | null }, val?: number | null) {
+  if (val == null) return null;
+  const simbolo = sena.venta_usd && !sena.venta_ars ? "US$" : "$";
+  return `${simbolo} ${Number(val).toLocaleString("es-AR")}`;
+}
+
 export default function SenaDetalleModal({ sena: s, onClose }: { sena: any; onClose: () => void }) {
   return (
     <div className="fixed inset-0 bg-black/40 backdrop-blur-sm z-[100] flex items-center justify-center p-4" onClick={() => onClose()}>
@@ -58,8 +67,8 @@ export default function SenaDetalleModal({ sena: s, onClose }: { sena: any; onCl
           <Seccion titulo="Comercial">
             <Fila label="Venta" valor={moneda(s.venta_ars, s.venta_usd)} />
             <Fila label="Seña" valor={moneda(s.sena_ars, s.sena_usd)} />
-            <Fila label="Saldo a abonar" valor={s.saldo_abonar_ars != null ? `$ ${Number(s.saldo_abonar_ars).toLocaleString("es-AR")}` : null} />
-            <Fila label="Remanente" valor={s.remanente_ars != null ? `$ ${Number(s.remanente_ars).toLocaleString("es-AR")}` : null} />
+            <Fila label="Saldo a abonar" valor={montoEnMonedaVenta(s, s.saldo_abonar_ars)} />
+            <Fila label="Remanente" valor={montoEnMonedaVenta(s, s.remanente_ars)} />
           </Seccion>
 
           <Seccion titulo="Estado">
