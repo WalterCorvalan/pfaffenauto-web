@@ -111,12 +111,16 @@ export default function NpsClient({
       <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
         <div className="bg-white dark:bg-[#111] border border-slate-200 dark:border-white/10 rounded-2xl p-5 shadow-sm flex flex-col justify-center">
           <span className="text-[10px] font-bold uppercase tracking-widest text-slate-500">NPS Score</span>
-          <div className="flex items-end gap-2 mt-1">
-            <span className={`text-4xl font-black font-mono ${npsScore > 50 ? "text-emerald-600 dark:text-emerald-400" : npsScore > 0 ? "text-amber-500" : "text-rose-600 dark:text-rose-400"}`}>
-              {npsScore}
-            </span>
-            <span className="text-xs text-slate-400 mb-1.5">/ 100</span>
-          </div>
+          {total === 0 ? (
+            <span className="text-lg font-bold text-slate-400 mt-1">Sin respuestas</span>
+          ) : (
+            <div className="flex items-end gap-2 mt-1">
+              <span className={`text-4xl font-black font-mono ${npsScore > 50 ? "text-emerald-600 dark:text-emerald-400" : npsScore > 0 ? "text-amber-500" : "text-rose-600 dark:text-rose-400"}`}>
+                {npsScore}
+              </span>
+              <span className="text-xs text-slate-400 mb-1.5">/ 100</span>
+            </div>
+          )}
         </div>
         <div className="bg-white dark:bg-[#111] border border-slate-200 dark:border-white/10 rounded-2xl p-5 shadow-sm flex flex-col justify-center">
           <span className="text-[10px] font-bold uppercase tracking-widest text-emerald-600">Promotores (9-10)</span>
@@ -149,7 +153,7 @@ export default function NpsClient({
               <BarChart3 className="w-4 h-4" /> Distribución de Puntajes
             </h3>
             <span className="text-sm font-bold bg-slate-50 dark:bg-white/5 border border-slate-100 dark:border-white/10 px-3 py-1 rounded-lg text-slate-700 dark:text-slate-300">
-              Promedio: {promedio} <Star className="w-3 h-3 inline text-amber-500 mb-0.5" />
+              Promedio: {total > 0 ? promedio : "Sin respuestas"} <Star className="w-3 h-3 inline text-amber-500 mb-0.5" />
             </span>
           </div>
           <div className="flex-1 min-h-[250px]">

@@ -104,8 +104,14 @@ export default function ReportesClient(props: Props) {
   };
 
   const proximoBono = (consig: number) => {
-    const siguiente = [...premios].filter((p) => p.consignaciones_min != null).sort((a, b) => a.consignaciones_min - b.consignaciones_min).find((p) => p.consignaciones_min > consig);
-    if (!siguiente) return null;
+    // Sin premios configurados, "el próximo escalón" no existe para nadie:
+    // antes eso hacía que TODOS los vendedores (incluidos los de 0
+    // consignaciones) mostraran "¡Máximo!" como si hubieran alcanzado el
+    // techo de un esquema que en realidad nunca se configuró.
+    const conMinimo = premios.filter((p) => p.consignaciones_min != null);
+    if (conMinimo.length === 0) return "Meta no configurada";
+    const siguiente = [...conMinimo].sort((a, b) => a.consignaciones_min - b.consignaciones_min).find((p) => p.consignaciones_min > consig);
+    if (!siguiente) return "¡Máximo!";
     return `${siguiente.consignaciones_min - consig} para USD ${siguiente.premio_usd}`;
   };
 
@@ -173,10 +179,13 @@ export default function ReportesClient(props: Props) {
             <tbody>
               {ranking.map((r: any, i: number) => (
                 <tr key={r.vendedor_id} className={i % 2 === 0 ? "bg-white/5" : ""}>
-                  <td className="px-3 py-2 font-bold">{i === 0 ? "🥇" : i === 1 ? "🥈" : i === 2 ? "🥉" : "•"} {r.nombre}{r.vendedor_id === miId ? " (vos)" : ""}</td>
+                  {/* Sin ventas, no hay primer/segundo/tercer puesto real que festejar
+                      -- antes el orden de la consulta alcanzaba para dar medalla aunque
+                      todos estuvieran en cero. */}
+                  <td className="px-3 py-2 font-bold">{Number(r.ventas_equivalentes) > 0 && i === 0 ? "🥇" : Number(r.ventas_equivalentes) > 0 && i === 1 ? "🥈" : Number(r.ventas_equivalentes) > 0 && i === 2 ? "🥉" : "•"} {r.nombre}{r.vendedor_id === miId ? " (vos)" : ""}</td>
                   <td className="px-3 py-2 text-right font-mono">{Number(r.ventas_equivalentes)}</td>
                   <td className="px-3 py-2 text-right font-mono">{r.consignaciones}</td>
-                  <td className="px-3 py-2 text-right text-indigo-200 text-xs">{proximoBono(r.consignaciones) || "¡Máximo!"}</td>
+                  <td className="px-3 py-2 text-right text-indigo-200 text-xs">{Number(r.consignaciones) > 0 ? proximoBono(r.consignaciones) : "Sin consignaciones"}</td>
                 </tr>
               ))}
               {ranking.length === 0 && <tr><td colSpan={4} className="px-3 py-4 text-center text-indigo-200 text-xs">Sin vendedores activos.</td></tr>}
