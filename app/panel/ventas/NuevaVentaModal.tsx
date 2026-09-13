@@ -174,7 +174,7 @@ export default function NuevaVentaModal({ perfiles, clientes, vehiculos, miId, i
   // registrada dos veces y sin conexión real con la venta).
   useEffect(() => {
     if (esEdicion) return;
-    supabase2.from("senas").select("id, numero, cliente_nombre, apellido, nombre, sena_ars, sena_usd, monto, moneda, fecha, marca, modelo, vehiculo_id")
+    supabase2.from("senas").select("id, numero, cliente_id, cliente_nombre, apellido, nombre, dni, telefono_celular, correo_electronico, sena_ars, sena_usd, monto, moneda, fecha, marca, modelo, vehiculo_id")
       .eq("estado", "Activa").order("created_at", { ascending: false }).then(({ data }) => { setSenasActivas(data || []); senasActivasOriginal.current = data || []; });
   }, [esEdicion]);
 
@@ -188,6 +188,25 @@ export default function NuevaVentaModal({ perfiles, clientes, vehiculos, miId, i
     setSenas((prev) => [...prev, { monto: String(monto), moneda, fecha: s.fecha || hoyLocalISO(), cajaDestino: "", senaOrigenId: s.id }]);
     setSenasActivas((prev) => prev.filter((x) => x.id !== senaId));
     setSenaAVincular("");
+
+    // Autocompletar cliente y vehículo desde la seña de origen -- antes
+    // vincular una seña solo copiaba el pago y había que retipear a mano el
+    // comprador (y el cliente del CRM quedaba sin engancharse aunque la
+    // seña ya lo tuviera identificado).
+    if (!clienteId) {
+      if (s.cliente_id && clientes.some((c) => c.id === s.cliente_id)) {
+        elegirCliente(s.cliente_id);
+      } else {
+        const nombre = `${s.apellido || ""} ${s.nombre || ""}`.trim() || s.cliente_nombre || "";
+        if (nombre) setCompradorNombre(nombre);
+        if (s.dni) setCompradorDni(s.dni);
+        if (s.telefono_celular) setCompradorTelefono(s.telefono_celular);
+        if (s.correo_electronico) setCompradorEmail(s.correo_electronico);
+      }
+    }
+    if (!vehiculoId && s.vehiculo_id && vehiculos.some((v) => v.id === s.vehiculo_id)) {
+      elegirVehiculo(s.vehiculo_id);
+    }
   };
 
   const agregarRecordatorio = () => {
