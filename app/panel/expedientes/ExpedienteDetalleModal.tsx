@@ -11,7 +11,7 @@ const SECTORES = [
   { value: "taller", label: "Taller" }, { value: "recepcion", label: "Recepción" }, { value: "admin", label: "Admin" },
 ];
 
-const TABS = ["Resumen", "Estado de Pago", "Pago Comprador", "Comprobantes", "Documentos", "Liquidación", "Gastos", "Consignación", "Duplicado", "Gestoría"];
+const TABS = ["Resumen", "Estado de Pago", "Pago Comprador", "Comprobantes", "Documentos", "Parte Vendedora", "Parte Compradora", "Liquidación", "Gastos", "Consignación", "Duplicado", "Gestoría"];
 
 const PRIORIDAD_COLOR: Record<string, string> = { Baja: "text-slate-500", Media: "text-amber-500", Alta: "text-rose-500" };
 
@@ -35,6 +35,27 @@ interface Props {
 export default function ExpedienteDetalleModal({ expedienteId, miId, perfiles, soyAdmin, puedeOperacionCaida, puedeVerLiquidacion, gananciasOcultas, tabInicial, onClose, onActualizado, onEliminado }: Props) {
   const [expediente, setExpediente] = useState<any>(null);
   const [venta, setVenta] = useState<any>(null);
+  // Los datos personales del propietario/vendedor (DNI, email, fecha de
+  // nacimiento, profesión) viven en vehiculos, no en ventas -- nombre y
+  // teléfono sí están duplicados en ventas.propietario_nombre/_telefono
+  // (se cargan una vez al vincular el auto), el resto no.
+  const [nuevoDocParte, setNuevoDocParte] = useState<"vendedora" | "compradora" | null>(null);
+  const [nuevoDocNombre, setNuevoDocNombre] = useState("");
+
+  // Datos personales -- comprador ya tiene los 6 campos en ventas, el
+  // propietario tiene nombre/teléfono en ventas y el resto en vehiculos.
+  const [compradorNombre2, setCompradorNombre2] = useState("");
+  const [compradorDni, setCompradorDni] = useState("");
+  const [compradorTelefono2, setCompradorTelefono2] = useState("");
+  const [compradorEmail, setCompradorEmail] = useState("");
+  const [compradorFechaNacimiento, setCompradorFechaNacimiento] = useState("");
+  const [compradorProfesion, setCompradorProfesion] = useState("");
+  const [propietarioNombre2, setPropietarioNombre2] = useState("");
+  const [propietarioTelefono2, setPropietarioTelefono2] = useState("");
+  const [propietarioDni, setPropietarioDni] = useState("");
+  const [propietarioEmail, setPropietarioEmail] = useState("");
+  const [propietarioFechaNacimiento, setPropietarioFechaNacimiento] = useState("");
+  const [propietarioProfesion, setPropietarioProfesion] = useState("");
   const [hitos, setHitos] = useState<any[]>([]);
   const [checklist, setChecklist] = useState<any[]>([]);
   const [observaciones, setObservaciones] = useState<any[]>([]);
@@ -131,7 +152,7 @@ export default function ExpedienteDetalleModal({ expedienteId, miId, perfiles, s
     setExtraCobradoFormaPago(e.venta?.extra_cobrado_forma_pago || "");
     setExtraCobradoCuentaId(e.venta?.extra_cobrado_cuenta_id || "");
 
-    const [{ data: h }, { data: cl }, { data: o }, { data: s }, { data: g }, { data: d }, { data: c }] = await Promise.all([
+    const [{ data: h }, { data: cl }, { data: o }, { data: s }, { data: g }, { data: d }, { data: c }, { data: veh }] = await Promise.all([
       supabase2.from("expediente_hitos").select("*").eq("expediente_id", expedienteId).order("orden"),
       supabase2.from("expediente_checklist").select("*").eq("expediente_id", expedienteId).order("parte,orden"),
       supabase2.from("expediente_observaciones").select("*, autor:perfiles(nombre)").eq("expediente_id", expedienteId).order("created_at", { ascending: false }),
@@ -139,6 +160,9 @@ export default function ExpedienteDetalleModal({ expedienteId, miId, perfiles, s
       supabase2.from("expediente_gastos").select("*").eq("expediente_id", expedienteId).order("created_at", { ascending: false }),
       supabase2.from("expediente_documentos").select("*").eq("expediente_id", expedienteId).order("created_at", { ascending: false }),
       supabase2.from("cuentas").select("id, nombre, moneda").eq("activa", true).order("nombre"),
+      e.venta?.vehiculo_id
+        ? supabase2.from("vehiculos").select("propietario_dni, propietario_email, propietario_fecha_nacimiento, propietario_profesion").eq("id", e.venta.vehiculo_id).maybeSingle()
+        : Promise.resolve({ data: null }),
     ]);
     setHitos(h || []);
     setChecklist(cl || []);
@@ -147,6 +171,18 @@ export default function ExpedienteDetalleModal({ expedienteId, miId, perfiles, s
     setGastos(g || []);
     setDocumentos(d || []);
     setCuentas(c || []);
+    setCompradorNombre2(e.venta?.comprador_nombre || "");
+    setCompradorDni(e.venta?.comprador_dni || "");
+    setCompradorTelefono2(e.venta?.comprador_telefono || "");
+    setCompradorEmail(e.venta?.comprador_email || "");
+    setCompradorFechaNacimiento(e.venta?.comprador_fecha_nacimiento || "");
+    setCompradorProfesion(e.venta?.comprador_profesion || "");
+    setPropietarioNombre2(e.venta?.propietario_nombre || "");
+    setPropietarioTelefono2(e.venta?.propietario_telefono || "");
+    setPropietarioDni(veh?.propietario_dni || "");
+    setPropietarioEmail(veh?.propietario_email || "");
+    setPropietarioFechaNacimiento(veh?.propietario_fecha_nacimiento || "");
+    setPropietarioProfesion(veh?.propietario_profesion || "");
     setCargando(false);
   };
 
@@ -162,6 +198,20 @@ export default function ExpedienteDetalleModal({ expedienteId, miId, perfiles, s
     const nuevo = !item.completado;
     await supabase2.rpc("expediente_checklist_tildar", { p_item_id: item.id, p_completado: nuevo });
     setChecklist((prev) => prev.map((x) => (x.id === item.id ? { ...x, completado: nuevo } : x)));
+  };
+
+  // Suma un ítem custom al checklist de la parte (ej: un requisito puntual
+  // que no está en el set default que trae el expediente al crearse).
+  const agregarDocumentoChecklist = async (parte: "vendedora" | "compradora") => {
+    if (!nuevoDocNombre.trim()) return;
+    const ordenMax = Math.max(0, ...checklist.filter((c) => c.parte === parte).map((c) => c.orden || 0));
+    const { data, error } = await supabase2.from("expediente_checklist").insert({
+      expediente_id: expedienteId, parte, nombre: nuevoDocNombre.trim(), completado: false, orden: ordenMax + 1,
+    }).select().single();
+    if (error) { alert("No se pudo agregar el documento."); return; }
+    setChecklist((prev) => [...prev, data]);
+    setNuevoDocParte(null);
+    setNuevoDocNombre("");
   };
 
   const subirArchivoItem = async (item: any, file: File) => {
@@ -274,7 +324,25 @@ export default function ExpedienteDetalleModal({ expedienteId, miId, perfiles, s
       }).eq("id", expedienteId).select("*, venta:ventas(*)").single();
 
       if (venta) {
-        await supabase2.from("ventas").update({ responsable_consignacion_id: consignador || null, comentario_gestoria: comentarioGestoria || null, comentario_finanzas: comentarioFinanzas || null }).eq("id", venta.id);
+        await supabase2.from("ventas").update({
+          responsable_consignacion_id: consignador || null, comentario_gestoria: comentarioGestoria || null, comentario_finanzas: comentarioFinanzas || null,
+          comprador_nombre: compradorNombre2.trim() || venta.comprador_nombre, comprador_dni: compradorDni || null, comprador_telefono: compradorTelefono2 || null,
+          comprador_email: compradorEmail || null, comprador_fecha_nacimiento: compradorFechaNacimiento || null, comprador_profesion: compradorProfesion || null,
+          propietario_nombre: propietarioNombre2 || null, propietario_telefono: propietarioTelefono2 || null,
+        }).eq("id", venta.id);
+        if (venta.vehiculo_id) {
+          // Guardado aparte y con su propio catch: si vehiculos.propietario_profesion
+          // todavía no existe (falta correr la migración), que no tire abajo el
+          // resto del guardado (título, estado, comentarios, datos del comprador).
+          try {
+            await supabase2.from("vehiculos").update({
+              propietario_dni: propietarioDni || null, propietario_email: propietarioEmail || null,
+              propietario_fecha_nacimiento: propietarioFechaNacimiento || null, propietario_profesion: propietarioProfesion || null,
+            }).eq("id", venta.vehiculo_id);
+          } catch (errVeh) {
+            console.error("No se pudieron guardar los datos del propietario en vehiculos:", errVeh);
+          }
+        }
       }
 
       if (data) { setExpediente(data); onActualizado(data); }
@@ -882,6 +950,71 @@ export default function ExpedienteDetalleModal({ expedienteId, miId, perfiles, s
               })}
             </div>
           )}
+
+          {(tab === "Parte Vendedora" || tab === "Parte Compradora") && (() => {
+            const esVendedora = tab === "Parte Vendedora";
+            const parte = esVendedora ? "vendedora" as const : "compradora" as const;
+            const items = checklist.filter((c) => c.parte === parte);
+            const campos = esVendedora
+              ? { nombre: propietarioNombre2, setNombre: setPropietarioNombre2, dni: propietarioDni, setDni: setPropietarioDni, tel: propietarioTelefono2, setTel: setPropietarioTelefono2, email: propietarioEmail, setEmail: setPropietarioEmail, nacimiento: propietarioFechaNacimiento, setNacimiento: setPropietarioFechaNacimiento, profesion: propietarioProfesion, setProfesion: setPropietarioProfesion }
+              : { nombre: compradorNombre2, setNombre: setCompradorNombre2, dni: compradorDni, setDni: setCompradorDni, tel: compradorTelefono2, setTel: setCompradorTelefono2, email: compradorEmail, setEmail: setCompradorEmail, nacimiento: compradorFechaNacimiento, setNacimiento: setCompradorFechaNacimiento, profesion: compradorProfesion, setProfesion: setCompradorProfesion };
+            return (
+              <div className="space-y-4">
+                <p className="text-xs font-black uppercase tracking-widest text-slate-500 dark:text-slate-400">Datos de la Parte {esVendedora ? "Vendedora" : "Compradora"}</p>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                  <div><label className="text-xs font-semibold text-slate-500 dark:text-slate-400 block mb-1">Nombre completo</label><input value={campos.nombre} onChange={(e) => campos.setNombre(e.target.value)} placeholder={esVendedora ? "Nombre del vendedor" : "Nombre del comprador"} className="w-full bg-slate-50 dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-lg px-3 py-2 text-sm" /></div>
+                  <div><label className="text-xs font-semibold text-slate-500 dark:text-slate-400 block mb-1">DNI</label><input value={campos.dni} onChange={(e) => campos.setDni(e.target.value)} placeholder="00.000.000" className="w-full bg-slate-50 dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-lg px-3 py-2 text-sm" /></div>
+                  <div>
+                    <label className="text-xs font-semibold text-slate-500 dark:text-slate-400 block mb-1">Teléfono</label>
+                    <div className="flex gap-2">
+                      <input value={campos.tel} onChange={(e) => campos.setTel(e.target.value)} placeholder="+54 9 11 ..." className="flex-1 bg-slate-50 dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-lg px-3 py-2 text-sm" />
+                      {campos.tel && (
+                        <a href={whatsapp(campos.tel, campos.nombre, `Hola ${campos.nombre || ""}, te contacto por el expediente de ${venta?.vehiculo_marca} ${venta?.vehiculo_modelo}.`) || undefined} target="_blank" rel="noreferrer" className="shrink-0 flex items-center gap-1 px-3 py-2 rounded-lg bg-emerald-500 hover:bg-emerald-600 text-white text-xs font-bold"><MessageCircle className="w-3.5 h-3.5" /> WhatsApp</a>
+                      )}
+                    </div>
+                  </div>
+                  <div><label className="text-xs font-semibold text-slate-500 dark:text-slate-400 block mb-1">Email</label><input value={campos.email} onChange={(e) => campos.setEmail(e.target.value)} placeholder="email@..." className="w-full bg-slate-50 dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-lg px-3 py-2 text-sm" /></div>
+                  <div><label className="text-xs font-semibold text-slate-500 dark:text-slate-400 block mb-1">Fecha de nacimiento</label><input type="date" value={campos.nacimiento} onChange={(e) => campos.setNacimiento(e.target.value)} className="w-full bg-slate-50 dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-lg px-3 py-2 text-sm" /></div>
+                  <div><label className="text-xs font-semibold text-slate-500 dark:text-slate-400 block mb-1">Ocupación / profesión</label><input value={campos.profesion} onChange={(e) => campos.setProfesion(e.target.value)} placeholder="Abogado/a, médico/a, contador/a..." className="w-full bg-slate-50 dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-lg px-3 py-2 text-sm" /></div>
+                </div>
+                {esVendedora && <p className="text-[10px] text-slate-400">DNI, email, fecha de nacimiento y profesión quedan guardados en la ficha del vehículo (son del propietario del auto, no de esta venta puntual) — nombre y teléfono sí son propios de esta venta.</p>}
+
+                <div>
+                  <p className="text-xs font-bold text-slate-600 dark:text-slate-300 mb-2">Documentación requerida</p>
+                  {items.length === 0 ? (
+                    <p className="text-xs text-slate-400 italic mb-2">Sin ítems de documentación cargados para esta parte.</p>
+                  ) : (
+                    <div className="space-y-1.5 mb-2">
+                      {items.map((item) => (
+                        <div key={item.id} className="flex items-center justify-between bg-slate-50 dark:bg-white/5 border border-slate-100 dark:border-white/10 rounded-lg px-3 py-2">
+                          <button onClick={() => toggleChecklistItem(item)} className="flex items-center gap-1.5 text-left min-w-0">
+                            <span className={`w-2 h-2 rounded-full shrink-0 ${item.completado ? "bg-emerald-500" : "bg-amber-400"}`} />
+                            <span className={`text-xs truncate ${item.completado ? "text-slate-400 line-through" : "text-slate-600 dark:text-slate-300"}`}>{item.nombre}</span>
+                          </button>
+                          <div className="flex items-center gap-2 shrink-0">
+                            <span className={`text-[9px] font-bold px-2 py-1 rounded-full ${item.completado ? "bg-emerald-100 dark:bg-emerald-500/20 text-emerald-700 dark:text-emerald-300" : "bg-amber-100 dark:bg-amber-500/20 text-amber-700 dark:text-amber-300"}`}>{item.completado ? "OK" : "Pendiente"}</span>
+                            <label className="p-1.5 rounded-lg bg-white dark:bg-white/10 border border-slate-200 dark:border-white/10 cursor-pointer text-slate-500">
+                              {subiendoItem === item.id ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Upload className="w-3.5 h-3.5" />}
+                              <input type="file" accept="image/*,.pdf" className="hidden" disabled={!!subiendoItem} onChange={(e) => e.target.files?.[0] && subirArchivoItem(item, e.target.files[0])} />
+                            </label>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                  {nuevoDocParte === parte ? (
+                    <div className="flex items-center gap-1.5">
+                      <input autoFocus value={nuevoDocNombre} onChange={(e) => setNuevoDocNombre(e.target.value)} onKeyDown={(e) => e.key === "Enter" && agregarDocumentoChecklist(parte)} placeholder="Nombre del documento" className="flex-1 bg-white dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-lg px-2.5 py-1.5 text-xs outline-none focus:border-rose-500" />
+                      <button onClick={() => agregarDocumentoChecklist(parte)} disabled={!nuevoDocNombre.trim()} className="text-xs font-bold text-rose-600 disabled:opacity-50 shrink-0">Agregar</button>
+                      <button onClick={() => { setNuevoDocParte(null); setNuevoDocNombre(""); }} className="text-xs font-semibold text-slate-400 shrink-0">Cancelar</button>
+                    </div>
+                  ) : (
+                    <button onClick={() => { setNuevoDocParte(parte); setNuevoDocNombre(""); }} className="flex items-center gap-1 text-xs font-bold text-rose-600 hover:underline"><Plus className="w-3.5 h-3.5" /> Agregar documento</button>
+                  )}
+                </div>
+              </div>
+            );
+          })()}
 
           {tab === "Liquidación" && (
             <div className="space-y-4">

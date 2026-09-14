@@ -40,7 +40,18 @@ Cada gasto tiene `a_cargo_de`: `comprador` / `vendedor` / `agencia`. No son solo
 
 `confirmarParte()`/`revertirParte()` en `ExpedienteDetalleModal.tsx` son simétricas: confirmar setea `confirmado_X`/`confirmado_X_en`/`confirmado_X_por`, revertir los vuelve a `false`/`null`/`null`. Revertir una confirmación cuando la otra parte ya estaba confirmada vuelve a bloquear el expediente entero (mismo criterio que `pendienteConfirmacion` de arriba) — es intencional: no hay forma de "revertir solo a medias".
 
+## Tabs "Parte Vendedora" / "Parte Compradora"
+
+Datos personales de cada parte + su checklist de documentación, en un tab propio (antes solo vivían mezclados en Documentos/Gestoría). Casi todos los campos ya existían en otras tablas, no fue necesario crear casi nada nuevo:
+
+- **Comprador**: los 6 campos (`nombre`/`dni`/`telefono`/`email`/`fecha_nacimiento`/`profesion`) ya estaban en `ventas.comprador_*` — se editan y guardan ahí directo, sin campo nuevo.
+- **Vendedor/propietario**: `nombre`/`telefono` están en `ventas.propietario_*` (se cargan una vez al vincular el auto a la venta). `dni`/`email`/`fecha_nacimiento` viven en `vehiculos.propietario_*` (son del auto, no de la venta puntual — si el mismo propietario vende otro auto, son registros separados). `profesion` era el único campo que faltaba → `vehiculos.propietario_profesion` (nuevo, ver `migraciones/sql_vehiculos_propietario_profesion.sql`). El guardado de este último campo está en su propio `try/catch` en `guardarCambios()`: si la migración todavía no corrió, ese `update` puntual falla solo y no rompe el resto del guardado (comprador, hitos, etc.).
+- El botón WhatsApp de cada parte reusa `whatsapp()` (mismo helper que ya usaba Comprobantes/Pago Comprador).
+- La sección "Documentación requerida" de cada tab reusa `toggleChecklistItem`/`subirArchivoItem` (las mismas funciones que ya alimentan el resumen "Docs Vendedor X/Y" y el tab Gestoría) — no hay lógica de checklist duplicada. `agregarDocumentoChecklist(parte)` es nuevo: permite sumar un ítem suelto al checklist de esa parte (`orden = max(orden existente) + 1`).
+- Los tabs Documentos y Gestoría **no se tocaron** — siguen mostrando lo mismo que antes; estos dos tabs nuevos son una vista adicional centrada en la persona, no un reemplazo.
+
 ## No tocar sin revisar el resto
 
 - Si agregás un nuevo tipo de gasto o cambiás `a_cargo_de`, revisá que el efecto (suma/resta) en los totales de Liquidación siga la misma regla de arriba — no alcanza con que aparezca en el listado.
 - `lib/moneda.ts` es la fuente de conversión del resto del panel (Señas, Ventas) — si en algún momento se resuelve la limitación de señas en otra moneda, usar esa utilidad en vez de escribir conversión propia acá.
+- Los datos personales de comprador/propietario están repartidos en 2 tablas (`ventas`/`vehiculos`, ver "Tabs Parte Vendedora/Compradora" arriba) — si agregás un campo nuevo, pensá primero si es "de la venta" o "del auto" antes de elegir dónde guardarlo.
