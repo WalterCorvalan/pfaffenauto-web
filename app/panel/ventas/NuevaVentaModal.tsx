@@ -35,6 +35,10 @@ export interface VentaPrefill {
   precioVenta?: string;
   monedaVenta?: string;
   vehiculoId?: string;
+  permuta?: {
+    marca?: string | null; modelo?: string | null; anio?: number | null; km?: number | null;
+    estado?: string | null; patente?: string | null; tasacion?: number | null; moneda?: string | null;
+  };
 }
 
 interface Props {
@@ -118,8 +122,20 @@ export default function NuevaVentaModal({ perfiles, clientes, vehiculos, miId, i
   const [tipoCambio, setTipoCambio] = useState(editando?.tipo_cambio ? String(editando.tipo_cambio) : "");
   const [patentamientoMonto, setPatentamientoMonto] = useState(editando?.patentamiento_transferencia_monto ? String(editando.patentamiento_transferencia_monto) : "");
 
-  const [incluirPermuta, setIncluirPermuta] = useState(false);
-  const [permutas, setPermutas] = useState<Permuta[]>([]);
+  // Si viene de "Convertir en venta" de una cotización con toma de permuta
+  // cargada (NuevaCotizacionModal.tsx), precargarla acá -- si no, se pierde
+  // por completo y el vendedor tiene que recordarla y volver a tipearla.
+  const [incluirPermuta, setIncluirPermuta] = useState(!!initial?.permuta);
+  const [permutas, setPermutas] = useState<Permuta[]>(initial?.permuta ? [{
+    ...nuevaPermuta(),
+    marca: initial.permuta.marca || "", modelo: initial.permuta.modelo || "",
+    anio: initial.permuta.anio ? String(initial.permuta.anio) : "",
+    km: initial.permuta.km ? String(initial.permuta.km) : "",
+    condicion: initial.permuta.estado || "Muy bueno",
+    patente: initial.permuta.patente || "",
+    valor: initial.permuta.tasacion ? String(initial.permuta.tasacion) : "",
+    moneda: initial.permuta.moneda || "USD",
+  }] : []);
 
   const [responsableConsignacion, setResponsableConsignacion] = useState(editando?.responsable_consignacion_id || "");
   const [gestorAsignado, setGestorAsignado] = useState(editando?.gestor_asignado_id || "");
