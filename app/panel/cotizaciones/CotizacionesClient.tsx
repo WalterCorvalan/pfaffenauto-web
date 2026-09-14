@@ -57,6 +57,7 @@ export default function CotizacionesClient({
   const [vendedorFiltro, setVendedorFiltro] = useState("");
   const [desde, setDesde] = useState("");
   const [hasta, setHasta] = useState("");
+  const [orden, setOrden] = useState<"reciente" | "antigua">("reciente");
   const [modalNuevo, setModalNuevo] = useState(false);
   const [modalMigrar, setModalMigrar] = useState(false);
   const [editando, setEditando] = useState<Cotizacion | null>(null);
@@ -129,8 +130,12 @@ export default function CotizacionesClient({
       const q = query.trim().toLowerCase();
       lista = lista.filter((c) => [c.cliente_nombre, c.vehiculo_descripcion, c.condiciones_pago].filter(Boolean).join(" ").toLowerCase().includes(q));
     }
+    lista = [...lista].sort((a, b) => {
+      const cmp = a.fecha_emision.localeCompare(b.fecha_emision);
+      return orden === "reciente" ? -cmp : cmp;
+    });
     return lista;
-  }, [cotizaciones, tab, vendedorFiltro, desde, hasta, query]);
+  }, [cotizaciones, tab, vendedorFiltro, desde, hasta, query, orden]);
 
   const contadores = {
     pendiente: cotizaciones.filter((c) => c.estado === "pendiente").length,
@@ -201,6 +206,10 @@ export default function CotizacionesClient({
           </select>
           <input type="date" value={desde} onChange={(e) => setDesde(e.target.value)} className="bg-white dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-xl px-3 py-2.5 text-sm outline-none focus:border-rose-500 text-slate-900 dark:text-white" />
           <input type="date" value={hasta} onChange={(e) => setHasta(e.target.value)} className="bg-white dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-xl px-3 py-2.5 text-sm outline-none focus:border-rose-500 text-slate-900 dark:text-white" />
+          <select value={orden} onChange={(e) => setOrden(e.target.value as "reciente" | "antigua")} className="bg-white dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-xl px-3 py-2.5 text-sm outline-none focus:border-rose-500 text-slate-900 dark:text-white">
+            <option value="reciente">Fecha: más recientes primero</option>
+            <option value="antigua">Fecha: más antiguas primero</option>
+          </select>
         </div>
 
         {filtradas.length === 0 ? (
@@ -227,6 +236,9 @@ export default function CotizacionesClient({
                     <p className="text-[11px] text-slate-400 mt-0.5">{fmtFechaLocal(c.fecha_emision)}</p>
                   </div>
                 ), claseTd: "align-top", ocultarEnMobile: true },
+                { key: "fecha", header: "Fecha", cell: (c) => (
+                  <span className="cursor-pointer text-[13px] text-slate-600 dark:text-slate-300 whitespace-nowrap" onClick={() => setDetalle(c)}>{fmtFechaLocal(c.fecha_emision)}</span>
+                ), claseTd: "align-top", ocultarEnMobile: true },
                 { key: "vehiculo", header: "Vehículo", cell: (c) => (
                   <div className="cursor-pointer" onClick={() => setDetalle(c)}>
                     <p className="text-[13px] font-semibold text-slate-700 dark:text-slate-200">{c.vehiculo_descripcion || "—"}</p>
@@ -247,6 +259,11 @@ export default function CotizacionesClient({
                 { key: "vendedor", header: "Vendedor", cell: (c) => (
                   <span className="cursor-pointer text-[13px] text-slate-600 dark:text-slate-300" onClick={() => setDetalle(c)}>{c.vendedor_id ? perfilMap[c.vendedor_id] : "Sin vendedor"}</span>
                 ), claseTd: "align-top" },
+                ...(tab === "aprobada" ? [{
+                  key: "aprobada_el", header: "Aprobada el", cell: (c: Cotizacion) => (
+                    <span className="cursor-pointer text-[13px] text-slate-600 dark:text-slate-300 whitespace-nowrap" onClick={() => setDetalle(c)}>{fmtFechaLocal(c.updated_at.slice(0, 10))}</span>
+                  ), claseTd: "align-top", ocultarEnMobile: true,
+                }] : []),
                 { key: "estado", header: "Estado", anchoCompletoMobile: true, claseTd: "align-top min-w-[260px]", cell: (c) => {
                   const horas = horasPendiente(c.created_at);
                   const slaColor = horas >= slaHoras ? "bg-rose-500" : horas >= slaHoras / 2 ? "bg-amber-500" : "bg-emerald-500";
@@ -256,7 +273,7 @@ export default function CotizacionesClient({
                       <span className={`inline-block text-[10px] font-bold px-2 py-1 rounded-full border ${tab === "pendiente" ? "bg-slate-100 dark:bg-white/10 text-slate-600 dark:text-slate-300 border-slate-200 dark:border-white/10" : tab === "aprobada" ? "bg-emerald-50 dark:bg-emerald-500/10 text-emerald-700 dark:text-emerald-300 border-emerald-200 dark:border-emerald-500/20" : "bg-rose-50 dark:bg-rose-500/10 text-rose-700 dark:text-rose-300 border-rose-200 dark:border-rose-500/20"}`}>
                         {tab === "pendiente" ? "Pendiente" : tab === "aprobada" ? "Aprobada" : "Rechazada"}
                       </span>
-                      {tab !== "pendiente" && <p className="text-[10px] text-slate-400 mt-1">{tab === "aprobada" ? "Aprobada" : "Rechazada"} el {fmtFechaLocal(c.updated_at.slice(0, 10))}</p>}
+                      {tab === "rechazada" && <p className="text-[10px] text-slate-400 mt-1">Rechazada el {fmtFechaLocal(c.updated_at.slice(0, 10))}</p>}
 
                       {c.revision_pedida && (
                         <span className="flex items-center gap-1 mt-2 text-[10px] font-bold px-2 py-1 rounded-full bg-amber-50 dark:bg-amber-500/10 text-amber-700 dark:text-amber-300 border border-amber-200 dark:border-amber-500/20 w-fit">
