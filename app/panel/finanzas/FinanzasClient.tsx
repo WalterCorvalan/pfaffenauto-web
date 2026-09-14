@@ -104,14 +104,18 @@ export default function FinanzasClient({
     const inicioMesStr = inicioMes.toISOString().slice(0, 10);
     return movimientos.filter((m) => m.fecha >= inicioMesStr);
   }, [movimientos]);
+  // Mismo criterio que cajaPorSucursal más abajo: una transferencia entre
+  // cajas propias entra como ingreso en una caja y egreso en la otra --
+  // sumarla infla ingresos/egresos brutos sin que sea plata real, y puede
+  // distorsionar el neto si las dos patas caen en monedas distintas.
   const ingresosTotales = useMemo(() => {
     const map: Record<string, number> = {};
-    movimientosDelMes.filter((m) => m.tipo === "ingreso" && m.estado === "aprobado").forEach((m) => { const mo = m.cuenta?.moneda; if (mo) map[mo] = (map[mo] || 0) + Number(m.monto); });
+    movimientosDelMes.filter((m) => m.tipo === "ingreso" && m.estado === "aprobado" && m.tipo_movimiento !== "Transferencia").forEach((m) => { const mo = m.cuenta?.moneda; if (mo) map[mo] = (map[mo] || 0) + Number(m.monto); });
     return map;
   }, [movimientosDelMes]);
   const egresosTotales = useMemo(() => {
     const map: Record<string, number> = {};
-    movimientosDelMes.filter((m) => m.tipo === "egreso" && m.estado === "aprobado").forEach((m) => { const mo = m.cuenta?.moneda; if (mo) map[mo] = (map[mo] || 0) + Number(m.monto); });
+    movimientosDelMes.filter((m) => m.tipo === "egreso" && m.estado === "aprobado" && m.tipo_movimiento !== "Transferencia").forEach((m) => { const mo = m.cuenta?.moneda; if (mo) map[mo] = (map[mo] || 0) + Number(m.monto); });
     return map;
   }, [movimientosDelMes]);
 
