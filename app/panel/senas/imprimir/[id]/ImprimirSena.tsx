@@ -80,6 +80,15 @@ export default function ImprimirSena({ sena: s, branding }: { sena: any; brandin
   const domicilioCliente = [[s.calle, s.numero_calle].filter(Boolean).join(" ") + (s.depto ? ` Dto. ${s.depto}` : ""), s.localidad, s.provincia ? `(${s.provincia})` : ""].filter(Boolean).join(", ");
   const adicionalTransferencia = Number(s.patentamiento_transferencia_ars || 0);
   const saldoAbonar = Number(s.saldo_abonar_ars || 0);
+  // Preferir la condición real del vehículo (misma fuente que usa el recibo de
+  // venta) en vez de adivinar 0KM/usado por el año -- eso hacía que un usado
+  // reciente figurara como 0KM acá y como usado en el recibo de venta.
+  const esCeroKm = s.vehiculo?.condicion ? s.vehiculo.condicion === "0km" : Number(s.modelo_anio) >= new Date().getFullYear();
+  // "de la Localidad de" es la localidad de radicación del vehículo (mismo
+  // campo que usa el recibo de venta), no la del domicilio del cliente --
+  // antes leía s.localidad (dirección del cliente) o el nombre de la
+  // sucursal, mezclando datos de fuentes distintas entre ambos documentos.
+  const localidadVehiculo = s.vehiculo?.radicado_localidad || s.sucursales?.nombre || "-";
 
   return (
     <div className="min-h-screen pb-20 text-slate-800 bg-[#F9FAFB] dark:bg-[#0A0A0A] print:bg-white print:pb-0 print:min-h-0 pt-8 print:pt-0 font-sans">
@@ -165,7 +174,7 @@ export default function ImprimirSena({ sena: s, branding }: { sena: any; brandin
         </div>
 
         <p className="mb-2.5 text-justify">
-          Establecidos como precio por la venta de un(a) <strong className="uppercase">{s.segmento || "vehículo"}</strong>, <strong className="uppercase">{Number(s.modelo_anio) >= new Date().getFullYear() ? "0KM" : "usado"}</strong>, en las condiciones vistas y que se encuentra libre de todo gravamen y/o deudas nacionales, municipales o provinciales, el cual ha sido revisado y probado a su entera satisfacción.
+          Establecidos como precio por la venta de un(a) <strong className="uppercase">{s.segmento || "vehículo"}</strong>, <strong className="uppercase">{esCeroKm ? "0KM" : "usado"}</strong>, en las condiciones vistas y que se encuentra libre de todo gravamen y/o deudas nacionales, municipales o provinciales, el cual ha sido revisado y probado a su entera satisfacción.
         </p>
 
         <div className="grid grid-cols-2 gap-x-8 gap-y-1 mb-2.5">
@@ -177,10 +186,10 @@ export default function ImprimirSena({ sena: s, branding }: { sena: any; brandin
           <div className="flex justify-between border-b border-dotted border-slate-300 pb-0.5"><span className="text-slate-500">Número de Motor</span><strong className="font-mono">{s.numero_motor || "A verificar"}</strong></div>
           <div className="flex justify-between border-b border-dotted border-slate-300 pb-0.5"><span className="text-slate-500">Chasis Marca</span><strong>{s.marca_chasis || "-"}</strong></div>
           <div className="flex justify-between border-b border-dotted border-slate-300 pb-0.5"><span className="text-slate-500">Número de Chasis</span><strong className="font-mono">{s.numero_chasis || "A verificar"}</strong></div>
-          <div className="flex justify-between border-b border-dotted border-slate-300 pb-0.5"><span className="text-slate-500">Dominio</span><strong className="uppercase">{s.dominio || "0KM"}</strong></div>
+          <div className="flex justify-between border-b border-dotted border-slate-300 pb-0.5"><span className="text-slate-500">Dominio</span><strong className="uppercase">{s.dominio || (esCeroKm ? "0KM" : "—")}</strong></div>
           <div className="flex justify-between border-b border-dotted border-slate-300 pb-0.5"><span className="text-slate-500">Color</span><strong className="capitalize">{s.color || "-"}</strong></div>
           <div className="flex justify-between border-b border-dotted border-slate-300 pb-0.5"><span className="text-slate-500">Año</span><strong>{s.modelo_anio}</strong></div>
-          <div className="flex justify-between border-b border-dotted border-slate-300 pb-0.5"><span className="text-slate-500">de la Localidad de</span><strong>{s.localidad || s.sucursales?.nombre || "-"}</strong></div>
+          <div className="flex justify-between border-b border-dotted border-slate-300 pb-0.5"><span className="text-slate-500">de la Localidad de</span><strong>{localidadVehiculo}</strong></div>
         </div>
 
         <p className="text-[9.5px] text-slate-700 leading-snug text-justify mb-1">
