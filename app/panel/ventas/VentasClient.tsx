@@ -66,12 +66,22 @@ export default function VentasClient({
     if (cotizacionId) {
       supabase2.from("cotizaciones").select("*").eq("id", cotizacionId).single().then(({ data }) => {
         if (data) {
+          // precio_aprobado es el precio negociado que un admin aprobó vía
+          // ModificarCotizacionModal.tsx -- puede diferir del sugerido
+          // original. Si existe, es el que corresponde precargar (el botón
+          // "Convertir en venta" solo aparece en cotizaciones ya aprobadas).
+          const precio = data.precio_aprobado ?? data.precio_sugerido;
+          const tienePermuta = data.permuta_marca || data.permuta_modelo || data.permuta_estado;
           setPrefill({
             compradorNombre: data.cliente_nombre || "",
             vehiculoDescripcion: data.vehiculo_descripcion || "",
-            precioVenta: data.precio_sugerido ? String(data.precio_sugerido) : "",
+            precioVenta: precio ? String(precio) : "",
             monedaVenta: data.moneda || "USD",
             vehiculoId: data.vehiculo_id || "",
+            permuta: tienePermuta ? {
+              marca: data.permuta_marca, modelo: data.permuta_modelo, anio: data.permuta_anio, km: data.permuta_km,
+              estado: data.permuta_estado, patente: data.permuta_patente, tasacion: data.permuta_tasacion, moneda: data.moneda,
+            } : undefined,
           });
           setModalNueva(true);
         }
