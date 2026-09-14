@@ -334,8 +334,14 @@ export default function NuevaVentaModal({ perfiles, clientes, vehiculos, miId, i
         calificacion_pedida_en: calificacionPedida && !editando.calificacion_pedida ? new Date().toISOString() : (calificacionPedida ? editando.calificacion_pedida_en : null),
       };
 
-      const { data: venta, error: dbError } = await supabase2.from("ventas").update(payload).eq("id", editando.id).select().single();
+      // .single() tiraba "Cannot coerce the result to a single JSON object"
+      // sin decir por qué cuando el UPDATE no podía releer la fila (RLS, o
+      // un trigger de base de datos abortando la transacción según el
+      // estado). maybeSingle() no crashea con eso, y distinguimos el caso
+      // de "no se pudo confirmar" del error real de Supabase.
+      const { data: venta, error: dbError } = await supabase2.from("ventas").update(payload).eq("id", editando.id).select().maybeSingle();
       if (dbError) throw dbError;
+      if (!venta) throw new Error("No se pudo confirmar el guardado (no se pudo releer la venta actualizada). Verificá permisos y volvé a intentar.");
 
       await guardarPagoEfectivo(editando.id);
 
