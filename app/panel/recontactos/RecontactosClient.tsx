@@ -237,16 +237,11 @@ export default function RecontactosClient({
     <div className="flex flex-col h-full w-full overflow-hidden">
       <div className="flex-1 overflow-y-auto custom-scrollbar p-4 md:p-6">
         <div className="max-w-6xl mx-auto">
-          <div className="flex items-center gap-4 mb-1">
-            <div className="w-10 h-10 rounded-xl bg-rose-50 dark:bg-rose-500/10 border border-rose-100 dark:border-rose-500/20 flex items-center justify-center shrink-0">
-              <UserSearch className="w-5 h-5 text-rose-600 dark:text-rose-400" />
-            </div>
-            <div>
-              <h1 className="text-xl font-black text-slate-900 dark:text-white leading-tight">Recontactos</h1>
-              <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
-                Gente que consultó hace {plazoFiltro}+ meses y nunca compró. A los que ya compraron los ves en Postventa y Dormidos — acá están los que no vuelve a mirar nadie.
-              </p>
-            </div>
+          <div className="mb-1">
+            <h1 className="text-xl font-black text-slate-900 dark:text-white flex items-center gap-2"><UserSearch className="w-5 h-5 text-rose-600" /> Recontactos</h1>
+            <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
+              Gente que consultó hace {plazoFiltro}+ meses y nunca compró. A los que ya compraron los ves en Postventa y Dormidos — acá están los que no vuelve a mirar nadie.
+            </p>
           </div>
 
           <div className="grid grid-cols-2 md:grid-cols-4 gap-3 my-4">

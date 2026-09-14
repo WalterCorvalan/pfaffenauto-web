@@ -215,14 +215,9 @@ export default function StockClient({
       <div className="flex-1 overflow-y-auto custom-scrollbar p-4 md:p-6">
         <div className="max-w-[80rem] 2xl:max-w-[110rem] mx-auto">
           <div className="flex flex-col md:flex-row md:items-center justify-between gap-3 mb-4">
-            <div className="flex items-center gap-4">
-              <div className="w-10 h-10 rounded-xl bg-rose-50 dark:bg-rose-500/10 border border-rose-100 dark:border-rose-500/20 flex items-center justify-center shrink-0">
-                <Car className="w-5 h-5 text-rose-600 dark:text-rose-400" />
-              </div>
-              <div>
-                <h1 className="text-xl font-black text-slate-900 dark:text-white leading-tight">Stock</h1>
-                <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">{disponibles.length} vehículos disponibles para vender</p>
-              </div>
+            <div>
+              <h1 className="text-xl font-black text-slate-900 dark:text-white flex items-center gap-2"><Car className="w-5 h-5 text-rose-600" /> Stock</h1>
+              <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">{disponibles.length} vehículos disponibles para vender</p>
             </div>
             <div className="flex items-center gap-2">
               {/* Desktop: todas las acciones sueltas. Mobile: solo la

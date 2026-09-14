@@ -140,21 +140,16 @@ export default function CotizacionesClient({
 
   return (
     <div className="flex flex-col h-full w-full overflow-hidden">
-      <header className="flex flex-col md:flex-row md:items-center justify-between gap-3 border-b border-slate-200 dark:border-white/5 px-6 py-4 bg-white dark:bg-white/[0.02] shrink-0">
-        <div className="flex items-center gap-4">
-          <div className="w-10 h-10 rounded-xl bg-rose-50 dark:bg-rose-500/10 border border-rose-100 dark:border-rose-500/20 flex items-center justify-center shrink-0">
-            <FileText className="w-5 h-5 text-rose-600 dark:text-rose-400" />
-          </div>
-          <div>
-            <h1 className="text-xl font-black text-slate-900 dark:text-white leading-tight">Cotizaciones</h1>
-            <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">{contadores.pendiente} pendientes · {contadores.aprobada} aprobadas · {contadores.rechazada} rechazadas</p>
-          </div>
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-3 px-6 pt-4 shrink-0">
+        <div>
+          <h1 className="text-xl font-black text-slate-900 dark:text-white flex items-center gap-2"><FileText className="w-5 h-5 text-rose-600" /> Cotizaciones</h1>
+          <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">{contadores.pendiente} pendientes · {contadores.aprobada} aprobadas · {contadores.rechazada} rechazadas</p>
         </div>
         <div className="flex items-center gap-2 shrink-0">
           <button onClick={() => setModalMigrar(true)} className="flex items-center gap-1.5 px-3.5 py-2.5 text-sm font-bold bg-white dark:bg-white/5 border border-slate-200 dark:border-white/10 hover:bg-slate-50 dark:hover:bg-white/10 rounded-xl transition-colors text-slate-600 dark:text-slate-300"><Wrench className="w-4 h-4" /> Migrar borradores</button>
           <button onClick={() => setModalNuevo(true)} className="flex items-center gap-1.5 px-4 py-2.5 text-sm font-bold bg-rose-600 hover:bg-rose-700 text-white rounded-xl transition-colors"><Plus className="w-4 h-4" /> Nueva cotización</button>
         </div>
-      </header>
+      </div>
 
       <div className="flex items-center gap-1 px-6 pt-3 border-b border-slate-200 dark:border-white/5 bg-white dark:bg-white/[0.02]">
         {[["pendiente", "Pendientes"], ["aprobada", "Aprobadas"], ["rechazada", "Rechazadas"]].map(([v, label]) => (

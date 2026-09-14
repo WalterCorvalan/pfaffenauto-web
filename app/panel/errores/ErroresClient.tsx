@@ -20,15 +20,10 @@ export default function ErroresClient({ errores }: { errores: LogError[] }) {
 
   return (
     <div className="flex flex-col h-full w-full overflow-hidden">
-      <header className="flex flex-col md:flex-row md:items-center justify-between gap-3 border-b border-slate-200 dark:border-white/5 px-6 py-4 bg-white dark:bg-white/[0.02] shrink-0">
-        <div className="flex items-center gap-4">
-          <div className="w-10 h-10 rounded-xl bg-rose-50 dark:bg-rose-500/10 border border-rose-100 dark:border-rose-500/20 flex items-center justify-center shrink-0">
-            <AlertTriangle className="w-5 h-5 text-rose-600 dark:text-rose-400" />
-          </div>
-          <div>
-            <h1 className="text-xl font-black text-slate-900 dark:text-white leading-tight">Errores del sistema</h1>
-            <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">Fallas registradas — últimos {errores.length}</p>
-          </div>
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-3 px-6 pt-4 shrink-0">
+        <div>
+          <h1 className="text-xl font-black text-slate-900 dark:text-white flex items-center gap-2"><AlertTriangle className="w-5 h-5 text-rose-600" /> Errores del sistema</h1>
+          <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">Fallas registradas — últimos {errores.length}</p>
         </div>
 
         <div className="flex items-center gap-2 flex-wrap">
@@ -44,7 +39,7 @@ export default function ErroresClient({ errores }: { errores: LogError[] }) {
             ))}
           </select>
         </div>
-      </header>
+      </div>
 
       <div className="flex-1 overflow-y-auto custom-scrollbar p-4 md:p-6">
         <div className="max-w-4xl mx-auto">
