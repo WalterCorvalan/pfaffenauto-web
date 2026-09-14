@@ -1090,6 +1090,25 @@ export default function ExpedienteDetalleModal({ expedienteId, miId, perfiles, s
           )}
         </div>
 
+        {/* Resumen de checklist siempre visible (mismos datos que el tab
+            Documentos/Gestoría, solo que ahí quedaba escondido dentro de un
+            tab en vez de a la vista sin importar en qué tab estás). */}
+        {checklist.length > 0 && (
+          <div className="px-5 pb-2 grid grid-cols-2 gap-2">
+            {(["vendedora", "compradora"] as const).map((parte) => {
+              const items = checklist.filter((x) => x.parte === parte);
+              if (items.length === 0) return null;
+              const completos = items.filter((x) => x.completado).length;
+              return (
+                <button key={parte} onClick={() => setTab("Documentos")} className="flex items-center justify-between bg-slate-50 dark:bg-white/5 border border-slate-100 dark:border-white/10 rounded-lg px-3 py-2 hover:bg-slate-100 dark:hover:bg-white/10 text-left">
+                  <span className="text-xs font-bold text-slate-600 dark:text-slate-300">Docs {parte === "vendedora" ? "Vendedor" : "Comprador"}</span>
+                  <span className={`text-xs font-black ${completos === items.length ? "text-emerald-600" : "text-amber-600"}`}>{completos}/{items.length}</span>
+                </button>
+              );
+            })}
+          </div>
+        )}
+
         <div className="border-t border-slate-100 dark:border-white/10 p-4 sticky bottom-0 bg-white dark:bg-[#111] flex flex-wrap items-center gap-2">
           <button onClick={() => setMostrarPedido((v) => !v)} className="px-3 py-2 text-xs font-bold rounded-lg bg-indigo-50 dark:bg-indigo-500/10 text-indigo-600 dark:text-indigo-300">🔔 Pedir atención</button>
           <div className="relative">
