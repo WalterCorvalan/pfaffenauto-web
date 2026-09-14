@@ -3,6 +3,7 @@ import { createClient } from "@supabase/supabase-js";
 import { verificarTurnstile } from "@/lib/turnstile";
 import { rateLimit, ipDesdeRequest } from "@/lib/rateLimit";
 import { registrarError } from "@/lib/panel/logger";
+import { crearAlerta } from "@/lib/panel/alertas";
 
 const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE2_URL!,
@@ -64,11 +65,11 @@ export async function POST(req: Request) {
     const titulo = `Nueva visita agendada — ${nombre_cliente}${vehiculoTxt ? ` (${vehiculoTxt})` : ""}`;
     const link = `/panel/visitas`;
     if (vendedor_id) {
-      await supabase.from("alertas").insert({ destinatario_id: vendedor_id, tipo: "visita_nueva", prioridad: "media", titulo, link });
+      await crearAlerta(supabase, vendedor_id, titulo, { link, tipo: "visita_nueva", prioridad: "media", modulo: "visitas" });
     } else {
       const { data: destinatarios } = await supabase.from("perfiles").select("id").or("roles.cs.{admin},roles.cs.{encargado}").eq("activo", true);
       for (const d of destinatarios || []) {
-        await supabase.from("alertas").insert({ destinatario_id: d.id, tipo: "visita_nueva", prioridad: "media", titulo, link });
+        await crearAlerta(supabase, d.id, titulo, { link, tipo: "visita_nueva", prioridad: "media", modulo: "visitas" });
       }
     }
 

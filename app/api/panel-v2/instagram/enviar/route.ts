@@ -7,6 +7,7 @@ import { decrypt } from "@/lib/crypto";
 import { rateLimit, ipDesdeRequest } from "@/lib/rateLimit";
 import { registrarError } from "@/lib/panel/logger";
 import { contieneLenguajeInapropiado } from "@/lib/panel/moderacion";
+import { crearAlerta } from "@/lib/panel/alertas";
 import { z } from "zod";
 
 const EnviarSchema = z.object({
@@ -49,7 +50,7 @@ export async function POST(request: Request) {
 
   const { data: conversacion } = await supabaseAdmin
     .from("instagram_conversaciones")
-    .select("contacto_id, ai_habilitada, estado_pipeline, instagram_contactos(ig_user_id)")
+    .select("contacto_id, ai_habilitada, estado_pipeline, instagram_contactos(ig_user_id, username)")
     .eq("id", conversacionId)
     .single();
 
@@ -79,10 +80,27 @@ export async function POST(request: Request) {
     await sendInstagramMessage(config.ig_user_id, token, igUserId, texto);
     await supabaseAdmin.from("instagram_mensajes").update({ status: "sent" }).eq("id", mensaje.id);
 
+    const esPrimeraRespuesta = !conversacion?.estado_pipeline || conversacion.estado_pipeline === "sin_contactar";
     const patchConversacion: Record<string, unknown> = { last_message_at: new Date().toISOString() };
     if (conversacion?.ai_habilitada !== false) patchConversacion.ai_habilitada = false;
-    if (!conversacion?.estado_pipeline || conversacion.estado_pipeline === "sin_contactar") patchConversacion.estado_pipeline = "contactado";
+    if (esPrimeraRespuesta) patchConversacion.estado_pipeline = "contactado";
     await supabaseAdmin.from("instagram_conversaciones").update(patchConversacion).eq("id", conversacionId);
+
+    // Aviso a admin/encargados de que el lead ya fue atendido -- solo en la
+    // primera respuesta, no en cada mensaje de la charla (eso sería ruido).
+    if (esPrimeraRespuesta) {
+      const { data: perfil } = await supabaseAdmin.from("perfiles").select("nombre").eq("id", user.id).maybeSingle();
+      const nombreContacto = (conversacion?.instagram_contactos as any)?.username ? `@${(conversacion?.instagram_contactos as any)?.username}` : "un contacto de Instagram";
+      const { data: destinatarios } = await supabaseAdmin.from("perfiles").select("id").or("roles.cs.{admin},roles.cs.{encargado}").eq("activo", true).neq("id", user.id);
+      for (const d of destinatarios || []) {
+        crearAlerta(supabaseAdmin, d.id, `${perfil?.nombre || "Un vendedor"} respondió a ${nombreContacto}`, {
+          link: "/panel/whatsapp",
+          tipo: "lead_respondido",
+          prioridad: "novedad",
+          categoriaNotif: "leads",
+        }).catch((err) => console.error("[instagram/enviar] error notificando primera respuesta:", err));
+      }
+    }
   } catch (err: any) {
     registrarError("api/panel/instagram/enviar", err, { conversacionId, mensajeId: mensaje.id });
     await supabaseAdmin.from("instagram_mensajes").update({ status: "failed" }).eq("id", mensaje.id);

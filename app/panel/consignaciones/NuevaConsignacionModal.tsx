@@ -4,6 +4,7 @@ import { useState, useEffect, useRef } from "react";
 import { supabase2 } from "@/lib/supabase/client";
 import { X, Loader2 } from "lucide-react";
 import { hoyLocalISO } from "@/lib/panel/fechas";
+import { crearAlerta } from "@/lib/panel/alertas";
 
 interface Perfil { id: string; nombre: string; roles: string[] }
 interface Cliente { id: string; nombre: string; telefono: string | null }
@@ -81,6 +82,12 @@ export default function NuevaConsignacionModal({ perfiles, clientes, miId, onClo
         .single();
       if (err) throw err;
       onCreado(data);
+      for (const p of perfiles.filter((p) => (p.roles?.includes("admin") || p.roles?.includes("encargado")) && p.id !== miId)) {
+        crearAlerta(supabase2, p.id, `Nueva consignación — ${clienteNombre.trim()}`, {
+          mensaje: `${vehiculoDescripcion.trim()} (vendedor: ${data.vendedor?.nombre || "sin asignar"}).`,
+          link: "/panel/consignaciones", tipo: "consignacion", prioridad: "novedad", categoriaNotif: "consignacion",
+        });
+      }
       onClose();
     } catch (e: any) {
       setError(e?.message || "No se pudo guardar la consignación.");

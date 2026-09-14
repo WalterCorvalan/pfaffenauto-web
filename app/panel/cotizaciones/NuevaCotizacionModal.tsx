@@ -91,10 +91,15 @@ export default function NuevaCotizacionModal({ clientes, vehiculos, perfiles, mi
         : await supabase2.from("cotizaciones").insert({ ...payload, vendedor_id: miId || null, creado_por: miId || null }).select().single();
       if (dbError) throw dbError;
       if (!esEdicion && miId) {
-        crearAlerta(supabase2, miId, `Nueva cotización — ${data.cliente_nombre}`, {
-          mensaje: `${miNombre} creó una cotización por ${data.moneda} ${Number(data.precio_sugerido).toLocaleString("es-AR")}.`,
-          link: "/panel/cotizaciones", tipo: "cotizacion", prioridad: "novedad", categoriaNotif: "cotizaciones",
-        });
+        // Antes notificaba a miId -- el mismo vendedor que acaba de crearla,
+        // avisándole de algo que ya sabe. Tiene que avisarle a admin/encargados.
+        const { data: destinatarios } = await supabase2.from("perfiles").select("id").or("roles.cs.{admin},roles.cs.{encargado}").eq("activo", true).neq("id", miId);
+        for (const d of destinatarios || []) {
+          crearAlerta(supabase2, d.id, `Nueva cotización — ${data.cliente_nombre}`, {
+            mensaje: `${miNombre} creó una cotización por ${data.moneda} ${Number(data.precio_sugerido).toLocaleString("es-AR")}.`,
+            link: "/panel/cotizaciones", tipo: "cotizacion", prioridad: "novedad", categoriaNotif: "cotizaciones",
+          });
+        }
       }
       onCreado(data);
       if (enviarWhatsapp) {
