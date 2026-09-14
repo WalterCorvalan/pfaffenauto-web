@@ -6,9 +6,13 @@ import { fmt } from "./shared";
 
 export default function RentabilidadTab({ movimientos, senasActivas, cuotasPendientes }: { movimientos: any[]; senasActivas: Record<string, number>; cuotasPendientes: Record<string, number> }) {
   // Rentabilidad del área Finanzas/Gestoría: movimientos SIN venta_id (multas,
-  // transferencias, gestoría, honorarios, servicios, trámites, verificaciones).
+  // gestoría, honorarios, servicios, trámites, verificaciones).
   // La ganancia por venta de vehículo (con venta_id) vive en Reportes/Cockpit CEO.
-  const delArea = movimientos.filter((m) => !m.venta_id && !m.deleted_at && m.estado === "aprobado");
+  // Se excluye tipo_movimiento === "Transferencia": una transferencia entre
+  // cajas propias no es ingreso/egreso real, cae en ambas patas (sin venta_id)
+  // e infla los brutos -- mismo bug ya corregido en FinanzasClient.tsx,
+  // MovimientosTab.tsx y LibrosContablesTab.tsx.
+  const delArea = movimientos.filter((m) => !m.venta_id && !m.deleted_at && m.estado === "aprobado" && m.tipo_movimiento !== "Transferencia");
 
   const ingresosPorMoneda = useMemo(() => {
     const map: Record<string, number> = {};
