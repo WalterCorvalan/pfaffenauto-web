@@ -1,0 +1,37 @@
+# Ventas — cómo funciona y con qué se conecta
+
+Guía para no romper otra cosa al tocar este módulo. Si cambiás algo acá, revisá primero esta lista de conexiones.
+
+## Tabla principal
+
+`public.ventas` — columnas relevantes agrupadas por tema:
+
+- **Precio/moneda**: `precio_venta`, `moneda_venta` (ARS o USD, excluyentes), `tipo_cambio`. `tipo_cambio` se escribe **en el insert/update directo del payload** (no solo vía el RPC de efectivo) desde el fix de P1-06 — si agregás un campo nuevo relacionado a pago, no asumas que un solo RPC es la única vía de escritura, revisá ambos caminos.
+- **Efectivo recibido**: `pago_efectivo_ars`, `pago_efectivo_usd`, sus `_cuenta_id` y `_movimiento_id`. Se escriben solo a través del RPC `registrar_pago_efectivo_venta` (revierte el movimiento anterior con `eliminar_movimiento_caja` antes de crear uno nuevo, para no duplicar en Tesorería al reeditar). **Estos son los únicos campos que representan cobro real** — no asumir que `metodo_pago = 'Contado'` implica que se cobró el precio completo (bug corregido en P0-03: el recibo declaraba "cobrado en efectivo" un monto que nunca se cargó).
+- **Estado**: `estado` (`borrador`/`activa`/`reserva`/`cerrada`/`caida`/`cancelada`). Transiciones válidas en `TRANSICIONES` (objeto en `VentaDetalleModal.tsx`) — no todos los estados pueden ir a todos lados.
+- **Vínculos**: `vehiculo_id`, `cliente_id`, `vendedor_id`.
+
+## Componentes
+
+- **`NuevaVentaModal.tsx`** — alta y edición (mismo componente, rama por `esEdicion`). Contiene `vincularSena()` (trae señas `Activa` y las asocia) y `guardarPagoEfectivo()` (llama al RPC).
+- **`VentaDetalleModal.tsx`** — detalle, cambio de estado (`cambiarEstado()`), edición de comisión (`guardarComision()`), marcar operación caída (`marcarCaida()`, vía RPC `marcar_operacion_caida`).
+- **`VentasClient.tsx`** — listado/tabla. El ícono de Recibo enlaza a `/panel/ventas/imprimir/[id]` (mismo documento que el botón "Ver / Imprimir" del detalle — antes estaba deshabilitado ahí, corregido en P1-14). El ícono de Boleto sigue deshabilitado a propósito: ese documento no está implementado.
+- **`imprimir/[id]/page.tsx` + `ImprimirVenta.tsx`** — recibo imprimible. `senaPrevia` se calcula sumando `venta_senas` **convertidas a la moneda de la venta** con `lib/moneda.ts`; "se recibe en efectivo" usa `pago_efectivo_ars`/`usd`, no el precio total.
+
+## Patrón `.maybeSingle()` — no volver a `.single()`
+
+Los tres guardados de venta (edición, cambio de estado, edición de comisión) usan `.update(...).select().maybeSingle()`, no `.single()`. `.single()` explota con `"Cannot coerce the result to a single JSON object"` cuando el UPDATE no puede releer la fila (RLS bloqueando el SELECT posterior, o un trigger de base de datos abortando la transacción). Si agregás un guardado nuevo a `ventas`, seguí el mismo patrón: `maybeSingle()` + chequeo explícito de `!data`.
+
+## Trigger sospechoso en el cierre
+
+`generar_comisiones_al_cerrar_venta()` (en `migraciones/sql_fix_modo_comision.sql`) se dispara al pasar `estado = 'cerrada'` e inserta en `public.comisiones`. Si esa inserción falla (FK/NOT NULL en `creado_por`, vendedor sin fila en `perfiles`), aborta todo el UPDATE de la venta. No confirmado como causa raíz del bloqueo de cierre reportado en la auditoría (P1-09) — pendiente de reproducir con logs reales en runtime.
+
+## Componentes compartidos (¡ojo al tocarlos!)
+
+- **`components/panel/VehiculoSelector.tsx`** — compartido con Señas, Presupuestos, Permutas. No expone `condicion`.
+- **`components/panel/ClienteBuscador.tsx`** — compartido con Señas. El selector de "Cliente del CRM" en Nueva Venta usa una lista simple (`<select>` con `clientes` recibidos por props), **no** el buscador con paginación/búsqueda server-side — con miles de clientes, buscar por nombre puede no encontrar resultados fuera del primer lote (hallazgo P1-11, parte no resuelta).
+
+## No tocar sin revisar el resto
+
+- El cálculo de saldo del recibo (`ImprimirVenta.tsx`) depende de `lib/moneda.ts` — mismo criterio que Señas, no dupliques lógica de conversión acá.
+- `abrir_expediente_al_cerrar_venta` (trigger de base de datos, no está en este repo) crea el expediente automáticamente al cerrar — no insertar un expediente a mano desde el cliente.
