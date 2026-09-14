@@ -5,7 +5,7 @@ import {
   DollarSign, Car, TrendingUp, Users, ShoppingCart, CreditCard, Wallet,
   CalendarClock, AlertTriangle, Receipt, FolderKanban, Landmark, SearchCode,
   Trophy, Building2, Key, ListChecks, Flame, Clock, ClipboardList, Wrench,
-  Ticket, TrendingDown, Activity, BarChart3,
+  Ticket, TrendingDown, Activity, BarChart3, Megaphone,
 } from "lucide-react";
 import { BarChart, Bar, XAxis, ResponsiveContainer, Tooltip } from "recharts";
 import TablaResponsiva, { type ColumnaTabla } from "@/components/panel/TablaResponsiva";
@@ -32,6 +32,7 @@ interface Props {
   pedidosConMatch: { id: string; marca: string; modelo: string; nombre_cliente: string }[];
   ultimasOperaciones: { id: string; vehiculo_marca: string; vehiculo_modelo: string; comprador_nombre: string | null; precio_venta: number; moneda_venta: string; estado: string; fecha_cierre: string | null; vendedorNombre: string }[];
   stockEstancado: number; tareasVencidas: number; postventaPendiente: number;
+  reclamosResumen: { abiertos: number; enCurso: number; estancados: number; lista: { id: string; titulo: string; clienteNombre: string | null; prioridad: string; estado: string }[] };
   ticketPromedioPorMoneda: Record<string, number>;
   top10Gastos: { concepto: string; categoria: string; fecha: string; monto: number; moneda: string }[];
   gastosAtipicos: { categoria: string; montoMes: number; promedioHistorico: number; moneda: string }[];
@@ -99,6 +100,30 @@ export default function DashboardGeneralTab(props: Props) {
         <Tile label="Tareas vencidas" valor={props.tareasVencidas} icon={ClipboardList} color="rose" alerta={props.tareasVencidas > 0} href="/panel/tareas" />
         <Tile label="Postventa pendiente" valor={props.postventaPendiente} icon={Wrench} color="violet" alerta={props.postventaPendiente > 0} href="/panel/postventa" />
       </div>
+
+      {props.reclamosResumen.abiertos + props.reclamosResumen.enCurso > 0 && (
+        <div className="rounded-2xl overflow-hidden border border-amber-200 dark:border-amber-500/20">
+          <Link href="/panel/reclamos" className="flex items-center justify-between gap-3 px-4 py-3 bg-amber-100 dark:bg-amber-500/15 hover:bg-amber-200/70 dark:hover:bg-amber-500/25 transition-colors">
+            <p className="text-sm font-bold text-amber-800 dark:text-amber-300 flex items-center gap-1.5"><Megaphone className="w-4 h-4" /> Reclamos a resolver</p>
+            <p className="text-xs font-bold text-amber-700 dark:text-amber-300">{props.reclamosResumen.abiertos} abiertos · {props.reclamosResumen.enCurso} en curso{props.reclamosResumen.estancados > 0 ? ` · ${props.reclamosResumen.estancados} estancados` : ""}</p>
+          </Link>
+          <div className="bg-white dark:bg-white/[0.02] divide-y divide-slate-100 dark:divide-white/5">
+            {props.reclamosResumen.lista.map((r) => (
+              <Link key={r.id} href={`/panel/reclamos?reclamo=${r.id}`} className="flex items-center justify-between gap-3 px-4 py-2.5 text-xs hover:bg-slate-50 dark:hover:bg-white/5">
+                <div className="min-w-0">
+                  <p className="font-bold text-slate-800 dark:text-white truncate">{r.titulo}</p>
+                  {r.clienteNombre && <p className="text-slate-400 truncate">{r.clienteNombre}</p>}
+                </div>
+                <div className="flex items-center gap-1.5 shrink-0">
+                  <span className={`font-bold px-2 py-0.5 rounded-full ${r.prioridad === "Urgente" ? "bg-rose-50 text-rose-700 dark:bg-rose-500/15 dark:text-rose-300" : "bg-slate-100 text-slate-500 dark:bg-white/10 dark:text-slate-300"}`}>{r.prioridad}</span>
+                  <span className="font-bold px-2 py-0.5 rounded-full bg-blue-50 text-blue-700 dark:bg-blue-500/15 dark:text-blue-300">{r.estado === "abierto" ? "Abierto" : "En curso"}</span>
+                </div>
+              </Link>
+            ))}
+          </div>
+        </div>
+      )}
+
       <div className="grid grid-cols-2 md:grid-cols-5 gap-3">
         <Tile label="Autos vendidos (mes)" valor={props.ventasDelMes} icon={Car} color="indigo" href="/panel/ventas" />
         <Tile label="Ticket promedio" valor={fmtPorMoneda(props.ticketPromedioPorMoneda)} icon={Ticket} color="indigo" oculto={props.ocultarMontos} href="/panel/ventas" />
