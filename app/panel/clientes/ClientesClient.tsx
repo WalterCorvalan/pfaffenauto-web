@@ -7,7 +7,7 @@ import {
   Search, Users, UserPlus, Phone, Mail, List, Columns3, TrendingUp,
   PieChart, Trophy, CheckCircle2, Circle, MessageCircle, Download, Upload,
   Sun, Palmtree, Plane, Thermometer, X, ShoppingBag, Pencil, Trash2,
-  ChevronLeft, ChevronRight,
+  ChevronLeft, ChevronRight, ClipboardList, Tag as TagIcon,
 } from "lucide-react";
 import NuevoClienteModal from "./NuevoClienteModal";
 import DisponibilidadModal from "./DisponibilidadModal";
@@ -26,7 +26,8 @@ interface Cliente {
 interface Perfil { id: string; nombre: string; roles: string[] }
 interface Disponibilidad { vendedor_id: string; estado: string; desde: string | null; hasta: string | null; recibir_leads: boolean }
 
-type Vista = "lista" | "pipeline" | "ingresos" | "demanda" | "ranking";
+type Vista = "lista" | "tabla_detallada" | "pipeline" | "ingresos" | "demanda" | "ranking";
+type TabAgenda = "atender" | "todos" | "compraron";
 type TabLista = "mis_clientes" | "sin_contactar" | "contactados" | "compraron" | "perdidos" | "todos";
 type Periodo = "hoy" | "ayer" | "7dias" | "30dias" | "este_mes" | "mes_pasado" | "todos";
 
@@ -41,6 +42,14 @@ const PIPELINE_COLUMNAS = [
 
 const ESTADO_ICON: Record<string, any> = { disponible: Sun, ausente: Palmtree, vacaciones: Plane, enfermo: Thermometer };
 const ESTADO_LABEL: Record<string, string> = { disponible: "Disponible", ausente: "Ausente", vacaciones: "Vacaciones", enfermo: "Enfermo" };
+const ORIGEN_COLOR: Record<string, string> = {
+  Instagram: "bg-pink-50 dark:bg-pink-500/10 text-pink-700 dark:text-pink-300 border-pink-100 dark:border-pink-500/20",
+  Facebook: "bg-blue-50 dark:bg-blue-500/10 text-blue-700 dark:text-blue-300 border-blue-100 dark:border-blue-500/20",
+  WhatsApp: "bg-emerald-50 dark:bg-emerald-500/10 text-emerald-700 dark:text-emerald-300 border-emerald-100 dark:border-emerald-500/20",
+  Web: "bg-indigo-50 dark:bg-indigo-500/10 text-indigo-700 dark:text-indigo-300 border-indigo-100 dark:border-indigo-500/20",
+  Referido: "bg-amber-50 dark:bg-amber-500/10 text-amber-700 dark:text-amber-300 border-amber-100 dark:border-amber-500/20",
+  Showroom: "bg-violet-50 dark:bg-violet-500/10 text-violet-700 dark:text-violet-300 border-violet-100 dark:border-violet-500/20",
+};
 
 function tiempoRelativo(iso: string) {
   const ms = Date.now() - new Date(iso).getTime();
@@ -61,6 +70,28 @@ function diasDesde(iso: string) {
 }
 function nombreVacio(n: string) {
   return !n || n.trim() === "" || n.trim() === ".";
+}
+// Usado tanto en la columna "Cliente" del desktop como en el encabezado de
+// la tarjeta mobile (TablaResponsiva) -- antes desktop solo mostraba el
+// nombre en texto plano sin avatar/badges, mientras mobile ya los tenía.
+function renderClienteCell(c: Cliente) {
+  const contactado = c.pipeline_stage !== "sin_contactar";
+  const vacio = nombreVacio(c.nombre);
+  return (
+    <div className="flex items-center gap-3 min-w-0">
+      <div className="w-9 h-9 rounded-full bg-slate-100 dark:bg-white/5 text-slate-600 dark:text-slate-300 flex items-center justify-center font-black text-xs shrink-0 border border-slate-200 dark:border-white/10">{vacio ? "?" : c.nombre.charAt(0).toUpperCase()}</div>
+      <div className="min-w-0">
+        <p className={`text-sm font-bold truncate flex items-center gap-1.5 ${vacio ? "text-slate-400 italic" : "text-slate-900 dark:text-white"}`}>
+          {vacio ? "Cliente sin nombre" : c.nombre}
+          {c.estado_relacion === "cliente" && <span className="text-[9px] font-black uppercase px-1.5 py-0.5 rounded-full bg-emerald-100 dark:bg-emerald-500/10 text-emerald-700 dark:text-emerald-400 shrink-0 not-italic">Cliente</span>}
+        </p>
+        {c.dni_cuit && <p className="text-[10px] font-semibold text-slate-400">DNI {c.dni_cuit}</p>}
+        {!contactado && (
+          <p className="flex items-center gap-1 text-[10px] font-semibold text-emerald-500 mt-0.5"><span className="w-1.5 h-1.5 rounded-full bg-emerald-500 shrink-0" /> Sin contactar: {tiempoRelativo(c.created_at)}</p>
+        )}
+      </div>
+    </div>
+  );
 }
 function motivoDe(c: Cliente) {
   switch (c.pipeline_stage) {
@@ -154,6 +185,10 @@ export default function ClientesClient({
   const [vendedorIngresos, setVendedorIngresos] = useState<string | null>(null);
   const [incluirImportados, setIncluirImportados] = useState(false);
 
+  // ---------- TABLA DETALLADA (agenda comercial) ----------
+  const [tabAgenda, setTabAgenda] = useState<TabAgenda>("atender");
+  const [queryAgenda, setQueryAgenda] = useState("");
+
   useEffect(() => {
     if (searchParams.get("nuevo") === "1") {
       setModalNuevo(true);
@@ -238,6 +273,22 @@ export default function ClientesClient({
     () => clientesFiltrados.slice((paginaClientes - 1) * POR_PAGINA_CLIENTES, paginaClientes * POR_PAGINA_CLIENTES),
     [clientesFiltrados, paginaClientes]
   );
+
+  const agendaBase = useMemo(() => {
+    if (tabAgenda === "atender") return clientes.filter((c) => c.pipeline_stage === "sin_contactar");
+    if (tabAgenda === "compraron") return clientes.filter((c) => c.estado_relacion === "cliente");
+    return clientes;
+  }, [clientes, tabAgenda]);
+  const agendaFiltrada = useMemo(() => {
+    let lista = agendaBase;
+    if (queryAgenda.trim()) {
+      const q = queryAgenda.trim().toLowerCase();
+      lista = lista.filter((c) => c.nombre.toLowerCase().includes(q) || (c.telefono || "").includes(q) || (c.email || "").toLowerCase().includes(q) || (c.busca_marca || "").toLowerCase().includes(q));
+    }
+    return [...lista].sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
+  }, [agendaBase, queryAgenda]);
+  const agendaAtenderCount = clientes.filter((c) => c.pipeline_stage === "sin_contactar").length;
+  const agendaCompraronCount = clientes.filter((c) => c.estado_relacion === "cliente").length;
 
   // ---------- PIPELINE ----------
   // El pipeline es de LEADS -- un cliente que ya compró (estado_relacion
@@ -354,6 +405,7 @@ export default function ClientesClient({
           <div className="flex items-center gap-1 mb-4 bg-white dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-xl p-1 w-fit">
             {[
               { v: "lista", label: "Lista", icon: List },
+              { v: "tabla_detallada", label: "Tabla detallada", icon: ClipboardList },
               { v: "pipeline", label: "Pipeline", icon: Columns3 },
               { v: "ingresos", label: "Ingresos", icon: TrendingUp },
               { v: "demanda", label: "Demanda", icon: PieChart },
@@ -417,36 +469,19 @@ export default function ClientesClient({
                 <TablaResponsiva<Cliente>
                   filas={clientesPaginados}
                   keyExtractor={(c) => c.id}
-                  encabezadoMobile={(c) => {
-                    const contactado = c.pipeline_stage !== "sin_contactar";
-                    const vacio = nombreVacio(c.nombre);
-                    return (
-                      <div className="flex items-center gap-3 min-w-0">
-                        <div className="w-9 h-9 rounded-full bg-slate-100 dark:bg-white/5 text-slate-600 dark:text-slate-300 flex items-center justify-center font-black text-xs shrink-0 border border-slate-200 dark:border-white/10">{vacio ? "?" : c.nombre.charAt(0).toUpperCase()}</div>
-                        <div className="min-w-0">
-                          <p className={`text-sm font-bold truncate flex items-center gap-1.5 ${vacio ? "text-slate-400 italic" : "text-slate-900 dark:text-white"}`}>
-                            {vacio ? "Cliente sin nombre" : c.nombre}
-                            {c.estado_relacion === "cliente" && <span className="text-[9px] font-black uppercase px-1.5 py-0.5 rounded-full bg-emerald-100 dark:bg-emerald-500/10 text-emerald-700 dark:text-emerald-400 shrink-0 not-italic">Cliente</span>}
-                          </p>
-                          {c.dni_cuit && <p className="text-[10px] font-semibold text-slate-400">DNI {c.dni_cuit}</p>}
-                          {!contactado && (
-                            <p className="flex items-center gap-1 text-[10px] font-semibold text-emerald-500 mt-0.5"><span className="w-1.5 h-1.5 rounded-full bg-emerald-500 shrink-0" /> Sin contactar: {tiempoRelativo(c.created_at)}</p>
-                          )}
-                        </div>
-                      </div>
-                    );
-                  }}
+                  claseFila={(c) => `border-l-4 ${c.pipeline_stage === "sin_contactar" ? "border-l-emerald-400" : c.pipeline_stage === "perdido" ? "border-l-slate-200 dark:border-l-white/10" : "border-l-transparent"}`}
+                  encabezadoMobile={renderClienteCell}
                   columnas={
                     [
-                      { key: "cliente", header: "Cliente", cell: (c) => c.nombre, ocultarEnMobile: true },
+                      { key: "cliente", header: "Cliente", cell: renderClienteCell, ocultarEnMobile: true },
                       { key: "contacto", header: "Contacto", cell: (c) => (
                         <div className="flex flex-col gap-0.5">
-                          {c.telefono && <span className="flex items-center gap-1.5 text-xs font-semibold text-slate-700 dark:text-slate-300 whitespace-nowrap"><Phone className="w-3 h-3 text-rose-500 shrink-0" /> {c.telefono}</span>}
+                          {c.telefono && <a href={`tel:${c.telefono}`} onClick={(e) => e.stopPropagation()} className="flex items-center gap-1.5 text-xs font-semibold text-slate-700 dark:text-slate-300 whitespace-nowrap hover:text-rose-600 dark:hover:text-rose-400"><Phone className="w-3 h-3 text-rose-500 shrink-0" /> {c.telefono}</a>}
                           {c.email && <span className="flex items-center gap-1.5 text-[11px] text-slate-500 dark:text-slate-400 truncate max-w-[200px]"><Mail className="w-3 h-3 shrink-0" /> {c.email}</span>}
                         </div>
                       ) },
                       { key: "tipo", header: "Tipo", cell: (c) => <span className="text-[10px] font-bold px-2 py-1 rounded-full bg-slate-100 dark:bg-white/10 text-slate-600 dark:text-slate-300">{c.tipo}</span>, ocultarEnMobile: true },
-                      { key: "origen", header: "Origen", cell: (c) => <span className="text-[11px] font-semibold text-slate-500 dark:text-slate-400">{c.origen}</span> },
+                      { key: "origen", header: "Origen", cell: (c) => <span className={`text-[10px] font-bold px-2 py-1 rounded-full border whitespace-nowrap ${ORIGEN_COLOR[c.origen] || "bg-slate-100 dark:bg-white/10 text-slate-500 border-slate-200 dark:border-white/10"}`}>{c.origen}</span> },
                       { key: "interes", header: "Interés", cell: (c) => <span className="text-[11px] text-slate-500 dark:text-slate-400">{[c.busca_marca, c.busca_modelo].filter(Boolean).join(" ") || c.vehiculo_interes_texto || "—"}</span>, ocultarEnMobile: true },
                       { key: "vendedor", header: "Vendedor", cell: (c) => <span className="text-[11px] font-semibold text-slate-500 dark:text-slate-400">{c.vendedor_id ? perfilMap[c.vendedor_id] || "—" : "Sin asignar"}</span> },
                       { key: "ultimo_contacto", header: "Último contacto", cell: (c) => <span className="text-[11px] text-slate-500 dark:text-slate-400">{c.ultimo_contacto ? fmtFecha(c.ultimo_contacto) : "—"}</span>, ocultarEnMobile: true },
@@ -460,14 +495,15 @@ export default function ClientesClient({
                     const telLimpio = (c.telefono || "").replace(/\D/g, "");
                     const col = PIPELINE_COLUMNAS.find((p) => p.key === c.pipeline_stage);
                     return (
-                      <>
-                        <button onClick={() => toggleContacto(c)} disabled={actualizando === c.id} title={contactado ? "Marcar como Sin contactar" : "Marcar como Contactado"} className={`flex items-center gap-1.5 text-[10px] font-bold px-2.5 py-1.5 rounded-lg border whitespace-nowrap disabled:opacity-50 ${contactado ? "bg-emerald-50 dark:bg-emerald-500/10 text-emerald-700 dark:text-emerald-300 border-emerald-200 dark:border-emerald-500/20" : "bg-amber-50 dark:bg-amber-500/10 text-amber-700 dark:text-amber-300 border-amber-200 dark:border-amber-500/20"}`}>
-                          {contactado ? <CheckCircle2 className="w-3.5 h-3.5 shrink-0" /> : <Circle className="w-3.5 h-3.5 shrink-0" />} {col?.label}
+                      <div className="flex items-center gap-1 flex-wrap justify-end">
+                        {telLimpio && <a href={`https://wa.me/${telLimpio}?text=${encodeURIComponent(mensajeWhatsApp(c.nombre))}`} target="_blank" rel="noopener noreferrer" title="Contactar por WhatsApp" className="p-2 bg-emerald-500 hover:bg-emerald-600 text-white rounded-lg inline-flex shrink-0"><MessageCircle className="w-3.5 h-3.5" /></a>}
+                        <button onClick={() => toggleContacto(c)} disabled={actualizando === c.id} title={contactado ? "Marcar como Sin contactar" : "Marcar como Contactado"} className={`p-2 rounded-lg border disabled:opacity-50 shrink-0 ${contactado ? "bg-emerald-50 dark:bg-emerald-500/10 text-emerald-700 dark:text-emerald-300 border-emerald-200 dark:border-emerald-500/20" : "bg-amber-50 dark:bg-amber-500/10 text-amber-700 dark:text-amber-300 border-amber-200 dark:border-amber-500/20"}`}>
+                          {contactado ? <CheckCircle2 className="w-3.5 h-3.5" /> : <Circle className="w-3.5 h-3.5" />}
                         </button>
-                        {telLimpio && <a href={`https://wa.me/${telLimpio}?text=${encodeURIComponent(mensajeWhatsApp(c.nombre))}`} target="_blank" rel="noopener noreferrer" title="Contactar por WhatsApp" className="p-2 bg-emerald-500 hover:bg-emerald-600 text-white rounded-lg inline-flex"><MessageCircle className="w-3.5 h-3.5" /></a>}
-                        <button onClick={() => setEditando(c)} title="Editar cliente" className="p-2 text-slate-400 hover:text-indigo-600 dark:hover:text-indigo-300 hover:bg-slate-50 dark:hover:bg-white/5 rounded-lg"><Pencil className="w-3.5 h-3.5" /></button>
-                        <button onClick={() => eliminarCliente(c)} disabled={eliminandoId === c.id} title="Eliminar cliente" className="p-2 text-slate-400 hover:text-rose-600 hover:bg-slate-50 dark:hover:bg-white/5 rounded-lg disabled:opacity-50"><Trash2 className="w-3.5 h-3.5" /></button>
-                      </>
+                        <button onClick={() => setEditando(c)} title="Editar cliente" className="p-2 text-slate-400 hover:text-indigo-600 dark:hover:text-indigo-300 hover:bg-slate-50 dark:hover:bg-white/5 rounded-lg shrink-0"><Pencil className="w-3.5 h-3.5" /></button>
+                        <button onClick={() => eliminarCliente(c)} disabled={eliminandoId === c.id} title="Eliminar cliente" className="p-2 text-slate-400 hover:text-rose-600 hover:bg-slate-50 dark:hover:bg-white/5 rounded-lg disabled:opacity-50 shrink-0"><Trash2 className="w-3.5 h-3.5" /></button>
+                        <span className="hidden md:inline text-[10px] font-bold text-slate-400 whitespace-nowrap ml-1">{col?.label}</span>
+                      </div>
                     );
                   }}
                 />
@@ -484,6 +520,64 @@ export default function ClientesClient({
                       <ChevronRight className="w-4 h-4" />
                     </button>
                   </div>
+                </div>
+              )}
+            </>
+          )}
+
+          {/* ===================== TABLA DETALLADA (agenda comercial) ===================== */}
+          {vista === "tabla_detallada" && (
+            <>
+              <div>
+                <h2 className="text-sm font-bold text-slate-900 dark:text-white">Tu agenda comercial</h2>
+                <p className="text-[11px] text-slate-400 mb-3">Priorizado por quién todavía no fue contactado.</p>
+              </div>
+
+              <div className="flex flex-wrap items-center gap-2 mb-3">
+                <button onClick={() => setTabAgenda("atender")} className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold border ${tabAgenda === "atender" ? "bg-rose-600 border-rose-600 text-white" : "bg-white dark:bg-white/5 border-slate-200 dark:border-white/10 text-slate-600 dark:text-slate-300"}`}>Para atender <span className="px-1.5 rounded-full bg-black/10 dark:bg-white/10 text-[10px]">{agendaAtenderCount}</span></button>
+                <button onClick={() => setTabAgenda("todos")} className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold border ${tabAgenda === "todos" ? "bg-rose-600 border-rose-600 text-white" : "bg-white dark:bg-white/5 border-slate-200 dark:border-white/10 text-slate-600 dark:text-slate-300"}`}>Todos <span className="px-1.5 rounded-full bg-black/10 dark:bg-white/10 text-[10px]">{clientes.length}</span></button>
+                <button onClick={() => setTabAgenda("compraron")} className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold border ${tabAgenda === "compraron" ? "bg-rose-600 border-rose-600 text-white" : "bg-white dark:bg-white/5 border-slate-200 dark:border-white/10 text-slate-600 dark:text-slate-300"}`}>Compraron <span className="px-1.5 rounded-full bg-black/10 dark:bg-white/10 text-[10px]">{agendaCompraronCount}</span></button>
+              </div>
+
+              <div className="relative mb-4 max-w-md">
+                <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-slate-400" />
+                <input value={queryAgenda} onChange={(e) => setQueryAgenda(e.target.value)} placeholder="Nombre, teléfono, vehículo..." className="w-full bg-white dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-lg py-2 pl-9 pr-3 text-xs outline-none focus:border-rose-500 text-slate-900 dark:text-white placeholder:text-slate-400" />
+              </div>
+
+              <p className="text-[11px] font-semibold text-slate-400 mb-2">{agendaFiltrada.length} cliente{agendaFiltrada.length === 1 ? "" : "s"}</p>
+
+              {agendaFiltrada.length === 0 ? (
+                <div className="flex flex-col items-center justify-center text-center py-20 bg-white dark:bg-white/[0.02] border border-slate-200 dark:border-white/5 rounded-2xl">
+                  <ClipboardList className="w-10 h-10 text-slate-300 dark:text-slate-600 mb-3" />
+                  <h3 className="text-sm font-bold text-slate-800 dark:text-white mb-1">Nada para mostrar acá</h3>
+                  <p className="text-xs text-slate-500 dark:text-slate-400">Probá con otro filtro o buscá otra cosa.</p>
+                </div>
+              ) : (
+                <div className="bg-white dark:bg-white/[0.02] border border-slate-200 dark:border-white/5 rounded-2xl divide-y divide-slate-100 dark:divide-white/5">
+                  {agendaFiltrada.slice(0, 100).map((c) => {
+                    const vacio = nombreVacio(c.nombre);
+                    const sinContactar = c.pipeline_stage === "sin_contactar";
+                    const interes = [c.busca_marca, c.busca_modelo].filter(Boolean).join(" ") || c.vehiculo_interes_texto;
+                    return (
+                      <div key={c.id} onClick={() => setEditando(c)} className="flex items-start justify-between gap-3 px-4 py-3 cursor-pointer hover:bg-slate-50 dark:hover:bg-white/[0.02]">
+                        <div className="min-w-0 flex-1">
+                          <p className={`text-sm font-bold truncate ${vacio ? "text-slate-400 italic" : "text-slate-900 dark:text-white"}`}>{vacio ? "Cliente sin nombre" : c.nombre}</p>
+                          <p className="text-[11px] text-slate-400 mt-0.5">{c.vendedor_id ? perfilMap[c.vendedor_id] : "Sin asignar"} · {c.origen}</p>
+                          {interes && <p className="text-xs text-slate-500 dark:text-slate-300 mt-1 truncate">{interes}</p>}
+                          <div className="flex items-center gap-1.5 flex-wrap mt-1.5">
+                            <span className={`text-[10px] font-bold px-1.5 py-0.5 rounded-full border ${ORIGEN_COLOR[c.origen] || "bg-slate-100 dark:bg-white/10 text-slate-500 border-slate-200 dark:border-white/10"}`}>{c.origen}</span>
+                            {c.canal_ingreso === "walk_in" && <span className="text-[10px] font-bold px-1.5 py-0.5 rounded-full bg-slate-100 dark:bg-white/10 text-slate-500 border border-slate-200 dark:border-white/10">Se acercó al local</span>}
+                            {c.estado_relacion === "cliente" && <span className="flex items-center gap-1 text-[10px] font-black uppercase px-1.5 py-0.5 rounded-full bg-emerald-100 dark:bg-emerald-500/10 text-emerald-700 dark:text-emerald-400"><TagIcon className="w-2.5 h-2.5" /> Cliente</span>}
+                          </div>
+                          {sinContactar && <p className="flex items-center gap-1 text-[10px] font-semibold text-emerald-500 mt-1.5"><span className="w-1.5 h-1.5 rounded-full bg-emerald-500 shrink-0" /> Sin contactar: {tiempoRelativo(c.created_at)}</p>}
+                        </div>
+                        <div className="shrink-0 text-right" onClick={(e) => e.stopPropagation()}>
+                          {c.telefono && <a href={`https://wa.me/${c.telefono.replace(/\D/g, "")}?text=${encodeURIComponent(mensajeWhatsApp(c.nombre))}`} target="_blank" rel="noopener noreferrer" title="Contactar por WhatsApp" className="p-2 bg-emerald-500 hover:bg-emerald-600 text-white rounded-lg inline-flex"><MessageCircle className="w-3.5 h-3.5" /></a>}
+                        </div>
+                      </div>
+                    );
+                  })}
+                  {agendaFiltrada.length > 100 && <p className="text-[11px] text-slate-400 text-center py-3">Mostrando los primeros 100 — refiná la búsqueda para ver otros.</p>}
                 </div>
               )}
             </>
@@ -593,23 +687,39 @@ export default function ClientesClient({
               <div className="grid grid-cols-1 md:grid-cols-3 gap-3 mb-4">
                 <div className="bg-white dark:bg-white/[0.02] border border-slate-200 dark:border-white/5 rounded-xl p-4">
                   <p className="text-[11px] font-black uppercase tracking-widest text-slate-400 mb-2">De dónde vinieron</p>
-                  {desgloseOrigen.length === 0 ? <p className="text-xs text-slate-400">Sin datos en el período.</p> : desgloseOrigen.map(([k, n]) => (
-                    <button key={k} onClick={() => setOrigenIngresos(origenIngresos === k ? null : k)} className={`w-full flex items-center justify-between text-xs py-1.5 px-1.5 rounded-lg ${origenIngresos === k ? "bg-rose-50 dark:bg-rose-500/10 text-rose-600 dark:text-rose-300" : "text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-white/5"}`}>
-                      <span className="font-semibold">{k}</span><span className="font-black">{n}</span>
-                    </button>
-                  ))}
+                  {desgloseOrigen.length === 0 ? <p className="text-xs text-slate-400">Sin datos en el período.</p> : desgloseOrigen.map(([k, n]) => {
+                    const pct = Math.round((n / ingresosFiltrados.length) * 100);
+                    return (
+                      <button key={k} onClick={() => setOrigenIngresos(origenIngresos === k ? null : k)} className={`w-full text-left text-xs py-1.5 px-1.5 rounded-lg ${origenIngresos === k ? "bg-rose-50 dark:bg-rose-500/10 text-rose-600 dark:text-rose-300" : "text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-white/5"}`}>
+                        <div className="flex items-center justify-between mb-1"><span className="font-semibold">{k}</span><span className="font-black">{n} · {pct}%</span></div>
+                        <div className="h-1.5 bg-slate-100 dark:bg-white/10 rounded-full overflow-hidden"><div className={`h-full rounded-full ${origenIngresos === k ? "bg-rose-500" : "bg-slate-300 dark:bg-white/20"}`} style={{ width: `${pct}%` }} /></div>
+                      </button>
+                    );
+                  })}
                 </div>
                 <div className="bg-white dark:bg-white/[0.02] border border-slate-200 dark:border-white/5 rounded-xl p-4">
                   <p className="text-[11px] font-black uppercase tracking-widest text-slate-400 mb-2">Quién los tiene</p>
-                  {desgloseVendedor.length === 0 ? <p className="text-xs text-slate-400">Sin datos en el período.</p> : desgloseVendedor.map(([k, n]) => (
-                    <div key={k} className="flex items-center justify-between text-xs py-1.5 px-1.5 text-slate-600 dark:text-slate-300"><span className="font-semibold">{k}</span><span className="font-black">{n}</span></div>
-                  ))}
+                  {desgloseVendedor.length === 0 ? <p className="text-xs text-slate-400">Sin datos en el período.</p> : desgloseVendedor.map(([k, n]) => {
+                    const pct = Math.round((n / ingresosFiltrados.length) * 100);
+                    return (
+                      <div key={k} className="text-xs py-1.5 px-1.5 text-slate-600 dark:text-slate-300">
+                        <div className="flex items-center justify-between mb-1"><span className="font-semibold">{k}</span><span className="font-black">{n} · {pct}%</span></div>
+                        <div className="h-1.5 bg-slate-100 dark:bg-white/10 rounded-full overflow-hidden"><div className="h-full rounded-full bg-slate-300 dark:bg-white/20" style={{ width: `${pct}%` }} /></div>
+                      </div>
+                    );
+                  })}
                 </div>
                 <div className="bg-white dark:bg-white/[0.02] border border-slate-200 dark:border-white/5 rounded-xl p-4">
                   <p className="text-[11px] font-black uppercase tracking-widest text-slate-400 mb-2">Qué buscan</p>
-                  {desgloseBusca.length === 0 ? <p className="text-xs text-slate-400">Sin datos en el período.</p> : desgloseBusca.map(([k, n]) => (
-                    <div key={k} className="flex items-center justify-between text-xs py-1.5 px-1.5 text-slate-600 dark:text-slate-300"><span className="font-semibold">{k}</span><span className="font-black">{n}</span></div>
-                  ))}
+                  {desgloseBusca.length === 0 ? <p className="text-xs text-slate-400">Sin datos en el período.</p> : desgloseBusca.map(([k, n]) => {
+                    const pct = Math.round((n / ingresosFiltrados.length) * 100);
+                    return (
+                      <div key={k} className="text-xs py-1.5 px-1.5 text-slate-600 dark:text-slate-300">
+                        <div className="flex items-center justify-between mb-1"><span className="font-semibold">{k}</span><span className="font-black">{n} · {pct}%</span></div>
+                        <div className="h-1.5 bg-slate-100 dark:bg-white/10 rounded-full overflow-hidden"><div className="h-full rounded-full bg-slate-300 dark:bg-white/20" style={{ width: `${pct}%` }} /></div>
+                      </div>
+                    );
+                  })}
                 </div>
               </div>
 
