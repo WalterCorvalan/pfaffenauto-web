@@ -24,6 +24,10 @@ Cada gasto tiene `a_cargo_de`: `comprador` / `vendedor` / `agencia`. No son solo
 
 `pendientesConfirmacion` (`ExpedientesClient.tsx`) es un contador **global**: `!confirmado_comprador || !confirmado_consignacion`, sin filtrar por usuario — no existe un campo de responsable de confirmación, cualquiera puede tildar "Confirmar comprador"/"Confirmar consignación" desde `ExpedienteDetalleModal.tsx`. El copy dice "pendientes de confirmación" (antes decía "de **tu** confirmación", lo cual prometía una bandeja personal que el query no entrega — corregido). Si en algún momento se agrega un responsable real por expediente, ahí sí hay que filtrar por `miId` y el copy puede volver a decir "tu confirmación".
 
+## Vista previa / imprimir
+
+`app/panel/expedientes/imprimir/[id]/` — mismo patrón que Ventas/Señas/Presupuestos (`ImprimirX.tsx` con `window.print()`, header `print:hidden`, caja A4 abajo). Se accede con el ícono 👁 en la columna de acciones del listado (no hay un botón único de "Vista previa" a nivel de toda la lista — cada expediente tiene el suyo, mismo criterio que el resto del panel). Trae hitos de transferencia, checklist de documentación por parte, gastos y el estado de confirmación de ambas partes.
+
 ## "Demorado" en el listado
 
 `ExpedientesClient.tsx` muestra "⚠ Demorado — Xd +Yd" en vez de la barra de progreso cuando `dias > PLAZO_TRANSFERENCIA_DIAS` (15). `+Yd` es `dias - PLAZO_TRANSFERENCIA_DIAS`, los días de más sobre el plazo, no el total. `motivo_demora` es un campo de texto libre en `expedientes` (columna nueva, ver `migraciones/sql_expedientes_motivo_demora.sql` — correrla antes de usar "Registrar motivo de demora", si no está corrida el guardado falla con un alert explícito en vez de romper silenciosamente). Se edita desde el listado mismo (inline), no hace falta abrir el detalle.
