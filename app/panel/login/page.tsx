@@ -29,6 +29,18 @@ export default function LoginPageV2() {
       return;
     }
 
+    // El toggle "Inactivo" de Configuración → Usuarios (UsuariosClient.tsx)
+    // solo marcaba perfiles.activo=false -- nada lo chequeaba acá, así que
+    // un empleado dado de baja seguía pudiendo loguearse y usar todo el
+    // panel con sus credenciales de Supabase Auth intactas.
+    const { data: perfil } = await supabase2.from("perfiles").select("activo").eq("id", data.user.id).maybeSingle();
+    if (perfil?.activo === false) {
+      await supabase2.auth.signOut();
+      setError("Tu cuenta está desactivada. Contactá a un administrador.");
+      setLoading(false);
+      return;
+    }
+
     router.push("/panel");
     router.refresh();
   };
