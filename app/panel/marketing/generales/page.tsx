@@ -1,6 +1,6 @@
 import { createClient } from "@/lib/supabase/server";
 import Link from "next/link";
-import { BarChart3, MessageSquareText, AtSign, Bot, Megaphone, Search, DollarSign, TrendingUp, ArrowRight } from "lucide-react";
+import { BarChart3, MessageSquareText, AtSign, Bot, Megaphone, Search, DollarSign, TrendingUp, TrendingDown, ArrowRight, Users } from "lucide-react";
 import TarjetaCostoIA from "@/components/panel/TarjetaCostoIA";
 
 function inicioDia(offsetDias: number) {
@@ -42,6 +42,7 @@ export default async function MetricasGeneralesPage() {
   const supabase = await createClient();
   const desde7 = inicioDia(7);
   const desde30 = inicioDia(30);
+  const desde60 = inicioDia(60);
   const inicioMesDate = new Date();
   inicioMesDate.setUTCDate(1);
   inicioMesDate.setUTCHours(0, 0, 0, 0);
@@ -59,6 +60,13 @@ export default async function MetricasGeneralesPage() {
     { count: igTotal }, { count: igGanados },
     { count: rodiTotal }, { count: rodiGanados },
     { count: manualesTotal }, { count: manualesGanados },
+    // "Leads nuevos" y "Leads por canal" -- las mismas 4 fuentes de siempre
+    // (ver app/panel/leads/ARCHITECTURE.md), acá filtradas por fecha de
+    // ingreso en vez de estado. "Canal" = de qué fuente vino el lead, no
+    // canal_origen (esa es la atribución de publicidad dentro de cada
+    // fuente, un dato distinto).
+    { count: waNuevos30 }, { count: igNuevos30 }, { count: rodiNuevos30 }, { count: manualesNuevos30 },
+    { count: waNuevosAnt30 }, { count: igNuevosAnt30 }, { count: rodiNuevosAnt30 }, { count: manualesNuevosAnt30 },
   ] = await Promise.all([
     supabase.from("whatsapp_conversaciones").select("id", { count: "exact", head: true }).gte("created_at", desde7),
     supabase.from("whatsapp_mensajes").select("id", { count: "exact", head: true }).gte("created_at", desde7),
@@ -83,6 +91,14 @@ export default async function MetricasGeneralesPage() {
     supabase.from("rodi_conversaciones").select("id", { count: "exact", head: true }).eq("estado_lead", "convertido"),
     supabase.from("leads_manuales").select("id", { count: "exact", head: true }),
     supabase.from("leads_manuales").select("id", { count: "exact", head: true }).eq("estado_lead", "convertido"),
+    supabase.from("whatsapp_conversaciones").select("id", { count: "exact", head: true }).gte("created_at", desde30),
+    supabase.from("instagram_conversaciones").select("id", { count: "exact", head: true }).gte("created_at", desde30),
+    supabase.from("rodi_conversaciones").select("id", { count: "exact", head: true }).gte("created_at", desde30),
+    supabase.from("leads_manuales").select("id", { count: "exact", head: true }).gte("created_at", desde30),
+    supabase.from("whatsapp_conversaciones").select("id", { count: "exact", head: true }).gte("created_at", desde60).lt("created_at", desde30),
+    supabase.from("instagram_conversaciones").select("id", { count: "exact", head: true }).gte("created_at", desde60).lt("created_at", desde30),
+    supabase.from("rodi_conversaciones").select("id", { count: "exact", head: true }).gte("created_at", desde60).lt("created_at", desde30),
+    supabase.from("leads_manuales").select("id", { count: "exact", head: true }).gte("created_at", desde60).lt("created_at", desde30),
   ]);
 
   const leadsTotal = (waTotal ?? 0) + (igTotal ?? 0) + (rodiTotal ?? 0) + (manualesTotal ?? 0);
@@ -98,6 +114,16 @@ export default async function MetricasGeneralesPage() {
 
   const tasaCierreGlobal = leadsTotal ? Math.round(((leadsGanados || 0) / leadsTotal) * 100) : 0;
 
+  const leadsPorCanal = [
+    { label: "WhatsApp", n: waNuevos30 ?? 0 },
+    { label: "Instagram", n: igNuevos30 ?? 0 },
+    { label: "Web (Rodi)", n: rodiNuevos30 ?? 0 },
+    { label: "Carga manual", n: manualesNuevos30 ?? 0 },
+  ].sort((a, b) => b.n - a.n);
+  const leadsNuevos30 = leadsPorCanal.reduce((acc, c) => acc + c.n, 0);
+  const leadsNuevosAnt30 = (waNuevosAnt30 ?? 0) + (igNuevosAnt30 ?? 0) + (rodiNuevosAnt30 ?? 0) + (manualesNuevosAnt30 ?? 0);
+  const variacionLeadsPct = leadsNuevosAnt30 > 0 ? Math.round(((leadsNuevos30 - leadsNuevosAnt30) / leadsNuevosAnt30) * 100) : null;
+
   const canales = [
     { label: "WhatsApp", icon: MessageSquareText, color: "text-emerald-600", bg: "bg-emerald-50 dark:bg-emerald-500/10", conversaciones: waConversaciones7 ?? 0, mensajes: waMensajes7 ?? 0, href: "/panel/marketing/whatsapp-metricas" },
     { label: "Instagram", icon: AtSign, color: "text-pink-600", bg: "bg-pink-50 dark:bg-pink-500/10", conversaciones: igConversaciones7 ?? 0, mensajes: igMensajes7 ?? 0, href: "/panel/marketing/instagram" },
@@ -109,6 +135,48 @@ export default async function MetricasGeneralesPage() {
       <div>
         <h2 className="text-sm font-bold text-slate-900 dark:text-white flex items-center gap-2"><BarChart3 className="w-4 h-4 text-rose-600" /> Métricas Generales</h2>
         <p className="text-xs text-slate-400 mt-0.5">Resumen ejecutivo de todos los canales — últimos 7 días, gasto y costo de IA del mes en curso.</p>
+      </div>
+
+      {/* LEADS NUEVOS — de dónde vienen los clientes (últimos 30 días) */}
+      <div>
+        <h3 className="text-[11px] font-bold uppercase tracking-widest text-slate-400 mb-3">Leads nuevos — últimos 30 días</h3>
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div className="bg-white dark:bg-white/[0.02] border border-slate-200 dark:border-white/5 rounded-2xl p-5">
+            <Users className="w-5 h-5 text-rose-600 mb-2" />
+            <p className="text-2xl font-black text-slate-900 dark:text-white font-mono">{leadsNuevos30}</p>
+            <p className="text-[11px] text-slate-400 mt-0.5 flex items-center gap-1">
+              Leads nuevos (30d)
+              {variacionLeadsPct !== null && (
+                <span className={`inline-flex items-center gap-0.5 font-bold ${variacionLeadsPct >= 0 ? "text-emerald-600" : "text-rose-600"}`}>
+                  {variacionLeadsPct >= 0 ? <TrendingUp className="w-3 h-3" /> : <TrendingDown className="w-3 h-3" />} {Math.abs(variacionLeadsPct)}%
+                </span>
+              )}
+            </p>
+            <p className="text-[10px] text-slate-400 mt-0.5">Período anterior (30d previos): {leadsNuevosAnt30}</p>
+          </div>
+          <div className="bg-white dark:bg-white/[0.02] border border-slate-200 dark:border-white/5 rounded-2xl p-5">
+            <p className="text-sm font-bold text-slate-800 dark:text-white mb-3">Leads por canal</p>
+            {leadsNuevos30 === 0 ? (
+              <p className="text-xs text-slate-400 py-2">Sin leads nuevos en el período.</p>
+            ) : (
+              <div className="space-y-2">
+                {leadsPorCanal.map((c) => {
+                  const pct = Math.round((c.n / leadsNuevos30) * 100);
+                  return (
+                    <div key={c.label}>
+                      <div className="flex items-center justify-between text-xs mb-1">
+                        <span className="font-semibold text-slate-600 dark:text-slate-300">{c.label}</span>
+                        <span className="font-black text-slate-700 dark:text-slate-200">{c.n} · {pct}%</span>
+                      </div>
+                      <div className="h-1.5 bg-slate-100 dark:bg-white/10 rounded-full overflow-hidden"><div className="h-full rounded-full bg-rose-500" style={{ width: `${pct}%` }} /></div>
+                    </div>
+                  );
+                })}
+              </div>
+            )}
+            <p className="text-[10px] text-slate-400 mt-3">Cada persona cuenta una vez, por fecha de ingreso a whatsapp_conversaciones/instagram_conversaciones/rodi_conversaciones/leads_manuales.</p>
+          </div>
+        </div>
       </div>
 
       {/* RESUMEN EJECUTIVO — lo primero que hay que mirar */}
