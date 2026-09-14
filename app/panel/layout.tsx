@@ -465,12 +465,20 @@ export default function PanelV2Layout({
 
   useEffect(() => {
     const cargarPerfil = async (userId: string) => {
-      setMiId(userId);
       const { data } = await supabase2
         .from("perfiles")
-        .select("nombre, roles")
+        .select("nombre, roles, activo")
         .eq("id", userId)
         .single();
+      // Si lo desactivaron (Configuración → Usuarios) mientras tenía sesión
+      // abierta, cerrarla acá -- el chequeo en /panel/login solo cubre el
+      // login nuevo, no a alguien que ya estaba adentro.
+      if (data?.activo === false) {
+        await supabase2.auth.signOut();
+        router.replace("/panel/login");
+        return;
+      }
+      setMiId(userId);
       setNombre(data?.nombre || "Usuario");
       setRoles(data?.roles || []);
     };
@@ -495,7 +503,7 @@ export default function PanelV2Layout({
     });
 
     return () => sub.subscription.unsubscribe();
-  }, []);
+  }, [router]);
 
   // Módulos apagados por Empresa → Módulos, y visibilidad por sector —
   // el admin no se filtra nunca, así que solo hace falta traer esto para
