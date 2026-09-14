@@ -2,8 +2,9 @@
 
 import { useState, useMemo, useEffect } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
+import Link from "next/link";
 import { supabase2 } from "@/lib/supabase/client";
-import { Search, FolderPlus, Trash2, Pencil, Lock } from "lucide-react";
+import { Search, FolderPlus, Trash2, Pencil, Lock, Eye } from "lucide-react";
 import ExpedienteDetalleModal from "./ExpedienteDetalleModal";
 import { fmtFechaLocal } from "@/lib/panel/fechas";
 import TablaResponsiva, { type ColumnaTabla } from "@/components/panel/TablaResponsiva";
@@ -227,6 +228,7 @@ export default function ExpedientesClient({
           }
           acciones={(e) => (
             <>
+              <Link href={`/panel/expedientes/imprimir/${e.id}`} target="_blank" onClick={(ev) => ev.stopPropagation()} title="Vista previa" className="p-2 bg-white dark:bg-white/5 border border-slate-200 dark:border-white/10 hover:bg-slate-100 dark:hover:bg-white/10 rounded-lg text-slate-600 dark:text-slate-300 inline-flex"><Eye className="w-3.5 h-3.5" /></Link>
               <button onClick={() => setDetalleId(e.id)} className="p-2 bg-white dark:bg-white/5 border border-slate-200 dark:border-white/10 hover:bg-slate-100 dark:hover:bg-white/10 rounded-lg text-slate-600 dark:text-slate-300"><Pencil className="w-3.5 h-3.5" /></button>
               {soyAdmin && <button onClick={() => eliminar(e)} className="p-2 bg-rose-600 hover:bg-rose-700 text-white rounded-lg"><Trash2 className="w-3.5 h-3.5" /></button>}
             </>
