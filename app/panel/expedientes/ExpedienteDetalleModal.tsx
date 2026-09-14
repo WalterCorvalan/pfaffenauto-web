@@ -400,19 +400,30 @@ export default function ExpedienteDetalleModal({ expedienteId, miId, perfiles, s
   const totalSenas = senas.reduce((acc, s) => acc + (venta && s.moneda === venta.moneda_venta ? Number(s.monto) : 0), 0);
   const senasOtraMoneda = senas.filter((s) => venta && s.moneda !== venta.moneda_venta);
   const totalesSenasOtraMoneda = senasOtraMoneda.reduce((acc: Record<string, number>, s) => { acc[s.moneda] = (acc[s.moneda] || 0) + Number(s.monto); return acc; }, {});
-  const saldoComprador = venta ? Number(venta.precio_venta) - totalSenas - Number(venta.monto_financiacion || 0) : 0;
-  const aPagarVendedor = precioPropietario ? Number(precioPropietario) : null;
-  const monedasCoinciden = venta && precioPropietarioMoneda === venta.moneda_venta;
-  const margen = venta && aPagarVendedor != null && monedasCoinciden ? Number(venta.precio_venta) - aPagarVendedor : null;
-  const pendienteConfirmacion = !expediente.confirmado_comprador || !expediente.confirmado_consignacion;
 
   const gastosVendedor = gastos.filter((g) => g.a_cargo_de === "vendedor");
   const gastosComprador = gastos.filter((g) => g.a_cargo_de === "comprador");
   const gastosAgencia = gastos.filter((g) => g.a_cargo_de === "agencia");
   const sumaPorMoneda = (lista: any[]) => lista.reduce((acc: Record<string, number>, g) => { acc[g.moneda] = (acc[g.moneda] || 0) + Number(g.monto); return acc; }, {});
+  // Suma solo los gastos en la misma moneda de la venta/acuerdo -- igual
+  // criterio que totalSenas de arriba, para no mezclar ARS con USD sin
+  // conversión. a_cargo_de "comprador" es un cobro extra (se suma al total a
+  // cobrar); a_cargo_de "vendedor" es un descuento sobre lo acordado (se
+  // resta de lo que se le liquida al propietario).
+  const gastosCompradorMismaMoneda = venta ? gastosComprador.filter((g) => g.moneda === venta.moneda_venta).reduce((acc, g) => acc + Number(g.monto), 0) : 0;
+  const gastosVendedorMismaMoneda = gastosVendedor.filter((g) => g.moneda === precioPropietarioMoneda).reduce((acc, g) => acc + Number(g.monto), 0);
+
+  const totalACobrarComprador = venta ? Number(venta.precio_venta) + gastosCompradorMismaMoneda : 0;
+  const saldoComprador = venta ? totalACobrarComprador - totalSenas - Number(venta.monto_financiacion || 0) : 0;
+  const aPagarVendedor = precioPropietario ? Number(precioPropietario) : null;
+  const totalALiquidarVendedor = aPagarVendedor != null ? aPagarVendedor - gastosVendedorMismaMoneda : null;
+  const monedasCoinciden = venta && precioPropietarioMoneda === venta.moneda_venta;
+  const margen = venta && aPagarVendedor != null && monedasCoinciden ? Number(venta.precio_venta) - aPagarVendedor : null;
+  const pendienteConfirmacion = !expediente.confirmado_comprador || !expediente.confirmado_consignacion;
+
   const comisionPct = Number(venta?.comision_consignacion_pct || 0);
-  const honorarios = tipoAcuerdoConsignacion === "bruto" && aPagarVendedor != null ? aPagarVendedor * (comisionPct / 100) : 0;
-  const netoPropietario = aPagarVendedor != null ? aPagarVendedor - honorarios : null;
+  const honorarios = tipoAcuerdoConsignacion === "bruto" && totalALiquidarVendedor != null ? totalALiquidarVendedor * (comisionPct / 100) : 0;
+  const netoPropietario = totalALiquidarVendedor != null ? totalALiquidarVendedor - honorarios : null;
 
   const cuentasParaMoneda = (moneda: string) => cuentas.filter((c) => c.moneda === moneda);
 
@@ -798,7 +809,7 @@ export default function ExpedienteDetalleModal({ expedienteId, miId, perfiles, s
                 <p className="text-xs font-black uppercase tracking-widest text-emerald-600 mb-2">🤝 Cobro al comprador — {venta?.comprador_nombre}</p>
                 <div className="flex justify-between text-sm py-1"><span className="text-slate-500 dark:text-slate-400">Precio del vehículo</span><strong>{venta?.moneda_venta} {venta ? Number(venta.precio_venta).toLocaleString("es-AR") : "—"}</strong></div>
                 {gastosComprador.length === 0 ? <p className="text-[11px] text-slate-400 italic">Sin gastos del comprador cargados.</p> : gastosComprador.map((g) => <div key={g.id} className="flex justify-between text-xs py-0.5"><span className="text-slate-500 dark:text-slate-400">{g.concepto}</span><span>{g.moneda} {Number(g.monto).toLocaleString("es-AR")}</span></div>)}
-                <div className="flex justify-between text-sm font-bold border-t border-emerald-200 dark:border-emerald-500/20 mt-2 pt-2"><span>Total a cobrar al comprador</span><strong className="text-emerald-700 dark:text-emerald-300">{venta?.moneda_venta} {venta ? Number(venta.precio_venta).toLocaleString("es-AR") : "—"}</strong></div>
+                <div className="flex justify-between text-sm font-bold border-t border-emerald-200 dark:border-emerald-500/20 mt-2 pt-2"><span>Total a cobrar al comprador</span><strong className="text-emerald-700 dark:text-emerald-300">{venta?.moneda_venta} {totalACobrarComprador.toLocaleString("es-AR")}</strong></div>
                 {senas.length === 0 && <p className="text-[11px] text-amber-600 dark:text-amber-400 mt-1">⚠️ Sin seña registrada — el total completo queda pendiente.</p>}
                 <div className="flex justify-between text-sm font-bold pt-1"><span>Saldo pendiente al comprador</span><strong className="text-rose-600">{venta?.moneda_venta} {saldoComprador.toLocaleString("es-AR")}</strong></div>
               </div>
@@ -810,7 +821,7 @@ export default function ExpedienteDetalleModal({ expedienteId, miId, perfiles, s
                 </div>
                 <div className="flex justify-between text-sm py-1"><span className="text-slate-500 dark:text-slate-400">Precio acordado con el propietario</span>{aPagarVendedor != null ? <strong>{precioPropietarioMoneda} {aPagarVendedor.toLocaleString("es-AR")}</strong> : <span className="text-amber-600 text-xs">⚠️ Pendiente — completar en tab Consignación</span>}</div>
                 {gastosVendedor.length === 0 ? <p className="text-[11px] text-slate-400 italic">Sin gastos del vendedor cargados.</p> : gastosVendedor.map((g) => <div key={g.id} className="flex justify-between text-xs py-0.5"><span className="text-slate-500 dark:text-slate-400">{g.concepto}</span><span>{g.moneda} {Number(g.monto).toLocaleString("es-AR")}</span></div>)}
-                <div className="flex justify-between text-sm font-bold border-t border-indigo-200 dark:border-indigo-500/20 mt-2 pt-2"><span>Total a liquidar (pre-honorarios)</span><strong>{aPagarVendedor != null ? `${precioPropietarioMoneda} ${aPagarVendedor.toLocaleString("es-AR")}` : "—"}</strong></div>
+                <div className="flex justify-between text-sm font-bold border-t border-indigo-200 dark:border-indigo-500/20 mt-2 pt-2"><span>Total a liquidar (pre-honorarios)</span><strong>{totalALiquidarVendedor != null ? `${precioPropietarioMoneda} ${totalALiquidarVendedor.toLocaleString("es-AR")}` : "—"}</strong></div>
                 {tipoAcuerdoConsignacion === "bruto" && (
                   <div className="flex justify-between text-xs py-1"><span className="text-slate-500 dark:text-slate-400">− Honorarios de gestión ({comisionPct}%)</span><span>{precioPropietarioMoneda} {honorarios.toLocaleString("es-AR")}</span></div>
                 )}
