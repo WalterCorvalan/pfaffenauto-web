@@ -94,7 +94,11 @@ export default function MensajesBubble() {
         <FloatingChatWindow key={c.id} canal={c} miId={miId} offset={24 + i * 316} onClose={() => cerrarVentana(c.id)} />
       ))}
 
-      <div className="print:hidden hidden md:block fixed bottom-24 right-6 z-40">
+      {/* Separado horizontalmente del botón "+" (QuickActionsButton, fixed
+          bottom-6 right-6) en vez de apilado arriba -- ese botón despliega
+          hasta 5 pills hacia arriba y, en la misma columna, terminaba
+          tapando este ícono mientras el menú estaba abierto. */}
+      <div className="print:hidden hidden md:block fixed bottom-6 right-24 z-40">
         {popupAbierto && (
           <div className="absolute bottom-14 right-0 w-80 bg-white dark:bg-[#141414] border border-slate-200 dark:border-white/10 rounded-2xl shadow-2xl overflow-hidden">
             <div className="flex items-start justify-between px-4 py-3 border-b border-slate-100 dark:border-white/10">
