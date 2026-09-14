@@ -91,6 +91,10 @@ export default async function PanelV2Home() {
     { data: tierMiPerformance },
     { data: premiosMiPerformance },
     { data: configEmpresa },
+    { count: leadsSinAtenderWhatsapp },
+    { count: leadsSinAtenderInstagram },
+    { count: leadsSinAtenderRodi },
+    { count: leadsSinAtenderManuales },
   ] = await Promise.all([
     supabase.from("ventas").select("precio_venta, moneda_venta, estado").gte("fecha_cierre", inicioMes).lte("fecha_cierre", finMes),
     supabase.from("vehiculos").select("estado"),
@@ -148,7 +152,17 @@ export default async function PanelV2Home() {
     supabase.rpc("tier_para_vendedor", { p_vendedor_id: user.id, p_desde: inicioMes, p_hasta: finMes }),
     supabase.rpc("premios_consignaciones_vendedor", { p_vendedor_id: user.id, p_desde: inicioMes, p_hasta: finMes }),
     supabase.from("configuracion_empresa").select("objetivo_ventas_mensual").eq("id", true).maybeSingle(),
+    // "Leads sin atender" (tile de Dashboard general) -- son los leads del
+    // módulo Leads (ver app/panel/leads/) con estado_lead "nuevo", NO la
+    // cantidad de clientes del CRM (ese es un contador totalmente distinto,
+    // ver clientesSinContactar arriba).
+    supabase.from("whatsapp_conversaciones").select("id", { count: "exact", head: true }).or("estado_lead.eq.nuevo,estado_lead.is.null"),
+    supabase.from("instagram_conversaciones").select("id", { count: "exact", head: true }).or("estado_lead.eq.nuevo,estado_lead.is.null"),
+    supabase.from("rodi_conversaciones").select("id", { count: "exact", head: true }).or("estado_lead.eq.nuevo,estado_lead.is.null"),
+    supabase.from("leads_manuales").select("id", { count: "exact", head: true }).or("estado_lead.eq.nuevo,estado_lead.is.null"),
   ]);
+
+  const leadsSinAtender = (leadsSinAtenderWhatsapp ?? 0) + (leadsSinAtenderInstagram ?? 0) + (leadsSinAtenderRodi ?? 0) + (leadsSinAtenderManuales ?? 0);
 
   const perfilesMap: Record<string, string> = {};
   (await supabase.from("perfiles").select("id, nombre")).data?.forEach((p: any) => { perfilesMap[p.id] = p.nombre; });
@@ -377,6 +391,7 @@ export default async function PanelV2Home() {
       stockVendido={conteoEstado.vendido || 0}
       stockEnPreparacion={conteoEstado.en_preparacion || 0}
       clientesSinContactar={clientesSinContactar ?? 0}
+      leadsSinAtender={leadsSinAtender}
       cuotasPagarPorMoneda={cuotasPagarPorMoneda}
       saldos={saldos || []}
       recordatoriosHoy={recordatoriosHoy?.length ?? 0}

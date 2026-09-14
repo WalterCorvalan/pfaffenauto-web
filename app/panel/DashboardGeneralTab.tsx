@@ -16,6 +16,7 @@ interface Props {
   ventasDelMes: number; operacionesDelMes: number;
   stockDisponible: number; stockReservado: number; stockSenado: number; stockVendido: number; stockEnPreparacion: number;
   clientesSinContactar: number;
+  leadsSinAtender: number;
   cuotasPagarPorMoneda: Record<string, number>;
   saldos: { moneda: string; total: number }[];
   recordatoriosHoy: number; alertasPendientes: number; cotizacionesActivas: number;
@@ -93,7 +94,7 @@ export default function DashboardGeneralTab(props: Props) {
     <div className="space-y-4">
       <SeccionTitulo>Lo urgente hoy</SeccionTitulo>
       <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-        <Tile label="Leads sin atender" valor={props.clientesSinContactar} icon={Flame} color="rose" alerta={props.clientesSinContactar > 0} href="/panel/leads" />
+        <Tile label="Leads sin atender" valor={props.leadsSinAtender} icon={Flame} color="rose" alerta={props.leadsSinAtender > 0} href="/panel/leads" />
         <Tile label="Stock con 30+ días" valor={props.stockEstancado} icon={Clock} color="amber" alerta={props.stockEstancado > 0} href="/panel/stock" />
         <Tile label="Tareas vencidas" valor={props.tareasVencidas} icon={ClipboardList} color="rose" alerta={props.tareasVencidas > 0} href="/panel/tareas" />
         <Tile label="Postventa pendiente" valor={props.postventaPendiente} icon={Wrench} color="violet" alerta={props.postventaPendiente > 0} href="/panel/postventa" />
