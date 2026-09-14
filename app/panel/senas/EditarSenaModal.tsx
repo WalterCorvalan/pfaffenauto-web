@@ -1,8 +1,9 @@
 "use client";
 
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { supabase2 } from "@/lib/supabase/client";
 import { Wallet, Save, X } from "lucide-react";
+import { convertirMonto, totalEnMoneda, type Moneda } from "@/lib/moneda";
 
 const inputClass = "w-full bg-slate-50 dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-xl px-3 py-2.5 text-sm outline-none focus:border-rose-500 focus:bg-white dark:focus:bg-white/10 transition-colors text-slate-900 dark:text-white placeholder:text-slate-400";
 const labelClass = "text-[11px] font-bold text-slate-500 dark:text-slate-400 uppercase block mb-1.5";
@@ -31,6 +32,25 @@ export default function EditarSenaModal({ sena, vendedores, sucursales, onClose,
   const [senaUsd, setSenaUsd] = useState(sena.sena_usd != null ? String(sena.sena_usd) : "");
   const [observaciones, setObservaciones] = useState(sena.notas || "");
 
+  // saldo_abonar_ars/remanente_ars son "venta − seña [− prenda/patentamiento −
+  // efectivo/permuta]" (ver NuevaSenaModal.tsx) -- si acá se corrige el monto
+  // de venta o seña sin recalcularlos, el recibo (ImprimirSena.tsx) y el
+  // detalle siguen mostrando el saldo/remanente viejo. El resto de los
+  // componentes del cálculo (prenda, patentamiento, efectivo, permuta) no se
+  // editan en este form liviano, así que se reusan tal cual venían en `sena`.
+  const monedaVenta: Moneda = ventaUsd ? "USD" : "ARS";
+  const { saldoRecalculado, remanenteRecalculado } = useMemo(() => {
+    const ventaMonto = monedaVenta === "USD" ? Number(ventaUsd) || 0 : Number(ventaArs) || 0;
+    const senaConvertida = totalEnMoneda([{ monto: senaArs, moneda: "ARS" }, { monto: senaUsd, moneda: "USD" }], monedaVenta, sena.tipo_cambio);
+    const prendaConvertida = convertirMonto(sena.prenda_monto, "ARS", monedaVenta, sena.tipo_cambio);
+    const patentTransfConvertido = convertirMonto(sena.patentamiento_transferencia_ars, "ARS", monedaVenta, sena.tipo_cambio);
+    const saldo = ventaMonto + patentTransfConvertido - senaConvertida - prendaConvertida;
+    const efectivoConvertido = totalEnMoneda([{ monto: sena.efectivo_ars, moneda: "ARS" }, { monto: sena.efectivo_usd, moneda: "USD" }], monedaVenta, sena.tipo_cambio);
+    const permutaConvertida = convertirMonto(sena.permuta_tasado_ars, "ARS", monedaVenta, sena.tipo_cambio);
+    return { saldoRecalculado: saldo, remanenteRecalculado: saldo - efectivoConvertido - permutaConvertida };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [ventaArs, ventaUsd, senaArs, senaUsd, monedaVenta]);
+
   const guardar = async () => {
     setGuardando(true);
     try {
@@ -44,6 +64,8 @@ export default function EditarSenaModal({ sena, vendedores, sucursales, onClose,
         sena_ars: senaArs ? Number(senaArs) : null, sena_usd: senaUsd ? Number(senaUsd) : null,
         monto: senaArs ? Number(senaArs) : (senaUsd ? Number(senaUsd) : null),
         moneda: senaUsd && !senaArs ? "USD" : "ARS",
+        saldo_abonar_ars: saldoRecalculado,
+        remanente_ars: remanenteRecalculado,
         notas: observaciones || null,
       }).eq("id", sena.id).select("*, perfiles:vendedor_id ( nombre ), sucursales:sucursal_id ( nombre )").single();
       if (error) throw error;

@@ -16,7 +16,7 @@ Guía para no romper otra cosa al tocar este módulo. Si cambiás algo acá, rev
 ## Componentes
 
 - **`NuevaSenaModal.tsx`** — alta. Calcula `saldoCalculado`/`remanenteCalculado` con `lib/moneda.ts` (`convertirMonto`/`totalEnMoneda`), **nunca sumar campos `_ars`/`_usd` a mano** — eso fue el bug P0-01 de la auditoría (seña en USD contada como $0).
-- **`EditarSenaModal.tsx`** — edición.
+- **`EditarSenaModal.tsx`** — edición liviana (nombre, contacto, montos), sin repetir los efectos colaterales de la carga inicial (estado del vehículo, movimiento de caja, notificaciones). **Bug corregido**: al corregir `venta_ars`/`venta_usd`/`sena_ars`/`sena_usd` no recalculaba `saldo_abonar_ars`/`remanente_ars` — el recibo (`ImprimirSena.tsx`) y el detalle seguían mostrando el saldo/remanente de antes de la corrección. Ahora los recalcula con el mismo criterio que `NuevaSenaModal.tsx` (`lib/moneda.ts`), reusando `sena.tipo_cambio`/`prenda_monto`/`patentamiento_transferencia_ars`/`efectivo_ars`/`efectivo_usd`/`permuta_tasado_ars` tal cual venían (esos campos no son editables desde este form).
 - **`SenaDetalleModal.tsx`** — vista rápida (modal), no imprimible.
 - **`imprimir/[id]/page.tsx` + `ImprimirSena.tsx`** — recibo imprimible. Lee `vehiculo:vehiculo_id ( condicion, radicado_localidad )` con join — la condición 0KM/usado y la localidad **vienen del vehículo real**, no se adivinan por año ni se toma la localidad del cliente (bug corregido P1-13).
 - **`EstadoSenaSelector.tsx`** — cambio de estado desde el listado.
