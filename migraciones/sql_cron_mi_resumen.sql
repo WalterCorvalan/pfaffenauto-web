@@ -5,7 +5,7 @@ select cron.schedule(
   '0 8 * * *',
   $$
   select net.http_get(
-    url := 'https://www.pfaffencars.com/api/cron/panel-v2/mi-resumen?token=33864dbc0cd53d5b4ce97526401c0fc22ef766f1831f1403'
+    url := 'https://www.pfaffencars.com/api/cron/panel-v2/mi-resumen?token=b3ec90977565359e55e1a6e9b55f092ecec20fe255d90cef602a05448b5e2863'
   );
   $$
 );
