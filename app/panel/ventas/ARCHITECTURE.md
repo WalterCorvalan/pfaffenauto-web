@@ -13,7 +13,7 @@ Guía para no romper otra cosa al tocar este módulo. Si cambiás algo acá, rev
 
 ## Componentes
 
-- **`NuevaVentaModal.tsx`** — alta y edición (mismo componente, rama por `esEdicion`). Contiene `vincularSena()` (trae señas `Activa` y las asocia) y `guardarPagoEfectivo()` (llama al RPC).
+- **`NuevaVentaModal.tsx`** — alta y edición (mismo componente, rama por `esEdicion`). Contiene `vincularSena()` (trae señas `Activa` y las asocia) y `guardarPagoEfectivo()` (llama al RPC). El prop `initial: VentaPrefill` precarga el modal cuando se entra desde "Convertir en venta" de una cotización aprobada (`VentasClient.tsx`) — usa `precio_aprobado ?? precio_sugerido` de la cotización (no siempre son iguales: `precio_aprobado` es lo que un admin negoció vía `ModificarCotizacionModal.tsx`) y carga el bloque de permuta si la cotización tenía una.
 - **`VentaDetalleModal.tsx`** — detalle, cambio de estado (`cambiarEstado()`), edición de comisión (`guardarComision()`), marcar operación caída (`marcarCaida()`, vía RPC `marcar_operacion_caida`).
 - **`VentasClient.tsx`** — listado/tabla. El ícono de Recibo enlaza a `/panel/ventas/imprimir/[id]` (mismo documento que el botón "Ver / Imprimir" del detalle — antes estaba deshabilitado ahí, corregido en P1-14). El ícono de Boleto sigue deshabilitado a propósito: ese documento no está implementado.
 - **`imprimir/[id]/page.tsx` + `ImprimirVenta.tsx`** — recibo imprimible. `senaPrevia` se calcula sumando `venta_senas` **convertidas a la moneda de la venta** con `lib/moneda.ts`; "se recibe en efectivo" usa `pago_efectivo_ars`/`usd`, no el precio total.
