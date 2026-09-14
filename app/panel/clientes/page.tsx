@@ -27,7 +27,9 @@ export default async function ClientesPage() {
     queryClientes,
     supabase.from("perfiles").select("id, nombre, roles").eq("activo", true).order("nombre"),
     supabase.from("disponibilidad_vendedor").select("*"),
-    supabase.from("ventas").select("id, cliente_id").not("cliente_id", "is", null).limit(10000),
+    // Sin filtrar por cliente_id -- Ranking también rescata ventas por DNI
+    // del comprador cuando no quedaron vinculadas a una ficha de cliente.
+    supabase.from("ventas").select("id, cliente_id, comprador_dni, estado, precio_venta, moneda_venta, created_at").limit(10000),
   ]);
 
   return (

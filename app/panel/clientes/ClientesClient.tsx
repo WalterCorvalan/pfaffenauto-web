@@ -25,6 +25,7 @@ interface Cliente {
 }
 interface Perfil { id: string; nombre: string; roles: string[] }
 interface Disponibilidad { vendedor_id: string; estado: string; desde: string | null; hasta: string | null; recibir_leads: boolean }
+interface Venta { id: string; cliente_id: string | null; comprador_dni: string | null; estado: string; precio_venta: number; moneda_venta: string; created_at: string }
 
 type Vista = "lista" | "tabla_detallada" | "pipeline" | "ingresos" | "demanda" | "ranking";
 type TabAgenda = "atender" | "todos" | "compraron";
@@ -64,6 +65,13 @@ function tiempoRelativo(iso: string) {
 function fmtFecha(iso: string | null) {
   if (!iso) return "";
   return new Date(iso).toLocaleDateString("es-AR", { day: "2-digit", month: "2-digit" });
+}
+function fmtPrecio(n: number, moneda: string) {
+  return moneda === "ARS" ? `$ ${n.toLocaleString("es-AR")}` : `${moneda} ${n.toLocaleString("es-AR")}`;
+}
+function fmtTotalesPorMoneda(m: Record<string, number>) {
+  const entries = Object.entries(m);
+  return entries.length === 0 ? "—" : entries.map(([mo, n]) => fmtPrecio(n, mo)).join(" · ");
 }
 function diasDesde(iso: string) {
   return Math.floor((Date.now() - new Date(iso).getTime()) / 86400000);
@@ -146,7 +154,7 @@ function rangoPeriodo(p: Periodo): { desde: Date | null; hasta: Date | null; des
 
 export default function ClientesClient({
   clientesIniciales, perfiles, disponibilidadInicial, ventas, miId,
-}: { clientesIniciales: Cliente[]; perfiles: Perfil[]; disponibilidadInicial: Disponibilidad[]; ventas: { id: string; cliente_id: string | null }[]; miId: string }) {
+}: { clientesIniciales: Cliente[]; perfiles: Perfil[]; disponibilidadInicial: Disponibilidad[]; ventas: Venta[]; miId: string }) {
   const router = useRouter();
   const searchParams = useSearchParams();
 
@@ -159,6 +167,60 @@ export default function ClientesClient({
     ventas.forEach((v) => { if (v.cliente_id) acc[v.cliente_id] = (acc[v.cliente_id] || 0) + 1; });
     return acc;
   }, [ventas]);
+
+  // ---------- RANKING ----------
+  // Una venta puede no haber quedado vinculada a una ficha de cliente
+  // (cliente_id null) -- se rescata por DNI del comprador contra
+  // clientes.dni_cuit, tal como aclara el pie de esta pantalla.
+  const ventasPorCliente = useMemo(() => {
+    const porId: Record<string, Venta[]> = {};
+    const porDni: Record<string, Venta[]> = {};
+    ventas.forEach((v) => {
+      if (v.cliente_id) (porId[v.cliente_id] ||= []).push(v);
+      else if (v.comprador_dni) (porDni[v.comprador_dni] ||= []).push(v);
+    });
+    const map: Record<string, Venta[]> = {};
+    clientes.forEach((c) => {
+      const propias = porId[c.id] || [];
+      const rescatadas = c.dni_cuit ? porDni[c.dni_cuit] || [] : [];
+      if (propias.length || rescatadas.length) map[c.id] = [...propias, ...rescatadas];
+    });
+    return map;
+  }, [clientes, ventas]);
+
+  const rankingFilas = useMemo(() => {
+    return clientes
+      .map((c) => {
+        const vs = ventasPorCliente[c.id] || [];
+        const cerradas = vs.filter((v) => v.estado === "cerrada");
+        const enCurso = vs.filter((v) => ["activa", "reserva"].includes(v.estado));
+        const facturadoPorMoneda: Record<string, number> = {};
+        cerradas.forEach((v) => { facturadoPorMoneda[v.moneda_venta] = (facturadoPorMoneda[v.moneda_venta] || 0) + Number(v.precio_venta || 0); });
+        const fechas = cerradas.map((v) => new Date(v.created_at).getTime()).sort((a, b) => a - b);
+        return {
+          cliente: c, autos: cerradas.length, enCurso: enCurso.length, facturadoPorMoneda,
+          primera: fechas[0] ? new Date(fechas[0]) : null, ultima: fechas.length ? new Date(fechas[fechas.length - 1]) : null,
+        };
+      })
+      .filter((r) => r.autos > 0 || r.enCurso > 0);
+  }, [clientes, ventasPorCliente]);
+
+  const clientesQueCompraron = rankingFilas.filter((r) => r.autos > 0).length;
+  const autosVendidosTotal = rankingFilas.reduce((acc, r) => acc + r.autos, 0);
+  const vuelven = rankingFilas.filter((r) => r.autos >= 2).length;
+  const facturadoTotalPorMoneda = useMemo(() => {
+    const acc: Record<string, number> = {};
+    rankingFilas.forEach((r) => Object.entries(r.facturadoPorMoneda).forEach(([m, n]) => { acc[m] = (acc[m] || 0) + n; }));
+    return acc;
+  }, [rankingFilas]);
+
+  const [soloAbiertoSinComprar, setSoloAbiertoSinComprar] = useState(false);
+  const abiertoSinComprarCount = rankingFilas.filter((r) => r.autos === 0 && r.enCurso > 0).length;
+  const rankingMostrado = useMemo(() => {
+    let lista = rankingFilas;
+    if (soloAbiertoSinComprar) lista = lista.filter((r) => r.autos === 0 && r.enCurso > 0);
+    return [...lista].sort((a, b) => b.autos - a.autos || b.enCurso - a.enCurso);
+  }, [rankingFilas, soloAbiertoSinComprar]);
 
   const eliminarCliente = async (c: Cliente) => {
     if (!confirm(`¿Eliminar a ${c.nombre}? Esta acción no se puede deshacer.`)) return;
@@ -827,11 +889,72 @@ export default function ClientesClient({
 
           {/* ===================== RANKING ===================== */}
           {vista === "ranking" && (
-            <div className="flex flex-col items-center justify-center text-center py-24 bg-white dark:bg-white/[0.02] border border-slate-200 dark:border-white/5 rounded-2xl">
-              <ShoppingBag className="w-10 h-10 text-slate-300 dark:text-slate-600 mb-3" />
-              <h3 className="text-base font-black text-slate-800 dark:text-white mb-1">Todavía no hay compras cerradas</h3>
-              <p className="max-w-sm text-xs text-slate-500 dark:text-slate-400">Cuando cierres ventas vinculadas a un cliente, acá vas a ver quiénes son los que más te compran. Depende del módulo de Ventas, todavía no construido.</p>
-            </div>
+            rankingFilas.length === 0 ? (
+              <div className="flex flex-col items-center justify-center text-center py-24 bg-white dark:bg-white/[0.02] border border-slate-200 dark:border-white/5 rounded-2xl">
+                <ShoppingBag className="w-10 h-10 text-slate-300 dark:text-slate-600 mb-3" />
+                <h3 className="text-base font-black text-slate-800 dark:text-white mb-1">Todavía no hay compras ni operaciones abiertas</h3>
+                <p className="max-w-sm text-xs text-slate-500 dark:text-slate-400">Cuando cierres ventas vinculadas a un cliente (o con el mismo DNI), acá vas a ver quiénes son los que más te compran.</p>
+              </div>
+            ) : (
+              <>
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 mb-4">
+                  <div className="bg-white dark:bg-white/[0.02] border border-slate-200 dark:border-white/5 rounded-xl p-4">
+                    <p className="text-[10px] font-black uppercase tracking-widest text-slate-400">Clientes que compraron</p>
+                    <p className="text-2xl font-black text-slate-900 dark:text-white mt-1">{clientesQueCompraron}</p>
+                    <p className="text-[10px] text-slate-400 mt-0.5">{autosVendidosTotal} autos vendidos</p>
+                  </div>
+                  <div className="bg-white dark:bg-white/[0.02] border border-slate-200 dark:border-white/5 rounded-xl p-4">
+                    <p className="text-[10px] font-black uppercase tracking-widest text-slate-400">Vuelven</p>
+                    <p className="text-2xl font-black text-slate-900 dark:text-white mt-1">{vuelven}</p>
+                    <p className="text-[10px] text-slate-400 mt-0.5">compraron 2 o más autos</p>
+                  </div>
+                  <div className="bg-white dark:bg-white/[0.02] border border-slate-200 dark:border-white/5 rounded-xl p-4">
+                    <p className="text-[10px] font-black uppercase tracking-widest text-slate-400">Facturado a clientes</p>
+                    <p className="text-lg font-black text-slate-900 dark:text-white mt-1">{fmtTotalesPorMoneda(facturadoTotalPorMoneda)}</p>
+                    <p className="text-[10px] text-slate-400 mt-0.5">solo ventas cerradas</p>
+                  </div>
+                </div>
+
+                {abiertoSinComprarCount > 0 && (
+                  <button onClick={() => setSoloAbiertoSinComprar((v) => !v)} className={`flex items-center gap-1.5 mb-4 px-3 py-1.5 rounded-full text-xs font-bold border ${soloAbiertoSinComprar ? "bg-rose-600 border-rose-600 text-white" : "bg-white dark:bg-white/5 border-slate-200 dark:border-white/10 text-slate-600 dark:text-slate-300"}`}>
+                    {soloAbiertoSinComprar && <CheckCircle2 className="w-3.5 h-3.5" />} Mostrar {abiertoSinComprarCount} con operación abierta y sin comprar todavía
+                  </button>
+                )}
+
+                <div className="bg-white dark:bg-white/[0.02] border border-slate-200 dark:border-white/5 rounded-2xl overflow-x-auto">
+                  <table className="w-full text-left text-xs">
+                    <thead>
+                      <tr className="bg-slate-50 dark:bg-white/[0.03] border-b border-slate-200 dark:border-white/5 text-[10px] uppercase tracking-widest text-slate-400">
+                        <th className="px-4 py-3 w-10">#</th>
+                        <th className="px-4 py-3">Cliente</th>
+                        <th className="px-4 py-3">Autos</th>
+                        <th className="px-4 py-3">En curso</th>
+                        <th className="px-4 py-3">Facturado</th>
+                        <th className="px-4 py-3">Primera</th>
+                        <th className="px-4 py-3">Última</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {rankingMostrado.map((r, i) => (
+                        <tr key={r.cliente.id} onClick={() => setEditando(r.cliente)} className="border-b border-slate-100 dark:border-white/5 last:border-0 hover:bg-slate-50 dark:hover:bg-white/[0.02] cursor-pointer">
+                          <td className="px-4 py-3 font-black text-slate-400">{i < 3 && r.autos > 0 ? <Trophy className={`w-3.5 h-3.5 ${i === 0 ? "text-amber-500" : i === 1 ? "text-slate-400" : "text-amber-700"}`} /> : i + 1}</td>
+                          <td className="px-4 py-3">
+                            <p className="font-bold text-slate-900 dark:text-white">{nombreVacio(r.cliente.nombre) ? "Cliente sin nombre" : r.cliente.nombre}</p>
+                            {r.cliente.telefono && <p className="text-[11px] text-slate-400">{r.cliente.telefono}</p>}
+                          </td>
+                          <td className="px-4 py-3 font-black text-slate-700 dark:text-slate-200">{r.autos || "—"}</td>
+                          <td className="px-4 py-3">{r.enCurso > 0 ? <span className="inline-flex items-center justify-center text-[11px] font-bold px-2 py-0.5 rounded-full bg-blue-50 dark:bg-blue-500/10 text-blue-600 dark:text-blue-300 border border-blue-100 dark:border-blue-500/20">{r.enCurso}</span> : "—"}</td>
+                          <td className="px-4 py-3 text-slate-600 dark:text-slate-300">{fmtTotalesPorMoneda(r.facturadoPorMoneda)}</td>
+                          <td className="px-4 py-3 text-slate-400">{r.primera ? r.primera.toLocaleDateString("es-AR") : "—"}</td>
+                          <td className="px-4 py-3 text-slate-400">{r.ultima ? r.ultima.toLocaleDateString("es-AR") : "—"}</td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+                <p className="text-[11px] text-slate-400 mt-3">Los autos y la facturación son de ventas cerradas; &quot;en curso&quot; son operaciones abiertas (activa o reserva). Las ventas que no quedaron vinculadas a una ficha se rescatan por el DNI del comprador.</p>
+              </>
+            )
           )}
         </div>
       </div>
