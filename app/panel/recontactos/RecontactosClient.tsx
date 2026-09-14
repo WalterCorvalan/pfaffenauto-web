@@ -111,9 +111,17 @@ export default function RecontactosClient({
     });
   }, [clientes, compraronSet, esAdmin, miId, ultimoRecontactoPorCliente]);
 
-  const filtrados = useMemo(() => {
+  // Total elegible con solo el filtro de plazo aplicado -- "Para recontactar"
+  // tiene que ser el universo real (mismo criterio que "totalDormidos" en el
+  // módulo hermano Dormidos), no el mismo número que "Con filtro" (que sí
+  // suma segmento/vendedor/búsqueda encima).
+  const elegiblesPorPlazo = useMemo(() => {
     const minMeses = Number(plazoFiltro);
-    let lista = elegibles.filter((c) => mesesDesde(c.ultimo_contacto || c.created_at) >= minMeses);
+    return elegibles.filter((c) => mesesDesde(c.ultimo_contacto || c.created_at) >= minMeses);
+  }, [elegibles, plazoFiltro]);
+
+  const filtrados = useMemo(() => {
+    let lista = elegiblesPorPlazo;
     if (segmentoFiltro) lista = lista.filter((c) => (c.segmento || "consulta_general") === segmentoFiltro);
     if (vendedorFiltro) lista = lista.filter((c) => c.vendedor_id === vendedorFiltro);
     if (ocultarYaContactados) lista = lista.filter((c) => !ultimoRecontactoPorCliente[c.id]);
@@ -122,7 +130,7 @@ export default function RecontactosClient({
       lista = lista.filter((c) => [c.nombre, c.telefono, vehiculoDeCliente(c)].filter(Boolean).join(" ").toLowerCase().includes(q));
     }
     return lista.sort((a, b) => new Date(a.ultimo_contacto || a.created_at).getTime() - new Date(b.ultimo_contacto || b.created_at).getTime());
-  }, [elegibles, plazoFiltro, segmentoFiltro, vendedorFiltro, ocultarYaContactados, query, ultimoRecontactoPorCliente]);
+  }, [elegiblesPorPlazo, segmentoFiltro, vendedorFiltro, ocultarYaContactados, query, ultimoRecontactoPorCliente]);
 
   // Duplicados (mismo teléfono) → una sola fila, con contador.
   const filtradosAgrupados = useMemo(() => {
@@ -247,7 +255,7 @@ export default function RecontactosClient({
           <div className="grid grid-cols-2 md:grid-cols-4 gap-3 my-4">
             <div className="bg-white dark:bg-white/[0.02] border border-slate-200 dark:border-white/5 rounded-2xl p-4">
               <p className="text-[10px] font-black uppercase tracking-widest text-slate-400">Para recontactar</p>
-              <p className="text-2xl font-black text-slate-900 dark:text-white mt-1">{filtrados.length}</p>
+              <p className="text-2xl font-black text-slate-900 dark:text-white mt-1">{elegiblesPorPlazo.length}</p>
               <p className="text-[11px] text-slate-500 dark:text-slate-400 mt-0.5">{plazoFiltro}+ meses sin hablar</p>
             </div>
             <div className="bg-blue-50/50 dark:bg-blue-500/[0.04] border border-blue-100 dark:border-blue-500/10 rounded-2xl p-4">
