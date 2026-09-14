@@ -13,9 +13,10 @@ Un lead **no** vive en una sola tabla. Vive en una de estas 4, según el canal:
 
 Cada una tiene su propio `estado_lead` (`nuevo`/`asignado`/`calificando`/`convertido`/`perdido`, default `"nuevo"`), `calificacion`, `vendedor_id`, `canal_origen`, `sucursal_id`. `app/panel/leads/page.tsx` (`LeadsUnificadosClient.tsx`) es la **única** vista que unifica las 4 en una sola lista — cualquier pantalla nueva que necesite "todos los leads" tiene que consultar las 4, no una o dos.
 
-**Este patrón ya generó 2 bugs de auditoría por quedarse corto:**
+**Este patrón ya generó 3 bugs de auditoría por quedarse corto:**
 - El tile "Leads sin atender" del Dashboard general contaba `clientes` en vez de leads con `estado_lead = "nuevo"` en las 4 tablas (corregido).
 - El tablero de Tareas de Leads (`app/panel/tareas/page.tsx`) solo hacía join con whatsapp/instagram — una tarea asignada sobre un lead de Rodi o manual desaparecía del tablero por completo, no solo de un contador (corregido).
+- "Tasa de cierre global" en Marketing → Generales (`app/panel/marketing/generales/page.tsx`) contaba `clientes` (todo el CRM, histórico) como si fuera "leads", mostrando un % que no tenía nada que ver con conversión real de leads (corregido: suma las 4 tablas, `estado_lead = "convertido"` para el numerador).
 
 Si agregás una pantalla o métrica nueva sobre "leads", contá/consultá las 4 tablas o reusá `LeadsUnificadosClient.tsx`/su patrón de normalización — nunca asumas que whatsapp+instagram alcanza.
 

@@ -55,7 +55,10 @@ export default async function MetricasGeneralesPage() {
     { data: busquedas7 },
     { data: usoIA30 },
     { count: leadsRealesUtmMes },
-    { count: leadsTotal }, { count: leadsGanados },
+    { count: waTotal }, { count: waGanados },
+    { count: igTotal }, { count: igGanados },
+    { count: rodiTotal }, { count: rodiGanados },
+    { count: manualesTotal }, { count: manualesGanados },
   ] = await Promise.all([
     supabase.from("whatsapp_conversaciones").select("id", { count: "exact", head: true }).gte("created_at", desde7),
     supabase.from("whatsapp_mensajes").select("id", { count: "exact", head: true }).gte("created_at", desde7),
@@ -68,9 +71,22 @@ export default async function MetricasGeneralesPage() {
     supabase.from("busquedas_log").select("resultados_encontrados").gte("created_at", desde7),
     supabase.from("uso_ia_anthropic").select("input_tokens, output_tokens").gte("created_at", desde30).in("origen", ["panel-v2/webhooks/whatsapp", "panel-v2/webhooks/instagram", "panel-v2/rodi", "api/buscar-ia"]),
     supabase.from("leads_tasacion").select("id", { count: "exact", head: true }).not("utm_source", "is", null).gte("created_at", inicioMes),
-    supabase.from("clientes").select("id", { count: "exact", head: true }),
-    supabase.from("clientes").select("id", { count: "exact", head: true }).eq("pipeline_stage", "cerrado"),
+    // "Tasa de cierre global" tiene que contar leads reales, no clientes del
+    // CRM -- un lead no vive en una sola tabla (ver app/panel/leads/ARCHITECTURE.md,
+    // esta confusión clientes-vs-leads ya generó 2 bugs de auditoría antes de
+    // este). Se suman las 4 fuentes: total y "convertido" (estado_lead) de cada una.
+    supabase.from("whatsapp_conversaciones").select("id", { count: "exact", head: true }),
+    supabase.from("whatsapp_conversaciones").select("id", { count: "exact", head: true }).eq("estado_lead", "convertido"),
+    supabase.from("instagram_conversaciones").select("id", { count: "exact", head: true }),
+    supabase.from("instagram_conversaciones").select("id", { count: "exact", head: true }).eq("estado_lead", "convertido"),
+    supabase.from("rodi_conversaciones").select("id", { count: "exact", head: true }),
+    supabase.from("rodi_conversaciones").select("id", { count: "exact", head: true }).eq("estado_lead", "convertido"),
+    supabase.from("leads_manuales").select("id", { count: "exact", head: true }),
+    supabase.from("leads_manuales").select("id", { count: "exact", head: true }).eq("estado_lead", "convertido"),
   ]);
+
+  const leadsTotal = (waTotal ?? 0) + (igTotal ?? 0) + (rodiTotal ?? 0) + (manualesTotal ?? 0);
+  const leadsGanados = (waGanados ?? 0) + (igGanados ?? 0) + (rodiGanados ?? 0) + (manualesGanados ?? 0);
 
   const gastoMes = (campanasMes || []).reduce((acc, c) => acc + Number(c.gasto || 0), 0);
   const leadsMesPautas = (campanasMes || []).reduce((acc, c) => acc + Number(c.leads || 0), 0);
