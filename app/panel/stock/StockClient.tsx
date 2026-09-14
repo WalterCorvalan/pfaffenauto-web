@@ -200,7 +200,7 @@ export default function StockClient({
         <div className="flex items-center gap-2">
           <p className="text-sm font-bold text-slate-900 dark:text-white whitespace-nowrap">{v.marca} {v.modelo}</p>
           {aRevisar(v) && v.estado === "disponible" && (
-            <span title="Datos incompletos: revisar publicación/foto/precio">
+            <span title="Sin publicar en MercadoLibre, sin foto o sin precio cargado">
               <AlertTriangle className="w-3.5 h-3.5 text-amber-500 shrink-0" />
             </span>
           )}
@@ -259,8 +259,13 @@ export default function StockClient({
           <div className="flex items-center gap-2 mb-2 md:mb-4 overflow-x-auto pb-1 md:flex-wrap md:overflow-visible md:pb-0 -mx-4 px-4 md:mx-0 md:px-0">
             <span className="shrink-0 flex items-center gap-1.5 text-[11px] font-bold px-3 py-1.5 rounded-full bg-emerald-50 dark:bg-emerald-500/10 text-emerald-700 dark:text-emerald-300 border border-emerald-100 dark:border-emerald-500/20 whitespace-nowrap"><Car className="w-3.5 h-3.5" /> {disponibles.length} disponibles</span>
             <span className="shrink-0 flex items-center gap-1.5 text-[11px] font-bold px-3 py-1.5 rounded-full bg-slate-50 dark:bg-white/5 text-slate-600 dark:text-slate-300 border border-slate-200 dark:border-white/10 whitespace-nowrap"><Clock className="w-3.5 h-3.5" /> {diasProm}d prom.</span>
-            <span className={`shrink-0 flex items-center gap-1.5 text-[11px] font-bold px-3 py-1.5 rounded-full border whitespace-nowrap ${publicadoPct === 100 ? "bg-emerald-50 dark:bg-emerald-500/10 text-emerald-700 dark:text-emerald-300 border-emerald-100 dark:border-emerald-500/20" : "bg-amber-50 dark:bg-amber-500/10 text-amber-700 dark:text-amber-300 border-amber-100 dark:border-amber-500/20"}`}><TrendingUp className="w-3.5 h-3.5" /> {publicadoPct}% publicado</span>
-            {aRevisarCount > 0 && <span className="shrink-0 flex items-center gap-1.5 text-[11px] font-bold px-3 py-1.5 rounded-full bg-amber-50 dark:bg-amber-500/10 text-amber-700 dark:text-amber-300 border border-amber-100 dark:border-amber-500/20 whitespace-nowrap"><AlertTriangle className="w-3.5 h-3.5" /> {aRevisarCount} a revisar</span>}
+            {/* Este indicador mide publicado_ml (sincronización con MercadoLibre),
+                no visibilidad en el catálogo propio -- el catálogo público filtra
+                solo por estado === "disponible" y no mira este campo. Aclarado acá
+                para no confundirlo con "0% en la web" cuando el catálogo sí muestra
+                el stock disponible. */}
+            <span title="Mide vehículos sincronizados con MercadoLibre, no la visibilidad en el catálogo propio" className={`shrink-0 flex items-center gap-1.5 text-[11px] font-bold px-3 py-1.5 rounded-full border whitespace-nowrap ${publicadoPct === 100 ? "bg-emerald-50 dark:bg-emerald-500/10 text-emerald-700 dark:text-emerald-300 border-emerald-100 dark:border-emerald-500/20" : "bg-amber-50 dark:bg-amber-500/10 text-amber-700 dark:text-amber-300 border-amber-100 dark:border-amber-500/20"}`}><TrendingUp className="w-3.5 h-3.5" /> {publicadoPct}% publicado en ML</span>
+            {aRevisarCount > 0 && <span title="Sin publicar en MercadoLibre, sin foto o sin precio cargado" className="shrink-0 flex items-center gap-1.5 text-[11px] font-bold px-3 py-1.5 rounded-full bg-amber-50 dark:bg-amber-500/10 text-amber-700 dark:text-amber-300 border border-amber-100 dark:border-amber-500/20 whitespace-nowrap"><AlertTriangle className="w-3.5 h-3.5" /> {aRevisarCount} a revisar (ML)</span>}
             <span className="hidden md:inline text-xs font-semibold text-slate-500 dark:text-slate-400 ml-auto whitespace-nowrap">
               VALOR TOTAL DEL STOCK: <strong className="text-slate-800 dark:text-white">{Object.keys(valorTotalPorMoneda).length === 0 ? "—" : Object.entries(valorTotalPorMoneda).map(([m, n]) => fmtPrecio(n, m)).join(" · ")}</strong>
             </span>
@@ -314,7 +319,7 @@ export default function StockClient({
                   <button key={v} onClick={() => { setEstadoFiltro(v); setSoloEstancados(false); setSoloARevisar(false); }} className={`shrink-0 whitespace-nowrap px-3 py-1.5 rounded-full text-xs font-bold border ${estadoFiltro === v && !soloEstancados && !soloARevisar ? "bg-rose-600 border-rose-600 text-white" : "bg-white dark:bg-white/5 border-slate-200 dark:border-white/10 text-slate-600 dark:text-slate-300"}`}>{label}</button>
                 ))}
                 <button onClick={() => { setSoloEstancados((v) => !v); setSoloARevisar(false); }} className={`shrink-0 whitespace-nowrap flex items-center gap-1 px-3 py-1.5 rounded-full text-xs font-bold border ${soloEstancados ? "bg-rose-600 border-rose-600 text-white" : "bg-white dark:bg-white/5 border-slate-200 dark:border-white/10 text-slate-500"}`}><Clock className="w-3 h-3" /> Estancados (+90d) · {estancados}</button>
-                <button onClick={() => { setSoloARevisar((v) => !v); setSoloEstancados(false); }} className={`shrink-0 whitespace-nowrap flex items-center gap-1 px-3 py-1.5 rounded-full text-xs font-bold border ${soloARevisar ? "bg-rose-600 border-rose-600 text-white" : "bg-white dark:bg-white/5 border-slate-200 dark:border-white/10 text-slate-500"}`}><AlertTriangle className="w-3 h-3" /> A revisar</button>
+                <button title="Sin publicar en MercadoLibre, sin foto o sin precio cargado" onClick={() => { setSoloARevisar((v) => !v); setSoloEstancados(false); }} className={`shrink-0 whitespace-nowrap flex items-center gap-1 px-3 py-1.5 rounded-full text-xs font-bold border ${soloARevisar ? "bg-rose-600 border-rose-600 text-white" : "bg-white dark:bg-white/5 border-slate-200 dark:border-white/10 text-slate-500"}`}><AlertTriangle className="w-3 h-3" /> A revisar (ML)</button>
               </div>
 
               <div className="flex flex-col sm:flex-row gap-2 mb-4">
