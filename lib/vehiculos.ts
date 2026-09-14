@@ -20,3 +20,17 @@ export const CAMPOS_VEHICULO_PUBLICO =
 // Ficha de auto (/catalogo/[slug]): igual que arriba + datos de contacto de la sucursal.
 export const CAMPOS_VEHICULO_DETALLE =
   "id, marca, modelo, anio, km, condicion, tipo, segmento, estado, slug, precio_publicado_ars, precio_publicado_usd, traccion, potencia_cv, cantidad_plazas, transmision, combustible, destacado, fotos, sucursales!vehiculos_sucursal_id_fkey ( nombre, direccion, telefono:telefono_encargado )" as const;
+
+// Mismo criterio que StockClient.tsx (aRevisar): "listo para publicar en
+// MercadoLibre", no "listo para vender" -- reusado por la Ficha rápida/completa
+// de Stock para no duplicar la lógica de qué falta preparar.
+export function vehiculoARevisar(v: { publicado_ml?: boolean | null; fotos?: string[] | null; precio_venta?: number | null }): boolean {
+  return !v.publicado_ml || (v.fotos?.length ?? 0) === 0 || !v.precio_venta;
+}
+export function vehiculoPendientes(v: { publicado_ml?: boolean | null; fotos?: string[] | null; precio_venta?: number | null }): string[] {
+  const items: string[] = [];
+  if (!v.publicado_ml) items.push("Sin publicar en ML");
+  if ((v.fotos?.length ?? 0) === 0) items.push("Sin foto");
+  if (!v.precio_venta) items.push("Cargar peritaje");
+  return items;
+}
