@@ -16,15 +16,39 @@ export default async function EmbudoPage({ searchParams }: { searchParams: Promi
   desde6MesesDefault.setMonth(desde6MesesDefault.getMonth() - 6);
   const desdeEfectivo = desde || desde6MesesDefault.toISOString().split("T")[0];
 
-  // 1. Traemos clientes (leads) de v2 para medir el pipeline
-  let queryClientes = supabase
-    .from("clientes")
-    .select("id, origen, canal_ingreso, pipeline_stage, created_at, vendedor_id")
-    .gte("created_at", desdeEfectivo);
-  if (hasta) queryClientes = queryClientes.lte("created_at", `${hasta}T23:59:59`);
-  const { data: clientes } = await queryClientes;
+  // 1. Leads reales -- NO viven en "clientes" (esa es la tabla del CRM,
+  // incluye clientes migrados del sistema viejo, altas manuales de
+  // mostrador, etc., no solo leads). Un lead vive en una de estas 4 tablas
+  // -- ver app/panel/leads/ARCHITECTURE.md, este mismo patrón de confusión
+  // "clientes" vs "leads" ya se corrigió 3 veces antes en otros archivos
+  // (dashboard, tablero de tareas, Marketing → Generales). Acá era la
+  // cuarta vez: "Total Leads" contaba TODA la tabla clientes del período
+  // (incluida la migración masiva del sistema viejo), mostrando ~1000
+  // leads cuando en realidad había 1 solo lead real de WhatsApp.
+  const camposLead = "id, vendedor_id, canal_origen, estado_lead, created_at";
+  let qWhatsapp = supabase.from("whatsapp_conversaciones").select(camposLead).gte("created_at", desdeEfectivo);
+  let qInstagram = supabase.from("instagram_conversaciones").select(camposLead).gte("created_at", desdeEfectivo);
+  let qRodi = supabase.from("rodi_conversaciones").select(camposLead).gte("created_at", desdeEfectivo);
+  let qManuales = supabase.from("leads_manuales").select(camposLead).gte("created_at", desdeEfectivo);
+  if (hasta) {
+    qWhatsapp = qWhatsapp.lte("created_at", `${hasta}T23:59:59`);
+    qInstagram = qInstagram.lte("created_at", `${hasta}T23:59:59`);
+    qRodi = qRodi.lte("created_at", `${hasta}T23:59:59`);
+    qManuales = qManuales.lte("created_at", `${hasta}T23:59:59`);
+  }
+  const [{ data: leadsWhatsapp }, { data: leadsInstagram }, { data: leadsRodi }, { data: leadsManuales }] = await Promise.all([qWhatsapp, qInstagram, qRodi, qManuales]);
+  const datos = [...(leadsWhatsapp || []), ...(leadsInstagram || []), ...(leadsRodi || []), ...(leadsManuales || [])];
 
-  const datos = clientes || [];
+  // Clientes (CRM) -- solo para la sección "Cómo nos conocieron" más abajo,
+  // que es genuinamente sobre altas manuales de mostrador (walk-in), no
+  // sobre leads. No se mezcla con las métricas de arriba.
+  let queryClientesWalkIn = supabase
+    .from("clientes")
+    .select("id, origen, canal_ingreso, created_at")
+    .eq("canal_ingreso", "walk_in")
+    .gte("created_at", desdeEfectivo);
+  if (hasta) queryClientesWalkIn = queryClientesWalkIn.lte("created_at", `${hasta}T23:59:59`);
+  const { data: clientesWalkIn } = await queryClientesWalkIn;
 
   // 1a-tris. Leads_tasacion es la ÚNICA fuente con tracking real de UTM en
   // toda la app (viene de los 3 forms públicos vía lib/utm.ts) -- hasta acá
@@ -50,7 +74,7 @@ export default async function EmbudoPage({ searchParams }: { searchParams: Promi
   const canalesTasacionOrdenados = Object.entries(canalesTasacionMap).sort((a: any, b: any) => b[1].total - a[1].total);
 
   // 1a-bis. Clientes cargados a mano (walk-in) y su origen
-  const walkIns = datos.filter((c: any) => c.canal_ingreso === "walk_in");
+  const walkIns = clientesWalkIn || [];
   const conocioMap: Record<string, number> = {};
   walkIns.forEach((c: any) => {
     const k = c.origen || "Otro";
@@ -78,10 +102,17 @@ export default async function EmbudoPage({ searchParams }: { searchParams: Promi
   const pctConPauta = totalVentas > 0 ? Math.round((ventasConPauta / totalVentas) * 100) : 0;
   const pctSinPauta = totalVentas > 0 ? 100 - pctConPauta : 0;
 
-  // Mapeamos el cliente_id de la venta para saber el origen
+  // ventas.cliente_id apunta a la tabla "clientes" (el CRM), no a ninguna
+  // de las 4 fuentes de leads -- se resuelve el origen con un lookup propio
+  // por los IDs que realmente aparecen en estas ventas, no con `datos`.
+  const idsClientesVenta = Array.from(new Set(ventasTotalesArr.map((v: any) => v.cliente_id).filter(Boolean)));
+  const { data: clientesDeVentas } = idsClientesVenta.length
+    ? await supabase.from("clientes").select("id, origen").in("id", idsClientesVenta)
+    : { data: [] as { id: string; origen: string | null }[] };
+  const origenClienteMap = Object.fromEntries((clientesDeVentas || []).map((c) => [c.id, c.origen]));
   const getOrigenVenta = (clienteId: string | null) => {
-    const cliente = datos.find((c: any) => c.id === clienteId);
-    return cliente?.origen || "Desconocido";
+    if (!clienteId) return "Desconocido";
+    return origenClienteMap[clienteId] || "Desconocido";
   };
 
   const origenSinPautaMap: Record<string, number> = {};
@@ -120,7 +151,8 @@ export default async function EmbudoPage({ searchParams }: { searchParams: Promi
     return punto;
   });
 
-  // 1c. Embudo por vendedor (adaptación V2 con pipeline_stage de clientes)
+  // 1c. Embudo por vendedor -- basado en estado_lead de las 4 fuentes reales,
+  // no en pipeline_stage de clientes (ese es del CRM, no del lead).
   const { data: vendedoresPerfiles } = await supabase
     .from("perfiles")
     .select("id, nombre")
@@ -130,13 +162,16 @@ export default async function EmbudoPage({ searchParams }: { searchParams: Promi
   datos.forEach((c: any) => {
     if (!c.vendedor_id) return;
     if (!porVendedorMap[c.vendedor_id]) porVendedorMap[c.vendedor_id] = { citas: 0, asistieron: 0, compraron: 0 };
-    
-    // Asumimos que llegar a "visita" o más implica cita agendada
-    if (["visita", "negociacion", "cerrado"].includes(c.pipeline_stage)) {
+
+    // No hay un estado "visita/cita" en estado_lead (nuevo/asignado/
+    // calificando/convertido/perdido) -- "calificando" en adelante es la
+    // aproximación más cercana a "avanzó más allá del primer contacto",
+    // mismo espíritu que el "(Aprox)" que ya tiene la columna en la tabla.
+    if (["calificando", "convertido"].includes(c.estado_lead)) {
       porVendedorMap[c.vendedor_id].citas += 1;
-      porVendedorMap[c.vendedor_id].asistieron += 1; // Simplificación hasta enlazar actividades
+      porVendedorMap[c.vendedor_id].asistieron += 1;
     }
-    if (c.pipeline_stage === "cerrado") {
+    if (c.estado_lead === "convertido") {
       porVendedorMap[c.vendedor_id].compraron += 1;
     }
   });
@@ -149,22 +184,26 @@ export default async function EmbudoPage({ searchParams }: { searchParams: Promi
     }))
     .sort((a: any, b: any) => b.citas - a.citas);
 
-  // Cálculos del embudo global
+  // Cálculos del embudo global -- sobre las 4 fuentes reales de leads.
+  // estado_lead: nuevo / asignado / calificando / convertido / perdido.
   const totalLeads = datos.length;
-  const contactados = datos.filter((l: any) => l.pipeline_stage !== "sin_contactar").length;
-  const interesados = datos.filter((l: any) => ["negociacion", "cerrado"].includes(l.pipeline_stage)).length;
-  const ganados = datos.filter((l: any) => l.pipeline_stage === "cerrado").length;
+  const contactados = datos.filter((l: any) => l.estado_lead && l.estado_lead !== "nuevo").length;
+  const interesados = datos.filter((l: any) => ["calificando", "convertido"].includes(l.estado_lead)).length;
+  const ganados = datos.filter((l: any) => l.estado_lead === "convertido").length;
 
   const tasaContactabilidad = totalLeads > 0 ? Math.round((contactados / totalLeads) * 100) : 0;
   const tasaCierre = totalLeads > 0 ? Math.round((ganados / totalLeads) * 100) : 0;
 
-  // Agrupación por canal
+  // Agrupación por canal -- canal_origen viene de Meta/MercadoLibre
+  // (referral/link detectado en el primer mensaje, ver
+  // app/panel/leads/ARCHITECTURE.md) o queda null si no hubo esa señal, no
+  // asumir "Orgánico" cuando en realidad es "sin dato".
   const canalesMap: Record<string, { total: number, ganados: number }> = {};
   datos.forEach((l: any) => {
-    const canal = l.origen || "Orgánico";
+    const canal = l.canal_origen || "Sin identificar";
     if (!canalesMap[canal]) canalesMap[canal] = { total: 0, ganados: 0 };
     canalesMap[canal].total += 1;
-    if (l.pipeline_stage === "cerrado") canalesMap[canal].ganados += 1;
+    if (l.estado_lead === "convertido") canalesMap[canal].ganados += 1;
   });
   const canalesOrdenados = Object.entries(canalesMap).sort((a: any, b: any) => b[1].total - a[1].total);
 

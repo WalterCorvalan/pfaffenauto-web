@@ -13,10 +13,11 @@ Un lead **no** vive en una sola tabla. Vive en una de estas 4, según el canal:
 
 Cada una tiene su propio `estado_lead` (`nuevo`/`asignado`/`calificando`/`convertido`/`perdido`, default `"nuevo"`), `calificacion`, `vendedor_id`, `canal_origen`, `sucursal_id`. `app/panel/leads/page.tsx` (`LeadsUnificadosClient.tsx`) es la **única** vista que unifica las 4 en una sola lista — cualquier pantalla nueva que necesite "todos los leads" tiene que consultar las 4, no una o dos.
 
-**Este patrón ya generó 3 bugs de auditoría por quedarse corto:**
+**Este patrón ya generó 4 bugs de auditoría por quedarse corto:**
 - El tile "Leads sin atender" del Dashboard general contaba `clientes` en vez de leads con `estado_lead = "nuevo"` en las 4 tablas (corregido).
 - El tablero de Tareas de Leads (`app/panel/tareas/page.tsx`) solo hacía join con whatsapp/instagram — una tarea asignada sobre un lead de Rodi o manual desaparecía del tablero por completo, no solo de un contador (corregido).
 - "Tasa de cierre global" en Marketing → Generales (`app/panel/marketing/generales/page.tsx`) contaba `clientes` (todo el CRM, histórico) como si fuera "leads", mostrando un % que no tenía nada que ver con conversión real de leads (corregido: suma las 4 tablas, `estado_lead = "convertido"` para el numerador).
+- Marketing → Embudo (`app/panel/marketing/embudo/page.tsx`) — el más grave de los cuatro: "Total Leads" del flujo, "Leads y cierres por canal" y "Rendimiento por Vendedor" contaban **toda la tabla `clientes`** del período, incluida la migración masiva de clientes del sistema viejo. Con esa migración de fondo llegó a mostrar ~1000 "leads" cuando en la realidad había 1 solo lead real de WhatsApp en el período (corregido: las 3 secciones usan las 4 tablas reales, `estado_lead` en vez de `pipeline_stage`, `canal_origen` en vez de `origen`). La sección "Cómo nos conocieron" del mismo módulo sí sigue usando `clientes` a propósito — es sobre altas manuales de mostrador (walk-in), un concepto legítimamente distinto de "lead" (ver más abajo). Recordatorio de negocio: un lead vive en una de las 4 tablas hasta que se **convierte** (compra o consignación completa) — recién ahí pasa a `clientes`; no son la misma entidad en ningún punto del ciclo.
 
 Si agregás una pantalla o métrica nueva sobre "leads", contá/consultá las 4 tablas o reusá `LeadsUnificadosClient.tsx`/su patrón de normalización — nunca asumas que whatsapp+instagram alcanza.
 
