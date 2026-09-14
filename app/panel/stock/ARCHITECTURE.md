@@ -14,7 +14,7 @@ Guía para no romper otra cosa al tocar este módulo. Si cambiás algo acá, rev
 
 ## Componentes
 
-- **`StockClient.tsx`** — listado/tabla principal. `aRevisar(v)` = `!v.publicado_ml || v.fotos.length === 0 || !v.precio_venta` (criterio de sincronización con ML, no de "listo para vender").
+- **`StockClient.tsx`** — listado/tabla principal. `aRevisar(v)` = `!v.publicado_ml || v.fotos.length === 0 || !v.precio_venta` (criterio de sincronización con ML, no de "listo para vender"). Tiene 3 vistas intercambiables sobre la misma lista ya filtrada/ordenada (`filtrados`/`paginados`): `"lista"` (fila compacta), `"tarjetas"` (grid de cards), `"tabla"` (la tabla completa vía `TablaResponsiva`, la única con acciones inline de editar/señar/eliminar y columnas de ML/asignado). El selector de orden (`orden`) es real, no cosmético: ordena `filtrados` antes de paginar. "Coincidencias de unidad/modelo" y el checkbox "Comparar" que aparecen en el mockup de referencia **no están implementados** (no hay feature de comparador en el panel) — no agregar ese texto/checkbox sin construir la funcionalidad real detrás, para no repetir el patrón de "label sin datos reales" que ya se corrigió varias veces en otros módulos.
 - **`BotonPublicarML.tsx`** — dispara la publicación a MercadoLibre, actualiza `publicado_ml`, `ml_item_id`, `ml_publicar_error`.
 - **`NuevoVehiculoModal.tsx`** / edición inline (`PrecioEditor.tsx`, `SucursalEditor.tsx`, `VendedorEditor.tsx`).
 - **`NuevoMandatoModal.tsx`** — vehículos consignados (mandato), tabla `mandatos` aparte con FK a `vehiculos`.
