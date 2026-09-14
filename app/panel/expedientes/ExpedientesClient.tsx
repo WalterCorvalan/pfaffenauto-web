@@ -142,7 +142,7 @@ export default function ExpedientesClient({
 
       {pendientesConfirmacion.length > 0 && (
         <div className="bg-rose-50 dark:bg-rose-500/10 border border-rose-200 dark:border-rose-500/20 rounded-xl p-4 mb-4">
-          <p className="text-sm font-bold text-rose-700 dark:text-rose-300 flex items-center gap-1.5"><Lock className="w-4 h-4" /> Tenés {pendientesConfirmacion.length} expediente{pendientesConfirmacion.length === 1 ? "" : "s"} pendiente{pendientesConfirmacion.length === 1 ? "" : "s"} de tu confirmación</p>
+          <p className="text-sm font-bold text-rose-700 dark:text-rose-300 flex items-center gap-1.5"><Lock className="w-4 h-4" /> Hay {pendientesConfirmacion.length} expediente{pendientesConfirmacion.length === 1 ? "" : "s"} pendiente{pendientesConfirmacion.length === 1 ? "" : "s"} de confirmación</p>
           <p className="text-xs text-rose-700/70 dark:text-rose-300/60 mt-0.5">Hacé clic en cualquiera para abrirlo y tildar el cierre desde el banner rojo en la cabecera del expediente.</p>
           <div className="flex flex-wrap gap-2 mt-2">
             {pendientesConfirmacion.map((e) => (

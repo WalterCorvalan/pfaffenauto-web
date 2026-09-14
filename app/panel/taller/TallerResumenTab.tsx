@@ -8,10 +8,11 @@ export default function TallerResumenTab({ ordenes }: { ordenes: any[] }) {
   const mesActualStr = new Intl.DateTimeFormat("es-AR", { month: "long", year: "numeric" }).format(fechaActual);
   const tituloMes = mesActualStr.charAt(0).toUpperCase() + mesActualStr.slice(1);
 
-  // Cálculos de métricas (mockeados a 0/estado inicial hasta que se construya el submódulo de cobros)
-  const facturacionMes = 0;
-  const gananciaMes = 0;
-  const ticketPromedio = 0;
+  // Todavía no hay submódulo de cobros de Taller -- se muestra "—" en vez de
+  // "USD 0" para no hacer pasar un dato inexistente por un total real de $0.
+  const facturacionMes = null as number | null;
+  const gananciaMes = null as number | null;
+  const ticketPromedio = null as number | null;
   
   // Autos atendidos = Órdenes creadas este mes
   const mesActualIso = fechaActual.toISOString().slice(0, 7); // "YYYY-MM"
@@ -40,7 +41,7 @@ export default function TallerResumenTab({ ordenes }: { ordenes: any[] }) {
             <FileText className="w-4 h-4" /> Facturación del mes
           </div>
           <p className="text-2xl font-black text-slate-900 dark:text-white">
-            USD {facturacionMes.toLocaleString("es-AR")}
+            {facturacionMes === null ? "—" : `USD ${facturacionMes.toLocaleString("es-AR")}`}
           </p>
         </div>
 
@@ -50,7 +51,7 @@ export default function TallerResumenTab({ ordenes }: { ordenes: any[] }) {
             <TrendingUp className="w-4 h-4" /> Ganancia del mes
           </div>
           <p className="text-2xl font-black text-emerald-600 dark:text-emerald-400">
-            USD {gananciaMes.toLocaleString("es-AR")}
+            {gananciaMes === null ? "—" : `USD ${gananciaMes.toLocaleString("es-AR")}`}
           </p>
         </div>
 
@@ -60,7 +61,7 @@ export default function TallerResumenTab({ ordenes }: { ordenes: any[] }) {
             <Tags className="w-4 h-4" /> Ticket promedio
           </div>
           <p className="text-2xl font-black text-slate-900 dark:text-white">
-            USD {ticketPromedio.toLocaleString("es-AR")}
+            {ticketPromedio === null ? "—" : `USD ${ticketPromedio.toLocaleString("es-AR")}`}
           </p>
         </div>
 

@@ -22,6 +22,13 @@ export default function TallerClient({
   const [modalConfig, setModalConfig] = useState(false);
 
   const TABS = ["Tablero", "Agenda", "Recontacto", "Cerradas", "Historial", "Resumen"];
+  // Solo "Tablero" y "Cerradas" tienen estados definidos para contar de verdad
+  // (Agenda/Recontacto todavía no tienen un estado propio en `ordenes` -- no
+  // se les muestra un número inventado hasta que ese submódulo exista).
+  const CONTEO_POR_TAB: Record<string, string[] | undefined> = {
+    Tablero: ["ingresado", "presupuestado", "aprobado", "en_proceso"],
+    Cerradas: ["cerrada"],
+  };
 
   return (
     <div className="flex flex-col h-full overflow-hidden">
@@ -54,8 +61,7 @@ export default function TallerClient({
 
         <div className="flex items-center gap-6 overflow-x-auto custom-scrollbar">
           {TABS.map((tab) => {
-            const count = ordenesIniciales.length; // Lógica de conteo real pendiente
-            const showsCount = ["Tablero", "Agenda", "Recontacto", "Cerradas"].includes(tab);
+            const count = CONTEO_POR_TAB[tab] ? ordenesIniciales.filter((o) => CONTEO_POR_TAB[tab]!.includes(o.estado)).length : null;
             const activo = tabActivo === tab;
             return (
               <button
@@ -67,7 +73,7 @@ export default function TallerClient({
                     : "border-transparent text-slate-500 hover:text-slate-700 dark:hover:text-slate-300"
                 }`}
               >
-                {tab} {showsCount && `(0)`}
+                {tab} {count !== null && `(${count})`}
               </button>
             );
           })}
