@@ -3,6 +3,7 @@
 import React, { useState, useEffect, useRef } from "react";
 import { createPortal } from "react-dom";
 import Script from "next/script";
+import { supabase2 } from "@/lib/supabase/client";
 import { CalendarDays, X, CheckCircle2, Loader2, MapPin, Clock, CarFront, User, Phone } from "lucide-react";
 
 declare global {
@@ -31,6 +32,7 @@ export default function AgendarVisitaForm({ auto, isMobile = false }: AgendarVis
   const [telefono, setTelefono] = useState("");
   const [fecha, setFecha] = useState("");
   const [horario, setHorario] = useState("10:00");
+  const [ocupadas, setOcupadas] = useState<string[]>([]);
 
   // Turnstile (anti-spam)
   const [turnstileToken, setTurnstileToken] = useState("");
@@ -80,6 +82,19 @@ export default function AgendarVisitaForm({ auto, isMobile = false }: AgendarVis
     });
   }, [isOpen, success, turnstileListo]);
 
+  // Mismo chequeo de horarios ocupados que AgendarCitaForm.tsx -- antes este
+  // formulario (el de cada tarjeta del stock) dejaba elegir cualquier
+  // horario fijo sin consultar visitas_horarios_ocupados, así que se podían
+  // pisar dos visitas a la misma sucursal el mismo día y hora.
+  useEffect(() => {
+    if (!fecha) { setOcupadas([]); return; }
+    supabase2
+      .rpc("visitas_horarios_ocupados", { p_sucursal: sucursalNombre, p_fecha: fecha })
+      .then(({ data }) => {
+        setOcupadas(data?.map((v: { horario_visita: string }) => v.horario_visita) || []);
+      });
+  }, [fecha, sucursalNombre]);
+
   // Bloquear el scroll de fondo cuando el modal está abierto
   useEffect(() => {
     if (isOpen) {
@@ -94,6 +109,10 @@ export default function AgendarVisitaForm({ auto, isMobile = false }: AgendarVis
     e.preventDefault();
     setError("");
     if (!nombre || !telefono || !fecha || !horario) return;
+    if (ocupadas.includes(horario)) {
+      setError("Ese horario ya está ocupado, elegí otro.");
+      return;
+    }
     if (!turnstileToken) {
       setError("Completá la verificación anti-spam antes de continuar.");
       return;
@@ -233,15 +252,15 @@ export default function AgendarVisitaForm({ auto, isMobile = false }: AgendarVis
                     required value={horario} onChange={(e) => setHorario(e.target.value)}
                     className="w-full bg-white dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-xl px-3 py-3 text-xs font-semibold text-navy dark:text-white outline-none focus:border-[#0145F2] dark:focus:border-sky-400 focus:ring-4 focus:ring-blue-500/10 dark:focus:ring-sky-400/10 transition-all shadow-sm dark:shadow-none cursor-pointer dark:[color-scheme:dark]"
                   >
-                    <option value="09:00">09:00 hs (Mañana)</option>
-                    <option value="10:00">10:00 hs</option>
-                    <option value="11:00">11:00 hs</option>
-                    <option value="12:00">12:00 hs</option>
-                    <option value="14:00">14:00 hs (Tarde)</option>
-                    <option value="15:00">15:00 hs</option>
-                    <option value="16:00">16:00 hs</option>
-                    <option value="17:00">17:00 hs</option>
-                    <option value="18:00">18:00 hs</option>
+                    <option value="09:00" disabled={ocupadas.includes("09:00")}>09:00 hs (Mañana){ocupadas.includes("09:00") ? " (Ocupado)" : ""}</option>
+                    <option value="10:00" disabled={ocupadas.includes("10:00")}>10:00 hs{ocupadas.includes("10:00") ? " (Ocupado)" : ""}</option>
+                    <option value="11:00" disabled={ocupadas.includes("11:00")}>11:00 hs{ocupadas.includes("11:00") ? " (Ocupado)" : ""}</option>
+                    <option value="12:00" disabled={ocupadas.includes("12:00")}>12:00 hs{ocupadas.includes("12:00") ? " (Ocupado)" : ""}</option>
+                    <option value="14:00" disabled={ocupadas.includes("14:00")}>14:00 hs (Tarde){ocupadas.includes("14:00") ? " (Ocupado)" : ""}</option>
+                    <option value="15:00" disabled={ocupadas.includes("15:00")}>15:00 hs{ocupadas.includes("15:00") ? " (Ocupado)" : ""}</option>
+                    <option value="16:00" disabled={ocupadas.includes("16:00")}>16:00 hs{ocupadas.includes("16:00") ? " (Ocupado)" : ""}</option>
+                    <option value="17:00" disabled={ocupadas.includes("17:00")}>17:00 hs{ocupadas.includes("17:00") ? " (Ocupado)" : ""}</option>
+                    <option value="18:00" disabled={ocupadas.includes("18:00")}>18:00 hs{ocupadas.includes("18:00") ? " (Ocupado)" : ""}</option>
                   </select>
                 </div>
               </div>
