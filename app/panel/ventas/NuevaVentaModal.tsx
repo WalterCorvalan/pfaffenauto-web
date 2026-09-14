@@ -324,7 +324,7 @@ export default function NuevaVentaModal({ perfiles, clientes, vehiculos, miId, i
         vehiculo_marca: vMarca || null, vehiculo_modelo: vModelo || null, vehiculo_anio: vAnio ? Number(vAnio) : null,
         vehiculo_patente: vPatente || null, vehiculo_color: vColor || null, vehiculo_condicion: vCondicion || null,
         km: km ? Number(km) : null, precio_venta: Number(precioVenta), moneda_venta: monedaVenta,
-        vendedor_id: vendedorId || null, fecha_cierre: fechaCierre,
+        vendedor_id: vendedorId || null, fecha_cierre: fechaCierre, tipo_cambio: tipoCambio ? Number(tipoCambio) : null,
         comprador_nombre: compradorNombre.trim(), comprador_telefono: compradorTelefono || null,
         comprador_email: compradorEmail || null, comprador_dni: compradorDni || null,
         comprador_telefono_celular: compradorTelefonoCelular || null, comprador_fecha_nacimiento: compradorFechaNacimiento || null,
@@ -353,8 +353,14 @@ export default function NuevaVentaModal({ perfiles, clientes, vehiculos, miId, i
         calificacion_pedida_en: calificacionPedida && !editando.calificacion_pedida ? new Date().toISOString() : (calificacionPedida ? editando.calificacion_pedida_en : null),
       };
 
-      const { data: venta, error: dbError } = await supabase2.from("ventas").update(payload).eq("id", editando.id).select().single();
+      // .single() tiraba "Cannot coerce the result to a single JSON object"
+      // sin decir por qué cuando el UPDATE no podía releer la fila (RLS, o
+      // un trigger de base de datos abortando la transacción según el
+      // estado). maybeSingle() no crashea con eso, y distinguimos el caso
+      // de "no se pudo confirmar" del error real de Supabase.
+      const { data: venta, error: dbError } = await supabase2.from("ventas").update(payload).eq("id", editando.id).select().maybeSingle();
       if (dbError) throw dbError;
+      if (!venta) throw new Error("No se pudo confirmar el guardado (no se pudo releer la venta actualizada). Verificá permisos y volvé a intentar.");
 
       await guardarPagoEfectivo(editando.id);
 
@@ -407,7 +413,7 @@ export default function NuevaVentaModal({ perfiles, clientes, vehiculos, miId, i
         vehiculo_id: vehiculoId || null, vehiculo_marca: vMarca || null, vehiculo_modelo: vModelo || null,
         vehiculo_anio: vAnio ? Number(vAnio) : null, vehiculo_patente: vPatente || null, vehiculo_color: vColor || null, vehiculo_condicion: vCondicion || null,
         km: km ? Number(km) : null, precio_venta: Number(precioVenta), moneda_venta: monedaVenta,
-        vendedor_id: vendedorId || null, fecha_cierre: fechaCierre,
+        vendedor_id: vendedorId || null, fecha_cierre: fechaCierre, tipo_cambio: tipoCambio ? Number(tipoCambio) : null,
         cliente_id: clienteResueltoId, comprador_nombre: compradorNombre.trim(), comprador_telefono: compradorTelefono || null,
         comprador_email: compradorEmail || null, comprador_dni: compradorDni || null,
         comprador_telefono_celular: compradorTelefonoCelular || null, comprador_fecha_nacimiento: compradorFechaNacimiento || null,

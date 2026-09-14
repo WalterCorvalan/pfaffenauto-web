@@ -9,7 +9,7 @@ export default async function ImprimirSenaPage({ params }: { params: Promise<{ i
   const [{ data: sena }, { data: config }] = await Promise.all([
     supabase
       .from("senas")
-      .select("*, perfiles:vendedor_id ( nombre ), sucursales:sucursal_id ( nombre ), permuta_vehiculo:permuta_vehiculo_id ( marca, modelo, patente )")
+      .select("*, perfiles:vendedor_id ( nombre ), sucursales:sucursal_id ( nombre ), permuta_vehiculo:permuta_vehiculo_id ( marca, modelo, patente ), vehiculo:vehiculo_id ( condicion, radicado_localidad )")
       .eq("id", id)
       .maybeSingle(),
     supabase.from("configuracion_empresa").select("branding_nombre, branding_domicilio, branding_telefono, branding_cuit, branding_logo_url, branding_email, branding_web, branding_ingresos_brutos").eq("id", true).maybeSingle(),

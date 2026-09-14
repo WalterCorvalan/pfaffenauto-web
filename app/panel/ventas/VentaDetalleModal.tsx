@@ -131,8 +131,9 @@ export default function VentaDetalleModal({ ventaId, miId, soyAdmin, puedeOperac
       const nuevoVendedor = Number(comisionVendedorPct) || 0;
       const nuevoConsignacion = Number(comisionConsignacionPct) || 0;
       if (soyAdmin) {
-        const { data, error } = await supabase2.from("ventas").update({ comision_vendedor_pct: nuevoVendedor, comision_consignacion_pct: nuevoConsignacion }).eq("id", ventaId).select().single();
+        const { data, error } = await supabase2.from("ventas").update({ comision_vendedor_pct: nuevoVendedor, comision_consignacion_pct: nuevoConsignacion }).eq("id", ventaId).select().maybeSingle();
         if (error) throw error;
+        if (!data) throw new Error("No se pudo confirmar el guardado (no se pudo releer la venta).");
         setVenta(data);
         onActualizado(data);
         setEditandoComision(false);
@@ -151,8 +152,8 @@ export default function VentaDetalleModal({ ventaId, miId, soyAdmin, puedeOperac
         if (error) throw error;
         setSolicitudEnviada(true);
       }
-    } catch {
-      alert("No se pudo guardar el cambio de comisión.");
+    } catch (err: any) {
+      alert(err?.message ? `No se pudo guardar el cambio de comisión: ${err.message}` : "No se pudo guardar el cambio de comisión.");
     } finally {
       setGuardandoComision(false);
     }
@@ -160,10 +161,17 @@ export default function VentaDetalleModal({ ventaId, miId, soyAdmin, puedeOperac
 
   const cambiarEstado = async (nuevoEstado: string) => {
     setProcesando(true);
-    const { data, error } = await supabase2.from("ventas").update({ estado: nuevoEstado }).eq("id", ventaId).select().single();
+    // .single() reventaba con "Cannot coerce the result to a single JSON
+    // object" (y el alert genérico tapaba el motivo real) cuando el UPDATE
+    // no podía releer la fila -- típicamente porque un trigger de base de
+    // datos (ej. generar_comisiones_al_cerrar_venta) aborta la transacción
+    // al pasar a "cerrada". maybeSingle() no crashea, y mostramos el mensaje
+    // real de Supabase en vez de taparlo.
+    const { data, error } = await supabase2.from("ventas").update({ estado: nuevoEstado }).eq("id", ventaId).select().maybeSingle();
     setProcesando(false);
     setMostrarStatus(false);
-    if (error) { alert("No se pudo cambiar el estado."); return; }
+    if (error) { alert(`No se pudo cambiar el estado: ${error.message}`); return; }
+    if (!data) { alert("No se pudo confirmar el cambio de estado (no se pudo releer la venta). Verificá permisos y volvé a intentar."); await cargar(); return; }
     setVenta(data);
     onActualizado(data);
     await cargar();
