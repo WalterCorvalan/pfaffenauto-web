@@ -24,6 +24,10 @@ Guía para no romper otra cosa al tocar este módulo. Si cambiás algo acá, rev
 
 - **`components/panel/VehiculoSelector.tsx`** — no vive en `stock/`, pero opera sobre la misma tabla `vehiculos` y lo usan Señas, Ventas, Presupuestos y Permutas para elegir/cargar un vehículo. Si agregás una columna nueva a `vehiculos` que otros formularios necesiten leer, decidí si va acá (afecta a los 4 consumidores) o se resuelve en cada consumidor con su propio query/join, como se hizo con `condicion` en el recibo de seña.
 
+## Conexión con Leads — consultas por WhatsApp de un auto publicado en ML
+
+`vehiculos.ml_item_id` (formato `"MLA<dígitos>"`) también se usa para vincular automáticamente una conversación de WhatsApp con el auto por el que preguntan: cuando alguien escribe desde el botón "Contactá al vendedor" de la publicación en MercadoLibre, el webhook de WhatsApp (`app/api/panel-v2/webhooks/whatsapp/[token]/route.ts`) busca el `MLA...` en el texto del primer mensaje, lo cruza contra `ml_item_id`, y si matchea le setea `whatsapp_conversaciones.vehiculo_id` — ver `app/panel/leads/ARCHITECTURE.md`. `NuevoVehiculoModal.tsx` muestra el conteo ("💬 N consultas por WhatsApp") contando `whatsapp_conversaciones` con ese `vehiculo_id`.
+
 ## Conexión con el catálogo público
 
 - El catálogo (`app/(public)/catalogo/`) hace sus propios queries a `vehiculos` — no reusa nada de `StockClient.tsx`. Ver `app/(public)/catalogo/ARCHITECTURE.md`.

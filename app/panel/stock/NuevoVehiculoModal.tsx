@@ -174,6 +174,18 @@ export default function NuevoVehiculoModal({ perfiles, clientes, sucursales, miI
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [editando?.id]);
 
+  // Cuántas conversaciones de WhatsApp llegaron con este auto como
+  // "vehículo de interés" -- se vincula solo cuando el mensaje entrante
+  // trae el link de la publicación en MercadoLibre (ver webhook de
+  // WhatsApp), o a mano desde el detalle del lead.
+  const [consultasWa, setConsultasWa] = useState<number | null>(null);
+  useEffect(() => {
+    if (!editando?.id) { setConsultasWa(null); return; }
+    supabase2.from("whatsapp_conversaciones").select("id", { count: "exact", head: true }).eq("vehiculo_id", editando.id).then(({ count }) => {
+      setConsultasWa(count ?? 0);
+    });
+  }, [editando?.id]);
+
   // Vendedor sin "vehiculos.editar_completo" solo puede tocar fotos --
   // ni valida el resto de los campos obligatorios (no los va a tocar) ni
   // manda el payload completo, así ni un intento manual de re-habilitar
@@ -756,7 +768,7 @@ export default function NuevoVehiculoModal({ perfiles, clientes, sucursales, miI
           <div>
             <p className={seccionClass}>Publicación</p>
             {editando?.id && (
-              <div className="mb-3 flex items-center gap-2">
+              <div className="mb-3 flex items-center gap-2 flex-wrap">
                 <button
                   type="button"
                   onClick={publicarEnML}
@@ -767,6 +779,11 @@ export default function NuevoVehiculoModal({ perfiles, clientes, sucursales, miI
                   {publicadoMl ? "Volver a publicar en MercadoLibre" : "Publicar en MercadoLibre"}
                 </button>
                 {mlError && <span className="flex items-center gap-1 text-[11px] font-semibold text-rose-600"><AlertTriangle className="w-3.5 h-3.5" /> {mlError}</span>}
+                {consultasWa != null && consultasWa > 0 && (
+                  <span className="flex items-center gap-1 text-[11px] font-semibold text-emerald-600 bg-emerald-50 dark:bg-emerald-500/10 rounded-full px-2.5 py-1">
+                    💬 {consultasWa} consulta{consultasWa === 1 ? "" : "s"} por WhatsApp
+                  </span>
+                )}
               </div>
             )}
             {!editando?.id && (

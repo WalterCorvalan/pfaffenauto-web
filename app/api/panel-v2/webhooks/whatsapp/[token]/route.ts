@@ -143,14 +143,14 @@ async function ingestarMensaje({ waId, nombrePerfil, msg }: { waId: string; nomb
 
   let { data: conversacion } = await supabase
     .from("whatsapp_conversaciones")
-    .select("id, vendedor_id, ai_habilitada, canal_origen")
+    .select("id, vendedor_id, ai_habilitada, canal_origen, vehiculo_id")
     .eq("contacto_id", contacto.id)
     .maybeSingle();
 
   if (!conversacion) {
     // El trigger asignar_vendedor_conversacion_nueva le pone vendedor solo
     // (ronda) antes de que termine el insert.
-    const { data: nueva } = await supabase.from("whatsapp_conversaciones").insert({ contacto_id: contacto.id }).select("id, vendedor_id, ai_habilitada, canal_origen").single();
+    const { data: nueva } = await supabase.from("whatsapp_conversaciones").insert({ contacto_id: contacto.id }).select("id, vendedor_id, ai_habilitada, canal_origen, vehiculo_id").single();
     conversacion = nueva;
   }
   if (!conversacion) return;
@@ -168,6 +168,33 @@ async function ingestarMensaje({ waId, nombrePerfil, msg }: { waId: string; nomb
     const patch: Record<string, unknown> = { origen_ads: msg.referral.headline };
     if (!conversacion.canal_origen) patch.canal_origen = "Meta Ads";
     await supabase.from("whatsapp_conversaciones").update(patch).eq("id", conversacion.id);
+  } else if (/mercadolibre\.com/i.test(msg.text?.body || "")) {
+    // El botón "Contactá al vendedor" de una publicación de MercadoLibre
+    // genera un wa.me con un texto prearmado que SIEMPRE incluye el link
+    // completo de la publicación (auto.mercadolibre.com.ar/MLA-...) -- no
+    // manda "referral" como Meta Ads, pero el link en el texto del primer
+    // mensaje es una señal igual de confiable. Mismo vocabulario que
+    // lib/utm.ts ("MercadoLibre").
+    const patch: Record<string, unknown> = {};
+    if (!conversacion.canal_origen) patch.canal_origen = "MercadoLibre";
+
+    // El link trae el ID de la publicación (MLA-2006584545-...) -- si ese
+    // mismo auto está publicado en ML desde Stock (vehiculos.ml_item_id se
+    // carga al publicar, ver lib/ads/mercadolibrePublish.ts), se vincula
+    // solo como "vehículo de interés" de la charla, sin que el vendedor
+    // tenga que cargarlo a mano. Deja "cuántas consultas por WhatsApp
+    // entraron por este auto publicado en ML" contable por vehiculo_id.
+    if (!conversacion.vehiculo_id) {
+      const mlaId = msg.text?.body?.match(/MLA-?(\d+)/i)?.[1];
+      if (mlaId) {
+        const { data: vehiculo } = await supabase.from("vehiculos").select("id").eq("ml_item_id", `MLA${mlaId}`).maybeSingle();
+        if (vehiculo) patch.vehiculo_id = vehiculo.id;
+      }
+    }
+
+    if (Object.keys(patch).length > 0) {
+      await supabase.from("whatsapp_conversaciones").update(patch).eq("id", conversacion.id);
+    }
   }
 
   // Cuando el cliente toca una opción de la lista interactiva del menú de
