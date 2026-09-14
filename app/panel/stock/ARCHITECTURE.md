@@ -8,7 +8,7 @@ Guía para no romper otra cosa al tocar este módulo. Si cambiás algo acá, rev
 
 - `estado`: `disponible` / `reservado` / `señado` / `vendido` / `en_preparacion`. **Esto es lo único que mira el catálogo público** para decidir qué mostrar (filtra `in (disponible, reservado)`).
 - `publicado_ml`: boolean — si el vehículo está sincronizado con **MercadoLibre**. No tiene relación con la visibilidad en el catálogo propio. El badge "% publicado" y el filtro "A revisar" del panel miden esto (aclarado con labels "en ML" desde el fix P1-17, porque antes confundía: podía decir "0% publicado" con 73 autos visibles en `/catalogo`).
-- `condicion`: `0km` / `Excelente` / `Muy bueno` / `Bueno` / `Regular`. Es la fuente real de "0KM vs usado" — no derivar esto del año del vehículo (bug corregido en Señas, P1-13).
+- `condicion`: `0km` / `Excelente` / `Muy bueno` / `Bueno` / `Regular`. Es la **única** fuente real de "0KM vs usado" — nunca derivarlo de `km === 0` ni del año del vehículo: muchos usados tienen el km sin cargar (queda en 0/null por defecto, sin ser 0km real). Bug corregido en 7 lugares distintos (recibo de Seña P1-13, catálogo público, página `/0km`, buscador con IA, comparador, showroom 3D, y la publicación a MercadoLibre — este último publicaba usados como "Nuevo"). Si agregás un lugar nuevo que necesite saber si un auto es 0km, usá siempre `condicion === "0km"`.
 - `sucursal_id`, `radicado_localidad`, `radicado_provincia`: usados por los recibos de venta/seña para mostrar de dónde es el vehículo.
 - `precio_publicado_ars` / `precio_publicado_usd`: precio que se muestra en el catálogo público — puede diferir de `precio_venta` (precio interno de referencia).
 
