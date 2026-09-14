@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { supabase2 } from "@/lib/supabase/client";
-import { X, Loader2, ChevronDown, MoreVertical, Lock, MessageCircle, Check, Upload, Plus, FileDown, Paperclip } from "lucide-react";
+import { X, Loader2, ChevronDown, MoreVertical, Lock, MessageCircle, Check, Upload, Plus, FileDown, Paperclip, Undo2 } from "lucide-react";
 import { fmtFechaLocal } from "@/lib/panel/fechas";
 import BoletoModal from "./BoletoModal";
 
@@ -238,6 +238,19 @@ export default function ExpedienteDetalleModal({ expedienteId, miId, perfiles, s
     const payload = parte === "comprador"
       ? { confirmado_comprador: true, confirmado_comprador_en: new Date().toISOString(), confirmado_comprador_por: miId }
       : { confirmado_consignacion: true, confirmado_consignacion_en: new Date().toISOString(), confirmado_consignacion_por: miId };
+    const { data } = await supabase2.from("expedientes").update(payload).eq("id", expedienteId).select("*, venta:ventas(*)").single();
+    if (data) { setExpediente(data); onActualizado(data); }
+  };
+
+  // Deshace una confirmación ya hecha -- por ejemplo si se confirmó por
+  // error o la parte pidió corregir algo antes de que Gestoría/Tesorería
+  // arranquen el trámite. Vuelve a bloquear el expediente si la otra parte
+  // no está confirmada.
+  const revertirParte = async (parte: "comprador" | "consignacion") => {
+    if (!confirm(`¿Revertir la confirmación de ${parte === "comprador" ? "comprador" : "consignación"}? El expediente vuelve a quedar bloqueado hasta que se confirme de nuevo.`)) return;
+    const payload = parte === "comprador"
+      ? { confirmado_comprador: false, confirmado_comprador_en: null, confirmado_comprador_por: null }
+      : { confirmado_consignacion: false, confirmado_consignacion_en: null, confirmado_consignacion_por: null };
     const { data } = await supabase2.from("expedientes").update(payload).eq("id", expedienteId).select("*, venta:ventas(*)").single();
     if (data) { setExpediente(data); onActualizado(data); }
   };
@@ -494,13 +507,36 @@ export default function ExpedienteDetalleModal({ expedienteId, miId, perfiles, s
               <div className="grid grid-cols-2 gap-2 mt-3">
                 <div className="bg-white dark:bg-white/5 rounded-lg p-2.5">
                   <p className="text-[10px] font-bold uppercase text-slate-400 flex items-center justify-between">Parte compradora <span>{expediente.confirmado_comprador ? "confirmado" : "pendiente"}</span></p>
-                  {!expediente.confirmado_comprador && <button onClick={() => confirmarParte("comprador")} className="w-full mt-1.5 py-1.5 rounded-lg bg-rose-600 hover:bg-rose-700 text-white text-xs font-bold flex items-center justify-center gap-1"><Check className="w-3.5 h-3.5" /> Confirmar comprador</button>}
+                  {!expediente.confirmado_comprador ? (
+                    <button onClick={() => confirmarParte("comprador")} className="w-full mt-1.5 py-1.5 rounded-lg bg-rose-600 hover:bg-rose-700 text-white text-xs font-bold flex items-center justify-center gap-1"><Check className="w-3.5 h-3.5" /> Confirmar comprador</button>
+                  ) : (
+                    <button onClick={() => revertirParte("comprador")} className="w-full mt-1.5 py-1.5 rounded-lg border border-slate-200 dark:border-white/10 text-slate-500 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-white/5 text-xs font-bold flex items-center justify-center gap-1"><Undo2 className="w-3.5 h-3.5" /> Revertir comprador</button>
+                  )}
                 </div>
                 <div className="bg-white dark:bg-white/5 rounded-lg p-2.5">
                   <p className="text-[10px] font-bold uppercase text-slate-400 flex items-center justify-between">Parte consignación <span>{expediente.confirmado_consignacion ? "confirmado" : "pendiente"}</span></p>
-                  {!expediente.confirmado_consignacion && <button onClick={() => confirmarParte("consignacion")} className="w-full mt-1.5 py-1.5 rounded-lg bg-rose-600 hover:bg-rose-700 text-white text-xs font-bold flex items-center justify-center gap-1"><Check className="w-3.5 h-3.5" /> Confirmar consignación</button>}
+                  {!expediente.confirmado_consignacion ? (
+                    <button onClick={() => confirmarParte("consignacion")} className="w-full mt-1.5 py-1.5 rounded-lg bg-rose-600 hover:bg-rose-700 text-white text-xs font-bold flex items-center justify-center gap-1"><Check className="w-3.5 h-3.5" /> Confirmar consignación</button>
+                  ) : (
+                    <button onClick={() => revertirParte("consignacion")} className="w-full mt-1.5 py-1.5 rounded-lg border border-slate-200 dark:border-white/10 text-slate-500 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-white/5 text-xs font-bold flex items-center justify-center gap-1"><Undo2 className="w-3.5 h-3.5" /> Revertir consignación</button>
+                  )}
                 </div>
               </div>
+            </div>
+          )}
+
+          {!pendienteConfirmacion && (
+            <div className="bg-emerald-50 dark:bg-emerald-500/10 border border-emerald-200 dark:border-emerald-500/20 rounded-xl p-4">
+              <div className="flex items-center justify-between flex-wrap gap-2">
+                <p className="text-sm font-bold text-emerald-700 dark:text-emerald-300 flex items-center gap-1.5"><Check className="w-4 h-4" /> Operación confirmada por ambas partes</p>
+                <div className="flex gap-2">
+                  <button onClick={() => revertirParte("comprador")} className="px-2.5 py-1.5 rounded-lg border border-emerald-200 dark:border-emerald-500/20 text-emerald-700 dark:text-emerald-300 hover:bg-white dark:hover:bg-white/5 text-[11px] font-bold flex items-center gap-1"><Undo2 className="w-3 h-3" /> Revertir comprador</button>
+                  <button onClick={() => revertirParte("consignacion")} className="px-2.5 py-1.5 rounded-lg border border-emerald-200 dark:border-emerald-500/20 text-emerald-700 dark:text-emerald-300 hover:bg-white dark:hover:bg-white/5 text-[11px] font-bold flex items-center gap-1"><Undo2 className="w-3 h-3" /> Revertir consignación</button>
+                </div>
+              </div>
+              <p className="text-[11px] text-emerald-700/80 dark:text-emerald-300/70 mt-1">
+                Comprador: {expediente.confirmado_comprador_en ? fmtFechaLocal(expediente.confirmado_comprador_en) : "—"} · Consignación: {expediente.confirmado_consignacion_en ? fmtFechaLocal(expediente.confirmado_consignacion_en) : "—"}
+              </p>
             </div>
           )}
 
