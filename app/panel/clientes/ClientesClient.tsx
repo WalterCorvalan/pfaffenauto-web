@@ -687,23 +687,39 @@ export default function ClientesClient({
               <div className="grid grid-cols-1 md:grid-cols-3 gap-3 mb-4">
                 <div className="bg-white dark:bg-white/[0.02] border border-slate-200 dark:border-white/5 rounded-xl p-4">
                   <p className="text-[11px] font-black uppercase tracking-widest text-slate-400 mb-2">De dónde vinieron</p>
-                  {desgloseOrigen.length === 0 ? <p className="text-xs text-slate-400">Sin datos en el período.</p> : desgloseOrigen.map(([k, n]) => (
-                    <button key={k} onClick={() => setOrigenIngresos(origenIngresos === k ? null : k)} className={`w-full flex items-center justify-between text-xs py-1.5 px-1.5 rounded-lg ${origenIngresos === k ? "bg-rose-50 dark:bg-rose-500/10 text-rose-600 dark:text-rose-300" : "text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-white/5"}`}>
-                      <span className="font-semibold">{k}</span><span className="font-black">{n}</span>
-                    </button>
-                  ))}
+                  {desgloseOrigen.length === 0 ? <p className="text-xs text-slate-400">Sin datos en el período.</p> : desgloseOrigen.map(([k, n]) => {
+                    const pct = Math.round((n / ingresosFiltrados.length) * 100);
+                    return (
+                      <button key={k} onClick={() => setOrigenIngresos(origenIngresos === k ? null : k)} className={`w-full text-left text-xs py-1.5 px-1.5 rounded-lg ${origenIngresos === k ? "bg-rose-50 dark:bg-rose-500/10 text-rose-600 dark:text-rose-300" : "text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-white/5"}`}>
+                        <div className="flex items-center justify-between mb-1"><span className="font-semibold">{k}</span><span className="font-black">{n} · {pct}%</span></div>
+                        <div className="h-1.5 bg-slate-100 dark:bg-white/10 rounded-full overflow-hidden"><div className={`h-full rounded-full ${origenIngresos === k ? "bg-rose-500" : "bg-slate-300 dark:bg-white/20"}`} style={{ width: `${pct}%` }} /></div>
+                      </button>
+                    );
+                  })}
                 </div>
                 <div className="bg-white dark:bg-white/[0.02] border border-slate-200 dark:border-white/5 rounded-xl p-4">
                   <p className="text-[11px] font-black uppercase tracking-widest text-slate-400 mb-2">Quién los tiene</p>
-                  {desgloseVendedor.length === 0 ? <p className="text-xs text-slate-400">Sin datos en el período.</p> : desgloseVendedor.map(([k, n]) => (
-                    <div key={k} className="flex items-center justify-between text-xs py-1.5 px-1.5 text-slate-600 dark:text-slate-300"><span className="font-semibold">{k}</span><span className="font-black">{n}</span></div>
-                  ))}
+                  {desgloseVendedor.length === 0 ? <p className="text-xs text-slate-400">Sin datos en el período.</p> : desgloseVendedor.map(([k, n]) => {
+                    const pct = Math.round((n / ingresosFiltrados.length) * 100);
+                    return (
+                      <div key={k} className="text-xs py-1.5 px-1.5 text-slate-600 dark:text-slate-300">
+                        <div className="flex items-center justify-between mb-1"><span className="font-semibold">{k}</span><span className="font-black">{n} · {pct}%</span></div>
+                        <div className="h-1.5 bg-slate-100 dark:bg-white/10 rounded-full overflow-hidden"><div className="h-full rounded-full bg-slate-300 dark:bg-white/20" style={{ width: `${pct}%` }} /></div>
+                      </div>
+                    );
+                  })}
                 </div>
                 <div className="bg-white dark:bg-white/[0.02] border border-slate-200 dark:border-white/5 rounded-xl p-4">
                   <p className="text-[11px] font-black uppercase tracking-widest text-slate-400 mb-2">Qué buscan</p>
-                  {desgloseBusca.length === 0 ? <p className="text-xs text-slate-400">Sin datos en el período.</p> : desgloseBusca.map(([k, n]) => (
-                    <div key={k} className="flex items-center justify-between text-xs py-1.5 px-1.5 text-slate-600 dark:text-slate-300"><span className="font-semibold">{k}</span><span className="font-black">{n}</span></div>
-                  ))}
+                  {desgloseBusca.length === 0 ? <p className="text-xs text-slate-400">Sin datos en el período.</p> : desgloseBusca.map(([k, n]) => {
+                    const pct = Math.round((n / ingresosFiltrados.length) * 100);
+                    return (
+                      <div key={k} className="text-xs py-1.5 px-1.5 text-slate-600 dark:text-slate-300">
+                        <div className="flex items-center justify-between mb-1"><span className="font-semibold">{k}</span><span className="font-black">{n} · {pct}%</span></div>
+                        <div className="h-1.5 bg-slate-100 dark:bg-white/10 rounded-full overflow-hidden"><div className="h-full rounded-full bg-slate-300 dark:bg-white/20" style={{ width: `${pct}%` }} /></div>
+                      </div>
+                    );
+                  })}
                 </div>
               </div>
 
