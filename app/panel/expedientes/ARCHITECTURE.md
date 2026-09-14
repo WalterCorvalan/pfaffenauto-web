@@ -20,6 +20,10 @@ Cada gasto tiene `a_cargo_de`: `comprador` / `vendedor` / `agencia`. No son solo
 
 `senasOtraMoneda`/`totalesSenasOtraMoneda` se calculan y se muestran aparte, pero **no** se descuentan del `saldoComprador` (no hay tipo de cambio disponible en este contexto para convertir) — es una limitación conocida, no un bug: si un comprador señó en una moneda distinta a la de la venta, el saldo mostrado no refleja esa seña y hay que restarla a mano.
 
+## Banner "pendientes de confirmación"
+
+`pendientesConfirmacion` (`ExpedientesClient.tsx`) es un contador **global**: `!confirmado_comprador || !confirmado_consignacion`, sin filtrar por usuario — no existe un campo de responsable de confirmación, cualquiera puede tildar "Confirmar comprador"/"Confirmar consignación" desde `ExpedienteDetalleModal.tsx`. El copy dice "pendientes de confirmación" (antes decía "de **tu** confirmación", lo cual prometía una bandeja personal que el query no entrega — corregido). Si en algún momento se agrega un responsable real por expediente, ahí sí hay que filtrar por `miId` y el copy puede volver a decir "tu confirmación".
+
 ## No tocar sin revisar el resto
 
 - Si agregás un nuevo tipo de gasto o cambiás `a_cargo_de`, revisá que el efecto (suma/resta) en los totales de Liquidación siga la misma regla de arriba — no alcanza con que aparezca en el listado.
