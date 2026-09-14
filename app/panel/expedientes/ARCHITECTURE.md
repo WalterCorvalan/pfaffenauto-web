@@ -40,6 +40,10 @@ Cada gasto tiene `a_cargo_de`: `comprador` / `vendedor` / `agencia`. No son solo
 
 `confirmarParte()`/`revertirParte()` en `ExpedienteDetalleModal.tsx` son simétricas: confirmar setea `confirmado_X`/`confirmado_X_en`/`confirmado_X_por`, revertir los vuelve a `false`/`null`/`null`. Revertir una confirmación cuando la otra parte ya estaba confirmada vuelve a bloquear el expediente entero (mismo criterio que `pendienteConfirmacion` de arriba) — es intencional: no hay forma de "revertir solo a medias".
 
+## Tab "Historial"
+
+No es un log de auditoría automático (eso requeriría un trigger de base de datos que registre cada cambio campo por campo — no existe). Es la misma bitácora de observaciones (`expediente_observaciones`) que ya vivía dentro del tab Resumen, ahora también accesible como tab propio (con la lista completa, no solo las últimas 5). `renderObservaciones()` es la función compartida entre ambos lugares — si cambiás el formato de una entrada, se actualiza en los dos. Agregar una entrada nueva se sigue haciendo desde el tab Resumen (el textarea "Agregar observación"), no desde Historial.
+
 ## Tabs "Parte Vendedora" / "Parte Compradora"
 
 Datos personales de cada parte + su checklist de documentación, en un tab propio (antes solo vivían mezclados en Documentos/Gestoría). Casi todos los campos ya existían en otras tablas, no fue necesario crear casi nada nuevo:

@@ -11,7 +11,7 @@ const SECTORES = [
   { value: "taller", label: "Taller" }, { value: "recepcion", label: "Recepción" }, { value: "admin", label: "Admin" },
 ];
 
-const TABS = ["Resumen", "Estado de Pago", "Pago Comprador", "Comprobantes", "Documentos", "Parte Vendedora", "Parte Compradora", "Liquidación", "Gastos", "Consignación", "Duplicado", "Gestoría"];
+const TABS = ["Resumen", "Estado de Pago", "Pago Comprador", "Comprobantes", "Documentos", "Parte Vendedora", "Parte Compradora", "Liquidación", "Gastos", "Consignación", "Duplicado", "Gestoría", "Historial"];
 
 const PRIORIDAD_COLOR: Record<string, string> = { Baja: "text-slate-500", Media: "text-amber-500", Alta: "text-rose-500" };
 
@@ -542,6 +542,29 @@ export default function ExpedienteDetalleModal({ expedienteId, miId, perfiles, s
     pagado: "bg-emerald-100 dark:bg-emerald-500/20 text-emerald-700 dark:text-emerald-300",
   };
 
+  const renderObservaciones = (lista: typeof observaciones) =>
+    lista.length === 0 ? (
+      <div className="bg-slate-50 dark:bg-white/5 border border-dashed border-slate-200 dark:border-white/10 rounded-xl py-6 text-center">
+        <p className="text-xs text-slate-400">Sin observaciones todavía.</p>
+      </div>
+    ) : (
+      <div className="space-y-1.5">
+        {lista.map((o) => (
+          <div key={o.id} className="bg-slate-50 dark:bg-white/5 border border-slate-100 dark:border-white/10 rounded-lg px-3 py-2">
+            <div className="flex items-center justify-between">
+              <span className="text-xs font-bold flex items-center gap-1">
+                {o.tipo === "pedido_atencion" && <span title="Pedido de atención">🔔</span>}
+                {o.tipo === "respuesta_pedido_atencion" && <span title="Respuesta a un pedido de atención">↩️</span>}
+                {o.autor?.nombre || "Sistema"}
+              </span>
+              <span className="text-[10px] text-slate-400">{new Date(o.created_at).toLocaleString("es-AR")}</span>
+            </div>
+            <p className="text-xs text-slate-600 dark:text-slate-300 mt-0.5">{o.texto}</p>
+          </div>
+        ))}
+      </div>
+    );
+
   const ContextoResumen = () => (
     <div className="grid grid-cols-2 gap-3 bg-slate-50 dark:bg-white/5 rounded-xl p-3 mt-4 text-xs">
       <div><p className="text-slate-400 font-bold uppercase text-[10px]">Estado Gestoría</p><p className="text-slate-700 dark:text-slate-200">{estado === "cerrado" ? "Finalizado" : "En proceso"}</p></div>
@@ -766,28 +789,8 @@ export default function ExpedienteDetalleModal({ expedienteId, miId, perfiles, s
                   <div className="flex justify-end mt-1.5"><button onClick={agregarObservacion} className="px-3 py-1.5 rounded-lg bg-rose-600 hover:bg-rose-700 text-white text-xs font-bold">+ Agregar entrada</button></div>
                 </div>
 
-                <p className="text-[10px] font-black uppercase tracking-widest text-slate-400 mt-3 mb-1.5">Historial</p>
-                {observaciones.length === 0 ? (
-                  <div className="bg-slate-50 dark:bg-white/5 border border-dashed border-slate-200 dark:border-white/10 rounded-xl py-6 text-center">
-                    <p className="text-xs text-slate-400">Sin observaciones todavía.</p>
-                  </div>
-                ) : (
-                  <div className="space-y-1.5">
-                    {observaciones.map((o) => (
-                      <div key={o.id} className="bg-slate-50 dark:bg-white/5 border border-slate-100 dark:border-white/10 rounded-lg px-3 py-2">
-                        <div className="flex items-center justify-between">
-                          <span className="text-xs font-bold flex items-center gap-1">
-                            {o.tipo === "pedido_atencion" && <span title="Pedido de atención">🔔</span>}
-                            {o.tipo === "respuesta_pedido_atencion" && <span title="Respuesta a un pedido de atención">↩️</span>}
-                            {o.autor?.nombre || "Sistema"}
-                          </span>
-                          <span className="text-[10px] text-slate-400">{new Date(o.created_at).toLocaleString("es-AR")}</span>
-                        </div>
-                        <p className="text-xs text-slate-600 dark:text-slate-300 mt-0.5">{o.texto}</p>
-                      </div>
-                    ))}
-                  </div>
-                )}
+                <p className="text-[10px] font-black uppercase tracking-widest text-slate-400 mt-3 mb-1.5">Historial <button onClick={() => setTab("Historial")} className="normal-case font-semibold text-rose-600 hover:underline">ver todo</button></p>
+                {renderObservaciones(observaciones.slice(0, 5))}
               </div>
 
               <div className="grid grid-cols-2 gap-3">
@@ -1196,6 +1199,14 @@ export default function ExpedienteDetalleModal({ expedienteId, miId, perfiles, s
                   </label>
                 )}
               </div>
+            </div>
+          )}
+
+          {tab === "Historial" && (
+            <div className="space-y-3">
+              <p className="text-xs font-black uppercase tracking-widest text-slate-500 dark:text-slate-400">📝 Cambios del expediente</p>
+              <p className="text-[11px] text-slate-400">Bitácora de observaciones (queda fecha + autor) — se agrega una entrada nueva desde el tab Resumen.</p>
+              {renderObservaciones(observaciones)}
             </div>
           )}
 
