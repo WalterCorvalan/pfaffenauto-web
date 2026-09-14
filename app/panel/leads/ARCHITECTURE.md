@@ -19,6 +19,14 @@ Cada una tiene su propio `estado_lead` (`nuevo`/`asignado`/`calificando`/`conver
 
 Si agregás una pantalla o métrica nueva sobre "leads", contá/consultá las 4 tablas o reusá `LeadsUnificadosClient.tsx`/su patrón de normalización — nunca asumas que whatsapp+instagram alcanza.
 
+## `canal_origen` — de dónde vino el lead
+
+- **`leads_manuales`**: `canal_origen` es texto libre que carga quien lo crea a mano.
+- **`leads_tasacion`** (Cotizador/Vender/Financiación, sitio público): se llena con `getCanalOrigen()` (`lib/utm.ts`) — lee `utm_source` de la URL o, si no hay, el dominio del `document.referrer`. Vocabulario: `"Google Ads"`, `"Meta Ads"` (facebook e instagram mapean los dos ahí), `"MercadoLibre"`, `"WhatsApp"`, o la variante `"(orgánico)"` de cada uno si no hay UTM y detectó el referrer.
+- **`whatsapp_conversaciones` / `instagram_conversaciones`**: Meta manda un objeto `referral` en el primer mensaje **solo** cuando la charla arrancó desde un anuncio de Click-to-WhatsApp/Instagram o el botón "Enviar mensaje" de un posteo/story — ahí `canal_origen` se clasifica como `"Meta Ads"` (mismo vocabulario que `lib/utm.ts`, ver los webhooks respectivos). Si no llega `referral` (mensaje orgánico, alguien tipeó el número/usuario a mano), `canal_origen` queda `null` — no hay forma de saber más sin ese dato (WhatsApp/Instagram no exponen otra señal). **Se setea una sola vez** (si ya tiene valor, no se pisa en mensajes posteriores).
+- **`rodi_conversaciones`**: sin clasificación de `canal_origen` todavía (Rodi es el bot del sitio público propio, no tiene equivalente a `referral` de Meta).
+- **MercadoLibre vía WhatsApp**: MELI tiene su propio sistema de mensajería, separado de WhatsApp — un comprador de MELI normalmente escribe por el chat de MELI, no por acá. Si en algún momento se pone un link de wa.me en la descripción de un aviso de MELI con un texto prearmado distintivo, hay que parsear ese texto en el webhook para clasificarlo — hoy no existe ese link, así que no hay forma de distinguir un lead de MELI que decide escribir por WhatsApp.
+
 ## `tareas_lead`
 
 Puede colgar de cualquiera de las 4 fuentes vía FK: `whatsapp_conversacion_id`, `instagram_conversacion_id`, `rodi_conversacion_id`, `leads_manuales_id` (exactamente una no-nula por fila). El mapeo canal → columna FK está en `app/panel/whatsapp/LeadDetailModal.tsx` (const con las 4 claves) — reusar ese mapeo en vez de hardcodear el nombre de columna en un lugar nuevo.
