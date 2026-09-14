@@ -33,3 +33,9 @@ This version has breaking changes — APIs, conventions, and file structure may 
   - `components/ui/` — primitivos de UI sin lógica de negocio
   - Secciones únicas de layout/home (`Hero`, `Footer`, `PublicHeader`, `Stock`, etc.) quedan sueltas en la raíz de `components/`.
 - **`lib/`**: agrupado por dominio técnico cuando hay más de un archivo relacionado (`lib/supabase/{client,server}.ts`, `lib/ai/`, `lib/crypto/`, `lib/meta/`). Un archivo suelto (`lib/upload.ts`) no amerita carpeta propia.
+
+## Antes de tocar un módulo, leé su ARCHITECTURE.md
+
+Algunos módulos tienen un `ARCHITECTURE.md` en su carpeta (ej: `app/panel/senas/ARCHITECTURE.md`, `app/panel/ventas/ARCHITECTURE.md`, `app/panel/stock/ARCHITECTURE.md`, `app/(public)/catalogo/ARCHITECTURE.md`) que documenta con qué tablas/RPCs/triggers de Supabase se conecta, qué componentes comparte con otros módulos, y qué partes son frágiles ("no tocar sin revisar el resto"). Si existe uno para el módulo que vas a modificar, leelo primero — evita romper otro formulario que depende del mismo componente compartido (ej: `VehiculoSelector.tsx`) o duplicar lógica que ya vive en un solo lugar (ej: `lib/moneda.ts`).
+
+Si agregás un módulo nuevo con conexiones no triviales (tablas compartidas, componentes usados por más de un formulario, RPCs con efectos secundarios), sumale su propio `ARCHITECTURE.md` en vez de dejar esa información solo en la memoria de quien lo escribió.
