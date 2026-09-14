@@ -6,10 +6,25 @@ export default async function ClientesPage() {
 
   const { data: { user } } = await supabase.auth.getUser();
 
+  const [{ data: miPerfil }, { data: config }] = await Promise.all([
+    supabase.from("perfiles").select("roles").eq("id", user?.id ?? "").maybeSingle(),
+    supabase.from("configuracion_empresa").select("cada_vendedor_ve_solo_sus_clientes").eq("id", true).maybeSingle(),
+  ]);
+  const esAdminORecepcion = miPerfil?.roles?.some((r: string) => ["admin", "recepcion"].includes(r)) || false;
+  // Configuración → Empresa → "Cada vendedor ve solo sus clientes": con el
+  // toggle prendido, un vendedor (no admin/recepción) solo ve los clientes
+  // que tiene asignados -- ni los de otros vendedores ni los sin asignar
+  // (ver el aviso exacto en EmpresaClient.tsx). El toggle se guardaba desde
+  // que se creó Configuración → Empresa pero nada lo leía todavía.
+  const restringirAMisClientes = !!config?.cada_vendedor_ve_solo_sus_clientes && !esAdminORecepcion;
+
+  let queryClientes = supabase.from("clientes").select("*").order("created_at", { ascending: false }).limit(5000);
+  if (restringirAMisClientes) queryClientes = queryClientes.eq("vendedor_id", user?.id ?? "");
+
   const [{ data: clientes }, { data: perfiles }, { data: disponibilidad }, { data: ventas }] = await Promise.all([
     // Sin límite esto traía TODA la base de clientes de toda la historia --
     // 5000 da margen de sobra hoy y evita que la query quede sin techo.
-    supabase.from("clientes").select("*").order("created_at", { ascending: false }).limit(5000),
+    queryClientes,
     supabase.from("perfiles").select("id, nombre, roles").eq("activo", true).order("nombre"),
     supabase.from("disponibilidad_vendedor").select("*"),
     supabase.from("ventas").select("id, cliente_id").not("cliente_id", "is", null).limit(10000),
