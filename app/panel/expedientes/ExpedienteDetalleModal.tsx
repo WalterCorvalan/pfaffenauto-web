@@ -641,6 +641,12 @@ export default function ExpedienteDetalleModal({ expedienteId, miId, perfiles, s
   const comisionPct = Number(venta?.comision_consignacion_pct || 0);
   const honorarios = tipoAcuerdoConsignacion === "bruto" && totalALiquidarVendedor != null ? totalALiquidarVendedor * (comisionPct / 100) : 0;
   const netoPropietario = totalALiquidarVendedor != null ? totalALiquidarVendedor - honorarios : null;
+  // Honorarios cobrados − gastos de agencia, solo en la moneda de los
+  // honorarios (mismo criterio de "no convertir" que el resto de este
+  // archivo) -- antes esta caja mostraba el título "Margen agencia" pero el
+  // valor quedaba hardcodeado en "—" (nunca se calculaba).
+  const gastosAgenciaMismaMoneda = gastosAgencia.filter((g) => g.moneda === precioPropietarioMoneda).reduce((acc, g) => acc + Number(g.monto), 0);
+  const margenAgencia = tipoAcuerdoConsignacion === "bruto" ? honorarios - gastosAgenciaMismaMoneda : null;
 
   const cuentasParaMoneda = (moneda: string) => cuentas.filter((c) => c.moneda === moneda);
 
@@ -1165,7 +1171,7 @@ export default function ExpedienteDetalleModal({ expedienteId, miId, perfiles, s
                 <p className="text-xs font-black uppercase tracking-widest text-slate-500 dark:text-slate-400 mb-2">📈 Resumen agencia</p>
                 <div className="flex justify-between text-xs py-0.5"><span className="text-slate-500 dark:text-slate-400">+ Honorarios cobrados ({comisionPct}%)</span><span className="text-indigo-600 dark:text-indigo-400">{precioPropietarioMoneda} {honorarios.toLocaleString("es-AR")}</span></div>
                 <div className="flex justify-between text-xs py-0.5"><span className="text-slate-500 dark:text-slate-400">− Gastos no recuperados</span><span>{gastosAgencia.length === 0 ? "Sin gastos a cargo de la agencia" : Object.entries(sumaPorMoneda(gastosAgencia)).map(([m, n]) => `${m} ${n.toLocaleString("es-AR")}`).join(" · ")}</span></div>
-                <div className="flex justify-between text-sm font-bold border-t border-slate-200 dark:border-white/10 mt-2 pt-2"><span>Margen agencia</span><strong>{gananciasOcultas ? "Oculto" : "—"}</strong></div>
+                <div className="flex justify-between text-sm font-bold border-t border-slate-200 dark:border-white/10 mt-2 pt-2"><span>Margen agencia</span><strong>{gananciasOcultas ? "Oculto" : margenAgencia != null ? `${precioPropietarioMoneda} ${margenAgencia.toLocaleString("es-AR")}` : "—"}</strong></div>
               </div>
             </div>
           )}
