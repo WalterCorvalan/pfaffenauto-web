@@ -3,6 +3,7 @@
 import { useState, useEffect } from "react";
 import { supabase2 } from "@/lib/supabase/client";
 import { X, Save, Trash2, History } from "lucide-react";
+import { crearAlerta } from "@/lib/panel/alertas";
 
 const inputClass = "w-full bg-slate-50 dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-xl px-3.5 py-2.5 text-sm outline-none focus:border-rose-500 text-slate-900 dark:text-white placeholder:text-slate-400";
 const labelClass = "text-xs font-bold text-slate-600 dark:text-slate-300 mb-1.5 block";
@@ -71,6 +72,15 @@ export default function NuevoPedidoModal({ pedido, vendedores, clientes, miId, o
         : await supabase2.from("pedidos").insert({ ...payload, estado: "activo", origen: "manual" }).select("*, vehiculo_match:vehiculo_match_id ( marca, modelo, anio, precio_venta, moneda_venta )").single();
       if (err) throw err;
       onGuardado(data);
+      if (!isEditing) {
+        const { data: destinatarios } = await supabase2.from("perfiles").select("id").or("roles.cs.{admin},roles.cs.{encargado}").eq("activo", true).neq("id", miId);
+        for (const d of destinatarios || []) {
+          crearAlerta(supabase2, d.id, `Nuevo pedido — ${nombreCliente.trim()}`, {
+            mensaje: `Busca ${marca.trim()}${modelo ? ` ${modelo}` : ""}${anioDesde || anioHasta ? ` (${anioDesde || ""}${anioDesde && anioHasta ? "-" : ""}${anioHasta || ""})` : ""}.`,
+            link: "/panel/pedidos", tipo: "pedido_nuevo", prioridad: "novedad", categoriaNotif: "pedidos_wishlist",
+          });
+        }
+      }
     } catch (err: any) {
       console.error(err);
       setError(err.message || "No se pudo guardar el pedido.");

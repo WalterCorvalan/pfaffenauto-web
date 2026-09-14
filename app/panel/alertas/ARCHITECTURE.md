@@ -17,6 +17,16 @@ Si agregás un `crearAlerta()` nuevo para algo que ya tiene una categoría en `N
 
 **Si tocás `marcarLeida`/`cerrarAlerta`/`abrirAlerta` en cualquiera de las 2 vistas, operá sobre `idsGrupo` (todas las filas del grupo), no sobre `a.id`** — si no, marcar como leída o borrar una alerta agrupada solo afecta a la más reciente y las duplicadas viejas quedan huérfanas (esto fue exactamente el bug: `contador` se mostraba mal porque nunca se calculaba, y antes de esta agrupación cada duplicado ni siquiera se distinguía).
 
+## Notificaciones "en el momento" (no cron) — a quién avisan
+
+Además de los cron jobs, algunas pantallas avisan apenas pasa algo, sin esperar al día siguiente:
+
+- **Cotización nueva** (`NuevaCotizacionModal.tsx`), **consignación nueva** (`NuevaConsignacionModal.tsx`), **pedido nuevo** (`NuevoPedidoModal.tsx`): avisan a **admin/encargados** (`perfiles` con rol `admin` o `encargado`, excluyendo a quien lo creó) — no al creador. (Bug corregido: cotización nueva notificaba a `miId`, el mismo vendedor que la acababa de crear.)
+- **Visita nueva** (`app/api/panel-v2/visitas/route.ts`): avisa al `vendedor_id` si vino asignado desde el formulario público, si no a admin/encargados.
+- **Primera respuesta de un vendedor a un lead** (`app/api/panel-v2/whatsapp/enviar/route.ts`, `app/api/panel-v2/instagram/enviar/route.ts`): avisa a admin/encargados **solo cuando la conversación pasa de "sin_contactar" a "contactado"** (primera respuesta), no en cada mensaje de la charla — evita spam en una charla larga. Rodi no tiene endpoint de respuesta manual desde el panel (solo bot), así que no aplica ahí.
+
+Si agregás un aviso "en el momento" nuevo para algo que un staff crea manualmente (no un lead público), seguí el patrón de cotización/consignación/pedido: avisar a admin/encargados, no al creador — y filtrar `.neq("id", miId)` para no auto-notificarse.
+
 ## No tocar sin revisar el resto
 
 - No insertar en `alertas` sin pasar por `crearAlerta()` — te salteás los 2 filtros de arriba.
