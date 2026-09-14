@@ -11,7 +11,7 @@ const SECTORES = [
   { value: "taller", label: "Taller" }, { value: "recepcion", label: "Recepción" }, { value: "admin", label: "Admin" },
 ];
 
-const TABS = ["Resumen", "Estado de Pago", "Pago Comprador", "Comprobantes", "Documentos", "Parte Vendedora", "Parte Compradora", "Liquidación", "Gastos", "Consignación", "Duplicado", "Gestoría", "Historial"];
+const TABS = ["Resumen", "Estado de Pago", "Pago Comprador", "Comprobantes", "Documentos", "Parte Vendedora", "Parte Compradora", "Liquidación", "Gastos", "Consignación", "Cuentas Registro", "Duplicado", "Gestoría", "Historial"];
 
 const PRIORIDAD_COLOR: Record<string, string> = { Baja: "text-slate-500", Media: "text-amber-500", Alta: "text-rose-500" };
 
@@ -96,6 +96,19 @@ export default function ExpedienteDetalleModal({ expedienteId, miId, perfiles, s
   const [gestorExternoTelefono, setGestorExternoTelefono] = useState("");
   const [subiendoArancel, setSubiendoArancel] = useState(false);
 
+  // Cuentas Registro
+  const [cuentasRegistro, setCuentasRegistro] = useState<any[]>([]);
+  const [registroDatosBancariosUrl, setRegistroDatosBancariosUrl] = useState("");
+  const [registroImporteTotal, setRegistroImporteTotal] = useState("");
+  const [registroMonedaTotal, setRegistroMonedaTotal] = useState("ARS");
+  const [registroNotas, setRegistroNotas] = useState("");
+  const [subiendoDatosBancariosRegistro, setSubiendoDatosBancariosRegistro] = useState(false);
+  const [nuevaCuentaRegistro, setNuevaCuentaRegistro] = useState(false);
+  const [nuevaCuentaBanco, setNuevaCuentaBanco] = useState("");
+  const [nuevaCuentaCbuAlias, setNuevaCuentaCbuAlias] = useState("");
+  const [nuevaCuentaTitular, setNuevaCuentaTitular] = useState("");
+  const [nuevaCuentaImporte, setNuevaCuentaImporte] = useState("");
+
   // Estado de Pago (Tesorería → vendedor)
   const [estadoPagoTesoreria, setEstadoPagoTesoreria] = useState("pendiente");
   const [fechaPagoVendedor, setFechaPagoVendedor] = useState("");
@@ -149,6 +162,10 @@ export default function ExpedienteDetalleModal({ expedienteId, miId, perfiles, s
     setFechaEstimadaCierre(e.fecha_estimada_cierre || "");
     setGestorExternoNombre(e.gestor_externo_nombre || "");
     setGestorExternoTelefono(e.gestor_externo_telefono || "");
+    setRegistroDatosBancariosUrl(e.registro_datos_bancarios_url || "");
+    setRegistroImporteTotal(e.registro_importe_total != null ? String(e.registro_importe_total) : "");
+    setRegistroMonedaTotal(e.registro_moneda_total || "ARS");
+    setRegistroNotas(e.registro_notas || "");
 
     setEstadoPagoTesoreria(e.venta?.estado_pago_tesoreria || "pendiente");
     setFechaPagoVendedor(e.venta?.fecha_pago_vendedor || "");
@@ -165,7 +182,7 @@ export default function ExpedienteDetalleModal({ expedienteId, miId, perfiles, s
     setExtraCobradoFormaPago(e.venta?.extra_cobrado_forma_pago || "");
     setExtraCobradoCuentaId(e.venta?.extra_cobrado_cuenta_id || "");
 
-    const [{ data: h }, { data: cl }, { data: o }, { data: s }, { data: g }, { data: d }, { data: c }, { data: veh }] = await Promise.all([
+    const [{ data: h }, { data: cl }, { data: o }, { data: s }, { data: g }, { data: d }, { data: c }, { data: veh }, { data: cr }] = await Promise.all([
       supabase2.from("expediente_hitos").select("*").eq("expediente_id", expedienteId).order("orden"),
       supabase2.from("expediente_checklist").select("*").eq("expediente_id", expedienteId).order("parte,orden"),
       supabase2.from("expediente_observaciones").select("*, autor:perfiles(nombre)").eq("expediente_id", expedienteId).order("created_at", { ascending: false }),
@@ -176,6 +193,7 @@ export default function ExpedienteDetalleModal({ expedienteId, miId, perfiles, s
       e.venta?.vehiculo_id
         ? supabase2.from("vehiculos").select("propietario_dni, propietario_email, propietario_fecha_nacimiento, propietario_profesion").eq("id", e.venta.vehiculo_id).maybeSingle()
         : Promise.resolve({ data: null }),
+      supabase2.from("expediente_cuentas_registro").select("*").eq("expediente_id", expedienteId).order("orden"),
     ]);
     setHitos(h || []);
     setChecklist(cl || []);
@@ -184,6 +202,7 @@ export default function ExpedienteDetalleModal({ expedienteId, miId, perfiles, s
     setGastos(g || []);
     setDocumentos(d || []);
     setCuentas(c || []);
+    setCuentasRegistro(cr || []);
     setCompradorNombre2(e.venta?.comprador_nombre || "");
     setCompradorDni(e.venta?.comprador_dni || "");
     setCompradorTelefono2(e.venta?.comprador_telefono || "");
@@ -280,6 +299,44 @@ export default function ExpedienteDetalleModal({ expedienteId, miId, perfiles, s
     } finally {
       setSubiendoArancel(false);
     }
+  };
+
+  const subirDatosBancariosRegistro = async (file: File) => {
+    setSubiendoDatosBancariosRegistro(true);
+    try {
+      const formData = new FormData();
+      formData.append("file", file);
+      formData.append("carpeta", "expedientes");
+      const res = await fetch("/api/panel-v2/upload", { method: "POST", body: formData });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || "Error subiendo el archivo");
+      const { data: upd, error } = await supabase2.from("expedientes").update({ registro_datos_bancarios_url: data.publicUrl }).eq("id", expedienteId).select("*, venta:ventas(*)").single();
+      if (error) throw error;
+      if (upd) { setExpediente(upd); setRegistroDatosBancariosUrl(data.publicUrl); onActualizado(upd); }
+    } catch (e: any) {
+      alert(e?.message || "No se pudo subir el archivo. Si es la primera vez, puede que falte correr migraciones/sql_expedientes_cuentas_registro.sql en Supabase.");
+    } finally {
+      setSubiendoDatosBancariosRegistro(false);
+    }
+  };
+
+  const agregarCuentaRegistro = async () => {
+    if (!nuevaCuentaBanco.trim() && !nuevaCuentaCbuAlias.trim()) return;
+    const ordenMax = Math.max(0, ...cuentasRegistro.map((c) => c.orden || 0));
+    const { data, error } = await supabase2.from("expediente_cuentas_registro").insert({
+      expediente_id: expedienteId, banco: nuevaCuentaBanco.trim() || null, cbu_alias: nuevaCuentaCbuAlias.trim() || null,
+      titular: nuevaCuentaTitular.trim() || null, importe: nuevaCuentaImporte ? Number(nuevaCuentaImporte) : null, orden: ordenMax + 1,
+    }).select().single();
+    if (error) { alert("No se pudo agregar la cuenta. Puede que falte correr migraciones/sql_expedientes_cuentas_registro.sql en Supabase."); return; }
+    setCuentasRegistro((prev) => [...prev, data]);
+    setNuevaCuentaRegistro(false);
+    setNuevaCuentaBanco(""); setNuevaCuentaCbuAlias(""); setNuevaCuentaTitular(""); setNuevaCuentaImporte("");
+  };
+
+  const eliminarCuentaRegistro = async (id: string) => {
+    if (!confirm("¿Eliminar esta cuenta del registro?")) return;
+    await supabase2.from("expediente_cuentas_registro").delete().eq("id", id);
+    setCuentasRegistro((prev) => prev.filter((c) => c.id !== id));
   };
 
   const subirComprobante = async (file: File) => {
@@ -388,6 +445,16 @@ export default function ExpedienteDetalleModal({ expedienteId, miId, perfiles, s
         }).eq("id", expedienteId);
       } catch (errGestoria) {
         console.error("No se pudieron guardar los campos de Gestoría:", errGestoria);
+      }
+
+      // Ídem, columnas nuevas (ver migraciones/sql_expedientes_cuentas_registro.sql).
+      try {
+        await supabase2.from("expedientes").update({
+          registro_importe_total: registroImporteTotal ? Number(registroImporteTotal) : null,
+          registro_moneda_total: registroMonedaTotal, registro_notas: registroNotas || null,
+        }).eq("id", expedienteId);
+      } catch (errRegistro) {
+        console.error("No se pudieron guardar los campos de Cuentas Registro:", errRegistro);
       }
 
       if (data) { setExpediente(data); onActualizado(data); }
@@ -933,6 +1000,11 @@ export default function ExpedienteDetalleModal({ expedienteId, miId, perfiles, s
                   <p className="text-xs font-bold text-amber-700 dark:text-amber-300">🏆 Gestoría aún no completó toda la documentación de este expediente.</p>
                 </div>
               )}
+              {cuentasRegistro.length === 0 && (
+                <div className="bg-amber-50 dark:bg-amber-500/10 border border-amber-200 dark:border-amber-500/20 rounded-xl p-3">
+                  <p className="text-xs font-bold text-amber-700 dark:text-amber-300">🏦 Gestoría aún no cargó las cuentas de registro para este expediente. <button onClick={() => setTab("Cuentas Registro")} className="underline">Ver tab Cuentas Registro</button></p>
+                </div>
+              )}
               <div className="border border-slate-200 dark:border-white/10 rounded-xl p-4">
                 <div className="flex items-center justify-between mb-2">
                   <p className="text-xs font-black uppercase tracking-widest text-slate-500 dark:text-slate-400">📋 Comprobantes de transferencia</p>
@@ -1182,6 +1254,74 @@ export default function ExpedienteDetalleModal({ expedienteId, miId, perfiles, s
                   <div className="bg-slate-50 dark:bg-white/5 rounded-lg p-2.5 text-xs"><p className="text-slate-400 font-bold uppercase text-[10px] mb-1">Para Finanzas</p><p>{comentarioFinanzas || "Sin comentarios"}</p></div>
                 </div>
               </div>
+            </div>
+          )}
+
+          {tab === "Cuentas Registro" && (
+            <div className="space-y-4">
+              <div className="border border-dashed border-slate-300 dark:border-white/20 rounded-xl p-4">
+                <p className="text-xs font-black uppercase tracking-widest text-slate-500 dark:text-slate-400 mb-1">📄 Datos bancarios oficiales del registro</p>
+                <p className="text-[11px] text-slate-400 mb-2">PDF / imagen con CBU, alias, datos del titular. Tesorería los usa para transferir el pago al propietario.</p>
+                {registroDatosBancariosUrl ? (
+                  <a href={registroDatosBancariosUrl} target="_blank" rel="noreferrer" className="inline-flex items-center gap-1.5 text-xs font-bold text-emerald-600 bg-emerald-50 dark:bg-emerald-500/10 px-3 py-2 rounded-lg">✅ Ver archivo</a>
+                ) : (
+                  <label className="inline-flex items-center gap-1.5 text-xs font-bold text-slate-600 dark:text-slate-300 bg-slate-50 dark:bg-white/5 border border-slate-200 dark:border-white/10 px-3 py-2 rounded-lg cursor-pointer">
+                    {subiendoDatosBancariosRegistro ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Upload className="w-3.5 h-3.5" />} Adjuntar PDF / imagen
+                    <input type="file" accept="image/*,.pdf" className="hidden" disabled={subiendoDatosBancariosRegistro} onChange={(e) => e.target.files?.[0] && subirDatosBancariosRegistro(e.target.files[0])} />
+                  </label>
+                )}
+              </div>
+
+              <div className="border border-slate-200 dark:border-white/10 rounded-xl p-4">
+                <div className="flex items-center justify-between mb-1">
+                  <p className="text-xs font-black uppercase tracking-widest text-slate-500 dark:text-slate-400">🏦 Cuentas bancarias del registro</p>
+                  <button onClick={() => setNuevaCuentaRegistro(true)} className="px-3 py-1.5 text-xs font-bold rounded-lg border border-slate-200 dark:border-white/10 hover:bg-slate-50 dark:hover:bg-white/10 flex items-center gap-1"><Plus className="w-3.5 h-3.5" /> Agregar cuenta</button>
+                </div>
+                <p className="text-[11px] text-slate-400 mb-2">Splitear el pago al propietario en N cuentas (banco + CBU/Alias + titular + importe).</p>
+                {cuentasRegistro.length === 0 ? (
+                  <p className="text-xs text-slate-400 italic">Sin cuentas cargadas. Sumá la primera con el botón de arriba.</p>
+                ) : (
+                  <div className="space-y-1.5">
+                    {cuentasRegistro.map((c) => (
+                      <div key={c.id} className="flex items-center justify-between bg-slate-50 dark:bg-white/5 border border-slate-100 dark:border-white/10 rounded-lg px-3 py-2 text-xs">
+                        <div className="min-w-0">
+                          <p className="font-bold text-slate-700 dark:text-slate-200">{c.banco || "Sin banco"}{c.cbu_alias ? ` · ${c.cbu_alias}` : ""}</p>
+                          <p className="text-slate-400">{c.titular || "Sin titular"}</p>
+                        </div>
+                        <div className="flex items-center gap-2 shrink-0">
+                          {c.importe != null && <strong>$ {Number(c.importe).toLocaleString("es-AR")}</strong>}
+                          <button onClick={() => eliminarCuentaRegistro(c.id)} className="p-1 text-slate-400 hover:text-rose-600"><X className="w-3.5 h-3.5" /></button>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
+                {nuevaCuentaRegistro && (
+                  <div className="mt-3 flex flex-col gap-2 bg-slate-50 dark:bg-white/5 rounded-lg p-3">
+                    <input value={nuevaCuentaBanco} onChange={(e) => setNuevaCuentaBanco(e.target.value)} placeholder="Banco" className={inputClass} />
+                    <input value={nuevaCuentaCbuAlias} onChange={(e) => setNuevaCuentaCbuAlias(e.target.value)} placeholder="CBU / Alias" className={inputClass} />
+                    <input value={nuevaCuentaTitular} onChange={(e) => setNuevaCuentaTitular(e.target.value)} placeholder="Titular" className={inputClass} />
+                    <input type="text" inputMode="numeric" value={nuevaCuentaImporte} onChange={(e) => setNuevaCuentaImporte(e.target.value.replace(/\D/g, ""))} placeholder="Importe" className={inputClass} />
+                    <div className="flex justify-end gap-2"><button onClick={() => setNuevaCuentaRegistro(false)} className="px-3 py-1.5 text-xs font-semibold text-slate-500">Cancelar</button><button onClick={agregarCuentaRegistro} className="px-3 py-1.5 rounded-lg bg-rose-600 hover:bg-rose-700 text-white text-xs font-bold">Guardar cuenta</button></div>
+                  </div>
+                )}
+              </div>
+
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <div>
+                  <label className="text-xs font-semibold text-slate-500 dark:text-slate-400 block mb-1">Importe total registro</label>
+                  <input type="text" inputMode="numeric" value={registroImporteTotal} onChange={(e) => setRegistroImporteTotal(e.target.value.replace(/\D/g, ""))} placeholder="0" className={inputClass} />
+                </div>
+                <div>
+                  <label className="text-xs font-semibold text-slate-500 dark:text-slate-400 block mb-1">Moneda total</label>
+                  <select value={registroMonedaTotal} onChange={(e) => setRegistroMonedaTotal(e.target.value)} className="w-full bg-slate-50 dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-lg px-3 py-2 text-sm"><option value="ARS">ARS</option><option value="USD">USD</option></select>
+                </div>
+              </div>
+              <div>
+                <label className="text-xs font-semibold text-slate-500 dark:text-slate-400 block mb-1">Notas del registro</label>
+                <textarea value={registroNotas} onChange={(e) => setRegistroNotas(e.target.value)} rows={2} placeholder="Observaciones para Tesorería antes de transferir." className="w-full bg-slate-50 dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-lg px-3 py-2 text-sm" />
+              </div>
+              <p className="text-[10px] text-slate-400">El importe/moneda y las notas se guardan con el botón &quot;Guardar Cambios&quot; de abajo.</p>
             </div>
           )}
 
