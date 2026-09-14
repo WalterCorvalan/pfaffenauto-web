@@ -34,4 +34,5 @@ Los tres guardados de venta (edición, cambio de estado, edición de comisión) 
 ## No tocar sin revisar el resto
 
 - El cálculo de saldo del recibo (`ImprimirVenta.tsx`) depende de `lib/moneda.ts` — mismo criterio que Señas, no dupliques lógica de conversión acá.
+- **La conversión de señas por moneda hay que aplicarla en los 3 lugares que las suman**, no solo en el recibo: `imprimir/[id]/page.tsx` (`senaPrevia`), `page.tsx` (`senasPorVenta`, alimenta la columna "Adelanto" de `VentasClient.tsx`) y `VentaDetalleModal.tsx` (`totalSenas`). Los últimos dos quedaron sin convertir en una auditoría anterior y se corrigieron después: `page.tsx` sumaba montos crudos sin importar la moneda, `VentaDetalleModal.tsx` descartaba (ponía en $0) cualquier seña en moneda distinta a `venta.moneda_venta` en vez de convertirla con `totalEnMoneda(..., venta.tipo_cambio)`. Si agregás un cuarto lugar que sume `venta_senas`, usá el mismo patrón.
 - `abrir_expediente_al_cerrar_venta` (trigger de base de datos, no está en este repo) crea el expediente automáticamente al cerrar — no insertar un expediente a mano desde el cliente.
