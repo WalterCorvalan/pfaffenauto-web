@@ -16,6 +16,8 @@ Cada gasto tiene `a_cargo_de`: `comprador` / `vendedor` / `agencia`. No son solo
 
 **Bug corregido**: los totales antes ignoraban estos gastos por completo aunque la pantalla los listaba justo arriba — ver `ExpedienteDetalleModal.tsx`, variables `totalACobrarComprador`/`totalALiquidarVendedor`. Solo se suman/restan gastos en la misma moneda que la venta/acuerdo (no hay conversión automática ahí — mismo criterio que `totalSenas`, ya existente en el archivo).
 
+**Bug corregido (2)**: la caja "Resumen agencia" del tab Liquidación mostraba el título "Margen agencia" pero el valor quedaba hardcodeado en `"—"` (nunca se calculaba, ni siquiera cuando `gananciasOcultas` era falso). Ahora usa `margenAgencia = honorarios − gastosAgenciaMismaMoneda` (mismo criterio de "no convertir moneda" que el resto del archivo) — solo se calcula cuando el acuerdo con el propietario es "Bruto" (con "Neto / En mano" no hay honorarios de gestión que calcular ahí).
+
 ## Señas en otra moneda
 
 `senasOtraMoneda`/`totalesSenasOtraMoneda` se calculan y se muestran aparte, pero **no** se descuentan del `saldoComprador` (no hay tipo de cambio disponible en este contexto para convertir) — es una limitación conocida, no un bug: si un comprador señó en una moneda distinta a la de la venta, el saldo mostrado no refleja esa seña y hay que restarla a mano.
