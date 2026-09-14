@@ -40,6 +40,10 @@ Cada gasto tiene `a_cargo_de`: `comprador` / `vendedor` / `agencia`. No son solo
 
 `confirmarParte()`/`revertirParte()` en `ExpedienteDetalleModal.tsx` son simétricas: confirmar setea `confirmado_X`/`confirmado_X_en`/`confirmado_X_por`, revertir los vuelve a `false`/`null`/`null`. Revertir una confirmación cuando la otra parte ya estaba confirmada vuelve a bloquear el expediente entero (mismo criterio que `pendienteConfirmacion` de arriba) — es intencional: no hay forma de "revertir solo a medias".
 
+## Tab "Cuentas Registro"
+
+Tab nuevo, con su propia tabla `expediente_cuentas_registro` (id, expediente_id, banco, cbu_alias, titular, importe, orden) más 4 columnas nuevas en `expedientes` (`registro_datos_bancarios_url`, `registro_importe_total`, `registro_moneda_total`, `registro_notas`) — ver `migraciones/sql_expedientes_cuentas_registro.sql`. Gestoría carga acá el comprobante oficial de CBU/alias/titular del registro y, si el pago al propietario se divide en más de una cuenta del registro, cada una como fila propia (mismo patrón de mini-form que Gastos). El importe/moneda total y las notas se guardan con el botón global "Guardar Cambios" (con su propio try/catch, igual que los campos de Gestoría, para no romper el resto si la migración no corrió). El tab Comprobantes muestra un aviso si todavía no hay ninguna cuenta cargada acá, con un atajo directo al tab.
+
 ## Tab "Gestoría" — campos ampliados
 
 Se agregaron 6 columnas nuevas a `expedientes` (ver `migraciones/sql_expedientes_gestoria_campos.sql`): `gestoria_responsable_id` (quién administra el trámite internamente, mismo patrón que `responsable_consignacion_id` de Consignación), `gestoria_prioridad` (baja/media/alta), `arancel_comprobante_url`, `registro_devolvio_plata` (`"si"`/`"no"`/`null`), `fecha_estimada_cierre`, `gestor_externo_nombre`/`gestor_externo_telefono`. El guardado de estos 6 campos está en su propio `try/catch` dentro de `guardarCambios()` (mismo criterio que `vehiculos.propietario_profesion`): si la migración no corrió todavía, no rompe el resto del guardado del expediente (título, vencimiento, comentarios, etc.).
