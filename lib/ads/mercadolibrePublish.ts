@@ -79,7 +79,7 @@ function construirAtributos(v: VehiculoParaML) {
     { id: "MODEL", value_name: v.modelo },
     { id: "VEHICLE_YEAR", value_name: String(v.anio) },
     { id: "KILOMETERS", value_name: String(v.km ?? 0) },
-    { id: "ITEM_CONDITION", value_name: v.km === 0 ? "Nuevo" : "Usado" },
+    { id: "ITEM_CONDITION", value_name: v.condicion === "0km" ? "Nuevo" : "Usado" },
   ];
   if (v.combustible) atributos.push({ id: "FUEL_TYPE", value_name: v.combustible });
   if (v.transmision) atributos.push({ id: "TRANSMISSION", value_name: v.transmision });
@@ -96,7 +96,7 @@ function construirPayload(v: VehiculoParaML) {
     available_quantity: 1,
     buying_mode: "classified",
     listing_type_id: "gold_special",
-    condition: v.km === 0 ? "new" : "used",
+    condition: v.condicion === "0km" ? "new" : "used",
     description: { plain_text: v.notas || `${v.marca} ${v.modelo} ${v.anio}. Consultá financiación y disponibilidad.` },
     pictures: (v.fotos || []).slice(0, 10).map((url) => ({ source: url })),
     attributes: construirAtributos(v),
