@@ -142,8 +142,11 @@ export default async function PanelV2Home() {
     supabase.from("postventa_recordatorios").select("id", { count: "exact", head: true }).eq("estado", "pendiente"),
     // Top 10 gastos del mes + comparación contra el promedio histórico (6
     // meses) de cada categoría, para detectar gastos atípicos.
-    supabase.from("movimientos_caja").select("id, monto, tipo_movimiento, observaciones, fecha, cuenta_id").eq("tipo", "egreso").is("deleted_at", null).eq("estado", "aprobado").gte("fecha", inicioMes).lte("fecha", finMes),
-    supabase.from("movimientos_caja").select("monto, tipo_movimiento, fecha").eq("tipo", "egreso").is("deleted_at", null).eq("estado", "aprobado").gte("fecha", hace6meses).lt("fecha", inicioMes),
+    // Mismo criterio que ingresosPorMoneda/egresosPorMoneda más abajo: una
+    // transferencia entre cajas propias no es un gasto real, no debe aparecer
+    // como "gasto más caro" ni inflar el promedio histórico de gastos atípicos.
+    supabase.from("movimientos_caja").select("id, monto, tipo_movimiento, observaciones, fecha, cuenta_id").eq("tipo", "egreso").neq("tipo_movimiento", "Transferencia").is("deleted_at", null).eq("estado", "aprobado").gte("fecha", inicioMes).lte("fecha", finMes),
+    supabase.from("movimientos_caja").select("monto, tipo_movimiento, fecha").eq("tipo", "egreso").neq("tipo_movimiento", "Transferencia").is("deleted_at", null).eq("estado", "aprobado").gte("fecha", hace6meses).lt("fecha", inicioMes),
     // Proyección de caja: a cobrar (señas activas) y a pagar (comisiones
     // pendientes + cuotas a pagar de este mes, esta última ya viene arriba).
     supabase.from("senas").select("id, venta_ars, venta_usd, sena_ars, sena_usd, marca, modelo, apellido, nombre, cliente_nombre").eq("estado", "Activa"),
