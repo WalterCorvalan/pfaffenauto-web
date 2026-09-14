@@ -6,6 +6,7 @@ import Link from "next/link";
 import { supabase2 } from "@/lib/supabase/client";
 import FirmaCanvas from "@/components/panel/FirmaCanvas";
 import { numeroALetras } from "@/lib/numeroALetras";
+import { totalEnMoneda } from "@/lib/moneda";
 
 interface Branding {
   branding_nombre?: string | null; branding_domicilio?: string | null; branding_telefono?: string | null; branding_cuit?: string | null;
@@ -35,11 +36,25 @@ export default function ImprimirVenta({ venta: v, branding, senaPrevia }: { vent
   const domicilioCliente = v.cliente ? [[v.cliente.calle, v.cliente.numero_calle].filter(Boolean).join(" ") + (v.cliente.depto ? ` Dto. ${v.cliente.depto}` : ""), v.cliente.localidad, v.cliente.provincia ? `(${v.cliente.provincia})` : ""].filter(Boolean).join(", ") : "";
 
   const precioVenta = Number(v.precio_venta || 0);
-  const adicionalTransferencia = Number(v.extra_cobrado_moneda === moneda ? v.extra_cobrado_monto || 0 : 0);
+  const adicionalTransferencia = v.extra_cobrado_monto
+    ? totalEnMoneda([{ monto: v.extra_cobrado_monto, moneda: v.extra_cobrado_moneda || moneda }], moneda, v.tipo_cambio)
+    : 0;
   const saldoAbonar = Math.max(0, precioVenta + adicionalTransferencia - senaPrevia);
   const financiado = v.metodo_pago === "Financiado" && Number(v.monto_financiacion || 0) > 0;
-  const remanente = financiado ? Number(v.monto_financiacion || 0) : 0;
-  const efectivo = Math.max(0, saldoAbonar - remanente);
+  const montoFinanciado = financiado ? Number(v.monto_financiacion || 0) : 0;
+  // "se recibe en efectivo" refleja únicamente el efectivo efectivamente
+  // registrado en Tesorería (pago_efectivo_ars/usd) al cerrar la venta —
+  // antes se calculaba como "todo lo que no está financiado", lo que
+  // declaraba cobrado en efectivo un saldo Contado que nunca se cargó.
+  const efectivo = Math.max(
+    0,
+    totalEnMoneda(
+      [{ monto: v.pago_efectivo_ars, moneda: "ARS" }, { monto: v.pago_efectivo_usd, moneda: "USD" }],
+      moneda,
+      v.tipo_cambio
+    )
+  );
+  const remanente = Math.max(0, saldoAbonar - montoFinanciado - efectivo);
   const esUsado = v.vehiculo_condicion && v.vehiculo_condicion !== "0km";
 
   return (
