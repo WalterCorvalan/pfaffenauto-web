@@ -74,10 +74,26 @@ export default function ExpedientesClient({
 
   const actualizarUno = (e: any) => setExpedientes((prev) => prev.map((x) => (x.id === e.id ? { ...x, ...e } : x)));
 
+  const [motivoAbiertoId, setMotivoAbiertoId] = useState<string | null>(null);
+  const [motivoTexto, setMotivoTexto] = useState("");
+  const [guardandoMotivo, setGuardandoMotivo] = useState(false);
+
+  const guardarMotivoDemora = async (id: string) => {
+    if (!motivoTexto.trim()) return;
+    setGuardandoMotivo(true);
+    const { error } = await supabase2.from("expedientes").update({ motivo_demora: motivoTexto.trim() }).eq("id", id);
+    setGuardandoMotivo(false);
+    if (error) { alert("No se pudo registrar el motivo (¿ya corriste migraciones/sql_expedientes_motivo_demora.sql?)."); return; }
+    setExpedientes((prev) => prev.map((x) => (x.id === id ? { ...x, motivo_demora: motivoTexto.trim() } : x)));
+    setMotivoAbiertoId(null);
+    setMotivoTexto("");
+  };
+
   const renderExpedienteCell = (e: any) => {
     const v = e.venta || {};
     const pendiente = !e.confirmado_comprador || !e.confirmado_consignacion;
     const dias = Math.floor((Date.now() - new Date(e.fecha_apertura || e.created_at).getTime()) / 86400000);
+    const demorado = dias > PLAZO_TRANSFERENCIA_DIAS;
     return (
       <div>
         <div className="flex items-center gap-1.5 flex-wrap">
@@ -91,15 +107,38 @@ export default function ExpedientesClient({
         )}
         <p className="text-[12px] font-semibold text-slate-600 dark:text-slate-300 mt-1.5">{[v.vehiculo_marca, v.vehiculo_modelo, v.vehiculo_anio].filter(Boolean).join(" ")}</p>
         <p className="text-[11px] text-slate-400">{fmtFechaLocal(e.fecha_apertura || e.created_at)}</p>
-        <div className="mt-1.5">
-          <div className="flex items-center justify-between text-[10px] font-bold text-emerald-600 dark:text-emerald-400 mb-0.5">
-            <span>Día {dias} de {PLAZO_TRANSFERENCIA_DIAS}</span>
-            <span>{Math.min(100, Math.round((dias / PLAZO_TRANSFERENCIA_DIAS) * 100))}%</span>
+        {demorado ? (
+          <div className="mt-1.5" onClick={(ev) => ev.stopPropagation()}>
+            <p className="text-[10px] font-black uppercase tracking-wide text-rose-600 dark:text-rose-400">⚠ Demorado — {dias}d <span className="text-rose-400">+{dias - PLAZO_TRANSFERENCIA_DIAS}d</span></p>
+            {e.motivo_demora ? (
+              <p className="text-[11px] text-slate-500 dark:text-slate-400 italic mt-0.5">{e.motivo_demora}</p>
+            ) : motivoAbiertoId === e.id ? (
+              <div className="flex items-center gap-1.5 mt-1">
+                <input
+                  autoFocus
+                  value={motivoTexto}
+                  onChange={(ev) => setMotivoTexto(ev.target.value)}
+                  onKeyDown={(ev) => ev.key === "Enter" && guardarMotivoDemora(e.id)}
+                  placeholder="¿Por qué está demorado?"
+                  className="flex-1 bg-white dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-lg px-2 py-1 text-[11px] outline-none focus:border-rose-500"
+                />
+                <button onClick={() => guardarMotivoDemora(e.id)} disabled={!motivoTexto.trim() || guardandoMotivo} className="text-[11px] font-bold text-rose-600 disabled:opacity-50 shrink-0">Guardar</button>
+              </div>
+            ) : (
+              <button onClick={() => { setMotivoAbiertoId(e.id); setMotivoTexto(""); }} className="text-[11px] font-bold text-rose-600 hover:underline mt-0.5">+ Registrar motivo de demora</button>
+            )}
           </div>
-          <div className="w-full h-1.5 bg-slate-100 dark:bg-white/10 rounded-full overflow-hidden">
-            <div className={`h-full rounded-full ${dias > PLAZO_TRANSFERENCIA_DIAS ? "bg-rose-500" : "bg-emerald-500"}`} style={{ width: `${Math.min(100, Math.round((dias / PLAZO_TRANSFERENCIA_DIAS) * 100))}%` }} />
+        ) : (
+          <div className="mt-1.5">
+            <div className="flex items-center justify-between text-[10px] font-bold text-emerald-600 dark:text-emerald-400 mb-0.5">
+              <span>Día {dias} de {PLAZO_TRANSFERENCIA_DIAS}</span>
+              <span>{Math.min(100, Math.round((dias / PLAZO_TRANSFERENCIA_DIAS) * 100))}%</span>
+            </div>
+            <div className="w-full h-1.5 bg-slate-100 dark:bg-white/10 rounded-full overflow-hidden">
+              <div className="h-full rounded-full bg-emerald-500" style={{ width: `${Math.min(100, Math.round((dias / PLAZO_TRANSFERENCIA_DIAS) * 100))}%` }} />
+            </div>
           </div>
-        </div>
+        )}
       </div>
     );
   };
