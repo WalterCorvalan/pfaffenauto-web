@@ -103,7 +103,7 @@ async function obtenerOCrearConversacion(igUserId: string, username: string | nu
 
   let { data: conversacion } = await supabase
     .from("instagram_conversaciones")
-    .select("id, vendedor_id, ai_habilitada")
+    .select("id, vendedor_id, ai_habilitada, canal_origen")
     .eq("contacto_id", contacto.id)
     .maybeSingle();
 
@@ -113,12 +113,12 @@ async function obtenerOCrearConversacion(igUserId: string, username: string | nu
     const { data: nueva } = await supabase
       .from("instagram_conversaciones")
       .insert({ contacto_id: contacto.id })
-      .select("id, vendedor_id, ai_habilitada")
+      .select("id, vendedor_id, ai_habilitada, canal_origen")
       .single();
     conversacion = nueva;
   }
   return conversacion
-    ? { conversacionId: conversacion.id, contactoId: contacto.id, aiHabilitada: conversacion.ai_habilitada }
+    ? { conversacionId: conversacion.id, contactoId: contacto.id, aiHabilitada: conversacion.ai_habilitada, canalOrigen: conversacion.canal_origen }
     : null;
 }
 
@@ -171,6 +171,15 @@ async function procesarMensajeDirecto(msg: any) {
 
   const refs = await obtenerOCrearConversacion(igUserId, null);
   if (!refs) return;
+
+  // Meta manda "referral" en el evento de mensaje cuando la charla arrancó
+  // desde un anuncio de Click-to-Instagram o el botón "Enviar mensaje" de
+  // un posteo/story -- mismo patrón que el webhook de WhatsApp (ver ese
+  // archivo). Mismo vocabulario que lib/utm.ts para hablar el mismo idioma
+  // que /panel/marketing/pautas.
+  if (msg.referral && !refs.canalOrigen) {
+    await supabase.from("instagram_conversaciones").update({ canal_origen: "Meta Ads" }).eq("id", refs.conversacionId);
+  }
 
   const { error } = await supabase.from("instagram_mensajes").insert({
     conversacion_id: refs.conversacionId,

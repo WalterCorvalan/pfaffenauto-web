@@ -143,20 +143,31 @@ async function ingestarMensaje({ waId, nombrePerfil, msg }: { waId: string; nomb
 
   let { data: conversacion } = await supabase
     .from("whatsapp_conversaciones")
-    .select("id, vendedor_id, ai_habilitada")
+    .select("id, vendedor_id, ai_habilitada, canal_origen")
     .eq("contacto_id", contacto.id)
     .maybeSingle();
 
   if (!conversacion) {
     // El trigger asignar_vendedor_conversacion_nueva le pone vendedor solo
     // (ronda) antes de que termine el insert.
-    const { data: nueva } = await supabase.from("whatsapp_conversaciones").insert({ contacto_id: contacto.id }).select("id, vendedor_id, ai_habilitada").single();
+    const { data: nueva } = await supabase.from("whatsapp_conversaciones").insert({ contacto_id: contacto.id }).select("id, vendedor_id, ai_habilitada, canal_origen").single();
     conversacion = nueva;
   }
   if (!conversacion) return;
 
   if (msg.referral?.headline) {
-    await supabase.from("whatsapp_conversaciones").update({ origen_ads: msg.referral.headline }).eq("id", conversacion.id);
+    // Meta manda "referral" solo en el primer mensaje de una charla que
+    // arrancó desde un anuncio de Click-to-WhatsApp o el botón "Enviar
+    // mensaje" de un posteo de FB/IG -- antes solo se guardaba el headline
+    // (texto libre del anuncio) en origen_ads, sin clasificar canal_origen,
+    // que es el campo que el resto de la app (Leads, Dashboard, "canalTop"
+    // de Clientes) sí lee para saber de dónde vino el contacto. Mismo
+    // vocabulario que lib/utm.ts (MAPA_FUENTE) para hablar el mismo idioma
+    // que /panel/marketing/pautas -- instagram y facebook mapean los dos a
+    // "Meta Ads" ahí también, no se distinguen.
+    const patch: Record<string, unknown> = { origen_ads: msg.referral.headline };
+    if (!conversacion.canal_origen) patch.canal_origen = "Meta Ads";
+    await supabase.from("whatsapp_conversaciones").update(patch).eq("id", conversacion.id);
   }
 
   // Cuando el cliente toca una opción de la lista interactiva del menú de
