@@ -1,6 +1,7 @@
 import { createClient } from "@/lib/supabase/server";
 import { notFound } from "next/navigation";
 import ImprimirVenta from "./ImprimirVenta";
+import { totalEnMoneda } from "@/lib/moneda";
 
 export default async function ImprimirVentaPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
@@ -18,9 +19,14 @@ export default async function ImprimirVentaPage({ params }: { params: Promise<{ 
   if (!venta) notFound();
 
   const { data: senasAplicadas } = await supabase.from("venta_senas").select("monto, moneda").eq("venta_id", id);
-  const totalSenaPorMoneda: Record<string, number> = {};
-  (senasAplicadas || []).forEach((s: any) => { totalSenaPorMoneda[s.moneda] = (totalSenaPorMoneda[s.moneda] || 0) + Number(s.monto); });
-  const senaPrevia = totalSenaPorMoneda[venta.moneda_venta] || 0;
+  // Una seña vinculada puede haberse cobrado en una moneda distinta a la de
+  // la venta (ej. seña en USD sobre una venta en ARS) — sin convertir con la
+  // cotización de la venta, esa seña se contaba como $0 en el recibo.
+  const senaPrevia = totalEnMoneda(
+    (senasAplicadas || []).map((s: any) => ({ monto: s.monto, moneda: s.moneda })),
+    venta.moneda_venta,
+    venta.tipo_cambio
+  );
 
   return <ImprimirVenta venta={venta} branding={config} senaPrevia={senaPrevia} />;
 }

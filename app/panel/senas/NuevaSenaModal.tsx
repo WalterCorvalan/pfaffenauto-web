@@ -9,6 +9,7 @@ import { Wallet, Save, Upload, Loader2, X } from "lucide-react";
 import ClienteBuscador, { ClienteSeleccionado } from "@/components/panel/ClienteBuscador";
 import VehiculoSelector, { VehiculoDatos } from "@/components/panel/VehiculoSelector";
 import ConfirmarPrecioModal from "@/components/panel/ConfirmarPrecioModal";
+import { convertirMonto, totalEnMoneda, simboloMoneda, type Moneda } from "@/lib/moneda";
 
 const inputClass = "w-full bg-slate-50 dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-xl px-3 py-2.5 text-sm outline-none focus:border-rose-500 focus:bg-white dark:focus:bg-white/10 transition-colors text-slate-900 dark:text-white placeholder:text-slate-400";
 const labelClass = "text-[11px] font-bold text-slate-500 dark:text-slate-400 uppercase block mb-1.5";
@@ -73,19 +74,34 @@ export default function NuevaSenaModal({
   const [seguroCompania, setSeguroCompania] = useState("");
   const [seguroImporte, setSeguroImporte] = useState("");
 
+  // La venta puede pactarse en ARS o en USD (son campos excluyentes); todo lo
+  // demás (seña, efectivo, prenda, patentamiento, permuta) se carga en su
+  // propia moneda y hay que convertirlo a la moneda de la venta antes de
+  // restarlo — sumar campos "_ars" únicamente dejaba en $0 cualquier pago
+  // hecho en la moneda que no coincidía con la de la venta.
+  const monedaVenta: Moneda = ventaUsd ? "USD" : "ARS";
+  const ventaMonto = monedaVenta === "USD" ? Number(ventaUsd) || 0 : Number(ventaArs) || 0;
+
   const saldoCalculado = useMemo(() => {
-    const v = Number(ventaArs) || 0;
-    const s = Number(senaArs) || 0;
-    const p = Number(prendaMonto) || 0;
-    const t = Number(patentTransf) || 0;
-    return v + t - s - p;
-  }, [ventaArs, senaArs, prendaMonto, patentTransf]);
+    const senaConvertida = totalEnMoneda(
+      [{ monto: senaArs, moneda: "ARS" }, { monto: senaUsd, moneda: "USD" }],
+      monedaVenta,
+      tipoCambio
+    );
+    const prendaConvertida = convertirMonto(prendaMonto, "ARS", monedaVenta, tipoCambio);
+    const patentTransfConvertido = convertirMonto(patentTransf, "ARS", monedaVenta, tipoCambio);
+    return ventaMonto + patentTransfConvertido - senaConvertida - prendaConvertida;
+  }, [ventaMonto, monedaVenta, senaArs, senaUsd, prendaMonto, patentTransf, tipoCambio]);
 
   const remanenteCalculado = useMemo(() => {
-    const e = Number(efectivoArs) || 0;
-    const perm = Number(permutaTasadoArs) || 0;
-    return saldoCalculado - e - perm;
-  }, [saldoCalculado, efectivoArs, permutaTasadoArs]);
+    const efectivoConvertido = totalEnMoneda(
+      [{ monto: efectivoArs, moneda: "ARS" }, { monto: efectivoUsd, moneda: "USD" }],
+      monedaVenta,
+      tipoCambio
+    );
+    const permutaConvertida = convertirMonto(permutaTasadoArs, "ARS", monedaVenta, tipoCambio);
+    return saldoCalculado - efectivoConvertido - permutaConvertida;
+  }, [saldoCalculado, efectivoArs, efectivoUsd, permutaTasadoArs, monedaVenta, tipoCambio]);
 
   useEffect(() => {
     supabase2.auth.getUser().then(({ data }) => setMiId(data.user?.id || null));
@@ -106,11 +122,16 @@ export default function NuevaSenaModal({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [vehiculo?.vehiculo_id]);
 
+  const necesitaCotizacion =
+    (monedaVenta === "USD" && !!(Number(senaArs) || Number(efectivoArs) || Number(prendaMonto) || Number(patentTransf))) ||
+    (monedaVenta === "ARS" && !!(Number(senaUsd) || Number(efectivoUsd)));
+
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (!cliente) return alert("Elegí o cargá un cliente.");
     if (!vehiculo || !vehiculo.marca || !vehiculo.modelo) return alert("Elegí o cargá el vehículo.");
     if (!sucursalId) return alert("Elegí la sucursal.");
+    if (necesitaCotizacion && !tipoCambio) return alert("Cargá el tipo de cambio: hay montos en una moneda distinta a la de la venta.");
     setMostrarModalPrecio(true);
   };
 
@@ -342,7 +363,7 @@ export default function NuevaSenaModal({
 
             <div className="bg-white dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-xl p-4 flex items-center justify-between">
               <span className="text-[12px] font-bold uppercase tracking-widest text-slate-600 dark:text-slate-300">Remanente</span>
-              <strong className="text-lg font-black text-slate-900 dark:text-white">$ {remanenteCalculado.toLocaleString("es-AR")}</strong>
+              <strong className="text-lg font-black text-slate-900 dark:text-white">{simboloMoneda(monedaVenta)} {remanenteCalculado.toLocaleString("es-AR")}</strong>
             </div>
 
             {remanenteCalculado > 0 && (
@@ -375,8 +396,11 @@ export default function NuevaSenaModal({
 
           <div className="bg-rose-50 dark:bg-rose-500/10 border border-rose-200 dark:border-rose-500/20 rounded-2xl p-5 flex items-center justify-between">
             <span className="text-[13px] font-bold uppercase tracking-widest text-rose-700 dark:text-rose-300">Saldo a abonar (calculado)</span>
-            <strong className="text-2xl font-black text-rose-900 dark:text-white">$ {saldoCalculado.toLocaleString("es-AR")}</strong>
+            <strong className="text-2xl font-black text-rose-900 dark:text-white">{simboloMoneda(monedaVenta)} {saldoCalculado.toLocaleString("es-AR")}</strong>
           </div>
+          {necesitaCotizacion && !tipoCambio && (
+            <p className="text-[11px] text-amber-600 dark:text-amber-400 -mt-4">⚠ Hay montos en una moneda distinta a la de la venta ({monedaVenta}). Cargá el tipo de cambio para que el saldo sea correcto.</p>
+          )}
 
           <div>
             <label className={labelClass}>Observaciones</label>

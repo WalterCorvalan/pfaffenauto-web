@@ -177,8 +177,11 @@ export default function CockpitCeoTab({ miNombre, ocultarMontos, diaDelMes, dias
         </div>
         <div className="rounded-2xl p-4 bg-white dark:bg-white/[0.02] border border-slate-200 dark:border-white/5">
           <p className="text-[10px] font-bold uppercase text-slate-400 flex items-center gap-1.5 mb-1"><Trophy className="w-3.5 h-3.5" /> Mejor vendedor</p>
-          <p className="text-lg font-black text-slate-900 dark:text-white truncate">{ranking[0]?.nombre || "—"}</p>
-          <p className="text-[11px] text-slate-400 mt-1">{ranking[0] ? `${ranking[0].ventas_equivalentes} venta${ranking[0].ventas_equivalentes === 1 ? "" : "s"}` : "Sin datos todavía"}</p>
+          {/* ranking[0] es solo el primero de la lista, no necesariamente alguien
+              con ventas -- si todos están en 0 no hay "mejor vendedor" real que
+              mostrar. */}
+          <p className="text-lg font-black text-slate-900 dark:text-white truncate">{ranking[0]?.ventas_equivalentes > 0 ? ranking[0].nombre : "—"}</p>
+          <p className="text-[11px] text-slate-400 mt-1">{ranking[0]?.ventas_equivalentes > 0 ? `${ranking[0].ventas_equivalentes} venta${ranking[0].ventas_equivalentes === 1 ? "" : "s"}` : "Sin ventas todavía"}</p>
         </div>
       </div>
 

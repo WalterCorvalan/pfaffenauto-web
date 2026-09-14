@@ -21,7 +21,7 @@ import { useSearchParams, useRouter } from "next/navigation";
 import { motion, AnimatePresence } from "framer-motion";
 import ComparadorModal from "@/components/modals/ComparadorModal";
 import BuscadorFallback from "@/components/BuscadorFallBack";
-import { CAMPOS_VEHICULO_PUBLICO } from "@/lib/vehiculos";
+import { CAMPOS_VEHICULO_PUBLICO, normalizarMarca } from "@/lib/vehiculos";
 import { VehicleCard } from "@/components/Stock";
 
 const ITEMS_POR_PAGINA = 12;
@@ -64,8 +64,9 @@ export default function CatalogoClient({ vehiculosIniciales = [], totalInicial =
   const [potenciasSeleccionadas, setPotenciasSeleccionadas] = useState<string[]>([]);
   const [plazasSeleccionadas, setPlazasSeleccionadas] = useState<number[]>([]);
 
-  // Datos de base para los filtros (Sucursales se traen dinámicas)
+  // Datos de base para los filtros (Sucursales y Marcas se traen dinámicas)
   const [sucursalesDB, setSucursalesDB] = useState<{ id: string; nombre: string }[]>([]);
+  const [marcasDB, setMarcasDB] = useState<string[]>([]);
 
   // ESTADOS DE PAGINACIÓN
   const [pagina, setPagina] = useState(0);
@@ -95,6 +96,30 @@ export default function CatalogoClient({ vehiculosIniciales = [], totalInicial =
       .select("id, nombre")
       .then(({ data }) => {
         if (data) setSucursalesDB(data);
+      });
+  }, []);
+
+  // Marcas del filtro: antes era una lista fija en el código (LISTA_MARCAS)
+  // que no incluía marcas presentes en el stock real (Haval, Kymco, Seat,
+  // Alfa Romeo, etc.) -- ahora se arma con las marcas que realmente tienen
+  // stock publicado, deduplicadas sin importar tildes/mayúsculas.
+  useEffect(() => {
+    supabase
+      .from("vehiculos")
+      .select("marca")
+      .in("estado", ["disponible", "reservado"])
+      .then(({ data }) => {
+        if (!data) return;
+        const vistas = new Set<string>();
+        const marcas: string[] = [];
+        for (const { marca } of data) {
+          if (!marca) continue;
+          const clave = normalizarMarca(marca);
+          if (vistas.has(clave)) continue;
+          vistas.add(clave);
+          marcas.push(marca);
+        }
+        setMarcasDB(marcas.sort((a, b) => a.localeCompare(b, "es")));
       });
   }, []);
 
@@ -542,6 +567,7 @@ export default function CatalogoClient({ vehiculosIniciales = [], totalInicial =
                 toggleArrayItem(setPlazasSeleccionadas, p)
               }
               sucursalesDB={sucursalesDB}
+              marcasDB={marcasDB}
             />
           </aside>
 
@@ -614,6 +640,7 @@ export default function CatalogoClient({ vehiculosIniciales = [], totalInicial =
                       toggleArrayItem(setPlazasSeleccionadas, p)
                     }
                     sucursalesDB={sucursalesDB}
+                    marcasDB={marcasDB}
                   />
                 </div>
 
@@ -802,11 +829,15 @@ export default function CatalogoClient({ vehiculosIniciales = [], totalInicial =
 
 // ================= SIDEBAR COMPONENT (SÓLIDO) =================
 function FiltrosContent(props: any) {
-  const LISTA_MARCAS = [
-    "Audi", "BMW", "Chevrolet", "Citroën", "Fiat", "Ford", "Hyundai", 
+  // Lista fija de respaldo mientras marcasDB todavía no cargó (o si la
+  // consulta falla) -- en uso normal props.marcasDB (marcas reales del
+  // stock publicado) reemplaza esto por completo.
+  const LISTA_MARCAS_FALLBACK = [
+    "Audi", "BMW", "Chevrolet", "Citroën", "Fiat", "Ford", "Hyundai",
     "Jeep", "Kia", "Nissan", "Peugeot", "Renault", "Toyota", "Volkswagen"
   ];
-  
+  const LISTA_MARCAS: string[] = props.marcasDB?.length ? props.marcasDB : LISTA_MARCAS_FALLBACK;
+
   const LISTA_TIPOS = ["SUV", "Hatchback", "Pickup", "Sedán", "Auto", "Utilitarios"];
 
   return (

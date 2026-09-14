@@ -8,6 +8,7 @@ import { notificarRespuestaPrecio } from "@/lib/panel/notificaciones";
 import ConfirmarPrecioEncargadoModal from "@/components/panel/ConfirmarPrecioEncargadoModal";
 import FirmaCanvas from "@/components/panel/FirmaCanvas";
 import { numeroALetras } from "@/lib/numeroALetras";
+import { simboloMoneda, type Moneda } from "@/lib/moneda";
 
 interface Branding {
   branding_nombre?: string | null; branding_domicilio?: string | null; branding_telefono?: string | null; branding_cuit?: string | null;
@@ -65,13 +66,29 @@ export default function ImprimirSena({ sena: s, branding }: { sena: any; brandin
   };
 
   const vendedor = s.perfiles?.nombre || "Administración";
-  const formatMoney = (val: number) => `$ ${Number(val || 0).toLocaleString("es-AR", { minimumFractionDigits: 2 })} .-`;
-  const enLetras = (val: number) => `(${numeroALetras(Number(val || 0))})`;
+  // La venta y el saldo/remanente están en la moneda que se haya usado para
+  // vender (venta_ars xor venta_usd); la seña puede haberse cobrado en la
+  // otra moneda y hay que mostrarla en la suya, no forzarla a "$0" leyendo
+  // solo sena_ars.
+  const monedaVenta: Moneda = ventaUsd ? "USD" : "ARS";
+  const monedaSena: Moneda = s.sena_ars ? "ARS" : s.sena_usd ? "USD" : monedaVenta;
+  const senaMonto = Number(s.sena_ars || s.sena_usd || 0);
+  const formatMoney = (val: number, moneda: Moneda = monedaVenta) => `${simboloMoneda(moneda)} ${Number(val || 0).toLocaleString("es-AR", { minimumFractionDigits: 2 })} .-`;
+  const enLetras = (val: number, moneda: Moneda = monedaVenta) => (moneda === "ARS" ? `(${numeroALetras(Number(val || 0))})` : "");
   const fecha = s.fecha ? new Date(`${s.fecha}T12:00:00Z`).toLocaleDateString("es-AR", { timeZone: "UTC" }) : "—";
   const fechaNacimiento = s.fecha_nacimiento ? new Date(`${s.fecha_nacimiento}T12:00:00Z`).toLocaleDateString("es-AR", { timeZone: "UTC" }) : "N/A";
   const domicilioCliente = [[s.calle, s.numero_calle].filter(Boolean).join(" ") + (s.depto ? ` Dto. ${s.depto}` : ""), s.localidad, s.provincia ? `(${s.provincia})` : ""].filter(Boolean).join(", ");
   const adicionalTransferencia = Number(s.patentamiento_transferencia_ars || 0);
   const saldoAbonar = Number(s.saldo_abonar_ars || 0);
+  // Preferir la condición real del vehículo (misma fuente que usa el recibo de
+  // venta) en vez de adivinar 0KM/usado por el año -- eso hacía que un usado
+  // reciente figurara como 0KM acá y como usado en el recibo de venta.
+  const esCeroKm = s.vehiculo?.condicion ? s.vehiculo.condicion === "0km" : Number(s.modelo_anio) >= new Date().getFullYear();
+  // "de la Localidad de" es la localidad de radicación del vehículo (mismo
+  // campo que usa el recibo de venta), no la del domicilio del cliente --
+  // antes leía s.localidad (dirección del cliente) o el nombre de la
+  // sucursal, mezclando datos de fuentes distintas entre ambos documentos.
+  const localidadVehiculo = s.vehiculo?.radicado_localidad || s.sucursales?.nombre || "-";
 
   return (
     <div className="min-h-screen pb-20 text-slate-800 bg-[#F9FAFB] dark:bg-[#0A0A0A] print:bg-white print:pb-0 print:min-h-0 pt-8 print:pt-0 font-sans">
@@ -150,14 +167,14 @@ export default function ImprimirSena({ sena: s, branding }: { sena: any; brandin
         <p className="mb-2">como reserva y ad referendum de la firma vendedora</p>
 
         <div className="space-y-1 mb-2.5">
-          <div className="flex items-baseline gap-2 flex-wrap"><span className="w-64 shrink-0">la Cantidad de:</span><strong className="text-[14px]">{formatMoney(s.sena_ars)}</strong><span className="text-slate-500 italic">{enLetras(s.sena_ars)}</span></div>
-          <div className="flex items-baseline gap-2 flex-wrap"><span className="w-64 shrink-0">por un precio de venta establecido en:</span><strong className="text-[14px]">{formatMoney(ventaArs)}</strong><span className="text-slate-500 italic">{enLetras(ventaArs)}</span></div>
+          <div className="flex items-baseline gap-2 flex-wrap"><span className="w-64 shrink-0">la Cantidad de:</span><strong className="text-[14px]">{formatMoney(senaMonto, monedaSena)}</strong><span className="text-slate-500 italic">{enLetras(senaMonto, monedaSena)}</span></div>
+          <div className="flex items-baseline gap-2 flex-wrap"><span className="w-64 shrink-0">por un precio de venta establecido en:</span><strong className="text-[14px]">{formatMoney(monedaVenta === "USD" ? ventaUsd : ventaArs)}</strong><span className="text-slate-500 italic">{enLetras(monedaVenta === "USD" ? ventaUsd : ventaArs)}</span></div>
           <div className="flex items-baseline gap-2 flex-wrap"><span className="w-64 shrink-0">más un adicional por Transferencia y/o Patentamiento de:</span><strong className="text-[14px]">{formatMoney(adicionalTransferencia)}</strong><span className="text-slate-500 italic">{enLetras(adicionalTransferencia)}</span></div>
           <div className="flex items-baseline gap-2 flex-wrap pt-1.5 border-t border-slate-900"><span className="w-64 shrink-0 font-bold">Quedando un <em>Saldo</em> a abonar de:</span><strong className="text-[15px]">{formatMoney(saldoAbonar)}</strong><span className="text-slate-500 italic">{enLetras(saldoAbonar)}</span></div>
         </div>
 
         <p className="mb-2.5 text-justify">
-          Establecidos como precio por la venta de un(a) <strong className="uppercase">{s.segmento || "vehículo"}</strong>, <strong className="uppercase">{Number(s.modelo_anio) >= new Date().getFullYear() ? "0KM" : "usado"}</strong>, en las condiciones vistas y que se encuentra libre de todo gravamen y/o deudas nacionales, municipales o provinciales, el cual ha sido revisado y probado a su entera satisfacción.
+          Establecidos como precio por la venta de un(a) <strong className="uppercase">{s.segmento || "vehículo"}</strong>, <strong className="uppercase">{esCeroKm ? "0KM" : "usado"}</strong>, en las condiciones vistas y que se encuentra libre de todo gravamen y/o deudas nacionales, municipales o provinciales, el cual ha sido revisado y probado a su entera satisfacción.
         </p>
 
         <div className="grid grid-cols-2 gap-x-8 gap-y-1 mb-2.5">
@@ -169,10 +186,10 @@ export default function ImprimirSena({ sena: s, branding }: { sena: any; brandin
           <div className="flex justify-between border-b border-dotted border-slate-300 pb-0.5"><span className="text-slate-500">Número de Motor</span><strong className="font-mono">{s.numero_motor || "A verificar"}</strong></div>
           <div className="flex justify-between border-b border-dotted border-slate-300 pb-0.5"><span className="text-slate-500">Chasis Marca</span><strong>{s.marca_chasis || "-"}</strong></div>
           <div className="flex justify-between border-b border-dotted border-slate-300 pb-0.5"><span className="text-slate-500">Número de Chasis</span><strong className="font-mono">{s.numero_chasis || "A verificar"}</strong></div>
-          <div className="flex justify-between border-b border-dotted border-slate-300 pb-0.5"><span className="text-slate-500">Dominio</span><strong className="uppercase">{s.dominio || "0KM"}</strong></div>
+          <div className="flex justify-between border-b border-dotted border-slate-300 pb-0.5"><span className="text-slate-500">Dominio</span><strong className="uppercase">{s.dominio || (esCeroKm ? "0KM" : "—")}</strong></div>
           <div className="flex justify-between border-b border-dotted border-slate-300 pb-0.5"><span className="text-slate-500">Color</span><strong className="capitalize">{s.color || "-"}</strong></div>
           <div className="flex justify-between border-b border-dotted border-slate-300 pb-0.5"><span className="text-slate-500">Año</span><strong>{s.modelo_anio}</strong></div>
-          <div className="flex justify-between border-b border-dotted border-slate-300 pb-0.5"><span className="text-slate-500">de la Localidad de</span><strong>{s.localidad || s.sucursales?.nombre || "-"}</strong></div>
+          <div className="flex justify-between border-b border-dotted border-slate-300 pb-0.5"><span className="text-slate-500">de la Localidad de</span><strong>{localidadVehiculo}</strong></div>
         </div>
 
         <p className="text-[9.5px] text-slate-700 leading-snug text-justify mb-1">
