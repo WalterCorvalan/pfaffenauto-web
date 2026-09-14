@@ -5,8 +5,9 @@ import { useRouter } from "next/navigation";
 import { supabase2 } from "@/lib/supabase/client";
 import { CheckCircle2, X, Trash2, ChevronDown, ArrowRight } from "lucide-react";
 import { TIPO_ICON, TIPO_COLOR, TIPO_VER, ICONO_DEFECTO, COLOR_DEFECTO } from "@/components/panel/alertaMeta";
+import { agruparAlertas, type AlertaAgrupada } from "@/lib/panel/agruparAlertas";
 
-interface Alerta {
+interface AlertaRaw {
   id: string;
   tipo: string;
   prioridad: "alta" | "media" | "baja" | "novedad";
@@ -15,8 +16,8 @@ interface Alerta {
   link: string | null;
   leida: boolean;
   created_at: string;
-  contador: number;
 }
+type Alerta = AlertaAgrupada<AlertaRaw>;
 
 const PRIORIDAD_INFO: Record<string, { label: string; dot: string; badge: string }> = {
   alta: { label: "Prioridad alta", dot: "bg-rose-500", badge: "bg-rose-50 dark:bg-rose-500/10 text-rose-600 dark:text-rose-300" },
@@ -27,9 +28,9 @@ const PRIORIDAD_INFO: Record<string, { label: string; dot: string; badge: string
 const ORDEN = ["alta", "novedad", "media", "baja"] as const;
 
 
-export default function AlertasClient({ alertasIniciales }: { alertasIniciales: Alerta[]; miId: string }) {
+export default function AlertasClient({ alertasIniciales }: { alertasIniciales: AlertaRaw[]; miId: string }) {
   const router = useRouter();
-  const [alertas, setAlertas] = useState(alertasIniciales);
+  const [alertas, setAlertas] = useState<Alerta[]>(() => agruparAlertas(alertasIniciales));
   const [borrandoTodas, setBorrandoTodas] = useState(false);
   const [colapsadas, setColapsadas] = useState<Set<string>>(new Set());
 
@@ -48,12 +49,12 @@ export default function AlertasClient({ alertasIniciales }: { alertasIniciales: 
   const marcarLeida = async (a: Alerta) => {
     if (a.leida) return;
     setAlertas((prev) => prev.map((x) => (x.id === a.id ? { ...x, leida: true } : x)));
-    await supabase2.from("alertas").update({ leida: true }).eq("id", a.id);
+    await supabase2.from("alertas").update({ leida: true }).in("id", a.idsGrupo);
   };
 
-  const cerrarAlerta = async (id: string) => {
-    setAlertas((prev) => prev.filter((a) => a.id !== id));
-    await supabase2.from("alertas").delete().eq("id", id);
+  const cerrarAlerta = async (a: Alerta) => {
+    setAlertas((prev) => prev.filter((x) => x.id !== a.id));
+    await supabase2.from("alertas").delete().in("id", a.idsGrupo);
   };
 
   const irAlLink = (a: Alerta) => {
@@ -64,7 +65,7 @@ export default function AlertasClient({ alertasIniciales }: { alertasIniciales: 
   const borrarTodas = async () => {
     if (!confirm(`¿Borrar las ${alertas.length} alertas? No se puede deshacer.`)) return;
     setBorrandoTodas(true);
-    const ids = alertas.map((a) => a.id);
+    const ids = alertas.flatMap((a) => a.idsGrupo);
     setAlertas([]);
     await supabase2.from("alertas").delete().in("id", ids);
     setBorrandoTodas(false);
@@ -147,7 +148,7 @@ export default function AlertasClient({ alertasIniciales }: { alertasIniciales: 
                                 </button>
                               )}
                             </div>
-                            <button onClick={() => cerrarAlerta(a.id)} className="p-1.5 text-slate-300 hover:text-rose-600 hover:bg-white/50 dark:hover:bg-black/20 rounded-lg transition-colors shrink-0"><X className="w-4 h-4" /></button>
+                            <button onClick={() => cerrarAlerta(a)} className="p-1.5 text-slate-300 hover:text-rose-600 hover:bg-white/50 dark:hover:bg-black/20 rounded-lg transition-colors shrink-0"><X className="w-4 h-4" /></button>
                           </div>
                         );
                       })}

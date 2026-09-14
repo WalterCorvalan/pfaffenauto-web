@@ -204,6 +204,7 @@ async function avisarTareasVencidas(): Promise<number> {
       link: "/panel/tareas",
       tipo: "tarea_lead_vencida",
       prioridad: "media",
+      categoriaNotif: "leads",
     });
     await supabase.from("tareas_lead").update({ aviso_vencida_enviado: true }).eq("id", t.id);
     avisados++;

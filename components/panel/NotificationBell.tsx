@@ -5,10 +5,12 @@ import { useRouter } from "next/navigation";
 import { supabase2 } from "@/lib/supabase/client";
 import { Bell, Check, ExternalLink } from "lucide-react";
 import { TIPO_ICON, TIPO_COLOR, ICONO_DEFECTO, COLOR_DEFECTO } from "./alertaMeta";
+import { agruparAlertas, type AlertaAgrupada } from "@/lib/panel/agruparAlertas";
 
-interface Alerta {
-  id: string; tipo: string; prioridad: string; titulo: string; mensaje: string | null; link: string | null; leida: boolean; created_at: string; contador: number;
+interface AlertaRaw {
+  id: string; tipo: string; prioridad: string; titulo: string; mensaje: string | null; link: string | null; leida: boolean; created_at: string;
 }
+type Alerta = AlertaAgrupada<AlertaRaw>;
 
 function tiempoRelativo(iso: string) {
   const ms = Date.now() - new Date(iso).getTime();
@@ -36,7 +38,7 @@ export default function NotificationBell({ miId }: { miId: string }) {
       supabase2.from("alertas").select("*").eq("destinatario_id", miId).order("created_at", { ascending: false }).limit(8),
       supabase2.from("alertas").select("id", { count: "exact", head: true }).eq("destinatario_id", miId).eq("leida", false),
     ]);
-    setAlertas(data || []);
+    setAlertas(agruparAlertas(data || []));
     setSinLeer(count || 0);
   };
 
@@ -78,8 +80,8 @@ export default function NotificationBell({ miId }: { miId: string }) {
   const abrirAlerta = async (a: Alerta) => {
     if (!a.leida) {
       setAlertas((prev) => prev.map((x) => (x.id === a.id ? { ...x, leida: true } : x)));
-      setSinLeer((n) => Math.max(0, n - 1));
-      await supabase2.from("alertas").update({ leida: true }).eq("id", a.id);
+      setSinLeer((n) => Math.max(0, n - a.idsGrupo.length));
+      await supabase2.from("alertas").update({ leida: true }).in("id", a.idsGrupo);
     }
     setOpen(false);
     if (a.link) router.push(a.link);
