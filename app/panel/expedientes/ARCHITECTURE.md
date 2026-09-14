@@ -24,6 +24,10 @@ Cada gasto tiene `a_cargo_de`: `comprador` / `vendedor` / `agencia`. No son solo
 
 `pendientesConfirmacion` (`ExpedientesClient.tsx`) es un contador **global**: `!confirmado_comprador || !confirmado_consignacion`, sin filtrar por usuario — no existe un campo de responsable de confirmación, cualquiera puede tildar "Confirmar comprador"/"Confirmar consignación" desde `ExpedienteDetalleModal.tsx`. El copy dice "pendientes de confirmación" (antes decía "de **tu** confirmación", lo cual prometía una bandeja personal que el query no entrega — corregido). Si en algún momento se agrega un responsable real por expediente, ahí sí hay que filtrar por `miId` y el copy puede volver a decir "tu confirmación".
 
+## Pedido de atención — responder lo cierra
+
+`expedientes.pedido_atencion_sector`/`pedido_atencion_mensaje` son campos flat que alimentan el banner indigo — se escriben insertando una fila en `expediente_observaciones` con `tipo: "pedido_atencion"` (no hay un `.update()` directo a esos campos desde `pedirAtencion()`; algo del lado de la base los sincroniza con la última observación de ese tipo). `responderPedido()` inserta la respuesta como otra observación (`tipo: "respuesta_pedido_atencion"`, para distinguirla en el Historial con el ícono ↩️) y **sí** limpia esos dos campos flat directamente vía `.update()`, cerrando el pedido. Solo soporta un pedido activo a la vez (no es un hilo con múltiples pedidos abiertos en paralelo) — si se necesita eso, hay que sumar una tabla dedicada en vez de seguir reusando `expediente_observaciones` + campos flat.
+
 ## Revertir una confirmación
 
 `confirmarParte()`/`revertirParte()` en `ExpedienteDetalleModal.tsx` son simétricas: confirmar setea `confirmado_X`/`confirmado_X_en`/`confirmado_X_por`, revertir los vuelve a `false`/`null`/`null`. Revertir una confirmación cuando la otra parte ya estaba confirmada vuelve a bloquear el expediente entero (mismo criterio que `pendienteConfirmacion` de arriba) — es intencional: no hay forma de "revertir solo a medias".
