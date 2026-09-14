@@ -7,7 +7,7 @@ import { supabase2 } from "@/lib/supabase/client";
 import {
   Search, Car, Globe, Download, Upload, FileText, Plus, Edit2,
   AlertTriangle, Clock, CheckCircle2, Tag, Trash2, TrendingUp, ChevronLeft, ChevronRight,
-  Building2, UserCircle2, Loader2, Handshake, MoreVertical,
+  Building2, UserCircle2, Loader2, Handshake, MoreVertical, List, LayoutGrid, Table2, MapPin,
 } from "lucide-react";
 import NuevoVehiculoModal from "./NuevoVehiculoModal";
 import NuevoMandatoModal from "./NuevoMandatoModal";
@@ -37,6 +37,13 @@ interface Cliente { id: string; nombre: string; telefono: string | null; dni_cui
 interface CatalogoConfig { id: string; mostrar_precios: boolean; visitas_totales: number; fichas_vistas_totales: number; consultas_whatsapp_totales: number }
 
 type Tab = "general" | "consignaciones" | "0km" | "mandatos";
+type Vista = "lista" | "tarjetas" | "tabla";
+type Orden = "recientes" | "antiguos" | "precio_desc" | "precio_asc" | "dias_desc";
+const ORDEN_LABEL: Record<Orden, string> = {
+  recientes: "Últimos ingresos", antiguos: "Ingresos más antiguos",
+  precio_desc: "Precio: mayor a menor", precio_asc: "Precio: menor a mayor",
+  dias_desc: "Más días en stock",
+};
 
 const ESTADO_LABEL: Record<string, string> = { disponible: "Disponible", "señado": "Señado", vendido: "Vendido" };
 const ESTADO_COLOR: Record<string, string> = {
@@ -64,6 +71,15 @@ function fmtPrecio(n: number, moneda: string) {
 function aRevisar(v: Vehiculo) {
   return !v.publicado_ml || v.fotos.length === 0 || !v.precio_venta;
 }
+function pendientesTexto(v: Vehiculo) {
+  const items: string[] = [];
+  if (!v.publicado_ml) items.push("Sin publicar en ML");
+  if (v.fotos.length === 0) items.push("Sin foto");
+  if (!v.precio_venta) items.push("Sin precio");
+  if (items.length === 0) return null;
+  const [primero, ...resto] = items;
+  return resto.length ? `${primero} · +${resto.length} pendiente${resto.length === 1 ? "" : "s"}` : primero;
+}
 
 export default function StockClient({
   vehiculosIniciales, mandatosIniciales, perfiles, clientes, catalogoConfigInicial, sucursales, miId, diasEstancado = 90,
@@ -90,6 +106,8 @@ export default function StockClient({
   const [galeria, setGaleria] = useState<{ fotos: string[]; index: number } | null>(null);
   const [ocupadoId, setOcupadoId] = useState<string | null>(null);
   const [menuMobileAbierto, setMenuMobileAbierto] = useState(false);
+  const [vista, setVista] = useState<Vista>("tabla");
+  const [orden, setOrden] = useState<Orden>("recientes");
 
   // Por default true (optimista) para no tapar los botones un instante a
   // los que sí tienen permiso mientras se resuelve la consulta -- un
@@ -151,16 +169,22 @@ export default function StockClient({
       const q = query.trim().toLowerCase();
       lista = lista.filter((v) => [v.marca, v.modelo, v.patente, v.ubicacion, String(v.anio), v.propietario_nombre].filter(Boolean).join(" ").toLowerCase().includes(q));
     }
-    const prioridad = (v: Vehiculo) => (v.estado === "señado" ? 0 : v.estado === "vendido" ? 2 : 1);
-    return [...lista].sort((a, b) => prioridad(a) - prioridad(b) || diasEnStock(a.created_at) - diasEnStock(b.created_at));
-  }, [baseTab, estadoFiltro, soloEstancados, soloARevisar, marcaFiltro, sucursalFiltro, query]);
+    const comparador: Record<Orden, (a: Vehiculo, b: Vehiculo) => number> = {
+      recientes: (a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime(),
+      antiguos: (a, b) => new Date(a.created_at).getTime() - new Date(b.created_at).getTime(),
+      precio_desc: (a, b) => Number(b.precio_venta || 0) - Number(a.precio_venta || 0),
+      precio_asc: (a, b) => Number(a.precio_venta || 0) - Number(b.precio_venta || 0),
+      dias_desc: (a, b) => diasEnStock(b.created_at) - diasEnStock(a.created_at),
+    };
+    return [...lista].sort(comparador[orden]);
+  }, [baseTab, estadoFiltro, soloEstancados, soloARevisar, marcaFiltro, sucursalFiltro, query, orden]);
 
   // Antes se renderizaban TODAS las filas de una -- con stock real (77+)
   // la tabla se hacía larguísima. Paginado simple en memoria, sin tocar el
   // fetch (ya viene todo el stock de una sola vez desde el server).
   const POR_PAGINA = 25;
   const [pagina, setPagina] = useState(1);
-  useEffect(() => { setPagina(1); }, [tab, estadoFiltro, soloEstancados, soloARevisar, marcaFiltro, sucursalFiltro, query]);
+  useEffect(() => { setPagina(1); }, [tab, estadoFiltro, soloEstancados, soloARevisar, marcaFiltro, sucursalFiltro, query, orden]);
   const totalPaginas = Math.max(1, Math.ceil(filtrados.length / POR_PAGINA));
   const paginados = useMemo(() => filtrados.slice((pagina - 1) * POR_PAGINA, pagina * POR_PAGINA), [filtrados, pagina]);
 
@@ -332,6 +356,17 @@ export default function StockClient({
                 </select>
               </div>
 
+              <div className="flex items-center justify-end gap-2 mb-3 flex-wrap">
+                <select value={orden} onChange={(e) => setOrden(e.target.value as Orden)} className="bg-white dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-lg px-3 py-1.5 text-xs font-semibold text-slate-600 dark:text-slate-300">
+                  {(Object.keys(ORDEN_LABEL) as Orden[]).map((o) => <option key={o} value={o}>{ORDEN_LABEL[o]}</option>)}
+                </select>
+                <div className="flex items-center gap-1 bg-slate-100 dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-lg p-1">
+                  <button onClick={() => setVista("lista")} title="Vista lista" className={`flex items-center gap-1.5 px-2.5 py-1 rounded-md text-xs font-bold ${vista === "lista" ? "bg-rose-600 text-white" : "text-slate-500 dark:text-slate-400 hover:bg-white dark:hover:bg-white/10"}`}><List className="w-3.5 h-3.5" /> Lista</button>
+                  <button onClick={() => setVista("tarjetas")} title="Vista tarjetas" className={`flex items-center gap-1.5 px-2.5 py-1 rounded-md text-xs font-bold ${vista === "tarjetas" ? "bg-rose-600 text-white" : "text-slate-500 dark:text-slate-400 hover:bg-white dark:hover:bg-white/10"}`}><LayoutGrid className="w-3.5 h-3.5" /> Tarjetas</button>
+                  <button onClick={() => setVista("tabla")} title="Vista tabla detallada" className={`flex items-center gap-1.5 px-2.5 py-1 rounded-md text-xs font-bold ${vista === "tabla" ? "bg-rose-600 text-white" : "text-slate-500 dark:text-slate-400 hover:bg-white dark:hover:bg-white/10"}`}><Table2 className="w-3.5 h-3.5" /> Tabla detallada</button>
+                </div>
+              </div>
+
               {filtrados.length === 0 ? (
                 <div className="flex flex-col items-center justify-center text-center py-20 bg-white dark:bg-white/[0.02] border border-slate-200 dark:border-white/5 rounded-2xl">
                   <Search className="w-10 h-10 text-slate-300 dark:text-slate-600 mb-3" />
@@ -341,13 +376,72 @@ export default function StockClient({
               ) : (
                 <>
                   <div className="bg-white dark:bg-white/[0.02] border border-slate-200 dark:border-white/5 rounded-xl px-4 py-2.5 mb-3 flex items-center justify-between flex-wrap gap-2 text-xs font-semibold text-slate-500 dark:text-slate-400">
-                    <span>{filtrados.length} vehículo{filtrados.length === 1 ? "" : "s"} en lista</span>
+                    <span>{filtrados.length} vehículo{filtrados.length === 1 ? "" : "s"} en lista{Object.keys(valorTotalPorMoneda).length > 0 ? ` · ${Object.entries(valorTotalPorMoneda).map(([m, n]) => fmtPrecio(n, m)).join(" · ")}` : ""}</span>
                     <span className="flex items-center gap-3 text-[11px] font-bold">
                       <span className="flex items-center gap-1.5"><span className="w-2 h-2 rounded-full bg-sky-400" /> En stock</span>
                       <span className="flex items-center gap-1.5"><span className="w-2 h-2 rounded-full bg-amber-400" /> +30 días</span>
                       <span className="flex items-center gap-1.5"><span className="w-2 h-2 rounded-full bg-rose-500" /> +60 días</span>
                     </span>
                   </div>
+                  {vista === "lista" && (
+                    <div className="bg-white dark:bg-white/[0.02] border border-slate-200 dark:border-white/5 rounded-2xl divide-y divide-slate-100 dark:divide-white/5 overflow-hidden mb-3">
+                      {paginados.map((v) => {
+                        const dias = diasEnStock(v.created_at);
+                        const pendientes = pendientesTexto(v);
+                        return (
+                          <div key={v.id} onClick={() => setEditando(v)} className={`flex items-center gap-3 px-4 py-3 cursor-pointer hover:bg-slate-50 dark:hover:bg-white/5 border-l-4 ${bordeAntiguedad(dias, diasEstancado)}`}>
+                            <div className="w-14 h-14 rounded-lg bg-slate-100 dark:bg-white/5 border border-slate-200 dark:border-white/10 flex flex-col items-center justify-center shrink-0 overflow-hidden relative">
+                              {v.fotos?.[0] ? <img src={v.fotos[0]} alt="" className="w-full h-full object-cover" /> : <Car className="w-5 h-5 text-slate-300 dark:text-slate-600" />}
+                              <span className="absolute bottom-0 inset-x-0 bg-black/50 text-white text-[8px] font-bold text-center leading-3">{v.fotos.length} fotos</span>
+                            </div>
+                            <div className="flex-1 min-w-0">
+                              <div className="flex items-center justify-between gap-2">
+                                <p className="text-sm font-bold text-slate-900 dark:text-white truncate">{v.marca} {v.modelo}</p>
+                                <p className="text-sm font-bold text-slate-900 dark:text-white shrink-0">{fmtPrecio(v.precio_venta, v.moneda_venta)}</p>
+                              </div>
+                              <p className="text-[11px] text-slate-400">{v.anio} · {v.km?.toLocaleString("es-AR") ?? "—"} km · {v.patente || "s/patente"}</p>
+                              <div className="flex items-center gap-1.5 flex-wrap mt-1">
+                                <span className={`text-[10px] font-bold px-1.5 py-0.5 rounded-full border ${ESTADO_COLOR[v.estado]}`}>{ESTADO_LABEL[v.estado]}</span>
+                                <span className="text-[10px] text-slate-400">{v.origen || "Origen por definir"} · {dias}d en stock</span>
+                              </div>
+                              <p className="text-[11px] text-slate-400 mt-0.5 flex items-center gap-1"><MapPin className="w-3 h-3" /> {v.sucursal?.nombre || "Sin sucursal"} · {v.vendedor_asignado_id ? perfilMap[v.vendedor_asignado_id] : "Sin responsable"}</p>
+                              {pendientes && <p className="text-[11px] text-amber-600 dark:text-amber-400 mt-0.5">{pendientes}</p>}
+                            </div>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  )}
+                  {vista === "tarjetas" && (
+                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 mb-3">
+                      {paginados.map((v) => {
+                        const dias = diasEnStock(v.created_at);
+                        const pendientes = pendientesTexto(v);
+                        return (
+                          <div key={v.id} onClick={() => setEditando(v)} className={`bg-white dark:bg-white/[0.02] border border-slate-200 dark:border-white/5 rounded-2xl overflow-hidden cursor-pointer hover:shadow-md transition-shadow border-l-4 ${bordeAntiguedad(dias, diasEstancado)}`}>
+                            <div className="h-32 bg-slate-100 dark:bg-white/5 flex flex-col items-center justify-center gap-1 relative">
+                              {v.fotos?.[0] ? <img src={v.fotos[0]} alt="" className="w-full h-full object-cover" /> : <><Car className="w-8 h-8 text-slate-300 dark:text-slate-600" /><span className="text-[11px] text-slate-400">Sin foto</span></>}
+                              <span className="absolute bottom-1.5 left-1.5 bg-black/50 text-white text-[10px] font-bold px-1.5 py-0.5 rounded">{v.fotos.length} fotos</span>
+                            </div>
+                            <div className="p-3.5">
+                              <div className="flex items-start justify-between gap-2">
+                                <p className="text-sm font-bold text-slate-900 dark:text-white">{v.marca} {v.modelo}</p>
+                                <p className="text-sm font-bold text-slate-900 dark:text-white shrink-0">{fmtPrecio(v.precio_venta, v.moneda_venta)}</p>
+                              </div>
+                              <p className="text-[11px] text-slate-400 mt-0.5">{v.anio} · {v.km?.toLocaleString("es-AR") ?? "—"} km · {v.patente || "s/patente"}</p>
+                              <div className="flex items-center gap-1.5 flex-wrap mt-2">
+                                <span className={`text-[10px] font-bold px-1.5 py-0.5 rounded-full border ${ESTADO_COLOR[v.estado]}`}>{ESTADO_LABEL[v.estado]}</span>
+                                <span className="text-[10px] text-slate-400">{v.origen || "Origen por definir"} · {dias}d en stock</span>
+                              </div>
+                              <p className="text-[11px] text-slate-400 mt-1.5 flex items-center gap-1"><MapPin className="w-3 h-3" /> {v.sucursal?.nombre || "Sin sucursal"} · {v.vendedor_asignado_id ? perfilMap[v.vendedor_asignado_id] : "Sin responsable"}</p>
+                              {pendientes && <p className="text-[11px] text-amber-600 dark:text-amber-400 mt-1">{pendientes}</p>}
+                            </div>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  )}
+                  {vista === "tabla" && (
                   <TablaResponsiva<Vehiculo>
                     filas={paginados}
                     keyExtractor={(v) => v.id}
@@ -396,6 +490,7 @@ export default function StockClient({
                       </>
                     )}
                   />
+                  )}
                   {totalPaginas > 1 && (
                     <div className="grid grid-cols-3 items-center mt-3 px-1">
                       <p className="text-xs text-slate-400">Página {pagina} de {totalPaginas} — {filtrados.length} en total</p>
