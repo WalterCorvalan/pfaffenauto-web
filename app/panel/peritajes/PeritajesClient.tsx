@@ -15,21 +15,16 @@ interface Lead {
 export default function PeritajesClient({ peritajes, leadsSinPeritaje }: { peritajes: any[]; leadsSinPeritaje: Lead[] }) {
   return (
     <div className="flex flex-col h-full overflow-hidden">
-      <header className="flex items-center justify-between gap-4 border-b border-slate-200 dark:border-white/5 px-6 py-4 bg-white dark:bg-white/[0.02] shrink-0">
-        <div className="flex items-center gap-4">
-          <div className="w-10 h-10 rounded-xl bg-rose-50 dark:bg-rose-500/10 border border-rose-100 dark:border-rose-500/20 flex items-center justify-center shrink-0">
-            <ClipboardCheck className="w-5 h-5 text-rose-600 dark:text-rose-400" />
-          </div>
-          <div>
-            <h1 className="text-xl font-black text-slate-900 dark:text-white leading-tight">Peritajes</h1>
-            <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">Inspecciones de vehículos tasados</p>
-          </div>
-        </div>
-        <NuevoPeritajeModal leads={leadsSinPeritaje} />
-      </header>
-
       <div className="flex-1 overflow-y-auto p-6 bg-slate-50 dark:bg-[#141414]">
-        <div className="max-w-[1200px] mx-auto grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
+        <div className="max-w-[1200px] mx-auto">
+          <div className="flex items-center justify-between gap-4 mb-4">
+            <div>
+              <h1 className="text-xl font-black text-slate-900 dark:text-white flex items-center gap-2"><ClipboardCheck className="w-5 h-5 text-rose-600" /> Peritajes</h1>
+              <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">Inspecciones de vehículos tasados</p>
+            </div>
+            <NuevoPeritajeModal leads={leadsSinPeritaje} />
+          </div>
+          <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
           {peritajes.map((p: any) => (
             <Link
               key={p.id}
@@ -67,6 +62,7 @@ export default function PeritajesClient({ peritajes, leadsSinPeritaje }: { perit
               <p className="text-slate-500 dark:text-slate-400 text-xs mt-1">Iniciá uno con el botón "Nuevo peritaje" desde un lead de WhatsApp o Instagram.</p>
             </div>
           )}
+          </div>
         </div>
       </div>
     </div>
