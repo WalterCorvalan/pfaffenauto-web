@@ -88,6 +88,13 @@ export default function ExpedienteDetalleModal({ expedienteId, miId, perfiles, s
   const [precioPropietarioMoneda, setPrecioPropietarioMoneda] = useState("USD");
   const [tipoAcuerdoConsignacion, setTipoAcuerdoConsignacion] = useState("bruto");
   const [vencimiento, setVencimiento] = useState("");
+  const [gestoriaResponsable, setGestoriaResponsable] = useState("");
+  const [gestoriaPrioridad, setGestoriaPrioridad] = useState("media");
+  const [registroDevolvioPlata, setRegistroDevolvioPlata] = useState<string | null>(null);
+  const [fechaEstimadaCierre, setFechaEstimadaCierre] = useState("");
+  const [gestorExternoNombre, setGestorExternoNombre] = useState("");
+  const [gestorExternoTelefono, setGestorExternoTelefono] = useState("");
+  const [subiendoArancel, setSubiendoArancel] = useState(false);
 
   // Estado de Pago (Tesorería → vendedor)
   const [estadoPagoTesoreria, setEstadoPagoTesoreria] = useState("pendiente");
@@ -136,6 +143,12 @@ export default function ExpedienteDetalleModal({ expedienteId, miId, perfiles, s
     setPrecioPropietarioMoneda(e.precio_propietario_moneda || "USD");
     setTipoAcuerdoConsignacion(e.tipo_acuerdo_consignacion || "bruto");
     setVencimiento(e.vencimiento || "");
+    setGestoriaResponsable(e.gestoria_responsable_id || "");
+    setGestoriaPrioridad(e.gestoria_prioridad || "media");
+    setRegistroDevolvioPlata(e.registro_devolvio_plata || null);
+    setFechaEstimadaCierre(e.fecha_estimada_cierre || "");
+    setGestorExternoNombre(e.gestor_externo_nombre || "");
+    setGestorExternoTelefono(e.gestor_externo_telefono || "");
 
     setEstadoPagoTesoreria(e.venta?.estado_pago_tesoreria || "pendiente");
     setFechaPagoVendedor(e.venta?.fecha_pago_vendedor || "");
@@ -250,6 +263,25 @@ export default function ExpedienteDetalleModal({ expedienteId, miId, perfiles, s
     }
   };
 
+  const subirArancel = async (file: File) => {
+    setSubiendoArancel(true);
+    try {
+      const formData = new FormData();
+      formData.append("file", file);
+      formData.append("carpeta", "expedientes");
+      const res = await fetch("/api/panel-v2/upload", { method: "POST", body: formData });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || "Error subiendo el archivo");
+      const { data: upd, error } = await supabase2.from("expedientes").update({ arancel_comprobante_url: data.publicUrl }).eq("id", expedienteId).select("*, venta:ventas(*)").single();
+      if (error) throw error;
+      if (upd) { setExpediente(upd); onActualizado(upd); }
+    } catch (e: any) {
+      alert(e?.message || "No se pudo subir el archivo. Si es la primera vez, puede que falte correr migraciones/sql_expedientes_gestoria_campos.sql en Supabase.");
+    } finally {
+      setSubiendoArancel(false);
+    }
+  };
+
   const subirComprobante = async (file: File) => {
     setSubiendoComprobante(true);
     try {
@@ -343,6 +375,19 @@ export default function ExpedienteDetalleModal({ expedienteId, miId, perfiles, s
             console.error("No se pudieron guardar los datos del propietario en vehiculos:", errVeh);
           }
         }
+      }
+
+      // Aparte y con su propio catch: son columnas nuevas (ver
+      // migraciones/sql_expedientes_gestoria_campos.sql) -- si todavía no
+      // se corrió la migración, que no tire abajo el resto del guardado.
+      try {
+        await supabase2.from("expedientes").update({
+          gestoria_responsable_id: gestoriaResponsable || null, gestoria_prioridad: gestoriaPrioridad,
+          registro_devolvio_plata: registroDevolvioPlata, fecha_estimada_cierre: fechaEstimadaCierre || null,
+          gestor_externo_nombre: gestorExternoNombre || null, gestor_externo_telefono: gestorExternoTelefono || null,
+        }).eq("id", expedienteId);
+      } catch (errGestoria) {
+        console.error("No se pudieron guardar los campos de Gestoría:", errGestoria);
       }
 
       if (data) { setExpediente(data); onActualizado(data); }
@@ -1163,6 +1208,25 @@ export default function ExpedienteDetalleModal({ expedienteId, miId, perfiles, s
 
           {tab === "Gestoría" && (
             <div className="space-y-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <div>
+                  <label className="text-xs font-semibold text-slate-500 dark:text-slate-400 block mb-1">Administrativa de Gestoría</label>
+                  <select value={gestoriaResponsable} onChange={(e) => setGestoriaResponsable(e.target.value)} className="w-full bg-slate-50 dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-lg px-3 py-2 text-sm">
+                    <option value="">— Sin asignar —</option>
+                    {perfiles.map((p) => <option key={p.id} value={p.id}>{p.nombre}</option>)}
+                  </select>
+                  <p className="text-[10px] text-slate-400 mt-1">Quien administra el trámite internamente en la agencia.</p>
+                </div>
+                <div>
+                  <label className="text-xs font-semibold text-slate-500 dark:text-slate-400 block mb-1">Prioridad</label>
+                  <select value={gestoriaPrioridad} onChange={(e) => setGestoriaPrioridad(e.target.value)} className="w-full bg-slate-50 dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-lg px-3 py-2 text-sm">
+                    <option value="baja">Baja</option>
+                    <option value="media">Media</option>
+                    <option value="alta">Alta</option>
+                  </select>
+                </div>
+              </div>
+
               <div>
                 <label className="text-xs font-semibold text-slate-500 dark:text-slate-400 block mb-1">Vencimiento del trámite</label>
                 <input type="date" value={vencimiento} onChange={(e) => setVencimiento(e.target.value)} className="w-full sm:w-56 bg-slate-50 dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-lg px-3 py-2 text-sm" />
@@ -1199,6 +1263,63 @@ export default function ExpedienteDetalleModal({ expedienteId, miId, perfiles, s
                   </label>
                 )}
               </div>
+
+              <div>
+                <p className="text-[11px] font-black uppercase tracking-widest text-slate-400 mb-1.5">Arancel del registro</p>
+                {expediente.arancel_comprobante_url ? (
+                  <a href={expediente.arancel_comprobante_url} target="_blank" rel="noreferrer" className="inline-flex items-center gap-1.5 text-xs font-bold text-emerald-600 bg-emerald-50 dark:bg-emerald-500/10 px-3 py-2 rounded-lg">✅ Ver comprobante del arancel</a>
+                ) : (
+                  <label className="inline-flex items-center gap-1.5 text-xs font-bold text-slate-600 dark:text-slate-300 bg-slate-50 dark:bg-white/5 border border-dashed border-slate-300 dark:border-white/20 px-3 py-2 rounded-lg cursor-pointer">
+                    {subiendoArancel ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Upload className="w-3.5 h-3.5" />} Comprobante del arancel
+                    <input type="file" accept="image/*,.pdf" className="hidden" disabled={subiendoArancel} onChange={(e) => e.target.files?.[0] && subirArancel(e.target.files[0])} />
+                  </label>
+                )}
+              </div>
+
+              <div>
+                <label className="text-xs font-semibold text-slate-500 dark:text-slate-400 block mb-1">¿El registro devolvió plata?</label>
+                <div className="flex gap-2">
+                  <button onClick={() => setRegistroDevolvioPlata("no")} className={`px-3 py-1.5 rounded-lg border text-xs font-semibold ${registroDevolvioPlata === "no" ? "border-slate-400 bg-slate-100 dark:bg-white/10" : "border-slate-200 dark:border-white/10 text-slate-500"}`}>No sobró nada</button>
+                  <button onClick={() => setRegistroDevolvioPlata("si")} className={`px-3 py-1.5 rounded-lg border text-xs font-semibold ${registroDevolvioPlata === "si" ? "border-emerald-400 bg-emerald-50 dark:bg-emerald-500/10 text-emerald-700 dark:text-emerald-300" : "border-slate-200 dark:border-white/10 text-slate-500"}`}>Sí, sobró plata</button>
+                </div>
+                <p className="text-[10px] text-slate-400 mt-1">Comprobante de lo que se pagó al registro. Sincroniza con Liquidaciones (obligatorio para finalizar).</p>
+              </div>
+
+              <div>
+                <label className="text-xs font-semibold text-slate-500 dark:text-slate-400 block mb-1">Fecha estimada de cierre</label>
+                <input type="date" value={fechaEstimadaCierre} onChange={(e) => setFechaEstimadaCierre(e.target.value)} className="w-full sm:w-56 bg-slate-50 dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-lg px-3 py-2 text-sm" />
+              </div>
+
+              <div className="bg-indigo-50 dark:bg-indigo-500/10 border border-indigo-200 dark:border-indigo-500/20 rounded-xl p-3">
+                <p className="text-[11px] font-black uppercase tracking-widest text-indigo-600 mb-2">Gestor externo asignado</p>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                  <div>
+                    <label className="text-xs font-semibold text-slate-500 dark:text-slate-400 block mb-1">Nombre / Estudio</label>
+                    <input value={gestorExternoNombre} onChange={(e) => setGestorExternoNombre(e.target.value)} placeholder="ej: Estudio García & Asoc." className="w-full bg-white dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-lg px-3 py-2 text-sm" />
+                  </div>
+                  <div>
+                    <label className="text-xs font-semibold text-slate-500 dark:text-slate-400 block mb-1">Teléfono</label>
+                    <input value={gestorExternoTelefono} onChange={(e) => setGestorExternoTelefono(e.target.value)} placeholder="+54 9 11 ..." className="w-full bg-white dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-lg px-3 py-2 text-sm" />
+                  </div>
+                </div>
+              </div>
+
+              {hitos.length > 0 && (
+                <div>
+                  <p className="text-[11px] font-black uppercase tracking-widest text-slate-400 mb-1.5 flex items-center justify-between">Hitos de la transferencia <span>{hitos.filter((h) => h.completado).length}/{hitos.length}</span></p>
+                  <div className="space-y-1.5">
+                    {hitos.map((h, i) => (
+                      <button key={h.id} onClick={() => toggleHito(h)} className="w-full flex items-start gap-2.5 bg-slate-50 dark:bg-white/5 border border-slate-100 dark:border-white/10 rounded-xl px-3 py-2.5 text-left">
+                        <span className={`w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold shrink-0 mt-0.5 ${h.completado ? "bg-emerald-600 text-white" : "bg-slate-200 dark:bg-white/10 text-slate-500"}`}>{h.completado ? <Check className="w-3.5 h-3.5" /> : i + 1}</span>
+                        <span>
+                          <span className={`block text-xs font-bold ${h.completado ? "text-emerald-700 dark:text-emerald-300" : "text-slate-700 dark:text-slate-200"}`}>{h.nombre}</span>
+                          {h.descripcion && <span className="block text-[11px] text-slate-400">{h.descripcion}</span>}
+                        </span>
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              )}
             </div>
           )}
 

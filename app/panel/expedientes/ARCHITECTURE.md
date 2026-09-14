@@ -40,6 +40,12 @@ Cada gasto tiene `a_cargo_de`: `comprador` / `vendedor` / `agencia`. No son solo
 
 `confirmarParte()`/`revertirParte()` en `ExpedienteDetalleModal.tsx` son simétricas: confirmar setea `confirmado_X`/`confirmado_X_en`/`confirmado_X_por`, revertir los vuelve a `false`/`null`/`null`. Revertir una confirmación cuando la otra parte ya estaba confirmada vuelve a bloquear el expediente entero (mismo criterio que `pendienteConfirmacion` de arriba) — es intencional: no hay forma de "revertir solo a medias".
 
+## Tab "Gestoría" — campos ampliados
+
+Se agregaron 6 columnas nuevas a `expedientes` (ver `migraciones/sql_expedientes_gestoria_campos.sql`): `gestoria_responsable_id` (quién administra el trámite internamente, mismo patrón que `responsable_consignacion_id` de Consignación), `gestoria_prioridad` (baja/media/alta), `arancel_comprobante_url`, `registro_devolvio_plata` (`"si"`/`"no"`/`null`), `fecha_estimada_cierre`, `gestor_externo_nombre`/`gestor_externo_telefono`. El guardado de estos 6 campos está en su propio `try/catch` dentro de `guardarCambios()` (mismo criterio que `vehiculos.propietario_profesion`): si la migración no corrió todavía, no rompe el resto del guardado del expediente (título, vencimiento, comentarios, etc.).
+
+"Hitos de la transferencia" ya existía como dato (`expediente_hitos`, mostrado en el tab Resumen como una fila compacta de círculos numerados) — el tab Gestoría ahora también los muestra, como tarjetas con nombre completo, reusando el mismo estado `hitos` y la misma función `toggleHito()` (no hay una segunda fuente de datos ni un segundo toggle).
+
 ## Tab "Historial"
 
 No es un log de auditoría automático (eso requeriría un trigger de base de datos que registre cada cambio campo por campo — no existe). Es la misma bitácora de observaciones (`expediente_observaciones`) que ya vivía dentro del tab Resumen, ahora también accesible como tab propio (con la lista completa, no solo las últimas 5). `renderObservaciones()` es la función compartida entre ambos lugares — si cambiás el formato de una entrada, se actualiza en los dos. Agregar una entrada nueva se sigue haciendo desde el tab Resumen (el textarea "Agregar observación"), no desde Historial.
