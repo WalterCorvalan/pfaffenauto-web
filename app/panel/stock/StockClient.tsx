@@ -339,6 +339,17 @@ export default function StockClient({
                 ))}
                 <button onClick={() => { setSoloEstancados((v) => !v); setSoloARevisar(false); }} className={`shrink-0 whitespace-nowrap flex items-center gap-1 px-3 py-1.5 rounded-full text-xs font-bold border ${soloEstancados ? "bg-rose-600 border-rose-600 text-white" : "bg-white dark:bg-white/5 border-slate-200 dark:border-white/10 text-slate-500"}`}><Clock className="w-3 h-3" /> Estancados (+90d) · {estancados}</button>
                 <button title="Sin publicar en MercadoLibre, sin foto o sin precio cargado" onClick={() => { setSoloARevisar((v) => !v); setSoloEstancados(false); }} className={`shrink-0 whitespace-nowrap flex items-center gap-1 px-3 py-1.5 rounded-full text-xs font-bold border ${soloARevisar ? "bg-rose-600 border-rose-600 text-white" : "bg-white dark:bg-white/5 border-slate-200 dark:border-white/10 text-slate-500"}`}><AlertTriangle className="w-3 h-3" /> A revisar (ML)</button>
+
+                <div className="flex items-center gap-2 ml-auto shrink-0">
+                  <select value={orden} onChange={(e) => setOrden(e.target.value as Orden)} className="bg-white dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-lg px-3 py-1.5 text-xs font-semibold text-slate-600 dark:text-slate-300">
+                    {(Object.keys(ORDEN_LABEL) as Orden[]).map((o) => <option key={o} value={o}>{ORDEN_LABEL[o]}</option>)}
+                  </select>
+                  <div className="flex items-center gap-1 bg-slate-100 dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-lg p-1">
+                    <button onClick={() => setVista("lista")} title="Vista lista" className={`flex items-center gap-1.5 px-2.5 py-1 rounded-md text-xs font-bold ${vista === "lista" ? "bg-rose-600 text-white" : "text-slate-500 dark:text-slate-400 hover:bg-white dark:hover:bg-white/10"}`}><List className="w-3.5 h-3.5" /> Lista</button>
+                    <button onClick={() => setVista("tarjetas")} title="Vista tarjetas" className={`flex items-center gap-1.5 px-2.5 py-1 rounded-md text-xs font-bold ${vista === "tarjetas" ? "bg-rose-600 text-white" : "text-slate-500 dark:text-slate-400 hover:bg-white dark:hover:bg-white/10"}`}><LayoutGrid className="w-3.5 h-3.5" /> Tarjetas</button>
+                    <button onClick={() => setVista("tabla")} title="Vista tabla detallada" className={`flex items-center gap-1.5 px-2.5 py-1 rounded-md text-xs font-bold ${vista === "tabla" ? "bg-rose-600 text-white" : "text-slate-500 dark:text-slate-400 hover:bg-white dark:hover:bg-white/10"}`}><Table2 className="w-3.5 h-3.5" /> Tabla detallada</button>
+                  </div>
+                </div>
               </div>
 
               <div className="flex flex-col sm:flex-row gap-2 mb-4">
@@ -354,17 +365,6 @@ export default function StockClient({
                   <option value="">Todas las sucursales</option>
                   {sucursales.map((s) => <option key={s.id} value={s.id}>{s.nombre}</option>)}
                 </select>
-              </div>
-
-              <div className="flex items-center justify-end gap-2 mb-3 flex-wrap">
-                <select value={orden} onChange={(e) => setOrden(e.target.value as Orden)} className="bg-white dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-lg px-3 py-1.5 text-xs font-semibold text-slate-600 dark:text-slate-300">
-                  {(Object.keys(ORDEN_LABEL) as Orden[]).map((o) => <option key={o} value={o}>{ORDEN_LABEL[o]}</option>)}
-                </select>
-                <div className="flex items-center gap-1 bg-slate-100 dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-lg p-1">
-                  <button onClick={() => setVista("lista")} title="Vista lista" className={`flex items-center gap-1.5 px-2.5 py-1 rounded-md text-xs font-bold ${vista === "lista" ? "bg-rose-600 text-white" : "text-slate-500 dark:text-slate-400 hover:bg-white dark:hover:bg-white/10"}`}><List className="w-3.5 h-3.5" /> Lista</button>
-                  <button onClick={() => setVista("tarjetas")} title="Vista tarjetas" className={`flex items-center gap-1.5 px-2.5 py-1 rounded-md text-xs font-bold ${vista === "tarjetas" ? "bg-rose-600 text-white" : "text-slate-500 dark:text-slate-400 hover:bg-white dark:hover:bg-white/10"}`}><LayoutGrid className="w-3.5 h-3.5" /> Tarjetas</button>
-                  <button onClick={() => setVista("tabla")} title="Vista tabla detallada" className={`flex items-center gap-1.5 px-2.5 py-1 rounded-md text-xs font-bold ${vista === "tabla" ? "bg-rose-600 text-white" : "text-slate-500 dark:text-slate-400 hover:bg-white dark:hover:bg-white/10"}`}><Table2 className="w-3.5 h-3.5" /> Tabla detallada</button>
-                </div>
               </div>
 
               {filtrados.length === 0 ? (
