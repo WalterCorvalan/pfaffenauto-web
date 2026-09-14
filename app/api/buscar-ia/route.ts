@@ -84,8 +84,10 @@ export async function POST(req: Request) {
     if (filtros.marca) query = query.eq("marca", filtros.marca);
     if (filtros.transmision) query = query.eq("transmision", filtros.transmision);
     if (filtros.combustible) query = query.eq("combustible", filtros.combustible);
-    if (filtros.condicion === "0km") query = query.eq("km", 0);
-    else if (filtros.condicion === "usados") query = query.gt("km", 0);
+    // 0KM se define por vehiculos.condicion, nunca por km === 0 -- muchos
+    // usados tienen el km sin cargar (queda en 0/null sin ser 0km real).
+    if (filtros.condicion === "0km") query = query.eq("condicion", "0km");
+    else if (filtros.condicion === "usados") query = query.neq("condicion", "0km");
     if (filtros.precio_max_usd) query = query.lte("precio_publicado_usd", filtros.precio_max_usd);
 
     query = query.order("created_at", { ascending: false }).limit(24);

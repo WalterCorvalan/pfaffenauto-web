@@ -131,7 +131,7 @@ export default function ComparadorModal({ isOpen, onClose, autos, removerAuto }:
             <Row label="Combustible" val1={auto1?.combustible || "-"} val2={auto2?.combustible || "-"} val3={auto3?.combustible || "-"} />
             <Row label="Transmisión" val1={auto1?.transmision || "-"} val2={auto2?.transmision || "-"} val3={auto3?.transmision || "-"} />
             <Row label="Tipo" val1={auto1?.tipo?.toUpperCase() || "-"} val2={auto2?.tipo?.toUpperCase() || "-"} val3={auto3?.tipo?.toUpperCase() || "-"} />
-            <Row label="Condición" val1={auto1?.km === 0 ? "0KM" : "Usado"} val2={auto2 ? (auto2.km === 0 ? "0KM" : "Usado") : null} val3={auto3 ? (auto3.km === 0 ? "0KM" : "Usado") : null} />
+            <Row label="Condición" val1={auto1?.condicion === "0km" ? "0KM" : "Usado"} val2={auto2 ? (auto2.condicion === "0km" ? "0KM" : "Usado") : null} val3={auto3 ? (auto3.condicion === "0km" ? "0KM" : "Usado") : null} />
             
             {/* ACCIÓN (BOTONES) */}
             <div className="grid grid-cols-[24%_1fr_1fr_1fr] md:grid-cols-[18%_1fr_1fr_1fr] gap-1.5 md:gap-4 py-6 border-b border-white/5 items-center px-3 md:px-8 mt-2">
