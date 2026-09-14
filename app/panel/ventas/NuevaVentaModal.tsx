@@ -6,6 +6,7 @@ import { X, Loader2, Save, Trash2, Plus, Bell, Star } from "lucide-react";
 import { hoyLocalISO, parseFechaLocal, fmtFechaLocal } from "@/lib/panel/fechas";
 import { crearAlerta } from "@/lib/panel/alertas";
 import { generarCodigoPublico } from "@/lib/generarCodigoPublico";
+import { totalEnMoneda, type Moneda } from "@/lib/moneda";
 
 const TIPOS_RECORDATORIO: { value: string; label: string }[] = [
   { value: "llamada_seguimiento", label: "📞 Llamada de seguimiento" },
@@ -487,11 +488,17 @@ export default function NuevaVentaModal({ perfiles, clientes, vehiculos, miId, i
         }
       }
 
-      let totalPermutas = 0;
+      // Convertidos a la moneda de la venta antes de sumar -- sumar los
+      // montos crudos mezclaba ARS y USD en un solo número si una seña o
+      // permuta estaba en una moneda distinta a la de la venta (mismo bug
+      // que ya se había corregido en NuevaSenaModal/lib/moneda.ts, acá
+      // había quedado sin corregir).
+      const totalPermutas = incluirPermuta
+        ? totalEnMoneda(permutas.filter((p) => p.valor || p.marca).map((p) => ({ monto: p.valor, moneda: p.moneda as Moneda })), monedaVenta as Moneda, tipoCambio)
+        : 0;
       if (incluirPermuta && permutas.length > 0) {
         for (const p of permutas) {
           if (!p.valor && !p.marca) continue;
-          totalPermutas += Number(p.valor || 0);
           let vehiculoCreadoId: string | null = null;
           if (p.cargarAlStock && p.marca && p.modelo) {
             const { data: vCreado, error: errVehiculo } = await supabase2.from("vehiculos").insert({
@@ -526,7 +533,7 @@ export default function NuevaVentaModal({ perfiles, clientes, vehiculos, miId, i
         if (!puedeGenerarCuotas) {
           setComentarioFinanzas((prev: string) => `${prev ? prev + " — " : ""}Pedirle a Finanzas que genere el plan de cuotas (${cuotasPlazo} cuotas).`);
         } else {
-          const totalSenas = senas.reduce((acc, s) => acc + Number(s.monto || 0), 0);
+          const totalSenas = totalEnMoneda(senas.map((s) => ({ monto: s.monto, moneda: s.moneda as Moneda })), monedaVenta as Moneda, tipoCambio);
           const saldo = Number(precioVenta) - totalSenas - totalPermutas;
           const n = Number(cuotasPlazo);
           const cuotaMonto = Math.round((saldo / n) * 100) / 100;
