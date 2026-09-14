@@ -12,6 +12,7 @@ interface Props {
   ventasDelMes: number; operacionesDelMes: number; objetivoVentasMensual: number | null;
   stockDisponible: number; stockReservado: number; stockSenado: number; stockVendido: number; stockEnPreparacion: number;
   clientesSinContactar: number;
+  leadsSinAtender: number;
   cuotasPagarPorMoneda: Record<string, number>;
   saldos: { moneda: string; total: number }[];
   recordatoriosHoy: number; alertasPendientes: number; cotizacionesActivas: number;
@@ -122,6 +123,7 @@ export default function DashboardClient(props: Props) {
           stockVendido={props.stockVendido}
           stockEnPreparacion={props.stockEnPreparacion}
           clientesSinContactar={props.clientesSinContactar}
+          leadsSinAtender={props.leadsSinAtender}
           cuotasPagarPorMoneda={props.cuotasPagarPorMoneda}
           saldos={props.saldos}
           recordatoriosHoy={props.recordatoriosHoy}
