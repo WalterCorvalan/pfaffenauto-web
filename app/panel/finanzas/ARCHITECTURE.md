@@ -19,6 +19,7 @@ Esto ya causó dos bugs de auditoría por quedar aplicado en un lugar pero no en
 - `FinanzasClient.tsx` (`cajaPorSucursal`) lo aplicaba, pero `ingresosTotales`/`egresosTotales` del mismo archivo no (corregido).
 - `app/panel/page.tsx` (Dashboard, Cash Flow del mes) lo aplicaba, pero las queries de "Top 10 gastos" y "Gastos atípicos" del mismo archivo no (corregido).
 - `LibrosContablesTab.tsx` (Estado de resultados) y `ReportesClient.tsx` ya lo aplicaban correctamente desde el inicio.
+- `RentabilidadTab.tsx` (`delArea`, tiles "Ingresos/Egresos/Neto del área") tampoco lo aplicaba — mismo bug, tercera reaparición (corregido).
 
 Si agregás una métrica nueva sobre `movimientos_caja`, aplicá este filtro salvo que la métrica sea explícitamente sobre movimiento de caja bruto (ej. "cantidad total de operaciones registradas").
 
