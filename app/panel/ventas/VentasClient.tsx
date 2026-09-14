@@ -2,6 +2,7 @@
 
 import { useEffect, useMemo, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
+import Link from "next/link";
 import * as XLSX from "xlsx";
 import { Search, Briefcase, Download, Plus, Wrench, ShoppingCart, Eye, Pencil, FileText, Wallet, Trash2, Globe, SlidersHorizontal } from "lucide-react";
 import NuevaVentaModal, { type VentaPrefill } from "./NuevaVentaModal";
@@ -276,7 +277,10 @@ export default function VentasClient({
                   <button onClick={() => setDetalleId(v.id)} title="Ver" className="p-2 bg-slate-50 dark:bg-white/5 hover:bg-slate-200 dark:hover:bg-white/10 text-slate-600 dark:text-slate-300 rounded-lg"><Eye className="w-3.5 h-3.5" /></button>
                   <button onClick={() => setEditando(v)} title="Editar" className="p-2 bg-slate-50 dark:bg-white/5 hover:bg-slate-200 dark:hover:bg-white/10 text-slate-600 dark:text-slate-300 rounded-lg"><Pencil className="w-3.5 h-3.5" /></button>
                   <button disabled title="Boleto — todavía no construido" className="p-2 bg-slate-50 dark:bg-white/5 text-slate-300 dark:text-slate-600 rounded-lg opacity-60 cursor-not-allowed"><FileText className="w-3.5 h-3.5" /></button>
-                  <button disabled title="Recibo/seña — todavía no construido" className="p-2 bg-slate-50 dark:bg-white/5 text-slate-300 dark:text-slate-600 rounded-lg opacity-60 cursor-not-allowed"><Wallet className="w-3.5 h-3.5" /></button>
+                  {/* El detalle de la venta ya ofrece este mismo recibo bajo "Ver / Imprimir"
+                      (/panel/ventas/imprimir/[id]) -- acá estaba deshabilitado como "todavía
+                      no construido" cuando en realidad ya existe, solo faltaba el link. */}
+                  <Link href={`/panel/ventas/imprimir/${v.id}`} title="Recibo" className="p-2 bg-slate-50 dark:bg-white/5 hover:bg-slate-200 dark:hover:bg-white/10 text-slate-600 dark:text-slate-300 rounded-lg"><Wallet className="w-3.5 h-3.5" /></Link>
                   {v.estado === "cerrada" && v.comprador_telefono && (
                     <button onClick={() => servicePreEntrega(v)} title="Service pre-entrega" className="p-2 bg-emerald-50 dark:bg-emerald-500/10 hover:bg-emerald-600 hover:text-white text-emerald-600 dark:text-emerald-300 rounded-lg"><Wrench className="w-3.5 h-3.5" /></button>
                   )}
