@@ -51,6 +51,7 @@ interface Props {
   pedidosConMatch: { id: string; marca: string; modelo: string; nombre_cliente: string }[];
   ultimasOperaciones: { id: string; vehiculo_marca: string; vehiculo_modelo: string; comprador_nombre: string | null; precio_venta: number; moneda_venta: string; estado: string; fecha_cierre: string | null; vendedorNombre: string }[];
   stockEstancado: number; tareasVencidas: number; postventaPendiente: number;
+  reclamosResumen: { abiertos: number; enCurso: number; estancados: number; lista: { id: string; titulo: string; clienteNombre: string | null; prioridad: string; estado: string }[] };
   ticketPromedioPorMoneda: Record<string, number>;
   top10Gastos: { concepto: string; categoria: string; fecha: string; monto: number; moneda: string }[];
   gastosAtipicos: { categoria: string; montoMes: number; promedioHistorico: number; moneda: string }[];
@@ -156,6 +157,7 @@ export default function DashboardClient(props: Props) {
           stockEstancado={props.stockEstancado}
           tareasVencidas={props.tareasVencidas}
           postventaPendiente={props.postventaPendiente}
+          reclamosResumen={props.reclamosResumen}
           ticketPromedioPorMoneda={props.ticketPromedioPorMoneda}
           top10Gastos={props.top10Gastos}
           gastosAtipicos={props.gastosAtipicos}

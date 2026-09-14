@@ -82,6 +82,7 @@ export default async function PanelV2Home() {
     { count: stockEstancadoCount },
     { count: tareasVencidasCount },
     { count: postventaPendienteCount },
+    { data: reclamosActivos },
     { data: egresosMesDetalle },
     { data: egresos6MesesPorCategoria },
     // --- Proyección de caja + Mi Performance / Cuotas a pagar (mes) ---
@@ -140,6 +141,9 @@ export default async function PanelV2Home() {
     supabase.from("vehiculos").select("id", { count: "exact", head: true }).eq("estado", "disponible").lte("created_at", hace30dias),
     supabase.from("tareas_lead").select("id", { count: "exact", head: true }).eq("completada", false).lt("fecha_vencimiento", hoyIso),
     supabase.from("postventa_recordatorios").select("id", { count: "exact", head: true }).eq("estado", "pendiente"),
+    // Reclamos a resolver -- mismo criterio de "estancado" (3+ días sin
+    // moverse) que ReclamosClient.tsx, no duplicar ese número acá.
+    supabase.from("reclamos").select("id, titulo, cliente_nombre, prioridad, estado, ultimo_movimiento_at, created_at").neq("estado", "cerrado").order("created_at", { ascending: false }).limit(200),
     // Top 10 gastos del mes + comparación contra el promedio histórico (6
     // meses) de cada categoría, para detectar gastos atípicos.
     // Mismo criterio que ingresosPorMoneda/egresosPorMoneda más abajo: una
@@ -169,6 +173,27 @@ export default async function PanelV2Home() {
 
   const perfilesMap: Record<string, string> = {};
   (await supabase.from("perfiles").select("id, nombre")).data?.forEach((p: any) => { perfilesMap[p.id] = p.nombre; });
+
+  // Mismo umbral que ReclamosClient.tsx (ESTANCADO_DIAS = 3) -- no
+  // inventar otro criterio acá para "estancado".
+  interface ReclamoActivo { id: string; titulo: string; cliente_nombre: string | null; prioridad: string; estado: string; ultimo_movimiento_at: string; created_at: string }
+  const RECLAMO_ESTANCADO_DIAS = 3;
+  const corteReclamoEstancado = Date.now() - RECLAMO_ESTANCADO_DIAS * 86400000;
+  const listaReclamosActivos = (reclamosActivos || []) as ReclamoActivo[];
+  const reclamosResumen = {
+    abiertos: listaReclamosActivos.filter((r) => r.estado === "abierto").length,
+    enCurso: listaReclamosActivos.filter((r) => r.estado === "en_curso").length,
+    estancados: listaReclamosActivos.filter((r) => new Date(r.ultimo_movimiento_at).getTime() <= corteReclamoEstancado).length,
+    lista: [...listaReclamosActivos]
+      .sort((a, b) => {
+        const urgA = a.prioridad === "Urgente" ? 0 : 1;
+        const urgB = b.prioridad === "Urgente" ? 0 : 1;
+        if (urgA !== urgB) return urgA - urgB;
+        return new Date(a.ultimo_movimiento_at).getTime() - new Date(b.ultimo_movimiento_at).getTime();
+      })
+      .slice(0, 5)
+      .map((r) => ({ id: r.id, titulo: r.titulo, clienteNombre: r.cliente_nombre, prioridad: r.prioridad, estado: r.estado })),
+  };
 
   // Saldo real por cuenta -- NUNCA se guarda cacheado (ver Finanzas → Cuentas),
   // se calcula en vivo vía RPC. Mostrar saldo_inicial acá (como antes) era
@@ -456,6 +481,7 @@ export default async function PanelV2Home() {
       stockEstancado={stockEstancadoCount ?? 0}
       tareasVencidas={tareasVencidasCount ?? 0}
       postventaPendiente={postventaPendienteCount ?? 0}
+      reclamosResumen={reclamosResumen}
       ticketPromedioPorMoneda={ticketPromedioPorMoneda}
       top10Gastos={top10Gastos}
       gastosAtipicos={gastosAtipicos}
