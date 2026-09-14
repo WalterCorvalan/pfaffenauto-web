@@ -375,18 +375,33 @@ async function ejecutarAgente(conversacionId: string) {
     if (datos_detectados?.dia_visita && datos_detectados?.horario_visita) {
       const telefonoCliente = (convHandoff?.whatsapp_contactos as any)?.telefono;
       const nombreCliente = datos_detectados?.nombre || (convHandoff?.whatsapp_contactos as any)?.nombre_perfil || "Cliente de WhatsApp";
+      const fechaVisita = resolverFechaVisita(datos_detectados.dia_visita);
+      const sucursalVisita = sucursalElegida?.nombre || "Sin especificar";
+      // Mismo chequeo que los formularios públicos (AgendarVisitaForm.tsx /
+      // AgendarCitaForm.tsx) -- acá el bot no puede reofrecerle otro horario
+      // al cliente en el momento, así que la visita se crea igual (mejor
+      // tener el lead con un conflicto que perderlo) pero se avisa al
+      // vendedor/encargados para que reagenden una de las dos a mano.
+      const { data: ocupados } = await supabase.rpc("visitas_horarios_ocupados", { p_sucursal: sucursalVisita, p_fecha: fechaVisita });
+      const hayConflicto = (ocupados || []).some((o: { horario_visita: string }) => o.horario_visita === datos_detectados.horario_visita);
+
       const { error: errorVisita } = await supabase.from("visitas").insert({
         vehiculo_marca: datos_detectados?.vehiculo_propio?.marca || null,
         vehiculo_modelo: datos_detectados?.vehiculo_propio?.modelo || null,
         nombre_cliente: nombreCliente,
         telefono_cliente: telefonoCliente || "sin dato",
-        fecha_visita: resolverFechaVisita(datos_detectados.dia_visita),
+        fecha_visita: fechaVisita,
         horario_visita: datos_detectados.horario_visita,
-        sucursal: sucursalElegida?.nombre || "Sin especificar",
+        sucursal: sucursalVisita,
         estado: "Pendiente",
         vendedor_id: vendedorAsignado,
       });
       if (errorVisita) registrarError("webhook-v2:crear-visita", errorVisita);
+      else if (hayConflicto) {
+        const mensajeConflicto = `⚠️ ${nombreCliente} agendó por WhatsApp a las ${datos_detectados.horario_visita} el ${fechaVisita} en ${sucursalVisita}, pero ese horario ya estaba ocupado. Reagendar una de las dos.`;
+        if (vendedorAsignado) notificarPersona(supabase, vendedorAsignado, "whatsapp_venta_zona", mensajeConflicto, "/panel/visitas").catch((err) => console.error("[webhook-v2] error notificando conflicto de visita:", err));
+        else notificarEncargados(supabase, mensajeConflicto, "/panel/visitas", "whatsapp_venta_zona", sucursalElegida?.id, "alta").catch((err) => console.error("[webhook-v2] error notificando conflicto de visita:", err));
+      }
     }
   }
 }
