@@ -1,5 +1,6 @@
 import { createClient } from "@/lib/supabase/server";
 import VentasClient from "./VentasClient";
+import { totalEnMoneda } from "@/lib/moneda";
 
 export default async function VentasPage() {
   const supabase = await createClient();
@@ -35,9 +36,19 @@ export default async function VentasPage() {
     })
   );
 
-  const senasPorVenta: Record<string, number> = {};
+  // Una venta puede tener señas en más de una moneda -- convertir cada una a
+  // la moneda de la venta con lib/moneda.ts en vez de sumar montos crudos
+  // (mismo criterio que el recibo en imprimir/[id]/page.tsx, que ya lo hace
+  // bien; esta lista y VentaDetalleModal.tsx no lo hacían).
+  const ventasPorId = new Map((ventas || []).map((v) => [v.id, v]));
+  const senasPorVentaId: Record<string, { monto: number | string; moneda: "ARS" | "USD" }[]> = {};
   for (const s of senas || []) {
-    senasPorVenta[s.venta_id] = (senasPorVenta[s.venta_id] || 0) + Number(s.monto);
+    (senasPorVentaId[s.venta_id] ||= []).push({ monto: s.monto, moneda: s.moneda });
+  }
+  const senasPorVenta: Record<string, number> = {};
+  for (const [ventaId, lista] of Object.entries(senasPorVentaId)) {
+    const venta = ventasPorId.get(ventaId);
+    senasPorVenta[ventaId] = venta ? totalEnMoneda(lista, venta.moneda_venta, venta.tipo_cambio) : 0;
   }
 
   return (

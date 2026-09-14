@@ -55,7 +55,6 @@ export default function ModificarCotizacionModal({ cotizacion: c, vendedorNombre
       payload.revision_pedida = false;
       payload.revision_mensaje = null;
       payload.historial = [...(c.historial || []), { estado: "rechazada", actor_nombre: miNombre, created_at: ahora }];
-      if (tieneTomaVieja) payload.permuta_tasacion = tomaSugerida;
     } else {
       payload.revision_pedida = true;
       payload.revision_mensaje = mensaje.trim() || "Necesito más información.";

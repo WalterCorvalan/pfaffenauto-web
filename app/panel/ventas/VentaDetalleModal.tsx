@@ -5,6 +5,7 @@ import { supabase2 } from "@/lib/supabase/client";
 import Link from "next/link";
 import { X, Loader2, Pencil, Trash2, ChevronDown, AlertTriangle, ShieldAlert, Check, Car, User, DollarSign, Percent, KeyRound, FolderKanban, History, Copy, Printer } from "lucide-react";
 import { fmtFechaLocal } from "@/lib/panel/fechas";
+import { totalEnMoneda } from "@/lib/moneda";
 
 const ESTADO_LABEL: Record<string, string> = {
   borrador: "Borrador", activa: "Activa", reserva: "Reserva", cerrada: "Cerrada", caida: "Caída", cancelada: "Cancelada",
@@ -226,7 +227,10 @@ export default function VentaDetalleModal({ ventaId, miId, soyAdmin, puedeOperac
     );
   }
 
-  const totalSenas = senas.reduce((acc, s) => acc + (s.moneda === venta.moneda_venta ? Number(s.monto) : 0), 0);
+  // Una seña puede estar cobrada en una moneda distinta a la de la venta --
+  // convertir con la cotización de la venta en vez de descartarla (antes se
+  // contaba como $0), mismo criterio que ImprimirVenta.tsx.
+  const totalSenas = totalEnMoneda(senas.map((s) => ({ monto: s.monto, moneda: s.moneda })), venta.moneda_venta, venta.tipo_cambio);
   const comisionPct = Number(venta.comision_vendedor_pct || 0) + Number(venta.comision_consignacion_pct || 0);
   const comisionMonto = (Number(venta.precio_venta) * comisionPct) / 100;
   const transicionesDisponibles = TRANSICIONES[venta.estado] || [];
