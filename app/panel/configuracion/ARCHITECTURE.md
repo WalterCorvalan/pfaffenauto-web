@@ -21,6 +21,14 @@ Esta pantalla (`EmpresaClient.tsx`) guarda varios toggles/config en `configuraci
 
 Si agregás un checkbox/setting nuevo acá, antes de darlo por terminado **verificá que algún query/proceso lo lea** — guardarlo en la tabla no alcanza.
 
+## `PermisosTab.tsx` — pantalla entera sin consumir (deuda grande, no un bug de una línea)
+
+`PermisosTab.tsx` ("Permisos por Rol" + "Excepciones por Usuario") lee/escribe 3 tablas: `permisos_definiciones`, `rol_permisos`, `usuario_permisos`. **Ningún otro archivo del repo las consulta** (`grep -rl` sobre `app/`+`lib/` no da resultados fuera de este componente). Es la versión a escala de funcionalidad completa del mismo patrón documentado arriba ("se guarda pero nada lo lee"): un admin puede tildar/destildar permisos por rol o cargar excepciones por usuario acá, y no cambia nada real en ningún otro lado del panel.
+
+Todo el control de acceso actual del panel sigue siendo chequeos de rol hardcodeados por pantalla (`roles.includes("admin")` / `"encargado"` / `"ventas"`, ~32 ocurrencias repartidas por todo `app/panel/`) — no hay ningún hook ni gate central que lea `usuario_permisos`/`rol_permisos`.
+
+**No se resuelve con un cambio mínimo**: arreglarlo de verdad implica diseñar un mecanismo central (ej. un hook `usePermiso(clave)` o similar) y después migrar los ~32 puntos de chequeo de rol existentes para que lo usen — es un cambio de arquitectura, no un fix puntual. Si se decide encarar esto, hacerlo como su propio proyecto con plan de migración, no como parte de una auditoría de "nombre dice X, código hace Y".
+
 ## No tocar sin revisar el resto
 
 - `lead_routing_activo` sí está consumido (por una función de base de datos, `migraciones/sql_fix_panel_v2_en_funciones_2.sql`) — no es del mismo tipo de bug, es el ejemplo de cómo se ve un toggle que sí funciona.
