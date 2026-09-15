@@ -123,6 +123,19 @@ export default function ReclamoDetalleModal({ reclamoId, miId, perfiles, onClose
     if (!comentario.trim()) return;
     setEnviando(true);
     await registrarMovimiento("comentario", comentario.trim());
+    // La categoría "Reclamos" en Mi Espacio → Notificaciones promete avisar
+    // de "comentarios" -- antes solo quedaba en el timeline, quien tenía el
+    // reclamo asignado no se enteraba de nada salvo que entrara a mirar.
+    if (reclamo?.asignado_a && reclamo.asignado_a !== miId) {
+      await crearAlerta(supabase2, reclamo.asignado_a, `${autorNombre} comentó en un reclamo`, {
+        mensaje: comentario.trim(),
+        link: `/panel/reclamos?reclamo=${reclamoId}`,
+        tipo: "reclamo_comentario",
+        modulo: "reclamos",
+        categoriaNotif: "reclamos",
+        prioridad: "media",
+      });
+    }
     setComentario("");
     setEnviando(false);
     await cargar();
@@ -160,7 +173,7 @@ export default function ReclamoDetalleModal({ reclamoId, miId, perfiles, onClose
           link: `/panel/reclamos?reclamo=${reclamoId}`,
           tipo: "reclamo_pedido_atencion",
           modulo: "reclamos",
-          categoriaNotif: "pedidos_atencion_expedientes",
+          categoriaNotif: "reclamos",
           prioridad: "alta",
         })
       )
