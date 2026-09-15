@@ -47,6 +47,7 @@ interface Props {
   clientes: Cliente[];
   vehiculos: Vehiculo[];
   miId: string;
+  soyAdmin: boolean;
   initial?: VentaPrefill;
   editando?: any;
   cuentas: any[];
@@ -61,7 +62,7 @@ const nuevaPermuta = (): Permuta => ({
   segmento: "", tipo: "", marcaMotor: "", numeroMotor: "", marcaChasis: "", numeroChasis: "", combustible: "", radicadoLocalidad: "", radicadoProvincia: "", tasadoEn: "",
 });
 
-export default function NuevaVentaModal({ perfiles, clientes, vehiculos, miId, initial, editando, cuentas, onClose, onCreado }: Props) {
+export default function NuevaVentaModal({ perfiles, clientes, vehiculos, miId, soyAdmin, initial, editando, cuentas, onClose, onCreado }: Props) {
   const esEdicion = !!editando;
   const miPerfil = perfiles.find((p) => p.id === miId);
   const puedeGenerarCuotas = miPerfil?.roles?.some((r) => r === "admin" || r === "finanzas") ?? false;
@@ -247,7 +248,14 @@ export default function NuevaVentaModal({ perfiles, clientes, vehiculos, miId, i
   const [error, setError] = useState("");
 
   const comisionVendedorEfectiva = vendedorCompartido ? "0.5" : comisionVendedorPct;
-  const comisionEditable = comisionManual;
+  // "Carga manual" solo la puede activar/usar un admin -- este modal (a
+  // diferencia de VentaDetalleModal, que gatea "Editar comisión" con
+  // soyAdmin + autorizaciones) no tenía ningún control: cualquier usuario
+  // que pudiera abrir el modal de edición cambiaba el % libre, sin que el
+  // sistema pida aprobación ni genere solicitud. Si la venta ya tenía
+  // comision_manual=true de antes (cargada por un admin), un no-admin que
+  // la abre para editar otra cosa ve los campos igual, pero no editables.
+  const comisionEditable = comisionManual && soyAdmin;
 
   const elegirVehiculo = (id: string) => {
     setVehiculoId(id);
@@ -922,10 +930,14 @@ export default function NuevaVentaModal({ perfiles, clientes, vehiculos, miId, i
 
               <div>
                 <p className={seccionClass}>Comisión</p>
-                <label className="flex items-start gap-2.5 px-3 py-2.5 rounded-xl bg-amber-50 dark:bg-amber-500/10 border border-amber-200 dark:border-amber-500/20 cursor-pointer mb-3">
-                  <input type="checkbox" checked={comisionManual} onChange={(e) => setComisionManual(e.target.checked)} className="w-4 h-4 mt-0.5 accent-[#0145F2]" />
-                  <span><span className="block text-xs font-bold text-amber-700 dark:text-amber-300">⚙ Carga manual de comisión</span><span className="block text-[10px] text-amber-700/70 dark:text-amber-300/60">Activá para editar libremente los % de comisión, salteando la regla fija.</span></span>
-                </label>
+                {soyAdmin ? (
+                  <label className="flex items-start gap-2.5 px-3 py-2.5 rounded-xl bg-amber-50 dark:bg-amber-500/10 border border-amber-200 dark:border-amber-500/20 cursor-pointer mb-3">
+                    <input type="checkbox" checked={comisionManual} onChange={(e) => setComisionManual(e.target.checked)} className="w-4 h-4 mt-0.5 accent-[#0145F2]" />
+                    <span><span className="block text-xs font-bold text-amber-700 dark:text-amber-300">⚙ Carga manual de comisión</span><span className="block text-[10px] text-amber-700/70 dark:text-amber-300/60">Activá para editar libremente los % de comisión, salteando la regla fija.</span></span>
+                  </label>
+                ) : comisionManual && (
+                  <p className="px-3 py-2.5 rounded-xl bg-slate-50 dark:bg-white/5 border border-slate-200 dark:border-white/10 text-[11px] text-slate-500 dark:text-slate-400 mb-3">Esta venta tiene carga manual de comisión — solo un admin puede editar el %. Pedile a un admin que lo cambie desde el detalle de la venta.</p>
+                )}
                 <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
                   <div>
                     <label className={labelClass}>% vendedor</label>
