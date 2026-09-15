@@ -21,13 +21,19 @@ Esta pantalla (`EmpresaClient.tsx`) guarda varios toggles/config en `configuraci
 
 Si agregás un checkbox/setting nuevo acá, antes de darlo por terminado **verificá que algún query/proceso lo lea** — guardarlo en la tabla no alcanza.
 
-## `PermisosTab.tsx` — pantalla entera sin consumir (deuda grande, no un bug de una línea)
+## `PermisosTab.tsx` — mecanismo central creado, migración en curso
 
-`PermisosTab.tsx` ("Permisos por Rol" + "Excepciones por Usuario") lee/escribe 3 tablas: `permisos_definiciones`, `rol_permisos`, `usuario_permisos`. **Ningún otro archivo del repo las consulta** (`grep -rl` sobre `app/`+`lib/` no da resultados fuera de este componente). Es la versión a escala de funcionalidad completa del mismo patrón documentado arriba ("se guarda pero nada lo lee"): un admin puede tildar/destildar permisos por rol o cargar excepciones por usuario acá, y no cambia nada real en ningún otro lado del panel.
+`PermisosTab.tsx` ("Permisos por Rol" + "Excepciones por Usuario") lee/escribe 3 tablas: `permisos_definiciones`, `rol_permisos`, `usuario_permisos`. Hasta ahora **ningún otro archivo las consultaba** — la pantalla era decorativa, todo el control de acceso seguía siendo chequeos de rol hardcodeados por pantalla (`roles.includes("admin")` / `"encargado"` / `"ventas"`, ~32 ocurrencias repartidas por `app/panel/`).
 
-Todo el control de acceso actual del panel sigue siendo chequeos de rol hardcodeados por pantalla (`roles.includes("admin")` / `"encargado"` / `"ventas"`, ~32 ocurrencias repartidas por todo `app/panel/`) — no hay ningún hook ni gate central que lea `usuario_permisos`/`rol_permisos`.
+**Primer paso hecho**: `lib/panel/permisos.ts` → `tienePermiso(supabase, perfil, clave)` es el mecanismo central real. Mismo criterio que ya mostraba `PermisosTab.tsx` (sin cambiarlo):
 
-**No se resuelve con un cambio mínimo**: arreglarlo de verdad implica diseñar un mecanismo central (ej. un hook `usePermiso(clave)` o similar) y después migrar los ~32 puntos de chequeo de rol existentes para que lo usen — es un cambio de arquitectura, no un fix puntual. Si se decide encarar esto, hacerlo como su propio proyecto con plan de migración, no como parte de una auditoría de "nombre dice X, código hace Y".
+1. `admin` siempre tiene todos los permisos.
+2. Si el perfil tiene una fila en `usuario_permisos` para esa clave, esa excepción manda (otorgado o denegado), sin importar el rol.
+3. Si no, el default es "otorgado si CUALQUIERA de sus roles lo otorga" en `rol_permisos`.
+
+**Piloto migrado**: `puedeVerLiquidacion` (margen/ganancia de Expedientes, Gestoría, Liquidaciones, Tesorería → Expedientes) — antes era `["admin", "finanzas", "gestoria"].includes(rol)` repetido igual en 4 `page.tsx`. Ahora los 4 llaman `tienePermiso(supabase, miPerfil, "ver_liquidacion")`, con la clave sembrada en `permisos_definiciones`/`rol_permisos` (ver `migraciones/sql_permiso_ver_liquidacion.sql`) con el mismo default que tenía hardcodeado — no cambia el acceso de nadie hasta que alguien lo edite a mano en la pantalla de Permisos.
+
+**Quedan ~28 chequeos de rol sin migrar** (todos los `roles.includes(...)`/`roles.some(...)` que no sean `puedeVerLiquidacion`). Si migrás uno nuevo: 1) elegí una clave descriptiva, 2) sembrala en `permisos_definiciones` + `rol_permisos` con el mismo default que el código hardcodeado tenía (para no cambiar el acceso de nadie de golpe), 3) reemplazá el chequeo por `await tienePermiso(supabase, perfil, clave)` en el `page.tsx` (Server Component) y pasalo como prop al cliente, igual que `puedeVerLiquidacion` — no llamar a `tienePermiso` desde un componente `"use client"` directo, hace queries a la base.
 
 ## No tocar sin revisar el resto
 
