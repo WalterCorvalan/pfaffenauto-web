@@ -4,6 +4,11 @@ import { createClient } from "@/lib/supabase/server";
 import { createClient as createAdminClient } from "@supabase/supabase-js";
 import { MODULOS_CATALOGO, SECTORES } from "@/lib/panel/modulosCatalogo";
 
+// Único permiso fino (no de visibilidad de módulo) con UI propia por ahora
+// -- ver lib/panel/permisos.ts y app/panel/configuracion/ARCHITECTURE.md.
+const ROLES_PERMISOS = ["encargado", "ventas", "finanzas", "gestoria"] as const;
+const PERMISO_VER_LIQUIDACION = "ver_liquidacion";
+
 async function verificarAdmin() {
   const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();
@@ -24,9 +29,10 @@ export async function GET() {
   if (error) return error;
 
   const sb = admin();
-  const [{ data: configRows }, { data: visibilidad }] = await Promise.all([
+  const [{ data: configRows }, { data: visibilidad }, { data: verLiquidacion }] = await Promise.all([
     sb.from("modulos_config").select("*"),
     sb.from("visibilidad_sector").select("*"),
+    sb.from("rol_permisos").select("rol, otorgado").eq("permiso_clave", PERMISO_VER_LIQUIDACION),
   ]);
 
   // El catálogo completo del sidebar es la lista -- no lo que ya tenga
@@ -38,11 +44,18 @@ export async function GET() {
   const activoPorModulo = new Map((configRows || []).map((m) => [m.modulo, m.activo]));
   const modulos = MODULOS_CATALOGO.map(({ modulo }) => ({ modulo, activo: activoPorModulo.get(modulo) ?? true }));
 
-  return NextResponse.json({ modulos, visibilidad: visibilidad || [] });
+  // Sin fila en rol_permisos para ese rol -- tienePermiso() lo trata como
+  // "no otorgado" (ver lib/panel/permisos.ts), no como "otorgado por
+  // default" como pasa con visibilidad_sector. Mismo criterio acá.
+  const otorgadoPorRol = new Map((verLiquidacion || []).map((r) => [r.rol, r.otorgado]));
+  const permisoVerLiquidacion = ROLES_PERMISOS.map((rol) => ({ rol, otorgado: otorgadoPorRol.get(rol) ?? false }));
+
+  return NextResponse.json({ modulos, visibilidad: visibilidad || [], permisoVerLiquidacion });
 }
 
 const ModuloSchema = z.object({ modulo: z.string(), activo: z.boolean() });
 const VisibilidadSchema = z.object({ modulo: z.string(), sector: z.enum(SECTORES), visible: z.boolean() });
+const PermisoVerLiquidacionSchema = z.object({ rol: z.enum(ROLES_PERMISOS), otorgado: z.boolean() });
 
 export async function PATCH(request: Request) {
   const { error } = await verificarAdmin();
@@ -66,6 +79,16 @@ export async function PATCH(request: Request) {
     const parsed = VisibilidadSchema.safeParse(body);
     if (!parsed.success) return NextResponse.json({ error: "Datos inválidos." }, { status: 400 });
     const { error: upsertError } = await sb.from("visibilidad_sector").upsert(parsed.data);
+    if (upsertError) return NextResponse.json({ error: upsertError.message }, { status: 400 });
+    return NextResponse.json({ ok: true });
+  }
+
+  if (body.tipo === "permiso_ver_liquidacion") {
+    const parsed = PermisoVerLiquidacionSchema.safeParse(body);
+    if (!parsed.success) return NextResponse.json({ error: "Datos inválidos." }, { status: 400 });
+    const { error: upsertError } = await sb
+      .from("rol_permisos")
+      .upsert({ rol: parsed.data.rol, permiso_clave: PERMISO_VER_LIQUIDACION, otorgado: parsed.data.otorgado }, { onConflict: "rol,permiso_clave" });
     if (upsertError) return NextResponse.json({ error: upsertError.message }, { status: 400 });
     return NextResponse.json({ ok: true });
   }
