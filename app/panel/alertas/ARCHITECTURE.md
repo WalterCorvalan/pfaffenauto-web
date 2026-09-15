@@ -40,13 +40,28 @@ Mapeo aplicado en los 7 call sites reales (todos los que importan de `@/lib/pane
 
 Si agregás un call site nuevo a cualquiera de estas funciones, pasale `categoriaNotif`/`modulo` si hay una categoría real que le corresponda — si no hay ninguna que encaje, mejor dejarlo sin categoría (como visitas/señas arriba) que forzar una que no es.
 
-## `lib/notificaciones.ts` (sin `panel/`) — archivo v1 legacy, probablemente código muerto
+## `lib/notificaciones.ts` (v1) — borrado, sus 4 automatizaciones reales se portaron a v2
 
-Ojo con no confundirlo con el de arriba: `lib/notificaciones.ts` (sin `panel/` en la ruta) es otro archivo distinto, con funciones de mismo nombre (`notificarPersona`, `notificarEncargados`, `notificarGestoria`) pero que **insertan en la tabla `notificaciones`** (v1, no `alertas`) y consultan `perfiles.rol` (columna singular vieja, no `perfiles.roles` array que usa el resto del sistema). Lo importan `api/cron/automatizaciones/route.ts`, `api/visitas/route.ts`, `api/visitas/notificar/route.ts`, `api/postulaciones/route.ts`, `api/notificaciones/persona/route.ts`, `api/vehiculos/notificar-cambio/route.ts`, y los webhooks legacy `api/webhooks/wa/[token]` / `api/webhooks/ig/[token]`.
+Existía otro archivo, `lib/notificaciones.ts` (sin `panel/`), con funciones de mismo nombre (`notificarPersona`, `notificarEncargados`, `notificarGestoria`) pero que insertaban en una tabla v1 (`notificaciones`) que ningún componente del panel actual lee, y apuntaban a un proyecto Supabase distinto (`NEXT_PUBLIC_SUPABASE_URL`, no `NEXT_PUBLIC_SUPABASE2_URL` — otra base de datos, no solo otra tabla). Se borró junto con sus 8 call sites, la mayoría ya sin ningún uso real:
 
-Ningún componente del panel (`AlertasClient.tsx`, `NotificationBell.tsx`) lee la tabla `notificaciones` — solo leen `alertas`. Esto sugiere que estos ~8 call sites no le llegan a nadie hoy (aunque no se confirmó si `perfiles.rol` todavía existe en la base o si esas queries ya fallan silenciosamente). No se tocó en esta pasada — es un hallazgo aparte, más grande (decidir si migrar estos call sites a `lib/panel/notificaciones.ts`/`crearAlerta()`, o si son rutas realmente muertas y conviene borrarlas, requiere confirmar primero si siguen recibiendo tráfico real).
+- `api/notificaciones/persona/route.ts` — sin ningún caller.
+- `api/postulaciones/route.ts`, `api/visitas/route.ts`, `api/visitas/notificar/route.ts` — superados por sus equivalentes `panel-v2` (a los que ya apuntan los formularios públicos reales).
+- `api/webhooks/wa/[token]`, `api/webhooks/ig/[token]` — superados por los webhooks `panel-v2` (los configurados en Meta).
+- `api/vehiculos/notificar-cambio/route.ts` — sin ningún caller.
+- `lib/tramites.ts` — otro archivo v1 (tabla `tramites_gestoria`, distinta de `expedientes`) que dependía de este, también sin ningún caller. Borrado junto.
+
+La excepción fue `api/cron/automatizaciones/route.ts`: tenía 4 automatizaciones reales que **nunca se habían portado a v2** (a diferencia de "cuotas por vencer", que sí — ver `avisarCuotasPorVencer` en `seguimientos/route.ts`). Se reconstruyeron en `app/api/cron/panel-v2/automatizaciones/route.ts`, corriendo cada 15 min (`migraciones/sql_cron_automatizaciones_panel_v2.sql`):
+
+1. **Lead caliente sin atender 24h+**: si una conversación de WhatsApp calificada "caliente" no tiene respuesta interna en 24hs y no está en handoff, avisa al vendedor asignado (o a admin/encargados si no hay ninguno) — `categoriaNotif: "leads"`.
+2. **Agradecimiento post-venta por WhatsApp**: 1-3hs después de cerrar una venta, manda un mensaje de agradecimiento al comprador (requiere `whatsapp_configuracion` cargada).
+3. **Nudge de silencio**: si pasaron 30-45 min desde nuestro último mensaje sin que el cliente responda (y no está en handoff), manda un mensaje ofreciendo más info — el mensaje queda logueado en `whatsapp_mensajes` como cualquier otro.
+4. **Documentación pendiente 5+ días en un expediente**: usa `expediente_checklist` (no `documentacion_ventas`, que era la tabla v1 — en v2 los documentos de una operación viven en el checklist del expediente) — avisa al gestor asignado o a admin/encargado/gestoría, `categoriaNotif: "expedientes"`.
+
+El dedup es un flag boolean por fila (`aviso_caliente_sin_atender_enviado`, `aviso_agradecimiento_enviado`, `aviso_nudge_enviado`, `aviso_doc_pendiente_enviado` — ver la migración de columnas), mismo patrón que el resto de `seguimientos/route.ts`, no la tabla `automatizaciones_wa` aparte que usaba v1.
+
+**Hay más código v1 dando vueltas** (rutas apuntando a `NEXT_PUBLIC_SUPABASE_URL` en vez de `NEXT_PUBLIC_SUPABASE2_URL`: `api/usuarios`, varios `api/vehiculos/*`, `api/panel/whatsapp/enviar` y `api/panel/instagram/enviar` -sin el `-v2`-, `lib/ai/*`, etc.) que no se tocó en esta pasada — es un relevamiento más grande, aparte de esto.
 
 ## No tocar sin revisar el resto
 
 - No insertar en `alertas` sin pasar por `crearAlerta()` — te salteás los 2 filtros de arriba.
-- Los cron jobs de `app/api/cron/panel-v2/` (`seguimientos`, `mi-resumen`, `mi-resumen-semanal`, `resumen-empresa`, `espacio-recordatorios`, `eventos`) son la fuente principal de alertas generadas automáticamente — ver sus propios comentarios de cabecera para qué cubre cada uno y con qué frecuencia corre (`migraciones/sql_cron_*.sql`).
+- Los cron jobs de `app/api/cron/panel-v2/` (`seguimientos`, `mi-resumen`, `mi-resumen-semanal`, `resumen-empresa`, `espacio-recordatorios`, `eventos`, `automatizaciones`) son la fuente principal de alertas generadas automáticamente — ver sus propios comentarios de cabecera para qué cubre cada uno y con qué frecuencia corre (`migraciones/sql_cron_*.sql`).
