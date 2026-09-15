@@ -50,7 +50,7 @@ export default function NuevaCampanaModal({ sucursales = [] }: { sucursales?: { 
     <>
       <button
         onClick={() => setIsOpen(true)}
-        className="flex items-center gap-2 bg-rose-600 hover:bg-rose-700 text-white font-bold text-sm px-4 py-2.5 rounded-xl transition-colors shrink-0"
+        className="flex items-center gap-2 bg-[#0145F2] hover:bg-[#0138c9] text-white font-bold text-sm px-4 py-2.5 rounded-xl transition-colors shrink-0"
       >
         <Plus className="w-4 h-4" /> Cargar Métricas
       </button>

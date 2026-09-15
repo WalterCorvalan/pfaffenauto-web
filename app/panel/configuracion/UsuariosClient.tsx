@@ -293,7 +293,7 @@ function ModalNuevoUsuario({ sucursales, onClose, onSaved }: { sucursales: Sucur
           <p className="text-[11px] text-slate-400 mt-1">Es el número que ve el cliente en el sitio público si le asignan un auto a esta persona. Si lo dejás vacío, se usa el de la sucursal.</p>
         </div>
         {error && <p className="text-xs text-rose-600">{error}</p>}
-        <button onClick={guardar} disabled={guardando} className="w-full bg-rose-600 hover:bg-rose-700 text-white font-bold py-2.5 rounded-lg text-sm disabled:opacity-50">
+        <button onClick={guardar} disabled={guardando} className="w-full bg-[#0145F2] hover:bg-[#0138c9] text-white font-bold py-2.5 rounded-lg text-sm disabled:opacity-50">
           {guardando ? "Creando..." : "Crear usuario"}
         </button>
       </div>
@@ -350,7 +350,7 @@ function ModalEditarUsuario({ usuario, sucursales, onClose, onSaved }: { usuario
           <p className="text-[11px] text-slate-400 mt-1">Es el número que ve el cliente en el sitio público si le asignan un auto a esta persona. Si lo dejás vacío, se usa el de la sucursal.</p>
         </div>
         {error && <p className="text-xs text-rose-600">{error}</p>}
-        <button onClick={guardar} disabled={guardando} className="w-full bg-rose-600 hover:bg-rose-700 text-white font-bold py-2.5 rounded-lg text-sm disabled:opacity-50">
+        <button onClick={guardar} disabled={guardando} className="w-full bg-[#0145F2] hover:bg-[#0138c9] text-white font-bold py-2.5 rounded-lg text-sm disabled:opacity-50">
           {guardando ? "Guardando..." : "Guardar cambios"}
         </button>
       </div>

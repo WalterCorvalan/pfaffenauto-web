@@ -169,7 +169,7 @@ export default function CuotasPagarTab({ miId }: { miId: string }) {
                 <p className="text-[11px] text-slate-400">Vence: {c.vencimiento}{deuda && ` · ${deuda.acreedor}`}</p>
                 {!c.pagada && (
                   <div className="flex items-center gap-2 mt-2">
-                    <button onClick={() => abrirPago(c)} className="flex items-center gap-1 px-2.5 py-1.5 text-[11px] font-bold bg-rose-600 hover:bg-rose-700 text-white rounded-lg"><DollarSign className="w-3.5 h-3.5" /> Registrar pago</button>
+                    <button onClick={() => abrirPago(c)} className="flex items-center gap-1 px-2.5 py-1.5 text-[11px] font-bold bg-[#0145F2] hover:bg-[#0138c9] text-white rounded-lg"><DollarSign className="w-3.5 h-3.5" /> Registrar pago</button>
                     <button onClick={() => eliminar(c)} className="p-1.5 text-slate-400 hover:text-rose-600 ml-auto"><Trash2 className="w-3.5 h-3.5" /></button>
                   </div>
                 )}

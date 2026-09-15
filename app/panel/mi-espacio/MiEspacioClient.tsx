@@ -426,14 +426,14 @@ export default function MiEspacioClient({
         <div>
           <div className="flex items-center justify-between mb-3">
             <div><p className="text-lg font-bold">URGENTE — {urgentesPendientes.length} pendiente{urgentesPendientes.length === 1 ? "" : "s"}</p><p className="text-xs text-slate-400">Tus anotaciones de cosas urgentes a pagar. Cada ítem muestra cuántos días faltan para el vencimiento.</p></div>
-            <button onClick={() => setShowNuevoUrgente(true)} className="flex items-center gap-1.5 px-4 py-2 text-sm font-bold bg-rose-600 hover:bg-rose-700 text-white rounded-lg shrink-0"><Plus className="w-4 h-4" /> Nuevo urgente</button>
+            <button onClick={() => setShowNuevoUrgente(true)} className="flex items-center gap-1.5 px-4 py-2 text-sm font-bold bg-[#0145F2] hover:bg-[#0138c9] text-white rounded-lg shrink-0"><Plus className="w-4 h-4" /> Nuevo urgente</button>
           </div>
 
           {urgentes.length === 0 ? (
             <div className="bg-white dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-2xl py-16 text-center">
               <p className="text-sm font-bold">Sin items urgentes</p>
               <p className="text-xs text-slate-400 mt-1 mb-3">Anotá acá pagos / trámites con vencimiento para no olvidarlos.</p>
-              <button onClick={() => setShowNuevoUrgente(true)} className="px-4 py-2 text-sm font-bold bg-rose-600 hover:bg-rose-700 text-white rounded-lg">+ Agregar urgente</button>
+              <button onClick={() => setShowNuevoUrgente(true)} className="px-4 py-2 text-sm font-bold bg-[#0145F2] hover:bg-[#0138c9] text-white rounded-lg">+ Agregar urgente</button>
             </div>
           ) : (
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
@@ -469,7 +469,7 @@ export default function MiEspacioClient({
         <div>
           <div className="flex items-center justify-between mb-3 flex-wrap gap-2">
             <div><p className="text-lg font-bold">Pagos realizados — {pagosFiltrados.length} item{pagosFiltrados.length === 1 ? "" : "s"}</p><p className="text-xs text-slate-400">Todos tus pagos en un solo lugar — los manuales + los parciales que cargaste en Deudas, Urgente y Cuotas a pagar.</p></div>
-            <button onClick={() => setShowPagoManual(true)} className="flex items-center gap-1.5 px-4 py-2 text-sm font-bold bg-rose-600 hover:bg-rose-700 text-white rounded-lg shrink-0"><Plus className="w-4 h-4" /> Registrar pago manual</button>
+            <button onClick={() => setShowPagoManual(true)} className="flex items-center gap-1.5 px-4 py-2 text-sm font-bold bg-[#0145F2] hover:bg-[#0138c9] text-white rounded-lg shrink-0"><Plus className="w-4 h-4" /> Registrar pago manual</button>
           </div>
 
           <div className="flex items-center gap-2 mb-3 flex-wrap">
@@ -486,7 +486,7 @@ export default function MiEspacioClient({
             <div className="bg-white dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-2xl py-16 text-center">
               <p className="text-sm font-bold">Sin pagos registrados</p>
               <p className="text-xs text-slate-400 mt-1 mb-3">Anotá un pago manual acá, o cargá un pago parcial en Deudas/Urgente/Cuotas a pagar y va a aparecer en esta lista.</p>
-              <button onClick={() => setShowPagoManual(true)} className="px-4 py-2 text-sm font-bold bg-rose-600 hover:bg-rose-700 text-white rounded-lg">+ Registrar pago manual</button>
+              <button onClick={() => setShowPagoManual(true)} className="px-4 py-2 text-sm font-bold bg-[#0145F2] hover:bg-[#0138c9] text-white rounded-lg">+ Registrar pago manual</button>
             </div>
           ) : (
             <TablaResponsiva<any>
@@ -547,7 +547,7 @@ export default function MiEspacioClient({
             <textarea value={uNotas} onChange={(e) => setUNotas(e.target.value)} rows={2} placeholder="Detalles, link de pago, sucursal..." className={inputClass} />
             <div className="flex justify-end gap-2 mt-4">
               <button onClick={cerrarModalUrgente} className="px-4 py-2 text-sm font-bold text-slate-500">Cancelar</button>
-              <button onClick={editandoUrgente ? guardarEdicionUrgente : crearUrgente} disabled={guardandoUrgente} className="flex items-center gap-1.5 px-4 py-2 text-sm font-bold bg-rose-600 hover:bg-rose-700 text-white rounded-lg disabled:opacity-50"><Save className="w-4 h-4" /> {editandoUrgente ? "Guardar" : "Crear"}</button>
+              <button onClick={editandoUrgente ? guardarEdicionUrgente : crearUrgente} disabled={guardandoUrgente} className="flex items-center gap-1.5 px-4 py-2 text-sm font-bold bg-[#0145F2] hover:bg-[#0138c9] text-white rounded-lg disabled:opacity-50"><Save className="w-4 h-4" /> {editandoUrgente ? "Guardar" : "Crear"}</button>
             </div>
           </div>
         </div>
