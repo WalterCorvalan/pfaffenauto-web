@@ -53,6 +53,16 @@ Este fue el **piloto** de un pedido más amplio (cambiar rojo→azul en todo el 
 
 `vista` (el toggle Lista/Tarjetas/Tabla detallada) arranca en `"lista"` — pedido explícito, antes abría en `"tabla"`. Si cambiás el default de nuevo, hacelo a propósito y avisá, porque `app/panel/clientes/ARCHITECTURE.md` usa esta misma vista "lista" como referencia de diseño para otras pantallas del panel.
 
+## `categoria` — lista ampliada, quedó desincronizada entre alta manual e importación masiva
+
+`CATEGORIAS` en `NuevoVehiculoModal.tsx` tenía 5 valores (`Auto`, `Pickup/Camioneta`, `SUV`, `Utilitario`, `Moto`); se amplió a 9, agregando `Camión`, `Camioneta`, `Casa Rodante`, `Ómnibus | Van` (pedido del usuario). `ImportarXlsxModal.tsx` tenía su propia lista hardcodeada de válidas para el Excel, separada y desactualizada — **ni siquiera incluía `"Moto"`**, así que un Excel con esa categoría se guardaba silenciosamente como `"Auto"` sin avisar. Ahora usa `CATEGORIAS_VALIDAS`, la misma lista que el modal manual — si agregás una categoría nueva, agregala en los dos lugares (no se extrajo a `lib/` porque son los únicos 2 consumidores, pero si aparece un tercero sí conviene compartirla).
+
+Si en algún momento aparece un error de guardado al elegir una categoría nueva (`categoria` es un valor que el formulario ofrece pero la base rechaza), sospechar primero de una restricción `CHECK` en `public.vehiculos.categoria` desactualizada respecto al frontend — mismo patrón que ya pasó con `ubicacion` (ver abajo): el código del panel puede estar bien y el problema ser una migración de base de datos pendiente.
+
+## `combustible` — agregado "Gasoil" como opción separada de "Diésel"
+
+Antes solo estaba "Diésel". Se agregó "Gasoil" como opción aparte (no reemplaza a "Diésel") por pedido del usuario — la agencia usa ambos términos para cosas distintas en su stock real.
+
 ## No tocar sin revisar el resto
 
 - No confundir `publicado_ml` con "visible en la web" en ningún indicador nuevo — son conceptos distintos y ya generó un hallazgo de auditoría por la confusión.
