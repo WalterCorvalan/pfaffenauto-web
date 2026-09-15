@@ -47,8 +47,14 @@ export async function notificarEncargados(supabase: SupabaseClient, mensaje: str
 // routing) para que el primero que lo vea lo tome, no solo quien está de
 // turno como encargado.
 export async function notificarVendedoresDisponibles(supabase: SupabaseClient, mensaje: string, link: string, tipo: string) {
-  const { data: disponibilidad } = await supabase.from("disponibilidad_vendedor").select("vendedor_id, recibir_leads");
-  const noDisponibles = new Set((disponibilidad || []).filter((d) => d.recibir_leads === false).map((d) => d.vendedor_id));
+  const { data: disponibilidad } = await supabase.from("disponibilidad_vendedor").select("vendedor_id, recibir_leads, hasta");
+  const hoy = new Date().toISOString().slice(0, 10);
+  // DisponibilidadModal.tsx promete "Volvés solo pasada la fecha 'hasta'" --
+  // eso no pasaba solo: recibir_leads quedaba en false para siempre hasta
+  // que alguien lo destildara a mano, `hasta` nunca se chequeaba acá.
+  const noDisponibles = new Set(
+    (disponibilidad || []).filter((d) => d.recibir_leads === false && (!d.hasta || d.hasta >= hoy)).map((d) => d.vendedor_id)
+  );
 
   const { data: candidatos } = await supabase.from("perfiles").select("id, roles").or("roles.cs.{admin},roles.cs.{encargado},roles.cs.{ventas}").eq("activo", true);
   if (!candidatos || candidatos.length === 0) return;
