@@ -68,7 +68,7 @@ export default function EmpresaClient() {
       {error && <div className="text-rose-600 text-sm bg-rose-50 dark:bg-rose-500/10 p-3 rounded-lg">{error}</div>}
 
       <div className="flex items-center gap-1">
-        <button onClick={() => setSubtab("modulos")} className={`px-3 py-1.5 rounded-lg text-xs font-bold ${subtab === "modulos" ? "bg-rose-600 text-white" : "bg-slate-100 dark:bg-white/5 text-slate-500"}`}>Módulos</button>
+        <button onClick={() => setSubtab("modulos")} className={`px-3 py-1.5 rounded-lg text-xs font-bold ${subtab === "modulos" ? "bg-[#0145F2] text-white" : "bg-slate-100 dark:bg-white/5 text-slate-500"}`}>Módulos</button>
         <button onClick={() => setSubtab("comisiones")} className={`px-3 py-1.5 rounded-lg text-xs font-bold ${subtab === "comisiones" ? "bg-[#0145F2] text-white" : "bg-slate-100 dark:bg-white/5 text-slate-500"}`}>Comisiones</button>
         <button onClick={() => setSubtab("plazos")} className={`px-3 py-1.5 rounded-lg text-xs font-bold ${subtab === "plazos" ? "bg-[#0145F2] text-white" : "bg-slate-100 dark:bg-white/5 text-slate-500"}`}>Plazos / SLAs</button>
         <button onClick={() => setSubtab("routing")} className={`px-3 py-1.5 rounded-lg text-xs font-bold ${subtab === "routing" ? "bg-[#0145F2] text-white" : "bg-slate-100 dark:bg-white/5 text-slate-500"}`}>Lead Routing</button>
