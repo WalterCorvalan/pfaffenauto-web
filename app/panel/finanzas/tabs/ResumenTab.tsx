@@ -78,7 +78,7 @@ export default function ResumenTab({
         </div>
         <div className="rounded-2xl p-4 bg-white dark:bg-white/5 border border-slate-200 dark:border-white/10">
           <p className="text-[10px] font-bold uppercase tracking-widest text-slate-400">Neto del mes</p>
-          {Object.keys(netoTotalPorMoneda).length === 0 ? <p className="text-xl font-black mt-1">$ 0</p> : Object.entries(netoTotalPorMoneda).map(([m, v]) => <p key={m} className={`text-xl font-black mt-1 ${v >= 0 ? "" : "text-[#0145F2]"}`}>{fmt(v, m)}</p>)}
+          {Object.keys(netoTotalPorMoneda).length === 0 ? <p className="text-xl font-black mt-1">$ 0</p> : Object.entries(netoTotalPorMoneda).map(([m, v]) => <p key={m} className={`text-xl font-black mt-1 ${v >= 0 ? "" : "text-rose-600"}`}>{fmt(v, m)}</p>)}
           <p className="text-[10px] text-slate-400 mt-1">Ingresos menos egresos</p>
         </div>
         <div className="rounded-2xl p-4 bg-white dark:bg-white/5 border border-slate-200 dark:border-white/10">
@@ -149,7 +149,7 @@ export default function ResumenTab({
                 <div key={m} className="h-[170px] flex flex-col">
                   <div className="flex items-center justify-between mb-1 px-1">
                     <span className="text-[10px] font-bold uppercase text-slate-400">{m}</span>
-                    <span className={`text-xs font-black flex items-center gap-1 ${neto >= 0 ? "text-emerald-600" : "text-[#0145F2]"}`}>
+                    <span className={`text-xs font-black flex items-center gap-1 ${neto >= 0 ? "text-emerald-600" : "text-rose-600"}`}>
                       {neto >= 0 ? <TrendingUp className="w-3.5 h-3.5" /> : <TrendingDown className="w-3.5 h-3.5" />} Neto {fmt(neto, m)}
                     </span>
                   </div>

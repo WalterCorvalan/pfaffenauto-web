@@ -35,3 +35,8 @@ El saldo real de una cuenta se calcula vía RPC `saldo_cuenta(p_cuenta_id)`, nun
 
 - No sumar `movimientos_caja.monto` sin filtrar `estado = "aprobado"` y `deleted_at is null` primero.
 - No agregar una métrica de ingresos/egresos sobre `movimientos_caja` sin excluir `tipo_movimiento = "Transferencia"` (ver regla arriba).
+
+## Bugs de color corregidos (rebrand rojo→azul)
+
+- `EgresosCategoriaTab.tsx`: `COLOR_TEXTO`/`COLOR_BORDE` es una paleta decorativa de 5 categorías de gasto (indigo/sky/amber/rose/emerald, sin relación con acciones primarias ni con peligro). El sweep de rebrand había convertido solo `COLOR_TEXTO.rose` a azul, dejando `COLOR_BORDE.rose` en rosa — la tarjeta de "Gastos Varios" quedaba con borde rosa y monto azul. Revertido `COLOR_TEXTO.rose` a rosa para que la pareja vuelva a ser consistente (mismo criterio que los mapas de severidad excluidos del rebrand en `stock/ARCHITECTURE.md`).
+- `ResumenTab.tsx`: el "Neto" (total y por moneda) mostraba el valor negativo en azul (`text-[#0145F2]`) en vez de rojo — quedó atrapado por el regex del sweep al ser `text-rose-*` originalmente. Un neto negativo es una señal de alerta real, no una acción primaria; se revierte a `text-rose-600`.
