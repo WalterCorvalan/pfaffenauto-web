@@ -37,6 +37,12 @@ Guía para no romper otra cosa al tocar este módulo. Si cambiás algo acá, rev
 
 `vehiculos.ubicacion` se deja vacío al cargar un auto nuevo (se completa después, no es obligatorio en el alta). `NuevoVehiculoModal.tsx` ya manda `ubicacion: ubicacion || null`, pero la columna tenía una restricción `NOT NULL` en la base que lo rechazaba (`sql_vehiculos_ubicacion_nullable.sql` la saca). Si volvés a ver `null value in column "ubicacion" ... violates not-null constraint`, es porque esa migración no se corrió, no porque el formulario esté mal.
 
+## Color de marca — piloto de rebrand rojo→azul (#0145F2)
+
+`StockClient.tsx` mezclaba `rose-600` para dos cosas distintas: acentos de marca (icono del título, botones "Nuevo vehículo"/"Nuevo mandato", tab activo, chips de filtro/vista seleccionados, foco del buscador) y señales reales de estado/peligro (botón eliminar, badge "Vencido" de mandato, texto de días vencidos, punto+borde de fila estancada +60d). Se recoloreó solo el primer grupo a `#0145F2` (el azul ya definido como `colors.primary` en `tailwind.config.ts` pero no usado en literal), dejando el segundo grupo en rojo a propósito — no es el mismo `rose-600`, es información real (algo está vencido/hay que eliminar).
+
+Este es el **piloto** de un pedido más amplio (cambiar rojo→azul en todo el panel): `rose-600` aparece en 706 lugares repartidos en 172 archivos, y en varios de ellos tiene el mismo doble uso que acá. Si migrás otro módulo, aplicá el mismo criterio: ¿es un acento de marca/selección, o es una señal de estado/peligro? Solo lo primero cambia a `#0145F2`. Preferible usar clases Tailwind literales `bg-[#0145F2]`/`text-[#0145F2]`/`border-[#0145F2]` igual que se hizo acá (la clase `primary` de `tailwind.config.ts` existe pero no se usa en ningún componente todavía — adoptarla de a poco en vez de mezclar convenciones a mitad de migración).
+
 ## No tocar sin revisar el resto
 
 - No confundir `publicado_ml` con "visible en la web" en ningún indicador nuevo — son conceptos distintos y ya generó un hallazgo de auditoría por la confusión.
