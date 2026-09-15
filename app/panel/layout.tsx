@@ -358,7 +358,7 @@ const GRUPOS: {
         modulo: "autorizaciones",
       },
       { label: "Sugerencias", icon: Lightbulb, modulo: "sugerencias" },
-      { label: "Papelera", icon: Trash2, modulo: "papelera" },
+      { href: "/panel/papelera", label: "Papelera", icon: Trash2, modulo: "papelera" },
       {
         href: "/panel/configuracion",
         label: "Configuración",
