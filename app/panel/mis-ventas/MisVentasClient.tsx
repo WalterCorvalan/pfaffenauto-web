@@ -286,20 +286,20 @@ export default function MisVentasClient({ vendedores, miId, miNombre, esAdmin }:
         )}
 
         <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
-          <div className={`bg-white dark:bg-white/[0.02] border-2 rounded-2xl p-4 ${periodo === "mes" ? "border-rose-500" : "border-slate-200 dark:border-white/5"}`}>
+          <div className={`bg-white dark:bg-white/[0.02] border-2 rounded-2xl p-4 ${periodo === "mes" ? "border-[#0145F2]" : "border-slate-200 dark:border-white/5"}`}>
             <div className="flex items-center justify-between mb-2">
               <button onClick={() => { setPeriodo("mes"); setMesOffset((o) => o - 1); }} className="p-1 text-slate-400 hover:text-slate-700 dark:hover:text-white"><ChevronLeft className="w-4 h-4" /></button>
               <button onClick={() => setPeriodo("mes")} className="flex items-center gap-1.5 text-xs font-bold text-slate-600 dark:text-slate-300 uppercase tracking-widest"><Calendar className="w-3.5 h-3.5" /> {rangoMes.label}</button>
               <button onClick={() => { setPeriodo("mes"); setMesOffset((o) => o + 1); }} className="p-1 text-slate-400 hover:text-slate-700 dark:hover:text-white"><ChevronRight className="w-4 h-4" /></button>
             </div>
             <p className="text-2xl font-black text-slate-900 dark:text-white">{ventas.length} {ventas.length === 1 ? "venta" : "ventas"}</p>
-            {periodo === "mes" && <p className="text-[11px] text-rose-500 font-bold mt-1">↑ filtro activo</p>}
+            {periodo === "mes" && <p className="text-[11px] text-[#0145F2] font-bold mt-1">↑ filtro activo</p>}
           </div>
-          <button onClick={() => setPeriodo("anio")} className={`bg-white dark:bg-white/[0.02] border-2 rounded-2xl p-4 text-left ${periodo === "anio" ? "border-rose-500" : "border-slate-200 dark:border-white/5"}`}>
+          <button onClick={() => setPeriodo("anio")} className={`bg-white dark:bg-white/[0.02] border-2 rounded-2xl p-4 text-left ${periodo === "anio" ? "border-[#0145F2]" : "border-slate-200 dark:border-white/5"}`}>
             <p className="flex items-center gap-1.5 text-xs font-bold text-slate-600 dark:text-slate-300 uppercase tracking-widest mb-2"><Calendar className="w-3.5 h-3.5" /> Este año</p>
             <p className="text-2xl font-black text-slate-900 dark:text-white">{periodo === "anio" ? ventas.length : "—"} ventas</p>
           </button>
-          <button onClick={() => setPeriodo("historico")} className={`bg-white dark:bg-white/[0.02] border-2 rounded-2xl p-4 text-left ${periodo === "historico" ? "border-rose-500" : "border-slate-200 dark:border-white/5"}`}>
+          <button onClick={() => setPeriodo("historico")} className={`bg-white dark:bg-white/[0.02] border-2 rounded-2xl p-4 text-left ${periodo === "historico" ? "border-[#0145F2]" : "border-slate-200 dark:border-white/5"}`}>
             <p className="flex items-center gap-1.5 text-xs font-bold text-slate-600 dark:text-slate-300 uppercase tracking-widest mb-2"><Trophy className="w-3.5 h-3.5" /> Histórico</p>
             <p className="text-2xl font-black text-slate-900 dark:text-white">{periodo === "historico" ? ventas.length : "—"} ventas</p>
           </button>
