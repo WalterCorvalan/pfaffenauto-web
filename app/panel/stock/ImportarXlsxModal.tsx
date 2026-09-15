@@ -13,6 +13,11 @@ interface Props {
 }
 
 const CONDICIONES_VALIDAS = ["0km", "Excelente", "Muy bueno", "Bueno", "Regular"];
+// Mismo listado que CATEGORIAS en NuevoVehiculoModal.tsx -- se quedó
+// desincronizado antes (ni siquiera tenía "Moto"), así que un excel con esa
+// categoría se guardaba silenciosamente como "Auto". Si agregás una
+// categoría nueva a un lado, agregala acá también.
+const CATEGORIAS_VALIDAS = ["Auto", "Pickup/Camioneta", "SUV", "Utilitario", "Moto", "Camión", "Camioneta", "Casa Rodante", "Ómnibus | Van"];
 
 function buscarCampo(fila: Record<string, any>, nombres: string[]) {
   const claves = Object.keys(fila);
@@ -93,7 +98,7 @@ export default function ImportarXlsxModal({ miId, onClose, onImportados }: Props
           precio_compra: precioCompra ? Number(precioCompra) : null, moneda_compra: monedaCompra ? String(monedaCompra).trim().toUpperCase() : "USD",
           tc_ingreso: tcIngreso ? Number(tcIngreso) : null,
           propietario_nombre: propietario ? String(propietario).trim() : null,
-          categoria: categoria && ["Auto", "Pickup/Camioneta", "SUV", "Utilitario"].includes(String(categoria).trim()) ? String(categoria).trim() : "Auto",
+          categoria: categoria && CATEGORIAS_VALIDAS.includes(String(categoria).trim()) ? String(categoria).trim() : "Auto",
           notas: notas ? String(notas).trim() : null,
           estado: "disponible", propio_agencia: !propietario,
           creado_por: miId || null,
