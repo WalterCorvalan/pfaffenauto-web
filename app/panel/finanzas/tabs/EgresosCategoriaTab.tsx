@@ -33,7 +33,7 @@ const CATEGORIAS: CategoriaConfig[] = [
 
 const COLOR_TEXTO: Record<string, string> = {
   indigo: "text-indigo-600 dark:text-indigo-400", sky: "text-sky-600 dark:text-sky-400", amber: "text-amber-600 dark:text-amber-400",
-  rose: "text-[#0145F2] dark:text-[#5b8dff]", emerald: "text-emerald-600 dark:text-emerald-400",
+  rose: "text-rose-600 dark:text-rose-400", emerald: "text-emerald-600 dark:text-emerald-400",
 };
 const COLOR_BORDE: Record<string, string> = {
   indigo: "border-indigo-200 dark:border-indigo-500/30", sky: "border-sky-200 dark:border-sky-500/30", amber: "border-amber-200 dark:border-amber-500/30",
