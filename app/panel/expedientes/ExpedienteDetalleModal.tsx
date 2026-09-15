@@ -570,9 +570,10 @@ export default function ExpedienteDetalleModal({ expedienteId, miId, perfiles, s
   };
 
   const eliminar = async () => {
-    if (!confirm("¿Eliminar este expediente? No se puede deshacer.")) return;
-    const { error, count } = await supabase2.from("expedientes").delete({ count: "exact" }).eq("id", expedienteId);
-    if (error || !count) { alert("No se pudo eliminar."); return; }
+    if (!confirm("¿Eliminar este expediente? Queda en Papelera, se puede restaurar (también revive la venta vinculada y devuelve el vehículo a disponible).")) return;
+    const motivo = prompt("Motivo (opcional):") || undefined;
+    const res = await fetch("/api/panel/papelera", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ accion: "eliminar", tipo: "expedientes", id: expedienteId, motivo }) });
+    if (!res.ok) { alert("No se pudo eliminar (sin permiso o ya no existe)."); return; }
     onEliminado(expedienteId);
     onClose();
   };
