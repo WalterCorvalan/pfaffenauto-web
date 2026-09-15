@@ -11,7 +11,6 @@ import {
 } from "lucide-react";
 import NuevoClienteModal from "./NuevoClienteModal";
 import DisponibilidadModal from "./DisponibilidadModal";
-import TablaResponsiva, { type ColumnaTabla } from "@/components/panel/TablaResponsiva";
 import { renderSaludoWhatsApp } from "@/lib/panel/whatsappSaludo";
 
 interface Cliente {
@@ -78,28 +77,6 @@ function diasDesde(iso: string) {
 }
 function nombreVacio(n: string) {
   return !n || n.trim() === "" || n.trim() === ".";
-}
-// Usado tanto en la columna "Cliente" del desktop como en el encabezado de
-// la tarjeta mobile (TablaResponsiva) -- antes desktop solo mostraba el
-// nombre en texto plano sin avatar/badges, mientras mobile ya los tenía.
-function renderClienteCell(c: Cliente) {
-  const contactado = c.pipeline_stage !== "sin_contactar";
-  const vacio = nombreVacio(c.nombre);
-  return (
-    <div className="flex items-center gap-3 min-w-0">
-      <div className="w-9 h-9 rounded-full bg-slate-100 dark:bg-white/5 text-slate-600 dark:text-slate-300 flex items-center justify-center font-black text-xs shrink-0 border border-slate-200 dark:border-white/10">{vacio ? "?" : c.nombre.charAt(0).toUpperCase()}</div>
-      <div className="min-w-0">
-        <p className={`text-sm font-bold truncate flex items-center gap-1.5 ${vacio ? "text-slate-400 italic" : "text-slate-900 dark:text-white"}`}>
-          {vacio ? "Cliente sin nombre" : c.nombre}
-          {c.estado_relacion === "cliente" && <span className="text-[9px] font-black uppercase px-1.5 py-0.5 rounded-full bg-emerald-100 dark:bg-emerald-500/10 text-emerald-700 dark:text-emerald-400 shrink-0 not-italic">Cliente</span>}
-        </p>
-        {c.dni_cuit && <p className="text-[10px] font-semibold text-slate-400">DNI {c.dni_cuit}</p>}
-        {!contactado && (
-          <p className="flex items-center gap-1 text-[10px] font-semibold text-emerald-500 mt-0.5"><span className="w-1.5 h-1.5 rounded-full bg-emerald-500 shrink-0" /> Sin contactar: {tiempoRelativo(c.created_at)}</p>
-        )}
-      </div>
-    </div>
-  );
 }
 function motivoDe(c: Cliente) {
   switch (c.pipeline_stage) {
@@ -533,47 +510,53 @@ export default function ClientesClient({
                   <p className="text-xs text-slate-500 dark:text-slate-400">Todavía no hay clientes cargados. Podés darlos de alta desde acá mismo.</p>
                 </div>
               ) : (
-                <TablaResponsiva<Cliente>
-                  filas={clientesPaginados}
-                  keyExtractor={(c) => c.id}
-                  claseFila={(c) => `border-l-4 ${c.pipeline_stage === "sin_contactar" ? "border-l-emerald-400" : c.pipeline_stage === "perdido" ? "border-l-slate-200 dark:border-l-white/10" : "border-l-transparent"}`}
-                  encabezadoMobile={renderClienteCell}
-                  columnas={
-                    [
-                      { key: "cliente", header: "Cliente", cell: renderClienteCell, ocultarEnMobile: true },
-                      { key: "contacto", header: "Contacto", cell: (c) => (
-                        <div className="flex flex-col gap-0.5">
-                          {c.telefono && <a href={`tel:${c.telefono}`} onClick={(e) => e.stopPropagation()} className="flex items-center gap-1.5 text-xs font-semibold text-slate-700 dark:text-slate-300 whitespace-nowrap hover:text-[#0145F2] dark:hover:text-rose-400"><Phone className="w-3 h-3 text-rose-500 shrink-0" /> {c.telefono}</a>}
-                          {c.email && <span className="flex items-center gap-1.5 text-[11px] text-slate-500 dark:text-slate-400 truncate max-w-[200px]"><Mail className="w-3 h-3 shrink-0" /> {c.email}</span>}
-                        </div>
-                      ) },
-                      { key: "tipo", header: "Tipo", cell: (c) => <span className="text-[10px] font-bold px-2 py-1 rounded-full bg-slate-100 dark:bg-white/10 text-slate-600 dark:text-slate-300">{c.tipo}</span>, ocultarEnMobile: true },
-                      { key: "origen", header: "Origen", cell: (c) => <span className={`text-[10px] font-bold px-2 py-1 rounded-full border whitespace-nowrap ${ORIGEN_COLOR[c.origen] || "bg-slate-100 dark:bg-white/10 text-slate-500 border-slate-200 dark:border-white/10"}`}>{c.origen}</span> },
-                      { key: "interes", header: "Interés", cell: (c) => <span className="text-[11px] text-slate-500 dark:text-slate-400">{[c.busca_marca, c.busca_modelo].filter(Boolean).join(" ") || c.vehiculo_interes_texto || "—"}</span>, ocultarEnMobile: true },
-                      { key: "vendedor", header: "Vendedor", cell: (c) => <span className="text-[11px] font-semibold text-slate-500 dark:text-slate-400">{c.vendedor_id ? perfilMap[c.vendedor_id] || "—" : "Sin asignar"}</span> },
-                      { key: "ultimo_contacto", header: "Último contacto", cell: (c) => <span className="text-[11px] text-slate-500 dark:text-slate-400">{c.ultimo_contacto ? fmtFecha(c.ultimo_contacto) : "—"}</span>, ocultarEnMobile: true },
-                      { key: "ops", header: "Ops.", cell: (c) => (
-                        opsMap[c.id] ? <span title={`${opsMap[c.id]} operación(es)`} className="inline-flex items-center gap-1 text-[10px] font-black bg-indigo-50 dark:bg-indigo-500/10 text-indigo-600 dark:text-indigo-300 px-2 py-1 rounded-lg border border-indigo-100 dark:border-indigo-500/20"><ShoppingBag className="w-3 h-3" /> {opsMap[c.id]}</span> : <span className="text-[11px] text-slate-300 dark:text-slate-600">0</span>
-                      ) },
-                    ] as ColumnaTabla<Cliente>[]
-                  }
-                  acciones={(c) => {
+                <div className="bg-white dark:bg-white/[0.02] border border-slate-200 dark:border-white/5 rounded-2xl divide-y divide-slate-100 dark:divide-white/5 overflow-hidden mb-3">
+                  {clientesPaginados.map((c) => {
                     const contactado = c.pipeline_stage !== "sin_contactar";
+                    const vacio = nombreVacio(c.nombre);
                     const telLimpio = (c.telefono || "").replace(/\D/g, "");
                     const col = PIPELINE_COLUMNAS.find((p) => p.key === c.pipeline_stage);
+                    const bordeClase = c.pipeline_stage === "sin_contactar" ? "border-l-emerald-400" : c.pipeline_stage === "perdido" ? "border-l-slate-200 dark:border-l-white/10" : "border-l-transparent";
                     return (
-                      <div className="flex items-center gap-1 flex-wrap justify-end">
-                        {telLimpio && <a href={`https://wa.me/${telLimpio}?text=${encodeURIComponent(mensajeWhatsApp(c.nombre))}`} target="_blank" rel="noopener noreferrer" title="Contactar por WhatsApp" className="p-2 bg-emerald-500 hover:bg-emerald-600 text-white rounded-lg inline-flex shrink-0"><MessageCircle className="w-3.5 h-3.5" /></a>}
-                        <button onClick={() => toggleContacto(c)} disabled={actualizando === c.id} title={contactado ? "Marcar como Sin contactar" : "Marcar como Contactado"} className={`p-2 rounded-lg border disabled:opacity-50 shrink-0 ${contactado ? "bg-emerald-50 dark:bg-emerald-500/10 text-emerald-700 dark:text-emerald-300 border-emerald-200 dark:border-emerald-500/20" : "bg-amber-50 dark:bg-amber-500/10 text-amber-700 dark:text-amber-300 border-amber-200 dark:border-amber-500/20"}`}>
-                          {contactado ? <CheckCircle2 className="w-3.5 h-3.5" /> : <Circle className="w-3.5 h-3.5" />}
-                        </button>
-                        <button onClick={() => setEditando(c)} title="Editar cliente" className="p-2 text-slate-400 hover:text-indigo-600 dark:hover:text-indigo-300 hover:bg-slate-50 dark:hover:bg-white/5 rounded-lg shrink-0"><Pencil className="w-3.5 h-3.5" /></button>
-                        <button onClick={() => eliminarCliente(c)} disabled={eliminandoId === c.id} title="Eliminar cliente" className="p-2 text-slate-400 hover:text-rose-600 hover:bg-slate-50 dark:hover:bg-white/5 rounded-lg disabled:opacity-50 shrink-0"><Trash2 className="w-3.5 h-3.5" /></button>
-                        <span className="hidden md:inline text-[10px] font-bold text-slate-400 whitespace-nowrap ml-1">{col?.label}</span>
+                      <div key={c.id} onClick={() => setEditando(c)} className={`flex items-center gap-3 px-4 py-3 cursor-pointer hover:bg-slate-50 dark:hover:bg-white/5 border-l-4 ${bordeClase}`}>
+                        <div className="w-11 h-11 rounded-full bg-slate-100 dark:bg-white/5 text-slate-600 dark:text-slate-300 flex items-center justify-center font-black text-xs shrink-0 border border-slate-200 dark:border-white/10">{vacio ? "?" : c.nombre.charAt(0).toUpperCase()}</div>
+                        <div className="flex-1 min-w-0">
+                          <div className="flex items-center justify-between gap-2">
+                            <p className={`text-sm font-bold truncate flex items-center gap-1.5 ${vacio ? "text-slate-400 italic" : "text-slate-900 dark:text-white"}`}>
+                              {vacio ? "Cliente sin nombre" : c.nombre}
+                              {c.estado_relacion === "cliente" && <span className="text-[9px] font-black uppercase px-1.5 py-0.5 rounded-full bg-emerald-100 dark:bg-emerald-500/10 text-emerald-700 dark:text-emerald-400 shrink-0 not-italic">Cliente</span>}
+                            </p>
+                            <span className={`text-[10px] font-bold px-2 py-1 rounded-full border whitespace-nowrap shrink-0 ${ORIGEN_COLOR[c.origen] || "bg-slate-100 dark:bg-white/10 text-slate-500 border-slate-200 dark:border-white/10"}`}>{c.origen}</span>
+                          </div>
+                          <p className="text-[11px] text-slate-400 flex items-center gap-2 flex-wrap">
+                            {c.telefono && <a href={`tel:${c.telefono}`} onClick={(e) => e.stopPropagation()} className="flex items-center gap-1 hover:text-[#0145F2] dark:hover:text-rose-400"><Phone className="w-3 h-3 text-rose-500 shrink-0" /> {c.telefono}</a>}
+                            {c.email && <span className="flex items-center gap-1 truncate max-w-[200px]"><Mail className="w-3 h-3 shrink-0" /> {c.email}</span>}
+                            {c.dni_cuit && <span>DNI {c.dni_cuit}</span>}
+                          </p>
+                          <div className="flex items-center gap-1.5 flex-wrap mt-1">
+                            <span className="text-[10px] font-bold px-1.5 py-0.5 rounded-full bg-slate-100 dark:bg-white/10 text-slate-600 dark:text-slate-300">{c.tipo}</span>
+                            <span className="text-[10px] text-slate-400">{c.vendedor_id ? perfilMap[c.vendedor_id] || "—" : "Sin asignar"}</span>
+                            {opsMap[c.id] ? <span title={`${opsMap[c.id]} operación(es)`} className="inline-flex items-center gap-1 text-[10px] font-black bg-indigo-50 dark:bg-indigo-500/10 text-indigo-600 dark:text-indigo-300 px-1.5 py-0.5 rounded-full border border-indigo-100 dark:border-indigo-500/20"><ShoppingBag className="w-3 h-3" /> {opsMap[c.id]}</span> : null}
+                            {[c.busca_marca, c.busca_modelo].filter(Boolean).join(" ") || c.vehiculo_interes_texto ? <span className="text-[10px] text-slate-400">Busca: {[c.busca_marca, c.busca_modelo].filter(Boolean).join(" ") || c.vehiculo_interes_texto}</span> : null}
+                          </div>
+                          {!contactado ? (
+                            <p className="flex items-center gap-1 text-[10px] font-semibold text-emerald-500 mt-0.5"><span className="w-1.5 h-1.5 rounded-full bg-emerald-500 shrink-0" /> Sin contactar: {tiempoRelativo(c.created_at)}</p>
+                          ) : c.ultimo_contacto ? (
+                            <p className="text-[10px] text-slate-400 mt-0.5">Último contacto: {fmtFecha(c.ultimo_contacto)} · {col?.label}</p>
+                          ) : null}
+                        </div>
+                        <div className="flex items-center gap-1 shrink-0" onClick={(e) => e.stopPropagation()}>
+                          {telLimpio && <a href={`https://wa.me/${telLimpio}?text=${encodeURIComponent(mensajeWhatsApp(c.nombre))}`} target="_blank" rel="noopener noreferrer" title="Contactar por WhatsApp" className="p-2 bg-emerald-500 hover:bg-emerald-600 text-white rounded-lg inline-flex shrink-0"><MessageCircle className="w-3.5 h-3.5" /></a>}
+                          <button onClick={() => toggleContacto(c)} disabled={actualizando === c.id} title={contactado ? "Marcar como Sin contactar" : "Marcar como Contactado"} className={`p-2 rounded-lg border disabled:opacity-50 shrink-0 ${contactado ? "bg-emerald-50 dark:bg-emerald-500/10 text-emerald-700 dark:text-emerald-300 border-emerald-200 dark:border-emerald-500/20" : "bg-amber-50 dark:bg-amber-500/10 text-amber-700 dark:text-amber-300 border-amber-200 dark:border-amber-500/20"}`}>
+                            {contactado ? <CheckCircle2 className="w-3.5 h-3.5" /> : <Circle className="w-3.5 h-3.5" />}
+                          </button>
+                          <button onClick={() => setEditando(c)} title="Editar cliente" className="p-2 text-slate-400 hover:text-indigo-600 dark:hover:text-indigo-300 hover:bg-slate-50 dark:hover:bg-white/5 rounded-lg shrink-0"><Pencil className="w-3.5 h-3.5" /></button>
+                          <button onClick={() => eliminarCliente(c)} disabled={eliminandoId === c.id} title="Eliminar cliente" className="p-2 text-slate-400 hover:text-rose-600 hover:bg-slate-50 dark:hover:bg-white/5 rounded-lg disabled:opacity-50 shrink-0"><Trash2 className="w-3.5 h-3.5" /></button>
+                        </div>
                       </div>
                     );
-                  }}
-                />
+                  })}
+                </div>
               )}
 
               {totalPaginasClientes > 1 && (

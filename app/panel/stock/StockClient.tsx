@@ -106,7 +106,7 @@ export default function StockClient({
   const [galeria, setGaleria] = useState<{ fotos: string[]; index: number } | null>(null);
   const [ocupadoId, setOcupadoId] = useState<string | null>(null);
   const [menuMobileAbierto, setMenuMobileAbierto] = useState(false);
-  const [vista, setVista] = useState<Vista>("tabla");
+  const [vista, setVista] = useState<Vista>("lista");
   const [orden, setOrden] = useState<Orden>("recientes");
 
   // Por default true (optimista) para no tapar los botones un instante a
