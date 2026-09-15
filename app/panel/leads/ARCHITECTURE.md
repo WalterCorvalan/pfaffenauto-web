@@ -44,6 +44,10 @@ Cuando entra un lead sin vendedor asignado (el "hola" inicial), `notificarVended
 
 **Bug corregido**: `DisponibilidadModal.tsx` le dice al vendedor "Volvés solo pasada la fecha 'hasta'", pero `notificarVendedoresDisponibles()` nunca chequeaba `hasta` — un vendedor que se sacó de la rotación por 2 semanas de vacaciones quedaba afuera para siempre hasta que alguien entrara a mano a destildar "Seguir recibiendo leads". Ahora la función también trae `hasta` y solo mantiene a alguien fuera de la rotación si `hasta` es hoy o una fecha futura (sin `hasta` cargada, sigue afuera indefinidamente — eso sí es el comportamiento esperado para "Ausente"/"Enfermo" sin fecha de vuelta conocida). No hay ningún cron que resetee `recibir_leads` a `true` en la base — el campo se queda en `false` para siempre, la fecha se ignora únicamente al decidir a quién notificar.
 
+## El rol de vendedor es `"ventas"`, no `"vendedor"`
+
+**Bug corregido**: `app/panel/leads/page.tsx` filtraba `vendedoresLista` con `roles?.includes("vendedor")` — ese rol no existe en ningún perfil, el string correcto usado en todo el resto del código (`whatsapp/page.tsx`, `rodi/page.tsx`, `nps/page.tsx`, `configuracion/empresa/EmpresaClient.tsx`, `reportes/page.tsx`, `notificarVendedoresDisponibles()`) es `"ventas"`. Con el string equivocado, la lista de vendedores que llega a `LeadsUnificadosClient.tsx` quedaba vacía salvo por los admin — rompía el nombre del vendedor asignado en el listado y el selector para asignar/crear leads manuales.
+
 ## No tocar sin revisar el resto
 
 - No agregar un 5° canal de leads sin actualizar los 3 lugares de arriba (unificación en `leads/page.tsx`, el mapeo FK de `tareas_lead`, y cualquier contador tipo "Leads sin atender").

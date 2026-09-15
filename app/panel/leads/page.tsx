@@ -27,7 +27,10 @@ export default async function LeadsPage() {
     ...(manuales || []).map((c: any) => ({ id: c.id, origen: "manual" as const, nombre: c.nombre, telefono: c.telefono, vendedor_id: c.vendedor_id, calificacion: c.calificacion, estado_lead: c.estado_lead || "nuevo", canal_origen: c.canal_origen, sucursal_id: c.sucursal_id, created_at: c.created_at, last_message_at: c.created_at })),
   ].sort((a, b) => new Date(b.last_message_at || b.created_at).getTime() - new Date(a.last_message_at || a.created_at).getTime());
 
-  const vendedoresLista = (vendedores || []).filter((p: any) => p.roles?.includes("vendedor") || p.roles?.includes("admin"));
+  // El rol de vendedor en toda la base es "ventas" (ver whatsapp/rodi/nps/
+  // configuracion/notificaciones.ts) -- acá decía "vendedor", que ningún
+  // perfil tiene, así que este listado quedaba vacío salvo por los admin.
+  const vendedoresLista = (vendedores || []).filter((p: any) => p.roles?.includes("ventas") || p.roles?.includes("admin"));
 
   return (
     <LeadsUnificadosClient
