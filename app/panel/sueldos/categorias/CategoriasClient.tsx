@@ -60,7 +60,7 @@ export default function CategoriasClient({ categoriasIniciales }: { categoriasIn
                 onClick={() => abrirEdicion(c)}
                 className="bg-white dark:bg-white/[0.02] border border-slate-200 dark:border-white/5 rounded-2xl p-4 hover:border-rose-300 dark:hover:border-rose-500/50 transition-colors cursor-pointer group"
               >
-                <h4 className="font-bold text-slate-900 dark:text-white text-sm mb-3 group-hover:text-[#0145F2] dark:group-hover:text-rose-400 transition-colors">
+                <h4 className="font-bold text-slate-900 dark:text-white text-sm mb-3 group-hover:text-[#0145F2] dark:group-hover:text-[#5b8dff] transition-colors">
                   {c.nombre}
                 </h4>
                 <div className="space-y-2 text-[13px]">
