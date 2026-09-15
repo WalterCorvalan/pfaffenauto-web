@@ -153,9 +153,10 @@ export default function VentasClient({
   };
 
   const eliminarRapido = async (v: Venta) => {
-    if (!confirm(`¿Eliminar la venta de ${v.comprador_nombre}? No se puede deshacer.`)) return;
-    const { error, count } = await supabase2.from("ventas").delete({ count: "exact" }).eq("id", v.id);
-    if (error || !count) { alert("No se pudo eliminar (sin permiso o ya no existe)."); return; }
+    if (!confirm(`¿Eliminar la venta de ${v.comprador_nombre}? Queda en Papelera, se puede restaurar (también revive el expediente vinculado y devuelve el vehículo a disponible).`)) return;
+    const motivo = prompt("Motivo (opcional):") || undefined;
+    const res = await fetch("/api/panel-v2/papelera", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ accion: "eliminar", tipo: "ventas", id: v.id, motivo }) });
+    if (!res.ok) { alert("No se pudo eliminar (sin permiso o ya no existe)."); return; }
     setVentas((prev) => prev.filter((x) => x.id !== v.id));
   };
 

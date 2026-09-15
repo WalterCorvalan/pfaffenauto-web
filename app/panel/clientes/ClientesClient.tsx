@@ -205,10 +205,11 @@ export default function ClientesClient({
   }, [rankingFilas, soloAbiertoSinComprar]);
 
   const eliminarCliente = async (c: Cliente) => {
-    if (!confirm(`¿Eliminar a ${c.nombre}? Esta acción no se puede deshacer.`)) return;
+    if (!confirm(`¿Eliminar a ${c.nombre}? Queda en Papelera, se puede restaurar.`)) return;
+    const motivo = prompt("Motivo (opcional):") || undefined;
     setEliminandoId(c.id);
-    const { error } = await supabase2.from("clientes").delete().eq("id", c.id);
-    if (!error) setClientes((prev) => prev.filter((x) => x.id !== c.id));
+    const res = await fetch("/api/panel-v2/papelera", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ accion: "eliminar", tipo: "clientes", id: c.id, motivo }) });
+    if (res.ok) setClientes((prev) => prev.filter((x) => x.id !== c.id));
     else alert("No se pudo eliminar (puede que solo admin pueda borrar clientes).");
     setEliminandoId(null);
   };
