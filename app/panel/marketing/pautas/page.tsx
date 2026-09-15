@@ -110,7 +110,7 @@ export default async function PautasMarketingPage() {
             <DollarSign className="w-3.5 h-3.5" /> Gasto Total
           </span>
           <h3 className="text-2xl font-black text-slate-900 dark:text-white mt-1 font-mono">$ {totalActual.gasto.toLocaleString("es-AR")}</h3>
-          <span className={`text-[11px] font-bold flex items-center gap-1 mt-1 ${varGasto > 0 ? "text-[#0145F2] dark:text-[#5b8dff]" : varGasto < 0 ? "text-emerald-600 dark:text-emerald-400" : "text-slate-400"}`}>
+          <span className={`text-[11px] font-bold flex items-center gap-1 mt-1 ${varGasto > 0 ? "text-rose-600 dark:text-rose-400" : varGasto < 0 ? "text-emerald-600 dark:text-emerald-400" : "text-slate-400"}`}>
             {varGasto > 0 ? <TrendingUp className="w-3 h-3" /> : varGasto < 0 ? <TrendingDown className="w-3 h-3" /> : <Minus className="w-3 h-3" />}
             {varGasto.toFixed(0)}% vs mes anterior
           </span>
@@ -191,7 +191,7 @@ export default async function PautasMarketingPage() {
                     <span className="text-[12px] text-slate-500 dark:text-slate-400 font-medium">Costo/Lead</span>
                     <span className="font-mono font-bold text-[13px] text-[#0145F2] dark:text-[#5b8dff]">{cpl > 0 ? `$ ${cpl.toLocaleString("es-AR", { maximumFractionDigits: 0 })}` : "—"}</span>
                   </div>
-                  <div className={`flex items-center gap-1 text-[11px] font-bold pt-1 ${varPlataforma > 0 ? "text-[#0145F2] dark:text-[#5b8dff]" : varPlataforma < 0 ? "text-emerald-600 dark:text-emerald-400" : "text-slate-400"}`}>
+                  <div className={`flex items-center gap-1 text-[11px] font-bold pt-1 ${varPlataforma > 0 ? "text-rose-600 dark:text-rose-400" : varPlataforma < 0 ? "text-emerald-600 dark:text-emerald-400" : "text-slate-400"}`}>
                     {varPlataforma > 0 ? <TrendingUp className="w-3 h-3" /> : varPlataforma < 0 ? <TrendingDown className="w-3 h-3" /> : <Minus className="w-3 h-3" />}
                     {varPlataforma.toFixed(0)}% gasto vs mes anterior
                   </div>
