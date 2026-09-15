@@ -56,7 +56,7 @@ export default function ResumenTab({
       {/* Hero: saldo total por moneda */}
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
         {["ARS", "USD"].map((m) => (
-          <div key={m} className={`relative overflow-hidden rounded-2xl p-5 text-white shadow-sm bg-gradient-to-br ${m === "USD" ? "from-emerald-600 to-emerald-700" : "from-rose-600 to-rose-700"}`}>
+          <div key={m} className={`relative overflow-hidden rounded-2xl p-5 text-white shadow-sm bg-gradient-to-br ${m === "USD" ? "from-emerald-600 to-emerald-700" : "from-[#0145F2] to-rose-700"}`}>
             <Wallet className="w-24 h-24 absolute -right-4 -bottom-4 opacity-10" />
             <p className={`text-[10px] font-bold uppercase tracking-widest ${m === "USD" ? "text-emerald-100" : "text-rose-100"}`}>Total en {m} — todas las cajas</p>
             <p className="text-3xl font-black mt-1">{fmt(totalPorMoneda[m] || 0, m)}</p>
@@ -72,13 +72,13 @@ export default function ResumenTab({
           <p className="text-[10px] text-slate-400 mt-1">Suma de Ventas y Señas cobradas</p>
         </div>
         <div className="rounded-2xl p-4 bg-white dark:bg-white/5 border border-slate-200 dark:border-white/10">
-          <p className="text-[10px] font-bold uppercase tracking-widest text-rose-600 dark:text-rose-400">Egresos Totales (mes)</p>
+          <p className="text-[10px] font-bold uppercase tracking-widest text-[#0145F2] dark:text-[#5b8dff]">Egresos Totales (mes)</p>
           {Object.keys(egresosTotales).length === 0 ? <p className="text-xl font-black mt-1">$ 0</p> : Object.entries(egresosTotales).map(([m, v]) => <p key={m} className="text-xl font-black mt-1">{fmt(v, m)}</p>)}
           <p className="text-[10px] text-slate-400 mt-1">Gastos manuales + categorías</p>
         </div>
         <div className="rounded-2xl p-4 bg-white dark:bg-white/5 border border-slate-200 dark:border-white/10">
           <p className="text-[10px] font-bold uppercase tracking-widest text-slate-400">Neto del mes</p>
-          {Object.keys(netoTotalPorMoneda).length === 0 ? <p className="text-xl font-black mt-1">$ 0</p> : Object.entries(netoTotalPorMoneda).map(([m, v]) => <p key={m} className={`text-xl font-black mt-1 ${v >= 0 ? "" : "text-rose-600"}`}>{fmt(v, m)}</p>)}
+          {Object.keys(netoTotalPorMoneda).length === 0 ? <p className="text-xl font-black mt-1">$ 0</p> : Object.entries(netoTotalPorMoneda).map(([m, v]) => <p key={m} className={`text-xl font-black mt-1 ${v >= 0 ? "" : "text-[#0145F2]"}`}>{fmt(v, m)}</p>)}
           <p className="text-[10px] text-slate-400 mt-1">Ingresos menos egresos</p>
         </div>
         <div className="rounded-2xl p-4 bg-white dark:bg-white/5 border border-slate-200 dark:border-white/10">
@@ -149,7 +149,7 @@ export default function ResumenTab({
                 <div key={m} className="h-[170px] flex flex-col">
                   <div className="flex items-center justify-between mb-1 px-1">
                     <span className="text-[10px] font-bold uppercase text-slate-400">{m}</span>
-                    <span className={`text-xs font-black flex items-center gap-1 ${neto >= 0 ? "text-emerald-600" : "text-rose-600"}`}>
+                    <span className={`text-xs font-black flex items-center gap-1 ${neto >= 0 ? "text-emerald-600" : "text-[#0145F2]"}`}>
                       {neto >= 0 ? <TrendingUp className="w-3.5 h-3.5" /> : <TrendingDown className="w-3.5 h-3.5" />} Neto {fmt(neto, m)}
                     </span>
                   </div>
@@ -247,7 +247,7 @@ export default function ResumenTab({
                   <td className="py-2 px-4 text-slate-600 dark:text-slate-300">{o.persona}</td>
                   <td className="py-2 px-4 text-right font-mono font-bold text-slate-800 dark:text-white">{fmt(o.monto, o.moneda)}</td>
                   <td className="py-2 px-4 text-center">
-                    {o.documento ? <Link href={o.documento} className="text-rose-600 hover:underline font-bold">Ver</Link> : "—"}
+                    {o.documento ? <Link href={o.documento} className="text-[#0145F2] hover:underline font-bold">Ver</Link> : "—"}
                   </td>
                 </tr>
               ))}

@@ -37,7 +37,7 @@ export default function FiltroFechas({ desde, hasta }: { desde?: string; hasta?:
           <input type="date" value={h} onChange={(e) => setH(e.target.value)} className="w-full bg-slate-50 dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-lg px-2.5 py-1.5 text-xs outline-none mb-3" />
           <div className="flex items-center gap-2">
             <button onClick={limpiar} className="flex items-center gap-1 px-2.5 py-1.5 text-[11px] font-bold text-slate-500"><X className="w-3 h-3" /> Limpiar</button>
-            <button onClick={aplicar} className="ml-auto px-3 py-1.5 text-[11px] font-bold bg-rose-600 hover:bg-rose-700 text-white rounded-lg">Aplicar</button>
+            <button onClick={aplicar} className="ml-auto px-3 py-1.5 text-[11px] font-bold bg-[#0145F2] hover:bg-[#0138c9] text-white rounded-lg">Aplicar</button>
           </div>
         </div>
       )}

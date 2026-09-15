@@ -38,13 +38,13 @@ export default async function BusquedasWebPage() {
 
   return (
     <div className="p-6">
-      <h2 className="text-sm font-bold text-slate-900 dark:text-white flex items-center gap-2 mb-1"><Search className="w-4 h-4 text-rose-600" /> Búsquedas Web</h2>
+      <h2 className="text-sm font-bold text-slate-900 dark:text-white flex items-center gap-2 mb-1"><Search className="w-4 h-4 text-[#0145F2]" /> Búsquedas Web</h2>
       <p className="text-xs text-slate-400 mb-4">{datos.length} búsquedas registradas (últimas 500)</p>
 
       {datos.length > 0 && (
         <div className="grid grid-cols-2 lg:grid-cols-3 gap-4 mb-4">
           <div className="bg-white dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-2xl p-4">
-            <Search className="w-5 h-5 text-rose-600 mb-2" />
+            <Search className="w-5 h-5 text-[#0145F2] mb-2" />
             <p className="text-2xl font-black text-slate-900 dark:text-white font-mono">{datos.length}</p>
             <p className="text-[11px] text-slate-400 mt-0.5">Búsquedas registradas</p>
           </div>
@@ -73,7 +73,7 @@ export default async function BusquedasWebPage() {
             </div>
           </div>
           <div className="bg-white dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-2xl p-4">
-            <p className="text-xs font-bold text-slate-600 dark:text-slate-300 flex items-center gap-1.5 mb-3"><SearchX className="w-3.5 h-3.5 text-rose-600" /> Sin resultados</p>
+            <p className="text-xs font-bold text-slate-600 dark:text-slate-300 flex items-center gap-1.5 mb-3"><SearchX className="w-3.5 h-3.5 text-[#0145F2]" /> Sin resultados</p>
             <div className="space-y-1.5">
               {sinResultados.length === 0 ? (
                 <p className="text-xs text-slate-400">Todas las búsquedas encontraron algo.</p>

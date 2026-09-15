@@ -207,7 +207,7 @@ export default function NuevoMandatoModal({ miId, miNombre, onClose, onCreado }:
           </div>
 
           <label className="flex items-start gap-2.5 px-3 py-2.5 rounded-xl bg-rose-50 dark:bg-rose-500/10 border border-rose-200 dark:border-rose-500/20 cursor-pointer">
-            <input type="checkbox" checked={agregarAlStock} onChange={(e) => setAgregarAlStock(e.target.checked)} className="w-4 h-4 mt-0.5 accent-rose-600" />
+            <input type="checkbox" checked={agregarAlStock} onChange={(e) => setAgregarAlStock(e.target.checked)} className="w-4 h-4 mt-0.5 accent-[#0145F2]" />
             <span>
               <span className="block text-xs font-bold text-slate-700 dark:text-slate-200">📦 Agregar también este vehículo al stock</span>
               <span className="block text-[10px] text-slate-500 dark:text-slate-400">Crea automáticamente el vehículo en el stock con estado "En preparación" y el mandante como propietario. El mandato queda linkeado al vehículo.</span>
@@ -218,7 +218,7 @@ export default function NuevoMandatoModal({ miId, miNombre, onClose, onCreado }:
 
           <div className="pt-3 border-t border-slate-100 dark:border-white/10 flex gap-3">
             <button type="button" onClick={onClose} className="flex-1 py-2.5 text-sm font-semibold bg-white dark:bg-white/5 border border-slate-200 dark:border-white/10 hover:bg-slate-50 dark:hover:bg-white/10 text-slate-600 dark:text-slate-300 rounded-xl transition-colors">Cancelar</button>
-            <button type="submit" disabled={guardando} className="flex-1 py-2.5 flex items-center justify-center gap-2 text-sm font-bold bg-rose-600 hover:bg-rose-700 text-white rounded-xl transition-colors disabled:opacity-50">
+            <button type="submit" disabled={guardando} className="flex-1 py-2.5 flex items-center justify-center gap-2 text-sm font-bold bg-[#0145F2] hover:bg-[#0138c9] text-white rounded-xl transition-colors disabled:opacity-50">
               {guardando ? <Loader2 className="w-4 h-4 animate-spin" /> : <><Printer className="w-4 h-4" /> {agregarAlStock ? "Generar mandato + agregar al stock" : "Generar mandato"}</>}
             </button>
           </div>

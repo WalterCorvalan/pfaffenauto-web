@@ -8,7 +8,7 @@ export default async function PostulacionesPage() {
   return (
     <div className="p-6">
       <div className="flex items-center gap-2 mb-1">
-        <Users className="w-5 h-5 text-rose-600" />
+        <Users className="w-5 h-5 text-[#0145F2]" />
         <h1 className="text-xl font-bold text-slate-900 dark:text-white">Postulaciones</h1>
       </div>
       <p className="text-sm text-slate-400 mb-6">{(postulaciones || []).length} postulación{(postulaciones || []).length === 1 ? "" : "es"} recibidas desde /trabaja-con-nosotros</p>
@@ -36,7 +36,7 @@ export default async function PostulacionesPage() {
                 <Mail className="w-3.5 h-3.5 shrink-0" /> {p.email}
               </p>
               <p className="text-[10px] text-slate-400 mt-2">{new Date(p.created_at).toLocaleDateString("es-AR", { day: "2-digit", month: "short", year: "numeric" })}</p>
-              <a href={p.cv_url} target="_blank" rel="noreferrer" className="mt-3 flex items-center justify-center gap-1.5 w-full py-2 rounded-lg bg-rose-50 dark:bg-rose-500/10 text-rose-600 dark:text-rose-300 text-xs font-bold hover:bg-rose-100 dark:hover:bg-rose-500/20">
+              <a href={p.cv_url} target="_blank" rel="noreferrer" className="mt-3 flex items-center justify-center gap-1.5 w-full py-2 rounded-lg bg-rose-50 dark:bg-rose-500/10 text-[#0145F2] dark:text-rose-300 text-xs font-bold hover:bg-rose-100 dark:hover:bg-rose-500/20">
                 <FileText className="w-3.5 h-3.5" /> Ver CV
               </a>
             </div>

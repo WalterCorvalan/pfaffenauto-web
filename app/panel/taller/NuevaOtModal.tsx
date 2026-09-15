@@ -196,7 +196,7 @@ export default function NuevaOtModal({ mecanicos, onClose }: { mecanicos: any[];
             <div>
               <div className="flex justify-between items-center mb-1.5">
                 <label className="text-xs text-slate-600">Daños / observaciones al ingresar</label>
-                <button onClick={() => setDanos([...danos, { zona: "", detalle: "" }])} className="text-rose-600 text-xs font-medium hover:underline">+ Agregar</button>
+                <button onClick={() => setDanos([...danos, { zona: "", detalle: "" }])} className="text-[#0145F2] text-xs font-medium hover:underline">+ Agregar</button>
               </div>
               {danos.map((dano, index) => (
                 <div key={index} className="flex items-center gap-2 mb-2">
@@ -216,7 +216,7 @@ export default function NuevaOtModal({ mecanicos, onClose }: { mecanicos: any[];
 
         <div className="flex gap-3 p-6 border-t border-slate-100 bg-slate-50">
           <button onClick={onClose} className="px-4 py-2 text-sm font-bold bg-white border border-slate-200 rounded-xl text-slate-700">Cancelar</button>
-          <button onClick={guardarOT} disabled={cargando} className="px-6 py-2 text-sm font-bold bg-rose-600 text-white rounded-xl shadow-sm hover:bg-rose-700">Crear OT</button>
+          <button onClick={guardarOT} disabled={cargando} className="px-6 py-2 text-sm font-bold bg-[#0145F2] text-white rounded-xl shadow-sm hover:bg-[#0138c9]">Crear OT</button>
         </div>
       </div>
     </div>

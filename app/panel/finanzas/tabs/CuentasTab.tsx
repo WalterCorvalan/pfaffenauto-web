@@ -76,7 +76,7 @@ export default function CuentasTab({ cuentas, setCuentas, soyAdmin }: { cuentas:
         <p className="text-lg font-bold">Cuentas — {cuentas.length}</p>
         <div className="flex items-center gap-2">
           <button onClick={() => setShowDiff(true)} className="flex items-center gap-1.5 px-3 py-2 text-xs font-bold bg-slate-100 dark:bg-white/10 rounded-lg"><GitCompare className="w-3.5 h-3.5" /> Ver diff</button>
-          <button onClick={abrirNueva} className="flex items-center gap-1.5 px-4 py-2 text-sm font-bold bg-rose-600 hover:bg-rose-700 text-white rounded-lg"><Plus className="w-4 h-4" /> Nueva cuenta</button>
+          <button onClick={abrirNueva} className="flex items-center gap-1.5 px-4 py-2 text-sm font-bold bg-[#0145F2] hover:bg-[#0138c9] text-white rounded-lg"><Plus className="w-4 h-4" /> Nueva cuenta</button>
         </div>
       </div>
 
@@ -128,7 +128,7 @@ export default function CuentasTab({ cuentas, setCuentas, soyAdmin }: { cuentas:
             <p className="text-[10px] text-slate-400 mt-2">{editando ? "Cambiar el saldo inicial acá corrige la contabilidad de la cuenta — usalo con cuidado." : 'El saldo de apertura queda asentado como un movimiento "Saldo inicial" en el libro diario. Después, los movimientos que elijan esta caja actualizan el saldo automáticamente.'}</p>
             <div className="flex justify-end gap-2 mt-4">
               <button onClick={() => { setShowNueva(false); setEditando(null); }} className="px-4 py-2 text-sm font-bold text-slate-500">Cancelar</button>
-              <button onClick={editando ? guardarEdicion : crear} disabled={guardando} className="flex items-center gap-1.5 px-4 py-2 text-sm font-bold bg-rose-600 hover:bg-rose-700 text-white rounded-lg disabled:opacity-50"><Save className="w-4 h-4" /> {editando ? "Guardar" : "Crear cuenta"}</button>
+              <button onClick={editando ? guardarEdicion : crear} disabled={guardando} className="flex items-center gap-1.5 px-4 py-2 text-sm font-bold bg-[#0145F2] hover:bg-[#0138c9] text-white rounded-lg disabled:opacity-50"><Save className="w-4 h-4" /> {editando ? "Guardar" : "Crear cuenta"}</button>
             </div>
           </div>
         </div>
@@ -153,7 +153,7 @@ export default function CuentasTab({ cuentas, setCuentas, soyAdmin }: { cuentas:
         <div className="fixed inset-0 bg-black/40 z-50 flex items-center justify-center p-4" onClick={() => setReseteando(null)}>
           <div onClick={(e) => e.stopPropagation()} className="bg-white dark:bg-[#141414] border border-slate-200 dark:border-white/10 w-full max-w-sm rounded-2xl shadow-2xl p-6">
             <p className="text-xs text-slate-400 mb-4">Se resetea el saldo inicial de <b>{reseteando.nombre}</b>: {fmt(reseteando.saldo_inicial, reseteando.moneda)} → {fmt(0, reseteando.moneda)}. Usar SOLO si querés arrancar la contabilidad desde cero (típicamente después de borrar todos los movimientos). Reversible editando la cuenta.</p>
-            <div className="flex justify-end gap-2"><button onClick={() => setReseteando(null)} className="px-4 py-2 text-sm font-bold text-slate-500">Cancelar</button><button onClick={confirmarReset} disabled={guardando} className="px-4 py-2 text-sm font-bold bg-rose-600 hover:bg-rose-700 text-white rounded-lg disabled:opacity-50">Resetear saldo</button></div>
+            <div className="flex justify-end gap-2"><button onClick={() => setReseteando(null)} className="px-4 py-2 text-sm font-bold text-slate-500">Cancelar</button><button onClick={confirmarReset} disabled={guardando} className="px-4 py-2 text-sm font-bold bg-[#0145F2] hover:bg-[#0138c9] text-white rounded-lg disabled:opacity-50">Resetear saldo</button></div>
           </div>
         </div>
       )}

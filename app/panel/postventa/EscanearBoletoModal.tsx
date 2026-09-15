@@ -100,7 +100,7 @@ export default function EscanearBoletoModal({ miId, onClose, onCreado }: Props) 
 
         <div className="pt-4 mt-4 border-t border-slate-100 dark:border-white/10 flex gap-3">
           <button type="button" onClick={onClose} className="flex-1 py-2.5 text-sm font-semibold bg-white dark:bg-white/5 border border-slate-200 dark:border-white/10 hover:bg-slate-50 dark:hover:bg-white/10 text-slate-600 dark:text-slate-300 rounded-xl">Cerrar</button>
-          <button type="button" onClick={guardar} disabled={guardando} className="flex-1 py-2.5 flex items-center justify-center gap-2 text-sm font-bold bg-rose-600 hover:bg-rose-700 text-white rounded-xl disabled:opacity-50">
+          <button type="button" onClick={guardar} disabled={guardando} className="flex-1 py-2.5 flex items-center justify-center gap-2 text-sm font-bold bg-[#0145F2] hover:bg-[#0138c9] text-white rounded-xl disabled:opacity-50">
             {guardando ? <Loader2 className="w-4 h-4 animate-spin" /> : "Guardar compra"}
           </button>
         </div>

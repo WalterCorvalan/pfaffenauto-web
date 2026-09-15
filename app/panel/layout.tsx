@@ -882,10 +882,10 @@ export default function PanelV2Layout({
               <Link
                 key={item.href}
                 href={item.href}
-                className={`flex-1 flex flex-col items-center justify-center gap-0.5 text-[10px] font-semibold ${activo ? "text-rose-600 dark:text-rose-400" : "text-slate-500 dark:text-slate-400"}`}
+                className={`flex-1 flex flex-col items-center justify-center gap-0.5 text-[10px] font-semibold ${activo ? "text-[#0145F2] dark:text-[#5b8dff]" : "text-slate-500 dark:text-slate-400"}`}
               >
                 <Icon
-                  className={`w-5 h-5 ${activo ? "text-rose-600 dark:text-rose-400" : ""}`}
+                  className={`w-5 h-5 ${activo ? "text-[#0145F2] dark:text-[#5b8dff]" : ""}`}
                 />
                 {item.label}
               </Link>

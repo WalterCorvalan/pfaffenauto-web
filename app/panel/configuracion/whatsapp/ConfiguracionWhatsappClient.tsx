@@ -108,7 +108,7 @@ function MemoriaBot() {
           <label className={labelClass}>Respuesta</label>
           <textarea value={nueva.respuesta} onChange={(e) => setNueva((n) => ({ ...n, respuesta: e.target.value }))} rows={3} className={inputClass} />
         </div>
-        <button onClick={agregar} disabled={guardando} className="px-4 py-2.5 rounded-xl bg-rose-600 hover:bg-rose-700 text-white text-sm font-bold disabled:opacity-50 flex items-center gap-1.5">
+        <button onClick={agregar} disabled={guardando} className="px-4 py-2.5 rounded-xl bg-[#0145F2] hover:bg-[#0138c9] text-white text-sm font-bold disabled:opacity-50 flex items-center gap-1.5">
           {guardando ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Plus className="w-3.5 h-3.5" />} Agregar
         </button>
       </div>
@@ -200,10 +200,10 @@ export default function ConfiguracionWhatsappClient() {
       <div className="flex items-center gap-1 border-b border-slate-200 dark:border-white/10 mb-5">
         <Link href="/panel/configuracion" className="px-3 py-2.5 text-sm font-bold border-b-2 border-transparent text-slate-500">Usuarios</Link>
         <Link href="/panel/configuracion/empresa" className="px-3 py-2.5 text-sm font-bold border-b-2 border-transparent text-slate-500">Empresa</Link>
-        <span className="px-3 py-2.5 text-sm font-bold border-b-2 border-rose-600 text-rose-600">WhatsApp</span>
+        <span className="px-3 py-2.5 text-sm font-bold border-b-2 border-[#0145F2] text-[#0145F2]">WhatsApp</span>
         <Link href="/panel/configuracion/instagram" className="px-3 py-2.5 text-sm font-bold border-b-2 border-transparent text-slate-500">Instagram</Link>
       </div>
-      <h1 className="text-xl font-bold flex items-center gap-2 mb-1"><MessageCircle className="w-5 h-5 text-rose-600" /> Configuración — WhatsApp</h1>
+      <h1 className="text-xl font-bold flex items-center gap-2 mb-1"><MessageCircle className="w-5 h-5 text-[#0145F2]" /> Configuración — WhatsApp</h1>
       <p className="text-sm text-slate-400 mb-6">Conectá el número de WhatsApp Business de Meta para recibir los mensajes de los clientes acá (Conversaciones → WhatsApp) y que el asistente automático conteste hasta que un vendedor toma la charla.</p>
 
       <div className={`mb-4 px-3 py-2 rounded-lg text-xs font-bold inline-flex items-center gap-1.5 ${config?.listo ? "bg-emerald-50 text-emerald-700 dark:bg-emerald-500/10 dark:text-emerald-300" : "bg-amber-50 text-amber-700 dark:bg-amber-500/10 dark:text-amber-300"}`}>
@@ -253,7 +253,7 @@ export default function ConfiguracionWhatsappClient() {
           <p className="text-[10px] text-slate-400 col-span-2 -mt-1">Fuera de este rango, la IA no responde y se envía el aviso de "fuera de horario" configurado abajo (una vez por día por conversación).</p>
         </div>
         {mensaje && <p className="text-xs font-semibold text-slate-600 dark:text-slate-300">{mensaje}</p>}
-        <button onClick={guardar} disabled={guardando} className="px-4 py-2.5 rounded-xl bg-rose-600 hover:bg-rose-700 text-white text-sm font-bold disabled:opacity-50 flex items-center gap-1.5">
+        <button onClick={guardar} disabled={guardando} className="px-4 py-2.5 rounded-xl bg-[#0145F2] hover:bg-[#0138c9] text-white text-sm font-bold disabled:opacity-50 flex items-center gap-1.5">
           {guardando ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : null} Guardar
         </button>
       </div>
@@ -280,7 +280,7 @@ export default function ConfiguracionWhatsappClient() {
               {copiado === "verify" ? <Check className="w-4 h-4 text-emerald-500" /> : <Copy className="w-4 h-4" />}
             </button>
           </div>
-          <button onClick={regenerarVerify} className="text-[11px] font-semibold text-rose-600 mt-1.5">Regenerar (invalida el actual)</button>
+          <button onClick={regenerarVerify} className="text-[11px] font-semibold text-[#0145F2] mt-1.5">Regenerar (invalida el actual)</button>
         </div>
 
         <a href="https://developers.facebook.com/apps" target="_blank" rel="noreferrer" className="inline-flex items-center gap-1 text-xs font-bold text-indigo-600 dark:text-indigo-300">
@@ -426,7 +426,7 @@ function PlantillasWhatsapp() {
           <textarea value={nueva.cuerpo} onChange={(e) => setNueva((n) => ({ ...n, cuerpo: e.target.value }))} rows={3} placeholder="Hola {{1}}, seguimos en contacto por tu consulta en Pfaffen Autos." className={inputClass} />
           <p className="text-[10px] text-slate-400 mt-1">Máximo una variable, tiene que ser exactamente {"{{1}}"}.</p>
         </div>
-        <button onClick={crear} disabled={creando} className="px-4 py-2.5 rounded-xl bg-rose-600 hover:bg-rose-700 text-white text-sm font-bold disabled:opacity-50 flex items-center gap-1.5">
+        <button onClick={crear} disabled={creando} className="px-4 py-2.5 rounded-xl bg-[#0145F2] hover:bg-[#0138c9] text-white text-sm font-bold disabled:opacity-50 flex items-center gap-1.5">
           {creando ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Plus className="w-3.5 h-3.5" />} Enviar a aprobación de Meta
         </button>
       </div>

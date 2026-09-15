@@ -55,7 +55,7 @@ export default function TelefonosClient({
         </div>
         <button
           onClick={abrirNuevo}
-          className="flex items-center justify-center gap-2 bg-rose-600 hover:bg-rose-700 text-white font-bold text-sm px-4 py-2.5 rounded-xl transition-colors shrink-0"
+          className="flex items-center justify-center gap-2 bg-[#0145F2] hover:bg-[#0138c9] text-white font-bold text-sm px-4 py-2.5 rounded-xl transition-colors shrink-0"
         >
           <Plus className="w-4 h-4" /> Nuevo teléfono
         </button>
@@ -104,7 +104,7 @@ export default function TelefonosClient({
                       onClick={() => abrirEdicion(tel)}
                       className="bg-white dark:bg-white/[0.02] border border-slate-200 dark:border-white/5 rounded-2xl p-4 hover:border-rose-300 dark:hover:border-rose-500/50 transition-colors cursor-pointer group"
                     >
-                      <h4 className="font-bold text-slate-900 dark:text-white text-sm mb-3 group-hover:text-rose-600 dark:group-hover:text-rose-400 transition-colors">
+                      <h4 className="font-bold text-slate-900 dark:text-white text-sm mb-3 group-hover:text-[#0145F2] dark:group-hover:text-rose-400 transition-colors">
                         {tel.nombre}
                       </h4>
                       <div className="space-y-2 text-[13px]">

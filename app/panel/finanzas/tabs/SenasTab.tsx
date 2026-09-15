@@ -27,7 +27,7 @@ export default function SenasTab({
             <p className="text-xs text-amber-600 font-bold mt-1">Activas (a aplicar): {Object.entries(activasPorMoneda).map(([m, n]) => fmt(n, m)).join(" · ")}</p>
           )}
         </div>
-        <button onClick={() => setModalAbierto(true)} className="flex items-center gap-1.5 px-4 py-2 text-sm font-bold bg-rose-600 hover:bg-rose-700 text-white rounded-lg shrink-0"><Plus className="w-4 h-4" /> Nueva Seña</button>
+        <button onClick={() => setModalAbierto(true)} className="flex items-center gap-1.5 px-4 py-2 text-sm font-bold bg-[#0145F2] hover:bg-[#0138c9] text-white rounded-lg shrink-0"><Plus className="w-4 h-4" /> Nueva Seña</button>
       </div>
 
       {senas.length === 0 ? (
@@ -42,7 +42,7 @@ export default function SenasTab({
           )}
           columnas={
             [
-              { key: "numero", header: "N°", cell: (s) => s.numero || "—", claseTd: "font-mono font-bold text-rose-600" },
+              { key: "numero", header: "N°", cell: (s) => s.numero || "—", claseTd: "font-mono font-bold text-[#0145F2]" },
               { key: "fecha", header: "Fecha", cell: (s) => (s.fecha ? new Date(`${s.fecha}T12:00:00Z`).toLocaleDateString("es-AR", { timeZone: "UTC" }) : "—") },
               { key: "cliente", header: "Cliente", cell: (s) => <>{s.apellido || s.cliente_nombre}{s.apellido ? `, ${s.nombre}` : ""}{s.precio_confirmado === false && <AlertTriangle className="w-3.5 h-3.5 text-amber-500 inline ml-1" />}</>, claseTd: "font-bold", ocultarEnMobile: true },
               { key: "vehiculo", header: "Vehículo", cell: (s) => <span className="flex items-center gap-1.5"><CarFront className="w-3.5 h-3.5 text-slate-400" /> {s.marca} {s.modelo}</span> },
@@ -51,7 +51,7 @@ export default function SenasTab({
             ] as ColumnaTabla<any>[]
           }
           acciones={(s) => (
-            <Link href={`/panel/senas/imprimir/${s.id}`} className="inline-flex p-1.5 bg-slate-50 dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-lg text-slate-400 hover:text-rose-600"><Printer className="w-3.5 h-3.5" /></Link>
+            <Link href={`/panel/senas/imprimir/${s.id}`} className="inline-flex p-1.5 bg-slate-50 dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-lg text-slate-400 hover:text-[#0145F2]"><Printer className="w-3.5 h-3.5" /></Link>
           )}
         />
       )}

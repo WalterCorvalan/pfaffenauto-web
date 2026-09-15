@@ -74,9 +74,9 @@ export default function TransferenciasTab({
       </div>
 
       <div className="flex items-center gap-1 mb-3">
-        <button onClick={() => setFiltroEstado("todos")} className={`px-3 py-1.5 text-xs font-bold rounded-lg ${filtroEstado === "todos" ? "bg-rose-600 text-white" : "bg-white dark:bg-white/5 border border-slate-200 dark:border-white/10"}`}>Todos {delMes.length}</button>
-        <button onClick={() => setFiltroEstado("finalizados")} className={`px-3 py-1.5 text-xs font-bold rounded-lg ${filtroEstado === "finalizados" ? "bg-rose-600 text-white" : "bg-white dark:bg-white/5 border border-slate-200 dark:border-white/10"}`}>✓ Finalizados {finalizadosCount}</button>
-        <button onClick={() => setFiltroEstado("en_proceso")} className={`px-3 py-1.5 text-xs font-bold rounded-lg ${filtroEstado === "en_proceso" ? "bg-rose-600 text-white" : "bg-white dark:bg-white/5 border border-slate-200 dark:border-white/10"}`}>⏳ En proceso {enProcesoCount}</button>
+        <button onClick={() => setFiltroEstado("todos")} className={`px-3 py-1.5 text-xs font-bold rounded-lg ${filtroEstado === "todos" ? "bg-[#0145F2] text-white" : "bg-white dark:bg-white/5 border border-slate-200 dark:border-white/10"}`}>Todos {delMes.length}</button>
+        <button onClick={() => setFiltroEstado("finalizados")} className={`px-3 py-1.5 text-xs font-bold rounded-lg ${filtroEstado === "finalizados" ? "bg-[#0145F2] text-white" : "bg-white dark:bg-white/5 border border-slate-200 dark:border-white/10"}`}>✓ Finalizados {finalizadosCount}</button>
+        <button onClick={() => setFiltroEstado("en_proceso")} className={`px-3 py-1.5 text-xs font-bold rounded-lg ${filtroEstado === "en_proceso" ? "bg-[#0145F2] text-white" : "bg-white dark:bg-white/5 border border-slate-200 dark:border-white/10"}`}>⏳ En proceso {enProcesoCount}</button>
       </div>
 
       {filtrados.length === 0 ? (

@@ -99,10 +99,10 @@ export default function PrestamosTab({
       </div>
 
       <div className="flex items-center gap-1 mb-4">
-        <button onClick={() => setSub("activos")} className={`px-4 py-2 rounded-lg text-sm font-bold ${sub === "activos" ? "bg-rose-600 text-white" : "bg-white dark:bg-white/5 border border-slate-200 dark:border-white/10"}`}>Activos</button>
-        <button onClick={() => setSub("devueltos")} className={`px-4 py-2 rounded-lg text-sm font-bold ${sub === "devueltos" ? "bg-rose-600 text-white" : "bg-white dark:bg-white/5 border border-slate-200 dark:border-white/10"}`}>Devueltos</button>
-        <button onClick={() => setSub("todos")} className={`px-4 py-2 rounded-lg text-sm font-bold ${sub === "todos" ? "bg-rose-600 text-white" : "bg-white dark:bg-white/5 border border-slate-200 dark:border-white/10"}`}>Todos</button>
-        <button onClick={abrirNuevo} className="ml-auto flex items-center gap-1.5 px-4 py-2 text-sm font-bold bg-rose-600 hover:bg-rose-700 text-white rounded-lg"><Plus className="w-4 h-4" /> Nuevo Préstamo</button>
+        <button onClick={() => setSub("activos")} className={`px-4 py-2 rounded-lg text-sm font-bold ${sub === "activos" ? "bg-[#0145F2] text-white" : "bg-white dark:bg-white/5 border border-slate-200 dark:border-white/10"}`}>Activos</button>
+        <button onClick={() => setSub("devueltos")} className={`px-4 py-2 rounded-lg text-sm font-bold ${sub === "devueltos" ? "bg-[#0145F2] text-white" : "bg-white dark:bg-white/5 border border-slate-200 dark:border-white/10"}`}>Devueltos</button>
+        <button onClick={() => setSub("todos")} className={`px-4 py-2 rounded-lg text-sm font-bold ${sub === "todos" ? "bg-[#0145F2] text-white" : "bg-white dark:bg-white/5 border border-slate-200 dark:border-white/10"}`}>Todos</button>
+        <button onClick={abrirNuevo} className="ml-auto flex items-center gap-1.5 px-4 py-2 text-sm font-bold bg-[#0145F2] hover:bg-[#0138c9] text-white rounded-lg"><Plus className="w-4 h-4" /> Nuevo Préstamo</button>
       </div>
 
       {lista.length === 0 ? (
@@ -152,7 +152,7 @@ export default function PrestamosTab({
             <label className={labelClass + " mt-3"}>Notas</label>
             <textarea value={notas} onChange={(e) => setNotas(e.target.value)} rows={2} className={inputClass} />
             <p className="text-[10px] text-slate-400 mt-2">El préstamo nace activo y debita {monto ? fmt(Number(monto), moneda) : "el monto"} de la caja elegida. La marcación "devuelto" se hace después desde la lista.</p>
-            <div className="flex justify-end gap-2 mt-4"><button onClick={() => setShowNuevo(false)} className="px-4 py-2 text-sm font-bold text-slate-500">Cancelar</button><button onClick={registrar} disabled={guardando} className="flex items-center gap-1.5 px-4 py-2 text-sm font-bold bg-rose-600 hover:bg-rose-700 text-white rounded-lg disabled:opacity-50"><Save className="w-4 h-4" /> Guardar préstamo</button></div>
+            <div className="flex justify-end gap-2 mt-4"><button onClick={() => setShowNuevo(false)} className="px-4 py-2 text-sm font-bold text-slate-500">Cancelar</button><button onClick={registrar} disabled={guardando} className="flex items-center gap-1.5 px-4 py-2 text-sm font-bold bg-[#0145F2] hover:bg-[#0138c9] text-white rounded-lg disabled:opacity-50"><Save className="w-4 h-4" /> Guardar préstamo</button></div>
           </div>
         </div>
       )}
@@ -164,7 +164,7 @@ export default function PrestamosTab({
             <p className="text-sm font-bold mb-3">{devolviendo.persona} — {fmt(devolviendo.monto, devolviendo.moneda)}</p>
             <label className={labelClass}>Caja donde entra la devolución *</label>
             <select value={dvCuentaId} onChange={(e) => setDvCuentaId(e.target.value)} className={inputClass}><option value="">— Elegí —</option>{cuentas.filter((c) => c.moneda === devolviendo.moneda).map((c) => <option key={c.id} value={c.id}>{c.nombre} · saldo {fmt(c.saldo, c.moneda)}</option>)}</select>
-            <div className="flex justify-end gap-2 mt-4"><button onClick={() => setDevolviendo(null)} className="px-4 py-2 text-sm font-bold text-slate-500">Cancelar</button><button onClick={confirmarDevolucion} disabled={guardando} className="flex items-center gap-1.5 px-4 py-2 text-sm font-bold bg-rose-600 hover:bg-rose-700 text-white rounded-lg disabled:opacity-50"><Save className="w-4 h-4" /> Confirmar</button></div>
+            <div className="flex justify-end gap-2 mt-4"><button onClick={() => setDevolviendo(null)} className="px-4 py-2 text-sm font-bold text-slate-500">Cancelar</button><button onClick={confirmarDevolucion} disabled={guardando} className="flex items-center gap-1.5 px-4 py-2 text-sm font-bold bg-[#0145F2] hover:bg-[#0138c9] text-white rounded-lg disabled:opacity-50"><Save className="w-4 h-4" /> Confirmar</button></div>
           </div>
         </div>
       )}

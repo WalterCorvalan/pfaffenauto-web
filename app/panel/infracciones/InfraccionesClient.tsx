@@ -94,19 +94,19 @@ export default function InfraccionesClient({ infraccionesIniciales, vehiculos, p
     <div className="flex flex-col h-full overflow-hidden">
       <div className="flex items-center justify-between gap-4 px-6 pt-4 shrink-0">
         <div>
-          <h1 className="text-xl font-black text-slate-900 dark:text-white flex items-center gap-2"><Landmark className="w-5 h-5 text-rose-600" /> Infracciones</h1>
+          <h1 className="text-xl font-black text-slate-900 dark:text-white flex items-center gap-2"><Landmark className="w-5 h-5 text-[#0145F2]" /> Infracciones</h1>
           <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">Gestión de multas para clientes externos</p>
         </div>
-        <button onClick={abrirNueva} className="flex items-center gap-1.5 px-4 py-2.5 text-sm font-bold bg-rose-600 hover:bg-rose-700 text-white rounded-xl transition-colors shrink-0">
+        <button onClick={abrirNueva} className="flex items-center gap-1.5 px-4 py-2.5 text-sm font-bold bg-[#0145F2] hover:bg-[#0138c9] text-white rounded-xl transition-colors shrink-0">
           <Plus className="w-4 h-4" /> Nueva operación
         </button>
       </div>
 
       <div className="flex items-center gap-1 px-6 pt-3 border-b border-slate-200 dark:border-white/5 bg-white dark:bg-white/[0.02]">
-        <button onClick={() => setTab("listado")} className={`flex items-center gap-1.5 px-3 py-2.5 text-sm font-bold border-b-2 transition-colors ${tab === "listado" ? "border-rose-600 text-rose-600 dark:text-rose-400" : "border-transparent text-slate-400"}`}>
+        <button onClick={() => setTab("listado")} className={`flex items-center gap-1.5 px-3 py-2.5 text-sm font-bold border-b-2 transition-colors ${tab === "listado" ? "border-[#0145F2] text-[#0145F2] dark:text-[#5b8dff]" : "border-transparent text-slate-400"}`}>
           <List className="w-4 h-4" /> Listado
         </button>
-        <button onClick={() => setTab("liquidacion")} className={`flex items-center gap-1.5 px-3 py-2.5 text-sm font-bold border-b-2 transition-colors ${tab === "liquidacion" ? "border-rose-600 text-rose-600 dark:text-rose-400" : "border-transparent text-slate-400"}`}>
+        <button onClick={() => setTab("liquidacion")} className={`flex items-center gap-1.5 px-3 py-2.5 text-sm font-bold border-b-2 transition-colors ${tab === "liquidacion" ? "border-[#0145F2] text-[#0145F2] dark:text-[#5b8dff]" : "border-transparent text-slate-400"}`}>
           <BarChart3 className="w-4 h-4" /> Liquidación
         </button>
       </div>

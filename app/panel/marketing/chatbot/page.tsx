@@ -40,7 +40,7 @@ export default async function ChatbotMetricasPage() {
   const tarjetas = [
     { label: "Conversaciones (7d)", valor: conversaciones7 ?? 0, icon: MessageCircle, color: "text-indigo-600" },
     { label: "Mensajes de clientes (7d)", valor: mensajesEntrantes7 ?? 0, icon: Bot, color: "text-emerald-600" },
-    { label: "Leads calientes (7d)", valor: calientes7 ?? 0, icon: Flame, color: "text-rose-600" },
+    { label: "Leads calientes (7d)", valor: calientes7 ?? 0, icon: Flame, color: "text-[#0145F2]" },
     { label: "Leads tibios (7d)", valor: tibios7 ?? 0, icon: Flame, color: "text-amber-500" },
     { label: "Pidieron humano (7d)", valor: handoffs7 ?? 0, icon: PhoneCall, color: "text-amber-600" },
     { label: "Tasa de derivación (histórico)", valor: `${pctHandoffGlobal}%`, icon: PhoneCall, color: "text-amber-600" },
@@ -49,7 +49,7 @@ export default async function ChatbotMetricasPage() {
   return (
     <div className="p-6 max-w-[1000px] mx-auto space-y-4">
       <div>
-        <h2 className="text-sm font-bold text-slate-900 dark:text-white flex items-center gap-2"><Bot className="w-4 h-4 text-rose-600" /> Asistente Virtual (Rodi)</h2>
+        <h2 className="text-sm font-bold text-slate-900 dark:text-white flex items-center gap-2"><Bot className="w-4 h-4 text-[#0145F2]" /> Asistente Virtual (Rodi)</h2>
         <p className="text-xs text-slate-400 mt-0.5">Chatbot del sitio público — distinto del bot de WhatsApp, cada uno con su propia charla y costo de IA</p>
       </div>
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">

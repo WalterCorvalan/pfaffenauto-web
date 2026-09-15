@@ -152,7 +152,7 @@ export default function CotizacionesClient({
         </div>
         <div className="flex items-center gap-2 shrink-0">
           <button onClick={() => setModalMigrar(true)} className="flex items-center gap-1.5 px-3.5 py-2.5 text-sm font-bold bg-white dark:bg-white/5 border border-slate-200 dark:border-white/10 hover:bg-slate-50 dark:hover:bg-white/10 rounded-xl transition-colors text-slate-600 dark:text-slate-300"><Wrench className="w-4 h-4" /> Migrar borradores</button>
-          <button onClick={() => setModalNuevo(true)} className="flex items-center gap-1.5 px-4 py-2.5 text-sm font-bold bg-rose-600 hover:bg-rose-700 text-white rounded-xl transition-colors"><Plus className="w-4 h-4" /> Nueva cotización</button>
+          <button onClick={() => setModalNuevo(true)} className="flex items-center gap-1.5 px-4 py-2.5 text-sm font-bold bg-[#0145F2] hover:bg-[#0138c9] text-white rounded-xl transition-colors"><Plus className="w-4 h-4" /> Nueva cotización</button>
         </div>
       </div>
 
@@ -167,7 +167,7 @@ export default function CotizacionesClient({
           <div className="mb-6 bg-white dark:bg-white/[0.02] border border-slate-200 dark:border-white/5 rounded-2xl overflow-hidden">
             <div className="flex items-center justify-between px-4 py-3 border-b border-slate-100 dark:border-white/10">
               <p className="text-[11px] font-black uppercase tracking-widest text-slate-400 flex items-center gap-1.5"><Globe className="w-3.5 h-3.5" /> Tasaciones pedidas desde la web ({leadsWebIniciales.length})</p>
-              <Link href="/panel/peritajes" className="text-[11px] font-bold text-rose-600 hover:text-rose-700 flex items-center gap-1">Gestionar en Peritajes <ExternalLink className="w-3 h-3" /></Link>
+              <Link href="/panel/peritajes" className="text-[11px] font-bold text-[#0145F2] hover:text-[#0138c9] flex items-center gap-1">Gestionar en Peritajes <ExternalLink className="w-3 h-3" /></Link>
             </div>
             <p className="text-[11px] text-slate-400 px-4 pt-2">Solo lectura — se gestionan y convierten en peritaje desde el módulo Peritajes.</p>
             <div className="divide-y divide-slate-50 dark:divide-white/5">

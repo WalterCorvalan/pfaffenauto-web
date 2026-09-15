@@ -39,7 +39,7 @@ export default function MobileNavProgress() {
 
   return (
     <div className="md:hidden print:hidden fixed top-0 left-0 right-0 z-[200] h-[3px] bg-transparent pointer-events-none">
-      <div className="panel-v2-nav-progress h-full bg-rose-600" />
+      <div className="panel-v2-nav-progress h-full bg-[#0145F2]" />
     </div>
   );
 }

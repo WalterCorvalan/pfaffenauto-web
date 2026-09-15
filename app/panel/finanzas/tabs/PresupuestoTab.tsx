@@ -57,7 +57,7 @@ export default function PresupuestoTab({ presupuestos, setPresupuestos, movimien
     <div>
       <div className="flex items-center justify-between mb-4 flex-wrap gap-2">
         <label className="flex items-center gap-2 text-sm font-bold">📅 Mes: <input type="month" value={mes} onChange={(e) => setMes(e.target.value)} className={inputClass + " w-auto"} /></label>
-        <button onClick={abrirNuevo} className="flex items-center gap-1.5 px-4 py-2 text-sm font-bold bg-rose-600 hover:bg-rose-700 text-white rounded-lg"><Plus className="w-4 h-4" /> Nuevo Presupuesto</button>
+        <button onClick={abrirNuevo} className="flex items-center gap-1.5 px-4 py-2 text-sm font-bold bg-[#0145F2] hover:bg-[#0138c9] text-white rounded-lg"><Plus className="w-4 h-4" /> Nuevo Presupuesto</button>
       </div>
 
       {delMes.length === 0 ? (
@@ -99,7 +99,7 @@ export default function PresupuestoTab({ presupuestos, setPresupuestos, movimien
             <label className={labelClass + " mt-3"}>Notas</label>
             <textarea value={notas} onChange={(e) => setNotas(e.target.value)} rows={2} placeholder="Observaciones — supuestos, plan de ajuste, etc." className={inputClass} />
             <p className="text-[10px] text-slate-400 mt-2">El consumo real se computa al vuelo a partir de los movimientos que comparten mes, categoría, moneda y tipo — no se persiste en este doc.</p>
-            <div className="flex justify-end gap-2 mt-4"><button onClick={() => setShowNuevo(false)} className="px-4 py-2 text-sm font-bold text-slate-500">Cancelar</button><button onClick={guardar} disabled={guardando} className="flex items-center gap-1.5 px-4 py-2 text-sm font-bold bg-rose-600 hover:bg-rose-700 text-white rounded-lg disabled:opacity-50"><Save className="w-4 h-4" /> {editando ? "Guardar" : "Crear presupuesto"}</button></div>
+            <div className="flex justify-end gap-2 mt-4"><button onClick={() => setShowNuevo(false)} className="px-4 py-2 text-sm font-bold text-slate-500">Cancelar</button><button onClick={guardar} disabled={guardando} className="flex items-center gap-1.5 px-4 py-2 text-sm font-bold bg-[#0145F2] hover:bg-[#0138c9] text-white rounded-lg disabled:opacity-50"><Save className="w-4 h-4" /> {editando ? "Guardar" : "Crear presupuesto"}</button></div>
           </div>
         </div>
       )}

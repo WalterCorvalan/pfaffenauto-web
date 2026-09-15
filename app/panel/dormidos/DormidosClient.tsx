@@ -101,7 +101,7 @@ export default function DormidosClient({
       <div className="flex-1 overflow-y-auto custom-scrollbar p-4 md:p-6">
         <div className="max-w-6xl mx-auto">
           <div className="mb-1">
-            <h1 className="text-xl font-black text-slate-900 dark:text-white flex items-center gap-2"><Moon className="w-5 h-5 text-rose-600" /> Clientes Dormidos</h1>
+            <h1 className="text-xl font-black text-slate-900 dark:text-white flex items-center gap-2"><Moon className="w-5 h-5 text-[#0145F2]" /> Clientes Dormidos</h1>
             <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">Clientes que compraron hace {plazoFiltro}+ meses y podrían estar listos para renovar.</p>
           </div>
 
@@ -152,7 +152,7 @@ export default function DormidosClient({
               </div>
             )}
             {seleccionados.size > 0 && (
-              <button onClick={() => setModalCampana(true)} className="ml-auto flex items-center gap-1.5 px-4 py-2 text-xs font-bold bg-rose-600 hover:bg-rose-700 text-white rounded-lg">
+              <button onClick={() => setModalCampana(true)} className="ml-auto flex items-center gap-1.5 px-4 py-2 text-xs font-bold bg-[#0145F2] hover:bg-[#0138c9] text-white rounded-lg">
                 <Send className="w-3.5 h-3.5" /> Enviar campaña WhatsApp ({seleccionados.size})
               </button>
             )}
@@ -172,7 +172,7 @@ export default function DormidosClient({
                   <thead>
                     <tr className="bg-slate-50 dark:bg-white/[0.03] border-b border-slate-200 dark:border-white/5">
                       <th className="px-4 py-3 w-px">
-                        <input type="checkbox" checked={conTelefono.length > 0 && conTelefono.every((d) => seleccionados.has(d.clienteId))} onChange={toggleTodos} className="w-4 h-4 accent-rose-600" />
+                        <input type="checkbox" checked={conTelefono.length > 0 && conTelefono.every((d) => seleccionados.has(d.clienteId))} onChange={toggleTodos} className="w-4 h-4 accent-[#0145F2]" />
                       </th>
                       <th className="px-4 py-3 text-[10px] font-black uppercase tracking-widest text-slate-500 dark:text-slate-400">Cliente</th>
                       <th className="px-4 py-3 text-[10px] font-black uppercase tracking-widest text-slate-500 dark:text-slate-400">Última compra</th>
@@ -186,7 +186,7 @@ export default function DormidosClient({
                     {filtrados.map((d) => (
                       <tr key={d.clienteId} className={`border-b border-slate-100 dark:border-white/5 last:border-0 hover:bg-slate-50 dark:hover:bg-white/[0.02] ${colorFila(d.mesesDormido)}`}>
                         <td className="px-4 py-3">
-                          {d.telefono && <input type="checkbox" checked={seleccionados.has(d.clienteId)} onChange={() => toggleSeleccion(d.clienteId)} className="w-4 h-4 accent-rose-600" />}
+                          {d.telefono && <input type="checkbox" checked={seleccionados.has(d.clienteId)} onChange={() => toggleSeleccion(d.clienteId)} className="w-4 h-4 accent-[#0145F2]" />}
                         </td>
                         <td className="px-4 py-3">
                           <div className="flex items-center gap-1.5">
@@ -198,7 +198,7 @@ export default function DormidosClient({
                         <td className="px-4 py-3 text-xs text-slate-600 dark:text-slate-300 whitespace-nowrap">{[d.marca, d.modelo].filter(Boolean).join(" ") || "—"}</td>
                         <td className="px-4 py-3 text-xs font-bold text-slate-700 dark:text-slate-200 whitespace-nowrap">{fmtPrecio(d.precio, d.moneda)}</td>
                         <td className="px-4 py-3 text-xs whitespace-nowrap">
-                          <span className={`font-bold ${d.mesesDormido >= 30 ? "text-rose-600 dark:text-rose-400" : d.mesesDormido >= 24 ? "text-amber-600 dark:text-amber-400" : "text-slate-500"}`}>{d.mesesDormido}m</span>
+                          <span className={`font-bold ${d.mesesDormido >= 30 ? "text-[#0145F2] dark:text-[#5b8dff]" : d.mesesDormido >= 24 ? "text-amber-600 dark:text-amber-400" : "text-slate-500"}`}>{d.mesesDormido}m</span>
                         </td>
                         <td className="px-4 py-3 text-xs text-slate-500 dark:text-slate-400 whitespace-nowrap">{d.vendedorId ? perfilMap[d.vendedorId] || "—" : "Sin asignar"}</td>
                         <td className="px-4 py-3 w-px">
@@ -223,14 +223,14 @@ export default function DormidosClient({
               <div className="md:hidden flex flex-col gap-2">
                 {conTelefono.length > 0 && (
                   <label className="flex items-center gap-2 text-xs font-bold text-slate-500 dark:text-slate-400 px-1">
-                    <input type="checkbox" checked={conTelefono.every((d) => seleccionados.has(d.clienteId))} onChange={toggleTodos} className="w-4 h-4 accent-rose-600" />
+                    <input type="checkbox" checked={conTelefono.every((d) => seleccionados.has(d.clienteId))} onChange={toggleTodos} className="w-4 h-4 accent-[#0145F2]" />
                     Seleccionar todos los que tienen teléfono
                   </label>
                 )}
                 {filtrados.map((d) => (
                   <div key={d.clienteId} className={`bg-white dark:bg-white/[0.02] border border-slate-200 dark:border-white/5 rounded-2xl p-4 ${colorFila(d.mesesDormido)}`}>
                     <div className="flex items-start gap-3">
-                      {d.telefono && <input type="checkbox" checked={seleccionados.has(d.clienteId)} onChange={() => toggleSeleccion(d.clienteId)} className="w-4 h-4 accent-rose-600 mt-1 shrink-0" />}
+                      {d.telefono && <input type="checkbox" checked={seleccionados.has(d.clienteId)} onChange={() => toggleSeleccion(d.clienteId)} className="w-4 h-4 accent-[#0145F2] mt-1 shrink-0" />}
                       <div className="min-w-0 flex-1">
                         <div className="flex items-center gap-1.5">
                           {d.cantidadCompras >= 2 && <span title="Cliente VIP"><Crown className="w-3.5 h-3.5 text-amber-500 shrink-0" /></span>}
@@ -240,7 +240,7 @@ export default function DormidosClient({
                         <dl className="grid grid-cols-2 gap-x-3 gap-y-1.5 mt-2.5">
                           <div><dt className="text-[9px] font-black uppercase tracking-widest text-slate-400">Última compra</dt><dd className="text-xs text-slate-700 dark:text-slate-300">{[d.marca, d.modelo].filter(Boolean).join(" ") || "—"}</dd></div>
                           <div><dt className="text-[9px] font-black uppercase tracking-widest text-slate-400">Precio</dt><dd className="text-xs font-bold text-slate-700 dark:text-slate-300">{fmtPrecio(d.precio, d.moneda)}</dd></div>
-                          <div><dt className="text-[9px] font-black uppercase tracking-widest text-slate-400">Dormido hace</dt><dd className={`text-xs font-bold ${d.mesesDormido >= 30 ? "text-rose-600 dark:text-rose-400" : d.mesesDormido >= 24 ? "text-amber-600 dark:text-amber-400" : "text-slate-500"}`}>{d.mesesDormido}m</dd></div>
+                          <div><dt className="text-[9px] font-black uppercase tracking-widest text-slate-400">Dormido hace</dt><dd className={`text-xs font-bold ${d.mesesDormido >= 30 ? "text-[#0145F2] dark:text-[#5b8dff]" : d.mesesDormido >= 24 ? "text-amber-600 dark:text-amber-400" : "text-slate-500"}`}>{d.mesesDormido}m</dd></div>
                           <div><dt className="text-[9px] font-black uppercase tracking-widest text-slate-400">Vendedor</dt><dd className="text-xs text-slate-700 dark:text-slate-300">{d.vendedorId ? perfilMap[d.vendedorId] || "—" : "Sin asignar"}</dd></div>
                         </dl>
                       </div>

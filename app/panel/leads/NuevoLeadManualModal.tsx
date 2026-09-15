@@ -48,7 +48,7 @@ export default function NuevoLeadManualModal({ vendedores, sucursales, miId, onC
       <div className="absolute inset-0 bg-slate-900/50 backdrop-blur-sm" onClick={() => !guardando && onClose()} />
       <div className="relative bg-white dark:bg-[#141414] border border-slate-200 dark:border-white/10 w-full max-w-md rounded-2xl shadow-2xl p-6">
         <div className="flex justify-between items-start mb-1">
-          <h3 className="text-lg font-bold text-slate-900 dark:text-white flex items-center gap-2"><Radar className="w-5 h-5 text-rose-600" /> Nuevo lead</h3>
+          <h3 className="text-lg font-bold text-slate-900 dark:text-white flex items-center gap-2"><Radar className="w-5 h-5 text-[#0145F2]" /> Nuevo lead</h3>
           <button onClick={onClose} className="text-slate-400 hover:text-slate-700 dark:hover:text-white p-1.5 rounded-lg hover:bg-slate-100 dark:hover:bg-white/10"><X className="w-4 h-4" /></button>
         </div>
         <p className="text-xs text-slate-500 dark:text-slate-400 mb-4">Para leads que no llegan por WhatsApp/Instagram/Rodi — walk-in, MercadoLibre, cliente anterior, etc.</p>
@@ -99,7 +99,7 @@ export default function NuevoLeadManualModal({ vendedores, sucursales, miId, onC
 
           <div className="flex gap-2 pt-2">
             <button type="button" onClick={onClose} className="flex-1 py-2.5 text-sm font-semibold bg-white dark:bg-white/5 border border-slate-200 dark:border-white/10 hover:bg-slate-50 dark:hover:bg-white/10 text-slate-600 dark:text-slate-300 rounded-xl transition-colors">Cancelar</button>
-            <button type="submit" disabled={guardando} className="flex-1 py-2.5 flex items-center justify-center gap-2 text-sm font-bold bg-rose-600 hover:bg-rose-700 text-white rounded-xl transition-colors disabled:opacity-50">
+            <button type="submit" disabled={guardando} className="flex-1 py-2.5 flex items-center justify-center gap-2 text-sm font-bold bg-[#0145F2] hover:bg-[#0138c9] text-white rounded-xl transition-colors disabled:opacity-50">
               {guardando ? "Guardando..." : <><Save className="w-4 h-4" /> Crear lead</>}
             </button>
           </div>

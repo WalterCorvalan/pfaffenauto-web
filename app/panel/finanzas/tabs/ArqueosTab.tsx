@@ -42,7 +42,7 @@ export default function ArqueosTab({ arqueos, setArqueos, cuentas, miNombre }: {
         🔍 <b>Arqueo de caja</b>: comparación entre el saldo que el sistema calcula vs el efectivo contado físicamente. Cualquier diferencia debe quedar registrada con motivo.
       </div>
 
-      <div className="flex justify-end mb-4"><button onClick={abrir} className="flex items-center gap-1.5 px-4 py-2 text-sm font-bold bg-rose-600 hover:bg-rose-700 text-white rounded-lg"><Plus className="w-4 h-4" /> Nuevo arqueo</button></div>
+      <div className="flex justify-end mb-4"><button onClick={abrir} className="flex items-center gap-1.5 px-4 py-2 text-sm font-bold bg-[#0145F2] hover:bg-[#0138c9] text-white rounded-lg"><Plus className="w-4 h-4" /> Nuevo arqueo</button></div>
 
       {arqueos.length === 0 ? (
         <div className="bg-white dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-2xl py-16 text-center"><p className="text-sm font-bold">Sin arqueos registrados</p></div>
@@ -92,7 +92,7 @@ export default function ArqueosTab({ arqueos, setArqueos, cuentas, miNombre }: {
             <label className={labelClass + " mt-3"}>Motivo / Observaciones {hayDiferencia && "*"}</label>
             <textarea value={motivo} onChange={(e) => setMotivo(e.target.value)} rows={2} className={inputClass} />
             {hayDiferencia && !motivo.trim() && <p className="text-[10px] text-rose-500 mt-1">Indicá el motivo de la diferencia.</p>}
-            <div className="flex justify-end gap-2 mt-4"><button onClick={() => setShowNuevo(false)} className="px-4 py-2 text-sm font-bold text-slate-500">Cancelar</button><button onClick={guardar} disabled={guardando} className="flex items-center gap-1.5 px-4 py-2 text-sm font-bold bg-rose-600 hover:bg-rose-700 text-white rounded-lg disabled:opacity-50"><Save className="w-4 h-4" /> Guardar arqueo</button></div>
+            <div className="flex justify-end gap-2 mt-4"><button onClick={() => setShowNuevo(false)} className="px-4 py-2 text-sm font-bold text-slate-500">Cancelar</button><button onClick={guardar} disabled={guardando} className="flex items-center gap-1.5 px-4 py-2 text-sm font-bold bg-[#0145F2] hover:bg-[#0138c9] text-white rounded-lg disabled:opacity-50"><Save className="w-4 h-4" /> Guardar arqueo</button></div>
           </div>
         </div>
       )}

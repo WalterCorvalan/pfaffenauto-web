@@ -176,16 +176,16 @@ export default function NuevoEventoModal({ fechaInicial, perfiles, miId, onClose
             <div className="mt-3">
               <label className="text-xs font-semibold text-slate-600 dark:text-slate-300 block mb-1.5">¿Quién puede ver este evento?</label>
               <div className="flex gap-2">
-                <button type="button" onClick={() => setVisibilidad("equipo")} className={`px-3 py-1.5 rounded-lg text-xs font-semibold border ${visibilidad === "equipo" ? "bg-rose-600 border-rose-600 text-white" : "bg-white dark:bg-white/5 border-slate-200 dark:border-white/10 text-slate-600 dark:text-slate-300"}`}>Todo el equipo</button>
-                <button type="button" onClick={() => setVisibilidad("privado")} className={`px-3 py-1.5 rounded-lg text-xs font-semibold border ${visibilidad === "privado" ? "bg-rose-600 border-rose-600 text-white" : "bg-white dark:bg-white/5 border-slate-200 dark:border-white/10 text-slate-600 dark:text-slate-300"}`}>Privado</button>
+                <button type="button" onClick={() => setVisibilidad("equipo")} className={`px-3 py-1.5 rounded-lg text-xs font-semibold border ${visibilidad === "equipo" ? "bg-[#0145F2] border-[#0145F2] text-white" : "bg-white dark:bg-white/5 border-slate-200 dark:border-white/10 text-slate-600 dark:text-slate-300"}`}>Todo el equipo</button>
+                <button type="button" onClick={() => setVisibilidad("privado")} className={`px-3 py-1.5 rounded-lg text-xs font-semibold border ${visibilidad === "privado" ? "bg-[#0145F2] border-[#0145F2] text-white" : "bg-white dark:bg-white/5 border-slate-200 dark:border-white/10 text-slate-600 dark:text-slate-300"}`}>Privado</button>
               </div>
             </div>
 
             <div className="mt-3">
               <label className="text-xs font-semibold text-slate-600 dark:text-slate-300 block mb-1.5">¿A quién le avisamos?</label>
               <div className="flex gap-2 mb-2">
-                <button type="button" onClick={() => setNotificarPor("sector")} className={`px-3 py-1.5 rounded-lg text-xs font-semibold border ${notificarPor === "sector" ? "bg-rose-600 border-rose-600 text-white" : "bg-white dark:bg-white/5 border-slate-200 dark:border-white/10 text-slate-600 dark:text-slate-300"}`}>Por sector</button>
-                <button type="button" onClick={() => setNotificarPor("personas")} className={`px-3 py-1.5 rounded-lg text-xs font-semibold border ${notificarPor === "personas" ? "bg-rose-600 border-rose-600 text-white" : "bg-white dark:bg-white/5 border-slate-200 dark:border-white/10 text-slate-600 dark:text-slate-300"}`}>Por personas</button>
+                <button type="button" onClick={() => setNotificarPor("sector")} className={`px-3 py-1.5 rounded-lg text-xs font-semibold border ${notificarPor === "sector" ? "bg-[#0145F2] border-[#0145F2] text-white" : "bg-white dark:bg-white/5 border-slate-200 dark:border-white/10 text-slate-600 dark:text-slate-300"}`}>Por sector</button>
+                <button type="button" onClick={() => setNotificarPor("personas")} className={`px-3 py-1.5 rounded-lg text-xs font-semibold border ${notificarPor === "personas" ? "bg-[#0145F2] border-[#0145F2] text-white" : "bg-white dark:bg-white/5 border-slate-200 dark:border-white/10 text-slate-600 dark:text-slate-300"}`}>Por personas</button>
               </div>
 
               {notificarPor === "sector" ? (
@@ -220,7 +220,7 @@ export default function NuevoEventoModal({ fechaInicial, perfiles, miId, onClose
 
           <div className="pt-3 border-t border-slate-100 dark:border-white/10 flex gap-3">
             <button type="button" onClick={onClose} className="flex-1 py-2.5 text-sm font-semibold bg-white dark:bg-white/5 border border-slate-200 dark:border-white/10 hover:bg-slate-50 dark:hover:bg-white/10 text-slate-600 dark:text-slate-300 rounded-xl transition-colors">Cancelar</button>
-            <button type="submit" disabled={guardando} className="flex-1 py-2.5 flex items-center justify-center gap-2 text-sm font-bold bg-rose-600 hover:bg-rose-700 text-white rounded-xl transition-colors disabled:opacity-50">
+            <button type="submit" disabled={guardando} className="flex-1 py-2.5 flex items-center justify-center gap-2 text-sm font-bold bg-[#0145F2] hover:bg-[#0138c9] text-white rounded-xl transition-colors disabled:opacity-50">
               {guardando ? <Loader2 className="w-4 h-4 animate-spin" /> : "Crear evento"}
             </button>
           </div>

@@ -67,7 +67,7 @@ export default function ImprimirVenta({ venta: v, branding, senaPrevia }: { vent
             <p className="text-[11px] text-slate-500 dark:text-slate-400 font-mono mt-0.5">N° {v.numero}</p>
           </div>
         </div>
-        <button onClick={() => window.print()} className="bg-rose-600 hover:bg-rose-700 text-white px-6 py-2.5 rounded-xl font-bold text-xs uppercase tracking-widest flex items-center gap-2 transition-all shadow-sm active:scale-95"><Printer className="w-4 h-4" /> Imprimir / PDF</button>
+        <button onClick={() => window.print()} className="bg-[#0145F2] hover:bg-[#0138c9] text-white px-6 py-2.5 rounded-xl font-bold text-xs uppercase tracking-widest flex items-center gap-2 transition-all shadow-sm active:scale-95"><Printer className="w-4 h-4" /> Imprimir / PDF</button>
       </div>
 
       {/* Calcado del recibo de venta tradicional (Softcars) -- mismo formato

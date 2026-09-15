@@ -137,7 +137,7 @@ export default function AlertasClient({ alertasIniciales }: { alertasIniciales: 
                               <div className="flex items-start justify-between gap-2">
                                 <p className="text-sm font-bold text-slate-900 dark:text-white flex items-center gap-1.5">
                                   {a.titulo}
-                                  {a.contador > 1 && <span className="text-[10px] font-bold px-1.5 rounded-full bg-rose-600 text-white shrink-0">x{a.contador}</span>}
+                                  {a.contador > 1 && <span className="text-[10px] font-bold px-1.5 rounded-full bg-[#0145F2] text-white shrink-0">x{a.contador}</span>}
                                 </p>
                                 <span className={`text-[9px] font-bold uppercase px-1.5 py-0.5 rounded-full shrink-0 ${info.badge}`}>{p === "novedad" ? "Novedad" : info.label}</span>
                               </div>

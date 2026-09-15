@@ -50,7 +50,7 @@ export default function TuCatalogoModal({ config, esAdmin, onClose, onConfigActu
 
         <div className="flex items-center gap-2 mb-3">
           <div className="flex-1 bg-slate-50 dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-xl px-3 py-2.5 text-xs font-mono text-slate-600 dark:text-slate-300 truncate">{url}</div>
-          <button onClick={copiar} className="flex items-center gap-1.5 px-3 py-2.5 rounded-xl bg-rose-600 hover:bg-rose-700 text-white text-xs font-bold shrink-0">
+          <button onClick={copiar} className="flex items-center gap-1.5 px-3 py-2.5 rounded-xl bg-[#0145F2] hover:bg-[#0138c9] text-white text-xs font-bold shrink-0">
             {copiado ? <Check className="w-3.5 h-3.5" /> : <Copy className="w-3.5 h-3.5" />} {copiado ? "Copiado" : "Copiar"}
           </button>
         </div>
@@ -66,7 +66,7 @@ export default function TuCatalogoModal({ config, esAdmin, onClose, onConfigActu
 
         {esAdmin && config && (
           <label className="flex items-center gap-2.5 px-3 py-2.5 rounded-xl bg-slate-50 dark:bg-white/5 border border-slate-200 dark:border-white/10 cursor-pointer mb-4">
-            <input type="checkbox" checked={config.mostrar_precios} onChange={toggleMostrarPrecios} disabled={guardandoToggle} className="w-4 h-4 accent-rose-600" />
+            <input type="checkbox" checked={config.mostrar_precios} onChange={toggleMostrarPrecios} disabled={guardandoToggle} className="w-4 h-4 accent-[#0145F2]" />
             <span className="flex items-center gap-1.5 text-xs font-bold text-slate-700 dark:text-slate-200"><Tag className="w-3.5 h-3.5" /> Mostrar los precios en el catálogo</span>
           </label>
         )}

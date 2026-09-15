@@ -246,7 +246,7 @@ export default function RecontactosClient({
       <div className="flex-1 overflow-y-auto custom-scrollbar p-4 md:p-6">
         <div className="max-w-6xl mx-auto">
           <div className="mb-1">
-            <h1 className="text-xl font-black text-slate-900 dark:text-white flex items-center gap-2"><UserSearch className="w-5 h-5 text-rose-600" /> Recontactos</h1>
+            <h1 className="text-xl font-black text-slate-900 dark:text-white flex items-center gap-2"><UserSearch className="w-5 h-5 text-[#0145F2]" /> Recontactos</h1>
             <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
               Gente que consultó hace {plazoFiltro}+ meses y nunca compró. A los que ya compraron los ves en Postventa y Dormidos — acá están los que no vuelve a mirar nadie.
             </p>
@@ -276,8 +276,8 @@ export default function RecontactosClient({
           </div>
 
           <div className="flex items-center gap-1 mb-4 border-b border-slate-200 dark:border-white/10">
-            <button onClick={() => setTab("para")} className={`px-3 py-2 text-sm font-bold border-b-2 -mb-px transition-colors ${tab === "para" ? "border-rose-600 text-rose-600" : "border-transparent text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-200"}`}>Para recontactar ({filtrados.length})</button>
-            <button onClick={() => setTab("recontactados")} className={`px-3 py-2 text-sm font-bold border-b-2 -mb-px transition-colors ${tab === "recontactados" ? "border-rose-600 text-rose-600" : "border-transparent text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-200"}`}>Ya recontactados ({recontactos.length})</button>
+            <button onClick={() => setTab("para")} className={`px-3 py-2 text-sm font-bold border-b-2 -mb-px transition-colors ${tab === "para" ? "border-[#0145F2] text-[#0145F2]" : "border-transparent text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-200"}`}>Para recontactar ({filtrados.length})</button>
+            <button onClick={() => setTab("recontactados")} className={`px-3 py-2 text-sm font-bold border-b-2 -mb-px transition-colors ${tab === "recontactados" ? "border-[#0145F2] text-[#0145F2]" : "border-transparent text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-200"}`}>Ya recontactados ({recontactos.length})</button>
           </div>
 
           {tab === "para" ? (
@@ -313,7 +313,7 @@ export default function RecontactosClient({
                   </div>
                 </div>
                 <label className="flex items-center gap-2 text-xs font-semibold text-slate-600 dark:text-slate-300 pb-2 cursor-pointer">
-                  <input type="checkbox" checked={ocultarYaContactados} onChange={(e) => setOcultarYaContactados(e.target.checked)} className="w-4 h-4 accent-rose-600" /> Ocultar ya contactados
+                  <input type="checkbox" checked={ocultarYaContactados} onChange={(e) => setOcultarYaContactados(e.target.checked)} className="w-4 h-4 accent-[#0145F2]" /> Ocultar ya contactados
                 </label>
               </div>
 
@@ -346,7 +346,7 @@ export default function RecontactosClient({
                             <select value={segmento} onChange={(e) => cambiarSegmento(c, e.target.value)} className={`text-[11px] font-bold px-2.5 py-1.5 rounded-lg border ${seg.color}`}>
                               {SEGMENTOS.map((s) => <option key={s.value} value={s.value}>{s.label}</option>)}
                             </select>
-                            <button onClick={() => marcarNoContactar(c)} title="No contactar más" className="p-2 bg-slate-50 dark:bg-white/5 hover:bg-rose-600 hover:text-white text-slate-400 rounded-lg"><Ban className="w-4 h-4" /></button>
+                            <button onClick={() => marcarNoContactar(c)} title="No contactar más" className="p-2 bg-slate-50 dark:bg-white/5 hover:bg-[#0145F2] hover:text-white text-slate-400 rounded-lg"><Ban className="w-4 h-4" /></button>
                             <button onClick={() => mandarRecontacto(c)} disabled={enviando === c.id || !c.telefono} title="Mandar por WhatsApp" className="flex items-center gap-1.5 px-3 py-2 text-xs font-bold bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg disabled:opacity-50">
                               <MessageCircle className="w-3.5 h-3.5" /> WhatsApp
                             </button>
@@ -411,7 +411,7 @@ export default function RecontactosClient({
                           <div className="flex items-center gap-1.5 shrink-0">
                             <button onClick={() => marcarResultado(r, "quiere_avanzar")} title="Quiere avanzar" className="p-2 bg-slate-50 dark:bg-white/5 hover:bg-emerald-600 hover:text-white text-slate-400 rounded-lg"><ThumbsUp className="w-3.5 h-3.5" /></button>
                             <button onClick={() => marcarResultado(r, "no_interesa")} title="No le interesa" className="p-2 bg-slate-50 dark:bg-white/5 hover:bg-amber-500 hover:text-white text-slate-400 rounded-lg"><ThumbsDown className="w-3.5 h-3.5" /></button>
-                            <button onClick={() => marcarResultado(r, "pidio_baja")} title="Pidió baja" className="p-2 bg-slate-50 dark:bg-white/5 hover:bg-rose-600 hover:text-white text-slate-400 rounded-lg"><Ban className="w-3.5 h-3.5" /></button>
+                            <button onClick={() => marcarResultado(r, "pidio_baja")} title="Pidió baja" className="p-2 bg-slate-50 dark:bg-white/5 hover:bg-[#0145F2] hover:text-white text-slate-400 rounded-lg"><Ban className="w-3.5 h-3.5" /></button>
                             <button onClick={() => deshacerRecontacto(r)} title="Deshacer" className="p-2 bg-slate-50 dark:bg-white/5 hover:bg-slate-200 dark:hover:bg-white/10 text-slate-400 rounded-lg"><Undo2 className="w-3.5 h-3.5" /></button>
                           </div>
                         </div>

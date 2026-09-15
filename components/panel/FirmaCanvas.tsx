@@ -101,7 +101,7 @@ export default function FirmaCanvas({
     return (
       <div className="flex flex-col items-center">
         <img src={firmaUrlActual} alt="Firma del cliente" className="h-20 object-contain" />
-        <button type="button" onClick={() => setRefirmando(true)} className="print:hidden text-[10px] text-slate-400 hover:text-rose-600 dark:hover:text-rose-400 font-bold uppercase tracking-widest mt-1 flex items-center gap-1">
+        <button type="button" onClick={() => setRefirmando(true)} className="print:hidden text-[10px] text-slate-400 hover:text-[#0145F2] dark:hover:text-rose-400 font-bold uppercase tracking-widest mt-1 flex items-center gap-1">
           <PenLine className="w-3 h-3" /> Firmar de nuevo
         </button>
       </div>
@@ -121,7 +121,7 @@ export default function FirmaCanvas({
         <button type="button" onClick={limpiar} disabled={!tieneTrazo || guardando} className="flex items-center gap-1.5 text-[11px] font-bold uppercase tracking-widest text-slate-500 dark:text-slate-400 hover:text-slate-800 dark:hover:text-white disabled:opacity-40 transition-colors">
           <Eraser className="w-3.5 h-3.5" /> Limpiar
         </button>
-        <button type="button" onClick={guardarFirma} disabled={!tieneTrazo || guardando} className="ml-auto flex items-center gap-1.5 bg-rose-600 hover:bg-rose-700 text-white text-[11px] font-bold uppercase tracking-widest px-4 py-2 rounded-lg disabled:opacity-50 transition-colors">
+        <button type="button" onClick={guardarFirma} disabled={!tieneTrazo || guardando} className="ml-auto flex items-center gap-1.5 bg-[#0145F2] hover:bg-[#0138c9] text-white text-[11px] font-bold uppercase tracking-widest px-4 py-2 rounded-lg disabled:opacity-50 transition-colors">
           {guardando ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Check className="w-3.5 h-3.5" />} Guardar firma
         </button>
       </div>

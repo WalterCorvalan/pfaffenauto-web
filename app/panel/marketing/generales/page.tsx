@@ -127,13 +127,13 @@ export default async function MetricasGeneralesPage() {
   const canales = [
     { label: "WhatsApp", icon: MessageSquareText, color: "text-emerald-600", bg: "bg-emerald-50 dark:bg-emerald-500/10", conversaciones: waConversaciones7 ?? 0, mensajes: waMensajes7 ?? 0, href: "/panel/marketing/whatsapp-metricas" },
     { label: "Instagram", icon: AtSign, color: "text-pink-600", bg: "bg-pink-50 dark:bg-pink-500/10", conversaciones: igConversaciones7 ?? 0, mensajes: igMensajes7 ?? 0, href: "/panel/marketing/instagram" },
-    { label: "Rodi (web)", icon: Bot, color: "text-rose-600", bg: "bg-rose-50 dark:bg-rose-500/10", conversaciones: rodiConversaciones7 ?? 0, mensajes: rodiMensajes7 ?? 0, href: "/panel/marketing/chatbot" },
+    { label: "Rodi (web)", icon: Bot, color: "text-[#0145F2]", bg: "bg-rose-50 dark:bg-rose-500/10", conversaciones: rodiConversaciones7 ?? 0, mensajes: rodiMensajes7 ?? 0, href: "/panel/marketing/chatbot" },
   ];
 
   return (
     <div className="p-6 max-w-[1200px] mx-auto space-y-6">
       <div>
-        <h2 className="text-sm font-bold text-slate-900 dark:text-white flex items-center gap-2"><BarChart3 className="w-4 h-4 text-rose-600" /> Métricas Generales</h2>
+        <h2 className="text-sm font-bold text-slate-900 dark:text-white flex items-center gap-2"><BarChart3 className="w-4 h-4 text-[#0145F2]" /> Métricas Generales</h2>
         <p className="text-xs text-slate-400 mt-0.5">Resumen ejecutivo de todos los canales — últimos 7 días, gasto y costo de IA del mes en curso.</p>
       </div>
 
@@ -142,12 +142,12 @@ export default async function MetricasGeneralesPage() {
         <h3 className="text-[11px] font-bold uppercase tracking-widest text-slate-400 mb-3">Leads nuevos — últimos 30 días</h3>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <div className="bg-white dark:bg-white/[0.02] border border-slate-200 dark:border-white/5 rounded-2xl p-5">
-            <Users className="w-5 h-5 text-rose-600 mb-2" />
+            <Users className="w-5 h-5 text-[#0145F2] mb-2" />
             <p className="text-2xl font-black text-slate-900 dark:text-white font-mono">{leadsNuevos30}</p>
             <p className="text-[11px] text-slate-400 mt-0.5 flex items-center gap-1">
               Leads nuevos (30d)
               {variacionLeadsPct !== null && (
-                <span className={`inline-flex items-center gap-0.5 font-bold ${variacionLeadsPct >= 0 ? "text-emerald-600" : "text-rose-600"}`}>
+                <span className={`inline-flex items-center gap-0.5 font-bold ${variacionLeadsPct >= 0 ? "text-emerald-600" : "text-[#0145F2]"}`}>
                   {variacionLeadsPct >= 0 ? <TrendingUp className="w-3 h-3" /> : <TrendingDown className="w-3 h-3" />} {Math.abs(variacionLeadsPct)}%
                 </span>
               )}

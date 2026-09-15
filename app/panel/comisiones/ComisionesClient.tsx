@@ -191,7 +191,7 @@ export default function ComisionesClient({
             <span className="text-xl font-black font-mono text-slate-900 dark:text-white mt-1">{fmtPorMoneda(aCobrarPorMoneda)}</span>
           </div>
           <div className="bg-rose-50 dark:bg-rose-500/10 border border-rose-200 dark:border-rose-500/20 rounded-2xl p-4 flex flex-col justify-center">
-            <span className="text-[10px] font-bold uppercase tracking-widest text-rose-600">Pendiente</span>
+            <span className="text-[10px] font-bold uppercase tracking-widest text-[#0145F2]">Pendiente</span>
             <span className="text-xl font-black font-mono text-rose-700 dark:text-rose-400 mt-1">
               {monedasPresentes.map((m) => `${prefijoMoneda(m)} ${((aCobrarPorMoneda[m] || 0) - (cobradoPorMoneda[m] || 0)).toLocaleString()}`).join(" · ") || "US$ 0"}
             </span>

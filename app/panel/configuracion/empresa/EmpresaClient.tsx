@@ -60,7 +60,7 @@ export default function EmpresaClient() {
 
       <div className="flex items-center gap-1 border-b border-slate-200 dark:border-white/10">
         <Link href="/panel/configuracion" className="px-3 py-2.5 text-sm font-bold border-b-2 border-transparent text-slate-500">Usuarios</Link>
-        <span className="px-3 py-2.5 text-sm font-bold border-b-2 border-rose-600 text-rose-600">Empresa</span>
+        <span className="px-3 py-2.5 text-sm font-bold border-b-2 border-[#0145F2] text-[#0145F2]">Empresa</span>
         <Link href="/panel/configuracion/whatsapp" className="px-3 py-2.5 text-sm font-bold border-b-2 border-transparent text-slate-500">WhatsApp</Link>
         <Link href="/panel/configuracion/instagram" className="px-3 py-2.5 text-sm font-bold border-b-2 border-transparent text-slate-500">Instagram</Link>
       </div>
@@ -69,11 +69,11 @@ export default function EmpresaClient() {
 
       <div className="flex items-center gap-1">
         <button onClick={() => setSubtab("modulos")} className={`px-3 py-1.5 rounded-lg text-xs font-bold ${subtab === "modulos" ? "bg-rose-600 text-white" : "bg-slate-100 dark:bg-white/5 text-slate-500"}`}>Módulos</button>
-        <button onClick={() => setSubtab("comisiones")} className={`px-3 py-1.5 rounded-lg text-xs font-bold ${subtab === "comisiones" ? "bg-rose-600 text-white" : "bg-slate-100 dark:bg-white/5 text-slate-500"}`}>Comisiones</button>
-        <button onClick={() => setSubtab("plazos")} className={`px-3 py-1.5 rounded-lg text-xs font-bold ${subtab === "plazos" ? "bg-rose-600 text-white" : "bg-slate-100 dark:bg-white/5 text-slate-500"}`}>Plazos / SLAs</button>
-        <button onClick={() => setSubtab("routing")} className={`px-3 py-1.5 rounded-lg text-xs font-bold ${subtab === "routing" ? "bg-rose-600 text-white" : "bg-slate-100 dark:bg-white/5 text-slate-500"}`}>Lead Routing</button>
-        <button onClick={() => setSubtab("resumen")} className={`px-3 py-1.5 rounded-lg text-xs font-bold ${subtab === "resumen" ? "bg-rose-600 text-white" : "bg-slate-100 dark:bg-white/5 text-slate-500"}`}>Resumen diario</button>
-        <button onClick={() => setSubtab("branding")} className={`px-3 py-1.5 rounded-lg text-xs font-bold ${subtab === "branding" ? "bg-rose-600 text-white" : "bg-slate-100 dark:bg-white/5 text-slate-500"}`}>Branding</button>
+        <button onClick={() => setSubtab("comisiones")} className={`px-3 py-1.5 rounded-lg text-xs font-bold ${subtab === "comisiones" ? "bg-[#0145F2] text-white" : "bg-slate-100 dark:bg-white/5 text-slate-500"}`}>Comisiones</button>
+        <button onClick={() => setSubtab("plazos")} className={`px-3 py-1.5 rounded-lg text-xs font-bold ${subtab === "plazos" ? "bg-[#0145F2] text-white" : "bg-slate-100 dark:bg-white/5 text-slate-500"}`}>Plazos / SLAs</button>
+        <button onClick={() => setSubtab("routing")} className={`px-3 py-1.5 rounded-lg text-xs font-bold ${subtab === "routing" ? "bg-[#0145F2] text-white" : "bg-slate-100 dark:bg-white/5 text-slate-500"}`}>Lead Routing</button>
+        <button onClick={() => setSubtab("resumen")} className={`px-3 py-1.5 rounded-lg text-xs font-bold ${subtab === "resumen" ? "bg-[#0145F2] text-white" : "bg-slate-100 dark:bg-white/5 text-slate-500"}`}>Resumen diario</button>
+        <button onClick={() => setSubtab("branding")} className={`px-3 py-1.5 rounded-lg text-xs font-bold ${subtab === "branding" ? "bg-[#0145F2] text-white" : "bg-slate-100 dark:bg-white/5 text-slate-500"}`}>Branding</button>
       </div>
 
       {cargando ? (
@@ -87,7 +87,7 @@ export default function EmpresaClient() {
               {modulos.map((m) => (
                 <label key={m.modulo} className="flex items-center justify-between gap-2 px-3 py-2 rounded-lg bg-slate-50 dark:bg-white/5 text-sm">
                   <span className="text-slate-700 dark:text-slate-200">{MODULO_LABEL[m.modulo] || m.modulo}</span>
-                  <input type="checkbox" checked={m.activo} onChange={(e) => toggleModulo(m.modulo, e.target.checked)} className="w-4 h-4 accent-rose-600" />
+                  <input type="checkbox" checked={m.activo} onChange={(e) => toggleModulo(m.modulo, e.target.checked)} className="w-4 h-4 accent-[#0145F2]" />
                 </label>
               ))}
             </div>
@@ -108,7 +108,7 @@ export default function EmpresaClient() {
                     key: s,
                     header: SECTOR_LABEL[s],
                     claseTd: "py-2 px-2 text-center",
-                    cell: (m: Modulo) => <input type="checkbox" disabled={!m.activo} checked={esVisible(m.modulo, s)} onChange={() => toggleVisibilidad(m.modulo, s)} className="w-4 h-4 accent-rose-600" />,
+                    cell: (m: Modulo) => <input type="checkbox" disabled={!m.activo} checked={esVisible(m.modulo, s)} onChange={() => toggleVisibilidad(m.modulo, s)} className="w-4 h-4 accent-[#0145F2]" />,
                   })),
                 ] as ColumnaTabla<Modulo>[]
               }
@@ -195,7 +195,7 @@ function ComisionesConfig() {
           <p className="text-xs text-slate-400 mb-2">"Ninguna" esconde la sección Mis Comisiones para todos los vendedores.</p>
           <div className="flex gap-2">
             {(["porcentaje", "fijo", "ninguna"] as const).map((m) => (
-              <button key={m} onClick={() => guardar({ modo_comision: m })} className={`px-3 py-1.5 rounded-lg text-xs font-bold border ${config.modo_comision === m ? "bg-rose-600 text-white border-rose-600" : "bg-white dark:bg-white/5 border-slate-200 dark:border-white/10 text-slate-500"}`}>
+              <button key={m} onClick={() => guardar({ modo_comision: m })} className={`px-3 py-1.5 rounded-lg text-xs font-bold border ${config.modo_comision === m ? "bg-[#0145F2] text-white border-[#0145F2]" : "bg-white dark:bg-white/5 border-slate-200 dark:border-white/10 text-slate-500"}`}>
                 {m === "porcentaje" ? "Por porcentaje" : m === "fijo" ? "Monto fijo por venta" : "Ninguna"}
               </button>
             ))}
@@ -230,7 +230,7 @@ function ComisionesConfig() {
             <div className="flex flex-wrap gap-2 mb-2">
               {config.comision_presets.map((p) => (
                 <span key={p} className="flex items-center gap-1 px-2.5 py-1 rounded-full bg-slate-100 dark:bg-white/10 text-xs font-bold text-slate-600 dark:text-slate-300">
-                  {p}% <button onClick={() => quitarPreset(p)} className="text-slate-400 hover:text-rose-600">×</button>
+                  {p}% <button onClick={() => quitarPreset(p)} className="text-slate-400 hover:text-[#0145F2]">×</button>
                 </span>
               ))}
             </div>
@@ -331,7 +331,7 @@ function PlazosConfig() {
           </div>
         </div>
         <label className="flex items-start gap-2">
-          <input type="checkbox" checked={config.asignar_al_enviar} onChange={(e) => guardar({ asignar_al_enviar: e.target.checked })} className="w-4 h-4 accent-rose-600 mt-0.5" />
+          <input type="checkbox" checked={config.asignar_al_enviar} onChange={(e) => guardar({ asignar_al_enviar: e.target.checked })} className="w-4 h-4 accent-[#0145F2] mt-0.5" />
           <span className="text-sm text-slate-700 dark:text-slate-200">
             Asignar el cliente al vendedor al enviar un recontacto
             <span className="block text-[11px] text-slate-400 font-normal">Si un cliente sin vendedor recibe un mensaje de recontacto, queda asignado a quien lo mandó.</span>
@@ -345,7 +345,7 @@ function PlazosConfig() {
           Estos valores ya existen en la base pero todavía no hay una automatización en Pedidos que los lea — cambiarlos acá no tiene efecto hasta que se construya esa lógica.
         </p>
         <label className="flex items-center gap-2">
-          <input type="checkbox" checked={config.reasignar_pedidos} onChange={(e) => guardar({ reasignar_pedidos: e.target.checked })} className="w-4 h-4 accent-rose-600" />
+          <input type="checkbox" checked={config.reasignar_pedidos} onChange={(e) => guardar({ reasignar_pedidos: e.target.checked })} className="w-4 h-4 accent-[#0145F2]" />
           <span className="text-sm text-slate-700 dark:text-slate-200">Reasignación automática de pedidos</span>
         </label>
         <div className="grid grid-cols-2 gap-4">
@@ -419,7 +419,7 @@ function LeadRoutingConfig() {
         <p className="text-sm font-bold text-slate-800 dark:text-white">Reasignación automática</p>
         <p className="text-xs text-slate-400">Si un vendedor no marca el lead como contactado en el plazo fijado, pasa al siguiente de la ronda. Corre cada 10 minutos.</p>
         <label className="flex items-center gap-2">
-          <input type="checkbox" checked={config.lead_routing_activo} onChange={(e) => guardarConfig({ lead_routing_activo: e.target.checked })} className="w-4 h-4 accent-rose-600" />
+          <input type="checkbox" checked={config.lead_routing_activo} onChange={(e) => guardarConfig({ lead_routing_activo: e.target.checked })} className="w-4 h-4 accent-[#0145F2]" />
           <span className="text-sm text-slate-700 dark:text-slate-200">Activar reasignación automática</span>
         </label>
         <div className="grid grid-cols-2 gap-4">
@@ -442,7 +442,7 @@ function LeadRoutingConfig() {
           {vendedores.map((v) => (
             <label key={v.id} className="flex items-center justify-between gap-2 px-3 py-2 rounded-lg bg-slate-50 dark:bg-white/5 text-sm">
               <span className="text-slate-700 dark:text-slate-200">{v.nombre}</span>
-              <input type="checkbox" checked={v.recibirLeads} onChange={(e) => toggleVendedor(v.id, e.target.checked)} className="w-4 h-4 accent-rose-600" />
+              <input type="checkbox" checked={v.recibirLeads} onChange={(e) => toggleVendedor(v.id, e.target.checked)} className="w-4 h-4 accent-[#0145F2]" />
             </label>
           ))}
           {vendedores.length === 0 && <p className="text-xs text-slate-400 text-center py-4">No hay vendedores activos con rol Ventas.</p>}
@@ -452,7 +452,7 @@ function LeadRoutingConfig() {
       <div className="bg-white dark:bg-white/[0.02] border border-slate-200 dark:border-white/5 rounded-2xl p-5 space-y-2">
         <p className="text-sm font-bold text-slate-800 dark:text-white">Visibilidad de clientes</p>
         <label className="flex items-start gap-2">
-          <input type="checkbox" checked={config.cada_vendedor_ve_solo_sus_clientes} onChange={(e) => guardarConfig({ cada_vendedor_ve_solo_sus_clientes: e.target.checked })} className="w-4 h-4 accent-rose-600 mt-0.5" />
+          <input type="checkbox" checked={config.cada_vendedor_ve_solo_sus_clientes} onChange={(e) => guardarConfig({ cada_vendedor_ve_solo_sus_clientes: e.target.checked })} className="w-4 h-4 accent-[#0145F2] mt-0.5" />
           <span className="text-sm text-slate-700 dark:text-slate-200">
             Cada vendedor ve solo sus clientes
             <span className="block text-[11px] text-slate-400 font-normal">Admin y recepción siguen viendo todo. Ojo: un cliente sin vendedor asignado no le aparece a ningún vendedor con esto prendido, solo a admin y recepción.</span>
@@ -509,7 +509,7 @@ function ResumenDiarioConfig() {
           <p className="text-xs text-slate-400">Cada mañana se arma el resumen del día (ventas, leads nuevos, expedientes atrasados, cuotas por vencer, stock). Cada miembro lo recibe en la campanita según su rol.</p>
         </div>
         <label className="flex items-center gap-2">
-          <input type="checkbox" checked={config.resumen_diario_activo} onChange={(e) => guardar({ resumen_diario_activo: e.target.checked })} className="w-4 h-4 accent-rose-600" />
+          <input type="checkbox" checked={config.resumen_diario_activo} onChange={(e) => guardar({ resumen_diario_activo: e.target.checked })} className="w-4 h-4 accent-[#0145F2]" />
           <span className="text-sm text-slate-700 dark:text-slate-200">Resumen diario activo</span>
         </label>
         {config.resumen_diario_activo && (
@@ -529,7 +529,7 @@ function ResumenDiarioConfig() {
               <input type="text" placeholder="Vacío = el nombre de tu agencia" defaultValue={config.resumen_diario_nombre || ""} onBlur={(e) => guardar({ resumen_diario_nombre: e.target.value || null })} className={inputClass} />
             </div>
             <label className="flex items-start gap-2">
-              <input type="checkbox" checked={config.resumen_diario_whatsapp_activo} onChange={(e) => guardar({ resumen_diario_whatsapp_activo: e.target.checked })} className="w-4 h-4 accent-rose-600 mt-0.5" />
+              <input type="checkbox" checked={config.resumen_diario_whatsapp_activo} onChange={(e) => guardar({ resumen_diario_whatsapp_activo: e.target.checked })} className="w-4 h-4 accent-[#0145F2] mt-0.5" />
               <span className="text-sm text-slate-700 dark:text-slate-200">
                 Enviar también por WhatsApp al dueño
                 <span className="block text-[11px] text-slate-400 font-normal">Llega desde la línea del CRM con una plantilla aprobada por Meta.</span>

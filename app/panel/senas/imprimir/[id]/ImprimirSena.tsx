@@ -115,7 +115,7 @@ export default function ImprimirSena({ sena: s, branding }: { sena: any; brandin
           {precioConfirmado === true && s.precio_confirmado === false && (
             <span className="flex items-center gap-1.5 bg-emerald-50 dark:bg-emerald-500/10 text-emerald-700 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-500/20 px-3 py-2 rounded-xl text-xs font-bold"><CheckCircle2 className="w-4 h-4" /> Precio confirmado</span>
           )}
-          <button onClick={() => window.print()} className="bg-rose-600 hover:bg-rose-700 text-white px-6 py-2.5 rounded-xl font-bold text-xs uppercase tracking-widest flex items-center gap-2 transition-all shadow-sm active:scale-95"><Printer className="w-4 h-4" /> Imprimir / PDF</button>
+          <button onClick={() => window.print()} className="bg-[#0145F2] hover:bg-[#0138c9] text-white px-6 py-2.5 rounded-xl font-bold text-xs uppercase tracking-widest flex items-center gap-2 transition-all shadow-sm active:scale-95"><Printer className="w-4 h-4" /> Imprimir / PDF</button>
         </div>
       </div>
 

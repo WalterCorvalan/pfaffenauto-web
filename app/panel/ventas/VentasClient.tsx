@@ -165,27 +165,27 @@ export default function VentasClient({
         <div className="max-w-7xl mx-auto">
           <div className="flex flex-col md:flex-row md:items-center justify-between gap-3 mb-4">
             <div>
-              <h1 className="text-xl font-black text-slate-900 dark:text-white flex items-center gap-2"><Briefcase className="w-5 h-5 text-rose-600" /> Ventas</h1>
+              <h1 className="text-xl font-black text-slate-900 dark:text-white flex items-center gap-2"><Briefcase className="w-5 h-5 text-[#0145F2]" /> Ventas</h1>
               <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">{ventas.length} ventas · {enCurso} en curso · {cerradas} cerradas</p>
             </div>
             <div className="flex items-center gap-2">
               <button onClick={exportar} className="flex items-center gap-1.5 px-3 py-2 text-xs font-semibold bg-white dark:bg-white/5 border border-slate-200 dark:border-white/10 hover:bg-slate-50 dark:hover:bg-white/10 rounded-lg text-slate-600 dark:text-slate-300"><Download className="w-3.5 h-3.5" /> Exportar</button>
-              <button onClick={() => setModalNueva(true)} className="flex items-center gap-1.5 px-4 py-2 text-xs font-bold bg-rose-600 hover:bg-rose-700 text-white rounded-lg shadow-sm"><Plus className="w-3.5 h-3.5" /> Nueva venta</button>
+              <button onClick={() => setModalNueva(true)} className="flex items-center gap-1.5 px-4 py-2 text-xs font-bold bg-[#0145F2] hover:bg-[#0138c9] text-white rounded-lg shadow-sm"><Plus className="w-3.5 h-3.5" /> Nueva venta</button>
             </div>
           </div>
 
           <div className="flex items-center gap-2 mb-4">
-            <button onClick={() => setSoloMias(false)} className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-bold transition-colors ${!soloMias ? "bg-rose-600 text-white" : "bg-white dark:bg-white/5 border border-slate-200 dark:border-white/10 text-slate-600 dark:text-slate-300"}`}>
+            <button onClick={() => setSoloMias(false)} className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-bold transition-colors ${!soloMias ? "bg-[#0145F2] text-white" : "bg-white dark:bg-white/5 border border-slate-200 dark:border-white/10 text-slate-600 dark:text-slate-300"}`}>
               <Globe className="w-3.5 h-3.5" /> General <span className={`text-[10px] px-1.5 py-0.5 rounded-full ${!soloMias ? "bg-white/20" : "bg-slate-100 dark:bg-white/10"}`}>{ventas.length}</span>
             </button>
-            <button onClick={() => setSoloMias(true)} className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-bold transition-colors ${soloMias ? "bg-rose-600 text-white" : "bg-white dark:bg-white/5 border border-slate-200 dark:border-white/10 text-slate-600 dark:text-slate-300"}`}>
+            <button onClick={() => setSoloMias(true)} className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-bold transition-colors ${soloMias ? "bg-[#0145F2] text-white" : "bg-white dark:bg-white/5 border border-slate-200 dark:border-white/10 text-slate-600 dark:text-slate-300"}`}>
               {perfilMap[miId] || "Mis ventas"} <span className={`text-[10px] px-1.5 py-0.5 rounded-full ${soloMias ? "bg-white/20" : "bg-slate-100 dark:bg-white/10"}`}>{misVentas}</span>
             </button>
           </div>
 
           <div className="flex items-center gap-1 mb-4 border-b border-slate-200 dark:border-white/10 overflow-x-auto">
             {TABS.map((t) => (
-              <button key={t.value} onClick={() => setTab(t.value)} className={`px-3 py-2 text-sm font-bold border-b-2 -mb-px whitespace-nowrap transition-colors ${tab === t.value ? "border-rose-600 text-rose-600" : "border-transparent text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-200"}`}>{t.label}</button>
+              <button key={t.value} onClick={() => setTab(t.value)} className={`px-3 py-2 text-sm font-bold border-b-2 -mb-px whitespace-nowrap transition-colors ${tab === t.value ? "border-[#0145F2] text-[#0145F2]" : "border-transparent text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-200"}`}>{t.label}</button>
             ))}
           </div>
 
@@ -198,9 +198,9 @@ export default function VentasClient({
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-slate-400" />
               <input value={query} onChange={(e) => setQuery(e.target.value)} placeholder="Comprador, vehículo, DNI, teléfono..." className="w-full bg-white dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-lg py-2 pl-9 pr-3 text-xs outline-none focus:border-rose-500 text-slate-900 dark:text-white placeholder:text-slate-400" />
             </div>
-            <button onClick={() => setFiltrosAbiertos((v) => !v)} className={`shrink-0 flex items-center gap-1.5 px-3 py-2 rounded-lg text-xs font-bold border ${filtrosAbiertos ? "bg-rose-600 border-rose-600 text-white" : "bg-white dark:bg-white/5 border-slate-200 dark:border-white/10 text-slate-600 dark:text-slate-300"}`}>
+            <button onClick={() => setFiltrosAbiertos((v) => !v)} className={`shrink-0 flex items-center gap-1.5 px-3 py-2 rounded-lg text-xs font-bold border ${filtrosAbiertos ? "bg-[#0145F2] border-[#0145F2] text-white" : "bg-white dark:bg-white/5 border-slate-200 dark:border-white/10 text-slate-600 dark:text-slate-300"}`}>
               <SlidersHorizontal className="w-3.5 h-3.5" /> Filtros
-              {filtrosSecundariosActivos > 0 && <span className={`text-[9px] px-1.5 rounded-full ${filtrosAbiertos ? "bg-white/20" : "bg-rose-100 dark:bg-rose-500/20 text-rose-600 dark:text-rose-300"}`}>{filtrosSecundariosActivos}</span>}
+              {filtrosSecundariosActivos > 0 && <span className={`text-[9px] px-1.5 rounded-full ${filtrosAbiertos ? "bg-white/20" : "bg-rose-100 dark:bg-rose-500/20 text-[#0145F2] dark:text-rose-300"}`}>{filtrosSecundariosActivos}</span>}
             </button>
           </div>
 
@@ -221,7 +221,7 @@ export default function VentasClient({
               <div className="flex-1"><label className="text-[9px] font-bold text-slate-400 block">DESDE</label><input type="date" value={desde} onChange={(e) => setDesde(e.target.value)} className="w-full bg-white dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-lg px-2 py-1.5 text-xs text-slate-900 dark:text-white" /></div>
               <div className="flex-1"><label className="text-[9px] font-bold text-slate-400 block">HASTA</label><input type="date" value={hasta} onChange={(e) => setHasta(e.target.value)} className="w-full bg-white dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-lg px-2 py-1.5 text-xs text-slate-900 dark:text-white" /></div>
             </div>
-            <label className="flex items-center gap-1.5 text-xs font-semibold text-slate-500 dark:text-slate-400"><input type="checkbox" checked={soloPermuta} onChange={(e) => setSoloPermuta(e.target.checked)} className="w-4 h-4 accent-rose-600" /> Solo con permuta</label>
+            <label className="flex items-center gap-1.5 text-xs font-semibold text-slate-500 dark:text-slate-400"><input type="checkbox" checked={soloPermuta} onChange={(e) => setSoloPermuta(e.target.checked)} className="w-4 h-4 accent-[#0145F2]" /> Solo con permuta</label>
           </div>
           <div className={`items-center gap-2 mb-4 ${filtrosAbiertos ? "flex" : "hidden"} md:flex`}>
             <label className="text-xs font-semibold text-slate-500 dark:text-slate-400">Mes:</label>

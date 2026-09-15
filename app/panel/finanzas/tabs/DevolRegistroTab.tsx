@@ -109,10 +109,10 @@ export default function DevolRegistroTab({
 
       <div className="flex items-center gap-1 mb-4 flex-wrap">
         {([["por_confirmar", "Por confirmar"], ["acreditada", "Acreditadas"], ["al_cliente", "Al cliente"], ["todas", "Todas"]] as [Sub, string][]).map(([v, l]) => (
-          <button key={v} onClick={() => setSub(v)} className={`px-3 py-1.5 text-xs font-bold rounded-lg ${sub === v ? "bg-rose-600 text-white" : "bg-white dark:bg-white/5 border border-slate-200 dark:border-white/10"}`}>{l}</button>
+          <button key={v} onClick={() => setSub(v)} className={`px-3 py-1.5 text-xs font-bold rounded-lg ${sub === v ? "bg-[#0145F2] text-white" : "bg-white dark:bg-white/5 border border-slate-200 dark:border-white/10"}`}>{l}</button>
         ))}
         <input value={busqueda} onChange={(e) => setBusqueda(e.target.value)} placeholder="Buscar por patente, cliente o gestora..." className="ml-auto text-xs bg-white dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-lg px-3 py-1.5 outline-none" />
-        <button onClick={abrirNueva} className="px-4 py-1.5 text-xs font-bold bg-rose-600 hover:bg-rose-700 text-white rounded-lg">+ Nueva</button>
+        <button onClick={abrirNueva} className="px-4 py-1.5 text-xs font-bold bg-[#0145F2] hover:bg-[#0138c9] text-white rounded-lg">+ Nueva</button>
       </div>
 
       {lista.length === 0 ? (
@@ -163,7 +163,7 @@ export default function DevolRegistroTab({
             </div>
             <label className={labelClass + " mt-3"}>Notas</label>
             <textarea value={notas} onChange={(e) => setNotas(e.target.value)} rows={2} className={inputClass} />
-            <div className="flex justify-end gap-2 mt-4"><button onClick={() => setShowNueva(false)} className="px-4 py-2 text-sm font-bold text-slate-500">Cancelar</button><button onClick={crear} disabled={guardando} className="flex items-center gap-1.5 px-4 py-2 text-sm font-bold bg-rose-600 hover:bg-rose-700 text-white rounded-lg disabled:opacity-50"><Save className="w-4 h-4" /> Registrar</button></div>
+            <div className="flex justify-end gap-2 mt-4"><button onClick={() => setShowNueva(false)} className="px-4 py-2 text-sm font-bold text-slate-500">Cancelar</button><button onClick={crear} disabled={guardando} className="flex items-center gap-1.5 px-4 py-2 text-sm font-bold bg-[#0145F2] hover:bg-[#0138c9] text-white rounded-lg disabled:opacity-50"><Save className="w-4 h-4" /> Registrar</button></div>
           </div>
         </div>
       )}
@@ -181,7 +181,7 @@ export default function DevolRegistroTab({
             {rsDestino === "acreditada" && (
               <><label className={labelClass + " mt-3"}>Caja *</label><select value={rsCuentaId} onChange={(e) => setRsCuentaId(e.target.value)} className={inputClass}><option value="">— Elegí —</option>{cuentas.filter((c) => c.moneda === resolviendo.moneda).map((c) => <option key={c.id} value={c.id}>{c.nombre} · saldo {fmt(c.saldo, c.moneda)}</option>)}</select></>
             )}
-            <div className="flex justify-end gap-2 mt-4"><button onClick={() => setResolviendo(null)} className="px-4 py-2 text-sm font-bold text-slate-500">Cancelar</button><button onClick={confirmarResolucion} disabled={guardando} className="flex items-center gap-1.5 px-4 py-2 text-sm font-bold bg-rose-600 hover:bg-rose-700 text-white rounded-lg disabled:opacity-50"><Save className="w-4 h-4" /> Confirmar</button></div>
+            <div className="flex justify-end gap-2 mt-4"><button onClick={() => setResolviendo(null)} className="px-4 py-2 text-sm font-bold text-slate-500">Cancelar</button><button onClick={confirmarResolucion} disabled={guardando} className="flex items-center gap-1.5 px-4 py-2 text-sm font-bold bg-[#0145F2] hover:bg-[#0138c9] text-white rounded-lg disabled:opacity-50"><Save className="w-4 h-4" /> Confirmar</button></div>
           </div>
         </div>
       )}

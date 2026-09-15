@@ -115,7 +115,7 @@ export default function NpsClient({
             <span className="text-lg font-bold text-slate-400 mt-1">Sin respuestas</span>
           ) : (
             <div className="flex items-end gap-2 mt-1">
-              <span className={`text-4xl font-black font-mono ${npsScore > 50 ? "text-emerald-600 dark:text-emerald-400" : npsScore > 0 ? "text-amber-500" : "text-rose-600 dark:text-rose-400"}`}>
+              <span className={`text-4xl font-black font-mono ${npsScore > 50 ? "text-emerald-600 dark:text-emerald-400" : npsScore > 0 ? "text-amber-500" : "text-[#0145F2] dark:text-[#5b8dff]"}`}>
                 {npsScore}
               </span>
               <span className="text-xs text-slate-400 mb-1.5">/ 100</span>
@@ -136,10 +136,10 @@ export default function NpsClient({
           </div>
         </div>
         <div className="bg-white dark:bg-[#111] border border-slate-200 dark:border-white/10 rounded-2xl p-5 shadow-sm flex flex-col justify-center">
-          <span className="text-[10px] font-bold uppercase tracking-widest text-rose-600">Detractores (0-6)</span>
+          <span className="text-[10px] font-bold uppercase tracking-widest text-[#0145F2]">Detractores (0-6)</span>
           <div className="flex items-center justify-between mt-1">
             <span className="text-2xl font-black text-rose-700 dark:text-rose-400">{detractores}</span>
-            <span className="text-sm font-bold text-rose-600/50 bg-rose-50 dark:bg-rose-500/10 px-2 py-1 rounded-md">{pctDetractores.toFixed(0)}%</span>
+            <span className="text-sm font-bold text-[#0145F2]/50 bg-rose-50 dark:bg-rose-500/10 px-2 py-1 rounded-md">{pctDetractores.toFixed(0)}%</span>
           </div>
         </div>
       </div>
@@ -194,7 +194,7 @@ export default function NpsClient({
                       </div>
                     </div>
                     <div className="text-right">
-                      <p className={`font-mono text-[14px] font-bold ${v.nps > 50 ? "text-emerald-600 dark:text-emerald-400" : v.nps > 0 ? "text-amber-500" : "text-rose-600 dark:text-rose-400"}`}>{v.nps}</p>
+                      <p className={`font-mono text-[14px] font-bold ${v.nps > 50 ? "text-emerald-600 dark:text-emerald-400" : v.nps > 0 ? "text-amber-500" : "text-[#0145F2] dark:text-[#5b8dff]"}`}>{v.nps}</p>
                       <p className="text-[10px] text-slate-400 uppercase font-bold tracking-widest">NPS</p>
                     </div>
                   </div>

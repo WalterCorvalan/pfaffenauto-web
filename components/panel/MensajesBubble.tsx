@@ -124,7 +124,7 @@ export default function MensajesBubble() {
                       <p className="text-sm font-bold text-slate-900 dark:text-white truncate">{nombreCanal(c)}</p>
                       <p className="text-[11px] text-slate-400 truncate">{preview}</p>
                     </div>
-                    {n > 0 && <span className="text-[10px] font-bold bg-rose-600 text-white rounded-full px-1.5 py-0.5 shrink-0">{n}</span>}
+                    {n > 0 && <span className="text-[10px] font-bold bg-[#0145F2] text-white rounded-full px-1.5 py-0.5 shrink-0">{n}</span>}
                   </button>
                 );
               })}
@@ -147,7 +147,7 @@ export default function MensajesBubble() {
         >
           <MessageCircle className="w-5 h-5 text-indigo-600 dark:text-indigo-400" />
           {totalNoLeidos > 0 && (
-            <span className="absolute -top-1 -right-1 min-w-[18px] h-[18px] px-1 rounded-full bg-rose-600 text-white text-[10px] font-bold flex items-center justify-center">
+            <span className="absolute -top-1 -right-1 min-w-[18px] h-[18px] px-1 rounded-full bg-[#0145F2] text-white text-[10px] font-bold flex items-center justify-center">
               {totalNoLeidos > 99 ? "99+" : totalNoLeidos}
             </span>
           )}

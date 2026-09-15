@@ -147,7 +147,7 @@ export default function ExpedientesClient({
     <div className="p-6">
       <div className="flex items-start justify-between mb-1">
         <div>
-          <h1 className="text-xl font-bold flex items-center gap-2"><FolderPlus className="w-5 h-5 text-rose-600" /> Expedientes</h1>
+          <h1 className="text-xl font-bold flex items-center gap-2"><FolderPlus className="w-5 h-5 text-[#0145F2]" /> Expedientes</h1>
           <p className="text-sm text-slate-400">{activos.length} expedientes · {enProceso.length} en trámite · {transferidos.length} cerrados o transferidos</p>
         </div>
       </div>
@@ -162,7 +162,7 @@ export default function ExpedientesClient({
           { v: "transferidos" as const, l: "Transferidos", n: transferidos.length },
           { v: "reventas" as const, l: "Reventas", n: reventas.length },
         ].map((t) => (
-          <button key={t.v} onClick={() => setTab(t.v)} className={`px-3 py-2 text-sm font-semibold border-b-2 -mb-px flex items-center gap-1.5 ${tab === t.v ? "border-rose-600 text-rose-600" : "border-transparent text-slate-500 hover:text-slate-700 dark:hover:text-slate-300"}`}>
+          <button key={t.v} onClick={() => setTab(t.v)} className={`px-3 py-2 text-sm font-semibold border-b-2 -mb-px flex items-center gap-1.5 ${tab === t.v ? "border-[#0145F2] text-[#0145F2]" : "border-transparent text-slate-500 hover:text-slate-700 dark:hover:text-slate-300"}`}>
             {t.l} <span className="text-[10px] font-bold bg-slate-100 dark:bg-white/10 px-1.5 py-0.5 rounded-full">{t.n}</span>
           </button>
         ))}

@@ -754,7 +754,7 @@ export default function ExpedienteDetalleModal({ expedienteId, miId, perfiles, s
                 <div className="bg-white dark:bg-white/5 rounded-lg p-2.5">
                   <p className="text-[10px] font-bold uppercase text-slate-400 flex items-center justify-between">Parte compradora <span>{expediente.confirmado_comprador ? "confirmado" : "pendiente"}</span></p>
                   {!expediente.confirmado_comprador ? (
-                    <button onClick={() => confirmarParte("comprador")} className="w-full mt-1.5 py-1.5 rounded-lg bg-rose-600 hover:bg-rose-700 text-white text-xs font-bold flex items-center justify-center gap-1"><Check className="w-3.5 h-3.5" /> Confirmar comprador</button>
+                    <button onClick={() => confirmarParte("comprador")} className="w-full mt-1.5 py-1.5 rounded-lg bg-[#0145F2] hover:bg-[#0138c9] text-white text-xs font-bold flex items-center justify-center gap-1"><Check className="w-3.5 h-3.5" /> Confirmar comprador</button>
                   ) : (
                     <button onClick={() => revertirParte("comprador")} className="w-full mt-1.5 py-1.5 rounded-lg border border-slate-200 dark:border-white/10 text-slate-500 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-white/5 text-xs font-bold flex items-center justify-center gap-1"><Undo2 className="w-3.5 h-3.5" /> Revertir comprador</button>
                   )}
@@ -762,7 +762,7 @@ export default function ExpedienteDetalleModal({ expedienteId, miId, perfiles, s
                 <div className="bg-white dark:bg-white/5 rounded-lg p-2.5">
                   <p className="text-[10px] font-bold uppercase text-slate-400 flex items-center justify-between">Parte consignación <span>{expediente.confirmado_consignacion ? "confirmado" : "pendiente"}</span></p>
                   {!expediente.confirmado_consignacion ? (
-                    <button onClick={() => confirmarParte("consignacion")} className="w-full mt-1.5 py-1.5 rounded-lg bg-rose-600 hover:bg-rose-700 text-white text-xs font-bold flex items-center justify-center gap-1"><Check className="w-3.5 h-3.5" /> Confirmar consignación</button>
+                    <button onClick={() => confirmarParte("consignacion")} className="w-full mt-1.5 py-1.5 rounded-lg bg-[#0145F2] hover:bg-[#0138c9] text-white text-xs font-bold flex items-center justify-center gap-1"><Check className="w-3.5 h-3.5" /> Confirmar consignación</button>
                   ) : (
                     <button onClick={() => revertirParte("consignacion")} className="w-full mt-1.5 py-1.5 rounded-lg border border-slate-200 dark:border-white/10 text-slate-500 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-white/5 text-xs font-bold flex items-center justify-center gap-1"><Undo2 className="w-3.5 h-3.5" /> Revertir consignación</button>
                   )}
@@ -833,7 +833,7 @@ export default function ExpedienteDetalleModal({ expedienteId, miId, perfiles, s
 
           <div className="flex items-center gap-1 border-b border-slate-200 dark:border-white/10 overflow-x-auto">
             {TABS.map((t) => (
-              <button key={t} onClick={() => setTab(t)} className={`px-2.5 py-2 text-xs font-bold whitespace-nowrap border-b-2 -mb-px ${tab === t ? "border-rose-600 text-rose-600" : "border-transparent text-slate-400 hover:text-slate-600 dark:hover:text-slate-300"}`}>{t}</button>
+              <button key={t} onClick={() => setTab(t)} className={`px-2.5 py-2 text-xs font-bold whitespace-nowrap border-b-2 -mb-px ${tab === t ? "border-[#0145F2] text-[#0145F2]" : "border-transparent text-slate-400 hover:text-slate-600 dark:hover:text-slate-300"}`}>{t}</button>
             ))}
           </div>
 
@@ -904,10 +904,10 @@ export default function ExpedienteDetalleModal({ expedienteId, miId, perfiles, s
                 <div className="bg-slate-50 dark:bg-white/5 border border-slate-100 dark:border-white/10 rounded-xl p-3">
                   <p className="text-[10px] font-bold uppercase text-slate-400 mb-1.5">Agregar observación</p>
                   <textarea value={nuevaObs} onChange={(e) => setNuevaObs(e.target.value)} rows={2} placeholder="Contexto, cambios, acuerdos con el cliente, trabas de gestoría, etc." className="w-full bg-white dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-lg px-3 py-2 text-sm" />
-                  <div className="flex justify-end mt-1.5"><button onClick={agregarObservacion} className="px-3 py-1.5 rounded-lg bg-rose-600 hover:bg-rose-700 text-white text-xs font-bold">+ Agregar entrada</button></div>
+                  <div className="flex justify-end mt-1.5"><button onClick={agregarObservacion} className="px-3 py-1.5 rounded-lg bg-[#0145F2] hover:bg-[#0138c9] text-white text-xs font-bold">+ Agregar entrada</button></div>
                 </div>
 
-                <p className="text-[10px] font-black uppercase tracking-widest text-slate-400 mt-3 mb-1.5">Historial <button onClick={() => setTab("Historial")} className="normal-case font-semibold text-rose-600 hover:underline">ver todo</button></p>
+                <p className="text-[10px] font-black uppercase tracking-widest text-slate-400 mt-3 mb-1.5">Historial <button onClick={() => setTab("Historial")} className="normal-case font-semibold text-[#0145F2] hover:underline">ver todo</button></p>
                 {renderObservaciones(observaciones.slice(0, 5))}
               </div>
 
@@ -948,7 +948,7 @@ export default function ExpedienteDetalleModal({ expedienteId, miId, perfiles, s
                   <label className={labelClass}>Notas de Tesorería</label>
                   <textarea value={notasTesoreria} onChange={(e) => setNotasTesoreria(e.target.value)} rows={3} placeholder="Método de pago, referencias, aclaraciones..." className={inputClass} />
                 </div>
-                <div className="flex justify-end mt-3"><button onClick={guardarEstadoPago} disabled={guardandoPago} className="px-4 py-2 rounded-lg bg-rose-600 hover:bg-rose-700 text-white text-xs font-bold disabled:opacity-50">{guardandoPago ? "Guardando..." : "Guardar cambios"}</button></div>
+                <div className="flex justify-end mt-3"><button onClick={guardarEstadoPago} disabled={guardandoPago} className="px-4 py-2 rounded-lg bg-[#0145F2] hover:bg-[#0138c9] text-white text-xs font-bold disabled:opacity-50">{guardandoPago ? "Guardando..." : "Guardar cambios"}</button></div>
               </div>
               <ContextoResumen />
             </div>
@@ -995,7 +995,7 @@ export default function ExpedienteDetalleModal({ expedienteId, miId, perfiles, s
                   </div>
                 </div>
               </div>
-              <div className="flex justify-end"><button onClick={guardarPagoComprador} disabled={guardandoPagoComprador} className="px-4 py-2 rounded-lg bg-rose-600 hover:bg-rose-700 text-white text-xs font-bold disabled:opacity-50">{guardandoPagoComprador ? "Guardando..." : "Guardar cambios"}</button></div>
+              <div className="flex justify-end"><button onClick={guardarPagoComprador} disabled={guardandoPagoComprador} className="px-4 py-2 rounded-lg bg-[#0145F2] hover:bg-[#0138c9] text-white text-xs font-bold disabled:opacity-50">{guardandoPagoComprador ? "Guardando..." : "Guardar cambios"}</button></div>
             </div>
           )}
 
@@ -1014,7 +1014,7 @@ export default function ExpedienteDetalleModal({ expedienteId, miId, perfiles, s
               <div className="border border-slate-200 dark:border-white/10 rounded-xl p-4">
                 <div className="flex items-center justify-between mb-2">
                   <p className="text-xs font-black uppercase tracking-widest text-slate-500 dark:text-slate-400">📋 Comprobantes de transferencia</p>
-                  <label className="px-3 py-2 text-xs font-bold rounded-lg bg-rose-600 hover:bg-rose-700 text-white cursor-pointer flex items-center gap-1.5">
+                  <label className="px-3 py-2 text-xs font-bold rounded-lg bg-[#0145F2] hover:bg-[#0138c9] text-white cursor-pointer flex items-center gap-1.5">
                     {subiendoComprobante ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Plus className="w-3.5 h-3.5" />} Agregar comprobante
                     <input type="file" accept="image/*,.pdf" className="hidden" disabled={subiendoComprobante} onChange={(e) => e.target.files?.[0] && subirComprobante(e.target.files[0])} />
                   </label>
@@ -1024,7 +1024,7 @@ export default function ExpedienteDetalleModal({ expedienteId, miId, perfiles, s
                 ) : (
                   <div className="space-y-1.5">
                     {documentos.filter((d) => d.tipo === "comprobante_transferencia").map((d) => (
-                      <a key={d.id} href={d.url} target="_blank" rel="noreferrer" className="flex items-center gap-2 text-xs text-rose-600 hover:underline"><Paperclip className="w-3.5 h-3.5" /> {d.nombre}</a>
+                      <a key={d.id} href={d.url} target="_blank" rel="noreferrer" className="flex items-center gap-2 text-xs text-[#0145F2] hover:underline"><Paperclip className="w-3.5 h-3.5" /> {d.nombre}</a>
                     ))}
                   </div>
                 )}
@@ -1059,7 +1059,7 @@ export default function ExpedienteDetalleModal({ expedienteId, miId, perfiles, s
                         <div key={item.id} className="flex items-center justify-between bg-slate-50 dark:bg-white/5 border border-slate-100 dark:border-white/10 rounded-lg px-3 py-2">
                           <div>
                             <p className="text-xs font-semibold text-slate-700 dark:text-slate-200">{item.nombre}</p>
-                            {item.archivo_url ? <a href={item.archivo_url} target="_blank" rel="noreferrer" className="text-[11px] text-rose-600 hover:underline">Ver archivo</a> : <p className="text-[11px] text-slate-400 italic">Sin archivo adjunto</p>}
+                            {item.archivo_url ? <a href={item.archivo_url} target="_blank" rel="noreferrer" className="text-[11px] text-[#0145F2] hover:underline">Ver archivo</a> : <p className="text-[11px] text-slate-400 italic">Sin archivo adjunto</p>}
                           </div>
                           <div className="flex items-center gap-2">
                             <span className={`text-[9px] font-bold px-2 py-1 rounded-full ${item.completado ? "bg-emerald-100 dark:bg-emerald-500/20 text-emerald-700 dark:text-emerald-300" : "bg-amber-100 dark:bg-amber-500/20 text-amber-700 dark:text-amber-300"}`}>{item.completado ? "OK" : "Pendiente"}</span>
@@ -1131,11 +1131,11 @@ export default function ExpedienteDetalleModal({ expedienteId, miId, perfiles, s
                   {nuevoDocParte === parte ? (
                     <div className="flex items-center gap-1.5">
                       <input autoFocus value={nuevoDocNombre} onChange={(e) => setNuevoDocNombre(e.target.value)} onKeyDown={(e) => e.key === "Enter" && agregarDocumentoChecklist(parte)} placeholder="Nombre del documento" className="flex-1 bg-white dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-lg px-2.5 py-1.5 text-xs outline-none focus:border-rose-500" />
-                      <button onClick={() => agregarDocumentoChecklist(parte)} disabled={!nuevoDocNombre.trim()} className="text-xs font-bold text-rose-600 disabled:opacity-50 shrink-0">Agregar</button>
+                      <button onClick={() => agregarDocumentoChecklist(parte)} disabled={!nuevoDocNombre.trim()} className="text-xs font-bold text-[#0145F2] disabled:opacity-50 shrink-0">Agregar</button>
                       <button onClick={() => { setNuevoDocParte(null); setNuevoDocNombre(""); }} className="text-xs font-semibold text-slate-400 shrink-0">Cancelar</button>
                     </div>
                   ) : (
-                    <button onClick={() => { setNuevoDocParte(parte); setNuevoDocNombre(""); }} className="flex items-center gap-1 text-xs font-bold text-rose-600 hover:underline"><Plus className="w-3.5 h-3.5" /> Agregar documento</button>
+                    <button onClick={() => { setNuevoDocParte(parte); setNuevoDocNombre(""); }} className="flex items-center gap-1 text-xs font-bold text-[#0145F2] hover:underline"><Plus className="w-3.5 h-3.5" /> Agregar documento</button>
                   )}
                 </div>
               </div>
@@ -1150,7 +1150,7 @@ export default function ExpedienteDetalleModal({ expedienteId, miId, perfiles, s
                 {gastosComprador.length === 0 ? <p className="text-[11px] text-slate-400 italic">Sin gastos del comprador cargados.</p> : gastosComprador.map((g) => <div key={g.id} className="flex justify-between text-xs py-0.5"><span className="text-slate-500 dark:text-slate-400">{g.concepto}</span><span>{g.moneda} {Number(g.monto).toLocaleString("es-AR")}</span></div>)}
                 <div className="flex justify-between text-sm font-bold border-t border-emerald-200 dark:border-emerald-500/20 mt-2 pt-2"><span>Total a cobrar al comprador</span><strong className="text-emerald-700 dark:text-emerald-300">{venta?.moneda_venta} {totalACobrarComprador.toLocaleString("es-AR")}</strong></div>
                 {senas.length === 0 && <p className="text-[11px] text-amber-600 dark:text-amber-400 mt-1">⚠️ Sin seña registrada — el total completo queda pendiente.</p>}
-                <div className="flex justify-between text-sm font-bold pt-1"><span>Saldo pendiente al comprador</span><strong className="text-rose-600">{venta?.moneda_venta} {saldoComprador.toLocaleString("es-AR")}</strong></div>
+                <div className="flex justify-between text-sm font-bold pt-1"><span>Saldo pendiente al comprador</span><strong className="text-[#0145F2]">{venta?.moneda_venta} {saldoComprador.toLocaleString("es-AR")}</strong></div>
               </div>
 
               <div className="bg-indigo-50/60 dark:bg-indigo-500/5 border border-indigo-100 dark:border-indigo-500/20 rounded-xl p-4">
@@ -1198,7 +1198,7 @@ export default function ExpedienteDetalleModal({ expedienteId, miId, perfiles, s
                           <input type="text" inputMode="numeric" value={nuevoGastoMonto} onChange={(e) => setNuevoGastoMonto(e.target.value.replace(/\D/g, ""))} placeholder="Monto" className={inputClass} />
                           <select value={nuevoGastoMoneda} onChange={(e) => setNuevoGastoMoneda(e.target.value)} className="bg-slate-50 dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-lg px-2 text-sm w-20"><option value="ARS">ARS</option><option value="USD">USD</option></select>
                         </div>
-                        <div className="flex justify-end gap-2"><button onClick={() => setNuevoGastoParte(null)} className="px-3 py-1.5 text-xs font-semibold text-slate-500">Cancelar</button><button onClick={agregarGasto} className="px-3 py-1.5 rounded-lg bg-rose-600 hover:bg-rose-700 text-white text-xs font-bold">Guardar gasto</button></div>
+                        <div className="flex justify-end gap-2"><button onClick={() => setNuevoGastoParte(null)} className="px-3 py-1.5 text-xs font-semibold text-slate-500">Cancelar</button><button onClick={agregarGasto} className="px-3 py-1.5 rounded-lg bg-[#0145F2] hover:bg-[#0138c9] text-white text-xs font-bold">Guardar gasto</button></div>
                       </div>
                     )}
                   </div>
@@ -1249,7 +1249,7 @@ export default function ExpedienteDetalleModal({ expedienteId, miId, perfiles, s
                 </div>
                 <div className="flex items-center justify-end gap-2 mt-3">
                   {(precioPropietario !== String(expediente.precio_propietario ?? "") || tipoAcuerdoConsignacion !== (expediente.tipo_acuerdo_consignacion || "bruto")) && <span className="text-[11px] text-rose-500 italic">Hay cambios sin guardar</span>}
-                  <button onClick={guardarConsignacion} disabled={guardandoConsignacion} className="px-4 py-2 rounded-lg bg-rose-600 hover:bg-rose-700 text-white text-xs font-bold disabled:opacity-50">{guardandoConsignacion ? "Guardando..." : "Guardar"}</button>
+                  <button onClick={guardarConsignacion} disabled={guardandoConsignacion} className="px-4 py-2 rounded-lg bg-[#0145F2] hover:bg-[#0138c9] text-white text-xs font-bold disabled:opacity-50">{guardandoConsignacion ? "Guardando..." : "Guardar"}</button>
                 </div>
               </div>
 
@@ -1308,7 +1308,7 @@ export default function ExpedienteDetalleModal({ expedienteId, miId, perfiles, s
                     <input value={nuevaCuentaCbuAlias} onChange={(e) => setNuevaCuentaCbuAlias(e.target.value)} placeholder="CBU / Alias" className={inputClass} />
                     <input value={nuevaCuentaTitular} onChange={(e) => setNuevaCuentaTitular(e.target.value)} placeholder="Titular" className={inputClass} />
                     <input type="text" inputMode="numeric" value={nuevaCuentaImporte} onChange={(e) => setNuevaCuentaImporte(e.target.value.replace(/\D/g, ""))} placeholder="Importe" className={inputClass} />
-                    <div className="flex justify-end gap-2"><button onClick={() => setNuevaCuentaRegistro(false)} className="px-3 py-1.5 text-xs font-semibold text-slate-500">Cancelar</button><button onClick={agregarCuentaRegistro} className="px-3 py-1.5 rounded-lg bg-rose-600 hover:bg-rose-700 text-white text-xs font-bold">Guardar cuenta</button></div>
+                    <div className="flex justify-end gap-2"><button onClick={() => setNuevaCuentaRegistro(false)} className="px-3 py-1.5 text-xs font-semibold text-slate-500">Cancelar</button><button onClick={agregarCuentaRegistro} className="px-3 py-1.5 rounded-lg bg-[#0145F2] hover:bg-[#0138c9] text-white text-xs font-bold">Guardar cuenta</button></div>
                   </div>
                 )}
               </div>
@@ -1337,7 +1337,7 @@ export default function ExpedienteDetalleModal({ expedienteId, miId, perfiles, s
               {documentos.filter((d) => d.tipo === "duplicado").length === 0 ? (
                 <div className="bg-slate-50 dark:bg-white/5 border border-dashed border-slate-200 dark:border-white/10 rounded-xl py-8 text-center">
                   <p className="text-xs text-slate-400 mb-3">No hay documento de duplicado en este expediente.</p>
-                  <label className="inline-flex items-center gap-1.5 px-3 py-2 text-xs font-bold rounded-lg bg-rose-600 hover:bg-rose-700 text-white cursor-pointer">
+                  <label className="inline-flex items-center gap-1.5 px-3 py-2 text-xs font-bold rounded-lg bg-[#0145F2] hover:bg-[#0138c9] text-white cursor-pointer">
                     {subiendoDuplicado ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Upload className="w-3.5 h-3.5" />} Subir documento
                     <input type="file" accept="image/*,.pdf" className="hidden" disabled={subiendoDuplicado} onChange={(e) => e.target.files?.[0] && subirDuplicado(e.target.files[0])} />
                   </label>
@@ -1345,7 +1345,7 @@ export default function ExpedienteDetalleModal({ expedienteId, miId, perfiles, s
               ) : (
                 <div className="space-y-1.5">
                   {documentos.filter((d) => d.tipo === "duplicado").map((d) => (
-                    <a key={d.id} href={d.url} target="_blank" rel="noreferrer" className="flex items-center gap-2 text-xs text-rose-600 hover:underline bg-slate-50 dark:bg-white/5 rounded-lg px-3 py-2"><Paperclip className="w-3.5 h-3.5" /> {d.nombre}</a>
+                    <a key={d.id} href={d.url} target="_blank" rel="noreferrer" className="flex items-center gap-2 text-xs text-[#0145F2] hover:underline bg-slate-50 dark:bg-white/5 rounded-lg px-3 py-2"><Paperclip className="w-3.5 h-3.5" /> {d.nombre}</a>
                   ))}
                 </div>
               )}
@@ -1486,7 +1486,7 @@ export default function ExpedienteDetalleModal({ expedienteId, miId, perfiles, s
               </select>
               <textarea value={mensajePedido} onChange={(e) => setMensajePedido(e.target.value.slice(0, 200))} rows={2} placeholder="Ej: Falta confirmar el pago del libre deuda — revisá si tenemos el comprobante." className="w-full bg-white dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-lg px-3 py-2 text-sm" />
               <p className="text-[10px] text-slate-400">Hasta 200 caracteres.</p>
-              <div className="flex justify-end gap-2"><button onClick={() => setMostrarPedido(false)} className="px-3 py-1.5 text-xs font-semibold text-slate-500">Cancelar</button><button onClick={pedirAtencion} disabled={!sectorPedido} className="px-3 py-1.5 rounded-lg bg-rose-600 hover:bg-rose-700 text-white text-xs font-bold disabled:opacity-50">🔔 Enviar pedido</button></div>
+              <div className="flex justify-end gap-2"><button onClick={() => setMostrarPedido(false)} className="px-3 py-1.5 text-xs font-semibold text-slate-500">Cancelar</button><button onClick={pedirAtencion} disabled={!sectorPedido} className="px-3 py-1.5 rounded-lg bg-[#0145F2] hover:bg-[#0138c9] text-white text-xs font-bold disabled:opacity-50">🔔 Enviar pedido</button></div>
             </div>
           )}
 
@@ -1544,7 +1544,7 @@ export default function ExpedienteDetalleModal({ expedienteId, miId, perfiles, s
           <button disabled title="Todavía no construido" className="px-3 py-2 text-xs font-semibold rounded-lg border border-slate-200 dark:border-white/10 text-slate-300 opacity-60 cursor-not-allowed">Reseña ex-dueño</button>
           <div className="flex-1" />
           <button onClick={onClose} className="px-3 py-2 text-xs font-semibold text-slate-500">Cerrar</button>
-          <button onClick={guardarCambios} disabled={guardando} className="px-4 py-2 rounded-lg bg-rose-600 hover:bg-rose-700 text-white text-xs font-bold disabled:opacity-50 flex items-center gap-1.5">{guardando ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : null} Guardar Cambios</button>
+          <button onClick={guardarCambios} disabled={guardando} className="px-4 py-2 rounded-lg bg-[#0145F2] hover:bg-[#0138c9] text-white text-xs font-bold disabled:opacity-50 flex items-center gap-1.5">{guardando ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : null} Guardar Cambios</button>
         </div>
       </div>
 

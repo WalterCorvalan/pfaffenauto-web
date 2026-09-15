@@ -33,7 +33,7 @@ export default function LibrosContablesTab({ cuentas }: { cuentas: any[] }) {
     <div className="space-y-4">
       <div className="flex items-center gap-1 border-b border-slate-200 dark:border-white/10 pb-1 overflow-x-auto">
         {SUBTABS.map((t) => (
-          <button key={t.value} onClick={() => setSub(t.value)} className={`flex items-center gap-1.5 px-3 py-1.5 text-xs font-bold whitespace-nowrap rounded-lg transition-colors ${sub === t.value ? "bg-rose-600 text-white" : "text-slate-500 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-white/5"}`}>
+          <button key={t.value} onClick={() => setSub(t.value)} className={`flex items-center gap-1.5 px-3 py-1.5 text-xs font-bold whitespace-nowrap rounded-lg transition-colors ${sub === t.value ? "bg-[#0145F2] text-white" : "text-slate-500 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-white/5"}`}>
             <t.icon className="w-3.5 h-3.5" /> {t.label}
           </button>
         ))}
@@ -85,7 +85,7 @@ function LibroDiario({ desde, hasta }: { desde: string; hasta: string }) {
                   <td className="px-4 py-2">{m.tipo_movimiento || "—"}</td>
                   <td className="px-4 py-2 text-slate-400 truncate max-w-[200px]">{m.observaciones || "—"}</td>
                   <td className="px-4 py-2 text-right font-mono text-emerald-600">{m.tipo === "ingreso" ? fmt(Number(m.monto), m.cuenta?.moneda) : ""}</td>
-                  <td className="px-4 py-2 text-right font-mono text-rose-600">{m.tipo === "egreso" ? fmt(Number(m.monto), m.cuenta?.moneda) : ""}</td>
+                  <td className="px-4 py-2 text-right font-mono text-[#0145F2]">{m.tipo === "egreso" ? fmt(Number(m.monto), m.cuenta?.moneda) : ""}</td>
                 </tr>
               ))}
               {movimientos.length === 0 && <tr><td colSpan={6} className="px-4 py-8 text-center text-slate-400">Sin movimientos en este período.</td></tr>}
@@ -149,7 +149,7 @@ function LibroMayor({ cuentas, cuentaId, setCuentaId }: { cuentas: any[]; cuenta
                     <td className="px-4 py-2 text-slate-500 dark:text-slate-400">{m.fecha}</td>
                     <td className="px-4 py-2">{m.tipo_movimiento || "—"}</td>
                     <td className="px-4 py-2 text-right font-mono text-emerald-600">{m.tipo === "ingreso" ? fmt(Number(m.monto), cuenta?.moneda) : ""}</td>
-                    <td className="px-4 py-2 text-right font-mono text-rose-600">{m.tipo === "egreso" ? fmt(Number(m.monto), cuenta?.moneda) : ""}</td>
+                    <td className="px-4 py-2 text-right font-mono text-[#0145F2]">{m.tipo === "egreso" ? fmt(Number(m.monto), cuenta?.moneda) : ""}</td>
                     <td className="px-4 py-2 text-right font-mono font-bold">{fmt(m.saldo, cuenta?.moneda)}</td>
                   </tr>
                 ))}
@@ -214,13 +214,13 @@ function EstadoResultados({ desde, hasta }: { desde: string; hasta: string }) {
             ))}
             <div className="flex justify-between text-xs font-bold border-t border-slate-100 dark:border-white/10 mt-1 pt-1"><span>Total ingresos</span><span className="font-mono text-emerald-600">{fmt(totalIngresos, moneda)}</span></div>
 
-            <p className="text-[10px] font-black uppercase tracking-widest text-rose-600 mb-1 mt-4">Egresos</p>
+            <p className="text-[10px] font-black uppercase tracking-widest text-[#0145F2] mb-1 mt-4">Egresos</p>
             {Object.entries(egresos).sort((a, b) => b[1] - a[1]).map(([k, v]) => (
               <div key={k} className="flex justify-between text-xs py-0.5"><span className="text-slate-500 dark:text-slate-400">{k}</span><span className="font-mono">{fmt(v, moneda)}</span></div>
             ))}
-            <div className="flex justify-between text-xs font-bold border-t border-slate-100 dark:border-white/10 mt-1 pt-1"><span>Total egresos</span><span className="font-mono text-rose-600">{fmt(totalEgresos, moneda)}</span></div>
+            <div className="flex justify-between text-xs font-bold border-t border-slate-100 dark:border-white/10 mt-1 pt-1"><span>Total egresos</span><span className="font-mono text-[#0145F2]">{fmt(totalEgresos, moneda)}</span></div>
 
-            <div className={`flex justify-between text-sm font-black border-t-2 border-slate-200 dark:border-white/20 mt-3 pt-2 ${resultado >= 0 ? "text-emerald-600" : "text-rose-600"}`}>
+            <div className={`flex justify-between text-sm font-black border-t-2 border-slate-200 dark:border-white/20 mt-3 pt-2 ${resultado >= 0 ? "text-emerald-600" : "text-[#0145F2]"}`}>
               <span>Resultado del período</span><span className="font-mono">{fmt(resultado, moneda)}</span>
             </div>
           </div>
@@ -278,11 +278,11 @@ function FlujoDeCaja() {
                 <tr key={m.key} className="border-b border-slate-50 dark:border-white/5">
                   <td className="px-4 py-2 font-bold text-slate-700 dark:text-slate-200 capitalize">{m.label}</td>
                   <td className="px-4 py-2 text-right font-mono text-emerald-600">{m.ingresos.USD ? fmt(m.ingresos.USD, "USD") : "—"}</td>
-                  <td className="px-4 py-2 text-right font-mono text-rose-600">{m.egresos.USD ? fmt(m.egresos.USD, "USD") : "—"}</td>
-                  <td className={`px-4 py-2 text-right font-mono font-bold ${netoUsd >= 0 ? "text-emerald-600" : "text-rose-600"}`}>{fmt(netoUsd, "USD")}</td>
+                  <td className="px-4 py-2 text-right font-mono text-[#0145F2]">{m.egresos.USD ? fmt(m.egresos.USD, "USD") : "—"}</td>
+                  <td className={`px-4 py-2 text-right font-mono font-bold ${netoUsd >= 0 ? "text-emerald-600" : "text-[#0145F2]"}`}>{fmt(netoUsd, "USD")}</td>
                   <td className="px-4 py-2 text-right font-mono text-emerald-600">{m.ingresos.ARS ? fmt(m.ingresos.ARS, "ARS") : "—"}</td>
-                  <td className="px-4 py-2 text-right font-mono text-rose-600">{m.egresos.ARS ? fmt(m.egresos.ARS, "ARS") : "—"}</td>
-                  <td className={`px-4 py-2 text-right font-mono font-bold ${netoArs >= 0 ? "text-emerald-600" : "text-rose-600"}`}>{fmt(netoArs, "ARS")}</td>
+                  <td className="px-4 py-2 text-right font-mono text-[#0145F2]">{m.egresos.ARS ? fmt(m.egresos.ARS, "ARS") : "—"}</td>
+                  <td className={`px-4 py-2 text-right font-mono font-bold ${netoArs >= 0 ? "text-emerald-600" : "text-[#0145F2]"}`}>{fmt(netoArs, "ARS")}</td>
                 </tr>
               );
             })}

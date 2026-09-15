@@ -124,10 +124,10 @@ export default function PedidosClient({ pedidosIniciales, vendedores, clientes, 
     <div className="flex flex-col h-full overflow-hidden">
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-3 px-6 pt-4 shrink-0">
         <div>
-          <h1 className="text-xl font-black text-slate-900 dark:text-white flex items-center gap-2"><Search className="w-5 h-5 text-rose-600" /> Pedidos</h1>
+          <h1 className="text-xl font-black text-slate-900 dark:text-white flex items-center gap-2"><Search className="w-5 h-5 text-[#0145F2]" /> Pedidos</h1>
           <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">Búsqueda de vehículos específicos para clientes</p>
         </div>
-        <button onClick={abrirNuevo} className="flex items-center gap-1.5 px-4 py-2.5 text-sm font-bold bg-rose-600 hover:bg-rose-700 text-white rounded-xl transition-colors shrink-0">
+        <button onClick={abrirNuevo} className="flex items-center gap-1.5 px-4 py-2.5 text-sm font-bold bg-[#0145F2] hover:bg-[#0138c9] text-white rounded-xl transition-colors shrink-0">
           <Plus className="w-4 h-4" /> Nuevo pedido
         </button>
       </div>
@@ -155,7 +155,7 @@ export default function PedidosClient({ pedidosIniciales, vendedores, clientes, 
       <div className="flex items-center gap-2 px-6 pt-2 flex-wrap">
         <button
           onClick={() => setSoloMios((v) => !v)}
-          className={`px-3 py-1.5 rounded-lg text-[12px] font-bold transition-colors ${soloMios ? "bg-rose-600 text-white" : "bg-white dark:bg-white/5 border border-slate-200 dark:border-white/10 text-slate-500 dark:text-slate-400"}`}
+          className={`px-3 py-1.5 rounded-lg text-[12px] font-bold transition-colors ${soloMios ? "bg-[#0145F2] text-white" : "bg-white dark:bg-white/5 border border-slate-200 dark:border-white/10 text-slate-500 dark:text-slate-400"}`}
         >
           Solo míos
         </button>
@@ -207,10 +207,10 @@ export default function PedidosClient({ pedidosIniciales, vendedores, clientes, 
                       {tieneMatch ? (
                         <span className="inline-flex items-center gap-1 text-[11px] font-bold text-emerald-700 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-500/10 border border-emerald-200 dark:border-emerald-500/20 px-2 py-1 rounded-full">
                           <Sparkles className="w-3 h-3" /> {p.vehiculo_match?.marca} {p.vehiculo_match?.modelo}
-                          <button onClick={() => asignarMatchManual(p, "")} title="Quitar match" className="ml-0.5 hover:text-rose-600"><X className="w-3 h-3" /></button>
+                          <button onClick={() => asignarMatchManual(p, "")} title="Quitar match" className="ml-0.5 hover:text-[#0145F2]"><X className="w-3 h-3" /></button>
                         </span>
                       ) : (
-                        <button onClick={() => setMatcheando(p)} className="text-[11px] font-bold text-slate-400 hover:text-rose-600 flex items-center gap-1">
+                        <button onClick={() => setMatcheando(p)} className="text-[11px] font-bold text-slate-400 hover:text-[#0145F2] flex items-center gap-1">
                           <Sparkles className="w-3 h-3" /> Match manual
                         </button>
                       )}
@@ -286,7 +286,7 @@ export default function PedidosClient({ pedidosIniciales, vendedores, clientes, 
             <textarea value={notaReconfirmacion} onChange={(e) => setNotaReconfirmacion(e.target.value)} rows={3} placeholder="Nota (opcional)" className="w-full bg-slate-50 dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-xl px-3.5 py-2.5 text-sm outline-none focus:border-rose-500" />
             <div className="flex justify-end gap-2 mt-4">
               <button onClick={() => setReconfirmando(null)} disabled={guardandoReconfirmacion} className="px-4 py-2 text-sm font-bold text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-white/10 rounded-xl disabled:opacity-50">Cancelar</button>
-              <button onClick={guardarReconfirmacion} disabled={guardandoReconfirmacion} className="px-4 py-2 text-sm font-bold bg-rose-600 hover:bg-rose-700 text-white rounded-xl disabled:opacity-50">{guardandoReconfirmacion ? "Guardando..." : "Reconfirmar"}</button>
+              <button onClick={guardarReconfirmacion} disabled={guardandoReconfirmacion} className="px-4 py-2 text-sm font-bold bg-[#0145F2] hover:bg-[#0138c9] text-white rounded-xl disabled:opacity-50">{guardandoReconfirmacion ? "Guardando..." : "Reconfirmar"}</button>
             </div>
           </div>
         </div>

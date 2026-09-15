@@ -455,7 +455,7 @@ export default function ClientesClient({
           {/* HEADER */}
           <div className="flex flex-col md:flex-row md:items-center justify-between gap-3 mb-4">
             <div>
-              <h1 className="text-xl font-black text-slate-900 dark:text-white flex items-center gap-2"><Users className="w-5 h-5 text-rose-600" /> Clientes</h1>
+              <h1 className="text-xl font-black text-slate-900 dark:text-white flex items-center gap-2"><Users className="w-5 h-5 text-[#0145F2]" /> Clientes</h1>
               <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">{clientes.length} clientes · {activos} activos · {nuevosHoy} nuevos</p>
             </div>
             <div className="flex items-center gap-2 flex-wrap">
@@ -464,7 +464,7 @@ export default function ClientesClient({
               <button onClick={() => setModalDisponibilidad(true)} className="flex items-center gap-1.5 px-3 py-2 text-xs font-semibold bg-white dark:bg-white/5 border border-slate-200 dark:border-white/10 hover:bg-slate-50 dark:hover:bg-white/10 rounded-lg text-slate-600 dark:text-slate-300">
                 {EstadoIcon && <EstadoIcon className="w-3.5 h-3.5 text-emerald-500" />} {ESTADO_LABEL[miDisponibilidad?.estado || "disponible"]}
               </button>
-              <button onClick={() => setModalNuevo(true)} className="flex items-center gap-1.5 px-4 py-2 text-xs font-bold bg-rose-600 hover:bg-rose-700 text-white rounded-lg shadow-sm"><UserPlus className="w-3.5 h-3.5" /> Nuevo cliente</button>
+              <button onClick={() => setModalNuevo(true)} className="flex items-center gap-1.5 px-4 py-2 text-xs font-bold bg-[#0145F2] hover:bg-[#0138c9] text-white rounded-lg shadow-sm"><UserPlus className="w-3.5 h-3.5" /> Nuevo cliente</button>
             </div>
           </div>
 
@@ -481,7 +481,7 @@ export default function ClientesClient({
               const Icon = t.icon;
               const activo = vista === t.v;
               return (
-                <button key={t.v} onClick={() => setVista(t.v as Vista)} className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold transition-colors ${activo ? "bg-rose-600 text-white shadow-sm" : "text-slate-500 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-white/10"}`}>
+                <button key={t.v} onClick={() => setVista(t.v as Vista)} className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold transition-colors ${activo ? "bg-[#0145F2] text-white shadow-sm" : "text-slate-500 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-white/10"}`}>
                   <Icon className="w-3.5 h-3.5" /> {t.label}
                 </button>
               );
@@ -508,15 +508,15 @@ export default function ClientesClient({
 
               <div className="flex flex-wrap items-center gap-3 mb-4">
                 <div className="flex items-center gap-1.5 flex-wrap">
-                  <button onClick={() => setOrigenFiltro(null)} className={`px-2.5 py-1 rounded-full text-[11px] font-semibold border ${!origenFiltro ? "bg-rose-600 border-rose-600 text-white" : "bg-white dark:bg-white/5 border-slate-200 dark:border-white/10 text-slate-500"}`}>Todos</button>
+                  <button onClick={() => setOrigenFiltro(null)} className={`px-2.5 py-1 rounded-full text-[11px] font-semibold border ${!origenFiltro ? "bg-[#0145F2] border-[#0145F2] text-white" : "bg-white dark:bg-white/5 border-slate-200 dark:border-white/10 text-slate-500"}`}>Todos</button>
                   {["Instagram", "Facebook", "Web", "Referido", "Showroom", "WhatsApp", "Otro"].map((o) => (
-                    <button key={o} onClick={() => setOrigenFiltro(o)} className={`px-2.5 py-1 rounded-full text-[11px] font-semibold border ${origenFiltro === o ? "bg-rose-600 border-rose-600 text-white" : "bg-white dark:bg-white/5 border-slate-200 dark:border-white/10 text-slate-500"}`}>{o}</button>
+                    <button key={o} onClick={() => setOrigenFiltro(o)} className={`px-2.5 py-1 rounded-full text-[11px] font-semibold border ${origenFiltro === o ? "bg-[#0145F2] border-[#0145F2] text-white" : "bg-white dark:bg-white/5 border-slate-200 dark:border-white/10 text-slate-500"}`}>{o}</button>
                   ))}
                 </div>
                 <div className="flex items-center gap-1.5 ml-auto">
                   <span className="text-[11px] font-semibold text-slate-400">Sexo:</span>
                   {[null, "Femenino", "Masculino"].map((s) => (
-                    <button key={s || "todos"} onClick={() => setSexoFiltro(s)} className={`px-2.5 py-1 rounded-full text-[11px] font-semibold border ${sexoFiltro === s ? "bg-rose-600 border-rose-600 text-white" : "bg-white dark:bg-white/5 border-slate-200 dark:border-white/10 text-slate-500"}`}>{s || "Todos"}</button>
+                    <button key={s || "todos"} onClick={() => setSexoFiltro(s)} className={`px-2.5 py-1 rounded-full text-[11px] font-semibold border ${sexoFiltro === s ? "bg-[#0145F2] border-[#0145F2] text-white" : "bg-white dark:bg-white/5 border-slate-200 dark:border-white/10 text-slate-500"}`}>{s || "Todos"}</button>
                   ))}
                 </div>
               </div>
@@ -543,7 +543,7 @@ export default function ClientesClient({
                       { key: "cliente", header: "Cliente", cell: renderClienteCell, ocultarEnMobile: true },
                       { key: "contacto", header: "Contacto", cell: (c) => (
                         <div className="flex flex-col gap-0.5">
-                          {c.telefono && <a href={`tel:${c.telefono}`} onClick={(e) => e.stopPropagation()} className="flex items-center gap-1.5 text-xs font-semibold text-slate-700 dark:text-slate-300 whitespace-nowrap hover:text-rose-600 dark:hover:text-rose-400"><Phone className="w-3 h-3 text-rose-500 shrink-0" /> {c.telefono}</a>}
+                          {c.telefono && <a href={`tel:${c.telefono}`} onClick={(e) => e.stopPropagation()} className="flex items-center gap-1.5 text-xs font-semibold text-slate-700 dark:text-slate-300 whitespace-nowrap hover:text-[#0145F2] dark:hover:text-rose-400"><Phone className="w-3 h-3 text-rose-500 shrink-0" /> {c.telefono}</a>}
                           {c.email && <span className="flex items-center gap-1.5 text-[11px] text-slate-500 dark:text-slate-400 truncate max-w-[200px]"><Mail className="w-3 h-3 shrink-0" /> {c.email}</span>}
                         </div>
                       ) },
@@ -601,9 +601,9 @@ export default function ClientesClient({
               </div>
 
               <div className="flex flex-wrap items-center gap-2 mb-3">
-                <button onClick={() => setTabAgenda("atender")} className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold border ${tabAgenda === "atender" ? "bg-rose-600 border-rose-600 text-white" : "bg-white dark:bg-white/5 border-slate-200 dark:border-white/10 text-slate-600 dark:text-slate-300"}`}>Para atender <span className="px-1.5 rounded-full bg-black/10 dark:bg-white/10 text-[10px]">{agendaAtenderCount}</span></button>
-                <button onClick={() => setTabAgenda("todos")} className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold border ${tabAgenda === "todos" ? "bg-rose-600 border-rose-600 text-white" : "bg-white dark:bg-white/5 border-slate-200 dark:border-white/10 text-slate-600 dark:text-slate-300"}`}>Todos <span className="px-1.5 rounded-full bg-black/10 dark:bg-white/10 text-[10px]">{clientes.length}</span></button>
-                <button onClick={() => setTabAgenda("compraron")} className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold border ${tabAgenda === "compraron" ? "bg-rose-600 border-rose-600 text-white" : "bg-white dark:bg-white/5 border-slate-200 dark:border-white/10 text-slate-600 dark:text-slate-300"}`}>Compraron <span className="px-1.5 rounded-full bg-black/10 dark:bg-white/10 text-[10px]">{agendaCompraronCount}</span></button>
+                <button onClick={() => setTabAgenda("atender")} className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold border ${tabAgenda === "atender" ? "bg-[#0145F2] border-[#0145F2] text-white" : "bg-white dark:bg-white/5 border-slate-200 dark:border-white/10 text-slate-600 dark:text-slate-300"}`}>Para atender <span className="px-1.5 rounded-full bg-black/10 dark:bg-white/10 text-[10px]">{agendaAtenderCount}</span></button>
+                <button onClick={() => setTabAgenda("todos")} className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold border ${tabAgenda === "todos" ? "bg-[#0145F2] border-[#0145F2] text-white" : "bg-white dark:bg-white/5 border-slate-200 dark:border-white/10 text-slate-600 dark:text-slate-300"}`}>Todos <span className="px-1.5 rounded-full bg-black/10 dark:bg-white/10 text-[10px]">{clientes.length}</span></button>
+                <button onClick={() => setTabAgenda("compraron")} className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold border ${tabAgenda === "compraron" ? "bg-[#0145F2] border-[#0145F2] text-white" : "bg-white dark:bg-white/5 border-slate-200 dark:border-white/10 text-slate-600 dark:text-slate-300"}`}>Compraron <span className="px-1.5 rounded-full bg-black/10 dark:bg-white/10 text-[10px]">{agendaCompraronCount}</span></button>
               </div>
 
               <div className="relative mb-4 max-w-md">
@@ -703,18 +703,18 @@ export default function ClientesClient({
             <>
               <div className="flex flex-wrap items-center gap-2 mb-4">
                 {PERIODOS.map((p) => (
-                  <button key={p.value} onClick={() => { setPeriodo(p.value); setDiaSeleccionado(null); }} className={`px-3 py-1.5 rounded-full text-xs font-bold border ${periodo === p.value ? "bg-rose-600 border-rose-600 text-white" : "bg-white dark:bg-white/5 border-slate-200 dark:border-white/10 text-slate-600 dark:text-slate-300"}`}>{p.label}</button>
+                  <button key={p.value} onClick={() => { setPeriodo(p.value); setDiaSeleccionado(null); }} className={`px-3 py-1.5 rounded-full text-xs font-bold border ${periodo === p.value ? "bg-[#0145F2] border-[#0145F2] text-white" : "bg-white dark:bg-white/5 border-slate-200 dark:border-white/10 text-slate-600 dark:text-slate-300"}`}>{p.label}</button>
                 ))}
                 <label className="flex items-center gap-1.5 ml-2 text-[11px] font-semibold text-slate-400">
-                  <input type="checkbox" checked={incluirImportados} onChange={(e) => setIncluirImportados(e.target.checked)} className="accent-rose-600" /> Incluir importados por Excel
+                  <input type="checkbox" checked={incluirImportados} onChange={(e) => setIncluirImportados(e.target.checked)} className="accent-[#0145F2]" /> Incluir importados por Excel
                 </label>
               </div>
 
               {(diaSeleccionado || origenIngresos || vendedorIngresos) && (
                 <div className="flex items-center gap-2 mb-3 flex-wrap">
-                  {diaSeleccionado && <span className="flex items-center gap-1 px-2.5 py-1 rounded-full bg-rose-50 dark:bg-rose-500/10 text-rose-600 dark:text-rose-300 text-[11px] font-semibold">{new Date(diaSeleccionado).toLocaleDateString("es-AR")} <button onClick={() => setDiaSeleccionado(null)}><X className="w-3 h-3" /></button></span>}
-                  {origenIngresos && <span className="flex items-center gap-1 px-2.5 py-1 rounded-full bg-rose-50 dark:bg-rose-500/10 text-rose-600 dark:text-rose-300 text-[11px] font-semibold">{origenIngresos} <button onClick={() => setOrigenIngresos(null)}><X className="w-3 h-3" /></button></span>}
-                  {vendedorIngresos && <span className="flex items-center gap-1 px-2.5 py-1 rounded-full bg-rose-50 dark:bg-rose-500/10 text-rose-600 dark:text-rose-300 text-[11px] font-semibold">{vendedorIngresos === "__sin_asignar__" ? "Sin asignar" : perfilMap[vendedorIngresos]} <button onClick={() => setVendedorIngresos(null)}><X className="w-3 h-3" /></button></span>}
+                  {diaSeleccionado && <span className="flex items-center gap-1 px-2.5 py-1 rounded-full bg-rose-50 dark:bg-rose-500/10 text-[#0145F2] dark:text-rose-300 text-[11px] font-semibold">{new Date(diaSeleccionado).toLocaleDateString("es-AR")} <button onClick={() => setDiaSeleccionado(null)}><X className="w-3 h-3" /></button></span>}
+                  {origenIngresos && <span className="flex items-center gap-1 px-2.5 py-1 rounded-full bg-rose-50 dark:bg-rose-500/10 text-[#0145F2] dark:text-rose-300 text-[11px] font-semibold">{origenIngresos} <button onClick={() => setOrigenIngresos(null)}><X className="w-3 h-3" /></button></span>}
+                  {vendedorIngresos && <span className="flex items-center gap-1 px-2.5 py-1 rounded-full bg-rose-50 dark:bg-rose-500/10 text-[#0145F2] dark:text-rose-300 text-[11px] font-semibold">{vendedorIngresos === "__sin_asignar__" ? "Sin asignar" : perfilMap[vendedorIngresos]} <button onClick={() => setVendedorIngresos(null)}><X className="w-3 h-3" /></button></span>}
                 </div>
               )}
 
@@ -744,7 +744,7 @@ export default function ClientesClient({
                 <div className="flex items-end gap-1 h-32">
                   {barras30.map((d) => (
                     <button key={d.key} onClick={() => setDiaSeleccionado(diaSeleccionado === d.key ? null : d.key)} title={`${d.fecha.toLocaleDateString("es-AR")}: ${d.count}`} className="flex-1 flex flex-col items-center justify-end h-full group">
-                      <div className={`w-full rounded-t transition-colors ${diaSeleccionado === d.key ? "bg-rose-600" : "bg-rose-200 dark:bg-rose-500/30 group-hover:bg-rose-400"}`} style={{ height: `${(d.count / maxBarra) * 100}%`, minHeight: d.count > 0 ? "4px" : "1px" }} />
+                      <div className={`w-full rounded-t transition-colors ${diaSeleccionado === d.key ? "bg-[#0145F2]" : "bg-rose-200 dark:bg-rose-500/30 group-hover:bg-rose-400"}`} style={{ height: `${(d.count / maxBarra) * 100}%`, minHeight: d.count > 0 ? "4px" : "1px" }} />
                     </button>
                   ))}
                 </div>
@@ -757,7 +757,7 @@ export default function ClientesClient({
                   {desgloseOrigen.length === 0 ? <p className="text-xs text-slate-400">Sin datos en el período.</p> : desgloseOrigen.map(([k, n]) => {
                     const pct = Math.round((n / ingresosFiltrados.length) * 100);
                     return (
-                      <button key={k} onClick={() => setOrigenIngresos(origenIngresos === k ? null : k)} className={`w-full text-left text-xs py-1.5 px-1.5 rounded-lg ${origenIngresos === k ? "bg-rose-50 dark:bg-rose-500/10 text-rose-600 dark:text-rose-300" : "text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-white/5"}`}>
+                      <button key={k} onClick={() => setOrigenIngresos(origenIngresos === k ? null : k)} className={`w-full text-left text-xs py-1.5 px-1.5 rounded-lg ${origenIngresos === k ? "bg-rose-50 dark:bg-rose-500/10 text-[#0145F2] dark:text-rose-300" : "text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-white/5"}`}>
                         <div className="flex items-center justify-between mb-1"><span className="font-semibold">{k}</span><span className="font-black">{n} · {pct}%</span></div>
                         <div className="h-1.5 bg-slate-100 dark:bg-white/10 rounded-full overflow-hidden"><div className={`h-full rounded-full ${origenIngresos === k ? "bg-rose-500" : "bg-slate-300 dark:bg-white/20"}`} style={{ width: `${pct}%` }} /></div>
                       </button>
@@ -921,7 +921,7 @@ export default function ClientesClient({
                 </div>
 
                 {abiertoSinComprarCount > 0 && (
-                  <button onClick={() => setSoloAbiertoSinComprar((v) => !v)} className={`flex items-center gap-1.5 mb-4 px-3 py-1.5 rounded-full text-xs font-bold border ${soloAbiertoSinComprar ? "bg-rose-600 border-rose-600 text-white" : "bg-white dark:bg-white/5 border-slate-200 dark:border-white/10 text-slate-600 dark:text-slate-300"}`}>
+                  <button onClick={() => setSoloAbiertoSinComprar((v) => !v)} className={`flex items-center gap-1.5 mb-4 px-3 py-1.5 rounded-full text-xs font-bold border ${soloAbiertoSinComprar ? "bg-[#0145F2] border-[#0145F2] text-white" : "bg-white dark:bg-white/5 border-slate-200 dark:border-white/10 text-slate-600 dark:text-slate-300"}`}>
                     {soloAbiertoSinComprar && <CheckCircle2 className="w-3.5 h-3.5" />} Mostrar {abiertoSinComprarCount} con operación abierta y sin comprar todavía
                   </button>
                 )}

@@ -96,9 +96,9 @@ export default function ChequesTab({ cheques, setCheques, cuentas }: { cheques: 
   return (
     <div>
       <div className="flex items-center gap-1 mb-3">
-        <button onClick={() => setSub("a_cobrar")} className={`px-4 py-2 rounded-lg text-sm font-bold ${sub === "a_cobrar" ? "bg-rose-600 text-white" : "bg-white dark:bg-white/5 border border-slate-200 dark:border-white/10"}`}>📥 A cobrar</button>
-        <button onClick={() => setSub("emitido")} className={`px-4 py-2 rounded-lg text-sm font-bold ${sub === "emitido" ? "bg-rose-600 text-white" : "bg-white dark:bg-white/5 border border-slate-200 dark:border-white/10"}`}>📤 Emitidos</button>
-        <button onClick={abrir} className="ml-auto flex items-center gap-1.5 px-4 py-2 text-sm font-bold bg-rose-600 hover:bg-rose-700 text-white rounded-lg"><Plus className="w-4 h-4" /> Nuevo cheque</button>
+        <button onClick={() => setSub("a_cobrar")} className={`px-4 py-2 rounded-lg text-sm font-bold ${sub === "a_cobrar" ? "bg-[#0145F2] text-white" : "bg-white dark:bg-white/5 border border-slate-200 dark:border-white/10"}`}>📥 A cobrar</button>
+        <button onClick={() => setSub("emitido")} className={`px-4 py-2 rounded-lg text-sm font-bold ${sub === "emitido" ? "bg-[#0145F2] text-white" : "bg-white dark:bg-white/5 border border-slate-200 dark:border-white/10"}`}>📤 Emitidos</button>
+        <button onClick={abrir} className="ml-auto flex items-center gap-1.5 px-4 py-2 text-sm font-bold bg-[#0145F2] hover:bg-[#0138c9] text-white rounded-lg"><Plus className="w-4 h-4" /> Nuevo cheque</button>
       </div>
 
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 mb-4">
@@ -164,7 +164,7 @@ export default function ChequesTab({ cheques, setCheques, cuentas }: { cheques: 
             <input value={form.cajaBancoPropio} onChange={(e) => setForm({ ...form, cajaBancoPropio: e.target.value })} placeholder="Dónde lo depositás/pagás" className={inputClass} />
             <label className={labelClass + " mt-3"}>Notas</label>
             <textarea value={form.notas} onChange={(e) => setForm({ ...form, notas: e.target.value })} rows={2} placeholder="Detalle, operación vinculada, etc." className={inputClass} />
-            <div className="flex justify-end gap-2 mt-4"><button onClick={() => setShowNuevo(false)} className="px-4 py-2 text-sm font-bold text-slate-500">Cancelar</button><button onClick={crear} disabled={guardando} className="flex items-center gap-1.5 px-4 py-2 text-sm font-bold bg-rose-600 hover:bg-rose-700 text-white rounded-lg disabled:opacity-50"><Save className="w-4 h-4" /> Registrar cheque</button></div>
+            <div className="flex justify-end gap-2 mt-4"><button onClick={() => setShowNuevo(false)} className="px-4 py-2 text-sm font-bold text-slate-500">Cancelar</button><button onClick={crear} disabled={guardando} className="flex items-center gap-1.5 px-4 py-2 text-sm font-bold bg-[#0145F2] hover:bg-[#0138c9] text-white rounded-lg disabled:opacity-50"><Save className="w-4 h-4" /> Registrar cheque</button></div>
           </div>
         </div>
       )}
@@ -181,7 +181,7 @@ export default function ChequesTab({ cheques, setCheques, cuentas }: { cheques: 
             </select>
             <div className="flex justify-end gap-2 mt-4">
               <button onClick={() => setChequeParaCobrar(null)} className="px-4 py-2 text-sm font-bold text-slate-500">Cancelar</button>
-              <button onClick={confirmarCobro} disabled={cambiandoEstado} className="flex items-center gap-1.5 px-4 py-2 text-sm font-bold bg-rose-600 hover:bg-rose-700 text-white rounded-lg disabled:opacity-50"><Save className="w-4 h-4" /> Confirmar</button>
+              <button onClick={confirmarCobro} disabled={cambiandoEstado} className="flex items-center gap-1.5 px-4 py-2 text-sm font-bold bg-[#0145F2] hover:bg-[#0138c9] text-white rounded-lg disabled:opacity-50"><Save className="w-4 h-4" /> Confirmar</button>
             </div>
           </div>
         </div>

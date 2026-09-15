@@ -85,7 +85,7 @@ export default function ReclamosClient({ reclamosIniciales, perfiles, miPerfil }
           <h1 className="text-xl font-bold">Reclamos</h1>
           <p className="text-sm text-slate-400">{abiertos.length} reclamo{abiertos.length === 1 ? "" : "s"} sin cerrar</p>
         </div>
-        <button onClick={() => setMostrarNuevo(true)} className="flex items-center gap-1.5 px-4 py-2 rounded-xl text-sm font-bold bg-rose-600 hover:bg-rose-700 text-white shadow-sm">
+        <button onClick={() => setMostrarNuevo(true)} className="flex items-center gap-1.5 px-4 py-2 rounded-xl text-sm font-bold bg-[#0145F2] hover:bg-[#0138c9] text-white shadow-sm">
           <Plus className="w-4 h-4" /> Nuevo reclamo
         </button>
       </div>
@@ -118,7 +118,7 @@ export default function ReclamosClient({ reclamosIniciales, perfiles, miPerfil }
           <button
             key={t}
             onClick={() => setTab(t)}
-            className={`px-3 py-2 text-sm font-semibold border-b-2 -mb-px flex items-center gap-1.5 ${tab === t ? "border-rose-600 text-rose-600" : "border-transparent text-slate-500 hover:text-slate-700 dark:hover:text-slate-300"}`}
+            className={`px-3 py-2 text-sm font-semibold border-b-2 -mb-px flex items-center gap-1.5 ${tab === t ? "border-[#0145F2] text-[#0145F2]" : "border-transparent text-slate-500 hover:text-slate-700 dark:hover:text-slate-300"}`}
           >
             {t === "abierto" ? "Abiertos" : t === "en_curso" ? "En curso" : "Cerrados"}
             {t !== "cerrado" && <span className="text-[10px] font-bold bg-slate-100 dark:bg-white/10 px-1.5 py-0.5 rounded-full">{t === "abierto" ? abiertos.length : enCurso.length}</span>}

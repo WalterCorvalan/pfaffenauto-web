@@ -139,7 +139,7 @@ export default function ModificarCotizacionModal({ cotizacion: c, vendedorNombre
           <button onClick={() => decidir("rechazar")} disabled={guardando} className="flex items-center gap-1.5 px-3 py-2 text-xs font-bold bg-white dark:bg-white/5 border border-rose-200 dark:border-rose-500/20 text-rose-600 rounded-lg disabled:opacity-50"><XCircle className="w-3.5 h-3.5" /> Rechazar</button>
           <button onClick={() => decidir("info")} disabled={guardando} className="flex items-center gap-1.5 px-3 py-2 text-xs font-bold bg-white dark:bg-white/5 border border-slate-200 dark:border-white/10 text-slate-600 dark:text-slate-300 rounded-lg disabled:opacity-50"><MessageCircle className="w-3.5 h-3.5" /> Pedir más info</button>
           <button onClick={onClose} className="px-3 py-2 text-xs font-semibold bg-white dark:bg-white/5 border border-slate-200 dark:border-white/10 text-slate-600 dark:text-slate-300 rounded-lg">Cancelar</button>
-          <button onClick={() => decidir("aprobar")} disabled={guardando} className="flex items-center gap-1.5 px-4 py-2 text-xs font-bold bg-rose-600 hover:bg-rose-700 text-white rounded-lg ml-auto disabled:opacity-50">
+          <button onClick={() => decidir("aprobar")} disabled={guardando} className="flex items-center gap-1.5 px-4 py-2 text-xs font-bold bg-[#0145F2] hover:bg-[#0138c9] text-white rounded-lg ml-auto disabled:opacity-50">
             {guardando ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <CheckCircle2 className="w-3.5 h-3.5" />} Aprobar precio
           </button>
         </div>

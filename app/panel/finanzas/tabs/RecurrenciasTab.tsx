@@ -225,8 +225,8 @@ export default function RecurrenciasTab({
       </div>
 
       <div className="flex items-center justify-between mb-3">
-        <button onClick={generarTodas} disabled={guardando || pendientesEsteMes.length === 0} className="flex items-center gap-1.5 px-4 py-2 text-sm font-bold bg-rose-600 hover:bg-rose-700 disabled:opacity-50 text-white rounded-lg"><Send className="w-4 h-4" /> Generar TODAS del mes ({pendientesEsteMes.length} pendiente{pendientesEsteMes.length === 1 ? "" : "s"})</button>
-        <button onClick={abrirNuevo} className="flex items-center gap-1.5 px-4 py-2 text-sm font-bold bg-rose-600 hover:bg-rose-700 text-white rounded-lg"><Plus className="w-4 h-4" /> Nueva Recurrencia</button>
+        <button onClick={generarTodas} disabled={guardando || pendientesEsteMes.length === 0} className="flex items-center gap-1.5 px-4 py-2 text-sm font-bold bg-[#0145F2] hover:bg-[#0138c9] disabled:opacity-50 text-white rounded-lg"><Send className="w-4 h-4" /> Generar TODAS del mes ({pendientesEsteMes.length} pendiente{pendientesEsteMes.length === 1 ? "" : "s"})</button>
+        <button onClick={abrirNuevo} className="flex items-center gap-1.5 px-4 py-2 text-sm font-bold bg-[#0145F2] hover:bg-[#0138c9] text-white rounded-lg"><Plus className="w-4 h-4" /> Nueva Recurrencia</button>
       </div>
 
       {recurrencias.length === 0 ? (
@@ -282,7 +282,7 @@ export default function RecurrenciasTab({
             <select value={cuentaId} onChange={(e) => setCuentaId(e.target.value)} className={inputClass}><option value="">— Elegí —</option>{cuentas.filter((c) => c.moneda === moneda).map((c) => <option key={c.id} value={c.id}>{c.nombre}</option>)}</select>
             <label className={labelClass + " mt-3"}>Notas</label>
             <textarea value={notas} onChange={(e) => setNotas(e.target.value)} rows={2} className={inputClass} />
-            <div className="flex justify-end gap-2 mt-4"><button onClick={() => setShowNuevo(false)} className="px-4 py-2 text-sm font-bold text-slate-500">Cancelar</button><button onClick={guardar} disabled={guardando} className="flex items-center gap-1.5 px-4 py-2 text-sm font-bold bg-rose-600 hover:bg-rose-700 text-white rounded-lg disabled:opacity-50"><Save className="w-4 h-4" /> {editando ? "Guardar" : "Crear recurrencia"}</button></div>
+            <div className="flex justify-end gap-2 mt-4"><button onClick={() => setShowNuevo(false)} className="px-4 py-2 text-sm font-bold text-slate-500">Cancelar</button><button onClick={guardar} disabled={guardando} className="flex items-center gap-1.5 px-4 py-2 text-sm font-bold bg-[#0145F2] hover:bg-[#0138c9] text-white rounded-lg disabled:opacity-50"><Save className="w-4 h-4" /> {editando ? "Guardar" : "Crear recurrencia"}</button></div>
           </div>
         </div>
       )}

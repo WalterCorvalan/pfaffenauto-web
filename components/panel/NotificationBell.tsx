@@ -92,7 +92,7 @@ export default function NotificationBell({ miId }: { miId: string }) {
       <button onClick={() => setOpen((v) => !v)} className="relative p-2 rounded-lg hover:bg-slate-100 dark:hover:bg-white/10 text-slate-500 dark:text-slate-300 shrink-0" title="Notificaciones">
         <Bell className="w-4 h-4" />
         {sinLeer > 0 && (
-          <span className="absolute -top-0.5 -right-0.5 min-w-[16px] h-4 px-1 rounded-full bg-rose-600 text-white text-[9px] font-bold flex items-center justify-center">
+          <span className="absolute -top-0.5 -right-0.5 min-w-[16px] h-4 px-1 rounded-full bg-[#0145F2] text-white text-[9px] font-bold flex items-center justify-center">
             {sinLeer > 9 ? "9+" : sinLeer}
           </span>
         )}
@@ -102,7 +102,7 @@ export default function NotificationBell({ miId }: { miId: string }) {
         <div className="absolute right-0 top-full mt-2 w-80 bg-white dark:bg-[#1A1A1A] border border-slate-200 dark:border-white/10 rounded-2xl shadow-2xl z-50 overflow-hidden">
           <div className="flex items-center justify-between px-4 py-3 border-b border-slate-100 dark:border-white/10">
             <span className="flex items-center gap-1.5 text-sm font-bold text-slate-800 dark:text-white">
-              <Bell className="w-4 h-4" /> Notificaciones {sinLeer > 0 && <span className="text-[10px] font-bold px-1.5 py-0.5 rounded-full bg-rose-600 text-white">{sinLeer}</span>}
+              <Bell className="w-4 h-4" /> Notificaciones {sinLeer > 0 && <span className="text-[10px] font-bold px-1.5 py-0.5 rounded-full bg-[#0145F2] text-white">{sinLeer}</span>}
             </span>
             {sinLeer > 0 && <button onClick={marcarTodas} className="flex items-center gap-1 text-[11px] font-semibold text-slate-400 hover:text-rose-600"><Check className="w-3 h-3" /> Marcar todas</button>}
           </div>
@@ -120,7 +120,7 @@ export default function NotificationBell({ miId }: { miId: string }) {
                     <span className="min-w-0 flex-1">
                       <span className="flex items-center gap-1.5">
                         <span className="text-xs font-bold text-slate-800 dark:text-white truncate">{a.titulo}</span>
-                        {a.contador > 1 && <span className="shrink-0 text-[10px] font-bold px-1.5 rounded-full bg-rose-600 text-white">x{a.contador}</span>}
+                        {a.contador > 1 && <span className="shrink-0 text-[10px] font-bold px-1.5 rounded-full bg-[#0145F2] text-white">x{a.contador}</span>}
                         {!a.leida && <span className="w-1.5 h-1.5 rounded-full bg-rose-500 shrink-0" />}
                       </span>
                       {a.mensaje && <span className="block text-[11px] text-slate-500 dark:text-slate-400 truncate">{a.mensaje}</span>}

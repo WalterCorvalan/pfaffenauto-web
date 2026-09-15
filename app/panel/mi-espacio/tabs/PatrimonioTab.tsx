@@ -102,7 +102,7 @@ export default function PatrimonioTab({ miId, miNombre, soyAdmin }: { miId: stri
     <div>
       <div className="flex items-center justify-between mb-3 flex-wrap gap-2">
         <div><p className="text-lg font-bold">Resumen patrimonial — {miNombre}</p><p className="text-xs text-slate-400">Vista consolidada de activos y pasivos personales. Cada moneda se calcula por separado — el tipo de cambio es volátil.</p></div>
-        {soyAdmin && <label className="flex items-center gap-2 text-xs font-semibold shrink-0"><input type="checkbox" checked={incluirStock} onChange={(e) => setIncluirStock(e.target.checked)} className="w-4 h-4 accent-rose-600" /> Incluir stock propio (USD)</label>}
+        {soyAdmin && <label className="flex items-center gap-2 text-xs font-semibold shrink-0"><input type="checkbox" checked={incluirStock} onChange={(e) => setIncluirStock(e.target.checked)} className="w-4 h-4 accent-[#0145F2]" /> Incluir stock propio (USD)</label>}
       </div>
 
       <div className="bg-indigo-50 dark:bg-indigo-500/10 border border-indigo-100 dark:border-indigo-500/20 rounded-xl p-5 mb-4">
@@ -133,7 +133,7 @@ export default function PatrimonioTab({ miId, miNombre, soyAdmin }: { miId: stri
 
       <div className="flex items-center justify-between mb-2">
         <p className="text-sm font-bold">Mis cuentas personales — {cuentas.length} cargada{cuentas.length === 1 ? "" : "s"}</p>
-        <button onClick={abrirNueva} className="flex items-center gap-1.5 px-4 py-2 text-sm font-bold bg-rose-600 hover:bg-rose-700 text-white rounded-lg"><Plus className="w-4 h-4" /> Nueva cuenta</button>
+        <button onClick={abrirNueva} className="flex items-center gap-1.5 px-4 py-2 text-sm font-bold bg-[#0145F2] hover:bg-[#0138c9] text-white rounded-lg"><Plus className="w-4 h-4" /> Nueva cuenta</button>
       </div>
       {cuentas.length === 0 ? (
         <div className="bg-white dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-2xl py-12 text-center">

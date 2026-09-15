@@ -123,10 +123,10 @@ export default function PagosDispTab({
 
       <div className="flex items-center gap-1 mb-4 flex-wrap">
         {FILTROS.map((f) => (
-          <button key={f.value} onClick={() => setFiltro(f.value)} className={`px-3 py-1.5 text-xs font-bold rounded-lg ${filtro === f.value ? "bg-rose-600 text-white" : "bg-white dark:bg-white/5 border border-slate-200 dark:border-white/10"}`}>{f.label}</button>
+          <button key={f.value} onClick={() => setFiltro(f.value)} className={`px-3 py-1.5 text-xs font-bold rounded-lg ${filtro === f.value ? "bg-[#0145F2] text-white" : "bg-white dark:bg-white/5 border border-slate-200 dark:border-white/10"}`}>{f.label}</button>
         ))}
         <input value={busqueda} onChange={(e) => setBusqueda(e.target.value)} placeholder="Buscar vehículo, cliente, notas..." className="ml-auto text-xs bg-white dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-lg px-3 py-1.5 outline-none" />
-        <button onClick={abrirNuevo} className="flex items-center gap-1.5 px-4 py-1.5 text-xs font-bold bg-rose-600 hover:bg-rose-700 text-white rounded-lg"><Plus className="w-3.5 h-3.5" /> Nuevo</button>
+        <button onClick={abrirNuevo} className="flex items-center gap-1.5 px-4 py-1.5 text-xs font-bold bg-[#0145F2] hover:bg-[#0138c9] text-white rounded-lg"><Plus className="w-3.5 h-3.5" /> Nuevo</button>
       </div>
 
       {filtrados.length === 0 ? (
@@ -178,7 +178,7 @@ export default function PagosDispTab({
             <label className={labelClass + " mt-3"}>Notas</label>
             <textarea value={notas} onChange={(e) => setNotas(e.target.value)} rows={2} className={inputClass} />
             <p className="text-[10px] text-slate-400 mt-2">El pago queda como pendiente — no afecta saldos hasta que se marque Cobrado.</p>
-            <div className="flex justify-end gap-2 mt-4"><button onClick={() => setShowNuevo(false)} className="px-4 py-2 text-sm font-bold text-slate-500">Cancelar</button><button onClick={crear} disabled={guardando} className="flex items-center gap-1.5 px-4 py-2 text-sm font-bold bg-rose-600 hover:bg-rose-700 text-white rounded-lg disabled:opacity-50"><Save className="w-4 h-4" /> Registrar pago</button></div>
+            <div className="flex justify-end gap-2 mt-4"><button onClick={() => setShowNuevo(false)} className="px-4 py-2 text-sm font-bold text-slate-500">Cancelar</button><button onClick={crear} disabled={guardando} className="flex items-center gap-1.5 px-4 py-2 text-sm font-bold bg-[#0145F2] hover:bg-[#0138c9] text-white rounded-lg disabled:opacity-50"><Save className="w-4 h-4" /> Registrar pago</button></div>
           </div>
         </div>
       )}
@@ -192,7 +192,7 @@ export default function PagosDispTab({
               <div><label className={labelClass}>Monto ({cobrando.moneda}) *</label><input type="text" inputMode="numeric" value={cbMonto} onChange={(e) => setCbMonto(e.target.value.replace(/\D/g, ""))} placeholder="147000" className={inputClass} /></div>
               <div><label className={labelClass}>Caja *</label><select value={cbCuentaId} onChange={(e) => setCbCuentaId(e.target.value)} className={inputClass}><option value="">— Elegí —</option>{cuentas.filter((c) => c.moneda === cobrando.moneda).map((c) => <option key={c.id} value={c.id}>{c.nombre} · saldo {fmt(c.saldo, c.moneda)}</option>)}</select></div>
             </div>
-            <div className="flex justify-end gap-2 mt-4"><button onClick={() => setCobrando(null)} className="px-4 py-2 text-sm font-bold text-slate-500">Cancelar</button><button onClick={confirmarCobro} disabled={guardando} className="flex items-center gap-1.5 px-4 py-2 text-sm font-bold bg-rose-600 hover:bg-rose-700 text-white rounded-lg disabled:opacity-50"><Save className="w-4 h-4" /> Confirmar</button></div>
+            <div className="flex justify-end gap-2 mt-4"><button onClick={() => setCobrando(null)} className="px-4 py-2 text-sm font-bold text-slate-500">Cancelar</button><button onClick={confirmarCobro} disabled={guardando} className="flex items-center gap-1.5 px-4 py-2 text-sm font-bold bg-[#0145F2] hover:bg-[#0138c9] text-white rounded-lg disabled:opacity-50"><Save className="w-4 h-4" /> Confirmar</button></div>
           </div>
         </div>
       )}

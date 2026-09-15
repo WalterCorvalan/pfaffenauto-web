@@ -134,13 +134,13 @@ export default function DashboardGeneralTab(props: Props) {
 
       <div className="rounded-2xl p-4 bg-white dark:bg-white/[0.02] border border-slate-200 dark:border-white/5 flex items-center justify-between flex-wrap gap-3">
         <div className="flex items-center gap-3">
-          <div className="w-9 h-9 rounded-xl bg-rose-50 dark:bg-rose-500/10 text-rose-600 dark:text-rose-400 flex items-center justify-center"><Users className="w-4 h-4" /></div>
+          <div className="w-9 h-9 rounded-xl bg-rose-50 dark:bg-rose-500/10 text-[#0145F2] dark:text-[#5b8dff] flex items-center justify-center"><Users className="w-4 h-4" /></div>
           <div>
             <p className="text-lg font-black text-slate-900 dark:text-white">{props.clientesIngresadosHoy}</p>
             <p className="text-[10px] font-bold uppercase tracking-widest text-slate-400">Clientes que ingresaron hoy{props.canalTop ? ` · mayoría por ${props.canalTop}` : ""}</p>
           </div>
         </div>
-        <Link href="/panel/clientes" className="text-xs font-bold text-rose-600 hover:underline">Ver más →</Link>
+        <Link href="/panel/clientes" className="text-xs font-bold text-[#0145F2] hover:underline">Ver más →</Link>
       </div>
 
       <SeccionTitulo>Ventas y clientes</SeccionTitulo>
@@ -279,7 +279,7 @@ export default function DashboardGeneralTab(props: Props) {
               ))}
             </div>
             <div>
-              <p className="text-[10px] font-bold uppercase text-rose-600 mb-1">Top egresos</p>
+              <p className="text-[10px] font-bold uppercase text-[#0145F2] mb-1">Top egresos</p>
               {Object.entries(props.topEgresos).sort((a, b) => b[1] - a[1]).slice(0, 3).map(([k, v]) => (
                 <div key={k} className="flex justify-between text-[11px] text-slate-500"><span className="truncate">{k}</span><span className={`font-mono ${props.ocultarMontos ? "blur-sm select-none" : ""}`}>{Math.round(v).toLocaleString("es-AR")}</span></div>
               ))}
@@ -309,7 +309,7 @@ export default function DashboardGeneralTab(props: Props) {
                     <td className="py-1.5 pr-2 text-slate-700 dark:text-slate-200 truncate max-w-[200px]">{g.concepto}</td>
                     <td className="py-1.5 pr-2 text-slate-500">{g.categoria}</td>
                     <td className="py-1.5 pr-2 text-slate-400">{new Date(`${g.fecha}T12:00:00Z`).toLocaleDateString("es-AR", { timeZone: "UTC" })}</td>
-                    <td className={`py-1.5 text-right font-mono font-bold text-rose-600 dark:text-rose-400 ${props.ocultarMontos ? "blur-sm select-none" : ""}`}>{fmtMoneda(g.monto, g.moneda)}</td>
+                    <td className={`py-1.5 text-right font-mono font-bold text-[#0145F2] dark:text-[#5b8dff] ${props.ocultarMontos ? "blur-sm select-none" : ""}`}>{fmtMoneda(g.monto, g.moneda)}</td>
                   </tr>
                 ))}
               </tbody>
@@ -319,7 +319,7 @@ export default function DashboardGeneralTab(props: Props) {
       </div>
 
       <div className={`rounded-2xl p-5 border ${props.gastosAtipicos.length > 0 ? "bg-rose-50/40 dark:bg-rose-500/5 border-rose-200 dark:border-rose-500/20" : "bg-white dark:bg-white/[0.02] border-slate-200 dark:border-white/5"}`}>
-        <p className="text-[11px] font-black uppercase tracking-widest text-rose-600 dark:text-rose-400 flex items-center gap-1.5 mb-1"><AlertTriangle className="w-3.5 h-3.5" /> Gastos atípicos — más del doble del promedio de su categoría</p>
+        <p className="text-[11px] font-black uppercase tracking-widest text-[#0145F2] dark:text-[#5b8dff] flex items-center gap-1.5 mb-1"><AlertTriangle className="w-3.5 h-3.5" /> Gastos atípicos — más del doble del promedio de su categoría</p>
         <p className="text-[11px] text-slate-400 mb-3">Comparado contra el promedio histórico de los últimos 6 meses de cada categoría.</p>
         {props.gastosAtipicos.length === 0 ? (
           <p className="text-xs text-slate-400 italic text-center py-4">Ningún gasto se salió del promedio este mes. 🎉</p>
@@ -329,7 +329,7 @@ export default function DashboardGeneralTab(props: Props) {
               <div key={g.categoria} className="flex items-center justify-between text-xs bg-white dark:bg-white/5 rounded-lg px-3 py-2">
                 <span className="font-bold text-slate-700 dark:text-slate-200">{g.categoria}</span>
                 <span className={`font-mono ${props.ocultarMontos ? "blur-sm select-none" : ""}`}>
-                  <span className="font-bold text-rose-600">{fmtMoneda(g.montoMes, g.moneda)}</span>
+                  <span className="font-bold text-[#0145F2]">{fmtMoneda(g.montoMes, g.moneda)}</span>
                   <span className="text-slate-400"> · prom. {fmtMoneda(g.promedioHistorico, g.moneda)}</span>
                 </span>
               </div>
@@ -392,7 +392,7 @@ export default function DashboardGeneralTab(props: Props) {
             <p className={`text-sm font-black text-emerald-700 dark:text-emerald-400 ${props.ocultarMontos ? "blur-sm select-none" : ""}`}>{fmtPorMoneda(props.proyeccionCaja.aCobrarPorMoneda)}</p>
           </div>
           <div className="rounded-xl p-3 bg-rose-50 dark:bg-rose-500/10">
-            <p className="text-[10px] font-bold uppercase text-rose-600 mb-1">↗ A pagar</p>
+            <p className="text-[10px] font-bold uppercase text-[#0145F2] mb-1">↗ A pagar</p>
             <p className={`text-sm font-black text-rose-700 dark:text-rose-400 ${props.ocultarMontos ? "blur-sm select-none" : ""}`}>{fmtPorMoneda(props.proyeccionCaja.aPagarPorMoneda)}</p>
           </div>
           <div className="rounded-xl p-3 bg-emerald-50 dark:bg-emerald-500/10">
@@ -411,13 +411,13 @@ export default function DashboardGeneralTab(props: Props) {
             ) : <p className="text-xs text-slate-400">Sin entradas previstas.</p>}
           </div>
           <div className="rounded-xl p-3 border border-rose-100 dark:border-rose-500/20">
-            <p className="text-[10px] font-bold uppercase text-rose-600 mb-2">↓ Salidas previstas · Top {props.proyeccionCaja.topSalidas.length}</p>
+            <p className="text-[10px] font-bold uppercase text-[#0145F2] mb-2">↓ Salidas previstas · Top {props.proyeccionCaja.topSalidas.length}</p>
             {props.proyeccionCaja.topSalidas.length === 0 ? <p className="text-xs text-slate-400">Sin salidas previstas.</p> : (
               <div className="space-y-1">
                 {props.proyeccionCaja.topSalidas.map((s) => (
                   <div key={s.id} className="flex justify-between text-xs">
                     <span className="text-slate-700 dark:text-slate-200 truncate">{s.label}</span>
-                    <span className={`font-mono font-bold text-rose-600 shrink-0 ml-2 ${props.ocultarMontos ? "blur-sm select-none" : ""}`}>{fmtMoneda(s.monto, s.moneda)}</span>
+                    <span className={`font-mono font-bold text-[#0145F2] shrink-0 ml-2 ${props.ocultarMontos ? "blur-sm select-none" : ""}`}>{fmtMoneda(s.monto, s.moneda)}</span>
                   </div>
                 ))}
               </div>
@@ -474,7 +474,7 @@ export default function DashboardGeneralTab(props: Props) {
               <p className={`text-xs font-black text-emerald-700 dark:text-emerald-400 ${props.ocultarMontos ? "blur-sm select-none" : ""}`}>{fmtPorMoneda(props.ingresosPorMoneda)}</p>
             </div>
             <div className="rounded-lg p-2 bg-rose-50 dark:bg-rose-500/10 text-center">
-              <p className="text-[9px] font-bold uppercase text-rose-600">Egresos</p>
+              <p className="text-[9px] font-bold uppercase text-[#0145F2]">Egresos</p>
               <p className={`text-xs font-black text-rose-700 dark:text-rose-400 ${props.ocultarMontos ? "blur-sm select-none" : ""}`}>{fmtPorMoneda(props.egresosPorMoneda)}</p>
             </div>
             <div className="rounded-lg p-2 bg-violet-50 dark:bg-violet-500/10 text-center">

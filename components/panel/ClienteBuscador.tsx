@@ -161,7 +161,7 @@ export default function ClienteBuscador({
           <input className={inputClass} placeholder="Estado civil" value={nuevo.estado_civil} onChange={(e) => setNuevo({ ...nuevo, estado_civil: e.target.value })} />
           <input className={inputClass} placeholder="Profesión" value={nuevo.profesion} onChange={(e) => setNuevo({ ...nuevo, profesion: e.target.value })} />
         </div>
-        <button type="button" onClick={guardarNuevoCliente} disabled={guardando} className="w-full bg-rose-600 hover:bg-rose-700 text-white font-bold py-2.5 rounded-lg text-[11px] uppercase tracking-widest disabled:opacity-50 transition-colors">
+        <button type="button" onClick={guardarNuevoCliente} disabled={guardando} className="w-full bg-[#0145F2] hover:bg-[#0138c9] text-white font-bold py-2.5 rounded-lg text-[11px] uppercase tracking-widest disabled:opacity-50 transition-colors">
           {guardando ? "Guardando..." : "Usar este cliente"}
         </button>
       </div>
@@ -185,7 +185,7 @@ export default function ClienteBuscador({
           {filtrados.length === 0 && <p className="px-3 py-3 text-[13px] text-slate-400 italic">Sin resultados.</p>}
         </div>
       )}
-      <button type="button" onClick={() => setCreandoNuevo(true)} className="flex items-center gap-1.5 text-rose-600 dark:text-rose-400 hover:text-rose-800 dark:hover:text-rose-300 text-[12px] font-bold">
+      <button type="button" onClick={() => setCreandoNuevo(true)} className="flex items-center gap-1.5 text-[#0145F2] dark:text-[#5b8dff] hover:text-[#0138c9] dark:hover:text-rose-300 text-[12px] font-bold">
         <UserPlus className="w-3.5 h-3.5" /> Cargar cliente nuevo
       </button>
     </div>

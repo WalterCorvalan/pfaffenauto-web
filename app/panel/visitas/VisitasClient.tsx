@@ -132,11 +132,11 @@ export default function VisitasClient({
     <div className="p-6">
       <div className="flex flex-wrap items-center justify-between gap-3 mb-1">
         <div>
-          <h1 className="text-xl font-bold flex items-center gap-2"><CalendarCheck className="w-5 h-5 text-rose-600" /> Agenda de Citas</h1>
+          <h1 className="text-xl font-bold flex items-center gap-2"><CalendarCheck className="w-5 h-5 text-[#0145F2]" /> Agenda de Citas</h1>
           <p className="text-sm text-slate-400">Visitas agendadas desde la web o cargadas a mano</p>
         </div>
         <div className="flex items-center gap-2 flex-wrap">
-          <button onClick={() => setModalNueva(true)} className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-bold bg-rose-600 hover:bg-rose-700 text-white rounded-lg shadow-sm"><Plus className="w-3.5 h-3.5" /> Nueva visita</button>
+          <button onClick={() => setModalNueva(true)} className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-bold bg-[#0145F2] hover:bg-[#0138c9] text-white rounded-lg shadow-sm"><Plus className="w-3.5 h-3.5" /> Nueva visita</button>
           <div className="flex items-center gap-1.5 bg-slate-50 dark:bg-white/5 border border-slate-200 dark:border-white/10 px-2.5 py-1 rounded-md text-[11px] font-bold text-slate-600 dark:text-slate-300"><Users className="w-3.5 h-3.5" /> {total} Total</div>
           <div className="flex items-center gap-1.5 bg-amber-50 dark:bg-amber-500/10 border border-amber-200 dark:border-amber-500/20 px-2.5 py-1 rounded-md text-[11px] font-bold text-amber-700 dark:text-amber-300"><CalendarClock className="w-3.5 h-3.5" /> {pendientes} Por venir</div>
           <div className="flex items-center gap-1.5 bg-emerald-50 dark:bg-emerald-500/10 border border-emerald-200 dark:border-emerald-500/20 px-2.5 py-1 rounded-md text-[11px] font-bold text-emerald-700 dark:text-emerald-300"><CheckCircle2 className="w-3.5 h-3.5" /> {asistieron} Asistieron</div>

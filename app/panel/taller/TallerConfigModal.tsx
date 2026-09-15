@@ -255,7 +255,7 @@ export default function TallerConfigModal({
 
         <div className="flex gap-3 p-6 border-t border-slate-100 dark:border-white/10 shrink-0">
           <button onClick={onClose} className="px-4 py-2 text-sm font-bold bg-white dark:bg-transparent border border-slate-200 dark:border-white/10 rounded-xl text-slate-700 dark:text-slate-300">Cancelar</button>
-          <button onClick={guardar} disabled={cargando} className="px-6 py-2 text-sm font-bold bg-rose-600 text-white rounded-xl shadow-sm hover:bg-rose-700 disabled:opacity-50">Guardar</button>
+          <button onClick={guardar} disabled={cargando} className="px-6 py-2 text-sm font-bold bg-[#0145F2] text-white rounded-xl shadow-sm hover:bg-[#0138c9] disabled:opacity-50">Guardar</button>
         </div>
       </div>
     </div>

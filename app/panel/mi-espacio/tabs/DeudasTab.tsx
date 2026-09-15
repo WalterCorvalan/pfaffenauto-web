@@ -115,7 +115,7 @@ export default function DeudasTab({ miId }: { miId: string }) {
     <div>
       <div className="flex items-center justify-between mb-3">
         <div><p className="text-lg font-bold">Deudas — {activas.length} activa{activas.length === 1 ? "" : "s"}</p><p className="text-xs text-slate-400">Plata que le debés a otras personas. Solo vos lo ves.</p></div>
-        <button onClick={() => setShowNueva(true)} className="flex items-center gap-1.5 px-4 py-2 text-sm font-bold bg-rose-600 hover:bg-rose-700 text-white rounded-lg shrink-0"><Plus className="w-4 h-4" /> Nueva deuda</button>
+        <button onClick={() => setShowNueva(true)} className="flex items-center gap-1.5 px-4 py-2 text-sm font-bold bg-[#0145F2] hover:bg-[#0138c9] text-white rounded-lg shrink-0"><Plus className="w-4 h-4" /> Nueva deuda</button>
       </div>
 
       <div className="grid grid-cols-2 gap-3 mb-4">
@@ -142,7 +142,7 @@ export default function DeudasTab({ miId }: { miId: string }) {
                 <p className="text-[11px] text-slate-400">Desde {d.fecha_inicio}{d.vencimiento ? ` · vence ${d.vencimiento}` : ""}{ligadas.length > 0 && ` · ${ligadas.length} cuota(s) vinculada(s)`}</p>
                 {!d.pagada && (
                   <div className="flex items-center gap-2 mt-2 flex-wrap">
-                    {ligadas.length === 0 && <button onClick={() => abrirPago(d)} className="flex items-center gap-1 px-2.5 py-1.5 text-[11px] font-bold bg-rose-600 hover:bg-rose-700 text-white rounded-lg"><DollarSign className="w-3.5 h-3.5" /> Registrar pago</button>}
+                    {ligadas.length === 0 && <button onClick={() => abrirPago(d)} className="flex items-center gap-1 px-2.5 py-1.5 text-[11px] font-bold bg-[#0145F2] hover:bg-[#0138c9] text-white rounded-lg"><DollarSign className="w-3.5 h-3.5" /> Registrar pago</button>}
                     <button onClick={() => setVinculando(d)} className="flex items-center gap-1 px-2.5 py-1.5 text-[11px] font-bold border border-slate-200 dark:border-white/10 rounded-lg hover:bg-slate-50 dark:hover:bg-white/5"><Link2 className="w-3.5 h-3.5" /> Vincular cuotas</button>
                     <button onClick={() => abrirEdicion(d)} className="p-1.5 text-slate-400 hover:text-slate-700 dark:hover:text-white ml-auto"><Pencil className="w-3.5 h-3.5" /></button>
                     <button onClick={() => eliminar(d)} className="p-1.5 text-slate-400 hover:text-rose-600"><Trash2 className="w-3.5 h-3.5" /></button>
@@ -169,7 +169,7 @@ export default function DeudasTab({ miId }: { miId: string }) {
             </div>
             <label className={labelClass + " mt-3"}>Notas</label>
             <textarea value={notas} onChange={(e) => setNotas(e.target.value)} rows={2} className={inputClass} />
-            <div className="flex justify-end gap-2 mt-4"><button onClick={cerrarModalDeuda} className="px-4 py-2 text-sm font-bold text-slate-500">Cancelar</button><button onClick={crear} disabled={guardando} className="flex items-center gap-1.5 px-4 py-2 text-sm font-bold bg-rose-600 hover:bg-rose-700 text-white rounded-lg disabled:opacity-50"><Save className="w-4 h-4" /> {editando ? "Guardar" : "Crear"}</button></div>
+            <div className="flex justify-end gap-2 mt-4"><button onClick={cerrarModalDeuda} className="px-4 py-2 text-sm font-bold text-slate-500">Cancelar</button><button onClick={crear} disabled={guardando} className="flex items-center gap-1.5 px-4 py-2 text-sm font-bold bg-[#0145F2] hover:bg-[#0138c9] text-white rounded-lg disabled:opacity-50"><Save className="w-4 h-4" /> {editando ? "Guardar" : "Crear"}</button></div>
           </div>
         </div>
       )}
@@ -189,7 +189,7 @@ export default function DeudasTab({ miId }: { miId: string }) {
             <label className={labelClass + " mt-3"}>Notas (opcional)</label>
             <textarea value={pagoNotas} onChange={(e) => setPagoNotas(e.target.value)} rows={2} placeholder="Transferencia, efectivo, etc." className={inputClass} />
             {Number(pagoMonto) >= saldoPendiente && Number(pagoMonto) > 0 && <p className="text-xs text-emerald-600 font-semibold mt-2">✓ Con este pago la deuda queda saldada.</p>}
-            <div className="flex justify-end gap-2 mt-4"><button onClick={() => setPagando(null)} className="px-4 py-2 text-sm font-bold text-slate-500">Cancelar</button><button onClick={confirmarPago} disabled={guardandoPago} className="flex items-center gap-1.5 px-4 py-2 text-sm font-bold bg-rose-600 hover:bg-rose-700 text-white rounded-lg disabled:opacity-50"><Save className="w-4 h-4" /> Registrar pago</button></div>
+            <div className="flex justify-end gap-2 mt-4"><button onClick={() => setPagando(null)} className="px-4 py-2 text-sm font-bold text-slate-500">Cancelar</button><button onClick={confirmarPago} disabled={guardandoPago} className="flex items-center gap-1.5 px-4 py-2 text-sm font-bold bg-[#0145F2] hover:bg-[#0138c9] text-white rounded-lg disabled:opacity-50"><Save className="w-4 h-4" /> Registrar pago</button></div>
           </div>
         </div>
       )}
@@ -208,7 +208,7 @@ export default function DeudasTab({ miId }: { miId: string }) {
               <div className="space-y-1.5 max-h-64 overflow-y-auto">
                 {cuotasVinculables.map((c) => (
                   <label key={c.id} className="flex items-center gap-3 bg-slate-50 dark:bg-white/5 rounded-lg p-3 cursor-pointer">
-                    <input type="checkbox" checked={c.deuda_id === vinculando.id} onChange={() => toggleVinculo(c)} className="w-4 h-4 accent-rose-600" />
+                    <input type="checkbox" checked={c.deuda_id === vinculando.id} onChange={() => toggleVinculo(c)} className="w-4 h-4 accent-[#0145F2]" />
                     <span className="flex-1 text-sm">{c.concepto} — {fmt(Number(c.monto), c.moneda)}</span>
                   </label>
                 ))}

@@ -35,7 +35,7 @@ export default function TallerClient({
       <header className="flex flex-col border-b border-slate-200 dark:border-white/5 bg-white dark:bg-white/[0.02] shrink-0 pt-6 px-6">
         <div className="flex items-center justify-between pb-6">
           <div className="flex items-center gap-3">
-            <Wrench className="w-6 h-6 text-rose-600" />
+            <Wrench className="w-6 h-6 text-[#0145F2]" />
             <div>
               <h1 className="text-xl font-black text-slate-900 dark:text-white leading-tight">Taller</h1>
               <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
@@ -52,7 +52,7 @@ export default function TallerClient({
             </button>
             <button
               onClick={() => setModalNuevaOT(true)}
-              className="flex items-center gap-2 bg-rose-600 hover:bg-rose-700 text-white font-bold text-sm px-4 py-2.5 rounded-xl transition-colors"
+              className="flex items-center gap-2 bg-[#0145F2] hover:bg-[#0138c9] text-white font-bold text-sm px-4 py-2.5 rounded-xl transition-colors"
             >
               <Plus className="w-4 h-4" /> Nueva OT
             </button>
@@ -69,7 +69,7 @@ export default function TallerClient({
                 onClick={() => setTabActivo(tab)}
                 className={`pb-3 text-[13px] font-bold transition-colors border-b-2 whitespace-nowrap ${
                   activo
-                    ? "border-rose-600 text-rose-600 dark:text-rose-400"
+                    ? "border-[#0145F2] text-[#0145F2] dark:text-[#5b8dff]"
                     : "border-transparent text-slate-500 hover:text-slate-700 dark:hover:text-slate-300"
                 }`}
               >
