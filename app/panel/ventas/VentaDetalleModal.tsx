@@ -11,7 +11,7 @@ const ESTADO_LABEL: Record<string, string> = {
   borrador: "Borrador", activa: "Activa", reserva: "Reserva", cerrada: "Cerrada", caida: "Caída", cancelada: "Cancelada",
 };
 const ESTADO_COLOR: Record<string, string> = {
-  borrador: "text-slate-500", activa: "text-blue-600", reserva: "text-amber-600", cerrada: "text-emerald-600", caida: "text-orange-600", cancelada: "text-[#0145F2]",
+  borrador: "text-slate-500", activa: "text-blue-600", reserva: "text-amber-600", cerrada: "text-emerald-600", caida: "text-orange-600", cancelada: "text-rose-600",
 };
 
 const TRANSICIONES: Record<string, string[]> = {
@@ -196,9 +196,10 @@ export default function VentaDetalleModal({ ventaId, miId, soyAdmin, puedeOperac
   };
 
   const eliminar = async () => {
-    if (!confirm("¿Eliminar esta venta? No se puede deshacer.")) return;
-    const { error, count } = await supabase2.from("ventas").delete({ count: "exact" }).eq("id", ventaId);
-    if (error || !count) { alert("No se pudo eliminar (sin permiso o ya no existe)."); return; }
+    if (!confirm(`¿Eliminar la venta de ${venta.comprador_nombre}? Queda en Papelera, se puede restaurar (también revive el expediente vinculado y devuelve el vehículo a disponible).`)) return;
+    const motivo = prompt("Motivo (opcional):") || undefined;
+    const res = await fetch("/api/panel/papelera", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ accion: "eliminar", tipo: "ventas", id: ventaId, motivo }) });
+    if (!res.ok) { alert("No se pudo eliminar (sin permiso o ya no existe)."); return; }
     onEliminado(ventaId);
     onClose();
   };
