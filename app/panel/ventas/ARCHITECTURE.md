@@ -22,9 +22,11 @@ Guía para no romper otra cosa al tocar este módulo. Si cambiás algo acá, rev
 
 Los tres guardados de venta (edición, cambio de estado, edición de comisión) usan `.update(...).select().maybeSingle()`, no `.single()`. `.single()` explota con `"Cannot coerce the result to a single JSON object"` cuando el UPDATE no puede releer la fila (RLS bloqueando el SELECT posterior, o un trigger de base de datos abortando la transacción). Si agregás un guardado nuevo a `ventas`, seguí el mismo patrón: `maybeSingle()` + chequeo explícito de `!data`.
 
-## Trigger sospechoso en el cierre
+## Bug corregido: cambiar el estado de una venta fallaba siempre, para cualquier estado y cualquier usuario
 
-`generar_comisiones_al_cerrar_venta()` (en `migraciones/sql_fix_modo_comision.sql`) se dispara al pasar `estado = 'cerrada'` e inserta en `public.comisiones`. Si esa inserción falla (FK/NOT NULL en `creado_por`, vendedor sin fila en `perfiles`), aborta todo el UPDATE de la venta. No confirmado como causa raíz del bloqueo de cierre reportado en la auditoría (P1-09) — pendiente de reproducir con logs reales en runtime.
+Causa raíz confirmada en runtime (auditoría de flujo real, `testing/guia-flujo-real-panel`) — **no** era `generar_comisiones_al_cerrar_venta()` (esa solo corre al cerrar, y el bug se reproducía igual al pasar a "Reserva"). El trigger real es `trg_log_venta_estado` (función `log_venta_estado()`), que corre en **cualquier** cambio de `estado` e inserta un registro en `public.venta_estado_historial` (la tabla que lee `VentaDetalleModal.tsx` para el bloque "Historial de estados"). Esa tabla tiene RLS habilitado con una única política, de `SELECT` — nunca se le agregó una de `INSERT`. Como `log_venta_estado()` no estaba marcada `security definer`, el insert corría con los permisos del usuario que editaba la venta, RLS lo rechazaba, y la excepción abortaba toda la transacción del `UPDATE` sobre `ventas` — así que fallaba para cualquier estado destino y cualquier usuario (probado con un vendedor no-admin y con admin, ambos fallaban igual).
+
+Arreglado en `migraciones/sql_fix_log_venta_estado_security_definer.sql`, marcando la función `security definer` — mismo patrón que ya usa `registrar_historial_cambios()` (el trigger de historial genérico de `ventas`) para poder escribir su propia tabla de auditoría sin depender del permiso de `INSERT` del usuario que edita. Si agregás otro trigger de auditoría/historial sobre una tabla con RLS, seguí este mismo patrón desde el arranque — no asumas que el rol del usuario que dispara el trigger alcanza para escribir en la tabla de logs.
 
 ## Componentes compartidos (¡ojo al tocarlos!)
 
