@@ -48,6 +48,10 @@ Este fue el **piloto** de un pedido más amplio (cambiar rojo→azul en todo el 
 - Donde el acento sí se migró, el patrón `dark:text-rose-400` que acompañaba al `text-rose-600` original se cambió a `dark:text-[#5b8dff]` (azul más claro, pensado para fondo oscuro) — si agregás un acento nuevo, no dejes el modo oscuro en rojo mientras el claro queda azul.
 - El botón "Cerrar sesión" y el toast de alertas nuevas (`app/panel/layout.tsx`) se dejaron en rojo a propósito — no son acciones primarias de guardar/crear.
 
+## Vista por default: "lista", no "tabla"
+
+`vista` (el toggle Lista/Tarjetas/Tabla detallada) arranca en `"lista"` — pedido explícito, antes abría en `"tabla"`. Si cambiás el default de nuevo, hacelo a propósito y avisá, porque `app/panel/clientes/ARCHITECTURE.md` usa esta misma vista "lista" como referencia de diseño para otras pantallas del panel.
+
 ## No tocar sin revisar el resto
 
 - No confundir `publicado_ml` con "visible en la web" en ningún indicador nuevo — son conceptos distintos y ya generó un hallazgo de auditoría por la confusión.

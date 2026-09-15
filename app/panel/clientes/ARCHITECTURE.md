@@ -18,6 +18,10 @@ Una venta puede no haber quedado vinculada a una ficha de cliente (`ventas.clien
 
 `esAdminORecepcion` (ahora `esAdminRecepcionOEncargado`) solo incluía `admin` y `recepcion`. Con el toggle "cada vendedor ve solo sus clientes" prendido, el `encargado` quedaba tratado como un vendedor común y se le filtraba `vendedor_id = su propio id` — como el encargado normalmente no tiene clientes asignados como vendedor, la lista le quedaba vacía (podía entrar al módulo, pero sin datos). Corregido agregando `encargado` a la lista de roles que ven la cartera completa, igual que admin/recepción.
 
+## Vista "lista" — tarjetas estilo Stock, no `TablaResponsiva`
+
+La vista principal (`vista === "lista"`, la que ve todo el mundo al entrar) dejó de usar `TablaResponsiva` y pasó a ser una lista de tarjetas (avatar + nombre + contacto + badges en una fila, acciones a la derecha), calcada del patrón de `vista === "lista"` de `StockClient.tsx` — mismo contenedor (`rounded-2xl divide-y`), mismo layout de fila. Es un pedido explícito de diseño para que las dos pantallas se vean consistentes. `renderClienteCell()` y el import de `TablaResponsiva`/`ColumnaTabla` se borraron por quedar sin uso — si necesitás la vista de tabla clásica con columnas, mirá `vista === "tabla_detallada"` (usa `<table>` directo, no `TablaResponsiva`), no revivas el componente viejo.
+
 ## No tocar sin revisar el resto
 
 - Si el toggle está prendido, `clientesIniciales` que llega a `ClientesClient.tsx` ya viene filtrado — no asumir que siempre es "todos los clientes" al usarlo para deduplicar o comparar.
