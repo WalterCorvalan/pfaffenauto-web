@@ -302,7 +302,7 @@ export default function ReportesClient(props: Props) {
               <tbody>
                 {props.consultasVsVentas.map((c: any, i: number) => {
                   const pct = Number(c.tasa_conversion_pct) || 0;
-                  const colorPct = pct === 0 ? "text-[#0145F2]" : pct < 15 ? "text-amber-600" : "text-emerald-600";
+                  const colorPct = pct === 0 ? "text-rose-600" : pct < 15 ? "text-amber-600" : "text-emerald-600";
                   return (
                     <tr key={`${c.marca}-${c.modelo}-${i}`} className="border-t border-slate-50 dark:border-white/5">
                       <td className="py-1.5 font-bold text-slate-700 dark:text-slate-200">{c.marca} {c.modelo}</td>
