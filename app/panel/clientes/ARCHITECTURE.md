@@ -14,6 +14,10 @@ Configuración → Empresa tiene un toggle **"Cada vendedor ve solo sus clientes
 
 Una venta puede no haber quedado vinculada a una ficha de cliente (`ventas.cliente_id` null) — en ese caso se rescata comparando `ventas.comprador_dni` contra `clientes.dni_cuit` (`ventasPorCliente` en `ClientesClient.tsx`, mismo criterio que ya usaba el tab Ranking). **Bug corregido**: el badge "N operación(es)" de la lista principal (`opsMap`) contaba solo por `cliente_id`, sin este rescate por DNI — un cliente con una venta rescatada mostraba "0" en la lista aunque Ranking, para ese mismo cliente, sí la contara. Ahora `opsMap` se deriva de `ventasPorCliente` en vez de tener su propio loop. Si agregás un contador nuevo sobre `ventas` en este módulo, reusá `ventasPorCliente` en vez de iterar `ventas` de cero — evita que se repita el mismo desfasaje.
 
+## Bug corregido: encargado veía Clientes vacío
+
+`esAdminORecepcion` (ahora `esAdminRecepcionOEncargado`) solo incluía `admin` y `recepcion`. Con el toggle "cada vendedor ve solo sus clientes" prendido, el `encargado` quedaba tratado como un vendedor común y se le filtraba `vendedor_id = su propio id` — como el encargado normalmente no tiene clientes asignados como vendedor, la lista le quedaba vacía (podía entrar al módulo, pero sin datos). Corregido agregando `encargado` a la lista de roles que ven la cartera completa, igual que admin/recepción.
+
 ## No tocar sin revisar el resto
 
 - Si el toggle está prendido, `clientesIniciales` que llega a `ClientesClient.tsx` ya viene filtrado — no asumir que siempre es "todos los clientes" al usarlo para deduplicar o comparar.

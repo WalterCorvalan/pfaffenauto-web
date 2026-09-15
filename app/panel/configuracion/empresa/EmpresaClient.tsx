@@ -11,11 +11,15 @@ const MODULO_LABEL: Record<string, string> = Object.fromEntries(MODULOS_CATALOGO
 
 interface Modulo { modulo: string; activo: boolean; }
 interface Visibilidad { modulo: string; sector: string; visible: boolean; }
+interface PermisoRol { rol: string; otorgado: boolean; }
+
+const ROL_LABEL: Record<string, string> = { encargado: "Encargado", ventas: "Ventas", finanzas: "Finanzas", gestoria: "Gestoría" };
 
 export default function EmpresaClient() {
   const [subtab, setSubtab] = useState<"modulos" | "comisiones" | "plazos" | "routing" | "resumen" | "branding">("modulos");
   const [modulos, setModulos] = useState<Modulo[]>([]);
   const [visibilidad, setVisibilidad] = useState<Visibilidad[]>([]);
+  const [permisoVerLiquidacion, setPermisoVerLiquidacion] = useState<PermisoRol[]>([]);
   const [cargando, setCargando] = useState(true);
   const [error, setError] = useState("");
 
@@ -23,7 +27,7 @@ export default function EmpresaClient() {
     setCargando(true);
     const res = await fetch("/api/panel-v2/modulos");
     const data = await res.json();
-    if (res.ok) { setModulos(data.modulos); setVisibilidad(data.visibilidad); }
+    if (res.ok) { setModulos(data.modulos); setVisibilidad(data.visibilidad); setPermisoVerLiquidacion(data.permisoVerLiquidacion || []); }
     else setError(data.error || "No se pudo cargar.");
     setCargando(false);
   };
@@ -49,6 +53,14 @@ export default function EmpresaClient() {
         : [...prev, { modulo, sector, visible: nuevoValor }];
     });
     await fetch("/api/panel-v2/modulos", { method: "PATCH", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ tipo: "visibilidad", modulo, sector, visible: nuevoValor }) });
+  };
+
+  const puedeVerLiquidacion = (rol: string) => permisoVerLiquidacion.find((p) => p.rol === rol)?.otorgado ?? false;
+
+  const toggleVerLiquidacion = async (rol: string) => {
+    const nuevoValor = !puedeVerLiquidacion(rol);
+    setPermisoVerLiquidacion((prev) => prev.map((p) => (p.rol === rol ? { ...p, otorgado: nuevoValor } : p)));
+    await fetch("/api/panel-v2/modulos", { method: "PATCH", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ tipo: "permiso_ver_liquidacion", rol, otorgado: nuevoValor }) });
   };
 
   return (
@@ -113,6 +125,19 @@ export default function EmpresaClient() {
                 ] as ColumnaTabla<Modulo>[]
               }
             />
+          </div>
+
+          <div className="bg-white dark:bg-white/[0.02] border border-slate-200 dark:border-white/5 rounded-2xl p-5">
+            <p className="text-sm font-bold text-slate-800 dark:text-white mb-1">Ver margen/ganancia (Expedientes, Gestoría, Liquidaciones, Tesorería)</p>
+            <p className="text-xs text-slate-400 mb-4">Quién puede ver el margen/ganancia de la agencia en esas 4 pantallas. Admin lo ve siempre.</p>
+            <div className="flex flex-wrap gap-3">
+              {permisoVerLiquidacion.map((p) => (
+                <label key={p.rol} className="flex items-center gap-2 px-3 py-2 rounded-lg bg-slate-50 dark:bg-white/5 text-sm">
+                  <input type="checkbox" checked={p.otorgado} onChange={() => toggleVerLiquidacion(p.rol)} className="w-4 h-4 accent-[#0145F2]" />
+                  <span className="text-slate-700 dark:text-slate-200">{ROL_LABEL[p.rol] || p.rol}</span>
+                </label>
+              ))}
+            </div>
           </div>
         </>
       ) : subtab === "comisiones" ? (
