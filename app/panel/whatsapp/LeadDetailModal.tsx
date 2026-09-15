@@ -29,7 +29,7 @@ const ESTADOS_TEST_DRIVE = ["Programado", "Realizado", "Cancelado"];
 export const CANALES_ORIGEN = ["Salón", "MercadoLibre", "Rodi", "WhatsApp", "Instagram", "Cliente anterior"];
 const CALIFICACIONES = [
   { value: "", label: "Sin calificar", icono: Minus, color: "text-slate-500 dark:text-slate-400 border-slate-200 dark:border-white/10 bg-slate-50 dark:bg-white/5" },
-  { value: "caliente", label: "Caliente", icono: Flame, color: "text-[#0145F2] dark:text-rose-300 border-rose-200 dark:border-rose-500/20 bg-rose-50 dark:bg-rose-500/10" },
+  { value: "caliente", label: "Caliente", icono: Flame, color: "text-rose-600 dark:text-rose-300 border-rose-200 dark:border-rose-500/20 bg-rose-50 dark:bg-rose-500/10" },
   { value: "tibio", label: "Tibio", icono: Clock, color: "text-amber-600 dark:text-amber-300 border-amber-200 dark:border-amber-500/20 bg-amber-50 dark:bg-amber-500/10" },
   { value: "frio", label: "Frío", icono: Snowflake, color: "text-sky-600 dark:text-sky-300 border-sky-200 dark:border-sky-500/20 bg-sky-50 dark:bg-sky-500/10" },
 ];
@@ -427,7 +427,7 @@ export default function LeadDetailModal({
               })}
             </div>
             {lead.motivo_cierre_id && lead.estado_lead === "perdido" && (
-              <p className="text-[11px] text-[#0145F2] dark:text-rose-300 font-bold mt-2 bg-rose-50 dark:bg-rose-500/10 border border-rose-200 dark:border-rose-500/20 rounded-lg px-2.5 py-1.5 w-fit">
+              <p className="text-[11px] text-rose-600 dark:text-rose-300 font-bold mt-2 bg-rose-50 dark:bg-rose-500/10 border border-rose-200 dark:border-rose-500/20 rounded-lg px-2.5 py-1.5 w-fit">
                 Motivo: {motivos.find((m) => m.id === lead.motivo_cierre_id)?.nombre || "—"}
               </p>
             )}
@@ -617,7 +617,7 @@ export default function LeadDetailModal({
                     <Link key={p.id} href={`/panel/peritajes/${p.id}`} className="flex items-center justify-between gap-3 bg-white dark:bg-white/5 border border-slate-100 dark:border-white/10 rounded-xl p-3 hover:border-rose-300">
                       <span className="text-xs font-medium text-slate-700 dark:text-slate-200">{new Date(p.created_at).toLocaleDateString("es-AR")}</span>
                       <span className="flex items-center gap-2 text-[11px] font-bold">
-                        {p.puntaje != null && <span className={p.puntaje >= 70 ? "text-emerald-600" : p.puntaje >= 40 ? "text-amber-600" : "text-[#0145F2]"}>{p.puntaje}%</span>}
+                        {p.puntaje != null && <span className={p.puntaje >= 70 ? "text-emerald-600" : p.puntaje >= 40 ? "text-amber-600" : "text-rose-600"}>{p.puntaje}%</span>}
                         <span className="text-slate-400 uppercase">{p.estado}</span>
                       </span>
                     </Link>

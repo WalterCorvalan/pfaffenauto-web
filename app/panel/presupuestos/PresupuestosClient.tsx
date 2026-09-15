@@ -142,7 +142,7 @@ export default function PresupuestosClient({
                 <input type="date" value={hastaCustom} onChange={(e) => setHastaCustom(e.target.value)} className="bg-slate-50 dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-lg px-2 py-1.5 text-[11px] text-slate-600 dark:text-slate-300 outline-none" />
               </div>
               {hayFiltrosActivos && (
-                <button onClick={limpiarFiltros} className="flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-[11px] font-bold text-[#0145F2] dark:text-[#5b8dff] hover:bg-rose-50 dark:hover:bg-rose-500/10">
+                <button onClick={limpiarFiltros} className="flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-[11px] font-bold text-rose-600 dark:text-rose-400 hover:bg-rose-50 dark:hover:bg-rose-500/10">
                   <X className="w-3 h-3" /> Limpiar
                 </button>
               )}
@@ -178,7 +178,7 @@ export default function PresupuestosClient({
                       <td className="px-4 py-3 text-[13px] text-slate-500 dark:text-slate-400">{p.perfiles?.nombre || "—"}</td>
                       <td className="px-4 py-3 text-right font-mono text-[13px] font-bold text-slate-900 dark:text-white">{p.precio_ars ? `$ ${Number(p.precio_ars).toLocaleString("es-AR")}` : p.precio_usd ? `US$ ${Number(p.precio_usd).toLocaleString("es-AR")}` : "—"}</td>
                       <td className="px-4 py-3 text-center" onClick={(e) => e.stopPropagation()}><CompartirPresupuestoBoton tokenPublico={p.token_publico} /></td>
-                      <td className="px-4 py-3 text-center" onClick={(e) => e.stopPropagation()}><Link href={`/panel/presupuestos/imprimir/${p.id}`} className="inline-flex p-2 bg-slate-50 dark:bg-white/5 hover:bg-rose-50 dark:hover:bg-rose-500/10 border border-slate-200 dark:border-white/10 hover:border-rose-200 dark:hover:border-rose-500/30 rounded-lg text-slate-400 hover:text-[#0145F2] dark:hover:text-rose-400 transition-all"><Printer className="w-4 h-4" /></Link></td>
+                      <td className="px-4 py-3 text-center" onClick={(e) => e.stopPropagation()}><Link href={`/panel/presupuestos/imprimir/${p.id}`} className="inline-flex p-2 bg-slate-50 dark:bg-white/5 hover:bg-rose-50 dark:hover:bg-rose-500/10 border border-slate-200 dark:border-white/10 hover:border-rose-200 dark:hover:border-rose-500/30 rounded-lg text-slate-400 hover:text-rose-600 dark:hover:text-rose-400 transition-all"><Printer className="w-4 h-4" /></Link></td>
                     </tr>
                   ))}
                   {presupuestosFiltrados.length === 0 && (

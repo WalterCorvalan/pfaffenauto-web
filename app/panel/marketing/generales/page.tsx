@@ -127,7 +127,7 @@ export default async function MetricasGeneralesPage() {
   const canales = [
     { label: "WhatsApp", icon: MessageSquareText, color: "text-emerald-600", bg: "bg-emerald-50 dark:bg-emerald-500/10", conversaciones: waConversaciones7 ?? 0, mensajes: waMensajes7 ?? 0, href: "/panel/marketing/whatsapp-metricas" },
     { label: "Instagram", icon: AtSign, color: "text-pink-600", bg: "bg-pink-50 dark:bg-pink-500/10", conversaciones: igConversaciones7 ?? 0, mensajes: igMensajes7 ?? 0, href: "/panel/marketing/instagram" },
-    { label: "Rodi (web)", icon: Bot, color: "text-[#0145F2]", bg: "bg-rose-50 dark:bg-rose-500/10", conversaciones: rodiConversaciones7 ?? 0, mensajes: rodiMensajes7 ?? 0, href: "/panel/marketing/chatbot" },
+    { label: "Rodi (web)", icon: Bot, color: "text-rose-600", bg: "bg-rose-50 dark:bg-rose-500/10", conversaciones: rodiConversaciones7 ?? 0, mensajes: rodiMensajes7 ?? 0, href: "/panel/marketing/chatbot" },
   ];
 
   return (
@@ -147,7 +147,7 @@ export default async function MetricasGeneralesPage() {
             <p className="text-[11px] text-slate-400 mt-0.5 flex items-center gap-1">
               Leads nuevos (30d)
               {variacionLeadsPct !== null && (
-                <span className={`inline-flex items-center gap-0.5 font-bold ${variacionLeadsPct >= 0 ? "text-emerald-600" : "text-[#0145F2]"}`}>
+                <span className={`inline-flex items-center gap-0.5 font-bold ${variacionLeadsPct >= 0 ? "text-emerald-600" : "text-rose-600"}`}>
                   {variacionLeadsPct >= 0 ? <TrendingUp className="w-3 h-3" /> : <TrendingDown className="w-3 h-3" />} {Math.abs(variacionLeadsPct)}%
                 </span>
               )}

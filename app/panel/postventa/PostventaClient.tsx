@@ -206,7 +206,7 @@ export default function PostventaClient({
                           return (
                             <div key={r.id} className="flex items-center justify-between gap-3 px-4 py-3">
                               <div className="flex items-center gap-3 min-w-0">
-                                <span className="w-8 h-8 rounded-full bg-rose-50 dark:bg-rose-500/10 text-[#0145F2] dark:text-rose-300 flex items-center justify-center shrink-0"><Icon className="w-4 h-4" /></span>
+                                <span className="w-8 h-8 rounded-full bg-rose-50 dark:bg-rose-500/10 text-rose-600 dark:text-rose-300 flex items-center justify-center shrink-0"><Icon className="w-4 h-4" /></span>
                                 <div className="min-w-0">
                                   <p className="text-sm font-bold text-slate-800 dark:text-white truncate">{TIPO_MAP[r.tipo]?.label} — {compra?.comprador_nombre}</p>
                                   <p className="text-[11px] text-slate-400 truncate">{compra?.vehiculo_marca} {compra?.vehiculo_modelo} · {fmtFechaLocal(r.fecha_vencimiento)}{r.descripcion ? ` · ${r.descripcion}` : ""}</p>

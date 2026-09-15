@@ -696,9 +696,9 @@ export default function ClientesClient({
 
               {(diaSeleccionado || origenIngresos || vendedorIngresos) && (
                 <div className="flex items-center gap-2 mb-3 flex-wrap">
-                  {diaSeleccionado && <span className="flex items-center gap-1 px-2.5 py-1 rounded-full bg-rose-50 dark:bg-rose-500/10 text-[#0145F2] dark:text-rose-300 text-[11px] font-semibold">{new Date(diaSeleccionado).toLocaleDateString("es-AR")} <button onClick={() => setDiaSeleccionado(null)}><X className="w-3 h-3" /></button></span>}
-                  {origenIngresos && <span className="flex items-center gap-1 px-2.5 py-1 rounded-full bg-rose-50 dark:bg-rose-500/10 text-[#0145F2] dark:text-rose-300 text-[11px] font-semibold">{origenIngresos} <button onClick={() => setOrigenIngresos(null)}><X className="w-3 h-3" /></button></span>}
-                  {vendedorIngresos && <span className="flex items-center gap-1 px-2.5 py-1 rounded-full bg-rose-50 dark:bg-rose-500/10 text-[#0145F2] dark:text-rose-300 text-[11px] font-semibold">{vendedorIngresos === "__sin_asignar__" ? "Sin asignar" : perfilMap[vendedorIngresos]} <button onClick={() => setVendedorIngresos(null)}><X className="w-3 h-3" /></button></span>}
+                  {diaSeleccionado && <span className="flex items-center gap-1 px-2.5 py-1 rounded-full bg-rose-50 dark:bg-rose-500/10 text-rose-600 dark:text-rose-300 text-[11px] font-semibold">{new Date(diaSeleccionado).toLocaleDateString("es-AR")} <button onClick={() => setDiaSeleccionado(null)}><X className="w-3 h-3" /></button></span>}
+                  {origenIngresos && <span className="flex items-center gap-1 px-2.5 py-1 rounded-full bg-rose-50 dark:bg-rose-500/10 text-rose-600 dark:text-rose-300 text-[11px] font-semibold">{origenIngresos} <button onClick={() => setOrigenIngresos(null)}><X className="w-3 h-3" /></button></span>}
+                  {vendedorIngresos && <span className="flex items-center gap-1 px-2.5 py-1 rounded-full bg-rose-50 dark:bg-rose-500/10 text-rose-600 dark:text-rose-300 text-[11px] font-semibold">{vendedorIngresos === "__sin_asignar__" ? "Sin asignar" : perfilMap[vendedorIngresos]} <button onClick={() => setVendedorIngresos(null)}><X className="w-3 h-3" /></button></span>}
                 </div>
               )}
 
@@ -741,7 +741,7 @@ export default function ClientesClient({
                   {desgloseOrigen.length === 0 ? <p className="text-xs text-slate-400">Sin datos en el período.</p> : desgloseOrigen.map(([k, n]) => {
                     const pct = Math.round((n / ingresosFiltrados.length) * 100);
                     return (
-                      <button key={k} onClick={() => setOrigenIngresos(origenIngresos === k ? null : k)} className={`w-full text-left text-xs py-1.5 px-1.5 rounded-lg ${origenIngresos === k ? "bg-rose-50 dark:bg-rose-500/10 text-[#0145F2] dark:text-rose-300" : "text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-white/5"}`}>
+                      <button key={k} onClick={() => setOrigenIngresos(origenIngresos === k ? null : k)} className={`w-full text-left text-xs py-1.5 px-1.5 rounded-lg ${origenIngresos === k ? "bg-rose-50 dark:bg-rose-500/10 text-rose-600 dark:text-rose-300" : "text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-white/5"}`}>
                         <div className="flex items-center justify-between mb-1"><span className="font-semibold">{k}</span><span className="font-black">{n} · {pct}%</span></div>
                         <div className="h-1.5 bg-slate-100 dark:bg-white/10 rounded-full overflow-hidden"><div className={`h-full rounded-full ${origenIngresos === k ? "bg-rose-500" : "bg-slate-300 dark:bg-white/20"}`} style={{ width: `${pct}%` }} /></div>
                       </button>

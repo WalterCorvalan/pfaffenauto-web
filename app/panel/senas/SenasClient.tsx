@@ -88,7 +88,7 @@ export default function SenasClient({
               </div>
               <button onClick={() => setFiltrosAbiertos((v) => !v)} className={`md:hidden shrink-0 flex items-center gap-1.5 px-3 py-2.5 rounded-xl text-sm font-bold border ${filtrosAbiertos ? "bg-[#0145F2] border-[#0145F2] text-white" : "bg-white dark:bg-white/5 border-slate-200 dark:border-white/10 text-slate-600 dark:text-slate-300"}`}>
                 <SlidersHorizontal className="w-4 h-4" /> Filtros
-                {filtrosSecundariosActivos > 0 && <span className={`text-[9px] px-1.5 rounded-full ${filtrosAbiertos ? "bg-white/20" : "bg-rose-100 dark:bg-rose-500/20 text-[#0145F2] dark:text-rose-300"}`}>{filtrosSecundariosActivos}</span>}
+                {filtrosSecundariosActivos > 0 && <span className={`text-[9px] px-1.5 rounded-full ${filtrosAbiertos ? "bg-white/20" : "bg-rose-100 dark:bg-rose-500/20 text-rose-600 dark:text-rose-300"}`}>{filtrosSecundariosActivos}</span>}
               </button>
             </div>
             <div className={`flex flex-col gap-2 mt-2 md:mt-0 md:contents ${filtrosAbiertos ? "" : "hidden md:contents"}`}>

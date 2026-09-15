@@ -161,7 +161,7 @@ export default function DiagramaCarroceria({ peritajeId, marcasIniciales }: { pe
             <button
               type="button"
               onClick={copiarJson}
-              className="flex items-center gap-1 text-[10px] font-bold text-[#0145F2] dark:text-[#5b8dff] bg-rose-50 dark:bg-rose-500/10 border border-rose-100 dark:border-rose-500/20 px-2.5 py-1.5 rounded-lg hover:bg-rose-100 transition-colors"
+              className="flex items-center gap-1 text-[10px] font-bold text-rose-600 dark:text-rose-400 bg-rose-50 dark:bg-rose-500/10 border border-rose-100 dark:border-rose-500/20 px-2.5 py-1.5 rounded-lg hover:bg-rose-100 transition-colors"
             >
               {copiado ? <Check className="w-3 h-3" /> : <Copy className="w-3 h-3" />} {copiado ? "Copiado" : "Copiar JSON"}
             </button>

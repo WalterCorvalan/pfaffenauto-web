@@ -289,7 +289,7 @@ export default async function EmbudoPage({ searchParams }: { searchParams: Promi
         </div>
         <div className="p-6 grid grid-cols-1 sm:grid-cols-2 gap-4">
           <div className="bg-rose-50 dark:bg-rose-500/10 border border-rose-200 dark:border-rose-500/20 rounded-xl p-5 text-center">
-            <div className="w-10 h-10 mx-auto bg-rose-100 dark:bg-rose-900/50 text-[#0145F2] dark:text-rose-300 rounded-full flex items-center justify-center mb-3">
+            <div className="w-10 h-10 mx-auto bg-rose-100 dark:bg-rose-900/50 text-rose-600 dark:text-rose-300 rounded-full flex items-center justify-center mb-3">
               <Megaphone className="w-5 h-5" />
             </div>
             <h3 className="text-3xl font-black text-rose-700 dark:text-rose-300 mb-1">{pctConPauta}%</h3>

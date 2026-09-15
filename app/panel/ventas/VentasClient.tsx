@@ -201,7 +201,7 @@ export default function VentasClient({
             </div>
             <button onClick={() => setFiltrosAbiertos((v) => !v)} className={`shrink-0 flex items-center gap-1.5 px-3 py-2 rounded-lg text-xs font-bold border ${filtrosAbiertos ? "bg-[#0145F2] border-[#0145F2] text-white" : "bg-white dark:bg-white/5 border-slate-200 dark:border-white/10 text-slate-600 dark:text-slate-300"}`}>
               <SlidersHorizontal className="w-3.5 h-3.5" /> Filtros
-              {filtrosSecundariosActivos > 0 && <span className={`text-[9px] px-1.5 rounded-full ${filtrosAbiertos ? "bg-white/20" : "bg-rose-100 dark:bg-rose-500/20 text-[#0145F2] dark:text-rose-300"}`}>{filtrosSecundariosActivos}</span>}
+              {filtrosSecundariosActivos > 0 && <span className={`text-[9px] px-1.5 rounded-full ${filtrosAbiertos ? "bg-white/20" : "bg-rose-100 dark:bg-rose-500/20 text-rose-600 dark:text-rose-300"}`}>{filtrosSecundariosActivos}</span>}
             </button>
           </div>
 

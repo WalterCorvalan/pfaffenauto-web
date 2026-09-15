@@ -139,7 +139,7 @@ export default function NpsClient({
           <span className="text-[10px] font-bold uppercase tracking-widest text-[#0145F2]">Detractores (0-6)</span>
           <div className="flex items-center justify-between mt-1">
             <span className="text-2xl font-black text-rose-700 dark:text-rose-400">{detractores}</span>
-            <span className="text-sm font-bold text-[#0145F2]/50 bg-rose-50 dark:bg-rose-500/10 px-2 py-1 rounded-md">{pctDetractores.toFixed(0)}%</span>
+            <span className="text-sm font-bold text-rose-600/50 bg-rose-50 dark:bg-rose-500/10 px-2 py-1 rounded-md">{pctDetractores.toFixed(0)}%</span>
           </div>
         </div>
       </div>

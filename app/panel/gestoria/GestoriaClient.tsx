@@ -196,7 +196,7 @@ export default function GestoriaClient({
                   <span className="text-sm font-bold text-slate-900 dark:text-white shrink-0">{e.titulo || `EXP — ${v.vehiculo_marca || ""} ${v.vehiculo_modelo || ""} (${v.vehiculo_anio || ""})`}</span>
                   {v.vehiculo_patente && <span className="text-[9px] font-bold bg-slate-100 dark:bg-white/10 px-1.5 py-0.5 rounded shrink-0">{v.vehiculo_patente}</span>}
                   <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full shrink-0 ${ESTADO_CLASS[e.estado]}`}>{ESTADO_LABEL[e.estado] || e.estado}</span>
-                  {pendiente && <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-rose-50 dark:bg-rose-500/10 text-[#0145F2] shrink-0">🔒 Pendiente</span>}
+                  {pendiente && <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-rose-50 dark:bg-rose-500/10 text-rose-600 shrink-0">🔒 Pendiente</span>}
                   <span className="flex-1" />
                   <span className="ml-auto flex items-center gap-1.5 flex-wrap justify-end text-[11px] text-slate-400">
                     <MessageCircle className="w-3.5 h-3.5 text-emerald-500" /> {v.comprador_nombre}
