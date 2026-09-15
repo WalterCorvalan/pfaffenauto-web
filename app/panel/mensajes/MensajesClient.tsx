@@ -239,7 +239,7 @@ export default function MensajesClient({ miId, miNombre, staff }: { miId: string
                   <p className={`text-sm font-bold truncate ${activo ? "text-white" : "text-slate-900 dark:text-white"}`}>{nombreCanal(c, miId)}</p>
                   <p className={`text-[11px] truncate ${activo ? "text-white/70" : "text-slate-400"}`}>{ultimoMensajePorCanal[c.id] ? "Mensaje nuevo" : "Tocá para chatear"}</p>
                 </div>
-                {n > 0 && <span className={`text-[10px] font-bold rounded-full px-1.5 py-0.5 shrink-0 ${activo ? "bg-white text-indigo-600" : "bg-rose-600 text-white"}`}>{n}</span>}
+                {n > 0 && <span className={`text-[10px] font-bold rounded-full px-1.5 py-0.5 shrink-0 ${activo ? "bg-white text-indigo-600" : "bg-[#0145F2] text-white"}`}>{n}</span>}
               </button>
             );
           })}
@@ -348,7 +348,7 @@ export default function MensajesClient({ miId, miNombre, staff }: { miId: string
             <div className="space-y-1 mb-4">
               {staff.map((p) => (
                 <label key={p.id} className="flex items-center gap-3 px-2 py-2 rounded-lg hover:bg-slate-50 dark:hover:bg-white/5 cursor-pointer">
-                  <input type="checkbox" checked={miembrosGrupo.includes(p.id)} onChange={(e) => setMiembrosGrupo((prev) => e.target.checked ? [...prev, p.id] : prev.filter((x) => x !== p.id))} className="w-4 h-4 accent-rose-600" />
+                  <input type="checkbox" checked={miembrosGrupo.includes(p.id)} onChange={(e) => setMiembrosGrupo((prev) => e.target.checked ? [...prev, p.id] : prev.filter((x) => x !== p.id))} className="w-4 h-4 accent-[#0145F2]" />
                   <div className="w-8 h-8 rounded-full bg-indigo-500 text-white flex items-center justify-center font-bold text-xs shrink-0">{p.nombre.slice(0, 1).toUpperCase()}</div>
                   <div><p className="text-sm font-semibold">{p.nombre}</p><p className="text-[10px] text-slate-400">{p.roles?.[0] || ""}</p></div>
                 </label>
@@ -356,7 +356,7 @@ export default function MensajesClient({ miId, miNombre, staff }: { miId: string
             </div>
             <div className="flex gap-2">
               <button onClick={() => setShowNuevoGrupo(false)} disabled={creandoGrupo} className="flex-1 px-4 py-2.5 text-sm font-bold text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-white/10 rounded-xl disabled:opacity-50">Cancelar</button>
-              <button onClick={crearGrupo} disabled={creandoGrupo || !nombreGrupo.trim() || miembrosGrupo.length === 0} className="flex-1 flex items-center justify-center gap-1.5 px-4 py-2.5 text-sm font-bold bg-rose-600 hover:bg-rose-700 text-white rounded-xl disabled:opacity-50"><Users className="w-4 h-4" /> Crear grupo</button>
+              <button onClick={crearGrupo} disabled={creandoGrupo || !nombreGrupo.trim() || miembrosGrupo.length === 0} className="flex-1 flex items-center justify-center gap-1.5 px-4 py-2.5 text-sm font-bold bg-[#0145F2] hover:bg-[#0138c9] text-white rounded-xl disabled:opacity-50"><Users className="w-4 h-4" /> Crear grupo</button>
             </div>
           </div>
         </div>

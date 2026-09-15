@@ -92,7 +92,7 @@ export default function SenaModal({ vehiculo, miId, onClose, onGuardada }: Props
 
         <div className="flex gap-2 pt-5 mt-1 border-t border-slate-100 dark:border-white/10">
           <button onClick={onClose} disabled={guardando} className="flex-1 py-2.5 text-sm font-semibold bg-white dark:bg-white/5 border border-slate-200 dark:border-white/10 hover:bg-slate-50 dark:hover:bg-white/10 text-slate-600 dark:text-slate-300 rounded-xl transition-colors disabled:opacity-50">Cancelar</button>
-          <button onClick={guardar} disabled={guardando} className="flex-1 flex items-center justify-center gap-2 py-2.5 text-sm font-bold bg-rose-600 hover:bg-rose-700 text-white rounded-xl transition-colors disabled:opacity-50">
+          <button onClick={guardar} disabled={guardando} className="flex-1 flex items-center justify-center gap-2 py-2.5 text-sm font-bold bg-[#0145F2] hover:bg-[#0138c9] text-white rounded-xl transition-colors disabled:opacity-50">
             {guardando ? <Loader2 className="w-4 h-4 animate-spin" /> : "Registrar seña"}
           </button>
         </div>

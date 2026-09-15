@@ -125,7 +125,7 @@ export default function LeadsTab({ conversacionesIniciales, vendedores, miId }: 
         <div className="flex items-center gap-2 overflow-x-auto pb-1">
           <Filter className="w-3.5 h-3.5 text-slate-400 shrink-0" />
           {ESTADOS.map((e) => (
-            <button key={e.value} onClick={() => setFiltro(e.value)} className={`px-3 py-1.5 text-xs font-bold rounded-full whitespace-nowrap transition-colors ${filtro === e.value ? "bg-rose-600 text-white" : "bg-slate-50 dark:bg-white/5 border border-slate-200 dark:border-white/10 text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-white/10"}`}>
+            <button key={e.value} onClick={() => setFiltro(e.value)} className={`px-3 py-1.5 text-xs font-bold rounded-full whitespace-nowrap transition-colors ${filtro === e.value ? "bg-[#0145F2] text-white" : "bg-slate-50 dark:bg-white/5 border border-slate-200 dark:border-white/10 text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-white/10"}`}>
               {e.label}
             </button>
           ))}
@@ -150,7 +150,7 @@ export default function LeadsTab({ conversacionesIniciales, vendedores, miId }: 
         <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-4">
           <div className="bg-white dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-2xl p-4"><p className="text-2xl font-black">{reportes.total}</p><p className="text-[10px] font-bold uppercase text-slate-400">Leads activos</p></div>
           <div className="bg-white dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-2xl p-4"><p className="text-2xl font-black">{conversaciones.filter((c) => !c.vendedor_id).length}</p><p className="text-[10px] font-bold uppercase text-slate-400">Sin asignar</p></div>
-          <div className="bg-rose-50 dark:bg-rose-500/10 border border-rose-200 dark:border-rose-500/20 rounded-2xl p-4"><p className="text-2xl font-black text-rose-600">{reportes.sinCalif}</p><p className="text-[10px] font-bold uppercase text-rose-500">Sin calificar</p></div>
+          <div className="bg-rose-50 dark:bg-rose-500/10 border border-rose-200 dark:border-rose-500/20 rounded-2xl p-4"><p className="text-2xl font-black text-[#0145F2]">{reportes.sinCalif}</p><p className="text-[10px] font-bold uppercase text-rose-500">Sin calificar</p></div>
           <div className="bg-white dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-2xl p-4"><p className="text-2xl font-black">{conversaciones.filter((c) => c.unread_count > 0).length}</p><p className="text-[10px] font-bold uppercase text-slate-400">Sin contactar</p></div>
 
           <div className="bg-white dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-2xl p-4 flex flex-col items-center">

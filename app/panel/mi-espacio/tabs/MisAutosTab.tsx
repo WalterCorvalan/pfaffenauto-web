@@ -75,7 +75,7 @@ export default function MisAutosTab({ miId }: { miId: string }) {
     <div>
       <div className="flex items-center justify-between mb-3">
         <div><p className="text-lg font-bold">Mis autos personales — {autos.length} registrado{autos.length === 1 ? "" : "s"}</p><p className="text-xs text-slate-400">Valor estimado total: USD {valorTotal.toLocaleString("es-AR")}</p></div>
-        <button onClick={abrirNuevo} className="flex items-center gap-1.5 px-4 py-2 text-sm font-bold bg-rose-600 hover:bg-rose-700 text-white rounded-lg shrink-0"><Plus className="w-4 h-4" /> Nuevo auto personal</button>
+        <button onClick={abrirNuevo} className="flex items-center gap-1.5 px-4 py-2 text-sm font-bold bg-[#0145F2] hover:bg-[#0138c9] text-white rounded-lg shrink-0"><Plus className="w-4 h-4" /> Nuevo auto personal</button>
       </div>
 
       {autos.length === 0 ? (
@@ -125,7 +125,7 @@ export default function MisAutosTab({ miId }: { miId: string }) {
             <input value={f.compania_seguro || ""} onChange={(e) => setF({ ...f, compania_seguro: e.target.value })} className={inputClass} />
             <label className={labelClass + " mt-3"}>Notas</label>
             <textarea value={f.notas || ""} onChange={(e) => setF({ ...f, notas: e.target.value })} rows={2} className={inputClass} />
-            <div className="flex justify-end gap-2 mt-4"><button onClick={() => setShowNuevo(false)} className="px-4 py-2 text-sm font-bold text-slate-500">Cancelar</button><button onClick={guardar} disabled={guardando} className="flex items-center gap-1.5 px-4 py-2 text-sm font-bold bg-rose-600 hover:bg-rose-700 text-white rounded-lg disabled:opacity-50"><Save className="w-4 h-4" /> {editando ? "Guardar cambios" : "Crear"}</button></div>
+            <div className="flex justify-end gap-2 mt-4"><button onClick={() => setShowNuevo(false)} className="px-4 py-2 text-sm font-bold text-slate-500">Cancelar</button><button onClick={guardar} disabled={guardando} className="flex items-center gap-1.5 px-4 py-2 text-sm font-bold bg-[#0145F2] hover:bg-[#0138c9] text-white rounded-lg disabled:opacity-50"><Save className="w-4 h-4" /> {editando ? "Guardar cambios" : "Crear"}</button></div>
           </div>
         </div>
       )}

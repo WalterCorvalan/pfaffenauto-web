@@ -112,7 +112,7 @@ export default function DisponibilidadModal({ perfiles, disponibilidad, miId, es
               </div>
 
               <label className="flex items-center gap-2.5 px-3 py-2.5 rounded-xl bg-slate-50 dark:bg-white/5 border border-slate-200 dark:border-white/10 cursor-pointer">
-                <input type="checkbox" checked={recibirLeads} onChange={(e) => setRecibirLeads(e.target.checked)} className="w-4 h-4 accent-rose-600" />
+                <input type="checkbox" checked={recibirLeads} onChange={(e) => setRecibirLeads(e.target.checked)} className="w-4 h-4 accent-[#0145F2]" />
                 <span className="text-xs font-semibold text-slate-600 dark:text-slate-300">Seguir recibiendo leads mientras estoy ausente</span>
               </label>
               {!recibirLeads && <p className="text-[10px] text-amber-600 dark:text-amber-400">Salís de la rotación: tus leads sin contactar se reparten entre los que están trabajando. Volvés solo pasada la fecha "hasta".</p>}
@@ -122,7 +122,7 @@ export default function DisponibilidadModal({ perfiles, disponibilidad, miId, es
 
         <div className="pt-5 mt-2 border-t border-slate-100 dark:border-white/10 flex gap-3">
           <button type="button" onClick={onClose} className="flex-1 py-2.5 text-sm font-semibold bg-white dark:bg-white/5 border border-slate-200 dark:border-white/10 hover:bg-slate-50 dark:hover:bg-white/10 text-slate-600 dark:text-slate-300 rounded-xl transition-colors">Cancelar</button>
-          <button type="button" onClick={guardar} disabled={guardando} className="flex-1 py-2.5 flex items-center justify-center gap-2 text-sm font-bold bg-rose-600 hover:bg-rose-700 text-white rounded-xl transition-colors disabled:opacity-50">
+          <button type="button" onClick={guardar} disabled={guardando} className="flex-1 py-2.5 flex items-center justify-center gap-2 text-sm font-bold bg-[#0145F2] hover:bg-[#0138c9] text-white rounded-xl transition-colors disabled:opacity-50">
             {guardando ? <Loader2 className="w-4 h-4 animate-spin" /> : "Guardar"}
           </button>
         </div>

@@ -116,7 +116,7 @@ export default function CuotasCobrarTab({ miId }: { miId: string }) {
       <div className="flex items-center justify-between mb-3 flex-wrap gap-2">
         <div><p className="text-lg font-bold">Cuotas a cobrar — {pendientes.length} pendiente{pendientes.length === 1 ? "" : "s"}</p><p className="text-xs text-slate-400">Plata que te tienen que pagar — préstamos personales, fiados, etc. Solo vos lo ves.</p></div>
         <div className="flex gap-2 shrink-0">
-          <button onClick={() => setShowNueva(true)} className="flex items-center gap-1.5 px-4 py-2 text-sm font-bold bg-rose-600 hover:bg-rose-700 text-white rounded-lg"><Plus className="w-4 h-4" /> Nueva cuota</button>
+          <button onClick={() => setShowNueva(true)} className="flex items-center gap-1.5 px-4 py-2 text-sm font-bold bg-[#0145F2] hover:bg-[#0138c9] text-white rounded-lg"><Plus className="w-4 h-4" /> Nueva cuota</button>
           <button onClick={() => setShowPlan(true)} className="flex items-center gap-1.5 px-4 py-2 text-sm font-bold border border-slate-200 dark:border-white/10 rounded-lg"><ListPlus className="w-4 h-4" /> Plan automático</button>
         </div>
       </div>
@@ -169,7 +169,7 @@ export default function CuotasCobrarTab({ miId }: { miId: string }) {
             <input value={deudor} onChange={(e) => setDeudor(e.target.value)} placeholder="Nombre" className={inputClass} />
             <label className={labelClass + " mt-3"}>Notas</label>
             <textarea value={notas} onChange={(e) => setNotas(e.target.value)} rows={2} className={inputClass} />
-            <div className="flex justify-end gap-2 mt-4"><button onClick={() => setShowNueva(false)} className="px-4 py-2 text-sm font-bold text-slate-500">Cancelar</button><button onClick={crear} disabled={guardando} className="flex items-center gap-1.5 px-4 py-2 text-sm font-bold bg-rose-600 hover:bg-rose-700 text-white rounded-lg disabled:opacity-50"><Save className="w-4 h-4" /> Crear</button></div>
+            <div className="flex justify-end gap-2 mt-4"><button onClick={() => setShowNueva(false)} className="px-4 py-2 text-sm font-bold text-slate-500">Cancelar</button><button onClick={crear} disabled={guardando} className="flex items-center gap-1.5 px-4 py-2 text-sm font-bold bg-[#0145F2] hover:bg-[#0138c9] text-white rounded-lg disabled:opacity-50"><Save className="w-4 h-4" /> Crear</button></div>
           </div>
         </div>
       )}
@@ -194,7 +194,7 @@ export default function CuotasCobrarTab({ miId }: { miId: string }) {
             <input type="date" value={pPrimerVencimiento} onChange={(e) => setPPrimerVencimiento(e.target.value)} className={inputClass} />
             <label className={labelClass + " mt-3"}>Notas</label>
             <textarea value={pNotas} onChange={(e) => setPNotas(e.target.value)} rows={2} className={inputClass} />
-            <div className="flex justify-end gap-2 mt-4"><button onClick={() => setShowPlan(false)} className="px-4 py-2 text-sm font-bold text-slate-500">Cancelar</button><button onClick={crearPlan} disabled={creandoPlan} className="flex items-center gap-1.5 px-4 py-2 text-sm font-bold bg-rose-600 hover:bg-rose-700 text-white rounded-lg disabled:opacity-50"><ListPlus className="w-4 h-4" /> Crear {pCantidad} cuotas</button></div>
+            <div className="flex justify-end gap-2 mt-4"><button onClick={() => setShowPlan(false)} className="px-4 py-2 text-sm font-bold text-slate-500">Cancelar</button><button onClick={crearPlan} disabled={creandoPlan} className="flex items-center gap-1.5 px-4 py-2 text-sm font-bold bg-[#0145F2] hover:bg-[#0138c9] text-white rounded-lg disabled:opacity-50"><ListPlus className="w-4 h-4" /> Crear {pCantidad} cuotas</button></div>
           </div>
         </div>
       )}

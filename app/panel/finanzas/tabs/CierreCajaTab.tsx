@@ -52,7 +52,7 @@ export default function CierreCajaTab({ cierres, setCierres }: { cierres: any[];
 
       <div className="flex justify-end gap-2 mb-4">
         <button onClick={exportarXlsx} className="flex items-center gap-1.5 px-4 py-2 text-sm font-bold border border-slate-200 dark:border-white/10 rounded-lg"><Download className="w-4 h-4" /> XLSX</button>
-        <button onClick={cerrarHoy} disabled={guardando} className="flex items-center gap-1.5 px-4 py-2 text-sm font-bold bg-rose-600 hover:bg-rose-700 text-white rounded-lg disabled:opacity-50"><Package className="w-4 h-4" /> Cerrar día actual</button>
+        <button onClick={cerrarHoy} disabled={guardando} className="flex items-center gap-1.5 px-4 py-2 text-sm font-bold bg-[#0145F2] hover:bg-[#0138c9] text-white rounded-lg disabled:opacity-50"><Package className="w-4 h-4" /> Cerrar día actual</button>
       </div>
 
       {cierres.length === 0 ? (

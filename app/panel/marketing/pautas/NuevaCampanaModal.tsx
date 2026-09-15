@@ -62,7 +62,7 @@ export default function NuevaCampanaModal({ sucursales = [] }: { sucursales?: { 
             
             <div className="p-6 pb-0 shrink-0 flex items-start justify-between border-b border-slate-100 dark:border-white/10 pb-4">
               <h3 className="text-lg font-bold text-slate-900 dark:text-white flex items-center gap-2">
-                <Megaphone className="w-5 h-5 text-rose-600" /> Cargar Pauta
+                <Megaphone className="w-5 h-5 text-[#0145F2]" /> Cargar Pauta
               </h3>
               <button onClick={() => setIsOpen(false)} className="text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 transition-colors">
                 <X className="w-4 h-4" />
@@ -120,7 +120,7 @@ export default function NuevaCampanaModal({ sucursales = [] }: { sucursales?: { 
               <button onClick={() => setIsOpen(false)} disabled={cargando} className="ml-auto px-4 py-2.5 text-sm font-bold text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-white/10 rounded-xl transition-colors disabled:opacity-50">
                 Cancelar
               </button>
-              <button onClick={handleSubmit} disabled={cargando} className="px-6 py-2.5 text-sm font-bold bg-rose-600 hover:bg-rose-700 text-white rounded-xl transition-colors shadow-sm disabled:opacity-50 flex items-center gap-2">
+              <button onClick={handleSubmit} disabled={cargando} className="px-6 py-2.5 text-sm font-bold bg-[#0145F2] hover:bg-[#0138c9] text-white rounded-xl transition-colors shadow-sm disabled:opacity-50 flex items-center gap-2">
                 {cargando ? "Guardando..." : <><Save className="w-4 h-4" /> Registrar</>}
               </button>
             </div>

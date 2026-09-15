@@ -11,7 +11,7 @@ const ESTADO_LABEL: Record<string, string> = {
   borrador: "Borrador", activa: "Activa", reserva: "Reserva", cerrada: "Cerrada", caida: "Caída", cancelada: "Cancelada",
 };
 const ESTADO_COLOR: Record<string, string> = {
-  borrador: "text-slate-500", activa: "text-blue-600", reserva: "text-amber-600", cerrada: "text-emerald-600", caida: "text-orange-600", cancelada: "text-rose-600",
+  borrador: "text-slate-500", activa: "text-blue-600", reserva: "text-amber-600", cerrada: "text-emerald-600", caida: "text-orange-600", cancelada: "text-[#0145F2]",
 };
 
 const TRANSICIONES: Record<string, string[]> = {
@@ -364,7 +364,7 @@ export default function VentaDetalleModal({ ventaId, miId, soyAdmin, puedeOperac
             icono={Percent}
             titulo="Comisión"
             accion={!editandoComision && (
-              <button onClick={abrirEdicionComision} className="flex items-center gap-1 text-[11px] font-bold text-rose-600 hover:text-rose-700"><Pencil className="w-3 h-3" /> Editar</button>
+              <button onClick={abrirEdicionComision} className="flex items-center gap-1 text-[11px] font-bold text-[#0145F2] hover:text-[#0138c9]"><Pencil className="w-3 h-3" /> Editar</button>
             )}
           >
             <Fila label="Vendedor" valor={venta.vendedor_id ? perfilMap[venta.vendedor_id] : null} />
@@ -393,7 +393,7 @@ export default function VentaDetalleModal({ ventaId, miId, soyAdmin, puedeOperac
                     </div>
                     <div className="flex justify-end gap-2">
                       <button onClick={() => setEditandoComision(false)} className="px-3 py-1.5 text-xs font-semibold text-slate-500">Cancelar</button>
-                      <button onClick={guardarComision} disabled={guardandoComision} className="px-3 py-1.5 rounded-lg text-xs font-bold bg-rose-600 hover:bg-rose-700 text-white disabled:opacity-50">
+                      <button onClick={guardarComision} disabled={guardandoComision} className="px-3 py-1.5 rounded-lg text-xs font-bold bg-[#0145F2] hover:bg-[#0138c9] text-white disabled:opacity-50">
                         {guardandoComision ? "Guardando..." : soyAdmin ? "Guardar" : "Enviar solicitud"}
                       </button>
                     </div>

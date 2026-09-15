@@ -55,7 +55,7 @@ export default function ExpedientesTesoreriaClient({
 
   return (
     <div className="p-6">
-      <h1 className="text-xl font-bold flex items-center gap-2 mb-1"><Wallet className="w-5 h-5 text-rose-600" /> Expedientes Tesorería</h1>
+      <h1 className="text-xl font-bold flex items-center gap-2 mb-1"><Wallet className="w-5 h-5 text-[#0145F2]" /> Expedientes Tesorería</h1>
       <p className="text-sm text-slate-400 mb-4">Pago al vendedor y cobro al comprador, expediente por expediente.</p>
 
       <div className="flex items-center gap-1 border-b border-slate-200 dark:border-white/10 mb-4">
@@ -64,7 +64,7 @@ export default function ExpedientesTesoreriaClient({
           { v: "procesados" as const, l: "Procesados", n: procesados.length },
           { v: "caidas" as const, l: "Operaciones caídas", n: caidas.length },
         ].map((t) => (
-          <button key={t.v} onClick={() => setTab(t.v)} className={`px-3 py-2 text-sm font-semibold border-b-2 -mb-px flex items-center gap-1.5 ${tab === t.v ? "border-rose-600 text-rose-600" : "border-transparent text-slate-500 hover:text-slate-700 dark:hover:text-slate-300"}`}>
+          <button key={t.v} onClick={() => setTab(t.v)} className={`px-3 py-2 text-sm font-semibold border-b-2 -mb-px flex items-center gap-1.5 ${tab === t.v ? "border-[#0145F2] text-[#0145F2]" : "border-transparent text-slate-500 hover:text-slate-700 dark:hover:text-slate-300"}`}>
             {t.l} <span className="text-[10px] font-bold bg-slate-100 dark:bg-white/10 px-1.5 py-0.5 rounded-full">{t.n}</span>
           </button>
         ))}
@@ -116,7 +116,7 @@ export default function ExpedientesTesoreriaClient({
             ] as ColumnaTabla<any>[]
           }
           acciones={(e) => (
-            <button onClick={() => setDetalleId(e.id)} className="px-3 py-2 text-xs font-bold bg-rose-600 hover:bg-rose-700 text-white rounded-lg">Gestionar</button>
+            <button onClick={() => setDetalleId(e.id)} className="px-3 py-2 text-xs font-bold bg-[#0145F2] hover:bg-[#0138c9] text-white rounded-lg">Gestionar</button>
           )}
         />
       )}

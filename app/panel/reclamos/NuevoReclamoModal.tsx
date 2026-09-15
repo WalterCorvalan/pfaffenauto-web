@@ -242,7 +242,7 @@ export default function NuevoReclamoModal({ perfiles, miId, onClose, onCreado }:
 
         <div className="flex justify-end gap-2 px-5 py-4 border-t border-slate-100 dark:border-white/10 sticky bottom-0 bg-white dark:bg-[#111]">
           <button onClick={onClose} className="px-4 py-2 rounded-xl text-sm font-semibold text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-white/5">Cancelar</button>
-          <button onClick={guardar} disabled={guardando} className="px-4 py-2 rounded-xl text-sm font-bold bg-rose-600 hover:bg-rose-700 text-white disabled:opacity-50 flex items-center gap-2">
+          <button onClick={guardar} disabled={guardando} className="px-4 py-2 rounded-xl text-sm font-bold bg-[#0145F2] hover:bg-[#0138c9] text-white disabled:opacity-50 flex items-center gap-2">
             {guardando ? <Loader2 className="w-4 h-4 animate-spin" /> : null} Cargar reclamo
           </button>
         </div>

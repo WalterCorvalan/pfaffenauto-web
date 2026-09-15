@@ -130,7 +130,7 @@ export default function CalendarioClient({ eventosIniciales, perfiles, miId }: {
           >
             <Info className="w-4 h-4" /> Conectar Google Calendar
           </button>
-          <button onClick={() => abrirNuevoEvento()} className="flex items-center gap-2 px-4 py-2.5 bg-rose-600 hover:bg-rose-700 text-white rounded-xl text-sm font-bold transition-colors">
+          <button onClick={() => abrirNuevoEvento()} className="flex items-center gap-2 px-4 py-2.5 bg-[#0145F2] hover:bg-[#0138c9] text-white rounded-xl text-sm font-bold transition-colors">
             <CalendarPlus className="w-4 h-4" /> Nuevo evento
           </button>
         </div>
@@ -138,7 +138,7 @@ export default function CalendarioClient({ eventosIniciales, perfiles, miId }: {
 
       <div className="flex gap-2 mb-4">
         {(["mes", "semana", "dia"] as const).map((v) => (
-          <button key={v} onClick={() => setVista(v)} className={`px-4 py-2 rounded-lg text-sm font-bold transition-colors ${vista === v ? "bg-rose-600 text-white" : "bg-white dark:bg-white/5 border border-slate-200 dark:border-white/10 text-slate-600 dark:text-slate-300"}`}>
+          <button key={v} onClick={() => setVista(v)} className={`px-4 py-2 rounded-lg text-sm font-bold transition-colors ${vista === v ? "bg-[#0145F2] text-white" : "bg-white dark:bg-white/5 border border-slate-200 dark:border-white/10 text-slate-600 dark:text-slate-300"}`}>
             {v === "mes" ? "Mes" : v === "semana" ? "Semana" : "Día"}
           </button>
         ))}
@@ -185,7 +185,7 @@ export default function CalendarioClient({ eventosIniciales, perfiles, miId }: {
                       key={iso}
                       onClick={() => setDiaSeleccionado(iso === diaSeleccionado ? null : iso)}
                       className={`aspect-square rounded-lg text-sm flex flex-col items-center justify-start p-1 transition-colors ${
-                        esSeleccionado ? "bg-rose-600 text-white font-bold" : esHoy ? "bg-rose-50 dark:bg-rose-500/10 text-rose-600 dark:text-rose-400 font-bold" : "hover:bg-slate-50 dark:hover:bg-white/5 text-slate-700 dark:text-slate-300"
+                        esSeleccionado ? "bg-[#0145F2] text-white font-bold" : esHoy ? "bg-rose-50 dark:bg-rose-500/10 text-[#0145F2] dark:text-[#5b8dff] font-bold" : "hover:bg-slate-50 dark:hover:bg-white/5 text-slate-700 dark:text-slate-300"
                       }`}
                     >
                       <span>{d.getDate()}</span>
@@ -212,8 +212,8 @@ export default function CalendarioClient({ eventosIniciales, perfiles, miId }: {
                 return (
                   <div key={iso} className={`rounded-lg border p-2.5 ${esHoy ? "border-rose-300 bg-rose-50/50 dark:bg-rose-500/5" : "border-slate-100 dark:border-white/10"}`}>
                     <div className="flex items-center justify-between mb-1.5">
-                      <span className={`text-xs font-bold ${esHoy ? "text-rose-600" : "text-slate-600 dark:text-slate-300"}`}>{DIAS[d.getDay()]} {d.getDate()}</span>
-                      <button onClick={() => abrirNuevoEvento(iso)} className="text-[11px] font-bold text-rose-600 hover:underline">+ Agregar</button>
+                      <span className={`text-xs font-bold ${esHoy ? "text-[#0145F2]" : "text-slate-600 dark:text-slate-300"}`}>{DIAS[d.getDay()]} {d.getDate()}</span>
+                      <button onClick={() => abrirNuevoEvento(iso)} className="text-[11px] font-bold text-[#0145F2] hover:underline">+ Agregar</button>
                     </div>
                     {eventosDelDia.length === 0 ? (
                       <p className="text-[11px] text-slate-400 italic">Sin eventos.</p>
@@ -230,7 +230,7 @@ export default function CalendarioClient({ eventosIniciales, perfiles, miId }: {
             <div>
               <div className="flex items-center justify-between mb-2">
                 <span className="text-xs font-bold text-slate-400 uppercase tracking-widest">Eventos del día</span>
-                <button onClick={() => abrirNuevoEvento(cursor.toISOString().split("T")[0])} className="text-xs font-bold text-rose-600 hover:underline">+ Agregar acá</button>
+                <button onClick={() => abrirNuevoEvento(cursor.toISOString().split("T")[0])} className="text-xs font-bold text-[#0145F2] hover:underline">+ Agregar acá</button>
               </div>
               {eventosDelCursor.length === 0 ? (
                 <p className="text-xs text-slate-400 italic">Sin eventos este día.</p>
@@ -244,7 +244,7 @@ export default function CalendarioClient({ eventosIniciales, perfiles, miId }: {
             <div className="mt-4 pt-4 border-t border-slate-100 dark:border-white/10">
               <div className="flex items-center justify-between mb-2">
                 <h3 className="text-xs font-bold uppercase tracking-widest text-slate-400">Eventos del {diaSeleccionado}</h3>
-                <button onClick={() => abrirNuevoEvento(diaSeleccionado)} className="text-xs font-bold text-rose-600 hover:underline">+ Agregar acá</button>
+                <button onClick={() => abrirNuevoEvento(diaSeleccionado)} className="text-xs font-bold text-[#0145F2] hover:underline">+ Agregar acá</button>
               </div>
               {eventosDelDiaSeleccionado.length === 0 ? (
                 <p className="text-xs text-slate-400 italic">Sin eventos este día.</p>
@@ -274,7 +274,7 @@ export default function CalendarioClient({ eventosIniciales, perfiles, miId }: {
       <div className="bg-white dark:bg-white/[0.02] border border-slate-200 dark:border-white/10 rounded-2xl p-4">
         <div className="flex gap-2 mb-4 border-b border-slate-100 dark:border-white/10">
           {(["proximos", "pasados", "todos"] as const).map((t) => (
-            <button key={t} onClick={() => setTabLista(t)} className={`px-3 py-2 text-sm font-bold border-b-2 transition-colors ${tabLista === t ? "border-rose-600 text-rose-600" : "border-transparent text-slate-500 dark:text-slate-400"}`}>
+            <button key={t} onClick={() => setTabLista(t)} className={`px-3 py-2 text-sm font-bold border-b-2 transition-colors ${tabLista === t ? "border-[#0145F2] text-[#0145F2]" : "border-transparent text-slate-500 dark:text-slate-400"}`}>
               {t === "proximos" ? "Próximos" : t === "pasados" ? "Pasados" : "Todos"}
             </button>
           ))}

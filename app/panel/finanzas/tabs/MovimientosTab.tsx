@@ -204,7 +204,7 @@ export default function MovimientosTab({
     <div>
       <div className="flex items-center gap-1 mb-3 flex-wrap">
         {[{ v: "todos", l: "Todos" }, { v: "ingreso", l: "Ingreso" }, { v: "egreso", l: "Egreso" }, { v: "transferencia", l: "Transferencias" }].map((t) => (
-          <button key={t.v} onClick={() => setFiltroTipo(t.v as any)} className={`px-3 py-1.5 rounded-lg text-xs font-bold ${filtroTipo === t.v ? "bg-rose-600 text-white" : "bg-white dark:bg-white/5 border border-slate-200 dark:border-white/10"}`}>{t.l}</button>
+          <button key={t.v} onClick={() => setFiltroTipo(t.v as any)} className={`px-3 py-1.5 rounded-lg text-xs font-bold ${filtroTipo === t.v ? "bg-[#0145F2] text-white" : "bg-white dark:bg-white/5 border border-slate-200 dark:border-white/10"}`}>{t.l}</button>
         ))}
         <div className="relative flex-1 min-w-[180px]">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-slate-400" />
@@ -217,7 +217,7 @@ export default function MovimientosTab({
         <button onClick={() => setShowCierres(true)} className="flex items-center gap-1 px-3 py-1.5 text-xs font-bold border border-slate-200 dark:border-white/10 rounded-lg"><Lock className="w-3.5 h-3.5" /> Cierres mensuales</button>
         <button onClick={() => setShowTransferencia(true)} className="flex items-center gap-1 px-3 py-1.5 text-xs font-bold border border-slate-200 dark:border-white/10 rounded-lg"><ArrowLeftRight className="w-3.5 h-3.5" /> Transferencia</button>
         <button onClick={exportarCsv} className="flex items-center gap-1 px-3 py-1.5 text-xs font-bold border border-slate-200 dark:border-white/10 rounded-lg"><Download className="w-3.5 h-3.5" /> Excel</button>
-        <button onClick={() => setShowRegistrar(true)} className="flex items-center gap-1.5 px-4 py-1.5 text-xs font-bold bg-rose-600 hover:bg-rose-700 text-white rounded-lg ml-auto"><Plus className="w-3.5 h-3.5" /> Registrar</button>
+        <button onClick={() => setShowRegistrar(true)} className="flex items-center gap-1.5 px-4 py-1.5 text-xs font-bold bg-[#0145F2] hover:bg-[#0138c9] text-white rounded-lg ml-auto"><Plus className="w-3.5 h-3.5" /> Registrar</button>
       </div>
 
       <div className="flex items-center gap-2 mb-3 flex-wrap text-xs">
@@ -289,7 +289,7 @@ export default function MovimientosTab({
             <p className="text-xs text-slate-400 mb-4">Cargá un ingreso o egreso. El saldo de la caja seleccionada se actualiza automáticamente.</p>
             <div className="flex gap-2 mb-3">
               <button onClick={() => setRTipo("ingreso")} className={`flex-1 py-2 rounded-lg text-sm font-bold ${rTipo === "ingreso" ? "bg-emerald-600 text-white" : "border border-slate-200 dark:border-white/10"}`}>Ingreso</button>
-              <button onClick={() => setRTipo("egreso")} className={`flex-1 py-2 rounded-lg text-sm font-bold ${rTipo === "egreso" ? "bg-rose-600 text-white" : "border border-slate-200 dark:border-white/10"}`}>Egreso</button>
+              <button onClick={() => setRTipo("egreso")} className={`flex-1 py-2 rounded-lg text-sm font-bold ${rTipo === "egreso" ? "bg-[#0145F2] text-white" : "border border-slate-200 dark:border-white/10"}`}>Egreso</button>
             </div>
             <div className="grid grid-cols-2 gap-2">
               <div><label className={labelClass}>Categoría *</label><select value={rCategoria} onChange={(e) => setRCategoria(e.target.value)} className={inputClass}>{CATEGORIAS.map((c) => <option key={c}>{c}</option>)}</select></div>
@@ -318,7 +318,7 @@ export default function MovimientosTab({
             {rArchivos.length === 0 ? <p className="text-[11px] text-slate-400 mt-1.5">Sin comprobantes adjuntos. Podés sumar tantos como necesites.</p> : (
               <div className="flex flex-wrap gap-1.5 mt-1.5">{rArchivos.map((f, i) => <span key={i} className="text-[11px] bg-slate-100 dark:bg-white/10 px-2 py-1 rounded-full flex items-center gap-1">{f.name}<button onClick={() => setRArchivos((prev) => prev.filter((_, x) => x !== i))}><X className="w-3 h-3" /></button></span>)}</div>
             )}
-            <div className="flex justify-end gap-2 mt-4"><button onClick={() => setShowRegistrar(false)} className="px-4 py-2 text-sm font-bold text-slate-500">Cancelar</button><button onClick={registrar} disabled={guardandoR} className="flex items-center gap-1.5 px-4 py-2 text-sm font-bold bg-rose-600 hover:bg-rose-700 text-white rounded-lg disabled:opacity-50"><Save className="w-4 h-4" /> {guardandoR ? "Guardando..." : "Registrar movimiento"}</button></div>
+            <div className="flex justify-end gap-2 mt-4"><button onClick={() => setShowRegistrar(false)} className="px-4 py-2 text-sm font-bold text-slate-500">Cancelar</button><button onClick={registrar} disabled={guardandoR} className="flex items-center gap-1.5 px-4 py-2 text-sm font-bold bg-[#0145F2] hover:bg-[#0138c9] text-white rounded-lg disabled:opacity-50"><Save className="w-4 h-4" /> {guardandoR ? "Guardando..." : "Registrar movimiento"}</button></div>
           </div>
         </div>
       )}
@@ -350,7 +350,7 @@ export default function MovimientosTab({
             )}
             <label className={labelClass + " mt-3"}>Concepto / nota</label>
             <textarea value={tNotas} onChange={(e) => setTNotas(e.target.value)} rows={2} placeholder="Ej: Reposición caja chica · cierre semanal" className={inputClass} />
-            <div className="flex justify-end gap-2 mt-4"><button onClick={() => setShowTransferencia(false)} className="px-4 py-2 text-sm font-bold text-slate-500">Cancelar</button><button onClick={crearTransferencia} disabled={guardandoT} className="flex items-center gap-1.5 px-4 py-2 text-sm font-bold bg-rose-600 hover:bg-rose-700 text-white rounded-lg disabled:opacity-50"><ArrowLeftRight className="w-4 h-4" /> Crear transferencia</button></div>
+            <div className="flex justify-end gap-2 mt-4"><button onClick={() => setShowTransferencia(false)} className="px-4 py-2 text-sm font-bold text-slate-500">Cancelar</button><button onClick={crearTransferencia} disabled={guardandoT} className="flex items-center gap-1.5 px-4 py-2 text-sm font-bold bg-[#0145F2] hover:bg-[#0138c9] text-white rounded-lg disabled:opacity-50"><ArrowLeftRight className="w-4 h-4" /> Crear transferencia</button></div>
           </div>
         </div>
       )}
@@ -369,7 +369,7 @@ export default function MovimientosTab({
                       <Lock className={`w-4 h-4 ${cerrado ? "text-rose-500" : "text-amber-500"}`} />
                       <div><p className="text-sm font-bold">{new Date(mes + "T00:00:00").toLocaleDateString("es-AR", { month: "long", year: "numeric" })}</p><p className="text-[11px] text-slate-400">{cant} movimiento{cant === 1 ? "" : "s"}</p></div>
                     </div>
-                    {cerrado ? <button onClick={() => reabrirMes(mes)} className="px-3 py-1.5 text-xs font-bold border border-slate-200 dark:border-white/10 rounded-lg">Reabrir</button> : <button onClick={() => cerrarMes(mes)} className="px-3 py-1.5 text-xs font-bold bg-rose-600 hover:bg-rose-700 text-white rounded-lg flex items-center gap-1"><Lock className="w-3.5 h-3.5" /> Cerrar mes</button>}
+                    {cerrado ? <button onClick={() => reabrirMes(mes)} className="px-3 py-1.5 text-xs font-bold border border-slate-200 dark:border-white/10 rounded-lg">Reabrir</button> : <button onClick={() => cerrarMes(mes)} className="px-3 py-1.5 text-xs font-bold bg-[#0145F2] hover:bg-[#0138c9] text-white rounded-lg flex items-center gap-1"><Lock className="w-3.5 h-3.5" /> Cerrar mes</button>}
                   </div>
                 );
               })}

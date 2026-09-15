@@ -137,7 +137,7 @@ export default function PeritajeClient({ peritaje, itemsIniciales }: { peritaje:
             <ArrowLeft className="w-4 h-4" />
           </Link>
           <div className="w-10 h-10 rounded-xl bg-rose-50 dark:bg-rose-500/10 border border-rose-100 dark:border-rose-500/20 flex items-center justify-center shrink-0">
-            <ClipboardCheck className="w-5 h-5 text-rose-600 dark:text-rose-400" />
+            <ClipboardCheck className="w-5 h-5 text-[#0145F2] dark:text-[#5b8dff]" />
           </div>
           <div>
             <h1 className="text-[17px] font-bold text-slate-900 dark:text-white leading-tight flex items-center gap-2">
@@ -155,7 +155,7 @@ export default function PeritajeClient({ peritaje, itemsIniciales }: { peritaje:
         <div className="flex items-center gap-3">
           {puntaje !== null && (
             <div className="text-center">
-              <span className={`text-2xl font-black ${puntaje >= 70 ? "text-emerald-600 dark:text-emerald-400" : puntaje >= 40 ? "text-amber-600 dark:text-amber-400" : "text-rose-600 dark:text-rose-400"}`}>
+              <span className={`text-2xl font-black ${puntaje >= 70 ? "text-emerald-600 dark:text-emerald-400" : puntaje >= 40 ? "text-amber-600 dark:text-amber-400" : "text-[#0145F2] dark:text-[#5b8dff]"}`}>
                 {puntaje}%
               </span>
               <p className="text-[9px] font-bold uppercase tracking-widest text-slate-400">Puntaje</p>
@@ -209,7 +209,7 @@ export default function PeritajeClient({ peritaje, itemsIniciales }: { peritaje:
                         <button
                           onClick={() => fileInputsRef.current[item.id]?.click()}
                           disabled={subiendoFotoId === item.id}
-                          className="p-1.5 rounded-lg border border-slate-200 dark:border-white/10 text-slate-400 hover:text-rose-600 dark:hover:text-rose-400 hover:border-rose-300 dark:hover:border-rose-500/50 transition-colors disabled:opacity-50"
+                          className="p-1.5 rounded-lg border border-slate-200 dark:border-white/10 text-slate-400 hover:text-[#0145F2] dark:hover:text-rose-400 hover:border-rose-300 dark:hover:border-rose-500/50 transition-colors disabled:opacity-50"
                           title="Adjuntar foto"
                         >
                           {subiendoFotoId === item.id ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Paperclip className="w-3.5 h-3.5" />}
@@ -230,7 +230,7 @@ export default function PeritajeClient({ peritaje, itemsIniciales }: { peritaje:
                           type="checkbox"
                           checked={!!item.necesita_reparacion}
                           onChange={(e) => actualizarItem(item.id, { necesita_reparacion: e.target.checked })}
-                          className="w-3.5 h-3.5 accent-rose-600"
+                          className="w-3.5 h-3.5 accent-[#0145F2]"
                         />
                         <Wrench className="w-3 h-3" /> Reparar
                       </label>
@@ -265,7 +265,7 @@ export default function PeritajeClient({ peritaje, itemsIniciales }: { peritaje:
                         <button
                           type="button"
                           onClick={() => actualizarItem(item.id, { foto_url: "" })}
-                          className="absolute -top-1.5 -right-1.5 w-5 h-5 rounded-full bg-rose-500 hover:bg-rose-600 text-white flex items-center justify-center shadow-sm"
+                          className="absolute -top-1.5 -right-1.5 w-5 h-5 rounded-full bg-rose-500 hover:bg-[#0145F2] text-white flex items-center justify-center shadow-sm"
                           title="Quitar foto"
                         >
                           <X className="w-3 h-3" />
@@ -317,7 +317,7 @@ export default function PeritajeClient({ peritaje, itemsIniciales }: { peritaje:
                             <button
                               onClick={() => fileInputsRef.current[item.id]?.click()}
                               disabled={subiendoFotoId === item.id}
-                              className="p-1.5 rounded-lg border border-slate-200 dark:border-white/10 text-slate-400 hover:text-rose-600 dark:hover:text-rose-400 hover:border-rose-300 dark:hover:border-rose-500/50 transition-colors disabled:opacity-50"
+                              className="p-1.5 rounded-lg border border-slate-200 dark:border-white/10 text-slate-400 hover:text-[#0145F2] dark:hover:text-rose-400 hover:border-rose-300 dark:hover:border-rose-500/50 transition-colors disabled:opacity-50"
                               title="Adjuntar foto"
                             >
                               {subiendoFotoId === item.id ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Paperclip className="w-3.5 h-3.5" />}
@@ -338,7 +338,7 @@ export default function PeritajeClient({ peritaje, itemsIniciales }: { peritaje:
                               <button
                                 type="button"
                                 onClick={() => actualizarItem(item.id, { foto_url: "" })}
-                                className="absolute -top-1.5 -right-1.5 w-5 h-5 rounded-full bg-rose-500 hover:bg-rose-600 text-white flex items-center justify-center shadow-sm"
+                                className="absolute -top-1.5 -right-1.5 w-5 h-5 rounded-full bg-rose-500 hover:bg-[#0145F2] text-white flex items-center justify-center shadow-sm"
                                 title="Quitar foto"
                               >
                                 <X className="w-3 h-3" />
@@ -364,7 +364,7 @@ export default function PeritajeClient({ peritaje, itemsIniciales }: { peritaje:
             <div className="p-4 grid grid-cols-2 sm:grid-cols-3 gap-2.5">
               {ACCESORIOS_PERITAJE.map((acc) => (
                 <label key={acc} className="flex items-center gap-2 text-[12px] font-medium text-slate-700 dark:text-slate-200 cursor-pointer">
-                  <input type="checkbox" checked={!!accesorios[acc]} onChange={() => toggleAccesorio(acc)} className="w-4 h-4 accent-rose-600 shrink-0" />
+                  <input type="checkbox" checked={!!accesorios[acc]} onChange={() => toggleAccesorio(acc)} className="w-4 h-4 accent-[#0145F2] shrink-0" />
                   {acc}
                 </label>
               ))}
@@ -398,7 +398,7 @@ export default function PeritajeClient({ peritaje, itemsIniciales }: { peritaje:
                       <button
                         key={t} type="button"
                         onClick={() => setUsoInterno((p) => ({ ...p, tipo_cliente: t }))}
-                        className={`flex-1 text-[11px] font-bold px-2 py-1.5 rounded-lg border transition-colors ${usoInterno.tipo_cliente === t ? "bg-rose-600 text-white border-rose-600" : "bg-white dark:bg-white/[0.02] border-slate-200 dark:border-white/10 text-slate-500 dark:text-slate-400"}`}
+                        className={`flex-1 text-[11px] font-bold px-2 py-1.5 rounded-lg border transition-colors ${usoInterno.tipo_cliente === t ? "bg-[#0145F2] text-white border-[#0145F2]" : "bg-white dark:bg-white/[0.02] border-slate-200 dark:border-white/10 text-slate-500 dark:text-slate-400"}`}
                       >
                         {t === "Publico" ? "Público" : "Revendedor"}
                       </button>
@@ -445,14 +445,14 @@ export default function PeritajeClient({ peritaje, itemsIniciales }: { peritaje:
                 <div>
                   <label className="text-[10px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-widest mb-1 block">O.K. Dto. V.U.</label>
                   <label className="flex items-center gap-2 h-[34px]">
-                    <input type="checkbox" checked={!!usoInterno.ok_dto_vu} onChange={(e) => setUsoInterno((p) => ({ ...p, ok_dto_vu: e.target.checked }))} className="w-4 h-4 accent-rose-600" />
+                    <input type="checkbox" checked={!!usoInterno.ok_dto_vu} onChange={(e) => setUsoInterno((p) => ({ ...p, ok_dto_vu: e.target.checked }))} className="w-4 h-4 accent-[#0145F2]" />
                     <span className="text-[12px] text-slate-600 dark:text-slate-300">Aprobado</span>
                   </label>
                 </div>
                 <div>
                   <label className="text-[10px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-widest mb-1 block">O.K. Gerencia de Ventas</label>
                   <label className="flex items-center gap-2 h-[34px]">
-                    <input type="checkbox" checked={!!usoInterno.ok_gerencia_ventas} onChange={(e) => setUsoInterno((p) => ({ ...p, ok_gerencia_ventas: e.target.checked }))} className="w-4 h-4 accent-rose-600" />
+                    <input type="checkbox" checked={!!usoInterno.ok_gerencia_ventas} onChange={(e) => setUsoInterno((p) => ({ ...p, ok_gerencia_ventas: e.target.checked }))} className="w-4 h-4 accent-[#0145F2]" />
                     <span className="text-[12px] text-slate-600 dark:text-slate-300">Aprobado</span>
                   </label>
                 </div>
@@ -463,7 +463,7 @@ export default function PeritajeClient({ peritaje, itemsIniciales }: { peritaje:
                   type="button"
                   onClick={guardarUsoInterno}
                   disabled={guardandoUsoInterno}
-                  className="flex items-center gap-1.5 bg-rose-600 hover:bg-rose-700 text-white font-bold text-[11px] uppercase tracking-widest px-4 py-2 rounded-xl transition-colors disabled:opacity-50"
+                  className="flex items-center gap-1.5 bg-[#0145F2] hover:bg-[#0138c9] text-white font-bold text-[11px] uppercase tracking-widest px-4 py-2 rounded-xl transition-colors disabled:opacity-50"
                 >
                   {guardandoUsoInterno ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <CheckCircle2 className="w-3.5 h-3.5" />}
                   {guardandoUsoInterno ? "Guardando..." : "Guardar uso interno"}

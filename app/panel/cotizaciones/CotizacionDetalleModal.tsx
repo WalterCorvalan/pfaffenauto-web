@@ -79,7 +79,7 @@ export default function CotizacionDetalleModal({
           </div>
           <div className="flex gap-2">
             <input value={comentario} onChange={(e) => setComentario(e.target.value)} onKeyDown={(e) => e.key === "Enter" && enviarComentario()} placeholder="Escribir comentario..." className="flex-1 bg-slate-50 dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-lg px-3 py-2 text-xs outline-none focus:border-rose-500 text-slate-900 dark:text-white" />
-            <button onClick={enviarComentario} className="p-2 bg-rose-600 hover:bg-rose-700 text-white rounded-lg"><Send className="w-3.5 h-3.5" /></button>
+            <button onClick={enviarComentario} className="p-2 bg-[#0145F2] hover:bg-[#0138c9] text-white rounded-lg"><Send className="w-3.5 h-3.5" /></button>
           </div>
 
           {c.historial?.length > 0 && (

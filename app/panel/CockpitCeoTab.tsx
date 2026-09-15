@@ -123,7 +123,7 @@ export default function CockpitCeoTab({ miNombre, ocultarMontos, diaDelMes, dias
             rows={2}
             className="flex-1 rounded-xl bg-white text-slate-900 px-3 py-2.5 text-sm outline-none resize-none"
           />
-          <button onClick={() => enviar(pregunta)} disabled={cargando || !pregunta.trim()} className="px-4 rounded-xl bg-rose-500 hover:bg-rose-600 text-white font-bold text-sm disabled:opacity-50 flex items-center gap-1.5 shrink-0">
+          <button onClick={() => enviar(pregunta)} disabled={cargando || !pregunta.trim()} className="px-4 rounded-xl bg-rose-500 hover:bg-[#0145F2] text-white font-bold text-sm disabled:opacity-50 flex items-center gap-1.5 shrink-0">
             {cargando ? <Loader2 className="w-4 h-4 animate-spin" /> : <Send className="w-4 h-4" />} Enviar
           </button>
         </div>
@@ -162,7 +162,7 @@ export default function CockpitCeoTab({ miNombre, ocultarMontos, diaDelMes, dias
               <p className="text-[11px] text-slate-400 mt-1">{Math.round((ventasDelMes / objetivoVentasMensual) * 100)}% del objetivo mensual</p>
             </>
           ) : (
-            variacionAnual !== null && <p className={`text-[11px] mt-1 font-bold ${variacionAnual >= 0 ? "text-emerald-600" : "text-rose-600"}`}>{variacionAnual >= 0 ? "+" : ""}{variacionAnual}% vs mismo mes año anterior</p>
+            variacionAnual !== null && <p className={`text-[11px] mt-1 font-bold ${variacionAnual >= 0 ? "text-emerald-600" : "text-[#0145F2]"}`}>{variacionAnual >= 0 ? "+" : ""}{variacionAnual}% vs mismo mes año anterior</p>
           )}
         </div>
         <div className="rounded-2xl p-4 bg-white dark:bg-white/[0.02] border border-slate-200 dark:border-white/5">

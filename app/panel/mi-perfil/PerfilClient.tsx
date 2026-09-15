@@ -72,7 +72,7 @@ export default function PerfilClient({ miId }: { miId: string }) {
     <div className="flex flex-col h-full w-full overflow-hidden">
       <div className="flex-1 overflow-y-auto custom-scrollbar p-4 md:p-6">
         <div className="mb-4">
-          <h1 className="text-xl font-black text-slate-900 dark:text-white flex items-center gap-2"><UserCircle2 className="w-5 h-5 text-rose-600" /> Mi Perfil</h1>
+          <h1 className="text-xl font-black text-slate-900 dark:text-white flex items-center gap-2"><UserCircle2 className="w-5 h-5 text-[#0145F2]" /> Mi Perfil</h1>
           <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">Tu foto, nombre y WhatsApp -- se muestran al cliente cuando te asignan un auto (catálogo, presupuesto, seguimiento).</p>
         </div>
         {cargando ? (
@@ -92,7 +92,7 @@ export default function PerfilClient({ miId }: { miId: string }) {
                   type="button"
                   onClick={() => fileInputRef.current?.click()}
                   disabled={subiendoFoto}
-                  className="absolute -bottom-1 -right-1 w-7 h-7 rounded-full bg-rose-600 hover:bg-rose-700 text-white flex items-center justify-center shadow-sm disabled:opacity-50"
+                  className="absolute -bottom-1 -right-1 w-7 h-7 rounded-full bg-[#0145F2] hover:bg-[#0138c9] text-white flex items-center justify-center shadow-sm disabled:opacity-50"
                   title="Cambiar foto"
                 >
                   {subiendoFoto ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Camera className="w-3.5 h-3.5" />}
@@ -135,7 +135,7 @@ export default function PerfilClient({ miId }: { miId: string }) {
               )}
 
               <div className="flex justify-end pt-1">
-                <button onClick={guardar} disabled={guardando || !nombre.trim()} className="flex items-center gap-1.5 px-5 py-2.5 text-sm font-bold bg-rose-600 hover:bg-rose-700 text-white rounded-lg disabled:opacity-50">
+                <button onClick={guardar} disabled={guardando || !nombre.trim()} className="flex items-center gap-1.5 px-5 py-2.5 text-sm font-bold bg-[#0145F2] hover:bg-[#0138c9] text-white rounded-lg disabled:opacity-50">
                   <Save className="w-4 h-4" /> {guardando ? "Guardando..." : "Guardar"}
                 </button>
               </div>

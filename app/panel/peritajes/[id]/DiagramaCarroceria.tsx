@@ -14,7 +14,7 @@ const SIMBOLOS = [
 
 const COLOR_SIMBOLO: Record<string, string> = {
   rayado: "text-amber-600 dark:text-amber-400",
-  cambiar: "text-rose-600 dark:text-rose-400",
+  cambiar: "text-[#0145F2] dark:text-[#5b8dff]",
   quemada: "text-orange-600 dark:text-orange-400",
   cuarteada: "text-indigo-600 dark:text-indigo-400",
 };
@@ -161,7 +161,7 @@ export default function DiagramaCarroceria({ peritajeId, marcasIniciales }: { pe
             <button
               type="button"
               onClick={copiarJson}
-              className="flex items-center gap-1 text-[10px] font-bold text-rose-600 dark:text-rose-400 bg-rose-50 dark:bg-rose-500/10 border border-rose-100 dark:border-rose-500/20 px-2.5 py-1.5 rounded-lg hover:bg-rose-100 transition-colors"
+              className="flex items-center gap-1 text-[10px] font-bold text-[#0145F2] dark:text-[#5b8dff] bg-rose-50 dark:bg-rose-500/10 border border-rose-100 dark:border-rose-500/20 px-2.5 py-1.5 rounded-lg hover:bg-rose-100 transition-colors"
             >
               {copiado ? <Check className="w-3 h-3" /> : <Copy className="w-3 h-3" />} {copiado ? "Copiado" : "Copiar JSON"}
             </button>
@@ -172,7 +172,7 @@ export default function DiagramaCarroceria({ peritajeId, marcasIniciales }: { pe
             title="Arrastrar puntos para reubicarlos"
             className={`flex items-center gap-1 text-[10px] font-bold px-2.5 py-1.5 rounded-lg border transition-colors ${
               modoAjuste
-                ? "bg-rose-600 text-white border-rose-600"
+                ? "bg-[#0145F2] text-white border-[#0145F2]"
                 : "bg-white dark:bg-transparent text-slate-500 dark:text-slate-400 border-slate-200 dark:border-white/10 hover:border-rose-400"
             }`}
           >

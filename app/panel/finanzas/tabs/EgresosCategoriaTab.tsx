@@ -33,7 +33,7 @@ const CATEGORIAS: CategoriaConfig[] = [
 
 const COLOR_TEXTO: Record<string, string> = {
   indigo: "text-indigo-600 dark:text-indigo-400", sky: "text-sky-600 dark:text-sky-400", amber: "text-amber-600 dark:text-amber-400",
-  rose: "text-rose-600 dark:text-rose-400", emerald: "text-emerald-600 dark:text-emerald-400",
+  rose: "text-[#0145F2] dark:text-[#5b8dff]", emerald: "text-emerald-600 dark:text-emerald-400",
 };
 const COLOR_BORDE: Record<string, string> = {
   indigo: "border-indigo-200 dark:border-indigo-500/30", sky: "border-sky-200 dark:border-sky-500/30", amber: "border-amber-200 dark:border-amber-500/30",
@@ -130,7 +130,7 @@ export default function EgresosCategoriaTab({
             <option value="">Todas las sucursales</option>
             {sucursales.map((s) => <option key={s.id} value={s.id}>{s.nombre}</option>)}
           </select>
-          <button onClick={abrirModal} className="flex items-center gap-1.5 bg-rose-600 hover:bg-rose-700 text-white px-4 py-2 rounded-lg text-xs font-bold transition-colors shadow-sm"><Plus className="w-4 h-4" /> Nuevo Egreso</button>
+          <button onClick={abrirModal} className="flex items-center gap-1.5 bg-[#0145F2] hover:bg-[#0138c9] text-white px-4 py-2 rounded-lg text-xs font-bold transition-colors shadow-sm"><Plus className="w-4 h-4" /> Nuevo Egreso</button>
         </div>
       </div>
 
@@ -182,7 +182,7 @@ export default function EgresosCategoriaTab({
                   {config.conEmpleado && <td className="p-3 text-slate-700 dark:text-slate-200">{r.vendedor?.nombre || "—"}</td>}
                   <td className="p-3 text-slate-600 dark:text-slate-300">{r.observaciones || "—"}</td>
                   <td className="p-3 text-slate-600 dark:text-slate-300">{sucursales.find((s) => s.id === r.sucursal_id)?.nombre || "—"}</td>
-                  <td className="p-3 pr-4 text-right font-mono font-bold text-rose-600 dark:text-rose-400">{fmt(Number(r.monto), r.cuenta?.moneda || "ARS")}</td>
+                  <td className="p-3 pr-4 text-right font-mono font-bold text-[#0145F2] dark:text-[#5b8dff]">{fmt(Number(r.monto), r.cuenta?.moneda || "ARS")}</td>
                 </tr>
               ))}
               {registros.length === 0 && (
@@ -245,7 +245,7 @@ export default function EgresosCategoriaTab({
               </div>
               <div className="pt-4 mt-2 border-t border-slate-100 dark:border-white/10 flex gap-2">
                 <button type="button" onClick={() => setShowModal(false)} className="flex-1 py-2.5 text-xs font-bold uppercase tracking-widest bg-white dark:bg-white/5 border border-slate-200 dark:border-white/10 hover:bg-slate-50 dark:hover:bg-white/10 text-slate-600 dark:text-slate-300 rounded-xl transition-colors">Cancelar</button>
-                <button type="submit" disabled={guardando} className="flex-1 py-2.5 text-xs font-bold uppercase tracking-widest bg-rose-600 hover:bg-rose-700 text-white rounded-xl transition-colors disabled:opacity-50">{guardando ? "Guardando..." : "Registrar"}</button>
+                <button type="submit" disabled={guardando} className="flex-1 py-2.5 text-xs font-bold uppercase tracking-widest bg-[#0145F2] hover:bg-[#0138c9] text-white rounded-xl transition-colors disabled:opacity-50">{guardando ? "Guardando..." : "Registrar"}</button>
               </div>
             </form>
           </div>

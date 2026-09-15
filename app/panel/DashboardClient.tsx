@@ -83,11 +83,11 @@ export default function DashboardClient(props: Props) {
 
       <div className="flex items-center gap-1 border-b border-slate-200 dark:border-white/10">
         {props.esAdmin && (
-          <button onClick={() => setTab("cockpit")} className={`flex items-center gap-1.5 px-3 py-2.5 text-sm font-bold border-b-2 -mb-px transition-colors ${tab === "cockpit" ? "border-rose-600 text-rose-600" : "border-transparent text-slate-500 hover:text-slate-700 dark:hover:text-slate-300"}`}>
+          <button onClick={() => setTab("cockpit")} className={`flex items-center gap-1.5 px-3 py-2.5 text-sm font-bold border-b-2 -mb-px transition-colors ${tab === "cockpit" ? "border-[#0145F2] text-[#0145F2]" : "border-transparent text-slate-500 hover:text-slate-700 dark:hover:text-slate-300"}`}>
             <Target className="w-4 h-4" /> Cockpit CEO
           </button>
         )}
-        <button onClick={() => setTab("general")} className={`flex items-center gap-1.5 px-3 py-2.5 text-sm font-bold border-b-2 -mb-px transition-colors ${tab === "general" ? "border-rose-600 text-rose-600" : "border-transparent text-slate-500 hover:text-slate-700 dark:hover:text-slate-300"}`}>
+        <button onClick={() => setTab("general")} className={`flex items-center gap-1.5 px-3 py-2.5 text-sm font-bold border-b-2 -mb-px transition-colors ${tab === "general" ? "border-[#0145F2] text-[#0145F2]" : "border-transparent text-slate-500 hover:text-slate-700 dark:hover:text-slate-300"}`}>
           <LayoutDashboard className="w-4 h-4" /> Dashboard general
         </button>
       </div>

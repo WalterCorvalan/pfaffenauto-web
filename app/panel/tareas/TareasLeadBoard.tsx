@@ -130,7 +130,7 @@ export default function TareasLeadBoard({
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
           <div className="flex items-center gap-4">
             <div className="w-10 h-10 rounded-lg bg-rose-50 dark:bg-rose-500/10 border border-rose-100 dark:border-rose-500/20 flex items-center justify-center shrink-0">
-              <CheckSquare className="w-5 h-5 text-rose-600" />
+              <CheckSquare className="w-5 h-5 text-[#0145F2]" />
             </div>
             <div>
               <h1 className="text-[17px] font-bold text-slate-900 dark:text-white leading-tight">Tareas de Leads</h1>
@@ -154,7 +154,7 @@ export default function TareasLeadBoard({
 
         <div className="flex items-center gap-1 border-b border-slate-100 dark:border-white/10 -mb-4">
           {TABS.map((t) => (
-            <button key={t.id} onClick={() => setVista(t.id)} className={`flex items-center gap-1.5 px-4 py-2.5 text-[12px] font-bold border-b-2 transition-colors ${vista === t.id ? "border-rose-600 text-rose-600" : "border-transparent text-slate-500 dark:text-slate-400 hover:text-slate-800 dark:hover:text-slate-200"}`}>
+            <button key={t.id} onClick={() => setVista(t.id)} className={`flex items-center gap-1.5 px-4 py-2.5 text-[12px] font-bold border-b-2 transition-colors ${vista === t.id ? "border-[#0145F2] text-[#0145F2]" : "border-transparent text-slate-500 dark:text-slate-400 hover:text-slate-800 dark:hover:text-slate-200"}`}>
               {t.icono} {t.label}
             </button>
           ))}
@@ -325,7 +325,7 @@ function TareasCalendario({ tareas, completadas }: { tareas: any[]; completadas:
           const esHoy = dia.toDateString() === new Date().toDateString();
           return (
             <div key={dia.toISOString()} className={`bg-white dark:bg-white/5 border rounded-xl overflow-hidden ${esHoy ? "border-rose-400 ring-1 ring-rose-400" : "border-slate-200 dark:border-white/10"}`}>
-              <div className={`px-2 py-1.5 text-center text-[10px] font-bold ${esHoy ? "bg-rose-600 text-white" : "bg-slate-50 dark:bg-white/5 text-slate-500 dark:text-slate-400"}`}>{nombreDia(dia)}</div>
+              <div className={`px-2 py-1.5 text-center text-[10px] font-bold ${esHoy ? "bg-[#0145F2] text-white" : "bg-slate-50 dark:bg-white/5 text-slate-500 dark:text-slate-400"}`}>{nombreDia(dia)}</div>
               {items.length === 0 ? <p className="px-2 py-2.5 text-center text-[10px] text-slate-300 dark:text-slate-600 italic">Sin tareas</p> : (
                 <div className="p-1.5 space-y-1">
                   {items.map((t) => (
@@ -371,11 +371,11 @@ function TareasHistorial({ completadas }: { completadas: any[] }) {
         <TablaResponsiva<typeof filtradas[number]>
           filas={filtradas}
           keyExtractor={(t) => t.id}
-          encabezadoMobile={(t) => <Link href={hrefLead(t.lead)} className="text-rose-600 hover:underline text-[13px] font-bold">{t.lead?.nombre || "Lead"}</Link>}
+          encabezadoMobile={(t) => <Link href={hrefLead(t.lead)} className="text-[#0145F2] hover:underline text-[13px] font-bold">{t.lead?.nombre || "Lead"}</Link>}
           columnas={
             [
               { key: "fecha", header: "Fecha", cell: (t) => new Date(t.fecha_vencimiento).toLocaleString("es-AR", { day: "2-digit", month: "short", year: "numeric", hour: "2-digit", minute: "2-digit" }), claseTd: "text-[12px] font-medium text-slate-500 dark:text-slate-400 whitespace-nowrap" },
-              { key: "lead", header: "Lead", cell: (t) => <Link href={hrefLead(t.lead)} className="text-rose-600 hover:underline">{t.lead?.nombre || "Lead"}</Link>, claseTd: "text-[13px] font-bold", ocultarEnMobile: true },
+              { key: "lead", header: "Lead", cell: (t) => <Link href={hrefLead(t.lead)} className="text-[#0145F2] hover:underline">{t.lead?.nombre || "Lead"}</Link>, claseTd: "text-[13px] font-bold", ocultarEnMobile: true },
               { key: "tipo", header: "Tipo", cell: (t) => <span className="bg-slate-100 dark:bg-white/10 text-slate-600 dark:text-slate-300 px-2 py-1 rounded-md">{t.tipo}</span>, claseTd: "text-[12px] font-semibold text-slate-700 dark:text-slate-200" },
               { key: "comentario", header: "Comentario", cell: (t) => t.resultado || t.titulo || "—", claseTd: "text-[12px] text-slate-500 dark:text-slate-400 truncate max-w-xs" },
             ] as ColumnaTabla<typeof filtradas[number]>[]

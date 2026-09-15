@@ -111,9 +111,9 @@ export default function LiquidacionesClient({
       </div>
 
       <div className="flex items-center gap-1 my-4 border-b border-slate-200 dark:border-white/10">
-        <button onClick={() => setTab("transferencias")} className={`flex items-center gap-1.5 px-3 py-2.5 text-sm font-bold border-b-2 -mb-px ${tab === "transferencias" ? "border-rose-600 text-rose-600" : "border-transparent text-slate-500"}`}><List className="w-4 h-4" /> Transferencias</button>
-        <button onClick={() => setTab("mensual")} className={`flex items-center gap-1.5 px-3 py-2.5 text-sm font-bold border-b-2 -mb-px ${tab === "mensual" ? "border-rose-600 text-rose-600" : "border-transparent text-slate-500"}`}><ReceiptIcon className="w-4 h-4" /> Liquidación mensual</button>
-        <button onClick={() => setTab("resumen")} className={`flex items-center gap-1.5 px-3 py-2.5 text-sm font-bold border-b-2 -mb-px ${tab === "resumen" ? "border-rose-600 text-rose-600" : "border-transparent text-slate-500"}`}><Building2 className="w-4 h-4" /> Resumen agencia</button>
+        <button onClick={() => setTab("transferencias")} className={`flex items-center gap-1.5 px-3 py-2.5 text-sm font-bold border-b-2 -mb-px ${tab === "transferencias" ? "border-[#0145F2] text-[#0145F2]" : "border-transparent text-slate-500"}`}><List className="w-4 h-4" /> Transferencias</button>
+        <button onClick={() => setTab("mensual")} className={`flex items-center gap-1.5 px-3 py-2.5 text-sm font-bold border-b-2 -mb-px ${tab === "mensual" ? "border-[#0145F2] text-[#0145F2]" : "border-transparent text-slate-500"}`}><ReceiptIcon className="w-4 h-4" /> Liquidación mensual</button>
+        <button onClick={() => setTab("resumen")} className={`flex items-center gap-1.5 px-3 py-2.5 text-sm font-bold border-b-2 -mb-px ${tab === "resumen" ? "border-[#0145F2] text-[#0145F2]" : "border-transparent text-slate-500"}`}><Building2 className="w-4 h-4" /> Resumen agencia</button>
       </div>
 
       {tab === "transferencias" && <TransferenciasTab liquidaciones={liquidaciones} setLiquidaciones={setLiquidaciones} gananciasOcultas={gananciasOcultas} onEditar={abrirEditar} />}

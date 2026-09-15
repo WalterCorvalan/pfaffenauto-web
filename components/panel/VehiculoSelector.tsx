@@ -138,7 +138,7 @@ export default function VehiculoSelector({
           <input className={inputClass} placeholder="Marca de chasis" value={d.marca_chasis} onChange={(e) => onCambiar({ ...d, marca_chasis: e.target.value })} />
           <input className={inputClass} placeholder="Número de chasis" value={d.numero_chasis} onChange={(e) => onCambiar({ ...d, numero_chasis: e.target.value })} />
         </div>
-        <button type="button" onClick={confirmarManual} disabled={guardandoManual} className="w-full bg-rose-600 hover:bg-rose-700 text-white font-bold py-2.5 rounded-lg text-[11px] uppercase tracking-widest transition-colors disabled:opacity-50">
+        <button type="button" onClick={confirmarManual} disabled={guardandoManual} className="w-full bg-[#0145F2] hover:bg-[#0138c9] text-white font-bold py-2.5 rounded-lg text-[11px] uppercase tracking-widest transition-colors disabled:opacity-50">
           {guardandoManual ? "Guardando..." : "Listo"}
         </button>
       </div>
@@ -166,7 +166,7 @@ export default function VehiculoSelector({
         ))}
         {vehiculosFiltrados.length === 0 && <p className="px-3 py-3 text-[13px] text-slate-400 italic">Sin resultados.</p>}
       </div>
-      <button type="button" onClick={() => setModoManual(true)} className="flex items-center gap-1.5 text-rose-600 dark:text-rose-400 hover:text-rose-800 dark:hover:text-rose-300 text-[12px] font-bold">
+      <button type="button" onClick={() => setModoManual(true)} className="flex items-center gap-1.5 text-[#0145F2] dark:text-[#5b8dff] hover:text-[#0138c9] dark:hover:text-rose-300 text-[12px] font-bold">
         <Car className="w-3.5 h-3.5" /> Cargar vehículo manualmente
       </button>
     </div>

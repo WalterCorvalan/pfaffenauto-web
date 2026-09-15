@@ -155,7 +155,7 @@ export default function ConsignacionDetalleModal({ consignacionId, perfiles, cli
               <p className="text-sm font-bold text-slate-900 dark:text-white">{consignacion.cliente_nombre}</p>
               {consignacion.cliente_telefono && (
                 <div className="flex items-center gap-3 mt-1">
-                  <a href={`tel:${consignacion.cliente_telefono}`} className="flex items-center gap-1 text-xs font-semibold text-rose-600"><Phone className="w-3.5 h-3.5" /> {consignacion.cliente_telefono}</a>
+                  <a href={`tel:${consignacion.cliente_telefono}`} className="flex items-center gap-1 text-xs font-semibold text-[#0145F2]"><Phone className="w-3.5 h-3.5" /> {consignacion.cliente_telefono}</a>
                   {whatsappHref && <a href={whatsappHref} target="_blank" rel="noreferrer" className="flex items-center gap-1 text-xs font-semibold text-emerald-600"><MessageCircle className="w-3.5 h-3.5" /> WhatsApp</a>}
                 </div>
               )}
@@ -201,7 +201,7 @@ export default function ConsignacionDetalleModal({ consignacionId, perfiles, cli
               </div>
               <div className="flex items-center justify-between">
                 <span className="text-xs text-slate-500 dark:text-slate-400">Publicada</span>
-                <input type="checkbox" checked={publicada} onChange={(e) => (editando ? setPublicada(e.target.checked) : togglePublicada(e.target.checked))} className="w-4 h-4 accent-rose-600" />
+                <input type="checkbox" checked={publicada} onChange={(e) => (editando ? setPublicada(e.target.checked) : togglePublicada(e.target.checked))} className="w-4 h-4 accent-[#0145F2]" />
               </div>
             </div>
           </div>
@@ -251,12 +251,12 @@ export default function ConsignacionDetalleModal({ consignacionId, perfiles, cli
           {editando ? (
             <>
               <button onClick={() => setEditando(false)} className="px-3 py-2 text-xs font-semibold text-slate-500">Descartar</button>
-              <button onClick={guardarEdicion} disabled={guardando} className="px-4 py-2 rounded-xl bg-rose-600 hover:bg-rose-700 text-white text-xs font-bold disabled:opacity-50 flex items-center gap-1.5">{guardando ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : null} Guardar</button>
+              <button onClick={guardarEdicion} disabled={guardando} className="px-4 py-2 rounded-xl bg-[#0145F2] hover:bg-[#0138c9] text-white text-xs font-bold disabled:opacity-50 flex items-center gap-1.5">{guardando ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : null} Guardar</button>
             </>
           ) : (
             <>
               {consignacion.estado !== "cancelado" && consignacion.estado !== "consignado" && (
-                <button onClick={cancelarConsignacion} className="flex items-center gap-1.5 px-3 py-2 text-xs font-bold bg-white dark:bg-white/5 border border-rose-200 dark:border-rose-500/20 text-rose-600 rounded-xl">Cancelar consignación</button>
+                <button onClick={cancelarConsignacion} className="flex items-center gap-1.5 px-3 py-2 text-xs font-bold bg-white dark:bg-white/5 border border-rose-200 dark:border-rose-500/20 text-[#0145F2] rounded-xl">Cancelar consignación</button>
               )}
               <button onClick={() => setEditando(true)} className="flex items-center gap-1.5 px-4 py-2 rounded-xl bg-rose-600 hover:bg-rose-700 text-white text-xs font-bold">Editar</button>
               {soyAdmin && <button onClick={eliminar} className="px-3 py-2 text-xs font-bold text-rose-600">Eliminar</button>}

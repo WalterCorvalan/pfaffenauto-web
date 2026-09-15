@@ -74,10 +74,10 @@ export default function ConsignacionesClient({ consignacionesIniciales, perfiles
     <div className="p-6">
       <div className="flex items-start justify-between mb-1">
         <div>
-          <h1 className="text-xl font-bold flex items-center gap-2"><KeyRound className="w-5 h-5 text-rose-600" /> Consignaciones</h1>
+          <h1 className="text-xl font-bold flex items-center gap-2"><KeyRound className="w-5 h-5 text-[#0145F2]" /> Consignaciones</h1>
           <p className="text-sm text-slate-400">{consignaciones.length} consignación{consignaciones.length === 1 ? "" : "es"} · {porContactar} por contactar · {publicadas} publicadas</p>
         </div>
-        <button onClick={() => setModalNueva(true)} className="flex items-center gap-1.5 px-4 py-2 rounded-xl text-sm font-bold bg-rose-600 hover:bg-rose-700 text-white shadow-sm">
+        <button onClick={() => setModalNueva(true)} className="flex items-center gap-1.5 px-4 py-2 rounded-xl text-sm font-bold bg-[#0145F2] hover:bg-[#0138c9] text-white shadow-sm">
           <Plus className="w-4 h-4" /> Nueva consignación
         </button>
       </div>
@@ -86,7 +86,7 @@ export default function ConsignacionesClient({ consignacionesIniciales, perfiles
         {TABS.map((t) => {
           const n = t.value === "todas" ? consignaciones.length : consignaciones.filter((c) => c.estado === t.value).length;
           return (
-            <button key={t.value} onClick={() => setTab(t.value)} className={`px-3 py-2 text-sm font-semibold whitespace-nowrap border-b-2 -mb-px flex items-center gap-1.5 ${tab === t.value ? "border-rose-600 text-rose-600" : "border-transparent text-slate-500 hover:text-slate-700 dark:hover:text-slate-300"}`}>
+            <button key={t.value} onClick={() => setTab(t.value)} className={`px-3 py-2 text-sm font-semibold whitespace-nowrap border-b-2 -mb-px flex items-center gap-1.5 ${tab === t.value ? "border-[#0145F2] text-[#0145F2]" : "border-transparent text-slate-500 hover:text-slate-700 dark:hover:text-slate-300"}`}>
               {t.label} {n > 0 && <span className="text-[10px] font-bold bg-slate-100 dark:bg-white/10 px-1.5 py-0.5 rounded-full">{n}</span>}
             </button>
           );

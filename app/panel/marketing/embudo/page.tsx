@@ -214,7 +214,7 @@ export default async function EmbudoPage({ searchParams }: { searchParams: Promi
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-1.5 bg-slate-50 dark:bg-white/5 border border-slate-200 dark:border-white/10 px-3 py-1.5 rounded-lg text-[11px] font-bold text-slate-600 dark:text-slate-300">
           <BarChart3 className="w-3.5 h-3.5 text-slate-400 dark:text-slate-500" />
-          Tasa de Cierre Global: <span className="text-rose-600 dark:text-rose-400 text-[13px] ml-1">{tasaCierre}%</span>
+          Tasa de Cierre Global: <span className="text-[#0145F2] dark:text-[#5b8dff] text-[13px] ml-1">{tasaCierre}%</span>
         </div>
         <FiltroFechas desde={desde} hasta={hasta} />
       </div>
@@ -289,11 +289,11 @@ export default async function EmbudoPage({ searchParams }: { searchParams: Promi
         </div>
         <div className="p-6 grid grid-cols-1 sm:grid-cols-2 gap-4">
           <div className="bg-rose-50 dark:bg-rose-500/10 border border-rose-200 dark:border-rose-500/20 rounded-xl p-5 text-center">
-            <div className="w-10 h-10 mx-auto bg-rose-100 dark:bg-rose-900/50 text-rose-600 dark:text-rose-300 rounded-full flex items-center justify-center mb-3">
+            <div className="w-10 h-10 mx-auto bg-rose-100 dark:bg-rose-900/50 text-[#0145F2] dark:text-rose-300 rounded-full flex items-center justify-center mb-3">
               <Megaphone className="w-5 h-5" />
             </div>
             <h3 className="text-3xl font-black text-rose-700 dark:text-rose-300 mb-1">{pctConPauta}%</h3>
-            <p className="text-[11px] font-bold uppercase tracking-widest text-rose-600">Estaban Publicados ({ventasConPauta})</p>
+            <p className="text-[11px] font-bold uppercase tracking-widest text-[#0145F2]">Estaban Publicados ({ventasConPauta})</p>
           </div>
           <div className="bg-slate-50 dark:bg-white/5 border border-slate-100 dark:border-white/10 rounded-xl p-5 text-center">
             <div className="w-10 h-10 mx-auto bg-slate-200 dark:bg-white/10 text-slate-600 dark:text-slate-300 rounded-full flex items-center justify-center mb-3">

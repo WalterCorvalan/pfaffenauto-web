@@ -310,8 +310,8 @@ export default function TransferenciaModal({
         <p className="text-xs font-bold mt-4">¿El registro devolvió plata?</p>
         <p className="text-[10px] text-slate-400 mb-2">A veces el arancel se paga estimado y después reintegran la diferencia. Esto NO es el margen de gestoría — es plata que el registro devuelve.</p>
         <div className="flex gap-2">
-          <button onClick={() => setHuboDevolucion(false)} className={`px-3 py-2 text-xs font-bold rounded-lg border ${huboDevolucion === false ? "bg-rose-600 text-white border-rose-600" : "border-slate-200 dark:border-white/10"}`}>No sobró nada</button>
-          <button onClick={() => setHuboDevolucion(true)} className={`px-3 py-2 text-xs font-bold rounded-lg border ${huboDevolucion === true ? "bg-rose-600 text-white border-rose-600" : "border-slate-200 dark:border-white/10"}`}>Sí, sobró plata</button>
+          <button onClick={() => setHuboDevolucion(false)} className={`px-3 py-2 text-xs font-bold rounded-lg border ${huboDevolucion === false ? "bg-[#0145F2] text-white border-[#0145F2]" : "border-slate-200 dark:border-white/10"}`}>No sobró nada</button>
+          <button onClick={() => setHuboDevolucion(true)} className={`px-3 py-2 text-xs font-bold rounded-lg border ${huboDevolucion === true ? "bg-[#0145F2] text-white border-[#0145F2]" : "border-slate-200 dark:border-white/10"}`}>Sí, sobró plata</button>
         </div>
         {huboDevolucion === true && (
           <div className="mt-2 space-y-2">
@@ -326,7 +326,7 @@ export default function TransferenciaModal({
 
         <div className="flex justify-end gap-2 mt-4 sticky bottom-0 bg-white dark:bg-[#141414] pt-2">
           <button onClick={onClose} disabled={guardando} className="px-4 py-2 text-sm font-bold text-slate-500">Cancelar</button>
-          <button onClick={guardar} disabled={guardando} className="flex items-center gap-1.5 px-4 py-2 text-sm font-bold bg-rose-600 hover:bg-rose-700 text-white rounded-lg disabled:opacity-50"><Save className="w-4 h-4" /> {editando ? "Guardar cambios" : "Crear transferencia"}</button>
+          <button onClick={guardar} disabled={guardando} className="flex items-center gap-1.5 px-4 py-2 text-sm font-bold bg-[#0145F2] hover:bg-[#0138c9] text-white rounded-lg disabled:opacity-50"><Save className="w-4 h-4" /> {editando ? "Guardar cambios" : "Crear transferencia"}</button>
         </div>
       </div>
     </div>

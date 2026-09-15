@@ -35,7 +35,7 @@ export default function VendedorEditor({
 
   if (!editando) {
     return (
-      <button onClick={() => setEditando(true)} className="flex items-center gap-1.5 text-slate-600 dark:text-slate-300 font-semibold hover:text-rose-600 dark:hover:text-rose-400 group">
+      <button onClick={() => setEditando(true)} className="flex items-center gap-1.5 text-slate-600 dark:text-slate-300 font-semibold hover:text-[#0145F2] dark:hover:text-rose-400 group">
         <UserCircle2 className="w-3.5 h-3.5 text-slate-400 shrink-0 group-hover:text-rose-500" />
         {vendedorNombre || <span className="text-slate-300 dark:text-slate-600 font-normal">Sin asignar</span>}
       </button>
@@ -47,7 +47,7 @@ export default function VendedorEditor({
       <div className="absolute inset-0 bg-slate-900/40 backdrop-blur-sm" onClick={() => !guardando && setEditando(false)} />
       <div className="relative bg-white dark:bg-[#141414] border border-slate-200 dark:border-white/10 w-full max-w-xs rounded-2xl shadow-2xl p-5 space-y-4">
         <div className="flex items-center justify-between">
-          <h3 className="text-sm font-bold text-slate-900 dark:text-white flex items-center gap-2"><UserCircle2 className="w-4 h-4 text-rose-600" /> Asignar vendedor</h3>
+          <h3 className="text-sm font-bold text-slate-900 dark:text-white flex items-center gap-2"><UserCircle2 className="w-4 h-4 text-[#0145F2]" /> Asignar vendedor</h3>
           <button onClick={() => setEditando(false)} className="text-slate-400 hover:text-slate-700 dark:hover:text-white"><X className="w-4 h-4" /></button>
         </div>
         <select value={nuevo} onChange={(e) => setNuevo(e.target.value)} className="w-full bg-slate-50 dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-xl px-3 py-2.5 text-sm outline-none text-slate-900 dark:text-white">
@@ -61,7 +61,7 @@ export default function VendedorEditor({
         )}
         <div className="flex gap-2">
           <button onClick={() => setEditando(false)} disabled={guardando} className="flex-1 py-2 text-xs font-bold text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-white/10 rounded-xl disabled:opacity-50">Cancelar</button>
-          <button onClick={guardar} disabled={guardando} className="flex-1 py-2 flex items-center justify-center gap-1.5 text-xs font-bold bg-rose-600 hover:bg-rose-700 text-white rounded-xl disabled:opacity-50">
+          <button onClick={guardar} disabled={guardando} className="flex-1 py-2 flex items-center justify-center gap-1.5 text-xs font-bold bg-[#0145F2] hover:bg-[#0138c9] text-white rounded-xl disabled:opacity-50">
             {guardando ? "Guardando..." : <><Save className="w-3.5 h-3.5" /> Confirmar</>}
           </button>
         </div>

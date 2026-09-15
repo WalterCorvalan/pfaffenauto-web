@@ -189,8 +189,8 @@ export default function CajaGrandeChicaTab({ miId, soyAdmin, cuentas, setCuentas
           {sucursales.map((s) => <option key={s.id} value={s.id}>{s.nombre}</option>)}
         </select>
         <div className="flex gap-1 ml-2">
-          <button onClick={() => setRol("grande")} className={`px-3 py-1.5 rounded-lg text-xs font-bold flex items-center gap-1 ${rol === "grande" ? "bg-rose-600 text-white" : "bg-white dark:bg-white/5 border border-slate-200 dark:border-white/10"}`}><Landmark className="w-3.5 h-3.5" /> Caja Grande</button>
-          <button onClick={() => setRol("chica")} className={`px-3 py-1.5 rounded-lg text-xs font-bold flex items-center gap-1 ${rol === "chica" ? "bg-rose-600 text-white" : "bg-white dark:bg-white/5 border border-slate-200 dark:border-white/10"}`}><Wallet className="w-3.5 h-3.5" /> Caja Chica</button>
+          <button onClick={() => setRol("grande")} className={`px-3 py-1.5 rounded-lg text-xs font-bold flex items-center gap-1 ${rol === "grande" ? "bg-[#0145F2] text-white" : "bg-white dark:bg-white/5 border border-slate-200 dark:border-white/10"}`}><Landmark className="w-3.5 h-3.5" /> Caja Grande</button>
+          <button onClick={() => setRol("chica")} className={`px-3 py-1.5 rounded-lg text-xs font-bold flex items-center gap-1 ${rol === "chica" ? "bg-[#0145F2] text-white" : "bg-white dark:bg-white/5 border border-slate-200 dark:border-white/10"}`}><Wallet className="w-3.5 h-3.5" /> Caja Chica</button>
         </div>
       </div>
 
@@ -198,7 +198,7 @@ export default function CajaGrandeChicaTab({ miId, soyAdmin, cuentas, setCuentas
         <div className="bg-white dark:bg-white/5 border border-dashed border-slate-300 dark:border-white/10 rounded-2xl py-12 text-center">
           <p className="text-sm font-bold mb-1">Todavía no existe la Caja {rol === "grande" ? "Grande" : "Chica"} de {sucursalActual?.nombre}.</p>
           <p className="text-xs text-slate-400 mb-4">Se crea como una cuenta de efectivo más — arqueos, cierre de caja y libros contables la toman sola apenas exista.</p>
-          <button onClick={crearCaja} disabled={creandoCaja} className="px-4 py-2 text-sm font-bold bg-rose-600 hover:bg-rose-700 text-white rounded-lg disabled:opacity-50">{creandoCaja ? "Creando..." : `Crear Caja ${rol === "grande" ? "Grande" : "Chica"}`}</button>
+          <button onClick={crearCaja} disabled={creandoCaja} className="px-4 py-2 text-sm font-bold bg-[#0145F2] hover:bg-[#0138c9] text-white rounded-lg disabled:opacity-50">{creandoCaja ? "Creando..." : `Crear Caja ${rol === "grande" ? "Grande" : "Chica"}`}</button>
         </div>
       ) : (
         <>
@@ -268,7 +268,7 @@ export default function CajaGrandeChicaTab({ miId, soyAdmin, cuentas, setCuentas
                   { key: "responsable", header: "Responsable", cell: (m) => m.vendedor?.nombre || "—", claseTd: "text-sm text-slate-500" },
                   { key: "medio", header: "Medio de pago", cell: (m) => m.forma_pago || "—", claseTd: "text-sm text-slate-500" },
                   { key: "comprobante", header: "Comprobante", cell: (m) => m.comprobante_url ? <a href={m.comprobante_url} target="_blank" rel="noreferrer" className="text-indigo-600 font-bold flex items-center gap-1"><Paperclip className="w-3 h-3" /> Ver</a> : "—" },
-                  { key: "monto", header: "Monto", cell: (m) => <span className={`text-sm font-bold ${m.tipo === "ingreso" ? "text-emerald-600" : "text-rose-600"}`}>{m.tipo === "ingreso" ? "+" : "-"}{fmt(m.monto, m.cuenta?.moneda)}</span> },
+                  { key: "monto", header: "Monto", cell: (m) => <span className={`text-sm font-bold ${m.tipo === "ingreso" ? "text-emerald-600" : "text-[#0145F2]"}`}>{m.tipo === "ingreso" ? "+" : "-"}{fmt(m.monto, m.cuenta?.moneda)}</span> },
                 ] as ColumnaTabla<any>[]
               }
             />
@@ -347,7 +347,7 @@ export default function CajaGrandeChicaTab({ miId, soyAdmin, cuentas, setCuentas
               <button
                 onClick={() => registrar()}
                 disabled={guardando}
-                className="flex items-center gap-1.5 px-4 py-2 text-sm font-bold bg-rose-600 hover:bg-rose-700 text-white rounded-lg disabled:opacity-50"
+                className="flex items-center gap-1.5 px-4 py-2 text-sm font-bold bg-[#0145F2] hover:bg-[#0138c9] text-white rounded-lg disabled:opacity-50"
               >
                 <Save className="w-4 h-4" /> {guardando ? "Guardando..." : "Registrar"}
               </button>

@@ -52,7 +52,7 @@ export default function MiWhatsAppTab({ miId, agenciaNombre = "Pfaffen Autos" }:
       <div className="bg-white dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-xl p-3.5 text-sm whitespace-pre-wrap">{preview}</div>
 
       <div className="flex justify-end mt-4">
-        <button onClick={guardar} disabled={guardando} className="flex items-center gap-1.5 px-5 py-2.5 text-sm font-bold bg-rose-600 hover:bg-rose-700 text-white rounded-lg disabled:opacity-50"><Save className="w-4 h-4" /> {guardando ? "Guardando..." : "Guardar"}</button>
+        <button onClick={guardar} disabled={guardando} className="flex items-center gap-1.5 px-5 py-2.5 text-sm font-bold bg-[#0145F2] hover:bg-[#0138c9] text-white rounded-lg disabled:opacity-50"><Save className="w-4 h-4" /> {guardando ? "Guardando..." : "Guardar"}</button>
       </div>
     </div>
   );

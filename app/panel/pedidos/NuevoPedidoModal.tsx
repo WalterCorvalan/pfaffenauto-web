@@ -131,7 +131,7 @@ export default function NuevoPedidoModal({ pedido, vendedores, clientes, miId, o
             <label className={labelClass}>Tipo de pedido</label>
             <div className="flex gap-2">
               {[{ v: "avisame", l: "Avisame" }, { v: "busqueda", l: "Búsqueda activa" }].map((t) => (
-                <button key={t.v} type="button" onClick={() => setTipo(t.v)} className={`flex-1 text-sm font-bold px-3 py-2 rounded-xl border transition-colors ${tipo === t.v ? "bg-rose-600 border-rose-600 text-white" : "bg-white dark:bg-white/5 border-slate-200 dark:border-white/10 text-slate-500 dark:text-slate-400"}`}>{t.l}</button>
+                <button key={t.v} type="button" onClick={() => setTipo(t.v)} className={`flex-1 text-sm font-bold px-3 py-2 rounded-xl border transition-colors ${tipo === t.v ? "bg-[#0145F2] border-[#0145F2] text-white" : "bg-white dark:bg-white/5 border-slate-200 dark:border-white/10 text-slate-500 dark:text-slate-400"}`}>{t.l}</button>
               ))}
             </div>
           </div>
@@ -163,10 +163,10 @@ export default function NuevoPedidoModal({ pedido, vendedores, clientes, miId, o
 
           <div className="flex gap-4">
             <label className="flex items-center gap-2 text-sm font-medium text-slate-700 dark:text-slate-300 cursor-pointer">
-              <input type="checkbox" checked={wishlist} onChange={(e) => setWishlist(e.target.checked)} className="w-4 h-4 rounded accent-rose-600" /> Wishlist
+              <input type="checkbox" checked={wishlist} onChange={(e) => setWishlist(e.target.checked)} className="w-4 h-4 rounded accent-[#0145F2]" /> Wishlist
             </label>
             <label className="flex items-center gap-2 text-sm font-medium text-slate-700 dark:text-slate-300 cursor-pointer">
-              <input type="checkbox" checked={reservaSenada} onChange={(e) => setReservaSenada(e.target.checked)} className="w-4 h-4 rounded accent-rose-600" /> Reserva señada
+              <input type="checkbox" checked={reservaSenada} onChange={(e) => setReservaSenada(e.target.checked)} className="w-4 h-4 rounded accent-[#0145F2]" /> Reserva señada
             </label>
           </div>
 
@@ -197,7 +197,7 @@ export default function NuevoPedidoModal({ pedido, vendedores, clientes, miId, o
             </button>
           )}
           <button onClick={onClose} disabled={cargando} className={`px-4 py-2.5 text-sm font-bold text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-white/10 rounded-xl transition-colors disabled:opacity-50 ${!isEditing && "ml-auto"}`}>Cancelar</button>
-          <button onClick={guardar} disabled={cargando} className="flex items-center gap-2 px-6 py-2.5 text-sm font-bold bg-rose-600 hover:bg-rose-700 text-white rounded-xl transition-colors disabled:opacity-50">
+          <button onClick={guardar} disabled={cargando} className="flex items-center gap-2 px-6 py-2.5 text-sm font-bold bg-[#0145F2] hover:bg-[#0138c9] text-white rounded-xl transition-colors disabled:opacity-50">
             <Save className="w-4 h-4" /> {cargando ? "Guardando..." : isEditing ? "Guardar cambios" : "Crear pedido"}
           </button>
         </div>

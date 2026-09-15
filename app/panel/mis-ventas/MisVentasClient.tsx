@@ -215,7 +215,7 @@ export default function MisVentasClient({ vendedores, miId, miNombre, esAdmin }:
           <button onClick={() => setModalRecibo(true)} title="PDF suelto para completar a mano — no se guarda en el CRM" className="flex items-center gap-1.5 px-3.5 py-2 text-sm font-bold bg-white dark:bg-white/5 border border-slate-200 dark:border-white/10 hover:bg-slate-50 dark:hover:bg-white/10 rounded-xl transition-colors">
             <DollarSign className="w-4 h-4" /> Nuevo Recibo
           </button>
-          <button onClick={() => setModalBoleto(true)} title="PDF suelto para completar a mano — no se guarda en el CRM" className="flex items-center gap-1.5 px-3.5 py-2 text-sm font-bold bg-rose-600 hover:bg-rose-700 text-white rounded-xl transition-colors">
+          <button onClick={() => setModalBoleto(true)} title="PDF suelto para completar a mano — no se guarda en el CRM" className="flex items-center gap-1.5 px-3.5 py-2 text-sm font-bold bg-[#0145F2] hover:bg-[#0138c9] text-white rounded-xl transition-colors">
             <FileText className="w-4 h-4" /> Nuevo Boleto
           </button>
           {esAdmin && vendedores.length > 1 && (
@@ -225,7 +225,7 @@ export default function MisVentasClient({ vendedores, miId, miNombre, esAdmin }:
                 <button
                   key={v.id}
                   onClick={() => setVendedorId(v.id)}
-                  className={`px-3 py-1.5 text-xs font-bold rounded-full border transition-colors ${vendedorId === v.id ? "bg-rose-600 border-rose-600 text-white" : "bg-white dark:bg-white/5 border-slate-200 dark:border-white/10 text-slate-600 dark:text-slate-300"}`}
+                  className={`px-3 py-1.5 text-xs font-bold rounded-full border transition-colors ${vendedorId === v.id ? "bg-[#0145F2] border-[#0145F2] text-white" : "bg-white dark:bg-white/5 border-slate-200 dark:border-white/10 text-slate-600 dark:text-slate-300"}`}
                 >
                   {v.id === miId ? miNombre : v.nombre}
                 </button>

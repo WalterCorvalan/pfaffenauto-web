@@ -304,7 +304,7 @@ export default function ReclamoDetalleModal({ reclamoId, miId, perfiles, onClose
               </div>
               <div className="flex gap-2 justify-end pt-1">
                 <button onClick={() => setEditando(false)} className="px-3 py-1.5 text-xs font-semibold text-slate-500">Cancelar</button>
-                <button onClick={guardarEdicion} disabled={guardandoEdicion} className="px-3.5 py-1.5 text-xs font-bold bg-rose-600 hover:bg-rose-700 text-white rounded-lg disabled:opacity-50">{guardandoEdicion ? "Guardando..." : "Guardar"}</button>
+                <button onClick={guardarEdicion} disabled={guardandoEdicion} className="px-3.5 py-1.5 text-xs font-bold bg-[#0145F2] hover:bg-[#0138c9] text-white rounded-lg disabled:opacity-50">{guardandoEdicion ? "Guardando..." : "Guardar"}</button>
               </div>
             </div>
           ) : (
@@ -350,7 +350,7 @@ export default function ReclamoDetalleModal({ reclamoId, miId, perfiles, onClose
               </button>
             )}
             {reclamo.estado !== "cerrado" ? (
-              <button onClick={() => setMostrarCierre((v) => !v)} className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold bg-rose-600 hover:bg-rose-700 text-white">
+              <button onClick={() => setMostrarCierre((v) => !v)} className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold bg-[#0145F2] hover:bg-[#0138c9] text-white">
                 <CheckCircle2 className="w-3.5 h-3.5" /> Cerrar reclamo
               </button>
             ) : (
@@ -379,11 +379,11 @@ export default function ReclamoDetalleModal({ reclamoId, miId, perfiles, onClose
 
           {mostrarCierre && (
             <div className="bg-rose-50 dark:bg-rose-500/10 border border-rose-200 dark:border-rose-500/20 rounded-xl p-3.5 space-y-2">
-              <p className="text-xs font-black uppercase tracking-widest text-rose-600 dark:text-rose-300">Nota de cierre</p>
+              <p className="text-xs font-black uppercase tracking-widest text-[#0145F2] dark:text-rose-300">Nota de cierre</p>
               <textarea value={notaCierre} onChange={(e) => setNotaCierre(e.target.value)} rows={2} placeholder="¿Cómo se resolvió?" className="w-full bg-white dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-xl px-3 py-2 text-sm outline-none" />
               <div className="flex justify-end gap-2">
                 <button onClick={() => setMostrarCierre(false)} className="px-3 py-1.5 rounded-lg text-xs font-semibold text-slate-500">Cancelar</button>
-                <button onClick={cerrar} disabled={!notaCierre.trim()} className="px-3 py-1.5 rounded-lg text-xs font-bold bg-rose-600 hover:bg-rose-700 text-white disabled:opacity-50">Cerrar reclamo</button>
+                <button onClick={cerrar} disabled={!notaCierre.trim()} className="px-3 py-1.5 rounded-lg text-xs font-bold bg-[#0145F2] hover:bg-[#0138c9] text-white disabled:opacity-50">Cerrar reclamo</button>
               </div>
             </div>
           )}
@@ -422,7 +422,7 @@ export default function ReclamoDetalleModal({ reclamoId, miId, perfiles, onClose
             </div>
             <div className="flex gap-2 mt-3">
               <textarea value={comentario} onChange={(e) => setComentario(e.target.value)} rows={2} placeholder="Escribí una actualización del seguimiento..." className="flex-1 bg-slate-50 dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-xl px-3 py-2 text-sm outline-none" />
-              <button onClick={enviarComentario} disabled={enviando || !comentario.trim()} className="px-3 rounded-xl bg-rose-600 hover:bg-rose-700 text-white disabled:opacity-50 shrink-0">
+              <button onClick={enviarComentario} disabled={enviando || !comentario.trim()} className="px-3 rounded-xl bg-[#0145F2] hover:bg-[#0138c9] text-white disabled:opacity-50 shrink-0">
                 {enviando ? <Loader2 className="w-4 h-4 animate-spin" /> : <Send className="w-4 h-4" />}
               </button>
             </div>

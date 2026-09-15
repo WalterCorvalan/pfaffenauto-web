@@ -56,7 +56,7 @@ export default function GastosFijosTab({ miId, autoAbrir, onAutoAbierto }: { miI
     <div>
       <div className="flex items-center justify-between mb-3">
         <div><p className="text-lg font-bold">Gastos fijos / Suscripciones — {items.length} items</p><p className="text-xs text-slate-400">Total cargado: {Object.keys(totalPorMoneda).length === 0 ? "—" : Object.entries(totalPorMoneda).map(([m, n]) => `${m === "ARS" ? "$" : "USD"} ${n.toLocaleString("es-AR")}`).join(" · ")}</p></div>
-        <button onClick={() => setShowNuevo(true)} className="flex items-center gap-1.5 px-4 py-2 text-sm font-bold bg-rose-600 hover:bg-rose-700 text-white rounded-lg shrink-0"><Plus className="w-4 h-4" /> Nuevo gasto fijo</button>
+        <button onClick={() => setShowNuevo(true)} className="flex items-center gap-1.5 px-4 py-2 text-sm font-bold bg-[#0145F2] hover:bg-[#0138c9] text-white rounded-lg shrink-0"><Plus className="w-4 h-4" /> Nuevo gasto fijo</button>
       </div>
 
       {items.length === 0 ? (
@@ -65,7 +65,7 @@ export default function GastosFijosTab({ miId, autoAbrir, onAutoAbierto }: { miI
         <div className="space-y-1.5">
           {items.map((i) => (
             <div key={i.id} className="bg-white dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-xl px-4 py-3 flex items-center justify-between">
-              <div><p className="text-sm font-bold">{i.concepto} <span className="text-[10px] font-bold text-indigo-600 bg-indigo-50 dark:bg-indigo-500/10 px-1.5 py-0.5 rounded ml-1">{i.categoria}</span></p><p className="text-sm font-bold text-rose-600">{i.moneda === "ARS" ? "$" : "USD"} {Number(i.monto).toLocaleString("es-AR")} <span className="text-[11px] font-normal text-slate-400">{i.frecuencia.toLowerCase()}{i.dia_del_mes ? ` · día ${i.dia_del_mes}` : ""}</span></p></div>
+              <div><p className="text-sm font-bold">{i.concepto} <span className="text-[10px] font-bold text-indigo-600 bg-indigo-50 dark:bg-indigo-500/10 px-1.5 py-0.5 rounded ml-1">{i.categoria}</span></p><p className="text-sm font-bold text-[#0145F2]">{i.moneda === "ARS" ? "$" : "USD"} {Number(i.monto).toLocaleString("es-AR")} <span className="text-[11px] font-normal text-slate-400">{i.frecuencia.toLowerCase()}{i.dia_del_mes ? ` · día ${i.dia_del_mes}` : ""}</span></p></div>
               <div className="flex gap-1"><button onClick={() => eliminar(i)} className="p-1.5 text-slate-400 hover:text-rose-600"><Trash2 className="w-3.5 h-3.5" /></button></div>
             </div>
           ))}
@@ -91,7 +91,7 @@ export default function GastosFijosTab({ miId, autoAbrir, onAutoAbierto }: { miI
             <select value={categoria} onChange={(e) => setCategoria(e.target.value)} className={inputClass}><option>Suscripciones</option><option>Vivienda</option><option>Servicios</option><option>Otros</option></select>
             <label className={labelClass + " mt-3"}>Notas</label>
             <textarea value={notas} onChange={(e) => setNotas(e.target.value)} rows={2} placeholder="Detalles adicionales..." className={inputClass} />
-            <div className="flex justify-end gap-2 mt-4"><button onClick={() => setShowNuevo(false)} className="px-4 py-2 text-sm font-bold text-slate-500">Cancelar</button><button onClick={crear} disabled={guardando} className="flex items-center gap-1.5 px-4 py-2 text-sm font-bold bg-rose-600 hover:bg-rose-700 text-white rounded-lg disabled:opacity-50"><Save className="w-4 h-4" /> Crear</button></div>
+            <div className="flex justify-end gap-2 mt-4"><button onClick={() => setShowNuevo(false)} className="px-4 py-2 text-sm font-bold text-slate-500">Cancelar</button><button onClick={crear} disabled={guardando} className="flex items-center gap-1.5 px-4 py-2 text-sm font-bold bg-[#0145F2] hover:bg-[#0138c9] text-white rounded-lg disabled:opacity-50"><Save className="w-4 h-4" /> Crear</button></div>
           </div>
         </div>
       )}

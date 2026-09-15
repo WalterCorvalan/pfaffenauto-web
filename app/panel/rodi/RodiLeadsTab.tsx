@@ -55,7 +55,7 @@ export default function RodiLeadsTab({ conversacionesIniciales, vendedores, miId
       <div className="flex items-center gap-2 mb-4 overflow-x-auto pb-1">
         <Filter className="w-3.5 h-3.5 text-slate-400 shrink-0" />
         {ESTADOS.map((e) => (
-          <button key={e.value} onClick={() => setFiltro(e.value)} className={`px-3 py-1.5 text-xs font-bold rounded-full whitespace-nowrap transition-colors ${filtro === e.value ? "bg-rose-600 text-white" : "bg-slate-50 dark:bg-white/5 border border-slate-200 dark:border-white/10 text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-white/10"}`}>
+          <button key={e.value} onClick={() => setFiltro(e.value)} className={`px-3 py-1.5 text-xs font-bold rounded-full whitespace-nowrap transition-colors ${filtro === e.value ? "bg-[#0145F2] text-white" : "bg-slate-50 dark:bg-white/5 border border-slate-200 dark:border-white/10 text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-white/10"}`}>
             {e.label}
           </button>
         ))}

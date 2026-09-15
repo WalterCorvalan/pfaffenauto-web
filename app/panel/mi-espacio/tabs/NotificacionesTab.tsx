@@ -75,7 +75,7 @@ export default function NotificacionesTab({ miId }: { miId: string }) {
       </div>
       <p className="text-xs text-slate-400 mt-3">El resumen diario se configura aparte, en la pestaña <strong>Mi resumen</strong>.</p>
       <div className="flex justify-end mt-3">
-        <button onClick={guardar} disabled={guardando} className="flex items-center gap-1.5 px-5 py-2.5 text-sm font-bold bg-rose-600 hover:bg-rose-700 text-white rounded-lg disabled:opacity-50"><Save className="w-4 h-4" /> {guardando ? "Guardando..." : "Guardar"}</button>
+        <button onClick={guardar} disabled={guardando} className="flex items-center gap-1.5 px-5 py-2.5 text-sm font-bold bg-[#0145F2] hover:bg-[#0138c9] text-white rounded-lg disabled:opacity-50"><Save className="w-4 h-4" /> {guardando ? "Guardando..." : "Guardar"}</button>
       </div>
     </div>
   );

@@ -58,7 +58,7 @@ export default function ContactosTab({ miId }: { miId: string }) {
     <div>
       <div className="flex items-center justify-between mb-3">
         <div><p className="text-lg font-bold">Mis contactos clave — {contactos.length} registrado{contactos.length === 1 ? "" : "s"}</p><p className="text-xs text-slate-400">Tu agenda personal — separada de los clientes de la agencia.</p></div>
-        <button onClick={() => setShowNuevo(true)} className="flex items-center gap-1.5 px-4 py-2 text-sm font-bold bg-rose-600 hover:bg-rose-700 text-white rounded-lg shrink-0"><Plus className="w-4 h-4" /> Nuevo contacto</button>
+        <button onClick={() => setShowNuevo(true)} className="flex items-center gap-1.5 px-4 py-2 text-sm font-bold bg-[#0145F2] hover:bg-[#0138c9] text-white rounded-lg shrink-0"><Plus className="w-4 h-4" /> Nuevo contacto</button>
       </div>
 
       <div className="relative mb-4 max-w-md">
@@ -106,7 +106,7 @@ export default function ContactosTab({ miId }: { miId: string }) {
             <input value={email} onChange={(e) => setEmail(e.target.value)} className={inputClass} />
             <label className={labelClass + " mt-3"}>Notas</label>
             <textarea value={notas} onChange={(e) => setNotas(e.target.value)} rows={2} placeholder="Cómo me ayuda, en qué cosas..." className={inputClass} />
-            <div className="flex justify-end gap-2 mt-4"><button onClick={() => setShowNuevo(false)} className="px-4 py-2 text-sm font-bold text-slate-500">Cancelar</button><button onClick={crear} disabled={guardando} className="flex items-center gap-1.5 px-4 py-2 text-sm font-bold bg-rose-600 hover:bg-rose-700 text-white rounded-lg disabled:opacity-50"><Save className="w-4 h-4" /> Crear</button></div>
+            <div className="flex justify-end gap-2 mt-4"><button onClick={() => setShowNuevo(false)} className="px-4 py-2 text-sm font-bold text-slate-500">Cancelar</button><button onClick={crear} disabled={guardando} className="flex items-center gap-1.5 px-4 py-2 text-sm font-bold bg-[#0145F2] hover:bg-[#0138c9] text-white rounded-lg disabled:opacity-50"><Save className="w-4 h-4" /> Crear</button></div>
           </div>
         </div>
       )}

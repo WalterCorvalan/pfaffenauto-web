@@ -136,7 +136,7 @@ export default function QuickActionsButton() {
         <button
           type="button"
           onClick={() => setOpen((v) => !v)}
-          className="w-14 h-14 rounded-full bg-rose-600 hover:bg-rose-700 text-white shadow-xl flex items-center justify-center transition-transform active:scale-95"
+          className="w-14 h-14 rounded-full bg-[#0145F2] hover:bg-[#0138c9] text-white shadow-xl flex items-center justify-center transition-transform active:scale-95"
           title="Acciones rápidas"
         >
           {open ? <X className="w-6 h-6" /> : <Plus className="w-6 h-6" />}

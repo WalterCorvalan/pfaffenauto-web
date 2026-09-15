@@ -244,7 +244,7 @@ export default function BoletoModal({ tipo, expediente, venta, checklist, miNomb
 
         <div className="flex justify-between items-center px-5 py-4 border-t border-slate-100 dark:border-white/10 sticky bottom-0 bg-white dark:bg-[#111]">
           <button onClick={onClose} className="px-3 py-2 text-sm font-semibold text-slate-500">Cancelar</button>
-          <button onClick={generarPdf} disabled={generando} className="flex items-center gap-2 px-4 py-2.5 rounded-xl bg-rose-600 hover:bg-rose-700 text-white text-sm font-bold disabled:opacity-50">
+          <button onClick={generarPdf} disabled={generando} className="flex items-center gap-2 px-4 py-2.5 rounded-xl bg-[#0145F2] hover:bg-[#0138c9] text-white text-sm font-bold disabled:opacity-50">
             <FileDown className="w-4 h-4" /> {generando ? "Generando..." : "Descargar PDF"}
           </button>
         </div>

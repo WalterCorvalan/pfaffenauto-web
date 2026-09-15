@@ -139,8 +139,8 @@ export default function CuotasTab({
   return (
     <div>
       <div className="flex items-center gap-1 mb-3">
-        <button onClick={() => setSub("cobrar")} className={`px-4 py-2 rounded-lg text-sm font-bold flex items-center gap-1.5 ${sub === "cobrar" ? "bg-rose-600 text-white" : "bg-white dark:bg-white/5 border border-slate-200 dark:border-white/10"}`}>💰 A cobrar</button>
-        <button onClick={() => setSub("pagar")} className={`px-4 py-2 rounded-lg text-sm font-bold flex items-center gap-1.5 ${sub === "pagar" ? "bg-rose-600 text-white" : "bg-white dark:bg-white/5 border border-slate-200 dark:border-white/10"}`}>💸 A pagar</button>
+        <button onClick={() => setSub("cobrar")} className={`px-4 py-2 rounded-lg text-sm font-bold flex items-center gap-1.5 ${sub === "cobrar" ? "bg-[#0145F2] text-white" : "bg-white dark:bg-white/5 border border-slate-200 dark:border-white/10"}`}>💰 A cobrar</button>
+        <button onClick={() => setSub("pagar")} className={`px-4 py-2 rounded-lg text-sm font-bold flex items-center gap-1.5 ${sub === "pagar" ? "bg-[#0145F2] text-white" : "bg-white dark:bg-white/5 border border-slate-200 dark:border-white/10"}`}>💸 A pagar</button>
       </div>
 
       {sub === "cobrar" && (
@@ -151,7 +151,7 @@ export default function CuotasTab({
             <div className="bg-white dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-xl p-3"><p className="text-[10px] font-bold uppercase text-slate-400">Cuotas pendientes</p><p className="text-lg font-black">{pendientesCobrar.length}</p></div>
             <div className="bg-rose-50 dark:bg-rose-500/10 border border-rose-100 dark:border-rose-500/20 rounded-xl p-3"><p className="text-[10px] font-bold uppercase text-rose-500">Vencidas</p><p className="text-lg font-black">{pendientesCobrar.filter((c) => diasHasta(c.vencimiento) < 0).length}</p></div>
             <div className="bg-indigo-50 dark:bg-indigo-500/10 border border-indigo-100 dark:border-indigo-500/20 rounded-xl p-3"><p className="text-[10px] font-bold uppercase text-indigo-600">Próx. 7 días</p><p className="text-lg font-black">{pendientesCobrar.filter((c) => { const d = diasHasta(c.vencimiento); return d >= 0 && d <= 7; }).length}</p></div>
-            <button onClick={() => setShowNuevaC(true)} className="flex items-center justify-center gap-1.5 bg-rose-600 hover:bg-rose-700 text-white text-sm font-bold rounded-xl"><Plus className="w-4 h-4" /> Nueva cuota</button>
+            <button onClick={() => setShowNuevaC(true)} className="flex items-center justify-center gap-1.5 bg-[#0145F2] hover:bg-[#0138c9] text-white text-sm font-bold rounded-xl"><Plus className="w-4 h-4" /> Nueva cuota</button>
           </div>
 
           {cuotasCobrar.length === 0 ? <div className="bg-white dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-2xl py-16 text-center"><p className="text-sm font-bold">Aún no hay cuotas</p></div> : (
@@ -180,7 +180,7 @@ export default function CuotasTab({
       {sub === "pagar" && (
         <div>
           <p className="text-xs text-slate-400 mb-3">Lo que la agencia debe en cuotas: autos comprados financiados, deudas con financieras o bancos, compras a proveedores. Cada pago sale de una caja y queda registrado como egreso.</p>
-          <button onClick={() => setShowNuevaP(true)} className="flex items-center gap-1.5 px-4 py-2 mb-4 text-sm font-bold bg-rose-600 hover:bg-rose-700 text-white rounded-lg"><Plus className="w-4 h-4" /> Nueva deuda en cuotas</button>
+          <button onClick={() => setShowNuevaP(true)} className="flex items-center gap-1.5 px-4 py-2 mb-4 text-sm font-bold bg-[#0145F2] hover:bg-[#0138c9] text-white rounded-lg"><Plus className="w-4 h-4" /> Nueva deuda en cuotas</button>
 
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 mb-4">
             <div className="bg-white dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-xl p-3"><p className="text-[10px] font-bold uppercase text-slate-400">Deuda pendiente</p>{Object.keys(pendientePagarPorMoneda).length === 0 ? <p className="text-sm">—</p> : Object.entries(pendientePagarPorMoneda).map(([m, n]) => <p key={m} className="text-sm font-black">{fmt(n, m)}</p>)}<p className="text-[10px] text-slate-400">{pendientesPagar.length} cuotas sin pagar</p></div>
@@ -232,7 +232,7 @@ export default function CuotasTab({
               <div><label className={labelClass}>Moneda</label><select value={cMoneda} onChange={(e) => setCMoneda(e.target.value)} className={inputClass}><option value="USD">USD</option><option value="ARS">ARS</option></select></div>
               <div><label className={labelClass}>Vencimiento *</label><input type="date" value={cVencimiento} onChange={(e) => setCVencimiento(e.target.value)} className={inputClass} /></div>
             </div>
-            <div className="flex justify-end gap-2 mt-4"><button onClick={() => setShowNuevaC(false)} className="px-4 py-2 text-sm font-bold text-slate-500">Cancelar</button><button onClick={crearCuotaCobrar} disabled={guardandoC} className="flex items-center gap-1.5 px-4 py-2 text-sm font-bold bg-rose-600 hover:bg-rose-700 text-white rounded-lg disabled:opacity-50"><Save className="w-4 h-4" /> Crear</button></div>
+            <div className="flex justify-end gap-2 mt-4"><button onClick={() => setShowNuevaC(false)} className="px-4 py-2 text-sm font-bold text-slate-500">Cancelar</button><button onClick={crearCuotaCobrar} disabled={guardandoC} className="flex items-center gap-1.5 px-4 py-2 text-sm font-bold bg-[#0145F2] hover:bg-[#0138c9] text-white rounded-lg disabled:opacity-50"><Save className="w-4 h-4" /> Crear</button></div>
           </div>
         </div>
       )}
@@ -264,7 +264,7 @@ export default function CuotasTab({
             <input type="date" value={pPrimerVencimiento} onChange={(e) => setPPrimerVencimiento(e.target.value)} className={inputClass} />
             <label className={labelClass + " mt-3"}>Notas</label>
             <textarea value={pNotas} onChange={(e) => setPNotas(e.target.value)} rows={2} className={inputClass} />
-            <div className="flex justify-end gap-2 mt-4"><button onClick={() => setShowNuevaP(false)} className="px-4 py-2 text-sm font-bold text-slate-500">Cancelar</button><button onClick={crearCuotaPagar} disabled={guardandoP} className="flex items-center gap-1.5 px-4 py-2 text-sm font-bold bg-rose-600 hover:bg-rose-700 text-white rounded-lg disabled:opacity-50"><ListPlus className="w-4 h-4" /> Crear plan</button></div>
+            <div className="flex justify-end gap-2 mt-4"><button onClick={() => setShowNuevaP(false)} className="px-4 py-2 text-sm font-bold text-slate-500">Cancelar</button><button onClick={crearCuotaPagar} disabled={guardandoP} className="flex items-center gap-1.5 px-4 py-2 text-sm font-bold bg-[#0145F2] hover:bg-[#0138c9] text-white rounded-lg disabled:opacity-50"><ListPlus className="w-4 h-4" /> Crear plan</button></div>
           </div>
         </div>
       )}
@@ -283,7 +283,7 @@ export default function CuotasTab({
             </div>
             <label className={labelClass + " mt-3"}>Notas</label>
             <textarea value={pgNotas} onChange={(e) => setPgNotas(e.target.value)} rows={2} className={inputClass} />
-            <div className="flex justify-end gap-2 mt-4"><button onClick={() => setPagando(null)} className="px-4 py-2 text-sm font-bold text-slate-500">Cancelar</button><button onClick={confirmarPago} disabled={guardandoPg} className="flex items-center gap-1.5 px-4 py-2 text-sm font-bold bg-rose-600 hover:bg-rose-700 text-white rounded-lg disabled:opacity-50"><Save className="w-4 h-4" /> Confirmar</button></div>
+            <div className="flex justify-end gap-2 mt-4"><button onClick={() => setPagando(null)} className="px-4 py-2 text-sm font-bold text-slate-500">Cancelar</button><button onClick={confirmarPago} disabled={guardandoPg} className="flex items-center gap-1.5 px-4 py-2 text-sm font-bold bg-[#0145F2] hover:bg-[#0138c9] text-white rounded-lg disabled:opacity-50"><Save className="w-4 h-4" /> Confirmar</button></div>
           </div>
         </div>
       )}

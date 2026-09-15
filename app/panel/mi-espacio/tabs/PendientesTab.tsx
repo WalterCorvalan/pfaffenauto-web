@@ -57,7 +57,7 @@ export default function PendientesTab({ miId, autoAbrir, onAutoAbierto }: { miId
     <div>
       <div className="flex items-center justify-between mb-3">
         <p className="text-lg font-bold">Mis pendientes — {sinCompletar} sin completar</p>
-        <button onClick={() => setShowNueva(true)} className="flex items-center gap-1.5 px-4 py-2 text-sm font-bold bg-rose-600 hover:bg-rose-700 text-white rounded-lg"><Plus className="w-4 h-4" /> Nueva tarea</button>
+        <button onClick={() => setShowNueva(true)} className="flex items-center gap-1.5 px-4 py-2 text-sm font-bold bg-[#0145F2] hover:bg-[#0138c9] text-white rounded-lg"><Plus className="w-4 h-4" /> Nueva tarea</button>
       </div>
 
       {items.length === 0 ? (
@@ -90,7 +90,7 @@ export default function PendientesTab({ miId, autoAbrir, onAutoAbierto }: { miId
             </div>
             <label className={labelClass + " mt-3"}>Notas</label>
             <textarea value={notas} onChange={(e) => setNotas(e.target.value)} rows={2} placeholder="Detalles, contactos a llamar, recordatorios..." className={inputClass} />
-            <div className="flex justify-end gap-2 mt-4"><button onClick={() => setShowNueva(false)} className="px-4 py-2 text-sm font-bold text-slate-500">Cancelar</button><button onClick={crear} disabled={guardando} className="flex items-center gap-1.5 px-4 py-2 text-sm font-bold bg-rose-600 hover:bg-rose-700 text-white rounded-lg disabled:opacity-50"><Save className="w-4 h-4" /> Crear</button></div>
+            <div className="flex justify-end gap-2 mt-4"><button onClick={() => setShowNueva(false)} className="px-4 py-2 text-sm font-bold text-slate-500">Cancelar</button><button onClick={crear} disabled={guardando} className="flex items-center gap-1.5 px-4 py-2 text-sm font-bold bg-[#0145F2] hover:bg-[#0138c9] text-white rounded-lg disabled:opacity-50"><Save className="w-4 h-4" /> Crear</button></div>
           </div>
         </div>
       )}

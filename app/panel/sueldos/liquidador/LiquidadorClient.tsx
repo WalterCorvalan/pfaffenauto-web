@@ -164,7 +164,7 @@ export default function LiquidadorClient({ empleados, liquidacionesPrevias, cate
     <div className="flex flex-col h-full overflow-hidden">
       <div className="flex-1 overflow-y-auto bg-slate-50 dark:bg-[#141414] p-6 space-y-6">
         <div>
-          <h1 className="text-xl font-black text-slate-900 dark:text-white flex items-center gap-2"><Wallet className="w-5 h-5 text-rose-600" /> Liquidador de sueldos</h1>
+          <h1 className="text-xl font-black text-slate-900 dark:text-white flex items-center gap-2"><Wallet className="w-5 h-5 text-[#0145F2]" /> Liquidador de sueldos</h1>
           <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">Sueldo base + comisión + trabajo de taller + presentismo</p>
         </div>
         <div className="bg-white dark:bg-white/[0.02] border border-slate-200 dark:border-white/5 rounded-2xl p-6">
@@ -205,7 +205,7 @@ export default function LiquidadorClient({ empleados, liquidacionesPrevias, cate
         {empleadoId && categoria && (
           <div className="bg-white dark:bg-white/[0.02] border border-slate-200 dark:border-white/5 rounded-2xl p-6">
             <h2 className="text-[11px] font-bold uppercase tracking-widest text-slate-500 dark:text-slate-400 flex items-center gap-2 mb-5">
-              <Calculator className="w-4 h-4 text-rose-600 dark:text-rose-400" /> Cálculo {calculando && <span className="text-slate-400 normal-case font-medium">calculando...</span>}
+              <Calculator className="w-4 h-4 text-[#0145F2] dark:text-[#5b8dff]" /> Cálculo {calculando && <span className="text-slate-400 normal-case font-medium">calculando...</span>}
             </h2>
 
             <dl className="space-y-3 text-sm mb-5">
@@ -258,10 +258,10 @@ export default function LiquidadorClient({ empleados, liquidacionesPrevias, cate
 
             <div className="flex items-center justify-between pt-5 border-t border-slate-100 dark:border-white/10 mb-6">
               <span className="text-base font-bold text-slate-900 dark:text-white">Total a liquidar</span>
-              <span className="text-3xl font-black text-rose-600 dark:text-rose-400">{fmt(totalFinal, monedaSueldo)}</span>
+              <span className="text-3xl font-black text-[#0145F2] dark:text-[#5b8dff]">{fmt(totalFinal, monedaSueldo)}</span>
             </div>
 
-            <button onClick={guardar} disabled={guardando} className="w-full bg-rose-600 hover:bg-rose-700 disabled:opacity-50 text-white font-bold py-3.5 rounded-xl text-sm transition-colors flex items-center justify-center gap-2">
+            <button onClick={guardar} disabled={guardando} className="w-full bg-[#0145F2] hover:bg-[#0138c9] disabled:opacity-50 text-white font-bold py-3.5 rounded-xl text-sm transition-colors flex items-center justify-center gap-2">
               {guardando ? "Guardando..." : <><Save className="w-4 h-4" /> Guardar liquidación de {mes}</>}
             </button>
           </div>
@@ -269,7 +269,7 @@ export default function LiquidadorClient({ empleados, liquidacionesPrevias, cate
 
         <div className="bg-white dark:bg-white/[0.02] border border-slate-200 dark:border-white/5 rounded-2xl overflow-hidden">
           <div className="px-6 py-4 border-b border-slate-100 dark:border-white/10 flex items-center gap-2">
-            <ClipboardList className="w-4 h-4 text-rose-600 dark:text-rose-400" />
+            <ClipboardList className="w-4 h-4 text-[#0145F2] dark:text-[#5b8dff]" />
             <h2 className="text-[11px] font-bold uppercase tracking-widest text-slate-500 dark:text-slate-400">Liquidaciones generadas</h2>
           </div>
           {liquidaciones.length === 0 ? (
@@ -288,7 +288,7 @@ export default function LiquidadorClient({ empleados, liquidacionesPrevias, cate
                 [
                   { key: "empleado", header: "Empleado", cell: (l) => l.perfiles?.nombre || "—", claseTd: "font-bold text-slate-800 dark:text-white text-[13px]", ocultarEnMobile: true },
                   { key: "mes", header: "Mes", cell: (l) => new Date(l.mes).toLocaleDateString("es-AR", { month: "long", year: "numeric", timeZone: "UTC" }), claseTd: "text-slate-500 dark:text-slate-400 text-[13px]" },
-                  { key: "total", header: "Total", cell: (l) => fmt(Number(l.total_final), l.moneda_total), claseTd: "text-right font-mono font-bold text-rose-600 dark:text-rose-400 text-[13px]" },
+                  { key: "total", header: "Total", cell: (l) => fmt(Number(l.total_final), l.moneda_total), claseTd: "text-right font-mono font-bold text-[#0145F2] dark:text-[#5b8dff] text-[13px]" },
                   { key: "estado", header: "Estado", cell: (l) => (
                     l.estado === "pagada" ? (
                       <span className="text-[10px] font-bold uppercase tracking-widest text-emerald-700 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-500/10 px-2 py-1 rounded-full">Pagada</span>
@@ -298,7 +298,7 @@ export default function LiquidadorClient({ empleados, liquidacionesPrevias, cate
                   ) },
                   { key: "caja", header: "Caja", cell: (l) => (
                     l.estado === "pagada" ? (
-                      <button onClick={() => revertirPago(l.id)} className="text-[11px] font-bold text-slate-400 hover:text-rose-600 flex items-center gap-1 md:ml-auto">
+                      <button onClick={() => revertirPago(l.id)} className="text-[11px] font-bold text-slate-400 hover:text-[#0145F2] flex items-center gap-1 md:ml-auto">
                         <Undo2 className="w-3.5 h-3.5" /> Revertir
                       </button>
                     ) : (

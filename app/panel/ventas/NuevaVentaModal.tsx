@@ -595,7 +595,7 @@ export default function NuevaVentaModal({ perfiles, clientes, vehiculos, miId, i
         <div className="space-y-4 px-6 py-4 overflow-y-auto overflow-x-hidden flex-1 min-h-0">
           {!esEdicion && (
             <label className={`flex items-start gap-2.5 px-3 py-2.5 rounded-xl border cursor-pointer ${cargaManual ? "bg-amber-50 dark:bg-amber-500/10 border-amber-300 dark:border-amber-500/30" : "bg-white dark:bg-white/5 border-slate-200 dark:border-white/10"}`}>
-              <input type="checkbox" checked={cargaManual} onChange={(e) => setCargaManual(e.target.checked)} className="w-4 h-4 mt-0.5 accent-rose-600" />
+              <input type="checkbox" checked={cargaManual} onChange={(e) => setCargaManual(e.target.checked)} className="w-4 h-4 mt-0.5 accent-[#0145F2]" />
               <span>
                 <span className="flex items-center gap-1.5 text-xs font-bold text-slate-700 dark:text-slate-200">↓ Carga manual <span className="font-normal text-slate-400">(venta vieja importada desde Excel)</span></span>
                 <span className="block text-[10px] text-slate-500 dark:text-slate-400 mt-0.5">Para registrar ventas históricas: permite cargar el vehículo a mano (sin ficha en stock) y la venta nace en estado <strong>Cerrada</strong> directamente. El resto del formulario queda igual.</span>
@@ -800,7 +800,7 @@ export default function NuevaVentaModal({ perfiles, clientes, vehiculos, miId, i
               <div>
                 <div className="flex items-center justify-between mb-2">
                   <p className={seccionClass + " mt-0 mb-0"}>🛡️ ¿Contrata seguro?</p>
-                  <label className="flex items-center gap-2 text-xs font-semibold text-slate-600 dark:text-slate-300 cursor-pointer"><input type="checkbox" checked={seguroContratado} onChange={(e) => setSeguroContratado(e.target.checked)} className="w-4 h-4 accent-rose-600" /> Sí</label>
+                  <label className="flex items-center gap-2 text-xs font-semibold text-slate-600 dark:text-slate-300 cursor-pointer"><input type="checkbox" checked={seguroContratado} onChange={(e) => setSeguroContratado(e.target.checked)} className="w-4 h-4 accent-[#0145F2]" /> Sí</label>
                 </div>
                 {seguroContratado && (
                   <div className="grid grid-cols-2 gap-3">
@@ -846,7 +846,7 @@ export default function NuevaVentaModal({ perfiles, clientes, vehiculos, miId, i
               <div>
                 <div className="flex items-center justify-between mb-2">
                   <p className="text-[11px] font-black uppercase tracking-widest text-slate-400">Permuta</p>
-                  <label className="flex items-center gap-2 text-xs font-semibold text-slate-600 dark:text-slate-300 cursor-pointer"><input type="checkbox" checked={incluirPermuta} onChange={(e) => togglePermuta(e.target.checked)} className="w-4 h-4 accent-rose-600" /> Incluir vehículo en permuta</label>
+                  <label className="flex items-center gap-2 text-xs font-semibold text-slate-600 dark:text-slate-300 cursor-pointer"><input type="checkbox" checked={incluirPermuta} onChange={(e) => togglePermuta(e.target.checked)} className="w-4 h-4 accent-[#0145F2]" /> Incluir vehículo en permuta</label>
                 </div>
                 {!incluirPermuta ? (
                   <p className="text-[11px] text-slate-400 bg-slate-50 dark:bg-white/5 rounded-lg px-3 py-2">Sin permuta. Activá el toggle si el comprador entrega un auto en parte de pago.</p>
@@ -884,7 +884,7 @@ export default function NuevaVentaModal({ perfiles, clientes, vehiculos, miId, i
                           ))}
                         </div>
                         <label className="flex items-center gap-2.5 mt-3 px-3 py-2 rounded-lg bg-white dark:bg-white/5 border border-slate-200 dark:border-white/10 cursor-pointer">
-                          <input type="checkbox" checked={p.cargarAlStock} onChange={(e) => actualizarPermuta(i, "cargarAlStock", e.target.checked)} className="w-4 h-4 accent-rose-600" />
+                          <input type="checkbox" checked={p.cargarAlStock} onChange={(e) => actualizarPermuta(i, "cargarAlStock", e.target.checked)} className="w-4 h-4 accent-[#0145F2]" />
                           <span className="flex-1">
                             <span className="block text-xs font-bold text-slate-700 dark:text-slate-200">🚗 Cargar este vehículo al Stock {i === 0 ? "automáticamente" : ""}</span>
                             {i === 0 && <span className="block text-[10px] text-slate-400">Al guardar la venta, el vehículo de permuta se crea en Stock con status Disponible y los datos cargados arriba.</span>}
@@ -923,7 +923,7 @@ export default function NuevaVentaModal({ perfiles, clientes, vehiculos, miId, i
               <div>
                 <p className={seccionClass}>Comisión</p>
                 <label className="flex items-start gap-2.5 px-3 py-2.5 rounded-xl bg-amber-50 dark:bg-amber-500/10 border border-amber-200 dark:border-amber-500/20 cursor-pointer mb-3">
-                  <input type="checkbox" checked={comisionManual} onChange={(e) => setComisionManual(e.target.checked)} className="w-4 h-4 mt-0.5 accent-rose-600" />
+                  <input type="checkbox" checked={comisionManual} onChange={(e) => setComisionManual(e.target.checked)} className="w-4 h-4 mt-0.5 accent-[#0145F2]" />
                   <span><span className="block text-xs font-bold text-amber-700 dark:text-amber-300">⚙ Carga manual de comisión</span><span className="block text-[10px] text-amber-700/70 dark:text-amber-300/60">Activá para editar libremente los % de comisión, salteando la regla fija.</span></span>
                 </label>
                 <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
@@ -952,7 +952,7 @@ export default function NuevaVentaModal({ perfiles, clientes, vehiculos, miId, i
                 </div>
 
                 <label className="flex items-start gap-2.5 mt-3 px-3 py-2.5 rounded-xl bg-slate-50 dark:bg-white/5 border border-slate-200 dark:border-white/10 cursor-pointer">
-                  <input type="checkbox" checked={vendedorCompartido} onChange={(e) => setVendedorCompartido(e.target.checked)} className="w-4 h-4 mt-0.5 accent-rose-600" />
+                  <input type="checkbox" checked={vendedorCompartido} onChange={(e) => setVendedorCompartido(e.target.checked)} className="w-4 h-4 mt-0.5 accent-[#0145F2]" />
                   <span><span className="block text-xs font-bold text-slate-700 dark:text-slate-200">🤝 Vendedor compartido (split comisión 50/50)</span><span className="block text-[10px] text-slate-400">Activá esto si la comisión se reparte con otro vendedor — ambos pasan automáticamente a 0.5% cada uno{!comisionEditable ? " (no editable)" : ""}.</span></span>
                 </label>
                 {vendedorCompartido && (
@@ -979,7 +979,7 @@ export default function NuevaVentaModal({ perfiles, clientes, vehiculos, miId, i
                 <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
                   {[["Tuerca de seguridad", entregaTuerca, setEntregaTuerca, "si corresponde"], ["Duplicado de llave", entregaLlave, setEntregaLlave, ""], ["Manuales", entregaManuales, setEntregaManuales, ""], ["Cédula", entregaCedula, setEntregaCedula, ""]].map(([label, val, setter, hint]: any) => (
                     <label key={label} className="flex flex-col items-start gap-1 px-3 py-2.5 rounded-xl bg-slate-50 dark:bg-white/5 border border-slate-200 dark:border-white/10 cursor-pointer">
-                      <span className="flex items-center gap-1.5 text-xs font-semibold text-slate-700 dark:text-slate-200"><input type="checkbox" checked={val} onChange={(e) => setter(e.target.checked)} className="w-3.5 h-3.5 accent-rose-600" /> {label}</span>
+                      <span className="flex items-center gap-1.5 text-xs font-semibold text-slate-700 dark:text-slate-200"><input type="checkbox" checked={val} onChange={(e) => setter(e.target.checked)} className="w-3.5 h-3.5 accent-[#0145F2]" /> {label}</span>
                       {hint && <span className="text-[9px] text-slate-400 ml-5">{hint}</span>}
                     </label>
                   ))}
@@ -1063,7 +1063,7 @@ export default function NuevaVentaModal({ perfiles, clientes, vehiculos, miId, i
                     </div>
                   </div>
                   <div className="flex items-center gap-3 mt-2">
-                    <button type="button" onClick={agregarRecordatorio} disabled={!rFecha} className="px-3 py-1.5 rounded-lg bg-rose-600 hover:bg-rose-700 text-white text-xs font-bold disabled:opacity-50">+ Agregar</button>
+                    <button type="button" onClick={agregarRecordatorio} disabled={!rFecha} className="px-3 py-1.5 rounded-lg bg-[#0145F2] hover:bg-[#0138c9] text-white text-xs font-bold disabled:opacity-50">+ Agregar</button>
                     {(recordatorios.length > 0 || recordatoriosNuevos.length > 0) && <button type="button" onClick={generarRecordatoriosAutomaticos} className="text-xs font-bold text-indigo-600 dark:text-indigo-300">Generar recordatorios automáticos</button>}
                   </div>
                   <p className="text-[10px] text-slate-400 mt-1.5">Los cambios en recordatorios se guardan al apretar "Guardar cambios".</p>
@@ -1089,7 +1089,7 @@ export default function NuevaVentaModal({ perfiles, clientes, vehiculos, miId, i
         <div className="flex gap-2 p-6 pt-3 border-t border-slate-100 dark:border-white/10 shrink-0">
           <button type="button" onClick={onClose} className="px-4 py-2.5 text-sm font-semibold bg-white dark:bg-white/5 border border-slate-200 dark:border-white/10 hover:bg-slate-50 dark:hover:bg-white/10 text-slate-600 dark:text-slate-300 rounded-xl">Cancelar</button>
           {!esEdicion && <button type="button" onClick={() => guardar(true)} disabled={guardando} className="flex-1 py-2.5 flex items-center justify-center gap-2 text-sm font-semibold bg-white dark:bg-white/5 border border-slate-200 dark:border-white/10 hover:bg-slate-50 dark:hover:bg-white/10 text-slate-600 dark:text-slate-300 rounded-xl disabled:opacity-50"><Save className="w-4 h-4" /> Guardar borrador</button>}
-          <button type="button" onClick={() => guardar(false)} disabled={guardando} className="flex-1 py-2.5 flex items-center justify-center gap-2 text-sm font-bold bg-rose-600 hover:bg-rose-700 text-white rounded-xl disabled:opacity-50">
+          <button type="button" onClick={() => guardar(false)} disabled={guardando} className="flex-1 py-2.5 flex items-center justify-center gap-2 text-sm font-bold bg-[#0145F2] hover:bg-[#0138c9] text-white rounded-xl disabled:opacity-50">
             {guardando ? <Loader2 className="w-4 h-4 animate-spin" /> : <><Save className="w-4 h-4" /> {esEdicion ? "Guardar cambios" : "Crear venta"}</>}
           </button>
         </div>

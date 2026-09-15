@@ -144,7 +144,7 @@ export default function NuevoPeritajeModal({ leads }: { leads: Lead[] }) {
                   <button onClick={() => setLeadElegido(null)} disabled={creando} className="px-4 py-2.5 text-sm font-bold text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-white/10 rounded-xl transition-colors disabled:opacity-50">
                     Atrás
                   </button>
-                  <button onClick={iniciarPeritaje} disabled={creando} className="ml-auto flex items-center gap-2 px-6 py-2.5 text-sm font-bold bg-rose-600 hover:bg-rose-700 text-white rounded-xl transition-colors disabled:opacity-50">
+                  <button onClick={iniciarPeritaje} disabled={creando} className="ml-auto flex items-center gap-2 px-6 py-2.5 text-sm font-bold bg-[#0145F2] hover:bg-[#0138c9] text-white rounded-xl transition-colors disabled:opacity-50">
                     {creando ? <Loader2 className="w-4 h-4 animate-spin" /> : <Plus className="w-4 h-4" />} {creando ? "Iniciando..." : "Iniciar peritaje"}
                   </button>
                 </div>

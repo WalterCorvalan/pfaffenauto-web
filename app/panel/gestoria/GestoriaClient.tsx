@@ -81,7 +81,7 @@ export default function GestoriaClient({
     <div className="p-6">
       <div className="flex flex-wrap items-start justify-between gap-2 mb-1">
         <div>
-          <h1 className="text-xl font-bold flex items-center gap-2"><ClipboardList className="w-5 h-5 text-rose-600" /> Gestoría — Estado de Transferencias</h1>
+          <h1 className="text-xl font-bold flex items-center gap-2"><ClipboardList className="w-5 h-5 text-[#0145F2]" /> Gestoría — Estado de Transferencias</h1>
           <p className="text-sm text-slate-400">Vista de seguimiento de expedientes activos</p>
         </div>
         <div className="flex items-center gap-2">
@@ -112,7 +112,7 @@ export default function GestoriaClient({
       <div className="flex items-center justify-between border-b border-slate-200 dark:border-white/10 mb-4">
         <div className="flex items-center gap-1">
           {[{ v: "activos" as const, l: "Activos", n: activos.length }, { v: "finalizados" as const, l: "Finalizados", n: finalizados.length }].map((t) => (
-            <button key={t.v} onClick={() => setTab(t.v)} className={`px-3 py-2 text-sm font-semibold border-b-2 -mb-px flex items-center gap-1.5 ${tab === t.v ? "border-rose-600 text-rose-600" : "border-transparent text-slate-500 hover:text-slate-700 dark:hover:text-slate-300"}`}>
+            <button key={t.v} onClick={() => setTab(t.v)} className={`px-3 py-2 text-sm font-semibold border-b-2 -mb-px flex items-center gap-1.5 ${tab === t.v ? "border-[#0145F2] text-[#0145F2]" : "border-transparent text-slate-500 hover:text-slate-700 dark:hover:text-slate-300"}`}>
               {t.l} <span className="text-[10px] font-bold bg-slate-100 dark:bg-white/10 px-1.5 py-0.5 rounded-full">{t.n}</span>
             </button>
           ))}
@@ -196,7 +196,7 @@ export default function GestoriaClient({
                   <span className="text-sm font-bold text-slate-900 dark:text-white shrink-0">{e.titulo || `EXP — ${v.vehiculo_marca || ""} ${v.vehiculo_modelo || ""} (${v.vehiculo_anio || ""})`}</span>
                   {v.vehiculo_patente && <span className="text-[9px] font-bold bg-slate-100 dark:bg-white/10 px-1.5 py-0.5 rounded shrink-0">{v.vehiculo_patente}</span>}
                   <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full shrink-0 ${ESTADO_CLASS[e.estado]}`}>{ESTADO_LABEL[e.estado] || e.estado}</span>
-                  {pendiente && <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-rose-50 dark:bg-rose-500/10 text-rose-600 shrink-0">🔒 Pendiente</span>}
+                  {pendiente && <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-rose-50 dark:bg-rose-500/10 text-[#0145F2] shrink-0">🔒 Pendiente</span>}
                   <span className="flex-1" />
                   <span className="ml-auto flex items-center gap-1.5 flex-wrap justify-end text-[11px] text-slate-400">
                     <MessageCircle className="w-3.5 h-3.5 text-emerald-500" /> {v.comprador_nombre}
@@ -270,7 +270,7 @@ export default function GestoriaClient({
                         className={`text-xs font-bold px-3 py-1.5 rounded-lg flex items-center gap-1 ${v.comprador_telefono ? "bg-emerald-600 hover:bg-emerald-700 text-white" : "bg-slate-100 dark:bg-white/5 text-slate-300 pointer-events-none"}`}>
                         <MessageCircle className="w-3.5 h-3.5" /> WhatsApp comprador
                       </a>
-                      <button onClick={() => setDetalleId(e.id)} className="ml-auto text-xs font-bold px-3 py-1.5 rounded-lg bg-rose-600 hover:bg-rose-700 text-white">Abrir detalle →</button>
+                      <button onClick={() => setDetalleId(e.id)} className="ml-auto text-xs font-bold px-3 py-1.5 rounded-lg bg-[#0145F2] hover:bg-[#0138c9] text-white">Abrir detalle →</button>
                     </div>
                   </div>
                 )}

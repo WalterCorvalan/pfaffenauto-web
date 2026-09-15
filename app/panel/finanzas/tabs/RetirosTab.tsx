@@ -73,7 +73,7 @@ export default function RetirosTab({
         ))}
       </div>
 
-      <button onClick={abrir} className="flex items-center gap-1.5 px-4 py-2 mb-4 text-sm font-bold bg-rose-600 hover:bg-rose-700 text-white rounded-lg"><Plus className="w-4 h-4" /> Nuevo retiro</button>
+      <button onClick={abrir} className="flex items-center gap-1.5 px-4 py-2 mb-4 text-sm font-bold bg-[#0145F2] hover:bg-[#0138c9] text-white rounded-lg"><Plus className="w-4 h-4" /> Nuevo retiro</button>
 
       {retiros.length === 0 ? (
         <div className="bg-white dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-2xl py-16 text-center"><p className="text-sm font-bold">Sin retiros registrados</p></div>
@@ -111,7 +111,7 @@ export default function RetirosTab({
             <label className={labelClass + " mt-3"}>Motivo</label>
             <textarea value={motivo} onChange={(e) => setMotivo(e.target.value)} rows={2} placeholder="Retiro personal, viático, gastos, etc." className={inputClass} />
             {cuentaSel && monto && <p className="text-[10px] text-slate-400 mt-2">Resta {fmt(Number(monto), cuentaSel.moneda)} del saldo de "{cuentaSel.nombre}" y crea un movimiento Egreso vinculado en Finanzas.</p>}
-            <div className="flex justify-end gap-2 mt-4"><button onClick={() => setShowNuevo(false)} className="px-4 py-2 text-sm font-bold text-slate-500">Cancelar</button><button onClick={registrar} disabled={guardando} className="flex items-center gap-1.5 px-4 py-2 text-sm font-bold bg-rose-600 hover:bg-rose-700 text-white rounded-lg disabled:opacity-50"><Save className="w-4 h-4" /> Registrar retiro</button></div>
+            <div className="flex justify-end gap-2 mt-4"><button onClick={() => setShowNuevo(false)} className="px-4 py-2 text-sm font-bold text-slate-500">Cancelar</button><button onClick={registrar} disabled={guardando} className="flex items-center gap-1.5 px-4 py-2 text-sm font-bold bg-[#0145F2] hover:bg-[#0138c9] text-white rounded-lg disabled:opacity-50"><Save className="w-4 h-4" /> Registrar retiro</button></div>
           </div>
         </div>
       )}

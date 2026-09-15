@@ -208,7 +208,7 @@ export default function RodiBandeja({ conversacionesIniciales, vendedores, miId 
           <div className="h-[60px] p-4 border-b border-slate-200 dark:border-white/10 flex items-center justify-between shrink-0">
             <h3 className="text-[11px] font-bold text-slate-400 uppercase tracking-widest">Detalles</h3>
             <div className="flex items-center gap-1">
-              <button onClick={() => setDetalleAbierto(true)} title="Ver ficha completa (tareas, test drives, historial)" className="text-slate-400 hover:text-rose-600 p-1 rounded-md hover:bg-slate-100 dark:hover:bg-white/5"><Maximize2 className="w-4 h-4" /></button>
+              <button onClick={() => setDetalleAbierto(true)} title="Ver ficha completa (tareas, test drives, historial)" className="text-slate-400 hover:text-[#0145F2] p-1 rounded-md hover:bg-slate-100 dark:hover:bg-white/5"><Maximize2 className="w-4 h-4" /></button>
               <button onClick={() => setPanelAbierto(false)} className="text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 p-1 rounded-md hover:bg-slate-100 dark:hover:bg-white/5"><ChevronRight className="w-4 h-4" /></button>
             </div>
           </div>

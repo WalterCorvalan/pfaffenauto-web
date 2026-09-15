@@ -19,7 +19,7 @@ export default function PeritajesClient({ peritajes, leadsSinPeritaje }: { perit
         <div className="max-w-[1200px] mx-auto">
           <div className="flex items-center justify-between gap-4 mb-4">
             <div>
-              <h1 className="text-xl font-black text-slate-900 dark:text-white flex items-center gap-2"><ClipboardCheck className="w-5 h-5 text-rose-600" /> Peritajes</h1>
+              <h1 className="text-xl font-black text-slate-900 dark:text-white flex items-center gap-2"><ClipboardCheck className="w-5 h-5 text-[#0145F2]" /> Peritajes</h1>
               <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">Inspecciones de vehículos tasados</p>
             </div>
             <NuevoPeritajeModal leads={leadsSinPeritaje} />
@@ -36,7 +36,7 @@ export default function PeritajesClient({ peritajes, leadsSinPeritaje }: { perit
                   {p.estado}
                 </span>
                 {p.puntaje !== null && (
-                  <span className={`text-sm font-black ${p.puntaje >= 70 ? "text-emerald-600 dark:text-emerald-400" : p.puntaje >= 40 ? "text-amber-600 dark:text-amber-400" : "text-rose-600 dark:text-rose-400"}`}>
+                  <span className={`text-sm font-black ${p.puntaje >= 70 ? "text-emerald-600 dark:text-emerald-400" : p.puntaje >= 40 ? "text-amber-600 dark:text-amber-400" : "text-[#0145F2] dark:text-[#5b8dff]"}`}>
                     {p.puntaje}%
                   </span>
                 )}

@@ -96,7 +96,7 @@ export default function CobrosClient({ miId, soyAdminOFinanzas, cuotasIniciales,
                 <div className="text-right">
                   <p className="text-lg font-black">{fmt(pendiente, c.moneda)}</p>
                   {Number(c.monto_cobrado) > 0 && <p className="text-[10px] text-slate-400">de {fmt(c.monto, c.moneda)} — cobrado {fmt(c.monto_cobrado, c.moneda)}</p>}
-                  <button onClick={() => abrirCobro(c)} className="mt-1.5 flex items-center gap-1 px-3 py-1.5 text-xs font-bold bg-rose-600 hover:bg-rose-700 text-white rounded-lg ml-auto"><DollarSign className="w-3.5 h-3.5" /> Marcar cobrada</button>
+                  <button onClick={() => abrirCobro(c)} className="mt-1.5 flex items-center gap-1 px-3 py-1.5 text-xs font-bold bg-[#0145F2] hover:bg-[#0138c9] text-white rounded-lg ml-auto"><DollarSign className="w-3.5 h-3.5" /> Marcar cobrada</button>
                 </div>
               </div>
             );
@@ -116,7 +116,7 @@ export default function CobrosClient({ miId, soyAdminOFinanzas, cuotasIniciales,
               <div><label className={labelClass}>Caja *</label><select value={cbCuentaId} onChange={(e) => setCbCuentaId(e.target.value)} className={inputClass}><option value="">— Elegí —</option>{cuentas.filter((ct) => ct.moneda === cobrando.moneda).map((ct) => <option key={ct.id} value={ct.id}>{ct.nombre}</option>)}</select></div>
             </div>
             <p className="text-[10px] text-slate-400 mt-2">La cuota sale de pendientes y queda registrada con esta fecha.</p>
-            <div className="flex justify-end gap-2 mt-4"><button onClick={() => setCobrando(null)} className="px-4 py-2 text-sm font-bold text-slate-500">Cancelar</button><button onClick={confirmarCobro} disabled={guardando} className="flex items-center gap-1.5 px-4 py-2 text-sm font-bold bg-rose-600 hover:bg-rose-700 text-white rounded-lg disabled:opacity-50"><Save className="w-4 h-4" /> Confirmar cobro</button></div>
+            <div className="flex justify-end gap-2 mt-4"><button onClick={() => setCobrando(null)} className="px-4 py-2 text-sm font-bold text-slate-500">Cancelar</button><button onClick={confirmarCobro} disabled={guardando} className="flex items-center gap-1.5 px-4 py-2 text-sm font-bold bg-[#0145F2] hover:bg-[#0138c9] text-white rounded-lg disabled:opacity-50"><Save className="w-4 h-4" /> Confirmar cobro</button></div>
           </div>
         </div>
       )}

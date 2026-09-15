@@ -89,11 +89,11 @@ export default function UsuariosClient() {
           <h1 className="text-xl font-black text-slate-900 dark:text-white flex items-center gap-2"><Settings className="w-5 h-5 text-indigo-600" /> Configuración</h1>
           <p className="text-sm text-slate-400">Usuarios, roles y permisos del equipo.</p>
         </div>
-        <button onClick={() => setNuevo(true)} className="flex items-center gap-1.5 px-4 py-2 text-sm font-bold bg-rose-600 hover:bg-rose-700 text-white rounded-lg"><UserPlus className="w-4 h-4" /> Nuevo usuario</button>
+        <button onClick={() => setNuevo(true)} className="flex items-center gap-1.5 px-4 py-2 text-sm font-bold bg-[#0145F2] hover:bg-[#0138c9] text-white rounded-lg"><UserPlus className="w-4 h-4" /> Nuevo usuario</button>
       </div>
 
       <div className="flex items-center gap-1 border-b border-slate-200 dark:border-white/10 overflow-x-auto">
-        <span className="px-3 py-2.5 text-sm font-bold border-b-2 border-rose-600 text-rose-600 whitespace-nowrap">Colaboradores</span>
+        <span className="px-3 py-2.5 text-sm font-bold border-b-2 border-[#0145F2] text-[#0145F2] whitespace-nowrap">Colaboradores</span>
         <Link href="/panel/configuracion/empresa" className="px-3 py-2.5 text-sm font-bold border-b-2 border-transparent text-slate-500 whitespace-nowrap">Empresa</Link>
         <Link href="/panel/configuracion/whatsapp" className="px-3 py-2.5 text-sm font-bold border-b-2 border-transparent text-slate-500 whitespace-nowrap">WhatsApp</Link>
         <Link href="/panel/configuracion/instagram" className="px-3 py-2.5 text-sm font-bold border-b-2 border-transparent text-slate-500 whitespace-nowrap">Instagram</Link>
@@ -274,7 +274,7 @@ function ModalNuevoUsuario({ sucursales, onClose, onSaved }: { sucursales: Sucur
           <label className="text-xs font-semibold text-slate-500 block mb-1">Roles</label>
           <div className="flex flex-wrap gap-2">
             {ROLES.map((r) => (
-              <button key={r} onClick={() => toggleRol(r)} className={`px-3 py-1.5 rounded-lg text-xs font-bold border ${roles.includes(r) ? "bg-rose-600 text-white border-rose-600" : "bg-white dark:bg-white/5 border-slate-200 dark:border-white/10 text-slate-500"}`}>
+              <button key={r} onClick={() => toggleRol(r)} className={`px-3 py-1.5 rounded-lg text-xs font-bold border ${roles.includes(r) ? "bg-[#0145F2] text-white border-[#0145F2]" : "bg-white dark:bg-white/5 border-slate-200 dark:border-white/10 text-slate-500"}`}>
                 {ROL_LABEL[r]}
               </button>
             ))}
@@ -331,7 +331,7 @@ function ModalEditarUsuario({ usuario, sucursales, onClose, onSaved }: { usuario
           <label className="text-xs font-semibold text-slate-500 block mb-1">Roles</label>
           <div className="flex flex-wrap gap-2">
             {ROLES.map((r) => (
-              <button key={r} onClick={() => toggleRol(r)} className={`px-3 py-1.5 rounded-lg text-xs font-bold border ${roles.includes(r) ? "bg-rose-600 text-white border-rose-600" : "bg-white dark:bg-white/5 border-slate-200 dark:border-white/10 text-slate-500"}`}>
+              <button key={r} onClick={() => toggleRol(r)} className={`px-3 py-1.5 rounded-lg text-xs font-bold border ${roles.includes(r) ? "bg-[#0145F2] text-white border-[#0145F2]" : "bg-white dark:bg-white/5 border-slate-200 dark:border-white/10 text-slate-500"}`}>
                 {ROL_LABEL[r]}
               </button>
             ))}
