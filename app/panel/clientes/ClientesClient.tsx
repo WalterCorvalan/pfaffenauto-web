@@ -162,12 +162,6 @@ export default function ClientesClient({
   const [editando, setEditando] = useState<Cliente | null>(null);
   const [eliminandoId, setEliminandoId] = useState<string | null>(null);
 
-  const opsMap = useMemo(() => {
-    const acc: Record<string, number> = {};
-    ventas.forEach((v) => { if (v.cliente_id) acc[v.cliente_id] = (acc[v.cliente_id] || 0) + 1; });
-    return acc;
-  }, [ventas]);
-
   // ---------- RANKING ----------
   // Una venta puede no haber quedado vinculada a una ficha de cliente
   // (cliente_id null) -- se rescata por DNI del comprador contra
@@ -187,6 +181,17 @@ export default function ClientesClient({
     });
     return map;
   }, [clientes, ventas]);
+
+  // Antes contaba solo por cliente_id -- una venta rescatada por DNI (sin
+  // cliente_id vinculado) aparecía con "0 operaciones" acá aunque el tab
+  // Ranking, para ese mismo cliente, sí la contaba como un auto vendido.
+  // Reusa ventasPorCliente (ya resuelve ese rescate) para que ambos
+  // lugares cuenten lo mismo.
+  const opsMap = useMemo(() => {
+    const acc: Record<string, number> = {};
+    Object.entries(ventasPorCliente).forEach(([clienteId, vs]) => { acc[clienteId] = vs.length; });
+    return acc;
+  }, [ventasPorCliente]);
 
   const rankingFilas = useMemo(() => {
     return clientes

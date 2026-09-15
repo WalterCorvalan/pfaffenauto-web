@@ -10,6 +10,10 @@ Configuración → Empresa tiene un toggle **"Cada vendedor ve solo sus clientes
 
 **Alcance actual**: el filtro solo se aplica en este listado (`/panel/clientes`). Otros lugares que también muestran clientes (ej. el `<select>` de "Cliente del CRM" en `NuevaVentaModal.tsx`, que recibe la lista completa por props desde `app/panel/ventas/page.tsx`) **no** respetan este toggle todavía — es una decisión de producto pendiente si se quiere extender el mismo criterio ahí.
 
+## Conteo de operaciones por cliente
+
+Una venta puede no haber quedado vinculada a una ficha de cliente (`ventas.cliente_id` null) — en ese caso se rescata comparando `ventas.comprador_dni` contra `clientes.dni_cuit` (`ventasPorCliente` en `ClientesClient.tsx`, mismo criterio que ya usaba el tab Ranking). **Bug corregido**: el badge "N operación(es)" de la lista principal (`opsMap`) contaba solo por `cliente_id`, sin este rescate por DNI — un cliente con una venta rescatada mostraba "0" en la lista aunque Ranking, para ese mismo cliente, sí la contara. Ahora `opsMap` se deriva de `ventasPorCliente` en vez de tener su propio loop. Si agregás un contador nuevo sobre `ventas` en este módulo, reusá `ventasPorCliente` en vez de iterar `ventas` de cero — evita que se repita el mismo desfasaje.
+
 ## No tocar sin revisar el resto
 
 - Si el toggle está prendido, `clientesIniciales` que llega a `ClientesClient.tsx` ya viene filtrado — no asumir que siempre es "todos los clientes" al usarlo para deduplicar o comparar.
