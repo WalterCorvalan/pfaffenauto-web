@@ -240,7 +240,7 @@ export default function StockClient({
         <div className="max-w-[80rem] 2xl:max-w-[110rem] mx-auto">
           <div className="flex flex-col md:flex-row md:items-center justify-between gap-3 mb-4">
             <div>
-              <h1 className="text-xl font-black text-slate-900 dark:text-white flex items-center gap-2"><Car className="w-5 h-5 text-rose-600" /> Stock</h1>
+              <h1 className="text-xl font-black text-slate-900 dark:text-white flex items-center gap-2"><Car className="w-5 h-5 text-[#0145F2]" /> Stock</h1>
               <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">{disponibles.length} vehículos disponibles para vender</p>
             </div>
             <div className="flex items-center gap-2">
@@ -271,7 +271,7 @@ export default function StockClient({
                 )}
               </div>
 
-              {puedeCrear && <button onClick={() => setModalNuevo(true)} className="flex items-center gap-1.5 px-4 py-2 text-xs font-bold bg-rose-600 hover:bg-rose-700 text-white rounded-lg shadow-sm shrink-0"><Plus className="w-3.5 h-3.5" /> Nuevo vehículo</button>}
+              {puedeCrear && <button onClick={() => setModalNuevo(true)} className="flex items-center gap-1.5 px-4 py-2 text-xs font-bold bg-[#0145F2] hover:bg-[#0138c9] text-white rounded-lg shadow-sm shrink-0"><Plus className="w-3.5 h-3.5" /> Nuevo vehículo</button>}
             </div>
           </div>
 
@@ -295,14 +295,14 @@ export default function StockClient({
 
           <div className="flex items-center gap-1 mb-4 border-b border-slate-200 dark:border-white/10 overflow-x-auto -mx-4 px-4 md:mx-0 md:px-0">
             {[["general", "Stock general"], ["consignaciones", "Consignaciones"], ["0km", "0 km"], ["mandatos", "Mandatos"]].map(([v, label]) => (
-              <button key={v} onClick={() => setTab(v as Tab)} className={`shrink-0 whitespace-nowrap px-3 py-2 text-sm font-bold border-b-2 -mb-px transition-colors ${tab === v ? "border-rose-600 text-rose-600" : "border-transparent text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-200"}`}>{label}</button>
+              <button key={v} onClick={() => setTab(v as Tab)} className={`shrink-0 whitespace-nowrap px-3 py-2 text-sm font-bold border-b-2 -mb-px transition-colors ${tab === v ? "border-[#0145F2] text-[#0145F2]" : "border-transparent text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-200"}`}>{label}</button>
             ))}
           </div>
 
           {tab === "mandatos" ? (
             <>
               <div className="flex justify-end mb-3">
-                <button onClick={() => setModalMandato(true)} className="flex items-center gap-1.5 px-3 py-2 text-xs font-bold bg-rose-600 hover:bg-rose-700 text-white rounded-lg"><Plus className="w-3.5 h-3.5" /> Nuevo mandato</button>
+                <button onClick={() => setModalMandato(true)} className="flex items-center gap-1.5 px-3 py-2 text-xs font-bold bg-[#0145F2] hover:bg-[#0138c9] text-white rounded-lg"><Plus className="w-3.5 h-3.5" /> Nuevo mandato</button>
               </div>
               {mandatos.length === 0 ? (
                 <div className="flex flex-col items-center justify-center text-center py-20 bg-white dark:bg-white/[0.02] border border-slate-200 dark:border-white/5 rounded-2xl">
@@ -333,21 +333,21 @@ export default function StockClient({
           ) : (
             <>
               <div className="flex items-center gap-2 mb-3 overflow-x-auto pb-1 md:flex-wrap md:overflow-visible md:pb-0 -mx-4 px-4 md:mx-0 md:px-0">
-                <button onClick={() => { setEstadoFiltro(""); setSoloEstancados(false); setSoloARevisar(false); }} className={`shrink-0 whitespace-nowrap px-3 py-1.5 rounded-full text-xs font-bold border ${estadoFiltro === "" && !soloEstancados && !soloARevisar ? "bg-rose-600 border-rose-600 text-white" : "bg-white dark:bg-white/5 border-slate-200 dark:border-white/10 text-slate-600 dark:text-slate-300"}`}>Todos</button>
+                <button onClick={() => { setEstadoFiltro(""); setSoloEstancados(false); setSoloARevisar(false); }} className={`shrink-0 whitespace-nowrap px-3 py-1.5 rounded-full text-xs font-bold border ${estadoFiltro === "" && !soloEstancados && !soloARevisar ? "bg-[#0145F2] border-[#0145F2] text-white" : "bg-white dark:bg-white/5 border-slate-200 dark:border-white/10 text-slate-600 dark:text-slate-300"}`}>Todos</button>
                 {Object.entries(ESTADO_LABEL).map(([v, label]) => (
-                  <button key={v} onClick={() => { setEstadoFiltro(v); setSoloEstancados(false); setSoloARevisar(false); }} className={`shrink-0 whitespace-nowrap px-3 py-1.5 rounded-full text-xs font-bold border ${estadoFiltro === v && !soloEstancados && !soloARevisar ? "bg-rose-600 border-rose-600 text-white" : "bg-white dark:bg-white/5 border-slate-200 dark:border-white/10 text-slate-600 dark:text-slate-300"}`}>{label}</button>
+                  <button key={v} onClick={() => { setEstadoFiltro(v); setSoloEstancados(false); setSoloARevisar(false); }} className={`shrink-0 whitespace-nowrap px-3 py-1.5 rounded-full text-xs font-bold border ${estadoFiltro === v && !soloEstancados && !soloARevisar ? "bg-[#0145F2] border-[#0145F2] text-white" : "bg-white dark:bg-white/5 border-slate-200 dark:border-white/10 text-slate-600 dark:text-slate-300"}`}>{label}</button>
                 ))}
-                <button onClick={() => { setSoloEstancados((v) => !v); setSoloARevisar(false); }} className={`shrink-0 whitespace-nowrap flex items-center gap-1 px-3 py-1.5 rounded-full text-xs font-bold border ${soloEstancados ? "bg-rose-600 border-rose-600 text-white" : "bg-white dark:bg-white/5 border-slate-200 dark:border-white/10 text-slate-500"}`}><Clock className="w-3 h-3" /> Estancados (+90d) · {estancados}</button>
-                <button title="Sin publicar en MercadoLibre, sin foto o sin precio cargado" onClick={() => { setSoloARevisar((v) => !v); setSoloEstancados(false); }} className={`shrink-0 whitespace-nowrap flex items-center gap-1 px-3 py-1.5 rounded-full text-xs font-bold border ${soloARevisar ? "bg-rose-600 border-rose-600 text-white" : "bg-white dark:bg-white/5 border-slate-200 dark:border-white/10 text-slate-500"}`}><AlertTriangle className="w-3 h-3" /> A revisar (ML)</button>
+                <button onClick={() => { setSoloEstancados((v) => !v); setSoloARevisar(false); }} className={`shrink-0 whitespace-nowrap flex items-center gap-1 px-3 py-1.5 rounded-full text-xs font-bold border ${soloEstancados ? "bg-[#0145F2] border-[#0145F2] text-white" : "bg-white dark:bg-white/5 border-slate-200 dark:border-white/10 text-slate-500"}`}><Clock className="w-3 h-3" /> Estancados (+90d) · {estancados}</button>
+                <button title="Sin publicar en MercadoLibre, sin foto o sin precio cargado" onClick={() => { setSoloARevisar((v) => !v); setSoloEstancados(false); }} className={`shrink-0 whitespace-nowrap flex items-center gap-1 px-3 py-1.5 rounded-full text-xs font-bold border ${soloARevisar ? "bg-[#0145F2] border-[#0145F2] text-white" : "bg-white dark:bg-white/5 border-slate-200 dark:border-white/10 text-slate-500"}`}><AlertTriangle className="w-3 h-3" /> A revisar (ML)</button>
 
                 <div className="flex items-center gap-2 ml-auto shrink-0">
                   <select value={orden} onChange={(e) => setOrden(e.target.value as Orden)} className="bg-white dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-lg px-3 py-1.5 text-xs font-semibold text-slate-600 dark:text-slate-300">
                     {(Object.keys(ORDEN_LABEL) as Orden[]).map((o) => <option key={o} value={o}>{ORDEN_LABEL[o]}</option>)}
                   </select>
                   <div className="flex items-center gap-1 bg-slate-100 dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-lg p-1">
-                    <button onClick={() => setVista("lista")} title="Vista lista" className={`flex items-center gap-1.5 px-2.5 py-1 rounded-md text-xs font-bold ${vista === "lista" ? "bg-rose-600 text-white" : "text-slate-500 dark:text-slate-400 hover:bg-white dark:hover:bg-white/10"}`}><List className="w-3.5 h-3.5" /> Lista</button>
-                    <button onClick={() => setVista("tarjetas")} title="Vista tarjetas" className={`flex items-center gap-1.5 px-2.5 py-1 rounded-md text-xs font-bold ${vista === "tarjetas" ? "bg-rose-600 text-white" : "text-slate-500 dark:text-slate-400 hover:bg-white dark:hover:bg-white/10"}`}><LayoutGrid className="w-3.5 h-3.5" /> Tarjetas</button>
-                    <button onClick={() => setVista("tabla")} title="Vista tabla detallada" className={`flex items-center gap-1.5 px-2.5 py-1 rounded-md text-xs font-bold ${vista === "tabla" ? "bg-rose-600 text-white" : "text-slate-500 dark:text-slate-400 hover:bg-white dark:hover:bg-white/10"}`}><Table2 className="w-3.5 h-3.5" /> Tabla detallada</button>
+                    <button onClick={() => setVista("lista")} title="Vista lista" className={`flex items-center gap-1.5 px-2.5 py-1 rounded-md text-xs font-bold ${vista === "lista" ? "bg-[#0145F2] text-white" : "text-slate-500 dark:text-slate-400 hover:bg-white dark:hover:bg-white/10"}`}><List className="w-3.5 h-3.5" /> Lista</button>
+                    <button onClick={() => setVista("tarjetas")} title="Vista tarjetas" className={`flex items-center gap-1.5 px-2.5 py-1 rounded-md text-xs font-bold ${vista === "tarjetas" ? "bg-[#0145F2] text-white" : "text-slate-500 dark:text-slate-400 hover:bg-white dark:hover:bg-white/10"}`}><LayoutGrid className="w-3.5 h-3.5" /> Tarjetas</button>
+                    <button onClick={() => setVista("tabla")} title="Vista tabla detallada" className={`flex items-center gap-1.5 px-2.5 py-1 rounded-md text-xs font-bold ${vista === "tabla" ? "bg-[#0145F2] text-white" : "text-slate-500 dark:text-slate-400 hover:bg-white dark:hover:bg-white/10"}`}><Table2 className="w-3.5 h-3.5" /> Tabla detallada</button>
                   </div>
                 </div>
               </div>
@@ -355,7 +355,7 @@ export default function StockClient({
               <div className="flex flex-col sm:flex-row gap-2 mb-4">
                 <div className="relative flex-1">
                   <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-slate-400" />
-                  <input value={query} onChange={(e) => setQuery(e.target.value)} placeholder="Buscar marca, modelo, patente, año, propietario, ubicación..." className="w-full bg-white dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-lg py-2 pl-9 pr-3 text-xs outline-none focus:border-rose-500 text-slate-900 dark:text-white placeholder:text-slate-400" />
+                  <input value={query} onChange={(e) => setQuery(e.target.value)} placeholder="Buscar marca, modelo, patente, año, propietario, ubicación..." className="w-full bg-white dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-lg py-2 pl-9 pr-3 text-xs outline-none focus:border-[#0145F2] text-slate-900 dark:text-white placeholder:text-slate-400" />
                 </div>
                 <select value={marcaFiltro} onChange={(e) => setMarcaFiltro(e.target.value)} className="bg-white dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-lg px-3 py-2 text-xs font-semibold text-slate-600 dark:text-slate-300">
                   <option value="">Todas las marcas</option>
