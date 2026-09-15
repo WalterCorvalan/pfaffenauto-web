@@ -30,8 +30,14 @@ export default function SaldoAgenciaTab({ miId }: { miId: string }) {
     const map: Record<string, { meDebe: number; leDebo: number }> = {};
     sinSaldar.forEach((m) => {
       if (!map[m.moneda]) map[m.moneda] = { meDebe: 0, leDebo: 0 };
-      if (m.tipo === "saque") map[m.moneda].meDebe += Number(m.monto);
-      else map[m.moneda].leDebo += Number(m.monto);
+      // "saque" = agencia → yo (saqué plata de la caja para mí) -- eso lo
+      // que hace es que YO le debo esa plata a la agencia, no al revés.
+      // "aporte" = yo → agencia (puse plata mía) -- ahí la agencia me debe
+      // a mí. Estaba invertido: un "saque" sumaba a "agencia me debe" y un
+      // "aporte" a "yo debo a agencia", exactamente al revés de lo que
+      // dice cada tipo.
+      if (m.tipo === "saque") map[m.moneda].leDebo += Number(m.monto);
+      else map[m.moneda].meDebe += Number(m.monto);
     });
     return map;
   }, [sinSaldar]);
