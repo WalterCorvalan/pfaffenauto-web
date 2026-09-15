@@ -196,21 +196,26 @@ export default function ConfiguracionWhatsappClient() {
   const webhookUrl = config?.webhook_verify_token ? `${typeof window !== "undefined" ? window.location.origin : ""}/api/panel-v2/webhooks/whatsapp/${config.webhook_verify_token}` : "";
 
   return (
-    <div className="p-6 max-w-2xl">
-      <div className="flex items-center gap-1 border-b border-slate-200 dark:border-white/10 mb-5">
-        <Link href="/panel/configuracion" className="px-3 py-2.5 text-sm font-bold border-b-2 border-transparent text-slate-500">Usuarios</Link>
-        <Link href="/panel/configuracion/empresa" className="px-3 py-2.5 text-sm font-bold border-b-2 border-transparent text-slate-500">Empresa</Link>
-        <span className="px-3 py-2.5 text-sm font-bold border-b-2 border-[#0145F2] text-[#0145F2]">WhatsApp</span>
-        <Link href="/panel/configuracion/instagram" className="px-3 py-2.5 text-sm font-bold border-b-2 border-transparent text-slate-500">Instagram</Link>
+    <div className="p-6 max-w-6xl mx-auto space-y-5">
+      <div>
+        <h1 className="text-xl font-black text-slate-900 dark:text-white flex items-center gap-2"><MessageCircle className="w-5 h-5 text-indigo-600" /> Configuración</h1>
+        <p className="text-sm text-slate-400">Conectá el número de WhatsApp Business de Meta para recibir los mensajes de los clientes acá (Conversaciones → WhatsApp) y que el asistente automático conteste hasta que un vendedor toma la charla.</p>
       </div>
-      <h1 className="text-xl font-bold flex items-center gap-2 mb-1"><MessageCircle className="w-5 h-5 text-[#0145F2]" /> Configuración — WhatsApp</h1>
-      <p className="text-sm text-slate-400 mb-6">Conectá el número de WhatsApp Business de Meta para recibir los mensajes de los clientes acá (Conversaciones → WhatsApp) y que el asistente automático conteste hasta que un vendedor toma la charla.</p>
 
-      <div className={`mb-4 px-3 py-2 rounded-lg text-xs font-bold inline-flex items-center gap-1.5 ${config?.listo ? "bg-emerald-50 text-emerald-700 dark:bg-emerald-500/10 dark:text-emerald-300" : "bg-amber-50 text-amber-700 dark:bg-amber-500/10 dark:text-amber-300"}`}>
+      <div className="flex items-center gap-1 border-b border-slate-200 dark:border-white/10 overflow-x-auto">
+        <Link href="/panel/configuracion" className="px-3 py-2.5 text-sm font-bold border-b-2 border-transparent text-slate-500 whitespace-nowrap">Colaboradores</Link>
+        <Link href="/panel/configuracion/empresa" className="px-3 py-2.5 text-sm font-bold border-b-2 border-transparent text-slate-500 whitespace-nowrap">Empresa</Link>
+        <span className="px-3 py-2.5 text-sm font-bold border-b-2 border-[#0145F2] text-[#0145F2] whitespace-nowrap">WhatsApp</span>
+        <Link href="/panel/configuracion/instagram" className="px-3 py-2.5 text-sm font-bold border-b-2 border-transparent text-slate-500 whitespace-nowrap">Instagram</Link>
+      </div>
+
+      <div className="max-w-2xl space-y-5">
+
+      <div className={`px-3 py-2 rounded-lg text-xs font-bold inline-flex items-center gap-1.5 ${config?.listo ? "bg-emerald-50 text-emerald-700 dark:bg-emerald-500/10 dark:text-emerald-300" : "bg-amber-50 text-amber-700 dark:bg-amber-500/10 dark:text-amber-300"}`}>
         {config?.listo ? "✅ Configurado" : "⏳ Falta completar"}
       </div>
 
-      <div className="bg-white dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-2xl p-5 space-y-4 mb-5">
+      <div className="bg-white dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-2xl p-5 space-y-4">
         <p className="text-[11px] font-black uppercase tracking-widest text-slate-400">Credenciales de Meta</p>
         <div>
           <label className={labelClass}>Identificador del número (phone_number_id)</label>
@@ -290,6 +295,7 @@ export default function ConfiguracionWhatsappClient() {
 
       <PlantillasWhatsapp />
       <MemoriaBot />
+      </div>
     </div>
   );
 }
