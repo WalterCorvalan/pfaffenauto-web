@@ -1,4 +1,5 @@
 import { createClient } from "@/lib/supabase/server";
+import { tienePermiso } from "@/lib/panel/permisos";
 import LiquidacionesClient from "./LiquidacionesClient";
 
 export const metadata = { title: "Liquidaciones | Pfaffen Autos" };
@@ -8,7 +9,7 @@ export default async function LiquidacionesPage() {
   const { data: { user } } = await supabase.auth.getUser();
 
   const miPerfil = user ? await supabase.from("perfiles").select("id, nombre, roles, ganancias_ocultas").eq("id", user.id).single().then((r) => r.data) : null;
-  const puedeVerLiquidacion = miPerfil?.roles?.some((r: string) => ["admin", "finanzas", "gestoria"].includes(r)) ?? false;
+  const puedeVerLiquidacion = await tienePermiso(supabase, miPerfil, "ver_liquidacion");
   const soyAdmin = miPerfil?.roles?.includes("admin") ?? false;
   const soyAdminOFinanzas = miPerfil?.roles?.some((r: string) => r === "admin" || r === "finanzas") ?? false;
 

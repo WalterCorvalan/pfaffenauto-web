@@ -1,4 +1,5 @@
 import { createClient } from "@/lib/supabase/server";
+import { tienePermiso } from "@/lib/panel/permisos";
 import ExpedientesClient from "./ExpedientesClient";
 
 export default async function ExpedientesPage() {
@@ -31,12 +32,15 @@ export default async function ExpedientesPage() {
     if (g.a_cargo_de === "comprador") bucket.comprador[g.moneda] = (bucket.comprador[g.moneda] || 0) + Number(g.monto);
   }
 
+  const puedeVerLiquidacion = await tienePermiso(supabase, miPerfil, "ver_liquidacion");
+
   return (
     <ExpedientesClient
       expedientesIniciales={expedientesRes.data || []}
       perfiles={perfilesRes.data || []}
       miId={user?.id || ""}
       miPerfil={miPerfil}
+      puedeVerLiquidacion={puedeVerLiquidacion}
       gastosPorExpediente={gastosPorExpediente}
     />
   );

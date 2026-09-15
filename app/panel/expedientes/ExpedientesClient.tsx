@@ -23,8 +23,8 @@ const ESTADO_CLASS: Record<string, string> = {
 };
 
 export default function ExpedientesClient({
-  expedientesIniciales, perfiles, miId, miPerfil, gastosPorExpediente,
-}: { expedientesIniciales: any[]; perfiles: Perfil[]; miId: string; miPerfil: any; gastosPorExpediente: Record<string, { vendedor: Record<string, number>; comprador: Record<string, number> }> }) {
+  expedientesIniciales, perfiles, miId, miPerfil, puedeVerLiquidacion, gastosPorExpediente,
+}: { expedientesIniciales: any[]; perfiles: Perfil[]; miId: string; miPerfil: any; puedeVerLiquidacion: boolean; gastosPorExpediente: Record<string, { vendedor: Record<string, number>; comprador: Record<string, number> }> }) {
   const router = useRouter();
   const searchParams = useSearchParams();
   const [expedientes, setExpedientes] = useState(expedientesIniciales);
@@ -41,7 +41,6 @@ export default function ExpedientesClient({
   const perfilMap = useMemo(() => Object.fromEntries(perfiles.map((p) => [p.id, p.nombre])), [perfiles]);
   const soyAdmin = miPerfil?.roles?.includes("admin") ?? false;
   const puedeOperacionCaida = miPerfil?.roles?.some((r: string) => r === "admin" || r === "finanzas") ?? false;
-  const puedeVerLiquidacion = miPerfil?.roles?.some((r: string) => ["admin", "finanzas", "gestoria"].includes(r)) ?? false;
 
   const activos = expedientes.filter((e) => !e.archivado && !e.es_reventa);
   const enProceso = activos.filter((e) => e.estado !== "cerrado");

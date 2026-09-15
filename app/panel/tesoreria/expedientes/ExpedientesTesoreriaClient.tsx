@@ -18,8 +18,8 @@ const ESTADO_TESORERIA_CLASS: Record<string, string> = {
 };
 
 export default function ExpedientesTesoreriaClient({
-  expedientesIniciales, perfiles, miId, miPerfil, gastosPorExpediente,
-}: { expedientesIniciales: any[]; perfiles: Perfil[]; miId: string; miPerfil: any; gastosPorExpediente: Record<string, { vendedor: Record<string, number>; comprador: Record<string, number> }>; cuentas: any[] }) {
+  expedientesIniciales, perfiles, miId, miPerfil, puedeVerLiquidacion, gastosPorExpediente,
+}: { expedientesIniciales: any[]; perfiles: Perfil[]; miId: string; miPerfil: any; puedeVerLiquidacion: boolean; gastosPorExpediente: Record<string, { vendedor: Record<string, number>; comprador: Record<string, number> }>; cuentas: any[] }) {
   const router = useRouter();
   const searchParams = useSearchParams();
   const [expedientes, setExpedientes] = useState(expedientesIniciales);
@@ -34,7 +34,6 @@ export default function ExpedientesTesoreriaClient({
 
   const soyAdmin = miPerfil?.roles?.includes("admin") ?? false;
   const puedeOperacionCaida = miPerfil?.roles?.some((r: string) => r === "admin" || r === "finanzas") ?? false;
-  const puedeVerLiquidacion = miPerfil?.roles?.some((r: string) => ["admin", "finanzas", "gestoria"].includes(r)) ?? false;
 
   const noArchivados = expedientes.filter((e) => !e.archivado);
   const caidas = noArchivados.filter((e) => e.venta?.estado === "caida");

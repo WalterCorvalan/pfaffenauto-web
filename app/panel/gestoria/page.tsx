@@ -1,5 +1,6 @@
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
+import { tienePermiso } from "@/lib/panel/permisos";
 import GestoriaClient from "./GestoriaClient";
 
 const ROLES_GESTORIA = ["admin", "finanzas", "gestoria", "encargado"];
@@ -34,7 +35,7 @@ export default async function GestoriaPage() {
 
   const soyAdmin = miPerfil?.roles?.includes("admin") ?? false;
   const puedeOperacionCaida = miPerfil?.roles?.some((r: string) => r === "admin" || r === "finanzas") ?? false;
-  const puedeVerLiquidacion = miPerfil?.roles?.some((r: string) => ["admin", "finanzas", "gestoria"].includes(r)) ?? false;
+  const puedeVerLiquidacion = await tienePermiso(supabase, miPerfil, "ver_liquidacion");
 
   return (
     <GestoriaClient

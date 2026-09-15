@@ -1,4 +1,5 @@
 import { createClient } from "@/lib/supabase/server";
+import { tienePermiso } from "@/lib/panel/permisos";
 import ExpedientesTesoreriaClient from "./ExpedientesTesoreriaClient";
 
 export const metadata = { title: "Expedientes Tesorería | Pfaffen Autos" };
@@ -32,12 +33,15 @@ export default async function ExpedientesTesoreriaPage() {
     if (g.a_cargo_de === "comprador") bucket.comprador[g.moneda] = (bucket.comprador[g.moneda] || 0) + Number(g.monto);
   }
 
+  const puedeVerLiquidacion = await tienePermiso(supabase, miPerfil, "ver_liquidacion");
+
   return (
     <ExpedientesTesoreriaClient
       expedientesIniciales={expedientesRes.data || []}
       perfiles={perfilesRes.data || []}
       miId={user?.id || ""}
       miPerfil={miPerfil}
+      puedeVerLiquidacion={puedeVerLiquidacion}
       gastosPorExpediente={gastosPorExpediente}
       cuentas={cuentasRes.data || []}
     />
