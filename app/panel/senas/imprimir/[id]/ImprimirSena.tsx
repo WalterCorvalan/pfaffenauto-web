@@ -56,7 +56,8 @@ export default function ImprimirSena({ sena: s, branding }: { sena: any; brandin
     await notificarRespuestaPrecio(
       supabase2, s.vendedor_id,
       cambio ? `${nombreEncargado} corrigió el precio de la Seña N° ${s.numero}: ahora es ${precioTexto}.` : `${nombreEncargado} confirmó el precio de la Seña N° ${s.numero}: ${precioTexto}.`,
-      `/panel/senas/imprimir/${s.id}`
+      `/panel/senas/imprimir/${s.id}`,
+      { modulo: "senas" }
     );
 
     setVentaArs(nuevoArs);

@@ -226,7 +226,9 @@ export default function NuevaSenaModal({
           `${cliente.nombre} ${cliente.apellido || ""} — Seña N° ${data.numero}: el vendedor no confirmó el precio ($${(Number(ventaArs) || 0).toLocaleString("es-AR")}). Verificalo.`,
           `/panel/senas/imprimir/${data.id}`,
           "precio_a_confirmar",
-          sucursalId
+          sucursalId,
+          "media",
+          { modulo: "senas" }
         );
       }
 

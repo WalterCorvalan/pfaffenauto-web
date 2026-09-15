@@ -398,13 +398,13 @@ async function ejecutarAgente(conversacionId: string) {
     }
 
     if (vendedorAsignado) {
-      notificarPersona(supabase, vendedorAsignado, sucursalElegida ? "whatsapp_venta_zona" : "whatsapp_handoff", mensajeNoti, linkNoti).catch((err) => console.error("[webhook-v2] error notificando handoff:", err));
+      notificarPersona(supabase, vendedorAsignado, sucursalElegida ? "whatsapp_venta_zona" : "whatsapp_handoff", mensajeNoti, linkNoti, { categoriaNotif: "leads", modulo: "leads" }).catch((err) => console.error("[webhook-v2] error notificando handoff:", err));
     } else if (sucursalElegida) {
       // Ni un vendedor ni un encargado disponible en esa sucursal -- último
       // recurso, avisar en general (prioridad alta igual, es venta real).
-      notificarEncargados(supabase, mensajeNoti, linkNoti, "whatsapp_venta_zona", sucursalElegida.id, "alta").catch((err) => console.error("[webhook-v2] error notificando zona:", err));
+      notificarEncargados(supabase, mensajeNoti, linkNoti, "whatsapp_venta_zona", sucursalElegida.id, "alta", { categoriaNotif: "leads", modulo: "leads" }).catch((err) => console.error("[webhook-v2] error notificando zona:", err));
     } else {
-      notificarEncargados(supabase, mensajeNoti, linkNoti, "whatsapp_handoff").catch((err) => console.error("[webhook-v2] error notificando handoff:", err));
+      notificarEncargados(supabase, mensajeNoti, linkNoti, "whatsapp_handoff", null, "media", { categoriaNotif: "leads", modulo: "leads" }).catch((err) => console.error("[webhook-v2] error notificando handoff:", err));
     }
 
     // Día/horario confirmado para acercarse: se agenda como visita real en
@@ -437,8 +437,8 @@ async function ejecutarAgente(conversacionId: string) {
       if (errorVisita) registrarError("webhook-v2:crear-visita", errorVisita);
       else if (hayConflicto) {
         const mensajeConflicto = `⚠️ ${nombreCliente} agendó por WhatsApp a las ${datos_detectados.horario_visita} el ${fechaVisita} en ${sucursalVisita}, pero ese horario ya estaba ocupado. Reagendar una de las dos.`;
-        if (vendedorAsignado) notificarPersona(supabase, vendedorAsignado, "whatsapp_venta_zona", mensajeConflicto, "/panel/visitas").catch((err) => console.error("[webhook-v2] error notificando conflicto de visita:", err));
-        else notificarEncargados(supabase, mensajeConflicto, "/panel/visitas", "whatsapp_venta_zona", sucursalElegida?.id, "alta").catch((err) => console.error("[webhook-v2] error notificando conflicto de visita:", err));
+        if (vendedorAsignado) notificarPersona(supabase, vendedorAsignado, "whatsapp_venta_zona", mensajeConflicto, "/panel/visitas", { modulo: "visitas" }).catch((err) => console.error("[webhook-v2] error notificando conflicto de visita:", err));
+        else notificarEncargados(supabase, mensajeConflicto, "/panel/visitas", "whatsapp_venta_zona", sucursalElegida?.id, "alta", { modulo: "visitas" }).catch((err) => console.error("[webhook-v2] error notificando conflicto de visita:", err));
       }
     }
   }

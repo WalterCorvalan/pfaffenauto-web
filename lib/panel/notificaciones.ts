@@ -1,4 +1,5 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
+import { crearAlerta, type CategoriaNotif, type PrioridadAlerta } from "./alertas";
 
 // Ojo: este archivo lo importan tanto Server Components como componentes
 // "use client" (ImprimirSena, NuevaSenaModal, etc.) -- NUNCA importar acá
@@ -13,10 +14,24 @@ function registrarError(origen: string, error: unknown, contexto?: Record<string
 // Equivalentes de lib/notificaciones.ts (v1) pero sobre "alertas" (nova) en
 // vez de "notificaciones" (v1), y roles como array (perfiles.roles) en vez
 // de columna singular "rol".
+//
+// Todas pasan por crearAlerta() (no insertan directo en "alertas") -- antes
+// lo hacían, así que ninguna alerta de este archivo respetaba el filtro de
+// módulo apagado ni el de categoría desactivada en Mi Espacio →
+// Notificaciones (bug de auditoría, ver alertas/ARCHITECTURE.md). Cada
+// función toma `opciones.categoriaNotif`/`opciones.modulo` opcionales --
+// quien la llama decide si hay una categoría/módulo real que le corresponda
+// (no todos los avisos tienen una todavía, ver la lista de categorías en
+// NotificacionesTab.tsx).
 
-export async function notificarPersona(supabase: SupabaseClient, destinatarioId: string, tipo: string, mensaje: string, link: string) {
-  const { error } = await supabase.from("alertas").insert({ destinatario_id: destinatarioId, tipo, titulo: mensaje, link, prioridad: "media" });
-  if (error) registrarError("notificaciones:notificarPersona", error, { destinatarioId, tipo });
+type OpcionesNotif = { categoriaNotif?: CategoriaNotif; modulo?: string; prioridad?: "alta" | "media" | "baja" | "novedad" };
+
+export async function notificarPersona(supabase: SupabaseClient, destinatarioId: string, tipo: string, mensaje: string, link: string, opciones?: OpcionesNotif) {
+  try {
+    await crearAlerta(supabase, destinatarioId, mensaje, { link, tipo, prioridad: opciones?.prioridad || "media", modulo: opciones?.modulo, categoriaNotif: opciones?.categoriaNotif });
+  } catch (error) {
+    registrarError("notificaciones:notificarPersona", error, { destinatarioId, tipo });
+  }
 }
 
 // sucursalId opcional: si se pasa, prioriza al/los encargado(s) de ESA
@@ -24,7 +39,7 @@ export async function notificarPersona(supabase: SupabaseClient, destinatarioId:
 // tiene el rol "encargado" (hoy nadie lo tiene asignado todavía), cae al
 // comportamiento viejo -- avisar a TODOS los admin/encargado -- para no
 // perder silenciosamente un aviso importante mientras se carga esa data.
-export async function notificarEncargados(supabase: SupabaseClient, mensaje: string, link: string, tipo: string = "precio_a_confirmar", sucursalId?: string | null, prioridad: string = "media") {
+export async function notificarEncargados(supabase: SupabaseClient, mensaje: string, link: string, tipo: string = "precio_a_confirmar", sucursalId?: string | null, prioridad: PrioridadAlerta = "media", opciones?: OpcionesNotif) {
   const { data: candidatos } = await supabase.from("perfiles").select("id, roles, sucursal_id").or("roles.cs.{admin},roles.cs.{encargado}").eq("activo", true);
   if (!candidatos || candidatos.length === 0) return;
 
@@ -34,10 +49,13 @@ export async function notificarEncargados(supabase: SupabaseClient, mensaje: str
     if (filtrados.some((p) => p.roles.includes("encargado"))) destinatarios = filtrados;
   }
 
-  const { error } = await supabase.from("alertas").insert(
-    destinatarios.map((e) => ({ destinatario_id: e.id, tipo, titulo: mensaje, link, prioridad }))
-  );
-  if (error) registrarError("notificaciones:notificarEncargados", error, { tipo, sucursalId });
+  try {
+    await Promise.all(destinatarios.map((e) =>
+      crearAlerta(supabase, e.id, mensaje, { link, tipo, prioridad: opciones?.prioridad || prioridad, modulo: opciones?.modulo, categoriaNotif: opciones?.categoriaNotif })
+    ));
+  } catch (error) {
+    registrarError("notificaciones:notificarEncargados", error, { tipo, sucursalId });
+  }
 }
 
 // Lead nuevo sin vendedor asignado todavía (el "hola" inicial): antes solo
@@ -62,32 +80,44 @@ export async function notificarVendedoresDisponibles(supabase: SupabaseClient, m
   const destinatarios = candidatos.filter((p) => !noDisponibles.has(p.id));
   if (destinatarios.length === 0) return;
 
-  const { error } = await supabase.from("alertas").insert(
-    destinatarios.map((d) => ({ destinatario_id: d.id, tipo, titulo: mensaje, link, prioridad: "media" }))
-  );
-  if (error) registrarError("notificaciones:notificarVendedoresDisponibles", error, { tipo });
+  try {
+    await Promise.all(destinatarios.map((d) =>
+      crearAlerta(supabase, d.id, mensaje, { link, tipo, prioridad: "media", modulo: "leads", categoriaNotif: "leads" })
+    ));
+  } catch (error) {
+    registrarError("notificaciones:notificarVendedoresDisponibles", error, { tipo });
+  }
 }
 
 export async function notificarGestoria(supabase: SupabaseClient, mensaje: string, link: string, tipo: string = "movimiento_pendiente") {
   const { data: destinatarios } = await supabase.from("perfiles").select("id").or("roles.cs.{admin},roles.cs.{encargado},roles.cs.{gestoria}").eq("activo", true);
   if (!destinatarios || destinatarios.length === 0) return;
-  const { error } = await supabase.from("alertas").insert(
-    destinatarios.map((d) => ({ destinatario_id: d.id, tipo, titulo: mensaje, link, prioridad: "media" }))
-  );
-  if (error) registrarError("notificaciones:notificarGestoria", error, { tipo });
+  try {
+    await Promise.all(destinatarios.map((d) =>
+      crearAlerta(supabase, d.id, mensaje, { link, tipo, prioridad: "media", modulo: "gestoria", categoriaNotif: "gestoria" })
+    ));
+  } catch (error) {
+    registrarError("notificaciones:notificarGestoria", error, { tipo });
+  }
 }
 
 export async function notificarFinanzas(supabase: SupabaseClient, mensaje: string, link: string, tipo: string = "sobrante_registro") {
   const { data: destinatarios } = await supabase.from("perfiles").select("id").or("roles.cs.{admin},roles.cs.{finanzas}").eq("activo", true);
   if (!destinatarios || destinatarios.length === 0) return;
-  const { error } = await supabase.from("alertas").insert(
-    destinatarios.map((d) => ({ destinatario_id: d.id, tipo, titulo: mensaje, link, prioridad: "media" }))
-  );
-  if (error) registrarError("notificaciones:notificarFinanzas", error, { tipo });
+  try {
+    await Promise.all(destinatarios.map((d) =>
+      crearAlerta(supabase, d.id, mensaje, { link, tipo, prioridad: "media", modulo: "finanzas", categoriaNotif: "finanzas" })
+    ));
+  } catch (error) {
+    registrarError("notificaciones:notificarFinanzas", error, { tipo });
+  }
 }
 
-export async function notificarRespuestaPrecio(supabase: SupabaseClient, vendedorId: string | null, mensaje: string, link: string) {
+export async function notificarRespuestaPrecio(supabase: SupabaseClient, vendedorId: string | null, mensaje: string, link: string, opciones?: OpcionesNotif) {
   if (!vendedorId) return;
-  const { error } = await supabase.from("alertas").insert({ destinatario_id: vendedorId, tipo: "precio_confirmado_respuesta", titulo: mensaje, link, prioridad: "media" });
-  if (error) registrarError("notificaciones:notificarRespuestaPrecio", error, { vendedorId });
+  try {
+    await crearAlerta(supabase, vendedorId, mensaje, { link, tipo: "precio_confirmado_respuesta", prioridad: "media", modulo: opciones?.modulo, categoriaNotif: opciones?.categoriaNotif });
+  } catch (error) {
+    registrarError("notificaciones:notificarRespuestaPrecio", error, { vendedorId });
+  }
 }

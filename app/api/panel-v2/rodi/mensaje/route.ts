@@ -205,9 +205,9 @@ async function procesarMensaje({ sessionId, texto, origenPagina, nombre, telefon
     // consignación/permuta), que es un caso nuevo que ese trigger no conoce.
     if (sucursalElegida) {
       if (vendedorAsignado) {
-        notificarPersona(supabase, vendedorAsignado, "rodi_venta_zona", mensajeNoti, linkNoti).catch((err) => console.error("[rodi] error notificando handoff:", err));
+        notificarPersona(supabase, vendedorAsignado, "rodi_venta_zona", mensajeNoti, linkNoti, { categoriaNotif: "leads", modulo: "leads" }).catch((err) => console.error("[rodi] error notificando handoff:", err));
       } else {
-        notificarEncargados(supabase, mensajeNoti, linkNoti, "rodi_venta_zona", sucursalElegida.id, "alta").catch((err) => console.error("[rodi] error notificando zona:", err));
+        notificarEncargados(supabase, mensajeNoti, linkNoti, "rodi_venta_zona", sucursalElegida.id, "alta", { categoriaNotif: "leads", modulo: "leads" }).catch((err) => console.error("[rodi] error notificando zona:", err));
       }
     }
 
@@ -239,8 +239,8 @@ async function procesarMensaje({ sessionId, texto, origenPagina, nombre, telefon
       if (errorVisita) registrarError("api/panel/rodi/mensaje:crear-visita", errorVisita);
       else if (hayConflicto) {
         const mensajeConflicto = `⚠️ ${nombreCliente} agendó por Rodi a las ${datos_detectados.horario_visita} el ${fechaVisita} en ${sucursalVisita}, pero ese horario ya estaba ocupado. Reagendar una de las dos.`;
-        if (vendedorAsignado) notificarPersona(supabase, vendedorAsignado, "rodi_venta_zona", mensajeConflicto, "/panel/visitas").catch((err) => console.error("[rodi] error notificando conflicto de visita:", err));
-        else notificarEncargados(supabase, mensajeConflicto, "/panel/visitas", "rodi_venta_zona", sucursalElegida?.id, "alta").catch((err) => console.error("[rodi] error notificando conflicto de visita:", err));
+        if (vendedorAsignado) notificarPersona(supabase, vendedorAsignado, "rodi_venta_zona", mensajeConflicto, "/panel/visitas", { modulo: "visitas" }).catch((err) => console.error("[rodi] error notificando conflicto de visita:", err));
+        else notificarEncargados(supabase, mensajeConflicto, "/panel/visitas", "rodi_venta_zona", sucursalElegida?.id, "alta", { modulo: "visitas" }).catch((err) => console.error("[rodi] error notificando conflicto de visita:", err));
       }
     }
   }
