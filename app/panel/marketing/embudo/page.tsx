@@ -293,7 +293,7 @@ export default async function EmbudoPage({ searchParams }: { searchParams: Promi
               <Megaphone className="w-5 h-5" />
             </div>
             <h3 className="text-3xl font-black text-rose-700 dark:text-rose-300 mb-1">{pctConPauta}%</h3>
-            <p className="text-[11px] font-bold uppercase tracking-widest text-[#0145F2]">Estaban Publicados ({ventasConPauta})</p>
+            <p className="text-[11px] font-bold uppercase tracking-widest text-rose-500">Estaban Publicados ({ventasConPauta})</p>
           </div>
           <div className="bg-slate-50 dark:bg-white/5 border border-slate-100 dark:border-white/10 rounded-xl p-5 text-center">
             <div className="w-10 h-10 mx-auto bg-slate-200 dark:bg-white/10 text-slate-600 dark:text-slate-300 rounded-full flex items-center justify-center mb-3">

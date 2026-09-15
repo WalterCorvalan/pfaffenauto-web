@@ -40,7 +40,7 @@ export default async function ChatbotMetricasPage() {
   const tarjetas = [
     { label: "Conversaciones (7d)", valor: conversaciones7 ?? 0, icon: MessageCircle, color: "text-indigo-600" },
     { label: "Mensajes de clientes (7d)", valor: mensajesEntrantes7 ?? 0, icon: Bot, color: "text-emerald-600" },
-    { label: "Leads calientes (7d)", valor: calientes7 ?? 0, icon: Flame, color: "text-[#0145F2]" },
+    { label: "Leads calientes (7d)", valor: calientes7 ?? 0, icon: Flame, color: "text-rose-500" },
     { label: "Leads tibios (7d)", valor: tibios7 ?? 0, icon: Flame, color: "text-amber-500" },
     { label: "Pidieron humano (7d)", valor: handoffs7 ?? 0, icon: PhoneCall, color: "text-amber-600" },
     { label: "Tasa de derivación (histórico)", valor: `${pctHandoffGlobal}%`, icon: PhoneCall, color: "text-amber-600" },
