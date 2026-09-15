@@ -32,7 +32,8 @@ export default function ImprimirPresupuesto({ presupuesto: p, branding }: { pres
     await notificarRespuestaPrecio(
       supabase2, p.vendedor_id,
       cambio ? `${nombreEncargado} corrigió el precio del Presupuesto N° ${p.numero}: ahora es ${precioTexto}.` : `${nombreEncargado} confirmó el precio del Presupuesto N° ${p.numero}: ${precioTexto}.`,
-      `/panel/presupuestos/imprimir/${p.id}`
+      `/panel/presupuestos/imprimir/${p.id}`,
+      { categoriaNotif: "taller", modulo: "presupuestos" }
     );
 
     setPrecioArs(nuevoArs);

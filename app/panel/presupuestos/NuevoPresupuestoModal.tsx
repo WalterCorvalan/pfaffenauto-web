@@ -104,7 +104,9 @@ export default function NuevoPresupuestoModal({
           `${cliente.nombre} ${cliente.apellido || ""} — Presupuesto N° ${data.numero}: el vendedor no confirmó el precio ($${(Number(precioArs) || 0).toLocaleString("es-AR")}). Verificalo.`,
           `/panel/presupuestos/imprimir/${data.id}`,
           "precio_a_confirmar",
-          sucursalVendedor
+          sucursalVendedor,
+          "media",
+          { categoriaNotif: "taller", modulo: "presupuestos" }
         );
       }
 
