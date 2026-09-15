@@ -17,6 +17,7 @@ Esta pantalla (`EmpresaClient.tsx`) guarda varios toggles/config en `configuraci
 
 - `resumen_diario_activo` — no tenía ningún proceso que generara el resumen, hasta que se creó el cron `resumen-empresa` (ver `app/api/cron/panel-v2/resumen-empresa/route.ts`).
 - `cada_vendedor_ve_solo_sus_clientes` — no lo leía nadie, hasta que se agregó el filtro en `app/panel/clientes/page.tsx` (ver `app/panel/clientes/ARCHITECTURE.md`).
+- `pct_toma_consignacion` — el propio texto de ayuda de este campo dice "Sale en el listado de Cotizaciones... y en el PDF del presupuesto", pero `ModificarCotizacionModal.tsx` (donde se calcula la "toma sugerida" al aprobar una cotización con permuta) tenía el descuento hardcodeado en `0.85` (-15%) en 3 lugares, sin leer este setting para nada — corregido: ahora trae `pct_toma_consignacion` directo de `configuracion_empresa` (no vía el endpoint admin-only `/api/panel-v2/configuracion-empresa`, porque este modal también lo puede abrir un encargado no-admin) con fallback a 15 mientras carga.
 
 Si agregás un checkbox/setting nuevo acá, antes de darlo por terminado **verificá que algún query/proceso lo lea** — guardarlo en la tabla no alcanza.
 

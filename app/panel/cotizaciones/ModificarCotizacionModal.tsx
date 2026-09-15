@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { supabase2 } from "@/lib/supabase/client";
 import { X, CheckCircle2, XCircle, MessageCircle, Loader2 } from "lucide-react";
 
@@ -24,9 +24,20 @@ export default function ModificarCotizacionModal({ cotizacion: c, vendedorNombre
   const [moneda, setMoneda] = useState(c.moneda);
   const [mensaje, setMensaje] = useState("");
   const [guardando, setGuardando] = useState(false);
+  // Configuración → Empresa tiene "% toma de usado" (pct_toma_consignacion)
+  // justamente para esto -- acá estaba hardcodeado en 0.85 (-15%) sin leerlo,
+  // el mismo tipo de bug ya documentado 2 veces en configuracion/ARCHITECTURE.md
+  // (un setting que se guarda pero nada lo consume). 15 queda de fallback
+  // mientras carga o si la config no está disponible.
+  const [pctToma, setPctToma] = useState(15);
+  useEffect(() => {
+    supabase2.from("configuracion_empresa").select("pct_toma_consignacion").eq("id", true).maybeSingle()
+      .then(({ data }) => { if (data?.pct_toma_consignacion != null) setPctToma(Number(data.pct_toma_consignacion)); });
+  }, []);
 
   const tieneTomaVieja = c.permuta_marca || c.permuta_modelo || c.permuta_estado;
-  const tomaSugerida = Math.round((Number(precio) || 0) * 0.85);
+  const factorToma = 1 - pctToma / 100;
+  const tomaSugerida = Math.round((Number(precio) || 0) * factorToma);
   const precioDistinto = Number(precio) !== c.precio_sugerido;
 
   const decidir = async (accion: "aprobar" | "rechazar" | "info") => {
@@ -102,7 +113,7 @@ export default function ModificarCotizacionModal({ cotizacion: c, vendedorNombre
             <div className="bg-slate-50 dark:bg-white/5 rounded-xl p-3 mt-3">
               <p className="text-[10px] font-black uppercase tracking-widest text-slate-400">Valor cotizado por el vendedor</p>
               <p className="text-2xl font-black text-slate-900 dark:text-white">{c.moneda} {c.precio_sugerido.toLocaleString("es-AR")}</p>
-              {tieneTomaVieja && <p className="text-xs font-semibold text-indigo-600 dark:text-indigo-300 mt-0.5">Toma sugerida (-15%): {c.moneda} {Math.round(c.precio_sugerido * 0.85).toLocaleString("es-AR")}</p>}
+              {tieneTomaVieja && <p className="text-xs font-semibold text-indigo-600 dark:text-indigo-300 mt-0.5">Toma sugerida (-{pctToma}%): {c.moneda} {Math.round(c.precio_sugerido * factorToma).toLocaleString("es-AR")}</p>}
             </div>
           </div>
 
@@ -113,7 +124,7 @@ export default function ModificarCotizacionModal({ cotizacion: c, vendedorNombre
                 <input type="text" inputMode="numeric" value={precio} onChange={(e) => setPrecio(e.target.value.replace(/\D/g, ""))} className={`${inputClass} flex-1 min-w-0`} />
                 <select value={moneda} onChange={(e) => setMoneda(e.target.value)} className={`${inputClass} !w-20 shrink-0`}><option value="USD">USD</option><option value="ARS">ARS</option></select>
               </div>
-              {tieneTomaVieja && <p className="text-[11px] font-semibold text-indigo-600 dark:text-indigo-300 mt-1">Toma con este precio (-15%): {moneda} {tomaSugerida.toLocaleString("es-AR")}</p>}
+              {tieneTomaVieja && <p className="text-[11px] font-semibold text-indigo-600 dark:text-indigo-300 mt-1">Toma con este precio (-{pctToma}%): {moneda} {tomaSugerida.toLocaleString("es-AR")}</p>}
               <p className="text-[10px] text-slate-400 mt-1">Editalo si querés modificarlo. Si difiere, queda como Modificada.</p>
             </div>
             <div>
