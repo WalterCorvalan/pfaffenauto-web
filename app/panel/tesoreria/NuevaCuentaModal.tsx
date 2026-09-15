@@ -36,7 +36,7 @@ export default function NuevaCuentaModal({ sucursales }: { sucursales: any[] }) 
 
   return (
     <>
-      <button onClick={() => setIsOpen(true)} className="flex items-center gap-1.5 bg-rose-600 hover:bg-rose-700 text-white px-4 py-2.5 rounded-xl text-sm font-bold transition-colors shrink-0"><Plus className="w-4 h-4" /> Nueva Cuenta</button>
+      <button onClick={() => setIsOpen(true)} className="flex items-center gap-1.5 bg-[#0145F2] hover:bg-[#0138c9] text-white px-4 py-2.5 rounded-xl text-sm font-bold transition-colors shrink-0"><Plus className="w-4 h-4" /> Nueva Cuenta</button>
 
       {isOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/40 backdrop-blur-sm" onClick={() => setIsOpen(false)}>

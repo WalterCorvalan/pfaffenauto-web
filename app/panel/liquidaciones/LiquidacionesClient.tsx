@@ -106,7 +106,7 @@ export default function LiquidacionesClient({
           <span className="text-xs text-slate-400">Ingreso agencia (filtro): <b className="text-slate-700 dark:text-white">{gananciasOcultas ? "—" : fmt(ingresoAgenciaTotal)}</b></span>
           <button onClick={sync} disabled={sincronizando} className="flex items-center gap-1.5 px-3 py-2 text-xs font-bold border border-slate-200 dark:border-white/10 rounded-lg disabled:opacity-50"><RefreshCw className={`w-3.5 h-3.5 ${sincronizando ? "animate-spin" : ""}`} /> Sync con expedientes</button>
           {soyAdminOFinanzas && <button onClick={limpiarDuplicadas} disabled={limpiando} className="flex items-center gap-1.5 px-3 py-2 text-xs font-bold border border-slate-200 dark:border-white/10 rounded-lg disabled:opacity-50"><Trash2 className="w-3.5 h-3.5" /> Limpiar duplicadas</button>}
-          <button onClick={abrirNueva} className="flex items-center gap-1.5 px-4 py-2 text-sm font-bold bg-rose-600 hover:bg-rose-700 text-white rounded-lg"><Plus className="w-4 h-4" /> Nueva transferencia</button>
+          <button onClick={abrirNueva} className="flex items-center gap-1.5 px-4 py-2 text-sm font-bold bg-[#0145F2] hover:bg-[#0138c9] text-white rounded-lg"><Plus className="w-4 h-4" /> Nueva transferencia</button>
         </div>
       </div>
 

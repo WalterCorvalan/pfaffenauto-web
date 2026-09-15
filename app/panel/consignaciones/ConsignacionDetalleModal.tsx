@@ -258,7 +258,7 @@ export default function ConsignacionDetalleModal({ consignacionId, perfiles, cli
               {consignacion.estado !== "cancelado" && consignacion.estado !== "consignado" && (
                 <button onClick={cancelarConsignacion} className="flex items-center gap-1.5 px-3 py-2 text-xs font-bold bg-white dark:bg-white/5 border border-rose-200 dark:border-rose-500/20 text-rose-600 rounded-xl">Cancelar consignación</button>
               )}
-              <button onClick={() => setEditando(true)} className="flex items-center gap-1.5 px-4 py-2 rounded-xl bg-rose-600 hover:bg-rose-700 text-white text-xs font-bold">Editar</button>
+              <button onClick={() => setEditando(true)} className="flex items-center gap-1.5 px-4 py-2 rounded-xl bg-[#0145F2] hover:bg-[#0138c9] text-white text-xs font-bold">Editar</button>
               {soyAdmin && <button onClick={eliminar} className="px-3 py-2 text-xs font-bold text-rose-600">Eliminar</button>}
             </>
           )}

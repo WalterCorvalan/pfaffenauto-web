@@ -207,7 +207,7 @@ export default function CuotasTab({
                     <p className="text-lg font-black mt-1">{fmt(c.monto, c.moneda)}</p>
                     {c.monto_pagado > 0 && !c.pagada && <p className="text-[11px] text-slate-400">Pagado: {fmt(c.monto_pagado, c.moneda)}</p>}
                     <p className="text-[11px] text-slate-400">Vence: {c.vencimiento}</p>
-                    {!c.pagada && <button onClick={() => abrirPago(c, "pagar")} className="mt-2 flex items-center gap-1 px-2.5 py-1.5 text-[11px] font-bold bg-rose-600 hover:bg-rose-700 text-white rounded-lg"><DollarSign className="w-3.5 h-3.5" /> Pagar / parcial</button>}
+                    {!c.pagada && <button onClick={() => abrirPago(c, "pagar")} className="mt-2 flex items-center gap-1 px-2.5 py-1.5 text-[11px] font-bold bg-[#0145F2] hover:bg-[#0138c9] text-white rounded-lg"><DollarSign className="w-3.5 h-3.5" /> Pagar / parcial</button>}
                   </div>
                 );
               })}

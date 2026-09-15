@@ -72,7 +72,7 @@ export default function NuevoPeritajeModal({ leads }: { leads: Lead[] }) {
     <>
       <button
         onClick={() => setAbierto(true)}
-        className="flex items-center gap-1.5 px-4 py-2.5 text-sm font-bold bg-rose-600 hover:bg-rose-700 text-white rounded-xl transition-colors shrink-0"
+        className="flex items-center gap-1.5 px-4 py-2.5 text-sm font-bold bg-[#0145F2] hover:bg-[#0138c9] text-white rounded-xl transition-colors shrink-0"
       >
         <Plus className="w-4 h-4" /> Nuevo peritaje
       </button>
