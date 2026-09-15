@@ -209,7 +209,7 @@ export default function PeritajeClient({ peritaje, itemsIniciales }: { peritaje:
                         <button
                           onClick={() => fileInputsRef.current[item.id]?.click()}
                           disabled={subiendoFotoId === item.id}
-                          className="p-1.5 rounded-lg border border-slate-200 dark:border-white/10 text-slate-400 hover:text-[#0145F2] dark:hover:text-rose-400 hover:border-rose-300 dark:hover:border-rose-500/50 transition-colors disabled:opacity-50"
+                          className="p-1.5 rounded-lg border border-slate-200 dark:border-white/10 text-slate-400 hover:text-rose-600 dark:hover:text-rose-400 hover:border-rose-300 dark:hover:border-rose-500/50 transition-colors disabled:opacity-50"
                           title="Adjuntar foto"
                         >
                           {subiendoFotoId === item.id ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Paperclip className="w-3.5 h-3.5" />}
@@ -317,7 +317,7 @@ export default function PeritajeClient({ peritaje, itemsIniciales }: { peritaje:
                             <button
                               onClick={() => fileInputsRef.current[item.id]?.click()}
                               disabled={subiendoFotoId === item.id}
-                              className="p-1.5 rounded-lg border border-slate-200 dark:border-white/10 text-slate-400 hover:text-[#0145F2] dark:hover:text-rose-400 hover:border-rose-300 dark:hover:border-rose-500/50 transition-colors disabled:opacity-50"
+                              className="p-1.5 rounded-lg border border-slate-200 dark:border-white/10 text-slate-400 hover:text-rose-600 dark:hover:text-rose-400 hover:border-rose-300 dark:hover:border-rose-500/50 transition-colors disabled:opacity-50"
                               title="Adjuntar foto"
                             >
                               {subiendoFotoId === item.id ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Paperclip className="w-3.5 h-3.5" />}

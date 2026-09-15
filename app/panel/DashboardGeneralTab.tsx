@@ -134,7 +134,7 @@ export default function DashboardGeneralTab(props: Props) {
 
       <div className="rounded-2xl p-4 bg-white dark:bg-white/[0.02] border border-slate-200 dark:border-white/5 flex items-center justify-between flex-wrap gap-3">
         <div className="flex items-center gap-3">
-          <div className="w-9 h-9 rounded-xl bg-rose-50 dark:bg-rose-500/10 text-[#0145F2] dark:text-[#5b8dff] flex items-center justify-center"><Users className="w-4 h-4" /></div>
+          <div className="w-9 h-9 rounded-xl bg-rose-50 dark:bg-rose-500/10 text-rose-600 dark:text-rose-400 flex items-center justify-center"><Users className="w-4 h-4" /></div>
           <div>
             <p className="text-lg font-black text-slate-900 dark:text-white">{props.clientesIngresadosHoy}</p>
             <p className="text-[10px] font-bold uppercase tracking-widest text-slate-400">Clientes que ingresaron hoy{props.canalTop ? ` · mayoría por ${props.canalTop}` : ""}</p>

@@ -185,7 +185,7 @@ export default function CalendarioClient({ eventosIniciales, perfiles, miId }: {
                       key={iso}
                       onClick={() => setDiaSeleccionado(iso === diaSeleccionado ? null : iso)}
                       className={`aspect-square rounded-lg text-sm flex flex-col items-center justify-start p-1 transition-colors ${
-                        esSeleccionado ? "bg-[#0145F2] text-white font-bold" : esHoy ? "bg-rose-50 dark:bg-rose-500/10 text-[#0145F2] dark:text-[#5b8dff] font-bold" : "hover:bg-slate-50 dark:hover:bg-white/5 text-slate-700 dark:text-slate-300"
+                        esSeleccionado ? "bg-[#0145F2] text-white font-bold" : esHoy ? "bg-rose-50 dark:bg-rose-500/10 text-rose-600 dark:text-rose-400 font-bold" : "hover:bg-slate-50 dark:hover:bg-white/5 text-slate-700 dark:text-slate-300"
                       }`}
                     >
                       <span>{d.getDate()}</span>

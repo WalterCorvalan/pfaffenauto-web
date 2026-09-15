@@ -51,7 +51,7 @@ export default async function TesoreriaPage() {
           </div>
 
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-6">
-            <div className="relative overflow-hidden bg-gradient-to-br from-[#0145F2] to-rose-700 rounded-2xl p-6 text-white shadow-sm">
+            <div className="relative overflow-hidden bg-gradient-to-br from-rose-600 to-rose-700 rounded-2xl p-6 text-white shadow-sm">
               <Wallet className="w-24 h-24 absolute -right-4 -bottom-4 opacity-10" />
               <span className="text-[10px] uppercase tracking-widest font-bold text-rose-100">Saldo total en pesos</span>
               <h3 className="text-3xl font-black mt-1 font-mono">$ {saldoTotalArs.toLocaleString("es-AR")}</h3>
@@ -78,11 +78,11 @@ export default async function TesoreriaPage() {
                     <div className={`w-9 h-9 rounded-lg border flex items-center justify-center ${BADGE_TIPO[c.tipo] || BADGE_TIPO.Otro}`}><Icono className="w-4 h-4" /></div>
                     <div className="flex items-center gap-1.5">
                       <span className="text-[9px] font-bold uppercase tracking-widest text-slate-400 bg-slate-50 dark:bg-white/5 border border-slate-200 dark:border-white/10 px-2 py-0.5 rounded">{c.tipo}</span>
-                      <span className={`text-[9px] font-bold uppercase tracking-widest px-2 py-0.5 rounded border ${esUsd ? "text-emerald-600 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-500/10 border-emerald-100 dark:border-emerald-500/20" : "text-[#0145F2] dark:text-[#5b8dff] bg-rose-50 dark:bg-rose-500/10 border-rose-100 dark:border-rose-500/20"}`}>{c.moneda || "ARS"}</span>
+                      <span className={`text-[9px] font-bold uppercase tracking-widest px-2 py-0.5 rounded border ${esUsd ? "text-emerald-600 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-500/10 border-emerald-100 dark:border-emerald-500/20" : "text-rose-600 dark:text-rose-400 bg-rose-50 dark:bg-rose-500/10 border-rose-100 dark:border-rose-500/20"}`}>{c.moneda || "ARS"}</span>
                     </div>
                   </div>
                   <h3 className="font-bold text-[14px] text-slate-900 dark:text-white mb-1 truncate">{c.nombre}</h3>
-                  <p className={`text-xl font-black font-mono ${c.saldo >= 0 ? "text-slate-900 dark:text-white" : "text-[#0145F2]"}`}>{esUsd ? "US$" : "$"} {c.saldo.toLocaleString(esUsd ? "en-US" : "es-AR")}</p>
+                  <p className={`text-xl font-black font-mono ${c.saldo >= 0 ? "text-slate-900 dark:text-white" : "text-rose-600"}`}>{esUsd ? "US$" : "$"} {c.saldo.toLocaleString(esUsd ? "en-US" : "es-AR")}</p>
                   <div className="mt-3 h-1.5 bg-slate-100 dark:bg-white/5 rounded-full overflow-hidden">
                     <div className={`h-full rounded-full ${c.saldo < 0 ? "bg-rose-500" : esUsd ? "bg-emerald-500" : "bg-rose-400"}`} style={{ width: `${pct}%` }} />
                   </div>

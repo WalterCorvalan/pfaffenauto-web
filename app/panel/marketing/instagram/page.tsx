@@ -64,7 +64,7 @@ function inicioDia(offsetDias: number) {
 const ORIGEN_IA = "panel-v2/webhooks/instagram";
 
 const COLOR_SEMAFORO: Record<string, { borde: string; fondo: string; punto: string; texto: string }> = {
-  caliente: { borde: "border-rose-200 dark:border-rose-500/20", fondo: "bg-rose-50/60 dark:bg-rose-500/10", punto: "bg-rose-500", texto: "text-[#0145F2] dark:text-rose-300" },
+  caliente: { borde: "border-rose-200 dark:border-rose-500/20", fondo: "bg-rose-50/60 dark:bg-rose-500/10", punto: "bg-rose-500", texto: "text-rose-600 dark:text-rose-300" },
   tibio: { borde: "border-amber-200 dark:border-amber-500/20", fondo: "bg-amber-50/60 dark:bg-amber-500/10", punto: "bg-amber-500", texto: "text-amber-600 dark:text-amber-300" },
   frio: { borde: "border-slate-200 dark:border-white/10", fondo: "bg-white dark:bg-white/[0.02]", punto: "bg-slate-300 dark:bg-slate-600", texto: "text-slate-500 dark:text-slate-400" },
 };
@@ -110,7 +110,7 @@ export default async function InstagramMetricasPage() {
     { label: "Mensajes entrantes (7d)", valor: entrantes7 ?? 0, icon: ArrowDownToLine, color: "text-emerald-600" },
     { label: "Mensajes salientes (7d)", valor: salientes7 ?? 0, icon: ArrowUpFromLine, color: "text-blue-600" },
     { label: "Conversaciones nuevas (7d)", valor: conversacionesNuevas7 ?? 0, icon: Users, color: "text-purple-600" },
-    { label: "Leads calientes", valor: totalCalientes ?? 0, icon: Flame, color: "text-[#0145F2]" },
+    { label: "Leads calientes", valor: totalCalientes ?? 0, icon: Flame, color: "text-rose-600" },
     { label: "Leads tibios", valor: totalTibios ?? 0, icon: Flame, color: "text-amber-500" },
     { label: "Pidieron humano", valor: `${pctHandoff}%`, icon: PhoneCall, color: "text-amber-600" },
   ];

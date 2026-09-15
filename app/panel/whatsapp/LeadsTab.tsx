@@ -150,7 +150,7 @@ export default function LeadsTab({ conversacionesIniciales, vendedores, miId }: 
         <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-4">
           <div className="bg-white dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-2xl p-4"><p className="text-2xl font-black">{reportes.total}</p><p className="text-[10px] font-bold uppercase text-slate-400">Leads activos</p></div>
           <div className="bg-white dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-2xl p-4"><p className="text-2xl font-black">{conversaciones.filter((c) => !c.vendedor_id).length}</p><p className="text-[10px] font-bold uppercase text-slate-400">Sin asignar</p></div>
-          <div className="bg-rose-50 dark:bg-rose-500/10 border border-rose-200 dark:border-rose-500/20 rounded-2xl p-4"><p className="text-2xl font-black text-[#0145F2]">{reportes.sinCalif}</p><p className="text-[10px] font-bold uppercase text-rose-500">Sin calificar</p></div>
+          <div className="bg-rose-50 dark:bg-rose-500/10 border border-rose-200 dark:border-rose-500/20 rounded-2xl p-4"><p className="text-2xl font-black text-rose-600">{reportes.sinCalif}</p><p className="text-[10px] font-bold uppercase text-rose-500">Sin calificar</p></div>
           <div className="bg-white dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-2xl p-4"><p className="text-2xl font-black">{conversaciones.filter((c) => c.unread_count > 0).length}</p><p className="text-[10px] font-bold uppercase text-slate-400">Sin contactar</p></div>
 
           <div className="bg-white dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-2xl p-4 flex flex-col items-center">
