@@ -36,7 +36,7 @@ export default function PeritajesClient({ peritajes, leadsSinPeritaje }: { perit
                   {p.estado}
                 </span>
                 {p.puntaje !== null && (
-                  <span className={`text-sm font-black ${p.puntaje >= 70 ? "text-emerald-600 dark:text-emerald-400" : p.puntaje >= 40 ? "text-amber-600 dark:text-amber-400" : "text-[#0145F2] dark:text-[#5b8dff]"}`}>
+                  <span className={`text-sm font-black ${p.puntaje >= 70 ? "text-emerald-600 dark:text-emerald-400" : p.puntaje >= 40 ? "text-amber-600 dark:text-amber-400" : "text-rose-600 dark:text-rose-400"}`}>
                     {p.puntaje}%
                   </span>
                 )}

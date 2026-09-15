@@ -155,7 +155,7 @@ export default function PeritajeClient({ peritaje, itemsIniciales }: { peritaje:
         <div className="flex items-center gap-3">
           {puntaje !== null && (
             <div className="text-center">
-              <span className={`text-2xl font-black ${puntaje >= 70 ? "text-emerald-600 dark:text-emerald-400" : puntaje >= 40 ? "text-amber-600 dark:text-amber-400" : "text-[#0145F2] dark:text-[#5b8dff]"}`}>
+              <span className={`text-2xl font-black ${puntaje >= 70 ? "text-emerald-600 dark:text-emerald-400" : puntaje >= 40 ? "text-amber-600 dark:text-amber-400" : "text-rose-600 dark:text-rose-400"}`}>
                 {puntaje}%
               </span>
               <p className="text-[9px] font-bold uppercase tracking-widest text-slate-400">Puntaje</p>
