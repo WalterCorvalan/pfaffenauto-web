@@ -33,6 +33,10 @@ Guía para no romper otra cosa al tocar este módulo. Si cambiás algo acá, rev
 - El catálogo (`app/(public)/catalogo/`) hace sus propios queries a `vehiculos` — no reusa nada de `StockClient.tsx`. Ver `app/(public)/catalogo/ARCHITECTURE.md`.
 - Columnas expuestas al público: `lib/vehiculos.ts` → `CAMPOS_VEHICULO_PUBLICO`. **Nunca** usar `select("*")` en queries públicas — hay columnas internas (`precio_compra`, `precio_costo_ars/usd`, `observaciones_internas`, `vendedor_asignado_id`) que no deben viajar al cliente.
 
+## `ubicacion` — se carga vacío a propósito, tiene que ser nullable
+
+`vehiculos.ubicacion` se deja vacío al cargar un auto nuevo (se completa después, no es obligatorio en el alta). `NuevoVehiculoModal.tsx` ya manda `ubicacion: ubicacion || null`, pero la columna tenía una restricción `NOT NULL` en la base que lo rechazaba (`sql_vehiculos_ubicacion_nullable.sql` la saca). Si volvés a ver `null value in column "ubicacion" ... violates not-null constraint`, es porque esa migración no se corrió, no porque el formulario esté mal.
+
 ## No tocar sin revisar el resto
 
 - No confundir `publicado_ml` con "visible en la web" en ningún indicador nuevo — son conceptos distintos y ya generó un hallazgo de auditoría por la confusión.
