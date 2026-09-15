@@ -2,7 +2,7 @@ import { createClient } from "@supabase/supabase-js";
 import { crearAlerta } from "@/lib/panel/alertas";
 
 // Corre 1 vez por día vía pg_cron (mismo patrón que
-// app/api/cron/panel-v2/eventos/route.ts). Cubre dos cosas de "Mi Espacio"
+// app/api/cron/panel/eventos/route.ts). Cubre dos cosas de "Mi Espacio"
 // que se cargaban pero nunca avisaban nada:
 //   1) Calendario personal (espacio_eventos) -- respeta el "recordar antes"
 //      que el usuario elige al cargar el evento.

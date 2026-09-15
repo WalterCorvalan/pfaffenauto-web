@@ -133,7 +133,7 @@ export default function AgendarCitaForm() {
     try {
       const vehiculoSeleccionado = vehiculos.find((v) => v.id === vehiculoId);
 
-      const response = await fetch("/api/panel-v2/visitas", {
+      const response = await fetch("/api/panel/visitas", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({

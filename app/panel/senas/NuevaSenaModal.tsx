@@ -45,7 +45,7 @@ export default function NuevaSenaModal({
       const formData = new FormData();
       formData.append("file", file);
       formData.append("carpeta", "comprobantes");
-      const res = await fetch("/api/panel-v2/upload", { method: "POST", body: formData });
+      const res = await fetch("/api/panel/upload", { method: "POST", body: formData });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || "No se pudo subir el comprobante.");
       setComprobanteUrl(data.publicUrl);
@@ -237,7 +237,7 @@ export default function NuevaSenaModal({
         if (montoMovimiento > 0) {
           // Antes esto insertaba directo en movimientos_caja: quedaba en
           // estado "pendiente" por default de columna y no había forma de
-          // aprobarlo en ningún lado de panel-v2 — plata cobrada de verdad
+          // aprobarlo en ningún lado de panel — plata cobrada de verdad
           // que desaparecía para siempre de Finanzas. Ahora pasa por el RPC
           // (mismo motor que usa Finanzas), que la deja "aprobada" al toque
           // por ser un ingreso, y solo después completamos los campos

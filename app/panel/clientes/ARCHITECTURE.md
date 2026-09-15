@@ -25,4 +25,4 @@ La vista principal (`vista === "lista"`, la que ve todo el mundo al entrar) dej�
 ## No tocar sin revisar el resto
 
 - Si el toggle está prendido, `clientesIniciales` que llega a `ClientesClient.tsx` ya viene filtrado — no asumir que siempre es "todos los clientes" al usarlo para deduplicar o comparar.
-- **Eliminar un cliente ya no es un `DELETE` real** — es borrado lógico vía `POST /api/panel-v2/papelera`. Ver `app/panel/papelera/ARCHITECTURE.md`. No vuelvas a `supabase2.from("clientes").delete(...)` directo desde `ClientesClient.tsx`.
+- **Eliminar un cliente ya no es un `DELETE` real** — es borrado lógico vía `POST /api/panel/papelera`. Ver `app/panel/papelera/ARCHITECTURE.md`. No vuelvas a `supabase2.from("clientes").delete(...)` directo desde `ClientesClient.tsx`.

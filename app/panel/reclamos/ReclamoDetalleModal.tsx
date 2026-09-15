@@ -223,7 +223,7 @@ export default function ReclamoDetalleModal({ reclamoId, miId, perfiles, onClose
       const formData = new FormData();
       formData.append("file", file);
       formData.append("carpeta", "reclamos");
-      const res = await fetch("/api/panel-v2/upload", { method: "POST", body: formData });
+      const res = await fetch("/api/panel/upload", { method: "POST", body: formData });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || "Error subiendo el archivo");
       await supabase2.from("reclamo_adjuntos").insert({ reclamo_id: reclamoId, nombre: data.nombre || file.name, url: data.publicUrl, subido_por: miId });

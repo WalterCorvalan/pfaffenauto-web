@@ -66,7 +66,7 @@ export default function FloatingChatbot() {
     setLoading(true);
 
     try {
-      const res = await fetch("/api/panel-v2/rodi/mensaje", {
+      const res = await fetch("/api/panel/rodi/mensaje", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ sessionId: obtenerSessionId(), texto, origenPagina: pathname }),

@@ -170,7 +170,7 @@ export default function VenderForm() {
     setLoading(true);
 
     try {
-      const response = await fetch("/api/panel-v2/leads-tasacion", {
+      const response = await fetch("/api/panel/leads-tasacion", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({

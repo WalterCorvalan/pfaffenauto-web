@@ -102,7 +102,7 @@ export default function MovimientosTab({
         const formData = new FormData();
         formData.append("file", file);
         formData.append("carpeta", "finanzas");
-        const res = await fetch("/api/panel-v2/upload", { method: "POST", body: formData });
+        const res = await fetch("/api/panel/upload", { method: "POST", body: formData });
         const data = await res.json();
         if (res.ok) await supabase2.from("movimiento_comprobantes").insert({ movimiento_id: movId, url: data.publicUrl, nombre: file.name, subido_por: miId });
       }

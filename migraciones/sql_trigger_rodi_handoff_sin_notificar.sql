@@ -1,6 +1,6 @@
 -- trg_rodi_handoff notifica a un vendedor/encargado en CUALQUIER handoff,
 -- sin distinguir motivo. Con el nuevo caso "cliente ofensivo" (bot se pausa
--- solo, sin avisarle a nadie -- ver app/api/panel-v2/rodi/mensaje/route.ts,
+-- solo, sin avisarle a nadie -- ver app/api/panel/rodi/mensaje/route.ts,
 -- campo pausar_sin_notificar), este trigger seguía notificando igual porque
 -- no sabía de ese caso. Se agrega el corte temprano correspondiente.
 

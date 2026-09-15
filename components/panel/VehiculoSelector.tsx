@@ -69,7 +69,7 @@ export default function VehiculoSelector({
     if (!sucursalId) return alert("Elegí la sucursal antes de cargar el vehículo.");
     setGuardandoManual(true);
     try {
-      const res = await fetch("/api/panel-v2/vehiculos/crear-incompleto", {
+      const res = await fetch("/api/panel/vehiculos/crear-incompleto", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({

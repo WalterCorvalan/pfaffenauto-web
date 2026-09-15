@@ -25,7 +25,7 @@ export default function EmpresaClient() {
 
   const cargar = async () => {
     setCargando(true);
-    const res = await fetch("/api/panel-v2/modulos");
+    const res = await fetch("/api/panel/modulos");
     const data = await res.json();
     if (res.ok) { setModulos(data.modulos); setVisibilidad(data.visibilidad); setPermisoVerLiquidacion(data.permisoVerLiquidacion || []); }
     else setError(data.error || "No se pudo cargar.");
@@ -36,7 +36,7 @@ export default function EmpresaClient() {
 
   const toggleModulo = async (modulo: string, activo: boolean) => {
     setModulos((prev) => prev.map((m) => (m.modulo === modulo ? { ...m, activo } : m)));
-    await fetch("/api/panel-v2/modulos", { method: "PATCH", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ tipo: "modulo", modulo, activo }) });
+    await fetch("/api/panel/modulos", { method: "PATCH", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ tipo: "modulo", modulo, activo }) });
   };
 
   const esVisible = (modulo: string, sector: string) => {
@@ -52,7 +52,7 @@ export default function EmpresaClient() {
         ? prev.map((v) => (v.modulo === modulo && v.sector === sector ? { ...v, visible: nuevoValor } : v))
         : [...prev, { modulo, sector, visible: nuevoValor }];
     });
-    await fetch("/api/panel-v2/modulos", { method: "PATCH", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ tipo: "visibilidad", modulo, sector, visible: nuevoValor }) });
+    await fetch("/api/panel/modulos", { method: "PATCH", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ tipo: "visibilidad", modulo, sector, visible: nuevoValor }) });
   };
 
   const puedeVerLiquidacion = (rol: string) => permisoVerLiquidacion.find((p) => p.rol === rol)?.otorgado ?? false;
@@ -60,7 +60,7 @@ export default function EmpresaClient() {
   const toggleVerLiquidacion = async (rol: string) => {
     const nuevoValor = !puedeVerLiquidacion(rol);
     setPermisoVerLiquidacion((prev) => prev.map((p) => (p.rol === rol ? { ...p, otorgado: nuevoValor } : p)));
-    await fetch("/api/panel-v2/modulos", { method: "PATCH", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ tipo: "permiso_ver_liquidacion", rol, otorgado: nuevoValor }) });
+    await fetch("/api/panel/modulos", { method: "PATCH", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ tipo: "permiso_ver_liquidacion", rol, otorgado: nuevoValor }) });
   };
 
   return (
@@ -174,7 +174,7 @@ function ComisionesConfig() {
 
   const cargar = async () => {
     setCargando(true);
-    const res = await fetch("/api/panel-v2/configuracion-empresa");
+    const res = await fetch("/api/panel/configuracion-empresa");
     const data = await res.json();
     if (res.ok) setConfig(data.config);
     setCargando(false);
@@ -188,7 +188,7 @@ function ComisionesConfig() {
     setConfig(actualizado);
     setGuardando(true);
     setMensaje("");
-    const res = await fetch("/api/panel-v2/configuracion-empresa", { method: "PATCH", headers: { "Content-Type": "application/json" }, body: JSON.stringify(patch) });
+    const res = await fetch("/api/panel/configuracion-empresa", { method: "PATCH", headers: { "Content-Type": "application/json" }, body: JSON.stringify(patch) });
     const data = await res.json();
     setGuardando(false);
     setMensaje(res.ok ? "Guardado." : data.error || "No se pudo guardar.");
@@ -307,7 +307,7 @@ function PlazosConfig() {
 
   const cargar = async () => {
     setCargando(true);
-    const res = await fetch("/api/panel-v2/configuracion-empresa");
+    const res = await fetch("/api/panel/configuracion-empresa");
     const data = await res.json();
     if (res.ok) setConfig(data.config);
     setCargando(false);
@@ -319,7 +319,7 @@ function PlazosConfig() {
     if (!config) return;
     setConfig({ ...config, ...patch });
     setMensaje("");
-    const res = await fetch("/api/panel-v2/configuracion-empresa", { method: "PATCH", headers: { "Content-Type": "application/json" }, body: JSON.stringify(patch) });
+    const res = await fetch("/api/panel/configuracion-empresa", { method: "PATCH", headers: { "Content-Type": "application/json" }, body: JSON.stringify(patch) });
     const data = await res.json();
     setMensaje(res.ok ? "Guardado." : data.error || "No se pudo guardar.");
     setTimeout(() => setMensaje(""), 2000);
@@ -407,7 +407,7 @@ function LeadRoutingConfig() {
   const cargar = async () => {
     setCargando(true);
     const [resConfig, { data: perfiles }, { data: disponibilidad }] = await Promise.all([
-      fetch("/api/panel-v2/configuracion-empresa").then((r) => r.json()),
+      fetch("/api/panel/configuracion-empresa").then((r) => r.json()),
       supabase2.from("perfiles").select("id, nombre, roles").eq("activo", true).order("nombre"),
       supabase2.from("disponibilidad_vendedor").select("vendedor_id, recibir_leads"),
     ]);
@@ -423,7 +423,7 @@ function LeadRoutingConfig() {
     if (!config) return;
     setConfig({ ...config, ...patch });
     setMensaje("");
-    const res = await fetch("/api/panel-v2/configuracion-empresa", { method: "PATCH", headers: { "Content-Type": "application/json" }, body: JSON.stringify(patch) });
+    const res = await fetch("/api/panel/configuracion-empresa", { method: "PATCH", headers: { "Content-Type": "application/json" }, body: JSON.stringify(patch) });
     const data = await res.json();
     setMensaje(res.ok ? "Guardado." : data.error || "No se pudo guardar.");
     setTimeout(() => setMensaje(""), 2000);
@@ -499,7 +499,7 @@ function useConfigEmpresa() {
 
   const cargar = async () => {
     setCargando(true);
-    const res = await fetch("/api/panel-v2/configuracion-empresa");
+    const res = await fetch("/api/panel/configuracion-empresa");
     const data = await res.json();
     if (res.ok) setConfig(data.config);
     else setMensaje(data.error || "No se pudo cargar.");
@@ -512,7 +512,7 @@ function useConfigEmpresa() {
     if (!config) return;
     setConfig({ ...config, ...patch });
     setMensaje("");
-    const res = await fetch("/api/panel-v2/configuracion-empresa", { method: "PATCH", headers: { "Content-Type": "application/json" }, body: JSON.stringify(patch) });
+    const res = await fetch("/api/panel/configuracion-empresa", { method: "PATCH", headers: { "Content-Type": "application/json" }, body: JSON.stringify(patch) });
     const data = await res.json();
     setMensaje(res.ok ? "Guardado." : data.error || "No se pudo guardar.");
     setTimeout(() => setMensaje(""), 2000);
@@ -597,7 +597,7 @@ function BrandingConfig() {
       const formData = new FormData();
       formData.append("file", file);
       formData.append("carpeta", "branding");
-      const res = await fetch("/api/panel-v2/upload", { method: "POST", body: formData });
+      const res = await fetch("/api/panel/upload", { method: "POST", body: formData });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || "Error subiendo el logo");
       await guardar({ branding_logo_url: data.publicUrl });

@@ -252,7 +252,7 @@ export default function ExpedienteDetalleModal({ expedienteId, miId, perfiles, s
       const formData = new FormData();
       formData.append("file", file);
       formData.append("carpeta", "expedientes");
-      const res = await fetch("/api/panel-v2/upload", { method: "POST", body: formData });
+      const res = await fetch("/api/panel/upload", { method: "POST", body: formData });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || "Error subiendo el archivo");
       await supabase2.from("expediente_checklist").update({ archivo_url: data.publicUrl, completado: true, completado_en: new Date().toISOString(), completado_por: miId }).eq("id", item.id);
@@ -270,7 +270,7 @@ export default function ExpedienteDetalleModal({ expedienteId, miId, perfiles, s
       const formData = new FormData();
       formData.append("file", file);
       formData.append("carpeta", "expedientes");
-      const res = await fetch("/api/panel-v2/upload", { method: "POST", body: formData });
+      const res = await fetch("/api/panel/upload", { method: "POST", body: formData });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || "Error subiendo el archivo");
       const { data: upd } = await supabase2.from("expedientes").update({ titulo_transferido_url: data.publicUrl }).eq("id", expedienteId).select("*, venta:ventas(*)").single();
@@ -288,7 +288,7 @@ export default function ExpedienteDetalleModal({ expedienteId, miId, perfiles, s
       const formData = new FormData();
       formData.append("file", file);
       formData.append("carpeta", "expedientes");
-      const res = await fetch("/api/panel-v2/upload", { method: "POST", body: formData });
+      const res = await fetch("/api/panel/upload", { method: "POST", body: formData });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || "Error subiendo el archivo");
       const { data: upd, error } = await supabase2.from("expedientes").update({ arancel_comprobante_url: data.publicUrl }).eq("id", expedienteId).select("*, venta:ventas(*)").single();
@@ -307,7 +307,7 @@ export default function ExpedienteDetalleModal({ expedienteId, miId, perfiles, s
       const formData = new FormData();
       formData.append("file", file);
       formData.append("carpeta", "expedientes");
-      const res = await fetch("/api/panel-v2/upload", { method: "POST", body: formData });
+      const res = await fetch("/api/panel/upload", { method: "POST", body: formData });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || "Error subiendo el archivo");
       const { data: upd, error } = await supabase2.from("expedientes").update({ registro_datos_bancarios_url: data.publicUrl }).eq("id", expedienteId).select("*, venta:ventas(*)").single();
@@ -345,7 +345,7 @@ export default function ExpedienteDetalleModal({ expedienteId, miId, perfiles, s
       const formData = new FormData();
       formData.append("file", file);
       formData.append("carpeta", "expedientes");
-      const res = await fetch("/api/panel-v2/upload", { method: "POST", body: formData });
+      const res = await fetch("/api/panel/upload", { method: "POST", body: formData });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || "Error subiendo el archivo");
       const { data: doc } = await supabase2.from("expediente_documentos").insert({ expediente_id: expedienteId, nombre: file.name, url: data.publicUrl, tipo: "comprobante_transferencia", subido_por: miId }).select().single();
@@ -363,7 +363,7 @@ export default function ExpedienteDetalleModal({ expedienteId, miId, perfiles, s
       const formData = new FormData();
       formData.append("file", file);
       formData.append("carpeta", "expedientes");
-      const res = await fetch("/api/panel-v2/upload", { method: "POST", body: formData });
+      const res = await fetch("/api/panel/upload", { method: "POST", body: formData });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || "Error subiendo el archivo");
       const { data: doc } = await supabase2.from("expediente_documentos").insert({ expediente_id: expedienteId, nombre: file.name, url: data.publicUrl, tipo: "duplicado", subido_por: miId }).select().single();

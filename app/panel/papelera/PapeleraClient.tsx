@@ -53,14 +53,14 @@ export default function PapeleraClient() {
   const [ocupadoId, setOcupadoId] = useState<string | null>(null);
 
   const cargarConteos = useCallback(async () => {
-    const res = await fetch("/api/panel-v2/papelera");
+    const res = await fetch("/api/panel/papelera");
     const data = await res.json();
     if (res.ok) setConteos(data.conteos);
   }, []);
 
   const cargarItems = useCallback(async (t: Tipo) => {
     setCargando(true);
-    const res = await fetch(`/api/panel-v2/papelera?tipo=${t}`);
+    const res = await fetch(`/api/panel/papelera?tipo=${t}`);
     const data = await res.json();
     if (res.ok) setItems(data.items);
     setCargando(false);
@@ -77,7 +77,7 @@ export default function PapeleraClient() {
 
   const restaurar = async (id: string) => {
     setOcupadoId(id);
-    const res = await fetch("/api/panel-v2/papelera", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ accion: "restaurar", tipo: tab, id }) });
+    const res = await fetch("/api/panel/papelera", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ accion: "restaurar", tipo: tab, id }) });
     setOcupadoId(null);
     if (!res.ok) { alert("No se pudo restaurar."); return; }
     setItems((prev) => prev.filter((i) => i.id !== id));
@@ -87,7 +87,7 @@ export default function PapeleraClient() {
   const eliminarDefinitivo = async (id: string) => {
     if (!confirm("¿Eliminar definitivamente? Esto no se puede deshacer, ni siquiera desde acá.")) return;
     setOcupadoId(id);
-    const res = await fetch("/api/panel-v2/papelera", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ accion: "eliminar_definitivo", tipo: tab, id }) });
+    const res = await fetch("/api/panel/papelera", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ accion: "eliminar_definitivo", tipo: tab, id }) });
     setOcupadoId(null);
     if (!res.ok) { alert("No se pudo eliminar."); return; }
     setItems((prev) => prev.filter((i) => i.id !== id));

@@ -5,7 +5,7 @@ import { supabase2 } from "@/lib/supabase/client";
 import { Eraser, Check, Loader2, PenLine } from "lucide-react";
 
 // Firma digital genérica: el cliente firma con el dedo/mouse sobre un canvas,
-// se sube como PNG (/api/panel-v2/upload) y se guarda la URL en la columna
+// se sube como PNG (/api/panel/upload) y se guarda la URL en la columna
 // que le pases. Reusable para señas/presupuestos.
 export default function FirmaCanvas({
   tabla, id, firmaUrlActual, onGuardada, campo = "firma_url",
@@ -81,7 +81,7 @@ export default function FirmaCanvas({
       const formData = new FormData();
       formData.append("file", blob, `firma-${id}.png`);
       formData.append("carpeta", "firmas");
-      const res = await fetch("/api/panel-v2/upload", { method: "POST", body: formData });
+      const res = await fetch("/api/panel/upload", { method: "POST", body: formData });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || "No se pudo subir la firma.");
 

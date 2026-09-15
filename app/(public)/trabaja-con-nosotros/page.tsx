@@ -99,7 +99,7 @@ export default function TrabajaConNosotrosPage() {
       const publicUrlData = { publicUrl: uploadData.publicUrl };
 
       // 2. Guardar los datos vía API (Turnstile + zod + rate limit del lado servidor)
-      const response = await fetch("/api/panel-v2/postulaciones", {
+      const response = await fetch("/api/panel/postulaciones", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({

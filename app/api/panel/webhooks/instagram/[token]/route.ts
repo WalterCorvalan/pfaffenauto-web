@@ -7,8 +7,8 @@ import { decrypt } from "@/lib/crypto";
 import { rateLimit, ipDesdeRequest } from "@/lib/rateLimit";
 import { registrarError } from "@/lib/panel/logger";
 
-// Webhook de Meta para el Instagram de panel-v2 (Conversaciones → Instagram),
-// mismo patrón que /api/panel-v2/webhooks/whatsapp: comentario en un post →
+// Webhook de Meta para el Instagram de panel (Conversaciones → Instagram),
+// mismo patrón que /api/panel/webhooks/whatsapp: comentario en un post →
 // respuesta privada automática, y a partir de ahí sigue como DM normal
 // atendido por el mismo agente (agenteV2). Credenciales cifradas en
 // instagram_configuracion (Configuración → Instagram), no en env vars.
@@ -225,7 +225,7 @@ async function ejecutarAgente(conversacionId: string, igUserId: string) {
   const { data: mensajes } = await supabase.from("instagram_mensajes").select("direccion, texto").eq("conversacion_id", conversacionId).order("created_at", { ascending: true }).limit(20);
   const historial = (mensajes ?? []).filter((m) => m.texto).map((m) => ({ role: (m.direccion === "in" ? "user" : "assistant") as "user" | "assistant", content: m.texto as string }));
 
-  const result = await generarRespuestaAgenteV2(historial, "panel-v2/webhooks/instagram");
+  const result = await generarRespuestaAgenteV2(historial, "panel/webhooks/instagram");
   const { data: config } = await supabase.from("instagram_configuracion").select("*").eq("id", true).single();
 
   if (!result.ok) {

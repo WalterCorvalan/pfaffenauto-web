@@ -17,7 +17,7 @@ import { registrarError } from "@/lib/panel/logger";
 // (ver comentarios en lib/ads/*.ts) — no rompe nada mientras falten keys.
 //
 // Pensado para correr cada 1-2hs vía pg_cron (mismo patrón que
-// /api/cron/panel-v2/automatizaciones), para que el gasto del día se vea
+// /api/cron/panel/automatizaciones), para que el gasto del día se vea
 // actualizado sin esperar al cierre del día.
 
 const supabase = createClient(
@@ -40,7 +40,7 @@ export async function GET(req: Request) {
 
   for (const r of resultados) {
     if (r.configurado && !r.ok) {
-      registrarError(`api/cron/panel-v2/pautas ${r.plataforma}`, new Error(r.error || "error desconocido"));
+      registrarError(`api/cron/panel/pautas ${r.plataforma}`, new Error(r.error || "error desconocido"));
     }
   }
 

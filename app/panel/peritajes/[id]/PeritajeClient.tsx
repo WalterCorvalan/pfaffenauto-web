@@ -103,7 +103,7 @@ export default function PeritajeClient({ peritaje, itemsIniciales }: { peritaje:
       const formData = new FormData();
       formData.append("file", file);
       formData.append("carpeta", "peritajes");
-      const res = await fetch("/api/panel-v2/upload", { method: "POST", body: formData });
+      const res = await fetch("/api/panel/upload", { method: "POST", body: formData });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || "Error al subir la foto.");
       await actualizarItem(itemId, { foto_url: data.publicUrl });

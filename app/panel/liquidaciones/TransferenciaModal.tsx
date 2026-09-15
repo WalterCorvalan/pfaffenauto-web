@@ -108,7 +108,7 @@ export default function TransferenciaModal({
     const formData = new FormData();
     formData.append("file", file);
     formData.append("carpeta", carpeta);
-    const res = await fetch("/api/panel-v2/upload", { method: "POST", body: formData });
+    const res = await fetch("/api/panel/upload", { method: "POST", body: formData });
     const data = await res.json();
     if (!res.ok) throw new Error(data.error || "No se pudo subir el archivo.");
     return data.publicUrl as string;

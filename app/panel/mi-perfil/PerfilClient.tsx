@@ -20,7 +20,7 @@ export default function PerfilClient({ miId }: { miId: string }) {
   const [mensaje, setMensaje] = useState<{ tipo: "ok" | "error"; texto: string } | null>(null);
 
   useEffect(() => {
-    fetch("/api/panel-v2/perfil").then((r) => r.json()).then(({ perfil }) => {
+    fetch("/api/panel/perfil").then((r) => r.json()).then(({ perfil }) => {
       setNombre(perfil?.nombre || "");
       setWhatsapp(perfil?.whatsapp || "");
       setEmail(perfil?.email || "");
@@ -37,7 +37,7 @@ export default function PerfilClient({ miId }: { miId: string }) {
     try {
       const formData = new FormData();
       formData.append("file", file);
-      const res = await fetch("/api/panel-v2/perfil/foto", { method: "POST", body: formData });
+      const res = await fetch("/api/panel/perfil/foto", { method: "POST", body: formData });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || "Error al subir la foto.");
       setFotoUrl(data.publicUrl);
@@ -53,7 +53,7 @@ export default function PerfilClient({ miId }: { miId: string }) {
     setGuardando(true);
     setMensaje(null);
     try {
-      const res = await fetch("/api/panel-v2/perfil", {
+      const res = await fetch("/api/panel/perfil", {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ nombre: nombre.trim(), whatsapp: whatsapp.replace(/\D/g, "") || null }),

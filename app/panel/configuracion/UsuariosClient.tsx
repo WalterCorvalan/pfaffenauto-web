@@ -35,7 +35,7 @@ export default function UsuariosClient() {
   const cargar = async () => {
     setCargando(true);
     const [res, { data: sucursalesData }] = await Promise.all([
-      fetch("/api/panel-v2/usuarios"),
+      fetch("/api/panel/usuarios"),
       supabase2.from("sucursales").select("id, nombre").order("nombre"),
     ]);
     const data = await res.json();
@@ -51,7 +51,7 @@ export default function UsuariosClient() {
     if (!confirm(`¿Eliminar a ${u.nombre}? Esta acción no se puede deshacer.`)) return;
     setEliminandoId(u.id);
     try {
-      const res = await fetch(`/api/panel-v2/usuarios?id=${u.id}`, { method: "DELETE" });
+      const res = await fetch(`/api/panel/usuarios?id=${u.id}`, { method: "DELETE" });
       const data = await res.json();
       if (!res.ok) return alert(data.error || "No se pudo eliminar.");
       await cargar();
@@ -61,13 +61,13 @@ export default function UsuariosClient() {
   };
 
   const toggleActivo = async (u: Usuario) => {
-    await fetch("/api/panel-v2/usuarios", { method: "PATCH", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ id: u.id, activo: !u.activo }) });
+    await fetch("/api/panel/usuarios", { method: "PATCH", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ id: u.id, activo: !u.activo }) });
     setUsuarios((prev) => prev.map((x) => (x.id === u.id ? { ...x, activo: !u.activo } : x)));
   };
 
   const cambiarSucursal = async (u: Usuario, sucursalId: string) => {
     setGuardandoSucursal(true);
-    await fetch("/api/panel-v2/usuarios", { method: "PATCH", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ id: u.id, sucursal_id: sucursalId || null }) });
+    await fetch("/api/panel/usuarios", { method: "PATCH", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ id: u.id, sucursal_id: sucursalId || null }) });
     setUsuarios((prev) => prev.map((x) => (x.id === u.id ? { ...x, sucursal_id: sucursalId || null } : x)));
     setGuardandoSucursal(false);
     setEditandoSucursalId(null);
@@ -248,7 +248,7 @@ function ModalNuevoUsuario({ sucursales, onClose, onSaved }: { sucursales: Sucur
     if (password.length < 6) return setError("La contraseña necesita al menos 6 caracteres.");
     setGuardando(true);
     setError("");
-    const res = await fetch("/api/panel-v2/usuarios", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ email, password, nombre, roles, sucursal_id: sucursalId || null, whatsapp: whatsapp.replace(/\D/g, "") || null }) });
+    const res = await fetch("/api/panel/usuarios", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ email, password, nombre, roles, sucursal_id: sucursalId || null, whatsapp: whatsapp.replace(/\D/g, "") || null }) });
     const data = await res.json();
     if (!res.ok) { setError(data.error || "No se pudo crear."); setGuardando(false); return; }
     onSaved();
@@ -314,7 +314,7 @@ function ModalEditarUsuario({ usuario, sucursales, onClose, onSaved }: { usuario
   const guardar = async () => {
     if (!nombre || roles.length === 0) return setError("Completá nombre y al menos un rol.");
     setGuardando(true);
-    const res = await fetch("/api/panel-v2/usuarios", { method: "PATCH", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ id: usuario.id, nombre, roles, sucursal_id: sucursalId || null, whatsapp: whatsapp.replace(/\D/g, "") || null }) });
+    const res = await fetch("/api/panel/usuarios", { method: "PATCH", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ id: usuario.id, nombre, roles, sucursal_id: sucursalId || null, whatsapp: whatsapp.replace(/\D/g, "") || null }) });
     const data = await res.json();
     if (!res.ok) { setError(data.error || "No se pudo guardar."); setGuardando(false); return; }
     onSaved();

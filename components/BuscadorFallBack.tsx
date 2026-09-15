@@ -66,7 +66,7 @@ export default function BuscadorFallback({ isOpen, onClose, busquedaPrevia = "" 
     setError("");
 
     try {
-      const res = await fetch("/api/panel-v2/pedidos", {
+      const res = await fetch("/api/panel/pedidos", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ turnstileToken, nombre, telefono, busqueda }),

@@ -132,7 +132,7 @@ export default function ConfiguracionWhatsappClient() {
 
   const cargar = async () => {
     setCargando(true);
-    const res = await fetch("/api/panel-v2/whatsapp/configuracion");
+    const res = await fetch("/api/panel/whatsapp/configuracion");
     const data = await res.json();
     if (res.ok) {
       setConfig(data.config);
@@ -152,7 +152,7 @@ export default function ConfiguracionWhatsappClient() {
     setGuardando(true);
     setMensaje("");
     try {
-      const res = await fetch("/api/panel-v2/whatsapp/configuracion", {
+      const res = await fetch("/api/panel/whatsapp/configuracion", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ phoneNumberId, wabaId, accessToken, botNombre, tono, horarioInicio, horarioFin }),
@@ -173,7 +173,7 @@ export default function ConfiguracionWhatsappClient() {
     if (!confirm("¿Regenerar el Verify Token? Vas a tener que actualizarlo también en el dashboard de Meta.")) return;
     setGuardando(true);
     try {
-      const res = await fetch("/api/panel-v2/whatsapp/configuracion", {
+      const res = await fetch("/api/panel/whatsapp/configuracion", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ phoneNumberId, accessToken: "", botNombre, regenerarVerifyToken: true }),
@@ -193,7 +193,7 @@ export default function ConfiguracionWhatsappClient() {
 
   if (cargando) return <div className="p-6 flex justify-center"><Loader2 className="w-5 h-5 animate-spin text-slate-400" /></div>;
 
-  const webhookUrl = config?.webhook_verify_token ? `${typeof window !== "undefined" ? window.location.origin : ""}/api/panel-v2/webhooks/whatsapp/${config.webhook_verify_token}` : "";
+  const webhookUrl = config?.webhook_verify_token ? `${typeof window !== "undefined" ? window.location.origin : ""}/api/panel/webhooks/whatsapp/${config.webhook_verify_token}` : "";
 
   return (
     <div className="p-6 max-w-6xl mx-auto space-y-5">
@@ -326,7 +326,7 @@ function PlantillasWhatsapp() {
 
   const cargar = async () => {
     setCargando(true);
-    const res = await fetch("/api/panel-v2/whatsapp/templates");
+    const res = await fetch("/api/panel/whatsapp/templates");
     const data = await res.json();
     if (res.ok) setPlantillas(data.templates || []);
     setCargando(false);
@@ -337,7 +337,7 @@ function PlantillasWhatsapp() {
     setSincronizando(true);
     setError("");
     try {
-      const res = await fetch("/api/panel-v2/whatsapp/templates/sync", { method: "POST" });
+      const res = await fetch("/api/panel/whatsapp/templates/sync", { method: "POST" });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error);
       await cargar();
@@ -358,7 +358,7 @@ function PlantillasWhatsapp() {
     setCreando(true);
     setError("");
     try {
-      const res = await fetch("/api/panel-v2/whatsapp/templates", {
+      const res = await fetch("/api/panel/whatsapp/templates", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(nueva),

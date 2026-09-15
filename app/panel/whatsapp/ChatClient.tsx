@@ -34,7 +34,7 @@ export default function ChatClient({
   const setConversaciones = canal === "whatsapp" ? setConversacionesWA : setConversacionesIG;
   const tablaConversaciones = canal === "whatsapp" ? "whatsapp_conversaciones" : "instagram_conversaciones";
   const tablaMensajes = canal === "whatsapp" ? "whatsapp_mensajes" : "instagram_mensajes";
-  const endpointEnviar = canal === "whatsapp" ? "/api/panel-v2/whatsapp/enviar" : "/api/panel-v2/instagram/enviar";
+  const endpointEnviar = canal === "whatsapp" ? "/api/panel/whatsapp/enviar" : "/api/panel/instagram/enviar";
   const [seleccionada, setSeleccionada] = useState<string | null>(null);
   const [mensajes, setMensajes] = useState<any[]>([]);
   const [nuevoMensaje, setNuevoMensaje] = useState("");
@@ -147,7 +147,7 @@ export default function ChatClient({
     if (!seleccionada || !templateElegido) return;
     setEnviandoPlantilla(true);
     try {
-      const res = await fetch("/api/panel-v2/whatsapp/enviar-plantilla", {
+      const res = await fetch("/api/panel/whatsapp/enviar-plantilla", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ conversacionId: seleccionada, templateId: templateElegido, variable: variablePlantilla || undefined }),
