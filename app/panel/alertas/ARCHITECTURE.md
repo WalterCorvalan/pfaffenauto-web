@@ -27,6 +27,16 @@ Además de los cron jobs, algunas pantallas avisan apenas pasa algo, sin esperar
 
 Si agregás un aviso "en el momento" nuevo para algo que un staff crea manualmente (no un lead público), seguí el patrón de cotización/consignación/pedido: avisar a admin/encargados, no al creador — y filtrar `.neq("id", miId)` para no auto-notificarse.
 
+## `lib/panel/notificaciones.ts` — sistema paralelo que bypasea las preferencias (deuda grande, no un bug de línea)
+
+Existe un segundo archivo de helpers de notificación, `lib/panel/notificaciones.ts` (`notificarPersona`, `notificarEncargados`, `notificarVendedoresDisponibles`, `notificarGestoria`, `notificarFinanzas`, `notificarRespuestaPrecio`), heredado de v1 ("Equivalentes de lib/notificaciones.ts (v1)", según su propio comentario de cabecera). **Todas** sus funciones insertan directo en `alertas` sin pasar por `crearAlerta()` — violan la regla de arriba ("nunca insertar directo en alertas") en todo el archivo, no en un caso puntual.
+
+Efecto real: ninguna alerta que pase por este archivo respeta ni el filtro de módulo apagado (`visibilidad_sector`) ni el de categoría desactivada en Mi Espacio → Notificaciones (`espacio_notif_prefs.desactivadas`) — un usuario puede apagar "Gestoría", "Finanzas" o "Leads" en esa pantalla y va a seguir recibiendo estas igual. Se usa en ~13 puntos: los webhooks de WhatsApp/Instagram/Rodi (handoff a vendedor, conflictos de horario de visita), `NuevoPresupuestoModal.tsx`/`ImprimirPresupuesto.tsx`, `NuevaSenaModal.tsx`/`ImprimirSena.tsx` (precio a confirmar), `TransferenciaModal.tsx` (Liquidaciones, notificarGestoria/notificarFinanzas), `api/visitas/*`, `api/postulaciones/route.ts`, `api/cron/automatizaciones/route.ts`.
+
+Consecuencia colateral: varias categorías de `CategoriaNotif` (`lib/panel/alertas.ts`) y de `NotificacionesTab.tsx` — al menos `gestoria`, `cambios_precio`, `taller`, `gerente_ia`, `oportunidades_red`, `comisiones`, `fraude`, `suscripcion` — no tienen ningún `crearAlerta()` que les pase esa `categoriaNotif` (algunas porque el aviso real que les correspondería sale por este archivo paralelo en vez de por `crearAlerta()`, como `gestoria`/`finanzas` vía `notificarGestoria()`/`notificarFinanzas()`; otras probablemente porque esa alerta todavía no está implementada).
+
+**No se resuelve con un cambio mínimo**: migrar esto implica revisar cada uno de los ~13 call sites, decidir el `categoriaNotif`/`modulo` correcto para cada aviso (no siempre es obvio — hay categorías sin un mapeo 1:1 claro, como "precio a confirmar" de señas), y reemplazar el insert directo por `crearAlerta()`. Encararlo como su propio proyecto con revisión caso por caso, no como parte de una auditoría de "nombre dice X, código hace Y".
+
 ## No tocar sin revisar el resto
 
 - No insertar en `alertas` sin pasar por `crearAlerta()` — te salteás los 2 filtros de arriba.
