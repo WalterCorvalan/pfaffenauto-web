@@ -4,7 +4,7 @@ import { useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import { supabase2 } from "@/lib/supabase/client";
 import { CheckCircle2, X, Trash2, ChevronDown, ArrowRight } from "lucide-react";
-import { TIPO_ICON, TIPO_COLOR, TIPO_VER, ICONO_DEFECTO, COLOR_DEFECTO } from "@/components/panel/alertaMeta";
+import { TIPO_ICON, TIPO_COLOR, TIPO_VER, ICONO_DEFECTO, COLOR_DEFECTO, TIPOS_RESUMEN } from "@/components/panel/alertaMeta";
 import { agruparAlertas, type AlertaAgrupada } from "@/lib/panel/agruparAlertas";
 
 interface AlertaRaw {
@@ -33,6 +33,7 @@ export default function AlertasClient({ alertasIniciales }: { alertasIniciales: 
   const [alertas, setAlertas] = useState<Alerta[]>(() => agruparAlertas(alertasIniciales));
   const [borrandoTodas, setBorrandoTodas] = useState(false);
   const [colapsadas, setColapsadas] = useState<Set<string>>(new Set());
+  const [alertaModal, setAlertaModal] = useState<Alerta | null>(null);
 
   const conteos = useMemo(() => {
     const c = { alta: 0, novedad: 0, media: 0, baja: 0 };
@@ -59,6 +60,12 @@ export default function AlertasClient({ alertasIniciales }: { alertasIniciales: 
 
   const irAlLink = (a: Alerta) => {
     marcarLeida(a);
+    if (TIPOS_RESUMEN.has(a.tipo)) { setAlertaModal(a); return; }
+    if (a.link) router.push(a.link);
+  };
+
+  const irAlDetalleDesdeModal = (a: Alerta) => {
+    setAlertaModal(null);
     if (a.link) router.push(a.link);
   };
 
@@ -158,6 +165,25 @@ export default function AlertasClient({ alertasIniciales }: { alertasIniciales: 
               </div>
             );
           })}
+        </div>
+      )}
+
+      {alertaModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/40" onClick={() => setAlertaModal(null)}>
+          <div className="bg-white dark:bg-[#1A1A1A] rounded-2xl shadow-xl w-full max-w-md p-6" onClick={(e) => e.stopPropagation()}>
+            <div className="flex items-start justify-between gap-3 mb-3">
+              <h2 className="text-lg font-bold text-slate-900 dark:text-white">{alertaModal.titulo}</h2>
+              <button onClick={() => setAlertaModal(null)} className="p-1 text-slate-400 hover:text-rose-600 rounded-lg transition-colors shrink-0"><X className="w-4 h-4" /></button>
+            </div>
+            {alertaModal.mensaje && (
+              <p className="text-sm text-slate-600 dark:text-slate-300 whitespace-pre-line">{alertaModal.mensaje}</p>
+            )}
+            {alertaModal.link && (
+              <button onClick={() => irAlDetalleDesdeModal(alertaModal)} className="flex items-center gap-1 text-xs font-bold text-emerald-600 dark:text-emerald-400 hover:underline mt-4">
+                {TIPO_VER[alertaModal.tipo] || "Ver más"} <ArrowRight className="w-3 h-3" />
+              </button>
+            )}
+          </div>
         </div>
       )}
     </div>
