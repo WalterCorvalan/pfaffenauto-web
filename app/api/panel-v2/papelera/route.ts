@@ -82,18 +82,18 @@ export async function POST(request: Request) {
   // borran/restauran siempre juntos, sea cual sea el que el admin haya
   // tocado, porque un expediente sin su venta (o viceversa) no tiene
   // sentido de negocio. Ver ARCHITECTURE.md.
-  async function parEncontrado(): Promise<{ ventaId: string | null; expedienteId: string | null; vehiculoId: string | null }> {
+  async function parEncontrado(): Promise<{ ventaId: string | null; expedienteId: string | null; vehiculoId: string | null; ventaEraCerrada: boolean }> {
     if (tipo === "ventas") {
-      const { data: venta } = await sb.from("ventas").select("id, vehiculo_id").eq("id", id).maybeSingle();
+      const { data: venta } = await sb.from("ventas").select("id, vehiculo_id, estado").eq("id", id).maybeSingle();
       const { data: exp } = await sb.from("expedientes").select("id").eq("venta_id", id).maybeSingle();
-      return { ventaId: venta?.id || null, expedienteId: exp?.id || null, vehiculoId: venta?.vehiculo_id || null };
+      return { ventaId: venta?.id || null, expedienteId: exp?.id || null, vehiculoId: venta?.vehiculo_id || null, ventaEraCerrada: venta?.estado === "cerrada" };
     }
     if (tipo === "expedientes") {
       const { data: exp } = await sb.from("expedientes").select("id, venta_id").eq("id", id).maybeSingle();
-      const { data: venta } = exp?.venta_id ? await sb.from("ventas").select("id, vehiculo_id").eq("id", exp.venta_id).maybeSingle() : { data: null };
-      return { ventaId: venta?.id || null, expedienteId: exp?.id || null, vehiculoId: venta?.vehiculo_id || null };
+      const { data: venta } = exp?.venta_id ? await sb.from("ventas").select("id, vehiculo_id, estado").eq("id", exp.venta_id).maybeSingle() : { data: null };
+      return { ventaId: venta?.id || null, expedienteId: exp?.id || null, vehiculoId: venta?.vehiculo_id || null, ventaEraCerrada: venta?.estado === "cerrada" };
     }
-    return { ventaId: null, expedienteId: null, vehiculoId: null };
+    return { ventaId: null, expedienteId: null, vehiculoId: null, ventaEraCerrada: false };
   }
 
   if (accion === "eliminar") {
@@ -116,10 +116,17 @@ export async function POST(request: Request) {
   if (accion === "restaurar") {
     const patch = { deleted_at: null, deleted_by: null, motivo_eliminacion: null };
     if (tipo === "ventas" || tipo === "expedientes") {
-      const { ventaId, expedienteId, vehiculoId } = await parEncontrado();
+      // Simétrico a "eliminar": ahí solo se revierte a disponible si estaba
+      // vendido (la venta la había puesto así); acá solo se vuelve a poner
+      // vendido si la venta restaurada es la que originalmente lo vendió
+      // (mismo criterio que NuevaVentaModal.tsx al crearla: vehiculoId &&
+      // estado === "cerrada"). Antes esto era incondicional -- restaurar una
+      // venta que nunca llegó a "cerrada" (el vehículo nunca pasó a vendido)
+      // igual forzaba el vehículo a "vendido", pisando su estado real.
+      const { ventaId, expedienteId, vehiculoId, ventaEraCerrada } = await parEncontrado();
       if (ventaId) await sb.from("ventas").update(patch).eq("id", ventaId);
       if (expedienteId) await sb.from("expedientes").update(patch).eq("id", expedienteId);
-      if (vehiculoId) await sb.from("vehiculos").update({ estado: "vendido" }).eq("id", vehiculoId);
+      if (vehiculoId && ventaEraCerrada) await sb.from("vehiculos").update({ estado: "vendido" }).eq("id", vehiculoId);
     } else {
       const { error: upError } = await sb.from(tipo).update(patch).eq("id", id);
       if (upError) return NextResponse.json({ error: upError.message }, { status: 400 });
