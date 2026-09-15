@@ -530,7 +530,7 @@ export default function ClientesClient({
                             <span className={`text-[10px] font-bold px-2 py-1 rounded-full border whitespace-nowrap shrink-0 ${ORIGEN_COLOR[c.origen] || "bg-slate-100 dark:bg-white/10 text-slate-500 border-slate-200 dark:border-white/10"}`}>{c.origen}</span>
                           </div>
                           <p className="text-[11px] text-slate-400 flex items-center gap-2 flex-wrap">
-                            {c.telefono && <a href={`tel:${c.telefono}`} onClick={(e) => e.stopPropagation()} className="flex items-center gap-1 hover:text-[#0145F2] dark:hover:text-rose-400"><Phone className="w-3 h-3 text-rose-500 shrink-0" /> {c.telefono}</a>}
+                            {c.telefono && <a href={`tel:${c.telefono}`} onClick={(e) => e.stopPropagation()} className="flex items-center gap-1 hover:text-[#0145F2] dark:hover:text-[#5b8dff]"><Phone className="w-3 h-3 text-rose-500 shrink-0" /> {c.telefono}</a>}
                             {c.email && <span className="flex items-center gap-1 truncate max-w-[200px]"><Mail className="w-3 h-3 shrink-0" /> {c.email}</span>}
                             {c.dni_cuit && <span>DNI {c.dni_cuit}</span>}
                           </p>
