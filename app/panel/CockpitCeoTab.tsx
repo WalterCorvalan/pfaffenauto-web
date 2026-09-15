@@ -162,7 +162,7 @@ export default function CockpitCeoTab({ miNombre, ocultarMontos, diaDelMes, dias
               <p className="text-[11px] text-slate-400 mt-1">{Math.round((ventasDelMes / objetivoVentasMensual) * 100)}% del objetivo mensual</p>
             </>
           ) : (
-            variacionAnual !== null && <p className={`text-[11px] mt-1 font-bold ${variacionAnual >= 0 ? "text-emerald-600" : "text-[#0145F2]"}`}>{variacionAnual >= 0 ? "+" : ""}{variacionAnual}% vs mismo mes año anterior</p>
+            variacionAnual !== null && <p className={`text-[11px] mt-1 font-bold ${variacionAnual >= 0 ? "text-emerald-600" : "text-rose-600"}`}>{variacionAnual >= 0 ? "+" : ""}{variacionAnual}% vs mismo mes año anterior</p>
           )}
         </div>
         <div className="rounded-2xl p-4 bg-white dark:bg-white/[0.02] border border-slate-200 dark:border-white/5">
