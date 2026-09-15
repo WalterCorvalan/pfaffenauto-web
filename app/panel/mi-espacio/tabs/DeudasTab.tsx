@@ -214,7 +214,7 @@ export default function DeudasTab({ miId }: { miId: string }) {
                 ))}
               </div>
             )}
-            <div className="flex justify-between items-center mt-4"><p className="text-xs text-slate-400">Sin cambios todavía.</p><button onClick={() => setVinculando(null)} className="flex items-center gap-1.5 px-4 py-2 text-sm font-bold bg-rose-400 text-white rounded-lg"><Save className="w-4 h-4" /> Listo</button></div>
+            <div className="flex justify-between items-center mt-4"><p className="text-xs text-slate-400">Sin cambios todavía.</p><button onClick={() => setVinculando(null)} className="flex items-center gap-1.5 px-4 py-2 text-sm font-bold bg-[#0145F2] hover:bg-[#0138c9] text-white rounded-lg"><Save className="w-4 h-4" /> Listo</button></div>
           </div>
         </div>
       )}
