@@ -144,7 +144,7 @@ export default function CajaGrandeChicaTab({ miId, soyAdmin, cuentas, setCuentas
         const formData = new FormData();
         formData.append("file", rArchivo);
         formData.append("carpeta", "finanzas");
-        const res = await fetch("/api/panel-v2/upload", { method: "POST", body: formData });
+        const res = await fetch("/api/panel/upload", { method: "POST", body: formData });
         const data = await res.json();
         if (res.ok) comprobanteUrl = data.publicUrl;
       }

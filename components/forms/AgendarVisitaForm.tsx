@@ -121,7 +121,7 @@ export default function AgendarVisitaForm({ auto, isMobile = false }: AgendarVis
     setLoading(true);
 
     try {
-      const response = await fetch("/api/panel-v2/visitas", {
+      const response = await fetch("/api/panel/visitas", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({

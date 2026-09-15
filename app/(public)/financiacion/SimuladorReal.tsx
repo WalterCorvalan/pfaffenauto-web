@@ -139,7 +139,7 @@ export default function SimuladorReal() {
     setLoading(true);
     try {
       const cuota = calcularCuota(montoAFinanciar, meses);
-      const response = await fetch("/api/panel-v2/leads-tasacion", {
+      const response = await fetch("/api/panel/leads-tasacion", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({

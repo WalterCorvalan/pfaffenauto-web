@@ -6,7 +6,7 @@ import { rateLimit, ipDesdeRequest } from "@/lib/rateLimit";
 import { z } from "zod";
 
 // Self-service: cada usuario edita SU PROPIO perfil (nombre, whatsapp, foto)
-// -- a diferencia de /api/panel-v2/usuarios que es admin-only y gestiona
+// -- a diferencia de /api/panel/usuarios que es admin-only y gestiona
 // a otros (roles, sucursal, alta/baja).
 
 function admin() {

@@ -15,11 +15,11 @@
 -- que convendría rotar en algún momento).
 
 select cron.schedule(
-  'panel-v2-pedidos-match',
+  'panel-pedidos-match',
   '0 * * * *',
   $$
   select net.http_get(
-    url := 'https://pfaffenauto-web.vercel.app/api/cron/panel-v2/pedidos-match?token=<CRON_SECRET>'
+    url := 'https://pfaffenauto-web.vercel.app/api/cron/panel/pedidos-match?token=<CRON_SECRET>'
   );
   $$
 );

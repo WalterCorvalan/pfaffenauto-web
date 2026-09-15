@@ -82,7 +82,7 @@ export default function NuevoVehiculoModal({ perfiles, clientes, sucursales, miI
     setPublicandoMl(true);
     setMlError(null);
     try {
-      const res = await fetch("/api/panel-v2/ml/publicar", {
+      const res = await fetch("/api/panel/ml/publicar", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ vehiculoId: editando.id }),
@@ -113,7 +113,7 @@ export default function NuevoVehiculoModal({ perfiles, clientes, sucursales, miI
         const formData = new FormData();
         formData.append("file", file);
         formData.append("carpeta", "vehiculos");
-        const res = await fetch("/api/panel-v2/upload", { method: "POST", body: formData });
+        const res = await fetch("/api/panel/upload", { method: "POST", body: formData });
         const data = await res.json();
         if (!res.ok) throw new Error(data.error || "Error subiendo la imagen");
         subidas.push(data.publicUrl);

@@ -26,7 +26,7 @@ Guía para no romper otra cosa al tocar este módulo. Si cambiás algo acá, rev
 
 ## Conexión con Leads — consultas por WhatsApp de un auto publicado en ML
 
-`vehiculos.ml_item_id` (formato `"MLA<dígitos>"`) también se usa para vincular automáticamente una conversación de WhatsApp con el auto por el que preguntan: cuando alguien escribe desde el botón "Contactá al vendedor" de la publicación en MercadoLibre, el webhook de WhatsApp (`app/api/panel-v2/webhooks/whatsapp/[token]/route.ts`) busca el `MLA...` en el texto del primer mensaje, lo cruza contra `ml_item_id`, y si matchea le setea `whatsapp_conversaciones.vehiculo_id` — ver `app/panel/leads/ARCHITECTURE.md`. `NuevoVehiculoModal.tsx` muestra el conteo ("💬 N consultas por WhatsApp") contando `whatsapp_conversaciones` con ese `vehiculo_id`.
+`vehiculos.ml_item_id` (formato `"MLA<dígitos>"`) también se usa para vincular automáticamente una conversación de WhatsApp con el auto por el que preguntan: cuando alguien escribe desde el botón "Contactá al vendedor" de la publicación en MercadoLibre, el webhook de WhatsApp (`app/api/panel/webhooks/whatsapp/[token]/route.ts`) busca el `MLA...` en el texto del primer mensaje, lo cruza contra `ml_item_id`, y si matchea le setea `whatsapp_conversaciones.vehiculo_id` — ver `app/panel/leads/ARCHITECTURE.md`. `NuevoVehiculoModal.tsx` muestra el conteo ("💬 N consultas por WhatsApp") contando `whatsapp_conversaciones` con ese `vehiculo_id`.
 
 ## Conexión con el catálogo público
 

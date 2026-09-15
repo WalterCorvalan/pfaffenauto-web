@@ -11,7 +11,7 @@ export default function BotonPublicarML({
   const publicar = async () => {
     setPublicando(true);
     try {
-      const res = await fetch("/api/panel-v2/ml/publicar", {
+      const res = await fetch("/api/panel/ml/publicar", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ vehiculoId }),

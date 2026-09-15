@@ -62,7 +62,7 @@ export default function CockpitCeoTab({ miNombre, ocultarMontos, diaDelMes, dias
     setCargando(true);
     setError("");
     try {
-      const res = await fetch("/api/panel-v2/gerente/preguntar", {
+      const res = await fetch("/api/panel/gerente/preguntar", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ pregunta: texto, historial: nuevoHistorial }),

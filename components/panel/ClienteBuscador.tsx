@@ -48,7 +48,7 @@ export default function ClienteBuscador({
     try {
       const formData = new FormData();
       formData.append("file", file);
-      const res = await fetch("/api/panel-v2/ocr-dni", { method: "POST", body: formData });
+      const res = await fetch("/api/panel/ocr-dni", { method: "POST", body: formData });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || "No se pudo leer el DNI.");
       setNuevo((prev) => ({

@@ -42,7 +42,7 @@ export default function CatalogoClient({ vehiculos, mostrarPrecios, whatsappGene
     if (!termino || termino === ultimoTerminoLogueado.current) return;
     const timeout = setTimeout(() => {
       ultimoTerminoLogueado.current = termino;
-      fetch("/api/panel-v2/busquedas", {
+      fetch("/api/panel/busquedas", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ termino, resultadosEncontrados: filtrados.length }),

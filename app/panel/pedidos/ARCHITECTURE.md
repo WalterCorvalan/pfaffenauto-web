@@ -5,10 +5,10 @@ Guía para no romper otra cosa al tocar este módulo. Si cambiás algo acá, rev
 ## Dos formas de entrada, un solo `vendedor_id`/`marca` con forma distinta
 
 - **`NuevoPedidoModal.tsx`** (panel, `origen: "manual"`): `marca`/`modelo` separados y limpios, cargados por un vendedor.
-- **`components/BuscadorFallBack.tsx`** (catálogo público, "¿No encontraste lo que buscabas?" → `POST /api/panel-v2/pedidos`, `origen: "web"`): un solo campo de texto libre del visitante (`busqueda`) se guarda tal cual en `marca` (ej. `"Toyota Hilux 2020"`), sin `modelo` separado. **No asumas que `pedidos.marca` es siempre un nombre de marca real** — para los de origen `"web"` puede ser cualquier texto que haya escrito el visitante.
+- **`components/BuscadorFallBack.tsx`** (catálogo público, "¿No encontraste lo que buscabas?" → `POST /api/panel/pedidos`, `origen: "web"`): un solo campo de texto libre del visitante (`busqueda`) se guarda tal cual en `marca` (ej. `"Toyota Hilux 2020"`), sin `modelo` separado. **No asumas que `pedidos.marca` es siempre un nombre de marca real** — para los de origen `"web"` puede ser cualquier texto que haya escrito el visitante.
 - **`components/forms/VenderForm.tsx`** (`/vender`) va a `leads_tasacion`, no a `pedidos` — son dos tablas distintas para dos cosas distintas (alguien que quiere vender su auto vs. alguien que busca comprar uno).
 
-## Match automático — `app/api/cron/panel-v2/pedidos-match/route.ts`
+## Match automático — `app/api/cron/panel/pedidos-match/route.ts`
 
 `vehiculo_match_id`/`match_detectado_at` existían en la tabla pero **nada los seteaba solo** — un vendedor tenía que abrir el pedido y elegir manualmente un vehículo de un dropdown (`asignarMatchManual` en `PedidosClient.tsx`). Se agregó un cron (por hora, `migraciones/sql_cron_pedidos_match.sql`) que:
 

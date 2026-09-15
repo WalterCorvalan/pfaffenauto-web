@@ -13,7 +13,7 @@ export default function GlobalError({
 }) {
   useEffect(() => {
     console.error(error);
-    fetch("/api/panel-v2/log-error", {
+    fetch("/api/panel/log-error", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ mensaje: error.message, stack: error.stack, url: window.location.href }),

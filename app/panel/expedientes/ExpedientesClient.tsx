@@ -68,7 +68,7 @@ export default function ExpedientesClient({
     if (!soyAdmin) return;
     if (!confirm(`¿Eliminar el expediente de ${e.venta?.comprador_nombre}? Queda en Papelera, se puede restaurar (también revive la venta vinculada y devuelve el vehículo a disponible).`)) return;
     const motivo = prompt("Motivo (opcional):") || undefined;
-    const res = await fetch("/api/panel-v2/papelera", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ accion: "eliminar", tipo: "expedientes", id: e.id, motivo }) });
+    const res = await fetch("/api/panel/papelera", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ accion: "eliminar", tipo: "expedientes", id: e.id, motivo }) });
     if (!res.ok) { alert("No se pudo eliminar."); return; }
     setExpedientes((prev) => prev.filter((x) => x.id !== e.id));
   };

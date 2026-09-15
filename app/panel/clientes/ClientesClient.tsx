@@ -208,7 +208,7 @@ export default function ClientesClient({
     if (!confirm(`¿Eliminar a ${c.nombre}? Queda en Papelera, se puede restaurar.`)) return;
     const motivo = prompt("Motivo (opcional):") || undefined;
     setEliminandoId(c.id);
-    const res = await fetch("/api/panel-v2/papelera", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ accion: "eliminar", tipo: "clientes", id: c.id, motivo }) });
+    const res = await fetch("/api/panel/papelera", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ accion: "eliminar", tipo: "clientes", id: c.id, motivo }) });
     if (res.ok) setClientes((prev) => prev.filter((x) => x.id !== c.id));
     else alert("No se pudo eliminar (puede que solo admin pueda borrar clientes).");
     setEliminandoId(null);

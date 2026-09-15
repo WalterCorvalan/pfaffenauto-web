@@ -164,7 +164,7 @@ export default function ConsignarForm() {
     setLoading(true);
 
     try {
-      const response = await fetch("/api/panel-v2/consignaciones", {
+      const response = await fetch("/api/panel/consignaciones", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({

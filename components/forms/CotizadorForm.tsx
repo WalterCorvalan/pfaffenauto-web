@@ -99,7 +99,7 @@ export default function CotizadorForm({ vehiculoObjetivo }: { vehiculoObjetivo?:
   const inputArchivoRef = useRef<HTMLInputElement>(null);
 
   // Reserva de visita real (cuando puede venir a sucursal) — mismo motor que
-  // ya usa /api/panel-v2/visitas.
+  // ya usa /api/panel/visitas.
   const [sucursales, setSucursales] = useState<{ id: string; nombre: string }[]>([]);
   const [sucursalVisita, setSucursalVisita] = useState("");
   const [fechaVisita, setFechaVisita] = useState("");
@@ -275,7 +275,7 @@ export default function CotizadorForm({ vehiculoObjetivo }: { vehiculoObjetivo?:
     setLoading(true);
 
     try {
-      const response = await fetch("/api/panel-v2/leads-tasacion", {
+      const response = await fetch("/api/panel/leads-tasacion", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({

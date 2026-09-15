@@ -18,7 +18,7 @@ export default function ConfiguracionInstagramClient() {
 
   const cargar = async () => {
     setCargando(true);
-    const res = await fetch("/api/panel-v2/instagram/configuracion");
+    const res = await fetch("/api/panel/instagram/configuracion");
     const data = await res.json();
     if (res.ok) {
       setConfig(data.config);
@@ -33,7 +33,7 @@ export default function ConfiguracionInstagramClient() {
     setGuardando(true);
     setMensaje("");
     try {
-      const res = await fetch("/api/panel-v2/instagram/configuracion", {
+      const res = await fetch("/api/panel/instagram/configuracion", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ igUserId, accessToken }),
@@ -54,7 +54,7 @@ export default function ConfiguracionInstagramClient() {
     if (!confirm("¿Regenerar el Verify Token? Vas a tener que actualizarlo también en el dashboard de Meta.")) return;
     setGuardando(true);
     try {
-      const res = await fetch("/api/panel-v2/instagram/configuracion", {
+      const res = await fetch("/api/panel/instagram/configuracion", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ igUserId, accessToken: "", regenerarVerifyToken: true }),
@@ -74,7 +74,7 @@ export default function ConfiguracionInstagramClient() {
 
   if (cargando) return <div className="p-6 flex justify-center"><Loader2 className="w-5 h-5 animate-spin text-slate-400" /></div>;
 
-  const webhookUrl = config?.webhook_verify_token ? `${typeof window !== "undefined" ? window.location.origin : ""}/api/panel-v2/webhooks/instagram/${config.webhook_verify_token}` : "";
+  const webhookUrl = config?.webhook_verify_token ? `${typeof window !== "undefined" ? window.location.origin : ""}/api/panel/webhooks/instagram/${config.webhook_verify_token}` : "";
 
   return (
     <div className="p-6 max-w-6xl mx-auto space-y-5">
