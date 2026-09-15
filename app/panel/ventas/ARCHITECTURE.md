@@ -28,10 +28,14 @@ Causa raíz confirmada en runtime (auditoría de flujo real, `testing/guia-flujo
 
 Arreglado en `migraciones/sql_fix_log_venta_estado_security_definer.sql`, marcando la función `security definer` — mismo patrón que ya usa `registrar_historial_cambios()` (el trigger de historial genérico de `ventas`) para poder escribir su propia tabla de auditoría sin depender del permiso de `INSERT` del usuario que edita. Si agregás otro trigger de auditoría/historial sobre una tabla con RLS, seguí este mismo patrón desde el arranque — no asumas que el rol del usuario que dispara el trigger alcanza para escribir en la tabla de logs.
 
+## Bug corregido (P1-11): selector de "Cliente del CRM" perdía clientes con la base grande
+
+Era un `<select>` simple poblado con el array `clientes` recibido por prop (todos de una sola query, sin `.limit()` explícito). Con la base real (1002 clientes), PostgREST corta esa query en 1000 filas por default — confirmado en vivo: el corte quedaba en "Gonzalez ...", así que ningún cliente alfabéticamente posterior (H a Z) aparecía como opción, aunque existiera. No es el mismo componente que `ClienteBuscador.tsx` (esta UI muestra un chip verde "seleccionado" en vez de reusarlo tal cual, para no arrastrar su lógica de alta de cliente nuevo — acá ya existen los campos de comprador sueltos como fallback), pero sigue el mismo patrón: 1 carácter filtra el array local `clientes` (instantáneo), desde 2 caracteres dispara `supabase2.from("clientes").select(...).or(nombre.ilike/dni_cuit.ilike).limit(20)` real contra la base. Si agregás otro selector de cliente en Ventas, no repitas el `<select>` con el array completo — este mismo patrón.
+
 ## Componentes compartidos (¡ojo al tocarlos!)
 
 - **`components/panel/VehiculoSelector.tsx`** — compartido con Señas, Presupuestos, Permutas. No expone `condicion`.
-- **`components/panel/ClienteBuscador.tsx`** — compartido con Señas. El selector de "Cliente del CRM" en Nueva Venta usa una lista simple (`<select>` con `clientes` recibidos por props), **no** el buscador con paginación/búsqueda server-side — con miles de clientes, buscar por nombre puede no encontrar resultados fuera del primer lote (hallazgo P1-11, parte no resuelta).
+- **`components/panel/ClienteBuscador.tsx`** — compartido con Señas. El selector de "Cliente del CRM" en Nueva Venta **no** usa este componente (tiene su propia UI, ver abajo), pero desde el fix de P1-11 sigue el mismo patrón de búsqueda en vivo.
 
 ## No tocar sin revisar el resto
 
