@@ -42,3 +42,7 @@ Guía para no romper otra cosa al tocar este módulo. Si cambiás algo acá, rev
 
 - El cálculo de saldo/remanente: única fuente de verdad es `lib/moneda.ts`. Duplicar la lógica en otro componente reintroduce el bug de moneda.
 - El número de seña lo asigna la base (secuencia real) — nunca calcular `max(numero)+1` en el cliente, eso causaba condición de carrera.
+
+## `clientes` en `page.tsx` — columnas puntuales, no `select("*")`
+
+`page.tsx` trae `clientes` solo para el buscador/autocompletado de `NuevaSenaModal.tsx` (vía `ClienteBuscador`) y el autofill de los ~16 campos personales que la seña copia del cliente (`dni`, `apellido`, `calle`, `provincia`, `estado_civil`, etc. — ver el objeto que arma `guardar()` en `NuevaSenaModal.tsx`). Antes era `select("*")` sin límite sobre toda la tabla `clientes`, trayendo también columnas de CRM que este módulo no usa (`origen`, `pipeline_stage`, `observaciones`, `busca_*`...). Se acotó a las columnas que realmente se leen + `limit(5000)` (mismo criterio que `clientes/page.tsx`). Si `NuevaSenaModal.tsx`/`EditarSenaModal.tsx` empiezan a leer un campo nuevo de `cliente.*`, agregalo a este `select` explícito — no vuelvas a `"*"`.
