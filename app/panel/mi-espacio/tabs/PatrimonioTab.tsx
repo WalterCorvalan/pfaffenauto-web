@@ -57,8 +57,12 @@ export default function PatrimonioTab({ miId, miNombre, soyAdmin }: { miId: stri
   const cuentasPorMoneda = useMemo(() => { const m: Record<string, number> = {}; cuentas.forEach((c) => { m[c.moneda] = (m[c.moneda] || 0) + Number(c.saldo_actual); }); return m; }, [cuentas]);
   const autosUsd = autos.reduce((a, x) => a + Number(x.valor_estimado_usd || 0), 0);
   const cobrosPendientes = porMoneda(cuotasCobrar, "monto", "monto_cobrado");
-  const agenciaMeDebe = movsAgencia.filter((m) => m.tipo === "saque").reduce((acc, m) => { acc[m.moneda] = (acc[m.moneda] || 0) + Number(m.monto); return acc; }, {} as Record<string, number>);
-  const yoDeboAgencia = movsAgencia.filter((m) => m.tipo === "aporte").reduce((acc, m) => { acc[m.moneda] = (acc[m.moneda] || 0) + Number(m.monto); return acc; }, {} as Record<string, number>);
+  // "saque" = agencia → yo (yo le debo esa plata a la agencia) y "aporte" =
+  // yo → agencia (la agencia me la debe a mí) -- mismo cálculo que
+  // SaldoAgenciaTab.tsx, hecho de nuevo acá y con el mismo bug que ahí:
+  // estaba invertido.
+  const agenciaMeDebe = movsAgencia.filter((m) => m.tipo === "aporte").reduce((acc, m) => { acc[m.moneda] = (acc[m.moneda] || 0) + Number(m.monto); return acc; }, {} as Record<string, number>);
+  const yoDeboAgencia = movsAgencia.filter((m) => m.tipo === "saque").reduce((acc, m) => { acc[m.moneda] = (acc[m.moneda] || 0) + Number(m.monto); return acc; }, {} as Record<string, number>);
   const cuotasPendientes = porMoneda(cuotasPagar, "monto", "monto_pagado");
   const deudasPersonales = porMoneda(deudas, "monto", "monto_pagado");
 
