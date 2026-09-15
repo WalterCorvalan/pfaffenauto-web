@@ -45,6 +45,9 @@ export const TIPO_ICON: Record<string, any> = {
   movimiento_pendiente: DollarSign,
   sobrante_registro: DollarSign,
   nuevo_lead: User,
+  mi_resumen_diario: BarChart3,
+  mi_resumen_semanal: BarChart3,
+  resumen_diario_empresa: BarChart3,
 };
 
 export const TIPO_COLOR: Record<string, string> = {
@@ -80,6 +83,9 @@ export const TIPO_COLOR: Record<string, string> = {
   movimiento_pendiente: "bg-amber-100 text-amber-600 dark:bg-amber-500/15 dark:text-amber-300",
   sobrante_registro: "bg-amber-100 text-amber-600 dark:bg-amber-500/15 dark:text-amber-300",
   nuevo_lead: "bg-purple-100 text-purple-600 dark:bg-purple-500/15 dark:text-purple-300",
+  mi_resumen_diario: "bg-indigo-100 text-indigo-600 dark:bg-indigo-500/15 dark:text-indigo-300",
+  mi_resumen_semanal: "bg-indigo-100 text-indigo-600 dark:bg-indigo-500/15 dark:text-indigo-300",
+  resumen_diario_empresa: "bg-indigo-100 text-indigo-600 dark:bg-indigo-500/15 dark:text-indigo-300",
 };
 
 export const TIPO_VER: Record<string, string> = {
@@ -115,7 +121,17 @@ export const TIPO_VER: Record<string, string> = {
   movimiento_pendiente: "Ver Finanzas",
   sobrante_registro: "Ver Finanzas",
   nuevo_lead: "Ver Clientes",
+  mi_resumen_diario: "Ver resumen",
+  mi_resumen_semanal: "Ver resumen",
+  resumen_diario_empresa: "Ver resumen",
 };
 
 export const ICONO_DEFECTO = Bell;
 export const COLOR_DEFECTO = "bg-slate-100 text-slate-500 dark:bg-white/10 dark:text-slate-300";
+
+// Alertas de "resumen" (cron jobs de mi-resumen/mi-resumen-semanal/
+// resumen-empresa) traen todo lo importante en su propio `mensaje`
+// (multi-línea) -- "Ver más" en estas no debe navegar de una, sino abrir un
+// modal con el resumen completo (el `link` queda como acceso opcional
+// dentro del modal, no como acción del click).
+export const TIPOS_RESUMEN = new Set(["mi_resumen_diario", "mi_resumen_semanal", "resumen_diario_empresa"]);

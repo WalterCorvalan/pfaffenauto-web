@@ -66,6 +66,12 @@ El dedup es un flag boolean por fila (`aviso_caliente_sin_atender_enviado`, `avi
 - **`lib/logger.ts` no es de esta lista** — a pesar de vivir junto a los archivos v1 de arriba, lo importan rutas de panel reales (`api/panel/busquedas`, `api/panel/upload`, entre otras) — no borrar.
 - **Portado, no borrado**: `api/cron/pautas/route.ts` (sincronizaba gasto/clics/leads de Meta Ads, Google Ads y MercadoLibre hacia `campanas_marketing`) apuntaba a la base vieja, mientras que `/panel/marketing/pautas` (real, v2) lee `campanas_marketing` de la base nueva — a diferencia de los de arriba, esta sí era una función activa que nunca llegaba a donde tenía que llegar, no código muerto. Portado a `app/api/cron/panel/pautas/route.ts` (mismo `lib/ads/*.ts`, que ya recibía el cliente de Supabase como parámetro — el único cambio real fue el proyecto), cron cada 2hs (`migraciones/sql_cron_pautas_panel_v2.sql`).
 
+## Alertas de "resumen" — "Ver más" abre un modal, no navega directo
+
+`mi-resumen`, `mi-resumen-semanal` y `resumen-empresa` (los 3 cron jobs de arriba) arman todo el resumen en el propio `mensaje` de la alerta (varias líneas con `\n`), pero antes "Ver más" navegaba directo al `link` (`/panel/mi-espacio?tab=...`, `/panel`) sin mostrar ese contenido — y aunque no navegaras, el `<p>` de la tarjeta tampoco respetaba los `\n`, así que el resumen se veía todo pegado en una sola línea. `AlertasClient.tsx` ahora detecta estos 3 `tipo` (`TIPOS_RESUMEN` en `components/panel/alertaMeta.tsx`) y en vez de `router.push()` abre un modal con el `mensaje` completo (`whitespace-pre-line`, respeta los saltos de línea) — el `link` queda como botón opcional dentro del modal, no como acción del clic. Si sumás un cron de resumen nuevo, agregá su `tipo` a `TIPOS_RESUMEN` para que se comporte igual.
+
+De paso, esos 3 `tipo` (`mi_resumen_diario`, `mi_resumen_semanal`, `resumen_diario_empresa`) no estaban mapeados en `TIPO_ICON`/`TIPO_COLOR`/`TIPO_VER` de `alertaMeta.tsx` — solo existía la clave genérica `resumen`, que ningún `crearAlerta()` real usa — así que caían en el ícono/color por defecto. Se agregaron los 3.
+
 ## No tocar sin revisar el resto
 
 - No insertar en `alertas` sin pasar por `crearAlerta()` — te salteás los 2 filtros de arriba.
