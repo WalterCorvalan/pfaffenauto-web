@@ -38,6 +38,12 @@ Puede colgar de cualquiera de las 4 fuentes vía FK: `whatsapp_conversacion_id`,
 - whatsapp/instagram abren en `/panel/whatsapp?tab=leads&lead=<id>&origen=<origen>` (`ConversacionesShell.tsx`, scopeado a esos 2 canales).
 - rodi/manual abren en `/panel/leads?lead=<id>&origen=<origen>` (la vista unificada, la única que resuelve los 4 orígenes).
 
+## Reparto de leads nuevos — `disponibilidad_vendedor`
+
+Cuando entra un lead sin vendedor asignado (el "hola" inicial), `notificarVendedoresDisponibles()` (`lib/panel/notificaciones.ts`) avisa a todos los admin/encargado/ventas activos **excepto** los que tienen `disponibilidad_vendedor.recibir_leads = false` (vendedor de licencia/vacaciones que se sacó de la rotación desde `DisponibilidadModal.tsx`, en Clientes). Es el **único** lugar del código que lee `recibir_leads` para reparto — no hay otro camino de asignación que lo consulte.
+
+**Bug corregido**: `DisponibilidadModal.tsx` le dice al vendedor "Volvés solo pasada la fecha 'hasta'", pero `notificarVendedoresDisponibles()` nunca chequeaba `hasta` — un vendedor que se sacó de la rotación por 2 semanas de vacaciones quedaba afuera para siempre hasta que alguien entrara a mano a destildar "Seguir recibiendo leads". Ahora la función también trae `hasta` y solo mantiene a alguien fuera de la rotación si `hasta` es hoy o una fecha futura (sin `hasta` cargada, sigue afuera indefinidamente — eso sí es el comportamiento esperado para "Ausente"/"Enfermo" sin fecha de vuelta conocida). No hay ningún cron que resetee `recibir_leads` a `true` en la base — el campo se queda en `false` para siempre, la fecha se ignora únicamente al decidir a quién notificar.
+
 ## No tocar sin revisar el resto
 
 - No agregar un 5° canal de leads sin actualizar los 3 lugares de arriba (unificación en `leads/page.tsx`, el mapeo FK de `tareas_lead`, y cualquier contador tipo "Leads sin atender").
