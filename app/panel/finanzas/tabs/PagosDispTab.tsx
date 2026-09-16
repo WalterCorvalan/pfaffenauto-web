@@ -84,7 +84,8 @@ export default function PagosDispTab({
     try {
       const { data: movId, error } = await supabase2.rpc("cobrar_pago_disponible", { p_id: cobrando.id, p_monto: Number(cbMonto), p_cuenta_id: cbCuentaId });
       if (error) throw error;
-      const { data: fresh } = await supabase2.from("pagos_disponibles").select("*").eq("id", cobrando.id).single();
+      const { data: fresh, error: errorFresh } = await supabase2.from("pagos_disponibles").select("*").eq("id", cobrando.id).maybeSingle();
+      if (errorFresh || !fresh) { alert("El cobro se registró, pero no se pudo refrescar la lista -- recargá la página."); setCobrando(null); return; }
       setPagos((prev: any[]) => prev.map((p) => (p.id === cobrando.id ? fresh : p)));
       const [{ data: nuevoMov }, { data: nuevoSaldo }] = await Promise.all([
         supabase2.from("movimientos_caja").select("*, cuenta:cuentas(nombre, moneda)").eq("id", movId).single(),
