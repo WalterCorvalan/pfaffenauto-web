@@ -185,8 +185,14 @@ export default function VentaDetalleModal({ ventaId, miId, soyAdmin, puedeOperac
     setMostrarCaida(false);
     if (error) { alert(error.message || "No se pudo marcar la operación como caída."); return; }
     await cargar();
-    const { data } = await supabase2.from("ventas").select("*").eq("id", ventaId).single();
-    if (data) onActualizado(data);
+    // El RPC no tiró error -- la venta ya quedó marcada caída. Este segundo
+    // refetch es solo para avisarle a la lista (VentasClient) del cambio; si
+    // falla, cargar() de arriba ya dejó el modal al día, pero antes
+    // onActualizado quedaba sin llamar en silencio y la fila de la lista
+    // seguía mostrando el estado viejo hasta refrescar la página entera.
+    const { data, error: errorFresh } = await supabase2.from("ventas").select("*").eq("id", ventaId).maybeSingle();
+    if (errorFresh || !data) { alert("La operación se marcó caída, pero la lista puede no reflejarlo hasta recargar la página."); return; }
+    onActualizado(data);
   };
 
   const copiarCodigo = () => {

@@ -36,7 +36,8 @@ export default function RetirosTab({
       });
       if (error) throw error;
 
-      const { data: fresh } = await supabase2.from("retiros_caja").select("*").eq("id", id).single();
+      const { data: fresh, error: errorFresh } = await supabase2.from("retiros_caja").select("*").eq("id", id).maybeSingle();
+      if (errorFresh || !fresh) { alert("El retiro se registró, pero no se pudo refrescar la lista -- recargá la página."); setShowNuevo(false); return; }
       setRetiros((prev: any[]) => [fresh, ...prev]);
 
       const [{ data: nuevoMov }, { data: nuevoSaldo }] = await Promise.all([

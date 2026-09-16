@@ -45,7 +45,8 @@ export default function PrestamosTab({
         p_devolucion_esperada: devolucionEsperada || null, p_motivo: motivo || null, p_notas: notas || null,
       });
       if (error) throw error;
-      const { data: fresh } = await supabase2.from("prestamos_otorgados").select("*").eq("id", id).single();
+      const { data: fresh, error: errorFresh } = await supabase2.from("prestamos_otorgados").select("*").eq("id", id).maybeSingle();
+      if (errorFresh || !fresh) { alert("El préstamo se registró, pero no se pudo refrescar la lista -- recargá la página."); setShowNuevo(false); return; }
       setPrestamos((prev: any[]) => [fresh, ...prev]);
       const [{ data: nuevoMov }, { data: nuevoSaldo }] = await Promise.all([
         supabase2.from("movimientos_caja").select("*, cuenta:cuentas(nombre, moneda)").eq("id", fresh.movimiento_id).single(),
@@ -67,7 +68,8 @@ export default function PrestamosTab({
     try {
       const { error } = await supabase2.rpc("marcar_prestamo_devuelto", { p_id: devolviendo.id, p_cuenta_id: dvCuentaId });
       if (error) throw error;
-      const { data: fresh } = await supabase2.from("prestamos_otorgados").select("*").eq("id", devolviendo.id).single();
+      const { data: fresh, error: errorFresh } = await supabase2.from("prestamos_otorgados").select("*").eq("id", devolviendo.id).maybeSingle();
+      if (errorFresh || !fresh) { alert("La devolución se registró, pero no se pudo refrescar la lista -- recargá la página."); setDevolviendo(null); return; }
       setPrestamos((prev: any[]) => prev.map((p) => (p.id === devolviendo.id ? fresh : p)));
       const [{ data: nuevoMov }, { data: nuevoSaldo }] = await Promise.all([
         supabase2.from("movimientos_caja").select("*, cuenta:cuentas(nombre, moneda)").eq("id", fresh.movimiento_devolucion_id).single(),

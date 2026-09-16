@@ -104,7 +104,7 @@ export default function RecurrenciasTab({
       ]);
       if (nuevoMov) setMovimientos((prev: any[]) => [nuevoMov, ...prev]);
       setCuentas((prev: any[]) => prev.map((c) => (c.id === r.cuenta_id ? { ...c, saldo: Number(nuevoSaldo) || 0 } : c)));
-      const { data: freshGen } = await supabase2.from("finanzas_recurrencias_generaciones").select("*").eq("recurrencia_id", r.id).eq("mes", `${mes}-01`).single();
+      const { data: freshGen } = await supabase2.from("finanzas_recurrencias_generaciones").select("*").eq("recurrencia_id", r.id).eq("mes", `${mes}-01`).maybeSingle();
       if (freshGen) setGeneraciones((prev: any[]) => [freshGen, ...prev]);
     } catch (err: any) {
       alert(err.message || "No se pudo generar.");
