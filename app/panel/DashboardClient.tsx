@@ -25,7 +25,7 @@ interface Props {
   calificaciones: { promedio: number | null; distribucion: number[]; pedidasSinResponder: number; total: number };
   gestoriaPorMoneda: Record<string, number>;
   gananciaPorMes: { mes: string; monto: number }[];
-  ventasPorMes6: { mes: string; cantidad: number }[];
+  ventasPorMes12: { mes: string; cantidad: number }[];
   proyeccionCaja: {
     saldos: { moneda: string; total: number }[];
     aCobrarPorMoneda: Record<string, number>; aPagarPorMoneda: Record<string, number>; resultadoPorMoneda: Record<string, number>;
@@ -150,7 +150,7 @@ export default function DashboardClient(props: Props) {
           visitasHoy={props.visitasHoy}
           pedidosConMatch={props.pedidosConMatch}
           ultimasOperaciones={props.ultimasOperaciones}
-          ventasPorMes6={props.ventasPorMes6}
+          ventasPorMes12={props.ventasPorMes12}
           proyeccionCaja={props.proyeccionCaja}
           miPerformance={props.miPerformance}
           cuotasPagarResumen={props.cuotasPagarResumen}
