@@ -21,7 +21,7 @@ const TIPOS_RECORDATORIO: { value: string; label: string }[] = [
 ];
 
 interface Vehiculo { id: string; marca: string; modelo: string; anio: number; patente: string | null; km: number | null; precio_venta: number; moneda_venta: string; estado: string; color: string | null; condicion: string }
-interface Cliente { id: string; nombre: string; telefono: string | null; email: string | null; dni_cuit: string | null }
+interface Cliente { id: string; nombre: string; apellido: string | null; telefono: string | null; email: string | null; dni_cuit: string | null }
 interface Perfil { id: string; nombre: string; roles: string[] }
 
 interface Seña { monto: string; moneda: string; fecha: string; cajaDestino: string; senaOrigenId?: string | null }
@@ -106,8 +106,8 @@ export default function NuevaVentaModal({ perfiles, clientes, vehiculos, miId, s
     const timer = setTimeout(async () => {
       const { data } = await supabase2
         .from("clientes")
-        .select("id, nombre, telefono, email, dni_cuit")
-        .or(`nombre.ilike.%${q}%,dni_cuit.ilike.%${q}%`)
+        .select("id, nombre, apellido, telefono, email, dni_cuit")
+        .or(`nombre.ilike.%${q}%,apellido.ilike.%${q}%,dni_cuit.ilike.%${q}%`)
         .order("nombre")
         .limit(20);
       setResultadosClienteVivo(data || []);
@@ -117,7 +117,7 @@ export default function NuevaVentaModal({ perfiles, clientes, vehiculos, miId, s
   }, [busquedaCliente]);
   const clientesFiltrados = resultadosClienteVivo ?? clientes.filter((c) => {
     const q = busquedaCliente.toLowerCase();
-    return !q || `${c.nombre} ${c.dni_cuit || ""}`.toLowerCase().includes(q);
+    return !q || `${c.nombre} ${c.apellido || ""} ${c.dni_cuit || ""}`.toLowerCase().includes(q);
   });
   const [compradorNombre, setCompradorNombre] = useState(editando?.comprador_nombre || initial?.compradorNombre || "");
   const [compradorTelefono, setCompradorTelefono] = useState(editando?.comprador_telefono || "");
@@ -308,8 +308,9 @@ export default function NuevaVentaModal({ perfiles, clientes, vehiculos, miId, s
     setClienteId(c?.id || "");
     setClienteDropdownAbierto(false);
     if (c) {
-      setBusquedaCliente(c.nombre);
-      setCompradorNombre(c.nombre); setCompradorTelefono(c.telefono || ""); setCompradorEmail(c.email || ""); setCompradorDni(c.dni_cuit || "");
+      const nombreCompleto = `${c.nombre} ${c.apellido || ""}`.trim();
+      setBusquedaCliente(nombreCompleto);
+      setCompradorNombre(nombreCompleto); setCompradorTelefono(c.telefono || ""); setCompradorEmail(c.email || ""); setCompradorDni(c.dni_cuit || "");
     } else {
       setBusquedaCliente("");
     }
@@ -745,7 +746,7 @@ export default function NuevaVentaModal({ perfiles, clientes, vehiculos, miId, s
                   <div className="absolute z-10 mt-1 w-full max-h-48 overflow-y-auto bg-white dark:bg-[#1A1A1A] border border-slate-200 dark:border-white/10 rounded-xl shadow-lg divide-y divide-slate-100 dark:divide-white/10">
                     {clientesFiltrados.slice(0, 20).map((c) => (
                       <button key={c.id} type="button" onMouseDown={() => elegirCliente(c)} className="w-full text-left px-3 py-2.5 hover:bg-slate-50 dark:hover:bg-white/5 transition-colors flex items-center justify-between">
-                        <span className="text-sm font-medium text-slate-800 dark:text-white truncate">{c.nombre}</span>
+                        <span className="text-sm font-medium text-slate-800 dark:text-white truncate">{c.nombre} {c.apellido || ""}</span>
                         <span className="text-[11px] text-slate-400 shrink-0">{c.telefono || c.dni_cuit || ""}</span>
                       </button>
                     ))}

@@ -15,7 +15,7 @@ export default async function VentasPage() {
   const [ventasRes, perfilesRes, clientesRes, vehiculosRes, permutasRes, senasRes, miPerfil, cuentasRes] = await Promise.all([
     supabase.from("ventas").select("*").gte("created_at", desde6Meses.toISOString()).order("created_at", { ascending: false }),
     supabase.from("perfiles").select("id, nombre, roles").eq("activo", true).order("nombre"),
-    supabase.from("clientes").select("id, nombre, telefono, email, dni_cuit").order("nombre"),
+    supabase.from("clientes").select("id, nombre, apellido, telefono, email, dni_cuit").order("nombre"),
     supabase.from("vehiculos").select("id, marca, modelo, anio, patente, km, precio_venta, moneda_venta, estado, color, condicion").in("estado", ["disponible", "reservado", "señado"]).order("marca"),
     supabase.from("venta_permutas").select("venta_id"),
     supabase.from("venta_senas").select("venta_id, monto, moneda"),
