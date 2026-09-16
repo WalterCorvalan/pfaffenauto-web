@@ -30,7 +30,11 @@ Arreglado en dos partes:
 
 ## Tasador de permuta (`TasarUsadoModal.tsx`)
 
-Sugiere un valor de permuta contra el **stock propio** (no MercadoLibre — la API pública de búsqueda de ML está bloqueada desde abril 2025, sin acceso ni con OAuth). Query: `vehiculos` filtrado por `marca`/`modelo` (ilike) y `anio` ±2 (exigir el año exacto deja la muestra casi siempre vacía con esta única fuente). Promedia `precio_venta` de los que matchean, quedándose con la moneda mayoritaria (no convierte ARS/USD entre sí). Sobre ese promedio aplica un descuento fijo por tramo de km (`TRAMOS_DESCUENTO_KM`, valores dados por el dueño de la agencia — no ajustar sin confirmar):
+Sugiere un valor de permuta contra **publicaciones reales de MercadoLibre** (v2 — la v1 usaba el stock propio como fuente, descartada por muestra muy chica; ver historial de este archivo/git log si hace falta volver a esa lógica).
+
+**Fuente de datos — scraping, no la API oficial.** La API pública de búsqueda de ML (`sites/MLA/search`) está bloqueada desde abril 2025, devuelve 403/401 incluso con token OAuth (confirmado en vivo). `lib/tasadorMercado.ts` (`fetchComparablesMeli`) hace un `fetch()` directo al listado público (`listado.mercadolibre.com.ar`, HTML server-rendered) y lo parsea con `cheerio` — con User-Agent de browser real, sin eso MeLi devuelve otra cosa o bloquea. **Riesgo aceptado a propósito**: esto viola los términos de uso de MercadoLibre y se rompe si cambian el markup del listado o bloquean la IP del server — no hay fallback automático, `fetchComparablesMeli()` tira error y el usuario ve "no se pudo consultar MercadoLibre" en vez de romper la cotización entera.
+
+**Flujo**: `app/api/panel/tasador-mercado/route.ts` (requiere sesión de staff, rate-limit 15/min) recibe marca/modelo/versión(opcional)/año/km → `fetchComparablesMeli()` trae hasta 10 comparables → `calcularEstadisticas()` saca media/mediana/mín/máx (JS puro, sin IA) → se aplica el descuento por tramo de km sobre la **media** (`TRAMOS_DESCUENTO_KM` en `lib/tasadorMercado.ts`, valores dados por el dueño de la agencia — no ajustar sin confirmar):
 
 | Hasta km | Descuento |
 |---|---|
@@ -41,7 +45,9 @@ Sugiere un valor de permuta contra el **stock propio** (no MercadoLibre — la A
 | 180.000 | 16% |
 | más | 20% |
 
-El valor final que se usa (`onTasado`) es el **ajustado** (con descuento), no el promedio bruto — se muestran los dos en pantalla para que quede claro de dónde sale.
+El valor final que se usa (`onTasado`) es el **ajustado** (con descuento), no la media bruta — se muestran los dos en pantalla para que quede claro de dónde sale.
+
+Si en algún momento el scraping deja de funcionar (bloqueo de MeLi) y hace falta una fuente alternativa sin costo, la opción más simple es volver a usar `vehiculos` (stock propio) como en la v1, aceptando muestra más chica.
 
 ## No tocar sin revisar el resto
 
