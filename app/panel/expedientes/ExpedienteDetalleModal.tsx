@@ -540,12 +540,17 @@ export default function ExpedienteDetalleModal({ expedienteId, miId, perfiles, s
   const guardarConsignacion = async () => {
     setGuardandoConsignacion(true);
     try {
-      const { data } = await supabase2.from("expedientes").update({
+      const { data, error } = await supabase2.from("expedientes").update({
         precio_propietario: precioPropietario ? Number(precioPropietario) : null,
         precio_propietario_moneda: precioPropietarioMoneda,
         tipo_acuerdo_consignacion: tipoAcuerdoConsignacion,
-      }).eq("id", expedienteId).select("*, venta:ventas(*)").single();
-      if (data) { setExpediente(data); onActualizado(data); }
+      }).eq("id", expedienteId).select("*, venta:ventas(*)").maybeSingle();
+      // precio_propietario alimenta directo la Liquidación (honorarios, neto
+      // a pagar al propietario) -- .single() sin chequear error dejaba esto
+      // guardado en silencio como "ok" aunque no se hubiera tocado nada.
+      if (error) throw error;
+      if (!data) throw new Error("No se pudo confirmar el guardado.");
+      setExpediente(data); onActualizado(data);
     } catch (err: any) {
       alert(err?.message ? `No se pudo guardar la consignación: ${err.message}` : "No se pudo guardar la consignación.");
     } finally {
@@ -555,10 +560,17 @@ export default function ExpedienteDetalleModal({ expedienteId, miId, perfiles, s
 
   const agregarGasto = async () => {
     if (!nuevoGastoParte || !nuevoGastoConcepto.trim() || !nuevoGastoMonto) return;
-    const { data } = await supabase2.from("expediente_gastos").insert({
+    // Sin chequeo de error acá: si el insert fallaba, el formulario se
+    // limpiaba igual (como si se hubiera guardado) y el gasto -- que afecta
+    // directo los totales de Liquidación/Tesorería -- desaparecía sin rastro.
+    const { data, error } = await supabase2.from("expediente_gastos").insert({
       expediente_id: expedienteId, concepto: nuevoGastoConcepto.trim(), monto: Number(nuevoGastoMonto), moneda: nuevoGastoMoneda, a_cargo_de: nuevoGastoParte,
-    }).select().single();
-    if (data) setGastos((prev) => [data, ...prev]);
+    }).select().maybeSingle();
+    if (error || !data) {
+      alert(error?.message ? `No se pudo agregar el gasto: ${error.message}` : "No se pudo agregar el gasto.");
+      return;
+    }
+    setGastos((prev) => [data, ...prev]);
     setNuevoGastoParte(null);
     setNuevoGastoConcepto("");
     setNuevoGastoMonto("");
