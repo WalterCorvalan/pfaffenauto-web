@@ -6,12 +6,12 @@ import type { NextConfig } from "next";
 // (imágenes, mismos hosts que ya están en images.remotePatterns abajo).
 const CSP = [
   "default-src 'self'",
-  "script-src 'self' 'unsafe-inline' https://challenges.cloudflare.com",
+  "script-src 'self' 'unsafe-inline' https://challenges.cloudflare.com https://www.googletagmanager.com",
   "style-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net",
   "img-src 'self' data: blob: https://*.b-cdn.net https://upload.wikimedia.org https://images.unsplash.com https://*.r2.dev https://*.r2.cloudflarestorage.com",
   "media-src 'self'",
   "font-src 'self' data: https://cdn.jsdelivr.net",
-  "connect-src 'self' https://challenges.cloudflare.com https://*.supabase.co wss://*.supabase.co",
+  "connect-src 'self' https://challenges.cloudflare.com https://*.supabase.co wss://*.supabase.co https://www.google-analytics.com https://*.google-analytics.com https://*.analytics.google.com",
   "frame-src https://challenges.cloudflare.com https://www.google.com https://maps.google.com",
   "object-src 'none'",
   "base-uri 'self'",
