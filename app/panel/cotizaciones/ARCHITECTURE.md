@@ -28,6 +28,21 @@ Arreglado en dos partes:
 1. "Editar" en `CotizacionDetalleModal.tsx` ahora solo se muestra sobre una cotización `aprobada` si `soyAdmin` — igual criterio que "Eliminar".
 2. `NuevaCotizacionModal.tsx`, al guardar la edición de una que **era** `aprobada`, la vuelve a `pendiente` y limpia `precio_aprobado` (agrega entrada al `historial`) — obliga a re-aprobarla en vez de dejar un precio aprobado viejo sirviendo datos nuevos.
 
+## Tasador de permuta (`TasarUsadoModal.tsx`)
+
+Sugiere un valor de permuta contra el **stock propio** (no MercadoLibre — la API pública de búsqueda de ML está bloqueada desde abril 2025, sin acceso ni con OAuth). Query: `vehiculos` filtrado por `marca`/`modelo` (ilike) y `anio` ±2 (exigir el año exacto deja la muestra casi siempre vacía con esta única fuente). Promedia `precio_venta` de los que matchean, quedándose con la moneda mayoritaria (no convierte ARS/USD entre sí). Sobre ese promedio aplica un descuento fijo por tramo de km (`TRAMOS_DESCUENTO_KM`, valores dados por el dueño de la agencia — no ajustar sin confirmar):
+
+| Hasta km | Descuento |
+|---|---|
+| 50.000 | 8% |
+| 80.000 | 10% |
+| 100.000 | 12% |
+| 120.000 | 14% |
+| 180.000 | 16% |
+| más | 20% |
+
+El valor final que se usa (`onTasado`) es el **ajustado** (con descuento), no el promedio bruto — se muestran los dos en pantalla para que quede claro de dónde sale.
+
 ## No tocar sin revisar el resto
 
 - `.update(...).select().maybeSingle()`, no `.single()` — mismo patrón que Ventas/Señas: `.single()` explota con "Cannot coerce..." si RLS o un trigger bloquean releer la fila tras el `UPDATE`, tapando el error real.
