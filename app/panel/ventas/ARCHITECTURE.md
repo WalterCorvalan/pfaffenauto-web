@@ -34,6 +34,12 @@ Era un `<select>` simple poblado con el array `clientes` recibido por prop (todo
 
 **Bug corregido en el fix anterior**: la primera versión del combobox buscaba solo por `nombre` y `dni_cuit`, sin `apellido` — `clientes.nombre` y `clientes.apellido` son columnas separadas (confirmado por `ClienteBuscador.tsx`, que sí las busca a las dos). Un cliente cuyo apellido no aparece en `nombre` no se encontraba tipeando el apellido. Detectado en el reretesteo de la auditoría con un cliente de prueba real. Corregido en la query, el filtro local, y los 3 `select("clientes")` que alimentan la prop `clientes` de este modal (`ventas/page.tsx`, `VentasClient.tsx` su tipo, `QuickActionsButton.tsx`) — los tres tenían que agregar la columna `apellido` al `select` explícito. Si agregás un buscador de cliente nuevo en cualquier módulo, buscá siempre por `nombre` Y `apellido`, nunca uno solo.
 
+## Bug corregido: la comisión total mostrada sumaba un % de consignación "fantasma"
+
+`comisionPct` (usado en `VentaDetalleModal.tsx` y dos veces en `VentasClient.tsx` para la columna "Comisión") sumaba `comision_vendedor_pct + comision_consignacion_pct` sin condición. El problema: `NuevaVentaModal.tsx` precarga `comisionConsignacionPct` con un default de `0.5` (o el valor de `configuracion_empresa.comision_consignacion_pct_default`) **en toda venta nueva**, tenga o no un `responsable_consignacion_id` asignado. El trigger de base `generar_comisiones_al_cerrar_venta()` solo genera la fila de comisión de consignación si hay `responsable_consignacion_id` — si no lo hay, ese % nunca se paga a nadie, pero igual se sumaba al total mostrado en el detalle y en el listado. Confirmado en runtime en la auditoría: una venta con `comision_vendedor_pct=1`, `comision_consignacion_pct=0.5` y sin responsable mostraba "1.5%" en el detalle de venta pero solo generaba una fila de comisión del 1% en `/panel/comisiones` — el 0.5% restante no estaba en ningún lado.
+
+Arreglado sumando `comision_consignacion_pct` solo cuando `venta.responsable_consignacion_id` no es null, en los 3 lugares que hacen esta cuenta (mismo criterio que el trigger). Si agregás un lugar nuevo que muestre "comisión total" de una venta, replicá esta condición — no sumes los dos `_pct` a ciegas.
+
 ## Componentes compartidos (¡ojo al tocarlos!)
 
 - **`components/panel/VehiculoSelector.tsx`** — compartido con Señas, Presupuestos, Permutas. No expone `condicion`.
