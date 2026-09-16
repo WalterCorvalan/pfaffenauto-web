@@ -1,5 +1,6 @@
 import { cache } from "react";
 import { createClient } from "@/lib/supabase/server";
+import { slugificarMarca } from "@/lib/marcasModelos";
 import {
   CalendarDays,
   CarFront,
@@ -220,7 +221,7 @@ export default async function VehiculoDetallePage({
               <span className="text-slate-300 dark:text-slate-600">/</span>
               <Link href="/catalogo" className="hover:text-[#0145F2] dark:hover:text-sky-300 transition-colors">Catálogo</Link>
               <span className="text-slate-300 dark:text-slate-600">/</span>
-              <Link href={`/marcas/${auto.marca.toLowerCase().replace(/\s+/g, "-")}`} className="hover:text-[#0145F2] dark:hover:text-sky-300 transition-colors">{auto.marca}</Link>
+              <Link href={`/marcas/${slugificarMarca(auto.marca)}`} className="hover:text-[#0145F2] dark:hover:text-sky-300 transition-colors">{auto.marca}</Link>
               <span className="text-slate-300 dark:text-slate-600">/</span>
               <span className="text-navy dark:text-white font-black">{auto.modelo}</span>
             </div>
@@ -306,7 +307,7 @@ function MobileTitle({ auto }: { auto: any }) {
         <span className="text-slate-400 dark:text-slate-600">/</span>
         <Link href="/catalogo" className="hover:text-[#0145F2] dark:hover:text-sky-300 transition-colors">Catálogo</Link>
         <span className="text-slate-400 dark:text-slate-600">/</span>
-        <Link href={`/marcas/${auto.marca.toLowerCase().replace(/\s+/g, "-")}`} className="text-slate-500 dark:text-slate-400 hover:text-[#0145F2] dark:hover:text-sky-300 transition-colors">{auto.marca}</Link>
+        <Link href={`/marcas/${slugificarMarca(auto.marca)}`} className="text-slate-500 dark:text-slate-400 hover:text-[#0145F2] dark:hover:text-sky-300 transition-colors">{auto.marca}</Link>
       </div>
 
       <h1 className="text-3xl font-black text-navy dark:text-white uppercase tracking-tighter leading-tight drop-shadow-sm">

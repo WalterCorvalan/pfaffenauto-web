@@ -2,6 +2,7 @@ import { MetadataRoute } from 'next';
 import { createClient } from '@supabase/supabase-js';
 import { KARRY_VERSIONS } from '@/lib/karry-versions';
 import { RELY_VERSIONS } from '@/lib/rely-versions';
+import { slugificarMarca } from '@/lib/marcasModelos';
 
 const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE2_URL!,
@@ -56,7 +57,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     new Set((vehiculos || []).map((v) => v.marca).filter(Boolean)),
   );
   const paginasMarcas: MetadataRoute.Sitemap = marcasUnicas.map((marca) => ({
-    url: `${baseUrl}/marcas/${marca.toLowerCase().replace(/\s+/g, '-')}`,
+    url: `${baseUrl}/marcas/${slugificarMarca(marca)}`,
     lastModified: new Date(),
     changeFrequency: 'weekly',
     priority: 0.6,

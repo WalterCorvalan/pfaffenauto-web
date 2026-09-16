@@ -4,6 +4,7 @@ import { useState } from "react";
 import Link from "next/link";
 import Image from "next/image";
 import { LOGOS_MARCAS } from "@/lib/marcasLogos";
+import { MARCAS_ARGENTINA, slugificarMarca } from "@/lib/marcasModelos";
 
 const MarcaCard = ({
   marca,
@@ -43,33 +44,16 @@ const MarcaCard = ({
   );
 };
 
-const MARCAS: { nombre: string; slug: string }[] = [
-  { nombre: "Volkswagen", slug: "volkswagen" },
-  { nombre: "Chevrolet", slug: "chevrolet" },
-  { nombre: "Toyota", slug: "toyota" },
-  { nombre: "Ford", slug: "ford" },
-  { nombre: "Peugeot", slug: "peugeot" },
-  { nombre: "Renault", slug: "renault" },
-  { nombre: "Fiat", slug: "fiat" },
-  { nombre: "Nissan", slug: "nissan" },
-  { nombre: "Honda", slug: "honda" },
-  { nombre: "Citroën", slug: "citroen" },
-  { nombre: "Hyundai", slug: "hyundai" },
-  { nombre: "Kia", slug: "kia" },
-  { nombre: "Jeep", slug: "jeep" },
-  { nombre: "RAM", slug: "ram" },
-  { nombre: "Suzuki", slug: "suzuki" },
-  { nombre: "Mitsubishi", slug: "mitsubishi" },
-  { nombre: "BAIC", slug: "baic" },
-  { nombre: "Chery", slug: "chery" },
-  { nombre: "BYD", slug: "byd" },
-  { nombre: "Geely", slug: "geely" },
-  { nombre: "Haval", slug: "haval" },
-  { nombre: "JAC", slug: "jac" },
-  { nombre: "Audi", slug: "audi" },
-  { nombre: "BMW", slug: "bmw" },
-  { nombre: "Mercedes-Benz", slug: "mercedes-benz" },
-];
+// Antes esta página tenía su propia lista de 25 marcas hardcodeada, separada
+// de MARCAS_ARGENTINA (lib/marcasModelos.ts, la lista curada que ya unifican
+// los 3 formularios públicos) -- se había desactualizado y le faltaban ~19
+// marcas reales del mercado actual (Land Rover, MG, MINI, Volvo, Porsche,
+// GWM, Mahindra, Subaru, Tata, Tesla, Wuling, Iveco, DFSK, Foton, Jetour,
+// Alfa Romeo, Rely, Karry, Zanella Utilitarios). "Otra" se excluye -- no es
+// una marca real, no tiene página propia.
+const MARCAS: { nombre: string; slug: string }[] = MARCAS_ARGENTINA
+  .filter((nombre) => nombre !== "Otra")
+  .map((nombre) => ({ nombre, slug: slugificarMarca(nombre) }));
 
 export default function MarcasClient() {
   return (

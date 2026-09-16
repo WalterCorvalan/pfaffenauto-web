@@ -29,6 +29,20 @@ export const MARCAS_ARGENTINA = [
 // Ver también lib/marcasLogos.ts (LOGOS_MARCAS) -- al recortar esta lista
 // se sumaron los logos que faltaban para las marcas nuevas del recorte.
 
+// Única fuente de verdad del slug de marca para las URLs /marcas/[marca] --
+// antes cada lugar que armaba este link (MarcasClient.tsx, el link de marca
+// en catalogo/[slug]/page.tsx, sitemap.ts) usaba su propia versión naive
+// (solo reemplazar espacios), sin sacar tildes -- "Citroën" generaba
+// "citroën" en un lado y "citroen" en otro: dos URLs distintas para la
+// misma marca, cada una mostrando resultados distintos.
+export function slugificarMarca(nombre: string): string {
+  return nombre
+    .toLowerCase()
+    .normalize("NFD").replace(/[̀-ͯ]/g, "")
+    .replace(/\s*\/\s*/g, "-")
+    .replace(/\s+/g, "-");
+}
+
 // Modelos reales por marca, para las marcas de mayor volumen en el mercado
 // argentino (las que más van a aparecer en consignaciones/cotizaciones/
 // ventas reales). Las marcas de MARCAS_ARGENTINA que no están acá siguen
