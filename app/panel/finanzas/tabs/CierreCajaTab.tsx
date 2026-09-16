@@ -16,8 +16,15 @@ export default function CierreCajaTab({ cierres, setCierres }: { cierres: any[];
       const hoy = new Date().toISOString().slice(0, 10);
       const { data: cierreId, error } = await supabase2.rpc("cerrar_dia_caja", { p_fecha: hoy });
       if (error) throw error;
-      const { data: fresh } = await supabase2.from("finanzas_cierres_diarios").select("*, detalle:finanzas_cierres_diarios_detalle(*), cerrado_por_perfil:perfiles!finanzas_cierres_diarios_cerrado_por_fkey(nombre)").eq("id", cierreId).single();
-      setCierres((prev: any[]) => [fresh, ...prev.filter((c) => c.fecha !== hoy)]);
+      // El cierre ya quedó guardado (el RPC no tiró error) -- sin chequear
+      // esto, un refetch fallido metía "undefined" directo en la lista y
+      // rompía el render (c.detalle de undefined) en vez de solo avisar.
+      const { data: fresh, error: errorFresh } = await supabase2.from("finanzas_cierres_diarios").select("*, detalle:finanzas_cierres_diarios_detalle(*), cerrado_por_perfil:perfiles!finanzas_cierres_diarios_cerrado_por_fkey(nombre)").eq("id", cierreId).maybeSingle();
+      if (errorFresh || !fresh) {
+        alert("El día se cerró, pero no se pudo refrescar la lista -- recargá la página para verlo.");
+      } else {
+        setCierres((prev: any[]) => [fresh, ...prev.filter((c) => c.fecha !== hoy)]);
+      }
     } catch (err: any) {
       alert(err.message || "No se pudo cerrar el día.");
     } finally { setGuardando(false); }
