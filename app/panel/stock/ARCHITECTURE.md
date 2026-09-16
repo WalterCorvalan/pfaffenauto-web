@@ -63,6 +63,18 @@ Si en algún momento aparece un error de guardado al elegir una categoría nueva
 
 Antes solo estaba "Diésel". Se agregó "Gasoil" como opción aparte (no reemplaza a "Diésel") por pedido del usuario — la agencia usa ambos términos para cosas distintas en su stock real.
 
+## Bug corregido: `precio_publicado_ars`/`usd` se desincronizaba de `precio_venta` en 3 lugares
+
+El catálogo público y el simulador de financiación leen **solo** `precio_publicado_ars`/`precio_publicado_usd` (nunca `precio_venta` directo — ver más arriba). `NuevoVehiculoModal.tsx` sí sincroniza los dos siempre que se guarda (alta o edición completa), pero otros 3 caminos que también escriben `precio_venta`/`moneda_venta` en `vehiculos` **no** tocaban esos dos campos:
+
+- **`PrecioEditor.tsx`** — edición rápida de precio desde el listado (el ícono/botón sobre el precio en la fila). Probablemente el camino más usado para cambiar un precio del día a día, y el que menos se sospecha porque no pasa por el modal completo.
+- **`ImportarXlsxModal.tsx`** — carga masiva por Excel: un auto importado quedaba con precio en el panel pero nunca publicado.
+- **`NuevoMandatoModal.tsx`** — alta de vehículo desde un mandato/consignación con "Agregar al stock" tildado.
+
+Encontrado por reporte real del usuario: una Volkswagen Tiguan con precio visible en el panel pero sin precio en la web. Los 3 se corrigieron para setear `precio_publicado_ars`/`usd` en el mismo guardado, mismo criterio que `NuevoVehiculoModal.tsx`. Se agregó además `migraciones/sql_resync_precio_publicado_vehiculos.sql` para sincronizar los vehículos que ya habían quedado desfasados en la base real — correrla una vez y borrarla del repo (mismo criterio que el resto de `migraciones/*.sql`).
+
+**Si agregás un lugar nuevo que escriba `precio_venta`/`moneda_venta` en `vehiculos`, seteá `precio_publicado_ars`/`usd` en el mismo `update`/`insert`** — no asumas que alguien va a reabrir el vehículo en `NuevoVehiculoModal.tsx` después para "publicarlo".
+
 ## No tocar sin revisar el resto
 
 - No confundir `publicado_ml` con "visible en la web" en ningún indicador nuevo — son conceptos distintos y ya generó un hallazgo de auditoría por la confusión.
