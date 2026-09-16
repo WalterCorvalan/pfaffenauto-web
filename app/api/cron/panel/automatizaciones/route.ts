@@ -155,6 +155,29 @@ async function alertarDocumentacionPendiente(): Promise<number> {
   return avisados;
 }
 
+// E. Handoff viejo sin actividad 30+ días -- reactiva a Rodi para que la
+// conversación no quede muda para siempre si el vendedor la dejó sin cerrar.
+// No borra nada del historial, solo vuelve a habilitar la IA.
+async function reactivarHandoffViejo(): Promise<number> {
+  const hace30dias = new Date(Date.now() - 30 * 24 * 3600 * 1000).toISOString();
+  const { data: conversaciones } = await supabase
+    .from("whatsapp_conversaciones")
+    .select("id")
+    .eq("ai_habilitada", false)
+    .not("handoff_at", "is", null)
+    .lte("last_message_at", hace30dias);
+
+  let reactivadas = 0;
+  for (const c of conversaciones || []) {
+    await supabase
+      .from("whatsapp_conversaciones")
+      .update({ ai_habilitada: true, handoff_at: null, handoff_reason: null, handoff_resumen: null })
+      .eq("id", c.id);
+    reactivadas++;
+  }
+  return reactivadas;
+}
+
 export async function GET(req: Request) {
   const url = new URL(req.url);
   const token = url.searchParams.get("token");
@@ -162,12 +185,13 @@ export async function GET(req: Request) {
     return new Response("Unauthorized", { status: 401 });
   }
 
-  const [leadsCalientes, agradecimientos, nudges, docsPendientes] = await Promise.all([
+  const [leadsCalientes, agradecimientos, nudges, docsPendientes, handoffReactivados] = await Promise.all([
     escalarLeadsCalientesSinAtender(),
     agradecerVentasRecientes(),
     nudgeSinRespuesta(),
     alertarDocumentacionPendiente(),
+    reactivarHandoffViejo(),
   ]);
 
-  return Response.json({ ok: true, leadsCalientes, agradecimientos, nudges, docsPendientes });
+  return Response.json({ ok: true, leadsCalientes, agradecimientos, nudges, docsPendientes, handoffReactivados });
 }
