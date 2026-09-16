@@ -493,7 +493,13 @@ async function enviarYActualizarMensaje(mensajeId: string, conversacionId: strin
     await supabase.from("whatsapp_mensajes").update({ status: "sent", wa_message_id: resultado.messages?.[0]?.id }).eq("id", mensajeId);
   } catch (err) {
     registrarError("webhook-v2:enviar-mensaje", err, { conversacionId, mensajeId });
-    await supabase.from("whatsapp_mensajes").update({ status: "failed" }).eq("id", mensajeId);
+    // Antes esto dejaba error_detalle en null -- el webhook de status
+    // asíncrono (actualizarEstadoMensaje) sí lo guarda, pero una falla
+    // síncrona al mandar (ej. Meta caída, ventana de 24hs) solo quedaba en
+    // logs_errores, invisible para el botón "reintentar con plantilla" del
+    // panel, que mostraba siempre el motivo genérico por defecto.
+    const detalleError = err instanceof Error ? err.message : String(err);
+    await supabase.from("whatsapp_mensajes").update({ status: "failed", error_detalle: detalleError.slice(0, 500) }).eq("id", mensajeId);
   }
 }
 
