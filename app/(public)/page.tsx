@@ -39,7 +39,7 @@ export default async function Page() {
 
   return (
     // Usamos el fondo claro premium que definimos para el resto de la web
-    <main className="w-full bg-[#f8f9fa] dark:bg-[#0a0a0f] min-h-screen relative flex flex-col gap-0 md:gap-20 pb-20">
+    <main className="w-full bg-[#f8f9fa] dark:bg-[#0a0a0f] min-h-screen relative flex flex-col gap-0 pb-20">
 
       <IntroLoader />
 
