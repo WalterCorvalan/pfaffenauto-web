@@ -95,6 +95,13 @@ export default function ImportarXlsxModal({ miId, onClose, onImportados }: Props
           marca: String(marca).trim(), modelo: String(modelo).trim(), anio: Number(anio),
           patente: String(patente).trim().toUpperCase(), km: Number(km), color: color ? String(color).trim() : null,
           condicion, ubicacion: String(ubicacion).trim(), precio_venta: Number(precio), moneda_venta: monedaNorm,
+          // El catálogo público lee SOLO precio_publicado_ars/usd, nunca
+          // precio_venta directo -- sin esto, un auto importado por Excel
+          // se veía con precio en el panel pero sin precio (o con el precio
+          // viejo) en la web, hasta que alguien lo reabriera y reguardara
+          // desde NuevoVehiculoModal.tsx (el único lugar que sí sincronizaba).
+          precio_publicado_ars: monedaNorm === "ARS" ? Number(precio) : null,
+          precio_publicado_usd: monedaNorm === "USD" ? Number(precio) : null,
           precio_compra: precioCompra ? Number(precioCompra) : null, moneda_compra: monedaCompra ? String(monedaCompra).trim().toUpperCase() : "USD",
           tc_ingreso: tcIngreso ? Number(tcIngreso) : null,
           propietario_nombre: propietario ? String(propietario).trim() : null,
