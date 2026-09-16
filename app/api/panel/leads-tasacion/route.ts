@@ -3,6 +3,7 @@ import { createClient } from "@supabase/supabase-js";
 import { verificarTurnstile } from "@/lib/turnstile";
 import { rateLimit, ipDesdeRequest } from "@/lib/rateLimit";
 import { registrarError } from "@/lib/panel/logger";
+import { crearAlerta } from "@/lib/panel/alertas";
 
 const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE2_URL!,
@@ -72,8 +73,9 @@ export async function POST(req: Request) {
           estado: "Pendiente",
         })
         .select("id")
-        .single();
+        .maybeSingle();
       if (errVisita) throw errVisita;
+      if (!visita) throw new Error("No se pudo confirmar la reserva de la visita.");
       visitaId = visita.id;
     }
 
@@ -105,19 +107,32 @@ export async function POST(req: Request) {
         utm_campaign: data.utmCampaign || null,
       })
       .select("id")
-      .single();
+      .maybeSingle();
 
     if (error) throw error;
+    if (!lead) throw new Error("No se pudo confirmar el envío de la solicitud.");
+
+    // El link/módulo dependían de suponer siempre "tasación" -- una
+    // solicitud de financiación (tipo: "financiacion") mandaba igual a
+    // /panel/cotizaciones, una pantalla que no tiene nada que ver, y la
+    // alerta se insertaba directo en "alertas" salteándose crearAlerta():
+    // ni respetaba el módulo apagado por rol (visibilidad_sector) ni la
+    // categoría de notificación que el destinatario haya silenciado en Mi
+    // Espacio → Notificaciones.
+    const esFinanciacion = data.tipo === "financiacion";
+    const modulo = esFinanciacion ? "financiaciones" : "cotizaciones";
+    const link = esFinanciacion ? "/panel/financiaciones" : "/panel/cotizaciones";
+    const titulo = esFinanciacion ? `Nueva solicitud de financiación — ${data.nombre}` : `Nueva tasación desde la web — ${data.nombre}`;
 
     const { data: destinatarios } = await supabase.from("perfiles").select("id").or("roles.cs.{admin},roles.cs.{encargado}").eq("activo", true);
     for (const d of destinatarios || []) {
-      await supabase.from("alertas").insert({
-        destinatario_id: d.id,
+      await crearAlerta(supabase, d.id, titulo, {
+        mensaje: `${data.marca} ${data.modelo || ""} ${data.anio || ""}`.trim(),
+        link,
         tipo: "lead_tasacion_nuevo",
         prioridad: "novedad",
-        titulo: `Nueva tasación desde la web — ${data.nombre}`,
-        mensaje: `${data.marca} ${data.modelo || ""} ${data.anio || ""}`.trim(),
-        link: `/panel/cotizaciones`,
+        modulo,
+        categoriaNotif: esFinanciacion ? undefined : "cotizaciones",
       });
     }
 
