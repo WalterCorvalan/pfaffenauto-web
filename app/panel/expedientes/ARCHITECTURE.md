@@ -66,6 +66,16 @@ Datos personales de cada parte + su checklist de documentación, en un tab propi
 - La sección "Documentación requerida" de cada tab reusa `toggleChecklistItem`/`subirArchivoItem` (las mismas funciones que ya alimentan el resumen "Docs Vendedor X/Y" y el tab Gestoría) — no hay lógica de checklist duplicada. `agregarDocumentoChecklist(parte)` es nuevo: permite sumar un ítem suelto al checklist de esa parte (`orden = max(orden existente) + 1`).
 - Los tabs Documentos y Gestoría **no se tocaron** — siguen mostrando lo mismo que antes; estos dos tabs nuevos son una vista adicional centrada en la persona, no un reemplazo.
 
+## Bug corregido (crítico): `guardarCambios()` podía perder los campos más editados en silencio
+
+El `UPDATE` principal (título, estado, fecha de apertura, vencimiento, precio del propietario) usaba `.single()` sin desestructurar `error`. Como Supabase-js no tira excepción ante un error de Postgrest, si el `UPDATE` fallaba (RLS, trigger, `.single()` con 0 filas) la función caía igual en `await cargar()` y terminaba "bien" — el spinner se apagaba, sin ningún `alert`, aunque nada de lo editado se hubiera guardado. Los dos bloques de campos opcionales (Gestoría, Cuentas Registro) sí logueaban el error con `console.error` al menos; el bloque principal no tenía ningún manejo. Arreglado con `.maybeSingle()` + chequeo explícito de `error`/`!data`, mismo patrón que Ventas/Señas/Cotizaciones.
+
+De paso se corrigió el mismo problema (update sin chequear resultado, optimismo de UI sin revertir en error) en `toggleHito`, `toggleChecklistItem`, `cambiarEstado`, `marcarReventa`, `confirmarParte`, `revertirParte`, `responderPedido` y `agregarObservacion` — todos silenciaban el error o dejaban el estado local desincronizado de la base si el guardado fallaba. Y en `BoletoModal.tsx`: el insert en `boletos` (que vincula el PDF generado al expediente) tampoco chequeaba error — el PDF se descargaba y el modal cerraba como si todo hubiera salido bien aunque el registro nunca quedara vinculado.
+
+## Bug corregido: "Resumen agencia" — el margen no reconciliaba con "Gastos no recuperados"
+
+La línea "− Gastos no recuperados" sumaba **todas** las monedas de `gastosAgencia` (`sumaPorMoneda`), pero `margenAgencia` (mostrado justo debajo, en la misma caja) solo resta los gastos en la moneda del acuerdo con el propietario (`gastosAgenciaMismaMoneda`, mismo criterio de "no convertir" que el resto del archivo). Si había un gasto a cargo de la agencia en la otra moneda, aparecía en la primera línea pero quedaba afuera del margen sin ningún aviso. Se agregó una nota inline (visible solo cuando aplica) explicando la discrepancia — no se convirtió moneda, mismo criterio que el resto del archivo (no hay tipo de cambio disponible en este contexto).
+
 ## No tocar sin revisar el resto
 
 - Si agregás un nuevo tipo de gasto o cambiás `a_cargo_de`, revisá que el efecto (suma/resta) en los totales de Liquidación siga la misma regla de arriba — no alcanza con que aparezca en el listado.

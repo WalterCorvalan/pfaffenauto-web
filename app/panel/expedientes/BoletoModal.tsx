@@ -113,7 +113,7 @@ export default function BoletoModal({ tipo, expediente, venta, checklist, miNomb
       doc.save(nombreArchivo);
 
       if (expediente?.id) {
-        await supabase2.from("boletos").insert({
+        const { error: errBoleto } = await supabase2.from("boletos").insert({
           expediente_id: expediente.id, venta_id: venta?.id || null, tipo, fecha, ciudad: ciudad || null,
           comprador_nombre: compradorNombre || null, comprador_dni: compradorDni || null, comprador_telefono: compradorTelefono || null, comprador_domicilio: compradorDomicilio || null,
           monto: monto ? Number(monto) : null, moneda,
@@ -123,6 +123,15 @@ export default function BoletoModal({ tipo, expediente, venta, checklist, miNomb
           firma_nombre: firmaNombre || null, firma_dni: firmaDni || null,
           agencia_nombre: agenciaNombre || null, agencia_domicilio: agenciaDomicilio || null, agencia_telefono: agenciaTelefono || null, agencia_cuit: agenciaCuit || null,
         });
+        // El PDF ya se descargó (doc.save arriba) antes de este insert --
+        // si el registro en "boletos" falla, el usuario se queda con el
+        // archivo pero el expediente no queda vinculado a ningún boleto.
+        // Avisar en vez de cerrar en silencio como si hubiera quedado todo bien.
+        if (errBoleto) {
+          alert("El PDF se descargó, pero no se pudo guardar el registro del boleto en el expediente. Volvé a intentar generarlo si hace falta que quede vinculado.");
+          setGenerando(false);
+          return;
+        }
       }
       onClose();
     } catch (e) {
