@@ -18,7 +18,7 @@ interface Venta {
   comision_vendedor_pct: number; comision_consignacion_pct: number; fecha_entrega: string | null; comision_liquidada: boolean;
 }
 interface Perfil { id: string; nombre: string; roles: string[] }
-interface Cliente { id: string; nombre: string; telefono: string | null; email: string | null; dni_cuit: string | null }
+interface Cliente { id: string; nombre: string; apellido: string | null; telefono: string | null; email: string | null; dni_cuit: string | null }
 interface Vehiculo { id: string; marca: string; modelo: string; anio: number; patente: string | null; km: number | null; precio_venta: number; moneda_venta: string; estado: string; color: string | null; condicion: string }
 
 type Tab = "todas" | "borrador" | "activa" | "reserva" | "cerrada" | "caida" | "cancelada";
