@@ -90,3 +90,5 @@ La línea "− Gastos no recuperados" sumaba **todas** las monedas de `gastosAge
 ## Real time (agregado)
 
 `ExpedientesClient.tsx` se suscribe a `postgres_changes` (`event: "*"`) sobre la tabla `expedientes` y, ante cualquier cambio, refetchea la lista completa con el mismo `select("*, venta:ventas(*)")` y la misma ventana de 6 meses que usa `page.tsx` — no hace merge parcial de filas, para no desincronizar el join anidado `venta`. **`expediente_gastos` no está suscripta** (los totales de Liquidación que dependen de esa tabla siguen requiriendo refrescar la página) — si se necesita real time ahí también, sumar un canal aparte, no mezclarlo con este (son tablas distintas con shapes distintos).
+
+`app/panel/tesoreria/expedientes/ExpedientesTesoreriaClient.tsx` (misma tabla `expedientes`, vista distinta para Tesorería, comparte `ExpedienteDetalleModal`) tiene su propio canal con el mismo criterio — un cambio de estado de pago hecho desde Gestoría/Expedientes ahora se refleja acá sin refrescar, y viceversa. Si en algún momento se toca uno de los dos refetch, revisar el otro.
