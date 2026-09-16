@@ -3,6 +3,7 @@
 import { useState, useMemo, useEffect } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { Search, Wallet } from "lucide-react";
+import { supabase2 } from "@/lib/supabase/client";
 import ExpedienteDetalleModal from "../../expedientes/ExpedienteDetalleModal";
 import { fmtFechaLocal } from "@/lib/panel/fechas";
 import TablaResponsiva, { type ColumnaTabla } from "@/components/panel/TablaResponsiva";
@@ -31,6 +32,24 @@ export default function ExpedientesTesoreriaClient({
     const id = searchParams.get("expediente");
     if (id) setDetalleId(id);
   }, [searchParams]);
+
+  // Mismo criterio que app/panel/expedientes/ExpedientesClient.tsx: sin esto,
+  // un cambio de estado de pago hecho por otro (Tesorería o Gestoría, ambas
+  // vistas comparten el mismo ExpedienteDetalleModal) no se reflejaba acá
+  // hasta refrescar la página. Refetch completo (misma ventana de 6 meses y
+  // join que page.tsx), no merge parcial, para no desincronizar venta:ventas(*).
+  useEffect(() => {
+    const desde6Meses = new Date();
+    desde6Meses.setMonth(desde6Meses.getMonth() - 6);
+    const canal = supabase2
+      .channel(`expedientes-tesoreria-live-${Math.random().toString(36).slice(2)}`)
+      .on("postgres_changes", { event: "*", schema: "public", table: "expedientes" }, async () => {
+        const { data } = await supabase2.from("expedientes").select("*, venta:ventas(*)").gte("created_at", desde6Meses.toISOString()).order("created_at", { ascending: false });
+        if (data) setExpedientes(data);
+      })
+      .subscribe();
+    return () => { supabase2.removeChannel(canal); };
+  }, []);
 
   const soyAdmin = miPerfil?.roles?.includes("admin") ?? false;
   const puedeOperacionCaida = miPerfil?.roles?.some((r: string) => r === "admin" || r === "finanzas") ?? false;
