@@ -88,14 +88,24 @@ export default function ComisionesClient({
   const alternarEstado = async (c: any) => {
     try {
       if (c.estado === "pendiente") {
-        const faltaResena = configuracion.exigir_resena_comision && c.ventas && c.tipo !== "bono" && 
+        // Marcar una comisión "cobrada" debita una cuenta real de caja
+        // (p_cuenta_id, ver confirmarCobroComision) -- no estaba gateado a
+        // admin/finanzas, a diferencia de la vuelta atrás ("Una vez cobrada,
+        // solo Administración puede volverla a pendiente", más abajo). Un
+        // vendedor podía pedirse un bono (BonoModal, aprobacion_pendiente:
+        // true) y auto-marcárselo cobrado sin que ningún admin lo hubiera
+        // aprobado -- el badge "Pendiente Aprobación" era solo decorativo,
+        // nada bloqueaba el click. Bug de plata real, encontrado en la
+        // auditoría de código.
+        if (!esAdminOFinanzas) {
+          alert("Solo Administración/Finanzas puede marcar una comisión como cobrada (implica debitar una cuenta real).");
+          return;
+        }
+
+        const faltaResena = configuracion.exigir_resena_comision && c.ventas && c.tipo !== "bono" &&
           !c.ventas.venta_resenas_solicitudes?.some((r: any) => r.tipo === (c.tipo === "consignacion" ? "ex_dueno" : "comprador"));
-        
+
         if (faltaResena) {
-          if (!esAdminOFinanzas) {
-            alert("Tenés que pedir la reseña primero para poder cobrar esta comisión.");
-            return;
-          }
           if (!confirm("Falta la reseña del cliente. ¿Forzar el pago como administrador?")) return;
         }
 
