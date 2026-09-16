@@ -98,6 +98,7 @@ export default function MovimientosTab({
       });
       if (error) throw error;
 
+      let comprobantesFallidos = 0;
       for (const file of rArchivos.slice(0, 10)) {
         const formData = new FormData();
         formData.append("file", file);
@@ -105,10 +106,20 @@ export default function MovimientosTab({
         const res = await fetch("/api/panel/upload", { method: "POST", body: formData });
         const data = await res.json();
         if (res.ok) await supabase2.from("movimiento_comprobantes").insert({ movimiento_id: movId, url: data.publicUrl, nombre: file.name, subido_por: miId });
+        else comprobantesFallidos++;
       }
 
-      const { data: nuevo } = await supabase2.from("movimientos_caja").select("*, cuenta:cuentas(nombre, moneda)").eq("id", movId).single();
-      if (nuevo) setMovimientos((prev: any[]) => [nuevo, ...prev]);
+      // El movimiento ya quedó guardado en la base (el RPC de arriba no tiró
+      // error) -- si este refetch falla, no hay que decir "no se pudo
+      // registrar" (sería falso), pero tampoco cerrar en silencio como si la
+      // lista ya estuviera al día cuando en realidad falta este movimiento.
+      const { data: nuevo, error: errorFresh } = await supabase2.from("movimientos_caja").select("*, cuenta:cuentas(nombre, moneda)").eq("id", movId).maybeSingle();
+      if (errorFresh || !nuevo) {
+        alert("El movimiento se registró, pero no se pudo refrescar la lista -- recargá la página para verlo.");
+      } else {
+        setMovimientos((prev: any[]) => [nuevo, ...prev]);
+      }
+      if (comprobantesFallidos > 0) alert(`El movimiento se registró, pero ${comprobantesFallidos} comprobante(s) no se pudieron subir. Adjuntalos de nuevo desde el detalle.`);
       setShowRegistrar(false);
       setRMonto(""); setRVentaId(""); setRNotas(""); setRArchivos([]);
     } catch (err: any) {
