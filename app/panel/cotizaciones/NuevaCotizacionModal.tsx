@@ -1,13 +1,13 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { supabase2 } from "@/lib/supabase/client";
-import { X, Loader2, Save, Calculator } from "lucide-react";
+import { X, Loader2, Save, Calculator, Search, Check } from "lucide-react";
 import { hoyLocalISO } from "@/lib/panel/fechas";
 import TasarUsadoModal from "./TasarUsadoModal";
 import { crearAlerta } from "@/lib/panel/alertas";
 
-interface Cliente { id: string; nombre: string; telefono: string | null; dni_cuit: string | null }
+interface Cliente { id: string; nombre: string; apellido: string | null; telefono: string | null; dni_cuit: string | null }
 interface Vehiculo { id: string; marca: string; modelo: string; anio: number; patente: string | null; precio_venta: number; moneda_venta: string; estado: string }
 interface Perfil { id: string; nombre: string }
 
@@ -51,19 +51,87 @@ export default function NuevaCotizacionModal({ clientes, vehiculos, perfiles, mi
   const [guardando, setGuardando] = useState(false);
   const [error, setError] = useState("");
 
-  const elegirCliente = (id: string) => {
-    setClienteId(id);
-    const c = clientes.find((x) => x.id === id);
-    if (c) setClienteNombre(c.nombre);
+  // "Cliente" y "Vehículo" eran <select> con el array completo recibido por
+  // prop (fetch server-side de una sola vez, sin .limit() explícito) --
+  // mismo bug ya corregido en Ventas/Señas/Presupuestos (P1-11 y el fix de
+  // VehiculoSelector.tsx): con miles de filas, PostgREST corta en 1000 y un
+  // cliente/vehículo agregado en la misma sesión no aparecía hasta
+  // recargar. Mismo patrón acá: filtro local instantáneo con 1 carácter,
+  // consulta real server-side (debounce 300ms) desde 2 caracteres.
+  const [busquedaCliente, setBusquedaCliente] = useState(editando?.cliente_nombre || "");
+  const [dropdownClienteAbierto, setDropdownClienteAbierto] = useState(false);
+  const [resultadosClienteVivo, setResultadosClienteVivo] = useState<Cliente[] | null>(null);
+  const [buscandoCliente, setBuscandoCliente] = useState(false);
+  useEffect(() => {
+    const q = busquedaCliente.trim();
+    if (q.length < 2) { setResultadosClienteVivo(null); return; }
+    setBuscandoCliente(true);
+    const timer = setTimeout(async () => {
+      const { data } = await supabase2
+        .from("clientes")
+        .select("id, nombre, apellido, telefono, dni_cuit")
+        .or(`nombre.ilike.%${q}%,apellido.ilike.%${q}%,dni_cuit.ilike.%${q}%`)
+        .order("nombre")
+        .limit(20);
+      setResultadosClienteVivo(data || []);
+      setBuscandoCliente(false);
+    }, 300);
+    return () => clearTimeout(timer);
+  }, [busquedaCliente]);
+  const clientesFiltrados = resultadosClienteVivo ?? clientes.filter((c) => {
+    const q = busquedaCliente.toLowerCase();
+    return !q || `${c.nombre} ${c.apellido || ""} ${c.dni_cuit || ""}`.toLowerCase().includes(q);
+  });
+
+  const [busquedaVehiculo, setBusquedaVehiculo] = useState(editando?.vehiculo_descripcion || "");
+  const [dropdownVehiculoAbierto, setDropdownVehiculoAbierto] = useState(false);
+  const [resultadosVehiculoVivo, setResultadosVehiculoVivo] = useState<Vehiculo[] | null>(null);
+  const [buscandoVehiculo, setBuscandoVehiculo] = useState(false);
+  useEffect(() => {
+    const q = busquedaVehiculo.trim();
+    if (q.length < 2) { setResultadosVehiculoVivo(null); return; }
+    setBuscandoVehiculo(true);
+    const timer = setTimeout(async () => {
+      const { data } = await supabase2
+        .from("vehiculos")
+        .select("id, marca, modelo, anio, patente, precio_venta, moneda_venta, estado")
+        .eq("estado", "disponible")
+        .or(`marca.ilike.%${q}%,modelo.ilike.%${q}%,patente.ilike.%${q}%`)
+        .order("marca")
+        .limit(20);
+      setResultadosVehiculoVivo(data || []);
+      setBuscandoVehiculo(false);
+    }, 300);
+    return () => clearTimeout(timer);
+  }, [busquedaVehiculo]);
+  const vehiculosFiltrados = resultadosVehiculoVivo ?? vehiculos.filter((v) => {
+    const q = busquedaVehiculo.toLowerCase();
+    return !q || `${v.marca} ${v.modelo} ${v.patente || ""}`.toLowerCase().includes(q);
+  });
+
+  const elegirCliente = (c: Cliente | null) => {
+    setClienteId(c?.id || "");
+    setDropdownClienteAbierto(false);
+    if (c) {
+      const nombreCompleto = `${c.nombre} ${c.apellido || ""}`.trim();
+      setBusquedaCliente(nombreCompleto);
+      setClienteNombre(nombreCompleto);
+    } else {
+      setBusquedaCliente("");
+    }
   };
 
-  const elegirVehiculo = (id: string) => {
-    setVehiculoId(id);
-    const v = vehiculos.find((x) => x.id === id);
+  const elegirVehiculo = (v: Vehiculo | null) => {
+    setVehiculoId(v?.id || "");
+    setDropdownVehiculoAbierto(false);
     if (v) {
-      setVehiculoDescripcion(`${v.marca} ${v.modelo} ${v.anio}`);
+      const descripcion = `${v.marca} ${v.modelo} ${v.anio}`;
+      setBusquedaVehiculo(descripcion);
+      setVehiculoDescripcion(descripcion);
       setPrecioSugerido(String(v.precio_venta));
       setMoneda(v.moneda_venta);
+    } else {
+      setBusquedaVehiculo("");
     }
   };
 
@@ -86,10 +154,25 @@ export default function NuevaCotizacionModal({ clientes, vehiculos, perfiles, mi
         fecha_emision: fechaEmision, fecha_vencimiento: fechaVencimiento || null,
         condiciones_pago: condicionesPago || null, notas: notas || null,
       };
+      // Editar una cotización ya aprobada (solo un admin llega a este botón,
+      // ver CotizacionDetalleModal.tsx) podía cambiar precio/vehículo/permuta
+      // sin volver a pasar por la aprobación -- precio_aprobado quedaba
+      // congelado con el valor viejo, divergiendo en silencio del nuevo
+      // precio_sugerido (Ventas usa precio_aprobado ?? precio_sugerido para
+      // precargar la venta). Si se edita algo de una aprobada, vuelve a
+      // pendiente y hay que re-aprobarla.
+      const eraAprobada = esEdicion && editando.estado === "aprobada";
+      const payloadFinal: Record<string, unknown> = { ...payload };
+      if (eraAprobada) {
+        payloadFinal.estado = "pendiente";
+        payloadFinal.precio_aprobado = null;
+        payloadFinal.historial = [...(editando.historial || []), { estado: "pendiente (editada, requiere re-aprobación)", actor_nombre: miNombre, created_at: new Date().toISOString() }];
+      }
       const { data, error: dbError } = esEdicion
-        ? await supabase2.from("cotizaciones").update({ ...payload, updated_at: new Date().toISOString() }).eq("id", editando.id).select().single()
-        : await supabase2.from("cotizaciones").insert({ ...payload, vendedor_id: miId || null, creado_por: miId || null }).select().single();
+        ? await supabase2.from("cotizaciones").update({ ...payloadFinal, updated_at: new Date().toISOString() }).eq("id", editando.id).select().maybeSingle()
+        : await supabase2.from("cotizaciones").insert({ ...payload, vendedor_id: miId || null, creado_por: miId || null }).select().maybeSingle();
       if (dbError) throw dbError;
+      if (!data) throw new Error("No se pudo confirmar el guardado (no se pudo releer la cotización). Verificá permisos y volvé a intentar.");
       if (!esEdicion && miId) {
         // Antes notificaba a miId -- el mismo vendedor que acaba de crearla,
         // avisándole de algo que ya sabe. Tiene que avisarle a admin/encargados.
@@ -136,21 +219,83 @@ export default function NuevaCotizacionModal({ clientes, vehiculos, perfiles, mi
           <div>
             <p className={seccionClass}>👤 Cliente y vehículo</p>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-              <div>
+              <div className="relative">
                 <label className={labelClass}>Cliente (del CRM)</label>
-                <select value={clienteId} onChange={(e) => elegirCliente(e.target.value)} className={inputClass}>
-                  <option value="">— Buscar por nombre, teléfono o DNI... —</option>
-                  {clientes.map((c) => <option key={c.id} value={c.id}>{c.nombre}{c.telefono ? ` · ${c.telefono}` : ""}</option>)}
-                </select>
+                {clienteId ? (
+                  <div className="flex items-center justify-between gap-2 bg-emerald-50 dark:bg-emerald-500/10 border border-emerald-200 dark:border-emerald-500/20 rounded-xl px-3 py-2.5">
+                    <span className="flex items-center gap-1.5 text-sm font-medium text-emerald-700 dark:text-emerald-300 truncate">
+                      <Check className="w-3.5 h-3.5 shrink-0" /> {busquedaCliente}
+                    </span>
+                    <button type="button" onClick={() => elegirCliente(null)} className="shrink-0 text-emerald-600 dark:text-emerald-300 hover:text-emerald-800 dark:hover:text-emerald-200 text-[11px] font-bold uppercase tracking-widest">
+                      Cambiar
+                    </button>
+                  </div>
+                ) : (
+                  <div className="relative">
+                    <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
+                    <input
+                      className={`${inputClass} pl-9`}
+                      placeholder="Buscar por nombre, teléfono o DNI..."
+                      value={busquedaCliente}
+                      onChange={(e) => { setBusquedaCliente(e.target.value); setDropdownClienteAbierto(true); }}
+                      onFocus={() => setDropdownClienteAbierto(true)}
+                      onBlur={() => setTimeout(() => setDropdownClienteAbierto(false), 150)}
+                    />
+                  </div>
+                )}
+                {!clienteId && dropdownClienteAbierto && busquedaCliente && (
+                  <div className="absolute z-10 mt-1 w-full max-h-48 overflow-y-auto bg-white dark:bg-[#1A1A1A] border border-slate-200 dark:border-white/10 rounded-xl shadow-lg divide-y divide-slate-100 dark:divide-white/10">
+                    {clientesFiltrados.slice(0, 20).map((c) => (
+                      <button key={c.id} type="button" onMouseDown={() => elegirCliente(c)} className="w-full text-left px-3 py-2.5 hover:bg-slate-50 dark:hover:bg-white/5 transition-colors flex items-center justify-between">
+                        <span className="text-sm font-medium text-slate-800 dark:text-white truncate">{c.nombre} {c.apellido || ""}</span>
+                        <span className="text-[11px] text-slate-400 shrink-0">{c.telefono || c.dni_cuit || ""}</span>
+                      </button>
+                    ))}
+                    {buscandoCliente ? (
+                      <p className="px-3 py-3 text-[13px] text-slate-400 italic flex items-center gap-1.5"><Loader2 className="w-3.5 h-3.5 animate-spin" /> Buscando...</p>
+                    ) : clientesFiltrados.length === 0 && <p className="px-3 py-3 text-[13px] text-slate-400 italic">Sin resultados.</p>}
+                  </div>
+                )}
                 <p className="text-[10px] text-slate-400 mt-1">Elegí uno o dejá vacío y completá el nombre libre</p>
               </div>
               <div><label className={labelClass}>Nombre del cliente *</label><input value={clienteNombre} onChange={(e) => setClienteNombre(e.target.value)} placeholder="Se pre-llena al elegir del selector" className={inputClass} /></div>
-              <div>
+              <div className="relative">
                 <label className={labelClass}>Vehículo (del stock)</label>
-                <select value={vehiculoId} onChange={(e) => elegirVehiculo(e.target.value)} className={inputClass}>
-                  <option value="">—</option>
-                  {vehiculos.map((v) => <option key={v.id} value={v.id}>{v.marca} {v.modelo} {v.anio} · {v.patente || "s/patente"}</option>)}
-                </select>
+                {vehiculoId ? (
+                  <div className="flex items-center justify-between gap-2 bg-emerald-50 dark:bg-emerald-500/10 border border-emerald-200 dark:border-emerald-500/20 rounded-xl px-3 py-2.5">
+                    <span className="flex items-center gap-1.5 text-sm font-medium text-emerald-700 dark:text-emerald-300 truncate">
+                      <Check className="w-3.5 h-3.5 shrink-0" /> {busquedaVehiculo}
+                    </span>
+                    <button type="button" onClick={() => elegirVehiculo(null)} className="shrink-0 text-emerald-600 dark:text-emerald-300 hover:text-emerald-800 dark:hover:text-emerald-200 text-[11px] font-bold uppercase tracking-widest">
+                      Cambiar
+                    </button>
+                  </div>
+                ) : (
+                  <div className="relative">
+                    <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
+                    <input
+                      className={`${inputClass} pl-9`}
+                      placeholder="Buscar por marca, modelo o patente..."
+                      value={busquedaVehiculo}
+                      onChange={(e) => { setBusquedaVehiculo(e.target.value); setDropdownVehiculoAbierto(true); }}
+                      onFocus={() => setDropdownVehiculoAbierto(true)}
+                      onBlur={() => setTimeout(() => setDropdownVehiculoAbierto(false), 150)}
+                    />
+                  </div>
+                )}
+                {!vehiculoId && dropdownVehiculoAbierto && busquedaVehiculo && (
+                  <div className="absolute z-10 mt-1 w-full max-h-48 overflow-y-auto bg-white dark:bg-[#1A1A1A] border border-slate-200 dark:border-white/10 rounded-xl shadow-lg divide-y divide-slate-100 dark:divide-white/10">
+                    {vehiculosFiltrados.slice(0, 20).map((v) => (
+                      <button key={v.id} type="button" onMouseDown={() => elegirVehiculo(v)} className="w-full text-left px-3 py-2.5 hover:bg-slate-50 dark:hover:bg-white/5 transition-colors flex items-center justify-between">
+                        <span className="text-sm font-medium text-slate-800 dark:text-white truncate">{v.marca} {v.modelo} {v.anio}</span>
+                        <span className="text-[11px] text-slate-400 shrink-0">{v.patente || "s/patente"}</span>
+                      </button>
+                    ))}
+                    {buscandoVehiculo ? (
+                      <p className="px-3 py-3 text-[13px] text-slate-400 italic flex items-center gap-1.5"><Loader2 className="w-3.5 h-3.5 animate-spin" /> Buscando...</p>
+                    ) : vehiculosFiltrados.length === 0 && <p className="px-3 py-3 text-[13px] text-slate-400 italic">Sin resultados.</p>}
+                  </div>
+                )}
                 <p className="text-[10px] text-slate-400 mt-1">Opcional — usalo si el cliente ya eligió uno</p>
               </div>
               <div>

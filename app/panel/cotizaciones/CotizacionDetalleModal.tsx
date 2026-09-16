@@ -103,7 +103,15 @@ export default function CotizacionDetalleModal({
           <a href={`https://wa.me/?text=${encodeURIComponent(`Cotización ${c.cliente_nombre} — ${c.vehiculo_descripcion || ""} — ${c.moneda} ${(c.precio_aprobado ?? c.precio_sugerido).toLocaleString("es-AR")}`)}`} target="_blank" rel="noopener noreferrer" className="flex items-center gap-1.5 px-3 py-2 text-xs font-semibold bg-emerald-50 dark:bg-emerald-500/10 border border-emerald-200 dark:border-emerald-500/20 text-emerald-700 dark:text-emerald-300 rounded-lg"><MessageCircle className="w-3.5 h-3.5" /> WhatsApp</a>
           {soyAdmin && <button onClick={onEliminar} className="flex items-center gap-1.5 px-3 py-2 text-xs font-semibold bg-white dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-lg text-rose-600"><Trash2 className="w-3.5 h-3.5" /> Eliminar</button>}
           {c.estado === "aprobada" && <a href={`/panel/ventas?cotizacion=${c.id}`} className="flex items-center gap-1.5 px-3 py-2 text-xs font-bold bg-[#0145F2] hover:bg-[#0138c9] text-white rounded-lg ml-auto"><ShoppingCart className="w-3.5 h-3.5" /> Convertir a venta</a>}
-          <button onClick={onEditar} className={`flex items-center gap-1.5 px-3 py-2 text-xs font-semibold bg-white dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-lg text-slate-600 dark:text-slate-300 ${c.estado === "aprobada" ? "" : "ml-auto"}`}><Pencil className="w-3.5 h-3.5" /> Editar</button>
+          {/* Editar una cotización ya aprobada cambiaba precio/vehículo sin
+              volver a pasar por ModificarCotizacionModal.tsx (el gate de
+              aprobación admin) -- precio_aprobado quedaba congelado con el
+              valor viejo mientras precio_sugerido cambiaba, divergiendo en
+              silencio. Ahora solo un admin puede reabrir una aprobada, y
+              NuevaCotizacionModal.tsx la vuelve a "pendiente" al guardar. */}
+          {(c.estado !== "aprobada" || soyAdmin) && (
+            <button onClick={onEditar} className={`flex items-center gap-1.5 px-3 py-2 text-xs font-semibold bg-white dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-lg text-slate-600 dark:text-slate-300 ${c.estado === "aprobada" ? "" : "ml-auto"}`}><Pencil className="w-3.5 h-3.5" /> Editar</button>
+          )}
         </div>
       </div>
     </div>
