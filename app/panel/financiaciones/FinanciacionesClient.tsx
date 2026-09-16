@@ -36,9 +36,16 @@ export default function FinanciacionesClient({ solicitudesIniciales }: { solicit
   }, [solicitudes, filtroEstado, query]);
 
   const cambiarEstado = async (id: string, estado: string) => {
+    const anterior = solicitudes.find((s) => s.id === id)?.estado;
     setSolicitudes((prev) => prev.map((s) => (s.id === id ? { ...s, estado } : s)));
     const { error } = await supabase2.from("leads_tasacion").update({ estado }).eq("id", id);
-    if (error) alert("No se pudo actualizar el estado.");
+    if (error) {
+      // El update optimista de arriba quedaba sin revertir si fallaba el
+      // guardado real -- la UI mostraba el estado nuevo hasta el próximo
+      // refresh de página, aunque la base siguiera con el viejo.
+      setSolicitudes((prev) => prev.map((s) => (s.id === id ? { ...s, estado: anterior ?? s.estado } : s)));
+      alert("No se pudo actualizar el estado.");
+    }
   };
 
   return (
