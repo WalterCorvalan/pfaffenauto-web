@@ -5,13 +5,24 @@ import { ShieldCheck, ChevronRight, Sparkles } from "lucide-react";
 import VehiculosGrid from "@/components/VehiculosGrid";
 import { CAMPOS_VEHICULO_PUBLICO } from "@/lib/vehiculos";
 import { LOGOS_MARCAS } from "@/lib/marcasLogos";
+import { MARCAS_ARGENTINA, slugificarMarca } from "@/lib/marcasModelos";
 import type { Metadata } from "next";
 
 export const revalidate = 60;
 
+// El slug de la URL puede no coincidir letra por letra con el nombre real de
+// la marca en la base (tildes sacadas, "GWM / Great Wall" -> guión) -- se
+// resuelve contra la lista curada en vez de derivarlo a mano con un simple
+// capitalize, que rompía marcas con tilde o espacios (ej. "citroen" nunca
+// hacía match con "Citroën" en la base).
+function resolverNombreMarca(slug: string): string {
+  const match = MARCAS_ARGENTINA.find((nombre) => slugificarMarca(nombre) === slug.toLowerCase());
+  return match || (slug.charAt(0).toUpperCase() + slug.slice(1).toLowerCase());
+}
+
 export async function generateMetadata({ params }: { params: Promise<{ marca: string }> }): Promise<Metadata> {
   const { marca } = await params;
-  const marcaName = marca.charAt(0).toUpperCase() + marca.slice(1).toLowerCase();
+  const marcaName = resolverNombreMarca(marca);
   return {
     title: `Autos ${marcaName} en Zona Norte | Pfaffen Autos`,
     description: `Encontrá vehículos ${marcaName} 0KM y usados seleccionados, con financiación y respaldo oficial en Pfaffen Autos.`,
@@ -100,7 +111,7 @@ export default async function MarcaPage({
   const { marca } = await params;
   const supabase = await createClient();
 
-  const marcaName = marca.charAt(0).toUpperCase() + marca.slice(1).toLowerCase();
+  const marcaName = resolverNombreMarca(marca);
   const marcaInfo = BRAND_DATA[marca.toLowerCase()] || {
     ...BRAND_DATA.default,
     logo: LOGOS_MARCAS[marcaName] || BRAND_DATA.default.logo,
@@ -110,7 +121,7 @@ export default async function MarcaPage({
   const { data: vehiculos } = await supabase
     .from("vehiculos")
     .select(CAMPOS_VEHICULO_PUBLICO)
-    .ilike("marca", marca)
+    .ilike("marca", marcaName)
     .in("estado", ["disponible", "reservado"])
     .order("precio_publicado_ars", { ascending: true });
 

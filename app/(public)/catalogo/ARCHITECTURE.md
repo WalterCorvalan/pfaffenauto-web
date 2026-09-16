@@ -24,6 +24,10 @@ Guía para no romper otra cosa al tocar este módulo. Si cambiás algo acá, rev
 - No comparten componentes de UI, pero sí la tabla `vehiculos` y la utilidad `normalizarMarca()`. Un cambio de esquema en `vehiculos` (nueva columna, cambio de valores de `estado` o `condicion`) afecta a los dos lados — revisar ambos `ARCHITECTURE.md`.
 - El home (`app/(public)/page.tsx`) también consulta `vehiculos` para armar `marcasEnStock` (componente `Marcas.tsx`) — mismo patrón de `normalizarMarca()`, considerar unificar si se toca de nuevo.
 
+## Links a `/marcas/[marca]`: usar siempre `slugificarMarca()`
+
+`lib/marcasModelos.ts` exporta `slugificarMarca()` (saca tildes, convierte "GWM / Great Wall" a "gwm-great-wall") — es la única fuente de verdad del slug para esa URL. Antes cada lugar que armaba el link (acá, `sitemap.ts`, `app/(public)/marcas/MarcasClient.tsx`) tenía su propia versión naive (solo reemplazar espacios), y `Citroën` generaba "citroën" en un lado y "citroen" en el otro — dos URLs para la misma marca, y encima `marcas/[marca]/page.tsx` matcheaba el slug crudo contra `vehiculos.marca` con `.ilike()`, así que la versión sin tilde nunca encontraba nada. Si agregás un link nuevo a `/marcas/...`, usá `slugificarMarca(auto.marca)`, no armes el slug a mano.
+
 ## Bug corregido: un auto cargado 100% en USD mostraba su precio principal convertido a pesos
 
 `catalogo/[slug]/page.tsx` (la ficha de un vehículo) calcula una variable `precioArs` que, cuando el auto **no** tiene `precio_publicado_ars` cargado (solo `precio_publicado_usd`), se rellena con una conversión estimada a dólar blue — pensada para alimentar `SimuladorFinanciacion.tsx` y la búsqueda de "Precio similar" (que solo compara en ARS), no para mostrarse como el precio real de venta.
