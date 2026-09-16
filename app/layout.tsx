@@ -2,6 +2,8 @@ import type { Metadata } from "next";
 import { Plus_Jakarta_Sans } from "next/font/google"; // <-- Nueva fuente
 import "./globals.css";
 import GoogleAnalytics from "@/components/GoogleAnalytics";
+import MetaPixel from "@/components/MetaPixel";
+import MicrosoftClarity from "@/components/MicrosoftClarity";
 
 // Cargamos Plus Jakarta Sans una sola vez para TODO el proyecto
 const jakarta = Plus_Jakarta_Sans({
@@ -122,6 +124,8 @@ export default function RootLayout({
       </head>
       <body className="font-sans bg-background text-foreground antialiased flex flex-col min-h-screen">
         <GoogleAnalytics />
+        <MetaPixel />
+        <MicrosoftClarity />
         {children}
       </body>
     </html>
