@@ -3,8 +3,8 @@
 import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { supabase2 } from "@/lib/supabase/client";
-import { Bell, Check, ExternalLink } from "lucide-react";
-import { TIPO_ICON, TIPO_COLOR, ICONO_DEFECTO, COLOR_DEFECTO } from "./alertaMeta";
+import { Bell, Check, ExternalLink, X, ArrowRight } from "lucide-react";
+import { TIPO_ICON, TIPO_COLOR, TIPO_VER, ICONO_DEFECTO, COLOR_DEFECTO, TIPOS_RESUMEN } from "./alertaMeta";
 import { agruparAlertas, type AlertaAgrupada } from "@/lib/panel/agruparAlertas";
 
 interface AlertaRaw {
@@ -27,6 +27,7 @@ export default function NotificationBell({ miId }: { miId: string }) {
   const [open, setOpen] = useState(false);
   const [alertas, setAlertas] = useState<Alerta[]>([]);
   const [sinLeer, setSinLeer] = useState(0);
+  const [alertaModal, setAlertaModal] = useState<Alerta | null>(null);
   const ref = useRef<HTMLDivElement>(null);
 
   // El contador va aparte de la lista visible (limitada a 8): si hay más de
@@ -84,6 +85,16 @@ export default function NotificationBell({ miId }: { miId: string }) {
       await supabase2.from("alertas").update({ leida: true }).in("id", a.idsGrupo);
     }
     setOpen(false);
+    // Mismo criterio que AlertasClient.tsx (Centro de Alertas): las de
+    // resumen (día/semana/mes) traen todo el contenido en su propio
+    // "mensaje" -- clickearlas acá navegaba directo al link sin mostrarlo,
+    // a diferencia del Centro de Alertas que ya abre un modal.
+    if (TIPOS_RESUMEN.has(a.tipo)) { setAlertaModal(a); return; }
+    if (a.link) router.push(a.link);
+  };
+
+  const irAlDetalleDesdeModal = (a: Alerta) => {
+    setAlertaModal(null);
     if (a.link) router.push(a.link);
   };
 
@@ -135,6 +146,25 @@ export default function NotificationBell({ miId }: { miId: string }) {
           <a href="/panel/alertas" onClick={() => setOpen(false)} className="flex items-center justify-center gap-1.5 px-4 py-2.5 text-xs font-bold text-rose-600 hover:bg-rose-50 dark:hover:bg-rose-500/10 border-t border-slate-100 dark:border-white/10">
             Ver Centro de Alertas <ExternalLink className="w-3 h-3" />
           </a>
+        </div>
+      )}
+
+      {alertaModal && (
+        <div className="fixed inset-0 z-[60] flex items-center justify-center p-4 bg-black/40" onClick={() => setAlertaModal(null)}>
+          <div className="bg-white dark:bg-[#1A1A1A] rounded-2xl shadow-xl w-full max-w-md p-6" onClick={(e) => e.stopPropagation()}>
+            <div className="flex items-start justify-between gap-3 mb-3">
+              <h2 className="text-lg font-bold text-slate-900 dark:text-white">{alertaModal.titulo}</h2>
+              <button onClick={() => setAlertaModal(null)} className="p-1 text-slate-400 hover:text-rose-600 rounded-lg transition-colors shrink-0"><X className="w-4 h-4" /></button>
+            </div>
+            {alertaModal.mensaje && (
+              <p className="text-sm text-slate-600 dark:text-slate-300 whitespace-pre-line">{alertaModal.mensaje}</p>
+            )}
+            {alertaModal.link && (
+              <button onClick={() => irAlDetalleDesdeModal(alertaModal)} className="flex items-center gap-1 text-xs font-bold text-emerald-600 dark:text-emerald-400 hover:underline mt-4">
+                {TIPO_VER[alertaModal.tipo] || "Ver más"} <ArrowRight className="w-3 h-3" />
+              </button>
+            )}
+          </div>
         </div>
       )}
     </div>
