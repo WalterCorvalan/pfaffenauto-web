@@ -61,8 +61,8 @@ const BRAND_DATA: Record<
   default: {
     logo: "/logo.png",
     logoR: "/r.png",
-    descripcion: "Encontrá los mejores modelos 0km y usados seleccionados con el respaldo y la garantía que merecés.",
-    pills: ["Calidad", "Seguridad", "Garantía"],
+    descripcion: "Encontrá los mejores modelos 0km y usados seleccionados",
+    pills: [],
     color: "#0145F2",
   },
 };
