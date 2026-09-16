@@ -7,7 +7,7 @@ import {
   Trophy, Building2, Key, ListChecks, Flame, Clock, ClipboardList, Wrench,
   Ticket, TrendingDown, Activity, BarChart3, Megaphone,
 } from "lucide-react";
-import { BarChart, Bar, XAxis, ResponsiveContainer, Tooltip } from "recharts";
+import { AreaChart, Area, XAxis, YAxis, CartesianGrid, ResponsiveContainer, Tooltip } from "recharts";
 import TablaResponsiva, { type ColumnaTabla } from "@/components/panel/TablaResponsiva";
 
 interface Props {
@@ -36,7 +36,7 @@ interface Props {
   ticketPromedioPorMoneda: Record<string, number>;
   top10Gastos: { concepto: string; categoria: string; fecha: string; monto: number; moneda: string }[];
   gastosAtipicos: { categoria: string; montoMes: number; promedioHistorico: number; moneda: string }[];
-  ventasPorMes6: { mes: string; cantidad: number }[];
+  ventasPorMes12: { mes: string; cantidad: number }[];
   proyeccionCaja: {
     saldos: { moneda: string; total: number }[];
     aCobrarPorMoneda: Record<string, number>; aPagarPorMoneda: Record<string, number>; resultadoPorMoneda: Record<string, number>;
@@ -90,6 +90,21 @@ function SeccionTitulo({ children }: { children: React.ReactNode }) {
 export default function DashboardGeneralTab(props: Props) {
   const saldoUsd = props.saldos.find((s) => s.moneda === "USD")?.total || 0;
   const saldoArs = props.saldos.find((s) => s.moneda === "ARS")?.total || 0;
+
+  // Variación del último mes vs. el anterior, para el badge sobre la curva
+  // de evolución -- el último punto de ventasPorMes12 es el mes en curso
+  // (incluye lo cerrado hasta hoy, no proyectado), así que la comparación
+  // es "lo que va del mes" vs. "el mes anterior completo", no apples-to-apples
+  // al 100%, pero es la misma limitación que ya tiene el resto del Dashboard
+  // (ventasDelMes/ventasMesAnterior) -- mismo criterio, no uno nuevo.
+  const evolucionVentas = (() => {
+    const datos = props.ventasPorMes12;
+    if (datos.length < 2) return { variacionPct: null as number | null };
+    const actual = datos[datos.length - 1].cantidad;
+    const anterior = datos[datos.length - 2].cantidad;
+    if (anterior === 0) return { variacionPct: actual > 0 ? 100 : null };
+    return { variacionPct: Math.round(((actual - anterior) / anterior) * 100) };
+  })();
 
   return (
     <div className="space-y-4">
@@ -170,15 +185,43 @@ export default function DashboardGeneralTab(props: Props) {
         )}
 
         <div className="rounded-2xl p-5 bg-white dark:bg-white/[0.02] border border-slate-200 dark:border-white/5">
-          <p className="text-sm font-bold text-slate-800 dark:text-white mb-1 flex items-center gap-1.5"><BarChart3 className="w-4 h-4 text-indigo-500" /> Ventas — últimos 6 meses</p>
-          <p className="text-[11px] text-slate-400 mb-2">Cantidad de ventas cerradas por mes</p>
-          <div className="h-[140px]">
+          <div className="flex items-center justify-between mb-1">
+            <p className="text-sm font-bold text-slate-800 dark:text-white flex items-center gap-1.5"><BarChart3 className="w-4 h-4 text-indigo-500" /> Evolución de ventas — últimos 12 meses</p>
+            {evolucionVentas.variacionPct !== null && (
+              <span className={`flex items-center gap-1 text-[11px] font-bold px-2 py-0.5 rounded-full ${evolucionVentas.variacionPct >= 0 ? "text-emerald-600 bg-emerald-50 dark:bg-emerald-500/10" : "text-rose-600 bg-rose-50 dark:bg-rose-500/10"}`}>
+                {evolucionVentas.variacionPct >= 0 ? <TrendingUp className="w-3 h-3" /> : <TrendingDown className="w-3 h-3" />}
+                {evolucionVentas.variacionPct >= 0 ? "+" : ""}{evolucionVentas.variacionPct}% vs. mes anterior
+              </span>
+            )}
+          </div>
+          <p className="text-[11px] text-slate-400 mb-2">Cantidad de ventas cerradas por mes — pasá el mouse para ver el detalle</p>
+          <div className="h-[180px]">
             <ResponsiveContainer width="100%" height="100%">
-              <BarChart data={props.ventasPorMes6}>
+              <AreaChart data={props.ventasPorMes12} margin={{ top: 8, right: 8, left: -20, bottom: 0 }}>
+                <defs>
+                  <linearGradient id="ventasEvolucionGradiente" x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="0%" stopColor="#6366f1" stopOpacity={0.35} />
+                    <stop offset="100%" stopColor="#6366f1" stopOpacity={0} />
+                  </linearGradient>
+                </defs>
+                <CartesianGrid vertical={false} strokeDasharray="3 3" stroke="currentColor" className="text-slate-100 dark:text-white/5" />
                 <XAxis dataKey="mes" tick={{ fontSize: 10 }} axisLine={false} tickLine={false} />
-                <Tooltip formatter={(v: any) => [String(v ?? 0), "Ventas"]} labelStyle={{ color: "#0f172a" }} contentStyle={{ fontSize: 12, borderRadius: 8 }} />
-                <Bar dataKey="cantidad" fill="#6366f1" radius={[4, 4, 0, 0]} />
-              </BarChart>
+                <YAxis tick={{ fontSize: 10 }} axisLine={false} tickLine={false} width={28} allowDecimals={false} />
+                <Tooltip
+                  formatter={(v: any) => [`${v ?? 0} venta${v === 1 ? "" : "s"}`, "Cerradas"]}
+                  labelStyle={{ color: "#0f172a", fontWeight: 700 }}
+                  contentStyle={{ fontSize: 12, borderRadius: 12, border: "1px solid #e2e8f0", boxShadow: "0 8px 24px -8px rgba(15,23,42,0.15)" }}
+                />
+                <Area
+                  type="monotone"
+                  dataKey="cantidad"
+                  stroke="#6366f1"
+                  strokeWidth={2.5}
+                  fill="url(#ventasEvolucionGradiente)"
+                  activeDot={{ r: 5, strokeWidth: 2, stroke: "#fff" }}
+                  dot={{ r: 2.5, fill: "#6366f1", strokeWidth: 0 }}
+                />
+              </AreaChart>
             </ResponsiveContainer>
           </div>
         </div>
