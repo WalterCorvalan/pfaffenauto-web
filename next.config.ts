@@ -3,15 +3,18 @@ import type { NextConfig } from "next";
 // Solo en producción: en dev, Turbopack necesita 'unsafe-eval' para el HMR y
 // no vale la pena pelear con eso en local. Dominios: Turnstile (script+iframe
 // del captcha), Google Maps (iframe embed de sucursales), R2/Wikimedia/Unsplash
-// (imágenes, mismos hosts que ya están en images.remotePatterns abajo).
+// (imágenes, mismos hosts que ya están en images.remotePatterns abajo),
+// Google Analytics, Meta Pixel (connect.facebook.net + noscript img de
+// facebook.com/tr) y Microsoft Clarity (script propio + subdominios de
+// envío de datos, variables por sesión).
 const CSP = [
   "default-src 'self'",
-  "script-src 'self' 'unsafe-inline' https://challenges.cloudflare.com https://www.googletagmanager.com",
+  "script-src 'self' 'unsafe-inline' https://challenges.cloudflare.com https://www.googletagmanager.com https://connect.facebook.net https://www.clarity.ms",
   "style-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net",
-  "img-src 'self' data: blob: https://*.b-cdn.net https://upload.wikimedia.org https://images.unsplash.com https://*.r2.dev https://*.r2.cloudflarestorage.com",
+  "img-src 'self' data: blob: https://*.b-cdn.net https://upload.wikimedia.org https://images.unsplash.com https://*.r2.dev https://*.r2.cloudflarestorage.com https://www.facebook.com",
   "media-src 'self'",
   "font-src 'self' data: https://cdn.jsdelivr.net",
-  "connect-src 'self' https://challenges.cloudflare.com https://*.supabase.co wss://*.supabase.co https://www.google-analytics.com https://*.google-analytics.com https://*.analytics.google.com",
+  "connect-src 'self' https://challenges.cloudflare.com https://*.supabase.co wss://*.supabase.co https://www.google-analytics.com https://*.google-analytics.com https://*.analytics.google.com https://www.facebook.com https://www.clarity.ms https://*.clarity.ms",
   "frame-src https://challenges.cloudflare.com https://www.google.com https://maps.google.com",
   "object-src 'none'",
   "base-uri 'self'",
