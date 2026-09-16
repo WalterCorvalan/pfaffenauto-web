@@ -513,6 +513,18 @@ export default function ExpedienteDetalleModal({ expedienteId, miId, perfiles, s
       alert('Elegí de qué caja entra el pago, o marcá "No — pendiente".');
       return;
     }
+    // Snapshot del estado previo (lo que hay hoy en la venta cargada, antes
+    // de este guardado) para poder revertir el primer RPC si el segundo
+    // falla -- sin esto quedaba un estado a mitad de camino: pago del
+    // comprador confirmado en la venta, pero el ingreso de "extra cobrado"
+    // sin registrar en Finanzas (ni el usuario se enteraba de ese detalle,
+    // solo veía "no se pudo guardar" sin saber qué de las dos partes quedó).
+    const previo = {
+      confirmado: venta.comprador_pago_confirmado || false,
+      fecha: venta.comprador_pago_fecha || "",
+      metodo: venta.comprador_metodo_pago || "",
+      cuentaId: venta.comprador_cuenta_id || "",
+    };
     setGuardandoPagoComprador(true);
     try {
       const { error: errorPago } = await supabase2.rpc("registrar_pago_comprador_venta", {
@@ -528,7 +540,20 @@ export default function ExpedienteDetalleModal({ expedienteId, miId, perfiles, s
         p_venta_id: venta.id, p_monto: extraCobradoMonto ? Number(extraCobradoMonto) : null, p_moneda: extraCobradoMoneda,
         p_cuenta_id: extraCobradoCuentaId || null, p_forma_pago: extraCobradoFormaPago || null, p_detalle: extraCobradoDetalle || null,
       });
-      if (errorExtra) throw errorExtra;
+      if (errorExtra) {
+        const { error: errorRevertir } = await supabase2.rpc("registrar_pago_comprador_venta", {
+          p_venta_id: venta.id, p_confirmado: previo.confirmado, p_fecha: previo.fecha || new Date().toISOString().slice(0, 10),
+          p_metodo: previo.metodo || null, p_cuenta_id: previo.confirmado ? previo.cuentaId : null,
+        });
+        if (errorRevertir) {
+          // No se pudo ni siquiera revertir -- acá sí hay que ser explícito
+          // sobre el estado real en vez de un alert genérico, para que quien
+          // lo lea sepa que el pago del comprador quedó aplicado sin el
+          // extra cobrado y tiene que revisarlo a mano.
+          throw new Error(`El pago del comprador se guardó, pero el extra cobrado falló (${errorExtra.message}) y no se pudo revertir el primero (${errorRevertir.message}). Revisá manualmente el estado de esta venta.`);
+        }
+        throw new Error(`No se pudo guardar el extra cobrado (${errorExtra.message}). Se revirtió el pago del comprador para no dejar un estado a medias — volvé a intentar.`);
+      }
       await cargar();
     } catch (err: any) {
       alert(err.message || "No se pudo guardar el pago del comprador.");
