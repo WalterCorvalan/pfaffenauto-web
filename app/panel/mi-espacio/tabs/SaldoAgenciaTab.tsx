@@ -58,13 +58,15 @@ export default function SaldoAgenciaTab({ miId }: { miId: string }) {
 
   const toggleSaldado = async (m: any) => {
     const nuevo = !m.saldado;
-    await supabase2.from("espacio_movimientos_agencia").update({ saldado: nuevo }).eq("id", m.id);
+    const { error } = await supabase2.from("espacio_movimientos_agencia").update({ saldado: nuevo }).eq("id", m.id);
+    if (error) { alert("No se pudo actualizar."); return; }
     setMovs((prev) => prev.map((x) => (x.id === m.id ? { ...x, saldado: nuevo } : x)));
   };
 
   const eliminar = async (m: any) => {
     if (!confirm("¿Eliminar este movimiento?")) return;
-    await supabase2.from("espacio_movimientos_agencia").delete().eq("id", m.id);
+    const { error } = await supabase2.from("espacio_movimientos_agencia").delete().eq("id", m.id);
+    if (error) { alert("No se pudo eliminar."); return; }
     setMovs((prev) => prev.filter((x) => x.id !== m.id));
   };
 
