@@ -56,12 +56,28 @@ export default function CobrosClient({ miId, soyAdminOFinanzas, cuotasIniciales,
 
   const confirmarCobro = async () => {
     if (!cobrando || !cbCuentaId || !cbMonto) return alert("Completá caja y monto.");
+    const montoNum = Number(cbMonto);
+    const pendienteCobrando = Number(cobrando.monto) - Number(cobrando.monto_cobrado);
+    // Sin este tope se podía tipear cualquier monto y mandarlo al RPC -- si
+    // este no valida server-side, quedaba un monto_cobrado > monto sin que
+    // nada lo impidiera acá (mismo criterio defensivo que el min="0.01" ya
+    // agregado en Comisiones).
+    if (montoNum <= 0) return alert("El monto tiene que ser mayor a 0.");
+    if (montoNum > pendienteCobrando) return alert(`El monto no puede superar lo pendiente (${fmt(pendienteCobrando, cobrando.moneda)}).`);
     setGuardando(true);
     try {
-      const { error } = await supabase2.rpc("cobrar_cuota_cliente", { p_cuota_id: cobrando.id, p_monto: Number(cbMonto), p_cuenta_id: cbCuentaId, p_fecha: cbFecha });
+      const { error } = await supabase2.rpc("cobrar_cuota_cliente", { p_cuota_id: cobrando.id, p_monto: montoNum, p_cuenta_id: cbCuentaId, p_fecha: cbFecha });
       if (error) throw error;
-      const { data: fresh } = await supabase2.from("cuotas_cobrar_clientes").select("*, cliente:clientes(nombre), venta:ventas(vehiculo_marca, vehiculo_modelo)").eq("id", cobrando.id).single();
-      setCuotas((prev: any[]) => prev.map((c) => (c.id === cobrando.id ? fresh : c)));
+      const { data: fresh, error: errFresh } = await supabase2.from("cuotas_cobrar_clientes").select("*, cliente:clientes(nombre), venta:ventas(vehiculo_marca, vehiculo_modelo)").eq("id", cobrando.id).maybeSingle();
+      // El cobro ya se registró (el RPC no tiró error) -- si esta lectura de
+      // vuelta falla, no hay que mostrar "no se pudo registrar el cobro"
+      // (sería falso), pero tampoco dejar la fila vieja/desincronizada en
+      // pantalla silenciosamente.
+      if (errFresh || !fresh) {
+        alert("El cobro se registró, pero no se pudo refrescar esta fila -- recargá la página para verla actualizada.");
+      } else {
+        setCuotas((prev: any[]) => prev.map((c) => (c.id === cobrando.id ? fresh : c)));
+      }
       setCobrando(null);
     } catch (err: any) {
       alert(err.message || "No se pudo registrar el cobro.");
@@ -112,7 +128,7 @@ export default function CobrosClient({ miId, soyAdminOFinanzas, cuotasIniciales,
             <label className={labelClass}>Fecha real de cobro *</label>
             <input type="date" value={cbFecha} onChange={(e) => setCbFecha(e.target.value)} className={inputClass} />
             <div className="grid grid-cols-2 gap-2 mt-3">
-              <div><label className={labelClass}>Monto ({cobrando.moneda}) *</label><input type="text" inputMode="numeric" value={cbMonto} onChange={(e) => setCbMonto(e.target.value.replace(/\D/g, ""))} className={inputClass} /></div>
+              <div><label className={labelClass}>Monto ({cobrando.moneda}) *</label><input type="text" inputMode="numeric" value={cbMonto} onChange={(e) => setCbMonto(e.target.value.replace(/\D/g, ""))} className={inputClass} /><p className="text-[10px] text-slate-400 mt-0.5">Pendiente: {fmt(Number(cobrando.monto) - Number(cobrando.monto_cobrado), cobrando.moneda)}</p></div>
               <div><label className={labelClass}>Caja *</label><select value={cbCuentaId} onChange={(e) => setCbCuentaId(e.target.value)} className={inputClass}><option value="">— Elegí —</option>{cuentas.filter((ct) => ct.moneda === cobrando.moneda).map((ct) => <option key={ct.id} value={ct.id}>{ct.nombre}</option>)}</select></div>
             </div>
             <p className="text-[10px] text-slate-400 mt-2">La cuota sale de pendientes y queda registrada con esta fecha.</p>
