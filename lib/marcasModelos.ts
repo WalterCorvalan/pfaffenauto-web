@@ -26,6 +26,9 @@ export const MARCAS_ARGENTINA = [
   "Zanella Utilitarios", "Otra",
 ];
 
+// Ver también lib/marcasLogos.ts (LOGOS_MARCAS) -- al recortar esta lista
+// se sumaron los logos que faltaban para las marcas nuevas del recorte.
+
 // Modelos reales por marca, para las marcas de mayor volumen en el mercado
 // argentino (las que más van a aparecer en consignaciones/cotizaciones/
 // ventas reales). Las marcas de MARCAS_ARGENTINA que no están acá siguen
