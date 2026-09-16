@@ -71,10 +71,11 @@ export default function ModificarCotizacionModal({ cotizacion: c, vendedorNombre
       payload.revision_mensaje = mensaje.trim() || "Necesito más información.";
     }
 
-    const { data, error } = await supabase2.from("cotizaciones").update(payload).eq("id", c.id).select().single();
+    const { data, error } = await supabase2.from("cotizaciones").update(payload).eq("id", c.id).select().maybeSingle();
     setGuardando(false);
-    if (!error) { onDecidido(data); onClose(); }
-    else alert(error?.message ? `No se pudo guardar la decisión: ${error.message}` : "No se pudo guardar la decisión.");
+    if (error) alert(`No se pudo guardar la decisión: ${error.message}`);
+    else if (!data) alert("No se pudo confirmar la decisión (no se pudo releer la cotización). Verificá permisos y volvé a intentar.");
+    else { onDecidido(data); onClose(); }
   };
 
   const inputClass = "w-full bg-slate-50 dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-xl px-3 py-2.5 text-sm outline-none focus:border-rose-500 text-slate-900 dark:text-white";
