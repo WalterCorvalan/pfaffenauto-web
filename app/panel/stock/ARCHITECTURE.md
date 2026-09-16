@@ -22,7 +22,7 @@ Guía para no romper otra cosa al tocar este módulo. Si cambiás algo acá, rev
 
 ## Componente compartido usado DESDE otros módulos
 
-- **`components/panel/VehiculoSelector.tsx`** — no vive en `stock/`, pero opera sobre la misma tabla `vehiculos` y lo usan Señas, Ventas, Presupuestos y Permutas para elegir/cargar un vehículo. Si agregás una columna nueva a `vehiculos` que otros formularios necesiten leer, decidí si va acá (afecta a los 4 consumidores) o se resuelve en cada consumidor con su propio query/join, como se hizo con `condicion` en el recibo de seña.
+- **`components/panel/VehiculoSelector.tsx`** — no vive en `stock/`, pero opera sobre la misma tabla `vehiculos` y lo usan Señas, Ventas, Presupuestos y Permutas para elegir/cargar un vehículo. Si agregás una columna nueva a `vehiculos` que otros formularios necesiten leer, decidí si va acá (afecta a los 4 consumidores) o se resuelve en cada consumidor con su propio query/join, como se hizo con `condicion` en el recibo de seña. **Bug corregido** (ver `presupuestos/ARCHITECTURE.md`): buscaba solo sobre el array recibido por prop (fetch único, sin `.limit()`) — ahora busca en vivo contra la base desde 2 caracteres, mismo patrón que `ClienteBuscador.tsx`.
 
 ## Conexión con Leads — consultas por WhatsApp de un auto publicado en ML
 
