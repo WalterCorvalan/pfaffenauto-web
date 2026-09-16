@@ -302,7 +302,40 @@ async function ejecutarAgente(conversacionId: string) {
   const patchConversacion: Record<string, unknown> = { calificacion };
   if (estadoSegunCalificacion) patchConversacion.estado_lead = estadoSegunCalificacion;
   if (vehiculoFocoId) patchConversacion.vehiculo_id = vehiculoFocoId;
+
+  // Pedido del usuario: todo auto 0km que el bot elige como foco de la
+  // charla se deriva siempre a Gabriel (Casa Central), sin importar la
+  // ronda normal por sucursal -- los 0km los maneja una sola persona.
+  // Se busca por nombre/sucursal en vivo (no un UUID hardcodeado) para no
+  // romper si cambia el perfil; si no se encuentra a Gabriel activo en
+  // Casa Central, no rompe el resto del flujo, solo no fuerza el cambio.
+  if (vehiculoFocoId) {
+    const { data: vehiculoFoco } = await supabase.from("vehiculos").select("condicion").eq("id", vehiculoFocoId).maybeSingle();
+    if (vehiculoFoco?.condicion === "0km") {
+      const { data: gabriel } = await supabase
+        .from("perfiles")
+        .select("id, sucursal:sucursal_id ( nombre )")
+        .ilike("nombre", "Gabriel%")
+        .eq("activo", true)
+        .maybeSingle();
+      const sucursalGabrielRaw = gabriel?.sucursal as { nombre?: string } | { nombre?: string }[] | null | undefined;
+      const sucursalGabriel = Array.isArray(sucursalGabrielRaw) ? sucursalGabrielRaw[0]?.nombre : sucursalGabrielRaw?.nombre;
+      if (gabriel?.id && sucursalGabriel && /casa central/i.test(sucursalGabriel)) {
+        patchConversacion.vendedor_id = gabriel.id;
+        patchConversacion.estado_lead = "asignado";
+      } else {
+        registrarError("webhook-v2:asignacion-0km", new Error("No se encontró a Gabriel (Casa Central) activo en perfiles"), { conversacionId, vehiculoFocoId });
+      }
+    }
+  }
+
   await supabase.from("whatsapp_conversaciones").update(patchConversacion).eq("id", conversacionId);
+
+  // Avisar a Gabriel recién después del update de arriba (así el link ya
+  // muestra la conversación con el vendedor correcto si abre desde la alerta).
+  if (patchConversacion.vendedor_id) {
+    notificarPersona(supabase, patchConversacion.vendedor_id as string, "whatsapp_venta_zona", "Un cliente está consultando por un 0km — se te asignó automáticamente.", `/panel/whatsapp?conversacion=${conversacionId}`, { categoriaNotif: "leads", modulo: "leads" }).catch((err) => console.error("[webhook-v2] error notificando asignación 0km:", err));
+  }
 
   // Nombre y mail que el cliente vaya dando durante la charla se guardan en
   // el contacto apenas se detectan, sin esperar al handoff — así quedan
@@ -460,7 +493,13 @@ async function enviarYActualizarMensaje(mensajeId: string, conversacionId: strin
     await supabase.from("whatsapp_mensajes").update({ status: "sent", wa_message_id: resultado.messages?.[0]?.id }).eq("id", mensajeId);
   } catch (err) {
     registrarError("webhook-v2:enviar-mensaje", err, { conversacionId, mensajeId });
-    await supabase.from("whatsapp_mensajes").update({ status: "failed" }).eq("id", mensajeId);
+    // Antes esto dejaba error_detalle en null -- el webhook de status
+    // asíncrono (actualizarEstadoMensaje) sí lo guarda, pero una falla
+    // síncrona al mandar (ej. Meta caída, ventana de 24hs) solo quedaba en
+    // logs_errores, invisible para el botón "reintentar con plantilla" del
+    // panel, que mostraba siempre el motivo genérico por defecto.
+    const detalleError = err instanceof Error ? err.message : String(err);
+    await supabase.from("whatsapp_mensajes").update({ status: "failed", error_detalle: detalleError.slice(0, 500) }).eq("id", mensajeId);
   }
 }
 

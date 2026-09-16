@@ -99,9 +99,15 @@ export default function NuevoPresupuestoModal({
         // mismo criterio que el resto de la cadena vehículo/vendedor/sucursal.
         const vendedorFinalId = vendedorId || user?.id;
         const sucursalVendedor = vendedores.find((v) => v.id === vendedorFinalId)?.sucursal_id || null;
+        // Precios en ARS y USD son excluyentes (ver inputs "disabled" más
+        // abajo) -- un presupuesto cargado solo en USD tenía precioArs vacío,
+        // así que este mensaje decía literalmente "$0" sin mencionar el
+        // precio real. Mismo texto que ya arma precioTexto más abajo para el
+        // modal de confirmación.
+        const precioTextoNotif = `$ ${(Number(precioArs) || 0).toLocaleString("es-AR")}${precioUsd ? ` (US$ ${Number(precioUsd).toLocaleString("es-AR")})` : ""}`;
         await notificarEncargados(
           supabase2,
-          `${cliente.nombre} ${cliente.apellido || ""} — Presupuesto N° ${data.numero}: el vendedor no confirmó el precio ($${(Number(precioArs) || 0).toLocaleString("es-AR")}). Verificalo.`,
+          `${cliente.nombre} ${cliente.apellido || ""} — Presupuesto N° ${data.numero}: el vendedor no confirmó el precio (${precioTextoNotif}). Verificalo.`,
           `/panel/presupuestos/imprimir/${data.id}`,
           "precio_a_confirmar",
           sucursalVendedor,

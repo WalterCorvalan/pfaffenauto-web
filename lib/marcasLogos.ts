@@ -70,6 +70,29 @@ export const LOGOS_MARCAS: Record<string, string> = {
   "SWM": "https://upload.wikimedia.org/wikipedia/commons/8/85/SWM_logo.svg",
   "Tank": "https://upload.wikimedia.org/wikipedia/commons/4/4b/TANK_logo.svg",
   "Volvo": "https://upload.wikimedia.org/wikipedia/commons/0/0c/Volvo_logo.svg",
+  // Agregadas al recortar MARCAS_ARGENTINA en lib/marcasModelos.ts (antes
+  // esta marca ni tenía logo mapeado). Estas usan el formato estable de
+  // Wikimedia Commons Special:FilePath (redirige al archivo real sin
+  // necesitar conocer el hash interno de la URL directa) -- este sandbox
+  // de Claude Code tiene bloqueado el acceso a wikimedia.org, así que no
+  // se pudo verificar visualmente cada logo antes de mergear; si alguno
+  // se ve raro o roto, avisar para cambiarlo.
+  "GWM / Great Wall": "https://upload.wikimedia.org/wikipedia/commons/5/57/Great_Wall_Motors_logo.svg",
+  "Changan": "https://commons.wikimedia.org/wiki/Special:FilePath/Changan_icon.svg",
+  "Mahindra": "https://commons.wikimedia.org/wiki/Special:FilePath/Mahindra_logo.svg",
+  "Subaru": "https://commons.wikimedia.org/wiki/Special:FilePath/Subaru_(2019).svg",
+  "Tata": "https://commons.wikimedia.org/wiki/Special:FilePath/Tata_Motors_Logo.svg",
+  "Tesla": "https://commons.wikimedia.org/wiki/Special:FilePath/Tesla_Motors.svg",
+  "Wuling": "https://commons.wikimedia.org/wiki/Special:FilePath/Wuling-logo.svg",
+  // Marcas propias de la agencia (ver components/landing/LandingRely.tsx y
+  // LandingKarry.tsx) -- ya tenían archivo local, solo faltaba sumarlas acá
+  // para que getLogoMarca() las resuelva en las tarjetas de auto/catálogo.
+  "Rely": "/RelyLogo.png",
+  "Karry": "/logo-karry.webp",
+  // "Zanella Utilitarios" queda sin logo a propósito -- no se encontró
+  // ninguno real en Wikimedia Commons, getLogoMarca() devuelve null y cae
+  // al placeholder default del componente que lo llame (no inventar una
+  // URL a ciegas).
 };
 
 export function getLogoMarca(marca: string | null | undefined): string | null {

@@ -24,6 +24,14 @@ Guía para no romper otra cosa al tocar este módulo. Si cambiás algo acá, rev
 - No comparten componentes de UI, pero sí la tabla `vehiculos` y la utilidad `normalizarMarca()`. Un cambio de esquema en `vehiculos` (nueva columna, cambio de valores de `estado` o `condicion`) afecta a los dos lados — revisar ambos `ARCHITECTURE.md`.
 - El home (`app/(public)/page.tsx`) también consulta `vehiculos` para armar `marcasEnStock` (componente `Marcas.tsx`) — mismo patrón de `normalizarMarca()`, considerar unificar si se toca de nuevo.
 
+## Bug corregido: un auto cargado 100% en USD mostraba su precio principal convertido a pesos
+
+`catalogo/[slug]/page.tsx` (la ficha de un vehículo) calcula una variable `precioArs` que, cuando el auto **no** tiene `precio_publicado_ars` cargado (solo `precio_publicado_usd`), se rellena con una conversión estimada a dólar blue — pensada para alimentar `SimuladorFinanciacion.tsx` y la búsqueda de "Precio similar" (que solo compara en ARS), no para mostrarse como el precio real de venta.
+
+El título grande "Precio al contado" (`VehiculoPriceCard`) usaba la condición `!precioArs` para decidir si mostrar USD o ARS — pero como `precioArs` **siempre** tenía un valor (el auto-convertido, cuando no había uno real), esa condición nunca era `true` para un auto en USD: el precio principal quedaba siempre convertido a pesos, aunque la operación real fuera en dólares. Reportado por el usuario con una Volkswagen Tiguan.
+
+Arreglado pasando un prop separado (`precioArsReal = !!auto.precio_publicado_ars`, sin el fallback convertido) y usando ese para decidir la moneda del precio principal — `precioArs` (con el fallback) se sigue usando tal cual para el simulador y "Precio similar", donde sí hace falta un número en ARS aunque sea estimado. Si agregás otro lugar que muestre el "precio principal" de un auto, no reuses la variable con el fallback de dólar blue para decidir la moneda a mostrar — solo para cálculos que necesitan sí o sí un ARS.
+
 ## No tocar sin revisar el resto
 
 - No introducir un segundo criterio de "publicado" distinto a `estado in (disponible, reservado)` — ya hubo un hallazgo de auditoría por la confusión entre esto y `publicado_ml`.

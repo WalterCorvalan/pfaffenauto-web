@@ -65,11 +65,14 @@ async function cargarDatosCliente(miId: string) {
 async function cargarDatosVenta(miId: string) {
   const [{ data: perfiles }, { data: clientes }, { data: vehiculos }, { data: cuentas }] = await Promise.all([
     supabase2.from("perfiles").select("id, nombre, roles").eq("activo", true).order("nombre"),
-    supabase2.from("clientes").select("id, nombre, telefono, email, dni_cuit").order("nombre"),
+    supabase2.from("clientes").select("id, nombre, apellido, telefono, email, dni_cuit").order("nombre"),
     supabase2.from("vehiculos").select("id, marca, modelo, anio, patente, km, precio_venta, moneda_venta, estado, color, condicion").in("estado", ["disponible", "reservado", "señado"]).order("marca"),
     supabase2.from("cuentas").select("id, nombre, moneda").eq("activa", true).order("nombre"),
   ]);
-  return { perfiles: perfiles || [], clientes: clientes || [], vehiculos: vehiculos || [], cuentas: cuentas || [], miId };
+  // "perfiles" ya trae los roles de todos los activos, el usuario actual
+  // incluido -- se deriva soyAdmin de ahí en vez de pedirlo aparte.
+  const soyAdmin = (perfiles || []).find((p) => p.id === miId)?.roles?.includes("admin") ?? false;
+  return { perfiles: perfiles || [], clientes: clientes || [], vehiculos: vehiculos || [], cuentas: cuentas || [], miId, soyAdmin };
 }
 
 export default function QuickActionsButton() {
@@ -156,7 +159,7 @@ export default function QuickActionsButton() {
         <NuevoClienteModal perfiles={clienteDatos.perfiles} disponibilidad={clienteDatos.disponibilidad} miId={clienteDatos.miId} onClose={cerrarModales} onCreado={onCreadoGenerico} />
       )}
       {ventaDatos && (
-        <NuevaVentaModal perfiles={ventaDatos.perfiles} clientes={ventaDatos.clientes} vehiculos={ventaDatos.vehiculos} cuentas={ventaDatos.cuentas} miId={ventaDatos.miId} onClose={cerrarModales} onCreado={onCreadoGenerico} />
+        <NuevaVentaModal perfiles={ventaDatos.perfiles} clientes={ventaDatos.clientes} vehiculos={ventaDatos.vehiculos} cuentas={ventaDatos.cuentas} miId={ventaDatos.miId} soyAdmin={ventaDatos.soyAdmin} onClose={cerrarModales} onCreado={onCreadoGenerico} />
       )}
     </>
   );

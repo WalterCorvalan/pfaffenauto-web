@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { supabase2 } from "@/lib/supabase/client";
 import { ShieldAlert, CheckCircle2, XCircle, KeyRound, Save, History, Inbox } from "lucide-react";
 
@@ -28,6 +28,25 @@ export default function AutorizacionesClient({
   const [nuevoPin, setNuevoPin] = useState("");
   const [tienePinEstado, setTienePinEstado] = useState(tienePin);
   const [guardandoPin, setGuardandoPin] = useState(false);
+
+  // Sin esto, una solicitud nueva (o resuelta por otro admin en simultáneo)
+  // solo aparecía al refrescar la página -- justo lo que había que evitar
+  // después de cerrar el bypass de autoaprobación de comisiones: el admin
+  // tiene que ver lo pendiente apenas entra, no un rato después.
+  useEffect(() => {
+    const canal = supabase2
+      .channel(`autorizaciones-live-${Math.random().toString(36).slice(2)}`)
+      .on("postgres_changes", { event: "*", schema: "public", table: "autorizaciones" }, async () => {
+        const [{ data: nuevoPendientes }, { data: nuevoHistorico }] = await Promise.all([
+          supabase2.from("autorizaciones").select("*, solicitante:perfiles!autorizaciones_solicitado_por_fkey(nombre)").eq("estado", "pendiente").order("created_at", { ascending: false }),
+          supabase2.from("autorizaciones").select("*, solicitante:perfiles!autorizaciones_solicitado_por_fkey(nombre), resolutor:perfiles!autorizaciones_resuelto_por_fkey(nombre)").neq("estado", "pendiente").order("resuelto_en", { ascending: false }).limit(100),
+        ]);
+        if (nuevoPendientes) setPendientes(nuevoPendientes);
+        if (nuevoHistorico) setHistorico(nuevoHistorico);
+      })
+      .subscribe();
+    return () => { supabase2.removeChannel(canal); };
+  }, []);
 
   const resolver = async (a: any, aprobar: boolean) => {
     setProcesando(a.id);

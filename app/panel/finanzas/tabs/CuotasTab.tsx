@@ -114,10 +114,12 @@ export default function CuotasTab({
       if (error) throw error;
 
       if (pagando.direccion === "cobrar") {
-        const { data: fresh } = await supabase2.from("cuotas_cobrar_clientes").select("*, cliente:clientes(nombre)").eq("id", pagando.cuota.id).single();
+        const { data: fresh, error: errorFresh } = await supabase2.from("cuotas_cobrar_clientes").select("*, cliente:clientes(nombre)").eq("id", pagando.cuota.id).maybeSingle();
+        if (errorFresh || !fresh) { alert("El cobro se registró, pero no se pudo refrescar la lista -- recargá la página."); setPagando(null); return; }
         setCuotasCobrar((prev: any[]) => prev.map((c) => (c.id === pagando.cuota.id ? fresh : c)));
       } else {
-        const { data: fresh } = await supabase2.from("cuotas_pagar_agencia").select("*").eq("id", pagando.cuota.id).single();
+        const { data: fresh, error: errorFresh } = await supabase2.from("cuotas_pagar_agencia").select("*").eq("id", pagando.cuota.id).maybeSingle();
+        if (errorFresh || !fresh) { alert("El pago se registró, pero no se pudo refrescar la lista -- recargá la página."); setPagando(null); return; }
         setCuotasPagar((prev: any[]) => prev.map((c) => (c.id === pagando.cuota.id ? fresh : c)));
       }
 

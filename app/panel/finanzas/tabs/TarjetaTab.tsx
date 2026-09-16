@@ -40,7 +40,12 @@ export default function TarjetaTab({
         p_cuotas_totales: Number(cuotasTotales) || 1, p_cuota_actual: Number(cuotaActual) || 1, p_estado: estado, p_cuenta_id: cuentaId || null,
       });
       if (error) throw error;
-      const { data: fresh } = await supabase2.from("consumos_tarjeta").select("*").eq("id", id).single();
+      // El RPC no tiró error -- el consumo ya quedó registrado. Sin chequear
+      // esto, "fresh" undefined entraba directo al array (crash de render)
+      // y encima "fresh.movimiento_id" de abajo tiraba, cayendo al catch con
+      // "no se pudo registrar" aunque sí se había registrado.
+      const { data: fresh, error: errorFresh } = await supabase2.from("consumos_tarjeta").select("*").eq("id", id).maybeSingle();
+      if (errorFresh || !fresh) { alert("El consumo se registró, pero no se pudo refrescar la lista -- recargá la página."); setShowNuevo(false); return; }
       setConsumos((prev: any[]) => [fresh, ...prev]);
 
       if (fresh.movimiento_id) {
@@ -65,7 +70,8 @@ export default function TarjetaTab({
     try {
       const { error } = await supabase2.rpc("marcar_consumo_tarjeta_pagado", { p_id: pagando.id, p_cuenta_id: pgCuentaId });
       if (error) throw error;
-      const { data: fresh } = await supabase2.from("consumos_tarjeta").select("*").eq("id", pagando.id).single();
+      const { data: fresh, error: errorFresh } = await supabase2.from("consumos_tarjeta").select("*").eq("id", pagando.id).maybeSingle();
+      if (errorFresh || !fresh) { alert("El pago se registró, pero no se pudo refrescar la lista -- recargá la página."); setPagando(null); return; }
       setConsumos((prev: any[]) => prev.map((c) => (c.id === pagando.id ? fresh : c)));
       const [{ data: nuevoMov }, { data: nuevoSaldo }] = await Promise.all([
         supabase2.from("movimientos_caja").select("*, cuenta:cuentas(nombre, moneda)").eq("id", fresh.movimiento_id).single(),

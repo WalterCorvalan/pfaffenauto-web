@@ -74,7 +74,7 @@ export default function BonoModal({
           <div className="flex gap-3">
             <div className="flex-1">
               <label className="text-xs font-bold text-slate-600 dark:text-slate-400 mb-1.5 block uppercase tracking-widest">Monto</label>
-              <input required type="number" placeholder="0" value={formData.monto} onChange={e => setFormData({...formData, monto: e.target.value})} className="w-full bg-slate-50 dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-xl px-3 py-2.5 text-sm outline-none text-slate-900 dark:text-white font-mono" />
+              <input required type="number" min="0.01" step="0.01" placeholder="0" value={formData.monto} onChange={e => setFormData({...formData, monto: e.target.value})} className="w-full bg-slate-50 dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-xl px-3 py-2.5 text-sm outline-none text-slate-900 dark:text-white font-mono" />
             </div>
             <div className="w-24">
               <label className="text-xs font-bold text-slate-600 dark:text-slate-400 mb-1.5 block uppercase tracking-widest">Moneda</label>

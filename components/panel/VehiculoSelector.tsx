@@ -1,7 +1,8 @@
 "use client";
 
-import { useState } from "react";
-import { Car, Check, X, Pencil, Search } from "lucide-react";
+import { useEffect, useState } from "react";
+import { Car, Check, X, Pencil, Search, Loader2 } from "lucide-react";
+import { supabase2 } from "@/lib/supabase/client";
 
 export interface VehiculoDatos {
   vehiculo_id: string | null;
@@ -31,9 +32,38 @@ export default function VehiculoSelector({
   const [guardandoManual, setGuardandoManual] = useState(false);
   const [busquedaStock, setBusquedaStock] = useState("");
 
-  const seleccionarDeStock = (id: string) => {
-    if (!id) return;
-    const v = vehiculos.find((x) => x.id === id);
+  // vehiculos llega por prop desde un query server-side que se trae UNA sola
+  // vez al cargar la página -- un auto marcado "disponible" recién, o
+  // agregado a stock en la misma sesión, no aparecía acá hasta recargar
+  // (mismo bug que ya se corrigió para clientes en ClienteBuscador.tsx,
+  // hallazgo de la auditoría de flujo real, ver senas/ARCHITECTURE.md). Con
+  // el agravante de que el select del server tampoco tiene .limit(), así
+  // que un stock disponible de más de 1000 autos ni siquiera llega completo
+  // acá. Mismo patrón: filtro local instantáneo con 1 carácter, consulta
+  // real server-side (debounce 300ms) desde 2 caracteres. Este hook tiene
+  // que vivir antes de los `return` condicionales de más abajo (reglas de
+  // hooks: no puede llamarse condicionalmente).
+  const [resultadosVivo, setResultadosVivo] = useState<any[] | null>(null);
+  const [buscando, setBuscando] = useState(false);
+  useEffect(() => {
+    const q = busquedaStock.trim();
+    if (q.length < 2) { setResultadosVivo(null); return; }
+    setBuscando(true);
+    const timer = setTimeout(async () => {
+      const { data } = await supabase2
+        .from("vehiculos")
+        .select("id, marca, modelo, patente, segmento, tipo, marca_motor, numero_motor, marca_chasis, numero_chasis, anio, color, km, combustible, transmision, traccion, precio_publicado_ars, precio_publicado_usd, precio_venta, moneda_venta")
+        .eq("estado", "disponible")
+        .or(`marca.ilike.%${q}%,modelo.ilike.%${q}%,patente.ilike.%${q}%`)
+        .order("marca")
+        .limit(30);
+      setResultadosVivo(data || []);
+      setBuscando(false);
+    }, 300);
+    return () => clearTimeout(timer);
+  }, [busquedaStock]);
+
+  const seleccionarDeStock = (v: any) => {
     if (!v) return;
     onCambiar({
       vehiculo_id: v.id, dominio: v.patente || "", segmento: v.segmento || "", marca: v.marca || "", modelo: v.modelo || "",
@@ -145,7 +175,7 @@ export default function VehiculoSelector({
     );
   }
 
-  const vehiculosFiltrados = vehiculos.filter((v) => {
+  const vehiculosFiltrados = resultadosVivo ?? vehiculos.filter((v) => {
     const q = busquedaStock.trim().toLowerCase();
     if (!q) return true;
     return `${v.marca} ${v.modelo} ${v.patente || ""}`.toLowerCase().includes(q);
@@ -159,12 +189,14 @@ export default function VehiculoSelector({
       </div>
       <div className="max-h-48 overflow-y-auto border border-slate-200 dark:border-white/10 rounded-xl divide-y divide-slate-100 dark:divide-white/10">
         {vehiculosFiltrados.slice(0, 30).map((v) => (
-          <button key={v.id} type="button" onClick={() => seleccionarDeStock(v.id)} className="w-full text-left px-3 py-2.5 hover:bg-rose-50 dark:hover:bg-white/5 transition-colors flex items-center justify-between gap-2">
+          <button key={v.id} type="button" onClick={() => seleccionarDeStock(v)} className="w-full text-left px-3 py-2.5 hover:bg-rose-50 dark:hover:bg-white/5 transition-colors flex items-center justify-between gap-2">
             <span className="text-sm font-medium text-slate-800 dark:text-white truncate">{v.marca} {v.modelo}</span>
             <span className="text-[11px] text-slate-400 shrink-0">{v.patente || "S/P"}</span>
           </button>
         ))}
-        {vehiculosFiltrados.length === 0 && <p className="px-3 py-3 text-[13px] text-slate-400 italic">Sin resultados.</p>}
+        {buscando ? (
+          <p className="px-3 py-3 text-[13px] text-slate-400 italic flex items-center gap-1.5"><Loader2 className="w-3.5 h-3.5 animate-spin" /> Buscando...</p>
+        ) : vehiculosFiltrados.length === 0 && <p className="px-3 py-3 text-[13px] text-slate-400 italic">Sin resultados.</p>}
       </div>
       <button type="button" onClick={() => setModoManual(true)} className="flex items-center gap-1.5 text-[#0145F2] dark:text-[#5b8dff] hover:text-[#0138c9] dark:hover:text-rose-300 text-[12px] font-bold">
         <Car className="w-3.5 h-3.5" /> Cargar vehículo manualmente

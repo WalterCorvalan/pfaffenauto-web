@@ -222,14 +222,22 @@ export default function ExpedienteDetalleModal({ expedienteId, miId, perfiles, s
 
   const toggleHito = async (h: any) => {
     const nuevo = !h.completado;
-    await supabase2.from("expediente_hitos").update({ completado: nuevo, completado_en: nuevo ? new Date().toISOString() : null }).eq("id", h.id);
     setHitos((prev) => prev.map((x) => (x.id === h.id ? { ...x, completado: nuevo } : x)));
+    const { error } = await supabase2.from("expediente_hitos").update({ completado: nuevo, completado_en: nuevo ? new Date().toISOString() : null }).eq("id", h.id);
+    if (error) {
+      setHitos((prev) => prev.map((x) => (x.id === h.id ? { ...x, completado: !nuevo } : x)));
+      alert("No se pudo actualizar el hito.");
+    }
   };
 
   const toggleChecklistItem = async (item: any) => {
     const nuevo = !item.completado;
-    await supabase2.rpc("expediente_checklist_tildar", { p_item_id: item.id, p_completado: nuevo });
     setChecklist((prev) => prev.map((x) => (x.id === item.id ? { ...x, completado: nuevo } : x)));
+    const { error } = await supabase2.rpc("expediente_checklist_tildar", { p_item_id: item.id, p_completado: nuevo });
+    if (error) {
+      setChecklist((prev) => prev.map((x) => (x.id === item.id ? { ...x, completado: !nuevo } : x)));
+      alert("No se pudo actualizar el ítem del checklist.");
+    }
   };
 
   // Suma un ítem custom al checklist de la parte (ej: un requisito puntual
@@ -379,8 +387,9 @@ export default function ExpedienteDetalleModal({ expedienteId, miId, perfiles, s
     const payload = parte === "comprador"
       ? { confirmado_comprador: true, confirmado_comprador_en: new Date().toISOString(), confirmado_comprador_por: miId }
       : { confirmado_consignacion: true, confirmado_consignacion_en: new Date().toISOString(), confirmado_consignacion_por: miId };
-    const { data } = await supabase2.from("expedientes").update(payload).eq("id", expedienteId).select("*, venta:ventas(*)").single();
+    const { data } = await supabase2.from("expedientes").update(payload).eq("id", expedienteId).select("*, venta:ventas(*)").maybeSingle();
     if (data) { setExpediente(data); onActualizado(data); }
+    else alert("No se pudo confirmar. Verificá permisos y volvé a intentar.");
   };
 
   // Deshace una confirmación ya hecha -- por ejemplo si se confirmó por
@@ -392,13 +401,15 @@ export default function ExpedienteDetalleModal({ expedienteId, miId, perfiles, s
     const payload = parte === "comprador"
       ? { confirmado_comprador: false, confirmado_comprador_en: null, confirmado_comprador_por: null }
       : { confirmado_consignacion: false, confirmado_consignacion_en: null, confirmado_consignacion_por: null };
-    const { data } = await supabase2.from("expedientes").update(payload).eq("id", expedienteId).select("*, venta:ventas(*)").single();
+    const { data } = await supabase2.from("expedientes").update(payload).eq("id", expedienteId).select("*, venta:ventas(*)").maybeSingle();
     if (data) { setExpediente(data); onActualizado(data); }
+    else alert("No se pudo revertir la confirmación.");
   };
 
   const agregarObservacion = async () => {
     if (!nuevaObs.trim()) return;
-    await supabase2.from("expediente_observaciones").insert({ expediente_id: expedienteId, texto: nuevaObs.trim(), autor_id: miId });
+    const { error } = await supabase2.from("expediente_observaciones").insert({ expediente_id: expedienteId, texto: nuevaObs.trim(), autor_id: miId });
+    if (error) { alert("No se pudo agregar la observación."); return; }
     setNuevaObs("");
     const { data } = await supabase2.from("expediente_observaciones").select("*, autor:perfiles(nombre)").eq("expediente_id", expedienteId).order("created_at", { ascending: false });
     setObservaciones(data || []);
@@ -407,10 +418,18 @@ export default function ExpedienteDetalleModal({ expedienteId, miId, perfiles, s
   const guardarCambios = async () => {
     setGuardando(true);
     try {
-      const { data } = await supabase2.from("expedientes").update({
+      // Antes usaba .single() sin chequear "error" -- si el UPDATE fallaba
+      // (RLS, trigger) supabase-js no tira excepción, así que el catch de
+      // abajo nunca se disparaba: guardarCambios() terminaba "bien" (spinner
+      // se apaga, sin alert) aunque título/estado/fechas/precio del
+      // propietario -- los campos más editados del modal -- nunca se
+      // hubieran guardado. Bug encontrado en la auditoría de código.
+      const { data, error: errPrincipal } = await supabase2.from("expedientes").update({
         titulo: titulo.trim() || null, estado, fecha_apertura: fechaApertura || null, vencimiento: vencimiento || null,
         precio_propietario: precioPropietario ? Number(precioPropietario) : null, precio_propietario_moneda: precioPropietarioMoneda,
-      }).eq("id", expedienteId).select("*, venta:ventas(*)").single();
+      }).eq("id", expedienteId).select("*, venta:ventas(*)").maybeSingle();
+      if (errPrincipal) throw errPrincipal;
+      if (!data) throw new Error("No se pudo confirmar el guardado (no se pudo releer el expediente). Verificá permisos y volvé a intentar.");
 
       if (venta) {
         await supabase2.from("ventas").update({
@@ -494,6 +513,18 @@ export default function ExpedienteDetalleModal({ expedienteId, miId, perfiles, s
       alert('Elegí de qué caja entra el pago, o marcá "No — pendiente".');
       return;
     }
+    // Snapshot del estado previo (lo que hay hoy en la venta cargada, antes
+    // de este guardado) para poder revertir el primer RPC si el segundo
+    // falla -- sin esto quedaba un estado a mitad de camino: pago del
+    // comprador confirmado en la venta, pero el ingreso de "extra cobrado"
+    // sin registrar en Finanzas (ni el usuario se enteraba de ese detalle,
+    // solo veía "no se pudo guardar" sin saber qué de las dos partes quedó).
+    const previo = {
+      confirmado: venta.comprador_pago_confirmado || false,
+      fecha: venta.comprador_pago_fecha || "",
+      metodo: venta.comprador_metodo_pago || "",
+      cuentaId: venta.comprador_cuenta_id || "",
+    };
     setGuardandoPagoComprador(true);
     try {
       const { error: errorPago } = await supabase2.rpc("registrar_pago_comprador_venta", {
@@ -509,7 +540,20 @@ export default function ExpedienteDetalleModal({ expedienteId, miId, perfiles, s
         p_venta_id: venta.id, p_monto: extraCobradoMonto ? Number(extraCobradoMonto) : null, p_moneda: extraCobradoMoneda,
         p_cuenta_id: extraCobradoCuentaId || null, p_forma_pago: extraCobradoFormaPago || null, p_detalle: extraCobradoDetalle || null,
       });
-      if (errorExtra) throw errorExtra;
+      if (errorExtra) {
+        const { error: errorRevertir } = await supabase2.rpc("registrar_pago_comprador_venta", {
+          p_venta_id: venta.id, p_confirmado: previo.confirmado, p_fecha: previo.fecha || new Date().toISOString().slice(0, 10),
+          p_metodo: previo.metodo || null, p_cuenta_id: previo.confirmado ? previo.cuentaId : null,
+        });
+        if (errorRevertir) {
+          // No se pudo ni siquiera revertir -- acá sí hay que ser explícito
+          // sobre el estado real en vez de un alert genérico, para que quien
+          // lo lea sepa que el pago del comprador quedó aplicado sin el
+          // extra cobrado y tiene que revisarlo a mano.
+          throw new Error(`El pago del comprador se guardó, pero el extra cobrado falló (${errorExtra.message}) y no se pudo revertir el primero (${errorRevertir.message}). Revisá manualmente el estado de esta venta.`);
+        }
+        throw new Error(`No se pudo guardar el extra cobrado (${errorExtra.message}). Se revirtió el pago del comprador para no dejar un estado a medias — volvé a intentar.`);
+      }
       await cargar();
     } catch (err: any) {
       alert(err.message || "No se pudo guardar el pago del comprador.");
@@ -521,12 +565,17 @@ export default function ExpedienteDetalleModal({ expedienteId, miId, perfiles, s
   const guardarConsignacion = async () => {
     setGuardandoConsignacion(true);
     try {
-      const { data } = await supabase2.from("expedientes").update({
+      const { data, error } = await supabase2.from("expedientes").update({
         precio_propietario: precioPropietario ? Number(precioPropietario) : null,
         precio_propietario_moneda: precioPropietarioMoneda,
         tipo_acuerdo_consignacion: tipoAcuerdoConsignacion,
-      }).eq("id", expedienteId).select("*, venta:ventas(*)").single();
-      if (data) { setExpediente(data); onActualizado(data); }
+      }).eq("id", expedienteId).select("*, venta:ventas(*)").maybeSingle();
+      // precio_propietario alimenta directo la Liquidación (honorarios, neto
+      // a pagar al propietario) -- .single() sin chequear error dejaba esto
+      // guardado en silencio como "ok" aunque no se hubiera tocado nada.
+      if (error) throw error;
+      if (!data) throw new Error("No se pudo confirmar el guardado.");
+      setExpediente(data); onActualizado(data);
     } catch (err: any) {
       alert(err?.message ? `No se pudo guardar la consignación: ${err.message}` : "No se pudo guardar la consignación.");
     } finally {
@@ -536,26 +585,36 @@ export default function ExpedienteDetalleModal({ expedienteId, miId, perfiles, s
 
   const agregarGasto = async () => {
     if (!nuevoGastoParte || !nuevoGastoConcepto.trim() || !nuevoGastoMonto) return;
-    const { data } = await supabase2.from("expediente_gastos").insert({
+    // Sin chequeo de error acá: si el insert fallaba, el formulario se
+    // limpiaba igual (como si se hubiera guardado) y el gasto -- que afecta
+    // directo los totales de Liquidación/Tesorería -- desaparecía sin rastro.
+    const { data, error } = await supabase2.from("expediente_gastos").insert({
       expediente_id: expedienteId, concepto: nuevoGastoConcepto.trim(), monto: Number(nuevoGastoMonto), moneda: nuevoGastoMoneda, a_cargo_de: nuevoGastoParte,
-    }).select().single();
-    if (data) setGastos((prev) => [data, ...prev]);
+    }).select().maybeSingle();
+    if (error || !data) {
+      alert(error?.message ? `No se pudo agregar el gasto: ${error.message}` : "No se pudo agregar el gasto.");
+      return;
+    }
+    setGastos((prev) => [data, ...prev]);
     setNuevoGastoParte(null);
     setNuevoGastoConcepto("");
     setNuevoGastoMonto("");
   };
 
   const cambiarEstado = async (nuevo: string) => {
+    const anterior = estado;
     setEstado(nuevo);
-    const { data } = await supabase2.from("expedientes").update({ estado: nuevo }).eq("id", expedienteId).select("*, venta:ventas(*)").single();
+    const { data } = await supabase2.from("expedientes").update({ estado: nuevo }).eq("id", expedienteId).select("*, venta:ventas(*)").maybeSingle();
     if (data) { setExpediente(data); onActualizado(data); }
+    else { setEstado(anterior); alert("No se pudo cambiar el estado."); }
     setMostrarMenu(false);
   };
 
   const marcarReventa = async () => {
     const fecha = prompt("¿Fecha prevista para retomar? (opcional, AAAA-MM-DD)");
-    const { data } = await supabase2.from("expedientes").update({ es_reventa: true, reventa_fecha_prevista: fecha || null }).eq("id", expedienteId).select("*, venta:ventas(*)").single();
+    const { data } = await supabase2.from("expedientes").update({ es_reventa: true, reventa_fecha_prevista: fecha || null }).eq("id", expedienteId).select("*, venta:ventas(*)").maybeSingle();
     if (data) { setExpediente(data); onActualizado(data); }
+    else alert("No se pudo marcar como reventa.");
     setMostrarMenu(false);
   };
 
@@ -598,14 +657,18 @@ export default function ExpedienteDetalleModal({ expedienteId, miId, perfiles, s
     if (!respuestaPedido.trim()) return;
     setRespondiendoPedido(true);
     try {
-      await supabase2.from("expediente_observaciones").insert({
+      const { error: errObs } = await supabase2.from("expediente_observaciones").insert({
         expediente_id: expedienteId, texto: respuestaPedido.trim(), tipo: "respuesta_pedido_atencion", autor_id: miId,
       });
-      const { data } = await supabase2.from("expedientes").update({ pedido_atencion_sector: null, pedido_atencion_mensaje: null }).eq("id", expedienteId).select("*, venta:ventas(*)").single();
-      if (data) { setExpediente(data); onActualizado(data); }
+      if (errObs) throw errObs;
+      const { data } = await supabase2.from("expedientes").update({ pedido_atencion_sector: null, pedido_atencion_mensaje: null }).eq("id", expedienteId).select("*, venta:ventas(*)").maybeSingle();
+      if (!data) throw new Error("No se pudo confirmar la respuesta (no se pudo releer el expediente).");
+      setExpediente(data); onActualizado(data);
       setRespuestaPedido("");
       const { data: obs } = await supabase2.from("expediente_observaciones").select("*, autor:perfiles(nombre)").eq("expediente_id", expedienteId).order("created_at", { ascending: false });
       setObservaciones(obs || []);
+    } catch (err: any) {
+      alert(err?.message ? `No se pudo enviar la respuesta: ${err.message}` : "No se pudo enviar la respuesta.");
     } finally {
       setRespondiendoPedido(false);
     }
@@ -1173,6 +1236,9 @@ export default function ExpedienteDetalleModal({ expedienteId, miId, perfiles, s
                 <div className="flex justify-between text-xs py-0.5"><span className="text-slate-500 dark:text-slate-400">+ Honorarios cobrados ({comisionPct}%)</span><span className="text-indigo-600 dark:text-indigo-400">{precioPropietarioMoneda} {honorarios.toLocaleString("es-AR")}</span></div>
                 <div className="flex justify-between text-xs py-0.5"><span className="text-slate-500 dark:text-slate-400">− Gastos no recuperados</span><span>{gastosAgencia.length === 0 ? "Sin gastos a cargo de la agencia" : Object.entries(sumaPorMoneda(gastosAgencia)).map(([m, n]) => `${m} ${n.toLocaleString("es-AR")}`).join(" · ")}</span></div>
                 <div className="flex justify-between text-sm font-bold border-t border-slate-200 dark:border-white/10 mt-2 pt-2"><span>Margen agencia</span><strong>{gananciasOcultas ? "Oculto" : margenAgencia != null ? `${precioPropietarioMoneda} ${margenAgencia.toLocaleString("es-AR")}` : "—"}</strong></div>
+                {!gananciasOcultas && gastosAgencia.some((g) => g.moneda !== precioPropietarioMoneda) && (
+                  <p className="text-[10px] text-amber-500 mt-1">“Gastos no recuperados” suma todas las monedas, pero “Margen agencia” solo descuenta los gastos en {precioPropietarioMoneda} (la moneda del acuerdo) — hay gastos en otra moneda que no están restados acá.</p>
+                )}
               </div>
             </div>
           )}

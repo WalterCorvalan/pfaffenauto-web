@@ -1,6 +1,6 @@
 "use client";
 
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { supabase2 } from "@/lib/supabase/client";
 import { buscarClienteDuplicado } from "@/lib/panel/clienteDedupe";
 import { Search, UserPlus, X, Check, ScanLine, Loader2 } from "lucide-react";
@@ -71,7 +71,36 @@ export default function ClienteBuscador({
     }
   };
 
-  const filtrados = clientes.filter((c) => {
+  // Búsqueda en vivo contra la base en vez de filtrar "clientes" (el array
+  // que recibe este componente por prop) -- ese array se trae UNA sola vez
+  // al cargar la página que lo usa (Señas/Presupuestos), así que un cliente
+  // creado en la misma sesión (acá mismo con "Cargar cliente nuevo", o desde
+  // /panel/clientes en otra pestaña) nunca aparecía en la búsqueda hasta
+  // recargar la página entera (bug encontrado en la auditoría de flujo real,
+  // hallazgo #4). Se filtra igual sobre el array local mientras el usuario
+  // recién empieza a tipear (1 carácter, resultado instantáneo, cubre el
+  // caso común de "ya estaba en la lista"), y a partir de 2 caracteres se
+  // dispara una consulta real que sí ve todo lo que existe ahora mismo.
+  const [resultadosVivo, setResultadosVivo] = useState<any[] | null>(null);
+  const [buscando, setBuscando] = useState(false);
+  useEffect(() => {
+    const q = busqueda.trim();
+    if (q.length < 2) { setResultadosVivo(null); return; }
+    setBuscando(true);
+    const timer = setTimeout(async () => {
+      const { data } = await supabase2
+        .from("clientes")
+        .select("id, nombre, apellido, dni_cuit, cuit_cuil, telefono, telefono_linea, email, calle, numero_calle, depto, localidad, codigo_postal, provincia, estado_civil, profesion, fecha_nacimiento")
+        .or(`nombre.ilike.%${q}%,apellido.ilike.%${q}%,dni_cuit.ilike.%${q}%`)
+        .order("nombre")
+        .limit(20);
+      setResultadosVivo(data || []);
+      setBuscando(false);
+    }, 300);
+    return () => clearTimeout(timer);
+  }, [busqueda]);
+
+  const filtrados = resultadosVivo ?? clientes.filter((c) => {
     const q = busqueda.toLowerCase();
     return !q || `${c.nombre} ${c.apellido || ""} ${c.dni_cuit || ""}`.toLowerCase().includes(q);
   });
@@ -182,7 +211,9 @@ export default function ClienteBuscador({
               <span className="text-[11px] text-slate-400">{c.dni_cuit || "Sin DNI"}</span>
             </button>
           ))}
-          {filtrados.length === 0 && <p className="px-3 py-3 text-[13px] text-slate-400 italic">Sin resultados.</p>}
+          {buscando ? (
+            <p className="px-3 py-3 text-[13px] text-slate-400 italic flex items-center gap-1.5"><Loader2 className="w-3.5 h-3.5 animate-spin" /> Buscando...</p>
+          ) : filtrados.length === 0 && <p className="px-3 py-3 text-[13px] text-slate-400 italic">Sin resultados.</p>}
         </div>
       )}
       <button type="button" onClick={() => setCreandoNuevo(true)} className="flex items-center gap-1.5 text-[#0145F2] dark:text-[#5b8dff] hover:text-[#0138c9] dark:hover:text-rose-300 text-[12px] font-bold">

@@ -185,8 +185,14 @@ export default function VentaDetalleModal({ ventaId, miId, soyAdmin, puedeOperac
     setMostrarCaida(false);
     if (error) { alert(error.message || "No se pudo marcar la operación como caída."); return; }
     await cargar();
-    const { data } = await supabase2.from("ventas").select("*").eq("id", ventaId).single();
-    if (data) onActualizado(data);
+    // El RPC no tiró error -- la venta ya quedó marcada caída. Este segundo
+    // refetch es solo para avisarle a la lista (VentasClient) del cambio; si
+    // falla, cargar() de arriba ya dejó el modal al día, pero antes
+    // onActualizado quedaba sin llamar en silencio y la fila de la lista
+    // seguía mostrando el estado viejo hasta refrescar la página entera.
+    const { data, error: errorFresh } = await supabase2.from("ventas").select("*").eq("id", ventaId).maybeSingle();
+    if (errorFresh || !data) { alert("La operación se marcó caída, pero la lista puede no reflejarlo hasta recargar la página."); return; }
+    onActualizado(data);
   };
 
   const copiarCodigo = () => {
@@ -232,7 +238,13 @@ export default function VentaDetalleModal({ ventaId, miId, soyAdmin, puedeOperac
   // convertir con la cotización de la venta en vez de descartarla (antes se
   // contaba como $0), mismo criterio que ImprimirVenta.tsx.
   const totalSenas = totalEnMoneda(senas.map((s) => ({ monto: s.monto, moneda: s.moneda })), venta.moneda_venta, venta.tipo_cambio);
-  const comisionPct = Number(venta.comision_vendedor_pct || 0) + Number(venta.comision_consignacion_pct || 0);
+  // comision_consignacion_pct puede tener un valor default (0.5% de
+  // configuracion_empresa) aunque la venta no tenga responsable_consignacion_id
+  // asignado -- el trigger generar_comisiones_al_cerrar_venta() SOLO genera
+  // esa fila de comisión si hay responsable, así que sumar el % acá sin esa
+  // condición mostraba un total inflado que nunca se le pagaba a nadie (bug
+  // encontrado en la auditoría: detalle mostraba 1.5%/comisiones listaba 1%).
+  const comisionPct = Number(venta.comision_vendedor_pct || 0) + (venta.responsable_consignacion_id ? Number(venta.comision_consignacion_pct || 0) : 0);
   const comisionMonto = (Number(venta.precio_venta) * comisionPct) / 100;
   const transicionesDisponibles = TRANSICIONES[venta.estado] || [];
 

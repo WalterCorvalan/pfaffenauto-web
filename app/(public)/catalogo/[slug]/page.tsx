@@ -250,6 +250,7 @@ export default async function VehiculoDetallePage({
             <VehiculoPriceCard
               auto={auto}
               precioArs={precioArs}
+              precioArsReal={!!auto.precio_publicado_ars}
               precioUsd={precioUsd}
               linkWhatsApp={linkWhatsApp}
               esCeroKm={esCeroKm}
@@ -397,6 +398,7 @@ function VehiculoSpecs({ auto, esCeroKm }: { auto: any; esCeroKm: boolean }) {
 function VehiculoPriceCard({
   auto,
   precioArs,
+  precioArsReal,
   precioUsd,
   linkWhatsApp,
   esCeroKm,
@@ -428,7 +430,15 @@ function VehiculoPriceCard({
         <div className="flex flex-col gap-2">
           <span className="text-sm font-medium text-slate-500 dark:text-slate-400 block mb-1">Precio al contado</span>
           <h2 className="text-4xl md:text-5xl font-black text-navy dark:text-white tracking-tighter drop-shadow-sm">
-            {precioUsd && precioUsd > 0 && !precioArs
+            {/* "precioArs" acá abajo puede ser un ARS estimado (convertido a
+                dólar blue) cuando el auto solo tiene precio_publicado_usd
+                cargado -- ese fallback existe para el simulador de
+                financiación (SimuladorFinanciacion.tsx arriba), pero usarlo
+                también acá hacía que un auto cargado 100% en USD SIEMPRE
+                mostrara el precio principal convertido a pesos, nunca en
+                dólares reales -- "precioArsReal" es si auto.precio_publicado_ars
+                realmente está cargado, sin el fallback. */}
+            {precioUsd && precioUsd > 0 && !precioArsReal
               ? `US$ ${precioUsd.toLocaleString("en-US")}`
               : `$ ${precioArs.toLocaleString("es-AR")}`}
           </h2>

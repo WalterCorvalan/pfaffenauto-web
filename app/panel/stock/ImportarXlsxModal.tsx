@@ -13,6 +13,11 @@ interface Props {
 }
 
 const CONDICIONES_VALIDAS = ["0km", "Excelente", "Muy bueno", "Bueno", "Regular"];
+// Mismo listado que CATEGORIAS en NuevoVehiculoModal.tsx -- se quedó
+// desincronizado antes (ni siquiera tenía "Moto"), así que un excel con esa
+// categoría se guardaba silenciosamente como "Auto". Si agregás una
+// categoría nueva a un lado, agregala acá también.
+const CATEGORIAS_VALIDAS = ["Auto", "Pickup/Camioneta", "SUV", "Utilitario", "Moto", "Camión", "Camioneta", "Casa Rodante", "Ómnibus | Van"];
 
 function buscarCampo(fila: Record<string, any>, nombres: string[]) {
   const claves = Object.keys(fila);
@@ -90,10 +95,17 @@ export default function ImportarXlsxModal({ miId, onClose, onImportados }: Props
           marca: String(marca).trim(), modelo: String(modelo).trim(), anio: Number(anio),
           patente: String(patente).trim().toUpperCase(), km: Number(km), color: color ? String(color).trim() : null,
           condicion, ubicacion: String(ubicacion).trim(), precio_venta: Number(precio), moneda_venta: monedaNorm,
+          // El catálogo público lee SOLO precio_publicado_ars/usd, nunca
+          // precio_venta directo -- sin esto, un auto importado por Excel
+          // se veía con precio en el panel pero sin precio (o con el precio
+          // viejo) en la web, hasta que alguien lo reabriera y reguardara
+          // desde NuevoVehiculoModal.tsx (el único lugar que sí sincronizaba).
+          precio_publicado_ars: monedaNorm === "ARS" ? Number(precio) : null,
+          precio_publicado_usd: monedaNorm === "USD" ? Number(precio) : null,
           precio_compra: precioCompra ? Number(precioCompra) : null, moneda_compra: monedaCompra ? String(monedaCompra).trim().toUpperCase() : "USD",
           tc_ingreso: tcIngreso ? Number(tcIngreso) : null,
           propietario_nombre: propietario ? String(propietario).trim() : null,
-          categoria: categoria && ["Auto", "Pickup/Camioneta", "SUV", "Utilitario"].includes(String(categoria).trim()) ? String(categoria).trim() : "Auto",
+          categoria: categoria && CATEGORIAS_VALIDAS.includes(String(categoria).trim()) ? String(categoria).trim() : "Auto",
           notas: notas ? String(notas).trim() : null,
           estado: "disponible", propio_agencia: !propietario,
           creado_por: miId || null,

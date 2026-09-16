@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useRef } from "react";
 import { supabase2 } from "@/lib/supabase/client";
-import { X, Loader2, Save, Trash2, Plus, Bell, Star } from "lucide-react";
+import { X, Loader2, Save, Trash2, Plus, Bell, Star, Search, Check } from "lucide-react";
 import { hoyLocalISO, parseFechaLocal, fmtFechaLocal } from "@/lib/panel/fechas";
 import { crearAlerta } from "@/lib/panel/alertas";
 import { generarCodigoPublico } from "@/lib/generarCodigoPublico";
@@ -21,7 +21,7 @@ const TIPOS_RECORDATORIO: { value: string; label: string }[] = [
 ];
 
 interface Vehiculo { id: string; marca: string; modelo: string; anio: number; patente: string | null; km: number | null; precio_venta: number; moneda_venta: string; estado: string; color: string | null; condicion: string }
-interface Cliente { id: string; nombre: string; telefono: string | null; email: string | null; dni_cuit: string | null }
+interface Cliente { id: string; nombre: string; apellido: string | null; telefono: string | null; email: string | null; dni_cuit: string | null }
 interface Perfil { id: string; nombre: string; roles: string[] }
 
 interface Seña { monto: string; moneda: string; fecha: string; cajaDestino: string; senaOrigenId?: string | null }
@@ -47,6 +47,7 @@ interface Props {
   clientes: Cliente[];
   vehiculos: Vehiculo[];
   miId: string;
+  soyAdmin: boolean;
   initial?: VentaPrefill;
   editando?: any;
   cuentas: any[];
@@ -61,7 +62,7 @@ const nuevaPermuta = (): Permuta => ({
   segmento: "", tipo: "", marcaMotor: "", numeroMotor: "", marcaChasis: "", numeroChasis: "", combustible: "", radicadoLocalidad: "", radicadoProvincia: "", tasadoEn: "",
 });
 
-export default function NuevaVentaModal({ perfiles, clientes, vehiculos, miId, initial, editando, cuentas, onClose, onCreado }: Props) {
+export default function NuevaVentaModal({ perfiles, clientes, vehiculos, miId, soyAdmin, initial, editando, cuentas, onClose, onCreado }: Props) {
   const esEdicion = !!editando;
   const miPerfil = perfiles.find((p) => p.id === miId);
   const puedeGenerarCuotas = miPerfil?.roles?.some((r) => r === "admin" || r === "finanzas") ?? false;
@@ -84,6 +85,40 @@ export default function NuevaVentaModal({ perfiles, clientes, vehiculos, miId, i
   const [fechaCierre, setFechaCierre] = useState(editando?.fecha_cierre || hoyLocalISO());
 
   const [clienteId, setClienteId] = useState(editando?.cliente_id || "");
+  // "Cliente del CRM" era un <select> con la lista completa recibida por
+  // prop -- con >1000 clientes, Supabase/PostgREST corta esa query en 1000
+  // filas por default, así que todo lo que quedaba afuera del corte (medio
+  // alfabeto para arriba, en la base real) era literalmente imposible de
+  // elegir (bug P1-11 de la auditoría de flujo real, confirmado en vivo con
+  // la base real: 1002 clientes, corte en "Gonzalez ...", nada después
+  // aparecía). Mismo patrón de búsqueda en vivo que ya usa ClienteBuscador
+  // (Señas/Presupuestos): 1 carácter filtra el array local (instantáneo),
+  // desde 2 caracteres dispara una consulta real server-side (debounce
+  // 300ms) que sí ve la base completa.
+  const [busquedaCliente, setBusquedaCliente] = useState(editando?.comprador_nombre || "");
+  const [clienteDropdownAbierto, setClienteDropdownAbierto] = useState(false);
+  const [resultadosClienteVivo, setResultadosClienteVivo] = useState<Cliente[] | null>(null);
+  const [buscandoCliente, setBuscandoCliente] = useState(false);
+  useEffect(() => {
+    const q = busquedaCliente.trim();
+    if (q.length < 2) { setResultadosClienteVivo(null); return; }
+    setBuscandoCliente(true);
+    const timer = setTimeout(async () => {
+      const { data } = await supabase2
+        .from("clientes")
+        .select("id, nombre, apellido, telefono, email, dni_cuit")
+        .or(`nombre.ilike.%${q}%,apellido.ilike.%${q}%,dni_cuit.ilike.%${q}%`)
+        .order("nombre")
+        .limit(20);
+      setResultadosClienteVivo(data || []);
+      setBuscandoCliente(false);
+    }, 300);
+    return () => clearTimeout(timer);
+  }, [busquedaCliente]);
+  const clientesFiltrados = resultadosClienteVivo ?? clientes.filter((c) => {
+    const q = busquedaCliente.toLowerCase();
+    return !q || `${c.nombre} ${c.apellido || ""} ${c.dni_cuit || ""}`.toLowerCase().includes(q);
+  });
   const [compradorNombre, setCompradorNombre] = useState(editando?.comprador_nombre || initial?.compradorNombre || "");
   const [compradorTelefono, setCompradorTelefono] = useState(editando?.comprador_telefono || "");
   const [compradorEmail, setCompradorEmail] = useState(editando?.comprador_email || "");
@@ -211,8 +246,9 @@ export default function NuevaVentaModal({ perfiles, clientes, vehiculos, miId, i
     // comprador (y el cliente del CRM quedaba sin engancharse aunque la
     // seña ya lo tuviera identificado).
     if (!clienteId) {
-      if (s.cliente_id && clientes.some((c) => c.id === s.cliente_id)) {
-        elegirCliente(s.cliente_id);
+      const clienteDeSena = s.cliente_id ? clientes.find((c) => c.id === s.cliente_id) : null;
+      if (clienteDeSena) {
+        elegirCliente(clienteDeSena);
       } else {
         const nombre = `${s.apellido || ""} ${s.nombre || ""}`.trim() || s.cliente_nombre || "";
         if (nombre) setCompradorNombre(nombre);
@@ -247,7 +283,14 @@ export default function NuevaVentaModal({ perfiles, clientes, vehiculos, miId, i
   const [error, setError] = useState("");
 
   const comisionVendedorEfectiva = vendedorCompartido ? "0.5" : comisionVendedorPct;
-  const comisionEditable = comisionManual;
+  // "Carga manual" solo la puede activar/usar un admin -- este modal (a
+  // diferencia de VentaDetalleModal, que gatea "Editar comisión" con
+  // soyAdmin + autorizaciones) no tenía ningún control: cualquier usuario
+  // que pudiera abrir el modal de edición cambiaba el % libre, sin que el
+  // sistema pida aprobación ni genere solicitud. Si la venta ya tenía
+  // comision_manual=true de antes (cargada por un admin), un no-admin que
+  // la abre para editar otra cosa ve los campos igual, pero no editables.
+  const comisionEditable = comisionManual && soyAdmin;
 
   const elegirVehiculo = (id: string) => {
     setVehiculoId(id);
@@ -261,10 +304,16 @@ export default function NuevaVentaModal({ perfiles, clientes, vehiculos, miId, i
     }
   };
 
-  const elegirCliente = (id: string) => {
-    setClienteId(id);
-    const c = clientes.find((x) => x.id === id);
-    if (c) { setCompradorNombre(c.nombre); setCompradorTelefono(c.telefono || ""); setCompradorEmail(c.email || ""); setCompradorDni(c.dni_cuit || ""); }
+  const elegirCliente = (c: Cliente | null) => {
+    setClienteId(c?.id || "");
+    setClienteDropdownAbierto(false);
+    if (c) {
+      const nombreCompleto = `${c.nombre} ${c.apellido || ""}`.trim();
+      setBusquedaCliente(nombreCompleto);
+      setCompradorNombre(nombreCompleto); setCompradorTelefono(c.telefono || ""); setCompradorEmail(c.email || ""); setCompradorDni(c.dni_cuit || "");
+    } else {
+      setBusquedaCliente("");
+    }
   };
 
   const agregarSeña = () => setSenas((prev) => [...prev, { monto: "", moneda: monedaVenta, fecha: hoyLocalISO(), cajaDestino: "" }]);
@@ -669,12 +718,43 @@ export default function NuevaVentaModal({ perfiles, clientes, vehiculos, miId, i
           <div>
             <p className={seccionClass}>Comprador</p>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-              <div>
+              <div className="relative">
                 <label className={labelClass}>Cliente del CRM</label>
-                <select value={clienteId} onChange={(e) => elegirCliente(e.target.value)} className={inputClass}>
-                  <option value="">— Buscar por nombre, teléfono o DNI —</option>
-                  {clientes.map((c) => <option key={c.id} value={c.id}>{c.nombre}{c.telefono ? ` · ${c.telefono}` : ""}</option>)}
-                </select>
+                {clienteId ? (
+                  <div className="flex items-center justify-between gap-2 bg-emerald-50 dark:bg-emerald-500/10 border border-emerald-200 dark:border-emerald-500/20 rounded-xl px-3 py-2.5">
+                    <span className="flex items-center gap-1.5 text-sm font-medium text-emerald-700 dark:text-emerald-300 truncate">
+                      <Check className="w-3.5 h-3.5 shrink-0" /> {busquedaCliente}
+                    </span>
+                    <button type="button" onClick={() => elegirCliente(null)} className="shrink-0 text-emerald-600 dark:text-emerald-300 hover:text-emerald-800 dark:hover:text-emerald-200 text-[11px] font-bold uppercase tracking-widest">
+                      Cambiar
+                    </button>
+                  </div>
+                ) : (
+                  <div className="relative">
+                    <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
+                    <input
+                      className={`${inputClass} pl-9`}
+                      placeholder="Buscar por nombre o DNI..."
+                      value={busquedaCliente}
+                      onChange={(e) => { setBusquedaCliente(e.target.value); setClienteDropdownAbierto(true); }}
+                      onFocus={() => setClienteDropdownAbierto(true)}
+                      onBlur={() => setTimeout(() => setClienteDropdownAbierto(false), 150)}
+                    />
+                  </div>
+                )}
+                {!clienteId && clienteDropdownAbierto && busquedaCliente && (
+                  <div className="absolute z-10 mt-1 w-full max-h-48 overflow-y-auto bg-white dark:bg-[#1A1A1A] border border-slate-200 dark:border-white/10 rounded-xl shadow-lg divide-y divide-slate-100 dark:divide-white/10">
+                    {clientesFiltrados.slice(0, 20).map((c) => (
+                      <button key={c.id} type="button" onMouseDown={() => elegirCliente(c)} className="w-full text-left px-3 py-2.5 hover:bg-slate-50 dark:hover:bg-white/5 transition-colors flex items-center justify-between">
+                        <span className="text-sm font-medium text-slate-800 dark:text-white truncate">{c.nombre} {c.apellido || ""}</span>
+                        <span className="text-[11px] text-slate-400 shrink-0">{c.telefono || c.dni_cuit || ""}</span>
+                      </button>
+                    ))}
+                    {buscandoCliente ? (
+                      <p className="px-3 py-3 text-[13px] text-slate-400 italic flex items-center gap-1.5"><Loader2 className="w-3.5 h-3.5 animate-spin" /> Buscando...</p>
+                    ) : clientesFiltrados.length === 0 && <p className="px-3 py-3 text-[13px] text-slate-400 italic">Sin resultados.</p>}
+                  </div>
+                )}
               </div>
               <div><label className={labelClass}>Nombre *</label><input value={compradorNombre} onChange={(e) => setCompradorNombre(e.target.value)} className={inputClass} /></div>
               <div><label className={labelClass}>Teléfono de línea</label><input value={compradorTelefono} onChange={(e) => setCompradorTelefono(e.target.value)} placeholder="+54 11 5555 5555" className={inputClass} /></div>
@@ -922,10 +1002,14 @@ export default function NuevaVentaModal({ perfiles, clientes, vehiculos, miId, i
 
               <div>
                 <p className={seccionClass}>Comisión</p>
-                <label className="flex items-start gap-2.5 px-3 py-2.5 rounded-xl bg-amber-50 dark:bg-amber-500/10 border border-amber-200 dark:border-amber-500/20 cursor-pointer mb-3">
-                  <input type="checkbox" checked={comisionManual} onChange={(e) => setComisionManual(e.target.checked)} className="w-4 h-4 mt-0.5 accent-[#0145F2]" />
-                  <span><span className="block text-xs font-bold text-amber-700 dark:text-amber-300">⚙ Carga manual de comisión</span><span className="block text-[10px] text-amber-700/70 dark:text-amber-300/60">Activá para editar libremente los % de comisión, salteando la regla fija.</span></span>
-                </label>
+                {soyAdmin ? (
+                  <label className="flex items-start gap-2.5 px-3 py-2.5 rounded-xl bg-amber-50 dark:bg-amber-500/10 border border-amber-200 dark:border-amber-500/20 cursor-pointer mb-3">
+                    <input type="checkbox" checked={comisionManual} onChange={(e) => setComisionManual(e.target.checked)} className="w-4 h-4 mt-0.5 accent-[#0145F2]" />
+                    <span><span className="block text-xs font-bold text-amber-700 dark:text-amber-300">⚙ Carga manual de comisión</span><span className="block text-[10px] text-amber-700/70 dark:text-amber-300/60">Activá para editar libremente los % de comisión, salteando la regla fija.</span></span>
+                  </label>
+                ) : comisionManual && (
+                  <p className="px-3 py-2.5 rounded-xl bg-slate-50 dark:bg-white/5 border border-slate-200 dark:border-white/10 text-[11px] text-slate-500 dark:text-slate-400 mb-3">Esta venta tiene carga manual de comisión — solo un admin puede editar el %. Pedile a un admin que lo cambie desde el detalle de la venta.</p>
+                )}
                 <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
                   <div>
                     <label className={labelClass}>% vendedor</label>

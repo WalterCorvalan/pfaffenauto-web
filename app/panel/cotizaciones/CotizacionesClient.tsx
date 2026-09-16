@@ -39,7 +39,7 @@ function tiempoPendienteLabel(iso: string) {
   return `${Math.floor(h / 24)}d ${Math.floor(h % 24)}h`;
 }
 interface Perfil { id: string; nombre: string; roles: string[] }
-interface Cliente { id: string; nombre: string; telefono: string | null; dni_cuit: string | null }
+interface Cliente { id: string; nombre: string; apellido: string | null; telefono: string | null; dni_cuit: string | null }
 interface Vehiculo { id: string; marca: string; modelo: string; anio: number; patente: string | null; precio_venta: number; moneda_venta: string; estado: string }
 interface LeadWeb { id: string; nombre: string; telefono: string | null; marca: string; modelo: string | null; anio: number | null; oferta_calculada: number | null; precio_esperado_cliente: number | null; estado: string; created_at: string; tipo: string }
 

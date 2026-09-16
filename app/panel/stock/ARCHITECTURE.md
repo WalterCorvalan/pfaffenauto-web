@@ -22,7 +22,7 @@ Guía para no romper otra cosa al tocar este módulo. Si cambiás algo acá, rev
 
 ## Componente compartido usado DESDE otros módulos
 
-- **`components/panel/VehiculoSelector.tsx`** — no vive en `stock/`, pero opera sobre la misma tabla `vehiculos` y lo usan Señas, Ventas, Presupuestos y Permutas para elegir/cargar un vehículo. Si agregás una columna nueva a `vehiculos` que otros formularios necesiten leer, decidí si va acá (afecta a los 4 consumidores) o se resuelve en cada consumidor con su propio query/join, como se hizo con `condicion` en el recibo de seña.
+- **`components/panel/VehiculoSelector.tsx`** — no vive en `stock/`, pero opera sobre la misma tabla `vehiculos` y lo usan Señas, Ventas, Presupuestos y Permutas para elegir/cargar un vehículo. Si agregás una columna nueva a `vehiculos` que otros formularios necesiten leer, decidí si va acá (afecta a los 4 consumidores) o se resuelve en cada consumidor con su propio query/join, como se hizo con `condicion` en el recibo de seña. **Bug corregido** (ver `presupuestos/ARCHITECTURE.md`): buscaba solo sobre el array recibido por prop (fetch único, sin `.limit()`) — ahora busca en vivo contra la base desde 2 caracteres, mismo patrón que `ClienteBuscador.tsx`.
 
 ## Conexión con Leads — consultas por WhatsApp de un auto publicado en ML
 
@@ -52,6 +52,28 @@ Este fue el **piloto** de un pedido más amplio (cambiar rojo→azul en todo el 
 ## Vista por default: "lista", no "tabla"
 
 `vista` (el toggle Lista/Tarjetas/Tabla detallada) arranca en `"lista"` — pedido explícito, antes abría en `"tabla"`. Si cambiás el default de nuevo, hacelo a propósito y avisá, porque `app/panel/clientes/ARCHITECTURE.md` usa esta misma vista "lista" como referencia de diseño para otras pantallas del panel.
+
+## `categoria` — lista ampliada, quedó desincronizada entre alta manual e importación masiva
+
+`CATEGORIAS` en `NuevoVehiculoModal.tsx` tenía 5 valores (`Auto`, `Pickup/Camioneta`, `SUV`, `Utilitario`, `Moto`); se amplió a 9, agregando `Camión`, `Camioneta`, `Casa Rodante`, `Ómnibus | Van` (pedido del usuario). `ImportarXlsxModal.tsx` tenía su propia lista hardcodeada de válidas para el Excel, separada y desactualizada — **ni siquiera incluía `"Moto"`**, así que un Excel con esa categoría se guardaba silenciosamente como `"Auto"` sin avisar. Ahora usa `CATEGORIAS_VALIDAS`, la misma lista que el modal manual — si agregás una categoría nueva, agregala en los dos lugares (no se extrajo a `lib/` porque son los únicos 2 consumidores, pero si aparece un tercero sí conviene compartirla).
+
+Si en algún momento aparece un error de guardado al elegir una categoría nueva (`categoria` es un valor que el formulario ofrece pero la base rechaza), sospechar primero de una restricción `CHECK` en `public.vehiculos.categoria` desactualizada respecto al frontend — mismo patrón que ya pasó con `ubicacion` (ver abajo): el código del panel puede estar bien y el problema ser una migración de base de datos pendiente.
+
+## `combustible` — agregado "Gasoil" como opción separada de "Diésel"
+
+Antes solo estaba "Diésel". Se agregó "Gasoil" como opción aparte (no reemplaza a "Diésel") por pedido del usuario — la agencia usa ambos términos para cosas distintas en su stock real.
+
+## Bug corregido: `precio_publicado_ars`/`usd` se desincronizaba de `precio_venta` en 3 lugares
+
+El catálogo público y el simulador de financiación leen **solo** `precio_publicado_ars`/`precio_publicado_usd` (nunca `precio_venta` directo — ver más arriba). `NuevoVehiculoModal.tsx` sí sincroniza los dos siempre que se guarda (alta o edición completa), pero otros 3 caminos que también escriben `precio_venta`/`moneda_venta` en `vehiculos` **no** tocaban esos dos campos:
+
+- **`PrecioEditor.tsx`** — edición rápida de precio desde el listado (el ícono/botón sobre el precio en la fila). Probablemente el camino más usado para cambiar un precio del día a día, y el que menos se sospecha porque no pasa por el modal completo.
+- **`ImportarXlsxModal.tsx`** — carga masiva por Excel: un auto importado quedaba con precio en el panel pero nunca publicado.
+- **`NuevoMandatoModal.tsx`** — alta de vehículo desde un mandato/consignación con "Agregar al stock" tildado.
+
+Encontrado por reporte real del usuario: una Volkswagen Tiguan con precio visible en el panel pero sin precio en la web. Los 3 se corrigieron para setear `precio_publicado_ars`/`usd` en el mismo guardado, mismo criterio que `NuevoVehiculoModal.tsx`. Se agregó además `migraciones/sql_resync_precio_publicado_vehiculos.sql` para sincronizar los vehículos que ya habían quedado desfasados en la base real — correrla una vez y borrarla del repo (mismo criterio que el resto de `migraciones/*.sql`).
+
+**Si agregás un lugar nuevo que escriba `precio_venta`/`moneda_venta` en `vehiculos`, seteá `precio_publicado_ars`/`usd` en el mismo `update`/`insert`** — no asumas que alguien va a reabrir el vehículo en `NuevoVehiculoModal.tsx` después para "publicarlo".
 
 ## No tocar sin revisar el resto
 

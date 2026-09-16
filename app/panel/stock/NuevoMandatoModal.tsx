@@ -80,6 +80,10 @@ export default function NuevoMandatoModal({ miId, miNombre, onClose, onCreado }:
             categoria: "Auto", marca: marca.trim(), modelo: modelo.trim(), anio: Number(anio), patente: (patente || `S/PATENTE-${mandato.id.slice(0, 8)}`).toUpperCase(),
             condicion: "Bueno", color: color || "—", km: km ? Number(km) : 0,
             precio_venta: valor ? Number(valor) : 0, moneda_venta: moneda,
+            // El catálogo público lee SOLO precio_publicado_ars/usd, nunca
+            // precio_venta directo -- mismo criterio que NuevoVehiculoModal.tsx.
+            precio_publicado_ars: moneda === "ARS" ? (valor ? Number(valor) : 0) : null,
+            precio_publicado_usd: moneda === "USD" ? (valor ? Number(valor) : 0) : null,
             estado: "en_preparacion", propio_agencia: false,
             propietario_nombre: mandanteNombre.trim(), propietario_dni: mandanteDni || null, propietario_telefono: mandanteTelefono || null, propietario_email: mandanteEmail || null,
             dueños_anteriores: duenosAnteriores ? Number(duenosAnteriores) : null,

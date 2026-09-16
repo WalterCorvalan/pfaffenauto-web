@@ -37,7 +37,7 @@ export default function ConsignacionDetalleModal({ consignacionId, perfiles, cli
   const [observaciones, setObservaciones] = useState("");
 
   const cargar = async () => {
-    const { data } = await supabase2.from("consignaciones").select("*, vendedor:perfiles!consignaciones_vendedor_id_fkey ( id, nombre )").eq("id", consignacionId).single();
+    const { data } = await supabase2.from("consignaciones").select("*, vendedor:perfiles!consignaciones_vendedor_id_fkey ( id, nombre )").eq("id", consignacionId).maybeSingle();
     if (data) {
       setConsignacion(data);
       setVehiculoDescripcion(data.vehiculo_descripcion || "");
@@ -54,20 +54,24 @@ export default function ConsignacionDetalleModal({ consignacionId, perfiles, cli
     if (nuevo === "consignado" && consignacion.estado !== "consignado") {
       if (!confirm("¿Marcar esta consignación como Consignado? Se salta el resto de los pasos.")) return;
     }
-    const { data } = await supabase2.from("consignaciones").update({ estado: nuevo }).eq("id", consignacionId).select("*, vendedor:perfiles!consignaciones_vendedor_id_fkey ( id, nombre )").single();
-    if (data) { setConsignacion(data); onActualizado(data); }
+    const { data, error } = await supabase2.from("consignaciones").update({ estado: nuevo }).eq("id", consignacionId).select("*, vendedor:perfiles!consignaciones_vendedor_id_fkey ( id, nombre )").maybeSingle();
+    if (error || !data) { alert("No se pudo cambiar el estado."); return; }
+    setConsignacion(data); onActualizado(data);
     setMostrarEstados(false);
   };
 
   const marcarContactoHoy = async () => {
-    const { data } = await supabase2.from("consignaciones").update({ ultimo_contacto: hoyLocalISO() }).eq("id", consignacionId).select("*, vendedor:perfiles!consignaciones_vendedor_id_fkey ( id, nombre )").single();
-    if (data) { setConsignacion(data); onActualizado(data); }
+    const { data, error } = await supabase2.from("consignaciones").update({ ultimo_contacto: hoyLocalISO() }).eq("id", consignacionId).select("*, vendedor:perfiles!consignaciones_vendedor_id_fkey ( id, nombre )").maybeSingle();
+    if (error || !data) { alert("No se pudo registrar el contacto."); return; }
+    setConsignacion(data); onActualizado(data);
   };
 
   const togglePublicada = async (val: boolean) => {
+    const anterior = publicada;
     setPublicada(val);
-    const { data } = await supabase2.from("consignaciones").update({ publicada: val }).eq("id", consignacionId).select("*, vendedor:perfiles!consignaciones_vendedor_id_fkey ( id, nombre )").single();
-    if (data) { setConsignacion(data); onActualizado(data); }
+    const { data, error } = await supabase2.from("consignaciones").update({ publicada: val }).eq("id", consignacionId).select("*, vendedor:perfiles!consignaciones_vendedor_id_fkey ( id, nombre )").maybeSingle();
+    if (error || !data) { setPublicada(anterior); alert("No se pudo cambiar Publicada."); return; }
+    setConsignacion(data); onActualizado(data);
   };
 
   const guardarEdicion = async () => {
@@ -113,8 +117,9 @@ export default function ConsignacionDetalleModal({ consignacionId, perfiles, cli
 
   const onVehiculoCreado = async (vehiculo: any) => {
     setModalStock(false);
-    const { data } = await supabase2.from("consignaciones").update({ vehiculo_id: vehiculo.id, publicada: true }).eq("id", consignacionId).select("*, vendedor:perfiles!consignaciones_vendedor_id_fkey ( id, nombre )").single();
-    if (data) { setConsignacion(data); onActualizado(data); }
+    const { data, error } = await supabase2.from("consignaciones").update({ vehiculo_id: vehiculo.id, publicada: true }).eq("id", consignacionId).select("*, vendedor:perfiles!consignaciones_vendedor_id_fkey ( id, nombre )").maybeSingle();
+    if (error || !data) { alert("El vehículo se creó en Stock, pero no se pudo vincularlo a esta consignación. Vinculalo manualmente."); return; }
+    setConsignacion(data); onActualizado(data);
   };
 
   const eliminar = async () => {

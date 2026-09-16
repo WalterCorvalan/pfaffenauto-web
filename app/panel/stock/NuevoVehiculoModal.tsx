@@ -6,7 +6,7 @@ import { X, Loader2, ScanLine, ClipboardPaste, ImagePlus, Upload, CheckCircle2, 
 import { crearAlerta } from "@/lib/panel/alertas";
 
 export const MARCAS = ["Toyota", "Volkswagen", "Ford", "Chevrolet", "Renault", "Peugeot", "Fiat", "Honda", "Hyundai", "Nissan", "Jeep", "Citroën", "BMW", "Mercedes-Benz", "Audi", "Otra"];
-const CATEGORIAS = ["Auto", "Pickup/Camioneta", "SUV", "Utilitario", "Moto"];
+const CATEGORIAS = ["Auto", "Pickup/Camioneta", "SUV", "Utilitario", "Moto", "Camión", "Camioneta", "Casa Rodante", "Ómnibus | Van"];
 const ORIGENES = ["Compra", "Consignación", "Permuta", "Otro"];
 const PROVINCIAS = [
   "Buenos Aires", "CABA", "Catamarca", "Chaco", "Chubut", "Córdoba", "Corrientes", "Entre Ríos", "Formosa", "Jujuy",
@@ -666,7 +666,7 @@ export default function NuevoVehiculoModal({ perfiles, clientes, sucursales, miI
                 <label className={labelClass}>Combustible</label>
                 <select value={combustible} onChange={(e) => setCombustible(e.target.value)} className={inputClass}>
                   <option value="">— Sin especificar —</option>
-                  <option>Nafta</option><option>Diésel</option><option>GNC</option><option>Híbrido</option><option>Eléctrico</option>
+                  <option>Nafta</option><option>Diésel</option><option>Gasoil</option><option>GNC</option><option>Híbrido</option><option>Eléctrico</option>
                 </select>
               </div>
               <div>

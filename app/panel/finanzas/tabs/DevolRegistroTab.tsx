@@ -71,7 +71,8 @@ export default function DevolRegistroTab({
     try {
       const { error } = await supabase2.rpc("resolver_devolucion_registro", { p_id: resolviendo.id, p_destino: rsDestino, p_cuenta_id: rsDestino === "acreditada" ? rsCuentaId : null });
       if (error) throw error;
-      const { data: fresh } = await supabase2.from("devoluciones_registro").select("*").eq("id", resolviendo.id).single();
+      const { data: fresh, error: errorFresh } = await supabase2.from("devoluciones_registro").select("*").eq("id", resolviendo.id).maybeSingle();
+      if (errorFresh || !fresh) { alert("La devolución se resolvió, pero no se pudo refrescar la lista -- recargá la página."); setResolviendo(null); return; }
       setDevoluciones((prev: any[]) => prev.map((d) => (d.id === resolviendo.id ? fresh : d)));
       if (fresh.movimiento_id) {
         const [{ data: nuevoMov }, { data: nuevoSaldo }] = await Promise.all([

@@ -24,7 +24,7 @@ Guía para no romper otra cosa al tocar este módulo. Si cambiás algo acá, rev
 ## Componentes compartidos (¡ojo al tocarlos!)
 
 - **`components/panel/VehiculoSelector.tsx`** — también lo usan Nueva Venta, Presupuestos y Permutas. **No expone el campo `condicion`** del vehículo (por eso el recibo de seña hace un join aparte a `vehiculos` en vez de leerlo del selector). Si necesitás más campos del vehículo en el form, evaluá si conviene agregarlos acá (afecta a los 4 formularios) o resolverlo en el consumidor, como se hizo con `condicion`.
-- **`components/panel/ClienteBuscador.tsx`** — selector de cliente, compartido con Ventas.
+- **`components/panel/ClienteBuscador.tsx`** — selector de cliente, compartido con Presupuestos (Ventas usa un `<select>` simple aparte, no este componente — ver limitación P1-11 en `ventas/ARCHITECTURE.md`). **Bug corregido**: filtraba sobre el array `clientes` recibido por prop, que se trae una sola vez al cargar la página — un cliente creado en la misma sesión (acá mismo con "Cargar cliente nuevo", o desde `/panel/clientes` en otra pestaña) no aparecía en la búsqueda hasta recargar. Ahora busca en vivo contra la base a partir de 2 caracteres (debounce de 300ms), usando el array local solo como resultado instantáneo mientras el usuario recién empieza a tipear.
 - **`components/panel/ConfirmarPrecioModal.tsx`** — confirma si el vendedor está seguro del precio antes de guardar.
 
 ## Efectos secundarios al guardar una seña

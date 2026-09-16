@@ -38,6 +38,24 @@ export default function ExpedientesClient({
     if (id) setDetalleId(id);
   }, [searchParams]);
 
+  // Mismo criterio que Autorizaciones: un expediente nuevo, o un hito/estado
+  // que cambia otro gestor mientras esta pestaña está abierta, antes solo se
+  // veía al refrescar. Refetch completo (misma ventana de 6 meses y join que
+  // page.tsx) en vez de mergear parcial -- la lista ya viene acotada, así
+  // que no es pesado, y evita desincronizar el campo venta:ventas(*) anidado.
+  useEffect(() => {
+    const desde6Meses = new Date();
+    desde6Meses.setMonth(desde6Meses.getMonth() - 6);
+    const canal = supabase2
+      .channel(`expedientes-live-${Math.random().toString(36).slice(2)}`)
+      .on("postgres_changes", { event: "*", schema: "public", table: "expedientes" }, async () => {
+        const { data } = await supabase2.from("expedientes").select("*, venta:ventas(*)").gte("created_at", desde6Meses.toISOString()).order("created_at", { ascending: false });
+        if (data) setExpedientes(data);
+      })
+      .subscribe();
+    return () => { supabase2.removeChannel(canal); };
+  }, []);
+
   const perfilMap = useMemo(() => Object.fromEntries(perfiles.map((p) => [p.id, p.nombre])), [perfiles]);
   const soyAdmin = miPerfil?.roles?.includes("admin") ?? false;
   const puedeOperacionCaida = miPerfil?.roles?.some((r: string) => r === "admin" || r === "finanzas") ?? false;

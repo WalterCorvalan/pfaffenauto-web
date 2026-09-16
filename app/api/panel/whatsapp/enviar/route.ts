@@ -116,7 +116,11 @@ export async function POST(request: Request) {
     }
   } catch (err: any) {
     registrarError("api/panel/whatsapp/enviar", err, { conversacionId, mensajeId: mensaje.id });
-    await supabaseAdmin.from("whatsapp_mensajes").update({ status: "failed" }).eq("id", mensaje.id);
+    // Mismo gap que en el webhook: sin esto, error_detalle quedaba en null
+    // y el botón "reintentar con plantilla" del panel no mostraba el motivo
+    // real (ej. "(#2) Service temporarily unavailable"), solo el genérico.
+    const detalleError = (err?.message ? String(err.message) : String(err)).slice(0, 500);
+    await supabaseAdmin.from("whatsapp_mensajes").update({ status: "failed", error_detalle: detalleError }).eq("id", mensaje.id);
     return NextResponse.json({ error: err?.message ?? "Error enviando el mensaje." }, { status: 502 });
   }
 

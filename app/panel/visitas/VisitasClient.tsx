@@ -74,6 +74,13 @@ export default function VisitasClient({
   const [visitas, setVisitas] = useState(visitasIniciales);
   const [modalNueva, setModalNueva] = useState(false);
   const perfilMap = useMemo(() => Object.fromEntries(perfiles.map((p) => [p.id, p.nombre])), [perfiles]);
+  // Las visitas cargadas a mano desde el panel guardan vehiculo_id (FK real a
+  // stock) -- las que crea el bot de WhatsApp guardan vehiculo_marca/modelo/
+  // patente como texto suelto, sin FK (auto no siempre está en stock). La
+  // tarjeta solo miraba los campos de texto, así que una visita cargada acá
+  // con un auto de stock elegido siempre mostraba "sin auto" aunque
+  // vehiculo_id sí se hubiera guardado bien.
+  const vehiculoPorId = useMemo(() => new Map(vehiculos.map((v) => [v.id, v])), [vehiculos]);
 
   const actualizarUna = (v: any) => setVisitas((prev) => (prev.some((x) => x.id === v.id) ? prev.map((x) => (x.id === v.id ? { ...x, ...v } : x)) : [v, ...prev]));
 
@@ -110,11 +117,17 @@ export default function VisitasClient({
         <VendedorSelector visitaId={v.id} vendedorActualId={v.vendedor_id} perfiles={perfiles} onCambiado={actualizarUna} />
         <div className="flex items-center gap-2 text-[11px]">
           <CarFront className="w-3.5 h-3.5 text-indigo-500 shrink-0" />
-          {v.vehiculo_marca ? (
-            <span className="font-semibold text-indigo-700 dark:text-sky-300 truncate">{v.vehiculo_marca} {v.vehiculo_modelo} {v.vehiculo_patente ? `(${v.vehiculo_patente})` : ""}</span>
-          ) : (
-            <span className="text-slate-400 dark:text-slate-500 italic">Visita general (sin auto)</span>
-          )}
+          {(() => {
+            const deStock = v.vehiculo_id ? vehiculoPorId.get(v.vehiculo_id) : null;
+            const marca = deStock?.marca || v.vehiculo_marca;
+            const modelo = deStock?.modelo || v.vehiculo_modelo;
+            const patente = deStock?.patente || v.vehiculo_patente;
+            return marca ? (
+              <span className="font-semibold text-indigo-700 dark:text-sky-300 truncate">{marca} {modelo} {patente ? `(${patente})` : ""}</span>
+            ) : (
+              <span className="text-slate-400 dark:text-slate-500 italic">Visita general (sin auto)</span>
+            );
+          })()}
         </div>
       </div>
 

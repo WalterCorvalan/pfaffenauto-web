@@ -23,10 +23,21 @@ export default function PrecioEditor({
     if (!monto || monto <= 0) return alert("Cargá un precio válido.");
     if (monto === precio && nuevaMoneda === moneda) return setEditando(false);
     setGuardando(true);
-    const { error } = await supabase2.from("vehiculos").update({ precio_venta: monto, moneda_venta: nuevaMoneda }).eq("id", vehiculoId);
+    // El catálogo público y el simulador de financiación leen SOLO
+    // precio_publicado_ars/usd, nunca precio_venta directo (ver
+    // NuevoVehiculoModal.tsx y ventas/ARCHITECTURE.md) -- este editor rápido
+    // solo tocaba precio_venta, así que cambiar el precio acá lo actualizaba
+    // en el panel pero la web seguía mostrando el precio publicado viejo (o
+    // ninguno, si nunca se había publicado).
+    const cambios = {
+      precio_venta: monto, moneda_venta: nuevaMoneda,
+      precio_publicado_ars: nuevaMoneda === "ARS" ? monto : null,
+      precio_publicado_usd: nuevaMoneda === "USD" ? monto : null,
+    };
+    const { error } = await supabase2.from("vehiculos").update(cambios).eq("id", vehiculoId);
     setGuardando(false);
     if (error) return alert(error?.message ? `No se pudo actualizar el precio: ${error.message}` : "No se pudo actualizar el precio.");
-    onActualizado(vehiculoId, { precio_venta: monto, moneda_venta: nuevaMoneda });
+    onActualizado(vehiculoId, cambios);
     setEditando(false);
   };
 

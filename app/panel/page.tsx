@@ -293,9 +293,12 @@ export default async function PanelV2Home() {
     }
   }
 
-  // Cantidad de ventas cerradas por mes, últimos 6 meses (para el gráfico del
-  // Dashboard general) -- reusa ventasPorAno, ya trae hasta 2 años atrás.
-  const ventasPorMes6: { mes: string; cantidad: number }[] = [];
+  // Cantidad de ventas cerradas por mes, últimos 12 meses (para la curva de
+  // evolución histórica del Dashboard general) -- reusa ventasPorAno, ya
+  // trae hasta 2 años atrás. Antes eran solo 6 meses en un gráfico de
+  // barras; se extendió a 12 para que la curva muestre una tendencia real
+  // (estacionalidad, no solo el último semestre).
+  const ventasPorMes12: { mes: string; cantidad: number }[] = [];
   {
     const porMes = new Map<string, number>();
     (ventasPorAno || []).forEach((v: any) => {
@@ -303,10 +306,10 @@ export default async function PanelV2Home() {
       if (!mes) return;
       porMes.set(mes, (porMes.get(mes) || 0) + 1);
     });
-    for (let i = 5; i >= 0; i--) {
+    for (let i = 11; i >= 0; i--) {
       const d = new Date(hoy.getFullYear(), hoy.getMonth() - i, 1);
       const key = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}`;
-      ventasPorMes6.push({ mes: d.toLocaleDateString("es-AR", { month: "short" }).toUpperCase().replace(".", ""), cantidad: porMes.get(key) || 0 });
+      ventasPorMes12.push({ mes: d.toLocaleDateString("es-AR", { month: "short" }).toUpperCase().replace(".", ""), cantidad: porMes.get(key) || 0 });
     }
   }
 
@@ -443,7 +446,7 @@ export default async function PanelV2Home() {
       calificaciones={{ promedio: promedioCalificacion, distribucion: distribucionEstrellas, pedidasSinResponder, total: calificadas.length }}
       gestoriaPorMoneda={gestoriaPorMoneda}
       gananciaPorMes={gananciaPorMes}
-      ventasPorMes6={ventasPorMes6}
+      ventasPorMes12={ventasPorMes12}
       proyeccionCaja={{
         saldos: saldos || [],
         aCobrarPorMoneda, aPagarPorMoneda, resultadoPorMoneda: resultadoProyeccionPorMoneda,
