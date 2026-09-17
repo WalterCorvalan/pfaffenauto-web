@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { createClient } from "@supabase/supabase-js";
 import { z } from "zod";
 import { generarRespuestaAgenteV2, dividirRespuestaEnMensajes } from "@/lib/ai/agenteV2";
+import { menuBienvenidaV2 } from "@/lib/ai/promptsV2";
 import { isAiConfiguredV2 } from "@/lib/ai/indexV2";
 import { rateLimit, ipDesdeRequest } from "@/lib/rateLimit";
 import { registrarError } from "@/lib/panel/logger";
@@ -104,6 +105,23 @@ async function procesarMensaje({ sessionId, texto, origenPagina, nombre, telefon
   const { data: mensajesDesc } = await supabase.from("rodi_mensajes").select("direccion, texto").eq("conversacion_id", conversacion.id).order("created_at", { ascending: false }).limit(20);
   const mensajesPrevios = mensajesDesc ? [...mensajesDesc].reverse() : mensajesDesc;
   const historial = (mensajesPrevios ?? []).map((m) => ({ role: (m.direccion === "in" ? "user" : "assistant") as "user" | "assistant", content: m.texto }));
+
+  // Ahorro de tokens a propósito: Rodi y el buscador del home tienen que ser
+  // austeros con la IA (a diferencia de WhatsApp, el canal donde sí se
+  // justifica el costo) -- un "hola" como primer mensaje de la charla no
+  // necesita razonar nada, es el mismo menú fijo que ya devuelve el prompt
+  // (menuBienvenidaV2) para ese caso. Server-side, sin IA: no es "la IA
+  // contestó rápido", es un mensaje predeterminado de chat como cualquier
+  // otro. Solo aplica al PRIMER mensaje de la charla (historial.length===1,
+  // esta misma línea que se acaba de insertar) -- un "hola" en medio de una
+  // conversación ya en curso sí pasa por el agente normal.
+  const esPrimerMensaje = historial.length === 1;
+  const esSaludoSimple = /^(hola+|holis|buenas|hey|buen[oa]s?\s*(d[ií]as?|tardes|noches)?|qu[ée]\s*tal|hello|hi)[\s!¡.,?¿]*$/i.test(texto.trim());
+  if (esPrimerMensaje && esSaludoSimple) {
+    const saludo = menuBienvenidaV2("Rodi");
+    await supabase.from("rodi_mensajes").insert({ conversacion_id: conversacion.id, direccion: "out", texto: saludo, ai_generado: false });
+    return NextResponse.json({ replies: [saludo], handoff: false });
+  }
 
   const result = await generarRespuestaAgenteV2(historial, "panel-v2/rodi", "Rodi", conversacion.vehiculo_id ?? null);
 
