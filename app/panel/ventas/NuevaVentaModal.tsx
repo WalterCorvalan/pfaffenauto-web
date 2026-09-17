@@ -161,6 +161,8 @@ export default function NuevaVentaModal({ perfiles, clientes, vehiculos, miId, s
   // Si viene de "Convertir en venta" de una cotización con toma de permuta
   // cargada (NuevaCotizacionModal.tsx), precargarla acá -- si no, se pierde
   // por completo y el vendedor tiene que recordarla y volver a tipearla.
+  const [docsComprador, setDocsComprador] = useState<Record<string, File | null>>({});
+  const [docsPermutas, setDocsPermutas] = useState<Record<number, Record<string, File | null>>>({});
   const [incluirPermuta, setIncluirPermuta] = useState(!!initial?.permuta);
   const [permutas, setPermutas] = useState<Permuta[]>(initial?.permuta ? [{
     ...nuevaPermuta(),
@@ -370,6 +372,39 @@ export default function NuevaVentaModal({ perfiles, clientes, vehiculos, miId, s
     if (error) throw error;
   };
 
+  // La venta todavía no tiene expediente_id en este punto (se crea recién al
+  // cerrar la venta, vía trigger) -- no se puede usar expediente_documentos
+  // directo, por eso se sube DESPUÉS de crear la venta (ya con ventaId) a
+  // venta_documentos. Best-effort: si un archivo falla no aborta el resto
+  // ni tira la venta ya guardada -- se avisa y queda para subir a mano.
+  const subirDocumentosVenta = async (ventaId: string) => {
+    const fallidos: string[] = [];
+    const subirUno = async (tipo: string, file: File, permutaIndex: number | null) => {
+      const formData = new FormData();
+      formData.append("file", file);
+      formData.append("carpeta", "ventas");
+      const res = await fetch("/api/panel/upload", { method: "POST", body: formData });
+      const data = await res.json();
+      if (!res.ok) { fallidos.push(tipo); return; }
+      const { error } = await supabase2.from("venta_documentos").insert({
+        venta_id: ventaId, tipo, permuta_index: permutaIndex, nombre: file.name, url: data.publicUrl, subido_por: miId || null,
+      });
+      if (error) fallidos.push(tipo);
+    };
+
+    for (const [tipo, file] of Object.entries(docsComprador)) {
+      if (file) await subirUno(tipo, file, null);
+    }
+    for (const [permutaIndex, docs] of Object.entries(docsPermutas)) {
+      for (const [tipo, file] of Object.entries(docs)) {
+        if (file) await subirUno(tipo, file, Number(permutaIndex));
+      }
+    }
+    if (fallidos.length > 0) {
+      alert(`La venta se guardó, pero ${fallidos.length} documento(s) no se pudieron subir. Adjuntalos de nuevo desde el detalle.`);
+    }
+  };
+
   const guardarEdicion = async () => {
     if (!precioVenta || !compradorNombre.trim()) {
       setError("Completá al menos el precio de venta y el nombre del comprador.");
@@ -429,6 +464,10 @@ export default function NuevaVentaModal({ perfiles, clientes, vehiculos, miId, s
       if (!venta) throw new Error("No se pudo confirmar el guardado (no se pudo releer la venta actualizada). Verificá permisos y volvé a intentar.");
 
       await guardarPagoEfectivo(editando.id);
+
+      if (Object.values(docsComprador).some(Boolean) || Object.values(docsPermutas).some((d) => Object.values(d).some(Boolean))) {
+        await subirDocumentosVenta(editando.id);
+      }
 
       if (recordatoriosNuevos.length > 0) {
         await supabase2.from("venta_recordatorios").insert(
@@ -522,6 +561,10 @@ export default function NuevaVentaModal({ perfiles, clientes, vehiculos, miId, s
           await supabase2.from("clientes").update({ pipeline_stage: "negociacion" }).eq("id", clienteResueltoId);
         }
         throw dbError;
+      }
+
+      if (Object.values(docsComprador).some(Boolean) || Object.values(docsPermutas).some((d) => Object.values(d).some(Boolean))) {
+        await subirDocumentosVenta(venta.id);
       }
 
       if (senas.length > 0) {
@@ -959,8 +1002,11 @@ export default function NuevaVentaModal({ perfiles, clientes, vehiculos, miId, s
                         </div>
                         <p className="text-[11px] font-bold text-amber-600 dark:text-amber-400 mt-3 mb-1.5">Cédula Verde del vehículo de permuta</p>
                         <div className="grid grid-cols-2 gap-2">
-                          {["Cédula Verde Frente", "Cédula Verde Dorso"].map((doc) => (
-                            <button key={doc} type="button" disabled title="Todavía no construido" className="flex items-center justify-center gap-1.5 py-2.5 rounded-xl border border-dashed border-slate-200 dark:border-white/10 text-[11px] font-semibold text-slate-500 dark:text-slate-400 opacity-60 cursor-not-allowed">📎 {doc}</button>
+                          {[["Cédula Verde Frente", "cedula_verde_frente"], ["Cédula Verde Dorso", "cedula_verde_dorso"]].map(([label, tipo]) => (
+                            <label key={tipo} className="flex items-center justify-center gap-1.5 py-2.5 rounded-xl border border-dashed border-slate-200 dark:border-white/10 text-[11px] font-semibold text-slate-500 dark:text-slate-400 cursor-pointer truncate px-1">
+                              {docsPermutas[i]?.[tipo] ? `✓ ${docsPermutas[i][tipo]!.name}` : `📎 ${label}`}
+                              <input type="file" accept="image/*,.pdf" className="hidden" onChange={(e) => setDocsPermutas((prev) => ({ ...prev, [i]: { ...prev[i], [tipo]: e.target.files?.[0] || null } }))} />
+                            </label>
                           ))}
                         </div>
                         <label className="flex items-center gap-2.5 mt-3 px-3 py-2 rounded-lg bg-white dark:bg-white/5 border border-slate-200 dark:border-white/10 cursor-pointer">
@@ -1074,10 +1120,13 @@ export default function NuevaVentaModal({ perfiles, clientes, vehiculos, miId, s
                 <p className={seccionClass}>Documentos para el expediente</p>
                 <p className="text-[10px] text-slate-400 mb-2">Podés adjuntar los archivos ahora o subirlos después desde el expediente. Máx. 15 MB por archivo.</p>
                 <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
-                  {["DNI Frente", "DNI Dorso", "Cédula Verde Frente", "Cédula Verde Dorso"].map((doc) => (
-                    <div key={doc} className="flex flex-col items-center gap-1.5 px-2 py-3 rounded-xl border border-dashed border-slate-200 dark:border-white/10 text-center">
-                      <span className="text-[10px] font-semibold text-slate-500 dark:text-slate-400">{doc}</span>
-                      <button type="button" disabled title="Todavía no construido" className="text-[10px] font-bold text-amber-500 opacity-60 cursor-not-allowed">📎 Adjuntar</button>
+                  {[["DNI Frente", "dni_frente"], ["DNI Dorso", "dni_dorso"], ["Cédula Verde Frente", "cedula_verde_frente"], ["Cédula Verde Dorso", "cedula_verde_dorso"]].map(([label, tipo]) => (
+                    <div key={tipo} className="flex flex-col items-center gap-1.5 px-2 py-3 rounded-xl border border-dashed border-slate-200 dark:border-white/10 text-center">
+                      <span className="text-[10px] font-semibold text-slate-500 dark:text-slate-400">{label}</span>
+                      <label className="text-[10px] font-bold text-[#0145F2] cursor-pointer truncate max-w-full px-1">
+                        {docsComprador[tipo] ? `✓ ${docsComprador[tipo]!.name}` : "📎 Adjuntar"}
+                        <input type="file" accept="image/*,.pdf" className="hidden" onChange={(e) => setDocsComprador((prev) => ({ ...prev, [tipo]: e.target.files?.[0] || null }))} />
+                      </label>
                     </div>
                   ))}
                 </div>
