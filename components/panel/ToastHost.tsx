@@ -48,9 +48,18 @@ export default function ToastHost() {
       const { mensaje, tipo } = (e as CustomEvent).detail || {};
       if (mensaje) agregar(mensaje, tipo || "info");
     };
+    // NotificationBell se monta 2 veces (topbar mobile + desktop) y ambas
+    // instancias escuchan el mismo INSERT de Supabase Realtime -- sin este
+    // dedupe por id de alerta, cada notificación nueva mostraba 2 toasts.
+    const idsMostrados = new Set<string>();
     const onAlerta = (e: Event) => {
-      const { mensaje, link } = (e as CustomEvent).detail || {};
-      if (mensaje) agregar(mensaje, "alerta", link);
+      const { id: idAlerta, mensaje, link } = (e as CustomEvent).detail || {};
+      if (!mensaje) return;
+      if (idAlerta) {
+        if (idsMostrados.has(idAlerta)) return;
+        idsMostrados.add(idAlerta);
+      }
+      agregar(mensaje, "alerta", link);
     };
 
     window.addEventListener("app-toast", onToast);

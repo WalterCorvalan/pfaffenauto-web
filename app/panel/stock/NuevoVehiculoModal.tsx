@@ -7,6 +7,12 @@ import { crearAlerta } from "@/lib/panel/alertas";
 
 export const MARCAS = ["Toyota", "Volkswagen", "Ford", "Chevrolet", "Renault", "Peugeot", "Fiat", "Honda", "Hyundai", "Nissan", "Jeep", "Citroën", "BMW", "Mercedes-Benz", "Audi", "Otra"];
 const CATEGORIAS = ["Auto", "Pickup/Camioneta", "SUV", "Utilitario", "Moto", "Camión", "Camioneta", "Casa Rodante", "Ómnibus | Van"];
+const SEGMENTOS = [
+  "Buses", "Cabriolet", "Coupe", "Familiar", "Monovolumen", "Otro", "Pickup", "Rural 5 Puertas",
+  "Sedan 3p", "Sedan 4p", "Sedan 5p", "Todo Terreno | SUV", "Utilitarios", "Van | Mini-Van",
+];
+const PUERTAS = [2, 3, 4, 5];
+const PLAZAS = [2, 3, 4, 5, 6, 7, 8, 9];
 const ORIGENES = ["Compra", "Consignación", "Permuta", "Otro"];
 const PROVINCIAS = [
   "Buenos Aires", "CABA", "Catamarca", "Chaco", "Chubut", "Córdoba", "Corrientes", "Entre Ríos", "Formosa", "Jujuy",
@@ -685,7 +691,10 @@ export default function NuevoVehiculoModal({ perfiles, clientes, sucursales, miI
               </div>
               <div>
                 <label className={labelClass}>Puertas</label>
-                <input type="number" value={puertas} onChange={(e) => setPuertas(e.target.value)} placeholder="Ej: 5" className={inputClass} />
+                <select value={puertas} onChange={(e) => setPuertas(e.target.value)} className={inputClass}>
+                  <option value="">— Sin especificar —</option>
+                  {PUERTAS.map((n) => <option key={n} value={n}>{n}</option>)}
+                </select>
               </div>
               <div>
                 <label className={labelClass}>Motor / cilindrada</label>
@@ -697,7 +706,10 @@ export default function NuevoVehiculoModal({ perfiles, clientes, sucursales, miI
               </div>
               <div>
                 <label className={labelClass}>Segmento</label>
-                <input value={segmento} onChange={(e) => setSegmento(e.target.value)} placeholder="Ej: Sedán compacto" className={inputClass} />
+                <select value={segmento} onChange={(e) => setSegmento(e.target.value)} className={inputClass}>
+                  <option value="">— Sin especificar —</option>
+                  {SEGMENTOS.map((s) => <option key={s} value={s}>{s}</option>)}
+                </select>
               </div>
               <div>
                 <label className={labelClass}>Tracción</label>
@@ -712,7 +724,10 @@ export default function NuevoVehiculoModal({ perfiles, clientes, sucursales, miI
               </div>
               <div>
                 <label className={labelClass}>Cantidad de plazas</label>
-                <input type="number" value={cantidadPlazas} onChange={(e) => setCantidadPlazas(e.target.value)} className={inputClass} />
+                <select value={cantidadPlazas} onChange={(e) => setCantidadPlazas(e.target.value)} className={inputClass}>
+                  <option value="">— Sin especificar —</option>
+                  {PLAZAS.map((n) => <option key={n} value={n}>{n}</option>)}
+                </select>
               </div>
             </div>
           </div>
@@ -726,7 +741,10 @@ export default function NuevoVehiculoModal({ perfiles, clientes, sucursales, miI
               </div>
               <div>
                 <label className={labelClass}>Marca motor</label>
-                <input value={marcaMotor} onChange={(e) => setMarcaMotor(e.target.value)} className={inputClass} />
+                <select value={marcaMotor} onChange={(e) => setMarcaMotor(e.target.value)} className={inputClass}>
+                  <option value="">— Sin especificar —</option>
+                  {MARCAS.map((m) => <option key={m} value={m}>{m}</option>)}
+                </select>
               </div>
               <div>
                 <label className={labelClass}>Nº chasis</label>
@@ -734,15 +752,14 @@ export default function NuevoVehiculoModal({ perfiles, clientes, sucursales, miI
               </div>
               <div>
                 <label className={labelClass}>Marca chasis</label>
-                <input value={marcaChasis} onChange={(e) => setMarcaChasis(e.target.value)} className={inputClass} />
+                <select value={marcaChasis} onChange={(e) => setMarcaChasis(e.target.value)} className={inputClass}>
+                  <option value="">— Sin especificar —</option>
+                  {MARCAS.map((m) => <option key={m} value={m}>{m}</option>)}
+                </select>
               </div>
               <div>
                 <label className={labelClass}>Radicado — localidad</label>
                 <input value={radicadoLocalidad} onChange={(e) => setRadicadoLocalidad(e.target.value)} className={inputClass} />
-              </div>
-              <div>
-                <label className={labelClass}>Radicado — provincia</label>
-                <input value={radicadoProvincia} onChange={(e) => setRadicadoProvincia(e.target.value)} className={inputClass} />
               </div>
             </div>
           </div>

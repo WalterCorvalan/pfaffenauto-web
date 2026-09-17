@@ -33,6 +33,22 @@ export async function crearAlerta(
     const { data: prefs } = await supabase.from("espacio_notif_prefs").select("desactivadas").eq("perfil_id", destinatarioId).maybeSingle();
     if (prefs?.desactivadas?.includes(opciones.categoriaNotif)) return;
   }
+  // WhatsApp (y otros previews de link) hacen su propio fetch de la URL
+  // pública para generar la vista previa antes de que el cliente la abra de
+  // verdad -- eso duplica la visita real. Si ya hay una alerta idéntica
+  // (mismo destinatario+tipo+link) en los últimos 30s, no duplicar.
+  if (opciones?.tipo && opciones?.link) {
+    const haceTreintaSeg = new Date(Date.now() - 30_000).toISOString();
+    const { data: reciente } = await supabase
+      .from("alertas")
+      .select("id")
+      .eq("destinatario_id", destinatarioId)
+      .eq("tipo", opciones.tipo)
+      .eq("link", opciones.link)
+      .gte("created_at", haceTreintaSeg)
+      .maybeSingle();
+    if (reciente) return;
+  }
   const { error } = await supabase.from("alertas").insert({
     destinatario_id: destinatarioId,
     titulo,

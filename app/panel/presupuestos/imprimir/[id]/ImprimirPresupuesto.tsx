@@ -7,7 +7,10 @@ import { supabase2 } from "@/lib/supabase/client";
 import { notificarRespuestaPrecio } from "@/lib/panel/notificaciones";
 import ConfirmarPrecioEncargadoModal from "@/components/panel/ConfirmarPrecioEncargadoModal";
 
-interface Branding { branding_nombre?: string | null; branding_domicilio?: string | null; branding_telefono?: string | null; branding_cuit?: string | null }
+interface Branding {
+  branding_nombre?: string | null; branding_domicilio?: string | null; branding_telefono?: string | null; branding_cuit?: string | null;
+  branding_logo_url?: string | null; branding_email?: string | null; branding_web?: string | null; branding_ingresos_brutos?: string | null;
+}
 
 export default function ImprimirPresupuesto({ presupuesto: p, branding }: { presupuesto: any; branding?: Branding | null }) {
   const nombreEmpresa = branding?.branding_nombre || "Pfaffen Autos";
@@ -54,7 +57,7 @@ export default function ImprimirPresupuesto({ presupuesto: p, branding }: { pres
   };
 
   return (
-    <div className="min-h-screen pb-20 text-slate-800 bg-[#F9FAFB] dark:bg-[#0A0A0A] print:bg-white pt-8 font-sans">
+    <div className="min-h-screen pb-20 text-slate-800 bg-[#F9FAFB] dark:bg-[#0A0A0A] print:bg-white print:pb-0 print:min-h-0 pt-8 print:pt-0 font-sans">
       <div className="print:hidden max-w-[210mm] mx-auto mb-8 bg-white dark:bg-[#141414] p-6 rounded-2xl border border-slate-200 dark:border-white/10 shadow-sm flex flex-col sm:flex-row items-center justify-between gap-4">
         <div className="flex items-center gap-4">
           <Link href="/panel/presupuestos" className="text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 transition-colors bg-slate-50 dark:bg-white/5 hover:bg-slate-100 dark:hover:bg-white/10 p-2.5 rounded-lg border border-slate-200 dark:border-white/10"><ArrowLeft className="w-4 h-4" /></Link>
@@ -75,70 +78,79 @@ export default function ImprimirPresupuesto({ presupuesto: p, branding }: { pres
         </div>
       </div>
 
-      <div className="max-w-[210mm] min-h-[297mm] mx-auto bg-white p-[15mm] shadow-lg border border-slate-200 print:shadow-none print:border-none print:p-0 print:m-0">
-        <div className="flex justify-between items-start border-b-[3px] border-slate-900 pb-5 mb-6">
-          <div>
-            <h1 className="text-3xl font-black text-slate-900 tracking-tighter uppercase">{nombreEmpresa}</h1>
-            <p className="text-[11px] font-bold text-slate-500 uppercase tracking-widest mt-1">Concesionaria Oficial y Usados Seleccionados</p>
-            {(branding?.branding_domicilio || branding?.branding_telefono || branding?.branding_cuit) && (
-              <p className="text-[9px] text-slate-400 mt-1 space-x-2">
-                {branding?.branding_domicilio && <span>{branding.branding_domicilio}</span>}
-                {branding?.branding_telefono && <span>Tel: {branding.branding_telefono}</span>}
-                {branding?.branding_cuit && <span>CUIT: {branding.branding_cuit}</span>}
-              </p>
-            )}
-          </div>
-          <div className="text-right">
-            <h2 className="text-[15px] font-bold text-slate-800 uppercase tracking-widest border-2 border-slate-200 px-4 py-1.5 rounded-lg bg-slate-50">Presupuesto</h2>
-            <div className="mt-3 text-[11px] text-slate-500 font-medium space-y-1 uppercase tracking-widest">
-              <p>Número: <span className="font-mono font-bold text-slate-900">{p.numero}</span></p>
-              <p>Fecha: <span className="font-bold text-slate-900">{fecha}</span></p>
-              <p>Vendedor: <span className="font-bold text-slate-900">{vendedor}</span></p>
-            </div>
-          </div>
-        </div>
-
-        <div className="mb-6">
-          <h3 className="text-[10px] font-black uppercase tracking-widest text-slate-400 border-b border-slate-200 pb-1 mb-3">Cliente</h3>
-          <strong className="text-slate-900 text-[15px]">{p.cliente_nombre}</strong>
-        </div>
-
-        <div className="mb-6">
-          <h3 className="text-[10px] font-black uppercase tracking-widest text-slate-400 border-b border-slate-200 pb-1 mb-3">Información del Vehículo</h3>
-          <div className="grid grid-cols-4 gap-y-4 gap-x-4 text-xs bg-slate-50 p-4 rounded-xl border border-slate-200 print:bg-white print:border-slate-300">
-            <div><span className="text-slate-400 font-bold tracking-widest text-[9px] uppercase block mb-0.5">Dominio</span><strong className="text-[14px] font-black uppercase">{p.dominio || "0KM"}</strong></div>
-            <div className="col-span-2"><span className="text-slate-400 font-bold tracking-widest text-[9px] uppercase block mb-0.5">Marca y Modelo</span><strong className="text-[14px] font-black uppercase">{p.marca} {p.modelo}</strong></div>
-            <div><span className="text-slate-400 font-bold tracking-widest text-[9px] uppercase block mb-0.5">Segmento</span><strong className="text-slate-900 capitalize">{p.segmento || "-"}</strong></div>
-            <div><span className="text-slate-400 font-bold tracking-widest text-[9px] uppercase block mb-0.5">Tipo</span><strong className="text-slate-900">{p.tipo || "-"}</strong></div>
-            <div><span className="text-slate-400 font-bold tracking-widest text-[9px] uppercase block mb-0.5">Año</span><strong className="text-slate-900">{p.modelo_anio || "-"}</strong></div>
-            <div><span className="text-slate-400 font-bold tracking-widest text-[9px] uppercase block mb-0.5">Color</span><strong className="text-slate-900 capitalize">{p.color || "-"}</strong></div>
-            <div><span className="text-slate-400 font-bold tracking-widest text-[9px] uppercase block mb-0.5">Kilómetros</span><strong className="text-slate-900">{p.kilometros?.toLocaleString("es-AR") || "-"}</strong></div>
-            <div><span className="text-slate-400 font-bold tracking-widest text-[9px] uppercase block mb-0.5">Combustible</span><strong className="text-slate-900">{p.combustible || "-"}</strong></div>
-          </div>
-        </div>
-
-        <div className="mb-6 flex gap-6">
-          <div className="flex-1 border border-slate-300 rounded-xl overflow-hidden">
-            <h3 className="bg-slate-50 px-4 py-2 text-[10px] font-black uppercase tracking-widest text-slate-500 border-b border-slate-300">Precio de venta</h3>
-            <div className="p-4 space-y-3 text-xs">
-              <div className="flex justify-between items-center"><span className="text-slate-600 font-medium">Precio de Venta u$s:</span><strong className="text-[14px]">{precioUsd ? `u$s ${Number(precioUsd).toLocaleString("es-AR")}` : "u$s 0,00"}</strong></div>
-              <div className="flex justify-between items-center border-t-2 border-slate-900 pt-3 mt-3">
-                <span className="font-bold text-[13px] uppercase tracking-widest">Precio Venta $:</span>
-                <strong className="text-xl font-black text-slate-900 bg-slate-100 px-3 py-1 rounded">{precioArs ? formatMoney(precioArs) : "A convenir"}</strong>
+      {/* Mismo formato de membrete/recibo que Venta y Seña (ImprimirVenta.tsx,
+          ImprimirSena.tsx) -- sin bloque de firma, porque un presupuesto no
+          se firma, solo se cotiza. */}
+      <div className="w-[210mm] max-w-[210mm] min-h-[297mm] print:min-h-0 mx-auto bg-white p-[12mm] pb-[14mm] shadow-lg border border-slate-200 print:shadow-none print:border-none print:m-0 text-[11px] leading-snug box-border">
+        <div className="flex justify-between items-start border-b-2 border-slate-900 pb-2 mb-2.5">
+          <div className="flex items-start gap-3">
+            {branding?.branding_logo_url ? (
+              <img src={branding.branding_logo_url} alt={nombreEmpresa} className="h-14 w-auto object-contain shrink-0" />
+            ) : (
+              <div className="relative shrink-0">
+                <img src="/logo.png" alt={nombreEmpresa} className="h-8 w-auto object-contain" />
+                <img src="/r.png" alt="Marca Registrada" className="absolute -top-1 -right-2 w-2 h-2 object-contain brightness-0 opacity-80" />
               </div>
-              {p.imprimir_en && <div className="flex justify-between items-center pt-1"><span className="text-slate-600 font-medium">Imprimir en:</span><strong className="text-slate-900">{p.imprimir_en}</strong></div>}
+            )}
+            <div>
+              <p className="text-[10px] text-slate-600">
+                {branding?.branding_domicilio && <span className="block">{branding.branding_domicilio}</span>}
+                {(branding?.branding_telefono || branding?.branding_email || branding?.branding_web) && (
+                  <span className="block">{[branding?.branding_telefono, branding?.branding_email, branding?.branding_web].filter(Boolean).join(" / ")}</span>
+                )}
+              </p>
             </div>
           </div>
+          <h1 className="text-xl font-black text-slate-900 tracking-tight uppercase self-center">{nombreEmpresa}</h1>
+          <div className="text-right shrink-0">
+            <h2 className="text-[13px] font-black uppercase tracking-wide">PRESUPUESTO Nro. {p.numero}</h2>
+            <p className="text-[10px] text-slate-600 mt-1">FECHA: {fecha}</p>
+            {branding?.branding_cuit && <p className="text-[10px] text-slate-600">Cuit: {branding.branding_cuit}</p>}
+            {branding?.branding_ingresos_brutos && <p className="text-[10px] text-slate-600">Ing. Brutos: {branding.branding_ingresos_brutos}</p>}
+          </div>
+        </div>
+
+        <p className="italic mb-2">A continuación le brindamos la cotización solicitada por:</p>
+
+        <div className="grid grid-cols-2 gap-x-8 gap-y-1 mb-2.5">
+          <div className="col-span-2 flex justify-between border-b border-dotted border-slate-300 pb-0.5"><span className="text-slate-500">Apellido y Nombre</span><strong>{p.cliente_nombre || "—"}</strong></div>
+        </div>
+
+        <div className="space-y-1 mb-2.5">
+          <div className="flex items-baseline gap-2 flex-wrap"><span className="w-64 shrink-0">Precio de Venta u$s:</span><strong className="text-[14px]">{precioUsd ? `u$s ${Number(precioUsd).toLocaleString("es-AR")}` : "—"}</strong></div>
+          <div className="flex items-baseline gap-2 flex-wrap pt-1.5 border-t border-slate-900"><span className="w-64 shrink-0 font-bold">Precio de Venta $:</span><strong className="text-[15px]">{precioArs ? formatMoney(precioArs) : "A convenir"}</strong></div>
+          {p.imprimir_en && <div className="flex items-baseline gap-2 flex-wrap"><span className="w-64 shrink-0">Imprimir en:</span><strong>{p.imprimir_en}</strong></div>}
+        </div>
+
+        <p className="mb-2.5 text-justify">
+          Cotización correspondiente a un(a) <strong className="uppercase">{p.segmento || "vehículo"}</strong>, <strong className="uppercase">{p.dominio ? "usado" : "0KM"}</strong>, en las condiciones informadas por el cliente.
+        </p>
+
+        <div className="grid grid-cols-2 gap-x-8 gap-y-1 mb-2.5">
+          <div className="flex justify-between border-b border-dotted border-slate-300 pb-0.5"><span className="text-slate-500">Segmento</span><strong>{p.segmento || "-"}</strong></div>
+          <div className="flex justify-between border-b border-dotted border-slate-300 pb-0.5"><span className="text-slate-500">Marca</span><strong>{p.marca}</strong></div>
+          <div className="flex justify-between border-b border-dotted border-slate-300 pb-0.5"><span className="text-slate-500">Modelo</span><strong>{p.modelo}</strong></div>
+          <div className="flex justify-between border-b border-dotted border-slate-300 pb-0.5"><span className="text-slate-500">Tipo</span><strong>{p.tipo || "-"}</strong></div>
+          <div className="flex justify-between border-b border-dotted border-slate-300 pb-0.5"><span className="text-slate-500">Dominio</span><strong className="uppercase">{p.dominio || "0KM"}</strong></div>
+          <div className="flex justify-between border-b border-dotted border-slate-300 pb-0.5"><span className="text-slate-500">Color</span><strong className="capitalize">{p.color || "-"}</strong></div>
+          <div className="flex justify-between border-b border-dotted border-slate-300 pb-0.5"><span className="text-slate-500">Año</span><strong>{p.modelo_anio || "-"}</strong></div>
+          <div className="flex justify-between border-b border-dotted border-slate-300 pb-0.5"><span className="text-slate-500">Kilómetros</span><strong>{p.kilometros?.toLocaleString("es-AR") || "-"}</strong></div>
+          <div className="flex justify-between border-b border-dotted border-slate-300 pb-0.5"><span className="text-slate-500">Combustible</span><strong>{p.combustible || "-"}</strong></div>
+        </div>
+
+        <div className="grid grid-cols-2 gap-x-8 mb-2">
+          <div className="flex justify-between border-b border-dotted border-slate-300 pb-0.5"><span className="text-slate-500">Vendedor</span><strong>{vendedor}</strong></div>
+          {branding?.branding_telefono && <div className="flex justify-between border-b border-dotted border-slate-300 pb-0.5"><span className="text-slate-500">Teléfono</span><strong>{branding.branding_telefono}</strong></div>}
         </div>
 
         {p.observaciones && (
-          <div className="mb-10">
-            <h3 className="text-[10px] font-black uppercase tracking-widest text-slate-400 border-b border-slate-200 pb-1 mb-2">Observaciones</h3>
-            <p className="text-[11px] text-slate-600 leading-relaxed whitespace-pre-wrap bg-slate-50 p-4 rounded-xl border border-slate-200 print:bg-white print:border-slate-300">{p.observaciones}</p>
+          <div className="mb-4">
+            <p className="text-slate-500 mb-1">Observaciones Adicionales:</p>
+            <p className="text-[10px] font-bold text-slate-800 leading-snug whitespace-pre-wrap border-b border-dotted border-slate-300 pb-1">{p.observaciones}</p>
           </div>
         )}
 
-        <p className="text-[10px] italic text-slate-400 mt-10">
+        <p className="text-[9.5px] text-slate-700 leading-snug text-justify mb-2.5">
           El presente documento es de carácter meramente informativo y no constituye una reserva del vehículo ni congela el valor del mismo. El stock y los precios están sujetos a modificaciones sin previo aviso hasta la efectiva seña de la unidad.
         </p>
       </div>

@@ -55,7 +55,7 @@ export default function NotificationBell({ miId }: { miId: string }) {
       .on("postgres_changes", { event: "INSERT", schema: "public", table: "alertas", filter: `destinatario_id=eq.${miId}` }, (payload: any) => {
         const nueva = payload.new;
         if (nueva?.titulo) {
-          window.dispatchEvent(new CustomEvent("app-toast-alerta", { detail: { mensaje: nueva.titulo, link: nueva.link } }));
+          window.dispatchEvent(new CustomEvent("app-toast-alerta", { detail: { id: nueva.id, mensaje: nueva.titulo, link: nueva.link } }));
         }
         cargar();
       })
