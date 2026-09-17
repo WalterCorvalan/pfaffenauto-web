@@ -6,7 +6,8 @@ import { supabase2 } from "@/lib/supabase/client";
 import {
   X, User, Phone, CarFront, Calendar, Plus, CheckCircle2, Circle, FileText,
   Ban, Clock, AlertTriangle, MapPin, StickyNote, Radio, Car, LifeBuoy, History,
-  Edit2, Check, Flame, Snowflake, Minus, Receipt, Wallet, ClipboardCheck, Loader2, MessageCircle, Bot, Building2,
+  Edit2, Check, Flame, Snowflake, Minus, Receipt, Wallet, ClipboardCheck, Loader2, MessageCircle, Building2,
+  Trash2, RotateCcw, Sparkles, UserRound,
 } from "lucide-react";
 
 const ESTADOS_LEAD = [
@@ -62,8 +63,8 @@ const CONTACTO_TABLA_POR_ORIGEN: Record<string, string | null> = {
 const ETIQUETA_ORIGEN: Record<string, string> = { whatsapp: "WhatsApp", instagram: "Instagram", rodi: "Rodi", manual: "carga manual" };
 
 export default function LeadDetailModal({
-  leadId, origen, miId, vendedores, sucursales = [], onClose, onActualizado,
-}: { leadId: string; origen: "whatsapp" | "instagram" | "rodi" | "manual"; miId: string; vendedores: Perfil[]; sucursales?: Sucursal[]; onClose: () => void; onActualizado: (id: string, patch: any) => void }) {
+  leadId, origen, miId, vendedores, sucursales = [], onClose, onActualizado, inline = false,
+}: { leadId: string; origen: "whatsapp" | "instagram" | "rodi" | "manual"; miId: string; vendedores: Perfil[]; sucursales?: Sucursal[]; onClose: () => void; onActualizado: (id: string, patch: any) => void; inline?: boolean }) {
   const tabla = TABLA_POR_ORIGEN[origen];
   const campoFk = CAMPO_FK_POR_ORIGEN[origen];
   const contactoTabla = CONTACTO_TABLA_POR_ORIGEN[origen];
@@ -90,6 +91,7 @@ export default function LeadDetailModal({
   const [guardandoVendedor, setGuardandoVendedor] = useState(false);
   const [guardandoVehiculo, setGuardandoVehiculo] = useState(false);
   const [creandoPeritaje, setCreandoPeritaje] = useState(false);
+  const [guardandoBasura, setGuardandoBasura] = useState(false);
 
   const [showCierreModal, setShowCierreModal] = useState(false);
   const [motivoCierreId, setMotivoCierreId] = useState("");
@@ -219,6 +221,15 @@ export default function LeadDetailModal({
       await patch({ calificacion: nueva || null });
       await registrarEvento("calificacion", `Grado de interés cambiado a "${CALIFICACIONES.find((c) => c.value === nueva)?.label}"`);
     } catch { alert("No se pudo cambiar el grado de interés."); } finally { setGuardandoCalificacion(false); }
+  };
+
+  const toggleBasura = async () => {
+    setGuardandoBasura(true);
+    try {
+      const nuevo = !lead.es_basura;
+      await patch({ es_basura: nuevo });
+      await registrarEvento("basura", nuevo ? "Mandado a Lead basura" : "Sacado de Lead basura");
+    } catch { alert("No se pudo actualizar."); } finally { setGuardandoBasura(false); }
   };
 
   const cambiarVendedor = async (vendedorId: string) => {
@@ -390,10 +401,13 @@ export default function LeadDetailModal({
       </div>
     );
 
-  return (
-    <div className="fixed inset-0 bg-black/40 backdrop-blur-sm z-[100] flex items-center justify-center p-4" onClick={() => onClose()}>
-      <div className="bg-white dark:bg-[#111] border border-slate-200 dark:border-white/10 rounded-2xl w-full max-w-3xl max-h-[90vh] overflow-y-auto shadow-2xl" onClick={(e) => e.stopPropagation()}>
-        <div className="flex justify-end px-5 pt-4 sticky top-0 bg-white dark:bg-[#111] z-10">
+  const contenido = (
+    <div className={inline ? "bg-white dark:bg-[#111] w-full h-full overflow-y-auto" : "bg-white dark:bg-[#111] border border-slate-200 dark:border-white/10 rounded-2xl w-full max-w-3xl max-h-[90vh] overflow-y-auto shadow-2xl"} onClick={(e) => e.stopPropagation()}>
+        <div className="flex justify-between items-center px-5 pt-4 sticky top-0 bg-white dark:bg-[#111] z-10 pb-2">
+          <button onClick={toggleBasura} disabled={guardandoBasura} title={lead.es_basura ? "Sacar de Lead basura" : "Mandar a Lead basura"}
+            className={`flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-[11px] font-bold transition-colors disabled:opacity-50 ${lead.es_basura ? "bg-slate-700 dark:bg-white/20 text-white" : "bg-white dark:bg-white/5 border border-slate-200 dark:border-white/10 text-slate-500 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-white/10"}`}>
+            {lead.es_basura ? <><RotateCcw className="w-3.5 h-3.5" /> Sacar de basura</> : <><Trash2 className="w-3.5 h-3.5" /> Lead basura</>}
+          </button>
           <button onClick={onClose} className="text-slate-400 hover:text-slate-700 dark:hover:text-white"><X className="w-5 h-5" /></button>
         </div>
 
@@ -524,12 +538,19 @@ export default function LeadDetailModal({
               </div>
 
               {lead.handoff_resumen && (
-                <div className="bg-indigo-50 dark:bg-indigo-500/10 border border-indigo-200 dark:border-indigo-500/20 rounded-2xl p-4">
-                  <h2 className="text-[11px] font-bold uppercase tracking-widest text-indigo-500 dark:text-indigo-300 mb-1 flex items-center gap-1.5"><Bot className="w-3.5 h-3.5" /> Resumen de la IA</h2>
-                  {lead.handoff_reason && (
-                    <p className="text-[11px] text-indigo-700 dark:text-indigo-300 mb-1">{lead.handoff_reason === "cliente_pidio_humano" ? "El cliente pidió hablar con una persona." : "La IA dejó de responder."}</p>
-                  )}
-                  <p className="text-[13px] text-indigo-900 dark:text-indigo-100 leading-relaxed">{lead.handoff_resumen}</p>
+                <div className="rounded-2xl overflow-hidden border border-indigo-200 dark:border-indigo-500/20 shadow-sm">
+                  <div className="bg-gradient-to-r from-indigo-600 to-violet-600 px-4 py-2.5 flex items-center gap-2">
+                    <span className="w-7 h-7 rounded-full bg-white/15 flex items-center justify-center shrink-0"><Sparkles className="w-3.5 h-3.5 text-white" /></span>
+                    <span className="text-[12px] font-black uppercase tracking-widest text-white">Resumen de la IA</span>
+                    {lead.handoff_reason && (
+                      <span className="ml-auto flex items-center gap-1 text-[10px] font-bold text-white/90 bg-white/15 px-2 py-0.5 rounded-full shrink-0">
+                        <UserRound className="w-3 h-3" /> {lead.handoff_reason === "cliente_pidio_humano" ? "Pidió humano" : "IA en pausa"}
+                      </span>
+                    )}
+                  </div>
+                  <div className="bg-indigo-50 dark:bg-indigo-500/10 px-4 py-3.5 border-l-4 border-l-indigo-500 dark:border-l-indigo-400">
+                    <p className="text-[13.5px] text-indigo-950 dark:text-indigo-100 leading-relaxed">{lead.handoff_resumen}</p>
+                  </div>
                 </div>
               )}
             </div>
@@ -716,7 +737,15 @@ export default function LeadDetailModal({
             </div>
           </div>
         )}
-      </div>
+        </div>
+  );
+
+
+  if (inline) return contenido;
+
+  return (
+    <div className="fixed inset-0 bg-black/40 backdrop-blur-sm z-[100] flex items-center justify-center p-4" onClick={() => onClose()}>
+      {contenido}
     </div>
   );
 }
