@@ -1,4 +1,5 @@
 import * as cheerio from "cheerio";
+import { descuentoPctPorKm } from "@/lib/panel/descuentoPorKm";
 
 // Tasador de mercado v1: scraping directo del listado público de MercadoLibre
 // (fetch + parseo de HTML con cheerio), NO la API oficial -- la API de
@@ -98,18 +99,8 @@ export function calcularEstadisticas(comparables: ComparableMeli[]): Estadistica
   return { media: Math.round(media), mediana: Math.round(mediana), minimo: precios[0], maximo: precios[n - 1], n };
 }
 
-// Tramos de descuento por kilometraje sobre la media de comparables --
-// valores dados por el dueño de la agencia, no inventar/ajustar sin
-// confirmar. Se evalúan en orden, el primero que matchea gana.
-const TRAMOS_DESCUENTO_KM: { hasta: number; pct: number }[] = [
-  { hasta: 50_000, pct: 8 },
-  { hasta: 80_000, pct: 10 },
-  { hasta: 100_000, pct: 12 },
-  { hasta: 120_000, pct: 14 },
-  { hasta: 180_000, pct: 16 },
-  { hasta: Infinity, pct: 20 },
-];
-
-export function descuentoPorKm(km: number): number {
-  return (TRAMOS_DESCUENTO_KM.find((t) => km <= t.hasta) || TRAMOS_DESCUENTO_KM[TRAMOS_DESCUENTO_KM.length - 1]).pct;
-}
+// El descuento por km ya vivía en lib/panel/descuentoPorKm.ts (usado por el
+// form público /cotizador para restarle al precio que el cliente dice
+// esperar) -- se reusa la misma tabla acá en vez de mantener una copia
+// paralela con los mismos números.
+export const descuentoPorKm = descuentoPctPorKm;
