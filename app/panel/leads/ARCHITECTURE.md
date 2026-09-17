@@ -48,6 +48,22 @@ Cuando entra un lead sin vendedor asignado (el "hola" inicial), `notificarVended
 
 **Bug corregido**: `app/panel/leads/page.tsx` filtraba `vendedoresLista` con `roles?.includes("vendedor")` — ese rol no existe en ningún perfil, el string correcto usado en todo el resto del código (`whatsapp/page.tsx`, `rodi/page.tsx`, `nps/page.tsx`, `configuracion/empresa/EmpresaClient.tsx`, `reportes/page.tsx`, `notificarVendedoresDisponibles()`) es `"ventas"`. Con el string equivocado, la lista de vendedores que llega a `LeadsUnificadosClient.tsx` quedaba vacía salvo por los admin — rompía el nombre del vendedor asignado en el listado y el selector para asignar/crear leads manuales.
 
+## Layout de dos paneles + pestañas "Sin respuesta" / "Lead basura"
+
+`LeadsUnificadosClient.tsx` es un layout de dos paneles tipo `app/panel/whatsapp/ChatClient.tsx`: sidebar con la lista (izquierda) + `LeadDetailModal` renderizado **inline** (derecha), no como modal superpuesto. Para eso `LeadDetailModal.tsx` (compartido con `/panel/whatsapp`) tiene un prop `inline?: boolean` — la única diferencia es el wrapper: con `inline` devuelve el contenido pelado (sin overlay `fixed inset-0`); sin el prop se comporta exactamente igual que antes (modal). Si tocás el contenido del detalle, es el mismo componente en los dos módulos — no dupliques lógica acá.
+
+`DIAS_SIN_RESPUESTA = 2` (constante en `LeadsUnificadosClient.tsx`) define el único umbral del módulo:
+
+- **"Sin respuesta"**: leads `caliente`, no basura, cuyo último mensaje es del cliente (`direccion = "in"`) y pasaron ≥2 días sin respuesta nuestra, y no están `perdido`/`convertido`.
+- **"Lead basura"**: mismo criterio de "2+ días sin contestar" pero para leads `frío`/sin calificar (regla automática, calculada en el cliente — no persiste nada), **más** cualquier lead con `es_basura = true` en la base (mandado a mano por un vendedor desde el botón del detalle, sin esperar el umbral).
+
+La dirección del último mensaje **no vive en la fila de la conversación** — `app/panel/leads/page.tsx` la trae con `ultimaDireccionPorConversacion()`, un fetch en bloque (últimas 3000 filas, `order by created_at desc`) por cada tabla de mensajes (`whatsapp_mensajes`, `instagram_mensajes`, `rodi_mensajes`) reducido a `{conversacion_id: direccion}` client-side, en vez de una query por conversación. `leads_manuales` no tiene tabla de mensajes — queda afuera de las dos reglas automáticas (`ultimaDireccion: null` siempre), pero sí puede mandarse a basura a mano.
+
+**`es_basura`** es una columna nueva (boolean, default `false`) en las 4 tablas de origen — el toggle vive en el header de `LeadDetailModal.tsx` (`toggleBasura`). Si en algún momento se agrega un 5° canal de leads, necesita esta columna también o quedará afuera de "Lead basura" manual.
+
+**Migración pendiente**: `migraciones/sql_leads_es_basura.sql` agrega `es_basura` a las 4 tablas. Hasta que se corra en Supabase, el toggle "Lead basura" falla al guardar (columna inexistente) — la regla automática de basura para leads fríos sí funciona sin la migración porque no depende de esa columna.
+
 ## No tocar sin revisar el resto
 
-- No agregar un 5° canal de leads sin actualizar los 3 lugares de arriba (unificación en `leads/page.tsx`, el mapeo FK de `tareas_lead`, y cualquier contador tipo "Leads sin atender").
+- No agregar un 5° canal de leads sin actualizar los 3 lugares de arriba (unificación en `leads/page.tsx`, el mapeo FK de `tareas_lead`, y cualquier contador tipo "Leads sin atender") — y sin sumarle `es_basura` si tiene que participar de la pestaña "Lead basura".
+- `LeadDetailModal.tsx` es compartido entre `/panel/whatsapp` y `/panel/leads` — cualquier cambio a su contenido (no al wrapper `inline`) afecta a los dos módulos.
