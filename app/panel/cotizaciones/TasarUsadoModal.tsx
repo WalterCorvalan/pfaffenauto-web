@@ -1,15 +1,24 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { X, Calculator, Loader2 } from "lucide-react";
 
 interface Props {
   marcaInicial: string;
   modeloInicial: string;
+  versionInicial?: string;
   anioInicial: string;
   kmInicial: string;
   onClose: () => void;
-  onTasado: (valor: number) => void;
+  // Sin destino real donde guardar el valor (ej. lead de tasación pedida
+  // desde la web, de solo lectura) -- se omite y el modal queda en modo
+  // "solo consulta", sin el botón "Usar este valor".
+  onTasado?: (valor: number) => void;
+  // Cuando los datos ya vienen completos y confiables (ej. desde un lead
+  // que el cliente mismo cargó), tasar apenas se abre el modal ahorra el
+  // click extra de "Calcular" -- en el flujo de permuta manual no conviene
+  // (el vendedor recién está completando/corrigiendo los campos).
+  autoTasar?: boolean;
 }
 
 interface Resultado {
@@ -19,10 +28,10 @@ interface Resultado {
   n: number;
 }
 
-export default function TasarUsadoModal({ marcaInicial, modeloInicial, anioInicial, kmInicial, onClose, onTasado }: Props) {
+export default function TasarUsadoModal({ marcaInicial, modeloInicial, versionInicial, anioInicial, kmInicial, onClose, onTasado, autoTasar }: Props) {
   const [marca, setMarca] = useState(marcaInicial);
   const [modelo, setModelo] = useState(modeloInicial);
-  const [version, setVersion] = useState("");
+  const [version, setVersion] = useState(versionInicial || "");
   const [anio, setAnio] = useState(anioInicial);
   const [km, setKm] = useState(kmInicial);
   const [tasando, setTasando] = useState(false);
@@ -49,6 +58,12 @@ export default function TasarUsadoModal({ marcaInicial, modeloInicial, anioInici
       setTasando(false);
     }
   };
+
+  useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- fetch al montar, no sincronización de estado externo
+    if (autoTasar) tasar();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   const inputClass = "w-full bg-slate-50 dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-xl px-3 py-2.5 text-sm outline-none focus:border-rose-500 text-slate-900 dark:text-white placeholder:text-slate-400";
   const labelClass = "text-xs font-semibold text-slate-600 dark:text-slate-300 block mb-1";
@@ -80,7 +95,7 @@ export default function TasarUsadoModal({ marcaInicial, modeloInicial, anioInici
             <p className="text-[11px] text-emerald-600 dark:text-emerald-400 mt-1">
               Media $ {resultado.media.toLocaleString("es-AR")} de {resultado.n} publicaci{resultado.n === 1 ? "ón" : "ones"} comparable{resultado.n === 1 ? "" : "s"} − {resultado.descuentoPct}% por kilometraje
             </p>
-            <button type="button" onClick={() => onTasado(resultado.ajustado)} className="mt-3 w-full py-2 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold">Usar este valor</button>
+            {onTasado && <button type="button" onClick={() => onTasado(resultado.ajustado)} className="mt-3 w-full py-2 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold">Usar este valor</button>}
           </div>
         )}
         {error && <p className="mt-4 text-xs text-center text-rose-500">{error}</p>}

@@ -14,6 +14,7 @@ import NuevaCotizacionModal from "./NuevaCotizacionModal";
 import MigrarBorradoresModal from "./MigrarBorradoresModal";
 import CotizacionDetalleModal from "./CotizacionDetalleModal";
 import ModificarCotizacionModal from "./ModificarCotizacionModal";
+import TasarUsadoModal from "./TasarUsadoModal";
 import TablaResponsiva, { type ColumnaTabla } from "@/components/panel/TablaResponsiva";
 
 interface Cotizacion {
@@ -41,7 +42,7 @@ function tiempoPendienteLabel(iso: string) {
 interface Perfil { id: string; nombre: string; roles: string[] }
 interface Cliente { id: string; nombre: string; apellido: string | null; telefono: string | null; dni_cuit: string | null }
 interface Vehiculo { id: string; marca: string; modelo: string; anio: number; patente: string | null; precio_venta: number; moneda_venta: string; estado: string }
-interface LeadWeb { id: string; nombre: string; telefono: string | null; marca: string; modelo: string | null; anio: number | null; oferta_calculada: number | null; precio_esperado_cliente: number | null; estado: string; created_at: string; tipo: string }
+interface LeadWeb { id: string; nombre: string; telefono: string | null; marca: string; modelo: string | null; version: string | null; anio: number | null; kilometraje: number | null; oferta_calculada: number | null; precio_esperado_cliente: number | null; estado: string; created_at: string; tipo: string }
 
 type Tab = "pendiente" | "aprobada" | "rechazada";
 
@@ -66,6 +67,7 @@ export default function CotizacionesClient({
   const [pidiendoAtencionId, setPidiendoAtencionId] = useState<string | null>(null);
   const [mensajeAtencion, setMensajeAtencion] = useState("");
   const [actualizandoId, setActualizandoId] = useState<string | null>(null);
+  const [tasandoLead, setTasandoLead] = useState<LeadWeb | null>(null);
 
   useEffect(() => {
     if (searchParams.get("nuevo") === "1") {
@@ -185,9 +187,19 @@ export default function CotizacionesClient({
                     </p>
                     <p className="text-[11px] text-slate-400 truncate">{[l.marca, l.modelo, l.anio].filter(Boolean).join(" ") || "—"} · {l.telefono || "sin teléfono"}</p>
                   </div>
-                  <div className="text-right shrink-0 ml-3">
-                    <p className="font-bold text-slate-700 dark:text-slate-200">{(l.oferta_calculada ?? l.precio_esperado_cliente) ? `$ ${Number(l.oferta_calculada ?? l.precio_esperado_cliente).toLocaleString("es-AR")}` : "—"}</p>
-                    <p className="text-[10px] text-slate-400">{new Date(l.created_at).toLocaleDateString("es-AR")}</p>
+                  <div className="text-right shrink-0 ml-3 flex items-center gap-3">
+                    <div>
+                      <p className="font-bold text-slate-700 dark:text-slate-200">{(l.oferta_calculada ?? l.precio_esperado_cliente) ? `$ ${Number(l.oferta_calculada ?? l.precio_esperado_cliente).toLocaleString("es-AR")}` : "—"}</p>
+                      <p className="text-[10px] text-slate-400">{new Date(l.created_at).toLocaleDateString("es-AR")}</p>
+                    </div>
+                    {/* Ese número de arriba es lo que el CLIENTE dijo que espera, con un
+                        % descontado por km -- no un precio de mercado real. Si el cliente
+                        infla lo que puso, el número infla igual. Esta sugerencia consulta
+                        publicaciones reales de MercadoLibre en vez de confiar en el dato
+                        que puso el cliente. */}
+                    {l.marca && l.modelo && l.anio && (
+                      <button onClick={() => setTasandoLead(l)} title="Sugerencia de mercado real (MercadoLibre)" className="shrink-0 px-2.5 py-1.5 text-[10px] font-bold bg-white dark:bg-white/5 border border-slate-200 dark:border-white/10 hover:border-[#0145F2] hover:text-[#0145F2] rounded-lg text-slate-500 dark:text-slate-400">Sug. mercado</button>
+                    )}
                   </div>
                 </div>
               ))}
@@ -351,6 +363,17 @@ export default function CotizacionesClient({
             setDetalle(null);
           }}
           onEditar={() => { setEditando(detalle); setDetalle(null); }}
+        />
+      )}
+      {tasandoLead && (
+        <TasarUsadoModal
+          marcaInicial={tasandoLead.marca || ""}
+          modeloInicial={tasandoLead.modelo || ""}
+          versionInicial={tasandoLead.version || undefined}
+          anioInicial={tasandoLead.anio ? String(tasandoLead.anio) : ""}
+          kmInicial={tasandoLead.kilometraje ? String(tasandoLead.kilometraje) : ""}
+          autoTasar
+          onClose={() => setTasandoLead(null)}
         />
       )}
     </div>
