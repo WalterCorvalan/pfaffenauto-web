@@ -209,7 +209,7 @@ export default async function VehiculoDetallePage({
         <MobileTitle auto={auto} />
 
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 lg:gap-10 items-start mt-2 lg:mt-6">
-          <div className="lg:col-span-8 flex flex-col gap-8 order-1 print:col-span-12">
+          <div className="lg:col-span-7 flex flex-col gap-8 order-1 print:col-span-12">
             <div className="hidden lg:flex text-[10px] sm:text-[11px] text-slate-500 dark:text-slate-400 font-bold uppercase tracking-widest items-center gap-2.5 print:hidden">
               <Link href="/" className="hover:text-[#0145F2] dark:hover:text-sky-300 transition-colors">Inicio</Link>
               <span className="text-slate-300 dark:text-slate-600">/</span>
@@ -241,7 +241,7 @@ export default async function VehiculoDetallePage({
             </div>
           </div>
 
-          <div className="lg:col-span-4 lg:sticky lg:top-28 order-2 print:col-span-12">
+          <div className="lg:col-span-5 lg:sticky lg:top-28 order-2 print:col-span-12">
             <VehiculoPriceCard
               auto={auto}
               precioArs={precioArs}
@@ -323,7 +323,7 @@ function MobileTitle({ auto }: { auto: any }) {
 
 function VehiculoGallery({ auto }: { auto: any }) {
   return (
-    <div className="w-full lg:max-w-3xl overflow-hidden shadow-[0_20px_50px_rgba(0,0,0,0.1)] dark:shadow-[0_20px_50px_rgba(0,0,0,0.4)] border border-slate-200/50 dark:border-white/10 bg-white dark:bg-white/5 print:shadow-none print:max-w-none print:border-slate-300">
+    <div className="w-full overflow-hidden shadow-[0_20px_50px_rgba(0,0,0,0.1)] dark:shadow-[0_20px_50px_rgba(0,0,0,0.4)] border border-slate-200/50 dark:border-white/10 bg-white dark:bg-white/5 print:shadow-none print:border-slate-300">
       <div className="print:hidden">
         <GaleriaVehiculo
           imagenes={auto.fotos || []}
