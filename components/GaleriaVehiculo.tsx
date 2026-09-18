@@ -1,11 +1,15 @@
 "use client";
 
-import { useState } from "react";
+import { useRef, useState } from "react";
 import Image from "next/image";
 import { ChevronLeft, ChevronRight, Image as ImageIcon } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 
 const MotionImage = motion.create(Image);
+
+// Distancia mínima de swipe (px) para contar como cambio de foto, no un tap
+// o un scroll vertical accidental.
+const UMBRAL_SWIPE = 40;
 
 interface GaleriaProps {
   imagenes: string[];
@@ -14,6 +18,7 @@ interface GaleriaProps {
 
 export default function GaleriaVehiculo({ imagenes, altText }: GaleriaProps) {
   const [currentIndex, setCurrentIndex] = useState(0);
+  const touchStartX = useRef<number | null>(null);
 
   // Si no hay imágenes, mostramos un placeholder elegante sin bordes
   if (!imagenes || imagenes.length === 0) {
@@ -33,14 +38,30 @@ export default function GaleriaVehiculo({ imagenes, altText }: GaleriaProps) {
     setCurrentIndex((prev) => (prev === 0 ? imagenes.length - 1 : prev - 1));
   };
 
+  const onTouchStart = (e: React.TouchEvent) => {
+    touchStartX.current = e.touches[0].clientX;
+  };
+
+  const onTouchEnd = (e: React.TouchEvent) => {
+    if (touchStartX.current === null) return;
+    const delta = e.changedTouches[0].clientX - touchStartX.current;
+    if (delta > UMBRAL_SWIPE) prevImage();
+    else if (delta < -UMBRAL_SWIPE) nextImage();
+    touchStartX.current = null;
+  };
+
   return (
     <div className="flex flex-col gap-3">
       {/* IMAGEN PRINCIPAL AL 100% SIN BORDES REDONDEADOS -- aspect-[4/3] en vez
           de alto fijo: coincide con la proporción típica de las fotos de
           stock (celular/cámara de agencia), así object-contain casi nunca
           deja franjas vacías a los costados. */}
-      <div className="relative w-full aspect-[4/3] bg-slate-950 overflow-hidden group">
-        
+      <div
+        className="relative w-full aspect-[4/3] bg-slate-950 overflow-hidden group touch-pan-y"
+        onTouchStart={onTouchStart}
+        onTouchEnd={onTouchEnd}
+      >
+
         <AnimatePresence mode="wait">
           <MotionImage
             key={currentIndex}
@@ -60,15 +81,18 @@ export default function GaleriaVehiculo({ imagenes, altText }: GaleriaProps) {
         {/* Controles de navegación (Solo si hay más de 1 foto) */}
         {imagenes.length > 1 && (
           <>
-            <button 
+            {/* En mobile se navega con swipe (onTouchStart/onTouchEnd de
+                arriba) -- las flechas quedan solo desde sm: para arriba,
+                donde no hay gesto táctil. */}
+            <button
               onClick={prevImage}
-              className="absolute left-4 top-1/2 -translate-y-1/2 bg-black/50 hover:bg-black/80 backdrop-blur-md text-white p-3.5 rounded-full transition-all border border-white/20 active:scale-95 z-20 opacity-80 group-hover:opacity-100"
+              className="hidden sm:block absolute left-4 top-1/2 -translate-y-1/2 bg-black/50 hover:bg-black/80 backdrop-blur-md text-white p-3.5 rounded-full transition-all border border-white/20 active:scale-95 z-20 opacity-80 group-hover:opacity-100"
             >
               <ChevronLeft className="w-5 h-5 md:w-6 md:h-6" />
             </button>
-            <button 
+            <button
               onClick={nextImage}
-              className="absolute right-4 top-1/2 -translate-y-1/2 bg-black/50 hover:bg-black/80 backdrop-blur-md text-white p-3.5 rounded-full transition-all border border-white/20 active:scale-95 z-20 opacity-80 group-hover:opacity-100"
+              className="hidden sm:block absolute right-4 top-1/2 -translate-y-1/2 bg-black/50 hover:bg-black/80 backdrop-blur-md text-white p-3.5 rounded-full transition-all border border-white/20 active:scale-95 z-20 opacity-80 group-hover:opacity-100"
             >
               <ChevronRight className="w-5 h-5 md:w-6 md:h-6" />
             </button>
