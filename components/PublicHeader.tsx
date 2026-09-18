@@ -9,6 +9,8 @@ import {
   Landmark, Home, CarFront, ShieldCheck, Tag 
 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
+import BuscadorSugerencias from "@/components/BuscadorSugerencias";
+import { agregarBusquedaReciente } from "@/lib/busquedasRecientes";
 
 export default function PublicHeader() {
   const [isOpen, setIsOpen] = useState(false);
@@ -16,6 +18,8 @@ export default function PublicHeader() {
   const [favCount, setFavCount] = useState(0);
   const [isScrolled, setIsScrolled] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
+  const [buscadorEnfocado, setBuscadorEnfocado] = useState(false);
+  const [buscadorMobileEnfocado, setBuscadorMobileEnfocado] = useState(false);
 
   const pathname = usePathname();
   const router = useRouter();
@@ -58,10 +62,20 @@ export default function PublicHeader() {
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault();
     if (searchQuery.trim()) {
+      agregarBusquedaReciente(searchQuery);
       router.push(`/catalogo?q=${encodeURIComponent(searchQuery)}`);
       setIsSearchMobileOpen(false);
       setSearchQuery("");
     }
+  };
+
+  const irABusqueda = (texto: string) => {
+    agregarBusquedaReciente(texto);
+    router.push(`/catalogo?q=${encodeURIComponent(texto)}`);
+    setSearchQuery("");
+    setIsSearchMobileOpen(false);
+    setBuscadorEnfocado(false);
+    setBuscadorMobileEnfocado(false);
   };
 
   const toggleMenu = () => {
@@ -207,6 +221,8 @@ export default function PublicHeader() {
                   placeholder="Buscá por marca, modelo, o necesidad..."
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
+                  onFocus={() => setBuscadorEnfocado(true)}
+                  onBlur={() => setBuscadorEnfocado(false)}
                   className="w-full bg-white/40 dark:bg-white/5 backdrop-blur-md hover:bg-white/60 dark:hover:bg-white/10 border border-white/60 dark:border-white/10 text-navy dark:text-white text-xs font-bold rounded-full pl-11 pr-12 py-3 outline-none focus:bg-white/80 dark:focus:bg-white/15 focus:ring-4 focus:ring-[#0145F2]/15 dark:focus:ring-sky-400/15 focus:border-[#0145F2]/40 dark:focus:border-sky-400/40 transition-all shadow-[inset_0_2px_4px_rgba(0,0,0,0.02)] dark:shadow-[inset_0_2px_4px_rgba(0,0,0,0.2)] placeholder:text-slate-400 placeholder:font-medium"
                 />
                 <button
@@ -215,6 +231,7 @@ export default function PublicHeader() {
                 >
                   <Search className="w-3.5 h-3.5" />
                 </button>
+                <BuscadorSugerencias termino={searchQuery} enfocado={buscadorEnfocado} onSeleccionar={irABusqueda} />
               </motion.form>
             )}
           </AnimatePresence>
@@ -288,9 +305,12 @@ export default function PublicHeader() {
                 placeholder="¿Qué auto buscás?"
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
+                onFocus={() => setBuscadorMobileEnfocado(true)}
+                onBlur={() => setBuscadorMobileEnfocado(false)}
                 className="w-full bg-white/50 dark:bg-white/5 backdrop-blur-md border border-white/80 dark:border-white/15 text-navy dark:text-white text-sm font-bold rounded-2xl pl-12 pr-4 py-3.5 outline-none"
                 autoFocus
               />
+              <BuscadorSugerencias termino={searchQuery} enfocado={buscadorMobileEnfocado} onSeleccionar={irABusqueda} />
             </form>
           </motion.div>
         )}

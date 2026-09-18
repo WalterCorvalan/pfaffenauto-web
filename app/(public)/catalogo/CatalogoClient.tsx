@@ -21,6 +21,8 @@ import { useSearchParams, useRouter } from "next/navigation";
 import { motion, AnimatePresence } from "framer-motion";
 import ComparadorModal from "@/components/modals/ComparadorModal";
 import BuscadorFallback from "@/components/BuscadorFallBack";
+import BuscadorSugerencias from "@/components/BuscadorSugerencias";
+import { agregarBusquedaReciente } from "@/lib/busquedasRecientes";
 import { CAMPOS_VEHICULO_PUBLICO, normalizarMarca } from "@/lib/vehiculos";
 import { VehicleCard } from "@/components/Stock";
 
@@ -39,6 +41,7 @@ export default function CatalogoClient({ vehiculosIniciales = [], totalInicial =
 
   // Estado local para el nuevo buscador
   const [inputBuscador, setInputBuscador] = useState(searchQuery);
+  const [buscadorEnfocado, setBuscadorEnfocado] = useState(false);
 
   const [isFallbackModalOpen, setIsFallbackModalOpen] = useState(false);
   // Seedeado con lo que ya trajo el server component (sin filtros) -- así el
@@ -129,10 +132,20 @@ export default function CatalogoClient({ vehiculosIniciales = [], totalInicial =
     const params = new URLSearchParams(searchParams.toString());
     if (inputBuscador.trim()) {
       params.set("q", inputBuscador.trim());
+      agregarBusquedaReciente(inputBuscador.trim());
     } else {
       params.delete("q");
     }
     router.push(`/catalogo?${params.toString()}`);
+  };
+
+  const seleccionarSugerencia = (texto: string) => {
+    setInputBuscador(texto);
+    agregarBusquedaReciente(texto);
+    const params = new URLSearchParams(searchParams.toString());
+    params.set("q", texto);
+    router.push(`/catalogo?${params.toString()}`);
+    setBuscadorEnfocado(false);
   };
 
   // "Limpiar todo" antes era un <Link href="/catalogo"> que solo cambiaba la
@@ -376,7 +389,7 @@ export default function CatalogoClient({ vehiculosIniciales = [], totalInicial =
             / <span className="text-gray-700 dark:text-slate-300">Catálogo</span>
           </div>
           
-          <form onSubmit={handleSearchSubmit} className="w-full max-w-3xl mx-auto">
+          <form onSubmit={handleSearchSubmit} className="w-full max-w-3xl mx-auto relative">
             <div className="relative flex items-center w-full bg-white dark:bg-[#161821] rounded-full shadow-[0_8px_20px_rgba(0,0,0,0.04)] border border-gray-200 dark:border-white/15 hover:shadow-md transition-shadow overflow-hidden p-1.5 group focus-within:border-[#0145F2]/40 focus-within:ring-4 focus-within:ring-[#0145F2]/10">
               <div className="pl-4 pr-3 text-[#0145F2] shrink-0">
                 <Sparkles className="w-5 h-5" />
@@ -385,6 +398,8 @@ export default function CatalogoClient({ vehiculosIniciales = [], totalInicial =
                 type="text"
                 value={inputBuscador}
                 onChange={(e) => setInputBuscador(e.target.value)}
+                onFocus={() => setBuscadorEnfocado(true)}
+                onBlur={() => setBuscadorEnfocado(false)}
                 placeholder='Buscá como hablás: "SUV diésel automática"'
                 className="flex-1 bg-transparent outline-none text-gray-900 dark:text-white placeholder:text-gray-400 dark:placeholder:text-slate-500 font-medium text-sm md:text-base w-full"
               />
@@ -396,6 +411,7 @@ export default function CatalogoClient({ vehiculosIniciales = [], totalInicial =
                 <ArrowRight className="w-4 h-4" />
               </button>
             </div>
+            <BuscadorSugerencias termino={inputBuscador} enfocado={buscadorEnfocado} onSeleccionar={seleccionarSugerencia} className="mx-1.5" />
 
             <div className="flex flex-wrap items-center justify-center md:justify-start gap-2 mt-4 md:ml-2">
               <span className="text-[10px] text-gray-400 dark:text-slate-500 font-black uppercase tracking-widest mr-1">Probá:</span>
