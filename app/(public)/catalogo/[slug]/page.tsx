@@ -323,7 +323,7 @@ function MobileTitle({ auto }: { auto: any }) {
 
 function VehiculoGallery({ auto }: { auto: any }) {
   return (
-    <div className="w-full lg:max-w-2xl overflow-hidden shadow-[0_20px_50px_rgba(0,0,0,0.1)] dark:shadow-[0_20px_50px_rgba(0,0,0,0.4)] border border-slate-200/50 dark:border-white/10 bg-white dark:bg-white/5 print:shadow-none print:max-w-none print:border-slate-300">
+    <div className="w-full lg:max-w-3xl overflow-hidden shadow-[0_20px_50px_rgba(0,0,0,0.1)] dark:shadow-[0_20px_50px_rgba(0,0,0,0.4)] border border-slate-200/50 dark:border-white/10 bg-white dark:bg-white/5 print:shadow-none print:max-w-none print:border-slate-300">
       <div className="print:hidden">
         <GaleriaVehiculo
           imagenes={auto.fotos || []}
