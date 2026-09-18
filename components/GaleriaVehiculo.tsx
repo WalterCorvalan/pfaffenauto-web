@@ -18,7 +18,7 @@ export default function GaleriaVehiculo({ imagenes, altText }: GaleriaProps) {
   // Si no hay imágenes, mostramos un placeholder elegante sin bordes
   if (!imagenes || imagenes.length === 0) {
     return (
-      <div className="relative w-full h-[300px] sm:h-[400px] md:h-[520px] bg-slate-900 flex flex-col items-center justify-center p-4 overflow-hidden text-gray-400">
+      <div className="relative w-full aspect-[4/3] bg-slate-900 flex flex-col items-center justify-center p-4 overflow-hidden text-gray-400">
         <ImageIcon className="w-12 h-12 mb-2 opacity-50" />
         <span className="text-xs font-black uppercase tracking-widest">Sin imágenes</span>
       </div>
@@ -35,8 +35,11 @@ export default function GaleriaVehiculo({ imagenes, altText }: GaleriaProps) {
 
   return (
     <div className="flex flex-col gap-3">
-      {/* IMAGEN PRINCIPAL AL 100% SIN BORDES REDONDEADOS */}
-      <div className="relative w-full h-[300px] sm:h-[420px] md:h-[520px] bg-slate-950 overflow-hidden group">
+      {/* IMAGEN PRINCIPAL AL 100% SIN BORDES REDONDEADOS -- aspect-[4/3] en vez
+          de alto fijo: coincide con la proporción típica de las fotos de
+          stock (celular/cámara de agencia), así object-contain casi nunca
+          deja franjas vacías a los costados. */}
+      <div className="relative w-full aspect-[4/3] bg-slate-950 overflow-hidden group">
         
         <AnimatePresence mode="wait">
           <MotionImage
