@@ -4,6 +4,7 @@ import { useState, useMemo } from "react";
 import { supabase2 } from "@/lib/supabase/client";
 import { Plus, X, Save } from "lucide-react";
 import { inputClass, labelClass, fmt, CATEGORIAS_MOVIMIENTO } from "./shared";
+import ConfirmDialog from "@/components/panel/ConfirmDialog";
 
 export default function PresupuestoTab({ presupuestos, setPresupuestos, movimientos }: { presupuestos: any[]; setPresupuestos: (fn: any) => void; movimientos: any[] }) {
   const [mes, setMes] = useState(new Date().toISOString().slice(0, 7));
@@ -15,6 +16,7 @@ export default function PresupuestoTab({ presupuestos, setPresupuestos, movimien
   const [monto, setMonto] = useState("");
   const [notas, setNotas] = useState("");
   const [guardando, setGuardando] = useState(false);
+  const [confirmDialog, setConfirmDialog] = useState<{ mensaje: string; accion: () => void } | null>(null);
 
   const delMes = presupuestos.filter((p) => p.mes.slice(0, 7) === mes);
 
@@ -47,10 +49,14 @@ export default function PresupuestoTab({ presupuestos, setPresupuestos, movimien
     } finally { setGuardando(false); }
   };
 
-  const eliminar = async (p: any) => {
-    if (!confirm(`¿Eliminar el presupuesto de "${p.categoria}"?`)) return;
-    await supabase2.from("finanzas_presupuestos").delete().eq("id", p.id);
-    setPresupuestos((prev: any[]) => prev.filter((x) => x.id !== p.id));
+  const eliminar = (p: any) => {
+    setConfirmDialog({
+      mensaje: `¿Eliminar el presupuesto de "${p.categoria}"?`,
+      accion: async () => {
+        await supabase2.from("finanzas_presupuestos").delete().eq("id", p.id);
+        setPresupuestos((prev: any[]) => prev.filter((x) => x.id !== p.id));
+      },
+    });
   };
 
   return (
@@ -103,6 +109,13 @@ export default function PresupuestoTab({ presupuestos, setPresupuestos, movimien
           </div>
         </div>
       )}
+
+      <ConfirmDialog
+        abierto={!!confirmDialog}
+        mensaje={confirmDialog?.mensaje || ""}
+        onConfirmar={() => { confirmDialog?.accion(); setConfirmDialog(null); }}
+        onCancelar={() => setConfirmDialog(null)}
+      />
     </div>
   );
 }

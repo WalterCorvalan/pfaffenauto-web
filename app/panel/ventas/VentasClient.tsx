@@ -9,6 +9,7 @@ import NuevaVentaModal, { type VentaPrefill } from "./NuevaVentaModal";
 import VentaDetalleModal from "./VentaDetalleModal";
 import { fmtFechaLocal } from "@/lib/panel/fechas";
 import { supabase2 } from "@/lib/supabase/client";
+import ConfirmDialog from "@/components/panel/ConfirmDialog";
 import TablaResponsiva, { type ColumnaTabla } from "@/components/panel/TablaResponsiva";
 
 interface Venta {
@@ -41,6 +42,7 @@ export default function VentasClient({
   const router = useRouter();
   const searchParams = useSearchParams();
   const [ventas, setVentas] = useState(ventasIniciales);
+  const [confirmDialog, setConfirmDialog] = useState<{ mensaje: string; accion: () => void } | null>(null);
   const [tab, setTab] = useState<Tab>("todas");
   const [soloMias, setSoloMias] = useState(false);
   const [query, setQuery] = useState("");
@@ -152,12 +154,16 @@ export default function VentasClient({
     setVentas((prev) => prev.map((x) => (x.id === v.id ? { ...x, ...data } : x)));
   };
 
-  const eliminarRapido = async (v: Venta) => {
-    if (!confirm(`¿Eliminar la venta de ${v.comprador_nombre}? Queda en Papelera, se puede restaurar (también revive el expediente vinculado y devuelve el vehículo a disponible).`)) return;
-    const motivo = prompt("Motivo (opcional):") || undefined;
-    const res = await fetch("/api/panel/papelera", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ accion: "eliminar", tipo: "ventas", id: v.id, motivo }) });
-    if (!res.ok) { alert("No se pudo eliminar (sin permiso o ya no existe)."); return; }
-    setVentas((prev) => prev.filter((x) => x.id !== v.id));
+  const eliminarRapido = (v: Venta) => {
+    setConfirmDialog({
+      mensaje: `¿Eliminar la venta de ${v.comprador_nombre}? Queda en Papelera, se puede restaurar (también revive el expediente vinculado y devuelve el vehículo a disponible).`,
+      accion: async () => {
+        const motivo = prompt("Motivo (opcional):") || undefined;
+        const res = await fetch("/api/panel/papelera", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ accion: "eliminar", tipo: "ventas", id: v.id, motivo }) });
+        if (!res.ok) { alert("No se pudo eliminar (sin permiso o ya no existe)."); return; }
+        setVentas((prev) => prev.filter((x) => x.id !== v.id));
+      },
+    });
   };
 
   return (
@@ -338,6 +344,12 @@ export default function VentasClient({
           onEditar={(v) => { setDetalleId(null); setEditando(v); }}
         />
       )}
+      <ConfirmDialog
+        abierto={!!confirmDialog}
+        mensaje={confirmDialog?.mensaje || ""}
+        onConfirmar={() => { confirmDialog?.accion(); setConfirmDialog(null); }}
+        onCancelar={() => setConfirmDialog(null)}
+      />
     </div>
   );
 }

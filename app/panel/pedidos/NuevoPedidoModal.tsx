@@ -4,6 +4,7 @@ import { useState, useEffect } from "react";
 import { supabase2 } from "@/lib/supabase/client";
 import { X, Save, Trash2, History } from "lucide-react";
 import { crearAlerta } from "@/lib/panel/alertas";
+import ConfirmDialog from "@/components/panel/ConfirmDialog";
 
 const inputClass = "w-full bg-slate-50 dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-xl px-3.5 py-2.5 text-sm outline-none focus:border-rose-500 text-slate-900 dark:text-white placeholder:text-slate-400";
 const labelClass = "text-xs font-bold text-slate-600 dark:text-slate-300 mb-1.5 block";
@@ -29,6 +30,7 @@ export default function NuevoPedidoModal({ pedido, vendedores, clientes, miId, o
   const [reservaSenada, setReservaSenada] = useState(pedido?.reserva_senada || false);
   const [notas, setNotas] = useState(pedido?.notas || "");
   const [reconfirmaciones, setReconfirmaciones] = useState<any[]>([]);
+  const [confirmDialog, setConfirmDialog] = useState<{ mensaje: string; accion: () => void } | null>(null);
 
   useEffect(() => {
     if (!isEditing) return;
@@ -89,18 +91,22 @@ export default function NuevoPedidoModal({ pedido, vendedores, clientes, miId, o
     }
   };
 
-  const borrar = async () => {
-    if (!confirm(`¿Eliminar el pedido de ${pedido.nombre_cliente}?`)) return;
-    setCargando(true);
-    try {
-      const { error: err } = await supabase2.from("pedidos").delete().eq("id", pedido.id);
-      if (err) throw err;
-      onGuardado({ ...pedido, _eliminado: true });
-    } catch (err: any) {
-      console.error(err);
-      setError(err?.message ? `No se pudo eliminar el pedido: ${err.message}` : "No se pudo eliminar el pedido.");
-      setCargando(false);
-    }
+  const borrar = () => {
+    setConfirmDialog({
+      mensaje: `¿Eliminar el pedido de ${pedido.nombre_cliente}?`,
+      accion: async () => {
+        setCargando(true);
+        try {
+          const { error: err } = await supabase2.from("pedidos").delete().eq("id", pedido.id);
+          if (err) throw err;
+          onGuardado({ ...pedido, _eliminado: true });
+        } catch (err: any) {
+          console.error(err);
+          setError(err?.message ? `No se pudo eliminar el pedido: ${err.message}` : "No se pudo eliminar el pedido.");
+          setCargando(false);
+        }
+      },
+    });
   };
 
   return (
@@ -202,6 +208,13 @@ export default function NuevoPedidoModal({ pedido, vendedores, clientes, miId, o
           </button>
         </div>
       </div>
+
+      <ConfirmDialog
+        abierto={!!confirmDialog}
+        mensaje={confirmDialog?.mensaje || ""}
+        onConfirmar={() => { confirmDialog?.accion(); setConfirmDialog(null); }}
+        onCancelar={() => setConfirmDialog(null)}
+      />
     </div>
   );
 }

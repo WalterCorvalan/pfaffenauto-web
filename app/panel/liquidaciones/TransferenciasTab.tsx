@@ -4,6 +4,7 @@ import { useState, useMemo } from "react";
 import { Pencil, Trash2, Folder } from "lucide-react";
 import { supabase2 } from "@/lib/supabase/client";
 import { fmt, ESTADO_LABEL, ESTADO_COLOR } from "./shared";
+import ConfirmDialog from "@/components/panel/ConfirmDialog";
 
 type Col = "dominio" | "fecha_operacion" | "transf_cliente" | "comision_gestora" | "ingreso_agencia";
 
@@ -20,6 +21,7 @@ export default function TransferenciasTab({
   const [filtroEstado, setFiltroEstado] = useState<"todos" | "finalizados" | "en_proceso">("todos");
   const [orden, setOrden] = useState<{ col: Col; dir: 1 | -1 }>({ col: "fecha_operacion", dir: -1 });
   const [verTodos, setVerTodos] = useState(false);
+  const [confirmDialog, setConfirmDialog] = useState<{ mensaje: string; accion: () => void } | null>(null);
 
   const delMes = mes && !verTodos ? liquidaciones.filter((l) => l.mes.slice(0, 7) === mes) : liquidaciones;
 
@@ -43,11 +45,15 @@ export default function TransferenciasTab({
 
   const toggleOrden = (col: Col) => setOrden((p) => (p.col === col ? { col, dir: (p.dir * -1) as 1 | -1 } : { col, dir: -1 }));
 
-  const eliminar = async (row: any) => {
-    if (!confirm(`¿Eliminar la transferencia de ${row.dominio}?`)) return;
-    const { error } = await supabase2.from("liquidaciones_gestoria").delete().eq("id", row.id);
-    if (error) { alert(`No se pudo eliminar: ${error.message}`); return; }
-    setLiquidaciones((prev: any[]) => prev.filter((x) => x.id !== row.id));
+  const eliminar = (row: any) => {
+    setConfirmDialog({
+      mensaje: `¿Eliminar la transferencia de ${row.dominio}?`,
+      accion: async () => {
+        const { error } = await supabase2.from("liquidaciones_gestoria").delete().eq("id", row.id);
+        if (error) { alert(`No se pudo eliminar: ${error.message}`); return; }
+        setLiquidaciones((prev: any[]) => prev.filter((x) => x.id !== row.id));
+      },
+    });
   };
 
   const totales = filtrados.reduce((acc, x) => ({
@@ -130,6 +136,12 @@ export default function TransferenciasTab({
           </table>
         </div>
       )}
+      <ConfirmDialog
+        abierto={!!confirmDialog}
+        mensaje={confirmDialog?.mensaje || ""}
+        onConfirmar={() => { confirmDialog?.accion(); setConfirmDialog(null); }}
+        onCancelar={() => setConfirmDialog(null)}
+      />
     </div>
   );
 }

@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { supabase2 } from "@/lib/supabase/client";
 import { X, Save, Trash2 } from "lucide-react";
+import ConfirmDialog from "@/components/panel/ConfirmDialog";
 
 const CATEGORIAS_PERMITIDAS = [
   "Gestoría", "Mecánico", "Chapa y pintura", "Gomería", "Lavadero", 
@@ -26,6 +27,7 @@ export default function NuevoTelefonoModal({
   const isEditing = !!telefono?.id;
   const [cargando, setCargando] = useState(false);
   const [error, setError] = useState("");
+  const [confirmDialog, setConfirmDialog] = useState<{ mensaje: string; accion: () => void } | null>(null);
 
   const [formData, setFormData] = useState({
     nombre: telefono?.nombre || "",
@@ -76,21 +78,25 @@ export default function NuevoTelefonoModal({
     }
   };
 
-  const borrar = async () => {
-    if (!confirm("¿Borrar este teléfono de la cartelera compartida?")) return;
-    setCargando(true);
-    try {
-      const { error: err } = await supabase2
-        .from("telefonos_utiles")
-        .delete()
-        .eq("id", telefono.id);
-      if (err) throw err;
-      onSuccess();
-    } catch (err: any) {
-      console.error(err);
-      setError("Error al borrar.");
-      setCargando(false);
-    }
+  const borrar = () => {
+    setConfirmDialog({
+      mensaje: "¿Borrar este teléfono de la cartelera compartida?",
+      accion: async () => {
+        setCargando(true);
+        try {
+          const { error: err } = await supabase2
+            .from("telefonos_utiles")
+            .delete()
+            .eq("id", telefono.id);
+          if (err) throw err;
+          onSuccess();
+        } catch (err: any) {
+          console.error(err);
+          setError("Error al borrar.");
+          setCargando(false);
+        }
+      },
+    });
   };
 
   return (
@@ -238,6 +244,12 @@ export default function NuevoTelefonoModal({
           </button>
         </div>
       </div>
+      <ConfirmDialog
+        abierto={!!confirmDialog}
+        mensaje={confirmDialog?.mensaje || ""}
+        onConfirmar={() => { confirmDialog?.accion(); setConfirmDialog(null); }}
+        onCancelar={() => setConfirmDialog(null)}
+      />
     </div>
   );
 }

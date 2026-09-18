@@ -22,6 +22,7 @@ import ContactosTab from "./tabs/ContactosTab";
 import NotificacionesTab from "./tabs/NotificacionesTab";
 import MiWhatsAppTab from "./tabs/MiWhatsAppTab";
 import TablaResponsiva, { type ColumnaTabla } from "@/components/panel/TablaResponsiva";
+import ConfirmDialog from "@/components/panel/ConfirmDialog";
 
 const RESUMEN_ITEMS = [
   { key: "ventas_cerradas", label: "Ventas cerradas", desc: "Cerradas en 24h y en la semana" },
@@ -95,6 +96,7 @@ export default function MiEspacioClient({
   const searchParams = useSearchParams();
   const [tab, setTab] = useState("mi-dia");
   const [mostrarAgregar, setMostrarAgregar] = useState(false);
+  const [confirmDialog, setConfirmDialog] = useState<{ mensaje: string; accion: () => void } | null>(null);
   const [autoAbrir, setAutoAbrir] = useState<string | null>(null);
   const [urgentes, setUrgentes] = useState(urgentesIniciales);
   const [pagos, setPagos] = useState(pagosIniciales);
@@ -195,10 +197,14 @@ export default function MiEspacioClient({
     setUTitulo(""); setUMonto(""); setUVencimiento(""); setUNotas("");
   };
 
-  const eliminarUrgente = async (u: any) => {
-    if (!confirm(`¿Eliminar "${u.titulo}"?`)) return;
-    await supabase2.from("espacio_urgentes").delete().eq("id", u.id);
-    setUrgentes((prev) => prev.filter((x) => x.id !== u.id));
+  const eliminarUrgente = (u: any) => {
+    setConfirmDialog({
+      mensaje: `¿Eliminar "${u.titulo}"?`,
+      accion: async () => {
+        await supabase2.from("espacio_urgentes").delete().eq("id", u.id);
+        setUrgentes((prev) => prev.filter((x) => x.id !== u.id));
+      },
+    });
   };
 
   const abrirPago = (u: any, completo: boolean) => {
@@ -262,11 +268,15 @@ export default function MiEspacioClient({
     setPmMetodo(""); setPmConcepto(""); setPmMoneda("USD"); setPmMonto(""); setPmBeneficiario(""); setPmNotas("");
   };
 
-  const eliminarPago = async (p: any) => {
+  const eliminarPago = (p: any) => {
     if (p.origen !== "manual") return;
-    if (!confirm("¿Eliminar este pago?")) return;
-    await supabase2.from("espacio_pagos").delete().eq("id", p.id);
-    setPagos((prev) => prev.filter((x) => x.id !== p.id));
+    setConfirmDialog({
+      mensaje: "¿Eliminar este pago?",
+      accion: async () => {
+        await supabase2.from("espacio_pagos").delete().eq("id", p.id);
+        setPagos((prev) => prev.filter((x) => x.id !== p.id));
+      },
+    });
   };
 
   const togglePref = async (recibir: boolean, nuevosItems: string[]) => {
@@ -602,6 +612,12 @@ export default function MiEspacioClient({
           </div>
         </div>
       )}
+      <ConfirmDialog
+        abierto={!!confirmDialog}
+        mensaje={confirmDialog?.mensaje || ""}
+        onConfirmar={() => { confirmDialog?.accion(); setConfirmDialog(null); }}
+        onCancelar={() => setConfirmDialog(null)}
+      />
     </div>
   );
 }

@@ -4,6 +4,7 @@ import { useState, useEffect, useMemo } from "react";
 import { supabase2 } from "@/lib/supabase/client";
 import { Plus, X, Save, Trash2, Search, MessageCircle, Phone, Mail } from "lucide-react";
 import { inputClass, labelClass } from "./shared";
+import ConfirmDialog from "@/components/panel/ConfirmDialog";
 
 const ROLES = ["Contador", "Abogado", "Escribano", "Mecánico", "Médico", "Plomero", "Electricista", "Otro"];
 
@@ -20,6 +21,7 @@ export default function ContactosTab({ miId }: { miId: string }) {
   const [email, setEmail] = useState("");
   const [notas, setNotas] = useState("");
   const [guardando, setGuardando] = useState(false);
+  const [confirmDialog, setConfirmDialog] = useState<{ mensaje: string; accion: () => void } | null>(null);
 
   const cargar = async () => {
     const { data } = await supabase2.from("espacio_contactos").select("*").eq("perfil_id", miId).order("nombre");
@@ -46,10 +48,14 @@ export default function ContactosTab({ miId }: { miId: string }) {
     } catch { alert("No se pudo crear el contacto."); } finally { setGuardando(false); }
   };
 
-  const eliminar = async (c: any) => {
-    if (!confirm(`¿Eliminar a ${c.nombre}?`)) return;
-    await supabase2.from("espacio_contactos").delete().eq("id", c.id);
-    setContactos((prev) => prev.filter((x) => x.id !== c.id));
+  const eliminar = (c: any) => {
+    setConfirmDialog({
+      mensaje: `¿Eliminar a ${c.nombre}?`,
+      accion: async () => {
+        await supabase2.from("espacio_contactos").delete().eq("id", c.id);
+        setContactos((prev) => prev.filter((x) => x.id !== c.id));
+      },
+    });
   };
 
   if (cargando) return null;
@@ -110,6 +116,13 @@ export default function ContactosTab({ miId }: { miId: string }) {
           </div>
         </div>
       )}
+
+      <ConfirmDialog
+        abierto={!!confirmDialog}
+        mensaje={confirmDialog?.mensaje || ""}
+        onConfirmar={() => { confirmDialog?.accion(); setConfirmDialog(null); }}
+        onCancelar={() => setConfirmDialog(null)}
+      />
     </div>
   );
 }

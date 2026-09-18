@@ -12,6 +12,7 @@ import {
 import NuevoClienteModal from "./NuevoClienteModal";
 import DisponibilidadModal from "./DisponibilidadModal";
 import { renderSaludoWhatsApp } from "@/lib/panel/whatsappSaludo";
+import ConfirmDialog from "@/components/panel/ConfirmDialog";
 
 interface Cliente {
   id: string; nombre: string; tipo: string; sexo: string | null; dni_cuit: string | null;
@@ -138,6 +139,7 @@ export default function ClientesClient({
   const [clientes, setClientes] = useState(clientesIniciales);
   const [editando, setEditando] = useState<Cliente | null>(null);
   const [eliminandoId, setEliminandoId] = useState<string | null>(null);
+  const [confirmDialog, setConfirmDialog] = useState<{ mensaje: string; accion: () => void } | null>(null);
 
   // ---------- RANKING ----------
   // Una venta puede no haber quedado vinculada a una ficha de cliente
@@ -204,14 +206,18 @@ export default function ClientesClient({
     return [...lista].sort((a, b) => b.autos - a.autos || b.enCurso - a.enCurso);
   }, [rankingFilas, soloAbiertoSinComprar]);
 
-  const eliminarCliente = async (c: Cliente) => {
-    if (!confirm(`¿Eliminar a ${c.nombre}? Queda en Papelera, se puede restaurar.`)) return;
-    const motivo = prompt("Motivo (opcional):") || undefined;
-    setEliminandoId(c.id);
-    const res = await fetch("/api/panel/papelera", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ accion: "eliminar", tipo: "clientes", id: c.id, motivo }) });
-    if (res.ok) setClientes((prev) => prev.filter((x) => x.id !== c.id));
-    else alert("No se pudo eliminar (puede que solo admin pueda borrar clientes).");
-    setEliminandoId(null);
+  const eliminarCliente = (c: Cliente) => {
+    setConfirmDialog({
+      mensaje: `¿Eliminar a ${c.nombre}? Queda en Papelera, se puede restaurar.`,
+      accion: async () => {
+        const motivo = prompt("Motivo (opcional):") || undefined;
+        setEliminandoId(c.id);
+        const res = await fetch("/api/panel/papelera", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ accion: "eliminar", tipo: "clientes", id: c.id, motivo }) });
+        if (res.ok) setClientes((prev) => prev.filter((x) => x.id !== c.id));
+        else alert("No se pudo eliminar (puede que solo admin pueda borrar clientes).");
+        setEliminandoId(null);
+      },
+    });
   };
   const [disponibilidad, setDisponibilidad] = useState(disponibilidadInicial);
   const [vista, setVista] = useState<Vista>("lista");
@@ -950,6 +956,12 @@ export default function ClientesClient({
 
       {(modalNuevo || editando) && <NuevoClienteModal perfiles={perfiles} disponibilidad={disponibilidad} miId={miId} editando={editando || undefined} onClose={() => { setModalNuevo(false); setEditando(null); }} onCreado={onCreado} />}
       {modalDisponibilidad && <DisponibilidadModal perfiles={perfiles} disponibilidad={disponibilidad} miId={miId} esAdmin={esAdmin} onClose={() => setModalDisponibilidad(false)} onGuardado={onDisponibilidadGuardada} />}
+      <ConfirmDialog
+        abierto={!!confirmDialog}
+        mensaje={confirmDialog?.mensaje || ""}
+        onConfirmar={() => { confirmDialog?.accion(); setConfirmDialog(null); }}
+        onCancelar={() => setConfirmDialog(null)}
+      />
     </div>
   );
 }

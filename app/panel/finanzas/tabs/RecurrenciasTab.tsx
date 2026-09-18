@@ -5,6 +5,7 @@ import { supabase2 } from "@/lib/supabase/client";
 import { Plus, X, Save, Send, Download, Trash2, ChevronDown, ChevronRight } from "lucide-react";
 import { inputClass, labelClass, fmt } from "./shared";
 import TablaResponsiva, { type ColumnaTabla } from "@/components/panel/TablaResponsiva";
+import ConfirmDialog from "@/components/panel/ConfirmDialog";
 
 function mesesAtras(n: number) {
   const out: string[] = [];
@@ -41,6 +42,7 @@ export default function RecurrenciasTab({
   const [guardando, setGuardando] = useState(false);
   const [mesesExpandidos, setMesesExpandidos] = useState<Record<string, boolean>>({});
   const [overrides, setOverrides] = useState<Record<string, string>>({});
+  const [confirmDialog, setConfirmDialog] = useState<{ mensaje: string; accion: () => void } | null>(null);
 
   const mesActual = new Date().toISOString().slice(0, 7);
   const activas = recurrencias.filter((r) => r.estado === "activa");
@@ -87,10 +89,14 @@ export default function RecurrenciasTab({
     setRecurrencias((prev: any[]) => prev.map((x) => (x.id === r.id ? { ...x, estado: nuevoEstado } : x)));
   };
 
-  const eliminarRecurrencia = async (r: any) => {
-    if (!confirm(`¿Eliminar la recurrencia "${r.nombre}"? No revierte movimientos ya generados.`)) return;
-    await supabase2.from("finanzas_recurrencias").delete().eq("id", r.id);
-    setRecurrencias((prev: any[]) => prev.filter((x) => x.id !== r.id));
+  const eliminarRecurrencia = (r: any) => {
+    setConfirmDialog({
+      mensaje: `¿Eliminar la recurrencia "${r.nombre}"? No revierte movimientos ya generados.`,
+      accion: async () => {
+        await supabase2.from("finanzas_recurrencias").delete().eq("id", r.id);
+        setRecurrencias((prev: any[]) => prev.filter((x) => x.id !== r.id));
+      },
+    });
   };
 
   const generar = async (r: any, mes = mesActual) => {
@@ -115,12 +121,16 @@ export default function RecurrenciasTab({
     for (const r of pendientesEsteMes) await generar(r, mesActual);
   };
 
-  const eliminarGeneracion = async (g: any) => {
-    if (!confirm("¿Eliminar este movimiento generado? Se revierte el egreso/ingreso y podés volver a generarlo.")) return;
-    await supabase2.rpc("eliminar_movimiento_caja", { p_movimiento_id: g.movimiento_id, p_motivo: "Generación de recurrencia eliminada" });
-    await supabase2.from("finanzas_recurrencias_generaciones").delete().eq("id", g.id);
-    setGeneraciones((prev: any[]) => prev.filter((x) => x.id !== g.id));
-    setMovimientos((prev: any[]) => prev.filter((m) => m.id !== g.movimiento_id));
+  const eliminarGeneracion = (g: any) => {
+    setConfirmDialog({
+      mensaje: "¿Eliminar este movimiento generado? Se revierte el egreso/ingreso y podés volver a generarlo.",
+      accion: async () => {
+        await supabase2.rpc("eliminar_movimiento_caja", { p_movimiento_id: g.movimiento_id, p_motivo: "Generación de recurrencia eliminada" });
+        await supabase2.from("finanzas_recurrencias_generaciones").delete().eq("id", g.id);
+        setGeneraciones((prev: any[]) => prev.filter((x) => x.id !== g.id));
+        setMovimientos((prev: any[]) => prev.filter((m) => m.id !== g.movimiento_id));
+      },
+    });
   };
 
   const exportarCsv = () => {
@@ -286,6 +296,13 @@ export default function RecurrenciasTab({
           </div>
         </div>
       )}
+
+      <ConfirmDialog
+        abierto={!!confirmDialog}
+        mensaje={confirmDialog?.mensaje || ""}
+        onConfirmar={() => { confirmDialog?.accion(); setConfirmDialog(null); }}
+        onCancelar={() => setConfirmDialog(null)}
+      />
     </div>
   );
 }

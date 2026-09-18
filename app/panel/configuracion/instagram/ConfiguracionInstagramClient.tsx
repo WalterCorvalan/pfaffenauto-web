@@ -3,6 +3,7 @@
 import { useState, useEffect } from "react";
 import Link from "next/link";
 import { Camera, Copy, Check, Loader2, ExternalLink } from "lucide-react";
+import ConfirmDialog from "@/components/panel/ConfirmDialog";
 
 const inputClass = "w-full bg-slate-50 dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-xl px-3 py-2.5 text-sm outline-none focus:border-rose-500";
 const labelClass = "text-xs font-semibold text-slate-600 dark:text-slate-300 block mb-1";
@@ -15,6 +16,7 @@ export default function ConfiguracionInstagramClient() {
   const [accessToken, setAccessToken] = useState("");
   const [copiado, setCopiado] = useState<"webhook" | "verify" | null>(null);
   const [mensaje, setMensaje] = useState("");
+  const [confirmDialog, setConfirmDialog] = useState<{ mensaje: string; accion: () => void } | null>(null);
 
   const cargar = async () => {
     setCargando(true);
@@ -50,20 +52,24 @@ export default function ConfiguracionInstagramClient() {
     }
   };
 
-  const regenerarVerify = async () => {
-    if (!confirm("¿Regenerar el Verify Token? Vas a tener que actualizarlo también en el dashboard de Meta.")) return;
-    setGuardando(true);
-    try {
-      const res = await fetch("/api/panel/instagram/configuracion", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ igUserId, accessToken: "", regenerarVerifyToken: true }),
-      });
-      const data = await res.json();
-      if (res.ok) setConfig(data.config);
-    } finally {
-      setGuardando(false);
-    }
+  const regenerarVerify = () => {
+    setConfirmDialog({
+      mensaje: "¿Regenerar el Verify Token? Vas a tener que actualizarlo también en el dashboard de Meta.",
+      accion: async () => {
+        setGuardando(true);
+        try {
+          const res = await fetch("/api/panel/instagram/configuracion", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ igUserId, accessToken: "", regenerarVerifyToken: true }),
+          });
+          const data = await res.json();
+          if (res.ok) setConfig(data.config);
+        } finally {
+          setGuardando(false);
+        }
+      },
+    });
   };
 
   const copiar = (texto: string, cual: "webhook" | "verify") => {
@@ -144,6 +150,13 @@ export default function ConfiguracionInstagramClient() {
         </a>
       </div>
       </div>
+
+      <ConfirmDialog
+        abierto={!!confirmDialog}
+        mensaje={confirmDialog?.mensaje || ""}
+        onConfirmar={() => { confirmDialog?.accion(); setConfirmDialog(null); }}
+        onCancelar={() => setConfirmDialog(null)}
+      />
     </div>
   );
 }

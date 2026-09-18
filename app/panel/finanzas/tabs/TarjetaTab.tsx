@@ -5,6 +5,7 @@ import { supabase2 } from "@/lib/supabase/client";
 import { Plus, X, Save } from "lucide-react";
 import { inputClass, labelClass, fmt } from "./shared";
 import TablaResponsiva, { type ColumnaTabla } from "@/components/panel/TablaResponsiva";
+import ConfirmDialog from "@/components/panel/ConfirmDialog";
 
 export default function TarjetaTab({
   consumos, setConsumos, cuentas, setCuentas, setMovimientos,
@@ -21,6 +22,7 @@ export default function TarjetaTab({
   const [guardando, setGuardando] = useState(false);
   const [pagando, setPagando] = useState<any | null>(null);
   const [pgCuentaId, setPgCuentaId] = useState("");
+  const [confirmDialog, setConfirmDialog] = useState<{ mensaje: string; accion: () => void } | null>(null);
 
   const pendientesPorMoneda = useMemo(() => {
     const map: Record<string, number> = {};
@@ -85,16 +87,20 @@ export default function TarjetaTab({
     } finally { setGuardando(false); }
   };
 
-  const eliminar = async (c: any) => {
-    if (!confirm(`¿Eliminar "${c.concepto}"? ${c.estado === "pagado" ? "Se revierte el egreso en la caja." : ""}`)) return;
-    try {
-      await supabase2.rpc("eliminar_consumo_tarjeta", { p_id: c.id });
-      setConsumos((prev: any[]) => prev.filter((x) => x.id !== c.id));
-      if (c.movimiento_id && c.cuenta_id) {
-        const { data: nuevoSaldo } = await supabase2.rpc("saldo_cuenta", { p_cuenta_id: c.cuenta_id });
-        setCuentas((prev: any[]) => prev.map((x) => (x.id === c.cuenta_id ? { ...x, saldo: Number(nuevoSaldo) || 0 } : x)));
-      }
-    } catch (err: any) { alert(err.message || "No se pudo eliminar."); }
+  const eliminar = (c: any) => {
+    setConfirmDialog({
+      mensaje: `¿Eliminar "${c.concepto}"? ${c.estado === "pagado" ? "Se revierte el egreso en la caja." : ""}`,
+      accion: async () => {
+        try {
+          await supabase2.rpc("eliminar_consumo_tarjeta", { p_id: c.id });
+          setConsumos((prev: any[]) => prev.filter((x) => x.id !== c.id));
+          if (c.movimiento_id && c.cuenta_id) {
+            const { data: nuevoSaldo } = await supabase2.rpc("saldo_cuenta", { p_cuenta_id: c.cuenta_id });
+            setCuentas((prev: any[]) => prev.map((x) => (x.id === c.cuenta_id ? { ...x, saldo: Number(nuevoSaldo) || 0 } : x)));
+          }
+        } catch (err: any) { alert(err.message || "No se pudo eliminar."); }
+      },
+    });
   };
 
   return (
@@ -171,6 +177,13 @@ export default function TarjetaTab({
           </div>
         </div>
       )}
+
+      <ConfirmDialog
+        abierto={!!confirmDialog}
+        mensaje={confirmDialog?.mensaje || ""}
+        onConfirmar={() => { confirmDialog?.accion(); setConfirmDialog(null); }}
+        onCancelar={() => setConfirmDialog(null)}
+      />
     </div>
   );
 }

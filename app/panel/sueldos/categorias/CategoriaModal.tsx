@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { supabase2 } from "@/lib/supabase/client";
 import { X, Save, Trash2 } from "lucide-react";
+import ConfirmDialog from "@/components/panel/ConfirmDialog";
 
 const inputClass = "w-full bg-slate-50 dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-xl px-3 py-2.5 text-sm outline-none focus:border-rose-500 text-slate-900 dark:text-white placeholder:text-slate-400";
 const labelClass = "text-xs font-bold text-slate-600 dark:text-slate-300 mb-1.5 block";
@@ -19,6 +20,7 @@ export default function CategoriaModal({
   const isEditing = !!categoria?.id;
   const [cargando, setCargando] = useState(false);
   const [error, setError] = useState("");
+  const [confirmDialog, setConfirmDialog] = useState<{ mensaje: string; accion: () => void } | null>(null);
 
   const [nombre, setNombre] = useState(categoria?.nombre || "");
   const [sueldoBase, setSueldoBase] = useState(categoria?.sueldo_base != null ? String(categoria.sueldo_base) : "0");
@@ -58,18 +60,22 @@ export default function CategoriaModal({
     }
   };
 
-  const borrar = async () => {
-    if (!confirm(`¿Eliminar la categoría "${categoria.nombre}"? Los empleados que la tengan asignada quedarán sin categoría.`)) return;
-    setCargando(true);
-    try {
-      const { error: err } = await supabase2.from("categorias_empleado").delete().eq("id", categoria.id);
-      if (err) throw err;
-      onSuccess();
-    } catch (err: any) {
-      console.error(err);
-      setError("No se pudo borrar la categoría.");
-      setCargando(false);
-    }
+  const borrar = () => {
+    setConfirmDialog({
+      mensaje: `¿Eliminar la categoría "${categoria.nombre}"? Los empleados que la tengan asignada quedarán sin categoría.`,
+      accion: async () => {
+        setCargando(true);
+        try {
+          const { error: err } = await supabase2.from("categorias_empleado").delete().eq("id", categoria.id);
+          if (err) throw err;
+          onSuccess();
+        } catch (err: any) {
+          console.error(err);
+          setError("No se pudo borrar la categoría.");
+          setCargando(false);
+        }
+      },
+    });
   };
 
   return (
@@ -146,6 +152,12 @@ export default function CategoriaModal({
           </button>
         </div>
       </div>
+      <ConfirmDialog
+        abierto={!!confirmDialog}
+        mensaje={confirmDialog?.mensaje || ""}
+        onConfirmar={() => { confirmDialog?.accion(); setConfirmDialog(null); }}
+        onCancelar={() => setConfirmDialog(null)}
+      />
     </div>
   );
 }

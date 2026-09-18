@@ -9,6 +9,7 @@ import EstadoSenaSelector from "./EstadoSenaSelector";
 import NuevaSenaModal from "./NuevaSenaModal";
 import EditarSenaModal from "./EditarSenaModal";
 import SenaDetalleModal from "./SenaDetalleModal";
+import ConfirmDialog from "@/components/panel/ConfirmDialog";
 
 const COLOR_ESTADO: Record<string, string> = { Activa: "border-l-amber-400", Convertida: "border-l-emerald-400", Perdida: "border-l-rose-400" };
 
@@ -22,6 +23,7 @@ export default function SenasClient({
   const [seleccionada, setSeleccionada] = useState<any>(null);
   const [editando, setEditando] = useState<any>(null);
   const [codigoCopiadoId, setCodigoCopiadoId] = useState<string | null>(null);
+  const [confirmDialog, setConfirmDialog] = useState<{ mensaje: string; accion: () => void } | null>(null);
 
   const [query, setQuery] = useState("");
   const [vendedorFiltro, setVendedorFiltro] = useState("");
@@ -56,14 +58,18 @@ export default function SenasClient({
     });
   }, [senas, query, vendedorFiltro, desde, hasta]);
 
-  const eliminar = async (s: any) => {
-    if (!confirm(`¿Eliminar la seña${s.numero ? ` N° ${s.numero}` : ""} de ${s.apellido || s.cliente_nombre || "este cliente"}? No se puede deshacer.`)) return;
-    const { error, count } = await supabase2.from("senas").delete({ count: "exact" }).eq("id", s.id);
-    if (error || !count) { alert("No se pudo eliminar."); return; }
-    if (s.vehiculo_id && s.estado === "Activa") {
-      await supabase2.from("vehiculos").update({ estado: "disponible" }).eq("id", s.vehiculo_id);
-    }
-    setSenas((prev) => prev.filter((x) => x.id !== s.id));
+  const eliminar = (s: any) => {
+    setConfirmDialog({
+      mensaje: `¿Eliminar la seña${s.numero ? ` N° ${s.numero}` : ""} de ${s.apellido || s.cliente_nombre || "este cliente"}? No se puede deshacer.`,
+      accion: async () => {
+        const { error, count } = await supabase2.from("senas").delete({ count: "exact" }).eq("id", s.id);
+        if (error || !count) { alert("No se pudo eliminar."); return; }
+        if (s.vehiculo_id && s.estado === "Activa") {
+          await supabase2.from("vehiculos").update({ estado: "disponible" }).eq("id", s.vehiculo_id);
+        }
+        setSenas((prev) => prev.filter((x) => x.id !== s.id));
+      },
+    });
   };
 
   return (
@@ -203,6 +209,13 @@ export default function SenasClient({
       )}
 
       {seleccionada && <SenaDetalleModal sena={seleccionada} onClose={() => setSeleccionada(null)} />}
+
+      <ConfirmDialog
+        abierto={!!confirmDialog}
+        mensaje={confirmDialog?.mensaje || ""}
+        onConfirmar={() => { confirmDialog?.accion(); setConfirmDialog(null); }}
+        onCancelar={() => setConfirmDialog(null)}
+      />
     </div>
   );
 }

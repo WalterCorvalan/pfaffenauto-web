@@ -8,6 +8,7 @@ import { Search, FolderPlus, Trash2, Pencil, Lock, Eye } from "lucide-react";
 import ExpedienteDetalleModal from "./ExpedienteDetalleModal";
 import { fmtFechaLocal } from "@/lib/panel/fechas";
 import TablaResponsiva, { type ColumnaTabla } from "@/components/panel/TablaResponsiva";
+import ConfirmDialog from "@/components/panel/ConfirmDialog";
 
 interface Perfil { id: string; nombre: string; roles: string[] }
 
@@ -32,6 +33,7 @@ export default function ExpedientesClient({
   const [busqueda, setBusqueda] = useState("");
   const [filtroGestor, setFiltroGestor] = useState("");
   const [detalleId, setDetalleId] = useState<string | null>(null);
+  const [confirmDialog, setConfirmDialog] = useState<{ mensaje: string; accion: () => void } | null>(null);
 
   useEffect(() => {
     const id = searchParams.get("expediente");
@@ -82,13 +84,17 @@ export default function ExpedientesClient({
     return l;
   }, [lista, busqueda, filtroGestor, perfilMap]);
 
-  const eliminar = async (e: any) => {
+  const eliminar = (e: any) => {
     if (!soyAdmin) return;
-    if (!confirm(`¿Eliminar el expediente de ${e.venta?.comprador_nombre}? Queda en Papelera, se puede restaurar (también revive la venta vinculada y devuelve el vehículo a disponible).`)) return;
-    const motivo = prompt("Motivo (opcional):") || undefined;
-    const res = await fetch("/api/panel/papelera", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ accion: "eliminar", tipo: "expedientes", id: e.id, motivo }) });
-    if (!res.ok) { alert("No se pudo eliminar."); return; }
-    setExpedientes((prev) => prev.filter((x) => x.id !== e.id));
+    setConfirmDialog({
+      mensaje: `¿Eliminar el expediente de ${e.venta?.comprador_nombre}? Queda en Papelera, se puede restaurar (también revive la venta vinculada y devuelve el vehículo a disponible).`,
+      accion: async () => {
+        const motivo = prompt("Motivo (opcional):") || undefined;
+        const res = await fetch("/api/panel/papelera", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ accion: "eliminar", tipo: "expedientes", id: e.id, motivo }) });
+        if (!res.ok) { alert("No se pudo eliminar."); return; }
+        setExpedientes((prev) => prev.filter((x) => x.id !== e.id));
+      },
+    });
   };
 
   const actualizarUno = (e: any) => setExpedientes((prev) => prev.map((x) => (x.id === e.id ? { ...x, ...e } : x)));
@@ -268,6 +274,13 @@ export default function ExpedientesClient({
           onEliminado={(id) => setExpedientes((prev) => prev.filter((x) => x.id !== id))}
         />
       )}
+
+      <ConfirmDialog
+        abierto={!!confirmDialog}
+        mensaje={confirmDialog?.mensaje || ""}
+        onConfirmar={() => { confirmDialog?.accion(); setConfirmDialog(null); }}
+        onCancelar={() => setConfirmDialog(null)}
+      />
     </div>
   );
 }

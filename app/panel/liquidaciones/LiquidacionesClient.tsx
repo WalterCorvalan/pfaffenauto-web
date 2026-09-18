@@ -8,6 +8,7 @@ import LiquidacionMensualTab from "./LiquidacionMensualTab";
 import ResumenAgenciaTab from "./ResumenAgenciaTab";
 import TransferenciaModal from "./TransferenciaModal";
 import { fmt } from "./shared";
+import ConfirmDialog from "@/components/panel/ConfirmDialog";
 
 export default function LiquidacionesClient({
   miId, miNombre, puedeVerLiquidacion, soyAdmin, soyAdminOFinanzas, gananciasOcultas, liquidacionesIniciales, vendedores, config,
@@ -21,6 +22,7 @@ export default function LiquidacionesClient({
   const [editando, setEditando] = useState<any | null>(null);
   const [sincronizando, setSincronizando] = useState(false);
   const [limpiando, setLimpiando] = useState(false);
+  const [confirmDialog, setConfirmDialog] = useState<{ mensaje: string; accion: () => void } | null>(null);
 
   const ingresoAgenciaTotal = useMemo(() => liquidaciones.filter((l) => l.estado === "terminado").reduce((a, l) => a + Number(l.ingreso_agencia), 0), [liquidaciones]);
 
@@ -84,18 +86,22 @@ export default function LiquidacionesClient({
     } finally { setSincronizando(false); }
   };
 
-  const limpiarDuplicadas = async () => {
-    if (!confirm("¿Eliminar transferencias duplicadas (mismo dominio y mes), dejando solo la más reciente?")) return;
-    setLimpiando(true);
-    try {
-      const { data: n, error } = await supabase2.rpc("limpiar_duplicadas_liquidaciones");
-      if (error) throw error;
-      const fresh = await refetchLiquidaciones();
-      setLiquidaciones(fresh || []);
-      alert(`${n} duplicadas eliminadas.`);
-    } catch (err: any) {
-      alert(err.message || "No se pudo limpiar duplicadas.");
-    } finally { setLimpiando(false); }
+  const limpiarDuplicadas = () => {
+    setConfirmDialog({
+      mensaje: "¿Eliminar transferencias duplicadas (mismo dominio y mes), dejando solo la más reciente?",
+      accion: async () => {
+        setLimpiando(true);
+        try {
+          const { data: n, error } = await supabase2.rpc("limpiar_duplicadas_liquidaciones");
+          if (error) throw error;
+          const fresh = await refetchLiquidaciones();
+          setLiquidaciones(fresh || []);
+          alert(`${n} duplicadas eliminadas.`);
+        } catch (err: any) {
+          alert(err.message || "No se pudo limpiar duplicadas.");
+        } finally { setLimpiando(false); }
+      },
+    });
   };
 
   return (
@@ -126,6 +132,12 @@ export default function LiquidacionesClient({
           onClose={() => setShowModal(false)} onSaved={guardarFila}
         />
       )}
+      <ConfirmDialog
+        abierto={!!confirmDialog}
+        mensaje={confirmDialog?.mensaje || ""}
+        onConfirmar={() => { confirmDialog?.accion(); setConfirmDialog(null); }}
+        onCancelar={() => setConfirmDialog(null)}
+      />
     </div>
   );
 }

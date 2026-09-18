@@ -4,6 +4,7 @@ import { useState } from "react";
 import { supabase2 } from "@/lib/supabase/client";
 import { hoyLocalISO } from "@/lib/panel/fechas";
 import { X, UserPlus, Trash2 } from "lucide-react";
+import ConfirmDialog from "@/components/panel/ConfirmDialog";
 
 const inputClass = "w-full bg-slate-50 dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-xl px-3.5 py-2.5 text-sm outline-none focus:border-rose-500 text-slate-900 dark:text-white placeholder:text-slate-400";
 const labelClass = "text-xs font-bold text-slate-600 dark:text-slate-300 mb-1.5 block";
@@ -15,6 +16,7 @@ export default function NuevaInfraccionModal({ infraccion, vehiculos, onClose, o
   const isEditing = !!infraccion?.id;
   const [cargando, setCargando] = useState(false);
   const [error, setError] = useState("");
+  const [confirmDialog, setConfirmDialog] = useState<{ mensaje: string; accion: () => void } | null>(null);
 
   const [fecha, setFecha] = useState(infraccion?.fecha || hoyLocalISO());
   const [mesEditadoManual, setMesEditadoManual] = useState(!!infraccion);
@@ -77,18 +79,22 @@ export default function NuevaInfraccionModal({ infraccion, vehiculos, onClose, o
     }
   };
 
-  const borrar = async () => {
-    if (!confirm("¿Eliminar esta infracción? Esta acción no se puede deshacer.")) return;
-    setCargando(true);
-    try {
-      const { error: err } = await supabase2.from("infracciones").delete().eq("id", infraccion.id);
-      if (err) throw err;
-      onGuardada({ ...infraccion, _eliminada: true });
-    } catch (err: any) {
-      console.error(err);
-      setError(err?.message ? `No se pudo eliminar: ${err.message}` : "No se pudo eliminar (puede que solo admin pueda borrar infracciones).");
-      setCargando(false);
-    }
+  const borrar = () => {
+    setConfirmDialog({
+      mensaje: "¿Eliminar esta infracción? Esta acción no se puede deshacer.",
+      accion: async () => {
+        setCargando(true);
+        try {
+          const { error: err } = await supabase2.from("infracciones").delete().eq("id", infraccion.id);
+          if (err) throw err;
+          onGuardada({ ...infraccion, _eliminada: true });
+        } catch (err: any) {
+          console.error(err);
+          setError(err?.message ? `No se pudo eliminar: ${err.message}` : "No se pudo eliminar (puede que solo admin pueda borrar infracciones).");
+          setCargando(false);
+        }
+      },
+    });
   };
 
   return (
@@ -184,6 +190,12 @@ export default function NuevaInfraccionModal({ infraccion, vehiculos, onClose, o
           </button>
         </div>
       </div>
+      <ConfirmDialog
+        abierto={!!confirmDialog}
+        mensaje={confirmDialog?.mensaje || ""}
+        onConfirmar={() => { confirmDialog?.accion(); setConfirmDialog(null); }}
+        onCancelar={() => setConfirmDialog(null)}
+      />
     </div>
   );
 }

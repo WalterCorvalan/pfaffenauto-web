@@ -4,6 +4,7 @@ import { useState, useEffect, useMemo } from "react";
 import { supabase2 } from "@/lib/supabase/client";
 import { Plus, X, Save, Trash2 } from "lucide-react";
 import { inputClass, labelClass } from "./shared";
+import ConfirmDialog from "@/components/panel/ConfirmDialog";
 
 export default function GastosFijosTab({ miId, autoAbrir, onAutoAbierto }: { miId: string; autoAbrir?: boolean; onAutoAbierto?: () => void }) {
   const [items, setItems] = useState<any[]>([]);
@@ -19,6 +20,7 @@ export default function GastosFijosTab({ miId, autoAbrir, onAutoAbierto }: { miI
   const [categoria, setCategoria] = useState("Otros");
   const [notas, setNotas] = useState("");
   const [guardando, setGuardando] = useState(false);
+  const [confirmDialog, setConfirmDialog] = useState<{ mensaje: string; accion: () => void } | null>(null);
 
   const cargar = async () => {
     const { data } = await supabase2.from("espacio_gastos_fijos").select("*").eq("perfil_id", miId).order("created_at");
@@ -39,10 +41,14 @@ export default function GastosFijosTab({ miId, autoAbrir, onAutoAbierto }: { miI
     } catch (err: any) { console.error(err); alert(err?.message ? `No se pudo crear el gasto fijo: ${err.message}` : "No se pudo crear el gasto fijo."); } finally { setGuardando(false); }
   };
 
-  const eliminar = async (i: any) => {
-    if (!confirm(`¿Eliminar "${i.concepto}"?`)) return;
-    await supabase2.from("espacio_gastos_fijos").delete().eq("id", i.id);
-    setItems((prev) => prev.filter((x) => x.id !== i.id));
+  const eliminar = (i: any) => {
+    setConfirmDialog({
+      mensaje: `¿Eliminar "${i.concepto}"?`,
+      accion: async () => {
+        await supabase2.from("espacio_gastos_fijos").delete().eq("id", i.id);
+        setItems((prev) => prev.filter((x) => x.id !== i.id));
+      },
+    });
   };
 
   const totalPorMoneda = useMemo(() => {
@@ -95,6 +101,13 @@ export default function GastosFijosTab({ miId, autoAbrir, onAutoAbierto }: { miI
           </div>
         </div>
       )}
+
+      <ConfirmDialog
+        abierto={!!confirmDialog}
+        mensaje={confirmDialog?.mensaje || ""}
+        onConfirmar={() => { confirmDialog?.accion(); setConfirmDialog(null); }}
+        onCancelar={() => setConfirmDialog(null)}
+      />
     </div>
   );
 }

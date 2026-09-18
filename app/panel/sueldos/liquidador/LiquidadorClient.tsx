@@ -6,6 +6,7 @@ import { supabase2 } from "@/lib/supabase/client";
 import { Wallet, Calculator, Save, ClipboardList, CircleDollarSign, Undo2, Trash2 } from "lucide-react";
 import { hoyLocalISO } from "@/lib/panel/fechas";
 import TablaResponsiva, { type ColumnaTabla } from "@/components/panel/TablaResponsiva";
+import ConfirmDialog from "@/components/panel/ConfirmDialog";
 
 interface Categoria {
   id: string;
@@ -30,6 +31,7 @@ function fmt(n: number, moneda: string) {
 export default function LiquidadorClient({ empleados, liquidacionesPrevias, categorias, cuentas }: { empleados: Empleado[]; liquidacionesPrevias: any[]; categorias: { id: string; nombre: string }[]; cuentas: { id: string; nombre: string; moneda: string }[] }) {
   const router = useRouter();
   const [liquidaciones, setLiquidaciones] = useState(liquidacionesPrevias);
+  const [confirmDialog, setConfirmDialog] = useState<{ mensaje: string; accion: () => void } | null>(null);
   const [pagando, setPagando] = useState<any | null>(null);
   const hoy = new Date();
   const mesActual = `${hoy.getFullYear()}-${String(hoy.getMonth() + 1).padStart(2, "0")}`;
@@ -141,11 +143,15 @@ export default function LiquidadorClient({ empleados, liquidacionesPrevias, cate
     }
   };
 
-  const revertirPago = async (id: string) => {
-    if (!confirm("¿Revertir el pago? Esto elimina el egreso de caja asociado.")) return;
-    const { error } = await supabase2.rpc("quitar_pago_liquidacion_sueldo", { p_liquidacion_id: id });
-    if (error) return alert(error.message);
-    router.refresh();
+  const revertirPago = (id: string) => {
+    setConfirmDialog({
+      mensaje: "¿Revertir el pago? Esto elimina el egreso de caja asociado.",
+      accion: async () => {
+        const { error } = await supabase2.rpc("quitar_pago_liquidacion_sueldo", { p_liquidacion_id: id });
+        if (error) return alert(error.message);
+        router.refresh();
+      },
+    });
   };
 
   // Solo para liquidaciones NO pagadas (nunca tocaron caja) -- si se generó
@@ -153,11 +159,15 @@ export default function LiquidadorClient({ empleados, liquidacionesPrevias, cate
   // borra la fila mala (la clave única es perfil_id+mes, distinta), quedaba
   // huérfana para siempre en la lista. Las pagadas se corrigen con
   // "Revertir" (arriba), no se borran directo.
-  const eliminarBorrador = async (l: any) => {
-    if (!confirm(`¿Eliminar la liquidación de ${l.perfiles?.nombre || "este empleado"} (${new Date(l.mes).toLocaleDateString("es-AR", { month: "long", year: "numeric", timeZone: "UTC" })})? No se puede deshacer.`)) return;
-    const { error } = await supabase2.from("liquidaciones_sueldo").delete().eq("id", l.id);
-    if (error) return alert("No se pudo eliminar.");
-    setLiquidaciones((prev) => prev.filter((x) => x.id !== l.id));
+  const eliminarBorrador = (l: any) => {
+    setConfirmDialog({
+      mensaje: `¿Eliminar la liquidación de ${l.perfiles?.nombre || "este empleado"} (${new Date(l.mes).toLocaleDateString("es-AR", { month: "long", year: "numeric", timeZone: "UTC" })})? No se puede deshacer.`,
+      accion: async () => {
+        const { error } = await supabase2.from("liquidaciones_sueldo").delete().eq("id", l.id);
+        if (error) return alert("No se pudo eliminar.");
+        setLiquidaciones((prev) => prev.filter((x) => x.id !== l.id));
+      },
+    });
   };
 
   return (
@@ -322,6 +332,12 @@ export default function LiquidadorClient({ empleados, liquidacionesPrevias, cate
       {pagando && (
         <PagoLiquidacionModal liquidacion={pagando} cuentas={cuentas} onClose={() => setPagando(null)} onPagado={() => { setPagando(null); router.refresh(); }} />
       )}
+      <ConfirmDialog
+        abierto={!!confirmDialog}
+        mensaje={confirmDialog?.mensaje || ""}
+        onConfirmar={() => { confirmDialog?.accion(); setConfirmDialog(null); }}
+        onCancelar={() => setConfirmDialog(null)}
+      />
     </div>
   );
 }

@@ -4,6 +4,7 @@ import { useState, useEffect } from "react";
 import Link from "next/link";
 import { MessageCircle, Copy, Check, Loader2, ExternalLink, Brain, Plus, Trash2 } from "lucide-react";
 import { supabase2 } from "@/lib/supabase/client";
+import ConfirmDialog from "@/components/panel/ConfirmDialog";
 
 const inputClass = "w-full bg-slate-50 dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-xl px-3 py-2.5 text-sm outline-none focus:border-rose-500";
 const labelClass = "text-xs font-semibold text-slate-600 dark:text-slate-300 block mb-1";
@@ -30,6 +31,7 @@ function MemoriaBot() {
   const [cargando, setCargando] = useState(true);
   const [nueva, setNueva] = useState<{ categoria: string; palabras: string; respuesta: string }>({ categoria: "horarios_ubicacion", palabras: "", respuesta: "" });
   const [guardando, setGuardando] = useState(false);
+  const [confirmDialog, setConfirmDialog] = useState<{ mensaje: string; accion: () => void } | null>(null);
 
   const cargar = async () => {
     setCargando(true);
@@ -54,10 +56,14 @@ function MemoriaBot() {
     await supabase2.from("whatsapp_memoria").update({ activo: !fila.activo }).eq("id", fila.id);
   };
 
-  const borrar = async (id: string) => {
-    if (!confirm("¿Borrar esta respuesta de memoria?")) return;
-    setFilas((prev) => prev.filter((f) => f.id !== id));
-    await supabase2.from("whatsapp_memoria").delete().eq("id", id);
+  const borrar = (id: string) => {
+    setConfirmDialog({
+      mensaje: "¿Borrar esta respuesta de memoria?",
+      accion: async () => {
+        setFilas((prev) => prev.filter((f) => f.id !== id));
+        await supabase2.from("whatsapp_memoria").delete().eq("id", id);
+      },
+    });
   };
 
   return (
@@ -112,6 +118,13 @@ function MemoriaBot() {
           {guardando ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Plus className="w-3.5 h-3.5" />} Agregar
         </button>
       </div>
+
+      <ConfirmDialog
+        abierto={!!confirmDialog}
+        mensaje={confirmDialog?.mensaje || ""}
+        onConfirmar={() => { confirmDialog?.accion(); setConfirmDialog(null); }}
+        onCancelar={() => setConfirmDialog(null)}
+      />
     </div>
   );
 }
@@ -129,6 +142,7 @@ export default function ConfiguracionWhatsappClient() {
   const [horarioFin, setHorarioFin] = useState(22);
   const [copiado, setCopiado] = useState<"webhook" | "verify" | null>(null);
   const [mensaje, setMensaje] = useState("");
+  const [confirmDialog, setConfirmDialog] = useState<{ mensaje: string; accion: () => void } | null>(null);
 
   const cargar = async () => {
     setCargando(true);
@@ -169,20 +183,24 @@ export default function ConfiguracionWhatsappClient() {
     }
   };
 
-  const regenerarVerify = async () => {
-    if (!confirm("¿Regenerar el Verify Token? Vas a tener que actualizarlo también en el dashboard de Meta.")) return;
-    setGuardando(true);
-    try {
-      const res = await fetch("/api/panel/whatsapp/configuracion", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ phoneNumberId, accessToken: "", botNombre, regenerarVerifyToken: true }),
-      });
-      const data = await res.json();
-      if (res.ok) setConfig(data.config);
-    } finally {
-      setGuardando(false);
-    }
+  const regenerarVerify = () => {
+    setConfirmDialog({
+      mensaje: "¿Regenerar el Verify Token? Vas a tener que actualizarlo también en el dashboard de Meta.",
+      accion: async () => {
+        setGuardando(true);
+        try {
+          const res = await fetch("/api/panel/whatsapp/configuracion", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ phoneNumberId, accessToken: "", botNombre, regenerarVerifyToken: true }),
+          });
+          const data = await res.json();
+          if (res.ok) setConfig(data.config);
+        } finally {
+          setGuardando(false);
+        }
+      },
+    });
   };
 
   const copiar = (texto: string, cual: "webhook" | "verify") => {
@@ -296,6 +314,13 @@ export default function ConfiguracionWhatsappClient() {
       <PlantillasWhatsapp />
       <MemoriaBot />
       </div>
+
+      <ConfirmDialog
+        abierto={!!confirmDialog}
+        mensaje={confirmDialog?.mensaje || ""}
+        onConfirmar={() => { confirmDialog?.accion(); setConfirmDialog(null); }}
+        onCancelar={() => setConfirmDialog(null)}
+      />
     </div>
   );
 }

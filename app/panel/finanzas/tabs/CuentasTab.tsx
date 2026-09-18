@@ -4,6 +4,7 @@ import { useState } from "react";
 import { supabase2 } from "@/lib/supabase/client";
 import { Plus, X, Save, Wallet, RotateCcw, GitCompare, Pencil } from "lucide-react";
 import { inputClass, labelClass, fmt } from "./shared";
+import ConfirmDialog from "@/components/panel/ConfirmDialog";
 
 const emptyForm = { nombre: "", tipo: "Banco", moneda: "USD", saldoInicial: "0", entidad: "", numeroCuenta: "", notas: "", activa: true };
 
@@ -14,6 +15,7 @@ export default function CuentasTab({ cuentas, setCuentas, soyAdmin }: { cuentas:
   const [guardando, setGuardando] = useState(false);
   const [showDiff, setShowDiff] = useState(false);
   const [reseteando, setReseteando] = useState<any | null>(null);
+  const [confirmDialog, setConfirmDialog] = useState<{ mensaje: string; accion: () => void } | null>(null);
 
   const abrirNueva = () => { setForm(emptyForm); setShowNueva(true); };
   const abrirEditar = (c: any) => {
@@ -51,10 +53,14 @@ export default function CuentasTab({ cuentas, setCuentas, soyAdmin }: { cuentas:
     } catch (err: any) { alert(err?.message ? `No se pudo guardar: ${err.message}` : "No se pudo guardar."); } finally { setGuardando(false); }
   };
 
-  const desactivar = async (c: any) => {
-    if (!confirm(`¿Desactivar "${c.nombre}"? Deja de aparecer en los selectores, pero su historial queda.`)) return;
-    await supabase2.from("cuentas").update({ activa: false }).eq("id", c.id);
-    setCuentas((prev: any[]) => prev.filter((x) => x.id !== c.id));
+  const desactivar = (c: any) => {
+    setConfirmDialog({
+      mensaje: `¿Desactivar "${c.nombre}"? Deja de aparecer en los selectores, pero su historial queda.`,
+      accion: async () => {
+        await supabase2.from("cuentas").update({ activa: false }).eq("id", c.id);
+        setCuentas((prev: any[]) => prev.filter((x) => x.id !== c.id));
+      },
+    });
   };
 
   const confirmarReset = async () => {
@@ -157,6 +163,13 @@ export default function CuentasTab({ cuentas, setCuentas, soyAdmin }: { cuentas:
           </div>
         </div>
       )}
+
+      <ConfirmDialog
+        abierto={!!confirmDialog}
+        mensaje={confirmDialog?.mensaje || ""}
+        onConfirmar={() => { confirmDialog?.accion(); setConfirmDialog(null); }}
+        onCancelar={() => setConfirmDialog(null)}
+      />
     </div>
   );
 }
