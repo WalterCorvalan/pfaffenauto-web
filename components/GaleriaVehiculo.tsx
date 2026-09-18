@@ -5,8 +5,6 @@ import Image from "next/image";
 import { ChevronLeft, ChevronRight, Image as ImageIcon } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 
-const MotionImage = motion.create(Image);
-
 // Distancia mínima de swipe (px) para contar como cambio de foto, no un tap
 // o un scroll vertical accidental.
 const UMBRAL_SWIPE = 40;
@@ -30,6 +28,13 @@ export default function GaleriaVehiculo({ imagenes, altText }: GaleriaProps) {
     );
   }
 
+  // Cada foto puede venir con una proporción distinta (celular, cámara de
+  // agencia, distintos recortes) -- en vez de forzar una caja de proporción
+  // fija (dejaba franjas vacías en fotos que no calzaban, o recortaba si
+  // usábamos object-cover), la imagen fluye con su propia altura natural
+  // (w-full h-auto) y el contenedor se ajusta solo. Nunca hay recorte ni
+  // franjas artificiales, para cualquier foto.
+
   const nextImage = () => {
     setCurrentIndex((prev) => (prev + 1) % imagenes.length);
   };
@@ -52,18 +57,16 @@ export default function GaleriaVehiculo({ imagenes, altText }: GaleriaProps) {
 
   return (
     <div className="flex flex-col gap-3">
-      {/* IMAGEN PRINCIPAL AL 100% SIN BORDES REDONDEADOS -- aspect-[4/3] en vez
-          de alto fijo: coincide con la proporción típica de las fotos de
-          stock (celular/cámara de agencia), así object-contain casi nunca
-          deja franjas vacías a los costados. */}
+      {/* IMAGEN PRINCIPAL AL 100% SIN BORDES REDONDEADOS -- sin proporción
+          fija, la imagen fluye con su alto natural (ver comentario arriba). */}
       <div
-        className="relative w-full aspect-[4/3] bg-slate-950 overflow-hidden group touch-pan-y"
+        className="relative w-full bg-slate-950 overflow-hidden group touch-pan-y flex items-center justify-center max-h-[70vh]"
         onTouchStart={onTouchStart}
         onTouchEnd={onTouchEnd}
       >
 
         <AnimatePresence mode="wait">
-          <MotionImage
+          <motion.img
             key={currentIndex}
             initial={{ opacity: 0, scale: 0.98, filter: "blur(4px)" }}
             animate={{ opacity: 1, scale: 1, filter: "blur(0px)" }}
@@ -71,13 +74,10 @@ export default function GaleriaVehiculo({ imagenes, altText }: GaleriaProps) {
             transition={{ duration: 0.3 }}
             src={imagenes[currentIndex]}
             alt={`${altText} - Foto ${currentIndex + 1}`}
-            fill
-            sizes="(max-width: 768px) 100vw, 66vw"
-            priority={currentIndex === 0}
-            className="object-contain"
+            className="w-full h-auto max-h-[70vh] object-contain"
           />
         </AnimatePresence>
-        
+
         {/* Controles de navegación (Solo si hay más de 1 foto) */}
         {imagenes.length > 1 && (
           <>
