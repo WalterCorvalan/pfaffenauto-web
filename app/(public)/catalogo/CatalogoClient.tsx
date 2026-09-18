@@ -178,12 +178,12 @@ export default function CatalogoClient({ vehiculosIniciales = [], totalInicial =
     // Filtros de texto, condición y precio
     const busquedaNormalizada = searchQuery.trim().toLowerCase();
     if (busquedaNormalizada === "0km" || busquedaNormalizada === "0 km") {
-      // 0KM se define por vehiculos.condicion, nunca por km === 0 -- muchos
-      // usados tienen el km sin cargar (queda en 0/null sin ser 0km real).
-      query = query.eq("condicion", "0km");
+      // 0KM se define por vehiculos.km === 0 -- el kilometraje es obligatorio
+      // al cargar un auto en Stock, así que un usado nunca queda en 0 sin querer.
+      query = query.eq("km", 0);
     } else if (busquedaNormalizada === "usados-seleccionados" || busquedaNormalizada === "autos-seleccionados") {
       // Todo el stock menos 0km y menos los de Outlet (mismo criterio de precio que usa /outlet).
-      query = query.neq("condicion", "0km").or("precio_publicado_ars.is.null,precio_publicado_ars.gte.10000000");
+      query = query.neq("km", 0).or("precio_publicado_ars.is.null,precio_publicado_ars.gte.10000000");
     } else if (searchQuery) {
       query = query.or(
         `marca.ilike.%${searchQuery}%,modelo.ilike.%${searchQuery}%,tipo.ilike.%${searchQuery}%,segmento.ilike.%${searchQuery}%`,
@@ -192,9 +192,9 @@ export default function CatalogoClient({ vehiculosIniciales = [], totalInicial =
 
     if (condicionQuery) {
       if (condicionQuery === "0km") {
-        query = query.eq("condicion", "0km");
+        query = query.eq("km", 0);
       } else if (condicionQuery === "usados") {
-        query = query.neq("condicion", "0km");
+        query = query.neq("km", 0);
       }
     }
 

@@ -21,9 +21,9 @@ export default async function CeroKmPage() {
     .from("vehiculos")
     .select(CAMPOS_VEHICULO_PUBLICO)
     .in("estado", ["disponible", "reservado"])
-    // 0KM se define por vehiculos.condicion, nunca por km === 0 -- muchos
-    // usados tienen el km sin cargar (queda en 0/null sin ser 0km real).
-    .eq("condicion", "0km")
+    // 0KM se define por vehiculos.km === 0 -- el kilometraje es obligatorio
+    // al cargar un auto en Stock, así que un usado nunca queda en 0 sin querer.
+    .eq("km", 0)
     .or("precio_publicado_ars.not.is.null,precio_publicado_usd.not.is.null")
     .order("created_at", { ascending: false });
 

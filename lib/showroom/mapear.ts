@@ -18,9 +18,7 @@ const COLOR_PLACEHOLDER = "#8a8f9c";
 // Fila de vehículos reales del stock (Disponible/Reservado) transformados al
 // formato que ya consume el showroom 3D — cada unidad física es una caja.
 export function vehiculoRealAShowroom(v: any, marca: string, telefonoSucursal?: string | null): ShowroomVehicle {
-  // 0KM se define por vehiculos.condicion, nunca por km === 0 -- muchos
-  // usados tienen el km sin cargar (queda en 0/null sin ser 0km real).
-  const esCeroKm = v.condicion === "0km";
+  const esCeroKm = v.km === 0;
   const precioTexto = v.precio_publicado_usd
     ? `US$ ${Number(v.precio_publicado_usd).toLocaleString("en-US")}`
     : `$${Number(v.precio_publicado_ars || 0).toLocaleString("es-AR")}`;

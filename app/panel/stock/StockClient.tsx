@@ -154,7 +154,7 @@ export default function StockClient({
 
   const baseTab = useMemo(() => {
     if (tab === "consignaciones") return vehiculos.filter((v) => v.consignado_por);
-    if (tab === "0km") return vehiculos.filter((v) => v.condicion === "0km");
+    if (tab === "0km") return vehiculos.filter((v) => v.km === 0);
     return vehiculos;
   }, [vehiculos, tab]);
 

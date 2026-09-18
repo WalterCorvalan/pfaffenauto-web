@@ -54,10 +54,7 @@ export async function generateMetadata({
   const auto = await buscarAuto(slug);
   if (!auto) return { title: "Vehículo no encontrado | Pfaffen Autos" };
 
-  // Ojo: NO usar "auto.km === 0" -- muchos usados todavía no tienen el km
-  // cargado y quedan en 0/null por defecto, no por ser 0km reales.
-  // "condicion" es el único campo confiable para esto.
-  const esCeroKm = auto.condicion === "0km";
+  const esCeroKm = auto.km === 0;
   const titulo = `${auto.marca} ${auto.modelo} ${auto.anio} ${esCeroKm ? "0KM" : "Usado"} | Pfaffen Autos`;
   const precioTexto = auto.precio_publicado_usd && !auto.precio_publicado_ars
     ? `US$ ${auto.precio_publicado_usd.toLocaleString("en-US")}`
@@ -110,10 +107,7 @@ export default async function VehiculoDetallePage({
   );
   const linkWhatsApp = `https://wa.me/${numeroLimpio}?text=${mensajeWhatsApp}`;
 
-  // Ojo: NO usar "auto.km === 0" -- muchos usados todavía no tienen el km
-  // cargado y quedan en 0/null por defecto, no por ser 0km reales.
-  // "condicion" es el único campo confiable para esto.
-  const esCeroKm = auto.condicion === "0km";
+  const esCeroKm = auto.km === 0;
   const precioUsd = auto.precio_publicado_usd || null;
   // Si el auto solo tiene precio cargado en USD (sin ARS), "precioArs || 0"
   // dejaba el simulador de crédito en $0 -- convertimos con el dólar blue
