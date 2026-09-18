@@ -6,6 +6,7 @@ import { X, Loader2, ChevronDown, MoreVertical, Lock, MessageCircle, Check, Uplo
 import { fmtFechaLocal } from "@/lib/panel/fechas";
 import BoletoModal from "./BoletoModal";
 import ConfirmDialog from "@/components/panel/ConfirmDialog";
+import AlertDialog from "@/components/panel/AlertDialog";
 
 const SECTORES = [
   { value: "ventas", label: "Ventas" }, { value: "gestoria", label: "Gestoría" }, { value: "finanzas", label: "Finanzas" },
@@ -37,6 +38,7 @@ export default function ExpedienteDetalleModal({ expedienteId, miId, perfiles, s
   const [expediente, setExpediente] = useState<any>(null);
   const [venta, setVenta] = useState<any>(null);
   const [confirmDialog, setConfirmDialog] = useState<{ mensaje: string; accion: () => void } | null>(null);
+  const [alertDialog, setAlertDialog] = useState<string | null>(null);
   // Los datos personales del propietario/vendedor (DNI, email, fecha de
   // nacimiento, profesión) viven en vehiculos, no en ventas -- nombre y
   // teléfono sí están duplicados en ventas.propietario_nombre/_telefono
@@ -498,7 +500,7 @@ export default function ExpedienteDetalleModal({ expedienteId, miId, perfiles, s
   const guardarEstadoPago = async () => {
     if (!venta) return;
     if (estadoPagoTesoreria === "pagado" && !cuentaPagoVendedorId) {
-      alert('Elegí de qué caja sale el pago al propietario, o cambiá el estado a "Pendiente"/"En proceso".');
+      setAlertDialog('Elegí de qué caja sale el pago al propietario, o cambiá el estado a "Pendiente"/"En proceso".');
       return;
     }
     setGuardandoPago(true);
@@ -511,7 +513,7 @@ export default function ExpedienteDetalleModal({ expedienteId, miId, perfiles, s
       await cargar();
       onActualizado({ ...expediente, venta: { ...venta, estado_pago_tesoreria: estadoPagoTesoreria } });
     } catch (err: any) {
-      alert(err.message || "No se pudo guardar el estado de pago.");
+      setAlertDialog(err.message || "No se pudo guardar el estado de pago.");
     } finally {
       setGuardandoPago(false);
     }
@@ -520,7 +522,7 @@ export default function ExpedienteDetalleModal({ expedienteId, miId, perfiles, s
   const guardarPagoComprador = async () => {
     if (!venta) return;
     if (compradorPagoConfirmado && !compradorCuentaId) {
-      alert('Elegí de qué caja entra el pago, o marcá "No — pendiente".');
+      setAlertDialog('Elegí de qué caja entra el pago, o marcá "No — pendiente".');
       return;
     }
     // Snapshot del estado previo (lo que hay hoy en la venta cargada, antes
@@ -566,7 +568,7 @@ export default function ExpedienteDetalleModal({ expedienteId, miId, perfiles, s
       }
       await cargar();
     } catch (err: any) {
-      alert(err.message || "No se pudo guardar el pago del comprador.");
+      setAlertDialog(err.message || "No se pudo guardar el pago del comprador.");
     } finally {
       setGuardandoPagoComprador(false);
     }
@@ -1645,6 +1647,11 @@ export default function ExpedienteDetalleModal({ expedienteId, miId, perfiles, s
         mensaje={confirmDialog?.mensaje || ""}
         onConfirmar={() => { confirmDialog?.accion(); setConfirmDialog(null); }}
         onCancelar={() => setConfirmDialog(null)}
+      />
+      <AlertDialog
+        abierto={!!alertDialog}
+        mensaje={alertDialog || ""}
+        onCerrar={() => setAlertDialog(null)}
       />
     </div>
   );
