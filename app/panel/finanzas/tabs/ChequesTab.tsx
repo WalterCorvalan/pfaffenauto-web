@@ -5,6 +5,7 @@ import { supabase2 } from "@/lib/supabase/client";
 import { Plus, X, Save } from "lucide-react";
 import { inputClass, labelClass, fmt, diasHasta } from "./shared";
 import TablaResponsiva, { type ColumnaTabla } from "@/components/panel/TablaResponsiva";
+import ConfirmDialog from "@/components/panel/ConfirmDialog";
 
 const emptyForm = { tipo: "a_cobrar", formato: "fisico", librador: "", numero: "", banco: "", cuitCuil: "", monto: "", moneda: "ARS", estado: "pendiente", fechaEmision: "", fechaCobro: "", cajaBancoPropio: "", notas: "" };
 
@@ -16,6 +17,7 @@ export default function ChequesTab({ cheques, setCheques, cuentas }: { cheques: 
   const [chequeParaCobrar, setChequeParaCobrar] = useState<any>(null);
   const [cuentaCobro, setCuentaCobro] = useState("");
   const [cambiandoEstado, setCambiandoEstado] = useState(false);
+  const [confirmDialog, setConfirmDialog] = useState<{ mensaje: string; accion: () => void } | null>(null);
 
   const lista = cheques.filter((c) => c.tipo === sub);
   const hoy = new Date().toISOString().slice(0, 10);
@@ -74,7 +76,7 @@ export default function ChequesTab({ cheques, setCheques, cuentas }: { cheques: 
     }
   };
 
-  const eliminar = async (c: any) => {
+  const eliminar = (c: any) => {
     // Un cheque "cobrado" ya generó un movimiento real de caja (c.movimiento_id)
     // -- borrarlo sin revertir ese movimiento lo dejaba huérfano (plata que
     // quedó contabilizada sin el cheque de origen). Se revierte primero con el
@@ -84,13 +86,17 @@ export default function ChequesTab({ cheques, setCheques, cuentas }: { cheques: 
     const mensaje = esCobrado
       ? `El cheque de ${c.librador} ya está cobrado y generó un movimiento real en Finanzas. Al eliminarlo también se revierte ese movimiento. ¿Confirmás?`
       : `¿Eliminar el cheque de ${c.librador}?`;
-    if (!confirm(mensaje)) return;
-    if (esCobrado) {
-      const { error } = await supabase2.rpc("eliminar_movimiento_caja", { p_movimiento_id: c.movimiento_id, p_motivo: `Cheque de ${c.librador} eliminado` });
-      if (error) return alert(`No se pudo revertir el movimiento de caja vinculado: ${error.message}`);
-    }
-    await supabase2.from("cheques").delete().eq("id", c.id);
-    setCheques((prev: any[]) => prev.filter((x) => x.id !== c.id));
+    setConfirmDialog({
+      mensaje,
+      accion: async () => {
+        if (esCobrado) {
+          const { error } = await supabase2.rpc("eliminar_movimiento_caja", { p_movimiento_id: c.movimiento_id, p_motivo: `Cheque de ${c.librador} eliminado` });
+          if (error) return alert(`No se pudo revertir el movimiento de caja vinculado: ${error.message}`);
+        }
+        await supabase2.from("cheques").delete().eq("id", c.id);
+        setCheques((prev: any[]) => prev.filter((x) => x.id !== c.id));
+      },
+    });
   };
 
   return (
@@ -186,6 +192,13 @@ export default function ChequesTab({ cheques, setCheques, cuentas }: { cheques: 
           </div>
         </div>
       )}
+
+      <ConfirmDialog
+        abierto={!!confirmDialog}
+        mensaje={confirmDialog?.mensaje || ""}
+        onConfirmar={() => { confirmDialog?.accion(); setConfirmDialog(null); }}
+        onCancelar={() => setConfirmDialog(null)}
+      />
     </div>
   );
 }

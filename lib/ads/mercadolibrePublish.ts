@@ -59,7 +59,6 @@ interface VehiculoParaML {
   km: number | null;
   precio_venta: number;
   moneda_venta: string;
-  condicion: string;
   combustible: string | null;
   transmision: string | null;
   color: string | null;
@@ -79,7 +78,7 @@ function construirAtributos(v: VehiculoParaML) {
     { id: "MODEL", value_name: v.modelo },
     { id: "VEHICLE_YEAR", value_name: String(v.anio) },
     { id: "KILOMETERS", value_name: String(v.km ?? 0) },
-    { id: "ITEM_CONDITION", value_name: v.condicion === "0km" ? "Nuevo" : "Usado" },
+    { id: "ITEM_CONDITION", value_name: v.km === 0 ? "Nuevo" : "Usado" },
   ];
   if (v.combustible) atributos.push({ id: "FUEL_TYPE", value_name: v.combustible });
   if (v.transmision) atributos.push({ id: "TRANSMISSION", value_name: v.transmision });
@@ -96,7 +95,7 @@ function construirPayload(v: VehiculoParaML) {
     available_quantity: 1,
     buying_mode: "classified",
     listing_type_id: "gold_special",
-    condition: v.condicion === "0km" ? "new" : "used",
+    condition: v.km === 0 ? "new" : "used",
     description: { plain_text: v.notas || `${v.marca} ${v.modelo} ${v.anio}. Consultá financiación y disponibilidad.` },
     pictures: (v.fotos || []).slice(0, 10).map((url) => ({ source: url })),
     attributes: construirAtributos(v),
@@ -119,7 +118,7 @@ export async function publicarVehiculoEnML(supabase: SupabaseClient, vehiculoId:
 
   const { data: v, error: errLectura } = await supabase
     .from("vehiculos")
-    .select("id, marca, modelo, anio, km, precio_venta, moneda_venta, condicion, combustible, transmision, color, fotos, notas, ml_item_id")
+    .select("id, marca, modelo, anio, km, precio_venta, moneda_venta, combustible, transmision, color, fotos, notas, ml_item_id")
     .eq("id", vehiculoId)
     .single();
   if (errLectura || !v) return { ok: false, error: "Vehículo no encontrado." };

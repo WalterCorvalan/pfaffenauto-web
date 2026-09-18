@@ -4,6 +4,7 @@ import { useEffect, useRef, useState } from "react";
 import { supabase2 } from "@/lib/supabase/client";
 import { buscarClienteDuplicado } from "@/lib/panel/clienteDedupe";
 import { Search, UserPlus, X, Check, ScanLine, Loader2 } from "lucide-react";
+import ConfirmDialog from "@/components/panel/ConfirmDialog";
 
 export interface ClienteSeleccionado {
   id: string;
@@ -33,6 +34,7 @@ export default function ClienteBuscador({
   const [busqueda, setBusqueda] = useState("");
   const [creandoNuevo, setCreandoNuevo] = useState(false);
   const [guardando, setGuardando] = useState(false);
+  const [confirmDialog, setConfirmDialog] = useState<{ mensaje: string; accion: () => void } | null>(null);
   const [escaneando, setEscaneando] = useState(false);
   const [errorEscaneo, setErrorEscaneo] = useState("");
   const inputDniRef = useRef<HTMLInputElement>(null);
@@ -114,13 +116,13 @@ export default function ClienteBuscador({
     try {
       const existente = await buscarClienteDuplicado(supabase2, nuevo);
       if (existente) {
-        if (!confirm(`Ya existe un cliente con ese DNI/teléfono: ${existente.nombre} ${existente.apellido || ""}. ¿Usar ese en vez de crear uno nuevo?`)) {
-          setGuardando(false);
-          return;
-        }
-        onSeleccionar(existente as any);
-        setCreandoNuevo(false);
-        setGuardando(false);
+        setConfirmDialog({
+          mensaje: `Ya existe un cliente con ese DNI/teléfono: ${existente.nombre} ${existente.apellido || ""}. ¿Usar ese en vez de crear uno nuevo?`,
+          accion: () => {
+            onSeleccionar(existente as any);
+            setCreandoNuevo(false);
+          },
+        });
         return;
       }
       const { data, error } = await supabase2
@@ -158,6 +160,7 @@ export default function ClienteBuscador({
 
   if (creandoNuevo) {
     return (
+      <>
       <div className="bg-slate-50 dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-xl p-4 space-y-3">
         <div className="flex justify-between items-center">
           <span className="text-[11px] font-bold uppercase tracking-widest text-slate-500 dark:text-slate-400">Nuevo cliente</span>
@@ -194,6 +197,13 @@ export default function ClienteBuscador({
           {guardando ? "Guardando..." : "Usar este cliente"}
         </button>
       </div>
+      <ConfirmDialog
+        abierto={!!confirmDialog}
+        mensaje={confirmDialog?.mensaje || ""}
+        onConfirmar={() => { confirmDialog?.accion(); setConfirmDialog(null); }}
+        onCancelar={() => setConfirmDialog(null)}
+      />
+      </>
     );
   }
 

@@ -4,6 +4,7 @@ import { useState, useEffect } from "react";
 import { supabase2 } from "@/lib/supabase/client";
 import { Plus, X, Save, Trash2, CheckCircle2, Circle } from "lucide-react";
 import { inputClass, labelClass } from "./shared";
+import ConfirmDialog from "@/components/panel/ConfirmDialog";
 
 const PRIORIDAD_COLOR: Record<string, string> = { Baja: "bg-slate-100 dark:bg-white/10 text-slate-500", Media: "bg-amber-100 dark:bg-amber-500/20 text-amber-700 dark:text-amber-300", Alta: "bg-rose-100 dark:bg-rose-500/20 text-rose-700 dark:text-rose-300" };
 
@@ -11,6 +12,7 @@ export default function PendientesTab({ miId, autoAbrir, onAutoAbierto }: { miId
   const [items, setItems] = useState<any[]>([]);
   const [cargando, setCargando] = useState(true);
   const [showNueva, setShowNueva] = useState(false);
+  const [confirmDialog, setConfirmDialog] = useState<{ mensaje: string; accion: () => void } | null>(null);
 
   useEffect(() => { if (autoAbrir) { setShowNueva(true); onAutoAbierto?.(); } }, [autoAbrir]);
   const [titulo, setTitulo] = useState("");
@@ -44,10 +46,14 @@ export default function PendientesTab({ miId, autoAbrir, onAutoAbierto }: { miId
     setItems((prev) => prev.map((x) => (x.id === i.id ? { ...x, completada: nuevo } : x)));
   };
 
-  const eliminar = async (i: any) => {
-    if (!confirm(`¿Eliminar "${i.titulo}"?`)) return;
-    await supabase2.from("espacio_pendientes").delete().eq("id", i.id);
-    setItems((prev) => prev.filter((x) => x.id !== i.id));
+  const eliminar = (i: any) => {
+    setConfirmDialog({
+      mensaje: `¿Eliminar "${i.titulo}"?`,
+      accion: async () => {
+        await supabase2.from("espacio_pendientes").delete().eq("id", i.id);
+        setItems((prev) => prev.filter((x) => x.id !== i.id));
+      },
+    });
   };
 
   const sinCompletar = items.filter((i) => !i.completada).length;
@@ -94,6 +100,12 @@ export default function PendientesTab({ miId, autoAbrir, onAutoAbierto }: { miId
           </div>
         </div>
       )}
+      <ConfirmDialog
+        abierto={!!confirmDialog}
+        mensaje={confirmDialog?.mensaje || ""}
+        onConfirmar={() => { confirmDialog?.accion(); setConfirmDialog(null); }}
+        onCancelar={() => setConfirmDialog(null)}
+      />
     </div>
   );
 }

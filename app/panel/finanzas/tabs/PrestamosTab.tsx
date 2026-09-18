@@ -5,6 +5,7 @@ import { supabase2 } from "@/lib/supabase/client";
 import { Plus, X, Save } from "lucide-react";
 import { inputClass, labelClass, fmt } from "./shared";
 import TablaResponsiva, { type ColumnaTabla } from "@/components/panel/TablaResponsiva";
+import ConfirmDialog from "@/components/panel/ConfirmDialog";
 
 type Sub = "activos" | "devueltos" | "todos";
 
@@ -24,6 +25,7 @@ export default function PrestamosTab({
   const [guardando, setGuardando] = useState(false);
   const [devolviendo, setDevolviendo] = useState<any | null>(null);
   const [dvCuentaId, setDvCuentaId] = useState("");
+  const [confirmDialog, setConfirmDialog] = useState<{ mensaje: string; accion: () => void } | null>(null);
 
   const activos = prestamos.filter((p) => p.estado === "pendiente");
   const totalAdeudadoPorMoneda = useMemo(() => {
@@ -83,14 +85,18 @@ export default function PrestamosTab({
     } finally { setGuardando(false); }
   };
 
-  const eliminar = async (p: any) => {
-    if (!confirm(`¿Eliminar el préstamo a ${p.persona}? Revierte los movimientos generados.`)) return;
-    try {
-      await supabase2.rpc("eliminar_prestamo_otorgado", { p_id: p.id });
-      setPrestamos((prev: any[]) => prev.filter((x) => x.id !== p.id));
-      const { data: nuevoSaldo } = await supabase2.rpc("saldo_cuenta", { p_cuenta_id: p.cuenta_id });
-      setCuentas((prev: any[]) => prev.map((c) => (c.id === p.cuenta_id ? { ...c, saldo: Number(nuevoSaldo) || 0 } : c)));
-    } catch (err: any) { alert(err.message || "No se pudo eliminar."); }
+  const eliminar = (p: any) => {
+    setConfirmDialog({
+      mensaje: `¿Eliminar el préstamo a ${p.persona}? Revierte los movimientos generados.`,
+      accion: async () => {
+        try {
+          await supabase2.rpc("eliminar_prestamo_otorgado", { p_id: p.id });
+          setPrestamos((prev: any[]) => prev.filter((x) => x.id !== p.id));
+          const { data: nuevoSaldo } = await supabase2.rpc("saldo_cuenta", { p_cuenta_id: p.cuenta_id });
+          setCuentas((prev: any[]) => prev.map((c) => (c.id === p.cuenta_id ? { ...c, saldo: Number(nuevoSaldo) || 0 } : c)));
+        } catch (err: any) { alert(err.message || "No se pudo eliminar."); }
+      },
+    });
   };
 
   return (
@@ -170,6 +176,13 @@ export default function PrestamosTab({
           </div>
         </div>
       )}
+
+      <ConfirmDialog
+        abierto={!!confirmDialog}
+        mensaje={confirmDialog?.mensaje || ""}
+        onConfirmar={() => { confirmDialog?.accion(); setConfirmDialog(null); }}
+        onCancelar={() => setConfirmDialog(null)}
+      />
     </div>
   );
 }

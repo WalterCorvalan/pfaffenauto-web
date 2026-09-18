@@ -5,6 +5,7 @@ import { supabase2 } from "@/lib/supabase/client";
 import { X, Loader2, ChevronDown, MessageCircle, Phone, Clock, PackagePlus, ExternalLink } from "lucide-react";
 import { fmtFechaLocal, hoyLocalISO } from "@/lib/panel/fechas";
 import NuevoVehiculoModal from "@/app/panel/stock/NuevoVehiculoModal";
+import ConfirmDialog from "@/components/panel/ConfirmDialog";
 
 interface Perfil { id: string; nombre: string; roles: string[] }
 interface Cliente { id: string; nombre: string; telefono: string | null; dni_cuit?: string | null }
@@ -30,6 +31,7 @@ export default function ConsignacionDetalleModal({ consignacionId, perfiles, cli
   const [editando, setEditando] = useState(false);
   const [mostrarEstados, setMostrarEstados] = useState(false);
   const [guardando, setGuardando] = useState(false);
+  const [confirmDialog, setConfirmDialog] = useState<{ mensaje: string; accion: () => void } | null>(null);
 
   const [vehiculoDescripcion, setVehiculoDescripcion] = useState("");
   const [vendedorId, setVendedorId] = useState("");
@@ -50,14 +52,22 @@ export default function ConsignacionDetalleModal({ consignacionId, perfiles, cli
 
   useEffect(() => { cargar(); }, [consignacionId]);
 
-  const cambiarEstado = async (nuevo: string) => {
-    if (nuevo === "consignado" && consignacion.estado !== "consignado") {
-      if (!confirm("¿Marcar esta consignación como Consignado? Se salta el resto de los pasos.")) return;
-    }
+  const ejecutarCambioEstado = async (nuevo: string) => {
     const { data, error } = await supabase2.from("consignaciones").update({ estado: nuevo }).eq("id", consignacionId).select("*, vendedor:perfiles!consignaciones_vendedor_id_fkey ( id, nombre )").maybeSingle();
     if (error || !data) { alert("No se pudo cambiar el estado."); return; }
     setConsignacion(data); onActualizado(data);
     setMostrarEstados(false);
+  };
+
+  const cambiarEstado = (nuevo: string) => {
+    if (nuevo === "consignado" && consignacion.estado !== "consignado") {
+      setConfirmDialog({
+        mensaje: "¿Marcar esta consignación como Consignado? Se salta el resto de los pasos.",
+        accion: () => ejecutarCambioEstado(nuevo),
+      });
+      return;
+    }
+    ejecutarCambioEstado(nuevo);
   };
 
   const marcarContactoHoy = async () => {
@@ -91,9 +101,11 @@ export default function ConsignacionDetalleModal({ consignacionId, perfiles, cli
     }
   };
 
-  const cancelarConsignacion = async () => {
-    if (!confirm("¿Cancelar esta consignación?")) return;
-    await cambiarEstado("cancelado");
+  const cancelarConsignacion = () => {
+    setConfirmDialog({
+      mensaje: "¿Cancelar esta consignación?",
+      accion: () => ejecutarCambioEstado("cancelado"),
+    });
   };
 
   // Naive: primera palabra de la descripción libre = marca, el resto = modelo
@@ -122,12 +134,16 @@ export default function ConsignacionDetalleModal({ consignacionId, perfiles, cli
     setConsignacion(data); onActualizado(data);
   };
 
-  const eliminar = async () => {
-    if (!confirm("¿Eliminar esta consignación? No se puede deshacer.")) return;
-    const { error, count } = await supabase2.from("consignaciones").delete({ count: "exact" }).eq("id", consignacionId);
-    if (error || !count) { alert("No se pudo eliminar."); return; }
-    onEliminado(consignacionId);
-    onClose();
+  const eliminar = () => {
+    setConfirmDialog({
+      mensaje: "¿Eliminar esta consignación? No se puede deshacer.",
+      accion: async () => {
+        const { error, count } = await supabase2.from("consignaciones").delete({ count: "exact" }).eq("id", consignacionId);
+        if (error || !count) { alert("No se pudo eliminar."); return; }
+        onEliminado(consignacionId);
+        onClose();
+      },
+    });
   };
 
   if (cargando || !consignacion) {
@@ -281,6 +297,13 @@ export default function ConsignacionDetalleModal({ consignacionId, perfiles, cli
           onCreado={onVehiculoCreado}
         />
       )}
+
+      <ConfirmDialog
+        abierto={!!confirmDialog}
+        mensaje={confirmDialog?.mensaje || ""}
+        onConfirmar={() => { confirmDialog?.accion(); setConfirmDialog(null); }}
+        onCancelar={() => setConfirmDialog(null)}
+      />
     </div>
   );
 }

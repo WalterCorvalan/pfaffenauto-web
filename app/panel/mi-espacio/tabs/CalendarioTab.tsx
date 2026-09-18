@@ -4,6 +4,7 @@ import { useState, useEffect } from "react";
 import { supabase2 } from "@/lib/supabase/client";
 import { Plus, X, Save, Trash2 } from "lucide-react";
 import { inputClass, labelClass } from "./shared";
+import ConfirmDialog from "@/components/panel/ConfirmDialog";
 
 const CATEGORIA_COLOR: Record<string, string> = {
   Familia: "bg-indigo-100 dark:bg-indigo-500/20 text-indigo-700 dark:text-indigo-300",
@@ -18,6 +19,7 @@ export default function CalendarioTab({ miId, autoAbrir, onAutoAbierto }: { miId
   const [eventos, setEventos] = useState<any[]>([]);
   const [cargando, setCargando] = useState(true);
   const [showNuevo, setShowNuevo] = useState(false);
+  const [confirmDialog, setConfirmDialog] = useState<{ mensaje: string; accion: () => void } | null>(null);
 
   useEffect(() => { if (autoAbrir) { setShowNuevo(true); onAutoAbierto?.(); } }, [autoAbrir]);
   const [evento, setEvento] = useState("");
@@ -47,10 +49,14 @@ export default function CalendarioTab({ miId, autoAbrir, onAutoAbierto }: { miId
     } catch { alert("No se pudo crear el evento."); } finally { setGuardando(false); }
   };
 
-  const eliminar = async (e: any) => {
-    if (!confirm(`¿Eliminar "${e.evento}"?`)) return;
-    await supabase2.from("espacio_eventos").delete().eq("id", e.id);
-    setEventos((prev) => prev.filter((x) => x.id !== e.id));
+  const eliminar = (e: any) => {
+    setConfirmDialog({
+      mensaje: `¿Eliminar "${e.evento}"?`,
+      accion: async () => {
+        await supabase2.from("espacio_eventos").delete().eq("id", e.id);
+        setEventos((prev) => prev.filter((x) => x.id !== e.id));
+      },
+    });
   };
 
   const hoy = new Date().toISOString().slice(0, 10);
@@ -108,6 +114,12 @@ export default function CalendarioTab({ miId, autoAbrir, onAutoAbierto }: { miId
           </div>
         </div>
       )}
+      <ConfirmDialog
+        abierto={!!confirmDialog}
+        mensaje={confirmDialog?.mensaje || ""}
+        onConfirmar={() => { confirmDialog?.accion(); setConfirmDialog(null); }}
+        onCancelar={() => setConfirmDialog(null)}
+      />
     </div>
   );
 }

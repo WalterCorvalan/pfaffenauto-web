@@ -50,7 +50,7 @@ export default function GaleriaVehiculo({ imagenes, altText }: GaleriaProps) {
             fill
             sizes="(max-width: 768px) 100vw, 66vw"
             priority={currentIndex === 0}
-            className="object-cover"
+            className="object-contain"
           />
         </AnimatePresence>
         

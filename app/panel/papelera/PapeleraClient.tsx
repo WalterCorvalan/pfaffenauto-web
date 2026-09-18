@@ -2,6 +2,7 @@
 
 import { useEffect, useState, useCallback } from "react";
 import { Trash2, Search, RotateCcw, Loader2, AlertTriangle } from "lucide-react";
+import ConfirmDialog from "@/components/panel/ConfirmDialog";
 
 type Tipo = "ventas" | "expedientes" | "clientes" | "taller_ordenes";
 
@@ -51,6 +52,7 @@ export default function PapeleraClient() {
   const [cargando, setCargando] = useState(true);
   const [busqueda, setBusqueda] = useState("");
   const [ocupadoId, setOcupadoId] = useState<string | null>(null);
+  const [confirmDialog, setConfirmDialog] = useState<{ mensaje: string; accion: () => void } | null>(null);
 
   const cargarConteos = useCallback(async () => {
     const res = await fetch("/api/panel/papelera");
@@ -84,14 +86,18 @@ export default function PapeleraClient() {
     cargarConteos();
   };
 
-  const eliminarDefinitivo = async (id: string) => {
-    if (!confirm("¿Eliminar definitivamente? Esto no se puede deshacer, ni siquiera desde acá.")) return;
-    setOcupadoId(id);
-    const res = await fetch("/api/panel/papelera", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ accion: "eliminar_definitivo", tipo: tab, id }) });
-    setOcupadoId(null);
-    if (!res.ok) { alert("No se pudo eliminar."); return; }
-    setItems((prev) => prev.filter((i) => i.id !== id));
-    cargarConteos();
+  const eliminarDefinitivo = (id: string) => {
+    setConfirmDialog({
+      mensaje: "¿Eliminar definitivamente? Esto no se puede deshacer, ni siquiera desde acá.",
+      accion: async () => {
+        setOcupadoId(id);
+        const res = await fetch("/api/panel/papelera", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ accion: "eliminar_definitivo", tipo: tab, id }) });
+        setOcupadoId(null);
+        if (!res.ok) { alert("No se pudo eliminar."); return; }
+        setItems((prev) => prev.filter((i) => i.id !== id));
+        cargarConteos();
+      },
+    });
   };
 
   const tabLabel = TABS.find((t) => t.value === tab)?.label.toLowerCase() || "";
@@ -151,6 +157,13 @@ export default function PapeleraClient() {
           )}
         </div>
       </div>
+
+      <ConfirmDialog
+        abierto={!!confirmDialog}
+        mensaje={confirmDialog?.mensaje || ""}
+        onConfirmar={() => { confirmDialog?.accion(); setConfirmDialog(null); }}
+        onCancelar={() => setConfirmDialog(null)}
+      />
     </div>
   );
 }

@@ -31,22 +31,31 @@ export async function POST(req: Request) {
     const { termino } = parsed.data;
 
     // Primero DB directa (match literal contra marca/modelo/versión) -- la
-    // mayoría de las búsquedas son un modelo tipeado tal cual ("Toyota
+    // mayoría de las búsquedas son marca + modelo tipeados tal cual ("Toyota
     // Hilux"), no necesitan que la IA las interprete. Solo se gasta un
     // llamado a la IA cuando el texto libre no matchea nada literal (typos,
     // sinónimos, "algo barato y automático", etc).
+    // Se matchea palabra por palabra (cada palabra en marca O modelo O
+    // versión, todas en la misma fila) en vez del término completo como una
+    // sola cadena -- "Toyota Corolla" antes nunca matcheaba directo porque
+    // ninguna columna tiene literalmente ese string ("modelo" solo guarda
+    // "Corolla"), así que cualquier búsqueda de marca+modelo ya caía a la IA
+    // sin necesidad. También evita el caso contrario: "bmw i8" (marca real,
+    // modelo que no existe en stock) ahora da 0 resultados directo sin
+    // gastar IA, en vez de interpretarlo como texto libre.
     // ".or()" de PostgREST usa "," y "()" como separadores propios -- se
     // sacan del término antes de armar el filtro para no romper la sintaxis
     // con texto libre que los traiga.
-    const terminoFiltro = termino.replace(/[,()]/g, " ").trim();
-    const { data: matchDirecto, count: countDirecto, error: errorDirecto } = terminoFiltro
-      ? await supabase
-          .from("vehiculos")
-          .select(`*, sucursales!vehiculos_sucursal_id_fkey ( nombre )`, { count: "exact" })
-          .in("estado", ["disponible", "reservado"])
-          .or(`marca.ilike.%${terminoFiltro}%,modelo.ilike.%${terminoFiltro}%,version.ilike.%${terminoFiltro}%`)
-          .order("created_at", { ascending: false })
-          .limit(24)
+    const palabras = termino.replace(/[,()]/g, " ").trim().split(/\s+/).filter(Boolean);
+    let queryDirecta = supabase
+      .from("vehiculos")
+      .select(`*, sucursales!vehiculos_sucursal_id_fkey ( nombre )`, { count: "exact" })
+      .in("estado", ["disponible", "reservado"]);
+    for (const palabra of palabras) {
+      queryDirecta = queryDirecta.or(`marca.ilike.%${palabra}%,modelo.ilike.%${palabra}%,version.ilike.%${palabra}%`);
+    }
+    const { data: matchDirecto, count: countDirecto, error: errorDirecto } = palabras.length > 0
+      ? await queryDirecta.order("created_at", { ascending: false }).limit(24)
       : { data: null, count: 0, error: null };
     if (errorDirecto) throw errorDirecto;
 
@@ -84,10 +93,8 @@ export async function POST(req: Request) {
     if (filtros.marca) query = query.eq("marca", filtros.marca);
     if (filtros.transmision) query = query.eq("transmision", filtros.transmision);
     if (filtros.combustible) query = query.eq("combustible", filtros.combustible);
-    // 0KM se define por vehiculos.condicion, nunca por km === 0 -- muchos
-    // usados tienen el km sin cargar (queda en 0/null sin ser 0km real).
-    if (filtros.condicion === "0km") query = query.eq("condicion", "0km");
-    else if (filtros.condicion === "usados") query = query.neq("condicion", "0km");
+    if (filtros.condicion === "0km") query = query.eq("km", 0);
+    else if (filtros.condicion === "usados") query = query.neq("km", 0);
     if (filtros.precio_max_usd) query = query.lte("precio_publicado_usd", filtros.precio_max_usd);
 
     query = query.order("created_at", { ascending: false }).limit(24);

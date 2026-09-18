@@ -16,6 +16,7 @@ import CotizacionDetalleModal from "./CotizacionDetalleModal";
 import ModificarCotizacionModal from "./ModificarCotizacionModal";
 import TasarUsadoModal from "./TasarUsadoModal";
 import TablaResponsiva, { type ColumnaTabla } from "@/components/panel/TablaResponsiva";
+import ConfirmDialog from "@/components/panel/ConfirmDialog";
 
 interface Cotizacion {
   id: string; cliente_id: string | null; cliente_nombre: string; vehiculo_id: string | null; vehiculo_descripcion: string | null; vendedor_id: string | null;
@@ -68,6 +69,7 @@ export default function CotizacionesClient({
   const [mensajeAtencion, setMensajeAtencion] = useState("");
   const [actualizandoId, setActualizandoId] = useState<string | null>(null);
   const [tasandoLead, setTasandoLead] = useState<LeadWeb | null>(null);
+  const [confirmDialog, setConfirmDialog] = useState<{ mensaje: string; accion: () => void } | null>(null);
 
   useEffect(() => {
     if (searchParams.get("nuevo") === "1") {
@@ -355,12 +357,16 @@ export default function CotizacionesClient({
           soyAdmin={soyAdmin}
           onClose={() => setDetalle(null)}
           onComentar={(texto) => comentar(detalle, texto)}
-          onEliminar={async () => {
-            if (!confirm("¿Eliminar esta cotización? No se puede deshacer.")) return;
-            const { error, count } = await supabase2.from("cotizaciones").delete({ count: "exact" }).eq("id", detalle.id);
-            if (error || !count) { alert("No se pudo eliminar (sin permiso o ya no existe)."); return; }
-            setCotizaciones((prev) => prev.filter((x) => x.id !== detalle.id));
-            setDetalle(null);
+          onEliminar={() => {
+            setConfirmDialog({
+              mensaje: "¿Eliminar esta cotización? No se puede deshacer.",
+              accion: async () => {
+                const { error, count } = await supabase2.from("cotizaciones").delete({ count: "exact" }).eq("id", detalle.id);
+                if (error || !count) { alert("No se pudo eliminar (sin permiso o ya no existe)."); return; }
+                setCotizaciones((prev) => prev.filter((x) => x.id !== detalle.id));
+                setDetalle(null);
+              },
+            });
           }}
           onEditar={() => { setEditando(detalle); setDetalle(null); }}
         />
@@ -376,6 +382,13 @@ export default function CotizacionesClient({
           onClose={() => setTasandoLead(null)}
         />
       )}
+
+      <ConfirmDialog
+        abierto={!!confirmDialog}
+        mensaje={confirmDialog?.mensaje || ""}
+        onConfirmar={() => { confirmDialog?.accion(); setConfirmDialog(null); }}
+        onCancelar={() => setConfirmDialog(null)}
+      />
     </div>
   );
 }

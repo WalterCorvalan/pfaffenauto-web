@@ -4,6 +4,7 @@ import { useState, useEffect, useMemo } from "react";
 import { supabase2 } from "@/lib/supabase/client";
 import { Plus, X, Save, Link2, Trash2, DollarSign, Pencil } from "lucide-react";
 import { inputClass, labelClass, fmt, badgeVencimiento } from "./shared";
+import ConfirmDialog from "@/components/panel/ConfirmDialog";
 
 export default function DeudasTab({ miId }: { miId: string }) {
   const [deudas, setDeudas] = useState<any[]>([]);
@@ -26,6 +27,7 @@ export default function DeudasTab({ miId }: { miId: string }) {
   const [guardandoPago, setGuardandoPago] = useState(false);
 
   const [vinculando, setVinculando] = useState<any | null>(null);
+  const [confirmDialog, setConfirmDialog] = useState<{ mensaje: string; accion: () => void } | null>(null);
 
   const cargar = async () => {
     const [{ data: d }, { data: c }] = await Promise.all([
@@ -78,10 +80,14 @@ export default function DeudasTab({ miId }: { miId: string }) {
     setAcreedor(""); setConcepto(""); setMoneda("ARS"); setMonto(""); setVencimiento(""); setNotas("");
   };
 
-  const eliminar = async (d: any) => {
-    if (!confirm(`¿Eliminar la deuda con ${d.acreedor}?`)) return;
-    await supabase2.from("espacio_deudas").delete().eq("id", d.id);
-    setDeudas((prev) => prev.filter((x) => x.id !== d.id));
+  const eliminar = (d: any) => {
+    setConfirmDialog({
+      mensaje: `¿Eliminar la deuda con ${d.acreedor}?`,
+      accion: async () => {
+        await supabase2.from("espacio_deudas").delete().eq("id", d.id);
+        setDeudas((prev) => prev.filter((x) => x.id !== d.id));
+      },
+    });
   };
 
   const abrirPago = (d: any) => { setPagando(d); setPagoMonto(String(saldoDeuda(d))); setPagoFecha(new Date().toISOString().slice(0, 10)); setPagoNotas(""); };
@@ -218,6 +224,13 @@ export default function DeudasTab({ miId }: { miId: string }) {
           </div>
         </div>
       )}
+
+      <ConfirmDialog
+        abierto={!!confirmDialog}
+        mensaje={confirmDialog?.mensaje || ""}
+        onConfirmar={() => { confirmDialog?.accion(); setConfirmDialog(null); }}
+        onCancelar={() => setConfirmDialog(null)}
+      />
     </div>
   );
 }

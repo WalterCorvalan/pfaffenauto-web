@@ -4,6 +4,7 @@ import { useState, useEffect } from "react";
 import { supabase2 } from "@/lib/supabase/client";
 import { Plus, X, Save, ListPlus, DollarSign, Trash2 } from "lucide-react";
 import { inputClass, labelClass, fmt, diasHasta, badgeVencimiento } from "./shared";
+import ConfirmDialog from "@/components/panel/ConfirmDialog";
 
 const FREQ_DIAS: Record<string, number> = { Mensual: 30, Bimestral: 60, Anual: 365 };
 
@@ -38,6 +39,7 @@ export default function CuotasCobrarTab({ miId }: { miId: string }) {
   const [cobroFecha, setCobroFecha] = useState(new Date().toISOString().slice(0, 10));
   const [cobroNotas, setCobroNotas] = useState("");
   const [guardandoCobro, setGuardandoCobro] = useState(false);
+  const [confirmDialog, setConfirmDialog] = useState<{ mensaje: string; accion: () => void } | null>(null);
 
   const cargar = async () => {
     const { data } = await supabase2.from("espacio_cuotas_cobrar").select("*").eq("perfil_id", miId).order("vencimiento");
@@ -86,10 +88,14 @@ export default function CuotasCobrarTab({ miId }: { miId: string }) {
     } catch (err: any) { console.error(err); alert(err?.message ? `No se pudo crear el plan: ${err.message}` : "No se pudo crear el plan."); } finally { setCreandoPlan(false); }
   };
 
-  const eliminar = async (c: any) => {
-    if (!confirm(`¿Eliminar la cuota "${c.concepto}"?`)) return;
-    await supabase2.from("espacio_cuotas_cobrar").delete().eq("id", c.id);
-    setCuotas((prev) => prev.filter((x) => x.id !== c.id));
+  const eliminar = (c: any) => {
+    setConfirmDialog({
+      mensaje: `¿Eliminar la cuota "${c.concepto}"?`,
+      accion: async () => {
+        await supabase2.from("espacio_cuotas_cobrar").delete().eq("id", c.id);
+        setCuotas((prev) => prev.filter((x) => x.id !== c.id));
+      },
+    });
   };
 
   const abrirCobro = (c: any) => { setCobrando(c); setCobroMonto(String(Number(c.monto) - Number(c.monto_cobrado))); setCobroFecha(new Date().toISOString().slice(0, 10)); setCobroNotas(""); };
@@ -217,6 +223,13 @@ export default function CuotasCobrarTab({ miId }: { miId: string }) {
           </div>
         </div>
       )}
+
+      <ConfirmDialog
+        abierto={!!confirmDialog}
+        mensaje={confirmDialog?.mensaje || ""}
+        onConfirmar={() => { confirmDialog?.accion(); setConfirmDialog(null); }}
+        onCancelar={() => setConfirmDialog(null)}
+      />
     </div>
   );
 }

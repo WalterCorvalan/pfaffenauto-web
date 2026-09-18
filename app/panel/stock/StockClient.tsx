@@ -4,6 +4,7 @@ import { useEffect, useMemo, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import * as XLSX from "xlsx";
 import { supabase2 } from "@/lib/supabase/client";
+import ConfirmDialog from "@/components/panel/ConfirmDialog";
 import {
   Search, Car, Globe, Download, Upload, FileText, Plus, Edit2,
   AlertTriangle, Clock, CheckCircle2, Tag, Trash2, TrendingUp, ChevronLeft, ChevronRight,
@@ -87,6 +88,7 @@ export default function StockClient({
   const router = useRouter();
   const searchParams = useSearchParams();
   const [vehiculos, setVehiculos] = useState(vehiculosIniciales);
+  const [confirmDialog, setConfirmDialog] = useState<{ mensaje: string; accion: () => void } | null>(null);
   const [mandatos, setMandatos] = useState(mandatosIniciales);
   const [catalogoConfig, setCatalogoConfig] = useState(catalogoConfigInicial);
   const [tab, setTab] = useState<Tab>("general");
@@ -135,13 +137,17 @@ export default function StockClient({
 
   const onCreadoVehiculo = (v: Vehiculo) => setVehiculos((prev) => (prev.some((x) => x.id === v.id) ? prev.map((x) => (x.id === v.id ? v : x)) : [v, ...prev]));
 
-  const eliminarVehiculo = async (v: Vehiculo) => {
-    if (!confirm(`¿Eliminar ${v.marca} ${v.modelo}? Esta acción no se puede deshacer.`)) return;
-    setOcupadoId(v.id);
-    const { error } = await supabase2.from("vehiculos").delete().eq("id", v.id);
-    if (!error) setVehiculos((prev) => prev.filter((x) => x.id !== v.id));
-    else alert("No se pudo eliminar (puede que solo admin pueda borrar vehículos).");
-    setOcupadoId(null);
+  const eliminarVehiculo = (v: Vehiculo) => {
+    setConfirmDialog({
+      mensaje: `¿Eliminar ${v.marca} ${v.modelo}? Esta acción no se puede deshacer.`,
+      accion: async () => {
+        setOcupadoId(v.id);
+        const { error } = await supabase2.from("vehiculos").delete().eq("id", v.id);
+        if (!error) setVehiculos((prev) => prev.filter((x) => x.id !== v.id));
+        else alert("No se pudo eliminar (puede que solo admin pueda borrar vehículos).");
+        setOcupadoId(null);
+      },
+    });
   };
 
   const onSenaGuardada = (vehiculoId: string) => setVehiculos((prev) => prev.map((x) => (x.id === vehiculoId ? { ...x, estado: "señado" } : x)));
@@ -154,7 +160,7 @@ export default function StockClient({
 
   const baseTab = useMemo(() => {
     if (tab === "consignaciones") return vehiculos.filter((v) => v.consignado_por);
-    if (tab === "0km") return vehiculos.filter((v) => v.condicion === "0km");
+    if (tab === "0km") return vehiculos.filter((v) => v.km === 0);
     return vehiculos;
   }, [vehiculos, tab]);
 
@@ -557,6 +563,12 @@ export default function StockClient({
       {modalImportar && <ImportarXlsxModal miId={miId} onClose={() => setModalImportar(false)} onImportados={(nuevos) => setVehiculos((prev) => [...nuevos, ...prev])} />}
       {senaVehiculo && <SenaModal vehiculo={senaVehiculo} miId={miId} onClose={() => setSenaVehiculo(null)} onGuardada={onSenaGuardada} />}
       {presupuestoVehiculo && <PresupuestoModal vehiculo={presupuestoVehiculo} miId={miId} onClose={() => setPresupuestoVehiculo(null)} />}
+      <ConfirmDialog
+        abierto={!!confirmDialog}
+        mensaje={confirmDialog?.mensaje || ""}
+        onConfirmar={() => { confirmDialog?.accion(); setConfirmDialog(null); }}
+        onCancelar={() => setConfirmDialog(null)}
+      />
     </div>
   );
 }

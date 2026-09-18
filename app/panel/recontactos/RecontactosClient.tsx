@@ -7,6 +7,7 @@ import {
   UserSearch, Search, MessageCircle, Ban, ThumbsUp, ThumbsDown, Undo2,
   Car, Handshake, Wrench, MessagesSquare, Send,
 } from "lucide-react";
+import ConfirmDialog from "@/components/panel/ConfirmDialog";
 
 interface Cliente {
   id: string; nombre: string; telefono: string | null; vehiculo_interes_texto: string | null;
@@ -85,6 +86,7 @@ export default function RecontactosClient({
   const [resultadoFiltro, setResultadoFiltro] = useState("");
   const [enviando, setEnviando] = useState<string | null>(null);
   const [segmentosLocal, setSegmentosLocal] = useState<Record<string, string>>({});
+  const [confirmDialog, setConfirmDialog] = useState<{ mensaje: string; accion: () => void } | null>(null);
 
   const perfilMap = useMemo(() => Object.fromEntries(perfiles.map((p) => [p.id, p.nombre])), [perfiles]);
   const miNombre = perfilMap[miId] || "el equipo";
@@ -204,10 +206,14 @@ export default function RecontactosClient({
     }
   };
 
-  const marcarNoContactar = async (c: Cliente) => {
-    if (!confirm(`¿Marcar a ${c.nombre} como "no contactar"? No va a recibir más mensajes de ninguna campaña.`)) return;
-    const { error } = await supabase2.from("clientes").update({ no_contactar: true }).eq("id", c.id);
-    if (!error) setClientes((prev) => prev.filter((x) => x.id !== c.id));
+  const marcarNoContactar = (c: Cliente) => {
+    setConfirmDialog({
+      mensaje: `¿Marcar a ${c.nombre} como "no contactar"? No va a recibir más mensajes de ninguna campaña.`,
+      accion: async () => {
+        const { error } = await supabase2.from("clientes").update({ no_contactar: true }).eq("id", c.id);
+        if (!error) setClientes((prev) => prev.filter((x) => x.id !== c.id));
+      },
+    });
   };
 
   const cambiarSegmento = (c: Cliente, segmento: string) => {
@@ -235,10 +241,14 @@ export default function RecontactosClient({
     }
   };
 
-  const deshacerRecontacto = async (r: Recontacto) => {
-    if (!confirm(`¿Deshacer este recontacto a ${r.cliente?.nombre}? Vuelve a estar disponible.`)) return;
-    const { error } = await supabase2.from("recontactos").delete().eq("id", r.id);
-    if (!error) setRecontactos((prev) => prev.filter((x) => x.id !== r.id));
+  const deshacerRecontacto = (r: Recontacto) => {
+    setConfirmDialog({
+      mensaje: `¿Deshacer este recontacto a ${r.cliente?.nombre}? Vuelve a estar disponible.`,
+      accion: async () => {
+        const { error } = await supabase2.from("recontactos").delete().eq("id", r.id);
+        if (!error) setRecontactos((prev) => prev.filter((x) => x.id !== r.id));
+      },
+    });
   };
 
   return (
@@ -424,6 +434,13 @@ export default function RecontactosClient({
           )}
         </div>
       </div>
+
+      <ConfirmDialog
+        abierto={!!confirmDialog}
+        mensaje={confirmDialog?.mensaje || ""}
+        onConfirmar={() => { confirmDialog?.accion(); setConfirmDialog(null); }}
+        onCancelar={() => setConfirmDialog(null)}
+      />
     </div>
   );
 }

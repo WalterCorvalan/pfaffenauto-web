@@ -3,6 +3,7 @@
 import { useState, useEffect, useRef } from "react";
 import { useSearchParams, useRouter } from "next/navigation";
 import { supabase2 } from "@/lib/supabase/client";
+import ConfirmDialog from "@/components/panel/ConfirmDialog";
 import {
   Search, Send, Bot, Check, Info, ChevronRight, PanelRight,
   Loader2, Megaphone, X, MessageSquareText, AtSign, Archive, ArchiveRestore, FileCheck2,
@@ -55,6 +56,7 @@ export default function ChatClient({
 
   const [creandoClienteManual, setCreandoClienteManual] = useState(false);
   const [guardandoCliente, setGuardandoCliente] = useState(false);
+  const [confirmDialog, setConfirmDialog] = useState<{ mensaje: string; accion: () => void } | null>(null);
   const [nuevoCliente, setNuevoCliente] = useState({ nombre: "", telefono: "", email: "", dni_cuit: "" });
 
   const [panelAbierto, setPanelAbierto] = useState(true);
@@ -273,24 +275,10 @@ export default function ChatClient({
     setCreandoClienteManual(true);
   };
 
-  const guardarClienteManual = async () => {
-    if (!nuevoCliente.nombre.trim()) { alert("El nombre es obligatorio."); return; }
+  const finalizarGuardadoCliente = async (clienteIdExistente: string | null) => {
     setGuardandoCliente(true);
     try {
-      let clienteId: string | null = null;
-      if (nuevoCliente.telefono.trim() || nuevoCliente.dni_cuit.trim()) {
-        const filtros: string[] = [];
-        if (nuevoCliente.telefono.trim()) filtros.push(`telefono.eq.${nuevoCliente.telefono.trim()}`);
-        if (nuevoCliente.dni_cuit.trim()) filtros.push(`dni_cuit.eq.${nuevoCliente.dni_cuit.trim()}`);
-        const { data: existentes } = await supabase2.from("clientes").select("id, nombre").or(filtros.join(","));
-        if (existentes && existentes.length > 0) {
-          if (!confirm(`Ya existe un cliente con ese teléfono/DNI: ${existentes[0].nombre}. ¿Usar ese en vez de crear uno nuevo?`)) {
-            setGuardandoCliente(false);
-            return;
-          }
-          clienteId = existentes[0].id;
-        }
-      }
+      let clienteId = clienteIdExistente;
       if (!clienteId) {
         const { data, error } = await supabase2.from("clientes").insert({
           nombre: nuevoCliente.nombre.trim(), telefono: nuevoCliente.telefono || null, email: nuevoCliente.email || null, dni_cuit: nuevoCliente.dni_cuit || null,
@@ -304,6 +292,31 @@ export default function ChatClient({
     } catch {
       alert("Error al crear el cliente.");
     } finally {
+      setGuardandoCliente(false);
+    }
+  };
+
+  const guardarClienteManual = async () => {
+    if (!nuevoCliente.nombre.trim()) { alert("El nombre es obligatorio."); return; }
+    setGuardandoCliente(true);
+    try {
+      if (nuevoCliente.telefono.trim() || nuevoCliente.dni_cuit.trim()) {
+        const filtros: string[] = [];
+        if (nuevoCliente.telefono.trim()) filtros.push(`telefono.eq.${nuevoCliente.telefono.trim()}`);
+        if (nuevoCliente.dni_cuit.trim()) filtros.push(`dni_cuit.eq.${nuevoCliente.dni_cuit.trim()}`);
+        const { data: existentes } = await supabase2.from("clientes").select("id, nombre").or(filtros.join(","));
+        if (existentes && existentes.length > 0) {
+          setConfirmDialog({
+            mensaje: `Ya existe un cliente con ese teléfono/DNI: ${existentes[0].nombre}. ¿Usar ese en vez de crear uno nuevo?`,
+            accion: () => { finalizarGuardadoCliente(existentes[0].id); },
+          });
+          setGuardandoCliente(false);
+          return;
+        }
+      }
+      await finalizarGuardadoCliente(null);
+    } catch {
+      alert("Error al crear el cliente.");
       setGuardandoCliente(false);
     }
   };
@@ -756,6 +769,12 @@ export default function ChatClient({
           </div>
         </div>
       )}
+      <ConfirmDialog
+        abierto={!!confirmDialog}
+        mensaje={confirmDialog?.mensaje || ""}
+        onConfirmar={() => { confirmDialog?.accion(); setConfirmDialog(null); }}
+        onCancelar={() => setConfirmDialog(null)}
+      />
     </div>
   );
 }

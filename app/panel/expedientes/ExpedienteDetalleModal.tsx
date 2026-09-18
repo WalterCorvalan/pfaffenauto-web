@@ -5,6 +5,7 @@ import { supabase2 } from "@/lib/supabase/client";
 import { X, Loader2, ChevronDown, MoreVertical, Lock, MessageCircle, Check, Upload, Plus, FileDown, Paperclip, Undo2 } from "lucide-react";
 import { fmtFechaLocal } from "@/lib/panel/fechas";
 import BoletoModal from "./BoletoModal";
+import ConfirmDialog from "@/components/panel/ConfirmDialog";
 
 const SECTORES = [
   { value: "ventas", label: "Ventas" }, { value: "gestoria", label: "Gestoría" }, { value: "finanzas", label: "Finanzas" },
@@ -35,6 +36,7 @@ interface Props {
 export default function ExpedienteDetalleModal({ expedienteId, miId, perfiles, soyAdmin, puedeOperacionCaida, puedeVerLiquidacion, gananciasOcultas, tabInicial, onClose, onActualizado, onEliminado }: Props) {
   const [expediente, setExpediente] = useState<any>(null);
   const [venta, setVenta] = useState<any>(null);
+  const [confirmDialog, setConfirmDialog] = useState<{ mensaje: string; accion: () => void } | null>(null);
   // Los datos personales del propietario/vendedor (DNI, email, fecha de
   // nacimiento, profesión) viven en vehiculos, no en ventas -- nombre y
   // teléfono sí están duplicados en ventas.propietario_nombre/_telefono
@@ -341,10 +343,14 @@ export default function ExpedienteDetalleModal({ expedienteId, miId, perfiles, s
     setNuevaCuentaBanco(""); setNuevaCuentaCbuAlias(""); setNuevaCuentaTitular(""); setNuevaCuentaImporte("");
   };
 
-  const eliminarCuentaRegistro = async (id: string) => {
-    if (!confirm("¿Eliminar esta cuenta del registro?")) return;
-    await supabase2.from("expediente_cuentas_registro").delete().eq("id", id);
-    setCuentasRegistro((prev) => prev.filter((c) => c.id !== id));
+  const eliminarCuentaRegistro = (id: string) => {
+    setConfirmDialog({
+      mensaje: "¿Eliminar esta cuenta del registro?",
+      accion: async () => {
+        await supabase2.from("expediente_cuentas_registro").delete().eq("id", id);
+        setCuentasRegistro((prev) => prev.filter((c) => c.id !== id));
+      },
+    });
   };
 
   const subirComprobante = async (file: File) => {
@@ -396,14 +402,18 @@ export default function ExpedienteDetalleModal({ expedienteId, miId, perfiles, s
   // error o la parte pidió corregir algo antes de que Gestoría/Tesorería
   // arranquen el trámite. Vuelve a bloquear el expediente si la otra parte
   // no está confirmada.
-  const revertirParte = async (parte: "comprador" | "consignacion") => {
-    if (!confirm(`¿Revertir la confirmación de ${parte === "comprador" ? "comprador" : "consignación"}? El expediente vuelve a quedar bloqueado hasta que se confirme de nuevo.`)) return;
-    const payload = parte === "comprador"
-      ? { confirmado_comprador: false, confirmado_comprador_en: null, confirmado_comprador_por: null }
-      : { confirmado_consignacion: false, confirmado_consignacion_en: null, confirmado_consignacion_por: null };
-    const { data } = await supabase2.from("expedientes").update(payload).eq("id", expedienteId).select("*, venta:ventas(*)").maybeSingle();
-    if (data) { setExpediente(data); onActualizado(data); }
-    else alert("No se pudo revertir la confirmación.");
+  const revertirParte = (parte: "comprador" | "consignacion") => {
+    setConfirmDialog({
+      mensaje: `¿Revertir la confirmación de ${parte === "comprador" ? "comprador" : "consignación"}? El expediente vuelve a quedar bloqueado hasta que se confirme de nuevo.`,
+      accion: async () => {
+        const payload = parte === "comprador"
+          ? { confirmado_comprador: false, confirmado_comprador_en: null, confirmado_comprador_por: null }
+          : { confirmado_consignacion: false, confirmado_consignacion_en: null, confirmado_consignacion_por: null };
+        const { data } = await supabase2.from("expedientes").update(payload).eq("id", expedienteId).select("*, venta:ventas(*)").maybeSingle();
+        if (data) { setExpediente(data); onActualizado(data); }
+        else alert("No se pudo revertir la confirmación.");
+      },
+    });
   };
 
   const agregarObservacion = async () => {
@@ -628,13 +638,17 @@ export default function ExpedienteDetalleModal({ expedienteId, miId, perfiles, s
     await cargar();
   };
 
-  const eliminar = async () => {
-    if (!confirm("¿Eliminar este expediente? Queda en Papelera, se puede restaurar (también revive la venta vinculada y devuelve el vehículo a disponible).")) return;
-    const motivo = prompt("Motivo (opcional):") || undefined;
-    const res = await fetch("/api/panel/papelera", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ accion: "eliminar", tipo: "expedientes", id: expedienteId, motivo }) });
-    if (!res.ok) { alert("No se pudo eliminar (sin permiso o ya no existe)."); return; }
-    onEliminado(expedienteId);
-    onClose();
+  const eliminar = () => {
+    setConfirmDialog({
+      mensaje: "¿Eliminar este expediente? Queda en Papelera, se puede restaurar (también revive la venta vinculada y devuelve el vehículo a disponible).",
+      accion: async () => {
+        const motivo = prompt("Motivo (opcional):") || undefined;
+        const res = await fetch("/api/panel/papelera", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ accion: "eliminar", tipo: "expedientes", id: expedienteId, motivo }) });
+        if (!res.ok) { alert("No se pudo eliminar (sin permiso o ya no existe)."); return; }
+        onEliminado(expedienteId);
+        onClose();
+      },
+    });
   };
 
   const pedirAtencion = async () => {
@@ -1625,6 +1639,13 @@ export default function ExpedienteDetalleModal({ expedienteId, miId, perfiles, s
           onClose={() => setBoletoTipo(null)}
         />
       )}
+
+      <ConfirmDialog
+        abierto={!!confirmDialog}
+        mensaje={confirmDialog?.mensaje || ""}
+        onConfirmar={() => { confirmDialog?.accion(); setConfirmDialog(null); }}
+        onCancelar={() => setConfirmDialog(null)}
+      />
     </div>
   );
 }

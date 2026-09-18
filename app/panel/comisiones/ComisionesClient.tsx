@@ -6,6 +6,7 @@ import { DollarSign, Plus, Filter, MessageSquare, Star, CheckCircle2, Clock, Wal
 import BonoModal from "./BonoModal";
 import PagoParcialModal from "./PagoParcialModal";
 import TablaResponsiva, { type ColumnaTabla } from "@/components/panel/TablaResponsiva";
+import ConfirmDialog from "@/components/panel/ConfirmDialog";
 
 export default function ComisionesClient({
   usuarioActualId,
@@ -33,6 +34,7 @@ export default function ComisionesClient({
   const [cuentaCobro, setCuentaCobro] = useState("");
   const [forzarSinResena, setForzarSinResena] = useState(false);
   const [cobrando, setCobrando] = useState(false);
+  const [confirmDialog, setConfirmDialog] = useState<{ mensaje: string; accion: () => void } | null>(null);
 
   const cargarComisiones = async () => {
     setCargando(true);
@@ -85,50 +87,61 @@ export default function ComisionesClient({
       : monedasPresentes.map((m) => `${prefijoMoneda(m)} ${(porMoneda[m] || 0).toLocaleString()}`).join(" · ");
 
   // Acciones
-  const alternarEstado = async (c: any) => {
-    try {
-      if (c.estado === "pendiente") {
-        // Marcar una comisión "cobrada" debita una cuenta real de caja
-        // (p_cuenta_id, ver confirmarCobroComision) -- no estaba gateado a
-        // admin/finanzas, a diferencia de la vuelta atrás ("Una vez cobrada,
-        // solo Administración puede volverla a pendiente", más abajo). Un
-        // vendedor podía pedirse un bono (BonoModal, aprobacion_pendiente:
-        // true) y auto-marcárselo cobrado sin que ningún admin lo hubiera
-        // aprobado -- el badge "Pendiente Aprobación" era solo decorativo,
-        // nada bloqueaba el click. Bug de plata real, encontrado en la
-        // auditoría de código.
-        if (!esAdminOFinanzas) {
-          alert("Solo Administración/Finanzas puede marcar una comisión como cobrada (implica debitar una cuenta real).");
-          return;
-        }
-
-        const faltaResena = configuracion.exigir_resena_comision && c.ventas && c.tipo !== "bono" &&
-          !c.ventas.venta_resenas_solicitudes?.some((r: any) => r.tipo === (c.tipo === "consignacion" ? "ex_dueno" : "comprador"));
-
-        if (faltaResena) {
-          if (!confirm("Falta la reseña del cliente. ¿Forzar el pago como administrador?")) return;
-        }
-
-        const restante = Number(c.monto) - Number(c.monto_pagado || 0);
-        if (restante > 0) {
-          setComisionParaCobrar(c);
-          setForzarSinResena(faltaResena && esAdminOFinanzas);
-          setCuentaCobro(cuentas.find((x) => x.moneda === c.moneda)?.id || "");
-          return;
-        }
-        const { error } = await supabase2.rpc("marcar_comision_cobrada", { p_comision_id: c.id, p_forzar_sin_resena: faltaResena && esAdminOFinanzas });
-        if (error) throw error;
-      } else {
-        if (!esAdminOFinanzas) {
-          alert("Una vez cobrada, solo Administración puede volverla a pendiente.");
-          return;
-        }
-        const { error } = await supabase2.rpc("cambiar_estado_comision", { p_comision_id: c.id, p_nuevo_estado: "pendiente" });
-        if (error) throw error;
+  const alternarEstado = (c: any) => {
+    if (c.estado === "pendiente") {
+      // Marcar una comisión "cobrada" debita una cuenta real de caja
+      // (p_cuenta_id, ver confirmarCobroComision) -- no estaba gateado a
+      // admin/finanzas, a diferencia de la vuelta atrás ("Una vez cobrada,
+      // solo Administración puede volverla a pendiente", más abajo). Un
+      // vendedor podía pedirse un bono (BonoModal, aprobacion_pendiente:
+      // true) y auto-marcárselo cobrado sin que ningún admin lo hubiera
+      // aprobado -- el badge "Pendiente Aprobación" era solo decorativo,
+      // nada bloqueaba el click. Bug de plata real, encontrado en la
+      // auditoría de código.
+      if (!esAdminOFinanzas) {
+        alert("Solo Administración/Finanzas puede marcar una comisión como cobrada (implica debitar una cuenta real).");
+        return;
       }
-      cargarComisiones();
-    } catch (err: any) {
-      alert(err.message || "Error al cambiar estado.");
+
+      const faltaResena = configuracion.exigir_resena_comision && c.ventas && c.tipo !== "bono" &&
+        !c.ventas.venta_resenas_solicitudes?.some((r: any) => r.tipo === (c.tipo === "consignacion" ? "ex_dueno" : "comprador"));
+
+      const marcarCobrada = async () => {
+        try {
+          const restante = Number(c.monto) - Number(c.monto_pagado || 0);
+          if (restante > 0) {
+            setComisionParaCobrar(c);
+            setForzarSinResena(faltaResena && esAdminOFinanzas);
+            setCuentaCobro(cuentas.find((x) => x.moneda === c.moneda)?.id || "");
+            return;
+          }
+          const { error } = await supabase2.rpc("marcar_comision_cobrada", { p_comision_id: c.id, p_forzar_sin_resena: faltaResena && esAdminOFinanzas });
+          if (error) throw error;
+          cargarComisiones();
+        } catch (err: any) {
+          alert(err.message || "Error al cambiar estado.");
+        }
+      };
+
+      if (faltaResena) {
+        setConfirmDialog({ mensaje: "Falta la reseña del cliente. ¿Forzar el pago como administrador?", accion: marcarCobrada });
+        return;
+      }
+      marcarCobrada();
+    } else {
+      if (!esAdminOFinanzas) {
+        alert("Una vez cobrada, solo Administración puede volverla a pendiente.");
+        return;
+      }
+      (async () => {
+        try {
+          const { error } = await supabase2.rpc("cambiar_estado_comision", { p_comision_id: c.id, p_nuevo_estado: "pendiente" });
+          if (error) throw error;
+          cargarComisiones();
+        } catch (err: any) {
+          alert(err.message || "Error al cambiar estado.");
+        }
+      })();
     }
   };
 
@@ -341,6 +354,12 @@ export default function ComisionesClient({
           </div>
         </div>
       )}
+      <ConfirmDialog
+        abierto={!!confirmDialog}
+        mensaje={confirmDialog?.mensaje || ""}
+        onConfirmar={() => { confirmDialog?.accion(); setConfirmDialog(null); }}
+        onCancelar={() => setConfirmDialog(null)}
+      />
     </div>
   );
 }

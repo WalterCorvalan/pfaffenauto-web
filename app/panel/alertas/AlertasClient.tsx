@@ -6,6 +6,7 @@ import { supabase2 } from "@/lib/supabase/client";
 import { CheckCircle2, X, Trash2, ChevronDown, ArrowRight } from "lucide-react";
 import { TIPO_ICON, TIPO_COLOR, TIPO_VER, ICONO_DEFECTO, COLOR_DEFECTO, TIPOS_RESUMEN } from "@/components/panel/alertaMeta";
 import { agruparAlertas, type AlertaAgrupada } from "@/lib/panel/agruparAlertas";
+import ConfirmDialog from "@/components/panel/ConfirmDialog";
 
 interface AlertaRaw {
   id: string;
@@ -27,6 +28,15 @@ const PRIORIDAD_INFO: Record<string, { label: string; dot: string; badge: string
 };
 const ORDEN = ["alta", "novedad", "media", "baja"] as const;
 
+function formatearFechaHora(iso: string) {
+  return new Date(iso).toLocaleString("es-AR", {
+    day: "2-digit",
+    month: "2-digit",
+    hour: "2-digit",
+    minute: "2-digit",
+  });
+}
+
 
 export default function AlertasClient({ alertasIniciales }: { alertasIniciales: AlertaRaw[]; miId: string }) {
   const router = useRouter();
@@ -34,6 +44,7 @@ export default function AlertasClient({ alertasIniciales }: { alertasIniciales: 
   const [borrandoTodas, setBorrandoTodas] = useState(false);
   const [colapsadas, setColapsadas] = useState<Set<string>>(new Set());
   const [alertaModal, setAlertaModal] = useState<Alerta | null>(null);
+  const [confirmDialog, setConfirmDialog] = useState<{ mensaje: string; accion: () => void } | null>(null);
 
   const conteos = useMemo(() => {
     const c = { alta: 0, novedad: 0, media: 0, baja: 0 };
@@ -69,13 +80,17 @@ export default function AlertasClient({ alertasIniciales }: { alertasIniciales: 
     if (a.link) router.push(a.link);
   };
 
-  const borrarTodas = async () => {
-    if (!confirm(`¿Borrar las ${alertas.length} alertas? No se puede deshacer.`)) return;
-    setBorrandoTodas(true);
-    const ids = alertas.flatMap((a) => a.idsGrupo);
-    setAlertas([]);
-    await supabase2.from("alertas").delete().in("id", ids);
-    setBorrandoTodas(false);
+  const borrarTodas = () => {
+    setConfirmDialog({
+      mensaje: `¿Borrar las ${alertas.length} alertas? No se puede deshacer.`,
+      accion: async () => {
+        setBorrandoTodas(true);
+        const ids = alertas.flatMap((a) => a.idsGrupo);
+        setAlertas([]);
+        await supabase2.from("alertas").delete().in("id", ids);
+        setBorrandoTodas(false);
+      },
+    });
   };
 
   const toggleColapsada = (p: string) => setColapsadas((prev) => { const n = new Set(prev); n.has(p) ? n.delete(p) : n.add(p); return n; });
@@ -154,6 +169,7 @@ export default function AlertasClient({ alertasIniciales }: { alertasIniciales: 
                                   {TIPO_VER[a.tipo] || "Ver más"} <ArrowRight className="w-3 h-3" />
                                 </button>
                               )}
+                              <p className="text-[10px] text-slate-400 dark:text-slate-500 mt-1.5">{formatearFechaHora(a.created_at)}</p>
                             </div>
                             <button onClick={() => cerrarAlerta(a)} className="p-1.5 text-slate-300 hover:text-rose-600 hover:bg-white/50 dark:hover:bg-black/20 rounded-lg transition-colors shrink-0"><X className="w-4 h-4" /></button>
                           </div>
@@ -186,6 +202,12 @@ export default function AlertasClient({ alertasIniciales }: { alertasIniciales: 
           </div>
         </div>
       )}
+      <ConfirmDialog
+        abierto={!!confirmDialog}
+        mensaje={confirmDialog?.mensaje || ""}
+        onConfirmar={() => { confirmDialog?.accion(); setConfirmDialog(null); }}
+        onCancelar={() => setConfirmDialog(null)}
+      />
     </div>
   );
 }

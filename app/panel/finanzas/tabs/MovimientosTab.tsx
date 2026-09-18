@@ -5,6 +5,7 @@ import { supabase2 } from "@/lib/supabase/client";
 import { Plus, X, Save, Trash2, ArrowLeftRight, Lock, Download, Search, Paperclip } from "lucide-react";
 import { inputClass, labelClass, fmt, CATEGORIAS_MOVIMIENTO as CATEGORIAS } from "./shared";
 import TablaResponsiva, { type ColumnaTabla } from "@/components/panel/TablaResponsiva";
+import ConfirmDialog from "@/components/panel/ConfirmDialog";
 
 function inicioSemana(d: Date) { const x = new Date(d); const dia = x.getDay(); x.setDate(x.getDate() - (dia === 0 ? 6 : dia - 1)); x.setHours(0, 0, 0, 0); return x; }
 
@@ -44,6 +45,7 @@ export default function MovimientosTab({
   const [guardandoT, setGuardandoT] = useState(false);
 
   const [showCierres, setShowCierres] = useState(false);
+  const [confirmDialog, setConfirmDialog] = useState<{ mensaje: string; accion: () => void } | null>(null);
 
   const filtrados = useMemo(() => {
     let l = movimientos;
@@ -137,19 +139,23 @@ export default function MovimientosTab({
     setMovimientos((prev: any[]) => prev.filter((x) => x.id !== m.id));
   };
 
-  const borrarTodos = async () => {
+  const borrarTodos = () => {
     if (!soyAdmin) return;
-    if (!confirm(`¿Eliminar los ${filtrados.length} movimientos de esta lista? No se puede deshacer fácil.`)) return;
-    const idsBorrados: string[] = [];
-    const fallidos: string[] = [];
-    for (const m of filtrados) {
-      const { error } = await supabase2.rpc("eliminar_movimiento_caja", { p_movimiento_id: m.id, p_motivo: "Borrado masivo" });
-      if (error) fallidos.push(m.id);
-      else idsBorrados.push(m.id);
-    }
-    const idsSet = new Set(idsBorrados);
-    setMovimientos((prev: any[]) => prev.filter((x) => !idsSet.has(x.id)));
-    if (fallidos.length > 0) alert(`${idsBorrados.length} eliminados, ${fallidos.length} fallaron (quizás mes cerrado). Revisá la lista.`);
+    setConfirmDialog({
+      mensaje: `¿Eliminar los ${filtrados.length} movimientos de esta lista? No se puede deshacer fácil.`,
+      accion: async () => {
+        const idsBorrados: string[] = [];
+        const fallidos: string[] = [];
+        for (const m of filtrados) {
+          const { error } = await supabase2.rpc("eliminar_movimiento_caja", { p_movimiento_id: m.id, p_motivo: "Borrado masivo" });
+          if (error) fallidos.push(m.id);
+          else idsBorrados.push(m.id);
+        }
+        const idsSet = new Set(idsBorrados);
+        setMovimientos((prev: any[]) => prev.filter((x) => !idsSet.has(x.id)));
+        if (fallidos.length > 0) alert(`${idsBorrados.length} eliminados, ${fallidos.length} fallaron (quizás mes cerrado). Revisá la lista.`);
+      },
+    });
   };
 
   const exportarCsv = () => {
@@ -389,6 +395,13 @@ export default function MovimientosTab({
           </div>
         </div>
       )}
+
+      <ConfirmDialog
+        abierto={!!confirmDialog}
+        mensaje={confirmDialog?.mensaje || ""}
+        onConfirmar={() => { confirmDialog?.accion(); setConfirmDialog(null); }}
+        onCancelar={() => setConfirmDialog(null)}
+      />
     </div>
   );
 }

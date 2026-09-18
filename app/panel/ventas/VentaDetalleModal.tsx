@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { supabase2 } from "@/lib/supabase/client";
+import ConfirmDialog from "@/components/panel/ConfirmDialog";
 import Link from "next/link";
 import { X, Loader2, Pencil, Trash2, ChevronDown, AlertTriangle, ShieldAlert, Check, Car, User, DollarSign, Percent, KeyRound, FolderKanban, History, Copy, Printer } from "lucide-react";
 import { fmtFechaLocal } from "@/lib/panel/fechas";
@@ -66,6 +67,7 @@ interface Props {
 
 export default function VentaDetalleModal({ ventaId, miId, soyAdmin, puedeOperacionCaida, cuentas, perfilMap, onClose, onActualizado, onEliminado, onEditar }: Props) {
   const [venta, setVenta] = useState<any>(null);
+  const [confirmDialog, setConfirmDialog] = useState<{ mensaje: string; accion: () => void } | null>(null);
   const [senas, setSenas] = useState<any[]>([]);
   const [cuotas, setCuotas] = useState<any[]>([]);
   const [cuotaParaCobrar, setCuotaParaCobrar] = useState<any>(null);
@@ -201,13 +203,17 @@ export default function VentaDetalleModal({ ventaId, miId, soyAdmin, puedeOperac
     setTimeout(() => setCodigoCopiado(false), 1800);
   };
 
-  const eliminar = async () => {
-    if (!confirm(`¿Eliminar la venta de ${venta.comprador_nombre}? Queda en Papelera, se puede restaurar (también revive el expediente vinculado y devuelve el vehículo a disponible).`)) return;
-    const motivo = prompt("Motivo (opcional):") || undefined;
-    const res = await fetch("/api/panel/papelera", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ accion: "eliminar", tipo: "ventas", id: ventaId, motivo }) });
-    if (!res.ok) { alert("No se pudo eliminar (sin permiso o ya no existe)."); return; }
-    onEliminado(ventaId);
-    onClose();
+  const eliminar = () => {
+    setConfirmDialog({
+      mensaje: `¿Eliminar la venta de ${venta.comprador_nombre}? Queda en Papelera, se puede restaurar (también revive el expediente vinculado y devuelve el vehículo a disponible).`,
+      accion: async () => {
+        const motivo = prompt("Motivo (opcional):") || undefined;
+        const res = await fetch("/api/panel/papelera", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ accion: "eliminar", tipo: "ventas", id: ventaId, motivo }) });
+        if (!res.ok) { alert("No se pudo eliminar (sin permiso o ya no existe)."); return; }
+        onEliminado(ventaId);
+        onClose();
+      },
+    });
   };
 
   const confirmarCobroCuota = async () => {
@@ -492,6 +498,12 @@ export default function VentaDetalleModal({ ventaId, miId, soyAdmin, puedeOperac
           </div>
         </div>
       )}
+      <ConfirmDialog
+        abierto={!!confirmDialog}
+        mensaje={confirmDialog?.mensaje || ""}
+        onConfirmar={() => { confirmDialog?.accion(); setConfirmDialog(null); }}
+        onCancelar={() => setConfirmDialog(null)}
+      />
     </div>
   );
 }

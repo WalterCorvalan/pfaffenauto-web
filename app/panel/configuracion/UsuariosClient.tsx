@@ -5,6 +5,7 @@ import Link from "next/link";
 import { Settings, UserPlus, Pencil, Trash2, Loader2, X, Users, UserCheck, UserX, MapPin, Search } from "lucide-react";
 import { supabase2 } from "@/lib/supabase/client";
 import TablaResponsiva, { type ColumnaTabla } from "@/components/panel/TablaResponsiva";
+import ConfirmDialog from "@/components/panel/ConfirmDialog";
 
 const ROLES = ["admin", "encargado", "ventas", "finanzas", "gestoria"] as const;
 const ROL_LABEL: Record<string, string> = { admin: "Admin", encargado: "Encargado", ventas: "Ventas", finanzas: "Finanzas", gestoria: "Gestoría" };
@@ -31,6 +32,7 @@ export default function UsuariosClient() {
   const [editandoSucursalId, setEditandoSucursalId] = useState<string | null>(null);
   const [guardandoSucursal, setGuardandoSucursal] = useState(false);
   const [eliminandoId, setEliminandoId] = useState<string | null>(null);
+  const [confirmDialog, setConfirmDialog] = useState<{ mensaje: string; accion: () => void } | null>(null);
 
   const cargar = async () => {
     setCargando(true);
@@ -47,17 +49,21 @@ export default function UsuariosClient() {
 
   useEffect(() => { cargar(); }, []);
 
-  const eliminar = async (u: Usuario) => {
-    if (!confirm(`¿Eliminar a ${u.nombre}? Esta acción no se puede deshacer.`)) return;
-    setEliminandoId(u.id);
-    try {
-      const res = await fetch(`/api/panel/usuarios?id=${u.id}`, { method: "DELETE" });
-      const data = await res.json();
-      if (!res.ok) return alert(data.error || "No se pudo eliminar.");
-      await cargar();
-    } finally {
-      setEliminandoId(null);
-    }
+  const eliminar = (u: Usuario) => {
+    setConfirmDialog({
+      mensaje: `¿Eliminar a ${u.nombre}? Esta acción no se puede deshacer.`,
+      accion: async () => {
+        setEliminandoId(u.id);
+        try {
+          const res = await fetch(`/api/panel/usuarios?id=${u.id}`, { method: "DELETE" });
+          const data = await res.json();
+          if (!res.ok) return alert(data.error || "No se pudo eliminar.");
+          await cargar();
+        } finally {
+          setEliminandoId(null);
+        }
+      },
+    });
   };
 
   const toggleActivo = async (u: Usuario) => {
@@ -213,6 +219,12 @@ export default function UsuariosClient() {
 
       {nuevo && <ModalNuevoUsuario sucursales={sucursales} onClose={() => setNuevo(false)} onSaved={() => { setNuevo(false); cargar(); }} />}
       {editando && <ModalEditarUsuario usuario={editando} sucursales={sucursales} onClose={() => setEditando(null)} onSaved={() => { setEditando(null); cargar(); }} />}
+      <ConfirmDialog
+        abierto={!!confirmDialog}
+        mensaje={confirmDialog?.mensaje || ""}
+        onConfirmar={() => { confirmDialog?.accion(); setConfirmDialog(null); }}
+        onCancelar={() => setConfirmDialog(null)}
+      />
     </div>
   );
 }
