@@ -11,6 +11,7 @@ interface VehiculoFinanciable {
   anio: number;
   km: number | null;
   precio_publicado_ars: number | null;
+  precio_publicado_usd?: number | null;
   sucursales: { nombre: string } | null;
 }
 

@@ -235,6 +235,7 @@ export default async function VehiculoDetallePage({
                   anio: auto.anio,
                   km: auto.km,
                   precio_publicado_ars: auto.precio_publicado_ars,
+                  precio_publicado_usd: auto.precio_publicado_usd,
                   sucursales: auto.sucursales,
                 }}
               />

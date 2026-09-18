@@ -5,6 +5,7 @@ import { createPortal } from "react-dom";
 import Script from "next/script";
 import { supabase2 as supabase } from "@/lib/supabase/client";
 import { getCanalOrigen, getUtmRaw } from "@/lib/utm";
+import { obtenerDolarBlue } from "@/lib/dolarBlue";
 import { CreditCard, X, CheckCircle2, Loader2, User, Phone, Mail, ArrowLeft, Search, Car } from "lucide-react";
 
 declare global {
@@ -23,6 +24,7 @@ interface VehiculoFinanciable {
   anio: number;
   km: number | null;
   precio_publicado_ars: number | null;
+  precio_publicado_usd?: number | null;
   sucursales: { nombre: string } | null;
 }
 
@@ -110,7 +112,7 @@ export default function SolicitarFinanciacionForm({ vehiculoPreseleccionado, cla
     const timeout = setTimeout(async () => {
       const { data } = await supabase
         .from("vehiculos")
-        .select("id, marca, modelo, anio, km, precio_publicado_ars, sucursales!vehiculos_sucursal_id_fkey ( nombre )")
+        .select("id, marca, modelo, anio, km, precio_publicado_ars, precio_publicado_usd, sucursales!vehiculos_sucursal_id_fkey ( nombre )")
         .eq("estado", "disponible")
         .or(`marca.ilike.%${busqueda}%,modelo.ilike.%${busqueda}%`)
         .limit(8);
@@ -120,7 +122,22 @@ export default function SolicitarFinanciacionForm({ vehiculoPreseleccionado, cla
     return () => clearTimeout(timeout);
   }, [busqueda, step]);
 
-  const precioVehiculo = vehiculo?.precio_publicado_ars || 0;
+  // Si el auto solo tiene precio cargado en USD (sin ARS), convertimos a
+  // dólar blue para poder simular igual -- antes "precio_publicado_ars || 0"
+  // dejaba el simulador en $0 y el botón deshabilitado para cualquier auto
+  // publicado solo en dólares (reportado con una Volkswagen Tiguan).
+  const [precioArsConvertido, setPrecioArsConvertido] = useState<number | null>(null);
+  useEffect(() => {
+    setPrecioArsConvertido(null);
+    if (!vehiculo || vehiculo.precio_publicado_ars || !vehiculo.precio_publicado_usd) return;
+    let cancelado = false;
+    obtenerDolarBlue()
+      .then(({ venta }) => { if (!cancelado) setPrecioArsConvertido(Math.round(vehiculo.precio_publicado_usd! * venta)); })
+      .catch(() => {});
+    return () => { cancelado = true; };
+  }, [vehiculo]);
+
+  const precioVehiculo = vehiculo?.precio_publicado_ars || precioArsConvertido || 0;
   const anticipoCliente = (precioVehiculo * anticipoPorcentaje) / 100;
   const montoAFinanciar = precioVehiculo - anticipoCliente;
 
@@ -325,7 +342,11 @@ export default function SolicitarFinanciacionForm({ vehiculoPreseleccionado, cla
                     onClick={() => setStep(3)}
                     className="w-full py-3.5 bg-[#0145F2] text-white font-black text-[10px] uppercase tracking-widest rounded-xl hover:bg-blue-600 transition-all disabled:opacity-50"
                   >
-                    {precioVehiculo ? "Continuar" : "Este auto no tiene precio publicado"}
+                    {precioVehiculo
+                      ? "Continuar"
+                      : vehiculo?.precio_publicado_usd
+                        ? "Calculando precio..."
+                        : "Este auto no tiene precio publicado"}
                   </button>
                 </div>
               )}
