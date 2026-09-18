@@ -5,10 +5,12 @@ import Link from "next/link";
 import Image from "next/image";
 import { Trash2, Heart, Phone, Car, ChevronRight, Sparkles } from "lucide-react";
 import { motion } from "framer-motion";
+import FavoritosPedidoModal from "@/components/modals/FavoritosPedidoModal";
 
 export default function FavoritosPage() {
   const [favoritos, setFavoritos] = useState<any[]>([]);
   const [mounted, setMounted] = useState(false);
+  const [modalPedidoAbierto, setModalPedidoAbierto] = useState(false);
 
   // Cargamos los favoritos desde el localStorage al iniciar
   useEffect(() => {
@@ -22,20 +24,6 @@ export default function FavoritosPage() {
     const nuevosFavs = favoritos.filter((f) => f.id !== id);
     setFavoritos(nuevosFavs);
     localStorage.setItem("pfaffen_favs", JSON.stringify(nuevosFavs));
-  };
-
-  const enviarPorWhatsApp = () => {
-    const numeroOficial = "5491121907000"; // Tu número oficial
-    let mensaje = "¡Hola Pfaffen Autos! 🚘 Estoy interesado en estos vehículos que guardé en mis favoritos:%0A%0A";
-    
-    favoritos.forEach((fav, index) => {
-      mensaje += `*${index + 1}. ${fav.marca} ${fav.modelo}*%0A`;
-      mensaje += `💵 Precio: ${fav.precio_usd ? `US$${fav.precio_usd.toLocaleString("en-US")}` : `$${fav.precio_ars?.toLocaleString("es-AR")}`}%0A`;
-      mensaje += `🔗 Link: https://www.pfaffencars.com/catalogo/${fav.slug}%0A%0A`;
-    });
-
-    mensaje += "Me gustaría recibir más información. ¡Gracias!";
-    window.open(`https://wa.me/${numeroOficial}?text=${mensaje}`, "_blank");
   };
 
   // Evitamos renderizar hasta que el cliente esté montado
@@ -83,11 +71,11 @@ export default function FavoritosPage() {
 
         {/* BOTÓN WHATSAPP GLOBAL (CENTRALIZADO Y MASIVO) */}
         {favoritos.length > 0 && (
-          <button 
-            onClick={enviarPorWhatsApp}
+          <button
+            onClick={() => setModalPedidoAbierto(true)}
             className="bg-red-500 hover:bg-red-600 text-white font-black text-xs uppercase tracking-widest px-8 py-4 rounded-2xl transition-all shadow-xl shadow-red-500/20 flex items-center justify-center gap-3 active:scale-95 shrink-0"
           >
-            <Phone className="w-5 h-5" /> 
+            <Phone className="w-5 h-5" />
             Consultar por {favoritos.length} {favoritos.length === 1 ? 'auto' : 'autos'}
           </button>
         )}
@@ -202,6 +190,12 @@ export default function FavoritosPage() {
           </div>
         )}
       </div>
+
+      <FavoritosPedidoModal
+        isOpen={modalPedidoAbierto}
+        favoritos={favoritos}
+        onClose={() => setModalPedidoAbierto(false)}
+      />
     </div>
   );
 }

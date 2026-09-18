@@ -198,6 +198,11 @@ export default function BuscadorFallback({ isOpen, onClose, busquedaPrevia = "" 
               {error && <p className="text-rose-600 text-xs font-semibold text-center">{error}</p>}
 
               <div ref={turnstileRef} className="flex justify-center" />
+              {!turnstileToken && (
+                <p className="text-slate-400 text-[11px] text-center flex items-center justify-center gap-1.5">
+                  <Loader2 className="w-3 h-3 animate-spin" /> Cargando verificación anti-spam...
+                </p>
+              )}
 
               <div className="pt-2">
                 <button
