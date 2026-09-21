@@ -63,7 +63,8 @@ export default function MensajesBubble() {
       setMiembrosGrupo([]);
       await cargar();
       abrirVentana({ id: nuevo.id, tipo: "grupo", nombre: nombreGrupo.trim(), par_clave: null, created_at: new Date().toISOString() });
-    } catch {
+    } catch (err) {
+      console.error("crearGrupo", err);
       alert("No se pudo crear el grupo.");
     } finally {
       setCreandoGrupo(false);
