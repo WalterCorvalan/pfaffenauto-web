@@ -14,6 +14,7 @@ interface Props {
   cotizacionesPorVendedor: any[]; stockPorEstado: any[]; stockPorMarca: any[]; infraccionesPorMes: any[];
   servicePosventaInicial: any;
   consultasVsVentas: any[];
+  ventasPorOrigenInicial: any[];
 }
 
 const ESTADO_COT_LABEL: Record<string, string> = { pendiente: "Pendiente", aprobada: "Aprobada", rechazada: "Rechazada" };
@@ -78,6 +79,7 @@ export default function ReportesClient(props: Props) {
   const [expedientesResumen, setExpedientesResumen] = useState(props.expedientesResumenInicial);
   const [infraccionesResumen, setInfraccionesResumen] = useState(props.infraccionesResumenInicial);
   const [tallerFacturacion, setTallerFacturacion] = useState(props.tallerFacturacionInicial);
+  const [ventasPorOrigen, setVentasPorOrigen] = useState(props.ventasPorOrigenInicial);
 
   const hoy = new Date();
   const mesBase = useMemo(() => new Date(hoy.getFullYear(), hoy.getMonth() + mesOffset, 1), [mesOffset]);
@@ -100,6 +102,16 @@ export default function ReportesClient(props: Props) {
     const h = new Date(base.getFullYear(), base.getMonth() + 1, 0).toISOString().slice(0, 10);
     const { data } = await supabase2.rpc("ranking_ventas", { p_desde: d, p_hasta: h });
     setRanking(data || []);
+
+    const { data: ventasOrigenRaw } = await supabase2.from("ventas").select("vehiculo_id, vehiculos(origen)").eq("estado", "cerrada").gte("fecha_cierre", d).lte("fecha_cierre", h);
+    const conteoOrigen = (ventasOrigenRaw || []).reduce((acc: Record<string, number>, v: { vehiculos: { origen: string } | { origen: string }[] | null }) => {
+      const vehiculo = Array.isArray(v.vehiculos) ? v.vehiculos[0] : v.vehiculos;
+      const origen = vehiculo?.origen || "Sin dato";
+      acc[origen] = (acc[origen] || 0) + 1;
+      return acc;
+    }, {});
+    setVentasPorOrigen(Object.entries(conteoOrigen).map(([origen, cantidad]) => ({ origen, cantidad })));
+
     setCargando(false);
   };
 
@@ -121,6 +133,7 @@ export default function ReportesClient(props: Props) {
   const maxClientesVend = Math.max(1, ...props.clientesPorVendedor.map((v: any) => Number(v.clientes) || 0));
   const maxCotVend = Math.max(1, ...props.cotizacionesPorVendedor.map((v: any) => Number(v.cotizaciones) || 0));
   const maxStockMarca = Math.max(1, ...props.stockPorMarca.map((v: any) => Number(v.cantidad) || 0));
+  const maxOrigen = Math.max(1, ...ventasPorOrigen.map((v: any) => Number(v.cantidad) || 0));
 
   // Nunca mezclar ARS y USD en el mismo eje/serie — se pivotea a una
   // columna por moneda en vez de sumar todo en un solo "monto".
@@ -287,6 +300,11 @@ export default function ReportesClient(props: Props) {
             <StatTile label="Con permuta" valor={`${props.composicionVentas.con_permuta} · ${props.composicionVentas.pct_permuta || 0}%`} tono="bg-indigo-50 dark:bg-indigo-500/10 border-indigo-100 dark:border-indigo-500/20" />
           </div>
           {props.composicionVentas.total_cerradas === 0 && <p className="text-xs text-slate-400 text-center py-4">Sin ventas cerradas todavía.</p>}
+        </Card>
+
+        <Card title="Ventas por Origen del Vehículo">
+          {ventasPorOrigen.map((v: any) => <BarRow key={v.origen} label={v.origen} valor={Number(v.cantidad)} max={maxOrigen} color="bg-amber-500" />)}
+          {ventasPorOrigen.length === 0 && <p className="text-xs text-slate-400 text-center py-4">Sin ventas cerradas este mes.</p>}
         </Card>
 
         <Card title="Origen de Leads">
