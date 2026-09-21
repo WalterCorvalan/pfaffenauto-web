@@ -14,14 +14,14 @@ export default async function ClientesPage() {
   // completa igual que admin/recepción (bug real: quedaba tratado como
   // vendedor común y, con el toggle de abajo prendido, se le filtraba por
   // vendedor_id = su propio id, así que la lista le quedaba vacía).
-  const esAdminRecepcionOEncargado = miPerfil?.roles?.some((r: string) => ["admin", "recepcion", "encargado"].includes(r)) || false;
+  const esAdminOEncargado = miPerfil?.roles?.some((r: string) => ["admin", "encargado"].includes(r)) || false;
   // Configuración → Empresa → "Cada vendedor ve solo sus clientes": con el
   // toggle prendido, un vendedor (no admin/recepción/encargado) solo ve los
   // clientes que tiene asignados -- ni los de otros vendedores ni los sin
   // asignar (ver el aviso exacto en EmpresaClient.tsx). El toggle se
   // guardaba desde que se creó Configuración → Empresa pero nada lo leía
   // todavía.
-  const restringirAMisClientes = !!config?.cada_vendedor_ve_solo_sus_clientes && !esAdminRecepcionOEncargado;
+  const restringirAMisClientes = !!config?.cada_vendedor_ve_solo_sus_clientes && !esAdminOEncargado;
 
   let queryClientes = supabase.from("clientes").select("*").order("created_at", { ascending: false }).limit(5000);
   // El toggle restringe leads (todavía no compraron), no clientes reales --

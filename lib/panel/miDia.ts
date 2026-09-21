@@ -89,17 +89,6 @@ async function leadsSinContestar(supabase: SupabaseClient, soloVendedorId?: stri
   return lista.sort((a, b) => (a.vendedorId ? 1 : 0) - (b.vendedorId ? 1 : 0));
 }
 
-export async function paraHoyRecepcion(supabase: SupabaseClient) {
-  const [sinContestar, { data: visitas }] = await Promise.all([
-    leadsSinContestar(supabase),
-    (async () => {
-      const hoyStr = new Date().toISOString().slice(0, 10);
-      return supabase.from("visitas").select("id, nombre_cliente, fecha_visita, sucursal").lt("fecha_visita", hoyStr).in("estado", ["Pendiente", "Confirmada"]).order("fecha_visita", { ascending: true }).limit(6);
-    })(),
-  ]);
-  return { sinContestar: sinContestar.slice(0, 6), visitasSinRegistrar: visitas || [] };
-}
-
 export async function colaVendedor(supabase: SupabaseClient, vendedorId: string) {
   const [leads, { data: reservas }] = await Promise.all([
     leadsSinContestar(supabase, vendedorId),

@@ -1,6 +1,6 @@
 import { createClient } from "@/lib/supabase/server";
 import MiEspacioClient from "./MiEspacioClient";
-import { paraHoyGestoria, paraHoyFinanzas, paraHoyRecepcion, colaVendedor, carteraVendedor } from "@/lib/panel/miDia";
+import { paraHoyGestoria, paraHoyFinanzas, colaVendedor, carteraVendedor } from "@/lib/panel/miDia";
 
 export const metadata = { title: "Mi Espacio | Pfaffen Autos" };
 
@@ -64,10 +64,9 @@ export default async function MiEspacioPage() {
 
   // "Para hoy" por rol -- solo se piden los datos del rol que corresponde,
   // no todo para todos. Ver lib/panel/miDia.ts (todo de solo lectura).
-  const [paraHoyGestoriaData, paraHoyFinanzasData, paraHoyRecepcionData, colaVendedorData, carteraVendedorData] = await Promise.all([
+  const [paraHoyGestoriaData, paraHoyFinanzasData, colaVendedorData, carteraVendedorData] = await Promise.all([
     roles.includes("gestoria") ? paraHoyGestoria(supabase) : Promise.resolve(null),
     roles.includes("finanzas") ? paraHoyFinanzas(supabase) : Promise.resolve(null),
-    roles.includes("recepcion") ? paraHoyRecepcion(supabase) : Promise.resolve(null),
     roles.includes("ventas") && user ? colaVendedor(supabase, user.id) : Promise.resolve(null),
     roles.includes("ventas") && user ? carteraVendedor(supabase, user.id) : Promise.resolve(null),
   ]);
@@ -89,7 +88,6 @@ export default async function MiEspacioPage() {
       gastosFijosPorMoneda={gastosFijosPorMoneda}
       paraHoyGestoria={paraHoyGestoriaData}
       paraHoyFinanzas={paraHoyFinanzasData}
-      paraHoyRecepcion={paraHoyRecepcionData}
       colaVendedor={colaVendedorData}
       carteraVendedor={carteraVendedorData}
     />

@@ -8,9 +8,9 @@ export default async function NpsPage() {
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) return null;
 
-  // Traer el perfil actual para saber si es admin/recepción
+  // Traer el perfil actual para saber si es admin
   const { data: miPerfil } = await supabase.from("perfiles").select("roles").eq("id", user.id).single();
-  const esAdminORecepcion = miPerfil?.roles?.some((r: string) => ["admin", "recepcion"].includes(r)) || false;
+  const esAdminORecepcion = miPerfil?.roles?.includes("admin") || false;
 
   // Datos iniciales
   const [
