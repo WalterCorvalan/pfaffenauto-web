@@ -34,21 +34,21 @@ function ProgressStepper({ currentStep }: { currentStep: number }) {
   ];
 
   return (
-    <div className="flex items-start mb-10 w-full max-w-sm">
+    <div className="flex items-start mb-4 lg:mb-10 w-full max-w-sm">
       {steps.map((step, idx) => {
         const isActive = currentStep >= step.num;
         return (
           <div key={step.num} className="flex items-start flex-1 last:flex-none">
-            <div className="flex flex-col items-center gap-2 w-8">
-              <div className={`w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold shrink-0 transition-colors duration-300 ${isActive ? "bg-blue-600 dark:bg-blue-500 text-white" : "bg-transparent border border-slate-300 dark:border-slate-700 text-slate-400 dark:text-slate-500"}`}>
+            <div className="flex flex-col items-center gap-1 lg:gap-2 w-8">
+              <div className={`w-6 h-6 lg:w-8 lg:h-8 rounded-full flex items-center justify-center text-[10px] lg:text-xs font-bold shrink-0 transition-colors duration-300 ${isActive ? "bg-blue-600 dark:bg-blue-500 text-white" : "bg-transparent border border-slate-300 dark:border-slate-700 text-slate-400 dark:text-slate-500"}`}>
                 {step.num}
               </div>
-              <span className={`text-[9px] uppercase tracking-widest whitespace-nowrap ${isActive ? "text-slate-700 dark:text-slate-300 font-bold" : "text-slate-400 dark:text-slate-600"}`}>
+              <span className={`text-[8px] lg:text-[9px] uppercase tracking-widest whitespace-nowrap ${isActive ? "text-slate-700 dark:text-slate-300 font-bold" : "text-slate-400 dark:text-slate-600"}`}>
                 {step.label}
               </span>
             </div>
             {idx < steps.length - 1 && (
-              <div className={`h-[1px] flex-1 mx-3 mt-4 transition-colors duration-300 ${isActive ? "bg-blue-500/50" : "bg-slate-200 dark:bg-slate-800"}`} />
+              <div className={`h-[1px] flex-1 mx-3 mt-3 lg:mt-4 transition-colors duration-300 ${isActive ? "bg-blue-500/50" : "bg-slate-200 dark:bg-slate-800"}`} />
             )}
           </div>
         );
@@ -394,16 +394,16 @@ export default function ConsignarForm() {
       </div>
 
       {/* ================= ZONA DERECHA: CONFIGURADOR ================= */}
-      <div className="w-full lg:w-[45%] h-auto bg-white dark:bg-[#0a0a0f] flex flex-col items-center pt-8 lg:pt-10 pb-10 px-6 lg:px-12">
+      <div className="w-full lg:w-[45%] h-auto bg-white dark:bg-[#0a0a0f] flex flex-col items-center pt-4 lg:pt-10 pb-10 px-6 lg:px-12">
         <div className="w-full max-w-md">
 
           <ProgressStepper currentStep={step} />
 
-          <div className="mb-8">
-            <h2 className="text-2xl font-black text-slate-900 dark:text-white tracking-tight mb-2">
+          <div className="mb-4 lg:mb-8">
+            <h2 className="text-lg lg:text-2xl font-black text-slate-900 dark:text-white tracking-tight mb-1 lg:mb-2">
               Configurá tu vehículo
             </h2>
-            <p className="text-sm text-slate-500 dark:text-slate-400">
+            <p className="hidden lg:block text-sm text-slate-500 dark:text-slate-400">
               {step === 1 && "Completá los datos y comenzá a ver tu auto en tiempo real."}
               {step === 2 && "Detalles técnicos adicionales del vehículo."}
               {step === 3 && "Dejanos tus datos para que un asesor te contacte."}
