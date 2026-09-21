@@ -268,13 +268,23 @@ export default function ConsignarForm() {
         <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_50%,rgba(1,69,242,0.08),transparent_60%)]" />
         <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[80%] h-[20%] bg-blue-500/10 dark:bg-blue-500/20 blur-[100px] rounded-full" />
 
-        {/* Header Preview -- en mobile, pill compacta de una sola línea (mismo
-            lenguaje visual que el badge de KM) en vez del bloque de 2 líneas,
-            que ocupaba espacio de la preview sin aportar nada nuevo. */}
-        <div className="absolute top-4 left-4 lg:top-6 lg:left-6 z-20">
-          <div className="flex lg:hidden items-center gap-1.5 bg-white/70 dark:bg-black/40 backdrop-blur-md border border-slate-200 dark:border-white/10 rounded-full px-3 py-1.5 shadow-sm dark:shadow-none">
-            <CarFront className="w-3.5 h-3.5 text-blue-600 dark:text-blue-400 shrink-0" />
-            <span className="text-[10px] font-bold text-slate-700 dark:text-slate-200">Consignación</span>
+        {/* Header Preview -- en mobile, en vez de un pill fijo tipo
+            "Consignación" (no aportaba info nueva) se muestran ahí mismo los
+            datos ya cargados (Año/Marca/Modelo/Versión), mismo lenguaje
+            visual que el badge de KM. Solo aparece una vez hay algo cargado. */}
+        <div className="absolute top-4 left-4 right-4 lg:top-6 lg:left-6 lg:right-auto z-20">
+          <div className="flex lg:hidden items-center gap-1.5 overflow-x-auto pr-24">
+            {[
+              { value: anio, icon: CalendarDays },
+              { value: marca, icon: CarFront },
+              { value: modelo, icon: Settings2 },
+              { value: version, icon: Zap },
+            ].filter((item) => item.value).map((item, i) => (
+              <div key={i} className="shrink-0 bg-white/70 dark:bg-black/40 backdrop-blur-md border border-slate-200 dark:border-white/10 rounded-full px-3 py-1.5 flex items-center gap-1.5 shadow-sm dark:shadow-none">
+                <item.icon className="w-3 h-3 text-blue-600 dark:text-blue-400 shrink-0" />
+                <span className="text-[10px] font-bold text-slate-900 dark:text-white truncate max-w-[90px]">{item.value}</span>
+              </div>
+            ))}
           </div>
           <div className="hidden lg:flex items-center gap-3">
             <CarFront className="w-6 h-6 text-blue-600 dark:text-blue-400 shrink-0" />
@@ -380,23 +390,8 @@ export default function ConsignarForm() {
           </AnimatePresence>
         </div>
 
-        {/* Bottom Bar: Datos recopilados -- en mobile, renglón de pills de una
-            sola línea (icono + valor, mismo lenguaje que el badge de KM) en
-            vez de las 4 tarjetas en grilla 2x2, que ocupaban media pantalla. */}
-        <div className="lg:hidden absolute bottom-3 left-3 right-3 z-20 flex gap-1.5 overflow-x-auto">
-          {[
-            { label: "Año", value: anio, icon: CalendarDays },
-            { label: "Marca", value: marca, icon: CarFront },
-            { label: "Modelo", value: modelo, icon: Settings2 },
-            { label: "Versión", value: version, icon: Zap }
-          ].filter((item) => item.value).map((item, i) => (
-            <div key={i} className="shrink-0 bg-white/70 dark:bg-black/40 backdrop-blur-md border border-slate-200 dark:border-white/10 rounded-full px-3 py-1.5 flex items-center gap-1.5 shadow-sm dark:shadow-none">
-              <item.icon className="w-3 h-3 text-blue-600 dark:text-blue-400 shrink-0" />
-              <span className="text-[10px] font-bold text-slate-900 dark:text-white truncate max-w-[90px]">{item.value}</span>
-            </div>
-          ))}
-        </div>
-
+        {/* Bottom Bar: Datos recopilados -- solo desktop (en mobile se
+            muestran arriba, ver Header Preview). */}
         <div className="hidden lg:flex absolute bottom-6 left-10 right-10 flex-wrap gap-4 z-20">
           {[
             { label: "Año", value: anio, icon: CalendarDays },
@@ -418,7 +413,7 @@ export default function ConsignarForm() {
       </div>
 
       {/* ================= ZONA DERECHA: CONFIGURADOR ================= */}
-      <div className="w-full lg:w-[45%] h-auto bg-white dark:bg-[#0a0a0f] flex flex-col items-center pt-4 lg:pt-10 pb-10 px-6 lg:px-12">
+      <div className="w-full lg:w-[45%] h-auto bg-white dark:bg-[#0a0a0f] flex flex-col items-center pt-2 lg:pt-10 pb-10 px-6 lg:px-12">
         <div className="w-full max-w-md">
 
           <ProgressStepper currentStep={step} />
