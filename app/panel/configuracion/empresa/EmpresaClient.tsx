@@ -6,7 +6,7 @@ import { Settings, Loader2 } from "lucide-react";
 import { supabase2 } from "@/lib/supabase/client";
 import TablaResponsiva, { type ColumnaTabla } from "@/components/panel/TablaResponsiva";
 import { MODULOS_CATALOGO, SECTORES, SECTOR_LABEL } from "@/lib/panel/modulosCatalogo";
-import { TOPES_FINANCIACION_DEFAULT, TOPE_0KM_DEFAULT, TNA_POR_PLAZO_DEFAULT, GASTOS_PCT_DEFAULT, PLAZOS_DISPONIBLES, type TopeFinanciacion } from "@/lib/panel/financiacion";
+import { TOPES_FINANCIACION_DEFAULT, TOPE_0KM_DEFAULT, TNA_POR_PLAZO_DEFAULT, GASTOS_PCT_DEFAULT, PLAZOS_DISPONIBLES, UVA_DESCUENTO_PCT_DEFAULT, PLAZOS_CON_UVA, type TopeFinanciacion } from "@/lib/panel/financiacion";
 
 const MODULO_LABEL: Record<string, string> = Object.fromEntries(MODULOS_CATALOGO.map((m) => [m.modulo, m.label]));
 
@@ -499,6 +499,7 @@ interface ConfigFinanciacion {
   financiacion_tope_0km: number;
   financiacion_tna: Record<string, number>;
   financiacion_gastos_pct: number;
+  financiacion_uva_descuento: Record<string, number>;
 }
 
 function FinanciacionConfig() {
@@ -516,6 +517,7 @@ function FinanciacionConfig() {
         financiacion_tope_0km: data.config.financiacion_tope_0km ?? TOPE_0KM_DEFAULT,
         financiacion_tna: Object.keys(data.config.financiacion_tna || {}).length ? data.config.financiacion_tna : TNA_POR_PLAZO_DEFAULT,
         financiacion_gastos_pct: data.config.financiacion_gastos_pct ?? GASTOS_PCT_DEFAULT,
+        financiacion_uva_descuento: Object.keys(data.config.financiacion_uva_descuento || {}).length ? data.config.financiacion_uva_descuento : UVA_DESCUENTO_PCT_DEFAULT,
       });
     }
     setCargando(false);
@@ -543,6 +545,11 @@ function FinanciacionConfig() {
   const actualizarTna = (plazo: number, valor: number) => {
     if (!config) return;
     guardar({ financiacion_tna: { ...config.financiacion_tna, [String(plazo)]: valor } });
+  };
+
+  const actualizarUva = (plazo: number, valor: number) => {
+    if (!config) return;
+    guardar({ financiacion_uva_descuento: { ...config.financiacion_uva_descuento, [String(plazo)]: valor } });
   };
 
   if (cargando || !config) return <div className="p-8 flex justify-center"><Loader2 className="w-5 h-5 animate-spin text-slate-400" /></div>;
@@ -586,6 +593,22 @@ function FinanciacionConfig() {
               <label className="text-[11px] font-semibold text-slate-500 block mb-1">{p} cuotas</label>
               <div className="flex items-center gap-1">
                 <input type="number" step="0.1" defaultValue={config.financiacion_tna[String(p)] ?? ""} onBlur={(e) => actualizarTna(p, Number(e.target.value))} className={inputClass} />
+                <span className="text-xs text-slate-400 shrink-0">%</span>
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
+
+      <div className="bg-white dark:bg-white/[0.02] border border-slate-200 dark:border-white/5 rounded-2xl p-5 space-y-3">
+        <p className="text-sm font-bold text-slate-800 dark:text-white mb-1">Descuento de la 1ª cuota UVA vs Tradicional (solo 12/18/24)</p>
+        <p className="text-xs text-slate-400 mb-2">UVA en decreditos solo existe hasta 24 cuotas y no es una cuota fija — se actualiza mes a mes por inflación. Esto es cuánto más baja arranca la primera cuota UVA respecto a la Tradicional del mismo plazo, sobre la misma tasa/capital.</p>
+        <div className="grid grid-cols-3 gap-2">
+          {PLAZOS_CON_UVA.map((p) => (
+            <div key={p}>
+              <label className="text-[11px] font-semibold text-slate-500 block mb-1">{p} cuotas</label>
+              <div className="flex items-center gap-1">
+                <input type="number" step="0.1" defaultValue={config.financiacion_uva_descuento[String(p)] ?? ""} onBlur={(e) => actualizarUva(p, Number(e.target.value))} className={inputClass} />
                 <span className="text-xs text-slate-400 shrink-0">%</span>
               </div>
             </div>

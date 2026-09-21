@@ -23,6 +23,15 @@ export const TNA_POR_PLAZO_DEFAULT: Record<string, number> = { "12": 76, "18": 7
 export const GASTOS_PCT_DEFAULT = 11;
 export const PLAZOS_DISPONIBLES = [12, 18, 24, 36, 48];
 
+// UVA solo existe hasta 24 cuotas en decreditos, y la grilla real solo
+// muestra la PRIMERA cuota (no es fija, se actualiza mes a mes por
+// inflación/índice UVA) -- no hay forma de proyectar eso con una fórmula.
+// Se aproxima como un % de descuento sobre la cuota Tradicional del mismo
+// plazo, derivado comparando la grilla real (Tradicional Desde vs UVA
+// Desde) para un mismo capital.
+export const UVA_DESCUENTO_PCT_DEFAULT: Record<string, number> = { "12": 9.1, "18": 10.3, "24": 10.5 };
+export const PLAZOS_CON_UVA = [12, 18, 24];
+
 export function topePctPorAnio(anio: number, esOkm: boolean, topes: TopeFinanciacion[], tope0km: number): number {
   if (esOkm) return tope0km;
   const fila = topes.find((t) => anio >= t.anioDesde && anio <= (t.anioHasta ?? 9999));
