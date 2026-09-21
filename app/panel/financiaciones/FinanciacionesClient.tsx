@@ -2,7 +2,7 @@
 
 import { useMemo, useState } from "react";
 import { supabase2 } from "@/lib/supabase/client";
-import { CreditCard, Search, Filter, Clock, MessageSquareText } from "lucide-react";
+import { CreditCard, Search, Filter, Clock, MessageSquareText, ExternalLink } from "lucide-react";
 import TablaResponsiva, { type ColumnaTabla } from "@/components/panel/TablaResponsiva";
 import FinanciacionDetalleModal from "./FinanciacionDetalleModal";
 
@@ -67,6 +67,14 @@ export default function FinanciacionesClient({ solicitudesIniciales, staff }: { 
           <h1 className="text-xl font-black text-slate-900 dark:text-white flex items-center gap-2"><CreditCard className="w-5 h-5 text-[#0145F2]" /> Financiaciones</h1>
           <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">Solicitudes de crédito desde la web (home y detalle de auto)</p>
         </div>
+        <a
+          href="https://agencias2.decreditos.com/simulacion/grid"
+          target="_blank"
+          rel="noopener noreferrer"
+          className="flex items-center justify-center gap-1.5 text-[13px] font-bold text-sky-700 dark:text-sky-300 bg-sky-50 dark:bg-sky-500/10 border border-sky-100 dark:border-sky-500/20 rounded-xl px-4 py-2.5 w-fit shrink-0"
+        >
+          <CreditCard className="w-4 h-4" /> Simulador de cuotas (decreditos) <ExternalLink className="w-3.5 h-3.5" />
+        </a>
       </div>
 
       <div className="flex flex-col sm:flex-row sm:items-center gap-2 px-6 pt-4">
