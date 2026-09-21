@@ -2,9 +2,10 @@
 
 import { useState, useEffect, useRef } from "react";
 import { supabase2 } from "@/lib/supabase/client";
-import { X, Loader2 } from "lucide-react";
+import { X, Loader2, Megaphone } from "lucide-react";
 import { hoyLocalISO } from "@/lib/panel/fechas";
 import { crearAlerta } from "@/lib/panel/alertas";
+import { buscarLeadsPorTexto, LEAD_ORIGEN_LABEL, type LeadEncontrado } from "@/lib/panel/buscarLeads";
 
 interface Perfil { id: string; nombre: string; roles: string[] }
 interface Cliente { id: string; nombre: string; telefono: string | null }
@@ -25,6 +26,8 @@ export default function NuevaConsignacionModal({ perfiles, clientes, miId, onClo
   const [clienteTelefono, setClienteTelefono] = useState("");
   const [busqueda, setBusqueda] = useState("");
   const [resultados, setResultados] = useState<Cliente[]>([]);
+  const [leadsEncontrados, setLeadsEncontrados] = useState<LeadEncontrado[]>([]);
+  const [buscandoCliente, setBuscandoCliente] = useState(false);
   const [mostrarResultados, setMostrarResultados] = useState(false);
   const buscadorRef = useRef<HTMLDivElement>(null);
 
@@ -38,11 +41,34 @@ export default function NuevaConsignacionModal({ perfiles, clientes, miId, onClo
   const [guardando, setGuardando] = useState(false);
   const [error, setError] = useState("");
 
+  // Búsqueda en vivo contra la base (en vez de filtrar solo el array local
+  // "clientes", que llega una sola vez por prop y con >1000 clientes queda
+  // cortado por el límite default de PostgREST -- mismo bug que ya se
+  // encontró y arregló en NuevaVentaModal). De paso suma leads (WhatsApp/
+  // Instagram/Rodi/manual) que todavía no son un cliente cargado.
   useEffect(() => {
-    if (busqueda.trim().length < 2) { setResultados([]); return; }
-    const q = busqueda.trim().toLowerCase();
-    setResultados(clientes.filter((c) => c.nombre.toLowerCase().includes(q) || (c.telefono || "").includes(q)).slice(0, 8));
+    const q = busqueda.trim();
+    if (q.length < 2) { setResultados([]); setLeadsEncontrados([]); return; }
+    setBuscandoCliente(true);
+    const timer = setTimeout(async () => {
+      const [{ data }, leads] = await Promise.all([
+        supabase2.from("clientes").select("id, nombre, telefono").or(`nombre.ilike.%${q}%,telefono.ilike.%${q}%`).order("nombre").limit(20),
+        buscarLeadsPorTexto(supabase2, q),
+      ]);
+      setResultados(data || clientes.filter((c) => c.nombre.toLowerCase().includes(q.toLowerCase()) || (c.telefono || "").includes(q)).slice(0, 8));
+      setLeadsEncontrados(leads);
+      setBuscandoCliente(false);
+    }, 300);
+    return () => clearTimeout(timer);
   }, [busqueda, clientes]);
+
+  const elegirLead = (l: LeadEncontrado) => {
+    setClienteId("");
+    setClienteNombre(l.nombre);
+    setClienteTelefono(l.telefono || "");
+    setBusqueda(l.nombre);
+    setMostrarResultados(false);
+  };
 
   useEffect(() => {
     const fuera = (e: MouseEvent) => { if (buscadorRef.current && !buscadorRef.current.contains(e.target as Node)) setMostrarResultados(false); };
@@ -120,14 +146,21 @@ export default function NuevaConsignacionModal({ perfiles, clientes, miId, onClo
                   placeholder="Empezá a tipear o elegí uno existente"
                   className={inputClass}
                 />
-                {mostrarResultados && resultados.length > 0 && (
-                  <div className="absolute z-20 mt-1 w-full bg-white dark:bg-[#1A1A1A] border border-slate-200 dark:border-white/10 rounded-xl shadow-xl max-h-48 overflow-y-auto">
+                {mostrarResultados && (resultados.length > 0 || leadsEncontrados.length > 0 || buscandoCliente) && (
+                  <div className="absolute z-20 mt-1 w-full bg-white dark:bg-[#1A1A1A] border border-slate-200 dark:border-white/10 rounded-xl shadow-xl max-h-56 overflow-y-auto">
                     {resultados.map((c) => (
                       <button key={c.id} onClick={() => elegirCliente(c)} className="w-full text-left px-3 py-2 hover:bg-slate-50 dark:hover:bg-white/5 border-b border-slate-100 dark:border-white/10 last:border-0">
                         <p className="text-xs font-bold">{c.nombre}</p>
                         {c.telefono && <p className="text-[10px] text-slate-400">{c.telefono}</p>}
                       </button>
                     ))}
+                    {leadsEncontrados.map((l) => (
+                      <button key={`${l.origen}-${l.id}`} onClick={() => elegirLead(l)} className="w-full text-left px-3 py-2 hover:bg-indigo-50 dark:hover:bg-indigo-500/10 border-b border-slate-100 dark:border-white/10 last:border-0 flex items-center justify-between gap-2">
+                        <p className="text-xs font-bold flex items-center gap-1.5 min-w-0 truncate"><Megaphone className="w-3.5 h-3.5 text-indigo-500 shrink-0" /> <span className="truncate">{l.nombre}</span></p>
+                        <span className="text-[9px] font-bold uppercase tracking-widest text-indigo-500 dark:text-indigo-300 shrink-0">{LEAD_ORIGEN_LABEL[l.origen]}</span>
+                      </button>
+                    ))}
+                    {buscandoCliente && <p className="px-3 py-2.5 text-[11px] text-slate-400 italic flex items-center gap-1.5"><Loader2 className="w-3.5 h-3.5 animate-spin" /> Buscando...</p>}
                   </div>
                 )}
               </div>
