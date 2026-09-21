@@ -3,7 +3,8 @@
 import { useEffect, useRef, useState } from "react";
 import { supabase2 } from "@/lib/supabase/client";
 import { buscarClienteDuplicado } from "@/lib/panel/clienteDedupe";
-import { Search, UserPlus, X, Check, ScanLine, Loader2 } from "lucide-react";
+import { buscarLeadsPorTexto, LEAD_ORIGEN_LABEL, type LeadEncontrado } from "@/lib/panel/buscarLeads";
+import { Search, UserPlus, X, Check, ScanLine, Loader2, Megaphone } from "lucide-react";
 import ConfirmDialog from "@/components/panel/ConfirmDialog";
 
 export interface ClienteSeleccionado {
@@ -84,19 +85,24 @@ export default function ClienteBuscador({
   // caso común de "ya estaba en la lista"), y a partir de 2 caracteres se
   // dispara una consulta real que sí ve todo lo que existe ahora mismo.
   const [resultadosVivo, setResultadosVivo] = useState<any[] | null>(null);
+  const [leadsEncontrados, setLeadsEncontrados] = useState<LeadEncontrado[]>([]);
   const [buscando, setBuscando] = useState(false);
   useEffect(() => {
     const q = busqueda.trim();
-    if (q.length < 2) { setResultadosVivo(null); return; }
+    if (q.length < 2) { setResultadosVivo(null); setLeadsEncontrados([]); return; }
     setBuscando(true);
     const timer = setTimeout(async () => {
-      const { data } = await supabase2
-        .from("clientes")
-        .select("id, nombre, apellido, dni_cuit, cuit_cuil, telefono, telefono_linea, email, calle, numero_calle, depto, localidad, codigo_postal, provincia, estado_civil, profesion, fecha_nacimiento")
-        .or(`nombre.ilike.%${q}%,apellido.ilike.%${q}%,dni_cuit.ilike.%${q}%`)
-        .order("nombre")
-        .limit(20);
+      const [{ data }, leads] = await Promise.all([
+        supabase2
+          .from("clientes")
+          .select("id, nombre, apellido, dni_cuit, cuit_cuil, telefono, telefono_linea, email, calle, numero_calle, depto, localidad, codigo_postal, provincia, estado_civil, profesion, fecha_nacimiento")
+          .or(`nombre.ilike.%${q}%,apellido.ilike.%${q}%,dni_cuit.ilike.%${q}%`)
+          .order("nombre")
+          .limit(20),
+        buscarLeadsPorTexto(supabase2, q),
+      ]);
       setResultadosVivo(data || []);
+      setLeadsEncontrados(leads);
       setBuscando(false);
     }, 300);
     return () => clearTimeout(timer);
@@ -106,6 +112,16 @@ export default function ClienteBuscador({
     const q = busqueda.toLowerCase();
     return !q || `${c.nombre} ${c.apellido || ""} ${c.dni_cuit || ""}`.toLowerCase().includes(q);
   });
+
+  // Un lead no tiene los campos que este formulario necesita (DNI, domicilio,
+  // etc.) -- elegirlo no lo "engancha" directo como si fuera un cliente real,
+  // precarga el alta de cliente nuevo con nombre/teléfono y deja el resto
+  // para completar a mano.
+  const elegirLead = (l: LeadEncontrado) => {
+    const [nombreLead, ...resto] = l.nombre.split(" ");
+    setNuevo((prev) => ({ ...prev, nombre: nombreLead || l.nombre, apellido: resto.join(" "), telefono: l.telefono || prev.telefono }));
+    setCreandoNuevo(true);
+  };
 
   const guardarNuevoCliente = async () => {
     if (!nuevo.nombre.trim() || !nuevo.apellido.trim()) {
@@ -214,16 +230,22 @@ export default function ClienteBuscador({
         <input className={`${inputClass} pl-9`} placeholder="Buscar cliente por nombre, apellido o DNI..." value={busqueda} onChange={(e) => setBusqueda(e.target.value)} />
       </div>
       {busqueda && (
-        <div className="max-h-48 overflow-y-auto border border-slate-200 dark:border-white/10 rounded-xl divide-y divide-slate-100 dark:divide-white/10">
+        <div className="max-h-64 overflow-y-auto border border-slate-200 dark:border-white/10 rounded-xl divide-y divide-slate-100 dark:divide-white/10">
           {filtrados.slice(0, 20).map((c) => (
             <button key={c.id} type="button" onClick={() => onSeleccionar(c)} className="w-full text-left px-3 py-2.5 hover:bg-rose-50 dark:hover:bg-white/5 transition-colors flex items-center justify-between">
               <span className="text-sm font-medium text-slate-800 dark:text-white">{c.nombre} {c.apellido || ""}</span>
               <span className="text-[11px] text-slate-400">{c.dni_cuit || "Sin DNI"}</span>
             </button>
           ))}
+          {leadsEncontrados.map((l) => (
+            <button key={`${l.origen}-${l.id}`} type="button" onClick={() => elegirLead(l)} className="w-full text-left px-3 py-2.5 hover:bg-indigo-50 dark:hover:bg-indigo-500/10 transition-colors flex items-center justify-between gap-2">
+              <span className="text-sm font-medium text-slate-800 dark:text-white flex items-center gap-1.5 min-w-0"><Megaphone className="w-3.5 h-3.5 text-indigo-500 shrink-0" /> <span className="truncate">{l.nombre}</span></span>
+              <span className="text-[10px] font-bold uppercase tracking-widest text-indigo-500 dark:text-indigo-300 shrink-0">{LEAD_ORIGEN_LABEL[l.origen]}</span>
+            </button>
+          ))}
           {buscando ? (
             <p className="px-3 py-3 text-[13px] text-slate-400 italic flex items-center gap-1.5"><Loader2 className="w-3.5 h-3.5 animate-spin" /> Buscando...</p>
-          ) : filtrados.length === 0 && <p className="px-3 py-3 text-[13px] text-slate-400 italic">Sin resultados.</p>}
+          ) : filtrados.length === 0 && leadsEncontrados.length === 0 && <p className="px-3 py-3 text-[13px] text-slate-400 italic">Sin resultados.</p>}
         </div>
       )}
       <button type="button" onClick={() => setCreandoNuevo(true)} className="flex items-center gap-1.5 text-[#0145F2] dark:text-[#5b8dff] hover:text-[#0138c9] dark:hover:text-rose-300 text-[12px] font-bold">
