@@ -268,12 +268,20 @@ export default function ConsignarForm() {
         <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_50%,rgba(1,69,242,0.08),transparent_60%)]" />
         <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[80%] h-[20%] bg-blue-500/10 dark:bg-blue-500/20 blur-[100px] rounded-full" />
 
-        {/* Header Preview */}
-        <div className="absolute top-4 left-4 lg:top-6 lg:left-6 z-20 flex items-center gap-2 lg:gap-3">
-          <CarFront className="w-5 h-5 lg:w-6 lg:h-6 text-blue-600 dark:text-blue-400 shrink-0" />
-          <div>
-            <h2 className="text-xs lg:text-sm font-black text-slate-900 dark:text-white">Tu próximo paso</h2>
-            <p className="text-[9px] lg:text-[10px] text-slate-500 dark:text-slate-400 uppercase tracking-widest">Configurador de Consignación</p>
+        {/* Header Preview -- en mobile, pill compacta de una sola línea (mismo
+            lenguaje visual que el badge de KM) en vez del bloque de 2 líneas,
+            que ocupaba espacio de la preview sin aportar nada nuevo. */}
+        <div className="absolute top-4 left-4 lg:top-6 lg:left-6 z-20">
+          <div className="flex lg:hidden items-center gap-1.5 bg-white/70 dark:bg-black/40 backdrop-blur-md border border-slate-200 dark:border-white/10 rounded-full px-3 py-1.5 shadow-sm dark:shadow-none">
+            <CarFront className="w-3.5 h-3.5 text-blue-600 dark:text-blue-400 shrink-0" />
+            <span className="text-[10px] font-bold text-slate-700 dark:text-slate-200">Consignación</span>
+          </div>
+          <div className="hidden lg:flex items-center gap-3">
+            <CarFront className="w-6 h-6 text-blue-600 dark:text-blue-400 shrink-0" />
+            <div>
+              <h2 className="text-sm font-black text-slate-900 dark:text-white">Tu próximo paso</h2>
+              <p className="text-[10px] text-slate-500 dark:text-slate-400 uppercase tracking-widest">Configurador de Consignación</p>
+            </div>
           </div>
         </div>
 
@@ -372,19 +380,35 @@ export default function ConsignarForm() {
           </AnimatePresence>
         </div>
 
-        {/* Bottom Bar: Datos recopilados */}
-        <div className="absolute bottom-3 left-3 right-3 lg:bottom-6 lg:left-10 lg:right-10 grid grid-cols-2 lg:flex lg:flex-wrap gap-1.5 lg:gap-4 z-20">
+        {/* Bottom Bar: Datos recopilados -- en mobile, renglón de pills de una
+            sola línea (icono + valor, mismo lenguaje que el badge de KM) en
+            vez de las 4 tarjetas en grilla 2x2, que ocupaban media pantalla. */}
+        <div className="lg:hidden absolute bottom-3 left-3 right-3 z-20 flex gap-1.5 overflow-x-auto">
+          {[
+            { label: "Año", value: anio, icon: CalendarDays },
+            { label: "Marca", value: marca, icon: CarFront },
+            { label: "Modelo", value: modelo, icon: Settings2 },
+            { label: "Versión", value: version, icon: Zap }
+          ].filter((item) => item.value).map((item, i) => (
+            <div key={i} className="shrink-0 bg-white/70 dark:bg-black/40 backdrop-blur-md border border-slate-200 dark:border-white/10 rounded-full px-3 py-1.5 flex items-center gap-1.5 shadow-sm dark:shadow-none">
+              <item.icon className="w-3 h-3 text-blue-600 dark:text-blue-400 shrink-0" />
+              <span className="text-[10px] font-bold text-slate-900 dark:text-white truncate max-w-[90px]">{item.value}</span>
+            </div>
+          ))}
+        </div>
+
+        <div className="hidden lg:flex absolute bottom-6 left-10 right-10 flex-wrap gap-4 z-20">
           {[
             { label: "Año", value: anio, icon: CalendarDays },
             { label: "Marca", value: marca, icon: CarFront },
             { label: "Modelo", value: modelo, icon: Settings2 },
             { label: "Versión", value: version, icon: Zap }
           ].map((item, i) => (
-            <div key={i} className="lg:flex-1 lg:min-w-[120px] bg-white/70 dark:bg-black/40 backdrop-blur-md border border-slate-200 dark:border-white/10 rounded-xl lg:rounded-2xl p-2 lg:p-4 flex items-center gap-2 lg:gap-3 shadow-sm dark:shadow-none">
-              <item.icon className={`w-3.5 h-3.5 lg:w-4 lg:h-4 shrink-0 ${item.value ? "text-blue-600 dark:text-blue-400" : "text-slate-400 dark:text-slate-600"}`} />
+            <div key={i} className="flex-1 min-w-[120px] bg-white/70 dark:bg-black/40 backdrop-blur-md border border-slate-200 dark:border-white/10 rounded-2xl p-4 flex items-center gap-3 shadow-sm dark:shadow-none">
+              <item.icon className={`w-4 h-4 shrink-0 ${item.value ? "text-blue-600 dark:text-blue-400" : "text-slate-400 dark:text-slate-600"}`} />
               <div className="flex flex-col min-w-0">
-                <span className="text-[8px] lg:text-[9px] uppercase tracking-widest text-slate-500 font-bold">{item.label}</span>
-                <span className={`text-[11px] lg:text-xs font-bold truncate ${item.value ? "text-slate-900 dark:text-white" : "text-slate-400 dark:text-slate-600"}`}>
+                <span className="text-[9px] uppercase tracking-widest text-slate-500 font-bold">{item.label}</span>
+                <span className={`text-xs font-bold truncate ${item.value ? "text-slate-900 dark:text-white" : "text-slate-400 dark:text-slate-600"}`}>
                   {item.value || "—"}
                 </span>
               </div>
