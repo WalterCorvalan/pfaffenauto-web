@@ -262,39 +262,39 @@ export default function ConsignarForm() {
     <div className="bg-[#F8FAFC] dark:bg-[#0a0a0f] text-slate-900 dark:text-white flex flex-col lg:flex-row font-sans">
 
       {/* ================= ZONA IZQUIERDA: PREVIEW DINÁMICA ================= */}
-      <div className="w-full lg:w-[55%] h-[40vh] lg:h-[calc(100vh-5rem)] lg:sticky lg:top-20 relative bg-slate-100 dark:bg-[#050b14] overflow-hidden shrink-0 border-b lg:border-b-0 lg:border-r border-slate-200 dark:border-white/5">
+      <div className="w-full lg:w-[55%] h-[56vh] min-h-[420px] lg:h-[calc(100vh-5rem)] lg:sticky lg:top-20 relative bg-slate-100 dark:bg-[#050b14] overflow-hidden shrink-0 border-b lg:border-b-0 lg:border-r border-slate-200 dark:border-white/5">
 
         {/* Fondos y luces */}
         <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_50%,rgba(1,69,242,0.08),transparent_60%)]" />
         <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[80%] h-[20%] bg-blue-500/10 dark:bg-blue-500/20 blur-[100px] rounded-full" />
 
         {/* Header Preview */}
-        <div className="absolute top-6 left-6 z-20 flex items-center gap-3">
-          <CarFront className="w-6 h-6 text-blue-600 dark:text-blue-400" />
+        <div className="absolute top-4 left-4 lg:top-6 lg:left-6 z-20 flex items-center gap-2 lg:gap-3">
+          <CarFront className="w-5 h-5 lg:w-6 lg:h-6 text-blue-600 dark:text-blue-400 shrink-0" />
           <div>
-            <h2 className="text-sm font-black text-slate-900 dark:text-white">Tu próximo paso</h2>
-            <p className="text-[10px] text-slate-500 dark:text-slate-400 uppercase tracking-widest">Configurador de Consignación</p>
+            <h2 className="text-xs lg:text-sm font-black text-slate-900 dark:text-white">Tu próximo paso</h2>
+            <p className="text-[9px] lg:text-[10px] text-slate-500 dark:text-slate-400 uppercase tracking-widest">Configurador de Consignación</p>
           </div>
         </div>
 
         {/* Floating KM Badge */}
         <AnimatePresence>
           {km && (
-            <motion.div 
-              initial={{ opacity: 0, y: -20 }} 
-              animate={{ opacity: 1, y: 0 }} 
-              className="absolute top-8 right-6 z-20 bg-blue-50/90 dark:bg-blue-900/40 border border-blue-200 dark:border-blue-500/30 backdrop-blur-xl rounded-2xl px-5 py-3 flex items-center gap-3 shadow-[0_0_30px_rgba(1,69,242,0.12)] dark:shadow-[0_0_30px_rgba(1,69,242,0.3)]"
+            <motion.div
+              initial={{ opacity: 0, y: -20 }}
+              animate={{ opacity: 1, y: 0 }}
+              className="absolute top-4 right-4 lg:top-8 lg:right-6 z-20 bg-blue-50/90 dark:bg-blue-900/40 border border-blue-200 dark:border-blue-500/30 backdrop-blur-xl rounded-xl lg:rounded-2xl px-3 py-2 lg:px-5 lg:py-3 flex items-center gap-2 lg:gap-3 shadow-[0_0_30px_rgba(1,69,242,0.12)] dark:shadow-[0_0_30px_rgba(1,69,242,0.3)]"
             >
-              <Gauge className="w-5 h-5 text-blue-600 dark:text-blue-400" />
+              <Gauge className="w-4 h-4 lg:w-5 lg:h-5 text-blue-600 dark:text-blue-400 shrink-0" />
               <div className="flex flex-col">
-                <span className="text-[9px] font-bold uppercase tracking-widest text-blue-700/70 dark:text-blue-200/70">Kilómetros</span>
+                <span className="text-[8px] lg:text-[9px] font-bold uppercase tracking-widest text-blue-700/70 dark:text-blue-200/70">Kilómetros</span>
                 <motion.span
                   key={km}
                   initial={{ opacity: 0, filter: "blur(4px)" }}
                   animate={{ opacity: 1, filter: "blur(0px)" }}
-                  className="text-lg font-black text-slate-900 dark:text-white leading-none font-mono"
+                  className="text-sm lg:text-lg font-black text-slate-900 dark:text-white leading-none font-mono"
                 >
-                  {formatKm(km)} <span className="text-sm font-bold text-blue-600 dark:text-blue-300">KM</span>
+                  {formatKm(km)} <span className="text-xs lg:text-sm font-bold text-blue-600 dark:text-blue-300">KM</span>
                 </motion.span>
               </div>
             </motion.div>
@@ -302,7 +302,7 @@ export default function ConsignarForm() {
         </AnimatePresence>
 
         {/* Canvas Principal */}
-        <div className="absolute inset-0 flex items-center justify-center p-8 mt-4 lg:mt-0">
+        <div className="absolute inset-0 flex items-center justify-center px-4 pt-16 pb-28 lg:p-8 lg:pt-0 lg:pb-0">
           <AnimatePresence mode="wait">
             {!marca ? (
               <motion.div 
@@ -310,11 +310,11 @@ export default function ConsignarForm() {
                 initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0, filter: "blur(10px)", scale: 0.9 }}
                 className="text-center"
               >
-                <div className="w-24 h-24 rounded-full border border-slate-200 dark:border-white/10 flex items-center justify-center mx-auto mb-6 bg-white dark:bg-white/5 shadow-sm dark:shadow-none">
-                  <Zap className="w-8 h-8 text-slate-400 dark:text-slate-600" />
+                <div className="w-16 h-16 lg:w-24 lg:h-24 rounded-full border border-slate-200 dark:border-white/10 flex items-center justify-center mx-auto mb-4 lg:mb-6 bg-white dark:bg-white/5 shadow-sm dark:shadow-none">
+                  <Zap className="w-6 h-6 lg:w-8 lg:h-8 text-slate-400 dark:text-slate-600" />
                 </div>
-                <h3 className="text-2xl font-black text-slate-700 dark:text-slate-300 tracking-tight">Comenzá tu configuración</h3>
-                <p className="text-sm text-slate-500 mt-2">Tu vehículo aparecerá en este espacio.</p>
+                <h3 className="text-lg lg:text-2xl font-black text-slate-700 dark:text-slate-300 tracking-tight px-4">Comenzá tu configuración</h3>
+                <p className="text-xs lg:text-sm text-slate-500 mt-2 px-4">Tu vehículo aparecerá en este espacio.</p>
               </motion.div>
             ) : marca && !modelo ? (
               <motion.div 
@@ -326,14 +326,14 @@ export default function ConsignarForm() {
                 className="flex flex-col items-center"
               >
                 {/* Fallback de logo por si no existe el SVG, mostramos texto */}
-                <div className="relative w-48 h-48 flex items-center justify-center">
-                  <img 
-                    src={logoPath} 
-                    alt={marca} 
+                <div className="relative w-32 h-32 lg:w-48 lg:h-48 flex items-center justify-center">
+                  <img
+                    src={logoPath}
+                    alt={marca}
                     className="max-w-full max-h-full object-contain drop-shadow-2xl"
                     onError={(e) => { e.currentTarget.style.display = 'none'; }}
                   />
-                  <span className="absolute inset-0 flex items-center justify-center text-4xl font-black text-slate-900 dark:text-white opacity-10 dark:opacity-20 -z-10 tracking-tighter uppercase">
+                  <span className="absolute inset-0 flex items-center justify-center text-2xl lg:text-4xl font-black text-slate-900 dark:text-white opacity-10 dark:opacity-20 -z-10 tracking-tighter uppercase">
                     {marca}
                   </span>
                 </div>
@@ -358,33 +358,33 @@ export default function ConsignarForm() {
                     <img
                       src={logoPath}
                       alt={marca}
-                      className="w-32 h-32 object-contain mb-8 opacity-70 dark:opacity-50"
+                      className="w-20 h-20 lg:w-32 lg:h-32 object-contain mb-4 lg:mb-8 opacity-70 dark:opacity-50"
                       onError={(e) => { e.currentTarget.style.display = 'none'; }}
                     />
-                    <h2 className="text-4xl font-black text-slate-900 dark:text-white uppercase tracking-tighter">{marca} {modelo}</h2>
+                    <h2 className="text-2xl lg:text-4xl font-black text-slate-900 dark:text-white uppercase tracking-tighter text-center px-4">{marca} {modelo}</h2>
                   </div>
                 )}
 
                 {/* Piso/Sombra debajo del auto */}
-                <div className="absolute bottom-[20%] lg:bottom-[30%] w-[80%] h-8 bg-black/10 dark:bg-black/60 blur-xl rounded-full" />
+                <div className="absolute bottom-[8%] lg:bottom-[30%] w-[80%] h-8 bg-black/10 dark:bg-black/60 blur-xl rounded-full" />
               </motion.div>
             )}
           </AnimatePresence>
         </div>
 
         {/* Bottom Bar: Datos recopilados */}
-        <div className="absolute bottom-6 left-6 right-6 lg:left-10 lg:right-10 flex flex-wrap gap-2 lg:gap-4 z-20">
+        <div className="absolute bottom-3 left-3 right-3 lg:bottom-6 lg:left-10 lg:right-10 grid grid-cols-2 lg:flex lg:flex-wrap gap-1.5 lg:gap-4 z-20">
           {[
             { label: "Año", value: anio, icon: CalendarDays },
             { label: "Marca", value: marca, icon: CarFront },
             { label: "Modelo", value: modelo, icon: Settings2 },
             { label: "Versión", value: version, icon: Zap }
           ].map((item, i) => (
-            <div key={i} className="flex-1 min-w-[120px] bg-white/70 dark:bg-black/40 backdrop-blur-md border border-slate-200 dark:border-white/10 rounded-2xl p-3 lg:p-4 flex items-center gap-3 shadow-sm dark:shadow-none">
-              <item.icon className={`w-4 h-4 ${item.value ? "text-blue-600 dark:text-blue-400" : "text-slate-400 dark:text-slate-600"}`} />
+            <div key={i} className="lg:flex-1 lg:min-w-[120px] bg-white/70 dark:bg-black/40 backdrop-blur-md border border-slate-200 dark:border-white/10 rounded-xl lg:rounded-2xl p-2 lg:p-4 flex items-center gap-2 lg:gap-3 shadow-sm dark:shadow-none">
+              <item.icon className={`w-3.5 h-3.5 lg:w-4 lg:h-4 shrink-0 ${item.value ? "text-blue-600 dark:text-blue-400" : "text-slate-400 dark:text-slate-600"}`} />
               <div className="flex flex-col min-w-0">
-                <span className="text-[9px] uppercase tracking-widest text-slate-500 font-bold">{item.label}</span>
-                <span className={`text-xs font-bold truncate ${item.value ? "text-slate-900 dark:text-white" : "text-slate-400 dark:text-slate-600"}`}>
+                <span className="text-[8px] lg:text-[9px] uppercase tracking-widest text-slate-500 font-bold">{item.label}</span>
+                <span className={`text-[11px] lg:text-xs font-bold truncate ${item.value ? "text-slate-900 dark:text-white" : "text-slate-400 dark:text-slate-600"}`}>
                   {item.value || "—"}
                 </span>
               </div>
