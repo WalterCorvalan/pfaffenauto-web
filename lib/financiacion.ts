@@ -1,5 +1,7 @@
-// Cálculo aproximado del tope de financiación y cuota estimada para el
-// simulador propio de Financiaciones -- NO reemplaza al simulador real de
+// Cálculo aproximado del tope de financiación y cuota estimada -- usado
+// tanto por el simulador propio del panel (Financiaciones) como por el
+// simulador público de la ficha de auto (SimuladorFinanciacion.tsx /
+// SolicitarFinanciacionForm.tsx). NO reemplaza al simulador real de
 // decreditos (agencias2.decreditos.com), que además depende del perfil
 // crediticio del cliente (algo que acá no podemos calcular). Sirve como
 // número de referencia para la charla inicial con el cliente.

@@ -1,8 +1,13 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Calculator, CheckCircle2 } from "lucide-react";
 import SolicitarFinanciacionForm from "@/components/forms/SolicitarFinanciacionForm";
+import {
+  TOPES_FINANCIACION_DEFAULT, TOPE_0KM_DEFAULT, TNA_POR_PLAZO_DEFAULT, GASTOS_PCT_DEFAULT,
+  UVA_DESCUENTO_PCT_DEFAULT, PLAZOS_DISPONIBLES, PLAZOS_CON_UVA,
+  topePctPorAnio, calcularCuotaFrances, type TopeFinanciacion,
+} from "@/lib/financiacion";
 
 interface VehiculoFinanciable {
   id: string;
@@ -26,22 +31,38 @@ export default function SimuladorFinanciacion({
   telefono: string;
   vehiculo: VehiculoFinanciable;
 }) {
-  const [anticipoPorcentaje, setAnticipoPorcentaje] = useState(50);
+  const [topes, setTopes] = useState<TopeFinanciacion[]>(TOPES_FINANCIACION_DEFAULT);
+  const [tope0km, setTope0km] = useState(TOPE_0KM_DEFAULT);
+  const [tna, setTna] = useState<Record<string, number>>(TNA_POR_PLAZO_DEFAULT);
+  const [gastosPct, setGastosPct] = useState(GASTOS_PCT_DEFAULT);
+  const [uvaDescuento, setUvaDescuento] = useState<Record<string, number>>(UVA_DESCUENTO_PCT_DEFAULT);
+
+  useEffect(() => {
+    fetch("/api/financiacion-config").then((r) => r.json()).then((data) => {
+      if (data.financiacion_topes?.length) setTopes(data.financiacion_topes);
+      if (data.financiacion_tope_0km) setTope0km(data.financiacion_tope_0km);
+      if (Object.keys(data.financiacion_tna || {}).length) setTna(data.financiacion_tna);
+      if (data.financiacion_gastos_pct != null) setGastosPct(data.financiacion_gastos_pct);
+      if (Object.keys(data.financiacion_uva_descuento || {}).length) setUvaDescuento(data.financiacion_uva_descuento);
+    }).catch(() => {});
+  }, []);
+
   const [cuotas, setCuotas] = useState(24);
-  const [cuentaSueldo, setCuentaSueldo] = useState(false);
 
-  // Línea "+Autos con BNA" (préstamo personal, no prendario) — tasas oficiales
-  // publicadas en bna.com.ar/home/masautos. Sistema francés de amortización.
-  const montoAnticipo = (precioTotal * anticipoPorcentaje) / 100;
-  const saldoAFinanciar = precioTotal - montoAnticipo;
+  // Tope de financiación real de decreditos según el año del auto (0km ->
+  // escalón propio, más alto) -- reemplaza al viejo slider manual de
+  // "anticipo" (30-80%, sin relación con el año) de la línea BNA.
+  const esOkm = (vehiculo.km ?? 0) === 0;
+  const pct = topePctPorAnio(vehiculo.anio, esOkm, topes, tope0km);
+  const capitalMaximo = precioTotal * (pct / 100);
+  const gastos = precioTotal * (gastosPct / 100);
+  const totalNecesario = precioTotal + gastos;
+  const anticipoCliente = Math.max(0, totalNecesario - capitalMaximo);
 
-  const TNA = cuentaSueldo ? 0.36 : 0.46;
-  const tasaMensual = TNA / 12;
-  const cuotaEstimada =
-    saldoAFinanciar > 0
-      ? (saldoAFinanciar * tasaMensual) / (1 - Math.pow(1 + tasaMensual, -cuotas))
-      : 0;
-
+  const tasaPlazo = tna[String(cuotas)];
+  const cuotaEstimada = tasaPlazo ? calcularCuotaFrances(capitalMaximo, tasaPlazo, cuotas) : 0;
+  const descuentoUva = PLAZOS_CON_UVA.includes(cuotas) ? uvaDescuento[String(cuotas)] : null;
+  const cuotaUva = descuentoUva ? Math.round(cuotaEstimada * (1 - descuentoUva / 100)) : null;
 
   return (
     <div className="bg-white dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-[24px] p-5 md:p-6 shadow-sm dark:shadow-none mt-6 relative overflow-hidden">
@@ -54,43 +75,24 @@ export default function SimuladorFinanciacion({
       </h3>
 
       <div className="space-y-6 relative z-10">
-        {/* Slider de Anticipo */}
-        <div>
-          <div className="flex justify-between items-end mb-2">
-            <label className="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-widest">Tu Anticipo ({anticipoPorcentaje}%)</label>
-            <span className="text-lg font-black text-[#0145F2] dark:text-sky-400">$ {montoAnticipo.toLocaleString("es-AR")}</span>
+        <div className="grid grid-cols-2 gap-3">
+          <div className="bg-slate-50 dark:bg-white/5 rounded-xl p-3">
+            <span className="text-[10px] uppercase font-bold tracking-widest text-slate-400 block mb-0.5">Financiás hasta</span>
+            <span className="text-lg font-black text-[#0145F2] dark:text-sky-400">$ {capitalMaximo.toLocaleString("es-AR")}</span>
+            <span className="block text-[10px] text-slate-400 mt-0.5">{pct}% del valor{esOkm ? " (0km)" : ""}</span>
           </div>
-          <input
-            type="range"
-            min="30"
-            max="80"
-            step="5"
-            value={anticipoPorcentaje}
-            onChange={(e) => setAnticipoPorcentaje(Number(e.target.value))}
-            className="w-full h-2 bg-slate-200 dark:bg-white/10 rounded-lg appearance-none cursor-pointer accent-[#0145F2]"
-          />
-          <div className="flex justify-between text-[10px] text-slate-400 dark:text-slate-500 font-bold mt-1">
-            <span>Min 30%</span>
-            <span>Max 80%</span>
+          <div className="bg-slate-50 dark:bg-white/5 rounded-xl p-3">
+            <span className="text-[10px] uppercase font-bold tracking-widest text-slate-400 block mb-0.5">Anticipo en efectivo</span>
+            <span className="text-lg font-black text-navy dark:text-white">$ {anticipoCliente.toLocaleString("es-AR")}</span>
+            <span className="block text-[10px] text-slate-400 mt-0.5">Precio + gastos − financiado</span>
           </div>
         </div>
-
-        {/* Cuenta sueldo BNA */}
-        <label className="flex items-center gap-2.5 text-xs font-bold text-slate-600 dark:text-slate-300 cursor-pointer bg-slate-50 dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-xl px-3 py-2.5 w-fit">
-          <input
-            type="checkbox"
-            checked={cuentaSueldo}
-            onChange={(e) => setCuentaSueldo(e.target.checked)}
-            className="w-4 h-4 accent-[#0145F2]"
-          />
-          Tengo cuenta sueldo en el Banco Nación
-        </label>
 
         {/* Selector de Cuotas */}
         <div>
           <label className="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-widest mb-2 block">Cantidad de Cuotas</label>
-          <div className="grid grid-cols-4 gap-2">
-            {[12, 24, 48, 72].map((c) => (
+          <div className="grid grid-cols-5 gap-2">
+            {PLAZOS_DISPONIBLES.map((c) => (
               <button
                 key={c}
                 onClick={() => setCuotas(c)}
@@ -103,15 +105,22 @@ export default function SimuladorFinanciacion({
         </div>
 
         {/* Resultado */}
-        <div className="bg-sky-50 dark:bg-sky-400/10 border border-sky-100 dark:border-sky-400/20 p-4 rounded-2xl flex items-center justify-between">
-          <div>
-            <span className="text-[10px] uppercase font-bold tracking-widest text-sky-600 dark:text-sky-300 block mb-0.5">Cuota Promedio</span>
-            <span className="text-2xl font-black text-navy dark:text-white">$ {cuotaEstimada.toLocaleString("es-AR", {maximumFractionDigits: 0})}</span>
+        <div className="bg-sky-50 dark:bg-sky-400/10 border border-sky-100 dark:border-sky-400/20 p-4 rounded-2xl">
+          <div className="flex items-center justify-between">
+            <div>
+              <span className="text-[10px] uppercase font-bold tracking-widest text-sky-600 dark:text-sky-300 block mb-0.5">Cuota Promedio</span>
+              <span className="text-2xl font-black text-navy dark:text-white">$ {cuotaEstimada.toLocaleString("es-AR", { maximumFractionDigits: 0 })}</span>
+            </div>
+            <CheckCircle2 className="w-8 h-8 text-sky-400 dark:text-sky-300" />
           </div>
-          <CheckCircle2 className="w-8 h-8 text-sky-400 dark:text-sky-300" />
+          {cuotaUva != null && (
+            <p className="text-xs font-bold text-indigo-600 dark:text-indigo-300 mt-2">
+              Plan UVA (1ª cuota, sube con inflación): $ {cuotaUva.toLocaleString("es-AR")}
+            </p>
+          )}
         </div>
         <p className="text-[10px] text-slate-400 dark:text-slate-500 text-center -mt-2">
-          Línea &quot;+Autos con BNA&quot; · TNA {(TNA * 100).toFixed(0)}% ({cuentaSueldo ? "cuenta sueldo" : "cartera abierta"}) · tasas oficiales sujetas a cambios del Banco Nación
+          Simulación aproximada — la tasa real depende del perfil crediticio de cada cliente, sujeta a aprobación de la financiera.
         </p>
 
         <SolicitarFinanciacionForm

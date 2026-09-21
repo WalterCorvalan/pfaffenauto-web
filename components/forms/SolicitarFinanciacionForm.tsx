@@ -7,6 +7,11 @@ import { supabase2 as supabase } from "@/lib/supabase/client";
 import { getCanalOrigen, getUtmRaw } from "@/lib/utm";
 import { obtenerDolarBlue } from "@/lib/dolarBlue";
 import { CreditCard, X, CheckCircle2, Loader2, User, Phone, Mail, ArrowLeft, Search, Car } from "lucide-react";
+import {
+  TOPES_FINANCIACION_DEFAULT, TOPE_0KM_DEFAULT, TNA_POR_PLAZO_DEFAULT, GASTOS_PCT_DEFAULT,
+  UVA_DESCUENTO_PCT_DEFAULT, PLAZOS_DISPONIBLES, PLAZOS_CON_UVA,
+  topePctPorAnio, calcularCuotaFrances, type TopeFinanciacion,
+} from "@/lib/financiacion";
 
 declare global {
   interface Window {
@@ -35,19 +40,23 @@ interface SolicitarFinanciacionFormProps {
   label?: string;
 }
 
-const TNA = 0.46;
-const PLAZOS = [24, 48, 72];
-
-function calcularCuota(montoAFinanciar: number, plazoMeses: number): number {
-  if (montoAFinanciar <= 0) return 0;
-  const tasaMensual = TNA / 12;
-  const cuotaPura =
-    (montoAFinanciar * (tasaMensual * Math.pow(1 + tasaMensual, plazoMeses))) /
-    (Math.pow(1 + tasaMensual, plazoMeses) - 1);
-  return Math.round(cuotaPura);
-}
-
 export default function SolicitarFinanciacionForm({ vehiculoPreseleccionado, className, label = "Solicitar mi crédito" }: SolicitarFinanciacionFormProps) {
+  const [topes, setTopes] = useState<TopeFinanciacion[]>(TOPES_FINANCIACION_DEFAULT);
+  const [tope0km, setTope0km] = useState(TOPE_0KM_DEFAULT);
+  const [tna, setTna] = useState<Record<string, number>>(TNA_POR_PLAZO_DEFAULT);
+  const [gastosPct, setGastosPct] = useState(GASTOS_PCT_DEFAULT);
+  const [uvaDescuento, setUvaDescuento] = useState<Record<string, number>>(UVA_DESCUENTO_PCT_DEFAULT);
+
+  useEffect(() => {
+    fetch("/api/financiacion-config").then((r) => r.json()).then((data) => {
+      if (data.financiacion_topes?.length) setTopes(data.financiacion_topes);
+      if (data.financiacion_tope_0km) setTope0km(data.financiacion_tope_0km);
+      if (Object.keys(data.financiacion_tna || {}).length) setTna(data.financiacion_tna);
+      if (data.financiacion_gastos_pct != null) setGastosPct(data.financiacion_gastos_pct);
+      if (Object.keys(data.financiacion_uva_descuento || {}).length) setUvaDescuento(data.financiacion_uva_descuento);
+    }).catch(() => {});
+  }, []);
+
   const [isOpen, setIsOpen] = useState(false);
   const [mounted, setMounted] = useState(false);
   const [loading, setLoading] = useState(false);
@@ -64,8 +73,7 @@ export default function SolicitarFinanciacionForm({ vehiculoPreseleccionado, cla
   const [buscando, setBuscando] = useState(false);
 
   // Paso 2: simulación
-  const [anticipoPorcentaje, setAnticipoPorcentaje] = useState(50);
-  const [meses, setMeses] = useState(48);
+  const [meses, setMeses] = useState(24);
 
   // Paso 3: preaprobado
   const [creditoPreaprobado, setCreditoPreaprobado] = useState<"si" | "no" | null>(null);
@@ -138,8 +146,17 @@ export default function SolicitarFinanciacionForm({ vehiculoPreseleccionado, cla
   }, [vehiculo]);
 
   const precioVehiculo = vehiculo?.precio_publicado_ars || precioArsConvertido || 0;
-  const anticipoCliente = (precioVehiculo * anticipoPorcentaje) / 100;
-  const montoAFinanciar = precioVehiculo - anticipoCliente;
+  const esOkm = (vehiculo?.km ?? 0) === 0;
+  const pctTope = vehiculo ? topePctPorAnio(vehiculo.anio, esOkm, topes, tope0km) : 0;
+  const capitalMaximo = precioVehiculo * (pctTope / 100);
+  const gastos = precioVehiculo * (gastosPct / 100);
+  const anticipoCliente = Math.max(0, precioVehiculo + gastos - capitalMaximo);
+  const montoAFinanciar = capitalMaximo;
+
+  const tasaPlazoSeleccionado = tna[String(meses)];
+  const cuotaEstimada = tasaPlazoSeleccionado ? calcularCuotaFrances(montoAFinanciar, tasaPlazoSeleccionado, meses) : 0;
+  const descuentoUvaSeleccionado = PLAZOS_CON_UVA.includes(meses) ? uvaDescuento[String(meses)] : null;
+  const cuotaUvaSeleccionada = descuentoUvaSeleccionado ? Math.round(cuotaEstimada * (1 - descuentoUvaSeleccionado / 100)) : null;
 
   const elegirVehiculo = (v: VehiculoFinanciable) => {
     setVehiculo(v);
@@ -155,7 +172,7 @@ export default function SolicitarFinanciacionForm({ vehiculoPreseleccionado, cla
     setStep(vehiculoPreseleccionado ? 2 : 1);
     setVehiculo(vehiculoPreseleccionado || null);
     setBusqueda(""); setResultados([]);
-    setAnticipoPorcentaje(50); setMeses(48);
+    setMeses(24);
     setCreditoPreaprobado(null);
     setNombre(""); setEmail(""); setTelefono("");
     setTurnstileToken("");
@@ -173,7 +190,6 @@ export default function SolicitarFinanciacionForm({ vehiculoPreseleccionado, cla
 
     setLoading(true);
     try {
-      const cuota = calcularCuota(montoAFinanciar, meses);
       const response = await fetch("/api/panel/leads-tasacion", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -188,7 +204,7 @@ export default function SolicitarFinanciacionForm({ vehiculoPreseleccionado, cla
           modelo: vehiculo.modelo,
           anio: vehiculo.anio,
           kilometraje: vehiculo.km ?? 0,
-          version: `Solicitud de crédito: anticipo $${anticipoCliente.toLocaleString("es-AR")} (${anticipoPorcentaje}%), financia $${montoAFinanciar.toLocaleString("es-AR")} en ${meses} cuotas de $${cuota.toLocaleString("es-AR")} aprox. Crédito preaprobado: ${creditoPreaprobado === "si" ? "Sí" : "No"}.`,
+          version: `Solicitud de crédito: financia hasta $${montoAFinanciar.toLocaleString("es-AR")} (${pctTope}% del valor), anticipo en efectivo $${anticipoCliente.toLocaleString("es-AR")}, en ${meses} cuotas de $${cuotaEstimada.toLocaleString("es-AR")} aprox. Crédito preaprobado: ${creditoPreaprobado === "si" ? "Sí" : "No"}.`,
           nombre: nombre.trim(),
           email: email.trim(),
           telefono: telefono.trim(),
@@ -304,40 +320,47 @@ export default function SolicitarFinanciacionForm({ vehiculoPreseleccionado, cla
                     </button>
                   )}
 
-                  <div>
-                    <div className="flex justify-between items-end mb-2">
-                      <label className="text-[11px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-widest">Anticipo ({anticipoPorcentaje}%)</label>
-                      <span className="text-xl font-black text-navy dark:text-white">$ {anticipoCliente.toLocaleString("es-AR")}</span>
+                  <div className="grid grid-cols-2 gap-2">
+                    <div className="bg-white dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-xl p-3">
+                      <span className="text-[10px] uppercase font-bold tracking-widest text-slate-400 block mb-0.5">Financiás hasta</span>
+                      <span className="text-lg font-black text-[#0145F2] dark:text-sky-400">$ {montoAFinanciar.toLocaleString("es-AR")}</span>
+                      <span className="block text-[10px] text-slate-400 mt-0.5">{pctTope}% del valor{esOkm ? " (0km)" : ""}</span>
                     </div>
-                    <input
-                      type="range" min="30" max="80" step="5"
-                      value={anticipoPorcentaje}
-                      onChange={(e) => setAnticipoPorcentaje(Number(e.target.value))}
-                      className="w-full h-2.5 bg-slate-200 dark:bg-slate-800 rounded-full appearance-none cursor-pointer accent-[#0145F2]"
-                    />
+                    <div className="bg-white dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-xl p-3">
+                      <span className="text-[10px] uppercase font-bold tracking-widest text-slate-400 block mb-0.5">Anticipo</span>
+                      <span className="text-lg font-black text-navy dark:text-white">$ {anticipoCliente.toLocaleString("es-AR")}</span>
+                      <span className="block text-[10px] text-slate-400 mt-0.5">Precio + gastos − financiado</span>
+                    </div>
                   </div>
 
                   <div>
                     <label className="text-[11px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-widest block mb-3">Comparar planes</label>
                     <div className="grid grid-cols-3 gap-2">
-                      {PLAZOS.map((plazo) => {
+                      {PLAZOS_DISPONIBLES.map((plazo) => {
                         const elegido = meses === plazo;
+                        const tasa = tna[String(plazo)];
+                        const cuotaPlazo = tasa ? calcularCuotaFrances(montoAFinanciar, tasa, plazo) : 0;
                         return (
                           <button
                             key={plazo} type="button" onClick={() => setMeses(plazo)}
                             className={`py-3 px-2 rounded-xl text-center transition-all border ${elegido ? "bg-[#0145F2] border-[#0145F2] text-white shadow-lg" : "bg-white dark:bg-white/5 border-slate-200 dark:border-white/10 text-slate-500 dark:text-slate-400"}`}
                           >
                             <p className="text-[10px] font-black uppercase tracking-widest opacity-80">{plazo} cuotas</p>
-                            <p className={`text-sm font-black mt-1 ${elegido ? "text-white" : "text-navy dark:text-white"}`}>$ {calcularCuota(montoAFinanciar, plazo).toLocaleString("es-AR")}</p>
+                            <p className={`text-sm font-black mt-1 ${elegido ? "text-white" : "text-navy dark:text-white"}`}>$ {cuotaPlazo.toLocaleString("es-AR")}</p>
                           </button>
                         );
                       })}
                     </div>
                   </div>
 
-                  <div className="bg-white dark:bg-white/5 border border-slate-200 dark:border-white/10 p-4 rounded-2xl flex items-center justify-between">
-                    <span className="text-xs font-bold text-slate-500 dark:text-slate-400">Cuota estimada ({meses} cuotas)</span>
-                    <span className="text-2xl font-black text-[#0145F2] dark:text-sky-300">$ {calcularCuota(montoAFinanciar, meses).toLocaleString("es-AR")}</span>
+                  <div className="bg-white dark:bg-white/5 border border-slate-200 dark:border-white/10 p-4 rounded-2xl">
+                    <div className="flex items-center justify-between">
+                      <span className="text-xs font-bold text-slate-500 dark:text-slate-400">Cuota estimada ({meses} cuotas)</span>
+                      <span className="text-2xl font-black text-[#0145F2] dark:text-sky-300">$ {cuotaEstimada.toLocaleString("es-AR")}</span>
+                    </div>
+                    {cuotaUvaSeleccionada != null && (
+                      <p className="text-xs font-bold text-indigo-600 dark:text-indigo-300 mt-2">Plan UVA (1ª cuota, sube con inflación): $ {cuotaUvaSeleccionada.toLocaleString("es-AR")}</p>
+                    )}
                   </div>
 
                   <button
