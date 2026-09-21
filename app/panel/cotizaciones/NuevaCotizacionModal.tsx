@@ -2,9 +2,8 @@
 
 import { useEffect, useState } from "react";
 import { supabase2 } from "@/lib/supabase/client";
-import { X, Loader2, Save, Calculator, Search, Check, Megaphone } from "lucide-react";
+import { X, Loader2, Save, Search, Check, Megaphone } from "lucide-react";
 import { hoyLocalISO } from "@/lib/panel/fechas";
-import TasarUsadoModal from "./TasarUsadoModal";
 import { crearAlerta } from "@/lib/panel/alertas";
 import { buscarLeadsPorTexto, LEAD_ORIGEN_LABEL, type LeadEncontrado } from "@/lib/panel/buscarLeads";
 
@@ -40,7 +39,6 @@ export default function NuevaCotizacionModal({ clientes, vehiculos, perfiles, mi
   const [permutaEstado, setPermutaEstado] = useState(editando?.permuta_estado || "Bueno");
   const [permutaPatente, setPermutaPatente] = useState(editando?.permuta_patente || "");
   const [permutaTasacion, setPermutaTasacion] = useState<number | null>(editando?.permuta_tasacion ?? null);
-  const [modalTasar, setModalTasar] = useState(false);
 
   const [precioSugerido, setPrecioSugerido] = useState(editando?.precio_sugerido ? String(editando.precio_sugerido) : "");
   const [moneda, setMoneda] = useState(editando?.moneda || "USD");
@@ -329,10 +327,7 @@ export default function NuevaCotizacionModal({ clientes, vehiculos, perfiles, mi
           </div>
 
           <div>
-            <div className="flex items-center justify-between mb-2">
-              <p className={seccionClass}>🔄 Auto que el cliente entrega en permuta</p>
-              <button type="button" onClick={() => setModalTasar(true)} className="flex items-center gap-1.5 text-[11px] font-bold text-indigo-600 dark:text-indigo-300 bg-indigo-50 dark:bg-indigo-500/10 border border-indigo-100 dark:border-indigo-500/20 rounded-lg px-2.5 py-1.5"><Calculator className="w-3.5 h-3.5" /> Tasar este usado</button>
-            </div>
+            <p className={seccionClass}>🔄 Auto que el cliente entrega en permuta</p>
             <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
               <div><label className={labelClass}>Marca</label><input value={permutaMarca} onChange={(e) => setPermutaMarca(e.target.value)} placeholder="BMW, Audi, Toyota..." className={inputClass} /></div>
               <div><label className={labelClass}>Modelo</label><input value={permutaModelo} onChange={(e) => setPermutaModelo(e.target.value)} placeholder="X3, A4, Hilux..." className={inputClass} /></div>
@@ -380,14 +375,6 @@ export default function NuevaCotizacionModal({ clientes, vehiculos, perfiles, mi
           </button>
         </div>
       </div>
-
-      {modalTasar && (
-        <TasarUsadoModal
-          marcaInicial={permutaMarca} modeloInicial={permutaModelo} anioInicial={permutaAnio} kmInicial={permutaKm}
-          onClose={() => setModalTasar(false)}
-          onTasado={(valor) => { setPermutaTasacion(valor); setModalTasar(false); }}
-        />
-      )}
     </div>
   );
 }

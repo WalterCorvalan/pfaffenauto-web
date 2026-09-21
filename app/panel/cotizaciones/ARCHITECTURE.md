@@ -28,26 +28,9 @@ Arreglado en dos partes:
 1. "Editar" en `CotizacionDetalleModal.tsx` ahora solo se muestra sobre una cotización `aprobada` si `soyAdmin` — igual criterio que "Eliminar".
 2. `NuevaCotizacionModal.tsx`, al guardar la edición de una que **era** `aprobada`, la vuelve a `pendiente` y limpia `precio_aprobado` (agrega entrada al `historial`) — obliga a re-aprobarla en vez de dejar un precio aprobado viejo sirviendo datos nuevos.
 
-## Tasador de permuta (`TasarUsadoModal.tsx`)
+## Tasador de permuta — eliminado
 
-Sugiere un valor de permuta contra **publicaciones reales de MercadoLibre** (v2 — la v1 usaba el stock propio como fuente, descartada por muestra muy chica; ver historial de este archivo/git log si hace falta volver a esa lógica).
-
-**Fuente de datos — scraping, no la API oficial.** La API pública de búsqueda de ML (`sites/MLA/search`) está bloqueada desde abril 2025, devuelve 403/401 incluso con token OAuth (confirmado en vivo). `lib/tasadorMercado.ts` (`fetchComparablesMeli`) hace un `fetch()` directo al listado público (`listado.mercadolibre.com.ar`, HTML server-rendered) y lo parsea con `cheerio` — con User-Agent de browser real, sin eso MeLi devuelve otra cosa o bloquea. **Riesgo aceptado a propósito**: esto viola los términos de uso de MercadoLibre y se rompe si cambian el markup del listado o bloquean la IP del server — no hay fallback automático, `fetchComparablesMeli()` tira error y el usuario ve "no se pudo consultar MercadoLibre" en vez de romper la cotización entera.
-
-**Flujo**: `app/api/panel/tasador-mercado/route.ts` (requiere sesión de staff, rate-limit 15/min) recibe marca/modelo/versión(opcional)/año/km → `fetchComparablesMeli()` trae hasta 10 comparables → `calcularEstadisticas()` saca media/mediana/mín/máx (JS puro, sin IA) → se aplica el descuento por tramo de km sobre la **media** (`TRAMOS_DESCUENTO_KM` en `lib/tasadorMercado.ts`, valores dados por el dueño de la agencia — no ajustar sin confirmar):
-
-| Hasta km | Descuento |
-|---|---|
-| 50.000 | 8% |
-| 80.000 | 10% |
-| 100.000 | 12% |
-| 120.000 | 14% |
-| 180.000 | 16% |
-| más | 20% |
-
-El valor final que se usa (`onTasado`) es el **ajustado** (con descuento), no la media bruta — se muestran los dos en pantalla para que quede claro de dónde sale.
-
-Si en algún momento el scraping deja de funcionar (bloqueo de MeLi) y hace falta una fuente alternativa sin costo, la opción más simple es volver a usar `vehiculos` (stock propio) como en la v1, aceptando muestra más chica.
+Existió un "Tasar este usado" (`TasarUsadoModal.tsx` + `app/api/panel/tasador-mercado/route.ts` + `lib/tasadorMercado.ts`) que scrapeaba el listado público de MercadoLibre para sugerir un valor de permuta. Se sacó porque MeLi bloquea el request del server (redirige a una página de "suspicious traffic" / verificación de cuenta) — no es arreglable ajustando selectores, es un bloqueo anti-bot real. Si se quiere retomar la idea, no reintentar el scraping directo; ver git log de este archivo para la lógica vieja (incluye una v1 que usaba `vehiculos` — stock propio — como fuente, con muestra más chica pero sin depender de terceros).
 
 ## No tocar sin revisar el resto
 

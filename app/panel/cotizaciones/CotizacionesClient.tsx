@@ -14,7 +14,6 @@ import NuevaCotizacionModal from "./NuevaCotizacionModal";
 import MigrarBorradoresModal from "./MigrarBorradoresModal";
 import CotizacionDetalleModal from "./CotizacionDetalleModal";
 import ModificarCotizacionModal from "./ModificarCotizacionModal";
-import TasarUsadoModal from "./TasarUsadoModal";
 import TablaResponsiva, { type ColumnaTabla } from "@/components/panel/TablaResponsiva";
 import ConfirmDialog from "@/components/panel/ConfirmDialog";
 
@@ -68,7 +67,6 @@ export default function CotizacionesClient({
   const [pidiendoAtencionId, setPidiendoAtencionId] = useState<string | null>(null);
   const [mensajeAtencion, setMensajeAtencion] = useState("");
   const [actualizandoId, setActualizandoId] = useState<string | null>(null);
-  const [tasandoLead, setTasandoLead] = useState<LeadWeb | null>(null);
   const [confirmDialog, setConfirmDialog] = useState<{ mensaje: string; accion: () => void } | null>(null);
 
   useEffect(() => {
@@ -194,14 +192,6 @@ export default function CotizacionesClient({
                       <p className="font-bold text-slate-700 dark:text-slate-200">{(l.oferta_calculada ?? l.precio_esperado_cliente) ? `$ ${Number(l.oferta_calculada ?? l.precio_esperado_cliente).toLocaleString("es-AR")}` : "—"}</p>
                       <p className="text-[10px] text-slate-400">{new Date(l.created_at).toLocaleDateString("es-AR")}</p>
                     </div>
-                    {/* Ese número de arriba es lo que el CLIENTE dijo que espera, con un
-                        % descontado por km -- no un precio de mercado real. Si el cliente
-                        infla lo que puso, el número infla igual. Esta sugerencia consulta
-                        publicaciones reales de MercadoLibre en vez de confiar en el dato
-                        que puso el cliente. */}
-                    {l.marca && l.modelo && l.anio && (
-                      <button onClick={() => setTasandoLead(l)} title="Sugerencia de mercado real (MercadoLibre)" className="shrink-0 px-2.5 py-1.5 text-[10px] font-bold bg-white dark:bg-white/5 border border-slate-200 dark:border-white/10 hover:border-[#0145F2] hover:text-[#0145F2] rounded-lg text-slate-500 dark:text-slate-400">Sug. mercado</button>
-                    )}
                   </div>
                 </div>
               ))}
@@ -371,18 +361,6 @@ export default function CotizacionesClient({
           onEditar={() => { setEditando(detalle); setDetalle(null); }}
         />
       )}
-      {tasandoLead && (
-        <TasarUsadoModal
-          marcaInicial={tasandoLead.marca || ""}
-          modeloInicial={tasandoLead.modelo || ""}
-          versionInicial={tasandoLead.version || undefined}
-          anioInicial={tasandoLead.anio ? String(tasandoLead.anio) : ""}
-          kmInicial={tasandoLead.kilometraje ? String(tasandoLead.kilometraje) : ""}
-          autoTasar
-          onClose={() => setTasandoLead(null)}
-        />
-      )}
-
       <ConfirmDialog
         abierto={!!confirmDialog}
         mensaje={confirmDialog?.mensaje || ""}
