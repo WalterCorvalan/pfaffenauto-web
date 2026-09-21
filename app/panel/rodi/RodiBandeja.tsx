@@ -218,8 +218,12 @@ export default function RodiBandeja({ conversacionesIniciales, vendedores, miId 
               <h3 className="font-bold text-lg">{conversacionActiva?.nombre_contacto || "Visitante anónimo"}</h3>
               <p className="text-sm text-slate-500 dark:text-slate-400 mt-1">{[conversacionActiva?.telefono_contacto, conversacionActiva?.email_contacto].filter(Boolean).join(" · ") || "Sin datos"}</p>
               {conversacionActiva?.origen_pagina && (
-                <div className="mt-3 flex items-center gap-1.5 bg-indigo-50 dark:bg-indigo-500/10 border border-indigo-200 dark:border-indigo-500/20 text-indigo-700 dark:text-sky-300 text-[11px] font-bold px-2.5 py-1 rounded-full max-w-full">
-                  <Megaphone className="w-3 h-3 shrink-0" /> <span className="truncate">{conversacionActiva.origen_pagina}</span>
+                <div
+                  title={`Página donde inició el chat — puede no ser el auto del que se terminó hablando: ${conversacionActiva.origen_pagina}`}
+                  className="mt-3 flex items-center gap-1.5 bg-indigo-50 dark:bg-indigo-500/10 border border-indigo-200 dark:border-indigo-500/20 text-indigo-700 dark:text-sky-300 text-[11px] font-bold px-2.5 py-1 rounded-full max-w-full"
+                >
+                  <Megaphone className="w-3 h-3 shrink-0" />
+                  <span className="truncate">Inició en: {conversacionActiva.origen_pagina}</span>
                 </div>
               )}
             </div>
