@@ -149,8 +149,14 @@ async function ingestarMensaje({ waId, nombrePerfil, msg }: { waId: string; nomb
 
   if (!conversacion) {
     // El trigger asignar_vendedor_conversacion_nueva le pone vendedor solo
-    // (ronda) antes de que termine el insert.
-    const { data: nueva } = await supabase.from("whatsapp_conversaciones").insert({ contacto_id: contacto.id }).select("id, vendedor_id, ai_habilitada, canal_origen, vehiculo_id").single();
+    // (ronda) antes de que termine el insert. canal_origen arranca en
+    // "WhatsApp" por default -- antes quedaba en null hasta que alguien lo
+    // marcara a mano en el panel, así que un lead que entraba orgánico (sin
+    // pauta de Meta ni desde MercadoLibre) aparecía "Sin especificar"
+    // indefinidamente. Si el primer mensaje sí trae señal de Meta Ads o
+    // MercadoLibre, los bloques de abajo lo pisan (ambos chequean también
+    // canal_origen === "WhatsApp", no solo null).
+    const { data: nueva } = await supabase.from("whatsapp_conversaciones").insert({ contacto_id: contacto.id, canal_origen: "WhatsApp" }).select("id, vendedor_id, ai_habilitada, canal_origen, vehiculo_id").single();
     conversacion = nueva;
   }
   if (!conversacion) return;
@@ -166,7 +172,7 @@ async function ingestarMensaje({ waId, nombrePerfil, msg }: { waId: string; nomb
     // que /panel/marketing/pautas -- instagram y facebook mapean los dos a
     // "Meta Ads" ahí también, no se distinguen.
     const patch: Record<string, unknown> = { origen_ads: msg.referral.headline };
-    if (!conversacion.canal_origen) patch.canal_origen = "Meta Ads";
+    if (!conversacion.canal_origen || conversacion.canal_origen === "WhatsApp") patch.canal_origen = "Meta Ads";
     await supabase.from("whatsapp_conversaciones").update(patch).eq("id", conversacion.id);
   } else if (/mercadolibre\.com/i.test(msg.text?.body || "")) {
     // El botón "Contactá al vendedor" de una publicación de MercadoLibre
@@ -176,7 +182,7 @@ async function ingestarMensaje({ waId, nombrePerfil, msg }: { waId: string; nomb
     // mensaje es una señal igual de confiable. Mismo vocabulario que
     // lib/utm.ts ("MercadoLibre").
     const patch: Record<string, unknown> = {};
-    if (!conversacion.canal_origen) patch.canal_origen = "MercadoLibre";
+    if (!conversacion.canal_origen || conversacion.canal_origen === "WhatsApp") patch.canal_origen = "MercadoLibre";
 
     // El link trae el ID de la publicación (MLA-2006584545-...) -- si ese
     // mismo auto está publicado en ML desde Stock (vehiculos.ml_item_id se

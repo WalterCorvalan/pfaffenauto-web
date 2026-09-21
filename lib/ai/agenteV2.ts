@@ -484,8 +484,24 @@ export async function generarRespuestaAgenteV2(historial: HistorialMensaje[], ca
   // Auto en foco de la charla: si esta búsqueda trajo un solo resultado
   // claro, ese pasa a ser el foco (se persiste en la conversación) — así un
   // pedido de fotos SIN volver a nombrar marca/modelo ("pásame fotos") sigue
-  // sabiendo de qué auto se trata.
-  let vehiculoFocoId: string | null = resultadosBusqueda.length === 1 ? resultadosBusqueda[0].id : null;
+  // sabiendo de qué auto se trata. Cuando trajo VARIOS (ej: "un Golf" y hay
+  // 3 Golf distintos en stock), antes se perdía el vínculo con la unidad
+  // puntual que el cliente pidió aunque su marca/modelo alcance para
+  // identificarla sin ambigüedad entre esos resultados -- el lead quedaba
+  // sin auto asociado en el panel pese a que el bot sí supo de cuál se
+  // trataba. Mismo criterio de match por nombre que ya usa "pedir_fotos"
+  // más abajo, pero solo cuando el match es único (si hay más de un
+  // resultado con ese nombre, seguimos sin poder saber a cuál se refería).
+  let vehiculoFocoId: string | null = null;
+  if (resultadosBusqueda.length === 1) {
+    vehiculoFocoId = resultadosBusqueda[0].id;
+  } else if (resultadosBusqueda.length > 1) {
+    const nombreBuscadoInicial = `${respuesta.vehiculo_mencionado?.marca ?? ""} ${respuesta.vehiculo_mencionado?.modelo ?? ""}`.trim().toLowerCase();
+    if (nombreBuscadoInicial) {
+      const coincidencias = resultadosBusqueda.filter((v) => `${v.marca} ${v.modelo}`.toLowerCase().includes(nombreBuscadoInicial));
+      if (coincidencias.length === 1) vehiculoFocoId = coincidencias[0].id;
+    }
+  }
 
   let fotosParaEnviar: string[] = [];
   if (respuesta.pedir_fotos) {
