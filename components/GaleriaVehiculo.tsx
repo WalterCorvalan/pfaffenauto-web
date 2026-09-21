@@ -65,13 +65,13 @@ export default function GaleriaVehiculo({ imagenes, altText }: GaleriaProps) {
         onTouchEnd={onTouchEnd}
       >
 
-        <AnimatePresence mode="wait">
+        <AnimatePresence>
           <motion.img
             key={currentIndex}
-            initial={{ opacity: 0, scale: 0.98, filter: "blur(4px)" }}
-            animate={{ opacity: 1, scale: 1, filter: "blur(0px)" }}
-            exit={{ opacity: 0, scale: 1.02, filter: "blur(4px)" }}
-            transition={{ duration: 0.3 }}
+            initial={{ opacity: 0, scale: 0.98 }}
+            animate={{ opacity: 1, scale: 1 }}
+            exit={{ opacity: 0, position: "absolute" }}
+            transition={{ duration: 0.25 }}
             src={imagenes[currentIndex]}
             alt={`${altText} - Foto ${currentIndex + 1}`}
             className="w-full h-auto max-h-[70vh] object-contain"
