@@ -9,6 +9,26 @@ const RespuestaSchema = z.object({
   link: z.string().nullable(),
 });
 
+// Rutas reales de /panel -- el modelo tiende a inventar secciones que
+// "deberían" existir (ej: "/panel/vendedores", que no existe: los
+// vendedores son perfiles con un rol, no tienen sección propia). Se valida
+// el link sugerido contra esta lista en vez de confiar en lo que devuelva.
+const RUTAS_PANEL_VALIDAS = new Set([
+  "alertas", "autorizaciones", "calendario", "clientes", "cobros", "comisiones", "configuracion",
+  "consignaciones", "cotizaciones", "dormidos", "errores", "expedientes", "financiaciones", "finanzas",
+  "gestoria", "infracciones", "leads", "liquidaciones", "logs", "marketing", "mensajes", "mi-espacio",
+  "mi-perfil", "mis-ventas", "nps", "papelera", "pedidos", "peritajes", "postulaciones", "postventa",
+  "presupuestos", "reclamos", "recontactos", "reportes", "rodi", "senas", "stock", "sueldos", "taller",
+  "tareas", "telefonos", "tesoreria", "ventas", "visitas", "whatsapp",
+]);
+
+function linkValido(link: string | null): string | null {
+  if (!link) return null;
+  const match = link.match(/^\/panel\/([a-z-]+)/);
+  if (!match || !RUTAS_PANEL_VALIDAS.has(match[1])) return null;
+  return link;
+}
+
 export async function POST(request: Request) {
   const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();
@@ -105,7 +125,7 @@ ${JSON.stringify(snapshot, null, 2)}
 Reglas:
 - Los números de arriba son la única fuente de verdad. Nunca los corrijas ni compares con datos externos (no tenés acceso a internet en esta versión).
 - Si preguntan algo que no está en estos datos, decilo con honestidad en vez de inventar.
-- Si conviene ir a una sección del panel para actuar, sugerí un link relativo (ej: "/panel/clientes") en el campo "link", si no aplica dejalo en null.
+- Si conviene ir a una sección del panel para actuar, sugerí un link relativo en el campo "link", pero SOLO usando una de estas secciones reales (no inventes otras): ${[...RUTAS_PANEL_VALIDAS].map((r) => `/panel/${r}`).join(", ")}. No hay una sección de "vendedores" -- los vendedores son perfiles, para eso no hay link. Si ninguna aplica, dejá el campo en null.
 - Devolvé SOLO este JSON: {"reply": "...", "link": "/panel/... o null"}`;
 
   const historialMsgs = Array.isArray(historial) ? historial.slice(-6).map((m: any) => ({ role: m.role === "assistant" ? "assistant" as const : "user" as const, content: String(m.content || "") })) : [];
@@ -120,5 +140,5 @@ Reglas:
     registrarError("api/panel/gerente/preguntar", resultado.error, { userId: user.id });
     return NextResponse.json({ error: "No se pudo generar una respuesta. Reintentá." }, { status: 500 });
   }
-  return NextResponse.json(resultado.data);
+  return NextResponse.json({ ...resultado.data, link: linkValido(resultado.data.link) });
 }
