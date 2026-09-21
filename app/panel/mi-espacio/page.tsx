@@ -1,5 +1,6 @@
 import { createClient } from "@/lib/supabase/server";
 import MiEspacioClient from "./MiEspacioClient";
+import { paraHoyGestoria, paraHoyFinanzas, paraHoyRecepcion, colaVendedor, carteraVendedor } from "@/lib/panel/miDia";
 
 export const metadata = { title: "Mi Espacio | Pfaffen Autos" };
 
@@ -9,6 +10,7 @@ export default async function MiEspacioPage() {
 
   const miPerfil = user ? await supabase.from("perfiles").select("id, nombre, roles").eq("id", user.id).single().then((r) => r.data) : null;
   const soyAdmin = miPerfil?.roles?.includes("admin") ?? false;
+  const roles: string[] = miPerfil?.roles || [];
 
   const inicioMes = new Date(); inicioMes.setDate(1); inicioMes.setHours(0, 0, 0, 0);
   const finMes = new Date(inicioMes); finMes.setMonth(finMes.getMonth() + 1);
@@ -60,6 +62,16 @@ export default async function MiEspacioPage() {
   const gastosFijosPorMoneda: Record<string, number> = {};
   (gastosFijos || []).forEach((g: any) => { gastosFijosPorMoneda[g.moneda] = (gastosFijosPorMoneda[g.moneda] || 0) + Number(g.monto); });
 
+  // "Para hoy" por rol -- solo se piden los datos del rol que corresponde,
+  // no todo para todos. Ver lib/panel/miDia.ts (todo de solo lectura).
+  const [paraHoyGestoriaData, paraHoyFinanzasData, paraHoyRecepcionData, colaVendedorData, carteraVendedorData] = await Promise.all([
+    roles.includes("gestoria") ? paraHoyGestoria(supabase) : Promise.resolve(null),
+    roles.includes("finanzas") ? paraHoyFinanzas(supabase) : Promise.resolve(null),
+    roles.includes("recepcion") ? paraHoyRecepcion(supabase) : Promise.resolve(null),
+    roles.includes("ventas") && user ? colaVendedor(supabase, user.id) : Promise.resolve(null),
+    roles.includes("ventas") && user ? carteraVendedor(supabase, user.id) : Promise.resolve(null),
+  ]);
+
   return (
     <MiEspacioClient
       miId={user?.id || ""}
@@ -75,6 +87,11 @@ export default async function MiEspacioPage() {
       eventosHoyCount={eventosHoyCount ?? 0}
       eventosSemanaCount={eventosSemanaCount ?? 0}
       gastosFijosPorMoneda={gastosFijosPorMoneda}
+      paraHoyGestoria={paraHoyGestoriaData}
+      paraHoyFinanzas={paraHoyFinanzasData}
+      paraHoyRecepcion={paraHoyRecepcionData}
+      colaVendedor={colaVendedorData}
+      carteraVendedor={carteraVendedorData}
     />
   );
 }

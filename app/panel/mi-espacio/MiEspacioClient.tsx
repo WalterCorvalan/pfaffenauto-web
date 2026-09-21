@@ -7,7 +7,7 @@ import { supabase2 } from "@/lib/supabase/client";
 import {
   BarChart3, Trophy, Flame, ExternalLink, Plus, X, Save, CheckCircle2,
   CreditCard, Trash2, Pencil, Car, ShoppingCart, Briefcase, Wallet2, ChevronDown,
-  ClipboardCheck, CalendarPlus, Wallet as WalletIcon,
+  ClipboardCheck, CalendarPlus, Wallet as WalletIcon, MessageCircle, AlertTriangle, Users,
 } from "lucide-react";
 import DeudasTab from "./tabs/DeudasTab";
 import CuotasPagarTab from "./tabs/CuotasPagarTab";
@@ -84,6 +84,7 @@ function diasHasta(fecha: string) {
 export default function MiEspacioClient({
   miId, miNombre, soyAdmin, agencia, urgentesIniciales, pagosIniciales, prefsIniciales,
   aCobrarPorMoneda, yaCobrePorMoneda, pendientesCount, eventosHoyCount, eventosSemanaCount, gastosFijosPorMoneda,
+  paraHoyGestoria, paraHoyFinanzas, paraHoyRecepcion, colaVendedor, carteraVendedor,
 }: {
   miId: string; miNombre: string; soyAdmin: boolean;
   agencia: { stockDisponible: number; ventasDelMes: number; expedientesActivos: number; ingresosDelMesUsd: number } | null;
@@ -91,6 +92,11 @@ export default function MiEspacioClient({
   aCobrarPorMoneda: Record<string, number>; yaCobrePorMoneda: Record<string, number>;
   pendientesCount: number; eventosHoyCount: number; eventosSemanaCount: number;
   gastosFijosPorMoneda: Record<string, number>;
+  paraHoyGestoria: { id: string; titulo: string; dias: number }[] | null;
+  paraHoyFinanzas: { mesAnteriorLabel: string; mesAnteriorCerrado: boolean; cuentasEnRojo: { id: string; nombre: string; moneda: string; saldo: number }[] } | null;
+  paraHoyRecepcion: { sinContestar: { id: string; origen: string; nombre: string; telefono: string | null; vendedorId: string | null }[]; visitasSinRegistrar: any[] } | null;
+  colaVendedor: { leadsSinContestar: { id: string; origen: string; nombre: string; telefono: string | null; vendedorId: string | null }[]; reservasSinSena: any[] } | null;
+  carteraVendedor: { total: number; sinContactoHaceRato: number } | null;
 }) {
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -404,6 +410,106 @@ export default function MiEspacioClient({
               <div className="bg-indigo-50 dark:bg-indigo-500/10 border border-indigo-100 dark:border-indigo-500/20 rounded-xl p-4"><p className="text-lg font-black text-indigo-600">{fmtPorMoneda(gastosFijosPorMoneda)}</p><p className="text-[10px] font-bold uppercase text-slate-400">Gastos fijos / mes</p><p className="text-[10px] text-slate-400">Piso comprometido</p></div>
             </div>
           </div>
+
+          {colaVendedor && (
+            <div>
+              <p className="text-[11px] font-black uppercase tracking-widest text-slate-400 mb-2">Para hoy</p>
+              {colaVendedor.leadsSinContestar.length === 0 && colaVendedor.reservasSinSena.length === 0 ? (
+                <div className="bg-emerald-50 dark:bg-emerald-500/10 border border-emerald-200 dark:border-emerald-500/20 rounded-xl px-4 py-3 text-sm font-semibold text-emerald-700 dark:text-emerald-300">Sin nada urgente en tu cola por ahora.</div>
+              ) : (
+                <div className="space-y-2">
+                  {colaVendedor.leadsSinContestar.map((l) => (
+                    <div key={l.id} className="flex items-center gap-2 bg-white dark:bg-white/5 border-l-4 border-rose-500 border-y border-r border-slate-200 dark:border-white/10 rounded-xl p-3">
+                      <button onClick={() => router.push(`/panel/leads?lead=${l.id}&origen=${l.origen}`)} className="flex-1 min-w-0 text-left">
+                        <p className="text-sm font-bold truncate">{l.nombre}</p>
+                        <p className="text-[11px] text-slate-400">Lead sin contestar · {l.origen}</p>
+                      </button>
+                      {l.telefono && (
+                        <a href={`https://wa.me/${l.telefono.replace(/\D/g, "")}?text=${encodeURIComponent(`¡Hola ${l.nombre}!`)}`} target="_blank" rel="noreferrer" className="bg-emerald-50 dark:bg-emerald-500/10 hover:bg-emerald-100 dark:hover:bg-emerald-500/20 text-emerald-600 dark:text-emerald-400 p-2 rounded-lg shrink-0"><MessageCircle className="w-4 h-4" /></a>
+                      )}
+                    </div>
+                  ))}
+                  {colaVendedor.reservasSinSena.map((v: any) => (
+                    <div key={v.id} className="flex items-center gap-2 bg-white dark:bg-white/5 border-l-4 border-rose-500 border-y border-r border-slate-200 dark:border-white/10 rounded-xl p-3">
+                      <Link href={`/panel/ventas?venta=${v.id}`} className="flex-1 min-w-0">
+                        <p className="text-sm font-bold truncate">{v.comprador_nombre}</p>
+                        <p className="text-[11px] text-slate-400">Reserva sin seña · {v.vehiculo_marca} {v.vehiculo_modelo}</p>
+                      </Link>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          )}
+
+          {carteraVendedor && (
+            <button onClick={() => router.push("/panel/clientes")} className="w-full flex items-center justify-between bg-white dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-xl p-4 text-left hover:bg-slate-50 dark:hover:bg-white/10">
+              <div className="flex items-center gap-2"><Users className="w-4 h-4 text-slate-400" /><span className="text-sm font-bold">Tus {carteraVendedor.total} cliente{carteraVendedor.total === 1 ? "" : "s"}</span></div>
+              {carteraVendedor.sinContactoHaceRato > 0 && <span className="text-[11px] font-bold text-amber-600 dark:text-amber-400">{carteraVendedor.sinContactoHaceRato} sin contacto hace +2 semanas</span>}
+            </button>
+          )}
+
+          {paraHoyGestoria && (
+            <div>
+              <p className="text-[11px] font-black uppercase tracking-widest text-slate-400 mb-2">Para hoy — Gestoría</p>
+              {paraHoyGestoria.length === 0 ? (
+                <div className="bg-emerald-50 dark:bg-emerald-500/10 border border-emerald-200 dark:border-emerald-500/20 rounded-xl px-4 py-3 text-sm font-semibold text-emerald-700 dark:text-emerald-300">Sin expedientes demorados.</div>
+              ) : (
+                <div className="space-y-2">
+                  {paraHoyGestoria.map((e) => (
+                    <button key={e.id} onClick={() => router.push(`/panel/gestoria?expediente=${e.id}`)} className="w-full flex items-center justify-between bg-white dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-xl p-3 text-left hover:bg-slate-50 dark:hover:bg-white/10">
+                      <span className="text-sm font-bold truncate">{e.titulo || "Sin título"}</span>
+                      <span className="text-[11px] font-bold text-rose-600 dark:text-rose-400 shrink-0 flex items-center gap-1"><AlertTriangle className="w-3.5 h-3.5" /> {e.dias}d</span>
+                    </button>
+                  ))}
+                </div>
+              )}
+            </div>
+          )}
+
+          {paraHoyFinanzas && (
+            <div>
+              <p className="text-[11px] font-black uppercase tracking-widest text-slate-400 mb-2">Para hoy — Finanzas</p>
+              <div className="space-y-2">
+                {!paraHoyFinanzas.mesAnteriorCerrado && (
+                  <div className="bg-amber-50 dark:bg-amber-500/10 border border-amber-200 dark:border-amber-500/20 rounded-xl px-4 py-3 text-sm font-semibold text-amber-700 dark:text-amber-300 capitalize">{paraHoyFinanzas.mesAnteriorLabel} quedó sin cerrar.</div>
+                )}
+                {paraHoyFinanzas.cuentasEnRojo.map((c) => (
+                  <div key={c.id} className="flex items-center justify-between bg-white dark:bg-white/5 border-l-4 border-rose-500 border-y border-r border-slate-200 dark:border-white/10 rounded-xl p-3">
+                    <span className="text-sm font-bold">{c.nombre}</span>
+                    <span className="text-sm font-black text-rose-600 dark:text-rose-400">{c.moneda === "USD" ? "USD" : "$"} {c.saldo.toLocaleString("es-AR")}</span>
+                  </div>
+                ))}
+                {paraHoyFinanzas.mesAnteriorCerrado && paraHoyFinanzas.cuentasEnRojo.length === 0 && (
+                  <div className="bg-emerald-50 dark:bg-emerald-500/10 border border-emerald-200 dark:border-emerald-500/20 rounded-xl px-4 py-3 text-sm font-semibold text-emerald-700 dark:text-emerald-300">Mes anterior cerrado, sin cuentas en rojo.</div>
+                )}
+              </div>
+            </div>
+          )}
+
+          {paraHoyRecepcion && (
+            <div>
+              <p className="text-[11px] font-black uppercase tracking-widest text-slate-400 mb-2">Para hoy — Recepción</p>
+              {paraHoyRecepcion.sinContestar.length === 0 && paraHoyRecepcion.visitasSinRegistrar.length === 0 ? (
+                <div className="bg-emerald-50 dark:bg-emerald-500/10 border border-emerald-200 dark:border-emerald-500/20 rounded-xl px-4 py-3 text-sm font-semibold text-emerald-700 dark:text-emerald-300">Sin leads sin contestar ni visitas abiertas.</div>
+              ) : (
+                <div className="space-y-2">
+                  {paraHoyRecepcion.sinContestar.map((l) => (
+                    <button key={l.id} onClick={() => router.push(`/panel/leads?lead=${l.id}&origen=${l.origen}`)} className="w-full flex items-center justify-between bg-white dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-xl p-3 text-left hover:bg-slate-50 dark:hover:bg-white/10">
+                      <span className="text-sm font-bold truncate">{l.nombre}</span>
+                      <span className="text-[11px] font-bold text-slate-400 shrink-0">{l.vendedorId ? "Con vendedor" : "Sin vendedor"}</span>
+                    </button>
+                  ))}
+                  {paraHoyRecepcion.visitasSinRegistrar.map((v: any) => (
+                    <button key={v.id} onClick={() => router.push("/panel/visitas")} className="w-full flex items-center justify-between bg-white dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-xl p-3 text-left hover:bg-slate-50 dark:hover:bg-white/10">
+                      <span className="text-sm font-bold truncate">{v.nombre_cliente}</span>
+                      <span className="text-[11px] font-bold text-amber-600 dark:text-amber-400 shrink-0">Visita sin registrar · {v.fecha_visita}</span>
+                    </button>
+                  ))}
+                </div>
+              )}
+            </div>
+          )}
         </div>
       )}
 
