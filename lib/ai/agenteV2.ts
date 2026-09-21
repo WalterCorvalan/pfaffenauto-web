@@ -188,13 +188,22 @@ export async function buscarStockRealV2(
   puertas?: number | null
 ): Promise<{ resultados: ResultadoStockV2[]; esAlternativa: boolean; total: number }> {
   const cat = categoria ?? null;
+  // Si el cliente pidió una marca/modelo puntual, la búsqueda nunca debe
+  // degradar hasta "mostrame lo que sea del stock" (último intento, sin
+  // ningún filtro) -- eso ignoraba por completo lo que pidió y, como
+  // ejecutarBusquedaStock no tiene ORDER BY, devolvía siempre la misma
+  // terna de autos sin relación con la marca pedida (reportado: pidió
+  // "Ford" y recibió la lista idéntica que ya había recibido antes por otro
+  // motivo, pareciendo que el bot "se quedó pegado"). Con marca/modelo
+  // específico, el peor caso es soltar la marca pero conservar la
+  // categoría (si la pidió) -- nunca un catálogo completamente genérico.
+  const pidioMarcaOModelo = !!(marca || modelo);
   const intentos: [string | null, string | null, string | null][] = [
     [marca, modelo, cat],
     [marca, modelo, null],
     [marca, null, cat],
     [marca, null, null],
-    [null, null, cat],
-    [null, null, null],
+    ...(pidioMarcaOModelo ? [] : [[null, null, cat] as [string | null, string | null, string | null], [null, null, null] as [string | null, string | null, string | null]]),
   ];
 
   // Puertas es el filtro más débil de todos -- hoy no todo el stock tiene
