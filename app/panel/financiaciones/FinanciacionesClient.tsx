@@ -13,11 +13,12 @@ const ESTADO_STYLES: Record<string, string> = {
   descartado: "bg-rose-500 text-white border-rose-500",
 };
 
-export default function FinanciacionesClient({ solicitudesIniciales }: { solicitudesIniciales: any[] }) {
+export default function FinanciacionesClient({ solicitudesIniciales, staff }: { solicitudesIniciales: any[]; staff: { id: string; nombre: string }[] }) {
   const [solicitudes, setSolicitudes] = useState(solicitudesIniciales);
   const [filtroEstado, setFiltroEstado] = useState("nuevo");
   const [query, setQuery] = useState("");
   const [seleccionada, setSeleccionada] = useState<any>(null);
+  const perfilMap = useMemo(() => Object.fromEntries(staff.map((p) => [p.id, p.nombre])), [staff]);
 
   const counts = useMemo(() => ({
     nuevo: solicitudes.filter((s) => s.estado === "nuevo").length,
@@ -45,6 +46,17 @@ export default function FinanciacionesClient({ solicitudesIniciales }: { solicit
       // refresh de página, aunque la base siguiera con el viejo.
       setSolicitudes((prev) => prev.map((s) => (s.id === id ? { ...s, estado: anterior ?? s.estado } : s)));
       alert("No se pudo actualizar el estado.");
+    }
+  };
+
+  const cambiarVendedor = async (id: string, vendedorId: string) => {
+    const anterior = solicitudes.find((s) => s.id === id)?.vendedor_id ?? null;
+    const nuevo = vendedorId || null;
+    setSolicitudes((prev) => prev.map((s) => (s.id === id ? { ...s, vendedor_id: nuevo } : s)));
+    const { error } = await supabase2.from("leads_tasacion").update({ vendedor_id: nuevo }).eq("id", id);
+    if (error) {
+      setSolicitudes((prev) => prev.map((s) => (s.id === id ? { ...s, vendedor_id: anterior } : s)));
+      alert("No se pudo asignar el vendedor.");
     }
   };
 
@@ -104,6 +116,17 @@ export default function FinanciacionesClient({ solicitudesIniciales }: { solicit
                 { key: "vehiculo", header: "Vehículo", cell: (s) => [s.marca, s.modelo, s.anio].filter(Boolean).join(" ") || "—", claseTd: "text-[13px] text-slate-700 dark:text-slate-200 font-medium" },
                 { key: "detalle", header: "Detalle del plan", cell: (s) => s.version || "—", claseTd: "text-[12px] text-slate-500 dark:text-slate-400 max-w-xs truncate" },
                 { key: "fecha", header: "Fecha", cell: (s) => <span className="flex items-center gap-1"><Clock className="w-3 h-3" /> {new Date(s.created_at).toLocaleDateString("es-AR", { day: "2-digit", month: "short" })}</span>, claseTd: "text-[12px] text-slate-400" },
+                { key: "vendedor", header: "Vendedor", cell: (s) => (
+                  <select
+                    value={s.vendedor_id || ""}
+                    onClick={(e) => e.stopPropagation()}
+                    onChange={(e) => cambiarVendedor(s.id, e.target.value)}
+                    className="text-[12px] font-semibold rounded-lg px-2 py-1.5 outline-none cursor-pointer border border-slate-200 dark:border-white/10 bg-white dark:bg-white/5 text-slate-700 dark:text-slate-200"
+                  >
+                    <option value="">Sin asignar</option>
+                    {staff.map((p) => <option key={p.id} value={p.id}>{p.nombre}</option>)}
+                  </select>
+                ), ocultarEnMobile: true },
                 { key: "estado", header: "Estado", cell: (s) => (
                   <select
                     value={s.estado}
@@ -133,7 +156,7 @@ export default function FinanciacionesClient({ solicitudesIniciales }: { solicit
         )}
       </div>
 
-      {seleccionada && <FinanciacionDetalleModal solicitud={seleccionada} onClose={() => setSeleccionada(null)} />}
+      {seleccionada && <FinanciacionDetalleModal solicitud={seleccionada} vendedorNombre={seleccionada.vendedor_id ? perfilMap[seleccionada.vendedor_id] : null} onClose={() => setSeleccionada(null)} />}
     </div>
   );
 }
