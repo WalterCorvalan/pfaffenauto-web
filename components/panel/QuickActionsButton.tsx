@@ -77,6 +77,13 @@ async function cargarDatosVenta(miId: string) {
 
 export default function QuickActionsButton() {
   const [open, setOpen] = useState(false);
+  // MensajesBubble (apilado justo arriba de este botón) escucha "qa:toggle"
+  // para esconderse mientras las 5 pills están desplegadas y así no quedar
+  // tapado ni interceptar sus clicks.
+  const cambiarOpen = (nuevo: boolean) => {
+    setOpen(nuevo);
+    window.dispatchEvent(new CustomEvent("qa:toggle", { detail: { open: nuevo } }));
+  };
   const [cargando, setCargando] = useState<AccionId | null>(null);
   const router = useRouter();
 
@@ -90,7 +97,7 @@ export default function QuickActionsButton() {
   const onCreadoGenerico = () => { cerrarModales(); router.refresh(); };
 
   const elegir = async (id: AccionId) => {
-    setOpen(false);
+    cambiarOpen(false);
     setCargando(id);
     try {
       const { data: { user } } = await supabase2.auth.getUser();
@@ -113,7 +120,7 @@ export default function QuickActionsButton() {
       <div className="print:hidden hidden md:flex fixed bottom-6 right-6 z-40 flex-col items-end gap-2">
         {open && (
           <>
-            <div className="fixed inset-0 -z-10" onClick={() => setOpen(false)} />
+            <div className="fixed inset-0 -z-10" onClick={() => cambiarOpen(false)} />
             <div className="flex flex-col items-end gap-2 mb-1">
               {ACCIONES.map((a) => {
                 const Icon = a.icon;
@@ -138,7 +145,7 @@ export default function QuickActionsButton() {
         )}
         <button
           type="button"
-          onClick={() => setOpen((v) => !v)}
+          onClick={() => cambiarOpen(!open)}
           className="w-14 h-14 rounded-full bg-[#0145F2] hover:bg-[#0138c9] text-white shadow-xl flex items-center justify-center transition-transform active:scale-95"
           title="Acciones rápidas"
         >

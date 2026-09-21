@@ -6,7 +6,7 @@ import { supabase2 } from "@/lib/supabase/client";
 import { MessageCircle, X, Globe, Users, Plus, Inbox } from "lucide-react";
 import FloatingChatWindow from "./FloatingChatWindow";
 
-interface Perfil { id: string; nombre: string }
+interface Perfil { id: string; nombre: string; roles?: string[] }
 interface Canal { id: string; tipo: "general" | "directo" | "grupo"; nombre: string | null; par_clave: string | null; created_at: string; otroMiembro?: Perfil }
 
 function nombreCanal(c: Canal) {
@@ -26,10 +26,49 @@ export default function MensajesBubble() {
   const [noLeidosPorCanal, setNoLeidosPorCanal] = useState<Record<string, number>>({});
   const [popupAbierto, setPopupAbierto] = useState(false);
   const [ventanas, setVentanas] = useState<Canal[]>([]);
+  const [staff, setStaff] = useState<Perfil[]>([]);
+  const [showNuevoGrupo, setShowNuevoGrupo] = useState(false);
+  const [nombreGrupo, setNombreGrupo] = useState("");
+  const [miembrosGrupo, setMiembrosGrupo] = useState<string[]>([]);
+  const [creandoGrupo, setCreandoGrupo] = useState(false);
+  const [quickActionsAbierto, setQuickActionsAbierto] = useState(false);
 
   useEffect(() => {
     supabase2.auth.getUser().then(({ data }) => setMiId(data.user?.id || ""));
   }, []);
+
+  useEffect(() => {
+    const onToggle = (e: Event) => setQuickActionsAbierto((e as CustomEvent<{ open: boolean }>).detail.open);
+    window.addEventListener("qa:toggle", onToggle);
+    return () => window.removeEventListener("qa:toggle", onToggle);
+  }, []);
+
+  useEffect(() => {
+    if (!miId) return;
+    supabase2.from("perfiles").select("id, nombre, roles").eq("activo", true).order("nombre").then(({ data }) => {
+      setStaff((data || []).filter((p) => p.id !== miId));
+    });
+  }, [miId]);
+
+  const crearGrupo = async () => {
+    if (!nombreGrupo.trim() || miembrosGrupo.length === 0) return;
+    setCreandoGrupo(true);
+    try {
+      const { data: nuevo, error } = await supabase2.from("mensajes_canales").insert({ tipo: "grupo", nombre: nombreGrupo.trim(), created_by: miId }).select("id").single();
+      if (error) throw error;
+      const filas = [miId, ...miembrosGrupo].map((perfil_id) => ({ canal_id: nuevo.id, perfil_id }));
+      await supabase2.from("mensajes_canal_miembros").insert(filas);
+      setShowNuevoGrupo(false);
+      setNombreGrupo("");
+      setMiembrosGrupo([]);
+      await cargar();
+      abrirVentana({ id: nuevo.id, tipo: "grupo", nombre: nombreGrupo.trim(), par_clave: null, created_at: new Date().toISOString() });
+    } catch {
+      alert("No se pudo crear el grupo.");
+    } finally {
+      setCreandoGrupo(false);
+    }
+  };
 
   const cargar = useCallback(async () => {
     if (!miId) return;
@@ -94,11 +133,12 @@ export default function MensajesBubble() {
         <FloatingChatWindow key={c.id} canal={c} miId={miId} offset={24 + i * 316} onClose={() => cerrarVentana(c.id)} />
       ))}
 
-      {/* Separado horizontalmente del botón "+" (QuickActionsButton, fixed
-          bottom-6 right-6) en vez de apilado arriba -- ese botón despliega
-          hasta 5 pills hacia arriba y, en la misma columna, terminaba
-          tapando este ícono mientras el menú estaba abierto. */}
-      <div className="print:hidden hidden md:block fixed bottom-6 right-24 z-40">
+      {/* Apilado arriba del botón "+" (QuickActionsButton, fixed bottom-6
+          right-6), misma columna. Mientras el "+" está abierto y despliega
+          sus pills hacia arriba, este ícono se esconde (ver evento
+          "qa:toggle" que emite QuickActionsButton) para no quedar tapado
+          ni interceptar los clicks de esas pills. */}
+      <div className={`print:hidden hidden md:block fixed bottom-24 right-6 z-30 transition-opacity ${quickActionsAbierto ? "opacity-0 pointer-events-none" : "opacity-100"}`}>
         {popupAbierto && (
           <div className="absolute bottom-14 right-0 w-80 bg-white dark:bg-[#141414] border border-slate-200 dark:border-white/10 rounded-2xl shadow-2xl overflow-hidden">
             <div className="flex items-start justify-between px-4 py-3 border-b border-slate-100 dark:border-white/10">
@@ -133,6 +173,9 @@ export default function MensajesBubble() {
               <button onClick={() => { setPopupAbierto(false); router.push("/panel/mensajes"); }} className="w-full flex items-center gap-2 px-2 py-2 text-sm font-semibold text-indigo-600 dark:text-indigo-400 hover:bg-slate-50 dark:hover:bg-white/5 rounded-lg">
                 <Plus className="w-4 h-4" /> Mensaje nuevo
               </button>
+              <button onClick={() => { setPopupAbierto(false); setShowNuevoGrupo(true); }} className="w-full flex items-center gap-2 px-2 py-2 text-sm font-semibold text-indigo-600 dark:text-indigo-400 hover:bg-slate-50 dark:hover:bg-white/5 rounded-lg">
+                <Users className="w-4 h-4" /> Crear grupo
+              </button>
               <button onClick={() => { setPopupAbierto(false); router.push("/panel/mensajes"); }} className="w-full flex items-center gap-2 px-2 py-2 text-sm font-semibold text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-white/5 rounded-lg">
                 <Inbox className="w-4 h-4" /> Ver Mensajes completo
               </button>
@@ -153,6 +196,31 @@ export default function MensajesBubble() {
           )}
         </button>
       </div>
+
+      {showNuevoGrupo && (
+        <div className="fixed inset-0 z-[60] flex items-center justify-center p-4">
+          <div className="absolute inset-0 bg-slate-900/50 backdrop-blur-sm" onClick={() => !creandoGrupo && setShowNuevoGrupo(false)} />
+          <div className="relative bg-white dark:bg-[#141414] border border-slate-200 dark:border-white/10 w-full max-w-sm rounded-2xl shadow-2xl p-6 max-h-[85vh] overflow-y-auto">
+            <div className="flex items-center justify-between mb-4"><h3 className="text-base font-bold">Crear grupo</h3><button onClick={() => setShowNuevoGrupo(false)}><X className="w-4 h-4 text-slate-400" /></button></div>
+            <label className="text-xs font-bold text-slate-500 dark:text-slate-400 mb-1 block">Nombre del grupo</label>
+            <input value={nombreGrupo} onChange={(e) => setNombreGrupo(e.target.value)} placeholder="Ej: Equipo Ventas, Gestión Marzo..." className="w-full bg-slate-50 dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-xl px-3.5 py-2.5 text-sm outline-none mb-4" />
+            <p className="text-xs font-bold text-slate-500 dark:text-slate-400 mb-1">Agregar miembros ({miembrosGrupo.length} seleccionados)</p>
+            <div className="space-y-1 mb-4">
+              {staff.map((p) => (
+                <label key={p.id} className="flex items-center gap-3 px-2 py-2 rounded-lg hover:bg-slate-50 dark:hover:bg-white/5 cursor-pointer">
+                  <input type="checkbox" checked={miembrosGrupo.includes(p.id)} onChange={(e) => setMiembrosGrupo((prev) => e.target.checked ? [...prev, p.id] : prev.filter((x) => x !== p.id))} className="w-4 h-4 accent-[#0145F2]" />
+                  <div className="w-8 h-8 rounded-full bg-indigo-500 text-white flex items-center justify-center font-bold text-xs shrink-0">{p.nombre.slice(0, 1).toUpperCase()}</div>
+                  <div><p className="text-sm font-semibold">{p.nombre}</p><p className="text-[10px] text-slate-400">{p.roles?.[0] || ""}</p></div>
+                </label>
+              ))}
+            </div>
+            <div className="flex gap-2">
+              <button onClick={() => setShowNuevoGrupo(false)} disabled={creandoGrupo} className="flex-1 px-4 py-2.5 text-sm font-bold text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-white/10 rounded-xl disabled:opacity-50">Cancelar</button>
+              <button onClick={crearGrupo} disabled={creandoGrupo || !nombreGrupo.trim() || miembrosGrupo.length === 0} className="flex-1 flex items-center justify-center gap-1.5 px-4 py-2.5 text-sm font-bold bg-[#0145F2] hover:bg-[#0138c9] text-white rounded-xl disabled:opacity-50"><Users className="w-4 h-4" /> Crear grupo</button>
+            </div>
+          </div>
+        </div>
+      )}
     </>
   );
 }
