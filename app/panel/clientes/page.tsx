@@ -24,7 +24,10 @@ export default async function ClientesPage() {
   const restringirAMisClientes = !!config?.cada_vendedor_ve_solo_sus_clientes && !esAdminRecepcionOEncargado;
 
   let queryClientes = supabase.from("clientes").select("*").order("created_at", { ascending: false }).limit(5000);
-  if (restringirAMisClientes) queryClientes = queryClientes.eq("vendedor_id", user?.id ?? "");
+  // El toggle restringe leads (todavía no compraron), no clientes reales --
+  // un vendedor siempre puede ver la cartera completa de gente que ya
+  // compró, aunque el lead que la originó no haya sido suyo.
+  if (restringirAMisClientes) queryClientes = queryClientes.or(`vendedor_id.eq.${user?.id ?? ""},estado_relacion.eq.cliente`);
 
   const [{ data: clientes }, { data: perfiles }, { data: disponibilidad }, { data: ventas }] = await Promise.all([
     // Sin límite esto traía TODA la base de clientes de toda la historia --
