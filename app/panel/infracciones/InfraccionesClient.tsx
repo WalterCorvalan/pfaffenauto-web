@@ -150,7 +150,7 @@ export default function InfraccionesClient({ infraccionesIniciales, vehiculos, p
                     { key: "planilla", header: "Planilla", cell: (i) => i.planilla || "—", claseTd: "text-[13px] text-slate-500 dark:text-slate-400" },
                     { key: "deuda", header: "Deuda", cell: (i) => fmtArs(i.deuda_ars), claseTd: "text-[13px] text-right text-slate-600 dark:text-slate-300 font-mono" },
                     { key: "pago_cliente", header: "Pago cliente", cell: (i) => fmtArs(i.pago_cliente_ars), claseTd: "text-[13px] text-right text-slate-600 dark:text-slate-300 font-mono" },
-                    { key: "pago_real", header: "Pago real", cell: (i) => fmtArs(i.pago_real_ars), claseTd: "text-[13px] text-right text-slate-600 dark:text-slate-300 font-mono" },
+                    ...(puedeVerGanancia ? [{ key: "pago_real", header: "Pago real", cell: (i: Infraccion) => fmtArs(i.pago_real_ars), claseTd: "text-[13px] text-right text-slate-600 dark:text-slate-300 font-mono" }] : []),
                     ...(puedeVerGanancia ? [{ key: "ganancia", header: "Ganancia", cell: (i: Infraccion) => fmtArs(i.ganancia_ars), claseTd: "text-[13px] text-right font-bold text-emerald-600 dark:text-emerald-400 font-mono" }] : []),
                     { key: "estado", header: "Estado", cell: (i) => <span className={`text-[10px] font-bold uppercase tracking-widest px-2 py-1 rounded-full ${ESTADO_COLOR[i.estado] || ""}`}>{i.estado}</span> },
                   ] as ColumnaTabla<Infraccion>[]
@@ -179,7 +179,7 @@ export default function InfraccionesClient({ infraccionesIniciales, vehiculos, p
                         <th className="px-4 py-3 text-right">Cantidad</th>
                         <th className="px-4 py-3 text-right">Deuda</th>
                         <th className="px-4 py-3 text-right">Pago cliente</th>
-                        <th className="px-4 py-3 text-right">Pago real</th>
+                        {puedeVerGanancia && <th className="px-4 py-3 text-right">Pago real</th>}
                         {puedeVerGanancia && <th className="px-4 py-3 text-right">Ganancia</th>}
                       </tr>
                     </thead>
@@ -190,7 +190,7 @@ export default function InfraccionesClient({ infraccionesIniciales, vehiculos, p
                           <td className="px-4 py-3 text-[13px] text-right text-slate-600 dark:text-slate-300 font-mono">{l.cantidad}</td>
                           <td className="px-4 py-3 text-[13px] text-right text-slate-600 dark:text-slate-300 font-mono">{fmtArs(l.total_deuda)}</td>
                           <td className="px-4 py-3 text-[13px] text-right text-slate-600 dark:text-slate-300 font-mono">{fmtArs(l.total_pago_cliente)}</td>
-                          <td className="px-4 py-3 text-[13px] text-right text-slate-600 dark:text-slate-300 font-mono">{fmtArs(l.total_pago_real)}</td>
+                          {puedeVerGanancia && <td className="px-4 py-3 text-[13px] text-right text-slate-600 dark:text-slate-300 font-mono">{fmtArs(l.total_pago_real)}</td>}
                           {puedeVerGanancia && <td className="px-4 py-3 text-[13px] text-right font-bold text-emerald-600 dark:text-emerald-400 font-mono">{fmtArs(l.total_ganancia)}</td>}
                         </tr>
                       ))}
@@ -201,7 +201,7 @@ export default function InfraccionesClient({ infraccionesIniciales, vehiculos, p
                         <td className="px-4 py-3 text-[13px] text-right font-black text-slate-900 dark:text-white font-mono">{totalLiquidacion.cantidad}</td>
                         <td className="px-4 py-3 text-[13px] text-right font-black text-slate-900 dark:text-white font-mono">{fmtArs(totalLiquidacion.total_deuda)}</td>
                         <td className="px-4 py-3 text-[13px] text-right font-black text-slate-900 dark:text-white font-mono">{fmtArs(totalLiquidacion.total_pago_cliente)}</td>
-                        <td className="px-4 py-3 text-[13px] text-right font-black text-slate-900 dark:text-white font-mono">{fmtArs(totalLiquidacion.total_pago_real)}</td>
+                        {puedeVerGanancia && <td className="px-4 py-3 text-[13px] text-right font-black text-slate-900 dark:text-white font-mono">{fmtArs(totalLiquidacion.total_pago_real)}</td>}
                         {puedeVerGanancia && <td className="px-4 py-3 text-[13px] text-right font-black text-emerald-600 dark:text-emerald-400 font-mono">{fmtArs(totalLiquidacion.total_ganancia)}</td>}
                       </tr>
                     </tfoot>
@@ -217,6 +217,7 @@ export default function InfraccionesClient({ infraccionesIniciales, vehiculos, p
         <NuevaInfraccionModal
           infraccion={infraccionAEditar}
           vehiculos={vehiculos}
+          puedeVerGanancia={puedeVerGanancia}
           onClose={() => setModalAbierto(false)}
           onGuardada={(i) => { onGuardada(i); setModalAbierto(false); }}
         />
