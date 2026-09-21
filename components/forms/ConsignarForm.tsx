@@ -262,7 +262,7 @@ export default function ConsignarForm() {
     <div className="bg-[#F8FAFC] dark:bg-[#0a0a0f] text-slate-900 dark:text-white flex flex-col lg:flex-row font-sans">
 
       {/* ================= ZONA IZQUIERDA: PREVIEW DINÁMICA ================= */}
-      <div className="w-full lg:w-[55%] h-[56vh] min-h-[420px] lg:h-[calc(100vh-5rem)] lg:sticky lg:top-20 relative bg-slate-100 dark:bg-[#050b14] overflow-hidden shrink-0 border-b lg:border-b-0 lg:border-r border-slate-200 dark:border-white/5">
+      <div className="w-full lg:w-[55%] h-[38vh] min-h-[300px] lg:h-[calc(100vh-5rem)] lg:sticky lg:top-20 relative bg-slate-100 dark:bg-[#050b14] overflow-hidden shrink-0 border-b lg:border-b-0 lg:border-r border-slate-200 dark:border-white/5">
 
         {/* Fondos y luces */}
         <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_50%,rgba(1,69,242,0.08),transparent_60%)]" />
