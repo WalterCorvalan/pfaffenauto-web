@@ -35,6 +35,7 @@ export default async function ReportesPage() {
     { data: servicePosventa },
     { data: consultasVsVentas },
     { data: composicionVentas },
+    { data: ventasPorOrigenRaw },
   ] = await Promise.all([
     supabase.auth.getUser().then(async ({ data }) => {
       if (!data.user) return { data: null };
@@ -63,7 +64,17 @@ export default async function ReportesPage() {
     supabase.from("v_reportes_service_posventa").select("*").single(),
     supabase.from("v_reportes_consultas_vs_ventas").select("*").limit(20),
     supabase.from("v_reportes_composicion_ventas").select("*").single(),
+    supabase.from("ventas").select("vehiculo_id, vehiculos(origen)").eq("estado", "cerrada").gte("fecha_cierre", desde).lte("fecha_cierre", hasta),
   ]);
+
+  const ventasPorOrigen = Object.entries(
+    (ventasPorOrigenRaw || []).reduce((acc: Record<string, number>, v: { vehiculos: { origen: string } | { origen: string }[] | null }) => {
+      const vehiculo = Array.isArray(v.vehiculos) ? v.vehiculos[0] : v.vehiculos;
+      const origen = vehiculo?.origen || "Sin dato";
+      acc[origen] = (acc[origen] || 0) + 1;
+      return acc;
+    }, {})
+  ).map(([origen, cantidad]) => ({ origen, cantidad }));
 
   return (
     <ReportesClient
@@ -96,6 +107,7 @@ export default async function ReportesPage() {
       servicePosventaInicial={servicePosventa || { oportunidades: 0, contactadas: 0, pct_contactadas: 0, con_ot: 0 }}
       consultasVsVentas={consultasVsVentas || []}
       composicionVentas={composicionVentas || { total_cerradas: 0, con_financiacion: 0, pct_financiadas: 0, con_seguro: 0, pct_seguro: 0, con_permuta: 0, pct_permuta: 0 }}
+      ventasPorOrigenInicial={ventasPorOrigen}
     />
   );
 }
