@@ -36,8 +36,10 @@ export async function POST(request: Request) {
     { data: expedientes },
     { data: saldos },
     { data: stockEstancado },
+    { data: vendedores },
+    { data: ventasHistoricas },
   ] = await Promise.all([
-    supabase.from("ventas").select("precio_venta, moneda_venta, estado, vehiculo_marca, vehiculo_modelo").gte("fecha_cierre", inicioMes).lte("fecha_cierre", finMes),
+    supabase.from("ventas").select("precio_venta, moneda_venta, estado, vehiculo_marca, vehiculo_modelo, vendedor_id").gte("fecha_cierre", inicioMes).lte("fecha_cierre", finMes),
     supabase.from("vehiculos").select("estado"),
     supabase.from("clientes").select("id", { count: "exact", head: true }).eq("pipeline_stage", "sin_contactar"),
     supabase.from("comisiones").select("estado, monto, moneda").eq("estado", "pendiente"),
@@ -46,6 +48,12 @@ export async function POST(request: Request) {
     supabase.from("expedientes").select("archivado").eq("archivado", false),
     supabase.rpc("saldos_totales_por_moneda"),
     supabase.from("vehiculos").select("marca, modelo, created_at").eq("estado", "disponible").lt("created_at", new Date(Date.now() - 90 * 86400000).toISOString()),
+    supabase.from("perfiles").select("id, nombre").eq("activo", true),
+    // Pedido explícito: "el gerente" es un chat interno, tiene que poder
+    // responder con TODO lo que hay en el sistema, no solo el recorte del
+    // mes en curso -- así que además del snapshot mensual se suma el
+    // histórico completo de ventas cerradas por vendedor.
+    supabase.from("ventas").select("vendedor_id").eq("estado", "cerrada"),
   ]);
 
   const ventasCerradas = (ventasMes || []).filter((v) => v.estado === "cerrada");
@@ -56,9 +64,29 @@ export async function POST(request: Request) {
   const comisionesPorMoneda: Record<string, number> = {};
   (comisiones || []).forEach((c) => { comisionesPorMoneda[c.moneda] = (comisionesPorMoneda[c.moneda] || 0) + Number(c.monto); });
 
+  // Antes el snapshot solo traía el total de ventas del negocio, sin
+  // desglose por vendedor -- una pregunta tan directa como "cuántas ventas
+  // lleva Fede" no tenía con qué responderse, y el bot terminaba diciendo
+  // "no tengo ese dato" aunque la info sí está en "ventas", solo que nunca
+  // se le pasó agrupada por vendedor_id.
+  const nombrePorVendedorId: Record<string, string> = {};
+  (vendedores || []).forEach((v) => { nombrePorVendedorId[v.id] = v.nombre; });
+  const ventasPorVendedor: Record<string, number> = {};
+  ventasCerradas.forEach((v: { vendedor_id: string | null }) => {
+    const nombre = v.vendedor_id ? (nombrePorVendedorId[v.vendedor_id] || "Sin nombre") : "Sin vendedor asignado";
+    ventasPorVendedor[nombre] = (ventasPorVendedor[nombre] || 0) + 1;
+  });
+  const ventasHistoricasPorVendedor: Record<string, number> = {};
+  (ventasHistoricas || []).forEach((v: { vendedor_id: string | null }) => {
+    const nombre = v.vendedor_id ? (nombrePorVendedorId[v.vendedor_id] || "Sin nombre") : "Sin vendedor asignado";
+    ventasHistoricasPorVendedor[nombre] = (ventasHistoricasPorVendedor[nombre] || 0) + 1;
+  });
+
   const snapshot = {
     hoy: hoy.toISOString().slice(0, 10),
     ventas_del_mes: ventasCerradas.length,
+    ventas_del_mes_por_vendedor: ventasPorVendedor,
+    ventas_totales_historicas_por_vendedor: ventasHistoricasPorVendedor,
     revenue_del_mes_por_moneda: revenuePorMoneda,
     stock_por_estado: conteoEstadoStock,
     stock_estancado_mas_90_dias: (stockEstancado || []).map((v) => `${v.marca} ${v.modelo}`),
