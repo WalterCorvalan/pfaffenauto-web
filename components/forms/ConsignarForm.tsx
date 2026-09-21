@@ -3,9 +3,13 @@
 import { useState, useEffect, useRef } from "react";
 import Link from "next/link";
 import Script from "next/script";
-import { ArrowLeft, Loader2, ChevronDown, X } from "lucide-react";
+import { ArrowLeft, Loader2, ChevronDown, X, CalendarDays, CarFront, Gauge, Zap, Check, Settings2, Flame } from "lucide-react";
+import { motion, AnimatePresence } from "framer-motion";
 import EnvioExitoso from "@/components/EnvioExitoso";
 import { MARCAS_ARGENTINA, MODELOS_POR_MARCA } from "@/lib/marcasModelos";
+import { supabase2 } from "@/lib/supabase/client";
+import { normalizarMarca } from "@/lib/vehiculos";
+import { LOGOS_MARCAS } from "@/lib/marcasLogos";
 
 declare global {
   interface Window {
@@ -18,8 +22,84 @@ declare global {
 
 const marcasDisponibles = MARCAS_ARGENTINA;
 const modelosPorMarca = MODELOS_POR_MARCA;
-
 const aniosDisponibles = Array.from({ length: 20 }, (_, i) => 2026 - i);
+
+// --- COMPONENTES DE UI INTERNOS ---
+
+function ProgressStepper({ currentStep }: { currentStep: number }) {
+  const steps = [
+    { num: 1, label: "VEHÍCULO" },
+    { num: 2, label: "DETALLES" },
+    { num: 3, label: "CONTACTO" }
+  ];
+
+  return (
+    <div className="flex items-start mb-10 w-full max-w-sm">
+      {steps.map((step, idx) => {
+        const isActive = currentStep >= step.num;
+        return (
+          <div key={step.num} className="flex items-start flex-1 last:flex-none">
+            <div className="flex flex-col items-center gap-2 w-8">
+              <div className={`w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold shrink-0 transition-colors duration-300 ${isActive ? "bg-blue-600 dark:bg-blue-500 text-white" : "bg-transparent border border-slate-300 dark:border-slate-700 text-slate-400 dark:text-slate-500"}`}>
+                {step.num}
+              </div>
+              <span className={`text-[9px] uppercase tracking-widest whitespace-nowrap ${isActive ? "text-slate-700 dark:text-slate-300 font-bold" : "text-slate-400 dark:text-slate-600"}`}>
+                {step.label}
+              </span>
+            </div>
+            {idx < steps.length - 1 && (
+              <div className={`h-[1px] flex-1 mx-3 mt-4 transition-colors duration-300 ${isActive ? "bg-blue-500/50" : "bg-slate-200 dark:bg-slate-800"}`} />
+            )}
+          </div>
+        );
+      })}
+    </div>
+  );
+}
+
+function ConfigField({ 
+  icon: Icon, label, value, isOpen, onClick, children, isCompleted 
+}: { 
+  icon: any, label: string, value: string, isOpen: boolean, onClick: () => void, children: React.ReactNode, isCompleted: boolean 
+}) {
+  return (
+    <div className={`border rounded-2xl overflow-hidden transition-all duration-300 ${isOpen ? "border-slate-300 dark:border-slate-600 bg-white dark:bg-[#161e2c] shadow-sm dark:shadow-none" : "border-slate-200 dark:border-white/5 bg-slate-50 dark:bg-[#0f172a] hover:bg-white dark:hover:bg-[#161e2c]"}`}>
+      <div onClick={onClick} className="flex items-center justify-between p-4 cursor-pointer">
+        <div className="flex items-center gap-4">
+          <div className="w-10 h-10 rounded-xl bg-slate-100 dark:bg-white/5 flex items-center justify-center shrink-0">
+            <Icon className="w-5 h-5 text-slate-500 dark:text-slate-400" />
+          </div>
+          <div className="flex flex-col">
+            <span className="text-[10px] text-slate-500 dark:text-slate-400 font-bold uppercase tracking-widest">{label}</span>
+            <span className={`text-sm font-bold truncate mt-0.5 ${value ? "text-slate-900 dark:text-white" : "text-slate-400 dark:text-slate-600"}`}>
+              {value || "Seleccionar..."}
+            </span>
+          </div>
+        </div>
+        <div className="flex items-center gap-3">
+          {isCompleted && !isOpen && <Check className="w-5 h-5 text-emerald-500 dark:text-emerald-400" />}
+          <ChevronDown className={`w-4 h-4 text-slate-400 dark:text-slate-500 transition-transform duration-300 ${isOpen ? "rotate-180" : ""}`} />
+        </div>
+      </div>
+      <AnimatePresence>
+        {isOpen && (
+          <motion.div 
+            initial={{ height: 0, opacity: 0 }} 
+            animate={{ height: "auto", opacity: 1 }} 
+            exit={{ height: 0, opacity: 0 }}
+            className="overflow-hidden"
+          >
+            <div className="p-4 pt-0 border-t border-slate-100 dark:border-white/5 mt-2">
+              {children}
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+    </div>
+  );
+}
+
+// --- COMPONENTE PRINCIPAL ---
 
 export default function ConsignarForm() {
   const [step, setStep] = useState(1);
@@ -38,16 +118,12 @@ export default function ConsignarForm() {
   const [email, setEmail] = useState("");
   const [tel, setTel] = useState("");
 
-  // Turnstile (anti-spam gratuito)
+  // Turnstile
   const [turnstileToken, setTurnstileToken] = useState("");
   const [turnstileListo, setTurnstileListo] = useState(false);
   const turnstileRef = useRef<HTMLDivElement>(null);
   const turnstileWidgetId = useRef<string | null>(null);
 
-  // El <Script onLoad> de más abajo no dispara de nuevo si el script ya
-  // quedó cargado por una navegación anterior (Next dedupea por src) — sin
-  // este poll, turnstileListo se queda en false para siempre y el widget
-  // nunca aparece hasta que se recarga la página entera.
   useEffect(() => {
     if (window.turnstile) { setTurnstileListo(true); return; }
     const intervalo = setInterval(() => {
@@ -56,47 +132,58 @@ export default function ConsignarForm() {
     return () => clearInterval(intervalo);
   }, []);
 
-  // Controladores de Dropdowns
-  const [openDropdown, setOpenDropdown] = useState<string | null>(null);
+  // UI States
+  const [openDropdown, setOpenDropdown] = useState<string | null>("anio");
   const [busquedaMarca, setBusquedaMarca] = useState("");
-
-  // Estados de carga/envío
   const [loading, setLoading] = useState(false);
   const [enviado, setEnviado] = useState(false);
-  const [segundos, setSegundos] = useState(60);
   const [errorEnvio, setErrorEnvio] = useState("");
-  const [shakeError, setShakeError] = useState(0);
+  const [imageError, setImageError] = useState(false);
+  const [fotoStock, setFotoStock] = useState<string | null>(null);
 
-  const mostrarError = (msg: string) => {
-    setErrorEnvio(msg);
-    setShakeError((n) => n + 1);
+  const formatKm = (value: string) => {
+    if (!value) return "0";
+    return Number(value).toLocaleString("es-AR");
   };
-
-  useEffect(() => {
-    if (segundos > 1) {
-      const timer = setInterval(() => {
-        setSegundos((prev) => prev - 1);
-      }, 2000);
-      return () => clearInterval(timer);
-    }
-  }, [segundos]);
 
   const marcasFiltradas = marcasDisponibles.filter(m => m.toLowerCase().includes(busquedaMarca.toLowerCase()));
-  const modelosDisponibles = modeloPorMarcaSeleccionada(marca);
+  const modelosDisponibles = modelosPorMarca[marca] || ["Base", "Full", "Sport", "Standard", "Otro"];
 
-  function modeloPorMarcaSeleccionada(m: string) {
-    return modelosPorMarca[m] || ["Base", "Full", "Sport", "Standard", "Otro"];
-  }
+  const validarPaso1 = () => anio && marca && modelo && version && km;
 
-  const validarPaso1 = () => {
-    return anio && marca && modelo && version && km;
-  };
+  // Auto-avanzar el acordeón
+  useEffect(() => {
+    if (anio && openDropdown === "anio") setOpenDropdown("marca");
+    else if (marca && openDropdown === "marca") setOpenDropdown("modelo");
+    else if (modelo && openDropdown === "modelo") setOpenDropdown("version");
+  }, [anio, marca, modelo]);
 
-  // Renderiza el widget de Turnstile cuando llegamos al paso de contacto
+  // Reset de error de imagen cuando cambia el modelo
+  useEffect(() => {
+    setImageError(false);
+  }, [marca, modelo]);
+
+  // Foto real: si tenemos en stock un vehículo de esta marca/modelo, usamos su
+  // primera foto real en vez del placeholder genérico (o el nombre en texto).
+  useEffect(() => {
+    if (!marca || !modelo) { setFotoStock(null); return; }
+    let cancelado = false;
+    supabase2
+      .from("vehiculos")
+      .select("fotos, marca, modelo")
+      .in("estado", ["disponible", "reservado"])
+      .ilike("modelo", `%${modelo}%`)
+      .then(({ data }) => {
+        if (cancelado || !data) return;
+        const match = data.find((v) => normalizarMarca(v.marca) === normalizarMarca(marca));
+        setFotoStock(match?.fotos?.[0] || null);
+      });
+    return () => { cancelado = true; };
+  }, [marca, modelo]);
+
   useEffect(() => {
     if (step !== 3 || !turnstileListo || !turnstileRef.current || !window.turnstile) return;
-    if (turnstileWidgetId.current) return; // ya renderizado
-
+    if (turnstileWidgetId.current) return;
     turnstileWidgetId.current = window.turnstile.render(turnstileRef.current, {
       sitekey: process.env.NEXT_PUBLIC_TURNSTILE_SITE_KEY || "",
       callback: (token: string) => setTurnstileToken(token),
@@ -105,19 +192,16 @@ export default function ConsignarForm() {
     });
   }, [step, turnstileListo]);
 
-  // =================================================================
-  // ENVIAR SOLICITUD DE CONSIGNACIÓN (verificación anti-spam vía Turnstile)
-  // =================================================================
   const enviarConsignacion = async (e: React.FormEvent) => {
     e.preventDefault();
     setErrorEnvio("");
 
     if (!nombre.trim() || !apellido.trim() || !email.trim() || !tel.trim()) {
-      mostrarError("Por favor completá todos los campos de contacto.");
+      setErrorEnvio("Por favor completá todos los campos de contacto.");
       return;
     }
     if (!turnstileToken) {
-      mostrarError("Completá la verificación de seguridad antes de continuar.");
+      setErrorEnvio("Completá la verificación de seguridad antes de continuar.");
       return;
     }
 
@@ -128,10 +212,7 @@ export default function ConsignarForm() {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          turnstileToken,
-          marca,
-          modelo,
-          anio,
+          turnstileToken, marca, modelo, anio,
           version: `${version}${gnc ? ` - GNC: ${gnc}` : ""}`,
           kilometraje: km,
           nombre: `${nombre.trim()} ${apellido.trim()}`,
@@ -145,8 +226,7 @@ export default function ConsignarForm() {
 
       setEnviado(true);
     } catch (error) {
-      console.error("Error al enviar consignación:", error);
-      mostrarError(error instanceof Error ? error.message : "Hubo un problema al procesar tu solicitud. Reintentá.");
+      setErrorEnvio(error instanceof Error ? error.message : "Hubo un problema. Reintentá.");
       if (turnstileWidgetId.current && window.turnstile) {
         window.turnstile.reset(turnstileWidgetId.current);
       }
@@ -156,315 +236,364 @@ export default function ConsignarForm() {
     }
   };
 
-  return (
-    <div className="min-h-screen bg-[#F8FAFC] dark:bg-[#0a0a0f] text-slate-900 dark:text-white pt-16 pb-50 relative font-sans overflow-hidden flex flex-col justify-between">
-
-      <div className="absolute inset-0 pointer-events-none z-0">
-        <div className="absolute inset-0 bg-[linear-gradient(to_right,#e2e8f0_1px,transparent_1px),linear-gradient(to_bottom,#e2e8f0_1px,transparent_1px)] dark:bg-[linear-gradient(to_right,rgba(255,255,255,0.05)_1px,transparent_1px),linear-gradient(to_bottom,rgba(255,255,255,0.05)_1px,transparent_1px)] bg-[size:3rem_3rem] [mask-image:radial-gradient(ellipse_80%_50%_at_50%_0%,#000_70%,transparent_100%)] opacity-60"></div>
-        <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[800px] h-[400px] bg-emerald-500/5 dark:bg-emerald-400/10 blur-[120px] rounded-full"></div>
+  if (enviado) {
+    return (
+      <div className="min-h-screen bg-[#F8FAFC] dark:bg-[#0a0a0f] flex flex-col">
+        <EnvioExitoso
+          color="emerald"
+          titulo="¡Vehículo configurado!"
+          mensaje="Hemos recibido tu solicitud de consignación. Nuestro equipo analizará la configuración y se contactará a la brevedad."
+        >
+          <Link href="/" className="inline-block py-3.5 px-8 bg-blue-600 hover:bg-blue-700 text-white font-black rounded-2xl text-xs uppercase tracking-widest shadow-lg transition-colors">
+            Volver al inicio
+          </Link>
+        </EnvioExitoso>
       </div>
+    );
+  }
 
-      <div className="max-w-7xl mx-auto w-full px-4 md:px-8 grid grid-cols-1 lg:grid-cols-12 gap-8 items-center my-auto py-8 relative z-10">
+  // Rutas de assets: foto real de stock > asset genérico del modelo > logo/texto.
+  // El logo de marca sale del mismo mapa que usa components/Marcas.tsx (home)
+  // — así no duplicamos otra lista de logos que se desincronice de esa.
+  const logoPath = LOGOS_MARCAS[marca] || `/vehicles/brands/${marca.toLowerCase()}.svg`;
+  const carPath = fotoStock || `/vehicles/models/${marca.toLowerCase()}/${modelo.toLowerCase().replace(/ /g, '-')}.webp`;
 
-        {/* COLUMNA IZQUIERDA */}
-        <div className="lg:col-span-7 flex flex-col justify-center space-y-6 text-left">
-          <div className="space-y-3">
-            <span className="bg-emerald-50 dark:bg-emerald-400/10 text-emerald-700 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-400/20 text-[11px] font-black uppercase tracking-widest px-4 py-1.5 rounded-full inline-block shadow-sm dark:shadow-none">
-              Gestión Integral de Venta
-            </span>
-            <h1 className="text-4xl sm:text-6xl lg:text-7xl font-light text-navy dark:text-white tracking-tight leading-[1.08]">
-              Consigná tu auto y <br />
-              <strong className="font-black text-transparent bg-clip-text bg-gradient-to-r from-emerald-600 to-teal-400">olvidate de todo.</strong>
-            </h1>
-            <p className="text-xs sm:text-sm font-bold uppercase tracking-widest text-slate-500 dark:text-slate-400 pt-2">
-              MÁXIMA RENTABILIDAD, CERO ESTRÉS
-            </p>
+  return (
+    <div className="bg-[#F8FAFC] dark:bg-[#0a0a0f] text-slate-900 dark:text-white flex flex-col lg:flex-row font-sans">
+
+      {/* ================= ZONA IZQUIERDA: PREVIEW DINÁMICA ================= */}
+      <div className="w-full lg:w-[55%] h-[40vh] lg:h-[calc(100vh-5rem)] lg:sticky lg:top-20 relative bg-slate-100 dark:bg-[#050b14] overflow-hidden shrink-0 border-b lg:border-b-0 lg:border-r border-slate-200 dark:border-white/5">
+
+        {/* Fondos y luces */}
+        <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_50%,rgba(1,69,242,0.08),transparent_60%)]" />
+        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[80%] h-[20%] bg-blue-500/10 dark:bg-blue-500/20 blur-[100px] rounded-full" />
+
+        {/* Header Preview */}
+        <div className="absolute top-6 left-6 z-20 flex items-center gap-3">
+          <CarFront className="w-6 h-6 text-blue-600 dark:text-blue-400" />
+          <div>
+            <h2 className="text-sm font-black text-slate-900 dark:text-white">Tu próximo paso</h2>
+            <p className="text-[10px] text-slate-500 dark:text-slate-400 uppercase tracking-widest">Configurador de Consignación</p>
           </div>
         </div>
 
-        {/* COLUMNA DERECHA: FORMULARIO */}
-        <div className="lg:col-span-5 flex justify-center w-full">
-          <div className="bg-white/70 dark:bg-white/5 backdrop-blur-2xl border border-white dark:border-white/10 rounded-[32px] shadow-[0_20px_50px_rgba(0,0,0,0.06)] dark:shadow-none p-6 md:p-8 w-full max-w-md relative">
-
-            {!enviado && (
-              <div className="mb-4">
-                <h2 className="text-xl font-black text-navy dark:text-white tracking-tight">
-                  {segundos > 1 ? `Iniciá el proceso en ${segundos} segundos` : "Ya casi terminás, dale para adelante"}
-                </h2>
-                <p className="text-xs text-slate-400 font-medium">
-                  {step === 1 && "Ingresá los datos del vehículo a consignar"}
-                  {step === 2 && "¿Tu auto tiene o tuvo GNC?"}
-                  {step === 3 && "Necesitamos tus datos para contactarte"}
-                </p>
+        {/* Floating KM Badge */}
+        <AnimatePresence>
+          {km && (
+            <motion.div 
+              initial={{ opacity: 0, y: -20 }} 
+              animate={{ opacity: 1, y: 0 }} 
+              className="absolute top-8 right-6 z-20 bg-blue-50/90 dark:bg-blue-900/40 border border-blue-200 dark:border-blue-500/30 backdrop-blur-xl rounded-2xl px-5 py-3 flex items-center gap-3 shadow-[0_0_30px_rgba(1,69,242,0.12)] dark:shadow-[0_0_30px_rgba(1,69,242,0.3)]"
+            >
+              <Gauge className="w-5 h-5 text-blue-600 dark:text-blue-400" />
+              <div className="flex flex-col">
+                <span className="text-[9px] font-bold uppercase tracking-widest text-blue-700/70 dark:text-blue-200/70">Kilómetros</span>
+                <motion.span
+                  key={km}
+                  initial={{ opacity: 0, filter: "blur(4px)" }}
+                  animate={{ opacity: 1, filter: "blur(0px)" }}
+                  className="text-lg font-black text-slate-900 dark:text-white leading-none font-mono"
+                >
+                  {formatKm(km)} <span className="text-sm font-bold text-blue-600 dark:text-blue-300">KM</span>
+                </motion.span>
               </div>
-            )}
+            </motion.div>
+          )}
+        </AnimatePresence>
 
-            {!enviado ? (
-              <div>
-                {/* PASO 1 */}
-                {step === 1 && (
-                  <div className="space-y-4 animate-fadeIn">
-                    <div className="relative">
-                      <div 
-                        onClick={() => setOpenDropdown(openDropdown === 'anio' ? null : 'anio')}
-                        className={`w-full bg-white/60 dark:bg-white/5 backdrop-blur-md border rounded-2xl px-4 py-3.5 text-sm font-semibold flex items-center justify-between cursor-pointer transition-all shadow-sm dark:shadow-none ${anio ? 'text-navy dark:text-white border-slate-300 dark:border-white/20' : 'text-slate-400 dark:text-slate-500 border-white dark:border-white/10'}`}
-                      >
-                        <span>{anio ? anio : "Seleccioná el año"}</span>
-                        <ChevronDown className={`w-4 h-4 text-slate-500 dark:text-slate-400 transition-transform ${openDropdown === 'anio' ? 'rotate-180 text-emerald-600 dark:text-emerald-400' : ''}`} />
-                      </div>
-
-                      {openDropdown === 'anio' && (
-                        <div className="absolute top-full left-0 right-0 mt-2 bg-white/95 dark:bg-[#14141c] backdrop-blur-xl border border-white dark:border-white/10 rounded-2xl shadow-2xl z-50 max-h-56 overflow-y-auto p-1">
-                          {aniosDisponibles.map((a) => (
-                            <div
-                              key={a}
-                              onClick={() => { setAnio(String(a)); setOpenDropdown(null); }}
-                              className="px-4 py-2.5 text-xs font-bold text-slate-700 dark:text-slate-300 hover:bg-emerald-50 dark:hover:bg-emerald-400/10 hover:text-emerald-700 dark:hover:text-emerald-300 rounded-xl cursor-pointer transition-colors"
-                            >
-                              {a}
-                            </div>
-                          ))}
-                        </div>
-                      )}
-                    </div>
-
-                    <div className="relative">
-                      <div
-                        onClick={() => setOpenDropdown(openDropdown === 'marca' ? null : 'marca')}
-                        className={`w-full bg-white/60 dark:bg-white/5 backdrop-blur-md border rounded-2xl px-4 py-3.5 text-sm font-semibold flex items-center justify-between cursor-pointer transition-all shadow-sm dark:shadow-none ${marca ? 'text-navy dark:text-white border-slate-300 dark:border-white/20' : 'text-slate-400 dark:text-slate-500 border-white dark:border-white/10'}`}
-                      >
-                        <span>{marca ? marca : "Seleccioná la marca"}</span>
-                        <ChevronDown className={`w-4 h-4 text-slate-500 dark:text-slate-400 transition-transform ${openDropdown === 'marca' ? 'rotate-180 text-emerald-600 dark:text-emerald-400' : ''}`} />
-                      </div>
-
-                      {openDropdown === 'marca' && (
-                        <div className="absolute top-full left-0 right-0 mt-2 bg-white/95 dark:bg-[#14141c] backdrop-blur-xl border border-white dark:border-white/10 rounded-2xl shadow-2xl z-50 p-2">
-                          <input
-                            type="text"
-                            placeholder="Buscá la marca..."
-                            value={busquedaMarca}
-                            onChange={(e) => setBusquedaMarca(e.target.value)}
-                            className="w-full bg-slate-50 dark:bg-white/5 border border-slate-200 dark:border-white/10 text-slate-900 dark:text-white rounded-xl px-3 py-2 text-xs font-bold outline-none mb-2"
-                            autoFocus
-                          />
-                          <div className="max-h-44 overflow-y-auto space-y-1">
-                            {marcasFiltradas.map((m) => (
-                              <div
-                                key={m}
-                                onClick={() => { setMarca(m); setModelo(""); setOpenDropdown(null); }}
-                                className="px-3 py-2 text-xs font-bold text-slate-700 dark:text-slate-300 hover:bg-emerald-50 dark:hover:bg-emerald-400/10 hover:text-emerald-700 dark:hover:text-emerald-300 rounded-xl cursor-pointer transition-colors"
-                              >
-                                {m}
-                              </div>
-                            ))}
-                          </div>
-                        </div>
-                      )}
-                    </div>
-
-                    <div className="relative">
-                      <div
-                        onClick={() => marca && setOpenDropdown(openDropdown === 'modelo' ? null : 'modelo')}
-                        className={`w-full bg-white/60 dark:bg-white/5 backdrop-blur-md border rounded-2xl px-4 py-3.5 text-sm font-semibold flex items-center justify-between transition-all shadow-sm dark:shadow-none ${marca ? 'cursor-pointer text-navy dark:text-white border-slate-300 dark:border-white/20' : 'opacity-60 cursor-not-allowed text-slate-400 dark:text-slate-500 border-white dark:border-white/10'}`}
-                      >
-                        <span>{modelo ? modelo : "Seleccioná el modelo"}</span>
-                        <ChevronDown className={`w-4 h-4 text-slate-500 dark:text-slate-400 transition-transform ${openDropdown === 'modelo' ? 'rotate-180 text-emerald-600 dark:text-emerald-400' : ''}`} />
-                      </div>
-
-                      {openDropdown === 'modelo' && marca && (
-                        <div className="absolute top-full left-0 right-0 mt-2 bg-white/95 dark:bg-[#14141c] backdrop-blur-xl border border-white dark:border-white/10 rounded-2xl shadow-2xl z-50 max-h-52 overflow-y-auto p-1">
-                          {modelosDisponibles.map((mod) => (
-                            <div
-                              key={mod}
-                              onClick={() => { setModelo(mod); setOpenDropdown(null); }}
-                              className="px-4 py-2.5 text-xs font-bold text-slate-700 dark:text-slate-300 hover:bg-emerald-50 dark:hover:bg-emerald-400/10 hover:text-emerald-700 dark:hover:text-emerald-300 rounded-xl cursor-pointer transition-colors"
-                            >
-                              {mod}
-                            </div>
-                          ))}
-                        </div>
-                      )}
-                    </div>
-
-                    <div>
-                      <input
-                        type="text"
-                        placeholder="Ingresá la versión (Ej: 1.6 MSI...)"
-                        value={version}
-                        onChange={(e) => setVersion(e.target.value)}
-                        className="w-full bg-white/60 dark:bg-white/5 backdrop-blur-md border border-white dark:border-white/10 rounded-2xl px-4 py-3.5 text-sm font-semibold text-navy dark:text-white placeholder:text-slate-400 dark:placeholder:text-slate-500 outline-none focus:border-emerald-500 dark:focus:border-emerald-400 transition-all shadow-sm dark:shadow-none"
-                      />
-                    </div>
-
-                    <div>
-                      <input
-                        type="number"
-                        placeholder="Ingresá el kilometraje (Ej: 45000)"
-                        value={km}
-                        onChange={(e) => setKm(e.target.value)}
-                        className="w-full bg-white/60 dark:bg-white/5 backdrop-blur-md border border-white dark:border-white/10 rounded-2xl px-4 py-3.5 text-sm font-semibold text-navy dark:text-white placeholder:text-slate-400 dark:placeholder:text-slate-500 outline-none focus:border-emerald-500 dark:focus:border-emerald-400 transition-all shadow-sm dark:shadow-none"
-                      />
-                    </div>
-
-                    <div className="pt-2">
-                      <button 
-                        type="button" 
-                        disabled={!validarPaso1()}
-                        onClick={() => setStep(2)}
-                        className="w-full py-4 bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-teal-600 hover:to-emerald-500 disabled:opacity-50 text-white font-black rounded-2xl uppercase tracking-widest text-xs transition-all shadow-lg shadow-emerald-500/20 cursor-pointer active:scale-95"
-                      >
-                        Continuar
-                      </button>
-                    </div>
+        {/* Canvas Principal */}
+        <div className="absolute inset-0 flex items-center justify-center p-8 mt-4 lg:mt-0">
+          <AnimatePresence mode="wait">
+            {!marca ? (
+              <motion.div 
+                key="placeholder"
+                initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0, filter: "blur(10px)", scale: 0.9 }}
+                className="text-center"
+              >
+                <div className="w-24 h-24 rounded-full border border-slate-200 dark:border-white/10 flex items-center justify-center mx-auto mb-6 bg-white dark:bg-white/5 shadow-sm dark:shadow-none">
+                  <Zap className="w-8 h-8 text-slate-400 dark:text-slate-600" />
+                </div>
+                <h3 className="text-2xl font-black text-slate-700 dark:text-slate-300 tracking-tight">Comenzá tu configuración</h3>
+                <p className="text-sm text-slate-500 mt-2">Tu vehículo aparecerá en este espacio.</p>
+              </motion.div>
+            ) : marca && !modelo ? (
+              <motion.div 
+                key="logo"
+                initial={{ opacity: 0, scale: 0.8, filter: "blur(10px)" }} 
+                animate={{ opacity: 1, scale: 1, filter: "blur(0px)" }} 
+                exit={{ opacity: 0, scale: 1.1, filter: "blur(10px)" }}
+                transition={{ duration: 0.5 }}
+                className="flex flex-col items-center"
+              >
+                {/* Fallback de logo por si no existe el SVG, mostramos texto */}
+                <div className="relative w-48 h-48 flex items-center justify-center">
+                  <img 
+                    src={logoPath} 
+                    alt={marca} 
+                    className="max-w-full max-h-full object-contain drop-shadow-2xl"
+                    onError={(e) => { e.currentTarget.style.display = 'none'; }}
+                  />
+                  <span className="absolute inset-0 flex items-center justify-center text-4xl font-black text-slate-900 dark:text-white opacity-10 dark:opacity-20 -z-10 tracking-tighter uppercase">
+                    {marca}
+                  </span>
+                </div>
+              </motion.div>
+            ) : (
+              <motion.div 
+                key="car"
+                initial={{ opacity: 0, x: 50, filter: "blur(10px)" }} 
+                animate={{ opacity: 1, x: 0, filter: "blur(0px)" }} 
+                transition={{ duration: 0.6, ease: "easeOut" }}
+                className="relative w-full max-w-2xl h-full flex flex-col items-center justify-center"
+              >
+                {!imageError ? (
+                  <img
+                    src={carPath}
+                    alt={`${marca} ${modelo}`}
+                    className="w-full h-auto object-contain drop-shadow-[0_20px_40px_rgba(0,0,0,0.15)] dark:drop-shadow-[0_20px_50px_rgba(0,0,0,0.5)] z-10"
+                    onError={() => setImageError(true)}
+                  />
+                ) : (
+                  <div className="flex flex-col items-center">
+                    <img
+                      src={logoPath}
+                      alt={marca}
+                      className="w-32 h-32 object-contain mb-8 opacity-70 dark:opacity-50"
+                      onError={(e) => { e.currentTarget.style.display = 'none'; }}
+                    />
+                    <h2 className="text-4xl font-black text-slate-900 dark:text-white uppercase tracking-tighter">{marca} {modelo}</h2>
                   </div>
                 )}
 
-                {/* PASO 2 */}
-                {step === 2 && (
-                  <div className="space-y-6 animate-fadeIn py-2">
-                    <div>
-                      <button onClick={() => setStep(1)} className="text-xs font-bold text-emerald-600 dark:text-emerald-400 flex items-center gap-1 mb-2 hover:underline">
-                        <ArrowLeft className="w-3.5 h-3.5" /> Volver
-                      </button>
-                    </div>
+                {/* Piso/Sombra debajo del auto */}
+                <div className="absolute bottom-[20%] lg:bottom-[30%] w-[80%] h-8 bg-black/10 dark:bg-black/60 blur-xl rounded-full" />
+              </motion.div>
+            )}
+          </AnimatePresence>
+        </div>
 
-                    <div className="space-y-3">
-                      {["Sí, tiene GNC", "No, pero tenía antes", "No, nunca tuvo"].map((op) => (
-                        <div
-                          key={op}
-                          onClick={() => setGnc(op)}
-                          className={`p-4 rounded-2xl border cursor-pointer font-bold text-xs transition-all shadow-sm dark:shadow-none ${gnc === op ? 'bg-emerald-50 dark:bg-emerald-400/10 border-emerald-500 dark:border-emerald-400 text-emerald-700 dark:text-emerald-300' : 'bg-white/60 dark:bg-white/5 border-white dark:border-white/10 text-slate-700 dark:text-slate-300 hover:bg-white dark:hover:bg-white/10'}`}
-                        >
-                          {op}
-                        </div>
+        {/* Bottom Bar: Datos recopilados */}
+        <div className="absolute bottom-6 left-6 right-6 lg:left-10 lg:right-10 flex flex-wrap gap-2 lg:gap-4 z-20">
+          {[
+            { label: "Año", value: anio, icon: CalendarDays },
+            { label: "Marca", value: marca, icon: CarFront },
+            { label: "Modelo", value: modelo, icon: Settings2 },
+            { label: "Versión", value: version, icon: Zap }
+          ].map((item, i) => (
+            <div key={i} className="flex-1 min-w-[120px] bg-white/70 dark:bg-black/40 backdrop-blur-md border border-slate-200 dark:border-white/10 rounded-2xl p-3 lg:p-4 flex items-center gap-3 shadow-sm dark:shadow-none">
+              <item.icon className={`w-4 h-4 ${item.value ? "text-blue-600 dark:text-blue-400" : "text-slate-400 dark:text-slate-600"}`} />
+              <div className="flex flex-col min-w-0">
+                <span className="text-[9px] uppercase tracking-widest text-slate-500 font-bold">{item.label}</span>
+                <span className={`text-xs font-bold truncate ${item.value ? "text-slate-900 dark:text-white" : "text-slate-400 dark:text-slate-600"}`}>
+                  {item.value || "—"}
+                </span>
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
+
+      {/* ================= ZONA DERECHA: CONFIGURADOR ================= */}
+      <div className="w-full lg:w-[45%] h-auto bg-white dark:bg-[#0a0a0f] flex flex-col items-center pt-8 lg:pt-10 pb-10 px-6 lg:px-12">
+        <div className="w-full max-w-md">
+
+          <ProgressStepper currentStep={step} />
+
+          <div className="mb-8">
+            <h2 className="text-2xl font-black text-slate-900 dark:text-white tracking-tight mb-2">
+              Configurá tu vehículo
+            </h2>
+            <p className="text-sm text-slate-500 dark:text-slate-400">
+              {step === 1 && "Completá los datos y comenzá a ver tu auto en tiempo real."}
+              {step === 2 && "Detalles técnicos adicionales del vehículo."}
+              {step === 3 && "Dejanos tus datos para que un asesor te contacte."}
+            </p>
+          </div>
+
+          <div className="relative">
+            <AnimatePresence mode="wait">
+              
+              {/* --- PASO 1: VEHÍCULO --- */}
+              {step === 1 && (
+                <motion.div 
+                  key="step1"
+                  initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -20 }}
+                  transition={{ duration: 0.3 }}
+                  className="space-y-3"
+                >
+                  <ConfigField icon={CalendarDays} label="Año" value={anio} isOpen={openDropdown === 'anio'} onClick={() => setOpenDropdown(openDropdown === 'anio' ? null : 'anio')} isCompleted={!!anio}>
+                    <div className="grid grid-cols-4 gap-2">
+                      {aniosDisponibles.map((a) => (
+                        <button key={a} onClick={() => { setAnio(String(a)); setOpenDropdown("marca"); }} className={`py-2 text-xs font-bold rounded-lg border transition-all ${anio === String(a) ? "bg-blue-600 border-blue-500 text-white" : "bg-slate-50 dark:bg-white/5 border-slate-200 dark:border-white/5 text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-white/10 hover:border-slate-300 dark:hover:border-white/20"}`}>
+                          {a}
+                        </button>
                       ))}
                     </div>
+                  </ConfigField>
 
+                  <ConfigField icon={CarFront} label="Marca" value={marca} isOpen={openDropdown === 'marca'} onClick={() => setOpenDropdown(openDropdown === 'marca' ? null : 'marca')} isCompleted={!!marca}>
+                    <input 
+                      type="text" placeholder="Buscá tu marca..." value={busquedaMarca} onChange={(e) => setBusquedaMarca(e.target.value)}
+                      className="w-full bg-slate-50 dark:bg-black/50 border border-slate-200 dark:border-white/10 rounded-xl px-4 py-3 text-sm text-slate-900 dark:text-white placeholder:text-slate-400 dark:placeholder:text-slate-600 outline-none focus:border-blue-500 mb-3"
+                    />
+                    <div className="max-h-48 overflow-y-auto custom-scrollbar pr-2 space-y-1">
+                      {marcasFiltradas.map((m) => (
+                        <button key={m} onClick={() => { setMarca(m); setModelo(""); setOpenDropdown("modelo"); setBusquedaMarca(""); }} className={`w-full text-left px-4 py-3 rounded-xl text-sm font-bold transition-colors ${marca === m ? "bg-blue-600 text-white" : "text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-white/10"}`}>
+                          {m}
+                        </button>
+                      ))}
+                    </div>
+                  </ConfigField>
+
+                  <ConfigField icon={Settings2} label="Modelo" value={modelo} isOpen={openDropdown === 'modelo'} onClick={() => marca && setOpenDropdown(openDropdown === 'modelo' ? null : 'modelo')} isCompleted={!!modelo}>
+                    <div className="max-h-48 overflow-y-auto custom-scrollbar pr-2 space-y-1">
+                      {modelosDisponibles.map((mod) => (
+                        <button key={mod} onClick={() => { setModelo(mod); setOpenDropdown("version"); }} className={`w-full text-left px-4 py-3 rounded-xl text-sm font-bold transition-colors ${modelo === mod ? "bg-blue-600 text-white" : "text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-white/10"}`}>
+                          {mod}
+                        </button>
+                      ))}
+                    </div>
+                  </ConfigField>
+
+                  <ConfigField icon={Zap} label="Versión" value={version} isOpen={openDropdown === 'version'} onClick={() => setOpenDropdown(openDropdown === 'version' ? null : 'version')} isCompleted={!!version}>
+                    <input 
+                      type="text" placeholder="Ej: 1.0 Turbo Premier..." value={version} onChange={(e) => setVersion(e.target.value)}
+                      className="w-full bg-slate-50 dark:bg-black/50 border border-slate-200 dark:border-white/10 rounded-xl px-4 py-3 text-sm text-slate-900 dark:text-white placeholder:text-slate-400 dark:placeholder:text-slate-600 outline-none focus:border-blue-500"
+                    />
+                    <button onClick={() => setOpenDropdown("km")} className="mt-3 w-full bg-slate-100 dark:bg-white/10 hover:bg-slate-200 dark:hover:bg-white/20 text-slate-700 dark:text-white text-xs font-bold py-2.5 rounded-lg transition-colors">
+                      Confirmar Versión
+                    </button>
+                  </ConfigField>
+
+                  <ConfigField icon={Gauge} label="Kilómetros" value={km ? formatKm(km) + " km" : ""} isOpen={openDropdown === 'km'} onClick={() => setOpenDropdown(openDropdown === 'km' ? null : 'km')} isCompleted={!!km}>
+                    <input
+                      type="number" placeholder="Ej: 45000" value={km} onChange={(e) => setKm(e.target.value)}
+                      className="w-full bg-slate-50 dark:bg-black/50 border border-slate-200 dark:border-white/10 rounded-xl px-4 py-3 text-sm text-slate-900 dark:text-white placeholder:text-slate-400 dark:placeholder:text-slate-600 outline-none focus:border-blue-500 font-mono"
+                    />
+                    <button onClick={() => setOpenDropdown(null)} className="mt-3 w-full bg-slate-100 dark:bg-white/10 hover:bg-slate-200 dark:hover:bg-white/20 text-slate-700 dark:text-white text-xs font-bold py-2.5 rounded-lg transition-colors">
+                      Confirmar Kilometraje
+                    </button>
+                  </ConfigField>
+
+                  <div className="pt-6">
                     <button 
-                      type="button"
-                      disabled={!gnc}
-                      onClick={() => setStep(3)}
-                      className="w-full py-4 bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-teal-600 hover:to-emerald-500 disabled:opacity-50 text-white font-black rounded-2xl uppercase tracking-widest text-xs transition-all shadow-lg shadow-emerald-500/20 cursor-pointer active:scale-95"
+                      onClick={() => setStep(2)} disabled={!validarPaso1()}
+                      className="w-full py-4 bg-blue-600 hover:bg-blue-500 disabled:bg-slate-200 dark:disabled:bg-slate-800 disabled:text-slate-400 dark:disabled:text-slate-500 text-white font-black rounded-2xl uppercase tracking-widest text-xs transition-colors flex items-center justify-center gap-2"
                     >
-                      Continuar
+                      Siguiente Paso <ArrowLeft className="w-4 h-4 rotate-180" />
                     </button>
                   </div>
-                )}
+                </motion.div>
+              )}
 
-                {/* PASO 3 (Contacto Final + Turnstile) */}
-                {step === 3 && (
-                  <form onSubmit={enviarConsignacion} className="space-y-4 animate-fadeIn">
-                    <div>
-                      <button type="button" onClick={() => setStep(2)} className="text-xs font-bold text-emerald-600 dark:text-emerald-400 flex items-center gap-1 mb-2 hover:underline">
-                        <ArrowLeft className="w-3.5 h-3.5" /> Volver
-                      </button>
+              {/* --- PASO 2: DETALLES --- */}
+              {step === 2 && (
+                <motion.div
+                  key="step2"
+                  initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -20 }}
+                  transition={{ duration: 0.3 }}
+                  className="space-y-4"
+                >
+                  <button onClick={() => setStep(1)} className="text-xs font-bold text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white flex items-center gap-1 mb-4 transition-colors">
+                    <ArrowLeft className="w-3.5 h-3.5" /> Volver al vehículo
+                  </button>
+
+                  <div className="bg-slate-50 dark:bg-[#161e2c] border border-slate-200 dark:border-slate-700 rounded-2xl p-6">
+                    <div className="flex items-center gap-3 mb-6">
+                      <Flame className="w-5 h-5 text-amber-500" />
+                      <h3 className="font-bold text-slate-900 dark:text-white">¿El vehículo tiene GNC?</h3>
                     </div>
-
-                    <div>
-                      <label className="text-[11px] font-bold text-slate-500 dark:text-slate-400 uppercase block mb-1">Nombre</label>
-                      <input
-                        type="text"
-                        required
-                        placeholder="Ingresá tu nombre"
-                        value={nombre}
-                        onChange={(e) => setNombre(e.target.value)}
-                        className="w-full bg-white/60 dark:bg-white/5 backdrop-blur-md border border-white dark:border-white/10 rounded-2xl px-4 py-3 text-xs font-semibold text-navy dark:text-white outline-none focus:border-emerald-500 dark:focus:border-emerald-400 shadow-sm dark:shadow-none"
-                      />
+                    <div className="space-y-3">
+                      {["Sí, tiene GNC", "No, pero tenía antes", "No, nunca tuvo"].map((op) => (
+                        <button
+                          key={op} onClick={() => setGnc(op)}
+                          className={`w-full text-left px-5 py-4 rounded-xl border text-sm font-bold transition-all ${gnc === op ? "bg-blue-50 dark:bg-blue-600/20 border-blue-500 text-blue-700 dark:text-white" : "bg-white dark:bg-[#0f172a] border-slate-200 dark:border-white/5 text-slate-500 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-white/5"}`}
+                        >
+                          {op}
+                        </button>
+                      ))}
                     </div>
+                  </div>
 
-                    <div>
-                      <label className="text-[11px] font-bold text-slate-500 dark:text-slate-400 uppercase block mb-1">Apellido</label>
-                      <input
-                        type="text"
-                        required
-                        placeholder="Ingresá tu apellido"
-                        value={apellido}
-                        onChange={(e) => setApellido(e.target.value)}
-                        className="w-full bg-white/60 dark:bg-white/5 backdrop-blur-md border border-white dark:border-white/10 rounded-2xl px-4 py-3 text-xs font-semibold text-navy dark:text-white outline-none focus:border-emerald-500 dark:focus:border-emerald-400 shadow-sm dark:shadow-none"
-                      />
-                    </div>
+                  <div className="pt-6">
+                    <button
+                      onClick={() => setStep(3)} disabled={!gnc}
+                      className="w-full py-4 bg-blue-600 hover:bg-blue-500 disabled:bg-slate-200 dark:disabled:bg-slate-800 disabled:text-slate-400 dark:disabled:text-slate-500 text-white font-black rounded-2xl uppercase tracking-widest text-xs transition-colors flex items-center justify-center gap-2"
+                    >
+                      Siguiente Paso <ArrowLeft className="w-4 h-4 rotate-180" />
+                    </button>
+                  </div>
+                </motion.div>
+              )}
 
-                    <div>
-                      <label className="text-[11px] font-bold text-slate-500 dark:text-slate-400 uppercase block mb-1">Email</label>
-                      <input
-                        type="email"
-                        required
-                        placeholder="Ingresá tu correo"
-                        value={email}
-                        onChange={(e) => setEmail(e.target.value)}
-                        className="w-full bg-white/60 dark:bg-white/5 backdrop-blur-md border border-white dark:border-white/10 rounded-2xl px-4 py-3 text-xs font-semibold text-navy dark:text-white outline-none focus:border-emerald-500 dark:focus:border-emerald-400 shadow-sm dark:shadow-none"
-                      />
-                    </div>
+              {/* --- PASO 3: CONTACTO --- */}
+              {step === 3 && (
+                <motion.div 
+                  key="step3"
+                  initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -20 }}
+                  transition={{ duration: 0.3 }}
+                >
+                  <button onClick={() => setStep(2)} className="text-xs font-bold text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white flex items-center gap-1 mb-6 transition-colors">
+                    <ArrowLeft className="w-3.5 h-3.5" /> Volver
+                  </button>
 
-                    <div>
-                      <label className="text-[11px] font-bold text-slate-500 dark:text-slate-400 uppercase block mb-1">Teléfono celular</label>
-                      <div className="flex gap-2">
-                        <div className="bg-white/80 dark:bg-white/10 border border-white dark:border-white/10 rounded-2xl px-3 py-3 text-xs font-bold text-slate-700 dark:text-slate-300 flex items-center shadow-sm dark:shadow-none">
-                          AR +549
-                        </div>
-                        <input
-                          type="tel"
-                          required
-                          placeholder="1112345678"
-                          value={tel}
-                          onChange={(e) => setTel(e.target.value)}
-                          className="flex-1 bg-white/60 dark:bg-white/5 backdrop-blur-md border border-white dark:border-white/10 rounded-2xl px-4 py-3 text-xs font-semibold text-navy dark:text-white outline-none focus:border-emerald-500 dark:focus:border-emerald-400 shadow-sm dark:shadow-none"
-                        />
+                  <form onSubmit={enviarConsignacion} className="space-y-4">
+                    <div className="grid grid-cols-2 gap-4">
+                      <div>
+                        <label className="text-[10px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-widest block mb-2">Nombre</label>
+                        <input required type="text" value={nombre} onChange={e => setNombre(e.target.value)} className="w-full bg-slate-50 dark:bg-[#161e2c] border border-slate-200 dark:border-white/5 rounded-xl px-4 py-3 text-sm text-slate-900 dark:text-white outline-none focus:border-blue-500 transition-colors" />
+                      </div>
+                      <div>
+                        <label className="text-[10px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-widest block mb-2">Apellido</label>
+                        <input required type="text" value={apellido} onChange={e => setApellido(e.target.value)} className="w-full bg-slate-50 dark:bg-[#161e2c] border border-slate-200 dark:border-white/5 rounded-xl px-4 py-3 text-sm text-slate-900 dark:text-white outline-none focus:border-blue-500 transition-colors" />
                       </div>
                     </div>
 
-                    <div className="pt-1 flex justify-center">
+                    <div>
+                      <label className="text-[10px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-widest block mb-2">Email</label>
+                      <input required type="email" value={email} onChange={e => setEmail(e.target.value)} className="w-full bg-slate-50 dark:bg-[#161e2c] border border-slate-200 dark:border-white/5 rounded-xl px-4 py-3 text-sm text-slate-900 dark:text-white outline-none focus:border-blue-500 transition-colors" />
+                    </div>
+
+                    <div>
+                      <label className="text-[10px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-widest block mb-2">Teléfono Celular</label>
+                      <div className="flex gap-2">
+                        <div className="bg-slate-100 dark:bg-[#161e2c] border border-slate-200 dark:border-white/5 rounded-xl px-4 py-3 text-xs font-bold text-slate-500 dark:text-slate-400 flex items-center">
+                          +549
+                        </div>
+                        <input required type="tel" value={tel} onChange={e => setTel(e.target.value)} placeholder="11 1234 5678" className="flex-1 bg-slate-50 dark:bg-[#161e2c] border border-slate-200 dark:border-white/5 rounded-xl px-4 py-3 text-sm text-slate-900 dark:text-white outline-none focus:border-blue-500 transition-colors" />
+                      </div>
+                    </div>
+
+                    <div className="pt-4 flex justify-center">
                       <div ref={turnstileRef} />
                     </div>
 
                     {errorEnvio && (
-                      <div key={shakeError} className="flex items-start gap-2 bg-rose-50 dark:bg-rose-400/10 border border-rose-200 dark:border-rose-400/20 rounded-2xl p-3 animate-fadeIn animate-shake">
-                        <X className="w-4 h-4 text-rose-600 dark:text-rose-400 shrink-0 mt-0.5" />
-                        <p className="text-[11px] text-rose-700 dark:text-rose-300 font-medium leading-relaxed">{errorEnvio}</p>
+                      <div className="flex items-start gap-2 bg-rose-50 dark:bg-rose-500/10 border border-rose-200 dark:border-rose-500/20 rounded-xl p-4 mt-4">
+                        <X className="w-4 h-4 text-rose-500 dark:text-rose-400 shrink-0 mt-0.5" />
+                        <p className="text-xs text-rose-600 dark:text-rose-300 font-medium leading-relaxed">{errorEnvio}</p>
                       </div>
                     )}
 
-                    <button 
-                      type="submit" 
-                      disabled={loading || !turnstileToken}
-                      className="w-full py-4 bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-teal-600 hover:to-emerald-500 disabled:opacity-50 text-white font-black rounded-2xl uppercase tracking-widest text-xs transition-all shadow-lg shadow-emerald-500/20 cursor-pointer flex items-center justify-center gap-2 active:scale-95"
-                    >
-                      {loading && <Loader2 className="w-4 h-4 animate-spin text-white" />}
-                      {loading ? "Enviando..." : "Confirmar Consignación"}
-                    </button>
+                    <div className="pt-6">
+                      <button 
+                        type="submit" disabled={loading || !turnstileToken}
+                        className="w-full py-4 bg-blue-600 hover:bg-blue-500 disabled:bg-slate-200 dark:disabled:bg-slate-800 disabled:text-slate-400 dark:disabled:text-slate-500 text-white font-black rounded-2xl uppercase tracking-widest text-xs transition-colors flex items-center justify-center gap-2"
+                      >
+                        {loading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Check className="w-4 h-4" />}
+                        {loading ? "Procesando..." : "Finalizar y Enviar"}
+                      </button>
+                    </div>
                   </form>
-                )}
+                </motion.div>
+              )}
 
-              </div>
-            ) : (
-              /* ÉXITO */
-              <EnvioExitoso
-                color="emerald"
-                titulo="¡Solicitud recibida!"
-                mensaje="Hemos recibido los datos de tu vehículo y uno de nuestros expertos en consignación te contactará a la brevedad para coordinar."
-              >
-                <Link href="/" className="inline-block py-3.5 px-8 bg-gradient-to-r from-emerald-600 to-teal-500 text-white font-black rounded-2xl text-xs uppercase tracking-widest shadow-lg shadow-emerald-500/20">
-                  Volver al inicio
-                </Link>
-              </EnvioExitoso>
-            )}
-
+            </AnimatePresence>
           </div>
         </div>
-
       </div>
 
-      <footer className="text-center text-[10px] font-bold text-slate-400 dark:text-slate-500 py-4 uppercase tracking-widest relative z-10">
-        Pfaffen Autos &bull; Todos los derechos reservados
-      </footer>
-
-      {/* Cargamos el script de Cloudflare */}
-      <Script
-        src="https://challenges.cloudflare.com/turnstile/v0/api.js"
-        strategy="lazyOnload"
-        onLoad={() => setTurnstileListo(true)}
-      />
-
+      <Script src="https://challenges.cloudflare.com/turnstile/v0/api.js" strategy="lazyOnload" onLoad={() => setTurnstileListo(true)} />
     </div>
   );
 }
