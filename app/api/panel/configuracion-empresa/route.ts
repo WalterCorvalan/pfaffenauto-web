@@ -67,6 +67,7 @@ const ConfigEmpresaSchema = z.object({
   financiacion_tope_0km: z.coerce.number().min(0).max(100).optional(),
   financiacion_tna: z.record(z.string(), z.coerce.number().min(0).max(500)).optional(),
   financiacion_gastos_pct: z.coerce.number().min(0).max(100).optional(),
+  financiacion_uva_descuento: z.record(z.string(), z.coerce.number().min(0).max(100)).optional(),
 });
 
 export async function PATCH(request: Request) {
