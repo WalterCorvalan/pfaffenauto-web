@@ -10,7 +10,7 @@ import AlertDialog from "@/components/panel/AlertDialog";
 
 const SECTORES = [
   { value: "ventas", label: "Ventas" }, { value: "gestoria", label: "Gestoría" }, { value: "finanzas", label: "Finanzas" },
-  { value: "taller", label: "Taller" }, { value: "recepcion", label: "Recepción" }, { value: "admin", label: "Admin" },
+  { value: "taller", label: "Taller" }, { value: "admin", label: "Admin" },
 ];
 
 const TABS = ["Resumen", "Estado de Pago", "Pago Comprador", "Comprobantes", "Documentos", "Parte Vendedora", "Parte Compradora", "Liquidación", "Gastos", "Consignación", "Cuentas Registro", "Duplicado", "Gestoría", "Historial"];

@@ -12,7 +12,6 @@ export const ROL_A_SECTOR: Record<string, string> = {
   finanzas: "finanzas",
   gestoria: "gestoria",
   taller: "taller",
-  recepcion: "recepcion",
 };
 
 // Mismo criterio que moduloVisible() en layout.tsx: admin nunca se filtra;

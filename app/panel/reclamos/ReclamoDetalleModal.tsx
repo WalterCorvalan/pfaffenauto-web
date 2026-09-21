@@ -11,7 +11,6 @@ const SECTORES = [
   { value: "gestoria", label: "Gestoría" },
   { value: "finanzas", label: "Finanzas" },
   { value: "taller", label: "Taller" },
-  { value: "recepcion", label: "Recepción" },
   { value: "admin", label: "Admin" },
 ];
 

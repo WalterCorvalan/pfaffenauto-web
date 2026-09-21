@@ -84,7 +84,7 @@ function diasHasta(fecha: string) {
 export default function MiEspacioClient({
   miId, miNombre, soyAdmin, agencia, urgentesIniciales, pagosIniciales, prefsIniciales,
   aCobrarPorMoneda, yaCobrePorMoneda, pendientesCount, eventosHoyCount, eventosSemanaCount, gastosFijosPorMoneda,
-  paraHoyGestoria, paraHoyFinanzas, paraHoyRecepcion, colaVendedor, carteraVendedor,
+  paraHoyGestoria, paraHoyFinanzas, colaVendedor, carteraVendedor,
 }: {
   miId: string; miNombre: string; soyAdmin: boolean;
   agencia: { stockDisponible: number; ventasDelMes: number; expedientesActivos: number; ingresosDelMesUsd: number } | null;
@@ -94,7 +94,6 @@ export default function MiEspacioClient({
   gastosFijosPorMoneda: Record<string, number>;
   paraHoyGestoria: { id: string; titulo: string; dias: number }[] | null;
   paraHoyFinanzas: { mesAnteriorLabel: string; mesAnteriorCerrado: boolean; cuentasEnRojo: { id: string; nombre: string; moneda: string; saldo: number }[] } | null;
-  paraHoyRecepcion: { sinContestar: { id: string; origen: string; nombre: string; telefono: string | null; vendedorId: string | null }[]; visitasSinRegistrar: any[] } | null;
   colaVendedor: { leadsSinContestar: { id: string; origen: string; nombre: string; telefono: string | null; vendedorId: string | null }[]; reservasSinSena: any[] } | null;
   carteraVendedor: { total: number; sinContactoHaceRato: number } | null;
 }) {
@@ -487,29 +486,6 @@ export default function MiEspacioClient({
             </div>
           )}
 
-          {paraHoyRecepcion && (
-            <div>
-              <p className="text-[11px] font-black uppercase tracking-widest text-slate-400 mb-2">Para hoy — Recepción</p>
-              {paraHoyRecepcion.sinContestar.length === 0 && paraHoyRecepcion.visitasSinRegistrar.length === 0 ? (
-                <div className="bg-emerald-50 dark:bg-emerald-500/10 border border-emerald-200 dark:border-emerald-500/20 rounded-xl px-4 py-3 text-sm font-semibold text-emerald-700 dark:text-emerald-300">Sin leads sin contestar ni visitas abiertas.</div>
-              ) : (
-                <div className="space-y-2">
-                  {paraHoyRecepcion.sinContestar.map((l) => (
-                    <button key={l.id} onClick={() => router.push(`/panel/leads?lead=${l.id}&origen=${l.origen}`)} className="w-full flex items-center justify-between bg-white dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-xl p-3 text-left hover:bg-slate-50 dark:hover:bg-white/10">
-                      <span className="text-sm font-bold truncate">{l.nombre}</span>
-                      <span className="text-[11px] font-bold text-slate-400 shrink-0">{l.vendedorId ? "Con vendedor" : "Sin vendedor"}</span>
-                    </button>
-                  ))}
-                  {paraHoyRecepcion.visitasSinRegistrar.map((v: any) => (
-                    <button key={v.id} onClick={() => router.push("/panel/visitas")} className="w-full flex items-center justify-between bg-white dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-xl p-3 text-left hover:bg-slate-50 dark:hover:bg-white/10">
-                      <span className="text-sm font-bold truncate">{v.nombre_cliente}</span>
-                      <span className="text-[11px] font-bold text-amber-600 dark:text-amber-400 shrink-0">Visita sin registrar · {v.fecha_visita}</span>
-                    </button>
-                  ))}
-                </div>
-              )}
-            </div>
-          )}
         </div>
       )}
 
