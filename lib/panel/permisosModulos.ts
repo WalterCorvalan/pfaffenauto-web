@@ -26,6 +26,10 @@ export async function puedeVerModulo(supabase: SupabaseClient, perfilId: string,
   const { data: config } = await supabase.from("modulos_config").select("activo").eq("modulo", modulo).maybeSingle();
   if (config?.activo === false) return false;
 
+  // Mismo override que moduloVisible() en layout.tsx -- Clientes siempre
+  // visible para ventas/encargado, sin depender de "Visibilidad por sector".
+  if (modulo === "clientes" && roles.some((r) => ["ventas", "encargado"].includes(r))) return true;
+
   const sectores = roles.map((r) => ROL_A_SECTOR[r]).filter(Boolean);
   if (sectores.length === 0) return true;
 
