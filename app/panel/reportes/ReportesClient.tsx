@@ -6,7 +6,7 @@ import { BarChart3, ChevronLeft, ChevronRight, Trophy, Clock, FolderKanban, Tick
 import { BarChart, Bar, XAxis, YAxis, ResponsiveContainer, Tooltip, CartesianGrid } from "recharts";
 
 interface Props {
-  miId: string; miNombre: string; soyAdmin: boolean; soyFinanzas: boolean; soyVentas: boolean; mesInicial: string;
+  miId: string; miNombre: string; soyAdmin: boolean; soyFinanzas: boolean; soyVentas: boolean; gananciasOcultas: boolean; mesInicial: string;
   rankingInicial: any[]; premios: any[]; rankingVelocidadInicial: any[]; operacionesPorVendedorInicial: any[];
   origenLeadsInicial: any[]; embudoComercialInicial: any; expedientesResumenInicial: any; expedientesPorEstado: any[];
   infraccionesResumenInicial: any; tallerFacturacionInicial: any; ventasPorMes: any[]; ventasPorMarca: any[]; composicionVentas: any;
@@ -67,8 +67,13 @@ function SeccionRestringida({ titulo }: { titulo: string }) {
 }
 
 export default function ReportesClient(props: Props) {
-  const { miId, miNombre, premios, soyAdmin, soyFinanzas } = props;
+  const { miId, miNombre, premios, soyAdmin, soyFinanzas, gananciasOcultas } = props;
   const puedeVerFinanzas = soyAdmin || soyFinanzas;
+  // "ganancia oculta" es la excepción por-usuario (perfiles.ganancias_ocultas)
+  // -- separada de puedeVerFinanzas, que solo controla si ve la SECCIÓN de
+  // reportes financieros. Un finanzas/admin con el margen oculto entra a la
+  // sección igual, pero el monto de ganancia puntual no se le muestra.
+  const puedeVerGanancia = puedeVerFinanzas && !gananciasOcultas;
   const [mesOffset, setMesOffset] = useState(0);
   const [cargando, setCargando] = useState(false);
   const [ranking, setRanking] = useState(props.rankingInicial);
@@ -461,7 +466,7 @@ export default function ReportesClient(props: Props) {
             <StatTile label="Total registradas" valor={infraccionesResumen.total} />
             <StatTile label="Pendientes" valor={infraccionesResumen.pendientes} tono="bg-amber-50 dark:bg-amber-500/10 border-amber-100 dark:border-amber-500/20" />
             <StatTile label="Pagadas" valor={infraccionesResumen.pagadas} tono="bg-emerald-50 dark:bg-emerald-500/10 border-emerald-100 dark:border-emerald-500/20" />
-            <StatTile label="Ganancia total" valor={fmtMoneda(Number(infraccionesResumen.ganancia_total) || 0, "ARS")} tono="bg-indigo-50 dark:bg-indigo-500/10 border-indigo-100 dark:border-indigo-500/20" />
+            {puedeVerGanancia && <StatTile label="Ganancia total" valor={fmtMoneda(Number(infraccionesResumen.ganancia_total) || 0, "ARS")} tono="bg-indigo-50 dark:bg-indigo-500/10 border-indigo-100 dark:border-indigo-500/20" />}
           </div>
           <Card title="Infracciones por Mes">
             <div className="h-[160px]">

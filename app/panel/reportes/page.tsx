@@ -38,7 +38,7 @@ export default async function ReportesPage() {
   ] = await Promise.all([
     supabase.auth.getUser().then(async ({ data }) => {
       if (!data.user) return { data: null };
-      return supabase.from("perfiles").select("id, nombre, roles").eq("id", data.user.id).single();
+      return supabase.from("perfiles").select("id, nombre, roles, ganancias_ocultas").eq("id", data.user.id).single();
     }),
     supabase.rpc("ranking_ventas", { p_desde: desde, p_hasta: hasta }),
     supabase.from("premios_consignaciones").select("*").order("orden"),
@@ -95,6 +95,7 @@ export default async function ReportesPage() {
       soyAdmin={miPerfil?.roles?.includes("admin") ?? false}
       soyFinanzas={miPerfil?.roles?.includes("finanzas") ?? false}
       soyVentas={miPerfil?.roles?.includes("ventas") ?? false}
+      gananciasOcultas={miPerfil?.ganancias_ocultas ?? false}
       mesInicial={mesActual}
       rankingInicial={ranking || []}
       premios={premios || []}
