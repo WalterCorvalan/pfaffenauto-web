@@ -206,6 +206,12 @@ export default function CatalogoClient({ vehiculosIniciales = [], totalInicial =
     if (condicionQuery) {
       if (condicionQuery === "0km") {
         query = query.eq("km", 0);
+      } else if (condicionQuery === "usados-seleccionados") {
+        // Mismo criterio que el header usaba antes vía "q" -- todo el stock
+        // menos 0km y menos los de Outlet (mismo corte de precio que usa
+        // /outlet). Se movió de "q" a "condicion" para que el link del
+        // header no deje el término escrito en el buscador visible.
+        query = query.neq("km", 0).or("precio_publicado_ars.is.null,precio_publicado_ars.gte.10000000");
       } else if (condicionQuery === "usados") {
         query = query.neq("km", 0);
       }

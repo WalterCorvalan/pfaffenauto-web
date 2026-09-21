@@ -54,7 +54,7 @@ export default function PublicHeader() {
   const navLinks = [
     { name: "Inicio", href: "/", icon: Home },
     { name: "0KM", href: "/0km", icon: CarFront },
-    { name: "Usados Seleccionados", href: "/catalogo?q=usados-seleccionados", icon: ShieldCheck },
+    { name: "Usados Seleccionados", href: "/catalogo?condicion=usados-seleccionados", icon: ShieldCheck },
     { name: "Outlet", href: "/outlet", badge: "Ofertas", icon: Tag },
     { name: "Nuestra Historia", href: "/nosotros", icon: Landmark },
   ];
@@ -168,7 +168,7 @@ export default function PublicHeader() {
               >
                 {navLinks.map((link) => {
                   const is0KM = link.href.includes("condicion=0km");
-                  const isUsados = link.href.includes("condicion=usados");
+                  const isUsados = link.href.includes("condicion=usados-seleccionados");
 
                   let isActive = false;
                   if (link.href === "/") {
@@ -176,7 +176,7 @@ export default function PublicHeader() {
                   } else if (is0KM) {
                     isActive = pathname === "/catalogo" && condicionParam === "0km";
                   } else if (isUsados) {
-                    isActive = pathname === "/catalogo" && condicionParam === "usados";
+                    isActive = pathname === "/catalogo" && condicionParam === "usados-seleccionados";
                   } else {
                     isActive =
                       pathname === link.href ||
