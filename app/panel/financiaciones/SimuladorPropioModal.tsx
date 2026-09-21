@@ -6,7 +6,7 @@ import VehiculoSelector, { type VehiculoDatos } from "@/components/panel/Vehicul
 import {
   TOPES_FINANCIACION_DEFAULT, TOPE_0KM_DEFAULT, TNA_POR_PLAZO_DEFAULT, GASTOS_PCT_DEFAULT,
   PLAZOS_DISPONIBLES, UVA_DESCUENTO_PCT_DEFAULT, PLAZOS_CON_UVA, topePctPorAnio, calcularCuotaFrances, type TopeFinanciacion,
-} from "@/lib/panel/financiacion";
+} from "@/lib/financiacion";
 
 function fmt(n: number) {
   return Math.round(n).toLocaleString("es-AR");

@@ -6,7 +6,7 @@ import { Settings, Loader2 } from "lucide-react";
 import { supabase2 } from "@/lib/supabase/client";
 import TablaResponsiva, { type ColumnaTabla } from "@/components/panel/TablaResponsiva";
 import { MODULOS_CATALOGO, SECTORES, SECTOR_LABEL } from "@/lib/panel/modulosCatalogo";
-import { TOPES_FINANCIACION_DEFAULT, TOPE_0KM_DEFAULT, TNA_POR_PLAZO_DEFAULT, GASTOS_PCT_DEFAULT, PLAZOS_DISPONIBLES, UVA_DESCUENTO_PCT_DEFAULT, PLAZOS_CON_UVA, type TopeFinanciacion } from "@/lib/panel/financiacion";
+import { TOPES_FINANCIACION_DEFAULT, TOPE_0KM_DEFAULT, TNA_POR_PLAZO_DEFAULT, GASTOS_PCT_DEFAULT, PLAZOS_DISPONIBLES, UVA_DESCUENTO_PCT_DEFAULT, PLAZOS_CON_UVA, type TopeFinanciacion } from "@/lib/financiacion";
 
 const MODULO_LABEL: Record<string, string> = Object.fromEntries(MODULOS_CATALOGO.map((m) => [m.modulo, m.label]));
 
