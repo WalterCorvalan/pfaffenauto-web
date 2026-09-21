@@ -880,7 +880,7 @@ export default function PanelV2Layout({
 
         {/* BOTTOM NAV — accesos rápidos en mobile, la barra lateral completa
             queda detrás del hamburger para lo demás. */}
-        <nav className={`md:hidden print:hidden fixed bottom-0 left-0 right-0 h-16 bg-white dark:bg-[#111] border-t border-slate-200 dark:border-white/10 items-stretch z-50 ${isOpen ? "hidden" : "flex"}`}>
+        <nav className={`md:hidden print:hidden fixed bottom-0 left-0 right-0 h-16 bg-white dark:bg-[#111] border-t border-slate-200 dark:border-white/10 items-stretch z-40 ${isOpen ? "hidden" : "flex"}`}>
           {NAV_MOBILE.map((item) => {
             const Icon = item.icon;
             const activo = pathname === item.href;
