@@ -310,7 +310,7 @@ export default function ConsignarForm() {
         </AnimatePresence>
 
         {/* Canvas Principal */}
-        <div className="absolute inset-0 flex items-center justify-center px-4 pt-16 pb-28 lg:p-8 lg:pt-0 lg:pb-0">
+        <div className="absolute inset-0 flex items-center justify-center px-4 pt-12 pb-14 lg:p-8 lg:pt-0 lg:pb-0">
           <AnimatePresence mode="wait">
             {!marca ? (
               <motion.div 
