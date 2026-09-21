@@ -301,7 +301,7 @@ export default function ConsignarForm() {
             <motion.div
               initial={{ opacity: 0, y: -20 }}
               animate={{ opacity: 1, y: 0 }}
-              className="absolute top-4 right-4 lg:top-8 lg:right-6 z-20 bg-blue-50/90 dark:bg-blue-900/40 border border-blue-200 dark:border-blue-500/30 backdrop-blur-xl rounded-xl lg:rounded-2xl px-3 py-2 lg:px-5 lg:py-3 flex items-center gap-2 lg:gap-3 shadow-[0_0_30px_rgba(1,69,242,0.12)] dark:shadow-[0_0_30px_rgba(1,69,242,0.3)]"
+              className="absolute top-16 right-4 lg:top-8 lg:right-6 z-20 bg-blue-50/90 dark:bg-blue-900/40 border border-blue-200 dark:border-blue-500/30 backdrop-blur-xl rounded-xl lg:rounded-2xl px-3 py-2 lg:px-5 lg:py-3 flex items-center gap-2 lg:gap-3 shadow-[0_0_30px_rgba(1,69,242,0.12)] dark:shadow-[0_0_30px_rgba(1,69,242,0.3)]"
             >
               <Gauge className="w-4 h-4 lg:w-5 lg:h-5 text-blue-600 dark:text-blue-400 shrink-0" />
               <div className="flex flex-col">
