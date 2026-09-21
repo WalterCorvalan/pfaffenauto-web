@@ -537,6 +537,12 @@ export default function PanelV2Layout({
     if (esAdmin || !modulo) return true;
     if (modulosActivos[modulo] === false) return false;
 
+    // Clientes siempre visible para ventas/encargado, sin depender de que
+    // "Visibilidad por sector" esté bien configurado -- pedido explícito
+    // para no dejar a esos dos roles sin acceso si alguien lo apaga sin
+    // querer desde Configuración → Empresa → Módulos.
+    if (modulo === "clientes" && roles.some((r) => ["ventas", "encargado"].includes(r))) return true;
+
     const sectores = roles.map((r) => ROL_A_SECTOR[r]).filter(Boolean);
     if (sectores.length === 0) return true;
 
