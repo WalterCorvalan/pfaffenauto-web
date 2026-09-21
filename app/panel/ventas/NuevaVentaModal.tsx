@@ -2,11 +2,12 @@
 
 import { useState, useEffect, useRef } from "react";
 import { supabase2 } from "@/lib/supabase/client";
-import { X, Loader2, Save, Trash2, Plus, Bell, Star, Search, Check } from "lucide-react";
+import { X, Loader2, Save, Trash2, Plus, Bell, Star, Search, Check, Megaphone } from "lucide-react";
 import { hoyLocalISO, parseFechaLocal, fmtFechaLocal } from "@/lib/panel/fechas";
 import { crearAlerta } from "@/lib/panel/alertas";
 import { generarCodigoPublico } from "@/lib/generarCodigoPublico";
 import { totalEnMoneda, type Moneda } from "@/lib/moneda";
+import { buscarLeadsPorTexto, LEAD_ORIGEN_LABEL, type LeadEncontrado } from "@/lib/panel/buscarLeads";
 
 const TIPOS_RECORDATORIO: { value: string; label: string }[] = [
   { value: "llamada_seguimiento", label: "📞 Llamada de seguimiento" },
@@ -98,19 +99,24 @@ export default function NuevaVentaModal({ perfiles, clientes, vehiculos, miId, s
   const [busquedaCliente, setBusquedaCliente] = useState(editando?.comprador_nombre || "");
   const [clienteDropdownAbierto, setClienteDropdownAbierto] = useState(false);
   const [resultadosClienteVivo, setResultadosClienteVivo] = useState<Cliente[] | null>(null);
+  const [leadsEncontrados, setLeadsEncontrados] = useState<LeadEncontrado[]>([]);
   const [buscandoCliente, setBuscandoCliente] = useState(false);
   useEffect(() => {
     const q = busquedaCliente.trim();
-    if (q.length < 2) { setResultadosClienteVivo(null); return; }
+    if (q.length < 2) { setResultadosClienteVivo(null); setLeadsEncontrados([]); return; }
     setBuscandoCliente(true);
     const timer = setTimeout(async () => {
-      const { data } = await supabase2
-        .from("clientes")
-        .select("id, nombre, apellido, telefono, email, dni_cuit")
-        .or(`nombre.ilike.%${q}%,apellido.ilike.%${q}%,dni_cuit.ilike.%${q}%`)
-        .order("nombre")
-        .limit(20);
+      const [{ data }, leads] = await Promise.all([
+        supabase2
+          .from("clientes")
+          .select("id, nombre, apellido, telefono, email, dni_cuit")
+          .or(`nombre.ilike.%${q}%,apellido.ilike.%${q}%,dni_cuit.ilike.%${q}%`)
+          .order("nombre")
+          .limit(20),
+        buscarLeadsPorTexto(supabase2, q),
+      ]);
       setResultadosClienteVivo(data || []);
+      setLeadsEncontrados(leads);
       setBuscandoCliente(false);
     }, 300);
     return () => clearTimeout(timer);
@@ -316,6 +322,18 @@ export default function NuevaVentaModal({ perfiles, clientes, vehiculos, miId, s
     } else {
       setBusquedaCliente("");
     }
+  };
+
+  // Un lead no tiene ficha en "clientes" -- a diferencia de Presupuesto/Seña,
+  // acá no hace falta crear una: comprador_nombre/telefono/email de la venta
+  // son texto libre (cliente_id queda vacío), así que el dato del lead se
+  // vuelca directo sin pasar por un alta.
+  const elegirLead = (l: LeadEncontrado) => {
+    setClienteId("");
+    setClienteDropdownAbierto(false);
+    setBusquedaCliente(l.nombre);
+    setCompradorNombre(l.nombre);
+    setCompradorTelefonoCelular(l.telefono || "");
   };
 
   const agregarSeña = () => setSenas((prev) => [...prev, { monto: "", moneda: monedaVenta, fecha: hoyLocalISO(), cajaDestino: "" }]);
@@ -793,9 +811,15 @@ export default function NuevaVentaModal({ perfiles, clientes, vehiculos, miId, s
                         <span className="text-[11px] text-slate-400 shrink-0">{c.telefono || c.dni_cuit || ""}</span>
                       </button>
                     ))}
+                    {leadsEncontrados.map((l) => (
+                      <button key={`${l.origen}-${l.id}`} type="button" onMouseDown={() => elegirLead(l)} className="w-full text-left px-3 py-2.5 hover:bg-indigo-50 dark:hover:bg-indigo-500/10 transition-colors flex items-center justify-between gap-2">
+                        <span className="text-sm font-medium text-slate-800 dark:text-white flex items-center gap-1.5 min-w-0 truncate"><Megaphone className="w-3.5 h-3.5 text-indigo-500 shrink-0" /> <span className="truncate">{l.nombre}</span></span>
+                        <span className="text-[10px] font-bold uppercase tracking-widest text-indigo-500 dark:text-indigo-300 shrink-0">{LEAD_ORIGEN_LABEL[l.origen]}</span>
+                      </button>
+                    ))}
                     {buscandoCliente ? (
                       <p className="px-3 py-3 text-[13px] text-slate-400 italic flex items-center gap-1.5"><Loader2 className="w-3.5 h-3.5 animate-spin" /> Buscando...</p>
-                    ) : clientesFiltrados.length === 0 && <p className="px-3 py-3 text-[13px] text-slate-400 italic">Sin resultados.</p>}
+                    ) : clientesFiltrados.length === 0 && leadsEncontrados.length === 0 && <p className="px-3 py-3 text-[13px] text-slate-400 italic">Sin resultados.</p>}
                   </div>
                 )}
               </div>
