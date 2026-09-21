@@ -114,7 +114,11 @@ async function ejecutarBusquedaStock(
     if (puertas) q = q.eq("puertas", puertas);
     // Sin conversor de dólar propio en v2 todavía — filtramos solo por la
     // moneda que mencionó el cliente, sin intentar convertir la otra.
-    if (presupuesto) q = q.eq("moneda_venta", presupuesto.moneda).lte("precio_venta", presupuesto.monto);
+    // Margen de estiramiento del 15%: un cliente con $20M no quiere ver SOLO
+    // autos hasta $20M exactos, quiere ver también algo de $22-23M si le
+    // sirve (con financiación de por medio) — antes el corte era exacto y
+    // dejaba afuera opciones cercanas que el vendedor sí mostraría en mano.
+    if (presupuesto) q = q.eq("moneda_venta", presupuesto.moneda).lte("precio_venta", presupuesto.monto * 1.15);
     return q;
   };
 

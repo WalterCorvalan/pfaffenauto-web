@@ -318,21 +318,25 @@ export default function SolicitarFinanciacionForm({ vehiculoPreseleccionado, cla
                   </div>
 
                   <div>
-                    <label className="text-[11px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-widest block mb-3">Plazo a financiar</label>
-                    <div className="grid grid-cols-3 gap-3">
-                      {PLAZOS.map((plazo) => (
-                        <button
-                          key={plazo} type="button" onClick={() => setMeses(plazo)}
-                          className={`py-3 rounded-xl text-sm font-black transition-all ${meses === plazo ? "bg-[#0145F2] text-white shadow-lg" : "bg-white dark:bg-white/5 border border-slate-200 dark:border-white/10 text-slate-500 dark:text-slate-400"}`}
-                        >
-                          {plazo} cuotas
-                        </button>
-                      ))}
+                    <label className="text-[11px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-widest block mb-3">Comparar planes</label>
+                    <div className="grid grid-cols-3 gap-2">
+                      {PLAZOS.map((plazo) => {
+                        const elegido = meses === plazo;
+                        return (
+                          <button
+                            key={plazo} type="button" onClick={() => setMeses(plazo)}
+                            className={`py-3 px-2 rounded-xl text-center transition-all border ${elegido ? "bg-[#0145F2] border-[#0145F2] text-white shadow-lg" : "bg-white dark:bg-white/5 border-slate-200 dark:border-white/10 text-slate-500 dark:text-slate-400"}`}
+                          >
+                            <p className="text-[10px] font-black uppercase tracking-widest opacity-80">{plazo} cuotas</p>
+                            <p className={`text-sm font-black mt-1 ${elegido ? "text-white" : "text-navy dark:text-white"}`}>$ {calcularCuota(montoAFinanciar, plazo).toLocaleString("es-AR")}</p>
+                          </button>
+                        );
+                      })}
                     </div>
                   </div>
 
                   <div className="bg-white dark:bg-white/5 border border-slate-200 dark:border-white/10 p-4 rounded-2xl flex items-center justify-between">
-                    <span className="text-xs font-bold text-slate-500 dark:text-slate-400">Cuota estimada</span>
+                    <span className="text-xs font-bold text-slate-500 dark:text-slate-400">Cuota estimada ({meses} cuotas)</span>
                     <span className="text-2xl font-black text-[#0145F2] dark:text-sky-300">$ {calcularCuota(montoAFinanciar, meses).toLocaleString("es-AR")}</span>
                   </div>
 

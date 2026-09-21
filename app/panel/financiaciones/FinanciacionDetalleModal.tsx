@@ -11,7 +11,7 @@ function Fila({ label, valor }: { label: string; valor: React.ReactNode }) {
   );
 }
 
-export default function FinanciacionDetalleModal({ solicitud: s, onClose }: { solicitud: any; onClose: () => void }) {
+export default function FinanciacionDetalleModal({ solicitud: s, vendedorNombre, onClose }: { solicitud: any; vendedorNombre?: string | null; onClose: () => void }) {
   return (
     <div className="fixed inset-0 bg-black/40 backdrop-blur-sm z-[100] flex items-center justify-center p-4" onClick={() => onClose()}>
       <div className="bg-white dark:bg-[#111] border border-slate-200 dark:border-white/10 rounded-2xl w-full max-w-lg max-h-[90vh] overflow-y-auto shadow-2xl" onClick={(e) => e.stopPropagation()}>
@@ -29,6 +29,8 @@ export default function FinanciacionDetalleModal({ solicitud: s, onClose }: { so
               <Fila label="Email" valor={s.email} />
             </div>
           </div>
+
+          <Fila label="Vendedor" valor={vendedorNombre || "Sin asignar"} />
 
           <div>
             <p className="text-[11px] font-black uppercase tracking-widest text-slate-400 mb-1.5">Vehículo</p>
