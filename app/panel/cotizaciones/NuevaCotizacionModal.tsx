@@ -2,10 +2,11 @@
 
 import { useEffect, useState } from "react";
 import { supabase2 } from "@/lib/supabase/client";
-import { X, Loader2, Save, Calculator, Search, Check } from "lucide-react";
+import { X, Loader2, Save, Calculator, Search, Check, Megaphone } from "lucide-react";
 import { hoyLocalISO } from "@/lib/panel/fechas";
 import TasarUsadoModal from "./TasarUsadoModal";
 import { crearAlerta } from "@/lib/panel/alertas";
+import { buscarLeadsPorTexto, LEAD_ORIGEN_LABEL, type LeadEncontrado } from "@/lib/panel/buscarLeads";
 
 interface Cliente { id: string; nombre: string; apellido: string | null; telefono: string | null; dni_cuit: string | null }
 interface Vehiculo { id: string; marca: string; modelo: string; anio: number; patente: string | null; precio_venta: number; moneda_venta: string; estado: string }
@@ -61,19 +62,24 @@ export default function NuevaCotizacionModal({ clientes, vehiculos, perfiles, mi
   const [busquedaCliente, setBusquedaCliente] = useState(editando?.cliente_nombre || "");
   const [dropdownClienteAbierto, setDropdownClienteAbierto] = useState(false);
   const [resultadosClienteVivo, setResultadosClienteVivo] = useState<Cliente[] | null>(null);
+  const [leadsEncontrados, setLeadsEncontrados] = useState<LeadEncontrado[]>([]);
   const [buscandoCliente, setBuscandoCliente] = useState(false);
   useEffect(() => {
     const q = busquedaCliente.trim();
-    if (q.length < 2) { setResultadosClienteVivo(null); return; }
+    if (q.length < 2) { setResultadosClienteVivo(null); setLeadsEncontrados([]); return; }
     setBuscandoCliente(true);
     const timer = setTimeout(async () => {
-      const { data } = await supabase2
-        .from("clientes")
-        .select("id, nombre, apellido, telefono, dni_cuit")
-        .or(`nombre.ilike.%${q}%,apellido.ilike.%${q}%,dni_cuit.ilike.%${q}%`)
-        .order("nombre")
-        .limit(20);
+      const [{ data }, leads] = await Promise.all([
+        supabase2
+          .from("clientes")
+          .select("id, nombre, apellido, telefono, dni_cuit")
+          .or(`nombre.ilike.%${q}%,apellido.ilike.%${q}%,dni_cuit.ilike.%${q}%`)
+          .order("nombre")
+          .limit(20),
+        buscarLeadsPorTexto(supabase2, q),
+      ]);
       setResultadosClienteVivo(data || []);
+      setLeadsEncontrados(leads);
       setBuscandoCliente(false);
     }, 300);
     return () => clearTimeout(timer);
@@ -119,6 +125,15 @@ export default function NuevaCotizacionModal({ clientes, vehiculos, perfiles, mi
     } else {
       setBusquedaCliente("");
     }
+  };
+
+  // Igual que en Ventas: cliente_nombre es texto libre en la cotización, así
+  // que un lead se vuelca directo sin necesidad de crear un cliente real.
+  const elegirLead = (l: LeadEncontrado) => {
+    setClienteId("");
+    setDropdownClienteAbierto(false);
+    setBusquedaCliente(l.nombre);
+    setClienteNombre(l.nombre);
   };
 
   const elegirVehiculo = (v: Vehiculo | null) => {
@@ -251,9 +266,15 @@ export default function NuevaCotizacionModal({ clientes, vehiculos, perfiles, mi
                         <span className="text-[11px] text-slate-400 shrink-0">{c.telefono || c.dni_cuit || ""}</span>
                       </button>
                     ))}
+                    {leadsEncontrados.map((l) => (
+                      <button key={`${l.origen}-${l.id}`} type="button" onMouseDown={() => elegirLead(l)} className="w-full text-left px-3 py-2.5 hover:bg-indigo-50 dark:hover:bg-indigo-500/10 transition-colors flex items-center justify-between gap-2">
+                        <span className="text-sm font-medium text-slate-800 dark:text-white flex items-center gap-1.5 min-w-0 truncate"><Megaphone className="w-3.5 h-3.5 text-indigo-500 shrink-0" /> <span className="truncate">{l.nombre}</span></span>
+                        <span className="text-[10px] font-bold uppercase tracking-widest text-indigo-500 dark:text-indigo-300 shrink-0">{LEAD_ORIGEN_LABEL[l.origen]}</span>
+                      </button>
+                    ))}
                     {buscandoCliente ? (
                       <p className="px-3 py-3 text-[13px] text-slate-400 italic flex items-center gap-1.5"><Loader2 className="w-3.5 h-3.5 animate-spin" /> Buscando...</p>
-                    ) : clientesFiltrados.length === 0 && <p className="px-3 py-3 text-[13px] text-slate-400 italic">Sin resultados.</p>}
+                    ) : clientesFiltrados.length === 0 && leadsEncontrados.length === 0 && <p className="px-3 py-3 text-[13px] text-slate-400 italic">Sin resultados.</p>}
                   </div>
                 )}
                 <p className="text-[10px] text-slate-400 mt-1">Elegí uno o dejá vacío y completá el nombre libre</p>

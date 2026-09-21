@@ -2,8 +2,9 @@
 
 import { useState, useEffect, useRef } from "react";
 import { supabase2 } from "@/lib/supabase/client";
-import { X, Loader2, Search } from "lucide-react";
+import { X, Loader2, Search, Megaphone } from "lucide-react";
 import { crearAlerta } from "@/lib/panel/alertas";
+import { buscarLeadsPorTexto, LEAD_ORIGEN_LABEL, type LeadEncontrado } from "@/lib/panel/buscarLeads";
 
 const TIPOS = ["Transferencia", "Pago", "Gestoría", "Documentación", "Administrativo", "Otro"];
 const PRIORIDADES = ["Baja", "Normal", "Alta", "Urgente"];
@@ -33,6 +34,7 @@ export default function NuevoReclamoModal({ perfiles, miId, onClose, onCreado }:
 
   const [busqueda, setBusqueda] = useState("");
   const [resultados, setResultados] = useState<ClienteResultado[]>([]);
+  const [leadsEncontrados, setLeadsEncontrados] = useState<LeadEncontrado[]>([]);
   const [mostrarResultados, setMostrarResultados] = useState(false);
   const buscadorRef = useRef<HTMLDivElement>(null);
 
@@ -40,14 +42,18 @@ export default function NuevoReclamoModal({ perfiles, miId, onClose, onCreado }:
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    if (busqueda.trim().length < 2) { setResultados([]); return; }
+    if (busqueda.trim().length < 2) { setResultados([]); setLeadsEncontrados([]); return; }
     const t = setTimeout(async () => {
-      const { data } = await supabase2
-        .from("clientes")
-        .select("id, nombre, telefono, email, dni_cuit")
-        .or(`nombre.ilike.%${busqueda}%,telefono.ilike.%${busqueda}%,dni_cuit.ilike.%${busqueda}%`)
-        .limit(8);
+      const [{ data }, leads] = await Promise.all([
+        supabase2
+          .from("clientes")
+          .select("id, nombre, telefono, email, dni_cuit")
+          .or(`nombre.ilike.%${busqueda}%,telefono.ilike.%${busqueda}%,dni_cuit.ilike.%${busqueda}%`)
+          .limit(8),
+        buscarLeadsPorTexto(supabase2, busqueda),
+      ]);
       setResultados(data || []);
+      setLeadsEncontrados(leads);
     }, 300);
     return () => clearTimeout(t);
   }, [busqueda]);
@@ -71,6 +77,14 @@ export default function NuevoReclamoModal({ perfiles, miId, onClose, onCreado }:
       setClienteId(null);
       setBusqueda("");
     }
+    setMostrarResultados(false);
+  };
+
+  const elegirLead = (l: LeadEncontrado) => {
+    setClienteId(null);
+    setClienteNombre(l.nombre);
+    setClienteTelefono(l.telefono || "");
+    setBusqueda(l.nombre);
     setMostrarResultados(false);
   };
 
@@ -218,7 +232,19 @@ export default function NuevoReclamoModal({ perfiles, miId, onClose, onCreado }:
                         <p className="text-[10px] text-slate-400">{[c.telefono, c.email].filter(Boolean).join(" · ")}</p>
                       </button>
                     ))}
-                    {resultados.length === 0 && <p className="px-3 py-2 text-xs text-slate-400">Sin coincidencias.</p>}
+                    {leadsEncontrados.map((l) => (
+                      <button
+                        key={`${l.origen}-${l.id}`}
+                        onClick={() => elegirLead(l)}
+                        className="w-full text-left px-3 py-2 hover:bg-indigo-50 dark:hover:bg-indigo-500/10 border-b border-slate-100 dark:border-white/10 last:border-0 flex items-center justify-between gap-2"
+                      >
+                        <span className="text-xs font-bold text-slate-900 dark:text-white flex items-center gap-1.5 min-w-0 truncate">
+                          <Megaphone className="w-3.5 h-3.5 text-indigo-500 shrink-0" /> <span className="truncate">{l.nombre}</span>
+                        </span>
+                        <span className="text-[9px] font-bold uppercase tracking-widest text-indigo-500 dark:text-indigo-300 shrink-0">{LEAD_ORIGEN_LABEL[l.origen]}</span>
+                      </button>
+                    ))}
+                    {resultados.length === 0 && leadsEncontrados.length === 0 && <p className="px-3 py-2 text-xs text-slate-400">Sin coincidencias.</p>}
                   </div>
                 )}
               </div>
