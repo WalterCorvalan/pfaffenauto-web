@@ -52,7 +52,7 @@ export default function CockpitCeoTab({ miNombre, ocultarMontos, diaDelMes, dias
   const [error, setError] = useState("");
   const finRef = useRef<HTMLDivElement>(null);
 
-  useEffect(() => { finRef.current?.scrollIntoView({ behavior: "smooth" }); }, [mensajes]);
+  useEffect(() => { finRef.current?.scrollIntoView({ behavior: "smooth", block: "nearest" }); }, [mensajes]);
 
   const enviar = async (texto: string) => {
     if (!texto.trim() || cargando) return;
