@@ -80,6 +80,7 @@ export default function ReportesClient(props: Props) {
   const [infraccionesResumen, setInfraccionesResumen] = useState(props.infraccionesResumenInicial);
   const [tallerFacturacion, setTallerFacturacion] = useState(props.tallerFacturacionInicial);
   const [ventasPorOrigen, setVentasPorOrigen] = useState(props.ventasPorOrigenInicial);
+  const [ventasPorMarca, setVentasPorMarca] = useState(props.ventasPorMarca);
 
   const hoy = new Date();
   const mesBase = useMemo(() => new Date(hoy.getFullYear(), hoy.getMonth() + mesOffset, 1), [mesOffset]);
@@ -103,14 +104,23 @@ export default function ReportesClient(props: Props) {
     const { data } = await supabase2.rpc("ranking_ventas", { p_desde: d, p_hasta: h });
     setRanking(data || []);
 
-    const { data: ventasOrigenRaw } = await supabase2.from("ventas").select("vehiculo_id, vehiculos(origen)").eq("estado", "cerrada").gte("fecha_cierre", d).lte("fecha_cierre", h);
-    const conteoOrigen = (ventasOrigenRaw || []).reduce((acc: Record<string, number>, v: { vehiculos: { origen: string } | { origen: string }[] | null }) => {
-      const vehiculo = Array.isArray(v.vehiculos) ? v.vehiculos[0] : v.vehiculos;
-      const origen = vehiculo?.origen || "Sin dato";
+    const { data: ventasRaw } = await supabase2.from("ventas").select("vehiculo_id, vehiculos(origen, marca)").eq("estado", "cerrada").gte("fecha_cierre", d).lte("fecha_cierre", h);
+    type VentaConVehiculo = { vehiculos: { origen: string; marca: string } | { origen: string; marca: string }[] | null };
+    const vehiculoDeVenta = (v: VentaConVehiculo) => (Array.isArray(v.vehiculos) ? v.vehiculos[0] : v.vehiculos);
+
+    const conteoOrigen = (ventasRaw || []).reduce((acc: Record<string, number>, v: VentaConVehiculo) => {
+      const origen = vehiculoDeVenta(v)?.origen || "Sin dato";
       acc[origen] = (acc[origen] || 0) + 1;
       return acc;
     }, {});
     setVentasPorOrigen(Object.entries(conteoOrigen).map(([origen, cantidad]) => ({ origen, cantidad })));
+
+    const conteoMarca = (ventasRaw || []).reduce((acc: Record<string, number>, v: VentaConVehiculo) => {
+      const marca = vehiculoDeVenta(v)?.marca || "Sin dato";
+      acc[marca] = (acc[marca] || 0) + 1;
+      return acc;
+    }, {});
+    setVentasPorMarca(Object.entries(conteoMarca).map(([marca, ventas_ponderadas]) => ({ marca, ventas_ponderadas })));
 
     setCargando(false);
   };
@@ -129,7 +139,7 @@ export default function ReportesClient(props: Props) {
 
   const maxVentasVendedor = Math.max(1, ...operacionesPorVendedor.map((v: any) => Number(v.ventas_mes) || 0));
   const maxLeads = Math.max(1, ...origenLeads.map((v: any) => Number(v.cantidad) || 0));
-  const maxMarca = Math.max(1, ...props.ventasPorMarca.map((v: any) => Number(v.ventas_ponderadas) || 0));
+  const maxMarca = Math.max(1, ...ventasPorMarca.map((v: any) => Number(v.ventas_ponderadas) || 0));
   const maxClientesVend = Math.max(1, ...props.clientesPorVendedor.map((v: any) => Number(v.clientes) || 0));
   const maxCotVend = Math.max(1, ...props.cotizacionesPorVendedor.map((v: any) => Number(v.cotizaciones) || 0));
   const maxStockMarca = Math.max(1, ...props.stockPorMarca.map((v: any) => Number(v.cantidad) || 0));
@@ -289,8 +299,8 @@ export default function ReportesClient(props: Props) {
         </Card>
 
         <Card title="Ventas por Marca">
-          {props.ventasPorMarca.map((v: any) => <BarRow key={v.marca} label={v.marca} valor={Number(v.ventas_ponderadas)} max={maxMarca} color="bg-violet-500" />)}
-          {props.ventasPorMarca.length === 0 && <p className="text-xs text-slate-400 text-center py-4">Sin ventas cerradas todavía.</p>}
+          {ventasPorMarca.map((v: any) => <BarRow key={v.marca} label={v.marca} valor={Number(v.ventas_ponderadas)} max={maxMarca} color="bg-violet-500" />)}
+          {ventasPorMarca.length === 0 && <p className="text-xs text-slate-400 text-center py-4">Sin ventas cerradas todavía.</p>}
         </Card>
 
         <Card title="Composición de Ventas">
