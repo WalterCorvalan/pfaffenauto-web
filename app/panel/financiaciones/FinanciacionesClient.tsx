@@ -5,6 +5,7 @@ import { supabase2 } from "@/lib/supabase/client";
 import { CreditCard, Search, Filter, Clock, MessageSquareText, ExternalLink } from "lucide-react";
 import TablaResponsiva, { type ColumnaTabla } from "@/components/panel/TablaResponsiva";
 import FinanciacionDetalleModal from "./FinanciacionDetalleModal";
+import SimuladorPropioModal from "./SimuladorPropioModal";
 
 const ESTADO_LABEL: Record<string, string> = { nuevo: "Nuevo", en_gestion: "En gestión", descartado: "Descartado" };
 const ESTADO_STYLES: Record<string, string> = {
@@ -18,6 +19,7 @@ export default function FinanciacionesClient({ solicitudesIniciales, staff }: { 
   const [filtroEstado, setFiltroEstado] = useState("nuevo");
   const [query, setQuery] = useState("");
   const [seleccionada, setSeleccionada] = useState<any>(null);
+  const [simuladorAbierto, setSimuladorAbierto] = useState(false);
   const perfilMap = useMemo(() => Object.fromEntries(staff.map((p) => [p.id, p.nombre])), [staff]);
 
   const counts = useMemo(() => ({
@@ -67,14 +69,23 @@ export default function FinanciacionesClient({ solicitudesIniciales, staff }: { 
           <h1 className="text-xl font-black text-slate-900 dark:text-white flex items-center gap-2"><CreditCard className="w-5 h-5 text-[#0145F2]" /> Financiaciones</h1>
           <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">Solicitudes de crédito desde la web (home y detalle de auto)</p>
         </div>
-        <a
-          href="https://agencias2.decreditos.com/simulacion/grid"
-          target="_blank"
-          rel="noopener noreferrer"
-          className="flex items-center justify-center gap-1.5 text-[13px] font-bold text-sky-700 dark:text-sky-300 bg-sky-50 dark:bg-sky-500/10 border border-sky-100 dark:border-sky-500/20 rounded-xl px-4 py-2.5 w-fit shrink-0"
-        >
-          <CreditCard className="w-4 h-4" /> Simulador de cuotas (decreditos) <ExternalLink className="w-3.5 h-3.5" />
-        </a>
+        <div className="flex items-center gap-2 shrink-0">
+          <button
+            type="button"
+            onClick={() => setSimuladorAbierto(true)}
+            className="flex items-center justify-center gap-1.5 text-[13px] font-bold text-emerald-700 dark:text-emerald-300 bg-emerald-50 dark:bg-emerald-500/10 border border-emerald-100 dark:border-emerald-500/20 rounded-xl px-4 py-2.5"
+          >
+            <CreditCard className="w-4 h-4" /> Simulador propio
+          </button>
+          <a
+            href="https://agencias2.decreditos.com/simulacion/grid"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="flex items-center justify-center gap-1.5 text-[13px] font-bold text-sky-700 dark:text-sky-300 bg-sky-50 dark:bg-sky-500/10 border border-sky-100 dark:border-sky-500/20 rounded-xl px-4 py-2.5"
+          >
+            <CreditCard className="w-4 h-4" /> decreditos <ExternalLink className="w-3.5 h-3.5" />
+          </a>
+        </div>
       </div>
 
       <div className="flex flex-col sm:flex-row sm:items-center gap-2 px-6 pt-4">
@@ -165,6 +176,7 @@ export default function FinanciacionesClient({ solicitudesIniciales, staff }: { 
       </div>
 
       {seleccionada && <FinanciacionDetalleModal solicitud={seleccionada} vendedorNombre={seleccionada.vendedor_id ? perfilMap[seleccionada.vendedor_id] : null} onClose={() => setSeleccionada(null)} />}
+      {simuladorAbierto && <SimuladorPropioModal onClose={() => setSimuladorAbierto(false)} />}
     </div>
   );
 }

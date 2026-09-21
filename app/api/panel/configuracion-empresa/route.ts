@@ -59,6 +59,14 @@ const ConfigEmpresaSchema = z.object({
   resumen_diario_plantilla_meta: z.string().trim().max(60).optional(),
   resumen_diario_idioma: z.string().trim().max(10).optional(),
   objetivo_ventas_mensual: z.coerce.number().min(0).optional().nullable(),
+  financiacion_topes: z.array(z.object({
+    anioDesde: z.coerce.number(),
+    anioHasta: z.coerce.number().nullable(),
+    pct: z.coerce.number().min(0).max(100),
+  })).max(20).optional(),
+  financiacion_tope_0km: z.coerce.number().min(0).max(100).optional(),
+  financiacion_tna: z.record(z.string(), z.coerce.number().min(0).max(500)).optional(),
+  financiacion_gastos_pct: z.coerce.number().min(0).max(100).optional(),
 });
 
 export async function PATCH(request: Request) {

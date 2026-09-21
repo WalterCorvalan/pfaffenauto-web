@@ -1,0 +1,39 @@
+// Cálculo aproximado del tope de financiación y cuota estimada para el
+// simulador propio de Financiaciones -- NO reemplaza al simulador real de
+// decreditos (agencias2.decreditos.com), que además depende del perfil
+// crediticio del cliente (algo que acá no podemos calcular). Sirve como
+// número de referencia para la charla inicial con el cliente.
+//
+// Tabla de topes confirmada probando el simulador real de decreditos con
+// autos/años reales (ver PR que agregó este archivo): sube 5 puntos por
+// escalón, con 0km como escalón propio arriba del resto.
+export interface TopeFinanciacion { anioDesde: number; anioHasta: number | null; pct: number }
+
+export const TOPES_FINANCIACION_DEFAULT: TopeFinanciacion[] = [
+  { anioDesde: 0, anioHasta: 2015, pct: 50 },
+  { anioDesde: 2016, anioHasta: 2017, pct: 55 },
+  { anioDesde: 2018, anioHasta: 2020, pct: 60 },
+  { anioDesde: 2021, anioHasta: 9999, pct: 65 },
+];
+export const TOPE_0KM_DEFAULT = 70;
+
+// TNA implícita derivada de la tabla "Tradicional - Desde" del simulador real
+// (mejor perfil crediticio) -- es una aproximación, no la tasa exacta.
+export const TNA_POR_PLAZO_DEFAULT: Record<string, number> = { "12": 76, "18": 70, "24": 65, "36": 60, "48": 57 };
+export const GASTOS_PCT_DEFAULT = 11;
+export const PLAZOS_DISPONIBLES = [12, 18, 24, 36, 48];
+
+export function topePctPorAnio(anio: number, esOkm: boolean, topes: TopeFinanciacion[], tope0km: number): number {
+  if (esOkm) return tope0km;
+  const fila = topes.find((t) => anio >= t.anioDesde && anio <= (t.anioHasta ?? 9999));
+  return fila?.pct ?? topes[0]?.pct ?? 50;
+}
+
+// Sistema francés de amortización, cuota fija.
+export function calcularCuotaFrances(capital: number, tnaPct: number, meses: number): number {
+  if (capital <= 0 || meses <= 0) return 0;
+  const tasaMensual = tnaPct / 100 / 12;
+  if (tasaMensual <= 0) return Math.round(capital / meses);
+  const cuota = (capital * tasaMensual) / (1 - Math.pow(1 + tasaMensual, -meses));
+  return Math.round(cuota);
+}
