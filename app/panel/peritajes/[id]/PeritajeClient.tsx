@@ -59,7 +59,7 @@ export default function PeritajeClient({ peritaje, itemsIniciales }: { peritaje:
 
   const neumaticos = useMemo(() => items.filter((it) => it.categoria === "Neumáticos"), [items]);
 
-  const actualizarItem = async (id: string, cambios: Partial<{ estado: string; observacion: string; foto_url: string; necesita_reparacion: boolean; gastos_reparacion: number | null }>) => {
+  const actualizarItem = async (id: string, cambios: Partial<{ estado: string; observacion: string; fotos_urls: string[]; necesita_reparacion: boolean; gastos_reparacion: number | null }>) => {
     let nuevosItems: typeof items = items;
     setItems((prev) => {
       nuevosItems = prev.map((it) => (it.id === id ? { ...it, ...cambios } : it));
@@ -97,21 +97,32 @@ export default function PeritajeClient({ peritaje, itemsIniciales }: { peritaje:
     setGuardandoUsoInterno(false);
   };
 
-  const subirFoto = async (itemId: string, file: File) => {
+  const subirFotos = async (itemId: string, files: FileList) => {
     setSubiendoFotoId(itemId);
     try {
-      const formData = new FormData();
-      formData.append("file", file);
-      formData.append("carpeta", "peritajes");
-      const res = await fetch("/api/panel/upload", { method: "POST", body: formData });
-      const data = await res.json();
-      if (!res.ok) throw new Error(data.error || "Error al subir la foto.");
-      await actualizarItem(itemId, { foto_url: data.publicUrl });
+      const urls = await Promise.all(
+        Array.from(files).map(async (file) => {
+          const formData = new FormData();
+          formData.append("file", file);
+          formData.append("carpeta", "peritajes");
+          const res = await fetch("/api/panel/upload", { method: "POST", body: formData });
+          const data = await res.json();
+          if (!res.ok) throw new Error(data.error || "Error al subir la foto.");
+          return data.publicUrl as string;
+        })
+      );
+      const actuales = items.find((it) => it.id === itemId)?.fotos_urls || [];
+      await actualizarItem(itemId, { fotos_urls: [...actuales, ...urls] });
     } catch (err: any) {
-      alert(err.message || "Error al subir la foto.");
+      alert(err.message || "Error al subir las fotos.");
     } finally {
       setSubiendoFotoId(null);
     }
+  };
+
+  const quitarFoto = (itemId: string, url: string) => {
+    const actuales = items.find((it) => it.id === itemId)?.fotos_urls || [];
+    actualizarItem(itemId, { fotos_urls: actuales.filter((u: string) => u !== url) });
   };
 
   const finalizarPeritaje = async () => {
@@ -218,8 +229,9 @@ export default function PeritajeClient({ peritaje, itemsIniciales }: { peritaje:
                           ref={(el) => { fileInputsRef.current[item.id] = el; }}
                           type="file"
                           accept="image/*"
+                          multiple
                           className="hidden"
-                          onChange={(e) => e.target.files?.[0] && subirFoto(item.id, e.target.files[0])}
+                          onChange={(e) => { if (e.target.files?.length) subirFotos(item.id, e.target.files); e.target.value = ""; }}
                         />
                       </div>
                     </div>
@@ -257,19 +269,23 @@ export default function PeritajeClient({ peritaje, itemsIniciales }: { peritaje:
                         className={inputClass}
                       />
                     )}
-                    {item.foto_url && (
-                      <div className="relative inline-block w-16 h-16">
-                        <a href={item.foto_url} target="_blank" rel="noopener noreferrer" className="block">
-                          <img src={item.foto_url} alt={item.item} className="h-16 w-16 object-cover rounded-lg border border-slate-200 dark:border-white/10" />
-                        </a>
-                        <button
-                          type="button"
-                          onClick={() => actualizarItem(item.id, { foto_url: "" })}
-                          className="absolute -top-1.5 -right-1.5 w-5 h-5 rounded-full bg-rose-500 hover:bg-[#0145F2] text-white flex items-center justify-center shadow-sm"
-                          title="Quitar foto"
-                        >
-                          <X className="w-3 h-3" />
-                        </button>
+                    {item.fotos_urls?.length > 0 && (
+                      <div className="flex flex-wrap gap-2">
+                        {item.fotos_urls.map((url: string) => (
+                          <div key={url} className="relative inline-block w-16 h-16">
+                            <a href={url} target="_blank" rel="noopener noreferrer" className="block">
+                              <img src={url} alt={item.item} className="h-16 w-16 object-cover rounded-lg border border-slate-200 dark:border-white/10" />
+                            </a>
+                            <button
+                              type="button"
+                              onClick={() => quitarFoto(item.id, url)}
+                              className="absolute -top-1.5 -right-1.5 w-5 h-5 rounded-full bg-rose-500 hover:bg-[#0145F2] text-white flex items-center justify-center shadow-sm"
+                              title="Quitar foto"
+                            >
+                              <X className="w-3 h-3" />
+                            </button>
+                          </div>
+                        ))}
                       </div>
                     )}
                   </div>
@@ -326,23 +342,28 @@ export default function PeritajeClient({ peritaje, itemsIniciales }: { peritaje:
                               ref={(el) => { fileInputsRef.current[item.id] = el; }}
                               type="file"
                               accept="image/*"
+                              multiple
                               className="hidden"
-                              onChange={(e) => e.target.files?.[0] && subirFoto(item.id, e.target.files[0])}
+                              onChange={(e) => { if (e.target.files?.length) subirFotos(item.id, e.target.files); e.target.value = ""; }}
                             />
                           </div>
-                          {item.foto_url && (
-                            <div className="relative inline-block w-16 h-16">
-                              <a href={item.foto_url} target="_blank" rel="noopener noreferrer" className="block">
-                                <img src={item.foto_url} alt={item.item} className="h-16 w-16 object-cover rounded-lg border border-slate-200 dark:border-white/10" />
-                              </a>
-                              <button
-                                type="button"
-                                onClick={() => actualizarItem(item.id, { foto_url: "" })}
-                                className="absolute -top-1.5 -right-1.5 w-5 h-5 rounded-full bg-rose-500 hover:bg-[#0145F2] text-white flex items-center justify-center shadow-sm"
-                                title="Quitar foto"
-                              >
-                                <X className="w-3 h-3" />
-                              </button>
+                          {item.fotos_urls?.length > 0 && (
+                            <div className="flex flex-wrap gap-2">
+                              {item.fotos_urls.map((url: string) => (
+                                <div key={url} className="relative inline-block w-16 h-16">
+                                  <a href={url} target="_blank" rel="noopener noreferrer" className="block">
+                                    <img src={url} alt={item.item} className="h-16 w-16 object-cover rounded-lg border border-slate-200 dark:border-white/10" />
+                                  </a>
+                                  <button
+                                    type="button"
+                                    onClick={() => quitarFoto(item.id, url)}
+                                    className="absolute -top-1.5 -right-1.5 w-5 h-5 rounded-full bg-rose-500 hover:bg-[#0145F2] text-white flex items-center justify-center shadow-sm"
+                                    title="Quitar foto"
+                                  >
+                                    <X className="w-3 h-3" />
+                                  </button>
+                                </div>
+                              ))}
                             </div>
                           )}
                         </div>
