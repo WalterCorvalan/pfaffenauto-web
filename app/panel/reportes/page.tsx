@@ -23,7 +23,6 @@ export default async function ReportesPage() {
     { data: infraccionesResumen },
     { data: tallerFacturacion },
     { data: ventasPorMes },
-    { data: ventasPorMarca },
     { data: topClientes },
     { data: clientesPorVendedor },
     { data: cotizacionesResumen },
@@ -52,7 +51,6 @@ export default async function ReportesPage() {
     supabase.from("v_reportes_infracciones_resumen").select("*").single(),
     supabase.from("v_reportes_taller_facturacion").select("*").single(),
     supabase.from("v_reportes_ventas_por_mes").select("*").limit(12),
-    supabase.from("v_reportes_ventas_por_marca").select("*"),
     supabase.from("v_reportes_top_clientes").select("*"),
     supabase.from("v_reportes_clientes_por_vendedor").select("*"),
     supabase.from("v_reportes_cotizaciones_resumen").select("*").single(),
@@ -64,17 +62,31 @@ export default async function ReportesPage() {
     supabase.from("v_reportes_service_posventa").select("*").single(),
     supabase.from("v_reportes_consultas_vs_ventas").select("*").limit(20),
     supabase.from("v_reportes_composicion_ventas").select("*").single(),
-    supabase.from("ventas").select("vehiculo_id, vehiculos(origen)").eq("estado", "cerrada").gte("fecha_cierre", desde).lte("fecha_cierre", hasta),
+    supabase.from("ventas").select("vehiculo_id, vehiculos(origen, marca)").eq("estado", "cerrada").gte("fecha_cierre", desde).lte("fecha_cierre", hasta),
   ]);
 
+  // Ventas por origen y por marca salen de la misma consulta (una sola
+  // vuelta a "ventas" filtrada por el mes elegido) -- antes "por marca"
+  // venía de una vista (v_reportes_ventas_por_marca) sin parámetro de
+  // fecha, así que no cambiaba nada al navegar de mes.
+  type VentaConVehiculo = { vehiculos: { origen: string; marca: string } | { origen: string; marca: string }[] | null };
+  const vehiculoDeVenta = (v: VentaConVehiculo) => (Array.isArray(v.vehiculos) ? v.vehiculos[0] : v.vehiculos);
+
   const ventasPorOrigen = Object.entries(
-    (ventasPorOrigenRaw || []).reduce((acc: Record<string, number>, v: { vehiculos: { origen: string } | { origen: string }[] | null }) => {
-      const vehiculo = Array.isArray(v.vehiculos) ? v.vehiculos[0] : v.vehiculos;
-      const origen = vehiculo?.origen || "Sin dato";
+    (ventasPorOrigenRaw || []).reduce((acc: Record<string, number>, v: VentaConVehiculo) => {
+      const origen = vehiculoDeVenta(v)?.origen || "Sin dato";
       acc[origen] = (acc[origen] || 0) + 1;
       return acc;
     }, {})
   ).map(([origen, cantidad]) => ({ origen, cantidad }));
+
+  const ventasPorMarca = Object.entries(
+    (ventasPorOrigenRaw || []).reduce((acc: Record<string, number>, v: VentaConVehiculo) => {
+      const marca = vehiculoDeVenta(v)?.marca || "Sin dato";
+      acc[marca] = (acc[marca] || 0) + 1;
+      return acc;
+    }, {})
+  ).map(([marca, ventas_ponderadas]) => ({ marca, ventas_ponderadas }));
 
   return (
     <ReportesClient
