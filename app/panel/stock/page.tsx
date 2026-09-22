@@ -5,7 +5,7 @@ export default async function StockPage() {
   const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();
 
-  const [{ data: vehiculos }, { data: mandatos }, { data: perfiles }, { data: clientes }, { data: catalogoConfig }, { data: sucursales }, { data: config }] = await Promise.all([
+  const [{ data: vehiculos }, { data: mandatos }, { data: perfiles }, { data: clientes }, { data: catalogoConfig }, { data: sucursales }, { data: config }, { data: chequesPendientes0km }] = await Promise.all([
     // Sin límite esto crecía sin tope con toda la historia de stock (vendido
     // incluido) -- 5000 da margen de sobra para años de operación real y
     // evita que la query quede literalmente sin techo.
@@ -16,6 +16,13 @@ export default async function StockPage() {
     supabase.from("catalogo_config").select("*").eq("id", "default").single(),
     supabase.from("sucursales").select("id, nombre").order("nombre"),
     supabase.from("configuracion_empresa").select("stock_dias_estancado").eq("id", true).maybeSingle(),
+    // Cheques emitidos, todavía no cobrados, vinculados a un 0km del stock --
+    // pedido de la reunión del 22/9, para descontar del patrimonio la deuda
+    // pendiente por cheques sin cobrar. Si la columna vehiculo_id todavía no
+    // existe (ver migraciones/sql_cheques_vehiculo_id.sql), el error queda
+    // en "error" y "data" en null -- el fallback "|| []" de abajo alcanza,
+    // no rompe el resto del stock.
+    supabase.from("cheques").select("id, vehiculo_id, monto, moneda").eq("tipo", "emitido").eq("estado", "pendiente").not("vehiculo_id", "is", null),
   ]);
 
   return (
@@ -28,6 +35,7 @@ export default async function StockPage() {
       sucursales={sucursales || []}
       miId={user?.id || ""}
       diasEstancado={config?.stock_dias_estancado || 90}
+      chequesPendientes0km={chequesPendientes0km || []}
     />
   );
 }

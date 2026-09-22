@@ -7,9 +7,9 @@ import { inputClass, labelClass, fmt, diasHasta } from "./shared";
 import TablaResponsiva, { type ColumnaTabla } from "@/components/panel/TablaResponsiva";
 import ConfirmDialog from "@/components/panel/ConfirmDialog";
 
-const emptyForm = { tipo: "a_cobrar", formato: "fisico", librador: "", numero: "", banco: "", cuitCuil: "", monto: "", moneda: "ARS", estado: "pendiente", fechaEmision: "", fechaCobro: "", cajaBancoPropio: "", notas: "" };
+const emptyForm = { tipo: "a_cobrar", formato: "fisico", librador: "", numero: "", banco: "", cuitCuil: "", monto: "", moneda: "ARS", estado: "pendiente", fechaEmision: "", fechaCobro: "", cajaBancoPropio: "", vehiculoId: "", notas: "" };
 
-export default function ChequesTab({ cheques, setCheques, cuentas }: { cheques: any[]; setCheques: (fn: any) => void; cuentas: any[] }) {
+export default function ChequesTab({ cheques, setCheques, cuentas, vehiculos0km }: { cheques: any[]; setCheques: (fn: any) => void; cuentas: any[]; vehiculos0km: any[] }) {
   const [sub, setSub] = useState<"a_cobrar" | "emitido">("a_cobrar");
   const [showNuevo, setShowNuevo] = useState(false);
   const [form, setForm] = useState(emptyForm);
@@ -42,7 +42,19 @@ export default function ChequesTab({ cheques, setCheques, cuentas }: { cheques: 
         fecha_emision: form.fechaEmision || null, fecha_cobro: form.fechaCobro, caja_banco_propio: form.cajaBancoPropio || null, notas: form.notas || null,
       }).select().single();
       if (error) throw error;
-      setCheques((prev: any[]) => [data, ...prev]);
+
+      // Vínculo a un 0km del stock en un update aparte, con su propio
+      // try/catch: si migraciones/sql_cheques_vehiculo_id.sql todavía no
+      // corrió en la base, el cheque se sigue guardando igual (solo sin el
+      // vínculo, que se puede completar después).
+      let vehiculoVinculado: any = null;
+      if (form.tipo === "emitido" && form.vehiculoId) {
+        const { error: errVehiculo } = await supabase2.from("cheques").update({ vehiculo_id: form.vehiculoId }).eq("id", data.id);
+        if (!errVehiculo) vehiculoVinculado = form.vehiculoId;
+        else console.error("No se pudo vincular el cheque al vehículo (¿corriste la migración?):", errVehiculo);
+      }
+
+      setCheques((prev: any[]) => [{ ...data, vehiculo_id: vehiculoVinculado }, ...prev]);
       setShowNuevo(false);
     } catch (err: any) { alert(err?.message ? `No se pudo registrar el cheque: ${err.message}` : "No se pudo registrar el cheque."); } finally { setGuardando(false); }
   };
@@ -178,6 +190,19 @@ export default function ChequesTab({ cheques, setCheques, cuentas }: { cheques: 
               <div><label className={labelClass}>Moneda *</label><select value={form.moneda} onChange={(e) => setForm({ ...form, moneda: e.target.value })} className={inputClass}><option value="ARS">ARS</option><option value="USD">USD</option></select></div>
               <div><label className={labelClass}>Estado *</label><select value={form.estado} onChange={(e) => setForm({ ...form, estado: e.target.value })} className={inputClass}><option value="pendiente">Pendiente</option><option value="depositado">Depositado</option><option value="cobrado">Cobrado</option><option value="rechazado">Rechazado</option><option value="endosado">Endosado</option></select></div>
             </div>
+            {form.tipo === "emitido" && (
+              <div className="mt-3">
+                <label className={labelClass}>Vehículo 0km vinculado (opcional)</label>
+                {/* Pedido de la reunión del 22/9: un cheque emitido para
+                    pagar un 0km se puede vincular a esa unidad del stock,
+                    para descontar del patrimonio en stock lo que todavía se
+                    debe por cheques sin cobrar. */}
+                <select value={form.vehiculoId} onChange={(e) => setForm({ ...form, vehiculoId: e.target.value })} className={inputClass}>
+                  <option value="">— Sin vincular —</option>
+                  {vehiculos0km.map((v) => <option key={v.id} value={v.id}>{v.marca} {v.modelo} {v.anio} {v.patente ? `· ${v.patente}` : ""}</option>)}
+                </select>
+              </div>
+            )}
             <div className="grid grid-cols-2 gap-2 mt-3">
               <div><label className={labelClass}>Fecha de emisión</label><input type="date" value={form.fechaEmision} onChange={(e) => setForm({ ...form, fechaEmision: e.target.value })} className={inputClass} /></div>
               <div><label className={labelClass}>Fecha de cobro *</label><input type="date" value={form.fechaCobro} onChange={(e) => setForm({ ...form, fechaCobro: e.target.value })} className={inputClass} /></div>
