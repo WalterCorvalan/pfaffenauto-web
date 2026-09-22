@@ -18,7 +18,7 @@ export const AgentReplySchemaV2 = z.object({
   handoff: z.boolean(),
   pausar_sin_notificar: z.boolean().optional(),
   resumen_handoff: z.string().nullable(),
-  intencion: z.enum(["COMPRA", "VENTA", "CONSIGNACION", "COMPRA_CON_PERMUTA", "HABLAR_CON_ASESOR", "OTRA_CONSULTA"]).nullable(),
+  intencion: z.enum(["COMPRA", "VENTA", "CONSIGNACION", "COMPRA_CON_PERMUTA", "SEGUROS", "HABLAR_CON_ASESOR", "OTRA_CONSULTA"]).nullable(),
   calificacion: z.enum(["caliente", "tibio", "frio"]).nullable(),
   datos_detectados: z.object({
     timing: z.string().nullable(),
@@ -475,10 +475,10 @@ export async function generarRespuestaAgenteV2(historial: HistorialMensaje[], ca
 
   // El modelo a veces devuelve el menú de bienvenida parafraseado (mismo
   // contenido, texto distinto) — si detectamos que ESTO es el menú
-  // (numerado 1-4, arranca con saludo), pisamos con el texto exacto en vez
-  // de confiar en que lo haya copiado bien.
-  if (/^\s*¡?hola/i.test(respuesta.reply) && /comprar/i.test(respuesta.reply) && /vender/i.test(respuesta.reply) && /consignar/i.test(respuesta.reply) && /permutar/i.test(respuesta.reply)) {
-    respuesta = { ...respuesta, reply: menuBienvenidaV2(nombreBot) };
+  // (arranca con saludo/bienvenida y menciona los 4 temas), pisamos con el
+  // texto exacto en vez de confiar en que lo haya copiado bien.
+  if (/^\s*[✨]?\s*(¡?hola|bienvenid)/i.test(respuesta.reply) && /comprar/i.test(respuesta.reply) && /vender/i.test(respuesta.reply) && /consignar/i.test(respuesta.reply) && /seguros/i.test(respuesta.reply)) {
+    respuesta = { ...respuesta, reply: menuBienvenidaV2() };
   }
 
   // Auto en foco de la charla: si esta búsqueda trajo un solo resultado

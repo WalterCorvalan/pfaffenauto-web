@@ -128,19 +128,34 @@ const EQUIPO_PFAFFEN = `\nEQUIPO PFAFFEN AUTOS (dato real, usalo si preguntan qu
 - Dueño: Sergio Pfaffen.`;
 
 // Texto exacto del menú de bienvenida — el LLM a veces lo parafrasea (por
-// ejemplo devuelve "4) Hablar con un asesor" en vez de "4) Permutar mi
-// auto", un menú típico de otros templates que vio en su entrenamiento).
-// Se usa para pisar la respuesta del modelo cuando detecta que está
-// mostrando el menú, así el texto es siempre exacto sin depender de que
-// el modelo lo copie bien.
-export function menuBienvenidaV2(nombreBot?: string): string {
-  return `¡Hola!${nombreBot ? ` Soy ${nombreBot}, el asistente de` : " Bienvenido a"} Pfaffen Autos.
-¿Qué te gustaría hacer hoy?
+// ejemplo devuelve "4) Hablar con un asesor" en vez de "4) Seguros", un
+// menú típico de otros templates que vio en su entrenamiento). Se usa para
+// pisar la respuesta del modelo cuando detecta que está mostrando el menú,
+// así el texto es siempre exacto sin depender de que el modelo lo copie
+// bien. Texto y formato pedidos por el usuario -- reemplaza "Permutar" por
+// "Seguros" como 4ta opción (la permuta se sigue entendiendo igual si el
+// cliente la pide por texto directo, solo deja de estar en el menú).
+export function menuBienvenidaV2(): string {
+  return `✨ BIENVENIDO A PFAFFEN CARS
 
-1. Comprar un vehículo
-2. Vender tu vehículo
-3. Consignar tu vehículo
-4. Permutar tu auto`;
+LA FORMA MÁS CONFIABLE DE COMPRAR O VENDER TU AUTO.
+
+¿Qué querés hacer hoy?
+
+Elegí una opción y comenzamos ⬇️
+
+01 · 🚘 COMPRAR
+0KM · Usados · Financiación
+
+02 · 💰 VENDER
+Cotizá tu vehículo de forma rápida y simple.
+
+03 · 🔑 CONSIGNAR
+Nosotros nos encargamos de venderlo.
+Vos recibís el dinero.
+
+04 · 🛡️ SEGUROS
+Protegé tu vehículo.`;
 }
 
 export function buildSystemPromptV2(vehiculoInfo?: string, resultadosStock?: ResultadoStockV2[], nombreBot?: string, resultadosSonAlternativa?: boolean, sucursales?: SucursalInfo[], sugerirCierre?: boolean, categoriaSolicitada?: string | null, totalRealStock?: number, tono?: string | null): string {
@@ -149,9 +164,9 @@ export function buildSystemPromptV2(vehiculoInfo?: string, resultadosStock?: Res
 ${bloqueEstiloYTono(tono)}
 MENSAJE DE BIENVENIDA
 Si el cliente solo saluda o no expresa una intención concreta, respondé exactamente con este menú (mismo texto, mismos emojis, no lo parafrasees):
-"${menuBienvenidaV2(nombreBot)}"
+"${menuBienvenidaV2()}"
 Si ya dijo lo que necesita, NO repitas el menú — entrá directo al tema.
-El saludo ("¡Hola!", "Bienvenido a Pfaffen Autos") va UNA sola vez, en el primerísimo mensaje de toda la charla — nunca lo repitas en respuestas posteriores, sea cual sea el tema (stock, repuestos, handoff, lo que sea). Si ya saludaste antes en esta misma charla, andá directo al contenido de la respuesta.
+El saludo ("Bienvenido a Pfaffen Cars") va UNA sola vez, en el primerísimo mensaje de toda la charla — nunca lo repitas en respuestas posteriores, sea cual sea el tema (stock, repuestos, handoff, lo que sea). Si ya saludaste antes en esta misma charla, andá directo al contenido de la respuesta.
 
 ${INTENCIONES_LINEA}
 ${vehiculoInfo ? `El cliente está consultando sobre: ${vehiculoInfo}` : ""}
