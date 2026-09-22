@@ -102,6 +102,27 @@ export default function ResumenTab({
 
   const maxSaldoCuenta = Math.max(1, ...cuentas.map((c) => Number(c.saldo) || 0));
 
+  // Evolución de ventas mes a mes (últimos 6 meses), separando Ventas de
+  // Señas dentro de la misma barra apilada, por moneda — arma la serie a
+  // partir del mismo historialOperaciones ya unificado que alimenta la
+  // tabla de abajo, sin pegarle otra vez a la base.
+  const evolucionPorMoneda = useMemo(() => {
+    const ahora = new Date();
+    const meses = Array.from({ length: 6 }, (_, i) => {
+      const d = new Date(ahora.getFullYear(), ahora.getMonth() - (5 - i), 1);
+      return { key: `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}`, label: d.toLocaleDateString("es-AR", { month: "short" }) };
+    });
+    const porMoneda: Record<string, { mes: string; Ventas: number; Señas: number }[]> = {};
+    historialOperaciones.forEach((o) => {
+      if (!o.fecha) return;
+      const idx = meses.findIndex((m) => m.key === o.fecha!.slice(0, 7));
+      if (idx === -1) return;
+      if (!porMoneda[o.moneda]) porMoneda[o.moneda] = meses.map((m) => ({ mes: m.label, Ventas: 0, Señas: 0 }));
+      porMoneda[o.moneda][idx][o.tipo === "Venta" ? "Ventas" : "Señas"] += o.monto;
+    });
+    return porMoneda;
+  }, [historialOperaciones]);
+
   return (
     <div className="space-y-5">
       {/* Hero: saldo total por moneda */}
@@ -225,6 +246,45 @@ export default function ResumenTab({
           </div>
         )}
       </div>
+
+      {/* Evolución de ventas mes a mes (Ventas + Señas), últimos 6 meses */}
+      {Object.keys(evolucionPorMoneda).length > 0 && (
+        <div className="bg-white dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-2xl p-4">
+          <p className="text-[11px] font-black uppercase tracking-widest text-slate-400 mb-3">📈 Evolución de ventas — últimos 6 meses</p>
+          <div className={`grid grid-cols-1 ${Object.keys(evolucionPorMoneda).length > 1 ? "sm:grid-cols-2" : ""} gap-4`}>
+            {Object.entries(evolucionPorMoneda).map(([m, serie]) => {
+              const totalMesActual = serie[serie.length - 1].Ventas + serie[serie.length - 1].Señas;
+              const totalMesAnterior = serie[serie.length - 2].Ventas + serie[serie.length - 2].Señas;
+              const variacion = totalMesAnterior > 0 ? Math.round(((totalMesActual - totalMesAnterior) / totalMesAnterior) * 100) : totalMesActual > 0 ? 100 : 0;
+              return (
+                <div key={m} className="h-[220px] flex flex-col">
+                  <div className="flex items-center justify-between mb-1 px-1">
+                    <span className="text-[10px] font-bold uppercase text-slate-400">{m}</span>
+                    {totalMesAnterior > 0 || totalMesActual > 0 ? (
+                      <span className={`text-xs font-black flex items-center gap-1 ${variacion >= 0 ? "text-emerald-600" : "text-rose-600"}`}>
+                        {variacion >= 0 ? <TrendingUp className="w-3.5 h-3.5" /> : <TrendingDown className="w-3.5 h-3.5" />} {variacion >= 0 ? "+" : ""}{variacion}% vs. mes anterior
+                      </span>
+                    ) : null}
+                  </div>
+                  <ResponsiveContainer width="100%" height="100%">
+                    <BarChart data={serie} margin={{ top: 4, right: 8, left: 0, bottom: 0 }}>
+                      <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="currentColor" className="text-slate-100 dark:text-white/10" />
+                      <XAxis dataKey="mes" tick={{ fontSize: 10 }} axisLine={false} tickLine={false} className="text-slate-400" />
+                      <YAxis hide />
+                      <Tooltip
+                        formatter={(value: any, name: any) => [fmt(Number(value), m), name]}
+                        contentStyle={{ borderRadius: 12, fontSize: 12, border: "1px solid #e2e8f0" }}
+                      />
+                      <Bar dataKey="Ventas" stackId="a" fill="#0145F2" radius={[0, 0, 0, 0]} barSize={22} />
+                      <Bar dataKey="Señas" stackId="a" fill="#f59e0b" radius={[6, 6, 0, 0]} barSize={22} />
+                    </BarChart>
+                  </ResponsiveContainer>
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      )}
 
       {/* Cuotas por cobrar: donut + detalle */}
       <div className="bg-white dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-2xl p-4">
