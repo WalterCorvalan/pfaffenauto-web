@@ -441,9 +441,9 @@ export default function ConsignarForm() {
                   className="space-y-3"
                 >
                   <ConfigField icon={CalendarDays} label="Año" value={anio} isOpen={openDropdown === 'anio'} onClick={() => setOpenDropdown(openDropdown === 'anio' ? null : 'anio')} isCompleted={!!anio}>
-                    <div className="grid grid-cols-4 gap-2">
+                    <div className="grid grid-cols-5 gap-1.5">
                       {aniosDisponibles.map((a) => (
-                        <button key={a} onClick={() => { setAnio(String(a)); setOpenDropdown("marca"); }} className={`py-2 text-xs font-bold rounded-lg border transition-all ${anio === String(a) ? "bg-blue-600 border-blue-500 text-white" : "bg-slate-50 dark:bg-white/5 border-slate-200 dark:border-white/5 text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-white/10 hover:border-slate-300 dark:hover:border-white/20"}`}>
+                        <button key={a} onClick={() => { setAnio(String(a)); setOpenDropdown("marca"); }} className={`py-1.5 text-[11px] font-bold rounded-md border transition-all ${anio === String(a) ? "bg-blue-600 border-blue-500 text-white" : "bg-slate-50 dark:bg-white/5 border-slate-200 dark:border-white/5 text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-white/10 hover:border-slate-300 dark:hover:border-white/20"}`}>
                           {a}
                         </button>
                       ))}
