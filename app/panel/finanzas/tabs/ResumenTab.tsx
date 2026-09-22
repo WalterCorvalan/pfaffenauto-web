@@ -14,9 +14,59 @@ interface Operacion {
   vehiculo: string; sucursal: string; persona: string; monto: number; moneda: string; documento: string | null;
 }
 
+// Semáforo financiero / punto de equilibrio (pedido de la reunión del
+// 22/9): rojo por debajo del equilibrio, amarillo en el equilibrio (banda
+// del 100-110%, no un punto exacto -- con montos reales nunca da justo),
+// verde con ganancia, azul al duplicar el equilibrio (el color de marca,
+// "se exceden las expectativas"). La barra usa el mismo color, llenándose
+// hasta 100% = 2x el equilibrio (o sea, 50% de la barra = equilibrio).
+function zonaEquilibrio(ingresos: number, equilibrio: number): { zona: "rojo" | "amarillo" | "verde" | "azul"; pct: number; label: string } {
+  if (equilibrio <= 0) return { zona: "amarillo", pct: 0, label: "Sin gastos fijos/variables cargados este mes" };
+  const ratio = ingresos / equilibrio;
+  const pctBarra = Math.min(100, Math.round((ratio / 2) * 100));
+  if (ratio < 1) return { zona: "rojo", pct: pctBarra, label: "Por debajo del punto de equilibrio" };
+  if (ratio < 1.1) return { zona: "amarillo", pct: pctBarra, label: "En el punto de equilibrio" };
+  if (ratio < 2) return { zona: "verde", pct: pctBarra, label: "Con ganancia" };
+  return { zona: "azul", pct: 100, label: "Duplicó el punto de equilibrio" };
+}
+
+const ZONA_COLOR: Record<string, { barra: string; texto: string; bg: string }> = {
+  rojo: { barra: "bg-rose-500", texto: "text-rose-600 dark:text-rose-400", bg: "bg-rose-50 dark:bg-rose-500/10 border-rose-100 dark:border-rose-500/20" },
+  amarillo: { barra: "bg-amber-500", texto: "text-amber-600 dark:text-amber-400", bg: "bg-amber-50 dark:bg-amber-500/10 border-amber-100 dark:border-amber-500/20" },
+  verde: { barra: "bg-emerald-500", texto: "text-emerald-600 dark:text-emerald-400", bg: "bg-emerald-50 dark:bg-emerald-500/10 border-emerald-100 dark:border-emerald-500/20" },
+  azul: { barra: "bg-[#0145F2]", texto: "text-[#0145F2] dark:text-sky-300", bg: "bg-[#0145F2]/5 dark:bg-[#0145F2]/10 border-[#0145F2]/20" },
+};
+
+function SemaforoPuntoEquilibrio({ ingresosTotales, puntoEquilibrioPorMoneda }: { ingresosTotales: Record<string, number>; puntoEquilibrioPorMoneda: Record<string, number> }) {
+  const monedas = Array.from(new Set([...Object.keys(ingresosTotales), ...Object.keys(puntoEquilibrioPorMoneda)]));
+  if (monedas.length === 0) return null;
+  return (
+    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+      {monedas.map((m) => {
+        const ingresos = ingresosTotales[m] || 0;
+        const equilibrio = puntoEquilibrioPorMoneda[m] || 0;
+        const { zona, pct, label } = zonaEquilibrio(ingresos, equilibrio);
+        const color = ZONA_COLOR[zona];
+        return (
+          <div key={m} className={`border rounded-2xl p-4 ${color.bg}`}>
+            <div className="flex items-center justify-between mb-1">
+              <span className="text-xs font-black uppercase tracking-widest text-slate-500 dark:text-slate-400">Punto de equilibrio ({m})</span>
+              <span className={`text-[10px] font-black uppercase tracking-widest ${color.texto}`}>{label}</span>
+            </div>
+            <div className="w-full h-2.5 bg-white/60 dark:bg-black/20 rounded-full overflow-hidden mb-1.5">
+              <div className={`h-full rounded-full transition-all ${color.barra}`} style={{ width: `${pct}%` }} />
+            </div>
+            <p className="text-[11px] text-slate-500 dark:text-slate-400">{fmt(ingresos, m)} de ingresos · equilibrio en {fmt(equilibrio, m)}</p>
+          </div>
+        );
+      })}
+    </div>
+  );
+}
+
 export default function ResumenTab({
   cuentas, totalPorMoneda, ingresosTotales, egresosTotales, pendientesCobrarStats,
-  saldosACobrarPorMoneda, cajaPorSucursal, historialOperaciones, setTab,
+  saldosACobrarPorMoneda, cajaPorSucursal, historialOperaciones, puntoEquilibrioPorMoneda, setTab,
 }: {
   cuentas: any[];
   totalPorMoneda: Record<string, number>;
@@ -26,6 +76,7 @@ export default function ResumenTab({
   saldosACobrarPorMoneda: Record<string, number>;
   cajaPorSucursal: { nombre: string; ingresos: Record<string, number>; saldosACobrar: Record<string, number> }[];
   historialOperaciones: Operacion[];
+  puntoEquilibrioPorMoneda: Record<string, number>;
   setTab: (t: string) => void;
 }) {
   const [busquedaOp, setBusquedaOp] = useState("");
@@ -63,6 +114,8 @@ export default function ResumenTab({
           </div>
         ))}
       </div>
+
+      <SemaforoPuntoEquilibrio ingresosTotales={ingresosTotales} puntoEquilibrioPorMoneda={puntoEquilibrioPorMoneda} />
 
       {/* Flujo del mes + saldos a cobrar */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">

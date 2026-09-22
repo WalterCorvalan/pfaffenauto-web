@@ -29,7 +29,7 @@ import SenasTab from "./tabs/SenasTab";
 import ResumenTab from "./tabs/ResumenTab";
 import EgresosCategoriaTab from "./tabs/EgresosCategoriaTab";
 import CajaGrandeChicaTab from "./tabs/CajaGrandeChicaTab";
-import { fmt } from "./tabs/shared";
+import { fmt, CATEGORIAS_GASTO_FIJO, CATEGORIAS_GASTO_VARIABLE } from "./tabs/shared";
 
 const TABS: { value: string; label: string; icon: any; disabled?: boolean; externo?: string }[] = [
   { value: "resumen", label: "Resumen", icon: BarChart3 },
@@ -238,6 +238,30 @@ export default function FinanzasClient({
     return map;
   }, [movimientosDelMes]);
 
+  // Semáforo financiero / punto de equilibrio (pedido de la reunión del
+  // 22/9): solo cuentan como "gasto" para el equilibrio las categorías que
+  // vos mismo clasificaste como fijas o variables -- compra/venta de auto,
+  // seña, transferencia y pago/cobro de cuota quedan afuera a propósito,
+  // son movimientos de capital/inventario, no gasto operativo (mismo
+  // criterio que ya usa RentabilidadTab.tsx para excluir Transferencia).
+  const gastosFijosTotales = useMemo(() => {
+    const map: Record<string, number> = {};
+    movimientosDelMes.filter((m) => m.tipo === "egreso" && m.estado === "aprobado" && CATEGORIAS_GASTO_FIJO.includes(m.tipo_movimiento)).forEach((m) => { const mo = m.cuenta?.moneda; if (mo) map[mo] = (map[mo] || 0) + Number(m.monto); });
+    return map;
+  }, [movimientosDelMes]);
+  const gastosVariablesTotales = useMemo(() => {
+    const map: Record<string, number> = {};
+    movimientosDelMes.filter((m) => m.tipo === "egreso" && m.estado === "aprobado" && CATEGORIAS_GASTO_VARIABLE.includes(m.tipo_movimiento)).forEach((m) => { const mo = m.cuenta?.moneda; if (mo) map[mo] = (map[mo] || 0) + Number(m.monto); });
+    return map;
+  }, [movimientosDelMes]);
+  const puntoEquilibrioPorMoneda = useMemo(() => {
+    const map: Record<string, number> = {};
+    Array.from(new Set([...Object.keys(gastosFijosTotales), ...Object.keys(gastosVariablesTotales)])).forEach((m) => {
+      map[m] = (gastosFijosTotales[m] || 0) + (gastosVariablesTotales[m] || 0);
+    });
+    return map;
+  }, [gastosFijosTotales, gastosVariablesTotales]);
+
   const cuotasPendientesPorMoneda = useMemo(() => {
     const map: Record<string, number> = {};
     cuotasCobrar.filter((c) => !c.cobrada).forEach((c) => { map[c.moneda] = (map[c.moneda] || 0) + (Number(c.monto) - Number(c.monto_cobrado)); });
@@ -349,6 +373,7 @@ export default function FinanzasClient({
           saldosACobrarPorMoneda={saldosACobrarPorMoneda}
           cajaPorSucursal={cajaPorSucursal}
           historialOperaciones={historialOperaciones}
+          puntoEquilibrioPorMoneda={puntoEquilibrioPorMoneda}
           setTab={setTab}
         />
       )}
