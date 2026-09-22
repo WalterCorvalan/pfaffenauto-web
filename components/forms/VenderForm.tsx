@@ -3,7 +3,7 @@
 import { useState, useEffect, useRef } from "react";
 import Link from "next/link";
 import Script from "next/script";
-import { ArrowLeft, Loader2, ChevronDown, X } from "lucide-react";
+import { ArrowLeft, Loader2, ChevronDown, X, Upload, FileVideo, ImageIcon } from "lucide-react";
 import EnvioExitoso from "@/components/EnvioExitoso";
 import { getCanalOrigen, getUtmRaw } from "@/lib/utm";
 import { MARCAS_ARGENTINA, MODELOS_POR_MARCA } from "@/lib/marcasModelos";
@@ -31,7 +31,49 @@ export default function VenderForm() {
   const [modelo, setModelo] = useState("");
   const [version, setVersion] = useState("");
   const [km, setKm] = useState("");
+  const [combustible, setCombustible] = useState("");
   const [gnc, setGnc] = useState("");
+
+  // Fotos/videos del vehículo -- mismo endpoint y mínimo que CotizadorForm
+  // (/cotizador), para que las dos vías de "vender" pidan lo mismo.
+  const MIN_FOTOS = 5;
+  const [archivosSubidos, setArchivosSubidos] = useState<{ nombre: string; url: string; tipo: "imagen" | "video" }[]>([]);
+  const [subiendoArchivo, setSubiendoArchivo] = useState(false);
+  const [errorArchivo, setErrorArchivo] = useState("");
+  const inputArchivoRef = useRef<HTMLInputElement>(null);
+
+  const subirArchivo = async (file: File) => {
+    setErrorArchivo("");
+    const esVideo = file.type.startsWith("video/");
+    const MAX_MB = 100;
+    if (file.size > MAX_MB * 1024 * 1024) {
+      setErrorArchivo(`"${file.name}" pesa más de ${MAX_MB}MB, probá con un archivo más liviano.`);
+      return;
+    }
+    setSubiendoArchivo(true);
+    try {
+      const formData = new FormData();
+      formData.append("file", file);
+      const res = await fetch("/api/upload-cotizacion", { method: "POST", body: formData });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || "No se pudo subir el archivo");
+      setArchivosSubidos((prev) => [...prev, { nombre: file.name, url: data.publicUrl, tipo: esVideo ? "video" : "imagen" }]);
+    } catch (err) {
+      setErrorArchivo(err instanceof Error ? err.message : "Error al subir el archivo. Reintentá.");
+    } finally {
+      setSubiendoArchivo(false);
+    }
+  };
+
+  const manejarSeleccionArchivos = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const files = Array.from(e.target.files || []);
+    files.forEach(subirArchivo);
+    if (inputArchivoRef.current) inputArchivoRef.current.value = "";
+  };
+
+  const quitarArchivo = (url: string) => {
+    setArchivosSubidos((prev) => prev.filter((a) => a.url !== url));
+  };
 
   // Estados de Contacto
   const [nombre, setNombre] = useState("");
@@ -90,13 +132,15 @@ export default function VenderForm() {
     return modelosPorMarca[m] || ["Base", "Full", "Sport", "Standard", "Otro"];
   }
 
+  const combustiblesDisponibles = ["Nafta", "Diésel", "GNC", "Híbrido", "Eléctrico"];
+
   const validarPaso1 = () => {
-    return anio && marca && modelo && version && km;
+    return anio && marca && modelo && version && km && combustible;
   };
 
   // Renderiza el widget de Turnstile cuando llegamos al paso de contacto
   useEffect(() => {
-    if (step !== 3 || !turnstileListo || !turnstileRef.current || !window.turnstile) return;
+    if (step !== 4 || !turnstileListo || !turnstileRef.current || !window.turnstile) return;
     if (turnstileWidgetId.current) return; // ya renderizado
 
     turnstileWidgetId.current = window.turnstile.render(turnstileRef.current, {
@@ -143,11 +187,13 @@ export default function VenderForm() {
           modelo,
           anio,
           version,
+          combustible,
           gnc,
           kilometraje: km,
           nombre: `${nombre.trim()} ${apellido.trim()}`,
           email: email.trim(),
           telefono: tel.trim(),
+          fotosYVideos: archivosSubidos.map((a) => a.url),
           tipo: "tasacion",
         }),
       });
@@ -206,7 +252,8 @@ export default function VenderForm() {
                 <p className="text-xs text-slate-400 font-medium">
                   {step === 1 && "Ingresá los datos del vehículo que querés vender"}
                   {step === 2 && "¿Tu auto tiene o tuvo GNC?"}
-                  {step === 3 && "Necesitamos tus datos para contactarte"}
+                  {step === 3 && "Subí al menos 5 fotos de tu vehículo"}
+                  {step === 4 && "Necesitamos tus datos para contactarte"}
                 </p>
               </div>
             )}
@@ -318,6 +365,30 @@ export default function VenderForm() {
                       />
                     </div>
 
+                    <div className="relative">
+                      <div
+                        onClick={() => setOpenDropdown(openDropdown === 'combustible' ? null : 'combustible')}
+                        className={`w-full bg-white/60 dark:bg-white/5 backdrop-blur-md border rounded-2xl px-4 py-3.5 text-sm font-semibold flex items-center justify-between cursor-pointer transition-all shadow-sm dark:shadow-none ${combustible ? 'text-navy dark:text-white border-slate-300 dark:border-white/20' : 'text-slate-400 dark:text-slate-500 border-white dark:border-white/10'}`}
+                      >
+                        <span>{combustible ? combustible : "Seleccioná el combustible"}</span>
+                        <ChevronDown className={`w-4 h-4 text-slate-500 dark:text-slate-400 transition-transform ${openDropdown === 'combustible' ? 'rotate-180 text-orange-600 dark:text-orange-400' : ''}`} />
+                      </div>
+
+                      {openDropdown === 'combustible' && (
+                        <div className="absolute top-full left-0 right-0 mt-2 bg-white/95 dark:bg-[#14141c] backdrop-blur-xl border border-white dark:border-white/10 rounded-2xl shadow-2xl z-50 p-1">
+                          {combustiblesDisponibles.map((c) => (
+                            <div
+                              key={c}
+                              onClick={() => { setCombustible(c); setOpenDropdown(null); }}
+                              className="px-4 py-2.5 text-xs font-bold text-slate-700 dark:text-slate-300 hover:bg-orange-50 dark:hover:bg-orange-400/10 hover:text-orange-700 dark:hover:text-orange-300 rounded-xl cursor-pointer transition-colors"
+                            >
+                              {c}
+                            </div>
+                          ))}
+                        </div>
+                      )}
+                    </div>
+
                     <div className="pt-2">
                       <button
                         type="button"
@@ -363,11 +434,76 @@ export default function VenderForm() {
                   </div>
                 )}
 
-                {/* PASO 3 (Contacto Final + Turnstile) */}
+                {/* PASO 3 (Fotos y videos) */}
                 {step === 3 && (
+                  <div className="space-y-4 animate-fadeIn py-2">
+                    <div>
+                      <button onClick={() => setStep(2)} className="text-xs font-bold text-orange-600 dark:text-orange-400 flex items-center gap-1 mb-2 hover:underline">
+                        <ArrowLeft className="w-3.5 h-3.5" /> Volver
+                      </button>
+                    </div>
+
+                    <input
+                      ref={inputArchivoRef}
+                      type="file"
+                      accept="image/*,video/*"
+                      multiple
+                      onChange={manejarSeleccionArchivos}
+                      className="hidden"
+                      id="input-archivos-vender"
+                    />
+                    <label
+                      htmlFor="input-archivos-vender"
+                      className="flex flex-col items-center justify-center gap-2 border-2 border-dashed border-slate-300 dark:border-white/20 hover:border-orange-500 dark:hover:border-orange-400 rounded-2xl py-6 cursor-pointer transition-colors bg-white/50 dark:bg-white/5"
+                    >
+                      {subiendoArchivo ? (
+                        <Loader2 className="w-5 h-5 text-orange-600 dark:text-orange-400 animate-spin" />
+                      ) : (
+                        <Upload className="w-5 h-5 text-slate-400 dark:text-slate-500" />
+                      )}
+                      <span className="text-[11px] font-bold text-slate-500 dark:text-slate-400">
+                        {subiendoArchivo ? "Subiendo..." : "Tocá para subir fotos o videos"}
+                      </span>
+                    </label>
+
+                    <p className={`text-[11px] font-bold ${archivosSubidos.length >= MIN_FOTOS ? "text-emerald-600 dark:text-emerald-400" : "text-slate-400"}`}>
+                      {archivosSubidos.length} / {MIN_FOTOS} fotos mínimas
+                    </p>
+
+                    {errorArchivo && (
+                      <p className="text-[11px] text-rose-600 dark:text-rose-400 font-medium">{errorArchivo}</p>
+                    )}
+
+                    {archivosSubidos.length > 0 && (
+                      <div className="space-y-1.5">
+                        {archivosSubidos.map((a) => (
+                          <div key={a.url} className="flex items-center gap-2 bg-white/70 dark:bg-white/5 border border-white dark:border-white/10 rounded-xl px-3 py-2 text-[11px] font-semibold text-slate-600 dark:text-slate-300">
+                            {a.tipo === "video" ? <FileVideo className="w-3.5 h-3.5 text-orange-600 dark:text-orange-400 shrink-0" /> : <ImageIcon className="w-3.5 h-3.5 text-orange-600 dark:text-orange-400 shrink-0" />}
+                            <span className="truncate flex-1">{a.nombre}</span>
+                            <button type="button" onClick={() => quitarArchivo(a.url)} className="text-slate-400 dark:text-slate-500 hover:text-rose-600 dark:hover:text-rose-400 shrink-0">
+                              <X className="w-3.5 h-3.5" />
+                            </button>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+
+                    <button
+                      type="button"
+                      disabled={archivosSubidos.length < MIN_FOTOS || subiendoArchivo}
+                      onClick={() => setStep(4)}
+                      className="w-full py-4 bg-gradient-to-r from-orange-600 to-amber-500 hover:from-amber-600 hover:to-orange-500 disabled:opacity-50 text-white font-black rounded-2xl uppercase tracking-widest text-xs transition-all shadow-lg shadow-orange-500/20 cursor-pointer active:scale-95"
+                    >
+                      Continuar
+                    </button>
+                  </div>
+                )}
+
+                {/* PASO 4 (Contacto Final + Turnstile) */}
+                {step === 4 && (
                   <form onSubmit={enviarVenta} className="space-y-4 animate-fadeIn">
                     <div>
-                      <button type="button" onClick={() => setStep(2)} className="text-xs font-bold text-orange-600 dark:text-orange-400 flex items-center gap-1 mb-2 hover:underline">
+                      <button type="button" onClick={() => setStep(3)} className="text-xs font-bold text-orange-600 dark:text-orange-400 flex items-center gap-1 mb-2 hover:underline">
                         <ArrowLeft className="w-3.5 h-3.5" /> Volver
                       </button>
                     </div>
