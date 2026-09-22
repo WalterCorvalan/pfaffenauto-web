@@ -26,3 +26,7 @@ El aviso del match llega **al vendedor** (alerta interna), no al cliente por Wha
 ## Nota de seguridad pendiente (no de este módulo, pero se vio de paso)
 
 `migraciones/sql_cron_seguimientos_y_resumen_empresa.sql` tiene el valor real de `CRON_SECRET` commiteado en texto plano en la URL de `net.http_get`. `sql_cron_pedidos_match.sql` no repite ese error a propósito (deja `<CRON_SECRET>` como placeholder) — vale la pena rotar ese secreto en algún momento ya que quedó expuesto en el historial del repo.
+
+## Cron jobs duplicados en `cron.job` (pendiente de limpieza, no tocar sin avisar)
+
+`migraciones/sql_cron_setup_completo.sql` (armado en otra sesión, sin ver qué había en Supabase) creó un segundo juego de jobs (`panel-eventos`, `panel-pautas`, `panel-pedidos-match`, etc., ids ≥25) que duplica exactamente a los que ya existían con nombre `panel-v2-*` (ids 7-12, 21-22) — mismos endpoints, mismo `CRON_SECRET`, corriendo dos veces cada uno. Además hay dos jobs viejos que apuntan a endpoints que ya no existen en el código (`bono-tier-mensual`, `lead-routing`, ids 13-14) y dos rotos que nunca tuvieron el secreto bien cargado (`panel-v2-pedidos-match` id 23 con `<CRON_SECRET>` literal, `cheques-depositar-diario` id 24 con `'TU_CRON_SECRET'` literal). Nada de esto se borró todavía — pendiente de decidir con el dueño cuál de los dos juegos (`panel-v2-*` o el nuevo) se queda antes de sacar el otro.
