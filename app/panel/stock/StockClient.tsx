@@ -84,8 +84,8 @@ function pendientesTexto(v: Vehiculo) {
 }
 
 export default function StockClient({
-  vehiculosIniciales, mandatosIniciales, perfiles, clientes, catalogoConfigInicial, sucursales, miId, diasEstancado = 90,
-}: { vehiculosIniciales: Vehiculo[]; mandatosIniciales: Mandato[]; perfiles: Perfil[]; clientes: Cliente[]; catalogoConfigInicial: CatalogoConfig | null; sucursales: { id: string; nombre: string }[]; miId: string; diasEstancado?: number }) {
+  vehiculosIniciales, mandatosIniciales, perfiles, clientes, catalogoConfigInicial, sucursales, miId, diasEstancado = 90, chequesPendientes0km = [],
+}: { vehiculosIniciales: Vehiculo[]; mandatosIniciales: Mandato[]; perfiles: Perfil[]; clientes: Cliente[]; catalogoConfigInicial: CatalogoConfig | null; sucursales: { id: string; nombre: string }[]; miId: string; diasEstancado?: number; chequesPendientes0km?: { id: string; vehiculo_id: string; monto: number; moneda: string }[] }) {
   const router = useRouter();
   const searchParams = useSearchParams();
   const [vehiculos, setVehiculos] = useState(vehiculosIniciales);
@@ -202,6 +202,29 @@ export default function StockClient({
     vehiculos.filter((v) => v.estado !== "vendido").forEach((v) => { acc[v.moneda_venta] = (acc[v.moneda_venta] || 0) + Number(v.precio_venta || 0); });
     return acc;
   }, [vehiculos]);
+  // Patrimonio 0km neto de cheques pendientes (pedido de la reunión del
+  // 22/9): un 0km pagado a un proveedor con cheques todavía no cobrados no
+  // representa el 100% de su precio de venta como patrimonio real -- se
+  // descuenta lo que se debe. Privado (gated por puedeEditarCompleto),
+  // mismo criterio que "reflejar la deuda de forma privada" de la reunión.
+  const deudaChequesPorVehiculo = useMemo(() => {
+    const map = new Map<string, Record<string, number>>();
+    chequesPendientes0km.forEach((c) => {
+      const actual = map.get(c.vehiculo_id) || {};
+      actual[c.moneda] = (actual[c.moneda] || 0) + Number(c.monto);
+      map.set(c.vehiculo_id, actual);
+    });
+    return map;
+  }, [chequesPendientes0km]);
+  const patrimonio0kmPorMoneda = useMemo(() => {
+    const acc: Record<string, number> = {};
+    vehiculos.filter((v) => v.condicion === "0km" && v.estado !== "vendido").forEach((v) => {
+      acc[v.moneda_venta] = (acc[v.moneda_venta] || 0) + Number(v.precio_venta || 0);
+      const deuda = deudaChequesPorVehiculo.get(v.id);
+      if (deuda) Object.entries(deuda).forEach(([m, n]) => { acc[m] = (acc[m] || 0) - n; });
+    });
+    return acc;
+  }, [vehiculos, deudaChequesPorVehiculo]);
   const estancados = vehiculos.filter((v) => diasEnStock(v.created_at) >= diasEstancado && v.estado === "disponible").length;
   const publicadoPct = disponibles.length ? Math.round((disponibles.filter((v) => v.publicado_ml).length / disponibles.length) * 100) : 0;
   const diasProm = disponibles.length ? Math.round(disponibles.reduce((acc, v) => acc + diasEnStock(v.created_at), 0) / disponibles.length) : 0;
@@ -305,6 +328,14 @@ export default function StockClient({
               <button key={v} onClick={() => setTab(v as Tab)} className={`shrink-0 whitespace-nowrap px-3 py-2 text-sm font-bold border-b-2 -mb-px transition-colors ${tab === v ? "border-[#0145F2] text-[#0145F2]" : "border-transparent text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-200"}`}>{label}</button>
             ))}
           </div>
+
+          {tab === "0km" && puedeEditarCompleto && deudaChequesPorVehiculo.size > 0 && (
+            <div className="mb-4 bg-amber-50 dark:bg-amber-500/10 border border-amber-100 dark:border-amber-500/20 rounded-2xl p-4">
+              <p className="text-[10px] font-bold uppercase tracking-widest text-amber-600 dark:text-amber-400">Patrimonio 0km, neto de cheques pendientes</p>
+              <p className="text-lg font-black text-slate-800 dark:text-white mt-1">{Object.entries(patrimonio0kmPorMoneda).map(([m, n]) => fmtPrecio(n, m)).join(" · ") || "—"}</p>
+              <p className="text-[11px] text-amber-700 dark:text-amber-300 mt-1">Descuenta cheques emitidos e impagos vinculados a estas unidades — visible solo para vos.</p>
+            </div>
+          )}
 
           {tab === "mandatos" ? (
             <>

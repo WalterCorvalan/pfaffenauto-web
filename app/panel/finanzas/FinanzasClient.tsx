@@ -416,7 +416,7 @@ export default function FinanzasClient({
         <RetirosTab retiros={retiros} setRetiros={setRetiros} cuentas={cuentas} setCuentas={setCuentas} setMovimientos={setMovimientos} />
       )}
 
-      {tab === "cheques" && <ChequesTab cheques={cheques} setCheques={setCheques} cuentas={cuentas} />}
+      {tab === "cheques" && <ChequesTab cheques={cheques} setCheques={setCheques} cuentas={cuentas} vehiculos0km={vehiculosDisponiblesFull.filter((v: any) => v.condicion === "0km")} />}
 
       {tab === "rentabilidad" && (
         <RentabilidadTab movimientos={movimientos} senasActivas={senasActivasPorMoneda} cuotasPendientes={cuotasPendientesPorMoneda} />
