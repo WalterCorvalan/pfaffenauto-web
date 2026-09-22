@@ -139,6 +139,7 @@ export default function ConsignarForm() {
   // Turnstile
   const [turnstileToken, setTurnstileToken] = useState("");
   const [turnstileListo, setTurnstileListo] = useState(false);
+  const [turnstileError, setTurnstileError] = useState(false);
   const turnstileRef = useRef<HTMLDivElement>(null);
   const turnstileWidgetId = useRef<string | null>(null);
 
@@ -199,15 +200,31 @@ export default function ConsignarForm() {
     return () => { cancelado = true; };
   }, [marca, modelo]);
 
+  // El <div ref={turnstileRef}> del paso 3 vive dentro de un motion.div con
+  // AnimatePresence mode="wait" -- eso retrasa el montaje del paso entrante
+  // hasta que termina la animación de salida del paso anterior (300ms).
+  // Este efecto se dispara apenas cambia "step", ANTES de que ese div
+  // exista todavía en el DOM (turnstileRef.current es null en ese momento)
+  // -- como las dependencias no vuelven a cambiar, nunca se reintentaba y
+  // el widget no se renderizaba nunca (bug real: Turnstile roto en
+  // Consignar desde que se le sumaron las animaciones del rediseño). Ahora
+  // reintenta cada 100ms hasta que el div realmente montó, mismo patrón
+  // que ya se usa para esperar a que cargue window.turnstile.
   useEffect(() => {
-    if (step !== 3 || !turnstileListo || !turnstileRef.current || !window.turnstile) return;
-    if (turnstileWidgetId.current) return;
-    turnstileWidgetId.current = window.turnstile.render(turnstileRef.current, {
-      sitekey: process.env.NEXT_PUBLIC_TURNSTILE_SITE_KEY || "",
-      callback: (token: string) => setTurnstileToken(token),
-      "expired-callback": () => setTurnstileToken(""),
-      "error-callback": () => setTurnstileToken(""),
-    });
+    if (step !== 3 || !turnstileListo || !window.turnstile || turnstileWidgetId.current) return;
+    const intentar = () => {
+      if (!turnstileRef.current || !window.turnstile || turnstileWidgetId.current) return false;
+      turnstileWidgetId.current = window.turnstile.render(turnstileRef.current, {
+        sitekey: process.env.NEXT_PUBLIC_TURNSTILE_SITE_KEY || "",
+        callback: (token: string) => { setTurnstileToken(token); setTurnstileError(false); },
+        "expired-callback": () => setTurnstileToken(""),
+        "error-callback": () => { setTurnstileToken(""); setTurnstileError(true); },
+      });
+      return true;
+    };
+    if (intentar()) return;
+    const intervalo = setInterval(() => { if (intentar()) clearInterval(intervalo); }, 100);
+    return () => clearInterval(intervalo);
   }, [step, turnstileListo]);
 
   const enviarConsignacion = async (e: React.FormEvent) => {
@@ -601,8 +618,13 @@ export default function ConsignarForm() {
                       </div>
                     </div>
 
-                    <div className="pt-4 flex justify-center">
+                    <div className="pt-4 flex flex-col items-center gap-1.5">
                       <div ref={turnstileRef} />
+                      {turnstileError && (
+                        <p className="text-[10px] text-rose-500 font-medium text-center max-w-xs">
+                          No se pudo cargar la verificación anti-spam. Puede ser un bloqueador de anuncios o un problema temporal — probá recargar la página.
+                        </p>
+                      )}
                     </div>
 
                     {errorEnvio && (
