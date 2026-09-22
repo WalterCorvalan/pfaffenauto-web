@@ -20,6 +20,7 @@ const LeadTasacionSchema = z.object({
   anio: z.coerce.number().int().min(1950).max(new Date().getFullYear() + 1).optional().nullable(),
   version: z.string().trim().max(150).optional().nullable(),
   kilometraje: z.coerce.number().min(0).max(2_000_000).optional().nullable(),
+  combustible: z.string().trim().max(30).optional().nullable(),
   gnc: z.string().trim().max(50).optional().nullable(),
   precioEsperado: z.coerce.number().min(0).optional().nullable(),
   descuentoPct: z.coerce.number().min(0).max(100).optional().nullable(),
@@ -120,6 +121,14 @@ export async function POST(req: Request) {
 
     if (error) throw error;
     if (!lead) throw new Error("No se pudo confirmar el envío de la solicitud.");
+
+    // Combustible en un update aparte: si migraciones/sql_leads_tasacion_combustible.sql
+    // todavía no corrió en la base, la solicitud se sigue guardando igual
+    // (mismo patrón resiliente que los campos de financiación más abajo).
+    if (data.combustible) {
+      const { error: errCombustible } = await supabase.from("leads_tasacion").update({ combustible: data.combustible }).eq("id", lead.id);
+      if (errCombustible) registrarError("api/panel/leads-tasacion:combustible", errCombustible, { leadId: lead.id });
+    }
 
     let vendedorFinanciacionId: string | null = null;
 
