@@ -9,7 +9,7 @@ import { obtenerDolarBlue } from "@/lib/dolarBlue";
 import { CreditCard, X, CheckCircle2, Loader2, User, Phone, Mail, ArrowLeft, Search, Car } from "lucide-react";
 import {
   TOPES_FINANCIACION_DEFAULT, TOPE_0KM_DEFAULT, TNA_POR_PLAZO_DEFAULT, GASTOS_PCT_DEFAULT,
-  UVA_DESCUENTO_PCT_DEFAULT, PLAZOS_DISPONIBLES, PLAZOS_CON_UVA,
+  PLAZOS_DISPONIBLES,
   topePctPorAnio, calcularCuotaFrances, type TopeFinanciacion,
 } from "@/lib/financiacion";
 
@@ -45,7 +45,6 @@ export default function SolicitarFinanciacionForm({ vehiculoPreseleccionado, cla
   const [tope0km, setTope0km] = useState(TOPE_0KM_DEFAULT);
   const [tna, setTna] = useState<Record<string, number>>(TNA_POR_PLAZO_DEFAULT);
   const [gastosPct, setGastosPct] = useState(GASTOS_PCT_DEFAULT);
-  const [uvaDescuento, setUvaDescuento] = useState<Record<string, number>>(UVA_DESCUENTO_PCT_DEFAULT);
 
   useEffect(() => {
     fetch("/api/financiacion-config").then((r) => r.json()).then((data) => {
@@ -53,7 +52,6 @@ export default function SolicitarFinanciacionForm({ vehiculoPreseleccionado, cla
       if (data.financiacion_tope_0km) setTope0km(data.financiacion_tope_0km);
       if (Object.keys(data.financiacion_tna || {}).length) setTna(data.financiacion_tna);
       if (data.financiacion_gastos_pct != null) setGastosPct(data.financiacion_gastos_pct);
-      if (Object.keys(data.financiacion_uva_descuento || {}).length) setUvaDescuento(data.financiacion_uva_descuento);
     }).catch(() => {});
   }, []);
 
@@ -155,8 +153,6 @@ export default function SolicitarFinanciacionForm({ vehiculoPreseleccionado, cla
 
   const tasaPlazoSeleccionado = tna[String(meses)];
   const cuotaEstimada = tasaPlazoSeleccionado ? calcularCuotaFrances(montoAFinanciar, tasaPlazoSeleccionado, meses) : 0;
-  const descuentoUvaSeleccionado = PLAZOS_CON_UVA.includes(meses) ? uvaDescuento[String(meses)] : null;
-  const cuotaUvaSeleccionada = descuentoUvaSeleccionado ? Math.round(cuotaEstimada * (1 - descuentoUvaSeleccionado / 100)) : null;
 
   const elegirVehiculo = (v: VehiculoFinanciable) => {
     setVehiculo(v);
@@ -360,9 +356,6 @@ export default function SolicitarFinanciacionForm({ vehiculoPreseleccionado, cla
                       <span className="text-xs font-bold text-slate-500 dark:text-slate-400">Cuota estimada ({meses} cuotas)</span>
                       <span className="text-2xl font-black text-[#0145F2] dark:text-sky-300">$ {cuotaEstimada.toLocaleString("es-AR")}</span>
                     </div>
-                    {cuotaUvaSeleccionada != null && (
-                      <p className="text-xs font-bold text-indigo-600 dark:text-indigo-300 mt-2">Plan UVA (1ª cuota, sube con inflación): $ {cuotaUvaSeleccionada.toLocaleString("es-AR")}</p>
-                    )}
                   </div>
 
                   <button

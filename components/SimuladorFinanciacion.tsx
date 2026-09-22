@@ -5,7 +5,7 @@ import { Calculator, CheckCircle2 } from "lucide-react";
 import SolicitarFinanciacionForm from "@/components/forms/SolicitarFinanciacionForm";
 import {
   TOPES_FINANCIACION_DEFAULT, TOPE_0KM_DEFAULT, TNA_POR_PLAZO_DEFAULT, GASTOS_PCT_DEFAULT,
-  UVA_DESCUENTO_PCT_DEFAULT, PLAZOS_DISPONIBLES, PLAZOS_CON_UVA,
+  PLAZOS_DISPONIBLES,
   topePctPorAnio, calcularCuotaFrances, type TopeFinanciacion,
 } from "@/lib/financiacion";
 
@@ -35,7 +35,6 @@ export default function SimuladorFinanciacion({
   const [tope0km, setTope0km] = useState(TOPE_0KM_DEFAULT);
   const [tna, setTna] = useState<Record<string, number>>(TNA_POR_PLAZO_DEFAULT);
   const [gastosPct, setGastosPct] = useState(GASTOS_PCT_DEFAULT);
-  const [uvaDescuento, setUvaDescuento] = useState<Record<string, number>>(UVA_DESCUENTO_PCT_DEFAULT);
 
   useEffect(() => {
     fetch("/api/financiacion-config").then((r) => r.json()).then((data) => {
@@ -43,7 +42,6 @@ export default function SimuladorFinanciacion({
       if (data.financiacion_tope_0km) setTope0km(data.financiacion_tope_0km);
       if (Object.keys(data.financiacion_tna || {}).length) setTna(data.financiacion_tna);
       if (data.financiacion_gastos_pct != null) setGastosPct(data.financiacion_gastos_pct);
-      if (Object.keys(data.financiacion_uva_descuento || {}).length) setUvaDescuento(data.financiacion_uva_descuento);
     }).catch(() => {});
   }, []);
 
@@ -61,8 +59,6 @@ export default function SimuladorFinanciacion({
 
   const tasaPlazo = tna[String(cuotas)];
   const cuotaEstimada = tasaPlazo ? calcularCuotaFrances(capitalMaximo, tasaPlazo, cuotas) : 0;
-  const descuentoUva = PLAZOS_CON_UVA.includes(cuotas) ? uvaDescuento[String(cuotas)] : null;
-  const cuotaUva = descuentoUva ? Math.round(cuotaEstimada * (1 - descuentoUva / 100)) : null;
 
   return (
     <div className="bg-white dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-[24px] p-5 md:p-6 shadow-sm dark:shadow-none mt-6 relative overflow-hidden">
@@ -113,11 +109,6 @@ export default function SimuladorFinanciacion({
             </div>
             <CheckCircle2 className="w-8 h-8 text-sky-400 dark:text-sky-300" />
           </div>
-          {cuotaUva != null && (
-            <p className="text-xs font-bold text-indigo-600 dark:text-indigo-300 mt-2">
-              Plan UVA (1ª cuota, sube con inflación): $ {cuotaUva.toLocaleString("es-AR")}
-            </p>
-          )}
         </div>
         <p className="text-[10px] text-slate-400 dark:text-slate-500 text-center -mt-2">
           Simulación aproximada — la tasa real depende del perfil crediticio de cada cliente, sujeta a aprobación de la financiera.

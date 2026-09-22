@@ -85,6 +85,14 @@ export default function FinanciacionesClient({ solicitudesIniciales, staff }: { 
           >
             <CreditCard className="w-4 h-4" /> decreditos <ExternalLink className="w-3.5 h-3.5" />
           </a>
+          <a
+            href="https://www.bna.com.ar/home/masautos"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="flex items-center justify-center gap-1.5 text-[13px] font-bold text-indigo-700 dark:text-indigo-300 bg-indigo-50 dark:bg-indigo-500/10 border border-indigo-100 dark:border-indigo-500/20 rounded-xl px-4 py-2.5"
+          >
+            <CreditCard className="w-4 h-4" /> Banco Nación <ExternalLink className="w-3.5 h-3.5" />
+          </a>
         </div>
       </div>
 
