@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState, useCallback } from "react";
+import { useEffect, useState, useCallback, useRef } from "react";
 import { useRouter, usePathname } from "next/navigation";
 import { supabase2 } from "@/lib/supabase/client";
 import { MessageCircle, X, Globe, Users, Plus, Inbox } from "lucide-react";
@@ -32,6 +32,60 @@ export default function MensajesBubble() {
   const [miembrosGrupo, setMiembrosGrupo] = useState<string[]>([]);
   const [creandoGrupo, setCreandoGrupo] = useState(false);
   const [quickActionsAbierto, setQuickActionsAbierto] = useState(false);
+
+  // Botón arrastrable a cualquier lado de la pantalla -- posición en px
+  // (fixed left/top), persistida por navegador (localStorage) para que se
+  // quede donde cada uno lo dejó. null = todavía en la posición default
+  // (fixed bottom-24 right-6 vía clases, sin drag todavía).
+  const BUBBLE_POS_KEY = "panel:mensajes-bubble-pos";
+  const [dragPos, setDragPos] = useState<{ left: number; top: number } | null>(null);
+  const arrastrandoRef = useRef(false);
+  const justDraggedRef = useRef(false);
+
+  useEffect(() => {
+    try {
+      const guardada = localStorage.getItem(BUBBLE_POS_KEY);
+      if (guardada) {
+        const p = JSON.parse(guardada);
+        setDragPos({
+          left: Math.min(Math.max(p.left, 8), window.innerWidth - 56),
+          top: Math.min(Math.max(p.top, 8), window.innerHeight - 56),
+        });
+      }
+    } catch { /* localStorage puede fallar en privado/bloqueado -- se queda en la posición default */ }
+  }, []);
+
+  const iniciarArrastre = (e: React.PointerEvent<HTMLButtonElement>) => {
+    const boton = e.currentTarget;
+    const rectInicial = boton.getBoundingClientRect();
+    const startX = e.clientX;
+    const startY = e.clientY;
+    arrastrandoRef.current = false;
+
+    const onMove = (ev: PointerEvent) => {
+      const dx = ev.clientX - startX;
+      const dy = ev.clientY - startY;
+      if (!arrastrandoRef.current && Math.abs(dx) + Math.abs(dy) > 4) arrastrandoRef.current = true;
+      if (!arrastrandoRef.current) return;
+      const left = Math.min(Math.max(rectInicial.left + dx, 8), window.innerWidth - rectInicial.width - 8);
+      const top = Math.min(Math.max(rectInicial.top + dy, 8), window.innerHeight - rectInicial.height - 8);
+      setDragPos({ left, top });
+    };
+    const onUp = () => {
+      window.removeEventListener("pointermove", onMove);
+      window.removeEventListener("pointerup", onUp);
+      if (arrastrandoRef.current) {
+        justDraggedRef.current = true;
+        setDragPos((actual) => {
+          if (actual) { try { localStorage.setItem(BUBBLE_POS_KEY, JSON.stringify(actual)); } catch { /* ignorar */ } }
+          return actual;
+        });
+        setTimeout(() => { justDraggedRef.current = false; }, 50);
+      }
+    };
+    window.addEventListener("pointermove", onMove);
+    window.addEventListener("pointerup", onUp);
+  };
 
   useEffect(() => {
     supabase2.auth.getUser().then(({ data }) => setMiId(data.user?.id || ""));
@@ -134,14 +188,24 @@ export default function MensajesBubble() {
         <FloatingChatWindow key={c.id} canal={c} miId={miId} offset={24 + i * 316} onClose={() => cerrarVentana(c.id)} />
       ))}
 
-      {/* Apilado arriba del botón "+" (QuickActionsButton, fixed bottom-6
-          right-6), misma columna. Mientras el "+" está abierto y despliega
-          sus pills hacia arriba, este ícono se esconde (ver evento
-          "qa:toggle" que emite QuickActionsButton) para no quedar tapado
-          ni interceptar los clicks de esas pills. */}
-      <div className={`print:hidden hidden md:block fixed bottom-24 right-6 z-30 transition-opacity ${quickActionsAbierto ? "opacity-0 pointer-events-none" : "opacity-100"}`}>
+      {/* Arrastrable a cualquier lado de la pantalla (pointer events propios,
+          posición persistida en localStorage) -- mientras no se arrastró
+          todavía, sigue apilado arriba del botón "+" (QuickActionsButton,
+          fixed bottom-6 right-6) con las clases default. Mientras el "+"
+          está abierto y despliega sus pills hacia arriba, este ícono se
+          esconde (ver evento "qa:toggle" que emite QuickActionsButton) para
+          no quedar tapado ni interceptar los clicks de esas pills -- eso
+          solo aplica en la posición default, apilada justo arriba del "+". */}
+      <div
+        className={`print:hidden hidden md:block fixed z-30 transition-opacity ${!dragPos && quickActionsAbierto ? "opacity-0 pointer-events-none" : "opacity-100"} ${dragPos ? "" : "bottom-24 right-6"}`}
+        style={dragPos ? { left: dragPos.left, top: dragPos.top } : undefined}
+      >
         {popupAbierto && (
-          <div className="absolute bottom-14 right-0 w-80 bg-white dark:bg-[#141414] border border-slate-200 dark:border-white/10 rounded-2xl shadow-2xl overflow-hidden">
+          <div
+            className={`absolute w-80 bg-white dark:bg-[#141414] border border-slate-200 dark:border-white/10 rounded-2xl shadow-2xl overflow-hidden ${
+              dragPos && dragPos.top < window.innerHeight / 2 ? "top-14" : "bottom-14"
+            } ${dragPos && dragPos.left < window.innerWidth / 2 - 160 ? "left-0" : "right-0"}`}
+          >
             <div className="flex items-start justify-between px-4 py-3 border-b border-slate-100 dark:border-white/10">
               <div>
                 <h3 className="text-sm font-bold text-slate-900 dark:text-white">Mensajes</h3>
@@ -185,9 +249,10 @@ export default function MensajesBubble() {
         )}
 
         <button
-          onClick={() => setPopupAbierto((v) => !v)}
-          className="flex w-12 h-12 rounded-full bg-white dark:bg-[#1A1A1A] border border-slate-200 dark:border-white/10 shadow-lg items-center justify-center hover:scale-105 transition-transform relative"
-          title="Mensajes"
+          onPointerDown={iniciarArrastre}
+          onClick={() => { if (justDraggedRef.current) return; setPopupAbierto((v) => !v); }}
+          className="flex w-12 h-12 rounded-full bg-white dark:bg-[#1A1A1A] border border-slate-200 dark:border-white/10 shadow-lg items-center justify-center hover:scale-105 transition-transform relative touch-none cursor-grab active:cursor-grabbing"
+          title="Mensajes — mantené presionado y arrastrá para moverlo"
         >
           <MessageCircle className="w-5 h-5 text-indigo-600 dark:text-indigo-400" />
           {totalNoLeidos > 0 && (
