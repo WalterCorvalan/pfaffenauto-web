@@ -3,12 +3,18 @@
 import { useState, useEffect, useRef } from "react";
 import Link from "next/link";
 import Script from "next/script";
-import { ArrowLeft, Loader2, ChevronDown, CarFront, User, Phone, Upload, X, FileVideo, ImageIcon, Building2, Camera, AlertTriangle, MapPin, CalendarDays, Clock } from "lucide-react";
+import {
+  ArrowLeft, Loader2, ChevronDown, X, CalendarDays, CarFront, Gauge, Zap, Check, Settings2, Flame, Fuel,
+  Upload, FileVideo, ImageIcon, Building2, Camera, AlertTriangle, MapPin, Clock, Repeat,
+} from "lucide-react";
+import { motion, AnimatePresence } from "framer-motion";
 import EnvioExitoso from "@/components/EnvioExitoso";
 import { getCanalOrigen, getUtmRaw } from "@/lib/utm";
 import { supabase2 } from "@/lib/supabase/client";
 import { calcularOferta } from "@/lib/panel/descuentoPorKm";
+import { normalizarMarca } from "@/lib/vehiculos";
 import { MARCAS_ARGENTINA, MODELOS_POR_MARCA } from "@/lib/marcasModelos";
+import { LOGOS_MARCAS } from "@/lib/marcasLogos";
 
 declare global {
   interface Window {
@@ -21,19 +27,86 @@ declare global {
 
 const marcasDisponibles = MARCAS_ARGENTINA;
 const modelosPorMarca = MODELOS_POR_MARCA;
-
 const aniosDisponibles = Array.from({ length: 20 }, (_, i) => 2026 - i);
+const combustiblesDisponibles = ["Nafta", "Diésel", "GNC", "Híbrido", "Eléctrico"];
+const MIN_FOTOS_SIN_VISITA = 5;
+const franjasHorario = ["09:00", "09:30", "10:00", "10:30", "11:00", "11:30", "12:00", "14:00", "14:30", "15:00", "15:30", "16:00", "16:30", "17:00", "17:30"];
 
-interface VehiculoObjetivo {
-  id: string;
-  marca: string;
-  modelo: string;
-  precio: number;
-  moneda: "ARS" | "USD";
+interface VehiculoObjetivo { id: string; marca: string; modelo: string; precio: number; moneda: "ARS" | "USD" }
+
+// --- COMPONENTES DE UI INTERNOS (mismo sistema visual que ConsignarForm.tsx) ---
+
+function ProgressStepper({ currentStep, totalSteps, labels }: { currentStep: number; totalSteps: number[]; labels: string[] }) {
+  return (
+    <div className="flex items-start mb-4 lg:mb-10 w-full max-w-sm">
+      {totalSteps.map((num, idx) => {
+        const isActive = currentStep >= num;
+        return (
+          <div key={num} className="flex items-start flex-1 last:flex-none">
+            <div className="flex flex-col items-center gap-1 lg:gap-2 w-8">
+              <div className={`w-6 h-6 lg:w-8 lg:h-8 rounded-full flex items-center justify-center text-[10px] lg:text-xs font-bold shrink-0 transition-colors duration-300 ${isActive ? "bg-blue-600 dark:bg-blue-500 text-white" : "bg-transparent border border-slate-300 dark:border-slate-700 text-slate-400 dark:text-slate-500"}`}>
+                {idx + 1}
+              </div>
+              <span className={`text-[8px] lg:text-[9px] uppercase tracking-widest whitespace-nowrap ${isActive ? "text-slate-700 dark:text-slate-300 font-bold" : "text-slate-400 dark:text-slate-600"}`}>
+                {labels[idx]}
+              </span>
+            </div>
+            {idx < totalSteps.length - 1 && (
+              <div className={`h-[1px] flex-1 mx-3 mt-3 lg:mt-4 transition-colors duration-300 ${isActive ? "bg-blue-500/50" : "bg-slate-200 dark:bg-slate-800"}`} />
+            )}
+          </div>
+        );
+      })}
+    </div>
+  );
 }
 
+function ConfigField({
+  icon: Icon, label, value, isOpen, onClick, children, isCompleted,
+}: {
+  icon: any; label: string; value: string; isOpen: boolean; onClick: () => void; children: React.ReactNode; isCompleted: boolean;
+}) {
+  return (
+    <div className={`border rounded-2xl overflow-hidden transition-all duration-300 ${isOpen ? "col-span-2 border-slate-300 dark:border-slate-600 bg-white dark:bg-[#161e2c] shadow-sm dark:shadow-none" : "border-slate-200 dark:border-white/5 bg-slate-50 dark:bg-[#0f172a] hover:bg-white dark:hover:bg-[#161e2c]"}`}>
+      <div onClick={onClick} className="lg:hidden flex flex-col gap-1.5 p-3 cursor-pointer">
+        <div className="flex items-center gap-1.5">
+          <Icon className="w-3.5 h-3.5 text-slate-400 dark:text-slate-500 shrink-0" />
+          <span className="text-[9px] text-slate-500 dark:text-slate-400 font-bold uppercase tracking-widest truncate">{label}</span>
+        </div>
+        <div className="flex items-center justify-between gap-1">
+          <span className={`text-xs font-bold truncate ${value ? "text-slate-900 dark:text-white" : "text-slate-400 dark:text-slate-600"}`}>{value || "Elegir"}</span>
+          {isCompleted && !isOpen ? <Check className="w-3.5 h-3.5 text-emerald-500 dark:text-emerald-400 shrink-0" /> : <ChevronDown className={`w-3.5 h-3.5 text-slate-400 dark:text-slate-500 shrink-0 transition-transform duration-300 ${isOpen ? "rotate-180" : ""}`} />}
+        </div>
+      </div>
+      <div onClick={onClick} className="hidden lg:flex items-center justify-between p-4 cursor-pointer">
+        <div className="flex items-center gap-4">
+          <div className="w-10 h-10 rounded-xl bg-slate-100 dark:bg-white/5 flex items-center justify-center shrink-0"><Icon className="w-5 h-5 text-slate-500 dark:text-slate-400" /></div>
+          <div className="flex flex-col">
+            <span className="text-[10px] text-slate-500 dark:text-slate-400 font-bold uppercase tracking-widest">{label}</span>
+            <span className={`text-sm font-bold truncate mt-0.5 ${value ? "text-slate-900 dark:text-white" : "text-slate-400 dark:text-slate-600"}`}>{value || "Seleccionar..."}</span>
+          </div>
+        </div>
+        <div className="flex items-center gap-3">
+          {isCompleted && !isOpen && <Check className="w-5 h-5 text-emerald-500 dark:text-emerald-400" />}
+          <ChevronDown className={`w-4 h-4 text-slate-400 dark:text-slate-500 transition-transform duration-300 ${isOpen ? "rotate-180" : ""}`} />
+        </div>
+      </div>
+      <AnimatePresence>
+        {isOpen && (
+          <motion.div initial={{ height: 0, opacity: 0 }} animate={{ height: "auto", opacity: 1 }} exit={{ height: 0, opacity: 0 }} className="overflow-hidden">
+            <div className="p-3 lg:p-4 pt-0 border-t border-slate-100 dark:border-white/5 mt-2">{children}</div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+    </div>
+  );
+}
+
+// --- COMPONENTE PRINCIPAL ---
+// step 1: vehículo (tiles) | 2: GNC | 2.5: calculando | 3: oferta | 3.5: visita-o-fotos (solo si rechaza la oferta) | 4: contacto
+
 export default function CotizadorForm({ vehiculoObjetivo }: { vehiculoObjetivo?: VehiculoObjetivo } = {}) {
-  const [step, setStep] = useState(1);
+  const [step, setStep] = useState<number>(1);
 
   // Estados del vehículo
   const [anio, setAnio] = useState("");
@@ -45,22 +118,18 @@ export default function CotizadorForm({ vehiculoObjetivo }: { vehiculoObjetivo?:
   const [gnc, setGnc] = useState("");
   const [precioEsperado, setPrecioEsperado] = useState("");
 
-  // Oferta instantánea: precio que el cliente espera, menos el descuento
-  // según los km (escala fija del equipo — antes acá se buscaban
-  // comparables de mercado con IA, ya no).
+  // Oferta instantánea
   const [descuentoPct, setDescuentoPct] = useState<number | null>(null);
   const [precioOferta, setPrecioOferta] = useState<number | null>(null);
   const [acuerdoPrecio, setAcuerdoPrecio] = useState<boolean | null>(null);
 
-  // Estado del peritaje (¿puede venir a sucursal, o manda fotos/videos?)
+  // Peritaje: sucursal o fotos
   const [puedeVenir, setPuedeVenir] = useState<boolean | null>(null);
   const [archivosSubidos, setArchivosSubidos] = useState<{ nombre: string; url: string; tipo: "imagen" | "video" }[]>([]);
   const [subiendoArchivo, setSubiendoArchivo] = useState(false);
   const [errorArchivo, setErrorArchivo] = useState("");
   const inputArchivoRef = useRef<HTMLInputElement>(null);
 
-  // Reserva de visita real (cuando puede venir a sucursal) — mismo motor que
-  // ya usa /api/panel/visitas.
   const [sucursales, setSucursales] = useState<{ id: string; nombre: string }[]>([]);
   const [sucursalVisita, setSucursalVisita] = useState("");
   const [fechaVisita, setFechaVisita] = useState("");
@@ -68,11 +137,8 @@ export default function CotizadorForm({ vehiculoObjetivo }: { vehiculoObjetivo?:
   const [horariosOcupados, setHorariosOcupados] = useState<string[]>([]);
 
   useEffect(() => {
-    // Vía RPC (no select directo): la tabla sucursales tiene RLS cerrada
-    // para el rol anon y esta lectura corre sin sesión, desde la web pública.
     supabase2.rpc("sucursales_publicas").then(({ data }) => { if (data) setSucursales(data); });
   }, []);
-
   useEffect(() => {
     if (!sucursalVisita || !fechaVisita) { setHorariosOcupados([]); return; }
     supabase2.rpc("visitas_horarios_ocupados", { p_sucursal: sucursalVisita, p_fecha: fechaVisita }).then(({ data }) => {
@@ -80,103 +146,88 @@ export default function CotizadorForm({ vehiculoObjetivo }: { vehiculoObjetivo?:
     });
   }, [sucursalVisita, fechaVisita]);
 
-  const franjasHorario = ["09:00", "09:30", "10:00", "10:30", "11:00", "11:30", "12:00", "14:00", "14:30", "15:00", "15:30", "16:00", "16:30", "17:00", "17:30"];
-
   // Estados de Contacto
   const [nombre, setNombre] = useState("");
   const [apellido, setApellido] = useState("");
   const [email, setEmail] = useState("");
   const [tel, setTel] = useState("");
 
-  // Turnstile (anti-spam gratuito)
+  // Turnstile
   const [turnstileToken, setTurnstileToken] = useState("");
   const [turnstileListo, setTurnstileListo] = useState(false);
   const [turnstileError, setTurnstileError] = useState(false);
   const turnstileRef = useRef<HTMLDivElement>(null);
   const turnstileWidgetId = useRef<string | null>(null);
 
-  // El <Script onLoad> de más abajo no dispara de nuevo si el script ya
-  // quedó cargado por una navegación anterior (Next dedupea por src) — sin
-  // este poll, turnstileListo se queda en false para siempre y el widget
-  // nunca aparece hasta que se recarga la página entera.
   useEffect(() => {
     if (window.turnstile) { setTurnstileListo(true); return; }
-    const intervalo = setInterval(() => {
-      if (window.turnstile) { setTurnstileListo(true); clearInterval(intervalo); }
-    }, 200);
+    const intervalo = setInterval(() => { if (window.turnstile) { setTurnstileListo(true); clearInterval(intervalo); } }, 200);
     return () => clearInterval(intervalo);
   }, []);
 
-  // Controladores de Dropdowns
-  const [openDropdown, setOpenDropdown] = useState<string | null>(null);
+  // UI States
+  const [openDropdown, setOpenDropdown] = useState<string | null>("anio");
   const [busquedaMarca, setBusquedaMarca] = useState("");
-
-  // Estados de carga/envío
   const [loading, setLoading] = useState(false);
   const [enviado, setEnviado] = useState(false);
-  const [segundos, setSegundos] = useState(60);
   const [errorEnvio, setErrorEnvio] = useState("");
-  const [shakeError, setShakeError] = useState(0);
+  const [imageError, setImageError] = useState(false);
+  const [fotoStock, setFotoStock] = useState<string | null>(null);
 
-  const mostrarError = (msg: string) => {
-    setErrorEnvio(msg);
-    setShakeError((n) => n + 1);
-  };
+  const formatKm = (value: string) => (value ? Number(value).toLocaleString("es-AR") : "0");
+  const marcasFiltradas = marcasDisponibles.filter((m) => m.toLowerCase().includes(busquedaMarca.toLowerCase()));
+  const modelosDisponibles = modelosPorMarca[marca] || ["Base", "Full", "Sport", "Standard", "Otro"];
+
+  const validarPaso1 = () => anio && marca && modelo && version && km && combustible && precioEsperado;
 
   useEffect(() => {
-    if (segundos > 1) {
-      const timer = setInterval(() => {
-        setSegundos((prev) => prev - 1);
-      }, 2000);
-      return () => clearInterval(timer);
-    }
-  }, [segundos]);
+    if (anio && openDropdown === "anio") setOpenDropdown("marca");
+    else if (marca && openDropdown === "marca") setOpenDropdown("modelo");
+    else if (modelo && openDropdown === "modelo") setOpenDropdown("version");
+  }, [anio, marca, modelo]);
 
-  const marcasFiltradas = marcasDisponibles.filter(m => m.toLowerCase().includes(busquedaMarca.toLowerCase()));
-  const modelosDisponibles = modeloPorMarcaSeleccionada(marca);
+  useEffect(() => { setImageError(false); }, [marca, modelo]);
 
-  function modeloPorMarcaSeleccionada(m: string) {
-    return modelosPorMarca[m] || ["Base", "Full", "Sport", "Standard", "Otro"];
-  }
-
-  const combustiblesDisponibles = ["Nafta", "Diésel", "GNC", "Híbrido", "Eléctrico"];
-
-  const validarPaso1 = () => {
-    return anio && marca && modelo && version && km && combustible && precioEsperado;
-  };
+  useEffect(() => {
+    if (!marca || !modelo) { setFotoStock(null); return; }
+    let cancelado = false;
+    supabase2.from("vehiculos").select("fotos, marca, modelo").in("estado", ["disponible", "reservado"]).ilike("modelo", `%${modelo}%`).then(({ data }) => {
+      if (cancelado || !data) return;
+      const match = data.find((v) => normalizarMarca(v.marca) === normalizarMarca(marca));
+      setFotoStock(match?.fotos?.[0] || null);
+    });
+    return () => { cancelado = true; };
+  }, [marca, modelo]);
 
   // Oferta instantánea: precio que puso el cliente, menos el % de descuento
-  // según los km — sin llamada al servidor, al toque. Se dispara después de
-  // GNC (paso 2), con una animación de "estamos calculando" antes de
-  // revelar el número, para que no se sienta instantáneo/trivial.
-  const continuarDesdePaso2 = () => {
+  // según los km -- con animación de "estamos calculando" antes de revelarla.
+  const continuarDesdeGnc = () => {
     const { descuentoPct: pct, oferta } = calcularOferta(Number(precioEsperado), Number(km));
     setDescuentoPct(pct);
     setPrecioOferta(oferta);
-    setStep(1.75);
-    setTimeout(() => setStep(1.5), 2200);
+    setStep(2.5);
+    setTimeout(() => setStep(3), 2200);
   };
 
-  // Renderiza el widget de Turnstile cuando llegamos al paso de contacto
+  // Mismo fix que ConsignarForm.tsx: reintenta hasta que el div del widget
+  // realmente montó (AnimatePresence mode="wait" retrasa el montaje).
   useEffect(() => {
-    if (step !== 4 || !turnstileListo || !turnstileRef.current || !window.turnstile) return;
-    if (turnstileWidgetId.current) return; // ya renderizado
-
-    turnstileWidgetId.current = window.turnstile.render(turnstileRef.current, {
-      sitekey: process.env.NEXT_PUBLIC_TURNSTILE_SITE_KEY || "",
-      callback: (token: string) => { setTurnstileToken(token); setTurnstileError(false); },
-      "expired-callback": () => setTurnstileToken(""),
-      "error-callback": (code: string) => {
-        setTurnstileToken("");
-        setTurnstileError(true);
-        console.error("[turnstile] error-callback:", code, "— probable causa: el dominio actual no está autorizado para este sitekey en el dashboard de Cloudflare.");
-      },
-    });
+    if (step !== 4 || !turnstileListo || !window.turnstile || turnstileWidgetId.current) return;
+    const intentar = () => {
+      if (!turnstileRef.current || !window.turnstile || turnstileWidgetId.current) return false;
+      turnstileWidgetId.current = window.turnstile.render(turnstileRef.current, {
+        sitekey: process.env.NEXT_PUBLIC_TURNSTILE_SITE_KEY || "",
+        callback: (token: string) => { setTurnstileToken(token); setTurnstileError(false); },
+        "expired-callback": () => setTurnstileToken(""),
+        "error-callback": () => { setTurnstileToken(""); setTurnstileError(true); },
+      });
+      return true;
+    };
+    if (intentar()) return;
+    const intervalo = setInterval(() => { if (intentar()) clearInterval(intervalo); }, 100);
+    return () => clearInterval(intervalo);
   }, [step, turnstileListo]);
 
-  // =================================================================
-  // SUBIR FOTOS/VIDEOS (cuando el cliente no puede venir a sucursal)
-  // =================================================================
   const subirArchivo = async (file: File) => {
     setErrorArchivo("");
     const esVideo = file.type.startsWith("video/");
@@ -185,7 +236,6 @@ export default function CotizadorForm({ vehiculoObjetivo }: { vehiculoObjetivo?:
       setErrorArchivo(`"${file.name}" pesa más de ${MAX_MB}MB, probá con un archivo más liviano.`);
       return;
     }
-
     setSubiendoArchivo(true);
     try {
       const formData = new FormData();
@@ -193,7 +243,6 @@ export default function CotizadorForm({ vehiculoObjetivo }: { vehiculoObjetivo?:
       const res = await fetch("/api/upload-cotizacion", { method: "POST", body: formData });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || "No se pudo subir el archivo");
-
       setArchivosSubidos((prev) => [...prev, { nombre: file.name, url: data.publicUrl, tipo: esVideo ? "video" : "imagen" }]);
     } catch (err) {
       setErrorArchivo(err instanceof Error ? err.message : "Error al subir el archivo. Reintentá.");
@@ -201,44 +250,34 @@ export default function CotizadorForm({ vehiculoObjetivo }: { vehiculoObjetivo?:
       setSubiendoArchivo(false);
     }
   };
-
   const manejarSeleccionArchivos = (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = Array.from(e.target.files || []);
     files.forEach(subirArchivo);
     if (inputArchivoRef.current) inputArchivoRef.current.value = "";
   };
+  const quitarArchivo = (url: string) => setArchivosSubidos((prev) => prev.filter((a) => a.url !== url));
 
-  const quitarArchivo = (url: string) => {
-    setArchivosSubidos((prev) => prev.filter((a) => a.url !== url));
-  };
-
-  const MIN_FOTOS_SIN_VISITA = 5;
-
-  const validarPaso3 = () => {
+  const validarPasoVisita = () => {
     if (puedeVenir === null) return false;
     if (puedeVenir === false && archivosSubidos.length < MIN_FOTOS_SIN_VISITA) return false;
     if (puedeVenir === true && (!sucursalVisita || !fechaVisita || !horarioVisita)) return false;
     return true;
   };
 
-  // =================================================================
-  // ENVIAR COTIZACIÓN (verificación anti-spam vía Turnstile, server-side)
-  // =================================================================
   const enviarCotizacion = async (e: React.FormEvent) => {
     e.preventDefault();
     setErrorEnvio("");
 
     if (!nombre.trim() || !apellido.trim() || !email.trim() || !tel.trim()) {
-      mostrarError("Por favor completá todos los campos de contacto.");
+      setErrorEnvio("Por favor completá todos los campos de contacto.");
       return;
     }
     if (!turnstileToken) {
-      mostrarError("Completá la verificación anti-spam antes de continuar.");
+      setErrorEnvio("Completá la verificación anti-spam antes de continuar.");
       return;
     }
 
     setLoading(true);
-
     try {
       const response = await fetch("/api/panel/leads-tasacion", {
         method: "POST",
@@ -249,17 +288,9 @@ export default function CotizadorForm({ vehiculoObjetivo }: { vehiculoObjetivo?:
           utmSource: getUtmRaw().utm_source,
           utmMedium: getUtmRaw().utm_medium,
           utmCampaign: getUtmRaw().utm_campaign,
-          marca,
-          modelo,
-          anio,
-          version,
-          combustible,
-          gnc,
+          marca, modelo, anio, version, combustible, gnc,
           kilometraje: km,
-          precioEsperado,
-          descuentoPct,
-          ofertaCalculada: precioOferta,
-          aceptaOferta: acuerdoPrecio,
+          precioEsperado, descuentoPct, ofertaCalculada: precioOferta, aceptaOferta: acuerdoPrecio,
           nombre: `${nombre.trim()} ${apellido.trim()}`,
           email: email.trim(),
           telefono: tel.trim(),
@@ -271,556 +302,403 @@ export default function CotizadorForm({ vehiculoObjetivo }: { vehiculoObjetivo?:
 
       const data = await response.json();
       if (!response.ok) throw new Error(data.error || "Error al enviar la cotización");
-
       setEnviado(true);
     } catch (error) {
-      console.error("Error al enviar cotización:", error);
-      mostrarError(error instanceof Error ? error.message : "Hubo un problema al procesar tu solicitud. Reintentá.");
-      if (turnstileWidgetId.current && window.turnstile) {
-        window.turnstile.reset(turnstileWidgetId.current);
-      }
+      setErrorEnvio(error instanceof Error ? error.message : "Hubo un problema. Reintentá.");
+      if (turnstileWidgetId.current && window.turnstile) window.turnstile.reset(turnstileWidgetId.current);
       setTurnstileToken("");
     } finally {
       setLoading(false);
     }
   };
 
-  return (
-    <div className="min-h-screen bg-[#F8FAFC] dark:bg-[#0a0a0f] text-slate-900 dark:text-white pt-12 md:pt-16 pb-12 md:pb-50 relative font-sans overflow-hidden flex flex-col justify-between">
-
-      <div className="absolute inset-0 pointer-events-none z-0">
-        <div className="absolute inset-0 bg-[linear-gradient(to_right,#e2e8f0_1px,transparent_1px),linear-gradient(to_bottom,#e2e8f0_1px,transparent_1px)] dark:bg-[linear-gradient(to_right,rgba(255,255,255,0.05)_1px,transparent_1px),linear-gradient(to_bottom,rgba(255,255,255,0.05)_1px,transparent_1px)] bg-[size:3rem_3rem] [mask-image:radial-gradient(ellipse_80%_50%_at_50%_0%,#000_70%,transparent_100%)] opacity-60"></div>
-        <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[800px] h-[400px] bg-[#0145F2]/5 dark:bg-sky-400/10 blur-[120px] rounded-full"></div>
+  if (enviado) {
+    return (
+      <div className="min-h-screen bg-[#F8FAFC] dark:bg-[#0a0a0f] flex flex-col">
+        <EnvioExitoso color="blue" titulo="¡Cotización enviada!" mensaje="Recibimos los datos de tu vehículo y un asesor comercial se pondrá en contacto a la brevedad.">
+          <Link href="/" className="inline-block py-3.5 px-8 bg-blue-600 hover:bg-blue-700 text-white font-black rounded-2xl text-xs uppercase tracking-widest shadow-lg transition-colors">Volver al inicio</Link>
+        </EnvioExitoso>
       </div>
+    );
+  }
 
-      <div className="max-w-7xl mx-auto w-full px-4 md:px-8 grid grid-cols-1 lg:grid-cols-12 gap-8 items-start md:items-center my-0 md:my-auto py-2 md:py-8 relative z-10">
+  const logoPath = LOGOS_MARCAS[marca] || `/vehicles/brands/${marca.toLowerCase()}.svg`;
+  const carPath = fotoStock || `/vehicles/models/${marca.toLowerCase()}/${modelo.toLowerCase().replace(/ /g, "-")}.webp`;
 
-        <div className="lg:col-span-7 flex flex-col justify-center space-y-6 text-left">
-          <div className="space-y-3">
-            <span className="bg-blue-50 dark:bg-sky-400/10 text-[#0145F2] dark:text-sky-300 border border-blue-100 dark:border-sky-400/20 text-[11px] font-black uppercase tracking-widest px-4 py-1.5 rounded-full inline-block shadow-sm dark:shadow-none">
-              Tasación profesional instantánea
-            </span>
-            <h1 className="text-4xl sm:text-6xl lg:text-7xl font-light text-navy dark:text-white tracking-tight leading-[1.08]">
-              Cotiza tu auto de la <br />
-              forma <strong className="font-black text-transparent bg-clip-text bg-gradient-to-r from-[#0145F2] to-sky-400">más confiable.</strong>
-            </h1>
-            <p className="text-xs sm:text-sm font-bold uppercase tracking-widest text-slate-500 dark:text-slate-400 pt-2">
-              RÁPIDO, SEGURO Y CONVENIENTE
-            </p>
+  // Etapas del stepper visible: 1 vehículo, 2 GNC/oferta, 3 peritaje (solo
+  // si rechazó la oferta), 4 contacto -- si aceptó la oferta, se saltea el
+  // paso de peritaje entero (no tiene sentido pedir fotos/visita si ya
+  // está de acuerdo con el número).
+  const stepsVisibles = acuerdoPrecio === true ? [1, 2, 4] : [1, 2, 3, 4];
+  const labelsVisibles = acuerdoPrecio === true ? ["VEHÍCULO", "OFERTA", "CONTACTO"] : ["VEHÍCULO", "OFERTA", "PERITAJE", "CONTACTO"];
+  const stepperActual = step >= 3.5 ? 3.5 : step;
+
+  return (
+    <div className="bg-[#F8FAFC] dark:bg-[#0a0a0f] text-slate-900 dark:text-white flex flex-col lg:flex-row font-sans">
+
+      {/* ================= ZONA IZQUIERDA: PREVIEW DINÁMICA ================= */}
+      <div className="w-full lg:w-[55%] h-[38vh] min-h-[300px] lg:h-[calc(100vh-5rem)] lg:sticky lg:top-20 relative bg-slate-100 dark:bg-[#050b14] overflow-hidden shrink-0 border-b lg:border-b-0 lg:border-r border-slate-200 dark:border-white/5">
+        <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_50%,rgba(1,69,242,0.08),transparent_60%)]" />
+        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[80%] h-[20%] bg-blue-500/10 dark:bg-blue-500/20 blur-[100px] rounded-full" />
+
+        <div className="absolute top-4 left-4 right-4 lg:top-6 lg:left-6 lg:right-auto z-20">
+          <div className="flex lg:hidden items-center gap-1.5 overflow-x-auto pr-24">
+            {[{ value: anio, icon: CalendarDays }, { value: marca, icon: CarFront }, { value: modelo, icon: Settings2 }, { value: version, icon: Zap }].filter((item) => item.value).map((item, i) => (
+              <div key={i} className="shrink-0 bg-white/70 dark:bg-black/40 backdrop-blur-md border border-slate-200 dark:border-white/10 rounded-full px-3 py-1.5 flex items-center gap-1.5 shadow-sm dark:shadow-none">
+                <item.icon className="w-3 h-3 text-blue-600 dark:text-blue-400 shrink-0" />
+                <span className="text-[10px] font-bold text-slate-900 dark:text-white truncate max-w-[90px]">{item.value}</span>
+              </div>
+            ))}
+          </div>
+          <div className="hidden lg:flex items-center gap-3">
+            <CarFront className="w-6 h-6 text-blue-600 dark:text-blue-400 shrink-0" />
+            <div>
+              <h2 className="text-sm font-black text-slate-900 dark:text-white">{vehiculoObjetivo ? "Tu permuta" : "Cotizá tu vehículo"}</h2>
+              <p className="text-[10px] text-slate-500 dark:text-slate-400 uppercase tracking-widest">Tasación profesional instantánea</p>
+            </div>
           </div>
         </div>
 
-        <div className="lg:col-span-5 flex justify-center w-full">
-          <div className="bg-white/70 dark:bg-white/5 backdrop-blur-2xl border border-white dark:border-white/10 rounded-[32px] shadow-[0_20px_50px_rgba(0,0,0,0.06)] dark:shadow-none p-6 md:p-8 w-full max-w-md relative">
+        {vehiculoObjetivo && (
+          <div className="absolute top-16 left-4 right-4 lg:top-20 lg:left-6 lg:right-6 z-20">
+            <div className="flex items-center gap-2.5 bg-emerald-50/90 dark:bg-emerald-400/10 border border-emerald-200 dark:border-emerald-400/20 backdrop-blur-md rounded-xl px-3.5 py-2.5">
+              <Repeat className="w-4 h-4 text-emerald-600 dark:text-emerald-400 shrink-0" />
+              <p className="text-[11px] font-bold text-emerald-800 dark:text-emerald-300 leading-tight">
+                Como parte de pago para el <span className="font-black">{vehiculoObjetivo.marca} {vehiculoObjetivo.modelo}</span>
+              </p>
+            </div>
+          </div>
+        )}
 
-            {!enviado && vehiculoObjetivo && (
-              <div className="mb-4 flex items-center gap-2.5 bg-emerald-50 dark:bg-emerald-400/10 border border-emerald-200 dark:border-emerald-400/20 rounded-xl px-3.5 py-2.5">
-                <CarFront className="w-4 h-4 text-emerald-600 dark:text-emerald-400 shrink-0" />
-                <p className="text-[11px] font-bold text-emerald-800 dark:text-emerald-300 leading-tight">
-                  Cotizando tu auto como parte de pago para el{" "}
-                  <span className="font-black">{vehiculoObjetivo.marca} {vehiculoObjetivo.modelo}</span>
-                </p>
+        <AnimatePresence>
+          {km && (
+            <motion.div initial={{ opacity: 0, y: -20 }} animate={{ opacity: 1, y: 0 }} className={`absolute right-4 lg:right-6 z-20 bg-blue-50/90 dark:bg-blue-900/40 border border-blue-200 dark:border-blue-500/30 backdrop-blur-xl rounded-xl lg:rounded-2xl px-3 py-2 lg:px-5 lg:py-3 flex items-center gap-2 lg:gap-3 shadow-[0_0_30px_rgba(1,69,242,0.12)] dark:shadow-[0_0_30px_rgba(1,69,242,0.3)] ${vehiculoObjetivo ? "top-32 lg:top-24" : "top-16 lg:top-8"}`}>
+              <Gauge className="w-4 h-4 lg:w-5 lg:h-5 text-blue-600 dark:text-blue-400 shrink-0" />
+              <div className="flex flex-col">
+                <span className="text-[8px] lg:text-[9px] font-bold uppercase tracking-widest text-blue-700/70 dark:text-blue-200/70">Kilómetros</span>
+                <motion.span key={km} initial={{ opacity: 0, filter: "blur(4px)" }} animate={{ opacity: 1, filter: "blur(0px)" }} className="text-sm lg:text-lg font-black text-slate-900 dark:text-white leading-none font-mono">
+                  {formatKm(km)} <span className="text-xs lg:text-sm font-bold text-blue-600 dark:text-blue-300">KM</span>
+                </motion.span>
               </div>
-            )}
+            </motion.div>
+          )}
+        </AnimatePresence>
 
-            {!enviado && (
-              <div className="mb-4">
-                <h2 className="text-xl font-black text-navy dark:text-white tracking-tight">
-                  {segundos > 1 ? `Cotiza tu auto en menos de ${segundos} segundos` : "Ya casi terminás, dale para adelante"}
-                </h2>
-                <p className="text-xs text-slate-400 font-medium">
-                  {step === 1 && "Ingresá los datos del vehículo"}
-                  {step === 2 && "¿Tu auto tiene o tuvo GNC?"}
-                  {step === 1.75 && "Estamos tasando tu vehículo"}
-                  {step === 1.5 && "Esto es lo que te podemos ofrecer"}
-                  {step === 3 && "¿Podés venir a una sucursal?"}
-                  {step === 4 && "Dejanos tus datos de contacto"}
-                </p>
-              </div>
-            )}
-
-            {!enviado ? (
-              <div>
-                
-                {step === 1 && (
-                  <div className="space-y-4 animate-fadeIn">
-                    <div className="relative">
-                      <div 
-                        onClick={() => setOpenDropdown(openDropdown === 'anio' ? null : 'anio')}
-                        className={`w-full bg-white/60 dark:bg-white/5 backdrop-blur-md border rounded-2xl px-4 py-3.5 text-sm font-semibold flex items-center justify-between cursor-pointer transition-all shadow-sm dark:shadow-none ${anio ? 'text-navy dark:text-white border-slate-300 dark:border-white/20' : 'text-slate-400 dark:text-slate-500 border-white dark:border-white/10'}`}
-                      >
-                        <span>{anio ? anio : "Seleccioná el año"}</span>
-                        <ChevronDown className={`w-4 h-4 text-slate-500 dark:text-slate-400 transition-transform ${openDropdown === 'anio' ? 'rotate-180 text-[#0145F2] dark:text-sky-300' : ''}`} />
-                      </div>
-
-                      {openDropdown === 'anio' && (
-                        <div className="absolute top-full left-0 right-0 mt-2 bg-white/95 dark:bg-[#14141c] backdrop-blur-xl border border-white dark:border-white/10 rounded-2xl shadow-2xl z-50 max-h-56 overflow-y-auto p-1">
-                          {aniosDisponibles.map((a) => (
-                            <div
-                              key={a}
-                              onClick={() => { setAnio(String(a)); setOpenDropdown(null); }}
-                              className="px-4 py-2.5 text-xs font-bold text-slate-700 dark:text-slate-300 hover:bg-blue-50 dark:hover:bg-sky-400/10 hover:text-[#0145F2] dark:hover:text-sky-300 rounded-xl cursor-pointer transition-colors"
-                            >
-                              {a}
-                            </div>
-                          ))}
-                        </div>
-                      )}
-                    </div>
-
-                    <div className="relative">
-                      <div
-                        onClick={() => setOpenDropdown(openDropdown === 'marca' ? null : 'marca')}
-                        className={`w-full bg-white/60 dark:bg-white/5 backdrop-blur-md border rounded-2xl px-4 py-3.5 text-sm font-semibold flex items-center justify-between cursor-pointer transition-all shadow-sm dark:shadow-none ${marca ? 'text-navy dark:text-white border-slate-300 dark:border-white/20' : 'text-slate-400 dark:text-slate-500 border-white dark:border-white/10'}`}
-                      >
-                        <span>{marca ? marca : "Seleccioná la marca"}</span>
-                        <ChevronDown className={`w-4 h-4 text-slate-500 dark:text-slate-400 transition-transform ${openDropdown === 'marca' ? 'rotate-180 text-[#0145F2] dark:text-sky-300' : ''}`} />
-                      </div>
-
-                      {openDropdown === 'marca' && (
-                        <div className="absolute top-full left-0 right-0 mt-2 bg-white/95 dark:bg-[#14141c] backdrop-blur-xl border border-white dark:border-white/10 rounded-2xl shadow-2xl z-50 p-2">
-                          <input
-                            type="text"
-                            placeholder="Buscá la marca..."
-                            value={busquedaMarca}
-                            onChange={(e) => setBusquedaMarca(e.target.value)}
-                            className="w-full bg-slate-50 dark:bg-white/5 border border-slate-200 dark:border-white/10 text-slate-900 dark:text-white rounded-xl px-3 py-2 text-xs font-bold outline-none mb-2"
-                            autoFocus
-                          />
-                          <div className="max-h-44 overflow-y-auto space-y-1">
-                            {marcasFiltradas.map((m) => (
-                              <div
-                                key={m}
-                                onClick={() => { setMarca(m); setModelo(""); setOpenDropdown(null); }}
-                                className="px-3 py-2 text-xs font-bold text-slate-700 dark:text-slate-300 hover:bg-blue-50 dark:hover:bg-sky-400/10 hover:text-[#0145F2] dark:hover:text-sky-300 rounded-xl cursor-pointer transition-colors"
-                              >
-                                {m}
-                              </div>
-                            ))}
-                          </div>
-                        </div>
-                      )}
-                    </div>
-
-                    <div className="relative">
-                      <div
-                        onClick={() => marca && setOpenDropdown(openDropdown === 'modelo' ? null : 'modelo')}
-                        className={`w-full bg-white/60 dark:bg-white/5 backdrop-blur-md border rounded-2xl px-4 py-3.5 text-sm font-semibold flex items-center justify-between transition-all shadow-sm dark:shadow-none ${marca ? 'cursor-pointer text-navy dark:text-white border-slate-300 dark:border-white/20' : 'opacity-60 cursor-not-allowed text-slate-400 dark:text-slate-500 border-white dark:border-white/10'}`}
-                      >
-                        <span>{modelo ? modelo : "Seleccioná el modelo"}</span>
-                        <ChevronDown className={`w-4 h-4 text-slate-500 dark:text-slate-400 transition-transform ${openDropdown === 'modelo' ? 'rotate-180 text-[#0145F2] dark:text-sky-300' : ''}`} />
-                      </div>
-
-                      {openDropdown === 'modelo' && marca && (
-                        <div className="absolute top-full left-0 right-0 mt-2 bg-white/95 dark:bg-[#14141c] backdrop-blur-xl border border-white dark:border-white/10 rounded-2xl shadow-2xl z-50 max-h-52 overflow-y-auto p-1">
-                          {modelosDisponibles.map((mod) => (
-                            <div
-                              key={mod}
-                              onClick={() => { setModelo(mod); setOpenDropdown(null); }}
-                              className="px-4 py-2.5 text-xs font-bold text-slate-700 dark:text-slate-300 hover:bg-blue-50 dark:hover:bg-sky-400/10 hover:text-[#0145F2] dark:hover:text-sky-300 rounded-xl cursor-pointer transition-colors"
-                            >
-                              {mod}
-                            </div>
-                          ))}
-                        </div>
-                      )}
-                    </div>
-
-                    <div>
-                      <input
-                        type="text"
-                        placeholder="Ingresá la versión (Ej: 1.6 MSI...)"
-                        value={version}
-                        onChange={(e) => setVersion(e.target.value)}
-                        className="w-full bg-white/60 dark:bg-white/5 backdrop-blur-md border border-white dark:border-white/10 rounded-2xl px-4 py-3.5 text-sm font-semibold text-navy dark:text-white placeholder:text-slate-400 dark:placeholder:text-slate-500 outline-none focus:border-[#0145F2] dark:focus:border-sky-400 transition-all shadow-sm dark:shadow-none"
-                      />
-                    </div>
-
-                    <div>
-                      <input
-                        type="number"
-                        placeholder="Ingresá el kilometraje (Ej: 45000)"
-                        value={km}
-                        onChange={(e) => setKm(e.target.value)}
-                        className="w-full bg-white/60 dark:bg-white/5 backdrop-blur-md border border-white dark:border-white/10 rounded-2xl px-4 py-3.5 text-sm font-semibold text-navy dark:text-white placeholder:text-slate-400 dark:placeholder:text-slate-500 outline-none focus:border-[#0145F2] dark:focus:border-sky-400 transition-all shadow-sm dark:shadow-none"
-                      />
-                    </div>
-
-                    <div className="relative">
-                      <div
-                        onClick={() => setOpenDropdown(openDropdown === 'combustible' ? null : 'combustible')}
-                        className={`w-full bg-white/60 dark:bg-white/5 backdrop-blur-md border rounded-2xl px-4 py-3.5 text-sm font-semibold flex items-center justify-between cursor-pointer transition-all shadow-sm dark:shadow-none ${combustible ? 'text-navy dark:text-white border-slate-300 dark:border-white/20' : 'text-slate-400 dark:text-slate-500 border-white dark:border-white/10'}`}
-                      >
-                        <span>{combustible ? combustible : "Seleccioná el combustible"}</span>
-                        <ChevronDown className={`w-4 h-4 text-slate-500 dark:text-slate-400 transition-transform ${openDropdown === 'combustible' ? 'rotate-180 text-[#0145F2] dark:text-sky-300' : ''}`} />
-                      </div>
-
-                      {openDropdown === 'combustible' && (
-                        <div className="absolute top-full left-0 right-0 mt-2 bg-white/95 dark:bg-[#14141c] backdrop-blur-xl border border-white dark:border-white/10 rounded-2xl shadow-2xl z-50 p-1">
-                          {combustiblesDisponibles.map((c) => (
-                            <div
-                              key={c}
-                              onClick={() => { setCombustible(c); setOpenDropdown(null); }}
-                              className="px-4 py-2.5 text-xs font-bold text-slate-700 dark:text-slate-300 hover:bg-blue-50 dark:hover:bg-sky-400/10 hover:text-[#0145F2] dark:hover:text-sky-300 rounded-xl cursor-pointer transition-colors"
-                            >
-                              {c}
-                            </div>
-                          ))}
-                        </div>
-                      )}
-                    </div>
-
-                    <div>
-                      <input
-                        type="number"
-                        placeholder="¿Cuánto esperás por tu auto? ($)"
-                        value={precioEsperado}
-                        onChange={(e) => setPrecioEsperado(e.target.value)}
-                        className="w-full bg-white/60 dark:bg-white/5 backdrop-blur-md border border-white dark:border-white/10 rounded-2xl px-4 py-3.5 text-sm font-semibold text-navy dark:text-white placeholder:text-slate-400 dark:placeholder:text-slate-500 outline-none focus:border-[#0145F2] dark:focus:border-sky-400 transition-all shadow-sm dark:shadow-none"
-                      />
-                    </div>
-
-                    <div className="pt-2">
-                      <button
-                        type="button"
-                        disabled={!validarPaso1()}
-                        onClick={() => setStep(2)}
-                        className="w-full py-4 bg-gradient-to-r from-[#0145F2] to-blue-600 hover:from-blue-600 hover:to-sky-500 disabled:opacity-50 text-white font-black rounded-2xl uppercase tracking-widest text-xs transition-all shadow-lg shadow-blue-500/20 cursor-pointer active:scale-95 flex items-center justify-center gap-2"
-                      >
-                        Continuar
-                      </button>
-                    </div>
-
+        <div className="absolute inset-0 flex items-center justify-center px-4 pt-12 pb-14 lg:p-8 lg:pt-0 lg:pb-0">
+          <AnimatePresence mode="wait">
+            {!marca ? (
+              <motion.div key="placeholder" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0, filter: "blur(10px)", scale: 0.9 }} className="text-center">
+                <div className="w-16 h-16 lg:w-24 lg:h-24 rounded-full border border-slate-200 dark:border-white/10 flex items-center justify-center mx-auto mb-4 lg:mb-6 bg-white dark:bg-white/5 shadow-sm dark:shadow-none">
+                  <Zap className="w-6 h-6 lg:w-8 lg:h-8 text-slate-400 dark:text-slate-600" />
+                </div>
+                <h3 className="text-lg lg:text-2xl font-black text-slate-700 dark:text-slate-300 tracking-tight px-4">Comenzá tu cotización</h3>
+                <p className="text-xs lg:text-sm text-slate-500 mt-2 px-4">Tu vehículo aparecerá en este espacio.</p>
+              </motion.div>
+            ) : marca && !modelo ? (
+              <motion.div key="logo" initial={{ opacity: 0, scale: 0.8, filter: "blur(10px)" }} animate={{ opacity: 1, scale: 1, filter: "blur(0px)" }} exit={{ opacity: 0, scale: 1.1, filter: "blur(10px)" }} transition={{ duration: 0.5 }} className="flex flex-col items-center">
+                <div className="relative w-32 h-32 lg:w-48 lg:h-48 flex items-center justify-center">
+                  <img src={logoPath} alt={marca} className="max-w-full max-h-full object-contain drop-shadow-2xl" onError={(e) => { e.currentTarget.style.display = "none"; }} />
+                  <span className="absolute inset-0 flex items-center justify-center text-2xl lg:text-4xl font-black text-slate-900 dark:text-white opacity-10 dark:opacity-20 -z-10 tracking-tighter uppercase">{marca}</span>
+                </div>
+              </motion.div>
+            ) : (
+              <motion.div key="car" initial={{ opacity: 0, x: 50, filter: "blur(10px)" }} animate={{ opacity: 1, x: 0, filter: "blur(0px)" }} transition={{ duration: 0.6, ease: "easeOut" }} className="relative w-full max-w-2xl h-full flex flex-col items-center justify-center">
+                {!imageError ? (
+                  <img src={carPath} alt={`${marca} ${modelo}`} className="w-full h-auto object-contain drop-shadow-[0_20px_40px_rgba(0,0,0,0.15)] dark:drop-shadow-[0_20px_50px_rgba(0,0,0,0.5)] z-10" onError={() => setImageError(true)} />
+                ) : (
+                  <div className="flex flex-col items-center">
+                    <img src={logoPath} alt={marca} className="w-20 h-20 lg:w-32 lg:h-32 object-contain mb-4 lg:mb-8 opacity-70 dark:opacity-50" onError={(e) => { e.currentTarget.style.display = "none"; }} />
+                    <h2 className="text-2xl lg:text-4xl font-black text-slate-900 dark:text-white uppercase tracking-tighter text-center px-4">{marca} {modelo}</h2>
                   </div>
                 )}
+                <div className="absolute bottom-[8%] lg:bottom-[30%] w-[80%] h-8 bg-black/10 dark:bg-black/60 blur-xl rounded-full" />
+              </motion.div>
+            )}
+          </AnimatePresence>
+        </div>
 
-                {step === 2 && (
-                  <div className="space-y-6 animate-fadeIn py-2">
-                    <div>
-                      <button onClick={() => setStep(1)} className="text-xs font-bold text-[#0145F2] flex items-center gap-1 mb-2 hover:underline">
-                        <ArrowLeft className="w-3.5 h-3.5" /> Volver
-                      </button>
-                    </div>
+        <div className="hidden lg:flex absolute bottom-6 left-10 right-10 flex-wrap gap-4 z-20">
+          {[{ label: "Año", value: anio, icon: CalendarDays }, { label: "Marca", value: marca, icon: CarFront }, { label: "Modelo", value: modelo, icon: Settings2 }, { label: "Versión", value: version, icon: Zap }].map((item, i) => (
+            <div key={i} className="flex-1 min-w-[120px] bg-white/70 dark:bg-black/40 backdrop-blur-md border border-slate-200 dark:border-white/10 rounded-2xl p-4 flex items-center gap-3 shadow-sm dark:shadow-none">
+              <item.icon className={`w-4 h-4 shrink-0 ${item.value ? "text-blue-600 dark:text-blue-400" : "text-slate-400 dark:text-slate-600"}`} />
+              <div className="flex flex-col min-w-0">
+                <span className="text-[9px] uppercase tracking-widest text-slate-500 font-bold">{item.label}</span>
+                <span className={`text-xs font-bold truncate ${item.value ? "text-slate-900 dark:text-white" : "text-slate-400 dark:text-slate-600"}`}>{item.value || "—"}</span>
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
 
-                    <div className="space-y-3">
-                      {["Sí, tiene GNC", "No, pero tenía antes", "No, nunca tuvo"].map((op) => (
-                        <div
-                          key={op}
-                          onClick={() => setGnc(op)}
-                          className={`p-4 rounded-2xl border cursor-pointer font-bold text-xs transition-all shadow-sm dark:shadow-none ${gnc === op ? 'bg-blue-50 dark:bg-sky-400/10 border-[#0145F2] dark:border-sky-400 text-[#0145F2] dark:text-sky-300' : 'bg-white/60 dark:bg-white/5 border-white dark:border-white/10 text-slate-700 dark:text-slate-300 hover:bg-white dark:hover:bg-white/10'}`}
-                        >
-                          {op}
-                        </div>
+      {/* ================= ZONA DERECHA: CONFIGURADOR ================= */}
+      <div className="w-full lg:w-[45%] h-auto bg-white dark:bg-[#0a0a0f] flex flex-col items-center pt-2 lg:pt-10 pb-10 px-6 lg:px-12">
+        <div className="w-full max-w-md">
+          <ProgressStepper currentStep={stepperActual} totalSteps={stepsVisibles} labels={labelsVisibles} />
+
+          <div className="mb-4 lg:mb-8">
+            <h2 className="text-lg lg:text-2xl font-black text-slate-900 dark:text-white tracking-tight mb-1 lg:mb-2">{vehiculoObjetivo ? "Cotizá tu permuta" : "Cotizá tu vehículo"}</h2>
+            <p className="hidden lg:block text-sm text-slate-500 dark:text-slate-400">
+              {step === 1 && "Completá los datos y comenzá a ver tu auto en tiempo real."}
+              {step === 2 && "¿Tu auto tiene o tuvo GNC?"}
+              {step === 2.5 && "Estamos tasando tu vehículo."}
+              {step === 3 && "Esto es lo que te podemos ofrecer."}
+              {step === 3.5 && "¿Podés venir a una sucursal?"}
+              {step === 4 && "Dejanos tus datos para que un asesor te contacte."}
+            </p>
+          </div>
+
+          <div className="relative">
+            <AnimatePresence mode="wait">
+
+              {step === 1 && (
+                <motion.div key="step1" initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -20 }} transition={{ duration: 0.3 }} className="grid grid-cols-2 gap-2 lg:block lg:space-y-3">
+                  <ConfigField icon={CalendarDays} label="Año" value={anio} isOpen={openDropdown === "anio"} onClick={() => setOpenDropdown(openDropdown === "anio" ? null : "anio")} isCompleted={!!anio}>
+                    <div className="grid grid-cols-5 gap-1.5">
+                      {aniosDisponibles.map((a) => (
+                        <button key={a} onClick={() => { setAnio(String(a)); setOpenDropdown("marca"); }} className={`py-1.5 text-[11px] font-bold rounded-md border transition-all ${anio === String(a) ? "bg-blue-600 border-blue-500 text-white" : "bg-slate-50 dark:bg-white/5 border-slate-200 dark:border-white/5 text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-white/10 hover:border-slate-300 dark:hover:border-white/20"}`}>{a}</button>
                       ))}
                     </div>
+                  </ConfigField>
 
-                    <button
-                      type="button"
-                      disabled={!gnc}
-                      onClick={continuarDesdePaso2}
-                      className="w-full py-4 bg-gradient-to-r from-[#0145F2] to-blue-600 hover:from-blue-600 hover:to-sky-500 disabled:opacity-50 text-white font-black rounded-2xl uppercase tracking-widest text-xs transition-all shadow-lg shadow-blue-500/20 cursor-pointer active:scale-95"
-                    >
-                      Continuar
+                  <ConfigField icon={CarFront} label="Marca" value={marca} isOpen={openDropdown === "marca"} onClick={() => setOpenDropdown(openDropdown === "marca" ? null : "marca")} isCompleted={!!marca}>
+                    <input type="text" placeholder="Buscá tu marca..." value={busquedaMarca} onChange={(e) => setBusquedaMarca(e.target.value)} className="w-full bg-slate-50 dark:bg-black/50 border border-slate-200 dark:border-white/10 rounded-xl px-4 py-3 text-sm text-slate-900 dark:text-white placeholder:text-slate-400 dark:placeholder:text-slate-600 outline-none focus:border-blue-500 mb-3" />
+                    <div className="max-h-48 overflow-y-auto custom-scrollbar pr-2 space-y-1">
+                      {marcasFiltradas.map((m) => (
+                        <button key={m} onClick={() => { setMarca(m); setModelo(""); setOpenDropdown("modelo"); setBusquedaMarca(""); }} className={`w-full text-left px-4 py-3 rounded-xl text-sm font-bold transition-colors ${marca === m ? "bg-blue-600 text-white" : "text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-white/10"}`}>{m}</button>
+                      ))}
+                    </div>
+                  </ConfigField>
+
+                  <ConfigField icon={Settings2} label="Modelo" value={modelo} isOpen={openDropdown === "modelo"} onClick={() => marca && setOpenDropdown(openDropdown === "modelo" ? null : "modelo")} isCompleted={!!modelo}>
+                    <div className="max-h-48 overflow-y-auto custom-scrollbar pr-2 space-y-1">
+                      {modelosDisponibles.map((mod) => (
+                        <button key={mod} onClick={() => { setModelo(mod); setOpenDropdown("version"); }} className={`w-full text-left px-4 py-3 rounded-xl text-sm font-bold transition-colors ${modelo === mod ? "bg-blue-600 text-white" : "text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-white/10"}`}>{mod}</button>
+                      ))}
+                    </div>
+                  </ConfigField>
+
+                  <ConfigField icon={Zap} label="Versión" value={version} isOpen={openDropdown === "version"} onClick={() => setOpenDropdown(openDropdown === "version" ? null : "version")} isCompleted={!!version}>
+                    <input type="text" placeholder="Ej: 1.0 Turbo Premier..." value={version} onChange={(e) => setVersion(e.target.value)} className="w-full bg-slate-50 dark:bg-black/50 border border-slate-200 dark:border-white/10 rounded-xl px-4 py-3 text-sm text-slate-900 dark:text-white placeholder:text-slate-400 dark:placeholder:text-slate-600 outline-none focus:border-blue-500" />
+                    <button onClick={() => setOpenDropdown("km")} className="mt-3 w-full bg-slate-100 dark:bg-white/10 hover:bg-slate-200 dark:hover:bg-white/20 text-slate-700 dark:text-white text-xs font-bold py-2.5 rounded-lg transition-colors">Confirmar Versión</button>
+                  </ConfigField>
+
+                  <ConfigField icon={Gauge} label="Kilómetros" value={km ? formatKm(km) + " km" : ""} isOpen={openDropdown === "km"} onClick={() => setOpenDropdown(openDropdown === "km" ? null : "km")} isCompleted={!!km}>
+                    <input type="number" placeholder="Ej: 45000" value={km} onChange={(e) => setKm(e.target.value)} className="w-full bg-slate-50 dark:bg-black/50 border border-slate-200 dark:border-white/10 rounded-xl px-4 py-3 text-sm text-slate-900 dark:text-white placeholder:text-slate-400 dark:placeholder:text-slate-600 outline-none focus:border-blue-500 font-mono" />
+                    <button onClick={() => setOpenDropdown("combustible")} className="mt-3 w-full bg-slate-100 dark:bg-white/10 hover:bg-slate-200 dark:hover:bg-white/20 text-slate-700 dark:text-white text-xs font-bold py-2.5 rounded-lg transition-colors">Confirmar Kilometraje</button>
+                  </ConfigField>
+
+                  <ConfigField icon={Fuel} label="Combustible" value={combustible} isOpen={openDropdown === "combustible"} onClick={() => setOpenDropdown(openDropdown === "combustible" ? null : "combustible")} isCompleted={!!combustible}>
+                    <div className="space-y-1">
+                      {combustiblesDisponibles.map((c) => (
+                        <button key={c} onClick={() => { setCombustible(c); setOpenDropdown("precio"); }} className={`w-full text-left px-4 py-3 rounded-xl text-sm font-bold transition-colors ${combustible === c ? "bg-blue-600 text-white" : "text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-white/10"}`}>{c}</button>
+                      ))}
+                    </div>
+                  </ConfigField>
+
+                  <ConfigField icon={Gauge} label="Precio esperado" value={precioEsperado ? `$ ${formatKm(precioEsperado)}` : ""} isOpen={openDropdown === "precio"} onClick={() => setOpenDropdown(openDropdown === "precio" ? null : "precio")} isCompleted={!!precioEsperado}>
+                    <input type="number" placeholder="¿Cuánto esperás por tu auto?" value={precioEsperado} onChange={(e) => setPrecioEsperado(e.target.value)} className="w-full bg-slate-50 dark:bg-black/50 border border-slate-200 dark:border-white/10 rounded-xl px-4 py-3 text-sm text-slate-900 dark:text-white placeholder:text-slate-400 dark:placeholder:text-slate-600 outline-none focus:border-blue-500 font-mono" />
+                    <button onClick={() => setOpenDropdown(null)} className="mt-3 w-full bg-slate-100 dark:bg-white/10 hover:bg-slate-200 dark:hover:bg-white/20 text-slate-700 dark:text-white text-xs font-bold py-2.5 rounded-lg transition-colors">Confirmar Precio</button>
+                  </ConfigField>
+
+                  <div className="col-span-2 pt-3 lg:pt-6">
+                    <button onClick={() => setStep(2)} disabled={!validarPaso1()} className="w-full py-4 bg-blue-600 hover:bg-blue-500 disabled:bg-slate-200 dark:disabled:bg-slate-800 disabled:text-slate-400 dark:disabled:text-slate-500 text-white font-black rounded-2xl uppercase tracking-widest text-xs transition-colors flex items-center justify-center gap-2">
+                      Siguiente Paso <ArrowLeft className="w-4 h-4 rotate-180" />
                     </button>
                   </div>
-                )}
+                </motion.div>
+              )}
 
-                {step === 1.75 && (
-                  <div className="space-y-5 animate-fadeIn py-10 flex flex-col items-center text-center">
-                    <div className="relative w-16 h-16">
-                      <div className="absolute inset-0 rounded-full border-4 border-blue-100 dark:border-sky-400/20" />
-                      <div className="absolute inset-0 rounded-full border-4 border-[#0145F2] dark:border-sky-400 border-t-transparent animate-spin" />
-                    </div>
-                    <div className="space-y-1.5">
-                      <p className="text-sm font-black text-navy dark:text-white">Analizando el mercado y tasando tu {marca} {modelo}...</p>
-                      <p className="text-[11px] text-slate-400 font-medium">Comparamos contra unidades similares para darte un valor real.</p>
+              {step === 2 && (
+                <motion.div key="step2" initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -20 }} transition={{ duration: 0.3 }} className="space-y-4">
+                  <button onClick={() => setStep(1)} className="text-xs font-bold text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white flex items-center gap-1 mb-4 transition-colors">
+                    <ArrowLeft className="w-3.5 h-3.5" /> Volver al vehículo
+                  </button>
+                  <div className="bg-slate-50 dark:bg-[#161e2c] border border-slate-200 dark:border-slate-700 rounded-2xl p-6">
+                    <div className="flex items-center gap-3 mb-6"><Flame className="w-5 h-5 text-amber-500" /><h3 className="font-bold text-slate-900 dark:text-white">¿El vehículo tiene GNC?</h3></div>
+                    <div className="space-y-3">
+                      {["Sí, tiene GNC", "No, pero tenía antes", "No, nunca tuvo"].map((op) => (
+                        <button key={op} onClick={() => setGnc(op)} className={`w-full text-left px-5 py-4 rounded-xl border text-sm font-bold transition-all ${gnc === op ? "bg-blue-50 dark:bg-blue-600/20 border-blue-500 text-blue-700 dark:text-white" : "bg-white dark:bg-[#0f172a] border-slate-200 dark:border-white/5 text-slate-500 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-white/5"}`}>{op}</button>
+                      ))}
                     </div>
                   </div>
-                )}
-
-                {step === 1.5 && (
-                  <div className="space-y-5 animate-fadeIn py-2">
-                    <div>
-                      <button onClick={() => setStep(2)} className="text-xs font-bold text-[#0145F2] flex items-center gap-1 mb-2 hover:underline">
-                        <ArrowLeft className="w-3.5 h-3.5" /> Volver
-                      </button>
-                    </div>
-
-                    <div className="bg-blue-50 dark:bg-sky-400/10 border border-blue-100 dark:border-sky-400/20 rounded-2xl p-5 text-center space-y-1.5">
-                      <p className="text-[11px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-widest">Oferta estimada</p>
-                      <p className="text-3xl font-black text-[#0145F2] dark:text-sky-300">
-                        ${precioOferta?.toLocaleString("es-AR")}
-                      </p>
-                    </div>
-
-                    <div className="space-y-3">
-                      <button
-                        type="button"
-                        onClick={() => { setAcuerdoPrecio(true); setStep(4); }}
-                        className="w-full py-4 bg-gradient-to-r from-[#0145F2] to-blue-600 hover:from-blue-600 hover:to-sky-500 text-white font-black rounded-2xl uppercase tracking-widest text-xs transition-all shadow-lg shadow-blue-500/20 cursor-pointer active:scale-95"
-                      >
-                        Estoy de acuerdo con este precio
-                      </button>
-                      <button
-                        type="button"
-                        onClick={() => { setAcuerdoPrecio(false); setStep(3); }}
-                        className="w-full py-4 bg-white/60 dark:bg-white/5 border border-white dark:border-white/10 text-slate-700 dark:text-slate-300 font-black rounded-2xl uppercase tracking-widest text-xs transition-all cursor-pointer active:scale-95"
-                      >
-                        Prefiero un peritaje presencial
-                      </button>
-                    </div>
+                  <div className="pt-6">
+                    <button onClick={continuarDesdeGnc} disabled={!gnc} className="w-full py-4 bg-blue-600 hover:bg-blue-500 disabled:bg-slate-200 dark:disabled:bg-slate-800 disabled:text-slate-400 dark:disabled:text-slate-500 text-white font-black rounded-2xl uppercase tracking-widest text-xs transition-colors flex items-center justify-center gap-2">
+                      Ver mi oferta <ArrowLeft className="w-4 h-4 rotate-180" />
+                    </button>
                   </div>
-                )}
+                </motion.div>
+              )}
 
-                {step === 3 && (
-                  <div className="space-y-5 animate-fadeIn py-2">
-                    <div>
-                      <button onClick={() => setStep(1.5)} className="text-xs font-bold text-[#0145F2] flex items-center gap-1 mb-2 hover:underline">
-                        <ArrowLeft className="w-3.5 h-3.5" /> Volver
-                      </button>
+              {step === 2.5 && (
+                <motion.div key="step2.5" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="py-16 flex flex-col items-center text-center space-y-5">
+                  <div className="relative w-16 h-16">
+                    <div className="absolute inset-0 rounded-full border-4 border-blue-100 dark:border-blue-500/20" />
+                    <div className="absolute inset-0 rounded-full border-4 border-blue-600 dark:border-blue-400 border-t-transparent animate-spin" />
+                  </div>
+                  <div className="space-y-1.5">
+                    <p className="text-sm font-black text-slate-900 dark:text-white">Analizando el mercado y tasando tu {marca} {modelo}...</p>
+                    <p className="text-xs text-slate-400 font-medium">Comparamos contra unidades similares para darte un valor real.</p>
+                  </div>
+                </motion.div>
+              )}
+
+              {step === 3 && (
+                <motion.div key="step3" initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -20 }} transition={{ duration: 0.3 }} className="space-y-5">
+                  <button onClick={() => setStep(2)} className="text-xs font-bold text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white flex items-center gap-1 mb-2 transition-colors">
+                    <ArrowLeft className="w-3.5 h-3.5" /> Volver
+                  </button>
+                  <div className="bg-blue-50 dark:bg-blue-600/10 border border-blue-100 dark:border-blue-500/20 rounded-2xl p-6 text-center space-y-1.5">
+                    <p className="text-[11px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-widest">Oferta estimada</p>
+                    <p className="text-3xl font-black text-blue-600 dark:text-blue-300">${precioOferta?.toLocaleString("es-AR")}</p>
+                  </div>
+                  <div className="space-y-3">
+                    <button onClick={() => { setAcuerdoPrecio(true); setStep(4); }} className="w-full py-4 bg-blue-600 hover:bg-blue-500 text-white font-black rounded-2xl uppercase tracking-widest text-xs transition-colors">
+                      Estoy de acuerdo con este precio
+                    </button>
+                    <button onClick={() => { setAcuerdoPrecio(false); setStep(3.5); }} className="w-full py-4 bg-slate-100 dark:bg-white/10 border border-slate-200 dark:border-white/10 text-slate-700 dark:text-slate-300 font-black rounded-2xl uppercase tracking-widest text-xs transition-colors">
+                      Prefiero un peritaje presencial
+                    </button>
+                  </div>
+                </motion.div>
+              )}
+
+              {step === 3.5 && (
+                <motion.div key="step3.5" initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -20 }} transition={{ duration: 0.3 }} className="space-y-4">
+                  <button onClick={() => setStep(3)} className="text-xs font-bold text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white flex items-center gap-1 mb-2 transition-colors">
+                    <ArrowLeft className="w-3.5 h-3.5" /> Volver
+                  </button>
+
+                  {Number(km) > 200000 && (
+                    <div className="flex items-start gap-2.5 bg-amber-50 dark:bg-amber-400/10 border border-amber-200 dark:border-amber-400/20 rounded-2xl p-3.5">
+                      <AlertTriangle className="w-4 h-4 text-amber-600 dark:text-amber-400 shrink-0 mt-0.5" />
+                      <p className="text-[11px] text-amber-800 dark:text-amber-300 font-medium leading-relaxed">Por el kilometraje que indicaste, te recomendamos acercarte a una sucursal para un peritaje presencial más preciso.</p>
                     </div>
+                  )}
 
-                    {Number(km) > 200000 && (
-                      <div className="flex items-start gap-2.5 bg-amber-50 dark:bg-amber-400/10 border border-amber-200 dark:border-amber-400/20 rounded-2xl p-3.5">
-                        <AlertTriangle className="w-4 h-4 text-amber-600 dark:text-amber-400 shrink-0 mt-0.5" />
-                        <p className="text-[11px] text-amber-800 dark:text-amber-300 font-medium leading-relaxed">
-                          Por el kilometraje que indicaste, te recomendamos acercarte a una sucursal para un peritaje presencial más preciso.
-                        </p>
-                      </div>
-                    )}
+                  <div className="space-y-3">
+                    <button onClick={() => setPuedeVenir(true)} className={`w-full text-left p-4 rounded-2xl border font-bold text-sm transition-all flex items-center gap-3 ${puedeVenir === true ? "bg-blue-50 dark:bg-blue-600/20 border-blue-500 text-blue-700 dark:text-white" : "bg-white dark:bg-[#0f172a] border-slate-200 dark:border-white/5 text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-white/5"}`}>
+                      <Building2 className="w-4 h-4 shrink-0" /> Sí, puedo llevarlo a una sucursal
+                    </button>
+                    <button onClick={() => setPuedeVenir(false)} className={`w-full text-left p-4 rounded-2xl border font-bold text-sm transition-all flex items-center gap-3 ${puedeVenir === false ? "bg-blue-50 dark:bg-blue-600/20 border-blue-500 text-blue-700 dark:text-white" : "bg-white dark:bg-[#0f172a] border-slate-200 dark:border-white/5 text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-white/5"}`}>
+                      <Camera className="w-4 h-4 shrink-0" /> No, prefiero mandar fotos y videos
+                    </button>
+                  </div>
 
+                  {puedeVenir === true && (
                     <div className="space-y-3">
-                      <div
-                        onClick={() => setPuedeVenir(true)}
-                        className={`p-4 rounded-2xl border cursor-pointer font-bold text-xs transition-all shadow-sm dark:shadow-none flex items-center gap-3 ${puedeVenir === true ? 'bg-blue-50 dark:bg-sky-400/10 border-[#0145F2] dark:border-sky-400 text-[#0145F2] dark:text-sky-300' : 'bg-white/60 dark:bg-white/5 border-white dark:border-white/10 text-slate-700 dark:text-slate-300 hover:bg-white dark:hover:bg-white/10'}`}
-                      >
-                        <Building2 className="w-4 h-4 shrink-0" />
-                        Sí, puedo llevarlo a una sucursal para el peritaje
+                      <div>
+                        <label className="text-[10px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-widest block mb-2 flex items-center gap-1.5"><MapPin className="w-3.5 h-3.5" /> Sucursal</label>
+                        <select value={sucursalVisita} onChange={(e) => { setSucursalVisita(e.target.value); setHorarioVisita(""); }} className="w-full bg-slate-50 dark:bg-[#161e2c] border border-slate-200 dark:border-white/5 rounded-xl px-4 py-3 text-sm text-slate-900 dark:text-white outline-none focus:border-blue-500 cursor-pointer">
+                          <option value="">Seleccioná el local</option>
+                          {sucursales.map((s) => <option key={s.id} value={s.nombre}>{s.nombre}</option>)}
+                        </select>
                       </div>
-                      <div
-                        onClick={() => setPuedeVenir(false)}
-                        className={`p-4 rounded-2xl border cursor-pointer font-bold text-xs transition-all shadow-sm dark:shadow-none flex items-center gap-3 ${puedeVenir === false ? 'bg-blue-50 dark:bg-sky-400/10 border-[#0145F2] dark:border-sky-400 text-[#0145F2] dark:text-sky-300' : 'bg-white/60 dark:bg-white/5 border-white dark:border-white/10 text-slate-700 dark:text-slate-300 hover:bg-white dark:hover:bg-white/10'}`}
-                      >
-                        <Camera className="w-4 h-4 shrink-0" />
-                        No, prefiero mandar fotos y videos
-                      </div>
-                    </div>
-
-                    {puedeVenir === true && (
-                      <div className="space-y-3 animate-fadeIn">
-                        <div className="relative">
-                          <label className="text-[11px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-widest mb-1.5 flex items-center gap-1.5"><MapPin className="w-3.5 h-3.5" /> Sucursal</label>
-                          <select
-                            value={sucursalVisita}
-                            onChange={(e) => { setSucursalVisita(e.target.value); setHorarioVisita(""); }}
-                            className="w-full bg-white/60 dark:bg-white/5 backdrop-blur-md border border-white dark:border-white/10 rounded-2xl px-4 py-3 text-xs font-semibold text-navy dark:text-white outline-none focus:border-[#0145F2] dark:focus:border-sky-400 shadow-sm dark:shadow-none cursor-pointer"
-                          >
-                            <option value="">Seleccioná el local</option>
-                            {sucursales.map((s) => <option key={s.id} value={s.nombre}>{s.nombre}</option>)}
+                      <div className="grid grid-cols-2 gap-3">
+                        <div>
+                          <label className="text-[10px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-widest block mb-2 flex items-center gap-1.5"><CalendarDays className="w-3.5 h-3.5" /> Día</label>
+                          <input type="date" min={new Date().toISOString().split("T")[0]} value={fechaVisita} onChange={(e) => { setFechaVisita(e.target.value); setHorarioVisita(""); }} className="w-full bg-slate-50 dark:bg-[#161e2c] border border-slate-200 dark:border-white/5 rounded-xl px-3 py-3 text-sm text-slate-900 dark:text-white outline-none focus:border-blue-500 dark:[color-scheme:dark]" />
+                        </div>
+                        <div>
+                          <label className="text-[10px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-widest block mb-2 flex items-center gap-1.5"><Clock className="w-3.5 h-3.5" /> Horario</label>
+                          <select value={horarioVisita} onChange={(e) => setHorarioVisita(e.target.value)} disabled={!sucursalVisita || !fechaVisita} className="w-full bg-slate-50 dark:bg-[#161e2c] border border-slate-200 dark:border-white/5 rounded-xl px-3 py-3 text-sm text-slate-900 dark:text-white outline-none focus:border-blue-500 disabled:opacity-50 cursor-pointer dark:[color-scheme:dark]">
+                            <option value="">{!sucursalVisita || !fechaVisita ? "Elegí sucursal y día" : "Elegir..."}</option>
+                            {franjasHorario.map((f) => <option key={f} value={f} disabled={horariosOcupados.includes(f)}>{f} {horariosOcupados.includes(f) ? "(ocupado)" : ""}</option>)}
                           </select>
                         </div>
-                        <div className="grid grid-cols-2 gap-3">
-                          <div>
-                            <label className="text-[11px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-widest mb-1.5 flex items-center gap-1.5"><CalendarDays className="w-3.5 h-3.5" /> Día</label>
-                            <input
-                              type="date"
-                              min={new Date().toISOString().split("T")[0]}
-                              value={fechaVisita}
-                              onChange={(e) => { setFechaVisita(e.target.value); setHorarioVisita(""); }}
-                              className="w-full bg-white/60 dark:bg-white/5 backdrop-blur-md border border-white dark:border-white/10 rounded-2xl px-3 py-3 text-xs font-semibold text-navy dark:text-white outline-none focus:border-[#0145F2] dark:focus:border-sky-400 shadow-sm dark:shadow-none dark:[color-scheme:dark]"
-                            />
-                          </div>
-                          <div>
-                            <label className="text-[11px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-widest mb-1.5 flex items-center gap-1.5"><Clock className="w-3.5 h-3.5" /> Horario</label>
-                            <select
-                              value={horarioVisita}
-                              onChange={(e) => setHorarioVisita(e.target.value)}
-                              disabled={!sucursalVisita || !fechaVisita}
-                              className="w-full bg-white/60 dark:bg-white/5 backdrop-blur-md border border-white dark:border-white/10 rounded-2xl px-3 py-3 text-xs font-semibold text-navy dark:text-white outline-none focus:border-[#0145F2] dark:focus:border-sky-400 shadow-sm dark:shadow-none disabled:opacity-50 cursor-pointer dark:[color-scheme:dark]"
-                            >
-                              <option value="">{!sucursalVisita || !fechaVisita ? "Elegí sucursal y día" : "Elegir..."}</option>
-                              {franjasHorario.map((f) => <option key={f} value={f} disabled={horariosOcupados.includes(f)}>{f} {horariosOcupados.includes(f) ? "(ocupado)" : ""}</option>)}
-                            </select>
-                          </div>
+                      </div>
+                    </div>
+                  )}
+
+                  {puedeVenir === false && (
+                    <div className="space-y-3">
+                      <input ref={inputArchivoRef} type="file" accept="image/*,video/*" multiple onChange={manejarSeleccionArchivos} className="hidden" id="input-archivos-cotizacion" />
+                      <label htmlFor="input-archivos-cotizacion" className="flex flex-col items-center justify-center gap-2 border-2 border-dashed border-slate-300 dark:border-white/20 hover:border-blue-500 dark:hover:border-blue-400 rounded-2xl py-8 cursor-pointer transition-colors bg-slate-50 dark:bg-[#161e2c]">
+                        {subiendoArchivo ? <Loader2 className="w-5 h-5 text-blue-600 dark:text-blue-400 animate-spin" /> : <Upload className="w-5 h-5 text-slate-400 dark:text-slate-500" />}
+                        <span className="text-xs font-bold text-slate-500 dark:text-slate-400">{subiendoArchivo ? "Subiendo..." : "Tocá para subir fotos o videos"}</span>
+                      </label>
+                      <p className={`text-xs font-bold ${archivosSubidos.length >= MIN_FOTOS_SIN_VISITA ? "text-emerald-600 dark:text-emerald-400" : "text-slate-400"}`}>{archivosSubidos.length} / {MIN_FOTOS_SIN_VISITA} fotos mínimas</p>
+                      {errorArchivo && <p className="text-xs text-rose-600 dark:text-rose-400 font-medium">{errorArchivo}</p>}
+                      {archivosSubidos.length > 0 && (
+                        <div className="space-y-1.5">
+                          {archivosSubidos.map((a) => (
+                            <div key={a.url} className="flex items-center gap-2 bg-slate-50 dark:bg-[#161e2c] border border-slate-200 dark:border-white/5 rounded-xl px-3 py-2 text-xs font-semibold text-slate-600 dark:text-slate-300">
+                              {a.tipo === "video" ? <FileVideo className="w-3.5 h-3.5 text-blue-600 dark:text-blue-400 shrink-0" /> : <ImageIcon className="w-3.5 h-3.5 text-blue-600 dark:text-blue-400 shrink-0" />}
+                              <span className="truncate flex-1">{a.nombre}</span>
+                              <button type="button" onClick={() => quitarArchivo(a.url)} className="text-slate-400 dark:text-slate-500 hover:text-rose-600 dark:hover:text-rose-400 shrink-0"><X className="w-3.5 h-3.5" /></button>
+                            </div>
+                          ))}
                         </div>
-                      </div>
-                    )}
+                      )}
+                    </div>
+                  )}
 
-                    {puedeVenir === false && (
-                      <div className="space-y-3 animate-fadeIn">
-                        <input
-                          ref={inputArchivoRef}
-                          type="file"
-                          accept="image/*,video/*"
-                          multiple
-                          onChange={manejarSeleccionArchivos}
-                          className="hidden"
-                          id="input-archivos-cotizacion"
-                        />
-                        <label
-                          htmlFor="input-archivos-cotizacion"
-                          className="flex flex-col items-center justify-center gap-2 border-2 border-dashed border-slate-300 dark:border-white/20 hover:border-[#0145F2] dark:hover:border-sky-400 rounded-2xl py-6 cursor-pointer transition-colors bg-white/50 dark:bg-white/5"
-                        >
-                          {subiendoArchivo ? (
-                            <Loader2 className="w-5 h-5 text-[#0145F2] dark:text-sky-300 animate-spin" />
-                          ) : (
-                            <Upload className="w-5 h-5 text-slate-400 dark:text-slate-500" />
-                          )}
-                          <span className="text-[11px] font-bold text-slate-500 dark:text-slate-400">
-                            {subiendoArchivo ? "Subiendo..." : "Tocá para subir fotos o videos"}
-                          </span>
-                        </label>
-
-                        <p className={`text-[11px] font-bold ${archivosSubidos.length >= MIN_FOTOS_SIN_VISITA ? "text-emerald-600 dark:text-emerald-400" : "text-slate-400"}`}>
-                          {archivosSubidos.length} / {MIN_FOTOS_SIN_VISITA} fotos mínimas
-                        </p>
-
-                        {errorArchivo && (
-                          <p className="text-[11px] text-rose-600 dark:text-rose-400 font-medium">{errorArchivo}</p>
-                        )}
-
-                        {archivosSubidos.length > 0 && (
-                          <div className="space-y-1.5">
-                            {archivosSubidos.map((a) => (
-                              <div key={a.url} className="flex items-center gap-2 bg-white/70 dark:bg-white/5 border border-white dark:border-white/10 rounded-xl px-3 py-2 text-[11px] font-semibold text-slate-600 dark:text-slate-300">
-                                {a.tipo === "video" ? <FileVideo className="w-3.5 h-3.5 text-[#0145F2] dark:text-sky-300 shrink-0" /> : <ImageIcon className="w-3.5 h-3.5 text-[#0145F2] dark:text-sky-300 shrink-0" />}
-                                <span className="truncate flex-1">{a.nombre}</span>
-                                <button type="button" onClick={() => quitarArchivo(a.url)} className="text-slate-400 dark:text-slate-500 hover:text-rose-600 dark:hover:text-rose-400 shrink-0">
-                                  <X className="w-3.5 h-3.5" />
-                                </button>
-                              </div>
-                            ))}
-                          </div>
-                        )}
-                      </div>
-                    )}
-
-                    <button
-                      type="button"
-                      disabled={!validarPaso3() || subiendoArchivo}
-                      onClick={() => setStep(4)}
-                      className="w-full py-4 bg-gradient-to-r from-[#0145F2] to-blue-600 hover:from-blue-600 hover:to-sky-500 disabled:opacity-50 text-white font-black rounded-2xl uppercase tracking-widest text-xs transition-all shadow-lg shadow-blue-500/20 cursor-pointer active:scale-95"
-                    >
-                      Continuar
+                  <div className="pt-2">
+                    <button onClick={() => setStep(4)} disabled={!validarPasoVisita() || subiendoArchivo} className="w-full py-4 bg-blue-600 hover:bg-blue-500 disabled:bg-slate-200 dark:disabled:bg-slate-800 disabled:text-slate-400 dark:disabled:text-slate-500 text-white font-black rounded-2xl uppercase tracking-widest text-xs transition-colors flex items-center justify-center gap-2">
+                      Siguiente Paso <ArrowLeft className="w-4 h-4 rotate-180" />
                     </button>
                   </div>
-                )}
+                </motion.div>
+              )}
 
-                {step === 4 && (
-                  <form onSubmit={enviarCotizacion} className="space-y-4 animate-fadeIn">
-                    <div>
-                      <button type="button" onClick={() => setStep(acuerdoPrecio === true ? 1.5 : 3)} className="text-xs font-bold text-[#0145F2] flex items-center gap-1 mb-2 hover:underline">
-                        <ArrowLeft className="w-3.5 h-3.5" /> Volver
-                      </button>
+              {step === 4 && (
+                <motion.div key="step4" initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -20 }} transition={{ duration: 0.3 }}>
+                  <button onClick={() => setStep(acuerdoPrecio === true ? 3 : 3.5)} className="text-xs font-bold text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white flex items-center gap-1 mb-6 transition-colors">
+                    <ArrowLeft className="w-3.5 h-3.5" /> Volver
+                  </button>
+
+                  <form onSubmit={enviarCotizacion} className="space-y-4">
+                    <div className="grid grid-cols-2 gap-4">
+                      <div>
+                        <label className="text-[10px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-widest block mb-2">Nombre</label>
+                        <input required type="text" value={nombre} onChange={(e) => setNombre(e.target.value)} className="w-full bg-slate-50 dark:bg-[#161e2c] border border-slate-200 dark:border-white/5 rounded-xl px-4 py-3 text-sm text-slate-900 dark:text-white outline-none focus:border-blue-500 transition-colors" />
+                      </div>
+                      <div>
+                        <label className="text-[10px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-widest block mb-2">Apellido</label>
+                        <input required type="text" value={apellido} onChange={(e) => setApellido(e.target.value)} className="w-full bg-slate-50 dark:bg-[#161e2c] border border-slate-200 dark:border-white/5 rounded-xl px-4 py-3 text-sm text-slate-900 dark:text-white outline-none focus:border-blue-500 transition-colors" />
+                      </div>
                     </div>
-
                     <div>
-                      <label className="text-[11px] font-bold text-slate-500 dark:text-slate-400 uppercase block mb-1">Nombre</label>
-                      <input
-                        type="text"
-                        required
-                        placeholder="Ingresá tu nombre"
-                        value={nombre}
-                        onChange={(e) => setNombre(e.target.value)}
-                        className="w-full bg-white/60 dark:bg-white/5 backdrop-blur-md border border-white dark:border-white/10 rounded-2xl px-4 py-3 text-xs font-semibold text-navy dark:text-white outline-none focus:border-[#0145F2] dark:focus:border-sky-400 shadow-sm dark:shadow-none"
-                      />
+                      <label className="text-[10px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-widest block mb-2">Email</label>
+                      <input required type="email" value={email} onChange={(e) => setEmail(e.target.value)} className="w-full bg-slate-50 dark:bg-[#161e2c] border border-slate-200 dark:border-white/5 rounded-xl px-4 py-3 text-sm text-slate-900 dark:text-white outline-none focus:border-blue-500 transition-colors" />
                     </div>
-
                     <div>
-                      <label className="text-[11px] font-bold text-slate-500 dark:text-slate-400 uppercase block mb-1">Apellido</label>
-                      <input
-                        type="text"
-                        required
-                        placeholder="Ingresá tu apellido"
-                        value={apellido}
-                        onChange={(e) => setApellido(e.target.value)}
-                        className="w-full bg-white/60 dark:bg-white/5 backdrop-blur-md border border-white dark:border-white/10 rounded-2xl px-4 py-3 text-xs font-semibold text-navy dark:text-white outline-none focus:border-[#0145F2] dark:focus:border-sky-400 shadow-sm dark:shadow-none"
-                      />
-                    </div>
-
-                    <div>
-                      <label className="text-[11px] font-bold text-slate-500 dark:text-slate-400 uppercase block mb-1">Email</label>
-                      <input
-                        type="email"
-                        required
-                        placeholder="Ingresá tu correo"
-                        value={email}
-                        onChange={(e) => setEmail(e.target.value)}
-                        className="w-full bg-white/60 dark:bg-white/5 backdrop-blur-md border border-white dark:border-white/10 rounded-2xl px-4 py-3 text-xs font-semibold text-navy dark:text-white outline-none focus:border-[#0145F2] dark:focus:border-sky-400 shadow-sm dark:shadow-none"
-                      />
-                    </div>
-
-                    <div>
-                      <label className="text-[11px] font-bold text-slate-500 dark:text-slate-400 uppercase block mb-1">Teléfono celular</label>
+                      <label className="text-[10px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-widest block mb-2">Teléfono Celular</label>
                       <div className="flex gap-2">
-                        <div className="bg-white/80 dark:bg-white/10 border border-white dark:border-white/10 rounded-2xl px-3 py-3 text-xs font-bold text-slate-700 dark:text-slate-300 flex items-center shadow-sm dark:shadow-none">
-                          AR +549
-                        </div>
-                        <input
-                          type="tel"
-                          required
-                          placeholder="1112345678"
-                          value={tel}
-                          onChange={(e) => setTel(e.target.value)}
-                          className="flex-1 bg-white/60 dark:bg-white/5 backdrop-blur-md border border-white dark:border-white/10 rounded-2xl px-4 py-3 text-xs font-semibold text-navy dark:text-white outline-none focus:border-[#0145F2] dark:focus:border-sky-400 shadow-sm dark:shadow-none"
-                        />
+                        <div className="bg-slate-100 dark:bg-[#161e2c] border border-slate-200 dark:border-white/5 rounded-xl px-4 py-3 text-xs font-bold text-slate-500 dark:text-slate-400 flex items-center">+549</div>
+                        <input required type="tel" value={tel} onChange={(e) => setTel(e.target.value)} placeholder="11 1234 5678" className="flex-1 bg-slate-50 dark:bg-[#161e2c] border border-slate-200 dark:border-white/5 rounded-xl px-4 py-3 text-sm text-slate-900 dark:text-white outline-none focus:border-blue-500 transition-colors" />
                       </div>
                     </div>
 
-                    <div className="pt-1 flex flex-col items-center gap-1.5">
+                    <div className="pt-4 flex flex-col items-center gap-1.5">
                       <div ref={turnstileRef} />
                       {turnstileError && (
-                        <p className="text-[10px] text-rose-500 font-medium text-center max-w-xs">
-                          No se pudo cargar la verificación anti-spam. Puede ser un bloqueador de anuncios o un problema temporal — probá recargar la página.
-                        </p>
+                        <p className="text-[10px] text-rose-500 font-medium text-center max-w-xs">No se pudo cargar la verificación anti-spam. Puede ser un bloqueador de anuncios o un problema temporal — probá recargar la página.</p>
                       )}
                     </div>
 
                     {errorEnvio && (
-                      <div key={shakeError} className="flex items-start gap-2 bg-rose-50 dark:bg-rose-400/10 border border-rose-200 dark:border-rose-400/20 rounded-2xl p-3 animate-fadeIn animate-shake">
-                        <X className="w-4 h-4 text-rose-600 dark:text-rose-400 shrink-0 mt-0.5" />
-                        <p className="text-[11px] text-rose-700 dark:text-rose-300 font-medium leading-relaxed">{errorEnvio}</p>
+                      <div className="flex items-start gap-2 bg-rose-50 dark:bg-rose-500/10 border border-rose-200 dark:border-rose-500/20 rounded-xl p-4 mt-4">
+                        <X className="w-4 h-4 text-rose-500 dark:text-rose-400 shrink-0 mt-0.5" />
+                        <p className="text-xs text-rose-600 dark:text-rose-300 font-medium leading-relaxed">{errorEnvio}</p>
                       </div>
                     )}
 
-                    <button
-                      type="submit"
-                      disabled={loading || !turnstileToken}
-                      className="w-full py-4 bg-gradient-to-r from-[#0145F2] to-blue-600 hover:from-blue-600 hover:to-sky-500 disabled:opacity-50 text-white font-black rounded-2xl uppercase tracking-widest text-xs transition-all shadow-lg shadow-blue-500/20 cursor-pointer flex items-center justify-center gap-2 active:scale-95"
-                    >
-                      {loading && <Loader2 className="w-4 h-4 animate-spin" />}
-                      {loading ? "Enviando..." : "Enviar solicitud de cotización"}
-                    </button>
+                    <div className="pt-6">
+                      <button type="submit" disabled={loading || !turnstileToken} className="w-full py-4 bg-blue-600 hover:bg-blue-500 disabled:bg-slate-200 dark:disabled:bg-slate-800 disabled:text-slate-400 dark:disabled:text-slate-500 text-white font-black rounded-2xl uppercase tracking-widest text-xs transition-colors flex items-center justify-center gap-2">
+                        {loading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Check className="w-4 h-4" />}
+                        {loading ? "Procesando..." : "Finalizar y Enviar"}
+                      </button>
+                    </div>
                   </form>
-                )}
+                </motion.div>
+              )}
 
-              </div>
-            ) : (
-              <EnvioExitoso
-                color="blue"
-                titulo="¡Cotización enviada!"
-                mensaje="Recibimos los datos de tu vehículo y un asesor comercial se pondrá en contacto a la brevedad."
-              >
-                <Link href="/" className="inline-block py-3.5 px-8 bg-gradient-to-r from-[#0145F2] to-blue-600 text-white font-black rounded-2xl text-xs uppercase tracking-widest shadow-lg shadow-blue-500/20">
-                  Volver al inicio
-                </Link>
-              </EnvioExitoso>
-            )}
-
+            </AnimatePresence>
           </div>
         </div>
-
       </div>
 
-      <footer className="text-center text-[10px] font-bold text-slate-400 dark:text-slate-500 py-4 uppercase tracking-widest relative z-10">
-        Pfaffen Autos &bull; Todos los derechos reservados
-      </footer>
-
-      <Script
-        src="https://challenges.cloudflare.com/turnstile/v0/api.js"
-        strategy="lazyOnload"
-        onLoad={() => setTurnstileListo(true)}
-      />
+      <Script src="https://challenges.cloudflare.com/turnstile/v0/api.js" strategy="lazyOnload" onLoad={() => setTurnstileListo(true)} />
     </div>
   );
 }
