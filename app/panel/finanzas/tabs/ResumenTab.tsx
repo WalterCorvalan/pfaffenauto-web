@@ -128,10 +128,10 @@ export default function ResumenTab({
       {/* Hero: saldo total por moneda */}
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
         {["ARS", "USD"].map((m) => (
-          <div key={m} className={`relative overflow-hidden rounded-2xl p-5 text-white shadow-sm bg-gradient-to-br ${m === "USD" ? "from-emerald-600 to-emerald-700" : "from-rose-600 to-rose-700"}`}>
-            <Wallet className="w-24 h-24 absolute -right-4 -bottom-4 opacity-10" />
-            <p className={`text-[10px] font-bold uppercase tracking-widest ${m === "USD" ? "text-emerald-100" : "text-rose-100"}`}>Total en {m} — todas las cajas</p>
-            <p className="text-3xl font-black mt-1">{fmt(totalPorMoneda[m] || 0, m)}</p>
+          <div key={m} className={`relative overflow-hidden rounded-2xl p-5 shadow-sm border ${m === "USD" ? "text-white bg-gradient-to-br from-emerald-600 to-emerald-700 border-transparent" : "bg-gradient-to-br from-sky-400 via-white to-sky-400 border-sky-200"}`}>
+            <Wallet className={`w-24 h-24 absolute -right-4 -bottom-4 ${m === "USD" ? "opacity-10" : "opacity-[0.08] text-sky-700"}`} />
+            <p className={`text-[10px] font-bold uppercase tracking-widest ${m === "USD" ? "text-emerald-100" : "text-sky-700"}`}>Total en {m} — todas las cajas</p>
+            <p className={`text-3xl font-black mt-1 ${m === "USD" ? "" : "text-slate-800"}`}>{fmt(totalPorMoneda[m] || 0, m)}</p>
           </div>
         ))}
       </div>
