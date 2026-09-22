@@ -127,6 +127,14 @@ async function ejecutarBusquedaStock(
       .from("vehiculos")
       .select("id, marca, modelo, anio, precio_venta, moneda_venta, precio_publicado_ars, precio_publicado_usd, patente, color, km, version, transmision, combustible, categoria, puertas, fotos, sucursales!vehiculos_sucursal_id_fkey ( nombre )")
       .in("estado", ["disponible", "reservado"])
+      // Sin ORDER BY antes traía siempre las mismas filas "por orden de
+      // fila" del motor, sin relación con lo que le convenía ver al cliente
+      // (reportado: pidió "Ford" con 13 unidades en stock y vio 4-6 al azar,
+      // ni las más nuevas ni las más baratas). Ordenamos por año más reciente
+      // primero y, entre autos del mismo año, por precio más bajo primero —
+      // así el corte de abajo (limit) se queda con lo más atractivo real.
+      .order("anio", { ascending: false })
+      .order("precio_venta", { ascending: true })
   ).limit(6);
 
   const queryTotal = aplicarFiltros(
