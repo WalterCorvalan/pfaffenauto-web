@@ -32,6 +32,15 @@ const LeadTasacionSchema = z.object({
   utmCampaign: z.string().trim().max(150).optional().nullable(),
   tipo: z.enum(["tasacion", "permuta", "financiacion"]).optional(),
   vehiculoObjetivoId: z.string().uuid().optional().nullable(),
+  // Datos estructurados de una solicitud de financiación -- ver
+  // migraciones/sql_leads_tasacion_financiacion.sql.
+  precioVehiculo: z.coerce.number().min(0).optional().nullable(),
+  pctFinanciado: z.coerce.number().min(0).max(100).optional().nullable(),
+  montoFinanciar: z.coerce.number().min(0).optional().nullable(),
+  anticipoMonto: z.coerce.number().min(0).optional().nullable(),
+  plazoMeses: z.coerce.number().int().min(1).optional().nullable(),
+  cuotaEstimada: z.coerce.number().min(0).optional().nullable(),
+  creditoPreaprobado: z.boolean().optional().nullable(),
   // Si el cliente eligió venir a sucursal, reserva una visita real en el
   // mismo request (misma lógica que /api/panel/visitas).
   visita: z.object({
@@ -111,6 +120,26 @@ export async function POST(req: Request) {
 
     if (error) throw error;
     if (!lead) throw new Error("No se pudo confirmar el envío de la solicitud.");
+
+    // Campos estructurados de financiación en un update aparte: si
+    // migraciones/sql_leads_tasacion_financiacion.sql todavía no corrió en
+    // la base, la solicitud se sigue guardando igual (con el resumen en
+    // "version" como respaldo) en vez de que el envío entero falle.
+    if (data.tipo === "financiacion") {
+      const { error: errCamposFinanciacion } = await supabase
+        .from("leads_tasacion")
+        .update({
+          precio_vehiculo: data.precioVehiculo ?? null,
+          pct_financiado: data.pctFinanciado ?? null,
+          monto_financiar: data.montoFinanciar ?? null,
+          anticipo_monto: data.anticipoMonto ?? null,
+          plazo_meses: data.plazoMeses ?? null,
+          cuota_estimada: data.cuotaEstimada ?? null,
+          credito_preaprobado: data.creditoPreaprobado ?? null,
+        })
+        .eq("id", lead.id);
+      if (errCamposFinanciacion) registrarError("api/panel/leads-tasacion:campos-financiacion", errCamposFinanciacion, { leadId: lead.id });
+    }
 
     // El link/módulo dependían de suponer siempre "tasación" -- una
     // solicitud de financiación (tipo: "financiacion") mandaba igual a

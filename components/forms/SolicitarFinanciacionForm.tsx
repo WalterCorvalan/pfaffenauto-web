@@ -209,6 +209,8 @@ export default function SolicitarFinanciacionForm({ vehiculoPreseleccionado, cla
           email: email.trim(),
           telefono: telefono.trim(),
           tipo: "financiacion",
+          precioVehiculo, pctFinanciado: pctTope, montoFinanciar: montoAFinanciar, anticipoMonto: anticipoCliente,
+          plazoMeses: meses, cuotaEstimada, creditoPreaprobado: creditoPreaprobado === "si",
         }),
       });
 
