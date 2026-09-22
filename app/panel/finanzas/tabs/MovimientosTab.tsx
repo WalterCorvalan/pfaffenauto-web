@@ -42,6 +42,7 @@ export default function MovimientosTab({
   const [tMontoDestino, setTMontoDestino] = useState("");
   const [tFecha, setTFecha] = useState(new Date().toISOString().slice(0, 10));
   const [tNotas, setTNotas] = useState("");
+  const [tComprobante, setTComprobante] = useState<File | null>(null);
   const [guardandoT, setGuardandoT] = useState(false);
 
   const [showCierres, setShowCierres] = useState(false);
@@ -184,13 +185,42 @@ export default function MovimientosTab({
     if (!tCajaOrigen || !tCajaDestino || !tMontoOrigen) return alert("Completá origen, destino y monto.");
     const montoDestino = tMonedaOrigen === tMonedaDestino ? tMontoOrigen : tMontoDestino;
     if (!montoDestino) return alert("Completá el monto destino.");
+    // Pedido de la reunión del 22/9: toda transferencia (entrada o salida)
+    // requiere obligatoriamente su comprobante, para que los saldos
+    // externos/internos no se desvirtúen sin poder auditarlos después.
+    if (!tComprobante) return alert("Adjuntá el comprobante de la transferencia -- es obligatorio.");
     setGuardandoT(true);
     try {
+      const formData = new FormData();
+      formData.append("file", tComprobante);
+      formData.append("carpeta", "finanzas");
+      const resUpload = await fetch("/api/panel/upload", { method: "POST", body: formData });
+      const dataUpload = await resUpload.json();
+      if (!resUpload.ok) throw new Error(dataUpload.error || "No se pudo subir el comprobante.");
+      const comprobanteUrl = dataUpload.publicUrl;
+
       const { error } = await supabase2.rpc("crear_transferencia", {
         p_cuenta_origen_id: tCajaOrigen, p_cuenta_destino_id: tCajaDestino,
         p_monto_origen: Number(tMontoOrigen), p_monto_destino: Number(montoDestino), p_fecha: tFecha, p_notas: tNotas || null,
       });
       if (error) throw error;
+
+      // crear_transferencia no devuelve los ids de los 2 movimientos que
+      // crea (Egreso en origen + Ingreso en destino) -- se identifican
+      // aparte por cuenta/fecha/categoría, recién creados, para pegarles el
+      // comprobante a ambos.
+      const { data: nuevosMovs } = await supabase2
+        .from("movimientos_caja")
+        .select("id")
+        .in("cuenta_id", [tCajaOrigen, tCajaDestino])
+        .eq("fecha", tFecha)
+        .eq("tipo_movimiento", "Transferencia")
+        .order("created_at", { ascending: false })
+        .limit(2);
+      if (nuevosMovs?.length) {
+        await supabase2.from("movimientos_caja").update({ comprobante_url: comprobanteUrl }).in("id", nuevosMovs.map((m) => m.id));
+      }
+
       window.location.reload();
     } catch (err: any) {
       alert(err.message || "No se pudo crear la transferencia.");
@@ -367,6 +397,11 @@ export default function MovimientosTab({
             )}
             <label className={labelClass + " mt-3"}>Concepto / nota</label>
             <textarea value={tNotas} onChange={(e) => setTNotas(e.target.value)} rows={2} placeholder="Ej: Reposición caja chica · cierre semanal" className={inputClass} />
+            <label className={labelClass + " mt-3 flex items-center gap-1.5"}><Paperclip className="w-3.5 h-3.5" /> Comprobante *</label>
+            <label className="inline-flex items-center gap-1.5 px-3 py-2 text-xs font-bold border border-slate-200 dark:border-white/10 rounded-lg cursor-pointer">
+              {tComprobante ? tComprobante.name : "Adjuntar archivo"}
+              <input type="file" accept="image/*,.pdf" className="hidden" onChange={(e) => setTComprobante(e.target.files?.[0] || null)} />
+            </label>
             <div className="flex justify-end gap-2 mt-4"><button onClick={() => setShowTransferencia(false)} className="px-4 py-2 text-sm font-bold text-slate-500">Cancelar</button><button onClick={crearTransferencia} disabled={guardandoT} className="flex items-center gap-1.5 px-4 py-2 text-sm font-bold bg-[#0145F2] hover:bg-[#0138c9] text-white rounded-lg disabled:opacity-50"><ArrowLeftRight className="w-4 h-4" /> Crear transferencia</button></div>
           </div>
         </div>
