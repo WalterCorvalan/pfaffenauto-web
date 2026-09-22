@@ -293,7 +293,7 @@ export default function VentasClient({
                 ] as ColumnaTabla<Venta>[]
               }
               acciones={(v) => (
-                <>
+                <div className="flex items-center gap-1 flex-wrap justify-end">
                   <button onClick={() => setDetalleId(v.id)} title="Ver" className="p-2 bg-slate-50 dark:bg-white/5 hover:bg-slate-200 dark:hover:bg-white/10 text-slate-600 dark:text-slate-300 rounded-lg"><Eye className="w-3.5 h-3.5" /></button>
                   <button onClick={() => setEditando(v)} title="Editar" className="p-2 bg-slate-50 dark:bg-white/5 hover:bg-slate-200 dark:hover:bg-white/10 text-slate-600 dark:text-slate-300 rounded-lg"><Pencil className="w-3.5 h-3.5" /></button>
                   <button disabled title="Boleto — todavía no construido" className="p-2 bg-slate-50 dark:bg-white/5 text-slate-300 dark:text-slate-600 rounded-lg opacity-60 cursor-not-allowed"><FileText className="w-3.5 h-3.5" /></button>
@@ -307,7 +307,7 @@ export default function VentasClient({
                   {soyAdmin && (
                     <button onClick={() => eliminarRapido(v)} title="Eliminar" className="p-2 bg-slate-50 dark:bg-white/5 hover:bg-rose-600 hover:text-white text-rose-500 rounded-lg"><Trash2 className="w-3.5 h-3.5" /></button>
                   )}
-                </>
+                </div>
               )}
             />
           )}
