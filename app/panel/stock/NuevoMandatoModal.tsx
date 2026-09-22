@@ -74,19 +74,27 @@ export default function NuevoMandatoModal({ miId, miNombre, onClose, onCreado }:
           servicios_oficiales: serviciosOficiales === "" ? null : serviciosOficiales === "Sí",
           manuales: manuales === "Sí", duplicado_llaves: duplicadoLlaves === "Sí", auxilio,
           valor: valor ? Number(valor) : null, moneda,
-          comision_pct: comisionPct ? Number(comisionPct) : null,
-          compra_asegurada: compraAsegurada || null,
-          condicion_pago: compraAsegurada === "si" ? condicionPago : null,
-          monto_condicion_pago: compraAsegurada === "si" && montoCondicionPago ? Number(montoCondicionPago) : null,
-          doc_08_nro: doc08Nro || null,
-          doc_verificacion_policial: docVerificacionPolicial || null,
-          doc_titulo_cedula_deuda: docTituloCedulaDeuda ? Number(docTituloCedulaDeuda) : null,
-          doc_a_cargo_vendedor: docACargoVendedor,
           creado_por: miId || null,
         })
         .select()
         .single();
       if (dbError) throw dbError;
+
+      // Campos nuevos (comisión, compra asegurada, documentación) en un
+      // update aparte con su propio try/catch: si migraciones/sql_mandatos_condiciones.sql
+      // todavía no corrió en la base, esto no debe romper la creación del
+      // mandato en sí -- mismo criterio que el tab Gestoría de Expedientes.
+      const { error: erroCamposAmpliados } = await supabase2.from("mandatos").update({
+        comision_pct: comisionPct ? Number(comisionPct) : null,
+        compra_asegurada: compraAsegurada || null,
+        condicion_pago: compraAsegurada === "si" ? condicionPago : null,
+        monto_condicion_pago: compraAsegurada === "si" && montoCondicionPago ? Number(montoCondicionPago) : null,
+        doc_08_nro: doc08Nro || null,
+        doc_verificacion_policial: docVerificacionPolicial || null,
+        doc_titulo_cedula_deuda: docTituloCedulaDeuda ? Number(docTituloCedulaDeuda) : null,
+        doc_a_cargo_vendedor: docACargoVendedor,
+      }).eq("id", mandato.id);
+      if (erroCamposAmpliados) console.error("No se pudieron guardar los campos ampliados del mandato (¿corriste la migración?):", erroCamposAmpliados);
 
       let vehiculoCreado = null;
       if (agregarAlStock) {
