@@ -44,6 +44,21 @@ function formatearParaEnvio(to: string): string {
   return to.replace(/^549(\d{10})$/, "54$1");
 }
 
+// Descarga un media entrante (audio/imagen/documento) de WhatsApp. Meta
+// entrega el archivo en 2 pasos: primero hay que pedir la URL temporal por
+// el ID del media (dura pocos minutos), después bajarla con el mismo Bearer
+// token -- sin el header, la URL de Meta devuelve 401 aunque sea la url
+// "correcta". Por eso no se puede simplemente guardar la URL de Meta como
+// media_url permanente: hay que bajar el archivo ahora mismo y subirlo a
+// nuestro storage (R2) para que quede accesible después.
+export async function descargarMediaWhatsapp(mediaId: string, token: string): Promise<{ buffer: Buffer; mimeType: string }> {
+  const info = await graphRequest<{ url: string; mime_type: string }>(mediaId, token);
+  const res = await fetch(info.url, { headers: { Authorization: `Bearer ${token}` } });
+  if (!res.ok) throw new MetaApiError(`No se pudo descargar el media (${res.status})`, res.status);
+  const arrayBuffer = await res.arrayBuffer();
+  return { buffer: Buffer.from(arrayBuffer), mimeType: info.mime_type };
+}
+
 export async function validatePhoneNumber(phoneNumberId: string, token: string) {
   return graphRequest<{ display_phone_number: string; verified_name: string; id: string }>(
     `${phoneNumberId}?fields=display_phone_number,verified_name`,

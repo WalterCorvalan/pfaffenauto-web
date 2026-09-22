@@ -2,8 +2,9 @@ import { createHmac, timingSafeEqual } from "crypto";
 import { createClient } from "@supabase/supabase-js";
 import { isAiConfiguredV2 } from "@/lib/ai/indexV2";
 import { generarRespuestaAgenteV2, dividirRespuestaEnMensajes } from "@/lib/ai/agenteV2";
-import { sendTextMessage, sendImageMessage } from "@/lib/meta/client";
+import { sendTextMessage, sendImageMessage, descargarMediaWhatsapp } from "@/lib/meta/client";
 import { decrypt } from "@/lib/crypto";
+import { subirArchivoR2, r2Configurado } from "@/lib/storage/r2";
 import { rateLimit, ipDesdeRequest } from "@/lib/rateLimit";
 import { registrarError } from "@/lib/panel/logger";
 import { buscarRespuestaMemoria, buscarRespuestaFueraHorario } from "@/lib/panel/whatsappMemoria";
@@ -109,14 +110,14 @@ async function procesarEvento(payload: any) {
 // Antes, cualquier mensaje que no fuera texto/interactive (audio, foto,
 // video, documento) se guardaba con texto=null y quedaba invisible para el
 // agente -- ejecutarAgente arma el historial filtrando ".filter(m => m.texto)",
-// así que el cliente mandaba un audio y el bot se quedaba en silencio total,
-// sin ni siquiera avisar que no pudo escucharlo. Se resuelve un texto real
-// para cada tipo -- sin transcripción automática de audio (a propósito: se
-// notifica al vendedor para que lo escuche él mismo, ver notificarAudioRecibido).
+// así que el cliente mandaba un audio y el bot se quedaba en silencio total.
+// Se resuelve un texto real para cada tipo -- sin transcripción automática de
+// audio (a propósito, el vendedor lo escucha directo en el panel, ver
+// media_url más abajo en ingestarMensaje()).
 function resolverTextoMensaje(msg: any): string | null {
   if (msg.type === "text") return msg.text?.body ?? null;
   if (msg.type === "interactive") return msg.interactive?.list_reply?.title ?? msg.interactive?.button_reply?.title ?? null;
-  if (msg.type === "audio") return "[Cliente envió un audio 🎤 -- escuchalo en tu WhatsApp]";
+  if (msg.type === "audio") return "🎤 Audio";
   if (msg.type === "image") return msg.image?.caption?.trim() || "[Cliente envió una foto sin descripción]";
   if (msg.type === "video") return msg.video?.caption?.trim() || "[Cliente envió un video]";
   if (msg.type === "document") return msg.document?.caption?.trim() || msg.document?.filename || "[Cliente envió un documento]";
@@ -208,12 +209,33 @@ async function ingestarMensaje({ waId, nombrePerfil, msg }: { waId: string; nomb
   // vez de texto — se usa el título de la opción como si lo hubiera tipeado,
   // así el agente lo procesa igual que cualquier mensaje de texto.
   const texto = resolverTextoMensaje(msg);
+  // Audio entrante: se baja el archivo real de Meta (URL temporal, ~5 min) y
+  // se sube a R2 para poder reproducirlo después desde el panel (antes solo
+  // quedaba el placeholder de texto de arriba, el vendedor tenía que
+  // escucharlo en su WhatsApp real). Best-effort: si falla (Meta caída, R2
+  // sin configurar, etc.) el mensaje se guarda igual con el placeholder de
+  // texto, no se pierde el mensaje por esto.
+  let mediaUrl: string | null = null;
+  if (msg.type === "audio" && msg.audio?.id) {
+    try {
+      const { data: config } = await supabase.from("whatsapp_configuracion").select("token_cifrado, token_iv, token_tag").eq("id", true).single();
+      if (config?.token_cifrado && r2Configurado()) {
+        const tokenPlano = decrypt(config.token_cifrado, config.token_iv, config.token_tag);
+        const { buffer, mimeType } = await descargarMediaWhatsapp(msg.audio.id, tokenPlano);
+        const extension = mimeType.includes("ogg") ? "ogg" : mimeType.split("/")[1]?.split(";")[0] || "bin";
+        mediaUrl = await subirArchivoR2(buffer, `whatsapp/audio/${Date.now()}-${msg.id}.${extension}`, mimeType.split(";")[0]);
+      }
+    } catch (err) {
+      registrarError("webhook-v2:descargar-audio", err, { conversacionId: conversacion.id, mediaId: msg.audio.id });
+    }
+  }
   const { error } = await supabase.from("whatsapp_mensajes").insert({
     conversacion_id: conversacion.id,
     wa_message_id: msg.id,
     direccion: "in",
     tipo: msg.type ?? "text",
     texto,
+    media_url: mediaUrl,
     status: "received",
     wa_timestamp: new Date(Number(msg.timestamp) * 1000).toISOString(),
   });
