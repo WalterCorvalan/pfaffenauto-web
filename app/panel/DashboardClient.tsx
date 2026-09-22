@@ -64,7 +64,12 @@ export default function DashboardClient(props: Props) {
   const hoyLabel = new Date().toLocaleDateString("es-AR", { weekday: "long", day: "numeric", month: "long" });
 
   return (
-    <div className="p-6 max-w-6xl mx-auto space-y-5">
+    <div className="relative p-6 max-w-6xl mx-auto space-y-5">
+      {/* Luz ambiente del dashboard -- mismo recurso visual que ya usan las
+          páginas públicas (blob difuminado del color de marca), acá metido
+          detrás del contenido sin afectar el layout (absolute + pointer-events-none). */}
+      <div className="absolute -top-24 left-1/2 -translate-x-1/2 w-[700px] h-[350px] bg-[#0145F2]/5 dark:bg-[#0145F2]/10 blur-[120px] rounded-full pointer-events-none -z-10" />
+
       <div className="flex items-start justify-between gap-3 flex-wrap">
         <div>
           <h1 className="text-2xl font-black text-slate-900 dark:text-white">Hola, {props.miNombre}</h1>
