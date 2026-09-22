@@ -16,6 +16,7 @@ const CONDICION_PAGO_LABEL: Record<string, string> = { inmediata: "Inmediata", "
 export default function ImprimirMandato({ mandato: m, branding }: { mandato: any; branding?: Branding | null }) {
   const nombreEmpresa = branding?.branding_nombre || "Pfaffen Autos";
   const [firmaUrl, setFirmaUrl] = useState<string | null>(m.firma_url ?? null);
+  const [firmaRetiroUrl, setFirmaRetiroUrl] = useState<string | null>(m.firma_retiro_url ?? null);
 
   const fecha = m.fecha ? new Date(`${m.fecha}T12:00:00Z`).toLocaleDateString("es-AR", { timeZone: "UTC" }) : "—";
   const moneda: Moneda = m.moneda === "ARS" ? "ARS" : "USD";
@@ -34,8 +35,11 @@ export default function ImprimirMandato({ mandato: m, branding }: { mandato: any
         <button onClick={() => window.print()} className="bg-[#0145F2] hover:bg-[#0138c9] text-white px-6 py-2.5 rounded-xl font-bold text-xs uppercase tracking-widest flex items-center gap-2 transition-all shadow-sm active:scale-95"><Printer className="w-4 h-4" /> Imprimir / PDF</button>
       </div>
 
-      {/* Página 1: datos del mandato -- calcado del formulario de papel. */}
-      <div className="w-[210mm] max-w-[210mm] min-h-[297mm] print:min-h-0 mx-auto bg-white p-[12mm] pb-[14mm] shadow-lg border border-slate-200 print:shadow-none print:border-none print:m-0 text-[11px] leading-snug box-border">
+      {/* Página 1: datos del mandato -- calcado del formulario de papel de
+          talonario (mismo layout, tipografía serif formal, sin los datos
+          fiscales del papel real porque este PDF no es un comprobante
+          fiscal -- ver ARCHITECTURE.md de stock si existe una nota al respecto). */}
+      <div className="w-[210mm] max-w-[210mm] min-h-[297mm] print:min-h-0 mx-auto bg-white p-[12mm] pb-[14mm] shadow-lg border border-slate-200 print:shadow-none print:border-none print:m-0 text-[11px] leading-snug box-border font-serif">
         <div className="flex justify-between items-start border-b-2 border-slate-900 pb-2 mb-3">
           <div className="flex items-start gap-3">
             {branding?.branding_logo_url ? (
@@ -82,22 +86,32 @@ export default function ImprimirMandato({ mandato: m, branding }: { mandato: any
           <div className="flex justify-between border-b border-dotted border-slate-300 pb-0.5"><span className="text-slate-500">Chasis/Cuadro</span><strong className="font-mono">{m.chasis_nro || "—"}</strong></div>
         </div>
 
-        <div className="flex justify-between items-baseline border-b border-dotted border-slate-300 pb-1 mb-1.5">
+        <div className="flex justify-between items-baseline border-b border-dotted border-slate-300 pb-1 mb-3">
           <span className="text-slate-500">Monto fijado para la venta</span>
           <strong className="text-[13px]">{formatMoney(m.valor)}</strong>
           <span className="text-slate-500">Menos la comisión del</span>
           <strong>{m.comision_pct != null ? `${m.comision_pct}%` : "—"}</strong>
         </div>
 
+        {/* Compra asegurada — mismas 3 columnas de precio que trae el
+            talonario de papel (Inmediata / A 30 días / A 45 días). Solo se
+            completa la columna que corresponde a condicion_pago; el resto
+            queda en blanco, igual que en el papel cuando no aplica esa
+            modalidad. */}
         <div className="flex items-center gap-2 mb-1.5">
           <span className="text-slate-500">Compra asegurada</span>
-          <span className={`px-2 py-0.5 rounded border font-bold text-[10px] ${m.compra_asegurada === "si" ? "bg-emerald-50 border-emerald-300 text-emerald-700" : "border-slate-300"}`}>SI</span>
-          <span className={`px-2 py-0.5 rounded border font-bold text-[10px] ${m.compra_asegurada === "no" ? "bg-rose-50 border-rose-300 text-rose-700" : "border-slate-300"}`}>NO</span>
-          {m.compra_asegurada === "si" && (
-            <span className="ml-3 text-slate-600">
-              {CONDICION_PAGO_LABEL[m.condicion_pago] || "—"}: <strong>{formatMoney(m.monto_condicion_pago)}</strong>
-            </span>
-          )}
+          <span className={`w-5 h-5 flex items-center justify-center rounded border font-bold text-[10px] ${m.compra_asegurada === "si" ? "bg-emerald-50 border-emerald-500 border-2 text-emerald-700" : "border-slate-400"}`}>{m.compra_asegurada === "si" ? "SI" : ""}</span>
+          <span className="text-slate-400">SI</span>
+          <span className={`w-5 h-5 flex items-center justify-center rounded border font-bold text-[10px] ml-2 ${m.compra_asegurada === "no" ? "bg-rose-50 border-rose-500 border-2 text-rose-700" : "border-slate-400"}`}>{m.compra_asegurada === "no" ? "NO" : ""}</span>
+          <span className="text-slate-400">NO</span>
+        </div>
+        <div className="grid grid-cols-3 gap-x-6 mb-3">
+          {(["inmediata", "30_dias", "45_dias"] as const).map((key) => (
+            <div key={key} className="flex justify-between border-b border-dotted border-slate-300 pb-0.5">
+              <span className="text-slate-500">{CONDICION_PAGO_LABEL[key]} $</span>
+              <strong>{m.compra_asegurada === "si" && m.condicion_pago === key ? formatMoney(m.monto_condicion_pago) : "—"}</strong>
+            </div>
+          ))}
         </div>
 
         <div className="flex flex-wrap items-baseline gap-x-6 gap-y-1 mb-1.5">
@@ -163,6 +177,10 @@ export default function ImprimirMandato({ mandato: m, branding }: { mandato: any
         </p>
 
         <p className="mt-10 font-bold">Recibí original del presente comprobante (firma del mandante o comitente):</p>
+        <div className="mt-4 max-w-xs break-inside-avoid">
+          <FirmaCanvas tabla="mandatos" id={m.id} firmaUrlActual={firmaRetiroUrl} onGuardada={setFirmaRetiroUrl} campo="firma_retiro_url" />
+          <div className="text-center border-t border-slate-400 pt-1.5 mt-1"><span className="block text-[11px]">firma</span></div>
+        </div>
       </div>
     </div>
   );
