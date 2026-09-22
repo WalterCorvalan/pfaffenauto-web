@@ -1,7 +1,8 @@
 "use client";
 
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
 import Link from "next/link";
+import { supabase2 } from "@/lib/supabase/client";
 import {
   BarChart3, FileText, Receipt, Wallet, Coins, CreditCard, Landmark,
   TrendingDown, TrendingUp, ExternalLink, HandCoins, ScrollText, Handshake,
@@ -87,7 +88,125 @@ export default function FinanzasClient({
   const [generaciones, setGeneraciones] = useState(generacionesIniciales);
   const [arqueos, setArqueos] = useState(arqueosIniciales);
   const [cierresDiarios, setCierresDiarios] = useState(cierresDiariosIniciales);
-  const [senas] = useState(senasIniciales);
+  const [senas, setSenas] = useState(senasIniciales);
+
+  // Todo el sector se llenaba una sola vez en el server (page.tsx) y se
+  // quedaba estático hasta recargar la página -- si dos personas usan
+  // Finanzas al mismo tiempo, una no veía lo que cargaba la otra sin F5.
+  // Un canal por tabla, cada uno refetcheando su propia lista completa (con
+  // los mismos joins que usa page.tsx) en vez de mergear el payload del
+  // evento -- mismo criterio que ExpedientesClient.tsx, para no desincronizar
+  // los joins anidados. "cuentas" se refetchea también ante cualquier cambio
+  // en movimientos_caja porque el saldo de cada cuenta no es una columna,
+  // se calcula en vivo con el RPC saldo_cuenta.
+  useEffect(() => {
+    const refetchCuentas = async () => {
+      const { data: base } = await supabase2.from("cuentas").select("*").eq("activa", true).order("nombre");
+      if (!base) return;
+      const conSaldo = await Promise.all(base.map(async (c: any) => {
+        const { data: saldo } = await supabase2.rpc("saldo_cuenta", { p_cuenta_id: c.id });
+        return { ...c, saldo: Number(saldo) || 0 };
+      }));
+      setCuentas(conSaldo);
+    };
+    const refetchMovimientos = async () => {
+      const { data } = await supabase2
+        .from("movimientos_caja")
+        .select("*, cuenta:cuentas(nombre, moneda), vehiculo:vehiculo_id ( marca, modelo, anio ), vendedor:vendedor_id ( nombre )")
+        .is("deleted_at", null)
+        .order("fecha", { ascending: false })
+        .order("created_at", { ascending: false })
+        .limit(200);
+      if (data) setMovimientos(data);
+    };
+    const refetchCheques = async () => {
+      const { data } = await supabase2.from("cheques").select("*").order("fecha_cobro", { ascending: false }).limit(300);
+      if (data) setCheques(data);
+    };
+    const refetchCuotasCobrar = async () => {
+      const { data } = await supabase2.from("cuotas_cobrar_clientes").select("*, cliente:clientes(nombre)").order("vencimiento");
+      if (data) setCuotasCobrar(data);
+    };
+    const refetchCuotasPagar = async () => {
+      const { data } = await supabase2.from("cuotas_pagar_agencia").select("*").order("vencimiento");
+      if (data) setCuotasPagar(data);
+    };
+    const refetchPagos = async () => {
+      const { data } = await supabase2.from("pagos_disponibles").select("*").order("fecha", { ascending: false }).limit(300);
+      if (data) setPagosDisponibles(data);
+    };
+    const refetchTarjeta = async () => {
+      const { data } = await supabase2.from("consumos_tarjeta").select("*").order("fecha", { ascending: false }).limit(300);
+      if (data) setConsumosTarjeta(data);
+    };
+    const refetchRetiros = async () => {
+      const { data } = await supabase2.from("retiros_caja").select("*").order("fecha", { ascending: false }).limit(300);
+      if (data) setRetiros(data);
+    };
+    const refetchDevoluciones = async () => {
+      const { data } = await supabase2.from("devoluciones_registro").select("*").order("fecha", { ascending: false }).limit(300);
+      if (data) setDevoluciones(data);
+    };
+    const refetchPrestamos = async () => {
+      const { data } = await supabase2.from("prestamos_otorgados").select("*").order("fecha", { ascending: false }).limit(300);
+      if (data) setPrestamos(data);
+    };
+    const refetchPresupuestos = async () => {
+      const { data } = await supabase2.from("finanzas_presupuestos").select("*");
+      if (data) setPresupuestos(data);
+    };
+    const refetchRecurrencias = async () => {
+      const { data } = await supabase2.from("finanzas_recurrencias").select("*").order("created_at", { ascending: false });
+      if (data) setRecurrencias(data);
+    };
+    const refetchGeneraciones = async () => {
+      const { data } = await supabase2.from("finanzas_recurrencias_generaciones").select("*").order("mes", { ascending: false }).limit(500);
+      if (data) setGeneraciones(data);
+    };
+    const refetchArqueos = async () => {
+      const { data } = await supabase2.from("finanzas_arqueos").select("*, cuenta:cuentas(nombre), responsable:perfiles(nombre)").order("fecha", { ascending: false }).limit(200);
+      if (data) setArqueos(data);
+    };
+    const refetchCierresDiarios = async () => {
+      const { data } = await supabase2
+        .from("finanzas_cierres_diarios")
+        .select("*, detalle:finanzas_cierres_diarios_detalle(*), cerrado_por_perfil:perfiles!finanzas_cierres_diarios_cerrado_por_fkey(nombre)")
+        .order("fecha", { ascending: false })
+        .limit(60);
+      if (data) setCierresDiarios(data);
+    };
+    const refetchCierresMensuales = async () => {
+      const { data } = await supabase2.from("cierres_mensuales").select("*").order("mes", { ascending: false });
+      if (data) setCierres(data);
+    };
+    const refetchSenas = async () => {
+      const { data } = await supabase2.from("senas").select("*, perfiles:vendedor_id ( nombre ), sucursales:sucursal_id ( nombre )").order("created_at", { ascending: false }).limit(100);
+      if (data) setSenas(data);
+    };
+
+    const canal = supabase2
+      .channel(`finanzas-realtime-${Math.random().toString(36).slice(2)}`)
+      .on("postgres_changes", { event: "*", schema: "public", table: "cuentas" }, refetchCuentas)
+      .on("postgres_changes", { event: "*", schema: "public", table: "movimientos_caja" }, () => { refetchMovimientos(); refetchCuentas(); })
+      .on("postgres_changes", { event: "*", schema: "public", table: "cheques" }, refetchCheques)
+      .on("postgres_changes", { event: "*", schema: "public", table: "cuotas_cobrar_clientes" }, refetchCuotasCobrar)
+      .on("postgres_changes", { event: "*", schema: "public", table: "cuotas_pagar_agencia" }, refetchCuotasPagar)
+      .on("postgres_changes", { event: "*", schema: "public", table: "pagos_disponibles" }, refetchPagos)
+      .on("postgres_changes", { event: "*", schema: "public", table: "consumos_tarjeta" }, refetchTarjeta)
+      .on("postgres_changes", { event: "*", schema: "public", table: "retiros_caja" }, refetchRetiros)
+      .on("postgres_changes", { event: "*", schema: "public", table: "devoluciones_registro" }, refetchDevoluciones)
+      .on("postgres_changes", { event: "*", schema: "public", table: "prestamos_otorgados" }, refetchPrestamos)
+      .on("postgres_changes", { event: "*", schema: "public", table: "finanzas_presupuestos" }, refetchPresupuestos)
+      .on("postgres_changes", { event: "*", schema: "public", table: "finanzas_recurrencias" }, refetchRecurrencias)
+      .on("postgres_changes", { event: "*", schema: "public", table: "finanzas_recurrencias_generaciones" }, refetchGeneraciones)
+      .on("postgres_changes", { event: "*", schema: "public", table: "finanzas_arqueos" }, refetchArqueos)
+      .on("postgres_changes", { event: "*", schema: "public", table: "finanzas_cierres_diarios" }, refetchCierresDiarios)
+      .on("postgres_changes", { event: "*", schema: "public", table: "cierres_mensuales" }, refetchCierresMensuales)
+      .on("postgres_changes", { event: "*", schema: "public", table: "senas" }, refetchSenas)
+      .subscribe();
+
+    return () => { supabase2.removeChannel(canal); };
+  }, []);
 
   const totalPorMoneda = useMemo(() => {
     const map: Record<string, number> = {};
