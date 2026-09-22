@@ -62,14 +62,14 @@ export default function FinanzasClient({
   chequesIniciales, pagosDisponiblesIniciales, consumosTarjetaIniciales, retirosIniciales, devolucionesIniciales,
   expedientes, senasActivasPorMoneda,
   prestamosIniciales, presupuestosIniciales, recurrenciasIniciales, generacionesIniciales, arqueosIniciales, cierresDiariosIniciales, miNombre,
-  senasIniciales, vehiculosDisponiblesFull, sucursales, vehiculosTodos,
+  senasIniciales, vehiculosDisponiblesFull, sucursales, veTodasSucursales, miSucursalId, vehiculosTodos,
 }: {
   miId: string; soyAdmin: boolean; soyAdminOFinanzas: boolean; cuentasIniciales: any[]; movimientosIniciales: any[]; cierresIniciales: any[];
   cuotasCobrarIniciales: any[]; cuotasPagarIniciales: any[]; vendedores: any[]; clientes: any[]; vehiculos: any[]; ventas: any[];
   chequesIniciales: any[]; pagosDisponiblesIniciales: any[]; consumosTarjetaIniciales: any[]; retirosIniciales: any[]; devolucionesIniciales: any[];
   expedientes: any[]; senasActivasPorMoneda: Record<string, number>;
   prestamosIniciales: any[]; presupuestosIniciales: any[]; recurrenciasIniciales: any[]; generacionesIniciales: any[]; arqueosIniciales: any[]; cierresDiariosIniciales: any[]; miNombre: string;
-  senasIniciales: any[]; vehiculosDisponiblesFull: any[]; sucursales: any[]; vehiculosTodos: { id: string; marca: string; modelo: string; anio: number; patente: string | null }[];
+  senasIniciales: any[]; vehiculosDisponiblesFull: any[]; sucursales: any[]; veTodasSucursales: boolean; miSucursalId: string | null; vehiculosTodos: { id: string; marca: string; modelo: string; anio: number; patente: string | null }[];
 }) {
   const [tab, setTab] = useState("resumen");
   const [cuentas, setCuentas] = useState(cuentasIniciales);
@@ -362,7 +362,7 @@ export default function FinanzasClient({
       )}
 
       {tab === "caja-grande-chica" && (
-        <CajaGrandeChicaTab miId={miId} soyAdmin={soyAdmin} cuentas={cuentas} setCuentas={setCuentas} movimientos={movimientos} setMovimientos={setMovimientos} sucursales={sucursales} vendedores={vendedores} />
+        <CajaGrandeChicaTab miId={miId} soyAdmin={soyAdmin} cuentas={cuentas} setCuentas={setCuentas} movimientos={movimientos} setMovimientos={setMovimientos} sucursales={veTodasSucursales ? sucursales : sucursales.filter((s) => s.id === miSucursalId)} vendedores={vendedores} />
       )}
 
       {tab === "egresos-categoria" && (
