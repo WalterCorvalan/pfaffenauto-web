@@ -352,7 +352,15 @@ export default function CajaGrandeChicaTab({ miId, soyAdmin, cuentas, setCuentas
                   { key: "responsable", header: "Responsable", cell: (m) => m.vendedor?.nombre || "—", claseTd: "text-sm text-slate-500" },
                   { key: "medio", header: "Medio de pago", cell: (m) => m.forma_pago || "—", claseTd: "text-sm text-slate-500" },
                   { key: "comprobante", header: "Comprobante", cell: (m) => m.comprobante_url ? <a href={m.comprobante_url} target="_blank" rel="noreferrer" className="text-indigo-600 font-bold flex items-center gap-1"><Paperclip className="w-3 h-3" /> Ver</a> : "—" },
-                  { key: "monto", header: "Monto", cell: (m) => <span className={`text-sm font-bold ${m.tipo === "ingreso" ? "text-emerald-600" : "text-[#0145F2]"}`}>{m.tipo === "ingreso" ? "+" : "-"}{fmt(m.monto, m.cuenta?.moneda)}</span> },
+                  { key: "cuenta", header: "Cuenta", cell: (m) => m.cuenta?.nombre || "—", claseTd: "text-sm text-slate-500 whitespace-nowrap", ocultarEnMobile: true },
+                  // Pedido de la reunión del 22/9: separar peso/dólar y
+                  // entrada/salida en columnas propias en vez de un único
+                  // "Monto" con signo -- así se lee de un vistazo sin tener
+                  // que fijarse en el color.
+                  { key: "pesoEntrada", header: "$ Entrada", cell: (m) => m.tipo === "ingreso" && m.cuenta?.moneda === "ARS" ? <span className="text-sm font-bold text-emerald-600">{fmt(m.monto, "ARS")}</span> : "—" },
+                  { key: "pesoSalida", header: "$ Salida", cell: (m) => m.tipo === "egreso" && m.cuenta?.moneda === "ARS" ? <span className="text-sm font-bold text-[#0145F2]">{fmt(m.monto, "ARS")}</span> : "—" },
+                  { key: "usdEntrada", header: "USD Ingreso", cell: (m) => m.tipo === "ingreso" && m.cuenta?.moneda === "USD" ? <span className="text-sm font-bold text-emerald-600">{fmt(m.monto, "USD")}</span> : "—", ocultarEnMobile: true },
+                  { key: "usdSalida", header: "USD Salida", cell: (m) => m.tipo === "egreso" && m.cuenta?.moneda === "USD" ? <span className="text-sm font-bold text-[#0145F2]">{fmt(m.monto, "USD")}</span> : "—", ocultarEnMobile: true },
                   { key: "acciones", header: "", cell: (m) => (
                     <div className="flex items-center gap-1">
                       {!m.transferencia_grupo_id && (
