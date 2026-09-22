@@ -390,7 +390,13 @@ export default function CotizacionesClient({
           onEditar={() => { setEditando(detalle); setDetalle(null); }}
         />
       )}
-      {leadWebDetalle && <LeadWebDetalleModal lead={leadsWeb.find((x) => x.id === leadWebDetalle.id) || leadWebDetalle} onClose={() => setLeadWebDetalle(null)} />}
+      {leadWebDetalle && (
+        <LeadWebDetalleModal
+          lead={leadsWeb.find((x) => x.id === leadWebDetalle.id) || leadWebDetalle}
+          vehiculoObjetivo={vehiculos.find((v) => v.id === leadWebDetalle.vehiculo_objetivo_id) || null}
+          onClose={() => setLeadWebDetalle(null)}
+        />
+      )}
       <ConfirmDialog
         abierto={!!confirmDialog}
         mensaje={confirmDialog?.mensaje || ""}
