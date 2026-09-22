@@ -57,14 +57,32 @@ function ProgressStepper({ currentStep }: { currentStep: number }) {
   );
 }
 
-function ConfigField({ 
-  icon: Icon, label, value, isOpen, onClick, children, isCompleted 
-}: { 
-  icon: any, label: string, value: string, isOpen: boolean, onClick: () => void, children: React.ReactNode, isCompleted: boolean 
+function ConfigField({
+  icon: Icon, label, value, isOpen, onClick, children, isCompleted
+}: {
+  icon: any, label: string, value: string, isOpen: boolean, onClick: () => void, children: React.ReactNode, isCompleted: boolean
 }) {
   return (
-    <div className={`border rounded-2xl overflow-hidden transition-all duration-300 ${isOpen ? "border-slate-300 dark:border-slate-600 bg-white dark:bg-[#161e2c] shadow-sm dark:shadow-none" : "border-slate-200 dark:border-white/5 bg-slate-50 dark:bg-[#0f172a] hover:bg-white dark:hover:bg-[#161e2c]"}`}>
-      <div onClick={onClick} className="flex items-center justify-between p-4 cursor-pointer">
+    <div className={`border rounded-2xl overflow-hidden transition-all duration-300 ${isOpen ? "col-span-2 border-slate-300 dark:border-slate-600 bg-white dark:bg-[#161e2c] shadow-sm dark:shadow-none" : "border-slate-200 dark:border-white/5 bg-slate-50 dark:bg-[#0f172a] hover:bg-white dark:hover:bg-[#161e2c]"}`}>
+      {/* Mobile: tile compacto (icono + label arriba, valor + estado abajo) para que entren 2 por fila. */}
+      <div onClick={onClick} className="lg:hidden flex flex-col gap-1.5 p-3 cursor-pointer">
+        <div className="flex items-center gap-1.5">
+          <Icon className="w-3.5 h-3.5 text-slate-400 dark:text-slate-500 shrink-0" />
+          <span className="text-[9px] text-slate-500 dark:text-slate-400 font-bold uppercase tracking-widest truncate">{label}</span>
+        </div>
+        <div className="flex items-center justify-between gap-1">
+          <span className={`text-xs font-bold truncate ${value ? "text-slate-900 dark:text-white" : "text-slate-400 dark:text-slate-600"}`}>
+            {value || "Elegir"}
+          </span>
+          {isCompleted && !isOpen ? (
+            <Check className="w-3.5 h-3.5 text-emerald-500 dark:text-emerald-400 shrink-0" />
+          ) : (
+            <ChevronDown className={`w-3.5 h-3.5 text-slate-400 dark:text-slate-500 shrink-0 transition-transform duration-300 ${isOpen ? "rotate-180" : ""}`} />
+          )}
+        </div>
+      </div>
+      {/* Desktop: fila horizontal original. */}
+      <div onClick={onClick} className="hidden lg:flex items-center justify-between p-4 cursor-pointer">
         <div className="flex items-center gap-4">
           <div className="w-10 h-10 rounded-xl bg-slate-100 dark:bg-white/5 flex items-center justify-center shrink-0">
             <Icon className="w-5 h-5 text-slate-500 dark:text-slate-400" />
@@ -83,13 +101,13 @@ function ConfigField({
       </div>
       <AnimatePresence>
         {isOpen && (
-          <motion.div 
-            initial={{ height: 0, opacity: 0 }} 
-            animate={{ height: "auto", opacity: 1 }} 
+          <motion.div
+            initial={{ height: 0, opacity: 0 }}
+            animate={{ height: "auto", opacity: 1 }}
             exit={{ height: 0, opacity: 0 }}
             className="overflow-hidden"
           >
-            <div className="p-4 pt-0 border-t border-slate-100 dark:border-white/5 mt-2">
+            <div className="p-3 lg:p-4 pt-0 border-t border-slate-100 dark:border-white/5 mt-2">
               {children}
             </div>
           </motion.div>
@@ -438,7 +456,7 @@ export default function ConsignarForm() {
                   key="step1"
                   initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -20 }}
                   transition={{ duration: 0.3 }}
-                  className="space-y-3"
+                  className="grid grid-cols-2 gap-2 lg:block lg:space-y-3"
                 >
                   <ConfigField icon={CalendarDays} label="Año" value={anio} isOpen={openDropdown === 'anio'} onClick={() => setOpenDropdown(openDropdown === 'anio' ? null : 'anio')} isCompleted={!!anio}>
                     <div className="grid grid-cols-5 gap-1.5">
@@ -494,8 +512,8 @@ export default function ConsignarForm() {
                     </button>
                   </ConfigField>
 
-                  <div className="pt-6">
-                    <button 
+                  <div className="col-span-2 pt-3 lg:pt-6">
+                    <button
                       onClick={() => setStep(2)} disabled={!validarPaso1()}
                       className="w-full py-4 bg-blue-600 hover:bg-blue-500 disabled:bg-slate-200 dark:disabled:bg-slate-800 disabled:text-slate-400 dark:disabled:text-slate-500 text-white font-black rounded-2xl uppercase tracking-widest text-xs transition-colors flex items-center justify-center gap-2"
                     >
