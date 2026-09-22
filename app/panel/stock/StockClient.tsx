@@ -8,8 +8,9 @@ import ConfirmDialog from "@/components/panel/ConfirmDialog";
 import {
   Search, Car, Globe, Download, Upload, FileText, Plus, Edit2,
   AlertTriangle, Clock, CheckCircle2, Tag, Trash2, TrendingUp, ChevronLeft, ChevronRight,
-  Building2, UserCircle2, Loader2, Handshake, MoreVertical, List, LayoutGrid, Table2, MapPin,
+  Building2, UserCircle2, Loader2, Handshake, MoreVertical, List, LayoutGrid, Table2, MapPin, Printer,
 } from "lucide-react";
+import Link from "next/link";
 import NuevoVehiculoModal from "./NuevoVehiculoModal";
 import NuevoMandatoModal from "./NuevoMandatoModal";
 import TuCatalogoModal from "./TuCatalogoModal";
@@ -327,9 +328,14 @@ export default function StockClient({
                           <p className="font-bold text-slate-800 dark:text-white">{m.vehiculo_marca} {m.vehiculo_modelo} {m.vehiculo_anio}</p>
                           <p className="text-xs text-slate-400">{m.mandante_nombre} · {m.tipo_tramite}{m.valor ? ` · ${fmtPrecio(m.valor, m.moneda)}` : ""}</p>
                         </div>
-                        <span className={`text-[11px] font-bold px-2.5 py-1 rounded-full border ${diasRestantes < 0 ? "bg-rose-50 text-rose-600 border-rose-200 dark:bg-rose-500/10 dark:border-rose-500/20" : diasRestantes <= 7 ? "bg-amber-50 text-amber-600 border-amber-200 dark:bg-amber-500/10 dark:border-amber-500/20" : "bg-slate-50 text-slate-500 border-slate-200 dark:bg-white/5 dark:border-white/10"}`}>
-                          {diasRestantes < 0 ? `Vencido hace ${-diasRestantes}d` : `Vence en ${diasRestantes}d`}
-                        </span>
+                        <div className="flex items-center gap-2 shrink-0">
+                          <span className={`text-[11px] font-bold px-2.5 py-1 rounded-full border ${diasRestantes < 0 ? "bg-rose-50 text-rose-600 border-rose-200 dark:bg-rose-500/10 dark:border-rose-500/20" : diasRestantes <= 7 ? "bg-amber-50 text-amber-600 border-amber-200 dark:bg-amber-500/10 dark:border-amber-500/20" : "bg-slate-50 text-slate-500 border-slate-200 dark:bg-white/5 dark:border-white/10"}`}>
+                            {diasRestantes < 0 ? `Vencido hace ${-diasRestantes}d` : `Vence en ${diasRestantes}d`}
+                          </span>
+                          <Link href={`/panel/stock/imprimir/mandato/${m.id}`} title="Ver / imprimir mandato" className="p-1.5 rounded-lg text-slate-400 hover:text-[#0145F2] hover:bg-slate-100 dark:hover:bg-white/10">
+                            <Printer className="w-3.5 h-3.5" />
+                          </Link>
+                        </div>
                       </div>
                     );
                   })}

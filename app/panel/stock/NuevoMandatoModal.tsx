@@ -40,6 +40,14 @@ export default function NuevoMandatoModal({ miId, miNombre, onClose, onCreado }:
   const [auxilio, setAuxilio] = useState("No trae");
   const [valor, setValor] = useState("");
   const [moneda, setMoneda] = useState("USD");
+  const [comisionPct, setComisionPct] = useState("");
+  const [compraAsegurada, setCompraAsegurada] = useState("");
+  const [condicionPago, setCondicionPago] = useState("inmediata");
+  const [montoCondicionPago, setMontoCondicionPago] = useState("");
+  const [doc08Nro, setDoc08Nro] = useState("");
+  const [docVerificacionPolicial, setDocVerificacionPolicial] = useState("");
+  const [docTituloCedulaDeuda, setDocTituloCedulaDeuda] = useState("");
+  const [docACargoVendedor, setDocACargoVendedor] = useState(true);
   const [agregarAlStock, setAgregarAlStock] = useState(true);
   const [guardando, setGuardando] = useState(false);
   const [error, setError] = useState("");
@@ -71,6 +79,22 @@ export default function NuevoMandatoModal({ miId, miNombre, onClose, onCreado }:
         .select()
         .single();
       if (dbError) throw dbError;
+
+      // Campos nuevos (comisión, compra asegurada, documentación) en un
+      // update aparte con su propio try/catch: si migraciones/sql_mandatos_condiciones.sql
+      // todavía no corrió en la base, esto no debe romper la creación del
+      // mandato en sí -- mismo criterio que el tab Gestoría de Expedientes.
+      const { error: erroCamposAmpliados } = await supabase2.from("mandatos").update({
+        comision_pct: comisionPct ? Number(comisionPct) : null,
+        compra_asegurada: compraAsegurada || null,
+        condicion_pago: compraAsegurada === "si" ? condicionPago : null,
+        monto_condicion_pago: compraAsegurada === "si" && montoCondicionPago ? Number(montoCondicionPago) : null,
+        doc_08_nro: doc08Nro || null,
+        doc_verificacion_policial: docVerificacionPolicial || null,
+        doc_titulo_cedula_deuda: docTituloCedulaDeuda ? Number(docTituloCedulaDeuda) : null,
+        doc_a_cargo_vendedor: docACargoVendedor,
+      }).eq("id", mandato.id);
+      if (erroCamposAmpliados) console.error("No se pudieron guardar los campos ampliados del mandato (¿corriste la migración?):", erroCamposAmpliados);
 
       let vehiculoCreado = null;
       if (agregarAlStock) {
@@ -207,7 +231,44 @@ export default function NuevoMandatoModal({ miId, miNombre, onClose, onCreado }:
                 <label className={labelClass}>Moneda</label>
                 <select value={moneda} onChange={(e) => setMoneda(e.target.value)} className={inputClass}><option value="USD">USD</option><option value="ARS">ARS</option></select>
               </div>
+              <div><label className={labelClass}>Comisión %</label><input type="number" step="0.01" value={comisionPct} onChange={(e) => setComisionPct(e.target.value)} placeholder="Ej: 10" className={inputClass} /></div>
             </div>
+          </div>
+
+          <div>
+            <p className={seccionClass}>Compra asegurada</p>
+            <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
+              <div>
+                <label className={labelClass}>¿La agencia asegura la compra?</label>
+                <select value={compraAsegurada} onChange={(e) => setCompraAsegurada(e.target.value)} className={inputClass}>
+                  <option value="">—</option><option value="si">Sí</option><option value="no">No</option>
+                </select>
+              </div>
+              {compraAsegurada === "si" && (
+                <>
+                  <div>
+                    <label className={labelClass}>Condición de pago</label>
+                    <select value={condicionPago} onChange={(e) => setCondicionPago(e.target.value)} className={inputClass}>
+                      <option value="inmediata">Inmediata</option><option value="30_dias">A 30 días</option><option value="45_dias">A 45 días</option>
+                    </select>
+                  </div>
+                  <div><label className={labelClass}>Monto</label><input type="text" inputMode="numeric" value={montoCondicionPago} onChange={(e) => setMontoCondicionPago(e.target.value.replace(/\D/g, ""))} className={inputClass} /></div>
+                </>
+              )}
+            </div>
+          </div>
+
+          <div>
+            <p className={seccionClass}>Documentación</p>
+            <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
+              <div><label className={labelClass}>08 N°</label><input value={doc08Nro} onChange={(e) => setDoc08Nro(e.target.value)} className={inputClass} /></div>
+              <div><label className={labelClass}>V. Policial</label><input value={docVerificacionPolicial} onChange={(e) => setDocVerificacionPolicial(e.target.value)} className={inputClass} /></div>
+              <div><label className={labelClass}>Título, Cédula, Deuda $</label><input type="text" inputMode="numeric" value={docTituloCedulaDeuda} onChange={(e) => setDocTituloCedulaDeuda(e.target.value.replace(/\D/g, ""))} className={inputClass} /></div>
+            </div>
+            <label className="flex items-center gap-2 mt-3 cursor-pointer">
+              <input type="checkbox" checked={docACargoVendedor} onChange={(e) => setDocACargoVendedor(e.target.checked)} className="w-4 h-4 accent-[#0145F2]" />
+              <span className="text-xs font-semibold text-slate-600 dark:text-slate-300">Documentación a cargo del vendedor</span>
+            </label>
           </div>
 
           <label className="flex items-start gap-2.5 px-3 py-2.5 rounded-xl bg-rose-50 dark:bg-rose-500/10 border border-rose-200 dark:border-rose-500/20 cursor-pointer">
