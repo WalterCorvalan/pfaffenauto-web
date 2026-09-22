@@ -514,6 +514,12 @@ export default function ChatClient({
                           {m.tipo === "image" && m.media_url && (
                             <img src={m.media_url} alt="Foto del vehículo" className="rounded-lg max-w-[260px] max-h-[260px] object-cover mb-1" />
                           )}
+                          {m.tipo === "audio" && m.media_url && (
+                            <audio controls preload="none" src={m.media_url} className="max-w-[260px] mb-1 h-10" />
+                          )}
+                          {/* Audio sin media_url: se cayó la descarga de Meta (URL
+                              temporal vencida, R2 no configurado, etc.) -- solo
+                              queda el placeholder de texto "🎤 Audio" de abajo. */}
                           {m.texto && <p className="leading-relaxed whitespace-pre-wrap">{m.texto}</p>}
                           <div className={`flex items-center justify-end gap-1 mt-1 ${out && !esIG ? "opacity-60" : "opacity-70"}`}>
                             {out && m.ai_generado && <Bot className="w-3 h-3" />}
