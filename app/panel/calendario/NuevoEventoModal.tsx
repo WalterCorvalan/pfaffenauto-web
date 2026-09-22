@@ -5,7 +5,7 @@ import { supabase2 } from "@/lib/supabase/client";
 import { X, Loader2 } from "lucide-react";
 
 export const TIPOS_EVENTO = ["Reunión", "Turno", "Entrega", "Vencimiento", "Recordatorio", "Otro"];
-export const SECTORES = ["Ventas", "Gestoría", "Finanzas", "Administración", "Recepción"];
+export const SECTORES = ["Ventas", "Gestoría", "Finanzas"];
 export const COLORES = ["#6366f1", "#22c55e", "#f59e0b", "#ef4444", "#3b82f6", "#a855f7", "#ec4899", "#14b8a6"];
 
 interface Perfil {
