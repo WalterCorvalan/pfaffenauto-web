@@ -118,7 +118,7 @@ async function procesarMensaje({ sessionId, texto, origenPagina, nombre, telefon
   const esPrimerMensaje = historial.length === 1;
   const esSaludoSimple = /^(hola+|holis|buenas|hey|buen[oa]s?\s*(d[ií]as?|tardes|noches)?|qu[ée]\s*tal|hello|hi)[\s!¡.,?¿]*$/i.test(texto.trim());
   if (esPrimerMensaje && esSaludoSimple) {
-    const saludo = menuBienvenidaV2("Rodi");
+    const saludo = menuBienvenidaV2();
     await supabase.from("rodi_mensajes").insert({ conversacion_id: conversacion.id, direccion: "out", texto: saludo, ai_generado: false });
     return NextResponse.json({ replies: [saludo], handoff: false });
   }
