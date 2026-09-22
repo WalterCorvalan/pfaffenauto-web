@@ -323,7 +323,7 @@ async function ejecutarAgente(conversacionId: string) {
     return;
   }
 
-  const { reply, handoff, pausar_sin_notificar, calificacion, resumen_handoff, datos_detectados } = result.data;
+  const { reply, handoff, pausar_sin_notificar, calificacion, resumen_handoff, datos_detectados, intencion } = result.data;
   const { fotosParaEnviar, vehiculoFocoId, pedidoStock } = result;
 
   const estadoSegunCalificacion = calificacion === "caliente" ? "calificando" : undefined;
@@ -332,28 +332,33 @@ async function ejecutarAgente(conversacionId: string) {
   if (vehiculoFocoId) patchConversacion.vehiculo_id = vehiculoFocoId;
 
   // Pedido del usuario: todo auto 0km que el bot elige como foco de la
-  // charla se deriva siempre a Gabriel (Casa Central), sin importar la
-  // ronda normal por sucursal -- los 0km los maneja una sola persona.
+  // charla, Y toda consulta de consignación (el cliente quiere que le
+  // vendamos SU auto), se derivan siempre a Gabriel (Casa Central), sin
+  // importar la ronda normal por sucursal -- los maneja una sola persona.
   // Se busca por nombre/sucursal en vivo (no un UUID hardcodeado) para no
   // romper si cambia el perfil; si no se encuentra a Gabriel activo en
   // Casa Central, no rompe el resto del flujo, solo no fuerza el cambio.
+  let motivoAsignacionGabriel: "0km" | "consignacion" | null = null;
   if (vehiculoFocoId) {
     const { data: vehiculoFoco } = await supabase.from("vehiculos").select("condicion").eq("id", vehiculoFocoId).maybeSingle();
-    if (vehiculoFoco?.condicion === "0km") {
-      const { data: gabriel } = await supabase
-        .from("perfiles")
-        .select("id, sucursal:sucursal_id ( nombre )")
-        .ilike("nombre", "Gabriel%")
-        .eq("activo", true)
-        .maybeSingle();
-      const sucursalGabrielRaw = gabriel?.sucursal as { nombre?: string } | { nombre?: string }[] | null | undefined;
-      const sucursalGabriel = Array.isArray(sucursalGabrielRaw) ? sucursalGabrielRaw[0]?.nombre : sucursalGabrielRaw?.nombre;
-      if (gabriel?.id && sucursalGabriel && /casa central/i.test(sucursalGabriel)) {
-        patchConversacion.vendedor_id = gabriel.id;
-        patchConversacion.estado_lead = "asignado";
-      } else {
-        registrarError("webhook-v2:asignacion-0km", new Error("No se encontró a Gabriel (Casa Central) activo en perfiles"), { conversacionId, vehiculoFocoId });
-      }
+    if (vehiculoFoco?.condicion === "0km") motivoAsignacionGabriel = "0km";
+  }
+  if (!motivoAsignacionGabriel && intencion === "CONSIGNACION") motivoAsignacionGabriel = "consignacion";
+
+  if (motivoAsignacionGabriel) {
+    const { data: gabriel } = await supabase
+      .from("perfiles")
+      .select("id, sucursal:sucursal_id ( nombre )")
+      .ilike("nombre", "Gabriel%")
+      .eq("activo", true)
+      .maybeSingle();
+    const sucursalGabrielRaw = gabriel?.sucursal as { nombre?: string } | { nombre?: string }[] | null | undefined;
+    const sucursalGabriel = Array.isArray(sucursalGabrielRaw) ? sucursalGabrielRaw[0]?.nombre : sucursalGabrielRaw?.nombre;
+    if (gabriel?.id && sucursalGabriel && /casa central/i.test(sucursalGabriel)) {
+      patchConversacion.vendedor_id = gabriel.id;
+      patchConversacion.estado_lead = "asignado";
+    } else {
+      registrarError("webhook-v2:asignacion-gabriel", new Error("No se encontró a Gabriel (Casa Central) activo en perfiles"), { conversacionId, vehiculoFocoId, motivoAsignacionGabriel });
     }
   }
 
@@ -362,7 +367,8 @@ async function ejecutarAgente(conversacionId: string) {
   // Avisar a Gabriel recién después del update de arriba (así el link ya
   // muestra la conversación con el vendedor correcto si abre desde la alerta).
   if (patchConversacion.vendedor_id) {
-    notificarPersona(supabase, patchConversacion.vendedor_id as string, "whatsapp_venta_zona", "Un cliente está consultando por un 0km — se te asignó automáticamente.", `/panel/whatsapp?conversacion=${conversacionId}`, { categoriaNotif: "leads", modulo: "leads" }).catch((err) => console.error("[webhook-v2] error notificando asignación 0km:", err));
+    const mensajeGabriel = motivoAsignacionGabriel === "consignacion" ? "Un cliente quiere consignar su auto — se te asignó automáticamente." : "Un cliente está consultando por un 0km — se te asignó automáticamente.";
+    notificarPersona(supabase, patchConversacion.vendedor_id as string, "whatsapp_venta_zona", mensajeGabriel, `/panel/whatsapp?conversacion=${conversacionId}`, { categoriaNotif: "leads", modulo: "leads" }).catch((err) => console.error("[webhook-v2] error notificando asignación a Gabriel:", err));
   }
 
   // Nombre y mail que el cliente vaya dando durante la charla se guardan en
