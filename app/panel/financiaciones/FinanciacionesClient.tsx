@@ -2,7 +2,7 @@
 
 import { useMemo, useState } from "react";
 import { supabase2 } from "@/lib/supabase/client";
-import { CreditCard, Search, Filter, Clock, MessageSquareText, ExternalLink } from "lucide-react";
+import { CreditCard, Search, Filter, Clock, MessageSquareText, ExternalLink, CheckCircle2, XCircle } from "lucide-react";
 import TablaResponsiva, { type ColumnaTabla } from "@/components/panel/TablaResponsiva";
 import FinanciacionDetalleModal from "./FinanciacionDetalleModal";
 import SimuladorPropioModal from "./SimuladorPropioModal";
@@ -133,7 +133,14 @@ export default function FinanciacionesClient({ solicitudesIniciales, staff }: { 
               [
                 { key: "cliente", header: "Cliente", cell: (s) => s.nombre, ocultarEnMobile: true },
                 { key: "vehiculo", header: "Vehículo", cell: (s) => [s.marca, s.modelo, s.anio].filter(Boolean).join(" ") || "—", claseTd: "text-[13px] text-slate-700 dark:text-slate-200 font-medium" },
-                { key: "detalle", header: "Detalle del plan", cell: (s) => s.version || "—", claseTd: "text-[12px] text-slate-500 dark:text-slate-400 max-w-xs truncate" },
+                { key: "plan", header: "Plan pedido", cell: (s) => s.monto_financiar != null ? (
+                  <span>Financia <strong>${Number(s.monto_financiar).toLocaleString("es-AR")}</strong>{s.plazo_meses ? ` en ${s.plazo_meses}c` : ""}{s.cuota_estimada ? ` · $${Number(s.cuota_estimada).toLocaleString("es-AR")}/mes` : ""}</span>
+                ) : (s.version || "—"), claseTd: "text-[12px] text-slate-500 dark:text-slate-400 max-w-xs truncate" },
+                { key: "preaprobado", header: "Preaprobado", cell: (s) => s.credito_preaprobado == null ? "—" : (
+                  <span className={`inline-flex items-center gap-1 text-[10px] font-bold px-2 py-1 rounded-full ${s.credito_preaprobado ? "bg-emerald-50 dark:bg-emerald-500/10 text-emerald-700 dark:text-emerald-300" : "bg-amber-50 dark:bg-amber-500/10 text-amber-700 dark:text-amber-300"}`}>
+                    {s.credito_preaprobado ? <CheckCircle2 className="w-3 h-3" /> : <XCircle className="w-3 h-3" />} {s.credito_preaprobado ? "Sí" : "No"}
+                  </span>
+                ), ocultarEnMobile: true },
                 { key: "fecha", header: "Fecha", cell: (s) => <span className="flex items-center gap-1"><Clock className="w-3 h-3" /> {new Date(s.created_at).toLocaleDateString("es-AR", { day: "2-digit", month: "short" })}</span>, claseTd: "text-[12px] text-slate-400" },
                 { key: "vendedor", header: "Vendedor", cell: (s) => (
                   <select
