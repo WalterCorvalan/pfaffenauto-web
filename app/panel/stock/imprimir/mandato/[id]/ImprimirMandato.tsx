@@ -114,14 +114,21 @@ export default function ImprimirMandato({ mandato: m, branding }: { mandato: any
           <div className="flex justify-between border-b border-dotted border-slate-300 pb-0.5"><span className="text-slate-500">Plazo</span><strong>{m.plazo_dias} días</strong></div>
         </div>
 
-        <div className="grid grid-cols-2 gap-16 px-4 mt-10 break-inside-avoid">
+        {/* Firma | Aclaración | DNI, como en el formulario de papel -- los
+            dos últimos ya se cargan en el modal "Nuevo mandato" (nombre y
+            DNI/CUIT del mandante), no hace falta pedirlos de nuevo acá. */}
+        <div className="grid grid-cols-3 gap-8 px-4 mt-10 break-inside-avoid">
           <div>
             <FirmaCanvas tabla="mandatos" id={m.id} firmaUrlActual={firmaUrl} onGuardada={setFirmaUrl} />
-            <div className="text-center border-t border-slate-400 pt-1.5 mt-1"><span className="block text-[11px]">firma del mandante</span></div>
+            <div className="text-center border-t border-slate-400 pt-1.5 mt-1"><span className="block text-[11px]">firma</span></div>
           </div>
           <div className="text-center">
-            <div className="h-20" />
-            <div className="border-t border-slate-400 pt-1.5"><span className="block text-[11px]">aclaración — DNI</span></div>
+            <div className="h-20 flex items-end justify-center pb-1"><span className="text-[11px] font-bold">{m.mandante_nombre}</span></div>
+            <div className="border-t border-slate-400 pt-1.5"><span className="block text-[11px]">aclaración</span></div>
+          </div>
+          <div className="text-center">
+            <div className="h-20 flex items-end justify-center pb-1"><span className="text-[11px] font-bold">{m.mandante_dni_cuit || "—"}</span></div>
+            <div className="border-t border-slate-400 pt-1.5"><span className="block text-[11px]">DNI</span></div>
           </div>
         </div>
       </div>
