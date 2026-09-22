@@ -168,6 +168,18 @@ export default function NuevoVehiculoModal({ perfiles, clientes, sucursales, miI
   const [propietarioProvincia, setPropietarioProvincia] = useState(editando?.propietario_provincia || "");
   const [propietarioTelefonoCelular, setPropietarioTelefonoCelular] = useState(editando?.propietario_telefono_celular || "");
 
+  // Compromiso de compra: si el auto se paga en cuotas al proveedor, arma
+  // solo las filas en cuotas_pagar_agencia (Finanzas → Cuotas a pagar) en
+  // vez de tener que cargarlas de nuevo a mano ahí -- mismo generador de
+  // vencimientos que usa CuotasTab.tsx para "Compromiso de compra (auto)".
+  // Solo al crear (no en edición, para no duplicar el plan en cada guardado).
+  const [compradoEnCuotas, setCompradoEnCuotas] = useState(false);
+  const [ccMontoCuota, setCcMontoCuota] = useState("");
+  const [ccMoneda, setCcMoneda] = useState("USD");
+  const [ccCantidad, setCcCantidad] = useState("1");
+  const [ccFrecuencia, setCcFrecuencia] = useState("Mensual");
+  const [ccPrimerVencimiento, setCcPrimerVencimiento] = useState(new Date().toISOString().slice(0, 10));
+
   // Titulares (dueños que figuran en el título, N dinámico, con % de
   // propiedad) — separado del proveedor/propietario de arriba.
   const [titulares, setTitulares] = useState<{ nombre: string; porcentaje: string; cuit_cuil: string }[]>([]);
@@ -278,6 +290,25 @@ export default function NuevoVehiculoModal({ perfiles, clientes, sucursales, miI
             porcentaje: t.porcentaje ? Number(t.porcentaje) : null, cuit_cuil: t.cuit_cuil.trim() || null,
           }))
         );
+      }
+
+      // Compromiso de compra: mismo generador de vencimientos que
+      // crearCuotaPagar() en CuotasTab.tsx (FREQ_DIAS por frecuencia).
+      if (!esEdicion && compradoEnCuotas && ccMontoCuota) {
+        const FREQ_DIAS: Record<string, number> = { Mensual: 30, Bimestral: 60, Anual: 365 };
+        const acreedor = [propietarioNombre, propietarioApellido].filter(Boolean).join(" ").trim() || "Proveedor sin nombre cargado";
+        const n = Number(ccCantidad) || 1;
+        const filasCompromiso = Array.from({ length: n }, (_, i) => {
+          const v = new Date(ccPrimerVencimiento + "T00:00:00");
+          v.setDate(v.getDate() + FREQ_DIAS[ccFrecuencia] * i);
+          return {
+            acreedor, tipo_deuda: "auto_cuotas", concepto: `${data.marca} ${data.modelo} ${data.anio} — compromiso de compra`,
+            vehiculo_id: data.id, moneda: ccMoneda, monto: Number(ccMontoCuota), vencimiento: v.toISOString().slice(0, 10),
+            cuota_actual: i + 1, cuota_total: n, creado_por: miId || null,
+          };
+        });
+        const { error: errorCompromiso } = await supabase2.from("cuotas_pagar_agencia").insert(filasCompromiso);
+        if (errorCompromiso) console.error("[NuevoVehiculoModal] No se pudo crear el compromiso de compra:", errorCompromiso);
       }
 
       if (!esEdicion && miId) {
@@ -605,6 +636,43 @@ export default function NuevoVehiculoModal({ perfiles, clientes, sucursales, miI
               </div>
             )}
           </div>
+
+          {!esEdicion && !propioAgencia && (
+            <div>
+              <p className={seccionClass}>Compromiso de compra</p>
+              <label className="flex items-start gap-2.5 px-3 py-2.5 rounded-xl bg-slate-50 dark:bg-white/5 border border-slate-200 dark:border-white/10 cursor-pointer mb-3">
+                <input type="checkbox" checked={compradoEnCuotas} onChange={(e) => setCompradoEnCuotas(e.target.checked)} className="w-4 h-4 mt-0.5 accent-[#0145F2]" />
+                <span>
+                  <span className="block text-xs font-bold text-slate-700 dark:text-slate-200">Se le paga al proveedor en cuotas</span>
+                  <span className="block text-[10px] text-slate-400">Genera el plan de pago automáticamente en Finanzas → Cuotas a pagar, con el acreedor y el auto ya vinculados.</span>
+                </span>
+              </label>
+              {compradoEnCuotas && (
+                <div className="grid grid-cols-2 gap-2">
+                  <div>
+                    <label className={labelClass}>Importe de cada cuota</label>
+                    <input type="text" inputMode="numeric" value={ccMontoCuota} onChange={(e) => setCcMontoCuota(e.target.value.replace(/\D/g, ""))} placeholder="2500" className={inputClass} />
+                  </div>
+                  <div>
+                    <label className={labelClass}>Moneda</label>
+                    <select value={ccMoneda} onChange={(e) => setCcMoneda(e.target.value)} className={inputClass}><option value="USD">USD</option><option value="ARS">ARS</option></select>
+                  </div>
+                  <div>
+                    <label className={labelClass}>Cantidad de cuotas</label>
+                    <input type="number" value={ccCantidad} onChange={(e) => setCcCantidad(e.target.value)} className={inputClass} />
+                  </div>
+                  <div>
+                    <label className={labelClass}>Frecuencia</label>
+                    <select value={ccFrecuencia} onChange={(e) => setCcFrecuencia(e.target.value)} className={inputClass}><option>Mensual</option><option>Bimestral</option><option>Anual</option></select>
+                  </div>
+                  <div className="col-span-2">
+                    <label className={labelClass}>Primer vencimiento</label>
+                    <input type="date" value={ccPrimerVencimiento} onChange={(e) => setCcPrimerVencimiento(e.target.value)} className={inputClass} />
+                  </div>
+                </div>
+              )}
+            </div>
+          )}
 
           <div>
             <div className="flex items-center justify-between mb-2">
