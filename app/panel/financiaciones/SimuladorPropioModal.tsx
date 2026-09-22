@@ -5,7 +5,7 @@ import { X, CreditCard, Check } from "lucide-react";
 import VehiculoSelector, { type VehiculoDatos } from "@/components/panel/VehiculoSelector";
 import {
   TOPES_FINANCIACION_DEFAULT, TOPE_0KM_DEFAULT, TNA_POR_PLAZO_DEFAULT, GASTOS_PCT_DEFAULT,
-  PLAZOS_DISPONIBLES, UVA_DESCUENTO_PCT_DEFAULT, PLAZOS_CON_UVA, topePctPorAnio, calcularCuotaFrances, type TopeFinanciacion,
+  PLAZOS_DISPONIBLES, topePctPorAnio, calcularCuotaFrances, type TopeFinanciacion,
 } from "@/lib/financiacion";
 
 function fmt(n: number) {
@@ -16,7 +16,6 @@ export default function SimuladorPropioModal({ onClose }: { onClose: () => void 
   const [topes, setTopes] = useState<TopeFinanciacion[]>(TOPES_FINANCIACION_DEFAULT);
   const [tope0km, setTope0km] = useState(TOPE_0KM_DEFAULT);
   const [tna, setTna] = useState<Record<string, number>>(TNA_POR_PLAZO_DEFAULT);
-  const [uvaDescuento, setUvaDescuento] = useState<Record<string, number>>(UVA_DESCUENTO_PCT_DEFAULT);
   const [gastosPct, setGastosPct] = useState(GASTOS_PCT_DEFAULT);
   const [dolarVenta, setDolarVenta] = useState<number | null>(null);
 
@@ -30,7 +29,6 @@ export default function SimuladorPropioModal({ onClose }: { onClose: () => void 
         if (data.config.financiacion_tope_0km) setTope0km(data.config.financiacion_tope_0km);
         if (Object.keys(data.config.financiacion_tna || {}).length) setTna(data.config.financiacion_tna);
         if (data.config.financiacion_gastos_pct != null) setGastosPct(data.config.financiacion_gastos_pct);
-        if (Object.keys(data.config.financiacion_uva_descuento || {}).length) setUvaDescuento(data.config.financiacion_uva_descuento);
       }
     }).catch(() => {});
     fetch("/api/dolar-blue").then((r) => r.json()).then((d) => { if (d.venta) setDolarVenta(d.venta); }).catch(() => {});
@@ -95,20 +93,12 @@ export default function SimuladorPropioModal({ onClose }: { onClose: () => void 
                     const tasaPlazo = tna[String(p)];
                     if (!tasaPlazo) return null;
                     const cuota = calcularCuotaFrances(capitalMaximo, tasaPlazo, p);
-                    const descuentoUva = PLAZOS_CON_UVA.includes(p) ? uvaDescuento[String(p)] : null;
-                    const cuotaUva = descuentoUva ? Math.round(cuota * (1 - descuentoUva / 100)) : null;
                     return (
                       <div key={p} className="px-3 py-2.5 bg-white dark:bg-transparent">
                         <div className="flex justify-between items-center">
                           <span className="text-sm font-semibold text-slate-600 dark:text-slate-300">{p} cuotas</span>
                           <span className="text-sm font-bold text-slate-900 dark:text-white">$ {fmt(cuota)} / mes</span>
                         </div>
-                        {cuotaUva != null && (
-                          <div className="flex justify-between items-center mt-1">
-                            <span className="text-[11px] text-indigo-500 dark:text-indigo-300">UVA (1ª cuota, sube con inflación)</span>
-                            <span className="text-[11px] font-bold text-indigo-600 dark:text-indigo-300">$ {fmt(cuotaUva)}</span>
-                          </div>
-                        )}
                       </div>
                     );
                   })}
