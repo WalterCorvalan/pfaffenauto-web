@@ -10,11 +10,12 @@ export default async function FinanzasPage() {
   const miPerfil = user ? await supabase.from("perfiles").select("id, nombre, roles, sucursal_id").eq("id", user.id).single().then((r) => r.data) : null;
   const soyAdminOFinanzas = miPerfil?.roles?.some((r: string) => r === "admin" || r === "finanzas") ?? false;
   const soyAdmin = miPerfil?.roles?.includes("admin") ?? false;
-  // Pedido de la reunión del 22/9: alguien sin admin/encargado/finanzas solo
-  // ve, en Caja Grande/Chica, la sucursal que tiene asignada en su perfil
-  // (Configuración → Usuarios) -- el resto del panel de Finanzas no se
-  // restringe, solo ese tab puntual.
-  const veTodasSucursales = miPerfil?.roles?.some((r: string) => ["admin", "encargado", "finanzas"].includes(r)) ?? false;
+  // Pedido de la reunión del 22/9: cada encargado de sucursal (ej. Lucas en
+  // Don Torcuato) solo ve, en Caja Grande/Chica, la sucursal que tiene
+  // asignada en su perfil -- "encargado" NO es un rol que vea todo, es
+  // por-sucursal como vendedor. Solo admin/finanzas ven todas las cajas.
+  // El resto del panel de Finanzas no se restringe, solo ese tab puntual.
+  const veTodasSucursales = miPerfil?.roles?.some((r: string) => ["admin", "finanzas"].includes(r)) ?? false;
   const miSucursalId = miPerfil?.sucursal_id ?? null;
 
   const [{ data: cuentas }, { data: cierres }, { data: cuotasCobrar }, { data: cuotasPagar }, { data: vendedores }, { data: clientes }, { data: vehiculosEnJuego }, { data: ventas }, { data: cheques }, { data: pagosDisponibles }, { data: consumosTarjeta }, { data: retiros }, { data: devoluciones }, { data: expedientes }, { data: prestamos }, { data: presupuestos }, { data: recurrencias }, { data: recurrenciasGeneraciones }, { data: arqueos }, { data: cierresDiarios }, { data: senas }, { data: sucursales }] = await Promise.all([

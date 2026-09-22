@@ -150,11 +150,27 @@ export default function ChequesTab({ cheques, setCheques, cuentas }: { cheques: 
               <div><label className={labelClass}>Tipo de cheque *</label><select value={form.tipo} onChange={(e) => setForm({ ...form, tipo: e.target.value })} className={inputClass}><option value="a_cobrar">A cobrar (lo recibo)</option><option value="emitido">Emitido (lo pago)</option></select></div>
               <div><label className={labelClass}>Formato</label><select value={form.formato} onChange={(e) => setForm({ ...form, formato: e.target.value })} className={inputClass}><option value="fisico">Físico</option><option value="echeque">ECHEQ</option></select></div>
             </div>
-            <label className={labelClass + " mt-3"}>Librador (quién lo firmó) *</label>
-            <input value={form.librador} onChange={(e) => setForm({ ...form, librador: e.target.value })} placeholder="Nombre / razón social del librador" className={inputClass} />
+            {/* "Librador" y "Banco" cambian de sentido según el tipo: en un
+                cheque a cobrar, el librador y su banco son de un tercero
+                (texto libre, no lo tenemos cargado). En uno emitido, el
+                librador somos nosotros -- el campo pasa a ser "beneficiario",
+                y "Banco" pasa a ser un select de nuestras propias cuentas
+                (de dónde sale el cheque), no texto libre. */}
+            <label className={labelClass + " mt-3"}>{form.tipo === "emitido" ? "Beneficiario (a quién se lo entregamos) *" : "Librador (quién lo firmó) *"}</label>
+            <input value={form.librador} onChange={(e) => setForm({ ...form, librador: e.target.value })} placeholder={form.tipo === "emitido" ? "Nombre / razón social del beneficiario" : "Nombre / razón social del librador"} className={inputClass} />
             <div className="grid grid-cols-3 gap-2 mt-3">
               <div><label className={labelClass}>N° de cheque</label><input value={form.numero} onChange={(e) => setForm({ ...form, numero: e.target.value })} placeholder="Ej: 12345678" className={inputClass} /></div>
-              <div><label className={labelClass}>Banco</label><input value={form.banco} onChange={(e) => setForm({ ...form, banco: e.target.value })} placeholder="Galicia, Nación..." className={inputClass} /></div>
+              <div>
+                <label className={labelClass}>{form.tipo === "emitido" ? "Nuestra cuenta" : "Banco"}</label>
+                {form.tipo === "emitido" ? (
+                  <select value={form.banco} onChange={(e) => setForm({ ...form, banco: e.target.value })} className={inputClass}>
+                    <option value="">— Elegí —</option>
+                    {cuentas.map((c) => <option key={c.id} value={c.nombre}>{c.nombre}</option>)}
+                  </select>
+                ) : (
+                  <input value={form.banco} onChange={(e) => setForm({ ...form, banco: e.target.value })} placeholder="Galicia, Nación..." className={inputClass} />
+                )}
+              </div>
               <div><label className={labelClass}>CUIT/CUIL</label><input value={form.cuitCuil} onChange={(e) => setForm({ ...form, cuitCuil: e.target.value })} placeholder="20-12345678-9" className={inputClass} /></div>
             </div>
             <div className="grid grid-cols-3 gap-2 mt-3">
@@ -166,15 +182,21 @@ export default function ChequesTab({ cheques, setCheques, cuentas }: { cheques: 
               <div><label className={labelClass}>Fecha de emisión</label><input type="date" value={form.fechaEmision} onChange={(e) => setForm({ ...form, fechaEmision: e.target.value })} className={inputClass} /></div>
               <div><label className={labelClass}>Fecha de cobro *</label><input type="date" value={form.fechaCobro} onChange={(e) => setForm({ ...form, fechaCobro: e.target.value })} className={inputClass} /></div>
             </div>
-            <label className={labelClass + " mt-3"}>Caja / banco propio</label>
-            {/* Mismo selector que "Cuenta (afecta saldo)" de RetirosTab.tsx,
-                pero acá es solo informativo (dónde pensás depositarlo/pagarlo)
-                -- caja_banco_propio es una columna de texto en "cheques", no
-                afecta ningún saldo hasta que el cheque se marca "Cobrado". */}
-            <select value={form.cajaBancoPropio} onChange={(e) => setForm({ ...form, cajaBancoPropio: e.target.value })} className={inputClass}>
-              <option value="">— Elegí —</option>
-              {cuentas.map((c) => <option key={c.id} value={c.nombre}>{c.nombre} · saldo {fmt(c.saldo, c.moneda)}</option>)}
-            </select>
+            {form.tipo === "a_cobrar" && (
+              <>
+                <label className={labelClass + " mt-3"}>Caja / banco propio</label>
+                {/* Mismo selector que "Cuenta (afecta saldo)" de RetirosTab.tsx,
+                    pero acá es solo informativo (dónde pensás depositarlo)
+                    -- caja_banco_propio es una columna de texto en "cheques", no
+                    afecta ningún saldo hasta que el cheque se marca "Cobrado".
+                    En un cheque emitido no aplica: ya se eligió "Nuestra
+                    cuenta" arriba, que cumple el mismo rol. */}
+                <select value={form.cajaBancoPropio} onChange={(e) => setForm({ ...form, cajaBancoPropio: e.target.value })} className={inputClass}>
+                  <option value="">— Elegí —</option>
+                  {cuentas.map((c) => <option key={c.id} value={c.nombre}>{c.nombre} · saldo {fmt(c.saldo, c.moneda)}</option>)}
+                </select>
+              </>
+            )}
             <label className={labelClass + " mt-3"}>Notas</label>
             <textarea value={form.notas} onChange={(e) => setForm({ ...form, notas: e.target.value })} rows={2} placeholder="Detalle, operación vinculada, etc." className={inputClass} />
             <div className="flex justify-end gap-2 mt-4"><button onClick={() => setShowNuevo(false)} className="px-4 py-2 text-sm font-bold text-slate-500">Cancelar</button><button onClick={crear} disabled={guardando} className="flex items-center gap-1.5 px-4 py-2 text-sm font-bold bg-[#0145F2] hover:bg-[#0138c9] text-white rounded-lg disabled:opacity-50"><Save className="w-4 h-4" /> Registrar cheque</button></div>
