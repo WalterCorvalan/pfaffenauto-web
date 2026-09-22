@@ -54,8 +54,15 @@ export default function NotificationBell({ miId }: { miId: string }) {
       // UPDATE (ej: marcar leída) no debe volver a mostrar el toast.
       .on("postgres_changes", { event: "INSERT", schema: "public", table: "alertas", filter: `destinatario_id=eq.${miId}` }, (payload: any) => {
         const nueva = payload.new;
+        // Antes solo se mandaba "titulo" (ej: "Nueva cotización — Juan
+        // Pérez") y el toast se quedaba corto -- casi todas las alertas ya
+        // traen el detalle explicativo en "mensaje" (ej: "Fede creó una
+        // cotización por USD 15.000"), pero nunca llegaba al toast. Se manda
+        // todo lo que el toast necesita para verse completo.
         if (nueva?.titulo) {
-          window.dispatchEvent(new CustomEvent("app-toast-alerta", { detail: { id: nueva.id, mensaje: nueva.titulo, link: nueva.link } }));
+          window.dispatchEvent(new CustomEvent("app-toast-alerta", {
+            detail: { id: nueva.id, titulo: nueva.titulo, mensaje: nueva.mensaje, link: nueva.link, tipo: nueva.tipo, prioridad: nueva.prioridad },
+          }));
         }
         cargar();
       })
