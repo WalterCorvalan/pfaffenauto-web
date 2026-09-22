@@ -17,20 +17,44 @@ export default function AfipIvaTab({ movimientos, setMovimientos }: { movimiento
     return Number(m.monto) * (Number(m.iva_pct) / (100 + Number(m.iva_pct)));
   };
 
+  // Los importes acá pueden venir de movimientos en ARS o en USD -- sumarlos
+  // todos juntos en un solo número (como hacía antes, con "USD" hardcodeado
+  // sin que ningún monto real estuviera en esa moneda) mezclaba pesos y
+  // dólares sin conversión, mismo criterio a evitar que en Señas/Expedientes.
+  // Se agrupa por moneda y se muestra cada una por separado, formato
+  // "$ X · US$ Y" (mismo patrón que el cron de resumen diario).
+  const sumaPorMoneda = (lista: any[], campo: (m: any) => number) => {
+    const porMoneda: Record<string, number> = {};
+    for (const m of lista) {
+      const moneda = m.cuenta?.moneda || "ARS";
+      porMoneda[moneda] = (porMoneda[moneda] || 0) + campo(m);
+    }
+    return porMoneda;
+  };
+  const fmtPorMoneda = (porMoneda: Record<string, number>) => {
+    const partes = Object.entries(porMoneda).filter(([, v]) => v !== 0);
+    if (partes.length === 0) return fmt(0, "ARS");
+    return partes.map(([moneda, v]) => fmt(v, moneda)).join(" · ");
+  };
+
   const resumen = useMemo(() => {
     const cats = [...CATS, "Sin clasificar"];
     return cats.map((cat) => {
       const lista = cat === "Sin clasificar" ? delPeriodo.filter((m) => !m.categoria_fiscal) : delPeriodo.filter((m) => m.categoria_fiscal === cat);
-      const ingresos = lista.filter((m) => m.tipo === "ingreso").reduce((a, m) => a + Number(m.monto), 0);
-      const egresos = lista.filter((m) => m.tipo === "egreso").reduce((a, m) => a + Number(m.monto), 0);
-      const ivaCobrado = lista.filter((m) => m.tipo === "ingreso").reduce((a, m) => a + ivaDe(m), 0);
-      const ivaPagado = lista.filter((m) => m.tipo === "egreso").reduce((a, m) => a + ivaDe(m), 0);
+      const ingresos = sumaPorMoneda(lista.filter((m) => m.tipo === "ingreso"), (m) => Number(m.monto));
+      const egresos = sumaPorMoneda(lista.filter((m) => m.tipo === "egreso"), (m) => Number(m.monto));
+      const ivaCobrado = sumaPorMoneda(lista.filter((m) => m.tipo === "ingreso"), ivaDe);
+      const ivaPagado = sumaPorMoneda(lista.filter((m) => m.tipo === "egreso"), ivaDe);
       return { cat, movs: lista.length, ingresos, egresos, ivaCobrado, ivaPagado };
     });
   }, [delPeriodo]);
 
-  const ivaCobradoTotal = resumen.reduce((a, r) => a + r.ivaCobrado, 0);
-  const ivaPagadoTotal = resumen.reduce((a, r) => a + r.ivaPagado, 0);
+  const ivaCobradoTotal = sumaPorMoneda(delPeriodo.filter((m) => m.tipo === "ingreso"), ivaDe);
+  const ivaPagadoTotal = sumaPorMoneda(delPeriodo.filter((m) => m.tipo === "egreso"), ivaDe);
+  const saldoIva: Record<string, number> = {};
+  for (const moneda of new Set([...Object.keys(ivaCobradoTotal), ...Object.keys(ivaPagadoTotal)])) {
+    saldoIva[moneda] = (ivaCobradoTotal[moneda] || 0) - (ivaPagadoTotal[moneda] || 0);
+  }
 
   const clasificar = async (m: any, patch: { categoria_fiscal?: string; iva_pct?: number }) => {
     const { error } = await supabase2.from("movimientos_caja").update(patch).eq("id", m.id);
@@ -50,9 +74,9 @@ export default function AfipIvaTab({ movimientos, setMovimientos }: { movimiento
       </div>
 
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 mb-4">
-        <div className="bg-emerald-50 dark:bg-emerald-500/10 border border-emerald-100 dark:border-emerald-500/20 rounded-xl p-4"><p className="text-[10px] font-bold uppercase text-emerald-600">IVA cobrado (débito)</p><p className="text-2xl font-black">{fmt(ivaCobradoTotal, "USD")}</p><p className="text-[10px] text-slate-400">A pagar a AFIP</p></div>
-        <div className="bg-indigo-50 dark:bg-indigo-500/10 border border-indigo-100 dark:border-indigo-500/20 rounded-xl p-4"><p className="text-[10px] font-bold uppercase text-indigo-600">IVA pagado (crédito)</p><p className="text-2xl font-black">{fmt(ivaPagadoTotal, "USD")}</p><p className="text-[10px] text-slate-400">A descontar del débito</p></div>
-        <div className="bg-rose-50 dark:bg-rose-500/10 border border-rose-100 dark:border-rose-500/20 rounded-xl p-4"><p className="text-[10px] font-bold uppercase text-rose-500">Saldo IVA</p><p className="text-2xl font-black">{fmt(ivaCobradoTotal - ivaPagadoTotal, "USD")}</p><p className="text-[10px] text-slate-400">A pagar a AFIP</p></div>
+        <div className="bg-emerald-50 dark:bg-emerald-500/10 border border-emerald-100 dark:border-emerald-500/20 rounded-xl p-4"><p className="text-[10px] font-bold uppercase text-emerald-600">IVA cobrado (débito)</p><p className="text-2xl font-black">{fmtPorMoneda(ivaCobradoTotal)}</p><p className="text-[10px] text-slate-400">A pagar a AFIP</p></div>
+        <div className="bg-indigo-50 dark:bg-indigo-500/10 border border-indigo-100 dark:border-indigo-500/20 rounded-xl p-4"><p className="text-[10px] font-bold uppercase text-indigo-600">IVA pagado (crédito)</p><p className="text-2xl font-black">{fmtPorMoneda(ivaPagadoTotal)}</p><p className="text-[10px] text-slate-400">A descontar del débito</p></div>
+        <div className="bg-rose-50 dark:bg-rose-500/10 border border-rose-100 dark:border-rose-500/20 rounded-xl p-4"><p className="text-[10px] font-bold uppercase text-rose-500">Saldo IVA</p><p className="text-2xl font-black">{fmtPorMoneda(saldoIva)}</p><p className="text-[10px] text-slate-400">A pagar a AFIP</p></div>
       </div>
 
       <div className="bg-white dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-xl overflow-hidden mb-4">
@@ -64,10 +88,10 @@ export default function AfipIvaTab({ movimientos, setMovimientos }: { movimiento
               <tr key={r.cat} className="border-t border-slate-50 dark:border-white/5">
                 <td className={`p-2.5 font-bold ${r.cat === "Sin clasificar" ? "text-amber-600" : ""}`}>{r.cat === "Sin clasificar" ? "⚠ Sin clasificar" : r.cat}</td>
                 <td className="p-2.5">{r.movs}</td>
-                <td className="p-2.5 font-mono text-emerald-600">{Math.round(r.ingresos).toLocaleString("es-AR")}</td>
-                <td className="p-2.5 font-mono text-rose-500">{Math.round(r.egresos).toLocaleString("es-AR")}</td>
-                <td className="p-2.5 font-mono text-emerald-600">{Math.round(r.ivaCobrado).toLocaleString("es-AR")}</td>
-                <td className="p-2.5 font-mono text-indigo-600">{Math.round(r.ivaPagado).toLocaleString("es-AR")}</td>
+                <td className="p-2.5 font-mono text-emerald-600">{fmtPorMoneda(r.ingresos)}</td>
+                <td className="p-2.5 font-mono text-rose-500">{fmtPorMoneda(r.egresos)}</td>
+                <td className="p-2.5 font-mono text-emerald-600">{fmtPorMoneda(r.ivaCobrado)}</td>
+                <td className="p-2.5 font-mono text-indigo-600">{fmtPorMoneda(r.ivaPagado)}</td>
               </tr>
             ))}
           </tbody>
