@@ -35,6 +35,7 @@ export default function CuotasTab({
   const [pTipoDeuda, setPTipoDeuda] = useState("compra");
   const [pConcepto, setPConcepto] = useState("");
   const [pVehiculoId, setPVehiculoId] = useState("");
+  const [pFinanciadoConId, setPFinanciadoConId] = useState("");
   const [pMoneda, setPMoneda] = useState("USD");
   const [pMontoCuota, setPMontoCuota] = useState("");
   const [pCantidad, setPCantidad] = useState("1");
@@ -91,9 +92,24 @@ export default function CuotasTab({
       });
       const { data, error } = await supabase2.from("cuotas_pagar_agencia").insert(filas).select();
       if (error) throw error;
-      setCuotasPagar((prev: any[]) => [...prev, ...(data || [])]);
+
+      // Vínculo con la cuenta a cobrar que financia este compromiso, en un
+      // update aparte: si migraciones/sql_cuotas_pagar_financiado_con.sql
+      // todavía no corrió en la base, el plan se guarda igual (mismo patrón
+      // resiliente que el resto de columnas nuevas del proyecto).
+      let filasFinales = data || [];
+      if (pFinanciadoConId && data && data.length > 0) {
+        const { data: dataConVinculo, error: errorVinculo } = await supabase2
+          .from("cuotas_pagar_agencia")
+          .update({ financiado_con_cuota_cobrar_id: pFinanciadoConId })
+          .in("id", data.map((d) => d.id))
+          .select();
+        if (!errorVinculo && dataConVinculo) filasFinales = dataConVinculo;
+      }
+
+      setCuotasPagar((prev: any[]) => [...prev, ...filasFinales]);
       setShowNuevaP(false);
-      setPAcreedor(""); setPConcepto(""); setPVehiculoId(""); setPMontoCuota(""); setPNotas("");
+      setPAcreedor(""); setPConcepto(""); setPVehiculoId(""); setPFinanciadoConId(""); setPMontoCuota(""); setPNotas("");
     } catch (err: any) { alert(err?.message ? `No se pudo crear la deuda: ${err.message}` : "No se pudo crear la deuda."); } finally { setGuardandoP(false); }
   };
 
@@ -209,6 +225,10 @@ export default function CuotasTab({
                     <p className="text-lg font-black mt-1">{fmt(c.monto, c.moneda)}</p>
                     {c.monto_pagado > 0 && !c.pagada && <p className="text-[11px] text-slate-400">Pagado: {fmt(c.monto_pagado, c.moneda)}</p>}
                     <p className="text-[11px] text-slate-400">Vence: {c.vencimiento}</p>
+                    {c.financiado_con_cuota_cobrar_id && (() => {
+                      const origen = cuotasCobrar.find((cc) => cc.id === c.financiado_con_cuota_cobrar_id);
+                      return <p className="text-[11px] text-indigo-500 mt-0.5">Financiado con: {origen ? `${origen.cliente?.nombre || "cliente"} — ${origen.concepto}` : "cuenta a cobrar"}</p>;
+                    })()}
                     {!c.pagada && <button onClick={() => abrirPago(c, "pagar")} className="mt-2 flex items-center gap-1 px-2.5 py-1.5 text-[11px] font-bold bg-[#0145F2] hover:bg-[#0138c9] text-white rounded-lg"><DollarSign className="w-3.5 h-3.5" /> Pagar / parcial</button>}
                   </div>
                 );
@@ -246,13 +266,22 @@ export default function CuotasTab({
             <p className="text-xs text-slate-400 mb-4">Lo que la agencia va a pagar en cuotas. Se generan los vencimientos solos.</p>
             <div className="grid grid-cols-2 gap-2">
               <div><label className={labelClass}>¿A quién se le paga? *</label><input value={pAcreedor} onChange={(e) => setPAcreedor(e.target.value)} placeholder="Ej: Banco Nación" className={inputClass} /><p className="text-[10px] text-slate-400 mt-0.5">Financiera, banco, proveedor, particular</p></div>
-              <div><label className={labelClass}>Tipo de deuda</label><select value={pTipoDeuda} onChange={(e) => setPTipoDeuda(e.target.value)} className={inputClass}><option value="compra">Compra / gasto</option><option value="auto_cuotas">Auto comprado en cuotas</option><option value="financiera">Financiera / banco</option></select></div>
+              <div><label className={labelClass}>Tipo de deuda</label><select value={pTipoDeuda} onChange={(e) => setPTipoDeuda(e.target.value)} className={inputClass}><option value="compra">Compra / gasto</option><option value="auto_cuotas">Compromiso de compra (auto)</option><option value="financiera">Financiera / banco</option></select></div>
             </div>
             <label className={labelClass + " mt-3"}>¿De qué es la deuda?</label>
             <input value={pConcepto} onChange={(e) => setPConcepto(e.target.value)} placeholder="Ej: Ford Ranger 0km / aire acondicionado del salón" className={inputClass} />
             <p className="text-[10px] text-slate-400 mt-0.5">Queda en el concepto del egreso</p>
             {pTipoDeuda === "auto_cuotas" && (
-              <><label className={labelClass + " mt-3"}>Vincular auto del stock</label><select value={pVehiculoId} onChange={(e) => setPVehiculoId(e.target.value)} className={inputClass}><option value="">— Sin vincular —</option>{vehiculos.map((v) => <option key={v.id} value={v.id}>{v.marca} {v.modelo} {v.patente ? `— ${v.patente}` : ""}</option>)}</select></>
+              <>
+                <label className={labelClass + " mt-3"}>Vincular auto del stock</label>
+                <select value={pVehiculoId} onChange={(e) => setPVehiculoId(e.target.value)} className={inputClass}><option value="">— Sin vincular —</option>{vehiculos.map((v) => <option key={v.id} value={v.id}>{v.marca} {v.modelo} {v.patente ? `— ${v.patente}` : ""}</option>)}</select>
+                <label className={labelClass + " mt-3"}>Financiado con esta cuenta a cobrar</label>
+                <select value={pFinanciadoConId} onChange={(e) => setPFinanciadoConId(e.target.value)} className={inputClass}>
+                  <option value="">— Sin vincular —</option>
+                  {pendientesCobrar.map((c) => <option key={c.id} value={c.id}>{c.cliente?.nombre || "Sin cliente"} — {c.concepto} ({fmt(c.monto, c.moneda)})</option>)}
+                </select>
+                <p className="text-[10px] text-slate-400 mt-0.5">Si este compromiso se paga con lo que nos debe un cliente señado, quedan relacionados acá.</p>
+              </>
             )}
             <div className="grid grid-cols-2 gap-2 mt-3">
               <div><label className={labelClass}>Importe de cada cuota *</label><input type="text" inputMode="numeric" value={pMontoCuota} onChange={(e) => setPMontoCuota(e.target.value.replace(/\D/g, ""))} placeholder="2500" className={inputClass} /></div>
