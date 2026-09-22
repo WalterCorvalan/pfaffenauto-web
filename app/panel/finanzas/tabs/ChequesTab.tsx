@@ -167,7 +167,14 @@ export default function ChequesTab({ cheques, setCheques, cuentas }: { cheques: 
               <div><label className={labelClass}>Fecha de cobro *</label><input type="date" value={form.fechaCobro} onChange={(e) => setForm({ ...form, fechaCobro: e.target.value })} className={inputClass} /></div>
             </div>
             <label className={labelClass + " mt-3"}>Caja / banco propio</label>
-            <input value={form.cajaBancoPropio} onChange={(e) => setForm({ ...form, cajaBancoPropio: e.target.value })} placeholder="Dónde lo depositás/pagás" className={inputClass} />
+            {/* Mismo selector que "Cuenta (afecta saldo)" de RetirosTab.tsx,
+                pero acá es solo informativo (dónde pensás depositarlo/pagarlo)
+                -- caja_banco_propio es una columna de texto en "cheques", no
+                afecta ningún saldo hasta que el cheque se marca "Cobrado". */}
+            <select value={form.cajaBancoPropio} onChange={(e) => setForm({ ...form, cajaBancoPropio: e.target.value })} className={inputClass}>
+              <option value="">— Elegí —</option>
+              {cuentas.map((c) => <option key={c.id} value={c.nombre}>{c.nombre} · saldo {fmt(c.saldo, c.moneda)}</option>)}
+            </select>
             <label className={labelClass + " mt-3"}>Notas</label>
             <textarea value={form.notas} onChange={(e) => setForm({ ...form, notas: e.target.value })} rows={2} placeholder="Detalle, operación vinculada, etc." className={inputClass} />
             <div className="flex justify-end gap-2 mt-4"><button onClick={() => setShowNuevo(false)} className="px-4 py-2 text-sm font-bold text-slate-500">Cancelar</button><button onClick={crear} disabled={guardando} className="flex items-center gap-1.5 px-4 py-2 text-sm font-bold bg-[#0145F2] hover:bg-[#0138c9] text-white rounded-lg disabled:opacity-50"><Save className="w-4 h-4" /> Registrar cheque</button></div>
