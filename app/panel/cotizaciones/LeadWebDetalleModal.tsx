@@ -18,7 +18,7 @@ const money = (v: number | null | undefined) => (v != null ? `$ ${Number(v).toLo
 // sin mostrar los datos reales que mandó el cliente (fotos incluidas), hasta
 // que se convertía manualmente en un peritaje. Ahora se puede ver todo lo
 // que llegó sin pasar por esa conversión.
-export default function LeadWebDetalleModal({ lead: s, onClose }: { lead: any; onClose: () => void }) {
+export default function LeadWebDetalleModal({ lead: s, vehiculoObjetivo, onClose }: { lead: any; vehiculoObjetivo?: { marca: string; modelo: string; anio: number; patente: string | null; precio_venta: number; moneda_venta: string; estado: string } | null; onClose: () => void }) {
   const fotos: string[] = Array.isArray(s.fotos_y_videos) ? s.fotos_y_videos : [];
   const esVideo = (url: string) => /\.(mp4|mov|webm|m4v)(\?|$)/i.test(url);
 
@@ -43,7 +43,7 @@ export default function LeadWebDetalleModal({ lead: s, onClose }: { lead: any; o
           </div>
 
           <div>
-            <p className="text-[11px] font-black uppercase tracking-widest text-slate-400 mb-1.5">Vehículo</p>
+            <p className="text-[11px] font-black uppercase tracking-widest text-slate-400 mb-1.5">Vehículo que nos ofrece</p>
             <div className="bg-slate-50/60 dark:bg-white/[0.02] border border-slate-100 dark:border-white/5 rounded-xl px-3">
               <Fila label="Descripción" valor={[s.marca, s.modelo, s.anio].filter(Boolean).join(" ") || "—"} />
               <Fila label="Versión" valor={s.version} />
@@ -52,6 +52,24 @@ export default function LeadWebDetalleModal({ lead: s, onClose }: { lead: any; o
               <Fila label="GNC" valor={s.gnc} />
             </div>
           </div>
+
+          {s.tipo === "permuta" && (
+            <div>
+              <p className="text-[11px] font-black uppercase tracking-widest text-indigo-500 mb-1.5">Auto nuestro que quiere a cambio (permuta)</p>
+              <div className="bg-indigo-50/60 dark:bg-indigo-500/5 border border-indigo-100 dark:border-indigo-500/20 rounded-xl px-3">
+                {vehiculoObjetivo ? (
+                  <>
+                    <Fila label="Descripción" valor={[vehiculoObjetivo.marca, vehiculoObjetivo.modelo, vehiculoObjetivo.anio].filter(Boolean).join(" ")} />
+                    <Fila label="Patente" valor={vehiculoObjetivo.patente} />
+                    <Fila label="Precio" valor={`${vehiculoObjetivo.moneda_venta} ${Number(vehiculoObjetivo.precio_venta).toLocaleString("es-AR")}`} />
+                    <Fila label="Estado en stock" valor={vehiculoObjetivo.estado} />
+                  </>
+                ) : (
+                  <p className="text-sm text-slate-400 py-2">No se encontró el auto (puede haberse vendido o eliminado del stock).</p>
+                )}
+              </div>
+            </div>
+          )}
 
           <div className="grid grid-cols-2 gap-2">
             <div className="rounded-xl px-3 py-2.5 border bg-slate-50/60 dark:bg-white/[0.02] border-slate-100 dark:border-white/5">
