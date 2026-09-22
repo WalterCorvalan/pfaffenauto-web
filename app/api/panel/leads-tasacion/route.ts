@@ -121,6 +121,8 @@ export async function POST(req: Request) {
     if (error) throw error;
     if (!lead) throw new Error("No se pudo confirmar el envío de la solicitud.");
 
+    let vendedorFinanciacionId: string | null = null;
+
     // Campos estructurados de financiación en un update aparte: si
     // migraciones/sql_leads_tasacion_financiacion.sql todavía no corrió en
     // la base, la solicitud se sigue guardando igual (con el resumen en
@@ -139,6 +141,24 @@ export async function POST(req: Request) {
         })
         .eq("id", lead.id);
       if (errCamposFinanciacion) registrarError("api/panel/leads-tasacion:campos-financiacion", errCamposFinanciacion, { leadId: lead.id });
+
+      // Pedido de la reunión del 22/9: una solicitud de financiación le
+      // llega solo al vendedor que tiene asignado ese auto en el stock. Si
+      // el auto no tiene vendedor asignado, se reparte al azar entre los
+      // vendedores activos (mismo criterio que los leads de WhatsApp sin
+      // asignar). admin/encargado siguen viendo todas igual.
+      if (data.vehiculoObjetivoId) {
+        const { data: vehiculo } = await supabase.from("vehiculos").select("vendedor_asignado_id").eq("id", data.vehiculoObjetivoId).maybeSingle();
+        vendedorFinanciacionId = vehiculo?.vendedor_asignado_id || null;
+      }
+      if (!vendedorFinanciacionId) {
+        const { data: vendedores } = await supabase.from("perfiles").select("id").contains("roles", ["ventas"]).eq("activo", true);
+        if (vendedores?.length) vendedorFinanciacionId = vendedores[Math.floor(Math.random() * vendedores.length)].id;
+      }
+      if (vendedorFinanciacionId) {
+        const { error: errVendedor } = await supabase.from("leads_tasacion").update({ vendedor_id: vendedorFinanciacionId }).eq("id", lead.id);
+        if (errVendedor) registrarError("api/panel/leads-tasacion:asignar-vendedor", errVendedor, { leadId: lead.id });
+      }
     }
 
     // El link/módulo dependían de suponer siempre "tasación" -- una
@@ -154,8 +174,13 @@ export async function POST(req: Request) {
     const titulo = esFinanciacion ? `Nueva solicitud de financiación — ${data.nombre}` : `Nueva tasación desde la web — ${data.nombre}`;
 
     const { data: destinatarios } = await supabase.from("perfiles").select("id").or("roles.cs.{admin},roles.cs.{encargado}").eq("activo", true);
-    for (const d of destinatarios || []) {
-      await crearAlerta(supabase, d.id, titulo, {
+    // El vendedor asignado a la financiación (o el sorteado al azar) recibe
+    // la misma alerta además de admin/encargado -- se deduplica por si
+    // también tiene rol admin/encargado, para no mandarle dos veces.
+    const idsDestinatarios = new Set((destinatarios || []).map((d) => d.id));
+    if (vendedorFinanciacionId) idsDestinatarios.add(vendedorFinanciacionId);
+    for (const idDestinatario of idsDestinatarios) {
+      await crearAlerta(supabase, idDestinatario, titulo, {
         mensaje: `${data.marca} ${data.modelo || ""} ${data.anio || ""}`.trim(),
         link,
         tipo: "lead_tasacion_nuevo",
