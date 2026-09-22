@@ -14,6 +14,7 @@ import NuevaCotizacionModal from "./NuevaCotizacionModal";
 import MigrarBorradoresModal from "./MigrarBorradoresModal";
 import CotizacionDetalleModal from "./CotizacionDetalleModal";
 import ModificarCotizacionModal from "./ModificarCotizacionModal";
+import LeadWebDetalleModal from "./LeadWebDetalleModal";
 import TablaResponsiva, { type ColumnaTabla } from "@/components/panel/TablaResponsiva";
 import ConfirmDialog from "@/components/panel/ConfirmDialog";
 
@@ -42,7 +43,10 @@ function tiempoPendienteLabel(iso: string) {
 interface Perfil { id: string; nombre: string; roles: string[] }
 interface Cliente { id: string; nombre: string; apellido: string | null; telefono: string | null; dni_cuit: string | null }
 interface Vehiculo { id: string; marca: string; modelo: string; anio: number; patente: string | null; precio_venta: number; moneda_venta: string; estado: string }
-interface LeadWeb { id: string; nombre: string; telefono: string | null; marca: string; modelo: string | null; version: string | null; anio: number | null; kilometraje: number | null; oferta_calculada: number | null; precio_esperado_cliente: number | null; estado: string; created_at: string; tipo: string }
+// Fila cruda de leads_tasacion -- select("*") en page.tsx, se pasa tal cual
+// para que LeadWebDetalleModal pueda mostrar cualquier campo (fotos, gnc,
+// combustible, canal_origen, etc.) sin tener que repetir la lista acá.
+type LeadWeb = Record<string, any> & { id: string; nombre: string; telefono: string | null; marca: string; estado: string; created_at: string; tipo: string };
 
 type Tab = "pendiente" | "aprobada" | "rechazada";
 
@@ -68,6 +72,8 @@ export default function CotizacionesClient({
   const [mensajeAtencion, setMensajeAtencion] = useState("");
   const [actualizandoId, setActualizandoId] = useState<string | null>(null);
   const [confirmDialog, setConfirmDialog] = useState<{ mensaje: string; accion: () => void } | null>(null);
+  const [leadsWeb, setLeadsWeb] = useState<LeadWeb[]>(leadsWebIniciales);
+  const [leadWebDetalle, setLeadWebDetalle] = useState<LeadWeb | null>(null);
 
   useEffect(() => {
     if (searchParams.get("nuevo") === "1") {
@@ -123,6 +129,16 @@ export default function CotizacionesClient({
     setActualizandoId(null);
   };
 
+  const cambiarEstadoLeadWeb = async (id: string, estado: string) => {
+    const anterior = leadsWeb.find((l) => l.id === id)?.estado;
+    setLeadsWeb((prev) => prev.map((l) => (l.id === id ? { ...l, estado } : l)));
+    const { error } = await supabase2.from("leads_tasacion").update({ estado }).eq("id", id);
+    if (error) {
+      setLeadsWeb((prev) => prev.map((l) => (l.id === id ? { ...l, estado: anterior ?? l.estado } : l)));
+      alert("No se pudo actualizar el estado.");
+    }
+  };
+
   const filtradas = useMemo(() => {
     let lista = cotizaciones.filter((c) => c.estado === tab);
     if (vendedorFiltro) lista = lista.filter((c) => c.vendedor_id === vendedorFiltro);
@@ -165,16 +181,16 @@ export default function CotizacionesClient({
       </div>
 
       <div className="flex-1 overflow-y-auto bg-slate-50 dark:bg-[#141414] p-6">
-        {leadsWebIniciales.length > 0 && (
+        {leadsWeb.length > 0 && (
           <div className="mb-6 bg-white dark:bg-white/[0.02] border border-slate-200 dark:border-white/5 rounded-2xl overflow-hidden">
             <div className="flex items-center justify-between px-4 py-3 border-b border-slate-100 dark:border-white/10">
-              <p className="text-[11px] font-black uppercase tracking-widest text-slate-400 flex items-center gap-1.5"><Globe className="w-3.5 h-3.5" /> Tasaciones pedidas desde la web ({leadsWebIniciales.length})</p>
-              <Link href="/panel/peritajes" className="text-[11px] font-bold text-[#0145F2] hover:text-[#0138c9] flex items-center gap-1">Gestionar en Peritajes <ExternalLink className="w-3 h-3" /></Link>
+              <p className="text-[11px] font-black uppercase tracking-widest text-slate-400 flex items-center gap-1.5"><Globe className="w-3.5 h-3.5" /> Tasaciones pedidas desde la web ({leadsWeb.length})</p>
+              <Link href="/panel/peritajes" className="text-[11px] font-bold text-[#0145F2] hover:text-[#0138c9] flex items-center gap-1">Convertir en peritaje <ExternalLink className="w-3 h-3" /></Link>
             </div>
-            <p className="text-[11px] text-slate-400 px-4 pt-2">Solo lectura — se gestionan y convierten en peritaje desde el módulo Peritajes.</p>
+            <p className="text-[11px] text-slate-400 px-4 pt-2">Tocá una fila para ver todos los datos (fotos incluidas). Convertirla en peritaje formal se sigue haciendo desde el módulo Peritajes.</p>
             <div className="divide-y divide-slate-50 dark:divide-white/5">
-              {leadsWebIniciales.map((l) => (
-                <div key={l.id} className="flex items-center justify-between px-4 py-2.5 text-sm">
+              {leadsWeb.map((l) => (
+                <button key={l.id} onClick={() => setLeadWebDetalle(l)} className="w-full text-left flex items-center justify-between px-4 py-2.5 text-sm hover:bg-slate-50 dark:hover:bg-white/5 transition-colors">
                   <div className="min-w-0">
                     <p className="font-bold text-slate-800 dark:text-white truncate flex items-center gap-1.5">
                       {l.nombre}
@@ -184,6 +200,9 @@ export default function CotizacionesClient({
                       <span className={`text-[9px] font-bold uppercase tracking-widest px-1.5 py-0.5 rounded shrink-0 ${l.tipo === "permuta" ? "bg-indigo-50 dark:bg-indigo-500/10 text-indigo-600 dark:text-indigo-300" : "bg-orange-50 dark:bg-orange-500/10 text-orange-600 dark:text-orange-300"}`}>
                         {l.tipo === "permuta" ? "Permuta" : "Compra"}
                       </span>
+                      {Array.isArray(l.fotos_y_videos) && l.fotos_y_videos.length > 0 && (
+                        <span className="text-[9px] font-bold uppercase tracking-widest px-1.5 py-0.5 rounded shrink-0 bg-slate-100 dark:bg-white/10 text-slate-500 dark:text-slate-300">{l.fotos_y_videos.length} fotos</span>
+                      )}
                     </p>
                     <p className="text-[11px] text-slate-400 truncate">{[l.marca, l.modelo, l.anio].filter(Boolean).join(" ") || "—"} · {l.telefono || "sin teléfono"}</p>
                   </div>
@@ -192,8 +211,18 @@ export default function CotizacionesClient({
                       <p className="font-bold text-slate-700 dark:text-slate-200">{(l.oferta_calculada ?? l.precio_esperado_cliente) ? `$ ${Number(l.oferta_calculada ?? l.precio_esperado_cliente).toLocaleString("es-AR")}` : "—"}</p>
                       <p className="text-[10px] text-slate-400">{new Date(l.created_at).toLocaleDateString("es-AR")}</p>
                     </div>
+                    <select
+                      value={l.estado || "nuevo"}
+                      onClick={(e) => e.stopPropagation()}
+                      onChange={(e) => cambiarEstadoLeadWeb(l.id, e.target.value)}
+                      className="text-[10px] font-bold uppercase tracking-widest rounded-lg px-2 py-1.5 outline-none cursor-pointer border border-slate-200 dark:border-white/10 bg-white dark:bg-white/5 text-slate-700 dark:text-slate-200"
+                    >
+                      <option value="nuevo">Nuevo</option>
+                      <option value="en_gestion">En gestión</option>
+                      <option value="descartado">Descartado</option>
+                    </select>
                   </div>
-                </div>
+                </button>
               ))}
             </div>
           </div>
@@ -361,6 +390,7 @@ export default function CotizacionesClient({
           onEditar={() => { setEditando(detalle); setDetalle(null); }}
         />
       )}
+      {leadWebDetalle && <LeadWebDetalleModal lead={leadsWeb.find((x) => x.id === leadWebDetalle.id) || leadWebDetalle} onClose={() => setLeadWebDetalle(null)} />}
       <ConfirmDialog
         abierto={!!confirmDialog}
         mensaje={confirmDialog?.mensaje || ""}

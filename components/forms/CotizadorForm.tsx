@@ -41,6 +41,7 @@ export default function CotizadorForm({ vehiculoObjetivo }: { vehiculoObjetivo?:
   const [modelo, setModelo] = useState("");
   const [version, setVersion] = useState("");
   const [km, setKm] = useState("");
+  const [combustible, setCombustible] = useState("");
   const [gnc, setGnc] = useState("");
   const [precioEsperado, setPrecioEsperado] = useState("");
 
@@ -138,8 +139,10 @@ export default function CotizadorForm({ vehiculoObjetivo }: { vehiculoObjetivo?:
     return modelosPorMarca[m] || ["Base", "Full", "Sport", "Standard", "Otro"];
   }
 
+  const combustiblesDisponibles = ["Nafta", "Diésel", "GNC", "Híbrido", "Eléctrico"];
+
   const validarPaso1 = () => {
-    return anio && marca && modelo && version && km && precioEsperado;
+    return anio && marca && modelo && version && km && combustible && precioEsperado;
   };
 
   // Oferta instantánea: precio que puso el cliente, menos el % de descuento
@@ -209,9 +212,11 @@ export default function CotizadorForm({ vehiculoObjetivo }: { vehiculoObjetivo?:
     setArchivosSubidos((prev) => prev.filter((a) => a.url !== url));
   };
 
+  const MIN_FOTOS_SIN_VISITA = 5;
+
   const validarPaso3 = () => {
     if (puedeVenir === null) return false;
-    if (puedeVenir === false && archivosSubidos.length === 0) return false;
+    if (puedeVenir === false && archivosSubidos.length < MIN_FOTOS_SIN_VISITA) return false;
     if (puedeVenir === true && (!sucursalVisita || !fechaVisita || !horarioVisita)) return false;
     return true;
   };
@@ -248,6 +253,7 @@ export default function CotizadorForm({ vehiculoObjetivo }: { vehiculoObjetivo?:
           modelo,
           anio,
           version,
+          combustible,
           gnc,
           kilometraje: km,
           precioEsperado,
@@ -438,6 +444,30 @@ export default function CotizadorForm({ vehiculoObjetivo }: { vehiculoObjetivo?:
                         onChange={(e) => setKm(e.target.value)}
                         className="w-full bg-white/60 dark:bg-white/5 backdrop-blur-md border border-white dark:border-white/10 rounded-2xl px-4 py-3.5 text-sm font-semibold text-navy dark:text-white placeholder:text-slate-400 dark:placeholder:text-slate-500 outline-none focus:border-[#0145F2] dark:focus:border-sky-400 transition-all shadow-sm dark:shadow-none"
                       />
+                    </div>
+
+                    <div className="relative">
+                      <div
+                        onClick={() => setOpenDropdown(openDropdown === 'combustible' ? null : 'combustible')}
+                        className={`w-full bg-white/60 dark:bg-white/5 backdrop-blur-md border rounded-2xl px-4 py-3.5 text-sm font-semibold flex items-center justify-between cursor-pointer transition-all shadow-sm dark:shadow-none ${combustible ? 'text-navy dark:text-white border-slate-300 dark:border-white/20' : 'text-slate-400 dark:text-slate-500 border-white dark:border-white/10'}`}
+                      >
+                        <span>{combustible ? combustible : "Seleccioná el combustible"}</span>
+                        <ChevronDown className={`w-4 h-4 text-slate-500 dark:text-slate-400 transition-transform ${openDropdown === 'combustible' ? 'rotate-180 text-[#0145F2] dark:text-sky-300' : ''}`} />
+                      </div>
+
+                      {openDropdown === 'combustible' && (
+                        <div className="absolute top-full left-0 right-0 mt-2 bg-white/95 dark:bg-[#14141c] backdrop-blur-xl border border-white dark:border-white/10 rounded-2xl shadow-2xl z-50 p-1">
+                          {combustiblesDisponibles.map((c) => (
+                            <div
+                              key={c}
+                              onClick={() => { setCombustible(c); setOpenDropdown(null); }}
+                              className="px-4 py-2.5 text-xs font-bold text-slate-700 dark:text-slate-300 hover:bg-blue-50 dark:hover:bg-sky-400/10 hover:text-[#0145F2] dark:hover:text-sky-300 rounded-xl cursor-pointer transition-colors"
+                            >
+                              {c}
+                            </div>
+                          ))}
+                        </div>
+                      )}
                     </div>
 
                     <div>
@@ -640,6 +670,10 @@ export default function CotizadorForm({ vehiculoObjetivo }: { vehiculoObjetivo?:
                             {subiendoArchivo ? "Subiendo..." : "Tocá para subir fotos o videos"}
                           </span>
                         </label>
+
+                        <p className={`text-[11px] font-bold ${archivosSubidos.length >= MIN_FOTOS_SIN_VISITA ? "text-emerald-600 dark:text-emerald-400" : "text-slate-400"}`}>
+                          {archivosSubidos.length} / {MIN_FOTOS_SIN_VISITA} fotos mínimas
+                        </p>
 
                         {errorArchivo && (
                           <p className="text-[11px] text-rose-600 dark:text-rose-400 font-medium">{errorArchivo}</p>
