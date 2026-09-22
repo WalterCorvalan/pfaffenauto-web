@@ -2,7 +2,7 @@
 
 import { useState, useMemo } from "react";
 import { supabase2 } from "@/lib/supabase/client";
-import { Plus, X, Save, ArrowLeftRight, Landmark, Wallet, Paperclip, Search, Pencil } from "lucide-react";
+import { Plus, X, Save, ArrowLeftRight, Landmark, Wallet, Paperclip, Search, Pencil, Trash2 } from "lucide-react";
 import { inputClass, labelClass, fmt, CATEGORIAS_CAJA_CHICA } from "./shared";
 import TablaResponsiva, { type ColumnaTabla } from "@/components/panel/TablaResponsiva";
 
@@ -114,6 +114,19 @@ export default function CajaGrandeChicaTab({ miId, soyAdmin, cuentas, setCuentas
     } finally {
       setGuardandoEdicion(false);
     }
+  };
+
+  // Mismo RPC (revierte el saldo del lado del servidor, respeta el bloqueo
+  // de mes cerrado) que usa "Editar" arriba y MovimientosTab.tsx -- acá
+  // además hay que reflejar la reversa en el saldo de la caja mostrado en
+  // pantalla, cosa que MovimientosTab.tsx no necesita porque no muestra saldo.
+  const eliminar = async (m: any) => {
+    const motivo = prompt(`¿Eliminar "${m.observaciones || m.tipo_movimiento || m.tipo}"? Escribí un motivo (opcional):`);
+    if (motivo === null) return;
+    const { error } = await supabase2.rpc("eliminar_movimiento_caja", { p_movimiento_id: m.id, p_motivo: motivo || null });
+    if (error) return alert(error.message || "No se pudo eliminar (puede que el mes esté cerrado).");
+    setMovimientos((prev: any[]) => prev.filter((x) => x.id !== m.id));
+    setCuentas((prev: any[]) => prev.map((c) => (c.id === m.cuenta_id ? { ...c, saldo: (c.saldo || 0) - (m.tipo === "ingreso" ? Number(m.monto) : -Number(m.monto)) } : c)));
   };
 
   const sucursalActual = sucursales.find((s) => s.id === sucursalId);
@@ -340,8 +353,13 @@ export default function CajaGrandeChicaTab({ miId, soyAdmin, cuentas, setCuentas
                   { key: "medio", header: "Medio de pago", cell: (m) => m.forma_pago || "—", claseTd: "text-sm text-slate-500" },
                   { key: "comprobante", header: "Comprobante", cell: (m) => m.comprobante_url ? <a href={m.comprobante_url} target="_blank" rel="noreferrer" className="text-indigo-600 font-bold flex items-center gap-1"><Paperclip className="w-3 h-3" /> Ver</a> : "—" },
                   { key: "monto", header: "Monto", cell: (m) => <span className={`text-sm font-bold ${m.tipo === "ingreso" ? "text-emerald-600" : "text-[#0145F2]"}`}>{m.tipo === "ingreso" ? "+" : "-"}{fmt(m.monto, m.cuenta?.moneda)}</span> },
-                  { key: "editar", header: "", cell: (m) => m.transferencia_grupo_id ? null : (
-                    <button onClick={() => abrirEditar(m)} title="Editar movimiento" className="text-slate-400 hover:text-[#0145F2] p-1 rounded-md hover:bg-slate-100 dark:hover:bg-white/5"><Pencil className="w-3.5 h-3.5" /></button>
+                  { key: "acciones", header: "", cell: (m) => (
+                    <div className="flex items-center gap-1">
+                      {!m.transferencia_grupo_id && (
+                        <button onClick={() => abrirEditar(m)} title="Editar movimiento" className="text-slate-400 hover:text-[#0145F2] p-1 rounded-md hover:bg-slate-100 dark:hover:bg-white/5"><Pencil className="w-3.5 h-3.5" /></button>
+                      )}
+                      <button onClick={() => eliminar(m)} title="Eliminar movimiento" className="text-slate-400 hover:text-rose-600 p-1 rounded-md hover:bg-slate-100 dark:hover:bg-white/5"><Trash2 className="w-3.5 h-3.5" /></button>
+                    </div>
                   ) },
                 ] as ColumnaTabla<any>[]
               }
