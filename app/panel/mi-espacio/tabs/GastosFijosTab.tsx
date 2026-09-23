@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useMemo } from "react";
 import { supabase2 } from "@/lib/supabase/client";
-import { Plus, X, Save, Trash2 } from "lucide-react";
+import { Plus, X, Save, Trash2, Pencil } from "lucide-react";
 import { inputClass, labelClass } from "./shared";
 import ConfirmDialog from "@/components/panel/ConfirmDialog";
 
@@ -10,6 +10,7 @@ export default function GastosFijosTab({ miId, autoAbrir, onAutoAbierto }: { miI
   const [items, setItems] = useState<any[]>([]);
   const [cargando, setCargando] = useState(true);
   const [showNuevo, setShowNuevo] = useState(false);
+  const [editandoId, setEditandoId] = useState<string | null>(null);
 
   useEffect(() => { if (autoAbrir) { setShowNuevo(true); onAutoAbierto?.(); } }, [autoAbrir]);
   const [concepto, setConcepto] = useState("");
@@ -29,16 +30,40 @@ export default function GastosFijosTab({ miId, autoAbrir, onAutoAbierto }: { miI
   };
   useEffect(() => { cargar(); }, [miId]);
 
-  const crear = async () => {
+  const abrirNuevo = () => {
+    setEditandoId(null);
+    setConcepto(""); setMonto(""); setMoneda("USD"); setFrecuencia("Mensual"); setDiaDelMes(""); setCategoria("Otros"); setNotas("");
+    setShowNuevo(true);
+  };
+
+  const abrirEdicion = (i: any) => {
+    setEditandoId(i.id);
+    setConcepto(i.concepto); setMonto(String(i.monto)); setMoneda(i.moneda); setFrecuencia(i.frecuencia);
+    setDiaDelMes(i.dia_del_mes ? String(i.dia_del_mes) : ""); setCategoria(i.categoria); setNotas(i.notas || "");
+    setShowNuevo(true);
+  };
+
+  const guardar = async () => {
     if (!concepto.trim() || !monto) return alert("Completá concepto y monto.");
     setGuardando(true);
     try {
-      const { data, error } = await supabase2.from("espacio_gastos_fijos").insert({ perfil_id: miId, concepto: concepto.trim(), monto: Number(monto), moneda, frecuencia, dia_del_mes: diaDelMes ? Number(diaDelMes) : null, categoria, notas: notas || null }).select().single();
-      if (error) throw error;
-      setItems((prev) => [...prev, data]);
+      const payload = { concepto: concepto.trim(), monto: Number(monto), moneda, frecuencia, dia_del_mes: diaDelMes ? Number(diaDelMes) : null, categoria, notas: notas || null };
+      if (editandoId) {
+        // Si cambia el día del mes, se reabilita el aviso para que no se
+        // pierda el recordatorio del nuevo día (si no, "ultimo_aviso_mes"
+        // seguiría bloqueando el aviso de este mes aunque cambie la fecha).
+        const { data, error } = await supabase2.from("espacio_gastos_fijos").update({ ...payload, ultimo_aviso_mes: null }).eq("id", editandoId).select().single();
+        if (error) throw error;
+        setItems((prev) => prev.map((x) => (x.id === editandoId ? data : x)));
+      } else {
+        const { data, error } = await supabase2.from("espacio_gastos_fijos").insert({ perfil_id: miId, ...payload }).select().single();
+        if (error) throw error;
+        setItems((prev) => [...prev, data]);
+      }
       setShowNuevo(false);
+      setEditandoId(null);
       setConcepto(""); setMonto(""); setDiaDelMes(""); setNotas("");
-    } catch (err: any) { console.error(err); alert(err?.message ? `No se pudo crear el gasto fijo: ${err.message}` : "No se pudo crear el gasto fijo."); } finally { setGuardando(false); }
+    } catch (err: any) { console.error(err); alert(err?.message ? `No se pudo guardar el gasto fijo: ${err.message}` : "No se pudo guardar el gasto fijo."); } finally { setGuardando(false); }
   };
 
   const eliminar = (i: any) => {
@@ -62,7 +87,7 @@ export default function GastosFijosTab({ miId, autoAbrir, onAutoAbierto }: { miI
     <div>
       <div className="flex items-center justify-between mb-3">
         <div><p className="text-lg font-bold">Gastos fijos / Suscripciones — {items.length} items</p><p className="text-xs text-slate-400">Total cargado: {Object.keys(totalPorMoneda).length === 0 ? "—" : Object.entries(totalPorMoneda).map(([m, n]) => `${m === "ARS" ? "$" : "USD"} ${n.toLocaleString("es-AR")}`).join(" · ")}</p></div>
-        <button onClick={() => setShowNuevo(true)} className="flex items-center gap-1.5 px-4 py-2 text-sm font-bold bg-[#0145F2] hover:bg-[#0138c9] text-white rounded-lg shrink-0"><Plus className="w-4 h-4" /> Nuevo gasto fijo</button>
+        <button onClick={abrirNuevo} className="flex items-center gap-1.5 px-4 py-2 text-sm font-bold bg-[#0145F2] hover:bg-[#0138c9] text-white rounded-lg shrink-0"><Plus className="w-4 h-4" /> Nuevo gasto fijo</button>
       </div>
 
       {items.length === 0 ? (
@@ -72,7 +97,7 @@ export default function GastosFijosTab({ miId, autoAbrir, onAutoAbierto }: { miI
           {items.map((i) => (
             <div key={i.id} className="bg-white dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-xl px-4 py-3 flex items-center justify-between">
               <div><p className="text-sm font-bold">{i.concepto} <span className="text-[10px] font-bold text-indigo-600 bg-indigo-50 dark:bg-indigo-500/10 px-1.5 py-0.5 rounded ml-1">{i.categoria}</span></p><p className="text-sm font-bold text-[#0145F2]">{i.moneda === "ARS" ? "$" : "USD"} {Number(i.monto).toLocaleString("es-AR")} <span className="text-[11px] font-normal text-slate-400">{i.frecuencia.toLowerCase()}{i.dia_del_mes ? ` · día ${i.dia_del_mes}` : ""}</span></p></div>
-              <div className="flex gap-1"><button onClick={() => eliminar(i)} className="p-1.5 text-slate-400 hover:text-rose-600"><Trash2 className="w-3.5 h-3.5" /></button></div>
+              <div className="flex gap-1"><button onClick={() => abrirEdicion(i)} className="p-1.5 text-slate-400 hover:text-[#0145F2]"><Pencil className="w-3.5 h-3.5" /></button><button onClick={() => eliminar(i)} className="p-1.5 text-slate-400 hover:text-rose-600"><Trash2 className="w-3.5 h-3.5" /></button></div>
             </div>
           ))}
         </div>
@@ -81,7 +106,7 @@ export default function GastosFijosTab({ miId, autoAbrir, onAutoAbierto }: { miI
       {showNuevo && (
         <div className="fixed inset-0 bg-black/40 z-50 flex items-center justify-center p-4" onClick={() => setShowNuevo(false)}>
           <div onClick={(e) => e.stopPropagation()} className="bg-white dark:bg-[#141414] border border-slate-200 dark:border-white/10 w-full max-w-sm rounded-2xl shadow-2xl p-6">
-            <div className="flex justify-between items-start mb-1"><h3 className="text-lg font-bold">Nuevo gasto fijo</h3><button onClick={() => setShowNuevo(false)}><X className="w-4 h-4 text-slate-400" /></button></div>
+            <div className="flex justify-between items-start mb-1"><h3 className="text-lg font-bold">{editandoId ? "Editar gasto fijo" : "Nuevo gasto fijo"}</h3><button onClick={() => setShowNuevo(false)}><X className="w-4 h-4 text-slate-400" /></button></div>
             <p className="text-xs text-slate-400 mb-4">Suscripciones y gastos recurrentes — solo vos los ves.</p>
             <label className={labelClass}>Concepto *</label>
             <input value={concepto} onChange={(e) => setConcepto(e.target.value)} placeholder="Alquiler casa, Netflix, ABL..." className={inputClass} />
@@ -97,7 +122,7 @@ export default function GastosFijosTab({ miId, autoAbrir, onAutoAbierto }: { miI
             <select value={categoria} onChange={(e) => setCategoria(e.target.value)} className={inputClass}><option>Suscripciones</option><option>Vivienda</option><option>Servicios</option><option>Otros</option></select>
             <label className={labelClass + " mt-3"}>Notas</label>
             <textarea value={notas} onChange={(e) => setNotas(e.target.value)} rows={2} placeholder="Detalles adicionales..." className={inputClass} />
-            <div className="flex justify-end gap-2 mt-4"><button onClick={() => setShowNuevo(false)} className="px-4 py-2 text-sm font-bold text-slate-500">Cancelar</button><button onClick={crear} disabled={guardando} className="flex items-center gap-1.5 px-4 py-2 text-sm font-bold bg-[#0145F2] hover:bg-[#0138c9] text-white rounded-lg disabled:opacity-50"><Save className="w-4 h-4" /> Crear</button></div>
+            <div className="flex justify-end gap-2 mt-4"><button onClick={() => setShowNuevo(false)} className="px-4 py-2 text-sm font-bold text-slate-500">Cancelar</button><button onClick={guardar} disabled={guardando} className="flex items-center gap-1.5 px-4 py-2 text-sm font-bold bg-[#0145F2] hover:bg-[#0138c9] text-white rounded-lg disabled:opacity-50"><Save className="w-4 h-4" /> {editandoId ? "Guardar" : "Crear"}</button></div>
           </div>
         </div>
       )}
