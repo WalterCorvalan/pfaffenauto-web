@@ -45,6 +45,7 @@ interface Props {
   eventosProximos: { id: string; titulo: string; fecha: string }[];
   vencidos: number; venceHoy: number; venceProx7d: number;
   ingresosPorMoneda: Record<string, number>; egresosPorMoneda: Record<string, number>; netoPorMoneda: Record<string, number>;
+  gastosFijosTotales: Record<string, number>; gastosVariablesTotales: Record<string, number>;
   topIngresos: Record<string, number>; topEgresos: Record<string, number>;
   cuentas: { id: string; nombre: string; moneda: string; saldo: number }[];
   visitasHoy: { id: string; nombre_cliente: string; vehiculo_marca: string | null; vehiculo_modelo: string | null; horario_visita: string | null }[];
@@ -149,6 +150,8 @@ export default function DashboardClient(props: Props) {
           ingresosPorMoneda={props.ingresosPorMoneda}
           egresosPorMoneda={props.egresosPorMoneda}
           netoPorMoneda={props.netoPorMoneda}
+          gastosFijosTotales={props.gastosFijosTotales}
+          gastosVariablesTotales={props.gastosVariablesTotales}
           topIngresos={props.topIngresos}
           topEgresos={props.topEgresos}
           cuentas={props.cuentas}

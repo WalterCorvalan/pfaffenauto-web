@@ -9,6 +9,7 @@ import {
 } from "lucide-react";
 import { AreaChart, Area, XAxis, YAxis, CartesianGrid, ResponsiveContainer, Tooltip } from "recharts";
 import TablaResponsiva, { type ColumnaTabla } from "@/components/panel/TablaResponsiva";
+import { zonaEquilibrio, CLASE_ZONA_CARD, type ZonaSemaforo } from "./finanzas/tabs/shared";
 
 interface Props {
   esAdmin: boolean; ocultarMontos: boolean;
@@ -34,6 +35,7 @@ interface Props {
   stockEstancado: number; tareasVencidas: number; postventaPendiente: number;
   reclamosResumen: { abiertos: number; enCurso: number; estancados: number; lista: { id: string; titulo: string; clienteNombre: string | null; prioridad: string; estado: string }[] };
   ticketPromedioPorMoneda: Record<string, number>;
+  gastosFijosTotales: Record<string, number>; gastosVariablesTotales: Record<string, number>;
   top10Gastos: { concepto: string; categoria: string; fecha: string; monto: number; moneda: string }[];
   gastosAtipicos: { categoria: string; montoMes: number; promedioHistorico: number; moneda: string }[];
   ventasPorMes12: { mes: string; cantidad: number }[];
@@ -70,9 +72,14 @@ const TONOS: Record<string, string> = {
   violet: "bg-violet-50 dark:bg-violet-500/10 text-violet-600 dark:text-violet-400",
 };
 
-function Tile({ label, valor, icon: Icon, href, color = "indigo", alerta = false, oculto = false }: { label: string; valor: React.ReactNode; icon: any; href?: string; color?: string; alerta?: boolean; oculto?: boolean }) {
+// zona (opcional): cuando la tarjeta representa una relación ingreso vs
+// costo con sentido de semáforo (rojo/amarillo/verde/azul, ver shared.ts),
+// pinta toda la tarjeta con CLASE_ZONA_CARD en vez del acento fijo de color
+// -- mismo criterio ya aplicado en Finanzas → Resumen/Rentabilidad/Cockpit.
+function Tile({ label, valor, icon: Icon, href, color = "indigo", alerta = false, oculto = false, zona }: { label: string; valor: React.ReactNode; icon: any; href?: string; color?: string; alerta?: boolean; oculto?: boolean; zona?: ZonaSemaforo }) {
+  const claseBorde = zona ? CLASE_ZONA_CARD[zona] : `bg-white dark:bg-white/[0.02] ${alerta ? "border-rose-200 dark:border-rose-500/30" : "border-slate-200 dark:border-white/5"}`;
   const contenido = (
-    <div className={`h-full rounded-2xl p-4 border bg-white dark:bg-white/[0.02] transition-all hover:-translate-y-0.5 hover:shadow-md ${alerta ? "border-rose-200 dark:border-rose-500/30" : "border-slate-200 dark:border-white/5"}`}>
+    <div className={`h-full rounded-2xl p-4 border transition-all hover:-translate-y-0.5 hover:shadow-md ${claseBorde}`}>
       <div className={`w-8 h-8 rounded-xl flex items-center justify-center mb-3 ${TONOS[color]}`}>
         <Icon className="w-4 h-4" />
       </div>
@@ -105,6 +112,22 @@ export default function DashboardGeneralTab(props: Props) {
     if (anterior === 0) return { variacionPct: actual > 0 ? 100 : null };
     return { variacionPct: Math.round(((actual - anterior) / anterior) * 100) };
   })();
+
+  // Zona (rojo/amarillo/verde/azul) de ventas del mes vs gastos fijos+
+  // variables del mes -- misma lógica que "Rentabilidad general" en
+  // Finanzas → Resumen, reusada acá para Ticket promedio / Ingresos por
+  // ventas. Una por moneda, para no mezclar ARS con USD en un solo color.
+  const monedasVenta = Array.from(new Set([
+    ...Object.keys(props.revenuePorMoneda), ...Object.keys(props.gastosFijosTotales), ...Object.keys(props.gastosVariablesTotales),
+  ])).filter((m) => (props.revenuePorMoneda[m] || 0) > 0);
+  const zonaVentaPorMoneda: Record<string, ZonaSemaforo> = {};
+  monedasVenta.forEach((m) => { zonaVentaPorMoneda[m] = zonaEquilibrio(props.revenuePorMoneda[m] || 0, (props.gastosFijosTotales[m] || 0) + (props.gastosVariablesTotales[m] || 0)); });
+
+  // Zona del "Neto del mes": ingresos vs egresos totales de la empresa ese
+  // mes (mismos datos que ya alimentan la tarjeta, ver page.tsx).
+  const monedasNeto = Array.from(new Set([...Object.keys(props.ingresosPorMoneda), ...Object.keys(props.egresosPorMoneda)]));
+  const zonaNetoPorMoneda: Record<string, ZonaSemaforo> = {};
+  monedasNeto.forEach((m) => { zonaNetoPorMoneda[m] = zonaEquilibrio(props.ingresosPorMoneda[m] || 0, props.egresosPorMoneda[m] || 0); });
 
   return (
     <div className="space-y-4">
@@ -141,10 +164,15 @@ export default function DashboardGeneralTab(props: Props) {
 
       <div className="grid grid-cols-2 md:grid-cols-5 gap-3">
         <Tile label="Autos vendidos (mes)" valor={props.ventasDelMes} icon={Car} color="indigo" href="/panel/ventas" />
-        <Tile label="Ticket promedio" valor={fmtPorMoneda(props.ticketPromedioPorMoneda)} icon={Ticket} color="indigo" oculto={props.ocultarMontos} href="/panel/ventas" />
-        <Tile label="Ingresos por ventas" valor={fmtPorMoneda(props.revenuePorMoneda)} icon={TrendingUp} color="emerald" oculto={props.ocultarMontos} href="/panel/finanzas" />
+        {monedasVenta.length === 0 && <Tile label="Ticket promedio" valor="—" icon={Ticket} color="indigo" oculto={props.ocultarMontos} href="/panel/ventas" />}
+        {monedasVenta.map((m) => (
+          <Tile key={`ticket-${m}`} label={`Ticket promedio (${m})`} valor={fmtMoneda(props.ticketPromedioPorMoneda[m] || 0, m)} icon={Ticket} oculto={props.ocultarMontos} href="/panel/ventas" zona={zonaVentaPorMoneda[m]} />
+        ))}
         <Tile label="Egresos totales" valor={fmtPorMoneda(props.egresosPorMoneda)} icon={TrendingDown} color="rose" oculto={props.ocultarMontos} href="/panel/finanzas" />
-        <Tile label="Neto del mes" valor={fmtPorMoneda(props.netoPorMoneda)} icon={Activity} color="violet" oculto={props.ocultarMontos} href="/panel/finanzas" />
+        {monedasNeto.length === 0 && <Tile label="Neto del mes" valor="—" icon={Activity} color="violet" oculto={props.ocultarMontos} href="/panel/finanzas" />}
+        {monedasNeto.map((m) => (
+          <Tile key={`neto-${m}`} label={`Neto del mes (${m})`} valor={fmtMoneda(props.netoPorMoneda[m] || 0, m)} icon={Activity} oculto={props.ocultarMontos} href="/panel/finanzas" zona={zonaNetoPorMoneda[m]} />
+        ))}
       </div>
 
       <div className="rounded-2xl p-4 bg-white dark:bg-white/[0.02] border border-slate-200 dark:border-white/5 flex items-center justify-between flex-wrap gap-3">
@@ -160,7 +188,14 @@ export default function DashboardGeneralTab(props: Props) {
 
       <SeccionTitulo>Ventas y clientes</SeccionTitulo>
       <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-        <Tile label="Revenue del mes" valor={fmtPorMoneda(props.revenuePorMoneda)} icon={DollarSign} color="emerald" oculto={props.ocultarMontos} href="/panel/ventas" />
+        {/* "Revenue del mes" e "Ingresos por ventas" eran la misma cifra
+            (revenuePorMoneda) en dos tarjetas con nombres distintos -- se
+            unifican acá, separadas por moneda, con el mismo semáforo de
+            ventas vs gastos fijos+variables que Ticket promedio. */}
+        {monedasVenta.length === 0 && <Tile label="Ingresos por ventas" valor="—" icon={DollarSign} color="emerald" oculto={props.ocultarMontos} href="/panel/ventas" />}
+        {monedasVenta.map((m) => (
+          <Tile key={`ingresos-${m}`} label={`Ingresos por ventas (${m})`} valor={fmtMoneda(props.revenuePorMoneda[m] || 0, m)} icon={DollarSign} oculto={props.ocultarMontos} href="/panel/ventas" zona={zonaVentaPorMoneda[m]} />
+        ))}
         <Tile label="Ventas del mes" valor={props.ventasDelMes} icon={ShoppingCart} color="emerald" href="/panel/ventas" />
         <Tile label="Operaciones del mes" valor={props.operacionesDelMes} icon={TrendingUp} color="indigo" href="/panel/ventas" />
         <Tile label="Clientes sin contactar" valor={props.clientesSinContactar} icon={Users} color="amber" alerta={props.clientesSinContactar > 0} href="/panel/clientes" />
@@ -295,8 +330,8 @@ export default function DashboardGeneralTab(props: Props) {
       <SeccionTitulo>Finanzas</SeccionTitulo>
       <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
         <Tile label="Cuotas a pagar (mes)" valor={fmtPorMoneda(props.cuotasPagarPorMoneda)} icon={CreditCard} color="rose" oculto={props.ocultarMontos} href="/panel/finanzas" />
-        <Tile label="Balance neto USD" valor={fmtMoneda(saldoUsd, "USD")} icon={Wallet} color="violet" oculto={props.ocultarMontos} href="/panel/finanzas" />
-        <Tile label="Balance neto ARS" valor={fmtMoneda(saldoArs, "ARS")} icon={Wallet} color="violet" oculto={props.ocultarMontos} href="/panel/finanzas" />
+        <Tile label="Balance neto USD" valor={fmtMoneda(saldoUsd, "USD")} icon={Wallet} oculto={props.ocultarMontos} href="/panel/finanzas" zona={saldoUsd >= 0 ? "verde" : "rojo"} />
+        <Tile label="Balance neto ARS" valor={fmtMoneda(saldoArs, "ARS")} icon={Wallet} oculto={props.ocultarMontos} href="/panel/finanzas" zona={saldoArs >= 0 ? "verde" : "rojo"} />
         <Tile label="Comisiones pendientes (cant.)" valor={props.comisionesPendientes} icon={Receipt} color="violet" href="/panel/comisiones" />
       </div>
 
