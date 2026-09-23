@@ -17,6 +17,12 @@ export default async function FinanzasPage() {
   // El resto del panel de Finanzas no se restringe, solo ese tab puntual.
   const veTodasSucursales = miPerfil?.roles?.some((r: string) => ["admin", "finanzas"].includes(r)) ?? false;
   const miSucursalId = miPerfil?.sucursal_id ?? null;
+  // Pedido del 23/9: un encargado (ej. Lucas en Don Torcuato) no ve el resto
+  // de Finanzas -- solo Caja Grande/Chica de su propia sucursal, nada más
+  // (antes solo esa pestaña se filtraba por sucursal, el resto del módulo
+  // quedaba completamente abierto). Un admin/finanzas que ADEMÁS tenga el
+  // rol "encargado" sigue viendo todo (veTodasSucursales manda).
+  const soloCajaSucursal = !veTodasSucursales && (miPerfil?.roles?.includes("encargado") ?? false);
 
   const [{ data: cuentas }, { data: cierres }, { data: cuotasCobrar }, { data: cuotasPagar }, { data: vendedores }, { data: clientes }, { data: vehiculosEnJuego }, { data: ventas }, { data: cheques }, { data: pagosDisponibles }, { data: consumosTarjeta }, { data: retiros }, { data: devoluciones }, { data: expedientes }, { data: prestamos }, { data: presupuestos }, { data: recurrencias }, { data: recurrenciasGeneraciones }, { data: arqueos }, { data: cierresDiarios }, { data: senas }, { data: sucursales }] = await Promise.all([
     supabase.from("cuentas").select("*").eq("activa", true).order("nombre"),
@@ -116,6 +122,7 @@ export default async function FinanzasPage() {
       vehiculosDisponiblesFull={vehiculosDisponiblesFull || []}
       sucursales={sucursales || []}
       veTodasSucursales={veTodasSucursales}
+      soloCajaSucursal={soloCajaSucursal}
       miSucursalId={miSucursalId}
       vehiculosTodos={vehiculosTodos || []}
     />

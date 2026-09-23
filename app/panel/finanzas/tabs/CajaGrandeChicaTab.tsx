@@ -185,6 +185,11 @@ export default function CajaGrandeChicaTab({ miId, soyAdmin, cuentas, setCuentas
 
   const registrar = async () => {
     if (!cuenta || !rMonto || Number(rMonto) <= 0) return alert("Completá el monto.");
+    // Pedido del 23/9: comprobante obligatorio en todo ingreso/egreso/
+    // transferencia de Caja Grande/Chica -- antes acá siempre era opcional
+    // y nunca bloqueaba, mismo criterio que ya regía en Movimientos →
+    // Transferencia.
+    if (!rArchivo) return alert("Adjuntá el comprobante -- es obligatorio.");
     setGuardando(true);
     try {
       const esTransferencia = rTipoMov !== "manual" && rTipoMov !== "gasto";
@@ -202,12 +207,37 @@ export default function CajaGrandeChicaTab({ miId, soyAdmin, cuentas, setCuentas
           cuentaOrigenId = cuenta.id; cuentaDestinoId = cajaChica.id;
         }
 
+        const formDataT = new FormData();
+        formDataT.append("file", rArchivo);
+        formDataT.append("carpeta", "finanzas");
+        const resUploadT = await fetch("/api/panel/upload", { method: "POST", body: formDataT });
+        const dataUploadT = await resUploadT.json();
+        if (!resUploadT.ok) throw new Error(dataUploadT.error || "No se pudo subir el comprobante.");
+        const comprobanteUrlT = dataUploadT.publicUrl;
+
         const { error } = await supabase2.rpc("crear_transferencia", {
           p_cuenta_origen_id: cuentaOrigenId, p_cuenta_destino_id: cuentaDestinoId,
           p_monto_origen: Number(rMonto), p_monto_destino: Number(rMonto), p_fecha: rFecha,
           p_notas: rConcepto || rObs || null,
         });
         if (error) throw error;
+
+        // crear_transferencia no devuelve los ids de los 2 movimientos que
+        // crea (egreso en origen + ingreso en destino) -- se identifican
+        // aparte, recién creados, para pegarles el comprobante a ambos
+        // (mismo patrón que Movimientos → Transferencia).
+        const { data: nuevosMovsT } = await supabase2
+          .from("movimientos_caja")
+          .select("id")
+          .in("cuenta_id", [cuentaOrigenId, cuentaDestinoId])
+          .eq("fecha", rFecha)
+          .eq("tipo_movimiento", "Transferencia")
+          .order("created_at", { ascending: false })
+          .limit(2);
+        if (nuevosMovsT?.length) {
+          await supabase2.from("movimientos_caja").update({ comprobante_url: comprobanteUrlT }).in("id", nuevosMovsT.map((m) => m.id));
+        }
+
         window.location.reload();
         return;
       }
@@ -432,15 +462,12 @@ export default function CajaGrandeChicaTab({ miId, soyAdmin, cuentas, setCuentas
             <label className={labelClass + " mt-3"}>Observaciones</label>
             <textarea value={rObs} onChange={(e) => setRObs(e.target.value)} rows={2} className={inputClass} />
 
-            {(rTipoMov === "manual" || rTipoMov === "gasto") && (
-              <>
-                <label className={labelClass + " mt-3 flex items-center gap-1.5"}><Paperclip className="w-3.5 h-3.5" /> Comprobante (opcional)</label>
-                <label className="inline-flex items-center gap-1.5 px-3 py-2 text-xs font-bold border border-slate-200 dark:border-white/10 rounded-lg cursor-pointer">
-                  {rArchivo ? rArchivo.name : "Adjuntar archivo"}
-                  <input type="file" accept="image/*,.pdf" className="hidden" onChange={(e) => setRArchivo(e.target.files?.[0] || null)} />
-                </label>
-              </>
-            )}
+            <label className={labelClass + " mt-3 flex items-center gap-1.5"}><Paperclip className="w-3.5 h-3.5" /> Comprobante *</label>
+            <label className="inline-flex items-center gap-1.5 px-3 py-2 text-xs font-bold border border-slate-200 dark:border-white/10 rounded-lg cursor-pointer">
+              {rArchivo ? rArchivo.name : "Adjuntar archivo"}
+              <input type="file" accept="image/*,.pdf" className="hidden" onChange={(e) => setRArchivo(e.target.files?.[0] || null)} />
+            </label>
+            {!rArchivo && <p className="text-[11px] text-rose-500 mt-1.5">Obligatorio -- adjuntá el comprobante.</p>}
 
             <div className="flex justify-end gap-2 mt-4">
               <button onClick={() => setShowRegistrar(false)} className="px-4 py-2 text-sm font-bold text-slate-500">Cancelar</button>
