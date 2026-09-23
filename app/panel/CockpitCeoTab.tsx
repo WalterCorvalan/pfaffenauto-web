@@ -7,6 +7,9 @@ import {
   Sparkles, Send, Loader2, Trophy, TrendingUp, Handshake, DollarSign, FileText,
   Star, Landmark, ClipboardList, Award,
 } from "lucide-react";
+import { supabase2 } from "@/lib/supabase/client";
+import { useRentabilidadPorVehiculo } from "./finanzas/tabs/useRentabilidadPorVehiculo";
+import { netoOperatoriaAreaPorMoneda } from "./finanzas/tabs/shared";
 
 interface RankingFila { vendedor_id: string; nombre: string; ventas_equivalentes: number; consignaciones: number }
 interface Props {
@@ -45,7 +48,7 @@ function MiniStat({ label, valor, sub }: { label: string; valor: React.ReactNode
   );
 }
 
-export default function CockpitCeoTab({ miNombre, ocultarMontos, diaDelMes, diasEnElMes, ventasDelMes, ventasMesAnterior, objetivoVentasMensual, gananciaPorMoneda, consignacionesDelMes, ranking, cierreMesAnterior, calificaciones, gestoriaPorMoneda, gananciaPorMes, resumenAnual, tuOperacion }: Props) {
+export default function CockpitCeoTab({ miNombre, ocultarMontos, diaDelMes, diasEnElMes, ventasDelMes, ventasMesAnterior, objetivoVentasMensual, consignacionesDelMes, ranking, cierreMesAnterior, calificaciones, gananciaPorMes, resumenAnual, tuOperacion }: Props) {
   const [mensajes, setMensajes] = useState<{ role: "user" | "assistant"; content: string; link?: string | null }[]>([]);
   const [pregunta, setPregunta] = useState("");
   const [cargando, setCargando] = useState(false);
@@ -53,6 +56,40 @@ export default function CockpitCeoTab({ miNombre, ocultarMontos, diaDelMes, dias
   const finRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => { finRef.current?.scrollIntoView({ behavior: "smooth", block: "nearest" }); }, [mensajes]);
+
+  // Reemplaza "Ganancia del mes" (antes solo precio venta − precio
+  // propietario, sin restar comisión ni gastos) y "Gestoría/Transferencias"
+  // (antes el total cobrado, sin restar gastos del área) por los mismos
+  // cálculos ya reales de Finanzas → Análisis y planificación -- mismos
+  // hooks/funciones que usan esos tabs, para no tener dos fórmulas de lo
+  // mismo desincronizándose entre el Dashboard y Finanzas.
+  const [ventasDelMesFin, setVentasDelMesFin] = useState<any[]>([]);
+  const [movimientosAreaMes, setMovimientosAreaMes] = useState<any[]>([]);
+  useEffect(() => {
+    const hoy = new Date();
+    const inicioMes = new Date(hoy.getFullYear(), hoy.getMonth(), 1).toISOString().slice(0, 10);
+    const finMes = new Date(hoy.getFullYear(), hoy.getMonth() + 1, 0).toISOString().slice(0, 10);
+    supabase2
+      .from("ventas")
+      .select("id, comprador_nombre, vehiculo_marca, vehiculo_modelo, vehiculo_id, precio_venta, moneda_venta, fecha_cierre, estado")
+      .eq("estado", "cerrada")
+      .gte("fecha_cierre", inicioMes)
+      .lte("fecha_cierre", finMes)
+      .then(({ data }) => setVentasDelMesFin(data || []));
+    supabase2
+      .from("movimientos_caja")
+      .select("tipo, monto, venta_id, tipo_movimiento, estado, deleted_at, fecha, cuenta:cuentas(moneda)")
+      .is("venta_id", null)
+      .is("deleted_at", null)
+      .eq("estado", "aprobado")
+      .gte("fecha", inicioMes)
+      .lte("fecha", finMes)
+      .then(({ data }) => setMovimientosAreaMes(data || []));
+  }, []);
+  const { totalesPorMoneda: rentabilidadVehiculoMes } = useRentabilidadPorVehiculo(ventasDelMesFin);
+  const operatoriaAreaMes = netoOperatoriaAreaPorMoneda(movimientosAreaMes);
+  const gananciaVehiculoPorMoneda: Record<string, number> = {};
+  Object.entries(rentabilidadVehiculoMes).forEach(([m, t]) => { gananciaVehiculoPorMoneda[m] = t.ganancia; });
 
   const enviar = async (texto: string) => {
     if (!texto.trim() || cargando) return;
@@ -165,11 +202,11 @@ export default function CockpitCeoTab({ miNombre, ocultarMontos, diaDelMes, dias
             variacionAnual !== null && <p className={`text-[11px] mt-1 font-bold ${variacionAnual >= 0 ? "text-emerald-600" : "text-rose-600"}`}>{variacionAnual >= 0 ? "+" : ""}{variacionAnual}% vs mismo mes año anterior</p>
           )}
         </div>
-        <div className="rounded-2xl p-4 bg-white dark:bg-white/[0.02] border border-slate-200 dark:border-white/5">
-          <p className="text-[10px] font-bold uppercase text-slate-400 flex items-center gap-1.5 mb-1"><DollarSign className="w-3.5 h-3.5" /> Ganancia del mes</p>
-          <p className={`text-2xl font-black text-slate-900 dark:text-white ${ocultarMontos ? "blur-sm select-none" : ""}`}>{fmtPorMoneda(gananciaPorMoneda)}</p>
-          <p className="text-[11px] text-slate-400 mt-1">Precio venta − precio propietario</p>
-        </div>
+        <Link href="/panel/finanzas" className="rounded-2xl p-4 bg-white dark:bg-white/[0.02] border border-slate-200 dark:border-white/5 hover:border-indigo-300 dark:hover:border-indigo-500/40 transition-colors block">
+          <p className="text-[10px] font-bold uppercase text-slate-400 flex items-center gap-1.5 mb-1"><DollarSign className="w-3.5 h-3.5" /> Rentabilidad por vehículo</p>
+          <p className={`text-2xl font-black text-slate-900 dark:text-white ${ocultarMontos ? "blur-sm select-none" : ""}`}>{fmtPorMoneda(gananciaVehiculoPorMoneda)}</p>
+          <p className="text-[11px] text-slate-400 mt-1">Venta − costo − comisión − gastos, del mes</p>
+        </Link>
         <div className="rounded-2xl p-4 bg-white dark:bg-white/[0.02] border border-slate-200 dark:border-white/5">
           <p className="text-[10px] font-bold uppercase text-slate-400 flex items-center gap-1.5 mb-1"><Handshake className="w-3.5 h-3.5" /> Consignaciones del mes</p>
           <p className="text-2xl font-black text-slate-900 dark:text-white">{consignacionesDelMes}</p>
@@ -229,11 +266,11 @@ export default function CockpitCeoTab({ miNombre, ocultarMontos, diaDelMes, dias
           </div>
         </div>
 
-        <div className="rounded-2xl p-5 bg-white dark:bg-white/[0.02] border border-slate-200 dark:border-white/5">
-          <p className="text-sm font-bold text-slate-800 dark:text-white mb-2 flex items-center gap-1.5"><ClipboardList className="w-4 h-4 text-indigo-500" /> Gestoría / Transferencias · mes</p>
-          <p className="text-lg font-black text-slate-900 dark:text-white">{fmtPorMoneda(gestoriaPorMoneda)}</p>
-          <p className="text-[11px] text-slate-400">Total cobrado a compradores por transferencias, gestoría y trámites.</p>
-        </div>
+        <Link href="/panel/finanzas" className="rounded-2xl p-5 bg-white dark:bg-white/[0.02] border border-slate-200 dark:border-white/5 hover:border-indigo-300 dark:hover:border-indigo-500/40 transition-colors block">
+          <p className="text-sm font-bold text-slate-800 dark:text-white mb-2 flex items-center gap-1.5"><ClipboardList className="w-4 h-4 text-indigo-500" /> Operatoria del área · mes</p>
+          <p className={`text-lg font-black text-slate-900 dark:text-white ${ocultarMontos ? "blur-sm select-none" : ""}`}>{fmtPorMoneda(operatoriaAreaMes)}</p>
+          <p className="text-[11px] text-slate-400">Neto de gestoría, multas, honorarios y trámites — ya con gastos del área descontados.</p>
+        </Link>
       </div>
 
       <div className="rounded-2xl p-5 bg-white dark:bg-white/[0.02] border border-slate-200 dark:border-white/5">
