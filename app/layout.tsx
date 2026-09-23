@@ -100,7 +100,7 @@ export default function RootLayout({
     priceRange: "$$$",
     logo: "https://www.pfaffencars.com/logo.png",
     sameAs: [
-      "https://www.instagram.com/pfaffenautomotores/",
+      "https://www.instagram.com/pfaffen.cars/",
       "https://facebook.com/pfaffenautos",
       "https://tiktok.com/@pfaffenautos",
     ],
