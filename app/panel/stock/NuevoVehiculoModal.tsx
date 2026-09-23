@@ -56,6 +56,12 @@ export default function NuevoVehiculoModal({ perfiles, clientes, sucursales, miI
   const [monedaVenta, setMonedaVenta] = useState(editando?.moneda_venta || "USD");
   const [precioCompra, setPrecioCompra] = useState(editando?.precio_compra ? String(editando.precio_compra) : "");
   const [monedaCompra, setMonedaCompra] = useState(editando?.moneda_compra || "USD");
+  const [facturado, setFacturado] = useState(editando?.facturado || false);
+  const [facturaImporte, setFacturaImporte] = useState(editando?.factura_importe ? String(editando.factura_importe) : "");
+  const [facturaNumero, setFacturaNumero] = useState(editando?.factura_numero || "");
+  const [facturaEmisor, setFacturaEmisor] = useState(editando?.factura_emisor || "");
+  const [facturaArchivoUrl, setFacturaArchivoUrl] = useState(editando?.factura_archivo_url || "");
+  const [subiendoFactura, setSubiendoFactura] = useState(false);
   const [estadoInicial, setEstadoInicial] = useState(editando?.estado || "disponible");
   const [ubicacion, setUbicacion] = useState(editando?.ubicacion || "");
   const [provincia, setProvincia] = useState(editando?.provincia || "");
@@ -130,6 +136,23 @@ export default function NuevoVehiculoModal({ perfiles, clientes, sucursales, miI
     } finally {
       setSubiendoFotos(false);
       if (fileRef.current) fileRef.current.value = "";
+    }
+  };
+
+  const subirFactura = async (file: File) => {
+    setSubiendoFactura(true);
+    try {
+      const formData = new FormData();
+      formData.append("file", file);
+      formData.append("carpeta", "vehiculos");
+      const res = await fetch("/api/panel/upload", { method: "POST", body: formData });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || "Error subiendo la factura");
+      setFacturaArchivoUrl(data.publicUrl);
+    } catch (err: any) {
+      setError(err?.message || "No se pudo subir la factura.");
+    } finally {
+      setSubiendoFactura(false);
     }
   };
 
@@ -237,6 +260,11 @@ export default function NuevoVehiculoModal({ perfiles, clientes, sucursales, miI
         categoria, marca: marca.trim(), modelo: modelo.trim(), anio: Number(anio), patente: patente.trim().toUpperCase(),
         origen: origen || null, color: color.trim(), km: Number(km), precio_venta: Number(precioVenta), moneda_venta: monedaVenta,
         precio_compra: precioCompra ? Number(precioCompra) : null, moneda_compra: monedaCompra,
+        facturado,
+        factura_importe: facturado && facturaImporte ? Number(facturaImporte) : null,
+        factura_numero: facturado ? (facturaNumero || null) : null,
+        factura_emisor: facturado ? (facturaEmisor || null) : null,
+        factura_archivo_url: facturado ? (facturaArchivoUrl || null) : null,
         ubicacion: ubicacion || null, provincia: provincia || null, estado: estadoInicial, "dueños_anteriores": duenosAnteriores ? Number(duenosAnteriores) : null,
         propio_agencia: propioAgencia,
         propietario_nombre: propioAgencia ? null : (propietarioNombre || null),
@@ -463,6 +491,42 @@ export default function NuevoVehiculoModal({ perfiles, clientes, sucursales, miI
                   <option value="USD">USD</option><option value="ARS">ARS</option>
                 </select>
               </div>
+            </div>
+
+            <div className="mt-3">
+              <label className="inline-flex items-center gap-2 cursor-pointer">
+                <input type="checkbox" checked={facturado} onChange={(e) => setFacturado(e.target.checked)} className="w-4 h-4 accent-[#0145F2]" />
+                <span className="text-sm font-semibold text-slate-700 dark:text-slate-200">¿Está facturado?</span>
+              </label>
+              {facturado && (
+                <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 mt-3">
+                  <div>
+                    <label className={labelClass}>Importe de factura</label>
+                    <input type="text" inputMode="numeric" value={facturaImporte} onChange={(e) => setFacturaImporte(e.target.value.replace(/\D/g, ""))} placeholder="12000000" className={inputClass} />
+                  </div>
+                  <div>
+                    <label className={labelClass}>N° de factura</label>
+                    <input type="text" value={facturaNumero} onChange={(e) => setFacturaNumero(e.target.value)} placeholder="0001-00012345" className={inputClass} />
+                  </div>
+                  <div>
+                    <label className={labelClass}>Quién factura</label>
+                    <input type="text" value={facturaEmisor} onChange={(e) => setFacturaEmisor(e.target.value)} placeholder="Nombre o razón social" className={inputClass} />
+                  </div>
+                  <div className="col-span-2 sm:col-span-3">
+                    <label className={labelClass}>Archivo de la factura</label>
+                    <div className="flex items-center gap-2">
+                      <label className={`inline-flex items-center gap-1.5 px-3 py-2 text-xs font-bold border border-slate-200 dark:border-white/10 rounded-lg cursor-pointer ${subiendoFactura ? "opacity-60 pointer-events-none" : ""}`}>
+                        {subiendoFactura ? "Subiendo..." : "Adjuntar archivo"}
+                        <input type="file" accept="image/*,.pdf" disabled={subiendoFactura} className="hidden" onChange={(e) => e.target.files?.[0] && subirFactura(e.target.files[0])} />
+                      </label>
+                      {facturaArchivoUrl && <a href={facturaArchivoUrl} target="_blank" rel="noreferrer" className="text-xs text-[#0145F2] hover:underline">Ver archivo</a>}
+                    </div>
+                  </div>
+                </div>
+              )}
+            </div>
+
+            <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 mt-3">
               <div>
                 <label className={labelClass}>{esEdicion ? "Estado" : "Estado inicial"}</label>
                 {/* "Señado" y "Vendido" los pone SOLO el flujo real (Señas /
