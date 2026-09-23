@@ -39,6 +39,7 @@ export const MODULOS_CATALOGO: { modulo: string; label: string }[] = [
   { modulo: "tesoreria", label: "Tesorería" },
   { modulo: "liquidaciones", label: "Liquidaciones" },
   { modulo: "comisiones", label: "Mis Comisiones" },
+  { modulo: "facturacion", label: "Facturación" },
   { modulo: "mensajes", label: "Mensajes" },
   { modulo: "whatsapp", label: "WhatsApp" },
   { modulo: "rodi", label: "Rodi (chat web)" },
