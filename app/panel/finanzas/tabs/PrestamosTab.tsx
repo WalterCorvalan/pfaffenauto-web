@@ -2,7 +2,7 @@
 
 import { useState, useMemo } from "react";
 import { supabase2 } from "@/lib/supabase/client";
-import { Plus, X, Save } from "lucide-react";
+import { Plus, X, Save, Pencil } from "lucide-react";
 import { inputClass, labelClass, fmt } from "./shared";
 import TablaResponsiva, { type ColumnaTabla } from "@/components/panel/TablaResponsiva";
 import ConfirmDialog from "@/components/panel/ConfirmDialog";
@@ -14,6 +14,7 @@ export default function PrestamosTab({
 }: { prestamos: any[]; setPrestamos: (fn: any) => void; cuentas: any[]; setCuentas: (fn: any) => void; setMovimientos: (fn: any) => void }) {
   const [sub, setSub] = useState<Sub>("activos");
   const [showNuevo, setShowNuevo] = useState(false);
+  const [editando, setEditando] = useState<any | null>(null);
   const [persona, setPersona] = useState("");
   const [monto, setMonto] = useState("");
   const [moneda, setMoneda] = useState("USD");
@@ -36,12 +37,32 @@ export default function PrestamosTab({
 
   const lista = sub === "todos" ? prestamos : prestamos.filter((p) => (sub === "activos" ? p.estado === "pendiente" : p.estado === "devuelto"));
 
-  const abrirNuevo = () => { setPersona(""); setMonto(""); setMoneda("USD"); setFecha(new Date().toISOString().slice(0, 10)); setCuentaId(""); setDevolucionEsperada(""); setMotivo(""); setNotas(""); setShowNuevo(true); };
+  const abrirNuevo = () => { setEditando(null); setPersona(""); setMonto(""); setMoneda("USD"); setFecha(new Date().toISOString().slice(0, 10)); setCuentaId(""); setDevolucionEsperada(""); setMotivo(""); setNotas(""); setShowNuevo(true); };
+
+  // Igual que Retiros: monto y caja ya debitaron el saldo al crear el
+  // préstamo (movimiento_id), no se pueden editar sin desincronizar. Lo que
+  // sí es seguro corregir: persona, fecha, devolución esperada, motivo y notas.
+  const abrirEditar = (p: any) => {
+    setEditando(p);
+    setPersona(p.persona); setMonto(String(p.monto)); setMoneda(p.moneda); setFecha(p.fecha); setCuentaId(p.cuenta_id);
+    setDevolucionEsperada(p.devolucion_esperada || ""); setMotivo(p.motivo || ""); setNotas(p.notas || "");
+    setShowNuevo(true);
+  };
 
   const registrar = async () => {
     if (!persona.trim() || !monto || !cuentaId) return alert("Completá persona, monto y caja.");
     setGuardando(true);
     try {
+      if (editando) {
+        const { data, error } = await supabase2.from("prestamos_otorgados").update({
+          persona: persona.trim(), fecha, devolucion_esperada: devolucionEsperada || null, motivo: motivo || null, notas: notas || null,
+        }).eq("id", editando.id).select().single();
+        if (error) throw error;
+        setPrestamos((prev: any[]) => prev.map((p) => (p.id === editando.id ? data : p)));
+        setShowNuevo(false);
+        return;
+      }
+
       const { data: id, error } = await supabase2.rpc("registrar_prestamo_otorgado", {
         p_persona: persona.trim(), p_monto: Number(monto), p_moneda: moneda, p_fecha: fecha, p_cuenta_id: cuentaId,
         p_devolucion_esperada: devolucionEsperada || null, p_motivo: motivo || null, p_notas: notas || null,
@@ -133,6 +154,7 @@ export default function PrestamosTab({
           acciones={(p) => (
             <>
               {p.estado === "pendiente" && <button onClick={() => abrirDevolucion(p)} className="text-emerald-600 font-bold">Marcar devuelto</button>}
+              <button onClick={() => abrirEditar(p)} className="text-slate-400 hover:text-[#0145F2]"><Pencil className="w-3.5 h-3.5 inline" /></button>
               <button onClick={() => eliminar(p)} className="text-rose-500 font-bold">Eliminar</button>
             </>
           )}
@@ -142,25 +164,25 @@ export default function PrestamosTab({
       {showNuevo && (
         <div className="fixed inset-0 bg-black/40 z-50 flex items-center justify-center p-4" onClick={() => setShowNuevo(false)}>
           <div onClick={(e) => e.stopPropagation()} className="bg-white dark:bg-[#141414] border border-slate-200 dark:border-white/10 w-full max-w-md rounded-2xl shadow-2xl p-6 max-h-[90vh] overflow-y-auto">
-            <div className="flex justify-between items-start mb-1"><h3 className="text-lg font-bold">Nuevo préstamo</h3><button onClick={() => setShowNuevo(false)}><X className="w-4 h-4 text-slate-400" /></button></div>
-            <p className="text-xs text-slate-400 mb-4">Préstamos otorgados a una persona desde una caja. Genera un Egreso automático en Finanzas.</p>
+            <div className="flex justify-between items-start mb-1"><h3 className="text-lg font-bold">{editando ? "Editar préstamo" : "Nuevo préstamo"}</h3><button onClick={() => setShowNuevo(false)}><X className="w-4 h-4 text-slate-400" /></button></div>
+            <p className="text-xs text-slate-400 mb-4">{editando ? "Monto, moneda y caja ya afectaron el saldo, no se pueden editar -- si están mal, eliminá el préstamo y cargalo de nuevo." : "Préstamos otorgados a una persona desde una caja. Genera un Egreso automático en Finanzas."}</p>
             <label className={labelClass}>Persona / beneficiario *</label>
             <input value={persona} onChange={(e) => setPersona(e.target.value)} className={inputClass} />
             <div className="grid grid-cols-3 gap-2 mt-3">
-              <div><label className={labelClass}>Monto *</label><input type="text" inputMode="numeric" value={monto} onChange={(e) => setMonto(e.target.value.replace(/\D/g, ""))} placeholder="147000" className={inputClass} /></div>
-              <div><label className={labelClass}>Moneda *</label><select value={moneda} onChange={(e) => setMoneda(e.target.value)} className={inputClass}><option value="USD">USD</option><option value="ARS">ARS</option></select></div>
+              <div><label className={labelClass}>Monto *</label><input type="text" inputMode="numeric" disabled={!!editando} value={monto} onChange={(e) => setMonto(e.target.value.replace(/\D/g, ""))} placeholder="147000" className={inputClass + (editando ? " opacity-50 cursor-not-allowed" : "")} /></div>
+              <div><label className={labelClass}>Moneda *</label><select value={moneda} disabled={!!editando} onChange={(e) => setMoneda(e.target.value)} className={inputClass + (editando ? " opacity-50 cursor-not-allowed" : "")}><option value="USD">USD</option><option value="ARS">ARS</option></select></div>
               <div><label className={labelClass}>Fecha *</label><input type="date" value={fecha} onChange={(e) => setFecha(e.target.value)} className={inputClass} /></div>
             </div>
             <div className="grid grid-cols-2 gap-2 mt-3">
-              <div><label className={labelClass}>Caja (afecta saldo)</label><select value={cuentaId} onChange={(e) => setCuentaId(e.target.value)} className={inputClass}><option value="">— Elegí —</option>{cuentas.filter((c) => c.moneda === moneda).map((c) => <option key={c.id} value={c.id}>{c.nombre} · saldo {fmt(c.saldo, c.moneda)}</option>)}</select></div>
+              <div><label className={labelClass}>Caja (afecta saldo)</label><select value={cuentaId} disabled={!!editando} onChange={(e) => setCuentaId(e.target.value)} className={inputClass + (editando ? " opacity-50 cursor-not-allowed" : "")}><option value="">— Elegí —</option>{cuentas.filter((c) => c.moneda === moneda).map((c) => <option key={c.id} value={c.id}>{c.nombre} · saldo {fmt(c.saldo, c.moneda)}</option>)}</select></div>
               <div><label className={labelClass}>Devolución esperada</label><input type="date" value={devolucionEsperada} onChange={(e) => setDevolucionEsperada(e.target.value)} className={inputClass} /></div>
             </div>
             <label className={labelClass + " mt-3"}>Motivo / descripción</label>
             <input value={motivo} onChange={(e) => setMotivo(e.target.value)} className={inputClass} />
             <label className={labelClass + " mt-3"}>Notas</label>
             <textarea value={notas} onChange={(e) => setNotas(e.target.value)} rows={2} className={inputClass} />
-            <p className="text-[10px] text-slate-400 mt-2">El préstamo nace activo y debita {monto ? fmt(Number(monto), moneda) : "el monto"} de la caja elegida. La marcación "devuelto" se hace después desde la lista.</p>
-            <div className="flex justify-end gap-2 mt-4"><button onClick={() => setShowNuevo(false)} className="px-4 py-2 text-sm font-bold text-slate-500">Cancelar</button><button onClick={registrar} disabled={guardando} className="flex items-center gap-1.5 px-4 py-2 text-sm font-bold bg-[#0145F2] hover:bg-[#0138c9] text-white rounded-lg disabled:opacity-50"><Save className="w-4 h-4" /> Guardar préstamo</button></div>
+            {!editando && <p className="text-[10px] text-slate-400 mt-2">El préstamo nace activo y debita {monto ? fmt(Number(monto), moneda) : "el monto"} de la caja elegida. La marcación "devuelto" se hace después desde la lista.</p>}
+            <div className="flex justify-end gap-2 mt-4"><button onClick={() => setShowNuevo(false)} className="px-4 py-2 text-sm font-bold text-slate-500">Cancelar</button><button onClick={registrar} disabled={guardando} className="flex items-center gap-1.5 px-4 py-2 text-sm font-bold bg-[#0145F2] hover:bg-[#0138c9] text-white rounded-lg disabled:opacity-50"><Save className="w-4 h-4" /> {editando ? "Guardar" : "Guardar préstamo"}</button></div>
           </div>
         </div>
       )}

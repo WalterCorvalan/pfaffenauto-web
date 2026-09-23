@@ -2,7 +2,7 @@
 
 import { useState, useMemo } from "react";
 import { supabase2 } from "@/lib/supabase/client";
-import { Plus, X, Save } from "lucide-react";
+import { Plus, X, Save, Pencil } from "lucide-react";
 import { inputClass, labelClass, fmt, diasHasta } from "./shared";
 import TablaResponsiva, { type ColumnaTabla } from "@/components/panel/TablaResponsiva";
 import ConfirmDialog from "@/components/panel/ConfirmDialog";
@@ -12,6 +12,7 @@ const emptyForm = { tipo: "a_cobrar", formato: "fisico", librador: "", numero: "
 export default function ChequesTab({ cheques, setCheques, cuentas, vehiculos0km }: { cheques: any[]; setCheques: (fn: any) => void; cuentas: any[]; vehiculos0km: any[] }) {
   const [sub, setSub] = useState<"a_cobrar" | "emitido">("a_cobrar");
   const [showNuevo, setShowNuevo] = useState(false);
+  const [editando, setEditando] = useState<any | null>(null);
   const [form, setForm] = useState(emptyForm);
   const [guardando, setGuardando] = useState(false);
   const [chequeParaCobrar, setChequeParaCobrar] = useState<any>(null);
@@ -30,17 +31,45 @@ export default function ChequesTab({ cheques, setCheques, cuentas, vehiculos0km 
     return { esteMes, pendientes, vencidos };
   }, [lista]);
 
-  const abrir = () => { setForm({ ...emptyForm, tipo: sub, fechaCobro: hoy }); setShowNuevo(true); };
+  const abrir = () => { setEditando(null); setForm({ ...emptyForm, tipo: sub, fechaCobro: hoy }); setShowNuevo(true); };
 
-  const crear = async () => {
+  // Solo se puede editar mientras el cheque no generó todavía un movimiento
+  // real de caja -- una vez "Cobrado" (c.movimiento_id seteado), la plata ya
+  // entró/salió de una cuenta con el monto/moneda originales, y un UPDATE acá
+  // no toca ese movimiento: dejaría el cheque y la caja desincronizados.
+  const abrirEditar = (c: any) => {
+    setEditando(c);
+    setForm({
+      tipo: c.tipo, formato: c.formato, librador: c.librador, numero: c.numero || "", banco: c.banco || "",
+      cuitCuil: c.cuit_cuil || "", monto: String(c.monto), moneda: c.moneda, estado: c.estado,
+      fechaEmision: c.fecha_emision || "", fechaCobro: c.fecha_cobro, cajaBancoPropio: c.caja_banco_propio || "",
+      vehiculoId: c.vehiculo_id || "", notas: c.notas || "",
+    });
+    setShowNuevo(true);
+  };
+
+  const guardar = async () => {
     if (!form.librador.trim() || !form.monto || !form.fechaCobro) return alert("Completá librador, monto y fecha de cobro.");
     setGuardando(true);
     try {
-      const { data, error } = await supabase2.from("cheques").insert({
+      const payload = {
         tipo: form.tipo, formato: form.formato, librador: form.librador.trim(), numero: form.numero || null, banco: form.banco || null,
         cuit_cuil: form.cuitCuil || null, monto: Number(form.monto), moneda: form.moneda, estado: form.estado,
         fecha_emision: form.fechaEmision || null, fecha_cobro: form.fechaCobro, caja_banco_propio: form.cajaBancoPropio || null, notas: form.notas || null,
-      }).select().single();
+      };
+
+      if (editando) {
+        const { data, error } = await supabase2.from("cheques").update(payload).eq("id", editando.id).select().single();
+        if (error) throw error;
+        if (form.tipo === "emitido" && form.vehiculoId !== (editando.vehiculo_id || "")) {
+          await supabase2.from("cheques").update({ vehiculo_id: form.vehiculoId || null }).eq("id", editando.id);
+        }
+        setCheques((prev: any[]) => prev.map((x) => (x.id === editando.id ? { ...data, vehiculo_id: form.vehiculoId || null } : x)));
+        setShowNuevo(false);
+        return;
+      }
+
+      const { data, error } = await supabase2.from("cheques").insert(payload).select().single();
       if (error) throw error;
 
       // Vínculo a un 0km del stock en un update aparte, con su propio
@@ -56,7 +85,7 @@ export default function ChequesTab({ cheques, setCheques, cuentas, vehiculos0km 
 
       setCheques((prev: any[]) => [{ ...data, vehiculo_id: vehiculoVinculado }, ...prev]);
       setShowNuevo(false);
-    } catch (err: any) { alert(err?.message ? `No se pudo registrar el cheque: ${err.message}` : "No se pudo registrar el cheque."); } finally { setGuardando(false); }
+    } catch (err: any) { alert(err?.message ? `No se pudo guardar el cheque: ${err.message}` : "No se pudo guardar el cheque."); } finally { setGuardando(false); }
   };
 
   // "Cobrado" es el único estado que mueve plata real -- entra/sale de una
@@ -149,14 +178,19 @@ export default function ChequesTab({ cheques, setCheques, cuentas, vehiculos0km 
               ) },
             ] as ColumnaTabla<any>[]
           }
-          acciones={(c) => <button onClick={() => eliminar(c)} className="text-rose-500 font-bold">Eliminar</button>}
+          acciones={(c) => (
+            <div className="flex items-center gap-2">
+              {c.estado !== "cobrado" && <button onClick={() => abrirEditar(c)} className="text-slate-400 hover:text-[#0145F2] flex items-center"><Pencil className="w-3.5 h-3.5" /></button>}
+              <button onClick={() => eliminar(c)} className="text-rose-500 font-bold">Eliminar</button>
+            </div>
+          )}
         />
       )}
 
       {showNuevo && (
         <div className="fixed inset-0 bg-black/40 z-50 flex items-center justify-center p-4" onClick={() => setShowNuevo(false)}>
           <div onClick={(e) => e.stopPropagation()} className="bg-white dark:bg-[#141414] border border-slate-200 dark:border-white/10 w-full max-w-md rounded-2xl shadow-2xl p-6 max-h-[90vh] overflow-y-auto">
-            <div className="flex justify-between items-start mb-1"><h3 className="text-lg font-bold">Nuevo cheque</h3><button onClick={() => setShowNuevo(false)}><X className="w-4 h-4 text-slate-400" /></button></div>
+            <div className="flex justify-between items-start mb-1"><h3 className="text-lg font-bold">{editando ? "Editar cheque" : "Nuevo cheque"}</h3><button onClick={() => setShowNuevo(false)}><X className="w-4 h-4 text-slate-400" /></button></div>
             <p className="text-xs text-slate-400 mb-4">Registro de cheque. Al cargarlo todavía no mueve saldos — eso pasa cuando lo marqués "Cobrado" y elijas la cuenta.</p>
             <div className="grid grid-cols-2 gap-2">
               <div><label className={labelClass}>Tipo de cheque *</label><select value={form.tipo} onChange={(e) => setForm({ ...form, tipo: e.target.value })} className={inputClass}><option value="a_cobrar">A cobrar (lo recibo)</option><option value="emitido">Emitido (lo pago)</option></select></div>
@@ -224,7 +258,7 @@ export default function ChequesTab({ cheques, setCheques, cuentas, vehiculos0km 
             )}
             <label className={labelClass + " mt-3"}>Notas</label>
             <textarea value={form.notas} onChange={(e) => setForm({ ...form, notas: e.target.value })} rows={2} placeholder="Detalle, operación vinculada, etc." className={inputClass} />
-            <div className="flex justify-end gap-2 mt-4"><button onClick={() => setShowNuevo(false)} className="px-4 py-2 text-sm font-bold text-slate-500">Cancelar</button><button onClick={crear} disabled={guardando} className="flex items-center gap-1.5 px-4 py-2 text-sm font-bold bg-[#0145F2] hover:bg-[#0138c9] text-white rounded-lg disabled:opacity-50"><Save className="w-4 h-4" /> Registrar cheque</button></div>
+            <div className="flex justify-end gap-2 mt-4"><button onClick={() => setShowNuevo(false)} className="px-4 py-2 text-sm font-bold text-slate-500">Cancelar</button><button onClick={guardar} disabled={guardando} className="flex items-center gap-1.5 px-4 py-2 text-sm font-bold bg-[#0145F2] hover:bg-[#0138c9] text-white rounded-lg disabled:opacity-50"><Save className="w-4 h-4" /> {editando ? "Guardar" : "Registrar cheque"}</button></div>
           </div>
         </div>
       )}

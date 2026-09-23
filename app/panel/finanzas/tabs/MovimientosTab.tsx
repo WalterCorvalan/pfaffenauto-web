@@ -2,7 +2,7 @@
 
 import { useState, useMemo } from "react";
 import { supabase2 } from "@/lib/supabase/client";
-import { Plus, X, Save, Trash2, ArrowLeftRight, Lock, Download, Search, Paperclip } from "lucide-react";
+import { Plus, X, Save, Trash2, ArrowLeftRight, Lock, Download, Search, Paperclip, Pencil } from "lucide-react";
 import { inputClass, labelClass, fmt, CATEGORIAS_MOVIMIENTO as CATEGORIAS } from "./shared";
 import TablaResponsiva, { type ColumnaTabla } from "@/components/panel/TablaResponsiva";
 import ConfirmDialog from "@/components/panel/ConfirmDialog";
@@ -23,6 +23,7 @@ export default function MovimientosTab({
   const [cajaFiltro, setCajaFiltro] = useState("");
 
   const [showRegistrar, setShowRegistrar] = useState(false);
+  const [editando, setEditando] = useState<any | null>(null);
   const [rCategoria, setRCategoria] = useState(CATEGORIAS[0]);
   const [rTipo, setRTipo] = useState<"ingreso" | "egreso">("ingreso");
   const [rMonto, setRMonto] = useState("");
@@ -91,10 +92,41 @@ export default function MovimientosTab({
   const ingresos = cajaSeleccionada ? (ingresosPorMoneda[cajaSeleccionada.moneda] || 0) : 0;
   const egresos = cajaSeleccionada ? (egresosPorMoneda[cajaSeleccionada.moneda] || 0) : 0;
 
+  // Solo movimientos manuales (sin transferencia_grupo_id ni venta_id) --
+  // una transferencia son 2 filas linkeadas y una venta la genera el cierre
+  // de la operación, ninguna de las dos se edita desde acá. No hay RPC de
+  // "editar" (mismo motivo que CajaGrandeChicaTab.tsx): se revierte el
+  // movimiento viejo y se recrea con los valores nuevos, para que el saldo
+  // de la caja quede bien y el mes cerrado siga bloqueando la operación.
+  const abrirEditar = (m: any) => {
+    setEditando(m);
+    setRCategoria(m.tipo_movimiento || CATEGORIAS[0]); setRTipo(m.tipo); setRMonto(String(m.monto)); setRFecha(m.fecha);
+    setRCajaId(m.cuenta_id); setRVentaId(m.venta_id || ""); setRNotas(m.observaciones || ""); setRArchivos([]);
+    setShowRegistrar(true);
+  };
+
   const registrar = async () => {
     if (!rMonto || !rCajaId) return alert("Completá monto y caja.");
     setGuardandoR(true);
     try {
+      if (editando) {
+        const { error: errorBorrar } = await supabase2.rpc("eliminar_movimiento_caja", { p_movimiento_id: editando.id, p_motivo: "Editado" });
+        if (errorBorrar) throw errorBorrar;
+        const { data: movId, error: errorCrear } = await supabase2.rpc("registrar_movimiento_caja", {
+          p_tipo: rTipo, p_monto: Number(rMonto), p_cuenta_id: rCajaId, p_fecha: rFecha,
+          p_categoria: rCategoria, p_venta_id: rVentaId || null, p_observaciones: rNotas || null,
+        });
+        if (errorCrear) throw errorCrear;
+        const { data: nuevo } = await supabase2.from("movimientos_caja").select("*, cuenta:cuentas(nombre, moneda)").eq("id", movId).maybeSingle();
+        setMovimientos((prev: any[]) => {
+          const sinElAnterior = prev.filter((m) => m.id !== editando.id);
+          return nuevo ? [nuevo, ...sinElAnterior] : sinElAnterior;
+        });
+        setShowRegistrar(false);
+        setEditando(null);
+        return;
+      }
+
       const { data: movId, error } = await supabase2.rpc("registrar_movimiento_caja", {
         p_tipo: rTipo, p_monto: Number(rMonto), p_cuenta_id: rCajaId, p_fecha: rFecha,
         p_categoria: rCategoria, p_venta_id: rVentaId || null, p_observaciones: rNotas || null,
@@ -126,7 +158,7 @@ export default function MovimientosTab({
       setShowRegistrar(false);
       setRMonto(""); setRVentaId(""); setRNotas(""); setRArchivos([]);
     } catch (err: any) {
-      alert(err.message || "No se pudo registrar el movimiento.");
+      alert(err.message || (editando ? "No se pudo editar el movimiento (puede que el mes esté cerrado)." : "No se pudo registrar el movimiento."));
     } finally {
       setGuardandoR(false);
     }
@@ -264,7 +296,7 @@ export default function MovimientosTab({
         <button onClick={() => setShowCierres(true)} className="flex items-center gap-1 px-3 py-1.5 text-xs font-bold border border-slate-200 dark:border-white/10 rounded-lg"><Lock className="w-3.5 h-3.5" /> Cierres mensuales</button>
         <button onClick={() => setShowTransferencia(true)} className="flex items-center gap-1 px-3 py-1.5 text-xs font-bold border border-slate-200 dark:border-white/10 rounded-lg"><ArrowLeftRight className="w-3.5 h-3.5" /> Transferencia</button>
         <button onClick={exportarCsv} className="flex items-center gap-1 px-3 py-1.5 text-xs font-bold border border-slate-200 dark:border-white/10 rounded-lg"><Download className="w-3.5 h-3.5" /> Excel</button>
-        <button onClick={() => setShowRegistrar(true)} className="flex items-center gap-1.5 px-4 py-1.5 text-xs font-bold bg-[#0145F2] hover:bg-[#0138c9] text-white rounded-lg ml-auto"><Plus className="w-3.5 h-3.5" /> Registrar</button>
+        <button onClick={() => { setEditando(null); setRCategoria(CATEGORIAS[0]); setRTipo("ingreso"); setRMonto(""); setRFecha(new Date().toISOString().slice(0, 10)); setRCajaId(""); setRVentaId(""); setRNotas(""); setRArchivos([]); setShowRegistrar(true); }} className="flex items-center gap-1.5 px-4 py-1.5 text-xs font-bold bg-[#0145F2] hover:bg-[#0138c9] text-white rounded-lg ml-auto"><Plus className="w-3.5 h-3.5" /> Registrar</button>
       </div>
 
       <div className="flex items-center gap-2 mb-3 flex-wrap text-xs">
@@ -306,7 +338,10 @@ export default function MovimientosTab({
             ] as ColumnaTabla<any>[]
           }
           acciones={(m) => (
-            <button onClick={() => eliminar(m)} className="text-[11px] font-bold text-rose-600">Eliminar</button>
+            <div className="flex items-center gap-2">
+              {!m.transferencia_grupo_id && !m.venta_id && <button onClick={() => abrirEditar(m)} title="Editar movimiento" className="text-slate-400 hover:text-[#0145F2]"><Pencil className="w-3.5 h-3.5" /></button>}
+              <button onClick={() => eliminar(m)} className="text-[11px] font-bold text-rose-600">Eliminar</button>
+            </div>
           )}
         />
       )}
@@ -332,8 +367,8 @@ export default function MovimientosTab({
       {showRegistrar && (
         <div className="fixed inset-0 bg-black/40 z-50 flex items-center justify-center p-4" onClick={() => setShowRegistrar(false)}>
           <div onClick={(e) => e.stopPropagation()} className="bg-white dark:bg-[#141414] border border-slate-200 dark:border-white/10 w-full max-w-md rounded-2xl shadow-2xl p-6 max-h-[90vh] overflow-y-auto">
-            <div className="flex justify-between items-start mb-1"><h3 className="text-lg font-bold">Registrar movimiento</h3><button onClick={() => setShowRegistrar(false)}><X className="w-4 h-4 text-slate-400" /></button></div>
-            <p className="text-xs text-slate-400 mb-4">Cargá un ingreso o egreso. El saldo de la caja seleccionada se actualiza automáticamente.</p>
+            <div className="flex justify-between items-start mb-1"><h3 className="text-lg font-bold">{editando ? "Editar movimiento" : "Registrar movimiento"}</h3><button onClick={() => setShowRegistrar(false)}><X className="w-4 h-4 text-slate-400" /></button></div>
+            <p className="text-xs text-slate-400 mb-4">{editando ? "Se revierte el movimiento anterior y se registra de nuevo con estos valores." : "Cargá un ingreso o egreso. El saldo de la caja seleccionada se actualiza automáticamente."}</p>
             <div className="flex gap-2 mb-3">
               <button onClick={() => setRTipo("ingreso")} className={`flex-1 py-2 rounded-lg text-sm font-bold ${rTipo === "ingreso" ? "bg-emerald-600 text-white" : "border border-slate-200 dark:border-white/10"}`}>Ingreso</button>
               <button onClick={() => setRTipo("egreso")} className={`flex-1 py-2 rounded-lg text-sm font-bold ${rTipo === "egreso" ? "bg-[#0145F2] text-white" : "border border-slate-200 dark:border-white/10"}`}>Egreso</button>
@@ -365,7 +400,7 @@ export default function MovimientosTab({
             {rArchivos.length === 0 ? <p className="text-[11px] text-slate-400 mt-1.5">Sin comprobantes adjuntos. Podés sumar tantos como necesites.</p> : (
               <div className="flex flex-wrap gap-1.5 mt-1.5">{rArchivos.map((f, i) => <span key={i} className="text-[11px] bg-slate-100 dark:bg-white/10 px-2 py-1 rounded-full flex items-center gap-1">{f.name}<button onClick={() => setRArchivos((prev) => prev.filter((_, x) => x !== i))}><X className="w-3 h-3" /></button></span>)}</div>
             )}
-            <div className="flex justify-end gap-2 mt-4"><button onClick={() => setShowRegistrar(false)} className="px-4 py-2 text-sm font-bold text-slate-500">Cancelar</button><button onClick={registrar} disabled={guardandoR} className="flex items-center gap-1.5 px-4 py-2 text-sm font-bold bg-[#0145F2] hover:bg-[#0138c9] text-white rounded-lg disabled:opacity-50"><Save className="w-4 h-4" /> {guardandoR ? "Guardando..." : "Registrar movimiento"}</button></div>
+            <div className="flex justify-end gap-2 mt-4"><button onClick={() => setShowRegistrar(false)} className="px-4 py-2 text-sm font-bold text-slate-500">Cancelar</button><button onClick={registrar} disabled={guardandoR} className="flex items-center gap-1.5 px-4 py-2 text-sm font-bold bg-[#0145F2] hover:bg-[#0138c9] text-white rounded-lg disabled:opacity-50"><Save className="w-4 h-4" /> {guardandoR ? "Guardando..." : editando ? "Guardar" : "Registrar movimiento"}</button></div>
           </div>
         </div>
       )}
