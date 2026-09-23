@@ -6,16 +6,13 @@ import { Plus, X, Save, Trash2, Pencil, TrendingUp, Landmark, CreditCard } from 
 import { inputClass, labelClass } from "./shared";
 import ConfirmDialog from "@/components/panel/ConfirmDialog";
 
-export default function PatrimonioTab({ miId, miNombre, soyAdmin }: { miId: string; miNombre: string; soyAdmin: boolean }) {
+export default function PatrimonioTab({ miId, miNombre }: { miId: string; miNombre: string }) {
   const [cargando, setCargando] = useState(true);
   const [cuentas, setCuentas] = useState<any[]>([]);
   const [autos, setAutos] = useState<any[]>([]);
   const [cuotasCobrar, setCuotasCobrar] = useState<any[]>([]);
-  const [movsAgencia, setMovsAgencia] = useState<any[]>([]);
   const [cuotasPagar, setCuotasPagar] = useState<any[]>([]);
   const [deudas, setDeudas] = useState<any[]>([]);
-  const [stockPropioUsd, setStockPropioUsd] = useState(0);
-  const [incluirStock, setIncluirStock] = useState(false);
 
   const [showNueva, setShowNueva] = useState(false);
   const [editando, setEditando] = useState<any | null>(null);
@@ -28,24 +25,18 @@ export default function PatrimonioTab({ miId, miNombre, soyAdmin }: { miId: stri
   const [confirmDialog, setConfirmDialog] = useState<{ mensaje: string; accion: () => void } | null>(null);
 
   const cargar = async () => {
-    const [{ data: c }, { data: a }, { data: cc }, { data: ma }, { data: cp }, { data: d }] = await Promise.all([
+    const [{ data: c }, { data: a }, { data: cc }, { data: cp }, { data: d }] = await Promise.all([
       supabase2.from("espacio_cuentas_personales").select("*").eq("perfil_id", miId).order("created_at"),
       supabase2.from("espacio_autos_personales").select("valor_estimado_usd").eq("perfil_id", miId),
       supabase2.from("espacio_cuotas_cobrar").select("monto, monto_cobrado, moneda").eq("perfil_id", miId).eq("cobrada", false),
-      supabase2.from("espacio_movimientos_agencia").select("tipo, monto, moneda").eq("perfil_id", miId).eq("saldado", false),
       supabase2.from("espacio_cuotas_pagar").select("monto, monto_pagado, moneda").eq("perfil_id", miId).eq("pagada", false),
       supabase2.from("espacio_deudas").select("monto, monto_pagado, moneda").eq("perfil_id", miId).eq("pagada", false),
     ]);
     setCuentas(c || []);
     setAutos(a || []);
     setCuotasCobrar(cc || []);
-    setMovsAgencia(ma || []);
     setCuotasPagar(cp || []);
     setDeudas(d || []);
-    if (soyAdmin) {
-      const { data: v } = await supabase2.from("vehiculos").select("precio_venta").eq("propio_agencia", true).eq("estado", "disponible").eq("moneda_venta", "USD");
-      setStockPropioUsd((v || []).reduce((acc, x) => acc + Number(x.precio_venta), 0));
-    }
     setCargando(false);
   };
   useEffect(() => { cargar(); }, [miId]);
@@ -59,17 +50,14 @@ export default function PatrimonioTab({ miId, miNombre, soyAdmin }: { miId: stri
   const cuentasPorMoneda = useMemo(() => { const m: Record<string, number> = {}; cuentas.forEach((c) => { m[c.moneda] = (m[c.moneda] || 0) + Number(c.saldo_actual); }); return m; }, [cuentas]);
   const autosUsd = autos.reduce((a, x) => a + Number(x.valor_estimado_usd || 0), 0);
   const cobrosPendientes = porMoneda(cuotasCobrar, "monto", "monto_cobrado");
-  // "saque" = agencia → yo (yo le debo esa plata a la agencia) y "aporte" =
-  // yo → agencia (la agencia me la debe a mí) -- mismo cálculo que
-  // SaldoAgenciaTab.tsx, hecho de nuevo acá y con el mismo bug que ahí:
-  // estaba invertido.
-  const agenciaMeDebe = movsAgencia.filter((m) => m.tipo === "aporte").reduce((acc, m) => { acc[m.moneda] = (acc[m.moneda] || 0) + Number(m.monto); return acc; }, {} as Record<string, number>);
-  const yoDeboAgencia = movsAgencia.filter((m) => m.tipo === "saque").reduce((acc, m) => { acc[m.moneda] = (acc[m.moneda] || 0) + Number(m.monto); return acc; }, {} as Record<string, number>);
   const cuotasPendientes = porMoneda(cuotasPagar, "monto", "monto_pagado");
   const deudasPersonales = porMoneda(deudas, "monto", "monto_pagado");
 
-  const activosUsd = (cuentasPorMoneda.USD || 0) + autosUsd + (cobrosPendientes.USD || 0) + (agenciaMeDebe.USD || 0) - (yoDeboAgencia.USD || 0) + (incluirStock ? stockPropioUsd : 0);
-  const activosArs = (cuentasPorMoneda.ARS || 0) + (cobrosPendientes.ARS || 0) + (agenciaMeDebe.ARS || 0) - (yoDeboAgencia.ARS || 0);
+  // El saldo con la agencia (SaldoAgenciaTab) y el stock propio de la
+  // agencia quedan afuera a propósito -- Mi Espacio es patrimonio
+  // estrictamente personal, no se mezcla con cuentas de la agencia.
+  const activosUsd = (cuentasPorMoneda.USD || 0) + autosUsd + (cobrosPendientes.USD || 0);
+  const activosArs = (cuentasPorMoneda.ARS || 0) + (cobrosPendientes.ARS || 0);
   const pasivosUsd = (cuotasPendientes.USD || 0) + (deudasPersonales.USD || 0);
   const pasivosArs = (cuotasPendientes.ARS || 0) + (deudasPersonales.ARS || 0);
   const netoUsd = activosUsd - pasivosUsd;
@@ -112,7 +100,6 @@ export default function PatrimonioTab({ miId, miNombre, soyAdmin }: { miId: stri
     <div>
       <div className="flex items-center justify-between mb-3 flex-wrap gap-2">
         <div><p className="text-lg font-bold">Resumen patrimonial — {miNombre}</p><p className="text-xs text-slate-400">Vista consolidada de activos y pasivos personales. Cada moneda se calcula por separado — el tipo de cambio es volátil.</p></div>
-        {soyAdmin && <label className="flex items-center gap-2 text-xs font-semibold shrink-0"><input type="checkbox" checked={incluirStock} onChange={(e) => setIncluirStock(e.target.checked)} className="w-4 h-4 accent-[#0145F2]" /> Incluir stock propio (USD)</label>}
       </div>
 
       <div className="bg-indigo-50 dark:bg-indigo-500/10 border border-indigo-100 dark:border-indigo-500/20 rounded-xl p-5 mb-4">
@@ -129,8 +116,6 @@ export default function PatrimonioTab({ miId, miNombre, soyAdmin }: { miId: stri
           <Fila label="Cuentas y billeteras (ARS)" valor={`$ ${(cuentasPorMoneda.ARS || 0).toLocaleString("es-AR")}`} />
           <Fila label="Autos personales (estim.)" valor={`USD ${autosUsd.toLocaleString("es-AR")}`} />
           <Fila label="Cobros pendientes (USD)" valor={`+ USD ${(cobrosPendientes.USD || 0).toLocaleString("es-AR")}`} verde />
-          <Fila label="Agencia me debe (USD)" valor={`+ USD ${(agenciaMeDebe.USD || 0).toLocaleString("es-AR")}`} verde />
-          {incluirStock && <Fila label="Stock propio agencia (USD)" valor={`+ USD ${stockPropioUsd.toLocaleString("es-AR")}`} verde />}
         </div>
         <div className="bg-rose-50 dark:bg-rose-500/10 border border-rose-100 dark:border-rose-500/20 rounded-xl p-4">
           <p className="text-xs font-bold text-rose-600 flex items-center gap-1.5 mb-2"><CreditCard className="w-3.5 h-3.5" /> Pasivos</p>

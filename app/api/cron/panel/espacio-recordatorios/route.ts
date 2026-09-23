@@ -6,8 +6,9 @@ import { crearAlerta } from "@/lib/panel/alertas";
 // que se cargaban pero nunca avisaban nada:
 //   1) Calendario personal (espacio_eventos) -- respeta el "recordar antes"
 //      que el usuario elige al cargar el evento.
-//   2) Vencimientos de autos personales (espacio_autos_personales) -- VTV,
-//      seguro y patente, avisa 7 días antes.
+//   2) Vencimientos de vehículos personales (espacio_autos_personales) --
+//      lista libre por vehículo (VTV, seguro, matrícula, lo que sea),
+//      avisa 7 días antes.
 //   3) Tareas personales (espacio_pendientes) con fecha de vencimiento.
 
 const supabase = createClient(
@@ -64,39 +65,46 @@ async function avisarCalendarioPersonal(hoy: string): Promise<number> {
   return avisados;
 }
 
+// "Mis Vehículos" cubre cualquier tipo (auto, moto, lancha, camión,
+// maquinaria...) -- los 3 campos fijos vence_vtv/vence_seguro/vence_patente
+// solo tenían sentido para un auto. Ahora los vencimientos son una lista
+// libre en JSONB ({label, fecha, avisado_fecha?}), un elemento por cada
+// cosa que el usuario quiera controlar (VTV, Matrícula, Habilitación
+// náutica, RTO, lo que sea). "avisado_fecha" vive DENTRO de cada item del
+// array (no hay una columna por vencimiento posible) y se reescribe el
+// array completo al avisar, para no volver a avisar la misma fecha dos veces.
 async function avisarVencimientosAutos(hoy: string): Promise<number> {
   const limite = sumarDias(hoy, DIAS_AVISO_VENCIMIENTO);
   const { data: autos } = await supabase
     .from("espacio_autos_personales")
-    .select("id, perfil_id, marca, modelo, patente, vence_vtv, vence_seguro, vence_patente, vtv_avisado_fecha, seguro_avisado_fecha, patente_avisado_fecha");
+    .select("id, perfil_id, marca, modelo, patente, vencimientos");
 
   let avisados = 0;
-  const CAMPOS: { vence: "vence_vtv" | "vence_seguro" | "vence_patente"; avisado: "vtv_avisado_fecha" | "seguro_avisado_fecha" | "patente_avisado_fecha"; label: string }[] = [
-    { vence: "vence_vtv", avisado: "vtv_avisado_fecha", label: "VTV" },
-    { vence: "vence_seguro", avisado: "seguro_avisado_fecha", label: "Seguro" },
-    { vence: "vence_patente", avisado: "patente_avisado_fecha", label: "Cuota de patente" },
-  ];
-
   for (const a of autos ?? []) {
     const nombreAuto = [a.marca, a.modelo, a.patente ? `(${a.patente})` : null].filter(Boolean).join(" ");
-    for (const campo of CAMPOS) {
-      const fechaVence = a[campo.vence] as string | null;
-      if (!fechaVence) continue;
-      if (fechaVence > limite) continue; // todavía falta más de una semana
-      if (a[campo.avisado] === fechaVence) continue; // ya se avisó esta misma fecha
+    const lista: { label: string; fecha: string; avisado_fecha?: string }[] = Array.isArray(a.vencimientos) ? a.vencimientos : [];
+    if (lista.length === 0) continue;
 
-      const fechaLegible = new Date(`${fechaVence}T12:00:00Z`).toLocaleDateString("es-AR", { timeZone: "UTC" });
-      const vencido = fechaVence < hoy;
-      const titulo = `${campo.label} ${vencido ? "vencida" : "por vencer"}: ${nombreAuto} — ${fechaLegible}`;
+    let cambio = false;
+    const listaActualizada = [];
+    for (const v of lista) {
+      if (!v.fecha || v.fecha > limite || v.avisado_fecha === v.fecha) { listaActualizada.push(v); continue; }
+
+      const fechaLegible = new Date(`${v.fecha}T12:00:00Z`).toLocaleDateString("es-AR", { timeZone: "UTC" });
+      const vencido = v.fecha < hoy;
+      const titulo = `${v.label} ${vencido ? "vencido" : "por vencer"}: ${nombreAuto} — ${fechaLegible}`;
       await crearAlerta(supabase, a.perfil_id, titulo, {
         link: "/panel/mi-espacio?tab=mis-autos",
         tipo: "espacio_auto_vencimiento",
         prioridad: vencido ? "media" : "baja",
         modulo: "mi_espacio",
       });
-      await supabase.from("espacio_autos_personales").update({ [campo.avisado]: fechaVence }).eq("id", a.id);
       avisados++;
+      cambio = true;
+      listaActualizada.push({ ...v, avisado_fecha: v.fecha });
     }
+
+    if (cambio) await supabase.from("espacio_autos_personales").update({ vencimientos: listaActualizada }).eq("id", a.id);
   }
   return avisados;
 }
