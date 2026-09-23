@@ -347,7 +347,7 @@ async function fetchSucursalesInfo(): Promise<SucursalInfo[]> {
   return (data ?? []) as SucursalInfo[];
 }
 
-export async function generarRespuestaAgenteV2(historial: HistorialMensaje[], canal: string = "whatsapp-v2", nombreBot?: string, vehiculoEnFocoId?: string | null, tono?: string | null): Promise<
+export async function generarRespuestaAgenteV2(historial: HistorialMensaje[], canal: string = "whatsapp-v2", nombreBot?: string, vehiculoEnFocoId?: string | null, tono?: string | null, esInstagram?: boolean): Promise<
   | { ok: true; data: AgentReplyV2; fotosParaEnviar: string[]; vehiculoFocoId: string | null; pedidoStock: AgentReplyV2["pedido_stock"] }
   | { ok: false; error: string }
 > {
@@ -360,7 +360,7 @@ export async function generarRespuestaAgenteV2(historial: HistorialMensaje[], ca
   const sucursales = await fetchSucursalesInfo();
 
   const result = await chatJsonV2(AgentReplySchemaV2, [
-    { role: "system", content: buildSystemPromptV2(undefined, undefined, nombreBot, undefined, sucursales, sugerirCierre, undefined, undefined, tono) },
+    { role: "system", content: buildSystemPromptV2(undefined, undefined, nombreBot, undefined, sucursales, sugerirCierre, undefined, undefined, tono, esInstagram) },
     ...historial,
   ], { origen: canal });
 
@@ -399,7 +399,7 @@ export async function generarRespuestaAgenteV2(historial: HistorialMensaje[], ca
   const correrPasada2 = async (resultados: ResultadoStockV2[], esAlternativa: boolean, total: number, categoriaSolicitada: string | null) => {
     resultadosBusqueda = resultados;
     const result2 = await chatJsonV2(AgentReplySchemaV2, [
-      { role: "system", content: buildSystemPromptV2(undefined, resultados, nombreBot, esAlternativa, sucursales, sugerirCierre, categoriaSolicitada, total, tono) },
+      { role: "system", content: buildSystemPromptV2(undefined, resultados, nombreBot, esAlternativa, sucursales, sugerirCierre, categoriaSolicitada, total, tono, esInstagram) },
       ...historial,
     ], { origen: canal });
 

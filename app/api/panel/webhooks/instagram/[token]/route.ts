@@ -226,7 +226,11 @@ async function ejecutarAgente(conversacionId: string, igUserId: string) {
   const historial = (mensajes ?? []).filter((m) => m.texto).map((m) => ({ role: (m.direccion === "in" ? "user" : "assistant") as "user" | "assistant", content: m.texto as string }));
 
   const { data: config } = await supabase.from("instagram_configuracion").select("*").eq("id", true).single();
-  const result = await generarRespuestaAgenteV2(historial, "panel/webhooks/instagram", undefined, undefined, config?.tono ?? null);
+  // Instagram es más informal que WhatsApp por defecto -- el admin puede
+  // pisar esto cargando su propio tono en Configuración > Instagram, pero
+  // no depende de que lo haga (el campo hoy suele estar vacío).
+  const tonoInstagram = config?.tono?.trim() || "informal y cercano, como quien le escribe a un amigo por Instagram, con algún emoji extra";
+  const result = await generarRespuestaAgenteV2(historial, "panel/webhooks/instagram", undefined, undefined, tonoInstagram, true);
 
   if (!result.ok) {
     registrarError("webhook-ig-v2:agente", result.error, { conversacionId });
