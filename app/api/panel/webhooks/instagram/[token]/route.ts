@@ -225,8 +225,8 @@ async function ejecutarAgente(conversacionId: string, igUserId: string) {
   const { data: mensajes } = await supabase.from("instagram_mensajes").select("direccion, texto").eq("conversacion_id", conversacionId).order("created_at", { ascending: true }).limit(20);
   const historial = (mensajes ?? []).filter((m) => m.texto).map((m) => ({ role: (m.direccion === "in" ? "user" : "assistant") as "user" | "assistant", content: m.texto as string }));
 
-  const result = await generarRespuestaAgenteV2(historial, "panel/webhooks/instagram");
   const { data: config } = await supabase.from("instagram_configuracion").select("*").eq("id", true).single();
+  const result = await generarRespuestaAgenteV2(historial, "panel/webhooks/instagram", undefined, undefined, config?.tono ?? null);
 
   if (!result.ok) {
     registrarError("webhook-ig-v2:agente", result.error, { conversacionId });
