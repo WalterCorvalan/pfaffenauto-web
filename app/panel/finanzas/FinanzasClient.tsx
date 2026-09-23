@@ -16,6 +16,7 @@ import PagosDispTab from "./tabs/PagosDispTab";
 import TarjetaTab from "./tabs/TarjetaTab";
 import RetirosTab from "./tabs/RetirosTab";
 import RentabilidadTab from "./tabs/RentabilidadTab";
+import RentabilidadVehiculoTab from "./tabs/RentabilidadVehiculoTab";
 import ChequesTab from "./tabs/ChequesTab";
 import PrestamosTab from "./tabs/PrestamosTab";
 import PresupuestoTab from "./tabs/PresupuestoTab";
@@ -78,7 +79,8 @@ const GRUPOS: GrupoDef[] = [
   },
   {
     value: "analisis-planificacion", label: "Análisis y planificación", tabs: [
-      { value: "rentabilidad", label: "Rentabilidad", icon: TrendingUp },
+      { value: "rentabilidad-vehiculo", label: "Rentabilidad por vehículo", icon: TrendingUp },
+      { value: "rentabilidad", label: "Operatoria del área", icon: TrendingUp },
       { value: "presupuesto", label: "Presupuesto", icon: ClipboardList },
       { value: "recurrencias", label: "Recurrencias", icon: Repeat },
     ],
@@ -473,6 +475,10 @@ export default function FinanzasClient({
       )}
 
       {tab === "cheques" && <ChequesTab cheques={cheques} setCheques={setCheques} cuentas={cuentas} vehiculos0km={vehiculosDisponiblesFull.filter((v: any) => v.condicion === "0km")} />}
+
+      {tab === "rentabilidad-vehiculo" && (
+        <RentabilidadVehiculoTab ventas={ventas} />
+      )}
 
       {tab === "rentabilidad" && (
         <RentabilidadTab movimientos={movimientos} senasActivas={senasActivasPorMoneda} cuotasPendientes={cuotasPendientesPorMoneda} />
