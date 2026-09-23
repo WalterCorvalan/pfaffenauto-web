@@ -9,10 +9,10 @@ const GOOGLE_MAPS_URL = "https://maps.app.goo.gl/4ZMmpWJCarHcZ2sb9";
 // Rating real del perfil de Google Business de cada sucursal (no se puede
 // derivar del promedio de las reseñas cargadas a mano, que son una
 // selección curada de las mejores -- eso siempre daría ~5.0, no el número
-// real que ve cualquiera que entre a Google Maps). En la home se muestra el
-// promedio de ambas sucursales.
+// real que ve cualquiera que entre a Google Maps). En la home se muestra
+// 4.8 fijo (definido a mano), no el promedio matemático de las sucursales.
 const GOOGLE_RATING_POR_SUCURSAL: Record<string, number> = { "casa-central": 4.6, "don-torcuato": 4.9 };
-const GOOGLE_RATING_PROMEDIO = (GOOGLE_RATING_POR_SUCURSAL["casa-central"] + GOOGLE_RATING_POR_SUCURSAL["don-torcuato"]) / 2;
+const GOOGLE_RATING_PROMEDIO = 4.8;
 
 // Reseñas estáticas de respaldo, por si todavía no se cargó ninguna en
 // Configuración → Reseñas (o la tabla resenas_manuales está vacía).
