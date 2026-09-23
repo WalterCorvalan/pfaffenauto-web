@@ -28,3 +28,19 @@ export function diasHasta(fecha: string) {
   const v = new Date(fecha + "T00:00:00");
   return Math.round((v.getTime() - hoy.getTime()) / 86400000);
 }
+
+// Movimientos SIN venta_id (gestoría, multas, honorarios, trámites) --
+// "Operatoria del área" en RentabilidadTab.tsx. Extraído acá para que el
+// Resumen pueda mostrar el mismo neto sin duplicar el filtro. Se excluye
+// tipo_movimiento === "Transferencia" (no es ingreso/egreso real, cae en
+// ambas patas e infla los brutos).
+export function netoOperatoriaAreaPorMoneda(movimientos: any[]): Record<string, number> {
+  const delArea = movimientos.filter((m) => !m.venta_id && !m.deleted_at && m.estado === "aprobado" && m.tipo_movimiento !== "Transferencia");
+  const map: Record<string, number> = {};
+  delArea.forEach((m) => {
+    const mo = m.cuenta?.moneda;
+    if (!mo) return;
+    map[mo] = (map[mo] || 0) + (m.tipo === "ingreso" ? Number(m.monto) : -Number(m.monto));
+  });
+  return map;
+}
