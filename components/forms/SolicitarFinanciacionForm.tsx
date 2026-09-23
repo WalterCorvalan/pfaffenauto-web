@@ -5,7 +5,6 @@ import { createPortal } from "react-dom";
 import Script from "next/script";
 import { supabase2 as supabase } from "@/lib/supabase/client";
 import { getCanalOrigen, getUtmRaw } from "@/lib/utm";
-import { obtenerDolarBlue } from "@/lib/dolarBlue";
 import { CreditCard, X, CheckCircle2, Loader2, User, Phone, Mail, ArrowLeft, Search, Car } from "lucide-react";
 import {
   TOPES_FINANCIACION_DEFAULT, TOPE_0KM_DEFAULT, TNA_POR_PLAZO_DEFAULT, GASTOS_PCT_DEFAULT,
@@ -137,8 +136,12 @@ export default function SolicitarFinanciacionForm({ vehiculoPreseleccionado, cla
     setPrecioArsConvertido(null);
     if (!vehiculo || vehiculo.precio_publicado_ars || !vehiculo.precio_publicado_usd) return;
     let cancelado = false;
-    obtenerDolarBlue()
-      .then(({ venta }) => { if (!cancelado) setPrecioArsConvertido(Math.round(vehiculo.precio_publicado_usd! * venta)); })
+    // Vía la ruta (no lib/dolarBlue.ts directo) para que también respete un
+    // precio de dólar manual cargado en Financiaciones → Configuración --
+    // esa lectura necesita la service role key, que nunca debe llegar al bundle cliente.
+    fetch("/api/dolar-blue")
+      .then((r) => r.json())
+      .then(({ venta }) => { if (!cancelado && venta) setPrecioArsConvertido(Math.round(vehiculo.precio_publicado_usd! * venta)); })
       .catch(() => {});
     return () => { cancelado = true; };
   }, [vehiculo]);

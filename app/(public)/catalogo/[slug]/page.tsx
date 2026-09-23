@@ -22,7 +22,7 @@ import AgendarVisitaForm from "@/components/forms/AgendarVisitaForm";
 import GaleriaVehiculo from "@/components/GaleriaVehiculo";
 import SimuladorFinanciacion from "@/components/SimuladorFinanciacion";
 import { CAMPOS_VEHICULO_DETALLE } from "@/lib/vehiculos";
-import { obtenerDolarBlue } from "@/lib/dolarBlue";
+import { obtenerCotizacionDolar } from "@/lib/dolarBlueConfig";
 
 export const revalidate = 60;
 
@@ -115,7 +115,7 @@ export default async function VehiculoDetallePage({
   let precioArs = auto.precio_publicado_ars || 0;
   if (!auto.precio_publicado_ars && precioUsd) {
     try {
-      const { venta } = await obtenerDolarBlue();
+      const { venta } = await obtenerCotizacionDolar();
       precioArs = Math.round(precioUsd * venta);
     } catch {
       // Sin cotización disponible: se muestra "Precio similar" y comparador
