@@ -31,7 +31,10 @@ export default function SimuladorPropioModal({ onClose }: { onClose: () => void 
         if (data.config.financiacion_gastos_pct != null) setGastosPct(data.config.financiacion_gastos_pct);
       }
     }).catch(() => {});
-    fetch("/api/dolar-blue").then((r) => r.json()).then((d) => { if (d.venta) setDolarVenta(d.venta); }).catch(() => {});
+    // /api/cotizacion-dolar respeta el precio manual (Financiaciones →
+    // Configuración) si está activado -- /api/dolar-blue es siempre el blue
+    // real fijo, solo para el ticker de referencia.
+    fetch("/api/cotizacion-dolar").then((r) => r.json()).then((d) => { if (d.venta) setDolarVenta(d.venta); }).catch(() => {});
   }, []);
 
   const anio = datos?.modelo_anio ? Number(datos.modelo_anio) : null;

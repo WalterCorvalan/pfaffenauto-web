@@ -136,10 +136,10 @@ export default function SolicitarFinanciacionForm({ vehiculoPreseleccionado, cla
     setPrecioArsConvertido(null);
     if (!vehiculo || vehiculo.precio_publicado_ars || !vehiculo.precio_publicado_usd) return;
     let cancelado = false;
-    // Vía la ruta (no lib/dolarBlue.ts directo) para que también respete un
-    // precio de dólar manual cargado en Financiaciones → Configuración --
-    // esa lectura necesita la service role key, que nunca debe llegar al bundle cliente.
-    fetch("/api/dolar-blue")
+    // /api/cotizacion-dolar (no /api/dolar-blue, que es siempre el blue real
+    // fijo para el ticker) -- este cálculo tiene que respetar un precio de
+    // dólar manual cargado en Financiaciones → Configuración si está activado.
+    fetch("/api/cotizacion-dolar")
       .then((r) => r.json())
       .then(({ venta }) => { if (!cancelado && venta) setPrecioArsConvertido(Math.round(vehiculo.precio_publicado_usd! * venta)); })
       .catch(() => {});
