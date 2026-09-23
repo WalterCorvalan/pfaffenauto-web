@@ -162,6 +162,18 @@ export default function VentaDetalleModal({ ventaId, miId, soyAdmin, puedeOperac
     }
   };
 
+  // Una venta caída/cancelada dejaba el expediente abierto para siempre (sin
+  // ningún cierre automático), con Gestoría viendo "En proceso" y checklist
+  // activo sobre una operación que ya no va a pasar -- ver auditoría del
+  // 23/9. Cierra el expediente ligado (si existe y no está ya cerrado) y
+  // deja una observación explicando por qué se cerró solo.
+  const cerrarExpedienteSiExiste = async (motivo: string) => {
+    const { data: expediente } = await supabase2.from("expedientes").select("id, estado").eq("venta_id", ventaId).maybeSingle();
+    if (!expediente || expediente.estado === "cerrado") return;
+    await supabase2.from("expedientes").update({ estado: "cerrado", updated_at: new Date().toISOString() }).eq("id", expediente.id);
+    await supabase2.from("expediente_observaciones").insert({ expediente_id: expediente.id, texto: motivo, autor_id: miId, tipo: "observacion" });
+  };
+
   const cambiarEstado = async (nuevoEstado: string) => {
     setProcesando(true);
     // .single() reventaba con "Cannot coerce the result to a single JSON
@@ -177,6 +189,7 @@ export default function VentaDetalleModal({ ventaId, miId, soyAdmin, puedeOperac
     if (!data) { alert("No se pudo confirmar el cambio de estado (no se pudo releer la venta). Verificá permisos y volvé a intentar."); await cargar(); return; }
     setVenta(data);
     onActualizado(data);
+    if (nuevoEstado === "cancelada") await cerrarExpedienteSiExiste("Expediente cerrado automáticamente: la venta se marcó Cancelada.");
     await cargar();
   };
 
@@ -186,6 +199,7 @@ export default function VentaDetalleModal({ ventaId, miId, soyAdmin, puedeOperac
     setProcesando(false);
     setMostrarCaida(false);
     if (error) { alert(error.message || "No se pudo marcar la operación como caída."); return; }
+    await cerrarExpedienteSiExiste("Expediente cerrado automáticamente: la operación se marcó Caída.");
     await cargar();
     // El RPC no tiró error -- la venta ya quedó marcada caída. Este segundo
     // refetch es solo para avisarle a la lista (VentasClient) del cambio; si

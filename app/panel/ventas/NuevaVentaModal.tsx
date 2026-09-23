@@ -587,14 +587,25 @@ export default function NuevaVentaModal({ perfiles, clientes, vehiculos, miId, s
 
       if (senas.length > 0) {
         const filas = senas.filter((s) => s.monto).map((s) => ({ venta_id: venta.id, monto: Number(s.monto), moneda: s.moneda, fecha: s.fecha, caja_destino: s.cajaDestino || null, sena_origen_id: s.senaOrigenId || null }));
-        if (filas.length > 0) await supabase2.from("venta_senas").insert(filas);
+        let errorVentaSenas = null;
+        if (filas.length > 0) {
+          const { error } = await supabase2.from("venta_senas").insert(filas);
+          errorVentaSenas = error;
+        }
 
-        // Las señas vinculadas (no las tipeadas a mano) se marcan Convertida acá
-        // -- antes quedaban huérfanas en el módulo Señas para siempre, sin
-        // ninguna referencia a la venta que terminaron generando.
-        const idsVinculados = senas.filter((s) => s.senaOrigenId).map((s) => s.senaOrigenId as string);
-        if (idsVinculados.length > 0) {
-          await supabase2.from("senas").update({ estado: "Convertida", etapa_seguimiento: "Convertida" }).in("id", idsVinculados);
+        if (errorVentaSenas) {
+          alert(`La venta se guardó, pero no se pudo registrar la seña vinculada: ${errorVentaSenas.message}. El saldo va a quedar mal calculado hasta que la cargues a mano desde la edición de la venta.`);
+        } else {
+          // Las señas vinculadas (no las tipeadas a mano) se marcan Convertida acá
+          // -- antes quedaban huérfanas en el módulo Señas para siempre, sin
+          // ninguna referencia a la venta que terminaron generando. Solo se
+          // marcan si venta_senas se guardó bien -- si no, la seña queda como
+          // estaba para poder reintentar el vínculo.
+          const idsVinculados = senas.filter((s) => s.senaOrigenId).map((s) => s.senaOrigenId as string);
+          if (idsVinculados.length > 0) {
+            const { error: errorSenas } = await supabase2.from("senas").update({ estado: "Convertida", etapa_seguimiento: "Convertida" }).in("id", idsVinculados);
+            if (errorSenas) alert(`La venta y la seña se guardaron, pero no se pudo marcar la seña como Convertida: ${errorSenas.message}. Marcala a mano desde Señas.`);
+          }
         }
       }
 
