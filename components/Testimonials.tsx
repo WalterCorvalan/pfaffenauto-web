@@ -1,34 +1,59 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { Star, MessageSquareQuote, ThumbsUp, CheckCircle2 } from "lucide-react";
+import { Star } from "lucide-react";
+import { supabase2 } from "@/lib/supabase/client";
 
-// Reseñas estáticas de respaldo
+const GOOGLE_MAPS_URL = "https://maps.app.goo.gl/4ZMmpWJCarHcZ2sb9";
+
+// Reseñas estáticas de respaldo, por si todavía no se cargó ninguna en
+// Configuración → Reseñas (o la tabla resenas_manuales está vacía).
 const fallbackReviews = [
-  { id: 1, name: "Claudia Adari", date: "Hace 2 semanas", source: "Google Reviews", rating: 5, text: "El trámite fue muy sencillo y el trato fue impecable de principio a fin. Me asesoraron en la financiación y me llevé el auto en 48hs. Muy recomendables.", initials: "CA" },
-  { id: 2, name: "Leana Carballo", date: "Hace 1 mes", source: "Compra Verificada", rating: 5, text: "Atención impecable, cumplieron con los tiempos estipulados. Tenía miedo de entregar mi usado pero la tasación fue súper justa. ¡Gracias a todo el equipo!", initials: "LC" },
-  { id: 3, name: "José Rodríguez", date: "Hace 2 meses", source: "Google Reviews", rating: 5, text: "Auto usado pero en condiciones impecables y un trato que te hace sentir especial. Responden los mensajes rápido.", initials: "JR" },
-  { id: 4, name: "Carlos Moreno", date: "Hace 3 meses", source: "Compra Verificada", rating: 4, text: "Muy buena experiencia de compra. Conforme con la atención de los vendedores del salón, súper transparentes con los papeles del vehículo.", initials: "CM" },
-  { id: 5, name: "Martina Silva", date: "Hace 4 meses", source: "Google Reviews", rating: 5, text: "Excelente el servicio post-venta. Tuve una duda con una configuración del auto y me la resolvieron en el día por teléfono sin vueltas.", initials: "MS" },
-  { id: 6, name: "Diego Fernández", date: "Hace 6 meses", source: "Compra Verificada", rating: 5, text: "Entregué mi pick-up como parte de pago y me lo cotizaron súper bien. La transferencia salió rápido. 10 puntos.", initials: "DF" }
+  { id: "f1", name: "Claudia Adari", date: "Hace 2 semanas", rating: 5, text: "El trámite fue muy sencillo y el trato fue impecable de principio a fin. Me asesoraron en la financiación y me llevé el auto en 48hs. Muy recomendables.", initials: "CA" },
+  { id: "f2", name: "Leana Carballo", date: "Hace 1 mes", rating: 5, text: "Atención impecable, cumplieron con los tiempos estipulados. Tenía miedo de entregar mi usado pero la tasación fue súper justa. ¡Gracias a todo el equipo!", initials: "LC" },
+  { id: "f3", name: "José Rodríguez", date: "Hace 2 meses", rating: 5, text: "Auto usado pero en condiciones impecables y un trato que te hace sentir especial. Responden los mensajes rápido.", initials: "JR" },
+  { id: "f4", name: "Carlos Moreno", date: "Hace 3 meses", rating: 4, text: "Muy buena experiencia de compra. Conforme con la atención de los vendedores del salón, súper transparentes con los papeles del vehículo.", initials: "CM" },
+  { id: "f5", name: "Martina Silva", date: "Hace 4 meses", rating: 5, text: "Excelente el servicio post-venta. Tuve una duda con una configuración del auto y me la resolvieron en el día por teléfono sin vueltas.", initials: "MS" },
+  { id: "f6", name: "Diego Fernández", date: "Hace 6 meses", rating: 5, text: "Entregué mi pick-up como parte de pago y me lo cotizaron súper bien. La transferencia salió rápido. 10 puntos.", initials: "DF" },
 ];
+
+function iniciales(nombre: string) {
+  return nombre.split(" ").map((n) => n[0]).join("").substring(0, 2).toUpperCase();
+}
+
+function mezclar<T>(arr: T[]): T[] {
+  const copia = [...arr];
+  for (let i = copia.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [copia[i], copia[j]] = [copia[j], copia[i]];
+  }
+  return copia;
+}
 
 export default function Testimonials() {
   const [reviews, setReviews] = useState(fallbackReviews);
   const [rating, setRating] = useState(4.8);
   const [total, setTotal] = useState<number | null>(null);
 
+  // Se cargan a mano desde Configuración → Reseñas (sin API/credenciales de
+  // Google) -- se pegan tal cual del perfil de Google Maps del negocio. Se
+  // muestran hasta 6 elegidas al azar entre todas las activas, para que no
+  // se repitan siempre las mismas si hay cargadas más de 6.
   useEffect(() => {
-    fetch("/api/reviews")
-      .then((res) => res.json())
-      .then((data) => {
-        if (data.reviews && data.reviews.length > 0) {
-          setReviews(data.reviews.slice(0, 6)); // Tomamos máximo 6 para la grilla
-        }
-        if (data.rating) setRating(data.rating);
-        if (data.total) setTotal(data.total);
-      })
-      .catch((err) => console.log("Usando reseñas estáticas de respaldo", err));
+    supabase2
+      .from("resenas_manuales")
+      .select("id, nombre, texto, rating, fecha_texto")
+      .eq("activo", true)
+      .then(({ data }) => {
+        if (!data || data.length === 0) return;
+        const elegidas = mezclar(data).slice(0, 6).map((r) => ({
+          id: r.id, name: r.nombre, date: r.fecha_texto || "", rating: r.rating, text: r.texto, initials: iniciales(r.nombre),
+        }));
+        setReviews(elegidas);
+        const promedio = data.reduce((acc, r) => acc + r.rating, 0) / data.length;
+        setRating(promedio);
+        setTotal(data.length);
+      });
   }, []);
 
   return (
@@ -47,8 +72,8 @@ export default function Testimonials() {
             </p>
           </div>
 
-          {/* Bloque de confianza */}
-          <div className="flex items-center gap-4 bg-gray-50 dark:bg-white/5 border border-gray-200 dark:border-white/10 p-4 rounded-xl shrink-0">
+          {/* Bloque de confianza -- lleva al perfil de Google Maps del negocio */}
+          <a href={GOOGLE_MAPS_URL} target="_blank" rel="noreferrer" className="flex items-center gap-4 bg-gray-50 dark:bg-white/5 border border-gray-200 dark:border-white/10 p-4 rounded-xl shrink-0 hover:border-blue-400 dark:hover:border-sky-400/50 transition-colors">
             <div className="flex flex-col items-center justify-center pr-4 border-r border-gray-200 dark:border-white/10">
               <span className="text-2xl font-black text-gray-900 dark:text-white">{rating.toFixed(1)}</span>
               <div className="flex gap-0.5 mt-1">
@@ -61,7 +86,7 @@ export default function Testimonials() {
               <span className="text-sm font-bold text-gray-900 dark:text-white">Google Reviews</span>
               <span className="text-xs text-gray-500 dark:text-slate-400 font-medium">{total ? `${total} opiniones reales` : "Basado en opiniones reales"}</span>
             </div>
-          </div>
+          </a>
         </div>
 
         {/* ================= MASONRY GRID (Diseño Asimétrico Estático) ================= */}
@@ -101,6 +126,12 @@ export default function Testimonials() {
 
             </div>
           ))}
+        </div>
+
+        <div className="flex justify-center mt-10">
+          <a href={GOOGLE_MAPS_URL} target="_blank" rel="noreferrer" className="text-sm font-bold text-blue-600 dark:text-sky-300 hover:underline">
+            Ver todas las reseñas en Google Maps →
+          </a>
         </div>
 
       </div>
