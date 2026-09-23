@@ -6,6 +6,14 @@ import { supabase2 } from "@/lib/supabase/client";
 
 const GOOGLE_MAPS_URL = "https://maps.app.goo.gl/4ZMmpWJCarHcZ2sb9";
 
+// Rating real del perfil de Google Business de cada sucursal (no se puede
+// derivar del promedio de las reseñas cargadas a mano, que son una
+// selección curada de las mejores -- eso siempre daría ~5.0, no el número
+// real que ve cualquiera que entre a Google Maps). En la home se muestra el
+// promedio de ambas sucursales.
+const GOOGLE_RATING_POR_SUCURSAL: Record<string, number> = { "casa-central": 4.6, "don-torcuato": 4.9 };
+const GOOGLE_RATING_PROMEDIO = (GOOGLE_RATING_POR_SUCURSAL["casa-central"] + GOOGLE_RATING_POR_SUCURSAL["don-torcuato"]) / 2;
+
 // Reseñas estáticas de respaldo, por si todavía no se cargó ninguna en
 // Configuración → Reseñas (o la tabla resenas_manuales está vacía).
 const fallbackReviews = [
@@ -36,7 +44,7 @@ function mezclar<T>(arr: T[]): T[] {
 // Testimonials en vez de armar algo nuevo por sucursal.
 export default function Testimonials({ sucursalSlug, sucursalNombre }: { sucursalSlug?: string; sucursalNombre?: string } = {}) {
   const [reviews, setReviews] = useState(fallbackReviews);
-  const [rating, setRating] = useState(4.8);
+  const rating = sucursalSlug ? (GOOGLE_RATING_POR_SUCURSAL[sucursalSlug] ?? GOOGLE_RATING_PROMEDIO) : GOOGLE_RATING_PROMEDIO;
   const [total, setTotal] = useState<number | null>(null);
 
   // Se cargan a mano desde Configuración → Reseñas (sin API/credenciales de
@@ -52,8 +60,6 @@ export default function Testimonials({ sucursalSlug, sucursalNombre }: { sucursa
         id: r.id, name: r.nombre, date: r.fecha_texto || "", rating: r.rating, text: r.texto, initials: iniciales(r.nombre),
       }));
       setReviews(elegidas);
-      const promedio = data.reduce((acc, r) => acc + r.rating, 0) / data.length;
-      setRating(promedio);
       setTotal(data.length);
     });
   }, [sucursalSlug]);
@@ -72,7 +78,7 @@ export default function Testimonials({ sucursalSlug, sucursalNombre }: { sucursa
             <p className="text-base text-gray-500 dark:text-slate-400 font-medium">
               {sucursalNombre
                 ? `Experiencias reales de clientes que ya pasaron por ${sucursalNombre}.`
-                : "Más de 5.000 operaciones concretadas con éxito. Leé las experiencias reales de clientes que ya pasaron por nuestros salones."}
+                : "Más de 3.000 operaciones concretadas con éxito. Leé las experiencias reales de clientes que ya pasaron por nuestros salones."}
             </p>
           </div>
 
