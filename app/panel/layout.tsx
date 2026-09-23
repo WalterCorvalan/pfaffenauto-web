@@ -315,6 +315,12 @@ const GRUPOS: {
         icon: DollarSign,
         modulo: "comisiones",
       },
+      {
+        href: "/panel/facturacion",
+        label: "Facturación",
+        icon: FileText,
+        modulo: "facturacion",
+      },
     ],
   },
   {
