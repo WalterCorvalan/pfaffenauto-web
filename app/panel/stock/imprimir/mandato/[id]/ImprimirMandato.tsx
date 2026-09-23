@@ -177,9 +177,22 @@ export default function ImprimirMandato({ mandato: m, branding }: { mandato: any
         </p>
 
         <p className="mt-10 font-bold">Recibí original del presente comprobante (firma del mandante o comitente):</p>
-        <div className="mt-4 max-w-xs break-inside-avoid">
-          <FirmaCanvas tabla="mandatos" id={m.id} firmaUrlActual={firmaRetiroUrl} onGuardada={setFirmaRetiroUrl} campo="firma_retiro_url" />
-          <div className="text-center border-t border-slate-400 pt-1.5 mt-1"><span className="block text-[11px]">firma</span></div>
+        {/* Mismo esquema Firma | Aclaración | DNI que la firma de arriba --
+            aclaración y DNI ya están cargados en el mandato (mandante_nombre/
+            mandante_dni_cuit), no se piden de nuevo. */}
+        <div className="grid grid-cols-3 gap-8 px-4 mt-4 break-inside-avoid">
+          <div>
+            <FirmaCanvas tabla="mandatos" id={m.id} firmaUrlActual={firmaRetiroUrl} onGuardada={setFirmaRetiroUrl} campo="firma_retiro_url" />
+            <div className="text-center border-t border-slate-400 pt-1.5 mt-1"><span className="block text-[11px]">firma</span></div>
+          </div>
+          <div className="text-center">
+            <div className="h-20 flex items-end justify-center pb-1"><span className="text-[11px] font-bold">{m.mandante_nombre}</span></div>
+            <div className="border-t border-slate-400 pt-1.5"><span className="block text-[11px]">aclaración</span></div>
+          </div>
+          <div className="text-center">
+            <div className="h-20 flex items-end justify-center pb-1"><span className="text-[11px] font-bold">{m.mandante_dni_cuit || "—"}</span></div>
+            <div className="border-t border-slate-400 pt-1.5"><span className="block text-[11px]">DNI</span></div>
+          </div>
         </div>
       </div>
     </div>
