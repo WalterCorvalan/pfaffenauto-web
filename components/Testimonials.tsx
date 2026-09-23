@@ -30,7 +30,11 @@ function mezclar<T>(arr: T[]): T[] {
   return copia;
 }
 
-export default function Testimonials() {
+// sucursalSlug opcional: mismo componente para la home (todas las reseñas
+// mezcladas) y para /sucursales/[slug] (filtradas a las de esa sucursal
+// vía resenas_manuales.sucursal_slug) -- pedido explícito de reusar
+// Testimonials en vez de armar algo nuevo por sucursal.
+export default function Testimonials({ sucursalSlug, sucursalNombre }: { sucursalSlug?: string; sucursalNombre?: string } = {}) {
   const [reviews, setReviews] = useState(fallbackReviews);
   const [rating, setRating] = useState(4.8);
   const [total, setTotal] = useState<number | null>(null);
@@ -40,21 +44,19 @@ export default function Testimonials() {
   // muestran hasta 6 elegidas al azar entre todas las activas, para que no
   // se repitan siempre las mismas si hay cargadas más de 6.
   useEffect(() => {
-    supabase2
-      .from("resenas_manuales")
-      .select("id, nombre, texto, rating, fecha_texto")
-      .eq("activo", true)
-      .then(({ data }) => {
-        if (!data || data.length === 0) return;
-        const elegidas = mezclar(data).slice(0, 6).map((r) => ({
-          id: r.id, name: r.nombre, date: r.fecha_texto || "", rating: r.rating, text: r.texto, initials: iniciales(r.nombre),
-        }));
-        setReviews(elegidas);
-        const promedio = data.reduce((acc, r) => acc + r.rating, 0) / data.length;
-        setRating(promedio);
-        setTotal(data.length);
-      });
-  }, []);
+    let query = supabase2.from("resenas_manuales").select("id, nombre, texto, rating, fecha_texto").eq("activo", true);
+    if (sucursalSlug) query = query.eq("sucursal_slug", sucursalSlug);
+    query.then(({ data }) => {
+      if (!data || data.length === 0) return;
+      const elegidas = mezclar(data).slice(0, 6).map((r) => ({
+        id: r.id, name: r.nombre, date: r.fecha_texto || "", rating: r.rating, text: r.texto, initials: iniciales(r.nombre),
+      }));
+      setReviews(elegidas);
+      const promedio = data.reduce((acc, r) => acc + r.rating, 0) / data.length;
+      setRating(promedio);
+      setTotal(data.length);
+    });
+  }, [sucursalSlug]);
 
   return (
     <section className="py-16 md:py-24 bg-[#f8f9fa] dark:bg-[#0a0a0f] border-t border-gray-200 dark:border-transparent">
@@ -68,7 +70,9 @@ export default function Testimonials() {
               <span className="text-blue-600 dark:text-sky-300">ya nos eligieron.</span>
             </h2>
             <p className="text-base text-gray-500 dark:text-slate-400 font-medium">
-              Más de 5.000 operaciones concretadas con éxito. Leé las experiencias reales de clientes que ya pasaron por nuestros salones.
+              {sucursalNombre
+                ? `Experiencias reales de clientes que ya pasaron por ${sucursalNombre}.`
+                : "Más de 5.000 operaciones concretadas con éxito. Leé las experiencias reales de clientes que ya pasaron por nuestros salones."}
             </p>
           </div>
 

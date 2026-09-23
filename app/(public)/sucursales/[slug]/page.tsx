@@ -8,6 +8,7 @@ import { MapPin, Phone, Clock, ArrowLeft } from "lucide-react";
 import FadeIn from "@/components/FadeIn"; 
 // Importación crucial para permitir Framer Motion en Next.js App Router (Client Component Inline)
 import SucursalHeroAnimated from "./SucursalHeroAnimated";
+import Testimonials from "@/components/Testimonials";
 import type { Metadata } from "next";
 
 const supabase = createClient(
@@ -144,6 +145,7 @@ export default async function SucursalPage({ params }: { params: Promise<{ slug:
         <h2 className="text-xl md:text-2xl font-black text-gray-900 dark:text-white tracking-tight">Stock disponible en esta sucursal</h2>
       </div>
       <VehiculosGrid vehiculos={vehiculos} />
+      <Testimonials sucursalSlug={slug} sucursalNombre={nombreSucursal} />
     </div>
   );
 }
