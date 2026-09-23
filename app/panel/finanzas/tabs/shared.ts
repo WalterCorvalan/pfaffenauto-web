@@ -23,6 +23,18 @@ export function porMoneda(lista: any[], campoMoneda: string, campoMonto: string)
   return map;
 }
 
+// Clases de card para el semáforo de plata: verde si el valor es positivo
+// (o la tarjeta es de naturaleza "buena", ej. ingresos), rojo si es negativo
+// (o de naturaleza "gasto"). Pedido del 23/9: todas las tarjetas de plata en
+// Finanzas tienen que tener el color en toda la tarjeta (fondo + borde), no
+// solo en el número -- mismo criterio que ya usaban Ingresos/Egresos del
+// área en RentabilidadTab.tsx.
+export function claseSemaforoCard(positivo: boolean) {
+  return positivo
+    ? "bg-emerald-50 dark:bg-emerald-500/10 border-emerald-100 dark:border-emerald-500/20"
+    : "bg-rose-50 dark:bg-rose-500/10 border-rose-100 dark:border-rose-500/20";
+}
+
 export function diasHasta(fecha: string) {
   const hoy = new Date(); hoy.setHours(0, 0, 0, 0);
   const v = new Date(fecha + "T00:00:00");

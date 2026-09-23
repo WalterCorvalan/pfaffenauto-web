@@ -4,7 +4,7 @@ import { useMemo, useState } from "react";
 import { Wallet, TrendingUp, TrendingDown, AlertTriangle, Clock, CheckCircle2, Building2, Search, HandCoins, CarFront, Receipt, Landmark } from "lucide-react";
 import Link from "next/link";
 import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip, BarChart, Bar, XAxis, YAxis, CartesianGrid } from "recharts";
-import { fmt, porMoneda, netoOperatoriaAreaPorMoneda } from "./shared";
+import { fmt, porMoneda, netoOperatoriaAreaPorMoneda, claseSemaforoCard } from "./shared";
 import { useRentabilidadPorVehiculo } from "./useRentabilidadPorVehiculo";
 import InfoTooltip from "@/components/panel/InfoTooltip";
 
@@ -179,28 +179,28 @@ export default function ResumenTab({
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
             {monedasNumeros.map((m) => (
               <div key={m} className="contents">
-                <div className="rounded-2xl p-4 bg-white dark:bg-white/5 border border-slate-200 dark:border-white/10">
+                <div className={`rounded-2xl p-4 border ${claseSemaforoCard((rentabilidadGeneralPorMoneda[m] || 0) >= 0)}`}>
                   <p className="text-[10px] font-bold uppercase tracking-widest text-slate-500 dark:text-slate-400 flex items-center">
                     <TrendingUp className="w-3 h-3 mr-1" /> Rentabilidad general ({m})
                     <InfoTooltip texto="Ganancia por vehículos vendidos (Rentabilidad por vehículo) + neto de gestoría/honorarios/trámites (Operatoria del área). No incluye gastos fijos ni variables de la agencia." />
                   </p>
-                  <p className={`text-xl font-black mt-1 ${(rentabilidadGeneralPorMoneda[m] || 0) < 0 ? "text-rose-600" : ""}`}>{fmt(rentabilidadGeneralPorMoneda[m] || 0, m)}</p>
+                  <p className="text-xl font-black mt-1">{fmt(rentabilidadGeneralPorMoneda[m] || 0, m)}</p>
                 </div>
-                <div className="rounded-2xl p-4 bg-white dark:bg-white/5 border border-slate-200 dark:border-white/10">
+                <div className={`rounded-2xl p-4 border ${claseSemaforoCard(true)}`}>
                   <p className="text-[10px] font-bold uppercase tracking-widest text-slate-500 dark:text-slate-400 flex items-center">
                     <CarFront className="w-3 h-3 mr-1" /> Valor de stock ({m})
                     <InfoTooltip texto="Suma del precio de venta publicado de los vehículos con estado Disponible en Stock. No incluye señados ni vendidos." />
                   </p>
                   <p className="text-xl font-black mt-1">{fmt(valorStockPorMoneda[m] || 0, m)}</p>
                 </div>
-                <div className="rounded-2xl p-4 bg-white dark:bg-white/5 border border-slate-200 dark:border-white/10">
+                <div className={`rounded-2xl p-4 border ${claseSemaforoCard(true)}`}>
                   <p className="text-[10px] font-bold uppercase tracking-widest text-slate-500 dark:text-slate-400 flex items-center">
                     <HandCoins className="w-3 h-3 mr-1" /> Generado en ventas + señas ({m})
                     <InfoTooltip texto="Suma de ventas cerradas y señas registradas este mes. No implica que ya esté cobrado en caja (eso lo ves en Ingresos Efectivos)." />
                   </p>
                   <p className="text-xl font-black mt-1">{fmt(generadoVentasSenasPorMoneda[m] || 0, m)}</p>
                 </div>
-                <div className="rounded-2xl p-4 bg-white dark:bg-white/5 border border-slate-200 dark:border-white/10">
+                <div className={`rounded-2xl p-4 border ${claseSemaforoCard(false)}`}>
                   <p className="text-[10px] font-bold uppercase tracking-widest text-slate-500 dark:text-slate-400 flex items-center">
                     <Landmark className="w-3 h-3 mr-1" /> Gastos fijos / variables ({m})
                     <InfoTooltip texto="Fijos: alquiler, sueldos, seguros, impuestos. Variables: comisiones, marketing, gestoría, insumos. Mismas categorías que usa el punto de equilibrio, del mes en curso." />
@@ -208,12 +208,12 @@ export default function ResumenTab({
                   <p className="text-sm font-bold mt-1">Fijos <span className="font-black">{fmt(gastosFijosTotales[m] || 0, m)}</span></p>
                   <p className="text-sm font-bold">Variables <span className="font-black">{fmt(gastosVariablesTotales[m] || 0, m)}</span></p>
                 </div>
-                <div className="rounded-2xl p-4 bg-white dark:bg-white/5 border border-slate-200 dark:border-white/10 sm:col-span-2 lg:col-span-1">
+                <div className={`rounded-2xl p-4 border sm:col-span-2 lg:col-span-1 ${claseSemaforoCard((operatoriaAreaPorMoneda[m] || 0) >= 0)}`}>
                   <p className="text-[10px] font-bold uppercase tracking-widest text-slate-500 dark:text-slate-400 flex items-center">
                     <Receipt className="w-3 h-3 mr-1" /> Ingresos extra / consignación ({m})
                     <InfoTooltip texto="Neto de movimientos que no vienen de una venta de vehículo: gestoría, multas, honorarios, trámites, verificaciones (mismo total que Operatoria del área)." />
                   </p>
-                  <p className={`text-xl font-black mt-1 ${(operatoriaAreaPorMoneda[m] || 0) < 0 ? "text-rose-600" : ""}`}>{fmt(operatoriaAreaPorMoneda[m] || 0, m)}</p>
+                  <p className="text-xl font-black mt-1">{fmt(operatoriaAreaPorMoneda[m] || 0, m)}</p>
                 </div>
               </div>
             ))}
