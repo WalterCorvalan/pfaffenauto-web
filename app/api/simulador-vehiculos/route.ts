@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { createClient } from "@supabase/supabase-js";
 import { rateLimit, ipDesdeRequest } from "@/lib/rateLimit";
-import { obtenerDolarBlue } from "@/lib/dolarBlue";
+import { obtenerCotizacionDolar } from "@/lib/dolarBlueConfig";
 
 // El simulador de /financiacion (público, sin login) antes consultaba
 // "vehiculos" directo desde el cliente con la anon key, trayendo
@@ -38,7 +38,7 @@ export async function GET(req: Request) {
   // Antes se confiaba en "?dolar=" mandado por el cliente -- cualquiera podía
   // pasar cualquier valor y el precio en ARS mostrado quedaba a su merced.
   // Se resuelve server-side con la misma cotización real que usa /api/dolar-blue.
-  const dolarVenta = await obtenerDolarBlue().then((d) => d.venta).catch(() => null);
+  const dolarVenta = await obtenerCotizacionDolar().then((d) => d.venta).catch(() => null);
 
   let query = supabase
     .from("vehiculos")

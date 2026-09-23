@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { Loader2 } from "lucide-react";
+import { Loader2, DollarSign } from "lucide-react";
 import { TOPES_FINANCIACION_DEFAULT, TOPE_0KM_DEFAULT, TNA_POR_PLAZO_DEFAULT, GASTOS_PCT_DEFAULT, PLAZOS_DISPONIBLES, type TopeFinanciacion } from "@/lib/financiacion";
 
 interface ConfigFinanciacion {
@@ -9,6 +9,9 @@ interface ConfigFinanciacion {
   financiacion_tope_0km: number;
   financiacion_tna: Record<string, number>;
   financiacion_gastos_pct: number;
+  dolar_manual_activo: boolean;
+  dolar_manual_compra: number | null;
+  dolar_manual_venta: number | null;
 }
 
 // Movido desde Configuración → Empresa: esta pantalla la ven admin/finanzas
@@ -23,6 +26,7 @@ export default function FinanciacionConfigTab() {
   const [config, setConfig] = useState<ConfigFinanciacion | null>(null);
   const [cargando, setCargando] = useState(true);
   const [mensaje, setMensaje] = useState("");
+  const [dolarBlueVivo, setDolarBlueVivo] = useState<{ compra: number; venta: number } | null>(null);
 
   const cargar = async () => {
     setCargando(true);
@@ -34,12 +38,19 @@ export default function FinanciacionConfigTab() {
         financiacion_tope_0km: data.financiacion_tope_0km ?? TOPE_0KM_DEFAULT,
         financiacion_tna: Object.keys(data.financiacion_tna || {}).length ? data.financiacion_tna : TNA_POR_PLAZO_DEFAULT,
         financiacion_gastos_pct: data.financiacion_gastos_pct ?? GASTOS_PCT_DEFAULT,
+        dolar_manual_activo: data.dolar_manual_activo ?? false,
+        dolar_manual_compra: data.dolar_manual_compra ?? null,
+        dolar_manual_venta: data.dolar_manual_venta ?? null,
       });
     }
     setCargando(false);
   };
 
   useEffect(() => { cargar(); }, []);
+  // Solo de referencia (para saber qué está devolviendo dolarapi.com ahora
+  // mismo) -- si el manual está activo, este número NO es el que se usa en
+  // el resto de la app, pero sirve para decidir a qué actualizarlo.
+  useEffect(() => { fetch("https://dolarapi.com/v1/dolares/blue").then((r) => r.json()).then((d) => setDolarBlueVivo({ compra: Number(d.compra), venta: Number(d.venta) })).catch(() => {}); }, []);
 
   const guardar = async (patch: Partial<ConfigFinanciacion>) => {
     if (!config) return;
@@ -69,6 +80,28 @@ export default function FinanciacionConfigTab() {
 
   return (
     <div className="space-y-4 p-6">
+      <div className="bg-white dark:bg-white/[0.02] border border-slate-200 dark:border-white/5 rounded-2xl p-5 space-y-3">
+        <p className="text-sm font-bold text-slate-800 dark:text-white mb-1 flex items-center gap-1.5"><DollarSign className="w-4 h-4 text-emerald-500" /> Precio del dólar</p>
+        <p className="text-xs text-slate-400 mb-2">Por defecto se usa el dólar blue en vivo (dolarapi.com) en toda la app: catálogo público, simuladores de financiación y el ticker del panel. Activá esto para fijar un precio propio en su lugar.</p>
+        <label className="flex items-center gap-2 cursor-pointer w-fit">
+          <input type="checkbox" checked={config.dolar_manual_activo} onChange={(e) => guardar({ dolar_manual_activo: e.target.checked })} className="w-4 h-4 accent-[#0145F2]" />
+          <span className="text-sm font-semibold">Usar precio manual en vez del dólar blue automático</span>
+        </label>
+        {config.dolar_manual_activo && (
+          <div className="grid grid-cols-2 gap-2 max-w-sm">
+            <div>
+              <label className="text-[11px] font-semibold text-slate-500 block mb-1">Compra</label>
+              <input type="number" defaultValue={config.dolar_manual_compra ?? ""} onBlur={(e) => guardar({ dolar_manual_compra: e.target.value ? Number(e.target.value) : null })} className={inputClass} />
+            </div>
+            <div>
+              <label className="text-[11px] font-semibold text-slate-500 block mb-1">Venta</label>
+              <input type="number" defaultValue={config.dolar_manual_venta ?? ""} onBlur={(e) => guardar({ dolar_manual_venta: e.target.value ? Number(e.target.value) : null })} className={inputClass} />
+            </div>
+          </div>
+        )}
+        {dolarBlueVivo && <p className="text-[11px] text-slate-400">Referencia: dólar blue ahora mismo — compra {dolarBlueVivo.compra.toLocaleString("es-AR")} · venta {dolarBlueVivo.venta.toLocaleString("es-AR")}</p>}
+      </div>
+
       <div className="bg-amber-50 dark:bg-amber-500/10 border border-amber-200 dark:border-amber-500/20 rounded-2xl p-4">
         <p className="text-xs text-amber-800 dark:text-amber-200 font-semibold">Esto arma un simulador propio APROXIMADO en Financiaciones. No reemplaza al simulador real de decreditos (que depende del perfil crediticio de cada cliente) — sirve solo como número de referencia para la charla inicial.</p>
       </div>

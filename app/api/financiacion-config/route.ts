@@ -19,7 +19,7 @@ const supabase = createClient(
 export async function GET() {
   const { data, error } = await supabase
     .from("configuracion_empresa")
-    .select("financiacion_topes, financiacion_tope_0km, financiacion_tna, financiacion_gastos_pct, financiacion_uva_descuento")
+    .select("financiacion_topes, financiacion_tope_0km, financiacion_tna, financiacion_gastos_pct, financiacion_uva_descuento, dolar_manual_activo, dolar_manual_compra, dolar_manual_venta")
     .eq("id", true)
     .maybeSingle();
 
@@ -32,6 +32,9 @@ export async function GET() {
       financiacion_tna: TNA_POR_PLAZO_DEFAULT,
       financiacion_gastos_pct: GASTOS_PCT_DEFAULT,
       financiacion_uva_descuento: UVA_DESCUENTO_PCT_DEFAULT,
+      dolar_manual_activo: false,
+      dolar_manual_compra: null,
+      dolar_manual_venta: null,
     });
   }
 
@@ -41,6 +44,9 @@ export async function GET() {
     financiacion_tna: Object.keys(data.financiacion_tna || {}).length ? data.financiacion_tna : TNA_POR_PLAZO_DEFAULT,
     financiacion_gastos_pct: data.financiacion_gastos_pct ?? GASTOS_PCT_DEFAULT,
     financiacion_uva_descuento: Object.keys(data.financiacion_uva_descuento || {}).length ? data.financiacion_uva_descuento : UVA_DESCUENTO_PCT_DEFAULT,
+    dolar_manual_activo: data.dolar_manual_activo ?? false,
+    dolar_manual_compra: data.dolar_manual_compra ?? null,
+    dolar_manual_venta: data.dolar_manual_venta ?? null,
   });
 }
 
@@ -51,6 +57,9 @@ const PatchSchema = z.object({
   financiacion_tna: z.record(z.string(), z.coerce.number()).optional(),
   financiacion_gastos_pct: z.coerce.number().min(0).optional(),
   financiacion_uva_descuento: z.record(z.string(), z.coerce.number()).optional(),
+  dolar_manual_activo: z.boolean().optional(),
+  dolar_manual_compra: z.coerce.number().min(0).nullable().optional(),
+  dolar_manual_venta: z.coerce.number().min(0).nullable().optional(),
 });
 
 // PATCH sí requiere sesión -- a diferencia del GET (público, para el
