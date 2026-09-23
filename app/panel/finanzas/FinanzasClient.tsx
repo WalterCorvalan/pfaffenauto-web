@@ -31,30 +31,63 @@ import EgresosCategoriaTab from "./tabs/EgresosCategoriaTab";
 import CajaGrandeChicaTab from "./tabs/CajaGrandeChicaTab";
 import { fmt, CATEGORIAS_GASTO_FIJO, CATEGORIAS_GASTO_VARIABLE } from "./tabs/shared";
 
-const TABS: { value: string; label: string; icon: any; disabled?: boolean; externo?: string }[] = [
-  { value: "resumen", label: "Resumen", icon: BarChart3 },
-  { value: "movimientos", label: "Movimientos", icon: FileText },
-  { value: "caja-grande-chica", label: "Caja Grande/Chica", icon: Wallet },
-  { value: "egresos-categoria", label: "Egresos por Categoría", icon: Receipt },
-  { value: "senas", label: "Señas", icon: Coins },
-  { value: "cuotas", label: "Cuotas", icon: Wallet },
-  { value: "devol-registro", label: "Devol. Registro", icon: HandCoins },
-  { value: "pagos-disp", label: "Pagos Disp.", icon: Coins },
-  { value: "tarjeta", label: "Tarjeta", icon: CreditCard },
-  { value: "retiros", label: "Retiros", icon: TrendingDown },
-  { value: "cheques", label: "Cheques", icon: ScrollText },
-  { value: "comisiones", label: "Comisiones", icon: Receipt, externo: "/panel/comisiones" },
-  { value: "rentabilidad", label: "Rentabilidad", icon: TrendingUp },
-  { value: "cuentas", label: "Cuentas", icon: Landmark },
-  { value: "prestamos", label: "Préstamos", icon: Handshake },
-  { value: "presupuesto", label: "Presupuesto", icon: ClipboardList },
-  { value: "recurrencias", label: "Recurrencias", icon: Repeat },
-  { value: "arqueos", label: "Arqueos", icon: SearchCheck },
-  { value: "cierre-caja", label: "Cierre Caja", icon: PackageCheck },
-  { value: "conciliacion", label: "Conciliación", icon: CheckSquare },
-  { value: "afip-iva", label: "AFIP/IVA", icon: Afip },
-  { value: "libros", label: "Libros Contables", icon: BookOpen },
+type TabDef = { value: string; label: string; icon: any; disabled?: boolean; externo?: string };
+type GrupoDef = { value: string; label: string; tabs: TabDef[] };
+
+// Antes eran 22 tabs sueltos en una sola fila horizontal -- reagrupados en
+// 6 secciones (pedido de diseño, sin cambiar qué hace cada tab) para que se
+// pueda ubicar cada cosa por su función en vez de tener que escanear toda
+// la fila. El value de cada tab no cambió, así que un link a
+// /panel/finanzas?tab=X que ya exista en otro módulo sigue funcionando --
+// solo cambia bajo qué grupo aparece.
+const GRUPOS: GrupoDef[] = [
+  { value: "resumen", label: "Resumen", tabs: [{ value: "resumen", label: "Resumen", icon: BarChart3 }] },
+  {
+    value: "caja-bancos", label: "Caja y bancos", tabs: [
+      { value: "movimientos", label: "Movimientos", icon: FileText },
+      { value: "caja-grande-chica", label: "Caja Grande/Chica", icon: Wallet },
+      { value: "cuentas", label: "Cuentas", icon: Landmark },
+      { value: "cheques", label: "Cheques", icon: ScrollText },
+    ],
+  },
+  {
+    value: "cobros", label: "Cobros", tabs: [
+      { value: "senas", label: "Señas", icon: Coins },
+      { value: "cuotas", label: "Cuotas", icon: Wallet },
+    ],
+  },
+  {
+    value: "pagos", label: "Pagos", tabs: [
+      { value: "devol-registro", label: "Devol. Registro", icon: HandCoins },
+      { value: "pagos-disp", label: "Pagos Disp.", icon: Coins },
+      { value: "tarjeta", label: "Tarjeta", icon: CreditCard },
+      { value: "retiros", label: "Retiros", icon: TrendingDown },
+      { value: "comisiones", label: "Comisiones", icon: Receipt, externo: "/panel/comisiones" },
+      { value: "prestamos", label: "Préstamos", icon: Handshake },
+    ],
+  },
+  {
+    value: "control-cierres", label: "Control y cierres", tabs: [
+      { value: "egresos-categoria", label: "Egresos por Categoría", icon: Receipt },
+      { value: "arqueos", label: "Arqueos", icon: SearchCheck },
+      { value: "cierre-caja", label: "Cierre Caja", icon: PackageCheck },
+      { value: "conciliacion", label: "Conciliación", icon: CheckSquare },
+      { value: "afip-iva", label: "AFIP/IVA", icon: Afip },
+      { value: "libros", label: "Libros Contables", icon: BookOpen },
+    ],
+  },
+  {
+    value: "analisis-planificacion", label: "Análisis y planificación", tabs: [
+      { value: "rentabilidad", label: "Rentabilidad", icon: TrendingUp },
+      { value: "presupuesto", label: "Presupuesto", icon: ClipboardList },
+      { value: "recurrencias", label: "Recurrencias", icon: Repeat },
+    ],
+  },
 ];
+
+function grupoDeTab(tabValue: string): string {
+  return GRUPOS.find((g) => g.tabs.some((t) => t.value === tabValue))?.value || "resumen";
+}
 
 export default function FinanzasClient({
   miId, soyAdmin, soyAdminOFinanzas, cuentasIniciales, movimientosIniciales, cierresIniciales,
@@ -71,7 +104,14 @@ export default function FinanzasClient({
   prestamosIniciales: any[]; presupuestosIniciales: any[]; recurrenciasIniciales: any[]; generacionesIniciales: any[]; arqueosIniciales: any[]; cierresDiariosIniciales: any[]; miNombre: string;
   senasIniciales: any[]; vehiculosDisponiblesFull: any[]; sucursales: any[]; veTodasSucursales: boolean; miSucursalId: string | null; vehiculosTodos: { id: string; marca: string; modelo: string; anio: number; patente: string | null }[];
 }) {
-  const [tab, setTab] = useState("resumen");
+  const [tab, setTabRaw] = useState("resumen");
+  const [grupo, setGrupo] = useState("resumen");
+  // Cambiar de grupo lleva al primer sub-tab de ese grupo; setTab (usado por
+  // ResumenTab para "ir a Cuotas" etc.) también reubica el grupo activo, para
+  // que la navegación cruzada entre tabs no deje la barra de grupos desincronizada.
+  const setTab = (t: string) => { setTabRaw(t); setGrupo(grupoDeTab(t)); };
+  const irAGrupo = (g: string) => { setGrupo(g); const primero = GRUPOS.find((x) => x.value === g)?.tabs[0]; if (primero) setTabRaw(primero.value); };
+  const grupoActivo = GRUPOS.find((g) => g.value === grupo) || GRUPOS[0];
   const [cuentas, setCuentas] = useState(cuentasIniciales);
   const [movimientos, setMovimientos] = useState(movimientosIniciales);
   const [cierres, setCierres] = useState(cierresIniciales);
@@ -350,18 +390,34 @@ export default function FinanzasClient({
         <div><h1 className="text-xl font-bold">Administración Financiera</h1><p className="text-sm text-slate-400">Movimientos, saldos por caja, comisiones, presupuestos y cierres.</p></div>
       </div>
 
-      <div className="bg-white dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-xl p-1 my-4 flex items-center gap-1 overflow-x-auto">
-        {TABS.map((t) => {
-          const Icon = t.icon;
-          if (t.externo) return <Link key={t.value} href={t.externo} className="px-3 py-1.5 text-xs font-bold whitespace-nowrap flex items-center gap-1.5 text-slate-500 dark:text-slate-400 hover:text-[#0145F2]"><Icon className="w-3.5 h-3.5" /> {t.label} <ExternalLink className="w-3 h-3" /></Link>;
-          return (
-            <button key={t.value} disabled={t.disabled} onClick={() => setTab(t.value)} title={t.disabled ? "Todavía no construido" : undefined}
-              className={`px-3 py-1.5 text-xs font-bold whitespace-nowrap flex items-center gap-1.5 rounded-lg transition-colors ${tab === t.value ? "bg-[#0145F2] text-white" : t.disabled ? "text-slate-300 dark:text-slate-600 cursor-not-allowed" : "text-slate-500 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-white/5"}`}>
-              <Icon className="w-3.5 h-3.5" /> {t.label}
-            </button>
-          );
-        })}
+      {/* Nivel 1: grupos -- único nivel que usa rojo (identidad de marca).
+          Todo lo que esté "adentro" de un tab (sub-filtros, badges de estado)
+          usa azul, para que el rojo siga significando "sección activa" y
+          nada compita visualmente con él. */}
+      <div className="flex items-center gap-1 my-4 overflow-x-auto border-b border-slate-200 dark:border-white/10">
+        {GRUPOS.map((g) => (
+          <button key={g.value} onClick={() => irAGrupo(g.value)}
+            className={`px-3 py-2.5 text-sm font-bold whitespace-nowrap border-b-2 transition-colors ${grupo === g.value ? "border-[#E11D2E] text-[#E11D2E]" : "border-transparent text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-200"}`}>
+            {g.label}
+          </button>
+        ))}
       </div>
+
+      {/* Nivel 2: sub-tabs del grupo activo -- azul para no competir con el rojo de arriba */}
+      {grupoActivo.tabs.length > 1 && (
+        <div className="bg-white dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-xl p-1 mb-4 flex items-center gap-1 overflow-x-auto">
+          {grupoActivo.tabs.map((t) => {
+            const Icon = t.icon;
+            if (t.externo) return <Link key={t.value} href={t.externo} className="px-3 py-1.5 text-xs font-bold whitespace-nowrap flex items-center gap-1.5 text-slate-500 dark:text-slate-400 hover:text-[#0145F2]"><Icon className="w-3.5 h-3.5" /> {t.label} <ExternalLink className="w-3 h-3" /></Link>;
+            return (
+              <button key={t.value} disabled={t.disabled} onClick={() => setTabRaw(t.value)} title={t.disabled ? "Todavía no construido" : undefined}
+                className={`px-3 py-1.5 text-xs font-bold whitespace-nowrap flex items-center gap-1.5 rounded-lg transition-colors ${tab === t.value ? "bg-[#0145F2] text-white" : t.disabled ? "text-slate-300 dark:text-slate-600 cursor-not-allowed" : "text-slate-500 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-white/5"}`}>
+                <Icon className="w-3.5 h-3.5" /> {t.label}
+              </button>
+            );
+          })}
+        </div>
+      )}
 
       {tab === "resumen" && (
         <ResumenTab
