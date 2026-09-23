@@ -1,7 +1,9 @@
 "use client";
 
+import { useEffect, useState } from "react";
 import Link from "next/link";
-import { X, Wallet, Printer, MessageSquareText } from "lucide-react";
+import { X, Wallet, Printer, MessageSquareText, FileText } from "lucide-react";
+import { supabase2 } from "@/lib/supabase/client";
 
 const LABEL_ESTADO: Record<string, string> = { Activa: "Pendiente", Convertida: "Realizada", Perdida: "Perdida" };
 
@@ -40,7 +42,16 @@ function montoEnMonedaVenta(sena: { venta_ars?: number | null; venta_usd?: numbe
   return `${simbolo} ${Number(val).toLocaleString("es-AR")}`;
 }
 
+interface DocumentoCliente { id: string; nombre: string; url: string; created_at: string }
+
 export default function SenaDetalleModal({ sena: s, onClose }: { sena: any; onClose: () => void }) {
+  const [documentosCliente, setDocumentosCliente] = useState<DocumentoCliente[]>([]);
+
+  useEffect(() => {
+    supabase2.from("documentos_cliente").select("id, nombre, url, created_at").eq("sena_id", s.id).order("created_at", { ascending: false })
+      .then(({ data }) => setDocumentosCliente(data || []));
+  }, [s.id]);
+
   return (
     <div className="fixed inset-0 bg-black/40 backdrop-blur-sm z-[100] flex items-center justify-center p-4" onClick={() => onClose()}>
       <div className="bg-white dark:bg-[#111] border border-slate-200 dark:border-white/10 rounded-2xl w-full max-w-lg max-h-[90vh] overflow-y-auto shadow-2xl" onClick={(e) => e.stopPropagation()}>
@@ -78,6 +89,21 @@ export default function SenaDetalleModal({ sena: s, onClose }: { sena: any; onCl
             <Fila label="Estado" valor={LABEL_ESTADO[s.estado] || s.estado} />
             <Fila label="Precio confirmado" valor={s.precio_confirmado === false ? "⚠️ A confirmar" : s.precio_confirmado === true ? "Sí" : null} />
           </Seccion>
+
+          {documentosCliente.length > 0 && (
+            <Seccion titulo="Documentación subida por el cliente">
+              <div className="py-2 space-y-1.5">
+                {documentosCliente.map((doc) => (
+                  <div key={doc.id} className="flex items-center justify-between gap-2">
+                    <p className="text-xs font-semibold text-slate-700 dark:text-slate-200 flex items-center gap-1.5 truncate">
+                      <FileText className="w-3.5 h-3.5 shrink-0 text-slate-400" /> {doc.nombre}
+                    </p>
+                    <a href={doc.url} target="_blank" rel="noreferrer" className="text-[11px] text-[#0145F2] dark:text-sky-400 hover:underline shrink-0">Ver archivo</a>
+                  </div>
+                ))}
+              </div>
+            </Seccion>
+          )}
 
           {s.notas && (
             <Seccion titulo="Observaciones">
