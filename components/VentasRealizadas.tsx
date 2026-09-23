@@ -12,28 +12,28 @@ const PUBLICACIONES: ReelItem[] = [
     tipo: "foto",
     src: "https://images.unsplash.com/photo-1503376780353-7e6692767b70?q=80&w=600&auto=format&fit=crop",
     titulo: "Entrega Toyota Hilux 2023",
-    link: "https://instagram.com/pfaffenautomotores",
+    link: "https://instagram.com/pfaffen.cars",
   },
   {
     id: 2,
     tipo: "foto",
     src: "https://images.unsplash.com/photo-1494905998402-395d579af36f?q=80&w=600&auto=format&fit=crop",
     titulo: "Chevrolet Tracker recién entregada",
-    link: "https://instagram.com/pfaffenautomotores",
+    link: "https://instagram.com/pfaffen.cars",
   },
   {
     id: 3,
     tipo: "foto",
     src: "https://images.unsplash.com/photo-1580273916550-e323be2ae537?q=80&w=600&auto=format&fit=crop",
     titulo: "Volkswagen Amarok 0km entregada",
-    link: "https://instagram.com/pfaffenautomotores",
+    link: "https://instagram.com/pfaffen.cars",
   },
   {
     id: 4,
     tipo: "foto",
     src: "https://images.unsplash.com/photo-1583121274602-3e2820c69888?q=80&w=600&auto=format&fit=crop",
     titulo: "Ford Ranger lista para trabajar",
-    link: "https://instagram.com/pfaffenautomotores",
+    link: "https://instagram.com/pfaffen.cars",
   },
 ];
 
@@ -52,7 +52,7 @@ export default function VentasRealizadas() {
             </h2>
           </div>
           <a
-            href="https://instagram.com/pfaffenautomotores"
+            href="https://instagram.com/pfaffen.cars"
             target="_blank"
             rel="noopener noreferrer"
             className="inline-flex items-center gap-2 text-sm font-bold text-blue-600 dark:text-sky-300 hover:text-blue-800 dark:hover:text-sky-200 transition-colors shrink-0 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#0145F2] rounded-md"
