@@ -186,12 +186,16 @@ export default function ResumenTab({
           <p className="text-[11px] font-black uppercase tracking-widest text-slate-400 mb-2">Números clave de la empresa</p>
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
             {monedasNumeros.map((m) => {
-              // Zona ventas vs gastos: la misma para las 3 tarjetas que
-              // representan cada lado de esa cuenta (ventas+señas es el
-              // ingreso, gastos fijos/variables el egreso, rentabilidad
-              // general el resultado), para que el trío se lea consistente.
+              // Zona ventas vs gastos: la misma para Rentabilidad general y
+              // Generado en ventas+señas (ventas+señas es el ingreso, gastos
+              // fijos+variables el egreso), para que ese par se lea
+              // consistente.
               const zonaVentasGastos = zonaEquilibrio(generadoVentasSenasPorMoneda[m] || 0, (gastosFijosTotales[m] || 0) + (gastosVariablesTotales[m] || 0));
               const zonaOperatoria = zonaEquilibrio(ingresosOperatoriaPorMoneda[m] || 0, egresosOperatoriaPorMoneda[m] || 0);
+              // Zona propia de "Fijos vs variables": compara los dos gastos
+              // ENTRE SÍ, no contra las ventas -- en cero o iguales (sin
+              // diferencia entre uno y otro) es el equilibrio, va amarillo.
+              const zonaFijoVariable = zonaEquilibrio(gastosVariablesTotales[m] || 0, gastosFijosTotales[m] || 0);
               return (
               <div key={m} className="contents">
                 <div className={`rounded-2xl p-4 border ${CLASE_ZONA_CARD[zonaVentasGastos]}`}>
@@ -215,7 +219,7 @@ export default function ResumenTab({
                   </p>
                   <p className="text-xl font-black mt-1">{fmt(generadoVentasSenasPorMoneda[m] || 0, m)}</p>
                 </div>
-                <div className={`rounded-2xl p-4 border ${CLASE_ZONA_CARD[zonaVentasGastos]}`}>
+                <div className={`rounded-2xl p-4 border ${CLASE_ZONA_CARD[zonaFijoVariable]}`}>
                   <p className="text-[10px] font-bold uppercase tracking-widest text-slate-500 dark:text-slate-400 flex items-center">
                     <Landmark className="w-3 h-3 mr-1" /> Gastos fijos / variables ({m})
                     <InfoTooltip texto="Fijos: alquiler, sueldos, seguros, impuestos. Variables: comisiones, marketing, gestoría, insumos. Mismas categorías que usa el punto de equilibrio, del mes en curso." />
