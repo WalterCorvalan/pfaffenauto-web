@@ -13,6 +13,7 @@ export default async function FinanciacionesPage() {
   // uno, ver app/api/panel/leads-tasacion/route.ts) -- admin/encargado/
   // finanzas siguen viendo todas, para supervisar y administrar tasas.
   const veTodo = roles.some((r) => ["admin", "encargado", "finanzas"].includes(r));
+  const esAdminOFinanzas = roles.some((r) => r === "admin" || r === "finanzas");
 
   let query = supabase.from("leads_tasacion").select("*").eq("tipo", "financiacion").order("created_at", { ascending: false });
   if (!veTodo && user) query = query.eq("vendedor_id", user.id);
@@ -22,5 +23,5 @@ export default async function FinanciacionesPage() {
     supabase.from("perfiles").select("id, nombre").eq("activo", true).order("nombre"),
   ]);
 
-  return <FinanciacionesClient solicitudesIniciales={solicitudes || []} staff={staff || []} />;
+  return <FinanciacionesClient solicitudesIniciales={solicitudes || []} staff={staff || []} esAdminOFinanzas={esAdminOFinanzas} />;
 }
