@@ -433,6 +433,11 @@ export default function FinanzasClient({
           historialOperaciones={historialOperaciones}
           puntoEquilibrioPorMoneda={puntoEquilibrioPorMoneda}
           setTab={setTab}
+          ventas={ventas}
+          movimientos={movimientos}
+          vehiculosDisponiblesFull={vehiculosDisponiblesFull}
+          gastosFijosTotales={gastosFijosTotales}
+          gastosVariablesTotales={gastosVariablesTotales}
         />
       )}
 
