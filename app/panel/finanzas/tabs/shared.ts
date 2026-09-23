@@ -23,17 +23,42 @@ export function porMoneda(lista: any[], campoMoneda: string, campoMonto: string)
   return map;
 }
 
-// Clases de card para el semáforo de plata: verde si el valor es positivo
-// (o la tarjeta es de naturaleza "buena", ej. ingresos), rojo si es negativo
-// (o de naturaleza "gasto"). Pedido del 23/9: todas las tarjetas de plata en
-// Finanzas tienen que tener el color en toda la tarjeta (fondo + borde), no
-// solo en el número -- mismo criterio que ya usaban Ingresos/Egresos del
-// área en RentabilidadTab.tsx.
-export function claseSemaforoCard(positivo: boolean) {
-  return positivo
-    ? "bg-emerald-50 dark:bg-emerald-500/10 border-emerald-100 dark:border-emerald-500/20"
-    : "bg-rose-50 dark:bg-rose-500/10 border-rose-100 dark:border-rose-500/20";
+// Semáforo financiero / punto de equilibrio (pedido de la reunión del
+// 22/9, corregido el 23/9: no es solo verde/rojo por signo, son 4 zonas
+// según la relación ingreso vs egreso -- rojo por debajo del equilibrio,
+// amarillo en el equilibrio (banda del 100-110%, no un punto exacto -- con
+// montos reales nunca da justo), verde con ganancia, azul al duplicar el
+// egreso ("se exceden las expectativas"). Toda tarjeta de plata en Finanzas
+// que tenga un par ingreso/egreso natural (Neto del área, Rentabilidad
+// general, Ingresos extra / consignación...) usa esta misma función, no un
+// simple positivo/negativo -- las tarjetas que son un solo lado del par
+// (Ingresos del área, Gastos fijos/variables, etc.) reciben la MISMA zona
+// que su contraparte, para que el conjunto se vea consistente.
+export type ZonaSemaforo = "rojo" | "amarillo" | "verde" | "azul";
+
+export function zonaEquilibrio(ingresos: number, egresos: number): ZonaSemaforo {
+  if (egresos <= 0) return ingresos > 0 ? "azul" : "amarillo";
+  const ratio = ingresos / egresos;
+  if (ratio < 1) return "rojo";
+  if (ratio < 1.1) return "amarillo";
+  if (ratio < 2) return "verde";
+  return "azul";
 }
+
+// Peor zona entre varias (una tarjeta puede mostrar más de una moneda) --
+// rojo es lo peor, azul lo mejor.
+const ORDEN_ZONA: ZonaSemaforo[] = ["rojo", "amarillo", "verde", "azul"];
+export function peorZona(zonas: ZonaSemaforo[]): ZonaSemaforo {
+  if (zonas.length === 0) return "amarillo";
+  return zonas.reduce((peor, z) => (ORDEN_ZONA.indexOf(z) < ORDEN_ZONA.indexOf(peor) ? z : peor));
+}
+
+export const CLASE_ZONA_CARD: Record<ZonaSemaforo, string> = {
+  rojo: "bg-rose-50 dark:bg-rose-500/10 border-rose-100 dark:border-rose-500/20",
+  amarillo: "bg-amber-50 dark:bg-amber-500/10 border-amber-100 dark:border-amber-500/20",
+  verde: "bg-emerald-50 dark:bg-emerald-500/10 border-emerald-100 dark:border-emerald-500/20",
+  azul: "bg-[#0145F2]/5 dark:bg-[#0145F2]/10 border-[#0145F2]/20",
+};
 
 export function diasHasta(fecha: string) {
   const hoy = new Date(); hoy.setHours(0, 0, 0, 0);
@@ -43,16 +68,26 @@ export function diasHasta(fecha: string) {
 
 // Movimientos SIN venta_id (gestoría, multas, honorarios, trámites) --
 // "Operatoria del área" en RentabilidadTab.tsx. Extraído acá para que el
-// Resumen pueda mostrar el mismo neto sin duplicar el filtro. Se excluye
-// tipo_movimiento === "Transferencia" (no es ingreso/egreso real, cae en
-// ambas patas e infla los brutos).
-export function netoOperatoriaAreaPorMoneda(movimientos: any[]): Record<string, number> {
+// Resumen pueda mostrar el mismo ingreso/egreso/neto sin duplicar el
+// filtro. Se excluye tipo_movimiento === "Transferencia" (no es
+// ingreso/egreso real, cae en ambas patas e infla los brutos).
+export function ingresosEgresosOperatoriaAreaPorMoneda(movimientos: any[]): { ingresos: Record<string, number>; egresos: Record<string, number> } {
   const delArea = movimientos.filter((m) => !m.venta_id && !m.deleted_at && m.estado === "aprobado" && m.tipo_movimiento !== "Transferencia");
-  const map: Record<string, number> = {};
+  const ingresos: Record<string, number> = {};
+  const egresos: Record<string, number> = {};
   delArea.forEach((m) => {
     const mo = m.cuenta?.moneda;
     if (!mo) return;
-    map[mo] = (map[mo] || 0) + (m.tipo === "ingreso" ? Number(m.monto) : -Number(m.monto));
+    if (m.tipo === "ingreso") ingresos[mo] = (ingresos[mo] || 0) + Number(m.monto);
+    else egresos[mo] = (egresos[mo] || 0) + Number(m.monto);
   });
+  return { ingresos, egresos };
+}
+
+export function netoOperatoriaAreaPorMoneda(movimientos: any[]): Record<string, number> {
+  const { ingresos, egresos } = ingresosEgresosOperatoriaAreaPorMoneda(movimientos);
+  const monedas = new Set([...Object.keys(ingresos), ...Object.keys(egresos)]);
+  const map: Record<string, number> = {};
+  monedas.forEach((m) => { map[m] = (ingresos[m] || 0) - (egresos[m] || 0); });
   return map;
 }
