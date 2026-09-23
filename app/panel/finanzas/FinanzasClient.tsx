@@ -70,11 +70,11 @@ const GRUPOS: GrupoDef[] = [
   {
     value: "control-cierres", label: "Control y cierres", tabs: [
       { value: "egresos-categoria", label: "Egresos por Categoría", icon: Receipt },
+      { value: "libros", label: "Libros Contables", icon: BookOpen },
       { value: "arqueos", label: "Arqueos", icon: SearchCheck },
       { value: "cierre-caja", label: "Cierre Caja", icon: PackageCheck },
       { value: "conciliacion", label: "Conciliación", icon: CheckSquare },
       { value: "afip-iva", label: "AFIP/IVA", icon: Afip },
-      { value: "libros", label: "Libros Contables", icon: BookOpen },
     ],
   },
   {

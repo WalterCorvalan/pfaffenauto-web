@@ -4,6 +4,7 @@ import { useState, useEffect, useMemo } from "react";
 import { supabase2 } from "@/lib/supabase/client";
 import { BookOpen, Landmark, TrendingUp, Activity, Loader2 } from "lucide-react";
 import { fmt, inputClass, labelClass } from "./shared";
+import TablaResponsiva, { type ColumnaTabla } from "@/components/panel/TablaResponsiva";
 
 // Libros contables básicos armados enteramente sobre movimientos_caja y
 // cuentas (nada nuevo en la base) — Diario, Mayor, Estado de Resultados y
@@ -11,10 +12,10 @@ import { fmt, inputClass, labelClass } from "./shared";
 // movimientos que ya alimenta Finanzas > Movimientos.
 
 const SUBTABS = [
-  { value: "diario", label: "Libro Diario", icon: BookOpen },
   { value: "mayor", label: "Libro Mayor", icon: Landmark },
   { value: "resultados", label: "Estado de Resultados", icon: TrendingUp },
   { value: "flujo", label: "Flujo de Caja", icon: Activity },
+  { value: "diario", label: "Libro Diario", icon: BookOpen },
 ] as const;
 
 function primerDiaMes(offset = 0) {
@@ -24,7 +25,7 @@ function primerDiaMes(offset = 0) {
 function toISO(d: Date) { return d.toISOString().slice(0, 10); }
 
 export default function LibrosContablesTab({ cuentas }: { cuentas: any[] }) {
-  const [sub, setSub] = useState<(typeof SUBTABS)[number]["value"]>("diario");
+  const [sub, setSub] = useState<(typeof SUBTABS)[number]["value"]>("mayor");
   const [desde, setDesde] = useState(toISO(primerDiaMes(0)));
   const [hasta, setHasta] = useState(toISO(new Date(primerDiaMes(1).getTime() - 86400000)));
   const [cuentaId, setCuentaId] = useState(cuentas[0]?.id || "");
@@ -68,30 +69,27 @@ function LibroDiario({ desde, hasta }: { desde: string; hasta: string }) {
       .then(({ data }) => { setMovimientos(data || []); setCargando(false); });
   }, [desde, hasta]);
 
+  const columnas: ColumnaTabla<(typeof movimientos)[number]>[] = [
+    { key: "fecha", header: "Fecha", cell: (m) => <span className="text-slate-500 dark:text-slate-400">{m.fecha}</span> },
+    { key: "cuenta", header: "Cuenta", cell: (m) => <span className="font-bold text-slate-700 dark:text-slate-200">{m.cuenta?.nombre || "—"}</span> },
+    { key: "concepto", header: "Concepto", cell: (m) => m.tipo_movimiento || "—" },
+    { key: "detalle", header: "Detalle", cell: (m) => <span className="text-slate-400">{m.observaciones || "—"}</span>, claseTd: "truncate max-w-[200px]", ocultarEnMobile: true },
+    { key: "debe", header: "Debe", cell: (m) => <span className="font-mono text-emerald-600">{m.tipo === "ingreso" ? fmt(Number(m.monto), m.cuenta?.moneda) : "—"}</span>, claseTh: "text-right", claseTd: "text-right" },
+    { key: "haber", header: "Haber", cell: (m) => <span className="font-mono text-[#0145F2]">{m.tipo === "egreso" ? fmt(Number(m.monto), m.cuenta?.moneda) : "—"}</span>, claseTh: "text-right", claseTd: "text-right" },
+  ];
+
   return (
-    <div className="bg-white dark:bg-white/[0.02] border border-slate-200 dark:border-white/5 rounded-2xl overflow-hidden">
-      <p className="text-xs text-slate-400 px-4 pt-3">Registro cronológico de todos los movimientos del período — un asiento por fila, en el orden en que ocurrieron.</p>
+    <div className="space-y-2">
+      <p className="text-xs text-slate-400 px-1">Registro cronológico de todos los movimientos del período — un asiento por fila, en el orden en que ocurrieron.</p>
       {cargando ? (
         <div className="p-8 flex justify-center"><Loader2 className="w-5 h-5 animate-spin text-slate-400" /></div>
       ) : (
-        <div className="overflow-x-auto">
-          <table className="w-full text-left text-xs mt-2">
-            <thead><tr className="text-slate-400 uppercase text-[10px] border-b border-slate-100 dark:border-white/5"><th className="px-4 py-2">Fecha</th><th className="px-4 py-2">Cuenta</th><th className="px-4 py-2">Concepto</th><th className="px-4 py-2">Detalle</th><th className="px-4 py-2 text-right">Debe</th><th className="px-4 py-2 text-right">Haber</th></tr></thead>
-            <tbody>
-              {movimientos.map((m) => (
-                <tr key={m.id} className="border-b border-slate-50 dark:border-white/5">
-                  <td className="px-4 py-2 text-slate-500 dark:text-slate-400">{m.fecha}</td>
-                  <td className="px-4 py-2 font-bold text-slate-700 dark:text-slate-200">{m.cuenta?.nombre || "—"}</td>
-                  <td className="px-4 py-2">{m.tipo_movimiento || "—"}</td>
-                  <td className="px-4 py-2 text-slate-400 truncate max-w-[200px]">{m.observaciones || "—"}</td>
-                  <td className="px-4 py-2 text-right font-mono text-emerald-600">{m.tipo === "ingreso" ? fmt(Number(m.monto), m.cuenta?.moneda) : ""}</td>
-                  <td className="px-4 py-2 text-right font-mono text-[#0145F2]">{m.tipo === "egreso" ? fmt(Number(m.monto), m.cuenta?.moneda) : ""}</td>
-                </tr>
-              ))}
-              {movimientos.length === 0 && <tr><td colSpan={6} className="px-4 py-8 text-center text-slate-400">Sin movimientos en este período.</td></tr>}
-            </tbody>
-          </table>
-        </div>
+        <TablaResponsiva
+          columnas={columnas}
+          filas={movimientos}
+          keyExtractor={(m) => m.id}
+          vacio={<p className="px-4 py-8 text-center text-slate-400 text-xs">Sin movimientos en este período.</p>}
+        />
       )}
     </div>
   );
@@ -123,6 +121,14 @@ function LibroMayor({ cuentas, cuentaId, setCuentaId }: { cuentas: any[]; cuenta
     });
   }, [movimientos, cuenta]);
 
+  const columnas: ColumnaTabla<(typeof filasConSaldo)[number]>[] = [
+    { key: "fecha", header: "Fecha", cell: (m) => <span className="text-slate-500 dark:text-slate-400">{m.fecha}</span> },
+    { key: "concepto", header: "Concepto", cell: (m) => m.tipo_movimiento || "—" },
+    { key: "debe", header: "Debe", cell: (m) => <span className="font-mono text-emerald-600">{m.tipo === "ingreso" ? fmt(Number(m.monto), cuenta?.moneda) : "—"}</span>, claseTh: "text-right", claseTd: "text-right" },
+    { key: "haber", header: "Haber", cell: (m) => <span className="font-mono text-[#0145F2]">{m.tipo === "egreso" ? fmt(Number(m.monto), cuenta?.moneda) : "—"}</span>, claseTh: "text-right", claseTd: "text-right" },
+    { key: "saldo", header: "Saldo", cell: (m) => <span className="font-mono font-bold">{fmt(m.saldo, cuenta?.moneda)}</span>, claseTh: "text-right", claseTd: "text-right", anchoCompletoMobile: true },
+  ];
+
   return (
     <div className="space-y-3">
       <div className="max-w-xs">
@@ -131,34 +137,21 @@ function LibroMayor({ cuentas, cuentaId, setCuentaId }: { cuentas: any[]; cuenta
           {cuentas.map((c) => <option key={c.id} value={c.id}>{c.nombre} ({c.moneda})</option>)}
         </select>
       </div>
-      <div className="bg-white dark:bg-white/[0.02] border border-slate-200 dark:border-white/5 rounded-2xl overflow-hidden">
-        <p className="text-xs text-slate-400 px-4 pt-3">Historial completo de la cuenta con saldo corriente — arranca en el saldo inicial cargado y va sumando/restando cada movimiento en orden.</p>
-        {cargando ? (
-          <div className="p-8 flex justify-center"><Loader2 className="w-5 h-5 animate-spin text-slate-400" /></div>
-        ) : (
-          <div className="overflow-x-auto">
-            <table className="w-full text-left text-xs mt-2">
-              <thead><tr className="text-slate-400 uppercase text-[10px] border-b border-slate-100 dark:border-white/5"><th className="px-4 py-2">Fecha</th><th className="px-4 py-2">Concepto</th><th className="px-4 py-2 text-right">Debe</th><th className="px-4 py-2 text-right">Haber</th><th className="px-4 py-2 text-right">Saldo</th></tr></thead>
-              <tbody>
-                <tr className="border-b border-slate-50 dark:border-white/5 bg-slate-50 dark:bg-white/5">
-                  <td className="px-4 py-2 text-slate-400" colSpan={4}>Saldo inicial</td>
-                  <td className="px-4 py-2 text-right font-mono font-bold">{fmt(Number(cuenta?.saldo_inicial) || 0, cuenta?.moneda)}</td>
-                </tr>
-                {filasConSaldo.map((m) => (
-                  <tr key={m.id} className="border-b border-slate-50 dark:border-white/5">
-                    <td className="px-4 py-2 text-slate-500 dark:text-slate-400">{m.fecha}</td>
-                    <td className="px-4 py-2">{m.tipo_movimiento || "—"}</td>
-                    <td className="px-4 py-2 text-right font-mono text-emerald-600">{m.tipo === "ingreso" ? fmt(Number(m.monto), cuenta?.moneda) : ""}</td>
-                    <td className="px-4 py-2 text-right font-mono text-[#0145F2]">{m.tipo === "egreso" ? fmt(Number(m.monto), cuenta?.moneda) : ""}</td>
-                    <td className="px-4 py-2 text-right font-mono font-bold">{fmt(m.saldo, cuenta?.moneda)}</td>
-                  </tr>
-                ))}
-                {filasConSaldo.length === 0 && <tr><td colSpan={5} className="px-4 py-8 text-center text-slate-400">Sin movimientos en esta cuenta.</td></tr>}
-              </tbody>
-            </table>
-          </div>
-        )}
+      <p className="text-xs text-slate-400 px-1">Historial completo de la cuenta con saldo corriente — arranca en el saldo inicial cargado y va sumando/restando cada movimiento en orden.</p>
+      <div className="bg-slate-50 dark:bg-white/5 border border-slate-200 dark:border-white/5 rounded-2xl px-4 py-2.5 flex items-center justify-between">
+        <span className="text-xs text-slate-400">Saldo inicial</span>
+        <span className="font-mono font-bold text-sm">{fmt(Number(cuenta?.saldo_inicial) || 0, cuenta?.moneda)}</span>
       </div>
+      {cargando ? (
+        <div className="p-8 flex justify-center"><Loader2 className="w-5 h-5 animate-spin text-slate-400" /></div>
+      ) : (
+        <TablaResponsiva
+          columnas={columnas}
+          filas={filasConSaldo}
+          keyExtractor={(m) => m.id}
+          vacio={<p className="px-4 py-8 text-center text-slate-400 text-xs">Sin movimientos en esta cuenta.</p>}
+        />
+      )}
     </div>
   );
 }
@@ -264,31 +257,34 @@ function FlujoDeCaja() {
 
   if (cargando) return <div className="p-8 flex justify-center"><Loader2 className="w-5 h-5 animate-spin text-slate-400" /></div>;
 
+  const filas = porMes.map((m) => ({
+    ...m,
+    netoUsd: (m.ingresos.USD || 0) - (m.egresos.USD || 0),
+    netoArs: (m.ingresos.ARS || 0) - (m.egresos.ARS || 0),
+  }));
+
+  // 7 columnas (mes + ingreso/egreso/neto x2 monedas) era ilegible en mobile
+  // aun con scroll horizontal -- separado en dos tablas responsivas, una por
+  // moneda, cada una con solo 4 columnas (Mes, Ingresos, Egresos, Neto).
+  const columnasPorMoneda = (moneda: "USD" | "ARS"): ColumnaTabla<(typeof filas)[number]>[] => [
+    { key: "mes", header: "Mes", cell: (m) => <span className="font-bold text-slate-700 dark:text-slate-200 capitalize">{m.label}</span> },
+    { key: "ingresos", header: "Ingresos", cell: (m) => <span className="font-mono text-emerald-600">{m.ingresos[moneda] ? fmt(m.ingresos[moneda], moneda) : "—"}</span>, claseTh: "text-right", claseTd: "text-right" },
+    { key: "egresos", header: "Egresos", cell: (m) => <span className="font-mono text-[#0145F2]">{m.egresos[moneda] ? fmt(m.egresos[moneda], moneda) : "—"}</span>, claseTh: "text-right", claseTd: "text-right" },
+    {
+      key: "neto", header: "Neto", claseTh: "text-right", claseTd: "text-right", anchoCompletoMobile: true,
+      cell: (m) => { const neto = moneda === "USD" ? m.netoUsd : m.netoArs; return <span className={`font-mono font-bold ${neto >= 0 ? "text-emerald-600" : "text-[#0145F2]"}`}>{fmt(neto, moneda)}</span>; },
+    },
+  ];
+
   return (
-    <div className="bg-white dark:bg-white/[0.02] border border-slate-200 dark:border-white/5 rounded-2xl overflow-hidden">
-      <p className="text-xs text-slate-400 px-4 pt-3">Ingresos, egresos y neto por mes (últimos 12 meses), por moneda.</p>
-      <div className="overflow-x-auto">
-        <table className="w-full text-left text-xs mt-2">
-          <thead><tr className="text-slate-400 uppercase text-[10px] border-b border-slate-100 dark:border-white/5"><th className="px-4 py-2">Mes</th><th className="px-4 py-2 text-right">Ingresos USD</th><th className="px-4 py-2 text-right">Egresos USD</th><th className="px-4 py-2 text-right">Neto USD</th><th className="px-4 py-2 text-right">Ingresos ARS</th><th className="px-4 py-2 text-right">Egresos ARS</th><th className="px-4 py-2 text-right">Neto ARS</th></tr></thead>
-          <tbody>
-            {porMes.map((m) => {
-              const netoUsd = (m.ingresos.USD || 0) - (m.egresos.USD || 0);
-              const netoArs = (m.ingresos.ARS || 0) - (m.egresos.ARS || 0);
-              return (
-                <tr key={m.key} className="border-b border-slate-50 dark:border-white/5">
-                  <td className="px-4 py-2 font-bold text-slate-700 dark:text-slate-200 capitalize">{m.label}</td>
-                  <td className="px-4 py-2 text-right font-mono text-emerald-600">{m.ingresos.USD ? fmt(m.ingresos.USD, "USD") : "—"}</td>
-                  <td className="px-4 py-2 text-right font-mono text-[#0145F2]">{m.egresos.USD ? fmt(m.egresos.USD, "USD") : "—"}</td>
-                  <td className={`px-4 py-2 text-right font-mono font-bold ${netoUsd >= 0 ? "text-emerald-600" : "text-[#0145F2]"}`}>{fmt(netoUsd, "USD")}</td>
-                  <td className="px-4 py-2 text-right font-mono text-emerald-600">{m.ingresos.ARS ? fmt(m.ingresos.ARS, "ARS") : "—"}</td>
-                  <td className="px-4 py-2 text-right font-mono text-[#0145F2]">{m.egresos.ARS ? fmt(m.egresos.ARS, "ARS") : "—"}</td>
-                  <td className={`px-4 py-2 text-right font-mono font-bold ${netoArs >= 0 ? "text-emerald-600" : "text-[#0145F2]"}`}>{fmt(netoArs, "ARS")}</td>
-                </tr>
-              );
-            })}
-          </tbody>
-        </table>
-      </div>
+    <div className="space-y-5">
+      <p className="text-xs text-slate-400 px-1">Ingresos, egresos y neto por mes (últimos 12 meses), por moneda.</p>
+      {(["USD", "ARS"] as const).map((moneda) => (
+        <div key={moneda} className="space-y-2">
+          <p className="text-[11px] font-black uppercase tracking-widest text-slate-400 px-1">Flujo de caja — {moneda}</p>
+          <TablaResponsiva columnas={columnasPorMoneda(moneda)} filas={filas} keyExtractor={(m) => m.key} />
+        </div>
+      ))}
     </div>
   );
 }
