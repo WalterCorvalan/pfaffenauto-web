@@ -2,7 +2,7 @@
 
 import { useMemo } from "react";
 import { TrendingUp, TrendingDown, Info } from "lucide-react";
-import { fmt } from "./shared";
+import { fmt, claseSemaforoCard } from "./shared";
 
 export default function RentabilidadTab({ movimientos, senasActivas, cuotasPendientes }: { movimientos: any[]; senasActivas: Record<string, number>; cuotasPendientes: Record<string, number> }) {
   // Rentabilidad del área Finanzas/Gestoría: movimientos SIN venta_id (multas,
@@ -67,8 +67,8 @@ export default function RentabilidadTab({ movimientos, senasActivas, cuotasPendi
           {Object.keys(egresosPorMoneda).length === 0 ? <p className="text-lg">—</p> : Object.entries(egresosPorMoneda).map(([m, n]) => <p key={m} className="text-lg font-black">{fmt(n, m)}</p>)}
           <p className="text-[10px] text-slate-400">{delArea.filter((m) => m.tipo === "egreso").length} movimientos</p>
         </div>
-        <div className="bg-white dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-xl p-4">
-          <p className="text-[10px] font-bold uppercase text-slate-400">Neto del área</p>
+        <div className={`rounded-xl p-4 border ${claseSemaforoCard(!Object.values(netoPorMoneda).some((n) => n < 0))}`}>
+          <p className="text-[10px] font-bold uppercase text-slate-500 dark:text-slate-400">Neto del área</p>
           {Object.keys(netoPorMoneda).length === 0 ? <p className="text-lg">USD 0<br />$ 0</p> : Object.entries(netoPorMoneda).map(([m, n]) => <p key={m} className="text-lg font-black">{fmt(n, m)}</p>)}
           <p className="text-[10px] text-slate-400">Ingresos − Egresos</p>
         </div>
