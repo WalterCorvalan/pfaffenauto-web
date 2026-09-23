@@ -7,6 +7,7 @@ import Image from "next/image";
 import { crearAlerta } from "@/lib/panel/alertas";
 import { rateLimit } from "@/lib/rateLimit";
 import { resolverContacto } from "@/lib/panel/contactoVehiculo";
+import DocumentosCliente from "./DocumentosCliente";
 
 export const dynamic = "force-dynamic";
 
@@ -305,6 +306,9 @@ export default async function SeguimientoPublicoPage({ params }: { params: Promi
               </ul>
             </div>
           )}
+
+          {/* Documentación del vehículo que el cliente entrega */}
+          <DocumentosCliente codigo={codigoUpper} />
 
           {/* Tarjeta del Asesor */}
           <div className="bg-white dark:bg-[#111] rounded-3xl p-6 shadow-sm border border-slate-100 dark:border-white/10 flex-1">

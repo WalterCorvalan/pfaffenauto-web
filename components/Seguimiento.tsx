@@ -37,8 +37,11 @@ export default function Seguimiento() {
               Seguí el camino de tu operacion.
             </h2>
             
-            <p className="text-slate-600 dark:text-slate-400 text-[15px] leading-relaxed mb-10 max-w-lg mx-auto lg:mx-0">
+            <p className="text-slate-600 dark:text-slate-400 text-[15px] leading-relaxed mb-4 max-w-lg mx-auto lg:mx-0">
               Ingresá el código único de 8 caracteres que te enviamos por WhatsApp al momento de señar o comprar tu vehículo para acceder a tu panel privado.
+            </p>
+            <p className="text-slate-500 dark:text-slate-500 text-[13px] leading-relaxed mb-10 max-w-lg mx-auto lg:mx-0">
+              Ahí vas a poder seguir el avance de tu operación y, si entregás un auto en parte de pago, subir fotos o PDF de la documentación directo desde el celular.
             </p>
 
             <div className="flex flex-col sm:flex-row justify-center lg:justify-start gap-6">

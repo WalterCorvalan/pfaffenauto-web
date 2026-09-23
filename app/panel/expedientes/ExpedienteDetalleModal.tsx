@@ -66,6 +66,7 @@ export default function ExpedienteDetalleModal({ expedienteId, miId, perfiles, s
   const [senas, setSenas] = useState<any[]>([]);
   const [gastos, setGastos] = useState<any[]>([]);
   const [documentos, setDocumentos] = useState<any[]>([]);
+  const [documentosCliente, setDocumentosCliente] = useState<any[]>([]);
   const [cuentas, setCuentas] = useState<any[]>([]);
   const [cargando, setCargando] = useState(true);
   const [subiendoTitulo, setSubiendoTitulo] = useState(false);
@@ -186,7 +187,7 @@ export default function ExpedienteDetalleModal({ expedienteId, miId, perfiles, s
     setExtraCobradoFormaPago(e.venta?.extra_cobrado_forma_pago || "");
     setExtraCobradoCuentaId(e.venta?.extra_cobrado_cuenta_id || "");
 
-    const [{ data: h }, { data: cl }, { data: o }, { data: s }, { data: g }, { data: d }, { data: c }, { data: veh }, { data: cr }] = await Promise.all([
+    const [{ data: h }, { data: cl }, { data: o }, { data: s }, { data: g }, { data: d }, { data: c }, { data: veh }, { data: cr }, { data: dc }] = await Promise.all([
       supabase2.from("expediente_hitos").select("*").eq("expediente_id", expedienteId).order("orden"),
       supabase2.from("expediente_checklist").select("*").eq("expediente_id", expedienteId).order("parte,orden"),
       supabase2.from("expediente_observaciones").select("*, autor:perfiles(nombre)").eq("expediente_id", expedienteId).order("created_at", { ascending: false }),
@@ -198,6 +199,10 @@ export default function ExpedienteDetalleModal({ expedienteId, miId, perfiles, s
         ? supabase2.from("vehiculos").select("propietario_dni, propietario_email, propietario_fecha_nacimiento, propietario_profesion").eq("id", e.venta.vehiculo_id).maybeSingle()
         : Promise.resolve({ data: null }),
       supabase2.from("expediente_cuentas_registro").select("*").eq("expediente_id", expedienteId).order("orden"),
+      // Documentación que el cliente subió solo desde /seguimiento (auto
+      // que entrega en parte de pago, DNI, cédula verde) -- tabla separada
+      // de expediente_documentos, que es donde el staff sube adjuntos.
+      e.venta ? supabase2.from("documentos_cliente").select("*").eq("venta_id", e.venta.id).order("created_at", { ascending: false }) : Promise.resolve({ data: [] }),
     ]);
     setHitos(h || []);
     setChecklist(cl || []);
@@ -207,6 +212,7 @@ export default function ExpedienteDetalleModal({ expedienteId, miId, perfiles, s
     setDocumentos(d || []);
     setCuentas(c || []);
     setCuentasRegistro(cr || []);
+    setDocumentosCliente(dc || []);
     setCompradorNombre2(e.venta?.comprador_nombre || "");
     setCompradorDni(e.venta?.comprador_dni || "");
     setCompradorTelefono2(e.venta?.comprador_telefono || "");
@@ -1123,6 +1129,22 @@ export default function ExpedienteDetalleModal({ expedienteId, miId, perfiles, s
 
           {tab === "Documentos" && (
             <div className="space-y-4">
+              {documentosCliente.length > 0 && (
+                <div>
+                  <div className="flex items-center gap-2 mb-2">
+                    <span className="text-[9px] font-black uppercase bg-teal-100 dark:bg-teal-500/20 text-teal-700 dark:text-teal-300 px-2 py-0.5 rounded">CLIENTE</span>
+                    <p className="text-xs font-bold text-slate-600 dark:text-slate-300">Subidos por el cliente desde el seguimiento</p>
+                  </div>
+                  <div className="space-y-1.5">
+                    {documentosCliente.map((doc: any) => (
+                      <div key={doc.id} className="flex items-center justify-between bg-slate-50 dark:bg-white/5 border border-slate-100 dark:border-white/10 rounded-lg px-3 py-2">
+                        <p className="text-xs font-semibold text-slate-700 dark:text-slate-200">{doc.nombre}</p>
+                        <a href={doc.url} target="_blank" rel="noreferrer" className="text-[11px] text-[#0145F2] hover:underline shrink-0">Ver archivo</a>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
               {(["venta", "vendedora", "compradora"] as const).map((parte) => {
                 const items = checklist.filter((c) => c.parte === parte);
                 if (items.length === 0) return null;
