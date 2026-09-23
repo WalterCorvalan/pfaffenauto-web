@@ -96,10 +96,27 @@ export async function POST(request: Request) {
     return { ventaId: null, expedienteId: null, vehiculoId: null, ventaEraCerrada: false };
   }
 
+  // Una venta con comisiones ya COBRADAS (plata real ya pagada) que se manda
+  // a Papelera dejaba esas comisiones huérfanas -- la RLS de ventas filtra
+  // deleted_at is null, así que la comisión seguía apareciendo en el
+  // listado con venta null, sin ningún aviso de que la plata pagada ya no
+  // corresponde a ninguna venta viva. Ver auditoría del 23/9. Se bloquea
+  // el borrado (lógico y definitivo) en vez de revertir la comisión sola
+  // -- esa decisión (¿se le reclama al vendedor? ¿queda como estaba?) es
+  // del dueño del negocio, no algo para resolver en silencio acá.
+  async function tieneComisionesCobradas(ventaId: string | null): Promise<boolean> {
+    if (!ventaId) return false;
+    const { count } = await sb.from("comisiones").select("id", { count: "exact", head: true }).eq("venta_id", ventaId).eq("estado", "cobrada");
+    return (count || 0) > 0;
+  }
+
   if (accion === "eliminar") {
     const patch = { deleted_at: new Date().toISOString(), deleted_by: user!.id, motivo_eliminacion: motivo?.trim() || null };
     if (tipo === "ventas" || tipo === "expedientes") {
       const { ventaId, expedienteId, vehiculoId } = await parEncontrado();
+      if (await tieneComisionesCobradas(ventaId)) {
+        return NextResponse.json({ error: "Esta venta tiene comisiones ya cobradas (plata pagada). No se puede eliminar sin resolver esas comisiones primero." }, { status: 409 });
+      }
       if (ventaId) await sb.from("ventas").update(patch).eq("id", ventaId);
       if (expedienteId) await sb.from("expedientes").update(patch).eq("id", expedienteId);
       if (vehiculoId) {
@@ -140,6 +157,9 @@ export async function POST(request: Request) {
   // restringían las políticas borrar_ventas/borrar_expedientes/etc.
   if (tipo === "ventas" || tipo === "expedientes") {
     const { ventaId, expedienteId } = await parEncontrado();
+    if (await tieneComisionesCobradas(ventaId)) {
+      return NextResponse.json({ error: "Esta venta tiene comisiones ya cobradas (plata pagada). No se puede eliminar sin resolver esas comisiones primero." }, { status: 409 });
+    }
     if (expedienteId) await sb.from("expedientes").delete().eq("id", expedienteId);
     if (ventaId) await sb.from("ventas").delete().eq("id", ventaId);
   } else {
