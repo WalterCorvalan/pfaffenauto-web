@@ -2,6 +2,7 @@ import Link from "next/link";
 import { Suspense } from "react";
 import PublicHeader from "@/components/PublicHeader";
 import Footer from "@/components/Footer";
+import CursorSpotlight from "@/components/CursorSpotlight";
 import UtmTracker from "@/components/UtmTracker";
 import FloatingChatbot from "@/components/FloatingChatbot";
 import CookieBanner from "@/components/CookieBanner";
@@ -20,6 +21,7 @@ export default function PublicLayout({
     <TemaPublicoProvider>
       <TemaPublicoRoot>
         <div className="public-root relative min-h-screen flex flex-col bg-background text-foreground selection:bg-primary selection:text-white">
+          <CursorSpotlight />
           <Suspense fallback={null}>
             <RouteProgress />
           </Suspense>
