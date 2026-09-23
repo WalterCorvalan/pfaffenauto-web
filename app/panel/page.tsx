@@ -1,5 +1,6 @@
 import { createClient } from "@/lib/supabase/server";
 import DashboardClient from "./DashboardClient";
+import { CATEGORIAS_GASTO_FIJO, CATEGORIAS_GASTO_VARIABLE } from "./finanzas/tabs/shared";
 
 export const metadata = { title: "Dashboard | Pfaffen Autos" };
 
@@ -366,6 +367,20 @@ export default async function PanelV2Home() {
   const netoPorMoneda: Record<string, number> = {};
   ["ARS", "USD"].forEach((m) => { netoPorMoneda[m] = (ingresosPorMoneda[m] || 0) - (egresosPorMoneda[m] || 0); });
 
+  // Gastos fijos/variables del mes, mismas categorías que usa el punto de
+  // equilibrio en Finanzas → Resumen (shared.ts) -- para el semáforo de
+  // "Ticket promedio" / "Ingresos por ventas" del Dashboard (ventas vs
+  // costos del mes, no el total de egresos que incluye compra de autos).
+  const gastosFijosTotales: Record<string, number> = {};
+  const gastosVariablesTotales: Record<string, number> = {};
+  (movimientosMes || []).forEach((m: any) => {
+    if (m.tipo !== "egreso") return;
+    const moneda = monedaPorCuenta[m.cuenta_id];
+    if (!moneda) return;
+    if (CATEGORIAS_GASTO_FIJO.includes(m.tipo_movimiento)) gastosFijosTotales[moneda] = (gastosFijosTotales[moneda] || 0) + Number(m.monto);
+    else if (CATEGORIAS_GASTO_VARIABLE.includes(m.tipo_movimiento)) gastosVariablesTotales[moneda] = (gastosVariablesTotales[moneda] || 0) + Number(m.monto);
+  });
+
   // Top 10 gastos del mes (por monto, cualquier moneda mezclada solo para
   // ordenar -- el monto se muestra siempre con su moneda real de la cuenta).
   const top10Gastos = [...(egresosMesDetalle || [])]
@@ -475,6 +490,8 @@ export default async function PanelV2Home() {
       ingresosPorMoneda={ingresosPorMoneda}
       egresosPorMoneda={egresosPorMoneda}
       netoPorMoneda={netoPorMoneda}
+      gastosFijosTotales={gastosFijosTotales}
+      gastosVariablesTotales={gastosVariablesTotales}
       topIngresos={topIngresos}
       topEgresos={topEgresos}
       cuentas={cuentasConSaldoReal}

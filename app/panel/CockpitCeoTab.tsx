@@ -9,7 +9,7 @@ import {
 } from "lucide-react";
 import { supabase2 } from "@/lib/supabase/client";
 import { useRentabilidadPorVehiculo } from "./finanzas/tabs/useRentabilidadPorVehiculo";
-import { netoOperatoriaAreaPorMoneda } from "./finanzas/tabs/shared";
+import { ingresosEgresosOperatoriaAreaPorMoneda, zonaEquilibrio, CLASE_ZONA_CARD } from "./finanzas/tabs/shared";
 
 interface RankingFila { vendedor_id: string; nombre: string; ventas_equivalentes: number; consignaciones: number }
 interface Props {
@@ -32,12 +32,6 @@ const PREGUNTAS_RAPIDAS = ["¿Qué debería atacar hoy?", "¿Cómo venimos con e
 function fmtMoneda(n: number, moneda: string) {
   return moneda === "ARS" ? `$ ${Math.round(n).toLocaleString("es-AR")}` : `${moneda} ${Math.round(n).toLocaleString("es-AR")}`;
 }
-function fmtPorMoneda(map: Record<string, number>) {
-  const entradas = Object.entries(map).filter(([, v]) => v !== 0);
-  if (entradas.length === 0) return "—";
-  return entradas.map(([m, v]) => fmtMoneda(v, m)).join(" · ");
-}
-
 function MiniStat({ label, valor, sub }: { label: string; valor: React.ReactNode; sub?: string }) {
   return (
     <div className="rounded-xl p-3 bg-white/10">
@@ -87,9 +81,8 @@ export default function CockpitCeoTab({ miNombre, ocultarMontos, diaDelMes, dias
       .then(({ data }) => setMovimientosAreaMes(data || []));
   }, []);
   const { totalesPorMoneda: rentabilidadVehiculoMes } = useRentabilidadPorVehiculo(ventasDelMesFin);
-  const operatoriaAreaMes = netoOperatoriaAreaPorMoneda(movimientosAreaMes);
-  const gananciaVehiculoPorMoneda: Record<string, number> = {};
-  Object.entries(rentabilidadVehiculoMes).forEach(([m, t]) => { gananciaVehiculoPorMoneda[m] = t.ganancia; });
+  const { ingresos: ingresosAreaMes, egresos: egresosAreaMes } = ingresosEgresosOperatoriaAreaPorMoneda(movimientosAreaMes);
+  const operatoriaAreaMonedas = Array.from(new Set([...Object.keys(ingresosAreaMes), ...Object.keys(egresosAreaMes)]));
 
   const enviar = async (texto: string) => {
     if (!texto.trim() || cargando) return;
@@ -202,11 +195,6 @@ export default function CockpitCeoTab({ miNombre, ocultarMontos, diaDelMes, dias
             variacionAnual !== null && <p className={`text-[11px] mt-1 font-bold ${variacionAnual >= 0 ? "text-emerald-600" : "text-rose-600"}`}>{variacionAnual >= 0 ? "+" : ""}{variacionAnual}% vs mismo mes año anterior</p>
           )}
         </div>
-        <Link href="/panel/finanzas" className="rounded-2xl p-4 bg-white dark:bg-white/[0.02] border border-slate-200 dark:border-white/5 hover:border-indigo-300 dark:hover:border-indigo-500/40 transition-colors block">
-          <p className="text-[10px] font-bold uppercase text-slate-400 flex items-center gap-1.5 mb-1"><DollarSign className="w-3.5 h-3.5" /> Rentabilidad por vehículo</p>
-          <p className={`text-2xl font-black text-slate-900 dark:text-white ${ocultarMontos ? "blur-sm select-none" : ""}`}>{fmtPorMoneda(gananciaVehiculoPorMoneda)}</p>
-          <p className="text-[11px] text-slate-400 mt-1">Venta − costo − comisión − gastos, del mes</p>
-        </Link>
         <div className="rounded-2xl p-4 bg-white dark:bg-white/[0.02] border border-slate-200 dark:border-white/5">
           <p className="text-[10px] font-bold uppercase text-slate-400 flex items-center gap-1.5 mb-1"><Handshake className="w-3.5 h-3.5" /> Consignaciones del mes</p>
           <p className="text-2xl font-black text-slate-900 dark:text-white">{consignacionesDelMes}</p>
@@ -221,6 +209,25 @@ export default function CockpitCeoTab({ miNombre, ocultarMontos, diaDelMes, dias
           <p className="text-[11px] text-slate-400 mt-1">{ranking[0]?.ventas_equivalentes > 0 ? `${ranking[0].ventas_equivalentes} venta${ranking[0].ventas_equivalentes === 1 ? "" : "s"}` : "Sin ventas todavía"}</p>
         </div>
       </div>
+
+      {/* Rentabilidad por vehículo: una tarjeta por moneda (antes ARS y USD
+          quedaban mezclados en una sola) con semáforo de venta vs costo+
+          comisión+gastos de ese mismo vehículo -- mismo criterio que
+          "Rentabilidad general" en Finanzas → Resumen. */}
+      {Object.keys(rentabilidadVehiculoMes).length > 0 && (
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+          {Object.entries(rentabilidadVehiculoMes).map(([moneda, t]) => {
+            const zona = zonaEquilibrio(t.precioVenta, t.costo + t.comision + t.gastos);
+            return (
+              <Link key={moneda} href="/panel/finanzas" className={`rounded-2xl p-4 border transition-colors hover:opacity-90 block ${CLASE_ZONA_CARD[zona]}`}>
+                <p className="text-[10px] font-bold uppercase text-slate-500 dark:text-slate-400 flex items-center gap-1.5 mb-1"><DollarSign className="w-3.5 h-3.5" /> Rentabilidad por vehículo ({moneda})</p>
+                <p className={`text-2xl font-black text-slate-900 dark:text-white ${ocultarMontos ? "blur-sm select-none" : ""}`}>{fmtMoneda(t.ganancia, moneda)}</p>
+                <p className="text-[11px] text-slate-400 mt-1">Venta − costo − comisión − gastos, del mes ({t.cantidad} venta{t.cantidad === 1 ? "" : "s"})</p>
+              </Link>
+            );
+          })}
+        </div>
+      )}
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         <div className="rounded-2xl p-5 bg-white dark:bg-white/[0.02] border border-slate-200 dark:border-white/5">
@@ -251,27 +258,38 @@ export default function CockpitCeoTab({ miNombre, ocultarMontos, diaDelMes, dias
         </div>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-        <div className="rounded-2xl p-5 bg-gradient-to-br from-violet-50 to-white dark:from-violet-500/10 dark:to-transparent border border-violet-100 dark:border-violet-500/20">
-          <p className="text-sm font-bold text-slate-800 dark:text-white mb-1 flex items-center gap-1.5"><TrendingUp className="w-4 h-4 text-violet-500" /> Tu operación (año)</p>
-          <div className="flex items-end justify-between mt-2">
-            <div>
-              <p className="text-2xl font-black text-slate-900 dark:text-white">{tuOperacion.ventas}</p>
-              <p className="text-[10px] font-bold uppercase text-slate-400">Ventas cerradas</p>
-            </div>
-            <div className="text-right">
-              <p className={`text-lg font-black text-violet-600 dark:text-violet-400 ${ocultarMontos ? "blur-sm select-none" : ""}`}>USD {tuOperacion.usd.toLocaleString("es-AR")}</p>
-              <p className="text-[9px] text-slate-400">solo ventas en USD</p>
-            </div>
+      <div className="rounded-2xl p-5 bg-gradient-to-br from-violet-50 to-white dark:from-violet-500/10 dark:to-transparent border border-violet-100 dark:border-violet-500/20">
+        <p className="text-sm font-bold text-slate-800 dark:text-white mb-1 flex items-center gap-1.5"><TrendingUp className="w-4 h-4 text-violet-500" /> Tu operación (año)</p>
+        <div className="flex items-end justify-between mt-2">
+          <div>
+            <p className="text-2xl font-black text-slate-900 dark:text-white">{tuOperacion.ventas}</p>
+            <p className="text-[10px] font-bold uppercase text-slate-400">Ventas cerradas</p>
+          </div>
+          <div className="text-right">
+            <p className={`text-lg font-black text-violet-600 dark:text-violet-400 ${ocultarMontos ? "blur-sm select-none" : ""}`}>USD {tuOperacion.usd.toLocaleString("es-AR")}</p>
+            <p className="text-[9px] text-slate-400">solo ventas en USD</p>
           </div>
         </div>
-
-        <Link href="/panel/finanzas" className="rounded-2xl p-5 bg-white dark:bg-white/[0.02] border border-slate-200 dark:border-white/5 hover:border-indigo-300 dark:hover:border-indigo-500/40 transition-colors block">
-          <p className="text-sm font-bold text-slate-800 dark:text-white mb-2 flex items-center gap-1.5"><ClipboardList className="w-4 h-4 text-indigo-500" /> Operatoria del área · mes</p>
-          <p className={`text-lg font-black text-slate-900 dark:text-white ${ocultarMontos ? "blur-sm select-none" : ""}`}>{fmtPorMoneda(operatoriaAreaMes)}</p>
-          <p className="text-[11px] text-slate-400">Neto de gestoría, multas, honorarios y trámites — ya con gastos del área descontados.</p>
-        </Link>
       </div>
+
+      {/* Operatoria del área: una tarjeta por moneda con semáforo de
+          ingresos vs egresos del área (misma lógica que RentabilidadTab.tsx
+          en Finanzas), en vez de una sola tarjeta con ARS y USD mezclados. */}
+      {operatoriaAreaMonedas.length > 0 && (
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+          {operatoriaAreaMonedas.map((moneda) => {
+            const zona = zonaEquilibrio(ingresosAreaMes[moneda] || 0, egresosAreaMes[moneda] || 0);
+            const neto = (ingresosAreaMes[moneda] || 0) - (egresosAreaMes[moneda] || 0);
+            return (
+              <Link key={moneda} href="/panel/finanzas" className={`rounded-2xl p-5 border transition-colors hover:opacity-90 block ${CLASE_ZONA_CARD[zona]}`}>
+                <p className="text-sm font-bold text-slate-800 dark:text-white mb-2 flex items-center gap-1.5"><ClipboardList className="w-4 h-4 text-indigo-500" /> Operatoria del área · mes ({moneda})</p>
+                <p className={`text-lg font-black text-slate-900 dark:text-white ${ocultarMontos ? "blur-sm select-none" : ""}`}>{fmtMoneda(neto, moneda)}</p>
+                <p className="text-[11px] text-slate-400">Neto de gestoría, multas, honorarios y trámites — ya con gastos del área descontados.</p>
+              </Link>
+            );
+          })}
+        </div>
+      )}
 
       <div className="rounded-2xl p-5 bg-white dark:bg-white/[0.02] border border-slate-200 dark:border-white/5">
         <p className="text-sm font-bold text-slate-800 dark:text-white mb-3 flex items-center gap-1.5"><Star className="w-4 h-4 text-amber-500" /> Calificaciones de ventas — mes en curso</p>
