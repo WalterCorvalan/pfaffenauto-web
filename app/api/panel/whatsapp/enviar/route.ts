@@ -65,10 +65,13 @@ export async function POST(request: Request) {
 
   const { data: perfil } = await supabaseAdmin.from("perfiles").select("nombre").eq("id", user.id).maybeSingle();
 
-  let textoFinal = texto;
-  if (conversacion?.ai_habilitada === false && perfil?.nombre) {
-    textoFinal = `[${perfil.nombre}]\n${texto}`;
-  }
+  // El [Nombre] va siempre en un mensaje manual, sin importar si la IA
+  // seguía activa en ese momento -- antes solo se agregaba si ya estaba
+  // pausada, así que un mensaje mandado mientras el bot todavía respondía
+  // salía "pelado" (ver más abajo: la pausa recién ocurre después de
+  // mandar este mismo mensaje, es tarde para que el chequeo de arriba la
+  // vea). El cliente siempre tiene que saber quién le escribe.
+  const textoFinal = perfil?.nombre ? `[${perfil.nombre}]\n${texto}` : texto;
 
   const { data: mensaje, error: insertError } = await supabaseAdmin
     .from("whatsapp_mensajes")
