@@ -378,7 +378,11 @@ export default function MovimientosTab({
               <button onClick={() => setRTipo("egreso")} className={`flex-1 py-2 rounded-lg text-sm font-bold ${rTipo === "egreso" ? "bg-[#0145F2] text-white" : "border border-slate-200 dark:border-white/10"}`}>Egreso</button>
             </div>
             <div className="grid grid-cols-2 gap-2">
-              <div><label className={labelClass}>Categoría *</label><select value={rCategoria} onChange={(e) => setRCategoria(e.target.value)} className={inputClass}>{CATEGORIAS.map((c) => <option key={c}>{c}</option>)}</select></div>
+              <div>
+                <label className={labelClass}>Categoría / destino *</label>
+                <input list="categorias-movimiento" value={rCategoria} onChange={(e) => setRCategoria(e.target.value)} placeholder="Elegí una o escribí la tuya" className={inputClass} />
+                <datalist id="categorias-movimiento">{CATEGORIAS.map((c) => <option key={c} value={c} />)}</datalist>
+              </div>
               <div><label className={labelClass}>Fecha *</label><input type="date" value={rFecha} onChange={(e) => setRFecha(e.target.value)} className={inputClass} /></div>
             </div>
             <label className={labelClass + " mt-3"}>Monto *</label>
