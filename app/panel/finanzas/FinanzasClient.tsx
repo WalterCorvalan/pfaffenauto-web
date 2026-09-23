@@ -97,7 +97,7 @@ export default function FinanzasClient({
   chequesIniciales, pagosDisponiblesIniciales, consumosTarjetaIniciales, retirosIniciales, devolucionesIniciales,
   expedientes, senasActivasPorMoneda,
   prestamosIniciales, presupuestosIniciales, recurrenciasIniciales, generacionesIniciales, arqueosIniciales, cierresDiariosIniciales, miNombre,
-  senasIniciales, vehiculosDisponiblesFull, sucursales, veTodasSucursales, miSucursalId, vehiculosTodos,
+  senasIniciales, vehiculosDisponiblesFull, sucursales, veTodasSucursales, miSucursalId, vehiculosTodos, soloCajaSucursal,
 }: {
   miId: string; soyAdmin: boolean; soyAdminOFinanzas: boolean; cuentasIniciales: any[]; movimientosIniciales: any[]; cierresIniciales: any[];
   cuotasCobrarIniciales: any[]; cuotasPagarIniciales: any[]; vendedores: any[]; clientes: any[]; vehiculos: any[]; ventas: any[];
@@ -105,9 +105,14 @@ export default function FinanzasClient({
   expedientes: any[]; senasActivasPorMoneda: Record<string, number>;
   prestamosIniciales: any[]; presupuestosIniciales: any[]; recurrenciasIniciales: any[]; generacionesIniciales: any[]; arqueosIniciales: any[]; cierresDiariosIniciales: any[]; miNombre: string;
   senasIniciales: any[]; vehiculosDisponiblesFull: any[]; sucursales: any[]; veTodasSucursales: boolean; miSucursalId: string | null; vehiculosTodos: { id: string; marca: string; modelo: string; anio: number; patente: string | null }[];
+  // Pedido del 23/9: un encargado de sucursal (ej. Lucas en Don Torcuato) no
+  // ve el resto de Finanzas -- solo Caja Grande/Chica de su propia
+  // sucursal, nada más. Antes solo esa pestaña se filtraba por sucursal,
+  // pero el resto del módulo quedaba completamente abierto.
+  soloCajaSucursal: boolean;
 }) {
-  const [tab, setTabRaw] = useState("resumen");
-  const [grupo, setGrupo] = useState("resumen");
+  const [tab, setTabRaw] = useState(soloCajaSucursal ? "caja-grande-chica" : "resumen");
+  const [grupo, setGrupo] = useState(soloCajaSucursal ? "caja-bancos" : "resumen");
   // Cambiar de grupo lleva al primer sub-tab de ese grupo; setTab (usado por
   // ResumenTab para "ir a Cuotas" etc.) también reubica el grupo activo, para
   // que la navegación cruzada entre tabs no deje la barra de grupos desincronizada.
@@ -385,6 +390,20 @@ export default function FinanzasClient({
     }));
     return [...deVentas, ...deSenas].sort((a, b) => (b.fecha || "").localeCompare(a.fecha || ""));
   }, [ventas, senas]);
+
+  // Encargado de sucursal: solo Caja Grande/Chica de su propia sucursal, sin
+  // barra de grupos/tabs ni acceso a ningún otro dato de Finanzas.
+  if (soloCajaSucursal) {
+    return (
+      <div className="p-6 max-w-6xl mx-auto">
+        <div className="mb-4">
+          <h1 className="text-xl font-bold">Caja de tu sucursal</h1>
+          <p className="text-sm text-slate-400">Solo ves la Caja Grande/Chica de tu sucursal asignada.</p>
+        </div>
+        <CajaGrandeChicaTab miId={miId} soyAdmin={soyAdmin} cuentas={cuentas} setCuentas={setCuentas} movimientos={movimientos} setMovimientos={setMovimientos} sucursales={sucursales.filter((s) => s.id === miSucursalId)} vendedores={vendedores} />
+      </div>
+    );
+  }
 
   return (
     <div className="p-6 max-w-6xl mx-auto">
