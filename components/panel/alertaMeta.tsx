@@ -48,6 +48,8 @@ export const TIPO_ICON: Record<string, any> = {
   mi_resumen_diario: BarChart3,
   mi_resumen_semanal: BarChart3,
   resumen_diario_empresa: BarChart3,
+  cheque_por_vencer: AlarmClock,
+  finanzas_vencimiento: AlarmClock,
 };
 
 export const TIPO_COLOR: Record<string, string> = {
@@ -86,6 +88,8 @@ export const TIPO_COLOR: Record<string, string> = {
   mi_resumen_diario: "bg-indigo-100 text-indigo-600 dark:bg-indigo-500/15 dark:text-indigo-300",
   mi_resumen_semanal: "bg-indigo-100 text-indigo-600 dark:bg-indigo-500/15 dark:text-indigo-300",
   resumen_diario_empresa: "bg-indigo-100 text-indigo-600 dark:bg-indigo-500/15 dark:text-indigo-300",
+  cheque_por_vencer: "bg-rose-100 text-rose-600 dark:bg-rose-500/15 dark:text-rose-300",
+  finanzas_vencimiento: "bg-rose-100 text-rose-600 dark:bg-rose-500/15 dark:text-rose-300",
 };
 
 export const TIPO_VER: Record<string, string> = {
@@ -124,6 +128,8 @@ export const TIPO_VER: Record<string, string> = {
   mi_resumen_diario: "Ver resumen",
   mi_resumen_semanal: "Ver resumen",
   resumen_diario_empresa: "Ver resumen",
+  cheque_por_vencer: "Ver Finanzas",
+  finanzas_vencimiento: "Ver Finanzas",
 };
 
 export const ICONO_DEFECTO = Bell;
