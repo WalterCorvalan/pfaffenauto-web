@@ -2,7 +2,7 @@
 
 import { useState, useMemo } from "react";
 import { supabase2 } from "@/lib/supabase/client";
-import { Plus, X, Save, DollarSign } from "lucide-react";
+import { Plus, X, Save, DollarSign, Pencil } from "lucide-react";
 import { inputClass, labelClass, fmt } from "./shared";
 import TablaResponsiva, { type ColumnaTabla } from "@/components/panel/TablaResponsiva";
 
@@ -14,6 +14,7 @@ export default function PagosDispTab({
   const [filtro, setFiltro] = useState<Filtro>("todos");
   const [busqueda, setBusqueda] = useState("");
   const [showNuevo, setShowNuevo] = useState(false);
+  const [editando, setEditando] = useState<any | null>(null);
   const [descripcion, setDescripcion] = useState("");
   const [monto, setMonto] = useState("");
   const [moneda, setMoneda] = useState("USD");
@@ -56,20 +57,38 @@ export default function PagosDispTab({
     return l;
   }, [pagos, filtro, busqueda]);
 
-  const abrirNuevo = () => { setDescripcion(""); setMonto(""); setMoneda("USD"); setFecha(hoy); setCuentaId(""); setExpedienteId(""); setClientePropietario(""); setNotas(""); setShowNuevo(true); };
+  const abrirNuevo = () => { setEditando(null); setDescripcion(""); setMonto(""); setMoneda("USD"); setFecha(hoy); setCuentaId(""); setExpedienteId(""); setClientePropietario(""); setNotas(""); setShowNuevo(true); };
+
+  // Editable mientras no tenga ningún cobro parcial todavía (monto_cobrado
+  // === 0 y !cobrado) -- un cobro parcial ya generó un movimiento real con el
+  // monto viejo, así que cambiar el monto después lo dejaría inconsistente.
+  const abrirEditar = (p: any) => {
+    setEditando(p);
+    setDescripcion(p.descripcion); setMonto(String(p.monto)); setMoneda(p.moneda); setFecha(p.fecha); setCuentaId(p.cuenta_id || "");
+    setExpedienteId(p.expediente_id || ""); setClientePropietario(p.cliente_propietario || ""); setNotas(p.notas || "");
+    setShowNuevo(true);
+  };
 
   const crear = async () => {
     if (!descripcion.trim() || !monto) return alert("Completá descripción y monto.");
     setGuardando(true);
     try {
-      const { data, error } = await supabase2.from("pagos_disponibles").insert({
+      const payload = {
         descripcion: descripcion.trim(), monto: Number(monto), moneda, fecha, cuenta_id: cuentaId || null,
         expediente_id: expedienteId || null, cliente_propietario: clientePropietario || null, notas: notas || null,
-      }).select().single();
+      };
+      if (editando) {
+        const { data, error } = await supabase2.from("pagos_disponibles").update(payload).eq("id", editando.id).select().single();
+        if (error) throw error;
+        setPagos((prev: any[]) => prev.map((p) => (p.id === editando.id ? data : p)));
+        setShowNuevo(false);
+        return;
+      }
+      const { data, error } = await supabase2.from("pagos_disponibles").insert(payload).select().single();
       if (error) throw error;
       setPagos((prev: any[]) => [data, ...prev]);
       setShowNuevo(false);
-    } catch (err: any) { alert(err?.message ? `No se pudo registrar el pago: ${err.message}` : "No se pudo registrar el pago."); } finally { setGuardando(false); }
+    } catch (err: any) { alert(err?.message ? `No se pudo guardar el pago: ${err.message}` : "No se pudo guardar el pago."); } finally { setGuardando(false); }
   };
 
   const abrirCobro = (p: any) => {
@@ -153,14 +172,19 @@ export default function PagosDispTab({
               { key: "notas", header: "Notas", cell: (p) => p.notas || "—", claseTd: "text-slate-400" },
             ] as ColumnaTabla<any>[]
           }
-          acciones={(p) => !p.cobrado && <button onClick={() => abrirCobro(p)} className="flex items-center gap-1 text-emerald-600 font-bold"><DollarSign className="w-3.5 h-3.5" /> Cobrar</button>}
+          acciones={(p) => !p.cobrado && (
+            <div className="flex items-center gap-2">
+              <button onClick={() => abrirCobro(p)} className="flex items-center gap-1 text-emerald-600 font-bold"><DollarSign className="w-3.5 h-3.5" /> Cobrar</button>
+              {Number(p.monto_cobrado) === 0 && <button onClick={() => abrirEditar(p)} className="text-slate-400 hover:text-[#0145F2]"><Pencil className="w-3.5 h-3.5" /></button>}
+            </div>
+          )}
         />
       )}
 
       {showNuevo && (
         <div className="fixed inset-0 bg-black/40 z-50 flex items-center justify-center p-4" onClick={() => setShowNuevo(false)}>
           <div onClick={(e) => e.stopPropagation()} className="bg-white dark:bg-[#141414] border border-slate-200 dark:border-white/10 w-full max-w-md rounded-2xl shadow-2xl p-6 max-h-[90vh] overflow-y-auto">
-            <div className="flex justify-between items-start mb-1"><h3 className="text-lg font-bold">Nuevo pago disponible</h3><button onClick={() => setShowNuevo(false)}><X className="w-4 h-4 text-slate-400" /></button></div>
+            <div className="flex justify-between items-start mb-1"><h3 className="text-lg font-bold">{editando ? "Editar pago disponible" : "Nuevo pago disponible"}</h3><button onClick={() => setShowNuevo(false)}><X className="w-4 h-4 text-slate-400" /></button></div>
             <p className="text-xs text-slate-400 mb-4">Pagos pendientes/disponibles para entregar al propietario. Al marcarse Cobrado se genera el Egreso en Finanzas automáticamente.</p>
             <label className={labelClass}>Descripción / Vehículo *</label>
             <input value={descripcion} onChange={(e) => setDescripcion(e.target.value)} className={inputClass} />
@@ -179,7 +203,7 @@ export default function PagosDispTab({
             <label className={labelClass + " mt-3"}>Notas</label>
             <textarea value={notas} onChange={(e) => setNotas(e.target.value)} rows={2} className={inputClass} />
             <p className="text-[10px] text-slate-400 mt-2">El pago queda como pendiente — no afecta saldos hasta que se marque Cobrado.</p>
-            <div className="flex justify-end gap-2 mt-4"><button onClick={() => setShowNuevo(false)} className="px-4 py-2 text-sm font-bold text-slate-500">Cancelar</button><button onClick={crear} disabled={guardando} className="flex items-center gap-1.5 px-4 py-2 text-sm font-bold bg-[#0145F2] hover:bg-[#0138c9] text-white rounded-lg disabled:opacity-50"><Save className="w-4 h-4" /> Registrar pago</button></div>
+            <div className="flex justify-end gap-2 mt-4"><button onClick={() => setShowNuevo(false)} className="px-4 py-2 text-sm font-bold text-slate-500">Cancelar</button><button onClick={crear} disabled={guardando} className="flex items-center gap-1.5 px-4 py-2 text-sm font-bold bg-[#0145F2] hover:bg-[#0138c9] text-white rounded-lg disabled:opacity-50"><Save className="w-4 h-4" /> {editando ? "Guardar" : "Registrar pago"}</button></div>
           </div>
         </div>
       )}

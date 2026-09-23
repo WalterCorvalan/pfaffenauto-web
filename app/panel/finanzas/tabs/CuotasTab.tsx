@@ -2,7 +2,7 @@
 
 import { useState, useMemo } from "react";
 import { supabase2 } from "@/lib/supabase/client";
-import { Plus, X, Save, ListPlus, DollarSign, Trash2 } from "lucide-react";
+import { Plus, X, Save, ListPlus, DollarSign, Trash2, Pencil } from "lucide-react";
 import { inputClass, labelClass, fmt, diasHasta } from "./shared";
 
 const FREQ_DIAS: Record<string, number> = { Mensual: 30, Bimestral: 60, Anual: 365 };
@@ -21,6 +21,7 @@ export default function CuotasTab({
 
   // A cobrar
   const [showNuevaC, setShowNuevaC] = useState(false);
+  const [editandoC, setEditandoC] = useState<any | null>(null);
   const [cClienteId, setCClienteId] = useState("");
   const [cVendedorId, setCVendedorId] = useState("");
   const [cConcepto, setCConcepto] = useState("");
@@ -31,6 +32,7 @@ export default function CuotasTab({
 
   // A pagar
   const [showNuevaP, setShowNuevaP] = useState(false);
+  const [editandoP, setEditandoP] = useState<any | null>(null);
   const [pAcreedor, setPAcreedor] = useState("");
   const [pTipoDeuda, setPTipoDeuda] = useState("compra");
   const [pConcepto, setPConcepto] = useState("");
@@ -43,6 +45,35 @@ export default function CuotasTab({
   const [pPrimerVencimiento, setPPrimerVencimiento] = useState(new Date().toISOString().slice(0, 10));
   const [pNotas, setPNotas] = useState("");
   const [guardandoP, setGuardandoP] = useState(false);
+
+  // Edición de una cuota a pagar puntual (no del plan completo) -- separado
+  // del modal de "Nueva deuda en cuotas" porque ese genera N filas de una
+  // (cantidad/frecuencia), acá se corrige una sola fila ya creada. Mismo
+  // criterio que el resto: solo si no tiene pago parcial todavía.
+  const [editandoCuotaP, setEditandoCuotaP] = useState<any | null>(null);
+  const [epAcreedor, setEpAcreedor] = useState("");
+  const [epConcepto, setEpConcepto] = useState("");
+  const [epMonto, setEpMonto] = useState("");
+  const [epVencimiento, setEpVencimiento] = useState("");
+  const [guardandoEp, setGuardandoEp] = useState(false);
+
+  const abrirEditarCuotaP = (c: any) => {
+    setEditandoCuotaP(c);
+    setEpAcreedor(c.acreedor); setEpConcepto(c.concepto || ""); setEpMonto(String(c.monto)); setEpVencimiento(c.vencimiento);
+  };
+
+  const guardarEditarCuotaP = async () => {
+    if (!editandoCuotaP || !epAcreedor.trim() || !epMonto || !epVencimiento) return alert("Completá acreedor, monto y vencimiento.");
+    setGuardandoEp(true);
+    try {
+      const { data, error } = await supabase2.from("cuotas_pagar_agencia").update({
+        acreedor: epAcreedor.trim(), concepto: epConcepto || null, monto: Number(epMonto), vencimiento: epVencimiento,
+      }).eq("id", editandoCuotaP.id).select().single();
+      if (error) throw error;
+      setCuotasPagar((prev: any[]) => prev.map((c) => (c.id === editandoCuotaP.id ? data : c)));
+      setEditandoCuotaP(null);
+    } catch (err: any) { alert(err?.message ? `No se pudo guardar: ${err.message}` : "No se pudo guardar."); } finally { setGuardandoEp(false); }
+  };
 
   const [pagando, setPagando] = useState<{ cuota: any; direccion: "cobrar" | "pagar" } | null>(null);
   const [pgMonto, setPgMonto] = useState("");
@@ -63,18 +94,35 @@ export default function CuotasTab({
   const pendienteCobrarPorMoneda = totales(pendientesCobrar, "monto", "monto_cobrado");
   const pendientePagarPorMoneda = totales(pendientesPagar, "monto", "monto_pagado");
 
+  const abrirNuevaC = () => { setEditandoC(null); setCClienteId(""); setCVendedorId(""); setCConcepto(""); setCMonto(""); setCVencimiento(""); setShowNuevaC(true); };
+
+  // Editable mientras no tenga ningún cobro parcial (monto_cobrado === 0 y
+  // !cobrada) -- un cobro parcial ya generó un movimiento real con el monto
+  // viejo, mismo criterio que PagosDispTab.tsx.
+  const abrirEditarC = (c: any) => {
+    setEditandoC(c);
+    setCClienteId(c.cliente_id || ""); setCVendedorId(c.vendedor_id || ""); setCConcepto(c.concepto); setCMoneda(c.moneda); setCMonto(String(c.monto)); setCVencimiento(c.vencimiento);
+    setShowNuevaC(true);
+  };
+
   const crearCuotaCobrar = async () => {
     if (!cConcepto.trim() || !cMonto || !cVencimiento) return alert("Completá concepto, monto y vencimiento.");
     setGuardandoC(true);
     try {
-      const { data, error } = await supabase2.from("cuotas_cobrar_clientes").insert({
-        cliente_id: cClienteId || null, vendedor_id: cVendedorId || null, concepto: cConcepto.trim(), moneda: cMoneda, monto: Number(cMonto), vencimiento: cVencimiento, creado_por: miId,
-      }).select("*, cliente:clientes(nombre)").single();
+      const payload = { cliente_id: cClienteId || null, vendedor_id: cVendedorId || null, concepto: cConcepto.trim(), moneda: cMoneda, monto: Number(cMonto), vencimiento: cVencimiento };
+      if (editandoC) {
+        const { data, error } = await supabase2.from("cuotas_cobrar_clientes").update(payload).eq("id", editandoC.id).select("*, cliente:clientes(nombre)").single();
+        if (error) throw error;
+        setCuotasCobrar((prev: any[]) => prev.map((c) => (c.id === editandoC.id ? data : c)));
+        setShowNuevaC(false);
+        return;
+      }
+      const { data, error } = await supabase2.from("cuotas_cobrar_clientes").insert({ ...payload, creado_por: miId }).select("*, cliente:clientes(nombre)").single();
       if (error) throw error;
       setCuotasCobrar((prev: any[]) => [...prev, data]);
       setShowNuevaC(false);
       setCClienteId(""); setCVendedorId(""); setCConcepto(""); setCMonto(""); setCVencimiento("");
-    } catch (err: any) { alert(err?.message ? `No se pudo crear la cuota: ${err.message}` : "No se pudo crear la cuota."); } finally { setGuardandoC(false); }
+    } catch (err: any) { alert(err?.message ? `No se pudo guardar la cuota: ${err.message}` : "No se pudo guardar la cuota."); } finally { setGuardandoC(false); }
   };
 
   const crearCuotaPagar = async () => {
@@ -169,7 +217,7 @@ export default function CuotasTab({
             <div className="bg-white dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-xl p-3"><p className="text-[10px] font-bold uppercase text-slate-400">Cuotas pendientes</p><p className="text-lg font-black">{pendientesCobrar.length}</p></div>
             <div className="bg-rose-50 dark:bg-rose-500/10 border border-rose-100 dark:border-rose-500/20 rounded-xl p-3"><p className="text-[10px] font-bold uppercase text-rose-500">Vencidas</p><p className="text-lg font-black">{pendientesCobrar.filter((c) => diasHasta(c.vencimiento) < 0).length}</p></div>
             <div className="bg-indigo-50 dark:bg-indigo-500/10 border border-indigo-100 dark:border-indigo-500/20 rounded-xl p-3"><p className="text-[10px] font-bold uppercase text-indigo-600">Próx. 7 días</p><p className="text-lg font-black">{pendientesCobrar.filter((c) => { const d = diasHasta(c.vencimiento); return d >= 0 && d <= 7; }).length}</p></div>
-            <button onClick={() => setShowNuevaC(true)} className="flex items-center justify-center gap-1.5 bg-[#0145F2] hover:bg-[#0138c9] text-white text-sm font-bold rounded-xl"><Plus className="w-4 h-4" /> Nueva cuota</button>
+            <button onClick={abrirNuevaC} className="flex items-center justify-center gap-1.5 bg-[#0145F2] hover:bg-[#0138c9] text-white text-sm font-bold rounded-xl"><Plus className="w-4 h-4" /> Nueva cuota</button>
           </div>
 
           {cuotasCobrar.length === 0 ? <div className="bg-white dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-2xl py-16 text-center"><p className="text-sm font-bold">Aún no hay cuotas</p></div> : (
@@ -186,7 +234,12 @@ export default function CuotasTab({
                     <p className="text-lg font-black mt-1">{fmt(c.monto, c.moneda)}</p>
                     {c.monto_cobrado > 0 && !c.cobrada && <p className="text-[11px] text-slate-400">Cobrado: {fmt(c.monto_cobrado, c.moneda)}</p>}
                     <p className="text-[11px] text-slate-400">Vence: {c.vencimiento}</p>
-                    {!c.cobrada && <button onClick={() => abrirPago(c, "cobrar")} className="mt-2 flex items-center gap-1 px-2.5 py-1.5 text-[11px] font-bold bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg"><DollarSign className="w-3.5 h-3.5" /> Marcar cobrada / parcial</button>}
+                    {!c.cobrada && (
+                      <div className="flex items-center gap-2 mt-2">
+                        <button onClick={() => abrirPago(c, "cobrar")} className="flex items-center gap-1 px-2.5 py-1.5 text-[11px] font-bold bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg"><DollarSign className="w-3.5 h-3.5" /> Marcar cobrada / parcial</button>
+                        {Number(c.monto_cobrado) === 0 && <button onClick={() => abrirEditarC(c)} className="text-slate-400 hover:text-[#0145F2]"><Pencil className="w-3.5 h-3.5" /></button>}
+                      </div>
+                    )}
                   </div>
                 );
               })}
@@ -229,7 +282,12 @@ export default function CuotasTab({
                       const origen = cuotasCobrar.find((cc) => cc.id === c.financiado_con_cuota_cobrar_id);
                       return <p className="text-[11px] text-indigo-500 mt-0.5">Financiado con: {origen ? `${origen.cliente?.nombre || "cliente"} — ${origen.concepto}` : "cuenta a cobrar"}</p>;
                     })()}
-                    {!c.pagada && <button onClick={() => abrirPago(c, "pagar")} className="mt-2 flex items-center gap-1 px-2.5 py-1.5 text-[11px] font-bold bg-[#0145F2] hover:bg-[#0138c9] text-white rounded-lg"><DollarSign className="w-3.5 h-3.5" /> Pagar / parcial</button>}
+                    {!c.pagada && (
+                      <div className="flex items-center gap-2 mt-2">
+                        <button onClick={() => abrirPago(c, "pagar")} className="flex items-center gap-1 px-2.5 py-1.5 text-[11px] font-bold bg-[#0145F2] hover:bg-[#0138c9] text-white rounded-lg"><DollarSign className="w-3.5 h-3.5" /> Pagar / parcial</button>
+                        {Number(c.monto_pagado) === 0 && <button onClick={() => abrirEditarCuotaP(c)} className="text-slate-400 hover:text-[#0145F2]"><Pencil className="w-3.5 h-3.5" /></button>}
+                      </div>
+                    )}
                   </div>
                 );
               })}
@@ -241,7 +299,7 @@ export default function CuotasTab({
       {showNuevaC && (
         <div className="fixed inset-0 bg-black/40 z-50 flex items-center justify-center p-4" onClick={() => setShowNuevaC(false)}>
           <div onClick={(e) => e.stopPropagation()} className="bg-white dark:bg-[#141414] border border-slate-200 dark:border-white/10 w-full max-w-md rounded-2xl shadow-2xl p-6">
-            <div className="flex justify-between items-start mb-4"><h3 className="text-lg font-bold">Nueva cuota a cobrar</h3><button onClick={() => setShowNuevaC(false)}><X className="w-4 h-4 text-slate-400" /></button></div>
+            <div className="flex justify-between items-start mb-4"><h3 className="text-lg font-bold">{editandoC ? "Editar cuota a cobrar" : "Nueva cuota a cobrar"}</h3><button onClick={() => setShowNuevaC(false)}><X className="w-4 h-4 text-slate-400" /></button></div>
             <div className="grid grid-cols-2 gap-2">
               <div><label className={labelClass}>Cliente</label><select value={cClienteId} onChange={(e) => setCClienteId(e.target.value)} className={inputClass}><option value="">— Sin cliente —</option>{clientes.map((c) => <option key={c.id} value={c.id}>{c.nombre}</option>)}</select></div>
               <div><label className={labelClass}>Vendedor</label><select value={cVendedorId} onChange={(e) => setCVendedorId(e.target.value)} className={inputClass}><option value="">— Sin asignar —</option>{vendedores.map((v) => <option key={v.id} value={v.id}>{v.nombre}</option>)}</select></div>
@@ -254,7 +312,7 @@ export default function CuotasTab({
               <div><label className={labelClass}>Moneda</label><select value={cMoneda} onChange={(e) => setCMoneda(e.target.value)} className={inputClass}><option value="USD">USD</option><option value="ARS">ARS</option></select></div>
               <div><label className={labelClass}>Vencimiento *</label><input type="date" value={cVencimiento} onChange={(e) => setCVencimiento(e.target.value)} className={inputClass} /></div>
             </div>
-            <div className="flex justify-end gap-2 mt-4"><button onClick={() => setShowNuevaC(false)} className="px-4 py-2 text-sm font-bold text-slate-500">Cancelar</button><button onClick={crearCuotaCobrar} disabled={guardandoC} className="flex items-center gap-1.5 px-4 py-2 text-sm font-bold bg-[#0145F2] hover:bg-[#0138c9] text-white rounded-lg disabled:opacity-50"><Save className="w-4 h-4" /> Crear</button></div>
+            <div className="flex justify-end gap-2 mt-4"><button onClick={() => setShowNuevaC(false)} className="px-4 py-2 text-sm font-bold text-slate-500">Cancelar</button><button onClick={crearCuotaCobrar} disabled={guardandoC} className="flex items-center gap-1.5 px-4 py-2 text-sm font-bold bg-[#0145F2] hover:bg-[#0138c9] text-white rounded-lg disabled:opacity-50"><Save className="w-4 h-4" /> {editandoC ? "Guardar" : "Crear"}</button></div>
           </div>
         </div>
       )}
@@ -296,6 +354,23 @@ export default function CuotasTab({
             <label className={labelClass + " mt-3"}>Notas</label>
             <textarea value={pNotas} onChange={(e) => setPNotas(e.target.value)} rows={2} className={inputClass} />
             <div className="flex justify-end gap-2 mt-4"><button onClick={() => setShowNuevaP(false)} className="px-4 py-2 text-sm font-bold text-slate-500">Cancelar</button><button onClick={crearCuotaPagar} disabled={guardandoP} className="flex items-center gap-1.5 px-4 py-2 text-sm font-bold bg-[#0145F2] hover:bg-[#0138c9] text-white rounded-lg disabled:opacity-50"><ListPlus className="w-4 h-4" /> Crear plan</button></div>
+          </div>
+        </div>
+      )}
+
+      {editandoCuotaP && (
+        <div className="fixed inset-0 bg-black/40 z-50 flex items-center justify-center p-4" onClick={() => setEditandoCuotaP(null)}>
+          <div onClick={(e) => e.stopPropagation()} className="bg-white dark:bg-[#141414] border border-slate-200 dark:border-white/10 w-full max-w-sm rounded-2xl shadow-2xl p-6">
+            <div className="flex justify-between items-start mb-3"><h3 className="text-base font-bold">Editar cuota a pagar</h3><button onClick={() => setEditandoCuotaP(null)}><X className="w-4 h-4 text-slate-400" /></button></div>
+            <label className={labelClass}>Acreedor *</label>
+            <input value={epAcreedor} onChange={(e) => setEpAcreedor(e.target.value)} className={inputClass} />
+            <label className={labelClass + " mt-3"}>Concepto</label>
+            <input value={epConcepto} onChange={(e) => setEpConcepto(e.target.value)} className={inputClass} />
+            <div className="grid grid-cols-2 gap-2 mt-3">
+              <div><label className={labelClass}>Monto ({editandoCuotaP.moneda}) *</label><input type="text" inputMode="numeric" value={epMonto} onChange={(e) => setEpMonto(e.target.value.replace(/\D/g, ""))} className={inputClass} /></div>
+              <div><label className={labelClass}>Vencimiento *</label><input type="date" value={epVencimiento} onChange={(e) => setEpVencimiento(e.target.value)} className={inputClass} /></div>
+            </div>
+            <div className="flex justify-end gap-2 mt-4"><button onClick={() => setEditandoCuotaP(null)} className="px-4 py-2 text-sm font-bold text-slate-500">Cancelar</button><button onClick={guardarEditarCuotaP} disabled={guardandoEp} className="flex items-center gap-1.5 px-4 py-2 text-sm font-bold bg-[#0145F2] hover:bg-[#0138c9] text-white rounded-lg disabled:opacity-50"><Save className="w-4 h-4" /> Guardar</button></div>
           </div>
         </div>
       )}

@@ -2,7 +2,7 @@
 
 import { useState, useMemo } from "react";
 import { supabase2 } from "@/lib/supabase/client";
-import { Plus, X, Save } from "lucide-react";
+import { Plus, X, Save, Pencil } from "lucide-react";
 import { inputClass, labelClass, fmt } from "./shared";
 import TablaResponsiva, { type ColumnaTabla } from "@/components/panel/TablaResponsiva";
 import ConfirmDialog from "@/components/panel/ConfirmDialog";
@@ -11,6 +11,7 @@ export default function RetirosTab({
   retiros, setRetiros, cuentas, setCuentas, setMovimientos,
 }: { retiros: any[]; setRetiros: (fn: any) => void; cuentas: any[]; setCuentas: (fn: any) => void; setMovimientos: (fn: any) => void }) {
   const [showNuevo, setShowNuevo] = useState(false);
+  const [editando, setEditando] = useState<any | null>(null);
   const [persona, setPersona] = useState("");
   const [fecha, setFecha] = useState(new Date().toISOString().slice(0, 10));
   const [monto, setMonto] = useState("");
@@ -26,12 +27,31 @@ export default function RetirosTab({
     return map;
   }, [retiros]);
 
-  const abrir = () => { setPersona(""); setMonto(""); setCuentaId(cuentas[0]?.id || ""); setMotivo(""); setFecha(new Date().toISOString().slice(0, 10)); setShowNuevo(true); };
+  const abrir = () => { setEditando(null); setPersona(""); setMonto(""); setCuentaId(cuentas[0]?.id || ""); setMotivo(""); setFecha(new Date().toISOString().slice(0, 10)); setShowNuevo(true); };
+
+  // El retiro crea el egreso real (movimiento_id) apenas se registra -- no
+  // hay estado "pendiente" como en Tarjeta/Cheques. Por eso solo se pueden
+  // editar los campos que no afectan caja (persona, fecha, motivo); monto y
+  // cuenta quedan fijos porque ya se descontaron del saldo, y no hay RPC que
+  // los reajuste sin desincronizar el movimiento vinculado.
+  const abrirEditar = (r: any) => {
+    setEditando(r);
+    setPersona(r.persona); setFecha(r.fecha); setMotivo(r.motivo || ""); setMonto(String(r.monto)); setCuentaId(r.cuenta_id);
+    setShowNuevo(true);
+  };
 
   const registrar = async () => {
     if (!persona.trim() || !monto || !cuentaId) return alert("Completá persona, monto y cuenta.");
     setGuardando(true);
     try {
+      if (editando) {
+        const { data, error } = await supabase2.from("retiros_caja").update({ persona: persona.trim(), fecha, motivo: motivo || null }).eq("id", editando.id).select().single();
+        if (error) throw error;
+        setRetiros((prev: any[]) => prev.map((r) => (r.id === editando.id ? data : r)));
+        setShowNuevo(false);
+        return;
+      }
+
       const cuenta = cuentas.find((c) => c.id === cuentaId);
       const { data: id, error } = await supabase2.rpc("registrar_retiro_caja", {
         p_persona: persona.trim(), p_fecha: fecha, p_monto: Number(monto), p_moneda: cuenta.moneda, p_cuenta_id: cuentaId, p_motivo: motivo || null,
@@ -98,27 +118,32 @@ export default function RetirosTab({
               { key: "motivo", header: "Motivo", cell: (r) => r.motivo || "—", claseTd: "text-slate-400" },
             ] as ColumnaTabla<any>[]
           }
-          acciones={(r) => <button onClick={() => eliminar(r)} className="text-rose-500 font-bold">Eliminar</button>}
+          acciones={(r) => (
+            <div className="flex items-center gap-2">
+              <button onClick={() => abrirEditar(r)} className="text-slate-400 hover:text-[#0145F2]"><Pencil className="w-3.5 h-3.5" /></button>
+              <button onClick={() => eliminar(r)} className="text-rose-500 font-bold">Eliminar</button>
+            </div>
+          )}
         />
       )}
 
       {showNuevo && (
         <div className="fixed inset-0 bg-black/40 z-50 flex items-center justify-center p-4" onClick={() => setShowNuevo(false)}>
           <div onClick={(e) => e.stopPropagation()} className="bg-white dark:bg-[#141414] border border-slate-200 dark:border-white/10 w-full max-w-sm rounded-2xl shadow-2xl p-6">
-            <div className="flex justify-between items-start mb-1"><h3 className="text-lg font-bold">Nuevo retiro</h3><button onClick={() => setShowNuevo(false)}><X className="w-4 h-4 text-slate-400" /></button></div>
-            <p className="text-xs text-slate-400 mb-4">Registrá un retiro de efectivo. Resta del saldo de la caja seleccionada y crea un movimiento automático en Finanzas.</p>
+            <div className="flex justify-between items-start mb-1"><h3 className="text-lg font-bold">{editando ? "Editar retiro" : "Nuevo retiro"}</h3><button onClick={() => setShowNuevo(false)}><X className="w-4 h-4 text-slate-400" /></button></div>
+            <p className="text-xs text-slate-400 mb-4">{editando ? "Monto y cuenta ya afectaron el saldo, no se pueden editar -- si están mal, eliminá el retiro y cargalo de nuevo." : "Registrá un retiro de efectivo. Resta del saldo de la caja seleccionada y crea un movimiento automático en Finanzas."}</p>
             <div className="grid grid-cols-2 gap-2">
               <div><label className={labelClass}>Persona *</label><input value={persona} onChange={(e) => setPersona(e.target.value)} className={inputClass} /></div>
               <div><label className={labelClass}>Fecha *</label><input type="date" value={fecha} onChange={(e) => setFecha(e.target.value)} className={inputClass} /></div>
             </div>
             <div className="grid grid-cols-2 gap-2 mt-3">
-              <div><label className={labelClass}>Monto *</label><input type="text" inputMode="numeric" value={monto} onChange={(e) => setMonto(e.target.value.replace(/\D/g, ""))} placeholder="147000" className={inputClass} /></div>
-              <div><label className={labelClass}>Cuenta (afecta saldo) *</label><select value={cuentaId} onChange={(e) => setCuentaId(e.target.value)} className={inputClass}><option value="">— Elegí —</option>{cuentas.map((c) => <option key={c.id} value={c.id}>{c.nombre} · saldo {fmt(c.saldo, c.moneda)}</option>)}</select></div>
+              <div><label className={labelClass}>Monto *</label><input type="text" inputMode="numeric" disabled={!!editando} value={monto} onChange={(e) => setMonto(e.target.value.replace(/\D/g, ""))} placeholder="147000" className={inputClass + (editando ? " opacity-50 cursor-not-allowed" : "")} /></div>
+              <div><label className={labelClass}>Cuenta (afecta saldo) *</label><select value={cuentaId} disabled={!!editando} onChange={(e) => setCuentaId(e.target.value)} className={inputClass + (editando ? " opacity-50 cursor-not-allowed" : "")}><option value="">— Elegí —</option>{cuentas.map((c) => <option key={c.id} value={c.id}>{c.nombre} · saldo {fmt(c.saldo, c.moneda)}</option>)}</select></div>
             </div>
             <label className={labelClass + " mt-3"}>Motivo</label>
             <textarea value={motivo} onChange={(e) => setMotivo(e.target.value)} rows={2} placeholder="Retiro personal, viático, gastos, etc." className={inputClass} />
-            {cuentaSel && monto && <p className="text-[10px] text-slate-400 mt-2">Resta {fmt(Number(monto), cuentaSel.moneda)} del saldo de "{cuentaSel.nombre}" y crea un movimiento Egreso vinculado en Finanzas.</p>}
-            <div className="flex justify-end gap-2 mt-4"><button onClick={() => setShowNuevo(false)} className="px-4 py-2 text-sm font-bold text-slate-500">Cancelar</button><button onClick={registrar} disabled={guardando} className="flex items-center gap-1.5 px-4 py-2 text-sm font-bold bg-[#0145F2] hover:bg-[#0138c9] text-white rounded-lg disabled:opacity-50"><Save className="w-4 h-4" /> Registrar retiro</button></div>
+            {!editando && cuentaSel && monto && <p className="text-[10px] text-slate-400 mt-2">Resta {fmt(Number(monto), cuentaSel.moneda)} del saldo de "{cuentaSel.nombre}" y crea un movimiento Egreso vinculado en Finanzas.</p>}
+            <div className="flex justify-end gap-2 mt-4"><button onClick={() => setShowNuevo(false)} className="px-4 py-2 text-sm font-bold text-slate-500">Cancelar</button><button onClick={registrar} disabled={guardando} className="flex items-center gap-1.5 px-4 py-2 text-sm font-bold bg-[#0145F2] hover:bg-[#0138c9] text-white rounded-lg disabled:opacity-50"><Save className="w-4 h-4" /> {editando ? "Guardar" : "Registrar retiro"}</button></div>
           </div>
         </div>
       )}
