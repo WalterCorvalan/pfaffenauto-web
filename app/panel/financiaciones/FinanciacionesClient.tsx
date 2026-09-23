@@ -2,10 +2,11 @@
 
 import { useMemo, useState } from "react";
 import { supabase2 } from "@/lib/supabase/client";
-import { CreditCard, Search, Filter, Clock, MessageSquareText, ExternalLink, CheckCircle2, XCircle } from "lucide-react";
+import { CreditCard, Search, Filter, Clock, MessageSquareText, ExternalLink, CheckCircle2, XCircle, Settings } from "lucide-react";
 import TablaResponsiva, { type ColumnaTabla } from "@/components/panel/TablaResponsiva";
 import FinanciacionDetalleModal from "./FinanciacionDetalleModal";
 import SimuladorPropioModal from "./SimuladorPropioModal";
+import FinanciacionConfigTab from "./FinanciacionConfigTab";
 
 const ESTADO_LABEL: Record<string, string> = { nuevo: "Nuevo", en_gestion: "En gestión", descartado: "Descartado" };
 const ESTADO_STYLES: Record<string, string> = {
@@ -14,12 +15,13 @@ const ESTADO_STYLES: Record<string, string> = {
   descartado: "bg-rose-500 text-white border-rose-500",
 };
 
-export default function FinanciacionesClient({ solicitudesIniciales, staff }: { solicitudesIniciales: any[]; staff: { id: string; nombre: string }[] }) {
+export default function FinanciacionesClient({ solicitudesIniciales, staff, esAdminOFinanzas }: { solicitudesIniciales: any[]; staff: { id: string; nombre: string }[]; esAdminOFinanzas: boolean }) {
   const [solicitudes, setSolicitudes] = useState(solicitudesIniciales);
   const [filtroEstado, setFiltroEstado] = useState("nuevo");
   const [query, setQuery] = useState("");
   const [seleccionada, setSeleccionada] = useState<any>(null);
   const [simuladorAbierto, setSimuladorAbierto] = useState(false);
+  const [vista, setVista] = useState<"solicitudes" | "config">("solicitudes");
   const perfilMap = useMemo(() => Object.fromEntries(staff.map((p) => [p.id, p.nombre])), [staff]);
 
   const counts = useMemo(() => ({
@@ -51,17 +53,6 @@ export default function FinanciacionesClient({ solicitudesIniciales, staff }: { 
     }
   };
 
-  const cambiarVendedor = async (id: string, vendedorId: string) => {
-    const anterior = solicitudes.find((s) => s.id === id)?.vendedor_id ?? null;
-    const nuevo = vendedorId || null;
-    setSolicitudes((prev) => prev.map((s) => (s.id === id ? { ...s, vendedor_id: nuevo } : s)));
-    const { error } = await supabase2.from("leads_tasacion").update({ vendedor_id: nuevo }).eq("id", id);
-    if (error) {
-      setSolicitudes((prev) => prev.map((s) => (s.id === id ? { ...s, vendedor_id: anterior } : s)));
-      alert("No se pudo asignar el vendedor.");
-    }
-  };
-
   return (
     <div className="flex flex-col h-full overflow-hidden">
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-3 px-6 pt-4 shrink-0">
@@ -70,6 +61,15 @@ export default function FinanciacionesClient({ solicitudesIniciales, staff }: { 
           <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">Solicitudes de crédito desde la web (home y detalle de auto)</p>
         </div>
         <div className="flex items-center gap-2 shrink-0">
+          {esAdminOFinanzas && (
+            <button
+              type="button"
+              onClick={() => setVista(vista === "config" ? "solicitudes" : "config")}
+              className={`flex items-center justify-center gap-1.5 text-[13px] font-bold rounded-xl px-4 py-2.5 border ${vista === "config" ? "bg-[#0145F2] text-white border-[#0145F2]" : "text-slate-600 dark:text-slate-300 bg-white dark:bg-white/5 border-slate-200 dark:border-white/10"}`}
+            >
+              <Settings className="w-4 h-4" /> {vista === "config" ? "Ver solicitudes" : "Configuración"}
+            </button>
+          )}
           <button
             type="button"
             onClick={() => setSimuladorAbierto(true)}
@@ -96,6 +96,12 @@ export default function FinanciacionesClient({ solicitudesIniciales, staff }: { 
         </div>
       </div>
 
+      {vista === "config" ? (
+        <div className="flex-1 overflow-y-auto bg-slate-50 dark:bg-[#141414]">
+          <FinanciacionConfigTab />
+        </div>
+      ) : (
+      <>
       <div className="flex flex-col sm:flex-row sm:items-center gap-2 px-6 pt-4">
         <div className="relative flex-1 max-w-sm">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
@@ -150,17 +156,6 @@ export default function FinanciacionesClient({ solicitudesIniciales, staff }: { 
                   </span>
                 ), ocultarEnMobile: true },
                 { key: "fecha", header: "Fecha", cell: (s) => <span className="flex items-center gap-1"><Clock className="w-3 h-3" /> {new Date(s.created_at).toLocaleDateString("es-AR", { day: "2-digit", month: "short" })}</span>, claseTd: "text-[12px] text-slate-400" },
-                { key: "vendedor", header: "Vendedor", cell: (s) => (
-                  <select
-                    value={s.vendedor_id || ""}
-                    onClick={(e) => e.stopPropagation()}
-                    onChange={(e) => cambiarVendedor(s.id, e.target.value)}
-                    className="text-[12px] font-semibold rounded-lg px-2 py-1.5 outline-none cursor-pointer border border-slate-200 dark:border-white/10 bg-white dark:bg-white/5 text-slate-700 dark:text-slate-200"
-                  >
-                    <option value="">Sin asignar</option>
-                    {staff.map((p) => <option key={p.id} value={p.id}>{p.nombre}</option>)}
-                  </select>
-                ), ocultarEnMobile: true },
                 { key: "estado", header: "Estado", cell: (s) => (
                   <select
                     value={s.estado}
@@ -189,6 +184,8 @@ export default function FinanciacionesClient({ solicitudesIniciales, staff }: { 
           />
         )}
       </div>
+      </>
+      )}
 
       {seleccionada && <FinanciacionDetalleModal solicitud={seleccionada} vendedorNombre={seleccionada.vendedor_id ? perfilMap[seleccionada.vendedor_id] : null} onClose={() => setSeleccionada(null)} />}
       {simuladorAbierto && <SimuladorPropioModal onClose={() => setSimuladorAbierto(false)} />}
