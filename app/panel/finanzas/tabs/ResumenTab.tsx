@@ -106,6 +106,11 @@ export default function ResumenTab({
   const operatoriaAreaPorMoneda = useMemo(() => netoOperatoriaAreaPorMoneda(movimientos), [movimientos]);
   const { ingresos: ingresosOperatoriaPorMoneda, egresos: egresosOperatoriaPorMoneda } = ingresosEgresosOperatoriaAreaPorMoneda(movimientos);
   const valorStockPorMoneda = useMemo(() => porMoneda(vehiculosDisponiblesFull, "moneda_venta", "precio_venta"), [vehiculosDisponiblesFull]);
+  // Indicador simple (pedido del dueño, 23/9): solo informativo, no afecta
+  // ningún cálculo de plata de acá -- todavía no hay una regla de negocio
+  // clara sobre qué debería hacer un vehículo sin facturar en Rentabilidad
+  // o patrimonio, así que se muestra aparte en vez de inventar una.
+  const vehiculosSinFacturar = useMemo(() => vehiculosDisponiblesFull.filter((v: { facturado?: boolean }) => !v.facturado), [vehiculosDisponiblesFull]);
   const rentabilidadGeneralPorMoneda = useMemo(() => {
     const monedas = new Set([...Object.keys(rentabilidadVehiculoPorMoneda), ...Object.keys(operatoriaAreaPorMoneda)]);
     const map: Record<string, number> = {};
@@ -239,6 +244,16 @@ export default function ResumenTab({
             })}
           </div>
         </div>
+      )}
+
+      {vehiculosSinFacturar.length > 0 && (
+        <Link href="/panel/facturacion" className="block rounded-2xl p-4 border bg-amber-50 dark:bg-amber-500/10 border-amber-200 dark:border-amber-500/20 hover:opacity-90 transition-opacity">
+          <p className="text-[10px] font-bold uppercase tracking-widest text-amber-700 dark:text-amber-300 flex items-center gap-1.5">
+            <Receipt className="w-3.5 h-3.5" /> Vehículos en stock sin facturar
+          </p>
+          <p className="text-xl font-black mt-1 text-amber-800 dark:text-amber-200">{vehiculosSinFacturar.length}</p>
+          <p className="text-[10px] text-slate-500 dark:text-slate-400 mt-1">Solo informativo — no afecta ningún cálculo de Finanzas. Ver en Facturación →</p>
+        </Link>
       )}
 
       <SemaforoPuntoEquilibrio ingresosTotales={ingresosTotales} puntoEquilibrioPorMoneda={puntoEquilibrioPorMoneda} />
