@@ -80,7 +80,7 @@ export default function PresupuestoTab({ presupuestos, setPresupuestos, movimien
                   <div><p className="text-sm font-bold">{p.categoria}</p><p className="text-xs text-slate-400">{fmt(p.monto_presupuestado, p.moneda)} / mes presupuestado ({p.tipo})</p></div>
                   <div className="text-right"><p className={`text-lg font-black ${excedido ? "text-rose-500" : ""}`}>{fmt(real, p.moneda)}</p><p className={`text-xs ${excedido ? "text-rose-500" : "text-slate-400"}`}>{pct}% consumido</p></div>
                 </div>
-                <div className="h-1.5 bg-slate-100 dark:bg-white/10 rounded-full mt-2 overflow-hidden"><div className={`h-full ${excedido ? "bg-rose-500" : "bg-rose-600"}`} style={{ width: `${pct}%` }} /></div>
+                <div className="h-1.5 bg-slate-100 dark:bg-white/10 rounded-full mt-2 overflow-hidden"><div className={`h-full ${excedido ? "bg-rose-600" : "bg-emerald-500"}`} style={{ width: `${pct}%` }} /></div>
                 <div className="flex items-center gap-3 mt-2"><button onClick={() => abrirEditar(p)} className="text-[11px] font-bold text-rose-500">Editar</button><button onClick={() => eliminar(p)} className="text-[11px] font-bold text-rose-500">Eliminar</button></div>
               </div>
             );
