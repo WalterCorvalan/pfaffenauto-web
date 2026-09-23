@@ -36,6 +36,7 @@ export const AgentReplySchemaV2 = z.object({
       marca: z.string().nullable(),
       modelo: z.string().nullable(),
       anio: z.string().nullable(),
+      km: z.string().nullable().optional(),
     }).nullable().optional(),
     tipo_seguro: z.string().nullable().optional(),
   }),
