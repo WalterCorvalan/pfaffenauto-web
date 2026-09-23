@@ -50,6 +50,7 @@ export const TIPO_ICON: Record<string, any> = {
   resumen_diario_empresa: BarChart3,
   cheque_por_vencer: AlarmClock,
   finanzas_vencimiento: AlarmClock,
+  documento_cliente_subido: FileText,
 };
 
 export const TIPO_COLOR: Record<string, string> = {
@@ -90,6 +91,7 @@ export const TIPO_COLOR: Record<string, string> = {
   resumen_diario_empresa: "bg-indigo-100 text-indigo-600 dark:bg-indigo-500/15 dark:text-indigo-300",
   cheque_por_vencer: "bg-rose-100 text-rose-600 dark:bg-rose-500/15 dark:text-rose-300",
   finanzas_vencimiento: "bg-rose-100 text-rose-600 dark:bg-rose-500/15 dark:text-rose-300",
+  documento_cliente_subido: "bg-teal-100 text-teal-600 dark:bg-teal-500/15 dark:text-teal-300",
 };
 
 export const TIPO_VER: Record<string, string> = {
@@ -130,6 +132,7 @@ export const TIPO_VER: Record<string, string> = {
   resumen_diario_empresa: "Ver resumen",
   cheque_por_vencer: "Ver Finanzas",
   finanzas_vencimiento: "Ver Finanzas",
+  documento_cliente_subido: "Ver operación",
 };
 
 export const ICONO_DEFECTO = Bell;
