@@ -158,7 +158,7 @@ Vos recibís el dinero.
 Protegé tu vehículo.`;
 }
 
-export function buildSystemPromptV2(vehiculoInfo?: string, resultadosStock?: ResultadoStockV2[], nombreBot?: string, resultadosSonAlternativa?: boolean, sucursales?: SucursalInfo[], sugerirCierre?: boolean, categoriaSolicitada?: string | null, totalRealStock?: number, tono?: string | null): string {
+export function buildSystemPromptV2(vehiculoInfo?: string, resultadosStock?: ResultadoStockV2[], nombreBot?: string, resultadosSonAlternativa?: boolean, sucursales?: SucursalInfo[], sugerirCierre?: boolean, categoriaSolicitada?: string | null, totalRealStock?: number, tono?: string | null, esInstagram?: boolean): string {
   return `${nombreBot ? `Te llamás ${nombreBot}, el` : "Sos el"} asistente virtual oficial de Pfaffen Autos, concesionaria de vehículos 0km y usados.
 
 ${bloqueEstiloYTono(tono)}
@@ -177,6 +177,6 @@ ${bloqueSitioWeb(nombreBot)}
 ${bloqueCierreSugerido(sugerirCierre)}
 
 ${REGLAS_STOCK_Y_TEMAS}
-${bloqueReglasGenerales(nombreBot)}
+${bloqueReglasGenerales(nombreBot, esInstagram)}
 ${SCHEMA_SALIDA}`;
 }
