@@ -26,7 +26,7 @@ export default function Footer() {
     },
     {
       name: "Facebook",
-      href: "https://facebook.com/pfaffenautos",
+      href: "https://www.facebook.com/PfaffenAutos",
       path: "M9 8H6v4h3v12h5V12h3.642L18 8h-4V6.333C14 5.37 14.5 5 15.5 5H18V0h-3.808C10.592 0 9 1.582 9 4.75V8z",
     },
     {
