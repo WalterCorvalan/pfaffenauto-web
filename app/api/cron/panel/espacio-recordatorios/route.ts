@@ -2,14 +2,19 @@ import { createClient } from "@supabase/supabase-js";
 import { crearAlerta } from "@/lib/panel/alertas";
 
 // Corre 1 vez por día vía pg_cron (mismo patrón que
-// app/api/cron/panel/eventos/route.ts). Cubre dos cosas de "Mi Espacio"
-// que se cargaban pero nunca avisaban nada:
+// app/api/cron/panel/eventos/route.ts). Cubre lo de "Mi Espacio" que se
+// cargaba pero nunca avisaba nada, para que funcione como agenda personal
+// real y no solo como planilla:
 //   1) Calendario personal (espacio_eventos) -- respeta el "recordar antes"
 //      que el usuario elige al cargar el evento.
 //   2) Vencimientos de vehículos personales (espacio_autos_personales) --
 //      lista libre por vehículo (VTV, seguro, matrícula, lo que sea),
 //      avisa 7 días antes.
 //   3) Tareas personales (espacio_pendientes) con fecha de vencimiento.
+//   4) Cuotas a cobrar / a pagar (espacio_cuotas_cobrar/pagar) -- avisa
+//      unos días antes del vencimiento, una sola vez por cuota.
+//   5) Gastos fijos (espacio_gastos_fijos) -- recordatorio recurrente el
+//      "día del mes" cargado (alquiler, suscripciones...), una vez por mes.
 
 const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE2_URL!,
@@ -24,6 +29,7 @@ const DIAS_ANTES: Record<string, number> = {
 };
 
 const DIAS_AVISO_VENCIMIENTO = 7;
+const DIAS_AVISO_CUOTA = 5;
 
 function hoyArgentina(): string {
   return new Date().toLocaleDateString("sv-SE", { timeZone: "America/Argentina/Buenos_Aires" }); // YYYY-MM-DD
@@ -133,6 +139,58 @@ async function avisarPendientesVencidos(hoy: string): Promise<number> {
   return avisados;
 }
 
+async function avisarCuota(hoy: string, tabla: "espacio_cuotas_cobrar" | "espacio_cuotas_pagar", tab: "cuotas-cobrar" | "cuotas-pagar", campoEstado: "cobrada" | "pagada", verboVencido: string): Promise<number> {
+  const limite = sumarDias(hoy, DIAS_AVISO_CUOTA);
+  const { data: cuotas } = await supabase
+    .from(tabla)
+    .select(`id, perfil_id, concepto, monto, moneda, vencimiento, ${campoEstado}, aviso_enviado`)
+    .eq(campoEstado, false)
+    .eq("aviso_enviado", false)
+    .lte("vencimiento", limite);
+
+  let avisados = 0;
+  for (const c of (cuotas ?? []) as any[]) {
+    const fechaLegible = new Date(`${c.vencimiento}T12:00:00Z`).toLocaleDateString("es-AR", { timeZone: "UTC" });
+    const vencida = c.vencimiento < hoy;
+    const titulo = `${c.concepto} ${vencida ? verboVencido : "por vencer"}: ${c.moneda === "USD" ? "USD" : "$"} ${Math.round(Number(c.monto)).toLocaleString("es-AR")} — ${fechaLegible}`;
+    await crearAlerta(supabase, c.perfil_id, titulo, {
+      link: `/panel/mi-espacio?tab=${tab}`,
+      tipo: `espacio_${tab.replace("-", "_")}`,
+      prioridad: vencida ? "media" : "baja",
+      modulo: "mi_espacio",
+    });
+    await supabase.from(tabla).update({ aviso_enviado: true }).eq("id", c.id);
+    avisados++;
+  }
+  return avisados;
+}
+
+// Recordatorio recurrente (no "vence una vez", se repite todos los meses)
+// -- se controla con "ultimo_aviso_mes" en vez de un booleano, para que
+// vuelva a avisar el mes que viene sin que el usuario tenga que reabrir nada.
+async function avisarGastosFijos(hoy: string): Promise<number> {
+  const diaHoy = Number(hoy.slice(8, 10));
+  const mesActual = hoy.slice(0, 7);
+  const { data: gastos } = await supabase
+    .from("espacio_gastos_fijos")
+    .select("id, perfil_id, concepto, monto, moneda, dia_del_mes, ultimo_aviso_mes")
+    .eq("dia_del_mes", diaHoy)
+    .neq("ultimo_aviso_mes", mesActual);
+
+  let avisados = 0;
+  for (const g of gastos ?? []) {
+    await crearAlerta(supabase, g.perfil_id, `Vence hoy: ${g.concepto} — ${g.moneda === "USD" ? "USD" : "$"} ${Math.round(Number(g.monto)).toLocaleString("es-AR")}`, {
+      link: "/panel/mi-espacio?tab=gastos-fijos",
+      tipo: "espacio_gasto_fijo",
+      prioridad: "baja",
+      modulo: "mi_espacio",
+    });
+    await supabase.from("espacio_gastos_fijos").update({ ultimo_aviso_mes: mesActual }).eq("id", g.id);
+    avisados++;
+  }
+  return avisados;
+}
+
 export async function GET(req: Request) {
   const url = new URL(req.url);
   const token = url.searchParams.get("token");
@@ -141,7 +199,14 @@ export async function GET(req: Request) {
   }
 
   const hoy = hoyArgentina();
-  const [calendario, vencimientos, pendientes] = await Promise.all([avisarCalendarioPersonal(hoy), avisarVencimientosAutos(hoy), avisarPendientesVencidos(hoy)]);
+  const [calendario, vencimientos, pendientes, cuotasCobrar, cuotasPagar, gastosFijos] = await Promise.all([
+    avisarCalendarioPersonal(hoy),
+    avisarVencimientosAutos(hoy),
+    avisarPendientesVencidos(hoy),
+    avisarCuota(hoy, "espacio_cuotas_cobrar", "cuotas-cobrar", "cobrada", "vencida"),
+    avisarCuota(hoy, "espacio_cuotas_pagar", "cuotas-pagar", "pagada", "vencida"),
+    avisarGastosFijos(hoy),
+  ]);
 
-  return Response.json({ ok: true, calendario, vencimientos, pendientes });
+  return Response.json({ ok: true, calendario, vencimientos, pendientes, cuotasCobrar, cuotasPagar, gastosFijos });
 }
