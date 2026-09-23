@@ -4,7 +4,7 @@ import { useMemo, useState } from "react";
 import { Wallet, TrendingUp, TrendingDown, AlertTriangle, Clock, CheckCircle2, Building2, Search, HandCoins, CarFront, Receipt, Landmark } from "lucide-react";
 import Link from "next/link";
 import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip, BarChart, Bar, XAxis, YAxis, CartesianGrid } from "recharts";
-import { fmt, porMoneda, netoOperatoriaAreaPorMoneda, claseSemaforoCard } from "./shared";
+import { fmt, porMoneda, netoOperatoriaAreaPorMoneda, ingresosEgresosOperatoriaAreaPorMoneda, zonaEquilibrio, CLASE_ZONA_CARD, type ZonaSemaforo } from "./shared";
 import { useRentabilidadPorVehiculo } from "./useRentabilidadPorVehiculo";
 import InfoTooltip from "@/components/panel/InfoTooltip";
 
@@ -22,21 +22,28 @@ interface Operacion {
 // verde con ganancia, azul al duplicar el equilibrio (el color de marca,
 // "se exceden las expectativas"). La barra usa el mismo color, llenándose
 // hasta 100% = 2x el equilibrio (o sea, 50% de la barra = equilibrio).
-function zonaEquilibrio(ingresos: number, equilibrio: number): { zona: "rojo" | "amarillo" | "verde" | "azul"; pct: number; label: string } {
-  if (equilibrio <= 0) return { zona: "amarillo", pct: 0, label: "Sin gastos fijos/variables cargados este mes" };
-  const ratio = ingresos / equilibrio;
-  const pctBarra = Math.min(100, Math.round((ratio / 2) * 100));
-  if (ratio < 1) return { zona: "rojo", pct: pctBarra, label: "Por debajo del punto de equilibrio" };
-  if (ratio < 1.1) return { zona: "amarillo", pct: pctBarra, label: "En el punto de equilibrio" };
-  if (ratio < 2) return { zona: "verde", pct: pctBarra, label: "Con ganancia" };
-  return { zona: "azul", pct: 100, label: "Duplicó el punto de equilibrio" };
+// La zona en sí la calcula zonaEquilibrio() (shared.ts, única fuente de
+// verdad, reusada también en las tarjetas de "Números clave") -- acá solo
+// se agrega el % de barra y el label de este componente puntual.
+function zonaEquilibrioDetalle(ingresos: number, equilibrio: number): { zona: ZonaSemaforo; pct: number; label: string } {
+  const zona = zonaEquilibrio(ingresos, equilibrio);
+  if (equilibrio <= 0) return { zona, pct: 0, label: "Sin gastos fijos/variables cargados este mes" };
+  const pct = Math.min(100, Math.round((ingresos / equilibrio / 2) * 100));
+  const label = zona === "rojo" ? "Por debajo del punto de equilibrio" : zona === "amarillo" ? "En el punto de equilibrio" : zona === "verde" ? "Con ganancia" : "Duplicó el punto de equilibrio";
+  return { zona, pct, label };
 }
 
-const ZONA_COLOR: Record<string, { barra: string; texto: string; bg: string }> = {
-  rojo: { barra: "bg-rose-500", texto: "text-rose-600 dark:text-rose-400", bg: "bg-rose-50 dark:bg-rose-500/10 border-rose-100 dark:border-rose-500/20" },
-  amarillo: { barra: "bg-amber-500", texto: "text-amber-600 dark:text-amber-400", bg: "bg-amber-50 dark:bg-amber-500/10 border-amber-100 dark:border-amber-500/20" },
-  verde: { barra: "bg-emerald-500", texto: "text-emerald-600 dark:text-emerald-400", bg: "bg-emerald-50 dark:bg-emerald-500/10 border-emerald-100 dark:border-emerald-500/20" },
-  azul: { barra: "bg-[#0145F2]", texto: "text-[#0145F2] dark:text-sky-300", bg: "bg-[#0145F2]/5 dark:bg-[#0145F2]/10 border-[#0145F2]/20" },
+const ZONA_TEXTO: Record<ZonaSemaforo, string> = {
+  rojo: "text-rose-600 dark:text-rose-400",
+  amarillo: "text-amber-600 dark:text-amber-400",
+  verde: "text-emerald-600 dark:text-emerald-400",
+  azul: "text-[#0145F2] dark:text-sky-300",
+};
+const ZONA_BARRA: Record<ZonaSemaforo, string> = {
+  rojo: "bg-rose-500",
+  amarillo: "bg-amber-500",
+  verde: "bg-emerald-500",
+  azul: "bg-[#0145F2]",
 };
 
 function SemaforoPuntoEquilibrio({ ingresosTotales, puntoEquilibrioPorMoneda }: { ingresosTotales: Record<string, number>; puntoEquilibrioPorMoneda: Record<string, number> }) {
@@ -47,8 +54,8 @@ function SemaforoPuntoEquilibrio({ ingresosTotales, puntoEquilibrioPorMoneda }: 
       {monedas.map((m) => {
         const ingresos = ingresosTotales[m] || 0;
         const equilibrio = puntoEquilibrioPorMoneda[m] || 0;
-        const { zona, pct, label } = zonaEquilibrio(ingresos, equilibrio);
-        const color = ZONA_COLOR[zona];
+        const { zona, pct, label } = zonaEquilibrioDetalle(ingresos, equilibrio);
+        const color = { bg: CLASE_ZONA_CARD[zona], texto: ZONA_TEXTO[zona], barra: ZONA_BARRA[zona] };
         return (
           <div key={m} className={`border rounded-2xl p-4 ${color.bg}`}>
             <div className="flex items-center justify-between mb-1">
@@ -97,6 +104,7 @@ export default function ResumenTab({
   // equilibrio) -- no se inventa una fórmula nueva acá.
   const { totalesPorMoneda: rentabilidadVehiculoPorMoneda } = useRentabilidadPorVehiculo(ventas);
   const operatoriaAreaPorMoneda = useMemo(() => netoOperatoriaAreaPorMoneda(movimientos), [movimientos]);
+  const { ingresos: ingresosOperatoriaPorMoneda, egresos: egresosOperatoriaPorMoneda } = ingresosEgresosOperatoriaAreaPorMoneda(movimientos);
   const valorStockPorMoneda = useMemo(() => porMoneda(vehiculosDisponiblesFull, "moneda_venta", "precio_venta"), [vehiculosDisponiblesFull]);
   const rentabilidadGeneralPorMoneda = useMemo(() => {
     const monedas = new Set([...Object.keys(rentabilidadVehiculoPorMoneda), ...Object.keys(operatoriaAreaPorMoneda)]);
@@ -177,30 +185,37 @@ export default function ResumenTab({
         <div>
           <p className="text-[11px] font-black uppercase tracking-widest text-slate-400 mb-2">Números clave de la empresa</p>
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
-            {monedasNumeros.map((m) => (
+            {monedasNumeros.map((m) => {
+              // Zona ventas vs gastos: la misma para las 3 tarjetas que
+              // representan cada lado de esa cuenta (ventas+señas es el
+              // ingreso, gastos fijos/variables el egreso, rentabilidad
+              // general el resultado), para que el trío se lea consistente.
+              const zonaVentasGastos = zonaEquilibrio(generadoVentasSenasPorMoneda[m] || 0, (gastosFijosTotales[m] || 0) + (gastosVariablesTotales[m] || 0));
+              const zonaOperatoria = zonaEquilibrio(ingresosOperatoriaPorMoneda[m] || 0, egresosOperatoriaPorMoneda[m] || 0);
+              return (
               <div key={m} className="contents">
-                <div className={`rounded-2xl p-4 border ${claseSemaforoCard((rentabilidadGeneralPorMoneda[m] || 0) >= 0)}`}>
+                <div className={`rounded-2xl p-4 border ${CLASE_ZONA_CARD[zonaVentasGastos]}`}>
                   <p className="text-[10px] font-bold uppercase tracking-widest text-slate-500 dark:text-slate-400 flex items-center">
                     <TrendingUp className="w-3 h-3 mr-1" /> Rentabilidad general ({m})
                     <InfoTooltip texto="Ganancia por vehículos vendidos (Rentabilidad por vehículo) + neto de gestoría/honorarios/trámites (Operatoria del área). No incluye gastos fijos ni variables de la agencia." />
                   </p>
                   <p className="text-xl font-black mt-1">{fmt(rentabilidadGeneralPorMoneda[m] || 0, m)}</p>
                 </div>
-                <div className={`rounded-2xl p-4 border ${claseSemaforoCard(true)}`}>
+                <div className={`rounded-2xl p-4 border ${CLASE_ZONA_CARD.verde}`}>
                   <p className="text-[10px] font-bold uppercase tracking-widest text-slate-500 dark:text-slate-400 flex items-center">
                     <CarFront className="w-3 h-3 mr-1" /> Valor de stock ({m})
                     <InfoTooltip texto="Suma del precio de venta publicado de los vehículos con estado Disponible en Stock. No incluye señados ni vendidos." />
                   </p>
                   <p className="text-xl font-black mt-1">{fmt(valorStockPorMoneda[m] || 0, m)}</p>
                 </div>
-                <div className={`rounded-2xl p-4 border ${claseSemaforoCard(true)}`}>
+                <div className={`rounded-2xl p-4 border ${CLASE_ZONA_CARD[zonaVentasGastos]}`}>
                   <p className="text-[10px] font-bold uppercase tracking-widest text-slate-500 dark:text-slate-400 flex items-center">
                     <HandCoins className="w-3 h-3 mr-1" /> Generado en ventas + señas ({m})
                     <InfoTooltip texto="Suma de ventas cerradas y señas registradas este mes. No implica que ya esté cobrado en caja (eso lo ves en Ingresos Efectivos)." />
                   </p>
                   <p className="text-xl font-black mt-1">{fmt(generadoVentasSenasPorMoneda[m] || 0, m)}</p>
                 </div>
-                <div className={`rounded-2xl p-4 border ${claseSemaforoCard(false)}`}>
+                <div className={`rounded-2xl p-4 border ${CLASE_ZONA_CARD[zonaVentasGastos]}`}>
                   <p className="text-[10px] font-bold uppercase tracking-widest text-slate-500 dark:text-slate-400 flex items-center">
                     <Landmark className="w-3 h-3 mr-1" /> Gastos fijos / variables ({m})
                     <InfoTooltip texto="Fijos: alquiler, sueldos, seguros, impuestos. Variables: comisiones, marketing, gestoría, insumos. Mismas categorías que usa el punto de equilibrio, del mes en curso." />
@@ -208,7 +223,7 @@ export default function ResumenTab({
                   <p className="text-sm font-bold mt-1">Fijos <span className="font-black">{fmt(gastosFijosTotales[m] || 0, m)}</span></p>
                   <p className="text-sm font-bold">Variables <span className="font-black">{fmt(gastosVariablesTotales[m] || 0, m)}</span></p>
                 </div>
-                <div className={`rounded-2xl p-4 border sm:col-span-2 lg:col-span-1 ${claseSemaforoCard((operatoriaAreaPorMoneda[m] || 0) >= 0)}`}>
+                <div className={`rounded-2xl p-4 border sm:col-span-2 lg:col-span-1 ${CLASE_ZONA_CARD[zonaOperatoria]}`}>
                   <p className="text-[10px] font-bold uppercase tracking-widest text-slate-500 dark:text-slate-400 flex items-center">
                     <Receipt className="w-3 h-3 mr-1" /> Ingresos extra / consignación ({m})
                     <InfoTooltip texto="Neto de movimientos que no vienen de una venta de vehículo: gestoría, multas, honorarios, trámites, verificaciones (mismo total que Operatoria del área)." />
@@ -216,7 +231,8 @@ export default function ResumenTab({
                   <p className="text-xl font-black mt-1">{fmt(operatoriaAreaPorMoneda[m] || 0, m)}</p>
                 </div>
               </div>
-            ))}
+              );
+            })}
           </div>
         </div>
       )}

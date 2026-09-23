@@ -2,7 +2,7 @@
 
 import { useMemo } from "react";
 import { TrendingUp, TrendingDown, Info } from "lucide-react";
-import { fmt, claseSemaforoCard } from "./shared";
+import { fmt, ingresosEgresosOperatoriaAreaPorMoneda, zonaEquilibrio, peorZona, CLASE_ZONA_CARD } from "./shared";
 
 export default function RentabilidadTab({ movimientos, senasActivas, cuotasPendientes }: { movimientos: any[]; senasActivas: Record<string, number>; cuotasPendientes: Record<string, number> }) {
   // Rentabilidad del área Finanzas/Gestoría: movimientos SIN venta_id (multas,
@@ -14,16 +14,19 @@ export default function RentabilidadTab({ movimientos, senasActivas, cuotasPendi
   // MovimientosTab.tsx y LibrosContablesTab.tsx.
   const delArea = movimientos.filter((m) => !m.venta_id && !m.deleted_at && m.estado === "aprobado" && m.tipo_movimiento !== "Transferencia");
 
-  const ingresosPorMoneda = useMemo(() => {
-    const map: Record<string, number> = {};
-    delArea.filter((m) => m.tipo === "ingreso").forEach((m) => { const mo = m.cuenta?.moneda; if (mo) map[mo] = (map[mo] || 0) + Number(m.monto); });
-    return map;
-  }, [delArea]);
-  const egresosPorMoneda = useMemo(() => {
-    const map: Record<string, number> = {};
-    delArea.filter((m) => m.tipo === "egreso").forEach((m) => { const mo = m.cuenta?.moneda; if (mo) map[mo] = (map[mo] || 0) + Number(m.monto); });
-    return map;
-  }, [delArea]);
+  const { ingresos: ingresosPorMoneda, egresos: egresosPorMoneda } = ingresosEgresosOperatoriaAreaPorMoneda(movimientos);
+
+  // Zona del semáforo (rojo/amarillo/verde/azul) según ingresos vs egresos
+  // del área -- misma lógica que el punto de equilibrio general, aplicada acá
+  // a la operatoria del área. Si hay más de una moneda, se usa la peor zona
+  // para colorear la tarjeta entera.
+  const zonaArea = useMemo(() => {
+    const monedas = Array.from(new Set([...Object.keys(ingresosPorMoneda), ...Object.keys(egresosPorMoneda)]));
+    if (monedas.length === 0) return "amarillo" as const;
+    return peorZona(monedas.map((m) => zonaEquilibrio(ingresosPorMoneda[m] || 0, egresosPorMoneda[m] || 0)));
+  }, [ingresosPorMoneda, egresosPorMoneda]);
+  const claseArea = CLASE_ZONA_CARD[zonaArea];
+
   const netoPorMoneda = useMemo(() => {
     const monedas = new Set([...Object.keys(ingresosPorMoneda), ...Object.keys(egresosPorMoneda)]);
     const map: Record<string, number> = {};
@@ -57,17 +60,17 @@ export default function RentabilidadTab({ movimientos, senasActivas, cuotasPendi
       </div>
 
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-        <div className="bg-emerald-50 dark:bg-emerald-500/10 border border-emerald-100 dark:border-emerald-500/20 rounded-xl p-4">
-          <p className="text-[10px] font-bold uppercase text-emerald-600 flex items-center justify-between">Ingresos del área <TrendingUp className="w-3.5 h-3.5" /></p>
+        <div className={`rounded-xl p-4 border ${claseArea}`}>
+          <p className="text-[10px] font-bold uppercase text-slate-500 dark:text-slate-400 flex items-center justify-between">Ingresos del área <TrendingUp className="w-3.5 h-3.5" /></p>
           {Object.keys(ingresosPorMoneda).length === 0 ? <p className="text-lg">—</p> : Object.entries(ingresosPorMoneda).map(([m, n]) => <p key={m} className="text-lg font-black">{fmt(n, m)}</p>)}
           <p className="text-[10px] text-slate-400">{delArea.filter((m) => m.tipo === "ingreso").length} movimientos</p>
         </div>
-        <div className="bg-rose-50 dark:bg-rose-500/10 border border-rose-100 dark:border-rose-500/20 rounded-xl p-4">
-          <p className="text-[10px] font-bold uppercase text-rose-500 flex items-center justify-between">Egresos del área <TrendingDown className="w-3.5 h-3.5" /></p>
+        <div className={`rounded-xl p-4 border ${claseArea}`}>
+          <p className="text-[10px] font-bold uppercase text-slate-500 dark:text-slate-400 flex items-center justify-between">Egresos del área <TrendingDown className="w-3.5 h-3.5" /></p>
           {Object.keys(egresosPorMoneda).length === 0 ? <p className="text-lg">—</p> : Object.entries(egresosPorMoneda).map(([m, n]) => <p key={m} className="text-lg font-black">{fmt(n, m)}</p>)}
           <p className="text-[10px] text-slate-400">{delArea.filter((m) => m.tipo === "egreso").length} movimientos</p>
         </div>
-        <div className={`rounded-xl p-4 border ${claseSemaforoCard(!Object.values(netoPorMoneda).some((n) => n < 0))}`}>
+        <div className={`rounded-xl p-4 border ${claseArea}`}>
           <p className="text-[10px] font-bold uppercase text-slate-500 dark:text-slate-400">Neto del área</p>
           {Object.keys(netoPorMoneda).length === 0 ? <p className="text-lg">USD 0<br />$ 0</p> : Object.entries(netoPorMoneda).map(([m, n]) => <p key={m} className="text-lg font-black">{fmt(n, m)}</p>)}
           <p className="text-[10px] text-slate-400">Ingresos − Egresos</p>
