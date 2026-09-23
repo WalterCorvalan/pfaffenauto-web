@@ -53,7 +53,7 @@ const FINANZAS_TABS = [
   { grupo: "FINANZAS PERSONALES", value: "saldo-agencia", label: "Saldo agencia" },
 ];
 const OTRAS_TABS = [
-  { grupo: "ORGANIZACIÓN", value: "mis-autos", label: "Mis autos" },
+  { grupo: "ORGANIZACIÓN", value: "mis-autos", label: "Mis vehículos" },
   { grupo: "ORGANIZACIÓN", value: "patrimonio", label: "Patrimonio" },
   { grupo: "ORGANIZACIÓN", value: "pendientes", label: "Pendientes" },
   { grupo: "ORGANIZACIÓN", value: "calendario", label: "Calendario" },
@@ -612,7 +612,7 @@ export default function MiEspacioClient({
       {tab === "saldo-agencia" && <SaldoAgenciaTab miId={miId} />}
       {tab === "gastos-fijos" && <GastosFijosTab miId={miId} autoAbrir={autoAbrir === "gastos-fijos"} onAutoAbierto={() => setAutoAbrir(null)} />}
       {tab === "mis-autos" && <MisAutosTab miId={miId} />}
-      {tab === "patrimonio" && <PatrimonioTab miId={miId} miNombre={miNombre} soyAdmin={soyAdmin} />}
+      {tab === "patrimonio" && <PatrimonioTab miId={miId} miNombre={miNombre} />}
       {tab === "pendientes" && <PendientesTab miId={miId} autoAbrir={autoAbrir === "pendientes"} onAutoAbierto={() => setAutoAbrir(null)} />}
       {tab === "calendario" && <CalendarioTab miId={miId} autoAbrir={autoAbrir === "calendario"} onAutoAbierto={() => setAutoAbrir(null)} />}
       {tab === "contactos" && <ContactosTab miId={miId} />}
