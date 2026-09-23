@@ -60,7 +60,10 @@ export default function SimuladorReal() {
   const [dolarVenta, setDolarVenta] = useState<number | null>(null);
 
   useEffect(() => {
-    fetch("/api/dolar-blue").then((r) => r.json()).then((d) => { if (d.venta) setDolarVenta(d.venta); }).catch(() => {});
+    // /api/cotizacion-dolar respeta el precio manual (Financiaciones →
+    // Configuración) si está activado -- /api/dolar-blue es siempre el blue
+    // real fijo, solo para el ticker de referencia.
+    fetch("/api/cotizacion-dolar").then((r) => r.json()).then((d) => { if (d.venta) setDolarVenta(d.venta); }).catch(() => {});
   }, []);
 
   const [nombre, setNombre] = useState("");
