@@ -101,7 +101,7 @@ export default function RootLayout({
     logo: "https://www.pfaffencars.com/logo.png",
     sameAs: [
       "https://www.instagram.com/pfaffen.cars/",
-      "https://facebook.com/pfaffenautos",
+      "https://www.facebook.com/PfaffenAutos",
       "https://tiktok.com/@pfaffenautos",
     ],
     areaServed: [
