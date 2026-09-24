@@ -133,6 +133,19 @@ export default function ExpedienteDetalleModal({ expedienteId, miId, perfiles, s
   const [extraCobradoCuentaId, setExtraCobradoCuentaId] = useState("");
   const [guardandoPagoComprador, setGuardandoPagoComprador] = useState(false);
 
+  // Cheque del comprador vinculado a esta venta -- antes "Cheque" era solo
+  // una etiqueta de método de pago sin ningún registro real: se acreditaba
+  // la plata al instante como si ya estuviera cobrado, y si el cheque
+  // rebotaba no había nada que revertir. Ahora el pago del comprador con
+  // cheque queda pendiente de verdad hasta que el cheque se cobra.
+  const [chequeVinculado, setChequeVinculado] = useState<{ id: string; librador: string; banco: string | null; numero: string | null; fecha_cobro: string; estado: string } | null>(null);
+  const [chequeLibrador, setChequeLibrador] = useState("");
+  const [chequeBanco, setChequeBanco] = useState("");
+  const [chequeNumero, setChequeNumero] = useState("");
+  const [chequeCuitCuil, setChequeCuitCuil] = useState("");
+  const [chequeFechaCobro, setChequeFechaCobro] = useState("");
+  const [guardandoCheque, setGuardandoCheque] = useState(false);
+
   // Gastos (mini-form)
   const [nuevoGastoParte, setNuevoGastoParte] = useState<"vendedor" | "comprador" | null>(null);
   const [nuevoGastoConcepto, setNuevoGastoConcepto] = useState("");
@@ -186,6 +199,13 @@ export default function ExpedienteDetalleModal({ expedienteId, miId, perfiles, s
     setExtraCobradoDetalle(e.venta?.extra_cobrado_detalle || "");
     setExtraCobradoFormaPago(e.venta?.extra_cobrado_forma_pago || "");
     setExtraCobradoCuentaId(e.venta?.extra_cobrado_cuenta_id || "");
+
+    if (e.venta?.id) {
+      const { data: cheque } = await supabase2.from("cheques").select("*").eq("venta_id", e.venta.id).eq("tipo", "a_cobrar").maybeSingle();
+      setChequeVinculado(cheque || null);
+    } else {
+      setChequeVinculado(null);
+    }
 
     const [{ data: h }, { data: cl }, { data: o }, { data: s }, { data: g }, { data: d }, { data: c }, { data: veh }, { data: cr }, { data: dc }] = await Promise.all([
       supabase2.from("expediente_hitos").select("*").eq("expediente_id", expedienteId).order("orden"),
@@ -525,8 +545,42 @@ export default function ExpedienteDetalleModal({ expedienteId, miId, perfiles, s
     }
   };
 
+  // Registra el cheque del comprador (queda "pendiente", NO acredita caja
+  // todavía) -- separado de guardarPagoComprador a propósito, para que
+  // confirmar el pago real solo pueda pasar una vez que el cheque se cobró
+  // de verdad (ver flujo en ChequesTab.tsx / Finanzas → Cheques).
+  const registrarChequeComprador = async () => {
+    if (!venta) return;
+    if (!chequeLibrador.trim() || !chequeNumero.trim() || !chequeFechaCobro) {
+      setAlertDialog("Completá librador, número y fecha de cobro del cheque.");
+      return;
+    }
+    setGuardandoCheque(true);
+    try {
+      const { data, error } = await supabase2.from("cheques").insert({
+        tipo: "a_cobrar", formato: "fisico", librador: chequeLibrador.trim(), numero: chequeNumero.trim(),
+        banco: chequeBanco || null, cuit_cuil: chequeCuitCuil || null, monto: saldoComprador, moneda: venta.moneda_venta,
+        estado: "pendiente", fecha_cobro: chequeFechaCobro, venta_id: venta.id,
+        notas: `Pago de ${venta.comprador_nombre || "comprador"} — ${venta.vehiculo_marca || ""} ${venta.vehiculo_modelo || ""}`.trim(),
+      }).select().single();
+      if (error) throw error;
+      setChequeVinculado(data);
+      setAlertDialog('Cheque registrado en Finanzas → Cheques (estado "Pendiente"). El pago de esta venta se puede confirmar recién cuando se marque "Cobrado" ahí.');
+    } catch (err) {
+      setAlertDialog(err instanceof Error ? err.message : "No se pudo registrar el cheque.");
+    } finally {
+      setGuardandoCheque(false);
+    }
+  };
+
   const guardarPagoComprador = async () => {
     if (!venta) return;
+    if (compradorMetodoPago === "Cheque" && compradorPagoConfirmado && chequeVinculado?.estado !== "cobrado") {
+      setAlertDialog(chequeVinculado
+        ? `El cheque vinculado todavía está "${chequeVinculado.estado}" — recién se puede confirmar el pago cuando se marque "Cobrado" desde Finanzas → Cheques.`
+        : 'Registrá primero el cheque con el botón "Registrar cheque" de abajo.');
+      return;
+    }
     if (compradorPagoConfirmado && !compradorCuentaId) {
       setAlertDialog('Elegí de qué caja entra el pago, o marcá "No — pendiente".');
       return;
@@ -1058,6 +1112,36 @@ export default function ExpedienteDetalleModal({ expedienteId, miId, perfiles, s
                   </div>
                 </div>
               </div>
+
+              {compradorMetodoPago === "Cheque" && (
+                <div className="bg-amber-50/60 dark:bg-amber-500/5 border border-amber-100 dark:border-amber-500/20 rounded-xl p-4">
+                  <p className="text-xs font-black uppercase tracking-widest text-amber-600 mb-1">📝 Cheque del comprador</p>
+                  {chequeVinculado ? (
+                    <>
+                      <p className="text-[11px] text-slate-500 dark:text-slate-400 mb-2">
+                        {chequeVinculado.librador} · {chequeVinculado.banco || "sin banco"} · N° {chequeVinculado.numero || "—"} · vence {chequeVinculado.fecha_cobro} · estado <strong className={chequeVinculado.estado === "cobrado" ? "text-emerald-600" : "text-amber-600"}>{chequeVinculado.estado}</strong>
+                      </p>
+                      {chequeVinculado.estado === "cobrado" ? (
+                        <p className="text-[11px] text-emerald-600">El cheque ya se cobró — ahora sí podés marcar &quot;¿Ya pagó?&quot; en Sí y guardar para confirmar el pago de esta venta.</p>
+                      ) : (
+                        <p className="text-[11px] text-amber-600">Todavía no se cobró — marcalo &quot;Cobrado&quot; desde Finanzas → Cheques para poder confirmar este pago acá.</p>
+                      )}
+                    </>
+                  ) : (
+                    <>
+                      <p className="text-[11px] text-slate-500 dark:text-slate-400 mb-3">Registrá los datos del cheque — queda en estado &quot;Pendiente&quot; en Finanzas → Cheques y NO acredita la caja todavía. El pago de esta venta se confirma recién cuando el cheque se cobre.</p>
+                      <div className="grid grid-cols-2 gap-3">
+                        <div><label className={labelClass}>Librador *</label><input value={chequeLibrador} onChange={(e) => setChequeLibrador(e.target.value)} placeholder="Nombre / razón social" className={inputClass} /></div>
+                        <div><label className={labelClass}>Banco</label><input value={chequeBanco} onChange={(e) => setChequeBanco(e.target.value)} placeholder="Galicia, Nación..." className={inputClass} /></div>
+                        <div><label className={labelClass}>N° de cheque *</label><input value={chequeNumero} onChange={(e) => setChequeNumero(e.target.value)} placeholder="Ej: 12345678" className={inputClass} /></div>
+                        <div><label className={labelClass}>CUIT/CUIL</label><input value={chequeCuitCuil} onChange={(e) => setChequeCuitCuil(e.target.value)} placeholder="20-12345678-9" className={inputClass} /></div>
+                        <div><label className={labelClass}>Fecha de cobro *</label><input type="date" value={chequeFechaCobro} onChange={(e) => setChequeFechaCobro(e.target.value)} className={inputClass} /></div>
+                      </div>
+                      <div className="flex justify-end mt-3"><button onClick={registrarChequeComprador} disabled={guardandoCheque} className="px-4 py-2 rounded-lg bg-amber-500 hover:bg-amber-600 text-white text-xs font-bold disabled:opacity-50">{guardandoCheque ? "Registrando..." : "Registrar cheque"}</button></div>
+                    </>
+                  )}
+                </div>
+              )}
 
               <div className="bg-blue-50/60 dark:bg-blue-500/5 border border-blue-100 dark:border-blue-500/20 rounded-xl p-4">
                 <p className="text-xs font-black uppercase tracking-widest text-blue-600 mb-1">📄 Gastos cobrados al comprador (aparte del precio)</p>
