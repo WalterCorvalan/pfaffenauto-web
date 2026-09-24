@@ -121,7 +121,7 @@ export default function SenasClient({
             </div>
           </div>
 
-          <div className="hidden md:block bg-white dark:bg-white/[0.02] border border-slate-200 dark:border-white/5 rounded-2xl overflow-hidden">
+          <div className="hidden md:block bg-white dark:bg-white/[0.02] border border-slate-200 dark:border-white/5 rounded-2xl shadow-sm overflow-hidden">
             <div className="overflow-x-auto">
               <table className="w-full text-left border-collapse">
                 <thead>
@@ -175,9 +175,9 @@ export default function SenasClient({
           </div>
 
           <div className="md:hidden space-y-3">
-            {filtradas.length === 0 && <div className="bg-white dark:bg-white/[0.02] border border-slate-200 dark:border-white/5 rounded-2xl p-8 text-center text-slate-400 text-sm italic">{senas.length === 0 ? "Sin señas cargadas todavía." : "Ninguna seña coincide con el filtro."}</div>}
+            {filtradas.length === 0 && <div className="bg-white dark:bg-white/[0.02] border border-slate-200 dark:border-white/5 rounded-2xl shadow-sm p-8 text-center text-slate-400 text-sm italic">{senas.length === 0 ? "Sin señas cargadas todavía." : "Ninguna seña coincide con el filtro."}</div>}
             {filtradas.map((s: any) => (
-              <div key={s.id} onClick={() => setSeleccionada(s)} className={`bg-white dark:bg-white/[0.02] border border-slate-200 dark:border-white/5 rounded-2xl p-4 space-y-2 border-l-4 cursor-pointer active:bg-slate-50 dark:active:bg-white/[0.04] ${COLOR_ESTADO[s.estado] || "border-l-slate-200"}`}>
+              <div key={s.id} onClick={() => setSeleccionada(s)} className={`bg-white dark:bg-white/[0.02] border border-slate-200 dark:border-white/5 rounded-2xl shadow-sm hover:shadow-md transition-shadow p-4 space-y-2 border-l-4 cursor-pointer active:bg-slate-50 dark:active:bg-white/[0.04] ${COLOR_ESTADO[s.estado] || "border-l-slate-200"}`}>
                 <div className="flex items-center justify-between">
                   <span className="font-mono text-[13px] font-bold text-[#0145F2] dark:text-[#5b8dff]">N° {s.numero || "—"}</span>
                   <span className="font-mono text-[13px] font-bold text-slate-900 dark:text-white">{s.sena_ars ? `$ ${Number(s.sena_ars).toLocaleString("es-AR")}` : s.monto ? `${s.moneda} ${Number(s.monto).toLocaleString("es-AR")}` : "—"}</span>

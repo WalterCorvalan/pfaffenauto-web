@@ -225,7 +225,7 @@ export default function ComisionesClient({
           </div>
 
           {/* FILTROS */}
-          <div className="bg-white dark:bg-[#141414] border border-slate-200 dark:border-white/10 rounded-2xl p-4 flex flex-col gap-2">
+          <div className="bg-white dark:bg-[#141414] border border-slate-200 dark:border-white/10 rounded-2xl shadow-sm p-4 flex flex-col gap-2">
             <select value={mesFiltro} onChange={(e) => setMesFiltro(e.target.value)} className="w-full bg-slate-50 dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-lg px-3 py-1.5 text-xs font-bold text-slate-700 dark:text-slate-300 outline-none">
               <option value="este_mes">Este mes</option>
               <option value="historico">Histórico completo</option>

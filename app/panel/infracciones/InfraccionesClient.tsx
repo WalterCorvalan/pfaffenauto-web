@@ -170,7 +170,7 @@ export default function InfraccionesClient({ infraccionesIniciales, vehiculos, p
                 <p className="text-sm font-bold text-slate-500 dark:text-slate-400">Sin infracciones liquidables ese mes.</p>
               </div>
             ) : (
-              <div className="bg-white dark:bg-white/[0.02] border border-slate-200 dark:border-white/5 rounded-2xl overflow-hidden">
+              <div className="bg-white dark:bg-white/[0.02] border border-slate-200 dark:border-white/5 rounded-2xl shadow-sm overflow-hidden">
                 <div className="overflow-x-auto">
                   <table className="w-full text-left border-collapse">
                     <thead>

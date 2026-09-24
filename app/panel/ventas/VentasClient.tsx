@@ -235,13 +235,13 @@ export default function VentasClient({
             <input type="month" value={mes} onChange={(e) => setMes(e.target.value)} className="bg-white dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-lg px-3 py-1.5 text-xs text-slate-900 dark:text-white" />
           </div>
 
-          <div className="flex items-center justify-between bg-white dark:bg-white/[0.02] border border-slate-200 dark:border-white/5 rounded-xl px-4 py-3 mb-3">
+          <div className="flex items-center justify-between bg-white dark:bg-white/[0.02] border border-slate-200 dark:border-white/5 rounded-xl shadow-sm px-4 py-3 mb-3">
             <p className="text-sm font-bold text-slate-700 dark:text-slate-200">{filtradas.length} venta{filtradas.length === 1 ? "" : "s"} en lista</p>
             <p className="text-sm font-black text-slate-900 dark:text-white">{Object.entries(totalesPorMoneda).map(([m, t]) => `${m} ${t.toLocaleString("es-AR")}`).join(" · ") || "—"}</p>
           </div>
 
           {filtradas.length === 0 ? (
-            <div className="flex flex-col items-center justify-center text-center py-20 bg-white dark:bg-white/[0.02] border border-slate-200 dark:border-white/5 rounded-2xl">
+            <div className="flex flex-col items-center justify-center text-center py-20 bg-white dark:bg-white/[0.02] border border-slate-200 dark:border-white/5 rounded-2xl shadow-sm">
               <ShoppingCart className="w-10 h-10 text-slate-300 dark:text-slate-600 mb-3" />
               <h3 className="text-sm font-bold text-slate-800 dark:text-white mb-1">Sin resultados</h3>
               <p className="text-xs text-slate-500 dark:text-slate-400">Todavía no hay ventas cargadas. Podés crear una desde el botón de arriba.</p>

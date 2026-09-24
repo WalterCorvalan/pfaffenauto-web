@@ -108,19 +108,19 @@ export default function UsuariosClient() {
 
       <>
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-            <div className="bg-white dark:bg-white/[0.02] border border-slate-200 dark:border-white/5 rounded-2xl p-4">
+            <div className="bg-white dark:bg-white/[0.02] border border-slate-200 dark:border-white/5 rounded-2xl shadow-sm p-4">
               <span className="block text-[10px] font-bold uppercase tracking-widest text-slate-400 mb-1">Total</span>
               <span className="text-xl font-bold text-slate-900 dark:text-white flex items-center gap-1.5"><Users className="w-4 h-4 text-indigo-500" /> {usuarios.length}</span>
             </div>
-            <div className="bg-white dark:bg-white/[0.02] border border-slate-200 dark:border-white/5 rounded-2xl p-4">
+            <div className="bg-white dark:bg-white/[0.02] border border-slate-200 dark:border-white/5 rounded-2xl shadow-sm p-4">
               <span className="block text-[10px] font-bold uppercase tracking-widest text-slate-400 mb-1">Activos</span>
               <span className="text-xl font-bold text-emerald-600 dark:text-emerald-400 flex items-center gap-1.5"><UserCheck className="w-4 h-4" /> {totalActivos}</span>
             </div>
-            <div className="bg-white dark:bg-white/[0.02] border border-slate-200 dark:border-white/5 rounded-2xl p-4">
+            <div className="bg-white dark:bg-white/[0.02] border border-slate-200 dark:border-white/5 rounded-2xl shadow-sm p-4">
               <span className="block text-[10px] font-bold uppercase tracking-widest text-slate-400 mb-1">Inactivos</span>
               <span className="text-xl font-bold text-slate-400 flex items-center gap-1.5"><UserX className="w-4 h-4" /> {totalInactivos}</span>
             </div>
-            <div className="bg-white dark:bg-white/[0.02] border border-slate-200 dark:border-white/5 rounded-2xl p-4">
+            <div className="bg-white dark:bg-white/[0.02] border border-slate-200 dark:border-white/5 rounded-2xl shadow-sm p-4">
               <span className="block text-[10px] font-bold uppercase tracking-widest text-slate-400 mb-1">Sucursales</span>
               <span className="text-xl font-bold text-slate-900 dark:text-white flex items-center gap-1.5"><MapPin className="w-4 h-4 text-indigo-500" /> {sucursales.length}</span>
             </div>
@@ -140,7 +140,7 @@ export default function UsuariosClient() {
             </div>
           </div>
 
-          <div className="bg-white dark:bg-white/[0.02] border border-slate-200 dark:border-white/5 rounded-2xl overflow-hidden">
+          <div className="bg-white dark:bg-white/[0.02] border border-slate-200 dark:border-white/5 rounded-2xl shadow-sm overflow-hidden">
             {cargando ? (
               <div className="p-8 flex justify-center"><Loader2 className="w-5 h-5 animate-spin text-slate-400" /></div>
             ) : (

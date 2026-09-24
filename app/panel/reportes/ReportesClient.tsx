@@ -26,7 +26,7 @@ function fmtMoneda(n: number, moneda: string) {
 
 function Card({ title, icon: Icon, children }: { title: string; icon?: any; children: React.ReactNode }) {
   return (
-    <div className="bg-white dark:bg-white/[0.02] border border-slate-200 dark:border-white/5 rounded-2xl p-5">
+    <div className="bg-white dark:bg-white/[0.02] border border-slate-200 dark:border-white/5 rounded-2xl shadow-sm p-5">
       <p className="text-sm font-bold text-slate-800 dark:text-white flex items-center gap-2 mb-4">{Icon && <Icon className="w-4 h-4 text-slate-400" />} {title}</p>
       {children}
     </div>

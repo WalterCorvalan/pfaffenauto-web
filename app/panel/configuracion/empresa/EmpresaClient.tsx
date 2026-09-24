@@ -91,7 +91,7 @@ export default function EmpresaClient() {
         <div className="p-8 flex justify-center"><Loader2 className="w-5 h-5 animate-spin text-slate-400" /></div>
       ) : subtab === "modulos" ? (
         <>
-          <div className="bg-white dark:bg-white/[0.02] border border-slate-200 dark:border-white/5 rounded-2xl p-5">
+          <div className="bg-white dark:bg-white/[0.02] border border-slate-200 dark:border-white/5 rounded-2xl shadow-sm p-5">
             <p className="text-sm font-bold text-slate-800 dark:text-white mb-1">Módulos</p>
             <p className="text-xs text-slate-400 mb-4">Lo que apagues desaparece del menú de todos los usuarios (también en el celular) y del acceso directo por URL.</p>
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2">
@@ -104,7 +104,7 @@ export default function EmpresaClient() {
             </div>
           </div>
 
-          <div className="bg-white dark:bg-white/[0.02] border border-slate-200 dark:border-white/5 rounded-2xl p-5">
+          <div className="bg-white dark:bg-white/[0.02] border border-slate-200 dark:border-white/5 rounded-2xl shadow-sm p-5">
             <p className="text-sm font-bold text-slate-800 dark:text-white mb-1">Visibilidad por sector</p>
             <p className="text-xs text-slate-400 mb-4">Destildar esconde esa sección para ese sector (menú, celular, URL directa). Admin ve siempre todo. Un módulo apagado arriba no aparece para nadie, tenga o no tenga tilde acá.</p>
             <TablaResponsiva<Modulo>
@@ -126,7 +126,7 @@ export default function EmpresaClient() {
             />
           </div>
 
-          <div className="bg-white dark:bg-white/[0.02] border border-slate-200 dark:border-white/5 rounded-2xl p-5">
+          <div className="bg-white dark:bg-white/[0.02] border border-slate-200 dark:border-white/5 rounded-2xl shadow-sm p-5">
             <p className="text-sm font-bold text-slate-800 dark:text-white mb-1">Ver margen/ganancia (Expedientes, Gestoría, Liquidaciones, Tesorería)</p>
             <p className="text-xs text-slate-400 mb-4">Quién puede ver el margen/ganancia de la agencia en esas 4 pantallas. Admin lo ve siempre.</p>
             <div className="flex flex-wrap gap-3">
@@ -213,7 +213,7 @@ function ComisionesConfig() {
 
   return (
     <div className="space-y-4">
-      <div className="bg-white dark:bg-white/[0.02] border border-slate-200 dark:border-white/5 rounded-2xl p-5 space-y-4">
+      <div className="bg-white dark:bg-white/[0.02] border border-slate-200 dark:border-white/5 rounded-2xl shadow-sm p-5 space-y-4">
         <div>
           <p className="text-sm font-bold text-slate-800 dark:text-white mb-1">Modo de comisión</p>
           <p className="text-xs text-slate-400 mb-2">"Ninguna" esconde la sección Mis Comisiones para todos los vendedores.</p>
@@ -267,7 +267,7 @@ function ComisionesConfig() {
         )}
       </div>
 
-      <div className="bg-white dark:bg-white/[0.02] border border-slate-200 dark:border-white/5 rounded-2xl p-5 space-y-4">
+      <div className="bg-white dark:bg-white/[0.02] border border-slate-200 dark:border-white/5 rounded-2xl shadow-sm p-5 space-y-4">
         <div>
           <label className="text-xs font-semibold text-slate-500 block mb-1">Valor de toma (cotizaciones)</label>
           <input type="number" step="0.1" defaultValue={config.pct_toma_consignacion} onBlur={(e) => guardar({ pct_toma_consignacion: Number(e.target.value) })} className={inputClass} />
@@ -330,7 +330,7 @@ function PlazosConfig() {
 
   return (
     <div className="space-y-4">
-      <div className="bg-white dark:bg-white/[0.02] border border-slate-200 dark:border-white/5 rounded-2xl p-5 space-y-4">
+      <div className="bg-white dark:bg-white/[0.02] border border-slate-200 dark:border-white/5 rounded-2xl shadow-sm p-5 space-y-4">
         <p className="text-sm font-bold text-slate-800 dark:text-white">Umbrales de tiempo</p>
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
           <div>
@@ -363,7 +363,7 @@ function PlazosConfig() {
         </label>
       </div>
 
-      <div className="bg-white dark:bg-white/[0.02] border border-slate-200 dark:border-white/5 rounded-2xl p-5 space-y-3">
+      <div className="bg-white dark:bg-white/[0.02] border border-slate-200 dark:border-white/5 rounded-2xl shadow-sm p-5 space-y-3">
         <p className="text-sm font-bold text-slate-800 dark:text-white">Reasignación de Pedidos</p>
         <p className="text-xs text-amber-600 dark:text-amber-400 bg-amber-50 dark:bg-amber-500/10 border border-amber-100 dark:border-amber-500/20 rounded-lg px-3 py-2">
           Estos valores ya existen en la base pero todavía no hay una automatización en Pedidos que los lea — cambiarlos acá no tiene efecto hasta que se construya esa lógica.
@@ -439,7 +439,7 @@ function LeadRoutingConfig() {
 
   return (
     <div className="space-y-4">
-      <div className="bg-white dark:bg-white/[0.02] border border-slate-200 dark:border-white/5 rounded-2xl p-5 space-y-4">
+      <div className="bg-white dark:bg-white/[0.02] border border-slate-200 dark:border-white/5 rounded-2xl shadow-sm p-5 space-y-4">
         <p className="text-sm font-bold text-slate-800 dark:text-white">Reasignación automática</p>
         <p className="text-xs text-slate-400">Si un vendedor no marca el lead como contactado en el plazo fijado, pasa al siguiente de la ronda. Corre cada 10 minutos.</p>
         <label className="flex items-center gap-2">
@@ -459,7 +459,7 @@ function LeadRoutingConfig() {
         </div>
       </div>
 
-      <div className="bg-white dark:bg-white/[0.02] border border-slate-200 dark:border-white/5 rounded-2xl p-5">
+      <div className="bg-white dark:bg-white/[0.02] border border-slate-200 dark:border-white/5 rounded-2xl shadow-sm p-5">
         <p className="text-sm font-bold text-slate-800 dark:text-white mb-1">Vendedores en la ronda</p>
         <p className="text-xs text-slate-400 mb-4">Destildar saca al vendedor del reparto rotativo (leads nuevos de WhatsApp y reasignaciones por timeout). Es lo mismo que "seguir recibiendo leads" en Mi disponibilidad — cambiarlo acá afecta a cualquier vendedor, no solo a vos.</p>
         <div className="space-y-1.5">
@@ -473,7 +473,7 @@ function LeadRoutingConfig() {
         </div>
       </div>
 
-      <div className="bg-white dark:bg-white/[0.02] border border-slate-200 dark:border-white/5 rounded-2xl p-5 space-y-2">
+      <div className="bg-white dark:bg-white/[0.02] border border-slate-200 dark:border-white/5 rounded-2xl shadow-sm p-5 space-y-2">
         <p className="text-sm font-bold text-slate-800 dark:text-white">Visibilidad de clientes</p>
         <label className="flex items-start gap-2">
           <input type="checkbox" checked={config.cada_vendedor_ve_solo_sus_clientes} onChange={(e) => guardarConfig({ cada_vendedor_ve_solo_sus_clientes: e.target.checked })} className="w-4 h-4 accent-[#0145F2] mt-0.5" />
@@ -527,7 +527,7 @@ function ResumenDiarioConfig() {
 
   return (
     <div className="space-y-4">
-      <div className="bg-white dark:bg-white/[0.02] border border-slate-200 dark:border-white/5 rounded-2xl p-5 space-y-4">
+      <div className="bg-white dark:bg-white/[0.02] border border-slate-200 dark:border-white/5 rounded-2xl shadow-sm p-5 space-y-4">
         <div>
           <p className="text-sm font-bold text-slate-800 dark:text-white">Resumen diario de la agencia</p>
           <p className="text-xs text-slate-400">Cada mañana se arma el resumen del día (ventas, leads nuevos, expedientes atrasados, cuotas por vencer, stock). Cada miembro lo recibe en la campanita según su rol.</p>
@@ -609,7 +609,7 @@ function BrandingConfig() {
 
   return (
     <div className="space-y-4">
-      <div className="bg-white dark:bg-white/[0.02] border border-slate-200 dark:border-white/5 rounded-2xl p-5 space-y-4">
+      <div className="bg-white dark:bg-white/[0.02] border border-slate-200 dark:border-white/5 rounded-2xl shadow-sm p-5 space-y-4">
         <div>
           <p className="text-sm font-bold text-slate-800 dark:text-white">Branding de la agencia</p>
           <p className="text-xs text-slate-400 mt-1">Estos datos ya se usan en los recibos de seña y presupuesto (imprimibles). El generador de boleto/mandato de v1 todavía no los lee.</p>

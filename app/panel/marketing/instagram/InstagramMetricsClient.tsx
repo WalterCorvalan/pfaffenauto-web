@@ -47,7 +47,7 @@ export default function InstagramMetricsClient({
     <div className="flex flex-col gap-4">
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
         {kpis.map((k) => (
-          <div key={k.label} className="bg-white dark:bg-white/[0.02] border border-slate-200 dark:border-white/5 rounded-2xl p-4">
+          <div key={k.label} className="bg-white dark:bg-white/[0.02] border border-slate-200 dark:border-white/5 rounded-2xl shadow-sm p-4">
             <div className="flex items-center gap-2 text-slate-400 dark:text-slate-500 mb-2">
               <k.icon className="w-4 h-4" />
               <span className="text-[10px] font-bold uppercase tracking-widest">{k.label}</span>
@@ -57,7 +57,7 @@ export default function InstagramMetricsClient({
         ))}
       </div>
 
-      <div className="bg-white dark:bg-white/[0.02] border border-slate-200 dark:border-white/5 rounded-2xl p-5">
+      <div className="bg-white dark:bg-white/[0.02] border border-slate-200 dark:border-white/5 rounded-2xl shadow-sm p-5">
         <h3 className="text-sm font-black text-slate-700 dark:text-slate-200 mb-4">Alcance y visitas al perfil — últimos 30 días</h3>
         <div className="h-64 w-full">
           <ResponsiveContainer width="100%" height="100%">
@@ -73,7 +73,7 @@ export default function InstagramMetricsClient({
         </div>
       </div>
 
-      <div className="bg-white dark:bg-white/[0.02] border border-slate-200 dark:border-white/5 rounded-2xl overflow-hidden">
+      <div className="bg-white dark:bg-white/[0.02] border border-slate-200 dark:border-white/5 rounded-2xl shadow-sm overflow-hidden">
         <h3 className="text-sm font-black text-slate-700 dark:text-slate-200 p-5 pb-3">Publicaciones recientes — @{username}</h3>
         <div className="overflow-x-auto">
           <table className="w-full text-sm">

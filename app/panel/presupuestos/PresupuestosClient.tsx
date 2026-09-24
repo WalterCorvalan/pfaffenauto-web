@@ -108,7 +108,7 @@ export default function PresupuestosClient({
           </div>
 
           {/* ===================== FILTROS ===================== */}
-          <div className="bg-white dark:bg-white/[0.02] border border-slate-200 dark:border-white/5 rounded-2xl p-4 mb-4 space-y-3">
+          <div className="bg-white dark:bg-white/[0.02] border border-slate-200 dark:border-white/5 rounded-2xl shadow-sm p-4 mb-4 space-y-3">
             <div className="flex flex-col md:flex-row gap-3">
               <div className="relative flex-1">
                 <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-slate-400" />
@@ -150,7 +150,7 @@ export default function PresupuestosClient({
             </div>
           </div>
 
-          <div className="hidden md:block bg-white dark:bg-white/[0.02] border border-slate-200 dark:border-white/5 rounded-2xl overflow-hidden">
+          <div className="hidden md:block bg-white dark:bg-white/[0.02] border border-slate-200 dark:border-white/5 rounded-2xl shadow-sm overflow-hidden">
             <div className="overflow-x-auto">
               <table className="w-full text-left border-collapse">
                 <thead>
@@ -190,9 +190,9 @@ export default function PresupuestosClient({
           </div>
 
           <div className="md:hidden space-y-3">
-            {presupuestosFiltrados.length === 0 && <div className="bg-white dark:bg-white/[0.02] border border-slate-200 dark:border-white/5 rounded-2xl p-8 text-center text-slate-400 text-sm italic">{presupuestos.length === 0 ? "Sin presupuestos cargados todavía." : "Ningún presupuesto coincide con estos filtros."}</div>}
+            {presupuestosFiltrados.length === 0 && <div className="bg-white dark:bg-white/[0.02] border border-slate-200 dark:border-white/5 rounded-2xl shadow-sm p-8 text-center text-slate-400 text-sm italic">{presupuestos.length === 0 ? "Sin presupuestos cargados todavía." : "Ningún presupuesto coincide con estos filtros."}</div>}
             {presupuestosPaginados.map((p: any) => (
-              <div key={p.id} onClick={() => setSeleccionado(p)} className={`bg-white dark:bg-white/[0.02] border border-slate-200 dark:border-white/5 rounded-2xl p-4 space-y-2 border-l-4 cursor-pointer active:bg-slate-50 dark:active:bg-white/[0.04] ${p.precio_confirmado === false ? "border-l-amber-400" : "border-l-rose-300"}`}>
+              <div key={p.id} onClick={() => setSeleccionado(p)} className={`bg-white dark:bg-white/[0.02] border border-slate-200 dark:border-white/5 rounded-2xl shadow-sm hover:shadow-md transition-shadow p-4 space-y-2 border-l-4 cursor-pointer active:bg-slate-50 dark:active:bg-white/[0.04] ${p.precio_confirmado === false ? "border-l-amber-400" : "border-l-rose-300"}`}>
                 <div className="flex items-center justify-between">
                   <span className="font-mono text-[13px] font-bold text-[#0145F2] dark:text-[#5b8dff]">N° {p.numero || "—"}</span>
                   <span className="font-mono text-[13px] font-bold text-slate-900 dark:text-white">{p.precio_ars ? `$ ${Number(p.precio_ars).toLocaleString("es-AR")}` : p.precio_usd ? `US$ ${Number(p.precio_usd).toLocaleString("es-AR")}` : "—"}</span>

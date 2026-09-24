@@ -347,13 +347,13 @@ export default function StockClient({
                 <button onClick={() => setModalMandato(true)} className="flex items-center gap-1.5 px-3 py-2 text-xs font-bold bg-[#0145F2] hover:bg-[#0138c9] text-white rounded-lg"><Plus className="w-3.5 h-3.5" /> Nuevo mandato</button>
               </div>
               {mandatos.length === 0 ? (
-                <div className="flex flex-col items-center justify-center text-center py-20 bg-white dark:bg-white/[0.02] border border-slate-200 dark:border-white/5 rounded-2xl">
+                <div className="flex flex-col items-center justify-center text-center py-20 bg-white dark:bg-white/[0.02] border border-slate-200 dark:border-white/5 rounded-2xl shadow-sm">
                   <FileText className="w-10 h-10 text-slate-300 dark:text-slate-600 mb-3" />
                   <h3 className="text-sm font-bold text-slate-800 dark:text-white mb-1">Sin mandatos</h3>
                   <p className="text-xs text-slate-500 dark:text-slate-400">Cuando generes mandatos desde Stock, van a aparecer acá con alertas de vencimiento.</p>
                 </div>
               ) : (
-                <div className="bg-white dark:bg-white/[0.02] border border-slate-200 dark:border-white/5 rounded-2xl divide-y divide-slate-100 dark:divide-white/5">
+                <div className="bg-white dark:bg-white/[0.02] border border-slate-200 dark:border-white/5 rounded-2xl shadow-sm divide-y divide-slate-100 dark:divide-white/5">
                   {mandatos.map((m) => {
                     const vence = parseFechaLocal(m.fecha); vence.setDate(vence.getDate() + m.plazo_dias);
                     const diasRestantes = Math.ceil((vence.getTime() - Date.now()) / 86400000);
@@ -415,14 +415,14 @@ export default function StockClient({
               </div>
 
               {filtrados.length === 0 ? (
-                <div className="flex flex-col items-center justify-center text-center py-20 bg-white dark:bg-white/[0.02] border border-slate-200 dark:border-white/5 rounded-2xl">
+                <div className="flex flex-col items-center justify-center text-center py-20 bg-white dark:bg-white/[0.02] border border-slate-200 dark:border-white/5 rounded-2xl shadow-sm">
                   <Search className="w-10 h-10 text-slate-300 dark:text-slate-600 mb-3" />
                   <h3 className="text-sm font-bold text-slate-800 dark:text-white mb-1">Sin resultados</h3>
                   <p className="text-xs text-slate-500 dark:text-slate-400">Todavía no hay vehículos en el stock. Cargá el primero con el botón Nuevo vehículo.</p>
                 </div>
               ) : (
                 <>
-                  <div className="bg-white dark:bg-white/[0.02] border border-slate-200 dark:border-white/5 rounded-xl px-4 py-2.5 mb-3 flex items-center justify-between flex-wrap gap-2 text-xs font-semibold text-slate-500 dark:text-slate-400">
+                  <div className="bg-white dark:bg-white/[0.02] border border-slate-200 dark:border-white/5 rounded-xl shadow-sm px-4 py-2.5 mb-3 flex items-center justify-between flex-wrap gap-2 text-xs font-semibold text-slate-500 dark:text-slate-400">
                     <span>{filtrados.length} vehículo{filtrados.length === 1 ? "" : "s"} en lista{Object.keys(valorTotalPorMoneda).length > 0 ? ` · ${Object.entries(valorTotalPorMoneda).map(([m, n]) => fmtPrecio(n, m)).join(" · ")}` : ""}</span>
                     <span className="flex items-center gap-3 text-[11px] font-bold">
                       <span className="flex items-center gap-1.5"><span className="w-2 h-2 rounded-full bg-sky-400" /> En stock</span>
@@ -431,7 +431,7 @@ export default function StockClient({
                     </span>
                   </div>
                   {vista === "lista" && (
-                    <div className="bg-white dark:bg-white/[0.02] border border-slate-200 dark:border-white/5 rounded-2xl divide-y divide-slate-100 dark:divide-white/5 overflow-hidden mb-3">
+                    <div className="bg-white dark:bg-white/[0.02] border border-slate-200 dark:border-white/5 rounded-2xl shadow-sm divide-y divide-slate-100 dark:divide-white/5 overflow-hidden mb-3">
                       {paginados.map((v) => {
                         const dias = diasEnStock(v.created_at);
                         const pendientes = pendientesTexto(v);

@@ -331,25 +331,25 @@ export default function MisVentasClient({ vendedores, miId, miNombre, esAdmin }:
         )}
 
         <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
-          <div className="bg-white dark:bg-white/[0.02] border border-slate-200 dark:border-white/5 rounded-2xl p-4">
+          <div className="bg-white dark:bg-white/[0.02] border border-slate-200 dark:border-white/5 rounded-2xl shadow-sm p-4">
             <p className="text-xs text-slate-400 flex items-center gap-1.5 mb-1"><Car className="w-3.5 h-3.5" /> Ventas</p>
             <p className="text-2xl font-black text-slate-900 dark:text-white">{ventas.length}</p>
           </div>
-          <div className="bg-white dark:bg-white/[0.02] border border-slate-200 dark:border-white/5 rounded-2xl p-4">
+          <div className="bg-white dark:bg-white/[0.02] border border-slate-200 dark:border-white/5 rounded-2xl shadow-sm p-4">
             <p className="text-xs text-slate-400 flex items-center gap-1.5 mb-1"><DollarSign className="w-3.5 h-3.5" /> Facturado</p>
             <p className="text-lg font-black text-slate-900 dark:text-white">{Object.entries(facturadoPorMoneda).map(([m, n]) => fmt(n, m)).join(" + ") || "—"}</p>
           </div>
-          <div className="bg-white dark:bg-white/[0.02] border border-slate-200 dark:border-white/5 rounded-2xl p-4">
+          <div className="bg-white dark:bg-white/[0.02] border border-slate-200 dark:border-white/5 rounded-2xl shadow-sm p-4">
             <p className="text-xs text-slate-400 flex items-center gap-1.5 mb-1"><Wallet className="w-3.5 h-3.5" /> Comisión total</p>
             <p className="text-lg font-black text-emerald-600 dark:text-emerald-400">{Object.entries(comisionTotalPorMoneda).map(([m, n]) => fmt(n, m)).join(" + ") || "—"}</p>
           </div>
-          <div className="bg-white dark:bg-white/[0.02] border border-slate-200 dark:border-white/5 rounded-2xl p-4">
+          <div className="bg-white dark:bg-white/[0.02] border border-slate-200 dark:border-white/5 rounded-2xl shadow-sm p-4">
             <p className="text-xs text-slate-400 flex items-center gap-1.5 mb-1"><Star className="w-3.5 h-3.5" /> Comisión extra</p>
             <p className="text-lg font-black text-slate-900 dark:text-white">{bonoProyectado > 0 ? fmt(bonoProyectado, "USD") : "—"}</p>
           </div>
         </div>
 
-        <div className="bg-white dark:bg-white/[0.02] border border-slate-200 dark:border-white/5 rounded-2xl p-5">
+        <div className="bg-white dark:bg-white/[0.02] border border-slate-200 dark:border-white/5 rounded-2xl shadow-sm p-5">
           <p className="text-sm font-bold text-slate-700 dark:text-slate-300 flex items-center gap-2 mb-4"><Calendar className="w-4 h-4" /> Resumen de {rango.label}</p>
           <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
             <div className="bg-amber-50 dark:bg-amber-500/10 border border-amber-100 dark:border-amber-500/20 rounded-xl p-3">
@@ -376,7 +376,7 @@ export default function MisVentasClient({ vendedores, miId, miNombre, esAdmin }:
           </div>
         </div>
 
-        <div className="bg-white dark:bg-white/[0.02] border border-slate-200 dark:border-white/5 rounded-2xl overflow-hidden">
+        <div className="bg-white dark:bg-white/[0.02] border border-slate-200 dark:border-white/5 rounded-2xl shadow-sm overflow-hidden">
           <button onClick={() => setVentasAbierto((v) => !v)} className="w-full flex items-center justify-between px-5 py-3.5 bg-slate-50 dark:bg-white/5 border-b border-slate-100 dark:border-white/10">
             <p className="text-sm font-bold text-slate-700 dark:text-slate-300 flex items-center gap-2"><Target className="w-4 h-4" /> Ventas ({ventas.length})</p>
             {ventasAbierto ? <ChevronUp className="w-4 h-4 text-slate-400" /> : <ChevronDown className="w-4 h-4 text-slate-400" />}
@@ -409,7 +409,7 @@ export default function MisVentasClient({ vendedores, miId, miNombre, esAdmin }:
           )}
         </div>
 
-        <div className="bg-white dark:bg-white/[0.02] border border-slate-200 dark:border-white/5 rounded-2xl overflow-hidden">
+        <div className="bg-white dark:bg-white/[0.02] border border-slate-200 dark:border-white/5 rounded-2xl shadow-sm overflow-hidden">
           <button onClick={() => setConsigAbierto((v) => !v)} className="w-full flex items-center justify-between px-5 py-3.5 bg-slate-50 dark:bg-white/5 border-b border-slate-100 dark:border-white/10">
             <p className="text-sm font-bold text-slate-700 dark:text-slate-300 flex items-center gap-2">🚗 Consignaciones traídas ({consignaciones.length}/{consignaciones.length}) <span className="text-[11px] font-medium text-slate-400">· este {periodo === "mes" ? "mes" : periodo === "anio" ? "año" : "período"}</span></p>
             {consigAbierto ? <ChevronUp className="w-4 h-4 text-slate-400" /> : <ChevronDown className="w-4 h-4 text-slate-400" />}

@@ -144,7 +144,7 @@ export default function DiagramaCarroceria({ peritajeId, marcasIniciales }: { pe
   };
 
   return (
-    <div className="bg-white dark:bg-white/[0.02] border border-slate-200 dark:border-white/5 rounded-2xl overflow-hidden">
+    <div className="bg-white dark:bg-white/[0.02] border border-slate-200 dark:border-white/5 rounded-2xl shadow-sm overflow-hidden">
       <div className="px-5 py-3 bg-slate-50 dark:bg-white/5 border-b border-slate-100 dark:border-white/10 flex flex-wrap items-center justify-between gap-2">
         <h2 className="text-[12px] font-bold uppercase tracking-widest text-slate-600 dark:text-slate-300">Diagrama de carrocería</h2>
         <div className="flex items-center gap-3">

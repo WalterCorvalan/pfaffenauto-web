@@ -49,7 +49,7 @@ export default function TablaResponsiva<T>({
   return (
     <>
       {/* Desktop / tablet: tabla completa */}
-      <div className="hidden md:block bg-white dark:bg-white/[0.02] border border-slate-200 dark:border-white/5 rounded-2xl overflow-x-auto">
+      <div className="hidden md:block bg-white dark:bg-white/[0.02] border border-slate-200 dark:border-white/5 rounded-2xl shadow-sm overflow-x-auto">
         <table className="w-full text-left border-collapse">
           <thead>
             <tr className="bg-slate-50 dark:bg-white/[0.03] border-b border-slate-200 dark:border-white/5">
@@ -90,7 +90,7 @@ export default function TablaResponsiva<T>({
           <div
             key={keyExtractor(fila)}
             onClick={onRowClick ? () => onRowClick(fila) : undefined}
-            className={`bg-white dark:bg-white/[0.02] border border-slate-200 dark:border-white/5 rounded-2xl p-4 ${onRowClick ? "cursor-pointer active:bg-slate-50 dark:active:bg-white/[0.04]" : ""} ${claseFila?.(fila) || ""}`}
+            className={`bg-white dark:bg-white/[0.02] border border-slate-200 dark:border-white/5 rounded-2xl shadow-sm p-4 ${onRowClick ? "cursor-pointer active:bg-slate-50 dark:active:bg-white/[0.04] active:shadow-none transition-shadow" : ""} ${claseFila?.(fila) || ""}`}
           >
             <div className="mb-2">{(encabezadoMobile ?? columnasCard[0]?.cell)(fila)}</div>
             <dl className="grid grid-cols-2 gap-x-3 gap-y-1.5">
@@ -102,7 +102,7 @@ export default function TablaResponsiva<T>({
               ))}
             </dl>
             {acciones && (
-              <div className="flex items-center gap-1 mt-3 pt-3 border-t border-slate-100 dark:border-white/5" onClick={(e) => e.stopPropagation()}>
+              <div className="flex items-center flex-wrap gap-1 mt-3 pt-3 border-t border-slate-100 dark:border-white/5" onClick={(e) => e.stopPropagation()}>
                 {acciones(fila)}
               </div>
             )}

@@ -105,7 +105,7 @@ export default function PerfilClient({ miId }: { miId: string }) {
               </div>
             </div>
 
-            <div className="bg-white dark:bg-white/[0.02] border border-slate-200 dark:border-white/5 rounded-2xl p-5 space-y-3">
+            <div className="bg-white dark:bg-white/[0.02] border border-slate-200 dark:border-white/5 rounded-2xl shadow-sm p-5 space-y-3">
               <div className="grid grid-cols-2 gap-3">
                 <div>
                   <label className={labelClass}>Empresa</label>

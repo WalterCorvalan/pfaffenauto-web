@@ -79,8 +79,9 @@ export default function AfipIvaTab({ movimientos, setMovimientos }: { movimiento
         <div className="bg-rose-50 dark:bg-rose-500/10 border border-rose-100 dark:border-rose-500/20 rounded-xl p-4"><p className="text-[10px] font-bold uppercase text-rose-500">Saldo IVA</p><p className="text-2xl font-black">{fmtPorMoneda(saldoIva)}</p><p className="text-[10px] text-slate-400">A pagar a AFIP</p></div>
       </div>
 
-      <div className="bg-white dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-xl overflow-hidden mb-4">
+      <div className="bg-white dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-xl shadow-sm overflow-hidden mb-4">
         <p className="text-xs font-bold uppercase text-slate-400 p-3 border-b border-slate-100 dark:border-white/10">Resumen por categoría fiscal</p>
+        <div className="overflow-x-auto">
         <table className="w-full text-xs">
           <thead><tr className="text-left text-slate-400"><th className="p-2.5">Categoría</th><th className="p-2.5">Movs</th><th className="p-2.5">Ingresos</th><th className="p-2.5">Egresos</th><th className="p-2.5">IVA cobrado</th><th className="p-2.5">IVA pagado</th></tr></thead>
           <tbody>
@@ -96,9 +97,10 @@ export default function AfipIvaTab({ movimientos, setMovimientos }: { movimiento
             ))}
           </tbody>
         </table>
+        </div>
       </div>
 
-      <div className="bg-white dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-xl p-4">
+      <div className="bg-white dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-xl shadow-sm p-4">
         <div className="flex items-center justify-between mb-2"><p className="text-sm font-bold">📋 Clasificar movimientos del período {periodo}</p><p className="text-xs text-slate-400">Mostrando {delPeriodo.length} de {delPeriodo.length}</p></div>
         <div className="divide-y divide-slate-100 dark:divide-white/10">
           {delPeriodo.map((m) => (

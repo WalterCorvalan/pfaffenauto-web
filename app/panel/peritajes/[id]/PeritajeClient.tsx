@@ -196,7 +196,7 @@ export default function PeritajeClient({ peritaje, itemsIniciales }: { peritaje:
         <div className="max-w-3xl mx-auto space-y-5">
 
           {grupos.map(([categoria, itemsGrupo]) => (
-            <div key={categoria} className="bg-white dark:bg-white/[0.02] border border-slate-200 dark:border-white/5 rounded-2xl overflow-hidden">
+            <div key={categoria} className="bg-white dark:bg-white/[0.02] border border-slate-200 dark:border-white/5 rounded-2xl shadow-sm overflow-hidden">
               <div className="px-5 py-3 bg-slate-50 dark:bg-white/5 border-b border-slate-100 dark:border-white/10">
                 <h2 className="text-[12px] font-bold uppercase tracking-widest text-slate-600 dark:text-slate-300">{categoria}</h2>
               </div>
@@ -295,7 +295,7 @@ export default function PeritajeClient({ peritaje, itemsIniciales }: { peritaje:
           ))}
 
           {neumaticos.length > 0 && (
-            <div className="bg-white dark:bg-white/[0.02] border border-slate-200 dark:border-white/5 rounded-2xl overflow-hidden">
+            <div className="bg-white dark:bg-white/[0.02] border border-slate-200 dark:border-white/5 rounded-2xl shadow-sm overflow-hidden">
               <div className="px-5 py-3 bg-slate-50 dark:bg-white/5 border-b border-slate-100 dark:border-white/10">
                 <h2 className="text-[12px] font-bold uppercase tracking-widest text-slate-600 dark:text-slate-300">Neumáticos</h2>
               </div>
@@ -377,7 +377,7 @@ export default function PeritajeClient({ peritaje, itemsIniciales }: { peritaje:
 
           <DiagramaCarroceria peritajeId={peritaje.id} marcasIniciales={peritaje.carroceria_marcas || {}} />
 
-          <div className="bg-white dark:bg-white/[0.02] border border-slate-200 dark:border-white/5 rounded-2xl overflow-hidden">
+          <div className="bg-white dark:bg-white/[0.02] border border-slate-200 dark:border-white/5 rounded-2xl shadow-sm overflow-hidden">
             <div className="px-5 py-3 bg-slate-50 dark:bg-white/5 border-b border-slate-100 dark:border-white/10 flex items-center justify-between">
               <h2 className="text-[12px] font-bold uppercase tracking-widest text-slate-600 dark:text-slate-300">Accesorios</h2>
               {guardandoAccesorios && <Loader2 className="w-3.5 h-3.5 animate-spin text-slate-400" />}
