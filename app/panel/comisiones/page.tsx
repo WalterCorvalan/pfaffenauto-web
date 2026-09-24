@@ -40,7 +40,10 @@ export default async function ComisionesPage() {
     .eq("activo", true)
     .order("nombre");
 
-  const vendedores = (perfiles || []).filter((p) => p.roles.some((r: string) => ["vendedor", "encargado", "admin"].includes(r)));
+  // El rol real es "ventas" (ver ROLES en UsuariosClient.tsx) -- "vendedor"
+  // nunca existió como valor real, así que este filtro nunca traía a
+  // ningún vendedor de verdad, solo encargados/admins con comisión.
+  const vendedores = (perfiles || []).filter((p) => p.roles.some((r: string) => ["ventas", "encargado", "admin"].includes(r)));
 
   const { data: cuentas } = await supabase.from("cuentas").select("id, nombre, moneda").eq("activa", true).order("nombre");
 

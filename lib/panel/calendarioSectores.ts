@@ -7,7 +7,10 @@
 // ventas/finanzas/gestoria) -- se mantiene este mapa así por si algún
 // evento viejo todavía tiene guardado alguno de esos dos sectores.
 export const SECTOR_A_ROLES: Record<string, string[]> = {
-  Ventas: ["vendedor", "admin"],
+  // "vendedor" nunca existió como valor real de perfiles.roles (es
+  // "ventas", como dice el comentario de arriba) -- un evento de sector
+  // "Ventas" nunca avisaba a ningún vendedor real, solo a admins.
+  Ventas: ["ventas", "admin"],
   "Gestoría": ["gestoria", "admin"],
   Finanzas: ["finanzas", "admin"],
   "Administración": ["admin"],
