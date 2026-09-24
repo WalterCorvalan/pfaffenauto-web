@@ -256,6 +256,12 @@ async function ejecutarAgente(conversacionId: string, igUserId: string) {
     await supabase.from("instagram_conversaciones").update({
       handoff_at: new Date().toISOString(), handoff_reason: "cliente_pidio_humano",
       handoff_resumen: resumen_handoff || null,
+      // Mismo comportamiento que WhatsApp (webhooks/whatsapp/[token]/route.ts):
+      // al derivar, la IA se pausa acá mismo -- sin esto el bot seguía
+      // contestando en Instagram después del handoff, mientras el panel
+      // mostraba el badge de "IA en pausa" como si ya hubiera dejado de
+      // responder (inconsistente con lo que pasaba de verdad).
+      ai_habilitada: false,
     }).eq("id", conversacionId);
     // La alerta de handoff la dispara el trigger sobre instagram_conversaciones.
   }

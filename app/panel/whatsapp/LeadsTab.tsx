@@ -58,10 +58,36 @@ function Bar({ label, valor, max, color }: { label: string; valor: number; max: 
   );
 }
 
-export default function LeadsTab({ conversacionesIniciales, vendedores, miId }: { conversacionesIniciales: any[]; vendedores: Perfil[]; miId: string }) {
+// Nombre/subtítulo visible del lead — WhatsApp usa whatsapp_contactos
+// (nombre_perfil/telefono), Instagram usa instagram_contactos (username,
+// sin nombre_perfil real) -- un solo helper para no repetir el ternario en
+// cada lugar que muestra un lead (grid, kanban, búsqueda).
+interface LeadConversacion {
+  id: string;
+  origen: "whatsapp" | "instagram";
+  whatsapp_contactos?: { nombre_perfil?: string | null; telefono?: string | null } | null;
+  instagram_contactos?: { username?: string | null } | null;
+}
+function nombreLead(c: LeadConversacion): string {
+  return c.origen === "instagram" ? (c.instagram_contactos?.username ? `@${c.instagram_contactos.username}` : "Sin usuario") : (c.whatsapp_contactos?.nombre_perfil || c.whatsapp_contactos?.telefono || "Sin nombre");
+}
+function subtituloLead(c: LeadConversacion): string {
+  return c.origen === "instagram" ? (c.instagram_contactos?.username ? `@${c.instagram_contactos.username}` : "") : (c.whatsapp_contactos?.telefono || "");
+}
+function tablaLead(c: LeadConversacion): "whatsapp_conversaciones" | "instagram_conversaciones" {
+  return c.origen === "instagram" ? "instagram_conversaciones" : "whatsapp_conversaciones";
+}
+
+export default function LeadsTab({ conversacionesIniciales, conversacionesInstagramIniciales, vendedores, miId }: { conversacionesIniciales: any[]; conversacionesInstagramIniciales?: LeadConversacion[]; vendedores: Perfil[]; miId: string }) {
   const router = useRouter();
   const searchParams = useSearchParams();
-  const [conversaciones, setConversaciones] = useState(conversacionesIniciales);
+  // Un solo lead unificado (WhatsApp + Instagram), cada uno con "origen"
+  // marcado -- antes esta tab solo recibía conversacionesIniciales (WA), los
+  // leads de Instagram nunca aparecían acá (aunque sí en la Bandeja).
+  const [conversaciones, setConversaciones] = useState(() => [
+    ...conversacionesIniciales.map((c) => ({ ...c, origen: "whatsapp" as const })),
+    ...(conversacionesInstagramIniciales || []).map((c) => ({ ...c, origen: "instagram" as const })),
+  ]);
   const [filtro, setFiltro] = useState("todos");
   const [busqueda, setBusqueda] = useState("");
   const [vista, setVista] = useState<"grid" | "kanban" | "reportes">("grid");
@@ -83,21 +109,25 @@ export default function LeadsTab({ conversacionesIniciales, vendedores, miId }: 
     if (filtro !== "todos") l = l.filter((c) => (c.estado_lead || "nuevo") === filtro);
     if (busqueda.trim()) {
       const q = busqueda.trim().toLowerCase();
-      l = l.filter((c) => [c.whatsapp_contactos?.nombre_perfil, c.whatsapp_contactos?.telefono, c.vendedor?.nombre].filter(Boolean).join(" ").toLowerCase().includes(q));
+      l = l.filter((c) => [nombreLead(c), subtituloLead(c), c.vendedor?.nombre].filter(Boolean).join(" ").toLowerCase().includes(q));
     }
     return l;
   }, [conversaciones, filtro, busqueda]);
 
   const reasignar = async (conversacionId: string, vendedorId: string) => {
     const nuevoId = vendedorId || null;
-    await supabase2.from("whatsapp_conversaciones").update({ vendedor_id: nuevoId }).eq("id", conversacionId);
+    const c = conversaciones.find((x) => x.id === conversacionId);
+    if (!c) return;
+    await supabase2.from(tablaLead(c)).update({ vendedor_id: nuevoId }).eq("id", conversacionId);
     const vendedor = vendedores.find((v) => v.id === nuevoId) || null;
-    setConversaciones((prev) => prev.map((c) => (c.id === conversacionId ? { ...c, vendedor_id: nuevoId, vendedor, estado_lead: nuevoId ? (c.estado_lead === "nuevo" ? "asignado" : c.estado_lead) : c.estado_lead } : c)));
+    setConversaciones((prev) => prev.map((x) => (x.id === conversacionId ? { ...x, vendedor_id: nuevoId, vendedor, estado_lead: nuevoId ? (x.estado_lead === "nuevo" ? "asignado" : x.estado_lead) : x.estado_lead } : x)));
   };
 
   const moverKanban = async (conversacionId: string, nuevoEstado: string) => {
-    setConversaciones((prev) => prev.map((c) => (c.id === conversacionId ? { ...c, estado_lead: nuevoEstado } : c)));
-    await supabase2.from("whatsapp_conversaciones").update({ estado_lead: nuevoEstado }).eq("id", conversacionId);
+    const c = conversaciones.find((x) => x.id === conversacionId);
+    if (!c) return;
+    setConversaciones((prev) => prev.map((x) => (x.id === conversacionId ? { ...x, estado_lead: nuevoEstado } : x)));
+    await supabase2.from(tablaLead(c)).update({ estado_lead: nuevoEstado }).eq("id", conversacionId);
   };
 
   const actualizarUno = (id: string, patch: any) => setConversaciones((prev) => prev.map((c) => (c.id === id ? { ...c, ...patch } : c)));
@@ -185,20 +215,20 @@ export default function LeadsTab({ conversacionesIniciales, vendedores, miId }: 
         filtrados.length === 0 ? (
           <div className="bg-white dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-2xl py-16 flex flex-col items-center justify-center text-center">
             <Bot className="w-10 h-10 text-slate-300 dark:text-slate-600 mb-3" />
-            <p className="text-sm font-bold text-slate-700 dark:text-slate-200">Sin leads de WhatsApp{filtro !== "todos" ? "" : " todavía"}.</p>
+            <p className="text-sm font-bold text-slate-700 dark:text-slate-200">Sin leads{filtro !== "todos" ? "" : " todavía"}.</p>
           </div>
         ) : (
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
             {filtrados.map((c) => (
-              <div key={c.id} onClick={() => setDetalle({ id: c.id, origen: "whatsapp" })} className="bg-white dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-2xl p-4 cursor-pointer hover:border-rose-300 transition-colors">
+              <div key={c.id} onClick={() => setDetalle({ id: c.id, origen: c.origen })} className="bg-white dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-2xl p-4 cursor-pointer hover:border-rose-300 transition-colors">
                 <div className="flex items-center justify-between mb-2">
                   <div className="flex items-center gap-2 min-w-0">
                     <span className={`w-2 h-2 rounded-full shrink-0 ${CALIFICACION_DOT[c.calificacion] || "bg-slate-300"}`} />
-                    <p className="text-sm font-bold text-slate-900 dark:text-white truncate">{c.whatsapp_contactos?.nombre_perfil || c.whatsapp_contactos?.telefono || "Sin nombre"}</p>
+                    <p className="text-sm font-bold text-slate-900 dark:text-white truncate">{nombreLead(c)}</p>
                   </div>
                   <span className={`text-[10px] font-bold uppercase px-2 py-0.5 rounded-full shrink-0 ${ESTADO_COLOR[c.estado_lead] || ESTADO_COLOR.nuevo}`}>{ESTADO_LABEL[c.estado_lead] || "Nuevo"}</span>
                 </div>
-                <p className="text-xs text-slate-400 mb-3">{c.whatsapp_contactos?.telefono}</p>
+                <p className="text-xs text-slate-400 mb-3">{subtituloLead(c)}</p>
                 <div className="flex items-center gap-2" onClick={(e) => e.stopPropagation()}>
                   <MessageCircle className="w-3.5 h-3.5 text-slate-400 shrink-0" />
                   <select value={c.vendedor_id || ""} onChange={(e) => reasignar(c.id, e.target.value)} className="flex-1 bg-slate-50 dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-lg px-2 py-1.5 text-xs font-semibold outline-none">
@@ -225,9 +255,9 @@ export default function LeadsTab({ conversacionesIniciales, vendedores, miId }: 
                 </div>
                 <div className="p-2 flex flex-col gap-2 min-h-[120px] flex-1 overflow-y-auto max-h-[60vh]">
                   {leads.map((c) => (
-                    <div key={c.id} draggable onDragStart={(e) => e.dataTransfer.setData("text/plain", c.id)} onClick={() => setDetalle({ id: c.id, origen: "whatsapp" })}
+                    <div key={c.id} draggable onDragStart={(e) => e.dataTransfer.setData("text/plain", c.id)} onClick={() => setDetalle({ id: c.id, origen: c.origen })}
                       className="bg-white dark:bg-white/10 border border-slate-200 dark:border-white/10 rounded-lg p-3 cursor-grab active:cursor-grabbing hover:border-rose-300">
-                      <p className="text-xs font-bold text-slate-900 dark:text-white truncate">{c.whatsapp_contactos?.nombre_perfil || c.whatsapp_contactos?.telefono || "Sin nombre"}</p>
+                      <p className="text-xs font-bold text-slate-900 dark:text-white truncate">{nombreLead(c)}</p>
                       <p className="text-[10px] text-slate-400 mt-0.5">{c.vendedor?.nombre || "Sin asignar"}</p>
                     </div>
                   ))}
@@ -240,7 +270,7 @@ export default function LeadsTab({ conversacionesIniciales, vendedores, miId }: 
       )}
 
       {vista !== "reportes" && (
-        <p className="text-[11px] text-slate-400 mt-5">Los leads se crean automáticamente al recibir cada mensaje en WhatsApp. El round-robin asigna inicialmente al vendedor; desde acá podés reasignar manualmente.</p>
+        <p className="text-[11px] text-slate-400 mt-5">Los leads se crean automáticamente al recibir cada mensaje en WhatsApp o Instagram. El round-robin asigna inicialmente al vendedor; desde acá podés reasignar manualmente.</p>
       )}
 
       {detalle && (

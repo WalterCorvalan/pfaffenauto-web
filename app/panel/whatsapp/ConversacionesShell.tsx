@@ -43,7 +43,7 @@ export default function ConversacionesShell({
           <ChatClient conversacionesIniciales={conversacionesIniciales} conversacionesInstagramIniciales={conversacionesInstagramIniciales} vendedores={vendedores} />
         )}
         {tab === "leads" && (
-          <LeadsTab conversacionesIniciales={conversacionesIniciales} vendedores={vendedores} miId={miId} />
+          <LeadsTab conversacionesIniciales={conversacionesIniciales} conversacionesInstagramIniciales={conversacionesInstagramIniciales} vendedores={vendedores} miId={miId} />
         )}
         {tab === "nuevo" && (
           <div className="p-6">
