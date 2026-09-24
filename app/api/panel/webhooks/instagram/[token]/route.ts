@@ -2,7 +2,7 @@ import { createHmac, timingSafeEqual } from "crypto";
 import { createClient } from "@supabase/supabase-js";
 import { isAiConfiguredV2 } from "@/lib/ai/indexV2";
 import { generarRespuestaAgenteV2, dividirRespuestaEnMensajes } from "@/lib/ai/agenteV2";
-import { sendInstagramPrivateReply, sendInstagramMessage } from "@/lib/meta/client";
+import { sendInstagramPrivateReply, sendInstagramMessage, replyToInstagramCommentPublicly } from "@/lib/meta/client";
 import { decrypt } from "@/lib/crypto";
 import { rateLimit, ipDesdeRequest } from "@/lib/rateLimit";
 import { registrarError } from "@/lib/panel/logger";
@@ -20,6 +20,25 @@ const supabase = createClient(
 
 const MENSAJE_APERTURA =
   "¡Hola! 👋 Gracias por tu comentario. Te escribimos por acá para ayudarte más rápido — ¿qué auto te interesa?";
+
+// Automatización tipo ManyChat: si el texto del comentario contiene alguna
+// palabra clave configurada en Configuración > Instagram, se usa esa
+// respuesta puntual en vez del mensaje de apertura genérico -- reglas
+// globales (no por post), la primera que matchea por orden gana.
+async function buscarAutomatizacionPorComentario(texto: string): Promise<{ respuesta_dm: string; respuesta_publica: string | null } | null> {
+  const { data: reglas } = await supabase
+    .from("instagram_automatizaciones_comentarios")
+    .select("palabras_clave, respuesta_dm, respuesta_publica")
+    .eq("activo", true)
+    .order("orden");
+  const textoLower = texto.toLowerCase();
+  for (const regla of reglas || []) {
+    if ((regla.palabras_clave || []).some((p: string) => textoLower.includes(p.toLowerCase()))) {
+      return { respuesta_dm: regla.respuesta_dm, respuesta_publica: regla.respuesta_publica || null };
+    }
+  }
+  return null;
+}
 
 async function tokenValido(token: string): Promise<boolean> {
   const { data } = await supabase.from("instagram_configuracion").select("webhook_verify_token").eq("id", true).single();
@@ -147,17 +166,30 @@ async function procesarComentario(value: any) {
     return;
   }
 
+  const automatizacion = await buscarAutomatizacionPorComentario(texto);
+  const mensajeDm = automatizacion?.respuesta_dm || MENSAJE_APERTURA;
+
   try {
     const tokenPlano = decrypt(config.token_cifrado, config.token_iv, config.token_tag);
-    await sendInstagramPrivateReply(commentId, tokenPlano, MENSAJE_APERTURA);
+    await sendInstagramPrivateReply(commentId, tokenPlano, mensajeDm);
     await supabase.from("instagram_mensajes").insert({
       conversacion_id: refs.conversacionId,
       direccion: "out",
       tipo: "text",
-      texto: MENSAJE_APERTURA,
+      texto: mensajeDm,
       status: "sent",
       ai_generado: false,
     });
+    // Respuesta pública opcional debajo del comentario -- solo cuando la
+    // regla que matcheó tiene una configurada (nunca en el caso genérico
+    // sin match, mismo comportamiento de siempre ahí).
+    if (automatizacion?.respuesta_publica) {
+      try {
+        await replyToInstagramCommentPublicly(commentId, tokenPlano, automatizacion.respuesta_publica);
+      } catch (err) {
+        registrarError("webhook-ig-v2:respuesta-publica", err, { conversacionId: refs.conversacionId, commentId });
+      }
+    }
   } catch (err) {
     registrarError("webhook-ig-v2:respuesta-privada", err, { conversacionId: refs.conversacionId, commentId });
   }
