@@ -133,7 +133,7 @@ async function ejecutarBusquedaStock(
   const query = aplicarFiltros(
     supabase
       .from("vehiculos")
-      .select("id, marca, modelo, anio, precio_venta, moneda_venta, precio_publicado_ars, precio_publicado_usd, patente, color, km, version, transmision, combustible, categoria, puertas, fotos, sucursales!vehiculos_sucursal_id_fkey ( nombre )")
+      .select("id, marca, modelo, anio, precio_venta, moneda_venta, precio_publicado_ars, precio_publicado_usd, patente, color, km, version, transmision, combustible, categoria, puertas, origen, carroceria, motor_cilindrada, segmento, traccion, potencia_cv, cantidad_plazas, fotos, sucursales!vehiculos_sucursal_id_fkey ( nombre )")
       .in("estado", ["disponible", "reservado"])
       // Sin ORDER BY antes traía siempre las mismas filas "por orden de
       // fila" del motor, sin relación con lo que le convenía ver al cliente
@@ -482,7 +482,7 @@ export async function generarRespuestaAgenteV2(historial: HistorialMensaje[], ca
     // recuerde bien lo que él mismo dijo antes.
     const { data: vehiculoFoco } = await supabase
       .from("vehiculos")
-      .select("id, marca, modelo, anio, precio_venta, moneda_venta, precio_publicado_ars, precio_publicado_usd, patente, color, km, version, transmision, combustible, categoria, puertas, fotos, sucursales!vehiculos_sucursal_id_fkey ( nombre )")
+      .select("id, marca, modelo, anio, precio_venta, moneda_venta, precio_publicado_ars, precio_publicado_usd, patente, color, km, version, transmision, combustible, categoria, puertas, origen, carroceria, motor_cilindrada, segmento, traccion, potencia_cv, cantidad_plazas, fotos, sucursales!vehiculos_sucursal_id_fkey ( nombre )")
       .eq("id", vehiculoEnFocoId)
       .in("estado", ["disponible", "reservado"])
       .maybeSingle();
