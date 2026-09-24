@@ -7,7 +7,37 @@ import ConfirmDialog from "@/components/panel/ConfirmDialog";
 import {
   Search, Send, Bot, Check, Info, ChevronRight, PanelRight,
   Loader2, Megaphone, X, MessageSquareText, AtSign, Archive, ArchiveRestore, FileCheck2,
+  MessageCircle, ShoppingBag,
 } from "lucide-react";
+
+// Badge con el origen real del lead, sobre el avatar -- pedido del 24/9:
+// "canal_origen" ya se clasifica solo en el webhook (WhatsApp directo, Meta
+// Ads si llegó de un anuncio con Click-to-WhatsApp, MercadoLibre si vino del
+// botón "Contactá al vendedor" de una publicación), pero antes esa info
+// vivía solo en el dato -- no se veía en ningún lado del chat. Solo aplica a
+// WhatsApp: Instagram no tiene un equivalente de "número directo vs. link de
+// otra plataforma" (siempre es un DM nativo de Instagram).
+function OrigenBadge({ canalOrigen }: { canalOrigen?: string | null }) {
+  if (canalOrigen === "MercadoLibre") {
+    return (
+      <span title="Llegó desde MercadoLibre" className="absolute -bottom-0.5 -right-0.5 w-4 h-4 rounded-full bg-yellow-400 border-2 border-white dark:border-[#111] flex items-center justify-center">
+        <ShoppingBag className="w-2.5 h-2.5 text-yellow-900" />
+      </span>
+    );
+  }
+  if (canalOrigen === "Meta Ads") {
+    return (
+      <span title="Llegó desde un anuncio de Meta (Facebook/Instagram)" className="absolute -bottom-0.5 -right-0.5 w-4 h-4 rounded-full bg-blue-600 border-2 border-white dark:border-[#111] flex items-center justify-center">
+        <Megaphone className="w-2.5 h-2.5 text-white" />
+      </span>
+    );
+  }
+  return (
+    <span title="Número de WhatsApp directo" className="absolute -bottom-0.5 -right-0.5 w-4 h-4 rounded-full bg-emerald-600 border-2 border-white dark:border-[#111] flex items-center justify-center">
+      <MessageCircle className="w-2.5 h-2.5 text-white" />
+    </span>
+  );
+}
 
 const ETAPAS_PIPELINE: { value: string; label: string }[] = [
   { value: "sin_contactar", label: "Sin contactar" },
@@ -389,6 +419,7 @@ export default function ChatClient({
         <div className="relative shrink-0">
           <div className="w-10 h-10 rounded-full bg-slate-600 text-white flex items-center justify-center font-bold text-sm">{iniciales}</div>
           <span className={`absolute -top-0.5 -right-0.5 w-3 h-3 rounded-full border-2 border-white dark:border-[#111] ${colorCalificacion(c.calificacion)}`} title={c.calificacion || "Sin calificar"} />
+          {canal === "whatsapp" && <OrigenBadge canalOrigen={c.canal_origen} />}
         </div>
         <div className="flex-1 min-w-0">
           <div className="flex justify-between items-start mb-0.5">
@@ -594,8 +625,11 @@ export default function ChatClient({
 
             <div className="flex-1 overflow-y-auto custom-scrollbar">
               <div className="p-4 border-b border-slate-200 dark:border-white/10 flex items-center gap-3">
-                <div className="w-11 h-11 rounded-full bg-slate-600 text-sm font-bold flex items-center justify-center text-white shrink-0 shadow-sm">
-                  {(contactoActivo?.nombre_perfil || contactoActivo?.telefono || "?").substring(0, 2).toUpperCase()}
+                <div className="relative shrink-0">
+                  <div className="w-11 h-11 rounded-full bg-slate-600 text-sm font-bold flex items-center justify-center text-white shadow-sm">
+                    {(contactoActivo?.nombre_perfil || contactoActivo?.telefono || "?").substring(0, 2).toUpperCase()}
+                  </div>
+                  {canal === "whatsapp" && <OrigenBadge canalOrigen={conversacionActiva?.canal_origen} />}
                 </div>
                 <div className="min-w-0">
                   <h3 className="font-bold text-slate-900 dark:text-white text-sm truncate">{contactoActivo?.nombre_perfil || "Cliente"}</h3>
