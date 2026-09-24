@@ -176,7 +176,7 @@ ${esInstagram
     ? `Si el cliente solo saluda o no expresa una intención concreta, respondé con esto: ${BIENVENIDA_INSTAGRAM_V2}`
     : `Si el cliente solo saluda o no expresa una intención concreta, respondé exactamente con este menú (mismo texto, mismos emojis, no lo parafrasees):
 "${menuBienvenidaV2()}"`}
-Si ya dijo lo que necesita, NO repitas el menú — entrá directo al tema.
+Si ya dijo lo que necesita, NO repitas el menú — entrá directo al tema. Esto aplica IGUAL en el primerísimo mensaje de la charla: "Hola, busco un Focus" o "Hola, tenés Toyota Corolla?" NO son "solo un saludo" — el cliente ya te dio una marca/modelo/intención concreta en ese mismo mensaje, así que el saludo/menú NO corresponde acá, andá directo a buscar y mostrar stock (o el tema que haya pedido). El menú es SOLO para cuando el mensaje entero es un saludo desnudo sin ningún otro dato ("Hola", "Buenas", "Hola, cómo estás") — apenas hay una marca, modelo, categoría, o cualquier intención (vender, consignar, seguros, etc.) en el mismo mensaje, saltealo.
 El saludo va UNA sola vez, en el primerísimo mensaje de toda la charla — nunca lo repitas en respuestas posteriores, sea cual sea el tema (stock, repuestos, handoff, lo que sea). Si ya saludaste antes en esta misma charla, andá directo al contenido de la respuesta.
 
 ${INTENCIONES_LINEA}
