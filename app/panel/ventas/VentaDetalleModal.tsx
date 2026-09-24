@@ -174,6 +174,49 @@ export default function VentaDetalleModal({ ventaId, miId, soyAdmin, puedeOperac
     await supabase2.from("expediente_observaciones").insert({ expediente_id: expediente.id, texto: motivo, autor_id: miId, tipo: "observacion" });
   };
 
+  // Al cancelar, antes solo se cerraba el expediente -- las cuotas sin
+  // cobrar, el vehículo marcado "vendido" y la seña marcada "Convertida"
+  // quedaban huérfanos, como si la venta siguiera vigente (Cobros y el cron
+  // de vencimientos seguían reclamando cuotas de una venta que ya no existe).
+  // Lo que SÍ mueve plata real (efectivo ya acreditado, comisiones ya
+  // generadas) NO se revierte solo -- no hay forma de saber desde acá si esa
+  // plata realmente se le devolvió al cliente, así que se avisa para que lo
+  // revise Finanzas a mano en vez de arriesgar un reverso incorrecto.
+  // Cuotas sin cobrar y vehículo vuelto a stock -- seguro para cancelada Y
+  // caída por igual, ninguna de las dos deja la venta "viva" de otra forma.
+  const revertirCuotasYVehiculo = async (ventaActual: { vehiculo_id: string | null; pago_efectivo_ars?: number | null; pago_efectivo_usd?: number | null }, avisos: string[]) => {
+    const { error: errorCuotas, count } = await supabase2.from("cuotas_cobrar_clientes").delete({ count: "exact" }).eq("venta_id", ventaId).eq("cobrada", false);
+    if (errorCuotas) avisos.push(`No se pudieron borrar las cuotas sin cobrar: ${errorCuotas.message}`);
+    else if (count) avisos.push(`Se borraron ${count} cuota(s) sin cobrar todavía.`);
+
+    if (ventaActual?.vehiculo_id) {
+      const { error: errorVehiculo } = await supabase2.from("vehiculos").update({ estado: "disponible" }).eq("id", ventaActual.vehiculo_id).eq("estado", "vendido");
+      if (errorVehiculo) avisos.push(`No se pudo devolver el vehículo a stock: ${errorVehiculo.message}`);
+    }
+
+    const huboEfectivo = ventaActual?.pago_efectivo_ars || ventaActual?.pago_efectivo_usd;
+    if (huboEfectivo) avisos.push("Esta venta tenía efectivo acreditado en Tesorería -- revisá si hay que revertirlo a mano.");
+  };
+
+  // Solo para "cancelada" -- "caída" ya tiene su propio manejo de la seña
+  // server-side (parámetro p_sena_queda_en_agencia del RPC
+  // marcar_operacion_caida), reabrir la seña acá encima pisaría esa
+  // decisión. "Cancelada" no pasa por ningún RPC, así que nadie más se
+  // encarga de esto.
+  const revertirVinculosCancelacion = async (ventaActual: { vehiculo_id: string | null; pago_efectivo_ars?: number | null; pago_efectivo_usd?: number | null }) => {
+    const avisos: string[] = [];
+    await revertirCuotasYVehiculo(ventaActual, avisos);
+
+    const { data: senasVinculadas } = await supabase2.from("venta_senas").select("sena_origen_id").eq("venta_id", ventaId).not("sena_origen_id", "is", null);
+    const idsSenas = (senasVinculadas || []).map((s) => s.sena_origen_id).filter(Boolean) as string[];
+    if (idsSenas.length > 0) {
+      const { error: errorSenas } = await supabase2.from("senas").update({ estado: "Activa", etapa_seguimiento: "Activa" }).in("id", idsSenas).eq("estado", "Convertida");
+      if (errorSenas) avisos.push(`No se pudieron reabrir las señas vinculadas: ${errorSenas.message}`);
+    }
+
+    if (avisos.length > 0) alert(`Venta cancelada. Revisá esto:\n\n${avisos.join("\n")}`);
+  };
+
   const cambiarEstado = async (nuevoEstado: string) => {
     setProcesando(true);
     // .single() reventaba con "Cannot coerce the result to a single JSON
@@ -189,7 +232,10 @@ export default function VentaDetalleModal({ ventaId, miId, soyAdmin, puedeOperac
     if (!data) { alert("No se pudo confirmar el cambio de estado (no se pudo releer la venta). Verificá permisos y volvé a intentar."); await cargar(); return; }
     setVenta(data);
     onActualizado(data);
-    if (nuevoEstado === "cancelada") await cerrarExpedienteSiExiste("Expediente cerrado automáticamente: la venta se marcó Cancelada.");
+    if (nuevoEstado === "cancelada") {
+      await cerrarExpedienteSiExiste("Expediente cerrado automáticamente: la venta se marcó Cancelada.");
+      await revertirVinculosCancelacion(data);
+    }
     await cargar();
   };
 
@@ -200,6 +246,9 @@ export default function VentaDetalleModal({ ventaId, miId, soyAdmin, puedeOperac
     setMostrarCaida(false);
     if (error) { alert(error.message || "No se pudo marcar la operación como caída."); return; }
     await cerrarExpedienteSiExiste("Expediente cerrado automáticamente: la operación se marcó Caída.");
+    const avisosCaida: string[] = [];
+    await revertirCuotasYVehiculo(venta, avisosCaida);
+    if (avisosCaida.length > 0) alert(`Operación marcada Caída. Revisá esto:\n\n${avisosCaida.join("\n")}`);
     await cargar();
     // El RPC no tiró error -- la venta ya quedó marcada caída. Este segundo
     // refetch es solo para avisarle a la lista (VentasClient) del cambio; si
