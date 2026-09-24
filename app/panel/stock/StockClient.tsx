@@ -12,6 +12,7 @@ import {
 } from "lucide-react";
 import Link from "next/link";
 import NuevoVehiculoModal from "./NuevoVehiculoModal";
+import FichaVehiculoModal from "./FichaVehiculoModal";
 import NuevoMandatoModal from "./NuevoMandatoModal";
 import TuCatalogoModal from "./TuCatalogoModal";
 import BotonPublicarML from "./BotonPublicarML";
@@ -106,6 +107,7 @@ export default function StockClient({
   const [senaVehiculo, setSenaVehiculo] = useState<Vehiculo | null>(null);
   const [presupuestoVehiculo, setPresupuestoVehiculo] = useState<Vehiculo | null>(null);
   const [editando, setEditando] = useState<Vehiculo | null>(null);
+  const [fichaVehiculo, setFichaVehiculo] = useState<Vehiculo | null>(null);
   const [galeria, setGaleria] = useState<{ fotos: string[]; index: number } | null>(null);
   const [ocupadoId, setOcupadoId] = useState<string | null>(null);
   const [menuMobileAbierto, setMenuMobileAbierto] = useState(false);
@@ -461,7 +463,7 @@ export default function StockClient({
                         const dias = diasEnStock(v.created_at);
                         const pendientes = pendientesTexto(v);
                         return (
-                          <div key={v.id} onClick={() => setEditando(v)} className={`bg-white dark:bg-white/[0.02] border border-slate-200 dark:border-white/5 rounded-2xl overflow-hidden cursor-pointer hover:shadow-md transition-shadow border-l-4 ${bordeAntiguedad(dias, diasEstancado)}`}>
+                          <div key={v.id} onClick={() => setFichaVehiculo(v)} className={`bg-white dark:bg-white/[0.02] border border-slate-200 dark:border-white/5 rounded-2xl overflow-hidden cursor-pointer hover:shadow-md transition-shadow border-l-4 ${bordeAntiguedad(dias, diasEstancado)}`}>
                             <div className="h-32 bg-slate-100 dark:bg-white/5 flex flex-col items-center justify-center gap-1 relative">
                               {v.fotos?.[0] ? <img src={v.fotos[0]} alt="" className="w-full h-full object-cover" /> : <><Car className="w-8 h-8 text-slate-300 dark:text-slate-600" /><span className="text-[11px] text-slate-400">Sin foto</span></>}
                               <span className="absolute bottom-1.5 left-1.5 bg-black/50 text-white text-[10px] font-bold px-1.5 py-0.5 rounded">{v.fotos.length} fotos</span>
@@ -555,6 +557,21 @@ export default function StockClient({
       </div>
 
       {(modalNuevo || editando) && <NuevoVehiculoModal perfiles={perfiles} clientes={clientes} sucursales={sucursales} miId={miId} editando={editando || undefined} soloFotos={!puedeEditarCompleto} onClose={() => { setModalNuevo(false); setEditando(null); }} onCreado={onCreadoVehiculo} />}
+      {fichaVehiculo && (
+        <FichaVehiculoModal
+          vehiculo={fichaVehiculo}
+          miId={miId}
+          perfiles={perfiles}
+          clientes={clientes}
+          sucursales={sucursales}
+          puedeEditarCompleto={puedeEditarCompleto}
+          puedeEliminar={puedeEliminar}
+          onClose={() => setFichaVehiculo(null)}
+          onActualizado={(id, cambios) => { actualizarVehiculo(id, cambios); setFichaVehiculo((f) => (f && f.id === id ? { ...f, ...cambios } : f)); }}
+          onCreado={(v) => { onCreadoVehiculo(v); setFichaVehiculo(v); }}
+          onEliminar={(v) => { eliminarVehiculo(v); setFichaVehiculo(null); }}
+        />
+      )}
 
       {galeria && (
         <div className="fixed inset-0 z-[60] bg-black/80 flex flex-col items-center justify-center p-6 gap-4" onClick={() => setGaleria(null)}>
