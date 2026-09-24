@@ -64,11 +64,17 @@ export const metadata: Metadata = {
       "Comprá o vendé tu auto de forma fácil y segura. Amplio catálogo de 0KM y usados seleccionados de alta gama.",
     url: "https://www.pfaffencars.com",
     siteName: "Pfaffen Autos",
+    // logo.png mide 668×173 real (no 1200x630) -- declarar un tamaño falso
+    // hace que Facebook/WhatsApp/LinkedIn decidan el layout de la preview
+    // con la proporción equivocada. Esto es un parche de la métrica, no la
+    // solución real: para una preview de compartido que se vea bien hace
+    // falta una imagen dedicada de ~1200x630 (o 1.91:1), no el logo
+    // estirado -- avisado aparte, no es algo para fabricar sin diseño.
     images: [
       {
         url: "https://www.pfaffencars.com/logo.png",
-        width: 1200,
-        height: 630,
+        width: 668,
+        height: 173,
         alt: "Pfaffen Autos",
       },
     ],
