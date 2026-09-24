@@ -48,7 +48,7 @@ function fmtFecha(iso: string | null) {
   return new Date(iso).toLocaleDateString("es-AR");
 }
 
-type TabFicha = "resumen" | "rendimiento" | "precios";
+type TabFicha = "resumen" | "rendimiento" | "precios" | "plan";
 
 interface Props {
   vehiculo: Vehiculo;
@@ -68,6 +68,7 @@ const TABS: { id: TabFicha; label: string; icon: typeof Car }[] = [
   { id: "resumen", label: "Resumen y fotos", icon: ImageIcon },
   { id: "rendimiento", label: "Rendimiento", icon: TrendingUp },
   { id: "precios", label: "Precios e historial", icon: History },
+  { id: "plan", label: "Plan de trabajo", icon: ClipboardCheck },
 ];
 
 export default function FichaVehiculoModal({ vehiculo, miId, perfiles, clientes, sucursales, puedeEditarCompleto, puedeEliminar, onClose, onActualizado, onCreado, onEliminar }: Props) {
@@ -113,6 +114,7 @@ export default function FichaVehiculoModal({ vehiculo, miId, perfiles, clientes,
           )}
           {tab === "rendimiento" && <TabRendimiento vehiculoId={vehiculo.id} />}
           {tab === "precios" && <TabPrecios vehiculoId={vehiculo.id} />}
+          {tab === "plan" && <TabPlan vehiculoId={vehiculo.id} miId={miId} perfiles={perfiles} />}
         </div>
 
         <div className="flex items-center gap-2 px-6 py-4 border-t border-slate-100 dark:border-white/10 shrink-0">
@@ -307,6 +309,91 @@ function TabPrecios({ vehiculoId }: { vehiculoId: string }) {
               <span className="text-slate-500 dark:text-slate-400">{fmtFecha(c.created_at)}</span>
               <span className="font-semibold text-slate-800 dark:text-slate-100">{fmtPrecio(c.precio_anterior, c.moneda_anterior)} → {fmtPrecio(c.precio_nuevo, c.moneda_nueva)}</span>
             </div>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
+
+// "Plan de trabajo" -- próxima acción/responsable/fecha para ESTA unidad
+// puntual (tabla `vehiculo_plan_trabajo`, con FK a vehiculos). Deliberadamente
+// distinto del buscador público /seguimiento (que sigue una venta/seña por
+// código, tablas ventas/senas) y del cron app/api/cron/panel/seguimientos
+// (agregador de alertas de otros módulos) -- no comparten tabla ni datos con
+// ninguno de los dos, por eso el nombre no usa la palabra "seguimiento".
+interface ItemPlan { id: string; proxima_accion: string; responsable_id: string | null; fecha: string | null; resuelto: boolean; created_at: string }
+
+function TabPlan({ vehiculoId, miId, perfiles }: { vehiculoId: string; miId: string; perfiles: Perfil[] }) {
+  const [items, setItems] = useState<ItemPlan[] | null>(null);
+  const [accion, setAccion] = useState("");
+  const [responsableId, setResponsableId] = useState("");
+  const [fecha, setFecha] = useState("");
+  const [guardando, setGuardando] = useState(false);
+  const perfilMap = Object.fromEntries(perfiles.map((p) => [p.id, p.nombre]));
+
+  const cargar = () => {
+    supabase2.from("vehiculo_plan_trabajo").select("id, proxima_accion, responsable_id, fecha, resuelto, created_at")
+      .eq("vehiculo_id", vehiculoId).order("resuelto", { ascending: true }).order("fecha", { ascending: true, nullsFirst: false })
+      .then(({ data }) => setItems(data || []));
+  };
+  useEffect(cargar, [vehiculoId]);
+
+  const agregar = async () => {
+    if (!accion.trim()) return;
+    setGuardando(true);
+    const { error } = await supabase2.from("vehiculo_plan_trabajo").insert({
+      vehiculo_id: vehiculoId, proxima_accion: accion.trim(),
+      responsable_id: responsableId || null, fecha: fecha || null, creado_por: miId,
+    });
+    if (!error) { setAccion(""); setResponsableId(""); setFecha(""); cargar(); }
+    setGuardando(false);
+  };
+
+  const marcarResuelto = async (item: ItemPlan) => {
+    setItems((prev) => prev && prev.map((i) => (i.id === item.id ? { ...i, resuelto: !i.resuelto } : i)));
+    await supabase2.from("vehiculo_plan_trabajo").update({ resuelto: !item.resuelto }).eq("id", item.id);
+    cargar();
+  };
+
+  return (
+    <div className="space-y-4">
+      <div>
+        <p className="text-sm font-bold text-slate-800 dark:text-white">Plan de trabajo</p>
+        <p className="text-xs text-slate-400">Próximas acciones a seguir sobre esta unidad puntual.</p>
+      </div>
+
+      <div className="bg-slate-50 dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-xl p-3.5 space-y-2">
+        <input value={accion} onChange={(e) => setAccion(e.target.value)} placeholder="Próxima acción (ej: llamar al cliente, cargar peritaje)" className="w-full bg-white dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-lg px-3 py-2 text-sm outline-none focus:border-[#0145F2] text-slate-900 dark:text-white placeholder:text-slate-400" />
+        <div className="flex flex-col sm:flex-row gap-2">
+          <select value={responsableId} onChange={(e) => setResponsableId(e.target.value)} className="flex-1 bg-white dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-lg px-3 py-2 text-xs font-semibold text-slate-600 dark:text-slate-300">
+            <option value="">Sin responsable</option>
+            {perfiles.map((p) => <option key={p.id} value={p.id}>{p.nombre}</option>)}
+          </select>
+          <input type="date" value={fecha} onChange={(e) => setFecha(e.target.value)} className="bg-white dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-lg px-3 py-2 text-xs text-slate-600 dark:text-slate-300" />
+          <button onClick={agregar} disabled={guardando || !accion.trim()} className="px-4 py-2 rounded-lg bg-[#0145F2] hover:bg-[#0138c9] text-white text-xs font-bold disabled:opacity-50 shrink-0">
+            {guardando ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : "Agregar"}
+          </button>
+        </div>
+      </div>
+
+      {items === null ? (
+        <div className="flex justify-center py-8"><Loader2 className="w-5 h-5 animate-spin text-slate-400" /></div>
+      ) : items.length === 0 ? (
+        <p className="text-sm text-slate-400 py-4">Sin acciones cargadas para esta unidad.</p>
+      ) : (
+        <div className="space-y-2">
+          {items.map((i) => (
+            <label key={i.id} className={`flex items-start gap-3 bg-slate-50 dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-xl px-3.5 py-2.5 cursor-pointer ${i.resuelto ? "opacity-50" : ""}`}>
+              <input type="checkbox" checked={i.resuelto} onChange={() => marcarResuelto(i)} className="mt-1 shrink-0" />
+              <div className="flex-1 min-w-0">
+                <p className={`text-sm font-semibold text-slate-800 dark:text-slate-100 ${i.resuelto ? "line-through" : ""}`}>{i.proxima_accion}</p>
+                <p className="text-[11px] text-slate-400">
+                  {i.responsable_id ? perfilMap[i.responsable_id] || "—" : "Sin responsable"}
+                  {i.fecha ? ` · ${fmtFecha(i.fecha)}` : ""}
+                </p>
+              </div>
+            </label>
           ))}
         </div>
       )}
