@@ -34,6 +34,13 @@ export type ResultadoStockV2 = {
   sucursal: string | null;
   categoria: string | null;
   puertas: number | null;
+  origen: string | null;
+  carroceria: string | null;
+  motor_cilindrada: string | null;
+  segmento: string | null;
+  traccion: string | null;
+  potencia_cv: number | null;
+  cantidad_plazas: number | null;
   fotos: string[];
 };
 
@@ -61,7 +68,14 @@ function formatearResultadosStock(resultados: ResultadoStockV2[], esAlternativa:
     : "";
   const lista = resultados
     .map((v) => {
-      const extra = [v.categoria, v.version, v.color, v.km != null ? `${v.km.toLocaleString("es-AR")} km` : null, v.transmision, v.combustible, v.puertas != null ? `${v.puertas} puertas` : null].filter(Boolean).join(" · ");
+      const extra = [
+        v.categoria, v.carroceria, v.version, v.segmento, v.color, v.origen,
+        v.km != null ? `${v.km.toLocaleString("es-AR")} km` : null,
+        v.transmision, v.combustible, v.traccion,
+        v.puertas != null ? `${v.puertas} puertas` : null,
+        v.cantidad_plazas != null ? `${v.cantidad_plazas} plazas` : null,
+        v.motor_cilindrada, v.potencia_cv != null ? `${v.potencia_cv} CV` : null,
+      ].filter(Boolean).join(" · ");
       const sucursalTxt = v.sucursal ? `\n📍 ${v.sucursal}` : "";
       const simbolo = v.moneda_venta === "USD" ? "US$" : "$";
       const precioTxt = v.precio_venta > 0 ? `${simbolo} ${v.precio_venta.toLocaleString("es-AR")}` : "Consultar precio";
