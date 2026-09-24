@@ -77,7 +77,19 @@ export default function LiquidadorClient({ empleados, liquidacionesPrevias, cate
       const hasta = new Date(anio, mesNum, 1).toISOString().split("T")[0];
 
       if (categoria.tiene_comision) {
-        const { data } = await supabase2.rpc("comisiones_periodo_empleado", { p_perfil_id: empleadoId, p_desde: desde, p_hasta: hasta });
+        const { data, error } = await supabase2.rpc("comisiones_periodo_empleado", { p_perfil_id: empleadoId, p_desde: desde, p_hasta: hasta });
+        if (error) {
+          // Sin este chequeo, un fallo del RPC (ej. mes sin datos, error de
+          // permisos) se veía IGUAL que "no tiene comisiones este mes" --
+          // comisionUsd/Ars quedaban en 0 en silencio, y esa cifra en 0
+          // terminaba en total_final de la liquidación como si fuera un
+          // dato real y confirmado.
+          alert(`No se pudo calcular la comisión del período: ${error.message}. La liquidación va a quedar con comisión $0 hasta que lo reintentes.`);
+          setComisionUsd(0);
+          setComisionArs(0);
+          setCalculando(false);
+          return;
+        }
         setComisionUsd(Number((data || []).find((r: any) => r.moneda === "USD")?.total) || 0);
         setComisionArs(Number((data || []).find((r: any) => r.moneda === "ARS")?.total) || 0);
       } else {
@@ -224,9 +236,16 @@ export default function LiquidadorClient({ empleados, liquidacionesPrevias, cate
                 <dd className="font-bold text-slate-900 dark:text-white font-mono">{fmt(sueldoBase, monedaSueldo)}</dd>
               </div>
               {categoria.tiene_comision && comisionEnMonedaSueldo > 0 && (
-                <div className="flex items-center justify-between">
-                  <dt className="text-slate-500 dark:text-slate-400">Comisión de ventas del mes</dt>
-                  <dd className="font-bold text-emerald-700 dark:text-emerald-400 font-mono">+ {fmt(comisionEnMonedaSueldo, monedaSueldo)}</dd>
+                <div>
+                  <div className="flex items-center justify-between">
+                    <dt className="text-slate-500 dark:text-slate-400">Comisión de ventas del mes</dt>
+                    <dd className="font-bold text-emerald-700 dark:text-emerald-400 font-mono">+ {fmt(comisionEnMonedaSueldo, monedaSueldo)}</dd>
+                  </div>
+                  {/* Esta comisión se paga acá, dentro del sueldo -- si las
+                      mismas comisiones de este período también se marcan
+                      "Cobrada" a mano en Comisiones (Finanzas → Comisiones),
+                      el empleado cobra dos veces por la misma venta. */}
+                  <p className="text-[10px] text-amber-600 dark:text-amber-400 mt-1">Al pagar esta liquidación, marcá también esas comisiones como cobradas en Finanzas → Comisiones (o viceversa) — no hay vínculo automático entre las dos, pagar en los dos lados duplica el cobro.</p>
                 </div>
               )}
               {tallerEnMonedaSueldo > 0 && (
