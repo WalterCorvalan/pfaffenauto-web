@@ -12,7 +12,7 @@ import TablaResponsiva, { type ColumnaTabla } from "@/components/panel/TablaResp
 import { zonaEquilibrio, CLASE_ZONA_CARD, type ZonaSemaforo } from "./finanzas/tabs/shared";
 
 interface Props {
-  esAdmin: boolean; ocultarMontos: boolean;
+  esAdmin: boolean; puedeVerFinanzas: boolean; ocultarMontos: boolean;
   revenuePorMoneda: Record<string, number>;
   ventasDelMes: number; operacionesDelMes: number;
   stockDisponible: number; stockReservado: number; stockSenado: number; stockVendido: number; stockEnPreparacion: number;
@@ -327,6 +327,14 @@ export default function DashboardGeneralTab(props: Props) {
         <Tile label="En preparación" valor={props.stockEnPreparacion} icon={Car} color="sky" href="/panel/stock" />
       </div>
 
+      {/* Toda esta sección (saldos por caja, cash flow, top de gastos) es
+          plata real de la empresa -- antes se mostraba a cualquier rol sin
+          gate (la tarjeta "Cash Flow del mes" de más abajo ya decía
+          "admin/finanzas" en su propio texto, pero nada lo hacía cumplir).
+          Mismo criterio que Finanzas ya aplica para el rol encargado
+          (auditoría de seguridad). */}
+      {props.puedeVerFinanzas && (
+      <>
       <SeccionTitulo>Finanzas</SeccionTitulo>
       <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
         <Tile label="Cuotas a pagar (mes)" valor={fmtPorMoneda(props.cuotasPagarPorMoneda)} icon={CreditCard} color="rose" oculto={props.ocultarMontos} href="/panel/finanzas" />
@@ -415,6 +423,8 @@ export default function DashboardGeneralTab(props: Props) {
           </div>
         )}
       </div>
+      </>
+      )}
 
       <SeccionTitulo>Operación</SeccionTitulo>
       <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
@@ -453,6 +463,8 @@ export default function DashboardGeneralTab(props: Props) {
         </div>
       </div>
 
+      {props.puedeVerFinanzas && (
+      <>
       <SeccionTitulo>Proyección de caja</SeccionTitulo>
       <div className="rounded-2xl p-5 bg-white dark:bg-white/[0.02] border border-slate-200 dark:border-white/5">
         <div className="flex items-center justify-between mb-3">
@@ -504,6 +516,8 @@ export default function DashboardGeneralTab(props: Props) {
         </div>
         <p className="text-[10px] text-slate-400 mt-3">Mismos números que la pantalla x Cobrar/Pagar — a cobrar: saldo pendiente de señas activas; a pagar: comisiones pendientes y cuotas a pagar de este mes.</p>
       </div>
+      </>
+      )}
 
       <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
         <div className="rounded-2xl p-4 bg-white dark:bg-white/[0.02] border border-slate-200 dark:border-white/5">
@@ -538,6 +552,7 @@ export default function DashboardGeneralTab(props: Props) {
           ) : <p className="text-xs text-slate-400 py-4 text-center">Sin datos de performance todavía.</p>}
         </div>
 
+        {props.puedeVerFinanzas && (
         <div className="rounded-2xl p-4 bg-white dark:bg-white/[0.02] border border-slate-200 dark:border-white/5">
           <div className="flex items-center justify-between mb-2">
             <div>
@@ -568,6 +583,7 @@ export default function DashboardGeneralTab(props: Props) {
             </div>
           ))}
         </div>
+        )}
 
         <div className="rounded-2xl p-4 bg-white dark:bg-white/[0.02] border border-slate-200 dark:border-white/5">
           <div className="flex items-center justify-between mb-2">

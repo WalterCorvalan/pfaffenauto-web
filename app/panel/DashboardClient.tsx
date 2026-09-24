@@ -7,7 +7,7 @@ import DashboardGeneralTab from "./DashboardGeneralTab";
 import Link from "next/link";
 
 interface Props {
-  miNombre: string; esAdmin: boolean; gananciasOcultas: boolean;
+  miNombre: string; esAdmin: boolean; puedeVerFinanzas: boolean; gananciasOcultas: boolean;
   revenuePorMoneda: Record<string, number>;
   ventasDelMes: number; operacionesDelMes: number; objetivoVentasMensual: number | null;
   stockDisponible: number; stockReservado: number; stockSenado: number; stockVendido: number; stockEnPreparacion: number;
@@ -120,6 +120,7 @@ export default function DashboardClient(props: Props) {
       ) : (
         <DashboardGeneralTab
           esAdmin={props.esAdmin}
+          puedeVerFinanzas={props.puedeVerFinanzas}
           ocultarMontos={oculto}
           revenuePorMoneda={props.revenuePorMoneda}
           ventasDelMes={props.ventasDelMes}
