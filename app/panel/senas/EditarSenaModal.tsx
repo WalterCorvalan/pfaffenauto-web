@@ -13,10 +13,11 @@ const labelClass = "text-[11px] font-bold text-slate-500 dark:text-slate-400 upp
 // colaterales de la carga inicial (estado del vehículo, movimiento de caja,
 // notificaciones) — esos ya pasaron y no hay que repetirlos al corregir un
 // dato mal cargado.
-export default function EditarSenaModal({ sena, vendedores, sucursales, onClose, onGuardado }: {
-  sena: any; vendedores: any[]; sucursales: any[]; onClose: () => void; onGuardado: (s: any) => void;
+export default function EditarSenaModal({ sena, vendedores, sucursales, miId, soyAdmin, onClose, onGuardado }: {
+  sena: any; vendedores: any[]; sucursales: any[]; miId: string; soyAdmin: boolean; onClose: () => void; onGuardado: (s: any) => void;
 }) {
   const [guardando, setGuardando] = useState(false);
+  const [solicitudEnviada, setSolicitudEnviada] = useState(false);
   const [apellido, setApellido] = useState(sena.apellido || "");
   const [nombre, setNombre] = useState(sena.nombre || "");
   const [dni, setDni] = useState(sena.dni || "");
@@ -51,10 +52,21 @@ export default function EditarSenaModal({ sena, vendedores, sucursales, onClose,
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [ventaArs, ventaUsd, senaArs, senaUsd, monedaVenta]);
 
+  // Cambiar el precio pactado (venta/seña) sin control de rol dejaba que
+  // cualquiera con acceso a Señas bajara/subiera el precio de una operación
+  // ajena sin dejar rastro -- mismo criterio que "Editar comisión" en
+  // VentaDetalleModal.tsx: admin aplica directo, cualquier otro rol genera
+  // una solicitud en `autorizaciones` (con PIN) en vez de tocar la seña.
+  const precioCambio =
+    (ventaArs ? Number(ventaArs) : null) !== (sena.venta_ars ?? null) ||
+    (ventaUsd ? Number(ventaUsd) : null) !== (sena.venta_usd ?? null) ||
+    (senaArs ? Number(senaArs) : null) !== (sena.sena_ars ?? null) ||
+    (senaUsd ? Number(senaUsd) : null) !== (sena.sena_usd ?? null);
+
   const guardar = async () => {
     setGuardando(true);
     try {
-      const { data, error } = await supabase2.from("senas").update({
+      const payload = {
         apellido: apellido || null, nombre: nombre || null,
         cliente_nombre: `${apellido || ""} ${nombre || ""}`.trim() || sena.cliente_nombre,
         dni: dni || null, telefono_celular: telefono || null, correo_electronico: email || null,
@@ -67,7 +79,26 @@ export default function EditarSenaModal({ sena, vendedores, sucursales, onClose,
         saldo_abonar_ars: saldoRecalculado,
         remanente_ars: remanenteRecalculado,
         notas: observaciones || null,
-      }).eq("id", sena.id).select("*, perfiles:vendedor_id ( nombre ), sucursales:sucursal_id ( nombre )").single();
+      };
+
+      if (precioCambio && !soyAdmin) {
+        const { error } = await supabase2.from("autorizaciones").insert({
+          tipo: "editar_precio_sena",
+          riesgo: "alto",
+          requiere_pin: true,
+          descripcion: `Editar precio de la seña de ${sena.cliente_nombre || `${apellido} ${nombre}`.trim()} (${marca} ${modelo})`,
+          entidad_tabla: "senas",
+          entidad_id: sena.id,
+          datos_antes: { venta_ars: sena.venta_ars, venta_usd: sena.venta_usd, sena_ars: sena.sena_ars, sena_usd: sena.sena_usd },
+          datos_despues: { venta_ars: payload.venta_ars, venta_usd: payload.venta_usd, sena_ars: payload.sena_ars, sena_usd: payload.sena_usd },
+          solicitado_por: miId,
+        });
+        if (error) throw error;
+        setSolicitudEnviada(true);
+        return;
+      }
+
+      const { data, error } = await supabase2.from("senas").update(payload).eq("id", sena.id).select("*, perfiles:vendedor_id ( nombre ), sucursales:sucursal_id ( nombre )").single();
       if (error) throw error;
       onGuardado(data);
       onClose();
@@ -114,15 +145,23 @@ export default function EditarSenaModal({ sena, vendedores, sucursales, onClose,
             <div><label className={labelClass}>Seña (US$)</label><input type="text" inputMode="numeric" className={inputClass} value={senaUsd} onChange={(e) => setSenaUsd(e.target.value.replace(/\D/g, ""))} /></div>
           </div>
           <p className="text-[10px] text-amber-600 dark:text-amber-400">Si corregís el monto de la seña acá, no se ajusta solo el movimiento ya registrado en Finanzas (si lo hubo) — avisá a Tesorería si hace falta.</p>
+          {precioCambio && !soyAdmin && !solicitudEnviada && (
+            <p className="text-[11px] text-amber-700 dark:text-amber-400 font-semibold">⚠️ Cambiar el precio de venta/seña necesita aprobación del admin — se genera una solicitud, no se aplica solo.</p>
+          )}
+          {solicitudEnviada && (
+            <p className="text-xs font-bold text-emerald-600">✓ Solicitud enviada, queda pendiente de aprobación en Autorizaciones.</p>
+          )}
 
           <div><label className={labelClass}>Observaciones</label><textarea className={inputClass} rows={3} value={observaciones} onChange={(e) => setObservaciones(e.target.value)} /></div>
         </div>
 
         <div className="flex gap-2 p-5 pt-3 border-t border-slate-100 dark:border-white/10 shrink-0 bg-slate-50 dark:bg-transparent">
           <button type="button" onClick={onClose} disabled={guardando} className="ml-auto px-4 py-2.5 text-sm font-bold text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-white/10 rounded-xl transition-colors disabled:opacity-50">Cancelar</button>
-          <button type="button" onClick={guardar} disabled={guardando} className="flex items-center gap-2 px-6 py-2.5 text-sm font-bold bg-[#0145F2] hover:bg-[#0138c9] text-white rounded-xl transition-colors disabled:opacity-50">
-            <Save className="w-4 h-4" /> {guardando ? "Guardando..." : "Guardar cambios"}
-          </button>
+          {!solicitudEnviada && (
+            <button type="button" onClick={guardar} disabled={guardando} className="flex items-center gap-2 px-6 py-2.5 text-sm font-bold bg-[#0145F2] hover:bg-[#0138c9] text-white rounded-xl transition-colors disabled:opacity-50">
+              <Save className="w-4 h-4" /> {guardando ? "Guardando..." : (precioCambio && !soyAdmin) ? "Enviar solicitud" : "Guardar cambios"}
+            </button>
+          )}
         </div>
       </div>
     </div>

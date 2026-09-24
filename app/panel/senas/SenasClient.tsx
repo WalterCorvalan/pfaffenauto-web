@@ -14,8 +14,8 @@ import ConfirmDialog from "@/components/panel/ConfirmDialog";
 const COLOR_ESTADO: Record<string, string> = { Activa: "border-l-amber-400", Convertida: "border-l-emerald-400", Perdida: "border-l-rose-400" };
 
 export default function SenasClient({
-  senasIniciales, clientes, vehiculos, vendedores, sucursales, cuentas,
-}: { senasIniciales: any[]; clientes: any[]; vehiculos: any[]; vendedores: any[]; sucursales: any[]; cuentas: any[] }) {
+  senasIniciales, clientes, vehiculos, vendedores, sucursales, cuentas, miId, soyAdmin,
+}: { senasIniciales: any[]; clientes: any[]; vehiculos: any[]; vendedores: any[]; sucursales: any[]; cuentas: any[]; miId: string; soyAdmin: boolean }) {
   const router = useRouter();
   const searchParams = useSearchParams();
   const [senas, setSenas] = useState(senasIniciales);
@@ -216,7 +216,7 @@ export default function SenasClient({
 
       {editando && (
         <EditarSenaModal
-          sena={editando} vendedores={vendedores} sucursales={sucursales}
+          sena={editando} vendedores={vendedores} sucursales={sucursales} miId={miId} soyAdmin={soyAdmin}
           onClose={() => setEditando(null)}
           onGuardado={(s) => setSenas((prev) => prev.map((x) => (x.id === s.id ? s : x)))}
         />

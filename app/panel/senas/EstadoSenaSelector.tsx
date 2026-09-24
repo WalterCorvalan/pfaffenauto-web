@@ -60,6 +60,20 @@ export default function EstadoSenaSelector({ id, estado, vehiculoId }: { id: str
       // Se cayó la seña: liberamos el auto.
       await supabase2.from("vehiculos").update({ estado: "disponible" }).eq("id", vehiculoId);
     }
+    if (nuevo === "Activa" && estado === "Perdida" && vehiculoId) {
+      // Reactivar una seña Perdida es el efecto inverso de arriba -- sin
+      // esto el auto quedaba "disponible" mientras la seña volvía a
+      // mostrarse "Activa" (implica reservado), y otro vendedor podía
+      // vender/señar el mismo auto. Solo se vuelve a marcar "señado" si
+      // sigue disponible -- si mientras tanto se vendió/señó por otro
+      // lado, no se pisa ese estado más nuevo, se avisa para resolver a mano.
+      const { data: vehiculoActual } = await supabase2.from("vehiculos").select("estado").eq("id", vehiculoId).maybeSingle();
+      if (vehiculoActual?.estado === "disponible") {
+        await supabase2.from("vehiculos").update({ estado: "señado" }).eq("id", vehiculoId);
+      } else if (vehiculoActual && vehiculoActual.estado !== "señado") {
+        alert(`La seña se reactivó, pero el vehículo ya está "${vehiculoActual.estado}" por otro lado -- revisalo a mano.`);
+      }
+    }
     if (nuevo === "Perdida" && devuelta) {
       const { data: mov } = await supabase2.from("movimientos_caja").select("id").eq("sena_id", id).is("deleted_at", null).maybeSingle();
       if (mov) {
