@@ -3,7 +3,7 @@ import { createClient } from "@supabase/supabase-js";
 import { createClient as createServerClient } from "@/lib/supabase/server";
 import { z } from "zod";
 import {
-  TOPES_FINANCIACION_DEFAULT, TOPE_0KM_DEFAULT, TNA_POR_PLAZO_DEFAULT,
+  TOPES_FINANCIACION_DEFAULT, TOPE_0KM_DEFAULT, TNA_POR_ANIO_Y_PLAZO_DEFAULT,
   GASTOS_PCT_DEFAULT, UVA_DESCUENTO_PCT_DEFAULT,
 } from "@/lib/financiacion";
 
@@ -29,7 +29,7 @@ export async function GET() {
     return NextResponse.json({
       financiacion_topes: TOPES_FINANCIACION_DEFAULT,
       financiacion_tope_0km: TOPE_0KM_DEFAULT,
-      financiacion_tna: TNA_POR_PLAZO_DEFAULT,
+      financiacion_tna: TNA_POR_ANIO_Y_PLAZO_DEFAULT,
       financiacion_gastos_pct: GASTOS_PCT_DEFAULT,
       financiacion_uva_descuento: UVA_DESCUENTO_PCT_DEFAULT,
       dolar_manual_activo: false,
@@ -41,7 +41,7 @@ export async function GET() {
   return NextResponse.json({
     financiacion_topes: data.financiacion_topes?.length ? data.financiacion_topes : TOPES_FINANCIACION_DEFAULT,
     financiacion_tope_0km: data.financiacion_tope_0km ?? TOPE_0KM_DEFAULT,
-    financiacion_tna: Object.keys(data.financiacion_tna || {}).length ? data.financiacion_tna : TNA_POR_PLAZO_DEFAULT,
+    financiacion_tna: data.financiacion_tna?.length ? data.financiacion_tna : TNA_POR_ANIO_Y_PLAZO_DEFAULT,
     financiacion_gastos_pct: data.financiacion_gastos_pct ?? GASTOS_PCT_DEFAULT,
     financiacion_uva_descuento: Object.keys(data.financiacion_uva_descuento || {}).length ? data.financiacion_uva_descuento : UVA_DESCUENTO_PCT_DEFAULT,
     dolar_manual_activo: data.dolar_manual_activo ?? false,
@@ -51,10 +51,11 @@ export async function GET() {
 }
 
 const TopeSchema = z.object({ anioDesde: z.number(), anioHasta: z.number().nullable(), pct: z.number().min(0).max(100) });
+const TnaGrupoSchema = z.object({ anioDesde: z.number(), anioHasta: z.number().nullable(), tna: z.record(z.string(), z.coerce.number().min(0).max(500)) });
 const PatchSchema = z.object({
   financiacion_topes: z.array(TopeSchema).optional(),
   financiacion_tope_0km: z.coerce.number().min(0).max(100).optional(),
-  financiacion_tna: z.record(z.string(), z.coerce.number()).optional(),
+  financiacion_tna: z.array(TnaGrupoSchema).optional(),
   financiacion_gastos_pct: z.coerce.number().min(0).optional(),
   financiacion_uva_descuento: z.record(z.string(), z.coerce.number()).optional(),
   dolar_manual_activo: z.boolean().optional(),
