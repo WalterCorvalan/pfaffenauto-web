@@ -1,22 +1,36 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { supabase2 } from "@/lib/supabase/client";
 import { X, Loader2, Handshake } from "lucide-react";
 
 interface Vehiculo { id: string; marca: string; modelo: string; precio_venta: number; moneda_venta: string }
-interface Props { vehiculo: Vehiculo; miId: string; onClose: () => void; onGuardada: (vehiculoId: string) => void }
+interface Cuenta { id: string; nombre: string; moneda: string }
+interface Props { vehiculo: Vehiculo; miId: string; cuentas?: Cuenta[]; onClose: () => void; onGuardada: (vehiculoId: string) => void }
 
 const inputClass = "w-full bg-slate-50 dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-xl px-3.5 py-2.5 text-sm outline-none focus:border-rose-500 text-slate-900 dark:text-white placeholder:text-slate-400";
 const labelClass = "text-xs font-bold text-slate-600 dark:text-slate-300 mb-1.5 block";
 
-export default function SenaModal({ vehiculo, miId, onClose, onGuardada }: Props) {
+export default function SenaModal({ vehiculo, miId, cuentas = [], onClose, onGuardada }: Props) {
   const [clienteNombre, setClienteNombre] = useState("");
   const [monto, setMonto] = useState("");
   const [moneda, setMoneda] = useState(vehiculo.moneda_venta || "USD");
   const [notas, setNotas] = useState("");
+  const [cuentaId, setCuentaId] = useState("");
   const [guardando, setGuardando] = useState(false);
   const [error, setError] = useState("");
+
+  // Antes esta seña "rápida" desde Stock se guardaba SIEMPRE sin ninguna
+  // cuenta -- la plata cobrada nunca entraba a Tesorería, a diferencia de
+  // Nueva Seña (Señas → Nueva) que sí lo permite. Mismo criterio ahí: solo
+  // se ofrecen cuentas de la misma moneda que la seña, para no repetir el
+  // bug de "elegí una cuenta USD con el monto cargado en ARS".
+  const cuentasParaSena = cuentas.filter((c) => c.moneda === moneda);
+
+  useEffect(() => {
+    if (cuentaId && !cuentasParaSena.some((c) => c.id === cuentaId)) setCuentaId("");
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [moneda]);
 
   const guardar = async () => {
     if (!clienteNombre.trim()) {
@@ -26,18 +40,32 @@ export default function SenaModal({ vehiculo, miId, onClose, onGuardada }: Props
     setGuardando(true);
     setError("");
     try {
-      const { error: errInsert } = await supabase2.from("senas").insert({
+      const { data: sena, error: errInsert } = await supabase2.from("senas").insert({
         vehiculo_id: vehiculo.id,
         cliente_nombre: clienteNombre.trim(),
         monto: monto ? Number(monto) : null,
         moneda,
         notas: notas || null,
         vendedor_id: miId || null,
-      });
+      }).select("id").single();
       if (errInsert) throw errInsert;
 
       const { error: errUpdate } = await supabase2.from("vehiculos").update({ estado: "señado" }).eq("id", vehiculo.id);
       if (errUpdate) throw errUpdate;
+
+      if (cuentaId && Number(monto) > 0) {
+        const { data: movId, error: errorMov } = await supabase2.rpc("registrar_movimiento_caja", {
+          p_tipo: "ingreso", p_monto: Number(monto), p_cuenta_id: cuentaId, p_fecha: new Date().toISOString().split("T")[0],
+          p_categoria: "Seña", p_forma_pago: "Transferencia", p_vehiculo_id: vehiculo.id, p_cliente_id: null,
+          p_venta_id: null, p_observaciones: `Seña — ${vehiculo.marca} ${vehiculo.modelo} — ${clienteNombre.trim()}`,
+        });
+        if (errorMov) {
+          alert(`La seña se guardó, pero no se pudo registrar el cobro en Finanzas: ${errorMov.message}. Cargalo a mano.`);
+        } else {
+          const { error: errorDatos } = await supabase2.from("movimientos_caja").update({ sena_id: sena.id }).eq("id", movId);
+          if (errorDatos) alert(`La seña se guardó y el ingreso quedó en Finanzas, pero no se pudo vincularlo a esta seña (${errorDatos.message}). Avisá a Finanzas.`);
+        }
+      }
 
       onGuardada(vehiculo.id);
       onClose();
@@ -84,6 +112,16 @@ export default function SenaModal({ vehiculo, miId, onClose, onGuardada }: Props
               </select>
             </div>
           </div>
+          {cuentas.length > 0 && (
+            <div>
+              <label className={labelClass}>Cuenta destino (opcional)</label>
+              <select value={cuentaId} onChange={(e) => setCuentaId(e.target.value)} className={inputClass}>
+                <option value="">No registrar en Tesorería</option>
+                {cuentasParaSena.map((c) => <option key={c.id} value={c.id}>{c.nombre} ({c.moneda})</option>)}
+              </select>
+              {cuentaId && !(Number(monto) > 0) && <p className="text-[10px] text-amber-600 mt-1">Cargá un monto para que el cobro se registre en Finanzas.</p>}
+            </div>
+          )}
           <div>
             <label className={labelClass}>Notas</label>
             <textarea value={notas} onChange={(e) => setNotas(e.target.value)} rows={3} placeholder="Condiciones, forma de pago, etc." className={inputClass} />

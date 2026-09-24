@@ -36,29 +36,42 @@ export default function EstadoSenaSelector({ id, estado, vehiculoId }: { id: str
     // queda contabilizada como ingreso para siempre sin que haya entrado
     // nada. Si en cambio queda en la agencia (arras, gasto administrativo),
     // el movimiento se deja intacto, igual que en una venta caída.
+    let devuelta = false;
     if (nuevo === "Perdida") {
-      const devuelta = confirm("La seña se marca como perdida. ¿El depósito se devuelve al cliente? Aceptar = se devuelve (revierte el ingreso en Finanzas). Cancelar = queda en la agencia (no se toca Finanzas).");
-      if (devuelta) {
-        const { data: mov } = await supabase2.from("movimientos_caja").select("id").eq("sena_id", id).is("deleted_at", null).maybeSingle();
-        if (mov) {
-          const { error: errorRev } = await supabase2.rpc("eliminar_movimiento_caja", { p_movimiento_id: mov.id, p_motivo: "Seña perdida — depósito devuelto al cliente" });
-          if (errorRev) { alert(`No se pudo revertir el ingreso en Finanzas: ${errorRev.message}`); return; }
-        }
-      }
+      devuelta = confirm("La seña se marca como perdida. ¿El depósito se devuelve al cliente? Aceptar = se devuelve (revierte el ingreso en Finanzas). Cancelar = queda en la agencia (no se toca Finanzas).");
     }
+
+    // Orden importa: primero se actualiza la seña (lo reversible y sin
+    // efecto en plata real), y RECIÉN si eso funciona se toca Finanzas --
+    // antes era al revés, y si el update de la seña fallaba DESPUÉS de
+    // revertir la caja, quedaba la plata revertida con la seña todavía
+    // "Activa" (inconsistente: el ingreso ya no estaba en Finanzas, pero
+    // nada en la seña reflejaba que se había perdido).
     setActual(nuevo);
     setCargando(true);
     const { error } = await supabase2.from("senas").update({ estado: nuevo, etapa_seguimiento: nuevo }).eq("id", id);
-    if (!error && nuevo === "Perdida" && vehiculoId) {
-      // Se cayó la seña: liberamos el auto.
-      await supabase2.from("vehiculos").update({ estado: "disponible" }).eq("id", vehiculoId);
-    }
-    setCargando(false);
     if (error) {
+      setCargando(false);
       alert("Error al cambiar el estado");
       setActual(estado);
       return;
     }
+    if (nuevo === "Perdida" && vehiculoId) {
+      // Se cayó la seña: liberamos el auto.
+      await supabase2.from("vehiculos").update({ estado: "disponible" }).eq("id", vehiculoId);
+    }
+    if (nuevo === "Perdida" && devuelta) {
+      const { data: mov } = await supabase2.from("movimientos_caja").select("id").eq("sena_id", id).is("deleted_at", null).maybeSingle();
+      if (mov) {
+        const { error: errorRev } = await supabase2.rpc("eliminar_movimiento_caja", { p_movimiento_id: mov.id, p_motivo: "Seña perdida — depósito devuelto al cliente" });
+        // La seña YA quedó marcada Perdida -- si esto falla no se revierte
+        // ese cambio (sería peor: la seña volvería a verse "Activa" con la
+        // plata todavía sin resolver). Se avisa fuerte para revisarlo a
+        // mano en vez de dejarlo pasar en silencio.
+        if (errorRev) alert(`La seña quedó marcada como Perdida, pero no se pudo revertir el ingreso en Finanzas: ${errorRev.message}. Revisalo a mano.`);
+      }
+    }
+    setCargando(false);
     router.refresh();
   };
 

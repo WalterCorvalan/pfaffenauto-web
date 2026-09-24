@@ -58,10 +58,24 @@ export default function SenasClient({
     });
   }, [senas, query, vendedorFiltro, desde, hasta]);
 
-  const eliminar = (s: any) => {
+  const eliminar = async (s: any) => {
+    // Si la seña tiene un ingreso real vinculado en Finanzas
+    // (movimientos_caja.sena_id), borrar la seña sin más lo dejaba
+    // huérfano -- la plata seguía contabilizada como ingreso para siempre,
+    // apuntando a una seña que ya no existe. Se chequea ANTES de mostrar el
+    // diálogo de confirmación para poder avisar explícitamente si hay plata
+    // de por medio.
+    const { data: mov } = await supabase2.from("movimientos_caja").select("id, monto, moneda").eq("sena_id", s.id).is("deleted_at", null).maybeSingle();
+    const mensaje = mov
+      ? `¿Eliminar la seña${s.numero ? ` N° ${s.numero}` : ""} de ${s.apellido || s.cliente_nombre || "este cliente"}? Tiene un ingreso de ${mov.moneda} ${Number(mov.monto).toLocaleString("es-AR")} en Finanzas -- también se va a revertir. No se puede deshacer.`
+      : `¿Eliminar la seña${s.numero ? ` N° ${s.numero}` : ""} de ${s.apellido || s.cliente_nombre || "este cliente"}? No se puede deshacer.`;
     setConfirmDialog({
-      mensaje: `¿Eliminar la seña${s.numero ? ` N° ${s.numero}` : ""} de ${s.apellido || s.cliente_nombre || "este cliente"}? No se puede deshacer.`,
+      mensaje,
       accion: async () => {
+        if (mov) {
+          const { error: errorRev } = await supabase2.rpc("eliminar_movimiento_caja", { p_movimiento_id: mov.id, p_motivo: `Seña de ${s.apellido || s.cliente_nombre || "cliente"} eliminada` });
+          if (errorRev) { alert(`No se pudo revertir el ingreso en Finanzas: ${errorRev.message}. La seña no se eliminó.`); return; }
+        }
         const { error, count } = await supabase2.from("senas").delete({ count: "exact" }).eq("id", s.id);
         if (error || !count) { alert("No se pudo eliminar."); return; }
         if (s.vehiculo_id && s.estado === "Activa") {

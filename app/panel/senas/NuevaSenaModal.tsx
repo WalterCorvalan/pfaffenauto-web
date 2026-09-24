@@ -39,6 +39,27 @@ export default function NuevaSenaModal({
   const [subiendoComprobante, setSubiendoComprobante] = useState(false);
   const cuentaSeleccionada = cuentas.find((c) => c.id === cuentaId);
 
+  // Seña ($) y Seña (US$) son mutuamente excluyentes (uno deshabilita al
+  // otro más abajo) -- antes el select de cuenta mostraba TODAS sin
+  // filtrar, así que se podía elegir una cuenta USD habiendo cargado la
+  // seña en ARS (o al revés): el cálculo de abajo (montoMovimiento) leía el
+  // campo de la moneda de la cuenta, que quedaba vacío, y el ingreso se
+  // saltaba en silencio -- la seña se cobraba de verdad pero nunca entraba
+  // a Tesorería, sin ningún aviso. Ahora el desplegable solo ofrece cuentas
+  // de la misma moneda que la seña cargada.
+  const monedaSenaElegida: "ARS" | "USD" | null = senaArs ? "ARS" : senaUsd ? "USD" : null;
+  const cuentasParaSena = monedaSenaElegida ? cuentas.filter((c) => c.moneda === monedaSenaElegida) : cuentas;
+
+  // Si el usuario cambia de moneda de seña después de haber elegido una
+  // cuenta (ej: tenía cargado US$ con una cuenta USD, y borra ese campo
+  // para cargar $ en su lugar), la cuenta vieja deja de aparecer en el
+  // desplegable filtrado pero seguía quedando seleccionada en el estado --
+  // se resetea para no arrastrar una cuenta de la moneda equivocada.
+  useEffect(() => {
+    if (cuentaId && !cuentasParaSena.some((c) => c.id === cuentaId)) setCuentaId("");
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [monedaSenaElegida]);
+
   const subirComprobante = async (file: File) => {
     setSubiendoComprobante(true);
     try {
@@ -234,7 +255,14 @@ export default function NuevaSenaModal({
 
       if (cuentaId) {
         const montoMovimiento = cuentaSeleccionada?.moneda === "USD" ? Number(senaUsd) || 0 : Number(senaArs) || 0;
-        if (montoMovimiento > 0) {
+        if (montoMovimiento === 0) {
+          // Red de seguridad -- el select ya filtra por moneda (ver
+          // cuentasParaSena), así que esto no debería poder pasar, pero si
+          // pasa igual (ej: la seña se borró justo antes de guardar) mejor
+          // avisar fuerte que dejarlo pasar en silencio como plata cobrada
+          // que nunca entró a Tesorería.
+          alert(`La seña se guardó, pero no se registró el cobro en Finanzas: la cuenta elegida es en ${cuentaSeleccionada?.moneda} y no cargaste un monto en esa moneda. Cargalo a mano.`);
+        } else {
           // Antes esto insertaba directo en movimientos_caja: quedaba en
           // estado "pendiente" por default de columna y no había forma de
           // aprobarlo en ningún lado de panel — plata cobrada de verdad
@@ -250,10 +278,18 @@ export default function NuevaSenaModal({
           if (errorMov) {
             alert("La seña se guardó, pero no se pudo registrar el cobro en Finanzas. Cargalo a mano.");
           } else {
-            await supabase2.from("movimientos_caja").update({
+            const { error: errorDatos } = await supabase2.from("movimientos_caja").update({
               sucursal_id: sucursalId, cuit_dni: cliente.dni_cuit, telefono: cliente.telefono, patente: vehiculo.dominio,
               vendedor_id: vendedorId || user?.id, sena_id: data.id, comprobante_url: comprobanteUrl || null,
             }).eq("id", movId);
+            if (errorDatos) {
+              // El ingreso YA quedó registrado en Finanzas (el RPC de arriba
+              // no falló) -- lo único que no se pudo completar es el vínculo
+              // "sena_id" y los datos descriptivos. Sin avisar, EstadoSenaSelector
+              // (que busca el movimiento por sena_id para poder revertirlo si
+              // la seña se pierde) no lo iba a encontrar nunca.
+              alert(`La seña se guardó y el ingreso quedó registrado en Finanzas, pero no se pudo vincularlo a esta seña (${errorDatos.message}). Si más adelante se pierde, no se va a poder revertir el ingreso automáticamente -- avisá a Finanzas.`);
+            }
           }
         }
       }
@@ -329,8 +365,9 @@ export default function NuevaSenaModal({
                 <label className={labelClass}>Cuenta destino</label>
                 <select className={inputClass} value={cuentaId} onChange={(e) => setCuentaId(e.target.value)}>
                   <option value="">No registrar en Tesorería</option>
-                  {cuentas.map((c) => <option key={c.id} value={c.id}>{c.nombre} ({c.moneda})</option>)}
+                  {cuentasParaSena.map((c) => <option key={c.id} value={c.id}>{c.nombre} ({c.moneda})</option>)}
                 </select>
+                {!monedaSenaElegida && <p className="text-[11px] text-slate-400 mt-1">Cargá la seña en $ o US$ arriba para ver las cuentas de esa moneda.</p>}
               </div>
               {cuentaId && (
                 <div>
