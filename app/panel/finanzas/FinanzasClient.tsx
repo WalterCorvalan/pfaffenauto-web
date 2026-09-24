@@ -431,7 +431,7 @@ export default function FinanzasClient({
 
       {/* Nivel 2: sub-tabs del grupo activo -- azul para no competir con el rojo de arriba */}
       {grupoActivo.tabs.length > 1 && (
-        <div className="bg-white dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-xl p-1 mb-4 flex items-center gap-1 overflow-x-auto">
+        <div className="bg-white dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-xl p-1 mb-4 flex items-center gap-1 overflow-x-auto shadow-sm">
           {grupoActivo.tabs.map((t) => {
             const Icon = t.icon;
             if (t.externo) return <Link key={t.value} href={t.externo} className="px-3 py-1.5 text-xs font-bold whitespace-nowrap flex items-center gap-1.5 text-slate-500 dark:text-slate-400 hover:text-[#0145F2]"><Icon className="w-3.5 h-3.5" /> {t.label} <ExternalLink className="w-3 h-3" /></Link>;

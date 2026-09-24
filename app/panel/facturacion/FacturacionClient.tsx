@@ -62,17 +62,17 @@ export default function FacturacionClient({ vehiculosIniciales }: { vehiculosIni
       </div>
 
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 mb-5">
-        <div className="rounded-2xl p-4 bg-amber-50 dark:bg-amber-500/10 border border-amber-100 dark:border-amber-500/20">
+        <div className="rounded-2xl p-4 bg-amber-50 dark:bg-amber-500/10 border border-amber-100 dark:border-amber-500/20 shadow-sm">
           <p className="text-[10px] font-bold uppercase text-amber-600">Sin facturar</p>
           <p className="text-2xl font-black text-slate-900 dark:text-white">{sinFacturarCount}</p>
         </div>
         {Object.keys(totalesPorMoneda).length === 0 ? (
-          <div className="rounded-2xl p-4 bg-white dark:bg-white/5 border border-slate-200 dark:border-white/10">
+          <div className="rounded-2xl p-4 bg-white dark:bg-white/5 border border-slate-200 dark:border-white/10 shadow-sm">
             <p className="text-[10px] font-bold uppercase text-slate-400">Total facturado</p>
             <p className="text-2xl font-black text-slate-900 dark:text-white">—</p>
           </div>
         ) : Object.entries(totalesPorMoneda).map(([moneda, total]) => (
-          <div key={moneda} className="rounded-2xl p-4 bg-emerald-50 dark:bg-emerald-500/10 border border-emerald-100 dark:border-emerald-500/20">
+          <div key={moneda} className="rounded-2xl p-4 bg-emerald-50 dark:bg-emerald-500/10 border border-emerald-100 dark:border-emerald-500/20 shadow-sm">
             <p className="text-[10px] font-bold uppercase text-emerald-600">Total facturado ({moneda})</p>
             <p className="text-2xl font-black text-slate-900 dark:text-white">{fmt(total, moneda)}</p>
           </div>
@@ -80,7 +80,7 @@ export default function FacturacionClient({ vehiculosIniciales }: { vehiculosIni
       </div>
 
       <div className="flex items-center gap-2 mb-4 flex-wrap">
-        <div className="flex items-center gap-1 bg-white dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-xl p-1">
+        <div className="flex items-center gap-1 bg-white dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-xl p-1 shadow-sm">
           {([["todos", "Todos"], ["sin_facturar", "Sin facturar"], ["facturados", "Facturados"]] as [Filtro, string][]).map(([v, l]) => (
             <button key={v} onClick={() => setFiltro(v)} className={`px-3 py-1.5 text-xs font-bold rounded-lg transition-colors ${filtro === v ? "bg-[#0145F2] text-white" : "text-slate-500 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-white/5"}`}>{l}</button>
           ))}

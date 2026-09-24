@@ -86,12 +86,12 @@ export default function TransferenciasTab({
       </div>
 
       {filtrados.length === 0 ? (
-        <div className="bg-white dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-2xl py-16 text-center">
+        <div className="bg-white dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-2xl py-16 text-center shadow-sm">
           <p className="text-sm font-bold">Sin transferencias {!verTodos && mes ? `en ${new Date(mes + "-01T12:00:00").toLocaleDateString("es-AR", { month: "long", year: "numeric" })}` : ""}</p>
           {!verTodos && meses.length > 1 && <><p className="text-xs text-slate-400 mt-1">Hay operaciones cargadas en otros meses ({meses.length} meses con datos).</p><button onClick={() => setVerTodos(true)} className="mt-3 px-4 py-2 text-xs font-bold border border-slate-200 dark:border-white/10 rounded-lg">Ver todos los meses</button></>}
         </div>
       ) : (
-        <div className="overflow-x-auto bg-white dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-xl">
+        <div className="overflow-x-auto bg-white dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-xl shadow-sm">
           <table className="w-full text-xs">
             <thead className="border-b border-slate-100 dark:border-white/10 text-slate-400">
               <tr>

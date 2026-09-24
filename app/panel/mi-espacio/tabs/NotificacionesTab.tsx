@@ -62,7 +62,7 @@ export default function NotificacionesTab({ miId }: { miId: string }) {
         {ITEMS.map((it) => {
           const activo = !desactivadas.includes(it.key);
           return (
-            <label key={it.key} className="flex items-start gap-3 bg-white dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-xl p-3.5 cursor-pointer">
+            <label key={it.key} className="flex items-start gap-3 bg-white dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-xl p-3.5 cursor-pointer shadow-sm">
               <input type="checkbox" checked={activo} onChange={() => toggle(it.key)} className="w-4 h-4 mt-0.5 accent-emerald-600 shrink-0" />
               <span className="flex-1 min-w-0">
                 <span className="text-sm font-semibold flex items-center gap-1.5">{it.icono} {it.label}</span>

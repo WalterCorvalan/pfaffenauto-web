@@ -43,12 +43,12 @@ export default async function BusquedasWebPage() {
 
       {datos.length > 0 && (
         <div className="grid grid-cols-2 lg:grid-cols-3 gap-4 mb-4">
-          <div className="bg-white dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-2xl p-4">
+          <div className="bg-white dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-2xl p-4 shadow-sm">
             <Search className="w-5 h-5 text-[#0145F2] mb-2" />
             <p className="text-2xl font-black text-slate-900 dark:text-white font-mono">{datos.length}</p>
             <p className="text-[11px] text-slate-400 mt-0.5">Búsquedas registradas</p>
           </div>
-          <div className="bg-white dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-2xl p-4">
+          <div className="bg-white dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-2xl p-4 shadow-sm">
             <Percent className="w-5 h-5 text-amber-600 mb-2" />
             <p className="text-2xl font-black text-slate-900 dark:text-white font-mono">{pctSinResultados}%</p>
             <p className="text-[11px] text-slate-400 mt-0.5">Sin resultados ({sinResultadosTotal})</p>
@@ -58,10 +58,10 @@ export default async function BusquedasWebPage() {
       )}
 
       {datos.length === 0 ? (
-        <div className="bg-white dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-2xl py-16 text-center text-sm text-slate-400">Todavía no hay búsquedas registradas en el catálogo.</div>
+        <div className="bg-white dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-2xl py-16 text-center text-sm text-slate-400 shadow-sm">Todavía no hay búsquedas registradas en el catálogo.</div>
       ) : (
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-          <div className="bg-white dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-2xl p-4">
+          <div className="bg-white dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-2xl p-4 shadow-sm">
             <p className="text-xs font-bold text-slate-600 dark:text-slate-300 flex items-center gap-1.5 mb-3"><TrendingUp className="w-3.5 h-3.5 text-emerald-600" /> Más buscados</p>
             <div className="space-y-1.5">
               {ranking.map(([termino, v]) => (
@@ -72,7 +72,7 @@ export default async function BusquedasWebPage() {
               ))}
             </div>
           </div>
-          <div className="bg-white dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-2xl p-4">
+          <div className="bg-white dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-2xl p-4 shadow-sm">
             <p className="text-xs font-bold text-slate-600 dark:text-slate-300 flex items-center gap-1.5 mb-3"><SearchX className="w-3.5 h-3.5 text-[#0145F2]" /> Sin resultados</p>
             <div className="space-y-1.5">
               {sinResultados.length === 0 ? (

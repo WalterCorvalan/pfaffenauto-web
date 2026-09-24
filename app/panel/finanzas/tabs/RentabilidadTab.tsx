@@ -78,7 +78,7 @@ export default function RentabilidadTab({ movimientos, senasActivas, cuotasPendi
       </div>
 
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-        <div className="bg-white dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-xl p-4">
+        <div className="bg-white dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-xl p-4 shadow-sm">
           <p className="text-sm font-bold mb-2">↑ Ingresos por categoría</p>
           {ingresosCat.length === 0 ? <p className="text-xs text-slate-400">Sin ingresos del área cargados.</p> : (
             <div className="space-y-1.5">{ingresosCat.map(([cat, porMoneda]) => (
@@ -86,7 +86,7 @@ export default function RentabilidadTab({ movimientos, senasActivas, cuotasPendi
             ))}</div>
           )}
         </div>
-        <div className="bg-white dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-xl p-4">
+        <div className="bg-white dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-xl p-4 shadow-sm">
           <p className="text-sm font-bold mb-2">↓ Egresos por categoría</p>
           {egresosCat.length === 0 ? <p className="text-xs text-slate-400">Sin egresos del área cargados.</p> : (
             <div className="space-y-1.5">{egresosCat.map(([cat, porMoneda]) => (

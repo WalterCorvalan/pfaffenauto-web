@@ -67,7 +67,7 @@ function MemoriaBot() {
   };
 
   return (
-    <div className="bg-white dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-2xl p-5 space-y-4 mt-5">
+    <div className="bg-white dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-2xl p-5 space-y-4 mt-5 shadow-sm">
       <div>
         <p className="text-[11px] font-black uppercase tracking-widest text-slate-400 flex items-center gap-1.5"><Brain className="w-3.5 h-3.5" /> Memoria del bot</p>
         <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">Preguntas frecuentes que el bot contesta con una respuesta fija, sin gastar un llamado a la IA. Si el mensaje del cliente no matchea ninguna palabra clave de acá, recién ahí pasa a la IA. "Fuera de horario" no usa palabras clave — se manda solo cuando llega un mensaje fuera del horario de atención configurado arriba (una vez por día por conversación).</p>
@@ -232,7 +232,7 @@ export default function ConfiguracionWhatsappClient() {
         {config?.listo ? "✅ Configurado" : "⏳ Falta completar"}
       </div>
 
-      <div className="bg-white dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-2xl p-5 space-y-4">
+      <div className="bg-white dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-2xl p-5 space-y-4 shadow-sm">
         <p className="text-[11px] font-black uppercase tracking-widest text-slate-400">Credenciales de Meta</p>
         <div>
           <label className={labelClass}>Identificador del número (phone_number_id)</label>
@@ -280,7 +280,7 @@ export default function ConfiguracionWhatsappClient() {
         </button>
       </div>
 
-      <div className="bg-white dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-2xl p-5 space-y-4">
+      <div className="bg-white dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-2xl p-5 space-y-4 shadow-sm">
         <p className="text-[11px] font-black uppercase tracking-widest text-slate-400">Webhook — cargalo en Meta</p>
         <p className="text-xs text-slate-500 dark:text-slate-400">En Meta → WhatsApp → Configuración → Webhook → Editar, pegá estos dos valores y suscribite al campo <b>messages</b>.</p>
 
@@ -399,7 +399,7 @@ function PlantillasWhatsapp() {
   };
 
   return (
-    <div className="bg-white dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-2xl p-5 space-y-4 mt-5">
+    <div className="bg-white dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-2xl p-5 space-y-4 mt-5 shadow-sm">
       <div className="flex items-center justify-between gap-2">
         <div>
           <p className="text-[11px] font-black uppercase tracking-widest text-slate-400">Plantillas (fuera de ventana 24hs)</p>

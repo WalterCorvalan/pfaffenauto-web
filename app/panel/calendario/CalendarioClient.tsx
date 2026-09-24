@@ -145,7 +145,7 @@ export default function CalendarioClient({ eventosIniciales, perfiles, miId }: {
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-[1fr_320px] gap-4 mb-8">
-        <div className="bg-white dark:bg-white/[0.02] border border-slate-200 dark:border-white/10 rounded-2xl p-4">
+        <div className="bg-white dark:bg-white/[0.02] border border-slate-200 dark:border-white/10 rounded-2xl p-4 shadow-sm">
           {vista === "mes" && (
             <div className="flex items-center justify-between mb-4">
               <button onClick={() => setCursor(new Date(anio, mes - 1, 1))} className="p-2 hover:bg-slate-100 dark:hover:bg-white/10 rounded-lg"><ChevronLeft className="w-4 h-4" /></button>
@@ -257,7 +257,7 @@ export default function CalendarioClient({ eventosIniciales, perfiles, miId }: {
           )}
         </div>
 
-        <div className="bg-white dark:bg-white/[0.02] border border-slate-200 dark:border-white/10 rounded-2xl p-4">
+        <div className="bg-white dark:bg-white/[0.02] border border-slate-200 dark:border-white/10 rounded-2xl p-4 shadow-sm">
           <h3 className="text-sm font-bold text-slate-900 dark:text-white flex items-center gap-2 mb-3">
             <CalendarDays className="w-4 h-4" /> Próximos eventos
           </h3>
@@ -271,7 +271,7 @@ export default function CalendarioClient({ eventosIniciales, perfiles, miId }: {
         </div>
       </div>
 
-      <div className="bg-white dark:bg-white/[0.02] border border-slate-200 dark:border-white/10 rounded-2xl p-4">
+      <div className="bg-white dark:bg-white/[0.02] border border-slate-200 dark:border-white/10 rounded-2xl p-4 shadow-sm">
         <div className="flex gap-2 mb-4 border-b border-slate-100 dark:border-white/10">
           {(["proximos", "pasados", "todos"] as const).map((t) => (
             <button key={t} onClick={() => setTabLista(t)} className={`px-3 py-2 text-sm font-bold border-b-2 transition-colors ${tabLista === t ? "border-[#0145F2] text-[#0145F2]" : "border-transparent text-slate-500 dark:text-slate-400"}`}>

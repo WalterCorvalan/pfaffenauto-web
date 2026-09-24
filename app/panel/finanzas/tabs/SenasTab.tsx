@@ -31,7 +31,7 @@ export default function SenasTab({
       </div>
 
       {senas.length === 0 ? (
-        <div className="bg-white dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-2xl py-16 text-center"><p className="text-sm font-bold">Sin señas cargadas</p></div>
+        <div className="bg-white dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-2xl py-16 text-center shadow-sm"><p className="text-sm font-bold">Sin señas cargadas</p></div>
       ) : (
         <TablaResponsiva<any>
           filas={senas}

@@ -29,11 +29,11 @@ export default function RentabilidadVehiculoTab({ ventas }: { ventas: any[] }) {
       </div>
 
       {Object.keys(totalesPorMoneda).length === 0 ? (
-        <div className="bg-white dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-2xl py-16 text-center"><p className="text-sm font-bold">Sin ventas cerradas con vehículo asociado</p></div>
+        <div className="bg-white dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-2xl py-16 text-center shadow-sm"><p className="text-sm font-bold">Sin ventas cerradas con vehículo asociado</p></div>
       ) : (
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mb-4">
           {Object.entries(totalesPorMoneda).map(([moneda, t]) => (
-            <div key={moneda} className="bg-white dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-xl p-4">
+            <div key={moneda} className="bg-white dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-xl p-4 shadow-sm">
               <p className="text-[10px] font-bold uppercase text-slate-400 flex items-center gap-1"><TrendingUp className="w-3.5 h-3.5" /> Ganancia total · {moneda} ({t.cantidad} venta{t.cantidad === 1 ? "" : "s"})</p>
               <p className={`text-2xl font-black ${t.ganancia < 0 ? "text-rose-500" : "text-emerald-600"}`}>{fmt(t.ganancia, moneda)}</p>
               <p className="text-xs text-slate-400 mt-1">Venta {fmt(t.precioVenta, moneda)} · Costo {fmt(t.costo, moneda)} · Comisión {fmt(t.comision, moneda)} · Gastos {fmt(t.gastos, moneda)}</p>

@@ -20,7 +20,7 @@ export default function ResumenAgenciaTab({ liquidaciones, gananciasOcultas }: {
   }, [finalizadas]);
 
   if (porMes.length === 0) {
-    return <div className="bg-white dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-2xl py-16 text-center"><p className="text-sm font-bold">Sin datos</p><p className="text-xs text-slate-400 mt-1">No hay transferencias finalizadas para el resumen de la agencia.</p></div>;
+    return <div className="bg-white dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-2xl py-16 text-center shadow-sm"><p className="text-sm font-bold">Sin datos</p><p className="text-xs text-slate-400 mt-1">No hay transferencias finalizadas para el resumen de la agencia.</p></div>;
   }
 
   const ultimo = porMes[0];
@@ -32,7 +32,7 @@ export default function ResumenAgenciaTab({ liquidaciones, gananciasOcultas }: {
 
   return (
     <div>
-      <div className="bg-white dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-xl p-4 mb-4 inline-block">
+      <div className="bg-white dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-xl p-4 mb-4 inline-block shadow-sm">
         <p className="text-sm font-bold">{new Date(ultimo.mes + "-01T12:00:00").toLocaleDateString("es-AR", { month: "long", year: "numeric" })}</p>
         <p className="text-2xl font-black text-blue-600">{gananciasOcultas ? "—" : fmt(ultimo.ingresoNeto)}</p>
         <p className="text-xs text-slate-400">Ingreso agencia ({pctAgenciaUltimoMes}%)</p>
