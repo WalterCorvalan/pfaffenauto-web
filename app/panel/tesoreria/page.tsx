@@ -1,4 +1,6 @@
+import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
+import { puedeVerModulo } from "@/lib/panel/permisosModulos";
 import { Landmark, CreditCard, Wallet, HelpCircle } from "lucide-react";
 import NuevaCuentaModal from "./NuevaCuentaModal";
 
@@ -8,6 +10,12 @@ const ICONO_TIPO: Record<string, any> = { Banco: Landmark, Tarjeta: CreditCard, 
 
 export default async function TesoreriaPage() {
   const supabase = await createClient();
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) redirect("/panel/login");
+  // Auditoría de Finanzas del 24/9 (permisos #18): esta página no tenía
+  // ningún control de rol -- servía saldos reales de todas las cuentas a
+  // cualquier usuario logueado que entrara por URL directa.
+  if (!(await puedeVerModulo(supabase, user.id, "tesoreria"))) redirect("/panel");
 
   const [{ data: cuentas }, { data: sucursales }] = await Promise.all([
     supabase.from("cuentas").select("*").eq("activa", true).order("nombre"),
