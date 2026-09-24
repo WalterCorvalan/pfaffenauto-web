@@ -52,11 +52,27 @@ export default function ChequesTab({ cheques, setCheques, cuentas, vehiculos0km 
     if (!form.librador.trim() || !form.monto || !form.fechaCobro) return alert("Completá librador, monto y fecha de cobro.");
     setGuardando(true);
     try {
-      const payload = {
+      // "Cobrado" NUNCA se guarda desde este formulario -- ese estado solo
+      // puede salir del flujo dedicado (cambiarEstado -> RPC
+      // cambiar_estado_cheque, que además mueve la caja real). Guardarlo acá
+      // directo dejaba un cheque marcado "cobrado" sin movimiento_id ni
+      // plata movida, y encima quedaba sin forma de arreglarlo (el botón
+      // Editar se oculta una vez "cobrado", y el select de estado de la
+      // tabla no reacciona si ya estás parado en esa misma opción).
+      const estadoSeguro = form.estado === "cobrado" ? "pendiente" : form.estado;
+      const payload: Record<string, unknown> = {
         tipo: form.tipo, formato: form.formato, librador: form.librador.trim(), numero: form.numero || null, banco: form.banco || null,
-        cuit_cuil: form.cuitCuil || null, monto: Number(form.monto), moneda: form.moneda, estado: form.estado,
+        cuit_cuil: form.cuitCuil || null, monto: Number(form.monto), moneda: form.moneda, estado: estadoSeguro,
         fecha_emision: form.fechaEmision || null, fecha_cobro: form.fechaCobro, caja_banco_propio: form.cajaBancoPropio || null, notas: form.notas || null,
       };
+      // Si se corrió la fecha de cobro y ya se había mandado el aviso de
+      // vencimiento para la fecha vieja, hay que resetearlo -- sin esto un
+      // cheque re-agendado más adelante nunca vuelve a avisar (queda con el
+      // flag en true de la primera fecha).
+      if (editando && form.fechaCobro !== editando.fecha_cobro) {
+        payload.aviso_vencimiento_enviado = false;
+        payload.aviso_vencido_enviado = false;
+      }
 
       if (editando) {
         const { data, error } = await supabase2.from("cheques").update(payload).eq("id", editando.id).select().single();
@@ -134,7 +150,18 @@ export default function ChequesTab({ cheques, setCheques, cuentas, vehiculos0km 
           const { error } = await supabase2.rpc("eliminar_movimiento_caja", { p_movimiento_id: c.movimiento_id, p_motivo: `Cheque de ${c.librador} eliminado` });
           if (error) return alert(`No se pudo revertir el movimiento de caja vinculado: ${error.message}`);
         }
-        await supabase2.from("cheques").delete().eq("id", c.id);
+        const { error: errorBorrar } = await supabase2.from("cheques").delete().eq("id", c.id);
+        if (errorBorrar) {
+          // La caja ya se revirtió arriba (si era cobrado) pero el cheque
+          // sigue existiendo -- sin este chequeo quedaba "cobrado" apuntando
+          // a un movimiento que ya no está, sin ningún aviso. No hay forma
+          // segura de deshacer la reversión desde acá, así que se avisa
+          // fuerte para que se resuelva a mano.
+          alert(esCobrado
+            ? `Se revirtió el movimiento de caja del cheque de ${c.librador}, pero el cheque no se pudo eliminar (${errorBorrar.message}). Quedó desincronizado -- revisalo a mano en Finanzas.`
+            : `No se pudo eliminar el cheque: ${errorBorrar.message}`);
+          return;
+        }
         setCheques((prev: any[]) => prev.filter((x) => x.id !== c.id));
       },
     });
@@ -222,7 +249,13 @@ export default function ChequesTab({ cheques, setCheques, cuentas, vehiculos0km 
             <div className="grid grid-cols-3 gap-2 mt-3">
               <div><label className={labelClass}>Monto *</label><input type="text" inputMode="numeric" value={form.monto} onChange={(e) => setForm({ ...form, monto: e.target.value.replace(/\D/g, "") })} placeholder="147000" className={inputClass} /></div>
               <div><label className={labelClass}>Moneda *</label><select value={form.moneda} onChange={(e) => setForm({ ...form, moneda: e.target.value })} className={inputClass}><option value="ARS">ARS</option><option value="USD">USD</option></select></div>
-              <div><label className={labelClass}>Estado *</label><select value={form.estado} onChange={(e) => setForm({ ...form, estado: e.target.value })} className={inputClass}><option value="pendiente">Pendiente</option><option value="depositado">Depositado</option><option value="cobrado">Cobrado</option><option value="rechazado">Rechazado</option><option value="endosado">Endosado</option></select></div>
+              <div>
+                <label className={labelClass}>Estado *</label>
+                <select value={form.estado === "cobrado" ? "pendiente" : form.estado} onChange={(e) => setForm({ ...form, estado: e.target.value })} className={inputClass}>
+                  <option value="pendiente">Pendiente</option><option value="depositado">Depositado</option><option value="rechazado">Rechazado</option><option value="endosado">Endosado</option>
+                </select>
+                <p className="text-[10px] text-slate-400 mt-1">&quot;Cobrado&quot; no se elige acá — usá el estado de la tabla una vez guardado, así queda vinculado el movimiento real de caja.</p>
+              </div>
             </div>
             {form.tipo === "emitido" && (
               <div className="mt-3">

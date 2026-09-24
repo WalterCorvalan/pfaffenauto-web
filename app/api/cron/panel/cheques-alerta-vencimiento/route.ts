@@ -25,36 +25,70 @@ export async function GET(req: Request) {
     return new Response("Unauthorized", { status: 401 });
   }
 
-  const en3Dias = new Date(`${hoyArgentina()}T12:00:00Z`);
+  const hoy = hoyArgentina();
+  const en3Dias = new Date(`${hoy}T12:00:00Z`);
   en3Dias.setUTCDate(en3Dias.getUTCDate() + 3);
-  const fechaObjetivo = en3Dias.toISOString().slice(0, 10);
-
-  const { data: cheques, error } = await supabase
-    .from("cheques")
-    .select("id, tipo, librador, banco, monto, moneda, fecha_cobro")
-    .eq("estado", "pendiente")
-    .eq("fecha_cobro", fechaObjetivo);
-
-  if (error) {
-    registrarError("cron/cheques-alerta-vencimiento", error);
-    return Response.json({ error: "No se pudo consultar los cheques." }, { status: 500 });
-  }
-
-  if (!cheques?.length) return Response.json({ ok: true, avisados: 0 });
+  const fechaLimite = en3Dias.toISOString().slice(0, 10);
 
   const { data: destinatarios } = await supabase.from("perfiles").select("id").or("roles.cs.{admin},roles.cs.{encargado},roles.cs.{finanzas}").eq("activo", true);
 
   let avisados = 0;
-  for (const c of cheques) {
-    const monto = `${c.moneda === "USD" ? "USD" : "$"} ${Number(c.monto).toLocaleString("es-AR")}`;
-    const titulo = c.tipo === "emitido" ? `Cheque a pagar en 3 días — ${c.librador}` : `Cheque a cobrar en 3 días — ${c.librador}`;
-    const mensaje = `${monto}${c.banco ? ` · ${c.banco}` : ""} · vence el ${c.fecha_cobro}. ${c.tipo === "emitido" ? "Asegurá fondos en cuenta." : "Revisá el estado antes de depositarlo."}`;
-    for (const d of destinatarios || []) {
-      await crearAlerta(supabase, d.id, titulo, {
-        mensaje, link: "/panel/finanzas?tab=cheques", tipo: "cheque_por_vencer", prioridad: "alta",
-      });
+
+  // Por vencer -- antes comparaba fecha_cobro = hoy+3 EXACTO, así que un
+  // cheque cargado con 1-2 días de plazo, o un día que el cron no corrió,
+  // nunca recibía aviso. Ahora es un rango (hoy..hoy+3) con flag propio, para
+  // no repetir el aviso todos los días una vez mandado.
+  const { data: porVencer, error: errorPorVencer } = await supabase
+    .from("cheques")
+    .select("id, tipo, librador, banco, monto, moneda, fecha_cobro")
+    .eq("estado", "pendiente")
+    .eq("aviso_vencimiento_enviado", false)
+    .gte("fecha_cobro", hoy)
+    .lte("fecha_cobro", fechaLimite);
+
+  if (errorPorVencer) {
+    registrarError("cron/cheques-alerta-vencimiento:por-vencer", errorPorVencer);
+  } else {
+    for (const c of porVencer || []) {
+      const monto = `${c.moneda === "USD" ? "USD" : "$"} ${Number(c.monto).toLocaleString("es-AR")}`;
+      const titulo = c.tipo === "emitido" ? `Cheque a pagar el ${c.fecha_cobro} — ${c.librador}` : `Cheque a cobrar el ${c.fecha_cobro} — ${c.librador}`;
+      const mensaje = `${monto}${c.banco ? ` · ${c.banco}` : ""} · vence el ${c.fecha_cobro}. ${c.tipo === "emitido" ? "Asegurá fondos en cuenta." : "Revisá el estado antes de depositarlo."}`;
+      for (const d of destinatarios || []) {
+        await crearAlerta(supabase, d.id, titulo, {
+          mensaje, link: "/panel/finanzas?tab=cheques", tipo: "cheque_por_vencer", prioridad: "alta",
+        });
+      }
+      await supabase.from("cheques").update({ aviso_vencimiento_enviado: true }).eq("id", c.id);
+      avisados++;
     }
-    avisados++;
+  }
+
+  // Ya vencidos y sin resolver -- antes esto no existía: un cheque "pendiente"
+  // que pasa su fecha de cobro sin que nadie lo marque cobrado/rechazado
+  // nunca generaba ningún aviso nuevo (el KPI "Vencidos sin resolver" del
+  // panel lo cuenta, pero nadie recibía notificación real).
+  const { data: vencidos, error: errorVencidos } = await supabase
+    .from("cheques")
+    .select("id, tipo, librador, banco, monto, moneda, fecha_cobro")
+    .eq("estado", "pendiente")
+    .eq("aviso_vencido_enviado", false)
+    .lt("fecha_cobro", hoy);
+
+  if (errorVencidos) {
+    registrarError("cron/cheques-alerta-vencimiento:vencidos", errorVencidos);
+  } else {
+    for (const c of vencidos || []) {
+      const monto = `${c.moneda === "USD" ? "USD" : "$"} ${Number(c.monto).toLocaleString("es-AR")}`;
+      const titulo = `Cheque vencido sin resolver — ${c.librador}`;
+      const mensaje = `${monto}${c.banco ? ` · ${c.banco}` : ""} · venció el ${c.fecha_cobro} y sigue pendiente. Marcalo cobrado, rechazado o endosado.`;
+      for (const d of destinatarios || []) {
+        await crearAlerta(supabase, d.id, titulo, {
+          mensaje, link: "/panel/finanzas?tab=cheques", tipo: "cheque_vencido", prioridad: "alta",
+        });
+      }
+      await supabase.from("cheques").update({ aviso_vencido_enviado: true }).eq("id", c.id);
+      avisados++;
+    }
   }
 
   return Response.json({ ok: true, avisados });
