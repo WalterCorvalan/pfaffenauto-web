@@ -45,6 +45,7 @@ export const AgentReplySchemaV2 = z.object({
     modelo: z.string().nullable(),
     categoria: z.enum(["Auto", "Pickup/Camioneta", "SUV", "Utilitario"]).nullable(),
     puertas: z.number().nullable().optional(),
+    combustible: z.enum(["Nafta", "Diesel", "Eléctrico", "GNC", "Híbrido"]).nullable().optional(),
   }).nullable(),
   presupuesto_mencionado: z.object({
     monto: z.number().positive(),
@@ -103,7 +104,8 @@ async function ejecutarBusquedaStock(
   modelo: string | null,
   categoria?: string | null,
   presupuesto?: { monto: number; moneda: "USD" | "ARS" } | null,
-  puertas?: number | null
+  puertas?: number | null,
+  combustible?: string | null
 ): Promise<{ resultados: ResultadoStockV2[]; total: number }> {
   const aplicarFiltros = (q: any) => {
     if (marca) q = q.ilike("marca", `%${marca}%`);
@@ -114,6 +116,10 @@ async function ejecutarBusquedaStock(
     // categoría se le vuelve a mostrar en esta búsqueda.
     if (categoria) q = q.eq("categoria", categoria);
     if (puertas) q = q.eq("puertas", puertas);
+    // Combustible (Nafta/Diesel/GNC/Eléctrico/Híbrido) — filtro duro igual
+    // que categoría: si el cliente pidió puntualmente GNC, no tiene sentido
+    // mostrarle una alternativa a Nafta como si cumpliera el pedido.
+    if (combustible) q = q.eq("combustible", combustible);
     // Sin conversor de dólar propio en v2 todavía — filtramos solo por la
     // moneda que mencionó el cliente, sin intentar convertir la otra.
     // Margen de estiramiento del 15%: un cliente con $20M no quiere ver SOLO
@@ -199,7 +205,8 @@ export async function buscarStockRealV2(
   modelo: string | null,
   categoria?: string | null,
   presupuesto?: { monto: number; moneda: "USD" | "ARS" } | null,
-  puertas?: number | null
+  puertas?: number | null,
+  combustible?: string | null
 ): Promise<{ resultados: ResultadoStockV2[]; esAlternativa: boolean; total: number }> {
   const cat = categoria ?? null;
   // Si el cliente pidió una marca/modelo puntual, la búsqueda nunca debe
@@ -220,27 +227,38 @@ export async function buscarStockRealV2(
     ...(pidioMarcaOModelo ? [] : [[null, null, cat] as [string | null, string | null, string | null], [null, null, null] as [string | null, string | null, string | null]]),
   ];
 
-  // Puertas es el filtro más débil de todos -- hoy no todo el stock tiene
-  // ese dato cargado, así que se prueba primero CON el filtro y, si no
-  // aparece nada en ninguna combinación, se repite toda la secuencia SIN
-  // puertas antes de rendirse (evita decir "no hay" solo porque falta cargar
-  // ese campo en un auto que sí está disponible).
-  for (const puertasIntento of puertas ? [puertas, null] : [null]) {
-    const probados = new Set<string>();
-    for (let i = 0; i < intentos.length; i++) {
-      const [m, mo, c] = intentos[i];
-      const clave = `${m}|${mo}|${c}`;
-      if (probados.has(clave)) continue;
-      probados.add(clave);
-      const { resultados, total } = await ejecutarBusquedaStock(m, mo, c, presupuesto, puertasIntento);
-      // esAlternativa solo debe subir por puertas cuando el cliente SÍ pidió
-      // puertas y hubo que soltar ese filtro para encontrar algo -- si nunca
-      // pidió puertas, puertasIntento es null desde el arranque (no es una
-      // "alternativa", es la búsqueda normal) y antes igual se marcaba como
-      // alternativa siempre, haciendo que CASI toda búsqueda exacta mostrara
-      // "ese modelo puntual no lo tengo" aunque fuera un match real.
-      const bajoPorPuertas = puertas != null && puertasIntento === null;
-      if (resultados.length > 0) return { resultados, esAlternativa: i > 0 || bajoPorPuertas, total };
+  // Combustible es un filtro duro (igual que categoría): si el cliente pidió
+  // GNC puntualmente, se prueba primero CON el filtro y recién si no aparece
+  // nada en ninguna combinación se repite la secuencia SIN combustible --
+  // eso sí queda marcado como alternativa (esAlternativa=true), porque el
+  // resultado NO cumple lo que el cliente pidió (regla de reglasStock.ts:
+  // ahí se ofrece dejar el teléfono en vez del genérico "¿te interesa
+  // alguna?").
+  for (const combustibleIntento of combustible ? [combustible, null] : [null]) {
+    // Puertas es el filtro más débil de todos -- hoy no todo el stock tiene
+    // ese dato cargado, así que se prueba primero CON el filtro y, si no
+    // aparece nada en ninguna combinación, se repite toda la secuencia SIN
+    // puertas antes de rendirse (evita decir "no hay" solo porque falta cargar
+    // ese campo en un auto que sí está disponible).
+    for (const puertasIntento of puertas ? [puertas, null] : [null]) {
+      const probados = new Set<string>();
+      for (let i = 0; i < intentos.length; i++) {
+        const [m, mo, c] = intentos[i];
+        const clave = `${m}|${mo}|${c}`;
+        if (probados.has(clave)) continue;
+        probados.add(clave);
+        const { resultados, total } = await ejecutarBusquedaStock(m, mo, c, presupuesto, puertasIntento, combustibleIntento);
+        // esAlternativa solo debe subir por puertas/combustible cuando el
+        // cliente SÍ pidió ese filtro y hubo que soltarlo para encontrar
+        // algo -- si nunca lo pidió, el intento es null desde el arranque
+        // (no es una "alternativa", es la búsqueda normal) y antes igual se
+        // marcaba como alternativa siempre, haciendo que CASI toda búsqueda
+        // exacta mostrara "ese modelo puntual no lo tengo" aunque fuera un
+        // match real.
+        const bajoPorPuertas = puertas != null && puertasIntento === null;
+        const bajoPorCombustible = combustible != null && combustibleIntento === null;
+        if (resultados.length > 0) return { resultados, esAlternativa: i > 0 || bajoPorPuertas || bajoPorCombustible, total };
+      }
     }
   }
   return { resultados: [], esAlternativa: true, total: 0 };
@@ -441,7 +459,7 @@ export async function generarRespuestaAgenteV2(historial: HistorialMensaje[], ca
     }
   };
 
-  const mencionaAlgoParaBuscar = esIntencionDeCompra && (respuesta.vehiculo_mencionado?.modelo || respuesta.vehiculo_mencionado?.marca || respuesta.vehiculo_mencionado?.categoria || respuesta.vehiculo_mencionado?.puertas || respuesta.presupuesto_mencionado || respuesta.pedir_stock_general);
+  const mencionaAlgoParaBuscar = esIntencionDeCompra && (respuesta.vehiculo_mencionado?.modelo || respuesta.vehiculo_mencionado?.marca || respuesta.vehiculo_mencionado?.categoria || respuesta.vehiculo_mencionado?.puertas || respuesta.vehiculo_mencionado?.combustible || respuesta.presupuesto_mencionado || respuesta.pedir_stock_general);
 
   if (mencionaAlgoParaBuscar) {
     const categoriaSolicitada = respuesta.vehiculo_mencionado?.categoria ?? null;
@@ -450,7 +468,8 @@ export async function generarRespuestaAgenteV2(historial: HistorialMensaje[], ca
       respuesta.vehiculo_mencionado?.modelo ?? null,
       categoriaSolicitada,
       respuesta.presupuesto_mencionado,
-      respuesta.vehiculo_mencionado?.puertas ?? null
+      respuesta.vehiculo_mencionado?.puertas ?? null,
+      respuesta.vehiculo_mencionado?.combustible ?? null
     );
     await correrPasada2(resultados, esAlternativa, total, categoriaSolicitada);
   } else if (esIntencionDeCompra && !hablandoDeAutoPropio && vehiculoEnFocoId) {
