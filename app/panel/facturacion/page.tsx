@@ -16,7 +16,7 @@ export default async function FacturacionPage() {
 
   const { data: vehiculos } = await supabase
     .from("vehiculos")
-    .select("id, marca, modelo, anio, patente, estado, moneda_compra, facturado, factura_importe, factura_numero, factura_emisor, factura_archivo_url")
+    .select("id, marca, modelo, anio, patente, estado, moneda_compra, facturado, factura_importe, factura_numero, factura_emisor, factura_archivo_url, factura_fecha, factura_tipo_comprobante, factura_iva_pct")
     .order("facturado", { ascending: true })
     .order("marca", { ascending: true });
 

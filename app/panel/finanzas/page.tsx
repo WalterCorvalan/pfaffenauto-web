@@ -87,7 +87,7 @@ export default async function FinanzasPage() {
         miNombre={miPerfil?.nombre || ""}
         senasIniciales={[]} vehiculosDisponiblesFull={[]} sucursales={sucursalPropia || []}
         veTodasSucursales={veTodasSucursales} soloCajaSucursal={soloCajaSucursal} miSucursalId={miSucursalId} vehiculosTodos={[]}
-        puedeVerLiquidacion={puedeVerLiquidacion}
+        puedeVerLiquidacion={puedeVerLiquidacion} vehiculosFacturados={[]}
       />
     );
   }
@@ -158,6 +158,15 @@ export default async function FinanzasPage() {
     .order("created_at", { ascending: false })
     .limit(200);
 
+  // Conecta Facturación (compra de vehículos) con AFIP/IVA -- no reemplaza
+  // el cálculo existente (que sigue siendo 100% movimientos_caja), solo le
+  // suma una fuente más para cruzar. Mismo gate que el resto de Liquidación
+  // (hallazgo de auditoría #9): esto es rentabilidad/costo real, no se
+  // trae si el usuario no tiene el permiso.
+  const { data: vehiculosFacturados } = puedeVerLiquidacion
+    ? await supabase.from("vehiculos").select("id, marca, modelo, patente, moneda_compra, factura_importe, factura_fecha, factura_tipo_comprobante, factura_iva_pct").eq("facturado", true).not("factura_fecha", "is", null).order("factura_fecha", { ascending: false }).limit(500)
+    : { data: [] as any[] };
+
   return (
     <FinanzasClient
       miId={user?.id || ""}
@@ -194,6 +203,7 @@ export default async function FinanzasPage() {
       miSucursalId={miSucursalId}
       vehiculosTodos={vehiculosTodos || []}
       puedeVerLiquidacion={puedeVerLiquidacion}
+      vehiculosFacturados={vehiculosFacturados || []}
     />
   );
 }

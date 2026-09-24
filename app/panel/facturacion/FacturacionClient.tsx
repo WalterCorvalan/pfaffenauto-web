@@ -1,7 +1,7 @@
 "use client";
 
 import { useMemo, useState } from "react";
-import { FileText, Pencil, CheckCircle2, AlertTriangle } from "lucide-react";
+import { FileText, Pencil, CheckCircle2, AlertTriangle, AlertOctagon } from "lucide-react";
 import TablaResponsiva, { type ColumnaTabla } from "@/components/panel/TablaResponsiva";
 import FacturaModal, { type VehiculoFactura } from "./FacturaModal";
 
@@ -28,6 +28,13 @@ export default function FacturacionClient({ vehiculosIniciales }: { vehiculosIni
 
   const sinFacturarCount = useMemo(() => vehiculos.filter((v) => !v.facturado).length, [vehiculos]);
 
+  // Cruce con el estado real del vehículo (no pisa nada de Facturación ni
+  // de Stock, solo lee `estado` que ya viaja con cada fila): un auto
+  // vendido sin factura de compra es el caso que más plata puede costar
+  // (no hay cómo justificar el costo ante AFIP) y hoy pasaba desapercibido
+  // mezclado con el resto de "sin facturar".
+  const vendidosSinFacturar = useMemo(() => vehiculos.filter((v) => !v.facturado && v.estado === "vendido"), [vehiculos]);
+
   const filtrados = useMemo(() => {
     let l = vehiculos;
     if (filtro === "facturados") l = l.filter((v) => v.facturado);
@@ -46,7 +53,9 @@ export default function FacturacionClient({ vehiculosIniciales }: { vehiculosIni
       key: "facturado", header: "Estado",
       cell: (v) => v.facturado
         ? <span className="inline-flex items-center gap-1 text-[10px] font-bold uppercase px-2 py-0.5 rounded-full bg-emerald-100 dark:bg-emerald-500/20 text-emerald-700 dark:text-emerald-300"><CheckCircle2 className="w-3 h-3" /> Facturado</span>
-        : <span className="inline-flex items-center gap-1 text-[10px] font-bold uppercase px-2 py-0.5 rounded-full bg-amber-100 dark:bg-amber-500/20 text-amber-700 dark:text-amber-300"><AlertTriangle className="w-3 h-3" /> Sin facturar</span>,
+        : v.estado === "vendido"
+          ? <span className="inline-flex items-center gap-1 text-[10px] font-bold uppercase px-2 py-0.5 rounded-full bg-rose-100 dark:bg-rose-500/20 text-rose-700 dark:text-rose-300"><AlertOctagon className="w-3 h-3" /> Vendido sin facturar</span>
+          : <span className="inline-flex items-center gap-1 text-[10px] font-bold uppercase px-2 py-0.5 rounded-full bg-amber-100 dark:bg-amber-500/20 text-amber-700 dark:text-amber-300"><AlertTriangle className="w-3 h-3" /> Sin facturar</span>,
     },
     { key: "importe", header: "Importe", cell: (v) => v.facturado && v.factura_importe ? fmt(Number(v.factura_importe), v.moneda_compra || "ARS") : "—" },
     { key: "numero", header: "N° Factura", cell: (v) => v.factura_numero || "—", ocultarEnMobile: true },
@@ -60,6 +69,16 @@ export default function FacturacionClient({ vehiculosIniciales }: { vehiculosIni
         <h1 className="text-xl font-bold flex items-center gap-2"><FileText className="w-5 h-5 text-[#0145F2]" /> Facturación</h1>
         <p className="text-sm text-slate-400">Estado de facturación de cada vehículo del stock.</p>
       </div>
+
+      {vendidosSinFacturar.length > 0 && (
+        <div className="flex items-start gap-2.5 bg-rose-50 dark:bg-rose-500/10 border border-rose-200 dark:border-rose-500/20 rounded-xl p-3.5 mb-5 shadow-sm">
+          <AlertOctagon className="w-4 h-4 text-rose-600 shrink-0 mt-0.5" />
+          <div>
+            <p className="text-sm font-bold text-rose-700 dark:text-rose-300">{vendidosSinFacturar.length} vehículo{vendidosSinFacturar.length === 1 ? "" : "s"} ya vendido{vendidosSinFacturar.length === 1 ? "" : "s"} sin factura de compra</p>
+            <p className="text-xs text-rose-600 dark:text-rose-400">Sin esa factura no hay cómo justificar el costo ante AFIP. {vendidosSinFacturar.slice(0, 4).map((v) => `${v.marca} ${v.modelo}${v.patente ? ` (${v.patente})` : ""}`).join(", ")}{vendidosSinFacturar.length > 4 ? ` y ${vendidosSinFacturar.length - 4} más` : ""}.</p>
+          </div>
+        </div>
+      )}
 
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 mb-5">
         <div className="rounded-2xl p-4 bg-amber-50 dark:bg-amber-500/10 border border-amber-100 dark:border-amber-500/20 shadow-sm">

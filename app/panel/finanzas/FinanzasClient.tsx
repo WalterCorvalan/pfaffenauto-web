@@ -98,7 +98,7 @@ export default function FinanzasClient({
   chequesIniciales, pagosDisponiblesIniciales, consumosTarjetaIniciales, retirosIniciales, devolucionesIniciales,
   expedientes, senasActivasPorMoneda,
   prestamosIniciales, presupuestosIniciales, recurrenciasIniciales, generacionesIniciales, arqueosIniciales, cierresDiariosIniciales, miNombre,
-  senasIniciales, vehiculosDisponiblesFull, sucursales, veTodasSucursales, miSucursalId, vehiculosTodos, soloCajaSucursal, puedeVerLiquidacion,
+  senasIniciales, vehiculosDisponiblesFull, sucursales, veTodasSucursales, miSucursalId, vehiculosTodos, soloCajaSucursal, puedeVerLiquidacion, vehiculosFacturados,
 }: {
   miId: string; soyAdmin: boolean; soyAdminOFinanzas: boolean; cuentasIniciales: any[]; movimientosIniciales: any[]; cierresIniciales: any[];
   cuotasCobrarIniciales: any[]; cuotasPagarIniciales: any[]; vendedores: any[]; clientes: any[]; vehiculos: any[]; ventas: any[];
@@ -115,6 +115,10 @@ export default function FinanzasClient({
   // AFIP/IVA (muestran precio de compra, comisión, ganancia real, saldo de
   // IVA), mismo permiso que ya protege Expedientes/Gestoría/Liquidaciones/Tesorería.
   puedeVerLiquidacion: boolean;
+  // Vehículos con factura de compra cargada en el módulo Facturación (con
+  // fecha) -- se le suma a AfipIvaTab como fuente adicional de crédito
+  // fiscal, sin reemplazar su cálculo actual basado en movimientos_caja.
+  vehiculosFacturados: any[];
 }) {
   const [tab, setTabRaw] = useState(soloCajaSucursal ? "caja-grande-chica" : "resumen");
   const [grupo, setGrupo] = useState(soloCajaSucursal ? "caja-bancos" : "resumen");
@@ -542,7 +546,7 @@ export default function FinanzasClient({
 
       {tab === "afip-iva" && (
         puedeVerLiquidacion
-          ? <AfipIvaTab movimientos={movimientos} setMovimientos={setMovimientos} />
+          ? <AfipIvaTab movimientos={movimientos} setMovimientos={setMovimientos} vehiculosFacturados={vehiculosFacturados} />
           : <div className="bg-amber-50 dark:bg-amber-500/10 border border-amber-200 dark:border-amber-500/20 rounded-xl p-6 text-sm text-amber-700 dark:text-amber-300">No tenés permiso para ver esta sección.</div>
       )}
 
