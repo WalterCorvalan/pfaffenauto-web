@@ -81,7 +81,7 @@ export default function MisVentasClient({ vendedores, miId, miNombre, esAdmin }:
         supabase2.rpc("pct_resenas_pedidas_vendedor", { p_vendedor_id: vendedorId, p_desde: desdeStr, p_hasta: hastaStr }),
         supabase2
           .from("ventas")
-          .select("id, fecha_cierre, vehiculo_marca, vehiculo_modelo, vehiculo_anio, precio_venta, moneda_venta, vendedor_id, vendedor_compartido_id, responsable_consignacion_id, comisiones ( monto, moneda, estado, beneficiario_id )")
+          .select("id, fecha_cierre, vehiculo_marca, vehiculo_modelo, vehiculo_anio, precio_venta, moneda_venta, vendedor_id, vendedor_compartido_id, responsable_consignacion_id, comisiones ( monto, monto_pagado, moneda, estado, beneficiario_id )")
           .eq("estado", "cerrada")
           .gte("fecha_cierre", desdeStr)
           .lte("fecha_cierre", hastaStr)
@@ -122,15 +122,30 @@ export default function MisVentasClient({ vendedores, miId, miNombre, esAdmin }:
         const rol = esVendedor && esConsig ? "Vendedor+Consig" : esVendedor ? (v.vendedor_compartido_id === vendedorId ? "Vendedor (compartido)" : "Vendedor") : "Consignación";
         const comisionPorMoneda: Record<string, number> = {};
         misComisiones.forEach((c: any) => { comisionPorMoneda[c.moneda] = (comisionPorMoneda[c.moneda] || 0) + Number(c.monto); });
+        // "Pendiente de cobro" tiene que ser lo que TODAVÍA falta cobrar, no
+        // el total ganado en la venta -- antes usaba comisionPorMoneda (la
+        // comisión COMPLETA, cobrada o no) apenas alguna comisión de la
+        // venta estuviera pendiente, así que un vendedor con Vendedor+Consig
+        // (dos comisiones, una ya cobrada) o con un pago parcial
+        // (monto_pagado > 0 en la pendiente) veía una cifra mayor a la real.
+        const comisionPendientePorMoneda: Record<string, number> = {};
+        misComisiones.filter((c: any) => c.estado === "pendiente").forEach((c: any) => {
+          comisionPendientePorMoneda[c.moneda] = (comisionPendientePorMoneda[c.moneda] || 0) + (Number(c.monto) - Number(c.monto_pagado || 0));
+        });
         const estadoComision = misComisiones.some((c: any) => c.estado === "pendiente") ? "Pendiente" : misComisiones.length ? "Cobrada" : "—";
-        return { ...v, rol, comisionPorMoneda, estadoComision, esConsig };
+        return { ...v, rol, comisionPorMoneda, comisionPendientePorMoneda, estadoComision, esConsig };
       });
       setVentas(ventasProcesadas);
 
-      const pendientes = ventasProcesadas.flatMap((v: any) => Object.entries(v.comisionPorMoneda).map(([moneda, monto]) => ({ moneda, monto: monto as number, pendiente: v.estadoComision === "Pendiente" })));
       const totalPorMoneda: Record<string, number> = {};
       let cantidadPendiente = 0;
-      pendientes.forEach((p) => { if (p.pendiente) { totalPorMoneda[p.moneda] = (totalPorMoneda[p.moneda] || 0) + p.monto; cantidadPendiente++; } });
+      ventasProcesadas.forEach((v) => {
+        if (v.estadoComision !== "Pendiente") return;
+        cantidadPendiente++;
+        Object.entries(v.comisionPendientePorMoneda).forEach(([moneda, monto]) => {
+          totalPorMoneda[moneda] = (totalPorMoneda[moneda] || 0) + (monto as number);
+        });
+      });
       setComisionesPendientes({ cantidad: cantidadPendiente, totalPorMoneda });
 
       setCargando(false);
