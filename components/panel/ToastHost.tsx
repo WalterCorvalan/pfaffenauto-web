@@ -42,6 +42,12 @@ const BORDE_PRIORIDAD: Record<string, string> = {
   baja: "border-l-4 border-l-slate-400",
   novedad: "border-l-4 border-l-indigo-500",
 };
+const BARRA_PRIORIDAD: Record<string, string> = {
+  alta: "bg-rose-500",
+  media: "bg-amber-500",
+  baja: "bg-slate-400",
+  novedad: "bg-indigo-500",
+};
 
 const DURACION_MS: Record<Toast["tipo"], number> = {
   success: 5000,
@@ -114,32 +120,36 @@ export default function ToastHost() {
   if (toasts.length === 0) return null;
 
   return (
-    <div className="fixed top-4 right-4 z-[100] flex flex-col gap-2 max-w-sm w-full pointer-events-none">
+    <div className="fixed top-4 right-4 z-[100] flex flex-col gap-2.5 max-w-sm w-full pointer-events-none">
       {toasts.map((t) => {
         if (t.tipo === "alerta") {
           const Icon = TIPO_ICON[t.tipoAlerta || ""] || ICONO_DEFECTO;
           const colorIcono = TIPO_COLOR[t.tipoAlerta || ""] || COLOR_DEFECTO;
           const borde = BORDE_PRIORIDAD[t.prioridad || "novedad"] || BORDE_PRIORIDAD.novedad;
           return (
-            <div key={t.id} className={`pointer-events-auto flex items-start gap-2.5 px-4 py-3 rounded-xl shadow-2xl animate-fadeIn bg-white dark:bg-[#1A1A1A] border border-slate-200 dark:border-white/10 ${borde}`}>
-              <span className={`w-8 h-8 rounded-full flex items-center justify-center shrink-0 ${colorIcono}`}><Icon className="w-4 h-4" /></span>
+            <div key={t.id} className={`relative overflow-hidden pointer-events-auto flex items-start gap-3 px-4 pt-3.5 pb-3 rounded-2xl shadow-[0_8px_30px_rgb(0,0,0,0.12)] animate-toastIn bg-white/95 dark:bg-[#1A1A1A]/95 backdrop-blur-sm border border-slate-200 dark:border-white/10 ${borde}`}>
+              <span className={`w-9 h-9 rounded-full flex items-center justify-center shrink-0 ring-4 ring-white dark:ring-[#1A1A1A] shadow-sm ${colorIcono}`}><Icon className="w-4 h-4" /></span>
               <div className="min-w-0 flex-1">
-                <p className="flex items-center gap-1.5 text-xs font-bold text-slate-900 dark:text-white truncate">
-                  {t.titulo}
+                <div className="flex items-center gap-1.5">
+                  <p className="text-xs font-bold text-slate-900 dark:text-white truncate flex-1">{t.titulo}</p>
                   {(t.contador || 1) > 1 && <span className="shrink-0 text-[10px] font-bold px-1.5 rounded-full bg-[#0145F2] text-white">x{t.contador}</span>}
-                </p>
+                </div>
                 {t.mensaje && t.mensaje !== t.titulo && (
-                  <p className="text-[11px] text-slate-500 dark:text-slate-400 leading-snug mt-0.5 line-clamp-2">{t.mensaje}</p>
+                  <p className="text-[11px] text-slate-500 dark:text-slate-400 leading-snug mt-1 line-clamp-2">{t.mensaje}</p>
                 )}
-                <div className="flex items-center gap-3 mt-1.5">
+                <div className="flex items-center gap-3 mt-2">
                   {t.link && (
                     <button onClick={() => ir(t)} className="flex items-center gap-1 text-[11px] font-bold text-[#0145F2] dark:text-sky-400 hover:underline">
                       {TIPO_VER[t.tipoAlerta || ""] || "Ver"} <ArrowRight className="w-3 h-3" />
                     </button>
                   )}
-                  <button onClick={() => cerrar(t.id)} className="text-[11px] font-semibold text-slate-400 hover:text-slate-600 dark:hover:text-slate-200">Descartar</button>
+                  <span className="text-[10px] text-slate-400">recién</span>
                 </div>
               </div>
+              <button onClick={() => cerrar(t.id)} className="shrink-0 p-1 -m-1 rounded-md text-slate-300 hover:text-slate-500 dark:hover:text-slate-300 transition-colors">
+                <X className="w-3.5 h-3.5" />
+              </button>
+              <div className={`absolute bottom-0 left-0 h-[3px] opacity-70 animate-toastBar ${BARRA_PRIORIDAD[t.prioridad || "novedad"] || BARRA_PRIORIDAD.novedad}`} style={{ animationDuration: `${DURACION_MS.alerta}ms` }} />
             </div>
           );
         }
@@ -149,13 +159,16 @@ export default function ToastHost() {
           <div
             key={t.id}
             onClick={() => ir(t)}
-            className={`pointer-events-auto flex items-start gap-2.5 px-4 py-3 rounded-xl shadow-2xl animate-fadeIn ${COLOR[t.tipo]} ${t.link ? "cursor-pointer" : ""}`}
+            className={`relative overflow-hidden pointer-events-auto flex items-start gap-3 px-4 pt-3 pb-3 rounded-2xl shadow-[0_8px_30px_rgb(0,0,0,0.16)] animate-toastIn ${COLOR[t.tipo]} ${t.link ? "cursor-pointer" : ""}`}
           >
-            <Icon className="w-4 h-4 shrink-0 mt-0.5" />
-            <p className="text-xs font-semibold leading-snug flex-1">{t.mensaje}</p>
-            <button onClick={(e) => { e.stopPropagation(); cerrar(t.id); }} className="shrink-0 opacity-70 hover:opacity-100">
+            <span className="w-7 h-7 rounded-full flex items-center justify-center shrink-0 bg-white/15">
+              <Icon className="w-4 h-4" />
+            </span>
+            <p className="text-xs font-semibold leading-snug flex-1 pt-1">{t.mensaje}</p>
+            <button onClick={(e) => { e.stopPropagation(); cerrar(t.id); }} className="shrink-0 p-1 -m-1 rounded-md opacity-70 hover:opacity-100 transition-opacity">
               <X className="w-3.5 h-3.5" />
             </button>
+            <div className="absolute bottom-0 left-0 h-[3px] bg-white/40 animate-toastBar" style={{ animationDuration: `${DURACION_MS[t.tipo]}ms` }} />
           </div>
         );
       })}

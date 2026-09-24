@@ -158,15 +158,26 @@ Vos recibís el dinero.
 Protegé tu vehículo.`;
 }
 
+// Instagram es un DM informal (como hablarle a un amigo), no el menú formal
+// de WhatsApp/Rodi -- pedido explícito del usuario 24/9: nada de "BIENVENIDO
+// A PFAFFEN CARS" en mayúsculas ni menú numerado acá, un saludo corto tipo
+// "¿en qué te ayudo?". Sin texto fijo a pisar (a diferencia de
+// menuBienvenidaV2): el modelo puede variar la frase, solo tiene que sonar
+// natural y corta.
+const BIENVENIDA_INSTAGRAM_V2 =
+  `Saludo corto e informal, como si le contestaras a un amigo por DM -- nada de "BIENVENIDO A PFAFFEN CARS" ni menú numerado. Algo en la línea de "¡Hola! 👋 ¿En qué te puedo ayudar?" o "Hola, contame qué estás buscando" -- variá la frase, no la repitas siempre igual, pero mantenela corta (una oración) y sin mayúsculas de grito.`;
+
 export function buildSystemPromptV2(vehiculoInfo?: string, resultadosStock?: ResultadoStockV2[], nombreBot?: string, resultadosSonAlternativa?: boolean, sucursales?: SucursalInfo[], sugerirCierre?: boolean, categoriaSolicitada?: string | null, totalRealStock?: number, tono?: string | null, esInstagram?: boolean): string {
   return `${nombreBot ? `Te llamás ${nombreBot}, el` : "Sos el"} asistente virtual oficial de Pfaffen Autos, concesionaria de vehículos 0km y usados.
 
 ${bloqueEstiloYTono(tono)}
 MENSAJE DE BIENVENIDA
-Si el cliente solo saluda o no expresa una intención concreta, respondé exactamente con este menú (mismo texto, mismos emojis, no lo parafrasees):
-"${menuBienvenidaV2()}"
+${esInstagram
+    ? `Si el cliente solo saluda o no expresa una intención concreta, respondé con esto: ${BIENVENIDA_INSTAGRAM_V2}`
+    : `Si el cliente solo saluda o no expresa una intención concreta, respondé exactamente con este menú (mismo texto, mismos emojis, no lo parafrasees):
+"${menuBienvenidaV2()}"`}
 Si ya dijo lo que necesita, NO repitas el menú — entrá directo al tema.
-El saludo ("Bienvenido a Pfaffen Cars") va UNA sola vez, en el primerísimo mensaje de toda la charla — nunca lo repitas en respuestas posteriores, sea cual sea el tema (stock, repuestos, handoff, lo que sea). Si ya saludaste antes en esta misma charla, andá directo al contenido de la respuesta.
+El saludo va UNA sola vez, en el primerísimo mensaje de toda la charla — nunca lo repitas en respuestas posteriores, sea cual sea el tema (stock, repuestos, handoff, lo que sea). Si ya saludaste antes en esta misma charla, andá directo al contenido de la respuesta.
 
 ${INTENCIONES_LINEA}
 ${vehiculoInfo ? `El cliente está consultando sobre: ${vehiculoInfo}` : ""}

@@ -1,4 +1,14 @@
 const GRAPH_BASE_URL = process.env.META_GRAPH_BASE_URL ?? "https://graph.facebook.com";
+// Los tokens del login nuevo de Instagram (Business Login for Instagram --
+// api.instagram.com/oauth/authorize, ver Configuración → Instagram → botón
+// "Conectar con Instagram") son válidos SOLO contra graph.instagram.com, no
+// contra graph.facebook.com -- son namespaces de token distintos. Usarlos
+// contra el endpoint equivocado da "Invalid OAuth access token - Cannot
+// parse access token" (código 190) aunque el token sea válido y nuevo.
+// Ver hilo del 24/9. Afecta solo a sendInstagramPrivateReply/
+// sendInstagramMessage -- el resto de las funciones de Instagram de este
+// archivo (publish, insights) usan el token viejo del login con Facebook.
+const GRAPH_INSTAGRAM_BASE_URL = "https://graph.instagram.com";
 const GRAPH_VERSION = process.env.META_GRAPH_API_VERSION ?? "v25.0";
 
 export class MetaApiError extends Error {
@@ -14,9 +24,10 @@ export class MetaApiError extends Error {
 async function graphRequest<T>(
   path: string,
   token: string,
-  init?: RequestInit
+  init?: RequestInit,
+  baseUrl: string = GRAPH_BASE_URL
 ): Promise<T> {
-  const url = `${GRAPH_BASE_URL}/${GRAPH_VERSION}/${path}`;
+  const url = `${baseUrl}/${GRAPH_VERSION}/${path}`;
   const res = await fetch(url, {
     ...init,
     headers: {
@@ -225,7 +236,7 @@ export async function sendInstagramPrivateReply(commentId: string, token: string
   return graphRequest<{ id: string; recipient_id: string }>(`${commentId}/private_replies`, token, {
     method: "POST",
     body: JSON.stringify({ message: text }),
-  });
+  }, GRAPH_INSTAGRAM_BASE_URL);
 }
 
 // Instagram: mensaje directo de seguimiento dentro de una conversación ya abierta
@@ -237,5 +248,5 @@ export async function sendInstagramMessage(igUserId: string, token: string, reci
       recipient: { id: recipientId },
       message: { text },
     }),
-  });
+  }, GRAPH_INSTAGRAM_BASE_URL);
 }

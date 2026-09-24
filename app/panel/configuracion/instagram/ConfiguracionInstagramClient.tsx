@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react";
 import Link from "next/link";
-import { Camera, Copy, Check, Loader2, ExternalLink } from "lucide-react";
+import { Camera, Copy, Check, Loader2, ExternalLink, CheckCircle2 } from "lucide-react";
 import ConfirmDialog from "@/components/panel/ConfirmDialog";
 
 const inputClass = "w-full bg-slate-50 dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-xl px-3 py-2.5 text-sm outline-none focus:border-rose-500";
@@ -17,6 +17,7 @@ export default function ConfiguracionInstagramClient() {
   const [tono, setTono] = useState("");
   const [copiado, setCopiado] = useState<"webhook" | "verify" | null>(null);
   const [mensaje, setMensaje] = useState("");
+  const [conectando, setConectando] = useState(false);
   const [confirmDialog, setConfirmDialog] = useState<{ mensaje: string; accion: () => void } | null>(null);
 
   const cargar = async () => {
@@ -32,6 +33,41 @@ export default function ConfiguracionInstagramClient() {
   };
 
   useEffect(() => { cargar(); }, []);
+
+  // Vuelta del login de Instagram (Business Login): Meta redirige acá con
+  // ?code=..., lo canjeamos por un access token real -- a diferencia del
+  // botón "Generar identificador" del dashboard de Meta, que no sirve para
+  // el Send API (ver error "Cannot parse access token" código 190, 24/9).
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    const code = params.get("code");
+    if (!code) return;
+    const redirectUri = `${window.location.origin}${window.location.pathname}`;
+    window.history.replaceState({}, "", window.location.pathname);
+    setConectando(true);
+    setMensaje("");
+    fetch("/api/panel/instagram/oauth-callback", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ code, redirectUri }),
+    })
+      .then(async (res) => {
+        const data = await res.json();
+        if (!res.ok) throw new Error(data.error || "No se pudo conectar con Instagram.");
+        setConfig(data.config);
+        setIgUserId(data.config?.ig_user_id || "");
+        setMensaje(`Conectado — token válido por ${data.expiresInDias ?? 60} días.`);
+      })
+      .catch((e) => setMensaje(e.message || "Error al conectar con Instagram."))
+      .finally(() => setConectando(false));
+  }, []);
+
+  const conectarConInstagram = () => {
+    const redirectUri = `${window.location.origin}${window.location.pathname}`;
+    const scope = "instagram_business_basic,instagram_business_manage_messages,instagram_business_manage_comments,instagram_business_content_publish,instagram_business_manage_insights";
+    const url = `https://www.instagram.com/oauth/authorize?force_reauth=true&client_id=1891064935199738&redirect_uri=${encodeURIComponent(redirectUri)}&response_type=code&scope=${encodeURIComponent(scope)}`;
+    window.location.href = url;
+  };
 
   const guardar = async () => {
     setGuardando(true);
@@ -105,6 +141,26 @@ export default function ConfiguracionInstagramClient() {
 
       <div className="bg-white dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-2xl p-5 space-y-4">
         <p className="text-[11px] font-black uppercase tracking-widest text-slate-400">Credenciales de Meta</p>
+
+        <div className="bg-indigo-50 dark:bg-indigo-500/10 border border-indigo-200 dark:border-indigo-500/20 rounded-xl p-3 space-y-2">
+          <p className="text-xs text-indigo-700 dark:text-indigo-300">El botón &quot;Generar identificador&quot; del dashboard de Meta no sirve para enviar mensajes. Usá este login en su lugar — genera un token real de 60 días.</p>
+          {config?.listo ? (
+            <div className="flex items-center gap-2">
+              <span className="px-4 py-2.5 rounded-xl bg-emerald-50 dark:bg-emerald-500/10 text-emerald-700 dark:text-emerald-300 text-sm font-bold flex items-center gap-1.5">
+                <CheckCircle2 className="w-4 h-4" /> Conectado
+              </span>
+              <button onClick={conectarConInstagram} disabled={conectando} className="text-[11px] font-semibold text-indigo-600 dark:text-indigo-300 hover:underline disabled:opacity-50 flex items-center gap-1">
+                {conectando ? <Loader2 className="w-3 h-3 animate-spin" /> : null} Reconectar
+              </button>
+            </div>
+          ) : (
+            <button onClick={conectarConInstagram} disabled={conectando} className="px-4 py-2.5 rounded-xl bg-gradient-to-r from-purple-600 to-pink-500 text-white text-sm font-bold disabled:opacity-50 flex items-center gap-1.5">
+              {conectando ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : null} Conectar con Instagram
+            </button>
+          )}
+          <p className="text-[10px] text-indigo-600/70 dark:text-indigo-300/70">Requiere que esta URL esté en la lista de &quot;URIs de redirección OAuth válidas&quot; de Meta: {typeof window !== "undefined" ? `${window.location.origin}${window.location.pathname}` : ""}</p>
+        </div>
+
         <div>
           <label className={labelClass}>Instagram User ID (ig_user_id)</label>
           <input value={igUserId} onChange={(e) => setIgUserId(e.target.value)} placeholder="Ej: 17841400000000000" className={inputClass} />
