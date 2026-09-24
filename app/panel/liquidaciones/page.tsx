@@ -1,3 +1,4 @@
+import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { tienePermiso } from "@/lib/panel/permisos";
 import LiquidacionesClient from "./LiquidacionesClient";
@@ -7,6 +8,7 @@ export const metadata = { title: "Liquidaciones | Pfaffen Autos" };
 export default async function LiquidacionesPage() {
   const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();
+  if (!user) redirect("/panel/login");
 
   const miPerfil = user ? await supabase.from("perfiles").select("id, nombre, roles, ganancias_ocultas").eq("id", user.id).single().then((r) => r.data) : null;
   const puedeVerLiquidacion = await tienePermiso(supabase, miPerfil, "ver_liquidacion");
@@ -20,9 +22,16 @@ export default async function LiquidacionesPage() {
     // Una liquidación "en_proceso" puede seguir abierta hace más de 6 meses --
     // solo acotamos por fecha las ya terminadas, nunca las en curso (mismo
     // criterio ya usado en Pedidos esta sesión).
-    supabase.from("liquidaciones_gestoria").select("*, expediente:expedientes(titulo_transferido_url), vendedor:perfiles!liquidaciones_gestoria_vendedor_interno_id_fkey(nombre)")
-      .or(`estado.eq.en_proceso,created_at.gte.${desde6Meses.toISOString()}`)
-      .order("created_at", { ascending: false }),
+    // El fetch corría siempre, aunque LiquidacionesClient.tsx solo
+    // RENDERIZA la lista si puedeVerLiquidacion -- los datos (clientes,
+    // vendedores, montos de gestoría) ya habían viajado en el payload a
+    // cualquier usuario sin el permiso (hallazgo de auditoría). Se corta
+    // acá, no solo el render.
+    puedeVerLiquidacion
+      ? supabase.from("liquidaciones_gestoria").select("*, expediente:expedientes(titulo_transferido_url), vendedor:perfiles!liquidaciones_gestoria_vendedor_interno_id_fkey(nombre)")
+          .or(`estado.eq.en_proceso,created_at.gte.${desde6Meses.toISOString()}`)
+          .order("created_at", { ascending: false })
+      : Promise.resolve({ data: [] }),
     supabase.from("perfiles").select("id, nombre").eq("activo", true).order("nombre"),
     supabase.from("configuracion_empresa").select("liquidaciones_comision_fija, liquidaciones_pct_gestora, liquidaciones_pct_agencia").eq("id", true).single(),
   ]);
