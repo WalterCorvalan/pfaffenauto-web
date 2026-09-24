@@ -65,7 +65,7 @@ const ConfigEmpresaSchema = z.object({
     pct: z.coerce.number().min(0).max(100),
   })).max(20).optional(),
   financiacion_tope_0km: z.coerce.number().min(0).max(100).optional(),
-  financiacion_tna: z.record(z.string(), z.coerce.number().min(0).max(500)).optional(),
+  financiacion_tna: z.array(z.object({ anioDesde: z.number(), anioHasta: z.number().nullable(), tna: z.record(z.string(), z.coerce.number().min(0).max(500)) })).optional(),
   financiacion_gastos_pct: z.coerce.number().min(0).max(100).optional(),
   financiacion_uva_descuento: z.record(z.string(), z.coerce.number().min(0).max(100)).optional(),
 });

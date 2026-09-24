@@ -4,8 +4,8 @@ import { useEffect, useState } from "react";
 import { X, CreditCard, Check } from "lucide-react";
 import VehiculoSelector, { type VehiculoDatos } from "@/components/panel/VehiculoSelector";
 import {
-  TOPES_FINANCIACION_DEFAULT, TOPE_0KM_DEFAULT, TNA_POR_PLAZO_DEFAULT, GASTOS_PCT_DEFAULT,
-  PLAZOS_DISPONIBLES, topePctPorAnio, calcularCuotaFrances, type TopeFinanciacion,
+  TOPES_FINANCIACION_DEFAULT, TOPE_0KM_DEFAULT, TNA_POR_ANIO_Y_PLAZO_DEFAULT, GASTOS_PCT_DEFAULT,
+  PLAZOS_DISPONIBLES, topePctPorAnio, tnaPctPorAnioYPlazo, calcularCuotaFrances, type TopeFinanciacion, type TnaGrupo,
 } from "@/lib/financiacion";
 
 function fmt(n: number) {
@@ -15,7 +15,7 @@ function fmt(n: number) {
 export default function SimuladorPropioModal({ onClose }: { onClose: () => void }) {
   const [topes, setTopes] = useState<TopeFinanciacion[]>(TOPES_FINANCIACION_DEFAULT);
   const [tope0km, setTope0km] = useState(TOPE_0KM_DEFAULT);
-  const [tna, setTna] = useState<Record<string, number>>(TNA_POR_PLAZO_DEFAULT);
+  const [tna, setTna] = useState<TnaGrupo[]>(TNA_POR_ANIO_Y_PLAZO_DEFAULT);
   const [gastosPct, setGastosPct] = useState(GASTOS_PCT_DEFAULT);
   const [dolarVenta, setDolarVenta] = useState<number | null>(null);
 
@@ -27,7 +27,7 @@ export default function SimuladorPropioModal({ onClose }: { onClose: () => void 
       if (data?.config) {
         if (data.config.financiacion_topes?.length) setTopes(data.config.financiacion_topes);
         if (data.config.financiacion_tope_0km) setTope0km(data.config.financiacion_tope_0km);
-        if (Object.keys(data.config.financiacion_tna || {}).length) setTna(data.config.financiacion_tna);
+        if (data.config.financiacion_tna?.length) setTna(data.config.financiacion_tna);
         if (data.config.financiacion_gastos_pct != null) setGastosPct(data.config.financiacion_gastos_pct);
       }
     }).catch(() => {});
@@ -93,7 +93,7 @@ export default function SimuladorPropioModal({ onClose }: { onClose: () => void 
                 <p className="text-xs font-semibold text-slate-500 mb-2">Cuota estimada según plazo (sistema francés, TNA aproximada)</p>
                 <div className="grid grid-cols-1 divide-y divide-slate-100 dark:divide-white/5 border border-slate-200 dark:border-white/10 rounded-xl overflow-hidden">
                   {PLAZOS_DISPONIBLES.map((p) => {
-                    const tasaPlazo = tna[String(p)];
+                    const tasaPlazo = anio ? tnaPctPorAnioYPlazo(anio, p, tna) : null;
                     if (!tasaPlazo) return null;
                     const cuota = calcularCuotaFrances(capitalMaximo, tasaPlazo, p);
                     return (

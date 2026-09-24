@@ -21,7 +21,24 @@ export const TOPE_0KM_DEFAULT = 70;
 
 // TNA implícita derivada de la tabla "Tradicional - Desde" del simulador real
 // (mejor perfil crediticio) -- es una aproximación, no la tasa exacta.
-export const TNA_POR_PLAZO_DEFAULT: Record<string, number> = { "12": 76, "18": 70, "24": 65, "36": 60, "48": 57 };
+// Agrupada por año del vehículo (igual que TopeFinanciacion) además de por
+// plazo -- pedido de la reunión del 22/9 ("pasar la tasa del 65% al 68% para
+// unidades 2021 en adelante"). Arranca en un solo grupo cubriendo todos los
+// años con los mismos valores de siempre -- el admin lo separa en más
+// grupos desde Financiaciones > Configuración si necesita tasas distintas
+// por antigüedad.
+export interface TnaGrupo { anioDesde: number; anioHasta: number | null; tna: Record<string, number> }
+
+export const TNA_POR_ANIO_Y_PLAZO_DEFAULT: TnaGrupo[] = [
+  { anioDesde: 0, anioHasta: 9999, tna: { "12": 76, "18": 70, "24": 65, "36": 60, "48": 57 } },
+];
+
+export function tnaPctPorAnioYPlazo(anio: number, plazo: number, grupos: TnaGrupo[]): number | null {
+  const fila = grupos.find((g) => anio >= g.anioDesde && anio <= (g.anioHasta ?? 9999));
+  const tabla = fila?.tna ?? grupos[0]?.tna;
+  return tabla?.[String(plazo)] ?? null;
+}
+
 export const GASTOS_PCT_DEFAULT = 11;
 export const PLAZOS_DISPONIBLES = [12, 18, 24, 36, 48];
 

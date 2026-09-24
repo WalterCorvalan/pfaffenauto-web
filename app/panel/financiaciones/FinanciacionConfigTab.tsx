@@ -2,12 +2,12 @@
 
 import { useEffect, useState } from "react";
 import { Loader2, DollarSign } from "lucide-react";
-import { TOPES_FINANCIACION_DEFAULT, TOPE_0KM_DEFAULT, TNA_POR_PLAZO_DEFAULT, GASTOS_PCT_DEFAULT, PLAZOS_DISPONIBLES, type TopeFinanciacion } from "@/lib/financiacion";
+import { TOPES_FINANCIACION_DEFAULT, TOPE_0KM_DEFAULT, TNA_POR_ANIO_Y_PLAZO_DEFAULT, GASTOS_PCT_DEFAULT, PLAZOS_DISPONIBLES, type TopeFinanciacion, type TnaGrupo } from "@/lib/financiacion";
 
 interface ConfigFinanciacion {
   financiacion_topes: TopeFinanciacion[];
   financiacion_tope_0km: number;
-  financiacion_tna: Record<string, number>;
+  financiacion_tna: TnaGrupo[];
   financiacion_gastos_pct: number;
   dolar_manual_activo: boolean;
   dolar_manual_compra: number | null;
@@ -36,7 +36,7 @@ export default function FinanciacionConfigTab() {
       setConfig({
         financiacion_topes: data.financiacion_topes?.length ? data.financiacion_topes : TOPES_FINANCIACION_DEFAULT,
         financiacion_tope_0km: data.financiacion_tope_0km ?? TOPE_0KM_DEFAULT,
-        financiacion_tna: Object.keys(data.financiacion_tna || {}).length ? data.financiacion_tna : TNA_POR_PLAZO_DEFAULT,
+        financiacion_tna: data.financiacion_tna?.length ? data.financiacion_tna : TNA_POR_ANIO_Y_PLAZO_DEFAULT,
         financiacion_gastos_pct: data.financiacion_gastos_pct ?? GASTOS_PCT_DEFAULT,
         dolar_manual_activo: data.dolar_manual_activo ?? false,
         dolar_manual_compra: data.dolar_manual_compra ?? null,
@@ -69,9 +69,26 @@ export default function FinanciacionConfigTab() {
     guardar({ financiacion_topes: topes });
   };
 
-  const actualizarTna = (plazo: number, valor: number) => {
+  const actualizarTnaGrupo = (idx: number, patch: Partial<TnaGrupo>) => {
     if (!config) return;
-    guardar({ financiacion_tna: { ...config.financiacion_tna, [String(plazo)]: valor } });
+    const grupos = config.financiacion_tna.map((g, i) => (i === idx ? { ...g, ...patch } : g));
+    guardar({ financiacion_tna: grupos });
+  };
+
+  const actualizarTna = (idx: number, plazo: number, valor: number) => {
+    if (!config) return;
+    actualizarTnaGrupo(idx, { tna: { ...config.financiacion_tna[idx].tna, [String(plazo)]: valor } });
+  };
+
+  const agregarGrupoTna = () => {
+    if (!config) return;
+    const ultimo = config.financiacion_tna[config.financiacion_tna.length - 1];
+    guardar({ financiacion_tna: [...config.financiacion_tna, { anioDesde: (ultimo?.anioHasta ?? 0) + 1, anioHasta: 9999, tna: { ...(ultimo?.tna || {}) } }] });
+  };
+
+  const borrarGrupoTna = (idx: number) => {
+    if (!config || config.financiacion_tna.length <= 1) return;
+    guardar({ financiacion_tna: config.financiacion_tna.filter((_, i) => i !== idx) });
   };
 
   if (cargando || !config) return <div className="p-8 flex justify-center"><Loader2 className="w-5 h-5 animate-spin text-slate-400" /></div>;
@@ -129,15 +146,33 @@ export default function FinanciacionConfigTab() {
       </div>
 
       <div className="bg-white dark:bg-white/[0.02] border border-slate-200 dark:border-white/5 rounded-2xl p-5 space-y-3">
-        <p className="text-sm font-bold text-slate-800 dark:text-white mb-1">TNA estimada por plazo (para la cuota aproximada)</p>
-        <p className="text-xs text-slate-400 mb-2">La tasa real depende del perfil crediticio del cliente — esto es un promedio de referencia. Actualizalo cuando decreditos cambie tasas.</p>
-        <div className="grid grid-cols-2 sm:grid-cols-5 gap-2">
-          {PLAZOS_DISPONIBLES.map((p) => (
-            <div key={p}>
-              <label className="text-[11px] font-semibold text-slate-500 block mb-1">{p} cuotas</label>
-              <div className="flex items-center gap-1">
-                <input type="number" step="0.1" defaultValue={config.financiacion_tna[String(p)] ?? ""} onBlur={(e) => actualizarTna(p, Number(e.target.value))} className={inputClass} />
-                <span className="text-xs text-slate-400 shrink-0">%</span>
+        <div className="flex items-center justify-between gap-2">
+          <p className="text-sm font-bold text-slate-800 dark:text-white">TNA estimada por año del vehículo y plazo</p>
+          <button type="button" onClick={agregarGrupoTna} className="text-[11px] font-bold text-[#0145F2] shrink-0">+ Agregar rango de años</button>
+        </div>
+        <p className="text-xs text-slate-400 mb-2">La tasa real depende del perfil crediticio del cliente — esto es un promedio de referencia. Separá por rango de años si decreditos cobra distinto según antigüedad (ej: 2021 en adelante).</p>
+        <div className="space-y-3">
+          {config.financiacion_tna.map((grupo, idx) => (
+            <div key={idx} className="bg-slate-50 dark:bg-white/5 rounded-xl p-3 space-y-2">
+              <div className="flex items-center gap-2">
+                <span className="text-xs text-slate-400 shrink-0">Años</span>
+                <input type="number" defaultValue={grupo.anioDesde} onBlur={(e) => actualizarTnaGrupo(idx, { anioDesde: Number(e.target.value) })} className="w-20 bg-transparent border border-slate-200 dark:border-white/10 rounded-lg px-2 py-1 text-sm outline-none" />
+                <span className="text-xs text-slate-400">a</span>
+                <input type="number" defaultValue={grupo.anioHasta ?? ""} placeholder="∞" onBlur={(e) => actualizarTnaGrupo(idx, { anioHasta: e.target.value ? Number(e.target.value) : null })} className="w-20 bg-transparent border border-slate-200 dark:border-white/10 rounded-lg px-2 py-1 text-sm outline-none" />
+                {config.financiacion_tna.length > 1 && (
+                  <button type="button" onClick={() => borrarGrupoTna(idx)} className="text-[11px] font-bold text-rose-500 ml-auto">Quitar</button>
+                )}
+              </div>
+              <div className="grid grid-cols-2 sm:grid-cols-5 gap-2">
+                {PLAZOS_DISPONIBLES.map((p) => (
+                  <div key={p}>
+                    <label className="text-[11px] font-semibold text-slate-500 block mb-1">{p} cuotas</label>
+                    <div className="flex items-center gap-1">
+                      <input type="number" step="0.1" defaultValue={grupo.tna[String(p)] ?? ""} onBlur={(e) => actualizarTna(idx, p, Number(e.target.value))} className={inputClass} />
+                      <span className="text-xs text-slate-400 shrink-0">%</span>
+                    </div>
+                  </div>
+                ))}
               </div>
             </div>
           ))}

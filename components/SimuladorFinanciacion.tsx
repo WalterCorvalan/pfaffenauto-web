@@ -4,9 +4,9 @@ import { useEffect, useState } from "react";
 import { Calculator, CheckCircle2 } from "lucide-react";
 import SolicitarFinanciacionForm from "@/components/forms/SolicitarFinanciacionForm";
 import {
-  TOPES_FINANCIACION_DEFAULT, TOPE_0KM_DEFAULT, TNA_POR_PLAZO_DEFAULT, GASTOS_PCT_DEFAULT,
+  TOPES_FINANCIACION_DEFAULT, TOPE_0KM_DEFAULT, TNA_POR_ANIO_Y_PLAZO_DEFAULT, GASTOS_PCT_DEFAULT,
   PLAZOS_DISPONIBLES,
-  topePctPorAnio, calcularCuotaFrances, type TopeFinanciacion,
+  topePctPorAnio, tnaPctPorAnioYPlazo, calcularCuotaFrances, type TopeFinanciacion, type TnaGrupo,
 } from "@/lib/financiacion";
 
 interface VehiculoFinanciable {
@@ -33,14 +33,14 @@ export default function SimuladorFinanciacion({
 }) {
   const [topes, setTopes] = useState<TopeFinanciacion[]>(TOPES_FINANCIACION_DEFAULT);
   const [tope0km, setTope0km] = useState(TOPE_0KM_DEFAULT);
-  const [tna, setTna] = useState<Record<string, number>>(TNA_POR_PLAZO_DEFAULT);
+  const [tna, setTna] = useState<TnaGrupo[]>(TNA_POR_ANIO_Y_PLAZO_DEFAULT);
   const [gastosPct, setGastosPct] = useState(GASTOS_PCT_DEFAULT);
 
   useEffect(() => {
     fetch("/api/financiacion-config").then((r) => r.json()).then((data) => {
       if (data.financiacion_topes?.length) setTopes(data.financiacion_topes);
       if (data.financiacion_tope_0km) setTope0km(data.financiacion_tope_0km);
-      if (Object.keys(data.financiacion_tna || {}).length) setTna(data.financiacion_tna);
+      if (data.financiacion_tna?.length) setTna(data.financiacion_tna);
       if (data.financiacion_gastos_pct != null) setGastosPct(data.financiacion_gastos_pct);
     }).catch(() => {});
   }, []);
@@ -57,7 +57,7 @@ export default function SimuladorFinanciacion({
   const totalNecesario = precioTotal + gastos;
   const anticipoCliente = Math.max(0, totalNecesario - capitalMaximo);
 
-  const tasaPlazo = tna[String(cuotas)];
+  const tasaPlazo = tnaPctPorAnioYPlazo(vehiculo.anio, cuotas, tna);
   const cuotaEstimada = tasaPlazo ? calcularCuotaFrances(capitalMaximo, tasaPlazo, cuotas) : 0;
 
   return (

@@ -7,9 +7,9 @@ import { supabase2 as supabase } from "@/lib/supabase/client";
 import { getCanalOrigen, getUtmRaw } from "@/lib/utm";
 import { CreditCard, X, CheckCircle2, Loader2, User, Phone, Mail, ArrowLeft, Search, Car } from "lucide-react";
 import {
-  TOPES_FINANCIACION_DEFAULT, TOPE_0KM_DEFAULT, TNA_POR_PLAZO_DEFAULT, GASTOS_PCT_DEFAULT,
+  TOPES_FINANCIACION_DEFAULT, TOPE_0KM_DEFAULT, TNA_POR_ANIO_Y_PLAZO_DEFAULT, GASTOS_PCT_DEFAULT,
   PLAZOS_DISPONIBLES,
-  topePctPorAnio, calcularCuotaFrances, type TopeFinanciacion,
+  topePctPorAnio, tnaPctPorAnioYPlazo, calcularCuotaFrances, type TopeFinanciacion, type TnaGrupo,
 } from "@/lib/financiacion";
 
 declare global {
@@ -42,14 +42,14 @@ interface SolicitarFinanciacionFormProps {
 export default function SolicitarFinanciacionForm({ vehiculoPreseleccionado, className, label = "Solicitar mi crédito" }: SolicitarFinanciacionFormProps) {
   const [topes, setTopes] = useState<TopeFinanciacion[]>(TOPES_FINANCIACION_DEFAULT);
   const [tope0km, setTope0km] = useState(TOPE_0KM_DEFAULT);
-  const [tna, setTna] = useState<Record<string, number>>(TNA_POR_PLAZO_DEFAULT);
+  const [tna, setTna] = useState<TnaGrupo[]>(TNA_POR_ANIO_Y_PLAZO_DEFAULT);
   const [gastosPct, setGastosPct] = useState(GASTOS_PCT_DEFAULT);
 
   useEffect(() => {
     fetch("/api/financiacion-config").then((r) => r.json()).then((data) => {
       if (data.financiacion_topes?.length) setTopes(data.financiacion_topes);
       if (data.financiacion_tope_0km) setTope0km(data.financiacion_tope_0km);
-      if (Object.keys(data.financiacion_tna || {}).length) setTna(data.financiacion_tna);
+      if (data.financiacion_tna?.length) setTna(data.financiacion_tna);
       if (data.financiacion_gastos_pct != null) setGastosPct(data.financiacion_gastos_pct);
     }).catch(() => {});
   }, []);
@@ -154,7 +154,7 @@ export default function SolicitarFinanciacionForm({ vehiculoPreseleccionado, cla
   const anticipoCliente = Math.max(0, precioVehiculo + gastos - capitalMaximo);
   const montoAFinanciar = capitalMaximo;
 
-  const tasaPlazoSeleccionado = tna[String(meses)];
+  const tasaPlazoSeleccionado = vehiculo ? tnaPctPorAnioYPlazo(vehiculo.anio, meses, tna) : null;
   const cuotaEstimada = tasaPlazoSeleccionado ? calcularCuotaFrances(montoAFinanciar, tasaPlazoSeleccionado, meses) : 0;
 
   const elegirVehiculo = (v: VehiculoFinanciable) => {
@@ -339,7 +339,7 @@ export default function SolicitarFinanciacionForm({ vehiculoPreseleccionado, cla
                     <div className="grid grid-cols-3 gap-2">
                       {PLAZOS_DISPONIBLES.map((plazo) => {
                         const elegido = meses === plazo;
-                        const tasa = tna[String(plazo)];
+                        const tasa = vehiculo ? tnaPctPorAnioYPlazo(vehiculo.anio, plazo, tna) : null;
                         const cuotaPlazo = tasa ? calcularCuotaFrances(montoAFinanciar, tasa, plazo) : 0;
                         return (
                           <button
