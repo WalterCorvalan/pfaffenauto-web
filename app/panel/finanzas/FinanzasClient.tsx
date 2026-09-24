@@ -98,7 +98,7 @@ export default function FinanzasClient({
   chequesIniciales, pagosDisponiblesIniciales, consumosTarjetaIniciales, retirosIniciales, devolucionesIniciales,
   expedientes, senasActivasPorMoneda,
   prestamosIniciales, presupuestosIniciales, recurrenciasIniciales, generacionesIniciales, arqueosIniciales, cierresDiariosIniciales, miNombre,
-  senasIniciales, vehiculosDisponiblesFull, sucursales, veTodasSucursales, miSucursalId, vehiculosTodos, soloCajaSucursal,
+  senasIniciales, vehiculosDisponiblesFull, sucursales, veTodasSucursales, miSucursalId, vehiculosTodos, soloCajaSucursal, puedeVerLiquidacion,
 }: {
   miId: string; soyAdmin: boolean; soyAdminOFinanzas: boolean; cuentasIniciales: any[]; movimientosIniciales: any[]; cierresIniciales: any[];
   cuotasCobrarIniciales: any[]; cuotasPagarIniciales: any[]; vendedores: any[]; clientes: any[]; vehiculos: any[]; ventas: any[];
@@ -111,6 +111,10 @@ export default function FinanzasClient({
   // sucursal, nada más. Antes solo esa pestaña se filtraba por sucursal,
   // pero el resto del módulo quedaba completamente abierto.
   soloCajaSucursal: boolean;
+  // "Ver margen/ganancia" -- gatea Resumen, Rentabilidad por vehículo y
+  // AFIP/IVA (muestran precio de compra, comisión, ganancia real, saldo de
+  // IVA), mismo permiso que ya protege Expedientes/Gestoría/Liquidaciones/Tesorería.
+  puedeVerLiquidacion: boolean;
 }) {
   const [tab, setTabRaw] = useState(soloCajaSucursal ? "caja-grande-chica" : "resumen");
   const [grupo, setGrupo] = useState(soloCajaSucursal ? "caja-bancos" : "resumen");
@@ -441,7 +445,10 @@ export default function FinanzasClient({
         </div>
       )}
 
-      {tab === "resumen" && (
+      {tab === "resumen" && !puedeVerLiquidacion && (
+        <div className="bg-amber-50 dark:bg-amber-500/10 border border-amber-200 dark:border-amber-500/20 rounded-xl p-6 text-sm text-amber-700 dark:text-amber-300">No tenés permiso para ver el margen/ganancia de la agencia. Pedile a un admin que te lo habilite en Configuración &gt; Empresa si lo necesitás.</div>
+      )}
+      {tab === "resumen" && puedeVerLiquidacion && (
         <ResumenTab
           cuentas={cuentas}
           totalPorMoneda={totalPorMoneda}
@@ -502,7 +509,9 @@ export default function FinanzasClient({
       {tab === "cheques" && <ChequesTab cheques={cheques} setCheques={setCheques} cuentas={cuentas} vehiculos0km={vehiculosDisponiblesFull.filter((v: any) => v.condicion === "0km")} soyAdminOFinanzas={soyAdminOFinanzas} />}
 
       {tab === "rentabilidad-vehiculo" && (
-        <RentabilidadVehiculoTab ventas={ventas} />
+        puedeVerLiquidacion
+          ? <RentabilidadVehiculoTab ventas={ventas} />
+          : <div className="bg-amber-50 dark:bg-amber-500/10 border border-amber-200 dark:border-amber-500/20 rounded-xl p-6 text-sm text-amber-700 dark:text-amber-300">No tenés permiso para ver el margen/ganancia de la agencia.</div>
       )}
 
       {tab === "rentabilidad" && (
@@ -531,7 +540,11 @@ export default function FinanzasClient({
 
       {tab === "conciliacion" && <ConciliacionTab movimientos={movimientos} />}
 
-      {tab === "afip-iva" && <AfipIvaTab movimientos={movimientos} setMovimientos={setMovimientos} />}
+      {tab === "afip-iva" && (
+        puedeVerLiquidacion
+          ? <AfipIvaTab movimientos={movimientos} setMovimientos={setMovimientos} />
+          : <div className="bg-amber-50 dark:bg-amber-500/10 border border-amber-200 dark:border-amber-500/20 rounded-xl p-6 text-sm text-amber-700 dark:text-amber-300">No tenés permiso para ver esta sección.</div>
+      )}
 
       {tab === "libros" && <LibrosContablesTab cuentas={cuentas} />}
     </div>

@@ -1,6 +1,7 @@
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { puedeVerModulo } from "@/lib/panel/permisosModulos";
+import { tienePermiso } from "@/lib/panel/permisos";
 import FinanzasClient from "./FinanzasClient";
 
 export const metadata = { title: "Finanzas | Pfaffen Autos" };
@@ -33,6 +34,11 @@ export default async function FinanzasPage() {
   // para que esos datos ni siquiera lleguen al navegador (ver auditoría de
   // Finanzas del 24/9: antes viajaban igual como props, solo sin render).
   const soloCajaSucursal = !veTodasSucursales && (miPerfil?.roles?.includes("encargado") ?? false);
+  // "Ver margen/ganancia" (Configuración > Empresa) decía cubrir "Expedientes,
+  // Gestoría, Liquidaciones, Tesorería" pero nunca se chequeaba acá -- Resumen,
+  // Rentabilidad por vehículo y AFIP/IVA quedaban visibles sin este gate
+  // aunque el admin lo hubiera desactivado para el rol (hallazgo de auditoría).
+  const puedeVerLiquidacion = await tienePermiso(supabase, miPerfil, "ver_liquidacion");
 
   // Un encargado de sucursal solo VE (en la UI) Caja Grande/Chica de su
   // propia sucursal -- pero antes el resto de los datos de Finanzas
@@ -81,6 +87,7 @@ export default async function FinanzasPage() {
         miNombre={miPerfil?.nombre || ""}
         senasIniciales={[]} vehiculosDisponiblesFull={[]} sucursales={sucursalPropia || []}
         veTodasSucursales={veTodasSucursales} soloCajaSucursal={soloCajaSucursal} miSucursalId={miSucursalId} vehiculosTodos={[]}
+        puedeVerLiquidacion={puedeVerLiquidacion}
       />
     );
   }
@@ -186,6 +193,7 @@ export default async function FinanzasPage() {
       soloCajaSucursal={soloCajaSucursal}
       miSucursalId={miSucursalId}
       vehiculosTodos={vehiculosTodos || []}
+      puedeVerLiquidacion={puedeVerLiquidacion}
     />
   );
 }
