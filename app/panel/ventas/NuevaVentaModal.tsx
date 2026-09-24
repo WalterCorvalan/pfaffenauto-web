@@ -678,7 +678,18 @@ export default function NuevaVentaModal({ perfiles, clientes, vehiculos, miId, s
           // el payload de arriba -- no hace falta hacer nada más acá.
         } else {
           const totalSenas = totalEnMoneda(senas.map((s) => ({ monto: s.monto, moneda: s.moneda as Moneda })), monedaVenta as Moneda, tipoCambio);
-          const saldo = Number(precioVenta) - totalSenas - totalPermutas;
+          // Antes el saldo a financiar en cuotas solo restaba señas y
+          // permutas -- ignoraba el efectivo ya cobrado (sección "Desglose
+          // de forma de pago", que se puede cargar igual con método
+          // Financiado, ej. una entrega en efectivo) y el monto que ya puso
+          // la financiera (montoFinanciacion) -- las cuotas terminaban
+          // sumando de más, cobrándole al cliente por plata que ya había
+          // entrado por otro lado.
+          const efectivoTotal = totalEnMoneda(
+            [{ monto: pagoEfectivoArs, moneda: "ARS" }, { monto: pagoEfectivoUsd, moneda: "USD" }],
+            monedaVenta as Moneda, tipoCambio
+          );
+          const saldo = Math.max(0, Number(precioVenta) - totalSenas - totalPermutas - efectivoTotal - Number(montoFinanciacion || 0));
           const n = Number(cuotasPlazo);
           const cuotaMonto = Math.round((saldo / n) * 100) / 100;
           const primerVencimiento = parseFechaLocal(fechaCierre);

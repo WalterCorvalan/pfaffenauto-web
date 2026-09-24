@@ -13,7 +13,7 @@ interface Branding {
   branding_logo_url?: string | null; branding_email?: string | null; branding_web?: string | null; branding_ingresos_brutos?: string | null;
 }
 
-export default function ImprimirVenta({ venta: v, branding, senaPrevia }: { venta: any; branding?: Branding | null; senaPrevia: number }) {
+export default function ImprimirVenta({ venta: v, branding, senaPrevia, permutaPrevia = 0 }: { venta: any; branding?: Branding | null; senaPrevia: number; permutaPrevia?: number }) {
   const nombreEmpresa = branding?.branding_nombre || "Pfaffen Autos";
   const [firmaUrl, setFirmaUrl] = useState<string | null>(v.firma_url ?? null);
   const [firmaVendedorUrl, setFirmaVendedorUrl] = useState<string | null>(v.firma_vendedor_url ?? null);
@@ -39,7 +39,11 @@ export default function ImprimirVenta({ venta: v, branding, senaPrevia }: { vent
   const adicionalTransferencia = v.extra_cobrado_monto
     ? totalEnMoneda([{ monto: v.extra_cobrado_monto, moneda: v.extra_cobrado_moneda || moneda }], moneda, v.tipo_cambio)
     : 0;
-  const saldoAbonar = Math.max(0, precioVenta + adicionalTransferencia - senaPrevia);
+  // El saldo a abonar ignoraba por completo las permutas -- con un auto
+  // entregado en parte de pago, se mostraba el saldo inflado como si el
+  // cliente todavía debiera el valor completo del vehículo, cuando en
+  // realidad ya lo cubrió en parte con el auto que entregó.
+  const saldoAbonar = Math.max(0, precioVenta + adicionalTransferencia - senaPrevia - permutaPrevia);
   const financiado = v.metodo_pago === "Financiado" && Number(v.monto_financiacion || 0) > 0;
   const montoFinanciado = financiado ? Number(v.monto_financiacion || 0) : 0;
   // "se recibe en efectivo" refleja únicamente el efectivo efectivamente

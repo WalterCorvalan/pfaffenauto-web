@@ -18,7 +18,10 @@ export default async function ImprimirVentaPage({ params }: { params: Promise<{ 
 
   if (!venta) notFound();
 
-  const { data: senasAplicadas } = await supabase.from("venta_senas").select("monto, moneda").eq("venta_id", id);
+  const [{ data: senasAplicadas }, { data: permutasAplicadas }] = await Promise.all([
+    supabase.from("venta_senas").select("monto, moneda").eq("venta_id", id),
+    supabase.from("venta_permutas").select("valor, moneda").eq("venta_id", id),
+  ]);
   // Una seña vinculada puede haberse cobrado en una moneda distinta a la de
   // la venta (ej. seña en USD sobre una venta en ARS) — sin convertir con la
   // cotización de la venta, esa seña se contaba como $0 en el recibo.
@@ -27,6 +30,14 @@ export default async function ImprimirVentaPage({ params }: { params: Promise<{ 
     venta.moneda_venta,
     venta.tipo_cambio
   );
+  // El saldo a abonar ignoraba las permutas por completo -- con un auto
+  // entregado en parte de pago, el recibo mostraba el saldo inflado como si
+  // el cliente todavía debiera el valor completo del auto que ya entregó.
+  const permutaPrevia = totalEnMoneda(
+    (permutasAplicadas || []).map((p) => ({ monto: p.valor, moneda: p.moneda })),
+    venta.moneda_venta,
+    venta.tipo_cambio
+  );
 
-  return <ImprimirVenta venta={venta} branding={config} senaPrevia={senaPrevia} />;
+  return <ImprimirVenta venta={venta} branding={config} senaPrevia={senaPrevia} permutaPrevia={permutaPrevia} />;
 }
