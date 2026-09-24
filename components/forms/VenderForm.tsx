@@ -412,7 +412,9 @@ export default function VenderForm() {
           <ProgressStepper currentStep={step} />
 
           <div className="mb-4 lg:mb-8">
-            <h2 className="text-lg lg:text-2xl font-black text-slate-900 dark:text-white tracking-tight mb-1 lg:mb-2">Vendé tu vehículo</h2>
+            {/* h1 real de la página -- no tenía ninguno (hallazgo de
+               auditoría SEO), el título visual era un <h2> suelto. */}
+            <h1 className="text-lg lg:text-2xl font-black text-slate-900 dark:text-white tracking-tight mb-1 lg:mb-2">Vendé tu vehículo</h1>
             <p className="hidden lg:block text-sm text-slate-500 dark:text-slate-400">
               {step === 1 && "Completá los datos y comenzá a ver tu auto en tiempo real."}
               {step === 2 && "Detalles técnicos adicionales del vehículo."}

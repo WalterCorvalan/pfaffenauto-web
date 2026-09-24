@@ -3,6 +3,7 @@ import LandingKarry from "@/components/landing/LandingKarry";
 export const metadata = {
   title: "Karry Pick Up | Pfaffen Autos",
   description: "Conocé la línea Karry Pick Up en versiones Cabina Simple y Cabina Doble. El motor de tu productividad.",
+  alternates: { canonical: "https://www.pfaffencars.com/karry" },
 };
 
 export default function KarryPage() {

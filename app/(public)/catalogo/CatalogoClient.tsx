@@ -388,6 +388,13 @@ export default function CatalogoClient({ vehiculosIniciales = [], totalInicial =
         
         {/* ================= MIGAS DE PAN Y BUSCADOR INTELIGENTE ================= */}
         <div className="mb-8">
+          {/* La página no tenía ningún <h1> -- el buscador iba directo
+             después de las migas, sin título semántico real (hallazgo de
+             auditoría SEO). Estilo chico a propósito para no romper el
+             layout existente, pero es un h1 real, no decorativo. */}
+          <h1 className="text-2xl md:text-3xl font-black text-gray-900 dark:text-white mb-3">
+            Catálogo de Autos 0KM y Usados
+          </h1>
           <div className="text-xs text-gray-500 dark:text-slate-400 font-medium mb-4">
             <Link href="/" className="hover:text-blue-600 transition-colors">
               Inicio

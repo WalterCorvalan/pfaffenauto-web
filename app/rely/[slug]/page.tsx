@@ -14,6 +14,7 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
   return {
     title: `${version.name} | Pfaffen Autos`,
     description: version.text,
+    alternates: { canonical: `https://www.pfaffencars.com/rely/${version.slug}` },
   };
 }
 
