@@ -58,6 +58,16 @@ export async function POST(request: Request) {
     { data: stockEstancado },
     { data: vendedores },
     { data: ventasHistoricas },
+    { data: senas },
+    { data: visitas },
+    { data: consignaciones },
+    { data: postventaRecordatorios },
+    { count: alertasSinLeer },
+    { data: leadsFinanciacion },
+    { data: whatsappConversaciones },
+    { data: instagramConversaciones },
+    { data: liquidacionesSueldo },
+    { data: pedidos },
   ] = await Promise.all([
     supabase.from("ventas").select("precio_venta, moneda_venta, estado, vehiculo_marca, vehiculo_modelo, vendedor_id").gte("fecha_cierre", inicioMes).lte("fecha_cierre", finMes),
     supabase.from("vehiculos").select("estado"),
@@ -74,6 +84,22 @@ export async function POST(request: Request) {
     // mes en curso -- así que además del snapshot mensual se suma el
     // histórico completo de ventas cerradas por vendedor.
     supabase.from("ventas").select("vendedor_id").eq("estado", "cerrada"),
+    // Pedido explícito 24/9: "el gerente" tiene que conocer TODOS los
+    // módulos del panel, no solo ventas/stock/finanzas -- se suma un
+    // resumen liviano (conteos, no filas completas) de cada módulo que
+    // faltaba: señas, visitas, consignaciones, postventa/taller, alertas
+    // sin leer del admin que pregunta, financiación, conversaciones de
+    // WhatsApp/Instagram, sueldos y pedidos.
+    supabase.from("senas").select("estado"),
+    supabase.from("visitas").select("estado, fecha_visita"),
+    supabase.from("consignaciones").select("estado"),
+    supabase.from("postventa_recordatorios").select("estado, fecha_vencimiento"),
+    supabase.from("alertas").select("id", { count: "exact", head: true }).eq("destinatario_id", user.id).eq("leida", false),
+    supabase.from("leads_tasacion").select("estado").eq("tipo", "financiacion"),
+    supabase.from("whatsapp_conversaciones").select("estado_lead, vendedor_id, handoff_at, ai_habilitada"),
+    supabase.from("instagram_conversaciones").select("estado_lead, vendedor_id, handoff_at, ai_habilitada"),
+    supabase.from("liquidaciones_sueldo").select("estado, total_final, moneda_total, mes").eq("mes", `${inicioMes.slice(0, 7)}-01`),
+    supabase.from("pedidos").select("estado"),
   ]);
 
   const ventasCerradas = (ventasMes || []).filter((v) => v.estado === "cerrada");
@@ -102,6 +128,16 @@ export async function POST(request: Request) {
     ventasHistoricasPorVendedor[nombre] = (ventasHistoricasPorVendedor[nombre] || 0) + 1;
   });
 
+  const contarPorEstado = (filas: { estado: string | null }[] | null) => {
+    const acc: Record<string, number> = {};
+    (filas || []).forEach((f) => { const k = f.estado || "sin_estado"; acc[k] = (acc[k] || 0) + 1; });
+    return acc;
+  };
+
+  const liquidacionesPendientes = (liquidacionesSueldo || []).filter((l) => l.estado !== "pagada");
+  const totalSueldosPendientesPorMoneda: Record<string, number> = {};
+  liquidacionesPendientes.forEach((l) => { totalSueldosPendientesPorMoneda[l.moneda_total] = (totalSueldosPendientesPorMoneda[l.moneda_total] || 0) + Number(l.total_final); });
+
   const snapshot = {
     hoy: hoy.toISOString().slice(0, 10),
     ventas_del_mes: ventasCerradas.length,
@@ -116,6 +152,27 @@ export async function POST(request: Request) {
     cotizaciones_pendientes: (cotizaciones || []).length,
     expedientes_activos: (expedientes || []).length,
     saldos_de_caja: saldos || [],
+    senas_por_estado: contarPorEstado(senas),
+    visitas_por_estado: contarPorEstado(visitas),
+    visitas_pendientes_proximas: (visitas || []).filter((v) => v.estado === "Pendiente" && v.fecha_visita >= hoy.toISOString().slice(0, 10)).length,
+    consignaciones_por_estado: contarPorEstado(consignaciones),
+    postventa_recordatorios_pendientes: (postventaRecordatorios || []).filter((r) => r.estado === "pendiente").length,
+    alertas_sin_leer_del_admin_que_pregunta: alertasSinLeer ?? 0,
+    leads_financiacion_por_estado: contarPorEstado(leadsFinanciacion),
+    whatsapp: {
+      conversaciones_totales: (whatsappConversaciones || []).length,
+      sin_asignar: (whatsappConversaciones || []).filter((c) => !c.vendedor_id).length,
+      con_handoff_pendiente: (whatsappConversaciones || []).filter((c) => c.handoff_at && !c.ai_habilitada).length,
+      por_estado_lead: contarPorEstado((whatsappConversaciones || []).map((c) => ({ estado: c.estado_lead }))),
+    },
+    instagram: {
+      conversaciones_totales: (instagramConversaciones || []).length,
+      sin_asignar: (instagramConversaciones || []).filter((c) => !c.vendedor_id).length,
+      con_handoff_pendiente: (instagramConversaciones || []).filter((c) => c.handoff_at && !c.ai_habilitada).length,
+      por_estado_lead: contarPorEstado((instagramConversaciones || []).map((c) => ({ estado: c.estado_lead }))),
+    },
+    sueldos_pendientes_de_pago_del_mes: { cantidad: liquidacionesPendientes.length, por_moneda: totalSueldosPendientesPorMoneda },
+    pedidos_por_estado: contarPorEstado(pedidos),
   };
 
   const systemMsg = `Sos "el gerente", un asistente que ayuda al dueño/admin de Pfaffen Autos (concesionaria) a entender el estado del negocio.
