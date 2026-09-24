@@ -3,6 +3,7 @@
 import { useState, useMemo } from "react";
 import { supabase2 } from "@/lib/supabase/client";
 import { AlertTriangle, Clock, DollarSign, X, Save } from "lucide-react";
+import { hoyLocalISO } from "@/lib/panel/fechas";
 
 function fmt(n: number, moneda = "ARS") {
   return `${moneda === "USD" ? "USD" : "$"} ${Math.round(n).toLocaleString("es-AR")}`;
@@ -19,15 +20,15 @@ const labelClass = "text-xs font-bold text-slate-600 dark:text-slate-300 mb-1 bl
 export default function CobrosClient({ miId, soyAdminOFinanzas, cuotasIniciales, cuentas }: { miId: string; soyAdminOFinanzas: boolean; cuotasIniciales: any[]; cuentas: any[] }) {
   const [cuotas, setCuotas] = useState(cuotasIniciales);
   const [cobrando, setCobrando] = useState<any | null>(null);
-  const [cbFecha, setCbFecha] = useState(new Date().toISOString().slice(0, 10));
+  const [cbFecha, setCbFecha] = useState(hoyLocalISO());
   const [cbMonto, setCbMonto] = useState("");
   const [cbCuentaId, setCbCuentaId] = useState("");
   const [guardando, setGuardando] = useState(false);
 
   const pendientes = cuotas.filter((c) => !c.cobrada);
-  const hoy = new Date().toISOString().slice(0, 10);
-  const en7 = new Date(); en7.setDate(en7.getDate() + 7);
-  const en7str = en7.toISOString().slice(0, 10);
+  const hoy = hoyLocalISO();
+  const en7 = new Date(); en7.setHours(0, 0, 0, 0); en7.setDate(en7.getDate() + 7);
+  const en7str = `${en7.getFullYear()}-${String(en7.getMonth() + 1).padStart(2, "0")}-${String(en7.getDate()).padStart(2, "0")}`;
 
   const vencidas = pendientes.filter((c) => c.vencimiento < hoy);
   const proximas = pendientes.filter((c) => c.vencimiento >= hoy && c.vencimiento <= en7str);
@@ -49,7 +50,7 @@ export default function CobrosClient({ miId, soyAdminOFinanzas, cuotasIniciales,
 
   const abrirCobro = (c: any) => {
     setCobrando(c);
-    setCbFecha(new Date().toISOString().slice(0, 10));
+    setCbFecha(hoyLocalISO());
     setCbMonto(String(Number(c.monto) - Number(c.monto_cobrado)));
     setCbCuentaId(cuentas.find((ct) => ct.moneda === c.moneda)?.id || "");
   };

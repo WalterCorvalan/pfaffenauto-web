@@ -3,12 +3,13 @@
 import { useState, useMemo } from "react";
 import { supabase2 } from "@/lib/supabase/client";
 import { inputClass, fmt } from "./shared";
+import { hoyLocalISO } from "@/lib/panel/fechas";
 
 const CATS = ["A", "B", "C", "Exenta"] as const;
 const IVA_OPCIONES = [21, 10.5, 27, 0];
 
 export default function AfipIvaTab({ movimientos, setMovimientos }: { movimientos: any[]; setMovimientos: (fn: any) => void }) {
-  const [periodo, setPeriodo] = useState(new Date().toISOString().slice(0, 7));
+  const [periodo, setPeriodo] = useState(hoyLocalISO().slice(0, 7));
 
   const delPeriodo = movimientos.filter((m) => !m.deleted_at && m.estado === "aprobado" && m.fecha.slice(0, 7) === periodo);
 

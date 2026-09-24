@@ -3,6 +3,7 @@
 import { useState, useMemo, useEffect } from "react";
 import Link from "next/link";
 import { supabase2 } from "@/lib/supabase/client";
+import { hoyLocalISO } from "@/lib/panel/fechas";
 import {
   BarChart3, FileText, Receipt, Wallet, Coins, CreditCard, Landmark,
   TrendingDown, TrendingUp, ExternalLink, HandCoins, ScrollText, Handshake,
@@ -317,9 +318,9 @@ export default function FinanzasClient({
 
   const pendientesCobrarStats = useMemo(() => {
     const p = cuotasCobrar.filter((c) => !c.cobrada);
-    const hoy = new Date().toISOString().slice(0, 10);
-    const en7 = new Date(); en7.setDate(en7.getDate() + 7);
-    const en7str = en7.toISOString().slice(0, 10);
+    const hoy = hoyLocalISO();
+    const en7 = new Date(); en7.setHours(0, 0, 0, 0); en7.setDate(en7.getDate() + 7);
+    const en7str = `${en7.getFullYear()}-${String(en7.getMonth() + 1).padStart(2, "0")}-${String(en7.getDate()).padStart(2, "0")}`;
     return { vencidas: p.filter((c) => c.vencimiento < hoy).length, porVencer: p.filter((c) => c.vencimiento >= hoy && c.vencimiento <= en7str).length, enFecha: p.filter((c) => c.vencimiento > en7str).length };
   }, [cuotasCobrar]);
 

@@ -4,6 +4,7 @@ import { useState } from "react";
 import { supabase2 } from "@/lib/supabase/client";
 import { Package, Download, X } from "lucide-react";
 import { fmt } from "./shared";
+import { hoyLocalISO } from "@/lib/panel/fechas";
 import TablaResponsiva, { type ColumnaTabla } from "@/components/panel/TablaResponsiva";
 
 export default function CierreCajaTab({ cierres, setCierres }: { cierres: any[]; setCierres: (fn: any) => void }) {
@@ -13,7 +14,7 @@ export default function CierreCajaTab({ cierres, setCierres }: { cierres: any[];
   const cerrarHoy = async () => {
     setGuardando(true);
     try {
-      const hoy = new Date().toISOString().slice(0, 10);
+      const hoy = hoyLocalISO();
       const { data: cierreId, error } = await supabase2.rpc("cerrar_dia_caja", { p_fecha: hoy });
       if (error) throw error;
       // El cierre ya quedó guardado (el RPC no tiró error) -- sin chequear
@@ -37,7 +38,7 @@ export default function CierreCajaTab({ cierres, setCierres }: { cierres: any[];
     const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
     const link = document.createElement("a");
     link.href = URL.createObjectURL(blob);
-    link.download = `cierres_caja_${new Date().toISOString().slice(0, 10)}.xlsx.csv`;
+    link.download = `cierres_caja_${hoyLocalISO()}.xlsx.csv`;
     link.click();
   };
 

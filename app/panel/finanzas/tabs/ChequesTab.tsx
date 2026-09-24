@@ -6,6 +6,7 @@ import { Plus, X, Save, Pencil } from "lucide-react";
 import { inputClass, labelClass, fmt, diasHasta } from "./shared";
 import TablaResponsiva, { type ColumnaTabla } from "@/components/panel/TablaResponsiva";
 import ConfirmDialog from "@/components/panel/ConfirmDialog";
+import { hoyLocalISO } from "@/lib/panel/fechas";
 
 const emptyForm = { tipo: "a_cobrar", formato: "fisico", librador: "", numero: "", banco: "", cuitCuil: "", monto: "", moneda: "ARS", estado: "pendiente", fechaEmision: "", fechaCobro: "", cajaBancoPropio: "", vehiculoId: "", notas: "" };
 
@@ -21,8 +22,8 @@ export default function ChequesTab({ cheques, setCheques, cuentas, vehiculos0km 
   const [confirmDialog, setConfirmDialog] = useState<{ mensaje: string; accion: () => void } | null>(null);
 
   const lista = cheques.filter((c) => c.tipo === sub);
-  const hoy = new Date().toISOString().slice(0, 10);
-  const mesActual = new Date().toISOString().slice(0, 7);
+  const hoy = hoyLocalISO();
+  const mesActual = hoy.slice(0, 7);
 
   const stats = useMemo(() => {
     const esteMes = lista.filter((c) => c.estado === "pendiente" && c.fecha_cobro.slice(0, 7) === mesActual);
