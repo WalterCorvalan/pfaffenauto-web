@@ -17,6 +17,7 @@ interface Venta {
   vehiculo_patente: string | null; precio_venta: number; moneda_venta: string; vendedor_id: string | null; fecha_cierre: string;
   comprador_nombre: string; comprador_telefono: string | null; comprador_dni: string | null; metodo_pago: string | null; created_at: string;
   comision_vendedor_pct: number; comision_consignacion_pct: number; responsable_consignacion_id: string | null; fecha_entrega: string | null; comision_liquidada: boolean;
+  vendedor_compartido_pct: number | null;
 }
 interface Perfil { id: string; nombre: string; roles: string[] }
 interface Cliente { id: string; nombre: string; apellido: string | null; telefono: string | null; email: string | null; dni_cuit: string | null }
@@ -275,14 +276,14 @@ export default function VentasClient({
                     // Ver comentario en VentaDetalleModal.tsx: solo sumar la
                     // consignación si hay responsable asignado (mismo criterio
                     // que el trigger que genera las comisiones reales).
-                    const comisionPct = Number(v.comision_vendedor_pct || 0) + (v.responsable_consignacion_id ? Number(v.comision_consignacion_pct || 0) : 0);
+                    const comisionPct = Number(v.comision_vendedor_pct || 0) + (v.responsable_consignacion_id ? Number(v.comision_consignacion_pct || 0) : 0) + Number(v.vendedor_compartido_pct || 0);
                     const comisionMonto = (Number(v.precio_venta) * comisionPct) / 100;
                     return comisionMonto > 0 ? <>{v.moneda_venta} {comisionMonto.toLocaleString("es-AR")} <span className="text-slate-400">({comisionPct}%)</span></> : "—";
                   }, claseTd: "text-xs text-slate-500 dark:text-slate-400 whitespace-nowrap" },
                   { key: "entrega", header: "Entrega", cell: (v) => (v.fecha_entrega ? fmtFechaLocal(v.fecha_entrega) : "—"), claseTd: "text-xs text-slate-500 dark:text-slate-400 whitespace-nowrap" },
                   { key: "status", header: "Status", cell: (v) => <span className={`text-[10px] font-bold px-2 py-1 rounded-full border ${ESTADO_COLOR[v.estado]}`}>{v.estado}</span> },
                   { key: "liquidada", header: "Liquidada", cell: (v) => {
-                    const comisionPct = Number(v.comision_vendedor_pct || 0) + (v.responsable_consignacion_id ? Number(v.comision_consignacion_pct || 0) : 0);
+                    const comisionPct = Number(v.comision_vendedor_pct || 0) + (v.responsable_consignacion_id ? Number(v.comision_consignacion_pct || 0) : 0) + Number(v.vendedor_compartido_pct || 0);
                     const comisionMonto = (Number(v.precio_venta) * comisionPct) / 100;
                     return comisionMonto > 0 ? (
                       <button onClick={(e) => { e.stopPropagation(); toggleLiquidada(v); }} className={`text-[10px] font-bold px-2 py-1 rounded-full flex items-center gap-1 ${v.comision_liquidada ? "bg-emerald-50 dark:bg-emerald-500/10 text-emerald-700 dark:text-emerald-300" : "bg-amber-50 dark:bg-amber-500/10 text-amber-700 dark:text-amber-300"}`}>

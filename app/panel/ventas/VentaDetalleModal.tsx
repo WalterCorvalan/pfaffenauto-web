@@ -313,7 +313,11 @@ export default function VentaDetalleModal({ ventaId, miId, soyAdmin, puedeOperac
   // esa fila de comisión si hay responsable, así que sumar el % acá sin esa
   // condición mostraba un total inflado que nunca se le pagaba a nadie (bug
   // encontrado en la auditoría: detalle mostraba 1.5%/comisiones listaba 1%).
-  const comisionPct = Number(venta.comision_vendedor_pct || 0) + (venta.responsable_consignacion_id ? Number(venta.comision_consignacion_pct || 0) : 0);
+  // vendedor_compartido_pct es la parte del compañero cuando la venta se
+  // reparte 🤝 (comision_vendedor_pct queda fijo en 0.5% en ese caso, ver
+  // NuevaVentaModal.tsx) -- sin sumarla, "Comisión" mostraba solo la mitad
+  // de lo que la agencia realmente paga.
+  const comisionPct = Number(venta.comision_vendedor_pct || 0) + (venta.responsable_consignacion_id ? Number(venta.comision_consignacion_pct || 0) : 0) + Number(venta.vendedor_compartido_pct || 0);
   const comisionMonto = (Number(venta.precio_venta) * comisionPct) / 100;
   const transicionesDisponibles = TRANSICIONES[venta.estado] || [];
 
