@@ -335,7 +335,7 @@ export default function ComisionesClient({
       </div>
 
       {modalBono && <BonoModal vendedores={vendedores} usuarioActualId={usuarioActualId} esAdmin={esAdminOFinanzas} onClose={() => { setModalBono(false); cargarComisiones(); }} />}
-      {comisionAPagar && <PagoParcialModal comision={comisionAPagar} cuentas={cuentas} onClose={() => { setComisionAPagar(null); cargarComisiones(); }} />}
+      {comisionAPagar && <PagoParcialModal comision={comisionAPagar} cuentas={cuentas} soyAdminOFinanzas={esAdminOFinanzas} onClose={() => { setComisionAPagar(null); cargarComisiones(); }} />}
 
       {comisionParaCobrar && (
         <div className="fixed inset-0 bg-black/40 z-50 flex items-center justify-center p-4" onClick={() => setComisionParaCobrar(null)}>
