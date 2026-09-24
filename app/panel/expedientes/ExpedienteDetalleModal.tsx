@@ -697,6 +697,14 @@ export default function ExpedienteDetalleModal({ expedienteId, miId, perfiles, s
     setGuardando(false);
     setMostrarCaida(false);
     if (error) { alert(error.message || "No se pudo marcar la operación caída."); return; }
+    // Mismo cierre que hace VentaDetalleModal.tsx cuando la caída se marca
+    // desde Ventas -- acá faltaba, así que marcar la operación caída desde
+    // el propio expediente lo dejaba abierto para siempre (Gestoría lo
+    // seguía viendo "En proceso" sobre una operación que ya no va a pasar).
+    if (expediente?.estado !== "cerrado") {
+      await supabase2.from("expedientes").update({ estado: "cerrado", updated_at: new Date().toISOString() }).eq("id", expedienteId);
+      await supabase2.from("expediente_observaciones").insert({ expediente_id: expedienteId, texto: "Expediente cerrado automáticamente: la operación se marcó Caída.", autor_id: miId, tipo: "observacion" });
+    }
     await cargar();
   };
 

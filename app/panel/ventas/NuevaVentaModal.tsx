@@ -603,7 +603,13 @@ export default function NuevaVentaModal({ perfiles, clientes, vehiculos, miId, s
         }
 
         if (errorVentaSenas) {
-          alert(`La venta se guardó, pero no se pudo registrar la seña vinculada: ${errorVentaSenas.message}. El saldo va a quedar mal calculado hasta que la cargues a mano desde la edición de la venta.`);
+          // El mensaje decía "cargala desde la edición de la venta", pero
+          // guardarEdicion() no toca venta_senas en ningún lado -- no hay
+          // forma real de reintentar el vínculo desde ahí. Hasta que se
+          // arme ese flujo, la única salida real es que alguien lo cargue
+          // a mano en la base, así que el aviso lo dice honestamente en vez
+          // de mandar a un lugar donde no se puede hacer nada.
+          alert(`La venta se guardó, pero no se pudo registrar la seña vinculada: ${errorVentaSenas.message}. El saldo va a quedar mal calculado -- avisale a un encargado para que lo corrija a mano en la base (no se puede reintentar desde la edición de la venta).`);
         } else {
           // Las señas vinculadas (no las tipeadas a mano) se marcan Convertida acá
           // -- antes quedaban huérfanas en el módulo Señas para siempre, sin
@@ -647,7 +653,7 @@ export default function NuevaVentaModal({ perfiles, clientes, vehiculos, miId, s
           // cargar_a_stock refleja si el vehículo realmente se creó, no el
           // checkbox tal cual (marca/modelo vacíos o el insert fallando
           // dejaban esto en true sin que exista ningún vehiculo_creado_id).
-          await supabase2.from("venta_permutas").insert({
+          const { error: errorPermuta } = await supabase2.from("venta_permutas").insert({
             venta_id: venta.id, valor: p.valor ? Number(p.valor) : null, moneda: p.moneda, precio_publicacion: p.precioPublicacion ? Number(p.precioPublicacion) : null,
             marca: p.marca || null, modelo: p.modelo || null, anio: p.anio ? Number(p.anio) : null, km: p.km ? Number(p.km) : null,
             patente: p.patente || null, color: p.color || null, condicion: p.condicion, cargar_a_stock: !!vehiculoCreadoId, dueno_nombre: p.duenoNombre || null,
@@ -656,6 +662,13 @@ export default function NuevaVentaModal({ perfiles, clientes, vehiculos, miId, s
             marca_chasis: p.marcaChasis || null, numero_chasis: p.numeroChasis || null, combustible: p.combustible || null,
             radicado_localidad: p.radicadoLocalidad || null, radicado_provincia: p.radicadoProvincia || null, tasado_en: p.tasadoEn || null,
           });
+          if (errorPermuta) {
+            // Sin este chequeo, si el auto SÍ se había cargado al stock
+            // (vehiculoCreadoId) pero este insert fallaba, quedaba un
+            // vehículo huérfano en Stock sin ningún registro de permuta que
+            // lo explique -- parecía stock propio comprado normal.
+            alert(`Falló el registro de la permuta${vehiculoCreadoId ? " (el auto ya quedó cargado en Stock)" : ""}: ${errorPermuta.message}. Revisalo a mano.`);
+          }
         }
       }
 
@@ -692,7 +705,13 @@ export default function NuevaVentaModal({ perfiles, clientes, vehiculos, miId, s
       }
 
       if (vehiculoId && estadoFinal === "cerrada") {
-        await supabase2.from("vehiculos").update({ estado: "vendido" }).eq("id", vehiculoId);
+        const { error: errorVehiculoVendido } = await supabase2.from("vehiculos").update({ estado: "vendido" }).eq("id", vehiculoId);
+        if (errorVehiculoVendido) {
+          // La venta ya quedó "cerrada" pero el auto sigue figurando
+          // "disponible"/"reservado" en Stock -- sin este aviso podía
+          // venderse (o mostrarse) dos veces.
+          alert(`La venta se cerró, pero el vehículo no se pudo marcar como vendido en Stock: ${errorVehiculoVendido.message}. Marcalo a mano.`);
+        }
       }
 
       // El expediente (con hitos + alerta al gestor) lo abre solo el trigger
