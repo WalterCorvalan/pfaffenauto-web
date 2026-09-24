@@ -117,32 +117,37 @@ export default function NotificationBell({ miId }: { miId: string }) {
       </button>
 
       {open && (
-        <div className="absolute right-0 top-full mt-2 w-80 bg-white dark:bg-[#1A1A1A] border border-slate-200 dark:border-white/10 rounded-2xl shadow-2xl z-50 overflow-hidden">
-          <div className="flex items-center justify-between px-4 py-3 border-b border-slate-100 dark:border-white/10">
-            <span className="flex items-center gap-1.5 text-sm font-bold text-slate-800 dark:text-white">
-              <Bell className="w-4 h-4" /> Notificaciones {sinLeer > 0 && <span className="text-[10px] font-bold px-1.5 py-0.5 rounded-full bg-[#0145F2] text-white">{sinLeer}</span>}
+        <div className="absolute right-0 top-full mt-2 w-80 bg-white dark:bg-[#1A1A1A] border border-slate-200 dark:border-white/10 rounded-2xl shadow-[0_12px_40px_rgb(0,0,0,0.15)] z-50 overflow-hidden animate-toastIn">
+          <div className="flex items-center justify-between px-4 py-3.5 border-b border-slate-100 dark:border-white/10 bg-gradient-to-r from-slate-50 to-white dark:from-white/[0.03] dark:to-transparent">
+            <span className="flex items-center gap-2 text-sm font-bold text-slate-800 dark:text-white">
+              <span className="w-7 h-7 rounded-full bg-[#0145F2]/10 text-[#0145F2] dark:bg-[#0145F2]/20 flex items-center justify-center"><Bell className="w-3.5 h-3.5" /></span>
+              Notificaciones {sinLeer > 0 && <span className="text-[10px] font-bold px-1.5 py-0.5 rounded-full bg-[#0145F2] text-white">{sinLeer}</span>}
             </span>
-            {sinLeer > 0 && <button onClick={marcarTodas} className="flex items-center gap-1 text-[11px] font-semibold text-slate-400 hover:text-rose-600"><Check className="w-3 h-3" /> Marcar todas</button>}
+            {sinLeer > 0 && <button onClick={marcarTodas} className="flex items-center gap-1 text-[11px] font-semibold text-slate-400 hover:text-rose-600 transition-colors"><Check className="w-3 h-3" /> Marcar todas</button>}
           </div>
 
           <div className="max-h-96 overflow-y-auto">
             {alertas.length === 0 ? (
-              <p className="text-xs text-slate-400 text-center py-8">Sin notificaciones.</p>
+              <div className="flex flex-col items-center gap-2 py-10 px-4">
+                <span className="w-11 h-11 rounded-full bg-slate-100 dark:bg-white/5 text-slate-300 dark:text-slate-500 flex items-center justify-center"><Bell className="w-5 h-5" /></span>
+                <p className="text-xs font-semibold text-slate-400">Estás al día</p>
+                <p className="text-[11px] text-slate-400 text-center">No tenés notificaciones nuevas.</p>
+              </div>
             ) : (
               alertas.map((a) => {
                 const Icon = TIPO_ICON[a.tipo] || ICONO_DEFECTO;
                 const color = TIPO_COLOR[a.tipo] || COLOR_DEFECTO;
                 return (
-                  <button key={a.id} onClick={() => abrirAlerta(a)} className={`w-full flex items-start gap-2.5 px-4 py-3 text-left border-b border-slate-50 dark:border-white/5 last:border-0 hover:bg-slate-50 dark:hover:bg-white/5 ${!a.leida ? "bg-slate-50/60 dark:bg-white/[0.03]" : ""}`}>
-                    <span className={`w-8 h-8 rounded-full flex items-center justify-center shrink-0 ${color}`}><Icon className="w-4 h-4" /></span>
+                  <button key={a.id} onClick={() => abrirAlerta(a)} className={`relative w-full flex items-start gap-3 px-4 py-3.5 text-left border-b border-slate-50 dark:border-white/5 last:border-0 hover:bg-slate-50 dark:hover:bg-white/[0.04] transition-colors ${!a.leida ? "bg-slate-50/60 dark:bg-white/[0.03]" : ""}`}>
+                    {!a.leida && <span className="absolute left-0 top-0 bottom-0 w-0.5 bg-[#0145F2]" />}
+                    <span className={`w-9 h-9 rounded-full flex items-center justify-center shrink-0 ring-4 ring-white dark:ring-[#1A1A1A] shadow-sm ${color}`}><Icon className="w-4 h-4" /></span>
                     <span className="min-w-0 flex-1">
                       <span className="flex items-center gap-1.5">
-                        <span className="text-xs font-bold text-slate-800 dark:text-white truncate">{a.titulo}</span>
+                        <span className={`text-xs truncate ${!a.leida ? "font-bold text-slate-900 dark:text-white" : "font-semibold text-slate-700 dark:text-slate-300"}`}>{a.titulo}</span>
                         {a.contador > 1 && <span className="shrink-0 text-[10px] font-bold px-1.5 rounded-full bg-[#0145F2] text-white">x{a.contador}</span>}
-                        {!a.leida && <span className="w-1.5 h-1.5 rounded-full bg-rose-500 shrink-0" />}
                       </span>
-                      {a.mensaje && <span className="block text-[11px] text-slate-500 dark:text-slate-400 truncate">{a.mensaje}</span>}
-                      <span className="block text-[10px] text-slate-400 mt-0.5">{tiempoRelativo(a.created_at)}</span>
+                      {a.mensaje && <span className="block text-[11px] text-slate-500 dark:text-slate-400 leading-snug mt-0.5 line-clamp-2">{a.mensaje}</span>}
+                      <span className="block text-[10px] text-slate-400 mt-1 font-medium">{tiempoRelativo(a.created_at)}</span>
                     </span>
                   </button>
                 );
@@ -150,7 +155,7 @@ export default function NotificationBell({ miId }: { miId: string }) {
             )}
           </div>
 
-          <a href="/panel/alertas" onClick={() => setOpen(false)} className="flex items-center justify-center gap-1.5 px-4 py-2.5 text-xs font-bold text-rose-600 hover:bg-rose-50 dark:hover:bg-rose-500/10 border-t border-slate-100 dark:border-white/10">
+          <a href="/panel/alertas" onClick={() => setOpen(false)} className="flex items-center justify-center gap-1.5 px-4 py-2.5 text-xs font-bold text-rose-600 hover:bg-rose-50 dark:hover:bg-rose-500/10 border-t border-slate-100 dark:border-white/10 transition-colors">
             Ver Centro de Alertas <ExternalLink className="w-3 h-3" />
           </a>
         </div>
