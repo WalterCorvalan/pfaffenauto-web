@@ -237,7 +237,7 @@ export default function ChatClient({
 
   const contactoActivoRaw = canal === "whatsapp" ? conversacionActiva?.whatsapp_contactos : conversacionActiva?.instagram_contactos;
   const contactoActivo = contactoActivoRaw
-    ? { nombre_perfil: canal === "whatsapp" ? contactoActivoRaw.nombre_perfil : `@${contactoActivoRaw.username || contactoActivoRaw.ig_user_id}`, telefono: canal === "whatsapp" ? contactoActivoRaw.telefono : null }
+    ? { nombre_perfil: canal === "whatsapp" ? contactoActivoRaw.nombre_perfil : (contactoActivoRaw.nombre_perfil || `@${contactoActivoRaw.username || contactoActivoRaw.ig_user_id}`), telefono: canal === "whatsapp" ? contactoActivoRaw.telefono : null }
     : null;
 
   const formatDate = (dateString: string) => new Date(dateString).toLocaleTimeString("es-AR", { hour: "2-digit", minute: "2-digit" });
@@ -357,7 +357,7 @@ export default function ChatClient({
     if (filtro === "no-leidas" && !(c.unread_count > 0)) return false;
     if (busqueda.trim()) {
       const contactoRaw = canal === "whatsapp" ? c.whatsapp_contactos : c.instagram_contactos;
-      const texto = canal === "whatsapp" ? [contactoRaw?.nombre_perfil, contactoRaw?.telefono].join(" ") : [contactoRaw?.username, contactoRaw?.ig_user_id].join(" ");
+      const texto = canal === "whatsapp" ? [contactoRaw?.nombre_perfil, contactoRaw?.telefono].join(" ") : [contactoRaw?.nombre_perfil, contactoRaw?.username, contactoRaw?.ig_user_id].join(" ");
       if (!texto.toLowerCase().includes(busqueda.trim().toLowerCase())) return false;
     }
     return true;
@@ -375,7 +375,7 @@ export default function ChatClient({
 
   const renderConversacion = (c: any) => {
     const contactoRaw = canal === "whatsapp" ? c.whatsapp_contactos : c.instagram_contactos;
-    const nombreMostrado = canal === "whatsapp" ? contactoRaw?.nombre_perfil : (contactoRaw ? `@${contactoRaw.username || contactoRaw.ig_user_id}` : null);
+    const nombreMostrado = canal === "whatsapp" ? contactoRaw?.nombre_perfil : (contactoRaw ? (contactoRaw.nombre_perfil || `@${contactoRaw.username || contactoRaw.ig_user_id}`) : null);
     const contacto = { nombre_perfil: nombreMostrado, telefono: canal === "whatsapp" ? contactoRaw?.telefono : null };
     const iniciales = (contacto?.nombre_perfil || contacto?.telefono || "?").substring(0, 2).toUpperCase();
     const isActive = seleccionada === c.id;
