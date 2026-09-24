@@ -66,10 +66,10 @@ interface LeadConversacion {
   id: string;
   origen: "whatsapp" | "instagram";
   whatsapp_contactos?: { nombre_perfil?: string | null; telefono?: string | null } | null;
-  instagram_contactos?: { username?: string | null } | null;
+  instagram_contactos?: { username?: string | null; nombre_perfil?: string | null } | null;
 }
 function nombreLead(c: LeadConversacion): string {
-  return c.origen === "instagram" ? (c.instagram_contactos?.username ? `@${c.instagram_contactos.username}` : "Sin usuario") : (c.whatsapp_contactos?.nombre_perfil || c.whatsapp_contactos?.telefono || "Sin nombre");
+  return c.origen === "instagram" ? (c.instagram_contactos?.nombre_perfil || (c.instagram_contactos?.username ? `@${c.instagram_contactos.username}` : "Sin usuario")) : (c.whatsapp_contactos?.nombre_perfil || c.whatsapp_contactos?.telefono || "Sin nombre");
 }
 function subtituloLead(c: LeadConversacion): string {
   return c.origen === "instagram" ? (c.instagram_contactos?.username ? `@${c.instagram_contactos.username}` : "") : (c.whatsapp_contactos?.telefono || "");

@@ -219,7 +219,7 @@ async function ejecutarAgente(conversacionId: string, igUserId: string) {
   if (!isAiConfiguredV2()) return;
   if (!estaEnHorarioAtencion()) return;
 
-  const { data: conversacionActual } = await supabase.from("instagram_conversaciones").select("ai_habilitada").eq("id", conversacionId).single();
+  const { data: conversacionActual } = await supabase.from("instagram_conversaciones").select("ai_habilitada, contacto_id").eq("id", conversacionId).single();
   if (conversacionActual?.ai_habilitada === false) return;
 
   const { data: mensajes } = await supabase.from("instagram_mensajes").select("direccion, texto").eq("conversacion_id", conversacionId).order("created_at", { ascending: true }).limit(20);
@@ -240,12 +240,20 @@ async function ejecutarAgente(conversacionId: string, igUserId: string) {
     return;
   }
 
-  const { reply, handoff, calificacion, resumen_handoff } = result.data;
+  const { reply, handoff, calificacion, resumen_handoff, datos_detectados } = result.data;
 
   const estadoSegunCalificacion = calificacion === "caliente" ? "calificando" : undefined;
   const patchConversacion: Record<string, unknown> = { calificacion };
   if (estadoSegunCalificacion) patchConversacion.estado_lead = estadoSegunCalificacion;
   await supabase.from("instagram_conversaciones").update(patchConversacion).eq("id", conversacionId);
+
+  // El agente SÍ le pregunta el nombre real al cliente en Instagram (regla
+  // DATOS DE CONTACTO), pero hasta ahora nunca se guardaba en ningún lado --
+  // instagram_contactos solo tenía username (el @ de Instagram, no el
+  // nombre real). Mismo patrón que whatsapp_contactos.nombre_perfil.
+  if (datos_detectados?.nombre && conversacionActual?.contacto_id) {
+    await supabase.from("instagram_contactos").update({ nombre_perfil: datos_detectados.nombre }).eq("id", conversacionActual.contacto_id);
+  }
 
   for (const parte of dividirRespuestaEnMensajes(reply)) {
     const { data: mensajeSaliente } = await supabase.from("instagram_mensajes").insert({ conversacion_id: conversacionId, direccion: "out", tipo: "text", texto: parte, status: "pending", ai_generado: true }).select("id").single();

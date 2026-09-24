@@ -3,6 +3,7 @@ import Link from "next/link";
 import { AtSign, ArrowDownToLine, ArrowUpFromLine, Users, PhoneCall, Flame, AlertTriangle } from "lucide-react";
 import TarjetaCostoIA from "@/components/panel/TarjetaCostoIA";
 import InstagramMetricsClient from "./InstagramMetricsClient";
+import { decrypt } from "@/lib/crypto";
 import {
   getInstagramAccountSummary,
   getInstagramAccountInsights,
@@ -13,10 +14,22 @@ import {
 // Métricas REALES de la cuenta (Meta Graph API) -- v1 las tenía, v2 solo
 // mostraba el inbox de DMs. Se calcan acá, independientes del inbox de abajo
 // (que sigue siendo lo que muestra esta página desde que se migró).
+// Las credenciales NO viven en env vars (META_INSTAGRAM_USER_ID/TOKEN, que
+// quedaron huérfanas del login viejo) -- desde que se migró a Business
+// Login for Instagram, la conexión vigente (ig_user_id + token cifrado) se
+// guarda en instagram_configuracion, la misma tabla que ya usan el webhook
+// y api/panel/instagram/enviar para mandar/recibir DMs. Leer de acá evita
+// que esta página apunte a una cuenta/token distinto del que está conectado
+// de verdad (causa real de "no muestra nada": las env vars nunca existieron
+// en este deploy, este código siempre devolvía el error de "faltan").
 async function cargarMetricasCuenta() {
-  const igUserId = process.env.META_INSTAGRAM_USER_ID;
-  const token = process.env.META_INSTAGRAM_TOKEN;
-  if (!igUserId || !token) return { ok: false as const, motivo: "Faltan META_INSTAGRAM_USER_ID / META_INSTAGRAM_TOKEN en las variables de entorno." };
+  const supabase = await createClient();
+  const { data: config } = await supabase.from("instagram_configuracion").select("ig_user_id, token_cifrado, token_iv, token_tag, listo").eq("id", true).single();
+  if (!config?.listo || !config.ig_user_id || !config.token_cifrado || !config.token_iv || !config.token_tag) {
+    return { ok: false as const, motivo: "Instagram no está conectado todavía -- conectalo en Configuración > Instagram." };
+  }
+  const igUserId = config.ig_user_id;
+  const token = decrypt(config.token_cifrado, config.token_iv, config.token_tag);
 
   try {
     const ahora = Math.floor(Date.now() / 1000);
