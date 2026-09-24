@@ -229,7 +229,7 @@ async function ejecutarAgente(conversacionId: string, igUserId: string) {
   // Instagram es más informal que WhatsApp por defecto -- el admin puede
   // pisar esto cargando su propio tono en Configuración > Instagram, pero
   // no depende de que lo haga (el campo hoy suele estar vacío).
-  const tonoInstagram = config?.tono?.trim() || "informal y cercano, como quien le escribe a un amigo por Instagram, con algún emoji extra";
+  const tonoInstagram = config?.tono?.trim() || "informal y cercano, como quien le escribe a un amigo por Instagram, con algún emoji extra -- más compañero y porteño en la onda (sin necesidad de lunfardo), validando lo que te dicen con calidez antes de responder (ej: \"che, ¿te puedo hacer una pregunta?\" -> \"sí, sí, dale, preguntame\"; \"¿puedo ir con mi mecánico?\" -> \"sí, no hay problema, podés venir con tu mecánico\")";
   const result = await generarRespuestaAgenteV2(historial, "panel/webhooks/instagram", undefined, undefined, tonoInstagram, true);
 
   if (!result.ok) {
