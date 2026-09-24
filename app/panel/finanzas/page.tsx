@@ -1,4 +1,6 @@
+import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
+import { puedeVerModulo } from "@/lib/panel/permisosModulos";
 import FinanzasClient from "./FinanzasClient";
 
 export const metadata = { title: "Finanzas | Pfaffen Autos" };
@@ -6,6 +8,13 @@ export const metadata = { title: "Finanzas | Pfaffen Autos" };
 export default async function FinanzasPage() {
   const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();
+  if (!user) redirect("/panel/login");
+  // Auditoría de Finanzas del 24/9 (permisos #18): proxy.ts solo exige sesión
+  // y layout.tsx solo oculta el ítem del sidebar -- por URL directa cualquier
+  // usuario logueado entraba igual. puedeVerModulo() ya existía (mismo
+  // criterio que el sidebar, respeta modulos_config/visibilidad_sector) pero
+  // no se llamaba desde ningún lado.
+  if (!(await puedeVerModulo(supabase, user.id, "finanzas"))) redirect("/panel");
 
   const miPerfil = user ? await supabase.from("perfiles").select("id, nombre, roles, sucursal_id").eq("id", user.id).single().then((r) => r.data) : null;
   const soyAdminOFinanzas = miPerfil?.roles?.some((r: string) => r === "admin" || r === "finanzas") ?? false;
