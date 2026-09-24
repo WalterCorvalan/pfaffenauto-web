@@ -226,10 +226,11 @@ async function ejecutarAgente(conversacionId: string, igUserId: string) {
   const historial = (mensajes ?? []).filter((m) => m.texto).map((m) => ({ role: (m.direccion === "in" ? "user" : "assistant") as "user" | "assistant", content: m.texto as string }));
 
   const { data: config } = await supabase.from("instagram_configuracion").select("*").eq("id", true).single();
-  // Instagram es más informal que WhatsApp por defecto -- el admin puede
-  // pisar esto cargando su propio tono en Configuración > Instagram, pero
-  // no depende de que lo haga (el campo hoy suele estar vacío).
-  const tonoInstagram = config?.tono?.trim() || "informal y cercano, como quien le escribe a un amigo por Instagram, con algún emoji extra -- tranquilo y relajado, sin apuro y sin sonar vendedor (nunca canchero ni haciéndose el gracioso): tu rol acá es escuchar, orientar y ayudar a que el cliente encuentre lo que busca, más como un amigo que te escucha que como un vendedor cerrando algo -- el vendedor formal y profesional lo hace WhatsApp una vez que derivás la charla para allá. Validá lo que te dicen con calidez antes de responder (ej: \"che, ¿te puedo hacer una pregunta?\" -> \"sí, sí, dale, preguntame\"; \"¿puedo ir con mi mecánico?\" -> \"sí, no hay problema, podés venir con tu mecánico\")";
+  // Instagram tiene que sonar igual de profesional y serio que WhatsApp --
+  // un vendedor real, no un amigo chateando. El admin puede pisar esto
+  // cargando su propio tono en Configuración > Instagram, pero no depende
+  // de que lo haga (el campo hoy suele estar vacío).
+  const tonoInstagram = config?.tono?.trim() || "profesional y serio, como un vendedor de la concesionaria atendiendo por Instagram -- el mismo tono formal y directo que se usa en WhatsApp, sin informalidades ni frases de amigo (nada de \"che\", \"dale\", tratar al cliente como si fueran conocidos). Amable y claro, pero siempre con la seriedad de alguien vendiendo un vehículo, no charlando en redes sociales.";
   const result = await generarRespuestaAgenteV2(historial, "panel/webhooks/instagram", undefined, undefined, tonoInstagram, true);
 
   if (!result.ok) {
