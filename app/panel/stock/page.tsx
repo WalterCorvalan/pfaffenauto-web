@@ -5,7 +5,7 @@ export default async function StockPage() {
   const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();
 
-  const [{ data: vehiculos }, { data: mandatos }, { data: perfiles }, { data: clientes }, { data: catalogoConfig }, { data: sucursales }, { data: config }, { data: chequesPendientes0km }] = await Promise.all([
+  const [{ data: vehiculos }, { data: mandatos }, { data: perfiles }, { data: clientes }, { data: catalogoConfig }, { data: sucursales }, { data: config }, { data: chequesPendientes0km }, { data: cuentas }] = await Promise.all([
     // Sin límite esto crecía sin tope con toda la historia de stock (vendido
     // incluido) -- 5000 da margen de sobra para años de operación real y
     // evita que la query quede literalmente sin techo.
@@ -28,6 +28,10 @@ export default async function StockPage() {
     // el error queda en "error" y "data" en null -- el fallback "|| []" de
     // abajo alcanza, no rompe el resto del stock.
     supabase.from("cheques").select("id, vehiculo_id, monto, moneda").eq("tipo", "emitido").neq("estado", "cobrado").not("vehiculo_id", "is", null),
+    // Para el selector de "Cuenta destino" del modal de seña rápida desde
+    // Stock (SenaModal.tsx) -- antes esa seña se guardaba SIEMPRE sin
+    // ninguna cuenta, así que la plata cobrada nunca entraba a Tesorería.
+    supabase.from("cuentas").select("id, nombre, moneda").eq("activa", true).order("nombre"),
   ]);
 
   return (
@@ -41,6 +45,7 @@ export default async function StockPage() {
       miId={user?.id || ""}
       diasEstancado={config?.stock_dias_estancado || 90}
       chequesPendientes0km={chequesPendientes0km || []}
+      cuentas={cuentas || []}
     />
   );
 }

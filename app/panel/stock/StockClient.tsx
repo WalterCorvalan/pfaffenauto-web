@@ -84,8 +84,8 @@ function pendientesTexto(v: Vehiculo) {
 }
 
 export default function StockClient({
-  vehiculosIniciales, mandatosIniciales, perfiles, clientes, catalogoConfigInicial, sucursales, miId, diasEstancado = 90, chequesPendientes0km = [],
-}: { vehiculosIniciales: Vehiculo[]; mandatosIniciales: Mandato[]; perfiles: Perfil[]; clientes: Cliente[]; catalogoConfigInicial: CatalogoConfig | null; sucursales: { id: string; nombre: string }[]; miId: string; diasEstancado?: number; chequesPendientes0km?: { id: string; vehiculo_id: string; monto: number; moneda: string }[] }) {
+  vehiculosIniciales, mandatosIniciales, perfiles, clientes, catalogoConfigInicial, sucursales, miId, diasEstancado = 90, chequesPendientes0km = [], cuentas = [],
+}: { vehiculosIniciales: Vehiculo[]; mandatosIniciales: Mandato[]; perfiles: Perfil[]; clientes: Cliente[]; catalogoConfigInicial: CatalogoConfig | null; sucursales: { id: string; nombre: string }[]; miId: string; diasEstancado?: number; chequesPendientes0km?: { id: string; vehiculo_id: string; monto: number; moneda: string }[]; cuentas?: { id: string; nombre: string; moneda: string }[] }) {
   const router = useRouter();
   const searchParams = useSearchParams();
   const [vehiculos, setVehiculos] = useState(vehiculosIniciales);
@@ -598,7 +598,7 @@ export default function StockClient({
       {modalMandato && <NuevoMandatoModal miId={miId} miNombre={miNombre} onClose={() => setModalMandato(false)} onCreado={onCreadoMandato} />}
       {modalCatalogo && <TuCatalogoModal config={catalogoConfig} esAdmin={esAdmin} onClose={() => setModalCatalogo(false)} onConfigActualizada={setCatalogoConfig} />}
       {modalImportar && <ImportarXlsxModal miId={miId} onClose={() => setModalImportar(false)} onImportados={(nuevos) => setVehiculos((prev) => [...nuevos, ...prev])} />}
-      {senaVehiculo && <SenaModal vehiculo={senaVehiculo} miId={miId} onClose={() => setSenaVehiculo(null)} onGuardada={onSenaGuardada} />}
+      {senaVehiculo && <SenaModal vehiculo={senaVehiculo} miId={miId} cuentas={cuentas} onClose={() => setSenaVehiculo(null)} onGuardada={onSenaGuardada} />}
       {presupuestoVehiculo && <PresupuestoModal vehiculo={presupuestoVehiculo} miId={miId} onClose={() => setPresupuestoVehiculo(null)} />}
       <ConfirmDialog
         abierto={!!confirmDialog}
