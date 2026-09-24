@@ -6,19 +6,20 @@ import { Plus, X, Save, Pencil } from "lucide-react";
 import { inputClass, labelClass, fmt } from "./shared";
 import TablaResponsiva, { type ColumnaTabla } from "@/components/panel/TablaResponsiva";
 import ConfirmDialog from "@/components/panel/ConfirmDialog";
+import { hoyLocalISO } from "@/lib/panel/fechas";
 
 type Sub = "activos" | "devueltos" | "todos";
 
 export default function PrestamosTab({
-  prestamos, setPrestamos, cuentas, setCuentas, setMovimientos,
-}: { prestamos: any[]; setPrestamos: (fn: any) => void; cuentas: any[]; setCuentas: (fn: any) => void; setMovimientos: (fn: any) => void }) {
+  prestamos, setPrestamos, cuentas, setCuentas, setMovimientos, soyAdminOFinanzas,
+}: { prestamos: any[]; setPrestamos: (fn: any) => void; cuentas: any[]; setCuentas: (fn: any) => void; setMovimientos: (fn: any) => void; soyAdminOFinanzas: boolean }) {
   const [sub, setSub] = useState<Sub>("activos");
   const [showNuevo, setShowNuevo] = useState(false);
   const [editando, setEditando] = useState<any | null>(null);
   const [persona, setPersona] = useState("");
   const [monto, setMonto] = useState("");
   const [moneda, setMoneda] = useState("USD");
-  const [fecha, setFecha] = useState(new Date().toISOString().slice(0, 10));
+  const [fecha, setFecha] = useState(hoyLocalISO());
   const [cuentaId, setCuentaId] = useState("");
   const [devolucionEsperada, setDevolucionEsperada] = useState("");
   const [motivo, setMotivo] = useState("");
@@ -37,7 +38,7 @@ export default function PrestamosTab({
 
   const lista = sub === "todos" ? prestamos : prestamos.filter((p) => (sub === "activos" ? p.estado === "pendiente" : p.estado === "devuelto"));
 
-  const abrirNuevo = () => { setEditando(null); setPersona(""); setMonto(""); setMoneda("USD"); setFecha(new Date().toISOString().slice(0, 10)); setCuentaId(""); setDevolucionEsperada(""); setMotivo(""); setNotas(""); setShowNuevo(true); };
+  const abrirNuevo = () => { setEditando(null); setPersona(""); setMonto(""); setMoneda("USD"); setFecha(hoyLocalISO()); setCuentaId(""); setDevolucionEsperada(""); setMotivo(""); setNotas(""); setShowNuevo(true); };
 
   // Igual que Retiros: monto y caja ya debitaron el saldo al crear el
   // préstamo (movimiento_id), no se pueden editar sin desincronizar. Lo que
@@ -50,6 +51,7 @@ export default function PrestamosTab({
   };
 
   const registrar = async () => {
+    if (!soyAdminOFinanzas) return alert("No tenés permiso para esto.");
     if (!persona.trim() || !monto || !cuentaId) return alert("Completá persona, monto y caja.");
     setGuardando(true);
     try {
@@ -86,6 +88,7 @@ export default function PrestamosTab({
   const abrirDevolucion = (p: any) => { setDevolviendo(p); setDvCuentaId(cuentas.find((c) => c.moneda === p.moneda)?.id || ""); };
 
   const confirmarDevolucion = async () => {
+    if (!soyAdminOFinanzas) return alert("No tenés permiso para esto.");
     if (!devolviendo || !dvCuentaId) return alert("Elegí la caja.");
     setGuardando(true);
     try {
@@ -107,6 +110,7 @@ export default function PrestamosTab({
   };
 
   const eliminar = (p: any) => {
+    if (!soyAdminOFinanzas) return alert("No tenés permiso para esto.");
     setConfirmDialog({
       mensaje: `¿Eliminar el préstamo a ${p.persona}? Revierte los movimientos generados.`,
       accion: async () => {

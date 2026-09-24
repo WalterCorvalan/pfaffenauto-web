@@ -10,7 +10,7 @@ import { hoyLocalISO } from "@/lib/panel/fechas";
 
 const emptyForm = { tipo: "a_cobrar", formato: "fisico", librador: "", numero: "", banco: "", cuitCuil: "", monto: "", moneda: "ARS", estado: "pendiente", fechaEmision: "", fechaCobro: "", cajaBancoPropio: "", vehiculoId: "", notas: "" };
 
-export default function ChequesTab({ cheques, setCheques, cuentas, vehiculos0km }: { cheques: any[]; setCheques: (fn: any) => void; cuentas: any[]; vehiculos0km: any[] }) {
+export default function ChequesTab({ cheques, setCheques, cuentas, vehiculos0km, soyAdminOFinanzas }: { cheques: any[]; setCheques: (fn: any) => void; cuentas: any[]; vehiculos0km: any[]; soyAdminOFinanzas: boolean }) {
   const [sub, setSub] = useState<"a_cobrar" | "emitido">("a_cobrar");
   const [showNuevo, setShowNuevo] = useState(false);
   const [editando, setEditando] = useState<any | null>(null);
@@ -50,6 +50,7 @@ export default function ChequesTab({ cheques, setCheques, cuentas, vehiculos0km 
   };
 
   const guardar = async () => {
+    if (!soyAdminOFinanzas) return alert("No tenés permiso para esto.");
     if (!form.librador.trim() || !form.monto || !form.fechaCobro) return alert("Completá librador, monto y fecha de cobro.");
     setGuardando(true);
     try {
@@ -109,6 +110,7 @@ export default function ChequesTab({ cheques, setCheques, cuentas, vehiculos0km 
   // cuenta, así que antes de aplicarlo hay que elegir cuál. Los demás
   // estados (pendiente/depositado/rechazado/endosado) no tocan caja.
   const cambiarEstado = async (c: any, estado: string) => {
+    if (!soyAdminOFinanzas) return alert("No tenés permiso para esto.");
     if (estado === "cobrado" && c.estado !== "cobrado") {
       setChequeParaCobrar(c);
       setCuentaCobro(cuentas.find((x) => x.moneda === c.moneda)?.id || "");
@@ -120,6 +122,7 @@ export default function ChequesTab({ cheques, setCheques, cuentas, vehiculos0km 
   };
 
   const confirmarCobro = async () => {
+    if (!soyAdminOFinanzas) return alert("No tenés permiso para esto.");
     if (!chequeParaCobrar || !cuentaCobro) return alert("Elegí una cuenta.");
     setCambiandoEstado(true);
     try {
@@ -135,6 +138,7 @@ export default function ChequesTab({ cheques, setCheques, cuentas, vehiculos0km 
   };
 
   const eliminar = (c: any) => {
+    if (!soyAdminOFinanzas) return alert("No tenés permiso para esto.");
     // Un cheque "cobrado" ya generó un movimiento real de caja (c.movimiento_id)
     // -- borrarlo sin revertir ese movimiento lo dejaba huérfano (plata que
     // quedó contabilizada sin el cheque de origen). Se revierte primero con el

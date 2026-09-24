@@ -6,6 +6,7 @@ import { Plus, X, Save, Send, Download, Trash2, ChevronDown, ChevronRight } from
 import { inputClass, labelClass, fmt } from "./shared";
 import TablaResponsiva, { type ColumnaTabla } from "@/components/panel/TablaResponsiva";
 import ConfirmDialog from "@/components/panel/ConfirmDialog";
+import { hoyLocalISO } from "@/lib/panel/fechas";
 
 function mesesAtras(n: number) {
   const out: string[] = [];
@@ -25,10 +26,17 @@ function labelMes(ym: string) {
   const [y, m] = ym.split("-").map(Number);
   return new Date(y, m - 1, 1).toLocaleDateString("es-AR", { month: "short", year: "2-digit" }).replace(".", "").toUpperCase();
 }
+// Formatea un Record<moneda, monto> -- nunca sumar ARS+USD como si fueran
+// la misma plata (regla del módulo, ver ARCHITECTURE.md).
+function fmtPorMoneda(map: Record<string, number>, fmt: (n: number, m: string) => string) {
+  const entries = Object.entries(map).filter(([, n]) => n !== 0);
+  if (entries.length === 0) return "—";
+  return entries.map(([m, n]) => fmt(n, m)).join(" · ");
+}
 
 export default function RecurrenciasTab({
-  recurrencias, setRecurrencias, generaciones, setGeneraciones, cuentas, setCuentas, movimientos, setMovimientos,
-}: { recurrencias: any[]; setRecurrencias: (fn: any) => void; generaciones: any[]; setGeneraciones: (fn: any) => void; cuentas: any[]; setCuentas: (fn: any) => void; movimientos: any[]; setMovimientos: (fn: any) => void }) {
+  recurrencias, setRecurrencias, generaciones, setGeneraciones, cuentas, setCuentas, movimientos, setMovimientos, soyAdminOFinanzas,
+}: { recurrencias: any[]; setRecurrencias: (fn: any) => void; generaciones: any[]; setGeneraciones: (fn: any) => void; cuentas: any[]; setCuentas: (fn: any) => void; movimientos: any[]; setMovimientos: (fn: any) => void; soyAdminOFinanzas: boolean }) {
   const [showNuevo, setShowNuevo] = useState(false);
   const [editando, setEditando] = useState<any | null>(null);
   const [nombre, setNombre] = useState("");
@@ -44,7 +52,7 @@ export default function RecurrenciasTab({
   const [overrides, setOverrides] = useState<Record<string, string>>({});
   const [confirmDialog, setConfirmDialog] = useState<{ mensaje: string; accion: () => void } | null>(null);
 
-  const mesActual = new Date().toISOString().slice(0, 7);
+  const mesActual = hoyLocalISO().slice(0, 7);
   const activas = recurrencias.filter((r) => r.estado === "activa");
   const pausadas = recurrencias.filter((r) => r.estado === "pausada");
   const generadasEsteMes = generaciones.filter((g) => g.mes.slice(0, 7) === mesActual);
@@ -66,6 +74,7 @@ export default function RecurrenciasTab({
   const abrirEditar = (r: any) => { setEditando(r); setNombre(r.nombre); setTipo(r.tipo); setCategoria(r.categoria || ""); setMonto(String(r.monto)); setMoneda(r.moneda); setDiaMes(String(r.dia_mes)); setCuentaId(r.cuenta_id); setNotas(r.notas || ""); setShowNuevo(true); };
 
   const guardar = async () => {
+    if (!soyAdminOFinanzas) return alert("No tenés permiso para esto.");
     if (!nombre.trim() || !monto || !cuentaId) return alert("Completá nombre, monto y caja.");
     setGuardando(true);
     try {
@@ -84,12 +93,14 @@ export default function RecurrenciasTab({
   };
 
   const pausarToggle = async (r: any) => {
+    if (!soyAdminOFinanzas) return alert("No tenés permiso para esto.");
     const nuevoEstado = r.estado === "activa" ? "pausada" : "activa";
     await supabase2.from("finanzas_recurrencias").update({ estado: nuevoEstado }).eq("id", r.id);
     setRecurrencias((prev: any[]) => prev.map((x) => (x.id === r.id ? { ...x, estado: nuevoEstado } : x)));
   };
 
   const eliminarRecurrencia = (r: any) => {
+    if (!soyAdminOFinanzas) return alert("No tenés permiso para esto.");
     setConfirmDialog({
       mensaje: `¿Eliminar la recurrencia "${r.nombre}"? No revierte movimientos ya generados.`,
       accion: async () => {
@@ -100,6 +111,7 @@ export default function RecurrenciasTab({
   };
 
   const generar = async (r: any, mes = mesActual) => {
+    if (!soyAdminOFinanzas) return alert("No tenés permiso para esto.");
     setGuardando(true);
     try {
       const { data: movId, error } = await supabase2.rpc("generar_recurrencia", { p_id: r.id, p_mes: `${mes}-01` });
@@ -122,6 +134,7 @@ export default function RecurrenciasTab({
   };
 
   const eliminarGeneracion = (g: any) => {
+    if (!soyAdminOFinanzas) return alert("No tenés permiso para esto.");
     setConfirmDialog({
       mensaje: "¿Eliminar este movimiento generado? Se revierte el egreso/ingreso y podés volver a generarlo.",
       accion: async () => {
@@ -149,7 +162,7 @@ export default function RecurrenciasTab({
     const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
     const link = document.createElement("a");
     link.href = URL.createObjectURL(blob);
-    link.download = `proyeccion_caja_${new Date().toISOString().slice(0, 10)}.csv`;
+    link.download = `proyeccion_caja_${hoyLocalISO()}.csv`;
     link.click();
   };
 
@@ -185,12 +198,25 @@ export default function RecurrenciasTab({
           <div className="divide-y divide-slate-100 dark:divide-white/10">
             {historico.map((m) => {
               const delMes = generaciones.filter((g) => g.mes.slice(0, 7) === m);
-              const neto = delMes.reduce((acc, g) => { const mov = movimientos.find((x) => x.id === g.movimiento_id); if (!mov) return acc; return acc + (mov.tipo === "ingreso" ? Number(mov.monto) : -Number(mov.monto)); }, 0);
+              // Nunca sumar ARS+USD como si fueran la misma plata -- se
+              // pivotea por moneda igual que compromisoPorMoneda arriba.
+              const netoPorMoneda: Record<string, number> = {};
+              delMes.forEach((g) => {
+                const mov = movimientos.find((x) => x.id === g.movimiento_id);
+                if (!mov) return;
+                const r = recurrencias.find((x) => x.id === g.recurrencia_id);
+                const mo = mov.cuenta?.moneda || r?.moneda || "ARS";
+                netoPorMoneda[mo] = (netoPorMoneda[mo] || 0) + (mov.tipo === "ingreso" ? Number(mov.monto) : -Number(mov.monto));
+              });
               return (
                 <div key={m}>
                   <button onClick={() => setMesesExpandidos((p) => ({ ...p, [m]: !p[m] }))} className="w-full flex items-center justify-between py-2 text-sm">
                     <span className="flex items-center gap-1.5">{mesesExpandidos[m] ? <ChevronDown className="w-3.5 h-3.5" /> : <ChevronRight className="w-3.5 h-3.5" />} {labelMes(m)} {delMes.length > 0 && <span className="text-[10px] bg-slate-100 dark:bg-white/10 rounded-full px-1.5">{delMes.length}</span>}</span>
-                    <span className={`font-mono font-bold ${neto < 0 ? "text-rose-500" : "text-emerald-600"}`}>{delMes.length === 0 ? "—" : fmt(neto, "USD")}</span>
+                    <span className="font-mono font-bold">
+                      {Object.entries(netoPorMoneda).length === 0 ? "—" : Object.entries(netoPorMoneda).map(([mo, n]) => (
+                        <span key={mo} className={n < 0 ? "text-rose-500" : "text-emerald-600"}>{fmt(n, mo)} </span>
+                      ))}
+                    </span>
                   </button>
                   {mesesExpandidos[m] && delMes.length > 0 && (
                     <div className="pb-2 space-y-1">
@@ -233,10 +259,13 @@ export default function RecurrenciasTab({
                     })}
                   </tr>
                 ))}
-                <tr className="border-t border-slate-200 dark:border-white/10 font-bold text-emerald-600"><td className="p-1.5 sticky left-0 bg-white dark:bg-[#141414]">Ingresos</td>{proyeccion.map((m) => { const n = activas.filter((r) => r.tipo === "ingreso").reduce((a, r) => a + Number(valorProyeccion(r, m) || 0), 0); return <td key={m} className="p-1.5 text-right">{n === 0 ? "—" : fmt(n, "USD")}</td>; })}</tr>
-                <tr className="text-rose-500 font-bold"><td className="p-1.5 sticky left-0 bg-white dark:bg-[#141414]">Egresos</td>{proyeccion.map((m) => { const n = activas.filter((r) => r.tipo === "egreso").reduce((a, r) => a + Number(valorProyeccion(r, m) || 0), 0); return <td key={m} className="p-1.5 text-right">{fmt(n, "USD")}</td>; })}</tr>
-                <tr className="font-bold border-t border-slate-200 dark:border-white/10"><td className="p-1.5 sticky left-0 bg-white dark:bg-[#141414]">Neto del mes</td>{proyeccion.map((m) => { const ing = activas.filter((r) => r.tipo === "ingreso").reduce((a, r) => a + Number(valorProyeccion(r, m) || 0), 0); const eg = activas.filter((r) => r.tipo === "egreso").reduce((a, r) => a + Number(valorProyeccion(r, m) || 0), 0); const n = ing - eg; return <td key={m} className={`p-1.5 text-right ${n < 0 ? "text-rose-500" : "text-emerald-600"}`}>{fmt(n, "USD")}</td>; })}</tr>
-                <tr className="text-slate-400"><td className="p-1.5 sticky left-0 bg-white dark:bg-[#141414]">Flujo acumulado</td>{(() => { let acc = 0; return proyeccion.map((m) => { const ing = activas.filter((r) => r.tipo === "ingreso").reduce((a, r) => a + Number(valorProyeccion(r, m) || 0), 0); const eg = activas.filter((r) => r.tipo === "egreso").reduce((a, r) => a + Number(valorProyeccion(r, m) || 0), 0); acc += ing - eg; return <td key={m} className={`p-1.5 text-right ${acc < 0 ? "text-rose-500" : ""}`}>{fmt(acc, "USD")}</td>; }); })()}</tr>
+                {/* Nunca sumar ARS+USD como si fueran la misma plata -- cada
+                    fila pivotea por moneda (fmtPorMoneda), igual que el resto
+                    del módulo. */}
+                <tr className="border-t border-slate-200 dark:border-white/10 font-bold text-emerald-600"><td className="p-1.5 sticky left-0 bg-white dark:bg-[#141414]">Ingresos</td>{proyeccion.map((m) => { const map: Record<string, number> = {}; activas.filter((r) => r.tipo === "ingreso").forEach((r) => { map[r.moneda] = (map[r.moneda] || 0) + Number(valorProyeccion(r, m) || 0); }); return <td key={m} className="p-1.5 text-right whitespace-nowrap">{fmtPorMoneda(map, fmt)}</td>; })}</tr>
+                <tr className="text-rose-500 font-bold"><td className="p-1.5 sticky left-0 bg-white dark:bg-[#141414]">Egresos</td>{proyeccion.map((m) => { const map: Record<string, number> = {}; activas.filter((r) => r.tipo === "egreso").forEach((r) => { map[r.moneda] = (map[r.moneda] || 0) + Number(valorProyeccion(r, m) || 0); }); return <td key={m} className="p-1.5 text-right whitespace-nowrap">{fmtPorMoneda(map, fmt)}</td>; })}</tr>
+                <tr className="font-bold border-t border-slate-200 dark:border-white/10"><td className="p-1.5 sticky left-0 bg-white dark:bg-[#141414]">Neto del mes</td>{proyeccion.map((m) => { const map: Record<string, number> = {}; activas.forEach((r) => { const v = Number(valorProyeccion(r, m) || 0); map[r.moneda] = (map[r.moneda] || 0) + (r.tipo === "ingreso" ? v : -v); }); return <td key={m} className="p-1.5 text-right whitespace-nowrap">{fmtPorMoneda(map, fmt)}</td>; })}</tr>
+                <tr className="text-slate-400"><td className="p-1.5 sticky left-0 bg-white dark:bg-[#141414]">Flujo acumulado</td>{(() => { const acc: Record<string, number> = {}; return proyeccion.map((m) => { activas.forEach((r) => { const v = Number(valorProyeccion(r, m) || 0); acc[r.moneda] = (acc[r.moneda] || 0) + (r.tipo === "ingreso" ? v : -v); }); return <td key={m} className="p-1.5 text-right whitespace-nowrap">{fmtPorMoneda(acc, fmt)}</td>; }); })()}</tr>
               </tbody>
             </table>
           </div>

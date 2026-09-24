@@ -4,8 +4,9 @@ import { useState, useMemo } from "react";
 import { supabase2 } from "@/lib/supabase/client";
 import { Plus, X, Save, ListPlus, DollarSign, Trash2, Pencil } from "lucide-react";
 import { inputClass, labelClass, fmt, diasHasta } from "./shared";
+import { hoyLocalISO } from "@/lib/panel/fechas";
 
-const FREQ_DIAS: Record<string, number> = { Mensual: 30, Bimestral: 60, Anual: 365 };
+const FREQ_MESES: Record<string, number> = { Mensual: 1, Bimestral: 2, Anual: 12 };
 
 function badge(fecha: string) {
   const d = diasHasta(fecha);
@@ -15,8 +16,8 @@ function badge(fecha: string) {
 }
 
 export default function CuotasTab({
-  cuotasCobrar, setCuotasCobrar, cuotasPagar, setCuotasPagar, cuentas, setCuentas, setMovimientos, clientes, vehiculos, vendedores, miId,
-}: { cuotasCobrar: any[]; setCuotasCobrar: (fn: any) => void; cuotasPagar: any[]; setCuotasPagar: (fn: any) => void; cuentas: any[]; setCuentas: (fn: any) => void; setMovimientos: (fn: any) => void; clientes: any[]; vehiculos: any[]; vendedores: any[]; miId: string }) {
+  cuotasCobrar, setCuotasCobrar, cuotasPagar, setCuotasPagar, cuentas, setCuentas, setMovimientos, clientes, vehiculos, vendedores, miId, soyAdminOFinanzas,
+}: { cuotasCobrar: any[]; setCuotasCobrar: (fn: any) => void; cuotasPagar: any[]; setCuotasPagar: (fn: any) => void; cuentas: any[]; setCuentas: (fn: any) => void; setMovimientos: (fn: any) => void; clientes: any[]; vehiculos: any[]; vendedores: any[]; miId: string; soyAdminOFinanzas: boolean }) {
   const [sub, setSub] = useState<"cobrar" | "pagar">("cobrar");
 
   // A cobrar
@@ -42,7 +43,7 @@ export default function CuotasTab({
   const [pMontoCuota, setPMontoCuota] = useState("");
   const [pCantidad, setPCantidad] = useState("1");
   const [pFrecuencia, setPFrecuencia] = useState("Mensual");
-  const [pPrimerVencimiento, setPPrimerVencimiento] = useState(new Date().toISOString().slice(0, 10));
+  const [pPrimerVencimiento, setPPrimerVencimiento] = useState(hoyLocalISO());
   const [pNotas, setPNotas] = useState("");
   const [guardandoP, setGuardandoP] = useState(false);
 
@@ -63,6 +64,7 @@ export default function CuotasTab({
   };
 
   const guardarEditarCuotaP = async () => {
+    if (!soyAdminOFinanzas) return alert("No tenés permiso para esto.");
     if (!editandoCuotaP || !epAcreedor.trim() || !epMonto || !epVencimiento) return alert("Completá acreedor, monto y vencimiento.");
     setGuardandoEp(true);
     try {
@@ -79,7 +81,7 @@ export default function CuotasTab({
   const [pgMonto, setPgMonto] = useState("");
   const [pgCajaId, setPgCajaId] = useState("");
   const [pgFormaPago, setPgFormaPago] = useState("");
-  const [pgFecha, setPgFecha] = useState(new Date().toISOString().slice(0, 10));
+  const [pgFecha, setPgFecha] = useState(hoyLocalISO());
   const [pgNotas, setPgNotas] = useState("");
   const [guardandoPg, setGuardandoPg] = useState(false);
 
@@ -106,6 +108,7 @@ export default function CuotasTab({
   };
 
   const crearCuotaCobrar = async () => {
+    if (!soyAdminOFinanzas) return alert("No tenés permiso para esto.");
     if (!cConcepto.trim() || !cMonto || !cVencimiento) return alert("Completá concepto, monto y vencimiento.");
     setGuardandoC(true);
     try {
@@ -126,16 +129,21 @@ export default function CuotasTab({
   };
 
   const crearCuotaPagar = async () => {
+    if (!soyAdminOFinanzas) return alert("No tenés permiso para esto.");
     if (!pAcreedor.trim() || !pMontoCuota) return alert("Completá acreedor y monto por cuota.");
     setGuardandoP(true);
     try {
       const n = Number(pCantidad) || 1;
       const filas = Array.from({ length: n }, (_, i) => {
+        // setMonth/setFullYear en vez de sumar días fijos -- sumar
+        // FREQ_DIAS*i corría el "día del mes" de vencimiento cuota a cuota
+        // (meses de 28-31 días), y en "Anual" ignoraba años bisiestos.
         const v = new Date(pPrimerVencimiento + "T00:00:00");
-        v.setDate(v.getDate() + FREQ_DIAS[pFrecuencia] * i);
+        v.setMonth(v.getMonth() + FREQ_MESES[pFrecuencia] * i);
+        const vencimientoStr = `${v.getFullYear()}-${String(v.getMonth() + 1).padStart(2, "0")}-${String(v.getDate()).padStart(2, "0")}`;
         return {
           acreedor: pAcreedor.trim(), tipo_deuda: pTipoDeuda, concepto: pConcepto || null, vehiculo_id: pTipoDeuda === "auto_cuotas" ? (pVehiculoId || null) : null,
-          moneda: pMoneda, monto: Number(pMontoCuota), vencimiento: v.toISOString().slice(0, 10), cuota_actual: i + 1, cuota_total: n, notas: pNotas || null, creado_por: miId,
+          moneda: pMoneda, monto: Number(pMontoCuota), vencimiento: vencimientoStr, cuota_actual: i + 1, cuota_total: n, notas: pNotas || null, creado_por: miId,
         };
       });
       const { data, error } = await supabase2.from("cuotas_pagar_agencia").insert(filas).select();
@@ -170,7 +178,13 @@ export default function CuotasTab({
   };
 
   const confirmarPago = async () => {
+    if (!soyAdminOFinanzas) return alert("No tenés permiso para esto.");
     if (!pagando || !pgCajaId || !pgMonto) return alert("Completá caja y monto.");
+    const campoPagado = pagando.direccion === "cobrar" ? "monto_cobrado" : "monto_pagado";
+    const pendiente = Number(pagando.cuota.monto) - Number(pagando.cuota[campoPagado]);
+    // Sin este tope se podía tipear cualquier monto -- mismo criterio que
+    // CobrosClient.tsx (la pantalla equivalente para cuotas a cobrar).
+    if (Number(pgMonto) > pendiente + 0.01) return alert(`El monto no puede superar el saldo pendiente (${fmt(pendiente, pagando.cuota.moneda)}).`);
     setGuardandoPg(true);
     try {
       const rpcName = pagando.direccion === "cobrar" ? "cobrar_cuota_cliente" : "pagar_cuota_agencia";

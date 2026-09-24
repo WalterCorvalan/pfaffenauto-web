@@ -480,7 +480,7 @@ export default function FinanzasClient({
       {tab === "cuentas" && <CuentasTab cuentas={cuentas} setCuentas={setCuentas} soyAdmin={soyAdmin} />}
 
       {tab === "cuotas" && (
-        <CuotasTab cuotasCobrar={cuotasCobrar} setCuotasCobrar={setCuotasCobrar} cuotasPagar={cuotasPagar} setCuotasPagar={setCuotasPagar} cuentas={cuentas} setCuentas={setCuentas} setMovimientos={setMovimientos} clientes={clientes} vehiculos={vehiculos} vendedores={vendedores} miId={miId} />
+        <CuotasTab cuotasCobrar={cuotasCobrar} setCuotasCobrar={setCuotasCobrar} cuotasPagar={cuotasPagar} setCuotasPagar={setCuotasPagar} cuentas={cuentas} setCuentas={setCuentas} setMovimientos={setMovimientos} clientes={clientes} vehiculos={vehiculos} vendedores={vendedores} miId={miId} soyAdminOFinanzas={soyAdminOFinanzas} />
       )}
 
       {tab === "devol-registro" && (
@@ -492,14 +492,14 @@ export default function FinanzasClient({
       )}
 
       {tab === "tarjeta" && (
-        <TarjetaTab consumos={consumosTarjeta} setConsumos={setConsumosTarjeta} cuentas={cuentas} setCuentas={setCuentas} setMovimientos={setMovimientos} />
+        <TarjetaTab consumos={consumosTarjeta} setConsumos={setConsumosTarjeta} cuentas={cuentas} setCuentas={setCuentas} setMovimientos={setMovimientos} soyAdminOFinanzas={soyAdminOFinanzas} />
       )}
 
       {tab === "retiros" && (
         <RetirosTab retiros={retiros} setRetiros={setRetiros} cuentas={cuentas} setCuentas={setCuentas} setMovimientos={setMovimientos} />
       )}
 
-      {tab === "cheques" && <ChequesTab cheques={cheques} setCheques={setCheques} cuentas={cuentas} vehiculos0km={vehiculosDisponiblesFull.filter((v: any) => v.condicion === "0km")} />}
+      {tab === "cheques" && <ChequesTab cheques={cheques} setCheques={setCheques} cuentas={cuentas} vehiculos0km={vehiculosDisponiblesFull.filter((v: any) => v.condicion === "0km")} soyAdminOFinanzas={soyAdminOFinanzas} />}
 
       {tab === "rentabilidad-vehiculo" && (
         <RentabilidadVehiculoTab ventas={ventas} />
@@ -510,15 +510,15 @@ export default function FinanzasClient({
       )}
 
       {tab === "prestamos" && (
-        <PrestamosTab prestamos={prestamos} setPrestamos={setPrestamos} cuentas={cuentas} setCuentas={setCuentas} setMovimientos={setMovimientos} />
+        <PrestamosTab prestamos={prestamos} setPrestamos={setPrestamos} cuentas={cuentas} setCuentas={setCuentas} setMovimientos={setMovimientos} soyAdminOFinanzas={soyAdminOFinanzas} />
       )}
 
       {tab === "presupuesto" && (
-        <PresupuestoTab presupuestos={presupuestos} setPresupuestos={setPresupuestos} movimientos={movimientos} />
+        <PresupuestoTab presupuestos={presupuestos} setPresupuestos={setPresupuestos} movimientos={movimientos} soyAdminOFinanzas={soyAdminOFinanzas} />
       )}
 
       {tab === "recurrencias" && (
-        <RecurrenciasTab recurrencias={recurrencias} setRecurrencias={setRecurrencias} generaciones={generaciones} setGeneraciones={setGeneraciones} cuentas={cuentas} setCuentas={setCuentas} movimientos={movimientos} setMovimientos={setMovimientos} />
+        <RecurrenciasTab recurrencias={recurrencias} setRecurrencias={setRecurrencias} generaciones={generaciones} setGeneraciones={setGeneraciones} cuentas={cuentas} setCuentas={setCuentas} movimientos={movimientos} setMovimientos={setMovimientos} soyAdminOFinanzas={soyAdminOFinanzas} />
       )}
 
       {tab === "arqueos" && (
