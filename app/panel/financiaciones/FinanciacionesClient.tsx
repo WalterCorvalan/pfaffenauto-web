@@ -70,13 +70,15 @@ export default function FinanciacionesClient({ solicitudesIniciales, staff, esAd
               <Settings className="w-4 h-4" /> {vista === "config" ? "Ver solicitudes" : "Configuración"}
             </button>
           )}
-          <button
-            type="button"
-            onClick={() => setSimuladorAbierto(true)}
-            className="flex items-center justify-center gap-1.5 text-[13px] font-bold text-emerald-700 dark:text-emerald-300 bg-emerald-50 dark:bg-emerald-500/10 border border-emerald-100 dark:border-emerald-500/20 rounded-xl px-4 py-2.5"
-          >
-            <CreditCard className="w-4 h-4" /> Simulador propio
-          </button>
+          {esAdminOFinanzas && (
+            <button
+              type="button"
+              onClick={() => setSimuladorAbierto(true)}
+              className="flex items-center justify-center gap-1.5 text-[13px] font-bold text-emerald-700 dark:text-emerald-300 bg-emerald-50 dark:bg-emerald-500/10 border border-emerald-100 dark:border-emerald-500/20 rounded-xl px-4 py-2.5"
+            >
+              <CreditCard className="w-4 h-4" /> Simulador propio
+            </button>
+          )}
           <a
             href="https://agencias2.decreditos.com/simulacion/grid"
             target="_blank"
