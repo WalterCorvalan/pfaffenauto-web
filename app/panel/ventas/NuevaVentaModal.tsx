@@ -531,6 +531,15 @@ export default function NuevaVentaModal({ perfiles, clientes, vehiculos, miId, s
       // código sin importar si arrancó con una seña o una venta directa.
       const codigoSeguimiento = generarCodigoPublico();
 
+      // Antes esto se armaba con setComentarioFinanzas DESPUÉS de insertar la
+      // venta (más abajo, al generar cuotas) -- el "comentario_finanzas" del
+      // payload ya viajaba con el valor viejo, así que el aviso para
+      // Finanzas nunca quedaba guardado de verdad. Se calcula acá, antes del
+      // insert, para que si corresponde quede en el mismo payload.
+      const comentarioFinanzasFinal = metodoPago === "Financiado" && cuotasPlazo && Number(cuotasPlazo) > 0 && !puedeGenerarCuotas
+        ? `${comentarioFinanzas ? comentarioFinanzas + " — " : ""}Pedirle a Finanzas que genere el plan de cuotas (${cuotasPlazo} cuotas).`
+        : comentarioFinanzas;
+
       const payload: any = {
         estado: estadoFinal, carga_manual: cargaManual, abre_expediente: true, codigo_seguimiento: codigoSeguimiento,
         vehiculo_id: vehiculoId || null, vehiculo_marca: vMarca || null, vehiculo_modelo: vModelo || null,
@@ -560,7 +569,7 @@ export default function NuevaVentaModal({ perfiles, clientes, vehiculos, miId, s
         vendedor_compartido_pct: vendedorCompartido ? Number(companeroPct) : null,
         extra_cobrado_monto: extraMonto ? Number(extraMonto) : null, extra_cobrado_moneda: extraMoneda,
         entrega_tuerca_seguridad: entregaTuerca, entrega_duplicado_llave: entregaLlave, entrega_manuales: entregaManuales, entrega_cedula: entregaCedula,
-        fecha_entrega: fechaEntrega || null, notas: notas || null, comentario_gestoria: comentarioGestoria || null, comentario_finanzas: comentarioFinanzas || null,
+        fecha_entrega: fechaEntrega || null, notas: notas || null, comentario_gestoria: comentarioGestoria || null, comentario_finanzas: comentarioFinanzasFinal || null,
         creado_por: miId || null,
       };
 
@@ -652,7 +661,8 @@ export default function NuevaVentaModal({ perfiles, clientes, vehiculos, miId, s
 
       if (metodoPago === "Financiado" && cuotasPlazo && Number(cuotasPlazo) > 0) {
         if (!puedeGenerarCuotas) {
-          setComentarioFinanzas((prev: string) => `${prev ? prev + " — " : ""}Pedirle a Finanzas que genere el plan de cuotas (${cuotasPlazo} cuotas).`);
+          // El aviso para Finanzas ya quedó en comentario_finanzas al armar
+          // el payload de arriba -- no hace falta hacer nada más acá.
         } else {
           const totalSenas = totalEnMoneda(senas.map((s) => ({ monto: s.monto, moneda: s.moneda as Moneda })), monedaVenta as Moneda, tipoCambio);
           const saldo = Number(precioVenta) - totalSenas - totalPermutas;
@@ -671,7 +681,13 @@ export default function NuevaVentaModal({ perfiles, clientes, vehiculos, miId, s
           // wiring de cobro/vencimiento). Se une al mismo flujo que Cobros/
           // CuotasTab así la cuota se puede cobrar y el cron de vencimientos
           // la agarra igual que cualquier otra.
-          await supabase2.from("cuotas_cobrar_clientes").insert(filas);
+          const { error: errorCuotas } = await supabase2.from("cuotas_cobrar_clientes").insert(filas);
+          if (errorCuotas) {
+            // Sin este chequeo la venta financiada quedaba sin plan de
+            // cuotas y nadie se enteraba -- no aparecía en Cobros ni en el
+            // cron de vencimientos, como si el cliente no debiera nada.
+            alert(`La venta se guardó, pero no se pudo generar el plan de cuotas: ${errorCuotas.message}. Generalo a mano desde Cobros o avisá a Finanzas.`);
+          }
         }
       }
 
