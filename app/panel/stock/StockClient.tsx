@@ -434,7 +434,7 @@ export default function StockClient({
                         const dias = diasEnStock(v.created_at);
                         const pendientes = pendientesTexto(v);
                         return (
-                          <div key={v.id} onClick={() => setEditando(v)} className={`flex items-center gap-3 px-4 py-3 cursor-pointer hover:bg-slate-50 dark:hover:bg-white/5 border-l-4 ${bordeAntiguedad(dias, diasEstancado)}`}>
+                          <div key={v.id} onClick={() => setFichaVehiculo(v)} className={`flex items-center gap-3 px-4 py-3 cursor-pointer hover:bg-slate-50 dark:hover:bg-white/5 border-l-4 ${bordeAntiguedad(dias, diasEstancado)}`}>
                             <div className="w-14 h-14 rounded-lg bg-slate-100 dark:bg-white/5 border border-slate-200 dark:border-white/10 flex flex-col items-center justify-center shrink-0 overflow-hidden relative">
                               {v.fotos?.[0] ? <img src={v.fotos[0]} alt="" className="w-full h-full object-cover" /> : <Car className="w-5 h-5 text-slate-300 dark:text-slate-600" />}
                               <span className="absolute bottom-0 inset-x-0 bg-black/50 text-white text-[8px] font-bold text-center leading-3">{v.fotos.length} fotos</span>
@@ -491,7 +491,7 @@ export default function StockClient({
                     filas={paginados}
                     keyExtractor={(v) => v.id}
                     claseFila={(v) => `border-l-4 ${bordeAntiguedad(diasEnStock(v.created_at), diasEstancado)}`}
-                    onRowClick={(v) => setEditando(v)}
+                    onRowClick={(v) => setFichaVehiculo(v)}
                     encabezadoMobile={renderVehiculoCell}
                     columnas={
                       [
