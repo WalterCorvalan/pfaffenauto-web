@@ -80,7 +80,14 @@ export default function RetirosTab({
       mensaje: `¿Eliminar el retiro de ${r.persona}? Se revierte el egreso en la caja.`,
       accion: async () => {
         try {
-          await supabase2.rpc("eliminar_retiro_caja", { p_id: r.id });
+          // supabase-js no tira excepción por un error de RPC -- devuelve
+          // { error }, no lo lanza -- así que este try/catch nunca agarraba
+          // un fallo del RPC en sí. Sin chequear "error" acá, si el RPC
+          // fallaba (mes cerrado, RLS) el retiro desaparecía igual de la
+          // UI mientras seguía existiendo en la base con su movimiento de
+          // caja intacto -- el usuario creía que ya no estaba.
+          const { error } = await supabase2.rpc("eliminar_retiro_caja", { p_id: r.id });
+          if (error) { alert(error.message || "No se pudo eliminar."); return; }
           setRetiros((prev: any[]) => prev.filter((x) => x.id !== r.id));
           const { data: nuevoSaldo } = await supabase2.rpc("saldo_cuenta", { p_cuenta_id: r.cuenta_id });
           setCuentas((prev: any[]) => prev.map((c) => (c.id === r.cuenta_id ? { ...c, saldo: Number(nuevoSaldo) || 0 } : c)));

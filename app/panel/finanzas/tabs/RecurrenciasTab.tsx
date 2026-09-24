@@ -125,7 +125,17 @@ export default function RecurrenciasTab({
     setConfirmDialog({
       mensaje: "¿Eliminar este movimiento generado? Se revierte el egreso/ingreso y podés volver a generarlo.",
       accion: async () => {
-        await supabase2.rpc("eliminar_movimiento_caja", { p_movimiento_id: g.movimiento_id, p_motivo: "Generación de recurrencia eliminada" });
+        const { error } = await supabase2.rpc("eliminar_movimiento_caja", { p_movimiento_id: g.movimiento_id, p_motivo: "Generación de recurrencia eliminada" });
+        if (error) {
+          // Antes esto no se chequeaba -- si el RPC fallaba, la fila de
+          // "generaciones" se borraba igual, así que el mes quedaba como
+          // "sin generar" mientras el movimiento de caja original seguía
+          // ahí sin revertir. Generar de nuevo ese mes creaba un SEGUNDO
+          // movimiento, duplicando la plata (dos egresos/ingresos por el
+          // mismo concepto y mes).
+          alert(`No se pudo revertir el movimiento: ${error.message}. La generación no se eliminó -- no la vuelvas a generar hasta resolver esto.`);
+          return;
+        }
         await supabase2.from("finanzas_recurrencias_generaciones").delete().eq("id", g.id);
         setGeneraciones((prev: any[]) => prev.filter((x) => x.id !== g.id));
         setMovimientos((prev: any[]) => prev.filter((m) => m.id !== g.movimiento_id));

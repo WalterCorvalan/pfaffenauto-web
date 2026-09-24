@@ -111,7 +111,12 @@ export default function PrestamosTab({
       mensaje: `¿Eliminar el préstamo a ${p.persona}? Revierte los movimientos generados.`,
       accion: async () => {
         try {
-          await supabase2.rpc("eliminar_prestamo_otorgado", { p_id: p.id });
+          // supabase-js no tira excepción por un error de RPC -- sin
+          // chequear "error" acá, si el RPC fallaba el préstamo desaparecía
+          // igual de la UI mientras seguía existiendo en la base con sus
+          // movimientos intactos.
+          const { error } = await supabase2.rpc("eliminar_prestamo_otorgado", { p_id: p.id });
+          if (error) { alert(error.message || "No se pudo eliminar."); return; }
           setPrestamos((prev: any[]) => prev.filter((x) => x.id !== p.id));
           const { data: nuevoSaldo } = await supabase2.rpc("saldo_cuenta", { p_cuenta_id: p.cuenta_id });
           setCuentas((prev: any[]) => prev.map((c) => (c.id === p.cuenta_id ? { ...c, saldo: Number(nuevoSaldo) || 0 } : c)));

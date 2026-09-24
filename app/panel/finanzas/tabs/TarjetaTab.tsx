@@ -114,7 +114,12 @@ export default function TarjetaTab({
       mensaje: `¿Eliminar "${c.concepto}"? ${c.estado === "pagado" ? "Se revierte el egreso en la caja." : ""}`,
       accion: async () => {
         try {
-          await supabase2.rpc("eliminar_consumo_tarjeta", { p_id: c.id });
+          // supabase-js no tira excepción por un error de RPC -- sin
+          // chequear "error" acá, si el RPC fallaba el consumo desaparecía
+          // igual de la UI mientras seguía existiendo en la base con su
+          // movimiento intacto.
+          const { error } = await supabase2.rpc("eliminar_consumo_tarjeta", { p_id: c.id });
+          if (error) { alert(error.message || "No se pudo eliminar."); return; }
           setConsumos((prev: any[]) => prev.filter((x) => x.id !== c.id));
           if (c.movimiento_id && c.cuenta_id) {
             const { data: nuevoSaldo } = await supabase2.rpc("saldo_cuenta", { p_cuenta_id: c.cuenta_id });
