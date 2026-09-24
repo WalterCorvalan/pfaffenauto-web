@@ -1,17 +1,28 @@
+import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
+import { puedeVerModulo } from "@/lib/panel/permisosModulos";
 import ReportesClient from "./ReportesClient";
 
 export const metadata = { title: "Reportes y Análisis | Pfaffen Autos" };
 
 export default async function ReportesPage() {
   const supabase = await createClient();
+  // Mismo hallazgo que ya se corrigió en Finanzas (auditoría del 24/9,
+  // permisos #18): por URL directa cualquier usuario logueado entraba
+  // igual, el ítem del sidebar solo se ocultaba visualmente.
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) redirect("/panel/login");
+  if (!(await puedeVerModulo(supabase, user.id, "reportes"))) redirect("/panel");
+
   const hoy = new Date();
   const mesActual = `${hoy.getFullYear()}-${String(hoy.getMonth() + 1).padStart(2, "0")}-01`;
   const desde = mesActual;
   const hasta = new Date(hoy.getFullYear(), hoy.getMonth() + 1, 0).toISOString().slice(0, 10);
 
+  const { data: miPerfil } = await supabase.from("perfiles").select("id, nombre, roles, ganancias_ocultas").eq("id", user.id).single();
+  const puedeVerFinanzas = (miPerfil?.roles?.includes("admin") || miPerfil?.roles?.includes("finanzas")) ?? false;
+
   const [
-    { data: miPerfil },
     { data: ranking },
     { data: premios },
     { data: rankingVelocidad },
@@ -36,10 +47,6 @@ export default async function ReportesPage() {
     { data: composicionVentas },
     { data: ventasPorOrigenRaw },
   ] = await Promise.all([
-    supabase.auth.getUser().then(async ({ data }) => {
-      if (!data.user) return { data: null };
-      return supabase.from("perfiles").select("id, nombre, roles, ganancias_ocultas").eq("id", data.user.id).single();
-    }),
     supabase.rpc("ranking_ventas", { p_desde: desde, p_hasta: hasta }),
     supabase.from("premios_consignaciones").select("*").order("orden"),
     supabase.from("v_reportes_ranking_velocidad").select("*"),
@@ -48,10 +55,17 @@ export default async function ReportesPage() {
     supabase.from("v_reportes_embudo_comercial").select("*"),
     supabase.from("v_reportes_expedientes_resumen").select("*").single(),
     supabase.from("v_reportes_expedientes_por_estado").select("*"),
-    supabase.from("v_reportes_infracciones_resumen").select("*").single(),
-    supabase.from("v_reportes_taller_facturacion").select("*").single(),
+    // Estos 3 muestran plata real (ganancia de infracciones, facturación de
+    // taller, montos por cliente) -- antes se pedían siempre y el gate
+    // puedeVerFinanzas solo decidía si ReportesClient los RENDERIZABA,
+    // pero como client component los recibe todos como props, ya habían
+    // viajado en el HTML/payload a cualquier usuario logueado (hallazgo de
+    // auditoría). Mismo criterio que finanzas/page.tsx: se corta el fetch
+    // acá, no solo el render.
+    puedeVerFinanzas ? supabase.from("v_reportes_infracciones_resumen").select("*").single() : Promise.resolve({ data: null }),
+    puedeVerFinanzas ? supabase.from("v_reportes_taller_facturacion").select("*").single() : Promise.resolve({ data: null }),
     supabase.from("v_reportes_ventas_por_mes").select("*").limit(12),
-    supabase.from("v_reportes_top_clientes").select("*"),
+    puedeVerFinanzas ? supabase.from("v_reportes_top_clientes").select("*") : Promise.resolve({ data: [] }),
     supabase.from("v_reportes_clientes_por_vendedor").select("*"),
     supabase.from("v_reportes_cotizaciones_resumen").select("*").single(),
     supabase.from("v_reportes_cotizaciones_por_estado").select("*"),
