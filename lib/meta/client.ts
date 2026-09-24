@@ -239,6 +239,17 @@ export async function sendInstagramPrivateReply(commentId: string, token: string
   }, GRAPH_INSTAGRAM_BASE_URL);
 }
 
+// Instagram: respuesta PÚBLICA visible debajo del comentario original (a
+// diferencia de sendInstagramPrivateReply, que es el DM) -- se usa junto al
+// DM cuando una automatización por palabra clave tiene texto público
+// configurado, mismo patrón visible que ManyChat.
+export async function replyToInstagramCommentPublicly(commentId: string, token: string, text: string) {
+  return graphRequest<{ id: string }>(`${commentId}/replies`, token, {
+    method: "POST",
+    body: JSON.stringify({ message: text }),
+  }, GRAPH_INSTAGRAM_BASE_URL);
+}
+
 // Instagram: mensaje directo de seguimiento dentro de una conversación ya abierta
 // (después del primer private reply, se puede seguir charlando como un DM normal).
 export async function sendInstagramMessage(igUserId: string, token: string, recipientId: string, text: string) {
