@@ -153,10 +153,12 @@ export default async function EmbudoPage({ searchParams }: { searchParams: Promi
 
   // 1c. Embudo por vendedor -- basado en estado_lead de las 4 fuentes reales,
   // no en pipeline_stage de clientes (ese es del CRM, no del lead).
+  // El rol real es "ventas" (ver ROLES en UsuariosClient.tsx) -- "vendedor"
+  // nunca existió como valor real, este filtro nunca traía a nadie.
   const { data: vendedoresPerfiles } = await supabase
     .from("perfiles")
     .select("id, nombre")
-    .contains("roles", ["vendedor"]);
+    .contains("roles", ["ventas"]);
 
   const porVendedorMap: Record<string, { citas: number; asistieron: number; compraron: number }> = {};
   datos.forEach((c: any) => {
