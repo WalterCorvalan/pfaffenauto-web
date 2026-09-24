@@ -16,13 +16,18 @@ export default async function StockPage() {
     supabase.from("catalogo_config").select("*").eq("id", "default").single(),
     supabase.from("sucursales").select("id, nombre").order("nombre"),
     supabase.from("configuracion_empresa").select("stock_dias_estancado").eq("id", true).maybeSingle(),
-    // Cheques emitidos, todavía no cobrados, vinculados a un 0km del stock --
-    // pedido de la reunión del 22/9, para descontar del patrimonio la deuda
-    // pendiente por cheques sin cobrar. Si la columna vehiculo_id todavía no
-    // existe (ver migraciones/sql_cheques_vehiculo_id.sql), el error queda
-    // en "error" y "data" en null -- el fallback "|| []" de abajo alcanza,
-    // no rompe el resto del stock.
-    supabase.from("cheques").select("id, vehiculo_id, monto, moneda").eq("tipo", "emitido").eq("estado", "pendiente").not("vehiculo_id", "is", null),
+    // Cheques emitidos, todavía no cobrados (plata que TODAVÍA no salió de
+    // ninguna cuenta), vinculados a un 0km del stock -- pedido de la reunión
+    // del 22/9, para descontar del patrimonio la deuda pendiente por cheques
+    // sin cobrar. "cobrado" es el ÚNICO estado que significa que la plata
+    // salió de verdad -- antes filtraba solo "pendiente", así que un cheque
+    // rechazado, endosado o depositado (todavía no cobrado, seguimos
+    // debiéndolo) dejaba de contarse como deuda aunque siguiéramos
+    // debiéndolo, e inflaba el "Patrimonio 0km neto". Si la columna
+    // vehiculo_id todavía no existe (ver migraciones/sql_cheques_vehiculo_id.sql),
+    // el error queda en "error" y "data" en null -- el fallback "|| []" de
+    // abajo alcanza, no rompe el resto del stock.
+    supabase.from("cheques").select("id, vehiculo_id, monto, moneda").eq("tipo", "emitido").neq("estado", "cobrado").not("vehiculo_id", "is", null),
   ]);
 
   return (
