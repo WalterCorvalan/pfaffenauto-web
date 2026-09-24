@@ -263,7 +263,13 @@ export default function ResumenTab({
         <div className="rounded-2xl p-4 bg-white dark:bg-white/5 border border-slate-200 dark:border-white/10">
           <p className="text-[10px] font-bold uppercase tracking-widest text-emerald-600 dark:text-emerald-400">Ingresos Efectivos (mes)</p>
           {Object.keys(ingresosTotales).length === 0 ? <p className="text-xl font-black mt-1">$ 0</p> : Object.entries(ingresosTotales).map(([m, v]) => <p key={m} className="text-xl font-black mt-1">{fmt(v, m)}</p>)}
-          <p className="text-[10px] text-slate-400 mt-1">Suma de Ventas y Señas cobradas</p>
+          {/* La leyenda decía "Suma de Ventas y Señas cobradas", pero
+              ingresosTotales suma TODO movimiento de tipo ingreso aprobado
+              (cobro de cuota, "Otro", etc.), no solo Venta/Seña -- el que sí
+              está acotado a ventas+señas es "Generado en ventas + señas"
+              más arriba (historialOperaciones). Corregido para no confundir
+              esta tarjeta con una validación cruzada de esa otra. */}
+          <p className="text-[10px] text-slate-400 mt-1">Todo ingreso de caja aprobado (ventas, señas, cobros de cuota, otros)</p>
         </div>
         <div className="rounded-2xl p-4 bg-white dark:bg-white/5 border border-slate-200 dark:border-white/10">
           <p className="text-[10px] font-bold uppercase tracking-widest text-[#0145F2] dark:text-[#5b8dff]">Egresos Totales (mes)</p>

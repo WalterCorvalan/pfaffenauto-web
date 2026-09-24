@@ -96,7 +96,7 @@ export default function LiquidacionMensualTab({ liquidaciones, setLiquidaciones,
                   <td className="p-2.5">{filas.length}</td>
                   <td className="p-2.5 font-mono">{fmt(filas.reduce((a, f) => a + Number(f.comision_fija_aplicada), 0))}</td>
                   <td className="p-2.5 font-mono">{fmt(filas.reduce((a, f) => a + (Number(f.pct_gestora_aplicado) / 100) * Number(f.diferencia_transferencia), 0))}</td>
-                  <td className="p-2.5"></td>
+                  <td className="p-2.5 font-mono">{fmt(filas.reduce((a, f) => a + (Number(f.pct_gestora_aplicado) / 100) * Number(f.diferencia_multas), 0))}</td>
                   <td className="p-2.5 font-mono">{fmt(comisionesMes)}</td>
                   <td className="p-2.5 font-mono">{gananciasOcultas ? "—" : fmt(agenciaMes)}</td>
                   <td colSpan={2}></td>
