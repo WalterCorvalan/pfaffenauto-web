@@ -4,6 +4,7 @@ import { useState, useEffect } from "react";
 import { supabase2 } from "@/lib/supabase/client";
 import { X, Loader2, ChevronDown, MoreVertical, Lock, MessageCircle, Check, Upload, Plus, FileDown, Paperclip, Undo2 } from "lucide-react";
 import { fmtFechaLocal } from "@/lib/panel/fechas";
+import { totalEnMoneda, type Moneda } from "@/lib/moneda";
 import BoletoModal from "./BoletoModal";
 import ConfirmDialog from "@/components/panel/ConfirmDialog";
 import AlertDialog from "@/components/panel/AlertDialog";
@@ -64,6 +65,7 @@ export default function ExpedienteDetalleModal({ expedienteId, miId, perfiles, s
   const [checklist, setChecklist] = useState<any[]>([]);
   const [observaciones, setObservaciones] = useState<any[]>([]);
   const [senas, setSenas] = useState<any[]>([]);
+  const [permutas, setPermutas] = useState<any[]>([]);
   const [gastos, setGastos] = useState<any[]>([]);
   const [documentos, setDocumentos] = useState<any[]>([]);
   const [documentosCliente, setDocumentosCliente] = useState<any[]>([]);
@@ -207,11 +209,15 @@ export default function ExpedienteDetalleModal({ expedienteId, miId, perfiles, s
       setChequeVinculado(null);
     }
 
-    const [{ data: h }, { data: cl }, { data: o }, { data: s }, { data: g }, { data: d }, { data: c }, { data: veh }, { data: cr }, { data: dc }] = await Promise.all([
+    const [{ data: h }, { data: cl }, { data: o }, { data: s }, { data: pm }, { data: g }, { data: d }, { data: c }, { data: veh }, { data: cr }, { data: dc }] = await Promise.all([
       supabase2.from("expediente_hitos").select("*").eq("expediente_id", expedienteId).order("orden"),
       supabase2.from("expediente_checklist").select("*").eq("expediente_id", expedienteId).order("parte,orden"),
       supabase2.from("expediente_observaciones").select("*, autor:perfiles(nombre)").eq("expediente_id", expedienteId).order("created_at", { ascending: false }),
       e.venta ? supabase2.from("venta_senas").select("*").eq("venta_id", e.venta.id) : Promise.resolve({ data: [] }),
+      // Faltaba acá -- "Saldo pendiente al comprador" (más abajo) nunca
+      // descontaba las permutas, mostrando el saldo inflado como si el
+      // cliente todavía debiera el valor completo del auto que ya entregó.
+      e.venta ? supabase2.from("venta_permutas").select("*").eq("venta_id", e.venta.id) : Promise.resolve({ data: [] }),
       supabase2.from("expediente_gastos").select("*").eq("expediente_id", expedienteId).order("created_at", { ascending: false }),
       supabase2.from("expediente_documentos").select("*").eq("expediente_id", expedienteId).order("created_at", { ascending: false }),
       supabase2.from("cuentas").select("id, nombre, moneda").eq("activa", true).order("nombre"),
@@ -228,6 +234,7 @@ export default function ExpedienteDetalleModal({ expedienteId, miId, perfiles, s
     setChecklist(cl || []);
     setObservaciones(o || []);
     setSenas(s || []);
+    setPermutas(pm || []);
     setGastos(g || []);
     setDocumentos(d || []);
     setCuentas(c || []);
@@ -762,9 +769,20 @@ export default function ExpedienteDetalleModal({ expedienteId, miId, perfiles, s
     return <div className="fixed inset-0 bg-black/40 backdrop-blur-sm z-[100] flex items-center justify-center"><Loader2 className="w-6 h-6 animate-spin text-white" /></div>;
   }
 
-  const totalSenas = senas.reduce((acc, s) => acc + (venta && s.moneda === venta.moneda_venta ? Number(s.monto) : 0), 0);
-  const senasOtraMoneda = senas.filter((s) => venta && s.moneda !== venta.moneda_venta);
-  const totalesSenasOtraMoneda = senasOtraMoneda.reduce((acc: Record<string, number>, s) => { acc[s.moneda] = (acc[s.moneda] || 0) + Number(s.monto); return acc; }, {});
+  // Antes esto solo sumaba señas en la MISMA moneda que la venta -- una
+  // seña en USD sobre una venta en ARS (o al revés) se contaba como $0,
+  // directamente invisible acá (a diferencia del recibo, que sí la
+  // convertía). Mismo criterio que ImprimirVenta.tsx: convertir con la
+  // cotización de la venta en vez de descartarla.
+  const totalSenas = venta ? totalEnMoneda(senas.map((s) => ({ monto: s.monto, moneda: s.moneda as Moneda })), venta.moneda_venta as Moneda, venta.tipo_cambio) : 0;
+  // "Saldo pendiente al comprador" tampoco descontaba las permutas ni el
+  // efectivo ya acreditado -- mostraba el saldo inflado como si el cliente
+  // todavía debiera plata que ya cubrió por otro lado.
+  const totalPermutas = venta ? totalEnMoneda(permutas.map((p) => ({ monto: p.valor, moneda: p.moneda as Moneda })), venta.moneda_venta as Moneda, venta.tipo_cambio) : 0;
+  const efectivoAcreditado = venta ? totalEnMoneda(
+    [{ monto: venta.pago_efectivo_ars, moneda: "ARS" }, { monto: venta.pago_efectivo_usd, moneda: "USD" }],
+    venta.moneda_venta as Moneda, venta.tipo_cambio
+  ) : 0;
 
   const gastosVendedor = gastos.filter((g) => g.a_cargo_de === "vendedor");
   const gastosComprador = gastos.filter((g) => g.a_cargo_de === "comprador");
@@ -779,7 +797,7 @@ export default function ExpedienteDetalleModal({ expedienteId, miId, perfiles, s
   const gastosVendedorMismaMoneda = gastosVendedor.filter((g) => g.moneda === precioPropietarioMoneda).reduce((acc, g) => acc + Number(g.monto), 0);
 
   const totalACobrarComprador = venta ? Number(venta.precio_venta) + gastosCompradorMismaMoneda : 0;
-  const saldoComprador = venta ? totalACobrarComprador - totalSenas - Number(venta.monto_financiacion || 0) : 0;
+  const saldoComprador = venta ? Math.max(0, totalACobrarComprador - totalSenas - totalPermutas - efectivoAcreditado - Number(venta.monto_financiacion || 0)) : 0;
   const aPagarVendedor = precioPropietario ? Number(precioPropietario) : null;
   const totalALiquidarVendedor = aPagarVendedor != null ? aPagarVendedor - gastosVendedorMismaMoneda : null;
   const monedasCoinciden = venta && precioPropietarioMoneda === venta.moneda_venta;
