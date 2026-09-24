@@ -14,15 +14,67 @@ export default async function FinanzasPage() {
   // Don Torcuato) solo ve, en Caja Grande/Chica, la sucursal que tiene
   // asignada en su perfil -- "encargado" NO es un rol que vea todo, es
   // por-sucursal como vendedor. Solo admin/finanzas ven todas las cajas.
-  // El resto del panel de Finanzas no se restringe, solo ese tab puntual.
   const veTodasSucursales = miPerfil?.roles?.some((r: string) => ["admin", "finanzas"].includes(r)) ?? false;
   const miSucursalId = miPerfil?.sucursal_id ?? null;
   // Pedido del 23/9: un encargado (ej. Lucas en Don Torcuato) no ve el resto
-  // de Finanzas -- solo Caja Grande/Chica de su propia sucursal, nada más
-  // (antes solo esa pestaña se filtraba por sucursal, el resto del módulo
-  // quedaba completamente abierto). Un admin/finanzas que ADEMÁS tenga el
-  // rol "encargado" sigue viendo todo (veTodasSucursales manda).
+  // de Finanzas -- solo Caja Grande/Chica de su propia sucursal, nada más.
+  // Un admin/finanzas que ADEMÁS tenga el rol "encargado" sigue viendo todo
+  // (veTodasSucursales manda). El branch de abajo (soloCajaSucursal) no
+  // solo oculta el resto del módulo en la UI -- corta el fetch server-side
+  // para que esos datos ni siquiera lleguen al navegador (ver auditoría de
+  // Finanzas del 24/9: antes viajaban igual como props, solo sin render).
   const soloCajaSucursal = !veTodasSucursales && (miPerfil?.roles?.includes("encargado") ?? false);
+
+  // Un encargado de sucursal solo VE (en la UI) Caja Grande/Chica de su
+  // propia sucursal -- pero antes el resto de los datos de Finanzas
+  // (cheques, cuotas, ventas, señas, presupuestos, todos los movimientos
+  // de TODAS las sucursales) se seguían pidiendo y mandando igual al
+  // navegador como props del client component, solo que sin render para
+  // ellos. Cualquiera con acceso a las devtools podía inspeccionar ese
+  // estado y ver saldos/movimientos de sucursales ajenas -- "no se ve" no
+  // es lo mismo que "no viaja". Acá se corta antes: solo se pide lo que
+  // ese branch de FinanzasClient (soloCajaSucursal) realmente usa, y
+  // recortado a su propia sucursal.
+  if (soloCajaSucursal && miSucursalId) {
+    const [{ data: cuentasSucursal }, { data: sucursalPropia }, { data: vendedoresSoloCaja }, { data: cuentasOtrasComoDestino }] = await Promise.all([
+      supabase.from("cuentas").select("*").eq("activa", true).eq("sucursal_id", miSucursalId).order("nombre"),
+      supabase.from("sucursales").select("id, nombre").eq("id", miSucursalId),
+      supabase.from("perfiles").select("id, nombre").eq("activo", true).order("nombre"),
+      // Solo como DESTINO para transferir (CajaGrandeChicaTab.tsx: reponer a
+      // otra caja grande, o depositar en banco) -- id/nombre/moneda nada
+      // más, nunca el saldo real de una cuenta que no es la propia.
+      supabase.from("cuentas").select("id, nombre, moneda, tipo, rol_caja, sucursal_id").eq("activa", true).neq("sucursal_id", miSucursalId).or("tipo.eq.Banco,rol_caja.eq.grande"),
+    ]);
+    const cuentaIds = (cuentasSucursal || []).map((c) => c.id);
+    const cuentasConSaldoSucursal = await Promise.all(
+      (cuentasSucursal || []).map(async (c) => {
+        const { data: saldo } = await supabase.rpc("saldo_cuenta", { p_cuenta_id: c.id });
+        return { ...c, saldo: Number(saldo) || 0 };
+      })
+    );
+    // saldo: 0 a propósito -- son solo destinos de transferencia en el
+    // dropdown (nunca se les muestra el saldo ahí), no un dato real que
+    // haya que calcular para una sucursal ajena.
+    const cuentasDestinoAjenas = (cuentasOtrasComoDestino || []).map((c) => ({ ...c, saldo: 0 }));
+    const { data: movimientosSucursal } = cuentaIds.length
+      ? await supabase.from("movimientos_caja").select("*, cuenta:cuentas(nombre, moneda), vehiculo:vehiculo_id ( marca, modelo, anio ), vendedor:vendedor_id ( nombre )").is("deleted_at", null).in("cuenta_id", cuentaIds).order("fecha", { ascending: false }).order("created_at", { ascending: false }).limit(500)
+      : { data: [] as unknown[] };
+
+    return (
+      <FinanzasClient
+        miId={user?.id || ""} soyAdmin={soyAdmin} soyAdminOFinanzas={soyAdminOFinanzas}
+        cuentasIniciales={[...cuentasConSaldoSucursal, ...cuentasDestinoAjenas]} movimientosIniciales={movimientosSucursal || []}
+        cierresIniciales={[]} cuotasCobrarIniciales={[]} cuotasPagarIniciales={[]}
+        vendedores={vendedoresSoloCaja || []} clientes={[]} vehiculos={[]} ventas={[]}
+        chequesIniciales={[]} pagosDisponiblesIniciales={[]} consumosTarjetaIniciales={[]} retirosIniciales={[]} devolucionesIniciales={[]}
+        expedientes={[]} senasActivasPorMoneda={{}}
+        prestamosIniciales={[]} presupuestosIniciales={[]} recurrenciasIniciales={[]} generacionesIniciales={[]} arqueosIniciales={[]} cierresDiariosIniciales={[]}
+        miNombre={miPerfil?.nombre || ""}
+        senasIniciales={[]} vehiculosDisponiblesFull={[]} sucursales={sucursalPropia || []}
+        veTodasSucursales={veTodasSucursales} soloCajaSucursal={soloCajaSucursal} miSucursalId={miSucursalId} vehiculosTodos={[]}
+      />
+    );
+  }
 
   const [{ data: cuentas }, { data: cierres }, { data: cuotasCobrar }, { data: cuotasPagar }, { data: vendedores }, { data: clientes }, { data: vehiculosEnJuego }, { data: ventas }, { data: cheques }, { data: pagosDisponibles }, { data: consumosTarjeta }, { data: retiros }, { data: devoluciones }, { data: expedientes }, { data: prestamos }, { data: presupuestos }, { data: recurrencias }, { data: recurrenciasGeneraciones }, { data: arqueos }, { data: cierresDiarios }, { data: senas }, { data: sucursales }] = await Promise.all([
     supabase.from("cuentas").select("*").eq("activa", true).order("nombre"),
