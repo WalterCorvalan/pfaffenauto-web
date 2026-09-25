@@ -31,12 +31,19 @@ const ITEMS = [
 
 export default function NotificacionesTab({ miId }: { miId: string }) {
   const [desactivadas, setDesactivadas] = useState<string[]>([]);
+  const [whatsappForward, setWhatsappForward] = useState(false);
+  const [tengoWhatsapp, setTengoWhatsapp] = useState(true);
   const [cargando, setCargando] = useState(true);
   const [guardando, setGuardando] = useState(false);
 
   useEffect(() => {
-    supabase2.from("espacio_notif_prefs").select("*").eq("perfil_id", miId).maybeSingle().then(({ data }) => {
+    Promise.all([
+      supabase2.from("espacio_notif_prefs").select("*").eq("perfil_id", miId).maybeSingle(),
+      supabase2.from("perfiles").select("whatsapp").eq("id", miId).single(),
+    ]).then(([{ data }, { data: perfil }]) => {
       setDesactivadas(data?.desactivadas || []);
+      setWhatsappForward(data?.whatsapp_forward || false);
+      setTengoWhatsapp(!!perfil?.whatsapp);
       setCargando(false);
     });
   }, [miId]);
@@ -46,7 +53,7 @@ export default function NotificacionesTab({ miId }: { miId: string }) {
   const guardar = async () => {
     setGuardando(true);
     try {
-      await supabase2.from("espacio_notif_prefs").upsert({ perfil_id: miId, desactivadas, updated_at: new Date().toISOString() });
+      await supabase2.from("espacio_notif_prefs").upsert({ perfil_id: miId, desactivadas, whatsapp_forward: whatsappForward, updated_at: new Date().toISOString() });
     } catch { alert("No se pudo guardar."); } finally { setGuardando(false); }
   };
 
@@ -58,6 +65,19 @@ export default function NotificacionesTab({ miId }: { miId: string }) {
         <p className="text-sm font-bold flex items-center gap-1.5"><BellRing className="w-4 h-4" /> Mis notificaciones</p>
         <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">Elegí qué querés que te llegue a la campanita 🔔 y al Centro de Alertas. Lo que apagues deja de avisarte (solo a vos). Por defecto recibís todo.</p>
       </div>
+
+      <label className={`flex items-start gap-3 border rounded-xl p-3.5 mb-3 ${tengoWhatsapp ? "bg-white dark:bg-white/5 border-slate-200 dark:border-white/10 cursor-pointer" : "bg-slate-50 dark:bg-white/[0.02] border-slate-200 dark:border-white/5 opacity-60"}`}>
+        <input type="checkbox" checked={whatsappForward} disabled={!tengoWhatsapp} onChange={() => setWhatsappForward((v) => !v)} className="w-4 h-4 mt-0.5 accent-emerald-600 shrink-0" />
+        <span className="flex-1 min-w-0">
+          <span className="text-sm font-semibold flex items-center gap-1.5">📲 Reenviarme las notificaciones a mi WhatsApp</span>
+          <span className="block text-[11px] text-slate-400 mt-0.5">
+            {tengoWhatsapp
+              ? "Además de la campanita, cada notificación (según lo que dejes activado abajo) te llega como mensaje al WhatsApp que tenés cargado en tu perfil — para no depender de entrar al CRM."
+              : "Necesitás tener un WhatsApp cargado en tu perfil (Configuración → Usuarios) antes de poder activar esto."}
+          </span>
+        </span>
+      </label>
+
       <div className="space-y-2">
         {ITEMS.map((it) => {
           const activo = !desactivadas.includes(it.key);
