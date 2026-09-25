@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { Plus, X, Receipt, Calculator, Car, UserPlus, ShoppingCart, Loader2, type LucideIcon } from "lucide-react";
 import { supabase2 } from "@/lib/supabase/client";
@@ -84,6 +84,66 @@ export default function QuickActionsButton() {
     setOpen(nuevo);
     window.dispatchEvent(new CustomEvent("qa:toggle", { detail: { open: nuevo } }));
   };
+
+  // Arrastrable a cualquier lado de la pantalla, mismo patrón que
+  // MensajesBubble.tsx (posición en px vía pointer events propios,
+  // persistida en localStorage). null = todavía en la posición default
+  // (fixed bottom-6 right-6 vía clases, sin drag todavía).
+  const BTN_POS_KEY = "panel:quick-actions-btn-pos";
+  const [dragPos, setDragPos] = useState<{ left: number; top: number } | null>(null);
+  const arrastrandoRef = useRef(false);
+  const justDraggedRef = useRef(false);
+
+  useEffect(() => {
+    try {
+      const guardada = localStorage.getItem(BTN_POS_KEY);
+      if (guardada) {
+        const p = JSON.parse(guardada);
+        setDragPos({
+          left: Math.min(Math.max(p.left, 8), window.innerWidth - 56),
+          top: Math.min(Math.max(p.top, 8), window.innerHeight - 56),
+        });
+      }
+    } catch { /* localStorage puede fallar en privado/bloqueado -- se queda en la posición default */ }
+  }, []);
+
+  const iniciarArrastre = (e: React.PointerEvent<HTMLButtonElement>) => {
+    const boton = e.currentTarget;
+    const rectInicial = boton.getBoundingClientRect();
+    const startX = e.clientX;
+    const startY = e.clientY;
+    arrastrandoRef.current = false;
+
+    const onMove = (ev: PointerEvent) => {
+      const dx = ev.clientX - startX;
+      const dy = ev.clientY - startY;
+      if (!arrastrandoRef.current && Math.abs(dx) + Math.abs(dy) > 4) arrastrandoRef.current = true;
+      if (!arrastrandoRef.current) return;
+      const left = Math.min(Math.max(rectInicial.left + dx, 8), window.innerWidth - rectInicial.width - 8);
+      const top = Math.min(Math.max(rectInicial.top + dy, 8), window.innerHeight - rectInicial.height - 8);
+      setDragPos({ left, top });
+    };
+    const onUp = () => {
+      window.removeEventListener("pointermove", onMove);
+      window.removeEventListener("pointerup", onUp);
+      if (arrastrandoRef.current) {
+        justDraggedRef.current = true;
+        setDragPos((actual) => {
+          if (actual) { try { localStorage.setItem(BTN_POS_KEY, JSON.stringify(actual)); } catch { /* ignorar */ } }
+          return actual;
+        });
+        setTimeout(() => { justDraggedRef.current = false; }, 50);
+      }
+    };
+    window.addEventListener("pointermove", onMove);
+    window.addEventListener("pointerup", onUp);
+  };
+
+  // Con el botón arrastrado a la mitad superior de la pantalla, las pills
+  // tienen que desplegarse hacia ABAJO (si no, se salen por arriba); en la
+  // mitad izquierda, alineadas a la izquierda en vez de a la derecha.
+  const arribaAbrePillsAbajo = !!dragPos && dragPos.top < (typeof window !== "undefined" ? window.innerHeight / 2 : 0);
+  const izquierdaAlineaAIzquierda = !!dragPos && dragPos.left < (typeof window !== "undefined" ? window.innerWidth / 2 : 0);
   const [cargando, setCargando] = useState<AccionId | null>(null);
   const router = useRouter();
 
@@ -117,11 +177,14 @@ export default function QuickActionsButton() {
 
   return (
     <>
-      <div className="print:hidden hidden md:flex fixed bottom-6 right-6 z-40 flex-col items-end gap-2">
+      <div
+        className={`print:hidden hidden md:flex fixed z-40 flex-col gap-2 ${dragPos ? (arribaAbrePillsAbajo ? "flex-col-reverse" : "flex-col") + " " + (izquierdaAlineaAIzquierda ? "items-start" : "items-end") : "bottom-6 right-6 flex-col items-end"}`}
+        style={dragPos ? { left: dragPos.left, top: dragPos.top } : undefined}
+      >
         {open && (
           <>
             <div className="fixed inset-0 -z-10" onClick={() => cambiarOpen(false)} />
-            <div className="flex flex-col items-end gap-2 mb-1">
+            <div className={`flex gap-2 ${dragPos && arribaAbrePillsAbajo ? "flex-col mt-1" : "flex-col mb-1"} ${dragPos && izquierdaAlineaAIzquierda ? "items-start" : "items-end"}`}>
               {ACCIONES.map((a) => {
                 const Icon = a.icon;
                 const ocupado = cargando === a.id;
@@ -145,9 +208,10 @@ export default function QuickActionsButton() {
         )}
         <button
           type="button"
-          onClick={() => cambiarOpen(!open)}
-          className="w-14 h-14 rounded-full bg-[#0145F2] hover:bg-[#0138c9] text-white shadow-xl flex items-center justify-center transition-transform active:scale-95"
-          title="Acciones rápidas"
+          onPointerDown={iniciarArrastre}
+          onClick={() => { if (justDraggedRef.current) return; cambiarOpen(!open); }}
+          className="w-14 h-14 rounded-full bg-[#0145F2] hover:bg-[#0138c9] text-white shadow-xl flex items-center justify-center transition-transform active:scale-95 touch-none cursor-grab active:cursor-grabbing"
+          title="Acciones rápidas — mantené presionado y arrastrá para moverlo"
         >
           {open ? <X className="w-6 h-6" /> : <Plus className="w-6 h-6" />}
         </button>
