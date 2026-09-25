@@ -41,14 +41,30 @@
 
 /* Feedback táctil del panel-v2 en mobile -- "toqué esto, algo va a pasar"
    mientras la próxima pantalla carga. Solo touch (hover:none), solo dentro
-   del panel (no afecta el sitio público). */
+   del panel (no afecta el sitio público). Pedido explícito: el feedback
+   anterior (scale 0.96, 80ms) pasaba desapercibido -- ahora es más marcado
+   (scale 0.93 + un destello de fondo) y cubre también tabs/labels/selects,
+   no solo <button>/<a>, para que cualquier tab o subfiltro lo tenga sin
+   tener que tocar cada uno a mano. */
 @media (hover: none) and (pointer: coarse) {
   .panel-v2-root a:active,
   .panel-v2-root button:not(:disabled):active,
-  .panel-v2-root [role="button"]:active {
-    transform: scale(0.96);
-    opacity: 0.75;
-    transition: transform 0.08s ease-out, opacity 0.08s ease-out;
+  .panel-v2-root [role="button"]:active,
+  .panel-v2-root [role="tab"]:active,
+  .panel-v2-root label:active,
+  .panel-v2-root select:active {
+    transform: scale(0.93);
+    opacity: 0.7;
+    background-color: rgba(1, 69, 242, 0.08);
+    transition: transform 0.12s ease-out, opacity 0.12s ease-out, background-color 0.12s ease-out;
+  }
+  .dark .panel-v2-root a:active,
+  .dark .panel-v2-root button:not(:disabled):active,
+  .dark .panel-v2-root [role="button"]:active,
+  .dark .panel-v2-root [role="tab"]:active,
+  .dark .panel-v2-root label:active,
+  .dark .panel-v2-root select:active {
+    background-color: rgba(1, 69, 242, 0.18);
   }
 }
 
