@@ -396,7 +396,7 @@ export default function CatalogoClient({ vehiculosIniciales = [], totalInicial =
             Catálogo de Autos 0KM y Usados
           </h1>
           <div className="text-xs text-gray-500 dark:text-slate-400 font-medium mb-4">
-            <Link href="/" className="hover:text-blue-600 transition-colors">
+            <Link href="/" className="hover:text-[#0145F2] transition-colors">
               Inicio
             </Link>{" "}
             / <span className="text-gray-700 dark:text-slate-300">Catálogo</span>
@@ -418,7 +418,7 @@ export default function CatalogoClient({ vehiculosIniciales = [], totalInicial =
               />
               <button
                 type="submit"
-                className="shrink-0 bg-[#0145F2] hover:bg-blue-700 text-white rounded-full w-10 h-10 md:w-auto md:px-6 md:h-12 flex items-center justify-center gap-2 font-black text-xs uppercase tracking-widest transition-all active:scale-95"
+                className="shrink-0 bg-[#0145F2] hover:bg-[#0138c9] text-white rounded-full w-10 h-10 md:w-auto md:px-6 md:h-12 flex items-center justify-center gap-2 font-black text-xs uppercase tracking-widest transition-all active:scale-95"
               >
                 <span className="hidden md:inline">Buscar</span>
                 <ArrowRight className="w-4 h-4" />
@@ -460,7 +460,7 @@ export default function CatalogoClient({ vehiculosIniciales = [], totalInicial =
               Filtros aplicados:
             </span>
             {searchQuery ? (
-              <span className="inline-flex items-center gap-1.5 bg-blue-50 dark:bg-sky-400/10 border border-blue-200 dark:border-sky-400/20 text-blue-700 dark:text-sky-300 text-xs font-bold px-3 py-1.5 rounded-full">
+              <span className="inline-flex items-center gap-1.5 bg-blue-50 dark:bg-sky-400/10 border border-blue-200 dark:border-sky-400/20 text-[#0138c9] dark:text-sky-300 text-xs font-bold px-3 py-1.5 rounded-full">
                 {searchQuery.toLowerCase() === "usados-seleccionados" || searchQuery.toLowerCase() === "autos-seleccionados"
                   ? "Usados Seleccionados"
                   : `Búsqueda: "${searchQuery}"`}
@@ -474,7 +474,7 @@ export default function CatalogoClient({ vehiculosIniciales = [], totalInicial =
             ) : null}
 
             {condicionQuery ? (
-              <span className="inline-flex items-center gap-1.5 bg-blue-50 dark:bg-sky-400/10 border border-blue-200 dark:border-sky-400/20 text-blue-700 dark:text-sky-300 text-xs font-bold px-3 py-1.5 rounded-full">
+              <span className="inline-flex items-center gap-1.5 bg-blue-50 dark:bg-sky-400/10 border border-blue-200 dark:border-sky-400/20 text-[#0138c9] dark:text-sky-300 text-xs font-bold px-3 py-1.5 rounded-full">
                 Condición: {condicionQuery === "0km" ? "0KM" : "Usados Seleccionados"}
                 <Link
                   href={searchQuery ? `/catalogo?q=${searchQuery}` : "/catalogo"}
@@ -495,7 +495,7 @@ export default function CatalogoClient({ vehiculosIniciales = [], totalInicial =
             <button
               type="button"
               onClick={limpiarTodosLosFiltros}
-              className="text-xs font-bold text-blue-600 hover:underline transition-all"
+              className="text-xs font-bold text-[#0145F2] hover:underline transition-all"
             >
               Limpiar todo
             </button>
@@ -530,7 +530,7 @@ export default function CatalogoClient({ vehiculosIniciales = [], totalInicial =
               onClick={() => setIsFilterOpen(true)}
               className="lg:hidden flex items-center gap-2 bg-white dark:bg-[#161821] px-4 py-2 rounded-lg border border-gray-300 dark:border-white/15 shadow-sm text-xs font-bold text-gray-900 dark:text-white active:scale-95 transition-all"
             >
-              <Filter className="w-4 h-4 text-blue-600" /> Filtros
+              <Filter className="w-4 h-4 text-[#0145F2]" /> Filtros
             </button>
           </div>
 
@@ -678,7 +678,7 @@ export default function CatalogoClient({ vehiculosIniciales = [], totalInicial =
                 <div className="pt-4 mt-auto border-t border-gray-200 dark:border-white/15 bg-white dark:bg-[#161821] sticky bottom-0">
                   <button
                     onClick={() => setIsFilterOpen(false)}
-                    className="w-full bg-blue-600 hover:bg-blue-700 active:scale-95 text-white font-bold text-xs uppercase tracking-widest py-3.5 rounded-xl transition-all"
+                    className="w-full bg-[#0145F2] hover:bg-[#0138c9] active:scale-95 text-white font-bold text-xs uppercase tracking-widest py-3.5 rounded-xl transition-all"
                   >
                     Ver {totalResultados} resultados
                   </button>
@@ -730,7 +730,7 @@ export default function CatalogoClient({ vehiculosIniciales = [], totalInicial =
                     <button
                       onClick={cargarMas}
                       disabled={loadingMore}
-                      className="flex items-center gap-2 bg-white dark:bg-[#161821] border border-gray-300 dark:border-white/15 hover:border-blue-600 hover:text-blue-600 shadow-sm hover:shadow px-8 py-3.5 rounded-xl text-gray-700 dark:text-slate-300 font-bold text-xs uppercase tracking-widest transition-all active:scale-95 disabled:opacity-50"
+                      className="flex items-center gap-2 bg-white dark:bg-[#161821] border border-gray-300 dark:border-white/15 hover:border-[#0145F2] hover:text-[#0145F2] shadow-sm hover:shadow px-8 py-3.5 rounded-xl text-gray-700 dark:text-slate-300 font-bold text-xs uppercase tracking-widest transition-all active:scale-95 disabled:opacity-50"
                     >
                       {loadingMore ? (
                         <>
@@ -760,7 +760,7 @@ export default function CatalogoClient({ vehiculosIniciales = [], totalInicial =
                   </Link>
                   <button 
                     onClick={() => setIsFallbackModalOpen(true)}
-                    className="w-full sm:w-auto bg-blue-600 hover:bg-blue-700 text-white font-bold text-xs uppercase tracking-widest px-8 py-3.5 rounded-xl transition-all shadow-sm active:scale-95"
+                    className="w-full sm:w-auto bg-[#0145F2] hover:bg-[#0138c9] text-white font-bold text-xs uppercase tracking-widest px-8 py-3.5 rounded-xl transition-all shadow-sm active:scale-95"
                   >
                     Pedir auto a medida
                   </button>
@@ -829,7 +829,7 @@ export default function CatalogoClient({ vehiculosIniciales = [], totalInicial =
                 <button
                   onClick={() => setModalComparadorOpen(true)}
                   disabled={autosComparar.length === 0}
-                  className="bg-blue-600 hover:bg-blue-500 disabled:bg-gray-700 disabled:text-gray-500 text-white px-4 py-2.5 md:px-6 md:py-3 rounded-xl text-[10px] md:text-xs font-bold uppercase tracking-widest transition-all flex items-center gap-2 active:scale-95"
+                  className="bg-[#0145F2] hover:bg-[#0145F2] disabled:bg-gray-700 disabled:text-gray-500 text-white px-4 py-2.5 md:px-6 md:py-3 rounded-xl text-[10px] md:text-xs font-bold uppercase tracking-widest transition-all flex items-center gap-2 active:scale-95"
                 >
                   <Scale className="w-4 h-4 shrink-0" /> Comparar
                 </button>
@@ -875,7 +875,7 @@ function FiltrosContent(props: any) {
     <div className="bg-white dark:bg-[#161821] border border-gray-200 dark:border-white/15 rounded-2xl p-6 shadow-sm pb-10 max-h-[85vh] overflow-y-auto custom-scrollbar">
       <div className="flex items-center justify-between mb-6 pb-4 border-b border-gray-200 dark:border-white/15 sticky top-0 bg-white dark:bg-[#161821] z-10">
         <div className="flex items-center gap-2 text-gray-900 dark:text-white font-black uppercase tracking-widest text-xs">
-          <SlidersHorizontal className="w-4 h-4 text-blue-600" />
+          <SlidersHorizontal className="w-4 h-4 text-[#0145F2]" />
           Filtros Avanzados
         </div>
       </div>
@@ -891,7 +891,7 @@ function FiltrosContent(props: any) {
             placeholder="Desde $"
             value={props.precioMin}
             onChange={(e) => props.setPrecioMin(e.target.value.replace(/\D/g, ""))}
-            className="w-full bg-gray-50 dark:bg-white/5 border border-gray-200 dark:border-white/15 rounded-lg px-3 py-2.5 text-xs font-bold text-gray-900 dark:text-white outline-none focus:bg-white focus:border-blue-500 transition-colors placeholder:font-medium"
+            className="w-full bg-gray-50 dark:bg-white/5 border border-gray-200 dark:border-white/15 rounded-lg px-3 py-2.5 text-xs font-bold text-gray-900 dark:text-white outline-none focus:bg-white focus:border-[#0145F2] transition-colors placeholder:font-medium"
           />
           <input
             type="text"
@@ -899,7 +899,7 @@ function FiltrosContent(props: any) {
             placeholder="Hasta $"
             value={props.precioMax}
             onChange={(e) => props.setPrecioMax(e.target.value.replace(/\D/g, ""))}
-            className="w-full bg-gray-50 dark:bg-white/5 border border-gray-200 dark:border-white/15 rounded-lg px-3 py-2.5 text-xs font-bold text-gray-900 dark:text-white outline-none focus:bg-white focus:border-blue-500 transition-colors placeholder:font-medium"
+            className="w-full bg-gray-50 dark:bg-white/5 border border-gray-200 dark:border-white/15 rounded-lg px-3 py-2.5 text-xs font-bold text-gray-900 dark:text-white outline-none focus:bg-white focus:border-[#0145F2] transition-colors placeholder:font-medium"
           />
         </div>
       </div>
@@ -1025,14 +1025,14 @@ function FilterSection({
         {options.map((opt, idx) => (
           <label
             key={idx}
-            className="flex items-center gap-3 text-xs text-gray-700 dark:text-slate-300 font-semibold cursor-pointer hover:text-blue-600 transition-colors group"
+            className="flex items-center gap-3 text-xs text-gray-700 dark:text-slate-300 font-semibold cursor-pointer hover:text-[#0145F2] transition-colors group"
           >
             <div className="relative flex items-center justify-center shrink-0">
               <input
                 type="checkbox"
                 checked={selected.includes(opt.value)}
                 onChange={() => onToggle(opt.value)}
-                className="w-4 h-4 rounded border-gray-300 dark:border-white/15 text-blue-600 focus:ring-blue-600 transition-all bg-gray-50 dark:bg-white/5 cursor-pointer"
+                className="w-4 h-4 rounded border-gray-300 dark:border-white/15 text-[#0145F2] focus:ring-[#0145F2] transition-all bg-gray-50 dark:bg-white/5 cursor-pointer"
               />
             </div>
             <span className="truncate">{opt.label}</span>

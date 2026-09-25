@@ -73,7 +73,7 @@ export default function Testimonials({ sucursalSlug, sucursalNombre }: { sucursa
           <div className="max-w-2xl">
             <h2 className="text-3xl md:text-5xl text-gray-900 dark:text-white font-black tracking-tight mb-4 leading-tight">
               Respaldados por quienes <br className="hidden md:block"/>
-              <span className="text-blue-600 dark:text-sky-300">ya nos eligieron.</span>
+              <span className="text-[#0145F2] dark:text-sky-300">ya nos eligieron.</span>
             </h2>
             <p className="text-base text-gray-500 dark:text-slate-400 font-medium">
               {sucursalNombre
@@ -109,7 +109,7 @@ export default function Testimonials({ sucursalSlug, sucursalNombre }: { sucursa
               {/* Header de la Tarjeta */}
               <div className="flex justify-between items-start mb-6">
                 <div className="flex items-center gap-3">
-                  <div className="w-10 h-10 rounded-full bg-blue-50 dark:bg-sky-400/10 text-blue-700 dark:text-sky-300 font-bold text-sm flex items-center justify-center shrink-0">
+                  <div className="w-10 h-10 rounded-full bg-blue-50 dark:bg-sky-400/10 text-[#0138c9] dark:text-sky-300 font-bold text-sm flex items-center justify-center shrink-0">
                     {review.initials}
                   </div>
                   <div>
@@ -139,7 +139,7 @@ export default function Testimonials({ sucursalSlug, sucursalNombre }: { sucursa
         </div>
 
         <div className="flex justify-center mt-10">
-          <a href={GOOGLE_MAPS_URL} target="_blank" rel="noreferrer" className="text-sm font-bold text-blue-600 dark:text-sky-300 hover:underline">
+          <a href={GOOGLE_MAPS_URL} target="_blank" rel="noreferrer" className="text-sm font-bold text-[#0145F2] dark:text-sky-300 hover:underline">
             Ver todas las reseñas en Google Maps →
           </a>
         </div>

@@ -336,7 +336,7 @@ export default function Stock({ vehiculos }: StockProps) {
                             <h5 className="text-xs font-black text-navy dark:text-white leading-tight truncate uppercase">
                               {auto.modelo}
                             </h5>
-                            <p className="text-[#] dark:text-sky-300 font-black text-xs mt-0.5">
+                            <p className="text-[#0145F2] dark:text-sky-300 font-black text-xs mt-0.5">
                               {precioMostrar}
                             </p>
                           </div>
