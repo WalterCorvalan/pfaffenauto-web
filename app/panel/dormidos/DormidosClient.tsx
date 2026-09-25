@@ -106,7 +106,7 @@ export default function DormidosClient({
           </div>
 
           <div className="grid grid-cols-2 md:grid-cols-4 gap-3 my-4">
-            <div className="bg-white dark:bg-white/[0.02] border border-slate-200 dark:border-white/5 rounded-2xl p-4">
+            <div className="bg-white dark:bg-white/[0.02] border border-slate-200 dark:border-white/5 rounded-2xl shadow-sm p-4">
               <p className="text-[10px] font-black uppercase tracking-widest text-slate-400">Total dormidos</p>
               <p className="text-2xl font-black text-slate-900 dark:text-white mt-1">{totalDormidos}</p>
               <p className="text-[11px] text-slate-500 dark:text-slate-400 mt-0.5">últimos {plazoFiltro}+ meses</p>
@@ -128,7 +128,7 @@ export default function DormidosClient({
             </div>
           </div>
 
-          <div className="flex flex-wrap items-end gap-3 mb-4 bg-white dark:bg-white/[0.02] border border-slate-200 dark:border-white/5 rounded-2xl p-4">
+          <div className="flex flex-wrap items-end gap-3 mb-4 bg-white dark:bg-white/[0.02] border border-slate-200 dark:border-white/5 rounded-2xl shadow-sm p-4">
             <div>
               <label className="text-[10px] font-black uppercase tracking-widest text-slate-400 block mb-1">Meses dormido (mín)</label>
               <select value={plazoFiltro} onChange={(e) => setPlazoFiltro(e.target.value)} className="bg-slate-50 dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-lg px-3 py-2 text-xs font-semibold text-slate-700 dark:text-slate-200">
@@ -159,7 +159,7 @@ export default function DormidosClient({
           </div>
 
           {filtrados.length === 0 ? (
-            <div className="flex flex-col items-center justify-center text-center py-20 bg-white dark:bg-white/[0.02] border border-slate-200 dark:border-white/5 rounded-2xl">
+            <div className="flex flex-col items-center justify-center text-center py-20 bg-white dark:bg-white/[0.02] border border-slate-200 dark:border-white/5 rounded-2xl shadow-sm">
               <Moon className="w-10 h-10 text-slate-300 dark:text-slate-600 mb-3" />
               <h3 className="text-sm font-bold text-slate-800 dark:text-white mb-1">Sin clientes dormidos</h3>
               <p className="max-w-sm text-xs text-slate-500 dark:text-slate-400">No hay clientes con última compra hace {plazoFiltro}+ meses que cumplan los filtros.</p>
@@ -167,7 +167,7 @@ export default function DormidosClient({
           ) : (
             <>
               {/* Desktop: tabla completa (sin cambios) */}
-              <div className="hidden md:block bg-white dark:bg-white/[0.02] border border-slate-200 dark:border-white/5 rounded-2xl overflow-hidden">
+              <div className="hidden md:block bg-white dark:bg-white/[0.02] border border-slate-200 dark:border-white/5 rounded-2xl shadow-sm overflow-hidden">
                 <table className="w-full text-left border-collapse">
                   <thead>
                     <tr className="bg-slate-50 dark:bg-white/[0.03] border-b border-slate-200 dark:border-white/5">
@@ -228,7 +228,7 @@ export default function DormidosClient({
                   </label>
                 )}
                 {filtrados.map((d) => (
-                  <div key={d.clienteId} className={`bg-white dark:bg-white/[0.02] border border-slate-200 dark:border-white/5 rounded-2xl p-4 ${colorFila(d.mesesDormido)}`}>
+                  <div key={d.clienteId} className={`bg-white dark:bg-white/[0.02] border border-slate-200 dark:border-white/5 rounded-2xl shadow-sm p-4 ${colorFila(d.mesesDormido)}`}>
                     <div className="flex items-start gap-3">
                       {d.telefono && <input type="checkbox" checked={seleccionados.has(d.clienteId)} onChange={() => toggleSeleccion(d.clienteId)} className="w-4 h-4 accent-[#0145F2] mt-1 shrink-0" />}
                       <div className="min-w-0 flex-1">

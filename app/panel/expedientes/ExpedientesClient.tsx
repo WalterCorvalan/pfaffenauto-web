@@ -219,7 +219,7 @@ export default function ExpedientesClient({
       )}
 
       {filtrados.length === 0 ? (
-        <div className="bg-white dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-2xl py-16 flex flex-col items-center justify-center text-center">
+        <div className="bg-white dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-2xl py-16 flex flex-col items-center justify-center text-center shadow-sm">
           <FolderPlus className="w-8 h-8 text-slate-300 dark:text-slate-600 mb-2" />
           <p className="text-sm font-bold text-slate-600 dark:text-slate-300">Todavía no hay expedientes</p>
           <p className="text-xs text-slate-400 mt-1 max-w-sm">Los expedientes se generan automáticamente al cerrar una venta — no hay alta manual en v2.</p>

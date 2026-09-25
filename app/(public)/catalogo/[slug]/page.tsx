@@ -407,12 +407,17 @@ function VehiculoPriceCard({
         <span className="text-[10px] text-slate-500 dark:text-slate-400 font-black uppercase tracking-widest block mb-2">
           {esCeroKm ? "0km" : "Usado seleccionado"} | {auto.anio}
         </span>
-        <h1 className="text-3xl lg:text-4xl font-black text-navy dark:text-white uppercase tracking-tighter leading-tight drop-shadow-sm">
+        {/* h2 a propósito: MobileTitle ya pone el <h1> real de la página
+            (oculto acá solo por CSS lg:hidden, sigue en el DOM) -- dos <h1>
+            simultáneos es un hallazgo típico de auditoría SEO (encabezados
+            duplicados), Google ve el HTML completo, no lo que el CSS oculta
+            en cada breakpoint. */}
+        <h2 className="text-3xl lg:text-4xl font-black text-navy dark:text-white uppercase tracking-tighter leading-tight drop-shadow-sm">
           {auto.marca}{" "}
           <span className="text-transparent bg-clip-text bg-gradient-to-r from-navy to-[#0145F2] dark:from-white dark:to-sky-400">
             {auto.modelo}
           </span>
-        </h1>
+        </h2>
         <p className="text-sm font-black text-slate-500 dark:text-slate-400 uppercase mt-2">
           {auto.version || `${auto.tipo || "Vehículo"} • ${auto.transmision || "Manual"}`}
         </p>

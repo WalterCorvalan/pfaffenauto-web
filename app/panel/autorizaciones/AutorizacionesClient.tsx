@@ -88,7 +88,7 @@ export default function AutorizacionesClient({
       <h1 className="text-xl font-bold flex items-center gap-2 mb-1"><ShieldAlert className="w-5 h-5 text-[#0145F2]" /> Autorizaciones</h1>
       <p className="text-sm text-slate-400 mb-4">Bandeja de solicitudes que requieren tu aprobación. Cada decisión queda trazada con motivo, fecha y usuario.</p>
 
-      <div className="flex items-center gap-1 bg-white dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-xl p-1 mb-4 w-fit">
+      <div className="flex items-center gap-1 bg-white dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-xl p-1 mb-4 w-fit shadow-sm">
         <button onClick={() => setTab("pendientes")} className={`px-3 py-1.5 rounded-lg text-sm font-bold flex items-center gap-1.5 ${tab === "pendientes" ? "bg-[#0145F2] text-white" : "text-slate-500 dark:text-slate-400"}`}><Inbox className="w-3.5 h-3.5" /> Pendientes</button>
         <button onClick={() => setTab("historico")} className={`px-3 py-1.5 rounded-lg text-sm font-bold flex items-center gap-1.5 ${tab === "historico" ? "bg-[#0145F2] text-white" : "text-slate-500 dark:text-slate-400"}`}><History className="w-3.5 h-3.5" /> Histórico</button>
         {soyAdmin && (
@@ -97,7 +97,7 @@ export default function AutorizacionesClient({
       </div>
 
       {tab === "pendientes" && (
-        <div className="bg-white dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-2xl overflow-hidden">
+        <div className="bg-white dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-2xl overflow-hidden shadow-sm">
           {pendientes.length === 0 ? (
             <div className="py-16 flex flex-col items-center justify-center text-center">
               <CheckCircle2 className="w-8 h-8 text-emerald-400 mb-2" />
@@ -138,7 +138,7 @@ export default function AutorizacionesClient({
       )}
 
       {tab === "historico" && (
-        <div className="bg-white dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-2xl overflow-hidden">
+        <div className="bg-white dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-2xl overflow-hidden shadow-sm">
           {historico.length === 0 ? (
             <p className="py-16 text-center text-sm text-slate-400">Sin histórico todavía.</p>
           ) : (
@@ -167,14 +167,14 @@ export default function AutorizacionesClient({
             <p className="text-xs text-amber-700/80 dark:text-amber-300/70 mt-1">Un PIN que podés dictar por teléfono cuando un usuario necesita autorizar algo urgente y no estás disponible para aprobar desde el CRM. <strong>Todo uso del PIN queda registrado abajo</strong> con quién, qué acción y cuándo.</p>
           </div>
 
-          <div className="bg-white dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-2xl p-5">
+          <div className="bg-white dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-2xl p-5 shadow-sm">
             <span className={`text-[10px] font-black uppercase px-2 py-1 rounded-full ${tienePinEstado ? "bg-emerald-50 dark:bg-emerald-500/10 text-emerald-700 dark:text-emerald-300" : "bg-amber-50 dark:bg-amber-500/10 text-amber-700 dark:text-amber-300"}`}>{tienePinEstado ? "PIN configurado" : "Sin PIN configurado"}</span>
             <label className="text-xs font-bold text-slate-500 dark:text-slate-400 block mt-3 mb-1">Nuevo PIN (mín 4 caracteres)</label>
             <input value={nuevoPin} onChange={(e) => setNuevoPin(e.target.value)} placeholder="Ej: 2874" type="password" className="w-full max-w-xs bg-slate-50 dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-lg px-3 py-2 text-sm outline-none" />
             <button onClick={guardarPin} disabled={guardandoPin || nuevoPin.length < 4} className="flex items-center gap-1.5 mt-3 px-4 py-2 rounded-lg text-sm font-bold bg-[#0145F2] hover:bg-[#0138c9] text-white disabled:opacity-50"><Save className="w-4 h-4" /> Guardar PIN</button>
           </div>
 
-          <div className="bg-white dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-2xl overflow-hidden">
+          <div className="bg-white dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-2xl overflow-hidden shadow-sm">
             <p className="text-xs font-bold text-slate-600 dark:text-slate-300 px-4 py-3 border-b border-slate-100 dark:border-white/10 flex items-center gap-1.5"><History className="w-3.5 h-3.5" /> Uso del PIN (auditoría)</p>
             {usosPinIniciales.length === 0 ? (
               <p className="py-8 text-center text-sm text-slate-400">Nadie usó el PIN todavía.</p>

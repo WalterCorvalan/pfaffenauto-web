@@ -42,11 +42,12 @@ export default function LiquidacionMensualTab({ liquidaciones, setLiquidaciones,
         const agenciaMes = filas.reduce((a, f) => a + Number(f.ingreso_agencia), 0);
 
         return (
-          <div key={mes} className="bg-white dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-xl overflow-hidden">
+          <div key={mes} className="bg-white dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-xl shadow-sm overflow-hidden">
             <div className="flex items-center justify-between p-3 border-b border-slate-100 dark:border-white/10">
               <p className="text-sm font-bold">{new Date(mes + "-01T12:00:00").toLocaleDateString("es-AR", { month: "long", year: "numeric" })}</p>
               <p className="text-xs text-slate-400">{filas.length} operación{filas.length === 1 ? "" : "es"} · <span className="text-indigo-600 font-bold">Comisiones: {fmt(comisionesMes)}</span> · <span className="text-blue-600 font-bold">Agencia: {gananciasOcultas ? "—" : fmt(agenciaMes)}</span></p>
             </div>
+            <div className="overflow-x-auto">
             <table className="w-full text-xs">
               <thead className="text-left text-slate-400"><tr><th className="p-2.5"></th><th className="p-2.5">Gestora</th><th className="p-2.5">Ops</th><th className="p-2.5">Fijo</th><th className="p-2.5">% Transf.</th><th className="p-2.5">% Multas</th><th className="p-2.5">Total a cobrar</th><th className="p-2.5">Ing. agencia</th><th className="p-2.5">Estado</th><th className="p-2.5">Acción</th></tr></thead>
               <tbody>
@@ -95,13 +96,14 @@ export default function LiquidacionMensualTab({ liquidaciones, setLiquidaciones,
                   <td className="p-2.5">{filas.length}</td>
                   <td className="p-2.5 font-mono">{fmt(filas.reduce((a, f) => a + Number(f.comision_fija_aplicada), 0))}</td>
                   <td className="p-2.5 font-mono">{fmt(filas.reduce((a, f) => a + (Number(f.pct_gestora_aplicado) / 100) * Number(f.diferencia_transferencia), 0))}</td>
-                  <td className="p-2.5"></td>
+                  <td className="p-2.5 font-mono">{fmt(filas.reduce((a, f) => a + (Number(f.pct_gestora_aplicado) / 100) * Number(f.diferencia_multas), 0))}</td>
                   <td className="p-2.5 font-mono">{fmt(comisionesMes)}</td>
                   <td className="p-2.5 font-mono">{gananciasOcultas ? "—" : fmt(agenciaMes)}</td>
                   <td colSpan={2}></td>
                 </tr>
               </tfoot>
             </table>
+            </div>
           </div>
         );
       })}

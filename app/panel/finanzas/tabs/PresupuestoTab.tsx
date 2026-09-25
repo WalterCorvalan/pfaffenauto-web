@@ -5,9 +5,10 @@ import { supabase2 } from "@/lib/supabase/client";
 import { Plus, X, Save } from "lucide-react";
 import { inputClass, labelClass, fmt, CATEGORIAS_MOVIMIENTO } from "./shared";
 import ConfirmDialog from "@/components/panel/ConfirmDialog";
+import { hoyLocalISO } from "@/lib/panel/fechas";
 
-export default function PresupuestoTab({ presupuestos, setPresupuestos, movimientos }: { presupuestos: any[]; setPresupuestos: (fn: any) => void; movimientos: any[] }) {
-  const [mes, setMes] = useState(new Date().toISOString().slice(0, 7));
+export default function PresupuestoTab({ presupuestos, setPresupuestos, movimientos, soyAdminOFinanzas }: { presupuestos: any[]; setPresupuestos: (fn: any) => void; movimientos: any[]; soyAdminOFinanzas: boolean }) {
+  const [mes, setMes] = useState(hoyLocalISO().slice(0, 7));
   const [showNuevo, setShowNuevo] = useState(false);
   const [editando, setEditando] = useState<any | null>(null);
   const [tipo, setTipo] = useState("egreso");
@@ -30,6 +31,7 @@ export default function PresupuestoTab({ presupuestos, setPresupuestos, movimien
   const abrirEditar = (p: any) => { setEditando(p); setTipo(p.tipo); setMoneda(p.moneda); setCategoria(p.categoria); setMonto(String(p.monto_presupuestado)); setNotas(p.notas || ""); setShowNuevo(true); };
 
   const guardar = async () => {
+    if (!soyAdminOFinanzas) return alert("No tenés permiso para esto.");
     if (!categoria || !monto) return alert("Completá categoría y monto.");
     setGuardando(true);
     try {
@@ -50,6 +52,7 @@ export default function PresupuestoTab({ presupuestos, setPresupuestos, movimien
   };
 
   const eliminar = (p: any) => {
+    if (!soyAdminOFinanzas) return alert("No tenés permiso para esto.");
     setConfirmDialog({
       mensaje: `¿Eliminar el presupuesto de "${p.categoria}"?`,
       accion: async () => {

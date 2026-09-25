@@ -511,13 +511,13 @@ export default function ClientesClient({
               </div>
 
               {clientesFiltrados.length === 0 ? (
-                <div className="flex flex-col items-center justify-center text-center py-20 bg-white dark:bg-white/[0.02] border border-slate-200 dark:border-white/5 rounded-2xl">
+                <div className="flex flex-col items-center justify-center text-center py-20 bg-white dark:bg-white/[0.02] border border-slate-200 dark:border-white/5 rounded-2xl shadow-sm">
                   <Users className="w-10 h-10 text-slate-300 dark:text-slate-600 mb-3" />
                   <h3 className="text-sm font-bold text-slate-800 dark:text-white mb-1">Sin resultados</h3>
                   <p className="text-xs text-slate-500 dark:text-slate-400">Todavía no hay clientes cargados. Podés darlos de alta desde acá mismo.</p>
                 </div>
               ) : (
-                <div className="bg-white dark:bg-white/[0.02] border border-slate-200 dark:border-white/5 rounded-2xl divide-y divide-slate-100 dark:divide-white/5 overflow-hidden mb-3">
+                <div className="bg-white dark:bg-white/[0.02] border border-slate-200 dark:border-white/5 rounded-2xl shadow-sm divide-y divide-slate-100 dark:divide-white/5 overflow-hidden mb-3">
                   {clientesPaginados.map((c) => {
                     const contactado = c.pipeline_stage !== "sin_contactar";
                     const vacio = nombreVacio(c.nombre);
@@ -604,13 +604,13 @@ export default function ClientesClient({
               <p className="text-[11px] font-semibold text-slate-400 mb-2">{agendaFiltrada.length} cliente{agendaFiltrada.length === 1 ? "" : "s"}</p>
 
               {agendaFiltrada.length === 0 ? (
-                <div className="flex flex-col items-center justify-center text-center py-20 bg-white dark:bg-white/[0.02] border border-slate-200 dark:border-white/5 rounded-2xl">
+                <div className="flex flex-col items-center justify-center text-center py-20 bg-white dark:bg-white/[0.02] border border-slate-200 dark:border-white/5 rounded-2xl shadow-sm">
                   <ClipboardList className="w-10 h-10 text-slate-300 dark:text-slate-600 mb-3" />
                   <h3 className="text-sm font-bold text-slate-800 dark:text-white mb-1">Nada para mostrar acá</h3>
                   <p className="text-xs text-slate-500 dark:text-slate-400">Probá con otro filtro o buscá otra cosa.</p>
                 </div>
               ) : (
-                <div className="bg-white dark:bg-white/[0.02] border border-slate-200 dark:border-white/5 rounded-2xl divide-y divide-slate-100 dark:divide-white/5">
+                <div className="bg-white dark:bg-white/[0.02] border border-slate-200 dark:border-white/5 rounded-2xl shadow-sm divide-y divide-slate-100 dark:divide-white/5">
                   {agendaFiltrada.slice(0, 100).map((c) => {
                     const vacio = nombreVacio(c.nombre);
                     const sinContactar = c.pipeline_stage === "sin_contactar";
@@ -709,12 +709,12 @@ export default function ClientesClient({
               )}
 
               <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 mb-4">
-                <div className="bg-white dark:bg-white/[0.02] border border-slate-200 dark:border-white/5 rounded-xl p-4">
+                <div className="bg-white dark:bg-white/[0.02] border border-slate-200 dark:border-white/5 rounded-xl shadow-sm p-4">
                   <p className="text-[10px] font-black uppercase tracking-widest text-slate-400">Ingresos · {PERIODOS.find((p) => p.value === periodo)?.label}</p>
                   <p className="text-2xl font-black text-slate-900 dark:text-white mt-1">{ingresosFiltrados.length}</p>
                   <p className="text-[10px] text-slate-400 mt-0.5">Período anterior: {periodo === "todos" ? "—" : ingresosAnteriorCount}</p>
                 </div>
-                <div className="bg-white dark:bg-white/[0.02] border border-slate-200 dark:border-white/5 rounded-xl p-4">
+                <div className="bg-white dark:bg-white/[0.02] border border-slate-200 dark:border-white/5 rounded-xl shadow-sm p-4">
                   <p className="text-[10px] font-black uppercase tracking-widest text-slate-400">Todavía sin contactar</p>
                   <p className="text-2xl font-black text-slate-900 dark:text-white mt-1">{sinContactarPeriodo}</p>
                 </div>
@@ -722,13 +722,13 @@ export default function ClientesClient({
                   <p className="text-[10px] font-black uppercase tracking-widest text-emerald-600 dark:text-emerald-400">Ya contactados</p>
                   <p className="text-2xl font-black text-emerald-700 dark:text-emerald-300 mt-1">{yaContactadosPeriodo}</p>
                 </div>
-                <div className="bg-white dark:bg-white/[0.02] border border-slate-200 dark:border-white/5 rounded-xl p-4">
+                <div className="bg-white dark:bg-white/[0.02] border border-slate-200 dark:border-white/5 rounded-xl shadow-sm p-4">
                   <p className="text-[10px] font-black uppercase tracking-widest text-slate-400">Canal que más trajo</p>
                   <p className="text-2xl font-black text-slate-900 dark:text-white mt-1">{canalTop}</p>
                 </div>
               </div>
 
-              <div className="bg-white dark:bg-white/[0.02] border border-slate-200 dark:border-white/5 rounded-2xl p-5 mb-4">
+              <div className="bg-white dark:bg-white/[0.02] border border-slate-200 dark:border-white/5 rounded-2xl shadow-sm p-5 mb-4">
                 <p className="text-sm font-bold text-slate-800 dark:text-white mb-1">Ingresos por día — últimos 30 días</p>
                 <p className="text-[11px] text-slate-400 mb-4">Clickeá una barra para ver los clientes de ese día</p>
                 <div className="flex items-end gap-1 h-32">
@@ -742,7 +742,7 @@ export default function ClientesClient({
               </div>
 
               <div className="grid grid-cols-1 md:grid-cols-3 gap-3 mb-4">
-                <div className="bg-white dark:bg-white/[0.02] border border-slate-200 dark:border-white/5 rounded-xl p-4">
+                <div className="bg-white dark:bg-white/[0.02] border border-slate-200 dark:border-white/5 rounded-xl shadow-sm p-4">
                   <p className="text-[11px] font-black uppercase tracking-widest text-slate-400 mb-2">De dónde vinieron</p>
                   {desgloseOrigen.length === 0 ? <p className="text-xs text-slate-400">Sin datos en el período.</p> : desgloseOrigen.map(([k, n]) => {
                     const pct = Math.round((n / ingresosFiltrados.length) * 100);
@@ -754,7 +754,7 @@ export default function ClientesClient({
                     );
                   })}
                 </div>
-                <div className="bg-white dark:bg-white/[0.02] border border-slate-200 dark:border-white/5 rounded-xl p-4">
+                <div className="bg-white dark:bg-white/[0.02] border border-slate-200 dark:border-white/5 rounded-xl shadow-sm p-4">
                   <p className="text-[11px] font-black uppercase tracking-widest text-slate-400 mb-2">Quién los tiene</p>
                   {desgloseVendedor.length === 0 ? <p className="text-xs text-slate-400">Sin datos en el período.</p> : desgloseVendedor.map(([k, n]) => {
                     const pct = Math.round((n / ingresosFiltrados.length) * 100);
@@ -766,7 +766,7 @@ export default function ClientesClient({
                     );
                   })}
                 </div>
-                <div className="bg-white dark:bg-white/[0.02] border border-slate-200 dark:border-white/5 rounded-xl p-4">
+                <div className="bg-white dark:bg-white/[0.02] border border-slate-200 dark:border-white/5 rounded-xl shadow-sm p-4">
                   <p className="text-[11px] font-black uppercase tracking-widest text-slate-400 mb-2">Qué buscan</p>
                   {desgloseBusca.length === 0 ? <p className="text-xs text-slate-400">Sin datos en el período.</p> : desgloseBusca.map(([k, n]) => {
                     const pct = Math.round((n / ingresosFiltrados.length) * 100);
@@ -781,7 +781,7 @@ export default function ClientesClient({
               </div>
 
               {repartoVendedores.length > 0 && (
-                <div className="bg-white dark:bg-white/[0.02] border border-slate-200 dark:border-white/5 rounded-xl p-4 mb-4 overflow-x-auto">
+                <div className="bg-white dark:bg-white/[0.02] border border-slate-200 dark:border-white/5 rounded-xl shadow-sm p-4 mb-4 overflow-x-auto">
                   <p className="text-[11px] font-black uppercase tracking-widest text-slate-400 mb-3">Cómo se repartió</p>
                   <table className="w-full text-left text-xs">
                     <thead><tr className="text-[10px] uppercase text-slate-400"><th className="py-1.5 pr-3">Vendedor</th><th className="py-1.5 pr-3">Entraron</th><th className="py-1.5 pr-3">Período anterior</th><th className="py-1.5 pr-3">Sin contactar</th></tr></thead>
@@ -806,13 +806,13 @@ export default function ClientesClient({
               )}
 
               {ingresosFiltrados.length === 0 ? (
-                <div className="flex flex-col items-center justify-center text-center py-16 bg-white dark:bg-white/[0.02] border border-slate-200 dark:border-white/5 rounded-2xl">
+                <div className="flex flex-col items-center justify-center text-center py-16 bg-white dark:bg-white/[0.02] border border-slate-200 dark:border-white/5 rounded-2xl shadow-sm">
                   <Users className="w-9 h-9 text-slate-300 dark:text-slate-600 mb-2" />
                   <h3 className="text-sm font-bold text-slate-800 dark:text-white">Sin ingresos en este período</h3>
                   <p className="text-xs text-slate-500 dark:text-slate-400">Probá con otro período o sacá los filtros.</p>
                 </div>
               ) : (
-                <div className="bg-white dark:bg-white/[0.02] border border-slate-200 dark:border-white/5 rounded-2xl divide-y divide-slate-100 dark:divide-white/5">
+                <div className="bg-white dark:bg-white/[0.02] border border-slate-200 dark:border-white/5 rounded-2xl shadow-sm divide-y divide-slate-100 dark:divide-white/5">
                   {ingresosFiltrados.map((c) => (
                     <div key={c.id} className="flex items-center justify-between px-4 py-2.5 text-xs">
                       <span className="font-semibold text-slate-700 dark:text-slate-200">{nombreVacio(c.nombre) ? "Cliente sin nombre" : c.nombre}</span>
@@ -828,7 +828,7 @@ export default function ClientesClient({
           {vista === "demanda" && (
             <>
               <div className="grid grid-cols-2 gap-3 mb-4">
-                <div className="bg-white dark:bg-white/[0.02] border border-slate-200 dark:border-white/5 rounded-xl p-4">
+                <div className="bg-white dark:bg-white/[0.02] border border-slate-200 dark:border-white/5 rounded-xl shadow-sm p-4">
                   <p className="text-2xl font-black text-slate-900 dark:text-white">0</p>
                   <p className="text-[11px] text-slate-400">clientes con auto identificado (0% de {clientes.length})</p>
                 </div>
@@ -838,7 +838,7 @@ export default function ClientesClient({
                 </div>
               </div>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                <div className="bg-white dark:bg-white/[0.02] border border-slate-200 dark:border-white/5 rounded-xl p-4">
+                <div className="bg-white dark:bg-white/[0.02] border border-slate-200 dark:border-white/5 rounded-xl shadow-sm p-4">
                   <p className="text-[11px] font-black uppercase tracking-widest text-slate-400 mb-3">Marcas más pedidas (top 15)</p>
                   {marcasTop.length === 0 ? <p className="text-xs text-slate-400 text-center py-4">Sin marcas reconocidas todavía.</p> : (
                     <div className="space-y-1.5">
@@ -852,18 +852,18 @@ export default function ClientesClient({
                     </div>
                   )}
                 </div>
-                <div className="bg-white dark:bg-white/[0.02] border border-slate-200 dark:border-white/5 rounded-xl p-4">
+                <div className="bg-white dark:bg-white/[0.02] border border-slate-200 dark:border-white/5 rounded-xl shadow-sm p-4">
                   <p className="text-[11px] font-black uppercase tracking-widest text-slate-400 mb-3">Por canal de entrada</p>
                   {canalDemanda.length === 0 ? <p className="text-xs text-slate-400 text-center py-4">Sin datos de canal.</p> : canalDemanda.map(([k, n]) => (
                     <div key={k} className="flex items-center justify-between text-xs py-1.5"><span className="font-semibold text-slate-600 dark:text-slate-300">{k}</span><span className="font-black text-slate-500">{n}</span></div>
                   ))}
                 </div>
-                <div className="bg-white dark:bg-white/[0.02] border border-slate-200 dark:border-white/5 rounded-xl p-4">
+                <div className="bg-white dark:bg-white/[0.02] border border-slate-200 dark:border-white/5 rounded-xl shadow-sm p-4">
                   <p className="text-[11px] font-black uppercase tracking-widest text-slate-400 mb-2">Por tipo de auto</p>
                   <p className="text-[10px] text-slate-400 mb-3">Sale de la carrocería del vehículo vinculado; cubre solo a los clientes con auto de stock enganchado.</p>
                   <p className="text-xs text-slate-400 text-center py-4">Todavía no hay clientes con auto de stock vinculado.</p>
                 </div>
-                <div className="bg-white dark:bg-white/[0.02] border border-slate-200 dark:border-white/5 rounded-xl p-4">
+                <div className="bg-white dark:bg-white/[0.02] border border-slate-200 dark:border-white/5 rounded-xl shadow-sm p-4">
                   <p className="text-[11px] font-black uppercase tracking-widest text-slate-400 mb-2 flex items-center gap-1.5"><ShoppingBag className="w-3.5 h-3.5" /> Pedidos activos por marca (wishlist)</p>
                   <p className="text-[10px] text-slate-400 mb-3">Demanda explícita: lo que el cliente dejó pedido y sigue abierto.</p>
                   {marcasTop.length === 0 ? <p className="text-xs text-slate-400 text-center py-4">Sin pedidos activos.</p> : (
@@ -885,7 +885,7 @@ export default function ClientesClient({
           {/* ===================== RANKING ===================== */}
           {vista === "ranking" && (
             rankingFilas.length === 0 ? (
-              <div className="flex flex-col items-center justify-center text-center py-24 bg-white dark:bg-white/[0.02] border border-slate-200 dark:border-white/5 rounded-2xl">
+              <div className="flex flex-col items-center justify-center text-center py-24 bg-white dark:bg-white/[0.02] border border-slate-200 dark:border-white/5 rounded-2xl shadow-sm">
                 <ShoppingBag className="w-10 h-10 text-slate-300 dark:text-slate-600 mb-3" />
                 <h3 className="text-base font-black text-slate-800 dark:text-white mb-1">Todavía no hay compras ni operaciones abiertas</h3>
                 <p className="max-w-sm text-xs text-slate-500 dark:text-slate-400">Cuando cierres ventas vinculadas a un cliente (o con el mismo DNI), acá vas a ver quiénes son los que más te compran.</p>
@@ -893,17 +893,17 @@ export default function ClientesClient({
             ) : (
               <>
                 <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 mb-4">
-                  <div className="bg-white dark:bg-white/[0.02] border border-slate-200 dark:border-white/5 rounded-xl p-4">
+                  <div className="bg-white dark:bg-white/[0.02] border border-slate-200 dark:border-white/5 rounded-xl shadow-sm p-4">
                     <p className="text-[10px] font-black uppercase tracking-widest text-slate-400">Clientes que compraron</p>
                     <p className="text-2xl font-black text-slate-900 dark:text-white mt-1">{clientesQueCompraron}</p>
                     <p className="text-[10px] text-slate-400 mt-0.5">{autosVendidosTotal} autos vendidos</p>
                   </div>
-                  <div className="bg-white dark:bg-white/[0.02] border border-slate-200 dark:border-white/5 rounded-xl p-4">
+                  <div className="bg-white dark:bg-white/[0.02] border border-slate-200 dark:border-white/5 rounded-xl shadow-sm p-4">
                     <p className="text-[10px] font-black uppercase tracking-widest text-slate-400">Vuelven</p>
                     <p className="text-2xl font-black text-slate-900 dark:text-white mt-1">{vuelven}</p>
                     <p className="text-[10px] text-slate-400 mt-0.5">compraron 2 o más autos</p>
                   </div>
-                  <div className="bg-white dark:bg-white/[0.02] border border-slate-200 dark:border-white/5 rounded-xl p-4">
+                  <div className="bg-white dark:bg-white/[0.02] border border-slate-200 dark:border-white/5 rounded-xl shadow-sm p-4">
                     <p className="text-[10px] font-black uppercase tracking-widest text-slate-400">Facturado a clientes</p>
                     <p className="text-lg font-black text-slate-900 dark:text-white mt-1">{fmtTotalesPorMoneda(facturadoTotalPorMoneda)}</p>
                     <p className="text-[10px] text-slate-400 mt-0.5">solo ventas cerradas</p>
@@ -916,7 +916,7 @@ export default function ClientesClient({
                   </button>
                 )}
 
-                <div className="bg-white dark:bg-white/[0.02] border border-slate-200 dark:border-white/5 rounded-2xl overflow-x-auto">
+                <div className="bg-white dark:bg-white/[0.02] border border-slate-200 dark:border-white/5 rounded-2xl shadow-sm overflow-x-auto">
                   <table className="w-full text-left text-xs">
                     <thead>
                       <tr className="bg-slate-50 dark:bg-white/[0.03] border-b border-slate-200 dark:border-white/5 text-[10px] uppercase tracking-widest text-slate-400">

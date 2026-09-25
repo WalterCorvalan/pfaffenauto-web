@@ -123,6 +123,21 @@ export async function POST(request: Request) {
         const { data: vehiculo } = await sb.from("vehiculos").select("estado").eq("id", vehiculoId).maybeSingle();
         if (vehiculo?.estado === "vendido") await sb.from("vehiculos").update({ estado: "disponible" }).eq("id", vehiculoId);
       }
+      // Mismo criterio que "cancelar" una venta desde VentaDetalleModal.tsx
+      // (revertirVinculosCancelacion) -- mandar a Papelera es otro camino de
+      // "esta venta ya no va", con los mismos efectos secundarios que
+      // resolver: si no, las cuotas sin cobrar seguían activas (Cobros y el
+      // cron le siguen reclamando al cliente sobre una venta que ya no
+      // existe) y la seña vinculada quedaba "Convertida" para siempre sin
+      // ninguna venta viva a la que apuntar.
+      if (ventaId) {
+        await sb.from("cuotas_cobrar_clientes").delete().eq("venta_id", ventaId).eq("cobrada", false);
+        const { data: senasVinculadas } = await sb.from("venta_senas").select("sena_origen_id").eq("venta_id", ventaId).not("sena_origen_id", "is", null);
+        const idsSenas = (senasVinculadas || []).map((s) => s.sena_origen_id).filter(Boolean) as string[];
+        if (idsSenas.length > 0) {
+          await sb.from("senas").update({ estado: "Activa", etapa_seguimiento: "Activa" }).in("id", idsSenas).eq("estado", "Convertida");
+        }
+      }
     } else {
       const { error: upError } = await sb.from(tipo).update(patch).eq("id", id);
       if (upError) return NextResponse.json({ error: upError.message }, { status: 400 });

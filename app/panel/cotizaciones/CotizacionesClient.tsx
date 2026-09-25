@@ -182,7 +182,7 @@ export default function CotizacionesClient({
 
       <div className="flex-1 overflow-y-auto bg-slate-50 dark:bg-[#141414] p-6">
         {leadsWeb.length > 0 && (
-          <div className="mb-6 bg-white dark:bg-white/[0.02] border border-slate-200 dark:border-white/5 rounded-2xl overflow-hidden">
+          <div className="mb-6 bg-white dark:bg-white/[0.02] border border-slate-200 dark:border-white/5 rounded-2xl shadow-sm overflow-hidden">
             <div className="flex items-center justify-between px-4 py-3 border-b border-slate-100 dark:border-white/10">
               <p className="text-[11px] font-black uppercase tracking-widest text-slate-400 flex items-center gap-1.5"><Globe className="w-3.5 h-3.5" /> Tasaciones pedidas desde la web ({leadsWeb.length})</p>
               <Link href="/panel/peritajes" className="text-[11px] font-bold text-[#0145F2] hover:text-[#0138c9] flex items-center gap-1">Convertir en peritaje <ExternalLink className="w-3 h-3" /></Link>
@@ -246,7 +246,7 @@ export default function CotizacionesClient({
         </div>
 
         {filtradas.length === 0 ? (
-          <div className="flex flex-col items-center justify-center text-center py-20 bg-white dark:bg-white/[0.02] border border-slate-200 dark:border-white/5 rounded-2xl">
+          <div className="flex flex-col items-center justify-center text-center py-20 bg-white dark:bg-white/[0.02] border border-slate-200 dark:border-white/5 rounded-2xl shadow-sm">
             <FileText className="w-10 h-10 text-slate-300 dark:text-slate-600 mb-3" />
             <h3 className="text-sm font-bold text-slate-800 dark:text-white mb-1">Sin resultados</h3>
             <p className="text-xs text-slate-500 dark:text-slate-400">Todavía no hay cotizaciones cargadas. Podés crear una desde el botón de arriba.</p>

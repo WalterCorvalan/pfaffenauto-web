@@ -1,3 +1,4 @@
+import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import LiquidadorClient from "./LiquidadorClient";
 
@@ -5,6 +6,15 @@ export const metadata = { title: "Liquidador de sueldos | Pfaffen Autos" };
 
 export default async function LiquidadorPage() {
   const supabase = await createClient();
+  // Sueldos no tenía ningún control de acceso -- ni tienePermiso() en el
+  // server, ni chequeo de rol en el cliente. Cualquier usuario logueado
+  // entraba por URL directa y veía el sueldo base de todos los empleados
+  // (incluido admin), y podía marcar/revertir liquidaciones pagadas --
+  // plata real de Tesorería. Solo admin, es el dato más sensible del panel.
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) redirect("/panel/login");
+  const { data: miPerfil } = await supabase.from("perfiles").select("roles").eq("id", user.id).single();
+  if (!miPerfil?.roles?.includes("admin")) redirect("/panel");
 
   const { data: empleados } = await supabase
     .from("perfiles")

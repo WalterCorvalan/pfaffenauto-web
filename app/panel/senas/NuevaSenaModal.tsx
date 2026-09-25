@@ -242,9 +242,14 @@ export default function NuevaSenaModal({
       }
 
       if (!precioConfirmado) {
+        // ventaArs/ventaUsd son mutuamente excluyentes -- armar el texto
+        // solo con ventaArs mostraba "$0" cuando la venta estaba pactada en
+        // USD, justo en el aviso pensado para que un encargado revise un
+        // precio sospechoso.
+        const precioTextoAviso = Number(ventaUsd) > 0 ? `US$ ${Number(ventaUsd).toLocaleString("en-US")}` : `$${(Number(ventaArs) || 0).toLocaleString("es-AR")}`;
         await notificarEncargados(
           supabase2,
-          `${cliente.nombre} ${cliente.apellido || ""} — Seña N° ${data.numero}: el vendedor no confirmó el precio ($${(Number(ventaArs) || 0).toLocaleString("es-AR")}). Verificalo.`,
+          `${cliente.nombre} ${cliente.apellido || ""} — Seña N° ${data.numero}: el vendedor no confirmó el precio (${precioTextoAviso}). Verificalo.`,
           `/panel/senas/imprimir/${data.id}`,
           "precio_a_confirmar",
           sucursalId,
@@ -458,7 +463,7 @@ export default function NuevaSenaModal({
 
       {mostrarModalPrecio && (
         <ConfirmarPrecioModal
-          precioTexto={`Venta $ ${(Number(ventaArs) || 0).toLocaleString("es-AR")}${senaArs ? ` · Seña $ ${Number(senaArs).toLocaleString("es-AR")}` : ""}`}
+          precioTexto={`Venta ${Number(ventaUsd) > 0 ? `US$ ${Number(ventaUsd).toLocaleString("en-US")}` : `$ ${(Number(ventaArs) || 0).toLocaleString("es-AR")}`}${Number(senaUsd) > 0 ? ` · Seña US$ ${Number(senaUsd).toLocaleString("en-US")}` : senaArs ? ` · Seña $ ${Number(senaArs).toLocaleString("es-AR")}` : ""}`}
           onConfirmar={() => guardarSena(true)}
           onNoSeguro={() => guardarSena(false)}
           onCancelar={() => setMostrarModalPrecio(false)}

@@ -54,7 +54,7 @@ export default function ConciliacionTab({ movimientos }: { movimientos: any[] })
         🏦 <b>Conciliación bancaria (scaffold)</b>: subí el extracto CSV y matcheamos automáticamente contra los movimientos del CRM. Acepta columnas <code>fecha</code>, <code>descripcion</code> y <code>monto</code> (separador , o ;). Match por monto absoluto (±1) y fecha (±3 días).
       </div>
 
-      <label className="flex items-center gap-3 bg-white dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-xl p-4 cursor-pointer">
+      <label className="flex items-center gap-3 bg-white dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-xl p-4 cursor-pointer shadow-sm">
         <span className="flex items-center gap-1.5 px-4 py-2 text-sm font-bold bg-[#0145F2] hover:bg-[#0138c9] text-white rounded-lg"><Upload className="w-4 h-4" /> Subir extracto CSV</span>
         <span className="text-xs text-slate-400">{archivo || "Sin archivo cargado."}</span>
         <input type="file" accept=".csv" className="hidden" onChange={(e) => e.target.files?.[0] && onFile(e.target.files[0])} />

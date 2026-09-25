@@ -231,7 +231,7 @@ export default function SolicitarFinanciacionForm({ vehiculoPreseleccionado, cla
     }
   };
 
-  const inputClass = "w-full bg-white dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-xl px-4 py-3 text-sm font-semibold text-navy dark:text-white outline-none focus:border-[#0145F2] dark:focus:border-sky-400 focus:ring-4 focus:ring-blue-500/10 dark:focus:ring-sky-400/10 transition-all shadow-sm dark:shadow-none";
+  const inputClass = "w-full bg-white dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-xl px-4 py-3 text-sm font-semibold text-navy dark:text-white outline-none focus:border-[#0145F2] dark:focus:border-sky-400 focus:ring-4 focus:ring-[#0145F2]/10 dark:focus:ring-sky-400/10 transition-all shadow-sm dark:shadow-none";
   const labelClass = "text-[10px] font-black text-slate-500 dark:text-slate-400 uppercase tracking-widest mb-1.5 flex items-center gap-1.5";
 
   const modalContent = (
@@ -365,7 +365,7 @@ export default function SolicitarFinanciacionForm({ vehiculoPreseleccionado, cla
                     type="button"
                     disabled={!precioVehiculo}
                     onClick={() => setStep(3)}
-                    className="w-full py-3.5 bg-[#0145F2] text-white font-black text-[10px] uppercase tracking-widest rounded-xl hover:bg-blue-600 transition-all disabled:opacity-50"
+                    className="w-full py-3.5 bg-[#0145F2] text-white font-black text-[10px] uppercase tracking-widest rounded-xl hover:bg-[#0145F2] transition-all disabled:opacity-50"
                   >
                     {precioVehiculo
                       ? "Continuar"
@@ -398,7 +398,7 @@ export default function SolicitarFinanciacionForm({ vehiculoPreseleccionado, cla
                     type="button"
                     disabled={!creditoPreaprobado}
                     onClick={() => setStep(4)}
-                    className="w-full py-3.5 bg-[#0145F2] text-white font-black text-[10px] uppercase tracking-widest rounded-xl hover:bg-blue-600 transition-all disabled:opacity-50"
+                    className="w-full py-3.5 bg-[#0145F2] text-white font-black text-[10px] uppercase tracking-widest rounded-xl hover:bg-[#0145F2] transition-all disabled:opacity-50"
                   >
                     Continuar
                   </button>
@@ -438,7 +438,7 @@ export default function SolicitarFinanciacionForm({ vehiculoPreseleccionado, cla
                   <button
                     type="submit"
                     disabled={loading || !turnstileToken}
-                    className="w-full py-3.5 bg-[#0145F2] text-white font-black text-[10px] uppercase tracking-widest rounded-xl hover:bg-blue-600 transition-all shadow-lg shadow-blue-500/30 disabled:opacity-50 flex items-center justify-center gap-2"
+                    className="w-full py-3.5 bg-[#0145F2] text-white font-black text-[10px] uppercase tracking-widest rounded-xl hover:bg-[#0145F2] transition-all shadow-lg shadow-[#0145F2]/30 disabled:opacity-50 flex items-center justify-center gap-2"
                   >
                     {loading && <Loader2 className="w-4 h-4 animate-spin" />}
                     {loading ? "Enviando..." : "Enviar solicitud"}
@@ -458,7 +458,7 @@ export default function SolicitarFinanciacionForm({ vehiculoPreseleccionado, cla
     <>
       <button
         onClick={() => setIsOpen(true)}
-        className={className || "mt-6 flex items-center justify-center gap-2 w-full bg-blue-600 hover:bg-blue-700 text-white font-bold text-sm py-3.5 rounded-xl transition-colors active:scale-[0.99]"}
+        className={className || "mt-6 flex items-center justify-center gap-2 w-full bg-[#0145F2] hover:bg-[#0138c9] text-white font-bold text-sm py-3.5 rounded-xl transition-colors active:scale-[0.99]"}
       >
         {label}
         <CreditCard className="w-4 h-4" />

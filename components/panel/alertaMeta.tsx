@@ -2,7 +2,7 @@ import {
   User, Car, FileText, BarChart3, CreditCard, Bell, DollarSign, FolderKanban,
   MessageSquareWarning, BellRing, SearchCode, Repeat, AlarmClock, MessageCircle,
   PhoneCall, Gift, AlertTriangle, Bot, Briefcase, KeyRound, CalendarCheck,
-  Calculator, Eye, CheckCircle2,
+  Calculator, Eye, CheckCircle2, ShieldAlert,
 } from "lucide-react";
 
 // Mapeo único de tipo de alerta -> ícono/color/link, compartido por
@@ -51,6 +51,8 @@ export const TIPO_ICON: Record<string, any> = {
   cheque_por_vencer: AlarmClock,
   finanzas_vencimiento: AlarmClock,
   documento_cliente_subido: FileText,
+  autorizacion_pendiente: ShieldAlert,
+  nuevo_mensaje_interno: MessageCircle,
 };
 
 export const TIPO_COLOR: Record<string, string> = {
@@ -92,6 +94,8 @@ export const TIPO_COLOR: Record<string, string> = {
   cheque_por_vencer: "bg-rose-100 text-rose-600 dark:bg-rose-500/15 dark:text-rose-300",
   finanzas_vencimiento: "bg-rose-100 text-rose-600 dark:bg-rose-500/15 dark:text-rose-300",
   documento_cliente_subido: "bg-teal-100 text-teal-600 dark:bg-teal-500/15 dark:text-teal-300",
+  autorizacion_pendiente: "bg-rose-100 text-rose-600 dark:bg-rose-500/15 dark:text-rose-300",
+  nuevo_mensaje_interno: "bg-emerald-100 text-emerald-600 dark:bg-emerald-500/15 dark:text-emerald-300",
 };
 
 export const TIPO_VER: Record<string, string> = {
@@ -133,6 +137,8 @@ export const TIPO_VER: Record<string, string> = {
   cheque_por_vencer: "Ver Finanzas",
   finanzas_vencimiento: "Ver Finanzas",
   documento_cliente_subido: "Ver operación",
+  autorizacion_pendiente: "Ver Autorizaciones",
+  nuevo_mensaje_interno: "Ver Mensajes",
 };
 
 export const ICONO_DEFECTO = Bell;

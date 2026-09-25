@@ -3,6 +3,7 @@
 import { useState, useMemo, useEffect } from "react";
 import Link from "next/link";
 import { supabase2 } from "@/lib/supabase/client";
+import { hoyLocalISO } from "@/lib/panel/fechas";
 import {
   BarChart3, FileText, Receipt, Wallet, Coins, CreditCard, Landmark,
   TrendingDown, TrendingUp, ExternalLink, HandCoins, ScrollText, Handshake,
@@ -97,7 +98,7 @@ export default function FinanzasClient({
   chequesIniciales, pagosDisponiblesIniciales, consumosTarjetaIniciales, retirosIniciales, devolucionesIniciales,
   expedientes, senasActivasPorMoneda,
   prestamosIniciales, presupuestosIniciales, recurrenciasIniciales, generacionesIniciales, arqueosIniciales, cierresDiariosIniciales, miNombre,
-  senasIniciales, vehiculosDisponiblesFull, sucursales, veTodasSucursales, miSucursalId, vehiculosTodos, soloCajaSucursal,
+  senasIniciales, vehiculosDisponiblesFull, sucursales, veTodasSucursales, miSucursalId, vehiculosTodos, soloCajaSucursal, puedeVerLiquidacion, vehiculosFacturados,
 }: {
   miId: string; soyAdmin: boolean; soyAdminOFinanzas: boolean; cuentasIniciales: any[]; movimientosIniciales: any[]; cierresIniciales: any[];
   cuotasCobrarIniciales: any[]; cuotasPagarIniciales: any[]; vendedores: any[]; clientes: any[]; vehiculos: any[]; ventas: any[];
@@ -110,6 +111,14 @@ export default function FinanzasClient({
   // sucursal, nada más. Antes solo esa pestaña se filtraba por sucursal,
   // pero el resto del módulo quedaba completamente abierto.
   soloCajaSucursal: boolean;
+  // "Ver margen/ganancia" -- gatea Resumen, Rentabilidad por vehículo y
+  // AFIP/IVA (muestran precio de compra, comisión, ganancia real, saldo de
+  // IVA), mismo permiso que ya protege Expedientes/Gestoría/Liquidaciones/Tesorería.
+  puedeVerLiquidacion: boolean;
+  // Vehículos con factura de compra cargada en el módulo Facturación (con
+  // fecha) -- se le suma a AfipIvaTab como fuente adicional de crédito
+  // fiscal, sin reemplazar su cálculo actual basado en movimientos_caja.
+  vehiculosFacturados: any[];
 }) {
   const [tab, setTabRaw] = useState(soloCajaSucursal ? "caja-grande-chica" : "resumen");
   const [grupo, setGrupo] = useState(soloCajaSucursal ? "caja-bancos" : "resumen");
@@ -317,9 +326,9 @@ export default function FinanzasClient({
 
   const pendientesCobrarStats = useMemo(() => {
     const p = cuotasCobrar.filter((c) => !c.cobrada);
-    const hoy = new Date().toISOString().slice(0, 10);
-    const en7 = new Date(); en7.setDate(en7.getDate() + 7);
-    const en7str = en7.toISOString().slice(0, 10);
+    const hoy = hoyLocalISO();
+    const en7 = new Date(); en7.setHours(0, 0, 0, 0); en7.setDate(en7.getDate() + 7);
+    const en7str = `${en7.getFullYear()}-${String(en7.getMonth() + 1).padStart(2, "0")}-${String(en7.getDate()).padStart(2, "0")}`;
     return { vencidas: p.filter((c) => c.vencimiento < hoy).length, porVencer: p.filter((c) => c.vencimiento >= hoy && c.vencimiento <= en7str).length, enFecha: p.filter((c) => c.vencimiento > en7str).length };
   }, [cuotasCobrar]);
 
@@ -426,7 +435,7 @@ export default function FinanzasClient({
 
       {/* Nivel 2: sub-tabs del grupo activo -- azul para no competir con el rojo de arriba */}
       {grupoActivo.tabs.length > 1 && (
-        <div className="bg-white dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-xl p-1 mb-4 flex items-center gap-1 overflow-x-auto">
+        <div className="bg-white dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-xl p-1 mb-4 flex items-center gap-1 overflow-x-auto shadow-sm">
           {grupoActivo.tabs.map((t) => {
             const Icon = t.icon;
             if (t.externo) return <Link key={t.value} href={t.externo} className="px-3 py-1.5 text-xs font-bold whitespace-nowrap flex items-center gap-1.5 text-slate-500 dark:text-slate-400 hover:text-[#0145F2]"><Icon className="w-3.5 h-3.5" /> {t.label} <ExternalLink className="w-3 h-3" /></Link>;
@@ -440,7 +449,10 @@ export default function FinanzasClient({
         </div>
       )}
 
-      {tab === "resumen" && (
+      {tab === "resumen" && !puedeVerLiquidacion && (
+        <div className="bg-amber-50 dark:bg-amber-500/10 border border-amber-200 dark:border-amber-500/20 rounded-xl p-6 text-sm text-amber-700 dark:text-amber-300">No tenés permiso para ver el margen/ganancia de la agencia. Pedile a un admin que te lo habilite en Configuración &gt; Empresa si lo necesitás.</div>
+      )}
+      {tab === "resumen" && puedeVerLiquidacion && (
         <ResumenTab
           cuentas={cuentas}
           totalPorMoneda={totalPorMoneda}
@@ -479,7 +491,7 @@ export default function FinanzasClient({
       {tab === "cuentas" && <CuentasTab cuentas={cuentas} setCuentas={setCuentas} soyAdmin={soyAdmin} />}
 
       {tab === "cuotas" && (
-        <CuotasTab cuotasCobrar={cuotasCobrar} setCuotasCobrar={setCuotasCobrar} cuotasPagar={cuotasPagar} setCuotasPagar={setCuotasPagar} cuentas={cuentas} setCuentas={setCuentas} setMovimientos={setMovimientos} clientes={clientes} vehiculos={vehiculos} vendedores={vendedores} miId={miId} />
+        <CuotasTab cuotasCobrar={cuotasCobrar} setCuotasCobrar={setCuotasCobrar} cuotasPagar={cuotasPagar} setCuotasPagar={setCuotasPagar} cuentas={cuentas} setCuentas={setCuentas} setMovimientos={setMovimientos} clientes={clientes} vehiculos={vehiculos} vendedores={vendedores} miId={miId} soyAdminOFinanzas={soyAdminOFinanzas} />
       )}
 
       {tab === "devol-registro" && (
@@ -491,17 +503,19 @@ export default function FinanzasClient({
       )}
 
       {tab === "tarjeta" && (
-        <TarjetaTab consumos={consumosTarjeta} setConsumos={setConsumosTarjeta} cuentas={cuentas} setCuentas={setCuentas} setMovimientos={setMovimientos} />
+        <TarjetaTab consumos={consumosTarjeta} setConsumos={setConsumosTarjeta} cuentas={cuentas} setCuentas={setCuentas} setMovimientos={setMovimientos} soyAdminOFinanzas={soyAdminOFinanzas} />
       )}
 
       {tab === "retiros" && (
         <RetirosTab retiros={retiros} setRetiros={setRetiros} cuentas={cuentas} setCuentas={setCuentas} setMovimientos={setMovimientos} />
       )}
 
-      {tab === "cheques" && <ChequesTab cheques={cheques} setCheques={setCheques} cuentas={cuentas} vehiculos0km={vehiculosDisponiblesFull.filter((v: any) => v.condicion === "0km")} />}
+      {tab === "cheques" && <ChequesTab cheques={cheques} setCheques={setCheques} cuentas={cuentas} vehiculos0km={vehiculosDisponiblesFull.filter((v: any) => v.condicion === "0km")} soyAdminOFinanzas={soyAdminOFinanzas} />}
 
       {tab === "rentabilidad-vehiculo" && (
-        <RentabilidadVehiculoTab ventas={ventas} />
+        puedeVerLiquidacion
+          ? <RentabilidadVehiculoTab ventas={ventas} />
+          : <div className="bg-amber-50 dark:bg-amber-500/10 border border-amber-200 dark:border-amber-500/20 rounded-xl p-6 text-sm text-amber-700 dark:text-amber-300">No tenés permiso para ver el margen/ganancia de la agencia.</div>
       )}
 
       {tab === "rentabilidad" && (
@@ -509,15 +523,15 @@ export default function FinanzasClient({
       )}
 
       {tab === "prestamos" && (
-        <PrestamosTab prestamos={prestamos} setPrestamos={setPrestamos} cuentas={cuentas} setCuentas={setCuentas} setMovimientos={setMovimientos} />
+        <PrestamosTab prestamos={prestamos} setPrestamos={setPrestamos} cuentas={cuentas} setCuentas={setCuentas} setMovimientos={setMovimientos} soyAdminOFinanzas={soyAdminOFinanzas} />
       )}
 
       {tab === "presupuesto" && (
-        <PresupuestoTab presupuestos={presupuestos} setPresupuestos={setPresupuestos} movimientos={movimientos} />
+        <PresupuestoTab presupuestos={presupuestos} setPresupuestos={setPresupuestos} movimientos={movimientos} soyAdminOFinanzas={soyAdminOFinanzas} />
       )}
 
       {tab === "recurrencias" && (
-        <RecurrenciasTab recurrencias={recurrencias} setRecurrencias={setRecurrencias} generaciones={generaciones} setGeneraciones={setGeneraciones} cuentas={cuentas} setCuentas={setCuentas} movimientos={movimientos} setMovimientos={setMovimientos} />
+        <RecurrenciasTab recurrencias={recurrencias} setRecurrencias={setRecurrencias} generaciones={generaciones} setGeneraciones={setGeneraciones} cuentas={cuentas} setCuentas={setCuentas} movimientos={movimientos} setMovimientos={setMovimientos} soyAdminOFinanzas={soyAdminOFinanzas} />
       )}
 
       {tab === "arqueos" && (
@@ -530,7 +544,11 @@ export default function FinanzasClient({
 
       {tab === "conciliacion" && <ConciliacionTab movimientos={movimientos} />}
 
-      {tab === "afip-iva" && <AfipIvaTab movimientos={movimientos} setMovimientos={setMovimientos} />}
+      {tab === "afip-iva" && (
+        puedeVerLiquidacion
+          ? <AfipIvaTab movimientos={movimientos} setMovimientos={setMovimientos} vehiculosFacturados={vehiculosFacturados} />
+          : <div className="bg-amber-50 dark:bg-amber-500/10 border border-amber-200 dark:border-amber-500/20 rounded-xl p-6 text-sm text-amber-700 dark:text-amber-300">No tenés permiso para ver esta sección.</div>
+      )}
 
       {tab === "libros" && <LibrosContablesTab cuentas={cuentas} />}
     </div>

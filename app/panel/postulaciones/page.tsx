@@ -14,7 +14,7 @@ export default async function PostulacionesPage() {
       <p className="text-sm text-slate-400 mb-6">{(postulaciones || []).length} postulación{(postulaciones || []).length === 1 ? "" : "es"} recibidas desde /trabaja-con-nosotros</p>
 
       {(!postulaciones || postulaciones.length === 0) ? (
-        <div className="bg-white dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-2xl py-16 flex flex-col items-center justify-center text-center">
+        <div className="bg-white dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-2xl py-16 flex flex-col items-center justify-center text-center shadow-sm">
           <Users className="w-10 h-10 text-slate-300 dark:text-slate-600 mb-3" />
           <p className="text-sm font-bold text-slate-700 dark:text-slate-200">Sin postulaciones todavía</p>
           <p className="text-xs text-slate-400 mt-1">Van a aparecer acá apenas alguien complete el formulario del sitio.</p>
@@ -22,7 +22,7 @@ export default async function PostulacionesPage() {
       ) : (
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
           {postulaciones.map((p) => (
-            <div key={p.id} className="bg-white dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-2xl p-4">
+            <div key={p.id} className="bg-white dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-2xl p-4 shadow-sm">
               <p className="text-sm font-bold text-slate-900 dark:text-white">{p.nombre} {p.apellido}</p>
               {p.puesto && (
                 <p className="flex items-center gap-1.5 text-xs text-indigo-600 dark:text-indigo-300 font-semibold mt-1">

@@ -31,6 +31,12 @@ Todo cálculo de dinero en este módulo pivotea a un `Record<moneda, monto>` (un
 
 El saldo real de una cuenta se calcula vía RPC `saldo_cuenta(p_cuenta_id)`, nunca se lee un campo `saldo_inicial` cacheado como si fuera el saldo actual (ese campo es solo el monto de apertura de la caja).
 
+## AfipIvaTab también lee `vehiculos.facturado` (Facturación), no solo `movimientos_caja`
+
+El cálculo de IVA cobrado/pagado/saldo (las 3 tarjetas de arriba y la tabla "Resumen por categoría fiscal") sigue siendo 100% `movimientos_caja` clasificado a mano — **eso no cambió**. Se le sumó una sección aparte, "Facturas de compra de vehículos del período", que lee `vehiculos` donde `facturado = true` y `factura_fecha` cae en el período elegido (`factura_fecha`/`factura_tipo_comprobante`/`factura_iva_pct`, cargados desde `app/panel/facturacion/FacturaModal.tsx`). Es solo informativa — no se suma al IVA cobrado/pagado de arriba, es para que finanzas cruce esa compra contra la DDJJ real. El fetch de `vehiculosFacturados` en `finanzas/page.tsx` está gateado igual que el resto de Liquidación (`puedeVerLiquidacion`) porque expone precio de compra real.
+
+Si tocás `facturacion/FacturaModal.tsx` (cambiás de nombre o quitás `factura_fecha`/`factura_tipo_comprobante`/`factura_iva_pct`), esta sección de `AfipIvaTab.tsx` deja de recibir datos.
+
 ## No tocar sin revisar el resto
 
 - No sumar `movimientos_caja.monto` sin filtrar `estado = "aprobado"` y `deleted_at is null` primero.

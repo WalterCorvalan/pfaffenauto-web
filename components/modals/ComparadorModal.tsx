@@ -63,7 +63,7 @@ export default function ComparadorModal({ isOpen, onClose, autos, removerAuto }:
           </button>
 
           {/* CABECERA (Fija arriba al scrollear) */}
-          <div className="bg-gradient-to-b from-red-950/20 to-[#121212] pt-8 pb-4 md:pt-10 px-3 md:px-8 shrink-0 border-b border-white/10 sticky top-0 z-10">
+          <div className="bg-gradient-to-b from-[#0145F2]/10 to-[#121212] pt-8 pb-4 md:pt-10 px-3 md:px-8 shrink-0 border-b border-white/10 sticky top-0 z-10">
             <h2 className="text-xl md:text-3xl font-black text-white uppercase tracking-tighter mb-6">
               Comparativa <span className="text-gray-500 font-medium text-sm md:text-lg ml-2 lowercase tracking-normal">de hasta 3 autos</span>
             </h2>
@@ -137,13 +137,13 @@ export default function ComparadorModal({ isOpen, onClose, autos, removerAuto }:
             <div className="grid grid-cols-[24%_1fr_1fr_1fr] md:grid-cols-[18%_1fr_1fr_1fr] gap-1.5 md:gap-4 py-6 border-b border-white/5 items-center px-3 md:px-8 mt-2">
               <span className="text-[8px] md:text-xs font-bold text-gray-400 uppercase tracking-widest">Acción</span>
               <div>
-                <Link href={`/catalogo/${auto1?.slug}`} className="inline-block bg-red-600 hover:bg-red-700 text-white text-[9px] md:text-xs font-bold uppercase tracking-widest px-2 py-2.5 md:px-6 md:py-4 rounded-full transition-colors text-center shadow-lg shadow-red-600/20 w-full">Ver Detalles</Link>
+                <Link href={`/catalogo/${auto1?.slug}`} className="inline-block bg-[#0145F2] hover:bg-[#0138c9] text-white text-[9px] md:text-xs font-bold uppercase tracking-widest px-2 py-2.5 md:px-6 md:py-4 rounded-full transition-colors text-center shadow-lg shadow-[#0145F2]/20 w-full">Ver Detalles</Link>
               </div>
               <div>
-                {auto2 && <Link href={`/catalogo/${auto2.slug}`} className="inline-block bg-red-600 hover:bg-red-700 text-white text-[9px] md:text-xs font-bold uppercase tracking-widest px-2 py-2.5 md:px-6 md:py-4 rounded-full transition-colors text-center shadow-lg shadow-red-600/20 w-full">Ver Detalles</Link>}
+                {auto2 && <Link href={`/catalogo/${auto2.slug}`} className="inline-block bg-[#0145F2] hover:bg-[#0138c9] text-white text-[9px] md:text-xs font-bold uppercase tracking-widest px-2 py-2.5 md:px-6 md:py-4 rounded-full transition-colors text-center shadow-lg shadow-[#0145F2]/20 w-full">Ver Detalles</Link>}
               </div>
               <div>
-                {auto3 && <Link href={`/catalogo/${auto3.slug}`} className="inline-block bg-red-600 hover:bg-red-700 text-white text-[9px] md:text-xs font-bold uppercase tracking-widest px-2 py-2.5 md:px-6 md:py-4 rounded-full transition-colors text-center shadow-lg shadow-red-600/20 w-full">Ver Detalles</Link>}
+                {auto3 && <Link href={`/catalogo/${auto3.slug}`} className="inline-block bg-[#0145F2] hover:bg-[#0138c9] text-white text-[9px] md:text-xs font-bold uppercase tracking-widest px-2 py-2.5 md:px-6 md:py-4 rounded-full transition-colors text-center shadow-lg shadow-[#0145F2]/20 w-full">Ver Detalles</Link>}
               </div>
             </div>
           </div>

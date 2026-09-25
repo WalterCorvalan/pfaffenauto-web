@@ -54,7 +54,7 @@ export default async function ChatbotMetricasPage() {
       </div>
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
         {tarjetas.map((t) => (
-          <div key={t.label} className="bg-white dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-2xl p-4">
+          <div key={t.label} className="bg-white dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-2xl p-4 shadow-sm">
             <t.icon className={`w-5 h-5 ${t.color} mb-2`} />
             <p className="text-2xl font-black text-slate-900 dark:text-white font-mono">{t.valor}</p>
             <p className="text-[11px] text-slate-400 mt-0.5">{t.label}</p>

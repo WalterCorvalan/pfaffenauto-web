@@ -127,13 +127,13 @@ export default function PapeleraClient() {
           {cargando ? (
             <div className="p-8 flex justify-center"><Loader2 className="w-5 h-5 animate-spin text-slate-400" /></div>
           ) : filtrados.length === 0 ? (
-            <div className="flex flex-col items-center justify-center text-center py-20 bg-white dark:bg-white/[0.02] border border-slate-200 dark:border-white/5 rounded-2xl">
+            <div className="flex flex-col items-center justify-center text-center py-20 bg-white dark:bg-white/[0.02] border border-slate-200 dark:border-white/5 rounded-2xl shadow-sm">
               <Trash2 className="w-10 h-10 text-slate-300 dark:text-slate-600 mb-3" />
               <h3 className="text-sm font-bold text-slate-800 dark:text-white mb-1">No hay {tabLabel} en la papelera</h3>
               <p className="text-xs text-slate-500 dark:text-slate-400 max-w-xs">Si borrás {tabLabel}, van a aparecer acá y vas a poder restaurarlas o eliminarlas definitivamente.</p>
             </div>
           ) : (
-            <div className="bg-white dark:bg-white/[0.02] border border-slate-200 dark:border-white/5 rounded-2xl divide-y divide-slate-100 dark:divide-white/5 overflow-hidden">
+            <div className="bg-white dark:bg-white/[0.02] border border-slate-200 dark:border-white/5 rounded-2xl shadow-sm divide-y divide-slate-100 dark:divide-white/5 overflow-hidden">
               {filtrados.map((item) => (
                 <div key={item.id} className="flex items-center gap-3 px-4 py-3">
                   <div className="flex-1 min-w-0">

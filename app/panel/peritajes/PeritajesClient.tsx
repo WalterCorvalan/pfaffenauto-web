@@ -29,7 +29,7 @@ export default function PeritajesClient({ peritajes, leadsSinPeritaje }: { perit
             <Link
               key={p.id}
               href={`/panel/peritajes/${p.id}`}
-              className="bg-white dark:bg-white/[0.02] border border-slate-200 dark:border-white/5 rounded-2xl p-4 hover:border-rose-300 dark:hover:border-rose-500/50 transition-colors"
+              className="bg-white dark:bg-white/[0.02] border border-slate-200 dark:border-white/5 rounded-2xl shadow-sm p-4 hover:border-rose-300 dark:hover:border-rose-500/50 transition-colors"
             >
               <div className="flex items-center justify-between mb-2">
                 <span className={`text-[10px] font-bold uppercase tracking-widest px-2 py-1 rounded-lg ${p.estado === "Completado" ? "bg-emerald-500 text-white" : "bg-amber-500 text-white"}`}>

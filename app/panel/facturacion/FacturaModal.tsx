@@ -7,9 +7,13 @@ import { X, Save, Loader2 } from "lucide-react";
 const inputClass = "w-full bg-slate-50 dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-xl px-3 py-2.5 text-sm outline-none focus:border-[#0145F2] text-slate-900 dark:text-white placeholder:text-slate-400";
 const labelClass = "text-xs font-semibold text-slate-600 dark:text-slate-300 block mb-1";
 
+const CATS = ["A", "B", "C", "Exenta"] as const;
+const IVA_OPCIONES = [21, 10.5, 27, 0];
+
 export interface VehiculoFactura {
   id: string; marca: string; modelo: string; anio: number | null; patente: string | null; estado: string; moneda_compra: string | null;
   facturado: boolean; factura_importe: number | null; factura_numero: string | null; factura_emisor: string | null; factura_archivo_url: string | null;
+  factura_fecha: string | null; factura_tipo_comprobante: string | null; factura_iva_pct: number | null;
 }
 
 // Editor puntual de la facturación de un vehículo -- mismos campos que
@@ -21,6 +25,9 @@ export default function FacturaModal({ vehiculo, onClose, onGuardado }: { vehicu
   const [numero, setNumero] = useState(vehiculo.factura_numero || "");
   const [emisor, setEmisor] = useState(vehiculo.factura_emisor || "");
   const [archivoUrl, setArchivoUrl] = useState(vehiculo.factura_archivo_url || "");
+  const [fecha, setFecha] = useState(vehiculo.factura_fecha || "");
+  const [tipoComprobante, setTipoComprobante] = useState(vehiculo.factura_tipo_comprobante || "");
+  const [ivaPct, setIvaPct] = useState(vehiculo.factura_iva_pct != null ? String(vehiculo.factura_iva_pct) : "");
   const [subiendo, setSubiendo] = useState(false);
   const [guardando, setGuardando] = useState(false);
   const [error, setError] = useState("");
@@ -52,8 +59,11 @@ export default function FacturaModal({ vehiculo, onClose, onGuardado }: { vehicu
       factura_numero: facturado ? (numero || null) : null,
       factura_emisor: facturado ? (emisor || null) : null,
       factura_archivo_url: facturado ? (archivoUrl || null) : null,
+      factura_fecha: facturado ? (fecha || null) : null,
+      factura_tipo_comprobante: facturado ? (tipoComprobante || null) : null,
+      factura_iva_pct: facturado && ivaPct !== "" ? Number(ivaPct) : null,
     };
-    const { data, error: dbError } = await supabase2.from("vehiculos").update(payload).eq("id", vehiculo.id).select("id, marca, modelo, anio, patente, estado, moneda_compra, facturado, factura_importe, factura_numero, factura_emisor, factura_archivo_url").single();
+    const { data, error: dbError } = await supabase2.from("vehiculos").update(payload).eq("id", vehiculo.id).select("id, marca, modelo, anio, patente, estado, moneda_compra, facturado, factura_importe, factura_numero, factura_emisor, factura_archivo_url, factura_fecha, factura_tipo_comprobante, factura_iva_pct").single();
     setGuardando(false);
     if (dbError) return setError(dbError.message);
     onGuardado(data as VehiculoFactura);
@@ -90,6 +100,27 @@ export default function FacturaModal({ vehiculo, onClose, onGuardado }: { vehicu
                 <label className={labelClass}>Quién factura</label>
                 <input type="text" value={emisor} onChange={(e) => setEmisor(e.target.value)} placeholder="Nombre o razón social" className={inputClass} />
               </div>
+              <div className="grid grid-cols-3 gap-2">
+                <div>
+                  <label className={labelClass}>Fecha</label>
+                  <input type="date" value={fecha} onChange={(e) => setFecha(e.target.value)} className={inputClass} />
+                </div>
+                <div>
+                  <label className={labelClass}>Comprobante</label>
+                  <select value={tipoComprobante} onChange={(e) => setTipoComprobante(e.target.value)} className={inputClass}>
+                    <option value="">—</option>
+                    {CATS.map((c) => <option key={c} value={c}>{c}</option>)}
+                  </select>
+                </div>
+                <div>
+                  <label className={labelClass}>% IVA</label>
+                  <select value={ivaPct} onChange={(e) => setIvaPct(e.target.value)} className={inputClass}>
+                    <option value="">—</option>
+                    {IVA_OPCIONES.map((v) => <option key={v} value={v}>{v}%</option>)}
+                  </select>
+                </div>
+              </div>
+              <p className="text-[10px] text-slate-400 -mt-1">Opcional. Si lo cargás, este vehículo aparece en Finanzas &gt; AFIP/IVA como crédito fiscal del período de la fecha de factura.</p>
               <div>
                 <label className={labelClass}>Archivo de la factura</label>
                 <div className="flex items-center gap-2">

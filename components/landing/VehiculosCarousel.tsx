@@ -285,12 +285,15 @@ export default function VehiculosCarousel({
               </span>
             </div>
           )}
-          <p
+          {/* h1 real de la landing (Karry y Rely comparten este carrusel) --
+             ninguna de las dos tenía ningún encabezado semántico, el título
+             visual era un <p> suelto (hallazgo de auditoría SEO). */}
+          <h1
             className="uppercase mb-2 sm:mb-3 text-2xl sm:text-4xl text-white transition-opacity duration-200"
             style={{ opacity: enMovimiento ? 0.4 : 0.95, letterSpacing: "0.01em", fontFamily: "var(--font-barlow)", fontWeight: 700, lineHeight: 0.95 }}
           >
             {activo.name}
-          </p>
+          </h1>
           <p
             className="hidden sm:block text-xs sm:text-sm text-white mb-4 sm:mb-5 transition-opacity duration-200"
             style={{ opacity: enMovimiento ? 0.3 : 0.85, lineHeight: 1.6 }}

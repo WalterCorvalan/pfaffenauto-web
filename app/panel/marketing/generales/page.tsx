@@ -141,7 +141,7 @@ export default async function MetricasGeneralesPage() {
       <div>
         <h3 className="text-[11px] font-bold uppercase tracking-widest text-slate-400 mb-3">Leads nuevos — últimos 30 días</h3>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <div className="bg-white dark:bg-white/[0.02] border border-slate-200 dark:border-white/5 rounded-2xl p-5">
+          <div className="bg-white dark:bg-white/[0.02] border border-slate-200 dark:border-white/5 rounded-2xl shadow-sm p-5">
             <Users className="w-5 h-5 text-[#0145F2] mb-2" />
             <p className="text-2xl font-black text-slate-900 dark:text-white font-mono">{leadsNuevos30}</p>
             <p className="text-[11px] text-slate-400 mt-0.5 flex items-center gap-1">
@@ -154,7 +154,7 @@ export default async function MetricasGeneralesPage() {
             </p>
             <p className="text-[10px] text-slate-400 mt-0.5">Período anterior (30d previos): {leadsNuevosAnt30}</p>
           </div>
-          <div className="bg-white dark:bg-white/[0.02] border border-slate-200 dark:border-white/5 rounded-2xl p-5">
+          <div className="bg-white dark:bg-white/[0.02] border border-slate-200 dark:border-white/5 rounded-2xl shadow-sm p-5">
             <p className="text-sm font-bold text-slate-800 dark:text-white mb-3">Leads por canal</p>
             {leadsNuevos30 === 0 ? (
               <p className="text-xs text-slate-400 py-2">Sin leads nuevos en el período.</p>
@@ -187,12 +187,12 @@ export default async function MetricasGeneralesPage() {
           <p className="text-[11px] text-indigo-100 mt-0.5">Tasa de cierre global ({leadsGanados ?? 0} de {leadsTotal ?? 0} leads)</p>
         </div>
         <TarjetaCostoIA costo={costoIaTotal30} label="Costo IA total — todos los bots (30d)" limite={20} />
-        <div className="bg-white dark:bg-white/[0.02] border border-slate-200 dark:border-white/5 rounded-2xl p-5">
+        <div className="bg-white dark:bg-white/[0.02] border border-slate-200 dark:border-white/5 rounded-2xl shadow-sm p-5">
           <DollarSign className="w-5 h-5 text-amber-600 mb-2" />
           <p className="text-2xl font-black text-slate-900 dark:text-white font-mono">$ {gastoMes.toLocaleString("es-AR")}</p>
           <p className="text-[11px] text-slate-400 mt-0.5">Gasto en pautas — mes en curso</p>
         </div>
-        <div className="bg-white dark:bg-white/[0.02] border border-slate-200 dark:border-white/5 rounded-2xl p-5">
+        <div className="bg-white dark:bg-white/[0.02] border border-slate-200 dark:border-white/5 rounded-2xl shadow-sm p-5">
           <Megaphone className="w-5 h-5 text-emerald-600 mb-2" />
           <p className="text-2xl font-black text-slate-900 dark:text-white font-mono">{leadsRealesUtmMes ?? 0}</p>
           <p className="text-[11px] text-slate-400 mt-0.5">Leads reales por UTM (mes) — atribución automática</p>

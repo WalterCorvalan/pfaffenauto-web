@@ -189,7 +189,7 @@ export default function LiquidadorClient({ empleados, liquidacionesPrevias, cate
           <h1 className="text-xl font-black text-slate-900 dark:text-white flex items-center gap-2"><Wallet className="w-5 h-5 text-[#0145F2]" /> Liquidador de sueldos</h1>
           <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">Sueldo base + comisión + trabajo de taller + presentismo</p>
         </div>
-        <div className="bg-white dark:bg-white/[0.02] border border-slate-200 dark:border-white/5 rounded-2xl p-6">
+        <div className="bg-white dark:bg-white/[0.02] border border-slate-200 dark:border-white/5 rounded-2xl shadow-sm p-6">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
             <div>
               <label className="text-[11px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-widest mb-1.5 block">Empleado</label>
@@ -225,7 +225,7 @@ export default function LiquidadorClient({ empleados, liquidacionesPrevias, cate
         </div>
 
         {empleadoId && categoria && (
-          <div className="bg-white dark:bg-white/[0.02] border border-slate-200 dark:border-white/5 rounded-2xl p-6">
+          <div className="bg-white dark:bg-white/[0.02] border border-slate-200 dark:border-white/5 rounded-2xl shadow-sm p-6">
             <h2 className="text-[11px] font-bold uppercase tracking-widest text-slate-500 dark:text-slate-400 flex items-center gap-2 mb-5">
               <Calculator className="w-4 h-4 text-[#0145F2] dark:text-[#5b8dff]" /> Cálculo {calculando && <span className="text-slate-400 normal-case font-medium">calculando...</span>}
             </h2>
@@ -296,7 +296,7 @@ export default function LiquidadorClient({ empleados, liquidacionesPrevias, cate
           </div>
         )}
 
-        <div className="bg-white dark:bg-white/[0.02] border border-slate-200 dark:border-white/5 rounded-2xl overflow-hidden">
+        <div className="bg-white dark:bg-white/[0.02] border border-slate-200 dark:border-white/5 rounded-2xl shadow-sm overflow-hidden">
           <div className="px-6 py-4 border-b border-slate-100 dark:border-white/10 flex items-center gap-2">
             <ClipboardList className="w-4 h-4 text-[#0145F2] dark:text-[#5b8dff]" />
             <h2 className="text-[11px] font-bold uppercase tracking-widest text-slate-500 dark:text-slate-400">Liquidaciones generadas</h2>

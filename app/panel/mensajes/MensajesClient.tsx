@@ -3,6 +3,7 @@
 import { useState, useEffect, useMemo, useRef, useCallback } from "react";
 import { supabase2 } from "@/lib/supabase/client";
 import { Search, Paperclip, Smile, Send, Plus, Users, Globe, X, Trash2, ArrowLeft, Check, CheckCheck } from "lucide-react";
+import { crearAlerta } from "@/lib/panel/alertas";
 
 interface Perfil { id: string; nombre: string; roles?: string[] }
 interface Canal { id: string; tipo: "general" | "directo" | "grupo"; nombre: string | null; par_clave: string | null; created_at: string; otroMiembro?: Perfil }
@@ -165,6 +166,21 @@ export default function MensajesClient({ miId, miNombre, staff }: { miId: string
       const ahora = new Date().toISOString();
       await supabase2.from("mensajes_lecturas").upsert({ canal_id: canalActivoId, perfil_id: miId, last_read_at: ahora });
       setLecturas((prev) => ({ ...prev, [canalActivoId]: ahora }));
+
+      // Antes un mensaje interno solo se veía si la otra persona ya tenía
+      // Mensajes abierto en ese momento (todo el "no leído" se calculaba en
+      // el propio estado de este componente) -- sin la pantalla abierta,
+      // cero aviso. Se notifica ahora a los demás miembros del canal
+      // (directo/grupo, no "general": ahí son todos los usuarios y
+      // avisar de cada mensaje sería spam) vía la campana/toast.
+      const canalActivo = canales.find((c) => c.id === canalActivoId);
+      if (canalActivo && canalActivo.tipo !== "general") {
+        const { data: miembros } = await supabase2.from("mensajes_canal_miembros").select("perfil_id").eq("canal_id", canalActivoId).neq("perfil_id", miId);
+        const titulo = canalActivo.tipo === "grupo" ? `${miNombre} en ${canalActivo.nombre || "el grupo"}` : `${miNombre} te escribió`;
+        for (const m of miembros || []) {
+          crearAlerta(supabase2, m.perfil_id, titulo, { mensaje: texto.trim() || "Adjuntó un archivo", link: "/panel/mensajes", tipo: "nuevo_mensaje_interno", prioridad: "media", modulo: "mensajes" });
+        }
+      }
     } catch {
       alert("No se pudo enviar el mensaje.");
     } finally {

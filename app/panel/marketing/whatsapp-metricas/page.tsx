@@ -22,7 +22,7 @@ const COLOR_SEMAFORO: Record<string, { borde: string; fondo: string; punto: stri
 
 function StatTile({ label, valor, icon: Icon, color = "text-slate-500", sub }: { label: string; valor: React.ReactNode; icon?: any; color?: string; sub?: string }) {
   return (
-    <div className="bg-white dark:bg-white/[0.02] border border-slate-200 dark:border-white/5 rounded-2xl p-5">
+    <div className="bg-white dark:bg-white/[0.02] border border-slate-200 dark:border-white/5 rounded-2xl shadow-sm p-5">
       {Icon && <Icon className={`w-5 h-5 ${color} mb-2`} />}
       <p className="text-2xl font-black text-slate-900 dark:text-white font-mono">{valor}</p>
       <p className="text-[11px] font-bold uppercase tracking-widest text-slate-400 mt-1">{label}</p>
@@ -120,7 +120,7 @@ export default async function WhatsappMetricasPage({
 
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
         {tarjetas.map((t) => (
-          <div key={t.label} className="bg-white dark:bg-white/[0.02] border border-slate-200 dark:border-white/5 rounded-2xl p-5">
+          <div key={t.label} className="bg-white dark:bg-white/[0.02] border border-slate-200 dark:border-white/5 rounded-2xl shadow-sm p-5">
             <span className="text-[10px] uppercase tracking-widest font-bold text-slate-400">{t.label}</span>
             <div className="flex items-center gap-5 mt-2">
               <div className="flex items-center gap-1.5">
@@ -190,7 +190,7 @@ export default async function WhatsappMetricasPage({
             );
           })}
           {(!conversaciones || conversaciones.length === 0) && (
-            <div className="col-span-full py-12 text-center text-[13px] text-slate-400 italic bg-white dark:bg-white/[0.02] border border-slate-200 dark:border-white/5 rounded-2xl">
+            <div className="col-span-full py-12 text-center text-[13px] text-slate-400 italic bg-white dark:bg-white/[0.02] border border-slate-200 dark:border-white/5 rounded-2xl shadow-sm">
               Sin conversaciones todavía.
             </div>
           )}

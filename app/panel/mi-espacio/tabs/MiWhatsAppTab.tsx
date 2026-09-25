@@ -49,7 +49,7 @@ export default function MiWhatsAppTab({ miId, agenciaNombre = "Pfaffen Autos" }:
       <p className="text-[10px] text-slate-400 mt-1 mb-4">Se agrega al final del mensaje, en una línea nueva. Ej: — Juan, Automotores San Martín</p>
 
       <p className="text-[10px] font-black uppercase tracking-widest text-slate-400 mb-1.5">Vista previa (cliente de ejemplo: Juan)</p>
-      <div className="bg-white dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-xl p-3.5 text-sm whitespace-pre-wrap">{preview}</div>
+      <div className="bg-white dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-xl p-3.5 text-sm whitespace-pre-wrap shadow-sm">{preview}</div>
 
       <div className="flex justify-end mt-4">
         <button onClick={guardar} disabled={guardando} className="flex items-center gap-1.5 px-5 py-2.5 text-sm font-bold bg-[#0145F2] hover:bg-[#0138c9] text-white rounded-lg disabled:opacity-50"><Save className="w-4 h-4" /> {guardando ? "Guardando..." : "Guardar"}</button>

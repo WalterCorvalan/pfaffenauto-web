@@ -40,7 +40,7 @@ function ProgressStepper({ currentStep }: { currentStep: number }) {
         return (
           <div key={step.num} className="flex items-start flex-1 last:flex-none">
             <div className="flex flex-col items-center gap-1 lg:gap-2 w-8">
-              <div className={`w-6 h-6 lg:w-8 lg:h-8 rounded-full flex items-center justify-center text-[10px] lg:text-xs font-bold shrink-0 transition-colors duration-300 ${isActive ? "bg-blue-600 dark:bg-blue-500 text-white" : "bg-transparent border border-slate-300 dark:border-slate-700 text-slate-400 dark:text-slate-500"}`}>
+              <div className={`w-6 h-6 lg:w-8 lg:h-8 rounded-full flex items-center justify-center text-[10px] lg:text-xs font-bold shrink-0 transition-colors duration-300 ${isActive ? "bg-[#0145F2] dark:bg-[#0145F2] text-white" : "bg-transparent border border-slate-300 dark:border-slate-700 text-slate-400 dark:text-slate-500"}`}>
                 {step.num}
               </div>
               <span className={`text-[8px] lg:text-[9px] uppercase tracking-widest whitespace-nowrap ${isActive ? "text-slate-700 dark:text-slate-300 font-bold" : "text-slate-400 dark:text-slate-600"}`}>
@@ -48,7 +48,7 @@ function ProgressStepper({ currentStep }: { currentStep: number }) {
               </span>
             </div>
             {idx < steps.length - 1 && (
-              <div className={`h-[1px] flex-1 mx-3 mt-3 lg:mt-4 transition-colors duration-300 ${isActive ? "bg-blue-500/50" : "bg-slate-200 dark:bg-slate-800"}`} />
+              <div className={`h-[1px] flex-1 mx-3 mt-3 lg:mt-4 transition-colors duration-300 ${isActive ? "bg-[#0145F2]/50" : "bg-slate-200 dark:bg-slate-800"}`} />
             )}
           </div>
         );
@@ -279,7 +279,7 @@ export default function ConsignarForm() {
           titulo="¡Vehículo configurado!"
           mensaje="Hemos recibido tu solicitud de consignación. Nuestro equipo analizará la configuración y se contactará a la brevedad."
         >
-          <Link href="/" className="inline-block py-3.5 px-8 bg-blue-600 hover:bg-blue-700 text-white font-black rounded-2xl text-xs uppercase tracking-widest shadow-lg transition-colors">
+          <Link href="/" className="inline-block py-3.5 px-8 bg-[#0145F2] hover:bg-[#0138c9] text-white font-black rounded-2xl text-xs uppercase tracking-widest shadow-lg transition-colors">
             Volver al inicio
           </Link>
         </EnvioExitoso>
@@ -301,7 +301,7 @@ export default function ConsignarForm() {
 
         {/* Fondos y luces */}
         <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_50%,rgba(1,69,242,0.08),transparent_60%)]" />
-        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[80%] h-[20%] bg-blue-500/10 dark:bg-blue-500/20 blur-[100px] rounded-full" />
+        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[80%] h-[20%] bg-[#0145F2]/10 dark:bg-[#0145F2]/20 blur-[100px] rounded-full" />
 
         {/* Header Preview -- en mobile, en vez de un pill fijo tipo
             "Consignación" (no aportaba info nueva) se muestran ahí mismo los
@@ -316,13 +316,13 @@ export default function ConsignarForm() {
               { value: version, icon: Zap },
             ].filter((item) => item.value).map((item, i) => (
               <div key={i} className="shrink-0 bg-white/70 dark:bg-black/40 backdrop-blur-md border border-slate-200 dark:border-white/10 rounded-full px-3 py-1.5 flex items-center gap-1.5 shadow-sm dark:shadow-none">
-                <item.icon className="w-3 h-3 text-blue-600 dark:text-blue-400 shrink-0" />
+                <item.icon className="w-3 h-3 text-[#0145F2] dark:text-blue-400 shrink-0" />
                 <span className="text-[10px] font-bold text-slate-900 dark:text-white truncate max-w-[90px]">{item.value}</span>
               </div>
             ))}
           </div>
           <div className="hidden lg:flex items-center gap-3">
-            <CarFront className="w-6 h-6 text-blue-600 dark:text-blue-400 shrink-0" />
+            <CarFront className="w-6 h-6 text-[#0145F2] dark:text-blue-400 shrink-0" />
             <div>
               <h2 className="text-sm font-black text-slate-900 dark:text-white">Tu próximo paso</h2>
               <p className="text-[10px] text-slate-500 dark:text-slate-400 uppercase tracking-widest">Configurador de Consignación</p>
@@ -336,18 +336,18 @@ export default function ConsignarForm() {
             <motion.div
               initial={{ opacity: 0, y: -20 }}
               animate={{ opacity: 1, y: 0 }}
-              className="absolute top-16 right-4 lg:top-8 lg:right-6 z-20 bg-blue-50/90 dark:bg-blue-900/40 border border-blue-200 dark:border-blue-500/30 backdrop-blur-xl rounded-xl lg:rounded-2xl px-3 py-2 lg:px-5 lg:py-3 flex items-center gap-2 lg:gap-3 shadow-[0_0_30px_rgba(1,69,242,0.12)] dark:shadow-[0_0_30px_rgba(1,69,242,0.3)]"
+              className="absolute top-16 right-4 lg:top-8 lg:right-6 z-20 bg-blue-50/90 dark:bg-blue-900/40 border border-blue-200 dark:border-[#0145F2]/30 backdrop-blur-xl rounded-xl lg:rounded-2xl px-3 py-2 lg:px-5 lg:py-3 flex items-center gap-2 lg:gap-3 shadow-[0_0_30px_rgba(1,69,242,0.12)] dark:shadow-[0_0_30px_rgba(1,69,242,0.3)]"
             >
-              <Gauge className="w-4 h-4 lg:w-5 lg:h-5 text-blue-600 dark:text-blue-400 shrink-0" />
+              <Gauge className="w-4 h-4 lg:w-5 lg:h-5 text-[#0145F2] dark:text-blue-400 shrink-0" />
               <div className="flex flex-col">
-                <span className="text-[8px] lg:text-[9px] font-bold uppercase tracking-widest text-blue-700/70 dark:text-blue-200/70">Kilómetros</span>
+                <span className="text-[8px] lg:text-[9px] font-bold uppercase tracking-widest text-[#0138c9]/70 dark:text-blue-200/70">Kilómetros</span>
                 <motion.span
                   key={km}
                   initial={{ opacity: 0, filter: "blur(4px)" }}
                   animate={{ opacity: 1, filter: "blur(0px)" }}
                   className="text-sm lg:text-lg font-black text-slate-900 dark:text-white leading-none font-mono"
                 >
-                  {formatKm(km)} <span className="text-xs lg:text-sm font-bold text-blue-600 dark:text-blue-300">KM</span>
+                  {formatKm(km)} <span className="text-xs lg:text-sm font-bold text-[#0145F2] dark:text-blue-300">KM</span>
                 </motion.span>
               </div>
             </motion.div>
@@ -435,7 +435,7 @@ export default function ConsignarForm() {
             { label: "Versión", value: version, icon: Zap }
           ].map((item, i) => (
             <div key={i} className="flex-1 min-w-[120px] bg-white/70 dark:bg-black/40 backdrop-blur-md border border-slate-200 dark:border-white/10 rounded-2xl p-4 flex items-center gap-3 shadow-sm dark:shadow-none">
-              <item.icon className={`w-4 h-4 shrink-0 ${item.value ? "text-blue-600 dark:text-blue-400" : "text-slate-400 dark:text-slate-600"}`} />
+              <item.icon className={`w-4 h-4 shrink-0 ${item.value ? "text-[#0145F2] dark:text-blue-400" : "text-slate-400 dark:text-slate-600"}`} />
               <div className="flex flex-col min-w-0">
                 <span className="text-[9px] uppercase tracking-widest text-slate-500 font-bold">{item.label}</span>
                 <span className={`text-xs font-bold truncate ${item.value ? "text-slate-900 dark:text-white" : "text-slate-400 dark:text-slate-600"}`}>
@@ -454,9 +454,11 @@ export default function ConsignarForm() {
           <ProgressStepper currentStep={step} />
 
           <div className="mb-4 lg:mb-8">
-            <h2 className="text-lg lg:text-2xl font-black text-slate-900 dark:text-white tracking-tight mb-1 lg:mb-2">
+            {/* h1 real de la página -- no tenía ninguno (hallazgo de
+               auditoría SEO), el título visual era un <h2> suelto. */}
+            <h1 className="text-lg lg:text-2xl font-black text-slate-900 dark:text-white tracking-tight mb-1 lg:mb-2">
               Configurá tu vehículo
-            </h2>
+            </h1>
             <p className="hidden lg:block text-sm text-slate-500 dark:text-slate-400">
               {step === 1 && "Completá los datos y comenzá a ver tu auto en tiempo real."}
               {step === 2 && "Detalles técnicos adicionales del vehículo."}
@@ -478,7 +480,7 @@ export default function ConsignarForm() {
                   <ConfigField icon={CalendarDays} label="Año" value={anio} isOpen={openDropdown === 'anio'} onClick={() => setOpenDropdown(openDropdown === 'anio' ? null : 'anio')} isCompleted={!!anio}>
                     <div className="grid grid-cols-5 gap-1.5">
                       {aniosDisponibles.map((a) => (
-                        <button key={a} onClick={() => { setAnio(String(a)); setOpenDropdown("marca"); }} className={`py-1.5 text-[11px] font-bold rounded-md border transition-all ${anio === String(a) ? "bg-blue-600 border-blue-500 text-white" : "bg-slate-50 dark:bg-white/5 border-slate-200 dark:border-white/5 text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-white/10 hover:border-slate-300 dark:hover:border-white/20"}`}>
+                        <button key={a} onClick={() => { setAnio(String(a)); setOpenDropdown("marca"); }} className={`py-1.5 text-[11px] font-bold rounded-md border transition-all ${anio === String(a) ? "bg-[#0145F2] border-[#0145F2] text-white" : "bg-slate-50 dark:bg-white/5 border-slate-200 dark:border-white/5 text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-white/10 hover:border-slate-300 dark:hover:border-white/20"}`}>
                           {a}
                         </button>
                       ))}
@@ -488,11 +490,11 @@ export default function ConsignarForm() {
                   <ConfigField icon={CarFront} label="Marca" value={marca} isOpen={openDropdown === 'marca'} onClick={() => setOpenDropdown(openDropdown === 'marca' ? null : 'marca')} isCompleted={!!marca}>
                     <input 
                       type="text" placeholder="Buscá tu marca..." value={busquedaMarca} onChange={(e) => setBusquedaMarca(e.target.value)}
-                      className="w-full bg-slate-50 dark:bg-black/50 border border-slate-200 dark:border-white/10 rounded-xl px-4 py-3 text-sm text-slate-900 dark:text-white placeholder:text-slate-400 dark:placeholder:text-slate-600 outline-none focus:border-blue-500 mb-3"
+                      className="w-full bg-slate-50 dark:bg-black/50 border border-slate-200 dark:border-white/10 rounded-xl px-4 py-3 text-sm text-slate-900 dark:text-white placeholder:text-slate-400 dark:placeholder:text-slate-600 outline-none focus:border-[#0145F2] mb-3"
                     />
                     <div className="max-h-48 overflow-y-auto custom-scrollbar pr-2 space-y-1">
                       {marcasFiltradas.map((m) => (
-                        <button key={m} onClick={() => { setMarca(m); setModelo(""); setOpenDropdown("modelo"); setBusquedaMarca(""); }} className={`w-full text-left px-4 py-3 rounded-xl text-sm font-bold transition-colors ${marca === m ? "bg-blue-600 text-white" : "text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-white/10"}`}>
+                        <button key={m} onClick={() => { setMarca(m); setModelo(""); setOpenDropdown("modelo"); setBusquedaMarca(""); }} className={`w-full text-left px-4 py-3 rounded-xl text-sm font-bold transition-colors ${marca === m ? "bg-[#0145F2] text-white" : "text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-white/10"}`}>
                           {m}
                         </button>
                       ))}
@@ -502,7 +504,7 @@ export default function ConsignarForm() {
                   <ConfigField icon={Settings2} label="Modelo" value={modelo} isOpen={openDropdown === 'modelo'} onClick={() => marca && setOpenDropdown(openDropdown === 'modelo' ? null : 'modelo')} isCompleted={!!modelo}>
                     <div className="max-h-48 overflow-y-auto custom-scrollbar pr-2 space-y-1">
                       {modelosDisponibles.map((mod) => (
-                        <button key={mod} onClick={() => { setModelo(mod); setOpenDropdown("version"); }} className={`w-full text-left px-4 py-3 rounded-xl text-sm font-bold transition-colors ${modelo === mod ? "bg-blue-600 text-white" : "text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-white/10"}`}>
+                        <button key={mod} onClick={() => { setModelo(mod); setOpenDropdown("version"); }} className={`w-full text-left px-4 py-3 rounded-xl text-sm font-bold transition-colors ${modelo === mod ? "bg-[#0145F2] text-white" : "text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-white/10"}`}>
                           {mod}
                         </button>
                       ))}
@@ -512,7 +514,7 @@ export default function ConsignarForm() {
                   <ConfigField icon={Zap} label="Versión" value={version} isOpen={openDropdown === 'version'} onClick={() => setOpenDropdown(openDropdown === 'version' ? null : 'version')} isCompleted={!!version}>
                     <input 
                       type="text" placeholder="Ej: 1.0 Turbo Premier..." value={version} onChange={(e) => setVersion(e.target.value)}
-                      className="w-full bg-slate-50 dark:bg-black/50 border border-slate-200 dark:border-white/10 rounded-xl px-4 py-3 text-sm text-slate-900 dark:text-white placeholder:text-slate-400 dark:placeholder:text-slate-600 outline-none focus:border-blue-500"
+                      className="w-full bg-slate-50 dark:bg-black/50 border border-slate-200 dark:border-white/10 rounded-xl px-4 py-3 text-sm text-slate-900 dark:text-white placeholder:text-slate-400 dark:placeholder:text-slate-600 outline-none focus:border-[#0145F2]"
                     />
                     <button onClick={() => setOpenDropdown("km")} className="mt-3 w-full bg-slate-100 dark:bg-white/10 hover:bg-slate-200 dark:hover:bg-white/20 text-slate-700 dark:text-white text-xs font-bold py-2.5 rounded-lg transition-colors">
                       Confirmar Versión
@@ -522,7 +524,7 @@ export default function ConsignarForm() {
                   <ConfigField icon={Gauge} label="Kilómetros" value={km ? formatKm(km) + " km" : ""} isOpen={openDropdown === 'km'} onClick={() => setOpenDropdown(openDropdown === 'km' ? null : 'km')} isCompleted={!!km}>
                     <input
                       type="number" placeholder="Ej: 45000" value={km} onChange={(e) => setKm(e.target.value)}
-                      className="w-full bg-slate-50 dark:bg-black/50 border border-slate-200 dark:border-white/10 rounded-xl px-4 py-3 text-sm text-slate-900 dark:text-white placeholder:text-slate-400 dark:placeholder:text-slate-600 outline-none focus:border-blue-500 font-mono"
+                      className="w-full bg-slate-50 dark:bg-black/50 border border-slate-200 dark:border-white/10 rounded-xl px-4 py-3 text-sm text-slate-900 dark:text-white placeholder:text-slate-400 dark:placeholder:text-slate-600 outline-none focus:border-[#0145F2] font-mono"
                     />
                     <button onClick={() => setOpenDropdown(null)} className="mt-3 w-full bg-slate-100 dark:bg-white/10 hover:bg-slate-200 dark:hover:bg-white/20 text-slate-700 dark:text-white text-xs font-bold py-2.5 rounded-lg transition-colors">
                       Confirmar Kilometraje
@@ -532,7 +534,7 @@ export default function ConsignarForm() {
                   <div className="col-span-2 pt-3 lg:pt-6">
                     <button
                       onClick={() => setStep(2)} disabled={!validarPaso1()}
-                      className="w-full py-4 bg-blue-600 hover:bg-blue-500 disabled:bg-slate-200 dark:disabled:bg-slate-800 disabled:text-slate-400 dark:disabled:text-slate-500 text-white font-black rounded-2xl uppercase tracking-widest text-xs transition-colors flex items-center justify-center gap-2"
+                      className="w-full py-4 bg-[#0145F2] hover:bg-[#0145F2] disabled:bg-slate-200 dark:disabled:bg-slate-800 disabled:text-slate-400 dark:disabled:text-slate-500 text-white font-black rounded-2xl uppercase tracking-widest text-xs transition-colors flex items-center justify-center gap-2"
                     >
                       Siguiente Paso <ArrowLeft className="w-4 h-4 rotate-180" />
                     </button>
@@ -561,7 +563,7 @@ export default function ConsignarForm() {
                       {["Sí, tiene GNC", "No, pero tenía antes", "No, nunca tuvo"].map((op) => (
                         <button
                           key={op} onClick={() => setGnc(op)}
-                          className={`w-full text-left px-5 py-4 rounded-xl border text-sm font-bold transition-all ${gnc === op ? "bg-blue-50 dark:bg-blue-600/20 border-blue-500 text-blue-700 dark:text-white" : "bg-white dark:bg-[#0f172a] border-slate-200 dark:border-white/5 text-slate-500 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-white/5"}`}
+                          className={`w-full text-left px-5 py-4 rounded-xl border text-sm font-bold transition-all ${gnc === op ? "bg-blue-50 dark:bg-[#0145F2]/20 border-[#0145F2] text-[#0138c9] dark:text-white" : "bg-white dark:bg-[#0f172a] border-slate-200 dark:border-white/5 text-slate-500 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-white/5"}`}
                         >
                           {op}
                         </button>
@@ -572,7 +574,7 @@ export default function ConsignarForm() {
                   <div className="pt-6">
                     <button
                       onClick={() => setStep(3)} disabled={!gnc}
-                      className="w-full py-4 bg-blue-600 hover:bg-blue-500 disabled:bg-slate-200 dark:disabled:bg-slate-800 disabled:text-slate-400 dark:disabled:text-slate-500 text-white font-black rounded-2xl uppercase tracking-widest text-xs transition-colors flex items-center justify-center gap-2"
+                      className="w-full py-4 bg-[#0145F2] hover:bg-[#0145F2] disabled:bg-slate-200 dark:disabled:bg-slate-800 disabled:text-slate-400 dark:disabled:text-slate-500 text-white font-black rounded-2xl uppercase tracking-widest text-xs transition-colors flex items-center justify-center gap-2"
                     >
                       Siguiente Paso <ArrowLeft className="w-4 h-4 rotate-180" />
                     </button>
@@ -595,17 +597,17 @@ export default function ConsignarForm() {
                     <div className="grid grid-cols-2 gap-4">
                       <div>
                         <label className="text-[10px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-widest block mb-2">Nombre</label>
-                        <input required type="text" value={nombre} onChange={e => setNombre(e.target.value)} className="w-full bg-slate-50 dark:bg-[#161e2c] border border-slate-200 dark:border-white/5 rounded-xl px-4 py-3 text-sm text-slate-900 dark:text-white outline-none focus:border-blue-500 transition-colors" />
+                        <input required type="text" value={nombre} onChange={e => setNombre(e.target.value)} className="w-full bg-slate-50 dark:bg-[#161e2c] border border-slate-200 dark:border-white/5 rounded-xl px-4 py-3 text-sm text-slate-900 dark:text-white outline-none focus:border-[#0145F2] transition-colors" />
                       </div>
                       <div>
                         <label className="text-[10px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-widest block mb-2">Apellido</label>
-                        <input required type="text" value={apellido} onChange={e => setApellido(e.target.value)} className="w-full bg-slate-50 dark:bg-[#161e2c] border border-slate-200 dark:border-white/5 rounded-xl px-4 py-3 text-sm text-slate-900 dark:text-white outline-none focus:border-blue-500 transition-colors" />
+                        <input required type="text" value={apellido} onChange={e => setApellido(e.target.value)} className="w-full bg-slate-50 dark:bg-[#161e2c] border border-slate-200 dark:border-white/5 rounded-xl px-4 py-3 text-sm text-slate-900 dark:text-white outline-none focus:border-[#0145F2] transition-colors" />
                       </div>
                     </div>
 
                     <div>
                       <label className="text-[10px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-widest block mb-2">Email</label>
-                      <input required type="email" value={email} onChange={e => setEmail(e.target.value)} className="w-full bg-slate-50 dark:bg-[#161e2c] border border-slate-200 dark:border-white/5 rounded-xl px-4 py-3 text-sm text-slate-900 dark:text-white outline-none focus:border-blue-500 transition-colors" />
+                      <input required type="email" value={email} onChange={e => setEmail(e.target.value)} className="w-full bg-slate-50 dark:bg-[#161e2c] border border-slate-200 dark:border-white/5 rounded-xl px-4 py-3 text-sm text-slate-900 dark:text-white outline-none focus:border-[#0145F2] transition-colors" />
                     </div>
 
                     <div>
@@ -614,7 +616,7 @@ export default function ConsignarForm() {
                         <div className="bg-slate-100 dark:bg-[#161e2c] border border-slate-200 dark:border-white/5 rounded-xl px-4 py-3 text-xs font-bold text-slate-500 dark:text-slate-400 flex items-center">
                           +549
                         </div>
-                        <input required type="tel" value={tel} onChange={e => setTel(e.target.value)} placeholder="11 1234 5678" className="flex-1 bg-slate-50 dark:bg-[#161e2c] border border-slate-200 dark:border-white/5 rounded-xl px-4 py-3 text-sm text-slate-900 dark:text-white outline-none focus:border-blue-500 transition-colors" />
+                        <input required type="tel" value={tel} onChange={e => setTel(e.target.value)} placeholder="11 1234 5678" className="flex-1 bg-slate-50 dark:bg-[#161e2c] border border-slate-200 dark:border-white/5 rounded-xl px-4 py-3 text-sm text-slate-900 dark:text-white outline-none focus:border-[#0145F2] transition-colors" />
                       </div>
                     </div>
 
@@ -637,7 +639,7 @@ export default function ConsignarForm() {
                     <div className="pt-6">
                       <button 
                         type="submit" disabled={loading || !turnstileToken}
-                        className="w-full py-4 bg-blue-600 hover:bg-blue-500 disabled:bg-slate-200 dark:disabled:bg-slate-800 disabled:text-slate-400 dark:disabled:text-slate-500 text-white font-black rounded-2xl uppercase tracking-widest text-xs transition-colors flex items-center justify-center gap-2"
+                        className="w-full py-4 bg-[#0145F2] hover:bg-[#0145F2] disabled:bg-slate-200 dark:disabled:bg-slate-800 disabled:text-slate-400 dark:disabled:text-slate-500 text-white font-black rounded-2xl uppercase tracking-widest text-xs transition-colors flex items-center justify-center gap-2"
                       >
                         {loading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Check className="w-4 h-4" />}
                         {loading ? "Procesando..." : "Finalizar y Enviar"}

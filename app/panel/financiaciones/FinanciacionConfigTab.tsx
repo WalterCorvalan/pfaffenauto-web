@@ -97,7 +97,7 @@ export default function FinanciacionConfigTab() {
 
   return (
     <div className="space-y-4 p-6">
-      <div className="bg-white dark:bg-white/[0.02] border border-slate-200 dark:border-white/5 rounded-2xl p-5 space-y-3">
+      <div className="bg-white dark:bg-white/[0.02] border border-slate-200 dark:border-white/5 rounded-2xl shadow-sm p-5 space-y-3">
         <p className="text-sm font-bold text-slate-800 dark:text-white mb-1 flex items-center gap-1.5"><DollarSign className="w-4 h-4 text-emerald-500" /> Precio del dólar</p>
         <p className="text-xs text-slate-400 mb-2">Por defecto se usa el dólar blue en vivo (dolarapi.com) en toda la app: catálogo público, simuladores de financiación y el ticker del panel. Activá esto para fijar un precio propio en su lugar.</p>
         <label className="flex items-center gap-2 cursor-pointer w-fit">
@@ -123,7 +123,7 @@ export default function FinanciacionConfigTab() {
         <p className="text-xs text-amber-800 dark:text-amber-200 font-semibold">Esto arma un simulador propio APROXIMADO en Financiaciones. No reemplaza al simulador real de decreditos (que depende del perfil crediticio de cada cliente) — sirve solo como número de referencia para la charla inicial.</p>
       </div>
 
-      <div className="bg-white dark:bg-white/[0.02] border border-slate-200 dark:border-white/5 rounded-2xl p-5 space-y-3">
+      <div className="bg-white dark:bg-white/[0.02] border border-slate-200 dark:border-white/5 rounded-2xl shadow-sm p-5 space-y-3">
         <p className="text-sm font-bold text-slate-800 dark:text-white mb-1">Tope de financiación por año del vehículo</p>
         <p className="text-xs text-slate-400 mb-2">% del valor del auto que se puede financiar como máximo, según antigüedad. Confirmado probando el simulador real de decreditos.</p>
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
@@ -145,7 +145,7 @@ export default function FinanciacionConfigTab() {
         </div>
       </div>
 
-      <div className="bg-white dark:bg-white/[0.02] border border-slate-200 dark:border-white/5 rounded-2xl p-5 space-y-3">
+      <div className="bg-white dark:bg-white/[0.02] border border-slate-200 dark:border-white/5 rounded-2xl shadow-sm p-5 space-y-3">
         <div className="flex items-center justify-between gap-2">
           <p className="text-sm font-bold text-slate-800 dark:text-white">TNA estimada por año del vehículo y plazo</p>
           <button type="button" onClick={agregarGrupoTna} className="text-[11px] font-bold text-[#0145F2] shrink-0">+ Agregar rango de años</button>
@@ -179,7 +179,7 @@ export default function FinanciacionConfigTab() {
         </div>
       </div>
 
-      <div className="bg-white dark:bg-white/[0.02] border border-slate-200 dark:border-white/5 rounded-2xl p-5">
+      <div className="bg-white dark:bg-white/[0.02] border border-slate-200 dark:border-white/5 rounded-2xl shadow-sm p-5">
         <label className="text-xs font-semibold text-slate-500 block mb-1">Gastos estimados (transferencia + prenda)</label>
         <div className="flex items-center gap-1 max-w-[160px]">
           <input type="number" step="0.1" defaultValue={config.financiacion_gastos_pct} onBlur={(e) => guardar({ financiacion_gastos_pct: Number(e.target.value) })} className={inputClass} />

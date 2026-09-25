@@ -44,7 +44,7 @@ export default async function PautadosPage() {
       )}
 
       {activos.length === 0 ? (
-        <div className="bg-white dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-2xl py-16 text-center text-sm text-slate-400">Ningún vehículo pautado activo por ahora.</div>
+        <div className="bg-white dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-2xl py-16 text-center text-sm text-slate-400 shadow-sm">Ningún vehículo pautado activo por ahora.</div>
       ) : (
         <TablaPautados vehiculos={activos} />
       )}

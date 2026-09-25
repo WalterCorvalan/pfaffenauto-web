@@ -984,12 +984,13 @@ export default function ExpedienteDetalleModal({ expedienteId, miId, perfiles, s
                 <p className="text-[10px] text-slate-400">Precio: {venta?.moneda_venta} {venta ? Number(venta.precio_venta).toLocaleString("es-AR") : "—"}</p>
               </div>
               <div className="bg-white dark:bg-white/5 rounded-lg p-2.5">
-                <p className="text-[9px] font-bold uppercase text-slate-400">A pagar al propietario</p>
-                {aPagarVendedor != null ? <p className="text-lg font-black text-purple-600">{precioPropietarioMoneda} {aPagarVendedor.toLocaleString("es-AR")}</p> : <p className="text-xs text-slate-400 mt-1.5">Sin precio cargado por finanzas</p>}
+                <p className="text-[9px] font-bold uppercase text-slate-400">Neto a pagar al propietario</p>
+                {netoPropietario != null ? <p className="text-lg font-black text-purple-600">{precioPropietarioMoneda} {netoPropietario.toLocaleString("es-AR")}</p> : <p className="text-xs text-slate-400 mt-1.5">Sin precio cargado por finanzas</p>}
+                {aPagarVendedor != null && netoPropietario != null && aPagarVendedor !== netoPropietario && <p className="text-[10px] text-slate-400">Acordado: {precioPropietarioMoneda} {aPagarVendedor.toLocaleString("es-AR")}</p>}
               </div>
               <div className="bg-white dark:bg-white/5 rounded-lg p-2.5">
                 <p className="text-[9px] font-bold uppercase text-slate-400">Margen neto agencia</p>
-                {gananciasOcultas ? <p className="text-xs text-slate-400 mt-1.5">Oculto para tu usuario</p> : margen != null ? <p className="text-lg font-black text-emerald-600">{venta?.moneda_venta} {margen.toLocaleString("es-AR")}</p> : <p className="text-xs text-orange-600 mt-1.5">No calculable.</p>}
+                {gananciasOcultas ? <p className="text-xs text-slate-400 mt-1.5">Oculto para tu usuario</p> : margenAgencia != null ? <p className="text-lg font-black text-emerald-600">{venta?.moneda_venta} {margenAgencia.toLocaleString("es-AR")}</p> : margen != null ? <p className="text-lg font-black text-emerald-600">{venta?.moneda_venta} {margen.toLocaleString("es-AR")}</p> : <p className="text-xs text-orange-600 mt-1.5">No calculable.</p>}
               </div>
             </div>
             <button onClick={() => setBoletoTipo("venta")} className="w-full mt-3 flex items-center justify-center gap-2 bg-emerald-600 hover:bg-emerald-700 text-white text-sm font-bold py-2.5 rounded-xl transition-colors">

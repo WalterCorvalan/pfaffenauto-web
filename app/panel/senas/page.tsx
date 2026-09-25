@@ -5,6 +5,9 @@ export const metadata = { title: "Señas | Pfaffen Autos" };
 
 export default async function SenasPage() {
   const supabase = await createClient();
+  const { data: { user } } = await supabase.auth.getUser();
+  const miPerfil = user ? await supabase.from("perfiles").select("id, roles").eq("id", user.id).single().then((r) => r.data) : null;
+  const soyAdmin = miPerfil?.roles?.includes("admin") ?? false;
 
   const [{ data: senas }, { data: clientes }, { data: vehiculos }, { data: vendedores }, { data: sucursales }, { data: cuentas }] = await Promise.all([
     supabase.from("senas").select("*, perfiles:vendedor_id ( nombre ), sucursales:sucursal_id ( nombre )").order("created_at", { ascending: false }).limit(100),
@@ -27,6 +30,8 @@ export default async function SenasPage() {
       vendedores={vendedores || []}
       sucursales={sucursales || []}
       cuentas={cuentas || []}
+      miId={user?.id || ""}
+      soyAdmin={soyAdmin}
     />
   );
 }

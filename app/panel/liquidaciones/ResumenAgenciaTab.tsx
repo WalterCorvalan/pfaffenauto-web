@@ -20,17 +20,22 @@ export default function ResumenAgenciaTab({ liquidaciones, gananciasOcultas }: {
   }, [finalizadas]);
 
   if (porMes.length === 0) {
-    return <div className="bg-white dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-2xl py-16 text-center"><p className="text-sm font-bold">Sin datos</p><p className="text-xs text-slate-400 mt-1">No hay transferencias finalizadas para el resumen de la agencia.</p></div>;
+    return <div className="bg-white dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-2xl py-16 text-center shadow-sm"><p className="text-sm font-bold">Sin datos</p><p className="text-xs text-slate-400 mt-1">No hay transferencias finalizadas para el resumen de la agencia.</p></div>;
   }
 
   const ultimo = porMes[0];
+  // finalizadas[0] es la liquidación cargada más recientemente (created_at
+  // desc), no necesariamente una fila del mes `ultimo.mes` -- si el % de
+  // agencia cambió de configuración entre medio, el label podía mostrar el
+  // % de otro mes. Se busca el % real de una fila que sí sea de ese mes.
+  const pctAgenciaUltimoMes = finalizadas.find((f) => f.mes.slice(0, 7) === ultimo.mes)?.pct_agencia_aplicado ?? 90;
 
   return (
     <div>
-      <div className="bg-white dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-xl p-4 mb-4 inline-block">
+      <div className="bg-white dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-xl p-4 mb-4 inline-block shadow-sm">
         <p className="text-sm font-bold">{new Date(ultimo.mes + "-01T12:00:00").toLocaleDateString("es-AR", { month: "long", year: "numeric" })}</p>
         <p className="text-2xl font-black text-blue-600">{gananciasOcultas ? "—" : fmt(ultimo.ingresoNeto)}</p>
-        <p className="text-xs text-slate-400">Ingreso agencia ({finalizadas[0]?.pct_agencia_aplicado ?? 90}%)</p>
+        <p className="text-xs text-slate-400">Ingreso agencia ({pctAgenciaUltimoMes}%)</p>
         <p className="text-xs text-slate-400 mt-1">{ultimo.ops} operaciones · Comisiones: {fmt(ultimo.comisiones)}</p>
       </div>
 

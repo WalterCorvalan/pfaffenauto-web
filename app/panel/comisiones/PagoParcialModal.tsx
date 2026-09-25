@@ -8,10 +8,12 @@ import { hoyLocalISO } from "@/lib/panel/fechas";
 export default function PagoParcialModal({
   comision,
   cuentas,
+  soyAdminOFinanzas,
   onClose
 }: {
   comision: any;
   cuentas: any[];
+  soyAdminOFinanzas: boolean;
   onClose: () => void;
 }) {
   const restante = Number(comision.monto) - Number(comision.monto_pagado);
@@ -24,6 +26,12 @@ export default function PagoParcialModal({
 
   const guardar = async (e: React.FormEvent) => {
     e.preventDefault();
+    // A diferencia de alternarEstado() (cobrar/revertir comisión), este
+    // modal no chequeaba el rol en absoluto -- el ícono que lo abre solo
+    // se OCULTA para no-admin/finanzas en ComisionesClient.tsx, pero si se
+    // fuerza la apertura, cualquier usuario autenticado podía llamar al RPC
+    // que debita una cuenta real (hallazgo de auditoría).
+    if (!soyAdminOFinanzas) return alert("No tenés permiso para esto.");
     if (!externo && !cuentaId) return alert('Elegí de qué caja sale el pago, o tildá "Pago Externo".');
     setCargando(true);
     try {

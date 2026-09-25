@@ -67,7 +67,7 @@ export default function RodiLeadsTab({ conversacionesIniciales, vendedores, miId
       </div>
 
       {filtrados.length === 0 ? (
-        <div className="bg-white dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-2xl py-16 flex flex-col items-center justify-center text-center">
+        <div className="bg-white dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-2xl py-16 flex flex-col items-center justify-center text-center shadow-sm">
           <Bot className="w-10 h-10 text-slate-300 dark:text-slate-600 mb-3" />
           <p className="text-sm font-bold text-slate-700 dark:text-slate-200">Sin leads de Rodi{filtro !== "todos" ? "" : " todavía"}.</p>
           {filtro === "todos" && <p className="text-xs text-slate-400 mt-1 max-w-sm">Cuando un visitante del sitio le escriba a Rodi, va a aparecer acá. El round-robin asigna inicialmente al vendedor; desde acá podés reasignar.</p>}
@@ -75,7 +75,7 @@ export default function RodiLeadsTab({ conversacionesIniciales, vendedores, miId
       ) : (
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
           {filtrados.map((c) => (
-            <button key={c.id} onClick={() => setDetalleId(c.id)} className="text-left bg-white dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-2xl p-4 hover:border-rose-300 dark:hover:border-rose-500/40 transition-colors">
+            <button key={c.id} onClick={() => setDetalleId(c.id)} className="text-left bg-white dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-2xl p-4 shadow-sm hover:shadow-md hover:border-rose-300 dark:hover:border-rose-500/40 transition-shadow">
               <div className="flex items-center justify-between mb-2">
                 <div className="flex items-center gap-2 min-w-0">
                   <span className={`w-2 h-2 rounded-full shrink-0 ${CALIFICACION_DOT[c.calificacion] || "bg-slate-300"}`} />

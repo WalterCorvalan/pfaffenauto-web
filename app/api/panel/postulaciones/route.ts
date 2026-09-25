@@ -3,6 +3,7 @@ import { createClient } from "@supabase/supabase-js";
 import { verificarTurnstile } from "@/lib/turnstile";
 import { rateLimit, ipDesdeRequest } from "@/lib/rateLimit";
 import { registrarError } from "@/lib/panel/logger";
+import { crearAlerta } from "@/lib/panel/alertas";
 
 const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE2_URL!,
@@ -51,7 +52,7 @@ export async function POST(req: Request) {
     const { data: destinatarios } = await supabase.from("perfiles").select("id").or("roles.cs.{admin},roles.cs.{encargado}").eq("activo", true);
     const titulo = `Nueva postulación: ${postulacion.nombre} ${postulacion.apellido} — ${postulacion.puesto}.`;
     for (const d of destinatarios || []) {
-      await supabase.from("alertas").insert({ destinatario_id: d.id, tipo: "postulacion", prioridad: "novedad", titulo, link: "/panel/postulaciones" });
+      await crearAlerta(supabase, d.id, titulo, { link: "/panel/postulaciones", tipo: "postulacion", prioridad: "novedad", modulo: "postulaciones" });
     }
 
     return Response.json({ ok: true, id: data.id });

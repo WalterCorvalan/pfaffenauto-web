@@ -24,7 +24,7 @@ const PRIORIDAD_INFO: Record<string, { label: string; dot: string; badge: string
   alta: { label: "Prioridad alta", dot: "bg-rose-500", badge: "bg-rose-50 dark:bg-rose-500/10 text-rose-600 dark:text-rose-300" },
   novedad: { label: "Novedades", dot: "bg-emerald-500", badge: "bg-emerald-50 dark:bg-emerald-500/10 text-emerald-600 dark:text-emerald-300" },
   media: { label: "Media", dot: "bg-amber-500", badge: "bg-amber-50 dark:bg-amber-500/10 text-amber-600 dark:text-amber-300" },
-  baja: { label: "Baja", dot: "bg-blue-500", badge: "bg-blue-50 dark:bg-blue-500/10 text-blue-600 dark:text-blue-300" },
+  baja: { label: "Baja", dot: "bg-[#0145F2]", badge: "bg-sky-50 dark:bg-sky-500/10 text-[#0145F2] dark:text-sky-300" },
 };
 const ORDEN = ["alta", "novedad", "media", "baja"] as const;
 
@@ -80,6 +80,14 @@ export default function AlertasClient({ alertasIniciales }: { alertasIniciales: 
     if (a.link) router.push(a.link);
   };
 
+  const marcarTodasLeidas = async () => {
+    const sinLeer = alertas.filter((a) => !a.leida);
+    if (sinLeer.length === 0) return;
+    setAlertas((prev) => prev.map((a) => ({ ...a, leida: true })));
+    const ids = sinLeer.flatMap((a) => a.idsGrupo);
+    await supabase2.from("alertas").update({ leida: true }).in("id", ids);
+  };
+
   const borrarTodas = () => {
     setConfirmDialog({
       mensaje: `¿Borrar las ${alertas.length} alertas? No se puede deshacer.`,
@@ -106,7 +114,7 @@ export default function AlertasClient({ alertasIniciales }: { alertasIniciales: 
           {ORDEN.map((p) => {
             const info = PRIORIDAD_INFO[p];
             return (
-              <div key={p} className={`text-center px-4 py-2 rounded-xl ${info.badge}`}>
+              <div key={p} className={`text-center px-4 py-2 rounded-xl shadow-sm ${info.badge}`}>
                 <p className="text-xl font-black leading-none">{conteos[p]}</p>
                 <p className="text-[10px] font-bold uppercase tracking-wide mt-1">{p === "alta" ? "Alta" : info.label}</p>
               </div>
@@ -116,7 +124,12 @@ export default function AlertasClient({ alertasIniciales }: { alertasIniciales: 
       </div>
 
       {alertas.length > 0 && (
-        <div className="flex justify-end mb-3">
+        <div className="flex justify-end gap-2 mb-3">
+          {alertas.some((a) => !a.leida) && (
+            <button onClick={marcarTodasLeidas} className="flex items-center gap-1.5 text-xs font-bold text-slate-500 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-white/10 px-3 py-1.5 rounded-lg transition-colors">
+              <CheckCircle2 className="w-3.5 h-3.5" /> Marcar todas como leídas
+            </button>
+          )}
           <button onClick={borrarTodas} disabled={borrandoTodas} className="flex items-center gap-1.5 text-xs font-bold text-rose-600 hover:bg-rose-50 dark:hover:bg-rose-500/10 px-3 py-1.5 rounded-lg transition-colors disabled:opacity-50">
             <Trash2 className="w-3.5 h-3.5" /> Borrar todas
           </button>
@@ -124,7 +137,7 @@ export default function AlertasClient({ alertasIniciales }: { alertasIniciales: 
       )}
 
       {alertas.length === 0 ? (
-        <div className="bg-white dark:bg-white/[0.02] border border-slate-200 dark:border-white/10 rounded-2xl py-16 flex flex-col items-center justify-center text-center">
+        <div className="bg-white dark:bg-white/[0.02] border border-slate-200 dark:border-white/10 rounded-2xl py-16 flex flex-col items-center justify-center text-center shadow-sm">
           <CheckCircle2 className="w-10 h-10 text-slate-300 dark:text-slate-600 mb-3" />
           <p className="font-bold text-slate-700 dark:text-slate-200">Todo en orden</p>
           <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">No hay alertas pendientes en este momento.</p>
@@ -153,11 +166,14 @@ export default function AlertasClient({ alertasIniciales }: { alertasIniciales: 
                         const Icon = TIPO_ICON[a.tipo] || ICONO_DEFECTO;
                         const color = TIPO_COLOR[a.tipo] || COLOR_DEFECTO;
                         return (
-                          <div key={a.id} className={`flex items-start gap-3 rounded-xl p-4 border ${info.badge} border-transparent`}>
-                            <span className={`w-8 h-8 rounded-lg flex items-center justify-center shrink-0 ${color}`}><Icon className="w-4 h-4" /></span>
+                          <div key={a.id} onClick={() => marcarLeida(a)} className={`flex items-start gap-3 rounded-xl p-4 border shadow-sm hover:shadow-md transition-shadow cursor-pointer ${info.badge} border-transparent`}>
+                            <span className={`relative w-8 h-8 rounded-lg flex items-center justify-center shrink-0 ${color}`}>
+                              <Icon className="w-4 h-4" />
+                              {!a.leida && <span className="absolute -top-0.5 -right-0.5 w-2.5 h-2.5 rounded-full bg-[#0145F2] ring-2 ring-white dark:ring-[#0A0A0A]" />}
+                            </span>
                             <div className="min-w-0 flex-1">
                               <div className="flex items-start justify-between gap-2">
-                                <p className="text-sm font-bold text-slate-900 dark:text-white flex items-center gap-1.5">
+                                <p className={`text-sm text-slate-900 dark:text-white flex items-center gap-1.5 ${a.leida ? "font-semibold" : "font-bold"}`}>
                                   {a.titulo}
                                   {a.contador > 1 && <span className="text-[10px] font-bold px-1.5 rounded-full bg-[#0145F2] text-white shrink-0">x{a.contador}</span>}
                                 </p>
@@ -186,7 +202,7 @@ export default function AlertasClient({ alertasIniciales }: { alertasIniciales: 
 
       {alertaModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/40" onClick={() => setAlertaModal(null)}>
-          <div className="bg-white dark:bg-[#1A1A1A] rounded-2xl shadow-xl w-full max-w-md p-6" onClick={(e) => e.stopPropagation()}>
+          <div className="bg-white dark:bg-[#1A1A1A] rounded-2xl shadow-2xl border border-slate-200 dark:border-white/10 w-full max-w-md p-6" onClick={(e) => e.stopPropagation()}>
             <div className="flex items-start justify-between gap-3 mb-3">
               <h2 className="text-lg font-bold text-slate-900 dark:text-white">{alertaModal.titulo}</h2>
               <button onClick={() => setAlertaModal(null)} className="p-1 text-slate-400 hover:text-rose-600 rounded-lg transition-colors shrink-0"><X className="w-4 h-4" /></button>

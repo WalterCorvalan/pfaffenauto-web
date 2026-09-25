@@ -24,7 +24,7 @@ export default async function OutletBanner() {
           <div className="flex-1 flex flex-col items-center md:items-start text-center md:text-left">
             
             <div className="mb-6">
-              <span className="inline-flex items-center gap-1.5 bg-blue-600 text-white text-[10px] md:text-xs font-bold uppercase tracking-widest px-3 py-1.5 rounded-md">
+              <span className="inline-flex items-center gap-1.5 bg-[#0145F2] text-white text-[10px] md:text-xs font-bold uppercase tracking-widest px-3 py-1.5 rounded-md">
                 <Zap className="w-3.5 h-3.5 fill-white" /> Liquidación de Stock
               </span>
             </div>
@@ -44,7 +44,7 @@ export default async function OutletBanner() {
                 />
                 <Image
                   src="/r.png"
-                  alt="Marca Registrada"
+                  alt=""
                   width={66}
                   height={66}
                   className="absolute -top-1 -right-3 md:-right-4 w-3 h-3 md:w-3.5 md:h-3.5 object-contain invert brightness-0 opacity-80"
@@ -72,7 +72,7 @@ export default async function OutletBanner() {
               <div className="w-px h-12 bg-slate-700 hidden md:block"></div>
               
               <div className="flex flex-col items-center md:items-start">
-                <span className="text-3xl md:text-4xl font-black text-blue-500 tracking-tighter">
+                <span className="text-3xl md:text-4xl font-black text-[#0145F2] tracking-tighter">
                   {outletCount || "+10"}
                 </span>
                 <span className="text-[10px] text-slate-400 font-bold uppercase tracking-widest mt-1 text-center md:text-left">
@@ -84,7 +84,7 @@ export default async function OutletBanner() {
             {/* Botón Sólido Clásico */}
             <Link 
               href="/outlet" 
-              className="flex items-center justify-center gap-2 bg-blue-600 hover:bg-blue-700 text-white px-8 py-4 rounded-xl font-bold uppercase tracking-widest text-xs md:text-sm w-full md:w-auto transition-colors active:scale-95"
+              className="flex items-center justify-center gap-2 bg-[#0145F2] hover:bg-[#0138c9] text-white px-8 py-4 rounded-xl font-bold uppercase tracking-widest text-xs md:text-sm w-full md:w-auto transition-colors active:scale-95"
             >
               Ver autos del outlet
               <ArrowRight className="w-4 h-4" />

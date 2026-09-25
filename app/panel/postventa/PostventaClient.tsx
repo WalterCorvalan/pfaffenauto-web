@@ -189,7 +189,7 @@ export default function PostventaClient({
                 <button onClick={() => setModalRecordatorio(true)} disabled={compras.length === 0} title={compras.length === 0 ? "Primero cargá una compra en «Ya compraron»" : undefined} className="flex items-center gap-1.5 px-3 py-2 text-xs font-bold bg-[#0145F2] hover:bg-[#0138c9] text-white rounded-lg disabled:opacity-40 disabled:cursor-not-allowed">+ Nuevo recordatorio</button>
               </div>
               {recordatoriosFiltrados.length === 0 ? (
-                <div className="flex flex-col items-center justify-center text-center py-16 bg-white dark:bg-white/[0.02] border border-slate-200 dark:border-white/5 rounded-2xl">
+                <div className="flex flex-col items-center justify-center text-center py-16 bg-white dark:bg-white/[0.02] border border-slate-200 dark:border-white/5 rounded-2xl shadow-sm">
                   <Phone className="w-10 h-10 text-slate-300 dark:text-slate-600 mb-3" />
                   <h3 className="text-sm font-bold text-slate-800 dark:text-white mb-1">No hay recontactos pendientes</h3>
                   <p className="max-w-sm text-xs text-slate-500 dark:text-slate-400">Cuando una venta tenga recordatorios (service, VTV, seguro...), van a aparecer acá agrupados por urgencia.</p>
@@ -199,7 +199,7 @@ export default function PostventaClient({
                   {ORDEN_BUCKETS.filter((b) => grupos[b]?.length).map((bucket) => (
                     <div key={bucket}>
                       <p className={`text-[11px] font-black uppercase tracking-widest mb-2 ${BUCKET_COLOR[bucket]}`}>{bucket} · {grupos[bucket].length}</p>
-                      <div className="bg-white dark:bg-white/[0.02] border border-slate-200 dark:border-white/5 rounded-2xl divide-y divide-slate-100 dark:divide-white/5">
+                      <div className="bg-white dark:bg-white/[0.02] border border-slate-200 dark:border-white/5 rounded-2xl shadow-sm divide-y divide-slate-100 dark:divide-white/5">
                         {grupos[bucket].map((r) => {
                           const compra = compraMap[r.compra_id];
                           const Icon = TIPO_MAP[r.tipo]?.icon || Pin;
@@ -227,13 +227,13 @@ export default function PostventaClient({
           ) : (
             <>
               {comprasFiltradas.length === 0 ? (
-                <div className="flex flex-col items-center justify-center text-center py-16 bg-white dark:bg-white/[0.02] border border-slate-200 dark:border-white/5 rounded-2xl">
+                <div className="flex flex-col items-center justify-center text-center py-16 bg-white dark:bg-white/[0.02] border border-slate-200 dark:border-white/5 rounded-2xl shadow-sm">
                   <Repeat className="w-10 h-10 text-slate-300 dark:text-slate-600 mb-3" />
                   <h3 className="text-sm font-bold text-slate-800 dark:text-white mb-1">Todavía no hay compras cerradas</h3>
                   <p className="max-w-sm text-xs text-slate-500 dark:text-slate-400">Cuando una venta pase a Cerrada, su comprador va a aparecer acá. También podés cargar compras viejas desde un Excel.</p>
                 </div>
               ) : (
-                <div className="bg-white dark:bg-white/[0.02] border border-slate-200 dark:border-white/5 rounded-2xl divide-y divide-slate-100 dark:divide-white/5 mb-4">
+                <div className="bg-white dark:bg-white/[0.02] border border-slate-200 dark:border-white/5 rounded-2xl shadow-sm divide-y divide-slate-100 dark:divide-white/5 mb-4">
                   {comprasFiltradas.map((c) => (
                     <div key={c.id} className="flex items-center justify-between px-4 py-3">
                       <div>

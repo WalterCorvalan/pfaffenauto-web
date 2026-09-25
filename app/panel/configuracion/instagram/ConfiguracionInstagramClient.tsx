@@ -64,7 +64,7 @@ function AutomatizacionesComentarios() {
   };
 
   return (
-    <div className="bg-white dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-2xl p-5 space-y-4">
+    <div className="bg-white dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-2xl p-5 space-y-4 shadow-sm">
       <div>
         <p className="text-[11px] font-black uppercase tracking-widest text-slate-400 flex items-center gap-1.5"><MessageSquareReply className="w-3.5 h-3.5" /> Automatizaciones de comentarios</p>
         <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">Tipo ManyChat: si un comentario en un posteo contiene alguna de estas palabras clave, se manda ese DM puntual (y opcionalmente una respuesta pública debajo del comentario) en vez del mensaje de apertura genérico. Si ningún comentario matchea ninguna regla, sigue el comportamiento de siempre.</p>
@@ -254,7 +254,7 @@ export default function ConfiguracionInstagramClient() {
         {config?.listo ? "✅ Configurado" : "⏳ Falta completar"}
       </div>
 
-      <div className="bg-white dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-2xl p-5 space-y-4">
+      <div className="bg-white dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-2xl p-5 space-y-4 shadow-sm">
         <p className="text-[11px] font-black uppercase tracking-widest text-slate-400">Credenciales de Meta</p>
 
         <div className="bg-indigo-50 dark:bg-indigo-500/10 border border-indigo-200 dark:border-indigo-500/20 rounded-xl p-3 space-y-2">
@@ -297,7 +297,7 @@ export default function ConfiguracionInstagramClient() {
         </button>
       </div>
 
-      <div className="bg-white dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-2xl p-5 space-y-4">
+      <div className="bg-white dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-2xl p-5 space-y-4 shadow-sm">
         <p className="text-[11px] font-black uppercase tracking-widest text-slate-400">Webhook — cargalo en Meta</p>
         <p className="text-xs text-slate-500 dark:text-slate-400">En Meta → Instagram → Configuración → Webhook → Editar, pegá estos dos valores y suscribite a los campos <b>comments</b> y <b>messages</b>.</p>
 

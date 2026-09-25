@@ -73,7 +73,7 @@ export default function VersionDetailClient({ version }: { version: Version }) {
                   i === indice ? "border-[#1273b9]" : "border-transparent hover:border-slate-300"
                 }`}
               >
-                <Image src={img} alt="" fill sizes="80px" className="object-cover" />
+                <Image src={img} alt={`${version.name} - miniatura ${i + 1}`} fill sizes="80px" className="object-cover" />
               </button>
             ))}
           </div>

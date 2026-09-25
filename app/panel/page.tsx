@@ -22,6 +22,7 @@ export default async function PanelV2Home() {
 
   const { data: miPerfil } = await supabase.from("perfiles").select("id, nombre, roles, ganancias_ocultas").eq("id", user.id).single();
   const esAdmin = miPerfil?.roles?.includes("admin") ?? false;
+  const puedeVerFinanzas = esAdmin || (miPerfil?.roles?.includes("finanzas") ?? false);
 
   const hoy = new Date();
   const inicioMes = new Date(hoy.getFullYear(), hoy.getMonth(), 1).toISOString().slice(0, 10);
@@ -111,7 +112,13 @@ export default async function PanelV2Home() {
     supabase.from("infracciones").select("id", { count: "exact", head: true }).eq("estado", "Pendiente"),
     supabase.from("pedidos").select("id", { count: "exact", head: true }).eq("estado", "activo"),
     supabase.rpc("ranking_ventas", { p_desde: inicioMes, p_hasta: finMes }),
-    supabase.from("expedientes").select("precio_propietario, precio_propietario_moneda, venta:venta_id(precio_venta, moneda_venta, fecha_cierre, estado)").not("precio_propietario", "is", null),
+    // El margen real (precio de venta − precio del propietario) es de las
+    // cifras más sensibles del negocio -- antes se pedía y calculaba
+    // siempre, y viajaba en el payload de DashboardClient (client
+    // component) a cualquier usuario logueado aunque CockpitCeoTab solo se
+    // renderizara para esAdmin (hallazgo de auditoría: "no se ve" no es lo
+    // mismo que "no viaja"). Se corta el fetch acá, no solo el render.
+    esAdmin ? supabase.from("expedientes").select("precio_propietario, precio_propietario_moneda, venta:venta_id(precio_venta, moneda_venta, fecha_cierre, estado)").not("precio_propietario", "is", null) : Promise.resolve({ data: [] }),
     // Antes contaba vehiculos.propio_agencia=false, que también se pone en
     // false desde mandatos (NuevoMandatoModal) e importaciones con dueño
     // cargado (ImportarXlsxModal) -- inflaba el número mezclando conceptos
@@ -123,7 +130,7 @@ export default async function PanelV2Home() {
     supabase.from("infracciones").select("ganancia_ars, estado, fecha").gte("fecha", inicioMesAnterior).lte("fecha", finMesAnterior),
     supabase.from("ventas").select("calificacion_puntaje, vendedor_id, calificacion_pedida").eq("estado", "cerrada").gte("fecha_cierre", inicioMes).lte("fecha_cierre", finMes),
     supabase.from("ventas").select("extra_cobrado_monto, extra_cobrado_moneda").eq("estado", "cerrada").gte("fecha_cierre", inicioMes).lte("fecha_cierre", finMes).not("extra_cobrado_monto", "is", null),
-    supabase.from("expedientes").select("precio_propietario, precio_propietario_moneda, venta:venta_id(precio_venta, moneda_venta, fecha_cierre, estado)").not("precio_propietario", "is", null).gte("venta.fecha_cierre", hace12meses),
+    esAdmin ? supabase.from("expedientes").select("precio_propietario, precio_propietario_moneda, venta:venta_id(precio_venta, moneda_venta, fecha_cierre, estado)").not("precio_propietario", "is", null).gte("venta.fecha_cierre", hace12meses) : Promise.resolve({ data: [] }),
     supabase.from("ventas").select("id, precio_venta, moneda_venta, fecha_cierre, estado").eq("estado", "cerrada").gte("fecha_cierre", `${hoy.getFullYear() - 2}-01-01`),
     supabase.from("ventas").select("id, precio_venta, moneda_venta").eq("estado", "cerrada").eq("vendedor_id", user.id).gte("fecha_cierre", inicioAno),
     supabase.from("consignaciones").select("id", { count: "exact", head: true }).gte("created_at", inicioAno),
@@ -314,9 +321,13 @@ export default async function PanelV2Home() {
     }
   }
 
-  // Resumen anual (2 años atrás, año pasado, año actual)
+  // Resumen anual (2 años atrás, año pasado, año actual) -- el monto en USD
+  // es plata real de facturación, se oculta para no-admin (mismo criterio
+  // que gananciaPorMoneda/gananciaPorMes de arriba). La cantidad de autos no
+  // es sensible, se deja igual.
   const resumenAnual = [hoy.getFullYear() - 2, hoy.getFullYear() - 1, hoy.getFullYear()].map((anio) => {
     const delAno = (ventasPorAno || []).filter((v: any) => v.fecha_cierre?.startsWith(String(anio)));
+    if (!esAdmin) return { anio, autos: delAno.length, usd: 0 };
     const usd = delAno.filter((v: any) => v.moneda_venta === "USD").reduce((a: number, v: any) => a + Number(v.precio_venta), 0);
     return { anio, autos: delAno.length, usd: Math.round(usd) };
   });
@@ -426,6 +437,7 @@ export default async function PanelV2Home() {
     <DashboardClient
       miNombre={miPerfil?.nombre || "Usuario"}
       esAdmin={esAdmin}
+      puedeVerFinanzas={puedeVerFinanzas}
       gananciasOcultas={miPerfil?.ganancias_ocultas ?? false}
       revenuePorMoneda={revenuePorMoneda}
       ventasDelMes={ventasCerradas.length}

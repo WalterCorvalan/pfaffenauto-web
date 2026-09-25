@@ -3,12 +3,13 @@
 import { useState, useMemo } from "react";
 import { supabase2 } from "@/lib/supabase/client";
 import { inputClass, fmt } from "./shared";
+import { hoyLocalISO } from "@/lib/panel/fechas";
 
 const CATS = ["A", "B", "C", "Exenta"] as const;
 const IVA_OPCIONES = [21, 10.5, 27, 0];
 
-export default function AfipIvaTab({ movimientos, setMovimientos }: { movimientos: any[]; setMovimientos: (fn: any) => void }) {
-  const [periodo, setPeriodo] = useState(new Date().toISOString().slice(0, 7));
+export default function AfipIvaTab({ movimientos, setMovimientos, vehiculosFacturados = [] }: { movimientos: any[]; setMovimientos: (fn: any) => void; vehiculosFacturados?: any[] }) {
+  const [periodo, setPeriodo] = useState(hoyLocalISO().slice(0, 7));
 
   const delPeriodo = movimientos.filter((m) => !m.deleted_at && m.estado === "aprobado" && m.fecha.slice(0, 7) === periodo);
 
@@ -36,6 +37,26 @@ export default function AfipIvaTab({ movimientos, setMovimientos }: { movimiento
     if (partes.length === 0) return fmt(0, "ARS");
     return partes.map(([moneda, v]) => fmt(v, moneda)).join(" · ");
   };
+
+  // Facturas de compra de vehículos (módulo Facturación) del período elegido
+  // -- fuente adicional de crédito fiscal, no reemplaza el cálculo de
+  // arriba (que sigue siendo 100% movimientos_caja clasificados a mano).
+  // No todas tienen % IVA cargado (es opcional en Facturación); las que sí
+  // lo tienen suman acá, el resto aparece listada igual para que finanzas
+  // la vea y la clasifique si corresponde.
+  const facturasCompraDelPeriodo = useMemo(
+    () => vehiculosFacturados.filter((v) => v.factura_fecha && v.factura_fecha.slice(0, 7) === periodo),
+    [vehiculosFacturados, periodo]
+  );
+  const ivaCompraDe = (v: any) => {
+    if (!v.factura_iva_pct || !v.factura_importe) return 0;
+    return Number(v.factura_importe) * (Number(v.factura_iva_pct) / (100 + Number(v.factura_iva_pct)));
+  };
+  const ivaComprasVehiculosPorMoneda: Record<string, number> = {};
+  for (const v of facturasCompraDelPeriodo) {
+    const moneda = v.moneda_compra || "ARS";
+    ivaComprasVehiculosPorMoneda[moneda] = (ivaComprasVehiculosPorMoneda[moneda] || 0) + ivaCompraDe(v);
+  }
 
   const resumen = useMemo(() => {
     const cats = [...CATS, "Sin clasificar"];
@@ -79,8 +100,9 @@ export default function AfipIvaTab({ movimientos, setMovimientos }: { movimiento
         <div className="bg-rose-50 dark:bg-rose-500/10 border border-rose-100 dark:border-rose-500/20 rounded-xl p-4"><p className="text-[10px] font-bold uppercase text-rose-500">Saldo IVA</p><p className="text-2xl font-black">{fmtPorMoneda(saldoIva)}</p><p className="text-[10px] text-slate-400">A pagar a AFIP</p></div>
       </div>
 
-      <div className="bg-white dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-xl overflow-hidden mb-4">
+      <div className="bg-white dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-xl shadow-sm overflow-hidden mb-4">
         <p className="text-xs font-bold uppercase text-slate-400 p-3 border-b border-slate-100 dark:border-white/10">Resumen por categoría fiscal</p>
+        <div className="overflow-x-auto">
         <table className="w-full text-xs">
           <thead><tr className="text-left text-slate-400"><th className="p-2.5">Categoría</th><th className="p-2.5">Movs</th><th className="p-2.5">Ingresos</th><th className="p-2.5">Egresos</th><th className="p-2.5">IVA cobrado</th><th className="p-2.5">IVA pagado</th></tr></thead>
           <tbody>
@@ -96,9 +118,36 @@ export default function AfipIvaTab({ movimientos, setMovimientos }: { movimiento
             ))}
           </tbody>
         </table>
+        </div>
       </div>
 
-      <div className="bg-white dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-xl p-4">
+      {facturasCompraDelPeriodo.length > 0 && (
+        <div className="bg-white dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-xl shadow-sm overflow-hidden mb-4">
+          <div className="flex items-center justify-between p-3 border-b border-slate-100 dark:border-white/10">
+            <p className="text-xs font-bold uppercase text-slate-400">🚗 Facturas de compra de vehículos del período (desde Facturación)</p>
+            <p className="text-xs text-slate-400">Crédito fiscal: <b className="text-indigo-600">{fmtPorMoneda(ivaComprasVehiculosPorMoneda)}</b></p>
+          </div>
+          <div className="overflow-x-auto">
+            <table className="w-full text-xs">
+              <thead><tr className="text-left text-slate-400"><th className="p-2.5">Vehículo</th><th className="p-2.5">Fecha</th><th className="p-2.5">Comprobante</th><th className="p-2.5">Importe</th><th className="p-2.5">IVA</th></tr></thead>
+              <tbody>
+                {facturasCompraDelPeriodo.map((v) => (
+                  <tr key={v.id} className="border-t border-slate-50 dark:border-white/5">
+                    <td className="p-2.5 font-bold">{v.marca} {v.modelo} {v.patente ? `· ${v.patente}` : ""}</td>
+                    <td className="p-2.5">{v.factura_fecha}</td>
+                    <td className="p-2.5">{v.factura_tipo_comprobante || "—"}</td>
+                    <td className="p-2.5 font-mono">{v.factura_importe ? fmt(Number(v.factura_importe), v.moneda_compra || "ARS") : "—"}</td>
+                    <td className="p-2.5 font-mono text-indigo-600">{v.factura_iva_pct ? fmt(ivaCompraDe(v), v.moneda_compra || "ARS") : <span className="text-amber-600">Sin % IVA cargado</span>}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+          <p className="text-[10px] text-slate-400 p-3 pt-0">No suma al IVA cobrado/pagado de arriba (esos siguen siendo solo movimientos de caja clasificados) — es información complementaria para cruzar contra la DDJJ real. Cargá fecha y % IVA en Facturación para que una compra aparezca acá.</p>
+        </div>
+      )}
+
+      <div className="bg-white dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-xl shadow-sm p-4">
         <div className="flex items-center justify-between mb-2"><p className="text-sm font-bold">📋 Clasificar movimientos del período {periodo}</p><p className="text-xs text-slate-400">Mostrando {delPeriodo.length} de {delPeriodo.length}</p></div>
         <div className="divide-y divide-slate-100 dark:divide-white/10">
           {delPeriodo.map((m) => (

@@ -3,8 +3,11 @@ import { puedeVerModulo } from "./permisosModulos";
 
 export type PrioridadAlerta = "alta" | "media" | "baja" | "novedad";
 
-// Helper genérico para que futuros módulos (Expedientes, Autorizaciones,
-// Tareas, Calendario...) avisen sin reinventar el insert cada vez.
+// Helper genérico para que los módulos avisen sin reinventar el insert cada
+// vez. Autorizaciones ya lo usa (EditarSenaModal.tsx, VentaDetalleModal.tsx
+// avisan a admin/finanzas cuando un no-admin pide un cambio que necesita
+// PIN) -- si sumás otro punto que inserte en "autorizaciones", avisá ahí
+// también, con el mismo criterio de audiencia.
 //
 // "modulo" es opcional (no todos los llamados lo pasan todavía) -- cuando
 // se pasa, no se manda la alerta si el destinatario tiene ese módulo

@@ -245,6 +245,7 @@ export default function Stock({ vehiculos }: StockProps) {
                         : "bg-white/80 dark:bg-black/40 backdrop-blur-md text-slate-500 dark:text-slate-300 hover:text-[#0145F2] dark:hover:text-sky-300 border-white/60 dark:border-white/15"
                     }`}
                     title="Comparar vehículo"
+                    aria-label="Comparar vehículo"
                   >
                     <Scale className="w-4 h-4" />
                   </button>
@@ -336,7 +337,7 @@ export default function Stock({ vehiculos }: StockProps) {
                             <h5 className="text-xs font-black text-navy dark:text-white leading-tight truncate uppercase">
                               {auto.modelo}
                             </h5>
-                            <p className="text-[#] dark:text-sky-300 font-black text-xs mt-0.5">
+                            <p className="text-[#0145F2] dark:text-sky-300 font-black text-xs mt-0.5">
                               {precioMostrar}
                             </p>
                           </div>
@@ -391,6 +392,7 @@ export default function Stock({ vehiculos }: StockProps) {
                         : "bg-white/20 dark:bg-white/10 backdrop-blur-md text-white hover:text-[#0145F2] dark:hover:text-sky-300 hover:bg-white dark:hover:bg-white/20 border-white/40 dark:border-white/15"
                     }`}
                     title="Comparar vehículo"
+                    aria-label="Comparar vehículo"
                   >
                     <Scale className="w-4 h-4" />
                   </button>
@@ -445,7 +447,7 @@ export default function Stock({ vehiculos }: StockProps) {
             animate={{ y: 0, opacity: 1 }}
             exit={{ y: 100, opacity: 0 }}
             transition={{ type: "spring", damping: 25, stiffness: 300 }}
-            className="fixed bottom-6 left-4 right-4 md:left-1/2 md:-translate-x-1/2 md:w-max z-50"
+            className="fixed bottom-24 md:bottom-6 left-4 right-4 md:left-1/2 md:-translate-x-1/2 md:w-max z-50"
           >
             <div className="bg-gray-900 shadow-2xl rounded-2xl pl-4 pr-3 py-3 md:px-5 md:py-3.5 flex items-center justify-between gap-4 md:gap-8 border border-gray-700">
               <div className="flex items-center gap-3 md:gap-4 shrink-0">
@@ -622,6 +624,7 @@ export function VehicleCard({
               : "bg-white/80 dark:bg-black/40 backdrop-blur-md text-gray-400 dark:text-slate-300 hover:text-[#0145F2] dark:hover:text-sky-300 border-white/60 dark:border-white/15"
           }`}
           title="Comparar vehículo"
+          aria-label="Comparar vehículo"
         >
           <Scale className="w-3.5 h-3.5" />
         </button>
@@ -647,20 +650,14 @@ export function VehicleCard({
           <div className="absolute inset-0 bg-gradient-to-tr from-transparent via-white/40 dark:via-white/10 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-700 pointer-events-none z-20"></div>
 
           <div className="relative h-[160px] sm:h-[180px] bg-white/30 dark:bg-white/5 flex items-center justify-center overflow-hidden mix-blend-multiply dark:mix-blend-normal">
-          {auto.fotos?.[0] ? (
-            <Image
-              src={auto.fotos[0]}
-              alt={`${auto.marca} ${auto.modelo}`}
-              fill
-              sizes="(max-width: 640px) 50vw, (max-width: 1024px) 25vw, 300px"
-              priority={prioridad}
-              className="object-cover object-center group-hover:scale-105 transition-transform duration-700 ease-out"
-            />
-          ) : (
-            <div className="w-full h-full flex items-center justify-center text-gray-300 dark:text-slate-500 text-xs font-medium">
-              Sin foto
-            </div>
-          )}
+          <Image
+            src={auto.fotos?.[0] || "/placeholder.jpg"}
+            alt={`${auto.marca} ${auto.modelo}`}
+            fill
+            sizes="(max-width: 640px) 50vw, (max-width: 1024px) 25vw, 300px"
+            priority={prioridad}
+            className="object-cover object-center group-hover:scale-105 transition-transform duration-700 ease-out"
+          />
           {auto.estado === "Reservado" && (
             <div className="absolute top-4 right-4 bg-yellow-100/90 dark:bg-amber-400/15 backdrop-blur-md text-yellow-800 dark:text-amber-300 border border-yellow-200/80 dark:border-amber-400/30 px-3 py-1.5 rounded-full text-[9px] font-black uppercase tracking-widest shadow-[0_4px_12px_rgba(0,0,0,0.05)] dark:shadow-[0_4px_12px_rgba(0,0,0,0.3)] z-10">
               Reservado
@@ -682,7 +679,7 @@ export function VehicleCard({
             {auto.marca} {auto.modelo}
           </h3>
 
-          <span className="text-lg sm:text-xl font-black text-[#0145F2] dark:text-sky-400 tracking-tighter mt-1">
+          <span className="text-lg sm:text-xl font-black text-[#0145F2] dark:text-sky-400 tracking-tighter mt-1 truncate">
             {precioMostrar}
           </span>
 

@@ -313,8 +313,9 @@ export default function CockpitCeoTab({ miNombre, ocultarMontos, diaDelMes, dias
         </div>
       </div>
 
-      <div className="rounded-2xl p-5 bg-white dark:bg-white/[0.02] border border-slate-200 dark:border-white/5">
+      <div className="rounded-2xl p-5 bg-white dark:bg-white/[0.02] border border-slate-200 dark:border-white/5 shadow-sm">
         <p className="text-sm font-bold text-slate-800 dark:text-white mb-3 flex items-center gap-1.5"><Trophy className="w-4 h-4 text-indigo-500" /> Ranking del mes</p>
+        <div className="overflow-x-auto">
         <table className="w-full text-left text-sm">
           <thead>
             <tr className="text-[10px] uppercase tracking-widest text-slate-400 border-b border-slate-100 dark:border-white/5">
@@ -334,6 +335,7 @@ export default function CockpitCeoTab({ miNombre, ocultarMontos, diaDelMes, dias
             {ranking.length === 0 && <tr><td colSpan={3} className="py-4 text-center text-slate-400 text-xs">Sin vendedores activos este mes.</td></tr>}
           </tbody>
         </table>
+        </div>
       </div>
 
       {!objetivoVentasMensual && (

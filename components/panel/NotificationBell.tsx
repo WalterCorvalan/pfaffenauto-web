@@ -111,7 +111,7 @@ export default function NotificationBell({ miId }: { miId: string }) {
         <Bell className="w-4 h-4" />
         {sinLeer > 0 && (
           <span className="absolute -top-0.5 -right-0.5 min-w-[16px] h-4 px-1 rounded-full bg-[#0145F2] text-white text-[9px] font-bold flex items-center justify-center">
-            {sinLeer > 9 ? "9+" : sinLeer}
+            {sinLeer}
           </span>
         )}
       </button>

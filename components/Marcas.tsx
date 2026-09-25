@@ -14,7 +14,7 @@ function MarcaCard({ marca }: { marca: { nombre: string; slug: string; logo: str
   return (
     <Link 
       href={`/marcas/${marca.slug}`} 
-      className="flex flex-col items-center justify-center gap-3 bg-white dark:bg-white/5 border border-gray-200 dark:border-white/10 rounded-2xl py-6 hover:border-blue-500 dark:hover:border-sky-400/50 hover:shadow-lg transition-all duration-300 group h-full focus:outline-none"
+      className="flex flex-col items-center justify-center gap-3 bg-white dark:bg-white/5 border border-gray-200 dark:border-white/10 rounded-2xl py-6 hover:border-[#0145F2] dark:hover:border-sky-400/50 hover:shadow-lg transition-all duration-300 group h-full focus:outline-none"
     >
       <div className="relative w-14 h-14 md:w-16 md:h-16 flex items-center justify-center transition-transform duration-300 group-hover:scale-105 mix-blend-multiply dark:mix-blend-normal p-2">
         {!imgError ? (
@@ -28,14 +28,14 @@ function MarcaCard({ marca }: { marca: { nombre: string; slug: string; logo: str
           />
         ) : (
           <div className="w-full h-full rounded-full bg-gray-50 dark:bg-white/10 border border-gray-200 dark:border-white/10 flex items-center justify-center group-hover:bg-blue-50 dark:group-hover:bg-sky-400/10 group-hover:border-blue-200 dark:group-hover:border-sky-400/30 transition-colors">
-            <span className="text-2xl font-bold text-gray-400 dark:text-slate-400 group-hover:text-blue-600 dark:group-hover:text-sky-300 transition-colors uppercase">
+            <span className="text-2xl font-bold text-gray-400 dark:text-slate-400 group-hover:text-[#0145F2] dark:group-hover:text-sky-300 transition-colors uppercase">
               {marca.nombre.charAt(0)}
             </span>
           </div>
         )}
       </div>
 
-      <span className="text-xs font-semibold text-gray-600 dark:text-slate-300 group-hover:text-blue-600 dark:group-hover:text-sky-300 transition-colors text-center px-2 w-full truncate">
+      <span className="text-xs font-semibold text-gray-600 dark:text-slate-300 group-hover:text-[#0145F2] dark:group-hover:text-sky-300 transition-colors text-center px-2 w-full truncate">
         {marca.nombre}
       </span>
     </Link>
@@ -49,10 +49,10 @@ function MarcaDestacadaCard({ marca }: { marca: { nombre: string; slug: string; 
   return (
     <Link
       href={`/${marca.slug}`}
-      className="relative flex flex-col items-center justify-center gap-2 md:gap-3 bg-gradient-to-br from-blue-50/80 via-white to-sky-50/50 dark:from-sky-400/10 dark:via-white/5 dark:to-blue-500/10 border-2 border-blue-500/40 dark:border-sky-400/30 rounded-2xl py-5 md:py-6 hover:border-blue-600 dark:hover:border-sky-400 hover:shadow-xl hover:scale-[1.02] transition-all duration-300 group h-full focus:outline-none overflow-hidden"
+      className="relative flex flex-col items-center justify-center gap-2 md:gap-3 bg-gradient-to-br from-blue-50/80 via-white to-sky-50/50 dark:from-sky-400/10 dark:via-white/5 dark:to-[#0145F2]/10 border-2 border-[#0145F2]/40 dark:border-sky-400/30 rounded-2xl py-5 md:py-6 hover:border-[#0145F2] dark:hover:border-sky-400 hover:shadow-xl hover:scale-[1.02] transition-all duration-300 group h-full focus:outline-none overflow-hidden"
     >
       {/* Badge superior destello */}
-      <div className="absolute top-2 right-2 bg-blue-600 dark:bg-sky-500 text-white text-[8px] font-black uppercase tracking-widest px-2 py-0.5 rounded-full shadow-sm flex items-center gap-1">
+      <div className="absolute top-2 right-2 bg-[#0145F2] dark:bg-sky-500 text-white text-[8px] font-black uppercase tracking-widest px-2 py-0.5 rounded-full shadow-sm flex items-center gap-1">
         <Sparkles className="w-2.5 h-2.5" /> Oficial
       </div>
 
@@ -71,7 +71,7 @@ function MarcaDestacadaCard({ marca }: { marca: { nombre: string; slug: string; 
           />
         ) : (
           <div className="w-full h-full rounded-full bg-blue-100 dark:bg-sky-400/10 border border-blue-200 dark:border-sky-400/30 flex items-center justify-center">
-            <span className="text-2xl font-black text-blue-600 dark:text-sky-300 uppercase">
+            <span className="text-2xl font-black text-[#0145F2] dark:text-sky-300 uppercase">
               {marca.nombre.charAt(0)}
             </span>
           </div>
@@ -79,10 +79,10 @@ function MarcaDestacadaCard({ marca }: { marca: { nombre: string; slug: string; 
       </div>
 
       <div className="text-center px-2 w-full">
-        <span className="text-xs md:text-sm font-black text-gray-900 dark:text-white group-hover:text-blue-600 dark:group-hover:text-sky-300 transition-colors block truncate">
+        <span className="text-xs md:text-sm font-black text-gray-900 dark:text-white group-hover:text-[#0145F2] dark:group-hover:text-sky-300 transition-colors block truncate">
           {marca.nombre}
         </span>
-        <span className="text-[9px] font-bold uppercase tracking-widest text-blue-600/80 dark:text-sky-400/80 block mt-0.5">
+        <span className="text-[9px] font-bold uppercase tracking-widest text-[#0145F2]/80 dark:text-sky-400/80 block mt-0.5">
           Concesionario
         </span>
       </div>
@@ -196,13 +196,13 @@ export default function Marcas({ marcasEnStock }: { marcasEnStock: string[] }) {
               Buscá por marca
             </h2>
             <p className="text-sm text-gray-500 dark:text-slate-400 flex items-center gap-1.5">
-              <ShieldCheck className="w-4 h-4 text-blue-600 dark:text-sky-400" /> Todas nuestras unidades cuentan con respaldo oficial.
+              <ShieldCheck className="w-4 h-4 text-[#0145F2] dark:text-sky-400" /> Todas nuestras unidades cuentan con respaldo oficial.
             </p>
           </div>
 
           <Link
             href="/marcas"
-            className="text-sm font-medium text-blue-600 dark:text-sky-400 hover:text-blue-800 dark:hover:text-sky-300 transition-colors flex items-center gap-1 group"
+            className="text-sm font-medium text-[#0145F2] dark:text-sky-400 hover:text-[#0138c9] dark:hover:text-sky-300 transition-colors flex items-center gap-1 group"
           >
             Ver todas las marcas
             <ChevronRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
@@ -211,7 +211,7 @@ export default function Marcas({ marcasEnStock }: { marcasEnStock: string[] }) {
 
         {/* ================= SECCIÓN 1: MARCAS OFICIALES DESTACADAS (RELY Y KARRY) ================= */}
         <div className="mb-6">
-          <span className="text-[10px] font-black uppercase tracking-widest text-blue-600 dark:text-sky-300 bg-blue-50 dark:bg-sky-400/10 border border-blue-200/60 dark:border-sky-400/20 px-3 py-1 rounded-full inline-block mb-3">
+          <span className="text-[10px] font-black uppercase tracking-widest text-[#0145F2] dark:text-sky-300 bg-blue-50 dark:bg-sky-400/10 border border-blue-200/60 dark:border-sky-400/20 px-3 py-1 rounded-full inline-block mb-3">
             Concesionarios Oficiales
           </span>
           <div className="grid grid-cols-2 sm:grid-cols-2 md:flex md:justify-center gap-4">
@@ -241,7 +241,7 @@ export default function Marcas({ marcasEnStock }: { marcasEnStock: string[] }) {
               <button
                 onClick={() => setPagina((p) => Math.max(0, p - 1))}
                 disabled={pagina === 0}
-                className="w-9 h-9 flex items-center justify-center rounded-full bg-white dark:bg-white/5 border border-gray-200 dark:border-white/10 text-gray-600 dark:text-slate-300 disabled:opacity-30 disabled:cursor-not-allowed hover:border-blue-500 dark:hover:border-sky-400/50 transition-colors"
+                className="w-9 h-9 flex items-center justify-center rounded-full bg-white dark:bg-white/5 border border-gray-200 dark:border-white/10 text-gray-600 dark:text-slate-300 disabled:opacity-30 disabled:cursor-not-allowed hover:border-[#0145F2] dark:hover:border-sky-400/50 transition-colors"
                 aria-label="Página anterior"
               >
                 <ChevronLeft className="w-4 h-4" />
@@ -252,7 +252,7 @@ export default function Marcas({ marcasEnStock }: { marcasEnStock: string[] }) {
               <button
                 onClick={() => setPagina((p) => Math.min(totalPaginas - 1, p + 1))}
                 disabled={pagina === totalPaginas - 1}
-                className="w-9 h-9 flex items-center justify-center rounded-full bg-white dark:bg-white/5 border border-gray-200 dark:border-white/10 text-gray-600 dark:text-slate-300 disabled:opacity-30 disabled:cursor-not-allowed hover:border-blue-500 dark:hover:border-sky-400/50 transition-colors"
+                className="w-9 h-9 flex items-center justify-center rounded-full bg-white dark:bg-white/5 border border-gray-200 dark:border-white/10 text-gray-600 dark:text-slate-300 disabled:opacity-30 disabled:cursor-not-allowed hover:border-[#0145F2] dark:hover:border-sky-400/50 transition-colors"
                 aria-label="Página siguiente"
               >
                 <ChevronRight className="w-4 h-4" />

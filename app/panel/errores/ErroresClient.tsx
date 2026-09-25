@@ -44,7 +44,7 @@ export default function ErroresClient({ errores }: { errores: LogError[] }) {
       <div className="flex-1 overflow-y-auto custom-scrollbar p-4 md:p-6">
         <div className="max-w-4xl mx-auto">
           {filtrados.length === 0 ? (
-            <div className="flex flex-col items-center justify-center text-center py-20 bg-white dark:bg-white/[0.02] border border-slate-200 dark:border-white/5 rounded-2xl">
+            <div className="flex flex-col items-center justify-center text-center py-20 bg-white dark:bg-white/[0.02] border border-slate-200 dark:border-white/5 rounded-2xl shadow-sm">
               <AlertTriangle className="w-10 h-10 text-slate-300 dark:text-slate-600 mb-3" />
               <h3 className="text-sm font-bold text-slate-800 dark:text-white mb-1">
                 {errores.length === 0 ? "Sin errores registrados" : "Nada con ese origen"}

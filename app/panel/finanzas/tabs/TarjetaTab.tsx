@@ -6,16 +6,17 @@ import { Plus, X, Save, Pencil } from "lucide-react";
 import { inputClass, labelClass, fmt } from "./shared";
 import TablaResponsiva, { type ColumnaTabla } from "@/components/panel/TablaResponsiva";
 import ConfirmDialog from "@/components/panel/ConfirmDialog";
+import { hoyLocalISO } from "@/lib/panel/fechas";
 
 export default function TarjetaTab({
-  consumos, setConsumos, cuentas, setCuentas, setMovimientos,
-}: { consumos: any[]; setConsumos: (fn: any) => void; cuentas: any[]; setCuentas: (fn: any) => void; setMovimientos: (fn: any) => void }) {
+  consumos, setConsumos, cuentas, setCuentas, setMovimientos, soyAdminOFinanzas,
+}: { consumos: any[]; setConsumos: (fn: any) => void; cuentas: any[]; setCuentas: (fn: any) => void; setMovimientos: (fn: any) => void; soyAdminOFinanzas: boolean }) {
   const [showNuevo, setShowNuevo] = useState(false);
   const [editando, setEditando] = useState<any | null>(null);
   const [concepto, setConcepto] = useState("");
   const [monto, setMonto] = useState("");
   const [moneda, setMoneda] = useState("ARS");
-  const [fecha, setFecha] = useState(new Date().toISOString().slice(0, 10));
+  const [fecha, setFecha] = useState(hoyLocalISO());
   const [cuotasTotales, setCuotasTotales] = useState("1");
   const [cuotaActual, setCuotaActual] = useState("1");
   const [estado, setEstado] = useState("pendiente");
@@ -31,7 +32,7 @@ export default function TarjetaTab({
     return map;
   }, [consumos]);
 
-  const abrir = () => { setEditando(null); setConcepto(""); setMonto(""); setMoneda("ARS"); setFecha(new Date().toISOString().slice(0, 10)); setCuotasTotales("1"); setCuotaActual("1"); setEstado("pendiente"); setCuentaId(""); setShowNuevo(true); };
+  const abrir = () => { setEditando(null); setConcepto(""); setMonto(""); setMoneda("ARS"); setFecha(hoyLocalISO()); setCuotasTotales("1"); setCuotaActual("1"); setEstado("pendiente"); setCuentaId(""); setShowNuevo(true); };
 
   // Solo se puede editar mientras el consumo sigue "pendiente" -- una vez
   // pagado ya generó el egreso real (movimiento_id) y no hay RPC de edición
@@ -44,6 +45,7 @@ export default function TarjetaTab({
   };
 
   const registrar = async () => {
+    if (!soyAdminOFinanzas) return alert("No tenés permiso para esto.");
     if (!concepto.trim() || !monto) return alert("Completá concepto y monto.");
     if (estado === "pagado" && !cuentaId) return alert("Elegí la caja de origen para un consumo pagado.");
     setGuardando(true);
@@ -89,6 +91,7 @@ export default function TarjetaTab({
   const abrirPago = (c: any) => { setPagando(c); setPgCuentaId(cuentas.find((x) => x.moneda === c.moneda)?.id || ""); };
 
   const confirmarPago = async () => {
+    if (!soyAdminOFinanzas) return alert("No tenés permiso para esto.");
     if (!pagando || !pgCuentaId) return alert("Elegí la caja.");
     setGuardando(true);
     try {
@@ -110,6 +113,7 @@ export default function TarjetaTab({
   };
 
   const eliminar = (c: any) => {
+    if (!soyAdminOFinanzas) return alert("No tenés permiso para esto.");
     setConfirmDialog({
       mensaje: `¿Eliminar "${c.concepto}"? ${c.estado === "pagado" ? "Se revierte el egreso en la caja." : ""}`,
       accion: async () => {

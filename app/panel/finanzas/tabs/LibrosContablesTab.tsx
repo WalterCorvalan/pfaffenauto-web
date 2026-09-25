@@ -199,7 +199,7 @@ function EstadoResultados({ desde, hasta }: { desde: string; hasta: string }) {
         const totalEgresos = Object.values(egresos).reduce((a, b) => a + b, 0);
         const resultado = totalIngresos - totalEgresos;
         return (
-          <div key={moneda} className="bg-white dark:bg-white/[0.02] border border-slate-200 dark:border-white/5 rounded-2xl p-5">
+          <div key={moneda} className="bg-white dark:bg-white/[0.02] border border-slate-200 dark:border-white/5 rounded-2xl shadow-sm p-5">
             <p className="text-sm font-bold text-slate-800 dark:text-white mb-3">Estado de Resultados — {moneda}</p>
             <p className="text-[10px] font-black uppercase tracking-widest text-emerald-600 mb-1">Ingresos</p>
             {Object.entries(ingresos).sort((a, b) => b[1] - a[1]).map(([k, v]) => (
