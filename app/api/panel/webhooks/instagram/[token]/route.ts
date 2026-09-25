@@ -116,7 +116,7 @@ async function procesarEvento(payload: any) {
         await procesarEcho(msg);
         continue;
       }
-      if (msg.message?.text) {
+      if (msg.message?.text || msg.message?.attachments?.length) {
         await procesarMensajeDirecto(msg);
       }
     }
@@ -213,11 +213,28 @@ async function procesarComentario(value: any) {
   }
 }
 
+// Igual que resolverTextoMensaje del webhook de WhatsApp: un mensaje sin
+// texto (foto/audio/video/sticker/compartir un posteo) no puede seguir
+// perdiéndose -- antes esto se descartaba entero (ni cliente ni empleado
+// veían nada guardado). Devuelve un texto placeholder legible para el
+// agente/el panel, más el tipo y la URL real si Meta la manda.
+function resolverTextoYMediaInstagram(message: any): { texto: string | null; tipo: string; mediaUrl: string | null } {
+  if (message?.text) return { texto: message.text, tipo: "text", mediaUrl: null };
+  const attachment = message?.attachments?.[0];
+  if (!attachment) return { texto: null, tipo: "text", mediaUrl: null };
+  const url: string | null = attachment.payload?.url ?? null;
+  if (attachment.type === "image") return { texto: url ? null : "[Envió una foto]", tipo: "image", mediaUrl: url };
+  if (attachment.type === "audio") return { texto: "🎤 Audio", tipo: "audio", mediaUrl: url };
+  if (attachment.type === "video") return { texto: url ? null : "[Envió un video]", tipo: "video", mediaUrl: url };
+  if (attachment.type === "share") return { texto: "[Compartió una publicación/reel]", tipo: "text", mediaUrl: null };
+  return { texto: "[Envió un archivo]", tipo: "text", mediaUrl: null };
+}
+
 async function procesarMensajeDirecto(msg: any) {
   const igUserId = msg.sender?.id;
-  const texto = msg.message?.text;
+  const { texto, tipo, mediaUrl } = resolverTextoYMediaInstagram(msg.message);
   const igMessageId = msg.message?.mid;
-  if (!igUserId || !texto) return;
+  if (!igUserId || (!texto && !mediaUrl)) return;
 
   // A diferencia de un comentario (Meta manda el username directo), un DM
   // entrante solo trae el IGSID numérico -- sin esto el contacto quedaba
@@ -255,8 +272,9 @@ async function procesarMensajeDirecto(msg: any) {
     conversacion_id: refs.conversacionId,
     ig_message_id: igMessageId,
     direccion: "in",
-    tipo: "text",
+    tipo,
     texto,
+    media_url: mediaUrl,
     status: "received",
   });
   if (error) {
@@ -400,9 +418,9 @@ async function enviarYActualizarMensaje(mensajeId: string, igUserId: string, tex
 // guarda como "out", sin ai_generado, y se pausa la IA para esa charla).
 async function procesarEcho(msg: any) {
   const igMessageId = msg.message?.mid;
-  const texto = msg.message?.text;
+  const { texto, tipo, mediaUrl } = resolverTextoYMediaInstagram(msg.message);
   const igUserId = msg.recipient?.id; // en un echo, el cliente es el "recipient", no el "sender"
-  if (!igMessageId || !texto || !igUserId) return;
+  if (!igMessageId || (!texto && !mediaUrl) || !igUserId) return;
 
   const { data: existente } = await supabase.from("instagram_mensajes").select("id").eq("ig_message_id", igMessageId).maybeSingle();
   if (existente) return; // echo de un mensaje que ya mandó el bot -- nada que hacer
@@ -414,8 +432,9 @@ async function procesarEcho(msg: any) {
     conversacion_id: refs.conversacionId,
     ig_message_id: igMessageId,
     direccion: "out",
-    tipo: "text",
+    tipo,
     texto,
+    media_url: mediaUrl,
     status: "sent",
     ai_generado: false,
   });
