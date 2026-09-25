@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react";
 import Link from "next/link";
-import { Camera, Copy, Check, Loader2, ExternalLink, CheckCircle2, MessageSquareReply, Plus, Trash2 } from "lucide-react";
+import { Camera, Copy, Check, Loader2, ExternalLink, CheckCircle2, MessageSquareReply, Plus, Trash2, UserSearch } from "lucide-react";
 import { supabase2 } from "@/lib/supabase/client";
 import ConfirmDialog from "@/components/panel/ConfirmDialog";
 
@@ -134,6 +134,7 @@ export default function ConfiguracionInstagramClient() {
   const [mensaje, setMensaje] = useState("");
   const [conectando, setConectando] = useState(false);
   const [confirmDialog, setConfirmDialog] = useState<{ mensaje: string; accion: () => void } | null>(null);
+  const [backfilleando, setBackfilleando] = useState(false);
 
   const cargar = async () => {
     setCargando(true);
@@ -231,6 +232,21 @@ export default function ConfiguracionInstagramClient() {
     setTimeout(() => setCopiado(null), 1500);
   };
 
+  const recuperarUsuarios = async () => {
+    setBackfilleando(true);
+    try {
+      const res = await fetch("/api/panel/instagram/backfill-usernames", { method: "POST" });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || "No se pudo recuperar los usuarios.");
+      if (data.resueltos === 0 && data.pendientes === 0) alert("No había ningún lead pendiente de recuperar @usuario.");
+      else alert(`Recuperados ${data.resueltos} @usuario${data.resueltos === 1 ? "" : "s"}.${data.pendientes > 0 ? ` Quedan ${data.pendientes} pendientes — volvé a apretar el botón para seguir.` : ""}`);
+    } catch (e: any) {
+      alert(e.message || "Error recuperando usuarios.");
+    } finally {
+      setBackfilleando(false);
+    }
+  };
+
   if (cargando) return <div className="p-6 flex justify-center"><Loader2 className="w-5 h-5 animate-spin text-slate-400" /></div>;
 
   const webhookUrl = config?.webhook_verify_token ? `${typeof window !== "undefined" ? window.location.origin : ""}/api/panel/webhooks/instagram/${config.webhook_verify_token}` : "";
@@ -295,6 +311,15 @@ export default function ConfiguracionInstagramClient() {
         <button onClick={guardar} disabled={guardando} className="px-4 py-2.5 rounded-xl bg-[#0145F2] hover:bg-[#0138c9] text-white text-sm font-bold disabled:opacity-50 flex items-center gap-1.5">
           {guardando ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : null} Guardar
         </button>
+
+        {config?.listo && (
+          <div className="border-t border-slate-200 dark:border-white/10 pt-4">
+            <button onClick={recuperarUsuarios} disabled={backfilleando} className="px-4 py-2.5 rounded-xl border border-slate-200 dark:border-white/10 text-slate-600 dark:text-slate-300 text-sm font-bold disabled:opacity-50 flex items-center gap-1.5">
+              {backfilleando ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <UserSearch className="w-3.5 h-3.5" />} Recuperar @usuario de leads viejos
+            </button>
+            <p className="text-[10px] text-slate-400 mt-1.5">Leads que llegaron por DM antes de que el bot supiera resolver el @usuario real (quedaron guardados solo con un número interno de Instagram) — le pregunta a Meta el @ correcto para cada uno. Hasta 200 por vez, volvé a apretarlo si quedan pendientes.</p>
+          </div>
+        )}
       </div>
 
       <div className="bg-white dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-2xl p-5 space-y-4 shadow-sm">
