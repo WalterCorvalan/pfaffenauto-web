@@ -1,6 +1,5 @@
 import { z } from "zod";
 import { createClient } from "@supabase/supabase-js";
-import { verificarTurnstile } from "@/lib/turnstile";
 import { rateLimit, ipDesdeRequest } from "@/lib/rateLimit";
 import { registrarError } from "@/lib/panel/logger";
 import { crearAlerta } from "@/lib/panel/alertas";
@@ -11,7 +10,6 @@ const supabase = createClient(
 );
 
 const LeadTasacionSchema = z.object({
-  turnstileToken: z.string().min(1, "Falta verificación anti-spam."),
   nombre: z.string().trim().min(1).max(150),
   telefono: z.string().trim().min(6).max(30),
   email: z.string().trim().email().max(150).optional().nullable(),
@@ -42,6 +40,7 @@ const LeadTasacionSchema = z.object({
   plazoMeses: z.coerce.number().int().min(1).optional().nullable(),
   cuotaEstimada: z.coerce.number().min(0).optional().nullable(),
   creditoPreaprobado: z.boolean().optional().nullable(),
+  cuil: z.string().trim().max(20).optional().nullable(),
   // Si el cliente eligió venir a sucursal, reserva una visita real en el
   // mismo request (misma lógica que /api/panel/visitas).
   visita: z.object({
@@ -64,11 +63,6 @@ export async function POST(req: Request) {
       return Response.json({ error: "Faltan datos obligatorios o tienen un formato inválido." }, { status: 400 });
     }
     const data = parsed.data;
-
-    const humano = await verificarTurnstile(data.turnstileToken, ip);
-    if (!humano) {
-      return Response.json({ error: "No pudimos verificar que sos humano. Reintentá." }, { status: 400 });
-    }
 
     let visitaId: string | null = null;
     if (data.visita) {
@@ -147,6 +141,7 @@ export async function POST(req: Request) {
           plazo_meses: data.plazoMeses ?? null,
           cuota_estimada: data.cuotaEstimada ?? null,
           credito_preaprobado: data.creditoPreaprobado ?? null,
+          cuil: data.cuil || null,
         })
         .eq("id", lead.id);
       if (errCamposFinanciacion) registrarError("api/panel/leads-tasacion:campos-financiacion", errCamposFinanciacion, { leadId: lead.id });

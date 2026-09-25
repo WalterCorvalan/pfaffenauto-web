@@ -1,25 +1,15 @@
 "use client";
 
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect } from "react";
 import { createPortal } from "react-dom";
-import Script from "next/script";
 import { supabase2 as supabase } from "@/lib/supabase/client";
 import { getCanalOrigen, getUtmRaw } from "@/lib/utm";
-import { CreditCard, X, CheckCircle2, Loader2, User, Phone, Mail, ArrowLeft, Search, Car } from "lucide-react";
+import { CreditCard, X, CheckCircle2, Loader2, User, Phone, Mail, ArrowLeft, Search, Car, IdCard } from "lucide-react";
 import {
   TOPES_FINANCIACION_DEFAULT, TOPE_0KM_DEFAULT, TNA_POR_ANIO_Y_PLAZO_DEFAULT, GASTOS_PCT_DEFAULT,
   PLAZOS_DISPONIBLES,
   topePctPorAnio, tnaPctPorAnioYPlazo, calcularCuotaFrances, type TopeFinanciacion, type TnaGrupo,
 } from "@/lib/financiacion";
-
-declare global {
-  interface Window {
-    turnstile?: {
-      render: (container: HTMLElement, options: Record<string, unknown>) => string;
-      reset: (widgetId?: string) => void;
-    };
-  }
-}
 
 interface VehiculoFinanciable {
   id: string;
@@ -79,35 +69,16 @@ export default function SolicitarFinanciacionForm({ vehiculoPreseleccionado, cla
   const [nombre, setNombre] = useState("");
   const [email, setEmail] = useState("");
   const [telefono, setTelefono] = useState("");
-
-  const [turnstileToken, setTurnstileToken] = useState("");
-  const [turnstileListo, setTurnstileListo] = useState(false);
-  const turnstileRef = useRef<HTMLDivElement>(null);
-  const turnstileWidgetId = useRef<string | null>(null);
+  const [cuil, setCuil] = useState("");
 
   useEffect(() => {
     setMounted(true);
-    // El script de Turnstile puede haber quedado cargado de otra página en la
-    // misma sesión (next/script dedupea por src): en ese caso onLoad no vuelve
-    // a dispararse acá, así que chequeamos directo si ya está disponible.
-    if (window.turnstile) setTurnstileListo(true);
   }, []);
 
   useEffect(() => {
     document.body.style.overflow = isOpen ? "hidden" : "unset";
     return () => { document.body.style.overflow = "unset"; };
   }, [isOpen]);
-
-  useEffect(() => {
-    if (step !== 4 || !turnstileListo || !turnstileRef.current || !window.turnstile) return;
-    if (turnstileWidgetId.current) return;
-    turnstileWidgetId.current = window.turnstile.render(turnstileRef.current, {
-      sitekey: process.env.NEXT_PUBLIC_TURNSTILE_SITE_KEY || "",
-      callback: (token: string) => setTurnstileToken(token),
-      "expired-callback": () => setTurnstileToken(""),
-      "error-callback": () => setTurnstileToken(""),
-    });
-  }, [step, turnstileListo]);
 
   // Buscar en stock real (solo disponibles) mientras el usuario tipea.
   useEffect(() => {
@@ -173,19 +144,13 @@ export default function SolicitarFinanciacionForm({ vehiculoPreseleccionado, cla
     setBusqueda(""); setResultados([]);
     setMeses(24);
     setCreditoPreaprobado(null);
-    setNombre(""); setEmail(""); setTelefono("");
-    setTurnstileToken("");
-    turnstileWidgetId.current = null;
+    setNombre(""); setEmail(""); setTelefono(""); setCuil("");
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError("");
-    if (!vehiculo || !nombre || !email || !telefono) return;
-    if (!turnstileToken) {
-      setError("Completá la verificación anti-spam antes de continuar.");
-      return;
-    }
+    if (!vehiculo || !nombre || !email || !telefono || !cuil) return;
 
     setLoading(true);
     try {
@@ -193,7 +158,6 @@ export default function SolicitarFinanciacionForm({ vehiculoPreseleccionado, cla
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          turnstileToken,
           canalOrigen: getCanalOrigen(),
           utmSource: getUtmRaw().utm_source,
           utmMedium: getUtmRaw().utm_medium,
@@ -207,6 +171,7 @@ export default function SolicitarFinanciacionForm({ vehiculoPreseleccionado, cla
           nombre: nombre.trim(),
           email: email.trim(),
           telefono: telefono.trim(),
+          cuil: cuil.trim(),
           tipo: "financiacion",
           precioVehiculo, pctFinanciado: pctTope, montoFinanciar: montoAFinanciar, anticipoMonto: anticipoCliente,
           plazoMeses: meses, cuotaEstimada, creditoPreaprobado: creditoPreaprobado === "si",
@@ -224,8 +189,6 @@ export default function SolicitarFinanciacionForm({ vehiculoPreseleccionado, cla
       }, 4500);
     } catch (err) {
       setError(err instanceof Error ? err.message : "Hubo un error al enviar la solicitud. Intentá nuevamente.");
-      if (turnstileWidgetId.current && window.turnstile) window.turnstile.reset(turnstileWidgetId.current);
-      setTurnstileToken("");
     } finally {
       setLoading(false);
     }
@@ -424,9 +387,9 @@ export default function SolicitarFinanciacionForm({ vehiculoPreseleccionado, cla
                     <label className={labelClass}><Phone className="w-3.5 h-3.5" /> Celular</label>
                     <input type="tel" required value={telefono} onChange={(e) => setTelefono(e.target.value)} className={inputClass} placeholder="Ej: 11 0000 0000" />
                   </div>
-
-                  <div className="flex justify-center">
-                    <div ref={turnstileRef} />
+                  <div>
+                    <label className={labelClass}><IdCard className="w-3.5 h-3.5" /> CUIL</label>
+                    <input type="text" required value={cuil} onChange={(e) => setCuil(e.target.value)} className={inputClass} placeholder="Ej: 20-12345678-9" />
                   </div>
 
                   {error && (
@@ -437,7 +400,7 @@ export default function SolicitarFinanciacionForm({ vehiculoPreseleccionado, cla
 
                   <button
                     type="submit"
-                    disabled={loading || !turnstileToken}
+                    disabled={loading}
                     className="w-full py-3.5 bg-[#0145F2] text-white font-black text-[10px] uppercase tracking-widest rounded-xl hover:bg-[#0145F2] transition-all shadow-lg shadow-[#0145F2]/30 disabled:opacity-50 flex items-center justify-center gap-2"
                   >
                     {loading && <Loader2 className="w-4 h-4 animate-spin" />}
@@ -449,8 +412,6 @@ export default function SolicitarFinanciacionForm({ vehiculoPreseleccionado, cla
           )}
         </div>
       </div>
-
-      <Script src="https://challenges.cloudflare.com/turnstile/v0/api.js" strategy="lazyOnload" onLoad={() => setTurnstileListo(true)} />
     </div>
   );
 
