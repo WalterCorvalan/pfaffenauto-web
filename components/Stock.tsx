@@ -650,20 +650,14 @@ export function VehicleCard({
           <div className="absolute inset-0 bg-gradient-to-tr from-transparent via-white/40 dark:via-white/10 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-700 pointer-events-none z-20"></div>
 
           <div className="relative h-[160px] sm:h-[180px] bg-white/30 dark:bg-white/5 flex items-center justify-center overflow-hidden mix-blend-multiply dark:mix-blend-normal">
-          {auto.fotos?.[0] ? (
-            <Image
-              src={auto.fotos[0]}
-              alt={`${auto.marca} ${auto.modelo}`}
-              fill
-              sizes="(max-width: 640px) 50vw, (max-width: 1024px) 25vw, 300px"
-              priority={prioridad}
-              className="object-cover object-center group-hover:scale-105 transition-transform duration-700 ease-out"
-            />
-          ) : (
-            <div className="w-full h-full flex items-center justify-center text-gray-300 dark:text-slate-500 text-xs font-medium">
-              Sin foto
-            </div>
-          )}
+          <Image
+            src={auto.fotos?.[0] || "/placeholder.jpg"}
+            alt={`${auto.marca} ${auto.modelo}`}
+            fill
+            sizes="(max-width: 640px) 50vw, (max-width: 1024px) 25vw, 300px"
+            priority={prioridad}
+            className="object-cover object-center group-hover:scale-105 transition-transform duration-700 ease-out"
+          />
           {auto.estado === "Reservado" && (
             <div className="absolute top-4 right-4 bg-yellow-100/90 dark:bg-amber-400/15 backdrop-blur-md text-yellow-800 dark:text-amber-300 border border-yellow-200/80 dark:border-amber-400/30 px-3 py-1.5 rounded-full text-[9px] font-black uppercase tracking-widest shadow-[0_4px_12px_rgba(0,0,0,0.05)] dark:shadow-[0_4px_12px_rgba(0,0,0,0.3)] z-10">
               Reservado
@@ -685,7 +679,7 @@ export function VehicleCard({
             {auto.marca} {auto.modelo}
           </h3>
 
-          <span className="text-lg sm:text-xl font-black text-[#0145F2] dark:text-sky-400 tracking-tighter mt-1">
+          <span className="text-lg sm:text-xl font-black text-[#0145F2] dark:text-sky-400 tracking-tighter mt-1 truncate">
             {precioMostrar}
           </span>
 

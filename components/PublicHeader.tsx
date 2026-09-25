@@ -110,7 +110,7 @@ export default function PublicHeader() {
             />
             <Image
               src="/r.png"
-              alt="Marca Registrada"
+              alt=""
               width={66}
               height={66}
               className="absolute -top-1 -right-2.5 md:-right-2.5 w-2 h-2 object-contain brightness-0 dark:invert opacity-80"

@@ -44,7 +44,7 @@ export default async function OutletBanner() {
                 />
                 <Image
                   src="/r.png"
-                  alt="Marca Registrada"
+                  alt=""
                   width={66}
                   height={66}
                   className="absolute -top-1 -right-3 md:-right-4 w-3 h-3 md:w-3.5 md:h-3.5 object-contain invert brightness-0 opacity-80"

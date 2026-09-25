@@ -595,7 +595,7 @@ export default function CotizadorForm({ vehiculoObjetivo }: { vehiculoObjetivo?:
                           {sucursales.map((s) => <option key={s.id} value={s.nombre}>{s.nombre}</option>)}
                         </select>
                       </div>
-                      <div className="grid grid-cols-2 gap-3">
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                         <div>
                           <label className="text-[10px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-widest block mb-2 flex items-center gap-1.5"><CalendarDays className="w-3.5 h-3.5" /> Día</label>
                           <input type="date" min={new Date().toISOString().split("T")[0]} value={fechaVisita} onChange={(e) => { setFechaVisita(e.target.value); setHorarioVisita(""); }} className="w-full bg-slate-50 dark:bg-[#161e2c] border border-slate-200 dark:border-white/5 rounded-xl px-3 py-3 text-sm text-slate-900 dark:text-white outline-none focus:border-blue-500 dark:[color-scheme:dark]" />
