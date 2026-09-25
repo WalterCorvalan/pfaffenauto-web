@@ -1,6 +1,8 @@
 import { createClient } from "@/lib/supabase/server";
 import RodiShell from "./RodiShell";
 
+export const metadata = { title: "Rodi | Pfaffen Cars" };
+
 export default async function RodiPage() {
   const supabase = await createClient();
 

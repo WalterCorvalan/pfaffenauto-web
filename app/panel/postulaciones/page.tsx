@@ -1,6 +1,8 @@
 import { createClient } from "@/lib/supabase/server";
 import { Users, Briefcase, Phone, Mail, FileText } from "lucide-react";
 
+export const metadata = { title: "Postulaciones | Pfaffen Cars" };
+
 export default async function PostulacionesPage() {
   const supabase = await createClient();
   const { data: postulaciones } = await supabase.from("postulaciones").select("*").order("created_at", { ascending: false });
@@ -11,7 +13,7 @@ export default async function PostulacionesPage() {
         <Users className="w-5 h-5 text-[#0145F2]" />
         <h1 className="text-xl font-bold text-slate-900 dark:text-white">Postulaciones</h1>
       </div>
-      <p className="text-sm text-slate-400 mb-6">{(postulaciones || []).length} postulación{(postulaciones || []).length === 1 ? "" : "es"} recibidas desde /trabaja-con-nosotros</p>
+      <p className="text-sm text-slate-400 mb-6">{(postulaciones || []).length} postulaci{(postulaciones || []).length === 1 ? "ón" : "ones"} recibidas desde /trabaja-con-nosotros</p>
 
       {(!postulaciones || postulaciones.length === 0) ? (
         <div className="bg-white dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-2xl py-16 flex flex-col items-center justify-center text-center shadow-sm">
