@@ -4,6 +4,7 @@ import { useMemo, useState } from "react";
 import { supabase2 } from "@/lib/supabase/client";
 import { Wallet, Save, X } from "lucide-react";
 import { convertirMonto, totalEnMoneda, type Moneda } from "@/lib/moneda";
+import { crearAlerta } from "@/lib/panel/alertas";
 
 const inputClass = "w-full bg-slate-50 dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-xl px-3 py-2.5 text-sm outline-none focus:border-rose-500 focus:bg-white dark:focus:bg-white/10 transition-colors text-slate-900 dark:text-white placeholder:text-slate-400";
 const labelClass = "text-[11px] font-bold text-slate-500 dark:text-slate-400 uppercase block mb-1.5";
@@ -82,11 +83,12 @@ export default function EditarSenaModal({ sena, vendedores, sucursales, miId, so
       };
 
       if (precioCambio && !soyAdmin) {
+        const descripcion = `Editar precio de la seña de ${sena.cliente_nombre || `${apellido} ${nombre}`.trim()} (${marca} ${modelo})`;
         const { error } = await supabase2.from("autorizaciones").insert({
           tipo: "editar_precio_sena",
           riesgo: "alto",
           requiere_pin: true,
-          descripcion: `Editar precio de la seña de ${sena.cliente_nombre || `${apellido} ${nombre}`.trim()} (${marca} ${modelo})`,
+          descripcion,
           entidad_tabla: "senas",
           entidad_id: sena.id,
           datos_antes: { venta_ars: sena.venta_ars, venta_usd: sena.venta_usd, sena_ars: sena.sena_ars, sena_usd: sena.sena_usd },
@@ -94,6 +96,14 @@ export default function EditarSenaModal({ sena, vendedores, sucursales, miId, so
           solicitado_por: miId,
         });
         if (error) throw error;
+        // Antes nadie se enteraba de que había una solicitud de
+        // autorización pendiente hasta que un admin entraba por su cuenta
+        // al módulo Autorizaciones -- avisa ahora a admin/finanzas (mismo
+        // criterio de audiencia que cotización/consignación/pedido nuevo).
+        const { data: destinatarios } = await supabase2.from("perfiles").select("id, roles").eq("activo", true);
+        for (const p of (destinatarios || []).filter((p) => (p.roles?.includes("admin") || p.roles?.includes("finanzas")) && p.id !== miId)) {
+          crearAlerta(supabase2, p.id, "Autorización pendiente", { mensaje: descripcion, link: "/panel/autorizaciones", tipo: "autorizacion_pendiente", prioridad: "alta", modulo: "autorizaciones" });
+        }
         setSolicitudEnviada(true);
         return;
       }

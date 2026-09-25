@@ -7,6 +7,7 @@ import Link from "next/link";
 import { X, Loader2, Pencil, Trash2, ChevronDown, AlertTriangle, ShieldAlert, Check, Car, User, DollarSign, Percent, KeyRound, FolderKanban, History, Copy, Printer } from "lucide-react";
 import { fmtFechaLocal } from "@/lib/panel/fechas";
 import { totalEnMoneda } from "@/lib/moneda";
+import { crearAlerta } from "@/lib/panel/alertas";
 
 const ESTADO_LABEL: Record<string, string> = {
   borrador: "Borrador", activa: "Activa", reserva: "Reserva", cerrada: "Cerrada", caida: "Caída", cancelada: "Cancelada",
@@ -141,11 +142,12 @@ export default function VentaDetalleModal({ ventaId, miId, soyAdmin, puedeOperac
         onActualizado(data);
         setEditandoComision(false);
       } else {
+        const descripcion = `Editar comisión de la venta de ${venta.comprador_nombre} (${venta.vehiculo_marca} ${venta.vehiculo_modelo})`;
         const { error } = await supabase2.from("autorizaciones").insert({
           tipo: "editar_comision_venta",
           riesgo: "alto",
           requiere_pin: true,
-          descripcion: `Editar comisión de la venta de ${venta.comprador_nombre} (${venta.vehiculo_marca} ${venta.vehiculo_modelo})`,
+          descripcion,
           entidad_tabla: "ventas",
           entidad_id: ventaId,
           datos_antes: { comision_vendedor_pct: venta.comision_vendedor_pct, comision_consignacion_pct: venta.comision_consignacion_pct },
@@ -153,6 +155,12 @@ export default function VentaDetalleModal({ ventaId, miId, soyAdmin, puedeOperac
           solicitado_por: miId,
         });
         if (error) throw error;
+        // Antes nadie se enteraba de la solicitud hasta entrar por su
+        // cuenta a Autorizaciones -- mismo aviso que EditarSenaModal.tsx.
+        const { data: destinatarios } = await supabase2.from("perfiles").select("id, roles").eq("activo", true);
+        for (const p of (destinatarios || []).filter((p) => (p.roles?.includes("admin") || p.roles?.includes("finanzas")) && p.id !== miId)) {
+          crearAlerta(supabase2, p.id, "Autorización pendiente", { mensaje: descripcion, link: "/panel/autorizaciones", tipo: "autorizacion_pendiente", prioridad: "alta", modulo: "autorizaciones" });
+        }
         setSolicitudEnviada(true);
       }
     } catch (err: any) {
