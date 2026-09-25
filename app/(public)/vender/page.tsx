@@ -1,7 +1,7 @@
 import VenderForm from "@/components/forms/VenderForm";
 
 export const metadata = {
-  title: "Vendé tu auto | Pfaffen Autos",
+  title: "Vendé tu auto | Pfaffen Cars",
   description: "Vendé tu vehículo con nosotros al mejor precio del mercado. Efectivo inmediato y transferencia segura.",
   alternates: { canonical: "https://www.pfaffencars.com/vender" },
 };

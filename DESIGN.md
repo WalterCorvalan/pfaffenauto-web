@@ -1,4 +1,4 @@
-# Design System: Pfaffen Autos (sitio público)
+# Design System: Pfaffen Cars (sitio público)
 
 ## 1. Visual Theme & Atmosphere
 Concesionaria premium con lenguaje "spatial UI" — glassmorphism, luces ambientales

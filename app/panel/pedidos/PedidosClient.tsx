@@ -253,7 +253,7 @@ export default function PedidosClient({ pedidosIniciales, vendedores, clientes, 
             }
             acciones={(p) => p.telefono && (
               <a
-                href={`https://wa.me/${p.telefono.replace(/\D/g, "")}?text=${encodeURIComponent(`¡Hola ${p.nombre_cliente}! Te contactamos de Pfaffen Autos respecto a tu búsqueda: ${busquedaTexto(p)}.`)}`}
+                href={`https://wa.me/${p.telefono.replace(/\D/g, "")}?text=${encodeURIComponent(`¡Hola ${p.nombre_cliente}! Te contactamos de Pfaffen Cars respecto a tu búsqueda: ${busquedaTexto(p)}.`)}`}
                 target="_blank"
                 rel="noreferrer"
                 className="bg-emerald-50 dark:bg-emerald-500/10 hover:bg-emerald-100 dark:hover:bg-emerald-500/20 text-emerald-600 dark:text-emerald-400 p-1.5 rounded-md transition-colors inline-flex"

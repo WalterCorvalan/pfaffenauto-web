@@ -70,7 +70,7 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
   const { data: sucursal } = await supabase.from("sucursales").select("nombre, direccion").eq("slug", slug).single();
   const nombre = sucursal?.nombre || slug;
   return {
-    title: `${nombre} | Sucursal Pfaffen Autos`,
+    title: `${nombre} | Sucursal Pfaffen Cars`,
     description: `Visitá nuestra sucursal ${nombre}${sucursal?.direccion ? ` en ${sucursal.direccion}` : ""}. Stock disponible, financiación y respaldo oficial.`,
     alternates: { canonical: `https://www.pfaffencars.com/sucursales/${slug}` },
   };
@@ -107,10 +107,10 @@ export default async function SucursalPage({ params }: { params: Promise<{ slug:
     "@context": "https://schema.org",
     "@type": "AutoDealer",
     "@id": `https://www.pfaffencars.com/sucursales/${slug}`,
-    name: `Pfaffen Autos ${nombreSucursal}`,
+    name: `Pfaffen Cars ${nombreSucursal}`,
     url: `https://www.pfaffencars.com/sucursales/${slug}`,
     telephone: telefono,
-    parentOrganization: { "@type": "Organization", name: "Pfaffen Autos", url: "https://www.pfaffencars.com" },
+    parentOrganization: { "@type": "Organization", name: "Pfaffen Cars", url: "https://www.pfaffencars.com" },
     address: {
       "@type": "PostalAddress",
       streetAddress,

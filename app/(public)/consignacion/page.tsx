@@ -1,7 +1,7 @@
 import ConsignarForm from "@/components/forms/ConsignarForm";
 
 export const metadata = {
-  title: "Consigná tu auto | Pfaffen Autos",
+  title: "Consigná tu auto | Pfaffen Cars",
   description: "Dejanos tu vehículo en consignación. Nosotros nos encargamos de todo el proceso de venta para que obtengas la máxima rentabilidad sin estrés.",
   alternates: { canonical: "https://www.pfaffencars.com/consignacion" },
 };

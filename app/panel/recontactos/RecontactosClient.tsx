@@ -53,7 +53,7 @@ function vehiculoDeCliente(c: Cliente) {
 }
 function armarMensaje(c: Cliente, segmento: string, config: Config, miNombre: string): { texto: string; esGenerico: boolean } {
   const vehiculo = vehiculoDeCliente(c);
-  let plantilla = config?.plantilla_consulta_general || "Hola {nombre}! Soy {vendedor} de Pfaffen Autos.";
+  let plantilla = config?.plantilla_consulta_general || "Hola {nombre}! Soy {vendedor} de Pfaffen Cars.";
   let esGenerico = false;
   if (segmento === "busca_auto" && vehiculo) {
     plantilla = config?.plantilla_busca_auto || plantilla;

@@ -1,7 +1,7 @@
 import { createClient } from "@/lib/supabase/server";
 import NpsClient from "./NpsClient";
 
-export const metadata = { title: "NPS y Satisfacción | Pfaffen Autos" };
+export const metadata = { title: "NPS y Satisfacción | Pfaffen Cars" };
 
 export default async function NpsPage() {
   const supabase = await createClient();

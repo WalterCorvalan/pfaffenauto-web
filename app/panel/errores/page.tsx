@@ -1,7 +1,7 @@
 import { createClient } from "@/lib/supabase/server";
 import ErroresClient from "./ErroresClient";
 
-export const metadata = { title: "Errores del sistema | Pfaffen Autos" };
+export const metadata = { title: "Errores del sistema | Pfaffen Cars" };
 
 export default async function ErroresPage() {
   const supabase = await createClient();

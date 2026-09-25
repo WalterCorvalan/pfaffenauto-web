@@ -14,7 +14,7 @@ interface Branding {
 const CONDICION_PAGO_LABEL: Record<string, string> = { inmediata: "Inmediata", "30_dias": "A 30 días", "45_dias": "A 45 días" };
 
 export default function ImprimirMandato({ mandato: m, branding }: { mandato: any; branding?: Branding | null }) {
-  const nombreEmpresa = branding?.branding_nombre || "Pfaffen Autos";
+  const nombreEmpresa = branding?.branding_nombre || "Pfaffen Cars";
   const [firmaUrl, setFirmaUrl] = useState<string | null>(m.firma_url ?? null);
   const [firmaRetiroUrl, setFirmaRetiroUrl] = useState<string | null>(m.firma_retiro_url ?? null);
 

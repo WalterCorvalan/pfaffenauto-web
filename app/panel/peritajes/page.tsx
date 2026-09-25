@@ -1,7 +1,7 @@
 import { createClient } from "@/lib/supabase/server";
 import PeritajesClient from "./PeritajesClient";
 
-export const metadata = { title: "Peritajes | Pfaffen Autos" };
+export const metadata = { title: "Peritajes | Pfaffen Cars" };
 
 export default async function PeritajesPage() {
   const supabase = await createClient();

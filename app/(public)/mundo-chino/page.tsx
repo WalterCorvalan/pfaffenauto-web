@@ -9,8 +9,8 @@ import type { Metadata } from "next";
 export const revalidate = 60;
 
 export const metadata: Metadata = {
-  title: "Mundo Chino | BAIC, Chery, Changan, JAC, BYD | Pfaffen Autos",
-  description: "Descubrí nuestra selección de marcas chinas: BAIC, Chery, Changan, JAC, BYD y más, con respaldo oficial en Pfaffen Autos.",
+  title: "Mundo Chino | BAIC, Chery, Changan, JAC, BYD | Pfaffen Cars",
+  description: "Descubrí nuestra selección de marcas chinas: BAIC, Chery, Changan, JAC, BYD y más, con respaldo oficial en Pfaffen Cars.",
   alternates: { canonical: "https://www.pfaffencars.com/mundo-chino" },
 };
 

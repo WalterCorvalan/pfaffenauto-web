@@ -1,7 +1,7 @@
 import { createClient } from "@/lib/supabase/server";
 import SenasClient from "./SenasClient";
 
-export const metadata = { title: "Señas | Pfaffen Autos" };
+export const metadata = { title: "Señas | Pfaffen Cars" };
 
 export default async function SenasPage() {
   const supabase = await createClient();

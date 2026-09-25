@@ -8,8 +8,8 @@ import type { Metadata } from "next";
 export const revalidate = 60;
 
 export const metadata: Metadata = {
-  title: "Autos 0KM en Zona Norte, Buenos Aires | Pfaffen Autos",
-  description: "Comprá tu auto 0KM en Zona Norte con garantía oficial de fábrica, financiación a medida y entrega inmediata en Pfaffen Autos.",
+  title: "Autos 0KM en Zona Norte, Buenos Aires | Pfaffen Cars",
+  description: "Comprá tu auto 0KM en Zona Norte con garantía oficial de fábrica, financiación a medida y entrega inmediata en Pfaffen Cars.",
   alternates: { canonical: "https://www.pfaffencars.com/0km" },
 };
 

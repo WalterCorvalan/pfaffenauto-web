@@ -2,7 +2,7 @@ import { createClient } from "@/lib/supabase/server";
 import DashboardClient from "./DashboardClient";
 import { CATEGORIAS_GASTO_FIJO, CATEGORIAS_GASTO_VARIABLE } from "./finanzas/tabs/shared";
 
-export const metadata = { title: "Dashboard | Pfaffen Autos" };
+export const metadata = { title: "Dashboard | Pfaffen Cars" };
 
 function margenPorMoneda(expedientes: any[], desde: string, hasta: string) {
   const map: Record<string, number> = {};

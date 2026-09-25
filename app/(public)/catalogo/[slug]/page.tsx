@@ -52,14 +52,14 @@ export async function generateMetadata({
 }): Promise<Metadata> {
   const { slug } = await params;
   const auto = await buscarAuto(slug);
-  if (!auto) return { title: "Vehículo no encontrado | Pfaffen Autos" };
+  if (!auto) return { title: "Vehículo no encontrado | Pfaffen Cars" };
 
   const esCeroKm = auto.km === 0;
-  const titulo = `${auto.marca} ${auto.modelo} ${auto.anio} ${esCeroKm ? "0KM" : "Usado"} | Pfaffen Autos`;
+  const titulo = `${auto.marca} ${auto.modelo} ${auto.anio} ${esCeroKm ? "0KM" : "Usado"} | Pfaffen Cars`;
   const precioTexto = auto.precio_publicado_usd && !auto.precio_publicado_ars
     ? `US$ ${auto.precio_publicado_usd.toLocaleString("en-US")}`
     : `$${(auto.precio_publicado_ars || 0).toLocaleString("es-AR")}`;
-  const descripcion = `${auto.marca} ${auto.modelo} ${auto.anio}, ${esCeroKm ? "0km" : `${auto.km?.toLocaleString("es-AR")} km`}. Precio ${precioTexto}. Financiación disponible en Pfaffen Autos.`;
+  const descripcion = `${auto.marca} ${auto.modelo} ${auto.anio}, ${esCeroKm ? "0km" : `${auto.km?.toLocaleString("es-AR")} km`}. Precio ${precioTexto}. Financiación disponible en Pfaffen Cars.`;
   const imagen = (auto.fotos as any)?.[0];
 
   return {
@@ -103,7 +103,7 @@ export default async function VehiculoDetallePage({
     numeroLimpio = numeroLimpio.replace(/^54/, "549");
 
   const mensajeWhatsApp = encodeURIComponent(
-    `Hola Pfaffen Autos, estoy interesado en el ${auto.marca} ${auto.modelo} (${auto.anio}) que tienen en la sucursal de ${auto.sucursales?.nombre || "ustedes"}.`,
+    `Hola Pfaffen Cars, estoy interesado en el ${auto.marca} ${auto.modelo} (${auto.anio}) que tienen en la sucursal de ${auto.sucursales?.nombre || "ustedes"}.`,
   );
   const linkWhatsApp = `https://wa.me/${numeroLimpio}?text=${mensajeWhatsApp}`;
 
@@ -283,7 +283,7 @@ function BackgroundEffects() {
 function PrintHeader({ auto }: { auto: any }) {
   return (
     <div className="hidden print:block text-center border-b-2 border-navy pb-6 mb-6 mt-8">
-      <img src="/logo.png" alt="Pfaffen Autos" className="h-10 mx-auto mb-2" />
+      <img src="/logo.png" alt="Pfaffen Cars" className="h-10 mx-auto mb-2" />
       <h1 className="text-xl font-black uppercase text-navy">
         Ficha Técnica Oficial
       </h1>

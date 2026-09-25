@@ -82,7 +82,7 @@ export async function GET() {
         model: v.modelo || "",
         year: String(v.anio || ""),
         title: `${v.marca} ${v.modelo} ${v.anio}`.trim(),
-        description: `${v.marca} ${v.modelo} ${v.anio}. Consultá financiación y disponibilidad en Pfaffen Autos.`,
+        description: `${v.marca} ${v.modelo} ${v.anio}. Consultá financiación y disponibilidad en Pfaffen Cars.`,
         price: precio,
         url: `https://www.pfaffencars.com/catalogo/${v.slug}`,
         image_url: v.fotos[0],

@@ -174,7 +174,7 @@ export default function FinanciacionesClient({ solicitudesIniciales, staff, esAd
             }
             acciones={(s) => s.telefono && (
               <a
-                href={`https://wa.me/${s.telefono.replace(/\D/g, "")}?text=${encodeURIComponent(`¡Hola ${s.nombre}! Te contactamos de Pfaffen Autos por tu solicitud de financiación${s.marca ? ` para el ${s.marca} ${s.modelo || ""}`.trim() : ""}.`)}`}
+                href={`https://wa.me/${s.telefono.replace(/\D/g, "")}?text=${encodeURIComponent(`¡Hola ${s.nombre}! Te contactamos de Pfaffen Cars por tu solicitud de financiación${s.marca ? ` para el ${s.marca} ${s.modelo || ""}`.trim() : ""}.`)}`}
                 target="_blank"
                 rel="noreferrer"
                 className="bg-emerald-50 dark:bg-emerald-500/10 hover:bg-emerald-100 dark:hover:bg-emerald-500/20 text-emerald-600 dark:text-emerald-400 p-1.5 rounded-md transition-colors inline-flex"

@@ -16,7 +16,7 @@ interface Branding {
 }
 
 export default function ImprimirSena({ sena: s, branding }: { sena: any; branding?: Branding | null }) {
-  const nombreEmpresa = branding?.branding_nombre || "Pfaffen Autos";
+  const nombreEmpresa = branding?.branding_nombre || "Pfaffen Cars";
   const [precioConfirmado, setPrecioConfirmado] = useState(s.precio_confirmado);
   const [ventaArs, setVentaArs] = useState(s.venta_ars);
   const [ventaUsd, setVentaUsd] = useState(s.venta_usd);

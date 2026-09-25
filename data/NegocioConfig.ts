@@ -1,7 +1,7 @@
 // src/data/NegocioConfig.ts
 
 export const NEGOCIO_CONFIG = {
-  nombre: "Pfaffen Autos",
+  nombre: "Pfaffen Cars",
   zona: "Zona Norte, Buenos Aires",
   contacto: {
     whatsapp: "+54 9 11 1234-5678",

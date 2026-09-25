@@ -24,8 +24,8 @@ export async function generateMetadata({ params }: { params: Promise<{ marca: st
   const { marca } = await params;
   const marcaName = resolverNombreMarca(marca);
   return {
-    title: `Autos ${marcaName} en Zona Norte | Pfaffen Autos`,
-    description: `Encontrá vehículos ${marcaName} 0KM y usados seleccionados, con financiación y respaldo oficial en Pfaffen Autos.`,
+    title: `Autos ${marcaName} en Zona Norte | Pfaffen Cars`,
+    description: `Encontrá vehículos ${marcaName} 0KM y usados seleccionados, con financiación y respaldo oficial en Pfaffen Cars.`,
     alternates: { canonical: `https://www.pfaffencars.com/marcas/${marca.toLowerCase()}` },
   };
 }

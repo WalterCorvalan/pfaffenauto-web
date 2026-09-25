@@ -2,7 +2,7 @@ import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import LiquidadorClient from "./LiquidadorClient";
 
-export const metadata = { title: "Liquidador de sueldos | Pfaffen Autos" };
+export const metadata = { title: "Liquidador de sueldos | Pfaffen Cars" };
 
 export default async function LiquidadorPage() {
   const supabase = await createClient();

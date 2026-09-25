@@ -381,7 +381,7 @@ export default function LeadDetailModal({
   const nombre = contacto?.nombre_perfil || contacto?.username || contacto?.telefono || "Sin nombre";
   const telefono = contacto?.telefono || "";
   const numeroLimpio = String(telefono).replace(/\D/g, "");
-  const linkWhatsApp = numeroLimpio ? `https://wa.me/${numeroLimpio}?text=${encodeURIComponent(`¡Hola ${nombre}! Te escribimos de Pfaffen Autos.`)}` : null;
+  const linkWhatsApp = numeroLimpio ? `https://wa.me/${numeroLimpio}?text=${encodeURIComponent(`¡Hola ${nombre}! Te escribimos de Pfaffen Cars.`)}` : null;
   const paramsLead = `${campoFk}=${leadId}`;
   const puedeEditar = true;
 

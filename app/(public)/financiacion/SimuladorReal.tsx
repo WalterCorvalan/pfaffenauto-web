@@ -207,7 +207,7 @@ export default function SimuladorReal() {
           </div>
           <h3 className="text-xl font-black text-slate-900 dark:text-white mb-2">¡Solicitud enviada!</h3>
           <p className="text-slate-500 dark:text-slate-400 text-xs max-w-sm mb-6">
-            Un asesor de {vehiculo?.sucursal || "Pfaffen Autos"} te va a contactar a la brevedad para avanzar con tu crédito.
+            Un asesor de {vehiculo?.sucursal || "Pfaffen Cars"} te va a contactar a la brevedad para avanzar con tu crédito.
           </p>
           <button
             type="button"

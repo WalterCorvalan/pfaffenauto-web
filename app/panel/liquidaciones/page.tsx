@@ -3,7 +3,7 @@ import { createClient } from "@/lib/supabase/server";
 import { tienePermiso } from "@/lib/panel/permisos";
 import LiquidacionesClient from "./LiquidacionesClient";
 
-export const metadata = { title: "Liquidaciones | Pfaffen Autos" };
+export const metadata = { title: "Liquidaciones | Pfaffen Cars" };
 
 export default async function LiquidacionesPage() {
   const supabase = await createClient();

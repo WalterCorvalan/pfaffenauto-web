@@ -6,7 +6,7 @@ import Seguimiento from "@/components/Seguimiento";
 // /seguimiento/[codigo] (código inválido) tenga a dónde apuntar, y para
 // poder compartir/bookmarkear la URL sin pasar por el home.
 export const metadata: Metadata = {
-  title: "Seguimiento de tu Operación | Pfaffen Autos",
+  title: "Seguimiento de tu Operación | Pfaffen Cars",
   description: "Consultá el estado de tu seña o venta con el código de seguimiento que te enviamos y subí la documentación pendiente.",
   alternates: { canonical: "https://www.pfaffencars.com/seguimiento" },
   robots: { index: false, follow: true }, // buscador vacío sin el código -- no hay contenido propio que indexar

@@ -9,7 +9,7 @@ export default function FAQ() {
 
   const faqs = [
     {
-      pregunta: "¿Cómo puedo comprar un vehículo en Pfaffen Autos?",
+      pregunta: "¿Cómo puedo comprar un vehículo en Pfaffen Cars?",
       respuesta: "Podés ver nuestro stock actualizado online, elegir el modelo que te guste y contactarte de forma inmediata con nuestros asesores a través de WhatsApp para coordinar una seña o visita en nuestras sucursales."
     },
     {

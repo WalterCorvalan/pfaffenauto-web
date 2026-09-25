@@ -1,7 +1,7 @@
 import { createClient } from "@/lib/supabase/server";
 import TallerClient from "./TallerClient";
 
-export const metadata = { title: "Taller | Pfaffen Autos" };
+export const metadata = { title: "Taller | Pfaffen Cars" };
 
 export default async function TallerPage() {
   // Cambio clave acá: createClient en vez de createServerClient

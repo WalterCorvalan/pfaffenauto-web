@@ -4,7 +4,7 @@ import { puedeVerModulo } from "@/lib/panel/permisosModulos";
 import { Landmark, CreditCard, Wallet, HelpCircle } from "lucide-react";
 import NuevaCuentaModal from "./NuevaCuentaModal";
 
-export const metadata = { title: "Tesorería | Pfaffen Autos" };
+export const metadata = { title: "Tesorería | Pfaffen Cars" };
 
 const ICONO_TIPO: Record<string, any> = { Banco: Landmark, Tarjeta: CreditCard, Efectivo: Wallet, Otro: HelpCircle };
 

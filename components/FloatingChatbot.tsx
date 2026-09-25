@@ -13,7 +13,7 @@ interface Message {
 
 const MENSAJE_INICIAL: Message = {
   role: "assistant",
-  content: "¡Hola! Soy Rodi, el asistente virtual de Pfaffen Autos. Contame qué auto estás buscando y te cuento si lo tenemos en stock.",
+  content: "¡Hola! Soy Rodi, el asistente virtual de Pfaffen Cars. Contame qué auto estás buscando y te cuento si lo tenemos en stock.",
 };
 
 const SESSION_KEY = "rodi_session_id";
@@ -111,7 +111,7 @@ export default function FloatingChatbot() {
               </div>
               <div>
                 <h3 className="font-black text-sm tracking-wide">
-                  Rodi · Pfaffen Autos
+                  Rodi · Pfaffen Cars
                 </h3>
                 <span className="text-[10px] text-emerald-400 font-bold uppercase tracking-widest flex items-center gap-1">
                   <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>{" "}
@@ -195,7 +195,7 @@ export default function FloatingChatbot() {
 
           {handoff && (
             <div className="px-4 py-2.5 bg-emerald-50 border-t border-emerald-100 text-[11px] font-semibold text-emerald-700 text-center shrink-0">
-              Un asesor de Pfaffen Autos te va a contactar en breve. 🚗
+              Un asesor de Pfaffen Cars te va a contactar en breve. 🚗
             </div>
           )}
 

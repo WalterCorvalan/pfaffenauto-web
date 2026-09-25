@@ -47,7 +47,7 @@ export async function POST(request: Request) {
     return await procesarMensaje({ sessionId, texto, origenPagina, nombre, telefono, email });
   } catch (err) {
     registrarError("api/panel/rodi/mensaje", err, { sessionId });
-    return NextResponse.json({ replies: ["¡Hola! Gracias por escribirnos a Pfaffen Autos. En breve te contacta uno de nuestros asesores. 🚗"], handoff: false });
+    return NextResponse.json({ replies: ["¡Hola! Gracias por escribirnos a Pfaffen Cars. En breve te contacta uno de nuestros asesores. 🚗"], handoff: false });
   }
 }
 
@@ -127,7 +127,7 @@ async function procesarMensaje({ sessionId, texto, origenPagina, nombre, telefon
 
   if (!result.ok) {
     registrarError("api/panel/rodi/mensaje:agente", result.error, { conversacionId: conversacion.id });
-    return NextResponse.json({ replies: ["¡Hola! Gracias por escribirnos a Pfaffen Autos. En breve te contacta uno de nuestros asesores. 🚗"], handoff: false });
+    return NextResponse.json({ replies: ["¡Hola! Gracias por escribirnos a Pfaffen Cars. En breve te contacta uno de nuestros asesores. 🚗"], handoff: false });
   }
 
   const { reply, handoff, pausar_sin_notificar, calificacion, resumen_handoff, datos_detectados } = result.data;

@@ -8,7 +8,7 @@ import type { Metadata } from "next";
 export const revalidate = 60;
 
 export const metadata: Metadata = {
-  title: "Outlet de Autos Usados Baratos en Zona Norte | Pfaffen Autos",
+  title: "Outlet de Autos Usados Baratos en Zona Norte | Pfaffen Cars",
   description: "Autos usados a precios de liquidación en Buenos Aires. Ideales como primer auto, proyectos o herramienta de trabajo.",
   alternates: { canonical: "https://www.pfaffencars.com/outlet" },
 };

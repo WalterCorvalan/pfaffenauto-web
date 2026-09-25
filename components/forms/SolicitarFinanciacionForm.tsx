@@ -259,7 +259,7 @@ export default function SolicitarFinanciacionForm({ vehiculoPreseleccionado, cla
               </div>
               <h4 className="text-xl font-black text-navy dark:text-white mb-2">¡Solicitud enviada!</h4>
               <p className="text-slate-500 dark:text-slate-400 text-xs max-w-sm">
-                Un asesor de {vehiculo?.sucursales?.nombre || "Pfaffen Autos"} te va a contactar a la brevedad para avanzar con tu crédito.
+                Un asesor de {vehiculo?.sucursales?.nombre || "Pfaffen Cars"} te va a contactar a la brevedad para avanzar con tu crédito.
               </p>
             </div>
           ) : (
