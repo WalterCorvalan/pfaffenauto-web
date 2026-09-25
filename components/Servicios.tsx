@@ -26,7 +26,7 @@ export default function Servicios() {
             </h2>
           </div>
           <Link
-            href="/contacto"
+            href="/#sucursales"
             className="hidden md:flex items-center gap-2 text-sm font-bold text-slate-500 hover:text-[#0145F2] dark:hover:text-sky-400 transition-colors group shrink-0"
           >
             Contactar asesor <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
@@ -125,7 +125,7 @@ export default function Servicios() {
                   Consignar Vehículo
                 </Link>
                 <Link
-                  href="/contacto"
+                  href="/#sucursales"
                   className="inline-flex items-center justify-center gap-2 bg-black/20 text-white hover:bg-black/30 font-black text-[10px] sm:text-xs uppercase tracking-widest px-8 py-4 rounded-xl transition-all backdrop-blur-sm border border-white/10 active:scale-95"
                 >
                   Contactar Asesor

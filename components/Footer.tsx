@@ -58,7 +58,12 @@ export default function Footer() {
 
       {/* ================= COLUMNAS ================= */}
       <div className="max-w-7xl mx-auto px-4 md:px-6 py-14 md:py-16">
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-8 md:gap-6">
+        {/* Sitio público: 3 columnas parejas (sin "Equipo", que solo existe
+            dentro del panel) -- antes "Respaldo Oficial" se estiraba a 2
+            columnas de un grid de 4 para no dejar un hueco, pero su
+            contenido (3 badges chicos) no llenaba ese ancho y dejaba
+            espacio vacío igual. */}
+        <div className={`grid grid-cols-2 ${isPanel ? "md:grid-cols-4" : "md:grid-cols-3"} gap-8 md:gap-6`}>
 
           {/* Explorar */}
           <div>
@@ -66,7 +71,7 @@ export default function Footer() {
             <ul className="space-y-3.5">
               {links.map((link) => (
                 <li key={link.label}>
-                  <Link href={link.href} className="text-gray-500 dark:text-slate-400 hover:text-blue-600 text-sm font-bold transition-colors">
+                  <Link href={link.href} className="text-gray-500 dark:text-slate-400 hover:text-[#0145F2] text-sm font-bold transition-colors">
                     {link.label}
                   </Link>
                 </li>
@@ -84,7 +89,7 @@ export default function Footer() {
                   href={s.href}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="flex items-center gap-2.5 text-gray-500 dark:text-slate-400 hover:text-blue-600 text-sm font-bold transition-colors"
+                  className="flex items-center gap-2.5 text-gray-500 dark:text-slate-400 hover:text-[#0145F2] text-sm font-bold transition-colors"
                 >
                   <svg className="w-4 h-4 fill-current shrink-0" viewBox="0 0 24 24">
                     <path d={s.path} />
@@ -95,12 +100,10 @@ export default function Footer() {
             </div>
           </div>
 
-          {/* Respaldo Oficial -- ocupa la columna que dejó libre "Equipo"
-              en el sitio público (esa columna solo existe dentro del
-              panel) para no dejar un hueco vacío en el grid de 4. */}
-          <div className={`col-span-2 ${isPanel ? "md:col-span-1" : "md:col-span-2"}`}>
+          {/* Respaldo Oficial */}
+          <div className="col-span-2 md:col-span-1">
             <h3 className="text-gray-900 dark:text-white text-[11px] font-black uppercase tracking-widest mb-5 flex items-center gap-1.5">
-              <ShieldCheck className="w-3.5 h-3.5 text-blue-600" /> Respaldo Oficial
+              <ShieldCheck className="w-3.5 h-3.5 text-[#0145F2]" /> Respaldo Oficial
             </h3>
             <div className="flex flex-wrap items-center gap-5">
               {badges.map((b) => (
@@ -116,7 +119,7 @@ export default function Footer() {
           {isPanel && (
             <div className="col-span-2 md:col-span-1">
               <h3 className="text-gray-900 dark:text-white text-[11px] font-black uppercase tracking-widest mb-5">Equipo</h3>
-              <Link href="/" className="inline-flex items-center gap-2 text-blue-600 hover:text-blue-700 text-sm font-black transition-colors">
+              <Link href="/" className="inline-flex items-center gap-2 text-[#0145F2] hover:text-[#0138c9] text-sm font-black transition-colors">
                 Volver a la Web <ArrowUpRight className="w-3.5 h-3.5" />
               </Link>
             </div>
@@ -133,7 +136,7 @@ export default function Footer() {
           </p>
           <button
             onClick={scrollToTop}
-            className="flex items-center gap-2 text-[10px] font-black uppercase tracking-widest text-gray-500 dark:text-slate-400 hover:text-blue-600 transition-colors"
+            className="flex items-center gap-2 text-[10px] font-black uppercase tracking-widest text-gray-500 dark:text-slate-400 hover:text-[#0145F2] transition-colors"
           >
             Volver arriba <ArrowUp className="w-3.5 h-3.5" />
           </button>
