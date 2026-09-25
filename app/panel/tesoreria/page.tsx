@@ -59,11 +59,11 @@ export default async function TesoreriaPage() {
           </div>
 
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-6">
-            <div className="relative overflow-hidden bg-gradient-to-br from-rose-600 to-rose-700 rounded-2xl p-6 text-white shadow-sm">
-              <Wallet className="w-24 h-24 absolute -right-4 -bottom-4 opacity-10" />
-              <span className="text-[10px] uppercase tracking-widest font-bold text-rose-100">Saldo total en pesos</span>
-              <h3 className="text-3xl font-black mt-1 font-mono">$ {saldoTotalArs.toLocaleString("es-AR")}</h3>
-              <p className="text-[11px] text-rose-100/80 mt-1 font-semibold">{cuentasConSaldo.filter((c) => (c.moneda || "ARS") === "ARS").length} cuenta(s)</p>
+            <div className="relative overflow-hidden bg-gradient-to-br from-sky-400 via-white to-sky-400 border border-sky-200 rounded-2xl p-6 shadow-sm">
+              <Wallet className="w-24 h-24 absolute -right-4 -bottom-4 opacity-[0.08] text-sky-700" />
+              <span className="text-[10px] uppercase tracking-widest font-bold text-sky-700">Saldo total en pesos</span>
+              <h3 className="text-3xl font-black mt-1 font-mono text-slate-800">$ {saldoTotalArs.toLocaleString("es-AR")}</h3>
+              <p className="text-[11px] text-sky-700/80 mt-1 font-semibold">{cuentasConSaldo.filter((c) => (c.moneda || "ARS") === "ARS").length} cuenta(s)</p>
             </div>
             <div className="relative overflow-hidden bg-gradient-to-br from-emerald-600 to-emerald-700 rounded-2xl p-6 text-white shadow-sm">
               <Wallet className="w-24 h-24 absolute -right-4 -bottom-4 opacity-10" />
