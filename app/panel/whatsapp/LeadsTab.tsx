@@ -220,7 +220,7 @@ export default function LeadsTab({ conversacionesIniciales, conversacionesInstag
         ) : (
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
             {filtrados.map((c) => (
-              <div key={c.id} onClick={() => setDetalle({ id: c.id, origen: c.origen })} className="bg-white dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-2xl p-4 cursor-pointer hover:border-rose-300 transition-colors">
+              <div key={c.id} onClick={() => setDetalle({ id: c.id, origen: c.origen })} className="bg-white dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-2xl p-4 cursor-pointer shadow-sm hover:shadow-md hover:border-rose-300 transition-shadow">
                 <div className="flex items-center justify-between mb-2">
                   <div className="flex items-center gap-2 min-w-0">
                     <span className={`w-2 h-2 rounded-full shrink-0 ${CALIFICACION_DOT[c.calificacion] || "bg-slate-300"}`} />
@@ -256,7 +256,7 @@ export default function LeadsTab({ conversacionesIniciales, conversacionesInstag
                 <div className="p-2 flex flex-col gap-2 min-h-[120px] flex-1 overflow-y-auto max-h-[60vh]">
                   {leads.map((c) => (
                     <div key={c.id} draggable onDragStart={(e) => e.dataTransfer.setData("text/plain", c.id)} onClick={() => setDetalle({ id: c.id, origen: c.origen })}
-                      className="bg-white dark:bg-white/10 border border-slate-200 dark:border-white/10 rounded-lg p-3 cursor-grab active:cursor-grabbing hover:border-rose-300">
+                      className="bg-white dark:bg-white/10 border border-slate-200 dark:border-white/10 rounded-lg p-3 shadow-sm cursor-grab active:cursor-grabbing hover:border-rose-300">
                       <p className="text-xs font-bold text-slate-900 dark:text-white truncate">{nombreLead(c)}</p>
                       <p className="text-[10px] text-slate-400 mt-0.5">{c.vendedor?.nombre || "Sin asignar"}</p>
                     </div>

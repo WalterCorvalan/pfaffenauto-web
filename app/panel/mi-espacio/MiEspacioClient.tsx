@@ -495,7 +495,7 @@ export default function MiEspacioClient({
             <p className="text-sm font-bold flex items-center gap-1.5">📊 Mi resumen diario</p>
             <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">Elegí qué querés ver en tu resumen de cada mañana en la campanita 🔔. Es tuyo: cada uno arma el suyo.</p>
           </div>
-          <label className="flex items-center gap-3 bg-white dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-xl p-4 cursor-pointer">
+          <label className="flex items-center gap-3 bg-white dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-xl p-4 cursor-pointer shadow-sm">
             <input type="checkbox" checked={recibirResumen} onChange={(e) => togglePref(e.target.checked, items)} className="w-5 h-5 accent-emerald-600" />
             <span><span className="block text-sm font-bold">Recibir el resumen diario</span><span className="block text-xs text-slate-400">Si lo apagás, no recibís el resumen en la campanita.</span></span>
           </label>
