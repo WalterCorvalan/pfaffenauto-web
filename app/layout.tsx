@@ -22,7 +22,10 @@ export const metadata: Metadata = {
     "pfaffen",
     "fafen",
     "pfaffen cars",
+    "pfaffen autos",
+    "pfaffenautos",
     "fafen autos",
+    "fafencar",
     "agencia pfaffen",
     "comprar auto 0km",
     "vender mi auto usado",
@@ -58,6 +61,13 @@ export const metadata: Metadata = {
     index: true,
     follow: true,
   },
+  // Código de verificación de Google Search Console (Configuración >
+  // Verificación de la propiedad > etiqueta HTML, ahí Google te da el
+  // string que va en el content). Solo se renderiza si está cargada la env
+  // var -- mismo criterio que GA/Meta Pixel/Clarity, no rompe nada sin ella.
+  verification: process.env.NEXT_PUBLIC_GOOGLE_SITE_VERIFICATION
+    ? { google: process.env.NEXT_PUBLIC_GOOGLE_SITE_VERIFICATION }
+    : undefined,
   openGraph: {
     title: "Pfaffen Cars | Concesionaria de 0KM y Usados en Zona Norte",
     description:
@@ -99,6 +109,7 @@ export default function RootLayout({
     "@context": "https://schema.org",
     "@type": "AutoDealer",
     name: "Pfaffen Cars",
+    alternateName: "Pfaffen Autos",
     image: "https://www.pfaffencars.com/logo.png",
     "@id": "https://www.pfaffencars.com",
     url: "https://www.pfaffencars.com",
