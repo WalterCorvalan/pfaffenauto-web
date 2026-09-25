@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { supabase2 } from "@/lib/supabase/client";
 import { X, Save, Radar } from "lucide-react";
-import { CANALES_ORIGEN } from "../whatsapp/LeadDetailModal";
+import { CANALES_ORIGEN } from "@/components/panel/conversaciones/LeadDetailModal";
 
 interface Perfil { id: string; nombre: string }
 interface Sucursal { id: string; nombre: string }

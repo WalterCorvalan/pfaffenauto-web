@@ -322,7 +322,7 @@ export default function LeadDetailModal({
     await registrarEvento("test_drive", `Test drive marcado como "${nuevo}"`);
   };
 
-  const LINK_ORIGEN: Record<string, string> = { whatsapp: "/panel/whatsapp", instagram: "/panel/whatsapp?canal=instagram", rodi: "/panel/rodi", manual: "/panel/clientes" };
+  const LINK_ORIGEN: Record<string, string> = { whatsapp: "/panel/whatsapp", instagram: "/panel/instagram", rodi: "/panel/rodi", manual: "/panel/clientes" };
 
   const pedirAsistencia = async () => {
     if (!asistenciaParaId) return alert("Elegí a quién pedirle ayuda.");

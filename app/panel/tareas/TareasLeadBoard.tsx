@@ -25,13 +25,12 @@ const CHART_COLORS = { primary: "#e11d48", rose: "#f43f5e", amber: "#f59e0b", em
 type Vista = "tablero" | "calendario" | "historial" | "metricas";
 
 function hrefLead(lead: { id: string; origen: "whatsapp" | "instagram" | "rodi" | "manual" }) {
-  // whatsapp/instagram abren en la pestaña de Leads dentro de WhatsApp
-  // (ConversacionesShell, scopeado a esos 2 canales); rodi/manual no viven
-  // ahí -- se resuelven en la vista unificada de /panel/leads, que sí
-  // soporta los 4 orígenes (ver LeadsUnificadosClient.tsx).
-  if (lead.origen === "whatsapp" || lead.origen === "instagram") {
-    return `/panel/whatsapp?tab=leads&lead=${lead.id}&origen=${lead.origen}`;
-  }
+  // whatsapp/instagram abren en la pestaña de Leads de su propio módulo
+  // (ConversacionesShell, separados en dos módulos de sidebar el 25/9);
+  // rodi/manual no viven ahí -- se resuelven en la vista unificada de
+  // /panel/leads, que sí soporta los 4 orígenes (ver LeadsUnificadosClient.tsx).
+  if (lead.origen === "whatsapp") return `/panel/whatsapp?tab=leads&lead=${lead.id}&origen=whatsapp`;
+  if (lead.origen === "instagram") return `/panel/instagram?tab=leads&lead=${lead.id}&origen=instagram`;
   return `/panel/leads?lead=${lead.id}&origen=${lead.origen}`;
 }
 

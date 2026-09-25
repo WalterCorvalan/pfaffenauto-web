@@ -1,17 +1,17 @@
 import { createClient } from "@/lib/supabase/server";
 import ConversacionesShell from "@/components/panel/conversaciones/ConversacionesShell";
 
-export default async function WhatsappPage() {
+export default async function InstagramPage() {
   const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();
 
-  const [waRes, vendedoresRes, miPerfilRes] = await Promise.all([
+  const [igRes, vendedoresRes, miPerfilRes] = await Promise.all([
     supabase
-      .from("whatsapp_conversaciones")
+      .from("instagram_conversaciones")
       .select(`
-        id, last_message_at, unread_count, handoff_at, handoff_reason, handoff_resumen, ai_habilitada, calificacion, origen_ads, notas, estado_pipeline, estado_lead, archivada,
-        whatsapp_contactos ( id, telefono, nombre_perfil ), cliente_id, vehiculo_id,
-        vendedor_id, vendedor:perfiles!whatsapp_conversaciones_vendedor_id_fkey ( id, nombre )
+        id, last_message_at, unread_count, handoff_at, handoff_reason, ai_habilitada, calificacion, origen_ads, notas, estado_pipeline, estado_lead, archivada,
+        instagram_contactos ( id, ig_user_id, username, nombre_perfil ), cliente_id, vehiculo_id,
+        vendedor_id, vendedor:perfiles!instagram_conversaciones_vendedor_id_fkey ( id, nombre )
       `)
       .order("last_message_at", { ascending: false })
       .limit(3000),
@@ -19,9 +19,9 @@ export default async function WhatsappPage() {
     user?.id ? supabase.from("perfiles").select("roles, sucursal_id").eq("id", user.id).single() : Promise.resolve({ data: null }),
   ]);
 
-  // Admin ve a todos. Encargado ve solo a los vendedores de SU sucursal (sus
-  // vendedores asignados). Un vendedor sin ninguno de esos roles solo ve a
-  // otros vendedores (no admin/encargado), sin importar sucursal.
+  // Mismo criterio de reparto de la lista de vendedores que /panel/whatsapp
+  // (ver ese page.tsx) -- admin ve a todos, encargado solo a los de su
+  // sucursal, vendedor ve al resto de vendedores.
   const soyAdmin = miPerfilRes.data?.roles?.includes("admin") ?? false;
   const soyEncargado = miPerfilRes.data?.roles?.includes("encargado") ?? false;
   const miSucursalId = miPerfilRes.data?.sucursal_id ?? null;
@@ -33,9 +33,10 @@ export default async function WhatsappPage() {
 
   return (
     <ConversacionesShell
-      canalFijo="whatsapp"
-      conversacionesIniciales={waRes.data || []}
-      conversacionesInstagramIniciales={[]}
+      canalFijo="instagram"
+      backTo="/panel/instagram?tab=leads"
+      conversacionesIniciales={[]}
+      conversacionesInstagramIniciales={igRes.data || []}
       vendedores={vendedores}
       miId={user?.id || ""}
     />

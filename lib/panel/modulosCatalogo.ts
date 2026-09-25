@@ -42,6 +42,8 @@ export const MODULOS_CATALOGO: { modulo: string; label: string }[] = [
   { modulo: "facturacion", label: "Facturación" },
   { modulo: "mensajes", label: "Mensajes" },
   { modulo: "whatsapp", label: "WhatsApp" },
+  { modulo: "instagram", label: "Instagram" },
+  { modulo: "messenger", label: "Messenger" },
   { modulo: "rodi", label: "Rodi (chat web)" },
   { modulo: "tareas_leads", label: "Tareas de Leads" },
   { modulo: "correos", label: "Correos" },
