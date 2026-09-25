@@ -3,6 +3,7 @@
 import { useState, useEffect } from "react";
 import { supabase2 } from "@/lib/supabase/client";
 import { BellRing, Save } from "lucide-react";
+import PushSubscribeButton from "@/components/panel/PushSubscribeButton";
 
 const ITEMS = [
   { key: "leads", icono: "🆕", label: "Leads nuevos, reasignados y sin responder", desc: "Lead nuevo, reasignado por no contactarse a tiempo, o un lead que lleva demasiadas horas sin respuesta." },
@@ -65,6 +66,8 @@ export default function NotificacionesTab({ miId }: { miId: string }) {
         <p className="text-sm font-bold flex items-center gap-1.5"><BellRing className="w-4 h-4" /> Mis notificaciones</p>
         <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">Elegí qué querés que te llegue a la campanita 🔔 y al Centro de Alertas. Lo que apagues deja de avisarte (solo a vos). Por defecto recibís todo.</p>
       </div>
+
+      <PushSubscribeButton />
 
       <label className={`flex items-start gap-3 border rounded-xl p-3.5 mb-3 ${tengoWhatsapp ? "bg-white dark:bg-white/5 border-slate-200 dark:border-white/10 cursor-pointer" : "bg-slate-50 dark:bg-white/[0.02] border-slate-200 dark:border-white/5 opacity-60"}`}>
         <input type="checkbox" checked={whatsappForward} disabled={!tengoWhatsapp} onChange={() => setWhatsappForward((v) => !v)} className="w-4 h-4 mt-0.5 accent-emerald-600 shrink-0" />

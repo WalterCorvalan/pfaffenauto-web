@@ -33,6 +33,7 @@
     "react-hook-form": "^7.82.0",
     "recharts": "^3.10.1",
     "three": "^0.185.1",
+    "web-push": "^3.6.7",
     "xlsx": "^0.18.5",
     "zod": "^4.4.3"
   },
@@ -42,6 +43,7 @@
     "@types/qrcode": "^1.5.6",
     "@types/react": "^19",
     "@types/react-dom": "^19",
+    "@types/web-push": "^3.6.4",
     "eslint": "^9",
     "eslint-config-next": "16.2.10",
     "tailwindcss": "^4",
