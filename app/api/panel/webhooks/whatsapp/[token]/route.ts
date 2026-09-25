@@ -25,6 +25,11 @@ const supabase = createClient(
   process.env.SUPABASE2_SERVICE_ROLE_KEY!
 );
 
+// El colchón de DEBOUNCE_MS (ver más abajo) se suma al tiempo de la función
+// -- sin este límite explícito corre el riesgo de superar el default de la
+// plataforma antes de terminar de contestar.
+export const maxDuration = 30;
+
 async function tokenValido(token: string): Promise<boolean> {
   const { data } = await supabase.from("whatsapp_configuracion").select("webhook_verify_token").eq("id", true).single();
   const expected = data?.webhook_verify_token ?? "";
@@ -89,7 +94,15 @@ export async function POST(req: Request, { params }: { params: Promise<{ token: 
   return Response.json({ received: true });
 }
 
+// Pedido del 25/9: si el cliente manda dos (o más) mensajes casi seguidos
+// ("Entregar 13 millones", después "resto cuotas"), el bot tiene que leerlos
+// juntos antes de contestar, no contestar al primero y confundirse con el
+// segundo. Se guardan TODOS los mensajes entrantes del payload primero (acá
+// abajo, sin tocar al agente) y recién al final se dispara el agente una
+// sola vez por conversación tocada -- así el historial que arma
+// ejecutarAgente ya trae los mensajes juntos en vez de solo el primero.
 async function procesarEvento(payload: any) {
+  const conversacionesTocadas = new Map<string, string>(); // conversacionId -> id del último mensaje entrante guardado acá
   for (const entry of payload.entry ?? []) {
     for (const change of entry.changes ?? []) {
       const value = change.value;
@@ -98,13 +111,42 @@ async function procesarEvento(payload: any) {
       for (const msg of value.messages ?? []) {
         const waId = msg.from;
         const nombrePerfil = value.contacts?.find((c: any) => c.wa_id === waId)?.profile?.name ?? null;
-        await ingestarMensaje({ waId, nombrePerfil, msg });
+        const resultado = await guardarMensajeEntrante({ waId, nombrePerfil, msg });
+        if (resultado) conversacionesTocadas.set(resultado.conversacionId, resultado.mensajeId);
       }
       for (const status of value.statuses ?? []) {
         await actualizarEstadoMensaje(status);
       }
     }
   }
+  for (const [conversacionId, mensajeId] of conversacionesTocadas) {
+    await ejecutarAgenteConDebounce(conversacionId, mensajeId);
+  }
+}
+
+// Además del caso de arriba (mismo payload), Meta puede mandar dos mensajes
+// casi simultáneos del mismo cliente en DOS llamadas de webhook separadas
+// (POST distintos, unos cientos de ms de diferencia) -- ahí no alcanza con
+// agrupar dentro de procesarEvento porque son invocaciones distintas de la
+// función. Se espera un colchón corto y, si en ese lapso llegó un mensaje
+// más nuevo en esa conversación, esta invocación se retira sin contestar --
+// la invocación del mensaje más nuevo es la que va a terminar respondiendo,
+// ya con el historial completo (los dos mensajes) en la consulta que hace
+// ejecutarAgente más abajo.
+const DEBOUNCE_MS = 6000;
+
+async function ejecutarAgenteConDebounce(conversacionId: string, mensajeId: string) {
+  await new Promise((resolve) => setTimeout(resolve, DEBOUNCE_MS));
+  const { data: ultimoEntrante } = await supabase
+    .from("whatsapp_mensajes")
+    .select("id")
+    .eq("conversacion_id", conversacionId)
+    .eq("direccion", "in")
+    .order("created_at", { ascending: false })
+    .limit(1)
+    .maybeSingle();
+  if (ultimoEntrante && ultimoEntrante.id !== mensajeId) return; // llegó algo más nuevo, esa invocación se encarga
+  await ejecutarAgente(conversacionId);
 }
 
 // Antes, cualquier mensaje que no fuera texto/interactive (audio, foto,
@@ -113,7 +155,7 @@ async function procesarEvento(payload: any) {
 // así que el cliente mandaba un audio y el bot se quedaba en silencio total.
 // Se resuelve un texto real para cada tipo -- sin transcripción automática de
 // audio (a propósito, el vendedor lo escucha directo en el panel, ver
-// media_url más abajo en ingestarMensaje()).
+// media_url más abajo en guardarMensajeEntrante()).
 function resolverTextoMensaje(msg: any): string | null {
   if (msg.type === "text") return msg.text?.body ?? null;
   if (msg.type === "interactive") return msg.interactive?.list_reply?.title ?? msg.interactive?.button_reply?.title ?? null;
@@ -124,7 +166,7 @@ function resolverTextoMensaje(msg: any): string | null {
   return null;
 }
 
-async function ingestarMensaje({ waId, nombrePerfil, msg }: { waId: string; nombrePerfil: string | null; msg: any }) {
+async function guardarMensajeEntrante({ waId, nombrePerfil, msg }: { waId: string; nombrePerfil: string | null; msg: any }): Promise<{ conversacionId: string; mensajeId: string } | null> {
   // Solo se completa nombre_perfil al crear el contacto por primera vez --
   // si ya existe, NO se pisa con el nombre de perfil de WhatsApp en cada
   // mensaje entrante, porque eso borraba el nombre real que el cliente ya
@@ -140,7 +182,7 @@ async function ingestarMensaje({ waId, nombrePerfil, msg }: { waId: string; nomb
       contacto = nuevo;
     }
   }
-  if (!contacto) return;
+  if (!contacto) return null;
 
   let { data: conversacion } = await supabase
     .from("whatsapp_conversaciones")
@@ -160,7 +202,7 @@ async function ingestarMensaje({ waId, nombrePerfil, msg }: { waId: string; nomb
     const { data: nueva } = await supabase.from("whatsapp_conversaciones").insert({ contacto_id: contacto.id, canal_origen: "WhatsApp" }).select("id, vendedor_id, ai_habilitada, canal_origen, vehiculo_id").single();
     conversacion = nueva;
   }
-  if (!conversacion) return;
+  if (!conversacion) return null;
 
   if (msg.referral?.headline) {
     // Meta manda "referral" solo en el primer mensaje de una charla que
@@ -229,7 +271,7 @@ async function ingestarMensaje({ waId, nombrePerfil, msg }: { waId: string; nomb
       registrarError("webhook-v2:descargar-audio", err, { conversacionId: conversacion.id, mediaId: msg.audio.id });
     }
   }
-  const { error } = await supabase.from("whatsapp_mensajes").insert({
+  const { data: mensajeInsertado, error } = await supabase.from("whatsapp_mensajes").insert({
     conversacion_id: conversacion.id,
     wa_message_id: msg.id,
     direccion: "in",
@@ -238,11 +280,11 @@ async function ingestarMensaje({ waId, nombrePerfil, msg }: { waId: string; nomb
     media_url: mediaUrl,
     status: "received",
     wa_timestamp: new Date(Number(msg.timestamp) * 1000).toISOString(),
-  });
+  }).select("id").single();
   if (error) {
-    if (error.code === "23505") return; // duplicado (reintento de Meta)
+    if (error.code === "23505") return null; // duplicado (reintento de Meta)
     registrarError("webhook-v2:insertar-mensaje", error, { conversacionId: conversacion.id });
-    return;
+    return null;
   }
 
   const { data: convActual } = await supabase.from("whatsapp_conversaciones").select("unread_count, vendedor_id").eq("id", conversacion.id).single();
@@ -253,7 +295,7 @@ async function ingestarMensaje({ waId, nombrePerfil, msg }: { waId: string; nomb
   // admin/encargado/ventas si todavía no tiene uno) -- llamarlo también
   // desde acá duplicaba la alerta.
 
-  await ejecutarAgente(conversacion.id);
+  return { conversacionId: conversacion.id, mensajeId: mensajeInsertado.id };
 }
 
 const RESPUESTA_FALLBACK = "¡Hola! Gracias por escribirnos a Pfaffen Autos. En breve te contacta uno de nuestros asesores. 🚗";
