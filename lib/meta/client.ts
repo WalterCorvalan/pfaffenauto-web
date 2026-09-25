@@ -261,3 +261,15 @@ export async function sendInstagramMessage(igUserId: string, token: string, reci
     }),
   }, GRAPH_INSTAGRAM_BASE_URL);
 }
+
+// Instagram: foto de un vehículo por DM -- mismo mecanismo que sendInstagramMessage
+// pero con un adjunto de imagen en vez de texto (Send API, no Content Publishing).
+export async function sendInstagramImageMessage(igUserId: string, token: string, recipientId: string, imageUrl: string) {
+  return graphRequest<{ recipient_id: string; message_id: string }>(`${igUserId}/messages`, token, {
+    method: "POST",
+    body: JSON.stringify({
+      recipient: { id: recipientId },
+      message: { attachment: { type: "image", payload: { url: imageUrl } } },
+    }),
+  }, GRAPH_INSTAGRAM_BASE_URL);
+}

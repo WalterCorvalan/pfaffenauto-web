@@ -2,7 +2,7 @@ import { createHmac, timingSafeEqual } from "crypto";
 import { createClient } from "@supabase/supabase-js";
 import { isAiConfiguredV2 } from "@/lib/ai/indexV2";
 import { generarRespuestaAgenteV2, dividirRespuestaEnMensajes } from "@/lib/ai/agenteV2";
-import { sendInstagramPrivateReply, sendInstagramMessage, replyToInstagramCommentPublicly } from "@/lib/meta/client";
+import { sendInstagramPrivateReply, sendInstagramMessage, sendInstagramImageMessage, replyToInstagramCommentPublicly } from "@/lib/meta/client";
 import { decrypt } from "@/lib/crypto";
 import { rateLimit, ipDesdeRequest } from "@/lib/rateLimit";
 import { registrarError } from "@/lib/panel/logger";
@@ -273,6 +273,7 @@ async function ejecutarAgente(conversacionId: string, igUserId: string) {
   }
 
   const { reply, handoff, calificacion, resumen_handoff, datos_detectados } = result.data;
+  const { fotosParaEnviar } = result;
 
   const estadoSegunCalificacion = calificacion === "caliente" ? "calificando" : undefined;
   const patchConversacion: Record<string, unknown> = { calificacion };
@@ -290,6 +291,14 @@ async function ejecutarAgente(conversacionId: string, igUserId: string) {
   for (const parte of dividirRespuestaEnMensajes(reply)) {
     const { data: mensajeSaliente } = await supabase.from("instagram_mensajes").insert({ conversacion_id: conversacionId, direccion: "out", tipo: "text", texto: parte, status: "pending", ai_generado: true }).select("id").single();
     if (mensajeSaliente) await enviarYActualizarMensaje(mensajeSaliente.id, igUserId, parte, config);
+  }
+
+  // Fotos del auto que el agente mostró en esta respuesta -- mismo patrón
+  // que WhatsApp (webhooks/whatsapp/[token]/route.ts), Instagram sí soporta
+  // mandar imágenes por DM (a diferencia de Rodi, que nunca lo hace).
+  for (const fotoUrl of fotosParaEnviar) {
+    const { data: mensajeFoto } = await supabase.from("instagram_mensajes").insert({ conversacion_id: conversacionId, direccion: "out", tipo: "image", media_url: fotoUrl, status: "pending", ai_generado: true }).select("id").single();
+    if (mensajeFoto) await enviarYActualizarImagen(mensajeFoto.id, igUserId, fotoUrl, config);
   }
 
   if (handoff) {
@@ -319,6 +328,21 @@ async function enviarYActualizarMensaje(mensajeId: string, igUserId: string, tex
     await supabase.from("instagram_mensajes").update({ status: "sent" }).eq("id", mensajeId);
   } catch (err) {
     registrarError("webhook-ig-v2:enviar-dm", err, { mensajeId, igUserId });
+    await supabase.from("instagram_mensajes").update({ status: "failed" }).eq("id", mensajeId);
+  }
+}
+
+// Best-effort, igual que la de WhatsApp: si falla la foto no rompe la
+// conversación, el texto ya se mandó antes.
+async function enviarYActualizarImagen(mensajeId: string, igUserId: string, imageUrl: string, config: any) {
+  if (!isInstagramEnvioConfigurado(config)) return;
+
+  try {
+    const tokenPlano = decrypt(config.token_cifrado, config.token_iv, config.token_tag);
+    await sendInstagramImageMessage(config.ig_user_id, tokenPlano, igUserId, imageUrl);
+    await supabase.from("instagram_mensajes").update({ status: "sent" }).eq("id", mensajeId);
+  } catch (err) {
+    registrarError("webhook-ig-v2:enviar-imagen", err, { mensajeId, igUserId });
     await supabase.from("instagram_mensajes").update({ status: "failed" }).eq("id", mensajeId);
   }
 }
