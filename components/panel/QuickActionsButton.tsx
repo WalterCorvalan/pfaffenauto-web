@@ -94,17 +94,26 @@ export default function QuickActionsButton() {
   const arrastrandoRef = useRef(false);
   const justDraggedRef = useRef(false);
 
+  const clamp = (p: { left: number; top: number }) => ({
+    left: Math.min(Math.max(p.left, 8), window.innerWidth - 56 - 8),
+    top: Math.min(Math.max(p.top, 8), window.innerHeight - 56 - 8),
+  });
+
   useEffect(() => {
     try {
       const guardada = localStorage.getItem(BTN_POS_KEY);
-      if (guardada) {
-        const p = JSON.parse(guardada);
-        setDragPos({
-          left: Math.min(Math.max(p.left, 8), window.innerWidth - 56),
-          top: Math.min(Math.max(p.top, 8), window.innerHeight - 56),
-        });
-      }
+      if (guardada) setDragPos(clamp(JSON.parse(guardada)));
     } catch { /* localStorage puede fallar en privado/bloqueado -- se queda en la posición default */ }
+  }, []);
+
+  // Si la ventana se achica (resize, rotar el celular, devtools abiertas)
+  // después de haber arrastrado el botón, la posición guardada puede quedar
+  // afuera del viewport nuevo -- sin este listener, el botón se veía cortado
+  // en una esquina hasta el próximo drag manual.
+  useEffect(() => {
+    const onResize = () => setDragPos((actual) => (actual ? clamp(actual) : actual));
+    window.addEventListener("resize", onResize);
+    return () => window.removeEventListener("resize", onResize);
   }, []);
 
   const iniciarArrastre = (e: React.PointerEvent<HTMLButtonElement>) => {
@@ -139,10 +148,11 @@ export default function QuickActionsButton() {
     window.addEventListener("pointerup", onUp);
   };
 
-  // Con el botón arrastrado a la mitad superior de la pantalla, las pills
-  // tienen que desplegarse hacia ABAJO (si no, se salen por arriba); en la
-  // mitad izquierda, alineadas a la izquierda en vez de a la derecha.
-  const arribaAbrePillsAbajo = !!dragPos && dragPos.top < (typeof window !== "undefined" ? window.innerHeight / 2 : 0);
+  // Pedido explícito: los accesos directos siempre se despliegan hacia
+  // ARRIBA del botón sin importar dónde se arrastre (antes se invertía en
+  // la mitad superior de la pantalla para no salirse -- eso confundía más
+  // de lo que ayudaba). En la mitad izquierda sí se alinean a la izquierda
+  // en vez de a la derecha, para no salirse por ese lado.
   const izquierdaAlineaAIzquierda = !!dragPos && dragPos.left < (typeof window !== "undefined" ? window.innerWidth / 2 : 0);
   const [cargando, setCargando] = useState<AccionId | null>(null);
   const router = useRouter();
@@ -178,13 +188,13 @@ export default function QuickActionsButton() {
   return (
     <>
       <div
-        className={`print:hidden hidden md:flex fixed z-40 flex-col gap-2 ${dragPos ? (arribaAbrePillsAbajo ? "flex-col-reverse" : "flex-col") + " " + (izquierdaAlineaAIzquierda ? "items-start" : "items-end") : "bottom-6 right-6 flex-col items-end"}`}
+        className={`print:hidden hidden md:flex fixed z-40 flex-col gap-2 ${dragPos ? "flex-col " + (izquierdaAlineaAIzquierda ? "items-start" : "items-end") : "bottom-6 right-6 flex-col items-end"}`}
         style={dragPos ? { left: dragPos.left, top: dragPos.top } : undefined}
       >
         {open && (
           <>
             <div className="fixed inset-0 -z-10" onClick={() => cambiarOpen(false)} />
-            <div className={`flex gap-2 ${dragPos && arribaAbrePillsAbajo ? "flex-col mt-1" : "flex-col mb-1"} ${dragPos && izquierdaAlineaAIzquierda ? "items-start" : "items-end"}`}>
+            <div className={`flex gap-2 flex-col mb-1 ${dragPos && izquierdaAlineaAIzquierda ? "items-start" : "items-end"}`}>
               {ACCIONES.map((a) => {
                 const Icon = a.icon;
                 const ocupado = cargando === a.id;
