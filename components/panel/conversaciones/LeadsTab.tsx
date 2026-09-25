@@ -78,7 +78,7 @@ function tablaLead(c: LeadConversacion): "whatsapp_conversaciones" | "instagram_
   return c.origen === "instagram" ? "instagram_conversaciones" : "whatsapp_conversaciones";
 }
 
-export default function LeadsTab({ conversacionesIniciales, conversacionesInstagramIniciales, vendedores, miId }: { conversacionesIniciales: any[]; conversacionesInstagramIniciales?: LeadConversacion[]; vendedores: Perfil[]; miId: string }) {
+export default function LeadsTab({ conversacionesIniciales, conversacionesInstagramIniciales, vendedores, miId, backTo = "/panel/whatsapp?tab=leads" }: { conversacionesIniciales: any[]; conversacionesInstagramIniciales?: LeadConversacion[]; vendedores: Perfil[]; miId: string; backTo?: string }) {
   const router = useRouter();
   const searchParams = useSearchParams();
   // Un solo lead unificado (WhatsApp + Instagram), cada uno con "origen"
@@ -101,7 +101,7 @@ export default function LeadsTab({ conversacionesIniciales, conversacionesInstag
 
   const cerrarDetalle = () => {
     setDetalle(null);
-    if (searchParams.get("lead")) router.replace("/panel/whatsapp?tab=leads");
+    if (searchParams.get("lead")) router.replace(backTo);
   };
 
   const filtrados = useMemo(() => {

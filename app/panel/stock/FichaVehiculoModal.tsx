@@ -432,7 +432,8 @@ const ORIGEN_ICON_LEAD: Record<OrigenLead, typeof MessageCircle> = { whatsapp: M
 const ORIGEN_LABEL_LEAD: Record<OrigenLead, string> = { whatsapp: "WhatsApp", instagram: "Instagram", rodi: "Rodi", manual: "Manual" };
 const ESTADO_LEAD_LABEL: Record<string, string> = { nuevo: "Nuevo", asignado: "Contactado", calificando: "Interesado", convertido: "Cliente", perdido: "Perdido" };
 function hrefLead(l: LeadFicha) {
-  if (l.origen === "whatsapp" || l.origen === "instagram") return `/panel/whatsapp?tab=leads&lead=${l.id}&origen=${l.origen}`;
+  if (l.origen === "whatsapp") return `/panel/whatsapp?tab=leads&lead=${l.id}&origen=whatsapp`;
+  if (l.origen === "instagram") return `/panel/instagram?tab=leads&lead=${l.id}&origen=instagram`;
   return `/panel/leads?lead=${l.id}&origen=${l.origen}`;
 }
 

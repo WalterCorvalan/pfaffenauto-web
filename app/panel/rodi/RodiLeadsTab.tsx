@@ -3,7 +3,7 @@
 import { useState, useMemo } from "react";
 import { supabase2 } from "@/lib/supabase/client";
 import { Filter, Search, Bot, User } from "lucide-react";
-import LeadDetailModal from "../whatsapp/LeadDetailModal";
+import LeadDetailModal from "@/components/panel/conversaciones/LeadDetailModal";
 
 interface Perfil { id: string; nombre: string; roles: string[] }
 

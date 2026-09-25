@@ -3,7 +3,7 @@
 import { useState, useMemo, useEffect } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { Filter, Search, Radar, MessageCircle, AtSign, Bot, User, Plus, Radio, Building2, ChevronDown, Flame, Trash2, Megaphone } from "lucide-react";
-import LeadDetailModal, { CANALES_ORIGEN } from "../whatsapp/LeadDetailModal";
+import LeadDetailModal, { CANALES_ORIGEN } from "@/components/panel/conversaciones/LeadDetailModal";
 import NuevoLeadManualModal from "./NuevoLeadManualModal";
 
 interface Perfil { id: string; nombre: string; roles: string[] }

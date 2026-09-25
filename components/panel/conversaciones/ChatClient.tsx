@@ -52,12 +52,14 @@ export default function ChatClient({
   conversacionesIniciales,
   conversacionesInstagramIniciales = [],
   vendedores = [],
+  canalFijo,
 }: {
   conversacionesIniciales: any[];
   conversacionesInstagramIniciales?: any[];
   vendedores?: { id: string; nombre: string }[];
+  canalFijo?: "whatsapp" | "instagram";
 }) {
-  const [canal, setCanal] = useState<"whatsapp" | "instagram">("whatsapp");
+  const [canal, setCanal] = useState<"whatsapp" | "instagram">(canalFijo || "whatsapp");
   const esIG = canal === "instagram";
   const [conversacionesWA, setConversacionesWA] = useState(conversacionesIniciales);
   const [conversacionesIG, setConversacionesIG] = useState(conversacionesInstagramIniciales);
@@ -116,9 +118,9 @@ export default function ChatClient({
   useEffect(() => {
     const conversacionParam = searchParams.get("conversacion");
     const canalParam = searchParams.get("canal");
-    if (canalParam === "instagram" || canalParam === "whatsapp") setCanal(canalParam);
+    if (!canalFijo && (canalParam === "instagram" || canalParam === "whatsapp")) setCanal(canalParam);
     if (conversacionParam) setSeleccionada(conversacionParam);
-  }, [searchParams]);
+  }, [searchParams, canalFijo]);
 
   useEffect(() => { mensajesEndRef.current?.scrollIntoView({ behavior: "smooth" }); }, [mensajes]);
 
@@ -448,14 +450,16 @@ export default function ChatClient({
       {/* COLUMNA 1: BANDEJA */}
       <div className={`w-full md:w-[280px] flex-col bg-white dark:bg-[#111] border-r border-slate-200 dark:border-white/10 shrink-0 ${seleccionada ? "hidden md:flex" : "flex"}`}>
         <div className="p-2.5 border-b border-slate-100 dark:border-white/10 shrink-0 space-y-2">
-          <div className="flex gap-1.5">
-            <button onClick={() => { setCanal("whatsapp"); setSeleccionada(null); }} className={`flex-1 flex items-center justify-center gap-1.5 px-2 py-1.5 text-xs font-bold rounded-lg transition-colors ${canal === "whatsapp" ? "bg-emerald-700 text-white" : "bg-slate-50 dark:bg-white/5 border border-slate-200 dark:border-white/10 text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-white/10"}`}>
-              <MessageSquareText className="w-3.5 h-3.5" /> WhatsApp {conversacionesWA.length}
-            </button>
-            <button onClick={() => { setCanal("instagram"); setSeleccionada(null); }} className={`flex-1 flex items-center justify-center gap-1.5 px-2 py-1.5 text-xs font-bold rounded-lg transition-colors ${canal === "instagram" ? "bg-gradient-to-tr from-amber-500 via-pink-600 to-purple-600 text-white" : "bg-slate-50 dark:bg-white/5 border border-slate-200 dark:border-white/10 text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-white/10"}`}>
-              <AtSign className="w-3.5 h-3.5" /> Instagram {conversacionesIG.length}
-            </button>
-          </div>
+          {!canalFijo && (
+            <div className="flex gap-1.5">
+              <button onClick={() => { setCanal("whatsapp"); setSeleccionada(null); }} className={`flex-1 flex items-center justify-center gap-1.5 px-2 py-1.5 text-xs font-bold rounded-lg transition-colors ${canal === "whatsapp" ? "bg-emerald-700 text-white" : "bg-slate-50 dark:bg-white/5 border border-slate-200 dark:border-white/10 text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-white/10"}`}>
+                <MessageSquareText className="w-3.5 h-3.5" /> WhatsApp {conversacionesWA.length}
+              </button>
+              <button onClick={() => { setCanal("instagram"); setSeleccionada(null); }} className={`flex-1 flex items-center justify-center gap-1.5 px-2 py-1.5 text-xs font-bold rounded-lg transition-colors ${canal === "instagram" ? "bg-gradient-to-tr from-amber-500 via-pink-600 to-purple-600 text-white" : "bg-slate-50 dark:bg-white/5 border border-slate-200 dark:border-white/10 text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-white/10"}`}>
+                <AtSign className="w-3.5 h-3.5" /> Instagram {conversacionesIG.length}
+              </button>
+            </div>
+          )}
 
           <div className="flex items-center gap-1.5">
             <div className="relative flex-1">

@@ -179,7 +179,7 @@ export default async function InstagramMetricasPage() {
             return (
               <Link
                 key={c.id}
-                href={`/panel/whatsapp?canal=instagram&conversacion=${c.id}`}
+                href={`/panel/instagram?conversacion=${c.id}`}
                 className={`border rounded-2xl p-4 shadow-sm hover:shadow-md transition-all flex items-center justify-between ${color.borde} ${color.fondo}`}
               >
                 <div className="flex items-center gap-2 min-w-0">
