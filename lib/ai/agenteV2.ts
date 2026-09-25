@@ -150,13 +150,13 @@ async function ejecutarBusquedaStock(
   );
 
   const [{ data }, { count }] = await Promise.all([query, queryTotal]);
-  // El bot es de cara al cliente -- SOLO puede usar el precio publicado
-  // (precio_publicado_ars/usd), el mismo que ve cualquiera en la web. Nunca
-  // precio_venta: es el precio interno de negociación, no es para afuera. Si
-  // un auto no tiene precio publicado cargado, se muestra "Consultar precio"
-  // (0 fuerza ese camino más abajo) en vez de filtrar por el interno.
+  // El bot es de cara al cliente -- prioriza el precio publicado
+  // (precio_publicado_ars/usd), el mismo que ve cualquiera en la web. Si un
+  // auto no tiene precio publicado cargado, cae al precio de venta (el que
+  // se carga en Stock) en vez de forzar "Consultar precio" -- pedido del
+  // 25/9, un auto con precio de venta cargado tiene que mostrar ese precio.
   const resultados = (data ?? []).map((v: any) => {
-    const precioVenta = v.precio_publicado_ars || v.precio_publicado_usd || 0;
+    const precioVenta = v.precio_publicado_ars || v.precio_publicado_usd || v.precio_venta || 0;
     const monedaVenta = v.precio_publicado_ars ? "ARS" : v.precio_publicado_usd ? "USD" : v.moneda_venta;
     return { ...v, precio_venta: precioVenta, moneda_venta: monedaVenta, sucursal: v.sucursales?.nombre ?? null };
   }) as ResultadoStockV2[];
@@ -497,7 +497,7 @@ export async function generarRespuestaAgenteV2(historial: HistorialMensaje[], ca
       .maybeSingle();
     if (vehiculoFoco) {
       const v: any = vehiculoFoco;
-      const precioVenta = v.precio_publicado_ars || v.precio_publicado_usd || 0;
+      const precioVenta = v.precio_publicado_ars || v.precio_publicado_usd || v.precio_venta || 0;
       const monedaVenta = v.precio_publicado_ars ? "ARS" : v.precio_publicado_usd ? "USD" : v.moneda_venta;
       const resultado = { ...v, precio_venta: precioVenta, moneda_venta: monedaVenta, sucursal: v.sucursales?.nombre ?? null } as ResultadoStockV2;
       await correrPasada2([resultado], false, 1, null);
