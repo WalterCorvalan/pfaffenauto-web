@@ -20,12 +20,9 @@ Es importante: **el código no apunta al dominio de Vercel en ningún lado**, ya
 - `components/modals/FavoritosPedidoModal.tsx` — arma el link de favoritos para mandar por WhatsApp.
 - `public/llms.txt` — para crawlers de IA.
 
-## 3. Inconsistencia encontrada: dos emails de contacto distintos
+## 3. [RESUELTO 25/9] Email de contacto unificado
 
-- `app/(public)/privacidad/page.tsx` usa **`info@pfaffencars.com`**.
-- `data/NegocioConfig.ts` (archivo sin usar en ningún lado, código muerto con datos placeholder) tiene **`contacto@pfaffenautos.com`** — dominio viejo, y además el archivo entero no se importa desde ningún componente. No hace falta arreglarlo salvo que en algún momento se decida usar ese archivo de verdad; si no, se puede borrar directamente.
-
-Decidir cuál es el email real de contacto y dejarlo consistente en `privacidad/page.tsx` (y en cualquier lado nuevo que se agregue).
+Había dos emails distintos en el código: `info@pfaffencars.com` en `privacidad/page.tsx` y `contacto@pfaffenautos.com` en `data/NegocioConfig.ts` (archivo sin usar en ningún componente, código muerto). El real es **`pfaffengabriel@gmail.com`** — ya se actualizó `app/(public)/privacidad/page.tsx` para usarlo. `data/NegocioConfig.ts` se dejó sin tocar (sigue sin ser código muerto, no lo importa nadie) — si en algún momento se decide usar ese archivo de verdad, actualizar el email ahí también o directamente borrarlo si no hace falta.
 
 ## 4. Instagram / Meta Commerce Manager — catálogo de Shopping
 
