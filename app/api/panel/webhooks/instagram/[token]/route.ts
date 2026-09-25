@@ -105,13 +105,17 @@ async function procesarEvento(payload: any) {
       }
     }
     for (const msg of entry.messaging ?? []) {
-      // Meta reenvía por este mismo webhook un "echo" de cada mensaje que
-      // el propio bot manda (msg.message.is_echo === true) -- sin filtrarlo,
-      // el bot recibía su propia respuesta como si fuera un mensaje nuevo
-      // del cliente y le contestaba a sí mismo (bug real: charlas enteras
-      // de "el bot habla solo", con el mismo texto apareciendo primero como
-      // "out" y siendo procesado de nuevo como "in" segundos después).
-      if (msg.message?.is_echo) continue;
+      // Meta reenvía por este mismo webhook un "echo" de cada mensaje
+      // saliente de la cuenta (msg.message.is_echo === true) -- del bot Y
+      // de respuestas manuales de empleados desde la app de Instagram. Un
+      // echo NUNCA se procesa como si fuera un mensaje nuevo del cliente
+      // (eso hacía que el bot se contestara a sí mismo) -- se maneja aparte
+      // en procesarEcho, que solo lo guarda si es una respuesta manual
+      // real que todavía no estaba en la base.
+      if (msg.message?.is_echo) {
+        await procesarEcho(msg);
+        continue;
+      }
       if (msg.message?.text) {
         await procesarMensajeDirecto(msg);
       }
@@ -371,12 +375,54 @@ async function enviarYActualizarMensaje(mensajeId: string, igUserId: string, tex
 
   try {
     const tokenPlano = decrypt(config.token_cifrado, config.token_iv, config.token_tag);
-    await sendInstagramMessage(config.ig_user_id, tokenPlano, igUserId, texto);
-    await supabase.from("instagram_mensajes").update({ status: "sent" }).eq("id", mensajeId);
+    // Guardamos el message_id real que devuelve Meta -- Meta reenvía este
+    // mismo mensaje como "echo" por el webhook unos segundos después (ver
+    // procesarEcho más abajo); con el id guardado, ese echo se reconoce
+    // como "ya lo tengo" y no se duplica en el chat del panel.
+    const resultado = await sendInstagramMessage(config.ig_user_id, tokenPlano, igUserId, texto);
+    await supabase.from("instagram_mensajes").update({ status: "sent", ig_message_id: resultado.message_id }).eq("id", mensajeId);
   } catch (err) {
     registrarError("webhook-ig-v2:enviar-dm", err, { mensajeId, igUserId });
     await supabase.from("instagram_mensajes").update({ status: "failed" }).eq("id", mensajeId);
   }
+}
+
+// Meta reenvía por el mismo webhook un "echo" de CUALQUIER mensaje saliente
+// de la cuenta -- tanto los que manda el bot (ya guardados por nosotros
+// arriba, con ig_message_id) como los que un empleado escribe a mano desde
+// la app de Instagram (esos nunca pasaron por nuestro código, no están en
+// la base todavía). Antes se ignoraban todos los echoes por igual -- eso
+// frenaba al bot de contestarse a sí mismo, pero de paso dejaba las
+// respuestas manuales de los empleados invisibles en el panel (pedido
+// explícito: "el panel tiene que ser un espejo exacto de Instagram"). Acá
+// se distingue por ig_message_id: si ya existe, es un echo de un mensaje
+// nuestro (se ignora); si no existe, es una respuesta manual real (se
+// guarda como "out", sin ai_generado, y se pausa la IA para esa charla).
+async function procesarEcho(msg: any) {
+  const igMessageId = msg.message?.mid;
+  const texto = msg.message?.text;
+  const igUserId = msg.recipient?.id; // en un echo, el cliente es el "recipient", no el "sender"
+  if (!igMessageId || !texto || !igUserId) return;
+
+  const { data: existente } = await supabase.from("instagram_mensajes").select("id").eq("ig_message_id", igMessageId).maybeSingle();
+  if (existente) return; // echo de un mensaje que ya mandó el bot -- nada que hacer
+
+  const refs = await obtenerOCrearConversacion(igUserId, null);
+  if (!refs) return;
+
+  await supabase.from("instagram_mensajes").insert({
+    conversacion_id: refs.conversacionId,
+    ig_message_id: igMessageId,
+    direccion: "out",
+    tipo: "text",
+    texto,
+    status: "sent",
+    ai_generado: false,
+  });
+  await supabase.from("instagram_conversaciones").update({
+    last_message_at: new Date().toISOString(),
+    ai_habilitada: false, // un humano ya está atendiendo esta charla a mano -- el bot no debe pisarlo
+  }).eq("id", refs.conversacionId);
 }
 
 // Best-effort, igual que la de WhatsApp: si falla la foto no rompe la
