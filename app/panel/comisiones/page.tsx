@@ -1,7 +1,7 @@
 import { createClient } from "@/lib/supabase/server";
 import ComisionesClient from "./ComisionesClient";
 
-export const metadata = { title: "Mis Comisiones | Pfaffen Autos" };
+export const metadata = { title: "Mis Comisiones | Pfaffen Cars" };
 
 export default async function ComisionesPage() {
   const supabase = await createClient();

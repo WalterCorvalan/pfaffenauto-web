@@ -102,7 +102,7 @@ export default function LandingKarry() {
             <Image src="/logo-karry.webp" alt="Karry" width={130} height={31} className="h-7 md:h-9 w-auto object-contain" />
             <div className="h-5 w-[1px] bg-white/20 mx-1"></div>
             <Link href="/" className="relative flex items-center group">
-              <Image src="/logo.png" alt="Pfaffen Autos" width={90} height={20} className="h-4 sm:h-5 md:h-5 w-auto object-contain brightness-0 invert opacity-80 group-hover:opacity-100 transition-opacity" />
+              <Image src="/logo.png" alt="Pfaffen Cars" width={90} height={20} className="h-4 sm:h-5 md:h-5 w-auto object-contain brightness-0 invert opacity-80 group-hover:opacity-100 transition-opacity" />
               <Image src="/r.png" alt="" width={8} height={8} className="absolute -top-1 -right-2 h-2 w-auto object-contain brightness-0 invert opacity-80" />
             </Link>
           </div>
@@ -239,7 +239,7 @@ export default function LandingKarry() {
               RESERVÁ <br/> <span className="text-[#0145F2]">TU KARRY.</span>
             </h2>
             <p className="text-slate-400 font-medium text-base md:text-lg leading-relaxed max-w-md">
-              Completá tus datos para asegurar tu unidad. Un asesor oficial de Pfaffen Autos se pondrá en contacto para coordinar la entrega o prueba de manejo.
+              Completá tus datos para asegurar tu unidad. Un asesor oficial de Pfaffen Cars se pondrá en contacto para coordinar la entrega o prueba de manejo.
             </p>
           </div>
 
@@ -353,13 +353,13 @@ export default function LandingKarry() {
               El Respaldo
             </span>
             <h2 className="text-4xl md:text-5xl uppercase text-white tracking-tighter mb-8 leading-[1.1]" style={{ fontFamily: "var(--font-barlow)", fontWeight: 700 }}>
-              Karry en Argentina, por Pfaffen Autos.
+              Karry en Argentina, por Pfaffen Cars.
             </h2>
             <p className="text-slate-400 text-sm md:text-base leading-relaxed mb-6">
               Karry es la marca de utilitarios del Chery Group, creada para dominar el segmento de carga liviana y logística de última milla. 
             </p>
             <p className="text-slate-400 text-sm md:text-base leading-relaxed">
-              Como concesionario oficial, Pfaffen Autos garantiza unidades 0KM, servicio técnico especializado y un stock de repuestos originales para que tu herramienta de trabajo nunca se detenga.
+              Como concesionario oficial, Pfaffen Cars garantiza unidades 0KM, servicio técnico especializado y un stock de repuestos originales para que tu herramienta de trabajo nunca se detenga.
             </p>
           </div>
 
@@ -382,7 +382,7 @@ export default function LandingKarry() {
       {/* ================= FOOTER ================= */}
       <footer className="bg-[#030303] py-12 border-t border-white/5 relative z-10">
         <div className="mx-auto flex max-w-6xl flex-col items-center justify-between gap-6 px-6 text-[11px] font-bold uppercase tracking-widest text-slate-600 sm:flex-row">
-          <span>© {new Date().getFullYear()} Karry / Pfaffen Autos</span>
+          <span>© {new Date().getFullYear()} Karry / Pfaffen Cars</span>
           <span className="text-center sm:text-right">Concesionario Oficial. Precios sujetos a modificación.</span>
         </div>
       </footer>

@@ -1,7 +1,7 @@
 import { createClient } from "@/lib/supabase/server";
 import TelefonosClient from "./TelefonosClient";
 
-export const metadata = { title: "Teléfonos útiles | Pfaffen Autos" };
+export const metadata = { title: "Teléfonos útiles | Pfaffen Cars" };
 
 export default async function TelefonosPage() {
   const supabase = await createClient();

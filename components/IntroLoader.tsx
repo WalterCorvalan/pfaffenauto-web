@@ -73,7 +73,7 @@ export default function IntroLoader() {
             <div className="relative">
               <Image
                 src="/logo.png"
-                alt="Pfaffen Autos"
+                alt="Pfaffen Cars"
                 width={668}
                 height={173}
                 priority

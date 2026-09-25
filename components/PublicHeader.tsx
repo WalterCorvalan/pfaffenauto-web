@@ -102,7 +102,7 @@ export default function PublicHeader() {
           <Link href="/" className="relative flex items-center group shrink-0">
             <Image
               src="/logo.png"
-              alt="Pfaffen Autos"
+              alt="Pfaffen Cars"
               width={668}
               height={173}
               priority

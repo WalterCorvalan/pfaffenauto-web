@@ -2,8 +2,8 @@ import type { Metadata } from "next";
 import Link from "next/link";
 
 export const metadata: Metadata = {
-  title: "Política de Privacidad | Pfaffen Autos",
-  description: "Cómo Pfaffen Autos recopila, usa y protege tus datos personales.",
+  title: "Política de Privacidad | Pfaffen Cars",
+  description: "Cómo Pfaffen Cars recopila, usa y protege tus datos personales.",
   alternates: { canonical: "https://www.pfaffencars.com/privacidad" },
 };
 
@@ -26,7 +26,7 @@ export default function PrivacidadPage() {
           <section>
             <h2 className="text-lg font-bold text-navy dark:text-white mb-2">1. Quiénes somos</h2>
             <p>
-              Pfaffen Autos es una concesionaria de vehículos 0KM y usados con sucursales en Casa Central y Don Torcuato,
+              Pfaffen Cars es una concesionaria de vehículos 0KM y usados con sucursales en Casa Central y Don Torcuato,
               Buenos Aires, Argentina. Esta política explica qué datos recopilamos a través de{" "}
               <strong>www.pfaffencars.com</strong>, para qué los usamos y qué derechos tenés sobre ellos, conforme a la
               Ley 25.326 de Protección de Datos Personales de la República Argentina.
@@ -94,7 +94,7 @@ export default function PrivacidadPage() {
             <ul className="list-disc pl-5 space-y-1">
               <li>Las respuestas del asistente son generadas automáticamente y pueden contener errores — siempre podés pedir hablar con una persona del equipo.</li>
               <li>Los datos que le escribís al asistente (texto, y en el caso de la tasación, fotos del vehículo) se procesan con proveedores externos de IA (como Anthropic u OpenAI) bajo sus propias políticas de privacidad, únicamente para generar la respuesta o el resultado — no se usan para entrenar modelos de terceros.</li>
-              <li>Ninguna decisión totalmente automatizada de IA es definitiva: los precios finales, condiciones de venta y cualquier compromiso comercial siempre los confirma una persona de Pfaffen Autos.</li>
+              <li>Ninguna decisión totalmente automatizada de IA es definitiva: los precios finales, condiciones de venta y cualquier compromiso comercial siempre los confirma una persona de Pfaffen Cars.</li>
               <li>No subas por el chat datos sensibles que no hagan falta para tu consulta (por ejemplo, no compartas contraseñas ni datos de tarjetas).</li>
             </ul>
           </section>

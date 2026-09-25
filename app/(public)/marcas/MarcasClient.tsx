@@ -72,7 +72,7 @@ export default function MarcasClient() {
             Todas las Marcas
           </h1>
           <p className="text-sm text-gray-500 dark:text-slate-400 max-w-xl">
-            Elegí una marca para ver el stock disponible de 0km y usados seleccionados en Pfaffen Autos.
+            Elegí una marca para ver el stock disponible de 0km y usados seleccionados en Pfaffen Cars.
           </p>
         </div>
 

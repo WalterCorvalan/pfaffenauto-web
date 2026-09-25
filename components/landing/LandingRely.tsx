@@ -102,7 +102,7 @@ export default function LandingRely() {
             <Image src="/RelyLogo.png" alt="Rely" width={140} height={56} className="h-8 md:h-11 w-auto object-contain -my-2 md:-my-3 brightness-0 invert" />
             <div className="h-5 w-[1px] bg-white/20 mx-1"></div>
             <Link href="/" className="relative flex items-center group">
-              <Image src="/logo.png" alt="Pfaffen Autos" width={90} height={20} className="h-4 sm:h-5 md:h-5 w-auto object-contain brightness-0 invert opacity-80 group-hover:opacity-100 transition-opacity" />
+              <Image src="/logo.png" alt="Pfaffen Cars" width={90} height={20} className="h-4 sm:h-5 md:h-5 w-auto object-contain brightness-0 invert opacity-80 group-hover:opacity-100 transition-opacity" />
               <Image src="/r.png" alt="" width={8} height={8} className="absolute -top-1 -right-2 h-2 w-auto object-contain brightness-0 invert opacity-80" />
             </Link>
           </div>
@@ -239,7 +239,7 @@ export default function LandingRely() {
               RESERVÁ <br/> <span className="text-[#F26B1D]">TU RELY.</span>
             </h2>
             <p className="text-slate-400 font-medium text-base md:text-lg leading-relaxed max-w-md">
-              Asegurá tu unidad hoy mismo. Dejanos tus datos y un especialista de Pfaffen Autos se pondrá en contacto para avanzar con la reserva oficial.
+              Asegurá tu unidad hoy mismo. Dejanos tus datos y un especialista de Pfaffen Cars se pondrá en contacto para avanzar con la reserva oficial.
             </p>
           </div>
 
@@ -350,13 +350,13 @@ export default function LandingRely() {
               El Respaldo
             </span>
             <h2 className="text-4xl md:text-5xl font-black uppercase text-white tracking-tighter mb-8 leading-[1.1]">
-              Rely en Argentina, por Pfaffen Autos.
+              Rely en Argentina, por Pfaffen Cars.
             </h2>
             <p className="text-slate-400 text-sm md:text-base leading-relaxed mb-6">
               Nacida bajo el ala protectora de Chery Group —el principal exportador de vehículos de pasajeros de China— Rely está diseñada para los trabajos más exigentes. Su nombre encapsula su ADN: <em className="not-italic text-slate-300 font-medium">Rebuild, Explore, Link, Yield.</em>
             </p>
             <p className="text-slate-400 text-sm md:text-base leading-relaxed">
-              En Argentina, Pfaffen Autos opera como concesionario oficial garantizando un circuito completo: unidades 0KM con disponibilidad inmediata, talleres especializados y repuestos originales de fábrica.
+              En Argentina, Pfaffen Cars opera como concesionario oficial garantizando un circuito completo: unidades 0KM con disponibilidad inmediata, talleres especializados y repuestos originales de fábrica.
             </p>
           </div>
 
@@ -379,7 +379,7 @@ export default function LandingRely() {
       {/* ================= FOOTER ================= */}
       <footer className="bg-[#030303] py-12 border-t border-white/5 relative z-10">
         <div className="mx-auto flex max-w-6xl flex-col items-center justify-between gap-6 px-6 text-[11px] font-bold uppercase tracking-widest text-slate-600 sm:flex-row">
-          <span>© {new Date().getFullYear()} Rely / Pfaffen Autos</span>
+          <span>© {new Date().getFullYear()} Rely / Pfaffen Cars</span>
           <span className="text-center sm:text-right">Concesionario Oficial. Precios sujetos a modificación.</span>
         </div>
       </footer>

@@ -33,7 +33,7 @@ export default function ShowroomEntrada({
         <motion.div style={{ scale, opacity }} className="absolute inset-0">
           <Image
             src={fachadaSrc}
-            alt={`Fachada Pfaffen Autos ${sucursalNombre}`}
+            alt={`Fachada Pfaffen Cars ${sucursalNombre}`}
             fill
             priority
             className="object-cover"

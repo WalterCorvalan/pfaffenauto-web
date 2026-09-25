@@ -2,7 +2,7 @@ import CotizadorForm from "@/components/forms/CotizadorForm";
 import { createClient } from "@/lib/supabase/server";
 
 export const metadata = {
-  title: "Cotizá tu vehículo | Pfaffen Autos",
+  title: "Cotizá tu vehículo | Pfaffen Cars",
   description: "Dejanos los datos de tu vehículo y te garantizamos la venta en tiempo récord o cotizá online.",
   alternates: { canonical: "https://www.pfaffencars.com/cotizador" },
 };

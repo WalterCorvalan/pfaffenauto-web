@@ -136,7 +136,7 @@ export default function LeadWebDetalleModal({ lead: s, vehiculoObjetivo, onClose
 
           {s.telefono && (
             <a
-              href={`https://wa.me/${s.telefono.replace(/\D/g, "")}?text=${encodeURIComponent(`¡Hola ${s.nombre}! Te contactamos de Pfaffen Autos por tu ${s.tipo === "permuta" ? "permuta" : "cotización"} del ${s.marca} ${s.modelo || ""}`.trim() + ".")}`}
+              href={`https://wa.me/${s.telefono.replace(/\D/g, "")}?text=${encodeURIComponent(`¡Hola ${s.nombre}! Te contactamos de Pfaffen Cars por tu ${s.tipo === "permuta" ? "permuta" : "cotización"} del ${s.marca} ${s.modelo || ""}`.trim() + ".")}`}
               target="_blank"
               rel="noreferrer"
               className="flex items-center justify-center gap-2 w-full bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-sm py-2.5 rounded-xl transition-colors"

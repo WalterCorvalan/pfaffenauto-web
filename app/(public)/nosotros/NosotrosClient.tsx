@@ -31,7 +31,7 @@ export default function NosotrosClient() {
             Los Inicios en Casa Central
           </h3>
           <p className="mb-8 text-sm md:text-base font-medium text-slate-600 dark:text-slate-400 leading-relaxed max-w-2xl">
-            Pfaffen Autos abrió sus puertas en nuestra Casa Central con una visión clara impulsada por nuestro fundador, <strong className="text-slate-900 dark:text-white">Sergio Pfaffezeller</strong>: transformar la compra y venta de vehículos en una experiencia transparente, segura y humana.
+            Pfaffen Cars abrió sus puertas en nuestra Casa Central con una visión clara impulsada por nuestro fundador, <strong className="text-slate-900 dark:text-white">Sergio Pfaffezeller</strong>: transformar la compra y venta de vehículos en una experiencia transparente, segura y humana.
           </p>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-6">
             <div className="relative h-48 md:h-64 w-full rounded-[2rem] overflow-hidden border border-slate-200 dark:border-white/10 shadow-sm group-hover:shadow-xl transition-shadow duration-500">
@@ -116,7 +116,7 @@ export default function NosotrosClient() {
         <h1 className="text-5xl md:text-[80px] lg:text-[110px] font-black tracking-tighter text-center leading-[0.85] mb-8 text-slate-900 dark:text-white">
           CONOCÉ <br className="hidden md:block" />
           <span className="text-transparent bg-clip-text bg-gradient-to-r from-[#0145F2] via-sky-400 to-[#0145F2] dark:from-sky-400 dark:via-blue-500 dark:to-sky-400">
-            PFAFFEN AUTOS
+            PFAFFEN CARS
           </span>
         </h1>
 

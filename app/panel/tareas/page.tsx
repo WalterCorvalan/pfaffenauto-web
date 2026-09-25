@@ -1,7 +1,7 @@
 import { createClient } from "@/lib/supabase/server";
 import TareasLeadBoard from "./TareasLeadBoard";
 
-export const metadata = { title: "Tareas de Leads | Pfaffen Autos" };
+export const metadata = { title: "Tareas de Leads | Pfaffen Cars" };
 
 export default async function TareasLeadPage() {
   const supabase = await createClient();

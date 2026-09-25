@@ -292,7 +292,7 @@ async function procesarMensajeDirecto(msg: any) {
   await ejecutarAgente(refs.conversacionId, igUserId);
 }
 
-const RESPUESTA_FALLBACK = "¡Hola! Gracias por escribirnos a Pfaffen Autos. En breve te contacta uno de nuestros asesores. 🚗";
+const RESPUESTA_FALLBACK = "¡Hola! Gracias por escribirnos a Pfaffen Cars. En breve te contacta uno de nuestros asesores. 🚗";
 
 function isInstagramEnvioConfigurado(config: any): boolean {
   return !!config?.listo && !!config?.token_cifrado && !!config?.token_iv && !!config?.token_tag && !!config?.ig_user_id;

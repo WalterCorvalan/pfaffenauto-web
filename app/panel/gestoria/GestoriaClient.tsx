@@ -262,11 +262,11 @@ export default function GestoriaClient({
                     </div>
 
                     <div className="flex flex-wrap gap-2">
-                      <a href={whatsapp(v.propietario_telefono, `Hola ${v.propietario_nombre || ""}, te escribimos de Pfaffen Autos por la transferencia de tu ${v.vehiculo_marca} ${v.vehiculo_modelo}.${docsFaltantesVendedora.length ? " Nos faltan estos documentos: " + docsFaltantesVendedora.join(", ") + "." : ""}`) || undefined} target="_blank" rel="noreferrer"
+                      <a href={whatsapp(v.propietario_telefono, `Hola ${v.propietario_nombre || ""}, te escribimos de Pfaffen Cars por la transferencia de tu ${v.vehiculo_marca} ${v.vehiculo_modelo}.${docsFaltantesVendedora.length ? " Nos faltan estos documentos: " + docsFaltantesVendedora.join(", ") + "." : ""}`) || undefined} target="_blank" rel="noreferrer"
                         className={`text-xs font-bold px-3 py-1.5 rounded-lg border flex items-center gap-1 ${v.propietario_telefono ? "border-emerald-200 dark:border-emerald-500/20 text-emerald-700 dark:text-emerald-300 hover:bg-emerald-50" : "border-slate-100 dark:border-white/10 text-slate-300 pointer-events-none"}`}>
                         <MessageCircle className="w-3.5 h-3.5" /> WhatsApp vendedor
                       </a>
-                      <a href={whatsapp(v.comprador_telefono, `Hola ${v.comprador_nombre || ""}, te escribimos de Pfaffen Autos por la transferencia de tu ${v.vehiculo_marca} ${v.vehiculo_modelo}.${docsFaltantesCompradora.length ? " Nos faltan estos documentos: " + docsFaltantesCompradora.join(", ") + "." : ""}`) || undefined} target="_blank" rel="noreferrer"
+                      <a href={whatsapp(v.comprador_telefono, `Hola ${v.comprador_nombre || ""}, te escribimos de Pfaffen Cars por la transferencia de tu ${v.vehiculo_marca} ${v.vehiculo_modelo}.${docsFaltantesCompradora.length ? " Nos faltan estos documentos: " + docsFaltantesCompradora.join(", ") + "." : ""}`) || undefined} target="_blank" rel="noreferrer"
                         className={`text-xs font-bold px-3 py-1.5 rounded-lg flex items-center gap-1 ${v.comprador_telefono ? "bg-emerald-600 hover:bg-emerald-700 text-white" : "bg-slate-100 dark:bg-white/5 text-slate-300 pointer-events-none"}`}>
                         <MessageCircle className="w-3.5 h-3.5" /> WhatsApp comprador
                       </a>

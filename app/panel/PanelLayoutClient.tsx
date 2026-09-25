@@ -677,7 +677,7 @@ export default function PanelLayoutClient({
               <div className={colapsado ? "md:hidden" : ""}>
                 <p className="text-sm font-bold leading-none">Panel</p>
                 <p className="text-[10px] text-slate-400 leading-none mt-0.5">
-                  Pfaffen Autos
+                  Pfaffen Cars
                 </p>
               </div>
             </Link>

@@ -74,7 +74,7 @@ export default function DormidosClient({
 
   const armarMensaje = (d: typeof filtrados[number]) => {
     const vehiculo = [d.marca, d.modelo].filter(Boolean).join(" ") || "tu auto";
-    const base = plantilla || "Hola {nombre}! Soy {vendedor} de Pfaffen Autos. Vimos que tu {vehiculo} ya tiene un tiempo — ¿pensaste en renovar? Tenemos excelentes condiciones para vos.";
+    const base = plantilla || "Hola {nombre}! Soy {vendedor} de Pfaffen Cars. Vimos que tu {vehiculo} ya tiene un tiempo — ¿pensaste en renovar? Tenemos excelentes condiciones para vos.";
     return base.replaceAll("{nombre}", d.nombre).replaceAll("{vendedor}", miNombre).replaceAll("{vehiculo}", vehiculo);
   };
 

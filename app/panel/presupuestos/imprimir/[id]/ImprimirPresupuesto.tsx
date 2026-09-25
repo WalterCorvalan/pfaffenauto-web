@@ -13,7 +13,7 @@ interface Branding {
 }
 
 export default function ImprimirPresupuesto({ presupuesto: p, branding }: { presupuesto: any; branding?: Branding | null }) {
-  const nombreEmpresa = branding?.branding_nombre || "Pfaffen Autos";
+  const nombreEmpresa = branding?.branding_nombre || "Pfaffen Cars";
   const [precioConfirmado, setPrecioConfirmado] = useState(p.precio_confirmado);
   const [precioArs, setPrecioArs] = useState(p.precio_ars);
   const [precioUsd, setPrecioUsd] = useState(p.precio_usd);

@@ -2,7 +2,7 @@ import { createClient } from "@/lib/supabase/server";
 import { notFound } from "next/navigation";
 import PeritajeClient from "./PeritajeClient";
 
-export const metadata = { title: "Peritaje | Pfaffen Autos" };
+export const metadata = { title: "Peritaje | Pfaffen Cars" };
 
 export default async function PeritajePage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;

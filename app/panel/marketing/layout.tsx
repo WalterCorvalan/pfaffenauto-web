@@ -1,7 +1,7 @@
 import { ReactNode } from "react";
 import MarketingHeader from "./MarketingHeader";
 
-export const metadata = { title: "Marketing | Pfaffen Autos" };
+export const metadata = { title: "Marketing | Pfaffen Cars" };
 
 export default function MarketingLayout({ children }: { children: ReactNode }) {
   return (

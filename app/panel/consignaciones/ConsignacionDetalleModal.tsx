@@ -152,7 +152,7 @@ export default function ConsignacionDetalleModal({ consignacionId, perfiles, cli
 
   const estadoInfo = ESTADO_MAP[consignacion.estado];
   const whatsappHref = consignacion.cliente_telefono
-    ? `https://wa.me/${consignacion.cliente_telefono.replace(/\D/g, "")}?text=${encodeURIComponent(`¡Hola ${consignacion.cliente_nombre}! Te escribimos de Pfaffen Autos por la consignación de tu ${consignacion.vehiculo_descripcion}.`)}`
+    ? `https://wa.me/${consignacion.cliente_telefono.replace(/\D/g, "")}?text=${encodeURIComponent(`¡Hola ${consignacion.cliente_nombre}! Te escribimos de Pfaffen Cars por la consignación de tu ${consignacion.vehiculo_descripcion}.`)}`
     : null;
 
   return (

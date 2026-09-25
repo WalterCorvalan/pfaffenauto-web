@@ -12,7 +12,7 @@ import DocumentosCliente from "./DocumentosCliente";
 export const dynamic = "force-dynamic";
 
 export const metadata: Metadata = {
-  title: "Portal del Cliente | Pfaffen Autos",
+  title: "Portal del Cliente | Pfaffen Cars",
   robots: { index: false, follow: false },
 };
 
@@ -125,8 +125,8 @@ export default async function SeguimientoPublicoPage({ params }: { params: Promi
       {/* HEADER FLOTANTE */}
       <div className="pt-6 px-4 mb-4 max-w-5xl mx-auto flex items-center justify-between">
         <div className="flex items-center gap-3 bg-white/70 dark:bg-[#111]/70 backdrop-blur-md px-4 py-2.5 rounded-2xl shadow-sm border border-white dark:border-white/10">
-          <Image src="/logo.png" alt="Pfaffen Autos" width={28} height={28} className="rounded-full" />
-          <span className="font-black text-[#0f293e] dark:text-white tracking-tight text-xs">PFAFFEN AUTOS</span>
+          <Image src="/logo.png" alt="Pfaffen Cars" width={28} height={28} className="rounded-full" />
+          <span className="font-black text-[#0f293e] dark:text-white tracking-tight text-xs">PFAFFEN CARS</span>
         </div>
         <div className="bg-white/70 dark:bg-[#111]/70 backdrop-blur-md px-4 py-2.5 rounded-2xl shadow-sm border border-white dark:border-white/10">
           <span className="text-[10px] font-black uppercase tracking-widest text-slate-500 dark:text-slate-400">Cód: {codigoUpper}</span>

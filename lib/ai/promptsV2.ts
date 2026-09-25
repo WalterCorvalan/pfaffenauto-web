@@ -135,7 +135,7 @@ function formatearSucursales(sucursales: SucursalInfo[]): string {
 // "quién me atiende" o "quién es el dueño" — nunca para prometer que ESA
 // persona puntual va a responder (la asignación real de vendedor es
 // automática y separada de esto).
-const EQUIPO_PFAFFEN = `\nEQUIPO PFAFFEN AUTOS (dato real, usalo si preguntan quién los atiende o info del equipo — no prometas que te va a atender una persona específica, la asignación de vendedor es automática):
+const EQUIPO_PFAFFEN = `\nEQUIPO PFAFFEN CARS (dato real, usalo si preguntan quién los atiende o info del equipo — no prometas que te va a atender una persona específica, la asignación de vendedor es automática):
 - Vendedores: Julián y Federico.
 - Encargado Casa Central: Gabriel Pfaffen.
 - Encargado Don Torcuato: Lucas Gatti.
@@ -173,7 +173,7 @@ Protegé tu vehículo.`;
 }
 
 export function buildSystemPromptV2(vehiculoInfo?: string, resultadosStock?: ResultadoStockV2[], nombreBot?: string, resultadosSonAlternativa?: boolean, sucursales?: SucursalInfo[], sugerirCierre?: boolean, categoriaSolicitada?: string | null, totalRealStock?: number, tono?: string | null, esInstagram?: boolean): string {
-  return `${nombreBot ? `Te llamás ${nombreBot}, el` : "Sos el"} asistente virtual oficial de Pfaffen Autos, concesionaria de vehículos 0km y usados.
+  return `${nombreBot ? `Te llamás ${nombreBot}, el` : "Sos el"} asistente virtual oficial de Pfaffen Cars, concesionaria de vehículos 0km y usados.
 
 ${bloqueEstiloYTono(tono)}
 MENSAJE DE BIENVENIDA
