@@ -105,6 +105,13 @@ async function procesarEvento(payload: any) {
       }
     }
     for (const msg of entry.messaging ?? []) {
+      // Meta reenvía por este mismo webhook un "echo" de cada mensaje que
+      // el propio bot manda (msg.message.is_echo === true) -- sin filtrarlo,
+      // el bot recibía su propia respuesta como si fuera un mensaje nuevo
+      // del cliente y le contestaba a sí mismo (bug real: charlas enteras
+      // de "el bot habla solo", con el mismo texto apareciendo primero como
+      // "out" y siendo procesado de nuevo como "in" segundos después).
+      if (msg.message?.is_echo) continue;
       if (msg.message?.text) {
         await procesarMensajeDirecto(msg);
       }
