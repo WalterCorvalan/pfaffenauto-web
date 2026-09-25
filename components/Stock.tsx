@@ -245,6 +245,7 @@ export default function Stock({ vehiculos }: StockProps) {
                         : "bg-white/80 dark:bg-black/40 backdrop-blur-md text-slate-500 dark:text-slate-300 hover:text-[#0145F2] dark:hover:text-sky-300 border-white/60 dark:border-white/15"
                     }`}
                     title="Comparar vehículo"
+                    aria-label="Comparar vehículo"
                   >
                     <Scale className="w-4 h-4" />
                   </button>
@@ -391,6 +392,7 @@ export default function Stock({ vehiculos }: StockProps) {
                         : "bg-white/20 dark:bg-white/10 backdrop-blur-md text-white hover:text-[#0145F2] dark:hover:text-sky-300 hover:bg-white dark:hover:bg-white/20 border-white/40 dark:border-white/15"
                     }`}
                     title="Comparar vehículo"
+                    aria-label="Comparar vehículo"
                   >
                     <Scale className="w-4 h-4" />
                   </button>
@@ -622,6 +624,7 @@ export function VehicleCard({
               : "bg-white/80 dark:bg-black/40 backdrop-blur-md text-gray-400 dark:text-slate-300 hover:text-[#0145F2] dark:hover:text-sky-300 border-white/60 dark:border-white/15"
           }`}
           title="Comparar vehículo"
+          aria-label="Comparar vehículo"
         >
           <Scale className="w-3.5 h-3.5" />
         </button>

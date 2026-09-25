@@ -134,7 +134,7 @@ export default function PublicHeader() {
                   alt="Rely"
                   width={1536}
                   height={1024}
-                  className="h-8 sm:h-10 md:h-12.5 w-auto object-contain transition-transform group-hover:scale-105 -my-1.5 sm:-my-2 md:-my-2.5 dark:brightness-0 dark:invert"
+                  className="h-8 sm:h-10 md:h-[50px] w-auto object-contain transition-transform group-hover:scale-105 -my-1.5 sm:-my-2 md:-my-2.5 dark:brightness-0 dark:invert"
                 />
               </Link>
               <Link
@@ -147,7 +147,7 @@ export default function PublicHeader() {
                   alt="Karry"
                   width={500}
                   height={240}
-                  className="h-5 sm:h-10 md:h-7.5 w-auto object-contain transition-transform group-hover:scale-105 -my-1.5 sm:-my-2 md:-my-2.5"
+                  className="h-5 sm:h-10 md:h-[30px] w-auto object-contain transition-transform group-hover:scale-105 -my-1.5 sm:-my-2 md:-my-2.5"
                 />
               </Link>
             </div>
@@ -243,6 +243,7 @@ export default function PublicHeader() {
             href="/favoritos"
             className="hidden lg:flex relative p-2.5 text-slate-500 dark:text-slate-300 hover:text-red-500 dark:hover:text-red-400 rounded-full transition-all"
             title="Mis Favoritos"
+            aria-label="Mis Favoritos"
           >
             <Heart
               className={`w-5 h-5 md:w-6 md:h-6 transition-colors ${
@@ -267,7 +268,7 @@ export default function PublicHeader() {
 
           <Link
             href="/cotizador"
-            className="hidden lg:flex items-center gap-2 bg-[#0145F2] hover:bg-blue-600 dark:hover:bg-blue-500 text-white px-5 py-2.5 rounded-full text-xs font-black uppercase tracking-widest transition-all shadow-[0_4px_15px_rgba(1,69,242,0.3)] shrink-0 relative overflow-hidden group"
+            className="hidden lg:flex items-center gap-2 bg-[#0145F2] hover:bg-[#0138c9] text-white px-5 py-2.5 rounded-full text-xs font-black uppercase tracking-widest transition-all shadow-[0_4px_15px_rgba(1,69,242,0.3)] shrink-0 relative overflow-hidden group"
           >
             <span className="absolute inset-0 w-[150%] h-full bg-gradient-to-r from-transparent via-white/20 to-transparent -translate-x-[150%] group-hover:animate-[shimmer_1.5s_infinite]"></span>
             Cotizá Tu Usado <ChevronRight className="w-4 h-4" />
@@ -277,13 +278,16 @@ export default function PublicHeader() {
             onClick={toggleSearchMobile}
             className="lg:hidden p-2.5 text-primary dark:text-sky-300 bg-white/40 dark:bg-white/5 backdrop-blur-md border border-white/60 dark:border-white/10 rounded-full shadow-sm"
             title="Buscar"
+            aria-label="Buscar"
           >
             <Search className="w-3.5 h-3.5 md:w-5 md:h-5" />
           </button>
 
           <button
             onClick={toggleMenu}
-            className="lg:hidden p-2.5 text-navy dark:text-white hover:bg-white/60 dark:hover:bg-white/10 rounded-full transition-all ml-[-2]"
+            className="lg:hidden p-2.5 text-navy dark:text-white bg-white/40 dark:bg-white/5 backdrop-blur-md border border-white/60 dark:border-white/10 rounded-full shadow-sm transition-all"
+            title={isOpen ? "Cerrar menú" : "Abrir menú"}
+            aria-label={isOpen ? "Cerrar menú" : "Abrir menú"}
           >
             {isOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
           </button>
