@@ -9,62 +9,14 @@ import TopTicker from "@/components/panel/TopTicker";
 import { ROL_A_SECTOR } from "@/lib/panel/permisosModulos";
 import { supabase2 } from "@/lib/supabase/client";
 import {
-  AlertTriangle,
-  Banknote,
-  BedDouble,
-  BellRing,
-  BookUser,
-  Bot,
-  Briefcase,
-  CalendarCheck,
-  CalendarDays,
-  Car,
-  CheckSquare,
-  ClipboardCheck,
-  ClipboardList,
-  Coins,
-  CreditCard,
-  DollarSign,
-  FileText,
-  Folder,
-  FolderKanban,
-  Hammer,
-  Handshake,
-  History,
-  KeyRound,
-  Landmark,
-  LayoutDashboard,
-  Lightbulb,
-  LineChart,
   LogOut,
-  Mail,
-  Megaphone,
   Menu,
-  MessageSquareWarning,
-  MessagesSquare,
   Moon,
-  PackageCheck,
   PanelLeftClose,
   PanelLeftOpen,
-  PiggyBank,
-  Radar,
-  Receipt,
-  Repeat,
   RotateCw,
   Search,
-  SearchCode,
-  Settings,
-  ShieldCheck,
-  Smartphone,
   Sun,
-  Tag,
-  ThumbsUp,
-  Trash2,
-  Trophy,
-  UserCircle2,
-  Users,
-  Wallet,
-  Wrench,
   X,
 } from "lucide-react";
 import Link from "next/link";
@@ -79,12 +31,12 @@ import { useEffect, useState } from "react";
 // Grupos calcados del esquema principal solicitado
 // Accesos rápidos de la bottom nav en mobile — el resto de los módulos
 // sigue disponible detrás del hamburger (sidebar completa).
-const NAV_MOBILE: { href: string; label: string; icon: any }[] = [
-  { href: "/panel", label: "Dashboard", icon: LayoutDashboard },
-  { href: "/panel/stock", label: "Stock", icon: Car },
-  { href: "/panel/clientes", label: "Clientes", icon: Users },
-  { href: "/panel/ventas", label: "Ventas", icon: Briefcase },
-  { href: "/panel/calendario", label: "Calendario", icon: CalendarDays },
+const NAV_MOBILE: { href: string; label: string; icon: string }[] = [
+  { href: "/panel", label: "Dashboard", icon: "/icons/panel/dashboard.png" },
+  { href: "/panel/stock", label: "Stock", icon: "/icons/panel/stock.png" },
+  { href: "/panel/clientes", label: "Clientes", icon: "/icons/panel/clientes.png" },
+  { href: "/panel/ventas", label: "Ventas", icon: "/icons/panel/ventas.png" },
+  { href: "/panel/calendario", label: "Calendario", icon: "/icons/panel/calendario.png" },
 ];
 
 // Todo item necesita "modulo" para que la visibilidad por sector
@@ -95,7 +47,7 @@ const NAV_MOBILE: { href: string; label: string; icon: any }[] = [
 // no lo tenga habilitado al primer módulo que sí vea.
 const GRUPOS: {
   titulo: string;
-  items: { href?: string; label: string; icon: any; modulo?: string }[];
+  items: { href?: string; label: string; icon: string; modulo?: string }[];
 }[] = [
   {
     titulo: "Principal",
@@ -103,37 +55,37 @@ const GRUPOS: {
       {
         href: "/panel",
         label: "Dashboard",
-        icon: LayoutDashboard,
+        icon: "/icons/panel/dashboard.png",
         modulo: "dashboard",
       },
       {
         href: "/panel/calendario",
         label: "Calendario",
-        icon: CalendarDays,
+        icon: "/icons/panel/calendario.png",
         modulo: "calendario",
       },
       {
         href: "/panel/alertas",
         label: "Alertas",
-        icon: BellRing,
+        icon: "/icons/panel/alertas.png",
         modulo: "alertas",
       },
       {
         href: "/panel/reportes",
         label: "Reportes",
-        icon: LineChart,
+        icon: "/icons/panel/reportes.png",
         modulo: "reportes",
       },
       {
         href: "/panel/mi-espacio",
         label: "Mi Espacio",
-        icon: Folder,
+        icon: "/icons/panel/mi-espacio.png",
         modulo: "mi_espacio",
       },
       {
         href: "/panel/mi-perfil",
         label: "Mi Perfil",
-        icon: UserCircle2,
+        icon: "/icons/panel/mi-perfil.png",
         modulo: "mi_perfil",
       },
     ],
@@ -141,66 +93,66 @@ const GRUPOS: {
   {
     titulo: "Comercial",
     items: [
-      { href: "/panel/stock", label: "Stock", icon: Car, modulo: "stock" },
+      { href: "/panel/stock", label: "Stock", icon: "/icons/panel/stock.png", modulo: "stock" },
       {
         href: "/panel/visitas",
         label: "Visitas",
-        icon: CalendarCheck,
+        icon: "/icons/panel/visitas.png",
         modulo: "visitas",
       },
       {
         href: "/panel/clientes",
         label: "Clientes",
-        icon: Users,
+        icon: "/icons/panel/clientes.png",
         modulo: "clientes",
       },
-      { href: "/panel/leads", label: "Leads", icon: Radar, modulo: "leads" },
+      { href: "/panel/leads", label: "Leads", icon: "/icons/panel/leads.png", modulo: "leads" },
       {
         href: "/panel/cotizaciones",
         label: "Cotizaciones",
-        icon: FileText,
+        icon: "/icons/panel/cotizaciones.png",
         modulo: "cotizaciones",
       },
       {
         href: "/panel/financiaciones",
         label: "Financiaciones",
-        icon: CreditCard,
+        icon: "/icons/panel/financiaciones.png",
         modulo: "financiaciones",
       },
       {
         href: "/panel/senas",
         label: "Señas",
-        icon: Wallet,
+        icon: "/icons/panel/senas.png",
         modulo: "senas",
       },
       {
         href: "/panel/presupuestos",
         label: "Presupuestos",
-        icon: FileText,
+        icon: "/icons/panel/presupuestos.png",
         modulo: "presupuestos",
       },
       {
         href: "/panel/ventas",
         label: "Ventas",
-        icon: Briefcase,
+        icon: "/icons/panel/ventas.png",
         modulo: "ventas",
       },
       {
         href: "/panel/mis-ventas",
         label: "Mis ventas",
-        icon: Trophy,
+        icon: "/icons/panel/mis-ventas.png",
         modulo: "mis_ventas",
       },
       {
         href: "/panel/dormidos",
         label: "Dormidos",
-        icon: BedDouble,
+        icon: "/icons/panel/dormidos.png",
         modulo: "dormidos",
       },
       {
         href: "/panel/recontactos",
         label: "Recontactos",
-        icon: Repeat,
+        icon: "/icons/panel/recontactos.png",
         modulo: "recontactos",
       },
     ],
@@ -211,7 +163,7 @@ const GRUPOS: {
       {
         href: "/panel/marketing/generales",
         label: "Marketing",
-        icon: Megaphone,
+        icon: "/icons/panel/marketing.png",
         modulo: "marketing",
       },
     ],
@@ -222,64 +174,64 @@ const GRUPOS: {
       {
         href: "/panel/pedidos",
         label: "Pedidos",
-        icon: SearchCode,
+        icon: "/icons/panel/pedidos.png",
         modulo: "pedidos",
       },
       {
         href: "/panel/postventa",
         label: "Postventa",
-        icon: PackageCheck,
+        icon: "/icons/panel/postventa.png",
         modulo: "postventa",
       },
       {
         href: "/panel/expedientes",
         label: "Expedientes",
-        icon: FolderKanban,
+        icon: "/icons/panel/expedientes.png",
         modulo: "expedientes",
       },
       {
         href: "/panel/reclamos",
         label: "Reclamos",
-        icon: MessageSquareWarning,
+        icon: "/icons/panel/reclamos.png",
         modulo: "reclamos",
       },
       {
         href: "/panel/gestoria",
         label: "Gestoría",
-        icon: ClipboardList,
+        icon: "/icons/panel/gestoria.png",
         modulo: "gestoria",
       },
       {
         href: "/panel/consignaciones",
         label: "Consignaciones",
-        icon: KeyRound,
+        icon: "/icons/panel/consignaciones.png",
         modulo: "consignaciones",
       },
       {
         href: "/panel/peritajes",
         label: "Peritajes",
-        icon: ClipboardCheck,
+        icon: "/icons/panel/peritajes.png",
         modulo: "peritajes",
       },
       {
         href: "/panel/infracciones",
         label: "Infracciones",
-        icon: Landmark,
+        icon: "/icons/panel/infracciones.png",
         modulo: "infracciones",
       },
       {
         href: "/panel/telefonos",
         label: "Teléfonos útiles",
-        icon: BookUser,
+        icon: "/icons/panel/telefonos.png",
         modulo: "telefonos_utiles",
       },
       {
         href: "/panel/taller",
         label: "Taller",
-        icon: Wrench,
+        icon: "/icons/panel/taller.png",
         modulo: "taller",
       },
-      { label: "Service", icon: Hammer, modulo: "service" },
+      { label: "Service", icon: "/icons/panel/service.png", modulo: "service" },
     ],
   },
   {
@@ -288,37 +240,37 @@ const GRUPOS: {
       {
         href: "/panel/finanzas",
         label: "Finanzas",
-        icon: Banknote,
+        icon: "/icons/panel/finanzas.png",
         modulo: "finanzas",
       },
       {
         href: "/panel/cobros",
         label: "Cobros",
-        icon: Receipt,
+        icon: "/icons/panel/cobros.png",
         modulo: "cobros",
       },
       {
         href: "/panel/tesoreria",
         label: "Tesorería",
-        icon: PiggyBank,
+        icon: "/icons/panel/tesoreria.png",
         modulo: "tesoreria",
       },
       {
         href: "/panel/liquidaciones",
         label: "Liquidaciones",
-        icon: Coins,
+        icon: "/icons/panel/liquidaciones.png",
         modulo: "liquidaciones",
       },
       {
         href: "/panel/comisiones",
         label: "Mis Comisiones",
-        icon: DollarSign,
+        icon: "/icons/panel/comisiones.png",
         modulo: "comisiones",
       },
       {
         href: "/panel/facturacion",
         label: "Facturación",
-        icon: FileText,
+        icon: "/icons/panel/facturacion.png",
         modulo: "facturacion",
       },
     ],
@@ -329,29 +281,29 @@ const GRUPOS: {
       {
         href: "/panel/mensajes",
         label: "Mensajes",
-        icon: MessagesSquare,
+        icon: "/icons/panel/mensajes.png",
         modulo: "mensajes",
       },
       {
         href: "/panel/whatsapp",
         label: "WhatsApp",
-        icon: Smartphone,
+        icon: "/icons/panel/whatsapp.png",
         modulo: "whatsapp",
       },
       {
         href: "/panel/rodi",
         label: "Rodi (chat web)",
-        icon: Bot,
+        icon: "/icons/panel/rodi.png",
         modulo: "rodi",
       },
       {
         href: "/panel/tareas",
         label: "Tareas de Leads",
-        icon: CheckSquare,
+        icon: "/icons/panel/tareas-leads.png",
         modulo: "tareas_leads",
       },
-      { label: "Correos", icon: Mail, modulo: "correos" },
-      { href: "/panel/nps", label: "NPS", icon: ThumbsUp, modulo: "nps" },
+      { label: "Correos", icon: "/icons/panel/correos.png", modulo: "correos" },
+      { href: "/panel/nps", label: "NPS", icon: "/icons/panel/nps.png", modulo: "nps" },
     ],
   },
   {
@@ -360,28 +312,28 @@ const GRUPOS: {
       {
         href: "/panel/autorizaciones",
         label: "Autorizaciones",
-        icon: ShieldCheck,
+        icon: "/icons/panel/autorizaciones.png",
         modulo: "autorizaciones",
       },
-      { label: "Sugerencias", icon: Lightbulb, modulo: "sugerencias" },
-      { href: "/panel/papelera", label: "Papelera", icon: Trash2, modulo: "papelera" },
+      { label: "Sugerencias", icon: "/icons/panel/sugerencias.png", modulo: "sugerencias" },
+      { href: "/panel/papelera", label: "Papelera", icon: "/icons/panel/papelera.png", modulo: "papelera" },
       {
         href: "/panel/configuracion",
         label: "Configuración",
-        icon: Settings,
+        icon: "/icons/panel/configuracion.png",
         modulo: "configuracion",
       },
-      { label: "Oportunidades", icon: Handshake, modulo: "oportunidades" },
+      { label: "Oportunidades", icon: "/icons/panel/oportunidades.png", modulo: "oportunidades" },
       {
         href: "/panel/errores",
         label: "Errores del sistema",
-        icon: AlertTriangle,
+        icon: "/icons/panel/errores.png",
         modulo: "errores_sistema",
       },
       {
         href: "/panel/logs",
         label: "Registro de Cambios",
-        icon: History,
+        icon: "/icons/panel/registro-cambios.png",
         modulo: "logs",
       },
     ],
@@ -392,19 +344,19 @@ const GRUPOS: {
       {
         href: "/panel/postulaciones",
         label: "Postulaciones",
-        icon: Users,
+        icon: "/icons/panel/postulaciones.png",
         modulo: "postulaciones",
       },
       {
         href: "/panel/sueldos/liquidador",
         label: "Liquidador de Sueldos",
-        icon: Wallet,
+        icon: "/icons/panel/liquidador-sueldos.png",
         modulo: "liquidador_sueldos",
       },
       {
         href: "/panel/sueldos/categorias",
         label: "Categorías de Empleados",
-        icon: Tag,
+        icon: "/icons/panel/categorias-empleados.png",
         modulo: "categorias_empleados",
       },
     ],
@@ -758,7 +710,6 @@ export default function PanelLayoutClient({
                     {grupo.items
                       .filter((item) => itemVisible(item))
                       .map((item) => {
-                        const Icon = item.icon;
                         const activo =
                           item.href &&
                           (item.href === "/panel"
@@ -771,7 +722,7 @@ export default function PanelLayoutClient({
                               title="Todavía no construido"
                               className={`flex items-center gap-3 py-2 mx-2 rounded-lg text-sm text-slate-300 dark:text-slate-600 cursor-not-allowed ${colapsado ? "md:justify-center px-4 md:px-0" : "px-4"}`}
                             >
-                              <Icon className="w-4 h-4 shrink-0" />{" "}
+                              <img src={item.icon} alt="" className="w-4 h-4 shrink-0 object-contain opacity-50" />{" "}
                               <span className={colapsado ? "md:hidden" : ""}>
                                 {item.label}
                               </span>
@@ -799,7 +750,7 @@ export default function PanelLayoutClient({
                             {cargando ? (
                               <RotateCw className="w-4 h-4 animate-spin shrink-0" />
                             ) : (
-                              <Icon className="w-4 h-4 shrink-0" />
+                              <img src={item.icon} alt="" className="w-4 h-4 shrink-0 object-contain" />
                             )}{" "}
                             <span className={colapsado ? "md:hidden" : ""}>
                               {item.label}
@@ -888,7 +839,6 @@ export default function PanelLayoutClient({
             queda detrás del hamburger para lo demás. */}
         <nav className={`md:hidden print:hidden fixed bottom-0 left-0 right-0 h-16 bg-white dark:bg-[#111] border-t border-slate-200 dark:border-white/10 items-stretch z-40 ${isOpen ? "hidden" : "flex"}`}>
           {NAV_MOBILE.map((item) => {
-            const Icon = item.icon;
             const activo = pathname === item.href;
             return (
               <Link
@@ -896,9 +846,7 @@ export default function PanelLayoutClient({
                 href={item.href}
                 className={`flex-1 flex flex-col items-center justify-center gap-0.5 text-[10px] font-semibold ${activo ? "text-[#0145F2] dark:text-[#5b8dff]" : "text-slate-500 dark:text-slate-400"}`}
               >
-                <Icon
-                  className={`w-5 h-5 ${activo ? "text-[#0145F2] dark:text-[#5b8dff]" : ""}`}
-                />
+                <img src={item.icon} alt="" className="w-5 h-5 object-contain" />
                 {item.label}
               </Link>
             );
