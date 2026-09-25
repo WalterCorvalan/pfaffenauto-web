@@ -45,6 +45,17 @@ export function zonaEquilibrio(ingresos: number, egresos: number): ZonaSemaforo 
   return "azul";
 }
 
+// Zona para un número ya neto (ganancia/pérdida), sin par ingreso/egreso
+// propio -- ej. "Rentabilidad general" (ganancia por vehículo + neto de
+// operatoria ya sumados). No reutilizar zonaEquilibrio acá: esa función
+// necesita ingresos y egresos por separado, y forzar un neto en ese molde
+// daba colores que no correspondían al signo del número mostrado.
+export function zonaSigno(valor: number): ZonaSemaforo {
+  if (valor < 0) return "rojo";
+  if (valor === 0) return "amarillo";
+  return "verde";
+}
+
 // Peor zona entre varias (una tarjeta puede mostrar más de una moneda) --
 // rojo es lo peor, azul lo mejor.
 const ORDEN_ZONA: ZonaSemaforo[] = ["rojo", "amarillo", "verde", "azul"];

@@ -5,6 +5,7 @@ import Link from "next/link";
 import { Settings, Loader2 } from "lucide-react";
 import { supabase2 } from "@/lib/supabase/client";
 import TablaResponsiva, { type ColumnaTabla } from "@/components/panel/TablaResponsiva";
+import Toggle from "@/components/panel/Toggle";
 import { MODULOS_CATALOGO, SECTORES, SECTOR_LABEL } from "@/lib/panel/modulosCatalogo";
 
 const MODULO_LABEL: Record<string, string> = Object.fromEntries(MODULOS_CATALOGO.map((m) => [m.modulo, m.label]));
@@ -98,7 +99,7 @@ export default function EmpresaClient() {
               {modulos.map((m) => (
                 <label key={m.modulo} className="flex items-center justify-between gap-2 px-3 py-2 rounded-lg bg-slate-50 dark:bg-white/5 text-sm">
                   <span className="text-slate-700 dark:text-slate-200">{MODULO_LABEL[m.modulo] || m.modulo}</span>
-                  <input type="checkbox" checked={m.activo} onChange={(e) => toggleModulo(m.modulo, e.target.checked)} className="w-4 h-4 accent-[#0145F2]" />
+                  <Toggle checked={m.activo} onChange={(v) => toggleModulo(m.modulo, v)} />
                 </label>
               ))}
             </div>
@@ -119,7 +120,7 @@ export default function EmpresaClient() {
                     key: s,
                     header: SECTOR_LABEL[s],
                     claseTd: "py-2 px-2 text-center",
-                    cell: (m: Modulo) => <input type="checkbox" disabled={!m.activo} checked={esVisible(m.modulo, s)} onChange={() => toggleVisibilidad(m.modulo, s)} className="w-4 h-4 accent-[#0145F2]" />,
+                    cell: (m: Modulo) => <Toggle disabled={!m.activo} checked={esVisible(m.modulo, s)} onChange={() => toggleVisibilidad(m.modulo, s)} />,
                   })),
                 ] as ColumnaTabla<Modulo>[]
               }
@@ -132,7 +133,7 @@ export default function EmpresaClient() {
             <div className="flex flex-wrap gap-3">
               {permisoVerLiquidacion.map((p) => (
                 <label key={p.rol} className="flex items-center gap-2 px-3 py-2 rounded-lg bg-slate-50 dark:bg-white/5 text-sm">
-                  <input type="checkbox" checked={p.otorgado} onChange={() => toggleVerLiquidacion(p.rol)} className="w-4 h-4 accent-[#0145F2]" />
+                  <Toggle checked={p.otorgado} onChange={() => toggleVerLiquidacion(p.rol)} />
                   <span className="text-slate-700 dark:text-slate-200">{ROL_LABEL[p.rol] || p.rol}</span>
                 </label>
               ))}
@@ -274,7 +275,7 @@ function ComisionesConfig() {
           <p className="text-[11px] text-slate-400 mt-1">% que se descuenta al precio para sugerir la toma del usado. Sale en el listado de Cotizaciones ("TOMA -{config.pct_toma_consignacion}%") y en el PDF del presupuesto. Disponible sea cual sea el modo de comisión de arriba.</p>
         </div>
         <label className="flex items-start gap-2">
-          <input type="checkbox" checked={config.exigir_resena_comision} onChange={(e) => guardar({ exigir_resena_comision: e.target.checked })} className="w-4 h-4 accent-rose-600 mt-0.5" />
+          <Toggle checked={config.exigir_resena_comision} onChange={(v) => guardar({ exigir_resena_comision: v })} color="rosa" />
           <span className="text-sm text-slate-700 dark:text-slate-200">
             Bloquear la comisión hasta pedir la reseña
             <span className="block text-[11px] text-slate-400 font-normal">Nadie marca su comisión como cobrada hasta pedir su reseña de Google. El admin puede pagar igual como excepción, queda registrado.</span>
@@ -355,7 +356,7 @@ function PlazosConfig() {
           </div>
         </div>
         <label className="flex items-start gap-2">
-          <input type="checkbox" checked={config.asignar_al_enviar} onChange={(e) => guardar({ asignar_al_enviar: e.target.checked })} className="w-4 h-4 accent-[#0145F2] mt-0.5" />
+          <Toggle checked={config.asignar_al_enviar} onChange={(v) => guardar({ asignar_al_enviar: v })} />
           <span className="text-sm text-slate-700 dark:text-slate-200">
             Asignar el cliente al vendedor al enviar un recontacto
             <span className="block text-[11px] text-slate-400 font-normal">Si un cliente sin vendedor recibe un mensaje de recontacto, queda asignado a quien lo mandó.</span>
@@ -369,7 +370,7 @@ function PlazosConfig() {
           Estos valores ya existen en la base pero todavía no hay una automatización en Pedidos que los lea — cambiarlos acá no tiene efecto hasta que se construya esa lógica.
         </p>
         <label className="flex items-center gap-2">
-          <input type="checkbox" checked={config.reasignar_pedidos} onChange={(e) => guardar({ reasignar_pedidos: e.target.checked })} className="w-4 h-4 accent-[#0145F2]" />
+          <Toggle checked={config.reasignar_pedidos} onChange={(v) => guardar({ reasignar_pedidos: v })} />
           <span className="text-sm text-slate-700 dark:text-slate-200">Reasignación automática de pedidos</span>
         </label>
         <div className="grid grid-cols-2 gap-4">
@@ -443,7 +444,7 @@ function LeadRoutingConfig() {
         <p className="text-sm font-bold text-slate-800 dark:text-white">Reasignación automática</p>
         <p className="text-xs text-slate-400">Si un vendedor no marca el lead como contactado en el plazo fijado, pasa al siguiente de la ronda. Corre cada 10 minutos.</p>
         <label className="flex items-center gap-2">
-          <input type="checkbox" checked={config.lead_routing_activo} onChange={(e) => guardarConfig({ lead_routing_activo: e.target.checked })} className="w-4 h-4 accent-[#0145F2]" />
+          <Toggle checked={config.lead_routing_activo} onChange={(v) => guardarConfig({ lead_routing_activo: v })} />
           <span className="text-sm text-slate-700 dark:text-slate-200">Activar reasignación automática</span>
         </label>
         <div className="grid grid-cols-2 gap-4">
@@ -466,7 +467,7 @@ function LeadRoutingConfig() {
           {vendedores.map((v) => (
             <label key={v.id} className="flex items-center justify-between gap-2 px-3 py-2 rounded-lg bg-slate-50 dark:bg-white/5 text-sm">
               <span className="text-slate-700 dark:text-slate-200">{v.nombre}</span>
-              <input type="checkbox" checked={v.recibirLeads} onChange={(e) => toggleVendedor(v.id, e.target.checked)} className="w-4 h-4 accent-[#0145F2]" />
+              <Toggle checked={v.recibirLeads} onChange={(val) => toggleVendedor(v.id, val)} />
             </label>
           ))}
           {vendedores.length === 0 && <p className="text-xs text-slate-400 text-center py-4">No hay vendedores activos con rol Ventas.</p>}
@@ -476,7 +477,7 @@ function LeadRoutingConfig() {
       <div className="bg-white dark:bg-white/[0.02] border border-slate-200 dark:border-white/5 rounded-2xl shadow-sm p-5 space-y-2">
         <p className="text-sm font-bold text-slate-800 dark:text-white">Visibilidad de clientes</p>
         <label className="flex items-start gap-2">
-          <input type="checkbox" checked={config.cada_vendedor_ve_solo_sus_clientes} onChange={(e) => guardarConfig({ cada_vendedor_ve_solo_sus_clientes: e.target.checked })} className="w-4 h-4 accent-[#0145F2] mt-0.5" />
+          <Toggle checked={config.cada_vendedor_ve_solo_sus_clientes} onChange={(v) => guardarConfig({ cada_vendedor_ve_solo_sus_clientes: v })} />
           <span className="text-sm text-slate-700 dark:text-slate-200">
             Cada vendedor ve solo sus clientes
             <span className="block text-[11px] text-slate-400 font-normal">Admin y recepción siguen viendo todo. Ojo: un cliente sin vendedor asignado no le aparece a ningún vendedor con esto prendido, solo a admin y recepción.</span>
@@ -533,7 +534,7 @@ function ResumenDiarioConfig() {
           <p className="text-xs text-slate-400">Cada mañana se arma el resumen del día (ventas, leads nuevos, expedientes atrasados, cuotas por vencer, stock). Cada miembro lo recibe en la campanita según su rol.</p>
         </div>
         <label className="flex items-center gap-2">
-          <input type="checkbox" checked={config.resumen_diario_activo} onChange={(e) => guardar({ resumen_diario_activo: e.target.checked })} className="w-4 h-4 accent-[#0145F2]" />
+          <Toggle checked={config.resumen_diario_activo} onChange={(v) => guardar({ resumen_diario_activo: v })} />
           <span className="text-sm text-slate-700 dark:text-slate-200">Resumen diario activo</span>
         </label>
         {config.resumen_diario_activo && (
@@ -553,7 +554,7 @@ function ResumenDiarioConfig() {
               <input type="text" placeholder="Vacío = el nombre de tu agencia" defaultValue={config.resumen_diario_nombre || ""} onBlur={(e) => guardar({ resumen_diario_nombre: e.target.value || null })} className={inputClass} />
             </div>
             <label className="flex items-start gap-2">
-              <input type="checkbox" checked={config.resumen_diario_whatsapp_activo} onChange={(e) => guardar({ resumen_diario_whatsapp_activo: e.target.checked })} className="w-4 h-4 accent-[#0145F2] mt-0.5" />
+              <Toggle checked={config.resumen_diario_whatsapp_activo} onChange={(v) => guardar({ resumen_diario_whatsapp_activo: v })} />
               <span className="text-sm text-slate-700 dark:text-slate-200">
                 Enviar también por WhatsApp al dueño
                 <span className="block text-[11px] text-slate-400 font-normal">Llega desde la línea del CRM con una plantilla aprobada por Meta.</span>

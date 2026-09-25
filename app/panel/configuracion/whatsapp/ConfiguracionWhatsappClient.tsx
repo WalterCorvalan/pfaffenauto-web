@@ -143,6 +143,7 @@ export default function ConfiguracionWhatsappClient() {
   const [copiado, setCopiado] = useState<"webhook" | "verify" | null>(null);
   const [mensaje, setMensaje] = useState("");
   const [confirmDialog, setConfirmDialog] = useState<{ mensaje: string; accion: () => void } | null>(null);
+  const [numeroConfirmado, setNumeroConfirmado] = useState<{ numero: string; nombreVerificado: string } | null>(null);
 
   const cargar = async () => {
     setCargando(true);
@@ -156,6 +157,7 @@ export default function ConfiguracionWhatsappClient() {
       setTono(data.config?.tono || "");
       setHorarioInicio(data.config?.horario_inicio ?? 8);
       setHorarioFin(data.config?.horario_fin ?? 22);
+      setNumeroConfirmado(data.numeroConfirmado || null);
     }
     setCargando(false);
   };
@@ -174,8 +176,9 @@ export default function ConfiguracionWhatsappClient() {
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || "No se pudo guardar.");
       setConfig(data.config);
+      setNumeroConfirmado(data.numeroConfirmado || null);
       setAccessToken("");
-      setMensaje("Guardado correctamente.");
+      setMensaje(data.numeroConfirmado ? `Guardado — Meta confirma que este ID corresponde al número ${data.numeroConfirmado.numero}.` : "Guardado correctamente (no se pudo confirmar el número contra Meta — revisá el token/ID).");
     } catch (e: any) {
       setMensaje(e.message || "Error al guardar.");
     } finally {
@@ -228,8 +231,15 @@ export default function ConfiguracionWhatsappClient() {
 
       <div className="max-w-2xl space-y-5">
 
-      <div className={`px-3 py-2 rounded-lg text-xs font-bold inline-flex items-center gap-1.5 ${config?.listo ? "bg-emerald-50 text-emerald-700 dark:bg-emerald-500/10 dark:text-emerald-300" : "bg-amber-50 text-amber-700 dark:bg-amber-500/10 dark:text-amber-300"}`}>
-        {config?.listo ? "✅ Configurado" : "⏳ Falta completar"}
+      <div className="flex flex-wrap items-center gap-2">
+        <div className={`px-3 py-2 rounded-lg text-xs font-bold inline-flex items-center gap-1.5 ${config?.listo ? "bg-emerald-50 text-emerald-700 dark:bg-emerald-500/10 dark:text-emerald-300" : "bg-amber-50 text-amber-700 dark:bg-amber-500/10 dark:text-amber-300"}`}>
+          {config?.listo ? "✅ Configurado" : "⏳ Falta completar"}
+        </div>
+        {config?.listo && (
+          <div className={`px-3 py-2 rounded-lg text-xs font-bold inline-flex items-center gap-1.5 ${numeroConfirmado ? "bg-indigo-50 text-indigo-700 dark:bg-indigo-500/10 dark:text-indigo-300" : "bg-rose-50 text-rose-700 dark:bg-rose-500/10 dark:text-rose-300"}`}>
+            {numeroConfirmado ? `📱 Meta confirma: ${numeroConfirmado.numero} (${numeroConfirmado.nombreVerificado})` : "⚠️ No se pudo confirmar el número contra Meta — revisá el phone_number_id/token"}
+          </div>
+        )}
       </div>
 
       <div className="bg-white dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-2xl p-5 space-y-4 shadow-sm">

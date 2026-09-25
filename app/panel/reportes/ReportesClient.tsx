@@ -194,8 +194,8 @@ export default function ReportesClient(props: Props) {
           </div>
           <Trophy className="w-6 h-6 text-indigo-200" />
         </div>
-        <div className="bg-white/10 rounded-xl overflow-hidden mb-3">
-          <table className="w-full text-left text-sm">
+        <div className="bg-white/10 rounded-xl overflow-x-auto mb-3">
+          <table className="w-full text-left text-sm min-w-[420px]">
             <thead>
               <tr className="text-[10px] uppercase tracking-widest text-indigo-200">
                 <th className="px-3 py-2 font-bold">Vendedor</th>

@@ -25,6 +25,15 @@ select cron.schedule(
   $$ select net.http_get('https://www.pfaffencars.com/api/cron/panel/pedidos-match?token=REEMPLAZAR_CON_CRON_SECRET'); $$
 );
 
+-- Cada 3 minutos: reenvía por WhatsApp personal las notificaciones de quien
+-- activó "whatsapp_forward" en Mi Espacio → Notificaciones (ver
+-- migraciones/sql_notificaciones_whatsapp_forward.sql).
+select cron.schedule(
+  'panel-notificar-whatsapp-vendedores',
+  '*/3 * * * *',
+  $$ select net.http_get('https://www.pfaffencars.com/api/cron/panel/notificar-whatsapp-vendedores?token=REEMPLAZAR_CON_CRON_SECRET'); $$
+);
+
 -- Cada hora: 4 automatizaciones de WhatsApp (agradecimiento de venta, nudges, etc).
 select cron.schedule(
   'panel-automatizaciones',
@@ -39,15 +48,11 @@ select cron.schedule(
   $$ select net.http_get('https://www.pfaffencars.com/api/cron/panel/pautas?token=REEMPLAZAR_CON_CRON_SECRET'); $$
 );
 
--- Cada hora: resumen diario de empresa por WhatsApp (solo actúa en la hora
--- configurada en Configuración → Empresa, y una sola vez por día).
-select cron.schedule(
-  'panel-resumen-empresa',
-  '0 * * * *',
-  $$ select net.http_get('https://www.pfaffencars.com/api/cron/panel/resumen-empresa?token=REEMPLAZAR_CON_CRON_SECRET'); $$
-);
-
--- 1 vez por día, 08:00 Argentina (11:00 UTC): "Mi resumen" diario de cada usuario.
+-- 1 vez por día, 08:00 Argentina (11:00 UTC): "Mi resumen" diario de cada
+-- usuario -- para admins incluye también el bloque de empresa completa
+-- (ventas/leads/caja de todos) que antes mandaba un cron aparte
+-- ("panel-resumen-empresa", dado de baja, ver sql_unschedule_resumen_empresa.sql)
+-- como una alerta separada.
 select cron.schedule(
   'panel-mi-resumen',
   '0 11 * * *',

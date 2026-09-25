@@ -2,7 +2,7 @@ import { createHmac, timingSafeEqual } from "crypto";
 import { createClient } from "@supabase/supabase-js";
 import { isAiConfiguredV2 } from "@/lib/ai/indexV2";
 import { generarRespuestaAgenteV2, dividirRespuestaEnMensajes } from "@/lib/ai/agenteV2";
-import { sendInstagramPrivateReply, sendInstagramMessage, replyToInstagramCommentPublicly } from "@/lib/meta/client";
+import { sendInstagramPrivateReply, sendInstagramMessage, sendInstagramImageMessage, replyToInstagramCommentPublicly, getInstagramUserProfile } from "@/lib/meta/client";
 import { decrypt } from "@/lib/crypto";
 import { rateLimit, ipDesdeRequest } from "@/lib/rateLimit";
 import { registrarError } from "@/lib/panel/logger";
@@ -105,7 +105,18 @@ async function procesarEvento(payload: any) {
       }
     }
     for (const msg of entry.messaging ?? []) {
-      if (msg.message?.text) {
+      // Meta reenvía por este mismo webhook un "echo" de cada mensaje
+      // saliente de la cuenta (msg.message.is_echo === true) -- del bot Y
+      // de respuestas manuales de empleados desde la app de Instagram. Un
+      // echo NUNCA se procesa como si fuera un mensaje nuevo del cliente
+      // (eso hacía que el bot se contestara a sí mismo) -- se maneja aparte
+      // en procesarEcho, que solo lo guarda si es una respuesta manual
+      // real que todavía no estaba en la base.
+      if (msg.message?.is_echo) {
+        await procesarEcho(msg);
+        continue;
+      }
+      if (msg.message?.text || msg.message?.attachments?.length) {
         await procesarMensajeDirecto(msg);
       }
     }
@@ -113,16 +124,23 @@ async function procesarEvento(payload: any) {
 }
 
 async function obtenerOCrearConversacion(igUserId: string, username: string | null) {
+  // No pisar un username real ya guardado con null -- procesarMensajeDirecto
+  // (los DM) no siempre trae el username en el evento, y antes este upsert
+  // lo sobreescribía a null igual, borrando el @ que sí se había guardado
+  // antes desde un comentario. Se conserva el que ya había si el nuevo viene vacío.
+  const { data: contactoExistente } = await supabase.from("instagram_contactos").select("id, username").eq("ig_user_id", igUserId).maybeSingle();
+  const usernameFinal = username ?? contactoExistente?.username ?? null;
+
   const { data: contacto } = await supabase
     .from("instagram_contactos")
-    .upsert({ ig_user_id: igUserId, username }, { onConflict: "ig_user_id", ignoreDuplicates: false })
+    .upsert({ ig_user_id: igUserId, username: usernameFinal }, { onConflict: "ig_user_id", ignoreDuplicates: false })
     .select("id")
     .single();
   if (!contacto) return null;
 
   let { data: conversacion } = await supabase
     .from("instagram_conversaciones")
-    .select("id, vendedor_id, ai_habilitada, canal_origen")
+    .select("id, vendedor_id, ai_habilitada, canal_origen, vehiculo_id")
     .eq("contacto_id", contacto.id)
     .maybeSingle();
 
@@ -132,12 +150,12 @@ async function obtenerOCrearConversacion(igUserId: string, username: string | nu
     const { data: nueva } = await supabase
       .from("instagram_conversaciones")
       .insert({ contacto_id: contacto.id })
-      .select("id, vendedor_id, ai_habilitada, canal_origen")
+      .select("id, vendedor_id, ai_habilitada, canal_origen, vehiculo_id")
       .single();
     conversacion = nueva;
   }
   return conversacion
-    ? { conversacionId: conversacion.id, contactoId: contacto.id, aiHabilitada: conversacion.ai_habilitada, canalOrigen: conversacion.canal_origen }
+    ? { conversacionId: conversacion.id, contactoId: contacto.id, aiHabilitada: conversacion.ai_habilitada, canalOrigen: conversacion.canal_origen, vehiculoId: conversacion.vehiculo_id }
     : null;
 }
 
@@ -195,13 +213,50 @@ async function procesarComentario(value: any) {
   }
 }
 
+// Igual que resolverTextoMensaje del webhook de WhatsApp: un mensaje sin
+// texto (foto/audio/video/sticker/compartir un posteo) no puede seguir
+// perdiéndose -- antes esto se descartaba entero (ni cliente ni empleado
+// veían nada guardado). Devuelve un texto placeholder legible para el
+// agente/el panel, más el tipo y la URL real si Meta la manda.
+function resolverTextoYMediaInstagram(message: any): { texto: string | null; tipo: string; mediaUrl: string | null } {
+  if (message?.text) return { texto: message.text, tipo: "text", mediaUrl: null };
+  const attachment = message?.attachments?.[0];
+  if (!attachment) return { texto: null, tipo: "text", mediaUrl: null };
+  const url: string | null = attachment.payload?.url ?? null;
+  if (attachment.type === "image") return { texto: url ? null : "[Envió una foto]", tipo: "image", mediaUrl: url };
+  if (attachment.type === "audio") return { texto: "🎤 Audio", tipo: "audio", mediaUrl: url };
+  if (attachment.type === "video") return { texto: url ? null : "[Envió un video]", tipo: "video", mediaUrl: url };
+  if (attachment.type === "share") return { texto: "[Compartió una publicación/reel]", tipo: "text", mediaUrl: null };
+  return { texto: "[Envió un archivo]", tipo: "text", mediaUrl: null };
+}
+
 async function procesarMensajeDirecto(msg: any) {
   const igUserId = msg.sender?.id;
-  const texto = msg.message?.text;
+  const { texto, tipo, mediaUrl } = resolverTextoYMediaInstagram(msg.message);
   const igMessageId = msg.message?.mid;
-  if (!igUserId || !texto) return;
+  if (!igUserId || (!texto && !mediaUrl)) return;
 
-  const refs = await obtenerOCrearConversacion(igUserId, null);
+  // A diferencia de un comentario (Meta manda el username directo), un DM
+  // entrante solo trae el IGSID numérico -- sin esto el contacto quedaba
+  // guardado con username null y el panel lo mostraba como "@" + el ID
+  // numérico en vez del @usuario real. Solo se pide si todavía no lo
+  // tenemos guardado (evita pegarle a la API de Meta en cada mensaje).
+  const { data: contactoPrevio } = await supabase.from("instagram_contactos").select("username").eq("ig_user_id", igUserId).maybeSingle();
+  let usernameResuelto: string | null = contactoPrevio?.username ?? null;
+  if (!usernameResuelto) {
+    const { data: config } = await supabase.from("instagram_configuracion").select("token_cifrado, token_iv, token_tag").eq("id", true).single();
+    if (config?.token_cifrado && config.token_iv && config.token_tag) {
+      try {
+        const tokenPlano = decrypt(config.token_cifrado, config.token_iv, config.token_tag);
+        const perfil = await getInstagramUserProfile(tokenPlano, igUserId);
+        usernameResuelto = perfil.username ?? null;
+      } catch (err) {
+        registrarError("webhook-ig-v2:resolver-username", err, { igUserId });
+      }
+    }
+  }
+
+  const refs = await obtenerOCrearConversacion(igUserId, usernameResuelto);
   if (!refs) return;
 
   // Meta manda "referral" en el evento de mensaje cuando la charla arrancó
@@ -217,8 +272,9 @@ async function procesarMensajeDirecto(msg: any) {
     conversacion_id: refs.conversacionId,
     ig_message_id: igMessageId,
     direccion: "in",
-    tipo: "text",
+    tipo,
     texto,
+    media_url: mediaUrl,
     status: "received",
   });
   if (error) {
@@ -251,7 +307,7 @@ async function ejecutarAgente(conversacionId: string, igUserId: string) {
   if (!isAiConfiguredV2()) return;
   if (!estaEnHorarioAtencion()) return;
 
-  const { data: conversacionActual } = await supabase.from("instagram_conversaciones").select("ai_habilitada, contacto_id").eq("id", conversacionId).single();
+  const { data: conversacionActual } = await supabase.from("instagram_conversaciones").select("ai_habilitada, contacto_id, vehiculo_id").eq("id", conversacionId).single();
   if (conversacionActual?.ai_habilitada === false) return;
 
   const { data: mensajes } = await supabase.from("instagram_mensajes").select("direccion, texto").eq("conversacion_id", conversacionId).order("created_at", { ascending: true }).limit(20);
@@ -263,7 +319,13 @@ async function ejecutarAgente(conversacionId: string, igUserId: string) {
   // cargando su propio tono en Configuración > Instagram, pero no depende
   // de que lo haga (el campo hoy suele estar vacío).
   const tonoInstagram = config?.tono?.trim() || "profesional y serio, como un vendedor de la concesionaria atendiendo por Instagram -- el mismo tono formal y directo que se usa en WhatsApp, sin informalidades ni frases de amigo (nada de \"che\", \"dale\", tratar al cliente como si fueran conocidos). Amable y claro, pero siempre con la seriedad de alguien vendiendo un vehículo, no charlando en redes sociales.";
-  const result = await generarRespuestaAgenteV2(historial, "panel/webhooks/instagram", undefined, undefined, tonoInstagram, true);
+  // "panel-v2/webhooks/instagram", no "panel/webhooks/instagram" -- este
+  // string es lo que uso_ia_anthropic.origen guarda para el costo de IA de
+  // cada llamada (ver agenteV2.ts, { origen: canal }), y Marketing > Instagram
+  // / Marketing > Generales filtran por "panel-v2/webhooks/instagram" para
+  // armar la tarjeta "Costo IA" -- con el prefijo mal puesto el filtro nunca
+  // matcheaba nada y la tarjeta quedaba siempre en "—" aunque hubiera uso real.
+  const result = await generarRespuestaAgenteV2(historial, "panel-v2/webhooks/instagram", undefined, conversacionActual?.vehiculo_id ?? null, tonoInstagram, true);
 
   if (!result.ok) {
     registrarError("webhook-ig-v2:agente", result.error, { conversacionId });
@@ -273,10 +335,18 @@ async function ejecutarAgente(conversacionId: string, igUserId: string) {
   }
 
   const { reply, handoff, calificacion, resumen_handoff, datos_detectados } = result.data;
+  const { fotosParaEnviar, vehiculoFocoId } = result;
 
   const estadoSegunCalificacion = calificacion === "caliente" ? "calificando" : undefined;
   const patchConversacion: Record<string, unknown> = { calificacion };
   if (estadoSegunCalificacion) patchConversacion.estado_lead = estadoSegunCalificacion;
+  // Mismo motivo que WhatsApp (webhooks/whatsapp/[token]/route.ts): guardar
+  // el auto en foco acá es lo que le permite al agente responder bien datos
+  // puntuales (color, km, patente, versión, etc.) en preguntas de
+  // seguimiento que no repiten el modelo -- sin esto, Instagram solo tenía
+  // el historial de texto para "acordarse" del auto, y con el modelo chico
+  // se perdía o confundía a los pocos mensajes.
+  if (vehiculoFocoId) patchConversacion.vehiculo_id = vehiculoFocoId;
   await supabase.from("instagram_conversaciones").update(patchConversacion).eq("id", conversacionId);
 
   // El agente SÍ le pregunta el nombre real al cliente en Instagram (regla
@@ -290,6 +360,14 @@ async function ejecutarAgente(conversacionId: string, igUserId: string) {
   for (const parte of dividirRespuestaEnMensajes(reply)) {
     const { data: mensajeSaliente } = await supabase.from("instagram_mensajes").insert({ conversacion_id: conversacionId, direccion: "out", tipo: "text", texto: parte, status: "pending", ai_generado: true }).select("id").single();
     if (mensajeSaliente) await enviarYActualizarMensaje(mensajeSaliente.id, igUserId, parte, config);
+  }
+
+  // Fotos del auto que el agente mostró en esta respuesta -- mismo patrón
+  // que WhatsApp (webhooks/whatsapp/[token]/route.ts), Instagram sí soporta
+  // mandar imágenes por DM (a diferencia de Rodi, que nunca lo hace).
+  for (const fotoUrl of fotosParaEnviar) {
+    const { data: mensajeFoto } = await supabase.from("instagram_mensajes").insert({ conversacion_id: conversacionId, direccion: "out", tipo: "image", media_url: fotoUrl, status: "pending", ai_generado: true }).select("id").single();
+    if (mensajeFoto) await enviarYActualizarImagen(mensajeFoto.id, igUserId, fotoUrl, config);
   }
 
   if (handoff) {
@@ -315,10 +393,68 @@ async function enviarYActualizarMensaje(mensajeId: string, igUserId: string, tex
 
   try {
     const tokenPlano = decrypt(config.token_cifrado, config.token_iv, config.token_tag);
-    await sendInstagramMessage(config.ig_user_id, tokenPlano, igUserId, texto);
-    await supabase.from("instagram_mensajes").update({ status: "sent" }).eq("id", mensajeId);
+    // Guardamos el message_id real que devuelve Meta -- Meta reenvía este
+    // mismo mensaje como "echo" por el webhook unos segundos después (ver
+    // procesarEcho más abajo); con el id guardado, ese echo se reconoce
+    // como "ya lo tengo" y no se duplica en el chat del panel.
+    const resultado = await sendInstagramMessage(config.ig_user_id, tokenPlano, igUserId, texto);
+    await supabase.from("instagram_mensajes").update({ status: "sent", ig_message_id: resultado.message_id }).eq("id", mensajeId);
   } catch (err) {
     registrarError("webhook-ig-v2:enviar-dm", err, { mensajeId, igUserId });
+    await supabase.from("instagram_mensajes").update({ status: "failed" }).eq("id", mensajeId);
+  }
+}
+
+// Meta reenvía por el mismo webhook un "echo" de CUALQUIER mensaje saliente
+// de la cuenta -- tanto los que manda el bot (ya guardados por nosotros
+// arriba, con ig_message_id) como los que un empleado escribe a mano desde
+// la app de Instagram (esos nunca pasaron por nuestro código, no están en
+// la base todavía). Antes se ignoraban todos los echoes por igual -- eso
+// frenaba al bot de contestarse a sí mismo, pero de paso dejaba las
+// respuestas manuales de los empleados invisibles en el panel (pedido
+// explícito: "el panel tiene que ser un espejo exacto de Instagram"). Acá
+// se distingue por ig_message_id: si ya existe, es un echo de un mensaje
+// nuestro (se ignora); si no existe, es una respuesta manual real (se
+// guarda como "out", sin ai_generado, y se pausa la IA para esa charla).
+async function procesarEcho(msg: any) {
+  const igMessageId = msg.message?.mid;
+  const { texto, tipo, mediaUrl } = resolverTextoYMediaInstagram(msg.message);
+  const igUserId = msg.recipient?.id; // en un echo, el cliente es el "recipient", no el "sender"
+  if (!igMessageId || (!texto && !mediaUrl) || !igUserId) return;
+
+  const { data: existente } = await supabase.from("instagram_mensajes").select("id").eq("ig_message_id", igMessageId).maybeSingle();
+  if (existente) return; // echo de un mensaje que ya mandó el bot -- nada que hacer
+
+  const refs = await obtenerOCrearConversacion(igUserId, null);
+  if (!refs) return;
+
+  await supabase.from("instagram_mensajes").insert({
+    conversacion_id: refs.conversacionId,
+    ig_message_id: igMessageId,
+    direccion: "out",
+    tipo,
+    texto,
+    media_url: mediaUrl,
+    status: "sent",
+    ai_generado: false,
+  });
+  await supabase.from("instagram_conversaciones").update({
+    last_message_at: new Date().toISOString(),
+    ai_habilitada: false, // un humano ya está atendiendo esta charla a mano -- el bot no debe pisarlo
+  }).eq("id", refs.conversacionId);
+}
+
+// Best-effort, igual que la de WhatsApp: si falla la foto no rompe la
+// conversación, el texto ya se mandó antes.
+async function enviarYActualizarImagen(mensajeId: string, igUserId: string, imageUrl: string, config: any) {
+  if (!isInstagramEnvioConfigurado(config)) return;
+
+  try {
+    const tokenPlano = decrypt(config.token_cifrado, config.token_iv, config.token_tag);
+    await sendInstagramImageMessage(config.ig_user_id, tokenPlano, igUserId, imageUrl);
+    await supabase.from("instagram_mensajes").update({ status: "sent" }).eq("id", mensajeId);
+  } catch (err) {
+    registrarError("webhook-ig-v2:enviar-imagen", err, { mensajeId, igUserId });
     await supabase.from("instagram_mensajes").update({ status: "failed" }).eq("id", mensajeId);
   }
 }

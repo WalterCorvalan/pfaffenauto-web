@@ -4,6 +4,11 @@ import { useState, useEffect, useRef } from "react";
 import Script from "next/script";
 import { getCanalOrigen, getUtmRaw } from "@/lib/utm";
 import { CreditCard, CheckCircle2, Loader2, User, Phone, Mail, ArrowLeft, Search, Car } from "lucide-react";
+import {
+  TOPES_FINANCIACION_DEFAULT, TOPE_0KM_DEFAULT, TNA_POR_ANIO_Y_PLAZO_DEFAULT, GASTOS_PCT_DEFAULT,
+  PLAZOS_DISPONIBLES,
+  topePctPorAnio, tnaPctPorAnioYPlazo, calcularCuotaFrances, type TopeFinanciacion, type TnaGrupo,
+} from "@/lib/financiacion";
 
 declare global {
   interface Window {
@@ -26,21 +31,16 @@ interface VehiculoFinanciable {
   precioArs: number;
 }
 
-const TNA = 0.46;
-const PLAZOS = [24, 48, 72];
-
-function calcularCuota(montoAFinanciar: number, plazoMeses: number): number {
-  if (montoAFinanciar <= 0) return 0;
-  const tasaMensual = TNA / 12;
-  const cuotaPura =
-    (montoAFinanciar * (tasaMensual * Math.pow(1 + tasaMensual, plazoMeses))) /
-    (Math.pow(1 + tasaMensual, plazoMeses) - 1);
-  return Math.round(cuotaPura);
-}
-
 // Simulador real de /financiacion: a diferencia del banner del home (que muestra
 // una simulación de referencia sobre un auto ficticio), acá se trabaja siempre
 // sobre stock real desde el paso 1 — nada de "vehículo base" inventado.
+//
+// El cálculo (tope de financiación + TNA por año/plazo) es EL MISMO que usa
+// SimuladorFinanciacion.tsx en la ficha de auto (lib/financiacion.ts) --
+// antes este simulador tenía su propia lógica inventada aparte (TNA fija
+// 46%, anticipo elegido a mano con un slider 30-80%, plazos 24/48/72) que
+// no tenía nada que ver con la configuración real de Financiaciones y daba
+// una cuota distinta a la que mostraba la ficha del mismo auto.
 export default function SimuladorReal() {
   const [loading, setLoading] = useState(false);
   const [success, setSuccess] = useState(false);
@@ -53,8 +53,7 @@ export default function SimuladorReal() {
   const [resultados, setResultados] = useState<VehiculoFinanciable[]>([]);
   const [buscando, setBuscando] = useState(false);
 
-  const [anticipoPorcentaje, setAnticipoPorcentaje] = useState(50);
-  const [meses, setMeses] = useState(48);
+  const [meses, setMeses] = useState(24);
 
   const [creditoPreaprobado, setCreditoPreaprobado] = useState<"si" | "no" | null>(null);
   const [dolarVenta, setDolarVenta] = useState<number | null>(null);
@@ -64,6 +63,23 @@ export default function SimuladorReal() {
     // Configuración) si está activado -- /api/dolar-blue es siempre el blue
     // real fijo, solo para el ticker de referencia.
     fetch("/api/cotizacion-dolar").then((r) => r.json()).then((d) => { if (d.venta) setDolarVenta(d.venta); }).catch(() => {});
+  }, []);
+
+  // Mismos topes/TNA/gastos configurables que usa la ficha de auto
+  // (Financiaciones → Configuración), en vez de la tasa fija que tenía este
+  // simulador antes.
+  const [topes, setTopes] = useState<TopeFinanciacion[]>(TOPES_FINANCIACION_DEFAULT);
+  const [tope0km, setTope0km] = useState(TOPE_0KM_DEFAULT);
+  const [tna, setTna] = useState<TnaGrupo[]>(TNA_POR_ANIO_Y_PLAZO_DEFAULT);
+  const [gastosPct, setGastosPct] = useState(GASTOS_PCT_DEFAULT);
+
+  useEffect(() => {
+    fetch("/api/financiacion-config").then((r) => r.json()).then((data) => {
+      if (data.financiacion_topes?.length) setTopes(data.financiacion_topes);
+      if (data.financiacion_tope_0km) setTope0km(data.financiacion_tope_0km);
+      if (data.financiacion_tna?.length) setTna(data.financiacion_tna);
+      if (data.financiacion_gastos_pct != null) setGastosPct(data.financiacion_gastos_pct);
+    }).catch(() => {});
   }, []);
 
   const [nombre, setNombre] = useState("");
@@ -111,8 +127,14 @@ export default function SimuladorReal() {
   }, [busqueda, step, dolarVenta]);
 
   const precioVehiculo = vehiculo?.precioArs || 0;
-  const anticipoCliente = (precioVehiculo * anticipoPorcentaje) / 100;
-  const montoAFinanciar = precioVehiculo - anticipoCliente;
+  const esOkm = (vehiculo?.km ?? 0) === 0;
+  const pctFinanciable = topePctPorAnio(vehiculo?.anio ?? 0, esOkm, topes, tope0km);
+  const capitalMaximo = precioVehiculo * (pctFinanciable / 100);
+  const gastos = precioVehiculo * (gastosPct / 100);
+  const anticipoCliente = Math.max(0, precioVehiculo + gastos - capitalMaximo);
+  const montoAFinanciar = capitalMaximo;
+  const tasaPlazo = vehiculo ? tnaPctPorAnioYPlazo(vehiculo.anio, meses, tna) : null;
+  const calcularCuota = (monto: number, plazoMeses: number) => (tasaPlazo ? calcularCuotaFrances(monto, tasaPlazo, plazoMeses) : 0);
 
   const elegirVehiculo = (v: VehiculoFinanciable) => {
     setVehiculo(v);
@@ -123,7 +145,7 @@ export default function SimuladorReal() {
     setStep(1);
     setVehiculo(null);
     setBusqueda(""); setResultados([]);
-    setAnticipoPorcentaje(50); setMeses(48);
+    setMeses(24);
     setCreditoPreaprobado(null);
     setNombre(""); setEmail(""); setTelefono("");
     setTurnstileToken("");
@@ -156,7 +178,7 @@ export default function SimuladorReal() {
           modelo: vehiculo.modelo,
           anio: vehiculo.anio,
           kilometraje: vehiculo.km ?? 0,
-          version: `Solicitud de crédito: anticipo $${anticipoCliente.toLocaleString("es-AR")} (${anticipoPorcentaje}%), financia $${montoAFinanciar.toLocaleString("es-AR")} en ${meses} cuotas de $${cuota.toLocaleString("es-AR")} aprox. Crédito preaprobado: ${creditoPreaprobado === "si" ? "Sí" : "No"}.`,
+          version: `Solicitud de crédito: anticipo $${anticipoCliente.toLocaleString("es-AR")} (${pctFinanciable}% financiable), financia $${montoAFinanciar.toLocaleString("es-AR")} en ${meses} cuotas de $${cuota.toLocaleString("es-AR")} aprox. Crédito preaprobado: ${creditoPreaprobado === "si" ? "Sí" : "No"}.`,
           nombre: nombre.trim(),
           email: email.trim(),
           telefono: telefono.trim(),
@@ -279,26 +301,28 @@ export default function SimuladorReal() {
                 Precio publicado: $ {precioVehiculo.toLocaleString("es-AR")}
               </div>
 
-              <div>
-                <label className={`${labelClass} mb-1`}>Tu Anticipo ({anticipoPorcentaje}%)</label>
-                <span className="block text-2xl sm:text-3xl font-black text-slate-900 dark:text-white tracking-tight whitespace-nowrap mb-2">$ {anticipoCliente.toLocaleString("es-AR")}</span>
-                <input
-                  type="range" min="30" max="80" step="5"
-                  value={anticipoPorcentaje}
-                  onChange={(e) => setAnticipoPorcentaje(Number(e.target.value))}
-                  className="w-full h-2.5 bg-slate-200 dark:bg-slate-800 rounded-full appearance-none cursor-pointer accent-[#0145F2] dark:accent-sky-400"
-                />
+              <div className="grid grid-cols-2 gap-3">
+                <div className="bg-slate-50 dark:bg-white/5 rounded-xl p-3">
+                  <span className="text-[10px] uppercase font-bold tracking-widest text-slate-400 block mb-0.5">Financiás hasta</span>
+                  <span className="text-lg font-black text-[#0145F2] dark:text-sky-400">$ {capitalMaximo.toLocaleString("es-AR")}</span>
+                  <span className="block text-[10px] text-slate-400 mt-0.5">{pctFinanciable}% del valor{esOkm ? " (0km)" : ""}</span>
+                </div>
+                <div className="bg-slate-50 dark:bg-white/5 rounded-xl p-3">
+                  <span className="text-[10px] uppercase font-bold tracking-widest text-slate-400 block mb-0.5">Anticipo en efectivo</span>
+                  <span className="text-lg font-black text-slate-900 dark:text-white">$ {anticipoCliente.toLocaleString("es-AR")}</span>
+                  <span className="block text-[10px] text-slate-400 mt-0.5">Precio + gastos − financiado</span>
+                </div>
               </div>
 
               <div>
                 <label className={`${labelClass} mb-3`}>Plazo a financiar</label>
-                <div className="grid grid-cols-3 gap-3">
-                  {PLAZOS.map((plazo) => (
+                <div className="grid grid-cols-5 gap-2">
+                  {PLAZOS_DISPONIBLES.map((plazo) => (
                     <button
                       key={plazo} type="button" onClick={() => setMeses(plazo)}
-                      className={`py-3.5 rounded-2xl text-sm font-black transition-all ${meses === plazo ? "bg-[#0145F2] text-white shadow-[0_0_20px_rgba(1,69,242,0.4)] scale-105" : "bg-slate-100 dark:bg-slate-800 text-slate-500 dark:text-slate-400 hover:bg-slate-200 dark:hover:bg-slate-700 hover:text-slate-900 dark:hover:text-white"}`}
+                      className={`py-3 rounded-2xl text-xs sm:text-sm font-black transition-all ${meses === plazo ? "bg-[#0145F2] text-white shadow-[0_0_20px_rgba(1,69,242,0.4)] scale-105" : "bg-slate-100 dark:bg-slate-800 text-slate-500 dark:text-slate-400 hover:bg-slate-200 dark:hover:bg-slate-700 hover:text-slate-900 dark:hover:text-white"}`}
                     >
-                      {plazo} cuotas
+                      {plazo}
                     </button>
                   ))}
                 </div>

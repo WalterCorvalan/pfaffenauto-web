@@ -4,7 +4,7 @@ import { useMemo, useState } from "react";
 import { Wallet, TrendingUp, TrendingDown, AlertTriangle, Clock, CheckCircle2, Building2, Search, HandCoins, CarFront, Receipt, Landmark } from "lucide-react";
 import Link from "next/link";
 import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip, BarChart, Bar, XAxis, YAxis, CartesianGrid } from "recharts";
-import { fmt, porMoneda, netoOperatoriaAreaPorMoneda, ingresosEgresosOperatoriaAreaPorMoneda, zonaEquilibrio, CLASE_ZONA_CARD, type ZonaSemaforo } from "./shared";
+import { fmt, porMoneda, netoOperatoriaAreaPorMoneda, ingresosEgresosOperatoriaAreaPorMoneda, zonaEquilibrio, zonaSigno, CLASE_ZONA_CARD, type ZonaSemaforo } from "./shared";
 import { useRentabilidadPorVehiculo } from "./useRentabilidadPorVehiculo";
 import InfoTooltip from "@/components/panel/InfoTooltip";
 
@@ -191,11 +191,13 @@ export default function ResumenTab({
           <p className="text-[11px] font-black uppercase tracking-widest text-slate-400 mb-2">Números clave de la empresa</p>
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
             {monedasNumeros.map((m) => {
-              // Zona ventas vs gastos: la misma para Rentabilidad general y
-              // Generado en ventas+señas (ventas+señas es el ingreso, gastos
-              // fijos+variables el egreso), para que ese par se lea
-              // consistente.
+              // Zona ventas vs gastos: para "Generado en ventas+señas" (ventas+señas
+              // es el ingreso, gastos fijos+variables el egreso). "Rentabilidad
+              // general" usa su propio signo (zonaSigno) -- es un neto ya
+              // calculado, no un par ingreso/egreso, y compartir esta zona le daba
+              // colores que no correspondían al número mostrado (ver zonaSigno).
               const zonaVentasGastos = zonaEquilibrio(generadoVentasSenasPorMoneda[m] || 0, (gastosFijosTotales[m] || 0) + (gastosVariablesTotales[m] || 0));
+              const zonaRentabilidadGeneral = zonaSigno(rentabilidadGeneralPorMoneda[m] || 0);
               const zonaOperatoria = zonaEquilibrio(ingresosOperatoriaPorMoneda[m] || 0, egresosOperatoriaPorMoneda[m] || 0);
               // Zona propia de "Fijos vs variables": compara los dos gastos
               // ENTRE SÍ, no contra las ventas -- en cero o iguales (sin
@@ -203,7 +205,7 @@ export default function ResumenTab({
               const zonaFijoVariable = zonaEquilibrio(gastosVariablesTotales[m] || 0, gastosFijosTotales[m] || 0);
               return (
               <div key={m} className="contents">
-                <div className={`rounded-2xl p-4 border ${CLASE_ZONA_CARD[zonaVentasGastos]}`}>
+                <div className={`rounded-2xl p-4 border ${CLASE_ZONA_CARD[zonaRentabilidadGeneral]}`}>
                   <p className="text-[10px] font-bold uppercase tracking-widest text-slate-500 dark:text-slate-400 flex items-center">
                     <TrendingUp className="w-3 h-3 mr-1" /> Rentabilidad general ({m})
                     <InfoTooltip texto="Ganancia por vehículos vendidos (Rentabilidad por vehículo) + neto de gestoría/honorarios/trámites (Operatoria del área). No incluye gastos fijos ni variables de la agencia." />

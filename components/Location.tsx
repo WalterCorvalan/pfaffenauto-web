@@ -71,7 +71,7 @@ export default function Location() {
           initial="hidden"
           whileInView="visible"
           viewport={{ once: true, margin: "-50px" }}
-          className="grid grid-cols-1 md:grid-cols-2 gap-6 md:gap-8 max-w-3xl mx-auto"
+          className="grid grid-cols-1 md:grid-cols-2 gap-6 md:gap-8"
         >
           {sucursalesData.map((sucursal) => (
             <motion.div variants={itemVariants} key={sucursal.id}>
@@ -82,7 +82,7 @@ export default function Location() {
                 <div className="absolute inset-0 bg-gradient-to-tr from-transparent via-white/50 dark:via-white/10 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-700 pointer-events-none z-20 rounded-[32px]"></div>
 
                 {/* Mapa SIN el filtro gris */}
-                <div className="w-full h-[220px] rounded-[24px] overflow-hidden relative border border-white/40 dark:border-white/10 shadow-inner bg-slate-100/50 dark:bg-slate-900">
+                <div className="w-full h-[260px] md:h-[340px] lg:h-[400px] rounded-[24px] overflow-hidden relative border border-white/40 dark:border-white/10 shadow-inner bg-slate-100/50 dark:bg-slate-900">
                   <iframe 
                     src={sucursal.mapUrl} 
                     className="w-full h-full border-0 transition-transform duration-700 group-hover:scale-105" 

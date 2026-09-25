@@ -1,5 +1,8 @@
 import { createClient } from "@supabase/supabase-js";
 import { crearAlerta } from "@/lib/panel/alertas";
+import { sendTemplateMessage, MetaApiError } from "@/lib/meta/client";
+import { decrypt } from "@/lib/crypto";
+import { registrarError } from "@/lib/panel/logger";
 
 // Corre 1 vez por día vía pg_cron. "Mi resumen" (Mi Espacio → primera
 // pestaña del panel) dejaba elegir qué querés ver "cada mañana en la
@@ -8,6 +11,19 @@ import { crearAlerta } from "@/lib/panel/alertas";
 // corresponde a CADA vendedor, salvo los 2 ítems "sensible" que son
 // compañía-wide y solo se arman para admins) y lo manda como una sola
 // alerta a la campanita.
+//
+// Antes existía un segundo cron aparte ("resumen-empresa", corriendo cada
+// hora) que mandaba OTRA alerta separada ("Resumen del día — fecha", solo a
+// admins, con ventas/leads/caja de TODA la empresa). Título sin fecha acá
+// ("Tu resumen de hoy 📊" fijo) hacía que agruparAlertas.ts (agrupa por
+// tipo+título) juntara el de hoy con el de ayer sin cerrar y mostrara "x2"
+// aunque solo se hubiera mandado una vez por día -- eso, sumado a que las
+// dos alertas se veían casi iguales, es lo que se reportó como "duplicado".
+// Se fusionaron en una sola alerta con fecha en el título: para admins
+// incluye el bloque de empresa completa (antes de resumen-empresa) arriba
+// de su resumen personal; para el resto del equipo, solo lo personal. El
+// cron/endpoint de resumen-empresa se da de baja (ver
+// migraciones/sql_unschedule_resumen_empresa.sql).
 
 const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE2_URL!,
@@ -128,6 +144,38 @@ async function armarResumenPersonal(perfilId: string, items: string[], esAdmin: 
   return lineas;
 }
 
+function hoyArgentinaIso(): string {
+  return new Date().toLocaleDateString("sv-SE", { timeZone: "America/Argentina/Buenos_Aires" });
+}
+
+// Mismo cálculo que tenía el viejo cron de resumen-empresa: saldo real por
+// moneda, sumando todas las cuentas activas (nunca se cachea, RPC saldo_cuenta).
+async function calcularCajaTexto(): Promise<string> {
+  const { data: cuentas } = await supabase.from("cuentas").select("id, moneda").eq("activa", true);
+  const porMoneda: Record<string, number> = {};
+  for (const c of cuentas ?? []) {
+    const { data: saldo } = await supabase.rpc("saldo_cuenta", { p_cuenta_id: c.id });
+    porMoneda[c.moneda] = (porMoneda[c.moneda] ?? 0) + Number(saldo ?? 0);
+  }
+  return Object.entries(porMoneda).map(([m, n]) => `${m} ${n.toLocaleString("es-AR")}`).join(" · ") || "sin cuentas activas";
+}
+
+// Bloque de empresa completa (todos los vendedores, no solo el destinatario)
+// que antes mandaba el cron aparte "resumen-empresa" -- ahora se antepone al
+// resumen personal de cada admin en vez de ser una alerta separada.
+async function armarBloqueEmpresa(hoy: string, nombreAgencia: string): Promise<string[]> {
+  const desdeHoy = new Date(`${hoy}T00:00:00-03:00`).toISOString();
+  const [{ count: ventasHoy }, { count: leadsHoy }, cajaTexto] = await Promise.all([
+    supabase.from("ventas").select("id", { count: "exact", head: true }).eq("estado", "cerrada").gte("fecha_cierre", desdeHoy),
+    supabase.from("clientes").select("id", { count: "exact", head: true }).gte("created_at", desdeHoy),
+    calcularCajaTexto(),
+  ]).then(([v, l, c]) => [v, l, c] as const);
+  return [
+    `🏢 ${nombreAgencia} — ventas cerradas hoy: ${ventasHoy ?? 0}, leads nuevos hoy: ${leadsHoy ?? 0}`,
+    `💵 Caja (empresa): ${cajaTexto}`,
+  ];
+}
+
 export async function GET(req: Request) {
   const url = new URL(req.url);
   const token = url.searchParams.get("token");
@@ -135,8 +183,14 @@ export async function GET(req: Request) {
     return new Response("Unauthorized", { status: 401 });
   }
 
-  const { data: config } = await supabase.from("configuracion_empresa").select("resumen_diario_dias_expediente_atrasado").eq("id", true).maybeSingle();
+  const { data: config } = await supabase.from("configuracion_empresa").select("*").eq("id", true).maybeSingle();
   const umbralAtraso = config?.resumen_diario_dias_expediente_atrasado ?? 5;
+  const hoy = hoyArgentinaIso();
+  const fechaCorta = new Date(`${hoy}T12:00:00Z`).toLocaleDateString("es-AR", { timeZone: "UTC", day: "2-digit", month: "2-digit" });
+  const nombreAgencia = config?.resumen_diario_nombre || config?.branding_nombre || "tu agencia";
+  const titulo = `Resumen del día — ${fechaCorta}`;
+
+  const bloqueEmpresa = config?.resumen_diario_activo ? await armarBloqueEmpresa(hoy, nombreAgencia) : null;
 
   const { data: perfiles } = await supabase.from("perfiles").select("id, roles, activo").eq("activo", true);
   const { data: todasLasPrefs } = await supabase.from("espacio_resumen_prefs").select("perfil_id, recibir_resumen, items");
@@ -148,6 +202,7 @@ export async function GET(req: Request) {
   ];
 
   let enviados = 0;
+  let whatsappEnviado = false;
   for (const p of perfiles ?? []) {
     const prefs = prefsMap.get(p.id);
     const recibir = prefs?.recibir_resumen ?? true; // default: opt-in por diseño del tab
@@ -155,17 +210,35 @@ export async function GET(req: Request) {
     const items = prefs?.items ?? ITEMS_DEFAULT;
     const esAdmin = !!p.roles?.includes("admin");
 
-    const lineas = await armarResumenPersonal(p.id, items, esAdmin, umbralAtraso);
+    const lineasPersonales = await armarResumenPersonal(p.id, items, esAdmin, umbralAtraso);
+    const lineas = esAdmin && bloqueEmpresa ? [...bloqueEmpresa, ...lineasPersonales] : lineasPersonales;
     if (lineas.length === 0) continue; // nada relevante para contar hoy
 
-    await crearAlerta(supabase, p.id, "Tu resumen de hoy 📊", {
+    await crearAlerta(supabase, p.id, titulo, {
       mensaje: lineas.join("\n"),
       link: "/panel/mi-espacio?tab=mi-resumen",
-      tipo: "mi_resumen_diario",
+      tipo: "resumen_diario",
       prioridad: "baja",
       modulo: "mi_espacio",
     });
     enviados++;
+
+    // WhatsApp al dueño: mismo plus opcional que tenía resumen-empresa, una
+    // sola vez (no por cada admin) -- si falla, no debe frenar las alertas
+    // del resto del equipo, que ya se mandaron arriba.
+    if (!whatsappEnviado && esAdmin && bloqueEmpresa && config?.resumen_diario_whatsapp_activo && config?.resumen_diario_telefono_dueno && config?.resumen_diario_plantilla_meta) {
+      whatsappEnviado = true;
+      try {
+        const { data: waConfig } = await supabase.from("whatsapp_configuracion").select("phone_number_id, token_cifrado, token_iv, token_tag").eq("id", true).maybeSingle();
+        if (waConfig?.phone_number_id && waConfig.token_cifrado) {
+          const wToken = decrypt(waConfig.token_cifrado, waConfig.token_iv, waConfig.token_tag);
+          await sendTemplateMessage(waConfig.phone_number_id, wToken, config.resumen_diario_telefono_dueno, config.resumen_diario_plantilla_meta, config.resumen_diario_idioma || "es_AR", `☀️ ${titulo}\n${bloqueEmpresa.join("\n")}`);
+        }
+      } catch (err) {
+        const msg = err instanceof MetaApiError ? err.message : "error desconocido";
+        registrarError("cron/mi-resumen:whatsapp", err, { detalle: msg });
+      }
+    }
   }
 
   return Response.json({ ok: true, enviados });
