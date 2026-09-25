@@ -149,7 +149,8 @@ export default function StockClient({
         setOcupadoId(v.id);
         const { error } = await supabase2.from("vehiculos").delete().eq("id", v.id);
         if (!error) setVehiculos((prev) => prev.filter((x) => x.id !== v.id));
-        else alert("No se pudo eliminar (puede que solo admin pueda borrar vehículos).");
+        else if (error.code === "23503") alert("No se pudo eliminar: este vehículo está vinculado a un mandato (u otro registro). Hay que desvincularlo primero.");
+        else alert(`No se pudo eliminar: ${error.message}`);
         setOcupadoId(null);
       },
     });
