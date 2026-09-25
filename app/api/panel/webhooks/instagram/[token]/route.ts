@@ -122,7 +122,7 @@ async function obtenerOCrearConversacion(igUserId: string, username: string | nu
 
   let { data: conversacion } = await supabase
     .from("instagram_conversaciones")
-    .select("id, vendedor_id, ai_habilitada, canal_origen")
+    .select("id, vendedor_id, ai_habilitada, canal_origen, vehiculo_id")
     .eq("contacto_id", contacto.id)
     .maybeSingle();
 
@@ -132,12 +132,12 @@ async function obtenerOCrearConversacion(igUserId: string, username: string | nu
     const { data: nueva } = await supabase
       .from("instagram_conversaciones")
       .insert({ contacto_id: contacto.id })
-      .select("id, vendedor_id, ai_habilitada, canal_origen")
+      .select("id, vendedor_id, ai_habilitada, canal_origen, vehiculo_id")
       .single();
     conversacion = nueva;
   }
   return conversacion
-    ? { conversacionId: conversacion.id, contactoId: contacto.id, aiHabilitada: conversacion.ai_habilitada, canalOrigen: conversacion.canal_origen }
+    ? { conversacionId: conversacion.id, contactoId: contacto.id, aiHabilitada: conversacion.ai_habilitada, canalOrigen: conversacion.canal_origen, vehiculoId: conversacion.vehiculo_id }
     : null;
 }
 
@@ -251,7 +251,7 @@ async function ejecutarAgente(conversacionId: string, igUserId: string) {
   if (!isAiConfiguredV2()) return;
   if (!estaEnHorarioAtencion()) return;
 
-  const { data: conversacionActual } = await supabase.from("instagram_conversaciones").select("ai_habilitada, contacto_id").eq("id", conversacionId).single();
+  const { data: conversacionActual } = await supabase.from("instagram_conversaciones").select("ai_habilitada, contacto_id, vehiculo_id").eq("id", conversacionId).single();
   if (conversacionActual?.ai_habilitada === false) return;
 
   const { data: mensajes } = await supabase.from("instagram_mensajes").select("direccion, texto").eq("conversacion_id", conversacionId).order("created_at", { ascending: true }).limit(20);
@@ -263,7 +263,7 @@ async function ejecutarAgente(conversacionId: string, igUserId: string) {
   // cargando su propio tono en Configuración > Instagram, pero no depende
   // de que lo haga (el campo hoy suele estar vacío).
   const tonoInstagram = config?.tono?.trim() || "profesional y serio, como un vendedor de la concesionaria atendiendo por Instagram -- el mismo tono formal y directo que se usa en WhatsApp, sin informalidades ni frases de amigo (nada de \"che\", \"dale\", tratar al cliente como si fueran conocidos). Amable y claro, pero siempre con la seriedad de alguien vendiendo un vehículo, no charlando en redes sociales.";
-  const result = await generarRespuestaAgenteV2(historial, "panel/webhooks/instagram", undefined, undefined, tonoInstagram, true);
+  const result = await generarRespuestaAgenteV2(historial, "panel/webhooks/instagram", undefined, conversacionActual?.vehiculo_id ?? null, tonoInstagram, true);
 
   if (!result.ok) {
     registrarError("webhook-ig-v2:agente", result.error, { conversacionId });
@@ -273,11 +273,18 @@ async function ejecutarAgente(conversacionId: string, igUserId: string) {
   }
 
   const { reply, handoff, calificacion, resumen_handoff, datos_detectados } = result.data;
-  const { fotosParaEnviar } = result;
+  const { fotosParaEnviar, vehiculoFocoId } = result;
 
   const estadoSegunCalificacion = calificacion === "caliente" ? "calificando" : undefined;
   const patchConversacion: Record<string, unknown> = { calificacion };
   if (estadoSegunCalificacion) patchConversacion.estado_lead = estadoSegunCalificacion;
+  // Mismo motivo que WhatsApp (webhooks/whatsapp/[token]/route.ts): guardar
+  // el auto en foco acá es lo que le permite al agente responder bien datos
+  // puntuales (color, km, patente, versión, etc.) en preguntas de
+  // seguimiento que no repiten el modelo -- sin esto, Instagram solo tenía
+  // el historial de texto para "acordarse" del auto, y con el modelo chico
+  // se perdía o confundía a los pocos mensajes.
+  if (vehiculoFocoId) patchConversacion.vehiculo_id = vehiculoFocoId;
   await supabase.from("instagram_conversaciones").update(patchConversacion).eq("id", conversacionId);
 
   // El agente SÍ le pregunta el nombre real al cliente en Instagram (regla
