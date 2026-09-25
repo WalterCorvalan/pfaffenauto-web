@@ -7,7 +7,7 @@ import ConfirmDialog from "@/components/panel/ConfirmDialog";
 import {
   Search, Send, Bot, Check, Info, ChevronRight, PanelRight,
   Loader2, Megaphone, X, MessageSquareText, AtSign, Archive, ArchiveRestore, FileCheck2,
-  MessageCircle, ShoppingBag,
+  MessageCircle, ShoppingBag, Link2,
 } from "lucide-react";
 
 // Badge con el origen real del lead, sobre el avatar -- pedido del 24/9:
@@ -538,14 +538,20 @@ export default function ChatClient({
               {loading ? (
                 <div className="flex justify-center py-4"><span className="text-xs text-slate-500 dark:text-slate-400">Cargando...</span></div>
               ) : (
-                mensajes.map((m) => {
+                mensajes.map((m, idx) => {
                   const out = m.direccion === "out";
+                  // "Visto" solo va debajo del ÚLTIMO mensaje que mandamos --
+                  // igual que la app real de Instagram, no un tilde por
+                  // mensaje. Si el último saliente todavía no tiene
+                  // leido_at, no se muestra nada (el cliente no lo vio aún).
+                  const esUltimoOut = out && !mensajes.slice(idx + 1).some((sig) => sig.direccion === "out");
+                  const mostrarVisto = esIG && esUltimoOut && !!m.leido_at;
                   const burbujaOut = esIG ? "bg-gradient-to-br from-pink-500 to-purple-600 text-white border-transparent" : "bg-[#d9fdd3] dark:bg-[#005c4b] border-transparent text-slate-800 dark:text-white";
                   const burbujaIn = "bg-white dark:bg-[#1f2c34] border-slate-100 dark:border-white/5 text-slate-800 dark:text-slate-100";
                   return (
                     <div key={m.id} className={`flex ${out ? "justify-end" : "justify-start"}`}>
                       <div className={`max-w-[80%] xl:max-w-[65%] flex flex-col ${out ? "items-end" : "items-start"}`}>
-                        <div className={`rounded-[10px] px-3 py-2 text-[14.5px] shadow-sm border ${out ? burbujaOut : burbujaIn} ${out ? "rounded-tr-none" : "rounded-tl-none"}`}>
+                        <div className={`relative rounded-[10px] px-3 py-2 text-[14.5px] shadow-sm border ${out ? burbujaOut : burbujaIn} ${out ? "rounded-tr-none" : "rounded-tl-none"}`}>
                           {m.tipo === "image" && m.media_url && (
                             <img src={m.media_url} alt="Foto del vehículo" className="rounded-lg max-w-[260px] max-h-[260px] object-cover mb-1" />
                           )}
@@ -555,9 +561,19 @@ export default function ChatClient({
                           {/* Audio sin media_url: se cayó la descarga de Meta (URL
                               temporal vencida, R2 no configurado, etc.) -- solo
                               queda el placeholder de texto "🎤 Audio" de abajo. */}
+                          {m.tipo === "video" && m.media_url && (
+                            <video controls preload="none" src={m.media_url} className="rounded-lg max-w-[260px] max-h-[260px] mb-1" />
+                          )}
+                          {m.tipo !== "image" && m.tipo !== "audio" && m.tipo !== "video" && m.media_url && (
+                            <a href={m.media_url} target="_blank" rel="noopener noreferrer" className="flex items-center gap-2 bg-black/5 dark:bg-white/10 rounded-lg px-2.5 py-2 mb-1 hover:bg-black/10 dark:hover:bg-white/20 transition-colors">
+                              <Link2 className="w-3.5 h-3.5 shrink-0" />
+                              <span className="text-[13px] font-semibold underline underline-offset-2 truncate">Ver publicación compartida</span>
+                            </a>
+                          )}
                           {m.texto && <p className="leading-relaxed whitespace-pre-wrap">{m.texto}</p>}
                           <div className={`flex items-center justify-end gap-1 mt-1 ${out && !esIG ? "opacity-60" : "opacity-70"}`}>
                             {out && m.ai_generado && <Bot className="w-3 h-3" />}
+                            {m.editado && <span className="text-[10px] italic">editado</span>}
                             <span className="text-[10px] font-medium">{formatDate(m.created_at)}</span>
                             {out && (m.status === "failed" ? (
                               <button type="button" onClick={() => setMostrarSelectorAprobadas(true)} title={m.error_detalle ? `Falló: ${m.error_detalle}. Click para reintentar con plantilla.` : "Falló el envío — probablemente ventana de 24hs vencida. Click para reintentar con plantilla."} className="hover:opacity-70">
@@ -565,7 +581,15 @@ export default function ChatClient({
                               </button>
                             ) : <Check className={`w-3.5 h-3.5 ${esIG ? "" : "text-blue-500 dark:text-sky-300"}`} />)}
                           </div>
+                          {esIG && m.reaccion && (
+                            <span className={`absolute -bottom-2 ${out ? "left-1" : "right-1"} w-5 h-5 rounded-full bg-white dark:bg-[#1A1A1A] border border-slate-200 dark:border-white/10 shadow flex items-center justify-center text-[11px]`}>
+                              {m.reaccion}
+                            </span>
+                          )}
                         </div>
+                        {mostrarVisto && (
+                          <span className="text-[10px] text-slate-400 dark:text-slate-500 mt-0.5 mr-1">Visto</span>
+                        )}
                       </div>
                     </div>
                   );
