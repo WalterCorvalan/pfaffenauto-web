@@ -76,8 +76,8 @@ export default function PrivacidadPage() {
             <p>
               Podés pedirnos en cualquier momento acceder, corregir o eliminar tus datos personales, o retirar tu
               consentimiento para recibir comunicaciones. Escribinos a{" "}
-              <a href="mailto:info@pfaffencars.com" className="text-[#0145F2] dark:text-sky-300 font-medium hover:underline">
-                info@pfaffencars.com
+              <a href="mailto:pfaffengabriel@gmail.com" className="text-[#0145F2] dark:text-sky-300 font-medium hover:underline">
+                pfaffengabriel@gmail.com
               </a>{" "}
               o por WhatsApp y lo resolvemos.
             </p>
