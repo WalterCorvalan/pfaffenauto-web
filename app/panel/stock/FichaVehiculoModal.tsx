@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { createPortal } from "react-dom";
 import { supabase2 } from "@/lib/supabase/client";
 import Link from "next/link";
 import {
@@ -90,7 +91,13 @@ export default function FichaVehiculoModal({ vehiculo, miId, perfiles, clientes,
       .then(({ count }) => setTienePeritaje((count ?? 0) > 0));
   }, [vehiculo.id]);
 
-  return (
+  // Portal a document.body: mismo motivo que FichaRapidaModal.tsx (esta
+  // ficha se abre desde adentro del <main> con scroll propio del panel).
+  const [montado, setMontado] = useState(false);
+  useEffect(() => setMontado(true), []);
+  if (!montado) return null;
+
+  return createPortal(
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
       <div className="absolute inset-0 bg-slate-900/50 backdrop-blur-sm" onClick={onClose} />
       <div className="relative bg-white dark:bg-[#141414] border border-slate-200 dark:border-white/10 w-full max-w-2xl max-h-[90vh] rounded-2xl shadow-2xl flex flex-col overflow-hidden">
@@ -151,7 +158,8 @@ export default function FichaVehiculoModal({ vehiculo, miId, perfiles, clientes,
       {peritajeAbierto && (
         <PeritajeModal vehiculo={vehiculo} miId={miId} onClose={() => { setPeritajeAbierto(false); supabase2.from("peritajes").select("id", { count: "exact", head: true }).eq("vehiculo_id", vehiculo.id).then(({ count }) => setTienePeritaje((count ?? 0) > 0)); }} />
       )}
-    </div>
+    </div>,
+    document.body
   );
 }
 

@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { createPortal } from "react-dom";
 import { supabase2 } from "@/lib/supabase/client";
 import { X, Car, Loader2, Trash2, Maximize2, Users, MapPin } from "lucide-react";
 
@@ -56,6 +57,14 @@ export default function FichaRapidaModal({ vehiculo, miId, perfiles, puedeElimin
   const [guardando, setGuardando] = useState(false);
   const perfilMap = Object.fromEntries(perfiles.map((p) => [p.id, p.nombre]));
 
+  // Portal a document.body: este modal se abre desde una fila/tarjeta
+  // dentro del <main> con scroll propio del panel -- sin portal, "fixed"
+  // queda atado a ese contenedor en vez de a la ventana (el modal se ve
+  // pegado a un costado y sin oscurecer el resto, en vez de centrado y
+  // tapando toda la pantalla). document solo existe en el cliente.
+  const [montado, setMontado] = useState(false);
+  useEffect(() => setMontado(true), []);
+
   useEffect(() => {
     Promise.all([
       supabase2.from("whatsapp_conversaciones").select("id", { count: "exact", head: true }).eq("vehiculo_id", vehiculo.id),
@@ -86,7 +95,9 @@ export default function FichaRapidaModal({ vehiculo, miId, perfiles, puedeElimin
   if (vehiculo.fotos.length === 0) pendientes.push("Sin foto");
   if (!vehiculo.precio_venta) pendientes.push("Sin precio");
 
-  return (
+  if (!montado) return null;
+
+  return createPortal(
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
       <div className="absolute inset-0 bg-slate-900/50 backdrop-blur-sm" onClick={onClose} />
       <div className="relative bg-white dark:bg-[#141414] border border-slate-200 dark:border-white/10 w-full max-w-sm max-h-[90vh] rounded-2xl shadow-2xl flex flex-col overflow-hidden">
@@ -163,6 +174,7 @@ export default function FichaRapidaModal({ vehiculo, miId, perfiles, puedeElimin
           )}
         </div>
       </div>
-    </div>
+    </div>,
+    document.body
   );
 }
