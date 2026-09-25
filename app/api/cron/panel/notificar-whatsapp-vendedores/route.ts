@@ -9,9 +9,8 @@ import { decrypt } from "@/lib/crypto";
 // usa el sitio público para "hablale a este vendedor"), reusando el número/
 // token de WhatsApp Business YA conectado para el bot de clientes -- no hace
 // falta un número nuevo. Opt-in: solo corre para quien activó
-// "whatsapp_forward" en Mi Espacio → Notificaciones. Corre cada 5 minutos
-// (ver migraciones/sql_cron_setup_completo.sql), mismo intervalo que
-// panel-eventos.
+// "whatsapp_forward" en Mi Espacio → Notificaciones. Corre cada 3 minutos
+// (ver migraciones/sql_cron_setup_completo.sql).
 
 const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE2_URL!,
@@ -32,7 +31,7 @@ export async function GET(req: Request) {
     return Response.json({ ok: true, enviados: 0, motivo: "whatsapp no configurado" });
   }
 
-  // Tope por corrida (60, cada 5 min) para no pegarle una ráfaga enorme a la
+  // Tope por corrida (60, cada 3 min) para no pegarle una ráfaga enorme a la
   // API de Meta si hubo un pico de alertas -- lo que sobre lo agarra la
   // corrida siguiente, whatsapp_enviado sigue en false hasta procesarse.
   const { data: alertas } = await supabase
