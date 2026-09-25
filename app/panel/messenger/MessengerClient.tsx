@@ -2,14 +2,13 @@
 
 import { useState } from "react";
 import Link from "next/link";
-import { MessageCircle, Facebook, Settings } from "lucide-react";
+import { MessageCircle, Settings } from "lucide-react";
 
 // Módulo separado de WhatsApp/Instagram (25/9), pero todavía sin integración
-// real con Meta: no existe messenger_conversaciones ni webhook -- ver
-// app/panel/whatsapp/ARCHITECTURE.md para el motivo de por qué no se armó
-// de cero en el mismo pedido (requiere permisos de Messenger en la app de
-// Meta, tablas nuevas y el bot de IA para ese canal). Esta pantalla queda
-// lista para el día que se conecte: mismo layout de tabs que
+// real con Meta: no existe messenger_conversaciones ni webhook (requiere
+// permisos de Messenger en la app de Meta, tablas nuevas y el bot de IA
+// para ese canal -- no se armó de cero en el mismo pedido). Esta pantalla
+// queda lista para el día que se conecte: mismo layout de tabs que
 // ConversacionesShell, pero con estado vacío en vez de datos reales. Cuando
 // se conecte, seguir el patrón de instagram_conversaciones/instagram_mensajes
 // (tablas + webhook + ChatClient/LeadsTab compartidos en
@@ -37,7 +36,7 @@ export default function MessengerClient() {
       <div className="flex-1 min-h-0 flex items-center justify-center p-6">
         <div className="max-w-md text-center">
           <div className="w-14 h-14 rounded-2xl bg-blue-50 dark:bg-blue-500/10 flex items-center justify-center mx-auto mb-4">
-            <Facebook className="w-7 h-7 text-blue-600 dark:text-blue-300" />
+            <MessageCircle className="w-7 h-7 text-blue-600 dark:text-blue-300" />
           </div>
           <h2 className="text-base font-bold text-slate-900 dark:text-white mb-1.5">Facebook Messenger todavía no está conectado</h2>
           <p className="text-sm text-slate-500 dark:text-slate-400 leading-relaxed mb-4">
