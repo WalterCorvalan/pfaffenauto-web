@@ -263,7 +263,13 @@ async function ejecutarAgente(conversacionId: string, igUserId: string) {
   // cargando su propio tono en Configuración > Instagram, pero no depende
   // de que lo haga (el campo hoy suele estar vacío).
   const tonoInstagram = config?.tono?.trim() || "profesional y serio, como un vendedor de la concesionaria atendiendo por Instagram -- el mismo tono formal y directo que se usa en WhatsApp, sin informalidades ni frases de amigo (nada de \"che\", \"dale\", tratar al cliente como si fueran conocidos). Amable y claro, pero siempre con la seriedad de alguien vendiendo un vehículo, no charlando en redes sociales.";
-  const result = await generarRespuestaAgenteV2(historial, "panel/webhooks/instagram", undefined, conversacionActual?.vehiculo_id ?? null, tonoInstagram, true);
+  // "panel-v2/webhooks/instagram", no "panel/webhooks/instagram" -- este
+  // string es lo que uso_ia_anthropic.origen guarda para el costo de IA de
+  // cada llamada (ver agenteV2.ts, { origen: canal }), y Marketing > Instagram
+  // / Marketing > Generales filtran por "panel-v2/webhooks/instagram" para
+  // armar la tarjeta "Costo IA" -- con el prefijo mal puesto el filtro nunca
+  // matcheaba nada y la tarjeta quedaba siempre en "—" aunque hubiera uso real.
+  const result = await generarRespuestaAgenteV2(historial, "panel-v2/webhooks/instagram", undefined, conversacionActual?.vehiculo_id ?? null, tonoInstagram, true);
 
   if (!result.ok) {
     registrarError("webhook-ig-v2:agente", result.error, { conversacionId });
