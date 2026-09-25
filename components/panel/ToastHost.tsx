@@ -50,10 +50,10 @@ const BARRA_PRIORIDAD: Record<string, string> = {
 };
 
 const DURACION_MS: Record<Toast["tipo"], number> = {
-  success: 5000,
-  error: 5000,
-  info: 5000,
-  alerta: 6000,
+  success: 8000,
+  error: 8000,
+  info: 8000,
+  alerta: 8000,
 };
 
 let contador = 0;
