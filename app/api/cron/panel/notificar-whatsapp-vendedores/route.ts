@@ -8,9 +8,16 @@ import { decrypt } from "@/lib/crypto";
 // número PERSONAL del destinatario (perfiles.whatsapp, el mismo campo que ya
 // usa el sitio público para "hablale a este vendedor"), reusando el número/
 // token de WhatsApp Business YA conectado para el bot de clientes -- no hace
-// falta un número nuevo. Opt-in: solo corre para quien activó
-// "whatsapp_forward" en Mi Espacio → Notificaciones. Corre cada 3 minutos
-// (ver migraciones/sql_cron_setup_completo.sql).
+// falta un número nuevo. Corre cada 3 minutos (ver
+// migraciones/sql_cron_setup_completo.sql).
+//
+// Rol "ventas" -- SIEMPRE activo, sin opt-in: pedido del 25/9, los
+// vendedores no tienen acceso al módulo Mi Espacio (así que nunca podrían
+// prender el toggle "whatsapp_forward" ellos mismos), y son justo la
+// audiencia que este reenvío busca cubrir (no entran seguido al CRM). El
+// resto de los roles (admin, encargado, finanzas, gestoría) sigue siendo
+// opt-in real vía Mi Espacio → Notificaciones -- si esos roles sí tienen
+// acceso, respetamos lo que elijan.
 
 const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE2_URL!,
@@ -44,11 +51,16 @@ export async function GET(req: Request) {
 
   const destinatarioIds = [...new Set(alertas.map((a) => a.destinatario_id))];
   const [{ data: perfiles }, { data: prefs }] = await Promise.all([
-    supabase.from("perfiles").select("id, whatsapp, activo").in("id", destinatarioIds),
+    supabase.from("perfiles").select("id, whatsapp, activo, roles").in("id", destinatarioIds),
     supabase.from("espacio_notif_prefs").select("perfil_id, whatsapp_forward").in("perfil_id", destinatarioIds),
   ]);
   const perfilPorId = new Map((perfiles || []).map((p) => [p.id, p]));
   const forwardHabilitado = new Set((prefs || []).filter((p) => p.whatsapp_forward).map((p) => p.perfil_id));
+  const puedeReenviar = (perfilId: string) => {
+    const perfil = perfilPorId.get(perfilId);
+    if (perfil?.roles?.includes("ventas")) return true; // siempre activo, sin opt-in
+    return forwardHabilitado.has(perfilId);
+  };
 
   const tokenPlano = decrypt(config.token_cifrado, config.token_iv, config.token_tag);
   let enviados = 0;
@@ -57,7 +69,7 @@ export async function GET(req: Request) {
   for (const alerta of alertas) {
     idsProcesadas.push(alerta.id);
     const perfil = perfilPorId.get(alerta.destinatario_id);
-    if (!perfil?.activo || !perfil.whatsapp || !forwardHabilitado.has(alerta.destinatario_id)) continue;
+    if (!perfil?.activo || !perfil.whatsapp || !puedeReenviar(alerta.destinatario_id)) continue;
 
     const texto = [`🔔 ${alerta.titulo}`, alerta.mensaje || null, alerta.link ? `${SITE_URL}${alerta.link}` : null]
       .filter(Boolean)
