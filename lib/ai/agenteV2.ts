@@ -404,7 +404,16 @@ export async function generarRespuestaAgenteV2(historial: HistorialMensaje[], ca
   const noEncontroNadaParaBuscar = esIntencionDeCompra && !hablandoDeAutoPropio && !respuesta.vehiculo_mencionado?.modelo && !respuesta.vehiculo_mencionado?.marca && !respuesta.vehiculo_mencionado?.categoria && !respuesta.vehiculo_mencionado?.puertas && !respuesta.presupuesto_mencionado && !respuesta.pedir_stock_general;
   if (noEncontroNadaParaBuscar) {
     const ultimoMensajeCliente = [...historial].reverse().find((h) => h.role === "user")?.content;
-    const fallback = ultimoMensajeCliente ? await extraerVehiculoFallback(ultimoMensajeCliente) : null;
+    // Si el cliente pide una PARTE/pieza suelta (paragolpe, óptica, espejo,
+    // repuesto, etc.) y de paso nombra una marca real de stock (ej:
+    // "paragolpes de Corolla"), el modelo ya clasificó bien vehiculo_mencionado
+    // en null (reglasStock.ts prohíbe mostrar stock ahí) -- pero este mismo
+    // fallback, pensado para el caso de "se olvidó de completar el campo",
+    // encontraba "Corolla" por texto plano y pisaba esa decisión correcta,
+    // terminando en una venta de auto en vez de la respuesta de "no vendemos
+    // repuestos sueltos". Se corta acá antes de intentar el match de texto.
+    const pareceRepuestoOPieza = ultimoMensajeCliente && /(repuesto|autoparte|accesorio|pieza|paragolpe|parabrisa|óptica|optica|farol|espejo|batería|bateria|cubierta|neumático|neumatico|amortiguador|embrague|buje|correa|filtro|tapa|techo)/i.test(ultimoMensajeCliente);
+    const fallback = ultimoMensajeCliente && !pareceRepuestoOPieza ? await extraerVehiculoFallback(ultimoMensajeCliente) : null;
     if (fallback) {
       respuesta = { ...respuesta, vehiculo_mencionado: { marca: fallback.marca, modelo: fallback.modelo, categoria: respuesta.vehiculo_mencionado?.categoria ?? null } };
     }
