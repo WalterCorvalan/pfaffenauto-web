@@ -95,8 +95,10 @@ export default function Footer() {
             </div>
           </div>
 
-          {/* Respaldo Oficial */}
-          <div className="col-span-2 md:col-span-1">
+          {/* Respaldo Oficial -- ocupa la columna que dejó libre "Equipo"
+              en el sitio público (esa columna solo existe dentro del
+              panel) para no dejar un hueco vacío en el grid de 4. */}
+          <div className={`col-span-2 ${isPanel ? "md:col-span-1" : "md:col-span-2"}`}>
             <h3 className="text-gray-900 dark:text-white text-[11px] font-black uppercase tracking-widest mb-5 flex items-center gap-1.5">
               <ShieldCheck className="w-3.5 h-3.5 text-blue-600" /> Respaldo Oficial
             </h3>
@@ -107,19 +109,18 @@ export default function Footer() {
             </div>
           </div>
 
-          {/* Acceso Staff */}
-          <div className="col-span-2 md:col-span-1">
-            <h3 className="text-gray-900 dark:text-white text-[11px] font-black uppercase tracking-widest mb-5">Equipo</h3>
-            {isPanel ? (
+          {/* "Acceso Staff" (link público a /panel/login) sacado a pedido
+              del 25/9 -- no tiene que estar expuesto en el footer del sitio
+              público. "Volver a la Web" se mantiene para cuando el footer
+              se renderiza dentro del panel (ej. login). */}
+          {isPanel && (
+            <div className="col-span-2 md:col-span-1">
+              <h3 className="text-gray-900 dark:text-white text-[11px] font-black uppercase tracking-widest mb-5">Equipo</h3>
               <Link href="/" className="inline-flex items-center gap-2 text-blue-600 hover:text-blue-700 text-sm font-black transition-colors">
                 Volver a la Web <ArrowUpRight className="w-3.5 h-3.5" />
               </Link>
-            ) : (
-              <Link href="/panel/login" className="inline-flex items-center gap-2 text-blue-600 hover:text-blue-700 text-sm font-black transition-colors">
-                Acceso Staff <ArrowUpRight className="w-3.5 h-3.5" />
-              </Link>
-            )}
-          </div>
+            </div>
+          )}
 
         </div>
       </div>
