@@ -25,6 +25,15 @@ select cron.schedule(
   $$ select net.http_get('https://www.pfaffencars.com/api/cron/panel/pedidos-match?token=REEMPLAZAR_CON_CRON_SECRET'); $$
 );
 
+-- Cada 3 minutos: reenvía por WhatsApp personal las notificaciones de quien
+-- activó "whatsapp_forward" en Mi Espacio → Notificaciones (ver
+-- migraciones/sql_notificaciones_whatsapp_forward.sql).
+select cron.schedule(
+  'panel-notificar-whatsapp-vendedores',
+  '*/3 * * * *',
+  $$ select net.http_get('https://www.pfaffencars.com/api/cron/panel/notificar-whatsapp-vendedores?token=REEMPLAZAR_CON_CRON_SECRET'); $$
+);
+
 -- Cada hora: 4 automatizaciones de WhatsApp (agradecimiento de venta, nudges, etc).
 select cron.schedule(
   'panel-automatizaciones',
