@@ -2,7 +2,7 @@ import { createHmac, timingSafeEqual } from "crypto";
 import { createClient } from "@supabase/supabase-js";
 import { isAiConfiguredV2 } from "@/lib/ai/indexV2";
 import { generarRespuestaAgenteV2, dividirRespuestaEnMensajes } from "@/lib/ai/agenteV2";
-import { sendInstagramPrivateReply, sendInstagramMessage, sendInstagramImageMessage, replyToInstagramCommentPublicly } from "@/lib/meta/client";
+import { sendInstagramPrivateReply, sendInstagramMessage, sendInstagramImageMessage, replyToInstagramCommentPublicly, getInstagramUserProfile } from "@/lib/meta/client";
 import { decrypt } from "@/lib/crypto";
 import { rateLimit, ipDesdeRequest } from "@/lib/rateLimit";
 import { registrarError } from "@/lib/panel/logger";
@@ -113,9 +113,16 @@ async function procesarEvento(payload: any) {
 }
 
 async function obtenerOCrearConversacion(igUserId: string, username: string | null) {
+  // No pisar un username real ya guardado con null -- procesarMensajeDirecto
+  // (los DM) no siempre trae el username en el evento, y antes este upsert
+  // lo sobreescribía a null igual, borrando el @ que sí se había guardado
+  // antes desde un comentario. Se conserva el que ya había si el nuevo viene vacío.
+  const { data: contactoExistente } = await supabase.from("instagram_contactos").select("id, username").eq("ig_user_id", igUserId).maybeSingle();
+  const usernameFinal = username ?? contactoExistente?.username ?? null;
+
   const { data: contacto } = await supabase
     .from("instagram_contactos")
-    .upsert({ ig_user_id: igUserId, username }, { onConflict: "ig_user_id", ignoreDuplicates: false })
+    .upsert({ ig_user_id: igUserId, username: usernameFinal }, { onConflict: "ig_user_id", ignoreDuplicates: false })
     .select("id")
     .single();
   if (!contacto) return null;
@@ -201,7 +208,27 @@ async function procesarMensajeDirecto(msg: any) {
   const igMessageId = msg.message?.mid;
   if (!igUserId || !texto) return;
 
-  const refs = await obtenerOCrearConversacion(igUserId, null);
+  // A diferencia de un comentario (Meta manda el username directo), un DM
+  // entrante solo trae el IGSID numérico -- sin esto el contacto quedaba
+  // guardado con username null y el panel lo mostraba como "@" + el ID
+  // numérico en vez del @usuario real. Solo se pide si todavía no lo
+  // tenemos guardado (evita pegarle a la API de Meta en cada mensaje).
+  const { data: contactoPrevio } = await supabase.from("instagram_contactos").select("username").eq("ig_user_id", igUserId).maybeSingle();
+  let usernameResuelto: string | null = contactoPrevio?.username ?? null;
+  if (!usernameResuelto) {
+    const { data: config } = await supabase.from("instagram_configuracion").select("token_cifrado, token_iv, token_tag").eq("id", true).single();
+    if (config?.token_cifrado && config.token_iv && config.token_tag) {
+      try {
+        const tokenPlano = decrypt(config.token_cifrado, config.token_iv, config.token_tag);
+        const perfil = await getInstagramUserProfile(tokenPlano, igUserId);
+        usernameResuelto = perfil.username ?? null;
+      } catch (err) {
+        registrarError("webhook-ig-v2:resolver-username", err, { igUserId });
+      }
+    }
+  }
+
+  const refs = await obtenerOCrearConversacion(igUserId, usernameResuelto);
   if (!refs) return;
 
   // Meta manda "referral" en el evento de mensaje cuando la charla arrancó

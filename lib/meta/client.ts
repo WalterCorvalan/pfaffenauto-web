@@ -250,6 +250,15 @@ export async function replyToInstagramCommentPublicly(commentId: string, token: 
   }, GRAPH_INSTAGRAM_BASE_URL);
 }
 
+// Instagram: nombre de usuario (@lo-que-sea) real de quien escribe por DM --
+// a diferencia de un comentario (donde Meta manda el username directo en el
+// evento), un mensaje directo entrante solo trae el IGSID (un ID numérico),
+// no el @. Este llamado aparte resuelve el username real para no dejar el
+// contacto guardado solo con el ID numérico como si fuera su nombre.
+export async function getInstagramUserProfile(token: string, igsid: string) {
+  return graphRequest<{ id: string; name?: string; username?: string }>(`${igsid}?fields=name,username`, token, undefined, GRAPH_INSTAGRAM_BASE_URL);
+}
+
 // Instagram: mensaje directo de seguimiento dentro de una conversación ya abierta
 // (después del primer private reply, se puede seguir charlando como un DM normal).
 export async function sendInstagramMessage(igUserId: string, token: string, recipientId: string, text: string) {
