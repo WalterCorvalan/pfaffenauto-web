@@ -29,13 +29,20 @@ Decidir cuál es el email real de contacto y dejarlo consistente en `privacidad/
 
 ## 4. Instagram / Meta Commerce Manager — catálogo de Shopping
 
-Quedó a mitad de configurar en Meta Commerce Manager (catálogo "Pfaffencars_CatalogoIG", tipo Vehículos, portfolio "Pfaffen Autos 2"). Faltó cargar la fuente de datos porque el dominio final todavía no está conectado — los links de cada auto en el feed usan `www.pfaffencars.com/catalogo/...`, que hoy no resuelve.
+**Ya está creado y listo, quedó solo pendiente el último paso (cargar la fuente de datos) porque el dominio final todavía no resuelve.**
 
-**Cuando el dominio esté conectado:**
-1. Volver a Meta Commerce Manager → el catálogo "Pfaffencars_CatalogoIG" ya creado.
-2. Agregar productos → Fuente de datos programada → URL: `https://www.pfaffencars.com/api/meta-catalog/feed`.
-3. Frecuencia: diaria.
-4. Vincular el catálogo a la cuenta de Instagram/Facebook de la agencia (Shopping).
+Estado exacto al 25/9:
+- Portfolio comercial: **Pfaffen Autos 2**.
+- Catálogo creado: **"Pfaffencars_CatalogoIG"**, tipo **Vehículos** ("Vehículos nuevos y usados en venta" — no "Vehículos y ofertas").
+- En el paso "Conecta tus datos" se dejó vinculado el conjunto de datos existente **PfaffenAutos IBot** (seguimiento de eventos de inventario) — no hace falta tocarlo de nuevo.
+- Se llegó hasta la pantalla "Agregar productos → Elige cómo subir el archivo", con **"Usar una URL u Hojas de cálculo de Google"** ya seleccionada. Se probó pegar `https://www.pfaffencars.com/api/meta-catalog/feed` y Meta la rechazó ("La URL no dirige a un archivo admitido") porque ese dominio todavía no está conectado — no llegó a probarse con la URL de Vercel (`https://pfaffenauto-web.vercel.app/api/meta-catalog/feed`) porque no tiene sentido cargar el feed con links de auto rotos (el feed arma cada link de producto con `www.pfaffencars.com/catalogo/...` hardcodeado, ver punto 2) mientras el dominio no esté vivo.
+
+**Para terminarlo, una vez que `pfaffencars.com` esté comprado y conectado en Vercel:**
+1. Meta Commerce Manager → Catálogos → abrir **"Pfaffencars_CatalogoIG"** (ya existe, no crear uno nuevo).
+2. Agregar productos → **Usar una URL u Hojas de cálculo de Google** → pegar `https://www.pfaffencars.com/api/meta-catalog/feed`.
+3. Antes de pegarla, probar la URL directo en el navegador para confirmar que devuelve el CSV (no un 404/500) — si el sitio recién migró de dominio puede tardar un rato en propagar DNS.
+4. Frecuencia de actualización: **diaria**.
+5. Vincular el catálogo a la cuenta de Instagram/Facebook de la agencia (Shopping) — Meta lo pide en el mismo asistente si la cuenta ya está habilitada para Shopping.
 
 ## 5. MercadoLibre (auto-publicación) — sin relación con el dominio
 
