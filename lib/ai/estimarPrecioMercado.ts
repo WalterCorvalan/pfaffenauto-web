@@ -59,16 +59,25 @@ export async function estimarPrecioMercado(vehiculo: DatosVehiculoTasacion): Pro
   try {
     const response = await anthropic.messages.create(
       {
-        model: "claude-haiku-4-5-20251001",
-        max_tokens: 1024,
-        tools: [{ type: "web_search_20250305" as const, name: "web_search", max_uses: 3 }],
+        model: "claude-sonnet-5",
+        max_tokens: 1536,
+        tools: [{ type: "web_search_20250305" as const, name: "web_search", max_uses: 6 }],
         messages: [{
           role: "user",
-          content: `Buscá el precio de mercado ACTUAL en pesos argentinos (ARS) para un vehículo usado: ${descripcion}. Fijate en publicaciones reales de portales argentinos (MercadoLibre, AutoCosmos, Kavak, DeRuedas, etc.) de unidades similares (mismo modelo, año y km parecidos). Al final de tu búsqueda respondé ÚNICAMENTE con un JSON en este formato exacto, sin texto adicional ni backticks:
-{"precio_ars": <número entero, precio promedio de mercado en pesos argentinos, o null si no encontraste datos suficientes>, "fuentes": ["url1", "url2"]}`,
+          content: `Buscá el precio de mercado ACTUAL en pesos argentinos (ARS) para un vehículo usado: ${descripcion}.
+
+Hacé varias búsquedas si hace falta (portales argentinos: MercadoLibre, AutoCosmos, Kavak, DeRuedas, etc.) hasta juntar publicaciones REALES de unidades comparables. Sé estricto al comparar:
+- Mismo modelo y versión/trim (ej: no compares un XEi contra un SE-G o un GLi, son precios distintos).
+- Año igual o el más cercano posible.
+- Kilometraje parecido (±20.000 km aprox.) -- un auto con muchos más km vale menos, uno con menos km vale más, no los promedies como si fueran iguales.
+- Si una publicación te da un rango de precios de varios vendedores (ej: "referencias de $X a $Y"), usá el valor medio de esa publicación, no el extremo más bajo.
+- Descartá publicaciones que no coincidan razonablemente en las condiciones de arriba en vez de promediarlas igual -- mejor un precio basado en 2-3 unidades bien comparables que en muchas mal comparadas.
+
+Al final de tu búsqueda respondé ÚNICAMENTE con un JSON en este formato exacto, sin texto adicional ni backticks:
+{"precio_ars": <número entero, precio de mercado en pesos argentinos para ESTA unidad puntual (año/km/versión), o null si no encontraste datos suficientes>, "fuentes": ["url1", "url2"]}`,
         }],
       },
-      { timeout: 25000, maxRetries: 0 }
+      { timeout: 40000, maxRetries: 0 }
     );
 
     let textoFinal = "";

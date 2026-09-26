@@ -79,6 +79,13 @@ export default function LeadWebDetalleModal({ lead: s, vehiculoObjetivo, onClose
             <div className="rounded-xl px-3 py-2.5 border bg-[#0145F2]/5 border-[#0145F2]/20">
               <p className="text-[10px] font-bold uppercase tracking-widest text-slate-400">Precio de mercado (web)</p>
               <p className="text-sm font-black mt-0.5 text-[#0145F2] dark:text-sky-300">{money(s.precio_mercado_estimado)}</p>
+              {/* precio_mercado_estimado ya viene con el descuento por km
+                  aplicado sobre la media que encontró la IA (pedido del
+                  26/9) -- se deja el desglose acá para que el asesor vea de
+                  dónde sale el número, no que parezca sacado de la nada. */}
+              {s.precio_mercado_medio_web != null && (
+                <p className="text-[10px] text-slate-400 mt-1">Media web: {money(s.precio_mercado_medio_web)}{s.precio_mercado_descuento_pct != null ? ` · -${s.precio_mercado_descuento_pct}% por km` : ""}</p>
+              )}
             </div>
           </div>
 

@@ -1,9 +1,11 @@
 import { z } from "zod";
+import { after } from "next/server";
 import { createClient } from "@supabase/supabase-js";
 import { rateLimit, ipDesdeRequest } from "@/lib/rateLimit";
 import { registrarError } from "@/lib/panel/logger";
 import { crearAlerta } from "@/lib/panel/alertas";
 import { estimarPrecioMercado } from "@/lib/ai/estimarPrecioMercado";
+import { descuentoPctPorKm } from "@/lib/panel/descuentoPorKm";
 
 const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE2_URL!,
@@ -128,21 +130,37 @@ export async function POST(req: Request) {
     // Precio de mercado real (pedido del 26/9, ver lib/ai/estimarPrecioMercado.ts)
     // -- solo para tasación/permuta, no tiene sentido para una solicitud de
     // financiación (ahí el vehículo ya es del stock propio, con precio real).
-    // Best-effort y en el mismo request (no "fire and forget"): en el
-    // runtime serverless la función se congela apenas se devuelve la
-    // respuesta, así que un true fire-and-forget nunca llegaría a guardar el
-    // resultado -- mismo motivo que ya documenta el webhook de WhatsApp.
+    // Con after() (Next 15.1+, soportado en Vercel vía waitUntil) esto corre
+    // DESPUÉS de que el cliente ya recibió la respuesta -- antes iba en el
+    // mismo request porque un fire-and-forget "a mano" se cortaba apenas
+    // Vercel devolvía la respuesta, pero eso hacía esperar al cliente en el
+    // form público hasta 25s (ahora más, con un modelo más grande y más
+    // búsquedas para mejorar la precisión) solo para un dato que ni siquiera
+    // se le muestra a él.
     if (data.tipo !== "financiacion") {
-      const estimado = await estimarPrecioMercado({
-        marca: data.marca, modelo: data.modelo, anio: data.anio, km: data.kilometraje, version: data.version, combustible: data.combustible,
+      after(async () => {
+        const estimado = await estimarPrecioMercado({
+          marca: data.marca, modelo: data.modelo, anio: data.anio, km: data.kilometraje, version: data.version, combustible: data.combustible,
+        });
+        if (estimado) {
+          // Pedido del 26/9: precio_mercado_estimado no es la media cruda de
+          // mercado (precio de venta particular/publicación) -- es la oferta
+          // real que le conviene hacer a la agencia, aplicando la misma
+          // escala de descuento por km que antes calculaba la oferta
+          // instantánea del cotizador (lib/panel/descuentoPorKm.ts). Media
+          // de mercado y % de descuento quedan igual en el registro por si
+          // el asesor quiere ver el desglose.
+          const descuentoPct = data.kilometraje != null ? descuentoPctPorKm(data.kilometraje) : 0;
+          const precioConDescuento = Math.round(estimado.precio * (1 - descuentoPct / 100));
+          const { error: errPrecioMercado } = await supabase.from("leads_tasacion").update({
+            precio_mercado_estimado: precioConDescuento,
+            precio_mercado_medio_web: estimado.precio,
+            precio_mercado_descuento_pct: descuentoPct,
+            precio_mercado_fuentes: estimado.fuentes,
+          }).eq("id", lead.id);
+          if (errPrecioMercado) registrarError("api/panel/leads-tasacion:precio-mercado", errPrecioMercado, { leadId: lead.id });
+        }
       });
-      if (estimado) {
-        const { error: errPrecioMercado } = await supabase.from("leads_tasacion").update({
-          precio_mercado_estimado: estimado.precio,
-          precio_mercado_fuentes: estimado.fuentes,
-        }).eq("id", lead.id);
-        if (errPrecioMercado) registrarError("api/panel/leads-tasacion:precio-mercado", errPrecioMercado, { leadId: lead.id });
-      }
     }
 
     let vendedorFinanciacionId: string | null = null;
