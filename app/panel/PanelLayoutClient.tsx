@@ -290,19 +290,16 @@ const GRUPOS: {
         icon: "/icons/panel/whatsapp.png",
         modulo: "whatsapp",
       },
-      // Instagram y Messenger (25/9) reusan el ícono de WhatsApp como
-      // placeholder -- todavía no hay ilustrado propio de Flaticon para
-      // estos dos (ver otro chat, que se encarga del reemplazo de íconos).
       {
         href: "/panel/instagram",
         label: "Instagram",
-        icon: "/icons/panel/whatsapp.png",
+        icon: "/icons/panel/instagram.png",
         modulo: "instagram",
       },
       {
         href: "/panel/messenger",
         label: "Messenger",
-        icon: "/icons/panel/whatsapp.png",
+        icon: "/icons/panel/messenger.png",
         modulo: "messenger",
       },
       {

@@ -57,7 +57,7 @@ export default function FinanciacionesClient({ solicitudesIniciales, staff, esAd
     <div className="flex flex-col h-full overflow-hidden">
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-3 px-6 pt-4 shrink-0">
         <div>
-          <h1 className="text-xl font-black text-slate-900 dark:text-white flex items-center gap-2"><CreditCard className="w-5 h-5 text-[#0145F2]" /> Financiaciones</h1>
+          <h1 className="text-xl font-black text-slate-900 dark:text-white flex items-center gap-2"><img src="/icons/panel/financiaciones.png" alt="" className="w-5 h-5 object-contain shrink-0" /> Financiaciones</h1>
           <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">Solicitudes de crédito desde la web (home y detalle de auto)</p>
         </div>
         <div className="flex items-center gap-2 shrink-0">

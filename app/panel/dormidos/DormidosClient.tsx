@@ -101,7 +101,7 @@ export default function DormidosClient({
       <div className="flex-1 overflow-y-auto custom-scrollbar p-4 md:p-6">
         <div className="max-w-6xl mx-auto">
           <div className="mb-1">
-            <h1 className="text-xl font-black text-slate-900 dark:text-white flex items-center gap-2"><Moon className="w-5 h-5 text-[#0145F2]" /> Clientes Dormidos</h1>
+            <h1 className="text-xl font-black text-slate-900 dark:text-white flex items-center gap-2"><img src="/icons/panel/dormidos.png" alt="" className="w-5 h-5 object-contain shrink-0" /> Clientes Dormidos</h1>
             <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">Clientes que compraron hace {plazoFiltro}+ meses y podrían estar listos para renovar.</p>
           </div>
 

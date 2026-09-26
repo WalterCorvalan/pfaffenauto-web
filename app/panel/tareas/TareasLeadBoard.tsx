@@ -132,7 +132,7 @@ export default function TareasLeadBoard({
               <CheckSquare className="w-5 h-5 text-[#0145F2]" />
             </div>
             <div>
-              <h1 className="text-[17px] font-bold text-slate-900 dark:text-white leading-tight">Tareas de Leads</h1>
+              <h1 className="text-[17px] font-bold text-slate-900 dark:text-white leading-tight flex items-center gap-1.5"><img src="/icons/panel/tareas-leads.png" alt="" className="w-4 h-4 object-contain shrink-0" /> Tareas de Leads</h1>
               <p className="text-[11px] font-medium text-slate-500 dark:text-slate-400 mt-0.5">Seguimiento comercial de leads de WhatsApp e Instagram, con acceso directo</p>
             </div>
           </div>

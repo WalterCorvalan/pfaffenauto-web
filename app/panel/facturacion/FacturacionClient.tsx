@@ -66,7 +66,7 @@ export default function FacturacionClient({ vehiculosIniciales }: { vehiculosIni
   return (
     <div className="p-6 max-w-6xl mx-auto">
       <div className="mb-5">
-        <h1 className="text-xl font-bold flex items-center gap-2"><FileText className="w-5 h-5 text-[#0145F2]" /> Facturación</h1>
+        <h1 className="text-xl font-bold flex items-center gap-2"><img src="/icons/panel/facturacion.png" alt="" className="w-5 h-5 object-contain shrink-0" /> Facturación</h1>
         <p className="text-sm text-slate-400">Estado de facturación de cada vehículo del stock.</p>
       </div>
 

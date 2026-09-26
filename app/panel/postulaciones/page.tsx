@@ -10,7 +10,7 @@ export default async function PostulacionesPage() {
   return (
     <div className="p-6">
       <div className="flex items-center gap-2 mb-1">
-        <Users className="w-5 h-5 text-[#0145F2]" />
+        <img src="/icons/panel/postulaciones.png" alt="" className="w-5 h-5 object-contain" />
         <h1 className="text-xl font-bold text-slate-900 dark:text-white">Postulaciones</h1>
       </div>
       <p className="text-sm text-slate-400 mb-6">{(postulaciones || []).length} postulaci{(postulaciones || []).length === 1 ? "ón" : "ones"} recibidas desde /trabaja-con-nosotros</p>

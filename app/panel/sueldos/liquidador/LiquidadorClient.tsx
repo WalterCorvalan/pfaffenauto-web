@@ -186,7 +186,7 @@ export default function LiquidadorClient({ empleados, liquidacionesPrevias, cate
     <div className="flex flex-col h-full overflow-hidden">
       <div className="flex-1 overflow-y-auto bg-slate-50 dark:bg-[#141414] p-6 space-y-6">
         <div>
-          <h1 className="text-xl font-black text-slate-900 dark:text-white flex items-center gap-2"><Wallet className="w-5 h-5 text-[#0145F2]" /> Liquidador de sueldos</h1>
+          <h1 className="text-xl font-black text-slate-900 dark:text-white flex items-center gap-2"><img src="/icons/panel/liquidador-sueldos.png" alt="" className="w-5 h-5 object-contain shrink-0" /> Liquidador de sueldos</h1>
           <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">Sueldo base + comisión + trabajo de taller + presentismo</p>
         </div>
         <div className="bg-white dark:bg-white/[0.02] border border-slate-200 dark:border-white/5 rounded-2xl shadow-sm p-6">

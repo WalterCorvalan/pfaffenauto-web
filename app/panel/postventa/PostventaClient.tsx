@@ -160,7 +160,7 @@ export default function PostventaClient({
         <div className="max-w-4xl mx-auto">
           <div className="flex flex-col md:flex-row md:items-center justify-between gap-3 mb-4">
             <div>
-              <h1 className="text-xl font-black text-slate-900 dark:text-white flex items-center gap-2"><Phone className="w-5 h-5 text-[#0145F2]" /> Postventa</h1>
+              <h1 className="text-xl font-black text-slate-900 dark:text-white flex items-center gap-2"><img src="/icons/panel/postventa.png" alt="" className="w-5 h-5 object-contain shrink-0" /> Postventa</h1>
               <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
                 {tab === "recontactos" ? `Recontacto de clientes: service, VTV, seguro, garantía y seguimiento. ${recordatoriosFiltrados.length} pendientes.` : `Todos los que ya te compraron un auto. ${compras.length} clientes.`}
               </p>

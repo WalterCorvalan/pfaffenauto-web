@@ -29,7 +29,7 @@ export default function MessengerClient() {
           ))}
         </div>
         <h1 className="text-sm font-bold text-slate-900 dark:text-white flex items-center gap-1.5 ml-auto shrink-0">
-          <MessageCircle className="w-4 h-4 text-blue-600" /> Messenger
+          <img src="/icons/panel/messenger.png" alt="" className="w-4 h-4 object-contain shrink-0" /> Messenger
         </h1>
       </div>
 

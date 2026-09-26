@@ -1,19 +1,9 @@
 "use client";
 
-import React, { useState, useEffect, useRef } from "react";
+import React, { useState, useEffect } from "react";
 import { createPortal } from "react-dom";
-import Script from "next/script";
 import { supabase2 } from "@/lib/supabase/client";
 import { CalendarDays, X, CheckCircle2, Loader2, MapPin, Clock, CarFront, User, Phone } from "lucide-react";
-
-declare global {
-  interface Window {
-    turnstile?: {
-      render: (container: HTMLElement, options: Record<string, unknown>) => string;
-      reset: (widgetId?: string) => void;
-    };
-  }
-}
 
 interface AgendarVisitaFormProps {
   auto: any;
@@ -34,13 +24,6 @@ export default function AgendarVisitaForm({ auto, isMobile = false }: AgendarVis
   const [horario, setHorario] = useState("10:00");
   const [ocupadas, setOcupadas] = useState<string[]>([]);
 
-  // Turnstile (anti-spam)
-  const [turnstileToken, setTurnstileToken] = useState("");
-  const [turnstileListo, setTurnstileListo] = useState(false);
-  const [turnstileError, setTurnstileError] = useState(false);
-  const turnstileRef = useRef<HTMLDivElement>(null);
-  const turnstileWidgetId = useRef<string | null>(null);
-
   const sucursalNombre = auto?.sucursales?.nombre || "Casa Central";
   const autoNombre = `${auto.marca} ${auto.modelo}`;
 
@@ -48,39 +31,6 @@ export default function AgendarVisitaForm({ auto, isMobile = false }: AgendarVis
   useEffect(() => {
     setMounted(true);
   }, []);
-
-  // No confiamos solo en el onLoad del <Script>: si otra tarjeta del stock ya
-  // insertó el mismo script de Turnstile antes, next/script dedupea el tag y
-  // este onLoad puede no disparar — con un poll alcanza igual una vez que
-  // window.turnstile está disponible.
-  useEffect(() => {
-    if (!isOpen || turnstileListo) return;
-    if (window.turnstile) { setTurnstileListo(true); return; }
-    const intervalo = setInterval(() => {
-      if (window.turnstile) {
-        setTurnstileListo(true);
-        clearInterval(intervalo);
-      }
-    }, 300);
-    return () => clearInterval(intervalo);
-  }, [isOpen, turnstileListo]);
-
-  // Renderiza el widget de Turnstile cuando se abre el modal
-  useEffect(() => {
-    if (!isOpen || success || !turnstileListo || !turnstileRef.current || !window.turnstile) return;
-    if (turnstileWidgetId.current) return; // ya renderizado
-
-    turnstileWidgetId.current = window.turnstile.render(turnstileRef.current, {
-      sitekey: process.env.NEXT_PUBLIC_TURNSTILE_SITE_KEY || "",
-      callback: (token: string) => { setTurnstileToken(token); setTurnstileError(false); },
-      "expired-callback": () => setTurnstileToken(""),
-      "error-callback": (code: string) => {
-        setTurnstileToken("");
-        setTurnstileError(true);
-        console.error("[turnstile] error-callback:", code, "— probable causa: el dominio actual no está autorizado para este sitekey en el dashboard de Cloudflare.");
-      },
-    });
-  }, [isOpen, success, turnstileListo]);
 
   // Mismo chequeo de horarios ocupados que AgendarCitaForm.tsx -- antes este
   // formulario (el de cada tarjeta del stock) dejaba elegir cualquier
@@ -113,10 +63,6 @@ export default function AgendarVisitaForm({ auto, isMobile = false }: AgendarVis
       setError("Ese horario ya está ocupado, elegí otro.");
       return;
     }
-    if (!turnstileToken) {
-      setError("Completá la verificación anti-spam antes de continuar.");
-      return;
-    }
 
     setLoading(true);
 
@@ -125,7 +71,6 @@ export default function AgendarVisitaForm({ auto, isMobile = false }: AgendarVis
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          turnstileToken,
           vehiculo_id: auto.id,
           vehiculo_marca: auto.marca,
           vehiculo_modelo: auto.modelo,
@@ -146,17 +91,11 @@ export default function AgendarVisitaForm({ auto, isMobile = false }: AgendarVis
         setIsOpen(false);
         setSuccess(false);
         setNombre(""); setTelefono(""); setFecha(""); setHorario("10:00");
-        setTurnstileToken("");
-        turnstileWidgetId.current = null;
       }, 4000);
 
     } catch (err) {
       console.error("Error al agendar:", err);
       setError(err instanceof Error ? err.message : "Hubo un error al agendar la visita. Intentá nuevamente.");
-      if (turnstileWidgetId.current && window.turnstile) {
-        window.turnstile.reset(turnstileWidgetId.current);
-      }
-      setTurnstileToken("");
     } finally {
       setLoading(false);
     }
@@ -265,15 +204,6 @@ export default function AgendarVisitaForm({ auto, isMobile = false }: AgendarVis
                 </div>
               </div>
 
-              <div className="flex flex-col items-center gap-1.5">
-                <div ref={turnstileRef} />
-                {turnstileError && (
-                  <p className="text-rose-500 text-[11px] font-semibold text-center max-w-xs">
-                    No se pudo cargar la verificación anti-spam. Puede ser un bloqueador de anuncios o un problema temporal — probá recargar la página.
-                  </p>
-                )}
-              </div>
-
               {error && (
                 <div className="bg-rose-50 dark:bg-rose-400/10 border border-rose-100 dark:border-rose-400/20 text-rose-600 dark:text-rose-300 text-xs font-semibold px-4 py-3 rounded-xl animate-shake">
                   {error}
@@ -290,7 +220,7 @@ export default function AgendarVisitaForm({ auto, isMobile = false }: AgendarVis
                 </button>
                 <button
                   type="submit"
-                  disabled={loading || !turnstileToken}
+                  disabled={loading}
                   className="flex-[2] py-3.5 bg-[#0145F2] text-white font-black text-[10px] uppercase tracking-widest rounded-xl hover:bg-blue-600 transition-all shadow-lg shadow-blue-500/30 disabled:opacity-50 flex items-center justify-center gap-2"
                 >
                   {loading && <Loader2 className="w-4 h-4 animate-spin" />}
@@ -301,12 +231,6 @@ export default function AgendarVisitaForm({ auto, isMobile = false }: AgendarVis
           )}
         </div>
       </div>
-
-      <Script
-        src="https://challenges.cloudflare.com/turnstile/v0/api.js"
-        strategy="lazyOnload"
-        onLoad={() => setTurnstileListo(true)}
-      />
     </div>
   );
 

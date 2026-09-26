@@ -92,7 +92,7 @@ export default function SenasClient({
         <div className="max-w-6xl mx-auto">
           <div className="flex flex-col md:flex-row md:items-center justify-between gap-3 mb-4">
             <div>
-              <h1 className="text-xl font-black text-slate-900 dark:text-white flex items-center gap-2"><Wallet className="w-5 h-5 text-[#0145F2]" /> Señas</h1>
+              <h1 className="text-xl font-black text-slate-900 dark:text-white flex items-center gap-2"><img src="/icons/panel/senas.png" alt="" className="w-5 h-5 object-contain shrink-0" /> Señas</h1>
               <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">Anticipos y reservas de unidades</p>
             </div>
             <button onClick={() => setModalAbierto(true)} className="flex items-center justify-center gap-1.5 bg-[#0145F2] hover:bg-[#0138c9] text-white px-4 py-2.5 rounded-xl text-sm font-bold transition-colors shrink-0"><Plus className="w-4 h-4" /> Nueva Seña</button>

@@ -229,7 +229,7 @@ export default function MensajesClient({ miId, miNombre, staff }: { miId: string
     <div className="flex h-full overflow-hidden bg-white dark:bg-[#0A0A0A]">
       <div className={`w-full sm:w-80 border-r border-slate-200 dark:border-white/10 flex flex-col shrink-0 ${canalActivoId ? "hidden sm:flex" : "flex"}`}>
         <div className="px-4 py-3 border-b border-slate-100 dark:border-white/10">
-          <h1 className="text-base font-bold text-slate-900 dark:text-white">Mensajes</h1>
+          <h1 className="text-base font-bold text-slate-900 dark:text-white flex items-center gap-1.5"><img src="/icons/panel/mensajes.png" alt="" className="w-4 h-4 object-contain shrink-0" /> Mensajes</h1>
           <p className="text-[11px] text-slate-400">Conectado como {miNombre}</p>
         </div>
         <div className="p-3">

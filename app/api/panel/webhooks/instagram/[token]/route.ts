@@ -130,6 +130,30 @@ async function procesarEvento(payload: any) {
         await procesarEcho(msg);
         continue;
       }
+      // El cliente puede reaccionar con un emoji a un mensaje nuestro (doble
+      // tap = ❤️, o mantener presionado y elegir otro) -- en la app real eso
+      // se ve como un emoji chiquito pegado a la burbuja. Antes este evento
+      // (messaging_reactions, ya suscripto en Meta) se ignoraba entero: la
+      // reacción real del cliente no se veía en ningún lado del panel.
+      if (msg.reaction) {
+        await procesarReaccion(msg.reaction);
+        continue;
+      }
+      // Recibo de lectura: el cliente abrió la charla y vio nuestros
+      // mensajes -- en la app real eso se ve como "Visto" debajo del último
+      // mensaje leído. Meta manda esto por "messaging_seen" (ya suscripto),
+      // pero antes se ignoraba entero.
+      if (msg.read) {
+        await procesarLectura(msg);
+        continue;
+      }
+      // Edición de un mensaje ya enviado por el cliente (Instagram permite
+      // editar un DM después de mandarlo) -- "messaging_edit" ya suscripto,
+      // pero antes se ignoraba y el panel se quedaba con el texto viejo.
+      if (msg.message_edit) {
+        await procesarEdicion(msg.message_edit);
+        continue;
+      }
       if (msg.message?.text || msg.message?.attachments?.length) {
         const resultado = await procesarMensajeDirecto(msg);
         if (resultado) conversacionesTocadas.set(resultado.conversacionId, { mensajeId: resultado.mensajeId, igUserId: resultado.igUserId });
@@ -268,7 +292,14 @@ function resolverTextoYMediaInstagram(message: any): { texto: string | null; tip
   if (attachment.type === "image") return { texto: url ? null : "[Envió una foto]", tipo: "image", mediaUrl: url };
   if (attachment.type === "audio") return { texto: "🎤 Audio", tipo: "audio", mediaUrl: url };
   if (attachment.type === "video") return { texto: url ? null : "[Envió un video]", tipo: "video", mediaUrl: url };
-  if (attachment.type === "share") return { texto: "[Compartió una publicación/reel]", tipo: "text", mediaUrl: null };
+  // "share" (posteo/reel compartido en el DM): Meta manda el link real en
+  // payload.url -- antes se tiraba siempre, así que el panel mostraba texto
+  // muerto sin poder abrir lo que el cliente compartió. Con el link se puede
+  // al menos abrirlo, aunque no se arme la tarjeta con miniatura de Instagram.
+  // Se guarda como tipo "text" (no un valor nuevo) para no arriesgar un
+  // constraint de esa columna que no se puede verificar en este entorno --
+  // el panel igual lo distingue por tener media_url sin ser imagen/audio/video.
+  if (attachment.type === "share") return { texto: url ? null : "[Compartió una publicación/reel]", tipo: "text", mediaUrl: url };
   return { texto: "[Envió un archivo]", tipo: "text", mediaUrl: null };
 }
 
@@ -484,6 +515,79 @@ async function procesarEcho(msg: any) {
     last_message_at: new Date().toISOString(),
     ai_habilitada: false, // un humano ya está atendiendo esta charla a mano -- el bot no debe pisarlo
   }).eq("id", refs.conversacionId);
+}
+
+// Reacción del cliente a un mensaje puntual (mid = el ig_message_id de ESE
+// mensaje, no de la conversación). "unreact" pasa cuando saca la reacción
+// que había puesto -- se limpia la columna en vez de dejar la vieja pegada.
+// Update best-effort: si migraciones/sql_instagram_mensajes_reaccion.sql
+// todavía no corrió (columna no existe), esto falla solo y el resto del
+// webhook sigue andando igual (mismo patrón resiliente que el resto del
+// archivo).
+// Meta a veces manda la reacción como palabra clave en vez del emoji real
+// (herencia del Messenger Platform viejo) -- sin este mapeo el panel mostraba
+// literalmente "love" pegado a la burbuja en vez del corazón que el cliente
+// tocó de verdad en la app.
+const EMOJI_POR_PALABRA_CLAVE: Record<string, string> = {
+  love: "❤️", like: "👍", wow: "😮", haha: "😆", sad: "😢", angry: "😠",
+};
+
+async function procesarReaccion(reaction: any) {
+  const mid = reaction?.mid;
+  if (!mid) return;
+  const crudo = reaction.action === "unreact" ? null : (reaction.emoji || reaction.reaction || null);
+  const emoji = crudo ? (EMOJI_POR_PALABRA_CLAVE[crudo.toLowerCase()] || crudo) : null;
+  const { error } = await supabase.from("instagram_mensajes").update({ reaccion: emoji }).eq("ig_message_id", mid);
+  if (error) registrarError("webhook-ig-v2:reaccion", error, { mid });
+}
+
+// Recibo de lectura. El sender de un evento "read" es el CLIENTE (confirma
+// que vio lo que le mandamos) -- Meta identifica hasta dónde leyó con
+// read.mid (el id del último mensaje que vio) o read.watermark (un
+// timestamp: "todo lo mandado antes de esto ya se vio"). Se soportan los
+// dos formatos porque no hay forma de confirmar cuál manda Instagram en
+// este entorno sin tráfico real -- si ninguno viene, no se marca nada (mejor
+// no marcar que marcar mal). No usa obtenerOCrearConversacion a propósito:
+// un recibo de lectura nunca debería crear una conversación nueva -- si no
+// existe todavía, no hay nada que marcar como leído.
+async function procesarLectura(msg: any) {
+  const igUserId = msg.sender?.id;
+  const read = msg.read;
+  if (!igUserId || !read) return;
+
+  const { data: contacto } = await supabase.from("instagram_contactos").select("id").eq("ig_user_id", igUserId).maybeSingle();
+  if (!contacto) return;
+  const { data: conversacion } = await supabase.from("instagram_conversaciones").select("id").eq("contacto_id", contacto.id).maybeSingle();
+  if (!conversacion) return;
+
+  let corte: string | null = null;
+  if (read.mid) {
+    const { data: mensajeLeido } = await supabase.from("instagram_mensajes").select("created_at").eq("ig_message_id", read.mid).maybeSingle();
+    corte = mensajeLeido?.created_at ?? null;
+  } else if (read.watermark) {
+    corte = new Date(Number(read.watermark)).toISOString();
+  }
+  if (!corte) return;
+
+  const { error } = await supabase.from("instagram_mensajes")
+    .update({ leido_at: new Date().toISOString() })
+    .eq("conversacion_id", conversacion.id)
+    .eq("direccion", "out")
+    .is("leido_at", null)
+    .lte("created_at", corte);
+  if (error) registrarError("webhook-ig-v2:lectura", error, { igUserId });
+}
+
+// Edición de un mensaje ya enviado -- mid identifica CUÁL mensaje se editó,
+// text trae el contenido nuevo. Se marca "editado: true" para que el panel
+// pueda avisar que ese texto no es el original (igual que hace la propia
+// app de Instagram con la etiqueta "Editado").
+async function procesarEdicion(edicion: any) {
+  const mid = edicion?.mid;
+  const textoNuevo = edicion?.text;
+  if (!mid || textoNuevo == null) return;
+  const { error } = await supabase.from("instagram_mensajes").update({ texto: textoNuevo, editado: true }).eq("ig_message_id", mid);
+  if (error) registrarError("webhook-ig-v2:edicion", error, { mid });
 }
 
 // Best-effort, igual que la de WhatsApp: si falla la foto no rompe la

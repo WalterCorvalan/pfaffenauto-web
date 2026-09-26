@@ -1,8 +1,7 @@
 "use client";
 
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect } from "react";
 import Link from "next/link";
-import Script from "next/script";
 import { ArrowLeft, Loader2, ChevronDown, X, CalendarDays, CarFront, Gauge, Zap, Check, Settings2, Flame } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import EnvioExitoso from "@/components/EnvioExitoso";
@@ -10,15 +9,6 @@ import { MARCAS_ARGENTINA, MODELOS_POR_MARCA } from "@/lib/marcasModelos";
 import { supabase2 } from "@/lib/supabase/client";
 import { normalizarMarca } from "@/lib/vehiculos";
 import { LOGOS_MARCAS } from "@/lib/marcasLogos";
-
-declare global {
-  interface Window {
-    turnstile?: {
-      render: (container: HTMLElement, options: Record<string, unknown>) => string;
-      reset: (widgetId?: string) => void;
-    };
-  }
-}
 
 const marcasDisponibles = MARCAS_ARGENTINA;
 const modelosPorMarca = MODELOS_POR_MARCA;
@@ -136,21 +126,6 @@ export default function ConsignarForm() {
   const [email, setEmail] = useState("");
   const [tel, setTel] = useState("");
 
-  // Turnstile
-  const [turnstileToken, setTurnstileToken] = useState("");
-  const [turnstileListo, setTurnstileListo] = useState(false);
-  const [turnstileError, setTurnstileError] = useState(false);
-  const turnstileRef = useRef<HTMLDivElement>(null);
-  const turnstileWidgetId = useRef<string | null>(null);
-
-  useEffect(() => {
-    if (window.turnstile) { setTurnstileListo(true); return; }
-    const intervalo = setInterval(() => {
-      if (window.turnstile) { setTurnstileListo(true); clearInterval(intervalo); }
-    }, 200);
-    return () => clearInterval(intervalo);
-  }, []);
-
   // UI States
   const [openDropdown, setOpenDropdown] = useState<string | null>("anio");
   const [busquedaMarca, setBusquedaMarca] = useState("");
@@ -200,43 +175,12 @@ export default function ConsignarForm() {
     return () => { cancelado = true; };
   }, [marca, modelo]);
 
-  // El <div ref={turnstileRef}> del paso 3 vive dentro de un motion.div con
-  // AnimatePresence mode="wait" -- eso retrasa el montaje del paso entrante
-  // hasta que termina la animación de salida del paso anterior (300ms).
-  // Este efecto se dispara apenas cambia "step", ANTES de que ese div
-  // exista todavía en el DOM (turnstileRef.current es null en ese momento)
-  // -- como las dependencias no vuelven a cambiar, nunca se reintentaba y
-  // el widget no se renderizaba nunca (bug real: Turnstile roto en
-  // Consignar desde que se le sumaron las animaciones del rediseño). Ahora
-  // reintenta cada 100ms hasta que el div realmente montó, mismo patrón
-  // que ya se usa para esperar a que cargue window.turnstile.
-  useEffect(() => {
-    if (step !== 3 || !turnstileListo || !window.turnstile || turnstileWidgetId.current) return;
-    const intentar = () => {
-      if (!turnstileRef.current || !window.turnstile || turnstileWidgetId.current) return false;
-      turnstileWidgetId.current = window.turnstile.render(turnstileRef.current, {
-        sitekey: process.env.NEXT_PUBLIC_TURNSTILE_SITE_KEY || "",
-        callback: (token: string) => { setTurnstileToken(token); setTurnstileError(false); },
-        "expired-callback": () => setTurnstileToken(""),
-        "error-callback": () => { setTurnstileToken(""); setTurnstileError(true); },
-      });
-      return true;
-    };
-    if (intentar()) return;
-    const intervalo = setInterval(() => { if (intentar()) clearInterval(intervalo); }, 100);
-    return () => clearInterval(intervalo);
-  }, [step, turnstileListo]);
-
   const enviarConsignacion = async (e: React.FormEvent) => {
     e.preventDefault();
     setErrorEnvio("");
 
     if (!nombre.trim() || !apellido.trim() || !email.trim() || !tel.trim()) {
       setErrorEnvio("Por favor completá todos los campos de contacto.");
-      return;
-    }
-    if (!turnstileToken) {
-      setErrorEnvio("Completá la verificación de seguridad antes de continuar.");
       return;
     }
 
@@ -247,7 +191,7 @@ export default function ConsignarForm() {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          turnstileToken, marca, modelo, anio,
+          marca, modelo, anio,
           version: `${version}${gnc ? ` - GNC: ${gnc}` : ""}`,
           kilometraje: km,
           nombre: `${nombre.trim()} ${apellido.trim()}`,
@@ -262,10 +206,6 @@ export default function ConsignarForm() {
       setEnviado(true);
     } catch (error) {
       setErrorEnvio(error instanceof Error ? error.message : "Hubo un problema. Reintentá.");
-      if (turnstileWidgetId.current && window.turnstile) {
-        window.turnstile.reset(turnstileWidgetId.current);
-      }
-      setTurnstileToken("");
     } finally {
       setLoading(false);
     }
@@ -620,15 +560,6 @@ export default function ConsignarForm() {
                       </div>
                     </div>
 
-                    <div className="pt-4 flex flex-col items-center gap-1.5">
-                      <div ref={turnstileRef} />
-                      {turnstileError && (
-                        <p className="text-[10px] text-rose-500 font-medium text-center max-w-xs">
-                          No se pudo cargar la verificación anti-spam. Puede ser un bloqueador de anuncios o un problema temporal — probá recargar la página.
-                        </p>
-                      )}
-                    </div>
-
                     {errorEnvio && (
                       <div className="flex items-start gap-2 bg-rose-50 dark:bg-rose-500/10 border border-rose-200 dark:border-rose-500/20 rounded-xl p-4 mt-4">
                         <X className="w-4 h-4 text-rose-500 dark:text-rose-400 shrink-0 mt-0.5" />
@@ -637,8 +568,8 @@ export default function ConsignarForm() {
                     )}
 
                     <div className="pt-6">
-                      <button 
-                        type="submit" disabled={loading || !turnstileToken}
+                      <button
+                        type="submit" disabled={loading}
                         className="w-full py-4 bg-[#0145F2] hover:bg-[#0145F2] disabled:bg-slate-200 dark:disabled:bg-slate-800 disabled:text-slate-400 dark:disabled:text-slate-500 text-white font-black rounded-2xl uppercase tracking-widest text-xs transition-colors flex items-center justify-center gap-2"
                       >
                         {loading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Check className="w-4 h-4" />}
@@ -653,8 +584,6 @@ export default function ConsignarForm() {
           </div>
         </div>
       </div>
-
-      <Script src="https://challenges.cloudflare.com/turnstile/v0/api.js" strategy="lazyOnload" onLoad={() => setTurnstileListo(true)} />
     </div>
   );
 }
