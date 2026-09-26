@@ -77,10 +77,37 @@ export default function LeadWebDetalleModal({ lead: s, vehiculoObjetivo, onClose
               <p className="text-sm font-black mt-0.5 text-slate-800 dark:text-white">{money(s.precio_esperado_cliente)}</p>
             </div>
             <div className="rounded-xl px-3 py-2.5 border bg-[#0145F2]/5 border-[#0145F2]/20">
-              <p className="text-[10px] font-bold uppercase tracking-widest text-slate-400">Oferta calculada</p>
-              <p className="text-sm font-black mt-0.5 text-[#0145F2] dark:text-sky-300">{money(s.oferta_calculada)}{s.descuento_pct != null ? ` (-${s.descuento_pct}%)` : ""}</p>
+              <p className="text-[10px] font-bold uppercase tracking-widest text-slate-400">Precio de mercado (web)</p>
+              <p className="text-sm font-black mt-0.5 text-[#0145F2] dark:text-sky-300">{money(s.precio_mercado_estimado)}</p>
             </div>
           </div>
+
+          {/* Pedido del 26/9: ya no calculamos una "oferta" automática con
+              descuento fijo sobre lo que pide el cliente (sin ancla de
+              mercado real, podía terminar muy por encima del valor real) --
+              ahora el asesor compara los dos números de arriba y decide acá
+              qué ofrecerle. Si hay fuentes de la búsqueda, quedan de
+              respaldo para justificar el número. */}
+          {s.precio_mercado_estimado != null && Array.isArray(s.precio_mercado_fuentes) && s.precio_mercado_fuentes.length > 0 && (
+            <div className="px-1">
+              <p className="text-[10px] font-bold uppercase tracking-widest text-slate-400 mb-1">Fuentes del precio de mercado</p>
+              <div className="flex flex-col gap-0.5">
+                {s.precio_mercado_fuentes.map((url: string, i: number) => (
+                  <a key={i} href={url} target="_blank" rel="noopener noreferrer" className="text-[11px] text-[#0145F2] dark:text-sky-300 hover:underline truncate">{url}</a>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {/* Legacy: leads enviados antes del 26/9 todavía tienen esta
+              "oferta calculada" con descuento fijo -- se sigue mostrando
+              para no perder el dato histórico, pero ningún lead nuevo la trae. */}
+          {s.oferta_calculada != null && (
+            <div className="rounded-xl px-3 py-2.5 border bg-slate-50/60 dark:bg-white/[0.02] border-slate-100 dark:border-white/5">
+              <p className="text-[10px] font-bold uppercase tracking-widest text-slate-400">Oferta calculada (histórico, previo al 26/9)</p>
+              <p className="text-sm font-black mt-0.5 text-slate-600 dark:text-slate-300">{money(s.oferta_calculada)}{s.descuento_pct != null ? ` (-${s.descuento_pct}%)` : ""}</p>
+            </div>
+          )}
 
           {s.acepta_oferta != null && (
             <div className={`flex items-center gap-2 px-3 py-2 rounded-xl ${s.acepta_oferta ? "bg-emerald-50 dark:bg-emerald-500/10 text-emerald-700 dark:text-emerald-300" : "bg-amber-50 dark:bg-amber-500/10 text-amber-700 dark:text-amber-300"}`}>

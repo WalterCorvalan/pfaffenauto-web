@@ -36,3 +36,13 @@ Existió un "Tasar este usado" (`TasarUsadoModal.tsx` + `app/api/panel/tasador-m
 
 - `.update(...).select().maybeSingle()`, no `.single()` — mismo patrón que Ventas/Señas: `.single()` explota con "Cannot coerce..." si RLS o un trigger bloquean releer la fila tras el `UPDATE`, tapando el error real.
 - El número/id lo asigna la base — no calcular nada en el cliente.
+
+## `leads_tasacion` (compra/permuta pedida desde `/cotizador`) — no es la misma tabla que `cotizaciones`
+
+Esta pantalla (`LeadWebDetalleModal.tsx`) también muestra `leads_tasacion` (`tipo` `tasacion`/`permuta`), una tabla completamente distinta de `cotizaciones` de arriba — no hay relación entre ambas. Ver `app/panel/leads/ARCHITECTURE.md` si el contexto es leads en general.
+
+**Pedido del 26/9**: antes `/cotizador` le calculaba al cliente una "oferta instantánea" restando un % fijo por km sobre el precio que ÉL mismo puso (`lib/panel/descuentoPorKm.ts`) — sin ningún ancla de mercado real, así que si pedía muy por encima del valor real, terminábamos ofreciendo igual demasiado caro. Se sacó esa oferta automática del formulario público entero (`CotizadorForm.tsx` ya no la calcula ni la muestra). En su lugar:
+- El formulario solo junta los datos del auto + el precio que el cliente espera (`precio_esperado_cliente`), sin mostrarle ningún número calculado.
+- Al recibir la cotización (`/api/panel/leads-tasacion`), se busca un precio de referencia real por web con `lib/ai/estimarPrecioMercado.ts` (usa la herramienta de búsqueda web de Claude sobre portales argentinos) y se guarda en `precio_mercado_estimado` + `precio_mercado_fuentes` (columnas de `migraciones/sql_leads_tasacion_precio_mercado.sql`). Best-effort: si la búsqueda falla o no encuentra nada, el lead se guarda igual sin ese dato — nunca bloquea el envío del formulario.
+- El asesor ve los dos números (`LeadWebDetalleModal.tsx`: "Precio esperado por el cliente" vs. "Precio de mercado (web)") y decide qué ofrecerle desde el panel — **nunca se le muestra automáticamente ningún precio calculado al cliente en el sitio público**.
+- `oferta_calculada`/`descuento_pct`/`acepta_oferta` quedan como campos históricos (leads de antes del 26/9 todavía los tienen) — se siguen mostrando si existen, pero ningún lead nuevo los completa.

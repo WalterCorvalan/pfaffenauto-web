@@ -3,6 +3,7 @@ import { createClient } from "@supabase/supabase-js";
 import { rateLimit, ipDesdeRequest } from "@/lib/rateLimit";
 import { registrarError } from "@/lib/panel/logger";
 import { crearAlerta } from "@/lib/panel/alertas";
+import { estimarPrecioMercado } from "@/lib/ai/estimarPrecioMercado";
 
 const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE2_URL!,
@@ -122,6 +123,26 @@ export async function POST(req: Request) {
     if (data.combustible) {
       const { error: errCombustible } = await supabase.from("leads_tasacion").update({ combustible: data.combustible }).eq("id", lead.id);
       if (errCombustible) registrarError("api/panel/leads-tasacion:combustible", errCombustible, { leadId: lead.id });
+    }
+
+    // Precio de mercado real (pedido del 26/9, ver lib/ai/estimarPrecioMercado.ts)
+    // -- solo para tasación/permuta, no tiene sentido para una solicitud de
+    // financiación (ahí el vehículo ya es del stock propio, con precio real).
+    // Best-effort y en el mismo request (no "fire and forget"): en el
+    // runtime serverless la función se congela apenas se devuelve la
+    // respuesta, así que un true fire-and-forget nunca llegaría a guardar el
+    // resultado -- mismo motivo que ya documenta el webhook de WhatsApp.
+    if (data.tipo !== "financiacion") {
+      const estimado = await estimarPrecioMercado({
+        marca: data.marca, modelo: data.modelo, anio: data.anio, km: data.kilometraje, version: data.version, combustible: data.combustible,
+      });
+      if (estimado) {
+        const { error: errPrecioMercado } = await supabase.from("leads_tasacion").update({
+          precio_mercado_estimado: estimado.precio,
+          precio_mercado_fuentes: estimado.fuentes,
+        }).eq("id", lead.id);
+        if (errPrecioMercado) registrarError("api/panel/leads-tasacion:precio-mercado", errPrecioMercado, { leadId: lead.id });
+      }
     }
 
     let vendedorFinanciacionId: string | null = null;
