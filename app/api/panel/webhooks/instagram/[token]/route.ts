@@ -18,6 +18,12 @@ const supabase = createClient(
   process.env.SUPABASE2_SERVICE_ROLE_KEY!
 );
 
+// El colchón de DEBOUNCE_MS (ver más abajo) se suma al tiempo de la función
+// -- sin este límite explícito corre el riesgo de superar el default de la
+// plataforma antes de terminar de contestar. Mismo criterio que el webhook
+// de WhatsApp.
+export const maxDuration = 30;
+
 const MENSAJE_APERTURA =
   "¡Hola! 👋 Gracias por tu comentario. Te escribimos por acá para ayudarte más rápido — ¿qué auto te interesa?";
 
@@ -97,7 +103,15 @@ export async function POST(req: Request, { params }: { params: Promise<{ token: 
   return Response.json({ received: true });
 }
 
+// Mismo fix del 25/9 que ya tiene el webhook de WhatsApp: si el cliente
+// manda dos (o más) mensajes casi seguidos por Instagram, el bot tiene que
+// leerlos juntos antes de contestar, no contestar al primero y confundirse
+// con el segundo. Se guardan TODOS los mensajes entrantes del payload
+// primero (acá abajo, sin tocar al agente) y recién al final se dispara el
+// agente una sola vez por conversación tocada -- así el historial que arma
+// ejecutarAgente ya trae los mensajes juntos en vez de solo el primero.
 async function procesarEvento(payload: any) {
+  const conversacionesTocadas = new Map<string, { mensajeId: string; igUserId: string }>();
   for (const entry of payload.entry ?? []) {
     for (const change of entry.changes ?? []) {
       if (change.field === "comments") {
@@ -141,10 +155,38 @@ async function procesarEvento(payload: any) {
         continue;
       }
       if (msg.message?.text || msg.message?.attachments?.length) {
-        await procesarMensajeDirecto(msg);
+        const resultado = await procesarMensajeDirecto(msg);
+        if (resultado) conversacionesTocadas.set(resultado.conversacionId, { mensajeId: resultado.mensajeId, igUserId: resultado.igUserId });
       }
     }
   }
+  for (const [conversacionId, { mensajeId, igUserId }] of conversacionesTocadas) {
+    await ejecutarAgenteConDebounce(conversacionId, mensajeId, igUserId);
+  }
+}
+
+// Además del caso de arriba (mismo payload), Meta puede mandar dos mensajes
+// casi simultáneos del mismo cliente en DOS llamadas de webhook separadas --
+// ahí no alcanza con agrupar dentro de procesarEvento porque son invocaciones
+// distintas de la función. Se espera un colchón corto y, si en ese lapso
+// llegó un mensaje más nuevo en esa conversación, esta invocación se retira
+// sin contestar -- la invocación del mensaje más nuevo es la que va a
+// terminar respondiendo, ya con el historial completo en la consulta que
+// hace ejecutarAgente más abajo. Mismo patrón que el webhook de WhatsApp.
+const DEBOUNCE_MS = 6000;
+
+async function ejecutarAgenteConDebounce(conversacionId: string, mensajeId: string, igUserId: string) {
+  await new Promise((resolve) => setTimeout(resolve, DEBOUNCE_MS));
+  const { data: ultimoEntrante } = await supabase
+    .from("instagram_mensajes")
+    .select("id")
+    .eq("conversacion_id", conversacionId)
+    .eq("direccion", "in")
+    .order("created_at", { ascending: false })
+    .limit(1)
+    .maybeSingle();
+  if (ultimoEntrante && ultimoEntrante.id !== mensajeId) return; // llegó algo más nuevo, esa invocación se encarga
+  await ejecutarAgente(conversacionId, igUserId);
 }
 
 async function obtenerOCrearConversacion(igUserId: string, username: string | null) {
@@ -261,11 +303,11 @@ function resolverTextoYMediaInstagram(message: any): { texto: string | null; tip
   return { texto: "[Envió un archivo]", tipo: "text", mediaUrl: null };
 }
 
-async function procesarMensajeDirecto(msg: any) {
+async function procesarMensajeDirecto(msg: any): Promise<{ conversacionId: string; mensajeId: string; igUserId: string } | null> {
   const igUserId = msg.sender?.id;
   const { texto, tipo, mediaUrl } = resolverTextoYMediaInstagram(msg.message);
   const igMessageId = msg.message?.mid;
-  if (!igUserId || (!texto && !mediaUrl)) return;
+  if (!igUserId || (!texto && !mediaUrl)) return null;
 
   // A diferencia de un comentario (Meta manda el username directo), un DM
   // entrante solo trae el IGSID numérico -- sin esto el contacto quedaba
@@ -288,7 +330,7 @@ async function procesarMensajeDirecto(msg: any) {
   }
 
   const refs = await obtenerOCrearConversacion(igUserId, usernameResuelto);
-  if (!refs) return;
+  if (!refs) return null;
 
   // Meta manda "referral" en el evento de mensaje cuando la charla arrancó
   // desde un anuncio de Click-to-Instagram o el botón "Enviar mensaje" de
@@ -299,7 +341,7 @@ async function procesarMensajeDirecto(msg: any) {
     await supabase.from("instagram_conversaciones").update({ canal_origen: "Meta Ads" }).eq("id", refs.conversacionId);
   }
 
-  const { error } = await supabase.from("instagram_mensajes").insert({
+  const { data: mensajeInsertado, error } = await supabase.from("instagram_mensajes").insert({
     conversacion_id: refs.conversacionId,
     ig_message_id: igMessageId,
     direccion: "in",
@@ -307,11 +349,11 @@ async function procesarMensajeDirecto(msg: any) {
     texto,
     media_url: mediaUrl,
     status: "received",
-  });
+  }).select("id").single();
   if (error) {
-    if (error.code === "23505") return; // duplicado, Meta reintentó el mismo evento
+    if (error.code === "23505") return null; // duplicado, Meta reintentó el mismo evento
     registrarError("webhook-ig-v2:insertar-mensaje", error, { conversacionId: refs.conversacionId });
-    return;
+    return null;
   }
 
   await supabase.from("instagram_conversaciones").update({
@@ -320,7 +362,7 @@ async function procesarMensajeDirecto(msg: any) {
   }).eq("id", refs.conversacionId);
   // Alerta de "nuevo mensaje" la dispara el trigger sobre instagram_mensajes.
 
-  await ejecutarAgente(refs.conversacionId, igUserId);
+  return { conversacionId: refs.conversacionId, mensajeId: mensajeInsertado.id, igUserId };
 }
 
 const RESPUESTA_FALLBACK = "¡Hola! Gracias por escribirnos a Pfaffen Cars. En breve te contacta uno de nuestros asesores. 🚗";
