@@ -2,7 +2,6 @@
 
 import { useState, useEffect } from "react";
 import { useSearchParams } from "next/navigation";
-import { MessageSquareText } from "lucide-react";
 import ChatClient from "./ChatClient";
 import LeadsTab from "./LeadsTab";
 
@@ -38,7 +37,7 @@ export default function ConversacionesShell({
         <div className="flex items-center gap-3 ml-auto">
           <p className="text-[10px] text-slate-400 shrink-0 hidden sm:block">{leadsConConversacion} lead{leadsConConversacion === 1 ? "" : "s"} con conversación</p>
           <h1 className="text-sm font-bold text-slate-900 dark:text-white flex items-center gap-1.5 shrink-0">
-            <MessageSquareText className="w-4 h-4 text-emerald-600" /> {canalFijo === "instagram" ? "Instagram" : canalFijo === "whatsapp" ? "WhatsApp" : "Conversaciones"}
+            <img src={`/icons/panel/${canalFijo === "instagram" ? "instagram" : canalFijo === "whatsapp" ? "whatsapp" : "mensajes"}.png`} alt="" className="w-4 h-4 object-contain shrink-0" /> {canalFijo === "instagram" ? "Instagram" : canalFijo === "whatsapp" ? "WhatsApp" : "Conversaciones"}
           </h1>
         </div>
       </div>

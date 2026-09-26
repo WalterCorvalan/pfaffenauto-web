@@ -275,7 +275,7 @@ export default function StockClient({
         <div className="max-w-[80rem] 2xl:max-w-[110rem] mx-auto">
           <div className="flex flex-col md:flex-row md:items-center justify-between gap-3 mb-4">
             <div>
-              <h1 className="text-xl font-black text-slate-900 dark:text-white flex items-center gap-2"><Car className="w-5 h-5 text-[#0145F2]" /> Stock</h1>
+              <h1 className="text-xl font-black text-slate-900 dark:text-white flex items-center gap-2"><img src="/icons/panel/stock.png" alt="" className="w-5 h-5 object-contain shrink-0" /> Stock</h1>
               <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">{disponibles.length} vehículos disponibles para vender</p>
             </div>
             <div className="flex items-center gap-2">

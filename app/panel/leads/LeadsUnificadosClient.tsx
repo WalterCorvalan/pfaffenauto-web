@@ -144,7 +144,7 @@ export default function LeadsUnificadosClient({ leadsIniciales, vendedores, sucu
       <div className={`w-full md:w-[320px] flex-col bg-white dark:bg-[#111] border-r border-slate-200 dark:border-white/10 shrink-0 ${seleccionado ? "hidden md:flex" : "flex"}`}>
         <div className="p-2.5 border-b border-slate-100 dark:border-white/10 shrink-0 space-y-2">
           <div className="flex items-center justify-between gap-2">
-            <h1 className="text-sm font-black text-slate-900 dark:text-white flex items-center gap-1.5"><Radar className="w-4 h-4 text-[#0145F2]" /> Leads</h1>
+            <h1 className="text-sm font-black text-slate-900 dark:text-white flex items-center gap-1.5"><img src="/icons/panel/leads.png" alt="" className="w-5 h-5 object-contain shrink-0" /> Leads</h1>
             <button onClick={() => setShowNuevo(true)} className="flex items-center gap-1 px-2.5 py-1.5 text-[11px] font-bold bg-[#0145F2] hover:bg-[#0138c9] text-white rounded-lg shadow-sm"><Plus className="w-3.5 h-3.5" /> Nuevo</button>
           </div>
           <p className="text-[11px] text-slate-500 dark:text-slate-400">{leads.length} leads · {nuevosHoy} hoy · {sinAsignar} sin asignar</p>

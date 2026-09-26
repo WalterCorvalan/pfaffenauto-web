@@ -45,7 +45,7 @@ export default function LogsClient({ cambios }: { cambios: Cambio[] }) {
             <History className="w-5 h-5 text-indigo-600 dark:text-indigo-300" />
           </div>
           <div>
-            <h1 className="text-[17px] font-bold text-slate-900 dark:text-white leading-tight">Registro de Cambios</h1>
+            <h1 className="text-[17px] font-bold text-slate-900 dark:text-white leading-tight flex items-center gap-1.5"><img src="/icons/panel/registro-cambios.png" alt="" className="w-4 h-4 object-contain shrink-0" /> Registro de Cambios</h1>
             <p className="text-[11px] font-medium text-slate-500 dark:text-slate-400 mt-0.5">Quién modificó qué — últimos {cambios.length} cambios</p>
           </div>
         </div>

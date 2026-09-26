@@ -107,7 +107,7 @@ export default function LiquidacionesClient({
   return (
     <div className="p-6 max-w-6xl mx-auto">
       <div className="flex items-start justify-between gap-3 mb-1 flex-wrap">
-        <div><h1 className="text-xl font-bold">Liquidaciones de gestoría</h1><p className="text-sm text-slate-400">{liquidaciones.length} operación{liquidaciones.length === 1 ? "" : "es"} cargada{liquidaciones.length === 1 ? "" : "s"}</p></div>
+        <div><h1 className="text-xl font-bold flex items-center gap-2"><img src="/icons/panel/liquidaciones.png" alt="" className="w-5 h-5 object-contain shrink-0" /> Liquidaciones de gestoría</h1><p className="text-sm text-slate-400">{liquidaciones.length} operación{liquidaciones.length === 1 ? "" : "es"} cargada{liquidaciones.length === 1 ? "" : "s"}</p></div>
         <div className="flex items-center gap-2 flex-wrap">
           {/* Decía "(filtro)" pero ingresoAgenciaTotal se calcula sobre
               `liquidaciones` completo (terminadas, hasta 6 meses + en

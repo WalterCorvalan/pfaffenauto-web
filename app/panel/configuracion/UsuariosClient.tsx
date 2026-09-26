@@ -92,7 +92,7 @@ export default function UsuariosClient() {
     <div className="p-6 max-w-6xl mx-auto space-y-5">
       <div className="flex items-start justify-between gap-3 flex-wrap">
         <div>
-          <h1 className="text-xl font-black text-slate-900 dark:text-white flex items-center gap-2"><Settings className="w-5 h-5 text-indigo-600" /> Configuración</h1>
+          <h1 className="text-xl font-black text-slate-900 dark:text-white flex items-center gap-2"><img src="/icons/panel/configuracion.png" alt="" className="w-5 h-5 object-contain shrink-0" /> Configuración</h1>
           <p className="text-sm text-slate-400">Usuarios, roles y permisos del equipo.</p>
         </div>
         <button onClick={() => setNuevo(true)} className="flex items-center gap-1.5 px-4 py-2 text-sm font-bold bg-[#0145F2] hover:bg-[#0138c9] text-white rounded-lg"><UserPlus className="w-4 h-4" /> Nuevo usuario</button>

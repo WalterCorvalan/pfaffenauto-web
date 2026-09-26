@@ -145,7 +145,7 @@ export default function VisitasClient({
     <div className="p-6">
       <div className="flex flex-wrap items-center justify-between gap-3 mb-1">
         <div>
-          <h1 className="text-xl font-bold flex items-center gap-2"><CalendarCheck className="w-5 h-5 text-[#0145F2]" /> Agenda de Citas</h1>
+          <h1 className="text-xl font-bold flex items-center gap-2"><img src="/icons/panel/visitas.png" alt="" className="w-5 h-5 object-contain shrink-0" /> Agenda de Citas</h1>
           <p className="text-sm text-slate-400">Visitas agendadas desde la web o cargadas a mano</p>
         </div>
         <div className="flex items-center gap-2 flex-wrap">

@@ -120,7 +120,7 @@ export default function CalendarioClient({ eventosIniciales, perfiles, miId }: {
     <div className="p-6 max-w-7xl mx-auto">
       <div className="flex items-start justify-between flex-wrap gap-3 mb-6">
         <div>
-          <h1 className="text-2xl font-bold text-slate-900 dark:text-white">Calendario</h1>
+          <h1 className="text-2xl font-bold text-slate-900 dark:text-white flex items-center gap-2"><img src="/icons/panel/calendario.png" alt="" className="w-6 h-6 object-contain shrink-0" /> Calendario</h1>
           <p className="text-sm text-slate-500 dark:text-slate-400 mt-0.5">{eventos.length} eventos · {totalProximos} próximos · {totalPasados} pasados</p>
         </div>
         <div className="flex items-center gap-2">

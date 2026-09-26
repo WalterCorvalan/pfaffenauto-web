@@ -37,7 +37,7 @@ export default function TallerClient({
           <div className="flex items-center gap-3">
             <Wrench className="w-6 h-6 text-[#0145F2]" />
             <div>
-              <h1 className="text-xl font-black text-slate-900 dark:text-white leading-tight">Taller</h1>
+              <h1 className="text-xl font-black text-slate-900 dark:text-white leading-tight flex items-center gap-2"><img src="/icons/panel/taller.png" alt="" className="w-5 h-5 object-contain shrink-0" /> Taller</h1>
               <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
                 Órdenes de trabajo del taller mecánico.
               </p>

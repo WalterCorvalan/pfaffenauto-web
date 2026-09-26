@@ -81,7 +81,7 @@ export default function GestoriaClient({
     <div className="p-6">
       <div className="flex flex-wrap items-start justify-between gap-2 mb-1">
         <div>
-          <h1 className="text-xl font-bold flex items-center gap-2"><ClipboardList className="w-5 h-5 text-[#0145F2]" /> Gestoría — Estado de Transferencias</h1>
+          <h1 className="text-xl font-bold flex items-center gap-2"><img src="/icons/panel/gestoria.png" alt="" className="w-5 h-5 object-contain shrink-0" /> Gestoría — Estado de Transferencias</h1>
           <p className="text-sm text-slate-400">Vista de seguimiento de expedientes activos</p>
         </div>
         <div className="flex items-center gap-2">

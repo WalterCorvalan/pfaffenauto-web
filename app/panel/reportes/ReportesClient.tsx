@@ -171,7 +171,7 @@ export default function ReportesClient(props: Props) {
   return (
     <div className="p-6 max-w-6xl mx-auto space-y-5">
       <div>
-        <h1 className="text-xl font-black text-slate-900 dark:text-white flex items-center gap-2"><BarChart3 className="w-5 h-5 text-indigo-600" /> Reportes y Análisis</h1>
+        <h1 className="text-xl font-black text-slate-900 dark:text-white flex items-center gap-2"><img src="/icons/panel/reportes.png" alt="" className="w-5 h-5 object-contain shrink-0" /> Reportes y Análisis</h1>
         <p className="text-sm text-slate-400">Vista completa — todos los módulos.</p>
       </div>
 

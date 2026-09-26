@@ -107,7 +107,7 @@ export default function AlertasClient({ alertasIniciales }: { alertasIniciales: 
     <div className="p-6 max-w-4xl mx-auto">
       <div className="flex items-start justify-between flex-wrap gap-4 mb-6">
         <div>
-          <h1 className="text-2xl font-bold text-slate-900 dark:text-white">Centro de Alertas</h1>
+          <h1 className="text-2xl font-bold text-slate-900 dark:text-white flex items-center gap-2"><img src="/icons/panel/alertas.png" alt="" className="w-6 h-6 object-contain shrink-0" /> Centro de Alertas</h1>
           <p className="text-sm text-slate-500 dark:text-slate-400 mt-0.5">Items que requieren atención, ordenados por prioridad</p>
         </div>
         <div className="flex items-center gap-2">

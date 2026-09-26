@@ -172,7 +172,7 @@ export default function ExpedientesClient({
     <div className="p-6">
       <div className="flex items-start justify-between mb-1">
         <div>
-          <h1 className="text-xl font-bold flex items-center gap-2"><FolderPlus className="w-5 h-5 text-[#0145F2]" /> Expedientes</h1>
+          <h1 className="text-xl font-bold flex items-center gap-2"><img src="/icons/panel/expedientes.png" alt="" className="w-5 h-5 object-contain shrink-0" /> Expedientes</h1>
           <p className="text-sm text-slate-400">{activos.length} expedientes · {enProceso.length} en trámite · {transferidos.length} cerrados o transferidos</p>
         </div>
       </div>

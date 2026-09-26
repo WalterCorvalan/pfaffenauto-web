@@ -219,7 +219,7 @@ export default function ConfiguracionWhatsappClient() {
   return (
     <div className="p-6 max-w-6xl mx-auto space-y-5">
       <div>
-        <h1 className="text-xl font-black text-slate-900 dark:text-white flex items-center gap-2"><MessageCircle className="w-5 h-5 text-indigo-600" /> Configuración</h1>
+        <h1 className="text-xl font-black text-slate-900 dark:text-white flex items-center gap-2"><img src="/icons/panel/configuracion.png" alt="" className="w-5 h-5 object-contain shrink-0" /> Configuración</h1>
         <p className="text-sm text-slate-400">Conectá el número de WhatsApp Business de Meta para recibir los mensajes de los clientes acá (Conversaciones → WhatsApp) y que el asistente automático conteste hasta que un vendedor toma la charla.</p>
       </div>
 
