@@ -17,6 +17,7 @@ import { bloqueCierreSugerido } from "./promptV2/cierreSugerido";
 import { REGLAS_STOCK_Y_TEMAS } from "./promptV2/reglasStock";
 import { bloqueReglasGenerales } from "./promptV2/reglasGenerales";
 import { SCHEMA_SALIDA } from "./promptV2/schemaSalida";
+import type { TopeFinanciacion, TnaGrupo } from "@/lib/financiacion";
 
 export type ResultadoStockV2 = {
   id: string;
@@ -103,6 +104,34 @@ function formatearResultadosStock(resultados: ResultadoStockV2[], esAlternativa:
 
 export type SucursalInfo = { nombre: string; direccion: string | null; telefono_encargado: string | null; google_maps_url: string | null; encargado_nombre?: string | null };
 
+// Pedido del 26/9: antes el prompt tenía una frase fija ("financiación de
+// hasta el 100% del valor del auto") que no coincidía con los topes reales
+// configurados en Financiaciones → Configuración (50-65% usados según año,
+// 70% para 0km) -- el bot podía prometerle al cliente un tope que después el
+// asesor tenía que desmentir. Ahora recibe los valores reales (misma fuente
+// que /api/financiacion-config y el simulador público) y los cita con
+// confianza, en vez de un número inventado o desactualizado.
+export type FinanciacionInfo = { topes: TopeFinanciacion[]; tope0km: number; tna: TnaGrupo[]; gastosPct: number };
+
+function formatearRangoTopes(topes: TopeFinanciacion[]): string {
+  const pcts = topes.map((t) => t.pct);
+  const min = Math.min(...pcts);
+  const max = Math.max(...pcts);
+  return min === max ? `${min}%` : `${min}% a ${max}% (según el año del auto, más nuevo = mayor tope)`;
+}
+
+export function formatearFinanciacion(info: FinanciacionInfo): string {
+  const tnaValores = info.tna.flatMap((g) => Object.values(g.tna));
+  const tnaMin = Math.min(...tnaValores);
+  const plazos = Array.from(new Set(info.tna.flatMap((g) => Object.keys(g.tna)))).sort((a, b) => Number(a) - Number(b));
+  return `\nFINANCIACIÓN (datos reales, cargados en Financiaciones → Configuración — usalos con confianza en vez de inventar o redondear un número):
+- Tope de financiación sobre usados: ${formatearRangoTopes(info.topes)} del valor del auto.
+- Tope de financiación sobre 0km: ${info.tope0km}%.
+- Tasa (TNA) desde ${tnaMin}% según plazo elegido — plazos disponibles: ${plazos.join(", ")} meses.
+- Gastos administrativos: ${info.gastosPct}% adicional sobre el capital financiado.
+- NUNCA digas "financiamos el 100%" ni ningún porcentaje/tasa que no sea uno de los de arriba — si el cliente pregunta por un número puntual que no podés calcular con esta info (ej: la cuota exacta con su perfil crediticio), ofrecele el simulador de la web (https://www.pfaffencars.com/financiacion) o derivalo a un asesor, nunca inventes ni redondees.`;
+}
+
 // Arma un link directo a WhatsApp a partir del teléfono cargado — evita
 // mostrar el número pelado y que el cliente tenga que copiarlo a mano.
 // wa.me solo necesita dígitos (sin +, espacios ni guiones).
@@ -172,7 +201,7 @@ Vos recibís el dinero.
 Protegé tu vehículo.`;
 }
 
-export function buildSystemPromptV2(vehiculoInfo?: string, resultadosStock?: ResultadoStockV2[], nombreBot?: string, resultadosSonAlternativa?: boolean, sucursales?: SucursalInfo[], sugerirCierre?: boolean, categoriaSolicitada?: string | null, totalRealStock?: number, tono?: string | null, esInstagram?: boolean): string {
+export function buildSystemPromptV2(vehiculoInfo?: string, resultadosStock?: ResultadoStockV2[], nombreBot?: string, resultadosSonAlternativa?: boolean, sucursales?: SucursalInfo[], sugerirCierre?: boolean, categoriaSolicitada?: string | null, totalRealStock?: number, tono?: string | null, esInstagram?: boolean, financiacion?: FinanciacionInfo): string {
   return `${nombreBot ? `Te llamás ${nombreBot}, el` : "Sos el"} asistente virtual oficial de Pfaffen Cars, concesionaria de vehículos 0km y usados.
 
 ${bloqueEstiloYTono(tono)}
@@ -187,6 +216,7 @@ ${INTENCIONES_LINEA}
 ${vehiculoInfo ? `El cliente está consultando sobre: ${vehiculoInfo}` : ""}
 ${resultadosStock ? formatearResultadosStock(resultadosStock, !!resultadosSonAlternativa, categoriaSolicitada, totalRealStock) : ""}
 ${sucursales ? formatearSucursales(sucursales) : ""}
+${financiacion ? formatearFinanciacion(financiacion) : ""}
 ${EQUIPO_PFAFFEN}
 ${bloqueSitioWeb(nombreBot)}
 ${bloqueCierreSugerido(sugerirCierre)}
