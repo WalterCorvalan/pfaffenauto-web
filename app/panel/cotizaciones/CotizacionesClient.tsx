@@ -139,6 +139,19 @@ export default function CotizacionesClient({
     }
   };
 
+  // Mismo campo vendedor_id que ya usa leads_tasacion para financiación
+  // (ver app/api/panel/leads-tasacion/route.ts) -- acá se lo suma a
+  // tasación/permuta, que hasta ahora se cargaban sin asignar a nadie.
+  const asignarVendedorLeadWeb = async (id: string, vendedorId: string) => {
+    const anterior = leadsWeb.find((l) => l.id === id)?.vendedor_id;
+    setLeadsWeb((prev) => prev.map((l) => (l.id === id ? { ...l, vendedor_id: vendedorId || null } : l)));
+    const { error } = await supabase2.from("leads_tasacion").update({ vendedor_id: vendedorId || null }).eq("id", id);
+    if (error) {
+      setLeadsWeb((prev) => prev.map((l) => (l.id === id ? { ...l, vendedor_id: anterior ?? null } : l)));
+      alert("No se pudo asignar el vendedor.");
+    }
+  };
+
   const filtradas = useMemo(() => {
     let lista = cotizaciones.filter((c) => c.estado === tab);
     if (vendedorFiltro) lista = lista.filter((c) => c.vendedor_id === vendedorFiltro);
@@ -403,6 +416,9 @@ export default function CotizacionesClient({
         <LeadWebDetalleModal
           lead={leadsWeb.find((x) => x.id === leadWebDetalle.id) || leadWebDetalle}
           vehiculoObjetivo={vehiculos.find((v) => v.id === leadWebDetalle.vehiculo_objetivo_id) || null}
+          perfiles={perfiles}
+          onCambiarEstado={(estado) => cambiarEstadoLeadWeb(leadWebDetalle.id, estado)}
+          onAsignarVendedor={(vendedorId) => asignarVendedorLeadWeb(leadWebDetalle.id, vendedorId)}
           onClose={() => setLeadWebDetalle(null)}
         />
       )}
