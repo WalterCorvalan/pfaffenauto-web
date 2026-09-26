@@ -1,5 +1,11 @@
 import Anthropic from "@anthropic-ai/sdk";
 import { registrarError } from "@/lib/panel/logger";
+import { registrarUsoAnthropicV2 } from "@/lib/ai/usageLoggerV2";
+
+// Identificador de origen para uso_ia_anthropic -- lo usa también
+// Marketing > Generales (app/panel/marketing/generales/page.tsx) para sumar
+// el costo de esta función al total de costo de IA.
+export const ORIGEN_IA_COTIZACION = "panel-v2/cotizacion-mercado";
 
 // Pedido del 26/9: antes /cotizador le calculaba al cliente una "oferta
 // instantánea" restando un % fijo por km sobre el precio que ÉL puso -- sin
@@ -79,6 +85,13 @@ Al final de tu búsqueda respondé ÚNICAMENTE con un JSON en este formato exact
       },
       { timeout: 40000, maxRetries: 0 }
     );
+
+    // Se registra apenas vuelve la respuesta (haya podido parsear un precio
+    // o no) -- el gasto real de tokens ya se hizo, sea cual sea el resultado.
+    registrarUsoAnthropicV2(ORIGEN_IA_COTIZACION, {
+      inputTokens: response.usage.input_tokens,
+      outputTokens: response.usage.output_tokens,
+    });
 
     let textoFinal = "";
     for (const bloque of response.content) {

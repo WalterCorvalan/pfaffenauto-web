@@ -2,6 +2,7 @@ import { createClient } from "@/lib/supabase/server";
 import Link from "next/link";
 import { BarChart3, MessageSquareText, AtSign, Bot, Megaphone, Search, DollarSign, TrendingUp, TrendingDown, ArrowRight, Users } from "lucide-react";
 import TarjetaCostoIA from "@/components/panel/TarjetaCostoIA";
+import { ORIGEN_IA_COTIZACION } from "@/lib/ai/estimarPrecioMercado";
 
 function inicioDia(offsetDias: number) {
   const d = new Date();
@@ -77,7 +78,7 @@ export default async function MetricasGeneralesPage() {
     supabase.from("vehiculos").select("id", { count: "exact", head: true }).eq("pautado", true),
     supabase.from("campanas_marketing").select("gasto, leads").gte("periodo", inicioMes),
     supabase.from("busquedas_log").select("resultados_encontrados").gte("created_at", desde7),
-    supabase.from("uso_ia_anthropic").select("input_tokens, output_tokens").gte("created_at", desde30).in("origen", ["panel-v2/webhooks/whatsapp", "panel-v2/webhooks/instagram", "panel-v2/rodi", "api/buscar-ia"]),
+    supabase.from("uso_ia_anthropic").select("input_tokens, output_tokens").gte("created_at", desde30).in("origen", ["panel-v2/webhooks/whatsapp", "panel-v2/webhooks/instagram", "panel-v2/rodi", "api/buscar-ia", "gerente_dashboard", ORIGEN_IA_COTIZACION]),
     supabase.from("leads_tasacion").select("id", { count: "exact", head: true }).not("utm_source", "is", null).gte("created_at", inicioMes),
     // "Tasa de cierre global" tiene que contar leads reales, no clientes del
     // CRM -- un lead no vive en una sola tabla (ver app/panel/leads/ARCHITECTURE.md,
