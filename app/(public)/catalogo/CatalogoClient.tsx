@@ -195,8 +195,13 @@ export default function CatalogoClient({ vehiculosIniciales = [], totalInicial =
       // al cargar un auto en Stock, así que un usado nunca queda en 0 sin querer.
       query = query.eq("km", 0);
     } else if (busquedaNormalizada === "usados-seleccionados" || busquedaNormalizada === "autos-seleccionados") {
-      // Todo el stock menos 0km y menos los de Outlet (mismo criterio de precio que usa /outlet).
-      query = query.neq("km", 0).or("precio_publicado_ars.is.null,precio_publicado_ars.gte.10000000");
+      // Pedido del 26/9: "Usados Seleccionados" muestra TODOS los usados,
+      // incluidos los que también aparecen en /outlet -- antes excluía por
+      // precio (mismo corte que Outlet), dejando afuera los usados más
+      // económicos sin que el cliente los viera acá. Outlet ya tiene su
+      // propia sección para destacarlos aparte; no hace falta que acá
+      // desaparezcan.
+      query = query.neq("km", 0);
     } else if (searchQuery) {
       query = query.or(
         `marca.ilike.%${searchQuery}%,modelo.ilike.%${searchQuery}%,tipo.ilike.%${searchQuery}%,segmento.ilike.%${searchQuery}%`,
@@ -207,11 +212,9 @@ export default function CatalogoClient({ vehiculosIniciales = [], totalInicial =
       if (condicionQuery === "0km") {
         query = query.eq("km", 0);
       } else if (condicionQuery === "usados-seleccionados") {
-        // Mismo criterio que el header usaba antes vía "q" -- todo el stock
-        // menos 0km y menos los de Outlet (mismo corte de precio que usa
-        // /outlet). Se movió de "q" a "condicion" para que el link del
-        // header no deje el término escrito en el buscador visible.
-        query = query.neq("km", 0).or("precio_publicado_ars.is.null,precio_publicado_ars.gte.10000000");
+        // Todos los usados, incluidos los que también están en /outlet (ver
+        // el mismo cambio arriba, en "busquedaNormalizada").
+        query = query.neq("km", 0);
       } else if (condicionQuery === "usados") {
         query = query.neq("km", 0);
       }
