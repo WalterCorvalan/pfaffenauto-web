@@ -371,7 +371,7 @@ export default function Stock({ vehiculos }: StockProps) {
                 <Link
                   key={auto.id}
                   href={`/catalogo/${auto.slug}`}
-                  className="min-w-[280px] md:min-w-[360px] h-[380px] md:h-[480px] relative rounded-[32px] overflow-hidden group snap-center shadow-lg dark:shadow-[0_20px_48px_rgba(0,0,0,0.6)] hover:shadow-2xl border border-white/40 dark:border-white/10 shrink-0 transition-all duration-500"
+                  className="min-w-[280px] md:min-w-[360px] h-[300px] md:h-[380px] relative rounded-[32px] overflow-hidden group snap-center shadow-lg dark:shadow-[0_20px_48px_rgba(0,0,0,0.6)] hover:shadow-2xl border border-white/40 dark:border-white/10 shrink-0 transition-all duration-500"
                 >
                   <button
                     onClick={(e) => toggleComparar(e, auto)}
@@ -386,12 +386,12 @@ export default function Stock({ vehiculos }: StockProps) {
                     <Scale className="w-4 h-4" />
                   </button>
                   <div className="absolute inset-0 bg-slate-200 dark:bg-slate-900 z-0"></div>
-                  {/* object-contain, no cover: la tarjeta es alta (380/480px)
-                     y angosta, muy distinta al aspect ratio real de una foto
-                     de auto (horizontal) -- con cover quedaba recortada muy
-                     de cerca, "encima" del auto. Con contain se ve el auto
-                     completo, aunque quede espacio (el fondo oscuro de abajo
-                     lo disimula). */}
+                  {/* Punto medio: object-contain dejaba al auto "flotando"
+                     con espacio vacío arriba/abajo (se probó y no convenció).
+                     Se volvió a object-cover pero con la tarjeta menos alta
+                     (380/480 -> 300/380) -- menos angosta contra el ancho de
+                     la foto real, así que cover recorta bastante menos que
+                     antes sin dejar espacios vacíos. */}
                   <Image
                     src={
                       auto.fotos?.[0] ||
@@ -400,7 +400,7 @@ export default function Stock({ vehiculos }: StockProps) {
                     alt={`${auto.marca} ${auto.modelo} ${auto.anio}`}
                     fill
                     sizes="(max-width: 768px) 280px, 360px"
-                    className="object-contain group-hover:scale-105 transition-transform duration-700 ease-out z-0 mix-blend-multiply dark:mix-blend-normal opacity-90 dark:opacity-85"
+                    className="object-cover group-hover:scale-105 transition-transform duration-700 ease-out z-0 mix-blend-multiply dark:mix-blend-normal opacity-90 dark:opacity-85"
                   />
                   <div className="absolute inset-0 bg-gradient-to-b from-black/70 via-transparent to-black/80 dark:from-black/80 dark:to-black/90 z-10" />
 
