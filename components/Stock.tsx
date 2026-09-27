@@ -371,15 +371,15 @@ export default function Stock({ vehiculos }: StockProps) {
                 <Link
                   key={auto.id}
                   href={`/catalogo/${auto.slug}`}
-                  className="min-w-[280px] md:min-w-[360px] h-[300px] md:h-[380px] relative rounded-[32px] overflow-hidden group snap-center shadow-lg dark:shadow-[0_20px_48px_rgba(0,0,0,0.6)] hover:shadow-2xl border border-white/40 dark:border-white/10 shrink-0 transition-all duration-500"
+                  className="min-w-[280px] md:min-w-[360px] h-[360px] md:h-[440px] relative rounded-[32px] overflow-hidden group snap-center shadow-lg dark:shadow-[0_20px_48px_rgba(0,0,0,0.6)] hover:shadow-2xl border border-white/40 dark:border-white/10 shrink-0 transition-all duration-500"
                 >
                   <div className="absolute inset-0 bg-slate-200 dark:bg-slate-900 z-0"></div>
-                  {/* Punto medio: object-contain dejaba al auto "flotando"
-                     con espacio vacío arriba/abajo (se probó y no convenció).
-                     Se volvió a object-cover pero con la tarjeta menos alta
-                     (380/480 -> 300/380) -- menos angosta contra el ancho de
-                     la foto real, así que cover recorta bastante menos que
-                     antes sin dejar espacios vacíos. */}
+                  {/* Alto de la tarjeta: object-contain dejaba al auto
+                     "flotando" con espacio vacío (no convenció); 300/380 con
+                     object-cover se veía bien pero el título (marca+modelo)
+                     tapaba el techo/capot del auto por falta de aire arriba.
+                     360/440 le da lugar al texto sin volver al recorte
+                     excesivo de la versión original (380/480). */}
                   <Image
                     src={
                       auto.fotos?.[0] ||
