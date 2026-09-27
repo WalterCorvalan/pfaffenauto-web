@@ -5,9 +5,9 @@ import { useSearchParams, useRouter } from "next/navigation";
 import { supabase2 } from "@/lib/supabase/client";
 import ConfirmDialog from "@/components/panel/ConfirmDialog";
 import {
-  Search, Send, Bot, Check, Info, ChevronRight, PanelRight,
+  Search, Send, Bot, Check, CheckCheck, Info, ChevronRight, PanelRight,
   Loader2, Megaphone, X, MessageSquareText, AtSign, Archive, ArchiveRestore, FileCheck2,
-  MessageCircle, ShoppingBag, Link2,
+  MessageCircle, ShoppingBag, Link2, Flame,
 } from "lucide-react";
 
 // Badge con el origen real del lead, sobre el avatar -- pedido del 24/9:
@@ -405,12 +405,40 @@ export default function ChatClient({
     return "bg-slate-300";
   };
 
+  // Preview del último mensaje + ícono de check (pedido 27/9, ver
+  // whatsapp/page.tsx e instagram/page.tsx -- traen c.ultimo_mensaje ahí
+  // porque no hay columna cacheada del último mensaje en la conversación).
+  // WhatsApp trackea pending/sent/delivered/read en un campo "status".
+  // Instagram solo trackea "leido_at" (sin distinguir entregado vs enviado),
+  // así que ahí el check es de 1 o 2 rayitas nomás, sin el estado intermedio.
+  const previewUltimoMensaje = (um: any) => {
+    if (!um) return null;
+    if (um.tipo === "text") return um.texto || "";
+    const ICONS_TIPO: Record<string, string> = { image: "📷 Foto", audio: "🎙️ Audio", video: "🎥 Video", document: "📄 Documento", sticker: "😀 Sticker" };
+    return ICONS_TIPO[um.tipo] || um.texto || "Mensaje";
+  };
+
+  const CheckDeLeido = ({ um }: { um: any }) => {
+    if (!um || um.direccion !== "out") return null;
+    if (canal === "whatsapp") {
+      if (um.status === "read") return <CheckCheck className="w-3.5 h-3.5 text-sky-500 shrink-0" />;
+      if (um.status === "delivered") return <CheckCheck className="w-3.5 h-3.5 text-slate-400 shrink-0" />;
+      if (um.status === "failed") return <Check className="w-3.5 h-3.5 text-rose-500 shrink-0" />;
+      return <Check className="w-3.5 h-3.5 text-slate-400 shrink-0" />; // pending / sent
+    }
+    // Instagram
+    return um.leido_at
+      ? <CheckCheck className="w-3.5 h-3.5 text-sky-500 shrink-0" />
+      : <Check className="w-3.5 h-3.5 text-slate-400 shrink-0" />;
+  };
+
   const renderConversacion = (c: any) => {
     const contactoRaw = canal === "whatsapp" ? c.whatsapp_contactos : c.instagram_contactos;
     const nombreMostrado = canal === "whatsapp" ? contactoRaw?.nombre_perfil : (contactoRaw ? (contactoRaw.nombre_perfil || `@${contactoRaw.username || contactoRaw.ig_user_id}`) : null);
     const contacto = { nombre_perfil: nombreMostrado, telefono: canal === "whatsapp" ? contactoRaw?.telefono : null };
     const iniciales = (contacto?.nombre_perfil || contacto?.telefono || "?").substring(0, 2).toUpperCase();
     const isActive = seleccionada === c.id;
+    const esCaliente = c.calificacion === "caliente";
 
     return (
       <button
@@ -426,13 +454,19 @@ export default function ChatClient({
         <div className="flex-1 min-w-0">
           <div className="flex justify-between items-start mb-0.5">
             <span className={`font-bold text-sm truncate flex items-center gap-1 ${isActive ? "text-emerald-900 dark:text-emerald-200" : "text-slate-900 dark:text-white"}`}>
+              {esCaliente && <span title="Lead caliente" className="shrink-0 inline-flex"><Flame className="w-3.5 h-3.5 text-rose-500 fill-rose-500" /></span>}
               {c.origen_ads && <span title={c.origen_ads} className="shrink-0 inline-flex"><Megaphone className="w-3 h-3 text-indigo-500 dark:text-sky-300" /></span>}
               {contacto?.nombre_perfil || contacto?.telefono}
             </span>
             <span className="text-[11px] text-slate-400 dark:text-slate-500 whitespace-nowrap">{c.last_message_at ? formatDay(c.last_message_at) : ""}</span>
           </div>
-          <div className="flex items-center justify-between">
-            <p className="text-[13px] text-slate-500 dark:text-slate-400 truncate mb-1.5">{c.vendedor?.nombre ? `Asignado a ${c.vendedor.nombre}` : "Sin asignar"}</p>
+          <div className="flex items-center justify-between gap-2 mb-1.5">
+            <span className="flex items-center gap-1 min-w-0 flex-1">
+              <CheckDeLeido um={c.ultimo_mensaje} />
+              <p className="text-[13px] text-slate-500 dark:text-slate-400 truncate">
+                {previewUltimoMensaje(c.ultimo_mensaje) ?? (c.vendedor?.nombre ? `Asignado a ${c.vendedor.nombre}` : "Sin asignar")}
+              </p>
+            </span>
             {c.unread_count > 0 && <span className="text-[10px] font-bold bg-emerald-600 text-white px-1.5 py-0.5 rounded-full shrink-0">{c.unread_count}</span>}
           </div>
           {c.handoff_at && !c.ai_habilitada && (

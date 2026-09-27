@@ -5,7 +5,7 @@ export default async function InstagramPage() {
   const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();
 
-  const [igRes, vendedoresRes, miPerfilRes] = await Promise.all([
+  const [igRes, vendedoresRes, miPerfilRes, ultimosMensajesRes] = await Promise.all([
     supabase
       .from("instagram_conversaciones")
       .select(`
@@ -17,7 +17,14 @@ export default async function InstagramPage() {
       .limit(3000),
     supabase.from("perfiles").select("id, nombre, roles, sucursal_id").eq("activo", true).order("nombre"),
     user?.id ? supabase.from("perfiles").select("roles, sucursal_id").eq("id", user.id).single() : Promise.resolve({ data: null }),
+    // Mismo criterio que /panel/whatsapp -- ver ese page.tsx.
+    supabase.from("instagram_mensajes").select("conversacion_id, texto, tipo, direccion, leido_at, created_at").order("created_at", { ascending: false }).limit(5000),
   ]);
+  const ultimoMensajePorConversacion = new Map<string, { texto: string | null; tipo: string; direccion: string; leido_at: string | null }>();
+  for (const m of ultimosMensajesRes.data || []) {
+    if (!ultimoMensajePorConversacion.has(m.conversacion_id)) ultimoMensajePorConversacion.set(m.conversacion_id, m);
+  }
+  const conversacionesConUltimoMensaje = (igRes.data || []).map((c) => ({ ...c, ultimo_mensaje: ultimoMensajePorConversacion.get(c.id) || null }));
 
   // Mismo criterio de reparto de la lista de vendedores que /panel/whatsapp
   // (ver ese page.tsx) -- admin ve a todos, encargado solo a los de su
@@ -36,7 +43,7 @@ export default async function InstagramPage() {
       canalFijo="instagram"
       backTo="/panel/instagram?tab=leads"
       conversacionesIniciales={[]}
-      conversacionesInstagramIniciales={igRes.data || []}
+      conversacionesInstagramIniciales={conversacionesConUltimoMensaje}
       vendedores={vendedores}
       miId={user?.id || ""}
     />
