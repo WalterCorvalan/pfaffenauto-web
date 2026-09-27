@@ -282,7 +282,7 @@ export default function PublicHeader() {
 
           <button
             onClick={toggleSearchMobile}
-            className="lg:hidden p-2.5 text-primary dark:text-sky-300 bg-white/40 dark:bg-white/5 backdrop-blur-md border border-white/60 dark:border-white/10 rounded-full shadow-sm"
+            className="lg:hidden p-2.5 mr-2 text-primary dark:text-sky-300 bg-white/40 dark:bg-white/5 backdrop-blur-md border border-white/60 dark:border-white/10 rounded-full shadow-sm"
             title="Buscar"
             aria-label="Buscar"
           >
