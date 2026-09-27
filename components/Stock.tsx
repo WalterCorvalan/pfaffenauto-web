@@ -392,11 +392,16 @@ export default function Stock({ vehiculos }: StockProps) {
                   />
                   <div className="absolute inset-0 bg-gradient-to-b from-black/70 via-transparent to-black/80 dark:from-black/80 dark:to-black/90 z-10" />
 
-                  <div className="absolute top-8 left-6 right-6 z-20">
+                  {/* Título más chico (2xl/3xl -> lg/xl): con nombres de 2
+                     líneas (ej "KQ51 CABINA SIMPLE 1.6") el bloque de texto
+                     era tan alto que tapaba la cabina del vehículo aunque el
+                     offset "top" se agrandara -- el problema era la altura
+                     del texto en sí, no solo dónde arrancaba. */}
+                  <div className="absolute top-10 left-6 right-6 z-20">
                     <span className="text-white/80 dark:text-white/70 text-[10px] md:text-xs uppercase tracking-widest font-black drop-shadow-md">
                       {auto.marca}
                     </span>
-                    <h3 className="text-2xl md:text-3xl font-black text-white leading-tight mt-1 drop-shadow-lg uppercase">
+                    <h3 className="text-lg md:text-xl font-black text-white leading-tight mt-1 drop-shadow-lg uppercase">
                       {auto.modelo}
                     </h3>
                   </div>
