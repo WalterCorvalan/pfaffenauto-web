@@ -228,8 +228,25 @@ export default function CatalogoClient({ vehiculosIniciales = [], totalInicial =
     if (precioMaxUsd) query = query.lte("precio_publicado_usd", Number(precioMaxUsd));
 
     // Filtros de Arrays Exactos
-    if (tiposSeleccionados.length > 0)
-      query = query.in("tipo", tiposSeleccionados);
+    // Filtro "Tipo de Vehículo" (LISTA_TIPOS) filtraba contra la columna
+    // "tipo", que no existe en el alta de vehiculos.tsx (el campo real es
+    // "categoria", cargado desde NuevoVehiculoModal.tsx) -- siempre daba 0
+    // resultados para SUV/Pickup/Sedán/Hatchback/Utilitarios/Auto. Se mapea a
+    // los valores reales de categoria. "Sedán" y "Hatchback" no tienen
+    // categoria propia (ambos caen en "Auto"), asi que por ahora devuelven lo
+    // mismo -- no hay forma de distinguir carrocería sin agregar ese dato.
+    if (tiposSeleccionados.length > 0) {
+      const TIPO_A_CATEGORIA: Record<string, string[]> = {
+        SUV: ["SUV"],
+        Pickup: ["Pickup/Camioneta", "Camioneta"],
+        Utilitarios: ["Utilitario"],
+        Auto: ["Auto"],
+        Sedán: ["Auto"],
+        Hatchback: ["Auto"],
+      };
+      const categoriasFiltro = tiposSeleccionados.flatMap((t) => TIPO_A_CATEGORIA[t] || [t]);
+      query = query.in("categoria", categoriasFiltro);
+    }
     if (marcasSeleccionadas.length > 0)
       query = query.in("marca", marcasSeleccionadas);
     if (sucursalesSeleccionadas.length > 0)

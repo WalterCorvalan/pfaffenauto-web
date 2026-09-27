@@ -191,23 +191,29 @@ export default function Hero() {
           transition={{ duration: 0.5, delay: 0.3 }}
           className="flex flex-wrap justify-center gap-3 max-w-xl mx-auto"
         >
-          {/* En mobile el 0KM va donde estaba Híbridos y viceversa — todos los
-             ítems llevan order explícito para que no choquen con el default
-             (order 0); en desktop (md+) vuelven al orden original de fuente. */}
-          <Pill icon={<CarFront className="w-4 h-4"/>} text="SUVs" href="/catalogo?q=SUV" className="order-1 md:order-none" />
-          <Pill icon={<CarFront className="w-4 h-4"/>} text="Sedanes" href="/catalogo?q=Sedan" className="order-2 md:order-none" />
-          <Pill icon={<CarFront className="w-4 h-4" />} text="Pick-ups" href="/catalogo?q=Pick-up" className="order-3 md:order-none" />
+          {/* En mobile, pedido del 27/9: "pirámide invertida" -- filas de
+             pastillas cortas arriba, cada fila siguiente más larga que la
+             anterior, hasta la más larga al final. Se logra con order
+             explícito + separadores "w-full" que fuerzan salto de línea
+             (mismo truco que ya se usaba para el break de 0KM/Híbridos). En
+             desktop (md+) todos vuelven al orden original de fuente. */}
           <Pill
             icon={<CarFront className="w-4 h-4 text-amber-400 dark:text-amber-300" fill="currentColor"/>}
             text="0KM"
             borderClass="border-gray-900 dark:border-white/20 bg-gray-900 dark:bg-white text-white dark:text-black hover:bg-gray-800 dark:hover:bg-slate-200 shadow-md"
             href="/catalogo?q=0km"
-            className="order-4 md:order-none"
+            className="order-1 md:order-none"
           />
-          <div className="w-full h-2 md:hidden order-5 md:order-none"></div> {/* Break en móvil */}
-          <Pill icon={<Zap className="w-4 h-4 text-amber-500 dark:text-amber-400" fill="currentColor"/>} text="Híbridos / Eléctricos" href="/catalogo?q=Hibrido" className="order-6 md:order-none" />
-          <Pill icon={<Users className="w-4 h-4 text-emerald-600 dark:text-emerald-400" />} text="Consignar Mi Auto" borderClass="border-white dark:border-emerald-400/20 bg-emerald-50/80 dark:bg-emerald-400/10 hover:bg-emerald-100/90 dark:hover:bg-emerald-400/20 text-emerald-900 dark:text-emerald-300" href="/consignacion" className="order-7 md:order-none" />
-          <Pill icon={<Grid className="w-4 h-4 text-[#0145F2] dark:text-sky-300"/>} text="Ver Catálogo" borderClass="border-white dark:border-sky-400/20 bg-blue-50/80 dark:bg-sky-400/10 hover:bg-blue-100/90 dark:hover:bg-sky-400/20 text-[#0145F2] dark:text-sky-300" href="/catalogo" className="order-8 md:order-none" />
+          <Pill icon={<CarFront className="w-4 h-4"/>} text="SUVs" href="/catalogo?q=SUV" className="order-2 md:order-none" />
+          <div className="w-full h-2 md:hidden order-3 md:order-none"></div>
+          <Pill icon={<CarFront className="w-4 h-4"/>} text="Sedanes" href="/catalogo?q=Sedan" className="order-4 md:order-none" />
+          <Pill icon={<CarFront className="w-4 h-4" />} text="Pick-ups" href="/catalogo?q=Pick-up" className="order-5 md:order-none" />
+          <div className="w-full h-2 md:hidden order-6 md:order-none"></div>
+          <Pill icon={<Grid className="w-4 h-4 text-[#0145F2] dark:text-sky-300"/>} text="Ver Catálogo" borderClass="border-white dark:border-sky-400/20 bg-blue-50/80 dark:bg-sky-400/10 hover:bg-blue-100/90 dark:hover:bg-sky-400/20 text-[#0145F2] dark:text-sky-300" href="/catalogo" className="order-7 md:order-none" />
+          <div className="w-full h-2 md:hidden order-8 md:order-none"></div>
+          <Pill icon={<Users className="w-4 h-4 text-emerald-600 dark:text-emerald-400" />} text="Consignar Mi Auto" borderClass="border-white dark:border-emerald-400/20 bg-emerald-50/80 dark:bg-emerald-400/10 hover:bg-emerald-100/90 dark:hover:bg-emerald-400/20 text-emerald-900 dark:text-emerald-300" href="/consignacion" className="order-9 md:order-none" />
+          <div className="w-full h-2 md:hidden order-10 md:order-none"></div>
+          <Pill icon={<Zap className="w-4 h-4 text-amber-500 dark:text-amber-400" fill="currentColor"/>} text="Híbridos / Eléctricos" href="/catalogo?q=Hibrido" className="order-11 md:order-none" />
         </motion.div>
 
       </div>
