@@ -102,7 +102,7 @@ export default function FloatingChatbot() {
 
       {/* Ventana del Chat */}
       {isOpen && (
-        <div className="bg-white border border-slate-200 w-[90vw] sm:w-[380px] h-[520px] rounded-3xl shadow-2xl flex flex-col overflow-hidden animate-fadeIn">
+        <div className="bg-white border-0 sm:border border-slate-200 fixed inset-0 sm:static sm:w-[380px] sm:h-[520px] rounded-none sm:rounded-3xl shadow-2xl flex flex-col overflow-hidden animate-fadeIn">
           {/* Cabecera del Chat */}
           <div className="bg-[#0F172A] text-white p-4 flex items-center justify-between shrink-0">
             <div className="flex items-center gap-3">
