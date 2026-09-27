@@ -143,7 +143,7 @@ export default async function WhatsappMetricasPage({
         <StatTile label="Leads calientes" valor={totalCalientes || 0} icon={Flame} color="text-rose-600" />
         <StatTile label="Leads tibios" valor={totalTibios || 0} icon={Flame} color="text-amber-500" />
         <StatTile label="Pidieron humano" valor={`${pctHandoff}%`} icon={PhoneCall} color="text-amber-600" sub={`${totalHandoffs || 0} de ${totalConversacionesGlobal || 0} conversaciones`} />
-        <TarjetaCostoIA costo={costoEstimado30} label="Costo IA (30d)" sub={`${tokensIn.toLocaleString("es-AR")} in · ${tokensOut.toLocaleString("es-AR")} out`} />
+        <TarjetaCostoIA costo={costoEstimado30} label="Costo IA (30d)" limite={15} sub={`${tokensIn.toLocaleString("es-AR")} in · ${tokensOut.toLocaleString("es-AR")} out`} />
       </div>
 
       <div>

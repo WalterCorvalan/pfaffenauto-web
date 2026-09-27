@@ -143,7 +143,7 @@ export default async function InstagramMetricasPage() {
             <p className="text-[11px] font-bold uppercase tracking-widest text-slate-400 mt-1">{t.label}</p>
           </div>
         ))}
-        <TarjetaCostoIA costo={costoEstimado30} label="Costo IA (30d)" />
+        <TarjetaCostoIA costo={costoEstimado30} label="Costo IA (30d)" limite={15} />
       </div>
 
       <div>

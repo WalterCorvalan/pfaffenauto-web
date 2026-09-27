@@ -373,18 +373,6 @@ export default function Stock({ vehiculos }: StockProps) {
                   href={`/catalogo/${auto.slug}`}
                   className="min-w-[280px] md:min-w-[360px] h-[300px] md:h-[380px] relative rounded-[32px] overflow-hidden group snap-center shadow-lg dark:shadow-[0_20px_48px_rgba(0,0,0,0.6)] hover:shadow-2xl border border-white/40 dark:border-white/10 shrink-0 transition-all duration-500"
                 >
-                  <button
-                    onClick={(e) => toggleComparar(e, auto)}
-                    className={`absolute top-5 left-5 z-30 p-2.5 rounded-full shadow-sm transition-all duration-300 border hover:scale-110 active:scale-95 ${
-                      autosComparar.some((a) => a.id === auto.id)
-                        ? "bg-[#0145F2] text-white border-[#0145F2]"
-                        : "bg-white/20 dark:bg-white/10 backdrop-blur-md text-white hover:text-[#0145F2] dark:hover:text-sky-300 hover:bg-white dark:hover:bg-white/20 border-white/40 dark:border-white/15"
-                    }`}
-                    title="Comparar vehículo"
-                    aria-label="Comparar vehículo"
-                  >
-                    <Scale className="w-4 h-4" />
-                  </button>
                   <div className="absolute inset-0 bg-slate-200 dark:bg-slate-900 z-0"></div>
                   {/* Punto medio: object-contain dejaba al auto "flotando"
                      con espacio vacío arriba/abajo (se probó y no convenció).
@@ -404,7 +392,7 @@ export default function Stock({ vehiculos }: StockProps) {
                   />
                   <div className="absolute inset-0 bg-gradient-to-b from-black/70 via-transparent to-black/80 dark:from-black/80 dark:to-black/90 z-10" />
 
-                  <div className="absolute top-6 left-16 right-6 z-20">
+                  <div className="absolute top-6 left-6 right-6 z-20">
                     <span className="text-white/80 dark:text-white/70 text-[10px] md:text-xs uppercase tracking-widest font-black drop-shadow-md">
                       {auto.marca}
                     </span>
