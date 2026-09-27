@@ -458,7 +458,13 @@ export default function ChatClient({
               {c.origen_ads && <span title={c.origen_ads} className="shrink-0 inline-flex"><Megaphone className="w-3 h-3 text-indigo-500 dark:text-sky-300" /></span>}
               {contacto?.nombre_perfil || contacto?.telefono}
             </span>
-            <span className="text-[11px] text-slate-400 dark:text-slate-500 whitespace-nowrap">{c.last_message_at ? formatDay(c.last_message_at) : ""}</span>
+            {/* Fallback a la fecha del último mensaje real (c.ultimo_mensaje,
+               traído en whatsapp/instagram page.tsx) -- hay conversaciones
+               viejas con last_message_at nulo que antes quedaban sin hora. */}
+            {(() => {
+              const fecha = c.last_message_at || c.ultimo_mensaje?.created_at;
+              return <span className="text-[11px] text-slate-400 dark:text-slate-500 whitespace-nowrap">{fecha ? formatDay(fecha) : ""}</span>;
+            })()}
           </div>
           <div className="flex items-center justify-between gap-2 mb-1.5">
             <span className="flex items-center gap-1 min-w-0 flex-1">
