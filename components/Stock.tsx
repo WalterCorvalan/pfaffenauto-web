@@ -392,7 +392,7 @@ export default function Stock({ vehiculos }: StockProps) {
                   />
                   <div className="absolute inset-0 bg-gradient-to-b from-black/70 via-transparent to-black/80 dark:from-black/80 dark:to-black/90 z-10" />
 
-                  <div className="absolute top-6 left-6 right-6 z-20">
+                  <div className="absolute top-8 left-6 right-6 z-20">
                     <span className="text-white/80 dark:text-white/70 text-[10px] md:text-xs uppercase tracking-widest font-black drop-shadow-md">
                       {auto.marca}
                     </span>

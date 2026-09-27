@@ -36,7 +36,7 @@ const NAV_MOBILE: { href: string; label: string; icon: string }[] = [
   { href: "/panel/stock", label: "Stock", icon: "/icons/panel/stock.png" },
   { href: "/panel/clientes", label: "Clientes", icon: "/icons/panel/clientes.png" },
   { href: "/panel/ventas", label: "Ventas", icon: "/icons/panel/ventas.png" },
-  { href: "/panel/calendario", label: "Calendario", icon: "/icons/panel/calendario.png" },
+  { href: "/panel/whatsapp", label: "WhatsApp", icon: "/icons/panel/whatsapp.png" },
 ];
 
 // Todo item necesita "modulo" para que la visibilidad por sector
