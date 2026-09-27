@@ -96,32 +96,20 @@ export default function Stock({ vehiculos }: StockProps) {
     .filter((auto) => auto.destacado)
     .slice(0, 4);
 
+  // Antes filtraban por auto.tipo -- columna que nunca se carga desde el
+  // alta de vehiculos (el campo real es "categoria", el mismo bug que ya se
+  // corrigio en el filtro del catalogo). Pickups zafaba a medias porque
+  // ademas matcheaba por nombre de modelo (hilux/amarok/ranger/strada/toro),
+  // pero se perdia cualquier pickup de otro modelo (reporte real: 2 Karry y
+  // una Rely no aparecian). Sedanes/urbanos dependia 100% de auto.tipo, asi
+  // que nunca mostraba nada. "Sedán"/"Hatchback" no tienen categoria propia,
+  // ambos caen en "Auto" (mismo criterio que el filtro del catalogo).
   const pickipsCarrusel = listaVehiculos
-    .filter((auto) => {
-      const t = normalizar(auto.tipo);
-      const m = normalizar(auto.modelo);
-      return (
-        t.includes("pick") ||
-        t.includes("camioneta") ||
-        m.includes("hilux") ||
-        m.includes("amarok") ||
-        m.includes("ranger") ||
-        m.includes("strada") ||
-        m.includes("toro")
-      );
-    })
+    .filter((auto) => auto.categoria === "Pickup/Camioneta" || auto.categoria === "Camioneta")
     .slice(0, 8);
 
   const urbanosYSedanes = listaVehiculos
-    .filter((auto) => {
-      const t = normalizar(auto.tipo);
-      return (
-        t.includes("sedan") ||
-        t.includes("hatchback") ||
-        t.includes("urbano") ||
-        t.includes("auto")
-      );
-    })
+    .filter((auto) => auto.categoria === "Auto")
     .slice(0, 4);
 
   const idsMostrados = new Set([
