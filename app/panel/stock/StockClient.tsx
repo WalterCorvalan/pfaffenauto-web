@@ -34,6 +34,7 @@ interface Vehiculo {
   ml_publicar_error: string | null; precio_compra: number | null; moneda_compra: string | null; origen: string | null;
   fotos: string[]; notas: string | null; created_at: string;
   sucursal_id: string | null; sucursal: { nombre: string } | null; vendedor_asignado_id: string | null;
+  mandato_id: string | null;
 }
 interface Mandato { id: string; mandante_nombre: string; vehiculo_marca: string; vehiculo_modelo: string; vehiculo_anio: number; fecha: string; plazo_dias: number; tipo_tramite: string; valor: number | null; moneda: string; vehiculo_id: string | null }
 interface Perfil { id: string; nombre: string; sucursal_id?: string | null }
@@ -165,8 +166,15 @@ export default function StockClient({
   const marcas = useMemo(() => Array.from(new Set(vehiculos.map((v) => v.marca))).sort(), [vehiculos]);
 
   const baseTab = useMemo(() => {
-    if (tab === "consignaciones") return vehiculos.filter((v) => v.consignado_por);
-    if (tab === "0km") return vehiculos.filter((v) => v.km === 0);
+    // "0km" nunca por v.km === 0 (hay usados sin km cargado que quedan en
+    // 0/null) -- condicion === "0km" es la unica fuente real, mismo criterio
+    // que el resto del panel (ver ARCHITECTURE.md). "consignaciones" iba por
+    // consignado_por (quien consigna, un campo aparte) en vez de origen
+    // (como se carga el vehiculo) -- un auto puede tener origen "Consignación"
+    // sin ese campo cargado. "mandatos" no filtraba nada, mostraba todo el stock.
+    if (tab === "consignaciones") return vehiculos.filter((v) => v.origen === "Consignación");
+    if (tab === "0km") return vehiculos.filter((v) => v.condicion === "0km");
+    if (tab === "mandatos") return vehiculos.filter((v) => v.mandato_id);
     return vehiculos;
   }, [vehiculos, tab]);
 
@@ -467,7 +475,10 @@ export default function StockClient({
                         const pendientes = pendientesTexto(v);
                         return (
                           <div key={v.id} onClick={() => setFichaRapidaVehiculo(v)} className={`bg-white dark:bg-white/[0.02] border border-slate-200 dark:border-white/5 rounded-2xl overflow-hidden cursor-pointer hover:shadow-md transition-shadow border-l-4 ${bordeAntiguedad(dias, diasEstancado)}`}>
-                            <div className="h-32 bg-slate-100 dark:bg-white/5 flex flex-col items-center justify-center gap-1 relative">
+                            <div
+                              onClick={(e) => { if (v.fotos?.length) { e.stopPropagation(); setGaleria({ fotos: v.fotos, index: 0 }); } }}
+                              className={`h-32 bg-slate-100 dark:bg-white/5 flex flex-col items-center justify-center gap-1 relative ${v.fotos?.length ? "cursor-zoom-in" : ""}`}
+                            >
                               {v.fotos?.[0] ? <img src={v.fotos[0]} alt="" className="w-full h-full object-cover" /> : <><Car className="w-8 h-8 text-slate-300 dark:text-slate-600" /><span className="text-[11px] text-slate-400">Sin foto</span></>}
                               <span className="absolute bottom-1.5 left-1.5 bg-black/50 text-white text-[10px] font-bold px-1.5 py-0.5 rounded">{v.fotos.length} fotos</span>
                             </div>

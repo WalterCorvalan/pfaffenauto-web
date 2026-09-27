@@ -34,6 +34,7 @@ interface Vehiculo {
   fotos: string[]; notas: string | null; created_at: string;
   sucursal_id: string | null; sucursal: { nombre: string } | null; vendedor_asignado_id: string | null;
   numero_motor?: string | null; numero_chasis?: string | null;
+  mandato_id: string | null;
 }
 interface Perfil { id: string; nombre: string; sucursal_id?: string | null }
 interface Cliente { id: string; nombre: string; telefono: string | null; dni_cuit: string | null }

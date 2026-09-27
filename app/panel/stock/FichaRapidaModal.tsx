@@ -19,6 +19,7 @@ interface Vehiculo {
   ml_publicar_error: string | null; precio_compra: number | null; moneda_compra: string | null; origen: string | null;
   fotos: string[]; notas: string | null; created_at: string;
   sucursal_id: string | null; sucursal: { nombre: string } | null; vendedor_asignado_id: string | null;
+  mandato_id: string | null;
 }
 interface Perfil { id: string; nombre: string; sucursal_id?: string | null }
 
