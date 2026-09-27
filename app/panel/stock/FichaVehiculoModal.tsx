@@ -11,7 +11,7 @@ import {
 } from "lucide-react";
 import NuevoVehiculoModal from "./NuevoVehiculoModal";
 import PeritajeModal from "./PeritajeModal";
-import BotonPublicarML from "./BotonPublicarML";
+import BotonPublicarTodo from "./BotonPublicarTodo";
 import { PieChart, Pie, Cell, ResponsiveContainer } from "recharts";
 
 // Ficha de vehículo (Stock) -- se abre desde FichaRapidaModal.tsx ("Abrir
@@ -192,7 +192,7 @@ function TabResumen({ vehiculo, tienePeritaje, onEditarFotos, onCargarPeritaje, 
             {pendientes.map((p) => (
               <li key={p.texto}>
                 {p.texto === "Sin publicar en ML" ? (
-                  <span onClick={(e) => e.stopPropagation()}><BotonPublicarML vehiculoId={vehiculo.id} publicado={vehiculo.publicado_ml} error={vehiculo.ml_publicar_error} onPublicado={onPublicado} /></span>
+                  <span onClick={(e) => e.stopPropagation()}><BotonPublicarTodo vehiculoId={vehiculo.id} publicado={vehiculo.publicado_ml} error={vehiculo.ml_publicar_error} onPublicado={onPublicado} /></span>
                 ) : (
                   <button onClick={p.accion} className="text-xs font-semibold text-amber-700 dark:text-amber-300 underline underline-offset-2 decoration-dotted">{p.texto}</button>
                 )}

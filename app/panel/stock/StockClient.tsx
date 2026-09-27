@@ -16,7 +16,7 @@ import FichaVehiculoModal from "./FichaVehiculoModal";
 import FichaRapidaModal from "./FichaRapidaModal";
 import NuevoMandatoModal from "./NuevoMandatoModal";
 import TuCatalogoModal from "./TuCatalogoModal";
-import BotonPublicarML from "./BotonPublicarML";
+import BotonPublicarTodo from "./BotonPublicarTodo";
 import ImportarXlsxModal from "./ImportarXlsxModal";
 import SenaModal from "./SenaModal";
 import PresupuestoModal from "./PresupuestoModal";
@@ -530,7 +530,7 @@ export default function StockClient({
                         }, claseTd: "text-xs whitespace-nowrap" },
                         { key: "ml", header: "ML", cell: (v) => (
                           <span onClick={(e) => e.stopPropagation()}>
-                            <BotonPublicarML vehiculoId={v.id} publicado={v.publicado_ml} error={v.ml_publicar_error} onPublicado={(id) => actualizarVehiculo(id, { publicado_ml: true, ml_publicar_error: null })} />
+                            <BotonPublicarTodo vehiculoId={v.id} publicado={v.publicado_ml} error={v.ml_publicar_error} onPublicado={(id) => actualizarVehiculo(id, { publicado_ml: true, ml_publicar_error: null })} />
                           </span>
                         ), ocultarEnMobile: true },
                       ] as ColumnaTabla<Vehiculo>[]
