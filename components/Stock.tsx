@@ -641,11 +641,12 @@ export function VehicleCard({
 
         <Link href={`/catalogo/${auto.slug}`} className="block h-full focus:outline-none">
           <div className="bg-white dark:bg-[#11131c] rounded-2xl overflow-hidden flex flex-col h-full border border-gray-200/70 dark:border-white/10 shadow-[0_8px_24px_rgba(0,0,0,0.05)] dark:shadow-[0_8px_24px_rgba(0,0,0,0.35)] hover:shadow-[0_16px_36px_rgba(1,69,242,0.12)] transition-all duration-500 transform hover:-translate-y-1">
-            {/* Más alta que la clásica (200/240 vs 160/180) -- con menos alto
-               se cortaban las ruedas de la foto real del auto. El bloque de
-               datos de abajo se compensó más compacto (menos padding, texto
-               más chico) para no alargar la tarjeta entera. */}
-            <div className="relative h-[200px] sm:h-[240px] bg-gray-100 dark:bg-white/5 overflow-hidden">
+            {/* La tarjeta es 1 columna (ancho completo) en mobile y 2-4
+               columnas en sm+ -- la card de mobile es bastante más ANCHA que
+               la de sm+, así que necesita más alto de imagen para no quedar
+               achatada (se cortaban las ruedas). sm:h-[240px] es el valor ya
+               probado en desktop/tablet, no tocar. */}
+            <div className="relative h-[300px] sm:h-[240px] bg-gray-100 dark:bg-white/5 overflow-hidden">
               <Image
                 src={auto.fotos?.[0] || "/placeholder.jpg"}
                 alt={`${auto.marca} ${auto.modelo}`}
