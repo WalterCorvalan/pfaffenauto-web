@@ -519,7 +519,7 @@ function VehiculosRelacionados({ titulo, vehiculos }: { titulo: string; vehiculo
               href={`/catalogo/${v.slug}`}
               className="block group bg-white/40 dark:bg-white/5 backdrop-blur-2xl rounded-[24px] border border-white/60 dark:border-white/10 overflow-hidden shadow-[0_8px_32px_rgba(0,0,0,0.04)] dark:shadow-none hover:shadow-[0_20px_48px_rgba(1,69,242,0.12)] dark:hover:shadow-none hover:border-white dark:hover:border-white/20 hover:bg-white/70 dark:hover:bg-white/10 transition-all duration-500"
             >
-              <div className="relative h-[140px] sm:h-[160px] bg-white/30 dark:bg-white/5 overflow-hidden mix-blend-multiply dark:mix-blend-normal">
+              <div className="relative h-[180px] sm:h-[220px] bg-white/30 dark:bg-white/5 overflow-hidden mix-blend-multiply dark:mix-blend-normal">
                 {v.fotos?.[0] ? (
                   <Image
                     src={v.fotos[0]}

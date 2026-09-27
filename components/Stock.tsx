@@ -3,7 +3,7 @@
 import React, { useState, useEffect } from "react";
 import Link from "next/link";
 import Image from "next/image";
-import { ChevronRight, ArrowUpRight, Clock, Scale, X, MapPin, Calendar, Gauge, Fuel, Heart, ArrowRight } from "lucide-react";
+import { ChevronRight, ArrowUpRight, Clock, Scale, X, MapPin, Calendar, Gauge, Heart, ArrowRight } from "lucide-react";
 import { motion, AnimatePresence, Variants } from "framer-motion";
 import ComparadorModal from "@/components/modals/ComparadorModal";
 import { MARCAS_CHINAS } from "@/lib/marcasChinas";
@@ -199,9 +199,9 @@ export default function Stock({ vehiculos }: StockProps) {
 
             <div className="relative w-full [mask-image:linear-gradient(to_right,transparent,black_5%,black_95%,transparent)] py-4">
               <div className="flex gap-5 md:gap-6 w-full overflow-x-auto pb-6 custom-scrollbar snap-x snap-mandatory">
-                {[...pickipsCarrusel, ...pickipsCarrusel].map((auto, index) => (
+                {pickipsCarrusel.map((auto) => (
                   <div
-                    key={`${auto.id}-${index}`}
+                    key={auto.id}
                     className="min-w-[280px] max-w-[280px] sm:min-w-[300px] sm:max-w-[300px] flex-shrink-0 snap-center"
                   >
                     <VehicleCard
@@ -619,67 +619,75 @@ export function VehicleCard({
       : "Consultar precio";
 
   if (variante === "alt") {
-    // Caja/combustible en un solo dato: si es híbrido/eléctrico se prioriza
-    // (es el dato que más vende), sino se muestra la transmisión.
-    const cajaOCombustible =
-      auto.combustible === "Híbrido" || auto.combustible === "Eléctrico"
-        ? auto.combustible
-        : auto.transmision || auto.combustible;
-
     return (
-      <Link href={`/catalogo/${auto.slug}`} className="block h-full focus:outline-none group">
-        <div className="bg-white dark:bg-[#11131c] rounded-2xl overflow-hidden flex flex-col h-full border border-gray-200/70 dark:border-white/10 shadow-[0_8px_24px_rgba(0,0,0,0.05)] dark:shadow-[0_8px_24px_rgba(0,0,0,0.35)] hover:shadow-[0_16px_36px_rgba(1,69,242,0.12)] transition-all duration-500 transform hover:-translate-y-1">
-          <div className="relative h-[160px] sm:h-[180px] bg-gray-100 dark:bg-white/5 overflow-hidden">
-            <Image
-              src={auto.fotos?.[0] || "/placeholder.jpg"}
-              alt={`${auto.marca} ${auto.modelo}`}
-              fill
-              sizes="(max-width: 640px) 50vw, (max-width: 1024px) 25vw, 300px"
-              priority={prioridad}
-              className="object-cover object-center group-hover:scale-105 transition-transform duration-700 ease-out"
-            />
-            <span className="absolute top-3 left-3 bg-[#0145F2] text-white text-[10px] font-black uppercase tracking-widest px-3 py-1.5 rounded-full shadow-sm z-10">
-              {auto.condicion === "0km" ? "0KM" : "Destacado"}
-            </span>
-            <span className="absolute top-3 right-3 w-8 h-8 rounded-full bg-white/90 dark:bg-black/50 backdrop-blur-md flex items-center justify-center text-gray-400 dark:text-slate-300 shadow-sm z-10">
-              <Heart className="w-4 h-4" />
-            </span>
-          </div>
+      <div className="relative h-full group">
+        {/* Comparador afuera del <Link> a propósito -- ver comentario de más
+           abajo en la tarjeta clásica (button anidado en <a> es inválido y
+           el click se filtra a la navegación incluso con stopPropagation). */}
+        {onToggleComparar && (
+          <button
+            onClick={(e) => onToggleComparar(e, auto)}
+            className={`absolute top-3.5 left-3.5 z-30 p-2 rounded-full shadow-sm transition-all duration-300 border hover:scale-110 active:scale-95 ${
+              estaSeleccionado
+                ? "bg-[#0145F2] text-white border-[#0145F2]"
+                : "bg-white/80 dark:bg-black/40 backdrop-blur-md text-gray-400 dark:text-slate-300 hover:text-[#0145F2] dark:hover:text-sky-300 border-white/60 dark:border-white/15"
+            }`}
+            title="Comparar vehículo"
+            aria-label="Comparar vehículo"
+          >
+            <Scale className="w-3.5 h-3.5" />
+          </button>
+        )}
 
-          <div className="p-4 sm:p-5 flex flex-col flex-grow">
-            <h3 className="text-sm sm:text-base font-black text-navy dark:text-white leading-tight truncate">
-              {auto.marca} {auto.modelo}
-            </h3>
-
-            <div className="flex items-center flex-wrap gap-x-2.5 gap-y-1 mt-2.5 text-[11px] text-gray-500 dark:text-slate-400 font-semibold">
-              <span className="flex items-center gap-1"><Calendar className="w-3 h-3 shrink-0" />{auto.anio}</span>
-              <span className="text-gray-300 dark:text-white/15">|</span>
-              <span className="flex items-center gap-1"><Gauge className="w-3 h-3 shrink-0" />{auto.km?.toLocaleString("es-AR")} km</span>
-              {cajaOCombustible && (
-                <>
-                  <span className="text-gray-300 dark:text-white/15">|</span>
-                  <span className="flex items-center gap-1"><Fuel className="w-3 h-3 shrink-0" />{cajaOCombustible}</span>
-                </>
-              )}
-              {auto.sucursales?.nombre && (
-                <>
-                  <span className="text-gray-300 dark:text-white/15">|</span>
-                  <span className="flex items-center gap-1 truncate"><MapPin className="w-3 h-3 shrink-0" />{auto.sucursales.nombre}</span>
-                </>
-              )}
-            </div>
-
-            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 mt-auto pt-3.5">
-              <span className="text-base sm:text-lg font-black text-[#0145F2] dark:text-sky-400 tracking-tighter truncate">
-                {precioMostrar}
-              </span>
-              <span className="flex items-center justify-center gap-1 bg-[#0145F2] group-hover:bg-[#0138c9] text-white text-[11px] font-black px-3 py-2 rounded-xl transition-colors shrink-0">
-                Ver detalle <ArrowRight className="w-3.5 h-3.5" />
+        <Link href={`/catalogo/${auto.slug}`} className="block h-full focus:outline-none">
+          <div className="bg-white dark:bg-[#11131c] rounded-2xl overflow-hidden flex flex-col h-full border border-gray-200/70 dark:border-white/10 shadow-[0_8px_24px_rgba(0,0,0,0.05)] dark:shadow-[0_8px_24px_rgba(0,0,0,0.35)] hover:shadow-[0_16px_36px_rgba(1,69,242,0.12)] transition-all duration-500 transform hover:-translate-y-1">
+            {/* Más alta que la clásica (200/240 vs 160/180) -- con menos alto
+               se cortaban las ruedas de la foto real del auto. El bloque de
+               datos de abajo se compensó más compacto (menos padding, texto
+               más chico) para no alargar la tarjeta entera. */}
+            <div className="relative h-[200px] sm:h-[240px] bg-gray-100 dark:bg-white/5 overflow-hidden">
+              <Image
+                src={auto.fotos?.[0] || "/placeholder.jpg"}
+                alt={`${auto.marca} ${auto.modelo}`}
+                fill
+                sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 300px"
+                priority={prioridad}
+                className="object-cover object-center group-hover:scale-105 transition-transform duration-700 ease-out"
+              />
+              <span className="absolute top-3 right-3 w-8 h-8 rounded-full bg-white/90 dark:bg-black/50 backdrop-blur-md flex items-center justify-center text-gray-400 dark:text-slate-300 shadow-sm z-10">
+                <Heart className="w-4 h-4" />
               </span>
             </div>
+
+            <div className="p-3.5 sm:p-4 flex flex-col flex-grow">
+              <h3 className="text-sm sm:text-base font-black text-navy dark:text-white leading-tight truncate">
+                {auto.marca} {auto.modelo}
+              </h3>
+
+              <div className="flex items-center flex-wrap gap-x-2.5 gap-y-1 mt-2 text-[11px] text-gray-500 dark:text-slate-400 font-semibold">
+                <span className="flex items-center gap-1"><Calendar className="w-3 h-3 shrink-0" />{auto.anio}</span>
+                <span className="text-gray-300 dark:text-white/15">|</span>
+                <span className="flex items-center gap-1"><Gauge className="w-3 h-3 shrink-0" />{auto.km?.toLocaleString("es-AR")} km</span>
+                {auto.sucursales?.nombre && (
+                  <>
+                    <span className="text-gray-300 dark:text-white/15">|</span>
+                    <span className="flex items-center gap-1 truncate"><MapPin className="w-3 h-3 shrink-0" />{auto.sucursales.nombre}</span>
+                  </>
+                )}
+              </div>
+
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 mt-auto pt-2.5">
+                <span className="text-base sm:text-lg font-black text-[#0145F2] dark:text-sky-400 tracking-tighter truncate">
+                  {precioMostrar}
+                </span>
+                <span className="flex items-center justify-center gap-1 bg-[#0145F2] group-hover:bg-[#0138c9] text-white text-[11px] font-black px-3 py-2 rounded-xl transition-colors shrink-0">
+                  Ver detalle <ArrowRight className="w-3.5 h-3.5" />
+                </span>
+              </div>
+            </div>
           </div>
-        </div>
-      </Link>
+        </Link>
+      </div>
     );
   }
 
@@ -723,7 +731,7 @@ export function VehicleCard({
         >
           <div className="absolute inset-0 bg-gradient-to-tr from-transparent via-white/40 dark:via-white/10 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-700 pointer-events-none z-20"></div>
 
-          <div className="relative h-[160px] sm:h-[180px] bg-white/30 dark:bg-white/5 flex items-center justify-center overflow-hidden mix-blend-multiply dark:mix-blend-normal">
+          <div className="relative h-[200px] sm:h-[240px] bg-white/30 dark:bg-white/5 flex items-center justify-center overflow-hidden mix-blend-multiply dark:mix-blend-normal">
           <Image
             src={auto.fotos?.[0] || "/placeholder.jpg"}
             alt={`${auto.marca} ${auto.modelo}`}
