@@ -1,6 +1,7 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
+import { useRouter } from "next/navigation";
 import { supabase2 } from "@/lib/supabase/client";
 import { CreditCard, Search, Filter, Clock, MessageSquareText, ExternalLink, CheckCircle2, XCircle, Settings } from "lucide-react";
 import TablaResponsiva, { type ColumnaTabla } from "@/components/panel/TablaResponsiva";
@@ -16,7 +17,22 @@ const ESTADO_STYLES: Record<string, string> = {
 };
 
 export default function FinanciacionesClient({ solicitudesIniciales, staff, esAdminOFinanzas }: { solicitudesIniciales: any[]; staff: { id: string; nombre: string }[]; esAdminOFinanzas: boolean }) {
+  const router = useRouter();
   const [solicitudes, setSolicitudes] = useState(solicitudesIniciales);
+
+  useEffect(() => { setSolicitudes(solicitudesIniciales); }, [solicitudesIniciales]);
+
+  // Realtime sobre leads_tasacion (tipo "financiacion") -- una solicitud
+  // nueva del simulador público antes solo aparecía al recargar a mano.
+  useEffect(() => {
+    let timeoutId: ReturnType<typeof setTimeout>;
+    const refrescarConDebounce = () => { clearTimeout(timeoutId); timeoutId = setTimeout(() => router.refresh(), 400); };
+    const canal = supabase2
+      .channel(`financiaciones-realtime-${Math.random().toString(36).slice(2)}`)
+      .on("postgres_changes", { event: "*", schema: "public", table: "leads_tasacion" }, refrescarConDebounce)
+      .subscribe();
+    return () => { clearTimeout(timeoutId); supabase2.removeChannel(canal); };
+  }, [router]);
   const [filtroEstado, setFiltroEstado] = useState("nuevo");
   const [query, setQuery] = useState("");
   const [seleccionada, setSeleccionada] = useState<any>(null);

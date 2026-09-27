@@ -2,6 +2,7 @@
 
 import { useState, useMemo, useEffect } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
+import { supabase2 } from "@/lib/supabase/client";
 import { Filter, Search, Radar, MessageCircle, AtSign, Bot, User, Plus, Radio, Building2, ChevronDown, Flame, Trash2, Megaphone } from "lucide-react";
 import LeadDetailModal, { CANALES_ORIGEN } from "@/components/panel/conversaciones/LeadDetailModal";
 import NuevoLeadManualModal from "./NuevoLeadManualModal";
@@ -75,6 +76,24 @@ export default function LeadsUnificadosClient({ leadsIniciales, vendedores, sucu
     const origen = searchParams.get("origen") as Origen | null;
     if (leadId && origen) setSeleccionado({ id: leadId, origen });
   }, [searchParams]);
+
+  useEffect(() => { setLeads(leadsIniciales); }, [leadsIniciales]);
+
+  // Realtime sobre las 4 fuentes reales de un lead (ver ARCHITECTURE.md,
+  // "no hay una tabla leads") -- antes un lead nuevo de cualquier canal solo
+  // aparecía acá al recargar la página a mano.
+  useEffect(() => {
+    let timeoutId: ReturnType<typeof setTimeout>;
+    const refrescarConDebounce = () => { clearTimeout(timeoutId); timeoutId = setTimeout(() => router.refresh(), 400); };
+    const canal = supabase2
+      .channel(`leads-realtime-${Math.random().toString(36).slice(2)}`)
+      .on("postgres_changes", { event: "*", schema: "public", table: "whatsapp_conversaciones" }, refrescarConDebounce)
+      .on("postgres_changes", { event: "*", schema: "public", table: "instagram_conversaciones" }, refrescarConDebounce)
+      .on("postgres_changes", { event: "*", schema: "public", table: "rodi_conversaciones" }, refrescarConDebounce)
+      .on("postgres_changes", { event: "*", schema: "public", table: "leads_manuales" }, refrescarConDebounce)
+      .subscribe();
+    return () => { clearTimeout(timeoutId); supabase2.removeChannel(canal); };
+  }, [router]);
 
   const cerrarDetalle = () => {
     setSeleccionado(null);

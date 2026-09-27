@@ -3,6 +3,10 @@
 import { useState } from "react";
 import { X, Globe, MessageSquareText, CheckCircle2, XCircle, ImageIcon, FileVideo, MapPin, CalendarDays, User, Phone, Mail, ExternalLink, TrendingUp } from "lucide-react";
 import Link from "next/link";
+import { TIPO_LEAD_WEB_LABEL } from "./tipoLeadWeb";
+
+const TIPO_LEAD_WEB_ESTILO_SOLIDO: Record<string, string> = { tasacion: "bg-orange-500", cotizacion: "bg-sky-500", permuta: "bg-indigo-500" };
+const TIPO_LEAD_WEB_FRASE: Record<string, string> = { tasacion: "la compra de tu", cotizacion: "la cotización de tu", permuta: "tu permuta del" };
 
 function Fila({ label, valor }: { label: string; valor: React.ReactNode }) {
   return (
@@ -66,8 +70,8 @@ export default function LeadWebDetalleModal({
             <X className="w-4 h-4" />
           </button>
           <div className={`absolute bottom-3 left-4 right-14 flex items-center gap-2 flex-wrap ${portada ? "" : "static px-4 pb-2"}`}>
-            <span className={`text-[9px] font-bold uppercase tracking-widest px-2 py-1 rounded-lg shrink-0 ${s.tipo === "permuta" ? "bg-indigo-500 text-white" : "bg-orange-500 text-white"}`}>
-              {s.tipo === "permuta" ? "Permuta" : "Compra"}
+            <span className={`text-[9px] font-bold uppercase tracking-widest px-2 py-1 rounded-lg shrink-0 text-white ${TIPO_LEAD_WEB_ESTILO_SOLIDO[s.tipo] || TIPO_LEAD_WEB_ESTILO_SOLIDO.tasacion}`}>
+              {TIPO_LEAD_WEB_LABEL[s.tipo] || "Compra"}
             </span>
             <span className={`text-[9px] font-bold uppercase tracking-widest px-2 py-1 rounded-lg shrink-0 border ${ESTADO_LABEL[estadoActual]?.clase || ESTADO_LABEL.nuevo.clase}`}>
               {ESTADO_LABEL[estadoActual]?.texto || estadoActual}
@@ -251,7 +255,7 @@ export default function LeadWebDetalleModal({
           <div className="flex gap-2">
             {s.telefono && (
               <a
-                href={`https://wa.me/${s.telefono.replace(/\D/g, "")}?text=${encodeURIComponent(`¡Hola ${s.nombre}! Te contactamos de Pfaffen Cars por tu ${s.tipo === "permuta" ? "permuta" : "cotización"} del ${s.marca} ${s.modelo || ""}`.trim() + ".")}`}
+                href={`https://wa.me/${s.telefono.replace(/\D/g, "")}?text=${encodeURIComponent(`¡Hola ${s.nombre}! Te contactamos de Pfaffen Cars por ${TIPO_LEAD_WEB_FRASE[s.tipo] || TIPO_LEAD_WEB_FRASE.tasacion} ${s.marca} ${s.modelo || ""}`.trim() + ".")}`}
                 target="_blank"
                 rel="noreferrer"
                 className="flex-1 flex items-center justify-center gap-2 bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-sm py-2.5 rounded-xl transition-colors"

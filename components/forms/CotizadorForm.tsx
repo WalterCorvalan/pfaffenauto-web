@@ -247,7 +247,11 @@ export default function CotizadorForm({ vehiculoObjetivo }: { vehiculoObjetivo?:
           telefono: tel.trim(),
           fotosYVideos: archivosSubidos.map((a) => a.url),
           ...(puedeVenir === true ? { visita: { sucursal: sucursalVisita, fecha: fechaVisita, horario: horarioVisita } } : {}),
-          ...(vehiculoObjetivo ? { tipo: "permuta", vehiculoObjetivoId: vehiculoObjetivo.id } : {}),
+          // Sin esto caía en el default "tasacion" del server -- mismo tipo
+          // que manda VenderForm.tsx, así que una cotización simple (sin
+          // auto de nuestro stock de por medio) se etiquetaba "Compra" en el
+          // panel, igual que cuando alguien nos quiere vender el auto.
+          ...(vehiculoObjetivo ? { tipo: "permuta", vehiculoObjetivoId: vehiculoObjetivo.id } : { tipo: "cotizacion" }),
         }),
       });
 

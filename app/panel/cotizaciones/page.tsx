@@ -14,7 +14,7 @@ export default async function CotizacionesPage() {
     // Tasaciones/permutas pedidas desde /cotizador en la web — viven en
     // leads_tasacion y se gestionan de verdad en Peritajes, pero también se
     // listan (solo lectura) acá para que no queden invisibles.
-    supabase.from("leads_tasacion").select("*").in("tipo", ["tasacion", "permuta"]).order("created_at", { ascending: false }).limit(50),
+    supabase.from("leads_tasacion").select("*").in("tipo", ["tasacion", "cotizacion", "permuta"]).order("created_at", { ascending: false }).limit(50),
   ]);
 
   return (

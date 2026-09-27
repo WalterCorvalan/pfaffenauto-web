@@ -32,7 +32,7 @@ const LeadTasacionSchema = z.object({
   utmSource: z.string().trim().max(100).optional().nullable(),
   utmMedium: z.string().trim().max(100).optional().nullable(),
   utmCampaign: z.string().trim().max(150).optional().nullable(),
-  tipo: z.enum(["tasacion", "permuta", "financiacion"]).optional(),
+  tipo: z.enum(["tasacion", "cotizacion", "permuta", "financiacion"]).optional(),
   vehiculoObjetivoId: z.string().uuid().optional().nullable(),
   // Datos estructurados de una solicitud de financiación -- ver
   // migraciones/sql_leads_tasacion_financiacion.sql.

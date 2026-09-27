@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useMemo, useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { supabase2 } from "@/lib/supabase/client";
 import { Search, Clock, MessageSquareText, Filter, Plus, Star, CheckCircle2, Sparkles, RefreshCw, FlagOff, Flag, X } from "lucide-react";
@@ -28,6 +28,20 @@ export default function PedidosClient({ pedidosIniciales, vendedores, clientes, 
   const router = useRouter();
   const [pedidos, setPedidos] = useState(pedidosIniciales);
   const [filtroEstado, setFiltroEstado] = useState("activo");
+
+  useEffect(() => { setPedidos(pedidosIniciales); }, [pedidosIniciales]);
+
+  // Realtime: match automático de stock (pedidos_match) y estados que puede
+  // tocar más de un vendedor a la vez -- antes solo se veía al recargar.
+  useEffect(() => {
+    let timeoutId: ReturnType<typeof setTimeout>;
+    const refrescarConDebounce = () => { clearTimeout(timeoutId); timeoutId = setTimeout(() => router.refresh(), 400); };
+    const canal = supabase2
+      .channel(`pedidos-realtime-${Math.random().toString(36).slice(2)}`)
+      .on("postgres_changes", { event: "*", schema: "public", table: "pedidos" }, refrescarConDebounce)
+      .subscribe();
+    return () => { clearTimeout(timeoutId); supabase2.removeChannel(canal); };
+  }, [router]);
   const [query, setQuery] = useState("");
   const [vendedorFiltro, setVendedorFiltro] = useState("");
   const [soloMios, setSoloMios] = useState(false);
