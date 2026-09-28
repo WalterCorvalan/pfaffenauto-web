@@ -131,6 +131,8 @@ export default function VenderForm() {
   // UI States
   const [openDropdown, setOpenDropdown] = useState<string | null>("anio");
   const [busquedaMarca, setBusquedaMarca] = useState("");
+  const [busquedaModelo, setBusquedaModelo] = useState("");
+  const [otroAnio, setOtroAnio] = useState("");
   const [loading, setLoading] = useState(false);
   const [enviado, setEnviado] = useState(false);
   const [errorEnvio, setErrorEnvio] = useState("");
@@ -141,6 +143,7 @@ export default function VenderForm() {
 
   const marcasFiltradas = marcasDisponibles.filter((m) => m.toLowerCase().includes(busquedaMarca.toLowerCase()));
   const modelosDisponibles = modelosPorMarca[marca] || ["Base", "Full", "Sport", "Standard", "Otro"];
+  const modelosFiltrados = modelosDisponibles.filter((m) => m.toLowerCase().includes(busquedaModelo.toLowerCase()));
 
   const validarPaso1 = () => anio && marca && modelo && version && km && combustible;
 
@@ -384,6 +387,20 @@ export default function VenderForm() {
                         </button>
                       ))}
                     </div>
+                    <div className="mt-3 pt-3 border-t border-slate-100 dark:border-white/5 flex gap-2">
+                      <input
+                        type="number" placeholder="¿No está? Escribí el año..." value={otroAnio}
+                        onChange={(e) => setOtroAnio(e.target.value)}
+                        className="flex-1 min-w-0 bg-slate-50 dark:bg-black/50 border border-slate-200 dark:border-white/10 rounded-xl px-4 py-2.5 text-sm text-slate-900 dark:text-white placeholder:text-slate-400 dark:placeholder:text-slate-600 outline-none focus:border-orange-500 font-mono"
+                      />
+                      <button
+                        onClick={() => { if (otroAnio) { setAnio(otroAnio); setOpenDropdown("marca"); } }}
+                        disabled={!otroAnio}
+                        className="shrink-0 bg-slate-100 dark:bg-white/10 hover:bg-slate-200 dark:hover:bg-white/20 disabled:opacity-40 text-slate-700 dark:text-white text-xs font-bold px-4 rounded-lg transition-colors"
+                      >
+                        Usar
+                      </button>
+                    </div>
                   </ConfigField>
 
                   <ConfigField icon={CarFront} label="Marca" value={marca} isOpen={openDropdown === "marca"} onClick={() => setOpenDropdown(openDropdown === "marca" ? null : "marca")} isCompleted={!!marca}>
@@ -394,16 +411,30 @@ export default function VenderForm() {
                           {m}
                         </button>
                       ))}
+                      {busquedaMarca.trim() && (
+                        <button onClick={() => { setMarca(busquedaMarca.trim()); setModelo(""); setOpenDropdown("modelo"); setBusquedaMarca(""); }} className="w-full text-left px-4 py-3 rounded-xl text-sm font-bold text-orange-600 dark:text-orange-400 hover:bg-slate-100 dark:hover:bg-white/10 border border-dashed border-slate-300 dark:border-white/10">
+                          + Usar &quot;{busquedaMarca.trim()}&quot;
+                        </button>
+                      )}
                     </div>
                   </ConfigField>
 
                   <ConfigField icon={Settings2} label="Modelo" value={modelo} isOpen={openDropdown === "modelo"} onClick={() => marca && setOpenDropdown(openDropdown === "modelo" ? null : "modelo")} isCompleted={!!modelo}>
+                    <input
+                      type="text" placeholder="Buscá tu modelo..." value={busquedaModelo} onChange={(e) => setBusquedaModelo(e.target.value)}
+                      className="w-full bg-slate-50 dark:bg-black/50 border border-slate-200 dark:border-white/10 rounded-xl px-4 py-3 text-sm text-slate-900 dark:text-white placeholder:text-slate-400 dark:placeholder:text-slate-600 outline-none focus:border-orange-500 mb-3"
+                    />
                     <div className="max-h-48 overflow-y-auto custom-scrollbar pr-2 space-y-1">
-                      {modelosDisponibles.map((mod) => (
-                        <button key={mod} onClick={() => { setModelo(mod); setOpenDropdown("version"); }} className={`w-full text-left px-4 py-3 rounded-xl text-sm font-bold transition-colors ${modelo === mod ? "bg-orange-600 text-white" : "text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-white/10"}`}>
+                      {modelosFiltrados.map((mod) => (
+                        <button key={mod} onClick={() => { setModelo(mod); setOpenDropdown("version"); setBusquedaModelo(""); }} className={`w-full text-left px-4 py-3 rounded-xl text-sm font-bold transition-colors ${modelo === mod ? "bg-orange-600 text-white" : "text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-white/10"}`}>
                           {mod}
                         </button>
                       ))}
+                      {busquedaModelo.trim() && (
+                        <button onClick={() => { setModelo(busquedaModelo.trim()); setOpenDropdown("version"); setBusquedaModelo(""); }} className="w-full text-left px-4 py-3 rounded-xl text-sm font-bold text-orange-600 dark:text-orange-400 hover:bg-slate-100 dark:hover:bg-white/10 border border-dashed border-slate-300 dark:border-white/10">
+                          + Usar &quot;{busquedaModelo.trim()}&quot;
+                        </button>
+                      )}
                     </div>
                   </ConfigField>
 
