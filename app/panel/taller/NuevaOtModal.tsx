@@ -4,6 +4,7 @@ import { useState } from "react";
 import { supabase2 } from "@/lib/supabase/client";
 import { X, Trash2 } from "lucide-react";
 import { hoyLocalISO } from "@/lib/panel/fechas";
+import { ETAPAS_TALLER } from "./etapasTaller";
 
 const inputClass = "bg-slate-50 dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-xl px-3 py-2.5 text-sm outline-none focus:border-rose-500 text-slate-900 dark:text-white placeholder:text-slate-400 w-full";
 
@@ -41,6 +42,10 @@ export default function NuevaOtModal({ mecanicos, onClose }: { mecanicos: any[];
       
       const payload = {
         origen: "taller",
+        // La base ya tiene default "ingreso_unidad" (sql_taller_etapas.sql),
+        // pero se manda explícito acá para no depender de que ese default
+        // siga existiendo si alguien lo cambia más adelante.
+        estado: ETAPAS_TALLER[0].value,
         tipo_orden: formData.tipo_orden,
         moneda: formData.moneda,
         cliente_nombre: formData.cliente_nombre,
