@@ -32,8 +32,8 @@ import { useEffect, useState } from "react";
 // Accesos rápidos de la bottom nav en mobile — el resto de los módulos
 // sigue disponible detrás del hamburger (sidebar completa).
 const NAV_MOBILE: { href: string; label: string; icon: string }[] = [
-  { href: "/panel", label: "Dashboard", icon: "/icons/panel/dashboard.png" },
   { href: "/panel/stock", label: "Stock", icon: "/icons/panel/stock.png" },
+  { href: "/panel/leads", label: "Leads", icon: "/icons/panel/leads.png" },
   { href: "/panel/clientes", label: "Clientes", icon: "/icons/panel/clientes.png" },
   { href: "/panel/ventas", label: "Ventas", icon: "/icons/panel/ventas.png" },
   { href: "/panel/whatsapp", label: "WhatsApp", icon: "/icons/panel/whatsapp.png" },
@@ -439,7 +439,7 @@ export default function PanelLayoutClient({
         .from("perfiles")
         .select("nombre, roles, activo")
         .eq("id", userId)
-        .single();
+        .maybeSingle();
       // Si lo desactivaron (Configuración → Usuarios) mientras tenía sesión
       // abierta, cerrarla acá -- el chequeo en /panel/login solo cubre el
       // login nuevo, no a alguien que ya estaba adentro.
