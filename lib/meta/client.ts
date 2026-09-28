@@ -77,6 +77,27 @@ export async function validatePhoneNumber(phoneNumberId: string, token: string) 
   );
 }
 
+// Estado real del número para enviar (no solo si existe/está bien tipeado
+// como validatePhoneNumber de arriba) -- "status" viene en MAYÚSCULAS
+// ("CONNECTED", "FLAGGED", etc.), no confundir con quality_rating.
+export async function getPhoneNumberStatus(phoneNumberId: string, token: string) {
+  return graphRequest<{ display_phone_number: string; verified_name: string; quality_rating?: string; code_verification_status?: string; status?: string }>(
+    `${phoneNumberId}?fields=display_phone_number,verified_name,quality_rating,code_verification_status,status`,
+    token
+  );
+}
+
+// Estado de verificación del negocio (WABA) -- este es el campo que bloquea
+// TODO el envío (bot, manual, plantillas) cuando queda en "not_verified",
+// sin importar que el resto (registro del número, PIN, suscripción de la
+// app) ya esté bien. Ver diagnóstico del 30/9: error #141010 de Meta.
+export async function getWabaVerificationStatus(wabaId: string, token: string) {
+  return graphRequest<{ id: string; name?: string; business_verification_status?: string }>(
+    `${wabaId}?fields=name,business_verification_status`,
+    token
+  );
+}
+
 export async function sendTextMessage(phoneNumberId: string, token: string, to: string, text: string) {
   return graphRequest<{ messages: { id: string }[] }>(`${phoneNumberId}/messages`, token, {
     method: "POST",
