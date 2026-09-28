@@ -12,7 +12,7 @@ export default async function ReclamosPage() {
     supabase.from("perfiles").select("id, nombre, roles").eq("activo", true),
     supabase.auth.getUser().then(async ({ data: { user } }) => {
       if (!user) return null;
-      const { data } = await supabase.from("perfiles").select("id, nombre, roles").eq("id", user.id).single();
+      const { data } = await supabase.from("perfiles").select("id, nombre, roles").eq("id", user.id).maybeSingle();
       return data;
     }),
   ]);

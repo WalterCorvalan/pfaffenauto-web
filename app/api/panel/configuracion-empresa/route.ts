@@ -7,7 +7,7 @@ async function verificarAdmin() {
   const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) return { error: NextResponse.json({ error: "No autorizado." }, { status: 401 }) };
-  const { data: perfil } = await supabase.from("perfiles").select("roles").eq("id", user.id).single();
+  const { data: perfil } = await supabase.from("perfiles").select("roles").eq("id", user.id).maybeSingle();
   if (!perfil?.roles?.includes("admin")) {
     return { error: NextResponse.json({ error: "Solo administradores." }, { status: 403 }) };
   }
@@ -22,7 +22,7 @@ export async function GET() {
   const { error } = await verificarAdmin();
   if (error) return error;
 
-  const { data, error: fetchError } = await admin().from("configuracion_empresa").select("*").eq("id", true).single();
+  const { data, error: fetchError } = await admin().from("configuracion_empresa").select("*").eq("id", true).maybeSingle();
   if (fetchError) return NextResponse.json({ error: fetchError.message }, { status: 400 });
   return NextResponse.json({ config: data });
 }

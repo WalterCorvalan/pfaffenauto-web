@@ -30,7 +30,7 @@ export async function GET() {
 
   const sb = admin();
   const [{ data }, { data: empresa }] = await Promise.all([
-    sb.from("perfiles").select("id, nombre, whatsapp, foto_url, sucursal_id, sucursal:sucursal_id ( nombre )").eq("id", user.id).single(),
+    sb.from("perfiles").select("id, nombre, whatsapp, foto_url, sucursal_id, sucursal:sucursal_id ( nombre )").eq("id", user.id).maybeSingle(),
     sb.from("configuracion_empresa").select("branding_nombre").eq("id", true).maybeSingle(),
   ]);
 

@@ -19,7 +19,7 @@ export default async function VentasPage() {
     supabase.from("vehiculos").select("id, marca, modelo, anio, patente, km, precio_venta, moneda_venta, estado, color, condicion").in("estado", ["disponible", "reservado", "señado"]).order("marca"),
     supabase.from("venta_permutas").select("venta_id"),
     supabase.from("venta_senas").select("venta_id, monto, moneda"),
-    user ? supabase.from("perfiles").select("id, nombre, roles").eq("id", user.id).single().then((r) => r.data) : Promise.resolve(null),
+    user ? supabase.from("perfiles").select("id, nombre, roles").eq("id", user.id).maybeSingle().then((r) => r.data) : Promise.resolve(null),
     supabase.from("cuentas").select("*").eq("activa", true).order("nombre"),
   ]);
   const ventas = ventasRes.data;

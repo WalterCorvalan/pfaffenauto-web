@@ -67,7 +67,7 @@ function parseDireccion(direccion: string) {
 
 export async function generateMetadata({ params }: { params: Promise<{ slug: string }> }): Promise<Metadata> {
   const { slug } = await params;
-  const { data: sucursal } = await supabase.from("sucursales").select("nombre, direccion").eq("slug", slug).single();
+  const { data: sucursal } = await supabase.from("sucursales").select("nombre, direccion").eq("slug", slug).maybeSingle();
   const nombre = sucursal?.nombre || slug;
   return {
     title: `${nombre} | Sucursal Pfaffen Cars`,
@@ -83,7 +83,7 @@ export default async function SucursalPage({ params }: { params: Promise<{ slug:
     .from("sucursales")
     .select("id, nombre, direccion, telefono:telefono_encargado, slug, google_maps_url")
     .eq("slug", slug)
-    .single();
+    .maybeSingle();
 
   if (!sucursal) notFound();
 

@@ -13,7 +13,7 @@ export default async function LiquidadorPage() {
   // plata real de Tesorería. Solo admin, es el dato más sensible del panel.
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) redirect("/panel/login");
-  const { data: miPerfil } = await supabase.from("perfiles").select("roles").eq("id", user.id).single();
+  const { data: miPerfil } = await supabase.from("perfiles").select("roles").eq("id", user.id).maybeSingle();
   if (!miPerfil?.roles?.includes("admin")) redirect("/panel");
 
   const { data: empleados } = await supabase

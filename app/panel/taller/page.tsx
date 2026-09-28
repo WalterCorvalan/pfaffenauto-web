@@ -15,7 +15,7 @@ export default async function TallerPage() {
   ] = await Promise.all([
     supabase.from("taller_ordenes").select("*").order("created_at", { ascending: false }),
     supabase.from("taller_mecanicos").select("*").eq("activo", true).order("nombre"),
-    supabase.from("taller_config").select("*").single(),
+    supabase.from("taller_config").select("*").maybeSingle(),
     supabase.from("taller_servicios").select("*").eq("activo", true).order("nombre")
   ]);
 

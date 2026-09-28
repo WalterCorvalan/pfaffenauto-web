@@ -10,7 +10,7 @@ export default async function ConsignacionesPage() {
     supabase.from("perfiles").select("id, nombre, roles").eq("activo", true).order("nombre"),
     supabase.from("clientes").select("id, nombre, telefono, dni_cuit").order("nombre"),
     supabase.from("sucursales").select("id, nombre").order("nombre"),
-    user ? supabase.from("perfiles").select("id, nombre, roles").eq("id", user.id).single().then((r) => r.data) : Promise.resolve(null),
+    user ? supabase.from("perfiles").select("id, nombre, roles").eq("id", user.id).maybeSingle().then((r) => r.data) : Promise.resolve(null),
   ]);
 
   return (

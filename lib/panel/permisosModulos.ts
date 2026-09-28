@@ -18,8 +18,14 @@ export const ROL_A_SECTOR: Record<string, string> = {
 // sin fila en visibilidad_sector, el módulo es visible por default; con
 // varios roles alcanza que UNO de los sectores lo vea.
 export async function puedeVerModulo(supabase: SupabaseClient, perfilId: string, modulo: string): Promise<boolean> {
-  const { data: perfil } = await supabase.from("perfiles").select("roles").eq("id", perfilId).single();
-  const roles: string[] = perfil?.roles || [];
+  const { data: perfil } = await supabase.from("perfiles").select("roles").eq("id", perfilId).maybeSingle();
+  // Sin perfil (lookup falló o el id no existe) no podemos confirmar ningún
+  // rol -- antes esto caía a roles=[] y por el default de la línea de abajo
+  // ("sin sector mapeado, visible") terminaba dando acceso a Tesorería/
+  // Facturación/Finanzas/Reportes a un perfil que ni siquiera pudimos leer.
+  // Denegar acá, no dejar pasar.
+  if (!perfil) return false;
+  const roles: string[] = perfil.roles || [];
   if (roles.includes("admin")) return true;
 
   const { data: config } = await supabase.from("modulos_config").select("activo").eq("modulo", modulo).maybeSingle();

@@ -10,13 +10,13 @@ export default async function GestoriaPage() {
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) redirect("/panel/login");
 
-  const { data: miPerfilRoles } = await supabase.from("perfiles").select("roles").eq("id", user.id).single();
+  const { data: miPerfilRoles } = await supabase.from("perfiles").select("roles").eq("id", user.id).maybeSingle();
   if (!miPerfilRoles?.roles?.some((r: string) => ROLES_GESTORIA.includes(r))) redirect("/panel");
 
   const [expedientesRes, perfilesRes, miPerfil] = await Promise.all([
     supabase.from("expedientes").select("*, venta:ventas(*)").eq("archivado", false).eq("es_reventa", false).order("fecha_apertura", { ascending: false }),
     supabase.from("perfiles").select("id, nombre, roles").eq("activo", true).order("nombre"),
-    user ? supabase.from("perfiles").select("id, nombre, roles, ganancias_ocultas").eq("id", user.id).single().then((r) => r.data) : Promise.resolve(null),
+    user ? supabase.from("perfiles").select("id, nombre, roles, ganancias_ocultas").eq("id", user.id).maybeSingle().then((r) => r.data) : Promise.resolve(null),
   ]);
 
   const expedientes = expedientesRes.data || [];

@@ -14,7 +14,7 @@ export default async function ComisionesPage() {
     .from("perfiles")
     .select("roles")
     .eq("id", user.id)
-    .single();
+    .maybeSingle();
 
   const esAdminOFinanzas = miPerfil?.roles?.some((r: string) => ["admin", "finanzas"].includes(r)) || false;
 

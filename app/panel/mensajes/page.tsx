@@ -8,7 +8,7 @@ export default async function MensajesPage() {
   const { data: { user } } = await supabase.auth.getUser();
 
   const [miPerfil, { data: staff }] = await Promise.all([
-    user ? supabase.from("perfiles").select("id, nombre").eq("id", user.id).single().then((r) => r.data) : Promise.resolve(null),
+    user ? supabase.from("perfiles").select("id, nombre").eq("id", user.id).maybeSingle().then((r) => r.data) : Promise.resolve(null),
     supabase.from("perfiles").select("id, nombre, roles").eq("activo", true).order("nombre"),
   ]);
 

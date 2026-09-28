@@ -10,7 +10,7 @@ export default async function LiquidacionesPage() {
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) redirect("/panel/login");
 
-  const miPerfil = user ? await supabase.from("perfiles").select("id, nombre, roles, ganancias_ocultas").eq("id", user.id).single().then((r) => r.data) : null;
+  const miPerfil = user ? await supabase.from("perfiles").select("id, nombre, roles, ganancias_ocultas").eq("id", user.id).maybeSingle().then((r) => r.data) : null;
   const puedeVerLiquidacion = await tienePermiso(supabase, miPerfil, "ver_liquidacion");
   const soyAdmin = miPerfil?.roles?.includes("admin") ?? false;
   const soyAdminOFinanzas = miPerfil?.roles?.some((r: string) => r === "admin" || r === "finanzas") ?? false;
@@ -33,7 +33,7 @@ export default async function LiquidacionesPage() {
           .order("created_at", { ascending: false })
       : Promise.resolve({ data: [] }),
     supabase.from("perfiles").select("id, nombre").eq("activo", true).order("nombre"),
-    supabase.from("configuracion_empresa").select("liquidaciones_comision_fija, liquidaciones_pct_gestora, liquidaciones_pct_agencia").eq("id", true).single(),
+    supabase.from("configuracion_empresa").select("liquidaciones_comision_fija, liquidaciones_pct_gestora, liquidaciones_pct_agencia").eq("id", true).maybeSingle(),
   ]);
 
   return (

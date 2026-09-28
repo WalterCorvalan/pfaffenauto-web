@@ -13,7 +13,7 @@ export default async function StockPage() {
     supabase.from("mandatos").select("*").order("created_at", { ascending: false }).limit(5000),
     supabase.from("perfiles").select("id, nombre, roles, sucursal_id").eq("activo", true).order("nombre"),
     supabase.from("clientes").select("id, nombre, telefono, dni_cuit").order("nombre").limit(5000),
-    supabase.from("catalogo_config").select("*").eq("id", "default").single(),
+    supabase.from("catalogo_config").select("*").eq("id", "default").maybeSingle(),
     supabase.from("sucursales").select("id, nombre").order("nombre"),
     supabase.from("configuracion_empresa").select("stock_dias_estancado").eq("id", true).maybeSingle(),
     // Cheques emitidos, todavía no cobrados (plata que TODAVÍA no salió de

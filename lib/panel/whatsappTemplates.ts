@@ -42,7 +42,7 @@ export function renderBody(body: string, variable?: string): string {
 }
 
 async function getConfig() {
-  const { data } = await supabaseAdmin.from("whatsapp_configuracion").select("*").eq("id", true).single();
+  const { data } = await supabaseAdmin.from("whatsapp_configuracion").select("*").eq("id", true).maybeSingle();
   return data;
 }
 

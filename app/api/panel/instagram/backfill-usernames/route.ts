@@ -27,7 +27,7 @@ async function clienteAutenticado() {
   );
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) return false;
-  const { data: perfil } = await supabase.from("perfiles").select("roles").eq("id", user.id).single();
+  const { data: perfil } = await supabase.from("perfiles").select("roles").eq("id", user.id).maybeSingle();
   return perfil?.roles?.includes("admin") ?? false;
 }
 
@@ -35,7 +35,7 @@ export async function POST() {
   const esAdmin = await clienteAutenticado();
   if (!esAdmin) return NextResponse.json({ error: "Solo Admin puede hacer esto." }, { status: 403 });
 
-  const { data: config } = await supabaseServicio.from("instagram_configuracion").select("token_cifrado, token_iv, token_tag").eq("id", true).single();
+  const { data: config } = await supabaseServicio.from("instagram_configuracion").select("token_cifrado, token_iv, token_tag").eq("id", true).maybeSingle();
   if (!config?.token_cifrado || !config.token_iv || !config.token_tag) {
     return NextResponse.json({ error: "Instagram no está conectado todavía." }, { status: 400 });
   }

@@ -69,7 +69,7 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: "No se pudo guardar el mensaje." }, { status: 500 });
   }
 
-  const { data: config } = await supabaseAdmin.from("instagram_configuracion").select("*").eq("id", true).single();
+  const { data: config } = await supabaseAdmin.from("instagram_configuracion").select("*").eq("id", true).maybeSingle();
   if (!config?.listo || !config.token_cifrado || !config.token_iv || !config.token_tag || !config.ig_user_id) {
     await supabaseAdmin.from("instagram_mensajes").update({ status: "failed" }).eq("id", mensaje.id);
     return NextResponse.json({ error: "Instagram no está configurado — cargá las credenciales en Configuración." }, { status: 503 });

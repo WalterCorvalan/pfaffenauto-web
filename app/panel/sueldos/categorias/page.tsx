@@ -11,7 +11,7 @@ export default async function CategoriasPage() {
   // empleado por URL directa.
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) redirect("/panel/login");
-  const { data: miPerfil } = await supabase.from("perfiles").select("roles").eq("id", user.id).single();
+  const { data: miPerfil } = await supabase.from("perfiles").select("roles").eq("id", user.id).maybeSingle();
   if (!miPerfil?.roles?.includes("admin")) redirect("/panel");
 
   const { data: categorias } = await supabase

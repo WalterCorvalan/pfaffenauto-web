@@ -27,7 +27,7 @@ export default async function TuCatalogoPage() {
     // Columnas explícitas -- select("*") exponía precio_costo, observaciones_internas
     // y demás campos internos a cualquier visitante anónimo.
     supabase.from("vehiculos").select("id, categoria, marca, modelo, anio, color, condicion, km, precio_venta, moneda_venta, ubicacion, fotos, version, combustible, transmision, carroceria, vendedor_asignado_id, sucursal_id").eq("estado", "disponible").order("created_at", { ascending: false }),
-    supabase.from("catalogo_config").select("*").eq("id", "default").single(),
+    supabase.from("catalogo_config").select("*").eq("id", "default").maybeSingle(),
   ]);
 
   await supabase.rpc("incrementar_stat_catalogo", { campo: "visitas" });

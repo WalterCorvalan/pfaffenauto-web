@@ -214,7 +214,7 @@ export default function NuevaVentaModal({ perfiles, clientes, vehiculos, miId, s
   // Comisiones — solo pisan el estado inicial en una venta NUEVA, nunca una
   // ya guardada (esa mantiene lo que tenía cuando se cerró).
   useEffect(() => {
-    supabase2.from("configuracion_empresa").select("comision_vendedor_pct_default, comision_consignacion_pct_default, comision_presets").eq("id", true).single().then(({ data }) => {
+    supabase2.from("configuracion_empresa").select("comision_vendedor_pct_default, comision_consignacion_pct_default, comision_presets").eq("id", true).maybeSingle().then(({ data }) => {
       if (!data) return;
       if (data.comision_presets) setComisionPresets(data.comision_presets);
       if (!esEdicion) {

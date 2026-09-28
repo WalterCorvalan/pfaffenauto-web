@@ -17,7 +17,7 @@ export default async function FinanzasPage() {
   // no se llamaba desde ningún lado.
   if (!(await puedeVerModulo(supabase, user.id, "finanzas"))) redirect("/panel");
 
-  const miPerfil = user ? await supabase.from("perfiles").select("id, nombre, roles, sucursal_id").eq("id", user.id).single().then((r) => r.data) : null;
+  const miPerfil = user ? await supabase.from("perfiles").select("id, nombre, roles, sucursal_id").eq("id", user.id).maybeSingle().then((r) => r.data) : null;
   const soyAdminOFinanzas = miPerfil?.roles?.some((r: string) => r === "admin" || r === "finanzas") ?? false;
   const soyAdmin = miPerfil?.roles?.includes("admin") ?? false;
   // Pedido de la reunión del 22/9: cada encargado de sucursal (ej. Lucas en

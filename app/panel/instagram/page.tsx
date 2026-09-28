@@ -16,7 +16,7 @@ export default async function InstagramPage() {
       .order("last_message_at", { ascending: false })
       .limit(3000),
     supabase.from("perfiles").select("id, nombre, roles, sucursal_id").eq("activo", true).order("nombre"),
-    user?.id ? supabase.from("perfiles").select("roles, sucursal_id").eq("id", user.id).single() : Promise.resolve({ data: null }),
+    user?.id ? supabase.from("perfiles").select("roles, sucursal_id").eq("id", user.id).maybeSingle() : Promise.resolve({ data: null }),
     // Mismo criterio que /panel/whatsapp -- ver ese page.tsx.
     supabase.from("instagram_mensajes").select("conversacion_id, texto, tipo, direccion, leido_at, created_at").order("created_at", { ascending: false }).limit(5000),
   ]);

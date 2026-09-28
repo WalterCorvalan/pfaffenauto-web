@@ -40,7 +40,7 @@ export default function NotificacionesTab({ miId }: { miId: string }) {
   useEffect(() => {
     Promise.all([
       supabase2.from("espacio_notif_prefs").select("*").eq("perfil_id", miId).maybeSingle(),
-      supabase2.from("perfiles").select("whatsapp").eq("id", miId).single(),
+      supabase2.from("perfiles").select("whatsapp").eq("id", miId).maybeSingle(),
     ]).then(([{ data }, { data: perfil }]) => {
       setDesactivadas(data?.desactivadas || []);
       setWhatsappForward(data?.whatsapp_forward || false);

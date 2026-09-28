@@ -17,7 +17,7 @@ const supabase = createClient(
 );
 
 async function tokenWhatsapp(): Promise<{ phoneNumberId: string; token: string } | null> {
-  const { data: config } = await supabase.from("whatsapp_configuracion").select("*").eq("id", true).single();
+  const { data: config } = await supabase.from("whatsapp_configuracion").select("*").eq("id", true).maybeSingle();
   if (!config?.listo || !config.token_cifrado || !config.token_iv || !config.token_tag || !config.phone_number_id) return null;
   return { phoneNumberId: config.phone_number_id, token: decrypt(config.token_cifrado, config.token_iv, config.token_tag) };
 }

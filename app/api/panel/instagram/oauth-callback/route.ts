@@ -21,7 +21,7 @@ async function clienteAutenticado() {
   );
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) return { supabase, esAdmin: false };
-  const { data: perfil } = await supabase.from("perfiles").select("roles").eq("id", user.id).single();
+  const { data: perfil } = await supabase.from("perfiles").select("roles").eq("id", user.id).maybeSingle();
   return { supabase, esAdmin: perfil?.roles?.includes("admin") ?? false };
 }
 

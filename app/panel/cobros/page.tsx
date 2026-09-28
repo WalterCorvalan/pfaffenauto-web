@@ -7,7 +7,7 @@ export default async function CobrosPage() {
   const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();
 
-  const miPerfil = user ? await supabase.from("perfiles").select("id, nombre, roles").eq("id", user.id).single().then((r) => r.data) : null;
+  const miPerfil = user ? await supabase.from("perfiles").select("id, nombre, roles").eq("id", user.id).maybeSingle().then((r) => r.data) : null;
   const soyAdminOFinanzas = miPerfil?.roles?.some((r: string) => r === "admin" || r === "finanzas") ?? false;
 
   let query = supabase

@@ -34,7 +34,7 @@ export async function POST(request: Request) {
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) return NextResponse.json({ error: "No autorizado." }, { status: 401 });
 
-  const { data: perfil } = await supabase.from("perfiles").select("roles").eq("id", user.id).single();
+  const { data: perfil } = await supabase.from("perfiles").select("roles").eq("id", user.id).maybeSingle();
   if (!perfil?.roles?.includes("admin")) return NextResponse.json({ error: "Solo administradores." }, { status: 403 });
 
   if (!isAiConfiguredV2()) return NextResponse.json({ error: "No hay ninguna IA configurada en el servidor." }, { status: 400 });

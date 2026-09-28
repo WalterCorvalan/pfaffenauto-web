@@ -33,7 +33,7 @@ export async function GET(req: Request) {
     return new Response("Unauthorized", { status: 401 });
   }
 
-  const { data: config } = await supabase.from("whatsapp_configuracion").select("*").eq("id", true).single();
+  const { data: config } = await supabase.from("whatsapp_configuracion").select("*").eq("id", true).maybeSingle();
   if (!config?.listo || !config.token_cifrado || !config.token_iv || !config.token_tag || !config.phone_number_id) {
     return Response.json({ ok: true, enviados: 0, motivo: "whatsapp no configurado" });
   }

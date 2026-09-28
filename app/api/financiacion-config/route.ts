@@ -72,7 +72,7 @@ export async function PATCH(request: Request) {
   const supabaseAuth = await createServerClient();
   const { data: { user } } = await supabaseAuth.auth.getUser();
   if (!user) return NextResponse.json({ error: "No autorizado." }, { status: 401 });
-  const { data: perfil } = await supabaseAuth.from("perfiles").select("roles").eq("id", user.id).single();
+  const { data: perfil } = await supabaseAuth.from("perfiles").select("roles").eq("id", user.id).maybeSingle();
   if (!perfil?.roles?.some((r: string) => r === "admin" || r === "finanzas")) {
     return NextResponse.json({ error: "Solo admin o finanzas." }, { status: 403 });
   }

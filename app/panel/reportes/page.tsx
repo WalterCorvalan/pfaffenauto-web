@@ -19,7 +19,7 @@ export default async function ReportesPage() {
   const desde = mesActual;
   const hasta = new Date(hoy.getFullYear(), hoy.getMonth() + 1, 0).toISOString().slice(0, 10);
 
-  const { data: miPerfil } = await supabase.from("perfiles").select("id, nombre, roles, ganancias_ocultas").eq("id", user.id).single();
+  const { data: miPerfil } = await supabase.from("perfiles").select("id, nombre, roles, ganancias_ocultas").eq("id", user.id).maybeSingle();
   const puedeVerFinanzas = (miPerfil?.roles?.includes("admin") || miPerfil?.roles?.includes("finanzas")) ?? false;
 
   const [
@@ -53,7 +53,7 @@ export default async function ReportesPage() {
     supabase.from("v_reportes_operaciones_por_vendedor").select("*"),
     supabase.from("v_reportes_origen_leads").select("*"),
     supabase.from("v_reportes_embudo_comercial").select("*"),
-    supabase.from("v_reportes_expedientes_resumen").select("*").single(),
+    supabase.from("v_reportes_expedientes_resumen").select("*").maybeSingle(),
     supabase.from("v_reportes_expedientes_por_estado").select("*"),
     // Estos 3 muestran plata real (ganancia de infracciones, facturación de
     // taller, montos por cliente) -- antes se pedían siempre y el gate
@@ -62,20 +62,20 @@ export default async function ReportesPage() {
     // viajado en el HTML/payload a cualquier usuario logueado (hallazgo de
     // auditoría). Mismo criterio que finanzas/page.tsx: se corta el fetch
     // acá, no solo el render.
-    puedeVerFinanzas ? supabase.from("v_reportes_infracciones_resumen").select("*").single() : Promise.resolve({ data: null }),
-    puedeVerFinanzas ? supabase.from("v_reportes_taller_facturacion").select("*").single() : Promise.resolve({ data: null }),
+    puedeVerFinanzas ? supabase.from("v_reportes_infracciones_resumen").select("*").maybeSingle() : Promise.resolve({ data: null }),
+    puedeVerFinanzas ? supabase.from("v_reportes_taller_facturacion").select("*").maybeSingle() : Promise.resolve({ data: null }),
     supabase.from("v_reportes_ventas_por_mes").select("*").limit(12),
     puedeVerFinanzas ? supabase.from("v_reportes_top_clientes").select("*") : Promise.resolve({ data: [] }),
     supabase.from("v_reportes_clientes_por_vendedor").select("*"),
-    supabase.from("v_reportes_cotizaciones_resumen").select("*").single(),
+    supabase.from("v_reportes_cotizaciones_resumen").select("*").maybeSingle(),
     supabase.from("v_reportes_cotizaciones_por_estado").select("*"),
     supabase.from("v_reportes_cotizaciones_por_vendedor").select("*"),
     supabase.from("v_reportes_stock_por_estado").select("*"),
     supabase.from("v_reportes_stock_por_marca").select("*"),
     supabase.from("v_reportes_infracciones_por_mes").select("*").limit(12),
-    supabase.from("v_reportes_service_posventa").select("*").single(),
+    supabase.from("v_reportes_service_posventa").select("*").maybeSingle(),
     supabase.from("v_reportes_consultas_vs_ventas").select("*").limit(20),
-    supabase.from("v_reportes_composicion_ventas").select("*").single(),
+    supabase.from("v_reportes_composicion_ventas").select("*").maybeSingle(),
     supabase.from("ventas").select("vehiculo_id, vehiculos(origen, marca)").eq("estado", "cerrada").gte("fecha_cierre", desde).lte("fecha_cierre", hasta),
   ]);
 

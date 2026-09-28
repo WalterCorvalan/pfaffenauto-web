@@ -7,7 +7,7 @@ export default async function PresupuestosPage() {
   const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();
 
-  const { data: miPerfil } = user ? await supabase.from("perfiles").select("roles").eq("id", user.id).single() : { data: null };
+  const { data: miPerfil } = user ? await supabase.from("perfiles").select("roles").eq("id", user.id).maybeSingle() : { data: null };
   const esEncargado = miPerfil?.roles?.some((r: string) => ["admin", "encargado"].includes(r));
 
   let query = supabase.from("presupuestos").select("*, perfiles:vendedor_id ( nombre )").order("created_at", { ascending: false }).limit(1000);

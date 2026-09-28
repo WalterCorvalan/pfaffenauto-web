@@ -15,7 +15,7 @@ async function verificarAdmin() {
   const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) return { error: NextResponse.json({ error: "No autorizado." }, { status: 401 }) };
-  const { data: perfil } = await supabase.from("perfiles").select("roles").eq("id", user.id).single();
+  const { data: perfil } = await supabase.from("perfiles").select("roles").eq("id", user.id).maybeSingle();
   if (!perfil?.roles?.includes("admin")) {
     return { error: NextResponse.json({ error: "Solo administradores." }, { status: 403 }) };
   }

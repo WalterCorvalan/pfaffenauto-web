@@ -6,7 +6,7 @@ export const metadata = { title: "Señas | Pfaffen Cars" };
 export default async function SenasPage() {
   const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();
-  const miPerfil = user ? await supabase.from("perfiles").select("id, roles").eq("id", user.id).single().then((r) => r.data) : null;
+  const miPerfil = user ? await supabase.from("perfiles").select("id, roles").eq("id", user.id).maybeSingle().then((r) => r.data) : null;
   const soyAdmin = miPerfil?.roles?.includes("admin") ?? false;
 
   const [{ data: senas }, { data: clientes }, { data: vehiculos }, { data: vendedores }, { data: sucursales }, { data: cuentas }] = await Promise.all([

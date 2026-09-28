@@ -18,7 +18,7 @@ async function usuarioActual() {
   );
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) return null;
-  const { data: perfil } = await supabase.from("perfiles").select("roles").eq("id", user.id).single();
+  const { data: perfil } = await supabase.from("perfiles").select("roles").eq("id", user.id).maybeSingle();
   if (!perfil?.roles?.includes("admin") && !perfil?.roles?.includes("encargado")) return null;
   return user;
 }

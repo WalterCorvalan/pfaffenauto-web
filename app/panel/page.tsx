@@ -20,7 +20,7 @@ export default async function PanelV2Home() {
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) return null;
 
-  const { data: miPerfil } = await supabase.from("perfiles").select("id, nombre, roles, ganancias_ocultas").eq("id", user.id).single();
+  const { data: miPerfil } = await supabase.from("perfiles").select("id, nombre, roles, ganancias_ocultas").eq("id", user.id).maybeSingle();
   const esAdmin = miPerfil?.roles?.includes("admin") ?? false;
   const puedeVerFinanzas = esAdmin || (miPerfil?.roles?.includes("finanzas") ?? false);
 

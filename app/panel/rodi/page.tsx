@@ -14,7 +14,7 @@ export default async function RodiPage() {
       .order("last_message_at", { ascending: false, nullsFirst: false }),
     supabase.from("perfiles").select("id, nombre, roles, sucursal_id").eq("activo", true).order("nombre"),
   ]);
-  const { data: miPerfil } = user?.id ? await supabase.from("perfiles").select("roles, sucursal_id").eq("id", user.id).single() : { data: null };
+  const { data: miPerfil } = user?.id ? await supabase.from("perfiles").select("roles, sucursal_id").eq("id", user.id).maybeSingle() : { data: null };
 
   // Admin ve a todos. Encargado ve solo a los vendedores de SU sucursal.
   // Un vendedor sin esos roles solo ve a otros vendedores.

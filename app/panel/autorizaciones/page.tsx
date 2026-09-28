@@ -8,7 +8,7 @@ export default async function AutorizacionesPage() {
   const { data: { user } } = await supabase.auth.getUser();
 
   const [miPerfil, { data: pendientes }, { data: historico }, pinPropio, { data: usosPin }] = await Promise.all([
-    user ? supabase.from("perfiles").select("id, nombre, roles").eq("id", user.id).single().then((r) => r.data) : Promise.resolve(null),
+    user ? supabase.from("perfiles").select("id, nombre, roles").eq("id", user.id).maybeSingle().then((r) => r.data) : Promise.resolve(null),
     supabase.from("autorizaciones").select("*, solicitante:perfiles!autorizaciones_solicitado_por_fkey(nombre)").eq("estado", "pendiente").order("created_at", { ascending: false }),
     supabase.from("autorizaciones").select("*, solicitante:perfiles!autorizaciones_solicitado_por_fkey(nombre), resolutor:perfiles!autorizaciones_resuelto_por_fkey(nombre)").neq("estado", "pendiente").order("resuelto_en", { ascending: false }).limit(100),
     user ? supabase.from("autorizaciones_pin").select("perfil_id").eq("perfil_id", user.id).maybeSingle().then((r) => r.data) : Promise.resolve(null),

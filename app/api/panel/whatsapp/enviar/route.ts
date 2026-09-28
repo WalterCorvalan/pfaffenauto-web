@@ -83,7 +83,7 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: "No se pudo guardar el mensaje." }, { status: 500 });
   }
 
-  const { data: config } = await supabaseAdmin.from("whatsapp_configuracion").select("*").eq("id", true).single();
+  const { data: config } = await supabaseAdmin.from("whatsapp_configuracion").select("*").eq("id", true).maybeSingle();
   if (!config?.listo || !config.token_cifrado || !config.token_iv || !config.token_tag || !config.phone_number_id) {
     await supabaseAdmin.from("whatsapp_mensajes").update({ status: "failed" }).eq("id", mensaje.id);
     return NextResponse.json({ error: "WhatsApp no está configurado — cargá las credenciales en Configuración." }, { status: 503 });

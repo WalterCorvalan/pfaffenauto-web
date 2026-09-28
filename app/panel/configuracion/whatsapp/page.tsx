@@ -7,7 +7,7 @@ export default async function ConfiguracionWhatsappPage() {
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) redirect("/panel/login");
 
-  const { data: perfil } = await supabase.from("perfiles").select("roles").eq("id", user.id).single();
+  const { data: perfil } = await supabase.from("perfiles").select("roles").eq("id", user.id).maybeSingle();
   if (!perfil?.roles?.includes("admin")) {
     return <div className="p-6 text-sm text-slate-500">Solo Admin puede ver la Configuración.</div>;
   }

@@ -14,7 +14,7 @@ async function clienteAutenticado() {
   );
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) return { supabase, esAdmin: false };
-  const { data: perfil } = await supabase.from("perfiles").select("roles").eq("id", user.id).single();
+  const { data: perfil } = await supabase.from("perfiles").select("roles").eq("id", user.id).maybeSingle();
   return { supabase, esAdmin: perfil?.roles?.includes("admin") ?? false };
 }
 
@@ -22,7 +22,7 @@ export async function GET() {
   const { supabase, esAdmin } = await clienteAutenticado();
   if (!esAdmin) return NextResponse.json({ error: "Solo Admin puede ver esto." }, { status: 403 });
 
-  let { data } = await supabase.from("instagram_configuracion").select("ig_user_id, listo, webhook_verify_token, tono, updated_at").eq("id", true).single();
+  let { data } = await supabase.from("instagram_configuracion").select("ig_user_id, listo, webhook_verify_token, tono, updated_at").eq("id", true).maybeSingle();
 
   if (data && !data.webhook_verify_token) {
     const verifyToken = randomBytes(24).toString("hex");
@@ -60,7 +60,7 @@ export async function POST(request: Request) {
       patch.webhook_verify_token = randomBytes(24).toString("hex");
     }
 
-    const { data: actual } = await supabase.from("instagram_configuracion").select("token_cifrado").eq("id", true).single();
+    const { data: actual } = await supabase.from("instagram_configuracion").select("token_cifrado").eq("id", true).maybeSingle();
     patch.listo = !!(igUserId && (accessToken || actual?.token_cifrado));
 
     const { data, error } = await supabase.from("instagram_configuracion").update(patch).eq("id", true).select("ig_user_id, listo, webhook_verify_token, tono, updated_at").single();

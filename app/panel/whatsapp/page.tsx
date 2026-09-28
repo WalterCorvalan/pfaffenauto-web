@@ -16,7 +16,7 @@ export default async function WhatsappPage() {
       .order("last_message_at", { ascending: false })
       .limit(3000),
     supabase.from("perfiles").select("id, nombre, roles, sucursal_id").eq("activo", true).order("nombre"),
-    user?.id ? supabase.from("perfiles").select("roles, sucursal_id").eq("id", user.id).single() : Promise.resolve({ data: null }),
+    user?.id ? supabase.from("perfiles").select("roles, sucursal_id").eq("id", user.id).maybeSingle() : Promise.resolve({ data: null }),
     // Preview + check de leido en la bandeja (pedido 27/9) -- no hay columna
     // cacheada del último mensaje en whatsapp_conversaciones, así que se trae
     // el más reciente de cada conversación acá y se toma la primera

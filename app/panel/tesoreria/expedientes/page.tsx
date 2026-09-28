@@ -14,7 +14,7 @@ export default async function ExpedientesTesoreriaPage() {
   const [expedientesRes, perfilesRes, miPerfil, cuentasRes] = await Promise.all([
     supabase.from("expedientes").select("*, venta:ventas(*)").gte("created_at", desde6Meses.toISOString()).order("created_at", { ascending: false }),
     supabase.from("perfiles").select("id, nombre, roles").eq("activo", true).order("nombre"),
-    user ? supabase.from("perfiles").select("id, nombre, roles, ganancias_ocultas").eq("id", user.id).single().then((r) => r.data) : Promise.resolve(null),
+    user ? supabase.from("perfiles").select("id, nombre, roles, ganancias_ocultas").eq("id", user.id).maybeSingle().then((r) => r.data) : Promise.resolve(null),
     supabase.from("cuentas").select("id, nombre, moneda").eq("activa", true).order("nombre"),
   ]);
 

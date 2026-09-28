@@ -125,7 +125,7 @@ export default function LeadDetailModal({
   const [guardandoAsistencia, setGuardandoAsistencia] = useState(false);
 
   const cargar = async () => {
-    const { data: l } = await supabase2.from(tabla).select("*").eq("id", leadId).single();
+    const { data: l } = await supabase2.from(tabla).select("*").eq("id", leadId).maybeSingle();
     if (!l) { setCargando(false); return; }
     setLead(l);
     setDomicilio(l.domicilio || "");
@@ -133,8 +133,8 @@ export default function LeadDetailModal({
     setVehiculoTestDriveId(l.vehiculo_id || "");
 
     const [{ data: c }, { data: v }, { data: vs }, { data: t }, { data: e }, { data: td }, { data: p }, { data: mot }] = await Promise.all([
-      contactoTabla ? supabase2.from(contactoTabla).select("*").eq("id", l.contacto_id).single() : Promise.resolve({ data: { nombre_perfil: l.nombre_contacto || l.nombre, telefono: l.telefono_contacto || l.telefono, email: l.email_contacto || l.email } }),
-      l.vehiculo_id ? supabase2.from("vehiculos").select("id, marca, modelo, anio, patente, sucursal:sucursal_id ( nombre )").eq("id", l.vehiculo_id).single() : Promise.resolve({ data: null }),
+      contactoTabla ? supabase2.from(contactoTabla).select("*").eq("id", l.contacto_id).maybeSingle() : Promise.resolve({ data: { nombre_perfil: l.nombre_contacto || l.nombre, telefono: l.telefono_contacto || l.telefono, email: l.email_contacto || l.email } }),
+      l.vehiculo_id ? supabase2.from("vehiculos").select("id, marca, modelo, anio, patente, sucursal:sucursal_id ( nombre )").eq("id", l.vehiculo_id).maybeSingle() : Promise.resolve({ data: null }),
       supabase2.from("vehiculos").select("id, marca, modelo, patente, sucursal:sucursal_id ( nombre )").in("estado", ["disponible", "reservado"]).order("marca"),
       supabase2.from("tareas_lead").select("*").eq(campoFk, leadId).order("fecha_vencimiento"),
       supabase2.from("eventos_lead").select("*, autor:perfiles(nombre)").eq(campoFk, leadId).order("created_at", { ascending: false }),
