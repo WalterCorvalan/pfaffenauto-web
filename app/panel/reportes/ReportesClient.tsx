@@ -2,7 +2,7 @@
 
 import { useState, useMemo } from "react";
 import { supabase2 } from "@/lib/supabase/client";
-import { BarChart3, ChevronLeft, ChevronRight, Trophy, Clock, FolderKanban, Ticket, Wrench, Loader2, Lock, SearchCheck } from "lucide-react";
+import { BarChart3, ChevronLeft, ChevronRight, Trophy, Clock, FolderKanban, Ticket, Wrench, Loader2, Lock, SearchCheck, TrendingUp } from "lucide-react";
 import { BarChart, Bar, XAxis, YAxis, ResponsiveContainer, Tooltip, CartesianGrid } from "recharts";
 
 interface Props {
@@ -15,6 +15,7 @@ interface Props {
   servicePosventaInicial: any;
   consultasVsVentas: any[];
   ventasPorOrigenInicial: any[];
+  proyeccionVentasInicial: any[];
 }
 
 const ESTADO_COT_LABEL: Record<string, string> = { pendiente: "Pendiente", aprobada: "Aprobada", rechazada: "Rechazada" };
@@ -264,6 +265,48 @@ export default function ReportesClient(props: Props) {
                     <td className="px-3 py-2 text-right font-mono">{r.contactados}</td>
                     <td className={`px-3 py-2 text-right font-mono ${r.sin_contactar > 0 ? "text-rose-300 font-bold" : ""}`}>{r.sin_contactar}</td>
                     <td className={`px-3 py-2 text-right font-mono ${r.soltados > 0 ? "text-rose-300 font-bold" : ""}`}>{r.soltados}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        )}
+      </div>
+
+      {/* Proyección del mes */}
+      <div className="rounded-2xl p-5 bg-gradient-to-br from-amber-600 to-orange-700 text-white">
+        <div className="flex items-center justify-between mb-3">
+          <div>
+            <p className="text-[10px] font-bold uppercase tracking-widest text-amber-100">Proyección del mes</p>
+            <p className="text-lg font-black capitalize">Mes actual</p>
+          </div>
+          <TrendingUp className="w-6 h-6 text-amber-100" />
+        </div>
+        <p className="text-[11px] text-amber-100 mb-3">
+          Ventas ya cerradas + (señas activas, presupuestos confirmados y visitas pendientes de este mes) × la tasa de conversión histórica de cada vendedor (últimos 3 meses). Es una estimación simple, no una predicción con IA.
+        </p>
+        {props.proyeccionVentasInicial.length === 0 ? (
+          <p className="text-center text-amber-100 text-xs py-4">Sin vendedores activos.</p>
+        ) : (
+          <div className="overflow-x-auto">
+            <table className="w-full text-left text-xs min-w-[480px]">
+              <thead>
+                <tr className="text-[10px] uppercase tracking-widest text-amber-100">
+                  <th className="px-3 py-2 font-bold">Vendedor</th>
+                  <th className="px-3 py-2 font-bold text-right">Cerradas</th>
+                  <th className="px-3 py-2 font-bold text-right">Pipeline abierto</th>
+                  <th className="px-3 py-2 font-bold text-right">Conversión hist.</th>
+                  <th className="px-3 py-2 font-bold text-right">Proyectadas</th>
+                </tr>
+              </thead>
+              <tbody>
+                {props.proyeccionVentasInicial.map((r: any, i: number) => (
+                  <tr key={r.vendedor_id} className={i % 2 === 0 ? "bg-white/5" : ""}>
+                    <td className="px-3 py-2 font-bold">{r.nombre}{r.vendedor_id === miId ? " (vos)" : ""}</td>
+                    <td className="px-3 py-2 text-right font-mono">{r.ventas_cerradas_mes}</td>
+                    <td className="px-3 py-2 text-right font-mono">{r.pipeline_actual}</td>
+                    <td className="px-3 py-2 text-right font-mono">{r.tasa_conversion_pct}%</td>
+                    <td className="px-3 py-2 text-right font-mono font-bold">{r.proyeccion}</td>
                   </tr>
                 ))}
               </tbody>
