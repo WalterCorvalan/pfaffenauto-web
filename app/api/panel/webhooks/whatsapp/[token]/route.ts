@@ -31,7 +31,7 @@ const supabase = createClient(
 export const maxDuration = 30;
 
 async function tokenValido(token: string): Promise<boolean> {
-  const { data } = await supabase.from("whatsapp_configuracion").select("webhook_verify_token").eq("id", true).single();
+  const { data } = await supabase.from("whatsapp_configuracion").select("webhook_verify_token").eq("id", true).maybeSingle();
   const expected = data?.webhook_verify_token ?? "";
   if (!expected) return false;
   const a = Buffer.from(token);
@@ -49,7 +49,7 @@ export async function GET(req: Request, { params }: { params: Promise<{ token: s
   const verifyToken = url.searchParams.get("hub.verify_token");
   const challenge = url.searchParams.get("hub.challenge");
 
-  const { data: config } = await supabase.from("whatsapp_configuracion").select("webhook_verify_token").eq("id", true).single();
+  const { data: config } = await supabase.from("whatsapp_configuracion").select("webhook_verify_token").eq("id", true).maybeSingle();
   if (mode === "subscribe" && verifyToken === config?.webhook_verify_token) {
     return new Response(challenge ?? "", { status: 200 });
   }
@@ -80,7 +80,17 @@ export async function POST(req: Request, { params }: { params: Promise<{ token: 
     return new Response("Unauthorized", { status: 401 });
   }
 
-  const payload = JSON.parse(rawBody);
+  let payload: unknown;
+  try {
+    payload = JSON.parse(rawBody);
+  } catch (err) {
+    // Body que pasó la firma HMAC pero no es JSON válido (glitch de
+    // reintento de Meta, body truncado) -- sin este catch tiraba 500 sin
+    // loguear nada útil. Devolvemos 200 igual que un error de
+    // procesamiento, para no generar reintentos infinitos de Meta.
+    registrarError("webhook-v2:parse-body", err);
+    return Response.json({ received: true });
+  }
   // Hay que esperar el procesamiento antes de responder: en el runtime
   // serverless de Vercel, la función se congela apenas se devuelve la
   // respuesta, así que "fire and forget" nunca llega a terminar y el
@@ -260,7 +270,7 @@ async function guardarMensajeEntrante({ waId, nombrePerfil, msg }: { waId: strin
   let mediaUrl: string | null = null;
   if (msg.type === "audio" && msg.audio?.id) {
     try {
-      const { data: config } = await supabase.from("whatsapp_configuracion").select("token_cifrado, token_iv, token_tag").eq("id", true).single();
+      const { data: config } = await supabase.from("whatsapp_configuracion").select("token_cifrado, token_iv, token_tag").eq("id", true).maybeSingle();
       if (config?.token_cifrado && r2Configurado()) {
         const tokenPlano = decrypt(config.token_cifrado, config.token_iv, config.token_tag);
         const { buffer, mimeType } = await descargarMediaWhatsapp(msg.audio.id, tokenPlano);
@@ -319,7 +329,7 @@ async function ejecutarAgente(conversacionId: string) {
   const { data: conversacionActual } = await supabase.from("whatsapp_conversaciones").select("ai_habilitada, fuera_horario_avisado_fecha, vehiculo_id").eq("id", conversacionId).single();
   if (conversacionActual?.ai_habilitada === false) return;
 
-  const { data: config } = await supabase.from("whatsapp_configuracion").select("*").eq("id", true).single();
+  const { data: config } = await supabase.from("whatsapp_configuracion").select("*").eq("id", true).maybeSingle();
 
   if (!estaEnHorarioAtencion(config?.horario_inicio ?? 8, config?.horario_fin ?? 22)) {
     const hoy = new Date().toISOString().split("T")[0];
