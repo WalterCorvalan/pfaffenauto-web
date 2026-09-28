@@ -1,4 +1,4 @@
-import { createHmac, timingSafeEqual } from "crypto";
+import { createHmac, timingSafeEqual, randomUUID } from "crypto";
 import { createClient } from "@supabase/supabase-js";
 import { isAiConfiguredV2 } from "@/lib/ai/indexV2";
 import { generarRespuestaAgenteV2, dividirRespuestaEnMensajes } from "@/lib/ai/agenteV2";
@@ -6,6 +6,7 @@ import { sendInstagramPrivateReply, sendInstagramMessage, sendInstagramImageMess
 import { decrypt } from "@/lib/crypto";
 import { rateLimit, ipDesdeRequest } from "@/lib/rateLimit";
 import { registrarError } from "@/lib/panel/logger";
+import { subirArchivoR2, r2Configurado } from "@/lib/storage/r2";
 
 // Webhook de Meta para el Instagram de panel (Conversaciones → Instagram),
 // mismo patrón que /api/panel/webhooks/whatsapp: comentario en un post →
@@ -47,7 +48,7 @@ async function buscarAutomatizacionPorComentario(texto: string): Promise<{ respu
 }
 
 async function tokenValido(token: string): Promise<boolean> {
-  const { data } = await supabase.from("instagram_configuracion").select("webhook_verify_token").eq("id", true).single();
+  const { data } = await supabase.from("instagram_configuracion").select("webhook_verify_token").eq("id", true).maybeSingle();
   const expected = data?.webhook_verify_token ?? "";
   if (!expected) return false;
   const a = Buffer.from(token);
@@ -65,7 +66,7 @@ export async function GET(req: Request, { params }: { params: Promise<{ token: s
   const verifyToken = url.searchParams.get("hub.verify_token");
   const challenge = url.searchParams.get("hub.challenge");
 
-  const { data: config } = await supabase.from("instagram_configuracion").select("webhook_verify_token").eq("id", true).single();
+  const { data: config } = await supabase.from("instagram_configuracion").select("webhook_verify_token").eq("id", true).maybeSingle();
   if (mode === "subscribe" && verifyToken === config?.webhook_verify_token) {
     return new Response(challenge ?? "", { status: 200 });
   }
@@ -93,7 +94,16 @@ export async function POST(req: Request, { params }: { params: Promise<{ token: 
     return new Response("Unauthorized", { status: 401 });
   }
 
-  const payload = JSON.parse(rawBody);
+  let payload: unknown;
+  try {
+    payload = JSON.parse(rawBody);
+  } catch (err) {
+    // Body que pasó la firma HMAC pero no es JSON válido -- sin este catch
+    // tiraba 500 sin loguear nada útil. Devolvemos 200 igual que un error
+    // de procesamiento, para no generar reintentos infinitos de Meta.
+    registrarError("webhook-ig-v2:parse-body", err);
+    return Response.json({ received: true });
+  }
   try {
     await procesarEvento(payload);
   } catch (err) {
@@ -244,7 +254,7 @@ async function procesarComentario(value: any) {
   });
   await supabase.from("instagram_conversaciones").update({ last_inbound_at: new Date().toISOString() }).eq("id", refs.conversacionId);
 
-  const { data: config } = await supabase.from("instagram_configuracion").select("*").eq("id", true).single();
+  const { data: config } = await supabase.from("instagram_configuracion").select("*").eq("id", true).maybeSingle();
   if (!isInstagramEnvioConfigurado(config)) {
     console.warn("[webhook-ig-v2] Instagram no está configurado: respuesta privada no enviada.");
     return;
@@ -303,11 +313,37 @@ function resolverTextoYMediaInstagram(message: any): { texto: string | null; tip
   return { texto: "[Envió un archivo]", tipo: "text", mediaUrl: null };
 }
 
+// A diferencia de WhatsApp (media_id + Bearer token para pedir una URL
+// temporal), el payload del DM de Instagram ya trae la URL del archivo
+// directo, sin auth -- pero es un link de Meta igual, no nuestro: si algún
+// día expira o Meta lo invalida, la foto vieja se rompe en el panel. Mismo
+// criterio que descargarMediaWhatsapp(): se baja ahora mismo y se sube a R2
+// para tener una copia propia permanente. Best-effort -- si falla (R2 sin
+// configurar, Meta caído), se guarda igual con la URL de Meta en vez de
+// perder el archivo.
+async function descargarYSubirMediaInstagram(url: string, tipo: string, igMessageId: string | undefined): Promise<string> {
+  if (!r2Configurado()) return url;
+  try {
+    const res = await fetch(url);
+    if (!res.ok) return url;
+    const buffer = Buffer.from(await res.arrayBuffer());
+    const mimeType = res.headers.get("content-type") || (tipo === "image" ? "image/jpeg" : tipo === "audio" ? "audio/mpeg" : "video/mp4");
+    const extension = mimeType.split("/")[1]?.split(";")[0] || (tipo === "image" ? "jpg" : tipo === "audio" ? "mp3" : "mp4");
+    return await subirArchivoR2(buffer, `instagram/${tipo}/${Date.now()}-${igMessageId || randomUUID()}.${extension}`, mimeType.split(";")[0]);
+  } catch {
+    return url;
+  }
+}
+
 async function procesarMensajeDirecto(msg: any): Promise<{ conversacionId: string; mensajeId: string; igUserId: string } | null> {
   const igUserId = msg.sender?.id;
-  const { texto, tipo, mediaUrl } = resolverTextoYMediaInstagram(msg.message);
+  let { texto, tipo, mediaUrl } = resolverTextoYMediaInstagram(msg.message);
   const igMessageId = msg.message?.mid;
   if (!igUserId || (!texto && !mediaUrl)) return null;
+
+  if (mediaUrl && (tipo === "image" || tipo === "audio" || tipo === "video")) {
+    mediaUrl = await descargarYSubirMediaInstagram(mediaUrl, tipo, igMessageId);
+  }
 
   // A diferencia de un comentario (Meta manda el username directo), un DM
   // entrante solo trae el IGSID numérico -- sin esto el contacto quedaba
@@ -317,7 +353,7 @@ async function procesarMensajeDirecto(msg: any): Promise<{ conversacionId: strin
   const { data: contactoPrevio } = await supabase.from("instagram_contactos").select("username").eq("ig_user_id", igUserId).maybeSingle();
   let usernameResuelto: string | null = contactoPrevio?.username ?? null;
   if (!usernameResuelto) {
-    const { data: config } = await supabase.from("instagram_configuracion").select("token_cifrado, token_iv, token_tag").eq("id", true).single();
+    const { data: config } = await supabase.from("instagram_configuracion").select("token_cifrado, token_iv, token_tag").eq("id", true).maybeSingle();
     if (config?.token_cifrado && config.token_iv && config.token_tag) {
       try {
         const tokenPlano = decrypt(config.token_cifrado, config.token_iv, config.token_tag);
@@ -386,7 +422,7 @@ async function ejecutarAgente(conversacionId: string, igUserId: string) {
   const { data: mensajes } = await supabase.from("instagram_mensajes").select("direccion, texto").eq("conversacion_id", conversacionId).order("created_at", { ascending: true }).limit(20);
   const historial = (mensajes ?? []).filter((m) => m.texto).map((m) => ({ role: (m.direccion === "in" ? "user" : "assistant") as "user" | "assistant", content: m.texto as string }));
 
-  const { data: config } = await supabase.from("instagram_configuracion").select("*").eq("id", true).single();
+  const { data: config } = await supabase.from("instagram_configuracion").select("*").eq("id", true).maybeSingle();
   // Instagram tiene que sonar igual de profesional y serio que WhatsApp --
   // un vendedor real, no un amigo chateando. El admin puede pisar esto
   // cargando su propio tono en Configuración > Instagram, pero no depende
