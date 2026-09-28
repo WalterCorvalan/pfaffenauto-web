@@ -1,7 +1,8 @@
 "use client";
 
 import { useState } from "react";
-import { Wrench, Settings, Search, Plus } from "lucide-react";
+import Link from "next/link";
+import { Wrench, Settings, Search, Plus, Smartphone } from "lucide-react";
 import NuevaOtModal from "./NuevaOtModal";
 import TallerConfigModal from "./TallerConfigModal";
 import TallerResumenTab from "./TallerResumenTab";
@@ -49,6 +50,13 @@ export default function TallerClient({
             </div>
           </div>
           <div className="flex items-center gap-3">
+            <Link
+              href="/panel/taller/movil"
+              title="Vista para celular"
+              className="p-2.5 text-slate-500 hover:text-slate-900 bg-slate-50 dark:bg-white/5 hover:bg-slate-100 dark:hover:bg-white/10 rounded-xl transition-colors border border-slate-200 dark:border-white/10"
+            >
+              <Smartphone className="w-4 h-4" />
+            </Link>
             <button
               onClick={() => setModalConfig(true)}
               className="p-2.5 text-slate-500 hover:text-slate-900 bg-slate-50 dark:bg-white/5 hover:bg-slate-100 dark:hover:bg-white/10 rounded-xl transition-colors border border-slate-200 dark:border-white/10"
