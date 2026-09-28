@@ -2,7 +2,7 @@ import { createClient } from "@/lib/supabase/server";
 import MiEspacioClient from "./MiEspacioClient";
 import { paraHoyGestoria, paraHoyFinanzas, colaVendedor, carteraVendedor } from "@/lib/panel/miDia";
 
-export const metadata = { title: "Mi Espacio | Pfaffen Autos" };
+export const metadata = { title: "Mi Espacio | Pfaffen Cars" };
 
 export default async function MiEspacioPage() {
   const supabase = await createClient();

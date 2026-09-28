@@ -1,6 +1,7 @@
 "use client";
 
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
+import { useRouter } from "next/navigation";
 import { supabase2 } from "@/lib/supabase/client";
 import { CalendarCheck, CarFront, MapPin, Clock, User, CheckCircle2, XCircle, CalendarClock, MessageSquareText, Users, Loader2, Plus } from "lucide-react";
 import { fmtFechaLocal, hoyLocalISO } from "@/lib/panel/fechas";
@@ -71,8 +72,23 @@ function VendedorSelector({ visitaId, vendedorActualId, perfiles, onCambiado }: 
 export default function VisitasClient({
   visitasIniciales, perfiles, sucursales, vehiculos, clientes, miId,
 }: { visitasIniciales: any[]; perfiles: Perfil[]; sucursales: Sucursal[]; vehiculos: Vehiculo[]; clientes: Cliente[]; miId: string }) {
+  const router = useRouter();
   const [visitas, setVisitas] = useState(visitasIniciales);
   const [modalNueva, setModalNueva] = useState(false);
+
+  useEffect(() => { setVisitas(visitasIniciales); }, [visitasIniciales]);
+
+  // Realtime: una visita reservada desde el sitio público (cotizador,
+  // agendar cita, etc.) antes solo aparecía al recargar el módulo a mano.
+  useEffect(() => {
+    let timeoutId: ReturnType<typeof setTimeout>;
+    const refrescarConDebounce = () => { clearTimeout(timeoutId); timeoutId = setTimeout(() => router.refresh(), 400); };
+    const canal = supabase2
+      .channel(`visitas-realtime-${Math.random().toString(36).slice(2)}`)
+      .on("postgres_changes", { event: "*", schema: "public", table: "visitas" }, refrescarConDebounce)
+      .subscribe();
+    return () => { clearTimeout(timeoutId); supabase2.removeChannel(canal); };
+  }, [router]);
   const perfilMap = useMemo(() => Object.fromEntries(perfiles.map((p) => [p.id, p.nombre])), [perfiles]);
   // Las visitas cargadas a mano desde el panel guardan vehiculo_id (FK real a
   // stock) -- las que crea el bot de WhatsApp guardan vehiculo_marca/modelo/
@@ -145,7 +161,7 @@ export default function VisitasClient({
     <div className="p-6">
       <div className="flex flex-wrap items-center justify-between gap-3 mb-1">
         <div>
-          <h1 className="text-xl font-bold flex items-center gap-2"><CalendarCheck className="w-5 h-5 text-[#0145F2]" /> Agenda de Citas</h1>
+          <h1 className="text-xl font-bold flex items-center gap-2"><img src="/icons/panel/visitas.png" alt="" className="w-5 h-5 object-contain shrink-0" /> Agenda de Citas</h1>
           <p className="text-sm text-slate-400">Visitas agendadas desde la web o cargadas a mano</p>
         </div>
         <div className="flex items-center gap-2 flex-wrap">

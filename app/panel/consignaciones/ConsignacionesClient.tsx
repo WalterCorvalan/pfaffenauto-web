@@ -53,6 +53,20 @@ export default function ConsignacionesClient({ consignacionesIniciales, perfiles
     if (id) setDetalleId(id);
   }, [searchParams]);
 
+  useEffect(() => { setConsignaciones(consignacionesIniciales); }, [consignacionesIniciales]);
+
+  // Realtime: una consignación pedida desde /consignacion (sitio público)
+  // antes solo aparecía al recargar el módulo a mano.
+  useEffect(() => {
+    let timeoutId: ReturnType<typeof setTimeout>;
+    const refrescarConDebounce = () => { clearTimeout(timeoutId); timeoutId = setTimeout(() => router.refresh(), 400); };
+    const canal = supabase2
+      .channel(`consignaciones-realtime-${Math.random().toString(36).slice(2)}`)
+      .on("postgres_changes", { event: "*", schema: "public", table: "consignaciones" }, refrescarConDebounce)
+      .subscribe();
+    return () => { clearTimeout(timeoutId); supabase2.removeChannel(canal); };
+  }, [router]);
+
   const activas = consignaciones.filter((c) => c.estado !== "cancelado" && c.estado !== "consignado");
   const porContactar = activas.filter((c) => c.estado === "pendiente_contacto").length;
   const publicadas = consignaciones.filter((c) => c.publicada).length;
@@ -74,7 +88,7 @@ export default function ConsignacionesClient({ consignacionesIniciales, perfiles
     <div className="p-6">
       <div className="flex items-start justify-between mb-1">
         <div>
-          <h1 className="text-xl font-bold flex items-center gap-2"><KeyRound className="w-5 h-5 text-[#0145F2]" /> Consignaciones</h1>
+          <h1 className="text-xl font-bold flex items-center gap-2"><img src="/icons/panel/consignaciones.png" alt="" className="w-5 h-5 object-contain shrink-0" /> Consignaciones</h1>
           <p className="text-sm text-slate-400">{consignaciones.length} consignación{consignaciones.length === 1 ? "" : "es"} · {porContactar} por contactar · {publicadas} publicadas</p>
         </div>
         <button onClick={() => setModalNueva(true)} className="flex items-center gap-1.5 px-4 py-2 rounded-xl text-sm font-bold bg-[#0145F2] hover:bg-[#0138c9] text-white shadow-sm">

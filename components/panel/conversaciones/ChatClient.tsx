@@ -5,9 +5,9 @@ import { useSearchParams, useRouter } from "next/navigation";
 import { supabase2 } from "@/lib/supabase/client";
 import ConfirmDialog from "@/components/panel/ConfirmDialog";
 import {
-  Search, Send, Bot, Check, Info, ChevronRight, PanelRight,
+  Search, Send, Bot, Check, CheckCheck, Info, ChevronRight, PanelRight,
   Loader2, Megaphone, X, MessageSquareText, AtSign, Archive, ArchiveRestore, FileCheck2,
-  MessageCircle, ShoppingBag,
+  MessageCircle, ShoppingBag, Link2, Flame, Car,
 } from "lucide-react";
 
 // Badge con el origen real del lead, sobre el avatar -- pedido del 24/9:
@@ -52,12 +52,14 @@ export default function ChatClient({
   conversacionesIniciales,
   conversacionesInstagramIniciales = [],
   vendedores = [],
+  canalFijo,
 }: {
   conversacionesIniciales: any[];
   conversacionesInstagramIniciales?: any[];
   vendedores?: { id: string; nombre: string }[];
+  canalFijo?: "whatsapp" | "instagram";
 }) {
-  const [canal, setCanal] = useState<"whatsapp" | "instagram">("whatsapp");
+  const [canal, setCanal] = useState<"whatsapp" | "instagram">(canalFijo || "whatsapp");
   const esIG = canal === "instagram";
   const [conversacionesWA, setConversacionesWA] = useState(conversacionesIniciales);
   const [conversacionesIG, setConversacionesIG] = useState(conversacionesInstagramIniciales);
@@ -116,9 +118,9 @@ export default function ChatClient({
   useEffect(() => {
     const conversacionParam = searchParams.get("conversacion");
     const canalParam = searchParams.get("canal");
-    if (canalParam === "instagram" || canalParam === "whatsapp") setCanal(canalParam);
+    if (!canalFijo && (canalParam === "instagram" || canalParam === "whatsapp")) setCanal(canalParam);
     if (conversacionParam) setSeleccionada(conversacionParam);
-  }, [searchParams]);
+  }, [searchParams, canalFijo]);
 
   useEffect(() => { mensajesEndRef.current?.scrollIntoView({ behavior: "smooth" }); }, [mensajes]);
 
@@ -285,6 +287,23 @@ export default function ChatClient({
   const [clientesResult, setClientesResult] = useState<any[]>([]);
   const [vehiculosResult, setVehiculosResult] = useState<any[]>([]);
   const [buscarVehiculo, setBuscarVehiculo] = useState("");
+  const [vehiculoVinculado, setVehiculoVinculado] = useState<any>(null);
+  const [buscandoVehiculoInline, setBuscandoVehiculoInline] = useState(false);
+
+  // Tarjeta de "vehículo vinculado" en el panel de detalle (pedido 27/9) --
+  // antes se podía vincular un auto (vincularVehiculo, ya existía para el
+  // modal de Cliente/Vehículo) pero una vez vinculado no se mostraba en
+  // ningún lado cuál quedó asociado. conversaciones no trae el join de
+  // vehiculos (whatsapp/instagram page.tsx solo trae vehiculo_id), así que
+  // se busca acá cuando cambia la conversación activa.
+  useEffect(() => {
+    const vehiculoId = conversacionActiva?.vehiculo_id;
+    if (!vehiculoId) { setVehiculoVinculado(null); return; }
+    let cancelado = false;
+    supabase2.from("vehiculos").select("id, marca, modelo, anio, km, precio_venta, moneda_venta, estado, fotos, slug").eq("id", vehiculoId).maybeSingle()
+      .then(({ data }) => { if (!cancelado) setVehiculoVinculado(data); });
+    return () => { cancelado = true; };
+  }, [conversacionActiva?.vehiculo_id]);
 
   const buscarClientesFn = async (q: string) => {
     setBuscarCliente(q);
@@ -358,7 +377,7 @@ export default function ChatClient({
     setShowVincular(false);
   };
 
-  const vincularVehiculo = async (vehiculoId: string) => {
+  const vincularVehiculo = async (vehiculoId: string | null) => {
     if (!seleccionada) return;
     await supabase2.from(tablaConversaciones).update({ vehiculo_id: vehiculoId }).eq("id", seleccionada);
     setConversaciones((prev) => prev.map((c) => (c.id === seleccionada ? { ...c, vehiculo_id: vehiculoId } : c)));
@@ -403,12 +422,40 @@ export default function ChatClient({
     return "bg-slate-300";
   };
 
+  // Preview del último mensaje + ícono de check (pedido 27/9, ver
+  // whatsapp/page.tsx e instagram/page.tsx -- traen c.ultimo_mensaje ahí
+  // porque no hay columna cacheada del último mensaje en la conversación).
+  // WhatsApp trackea pending/sent/delivered/read en un campo "status".
+  // Instagram solo trackea "leido_at" (sin distinguir entregado vs enviado),
+  // así que ahí el check es de 1 o 2 rayitas nomás, sin el estado intermedio.
+  const previewUltimoMensaje = (um: any) => {
+    if (!um) return null;
+    if (um.tipo === "text") return um.texto || "";
+    const ICONS_TIPO: Record<string, string> = { image: "📷 Foto", audio: "🎙️ Audio", video: "🎥 Video", document: "📄 Documento", sticker: "😀 Sticker" };
+    return ICONS_TIPO[um.tipo] || um.texto || "Mensaje";
+  };
+
+  const CheckDeLeido = ({ um }: { um: any }) => {
+    if (!um || um.direccion !== "out") return null;
+    if (canal === "whatsapp") {
+      if (um.status === "read") return <CheckCheck className="w-3.5 h-3.5 text-sky-500 shrink-0" />;
+      if (um.status === "delivered") return <CheckCheck className="w-3.5 h-3.5 text-slate-400 shrink-0" />;
+      if (um.status === "failed") return <Check className="w-3.5 h-3.5 text-rose-500 shrink-0" />;
+      return <Check className="w-3.5 h-3.5 text-slate-400 shrink-0" />; // pending / sent
+    }
+    // Instagram
+    return um.leido_at
+      ? <CheckCheck className="w-3.5 h-3.5 text-sky-500 shrink-0" />
+      : <Check className="w-3.5 h-3.5 text-slate-400 shrink-0" />;
+  };
+
   const renderConversacion = (c: any) => {
     const contactoRaw = canal === "whatsapp" ? c.whatsapp_contactos : c.instagram_contactos;
     const nombreMostrado = canal === "whatsapp" ? contactoRaw?.nombre_perfil : (contactoRaw ? (contactoRaw.nombre_perfil || `@${contactoRaw.username || contactoRaw.ig_user_id}`) : null);
     const contacto = { nombre_perfil: nombreMostrado, telefono: canal === "whatsapp" ? contactoRaw?.telefono : null };
     const iniciales = (contacto?.nombre_perfil || contacto?.telefono || "?").substring(0, 2).toUpperCase();
     const isActive = seleccionada === c.id;
+    const esCaliente = c.calificacion === "caliente";
 
     return (
       <button
@@ -424,13 +471,25 @@ export default function ChatClient({
         <div className="flex-1 min-w-0">
           <div className="flex justify-between items-start mb-0.5">
             <span className={`font-bold text-sm truncate flex items-center gap-1 ${isActive ? "text-emerald-900 dark:text-emerald-200" : "text-slate-900 dark:text-white"}`}>
+              {esCaliente && <span title="Lead caliente" className="shrink-0 inline-flex"><Flame className="w-3.5 h-3.5 text-rose-500 fill-rose-500" /></span>}
               {c.origen_ads && <span title={c.origen_ads} className="shrink-0 inline-flex"><Megaphone className="w-3 h-3 text-indigo-500 dark:text-sky-300" /></span>}
               {contacto?.nombre_perfil || contacto?.telefono}
             </span>
-            <span className="text-[11px] text-slate-400 dark:text-slate-500 whitespace-nowrap">{c.last_message_at ? formatDay(c.last_message_at) : ""}</span>
+            {/* Fallback a la fecha del último mensaje real (c.ultimo_mensaje,
+               traído en whatsapp/instagram page.tsx) -- hay conversaciones
+               viejas con last_message_at nulo que antes quedaban sin hora. */}
+            {(() => {
+              const fecha = c.last_message_at || c.ultimo_mensaje?.created_at;
+              return <span className="text-[11px] text-slate-400 dark:text-slate-500 whitespace-nowrap">{fecha ? formatDay(fecha) : ""}</span>;
+            })()}
           </div>
-          <div className="flex items-center justify-between">
-            <p className="text-[13px] text-slate-500 dark:text-slate-400 truncate mb-1.5">{c.vendedor?.nombre ? `Asignado a ${c.vendedor.nombre}` : "Sin asignar"}</p>
+          <div className="flex items-center justify-between gap-2 mb-1.5">
+            <span className="flex items-center gap-1 min-w-0 flex-1">
+              <CheckDeLeido um={c.ultimo_mensaje} />
+              <p className="text-[13px] text-slate-500 dark:text-slate-400 truncate">
+                {previewUltimoMensaje(c.ultimo_mensaje) ?? (c.vendedor?.nombre ? `Asignado a ${c.vendedor.nombre}` : "Sin asignar")}
+              </p>
+            </span>
             {c.unread_count > 0 && <span className="text-[10px] font-bold bg-emerald-600 text-white px-1.5 py-0.5 rounded-full shrink-0">{c.unread_count}</span>}
           </div>
           {c.handoff_at && !c.ai_habilitada && (
@@ -448,14 +507,16 @@ export default function ChatClient({
       {/* COLUMNA 1: BANDEJA */}
       <div className={`w-full md:w-[280px] flex-col bg-white dark:bg-[#111] border-r border-slate-200 dark:border-white/10 shrink-0 ${seleccionada ? "hidden md:flex" : "flex"}`}>
         <div className="p-2.5 border-b border-slate-100 dark:border-white/10 shrink-0 space-y-2">
-          <div className="flex gap-1.5">
-            <button onClick={() => { setCanal("whatsapp"); setSeleccionada(null); }} className={`flex-1 flex items-center justify-center gap-1.5 px-2 py-1.5 text-xs font-bold rounded-lg transition-colors ${canal === "whatsapp" ? "bg-emerald-700 text-white" : "bg-slate-50 dark:bg-white/5 border border-slate-200 dark:border-white/10 text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-white/10"}`}>
-              <MessageSquareText className="w-3.5 h-3.5" /> WhatsApp {conversacionesWA.length}
-            </button>
-            <button onClick={() => { setCanal("instagram"); setSeleccionada(null); }} className={`flex-1 flex items-center justify-center gap-1.5 px-2 py-1.5 text-xs font-bold rounded-lg transition-colors ${canal === "instagram" ? "bg-gradient-to-tr from-amber-500 via-pink-600 to-purple-600 text-white" : "bg-slate-50 dark:bg-white/5 border border-slate-200 dark:border-white/10 text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-white/10"}`}>
-              <AtSign className="w-3.5 h-3.5" /> Instagram {conversacionesIG.length}
-            </button>
-          </div>
+          {!canalFijo && (
+            <div className="flex gap-1.5">
+              <button onClick={() => { setCanal("whatsapp"); setSeleccionada(null); }} className={`flex-1 flex items-center justify-center gap-1.5 px-2 py-1.5 text-xs font-bold rounded-lg transition-colors ${canal === "whatsapp" ? "bg-emerald-700 text-white" : "bg-slate-50 dark:bg-white/5 border border-slate-200 dark:border-white/10 text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-white/10"}`}>
+                <MessageSquareText className="w-3.5 h-3.5" /> WhatsApp {conversacionesWA.length}
+              </button>
+              <button onClick={() => { setCanal("instagram"); setSeleccionada(null); }} className={`flex-1 flex items-center justify-center gap-1.5 px-2 py-1.5 text-xs font-bold rounded-lg transition-colors ${canal === "instagram" ? "bg-gradient-to-tr from-amber-500 via-pink-600 to-purple-600 text-white" : "bg-slate-50 dark:bg-white/5 border border-slate-200 dark:border-white/10 text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-white/10"}`}>
+                <AtSign className="w-3.5 h-3.5" /> Instagram {conversacionesIG.length}
+              </button>
+            </div>
+          )}
 
           <div className="flex items-center gap-1.5">
             <div className="relative flex-1">
@@ -534,14 +595,20 @@ export default function ChatClient({
               {loading ? (
                 <div className="flex justify-center py-4"><span className="text-xs text-slate-500 dark:text-slate-400">Cargando...</span></div>
               ) : (
-                mensajes.map((m) => {
+                mensajes.map((m, idx) => {
                   const out = m.direccion === "out";
+                  // "Visto" solo va debajo del ÚLTIMO mensaje que mandamos --
+                  // igual que la app real de Instagram, no un tilde por
+                  // mensaje. Si el último saliente todavía no tiene
+                  // leido_at, no se muestra nada (el cliente no lo vio aún).
+                  const esUltimoOut = out && !mensajes.slice(idx + 1).some((sig) => sig.direccion === "out");
+                  const mostrarVisto = esIG && esUltimoOut && !!m.leido_at;
                   const burbujaOut = esIG ? "bg-gradient-to-br from-pink-500 to-purple-600 text-white border-transparent" : "bg-[#d9fdd3] dark:bg-[#005c4b] border-transparent text-slate-800 dark:text-white";
                   const burbujaIn = "bg-white dark:bg-[#1f2c34] border-slate-100 dark:border-white/5 text-slate-800 dark:text-slate-100";
                   return (
                     <div key={m.id} className={`flex ${out ? "justify-end" : "justify-start"}`}>
                       <div className={`max-w-[80%] xl:max-w-[65%] flex flex-col ${out ? "items-end" : "items-start"}`}>
-                        <div className={`rounded-[10px] px-3 py-2 text-[14.5px] shadow-sm border ${out ? burbujaOut : burbujaIn} ${out ? "rounded-tr-none" : "rounded-tl-none"}`}>
+                        <div className={`relative rounded-[10px] px-3 py-2 text-[14.5px] shadow-sm border ${out ? burbujaOut : burbujaIn} ${out ? "rounded-tr-none" : "rounded-tl-none"}`}>
                           {m.tipo === "image" && m.media_url && (
                             <img src={m.media_url} alt="Foto del vehículo" className="rounded-lg max-w-[260px] max-h-[260px] object-cover mb-1" />
                           )}
@@ -551,9 +618,19 @@ export default function ChatClient({
                           {/* Audio sin media_url: se cayó la descarga de Meta (URL
                               temporal vencida, R2 no configurado, etc.) -- solo
                               queda el placeholder de texto "🎤 Audio" de abajo. */}
+                          {m.tipo === "video" && m.media_url && (
+                            <video controls preload="none" src={m.media_url} className="rounded-lg max-w-[260px] max-h-[260px] mb-1" />
+                          )}
+                          {m.tipo !== "image" && m.tipo !== "audio" && m.tipo !== "video" && m.media_url && (
+                            <a href={m.media_url} target="_blank" rel="noopener noreferrer" className="flex items-center gap-2 bg-black/5 dark:bg-white/10 rounded-lg px-2.5 py-2 mb-1 hover:bg-black/10 dark:hover:bg-white/20 transition-colors">
+                              <Link2 className="w-3.5 h-3.5 shrink-0" />
+                              <span className="text-[13px] font-semibold underline underline-offset-2 truncate">Ver publicación compartida</span>
+                            </a>
+                          )}
                           {m.texto && <p className="leading-relaxed whitespace-pre-wrap">{m.texto}</p>}
                           <div className={`flex items-center justify-end gap-1 mt-1 ${out && !esIG ? "opacity-60" : "opacity-70"}`}>
                             {out && m.ai_generado && <Bot className="w-3 h-3" />}
+                            {m.editado && <span className="text-[10px] italic">editado</span>}
                             <span className="text-[10px] font-medium">{formatDate(m.created_at)}</span>
                             {out && (m.status === "failed" ? (
                               <button type="button" onClick={() => setMostrarSelectorAprobadas(true)} title={m.error_detalle ? `Falló: ${m.error_detalle}. Click para reintentar con plantilla.` : "Falló el envío — probablemente ventana de 24hs vencida. Click para reintentar con plantilla."} className="hover:opacity-70">
@@ -561,7 +638,15 @@ export default function ChatClient({
                               </button>
                             ) : <Check className={`w-3.5 h-3.5 ${esIG ? "" : "text-blue-500 dark:text-sky-300"}`} />)}
                           </div>
+                          {esIG && m.reaccion && (
+                            <span className={`absolute -bottom-2 ${out ? "left-1" : "right-1"} w-5 h-5 rounded-full bg-white dark:bg-[#1A1A1A] border border-slate-200 dark:border-white/10 shadow flex items-center justify-center text-[11px]`}>
+                              {m.reaccion}
+                            </span>
+                          )}
                         </div>
+                        {mostrarVisto && (
+                          <span className="text-[10px] text-slate-400 dark:text-slate-500 mt-0.5 mr-1">Visto</span>
+                        )}
                       </div>
                     </div>
                   );
@@ -706,9 +791,41 @@ export default function ChatClient({
               </select>
             </div>
 
+            <div className="p-4 border-b border-slate-200 dark:border-white/10">
+              <h4 className="text-[11px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-widest mb-2">Vehículo vinculado</h4>
+              {vehiculoVinculado ? (
+                <div className="flex items-center gap-2.5 bg-slate-50 dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-lg p-2">
+                  <div className="w-11 h-11 rounded-md bg-slate-200 dark:bg-white/10 overflow-hidden shrink-0 flex items-center justify-center">
+                    {vehiculoVinculado.fotos?.[0] ? <img src={vehiculoVinculado.fotos[0]} alt="" className="w-full h-full object-cover" /> : <Car className="w-5 h-5 text-slate-400" />}
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <p className="text-xs font-bold text-slate-900 dark:text-white truncate">{vehiculoVinculado.marca} {vehiculoVinculado.modelo}</p>
+                    <p className="text-[11px] text-slate-400">
+                      {vehiculoVinculado.anio} · {vehiculoVinculado.precio_venta ? `${vehiculoVinculado.moneda_venta === "ARS" ? "$" : "US$"} ${Number(vehiculoVinculado.precio_venta).toLocaleString("es-AR")}` : "Consultar precio"}
+                    </p>
+                  </div>
+                  <button onClick={() => vincularVehiculo(null)} title="Quitar vínculo" className="text-slate-400 hover:text-rose-500 shrink-0 p-1"><X className="w-3.5 h-3.5" /></button>
+                </div>
+              ) : buscandoVehiculoInline ? (
+                <div className="space-y-1">
+                  <input autoFocus value={buscarVehiculo} onChange={(e) => buscarVehiculosFn(e.target.value)} placeholder="Marca, modelo o patente..." className="w-full border border-slate-200 dark:border-white/10 bg-white dark:bg-white/5 text-slate-900 dark:text-white rounded-lg px-3 py-2 text-sm" />
+                  {vehiculosResult.map((v) => (
+                    <button key={v.id} onClick={() => { vincularVehiculo(v.id); setBuscandoVehiculoInline(false); setBuscarVehiculo(""); setVehiculosResult([]); }} className="block w-full text-left text-sm text-slate-700 dark:text-slate-200 px-2 py-1.5 hover:bg-slate-100 dark:hover:bg-white/10 rounded">
+                      {v.marca} {v.modelo} {v.patente ? `(${v.patente})` : ""}
+                    </button>
+                  ))}
+                  <button onClick={() => { setBuscandoVehiculoInline(false); setBuscarVehiculo(""); setVehiculosResult([]); }} className="text-[11px] text-slate-400 hover:text-slate-600 dark:hover:text-slate-300">Cancelar</button>
+                </div>
+              ) : (
+                <button onClick={() => setBuscandoVehiculoInline(true)} className="w-full bg-slate-100 dark:bg-white/5 border border-slate-200 dark:border-white/10 hover:bg-slate-200 dark:hover:bg-white/10 text-slate-700 dark:text-slate-200 text-xs font-bold px-4 py-2 rounded-lg">
+                  + Vincular auto
+                </button>
+              )}
+            </div>
+
             <div className="p-4 pb-0 space-y-2">
               <button onClick={() => setShowVincular(true)} className="w-full bg-slate-100 dark:bg-white/5 border border-slate-200 dark:border-white/10 hover:bg-slate-200 dark:hover:bg-white/10 text-slate-700 dark:text-slate-200 text-xs font-bold px-4 py-2 rounded-lg">
-                {conversacionActiva?.cliente_id ? "Cliente vinculado ✓" : "Vincular a cliente / auto"}
+                {conversacionActiva?.cliente_id ? "Cliente vinculado ✓" : "Vincular a cliente"}
               </button>
               <button onClick={archivarConversacion} className="w-full flex items-center justify-center gap-1.5 bg-slate-100 dark:bg-white/5 border border-slate-200 dark:border-white/10 hover:bg-slate-200 dark:hover:bg-white/10 text-slate-700 dark:text-slate-200 text-xs font-bold px-4 py-2 rounded-lg">
                 {conversacionActiva?.archivada ? <><ArchiveRestore className="w-3.5 h-3.5" /> Desarchivar</> : <><Archive className="w-3.5 h-3.5" /> Archivar conversación</>}
@@ -747,15 +864,6 @@ export default function ChatClient({
                           </button>
                         ))}
                         <button onClick={abrirFormularioCliente} className="text-xs text-emerald-700 dark:text-emerald-300 font-bold mt-3">+ Crear cliente nuevo con estos datos</button>
-                      </div>
-                      <div className="border-t border-slate-100 dark:border-white/10 pt-4">
-                        <label className="text-xs font-bold text-slate-500 dark:text-slate-400">Vehículo (opcional)</label>
-                        <input value={buscarVehiculo} onChange={(e) => buscarVehiculosFn(e.target.value)} placeholder="Marca, modelo o patente..." className="w-full border border-slate-200 dark:border-white/10 bg-white dark:bg-white/5 text-slate-900 dark:text-white rounded-lg px-3 py-2 text-sm mt-1" />
-                        {vehiculosResult.map((v) => (
-                          <button key={v.id} onClick={() => vincularVehiculo(v.id)} className="block w-full text-left text-sm text-slate-700 dark:text-slate-200 px-2 py-1.5 hover:bg-slate-50 dark:hover:bg-white/5 rounded mt-1">
-                            {v.marca} {v.modelo} {v.patente ? `(${v.patente})` : ""}
-                          </button>
-                        ))}
                       </div>
                     </div>
                   )}

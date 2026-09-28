@@ -14,7 +14,7 @@ const PLAZO_TRANSFERENCIA_DIAS = 15;
 export default function ImprimirExpediente({
   expediente: e, branding, hitos, checklist, gastos, perfilMap, dias,
 }: { expediente: any; branding?: Branding | null; hitos: any[]; checklist: any[]; gastos: any[]; perfilMap: Record<string, string>; dias: number }) {
-  const nombreEmpresa = branding?.branding_nombre || "Pfaffen Autos";
+  const nombreEmpresa = branding?.branding_nombre || "Pfaffen Cars";
   const v = e.venta || {};
   const demorado = dias > PLAZO_TRANSFERENCIA_DIAS;
 

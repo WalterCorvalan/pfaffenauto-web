@@ -4,7 +4,7 @@ import { puedeVerModulo } from "@/lib/panel/permisosModulos";
 import { tienePermiso } from "@/lib/panel/permisos";
 import FinanzasClient from "./FinanzasClient";
 
-export const metadata = { title: "Finanzas | Pfaffen Autos" };
+export const metadata = { title: "Finanzas | Pfaffen Cars" };
 
 export default async function FinanzasPage() {
   const supabase = await createClient();

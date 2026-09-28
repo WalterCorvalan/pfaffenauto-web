@@ -85,7 +85,7 @@ export default function AutorizacionesClient({
 
   return (
     <div className="p-6 max-w-4xl mx-auto">
-      <h1 className="text-xl font-bold flex items-center gap-2 mb-1"><ShieldAlert className="w-5 h-5 text-[#0145F2]" /> Autorizaciones</h1>
+      <h1 className="text-xl font-bold flex items-center gap-2 mb-1"><img src="/icons/panel/autorizaciones.png" alt="" className="w-5 h-5 object-contain shrink-0" /> Autorizaciones</h1>
       <p className="text-sm text-slate-400 mb-4">Bandeja de solicitudes que requieren tu aprobación. Cada decisión queda trazada con motivo, fecha y usuario.</p>
 
       <div className="flex items-center gap-1 bg-white dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-xl p-1 mb-4 w-fit shadow-sm">

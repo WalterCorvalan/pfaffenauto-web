@@ -74,7 +74,7 @@ async function agradecerVentasRecientes(): Promise<number> {
   for (const v of ventas || []) {
     const telefono = v.comprador_telefono_celular || v.comprador_telefono;
     if (!telefono) continue;
-    const texto = `¡Hola ${v.comprador_nombre || ""}! Desde Pfaffen Autos queríamos agradecerte por tu compra${v.vehiculo_marca ? ` del ${v.vehiculo_marca} ${v.vehiculo_modelo || ""}`.trim() : ""} 🚗. Cualquier consulta sobre la documentación o el service, estamos para ayudarte.`;
+    const texto = `¡Hola ${v.comprador_nombre || ""}! Desde Pfaffen Cars queríamos agradecerte por tu compra${v.vehiculo_marca ? ` del ${v.vehiculo_marca} ${v.vehiculo_modelo || ""}`.trim() : ""} 🚗. Cualquier consulta sobre la documentación o el service, estamos para ayudarte.`;
     try {
       await sendTextMessage(wa.phoneNumberId, wa.token, telefono, texto);
       await supabase.from("ventas").update({ aviso_agradecimiento_enviado: true }).eq("id", v.id);

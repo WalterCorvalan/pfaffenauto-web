@@ -1,7 +1,7 @@
 import { createClient } from "@/lib/supabase/server";
 import PerfilClient from "./PerfilClient";
 
-export const metadata = { title: "Mi Perfil | Pfaffen Autos" };
+export const metadata = { title: "Mi Perfil | Pfaffen Cars" };
 
 export default async function MiPerfilPage() {
   const supabase = await createClient();

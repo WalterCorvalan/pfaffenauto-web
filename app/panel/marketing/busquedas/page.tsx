@@ -53,7 +53,7 @@ export default async function BusquedasWebPage() {
             <p className="text-2xl font-black text-slate-900 dark:text-white font-mono">{pctSinResultados}%</p>
             <p className="text-[11px] text-slate-400 mt-0.5">Sin resultados ({sinResultadosTotal})</p>
           </div>
-          <TarjetaCostoIA costo={costoEstimado30} label="Costo IA del buscador (30d)" />
+          <TarjetaCostoIA costo={costoEstimado30} label="Costo IA del buscador (30d)" limite={15} />
         </div>
       )}
 

@@ -1,7 +1,10 @@
 import { z } from "zod";
 import { createClient } from "@supabase/supabase-js";
 import { chatJsonV2 } from "@/lib/ai/indexV2";
-import { buildSystemPromptV2, menuBienvenidaV2, SEPARADOR_MENSAJES, type ResultadoStockV2, type SucursalInfo } from "@/lib/ai/promptsV2";
+import { buildSystemPromptV2, menuBienvenidaV2, SEPARADOR_MENSAJES, type ResultadoStockV2, type SucursalInfo, type FinanciacionInfo } from "@/lib/ai/promptsV2";
+import {
+  TOPES_FINANCIACION_DEFAULT, TOPE_0KM_DEFAULT, TNA_POR_ANIO_Y_PLAZO_DEFAULT, GASTOS_PCT_DEFAULT,
+} from "@/lib/financiacion";
 
 // Agente de ventas panel-v2 — lo usan tanto WhatsApp como Rodi (comparten el
 // mismo prompt base, cada uno con su propio historial). Fork de
@@ -365,6 +368,53 @@ async function fetchSucursalesInfo(): Promise<SucursalInfo[]> {
   return (data ?? []) as SucursalInfo[];
 }
 
+// Misma tabla y mismos defaults que /api/financiacion-config (el simulador
+// público) -- el bot tiene que citar EXACTAMENTE los mismos números que ve
+// el cliente en la web, no una copia vieja hardcodeada en el prompt.
+async function fetchFinanciacionInfo(): Promise<FinanciacionInfo> {
+  const { data } = await supabase.from("configuracion_empresa").select("financiacion_topes, financiacion_tope_0km, financiacion_tna, financiacion_gastos_pct").eq("id", true).maybeSingle();
+  return {
+    topes: data?.financiacion_topes?.length ? data.financiacion_topes : TOPES_FINANCIACION_DEFAULT,
+    tope0km: data?.financiacion_tope_0km ?? TOPE_0KM_DEFAULT,
+    tna: data?.financiacion_tna?.length ? data.financiacion_tna : TNA_POR_ANIO_Y_PLAZO_DEFAULT,
+    gastosPct: data?.financiacion_gastos_pct ?? GASTOS_PCT_DEFAULT,
+  };
+}
+
+// Red de seguridad anti-alucinación para financiación, mismo criterio que
+// respuestaMencionaStockInventado: el prompt ya prohíbe inventar un
+// porcentaje/tasa, pero un modelo chico a veces igual redondea o repite un
+// número de memoria (el "100%" que tenía el prompt viejo, por ejemplo). Solo
+// se activa si la respuesta menciona un % Y toca el tema financiación --
+// evita falsos positivos con porcentajes de otro contexto (ej: un % de
+// descuento que no tiene nada que ver con el crédito).
+function respuestaMencionaFinanciacionInventada(reply: string, financiacion: FinanciacionInfo): boolean {
+  if (!/financi|cuota|tna|cr[ée]dito|tope de|entrega inicial/i.test(reply)) return false;
+  const porcentajesReply = Array.from(reply.matchAll(/(\d{1,3})\s?%/g)).map((m) => Number(m[1]));
+  if (porcentajesReply.length === 0) return false;
+
+  const porcentajesReales = new Set<number>([
+    ...financiacion.topes.map((t) => t.pct),
+    financiacion.tope0km,
+    financiacion.gastosPct,
+    ...financiacion.tna.flatMap((g) => Object.values(g.tna)),
+  ]);
+  return porcentajesReply.some((n) => !porcentajesReales.has(n));
+}
+
+// Reemplazo seguro para el cliente cuando se descarta una respuesta por
+// respuestaMencionaFinanciacionInventada -- mismo criterio que
+// respuestaSeguraConStockReal: texto natural con los números reales, no el
+// bloque de instrucciones del prompt (formatearFinanciacion(), ese es para
+// el modelo, no para el cliente).
+function respuestaSeguraConFinanciacionReal(financiacion: FinanciacionInfo): string {
+  const tnaValores = financiacion.tna.flatMap((g) => Object.values(g.tna));
+  const tnaMin = Math.min(...tnaValores);
+  const pcts = financiacion.topes.map((t) => t.pct);
+  const rangoUsados = Math.min(...pcts) === Math.max(...pcts) ? `${pcts[0]}%` : `entre ${Math.min(...pcts)}% y ${Math.max(...pcts)}% según el año`;
+  return `Financiamos hasta ${rangoUsados} del valor en usados, y hasta ${financiacion.tope0km}% en 0km, con tasas desde ${tnaMin}% TNA según el plazo. ¿Querés que lo calculemos juntos para el auto puntual que te interesa?`;
+}
+
 export async function generarRespuestaAgenteV2(historial: HistorialMensaje[], canal: string = "whatsapp-v2", nombreBot?: string, vehiculoEnFocoId?: string | null, tono?: string | null, esInstagram?: boolean): Promise<
   | { ok: true; data: AgentReplyV2; fotosParaEnviar: string[]; vehiculoFocoId: string | null; pedidoStock: AgentReplyV2["pedido_stock"] }
   | { ok: false; error: string }
@@ -375,10 +425,10 @@ export async function generarRespuestaAgenteV2(historial: HistorialMensaje[], ca
   }
   const sugerirCierre = mensajesCliente >= LIMITE_MENSAJES_SUAVE;
 
-  const sucursales = await fetchSucursalesInfo();
+  const [sucursales, financiacion] = await Promise.all([fetchSucursalesInfo(), fetchFinanciacionInfo()]);
 
   const result = await chatJsonV2(AgentReplySchemaV2, [
-    { role: "system", content: buildSystemPromptV2(undefined, undefined, nombreBot, undefined, sucursales, sugerirCierre, undefined, undefined, tono, esInstagram) },
+    { role: "system", content: buildSystemPromptV2(undefined, undefined, nombreBot, undefined, sucursales, sugerirCierre, undefined, undefined, tono, esInstagram, financiacion) },
     ...historial,
   ], { origen: canal });
 
@@ -426,7 +476,7 @@ export async function generarRespuestaAgenteV2(historial: HistorialMensaje[], ca
   const correrPasada2 = async (resultados: ResultadoStockV2[], esAlternativa: boolean, total: number, categoriaSolicitada: string | null) => {
     resultadosBusqueda = resultados;
     const result2 = await chatJsonV2(AgentReplySchemaV2, [
-      { role: "system", content: buildSystemPromptV2(undefined, resultados, nombreBot, esAlternativa, sucursales, sugerirCierre, categoriaSolicitada, total, tono, esInstagram) },
+      { role: "system", content: buildSystemPromptV2(undefined, resultados, nombreBot, esAlternativa, sucursales, sugerirCierre, categoriaSolicitada, total, tono, esInstagram, financiacion) },
       ...historial,
     ], { origen: canal });
 
@@ -510,6 +560,15 @@ export async function generarRespuestaAgenteV2(historial: HistorialMensaje[], ca
   // cuando — se cortan del final de la respuesta como red de seguridad, en
   // vez de confiar solo en la instrucción.
   respuesta = { ...respuesta, reply: sacarCierreGenericoProhibido(respuesta.reply) };
+
+  // Red de seguridad anti-alucinación de financiación (pedido del 26/9,
+  // mismo criterio que la de stock): si a pesar del bloque FINANCIACIÓN con
+  // los números reales el modelo igual menciona un % que no es ninguno de
+  // los reales, se descarta esa respuesta y se reemplaza por el bloque
+  // seguro armado en código, con los datos reales tal cual están cargados.
+  if (respuestaMencionaFinanciacionInventada(respuesta.reply, financiacion)) {
+    respuesta = { ...respuesta, reply: respuestaSeguraConFinanciacionReal(financiacion) };
+  }
 
   // El modelo a veces devuelve el menú de bienvenida parafraseado (mismo
   // contenido, texto distinto) — si detectamos que ESTO es el menú

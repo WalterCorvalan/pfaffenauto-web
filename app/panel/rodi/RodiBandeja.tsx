@@ -4,7 +4,7 @@ import { useState, useEffect, useRef } from "react";
 import { useSearchParams } from "next/navigation";
 import { supabase2 } from "@/lib/supabase/client";
 import { Search, Send, Bot, Check, Info, ChevronRight, PanelRight, Megaphone, Maximize2 } from "lucide-react";
-import LeadDetailModal from "../whatsapp/LeadDetailModal";
+import LeadDetailModal from "@/components/panel/conversaciones/LeadDetailModal";
 
 interface Perfil { id: string; nombre: string; roles: string[] }
 

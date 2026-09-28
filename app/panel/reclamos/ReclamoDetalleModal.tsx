@@ -243,7 +243,7 @@ export default function ReclamoDetalleModal({ reclamoId, miId, perfiles, onClose
   }
 
   const whatsappHref = reclamo.cliente_telefono
-    ? `https://wa.me/${reclamo.cliente_telefono.replace(/\D/g, "")}?text=${encodeURIComponent(`¡Hola ${reclamo.cliente_nombre}! Te escribimos de Pfaffen Autos por tu reclamo: ${reclamo.titulo}.`)}`
+    ? `https://wa.me/${reclamo.cliente_telefono.replace(/\D/g, "")}?text=${encodeURIComponent(`¡Hola ${reclamo.cliente_nombre}! Te escribimos de Pfaffen Cars por tu reclamo: ${reclamo.titulo}.`)}`
     : null;
 
   return (

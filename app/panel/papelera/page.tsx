@@ -1,7 +1,7 @@
 import { createClient } from "@/lib/supabase/server";
 import PapeleraClient from "./PapeleraClient";
 
-export const metadata = { title: "Papelera | Pfaffen Autos" };
+export const metadata = { title: "Papelera | Pfaffen Cars" };
 
 export default async function PapeleraPage() {
   const supabase = await createClient();

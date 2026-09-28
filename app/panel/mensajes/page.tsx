@@ -1,7 +1,7 @@
 import { createClient } from "@/lib/supabase/server";
 import MensajesClient from "./MensajesClient";
 
-export const metadata = { title: "Mensajes | Pfaffen Autos" };
+export const metadata = { title: "Mensajes | Pfaffen Cars" };
 
 export default async function MensajesPage() {
   const supabase = await createClient();

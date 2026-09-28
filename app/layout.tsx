@@ -15,14 +15,17 @@ const jakarta = Plus_Jakarta_Sans({
 // ================= METADATA SEO OPTIMIZADA =================
 export const metadata: Metadata = {
   metadataBase: new URL("https://www.pfaffencars.com"),
-  title: "Pfaffen Autos | Concesionaria de 0KM y Usados en Zona Norte",
+  title: "Pfaffen Cars | Concesionaria de 0KM y Usados en Zona Norte",
   description:
     "Comprá o vendé tu auto de forma fácil y segura. Amplio catálogo de 0KM y usados seleccionados de alta gama (Toyota, Volkswagen, BMW, Audi). Sucursales en Casa Central y Don Torcuato.",
   keywords: [
     "pfaffen",
     "fafen",
+    "pfaffen cars",
     "pfaffen autos",
+    "pfaffenautos",
     "fafen autos",
+    "fafencar",
     "agencia pfaffen",
     "comprar auto 0km",
     "vender mi auto usado",
@@ -51,19 +54,26 @@ export const metadata: Metadata = {
     "concesionario oficial rely",
     "concesionario oficial karry",
   ],
-  authors: [{ name: "Pfaffen Autos" }],
-  creator: "Pfaffen Autos",
-  publisher: "Pfaffen Autos",
+  authors: [{ name: "Pfaffen Cars" }],
+  creator: "Pfaffen Cars",
+  publisher: "Pfaffen Cars",
   robots: {
     index: true,
     follow: true,
   },
+  // Código de verificación de Google Search Console (Configuración >
+  // Verificación de la propiedad > etiqueta HTML, ahí Google te da el
+  // string que va en el content). Solo se renderiza si está cargada la env
+  // var -- mismo criterio que GA/Meta Pixel/Clarity, no rompe nada sin ella.
+  verification: process.env.NEXT_PUBLIC_GOOGLE_SITE_VERIFICATION
+    ? { google: process.env.NEXT_PUBLIC_GOOGLE_SITE_VERIFICATION }
+    : undefined,
   openGraph: {
-    title: "Pfaffen Autos | Concesionaria de 0KM y Usados en Zona Norte",
+    title: "Pfaffen Cars | Concesionaria de 0KM y Usados en Zona Norte",
     description:
       "Comprá o vendé tu auto de forma fácil y segura. Amplio catálogo de 0KM y usados seleccionados de alta gama.",
     url: "https://www.pfaffencars.com",
-    siteName: "Pfaffen Autos",
+    siteName: "Pfaffen Cars",
     // logo.png mide 668×173 real (no 1200x630) -- declarar un tamaño falso
     // hace que Facebook/WhatsApp/LinkedIn decidan el layout de la preview
     // con la proporción equivocada. Esto es un parche de la métrica, no la
@@ -75,7 +85,7 @@ export const metadata: Metadata = {
         url: "https://www.pfaffencars.com/logo.png",
         width: 668,
         height: 173,
-        alt: "Pfaffen Autos",
+        alt: "Pfaffen Cars",
       },
     ],
     locale: "es_AR",
@@ -83,7 +93,7 @@ export const metadata: Metadata = {
   },
   twitter: {
     card: "summary_large_image",
-    title: "Pfaffen Autos | Concesionaria de 0KM y Usados en Zona Norte",
+    title: "Pfaffen Cars | Concesionaria de 0KM y Usados en Zona Norte",
     description:
       "Comprá o vendé tu auto de forma fácil y segura. Amplio catálogo de 0KM y usados seleccionados de alta gama.",
     images: ["https://www.pfaffencars.com/logo.png"],
@@ -98,7 +108,8 @@ export default function RootLayout({
   const jsonLd = {
     "@context": "https://schema.org",
     "@type": "AutoDealer",
-    name: "Pfaffen Autos",
+    name: "Pfaffen Cars",
+    alternateName: "Pfaffen Autos",
     image: "https://www.pfaffencars.com/logo.png",
     "@id": "https://www.pfaffencars.com",
     url: "https://www.pfaffencars.com",

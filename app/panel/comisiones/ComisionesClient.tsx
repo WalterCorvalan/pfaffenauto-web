@@ -199,7 +199,7 @@ export default function ComisionesClient({
           <div className="flex items-center gap-3">
             <DollarSign className="w-6 h-6 text-emerald-600" />
             <div>
-              <h1 className="text-xl font-black text-slate-900 dark:text-white leading-tight">Mis Comisiones</h1>
+              <h1 className="text-xl font-black text-slate-900 dark:text-white leading-tight flex items-center gap-2"><img src="/icons/panel/comisiones.png" alt="" className="w-5 h-5 object-contain shrink-0" /> Mis Comisiones</h1>
               <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">Control de pagos, bonos y reseñas</p>
             </div>
           </div>

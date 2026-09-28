@@ -132,7 +132,7 @@ export default function Footer() {
       <div className="border-t border-gray-200 dark:border-white/10">
         <div className="max-w-7xl mx-auto px-4 md:px-6 py-6 flex flex-col md:flex-row justify-between items-center gap-4">
           <p className="text-[11px] text-gray-400 dark:text-slate-500 font-bold uppercase tracking-widest text-center md:text-left">
-            © {new Date().getFullYear()} Pfaffen Autos. Todos los derechos reservados.
+            © {new Date().getFullYear()} Pfaffen Cars. Todos los derechos reservados.
           </p>
           <button
             onClick={scrollToTop}

@@ -17,6 +17,7 @@ import ModificarCotizacionModal from "./ModificarCotizacionModal";
 import LeadWebDetalleModal from "./LeadWebDetalleModal";
 import TablaResponsiva, { type ColumnaTabla } from "@/components/panel/TablaResponsiva";
 import ConfirmDialog from "@/components/panel/ConfirmDialog";
+import { TIPO_LEAD_WEB_LABEL, TIPO_LEAD_WEB_ESTILO } from "./tipoLeadWeb";
 
 interface Cotizacion {
   id: string; cliente_id: string | null; cliente_nombre: string; vehiculo_id: string | null; vehiculo_descripcion: string | null; vendedor_id: string | null;
@@ -82,6 +83,24 @@ export default function CotizacionesClient({
     }
   }, [searchParams, router]);
 
+  useEffect(() => { setCotizaciones(cotizacionesIniciales); }, [cotizacionesIniciales]);
+  useEffect(() => { setLeadsWeb(leadsWebIniciales); }, [leadsWebIniciales]);
+
+  // Realtime: cotizaciones internas (armadas a mano) y leads_tasacion (los
+  // pedidos que llegan solos del cotizador/vender/financiación público) --
+  // sin esto, una cotización nueva del sitio solo aparecía al recargar la
+  // página a mano, mismo patrón que ya usa el módulo de WhatsApp.
+  useEffect(() => {
+    let timeoutId: ReturnType<typeof setTimeout>;
+    const refrescarConDebounce = () => { clearTimeout(timeoutId); timeoutId = setTimeout(() => router.refresh(), 400); };
+    const canal = supabase2
+      .channel(`cotizaciones-realtime-${Math.random().toString(36).slice(2)}`)
+      .on("postgres_changes", { event: "*", schema: "public", table: "cotizaciones" }, refrescarConDebounce)
+      .on("postgres_changes", { event: "*", schema: "public", table: "leads_tasacion" }, refrescarConDebounce)
+      .subscribe();
+    return () => { clearTimeout(timeoutId); supabase2.removeChannel(canal); };
+  }, [router]);
+
   const perfilMap = useMemo(() => Object.fromEntries(perfiles.map((p) => [p.id, p.nombre])), [perfiles]);
   const miNombre = perfilMap[miId] || "Usuario";
   const soyAdmin = perfiles.find((p) => p.id === miId)?.roles?.includes("admin") ?? false;
@@ -139,6 +158,19 @@ export default function CotizacionesClient({
     }
   };
 
+  // Mismo campo vendedor_id que ya usa leads_tasacion para financiación
+  // (ver app/api/panel/leads-tasacion/route.ts) -- acá se lo suma a
+  // tasación/permuta, que hasta ahora se cargaban sin asignar a nadie.
+  const asignarVendedorLeadWeb = async (id: string, vendedorId: string) => {
+    const anterior = leadsWeb.find((l) => l.id === id)?.vendedor_id;
+    setLeadsWeb((prev) => prev.map((l) => (l.id === id ? { ...l, vendedor_id: vendedorId || null } : l)));
+    const { error } = await supabase2.from("leads_tasacion").update({ vendedor_id: vendedorId || null }).eq("id", id);
+    if (error) {
+      setLeadsWeb((prev) => prev.map((l) => (l.id === id ? { ...l, vendedor_id: anterior ?? null } : l)));
+      alert("No se pudo asignar el vendedor.");
+    }
+  };
+
   const filtradas = useMemo(() => {
     let lista = cotizaciones.filter((c) => c.estado === tab);
     if (vendedorFiltro) lista = lista.filter((c) => c.vendedor_id === vendedorFiltro);
@@ -165,7 +197,7 @@ export default function CotizacionesClient({
     <div className="flex flex-col h-full w-full overflow-hidden">
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-3 px-6 pt-4 shrink-0">
         <div>
-          <h1 className="text-xl font-black text-slate-900 dark:text-white flex items-center gap-2"><FileText className="w-5 h-5 text-rose-600" /> Cotizaciones</h1>
+          <h1 className="text-xl font-black text-slate-900 dark:text-white flex items-center gap-2"><img src="/icons/panel/cotizaciones.png" alt="" className="w-5 h-5 object-contain shrink-0" /> Cotizaciones</h1>
           <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">{contadores.pendiente} pendientes · {contadores.aprobada} aprobadas · {contadores.rechazada} rechazadas</p>
         </div>
         <div className="flex items-center gap-2 shrink-0">
@@ -195,10 +227,14 @@ export default function CotizacionesClient({
                     <p className="font-bold text-slate-800 dark:text-white truncate flex items-center gap-1.5">
                       {l.nombre}
                       {/* "Compra" = el cliente nos ofrece SU auto para que se lo compremos
-                          (tipo_peritaje "venta" en v1) -- antes decía "Tasación" a secas,
-                          no dejaba claro de qué lado de la operación viene el pedido. */}
-                      <span className={`text-[9px] font-bold uppercase tracking-widest px-1.5 py-0.5 rounded shrink-0 ${l.tipo === "permuta" ? "bg-indigo-50 dark:bg-indigo-500/10 text-indigo-600 dark:text-indigo-300" : "bg-orange-50 dark:bg-orange-500/10 text-orange-600 dark:text-orange-300"}`}>
-                        {l.tipo === "permuta" ? "Permuta" : "Compra"}
+                          (tipo_peritaje "venta" en v1, form /vender) -- "Cotización" es
+                          alguien tasando su auto sin pedir que se lo compremos (form
+                          /cotizador), y "Permuta" es lo mismo pero contra un auto puntual
+                          de nuestro stock. Antes /cotizador no mandaba tipo, caía en el
+                          default "tasacion" del server -- igual que /vender -- y una
+                          cotización simple se mostraba como "Compra" acá (bug real). */}
+                      <span className={`text-[9px] font-bold uppercase tracking-widest px-1.5 py-0.5 rounded shrink-0 ${TIPO_LEAD_WEB_ESTILO[l.tipo] || TIPO_LEAD_WEB_ESTILO.tasacion}`}>
+                        {TIPO_LEAD_WEB_LABEL[l.tipo] || "Compra"}
                       </span>
                       {Array.isArray(l.fotos_y_videos) && l.fotos_y_videos.length > 0 && (
                         <span className="text-[9px] font-bold uppercase tracking-widest px-1.5 py-0.5 rounded shrink-0 bg-slate-100 dark:bg-white/10 text-slate-500 dark:text-slate-300">{l.fotos_y_videos.length} fotos</span>
@@ -209,6 +245,9 @@ export default function CotizacionesClient({
                   <div className="text-right shrink-0 ml-3 flex items-center gap-3">
                     <div>
                       <p className="font-bold text-slate-700 dark:text-slate-200">{(l.oferta_calculada ?? l.precio_esperado_cliente) ? `$ ${Number(l.oferta_calculada ?? l.precio_esperado_cliente).toLocaleString("es-AR")}` : "—"}</p>
+                      {l.precio_mercado_estimado != null && (
+                        <p className="text-[10px] text-[#0145F2] dark:text-sky-300 font-semibold">mercado: $ {Number(l.precio_mercado_estimado).toLocaleString("es-AR")}</p>
+                      )}
                       <p className="text-[10px] text-slate-400">{new Date(l.created_at).toLocaleDateString("es-AR")}</p>
                     </div>
                     <select
@@ -400,6 +439,9 @@ export default function CotizacionesClient({
         <LeadWebDetalleModal
           lead={leadsWeb.find((x) => x.id === leadWebDetalle.id) || leadWebDetalle}
           vehiculoObjetivo={vehiculos.find((v) => v.id === leadWebDetalle.vehiculo_objetivo_id) || null}
+          perfiles={perfiles}
+          onCambiarEstado={(estado) => cambiarEstadoLeadWeb(leadWebDetalle.id, estado)}
+          onAsignarVendedor={(vendedorId) => asignarVendedorLeadWeb(leadWebDetalle.id, vendedorId)}
           onClose={() => setLeadWebDetalle(null)}
         />
       )}

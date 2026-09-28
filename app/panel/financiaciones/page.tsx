@@ -1,7 +1,7 @@
 import { createClient } from "@/lib/supabase/server";
 import FinanciacionesClient from "./FinanciacionesClient";
 
-export const metadata = { title: "Financiaciones | Pfaffen Autos" };
+export const metadata = { title: "Financiaciones | Pfaffen Cars" };
 
 export default async function FinanciacionesPage() {
   const supabase = await createClient();

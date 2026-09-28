@@ -3,7 +3,7 @@
 import { useState, useMemo } from "react";
 import { supabase2 } from "@/lib/supabase/client";
 import { BarChart3, ChevronLeft, ChevronRight, Trophy, Clock, FolderKanban, Ticket, Wrench, Loader2, Lock, SearchCheck, TrendingUp } from "lucide-react";
-import { BarChart, Bar, XAxis, YAxis, ResponsiveContainer, Tooltip, CartesianGrid } from "recharts";
+import { BarChart, Bar, XAxis, YAxis, ResponsiveContainer, Tooltip, CartesianGrid, Cell } from "recharts";
 
 interface Props {
   miId: string; miNombre: string; soyAdmin: boolean; soyFinanzas: boolean; soyVentas: boolean; gananciasOcultas: boolean; mesInicial: string;
@@ -45,6 +45,31 @@ function BarRow({ label, valor, max, color = "bg-indigo-500" }: { label: string;
       <div className="h-2 rounded-full bg-slate-100 dark:bg-white/10 overflow-hidden">
         <div className={`h-full rounded-full ${color}`} style={{ width: `${pct}%` }} />
       </div>
+    </div>
+  );
+}
+
+// Gráfico de barras real (recharts) para reemplazar los BarRow (barritas de
+// progreso a mano) donde tiene sentido comparar categorías -- pedido 27/9
+// para que el panel se vea más "profesional/empresarial". Se dejó BarRow
+// sin tocar en las 3 vistas "por Vendedor" (Operaciones/Clientes/
+// Cotizaciones por Vendedor) -- eso es ranking de personas, no se pidió
+// convertir ese.
+function MiniBarras({ datos, dataKey, labelKey, color = "#6366f1", colorFn, alto = 160 }: { datos: any[]; dataKey: string; labelKey: string; color?: string; colorFn?: (item: any) => string; alto?: number }) {
+  if (datos.length === 0) return <p className="text-xs text-slate-400 text-center py-4">Sin datos.</p>;
+  return (
+    <div style={{ height: alto }}>
+      <ResponsiveContainer width="100%" height="100%">
+        <BarChart data={datos} margin={{ top: 4, right: 4, left: -20, bottom: 0 }}>
+          <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="currentColor" className="text-slate-100 dark:text-white/10" />
+          <XAxis dataKey={labelKey} tick={{ fontSize: 10 }} axisLine={false} tickLine={false} interval={0} angle={-20} textAnchor="end" height={40} />
+          <YAxis tick={{ fontSize: 10 }} axisLine={false} tickLine={false} allowDecimals={false} width={28} />
+          <Tooltip contentStyle={{ fontSize: 12, borderRadius: 8 }} />
+          <Bar dataKey={dataKey} radius={[4, 4, 0, 0]}>
+            {datos.map((item, i) => <Cell key={i} fill={colorFn ? colorFn(item) : color} />)}
+          </Bar>
+        </BarChart>
+      </ResponsiveContainer>
     </div>
   );
 }
@@ -144,12 +169,8 @@ export default function ReportesClient(props: Props) {
   };
 
   const maxVentasVendedor = Math.max(1, ...operacionesPorVendedor.map((v: any) => Number(v.ventas_mes) || 0));
-  const maxLeads = Math.max(1, ...origenLeads.map((v: any) => Number(v.cantidad) || 0));
-  const maxMarca = Math.max(1, ...ventasPorMarca.map((v: any) => Number(v.ventas_ponderadas) || 0));
   const maxClientesVend = Math.max(1, ...props.clientesPorVendedor.map((v: any) => Number(v.clientes) || 0));
   const maxCotVend = Math.max(1, ...props.cotizacionesPorVendedor.map((v: any) => Number(v.cotizaciones) || 0));
-  const maxStockMarca = Math.max(1, ...props.stockPorMarca.map((v: any) => Number(v.cantidad) || 0));
-  const maxOrigen = Math.max(1, ...ventasPorOrigen.map((v: any) => Number(v.cantidad) || 0));
 
   // Nunca mezclar ARS y USD en el mismo eje/serie — se pivotea a una
   // columna por moneda en vez de sumar todo en un solo "monto".
@@ -172,7 +193,7 @@ export default function ReportesClient(props: Props) {
   return (
     <div className="p-6 max-w-6xl mx-auto space-y-5">
       <div>
-        <h1 className="text-xl font-black text-slate-900 dark:text-white flex items-center gap-2"><BarChart3 className="w-5 h-5 text-indigo-600" /> Reportes y Análisis</h1>
+        <h1 className="text-xl font-black text-slate-900 dark:text-white flex items-center gap-2"><img src="/icons/panel/reportes.png" alt="" className="w-5 h-5 object-contain shrink-0" /> Reportes y Análisis</h1>
         <p className="text-sm text-slate-400">Vista completa — todos los módulos.</p>
       </div>
 
@@ -347,8 +368,7 @@ export default function ReportesClient(props: Props) {
         </Card>
 
         <Card title="Ventas por Marca">
-          {ventasPorMarca.map((v: any) => <BarRow key={v.marca} label={v.marca} valor={Number(v.ventas_ponderadas)} max={maxMarca} color="bg-violet-500" />)}
-          {ventasPorMarca.length === 0 && <p className="text-xs text-slate-400 text-center py-4">Sin ventas cerradas todavía.</p>}
+          {ventasPorMarca.length === 0 ? <p className="text-xs text-slate-400 text-center py-4">Sin ventas cerradas todavía.</p> : <MiniBarras datos={ventasPorMarca} dataKey="ventas_ponderadas" labelKey="marca" color="#8b5cf6" />}
         </Card>
 
         <Card title="Composición de Ventas">
@@ -361,13 +381,11 @@ export default function ReportesClient(props: Props) {
         </Card>
 
         <Card title="Ventas por Origen del Vehículo">
-          {ventasPorOrigen.map((v: any) => <BarRow key={v.origen} label={v.origen} valor={Number(v.cantidad)} max={maxOrigen} color="bg-amber-500" />)}
-          {ventasPorOrigen.length === 0 && <p className="text-xs text-slate-400 text-center py-4">Sin ventas cerradas este mes.</p>}
+          {ventasPorOrigen.length === 0 ? <p className="text-xs text-slate-400 text-center py-4">Sin ventas cerradas este mes.</p> : <MiniBarras datos={ventasPorOrigen} dataKey="cantidad" labelKey="origen" color="#f59e0b" />}
         </Card>
 
         <Card title="Origen de Leads">
-          {origenLeads.map((v: any) => <BarRow key={v.origen} label={v.origen} valor={Number(v.cantidad)} max={maxLeads} color="bg-sky-500" />)}
-          {origenLeads.length === 0 && <p className="text-xs text-slate-400 text-center py-4">Sin leads nuevos este mes.</p>}
+          {origenLeads.length === 0 ? <p className="text-xs text-slate-400 text-center py-4">Sin leads nuevos este mes.</p> : <MiniBarras datos={origenLeads} dataKey="cantidad" labelKey="origen" color="#0ea5e9" />}
         </Card>
 
         <Card title="Consultas vs Ventas por Modelo" icon={SearchCheck}>
@@ -421,9 +439,14 @@ export default function ReportesClient(props: Props) {
         </Card>
 
         <Card title="Embudo Comercial">
-          <BarRow label="Clientes" valor={Number(embudoComercial.clientes)} max={Math.max(1, Number(embudoComercial.clientes))} color="bg-indigo-500" />
-          <BarRow label="Cotizaciones" valor={Number(embudoComercial.cotizaciones)} max={Math.max(1, Number(embudoComercial.clientes))} color="bg-amber-500" />
-          <BarRow label="Ventas" valor={Number(embudoComercial.ventas)} max={Math.max(1, Number(embudoComercial.clientes))} color="bg-emerald-500" />
+          <MiniBarras
+            datos={[
+              { etapa: "Clientes", cantidad: Number(embudoComercial.clientes) },
+              { etapa: "Cotizaciones", cantidad: Number(embudoComercial.cotizaciones) },
+              { etapa: "Ventas", cantidad: Number(embudoComercial.ventas) },
+            ]}
+            dataKey="cantidad" labelKey="etapa" color="#6366f1" alto={140}
+          />
         </Card>
       </div>
 
@@ -464,7 +487,7 @@ export default function ReportesClient(props: Props) {
           ))}
         </Card>
         <Card title="Stock por Marca">
-          {props.stockPorMarca.map((v: any) => <BarRow key={v.marca} label={v.marca} valor={Number(v.cantidad)} max={maxStockMarca} color="bg-indigo-500" />)}
+          <MiniBarras datos={props.stockPorMarca} dataKey="cantidad" labelKey="marca" color="#6366f1" />
         </Card>
       </div>
 
@@ -479,7 +502,12 @@ export default function ReportesClient(props: Props) {
         </div>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <Card title="Pipeline">
-            {props.cotizacionesPorEstado.map((v: any) => <BarRow key={v.estado} label={ESTADO_COT_LABEL[v.estado] || v.estado} valor={Number(v.cantidad)} max={Math.max(1, props.cotizacionesResumen.total_generadas)} color={v.estado === "aprobada" ? "bg-emerald-500" : v.estado === "rechazada" ? "bg-rose-500" : "bg-slate-400"} />)}
+            <MiniBarras
+              datos={props.cotizacionesPorEstado.map((v: any) => ({ ...v, label: ESTADO_COT_LABEL[v.estado] || v.estado }))}
+              dataKey="cantidad" labelKey="label"
+              colorFn={(v) => (v.estado === "aprobada" ? "#10b981" : v.estado === "rechazada" ? "#f43f5e" : "#94a3b8")}
+              alto={140}
+            />
           </Card>
           <Card title="Cotizaciones por Vendedor">
             {props.cotizacionesPorVendedor.map((v: any) => <BarRow key={v.vendedor_id} label={v.vendedor_nombre} valor={Number(v.cotizaciones)} max={maxCotVend} color="bg-indigo-500" />)}
@@ -497,7 +525,7 @@ export default function ReportesClient(props: Props) {
           <StatTile label="Vencidos" valor={expedientesResumen.vencidos} tono={expedientesResumen.vencidos > 0 ? "bg-rose-50 dark:bg-rose-500/10 border-rose-100 dark:border-rose-500/20" : ""} />
         </div>
         <Card title="Distribución por Estado">
-          {props.expedientesPorEstado.map((v: any) => <BarRow key={v.estado} label={ESTADO_EXP_LABEL[v.estado] || v.estado} valor={Number(v.cantidad)} max={Math.max(1, ...props.expedientesPorEstado.map((x: any) => Number(x.cantidad)))} color="bg-indigo-500" />)}
+          <MiniBarras datos={props.expedientesPorEstado.map((v: any) => ({ ...v, label: ESTADO_EXP_LABEL[v.estado] || v.estado }))} dataKey="cantidad" labelKey="label" color="#6366f1" alto={140} />
         </Card>
       </div>
 

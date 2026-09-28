@@ -37,7 +37,7 @@ export default async function OutletBanner() {
               <div className="relative flex items-center mt-2 sm:mt-0">
                 <Image
                   src="/logo.png"
-                  alt="Pfaffen Autos"
+                  alt="Pfaffen Cars"
                   width={668}
                   height={173}
                   className="h-8 md:h-11 w-auto invert brightness-0"

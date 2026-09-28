@@ -143,7 +143,7 @@ export default async function InstagramMetricasPage() {
             <p className="text-[11px] font-bold uppercase tracking-widest text-slate-400 mt-1">{t.label}</p>
           </div>
         ))}
-        <TarjetaCostoIA costo={costoEstimado30} label="Costo IA (30d)" />
+        <TarjetaCostoIA costo={costoEstimado30} label="Costo IA (30d)" limite={15} />
       </div>
 
       <div>
@@ -179,7 +179,7 @@ export default async function InstagramMetricasPage() {
             return (
               <Link
                 key={c.id}
-                href={`/panel/whatsapp?canal=instagram&conversacion=${c.id}`}
+                href={`/panel/instagram?conversacion=${c.id}`}
                 className={`border rounded-2xl p-4 shadow-sm hover:shadow-md transition-all flex items-center justify-between ${color.borde} ${color.fondo}`}
               >
                 <div className="flex items-center gap-2 min-w-0">

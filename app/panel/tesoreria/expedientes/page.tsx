@@ -2,7 +2,7 @@ import { createClient } from "@/lib/supabase/server";
 import { tienePermiso } from "@/lib/panel/permisos";
 import ExpedientesTesoreriaClient from "./ExpedientesTesoreriaClient";
 
-export const metadata = { title: "Expedientes Tesorería | Pfaffen Autos" };
+export const metadata = { title: "Expedientes Tesorería | Pfaffen Cars" };
 
 export default async function ExpedientesTesoreriaPage() {
   const supabase = await createClient();

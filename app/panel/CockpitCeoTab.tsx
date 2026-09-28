@@ -181,7 +181,7 @@ export default function CockpitCeoTab({ miNombre, ocultarMontos, diaDelMes, dias
       </div>
 
       <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-        <div className="rounded-2xl p-4 bg-white dark:bg-white/[0.02] border border-slate-200 dark:border-white/5">
+        <div className="rounded-2xl p-4 bg-white dark:bg-white/[0.02] border border-slate-200 dark:border-white/5 shadow-[0_2px_10px_rgba(15,23,42,0.06)] dark:shadow-[0_2px_14px_rgba(0,0,0,0.45)]">
           <p className="text-[10px] font-bold uppercase text-slate-400 flex items-center gap-1.5 mb-1"><TrendingUp className="w-3.5 h-3.5" /> Autos vendidos</p>
           <p className="text-2xl font-black text-slate-900 dark:text-white">{ventasDelMes}{objetivoVentasMensual ? <span className="text-sm font-bold text-slate-400"> / {objetivoVentasMensual}</span> : null}</p>
           {objetivoVentasMensual ? (
@@ -195,12 +195,12 @@ export default function CockpitCeoTab({ miNombre, ocultarMontos, diaDelMes, dias
             variacionAnual !== null && <p className={`text-[11px] mt-1 font-bold ${variacionAnual >= 0 ? "text-emerald-600" : "text-rose-600"}`}>{variacionAnual >= 0 ? "+" : ""}{variacionAnual}% vs mismo mes año anterior</p>
           )}
         </div>
-        <div className="rounded-2xl p-4 bg-white dark:bg-white/[0.02] border border-slate-200 dark:border-white/5">
+        <div className="rounded-2xl p-4 bg-white dark:bg-white/[0.02] border border-slate-200 dark:border-white/5 shadow-[0_2px_10px_rgba(15,23,42,0.06)] dark:shadow-[0_2px_14px_rgba(0,0,0,0.45)]">
           <p className="text-[10px] font-bold uppercase text-slate-400 flex items-center gap-1.5 mb-1"><Handshake className="w-3.5 h-3.5" /> Consignaciones del mes</p>
           <p className="text-2xl font-black text-slate-900 dark:text-white">{consignacionesDelMes}</p>
           <p className="text-[11px] text-slate-400 mt-1">Autos de terceros que ingresaron</p>
         </div>
-        <div className="rounded-2xl p-4 bg-white dark:bg-white/[0.02] border border-slate-200 dark:border-white/5">
+        <div className="rounded-2xl p-4 bg-white dark:bg-white/[0.02] border border-slate-200 dark:border-white/5 shadow-[0_2px_10px_rgba(15,23,42,0.06)] dark:shadow-[0_2px_14px_rgba(0,0,0,0.45)]">
           <p className="text-[10px] font-bold uppercase text-slate-400 flex items-center gap-1.5 mb-1"><Trophy className="w-3.5 h-3.5" /> Mejor vendedor</p>
           {/* ranking[0] es solo el primero de la lista, no necesariamente alguien
               con ventas -- si todos están en 0 no hay "mejor vendedor" real que
@@ -230,7 +230,7 @@ export default function CockpitCeoTab({ miNombre, ocultarMontos, diaDelMes, dias
       )}
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-        <div className="rounded-2xl p-5 bg-white dark:bg-white/[0.02] border border-slate-200 dark:border-white/5">
+        <div className="rounded-2xl p-5 bg-white dark:bg-white/[0.02] border border-slate-200 dark:border-white/5 shadow-[0_2px_10px_rgba(15,23,42,0.06)] dark:shadow-[0_2px_14px_rgba(0,0,0,0.45)]">
           <p className="text-sm font-bold text-slate-800 dark:text-white mb-3 flex items-center gap-1.5"><TrendingUp className="w-4 h-4 text-indigo-500" /> Ganancia últimos 12 meses (USD)</p>
           <div className="h-[160px]">
             <ResponsiveContainer width="100%" height="100%">
@@ -244,7 +244,7 @@ export default function CockpitCeoTab({ miNombre, ocultarMontos, diaDelMes, dias
           </div>
         </div>
 
-        <div className="rounded-2xl p-5 bg-white dark:bg-white/[0.02] border border-slate-200 dark:border-white/5">
+        <div className="rounded-2xl p-5 bg-white dark:bg-white/[0.02] border border-slate-200 dark:border-white/5 shadow-[0_2px_10px_rgba(15,23,42,0.06)] dark:shadow-[0_2px_14px_rgba(0,0,0,0.45)]">
           <p className="text-sm font-bold text-slate-800 dark:text-white mb-3 flex items-center gap-1.5"><Award className="w-4 h-4 text-indigo-500" /> Resumen anual</p>
           <div className="grid grid-cols-3 gap-2">
             {resumenAnual.map((r) => (
@@ -291,7 +291,7 @@ export default function CockpitCeoTab({ miNombre, ocultarMontos, diaDelMes, dias
         </div>
       )}
 
-      <div className="rounded-2xl p-5 bg-white dark:bg-white/[0.02] border border-slate-200 dark:border-white/5">
+      <div className="rounded-2xl p-5 bg-white dark:bg-white/[0.02] border border-slate-200 dark:border-white/5 shadow-[0_2px_10px_rgba(15,23,42,0.06)] dark:shadow-[0_2px_14px_rgba(0,0,0,0.45)]">
         <p className="text-sm font-bold text-slate-800 dark:text-white mb-3 flex items-center gap-1.5"><Star className="w-4 h-4 text-amber-500" /> Calificaciones de ventas — mes en curso</p>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <div>
@@ -313,7 +313,7 @@ export default function CockpitCeoTab({ miNombre, ocultarMontos, diaDelMes, dias
         </div>
       </div>
 
-      <div className="rounded-2xl p-5 bg-white dark:bg-white/[0.02] border border-slate-200 dark:border-white/5 shadow-sm">
+      <div className="rounded-2xl p-5 bg-white dark:bg-white/[0.02] border border-slate-200 dark:border-white/5 shadow-[0_2px_10px_rgba(15,23,42,0.06)] dark:shadow-[0_2px_14px_rgba(0,0,0,0.45)]">
         <p className="text-sm font-bold text-slate-800 dark:text-white mb-3 flex items-center gap-1.5"><Trophy className="w-4 h-4 text-indigo-500" /> Ranking del mes</p>
         <div className="overflow-x-auto">
         <table className="w-full text-left text-sm">

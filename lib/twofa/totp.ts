@@ -4,7 +4,7 @@ export function generarSecreto() {
   return generateSecret();
 }
 
-export function otpauthUrl(email: string, secret: string, issuer = "Pfaffen Autos") {
+export function otpauthUrl(email: string, secret: string, issuer = "Pfaffen Cars") {
   return generateURI({ issuer, label: email, secret });
 }
 

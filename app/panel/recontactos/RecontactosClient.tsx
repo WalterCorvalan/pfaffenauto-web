@@ -53,7 +53,7 @@ function vehiculoDeCliente(c: Cliente) {
 }
 function armarMensaje(c: Cliente, segmento: string, config: Config, miNombre: string): { texto: string; esGenerico: boolean } {
   const vehiculo = vehiculoDeCliente(c);
-  let plantilla = config?.plantilla_consulta_general || "Hola {nombre}! Soy {vendedor} de Pfaffen Autos.";
+  let plantilla = config?.plantilla_consulta_general || "Hola {nombre}! Soy {vendedor} de Pfaffen Cars.";
   let esGenerico = false;
   if (segmento === "busca_auto" && vehiculo) {
     plantilla = config?.plantilla_busca_auto || plantilla;
@@ -256,7 +256,7 @@ export default function RecontactosClient({
       <div className="flex-1 overflow-y-auto custom-scrollbar p-4 md:p-6">
         <div className="max-w-6xl mx-auto">
           <div className="mb-1">
-            <h1 className="text-xl font-black text-slate-900 dark:text-white flex items-center gap-2"><UserSearch className="w-5 h-5 text-[#0145F2]" /> Recontactos</h1>
+            <h1 className="text-xl font-black text-slate-900 dark:text-white flex items-center gap-2"><img src="/icons/panel/recontactos.png" alt="" className="w-5 h-5 object-contain shrink-0" /> Recontactos</h1>
             <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
               Gente que consultó hace {plazoFiltro}+ meses y nunca compró. A los que ya compraron los ves en Postventa y Dormidos — acá están los que no vuelve a mirar nadie.
             </p>

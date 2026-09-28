@@ -1,7 +1,7 @@
 import { createClient } from "@/lib/supabase/server";
 import DormidosClient from "./DormidosClient";
 
-export const metadata = { title: "Clientes Dormidos | Pfaffen Autos" };
+export const metadata = { title: "Clientes Dormidos | Pfaffen Cars" };
 
 export default async function DormidosPage() {
   const supabase = await createClient();

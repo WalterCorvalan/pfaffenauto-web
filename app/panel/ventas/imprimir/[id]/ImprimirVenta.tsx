@@ -14,7 +14,7 @@ interface Branding {
 }
 
 export default function ImprimirVenta({ venta: v, branding, senaPrevia, permutaPrevia = 0 }: { venta: any; branding?: Branding | null; senaPrevia: number; permutaPrevia?: number }) {
-  const nombreEmpresa = branding?.branding_nombre || "Pfaffen Autos";
+  const nombreEmpresa = branding?.branding_nombre || "Pfaffen Cars";
   const [firmaUrl, setFirmaUrl] = useState<string | null>(v.firma_url ?? null);
   const [firmaVendedorUrl, setFirmaVendedorUrl] = useState<string | null>(v.firma_vendedor_url ?? null);
   const [observaciones, setObservaciones] = useState(v.notas || "");

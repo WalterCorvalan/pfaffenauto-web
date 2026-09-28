@@ -71,7 +71,7 @@ export default function CatalogoClient({ vehiculos, mostrarPrecios, whatsappGene
           <div className="flex items-center gap-2.5">
             <div className="w-9 h-9 rounded-lg bg-rose-600 text-white flex items-center justify-center shrink-0"><Car className="w-5 h-5" /></div>
             <div>
-              <p className="text-sm font-black leading-none">Pfaffen Autos</p>
+              <p className="text-sm font-black leading-none">Pfaffen Cars</p>
               <p className="text-[11px] text-slate-400 leading-none mt-0.5">{vehiculos.length} vehículos disponibles</p>
             </div>
           </div>

@@ -65,7 +65,7 @@ export default function BotonesInteractivos({ auto }: { auto: any }) {
 
   const handleShare = async () => {
     const url = window.location.href;
-    const title = `${auto.marca} ${auto.modelo} - Pfaffen Autos`;
+    const title = `${auto.marca} ${auto.modelo} - Pfaffen Cars`;
     trackEvent("compartir_auto", { auto_id: auto.id, marca: auto.marca, modelo: auto.modelo });
 
     if (navigator.share) {

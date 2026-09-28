@@ -25,13 +25,12 @@ const CHART_COLORS = { primary: "#e11d48", rose: "#f43f5e", amber: "#f59e0b", em
 type Vista = "tablero" | "calendario" | "historial" | "metricas";
 
 function hrefLead(lead: { id: string; origen: "whatsapp" | "instagram" | "rodi" | "manual" }) {
-  // whatsapp/instagram abren en la pestaña de Leads dentro de WhatsApp
-  // (ConversacionesShell, scopeado a esos 2 canales); rodi/manual no viven
-  // ahí -- se resuelven en la vista unificada de /panel/leads, que sí
-  // soporta los 4 orígenes (ver LeadsUnificadosClient.tsx).
-  if (lead.origen === "whatsapp" || lead.origen === "instagram") {
-    return `/panel/whatsapp?tab=leads&lead=${lead.id}&origen=${lead.origen}`;
-  }
+  // whatsapp/instagram abren en la pestaña de Leads de su propio módulo
+  // (ConversacionesShell, separados en dos módulos de sidebar el 25/9);
+  // rodi/manual no viven ahí -- se resuelven en la vista unificada de
+  // /panel/leads, que sí soporta los 4 orígenes (ver LeadsUnificadosClient.tsx).
+  if (lead.origen === "whatsapp") return `/panel/whatsapp?tab=leads&lead=${lead.id}&origen=whatsapp`;
+  if (lead.origen === "instagram") return `/panel/instagram?tab=leads&lead=${lead.id}&origen=instagram`;
   return `/panel/leads?lead=${lead.id}&origen=${lead.origen}`;
 }
 
@@ -133,7 +132,7 @@ export default function TareasLeadBoard({
               <CheckSquare className="w-5 h-5 text-[#0145F2]" />
             </div>
             <div>
-              <h1 className="text-[17px] font-bold text-slate-900 dark:text-white leading-tight">Tareas de Leads</h1>
+              <h1 className="text-[17px] font-bold text-slate-900 dark:text-white leading-tight flex items-center gap-1.5"><img src="/icons/panel/tareas-leads.png" alt="" className="w-4 h-4 object-contain shrink-0" /> Tareas de Leads</h1>
               <p className="text-[11px] font-medium text-slate-500 dark:text-slate-400 mt-0.5">Seguimiento comercial de leads de WhatsApp e Instagram, con acceso directo</p>
             </div>
           </div>

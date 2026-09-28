@@ -31,11 +31,11 @@ Si agregás una pantalla o métrica nueva sobre "leads", contá/consultá las 4 
 
 ## `tareas_lead`
 
-Puede colgar de cualquiera de las 4 fuentes vía FK: `whatsapp_conversacion_id`, `instagram_conversacion_id`, `rodi_conversacion_id`, `leads_manuales_id` (exactamente una no-nula por fila). El mapeo canal → columna FK está en `app/panel/whatsapp/LeadDetailModal.tsx` (const con las 4 claves) — reusar ese mapeo en vez de hardcodear el nombre de columna en un lugar nuevo.
+Puede colgar de cualquiera de las 4 fuentes vía FK: `whatsapp_conversacion_id`, `instagram_conversacion_id`, `rodi_conversacion_id`, `leads_manuales_id` (exactamente una no-nula por fila). El mapeo canal → columna FK está en `components/panel/conversaciones/LeadDetailModal.tsx` (const con las 4 claves) — reusar ese mapeo en vez de hardcodear el nombre de columna en un lugar nuevo.
 
 ## Links a detalle
 
-- whatsapp/instagram abren en `/panel/whatsapp?tab=leads&lead=<id>&origen=<origen>` (`ConversacionesShell.tsx`, scopeado a esos 2 canales).
+- whatsapp abre en `/panel/whatsapp?tab=leads&lead=<id>&origen=whatsapp`, instagram en `/panel/instagram?tab=leads&lead=<id>&origen=instagram` (cada módulo monta `ConversacionesShell.tsx` con su propio `backTo`, separados el 25/9 -- antes compartían una sola pantalla).
 - rodi/manual abren en `/panel/leads?lead=<id>&origen=<origen>` (la vista unificada, la única que resuelve los 4 orígenes).
 
 ## Reparto de leads nuevos — `disponibilidad_vendedor`
@@ -50,7 +50,7 @@ Cuando entra un lead sin vendedor asignado (el "hola" inicial), `notificarVended
 
 ## Layout de dos paneles + pestañas "Sin respuesta" / "Lead basura"
 
-`LeadsUnificadosClient.tsx` es un layout de dos paneles tipo `app/panel/whatsapp/ChatClient.tsx`: sidebar con la lista (izquierda) + `LeadDetailModal` renderizado **inline** (derecha), no como modal superpuesto. Para eso `LeadDetailModal.tsx` (compartido con `/panel/whatsapp`) tiene un prop `inline?: boolean` — la única diferencia es el wrapper: con `inline` devuelve el contenido pelado (sin overlay `fixed inset-0`); sin el prop se comporta exactamente igual que antes (modal). Si tocás el contenido del detalle, es el mismo componente en los dos módulos — no dupliques lógica acá.
+`LeadsUnificadosClient.tsx` es un layout de dos paneles tipo `components/panel/conversaciones/ChatClient.tsx`: sidebar con la lista (izquierda) + `LeadDetailModal` renderizado **inline** (derecha), no como modal superpuesto. Para eso `LeadDetailModal.tsx` (compartido con `/panel/whatsapp` y `/panel/instagram`) tiene un prop `inline?: boolean` — la única diferencia es el wrapper: con `inline` devuelve el contenido pelado (sin overlay `fixed inset-0`); sin el prop se comporta exactamente igual que antes (modal). Si tocás el contenido del detalle, es el mismo componente en los dos módulos — no dupliques lógica acá.
 
 `DIAS_SIN_RESPUESTA = 2` (constante en `LeadsUnificadosClient.tsx`) define el único umbral del módulo:
 
@@ -66,4 +66,4 @@ La dirección del último mensaje **no vive en la fila de la conversación** —
 ## No tocar sin revisar el resto
 
 - No agregar un 5° canal de leads sin actualizar los 3 lugares de arriba (unificación en `leads/page.tsx`, el mapeo FK de `tareas_lead`, y cualquier contador tipo "Leads sin atender") — y sin sumarle `es_basura` si tiene que participar de la pestaña "Lead basura".
-- `LeadDetailModal.tsx` es compartido entre `/panel/whatsapp` y `/panel/leads` — cualquier cambio a su contenido (no al wrapper `inline`) afecta a los dos módulos.
+- `LeadDetailModal.tsx` es compartido entre `/panel/whatsapp`, `/panel/instagram`, `/panel/rodi` y `/panel/leads` — cualquier cambio a su contenido (no al wrapper `inline`) afecta a los dos módulos.

@@ -138,8 +138,8 @@ export default async function PresupuestoPublicoPage({ params }: { params: Promi
         <div className="absolute inset-0 opacity-[0.07] bg-[radial-gradient(circle_at_15%_25%,white,transparent_35%),radial-gradient(circle_at_85%_65%,white,transparent_30%)]" />
         <div className="relative max-w-4xl mx-auto">
           <div className="flex items-center gap-3 mb-10">
-            <Image src="/logo.png" alt="Pfaffen Autos" width={40} height={40} className="rounded-full ring-2 ring-white/20" />
-            <span className="font-black text-white tracking-tight text-sm">PFAFFEN AUTOS</span>
+            <Image src="/logo.png" alt="Pfaffen Cars" width={40} height={40} className="rounded-full ring-2 ring-white/20" />
+            <span className="font-black text-white tracking-tight text-sm">PFAFFEN CARS</span>
           </div>
 
           <div className="flex items-center justify-between flex-wrap gap-4 mb-10">
@@ -210,7 +210,7 @@ export default async function PresupuestoPublicoPage({ params }: { params: Promi
                 </div>
               )}
               <div>
-                <p className="font-black text-sm">{nombreVendedor || "Equipo Pfaffen Autos"}</p>
+                <p className="font-black text-sm">{nombreVendedor || "Equipo Pfaffen Cars"}</p>
                 <p className="text-[11px] text-blue-100 flex items-center gap-1 mt-0.5"><ShieldCheck className="w-3 h-3" /> Asesor comercial</p>
               </div>
             </div>

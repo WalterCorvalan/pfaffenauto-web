@@ -102,7 +102,7 @@ export default function PublicHeader() {
           <Link href="/" className="relative flex items-center group shrink-0">
             <Image
               src="/logo.png"
-              alt="Pfaffen Autos"
+              alt="Pfaffen Cars"
               width={668}
               height={173}
               priority
@@ -155,7 +155,13 @@ export default function PublicHeader() {
         </div>
 
         {/* ================= COLUMNA CENTRO: MENÚ / BUSCADOR (CENTRADO) ================= */}
-        <div className="flex justify-center items-center w-full">
+        {/* min-w-0 es necesario acá: sin esto, en una grilla grid-cols-[auto_1fr_auto]
+            esta columna "1fr" no se achica por debajo de su contenido mínimo, así que
+            en resoluciones intermedias (netbooks, ventana achicada) empujaba a TODA
+            la grilla más ancha que el viewport -- el botón de la derecha quedaba
+            recortado por el borde de la pantalla, sin importar cuánto se redujera
+            el contenido visual del menú. */}
+        <div className="flex justify-center items-center w-full min-w-0">
           <AnimatePresence mode="popLayout">
             {!isScrolled ? (
               <motion.nav
@@ -164,7 +170,7 @@ export default function PublicHeader() {
                 animate={{ opacity: 1, y: 0, filter: "blur(0px)" }}
                 exit={{ opacity: 0, y: 10, filter: "blur(4px)" }}
                 transition={{ duration: 0.3, type: "spring", stiffness: 200 }}
-                className="hidden lg:flex items-center gap-0 bg-white/30 dark:bg-white/5 backdrop-blur-md px-2 py-1.5 rounded-full border border-white/50 dark:border-white/10 shadow-inner"
+                className="hidden lg:flex items-center gap-0 bg-white/30 dark:bg-white/5 backdrop-blur-md px-2 py-1.5 rounded-full border border-white/50 dark:border-white/10 shadow-inner max-w-full overflow-x-auto no-scrollbar"
               >
                 {navLinks.map((link) => {
                   const is0KM = link.href.includes("condicion=0km");
@@ -276,7 +282,7 @@ export default function PublicHeader() {
 
           <button
             onClick={toggleSearchMobile}
-            className="lg:hidden p-2.5 text-primary dark:text-sky-300 bg-white/40 dark:bg-white/5 backdrop-blur-md border border-white/60 dark:border-white/10 rounded-full shadow-sm"
+            className="lg:hidden p-2.5 mr-2 text-primary dark:text-sky-300 bg-white/40 dark:bg-white/5 backdrop-blur-md border border-white/60 dark:border-white/10 rounded-full shadow-sm"
             title="Buscar"
             aria-label="Buscar"
           >

@@ -2,7 +2,6 @@
 
 import { useState, useEffect, useRef } from "react";
 import Link from "next/link";
-import Script from "next/script";
 import {
   ArrowLeft, Loader2, ChevronDown, X, CalendarDays, CarFront, Gauge, Zap, Check, Settings2, Flame, Fuel,
   Upload, FileVideo, ImageIcon, Building2, Camera, AlertTriangle, MapPin, Clock, Repeat,
@@ -11,19 +10,9 @@ import { motion, AnimatePresence } from "framer-motion";
 import EnvioExitoso from "@/components/EnvioExitoso";
 import { getCanalOrigen, getUtmRaw } from "@/lib/utm";
 import { supabase2 } from "@/lib/supabase/client";
-import { calcularOferta } from "@/lib/panel/descuentoPorKm";
 import { normalizarMarca } from "@/lib/vehiculos";
 import { MARCAS_ARGENTINA, MODELOS_POR_MARCA } from "@/lib/marcasModelos";
 import { LOGOS_MARCAS } from "@/lib/marcasLogos";
-
-declare global {
-  interface Window {
-    turnstile?: {
-      render: (container: HTMLElement, options: Record<string, unknown>) => string;
-      reset: (widgetId?: string) => void;
-    };
-  }
-}
 
 const marcasDisponibles = MARCAS_ARGENTINA;
 const modelosPorMarca = MODELOS_POR_MARCA;
@@ -103,7 +92,9 @@ function ConfigField({
 }
 
 // --- COMPONENTE PRINCIPAL ---
-// step 1: vehículo (tiles) | 2: GNC | 2.5: calculando | 3: oferta | 3.5: visita-o-fotos (solo si rechaza la oferta) | 4: contacto
+// step 1: vehículo (tiles) | 2: GNC | 3.5: visita-o-fotos | 4: contacto
+// (3 y 2.5 quedaron libres a propósito -- eran la "oferta instantánea" que
+// se sacó el 26/9, ver comentario en continuarDesdeGnc más abajo)
 
 export default function CotizadorForm({ vehiculoObjetivo }: { vehiculoObjetivo?: VehiculoObjetivo } = {}) {
   const [step, setStep] = useState<number>(1);
@@ -117,11 +108,6 @@ export default function CotizadorForm({ vehiculoObjetivo }: { vehiculoObjetivo?:
   const [combustible, setCombustible] = useState("");
   const [gnc, setGnc] = useState("");
   const [precioEsperado, setPrecioEsperado] = useState("");
-
-  // Oferta instantánea
-  const [descuentoPct, setDescuentoPct] = useState<number | null>(null);
-  const [precioOferta, setPrecioOferta] = useState<number | null>(null);
-  const [acuerdoPrecio, setAcuerdoPrecio] = useState<boolean | null>(null);
 
   // Peritaje: sucursal o fotos
   const [puedeVenir, setPuedeVenir] = useState<boolean | null>(null);
@@ -151,19 +137,6 @@ export default function CotizadorForm({ vehiculoObjetivo }: { vehiculoObjetivo?:
   const [apellido, setApellido] = useState("");
   const [email, setEmail] = useState("");
   const [tel, setTel] = useState("");
-
-  // Turnstile
-  const [turnstileToken, setTurnstileToken] = useState("");
-  const [turnstileListo, setTurnstileListo] = useState(false);
-  const [turnstileError, setTurnstileError] = useState(false);
-  const turnstileRef = useRef<HTMLDivElement>(null);
-  const turnstileWidgetId = useRef<string | null>(null);
-
-  useEffect(() => {
-    if (window.turnstile) { setTurnstileListo(true); return; }
-    const intervalo = setInterval(() => { if (window.turnstile) { setTurnstileListo(true); clearInterval(intervalo); } }, 200);
-    return () => clearInterval(intervalo);
-  }, []);
 
   // UI States
   const [openDropdown, setOpenDropdown] = useState<string | null>("anio");
@@ -199,34 +172,17 @@ export default function CotizadorForm({ vehiculoObjetivo }: { vehiculoObjetivo?:
     return () => { cancelado = true; };
   }, [marca, modelo]);
 
-  // Oferta instantánea: precio que puso el cliente, menos el % de descuento
-  // según los km -- con animación de "estamos calculando" antes de revelarla.
+  // Pedido del 26/9: ya no le mostramos ninguna oferta al cliente en el
+  // formulario (antes se calculaba con un descuento fijo por km sobre el
+  // precio que ÉL puso, sin ningún ancla de mercado real -- si pedía muy por
+  // encima del valor real, terminábamos ofreciendo igual demasiado caro).
+  // Ahora el formulario solo junta los datos; el precio de mercado real se
+  // busca del lado del servidor recién al enviar la cotización (ver
+  // /api/panel/leads-tasacion), y un asesor decide y comunica la oferta
+  // desde el panel de Cotizaciones, comparando precio pedido vs. mercado.
   const continuarDesdeGnc = () => {
-    const { descuentoPct: pct, oferta } = calcularOferta(Number(precioEsperado), Number(km));
-    setDescuentoPct(pct);
-    setPrecioOferta(oferta);
-    setStep(2.5);
-    setTimeout(() => setStep(3), 2200);
+    setStep(3.5);
   };
-
-  // Mismo fix que ConsignarForm.tsx: reintenta hasta que el div del widget
-  // realmente montó (AnimatePresence mode="wait" retrasa el montaje).
-  useEffect(() => {
-    if (step !== 4 || !turnstileListo || !window.turnstile || turnstileWidgetId.current) return;
-    const intentar = () => {
-      if (!turnstileRef.current || !window.turnstile || turnstileWidgetId.current) return false;
-      turnstileWidgetId.current = window.turnstile.render(turnstileRef.current, {
-        sitekey: process.env.NEXT_PUBLIC_TURNSTILE_SITE_KEY || "",
-        callback: (token: string) => { setTurnstileToken(token); setTurnstileError(false); },
-        "expired-callback": () => setTurnstileToken(""),
-        "error-callback": () => { setTurnstileToken(""); setTurnstileError(true); },
-      });
-      return true;
-    };
-    if (intentar()) return;
-    const intervalo = setInterval(() => { if (intentar()) clearInterval(intervalo); }, 100);
-    return () => clearInterval(intervalo);
-  }, [step, turnstileListo]);
 
   const subirArchivo = async (file: File) => {
     setErrorArchivo("");
@@ -272,10 +228,6 @@ export default function CotizadorForm({ vehiculoObjetivo }: { vehiculoObjetivo?:
       setErrorEnvio("Por favor completá todos los campos de contacto.");
       return;
     }
-    if (!turnstileToken) {
-      setErrorEnvio("Completá la verificación anti-spam antes de continuar.");
-      return;
-    }
 
     setLoading(true);
     try {
@@ -283,20 +235,23 @@ export default function CotizadorForm({ vehiculoObjetivo }: { vehiculoObjetivo?:
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          turnstileToken,
           canalOrigen: getCanalOrigen(),
           utmSource: getUtmRaw().utm_source,
           utmMedium: getUtmRaw().utm_medium,
           utmCampaign: getUtmRaw().utm_campaign,
           marca, modelo, anio, version, combustible, gnc,
           kilometraje: km,
-          precioEsperado, descuentoPct, ofertaCalculada: precioOferta, aceptaOferta: acuerdoPrecio,
+          precioEsperado,
           nombre: `${nombre.trim()} ${apellido.trim()}`,
           email: email.trim(),
           telefono: tel.trim(),
           fotosYVideos: archivosSubidos.map((a) => a.url),
           ...(puedeVenir === true ? { visita: { sucursal: sucursalVisita, fecha: fechaVisita, horario: horarioVisita } } : {}),
-          ...(vehiculoObjetivo ? { tipo: "permuta", vehiculoObjetivoId: vehiculoObjetivo.id } : {}),
+          // Sin esto caía en el default "tasacion" del server -- mismo tipo
+          // que manda VenderForm.tsx, así que una cotización simple (sin
+          // auto de nuestro stock de por medio) se etiquetaba "Compra" en el
+          // panel, igual que cuando alguien nos quiere vender el auto.
+          ...(vehiculoObjetivo ? { tipo: "permuta", vehiculoObjetivoId: vehiculoObjetivo.id } : { tipo: "cotizacion" }),
         }),
       });
 
@@ -305,8 +260,6 @@ export default function CotizadorForm({ vehiculoObjetivo }: { vehiculoObjetivo?:
       setEnviado(true);
     } catch (error) {
       setErrorEnvio(error instanceof Error ? error.message : "Hubo un problema. Reintentá.");
-      if (turnstileWidgetId.current && window.turnstile) window.turnstile.reset(turnstileWidgetId.current);
-      setTurnstileToken("");
     } finally {
       setLoading(false);
     }
@@ -325,13 +278,11 @@ export default function CotizadorForm({ vehiculoObjetivo }: { vehiculoObjetivo?:
   const logoPath = LOGOS_MARCAS[marca] || `/vehicles/brands/${marca.toLowerCase()}.svg`;
   const carPath = fotoStock || `/vehicles/models/${marca.toLowerCase()}/${modelo.toLowerCase().replace(/ /g, "-")}.webp`;
 
-  // Etapas del stepper visible: 1 vehículo, 2 GNC/oferta, 3 peritaje (solo
-  // si rechazó la oferta), 4 contacto -- si aceptó la oferta, se saltea el
-  // paso de peritaje entero (no tiene sentido pedir fotos/visita si ya
-  // está de acuerdo con el número).
-  const stepsVisibles = acuerdoPrecio === true ? [1, 2, 4] : [1, 2, 3, 4];
-  const labelsVisibles = acuerdoPrecio === true ? ["VEHÍCULO", "OFERTA", "CONTACTO"] : ["VEHÍCULO", "OFERTA", "PERITAJE", "CONTACTO"];
-  const stepperActual = step >= 3.5 ? 3.5 : step;
+  // Etapas del stepper visible: 1 vehículo, 2 datos/GNC, 3.5 peritaje
+  // (siempre, ya no hay oferta que aceptar de una para saltearlo), 4 contacto.
+  const stepsVisibles = [1, 2, 3.5, 4];
+  const labelsVisibles = ["VEHÍCULO", "DATOS", "PERITAJE", "CONTACTO"];
+  const stepperActual = step;
 
   return (
     <div className="bg-[#F8FAFC] dark:bg-[#0a0a0f] text-slate-900 dark:text-white flex flex-col lg:flex-row font-sans">
@@ -442,8 +393,6 @@ export default function CotizadorForm({ vehiculoObjetivo }: { vehiculoObjetivo?:
             <p className="hidden lg:block text-sm text-slate-500 dark:text-slate-400">
               {step === 1 && "Completá los datos y comenzá a ver tu auto en tiempo real."}
               {step === 2 && "¿Tu auto tiene o tuvo GNC?"}
-              {step === 2.5 && "Estamos tasando tu vehículo."}
-              {step === 3 && "Esto es lo que te podemos ofrecer."}
               {step === 3.5 && "¿Podés venir a una sucursal?"}
               {step === 4 && "Dejanos tus datos para que un asesor te contacte."}
             </p>
@@ -531,42 +480,9 @@ export default function CotizadorForm({ vehiculoObjetivo }: { vehiculoObjetivo?:
                 </motion.div>
               )}
 
-              {step === 2.5 && (
-                <motion.div key="step2.5" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="py-16 flex flex-col items-center text-center space-y-5">
-                  <div className="relative w-16 h-16">
-                    <div className="absolute inset-0 rounded-full border-4 border-blue-100 dark:border-[#0145F2]/20" />
-                    <div className="absolute inset-0 rounded-full border-4 border-[#0145F2] dark:border-blue-400 border-t-transparent animate-spin" />
-                  </div>
-                  <div className="space-y-1.5">
-                    <p className="text-sm font-black text-slate-900 dark:text-white">Analizando el mercado y tasando tu {marca} {modelo}...</p>
-                    <p className="text-xs text-slate-400 font-medium">Comparamos contra unidades similares para darte un valor real.</p>
-                  </div>
-                </motion.div>
-              )}
-
-              {step === 3 && (
-                <motion.div key="step3" initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -20 }} transition={{ duration: 0.3 }} className="space-y-5">
-                  <button onClick={() => setStep(2)} className="text-xs font-bold text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white flex items-center gap-1 mb-2 transition-colors">
-                    <ArrowLeft className="w-3.5 h-3.5" /> Volver
-                  </button>
-                  <div className="bg-blue-50 dark:bg-[#0145F2]/10 border border-blue-100 dark:border-[#0145F2]/20 rounded-2xl p-6 text-center space-y-1.5">
-                    <p className="text-[11px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-widest">Oferta estimada</p>
-                    <p className="text-3xl font-black text-[#0145F2] dark:text-blue-300">${precioOferta?.toLocaleString("es-AR")}</p>
-                  </div>
-                  <div className="space-y-3">
-                    <button onClick={() => { setAcuerdoPrecio(true); setStep(4); }} className="w-full py-4 bg-[#0145F2] hover:bg-[#0145F2] text-white font-black rounded-2xl uppercase tracking-widest text-xs transition-colors">
-                      Estoy de acuerdo con este precio
-                    </button>
-                    <button onClick={() => { setAcuerdoPrecio(false); setStep(3.5); }} className="w-full py-4 bg-slate-100 dark:bg-white/10 border border-slate-200 dark:border-white/10 text-slate-700 dark:text-slate-300 font-black rounded-2xl uppercase tracking-widest text-xs transition-colors">
-                      Prefiero un peritaje presencial
-                    </button>
-                  </div>
-                </motion.div>
-              )}
-
               {step === 3.5 && (
                 <motion.div key="step3.5" initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -20 }} transition={{ duration: 0.3 }} className="space-y-4">
-                  <button onClick={() => setStep(3)} className="text-xs font-bold text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white flex items-center gap-1 mb-2 transition-colors">
+                  <button onClick={() => setStep(2)} className="text-xs font-bold text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white flex items-center gap-1 mb-2 transition-colors">
                     <ArrowLeft className="w-3.5 h-3.5" /> Volver
                   </button>
 
@@ -644,7 +560,7 @@ export default function CotizadorForm({ vehiculoObjetivo }: { vehiculoObjetivo?:
 
               {step === 4 && (
                 <motion.div key="step4" initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -20 }} transition={{ duration: 0.3 }}>
-                  <button onClick={() => setStep(acuerdoPrecio === true ? 3 : 3.5)} className="text-xs font-bold text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white flex items-center gap-1 mb-6 transition-colors">
+                  <button onClick={() => setStep(3.5)} className="text-xs font-bold text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white flex items-center gap-1 mb-6 transition-colors">
                     <ArrowLeft className="w-3.5 h-3.5" /> Volver
                   </button>
 
@@ -671,13 +587,6 @@ export default function CotizadorForm({ vehiculoObjetivo }: { vehiculoObjetivo?:
                       </div>
                     </div>
 
-                    <div className="pt-4 flex flex-col items-center gap-1.5">
-                      <div ref={turnstileRef} />
-                      {turnstileError && (
-                        <p className="text-[10px] text-rose-500 font-medium text-center max-w-xs">No se pudo cargar la verificación anti-spam. Puede ser un bloqueador de anuncios o un problema temporal — probá recargar la página.</p>
-                      )}
-                    </div>
-
                     {errorEnvio && (
                       <div className="flex items-start gap-2 bg-rose-50 dark:bg-rose-500/10 border border-rose-200 dark:border-rose-500/20 rounded-xl p-4 mt-4">
                         <X className="w-4 h-4 text-rose-500 dark:text-rose-400 shrink-0 mt-0.5" />
@@ -686,7 +595,7 @@ export default function CotizadorForm({ vehiculoObjetivo }: { vehiculoObjetivo?:
                     )}
 
                     <div className="pt-6">
-                      <button type="submit" disabled={loading || !turnstileToken} className="w-full py-4 bg-[#0145F2] hover:bg-[#0145F2] disabled:bg-slate-200 dark:disabled:bg-slate-800 disabled:text-slate-400 dark:disabled:text-slate-500 text-white font-black rounded-2xl uppercase tracking-widest text-xs transition-colors flex items-center justify-center gap-2">
+                      <button type="submit" disabled={loading} className="w-full py-4 bg-[#0145F2] hover:bg-[#0145F2] disabled:bg-slate-200 dark:disabled:bg-slate-800 disabled:text-slate-400 dark:disabled:text-slate-500 text-white font-black rounded-2xl uppercase tracking-widest text-xs transition-colors flex items-center justify-center gap-2">
                         {loading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Check className="w-4 h-4" />}
                         {loading ? "Procesando..." : "Finalizar y Enviar"}
                       </button>
@@ -699,8 +608,6 @@ export default function CotizadorForm({ vehiculoObjetivo }: { vehiculoObjetivo?:
           </div>
         </div>
       </div>
-
-      <Script src="https://challenges.cloudflare.com/turnstile/v0/api.js" strategy="lazyOnload" onLoad={() => setTurnstileListo(true)} />
     </div>
   );
 }

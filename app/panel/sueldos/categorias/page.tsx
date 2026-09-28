@@ -2,7 +2,7 @@ import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import CategoriasClient from "./CategoriasClient";
 
-export const metadata = { title: "Categorías de empleados | Pfaffen Autos" };
+export const metadata = { title: "Categorías de empleados | Pfaffen Cars" };
 
 export default async function CategoriasPage() {
   const supabase = await createClient();

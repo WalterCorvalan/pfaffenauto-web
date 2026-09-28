@@ -35,6 +35,18 @@
   background-color: rgba(148, 163, 184, 0.5);
 }
 
+/* Scroll horizontal sin barra visible -- usado en el menú del header público
+   (PublicHeader.tsx) para que en resoluciones intermedias (netbooks, ventanas
+   achicadas) el menú se pueda deslizar en vez de recortarse o desbordar la
+   pantalla cuando no entran todos los links + botones a la vez. */
+.no-scrollbar {
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+.no-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+
 @keyframes shimmer {
   100% { transform: translateX(150%); }
 }

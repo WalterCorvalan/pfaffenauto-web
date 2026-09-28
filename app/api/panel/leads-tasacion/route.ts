@@ -1,9 +1,11 @@
 import { z } from "zod";
+import { after } from "next/server";
 import { createClient } from "@supabase/supabase-js";
-import { verificarTurnstile } from "@/lib/turnstile";
 import { rateLimit, ipDesdeRequest } from "@/lib/rateLimit";
 import { registrarError } from "@/lib/panel/logger";
 import { crearAlerta } from "@/lib/panel/alertas";
+import { estimarPrecioMercado } from "@/lib/ai/estimarPrecioMercado";
+import { descuentoPctPorKm } from "@/lib/panel/descuentoPorKm";
 
 const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE2_URL!,
@@ -11,7 +13,6 @@ const supabase = createClient(
 );
 
 const LeadTasacionSchema = z.object({
-  turnstileToken: z.string().min(1, "Falta verificación anti-spam."),
   nombre: z.string().trim().min(1).max(150),
   telefono: z.string().trim().min(6).max(30),
   email: z.string().trim().email().max(150).optional().nullable(),
@@ -31,7 +32,7 @@ const LeadTasacionSchema = z.object({
   utmSource: z.string().trim().max(100).optional().nullable(),
   utmMedium: z.string().trim().max(100).optional().nullable(),
   utmCampaign: z.string().trim().max(150).optional().nullable(),
-  tipo: z.enum(["tasacion", "permuta", "financiacion"]).optional(),
+  tipo: z.enum(["tasacion", "cotizacion", "permuta", "financiacion"]).optional(),
   vehiculoObjetivoId: z.string().uuid().optional().nullable(),
   // Datos estructurados de una solicitud de financiación -- ver
   // migraciones/sql_leads_tasacion_financiacion.sql.
@@ -42,6 +43,7 @@ const LeadTasacionSchema = z.object({
   plazoMeses: z.coerce.number().int().min(1).optional().nullable(),
   cuotaEstimada: z.coerce.number().min(0).optional().nullable(),
   creditoPreaprobado: z.boolean().optional().nullable(),
+  cuil: z.string().trim().max(20).optional().nullable(),
   // Si el cliente eligió venir a sucursal, reserva una visita real en el
   // mismo request (misma lógica que /api/panel/visitas).
   visita: z.object({
@@ -64,11 +66,6 @@ export async function POST(req: Request) {
       return Response.json({ error: "Faltan datos obligatorios o tienen un formato inválido." }, { status: 400 });
     }
     const data = parsed.data;
-
-    const humano = await verificarTurnstile(data.turnstileToken, ip);
-    if (!humano) {
-      return Response.json({ error: "No pudimos verificar que sos humano. Reintentá." }, { status: 400 });
-    }
 
     let visitaId: string | null = null;
     if (data.visita) {
@@ -130,6 +127,42 @@ export async function POST(req: Request) {
       if (errCombustible) registrarError("api/panel/leads-tasacion:combustible", errCombustible, { leadId: lead.id });
     }
 
+    // Precio de mercado real (pedido del 26/9, ver lib/ai/estimarPrecioMercado.ts)
+    // -- solo para tasación/permuta, no tiene sentido para una solicitud de
+    // financiación (ahí el vehículo ya es del stock propio, con precio real).
+    // Con after() (Next 15.1+, soportado en Vercel vía waitUntil) esto corre
+    // DESPUÉS de que el cliente ya recibió la respuesta -- antes iba en el
+    // mismo request porque un fire-and-forget "a mano" se cortaba apenas
+    // Vercel devolvía la respuesta, pero eso hacía esperar al cliente en el
+    // form público hasta 25s (ahora más, con un modelo más grande y más
+    // búsquedas para mejorar la precisión) solo para un dato que ni siquiera
+    // se le muestra a él.
+    if (data.tipo !== "financiacion") {
+      after(async () => {
+        const estimado = await estimarPrecioMercado({
+          marca: data.marca, modelo: data.modelo, anio: data.anio, km: data.kilometraje, version: data.version, combustible: data.combustible,
+        });
+        if (estimado) {
+          // Pedido del 26/9: precio_mercado_estimado no es la media cruda de
+          // mercado (precio de venta particular/publicación) -- es la oferta
+          // real que le conviene hacer a la agencia, aplicando la misma
+          // escala de descuento por km que antes calculaba la oferta
+          // instantánea del cotizador (lib/panel/descuentoPorKm.ts). Media
+          // de mercado y % de descuento quedan igual en el registro por si
+          // el asesor quiere ver el desglose.
+          const descuentoPct = data.kilometraje != null ? descuentoPctPorKm(data.kilometraje) : 0;
+          const precioConDescuento = Math.round(estimado.precio * (1 - descuentoPct / 100));
+          const { error: errPrecioMercado } = await supabase.from("leads_tasacion").update({
+            precio_mercado_estimado: precioConDescuento,
+            precio_mercado_medio_web: estimado.precio,
+            precio_mercado_descuento_pct: descuentoPct,
+            precio_mercado_fuentes: estimado.fuentes,
+          }).eq("id", lead.id);
+          if (errPrecioMercado) registrarError("api/panel/leads-tasacion:precio-mercado", errPrecioMercado, { leadId: lead.id });
+        }
+      });
+    }
+
     let vendedorFinanciacionId: string | null = null;
 
     // Campos estructurados de financiación en un update aparte: si
@@ -147,6 +180,7 @@ export async function POST(req: Request) {
           plazo_meses: data.plazoMeses ?? null,
           cuota_estimada: data.cuotaEstimada ?? null,
           credito_preaprobado: data.creditoPreaprobado ?? null,
+          cuil: data.cuil || null,
         })
         .eq("id", lead.id);
       if (errCamposFinanciacion) registrarError("api/panel/leads-tasacion:campos-financiacion", errCamposFinanciacion, { leadId: lead.id });

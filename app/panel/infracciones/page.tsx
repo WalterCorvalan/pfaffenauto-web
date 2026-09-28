@@ -1,7 +1,7 @@
 import { createClient } from "@/lib/supabase/server";
 import InfraccionesClient from "./InfraccionesClient";
 
-export const metadata = { title: "Infracciones | Pfaffen Autos" };
+export const metadata = { title: "Infracciones | Pfaffen Cars" };
 
 export default async function InfraccionesPage() {
   const supabase = await createClient();

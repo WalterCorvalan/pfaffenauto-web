@@ -60,7 +60,7 @@ export default async function ChatbotMetricasPage() {
             <p className="text-[11px] text-slate-400 mt-0.5">{t.label}</p>
           </div>
         ))}
-        <TarjetaCostoIA costo={costoEstimado30} label="Costo IA (30d)" />
+        <TarjetaCostoIA costo={costoEstimado30} label="Costo IA (30d)" limite={15} />
       </div>
     </div>
   );

@@ -94,7 +94,7 @@ export default function InfraccionesClient({ infraccionesIniciales, vehiculos, p
     <div className="flex flex-col h-full overflow-hidden">
       <div className="flex items-center justify-between gap-4 px-6 pt-4 shrink-0">
         <div>
-          <h1 className="text-xl font-black text-slate-900 dark:text-white flex items-center gap-2"><Landmark className="w-5 h-5 text-[#0145F2]" /> Infracciones</h1>
+          <h1 className="text-xl font-black text-slate-900 dark:text-white flex items-center gap-2"><img src="/icons/panel/infracciones.png" alt="" className="w-5 h-5 object-contain shrink-0" /> Infracciones</h1>
           <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">Gestión de multas para clientes externos</p>
         </div>
         <button onClick={abrirNueva} className="flex items-center gap-1.5 px-4 py-2.5 text-sm font-bold bg-[#0145F2] hover:bg-[#0138c9] text-white rounded-xl transition-colors shrink-0">

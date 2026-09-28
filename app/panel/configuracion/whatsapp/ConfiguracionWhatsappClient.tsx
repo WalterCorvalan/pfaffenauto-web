@@ -219,7 +219,7 @@ export default function ConfiguracionWhatsappClient() {
   return (
     <div className="p-6 max-w-6xl mx-auto space-y-5">
       <div>
-        <h1 className="text-xl font-black text-slate-900 dark:text-white flex items-center gap-2"><MessageCircle className="w-5 h-5 text-indigo-600" /> Configuración</h1>
+        <h1 className="text-xl font-black text-slate-900 dark:text-white flex items-center gap-2"><img src="/icons/panel/configuracion.png" alt="" className="w-5 h-5 object-contain shrink-0" /> Configuración</h1>
         <p className="text-sm text-slate-400">Conectá el número de WhatsApp Business de Meta para recibir los mensajes de los clientes acá (Conversaciones → WhatsApp) y que el asistente automático conteste hasta que un vendedor toma la charla.</p>
       </div>
 
@@ -261,7 +261,7 @@ export default function ConfiguracionWhatsappClient() {
         </div>
         <div>
           <label className={labelClass}>Nombre del bot (opcional)</label>
-          <input value={botNombre} onChange={(e) => setBotNombre(e.target.value)} placeholder="Sin nombre propio — responde como Pfaffen Autos" className={inputClass} />
+          <input value={botNombre} onChange={(e) => setBotNombre(e.target.value)} placeholder="Sin nombre propio — responde como Pfaffen Cars" className={inputClass} />
           <p className="text-[10px] text-slate-400 mt-1">No tiene relación con Rodi (el chatbot del sitio público). Este es solo el asistente que contesta acá, en WhatsApp.</p>
         </div>
         <div>
@@ -463,7 +463,7 @@ function PlantillasWhatsapp() {
         </div>
         <div>
           <label className={labelClass}>Cuerpo del mensaje</label>
-          <textarea value={nueva.cuerpo} onChange={(e) => setNueva((n) => ({ ...n, cuerpo: e.target.value }))} rows={3} placeholder="Hola {{1}}, seguimos en contacto por tu consulta en Pfaffen Autos." className={inputClass} />
+          <textarea value={nueva.cuerpo} onChange={(e) => setNueva((n) => ({ ...n, cuerpo: e.target.value }))} rows={3} placeholder="Hola {{1}}, seguimos en contacto por tu consulta en Pfaffen Cars." className={inputClass} />
           <p className="text-[10px] text-slate-400 mt-1">Máximo una variable, tiene que ser exactamente {"{{1}}"}.</p>
         </div>
         <button onClick={crear} disabled={creando} className="px-4 py-2.5 rounded-xl bg-[#0145F2] hover:bg-[#0138c9] text-white text-sm font-bold disabled:opacity-50 flex items-center gap-1.5">

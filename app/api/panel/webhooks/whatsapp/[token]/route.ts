@@ -298,7 +298,7 @@ async function guardarMensajeEntrante({ waId, nombrePerfil, msg }: { waId: strin
   return { conversacionId: conversacion.id, mensajeId: mensajeInsertado.id };
 }
 
-const RESPUESTA_FALLBACK = "¡Hola! Gracias por escribirnos a Pfaffen Autos. En breve te contacta uno de nuestros asesores. 🚗";
+const RESPUESTA_FALLBACK = "¡Hola! Gracias por escribirnos a Pfaffen Cars. En breve te contacta uno de nuestros asesores. 🚗";
 
 function isWhatsappEnvioConfigurado(config: any): boolean {
   return !!config?.listo && !!config?.token_cifrado && !!config?.token_iv && !!config?.token_tag && !!config?.phone_number_id;

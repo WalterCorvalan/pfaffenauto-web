@@ -3,9 +3,9 @@
 import { useEffect, useState } from "react";
 import QRCode from "qrcode";
 import { supabase2 } from "@/lib/supabase/client";
-import { X, Copy, Check, MessageCircle, ExternalLink, Tag, Eye, Car, MessageSquare } from "lucide-react";
+import { X, Copy, Check, MessageCircle, ExternalLink, Tag, Eye, Car, MessageSquare, RefreshCw } from "lucide-react";
 
-interface CatalogoConfig { id: string; mostrar_precios: boolean; visitas_totales: number; fichas_vistas_totales: number; consultas_whatsapp_totales: number }
+interface CatalogoConfig { id: string; mostrar_precios: boolean; visitas_totales: number; fichas_vistas_totales: number; consultas_whatsapp_totales: number; meta_feed_id?: string | null }
 
 interface Props {
   config: CatalogoConfig | null;
@@ -18,6 +18,10 @@ export default function TuCatalogoModal({ config, esAdmin, onClose, onConfigActu
   const [copiado, setCopiado] = useState(false);
   const [qrUrl, setQrUrl] = useState("");
   const [guardandoToggle, setGuardandoToggle] = useState(false);
+  const [feedId, setFeedId] = useState(config?.meta_feed_id || "");
+  const [tokenMeta, setTokenMeta] = useState("");
+  const [guardandoMeta, setGuardandoMeta] = useState(false);
+  const [mensajeMeta, setMensajeMeta] = useState("");
   const url = typeof window !== "undefined" ? `${window.location.origin}/tu-catalogo` : "/tu-catalogo";
 
   useEffect(() => {
@@ -28,6 +32,27 @@ export default function TuCatalogoModal({ config, esAdmin, onClose, onConfigActu
     await navigator.clipboard.writeText(url);
     setCopiado(true);
     setTimeout(() => setCopiado(false), 2000);
+  };
+
+  const guardarMeta = async () => {
+    if (!feedId.trim()) return;
+    setGuardandoMeta(true);
+    setMensajeMeta("");
+    try {
+      const res = await fetch("/api/panel/catalogo/meta-config", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ feedId: feedId.trim(), accessToken: tokenMeta.trim() || undefined }),
+      });
+      const data = await res.json();
+      if (!res.ok) { setMensajeMeta(data.error || "No se pudo guardar."); return; }
+      setTokenMeta("");
+      setMensajeMeta("Guardado ✓");
+    } catch {
+      setMensajeMeta("Error de red.");
+    } finally {
+      setGuardandoMeta(false);
+    }
   };
 
   const toggleMostrarPrecios = async () => {
@@ -97,6 +122,21 @@ export default function TuCatalogoModal({ config, esAdmin, onClose, onConfigActu
         </div>
 
         <p className="text-[10px] text-slate-400 text-center mt-3">¿Los autos se ven sin foto? Cargá las fotos en <strong>Stock → Editar auto → Fotos</strong> y aparecen ahí al toque.</p>
+
+        {esAdmin && (
+          <div className="border-t border-slate-100 dark:border-white/10 pt-4 mt-4">
+            <p className="text-xs font-bold text-slate-600 dark:text-slate-300 mb-1 flex items-center gap-1.5"><RefreshCw className="w-3.5 h-3.5" /> Catálogo de Meta (Instagram/Facebook)</p>
+            <p className="text-[10px] text-slate-400 mb-3">Para que el botón "Publicar en todos lados" de Stock pueda pedirle a Meta que relea el feed al toque. Sin esto, Instagram igual se sincroniza solo, pero una vez por día.</p>
+            <input value={feedId} onChange={(e) => setFeedId(e.target.value)} placeholder="Feed ID de Meta Commerce Manager" className="w-full bg-slate-50 dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-lg px-3 py-2 text-xs mb-2 outline-none focus:border-[#0145F2] text-slate-900 dark:text-white" />
+            <input value={tokenMeta} onChange={(e) => setTokenMeta(e.target.value)} type="password" placeholder="Access Token (dejalo vacío para no cambiarlo)" className="w-full bg-slate-50 dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-lg px-3 py-2 text-xs mb-2 outline-none focus:border-[#0145F2] text-slate-900 dark:text-white" />
+            <div className="flex items-center gap-2">
+              <button onClick={guardarMeta} disabled={guardandoMeta || !feedId.trim()} className="bg-[#0145F2] hover:bg-[#0138c9] disabled:opacity-40 text-white text-xs font-bold px-3 py-2 rounded-lg">
+                {guardandoMeta ? "Guardando..." : "Guardar"}
+              </button>
+              {mensajeMeta && <span className="text-[11px] text-slate-400">{mensajeMeta}</span>}
+            </div>
+          </div>
+        )}
       </div>
     </div>
   );

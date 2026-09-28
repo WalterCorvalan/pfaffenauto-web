@@ -4,7 +4,7 @@ import { useEffect, useMemo, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
 import * as XLSX from "xlsx";
-import { Search, Briefcase, Download, Plus, Wrench, ShoppingCart, Eye, Pencil, FileText, Wallet, Trash2, Globe, SlidersHorizontal } from "lucide-react";
+import { Search, Download, Plus, Wrench, ShoppingCart, Eye, Pencil, FileText, Wallet, Trash2, Globe, SlidersHorizontal } from "lucide-react";
 import NuevaVentaModal, { type VentaPrefill } from "./NuevaVentaModal";
 import VentaDetalleModal from "./VentaDetalleModal";
 import { fmtFechaLocal } from "@/lib/panel/fechas";
@@ -173,7 +173,7 @@ export default function VentasClient({
         <div className="max-w-7xl mx-auto">
           <div className="flex flex-col md:flex-row md:items-center justify-between gap-3 mb-4">
             <div>
-              <h1 className="text-xl font-black text-slate-900 dark:text-white flex items-center gap-2"><Briefcase className="w-5 h-5 text-[#0145F2]" /> Ventas</h1>
+              <h1 className="text-xl font-black text-slate-900 dark:text-white flex items-center gap-2"><img src="/icons/panel/ventas.png" alt="" className="w-5 h-5 object-contain" /> Ventas</h1>
               <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">{ventas.length} ventas · {enCurso} en curso · {cerradas} cerradas</p>
             </div>
             <div className="flex items-center gap-2">

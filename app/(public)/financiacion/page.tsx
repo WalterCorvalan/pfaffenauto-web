@@ -13,7 +13,7 @@ import {
 import SimuladorReal from "./SimuladorReal";
 
 export const metadata = {
-  title: "Financiación de Autos en Zona Norte | Pfaffen Autos",
+  title: "Financiación de Autos en Zona Norte | Pfaffen Cars",
   description: "Créditos personales del Banco Nación con tasa preferencial para comprar tu auto 0KM o usado en Buenos Aires. Simulá tu cuota sobre un auto real del stock y solicitalo online.",
   alternates: { canonical: "https://www.pfaffencars.com/financiacion" },
 };

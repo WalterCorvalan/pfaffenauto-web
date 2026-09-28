@@ -107,7 +107,7 @@ export default function PapeleraClient() {
       <div className="flex-1 overflow-y-auto custom-scrollbar p-4 md:p-6">
         <div className="max-w-4xl mx-auto">
           <div className="mb-4">
-            <h1 className="text-xl font-black text-slate-900 dark:text-white flex items-center gap-2"><Trash2 className="w-5 h-5 text-indigo-600" /> Papelera</h1>
+            <h1 className="text-xl font-black text-slate-900 dark:text-white flex items-center gap-2"><img src="/icons/panel/papelera.png" alt="" className="w-5 h-5 object-contain shrink-0" /> Papelera</h1>
             <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">Docs eliminados de la empresa activa. Podés restaurarlos desde acá; no se borran solos.</p>
           </div>
 

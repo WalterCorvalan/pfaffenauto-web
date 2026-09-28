@@ -52,14 +52,14 @@ export async function generateMetadata({
 }): Promise<Metadata> {
   const { slug } = await params;
   const auto = await buscarAuto(slug);
-  if (!auto) return { title: "Vehículo no encontrado | Pfaffen Autos" };
+  if (!auto) return { title: "Vehículo no encontrado | Pfaffen Cars" };
 
   const esCeroKm = auto.km === 0;
-  const titulo = `${auto.marca} ${auto.modelo} ${auto.anio} ${esCeroKm ? "0KM" : "Usado"} | Pfaffen Autos`;
+  const titulo = `${auto.marca} ${auto.modelo} ${auto.anio} ${esCeroKm ? "0KM" : "Usado"} | Pfaffen Cars`;
   const precioTexto = auto.precio_publicado_usd && !auto.precio_publicado_ars
     ? `US$ ${auto.precio_publicado_usd.toLocaleString("en-US")}`
     : `$${(auto.precio_publicado_ars || 0).toLocaleString("es-AR")}`;
-  const descripcion = `${auto.marca} ${auto.modelo} ${auto.anio}, ${esCeroKm ? "0km" : `${auto.km?.toLocaleString("es-AR")} km`}. Precio ${precioTexto}. Financiación disponible en Pfaffen Autos.`;
+  const descripcion = `${auto.marca} ${auto.modelo} ${auto.anio}, ${esCeroKm ? "0km" : `${auto.km?.toLocaleString("es-AR")} km`}. Precio ${precioTexto}. Financiación disponible en Pfaffen Cars.`;
   const imagen = (auto.fotos as any)?.[0];
 
   return {
@@ -103,7 +103,7 @@ export default async function VehiculoDetallePage({
     numeroLimpio = numeroLimpio.replace(/^54/, "549");
 
   const mensajeWhatsApp = encodeURIComponent(
-    `Hola Pfaffen Autos, estoy interesado en el ${auto.marca} ${auto.modelo} (${auto.anio}) que tienen en la sucursal de ${auto.sucursales?.nombre || "ustedes"}.`,
+    `Hola Pfaffen Cars, estoy interesado en el ${auto.marca} ${auto.modelo} (${auto.anio}) que tienen en la sucursal de ${auto.sucursales?.nombre || "ustedes"}.`,
   );
   const linkWhatsApp = `https://wa.me/${numeroLimpio}?text=${mensajeWhatsApp}`;
 
@@ -283,7 +283,7 @@ function BackgroundEffects() {
 function PrintHeader({ auto }: { auto: any }) {
   return (
     <div className="hidden print:block text-center border-b-2 border-navy pb-6 mb-6 mt-8">
-      <img src="/logo.png" alt="Pfaffen Autos" className="h-10 mx-auto mb-2" />
+      <img src="/logo.png" alt="Pfaffen Cars" className="h-10 mx-auto mb-2" />
       <h1 className="text-xl font-black uppercase text-navy">
         Ficha Técnica Oficial
       </h1>
@@ -519,7 +519,7 @@ function VehiculosRelacionados({ titulo, vehiculos }: { titulo: string; vehiculo
               href={`/catalogo/${v.slug}`}
               className="block group bg-white/40 dark:bg-white/5 backdrop-blur-2xl rounded-[24px] border border-white/60 dark:border-white/10 overflow-hidden shadow-[0_8px_32px_rgba(0,0,0,0.04)] dark:shadow-none hover:shadow-[0_20px_48px_rgba(1,69,242,0.12)] dark:hover:shadow-none hover:border-white dark:hover:border-white/20 hover:bg-white/70 dark:hover:bg-white/10 transition-all duration-500"
             >
-              <div className="relative h-[140px] sm:h-[160px] bg-white/30 dark:bg-white/5 overflow-hidden mix-blend-multiply dark:mix-blend-normal">
+              <div className="relative h-[180px] sm:h-[220px] bg-white/30 dark:bg-white/5 overflow-hidden mix-blend-multiply dark:mix-blend-normal">
                 {v.fotos?.[0] ? (
                   <Image
                     src={v.fotos[0]}

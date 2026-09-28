@@ -11,8 +11,8 @@ const supabaseAdmin = createServiceClient(
 );
 
 export const metadata: Metadata = {
-  title: "Catálogo de Autos 0KM y Usados | Pfaffen Autos",
-  description: "Explorá todo el stock de Pfaffen Autos: 0KM y usados seleccionados, con filtros por marca, tipo, precio y financiación.",
+  title: "Catálogo de Autos 0KM y Usados | Pfaffen Cars",
+  description: "Explorá todo el stock de Pfaffen Cars: 0KM y usados seleccionados, con filtros por marca, tipo, precio y financiación.",
   alternates: { canonical: "https://www.pfaffencars.com/tu-catalogo" },
 };
 

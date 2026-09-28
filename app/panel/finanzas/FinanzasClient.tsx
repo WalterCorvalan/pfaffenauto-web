@@ -406,7 +406,7 @@ export default function FinanzasClient({
     return (
       <div className="p-6 max-w-6xl mx-auto">
         <div className="mb-4">
-          <h1 className="text-xl font-bold">Caja de tu sucursal</h1>
+          <h1 className="text-xl font-bold flex items-center gap-2"><img src="/icons/panel/finanzas.png" alt="" className="w-5 h-5 object-contain shrink-0" /> Caja de tu sucursal</h1>
           <p className="text-sm text-slate-400">Solo ves la Caja Grande/Chica de tu sucursal asignada.</p>
         </div>
         <CajaGrandeChicaTab miId={miId} soyAdmin={soyAdmin} cuentas={cuentas} setCuentas={setCuentas} movimientos={movimientos} setMovimientos={setMovimientos} sucursales={sucursales.filter((s) => s.id === miSucursalId)} vendedores={vendedores} />
@@ -417,7 +417,7 @@ export default function FinanzasClient({
   return (
     <div className="p-6 max-w-6xl mx-auto">
       <div className="flex items-start justify-between gap-3 mb-1 flex-wrap">
-        <div><h1 className="text-xl font-bold">Administración Financiera</h1><p className="text-sm text-slate-400">Movimientos, saldos por caja, comisiones, presupuestos y cierres.</p></div>
+        <div><h1 className="text-xl font-bold flex items-center gap-2"><img src="/icons/panel/finanzas.png" alt="" className="w-5 h-5 object-contain shrink-0" /> Administración Financiera</h1><p className="text-sm text-slate-400">Movimientos, saldos por caja, comisiones, presupuestos y cierres.</p></div>
       </div>
 
       {/* Nivel 1: grupos -- único nivel que usa rojo (identidad de marca).

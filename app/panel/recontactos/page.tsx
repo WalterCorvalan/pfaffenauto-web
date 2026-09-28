@@ -1,7 +1,7 @@
 import { createClient } from "@/lib/supabase/server";
 import RecontactosClient from "./RecontactosClient";
 
-export const metadata = { title: "Recontactos | Pfaffen Autos" };
+export const metadata = { title: "Recontactos | Pfaffen Cars" };
 
 export default async function RecontactosPage() {
   const supabase = await createClient();

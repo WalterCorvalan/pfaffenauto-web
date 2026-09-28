@@ -38,7 +38,7 @@ export async function GET() {
     perfil: {
       ...data,
       email: user.email,
-      empresa: empresa?.branding_nombre || "Pfaffen Autos",
+      empresa: empresa?.branding_nombre || "Pfaffen Cars",
       sucursal_nombre: (data as any)?.sucursal?.nombre || null,
     },
   });

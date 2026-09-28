@@ -1,21 +1,11 @@
 "use client";
 
-import { useState, useEffect, useRef } from "react";
-import Script from "next/script";
+import { useState, useEffect } from "react";
 import { supabase2 } from "@/lib/supabase/client";
 import {
   CalendarCheck, Clock, MapPin, User, Phone, CheckCircle2,
   ChevronDown, Car, Coffee, ShieldCheck
 } from "lucide-react";
-
-declare global {
-  interface Window {
-    turnstile?: {
-      render: (container: HTMLElement, options: Record<string, unknown>) => string;
-      reset: (widgetId?: string) => void;
-    };
-  }
-}
 
 const HORA_INICIO = 9;
 const HORA_FIN = 18;
@@ -45,48 +35,7 @@ export default function AgendarCitaForm() {
   const [enviado, setEnviado] = useState(false);
   const [error, setError] = useState("");
 
-  // Turnstile (anti-spam) — antes este form insertaba directo a Supabase con
-  // la anon key, sin captcha ni rate limit. Ahora pasa por /api/visitas.
-  const [turnstileToken, setTurnstileToken] = useState("");
-  const [turnstileListo, setTurnstileListo] = useState(false);
-  const [turnstileError, setTurnstileError] = useState(false);
-  const turnstileRef = useRef<HTMLDivElement>(null);
-  const turnstileWidgetId = useRef<string | null>(null);
-
   const hoy = new Date().toISOString().split("T")[0];
-
-  // No confiamos solo en el onLoad del <Script>: si otro componente de la
-  // página (ej. AgendarVisitaForm dentro de cada card del stock) ya insertó
-  // el mismo script de Turnstile antes, next/script dedupea el tag y este
-  // onLoad puede no disparar nunca — quedaba "roto" hasta recargar. Con un
-  // poll alcanza igual si window.turnstile ya está disponible.
-  useEffect(() => {
-    if (turnstileListo) return;
-    if (window.turnstile) { setTurnstileListo(true); return; }
-    const intervalo = setInterval(() => {
-      if (window.turnstile) {
-        setTurnstileListo(true);
-        clearInterval(intervalo);
-      }
-    }, 300);
-    return () => clearInterval(intervalo);
-  }, [turnstileListo]);
-
-  useEffect(() => {
-    if (!turnstileListo || !turnstileRef.current || !window.turnstile) return;
-    if (turnstileWidgetId.current) return;
-
-    turnstileWidgetId.current = window.turnstile.render(turnstileRef.current, {
-      sitekey: process.env.NEXT_PUBLIC_TURNSTILE_SITE_KEY || "",
-      callback: (token: string) => { setTurnstileToken(token); setTurnstileError(false); },
-      "expired-callback": () => setTurnstileToken(""),
-      "error-callback": (code: string) => {
-        setTurnstileToken("");
-        setTurnstileError(true);
-        console.error("[turnstile] error-callback:", code, "— probable causa: el dominio actual no está autorizado para este sitekey en el dashboard de Cloudflare.");
-      },
-    });
-  }, [turnstileListo]);
 
   useEffect(() => {
     supabase2.from("sucursales").select("id, nombre").then(({ data }) => {
@@ -124,10 +73,6 @@ export default function AgendarCitaForm() {
       setError("Por favor, completá todos los campos obligatorios.");
       return;
     }
-    if (!turnstileToken) {
-      setError("Completá la verificación anti-spam antes de continuar.");
-      return;
-    }
 
     setCargando(true);
     try {
@@ -137,7 +82,6 @@ export default function AgendarCitaForm() {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          turnstileToken,
           vehiculo_id: vehiculoId || null,
           vehiculo_marca: vehiculoSeleccionado?.marca || null,
           vehiculo_modelo: vehiculoSeleccionado?.modelo || null,
@@ -157,10 +101,6 @@ export default function AgendarCitaForm() {
     } catch (err) {
       console.error(err);
       setError(err instanceof Error ? err.message : "Hubo un error al agendar la cita. Por favor, intentá nuevamente.");
-      if (turnstileWidgetId.current && window.turnstile) {
-        window.turnstile.reset(turnstileWidgetId.current);
-      }
-      setTurnstileToken("");
     } finally {
       setCargando(false);
     }
@@ -384,18 +324,9 @@ export default function AgendarCitaForm() {
                 </div>
               )}
 
-              <div className="mb-6 flex flex-col items-center gap-1.5">
-                <div ref={turnstileRef} />
-                {turnstileError && (
-                  <p className="text-rose-500 text-[11px] font-semibold text-center max-w-xs">
-                    No se pudo cargar la verificación anti-spam. Puede ser un bloqueador de anuncios o un problema temporal — probá recargar la página.
-                  </p>
-                )}
-              </div>
-
               <button
                 type="submit"
-                disabled={cargando || !turnstileToken}
+                disabled={cargando}
                 className="w-full bg-[#0145F2] hover:bg-indigo-700 text-white font-black text-sm uppercase tracking-widest py-4 rounded-xl transition-all shadow-lg shadow-blue-500/20 disabled:opacity-60 disabled:cursor-not-allowed active:scale-[0.99]"
               >
                 {cargando ? "Procesando..." : "Confirmar mi visita"}
@@ -405,12 +336,6 @@ export default function AgendarCitaForm() {
 
         </div>
       </div>
-
-      <Script
-        src="https://challenges.cloudflare.com/turnstile/v0/api.js"
-        strategy="lazyOnload"
-        onLoad={() => setTurnstileListo(true)}
-      />
     </section>
   );
 }

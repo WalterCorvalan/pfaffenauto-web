@@ -183,7 +183,7 @@ export default function TrabajaConNosotrosClient() {
               <h1 className="text-4xl lg:text-5xl font-black text-[#0f293e] dark:text-white tracking-tighter leading-tight mb-4 drop-shadow-sm">
                 Construí tu futuro en{" "}
                 <span className="text-[#0145F2] dark:text-sky-300">
-                  Pfaffen Autos
+                  Pfaffen Cars
                 </span>
               </h1>
               <p className="text-slate-600 dark:text-slate-400 text-sm leading-relaxed font-medium">
@@ -253,7 +253,7 @@ export default function TrabajaConNosotrosClient() {
                     ¡Postulación recibida!
                   </h2>
                   <p className="text-slate-500 dark:text-slate-400 text-sm max-w-sm mx-auto leading-relaxed">
-                    Gracias por querer formar parte de Pfaffen Autos. Nuestro
+                    Gracias por querer formar parte de Pfaffen Cars. Nuestro
                     equipo de Recursos Humanos revisará tu perfil y te
                     contactaremos si se ajusta a nuestras búsquedas.
                   </p>

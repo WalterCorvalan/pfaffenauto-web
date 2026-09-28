@@ -72,7 +72,7 @@ export default function PerfilClient({ miId }: { miId: string }) {
     <div className="flex flex-col h-full w-full overflow-hidden">
       <div className="flex-1 overflow-y-auto custom-scrollbar p-4 md:p-6">
         <div className="mb-4">
-          <h1 className="text-xl font-black text-slate-900 dark:text-white flex items-center gap-2"><UserCircle2 className="w-5 h-5 text-[#0145F2]" /> Mi Perfil</h1>
+          <h1 className="text-xl font-black text-slate-900 dark:text-white flex items-center gap-2"><img src="/icons/panel/mi-perfil.png" alt="" className="w-5 h-5 object-contain shrink-0" /> Mi Perfil</h1>
           <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">Tu foto, nombre y WhatsApp -- se muestran al cliente cuando te asignan un auto (catálogo, presupuesto, seguimiento).</p>
         </div>
         {cargando ? (

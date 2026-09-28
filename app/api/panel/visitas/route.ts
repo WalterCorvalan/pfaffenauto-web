@@ -1,6 +1,5 @@
 import { z } from "zod";
 import { createClient } from "@supabase/supabase-js";
-import { verificarTurnstile } from "@/lib/turnstile";
 import { rateLimit, ipDesdeRequest } from "@/lib/rateLimit";
 import { registrarError } from "@/lib/panel/logger";
 import { crearAlerta } from "@/lib/panel/alertas";
@@ -11,7 +10,6 @@ const supabase = createClient(
 );
 
 const VisitaSchema = z.object({
-  turnstileToken: z.string().min(1, "Falta verificación anti-spam."),
   vehiculo_id: z.string().optional().nullable(),
   vehiculo_marca: z.string().trim().max(60).optional().nullable(),
   vehiculo_modelo: z.string().trim().max(60).optional().nullable(),
@@ -38,12 +36,7 @@ export async function POST(req: Request) {
     if (!parsed.success) {
       return Response.json({ error: "Faltan datos obligatorios o tienen un formato inválido." }, { status: 400 });
     }
-    const { turnstileToken, vehiculo_id, vehiculo_marca, vehiculo_modelo, vehiculo_patente, nombre_cliente, telefono_cliente, fecha_visita, horario_visita, sucursal, vendedor_id } = parsed.data;
-
-    const humano = await verificarTurnstile(turnstileToken, ip);
-    if (!humano) {
-      return Response.json({ error: "No pudimos verificar que sos humano. Reintentá." }, { status: 400 });
-    }
+    const { vehiculo_id, vehiculo_marca, vehiculo_modelo, vehiculo_patente, nombre_cliente, telefono_cliente, fecha_visita, horario_visita, sucursal, vendedor_id } = parsed.data;
 
     const { data, error } = await supabase.from("visitas").insert({
       vehiculo_id: vehiculo_id || null,

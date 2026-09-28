@@ -87,7 +87,7 @@ export default function CobrosClient({ miId, soyAdminOFinanzas, cuotasIniciales,
 
   return (
     <div className="p-6 max-w-4xl mx-auto">
-      <div className="mb-1"><h1 className="text-xl font-bold">Cobros</h1><p className="text-sm text-slate-400">Cuotas que la agencia le cobra a sus clientes{!soyAdminOFinanzas ? " — solo tus operaciones" : ""}.</p></div>
+      <div className="mb-1"><h1 className="text-xl font-bold flex items-center gap-2"><img src="/icons/panel/cobros.png" alt="" className="w-5 h-5 object-contain shrink-0" /> Cobros</h1><p className="text-sm text-slate-400">Cuotas que la agencia le cobra a sus clientes{!soyAdminOFinanzas ? " — solo tus operaciones" : ""}.</p></div>
 
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 my-4">
         <div className="bg-rose-50 dark:bg-rose-500/10 border border-rose-100 dark:border-rose-500/20 rounded-xl p-3"><p className="text-[10px] font-bold uppercase text-rose-500 flex items-center gap-1"><AlertTriangle className="w-3.5 h-3.5" /> Vencidas</p><p className="text-2xl font-black">{vencidas.length}</p></div>

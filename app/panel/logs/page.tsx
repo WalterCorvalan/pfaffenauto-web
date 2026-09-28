@@ -1,7 +1,7 @@
 import { createClient } from "@/lib/supabase/server";
 import LogsClient from "./LogsClient";
 
-export const metadata = { title: "Registro de Cambios | Pfaffen Autos" };
+export const metadata = { title: "Registro de Cambios | Pfaffen Cars" };
 
 // Calcado de v1 (app/(panel-v1)/panel/logs) -- arranca con Ventas y Señas
 // (las 2 tablas que ya tienen el trigger registrar_historial_cambios).

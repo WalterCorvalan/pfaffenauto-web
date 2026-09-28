@@ -16,7 +16,7 @@ export default function RodiShell({ conversacionesIniciales, vendedores, miId }:
       <div className="px-6 pt-5 pb-3 border-b border-slate-200 dark:border-white/10 shrink-0">
         <div className="flex items-center justify-between flex-wrap gap-2">
           <div>
-            <h1 className="text-xl font-bold text-slate-900 dark:text-white">Conversaciones (Rodi)</h1>
+            <h1 className="text-xl font-bold text-slate-900 dark:text-white flex items-center gap-2"><img src="/icons/panel/rodi.png" alt="" className="w-5 h-5 object-contain shrink-0" /> Conversaciones (Rodi)</h1>
             <p className="text-xs text-slate-400 mt-0.5">{leadsConConversacion} lead{leadsConConversacion === 1 ? "" : "s"} con conversación · chat del sitio web</p>
           </div>
           <span className="flex items-center gap-1.5 px-3 py-1 rounded-full bg-indigo-50 dark:bg-indigo-500/10 text-indigo-600 dark:text-indigo-300 text-xs font-bold">

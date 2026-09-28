@@ -254,7 +254,7 @@ export default function ConfiguracionInstagramClient() {
   return (
     <div className="p-6 max-w-6xl mx-auto space-y-5">
       <div>
-        <h1 className="text-xl font-black text-slate-900 dark:text-white flex items-center gap-2"><Camera className="w-5 h-5 text-indigo-600" /> Configuración</h1>
+        <h1 className="text-xl font-black text-slate-900 dark:text-white flex items-center gap-2"><img src="/icons/panel/configuracion.png" alt="" className="w-5 h-5 object-contain shrink-0" /> Configuración</h1>
         <p className="text-sm text-slate-400">Conectá la cuenta de Instagram de Meta para recibir DMs y respuestas privadas a comentarios acá (Conversaciones → Instagram), con el mismo asistente automático que WhatsApp.</p>
       </div>
 

@@ -1,6 +1,7 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
+import { useRouter } from "next/navigation";
 import { supabase2 } from "@/lib/supabase/client";
 import { CreditCard, Search, Filter, Clock, MessageSquareText, ExternalLink, CheckCircle2, XCircle, Settings } from "lucide-react";
 import TablaResponsiva, { type ColumnaTabla } from "@/components/panel/TablaResponsiva";
@@ -16,7 +17,22 @@ const ESTADO_STYLES: Record<string, string> = {
 };
 
 export default function FinanciacionesClient({ solicitudesIniciales, staff, esAdminOFinanzas }: { solicitudesIniciales: any[]; staff: { id: string; nombre: string }[]; esAdminOFinanzas: boolean }) {
+  const router = useRouter();
   const [solicitudes, setSolicitudes] = useState(solicitudesIniciales);
+
+  useEffect(() => { setSolicitudes(solicitudesIniciales); }, [solicitudesIniciales]);
+
+  // Realtime sobre leads_tasacion (tipo "financiacion") -- una solicitud
+  // nueva del simulador público antes solo aparecía al recargar a mano.
+  useEffect(() => {
+    let timeoutId: ReturnType<typeof setTimeout>;
+    const refrescarConDebounce = () => { clearTimeout(timeoutId); timeoutId = setTimeout(() => router.refresh(), 400); };
+    const canal = supabase2
+      .channel(`financiaciones-realtime-${Math.random().toString(36).slice(2)}`)
+      .on("postgres_changes", { event: "*", schema: "public", table: "leads_tasacion" }, refrescarConDebounce)
+      .subscribe();
+    return () => { clearTimeout(timeoutId); supabase2.removeChannel(canal); };
+  }, [router]);
   const [filtroEstado, setFiltroEstado] = useState("nuevo");
   const [query, setQuery] = useState("");
   const [seleccionada, setSeleccionada] = useState<any>(null);
@@ -57,7 +73,7 @@ export default function FinanciacionesClient({ solicitudesIniciales, staff, esAd
     <div className="flex flex-col h-full overflow-hidden">
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-3 px-6 pt-4 shrink-0">
         <div>
-          <h1 className="text-xl font-black text-slate-900 dark:text-white flex items-center gap-2"><CreditCard className="w-5 h-5 text-[#0145F2]" /> Financiaciones</h1>
+          <h1 className="text-xl font-black text-slate-900 dark:text-white flex items-center gap-2"><img src="/icons/panel/financiaciones.png" alt="" className="w-5 h-5 object-contain shrink-0" /> Financiaciones</h1>
           <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">Solicitudes de crédito desde la web (home y detalle de auto)</p>
         </div>
         <div className="flex items-center gap-2 shrink-0">
@@ -174,7 +190,7 @@ export default function FinanciacionesClient({ solicitudesIniciales, staff, esAd
             }
             acciones={(s) => s.telefono && (
               <a
-                href={`https://wa.me/${s.telefono.replace(/\D/g, "")}?text=${encodeURIComponent(`¡Hola ${s.nombre}! Te contactamos de Pfaffen Autos por tu solicitud de financiación${s.marca ? ` para el ${s.marca} ${s.modelo || ""}`.trim() : ""}.`)}`}
+                href={`https://wa.me/${s.telefono.replace(/\D/g, "")}?text=${encodeURIComponent(`¡Hola ${s.nombre}! Te contactamos de Pfaffen Cars por tu solicitud de financiación${s.marca ? ` para el ${s.marca} ${s.modelo || ""}`.trim() : ""}.`)}`}
                 target="_blank"
                 rel="noreferrer"
                 className="bg-emerald-50 dark:bg-emerald-500/10 hover:bg-emerald-100 dark:hover:bg-emerald-500/20 text-emerald-600 dark:text-emerald-400 p-1.5 rounded-md transition-colors inline-flex"

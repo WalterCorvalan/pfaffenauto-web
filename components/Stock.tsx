@@ -3,7 +3,7 @@
 import React, { useState, useEffect } from "react";
 import Link from "next/link";
 import Image from "next/image";
-import { ChevronRight, ArrowUpRight, Clock, Scale, X, MapPin } from "lucide-react";
+import { ChevronRight, ArrowUpRight, Clock, Scale, X, MapPin, Calendar, Gauge, Heart, ArrowRight } from "lucide-react";
 import { motion, AnimatePresence, Variants } from "framer-motion";
 import ComparadorModal from "@/components/modals/ComparadorModal";
 import { MARCAS_CHINAS } from "@/lib/marcasChinas";
@@ -96,32 +96,20 @@ export default function Stock({ vehiculos }: StockProps) {
     .filter((auto) => auto.destacado)
     .slice(0, 4);
 
+  // Antes filtraban por auto.tipo -- columna que nunca se carga desde el
+  // alta de vehiculos (el campo real es "categoria", el mismo bug que ya se
+  // corrigio en el filtro del catalogo). Pickups zafaba a medias porque
+  // ademas matcheaba por nombre de modelo (hilux/amarok/ranger/strada/toro),
+  // pero se perdia cualquier pickup de otro modelo (reporte real: 2 Karry y
+  // una Rely no aparecian). Sedanes/urbanos dependia 100% de auto.tipo, asi
+  // que nunca mostraba nada. "Sedán"/"Hatchback" no tienen categoria propia,
+  // ambos caen en "Auto" (mismo criterio que el filtro del catalogo).
   const pickipsCarrusel = listaVehiculos
-    .filter((auto) => {
-      const t = normalizar(auto.tipo);
-      const m = normalizar(auto.modelo);
-      return (
-        t.includes("pick") ||
-        t.includes("camioneta") ||
-        m.includes("hilux") ||
-        m.includes("amarok") ||
-        m.includes("ranger") ||
-        m.includes("strada") ||
-        m.includes("toro")
-      );
-    })
+    .filter((auto) => auto.categoria === "Pickup/Camioneta" || auto.categoria === "Camioneta")
     .slice(0, 8);
 
   const urbanosYSedanes = listaVehiculos
-    .filter((auto) => {
-      const t = normalizar(auto.tipo);
-      return (
-        t.includes("sedan") ||
-        t.includes("hatchback") ||
-        t.includes("urbano") ||
-        t.includes("auto")
-      );
-    })
+    .filter((auto) => auto.categoria === "Auto")
     .slice(0, 4);
 
   const idsMostrados = new Set([
@@ -180,6 +168,7 @@ export default function Stock({ vehiculos }: StockProps) {
               autosComparar={autosComparar}
               onToggleComparar={toggleComparar}
               primerasPrioritarias
+              variante="alt"
             />
           </div>
         )}
@@ -198,9 +187,9 @@ export default function Stock({ vehiculos }: StockProps) {
 
             <div className="relative w-full [mask-image:linear-gradient(to_right,transparent,black_5%,black_95%,transparent)] py-4">
               <div className="flex gap-5 md:gap-6 w-full overflow-x-auto pb-6 custom-scrollbar snap-x snap-mandatory">
-                {[...pickipsCarrusel, ...pickipsCarrusel].map((auto, index) => (
+                {pickipsCarrusel.map((auto) => (
                   <div
-                    key={`${auto.id}-${index}`}
+                    key={auto.id}
                     className="min-w-[280px] max-w-[280px] sm:min-w-[300px] sm:max-w-[300px] flex-shrink-0 snap-center"
                   >
                     <VehicleCard
@@ -382,21 +371,15 @@ export default function Stock({ vehiculos }: StockProps) {
                 <Link
                   key={auto.id}
                   href={`/catalogo/${auto.slug}`}
-                  className="min-w-[280px] md:min-w-[360px] h-[380px] md:h-[480px] relative rounded-[32px] overflow-hidden group snap-center shadow-lg dark:shadow-[0_20px_48px_rgba(0,0,0,0.6)] hover:shadow-2xl border border-white/40 dark:border-white/10 shrink-0 transition-all duration-500"
+                  className="min-w-[280px] md:min-w-[360px] h-[360px] md:h-[440px] relative rounded-[32px] overflow-hidden group snap-center shadow-lg dark:shadow-[0_20px_48px_rgba(0,0,0,0.6)] hover:shadow-2xl border border-white/40 dark:border-white/10 shrink-0 transition-all duration-500"
                 >
-                  <button
-                    onClick={(e) => toggleComparar(e, auto)}
-                    className={`absolute top-5 left-5 z-30 p-2.5 rounded-full shadow-sm transition-all duration-300 border hover:scale-110 active:scale-95 ${
-                      autosComparar.some((a) => a.id === auto.id)
-                        ? "bg-[#0145F2] text-white border-[#0145F2]"
-                        : "bg-white/20 dark:bg-white/10 backdrop-blur-md text-white hover:text-[#0145F2] dark:hover:text-sky-300 hover:bg-white dark:hover:bg-white/20 border-white/40 dark:border-white/15"
-                    }`}
-                    title="Comparar vehículo"
-                    aria-label="Comparar vehículo"
-                  >
-                    <Scale className="w-4 h-4" />
-                  </button>
                   <div className="absolute inset-0 bg-slate-200 dark:bg-slate-900 z-0"></div>
+                  {/* Alto de la tarjeta: object-contain dejaba al auto
+                     "flotando" con espacio vacío (no convenció); 300/380 con
+                     object-cover se veía bien pero el título (marca+modelo)
+                     tapaba el techo/capot del auto por falta de aire arriba.
+                     360/440 le da lugar al texto sin volver al recorte
+                     excesivo de la versión original (380/480). */}
                   <Image
                     src={
                       auto.fotos?.[0] ||
@@ -409,11 +392,16 @@ export default function Stock({ vehiculos }: StockProps) {
                   />
                   <div className="absolute inset-0 bg-gradient-to-b from-black/70 via-transparent to-black/80 dark:from-black/80 dark:to-black/90 z-10" />
 
-                  <div className="absolute top-6 left-16 right-6 z-20">
+                  {/* Título más chico (2xl/3xl -> lg/xl): con nombres de 2
+                     líneas (ej "KQ51 CABINA SIMPLE 1.6") el bloque de texto
+                     era tan alto que tapaba la cabina del vehículo aunque el
+                     offset "top" se agrandara -- el problema era la altura
+                     del texto en sí, no solo dónde arrancaba. */}
+                  <div className="absolute top-10 left-6 right-6 z-20">
                     <span className="text-white/80 dark:text-white/70 text-[10px] md:text-xs uppercase tracking-widest font-black drop-shadow-md">
                       {auto.marca}
                     </span>
-                    <h3 className="text-2xl md:text-3xl font-black text-white leading-tight mt-1 drop-shadow-lg uppercase">
+                    <h3 className="text-lg md:text-xl font-black text-white leading-tight mt-1 drop-shadow-lg uppercase">
                       {auto.modelo}
                     </h3>
                   </div>
@@ -561,12 +549,17 @@ function VehicleGrid({
   autosComparar,
   onToggleComparar,
   primerasPrioritarias,
+  variante,
 }: {
   vehiculos: any[];
   autosComparar?: any[];
   onToggleComparar?: (e: React.MouseEvent, auto: any) => void;
   /** Marca las primeras 4 imágenes (la fila visible sin scrollear, justo debajo del Hero) como priority para que carguen antes en vez de esperar el lazy-load — sin esto son las primeras fotos que ve el visitante y tardan de más. */
   primerasPrioritarias?: boolean;
+  /** "alt" = prueba de diseño pedida el 27/9 (pastillas con año/km/combustible
+     o transmisión/sucursal + botón "Ver detalle"), solo para la sección
+     Destacados -- el resto del sitio sigue con la tarjeta clásica. */
+  variante?: "clasica" | "alt";
 }) {
   return (
     <motion.div
@@ -574,7 +567,7 @@ function VehicleGrid({
       initial="hidden"
       whileInView="visible"
       viewport={{ once: true, margin: "-50px" }}
-      className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-5 md:gap-6"
+      className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-5 md:gap-6"
     >
       {vehiculos.map((auto, i) => (
         <motion.div variants={itemVariants} key={auto.id} className="h-full">
@@ -583,6 +576,7 @@ function VehicleGrid({
             estaSeleccionado={autosComparar?.some((a) => a.id === auto.id)}
             onToggleComparar={onToggleComparar}
             prioridad={primerasPrioritarias && i < 4}
+            variante={variante}
           />
         </motion.div>
       ))}
@@ -596,18 +590,94 @@ export function VehicleCard({
   onToggleComparar,
   bordeSuave,
   prioridad,
+  variante,
 }: {
   auto: any;
   estaSeleccionado?: boolean;
   onToggleComparar?: (e: React.MouseEvent, auto: any) => void;
   bordeSuave?: boolean;
   prioridad?: boolean;
+  variante?: "clasica" | "alt";
 }) {
   const precioMostrar = auto.precio_publicado_ars
     ? `$ ${auto.precio_publicado_ars.toLocaleString("es-AR")}`
     : auto.precio_publicado_usd
       ? `US$ ${auto.precio_publicado_usd.toLocaleString("es-AR")}`
       : "Consultar precio";
+
+  if (variante === "alt") {
+    return (
+      <div className="relative h-full group">
+        {/* Comparador afuera del <Link> a propósito -- ver comentario de más
+           abajo en la tarjeta clásica (button anidado en <a> es inválido y
+           el click se filtra a la navegación incluso con stopPropagation). */}
+        {onToggleComparar && (
+          <button
+            onClick={(e) => onToggleComparar(e, auto)}
+            className={`absolute top-3.5 left-3.5 z-30 p-2 rounded-full shadow-sm transition-all duration-300 border hover:scale-110 active:scale-95 ${
+              estaSeleccionado
+                ? "bg-[#0145F2] text-white border-[#0145F2]"
+                : "bg-white/80 dark:bg-black/40 backdrop-blur-md text-gray-400 dark:text-slate-300 hover:text-[#0145F2] dark:hover:text-sky-300 border-white/60 dark:border-white/15"
+            }`}
+            title="Comparar vehículo"
+            aria-label="Comparar vehículo"
+          >
+            <Scale className="w-3.5 h-3.5" />
+          </button>
+        )}
+
+        <Link href={`/catalogo/${auto.slug}`} className="block h-full focus:outline-none">
+          <div className="bg-white dark:bg-[#11131c] rounded-2xl overflow-hidden flex flex-col h-full border border-gray-200/70 dark:border-white/10 shadow-[0_8px_24px_rgba(0,0,0,0.05)] dark:shadow-[0_8px_24px_rgba(0,0,0,0.35)] hover:shadow-[0_16px_36px_rgba(1,69,242,0.12)] transition-all duration-500 transform hover:-translate-y-1">
+            {/* La tarjeta es 1 columna (ancho completo) en mobile y 2-4
+               columnas en sm+ -- la card de mobile es bastante más ANCHA que
+               la de sm+, así que necesita más alto de imagen para no quedar
+               achatada (se cortaban las ruedas). sm:h-[240px] es el valor ya
+               probado en desktop/tablet, no tocar. */}
+            <div className="relative h-[300px] sm:h-[240px] bg-gray-100 dark:bg-white/5 overflow-hidden">
+              <Image
+                src={auto.fotos?.[0] || "/placeholder.jpg"}
+                alt={`${auto.marca} ${auto.modelo}`}
+                fill
+                sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 300px"
+                priority={prioridad}
+                className="object-cover object-center group-hover:scale-105 transition-transform duration-700 ease-out"
+              />
+              <span className="absolute top-3 right-3 w-8 h-8 rounded-full bg-white/90 dark:bg-black/50 backdrop-blur-md flex items-center justify-center text-gray-400 dark:text-slate-300 shadow-sm z-10">
+                <Heart className="w-4 h-4" />
+              </span>
+            </div>
+
+            <div className="p-3.5 sm:p-4 flex flex-col flex-grow">
+              <h3 className="text-sm sm:text-base font-black text-navy dark:text-white leading-tight truncate">
+                {auto.marca} {auto.modelo}
+              </h3>
+
+              <div className="flex items-center flex-wrap gap-x-2.5 gap-y-1 mt-2 text-[11px] text-gray-500 dark:text-slate-400 font-semibold">
+                <span className="flex items-center gap-1"><Calendar className="w-3 h-3 shrink-0" />{auto.anio}</span>
+                <span className="text-gray-300 dark:text-white/15">|</span>
+                <span className="flex items-center gap-1"><Gauge className="w-3 h-3 shrink-0" />{auto.km?.toLocaleString("es-AR")} km</span>
+                {auto.sucursales?.nombre && (
+                  <>
+                    <span className="text-gray-300 dark:text-white/15">|</span>
+                    <span className="flex items-center gap-1 truncate"><MapPin className="w-3 h-3 shrink-0" />{auto.sucursales.nombre}</span>
+                  </>
+                )}
+              </div>
+
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 mt-auto pt-2.5">
+                <span className="text-base sm:text-lg font-black text-[#0145F2] dark:text-sky-400 tracking-tighter truncate">
+                  {precioMostrar}
+                </span>
+                <span className="flex items-center justify-center gap-1 bg-[#0145F2] group-hover:bg-[#0138c9] text-white text-[11px] font-black px-3 py-2 rounded-xl transition-colors shrink-0">
+                  Ver detalle <ArrowRight className="w-3.5 h-3.5" />
+                </span>
+              </div>
+            </div>
+          </div>
+        </Link>
+      </div>
+    );
+  }
 
   return (
     <div className="relative h-full group">
@@ -649,7 +719,7 @@ export function VehicleCard({
         >
           <div className="absolute inset-0 bg-gradient-to-tr from-transparent via-white/40 dark:via-white/10 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-700 pointer-events-none z-20"></div>
 
-          <div className="relative h-[160px] sm:h-[180px] bg-white/30 dark:bg-white/5 flex items-center justify-center overflow-hidden mix-blend-multiply dark:mix-blend-normal">
+          <div className="relative h-[200px] sm:h-[240px] bg-white/30 dark:bg-white/5 flex items-center justify-center overflow-hidden mix-blend-multiply dark:mix-blend-normal">
           <Image
             src={auto.fotos?.[0] || "/placeholder.jpg"}
             alt={`${auto.marca} ${auto.modelo}`}

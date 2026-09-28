@@ -2,7 +2,7 @@ import Link from "next/link";
 import { CarFront, Search } from "lucide-react";
 
 export const metadata = {
-  title: "Página no encontrada | Pfaffen Autos",
+  title: "Página no encontrada | Pfaffen Cars",
   robots: { index: false, follow: true },
 };
 

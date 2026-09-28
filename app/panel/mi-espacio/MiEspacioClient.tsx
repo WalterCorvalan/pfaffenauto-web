@@ -315,7 +315,7 @@ export default function MiEspacioClient({
     <div className="p-6 max-w-5xl mx-auto">
       <div className="flex items-start justify-between gap-3 mb-1 flex-wrap">
         <div>
-          <h1 className="text-xl font-bold">Mi Espacio — {miNombre}</h1>
+          <h1 className="text-xl font-bold flex items-center gap-2"><img src="/icons/panel/mi-espacio.png" alt="" className="w-5 h-5 object-contain shrink-0" /> Mi Espacio — {miNombre}</h1>
           <p className="text-sm text-slate-400">Tu zona personal — separada de la operación de la agencia. Solo vos ves esto.</p>
         </div>
         <div className="flex items-center gap-2 shrink-0 relative">

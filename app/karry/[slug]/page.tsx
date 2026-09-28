@@ -12,7 +12,7 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
   const version = KARRY_VERSIONS.find((v) => v.slug === slug);
   if (!version) return {};
   return {
-    title: `${version.name} | Pfaffen Autos`,
+    title: `${version.name} | Pfaffen Cars`,
     description: version.text,
     alternates: { canonical: `https://www.pfaffencars.com/karry/${version.slug}` },
   };

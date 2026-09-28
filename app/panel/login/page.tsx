@@ -119,7 +119,7 @@ export default function LoginPageV2() {
               Panel
             </h2>
             <p className="text-center text-[11px] font-semibold uppercase tracking-[0.2em] text-white/30 mt-1.5">
-              Pfaffen Autos
+              Pfaffen Cars
             </p>
           </div>
 

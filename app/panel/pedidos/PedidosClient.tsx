@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useMemo, useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { supabase2 } from "@/lib/supabase/client";
 import { Search, Clock, MessageSquareText, Filter, Plus, Star, CheckCircle2, Sparkles, RefreshCw, FlagOff, Flag, X } from "lucide-react";
@@ -28,6 +28,20 @@ export default function PedidosClient({ pedidosIniciales, vendedores, clientes, 
   const router = useRouter();
   const [pedidos, setPedidos] = useState(pedidosIniciales);
   const [filtroEstado, setFiltroEstado] = useState("activo");
+
+  useEffect(() => { setPedidos(pedidosIniciales); }, [pedidosIniciales]);
+
+  // Realtime: match automático de stock (pedidos_match) y estados que puede
+  // tocar más de un vendedor a la vez -- antes solo se veía al recargar.
+  useEffect(() => {
+    let timeoutId: ReturnType<typeof setTimeout>;
+    const refrescarConDebounce = () => { clearTimeout(timeoutId); timeoutId = setTimeout(() => router.refresh(), 400); };
+    const canal = supabase2
+      .channel(`pedidos-realtime-${Math.random().toString(36).slice(2)}`)
+      .on("postgres_changes", { event: "*", schema: "public", table: "pedidos" }, refrescarConDebounce)
+      .subscribe();
+    return () => { clearTimeout(timeoutId); supabase2.removeChannel(canal); };
+  }, [router]);
   const [query, setQuery] = useState("");
   const [vendedorFiltro, setVendedorFiltro] = useState("");
   const [soloMios, setSoloMios] = useState(false);
@@ -124,7 +138,7 @@ export default function PedidosClient({ pedidosIniciales, vendedores, clientes, 
     <div className="flex flex-col h-full overflow-hidden">
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-3 px-6 pt-4 shrink-0">
         <div>
-          <h1 className="text-xl font-black text-slate-900 dark:text-white flex items-center gap-2"><Search className="w-5 h-5 text-[#0145F2]" /> Pedidos</h1>
+          <h1 className="text-xl font-black text-slate-900 dark:text-white flex items-center gap-2"><img src="/icons/panel/pedidos.png" alt="" className="w-5 h-5 object-contain shrink-0" /> Pedidos</h1>
           <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">Búsqueda de vehículos específicos para clientes</p>
         </div>
         <button onClick={abrirNuevo} className="flex items-center gap-1.5 px-4 py-2.5 text-sm font-bold bg-[#0145F2] hover:bg-[#0138c9] text-white rounded-xl transition-colors shrink-0">
@@ -253,7 +267,7 @@ export default function PedidosClient({ pedidosIniciales, vendedores, clientes, 
             }
             acciones={(p) => p.telefono && (
               <a
-                href={`https://wa.me/${p.telefono.replace(/\D/g, "")}?text=${encodeURIComponent(`¡Hola ${p.nombre_cliente}! Te contactamos de Pfaffen Autos respecto a tu búsqueda: ${busquedaTexto(p)}.`)}`}
+                href={`https://wa.me/${p.telefono.replace(/\D/g, "")}?text=${encodeURIComponent(`¡Hola ${p.nombre_cliente}! Te contactamos de Pfaffen Cars respecto a tu búsqueda: ${busquedaTexto(p)}.`)}`}
                 target="_blank"
                 rel="noreferrer"
                 className="bg-emerald-50 dark:bg-emerald-500/10 hover:bg-emerald-100 dark:hover:bg-emerald-500/20 text-emerald-600 dark:text-emerald-400 p-1.5 rounded-md transition-colors inline-flex"

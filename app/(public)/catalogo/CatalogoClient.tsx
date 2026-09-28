@@ -195,8 +195,13 @@ export default function CatalogoClient({ vehiculosIniciales = [], totalInicial =
       // al cargar un auto en Stock, así que un usado nunca queda en 0 sin querer.
       query = query.eq("km", 0);
     } else if (busquedaNormalizada === "usados-seleccionados" || busquedaNormalizada === "autos-seleccionados") {
-      // Todo el stock menos 0km y menos los de Outlet (mismo criterio de precio que usa /outlet).
-      query = query.neq("km", 0).or("precio_publicado_ars.is.null,precio_publicado_ars.gte.10000000");
+      // Pedido del 26/9: "Usados Seleccionados" muestra TODOS los usados,
+      // incluidos los que también aparecen en /outlet -- antes excluía por
+      // precio (mismo corte que Outlet), dejando afuera los usados más
+      // económicos sin que el cliente los viera acá. Outlet ya tiene su
+      // propia sección para destacarlos aparte; no hace falta que acá
+      // desaparezcan.
+      query = query.neq("km", 0);
     } else if (searchQuery) {
       query = query.or(
         `marca.ilike.%${searchQuery}%,modelo.ilike.%${searchQuery}%,tipo.ilike.%${searchQuery}%,segmento.ilike.%${searchQuery}%`,
@@ -207,11 +212,9 @@ export default function CatalogoClient({ vehiculosIniciales = [], totalInicial =
       if (condicionQuery === "0km") {
         query = query.eq("km", 0);
       } else if (condicionQuery === "usados-seleccionados") {
-        // Mismo criterio que el header usaba antes vía "q" -- todo el stock
-        // menos 0km y menos los de Outlet (mismo corte de precio que usa
-        // /outlet). Se movió de "q" a "condicion" para que el link del
-        // header no deje el término escrito en el buscador visible.
-        query = query.neq("km", 0).or("precio_publicado_ars.is.null,precio_publicado_ars.gte.10000000");
+        // Todos los usados, incluidos los que también están en /outlet (ver
+        // el mismo cambio arriba, en "busquedaNormalizada").
+        query = query.neq("km", 0);
       } else if (condicionQuery === "usados") {
         query = query.neq("km", 0);
       }
@@ -225,8 +228,25 @@ export default function CatalogoClient({ vehiculosIniciales = [], totalInicial =
     if (precioMaxUsd) query = query.lte("precio_publicado_usd", Number(precioMaxUsd));
 
     // Filtros de Arrays Exactos
-    if (tiposSeleccionados.length > 0)
-      query = query.in("tipo", tiposSeleccionados);
+    // Filtro "Tipo de Vehículo" (LISTA_TIPOS) filtraba contra la columna
+    // "tipo", que no existe en el alta de vehiculos.tsx (el campo real es
+    // "categoria", cargado desde NuevoVehiculoModal.tsx) -- siempre daba 0
+    // resultados para SUV/Pickup/Sedán/Hatchback/Utilitarios/Auto. Se mapea a
+    // los valores reales de categoria. "Sedán" y "Hatchback" no tienen
+    // categoria propia (ambos caen en "Auto"), asi que por ahora devuelven lo
+    // mismo -- no hay forma de distinguir carrocería sin agregar ese dato.
+    if (tiposSeleccionados.length > 0) {
+      const TIPO_A_CATEGORIA: Record<string, string[]> = {
+        SUV: ["SUV"],
+        Pickup: ["Pickup/Camioneta", "Camioneta"],
+        Utilitarios: ["Utilitario"],
+        Auto: ["Auto"],
+        Sedán: ["Auto"],
+        Hatchback: ["Auto"],
+      };
+      const categoriasFiltro = tiposSeleccionados.flatMap((t) => TIPO_A_CATEGORIA[t] || [t]);
+      query = query.in("categoria", categoriasFiltro);
+    }
     if (marcasSeleccionadas.length > 0)
       query = query.in("marca", marcasSeleccionadas);
     if (sucursalesSeleccionadas.length > 0)

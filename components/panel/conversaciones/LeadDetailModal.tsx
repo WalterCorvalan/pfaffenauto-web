@@ -322,7 +322,7 @@ export default function LeadDetailModal({
     await registrarEvento("test_drive", `Test drive marcado como "${nuevo}"`);
   };
 
-  const LINK_ORIGEN: Record<string, string> = { whatsapp: "/panel/whatsapp", instagram: "/panel/whatsapp?canal=instagram", rodi: "/panel/rodi", manual: "/panel/clientes" };
+  const LINK_ORIGEN: Record<string, string> = { whatsapp: "/panel/whatsapp", instagram: "/panel/instagram", rodi: "/panel/rodi", manual: "/panel/clientes" };
 
   const pedirAsistencia = async () => {
     if (!asistenciaParaId) return alert("Elegí a quién pedirle ayuda.");
@@ -381,7 +381,7 @@ export default function LeadDetailModal({
   const nombre = contacto?.nombre_perfil || contacto?.username || contacto?.telefono || "Sin nombre";
   const telefono = contacto?.telefono || "";
   const numeroLimpio = String(telefono).replace(/\D/g, "");
-  const linkWhatsApp = numeroLimpio ? `https://wa.me/${numeroLimpio}?text=${encodeURIComponent(`¡Hola ${nombre}! Te escribimos de Pfaffen Autos.`)}` : null;
+  const linkWhatsApp = numeroLimpio ? `https://wa.me/${numeroLimpio}?text=${encodeURIComponent(`¡Hola ${nombre}! Te escribimos de Pfaffen Cars.`)}` : null;
   const paramsLead = `${campoFk}=${leadId}`;
   const puedeEditar = true;
 

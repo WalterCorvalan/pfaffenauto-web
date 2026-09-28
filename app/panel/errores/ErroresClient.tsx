@@ -22,7 +22,7 @@ export default function ErroresClient({ errores }: { errores: LogError[] }) {
     <div className="flex flex-col h-full w-full overflow-hidden">
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-3 px-6 pt-4 shrink-0">
         <div>
-          <h1 className="text-xl font-black text-slate-900 dark:text-white flex items-center gap-2"><AlertTriangle className="w-5 h-5 text-rose-600" /> Errores del sistema</h1>
+          <h1 className="text-xl font-black text-slate-900 dark:text-white flex items-center gap-2"><img src="/icons/panel/errores.png" alt="" className="w-5 h-5 object-contain shrink-0" /> Errores del sistema</h1>
           <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">Fallas registradas — últimos {errores.length}</p>
         </div>
 

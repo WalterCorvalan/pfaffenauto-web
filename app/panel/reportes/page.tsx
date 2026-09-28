@@ -3,7 +3,7 @@ import { createClient } from "@/lib/supabase/server";
 import { puedeVerModulo } from "@/lib/panel/permisosModulos";
 import ReportesClient from "./ReportesClient";
 
-export const metadata = { title: "Reportes y Análisis | Pfaffen Autos" };
+export const metadata = { title: "Reportes y Análisis | Pfaffen Cars" };
 
 export default async function ReportesPage() {
   const supabase = await createClient();

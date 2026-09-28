@@ -3,7 +3,7 @@ import { createClient } from "@/lib/supabase/server";
 import { puedeVerModulo } from "@/lib/panel/permisosModulos";
 import FacturacionClient from "./FacturacionClient";
 
-export const metadata = { title: "Facturación | Pfaffen Autos" };
+export const metadata = { title: "Facturación | Pfaffen Cars" };
 
 export default async function FacturacionPage() {
   const supabase = await createClient();
