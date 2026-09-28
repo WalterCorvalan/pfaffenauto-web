@@ -18,6 +18,14 @@ export default async function ReportesPage() {
   const mesActual = `${hoy.getFullYear()}-${String(hoy.getMonth() + 1).padStart(2, "0")}-01`;
   const desde = mesActual;
   const hasta = new Date(hoy.getFullYear(), hoy.getMonth() + 1, 0).toISOString().slice(0, 10);
+  // Ventana de 3 meses completos ANTES del mes actual, para calcular la
+  // tasa de conversión histórica de cada vendedor (pipeline -> venta) que
+  // alimenta la proyección del mes. Separada del mes en curso a propósito:
+  // mezclar datos todavía "en progreso" del mes actual con el promedio
+  // histórico infla la tasa con oportunidades que ni siquiera tuvieron
+  // tiempo de convertir.
+  const desde3m = `${new Date(hoy.getFullYear(), hoy.getMonth() - 3, 1).getFullYear()}-${String(new Date(hoy.getFullYear(), hoy.getMonth() - 3, 1).getMonth() + 1).padStart(2, "0")}-01`;
+  const hasta3m = new Date(hoy.getFullYear(), hoy.getMonth(), 0).toISOString().slice(0, 10);
 
   const { data: miPerfil } = await supabase.from("perfiles").select("id, nombre, roles, ganancias_ocultas").eq("id", user.id).single();
   const puedeVerFinanzas = (miPerfil?.roles?.includes("admin") || miPerfil?.roles?.includes("finanzas")) ?? false;
@@ -46,6 +54,13 @@ export default async function ReportesPage() {
     { data: consultasVsVentas },
     { data: composicionVentas },
     { data: ventasPorOrigenRaw },
+    { data: senasActivas },
+    { data: senasHist },
+    { data: presupuestosMes },
+    { data: presupuestosHist },
+    { data: visitasMes },
+    { data: visitasHist },
+    { data: rankingHist },
   ] = await Promise.all([
     supabase.rpc("ranking_ventas", { p_desde: desde, p_hasta: hasta }),
     supabase.from("premios_consignaciones").select("*").order("orden"),
@@ -77,6 +92,16 @@ export default async function ReportesPage() {
     supabase.from("v_reportes_consultas_vs_ventas").select("*").limit(20),
     supabase.from("v_reportes_composicion_ventas").select("*").single(),
     supabase.from("ventas").select("vehiculo_id, vehiculos(origen, marca)").eq("estado", "cerrada").gte("fecha_cierre", desde).lte("fecha_cierre", hasta),
+    // Pipeline abierto del mes en curso, por vendedor (para "Proyección del
+    // mes" en ReportesClient) -- ver comentario arriba sobre por qué el
+    // histórico usa una ventana separada de 3 meses.
+    supabase.from("senas").select("vendedor_id").eq("estado", "Activa"),
+    supabase.from("senas").select("vendedor_id").gte("created_at", desde3m).lte("created_at", hasta3m),
+    supabase.from("presupuestos").select("vendedor_id").eq("precio_confirmado", true).gte("fecha", desde).lte("fecha", hasta),
+    supabase.from("presupuestos").select("vendedor_id").eq("precio_confirmado", true).gte("fecha", desde3m).lte("fecha", hasta3m),
+    supabase.from("visitas").select("vendedor_id").in("estado", ["Pendiente", "Confirmada"]).gte("fecha_visita", desde).lte("fecha_visita", hasta),
+    supabase.from("visitas").select("vendedor_id").gte("fecha_visita", desde3m).lte("fecha_visita", hasta3m),
+    supabase.rpc("ranking_ventas", { p_desde: desde3m, p_hasta: hasta3m }),
   ]);
 
   // Ventas por origen y por marca salen de la misma consulta (una sola
@@ -101,6 +126,44 @@ export default async function ReportesPage() {
       return acc;
     }, {})
   ).map(([marca, ventas_ponderadas]) => ({ marca, ventas_ponderadas }));
+
+  // Proyección del mes por vendedor: ventas ya cerradas + (pipeline abierto
+  // actual × tasa de conversión histórica de ESE vendedor en los últimos 3
+  // meses). No es un modelo de IA ni una predicción "inteligente" -- es una
+  // cuenta simple y auditable a propósito, para que un vendedor pueda
+  // entender de dónde sale el número en vez de confiar a ciegas.
+  const contarPorVendedor = (filas: { vendedor_id: string | null }[]) =>
+    (filas || []).reduce((acc: Record<string, number>, f) => {
+      if (f.vendedor_id) acc[f.vendedor_id] = (acc[f.vendedor_id] || 0) + 1;
+      return acc;
+    }, {});
+
+  const senasActivasPorVendedor = contarPorVendedor(senasActivas || []);
+  const senasHistPorVendedor = contarPorVendedor(senasHist || []);
+  const presupuestosMesPorVendedor = contarPorVendedor(presupuestosMes || []);
+  const presupuestosHistPorVendedor = contarPorVendedor(presupuestosHist || []);
+  const visitasMesPorVendedor = contarPorVendedor(visitasMes || []);
+  const visitasHistPorVendedor = contarPorVendedor(visitasHist || []);
+  const ventasHistPorVendedor = (rankingHist || []).reduce((acc: Record<string, number>, r: any) => {
+    acc[r.vendedor_id] = Number(r.ventas_equivalentes) || 0;
+    return acc;
+  }, {} as Record<string, number>);
+
+  const proyeccionVentas = (ranking || []).map((r: any) => {
+    const pipelineActual = (senasActivasPorVendedor[r.vendedor_id] || 0) + (presupuestosMesPorVendedor[r.vendedor_id] || 0) + (visitasMesPorVendedor[r.vendedor_id] || 0);
+    const oportunidadesHist = (senasHistPorVendedor[r.vendedor_id] || 0) + (presupuestosHistPorVendedor[r.vendedor_id] || 0) + (visitasHistPorVendedor[r.vendedor_id] || 0);
+    const ventasHist = ventasHistPorVendedor[r.vendedor_id] || 0;
+    const tasaConversion = oportunidadesHist > 0 ? ventasHist / oportunidadesHist : 0;
+    const ventasCerradasMes = Number(r.ventas_equivalentes) || 0;
+    return {
+      vendedor_id: r.vendedor_id,
+      nombre: r.nombre,
+      ventas_cerradas_mes: ventasCerradasMes,
+      pipeline_actual: pipelineActual,
+      tasa_conversion_pct: Math.round(tasaConversion * 1000) / 10,
+      proyeccion: Math.round((ventasCerradasMes + pipelineActual * tasaConversion) * 10) / 10,
+    };
+  });
 
   return (
     <ReportesClient
@@ -135,6 +198,7 @@ export default async function ReportesPage() {
       consultasVsVentas={consultasVsVentas || []}
       composicionVentas={composicionVentas || { total_cerradas: 0, con_financiacion: 0, pct_financiadas: 0, con_seguro: 0, pct_seguro: 0, con_permuta: 0, pct_permuta: 0 }}
       ventasPorOrigenInicial={ventasPorOrigen}
+      proyeccionVentasInicial={proyeccionVentas}
     />
   );
 }
