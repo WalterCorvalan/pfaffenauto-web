@@ -16,6 +16,15 @@ interface GaleriaProps {
 
 export default function GaleriaVehiculo({ imagenes, altText }: GaleriaProps) {
   const [currentIndex, setCurrentIndex] = useState(0);
+  // Alto reservado del contenedor mientras se cambia de foto -- sin esto,
+  // al cambiar el <img> (key={currentIndex} lo desmonta y monta de nuevo)
+  // el contenedor se derrumbaba a 0 hasta que la foto nueva terminaba de
+  // cargar, y todo lo de abajo (detalles del auto) saltaba para arriba un
+  // instante. Se guarda el aspect-ratio de la ÚLTIMA foto cargada y se lo
+  // aplica al contenedor -- mientras la nueva carga, el contenedor mantiene
+  // el tamaño de la anterior en vez de colapsar; cuando termina de cargar,
+  // se actualiza al aspect-ratio real de esa foto.
+  const [aspecto, setAspecto] = useState<number | null>(null);
   const touchStartX = useRef<number | null>(null);
 
   // Si no hay imágenes, mostramos un placeholder elegante sin bordes
@@ -61,6 +70,7 @@ export default function GaleriaVehiculo({ imagenes, altText }: GaleriaProps) {
           fija, la imagen fluye con su alto natural (ver comentario arriba). */}
       <div
         className="relative w-full bg-slate-950 overflow-hidden group touch-pan-y flex items-center justify-center max-h-[70vh]"
+        style={aspecto ? { aspectRatio: aspecto } : undefined}
         onTouchStart={onTouchStart}
         onTouchEnd={onTouchEnd}
       >
@@ -74,6 +84,7 @@ export default function GaleriaVehiculo({ imagenes, altText }: GaleriaProps) {
             transition={{ duration: 0.25 }}
             src={imagenes[currentIndex]}
             alt={`${altText} - Foto ${currentIndex + 1}`}
+            onLoad={(e) => setAspecto(e.currentTarget.naturalWidth / e.currentTarget.naturalHeight)}
             className="w-full h-auto max-h-[70vh] object-contain"
           />
         </AnimatePresence>
