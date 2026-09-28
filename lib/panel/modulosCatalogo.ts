@@ -66,5 +66,5 @@ export const MODULOS_CATALOGO: { modulo: string; label: string }[] = [
 // hoy (ver ROLES en app/panel/configuracion/UsuariosClient.tsx),
 // mapeados 1 a 1 vía ROL_A_SECTOR en permisosModulos.ts. Admin no entra
 // porque nunca se filtra.
-export const SECTORES = ["ventas", "encargado", "finanzas", "gestoria"] as const;
-export const SECTOR_LABEL: Record<string, string> = { ventas: "Ventas", encargado: "Encargado", finanzas: "Finanzas", gestoria: "Gestoría" };
+export const SECTORES = ["ventas", "encargado", "finanzas", "gestoria", "taller"] as const;
+export const SECTOR_LABEL: Record<string, string> = { ventas: "Ventas", encargado: "Encargado", finanzas: "Finanzas", gestoria: "Gestoría", taller: "Taller" };

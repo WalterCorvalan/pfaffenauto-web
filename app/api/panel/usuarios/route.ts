@@ -4,7 +4,7 @@ import { createClient } from "@/lib/supabase/server";
 import { createClient as createAdminClient } from "@supabase/supabase-js";
 import { rateLimit, ipDesdeRequest } from "@/lib/rateLimit";
 
-const ROLES = ["admin", "encargado", "ventas", "finanzas", "gestoria"] as const;
+const ROLES = ["admin", "encargado", "ventas", "finanzas", "gestoria", "taller"] as const;
 
 async function verificarAdmin() {
   const supabase = await createClient();
