@@ -1,5 +1,5 @@
 import { createClient } from "@/lib/supabase/server";
-import NpsClient from "./NpsClient";
+import NpsClient from "./NpsClientLazy";
 
 export const metadata = { title: "NPS y Satisfacción | Pfaffen Cars" };
 
@@ -9,7 +9,7 @@ export default async function NpsPage() {
   if (!user) return null;
 
   // Traer el perfil actual para saber si es admin
-  const { data: miPerfil } = await supabase.from("perfiles").select("roles").eq("id", user.id).single();
+  const { data: miPerfil } = await supabase.from("perfiles").select("roles").eq("id", user.id).maybeSingle();
   const esAdminORecepcion = miPerfil?.roles?.includes("admin") || false;
 
   // Datos iniciales
@@ -19,7 +19,7 @@ export default async function NpsPage() {
     { data: vendedoresActivos },
     { data: clientes }
   ] = await Promise.all([
-    supabase.from("configuracion_empresa").select("*").single(),
+    supabase.from("configuracion_empresa").select("*").maybeSingle(),
     supabase.from("nps_respuestas").select("*, clientes(nombre), perfiles!nps_respuestas_vendedor_id_fkey(nombre)").order("created_at", { ascending: false }),
     supabase.from("perfiles").select("id, nombre, roles").eq("activo", true),
     esAdminORecepcion ? supabase.from("clientes").select("id, nombre, telefono, vendedor_id").order("nombre") : Promise.resolve({ data: [] })

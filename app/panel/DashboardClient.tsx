@@ -2,9 +2,16 @@
 
 import { useState } from "react";
 import { Target, LayoutDashboard, EyeOff, Eye, FileText, Receipt, Calculator } from "lucide-react";
-import CockpitCeoTab from "./CockpitCeoTab";
-import DashboardGeneralTab from "./DashboardGeneralTab";
+import dynamic from "next/dynamic";
 import Link from "next/link";
+import { PanelSkeletonDashboard } from "@/components/panel/PanelSkeleton";
+
+// Dynamic import (sin SSR) -- CockpitCeoTab y DashboardGeneralTab usan
+// recharts (pesado) y nunca se muestran los dos a la vez (son un tab), así
+// que cargar los dos de una en el bundle inicial del Dashboard (la página
+// más visitada del panel) era peso muerto para la mitad de los usuarios.
+const CockpitCeoTab = dynamic(() => import("./CockpitCeoTab"), { ssr: false, loading: () => <PanelSkeletonDashboard /> });
+const DashboardGeneralTab = dynamic(() => import("./DashboardGeneralTab"), { ssr: false, loading: () => <PanelSkeletonDashboard /> });
 
 interface Props {
   miNombre: string; esAdmin: boolean; puedeVerFinanzas: boolean; gananciasOcultas: boolean;

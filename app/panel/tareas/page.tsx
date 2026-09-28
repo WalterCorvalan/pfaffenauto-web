@@ -1,5 +1,5 @@
 import { createClient } from "@/lib/supabase/server";
-import TareasLeadBoard from "./TareasLeadBoard";
+import TareasLeadBoard from "./TareasLeadBoardLazy";
 
 export const metadata = { title: "Tareas de Leads | Pfaffen Cars" };
 

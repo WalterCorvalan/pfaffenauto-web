@@ -2,7 +2,7 @@ import { createClient } from "@/lib/supabase/server";
 import Link from "next/link";
 import { AtSign, ArrowDownToLine, ArrowUpFromLine, Users, PhoneCall, Flame, AlertTriangle } from "lucide-react";
 import TarjetaCostoIA from "@/components/panel/TarjetaCostoIA";
-import InstagramMetricsClient from "./InstagramMetricsClient";
+import InstagramMetricsClient from "./InstagramMetricsClientLazy";
 import { decrypt } from "@/lib/crypto";
 import {
   getInstagramAccountSummary,
@@ -24,7 +24,7 @@ import {
 // en este deploy, este código siempre devolvía el error de "faltan").
 async function cargarMetricasCuenta() {
   const supabase = await createClient();
-  const { data: config } = await supabase.from("instagram_configuracion").select("ig_user_id, token_cifrado, token_iv, token_tag, listo").eq("id", true).single();
+  const { data: config } = await supabase.from("instagram_configuracion").select("ig_user_id, token_cifrado, token_iv, token_tag, listo").eq("id", true).maybeSingle();
   if (!config?.listo || !config.ig_user_id || !config.token_cifrado || !config.token_iv || !config.token_tag) {
     return { ok: false as const, motivo: "Instagram no está conectado todavía -- conectalo en Configuración > Instagram." };
   }

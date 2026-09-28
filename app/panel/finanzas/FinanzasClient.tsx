@@ -2,36 +2,46 @@
 
 import { useState, useMemo, useEffect } from "react";
 import Link from "next/link";
+import dynamic from "next/dynamic";
 import { supabase2 } from "@/lib/supabase/client";
 import { hoyLocalISO } from "@/lib/panel/fechas";
+import { PanelSkeletonDashboard } from "@/components/panel/PanelSkeleton";
 import {
   BarChart3, FileText, Receipt, Wallet, Coins, CreditCard, Landmark,
   TrendingDown, TrendingUp, ExternalLink, HandCoins, ScrollText, Handshake,
   ClipboardList, Repeat, SearchCheck, PackageCheck, CheckSquare, Landmark as Afip, BookOpen,
 } from "lucide-react";
-import MovimientosTab from "./tabs/MovimientosTab";
-import CuentasTab from "./tabs/CuentasTab";
-import CuotasTab from "./tabs/CuotasTab";
-import DevolRegistroTab from "./tabs/DevolRegistroTab";
-import PagosDispTab from "./tabs/PagosDispTab";
-import TarjetaTab from "./tabs/TarjetaTab";
-import RetirosTab from "./tabs/RetirosTab";
-import RentabilidadTab from "./tabs/RentabilidadTab";
-import RentabilidadVehiculoTab from "./tabs/RentabilidadVehiculoTab";
-import ChequesTab from "./tabs/ChequesTab";
-import PrestamosTab from "./tabs/PrestamosTab";
-import PresupuestoTab from "./tabs/PresupuestoTab";
-import RecurrenciasTab from "./tabs/RecurrenciasTab";
-import ArqueosTab from "./tabs/ArqueosTab";
-import CierreCajaTab from "./tabs/CierreCajaTab";
-import ConciliacionTab from "./tabs/ConciliacionTab";
-import AfipIvaTab from "./tabs/AfipIvaTab";
-import LibrosContablesTab from "./tabs/LibrosContablesTab";
-import SenasTab from "./tabs/SenasTab";
-import ResumenTab from "./tabs/ResumenTab";
-import EgresosCategoriaTab from "./tabs/EgresosCategoriaTab";
-import CajaGrandeChicaTab from "./tabs/CajaGrandeChicaTab";
+import { PanelSkeletonTabla } from "@/components/panel/PanelSkeleton";
 import { fmt, CATEGORIAS_GASTO_FIJO, CATEGORIAS_GASTO_VARIABLE } from "./tabs/shared";
+
+// Dynamic (sin SSR) -- Finanzas tiene ~20 tabs y antes se importaban todos
+// estático de una en el bundle inicial, aunque solo se ve uno a la vez. Cada
+// uno ahora se descarga recién al abrir ese tab puntual. Cero cambio de
+// comportamiento/cálculo -- mismos componentes, misma lógica, solo cambia
+// CUÁNDO se pide el JS.
+const carga = () => <PanelSkeletonTabla />;
+const MovimientosTab = dynamic(() => import("./tabs/MovimientosTab"), { ssr: false, loading: carga });
+const CuentasTab = dynamic(() => import("./tabs/CuentasTab"), { ssr: false, loading: carga });
+const CuotasTab = dynamic(() => import("./tabs/CuotasTab"), { ssr: false, loading: carga });
+const DevolRegistroTab = dynamic(() => import("./tabs/DevolRegistroTab"), { ssr: false, loading: carga });
+const PagosDispTab = dynamic(() => import("./tabs/PagosDispTab"), { ssr: false, loading: carga });
+const TarjetaTab = dynamic(() => import("./tabs/TarjetaTab"), { ssr: false, loading: carga });
+const RetirosTab = dynamic(() => import("./tabs/RetirosTab"), { ssr: false, loading: carga });
+const RentabilidadTab = dynamic(() => import("./tabs/RentabilidadTab"), { ssr: false, loading: carga });
+const RentabilidadVehiculoTab = dynamic(() => import("./tabs/RentabilidadVehiculoTab"), { ssr: false, loading: carga });
+const ChequesTab = dynamic(() => import("./tabs/ChequesTab"), { ssr: false, loading: carga });
+const PrestamosTab = dynamic(() => import("./tabs/PrestamosTab"), { ssr: false, loading: carga });
+const PresupuestoTab = dynamic(() => import("./tabs/PresupuestoTab"), { ssr: false, loading: carga });
+const RecurrenciasTab = dynamic(() => import("./tabs/RecurrenciasTab"), { ssr: false, loading: carga });
+const ArqueosTab = dynamic(() => import("./tabs/ArqueosTab"), { ssr: false, loading: carga });
+const CierreCajaTab = dynamic(() => import("./tabs/CierreCajaTab"), { ssr: false, loading: carga });
+const ConciliacionTab = dynamic(() => import("./tabs/ConciliacionTab"), { ssr: false, loading: carga });
+const AfipIvaTab = dynamic(() => import("./tabs/AfipIvaTab"), { ssr: false, loading: carga });
+const LibrosContablesTab = dynamic(() => import("./tabs/LibrosContablesTab"), { ssr: false, loading: carga });
+const SenasTab = dynamic(() => import("./tabs/SenasTab"), { ssr: false, loading: carga });
+const ResumenTab = dynamic(() => import("./tabs/ResumenTab"), { ssr: false, loading: () => <PanelSkeletonDashboard /> });
+const EgresosCategoriaTab = dynamic(() => import("./tabs/EgresosCategoriaTab"), { ssr: false, loading: carga });
+const CajaGrandeChicaTab = dynamic(() => import("./tabs/CajaGrandeChicaTab"), { ssr: false, loading: carga });
 
 type TabDef = { value: string; label: string; icon: any; disabled?: boolean; externo?: string };
 type GrupoDef = { value: string; label: string; tabs: TabDef[] };
