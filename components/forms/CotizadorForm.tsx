@@ -566,6 +566,9 @@ export default function CotizadorForm({ vehiculoObjetivo }: { vehiculoObjetivo?:
                         <span className="text-xs font-bold text-slate-500 dark:text-slate-400">{subiendoArchivo ? "Subiendo..." : "Tocá para subir fotos o videos"}</span>
                       </label>
                       <p className={`text-xs font-bold ${archivosSubidos.length >= MIN_FOTOS_SIN_VISITA ? "text-emerald-600 dark:text-emerald-400" : "text-slate-400"}`}>{archivosSubidos.length} / {MIN_FOTOS_SIN_VISITA} fotos mínimas</p>
+                      {archivosSubidos.length > 0 && archivosSubidos.length < MIN_FOTOS_SIN_VISITA && (
+                        <p className="text-xs text-rose-600 dark:text-rose-400 font-medium">Te faltan {MIN_FOTOS_SIN_VISITA - archivosSubidos.length} foto{MIN_FOTOS_SIN_VISITA - archivosSubidos.length === 1 ? "" : "s"} más para poder continuar.</p>
+                      )}
                       {errorArchivo && <p className="text-xs text-rose-600 dark:text-rose-400 font-medium">{errorArchivo}</p>}
                       {archivosSubidos.length > 0 && (
                         <div className="space-y-1.5">

@@ -45,9 +45,22 @@ interface Perfil { id: string; nombre: string; roles: string[] }
 interface Cliente { id: string; nombre: string; apellido: string | null; telefono: string | null; dni_cuit: string | null }
 interface Vehiculo { id: string; marca: string; modelo: string; anio: number; patente: string | null; precio_venta: number; moneda_venta: string; estado: string }
 // Fila cruda de leads_tasacion -- select("*") en page.tsx, se pasa tal cual
-// para que LeadWebDetalleModal pueda mostrar cualquier campo (fotos, gnc,
-// combustible, canal_origen, etc.) sin tener que repetir la lista acá.
-type LeadWeb = Record<string, any> & { id: string; nombre: string; telefono: string | null; marca: string; estado: string; created_at: string; tipo: string };
+// a LeadWebDetalleModal. Se listan los campos que ese modal y esta pantalla
+// realmente leen -- si el modal necesita uno nuevo, agregarlo acá también.
+type LeadWeb = {
+  id: string; nombre: string; telefono: string | null; email: string | null;
+  marca: string; modelo: string | null; anio: number | null; version: string | null;
+  kilometraje: number | null; combustible: string | null; gnc: string | null;
+  estado: string; tipo: string; vendedor_id: string | null; created_at: string;
+  precio_esperado_cliente: number | null; precio_mercado_estimado: number | null;
+  precio_mercado_medio_web: number | null; precio_mercado_descuento_pct: number | null;
+  precio_mercado_fuentes: string[] | null;
+  oferta_calculada: number | null; descuento_pct: number | null; acepta_oferta: boolean | null;
+  fotos_y_videos: string[] | null;
+  quiere_venir_sucursal: boolean | null; sucursal_preferida: string | null;
+  canal_origen: string | null; utm_source: string | null; utm_medium: string | null; utm_campaign: string | null;
+  vehiculo_objetivo_id: string | null;
+};
 
 type Tab = "pendiente" | "aprobada" | "rechazada";
 

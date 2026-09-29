@@ -122,7 +122,7 @@ export async function POST(req: Request) {
     // Combustible en un update aparte: si migraciones/sql_leads_tasacion_combustible.sql
     // todavía no corrió en la base, la solicitud se sigue guardando igual
     // (mismo patrón resiliente que los campos de financiación más abajo).
-    if (data.combustible) {
+    if (data.combustible !== undefined) {
       const { error: errCombustible } = await supabase.from("leads_tasacion").update({ combustible: data.combustible }).eq("id", lead.id);
       if (errCombustible) registrarError("api/panel/leads-tasacion:combustible", errCombustible, { leadId: lead.id });
     }

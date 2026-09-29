@@ -381,8 +381,10 @@ export default function ResumenTab({
           <p className="text-[11px] font-black uppercase tracking-widest text-slate-400 mb-3">📈 Evolución de ventas — últimos 6 meses</p>
           <div className={`grid grid-cols-1 ${Object.keys(evolucionPorMoneda).length > 1 ? "sm:grid-cols-2" : ""} gap-4`}>
             {Object.entries(evolucionPorMoneda).map(([m, serie]) => {
-              const totalMesActual = serie[serie.length - 1].Ventas + serie[serie.length - 1].Señas;
-              const totalMesAnterior = serie[serie.length - 2].Ventas + serie[serie.length - 2].Señas;
+              const ultimo = serie[serie.length - 1];
+              const penultimo = serie.length >= 2 ? serie[serie.length - 2] : null;
+              const totalMesActual = ultimo ? ultimo.Ventas + ultimo.Señas : 0;
+              const totalMesAnterior = penultimo ? penultimo.Ventas + penultimo.Señas : 0;
               const variacion = totalMesAnterior > 0 ? Math.round(((totalMesActual - totalMesAnterior) / totalMesAnterior) * 100) : totalMesActual > 0 ? 100 : 0;
               return (
                 <div key={m} className="h-[220px] flex flex-col">
