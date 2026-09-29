@@ -158,13 +158,19 @@ const GRUPOS: {
     ],
   },
   {
-    titulo: "Marketing",
+    titulo: "Marketing y Contenido",
     items: [
       {
         href: "/panel/marketing/generales",
         label: "Marketing",
         icon: "/icons/panel/marketing.png",
         modulo: "marketing",
+      },
+      {
+        href: "/panel/contenido-sitio/entregas",
+        label: "Contenido del Sitio",
+        icon: "/icons/panel/marketing.png",
+        modulo: "contenido_sitio",
       },
     ],
   },

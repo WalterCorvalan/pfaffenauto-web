@@ -4,17 +4,14 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 
 const TABS: { label: string; href?: string }[] = [
-  { label: "Métricas Generales", href: "/panel/marketing/generales" },
-  { label: "Embudo", href: "/panel/marketing/embudo" },
-  { label: "Pautas", href: "/panel/marketing/pautas" },
-  { label: "Autos Pautados", href: "/panel/marketing/pautados" },
-  { label: "Búsquedas", href: "/panel/marketing/busquedas" },
-  { label: "Asistente IA", href: "/panel/marketing/chatbot" },
-  { label: "Instagram", href: "/panel/marketing/instagram" },
-  { label: "WhatsApp", href: "/panel/marketing/whatsapp-metricas" },
+  { label: "Entregas", href: "/panel/contenido-sitio/entregas" },
+  { label: "Hero (portada)" },
+  { label: "Nuestra Historia" },
+  { label: "Footer y redes" },
+  { label: "Formulario RRHH" },
 ];
 
-export default function MarketingHeader() {
+export default function ContenidoSitioHeader() {
   const pathname = usePathname();
 
   return (
@@ -23,10 +20,10 @@ export default function MarketingHeader() {
         <img src="/icons/panel/marketing.png" alt="" className="w-6 h-6 object-contain shrink-0" />
         <div>
           <h1 className="text-xl font-black text-slate-900 dark:text-white leading-tight">
-            Marketing
+            Contenido del Sitio
           </h1>
           <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
-            Métricas, pautas publicitarias y rendimiento de canales.
+            Todo lo que hoy está fijo en el código de la web pública (imágenes, textos, redes, formularios) pasa a editarse desde acá.
           </p>
         </div>
       </div>

@@ -12,6 +12,7 @@ export const MODULOS_CATALOGO: { modulo: string; label: string }[] = [
   { modulo: "alertas", label: "Alertas" },
   { modulo: "reportes", label: "Reportes" },
   { modulo: "marketing", label: "Marketing" },
+  { modulo: "contenido_sitio", label: "Contenido del Sitio" },
   { modulo: "mi_espacio", label: "Mi Espacio" },
   { modulo: "stock", label: "Stock" },
   { modulo: "visitas", label: "Visitas" },
