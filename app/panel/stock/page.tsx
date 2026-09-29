@@ -63,6 +63,7 @@ export default async function StockPage() {
       cuentas={cuentas || []}
       soyAdmin={soyAdmin}
       puedeVerValorStock={puedeVerValorStock}
+      misRoles={miPerfil?.roles || []}
     />
   );
 }

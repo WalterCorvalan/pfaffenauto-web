@@ -70,6 +70,7 @@ interface Props {
   puedeEditarCompleto: boolean;
   puedeEliminar: boolean;
   soyAdmin?: boolean;
+  misRoles?: string[];
   onClose: () => void;
   onActualizado: (id: string, cambios: Partial<Vehiculo>) => void;
   onCreado: (v: Vehiculo) => void;
@@ -86,10 +87,21 @@ const TABS: { id: TabFicha; label: string; icon: typeof Car }[] = [
   { id: "portal", label: "Portal del propietario", icon: ExternalLink },
 ];
 
-export default function FichaVehiculoModal({ vehiculo, miId, perfiles, clientes, sucursales, puedeEditarCompleto, puedeEliminar, soyAdmin = false, onClose, onActualizado, onCreado, onEliminar }: Props) {
+export default function FichaVehiculoModal({ vehiculo, miId, perfiles, clientes, sucursales, puedeEditarCompleto, puedeEliminar, soyAdmin = false, misRoles = [], onClose, onActualizado, onCreado, onEliminar }: Props) {
   // "Gastos y margen" muestra el precio de compra (costo interno) -- solo
   // admin la ve, mismo criterio que los campos de compra en NuevoVehiculoModal.
-  const tabsVisibles = soyAdmin ? TABS : TABS.filter((t) => t.id !== "gastos");
+  // Pedido del 29/9: "Precios e historial" tampoco es para vendedor NI
+  // encargado (precio de lista, historial de cambios de precio -- info
+  // comercial sensible). "Plan de trabajo" solo se le saca a vendedor --
+  // encargado sí necesita coordinar seguimiento de unidades.
+  const esVentas = misRoles.includes("ventas");
+  const esEncargado = misRoles.includes("encargado");
+  const tabsVisibles = TABS.filter((t) => {
+    if (t.id === "gastos" && !soyAdmin) return false;
+    if (t.id === "plan" && esVentas && !soyAdmin) return false;
+    if (t.id === "precios" && (esVentas || esEncargado) && !soyAdmin) return false;
+    return true;
+  });
   const [tab, setTab] = useState<TabFicha>("resumen");
   const [editando, setEditando] = useState<"completo" | "fotos" | null>(null);
   const [peritajeAbierto, setPeritajeAbierto] = useState(false);

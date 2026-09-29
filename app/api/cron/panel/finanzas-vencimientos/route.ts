@@ -32,7 +32,7 @@ export async function GET(req: Request) {
 
   const [{ data: cuotasCobrar, error: e1 }, { data: cuotasPagar, error: e2 }, { data: pagos, error: e3 }, { data: prestamos, error: e4 }] = await Promise.all([
     supabase.from("cuotas_cobrar_clientes").select("id, cliente:clientes(nombre), monto, monto_cobrado, moneda, vencimiento").eq("cobrada", false).lt("vencimiento", hoy),
-    supabase.from("cuotas_pagar_agencia").select("id, proveedor, monto, monto_pagado, moneda, vencimiento").eq("pagada", false).lt("vencimiento", hoy),
+    supabase.from("cuotas_pagar_agencia").select("id, acreedor, monto, monto_pagado, moneda, vencimiento").eq("pagada", false).lt("vencimiento", hoy),
     supabase.from("pagos_disponibles").select("id, descripcion, monto, monto_cobrado, moneda, fecha").eq("cobrado", false).lt("fecha", hoy),
     supabase.from("prestamos_otorgados").select("id, persona, monto, moneda, devolucion_esperada").eq("estado", "pendiente").not("devolucion_esperada", "is", null).lt("devolucion_esperada", hoy),
   ]);
@@ -45,7 +45,13 @@ export async function GET(req: Request) {
 
   const items = [
     ...(cuotasCobrar || []).map((c) => `Cuota a cobrar de ${(c.cliente as { nombre?: string } | null)?.nombre || "cliente"} — ${fmt(Number(c.monto) - Number(c.monto_cobrado), c.moneda)} (venció ${c.vencimiento})`),
-    ...(cuotasPagar || []).map((c) => `Cuota a pagar a ${c.proveedor || "proveedor"} — ${fmt(Number(c.monto) - Number(c.monto_pagado), c.moneda)} (venció ${c.vencimiento})`),
+    // Bug corregido (29/9): el select pedía la columna "proveedor", que no
+    // existe en cuotas_pagar_agencia (el nombre real es "acreedor") -- el
+    // error de Postgres tiraba abajo el Promise.all ENTERO (misma variable
+    // `error` para las 4 queries), así que el cron de vencimientos venía
+    // fallando en silencio TODOS los días, sin mandar ninguna alerta (ni
+    // siquiera las de cuotas a cobrar/pagos/préstamos, que sí funcionaban).
+    ...(cuotasPagar || []).map((c) => `Cuota a pagar a ${c.acreedor || "acreedor"} — ${fmt(Number(c.monto) - Number(c.monto_pagado), c.moneda)} (venció ${c.vencimiento})`),
     ...(pagos || []).map((p) => `Pago disponible sin cobrar: ${p.descripcion} — ${fmt(Number(p.monto) - Number(p.monto_cobrado), p.moneda)} (venció ${p.fecha})`),
     ...(prestamos || []).map((p) => `Préstamo a ${p.persona} sin devolver — ${fmt(p.monto, p.moneda)} (esperado ${p.devolucion_esperada})`),
   ];

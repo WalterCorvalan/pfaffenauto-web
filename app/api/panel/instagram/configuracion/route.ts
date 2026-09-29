@@ -27,7 +27,7 @@ export async function GET() {
   if (data && !data.webhook_verify_token) {
     const verifyToken = randomBytes(24).toString("hex");
     const { data: actualizado } = await supabase.from("instagram_configuracion").update({ webhook_verify_token: verifyToken }).eq("id", true)
-      .select("ig_user_id, listo, webhook_verify_token, tono, updated_at").single();
+      .select("ig_user_id, listo, webhook_verify_token, tono, updated_at").maybeSingle();
     data = actualizado;
   }
 
@@ -63,7 +63,10 @@ export async function POST(request: Request) {
     const { data: actual } = await supabase.from("instagram_configuracion").select("token_cifrado").eq("id", true).maybeSingle();
     patch.listo = !!(igUserId && (accessToken || actual?.token_cifrado));
 
-    const { data, error } = await supabase.from("instagram_configuracion").update(patch).eq("id", true).select("ig_user_id, listo, webhook_verify_token, tono, updated_at").single();
+    // .maybeSingle() -- .single() tira 500 ("Cannot coerce the result to a
+    // single JSON object") si el update no devuelve fila, mismo fix que
+    // messenger/configuracion y configs/vistas/perfiles (commit b0cd241).
+    const { data, error } = await supabase.from("instagram_configuracion").update(patch).eq("id", true).select("ig_user_id, listo, webhook_verify_token, tono, updated_at").maybeSingle();
     if (error) throw error;
 
     return NextResponse.json({ config: data });

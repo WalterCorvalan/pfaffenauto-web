@@ -2,22 +2,11 @@
 
 import { useState, useEffect } from "react";
 import { supabase2 } from "@/lib/supabase/client";
+import { esDomingo, franjasParaFecha } from "@/lib/horarioAtencion";
 import {
   CalendarCheck, Clock, MapPin, User, Phone, CheckCircle2,
   ChevronDown, Car, Coffee, ShieldCheck
 } from "lucide-react";
-
-const HORA_INICIO = 9;
-const HORA_FIN = 18;
-
-function generarFranjas() {
-  const franjas: string[] = [];
-  for (let h = HORA_INICIO; h < HORA_FIN; h++) {
-    franjas.push(`${String(h).padStart(2, "0")}:00`);
-    franjas.push(`${String(h).padStart(2, "0")}:30`);
-  }
-  return franjas;
-}
 
 export default function AgendarCitaForm() {
   const [sucursales, setSucursales] = useState<{ id: string; nombre: string }[]>([]);
@@ -63,7 +52,9 @@ export default function AgendarCitaForm() {
       });
   }, [sucursal, fecha]);
 
-  const franjas = generarFranjas();
+  // Sábado corta a las 13 (9 a 13), domingo no tiene franjas (cerrado),
+  // resto de la semana 9 a 18 -- ver lib/horarioAtencion.ts.
+  const franjas = franjasParaFecha(fecha);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -246,7 +237,10 @@ export default function AgendarCitaForm() {
                       min={hoy}
                       value={fecha}
                       onChange={(e) => {
-                        setFecha(e.target.value);
+                        const valor = e.target.value;
+                        if (esDomingo(valor)) { setError("No atendemos los domingos -- elegí otro día."); return; }
+                        setError("");
+                        setFecha(valor);
                         setHorario("");
                       }}
                       required

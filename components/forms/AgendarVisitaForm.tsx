@@ -3,6 +3,7 @@
 import React, { useState, useEffect } from "react";
 import { createPortal } from "react-dom";
 import { supabase2 } from "@/lib/supabase/client";
+import { esDomingo, franjasParaFechaConAlmuerzo } from "@/lib/horarioAtencion";
 import { CalendarDays, X, CheckCircle2, Loader2, MapPin, Clock, CarFront, User, Phone } from "lucide-react";
 
 interface AgendarVisitaFormProps {
@@ -180,26 +181,29 @@ export default function AgendarVisitaForm({ auto, isMobile = false }: AgendarVis
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div>
                   <label className="text-[10px] font-black text-slate-500 dark:text-slate-400 uppercase tracking-widest mb-1.5 flex items-center gap-1.5"><CalendarDays className="w-3.5 h-3.5"/> Día</label>
-                  <input 
-                    type="date" required min={minDate} value={fecha} onChange={(e) => setFecha(e.target.value)}
+                  <input
+                    type="date" required min={minDate} value={fecha}
+                    onChange={(e) => {
+                      const valor = e.target.value;
+                      if (esDomingo(valor)) { setError("No atendemos los domingos -- elegí otro día."); return; }
+                      setError(""); setFecha(valor); setHorario("");
+                    }}
                     className="w-full bg-white dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-xl px-3 py-3 text-xs font-semibold text-navy dark:text-white outline-none focus:border-[#0145F2] dark:focus:border-sky-400 focus:ring-4 focus:ring-blue-500/10 dark:focus:ring-sky-400/10 transition-all shadow-sm dark:shadow-none cursor-pointer dark:[color-scheme:dark]"
                   />
                 </div>
                 <div>
                   <label className="text-[10px] font-black text-slate-500 dark:text-slate-400 uppercase tracking-widest mb-1.5 flex items-center gap-1.5"><Clock className="w-3.5 h-3.5"/> Hora aprox.</label>
-                  <select 
-                    required value={horario} onChange={(e) => setHorario(e.target.value)}
-                    className="w-full bg-white dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-xl px-3 py-3 text-xs font-semibold text-navy dark:text-white outline-none focus:border-[#0145F2] dark:focus:border-sky-400 focus:ring-4 focus:ring-blue-500/10 dark:focus:ring-sky-400/10 transition-all shadow-sm dark:shadow-none cursor-pointer dark:[color-scheme:dark]"
+                  <select
+                    required value={horario} onChange={(e) => setHorario(e.target.value)} disabled={!fecha}
+                    className="w-full bg-white dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-xl px-3 py-3 text-xs font-semibold text-navy dark:text-white outline-none focus:border-[#0145F2] dark:focus:border-sky-400 focus:ring-4 focus:ring-blue-500/10 dark:focus:ring-sky-400/10 transition-all shadow-sm dark:shadow-none cursor-pointer dark:[color-scheme:dark] disabled:opacity-50"
                   >
-                    <option value="09:00" disabled={ocupadas.includes("09:00")}>09:00 hs (Mañana){ocupadas.includes("09:00") ? " (Ocupado)" : ""}</option>
-                    <option value="10:00" disabled={ocupadas.includes("10:00")}>10:00 hs{ocupadas.includes("10:00") ? " (Ocupado)" : ""}</option>
-                    <option value="11:00" disabled={ocupadas.includes("11:00")}>11:00 hs{ocupadas.includes("11:00") ? " (Ocupado)" : ""}</option>
-                    <option value="12:00" disabled={ocupadas.includes("12:00")}>12:00 hs{ocupadas.includes("12:00") ? " (Ocupado)" : ""}</option>
-                    <option value="14:00" disabled={ocupadas.includes("14:00")}>14:00 hs (Tarde){ocupadas.includes("14:00") ? " (Ocupado)" : ""}</option>
-                    <option value="15:00" disabled={ocupadas.includes("15:00")}>15:00 hs{ocupadas.includes("15:00") ? " (Ocupado)" : ""}</option>
-                    <option value="16:00" disabled={ocupadas.includes("16:00")}>16:00 hs{ocupadas.includes("16:00") ? " (Ocupado)" : ""}</option>
-                    <option value="17:00" disabled={ocupadas.includes("17:00")}>17:00 hs{ocupadas.includes("17:00") ? " (Ocupado)" : ""}</option>
-                    <option value="18:00" disabled={ocupadas.includes("18:00")}>18:00 hs{ocupadas.includes("18:00") ? " (Ocupado)" : ""}</option>
+                    <option value="">{fecha ? "Elegir..." : "Elegí un día primero"}</option>
+                    {/* Sábado corta a las 13 (9 a 13), resto de la semana 9 a 18 con
+                       almuerzo 12-14 -- ver lib/horarioAtencion.ts, misma regla que
+                       AgendarCitaForm.tsx y CotizadorForm.tsx. */}
+                    {franjasParaFechaConAlmuerzo(fecha).map((f) => (
+                      <option key={f} value={f} disabled={ocupadas.includes(f)}>{f} hs{ocupadas.includes(f) ? " (Ocupado)" : ""}</option>
+                    ))}
                   </select>
                 </div>
               </div>

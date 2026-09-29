@@ -88,8 +88,8 @@ function pendientesTexto(v: Vehiculo) {
 }
 
 export default function StockClient({
-  vehiculosIniciales, mandatosIniciales, perfiles, clientes, catalogoConfigInicial, sucursales, miId, diasEstancado = 90, chequesPendientes0km = [], cuentas = [], soyAdmin = false, puedeVerValorStock = false,
-}: { vehiculosIniciales: Vehiculo[]; mandatosIniciales: Mandato[]; perfiles: Perfil[]; clientes: Cliente[]; catalogoConfigInicial: CatalogoConfig | null; sucursales: { id: string; nombre: string }[]; miId: string; diasEstancado?: number; chequesPendientes0km?: { id: string; vehiculo_id: string; monto: number; moneda: string }[]; cuentas?: { id: string; nombre: string; moneda: string }[]; soyAdmin?: boolean; puedeVerValorStock?: boolean }) {
+  vehiculosIniciales, mandatosIniciales, perfiles, clientes, catalogoConfigInicial, sucursales, miId, diasEstancado = 90, chequesPendientes0km = [], cuentas = [], soyAdmin = false, puedeVerValorStock = false, misRoles = [],
+}: { vehiculosIniciales: Vehiculo[]; mandatosIniciales: Mandato[]; perfiles: Perfil[]; clientes: Cliente[]; catalogoConfigInicial: CatalogoConfig | null; sucursales: { id: string; nombre: string }[]; miId: string; diasEstancado?: number; chequesPendientes0km?: { id: string; vehiculo_id: string; monto: number; moneda: string }[]; cuentas?: { id: string; nombre: string; moneda: string }[]; soyAdmin?: boolean; puedeVerValorStock?: boolean; misRoles?: string[] }) {
   const router = useRouter();
   const searchParams = useSearchParams();
   const [vehiculos, setVehiculos] = useState(vehiculosIniciales);
@@ -484,25 +484,30 @@ export default function StockClient({
                         const pendientes = pendientesTexto(v);
                         return (
                           <div key={v.id} onClick={() => setFichaRapidaVehiculo(v)} className={`bg-white dark:bg-white/[0.02] border border-slate-200 dark:border-white/5 rounded-2xl overflow-hidden cursor-pointer hover:shadow-md transition-shadow border-l-4 ${bordeAntiguedad(dias, diasEstancado)}`}>
+                            {/* Mismo criterio que la tarjeta del catálogo público (components/Stock.tsx,
+                               variante "alt"): imagen más alta + detalle más compacto (menos padding,
+                               menos margen entre filas) para que la foto gane espacio sin agrandar la
+                               tarjeta entera -- antes la imagen quedaba chica (h-32) contra un detalle
+                               con demasiado aire (p-3.5 + mt-2/mt-1.5/mt-1 entre filas). */}
                             <div
                               onClick={(e) => { if (v.fotos?.length) { e.stopPropagation(); setGaleria({ fotos: v.fotos, index: 0 }); } }}
-                              className={`h-32 bg-slate-100 dark:bg-white/5 flex flex-col items-center justify-center gap-1 relative ${v.fotos?.length ? "cursor-zoom-in" : ""}`}
+                              className={`h-40 bg-slate-100 dark:bg-white/5 flex flex-col items-center justify-center gap-1 relative ${v.fotos?.length ? "cursor-zoom-in" : ""}`}
                             >
                               {v.fotos?.[0] ? <img src={v.fotos[0]} alt="" className="w-full h-full object-cover" /> : <><Car className="w-8 h-8 text-slate-300 dark:text-slate-600" /><span className="text-[11px] text-slate-400">Sin foto</span></>}
                               <span className="absolute bottom-1.5 left-1.5 bg-black/50 text-white text-[10px] font-bold px-1.5 py-0.5 rounded">{v.fotos.length} fotos</span>
                             </div>
-                            <div className="p-3.5">
+                            <div className="p-2.5">
                               <div className="flex items-start justify-between gap-2">
                                 <p className="text-sm font-bold text-slate-900 dark:text-white">{v.marca} {v.modelo}</p>
                                 <p className="text-sm font-bold text-slate-900 dark:text-white shrink-0">{fmtPrecio(v.precio_venta, v.moneda_venta)}</p>
                               </div>
                               <p className="text-[11px] text-slate-400 mt-0.5">{v.anio} · {v.km?.toLocaleString("es-AR") ?? "—"} km · {v.patente || "s/patente"}</p>
-                              <div className="flex items-center gap-1.5 flex-wrap mt-2">
+                              <div className="flex items-center gap-1.5 flex-wrap mt-1">
                                 <span className={`text-[10px] font-bold px-1.5 py-0.5 rounded-full border ${ESTADO_COLOR[v.estado]}`}>{ESTADO_LABEL[v.estado]}</span>
                                 <span className="text-[10px] text-slate-400">{v.origen || "Origen por definir"} · {dias}d en stock</span>
                               </div>
-                              <p className="text-[11px] text-slate-400 mt-1.5 flex items-center gap-1"><MapPin className="w-3 h-3" /> {v.sucursal?.nombre || "Sin sucursal"} · {v.vendedor_asignado_id ? perfilMap[v.vendedor_asignado_id] : "Sin responsable"}</p>
-                              {pendientes && <p className="text-[11px] text-amber-600 dark:text-amber-400 mt-1">{pendientes}</p>}
+                              <p className="text-[11px] text-slate-400 mt-1 flex items-center gap-1"><MapPin className="w-3 h-3" /> {v.sucursal?.nombre || "Sin sucursal"} · {v.vendedor_asignado_id ? perfilMap[v.vendedor_asignado_id] : "Sin responsable"}</p>
+                              {pendientes && <p className="text-[11px] text-amber-600 dark:text-amber-400 mt-0.5">{pendientes}</p>}
                             </div>
                           </div>
                         );
@@ -604,6 +609,7 @@ export default function StockClient({
           puedeEditarCompleto={puedeEditarCompleto}
           puedeEliminar={puedeEliminar}
           soyAdmin={soyAdmin}
+          misRoles={misRoles}
           onClose={() => setFichaVehiculo(null)}
           onActualizado={(id, cambios) => { actualizarVehiculo(id, cambios); setFichaVehiculo((f) => (f && f.id === id ? { ...f, ...cambios } : f)); }}
           onCreado={(v) => { onCreadoVehiculo(v); setFichaVehiculo(v); }}

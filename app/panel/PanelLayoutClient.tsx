@@ -690,9 +690,7 @@ export default function PanelLayoutClient({
             className={`h-[60px] flex items-center gap-2 border-b border-slate-200 dark:border-white/10 shrink-0 ${colapsado ? "md:px-2 px-4" : "px-4"}`}
           >
             <Link href="/" target="_blank" title="Ver la web pública" className="flex items-center gap-2 min-w-0">
-              <div className="w-8 h-8 rounded-lg bg-indigo-600 text-white flex items-center justify-center font-bold text-xs shrink-0">
-                P
-              </div>
+              <img src="/pfaffen-automotores-icono.webp" alt="Pfaffen Automotores" className="w-8 h-8 rounded-lg object-cover shrink-0" />
               <div className={colapsado ? "md:hidden" : ""}>
                 <p className="text-sm font-bold leading-none">Panel</p>
                 <p className="text-[10px] text-slate-400 leading-none mt-0.5">

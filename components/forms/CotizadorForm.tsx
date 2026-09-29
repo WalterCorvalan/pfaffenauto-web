@@ -13,13 +13,13 @@ import { supabase2 } from "@/lib/supabase/client";
 import { normalizarMarca } from "@/lib/vehiculos";
 import { MARCAS_ARGENTINA, MODELOS_POR_MARCA } from "@/lib/marcasModelos";
 import { LOGOS_MARCAS } from "@/lib/marcasLogos";
+import { esDomingo, franjasParaFechaConAlmuerzo } from "@/lib/horarioAtencion";
 
 const marcasDisponibles = MARCAS_ARGENTINA;
 const modelosPorMarca = MODELOS_POR_MARCA;
 const aniosDisponibles = Array.from({ length: 20 }, (_, i) => 2026 - i);
 const combustiblesDisponibles = ["Nafta", "Diésel", "GNC", "Híbrido", "Eléctrico"];
 const MIN_FOTOS_SIN_VISITA = 5;
-const franjasHorario = ["09:00", "09:30", "10:00", "10:30", "11:00", "11:30", "12:00", "14:00", "14:30", "15:00", "15:30", "16:00", "16:30", "17:00", "17:30"];
 
 interface VehiculoObjetivo { id: string; marca: string; modelo: string; precio: number; moneda: "ARS" | "USD" }
 
@@ -121,6 +121,7 @@ export default function CotizadorForm({ vehiculoObjetivo }: { vehiculoObjetivo?:
   const [fechaVisita, setFechaVisita] = useState("");
   const [horarioVisita, setHorarioVisita] = useState("");
   const [horariosOcupados, setHorariosOcupados] = useState<string[]>([]);
+  const [errorVisita, setErrorVisita] = useState("");
 
   useEffect(() => {
     supabase2.rpc("sucursales_publicas").then(({ data }) => { if (data) setSucursales(data); });
@@ -545,16 +546,27 @@ export default function CotizadorForm({ vehiculoObjetivo }: { vehiculoObjetivo?:
                       <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                         <div>
                           <label className="text-[10px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-widest block mb-2 flex items-center gap-1.5"><CalendarDays className="w-3.5 h-3.5" /> Día</label>
-                          <input type="date" min={new Date().toISOString().split("T")[0]} value={fechaVisita} onChange={(e) => { setFechaVisita(e.target.value); setHorarioVisita(""); }} className="w-full bg-slate-50 dark:bg-[#161e2c] border border-slate-200 dark:border-white/5 rounded-xl px-3 py-3 text-sm text-slate-900 dark:text-white outline-none focus:border-[#0145F2] dark:[color-scheme:dark]" />
+                          <input
+                            type="date" min={new Date().toISOString().split("T")[0]} value={fechaVisita}
+                            onChange={(e) => {
+                              const valor = e.target.value;
+                              if (esDomingo(valor)) { setErrorVisita("No atendemos los domingos -- elegí otro día."); return; }
+                              setErrorVisita(""); setFechaVisita(valor); setHorarioVisita("");
+                            }}
+                            className="w-full bg-slate-50 dark:bg-[#161e2c] border border-slate-200 dark:border-white/5 rounded-xl px-3 py-3 text-sm text-slate-900 dark:text-white outline-none focus:border-[#0145F2] dark:[color-scheme:dark]"
+                          />
                         </div>
                         <div>
                           <label className="text-[10px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-widest block mb-2 flex items-center gap-1.5"><Clock className="w-3.5 h-3.5" /> Horario</label>
+                          {/* Sábado corta a las 13, domingo no tiene franjas -- ver
+                             lib/horarioAtencion.ts. */}
                           <select value={horarioVisita} onChange={(e) => setHorarioVisita(e.target.value)} disabled={!sucursalVisita || !fechaVisita} className="w-full bg-slate-50 dark:bg-[#161e2c] border border-slate-200 dark:border-white/5 rounded-xl px-3 py-3 text-sm text-slate-900 dark:text-white outline-none focus:border-[#0145F2] disabled:opacity-50 cursor-pointer dark:[color-scheme:dark]">
                             <option value="">{!sucursalVisita || !fechaVisita ? "Elegí sucursal y día" : "Elegir..."}</option>
-                            {franjasHorario.map((f) => <option key={f} value={f} disabled={horariosOcupados.includes(f)}>{f} {horariosOcupados.includes(f) ? "(ocupado)" : ""}</option>)}
+                            {franjasParaFechaConAlmuerzo(fechaVisita).map((f) => <option key={f} value={f} disabled={horariosOcupados.includes(f)}>{f} {horariosOcupados.includes(f) ? "(ocupado)" : ""}</option>)}
                           </select>
                         </div>
                       </div>
+                      {errorVisita && <p className="text-xs font-semibold text-rose-500">{errorVisita}</p>}
                     </div>
                   )}
 

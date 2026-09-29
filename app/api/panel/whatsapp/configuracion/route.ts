@@ -46,7 +46,7 @@ export async function GET() {
   if (data && !data.webhook_verify_token) {
     const verifyToken = randomBytes(24).toString("hex");
     const { data: actualizado } = await supabase.from("whatsapp_configuracion").update({ webhook_verify_token: verifyToken }).eq("id", true)
-      .select("phone_number_id, waba_id, listo, bot_nombre, webhook_verify_token, updated_at, horario_inicio, horario_fin, tono, token_cifrado, token_iv, token_tag").single();
+      .select("phone_number_id, waba_id, listo, bot_nombre, webhook_verify_token, updated_at, horario_inicio, horario_fin, tono, token_cifrado, token_iv, token_tag").maybeSingle();
     data = actualizado;
   }
 
@@ -92,8 +92,15 @@ export async function POST(request: Request) {
     const { data: actual } = await supabase.from("whatsapp_configuracion").select("token_cifrado, token_iv, token_tag").eq("id", true).maybeSingle();
     patch.listo = !!(phoneNumberId && (accessToken || actual?.token_cifrado));
 
-    const { data, error } = await supabase.from("whatsapp_configuracion").update(patch).eq("id", true).select("phone_number_id, waba_id, listo, bot_nombre, webhook_verify_token, updated_at, horario_inicio, horario_fin, tono, token_cifrado, token_iv, token_tag").single();
+    // .maybeSingle() -- .single() tira 500 ("Cannot coerce the result to a
+    // single JSON object") si el update no devuelve fila, mismo fix que
+    // instagram/messenger/configuracion y configs/vistas/perfiles (commit
+    // b0cd241). A diferencia de esos, acá el resto de la función SÍ asume
+    // "data" no nulo (data.phone_number_id, etc.) -- se corta antes con un
+    // error explícito en vez de reventar con un null.
+    const { data, error } = await supabase.from("whatsapp_configuracion").update(patch).eq("id", true).select("phone_number_id, waba_id, listo, bot_nombre, webhook_verify_token, updated_at, horario_inicio, horario_fin, tono, token_cifrado, token_iv, token_tag").maybeSingle();
     if (error) throw error;
+    if (!data) return NextResponse.json({ error: "No se pudo guardar la configuración." }, { status: 500 });
 
     const numeroConfirmadoData = await numeroConfirmado(data.phone_number_id, data.token_cifrado, data.token_iv, data.token_tag);
     const { token_cifrado, token_iv, token_tag, ...config } = data;

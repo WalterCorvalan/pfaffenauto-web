@@ -46,14 +46,17 @@ export default function BotonPublicarTodo({
   }
   if (error) {
     return (
-      <button onClick={publicar} title={error} className="text-rose-500 hover:text-rose-600">
-        <AlertTriangle className="w-4 h-4" />
+      <button onClick={publicar} title={error} className="flex items-center gap-1 text-rose-500 hover:text-rose-600 text-[11px] font-bold">
+        <AlertTriangle className="w-4 h-4 shrink-0" /> Error al publicar
       </button>
     );
   }
+  // Antes era solo el ícono, sin texto -- el title (tooltip on-hover) no
+  // sirve para "entender de un vistazo qué es esto" la primera vez, hay que
+  // pasar el mouse para enterarse. Ahora dice qué hace directo.
   return (
-    <button onClick={publicar} title="Publicar en todos lados (MercadoLibre + Meta)" className="text-slate-300 dark:text-slate-600 hover:text-blue-600 dark:hover:text-blue-400">
-      <Upload className="w-4 h-4" />
+    <button onClick={publicar} title="Publicar en MercadoLibre y resincronizar Meta (Instagram/Facebook)" className="flex items-center gap-1 text-slate-400 dark:text-slate-500 hover:text-blue-600 dark:hover:text-blue-400 text-[11px] font-bold">
+      <Upload className="w-4 h-4 shrink-0" /> Publicar en ML
     </button>
   );
 }

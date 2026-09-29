@@ -29,7 +29,7 @@ export async function GET() {
   if (data && !data.verify_token) {
     const verifyToken = randomBytes(24).toString("hex");
     const { data: actualizado } = await supabase.from("messenger_configuracion").update({ verify_token: verifyToken }).eq("id", true)
-      .select("page_id, listo, verify_token, tono, updated_at").single();
+      .select("page_id, listo, verify_token, tono, updated_at").maybeSingle();
     data = actualizado;
   }
 
@@ -65,7 +65,12 @@ export async function POST(request: Request) {
     const { data: actual } = await supabase.from("messenger_configuracion").select("token_cifrado").eq("id", true).maybeSingle();
     patch.listo = !!(pageId && (accessToken || actual?.token_cifrado));
 
-    const { data, error } = await supabase.from("messenger_configuracion").update(patch).eq("id", true).select("page_id, listo, verify_token, tono, updated_at").single();
+    // .maybeSingle() en vez de .single() -- este último tira "Cannot coerce
+    // the result to a single JSON object" (500) si el update devuelve 0
+    // filas (fila inexistente o RLS bloqueando el SELECT posterior al
+    // update), en vez de simplemente data=null. Mismo fix ya aplicado en
+    // configs/vistas/perfiles (commit b0cd241), faltaba acá.
+    const { data, error } = await supabase.from("messenger_configuracion").update(patch).eq("id", true).select("page_id, listo, verify_token, tono, updated_at").maybeSingle();
     if (error) throw error;
 
     return NextResponse.json({ config: data });
