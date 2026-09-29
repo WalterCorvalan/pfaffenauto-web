@@ -1,9 +1,24 @@
 import { redirect } from "next/navigation";
+import { createClient as createServiceClient } from "@supabase/supabase-js";
 import { createClient } from "@/lib/supabase/server";
 import { puedeVerModulo } from "@/lib/panel/permisosModulos";
 import ReportesClient from "./ReportesClient";
 
 export const metadata = { title: "Reportes y Análisis | Pfaffen Cars" };
+
+// Las 4 vistas "_por_vendedor"/ranking comparan a TODOS los vendedores entre
+// sí (ranking, cotizaciones, clientes, operaciones) -- son SECURITY DEFINER
+// (hallazgo del Advisor de Supabase, 28/9) y antes tenían SELECT concedido a
+// "authenticated", así que cualquier usuario logueado podía leerlas directo
+// por API/devtools sin pasar por el gate de puedeVerModulo("reportes") de
+// esta página. Se le sacó ese grant a "authenticated"/"anon" (ver migración)
+// y ahora se piden con este cliente de service role -- el gate server-side
+// de abajo (línea ~19) es la única puerta, mismo criterio que puedeVerFinanzas
+// ya usa para infracciones/taller/top clientes.
+const supabaseAdmin = createServiceClient(
+  process.env.NEXT_PUBLIC_SUPABASE2_URL!,
+  process.env.SUPABASE2_SERVICE_ROLE_KEY!
+);
 
 export default async function ReportesPage() {
   const supabase = await createClient();
@@ -64,8 +79,8 @@ export default async function ReportesPage() {
   ] = await Promise.all([
     supabase.rpc("ranking_ventas", { p_desde: desde, p_hasta: hasta }),
     supabase.from("premios_consignaciones").select("*").order("orden"),
-    supabase.from("v_reportes_ranking_velocidad").select("*"),
-    supabase.from("v_reportes_operaciones_por_vendedor").select("*"),
+    supabaseAdmin.from("v_reportes_ranking_velocidad").select("*"),
+    supabaseAdmin.from("v_reportes_operaciones_por_vendedor").select("*"),
     supabase.from("v_reportes_origen_leads").select("*"),
     supabase.from("v_reportes_embudo_comercial").select("*"),
     supabase.from("v_reportes_expedientes_resumen").select("*").maybeSingle(),
@@ -81,10 +96,10 @@ export default async function ReportesPage() {
     puedeVerFinanzas ? supabase.from("v_reportes_taller_facturacion").select("*").maybeSingle() : Promise.resolve({ data: null }),
     supabase.from("v_reportes_ventas_por_mes").select("*").limit(12),
     puedeVerFinanzas ? supabase.from("v_reportes_top_clientes").select("*") : Promise.resolve({ data: [] }),
-    supabase.from("v_reportes_clientes_por_vendedor").select("*"),
+    supabaseAdmin.from("v_reportes_clientes_por_vendedor").select("*"),
     supabase.from("v_reportes_cotizaciones_resumen").select("*").maybeSingle(),
     supabase.from("v_reportes_cotizaciones_por_estado").select("*"),
-    supabase.from("v_reportes_cotizaciones_por_vendedor").select("*"),
+    supabaseAdmin.from("v_reportes_cotizaciones_por_vendedor").select("*"),
     supabase.from("v_reportes_stock_por_estado").select("*"),
     supabase.from("v_reportes_stock_por_marca").select("*"),
     supabase.from("v_reportes_infracciones_por_mes").select("*").limit(12),
