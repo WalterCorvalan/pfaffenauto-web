@@ -28,16 +28,18 @@ export default async function EmbudoPage({ searchParams }: { searchParams: Promi
   const camposLead = "id, vendedor_id, canal_origen, estado_lead, created_at";
   let qWhatsapp = supabase.from("whatsapp_conversaciones").select(camposLead).gte("created_at", desdeEfectivo);
   let qInstagram = supabase.from("instagram_conversaciones").select(camposLead).gte("created_at", desdeEfectivo);
+  let qMessenger = supabase.from("messenger_conversaciones").select(camposLead).gte("created_at", desdeEfectivo);
   let qRodi = supabase.from("rodi_conversaciones").select(camposLead).gte("created_at", desdeEfectivo);
   let qManuales = supabase.from("leads_manuales").select(camposLead).gte("created_at", desdeEfectivo);
   if (hasta) {
     qWhatsapp = qWhatsapp.lte("created_at", `${hasta}T23:59:59`);
     qInstagram = qInstagram.lte("created_at", `${hasta}T23:59:59`);
+    qMessenger = qMessenger.lte("created_at", `${hasta}T23:59:59`);
     qRodi = qRodi.lte("created_at", `${hasta}T23:59:59`);
     qManuales = qManuales.lte("created_at", `${hasta}T23:59:59`);
   }
-  const [{ data: leadsWhatsapp }, { data: leadsInstagram }, { data: leadsRodi }, { data: leadsManuales }] = await Promise.all([qWhatsapp, qInstagram, qRodi, qManuales]);
-  const datos = [...(leadsWhatsapp || []), ...(leadsInstagram || []), ...(leadsRodi || []), ...(leadsManuales || [])];
+  const [{ data: leadsWhatsapp }, { data: leadsInstagram }, { data: leadsMessenger }, { data: leadsRodi }, { data: leadsManuales }] = await Promise.all([qWhatsapp, qInstagram, qMessenger, qRodi, qManuales]);
+  const datos = [...(leadsWhatsapp || []), ...(leadsInstagram || []), ...(leadsMessenger || []), ...(leadsRodi || []), ...(leadsManuales || [])];
 
   // Clientes (CRM) -- solo para la sección "Cómo nos conocieron" más abajo,
   // que es genuinamente sobre altas manuales de mostrador (walk-in), no

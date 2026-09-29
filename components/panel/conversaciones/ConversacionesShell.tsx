@@ -13,8 +13,8 @@ interface Perfil { id: string; nombre: string; roles: string[] }
 // oculta el switcher de ChatClient. Sin canalFijo (uso interno de
 // /panel/leads si en algún momento lo necesitara) se comporta como antes.
 export default function ConversacionesShell({
-  conversacionesIniciales, conversacionesInstagramIniciales, vendedores, miId, canalFijo, backTo,
-}: { conversacionesIniciales: any[]; conversacionesInstagramIniciales: any[]; vendedores: Perfil[]; miId: string; canalFijo?: "whatsapp" | "instagram"; backTo?: string }) {
+  conversacionesIniciales, conversacionesInstagramIniciales, conversacionesMessengerIniciales = [], vendedores, miId, canalFijo, backTo,
+}: { conversacionesIniciales: any[]; conversacionesInstagramIniciales: any[]; conversacionesMessengerIniciales?: any[]; vendedores: Perfil[]; miId: string; canalFijo?: "whatsapp" | "instagram" | "messenger"; backTo?: string }) {
   const searchParams = useSearchParams();
   const [tab, setTab] = useState<"bandeja" | "leads" | "nuevo">(searchParams.get("tab") === "leads" ? "leads" : "bandeja");
 
@@ -22,7 +22,8 @@ export default function ConversacionesShell({
     if (searchParams.get("tab") === "leads") setTab("leads");
   }, [searchParams]);
   const leadsConConversacion = conversacionesIniciales.filter((c) => c.estado_lead && c.estado_lead !== "nuevo").length
-    + conversacionesInstagramIniciales.filter((c) => c.estado_lead && c.estado_lead !== "nuevo").length;
+    + conversacionesInstagramIniciales.filter((c) => c.estado_lead && c.estado_lead !== "nuevo").length
+    + conversacionesMessengerIniciales.filter((c) => c.estado_lead && c.estado_lead !== "nuevo").length;
 
   return (
     <div className="w-full h-full flex flex-col overflow-hidden bg-white dark:bg-[#0A0A0A]">
@@ -37,17 +38,17 @@ export default function ConversacionesShell({
         <div className="flex items-center gap-3 ml-auto">
           <p className="text-[10px] text-slate-400 shrink-0 hidden sm:block">{leadsConConversacion} lead{leadsConConversacion === 1 ? "" : "s"} con conversación</p>
           <h1 className="text-sm font-bold text-slate-900 dark:text-white flex items-center gap-1.5 shrink-0">
-            <img src={`/icons/panel/${canalFijo === "instagram" ? "instagram" : canalFijo === "whatsapp" ? "whatsapp" : "mensajes"}.png`} alt="" className="w-4 h-4 object-contain shrink-0" /> {canalFijo === "instagram" ? "Instagram" : canalFijo === "whatsapp" ? "WhatsApp" : "Conversaciones"}
+            <img src={`/icons/panel/${canalFijo === "instagram" ? "instagram" : canalFijo === "whatsapp" ? "whatsapp" : canalFijo === "messenger" ? "messenger" : "mensajes"}.png`} alt="" className="w-4 h-4 object-contain shrink-0" /> {canalFijo === "instagram" ? "Instagram" : canalFijo === "whatsapp" ? "WhatsApp" : canalFijo === "messenger" ? "Messenger" : "Conversaciones"}
           </h1>
         </div>
       </div>
 
       <div className="flex-1 min-h-0">
         {tab === "bandeja" && (
-          <ChatClient conversacionesIniciales={conversacionesIniciales} conversacionesInstagramIniciales={conversacionesInstagramIniciales} vendedores={vendedores} canalFijo={canalFijo} />
+          <ChatClient conversacionesIniciales={conversacionesIniciales} conversacionesInstagramIniciales={conversacionesInstagramIniciales} conversacionesMessengerIniciales={conversacionesMessengerIniciales} vendedores={vendedores} canalFijo={canalFijo} />
         )}
         {tab === "leads" && (
-          <LeadsTab conversacionesIniciales={conversacionesIniciales} conversacionesInstagramIniciales={conversacionesInstagramIniciales} vendedores={vendedores} miId={miId} backTo={backTo} />
+          <LeadsTab conversacionesIniciales={conversacionesIniciales} conversacionesInstagramIniciales={conversacionesInstagramIniciales} conversacionesMessengerIniciales={conversacionesMessengerIniciales} vendedores={vendedores} miId={miId} backTo={backTo} />
         )}
         {tab === "nuevo" && (
           <div className="p-6">

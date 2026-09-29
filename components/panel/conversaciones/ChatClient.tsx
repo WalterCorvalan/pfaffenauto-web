@@ -48,26 +48,53 @@ const ETAPAS_PIPELINE: { value: string; label: string }[] = [
   { value: "perdido", label: "Perdido" },
 ];
 
+type Canal = "whatsapp" | "instagram" | "messenger";
+// Messenger agregado en paralelo (28/9) mientras la verificación de negocio
+// de Meta está pendiente -- webhook y tablas ya construidos (ver
+// app/api/panel/webhooks/messenger), pero sin canalFijo="messenger" en
+// ningún page.tsx todavía (no hay app/panel/messenger/page.tsx real armado
+// para eso, MessengerClient.tsx sigue con su placeholder "no conectado").
+// Se agrupa con Instagram en noEsWhatsapp (mismo modelo de leido_at, sin
+// status intermedio como WhatsApp) -- ver CheckDeLeido más abajo.
+const TABLA_CONVERSACIONES: Record<Canal, string> = { whatsapp: "whatsapp_conversaciones", instagram: "instagram_conversaciones", messenger: "messenger_conversaciones" };
+const TABLA_MENSAJES: Record<Canal, string> = { whatsapp: "whatsapp_mensajes", instagram: "instagram_mensajes", messenger: "messenger_mensajes" };
+const ENDPOINT_ENVIAR: Record<Canal, string> = { whatsapp: "/api/panel/whatsapp/enviar", instagram: "/api/panel/instagram/enviar", messenger: "/api/panel/messenger/enviar" };
+const CAMPO_CONTACTO: Record<Canal, string> = { whatsapp: "whatsapp_contactos", instagram: "instagram_contactos", messenger: "messenger_contactos" };
+
+// Cada canal guarda el contacto distinto -- WhatsApp tiene nombre_perfil +
+// telefono real, Instagram tiene @username (fallback si nunca se resolvió
+// el nombre real), Messenger no tiene ni teléfono ni @usuario público, solo
+// nombre real si Meta lo llegó a resolver.
+function resolverContacto(canal: Canal, raw: any): { nombre_perfil: string | null; telefono: string | null } | null {
+  if (!raw) return null;
+  if (canal === "whatsapp") return { nombre_perfil: raw.nombre_perfil, telefono: raw.telefono };
+  if (canal === "instagram") return { nombre_perfil: raw.nombre_perfil || `@${raw.username || raw.ig_user_id}`, telefono: null };
+  return { nombre_perfil: raw.nombre_perfil || "Contacto de Messenger", telefono: null };
+}
+
 export default function ChatClient({
   conversacionesIniciales,
   conversacionesInstagramIniciales = [],
+  conversacionesMessengerIniciales = [],
   vendedores = [],
   canalFijo,
 }: {
   conversacionesIniciales: any[];
   conversacionesInstagramIniciales?: any[];
+  conversacionesMessengerIniciales?: any[];
   vendedores?: { id: string; nombre: string }[];
-  canalFijo?: "whatsapp" | "instagram";
+  canalFijo?: Canal;
 }) {
-  const [canal, setCanal] = useState<"whatsapp" | "instagram">(canalFijo || "whatsapp");
-  const esIG = canal === "instagram";
+  const [canal, setCanal] = useState<Canal>(canalFijo || "whatsapp");
+  const noEsWhatsapp = canal !== "whatsapp";
   const [conversacionesWA, setConversacionesWA] = useState(conversacionesIniciales);
   const [conversacionesIG, setConversacionesIG] = useState(conversacionesInstagramIniciales);
-  const conversaciones = canal === "whatsapp" ? conversacionesWA : conversacionesIG;
-  const setConversaciones = canal === "whatsapp" ? setConversacionesWA : setConversacionesIG;
-  const tablaConversaciones = canal === "whatsapp" ? "whatsapp_conversaciones" : "instagram_conversaciones";
-  const tablaMensajes = canal === "whatsapp" ? "whatsapp_mensajes" : "instagram_mensajes";
-  const endpointEnviar = canal === "whatsapp" ? "/api/panel/whatsapp/enviar" : "/api/panel/instagram/enviar";
+  const [conversacionesMSG, setConversacionesMSG] = useState(conversacionesMessengerIniciales);
+  const conversaciones = canal === "whatsapp" ? conversacionesWA : canal === "instagram" ? conversacionesIG : conversacionesMSG;
+  const setConversaciones = canal === "whatsapp" ? setConversacionesWA : canal === "instagram" ? setConversacionesIG : setConversacionesMSG;
+  const tablaConversaciones = TABLA_CONVERSACIONES[canal];
+  const tablaMensajes = TABLA_MENSAJES[canal];
+  const endpointEnviar = ENDPOINT_ENVIAR[canal];
   const [seleccionada, setSeleccionada] = useState<string | null>(null);
   const [mensajes, setMensajes] = useState<any[]>([]);
   const [nuevoMensaje, setNuevoMensaje] = useState("");
@@ -103,6 +130,7 @@ export default function ChatClient({
 
   useEffect(() => { setConversacionesWA(conversacionesIniciales); }, [conversacionesIniciales]);
   useEffect(() => { setConversacionesIG(conversacionesInstagramIniciales); }, [conversacionesInstagramIniciales]);
+  useEffect(() => { setConversacionesMSG(conversacionesMessengerIniciales); }, [conversacionesMessengerIniciales]);
 
   useEffect(() => {
     let timeoutId: ReturnType<typeof setTimeout>;
@@ -111,6 +139,7 @@ export default function ChatClient({
       .channel(`bandeja-chat-v2-${Math.random().toString(36).slice(2)}`)
       .on("postgres_changes", { event: "*", schema: "public", table: "whatsapp_conversaciones" }, refrescarConDebounce)
       .on("postgres_changes", { event: "*", schema: "public", table: "instagram_conversaciones" }, refrescarConDebounce)
+      .on("postgres_changes", { event: "*", schema: "public", table: "messenger_conversaciones" }, refrescarConDebounce)
       .subscribe();
     return () => { clearTimeout(timeoutId); supabase2.removeChannel(canalBandeja); };
   }, [router]);
@@ -118,7 +147,7 @@ export default function ChatClient({
   useEffect(() => {
     const conversacionParam = searchParams.get("conversacion");
     const canalParam = searchParams.get("canal");
-    if (!canalFijo && (canalParam === "instagram" || canalParam === "whatsapp")) setCanal(canalParam);
+    if (!canalFijo && (canalParam === "instagram" || canalParam === "whatsapp" || canalParam === "messenger")) setCanal(canalParam);
     if (conversacionParam) setSeleccionada(conversacionParam);
   }, [searchParams, canalFijo]);
 
@@ -267,10 +296,7 @@ export default function ChatClient({
     if (error) setConversaciones((prev) => prev.map((c) => (c.id === conversacionActiva.id ? { ...c, ai_habilitada: !nuevoValor } : c)));
   };
 
-  const contactoActivoRaw = canal === "whatsapp" ? conversacionActiva?.whatsapp_contactos : conversacionActiva?.instagram_contactos;
-  const contactoActivo = contactoActivoRaw
-    ? { nombre_perfil: canal === "whatsapp" ? contactoActivoRaw.nombre_perfil : (contactoActivoRaw.nombre_perfil || `@${contactoActivoRaw.username || contactoActivoRaw.ig_user_id}`), telefono: canal === "whatsapp" ? contactoActivoRaw.telefono : null }
-    : null;
+  const contactoActivo = resolverContacto(canal, conversacionActiva?.[CAMPO_CONTACTO[canal]]);
 
   const formatDate = (dateString: string) => new Date(dateString).toLocaleTimeString("es-AR", { hour: "2-digit", minute: "2-digit" });
   const formatDay = (dateString: string) => {
@@ -331,7 +357,7 @@ export default function ChatClient({
       if (!clienteId) {
         const { data, error } = await supabase2.from("clientes").insert({
           nombre: nuevoCliente.nombre.trim(), telefono: nuevoCliente.telefono || null, email: nuevoCliente.email || null, dni_cuit: nuevoCliente.dni_cuit || null,
-          origen: canal === "whatsapp" ? "WhatsApp" : "Instagram", canal_ingreso: "lead_digital",
+          origen: canal === "whatsapp" ? "WhatsApp" : canal === "instagram" ? "Instagram" : "Messenger", canal_ingreso: "lead_digital",
         }).select("id").single();
         if (error) throw error;
         clienteId = data.id;
@@ -405,8 +431,8 @@ export default function ChatClient({
     if (c.archivada) return false;
     if (filtro === "no-leidas" && !(c.unread_count > 0)) return false;
     if (busqueda.trim()) {
-      const contactoRaw = canal === "whatsapp" ? c.whatsapp_contactos : c.instagram_contactos;
-      const texto = canal === "whatsapp" ? [contactoRaw?.nombre_perfil, contactoRaw?.telefono].join(" ") : [contactoRaw?.nombre_perfil, contactoRaw?.username, contactoRaw?.ig_user_id].join(" ");
+      const contactoRaw = c[CAMPO_CONTACTO[canal]];
+      const texto = [contactoRaw?.nombre_perfil, contactoRaw?.telefono, contactoRaw?.username, contactoRaw?.ig_user_id].join(" ");
       if (!texto.toLowerCase().includes(busqueda.trim().toLowerCase())) return false;
     }
     return true;
@@ -443,16 +469,14 @@ export default function ChatClient({
       if (um.status === "failed") return <Check className="w-3.5 h-3.5 text-rose-500 shrink-0" />;
       return <Check className="w-3.5 h-3.5 text-slate-400 shrink-0" />; // pending / sent
     }
-    // Instagram
+    // Instagram/Messenger -- ambos solo trackean leido_at, sin status intermedio.
     return um.leido_at
       ? <CheckCheck className="w-3.5 h-3.5 text-sky-500 shrink-0" />
       : <Check className="w-3.5 h-3.5 text-slate-400 shrink-0" />;
   };
 
   const renderConversacion = (c: any) => {
-    const contactoRaw = canal === "whatsapp" ? c.whatsapp_contactos : c.instagram_contactos;
-    const nombreMostrado = canal === "whatsapp" ? contactoRaw?.nombre_perfil : (contactoRaw ? (contactoRaw.nombre_perfil || `@${contactoRaw.username || contactoRaw.ig_user_id}`) : null);
-    const contacto = { nombre_perfil: nombreMostrado, telefono: canal === "whatsapp" ? contactoRaw?.telefono : null };
+    const contacto = resolverContacto(canal, c[CAMPO_CONTACTO[canal]]);
     const iniciales = (contacto?.nombre_perfil || contacto?.telefono || "?").substring(0, 2).toUpperCase();
     const isActive = seleccionada === c.id;
     const esCaliente = c.calificacion === "caliente";
@@ -515,6 +539,9 @@ export default function ChatClient({
               <button onClick={() => { setCanal("instagram"); setSeleccionada(null); }} className={`flex-1 flex items-center justify-center gap-1.5 px-2 py-1.5 text-xs font-bold rounded-lg transition-colors ${canal === "instagram" ? "bg-gradient-to-tr from-amber-500 via-pink-600 to-purple-600 text-white" : "bg-slate-50 dark:bg-white/5 border border-slate-200 dark:border-white/10 text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-white/10"}`}>
                 <AtSign className="w-3.5 h-3.5" /> Instagram {conversacionesIG.length}
               </button>
+              <button onClick={() => { setCanal("messenger"); setSeleccionada(null); }} className={`flex-1 flex items-center justify-center gap-1.5 px-2 py-1.5 text-xs font-bold rounded-lg transition-colors ${canal === "messenger" ? "bg-blue-600 text-white" : "bg-slate-50 dark:bg-white/5 border border-slate-200 dark:border-white/10 text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-white/10"}`}>
+                <MessageCircle className="w-3.5 h-3.5" /> Messenger {conversacionesMSG.length}
+              </button>
             </div>
           )}
 
@@ -550,31 +577,31 @@ export default function ChatClient({
       </div>
 
       {/* COLUMNA 2: CHAT */}
-      <div className={`flex-1 flex flex-col relative ${!seleccionada ? "hidden md:flex" : "flex"} ${esIG ? "bg-[#fafafa] dark:bg-[#0A0A0A]" : "bg-[#e5ddd4] dark:bg-[#0b141a]"}`}
-        style={!esIG ? { backgroundImage: "url(\"data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='100' height='100' viewBox='0 0 100 100'%3E%3Cg fill='%23000000' fill-opacity='0.03'%3E%3Cpath d='M11 18c3.866 0 7-3.134 7-7s-3.134-7-7-7-7 3.134-7 7 3.134 7 7 7zm48 25c3.866 0 7-3.134 7-7s-3.134-7-7-7-7 3.134-7 7 3.134 7 7 7zm-43-7c1.657 0 3-1.343 3-3s-1.343-3-3-3-3 1.343-3 3 1.343 3 3 3zm63 31c1.657 0 3-1.343 3-3s-1.343-3-3-3-3 1.343-3 3 1.343 3 3 3zM34 90c1.657 0 3-1.343 3-3s-1.343-3-3-3-3 1.343-3 3 1.343 3 3 3zm56-76c1.657 0 3-1.343 3-3s-1.343-3-3-3-3 1.343-3 3 1.343 3 3 3zM12 86c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm28-65c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm23-11c2.76 0 5-2.24 5-5s-2.24-5-5-5-5 2.24-5 5 2.24 5 5 5zm-6 60c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm29 22c2.76 0 5-2.24 5-5s-2.24-5-5-5-5 2.24-5 5 2.24 5 5 5zM32 63c2.76 0 5-2.24 5-5s-2.24-5-5-5-5 2.24-5 5 2.24 5 5 5zm57-13c2.76 0 5-2.24 5-5s-2.24-5-5-5-5 2.24-5 5 2.24 5 5 5zm-9-21c1.105 0 2-.895 2-2s-.895-2-2-2-2 .895-2 2 .895 2 2 2zM60 91c1.105 0 2-.895 2-2s-.895-2-2-2-2 .895-2 2 .895 2 2 2zM35 41c1.105 0 2-.895 2-2s-.895-2-2-2-2 .895-2 2 .895 2 2 2zM12 60c1.105 0 2-.895 2-2s-.895-2-2-2-2 .895-2 2 .895 2 2 2z'/%3E%3C/g%3E%3C/svg%3E\")" } : undefined}>
+      <div className={`flex-1 flex flex-col relative ${!seleccionada ? "hidden md:flex" : "flex"} ${noEsWhatsapp ? "bg-[#fafafa] dark:bg-[#0A0A0A]" : "bg-[#e5ddd4] dark:bg-[#0b141a]"}`}
+        style={!noEsWhatsapp ? { backgroundImage: "url(\"data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='100' height='100' viewBox='0 0 100 100'%3E%3Cg fill='%23000000' fill-opacity='0.03'%3E%3Cpath d='M11 18c3.866 0 7-3.134 7-7s-3.134-7-7-7-7 3.134-7 7 3.134 7 7 7zm48 25c3.866 0 7-3.134 7-7s-3.134-7-7-7-7 3.134-7 7 3.134 7 7 7zm-43-7c1.657 0 3-1.343 3-3s-1.343-3-3-3-3 1.343-3 3 1.343 3 3 3zm63 31c1.657 0 3-1.343 3-3s-1.343-3-3-3-3 1.343-3 3 1.343 3 3 3zM34 90c1.657 0 3-1.343 3-3s-1.343-3-3-3-3 1.343-3 3 1.343 3 3 3zm56-76c1.657 0 3-1.343 3-3s-1.343-3-3-3-3 1.343-3 3 1.343 3 3 3zM12 86c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm28-65c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm23-11c2.76 0 5-2.24 5-5s-2.24-5-5-5-5 2.24-5 5 2.24 5 5 5zm-6 60c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm29 22c2.76 0 5-2.24 5-5s-2.24-5-5-5-5 2.24-5 5 2.24 5 5 5zM32 63c2.76 0 5-2.24 5-5s-2.24-5-5-5-5 2.24-5 5 2.24 5 5 5zm57-13c2.76 0 5-2.24 5-5s-2.24-5-5-5-5 2.24-5 5 2.24 5 5 5zm-9-21c1.105 0 2-.895 2-2s-.895-2-2-2-2 .895-2 2 .895 2 2 2zM60 91c1.105 0 2-.895 2-2s-.895-2-2-2-2 .895-2 2 .895 2 2 2zM35 41c1.105 0 2-.895 2-2s-.895-2-2-2-2 .895-2 2 .895 2 2 2zM12 60c1.105 0 2-.895 2-2s-.895-2-2-2-2 .895-2 2 .895 2 2 2z'/%3E%3C/g%3E%3C/svg%3E\")" } : undefined}>
         {!seleccionada ? (
           <div className="flex-1 flex flex-col items-center justify-center text-slate-400 dark:text-slate-500">
             <p className="text-sm font-medium">Elige una conversación para ver el hilo</p>
           </div>
         ) : (
           <>
-            <div className={`h-[56px] flex justify-between items-center px-4 shrink-0 shadow-sm z-10 ${esIG ? "bg-white dark:bg-[#111] border-b border-slate-200 dark:border-white/10" : "bg-emerald-700 dark:bg-[#202c33]"}`}>
+            <div className={`h-[56px] flex justify-between items-center px-4 shrink-0 shadow-sm z-10 ${noEsWhatsapp ? "bg-white dark:bg-[#111] border-b border-slate-200 dark:border-white/10" : "bg-emerald-700 dark:bg-[#202c33]"}`}>
               <div className="flex items-center gap-3">
-                <div className={`w-9 h-9 rounded-full flex items-center justify-center font-bold text-white text-xs shrink-0 ${esIG ? "bg-gradient-to-tr from-amber-500 via-pink-600 to-purple-600" : "bg-emerald-900/40 dark:bg-white/10"}`}>
+                <div className={`w-9 h-9 rounded-full flex items-center justify-center font-bold text-white text-xs shrink-0 ${noEsWhatsapp ? "bg-gradient-to-tr from-amber-500 via-pink-600 to-purple-600" : "bg-emerald-900/40 dark:bg-white/10"}`}>
                   {(contactoActivo?.nombre_perfil || contactoActivo?.telefono || "?").substring(0, 2).toUpperCase()}
                 </div>
                 <div>
-                  <h3 className={`font-bold text-[15px] leading-tight ${esIG ? "text-slate-900 dark:text-white" : "text-white"}`}>{contactoActivo?.nombre_perfil || "Cliente"}</h3>
-                  <p className={`text-[11px] font-medium ${esIG ? "text-slate-500 dark:text-slate-400" : "text-emerald-100/80"}`}>{contactoActivo?.telefono}</p>
+                  <h3 className={`font-bold text-[15px] leading-tight ${noEsWhatsapp ? "text-slate-900 dark:text-white" : "text-white"}`}>{contactoActivo?.nombre_perfil || "Cliente"}</h3>
+                  <p className={`text-[11px] font-medium ${noEsWhatsapp ? "text-slate-500 dark:text-slate-400" : "text-emerald-100/80"}`}>{contactoActivo?.telefono}</p>
                 </div>
               </div>
               <div className="flex items-center gap-2">
-                <button className={`md:hidden text-sm font-bold ${esIG ? "text-emerald-700 dark:text-emerald-300" : "text-white"}`} onClick={() => setSeleccionada(null)}>Atrás</button>
-                <button onClick={() => setMostrarDetallesMobile(true)} className={`lg:hidden p-1.5 rounded-md transition-colors ${esIG ? "text-slate-400 dark:text-slate-500 hover:bg-slate-100 dark:hover:bg-white/5 hover:text-slate-700 dark:hover:text-slate-200" : "text-emerald-100 hover:bg-white/10"}`} title="Ver detalles">
+                <button className={`md:hidden text-sm font-bold ${noEsWhatsapp ? "text-emerald-700 dark:text-emerald-300" : "text-white"}`} onClick={() => setSeleccionada(null)}>Atrás</button>
+                <button onClick={() => setMostrarDetallesMobile(true)} className={`lg:hidden p-1.5 rounded-md transition-colors ${noEsWhatsapp ? "text-slate-400 dark:text-slate-500 hover:bg-slate-100 dark:hover:bg-white/5 hover:text-slate-700 dark:hover:text-slate-200" : "text-emerald-100 hover:bg-white/10"}`} title="Ver detalles">
                   <PanelRight className="w-5 h-5" />
                 </button>
                 {!panelAbierto && (
-                  <button onClick={() => setPanelAbierto(true)} className={`hidden lg:flex p-1.5 rounded-md transition-colors ${esIG ? "text-slate-400 dark:text-slate-500 hover:bg-slate-100 dark:hover:bg-white/5 hover:text-slate-700 dark:hover:text-slate-200" : "text-emerald-100 hover:bg-white/10"}`} title="Mostrar detalles">
+                  <button onClick={() => setPanelAbierto(true)} className={`hidden lg:flex p-1.5 rounded-md transition-colors ${noEsWhatsapp ? "text-slate-400 dark:text-slate-500 hover:bg-slate-100 dark:hover:bg-white/5 hover:text-slate-700 dark:hover:text-slate-200" : "text-emerald-100 hover:bg-white/10"}`} title="Mostrar detalles">
                     <PanelRight className="w-5 h-5" />
                   </button>
                 )}
@@ -602,8 +629,8 @@ export default function ChatClient({
                   // mensaje. Si el último saliente todavía no tiene
                   // leido_at, no se muestra nada (el cliente no lo vio aún).
                   const esUltimoOut = out && !mensajes.slice(idx + 1).some((sig) => sig.direccion === "out");
-                  const mostrarVisto = esIG && esUltimoOut && !!m.leido_at;
-                  const burbujaOut = esIG ? "bg-gradient-to-br from-pink-500 to-purple-600 text-white border-transparent" : "bg-[#d9fdd3] dark:bg-[#005c4b] border-transparent text-slate-800 dark:text-white";
+                  const mostrarVisto = noEsWhatsapp && esUltimoOut && !!m.leido_at;
+                  const burbujaOut = noEsWhatsapp ? "bg-gradient-to-br from-pink-500 to-purple-600 text-white border-transparent" : "bg-[#d9fdd3] dark:bg-[#005c4b] border-transparent text-slate-800 dark:text-white";
                   const burbujaIn = "bg-white dark:bg-[#1f2c34] border-slate-100 dark:border-white/5 text-slate-800 dark:text-slate-100";
                   return (
                     <div key={m.id} className={`flex ${out ? "justify-end" : "justify-start"}`}>
@@ -628,7 +655,7 @@ export default function ChatClient({
                             </a>
                           )}
                           {m.texto && <p className="leading-relaxed whitespace-pre-wrap">{m.texto}</p>}
-                          <div className={`flex items-center justify-end gap-1 mt-1 ${out && !esIG ? "opacity-60" : "opacity-70"}`}>
+                          <div className={`flex items-center justify-end gap-1 mt-1 ${out && !noEsWhatsapp ? "opacity-60" : "opacity-70"}`}>
                             {out && m.ai_generado && <Bot className="w-3 h-3" />}
                             {m.editado && <span className="text-[10px] italic">editado</span>}
                             <span className="text-[10px] font-medium">{formatDate(m.created_at)}</span>
@@ -636,9 +663,9 @@ export default function ChatClient({
                               <button type="button" onClick={() => setMostrarSelectorAprobadas(true)} title={m.error_detalle ? `Falló: ${m.error_detalle}. Click para reintentar con plantilla.` : "Falló el envío — probablemente ventana de 24hs vencida. Click para reintentar con plantilla."} className="hover:opacity-70">
                                 <X className="w-3.5 h-3.5 text-rose-500" />
                               </button>
-                            ) : <Check className={`w-3.5 h-3.5 ${esIG ? "" : "text-blue-500 dark:text-sky-300"}`} />)}
+                            ) : <Check className={`w-3.5 h-3.5 ${noEsWhatsapp ? "" : "text-blue-500 dark:text-sky-300"}`} />)}
                           </div>
-                          {esIG && m.reaccion && (
+                          {canal === "instagram" && m.reaccion && (
                             <span className={`absolute -bottom-2 ${out ? "left-1" : "right-1"} w-5 h-5 rounded-full bg-white dark:bg-[#1A1A1A] border border-slate-200 dark:border-white/10 shadow flex items-center justify-center text-[11px]`}>
                               {m.reaccion}
                             </span>
@@ -655,7 +682,7 @@ export default function ChatClient({
               <div ref={mensajesEndRef} />
             </div>
 
-            <div className={`p-3 relative ${esIG ? "bg-[#fafafa] dark:bg-[#0A0A0A]" : "bg-transparent"}`}>
+            <div className={`p-3 relative ${noEsWhatsapp ? "bg-[#fafafa] dark:bg-[#0A0A0A]" : "bg-transparent"}`}>
               {mostrarPlantillas && (
                 <div className="absolute bottom-full left-4 right-4 mb-2 bg-white dark:bg-[#1A1A1A] border border-slate-200 dark:border-white/10 rounded-xl shadow-xl max-h-56 overflow-y-auto z-20">
                   {plantillas.length === 0 ? (
@@ -674,7 +701,7 @@ export default function ChatClient({
                 <button type="button" onClick={() => setMostrarPlantillas((v) => !v)} title="Plantillas" className="p-2 text-slate-400 hover:text-emerald-600 dark:hover:text-emerald-300 shrink-0">
                   <MessageSquareText className="w-4 h-4" />
                 </button>
-                {!esIG && (
+                {!noEsWhatsapp && (
                   <button type="button" onClick={() => setMostrarSelectorAprobadas(true)} title="Plantilla aprobada (ventana de 24hs vencida)" className="p-2 text-slate-400 hover:text-amber-600 dark:hover:text-amber-300 shrink-0">
                     <FileCheck2 className="w-4 h-4" />
                   </button>

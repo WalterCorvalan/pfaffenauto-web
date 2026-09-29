@@ -27,7 +27,7 @@ const ESTADO_COLOR: Record<string, string> = {
 
 const TIPOS_TAREA = ["Llamar", "Enviar Email", "Enviar SMS", "Enviar WhatsApp", "Visitar al Cliente", "Cliente visita salón"];
 const ESTADOS_TEST_DRIVE = ["Programado", "Realizado", "Cancelado"];
-export const CANALES_ORIGEN = ["Salón", "MercadoLibre", "Rodi", "WhatsApp", "Instagram", "Cliente anterior"];
+export const CANALES_ORIGEN = ["Salón", "MercadoLibre", "Rodi", "WhatsApp", "Instagram", "Messenger", "Cliente anterior"];
 const CALIFICACIONES = [
   { value: "", label: "Sin calificar", icono: Minus, color: "text-slate-500 dark:text-slate-400 border-slate-200 dark:border-white/10 bg-slate-50 dark:bg-white/5" },
   { value: "caliente", label: "Caliente", icono: Flame, color: "text-rose-600 dark:text-rose-300 border-rose-200 dark:border-rose-500/20 bg-rose-50 dark:bg-rose-500/10" },
@@ -52,24 +52,28 @@ function Dato({ label, valor }: { label: string; valor?: string | null }) {
 interface Sucursal { id: string; nombre: string }
 
 const TABLA_POR_ORIGEN: Record<string, string> = {
-  whatsapp: "whatsapp_conversaciones", instagram: "instagram_conversaciones", rodi: "rodi_conversaciones", manual: "leads_manuales",
+  whatsapp: "whatsapp_conversaciones", instagram: "instagram_conversaciones", messenger: "messenger_conversaciones", rodi: "rodi_conversaciones", manual: "leads_manuales",
 };
 const CAMPO_FK_POR_ORIGEN: Record<string, string> = {
-  whatsapp: "whatsapp_conversacion_id", instagram: "instagram_conversacion_id", rodi: "rodi_conversacion_id", manual: "leads_manuales_id",
+  whatsapp: "whatsapp_conversacion_id", instagram: "instagram_conversacion_id", messenger: "messenger_conversacion_id", rodi: "rodi_conversacion_id", manual: "leads_manuales_id",
 };
 const CONTACTO_TABLA_POR_ORIGEN: Record<string, string | null> = {
-  whatsapp: "whatsapp_contactos", instagram: "instagram_contactos", rodi: null, manual: null,
+  whatsapp: "whatsapp_contactos", instagram: "instagram_contactos", messenger: "messenger_contactos", rodi: null, manual: null,
 };
-const ETIQUETA_ORIGEN: Record<string, string> = { whatsapp: "WhatsApp", instagram: "Instagram", rodi: "Rodi", manual: "carga manual" };
+const ETIQUETA_ORIGEN: Record<string, string> = { whatsapp: "WhatsApp", instagram: "Instagram", messenger: "Messenger", rodi: "Rodi", manual: "carga manual" };
 
 export default function LeadDetailModal({
   leadId, origen, miId, vendedores, sucursales = [], onClose, onActualizado, inline = false,
-}: { leadId: string; origen: "whatsapp" | "instagram" | "rodi" | "manual"; miId: string; vendedores: Perfil[]; sucursales?: Sucursal[]; onClose: () => void; onActualizado: (id: string, patch: any) => void; inline?: boolean }) {
+}: { leadId: string; origen: "whatsapp" | "instagram" | "messenger" | "rodi" | "manual"; miId: string; vendedores: Perfil[]; sucursales?: Sucursal[]; onClose: () => void; onActualizado: (id: string, patch: any) => void; inline?: boolean }) {
   const tabla = TABLA_POR_ORIGEN[origen];
   const campoFk = CAMPO_FK_POR_ORIGEN[origen];
   const contactoTabla = CONTACTO_TABLA_POR_ORIGEN[origen];
   // rodi/manual no tienen tabla de contacto separada -- nombre/telefono/email
   // viven directo en la fila del lead (nombre_contacto en rodi, nombre en manual).
+  // Messenger todavía no soporta "Iniciar peritaje" (la RPC
+  // crear_peritaje_desde_lead solo tiene parámetros para whatsapp/instagram,
+  // no se le agregó un p_messenger_conversacion_id -- mismo estado que
+  // rodi/manual, no es una regresión).
   const soportaPeritaje = origen === "whatsapp" || origen === "instagram";
 
   const [cargando, setCargando] = useState(true);
@@ -322,7 +326,7 @@ export default function LeadDetailModal({
     await registrarEvento("test_drive", `Test drive marcado como "${nuevo}"`);
   };
 
-  const LINK_ORIGEN: Record<string, string> = { whatsapp: "/panel/whatsapp", instagram: "/panel/instagram", rodi: "/panel/rodi", manual: "/panel/clientes" };
+  const LINK_ORIGEN: Record<string, string> = { whatsapp: "/panel/whatsapp", instagram: "/panel/instagram", messenger: "/panel/messenger", rodi: "/panel/rodi", manual: "/panel/clientes" };
 
   const pedirAsistencia = async () => {
     if (!asistenciaParaId) return alert("Elegí a quién pedirle ayuda.");

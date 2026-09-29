@@ -282,3 +282,34 @@ export async function sendInstagramImageMessage(igUserId: string, token: string,
     }),
   }, GRAPH_INSTAGRAM_BASE_URL);
 }
+
+// Messenger -- a diferencia de Instagram, usa graph.facebook.com (el mismo
+// token de Página de siempre, no el namespace especial de graph.instagram.com)
+// y el PSID (Page-Scoped ID) en vez de un IGSID. Mismo Send API, misma forma
+// de payload.
+export async function sendMessengerMessage(pageId: string, token: string, recipientPsid: string, text: string) {
+  return graphRequest<{ recipient_id: string; message_id: string }>(`${pageId}/messages`, token, {
+    method: "POST",
+    body: JSON.stringify({
+      recipient: { id: recipientPsid },
+      message: { text },
+    }),
+  });
+}
+
+export async function sendMessengerImageMessage(pageId: string, token: string, recipientPsid: string, imageUrl: string) {
+  return graphRequest<{ recipient_id: string; message_id: string }>(`${pageId}/messages`, token, {
+    method: "POST",
+    body: JSON.stringify({
+      recipient: { id: recipientPsid },
+      message: { attachment: { type: "image", payload: { url: imageUrl } } },
+    }),
+  });
+}
+
+// Nombre real de quien escribe por Messenger -- el webhook solo trae el PSID
+// numérico, igual que Instagram con el IGSID. Requiere permiso
+// pages_messaging (ya cubierto por el mismo token de Página).
+export async function getMessengerUserProfile(token: string, psid: string) {
+  return graphRequest<{ id: string; first_name?: string; last_name?: string }>(`${psid}?fields=first_name,last_name`, token);
+}

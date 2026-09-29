@@ -60,43 +60,54 @@ function Bar({ label, valor, max, color }: { label: string; valor: number; max: 
 
 // Nombre/subtítulo visible del lead — WhatsApp usa whatsapp_contactos
 // (nombre_perfil/telefono), Instagram usa instagram_contactos (username,
-// sin nombre_perfil real) -- un solo helper para no repetir el ternario en
-// cada lugar que muestra un lead (grid, kanban, búsqueda).
+// sin nombre_perfil real), Messenger usa messenger_contactos (solo
+// nombre_perfil si Meta lo resolvió, sin username ni teléfono) -- un solo
+// helper para no repetir el ternario en cada lugar que muestra un lead
+// (grid, kanban, búsqueda).
 interface LeadConversacion {
   id: string;
-  origen: "whatsapp" | "instagram";
+  origen: "whatsapp" | "instagram" | "messenger";
   whatsapp_contactos?: { nombre_perfil?: string | null; telefono?: string | null } | null;
   instagram_contactos?: { username?: string | null; nombre_perfil?: string | null } | null;
+  messenger_contactos?: { nombre_perfil?: string | null } | null;
 }
 function nombreLead(c: LeadConversacion): string {
-  return c.origen === "instagram" ? (c.instagram_contactos?.nombre_perfil || (c.instagram_contactos?.username ? `@${c.instagram_contactos.username}` : "Sin usuario")) : (c.whatsapp_contactos?.nombre_perfil || c.whatsapp_contactos?.telefono || "Sin nombre");
+  if (c.origen === "instagram") return c.instagram_contactos?.nombre_perfil || (c.instagram_contactos?.username ? `@${c.instagram_contactos.username}` : "Sin usuario");
+  if (c.origen === "messenger") return c.messenger_contactos?.nombre_perfil || "Sin nombre";
+  return c.whatsapp_contactos?.nombre_perfil || c.whatsapp_contactos?.telefono || "Sin nombre";
 }
 function subtituloLead(c: LeadConversacion): string {
-  return c.origen === "instagram" ? (c.instagram_contactos?.username ? `@${c.instagram_contactos.username}` : "") : (c.whatsapp_contactos?.telefono || "");
+  if (c.origen === "instagram") return c.instagram_contactos?.username ? `@${c.instagram_contactos.username}` : "";
+  if (c.origen === "messenger") return "";
+  return c.whatsapp_contactos?.telefono || "";
 }
-function tablaLead(c: LeadConversacion): "whatsapp_conversaciones" | "instagram_conversaciones" {
-  return c.origen === "instagram" ? "instagram_conversaciones" : "whatsapp_conversaciones";
+function tablaLead(c: LeadConversacion): "whatsapp_conversaciones" | "instagram_conversaciones" | "messenger_conversaciones" {
+  if (c.origen === "instagram") return "instagram_conversaciones";
+  if (c.origen === "messenger") return "messenger_conversaciones";
+  return "whatsapp_conversaciones";
 }
 
-export default function LeadsTab({ conversacionesIniciales, conversacionesInstagramIniciales, vendedores, miId, backTo = "/panel/whatsapp?tab=leads" }: { conversacionesIniciales: any[]; conversacionesInstagramIniciales?: LeadConversacion[]; vendedores: Perfil[]; miId: string; backTo?: string }) {
+export default function LeadsTab({ conversacionesIniciales, conversacionesInstagramIniciales, conversacionesMessengerIniciales, vendedores, miId, backTo = "/panel/whatsapp?tab=leads" }: { conversacionesIniciales: any[]; conversacionesInstagramIniciales?: LeadConversacion[]; conversacionesMessengerIniciales?: LeadConversacion[]; vendedores: Perfil[]; miId: string; backTo?: string }) {
   const router = useRouter();
   const searchParams = useSearchParams();
-  // Un solo lead unificado (WhatsApp + Instagram), cada uno con "origen"
-  // marcado -- antes esta tab solo recibía conversacionesIniciales (WA), los
-  // leads de Instagram nunca aparecían acá (aunque sí en la Bandeja).
+  // Un solo lead unificado (WhatsApp + Instagram + Messenger), cada uno con
+  // "origen" marcado -- antes esta tab solo recibía conversacionesIniciales
+  // (WA), los leads de otros canales nunca aparecían acá (aunque sí en la
+  // Bandeja).
   const [conversaciones, setConversaciones] = useState(() => [
     ...conversacionesIniciales.map((c) => ({ ...c, origen: "whatsapp" as const })),
     ...(conversacionesInstagramIniciales || []).map((c) => ({ ...c, origen: "instagram" as const })),
+    ...(conversacionesMessengerIniciales || []).map((c) => ({ ...c, origen: "messenger" as const })),
   ]);
   const [filtro, setFiltro] = useState("todos");
   const [busqueda, setBusqueda] = useState("");
   const [vista, setVista] = useState<"grid" | "kanban" | "reportes">("grid");
-  const [detalle, setDetalle] = useState<{ id: string; origen: "whatsapp" | "instagram" } | null>(null);
+  const [detalle, setDetalle] = useState<{ id: string; origen: "whatsapp" | "instagram" | "messenger" } | null>(null);
 
   useEffect(() => {
     const leadId = searchParams.get("lead");
     const origen = searchParams.get("origen");
-    if (leadId && (origen === "whatsapp" || origen === "instagram")) setDetalle({ id: leadId, origen });
+    if (leadId && (origen === "whatsapp" || origen === "instagram" || origen === "messenger")) setDetalle({ id: leadId, origen });
   }, [searchParams]);
 
   const cerrarDetalle = () => {
@@ -270,7 +281,7 @@ export default function LeadsTab({ conversacionesIniciales, conversacionesInstag
       )}
 
       {vista !== "reportes" && (
-        <p className="text-[11px] text-slate-400 mt-5">Los leads se crean automáticamente al recibir cada mensaje en WhatsApp o Instagram. El round-robin asigna inicialmente al vendedor; desde acá podés reasignar manualmente.</p>
+        <p className="text-[11px] text-slate-400 mt-5">Los leads se crean automáticamente al recibir cada mensaje en WhatsApp, Instagram o Messenger. El round-robin asigna inicialmente al vendedor; desde acá podés reasignar manualmente.</p>
       )}
 
       {detalle && (

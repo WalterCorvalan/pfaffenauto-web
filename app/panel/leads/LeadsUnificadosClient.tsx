@@ -9,7 +9,7 @@ import NuevoLeadManualModal from "./NuevoLeadManualModal";
 
 interface Perfil { id: string; nombre: string; roles: string[] }
 interface Sucursal { id: string; nombre: string }
-type Origen = "whatsapp" | "instagram" | "rodi" | "manual";
+type Origen = "whatsapp" | "instagram" | "messenger" | "rodi" | "manual";
 interface LeadNormalizado {
   id: string; origen: Origen; nombre: string; telefono: string | null; vendedor_id: string | null;
   calificacion: string | null; estado_lead: string; canal_origen: string | null; sucursal_id: string | null;
@@ -39,11 +39,11 @@ const ESTADO_COLOR: Record<string, string> = {
 const ESTADO_LABEL: Record<string, string> = { nuevo: "Nuevo", asignado: "Contactado", calificando: "Interesado", convertido: "Cliente", perdido: "Perdido" };
 const CALIFICACION_DOT: Record<string, string> = { caliente: "bg-rose-500", tibio: "bg-amber-500", frio: "bg-slate-300" };
 
-const ORIGEN_ICON: Record<Origen, any> = { whatsapp: MessageCircle, instagram: AtSign, rodi: Bot, manual: User };
-const ORIGEN_LABEL: Record<Origen, string> = { whatsapp: "WhatsApp", instagram: "Instagram", rodi: "Rodi", manual: "Manual" };
+const ORIGEN_ICON: Record<Origen, any> = { whatsapp: MessageCircle, instagram: AtSign, messenger: MessageCircle, rodi: Bot, manual: User };
+const ORIGEN_LABEL: Record<Origen, string> = { whatsapp: "WhatsApp", instagram: "Instagram", messenger: "Messenger", rodi: "Rodi", manual: "Manual" };
 const ORIGEN_COLOR: Record<Origen, string> = {
   whatsapp: "text-emerald-600 dark:text-emerald-400", instagram: "text-pink-600 dark:text-pink-400",
-  rodi: "text-indigo-600 dark:text-indigo-400", manual: "text-slate-500 dark:text-slate-400",
+  messenger: "text-blue-600 dark:text-blue-400", rodi: "text-indigo-600 dark:text-indigo-400", manual: "text-slate-500 dark:text-slate-400",
 };
 
 function diasDesde(iso: string | null) {
@@ -89,6 +89,7 @@ export default function LeadsUnificadosClient({ leadsIniciales, vendedores, sucu
       .channel(`leads-realtime-${Math.random().toString(36).slice(2)}`)
       .on("postgres_changes", { event: "*", schema: "public", table: "whatsapp_conversaciones" }, refrescarConDebounce)
       .on("postgres_changes", { event: "*", schema: "public", table: "instagram_conversaciones" }, refrescarConDebounce)
+      .on("postgres_changes", { event: "*", schema: "public", table: "messenger_conversaciones" }, refrescarConDebounce)
       .on("postgres_changes", { event: "*", schema: "public", table: "rodi_conversaciones" }, refrescarConDebounce)
       .on("postgres_changes", { event: "*", schema: "public", table: "leads_manuales" }, refrescarConDebounce)
       .subscribe();
@@ -200,7 +201,7 @@ export default function LeadsUnificadosClient({ leadsIniciales, vendedores, sucu
             <div className="space-y-1.5">
               <div className="flex items-center gap-1 flex-wrap">
                 <button onClick={() => setFiltroOrigen("todos")} className={`px-2 py-1 rounded-full text-[10px] font-semibold border ${filtroOrigen === "todos" ? "bg-[#0145F2] border-[#0145F2] text-white" : "bg-white dark:bg-white/5 border-slate-200 dark:border-white/10 text-slate-500"}`}>Todos</button>
-                {(["whatsapp", "instagram", "rodi", "manual"] as Origen[]).map((o) => (
+                {(["whatsapp", "instagram", "messenger", "rodi", "manual"] as Origen[]).map((o) => (
                   <button key={o} onClick={() => setFiltroOrigen(o)} className={`px-2 py-1 rounded-full text-[10px] font-semibold border ${filtroOrigen === o ? "bg-[#0145F2] border-[#0145F2] text-white" : "bg-white dark:bg-white/5 border-slate-200 dark:border-white/10 text-slate-500"}`}>{ORIGEN_LABEL[o]}</button>
                 ))}
               </div>
