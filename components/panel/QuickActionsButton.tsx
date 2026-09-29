@@ -188,13 +188,19 @@ export default function QuickActionsButton() {
   return (
     <>
       <div
-        className={`print:hidden hidden md:flex fixed z-40 flex-col gap-2 ${dragPos ? "flex-col " + (izquierdaAlineaAIzquierda ? "items-start" : "items-end") : "bottom-6 right-6 flex-col items-end"}`}
+        className={`print:hidden hidden md:block fixed z-40 ${dragPos ? "" : "bottom-6 right-6"}`}
         style={dragPos ? { left: dragPos.left, top: dragPos.top } : undefined}
       >
+        {/* Menú posicionado absolute anclado al botón (bottom-full = pegado
+           a su borde superior) -- así el botón NUNCA se mueve al abrir, sin
+           importar si el contenedor está anclado por "bottom" (posición
+           default) o por "top" (arrastrado): antes vivían en el mismo flujo
+           flex-col, y con anclaje "top" agregar el menú ANTES del botón en
+           el DOM empujaba al botón hacia abajo en vez de crecer para arriba. */}
         {open && (
           <>
             <div className="fixed inset-0 -z-10" onClick={() => cambiarOpen(false)} />
-            <div className={`flex gap-2 flex-col mb-1 ${dragPos && izquierdaAlineaAIzquierda ? "items-start" : "items-end"}`}>
+            <div className={`absolute bottom-full mb-1 flex gap-2 flex-col ${izquierdaAlineaAIzquierda ? "left-0 items-start" : "right-0 items-end"}`}>
               {ACCIONES.map((a) => {
                 const Icon = a.icon;
                 const ocupado = cargando === a.id;
@@ -204,7 +210,7 @@ export default function QuickActionsButton() {
                     type="button"
                     onClick={() => elegir(a.id)}
                     disabled={cargando !== null}
-                    className="flex items-center gap-2.5 pl-3 pr-4 py-2 rounded-full bg-white dark:bg-[#1A1A1A] border border-slate-200 dark:border-white/10 shadow-lg text-xs font-semibold text-slate-700 dark:text-slate-200 transition-all hover:shadow-xl hover:-translate-x-0.5 cursor-pointer disabled:opacity-60 disabled:cursor-wait"
+                    className="flex items-center gap-2.5 pl-3 pr-4 py-2 rounded-full bg-white dark:bg-[#1A1A1A] border border-slate-200 dark:border-white/10 shadow-lg text-xs font-semibold text-slate-700 dark:text-slate-200 transition-all hover:shadow-xl hover:-translate-x-0.5 cursor-pointer disabled:opacity-60 disabled:cursor-wait whitespace-nowrap"
                   >
                     <span className={`w-7 h-7 rounded-full flex items-center justify-center shrink-0 ${a.color}`}>
                       {ocupado ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Icon className="w-3.5 h-3.5" />}
