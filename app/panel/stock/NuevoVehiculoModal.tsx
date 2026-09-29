@@ -25,7 +25,7 @@ const ESTADOS = [
   { value: "vendido", label: "Vendido" },
 ];
 
-interface Perfil { id: string; nombre: string; sucursal_id?: string | null }
+interface Perfil { id: string; nombre: string; sucursal_id?: string | null; roles?: string[] }
 interface Cliente { id: string; nombre: string; telefono: string | null; dni_cuit: string | null }
 interface Sucursal { id: string; nombre: string }
 
@@ -46,6 +46,11 @@ export default function NuevoVehiculoModal({ perfiles, clientes, sucursales, miI
   // Consignaciones, precarga propietario/marca pero crea un vehículo nuevo)
   // -- no confundir con edición real de un vehículo existente.
   const esEdicion = !!editando?.id;
+  // Auditoría de filtros 29/9: "Vendedor asignado" es exclusivo de
+  // ventas/encargado; "Consignado por" y "Publicado por" pueden ser
+  // cualquiera MENOS gestoría (perfil administrativo, no opera stock).
+  const vendedores = perfiles.filter((p) => p.roles?.includes("ventas") || p.roles?.includes("encargado"));
+  const sinGestoria = perfiles.filter((p) => !p.roles?.includes("gestoria"));
   const [categoria, setCategoria] = useState(editando?.categoria || "Auto");
   const [marca, setMarca] = useState(editando?.marca || "");
   const [modelo, setModelo] = useState(editando?.modelo || "");
@@ -585,7 +590,7 @@ export default function NuevoVehiculoModal({ perfiles, clientes, sucursales, miI
                 <label className={labelClass}>Vendedor asignado</label>
                 <select value={vendedorAsignadoId} onChange={(e) => setVendedorAsignadoId(e.target.value)} className={inputClass}>
                   <option value="">— Sin asignar —</option>
-                  {perfiles.map((p) => <option key={p.id} value={p.id}>{p.nombre}{sucursalId && p.sucursal_id && p.sucursal_id !== sucursalId ? " (otra sucursal)" : ""}</option>)}
+                  {vendedores.map((p) => <option key={p.id} value={p.id}>{p.nombre}{sucursalId && p.sucursal_id && p.sucursal_id !== sucursalId ? " (otra sucursal)" : ""}</option>)}
                 </select>
                 {vendedorAsignadoId && sucursalId && (() => {
                   const elegido = perfiles.find((p) => p.id === vendedorAsignadoId);
@@ -657,7 +662,7 @@ export default function NuevoVehiculoModal({ perfiles, clientes, sucursales, miI
                   <label className={labelClass}>Consignado por</label>
                   <select value={consignadoPor} onChange={(e) => setConsignadoPor(e.target.value)} className={inputClass}>
                     <option value="">— Sin asignar —</option>
-                    {perfiles.map((p) => <option key={p.id} value={p.id}>{p.nombre}</option>)}
+                    {sinGestoria.map((p) => <option key={p.id} value={p.id}>{p.nombre}</option>)}
                   </select>
                   <p className="text-[10px] text-slate-400 mt-1">Vendedor responsable de la consignación</p>
                 </div>
@@ -955,7 +960,7 @@ export default function NuevoVehiculoModal({ perfiles, clientes, sucursales, miI
                 <label className={labelClass}>Publicado por</label>
                 <select value={publicadoPor} onChange={(e) => setPublicadoPor(e.target.value)} className={inputClass}>
                   <option value="">Sin especificar</option>
-                  {perfiles.map((p) => <option key={p.id} value={p.nombre}>{p.nombre}</option>)}
+                  {sinGestoria.map((p) => <option key={p.id} value={p.nombre}>{p.nombre}</option>)}
                 </select>
               </div>
               <div className="sm:col-span-2">

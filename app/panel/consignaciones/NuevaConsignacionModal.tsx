@@ -21,6 +21,8 @@ const ESTADOS = [
 ];
 
 export default function NuevaConsignacionModal({ perfiles, clientes, miId, onClose, onCreado }: { perfiles: Perfil[]; clientes: Cliente[]; miId: string; onClose: () => void; onCreado: (c: any) => void }) {
+  // Auditoría de filtros 29/9: "Vendedor" solo ventas/encargado.
+  const vendedores = perfiles.filter((p) => p.roles?.includes("ventas") || p.roles?.includes("encargado"));
   const [clienteId, setClienteId] = useState("");
   const [clienteNombre, setClienteNombre] = useState("");
   const [clienteTelefono, setClienteTelefono] = useState("");
@@ -185,7 +187,7 @@ export default function NuevaConsignacionModal({ perfiles, clientes, miId, onClo
                 <label className={labelClass}>Vendedor</label>
                 <select value={vendedorId} onChange={(e) => setVendedorId(e.target.value)} className={inputClass}>
                   <option value="">Sin asignar</option>
-                  {perfiles.map((p) => <option key={p.id} value={p.id}>{p.nombre}</option>)}
+                  {vendedores.map((p) => <option key={p.id} value={p.id}>{p.nombre}</option>)}
                 </select>
               </div>
               <div>

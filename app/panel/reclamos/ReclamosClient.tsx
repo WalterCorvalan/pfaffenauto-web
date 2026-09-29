@@ -24,6 +24,8 @@ const ESTADO_LABEL: Record<string, string> = { abierto: "Abierto", en_curso: "En
 interface Perfil { id: string; nombre: string; roles: string[] }
 
 export default function ReclamosClient({ reclamosIniciales, perfiles, miPerfil }: { reclamosIniciales: any[]; perfiles: Perfil[]; miPerfil: Perfil | null }) {
+  // Auditoría de filtros 29/9: cualquiera menos gestoría.
+  const sinGestoria = perfiles.filter((p) => !p.roles?.includes("gestoria"));
   const [reclamos, setReclamos] = useState(reclamosIniciales);
   const [tab, setTab] = useState<"abierto" | "en_curso" | "cerrado">("abierto");
   const [busqueda, setBusqueda] = useState("");
@@ -133,7 +135,7 @@ export default function ReclamosClient({ reclamosIniciales, perfiles, miPerfil }
         </div>
         <select value={filtroAsignado} onChange={(e) => setFiltroAsignado(e.target.value)} className="bg-white dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-xl px-3 py-2.5 text-sm outline-none">
           <option value="">Todos los asignados</option>
-          {perfiles.map((p) => <option key={p.id} value={p.id}>{p.nombre}</option>)}
+          {sinGestoria.map((p) => <option key={p.id} value={p.id}>{p.nombre}</option>)}
         </select>
         <select value={filtroPrioridad} onChange={(e) => setFiltroPrioridad(e.target.value)} className="bg-white dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-xl px-3 py-2.5 text-sm outline-none">
           <option value="">Todas las prioridades</option>

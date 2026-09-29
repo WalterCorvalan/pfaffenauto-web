@@ -40,7 +40,7 @@ interface Vehiculo {
   numero_motor?: string | null; numero_chasis?: string | null;
   mandato_id: string | null;
 }
-interface Perfil { id: string; nombre: string; sucursal_id?: string | null }
+interface Perfil { id: string; nombre: string; sucursal_id?: string | null; roles?: string[] }
 interface Cliente { id: string; nombre: string; telefono: string | null; dni_cuit: string | null }
 interface Sucursal { id: string; nombre: string }
 
@@ -374,6 +374,9 @@ function TabPlan({ vehiculoId, miId, perfiles }: { vehiculoId: string; miId: str
   const [fecha, setFecha] = useState("");
   const [guardando, setGuardando] = useState(false);
   const perfilMap = Object.fromEntries(perfiles.map((p) => [p.id, p.nombre]));
+  // Auditoría de filtros 29/9: "Responsable" del plan de trabajo, solo
+  // ventas/encargado (mismo pedido de antes: acá no puede figurar Cecilia).
+  const vendedores = perfiles.filter((p) => p.roles?.includes("ventas") || p.roles?.includes("encargado"));
 
   const cargar = () => {
     supabase2.from("vehiculo_plan_trabajo").select("id, proxima_accion, responsable_id, fecha, resuelto, created_at")
@@ -411,7 +414,7 @@ function TabPlan({ vehiculoId, miId, perfiles }: { vehiculoId: string; miId: str
         <div className="flex flex-col sm:flex-row gap-2">
           <select value={responsableId} onChange={(e) => setResponsableId(e.target.value)} className="flex-1 bg-white dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-lg px-3 py-2 text-xs font-semibold text-slate-600 dark:text-slate-300">
             <option value="">Sin responsable</option>
-            {perfiles.map((p) => <option key={p.id} value={p.id}>{p.nombre}</option>)}
+            {vendedores.map((p) => <option key={p.id} value={p.id}>{p.nombre}</option>)}
           </select>
           <input type="date" value={fecha} onChange={(e) => setFecha(e.target.value)} className="bg-white dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-lg px-3 py-2 text-xs text-slate-600 dark:text-slate-300" />
           <button onClick={agregar} disabled={guardando || !accion.trim()} className="px-4 py-2 rounded-lg bg-[#0145F2] hover:bg-[#0138c9] text-white text-xs font-bold disabled:opacity-50 shrink-0">

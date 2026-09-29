@@ -21,7 +21,7 @@ interface Vehiculo {
   sucursal_id: string | null; sucursal: { nombre: string } | null; vendedor_asignado_id: string | null;
   mandato_id: string | null;
 }
-interface Perfil { id: string; nombre: string; sucursal_id?: string | null }
+interface Perfil { id: string; nombre: string; sucursal_id?: string | null; roles?: string[] }
 
 const ESTADO_LABEL: Record<string, string> = { disponible: "Disponible", "señado": "Señado", vendido: "Vendido" };
 const ESTADO_COLOR: Record<string, string> = {
@@ -60,6 +60,8 @@ export default function FichaRapidaModal({ vehiculo, miId, perfiles, puedeElimin
   const [fecha, setFecha] = useState("");
   const [guardando, setGuardando] = useState(false);
   const perfilMap = Object.fromEntries(perfiles.map((p) => [p.id, p.nombre]));
+  // Auditoría de filtros 29/9: "Responsable" del plan de trabajo, solo ventas/encargado.
+  const vendedores = perfiles.filter((p) => p.roles?.includes("ventas") || p.roles?.includes("encargado"));
 
   // Portal a document.body: este modal se abre desde una fila/tarjeta
   // dentro del <main> con scroll propio del panel -- sin portal, "fixed"
@@ -167,7 +169,7 @@ export default function FichaRapidaModal({ vehiculo, miId, perfiles, puedeElimin
               <div className="flex items-center gap-1.5">
                 <select value={responsableId} onChange={(e) => setResponsableId(e.target.value)} className="flex-1 bg-white dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-lg px-2 py-1.5 text-[11px] font-semibold text-slate-600 dark:text-slate-300">
                   <option value="">Responsable</option>
-                  {perfiles.map((p) => <option key={p.id} value={p.id}>{p.nombre}</option>)}
+                  {vendedores.map((p) => <option key={p.id} value={p.id}>{p.nombre}</option>)}
                 </select>
                 <input type="date" value={fecha} onChange={(e) => setFecha(e.target.value)} className="bg-white dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-lg px-2 py-1.5 text-[11px] text-slate-600 dark:text-slate-300" />
               </div>

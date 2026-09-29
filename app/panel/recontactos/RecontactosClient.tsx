@@ -89,6 +89,8 @@ export default function RecontactosClient({
   const [confirmDialog, setConfirmDialog] = useState<{ mensaje: string; accion: () => void } | null>(null);
 
   const perfilMap = useMemo(() => Object.fromEntries(perfiles.map((p) => [p.id, p.nombre])), [perfiles]);
+  // Auditoría de filtros 29/9: filtro "Vendedor" solo con ventas/encargado.
+  const vendedores = useMemo(() => perfiles.filter((p) => p.roles?.includes("ventas") || p.roles?.includes("encargado")), [perfiles]);
   const miNombre = perfilMap[miId] || "el equipo";
   const esAdmin = perfiles.find((p) => p.id === miId)?.roles?.includes("admin") ?? false;
   const compraronSet = useMemo(() => new Set(idsCompraron), [idsCompraron]);
@@ -311,7 +313,7 @@ export default function RecontactosClient({
                     <label className="text-[10px] font-black uppercase tracking-widest text-slate-400 block mb-1">Vendedor</label>
                     <select value={vendedorFiltro} onChange={(e) => setVendedorFiltro(e.target.value)} className="bg-slate-50 dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-lg px-3 py-2 text-xs font-semibold text-slate-700 dark:text-slate-200">
                       <option value="">Todos</option>
-                      {perfiles.map((p) => <option key={p.id} value={p.id}>{p.nombre}</option>)}
+                      {vendedores.map((p) => <option key={p.id} value={p.id}>{p.nombre}</option>)}
                     </select>
                   </div>
                 )}

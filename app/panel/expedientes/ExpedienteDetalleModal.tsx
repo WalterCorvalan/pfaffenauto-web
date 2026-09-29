@@ -36,6 +36,10 @@ interface Props {
 }
 
 export default function ExpedienteDetalleModal({ expedienteId, miId, perfiles, soyAdmin, puedeOperacionCaida, puedeVerLiquidacion, gananciasOcultas, tabInicial, onClose, onActualizado, onEliminado }: Props) {
+  // Auditoría de filtros 29/9: "Consignador" es ventas/encargado;
+  // "Administrativa de Gestoría" es exclusivo de gestoría.
+  const vendedores = perfiles.filter((p) => p.roles?.includes("ventas") || p.roles?.includes("encargado"));
+  const gestoria = perfiles.filter((p) => p.roles?.includes("gestoria"));
   const [expediente, setExpediente] = useState<any>(null);
   const [venta, setVenta] = useState<any>(null);
   const [confirmDialog, setConfirmDialog] = useState<{ mensaje: string; accion: () => void } | null>(null);
@@ -1057,7 +1061,7 @@ export default function ExpedienteDetalleModal({ expedienteId, miId, perfiles, s
                   <label className="text-xs font-semibold text-slate-500 dark:text-slate-400 block mb-1">Consignador (vendedor que trajo el auto)</label>
                   <select value={consignador} onChange={(e) => setConsignador(e.target.value)} className="w-full bg-slate-50 dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-lg px-3 py-2 text-sm">
                     <option value="">— Sin asignar —</option>
-                    {perfiles.map((p) => <option key={p.id} value={p.id}>{p.nombre}</option>)}
+                    {vendedores.map((p) => <option key={p.id} value={p.id}>{p.nombre}</option>)}
                   </select>
                 </div>
                 <div>
@@ -1575,7 +1579,7 @@ export default function ExpedienteDetalleModal({ expedienteId, miId, perfiles, s
                   <label className="text-xs font-semibold text-slate-500 dark:text-slate-400 block mb-1">Administrativa de Gestoría</label>
                   <select value={gestoriaResponsable} onChange={(e) => setGestoriaResponsable(e.target.value)} className="w-full bg-slate-50 dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-lg px-3 py-2 text-sm">
                     <option value="">— Sin asignar —</option>
-                    {perfiles.map((p) => <option key={p.id} value={p.id}>{p.nombre}</option>)}
+                    {gestoria.map((p) => <option key={p.id} value={p.id}>{p.nombre}</option>)}
                   </select>
                   <p className="text-[10px] text-slate-400 mt-1">Quien administra el trámite internamente en la agencia.</p>
                 </div>

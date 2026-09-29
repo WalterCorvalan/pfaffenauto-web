@@ -50,6 +50,8 @@ function EstadoSelector({ visitaId, estadoActual, onCambiado }: { visitaId: stri
 
 function VendedorSelector({ visitaId, vendedorActualId, perfiles, onCambiado }: { visitaId: string; vendedorActualId: string | null; perfiles: Perfil[]; onCambiado: (v: any) => void }) {
   const [loading, setLoading] = useState(false);
+  // Auditoría de filtros 29/9: solo ventas/encargado.
+  const vendedores = perfiles.filter((p) => p.roles?.includes("ventas") || p.roles?.includes("encargado"));
   const cambiar = async (nuevo: string) => {
     setLoading(true);
     const { data } = await supabase2.from("visitas").update({ vendedor_id: nuevo || null }).eq("id", visitaId).select().single();
@@ -62,7 +64,7 @@ function VendedorSelector({ visitaId, vendedorActualId, perfiles, onCambiado }: 
       <select defaultValue={vendedorActualId || ""} disabled={loading} onChange={(e) => cambiar(e.target.value)}
         className="w-full bg-slate-50 dark:bg-white/5 border border-slate-200 dark:border-white/10 text-[11px] font-medium text-slate-700 dark:text-slate-200 rounded-md pl-1.5 pr-6 py-1 outline-none appearance-none cursor-pointer disabled:opacity-50">
         <option value="">Sin vendedor</option>
-        {perfiles.map((p) => <option key={p.id} value={p.id}>{p.nombre}</option>)}
+        {vendedores.map((p) => <option key={p.id} value={p.id}>{p.nombre}</option>)}
       </select>
       {loading && <Loader2 className="w-3 h-3 text-indigo-500 animate-spin absolute right-2 top-1/2 -translate-y-1/2 pointer-events-none" />}
     </div>

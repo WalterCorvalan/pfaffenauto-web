@@ -7,7 +7,7 @@ import { X, Loader2, CalendarCheck } from "lucide-react";
 interface Sucursal { id: string; nombre: string }
 interface Vehiculo { id: string; marca: string; modelo: string; patente: string | null }
 interface Cliente { id: string; nombre: string; telefono: string | null }
-interface Perfil { id: string; nombre: string }
+interface Perfil { id: string; nombre: string; roles?: string[] }
 
 interface Props {
   sucursales: Sucursal[];
@@ -25,6 +25,8 @@ const inputClass = "w-full bg-slate-50 dark:bg-white/5 border border-slate-200 d
 const labelClass = "text-xs font-bold text-slate-600 dark:text-slate-300 mb-1.5 block";
 
 export default function NuevaVisitaModal({ sucursales, vehiculos, clientes, perfiles, miId, onClose, onCreada }: Props) {
+  // Auditoría de filtros 29/9: "Vendedor asignado" solo ventas/encargado.
+  const vendedores = perfiles.filter((p) => p.roles?.includes("ventas") || p.roles?.includes("encargado"));
   const [clienteId, setClienteId] = useState("");
   const [nombreCliente, setNombreCliente] = useState("");
   const [telefonoCliente, setTelefonoCliente] = useState("");
@@ -142,7 +144,7 @@ export default function NuevaVisitaModal({ sucursales, vehiculos, clientes, perf
             <label className={labelClass}>Vendedor asignado</label>
             <select value={vendedorId} onChange={(e) => setVendedorId(e.target.value)} className={`${inputClass} cursor-pointer`}>
               <option value="">— Sin asignar —</option>
-              {perfiles.map((p) => <option key={p.id} value={p.id}>{p.nombre}</option>)}
+              {vendedores.map((p) => <option key={p.id} value={p.id}>{p.nombre}</option>)}
             </select>
           </div>
         </div>

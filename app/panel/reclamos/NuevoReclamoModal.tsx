@@ -20,6 +20,8 @@ interface Props {
 }
 
 export default function NuevoReclamoModal({ perfiles, miId, onClose, onCreado }: Props) {
+  // Auditoría de filtros 29/9: "Asignar a" -- cualquiera menos gestoría.
+  const sinGestoria = perfiles.filter((p) => !p.roles?.includes("gestoria"));
   const [titulo, setTitulo] = useState("");
   const [descripcion, setDescripcion] = useState("");
   const [tipo, setTipo] = useState("Administrativo");
@@ -187,7 +189,7 @@ export default function NuevoReclamoModal({ perfiles, miId, onClose, onCreado }:
                   <label className={labelClass}>Asignar a</label>
                   <select value={asignadoA} onChange={(e) => setAsignadoA(e.target.value)} className={inputClass}>
                     <option value="">— Sin asignar —</option>
-                    {perfiles.map((p) => <option key={p.id} value={p.id}>{p.nombre}</option>)}
+                    {sinGestoria.map((p) => <option key={p.id} value={p.id}>{p.nombre}</option>)}
                   </select>
                   <p className="text-[10px] text-slate-400 mt-1">Le llega una notificación</p>
                 </div>

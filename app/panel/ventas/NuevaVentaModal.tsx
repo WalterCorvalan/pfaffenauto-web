@@ -67,6 +67,12 @@ export default function NuevaVentaModal({ perfiles, clientes, vehiculos, miId, s
   const esEdicion = !!editando;
   const miPerfil = perfiles.find((p) => p.id === miId);
   const puedeGenerarCuotas = miPerfil?.roles?.some((r) => r === "admin" || r === "finanzas") ?? false;
+  // Auditoría de filtros 29/9: "Vendedor" y "Responsable de la
+  // consignación" son ventas/encargado (el segundo, cualquiera menos
+  // gestoría); "Gestor asignado" es exclusivo de gestoría.
+  const vendedores = perfiles.filter((p) => p.roles?.includes("ventas") || p.roles?.includes("encargado"));
+  const sinGestoria = perfiles.filter((p) => !p.roles?.includes("gestoria"));
+  const gestoria = perfiles.filter((p) => p.roles?.includes("gestoria"));
 
   const [cargaManual, setCargaManual] = useState(false);
 
@@ -823,7 +829,7 @@ export default function NuevaVentaModal({ perfiles, clientes, vehiculos, miId, s
                 <label className={labelClass}>Vendedor (cerró la venta) *</label>
                 <select value={vendedorId} onChange={(e) => setVendedorId(e.target.value)} className={inputClass}>
                   <option value="">—</option>
-                  {perfiles.map((p) => <option key={p.id} value={p.id}>{p.nombre}</option>)}
+                  {vendedores.map((p) => <option key={p.id} value={p.id}>{p.nombre}</option>)}
                 </select>
               </div>
               <div>
@@ -1114,14 +1120,14 @@ export default function NuevaVentaModal({ perfiles, clientes, vehiculos, miId, s
                     <label className={labelClass}>Responsable de la consignación</label>
                     <select value={responsableConsignacion} onChange={(e) => setResponsableConsignacion(e.target.value)} className={inputClass}>
                       <option value="">— Seleccioná responsable —</option>
-                      {perfiles.map((p) => <option key={p.id} value={p.id}>{p.nombre}</option>)}
+                      {sinGestoria.map((p) => <option key={p.id} value={p.id}>{p.nombre}</option>)}
                     </select>
                   </div>
                   <div>
                     <label className={labelClass}>🏛 Gestor asignado (quién va a llevar el trámite)</label>
                     <select value={gestorAsignado} onChange={(e) => setGestorAsignado(e.target.value)} className={inputClass}>
                       <option value="">— Sin asignar (lo define admin/gestoría) —</option>
-                      {perfiles.map((p) => <option key={p.id} value={p.id}>{p.nombre}</option>)}
+                      {gestoria.map((p) => <option key={p.id} value={p.id}>{p.nombre}</option>)}
                     </select>
                   </div>
                 </div>
