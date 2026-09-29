@@ -4,6 +4,8 @@ import StockClient from "./StockClient";
 export default async function StockPage() {
   const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();
+  const { data: miPerfil } = user ? await supabase.from("perfiles").select("roles").eq("id", user.id).maybeSingle() : { data: null };
+  const soyAdmin = miPerfil?.roles?.includes("admin") ?? false;
 
   const [{ data: vehiculos }, { data: mandatos }, { data: perfiles }, { data: clientes }, { data: catalogoConfig }, { data: sucursales }, { data: config }, { data: chequesPendientes0km }, { data: cuentas }] = await Promise.all([
     // Sin límite esto crecía sin tope con toda la historia de stock (vendido
@@ -34,9 +36,16 @@ export default async function StockPage() {
     supabase.from("cuentas").select("id, nombre, moneda").eq("activa", true).order("nombre"),
   ]);
 
+  // Precio/moneda de compra son costo interno -- solo admin los ve. Se
+  // sacan del payload acá (no solo se ocultan en la UI) para que un
+  // vendedor/encargado no pueda leerlos igual inspeccionando la red.
+  const vehiculosParaCliente = soyAdmin
+    ? (vehiculos || [])
+    : (vehiculos || []).map(({ precio_compra, moneda_compra, ...resto }) => resto);
+
   return (
     <StockClient
-      vehiculosIniciales={vehiculos || []}
+      vehiculosIniciales={vehiculosParaCliente}
       mandatosIniciales={mandatos || []}
       perfiles={perfiles || []}
       clientes={clientes || []}
@@ -46,6 +55,7 @@ export default async function StockPage() {
       diasEstancado={config?.stock_dias_estancado || 90}
       chequesPendientes0km={chequesPendientes0km || []}
       cuentas={cuentas || []}
+      soyAdmin={soyAdmin}
     />
   );
 }

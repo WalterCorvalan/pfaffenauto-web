@@ -69,6 +69,7 @@ interface Props {
   sucursales: Sucursal[];
   puedeEditarCompleto: boolean;
   puedeEliminar: boolean;
+  soyAdmin?: boolean;
   onClose: () => void;
   onActualizado: (id: string, cambios: Partial<Vehiculo>) => void;
   onCreado: (v: Vehiculo) => void;
@@ -85,7 +86,10 @@ const TABS: { id: TabFicha; label: string; icon: typeof Car }[] = [
   { id: "portal", label: "Portal del propietario", icon: ExternalLink },
 ];
 
-export default function FichaVehiculoModal({ vehiculo, miId, perfiles, clientes, sucursales, puedeEditarCompleto, puedeEliminar, onClose, onActualizado, onCreado, onEliminar }: Props) {
+export default function FichaVehiculoModal({ vehiculo, miId, perfiles, clientes, sucursales, puedeEditarCompleto, puedeEliminar, soyAdmin = false, onClose, onActualizado, onCreado, onEliminar }: Props) {
+  // "Gastos y margen" muestra el precio de compra (costo interno) -- solo
+  // admin la ve, mismo criterio que los campos de compra en NuevoVehiculoModal.
+  const tabsVisibles = soyAdmin ? TABS : TABS.filter((t) => t.id !== "gastos");
   const [tab, setTab] = useState<TabFicha>("resumen");
   const [editando, setEditando] = useState<"completo" | "fotos" | null>(null);
   const [peritajeAbierto, setPeritajeAbierto] = useState(false);
@@ -115,7 +119,7 @@ export default function FichaVehiculoModal({ vehiculo, miId, perfiles, clientes,
         </div>
 
         <div className="flex items-center gap-1 px-6 pt-3 border-b border-slate-100 dark:border-white/10 overflow-x-auto shrink-0">
-          {TABS.map((t) => (
+          {tabsVisibles.map((t) => (
             <button key={t.id} onClick={() => setTab(t.id)} className={`flex items-center gap-1.5 px-3 py-2 text-xs font-bold whitespace-nowrap border-b-2 -mb-px ${tab === t.id ? "border-[#0145F2] text-[#0145F2]" : "border-transparent text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-200"}`}>
               <t.icon className="w-3.5 h-3.5" /> {t.label}
             </button>
@@ -155,7 +159,7 @@ export default function FichaVehiculoModal({ vehiculo, miId, perfiles, clientes,
       {editando && (
         <NuevoVehiculoModal
           perfiles={perfiles} clientes={clientes} sucursales={sucursales} miId={miId}
-          editando={vehiculo} soloFotos={editando === "fotos" || !puedeEditarCompleto}
+          editando={vehiculo} soloFotos={editando === "fotos" || !puedeEditarCompleto} soyAdmin={soyAdmin}
           onClose={() => setEditando(null)}
           onCreado={(v) => { onCreado(v); setEditando(null); }}
         />

@@ -82,18 +82,12 @@ export default function ImprimirPresupuesto({ presupuesto: p, branding }: { pres
           ImprimirSena.tsx) -- sin bloque de firma, porque un presupuesto no
           se firma, solo se cotiza. */}
       <div className="w-[210mm] max-w-[210mm] min-h-[297mm] print:min-h-0 mx-auto bg-white p-[12mm] pb-[14mm] shadow-lg border border-slate-200 print:shadow-none print:border-none print:m-0 text-[11px] leading-snug box-border">
-        <div className="flex justify-between items-start border-b-2 border-slate-900 pb-2 mb-2.5">
+        <div className="grid grid-cols-[1fr_auto_1fr] items-center border-b-2 border-slate-900 pb-2 mb-2.5">
           <div className="flex items-start gap-3">
             {branding?.branding_logo_url ? (
               <img src={branding.branding_logo_url} alt={nombreEmpresa} className="h-14 w-auto object-contain shrink-0" />
             ) : (
-              <div className="shrink-0 flex items-center gap-3">
-                <img src="/pfaffen-automotores.png" alt="Pfaffen Automotores" className="h-10 w-auto object-contain" />
-                <div className="flex items-center gap-1.5">
-                  <img src="/logo.png" alt="Pfaffen" className="h-8 w-auto object-contain" />
-                  <span className="text-[15px] font-black tracking-wide text-slate-900 leading-none">CARS</span>
-                </div>
-              </div>
+              <img src="/pfaffen-automotores.png" alt="Pfaffen Automotores" className="h-10 w-auto object-contain shrink-0" />
             )}
             <div>
               <p className="text-[10px] text-slate-600">
@@ -104,8 +98,13 @@ export default function ImprimirPresupuesto({ presupuesto: p, branding }: { pres
               </p>
             </div>
           </div>
-          <h1 className="text-xl font-black text-slate-900 tracking-tight uppercase self-center">{nombreEmpresa}</h1>
-          <div className="text-right shrink-0">
+          {!branding?.branding_logo_url && (
+            <div className="flex items-center gap-1.5 justify-self-center">
+              <img src="/logo.png" alt="Pfaffen" className="h-8 w-auto object-contain" />
+              <span className="text-[15px] font-black tracking-wide text-slate-900 leading-none">CARS</span>
+            </div>
+          )}
+          <div className="text-right shrink-0 justify-self-end">
             <h2 className="text-[13px] font-black uppercase tracking-wide">PRESUPUESTO Nro. {p.numero}</h2>
             <p className="text-[10px] text-slate-600 mt-1">FECHA: {fecha}</p>
             {branding?.branding_cuit && <p className="text-[10px] text-slate-600">Cuit: {branding.branding_cuit}</p>}

@@ -416,7 +416,7 @@ async function ejecutarAgente(conversacionId: string, igUserId: string) {
   if (!isAiConfiguredV2()) return;
   if (!estaEnHorarioAtencion()) return;
 
-  const { data: conversacionActual } = await supabase.from("instagram_conversaciones").select("ai_habilitada, contacto_id, vehiculo_id").eq("id", conversacionId).single();
+  const { data: conversacionActual } = await supabase.from("instagram_conversaciones").select("ai_habilitada, contacto_id, vehiculo_id, vendedor_id").eq("id", conversacionId).single();
   if (conversacionActual?.ai_habilitada === false) return;
 
   const { data: mensajes } = await supabase.from("instagram_mensajes").select("direccion, texto").eq("conversacion_id", conversacionId).order("created_at", { ascending: true }).limit(20);
@@ -456,6 +456,22 @@ async function ejecutarAgente(conversacionId: string, igUserId: string) {
   // el historial de texto para "acordarse" del auto, y con el modelo chico
   // se perdía o confundía a los pocos mensajes.
   if (vehiculoFocoId) patchConversacion.vehiculo_id = vehiculoFocoId;
+
+  // Mismo criterio que WhatsApp (webhooks/whatsapp/[token]/route.ts): si el
+  // auto en foco ya tiene vendedor asignado en Stock y esta charla todavía
+  // no tiene vendedor (nadie la agarró antes de saber qué auto quería), se
+  // la asignamos a esa persona en vez de dejarla con quien le tocó por
+  // ronda al arrancar la charla.
+  if (vehiculoFocoId && !conversacionActual?.vendedor_id) {
+    const { data: vehiculoFoco } = await supabase.from("vehiculos").select("vendedor_asignado_id, vendedor:vendedor_asignado_id ( activo )").eq("id", vehiculoFocoId).maybeSingle();
+    const vendedorAsignadoActivo = vehiculoFoco?.vendedor as { activo?: boolean } | { activo?: boolean }[] | null | undefined;
+    const estaActivo = Array.isArray(vendedorAsignadoActivo) ? vendedorAsignadoActivo[0]?.activo : vendedorAsignadoActivo?.activo;
+    if (vehiculoFoco?.vendedor_asignado_id && estaActivo) {
+      patchConversacion.vendedor_id = vehiculoFoco.vendedor_asignado_id;
+      patchConversacion.estado_lead = "asignado";
+    }
+  }
+
   await supabase.from("instagram_conversaciones").update(patchConversacion).eq("id", conversacionId);
 
   // El agente SÍ le pregunta el nombre real al cliente en Instagram (regla

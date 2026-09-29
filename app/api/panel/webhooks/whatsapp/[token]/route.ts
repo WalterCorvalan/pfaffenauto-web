@@ -326,7 +326,7 @@ async function enviarMensajeFijo(conversacionId: string, texto: string, config: 
 }
 
 async function ejecutarAgente(conversacionId: string) {
-  const { data: conversacionActual } = await supabase.from("whatsapp_conversaciones").select("ai_habilitada, fuera_horario_avisado_fecha, vehiculo_id").eq("id", conversacionId).single();
+  const { data: conversacionActual } = await supabase.from("whatsapp_conversaciones").select("ai_habilitada, fuera_horario_avisado_fecha, vehiculo_id, vendedor_id").eq("id", conversacionId).single();
   if (conversacionActual?.ai_habilitada === false) return;
 
   const { data: config } = await supabase.from("whatsapp_configuracion").select("*").eq("id", true).maybeSingle();
@@ -391,9 +391,13 @@ async function ejecutarAgente(conversacionId: string) {
   // romper si cambia el perfil; si no se encuentra a Gabriel activo en
   // Casa Central, no rompe el resto del flujo, solo no fuerza el cambio.
   let motivoAsignacionGabriel: "0km" | "consignacion" | null = null;
+  let vehiculoFocoVendedorId: string | null = null;
   if (vehiculoFocoId) {
-    const { data: vehiculoFoco } = await supabase.from("vehiculos").select("condicion").eq("id", vehiculoFocoId).maybeSingle();
+    const { data: vehiculoFoco } = await supabase.from("vehiculos").select("condicion, vendedor_asignado_id, vendedor:vendedor_asignado_id ( activo )").eq("id", vehiculoFocoId).maybeSingle();
     if (vehiculoFoco?.condicion === "0km") motivoAsignacionGabriel = "0km";
+    const vendedorAsignadoActivo = vehiculoFoco?.vendedor as { activo?: boolean } | { activo?: boolean }[] | null | undefined;
+    const estaActivo = Array.isArray(vendedorAsignadoActivo) ? vendedorAsignadoActivo[0]?.activo : vendedorAsignadoActivo?.activo;
+    if (vehiculoFoco?.vendedor_asignado_id && estaActivo) vehiculoFocoVendedorId = vehiculoFoco.vendedor_asignado_id;
   }
   if (!motivoAsignacionGabriel && intencion === "CONSIGNACION") motivoAsignacionGabriel = "consignacion";
 
@@ -412,15 +416,26 @@ async function ejecutarAgente(conversacionId: string) {
     } else {
       registrarError("webhook-v2:asignacion-gabriel", new Error("No se encontró a Gabriel (Casa Central) activo en perfiles"), { conversacionId, vehiculoFocoId, motivoAsignacionGabriel });
     }
+  } else if (vehiculoFocoVendedorId && !conversacionActual?.vendedor_id) {
+    // El auto en foco ya tiene un vendedor asignado en Stock (pedido del
+    // usuario: "si alguien viene directamente buscando tal auto que lo
+    // tiene tal vendedor" tiene que llegarle a esa persona, no a quien le
+    // haya tocado por ronda) -- solo si la charla TODAVÍA no tiene vendedor,
+    // para no pisar una asignación manual/de ronda ya hecha antes de saber
+    // qué auto quería.
+    patchConversacion.vendedor_id = vehiculoFocoVendedorId;
+    patchConversacion.estado_lead = "asignado";
   }
 
   await supabase.from("whatsapp_conversaciones").update(patchConversacion).eq("id", conversacionId);
 
-  // Avisar a Gabriel recién después del update de arriba (así el link ya
-  // muestra la conversación con el vendedor correcto si abre desde la alerta).
+  // Avisar recién después del update de arriba (así el link ya muestra la
+  // conversación con el vendedor correcto si abre desde la alerta).
   if (patchConversacion.vendedor_id) {
-    const mensajeGabriel = motivoAsignacionGabriel === "consignacion" ? "Un cliente quiere consignar su auto — se te asignó automáticamente." : "Un cliente está consultando por un 0km — se te asignó automáticamente.";
-    notificarPersona(supabase, patchConversacion.vendedor_id as string, "whatsapp_venta_zona", mensajeGabriel, `/panel/whatsapp?conversacion=${conversacionId}`, { categoriaNotif: "leads", modulo: "leads" }).catch((err) => console.error("[webhook-v2] error notificando asignación a Gabriel:", err));
+    const mensajeAsignacion = motivoAsignacionGabriel === "consignacion" ? "Un cliente quiere consignar su auto — se te asignó automáticamente."
+      : motivoAsignacionGabriel === "0km" ? "Un cliente está consultando por un 0km — se te asignó automáticamente."
+      : "Un cliente está consultando por un auto que tenés asignado en Stock — se te asignó automáticamente.";
+    notificarPersona(supabase, patchConversacion.vendedor_id as string, "whatsapp_venta_zona", mensajeAsignacion, `/panel/whatsapp?conversacion=${conversacionId}`, { categoriaNotif: "leads", modulo: "leads" }).catch((err) => console.error("[webhook-v2] error notificando asignación:", err));
   }
 
   // Nombre y mail que el cliente vaya dando durante la charla se guardan en

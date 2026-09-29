@@ -139,6 +139,22 @@ async function procesarMensaje({ sessionId, texto, origenPagina, nombre, telefon
   }
   const patchCalificacion: Record<string, unknown> = { calificacion };
   if (vehiculoFocoId) patchCalificacion.vehiculo_id = vehiculoFocoId;
+
+  // Mismo criterio que WhatsApp/Instagram/Messenger: si el auto en foco ya
+  // tiene vendedor asignado en Stock y esta charla todavía no tiene
+  // vendedor, se la asignamos a esa persona en vez de esperar a la ronda
+  // por sucursal del handoff.
+  if (vehiculoFocoId && !conversacion.vendedor_id) {
+    const { data: vehiculoFoco } = await supabase.from("vehiculos").select("vendedor_asignado_id, vendedor:vendedor_asignado_id ( activo )").eq("id", vehiculoFocoId).maybeSingle();
+    const vendedorAsignadoActivo = vehiculoFoco?.vendedor as { activo?: boolean } | { activo?: boolean }[] | null | undefined;
+    const estaActivo = Array.isArray(vendedorAsignadoActivo) ? vendedorAsignadoActivo[0]?.activo : vendedorAsignadoActivo?.activo;
+    if (vehiculoFoco?.vendedor_asignado_id && estaActivo) {
+      patchCalificacion.vendedor_id = vehiculoFoco.vendedor_asignado_id;
+      patchCalificacion.estado_lead = "asignado";
+      conversacion.vendedor_id = vehiculoFoco.vendedor_asignado_id;
+    }
+  }
+
   await supabase.from("rodi_conversaciones").update(patchCalificacion).eq("id", conversacion.id);
 
   // Nombre/email/teléfono que el cliente vaya dando durante la charla se

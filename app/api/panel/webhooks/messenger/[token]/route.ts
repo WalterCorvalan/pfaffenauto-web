@@ -275,7 +275,7 @@ async function ejecutarAgente(conversacionId: string, psid: string) {
   if (!isAiConfiguredV2()) return;
   if (!estaEnHorarioAtencion()) return;
 
-  const { data: conversacionActual } = await supabase.from("messenger_conversaciones").select("ai_habilitada, contacto_id, vehiculo_id").eq("id", conversacionId).single();
+  const { data: conversacionActual } = await supabase.from("messenger_conversaciones").select("ai_habilitada, contacto_id, vehiculo_id, vendedor_id").eq("id", conversacionId).single();
   if (conversacionActual?.ai_habilitada === false) return;
 
   const { data: mensajes } = await supabase.from("messenger_mensajes").select("direccion, texto").eq("conversacion_id", conversacionId).order("created_at", { ascending: true }).limit(20);
@@ -302,6 +302,21 @@ async function ejecutarAgente(conversacionId: string, psid: string) {
   const patchConversacion: Record<string, unknown> = { calificacion };
   if (estadoSegunCalificacion) patchConversacion.estado_lead = estadoSegunCalificacion;
   if (vehiculoFocoId) patchConversacion.vehiculo_id = vehiculoFocoId;
+
+  // Mismo criterio que WhatsApp/Instagram: si el auto en foco ya tiene
+  // vendedor asignado en Stock y esta charla todavía no tiene vendedor, se
+  // la asignamos a esa persona en vez de dejarla sin nadie (Messenger no
+  // tiene round-robin propio todavía, ver migración de Messenger).
+  if (vehiculoFocoId && !conversacionActual?.vendedor_id) {
+    const { data: vehiculoFoco } = await supabase.from("vehiculos").select("vendedor_asignado_id, vendedor:vendedor_asignado_id ( activo )").eq("id", vehiculoFocoId).maybeSingle();
+    const vendedorAsignadoActivo = vehiculoFoco?.vendedor as { activo?: boolean } | { activo?: boolean }[] | null | undefined;
+    const estaActivo = Array.isArray(vendedorAsignadoActivo) ? vendedorAsignadoActivo[0]?.activo : vendedorAsignadoActivo?.activo;
+    if (vehiculoFoco?.vendedor_asignado_id && estaActivo) {
+      patchConversacion.vendedor_id = vehiculoFoco.vendedor_asignado_id;
+      patchConversacion.estado_lead = "asignado";
+    }
+  }
+
   await supabase.from("messenger_conversaciones").update(patchConversacion).eq("id", conversacionId);
 
   if (datos_detectados?.nombre && conversacionActual?.contacto_id) {

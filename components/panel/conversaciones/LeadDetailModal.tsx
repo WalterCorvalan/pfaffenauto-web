@@ -38,6 +38,28 @@ const CALIFICACIONES = [
 const inputClass = "w-full bg-slate-50 dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-lg px-3 py-2 text-sm outline-none focus:border-rose-500";
 const labelClass = "text-[11px] font-bold uppercase tracking-widest text-slate-500 dark:text-slate-400 mb-1 flex items-center gap-1.5";
 
+// Antes cada sección del detalle era el mismo cuadro gris (bg-slate-50) sin
+// distinción visual -- con 8 secciones apiladas costaba ubicarse de un
+// vistazo. Cada sección tiene ahora su propio color de acento (borde
+// izquierdo + fondo tintado muy suave + ícono con chip de color), mismo
+// patrón que ya usaba el bloque "Resumen de la IA" (indigo) más abajo.
+const SECCION_COLOR: Record<string, { card: string; chip: string; icono: string }> = {
+  vehiculo: { card: "bg-blue-50/50 dark:bg-blue-500/5 border-blue-100 dark:border-blue-500/10 border-l-4 border-l-blue-400 dark:border-l-blue-500", chip: "bg-blue-100 dark:bg-blue-500/15 text-blue-600 dark:text-blue-300", icono: "text-blue-600 dark:text-blue-300" },
+  vendedor: { card: "bg-violet-50/50 dark:bg-violet-500/5 border-violet-100 dark:border-violet-500/10 border-l-4 border-l-violet-400 dark:border-l-violet-500", chip: "bg-violet-100 dark:bg-violet-500/15 text-violet-600 dark:text-violet-300", icono: "text-violet-600 dark:text-violet-300" },
+  prospecto: { card: "bg-amber-50/50 dark:bg-amber-500/5 border-amber-100 dark:border-amber-500/10 border-l-4 border-l-amber-400 dark:border-l-amber-500", chip: "bg-amber-100 dark:bg-amber-500/15 text-amber-600 dark:text-amber-300", icono: "text-amber-600 dark:text-amber-300" },
+  canal: { card: "bg-cyan-50/50 dark:bg-cyan-500/5 border-cyan-100 dark:border-cyan-500/10 border-l-4 border-l-cyan-400 dark:border-l-cyan-500", chip: "bg-cyan-100 dark:bg-cyan-500/15 text-cyan-600 dark:text-cyan-300", icono: "text-cyan-600 dark:text-cyan-300" },
+  eventos: { card: "bg-slate-50 dark:bg-white/5 border-slate-100 dark:border-white/10 border-l-4 border-l-slate-300 dark:border-l-white/20", chip: "bg-slate-200 dark:bg-white/10 text-slate-600 dark:text-slate-300", icono: "text-slate-500 dark:text-slate-400" },
+  tareas: { card: "bg-rose-50/50 dark:bg-rose-500/5 border-rose-100 dark:border-rose-500/10 border-l-4 border-l-rose-400 dark:border-l-rose-500", chip: "bg-rose-100 dark:bg-rose-500/15 text-rose-600 dark:text-rose-300", icono: "text-rose-600 dark:text-rose-300" },
+  historial: { card: "bg-emerald-50/50 dark:bg-emerald-500/5 border-emerald-100 dark:border-emerald-500/10 border-l-4 border-l-emerald-400 dark:border-l-emerald-500", chip: "bg-emerald-100 dark:bg-emerald-500/15 text-emerald-600 dark:text-emerald-300", icono: "text-emerald-600 dark:text-emerald-300" },
+  peritaje: { card: "bg-fuchsia-50/50 dark:bg-fuchsia-500/5 border-fuchsia-100 dark:border-fuchsia-500/10 border-l-4 border-l-fuchsia-400 dark:border-l-fuchsia-500", chip: "bg-fuchsia-100 dark:bg-fuchsia-500/15 text-fuchsia-600 dark:text-fuchsia-300", icono: "text-fuchsia-600 dark:text-fuchsia-300" },
+  testdrive: { card: "bg-orange-50/50 dark:bg-orange-500/5 border-orange-100 dark:border-orange-500/10 border-l-4 border-l-orange-400 dark:border-l-orange-500", chip: "bg-orange-100 dark:bg-orange-500/15 text-orange-600 dark:text-orange-300", icono: "text-orange-600 dark:text-orange-300" },
+};
+// Ícono de sección envuelto en un chip circular de color, en vez de un
+// ícono suelto gris -- reusado en las 8 cabeceras de abajo.
+function IconoSeccion({ icono: Icono, color }: { icono: any; color: string }) {
+  return <span className={`w-6 h-6 rounded-lg flex items-center justify-center shrink-0 ${SECCION_COLOR[color].chip}`}><Icono className="w-3.5 h-3.5" /></span>;
+}
+
 interface Perfil { id: string; nombre: string; roles: string[] }
 
 function Dato({ label, valor }: { label: string; valor?: string | null }) {
@@ -61,6 +83,13 @@ const CONTACTO_TABLA_POR_ORIGEN: Record<string, string | null> = {
   whatsapp: "whatsapp_contactos", instagram: "instagram_contactos", messenger: "messenger_contactos", rodi: null, manual: null,
 };
 const ETIQUETA_ORIGEN: Record<string, string> = { whatsapp: "WhatsApp", instagram: "Instagram", messenger: "Messenger", rodi: "Rodi", manual: "carga manual" };
+// Avatar del header con degradé por canal -- antes no había ningún elemento
+// visual junto al nombre, mismo vocabulario de color que los íconos de
+// origen en LeadsUnificadosClient.tsx (whatsapp verde, instagram rosa, etc).
+const AVATAR_GRADIENTE_ORIGEN: Record<string, string> = {
+  whatsapp: "from-emerald-500 to-emerald-700", instagram: "from-pink-500 to-fuchsia-700",
+  messenger: "from-blue-500 to-blue-700", rodi: "from-indigo-500 to-violet-700", manual: "from-slate-500 to-slate-700",
+};
 
 export default function LeadDetailModal({
   leadId, origen, miId, vendedores, sucursales = [], onClose, onActualizado, inline = false,
@@ -445,9 +474,14 @@ export default function LeadDetailModal({
         <div className="px-5 pb-6 space-y-4">
           <div>
             <div className="flex items-start justify-between gap-3 mb-2">
-              <div>
-                <h1 className="text-xl font-bold text-slate-900 dark:text-white">{nombre}</h1>
-                <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">{origen === "manual" ? "Lead cargado a mano" : `Consulta por ${ETIQUETA_ORIGEN[origen]}`}</p>
+              <div className="flex items-center gap-3">
+                <div className={`w-11 h-11 rounded-full bg-gradient-to-br ${AVATAR_GRADIENTE_ORIGEN[origen]} text-white flex items-center justify-center font-black text-sm shrink-0 shadow-sm`}>
+                  {nombre.substring(0, 2).toUpperCase()}
+                </div>
+                <div>
+                  <h1 className="text-xl font-bold text-slate-900 dark:text-white">{nombre}</h1>
+                  <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">{origen === "manual" ? "Lead cargado a mano" : `Consulta por ${ETIQUETA_ORIGEN[origen]}`}</p>
+                </div>
               </div>
               <select value={lead.estado_lead || "nuevo"} disabled={guardandoEstado} onChange={(e) => cambiarEstado(e.target.value)}
                 className={`text-[10px] font-bold uppercase tracking-widest px-2.5 py-1.5 rounded-lg border outline-none cursor-pointer disabled:opacity-50 shrink-0 ${ESTADO_COLOR[lead.estado_lead] || ESTADO_COLOR.nuevo}`}>
@@ -503,15 +537,15 @@ export default function LeadDetailModal({
               <button onClick={marcarAsistenciaAtendida} className="shrink-0 text-[11px] font-bold text-orange-700 bg-white px-3 py-1.5 rounded-lg hover:bg-orange-50">Marcar atendida</button>
             </div>
           ) : (
-            <button onClick={() => setShowAsistenciaModal(true)} className="flex items-center justify-center gap-2 w-full bg-white dark:bg-white/5 border border-slate-200 dark:border-white/10 hover:bg-slate-50 dark:hover:bg-white/10 text-slate-600 dark:text-slate-300 font-bold py-2 rounded-xl text-[11px] uppercase tracking-widest">
+            <button onClick={() => setShowAsistenciaModal(true)} className="flex items-center justify-center gap-2 w-full bg-white dark:bg-white/5 border border-orange-200 dark:border-orange-500/20 hover:bg-orange-50 dark:hover:bg-orange-500/10 text-orange-600 dark:text-orange-300 font-bold py-2 rounded-xl text-[11px] uppercase tracking-widest transition-colors">
               <LifeBuoy className="w-3.5 h-3.5" /> Pedir asistencia
             </button>
           )}
 
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div className="space-y-4">
-              <div className="bg-slate-50 dark:bg-white/5 border border-slate-100 dark:border-white/10 rounded-2xl p-4">
-                <h2 className={labelClass}><CarFront className="w-3.5 h-3.5" /> Vehículo de interés</h2>
+              <div className={`border rounded-2xl p-4 ${SECCION_COLOR.vehiculo.card}`}>
+                <h2 className={labelClass}><IconoSeccion icono={CarFront} color="vehiculo" /> Vehículo de interés</h2>
                 <div className="relative">
                   {vehiculo && !mostrarListaVehiculos ? (
                     <button type="button" disabled={guardandoVehiculo} onClick={() => { setBusquedaVehiculo(""); setMostrarListaVehiculos(true); }}
@@ -556,16 +590,16 @@ export default function LeadDetailModal({
                 </div>
               </div>
 
-              <div className="bg-slate-50 dark:bg-white/5 border border-slate-100 dark:border-white/10 rounded-2xl p-4">
-                <h2 className={labelClass}><User className="w-3.5 h-3.5" /> Vendedor asignado</h2>
+              <div className={`border rounded-2xl p-4 ${SECCION_COLOR.vendedor.card}`}>
+                <h2 className={labelClass}><IconoSeccion icono={User} color="vendedor" /> Vendedor asignado</h2>
                 <select value={lead.vendedor_id || ""} disabled={guardandoVendedor} onChange={(e) => cambiarVendedor(e.target.value)} className={inputClass}>
                   <option value="">Sin asignar</option>
                   {vendedores.map((v) => (<option key={v.id} value={v.id}>{v.nombre}</option>))}
                 </select>
               </div>
 
-              <div className="bg-slate-50 dark:bg-white/5 border border-slate-100 dark:border-white/10 rounded-2xl p-4 space-y-3">
-                <h2 className={labelClass}><MapPin className="w-3.5 h-3.5" /> Prospecto</h2>
+              <div className={`border rounded-2xl p-4 space-y-3 ${SECCION_COLOR.prospecto.card}`}>
+                <h2 className={labelClass}><IconoSeccion icono={MapPin} color="prospecto" /> Prospecto</h2>
                 <div>
                   <div className="flex items-center justify-between mb-1">
                     <span className="text-[10px] font-bold uppercase tracking-widest text-slate-400">Domicilio</span>
@@ -586,9 +620,9 @@ export default function LeadDetailModal({
                 </div>
               </div>
 
-              <div className="bg-slate-50 dark:bg-white/5 border border-slate-100 dark:border-white/10 rounded-2xl p-4 space-y-3">
+              <div className={`border rounded-2xl p-4 space-y-3 ${SECCION_COLOR.canal.card}`}>
                 <div>
-                  <h2 className={labelClass}><Radio className="w-3.5 h-3.5" /> Canal de origen</h2>
+                  <h2 className={labelClass}><IconoSeccion icono={Radio} color="canal" /> Canal de origen</h2>
                   <div className="relative">
                     <select
                       value={lead.canal_origen || ""}
@@ -603,7 +637,7 @@ export default function LeadDetailModal({
                   </div>
                 </div>
                 <div>
-                  <h2 className={labelClass}><Building2 className="w-3.5 h-3.5" /> Sucursal</h2>
+                  <h2 className={labelClass}><IconoSeccion icono={Building2} color="canal" /> Sucursal</h2>
                   <div className="relative">
                     <select
                       value={lead.sucursal_id || ""}
@@ -638,9 +672,9 @@ export default function LeadDetailModal({
             </div>
 
             <div className="space-y-4">
-              <div className="bg-slate-50 dark:bg-white/5 border border-slate-100 dark:border-white/10 rounded-2xl p-4">
+              <div className={`border rounded-2xl p-4 ${SECCION_COLOR.eventos.card}`}>
                 <div className="flex items-center justify-between mb-2">
-                  <h2 className={labelClass + " mb-0"}><History className="w-3.5 h-3.5" /> Eventos</h2>
+                  <h2 className={labelClass + " mb-0"}><IconoSeccion icono={History} color="eventos" /> Eventos</h2>
                 </div>
                 <div className="space-y-2 max-h-40 overflow-y-auto">
                   {eventos.length === 0 ? <p className="text-xs text-slate-400 italic">Lead creado</p> : eventos.map((ev) => (
@@ -652,9 +686,9 @@ export default function LeadDetailModal({
                 </div>
               </div>
 
-              <div className="bg-slate-50 dark:bg-white/5 border border-slate-100 dark:border-white/10 rounded-2xl p-4">
+              <div className={`border rounded-2xl p-4 ${SECCION_COLOR.tareas.card}`}>
                 <div className="flex items-center justify-between mb-2">
-                  <h2 className={labelClass + " mb-0"}><Calendar className="w-3.5 h-3.5" /> Tareas de seguimiento</h2>
+                  <h2 className={labelClass + " mb-0"}><IconoSeccion icono={Calendar} color="tareas" /> Tareas de seguimiento</h2>
                   <button onClick={() => setShowTareaModal(true)} className="flex items-center gap-1 text-[11px] font-bold text-rose-600 hover:text-rose-700"><Plus className="w-3.5 h-3.5" /> Nueva</button>
                 </div>
                 <TareasGrupo titulo="Vencidas" icono={<AlertTriangle className="w-3.5 h-3.5 text-rose-500" />} tareas={vencidas} />
@@ -665,8 +699,8 @@ export default function LeadDetailModal({
             </div>
           </div>
 
-          <div className="bg-slate-50 dark:bg-white/5 border border-slate-100 dark:border-white/10 rounded-2xl p-4 space-y-3">
-            <h2 className={labelClass}><FileText className="w-3.5 h-3.5" /> Historial comercial</h2>
+          <div className={`border rounded-2xl p-4 space-y-3 ${SECCION_COLOR.historial.card}`}>
+            <h2 className={labelClass}><IconoSeccion icono={FileText} color="historial" /> Historial comercial</h2>
             {presupuestos.length === 0 && senas.length === 0 && ventas.length === 0 ? (
               <p className="text-xs text-slate-400 italic">Todavía no se generó ningún presupuesto, seña ni venta para este lead.</p>
             ) : (
@@ -705,9 +739,9 @@ export default function LeadDetailModal({
           </div>
 
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            <div className="bg-slate-50 dark:bg-white/5 border border-slate-100 dark:border-white/10 rounded-2xl p-4 space-y-3">
+            <div className={`border rounded-2xl p-4 space-y-3 ${SECCION_COLOR.peritaje.card}`}>
               <div className="flex items-center justify-between">
-                <h2 className={labelClass + " mb-0"}><ClipboardCheck className="w-3.5 h-3.5" /> Peritaje</h2>
+                <h2 className={labelClass + " mb-0"}><IconoSeccion icono={ClipboardCheck} color="peritaje" /> Peritaje</h2>
                 {soportaPeritaje && (
                   <button onClick={iniciarPeritaje} disabled={creandoPeritaje} className="flex items-center gap-1 text-[11px] font-bold text-[#0145F2] hover:text-[#0138c9] disabled:opacity-50">
                     <Plus className="w-3.5 h-3.5" /> {creandoPeritaje ? "Iniciando..." : "Iniciar peritaje"}
@@ -729,9 +763,9 @@ export default function LeadDetailModal({
               )}
             </div>
 
-            <div className="bg-slate-50 dark:bg-white/5 border border-slate-100 dark:border-white/10 rounded-2xl p-4">
+            <div className={`border rounded-2xl p-4 ${SECCION_COLOR.testdrive.card}`}>
               <div className="flex items-center justify-between mb-2">
-                <h2 className={labelClass + " mb-0"}><Car className="w-3.5 h-3.5" /> Test Drive</h2>
+                <h2 className={labelClass + " mb-0"}><IconoSeccion icono={Car} color="testdrive" /> Test Drive</h2>
                 <button onClick={() => setShowTestDriveModal(true)} className="flex items-center gap-1 text-[11px] font-bold text-[#0145F2] hover:text-[#0138c9]"><Plus className="w-3.5 h-3.5" /> Agendar</button>
               </div>
               {testDrives.length === 0 ? <p className="text-xs text-slate-400 italic">Sin test drives agendados.</p> : (

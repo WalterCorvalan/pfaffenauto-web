@@ -36,11 +36,12 @@ interface Props {
   miId: string;
   editando?: any;
   soloFotos?: boolean;
+  soyAdmin?: boolean;
   onClose: () => void;
   onCreado: (v: any) => void;
 }
 
-export default function NuevoVehiculoModal({ perfiles, clientes, sucursales, miId, editando, soloFotos = false, onClose, onCreado }: Props) {
+export default function NuevoVehiculoModal({ perfiles, clientes, sucursales, miId, editando, soloFotos = false, soyAdmin = false, onClose, onCreado }: Props) {
   // Un "editando" sin id es un prefill para alta nueva (ej: desde
   // Consignaciones, precarga propietario/marca pero crea un vehículo nuevo)
   // -- no confundir con edición real de un vehículo existente.
@@ -259,7 +260,10 @@ export default function NuevoVehiculoModal({ perfiles, clientes, sucursales, miI
       const payload = {
         categoria, marca: marca.trim(), modelo: modelo.trim(), anio: Number(anio), patente: patente.trim().toUpperCase(),
         origen: origen || null, color: color.trim(), km: Number(km), precio_venta: Number(precioVenta), moneda_venta: monedaVenta,
-        precio_compra: precioCompra ? Number(precioCompra) : null, moneda_compra: monedaCompra,
+        // Solo admin ve/edita el costo interno -- si no es admin, ni
+        // mandamos estas dos claves (así un update no pisa con null el
+        // precio de compra real que ya tenía cargado un auto).
+        ...(soyAdmin ? { precio_compra: precioCompra ? Number(precioCompra) : null, moneda_compra: monedaCompra } : {}),
         facturado,
         factura_importe: facturado && facturaImporte ? Number(facturaImporte) : null,
         factura_numero: facturado ? (facturaNumero || null) : null,
@@ -481,16 +485,20 @@ export default function NuevoVehiculoModal({ perfiles, clientes, sucursales, miI
                   <option value="USD">USD</option><option value="ARS">ARS</option>
                 </select>
               </div>
-              <div>
-                <label className={labelClass}>Precio compra (opcional)</label>
-                <input type="text" inputMode="numeric" value={precioCompra} onChange={(e) => setPrecioCompra(e.target.value.replace(/\D/g, ""))} placeholder="12000000" className={inputClass} />
-              </div>
-              <div>
-                <label className={labelClass}>Moneda compra</label>
-                <select value={monedaCompra} onChange={(e) => setMonedaCompra(e.target.value)} className={inputClass}>
-                  <option value="USD">USD</option><option value="ARS">ARS</option>
-                </select>
-              </div>
+              {soyAdmin && (
+                <>
+                  <div>
+                    <label className={labelClass}>Precio compra (opcional)</label>
+                    <input type="text" inputMode="numeric" value={precioCompra} onChange={(e) => setPrecioCompra(e.target.value.replace(/\D/g, ""))} placeholder="12000000" className={inputClass} />
+                  </div>
+                  <div>
+                    <label className={labelClass}>Moneda compra</label>
+                    <select value={monedaCompra} onChange={(e) => setMonedaCompra(e.target.value)} className={inputClass}>
+                      <option value="USD">USD</option><option value="ARS">ARS</option>
+                    </select>
+                  </div>
+                </>
+              )}
             </div>
 
             <div className="mt-3">

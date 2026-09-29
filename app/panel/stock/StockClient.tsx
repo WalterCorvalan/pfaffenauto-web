@@ -88,8 +88,8 @@ function pendientesTexto(v: Vehiculo) {
 }
 
 export default function StockClient({
-  vehiculosIniciales, mandatosIniciales, perfiles, clientes, catalogoConfigInicial, sucursales, miId, diasEstancado = 90, chequesPendientes0km = [], cuentas = [],
-}: { vehiculosIniciales: Vehiculo[]; mandatosIniciales: Mandato[]; perfiles: Perfil[]; clientes: Cliente[]; catalogoConfigInicial: CatalogoConfig | null; sucursales: { id: string; nombre: string }[]; miId: string; diasEstancado?: number; chequesPendientes0km?: { id: string; vehiculo_id: string; monto: number; moneda: string }[]; cuentas?: { id: string; nombre: string; moneda: string }[] }) {
+  vehiculosIniciales, mandatosIniciales, perfiles, clientes, catalogoConfigInicial, sucursales, miId, diasEstancado = 90, chequesPendientes0km = [], cuentas = [], soyAdmin = false,
+}: { vehiculosIniciales: Vehiculo[]; mandatosIniciales: Mandato[]; perfiles: Perfil[]; clientes: Cliente[]; catalogoConfigInicial: CatalogoConfig | null; sucursales: { id: string; nombre: string }[]; miId: string; diasEstancado?: number; chequesPendientes0km?: { id: string; vehiculo_id: string; monto: number; moneda: string }[]; cuentas?: { id: string; nombre: string; moneda: string }[]; soyAdmin?: boolean }) {
   const router = useRouter();
   const searchParams = useSearchParams();
   const [vehiculos, setVehiculos] = useState(vehiculosIniciales);
@@ -575,7 +575,7 @@ export default function StockClient({
         </div>
       </div>
 
-      {(modalNuevo || editando) && <NuevoVehiculoModal perfiles={perfiles} clientes={clientes} sucursales={sucursales} miId={miId} editando={editando || undefined} soloFotos={!puedeEditarCompleto} onClose={() => { setModalNuevo(false); setEditando(null); }} onCreado={onCreadoVehiculo} />}
+      {(modalNuevo || editando) && <NuevoVehiculoModal perfiles={perfiles} clientes={clientes} sucursales={sucursales} miId={miId} editando={editando || undefined} soloFotos={!puedeEditarCompleto} soyAdmin={soyAdmin} onClose={() => { setModalNuevo(false); setEditando(null); }} onCreado={onCreadoVehiculo} />}
       {fichaRapidaVehiculo && (
         <FichaRapidaModal
           vehiculo={fichaRapidaVehiculo}
@@ -599,6 +599,7 @@ export default function StockClient({
           sucursales={sucursales}
           puedeEditarCompleto={puedeEditarCompleto}
           puedeEliminar={puedeEliminar}
+          soyAdmin={soyAdmin}
           onClose={() => setFichaVehiculo(null)}
           onActualizado={(id, cambios) => { actualizarVehiculo(id, cambios); setFichaVehiculo((f) => (f && f.id === id ? { ...f, ...cambios } : f)); }}
           onCreado={(v) => { onCreadoVehiculo(v); setFichaVehiculo(v); }}
