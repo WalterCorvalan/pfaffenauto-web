@@ -2,21 +2,21 @@
 
 import { useEffect, useState } from "react";
 
-// Lun a Sáb, 9 a 19hs -- mismo horario que ya se muestra como texto fijo
-// en ambas sucursales (FALLBACK_DATA en page.tsx).
-const DIA_DESDE = 1; // lunes
-const DIA_HASTA = 6; // sábado
+// Lun a Vie 9 a 18hs, Sáb 9 a 13hs -- mismo horario que ya se muestra como
+// texto fijo en ambas sucursales (FALLBACK_DATA en page.tsx).
 const HORA_DESDE = 9;
-const HORA_HASTA = 19;
+const HORA_HASTA_SEMANA = 18;
+const HORA_HASTA_SABADO = 13;
 
 function calcularEstado(ahora: Date) {
-  const dia = ahora.getDay();
+  const dia = ahora.getDay(); // 0 domingo ... 6 sábado
   const hora = ahora.getHours() + ahora.getMinutes() / 60;
-  const esDiaHabil = dia >= DIA_DESDE && dia <= DIA_HASTA;
-  const abierto = esDiaHabil && hora >= HORA_DESDE && hora < HORA_HASTA;
+  const esDiaHabil = dia >= 1 && dia <= 6;
+  const horaHasta = dia === 6 ? HORA_HASTA_SABADO : HORA_HASTA_SEMANA;
+  const abierto = esDiaHabil && hora >= HORA_DESDE && hora < horaHasta;
 
   if (abierto) {
-    return { abierto: true, texto: `Abierto ahora · cierra a las ${HORA_HASTA}:00hs` };
+    return { abierto: true, texto: `Abierto ahora · cierra a las ${horaHasta}:00hs` };
   }
   if (esDiaHabil && hora < HORA_DESDE) {
     return { abierto: false, texto: `Cerrado · abre hoy a las ${HORA_DESDE}:00hs` };

@@ -26,13 +26,13 @@ const FALLBACK_DATA: Record<
     imagen: "/VDM.jpeg",
     telefono: "11 37564398",
     direccion: "Casa Central, Buenos Aires",
-    horario: "Lun a Sáb - 9:00 a 19:00hs",
+    horario: "Lun a Vie - 9:00 a 18:00hs, Sáb - 9:00 a 13:00hs",
   },
   "don-torcuato": {
     imagen: "/pana.jpg",
     telefono: "11 57998065",
     direccion: "Don Torcuato, Buenos Aires",
-    horario: "Lun a Sáb - 9:00 a 19:00hs",
+    horario: "Lun a Vie - 9:00 a 18:00hs, Sáb - 9:00 a 13:00hs",
   },
 };
 
