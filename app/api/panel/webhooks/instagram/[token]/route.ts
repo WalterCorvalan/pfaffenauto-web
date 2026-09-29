@@ -225,7 +225,7 @@ async function obtenerOCrearConversacion(igUserId: string, username: string | nu
     // vendedor solo (ronda) antes de que termine el insert.
     const { data: nueva } = await supabase
       .from("instagram_conversaciones")
-      .insert({ contacto_id: contacto.id })
+      .insert({ contacto_id: contacto.id, canal_origen: "Instagram" })
       .select("id, vendedor_id, ai_habilitada, canal_origen, vehiculo_id")
       .single();
     conversacion = nueva;
@@ -373,7 +373,7 @@ async function procesarMensajeDirecto(msg: any): Promise<{ conversacionId: strin
   // un posteo/story -- mismo patrón que el webhook de WhatsApp (ver ese
   // archivo). Mismo vocabulario que lib/utm.ts para hablar el mismo idioma
   // que /panel/marketing/pautas.
-  if (msg.referral && !refs.canalOrigen) {
+  if (msg.referral && (!refs.canalOrigen || refs.canalOrigen === "Instagram")) {
     await supabase.from("instagram_conversaciones").update({ canal_origen: "Meta Ads" }).eq("id", refs.conversacionId);
   }
 

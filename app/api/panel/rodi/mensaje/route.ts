@@ -59,7 +59,7 @@ async function procesarMensaje({ sessionId, texto, origenPagina, nombre, telefon
   if (!conversacion) {
     const { data: nueva, error } = await supabase
       .from("rodi_conversaciones")
-      .insert({ session_id: sessionId, origen_pagina: origenPagina || null, nombre_contacto: nombre || null, telefono_contacto: telefono || null, email_contacto: email || null })
+      .insert({ session_id: sessionId, canal_origen: "Rodi", origen_pagina: origenPagina || null, nombre_contacto: nombre || null, telefono_contacto: telefono || null, email_contacto: email || null })
       .select("*")
       .single();
     if (error || !nueva) {
