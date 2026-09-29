@@ -65,6 +65,8 @@ export default function EditarSenaModal({ sena, vendedores, sucursales, miId, so
     (senaUsd ? Number(senaUsd) : null) !== (sena.sena_usd ?? null);
 
   const guardar = async () => {
+    if (!sucursalId) return alert("Elegí la sucursal.");
+    if (!vendedorId) return alert("Elegí el vendedor.");
     setGuardando(true);
     try {
       const payload = {
@@ -140,7 +142,7 @@ export default function EditarSenaModal({ sena, vendedores, sucursales, miId, so
 
           <div className="grid grid-cols-2 gap-3">
             <div><label className={labelClass}>Sucursal</label><select className={inputClass} value={sucursalId} onChange={(e) => setSucursalId(e.target.value)}><option value="">—</option>{sucursales.map((s) => <option key={s.id} value={s.id}>{s.nombre}</option>)}</select></div>
-            <div><label className={labelClass}>Vendedor</label><select className={inputClass} value={vendedorId} onChange={(e) => setVendedorId(e.target.value)}><option value="">—</option>{vendedores.map((v) => <option key={v.id} value={v.id}>{v.nombre}</option>)}</select></div>
+            <div><label className={labelClass}>Vendedor</label><select className={inputClass} value={vendedorId} onChange={(e) => setVendedorId(e.target.value)}><option value="">—</option>{vendedores.filter((v) => v.roles?.includes("ventas") || v.roles?.includes("encargado")).map((v) => <option key={v.id} value={v.id}>{v.nombre}</option>)}</select></div>
           </div>
 
           <div className="grid grid-cols-2 gap-3">
@@ -149,10 +151,10 @@ export default function EditarSenaModal({ sena, vendedores, sucursales, miId, so
           </div>
 
           <div className="grid grid-cols-2 gap-3">
-            <div><label className={labelClass}>Venta ($)</label><input type="text" inputMode="numeric" className={inputClass} value={ventaArs} onChange={(e) => setVentaArs(e.target.value.replace(/\D/g, ""))} /></div>
-            <div><label className={labelClass}>Venta (US$)</label><input type="text" inputMode="numeric" className={inputClass} value={ventaUsd} onChange={(e) => setVentaUsd(e.target.value.replace(/\D/g, ""))} /></div>
-            <div><label className={labelClass}>Seña ($)</label><input type="text" inputMode="numeric" className={inputClass} value={senaArs} onChange={(e) => setSenaArs(e.target.value.replace(/\D/g, ""))} /></div>
-            <div><label className={labelClass}>Seña (US$)</label><input type="text" inputMode="numeric" className={inputClass} value={senaUsd} onChange={(e) => setSenaUsd(e.target.value.replace(/\D/g, ""))} /></div>
+            <div><label className={labelClass}>Venta ($)</label><input type="text" inputMode="numeric" className={`${inputClass} disabled:opacity-50`} value={ventaArs} onChange={(e) => setVentaArs(e.target.value.replace(/\D/g, ""))} disabled={!!ventaUsd} /></div>
+            <div><label className={labelClass}>Venta (US$)</label><input type="text" inputMode="numeric" className={`${inputClass} disabled:opacity-50`} value={ventaUsd} onChange={(e) => setVentaUsd(e.target.value.replace(/\D/g, ""))} disabled={!!ventaArs} /></div>
+            <div><label className={labelClass}>Seña ($)</label><input type="text" inputMode="numeric" className={`${inputClass} disabled:opacity-50`} value={senaArs} onChange={(e) => setSenaArs(e.target.value.replace(/\D/g, ""))} disabled={!!senaUsd} /></div>
+            <div><label className={labelClass}>Seña (US$)</label><input type="text" inputMode="numeric" className={`${inputClass} disabled:opacity-50`} value={senaUsd} onChange={(e) => setSenaUsd(e.target.value.replace(/\D/g, ""))} disabled={!!senaArs} /></div>
           </div>
           <p className="text-[10px] text-amber-600 dark:text-amber-400">Si corregís el monto de la seña acá, no se ajusta solo el movimiento ya registrado en Finanzas (si lo hubo) — avisá a Tesorería si hace falta.</p>
           {precioCambio && !soyAdmin && !solicitudEnviada && (

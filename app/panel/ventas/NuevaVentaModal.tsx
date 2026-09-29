@@ -327,6 +327,13 @@ export default function NuevaVentaModal({ perfiles, clientes, vehiculos, miId, s
       if (!estadoTocado) setEstado("activa");
     } else {
       setBusquedaVehiculo("");
+      // Limpia los datos del vehículo anterior -- si no, "Cambiar" para
+      // tildar Carga manual dejaba marca/modelo/año/patente/precio/moneda
+      // del auto ya deseleccionado pisando los campos de carga manual
+      // (comparten el mismo estado) sin ninguna señal visual de que
+      // quedaron datos viejos.
+      setVMarca(""); setVModelo(""); setVAnio(""); setVPatente(""); setVColor(""); setVCondicion("Muy bueno");
+      setKm(""); setPrecioVenta(""); setMonedaVenta("USD");
       if (!estadoTocado) setEstado("borrador");
     }
   };
@@ -450,6 +457,10 @@ export default function NuevaVentaModal({ perfiles, clientes, vehiculos, miId, s
   const guardarEdicion = async () => {
     if (!precioVenta || !compradorNombre.trim()) {
       setError("Completá al menos el precio de venta y el nombre del comprador.");
+      return;
+    }
+    if (estado !== "borrador" && !vendedorId) {
+      setError("Elegí un vendedor -- solo una venta en Borrador puede quedar sin vendedor asignado.");
       return;
     }
     if (pagoEfectivoArs && !pagoEfectivoArsCuentaId) {
@@ -786,7 +797,7 @@ export default function NuevaVentaModal({ perfiles, clientes, vehiculos, miId, s
         <div className="space-y-4 px-6 py-4 overflow-y-auto overflow-x-hidden flex-1 min-h-0">
           {!esEdicion && (
             <label className={`flex items-start gap-2.5 px-3 py-2.5 rounded-xl border cursor-pointer ${cargaManual ? "bg-amber-50 dark:bg-amber-500/10 border-amber-300 dark:border-amber-500/30" : "bg-white dark:bg-white/5 border-slate-200 dark:border-white/10"}`}>
-              <input type="checkbox" checked={cargaManual} onChange={(e) => setCargaManual(e.target.checked)} className="w-4 h-4 mt-0.5 accent-[#0145F2]" />
+              <input type="checkbox" checked={cargaManual} onChange={(e) => { setCargaManual(e.target.checked); if (e.target.checked && vehiculoId) elegirVehiculo(""); }} className="w-4 h-4 mt-0.5 accent-[#0145F2]" />
               <span>
                 <span className="flex items-center gap-1.5 text-xs font-bold text-slate-700 dark:text-slate-200">↓ Carga manual <span className="font-normal text-slate-400">(venta vieja importada desde Excel)</span></span>
                 <span className="block text-[10px] text-slate-500 dark:text-slate-400 mt-0.5">Para registrar ventas históricas: permite cargar el vehículo a mano (sin ficha en stock) y la venta nace en estado <strong>Cerrada</strong> directamente. El resto del formulario queda igual.</span>
@@ -1224,7 +1235,7 @@ export default function NuevaVentaModal({ perfiles, clientes, vehiculos, miId, s
                       <label className={labelClass}>Comparte comisión con *</label>
                       <select value={companeroId} onChange={(e) => setCompaneroId(e.target.value)} className={inputClass}>
                         <option value="">— Seleccioná compañero —</option>
-                        {perfiles.filter((p) => p.id !== vendedorId).map((p) => <option key={p.id} value={p.id}>{p.nombre}</option>)}
+                        {vendedores.filter((p) => p.id !== vendedorId).map((p) => <option key={p.id} value={p.id}>{p.nombre}</option>)}
                       </select>
                     </div>
                     <div>
@@ -1354,7 +1365,7 @@ export default function NuevaVentaModal({ perfiles, clientes, vehiculos, miId, s
 
         <div className="flex gap-2 p-6 pt-3 border-t border-slate-100 dark:border-white/10 shrink-0">
           <button type="button" onClick={onClose} className="px-4 py-2.5 text-sm font-semibold bg-white dark:bg-white/5 border border-slate-200 dark:border-white/10 hover:bg-slate-50 dark:hover:bg-white/10 text-slate-600 dark:text-slate-300 rounded-xl">Cancelar</button>
-          {!esEdicion && <button type="button" onClick={() => guardar(true)} disabled={guardando} className="flex-1 py-2.5 flex items-center justify-center gap-2 text-sm font-semibold bg-white dark:bg-white/5 border border-slate-200 dark:border-white/10 hover:bg-slate-50 dark:hover:bg-white/10 text-slate-600 dark:text-slate-300 rounded-xl disabled:opacity-50"><Save className="w-4 h-4" /> Guardar borrador</button>}
+          {!esEdicion && !cargaManual && <button type="button" onClick={() => guardar(true)} disabled={guardando} className="flex-1 py-2.5 flex items-center justify-center gap-2 text-sm font-semibold bg-white dark:bg-white/5 border border-slate-200 dark:border-white/10 hover:bg-slate-50 dark:hover:bg-white/10 text-slate-600 dark:text-slate-300 rounded-xl disabled:opacity-50"><Save className="w-4 h-4" /> Guardar borrador</button>}
           <button type="button" onClick={() => guardar(false)} disabled={guardando} className="flex-1 py-2.5 flex items-center justify-center gap-2 text-sm font-bold bg-[#0145F2] hover:bg-[#0138c9] text-white rounded-xl disabled:opacity-50">
             {guardando ? <Loader2 className="w-4 h-4 animate-spin" /> : <><Save className="w-4 h-4" /> {esEdicion ? "Guardar cambios" : "Crear venta"}</>}
           </button>

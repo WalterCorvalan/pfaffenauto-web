@@ -128,10 +128,15 @@ export default function NuevaSenaModal({
     supabase2.auth.getUser().then(({ data }) => setMiId(data.user?.id || null));
   }, []);
 
-  const vendedoresSinYo = vendedores.filter((v) => v.id !== miId);
+  const vendedoresSinYo = vendedores.filter((v) => v.id !== miId && (v.roles?.includes("ventas") || v.roles?.includes("encargado")));
 
   useEffect(() => {
     if (!vehiculo?.vehiculo_id) return;
+    // Limpia ambas antes de autocompletar -- si no, cambiar de un vehículo
+    // en ARS a uno en USD (o viceversa) dejaba el valor viejo pisado en el
+    // campo que ya no corresponde, violando "venta_ars/venta_usd mutuamente
+    // excluyentes" (ver ARCHITECTURE.md) sin ninguna señal visual.
+    setVentaArs(""); setVentaUsd("");
     // Mismo fallback que Presupuestos: "precio publicado" casi nunca se
     // carga, la mayoría del stock solo tiene precio_venta.
     if (vehiculo.precio_publicado_ars) setVentaArs(String(vehiculo.precio_publicado_ars));
@@ -395,7 +400,7 @@ export default function NuevaSenaModal({
             </div>
 
             <label className="flex items-center gap-3 text-sm text-slate-700 dark:text-slate-200 cursor-pointer bg-white dark:bg-white/5 border border-slate-200 dark:border-white/10 p-4 rounded-xl hover:bg-slate-50 dark:hover:bg-white/10 w-fit transition-colors font-medium">
-              <input type="checkbox" checked={recibePermuta} onChange={(e) => setRecibePermuta(e.target.checked)} className="w-4 h-4 accent-[#0145F2]" /> ¿Recibe auto en permuta?
+              <input type="checkbox" checked={recibePermuta} onChange={(e) => { setRecibePermuta(e.target.checked); if (!e.target.checked) { setVehiculoPermuta(null); setPermutaTasadoArs(""); } }} className="w-4 h-4 accent-[#0145F2]" /> ¿Recibe auto en permuta?
             </label>
 
             {recibePermuta && (

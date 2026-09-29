@@ -17,7 +17,7 @@ export default async function SenasPage() {
     // CRM (origen, pipeline_stage, observaciones, busca_*, etc.).
     supabase.from("clientes").select("id, nombre, apellido, dni_cuit, telefono, telefono_linea, email, fecha_nacimiento, calle, numero_calle, depto, localidad, codigo_postal, provincia, cuit_cuil, estado_civil, profesion").order("nombre").limit(5000),
     supabase.from("vehiculos").select("*").eq("estado", "disponible").order("marca"),
-    supabase.from("perfiles").select("id, nombre").eq("activo", true).order("nombre"),
+    supabase.from("perfiles").select("id, nombre, roles").eq("activo", true).order("nombre"),
     supabase.from("sucursales").select("id, nombre").order("nombre"),
     supabase.from("cuentas").select("id, nombre, moneda").eq("activa", true).order("nombre"),
   ]);
