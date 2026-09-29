@@ -46,11 +46,14 @@ interface Props {
   puedeEliminar: boolean;
   onClose: () => void;
   onAbrirCompleta: () => void;
+  onEditar: () => void;
+  onAbrirPeritaje: () => void;
   onEliminar: (v: Vehiculo) => void;
 }
 
-export default function FichaRapidaModal({ vehiculo, miId, perfiles, puedeEliminar, onClose, onAbrirCompleta, onEliminar }: Props) {
+export default function FichaRapidaModal({ vehiculo, miId, perfiles, puedeEliminar, onClose, onAbrirCompleta, onEditar, onAbrirPeritaje, onEliminar }: Props) {
   const [consultas, setConsultas] = useState<number | null>(null);
+  const [tienePeritaje, setTienePeritaje] = useState<boolean | null>(null);
   const [items, setItems] = useState<ItemPlan[] | null>(null);
   const [accion, setAccion] = useState("");
   const [responsableId, setResponsableId] = useState("");
@@ -71,6 +74,8 @@ export default function FichaRapidaModal({ vehiculo, miId, perfiles, puedeElimin
       supabase2.from("whatsapp_conversaciones").select("id", { count: "exact", head: true }).eq("vehiculo_id", vehiculo.id),
       supabase2.from("instagram_conversaciones").select("id", { count: "exact", head: true }).eq("vehiculo_id", vehiculo.id),
     ]).then(([wa, ig]) => setConsultas((wa.count ?? 0) + (ig.count ?? 0)));
+    supabase2.from("peritajes").select("id", { count: "exact", head: true }).eq("vehiculo_id", vehiculo.id)
+      .then(({ count }) => setTienePeritaje((count ?? 0) > 0));
   }, [vehiculo.id]);
 
   const cargarPlan = () => {
@@ -91,10 +96,11 @@ export default function FichaRapidaModal({ vehiculo, miId, perfiles, puedeElimin
     setGuardando(false);
   };
 
-  const pendientes: string[] = [];
-  if (!vehiculo.publicado_ml) pendientes.push("Sin publicar en ML");
-  if (vehiculo.fotos.length === 0) pendientes.push("Sin foto");
-  if (!vehiculo.precio_venta) pendientes.push("Sin precio");
+  const pendientes: { label: string; onClick: () => void }[] = [];
+  if (!vehiculo.publicado_ml) pendientes.push({ label: "Sin publicar en ML", onClick: onEditar });
+  if (vehiculo.fotos.length === 0) pendientes.push({ label: "Sin foto", onClick: onEditar });
+  if (!vehiculo.precio_venta) pendientes.push({ label: "Sin precio", onClick: onEditar });
+  if (tienePeritaje === false) pendientes.push({ label: "Sin peritaje", onClick: onAbrirPeritaje });
 
   if (!montado) return null;
 
@@ -129,10 +135,14 @@ export default function FichaRapidaModal({ vehiculo, miId, perfiles, puedeElimin
 
           {pendientes.length > 0 && (
             <div className="bg-amber-50 dark:bg-amber-500/10 border border-amber-100 dark:border-amber-500/20 rounded-xl p-3">
-              <p className="text-[10px] font-black uppercase tracking-widest text-amber-600 dark:text-amber-400 mb-1">Preparación y atención comercial</p>
-              <ul className="text-xs text-amber-700 dark:text-amber-300 space-y-0.5">
-                {pendientes.map((p) => <li key={p}>· {p}</li>)}
-              </ul>
+              <p className="text-[10px] font-black uppercase tracking-widest text-amber-600 dark:text-amber-400 mb-1.5">Preparación y atención comercial</p>
+              <div className="flex flex-col gap-1">
+                {pendientes.map((p) => (
+                  <button key={p.label} type="button" onClick={p.onClick} className="text-left text-xs font-bold text-amber-700 dark:text-amber-300 hover:text-amber-900 dark:hover:text-amber-100 hover:underline">
+                    · {p.label}
+                  </button>
+                ))}
+              </div>
             </div>
           )}
 

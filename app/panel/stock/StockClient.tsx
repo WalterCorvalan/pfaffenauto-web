@@ -19,6 +19,7 @@ import TuCatalogoModal from "./TuCatalogoModal";
 import BotonPublicarTodo from "./BotonPublicarTodo";
 import ImportarXlsxModal from "./ImportarXlsxModal";
 import SenaModal from "./SenaModal";
+import PeritajeModal from "./PeritajeModal";
 import PresupuestoModal from "./PresupuestoModal";
 import PrecioEditor from "./PrecioEditor";
 import SucursalEditor from "./SucursalEditor";
@@ -111,6 +112,7 @@ export default function StockClient({
   const [editando, setEditando] = useState<Vehiculo | null>(null);
   const [fichaVehiculo, setFichaVehiculo] = useState<Vehiculo | null>(null);
   const [fichaRapidaVehiculo, setFichaRapidaVehiculo] = useState<Vehiculo | null>(null);
+  const [peritajeVehiculo, setPeritajeVehiculo] = useState<Vehiculo | null>(null);
   const [galeria, setGaleria] = useState<{ fotos: string[]; index: number } | null>(null);
   const [ocupadoId, setOcupadoId] = useState<string | null>(null);
   const [menuMobileAbierto, setMenuMobileAbierto] = useState(false);
@@ -582,9 +584,12 @@ export default function StockClient({
           puedeEliminar={puedeEliminar}
           onClose={() => setFichaRapidaVehiculo(null)}
           onAbrirCompleta={() => { setFichaVehiculo(fichaRapidaVehiculo); setFichaRapidaVehiculo(null); }}
+          onEditar={() => { setEditando(fichaRapidaVehiculo); setFichaRapidaVehiculo(null); }}
+          onAbrirPeritaje={() => { setPeritajeVehiculo(fichaRapidaVehiculo); setFichaRapidaVehiculo(null); }}
           onEliminar={(v) => { eliminarVehiculo(v); setFichaRapidaVehiculo(null); }}
         />
       )}
+      {peritajeVehiculo && <PeritajeModal vehiculo={peritajeVehiculo} miId={miId} onClose={() => setPeritajeVehiculo(null)} />}
       {fichaVehiculo && (
         <FichaVehiculoModal
           vehiculo={fichaVehiculo}
