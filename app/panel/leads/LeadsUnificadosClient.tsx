@@ -29,10 +29,13 @@ const ESTADOS: { value: string; label: string }[] = [
   { value: "convertido", label: "Clientes" },
   { value: "perdido", label: "Perdidos" },
 ];
+// Paleta acotada a propósito -- solo "convertido" (bien) y "perdido" (mal)
+// llevan color semántico; los estados intermedios quedan en gris para no
+// competir por atención con las señales que sí importan (sin respuesta, basura).
 const ESTADO_COLOR: Record<string, string> = {
-  nuevo: "bg-blue-50 text-blue-700 dark:bg-blue-500/10 dark:text-blue-300",
-  asignado: "bg-amber-50 text-amber-700 dark:bg-amber-500/10 dark:text-amber-300",
-  calificando: "bg-indigo-50 text-indigo-700 dark:bg-indigo-500/10 dark:text-indigo-300",
+  nuevo: "bg-slate-100 text-slate-600 dark:bg-white/10 dark:text-slate-300",
+  asignado: "bg-slate-100 text-slate-600 dark:bg-white/10 dark:text-slate-300",
+  calificando: "bg-slate-100 text-slate-600 dark:bg-white/10 dark:text-slate-300",
   convertido: "bg-emerald-50 text-emerald-700 dark:bg-emerald-500/10 dark:text-emerald-300",
   perdido: "bg-rose-50 text-rose-700 dark:bg-rose-500/10 dark:text-rose-300",
 };
@@ -41,9 +44,13 @@ const CALIFICACION_DOT: Record<string, string> = { caliente: "bg-rose-500", tibi
 
 const ORIGEN_ICON: Record<Origen, any> = { whatsapp: MessageCircle, instagram: AtSign, messenger: MessageCircle, rodi: Bot, manual: User };
 const ORIGEN_LABEL: Record<Origen, string> = { whatsapp: "WhatsApp", instagram: "Instagram", messenger: "Messenger", rodi: "Rodi", manual: "Manual" };
+// Ícono del canal en gris con el mismo tono suave en todos -- antes cada
+// canal tenía su color de marca (emerald/pink/blue/indigo) y la bandeja
+// terminaba pareciendo un semáforo; ya está el label + ícono distinto para
+// diferenciarlos, no hace falta color encima.
 const ORIGEN_COLOR: Record<Origen, string> = {
-  whatsapp: "text-emerald-600 dark:text-emerald-400", instagram: "text-pink-600 dark:text-pink-400",
-  messenger: "text-blue-600 dark:text-blue-400", rodi: "text-indigo-600 dark:text-indigo-400", manual: "text-slate-500 dark:text-slate-400",
+  whatsapp: "text-slate-400 dark:text-slate-500", instagram: "text-slate-400 dark:text-slate-500",
+  messenger: "text-slate-400 dark:text-slate-500", rodi: "text-slate-400 dark:text-slate-500", manual: "text-slate-400 dark:text-slate-500",
 };
 
 function diasDesde(iso: string | null) {
@@ -153,7 +160,7 @@ export default function LeadsUnificadosClient({ leadsIniciales, vendedores, sucu
   const sinAsignar = leads.filter((l) => !l.vendedor_id).length;
 
   const filaClase = (id: string) => seleccionado?.id === id
-    ? "bg-rose-50 dark:bg-rose-500/10 border-l-2 border-l-rose-600 dark:border-l-rose-400"
+    ? "bg-slate-50 dark:bg-white/10 border-l-2 border-l-slate-700 dark:border-l-white/40"
     : "bg-white dark:bg-transparent border-l-2 border-l-transparent hover:bg-slate-50 dark:hover:bg-white/5";
 
   return (
@@ -190,7 +197,7 @@ export default function LeadsUnificadosClient({ leadsIniciales, vendedores, sucu
           <div className="flex items-center gap-1.5">
             <div className="relative flex-1">
               <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-slate-400" />
-              <input value={busqueda} onChange={(e) => setBusqueda(e.target.value)} placeholder="Buscar..." className="w-full bg-slate-50 dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-lg py-1.5 pl-8 pr-3 text-xs outline-none focus:border-rose-500 text-slate-900 dark:text-white placeholder:text-slate-400" />
+              <input value={busqueda} onChange={(e) => setBusqueda(e.target.value)} placeholder="Buscar..." className="w-full bg-slate-50 dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-lg py-1.5 pl-8 pr-3 text-xs outline-none focus:border-slate-400 dark:focus:border-white/30 text-slate-900 dark:text-white placeholder:text-slate-400" />
             </div>
             <button onClick={() => setShowFiltros((v) => !v)} title="Más filtros" className={`shrink-0 p-1.5 rounded-lg transition-colors ${showFiltros ? "bg-slate-800 dark:bg-white/10 text-white" : "bg-slate-50 dark:bg-white/5 border border-slate-200 dark:border-white/10 text-slate-500 dark:text-slate-400"}`}>
               <Filter className="w-3.5 h-3.5" />

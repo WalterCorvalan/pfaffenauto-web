@@ -3,11 +3,21 @@
 import { useState } from "react";
 import { supabase2 } from "@/lib/supabase/client";
 import { useRouter } from "next/navigation";
+import { Loader2, Lock, User } from "lucide-react";
 
 // Login propio de panel-v2 — Auth vive en el proyecto Supabase nuevo, separado
 // del de panel-v1 (app/(auth)/login), así que no puede reusar esa sesión.
+//
+// Login por "usuario" (pedido del 29/9): Supabase Auth sigue autenticando
+// por email como siempre, sin tocar ninguna cuenta existente -- acá solo se
+// le pide al empleado un alias corto ("Fede") y, si lo que escribió no es
+// directamente un email, se resuelve a su email real vía
+// /api/panel/login-usuario (perfiles.usuario, ver migraciones/
+// sql_perfiles_usuario.sql) antes de llamar a signInWithPassword. Si alguien
+// todavía prefiere tipear su email de siempre, también funciona -- no hay
+// forma de que este cambio deje a nadie sin poder entrar.
 export default function LoginPageV2() {
-  const [email, setEmail] = useState("");
+  const [usuario, setUsuario] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
@@ -17,6 +27,28 @@ export default function LoginPageV2() {
     e.preventDefault();
     setLoading(true);
     setError(null);
+
+    let email = usuario.trim();
+    if (!email.includes("@")) {
+      try {
+        const res = await fetch("/api/panel/login-usuario", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ usuario: email }),
+        });
+        const data = await res.json();
+        if (!res.ok || !data.email) {
+          setError("Usuario o contraseña incorrectos.");
+          setLoading(false);
+          return;
+        }
+        email = data.email;
+      } catch {
+        setError("No se pudo conectar. Probá de nuevo.");
+        setLoading(false);
+        return;
+      }
+    }
 
     const { data, error: authError } = await supabase2.auth.signInWithPassword({
       email,
@@ -46,102 +78,51 @@ export default function LoginPageV2() {
   };
 
   return (
-    <div className="relative min-h-screen flex items-center justify-center bg-[#050208] px-4 overflow-hidden">
-      <style>{`
-        @keyframes blob1 {
-          0%, 100% { transform: translate(-10%, -10%) scale(1); }
-          33% { transform: translate(20%, 10%) scale(1.3); }
-          66% { transform: translate(-5%, 20%) scale(0.85); }
-        }
-        @keyframes blob2 {
-          0%, 100% { transform: translate(10%, 15%) scale(1); }
-          40% { transform: translate(-20%, -10%) scale(1.2); }
-          75% { transform: translate(15%, -20%) scale(0.9); }
-        }
-        @keyframes blob3 {
-          0%, 100% { transform: translate(0%, 0%) scale(1); }
-          50% { transform: translate(-25%, 15%) scale(1.4); }
-        }
-        @keyframes hueshift {
-          0% { filter: hue-rotate(0deg); }
-          100% { filter: hue-rotate(360deg); }
-        }
-        @keyframes gradientText {
-          0%, 100% { background-position: 0% 50%; }
-          50% { background-position: 100% 50%; }
-        }
-        @keyframes floatIn {
-          from { opacity: 0; transform: translateY(16px) scale(0.98); }
-          to { opacity: 1; transform: translateY(0) scale(1); }
-        }
-        @keyframes borderGlow {
-          0%, 100% { opacity: 0.5; }
-          50% { opacity: 1; }
-        }
-        .psy-field { animation: hueshift 18s linear infinite; }
-        .psy-blob1 { animation: blob1 22s ease-in-out infinite; }
-        .psy-blob2 { animation: blob2 26s ease-in-out infinite; }
-        .psy-blob3 { animation: blob3 30s ease-in-out infinite; }
-        .psy-title {
-          background: linear-gradient(90deg, #ff5fae, #7c5cff, #35d0ff, #ffd25f, #ff5fae);
-          background-size: 300% 100%;
-          -webkit-background-clip: text;
-          background-clip: text;
-          color: transparent;
-          animation: gradientText 6s ease infinite;
-        }
-        .psy-card { animation: floatIn 0.7s cubic-bezier(0.16, 1, 0.3, 1); }
-        .psy-card-border {
-          background: linear-gradient(135deg, #ff5fae, #7c5cff, #35d0ff, #ffd25f);
-          background-size: 300% 300%;
-          animation: gradientText 8s ease infinite, borderGlow 4s ease-in-out infinite;
-        }
-      `}</style>
-
-      {/* Fondo psicodélico: blobs de gradiente girando/pulsando */}
-      <div className="absolute inset-0 psy-field pointer-events-none">
-        <div className="psy-blob1 absolute top-0 left-0 w-[60vw] h-[60vw] max-w-[600px] max-h-[600px] rounded-full bg-fuchsia-500/40 blur-[100px]" />
-        <div className="psy-blob2 absolute bottom-0 right-0 w-[55vw] h-[55vw] max-w-[550px] max-h-[550px] rounded-full bg-cyan-400/40 blur-[100px]" />
-        <div className="psy-blob3 absolute top-1/3 right-1/4 w-[45vw] h-[45vw] max-w-[450px] max-h-[450px] rounded-full bg-violet-500/40 blur-[100px]" />
-        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[40vw] h-[40vw] max-w-[400px] max-h-[400px] rounded-full bg-amber-400/20 blur-[110px]" />
-      </div>
-      {/* Grano sutil para que no quede plano */}
-      <div
-        className="absolute inset-0 opacity-[0.04] pointer-events-none mix-blend-overlay"
-        style={{ backgroundImage: "url(\"data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='120' height='120'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E\")" }}
-      />
-
-      {/* Tarjeta con borde en degradé animado */}
-      <div className="psy-card relative max-w-md w-full rounded-2xl p-[1.5px] psy-card-border shadow-[0_0_80px_-15px_rgba(124,92,255,0.5)]">
-        <div className="rounded-2xl bg-[#0A0710]/90 backdrop-blur-xl px-8 py-10 space-y-8">
-          <div>
-            <h2 className="text-center text-4xl font-black tracking-tight psy-title">
-              Panel
-            </h2>
-            <p className="text-center text-[11px] font-semibold uppercase tracking-[0.2em] text-white/30 mt-1.5">
-              Pfaffen Cars
-            </p>
+    <div className="min-h-[100dvh] flex flex-col items-center justify-center bg-slate-50 dark:bg-[#0a0a0f] px-4 py-8 sm:py-12">
+      <div className="w-full max-w-sm">
+        <div className="flex flex-col items-center mb-8">
+          <div className="w-12 h-12 rounded-2xl bg-[#0145F2] flex items-center justify-center shadow-lg shadow-[#0145F2]/20 mb-4">
+            <span className="text-white font-black text-lg">P</span>
           </div>
+          <h1 className="text-xl font-bold text-slate-900 dark:text-white">Pfaffen Cars</h1>
+          <p className="text-sm text-slate-500 dark:text-slate-400 mt-0.5">Ingresá al panel</p>
+        </div>
 
-          <form className="space-y-5" onSubmit={handleLogin}>
-            <div className="space-y-4">
-              <div>
-                <label className="text-xs font-semibold text-white/50">Email</label>
+        <div className="bg-white dark:bg-[#111] border border-slate-200 dark:border-white/10 rounded-2xl shadow-sm p-6 sm:p-7">
+          <form className="space-y-4" onSubmit={handleLogin} noValidate>
+            <div>
+              <label htmlFor="usuario" className="text-xs font-semibold text-slate-600 dark:text-slate-300">Usuario</label>
+              <div className="relative mt-1.5">
+                <User className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400 pointer-events-none" />
                 <input
-                  type="email"
+                  id="usuario"
+                  type="text"
+                  autoComplete="username"
                   required
                   autoFocus
-                  className="mt-1.5 w-full px-3.5 py-2.5 bg-white/[0.04] border border-white/10 rounded-xl text-white text-sm outline-none transition-colors focus:border-fuchsia-400/60 focus:bg-white/[0.06] placeholder:text-white/20"
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
+                  inputMode="text"
+                  autoCapitalize="none"
+                  autoCorrect="off"
+                  spellCheck={false}
+                  placeholder="Tu nombre de usuario"
+                  className="w-full pl-10 pr-3.5 py-3 bg-slate-50 dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-xl text-base text-slate-900 dark:text-white outline-none transition-colors focus:border-[#0145F2] focus:bg-white dark:focus:bg-white/[0.07] placeholder:text-slate-400"
+                  value={usuario}
+                  onChange={(e) => setUsuario(e.target.value)}
                 />
               </div>
-              <div>
-                <label className="text-xs font-semibold text-white/50">Contraseña</label>
+            </div>
+
+            <div>
+              <label htmlFor="password" className="text-xs font-semibold text-slate-600 dark:text-slate-300">Contraseña</label>
+              <div className="relative mt-1.5">
+                <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400 pointer-events-none" />
                 <input
+                  id="password"
                   type="password"
+                  autoComplete="current-password"
                   required
-                  className="mt-1.5 w-full px-3.5 py-2.5 bg-white/[0.04] border border-white/10 rounded-xl text-white text-sm outline-none transition-colors focus:border-cyan-400/60 focus:bg-white/[0.06] placeholder:text-white/20"
+                  placeholder="••••••••"
+                  className="w-full pl-10 pr-3.5 py-3 bg-slate-50 dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-xl text-base text-slate-900 dark:text-white outline-none transition-colors focus:border-[#0145F2] focus:bg-white dark:focus:bg-white/[0.07] placeholder:text-slate-400"
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
                 />
@@ -149,7 +130,7 @@ export default function LoginPageV2() {
             </div>
 
             {error && (
-              <div className="text-rose-300 text-xs font-semibold text-center bg-rose-500/10 border border-rose-500/20 py-2.5 rounded-xl">
+              <div className="text-rose-700 dark:text-rose-300 text-xs font-medium text-center bg-rose-50 dark:bg-rose-500/10 border border-rose-200 dark:border-rose-500/20 py-2.5 px-3 rounded-xl">
                 {error}
               </div>
             )}
@@ -157,12 +138,17 @@ export default function LoginPageV2() {
             <button
               type="submit"
               disabled={loading}
-              className="w-full flex justify-center py-3 px-4 rounded-xl text-sm font-bold text-white bg-gradient-to-r from-fuchsia-600 via-violet-600 to-cyan-500 hover:brightness-110 transition-all shadow-lg shadow-violet-900/40 disabled:opacity-50"
+              className="w-full flex items-center justify-center gap-2 py-3.5 sm:py-3 rounded-xl text-[15px] sm:text-sm font-bold text-white bg-[#0145F2] hover:bg-[#0138c9] active:bg-[#0130ad] transition-colors shadow-sm disabled:opacity-60 disabled:cursor-not-allowed"
             >
-              {loading ? "Ingresando..." : "Iniciar Sesión"}
+              {loading ? <Loader2 className="w-4 h-4 animate-spin" /> : null}
+              {loading ? "Ingresando..." : "Iniciar sesión"}
             </button>
           </form>
         </div>
+
+        <p className="text-center text-[11px] text-slate-400 dark:text-slate-600 mt-6">
+          Pfaffen Cars — Panel interno
+        </p>
       </div>
     </div>
   );
