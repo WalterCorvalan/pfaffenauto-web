@@ -158,10 +158,24 @@ export default function CajaGrandeChicaTab({ miId, soyAdmin, cuentas, setCuentas
     return [...l].sort((a, b) => (b.fecha + b.created_at).localeCompare(a.fecha + a.created_at));
   }, [movimientosCaja, rango, busqueda, responsableFiltro, categoriaFiltro]);
 
-  const ingresosPeriodo = filtrados.filter((m) => m.tipo === "ingreso").reduce((a, m) => a + Number(m.monto), 0);
-  const egresosPeriodo = filtrados.filter((m) => m.tipo === "egreso").reduce((a, m) => a + Number(m.monto), 0);
+  // `filtrados` de arriba sigue mostrando todo (incluye pendientes y
+  // transferencias) porque es el libro de movimientos de la caja, no un total.
+  // `saldo_cuenta()` (saldoActual) solo suma movimientos aprobados, así que
+  // para reconstruir el saldo antes del período hay que deshacer el mismo
+  // universo: aprobados, transferencias incluidas (mueven plata real de esta
+  // cuenta puntual, aunque no cuenten como ingreso/egreso de la empresa).
+  const aprobadosDelPeriodo = filtrados.filter((m) => m.estado === "aprobado");
   const saldoActual = cuenta?.saldo ?? 0;
-  const saldoAntesDelPeriodo = saldoActual - ingresosPeriodo + egresosPeriodo;
+  const saldoAntesDelPeriodo = saldoActual
+    - aprobadosDelPeriodo.filter((m) => m.tipo === "ingreso").reduce((a, m) => a + Number(m.monto), 0)
+    + aprobadosDelPeriodo.filter((m) => m.tipo === "egreso").reduce((a, m) => a + Number(m.monto), 0);
+
+  // Total ingresos/egresos mostrado en las tarjetas: mismo universo pero sin
+  // transferencias, para no inflarlo con plata que solo se movió entre
+  // cuentas propias (ver finanzas/ARCHITECTURE.md).
+  const paraTotales = aprobadosDelPeriodo.filter((m) => m.tipo_movimiento !== "Transferencia");
+  const ingresosPeriodo = paraTotales.filter((m) => m.tipo === "ingreso").reduce((a, m) => a + Number(m.monto), 0);
+  const egresosPeriodo = paraTotales.filter((m) => m.tipo === "egreso").reduce((a, m) => a + Number(m.monto), 0);
 
   const crearCaja = async () => {
     if (!sucursalActual) return;

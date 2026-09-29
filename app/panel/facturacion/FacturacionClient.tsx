@@ -1,7 +1,7 @@
 "use client";
 
 import { useMemo, useState } from "react";
-import { FileText, Pencil, CheckCircle2, AlertTriangle, AlertOctagon } from "lucide-react";
+import { FileText, Pencil, Plus, Search, X, CheckCircle2, AlertTriangle, AlertOctagon } from "lucide-react";
 import TablaResponsiva, { type ColumnaTabla } from "@/components/panel/TablaResponsiva";
 import FacturaModal, { type VehiculoFactura } from "./FacturaModal";
 
@@ -16,6 +16,8 @@ export default function FacturacionClient({ vehiculosIniciales }: { vehiculosIni
   const [filtro, setFiltro] = useState<Filtro>("todos");
   const [busqueda, setBusqueda] = useState("");
   const [editando, setEditando] = useState<VehiculoFactura | null>(null);
+  const [seleccionando, setSeleccionando] = useState(false);
+  const [buscaVehiculo, setBuscaVehiculo] = useState("");
 
   const totalesPorMoneda = useMemo(() => {
     const map: Record<string, number> = {};
@@ -34,6 +36,13 @@ export default function FacturacionClient({ vehiculosIniciales }: { vehiculosIni
   // (no hay cómo justificar el costo ante AFIP) y hoy pasaba desapercibido
   // mezclado con el resto de "sin facturar".
   const vendidosSinFacturar = useMemo(() => vehiculos.filter((v) => !v.facturado && v.estado === "vendido"), [vehiculos]);
+
+  const candidatosSelector = useMemo(() => {
+    const sinFacturar = vehiculos.filter((v) => !v.facturado);
+    if (!buscaVehiculo.trim()) return sinFacturar;
+    const q = buscaVehiculo.trim().toLowerCase();
+    return sinFacturar.filter((v) => [v.marca, v.modelo, v.patente].filter(Boolean).join(" ").toLowerCase().includes(q));
+  }, [vehiculos, buscaVehiculo]);
 
   const filtrados = useMemo(() => {
     let l = vehiculos;
@@ -105,6 +114,9 @@ export default function FacturacionClient({ vehiculosIniciales }: { vehiculosIni
           ))}
         </div>
         <input value={busqueda} onChange={(e) => setBusqueda(e.target.value)} placeholder="Buscar por marca, patente, N° factura..." className="flex-1 min-w-[200px] bg-slate-50 dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-xl px-3 py-2 text-sm outline-none focus:border-[#0145F2]" />
+        <button onClick={() => setSeleccionando(true)} className="flex items-center gap-1.5 px-3 py-2 text-sm font-bold bg-[#0145F2] hover:bg-[#0138c9] text-white rounded-xl shrink-0">
+          <Plus className="w-4 h-4" /> Nueva factura
+        </button>
       </div>
 
       <TablaResponsiva
@@ -115,6 +127,40 @@ export default function FacturacionClient({ vehiculosIniciales }: { vehiculosIni
         acciones={(v) => <button onClick={() => setEditando(v)} className="p-1.5 rounded-lg bg-slate-100 dark:bg-white/10 text-slate-500 hover:text-[#0145F2]"><Pencil className="w-3.5 h-3.5" /></button>}
         vacio={<p className="text-center text-sm text-slate-400 py-10">No hay vehículos que coincidan.</p>}
       />
+
+      {seleccionando && (
+        <div className="fixed inset-0 bg-black/40 backdrop-blur-sm z-[100] flex items-center justify-center p-4" onClick={() => setSeleccionando(false)}>
+          <div className="bg-white dark:bg-[#111] border border-slate-200 dark:border-white/10 rounded-2xl w-full max-w-md shadow-2xl max-h-[80vh] flex flex-col" onClick={(e) => e.stopPropagation()}>
+            <div className="flex justify-between items-start px-5 py-4 border-b border-slate-100 dark:border-white/10">
+              <div>
+                <h2 className="text-lg font-bold text-slate-900 dark:text-white">Nueva factura</h2>
+                <p className="text-xs text-slate-400">Elegí el vehículo del stock a facturar.</p>
+              </div>
+              <button onClick={() => setSeleccionando(false)} className="text-slate-400 hover:text-slate-700 dark:hover:text-white"><X className="w-5 h-5" /></button>
+            </div>
+            <div className="px-5 py-3 border-b border-slate-100 dark:border-white/10">
+              <div className="relative">
+                <Search className="w-4 h-4 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2" />
+                <input autoFocus value={buscaVehiculo} onChange={(e) => setBuscaVehiculo(e.target.value)} placeholder="Buscar por marca, modelo, patente..." className="w-full bg-slate-50 dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-xl pl-9 pr-3 py-2 text-sm outline-none focus:border-[#0145F2]" />
+              </div>
+            </div>
+            <div className="overflow-y-auto px-2 py-2">
+              {candidatosSelector.length === 0 ? (
+                <p className="text-center text-sm text-slate-400 py-8">No hay vehículos sin facturar que coincidan.</p>
+              ) : candidatosSelector.map((v) => (
+                <button
+                  key={v.id}
+                  onClick={() => { setEditando(v); setSeleccionando(false); setBuscaVehiculo(""); }}
+                  className="w-full flex items-center justify-between gap-2 px-3 py-2.5 rounded-xl hover:bg-slate-50 dark:hover:bg-white/5 text-left"
+                >
+                  <span className="text-sm font-semibold text-slate-700 dark:text-slate-200">{v.marca} {v.modelo} {v.anio ? `(${v.anio})` : ""}</span>
+                  <span className="text-xs text-slate-400">{v.patente || "—"}</span>
+                </button>
+              ))}
+            </div>
+          </div>
+        </div>
+      )}
 
       {editando && (
         <FacturaModal

@@ -11,7 +11,7 @@ const IVA_OPCIONES = [21, 10.5, 27, 0];
 export default function AfipIvaTab({ movimientos, setMovimientos, vehiculosFacturados = [] }: { movimientos: any[]; setMovimientos: (fn: any) => void; vehiculosFacturados?: any[] }) {
   const [periodo, setPeriodo] = useState(hoyLocalISO().slice(0, 7));
 
-  const delPeriodo = movimientos.filter((m) => !m.deleted_at && m.estado === "aprobado" && m.fecha.slice(0, 7) === periodo);
+  const delPeriodo = movimientos.filter((m) => !m.deleted_at && m.estado === "aprobado" && m.tipo_movimiento !== "Transferencia" && m.fecha.slice(0, 7) === periodo);
 
   const ivaDe = (m: any) => {
     if (!m.iva_pct) return 0;

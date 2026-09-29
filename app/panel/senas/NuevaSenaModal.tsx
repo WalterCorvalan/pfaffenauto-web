@@ -144,7 +144,7 @@ export default function NuevaSenaModal({
   }, [vehiculo?.vehiculo_id]);
 
   const necesitaCotizacion =
-    (monedaVenta === "USD" && !!(Number(senaArs) || Number(efectivoArs) || Number(prendaMonto) || Number(patentTransf))) ||
+    (monedaVenta === "USD" && !!(Number(senaArs) || Number(efectivoArs) || Number(prendaMonto) || Number(patentTransf) || Number(permutaTasadoArs))) ||
     (monedaVenta === "ARS" && !!(Number(senaUsd) || Number(efectivoUsd)));
 
   const handleSubmit = (e: React.FormEvent) => {
