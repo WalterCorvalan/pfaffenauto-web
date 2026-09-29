@@ -150,7 +150,7 @@ export default function FacturacionClient({ vehiculosIniciales }: { vehiculosIni
               ) : candidatosSelector.map((v) => (
                 <button
                   key={v.id}
-                  onClick={() => { setEditando(v); setSeleccionando(false); setBuscaVehiculo(""); }}
+                  onClick={() => { setEditando({ ...v, facturado: true }); setSeleccionando(false); setBuscaVehiculo(""); }}
                   className="w-full flex items-center justify-between gap-2 px-3 py-2.5 rounded-xl hover:bg-slate-50 dark:hover:bg-white/5 text-left"
                 >
                   <span className="text-sm font-semibold text-slate-700 dark:text-slate-200">{v.marca} {v.modelo} {v.anio ? `(${v.anio})` : ""}</span>
