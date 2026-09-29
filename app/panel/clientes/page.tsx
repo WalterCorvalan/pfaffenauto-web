@@ -10,13 +10,16 @@ export default async function ClientesPage() {
     supabase.from("perfiles").select("roles").eq("id", user?.id ?? "").maybeSingle(),
     supabase.from("configuracion_empresa").select("cada_vendedor_ve_solo_sus_clientes").eq("id", true).maybeSingle(),
   ]);
-  // Encargado y gestoría no son "un vendedor más" -- necesitan ver la
-  // cartera completa igual que admin (bug real con encargado: quedaba
-  // tratado como vendedor común y, con el toggle de abajo prendido, se le
-  // filtraba por vendedor_id = su propio id, así que la lista le quedaba
-  // vacía). Gestoría lo necesita para gestionar trámites de cualquier
-  // cliente, no solo los de "su" vendedor.
-  const esAdminOGestion = miPerfil?.roles?.some((r: string) => ["admin", "encargado", "gestoria"].includes(r)) || false;
+  // Encargado, gestoría y finanzas no son "un vendedor más" -- necesitan
+  // ver la cartera completa igual que admin (bug real con encargado:
+  // quedaba tratado como vendedor común y, con el toggle de abajo
+  // prendido, se le filtraba por vendedor_id = su propio id, así que la
+  // lista le quedaba vacía). Gestoría lo necesita para gestionar trámites
+  // de cualquier cliente, no solo los de "su" vendedor. Finanzas lo
+  // necesita para cobranzas/facturación de toda la cartera, no solo la de
+  // un vendedor puntual (mismo bug: sin vendedor_id propio asignado, la
+  // lista le quedaba vacía con el toggle prendido).
+  const esAdminOGestion = miPerfil?.roles?.some((r: string) => ["admin", "encargado", "gestoria", "finanzas"].includes(r)) || false;
   // Configuración → Empresa → "Cada vendedor ve solo sus clientes": con el
   // toggle prendido, un vendedor (no admin/encargado/gestoría) solo ve los
   // clientes que tiene asignados -- ni los de otros vendedores ni los sin
