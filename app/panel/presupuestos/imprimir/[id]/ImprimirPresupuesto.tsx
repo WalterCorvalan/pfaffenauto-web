@@ -87,9 +87,9 @@ export default function ImprimirPresupuesto({ presupuesto: p, branding }: { pres
             {branding?.branding_logo_url ? (
               <img src={branding.branding_logo_url} alt={nombreEmpresa} className="h-14 w-auto object-contain shrink-0" />
             ) : (
-              <div className="relative shrink-0">
-                <img src="/logo.png" alt={nombreEmpresa} className="h-8 w-auto object-contain" />
-                <img src="/r.png" alt="Marca Registrada" className="absolute -top-1 -right-2 w-2 h-2 object-contain brightness-0 opacity-80" />
+              <div className="shrink-0 flex items-center gap-1.5">
+                <img src="/logo.png" alt="Pfaffen" className="h-8 w-auto object-contain" />
+                <span className="text-[15px] font-black tracking-wide text-slate-900 leading-none">CARS</span>
               </div>
             )}
             <div>
