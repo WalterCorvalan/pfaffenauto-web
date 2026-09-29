@@ -29,13 +29,15 @@ const ESTADOS: { value: string; label: string }[] = [
   { value: "convertido", label: "Clientes" },
   { value: "perdido", label: "Perdidos" },
 ];
-// Paleta acotada a propósito -- solo "convertido" (bien) y "perdido" (mal)
-// llevan color semántico; los estados intermedios quedan en gris para no
-// competir por atención con las señales que sí importan (sin respuesta, basura).
+// Punto medio entre la versión original (5 colores distintos, muy
+// "semáforo") y la que le siguió (todo gris, muy apagada): los 3 estados
+// intermedios (nuevo/asignado/calificando) comparten un mismo tono suave en
+// vez de tener cada uno el suyo -- ya no compiten entre sí -- pero "convertido"
+// (bien) y "perdido" (mal) conservan su color semántico de siempre.
 const ESTADO_COLOR: Record<string, string> = {
-  nuevo: "bg-slate-100 text-slate-600 dark:bg-white/10 dark:text-slate-300",
-  asignado: "bg-slate-100 text-slate-600 dark:bg-white/10 dark:text-slate-300",
-  calificando: "bg-slate-100 text-slate-600 dark:bg-white/10 dark:text-slate-300",
+  nuevo: "bg-sky-50 text-sky-700 dark:bg-sky-500/10 dark:text-sky-300",
+  asignado: "bg-sky-50 text-sky-700 dark:bg-sky-500/10 dark:text-sky-300",
+  calificando: "bg-sky-50 text-sky-700 dark:bg-sky-500/10 dark:text-sky-300",
   convertido: "bg-emerald-50 text-emerald-700 dark:bg-emerald-500/10 dark:text-emerald-300",
   perdido: "bg-rose-50 text-rose-700 dark:bg-rose-500/10 dark:text-rose-300",
 };
@@ -44,13 +46,12 @@ const CALIFICACION_DOT: Record<string, string> = { caliente: "bg-rose-500", tibi
 
 const ORIGEN_ICON: Record<Origen, any> = { whatsapp: MessageCircle, instagram: AtSign, messenger: MessageCircle, rodi: Bot, manual: User };
 const ORIGEN_LABEL: Record<Origen, string> = { whatsapp: "WhatsApp", instagram: "Instagram", messenger: "Messenger", rodi: "Rodi", manual: "Manual" };
-// Ícono del canal en gris con el mismo tono suave en todos -- antes cada
-// canal tenía su color de marca (emerald/pink/blue/indigo) y la bandeja
-// terminaba pareciendo un semáforo; ya está el label + ícono distinto para
-// diferenciarlos, no hace falta color encima.
+// Vuelve el color de marca por canal (se había sacado del todo), pero en un
+// tono más suave (400 en vez de 600) que el original -- alcanza para
+// reconocer el canal de un vistazo sin que la bandeja parezca un semáforo.
 const ORIGEN_COLOR: Record<Origen, string> = {
-  whatsapp: "text-slate-400 dark:text-slate-500", instagram: "text-slate-400 dark:text-slate-500",
-  messenger: "text-slate-400 dark:text-slate-500", rodi: "text-slate-400 dark:text-slate-500", manual: "text-slate-400 dark:text-slate-500",
+  whatsapp: "text-emerald-500/80 dark:text-emerald-400/80", instagram: "text-pink-500/80 dark:text-pink-400/80",
+  messenger: "text-blue-500/80 dark:text-blue-400/80", rodi: "text-indigo-500/80 dark:text-indigo-400/80", manual: "text-slate-400 dark:text-slate-500",
 };
 
 function diasDesde(iso: string | null) {
@@ -160,7 +161,7 @@ export default function LeadsUnificadosClient({ leadsIniciales, vendedores, sucu
   const sinAsignar = leads.filter((l) => !l.vendedor_id).length;
 
   const filaClase = (id: string) => seleccionado?.id === id
-    ? "bg-slate-50 dark:bg-white/10 border-l-2 border-l-slate-700 dark:border-l-white/40"
+    ? "bg-sky-50/70 dark:bg-sky-500/10 border-l-2 border-l-[#0145F2] dark:border-l-sky-400"
     : "bg-white dark:bg-transparent border-l-2 border-l-transparent hover:bg-slate-50 dark:hover:bg-white/5";
 
   return (
@@ -197,7 +198,7 @@ export default function LeadsUnificadosClient({ leadsIniciales, vendedores, sucu
           <div className="flex items-center gap-1.5">
             <div className="relative flex-1">
               <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-slate-400" />
-              <input value={busqueda} onChange={(e) => setBusqueda(e.target.value)} placeholder="Buscar..." className="w-full bg-slate-50 dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-lg py-1.5 pl-8 pr-3 text-xs outline-none focus:border-slate-400 dark:focus:border-white/30 text-slate-900 dark:text-white placeholder:text-slate-400" />
+              <input value={busqueda} onChange={(e) => setBusqueda(e.target.value)} placeholder="Buscar..." className="w-full bg-slate-50 dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-lg py-1.5 pl-8 pr-3 text-xs outline-none focus:border-[#0145F2] dark:focus:border-sky-400 text-slate-900 dark:text-white placeholder:text-slate-400" />
             </div>
             <button onClick={() => setShowFiltros((v) => !v)} title="Más filtros" className={`shrink-0 p-1.5 rounded-lg transition-colors ${showFiltros ? "bg-slate-800 dark:bg-white/10 text-white" : "bg-slate-50 dark:bg-white/5 border border-slate-200 dark:border-white/10 text-slate-500 dark:text-slate-400"}`}>
               <Filter className="w-3.5 h-3.5" />
