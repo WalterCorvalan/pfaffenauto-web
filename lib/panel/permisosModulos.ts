@@ -17,6 +17,27 @@ export const ROL_A_SECTOR: Record<string, string> = {
 // Mismo criterio que moduloVisible() en layout.tsx: admin nunca se filtra;
 // sin fila en visibilidad_sector, el módulo es visible por default; con
 // varios roles alcanza que UNO de los sectores lo vea.
+// Quién puede asignar un lead/conversación a quién. Usado en
+// leads/page.tsx, whatsapp/page.tsx, instagram/page.tsx y rodi/page.tsx
+// para armar la lista de "vendedores" que llega al selector de asignación
+// de LeadDetailModal.tsx (compartido entre los 4 módulos) -- antes cada
+// page.tsx duplicaba este filtro a mano, y leads/page.tsx en particular se
+// había quedado corto (solo "ventas"+"admin" global, sin encargado y sin
+// distinguir sucursal). Regla de negocio: un vendedor solo puede
+// reasignar entre vendedores; un encargado puede asignar a cualquier
+// encargado o a un vendedor de su propia sucursal; admin puede asignar a
+// cualquiera.
+export function filtrarVendedoresAsignables<T extends { roles?: string[] | null; sucursal_id?: string | null }>(
+  perfiles: T[],
+  { soyAdmin, soyEncargado, miSucursalId }: { soyAdmin: boolean; soyEncargado: boolean; miSucursalId: string | null }
+): T[] {
+  return perfiles.filter((p) => {
+    if (soyAdmin) return p.roles?.includes("ventas") || p.roles?.includes("encargado") || p.roles?.includes("admin");
+    if (soyEncargado) return p.roles?.includes("encargado") || (p.roles?.includes("ventas") && p.sucursal_id === miSucursalId);
+    return p.roles?.includes("ventas");
+  });
+}
+
 export async function puedeVerModulo(supabase: SupabaseClient, perfilId: string, modulo: string): Promise<boolean> {
   const { data: perfil } = await supabase.from("perfiles").select("roles").eq("id", perfilId).maybeSingle();
   // Sin perfil (lookup falló o el id no existe) no podemos confirmar ningún
@@ -32,8 +53,9 @@ export async function puedeVerModulo(supabase: SupabaseClient, perfilId: string,
   if (config?.activo === false) return false;
 
   // Mismo override que moduloVisible() en layout.tsx -- Clientes siempre
-  // visible para ventas/encargado, sin depender de "Visibilidad por sector".
-  if (modulo === "clientes" && roles.some((r) => ["ventas", "encargado"].includes(r))) return true;
+  // visible para todos los roles salvo taller, sin depender de
+  // "Visibilidad por sector".
+  if (modulo === "clientes" && roles.some((r) => ["ventas", "encargado", "finanzas", "gestoria"].includes(r))) return true;
 
   const sectores = roles.map((r) => ROL_A_SECTOR[r]).filter(Boolean);
   if (sectores.length === 0) return true;

@@ -1,5 +1,6 @@
 import { createClient } from "@/lib/supabase/server";
 import LeadsUnificadosClient from "./LeadsUnificadosClient";
+import { filtrarVendedoresAsignables } from "@/lib/panel/permisosModulos";
 
 // Para las pestañas "Sin respuesta" y "Lead basura" hace falta saber si el
 // ÚLTIMO mensaje de la charla lo mandó el cliente ("in") o nosotros/la IA
@@ -22,7 +23,7 @@ export default async function LeadsPage() {
 
   const [
     { data: whatsapp }, { data: instagram }, { data: messenger }, { data: rodi }, { data: manuales },
-    { data: vendedores }, { data: sucursales },
+    { data: vendedores }, { data: sucursales }, { data: miPerfil },
     direccionWA, direccionIG, direccionMSG, direccionRodi,
   ] = await Promise.all([
     supabase.from("whatsapp_conversaciones").select("id, vendedor_id, calificacion, estado_lead, canal_origen, sucursal_id, created_at, last_message_at, es_basura, whatsapp_contactos ( nombre_perfil, telefono )").order("last_message_at", { ascending: false }).limit(200),
@@ -30,8 +31,9 @@ export default async function LeadsPage() {
     supabase.from("messenger_conversaciones").select("id, vendedor_id, calificacion, estado_lead, canal_origen, sucursal_id, created_at, last_message_at, messenger_contactos ( nombre_perfil, psid )").order("last_message_at", { ascending: false }).limit(200),
     supabase.from("rodi_conversaciones").select("id, vendedor_id, calificacion, estado_lead, canal_origen, sucursal_id, created_at, last_message_at, es_basura, nombre_contacto, telefono_contacto").order("last_message_at", { ascending: false }).limit(200),
     supabase.from("leads_manuales").select("id, vendedor_id, calificacion, estado_lead, canal_origen, sucursal_id, created_at, es_basura, nombre, telefono").order("created_at", { ascending: false }).limit(200),
-    supabase.from("perfiles").select("id, nombre, roles").eq("activo", true).order("nombre"),
+    supabase.from("perfiles").select("id, nombre, roles, sucursal_id").eq("activo", true).order("nombre"),
     supabase.from("sucursales").select("id, nombre").order("nombre"),
+    user?.id ? supabase.from("perfiles").select("roles, sucursal_id").eq("id", user.id).maybeSingle() : Promise.resolve({ data: null }),
     ultimaDireccionPorConversacion(supabase, "whatsapp_mensajes"),
     ultimaDireccionPorConversacion(supabase, "instagram_mensajes"),
     ultimaDireccionPorConversacion(supabase, "messenger_mensajes"),
@@ -49,10 +51,15 @@ export default async function LeadsPage() {
     ...(manuales || []).map((c: any) => ({ id: c.id, origen: "manual" as const, nombre: c.nombre, telefono: c.telefono, vendedor_id: c.vendedor_id, calificacion: c.calificacion, estado_lead: c.estado_lead || "nuevo", canal_origen: c.canal_origen, sucursal_id: c.sucursal_id, created_at: c.created_at, last_message_at: c.created_at, esBasura: c.es_basura || false, ultimaDireccion: null })),
   ].sort((a, b) => new Date(b.last_message_at || b.created_at).getTime() - new Date(a.last_message_at || a.created_at).getTime());
 
-  // El rol de vendedor en toda la base es "ventas" (ver whatsapp/rodi/nps/
-  // configuracion/notificaciones.ts) -- acá decía "vendedor", que ningún
-  // perfil tiene, así que este listado quedaba vacío salvo por los admin.
-  const vendedoresLista = (vendedores || []).filter((p: any) => p.roles?.includes("ventas") || p.roles?.includes("admin"));
+  // Mismo criterio de reparto que /panel/whatsapp, /panel/instagram y
+  // /panel/rodi (ver filtrarVendedoresAsignables) -- antes este listado
+  // era global (ventas+admin, sin distinguir sucursal ni encargado),
+  // así que cualquier vendedor podía reasignar un lead a cualquier otro
+  // vendedor o admin del sistema entero.
+  const soyAdmin = miPerfil?.roles?.includes("admin") ?? false;
+  const soyEncargado = miPerfil?.roles?.includes("encargado") ?? false;
+  const miSucursalId = miPerfil?.sucursal_id ?? null;
+  const vendedoresLista = filtrarVendedoresAsignables(vendedores || [], { soyAdmin, soyEncargado, miSucursalId });
 
   return (
     <LeadsUnificadosClient

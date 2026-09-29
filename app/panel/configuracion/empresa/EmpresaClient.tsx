@@ -76,7 +76,11 @@ export default function EmpresaClient() {
         <span className="px-3 py-2.5 text-sm font-bold border-b-2 border-[#0145F2] text-[#0145F2]">Empresa</span>
         <Link href="/panel/configuracion/whatsapp" className="px-3 py-2.5 text-sm font-bold border-b-2 border-transparent text-slate-500">WhatsApp</Link>
         <Link href="/panel/configuracion/instagram" className="px-3 py-2.5 text-sm font-bold border-b-2 border-transparent text-slate-500">Instagram</Link>
+<<<<<<< HEAD
         <Link href="/panel/configuracion/messenger" className="px-3 py-2.5 text-sm font-bold border-b-2 border-transparent text-slate-500">Messenger</Link>
+=======
+        <Link href="/panel/configuracion/sucursales" className="px-3 py-2.5 text-sm font-bold border-b-2 border-transparent text-slate-500">Sucursales</Link>
+>>>>>>> origin/master
       </div>
 
       {error && <div className="text-rose-600 text-sm bg-rose-50 dark:bg-rose-500/10 p-3 rounded-lg">{error}</div>}

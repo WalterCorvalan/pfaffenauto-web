@@ -158,13 +158,19 @@ const GRUPOS: {
     ],
   },
   {
-    titulo: "Marketing",
+    titulo: "Marketing y Contenido",
     items: [
       {
         href: "/panel/marketing/generales",
         label: "Marketing",
         icon: "/icons/panel/marketing.png",
         modulo: "marketing",
+      },
+      {
+        href: "/panel/contenido-sitio/entregas",
+        label: "Contenido del Sitio",
+        icon: "/icons/panel/marketing.png",
+        modulo: "contenido_sitio",
       },
     ],
   },
@@ -507,11 +513,12 @@ export default function PanelLayoutClient({
     if (esAdmin || !modulo) return true;
     if (modulosActivos[modulo] === false) return false;
 
-    // Clientes siempre visible para ventas/encargado, sin depender de que
-    // "Visibilidad por sector" esté bien configurado -- pedido explícito
-    // para no dejar a esos dos roles sin acceso si alguien lo apaga sin
-    // querer desde Configuración → Empresa → Módulos.
-    if (modulo === "clientes" && roles.some((r) => ["ventas", "encargado"].includes(r))) return true;
+    // Clientes siempre visible para todos los roles salvo taller, sin
+    // depender de que "Visibilidad por sector" esté bien configurado --
+    // pedido explícito para no dejar a ventas/encargado/finanzas/gestoría
+    // sin acceso si alguien lo apaga sin querer desde Configuración →
+    // Empresa → Módulos. Taller queda afuera a propósito.
+    if (modulo === "clientes" && roles.some((r) => ["ventas", "encargado", "finanzas", "gestoria"].includes(r))) return true;
 
     const sectores = roles.map((r) => ROL_A_SECTOR[r]).filter(Boolean);
     if (sectores.length === 0) return true;

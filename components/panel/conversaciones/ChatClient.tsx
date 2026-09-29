@@ -4,6 +4,7 @@ import { useState, useEffect, useRef } from "react";
 import { useSearchParams, useRouter } from "next/navigation";
 import { supabase2 } from "@/lib/supabase/client";
 import ConfirmDialog from "@/components/panel/ConfirmDialog";
+import { traducirErrorMeta } from "@/lib/meta/erroresWhatsapp";
 import {
   Search, Send, Bot, Check, CheckCheck, Info, ChevronRight, PanelRight,
   Loader2, Megaphone, X, MessageSquareText, AtSign, Archive, ArchiveRestore, FileCheck2,
@@ -660,7 +661,16 @@ export default function ChatClient({
                             {m.editado && <span className="text-[10px] italic">editado</span>}
                             <span className="text-[10px] font-medium">{formatDate(m.created_at)}</span>
                             {out && (m.status === "failed" ? (
-                              <button type="button" onClick={() => setMostrarSelectorAprobadas(true)} title={m.error_detalle ? `Falló: ${m.error_detalle}. Click para reintentar con plantilla.` : "Falló el envío — probablemente ventana de 24hs vencida. Click para reintentar con plantilla."} className="hover:opacity-70">
+                              <button
+                                type="button"
+                                onClick={() => setMostrarSelectorAprobadas(true)}
+                                title={(() => {
+                                  const traducido = traducirErrorMeta(m.error_detalle);
+                                  if (traducido) return `${traducido.titulo}: ${traducido.explicacion} Click para reintentar con plantilla.`;
+                                  return m.error_detalle ? `Falló: ${m.error_detalle}. Click para reintentar con plantilla.` : "Falló el envío — probablemente ventana de 24hs vencida. Click para reintentar con plantilla.";
+                                })()}
+                                className="hover:opacity-70"
+                              >
                                 <X className="w-3.5 h-3.5 text-rose-500" />
                               </button>
                             ) : <Check className={`w-3.5 h-3.5 ${noEsWhatsapp ? "" : "text-blue-500 dark:text-sky-300"}`} />)}

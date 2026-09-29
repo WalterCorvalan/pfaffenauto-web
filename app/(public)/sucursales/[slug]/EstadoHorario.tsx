@@ -2,36 +2,36 @@
 
 import { useEffect, useState } from "react";
 
-// Lun a Vie 9 a 18hs, Sáb 9 a 13hs -- mismo horario que ya se muestra como
-// texto fijo en ambas sucursales (FALLBACK_DATA en page.tsx).
-const HORA_DESDE = 9;
-const HORA_HASTA_SEMANA = 18;
-const HORA_HASTA_SABADO = 13;
+interface Props {
+  diaDesde: number;
+  diaHasta: number;
+  horaDesde: number;
+  horaHasta: number;
+}
 
-function calcularEstado(ahora: Date) {
-  const dia = ahora.getDay(); // 0 domingo ... 6 sábado
+function calcularEstado(ahora: Date, { diaDesde, diaHasta, horaDesde, horaHasta }: Props) {
+  const dia = ahora.getDay();
   const hora = ahora.getHours() + ahora.getMinutes() / 60;
-  const esDiaHabil = dia >= 1 && dia <= 6;
-  const horaHasta = dia === 6 ? HORA_HASTA_SABADO : HORA_HASTA_SEMANA;
-  const abierto = esDiaHabil && hora >= HORA_DESDE && hora < horaHasta;
+  const esDiaHabil = dia >= diaDesde && dia <= diaHasta;
+  const abierto = esDiaHabil && hora >= horaDesde && hora < horaHasta;
 
   if (abierto) {
     return { abierto: true, texto: `Abierto ahora · cierra a las ${horaHasta}:00hs` };
   }
-  if (esDiaHabil && hora < HORA_DESDE) {
-    return { abierto: false, texto: `Cerrado · abre hoy a las ${HORA_DESDE}:00hs` };
+  if (esDiaHabil && hora < horaDesde) {
+    return { abierto: false, texto: `Cerrado · abre hoy a las ${horaDesde}:00hs` };
   }
-  return { abierto: false, texto: `Cerrado · abre el próximo día hábil a las ${HORA_DESDE}:00hs` };
+  return { abierto: false, texto: `Cerrado · abre el próximo día hábil a las ${horaDesde}:00hs` };
 }
 
-export default function EstadoHorario() {
+export default function EstadoHorario(props: Props) {
   const [estado, setEstado] = useState<{ abierto: boolean; texto: string } | null>(null);
 
   useEffect(() => {
-    setEstado(calcularEstado(new Date()));
-    const id = setInterval(() => setEstado(calcularEstado(new Date())), 60000);
+    setEstado(calcularEstado(new Date(), props));
+    const id = setInterval(() => setEstado(calcularEstado(new Date(), props)), 60000);
     return () => clearInterval(id);
-  }, []);
+  }, [props.diaDesde, props.diaHasta, props.horaDesde, props.horaHasta]);
 
   // Sin estado todavía (primer render server-side): no mostramos nada para
   // no arriesgar un mismatch de hidratación con la hora del cliente.

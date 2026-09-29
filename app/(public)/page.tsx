@@ -37,6 +37,12 @@ export default async function Page() {
 
   const marcasEnStock = [...new Set((vehiculos || []).map((v: any) => normalizarMarca(v.marca || "")))];
 
+  const { data: entregas } = await supabase
+    .from("entregas_realizadas")
+    .select("id, tipo, src, titulo, link")
+    .eq("activo", true)
+    .order("orden", { ascending: true });
+
   return (
     // Usamos el fondo claro premium que definimos para el resto de la web
     <main className="w-full bg-[#f8f9fa] dark:bg-[#0a0a0f] min-h-screen relative flex flex-col gap-0 pb-20">
@@ -74,7 +80,7 @@ export default async function Page() {
 
       <Location />
 
-      <VentasRealizadas />
+      <VentasRealizadas items={entregas || []} />
 
       <BannerRRHH />
 

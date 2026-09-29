@@ -1,5 +1,6 @@
 import { createClient } from "@/lib/supabase/server";
 import ConversacionesShell from "@/components/panel/conversaciones/ConversacionesShell";
+import { filtrarVendedoresAsignables } from "@/lib/panel/permisosModulos";
 
 export default async function InstagramPage() {
   const supabase = await createClient();
@@ -26,17 +27,10 @@ export default async function InstagramPage() {
   }
   const conversacionesConUltimoMensaje = (igRes.data || []).map((c) => ({ ...c, ultimo_mensaje: ultimoMensajePorConversacion.get(c.id) || null }));
 
-  // Mismo criterio de reparto de la lista de vendedores que /panel/whatsapp
-  // (ver ese page.tsx) -- admin ve a todos, encargado solo a los de su
-  // sucursal, vendedor ve al resto de vendedores.
   const soyAdmin = miPerfilRes.data?.roles?.includes("admin") ?? false;
   const soyEncargado = miPerfilRes.data?.roles?.includes("encargado") ?? false;
   const miSucursalId = miPerfilRes.data?.sucursal_id ?? null;
-  const vendedores = (vendedoresRes.data || []).filter((p) => {
-    if (soyAdmin) return p.roles?.includes("ventas") || p.roles?.includes("admin");
-    if (soyEncargado) return p.roles?.includes("ventas") && p.sucursal_id === miSucursalId;
-    return p.roles?.includes("ventas");
-  });
+  const vendedores = filtrarVendedoresAsignables(vendedoresRes.data || [], { soyAdmin, soyEncargado, miSucursalId });
 
   return (
     <ConversacionesShell

@@ -5,29 +5,26 @@ import WhatsAppIcon from "@/components/icons/WhatsAppIcon";
 import EstadoHorario from "./EstadoHorario";
 
 interface HeroProps {
-  slug: string;
   nombre: string;
   imagen: string;
   direccion: string;
   telefono: string;
   horario: string;
+  navLink: string | null;
+  latitude: number | null;
+  longitude: number | null;
+  horarioDiaDesde: number;
+  horarioDiaHasta: number;
+  horarioHoraDesde: number;
+  horarioHoraHasta: number;
 }
 
-const UBICACIONES: Record<string, { mapUrl: string; navLink: string }> = {
-  "casa-central": {
-    mapUrl: "https://maps.google.com/maps?q=Pfaffen+Autos,+Villa+de+Mayo,+Buenos+Aires&t=m&z=15&output=embed&iwloc=near&hl=es",
-    navLink: "https://maps.app.goo.gl/4ZMmpWJCarHcZ2sb9",
-  },
-  "don-torcuato": {
-    // Acá colocamos la URL embed exacta de Google Maps
-    mapUrl: "https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3288.084180424599!2d-58.62231392426363!3d-34.48414427334185!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x95bca5007f7d6a25%3A0x103f7a961b168d5!2sPfaffen%20Autos%20Panamericana!5e0!3m2!1ses!2sar!4v1716300000000!5m2!1ses!2sar",
-    navLink: "https://maps.app.goo.gl/GuNBuUKT5xMFw5jR9",
-  },
-};
-
-export default function SucursalHeroAnimated({ slug, nombre, imagen, direccion, telefono, horario }: HeroProps) {
-  const ubicacion = UBICACIONES[slug];
-  const mapaSrc = ubicacion?.mapUrl || `https://www.google.com/maps?q=${encodeURIComponent(direccion)}&output=embed`;
+export default function SucursalHeroAnimated({ nombre, imagen, direccion, telefono, horario, navLink, latitude, longitude, horarioDiaDesde, horarioDiaHasta, horarioHoraDesde, horarioHoraHasta }: HeroProps) {
+  // Con lat/long cargadas (Configuración → Sucursales) el pin queda exacto;
+  // sin ellas, cae a buscar por dirección -- sigue funcionando, solo menos preciso.
+  const mapaSrc = latitude != null && longitude != null
+    ? `https://www.google.com/maps?q=${latitude},${longitude}&z=16&output=embed`
+    : `https://www.google.com/maps?q=${encodeURIComponent(direccion)}&output=embed`;
 
   return (
     <>
@@ -70,13 +67,13 @@ export default function SucursalHeroAnimated({ slug, nombre, imagen, direccion, 
               <div className="min-w-0">
                 <span className="text-[11px] font-bold text-gray-400 dark:text-slate-500 uppercase tracking-widest block mb-0.5">Horario de atención</span>
                 <span className="text-sm font-bold block text-gray-900 dark:text-white">{horario}</span>
-                <EstadoHorario />
+                <EstadoHorario diaDesde={horarioDiaDesde} diaHasta={horarioDiaHasta} horaDesde={horarioHoraDesde} horaHasta={horarioHoraHasta} />
               </div>
             </div>
             <div className="flex divide-x divide-gray-100 dark:divide-white/10">
-              {ubicacion?.navLink && (
+              {navLink && (
                 <a
-                  href={ubicacion.navLink}
+                  href={navLink}
                   target="_blank"
                   rel="noopener noreferrer"
                   className="flex-1 flex items-center justify-center gap-2 p-4 text-blue-700 dark:text-sky-300 font-bold text-xs uppercase tracking-widest hover:bg-blue-50/50 dark:hover:bg-sky-400/5 transition-colors"

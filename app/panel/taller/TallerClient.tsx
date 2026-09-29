@@ -1,10 +1,14 @@
 "use client";
 
 import { useState } from "react";
-import { Wrench, Settings, Search, Plus } from "lucide-react";
+import Link from "next/link";
+import { Wrench, Settings, Search, Plus, Smartphone } from "lucide-react";
 import NuevaOtModal from "./NuevaOtModal";
 import TallerConfigModal from "./TallerConfigModal";
 import TallerResumenTab from "./TallerResumenTab";
+import TallerBoard from "./TallerBoard";
+import OrdenTallerDetalleModal from "./OrdenTallerDetalleModal";
+import { ETAPAS_TALLER, ETAPA_ENTREGA } from "./etapasTaller";
 export default function TallerClient({
   ordenesIniciales,
   mecanicos,
@@ -21,13 +25,15 @@ export default function TallerClient({
   const [modalNuevaOT, setModalNuevaOT] = useState(false);
   const [modalConfig, setModalConfig] = useState(false);
 
+  const [ordenSeleccionadaCerrada, setOrdenSeleccionadaCerrada] = useState<any>(null);
+
   const TABS = ["Tablero", "Agenda", "Recontacto", "Cerradas", "Historial", "Resumen"];
   // Solo "Tablero" y "Cerradas" tienen estados definidos para contar de verdad
   // (Agenda/Recontacto todavía no tienen un estado propio en `ordenes` -- no
   // se les muestra un número inventado hasta que ese submódulo exista).
   const CONTEO_POR_TAB: Record<string, string[] | undefined> = {
-    Tablero: ["ingresado", "presupuestado", "aprobado", "en_proceso"],
-    Cerradas: ["cerrada"],
+    Tablero: ETAPAS_TALLER.filter((e) => e.value !== ETAPA_ENTREGA).map((e) => e.value),
+    Cerradas: [ETAPA_ENTREGA],
   };
 
   return (
@@ -44,6 +50,13 @@ export default function TallerClient({
             </div>
           </div>
           <div className="flex items-center gap-3">
+            <Link
+              href="/panel/taller/movil"
+              title="Vista para celular"
+              className="p-2.5 text-slate-500 hover:text-slate-900 bg-slate-50 dark:bg-white/5 hover:bg-slate-100 dark:hover:bg-white/10 rounded-xl transition-colors border border-slate-200 dark:border-white/10"
+            >
+              <Smartphone className="w-4 h-4" />
+            </Link>
             <button
               onClick={() => setModalConfig(true)}
               className="p-2.5 text-slate-500 hover:text-slate-900 bg-slate-50 dark:bg-white/5 hover:bg-slate-100 dark:hover:bg-white/10 rounded-xl transition-colors border border-slate-200 dark:border-white/10"
@@ -94,24 +107,57 @@ export default function TallerClient({
 
         {tabActivo === "Resumen" ? (
           <TallerResumenTab ordenes={ordenesIniciales} />
-        ) : ordenesIniciales.length === 0 ? (
-          <div className="bg-white dark:bg-white/[0.02] border border-slate-200 dark:border-white/5 border-dashed rounded-2xl flex flex-col items-center justify-center p-12 text-center h-64">
-            <Wrench className="w-8 h-8 text-slate-400 mb-3" />
-            <p className="text-[13px] font-medium text-slate-500">
-              No hay órdenes activas. Cargá una con "Nueva OT".
-            </p>
-          </div>
+        ) : tabActivo === "Tablero" ? (
+          ordenesIniciales.filter((o) => o.estado !== ETAPA_ENTREGA).length === 0 ? (
+            <div className="bg-white dark:bg-white/[0.02] border border-slate-200 dark:border-white/5 border-dashed rounded-2xl flex flex-col items-center justify-center p-12 text-center h-64">
+              <Wrench className="w-8 h-8 text-slate-400 mb-3" />
+              <p className="text-[13px] font-medium text-slate-500">
+                No hay órdenes activas. Cargá una con &quot;Nueva OT&quot;.
+              </p>
+            </div>
+          ) : (
+            <TallerBoard ordenesIniciales={ordenesIniciales.filter((o) => o.estado !== ETAPA_ENTREGA)} mecanicos={mecanicos} busqueda={busqueda} />
+          )
+        ) : tabActivo === "Cerradas" ? (
+          ordenesIniciales.filter((o) => o.estado === ETAPA_ENTREGA).length === 0 ? (
+            <div className="bg-white dark:bg-white/[0.02] border border-slate-200 dark:border-white/5 border-dashed rounded-2xl flex flex-col items-center justify-center p-12 text-center h-64">
+              <Wrench className="w-8 h-8 text-slate-400 mb-3" />
+              <p className="text-[13px] font-medium text-slate-500">Todavía no hay OTs entregadas.</p>
+            </div>
+          ) : (
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
+              {ordenesIniciales.filter((o) => o.estado === ETAPA_ENTREGA).map((o) => (
+                <button
+                  key={o.id}
+                  onClick={() => setOrdenSeleccionadaCerrada(o)}
+                  className="text-left bg-white dark:bg-white/[0.02] border border-slate-200 dark:border-white/5 rounded-2xl p-4 hover:shadow-md transition-all"
+                >
+                  <p className="text-[11px] font-black uppercase tracking-widest text-slate-400">{o.patente || "Sin patente"}</p>
+                  <p className="text-sm font-bold text-slate-900 dark:text-white">{o.marca} {o.modelo}</p>
+                  <p className="text-[11px] text-slate-500 dark:text-slate-400 mt-0.5">{o.cliente_nombre}</p>
+                </button>
+              ))}
+            </div>
+          )
         ) : (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-             {/* Listado de OTs (Próxima iteración) */}
+          <div className="bg-white dark:bg-white/[0.02] border border-slate-200 dark:border-white/5 border-dashed rounded-2xl flex flex-col items-center justify-center p-12 text-center h-64">
+            <p className="text-[13px] font-medium text-slate-500">&quot;{tabActivo}&quot; todavía no está implementado.</p>
           </div>
         )}
       </div>
 
       {modalNuevaOT && (
-        <NuevaOtModal 
-          mecanicos={mecanicos} 
-          onClose={() => setModalNuevaOT(false)} 
+        <NuevaOtModal
+          mecanicos={mecanicos}
+          onClose={() => setModalNuevaOT(false)}
+        />
+      )}
+      {ordenSeleccionadaCerrada && (
+        <OrdenTallerDetalleModal
+          orden={ordenSeleccionadaCerrada}
+          mecanicos={mecanicos}
+          onClose={() => setOrdenSeleccionadaCerrada(null)}
+          onActualizada={setOrdenSeleccionadaCerrada}
         />
       )}
       {modalConfig && (

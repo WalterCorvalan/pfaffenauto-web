@@ -2,10 +2,6 @@ import { createClient } from "@supabase/supabase-js";
 import { notFound } from "next/navigation";
 import { CAMPOS_VEHICULO_PUBLICO } from "@/lib/vehiculos";
 import VehiculosGrid from "@/components/VehiculosGrid";
-import Link from "next/link";
-import { MapPin, Phone, Clock, ArrowLeft } from "lucide-react";
-// Importamos tu FadeIn por si lo necesitas después, aunque usaremos framer internamente
-import FadeIn from "@/components/FadeIn"; 
 // Importación crucial para permitir Framer Motion en Next.js App Router (Client Component Inline)
 import SucursalHeroAnimated from "./SucursalHeroAnimated";
 import Testimonials from "@/components/Testimonials";
@@ -18,30 +14,14 @@ const supabase = createClient(
 
 export const revalidate = 60;
 
-const FALLBACK_DATA: Record<
-  string,
-  { imagen: string; telefono: string; direccion: string; horario: string }
-> = {
-  "casa-central": {
-    imagen: "/VDM.jpeg",
-    telefono: "11 37564398",
-    direccion: "Casa Central, Buenos Aires",
-    horario: "Lun a Vie - 9:00 a 18:00hs, Sáb - 9:00 a 13:00hs",
-  },
-  "don-torcuato": {
-    imagen: "/pana.jpg",
-    telefono: "11 57998065",
-    direccion: "Don Torcuato, Buenos Aires",
-    horario: "Lun a Vie - 9:00 a 18:00hs, Sáb - 9:00 a 13:00hs",
-  },
-};
-
-// Coordenadas reales, resueltas a mano desde el link corto de Google Maps de
-// cada sucursal (sucursales.google_maps_url) -- no hay lat/long en la DB.
-const GEO_SUCURSALES: Record<string, { latitude: number; longitude: number }> = {
-  "casa-central": { latitude: -34.4889306, longitude: -58.6614257 },
-  "don-torcuato": { latitude: -34.4840351, longitude: -58.619739 },
-};
+// Fallback genérico (no por-sucursal) para cuando una sucursal nueva todavía
+// no tiene imagen/horario cargados en Configuración → Sucursales -- antes
+// esto era un mapa hardcodeado por slug (FALLBACK_DATA/GEO_SUCURSALES) que
+// solo cubría las 2 sucursales originales; una sucursal nueva cargada desde
+// el panel usa sus propias columnas (imagen_url, horario_texto, etc.), y
+// solo cae acá si todavía no las completaron.
+const IMAGEN_GENERICA = "/logo.png";
+const HORARIO_GENERICO = "Consultanos el horario de atención";
 
 // Parsea "Calle 1234, C1614 Localidad, Provincia" en los campos de
 // PostalAddress que pide schema.org -- las direcciones reales ya vienen en
@@ -81,7 +61,7 @@ export default async function SucursalPage({ params }: { params: Promise<{ slug:
 
   const { data: sucursal } = await supabase
     .from("sucursales")
-    .select("id, nombre, direccion, telefono:telefono_encargado, slug, google_maps_url")
+    .select("id, nombre, direccion, telefono:telefono_encargado, slug, google_maps_url, imagen_url, horario_texto, horario_dia_desde, horario_dia_hasta, horario_hora_desde, horario_hora_hasta, latitude, longitude")
     .eq("slug", slug)
     .maybeSingle();
 
@@ -94,15 +74,19 @@ export default async function SucursalPage({ params }: { params: Promise<{ slug:
     .in("estado", ["disponible", "reservado"])
     .order("created_at", { ascending: false });
 
-  const fallback = FALLBACK_DATA[slug] || FALLBACK_DATA["casa-central"];
-
-  const imagenFondo = fallback.imagen;
-  const direccion = sucursal.direccion || fallback.direccion;
-  const telefono = sucursal.telefono || fallback.telefono;
-  const horario = fallback.horario;
+  const imagenFondo = sucursal.imagen_url || IMAGEN_GENERICA;
+  const direccion = sucursal.direccion || "";
+  const telefono = sucursal.telefono || "";
+  const horario = sucursal.horario_texto || HORARIO_GENERICO;
   const nombreSucursal = sucursal.nombre;
+  const horarioDiaDesde = sucursal.horario_dia_desde ?? 1;
+  const horarioDiaHasta = sucursal.horario_dia_hasta ?? 6;
+  const horarioHoraDesde = sucursal.horario_hora_desde ?? 9;
+  const horarioHoraHasta = sucursal.horario_hora_hasta ?? 19;
 
   const { streetAddress, addressLocality, addressRegion, postalCode } = parseDireccion(direccion);
+  const DIAS_SCHEMA = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"];
+  const dayOfWeek = Array.from({ length: horarioDiaHasta - horarioDiaDesde + 1 }, (_, i) => DIAS_SCHEMA[horarioDiaDesde + i]);
   const jsonLd = {
     "@context": "https://schema.org",
     "@type": "AutoDealer",
@@ -120,12 +104,12 @@ export default async function SucursalPage({ params }: { params: Promise<{ slug:
       addressCountry: "AR",
     },
     ...(sucursal.google_maps_url ? { hasMap: sucursal.google_maps_url } : {}),
-    ...(GEO_SUCURSALES[slug] ? { geo: { "@type": "GeoCoordinates", ...GEO_SUCURSALES[slug] } } : {}),
+    ...(sucursal.latitude != null && sucursal.longitude != null ? { geo: { "@type": "GeoCoordinates", latitude: sucursal.latitude, longitude: sucursal.longitude } } : {}),
     openingHoursSpecification: {
       "@type": "OpeningHoursSpecification",
-      dayOfWeek: ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"],
-      opens: "09:00",
-      closes: "19:00",
+      dayOfWeek,
+      opens: `${String(Math.trunc(horarioHoraDesde)).padStart(2, "0")}:${String(Math.round((horarioHoraDesde % 1) * 60)).padStart(2, "0")}`,
+      closes: `${String(Math.trunc(horarioHoraHasta)).padStart(2, "0")}:${String(Math.round((horarioHoraHasta % 1) * 60)).padStart(2, "0")}`,
     },
   };
 
@@ -133,12 +117,18 @@ export default async function SucursalPage({ params }: { params: Promise<{ slug:
     <div className="w-full bg-[#f8f9fa] dark:bg-[#0a0a0f] min-h-screen flex flex-col">
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd).replace(/</g, "\\u003c") }} />
       <SucursalHeroAnimated
-        slug={slug}
         nombre={nombreSucursal}
         imagen={imagenFondo}
         direccion={direccion}
         telefono={telefono}
         horario={horario}
+        navLink={sucursal.google_maps_url}
+        latitude={sucursal.latitude}
+        longitude={sucursal.longitude}
+        horarioDiaDesde={horarioDiaDesde}
+        horarioDiaHasta={horarioDiaHasta}
+        horarioHoraDesde={horarioHoraDesde}
+        horarioHoraHasta={horarioHoraHasta}
       />
 
       <div className="max-w-7xl mx-auto w-full px-4 md:px-6 pt-10">
