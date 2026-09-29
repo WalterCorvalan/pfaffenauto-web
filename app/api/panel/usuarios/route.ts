@@ -3,6 +3,7 @@ import { z } from "zod";
 import { createClient } from "@/lib/supabase/server";
 import { createClient as createAdminClient } from "@supabase/supabase-js";
 import { rateLimit, ipDesdeRequest } from "@/lib/rateLimit";
+import { normalizarUsuario } from "@/lib/panel/normalizarUsuario";
 
 const ROLES = ["admin", "encargado", "ventas", "finanzas", "gestoria", "taller"] as const;
 
@@ -27,12 +28,21 @@ export async function GET() {
 
   const sb = admin();
   const [{ data: perfiles }, { data: authList }] = await Promise.all([
-    sb.from("perfiles").select("id, nombre, roles, activo, sucursal_id, whatsapp, created_at").order("created_at", { ascending: false }),
+    sb.from("perfiles").select("id, nombre, roles, activo, sucursal_id, whatsapp, usuario, created_at").order("created_at", { ascending: false }),
     sb.auth.admin.listUsers({ perPage: 1000 }),
   ]);
 
   const emailPorId = new Map(authList?.users.map((u) => [u.id, u.email]) || []);
   const usuarios = (perfiles || []).map((p) => ({ ...p, email: emailPorId.get(p.id) || "—" }));
+
+  // Backfill silencioso: perfiles creados antes de que existiera esta
+  // columna (todos, al momento de escribir esto) nunca tuvieron su
+  // "usuario" derivado del email -- se completa acá, sin que nadie tenga
+  // que abrir cada uno a mano solo para que quede guardado.
+  const sinUsuario = usuarios.filter((u) => !u.usuario && u.email && u.email !== "—");
+  if (sinUsuario.length > 0) {
+    await Promise.all(sinUsuario.map((u) => sb.from("perfiles").update({ usuario: normalizarUsuario(u.email!) }).eq("id", u.id)));
+  }
 
   return NextResponse.json({ usuarios });
 }
@@ -63,8 +73,19 @@ export async function POST(request: Request) {
   const { data: nuevo, error: createError } = await sb.auth.admin.createUser({ email, password, email_confirm: true });
   if (createError) return NextResponse.json({ error: createError.message }, { status: 400 });
 
-  const { error: upsertError } = await sb.from("perfiles").upsert({ id: nuevo.user.id, nombre, roles, activo: true, sucursal_id: sucursal_id || null, whatsapp: whatsapp || null });
-  if (upsertError) return NextResponse.json({ error: upsertError.message }, { status: 400 });
+  const { error: upsertError } = await sb.from("perfiles").upsert({ id: nuevo.user.id, nombre, roles, activo: true, sucursal_id: sucursal_id || null, whatsapp: whatsapp || null, usuario: normalizarUsuario(email) });
+  if (upsertError) {
+    // Único caso donde puede fallar sin que sea un error real: dos emails
+    // con la misma parte antes de la arroba (ej: fede@pfaffencars.com y
+    // fede@gmail.com) generan el mismo "usuario" de login (índice único en
+    // perfiles.usuario, ver migraciones/sql_perfiles_usuario.sql). La
+    // cuenta de Auth ya se creó -- no la dejamos huérfana, pero avisamos
+    // del choque para que el admin ajuste el email.
+    if (upsertError.code === "23505") {
+      return NextResponse.json({ error: `Ya hay otro colaborador cuyo email empieza igual (antes de la @) -- el usuario de login "${normalizarUsuario(email)}" quedaría duplicado. Usá un email distinto.` }, { status: 400 });
+    }
+    return NextResponse.json({ error: upsertError.message }, { status: 400 });
+  }
 
   return NextResponse.json({ ok: true, id: nuevo.user.id });
 }
@@ -72,6 +93,7 @@ export async function POST(request: Request) {
 const ActualizarSchema = z.object({
   id: z.string().uuid(),
   nombre: z.string().trim().min(1).max(100).optional(),
+  email: z.string().trim().email().max(150).optional(),
   roles: z.array(z.enum(ROLES)).min(1).optional(),
   activo: z.boolean().optional(),
   sucursal_id: z.string().uuid().nullable().optional(),
@@ -87,10 +109,28 @@ export async function PATCH(request: Request) {
 
   const parsed = ActualizarSchema.safeParse(await request.json());
   if (!parsed.success) return NextResponse.json({ error: "Datos inválidos." }, { status: 400 });
-  const { id, ...update } = parsed.data;
+  const { id, email, ...update } = parsed.data;
 
-  const { error: updateError } = await admin().from("perfiles").update(update).eq("id", id);
-  if (updateError) return NextResponse.json({ error: updateError.message }, { status: 400 });
+  const sb = admin();
+
+  // El email es la credencial real de Supabase Auth (Nombre es solo cómo se
+  // lee en el panel, no afecta el login) -- si cambió, se actualiza ahí y
+  // se recalcula el "usuario" derivado (perfiles.usuario) para que el login
+  // corto siga sirviendo con el email nuevo.
+  const patchPerfil: Record<string, unknown> = { ...update };
+  if (email !== undefined) {
+    const { error: emailError } = await sb.auth.admin.updateUserById(id, { email });
+    if (emailError) return NextResponse.json({ error: emailError.message }, { status: 400 });
+    patchPerfil.usuario = normalizarUsuario(email);
+  }
+
+  const { error: updateError } = await sb.from("perfiles").update(patchPerfil).eq("id", id);
+  if (updateError) {
+    if (updateError.code === "23505") {
+      return NextResponse.json({ error: `Ya hay otro colaborador cuyo email empieza igual (antes de la @) -- el usuario de login quedaría duplicado. Usá un email distinto.` }, { status: 400 });
+    }
+    return NextResponse.json({ error: updateError.message }, { status: 400 });
+  }
 
   return NextResponse.json({ ok: true });
 }

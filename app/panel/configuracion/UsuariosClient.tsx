@@ -6,6 +6,7 @@ import { Settings, UserPlus, Pencil, Trash2, Loader2, X, Users, UserCheck, UserX
 import { supabase2 } from "@/lib/supabase/client";
 import TablaResponsiva, { type ColumnaTabla } from "@/components/panel/TablaResponsiva";
 import ConfirmDialog from "@/components/panel/ConfirmDialog";
+import { normalizarUsuario } from "@/lib/panel/normalizarUsuario";
 
 const ROLES = ["admin", "encargado", "ventas", "finanzas", "gestoria", "taller"] as const;
 const ROL_LABEL: Record<string, string> = { admin: "Admin", encargado: "Encargado", ventas: "Ventas", finanzas: "Finanzas", gestoria: "Gestoría", taller: "Taller" };
@@ -279,6 +280,9 @@ function ModalNuevoUsuario({ sucursales, onClose, onSaved }: { sucursales: Sucur
         <div>
           <label className="text-xs font-semibold text-slate-500 block mb-1">Email</label>
           <input type="email" value={email} onChange={(e) => setEmail(e.target.value)} className="w-full bg-slate-50 dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-lg px-3 py-2 text-sm outline-none" />
+          {email.includes("@") && (
+            <p className="text-[11px] text-slate-400 mt-1">Va a entrar al panel con el usuario <span className="font-semibold text-slate-600 dark:text-slate-300">{normalizarUsuario(email)}</span> (o con este email).</p>
+          )}
         </div>
         <div>
           <label className="text-xs font-semibold text-slate-500 block mb-1">Contraseña</label>
@@ -318,6 +322,7 @@ function ModalNuevoUsuario({ sucursales, onClose, onSaved }: { sucursales: Sucur
 
 function ModalEditarUsuario({ usuario, sucursales, onClose, onSaved }: { usuario: Usuario; sucursales: Sucursal[]; onClose: () => void; onSaved: () => void }) {
   const [nombre, setNombre] = useState(usuario.nombre);
+  const [email, setEmail] = useState(usuario.email);
   const [roles, setRoles] = useState<string[]>(usuario.roles);
   const [sucursalId, setSucursalId] = useState(usuario.sucursal_id || "");
   const [whatsapp, setWhatsapp] = useState(usuario.whatsapp || "");
@@ -327,9 +332,13 @@ function ModalEditarUsuario({ usuario, sucursales, onClose, onSaved }: { usuario
   const toggleRol = (r: string) => setRoles((prev) => (prev.includes(r) ? prev.filter((x) => x !== r) : [...prev, r]));
 
   const guardar = async () => {
-    if (!nombre || roles.length === 0) return setError("Completá nombre y al menos un rol.");
+    if (!nombre || !email || roles.length === 0) return setError("Completá nombre, email y al menos un rol.");
     setGuardando(true);
-    const res = await fetch("/api/panel/usuarios", { method: "PATCH", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ id: usuario.id, nombre, roles, sucursal_id: sucursalId || null, whatsapp: whatsapp.replace(/\D/g, "") || null }) });
+    const body: Record<string, unknown> = { id: usuario.id, nombre, roles, sucursal_id: sucursalId || null, whatsapp: whatsapp.replace(/\D/g, "") || null };
+    // El email solo se manda si cambió -- evita tocar Auth (y recalcular el
+    // usuario de login) en cada guardado cuando la persona ni lo tocó.
+    if (email !== usuario.email) body.email = email;
+    const res = await fetch("/api/panel/usuarios", { method: "PATCH", headers: { "Content-Type": "application/json" }, body: JSON.stringify(body) });
     const data = await res.json();
     if (!res.ok) { setError(data.error || "No se pudo guardar."); setGuardando(false); return; }
     onSaved();
@@ -341,6 +350,14 @@ function ModalEditarUsuario({ usuario, sucursales, onClose, onSaved }: { usuario
         <div>
           <label className="text-xs font-semibold text-slate-500 block mb-1">Nombre</label>
           <input value={nombre} onChange={(e) => setNombre(e.target.value)} className="w-full bg-slate-50 dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-lg px-3 py-2 text-sm outline-none" />
+          <p className="text-[11px] text-slate-400 mt-1">Es solo cómo se lo ve en el panel (listados, asignaciones, etc.) -- no afecta el login.</p>
+        </div>
+        <div>
+          <label className="text-xs font-semibold text-slate-500 block mb-1">Email</label>
+          <input type="email" value={email} onChange={(e) => setEmail(e.target.value)} className="w-full bg-slate-50 dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-lg px-3 py-2 text-sm outline-none" />
+          {email.includes("@") && (
+            <p className="text-[11px] text-slate-400 mt-1">Entra al panel con el usuario <span className="font-semibold text-slate-600 dark:text-slate-300">{normalizarUsuario(email)}</span> (o con este email).</p>
+          )}
         </div>
         <div>
           <label className="text-xs font-semibold text-slate-500 block mb-1">Roles</label>
