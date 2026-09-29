@@ -3,7 +3,6 @@
 import { useEffect, useRef, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Play, Pause, ChevronLeft, ChevronRight } from "lucide-react";
-import Image from "next/image";
 
 export interface ReelItem {
   id: number | string;
@@ -99,7 +98,11 @@ export default function MediaReel({ items, className = "" }: { items: ReelItem[]
               className="w-full h-full object-cover"
             />
           ) : (
-            <Image src={item.src} alt={item.titulo} fill sizes="400px" className="object-cover" />
+            // Título/link se cargan a mano desde el panel (Marketing → Entregas), no
+            // hay control sobre el dominio de la URL -- <img> en vez de next/image
+            // para no depender del whitelist de remotePatterns en next.config.
+            // eslint-disable-next-line @next/next/no-img-element
+            <img src={item.src} alt={item.titulo} className="w-full h-full object-cover" />
           )}
         </motion.div>
       </AnimatePresence>
