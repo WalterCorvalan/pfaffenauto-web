@@ -1,7 +1,9 @@
 "use client";
 
+import { useEffect, useState } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import { Loader2 } from "lucide-react";
 
 const TABS: { label: string; href?: string }[] = [
   { label: "Métricas Generales", href: "/panel/marketing/generales" },
@@ -16,6 +18,13 @@ const TABS: { label: string; href?: string }[] = [
 
 export default function MarketingHeader() {
   const pathname = usePathname();
+  // Clickear un tab tarda en reflejarse (pathname solo cambia cuando la
+  // navegación TERMINA) -- sin feedback inmediato, un click no distinguible
+  // de "no lo tomó" llevaba a clickear varias veces seguidas. pendingHref se
+  // marca en el instante del click (síncrono, antes de que Next termine de
+  // navegar) y se limpia solo cuando pathname realmente cambia al destino.
+  const [pendingHref, setPendingHref] = useState<string | null>(null);
+  useEffect(() => { setPendingHref(null); }, [pathname]);
 
   return (
     <header className="flex flex-col border-b border-slate-200 dark:border-white/5 bg-white dark:bg-white/[0.02] shrink-0 pt-6 px-6">
@@ -41,17 +50,22 @@ export default function MarketingHeader() {
             );
           }
           const activo = pathname?.startsWith(tab.href);
+          const pendiente = pendingHref === tab.href && !activo;
           return (
             <Link
               key={tab.href}
               href={tab.href}
-              className={`pb-3 text-[13px] font-bold transition-colors border-b-2 whitespace-nowrap ${
+              onClick={() => setPendingHref(tab.href!)}
+              className={`flex items-center gap-1.5 pb-3 text-[13px] font-bold transition-colors border-b-2 whitespace-nowrap ${
                 activo
                   ? "border-[#0145F2] text-[#0145F2] dark:text-[#5b8dff]"
+                  : pendiente
+                  ? "border-slate-300 dark:border-white/20 text-slate-700 dark:text-slate-300"
                   : "border-transparent text-slate-500 hover:text-slate-700 dark:hover:text-slate-300"
               }`}
             >
               {tab.label}
+              {pendiente && <Loader2 className="w-3 h-3 animate-spin shrink-0" />}
             </Link>
           );
         })}
