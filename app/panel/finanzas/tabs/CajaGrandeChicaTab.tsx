@@ -48,6 +48,12 @@ export default function CajaGrandeChicaTab({ miId, soyAdmin, cuentas, setCuentas
   const [rObs, setRObs] = useState("");
   const [rArchivo, setRArchivo] = useState<File | null>(null);
   const [guardando, setGuardando] = useState(false);
+  // "Medio de pago" solo existe para manual/gasto (una transferencia no lo
+  // tiene, ver el `select` más abajo) -- ahí, si es Efectivo, no hay
+  // comprobante posible y deja de ser obligatorio. Toda transferencia
+  // sigue exigiéndolo siempre.
+  const esManualOGasto = rTipoMov === "manual" || rTipoMov === "gasto";
+  const requiereComprobante = !esManualOGasto || rMedioPago !== "Efectivo";
 
   // Editar = eliminar_movimiento_caja (revierte el saldo) + registrar de
   // nuevo con los valores editados -- no existe un RPC de "editar" que
@@ -186,10 +192,13 @@ export default function CajaGrandeChicaTab({ miId, soyAdmin, cuentas, setCuentas
   const registrar = async () => {
     if (!cuenta || !rMonto || Number(rMonto) <= 0) return alert("Completá el monto.");
     // Pedido del 23/9: comprobante obligatorio en todo ingreso/egreso/
-    // transferencia de Caja Grande/Chica -- antes acá siempre era opcional
-    // y nunca bloqueaba, mismo criterio que ya regía en Movimientos →
-    // Transferencia.
-    if (!rArchivo) return alert("Adjuntá el comprobante -- es obligatorio.");
+    // transferencia de Caja Grande/Chica. Pedido del 29/9: si se pagó en
+    // efectivo no hay comprobante que adjuntar (no existe tal cosa como un
+    // "comprobante de efectivo") -- deja de ser obligatorio solo en ese
+    // caso. Una transferencia no tiene "medio de pago" (ver el `Medio de
+    // pago` de abajo, solo aparece para manual/gasto), así que ahí el
+    // comprobante sigue siendo obligatorio siempre.
+    if (requiereComprobante && !rArchivo) return alert("Adjuntá el comprobante -- es obligatorio.");
     setGuardando(true);
     try {
       const esTransferencia = rTipoMov !== "manual" && rTipoMov !== "gasto";
@@ -207,6 +216,10 @@ export default function CajaGrandeChicaTab({ miId, soyAdmin, cuentas, setCuentas
           cuentaOrigenId = cuenta.id; cuentaDestinoId = cajaChica.id;
         }
 
+        // Transferencia siempre exige comprobante (requiereComprobante ya lo
+        // validó arriba) -- este chequeo es solo para que TS confirme que
+        // rArchivo no es null acá, no cambia el comportamiento.
+        if (!rArchivo) throw new Error("Adjuntá el comprobante.");
         const formDataT = new FormData();
         formDataT.append("file", rArchivo);
         formDataT.append("carpeta", "finanzas");
@@ -462,12 +475,14 @@ export default function CajaGrandeChicaTab({ miId, soyAdmin, cuentas, setCuentas
             <label className={labelClass + " mt-3"}>Observaciones</label>
             <textarea value={rObs} onChange={(e) => setRObs(e.target.value)} rows={2} className={inputClass} />
 
-            <label className={labelClass + " mt-3 flex items-center gap-1.5"}><Paperclip className="w-3.5 h-3.5" /> Comprobante *</label>
+            <label className={labelClass + " mt-3 flex items-center gap-1.5"}><Paperclip className="w-3.5 h-3.5" /> Comprobante {requiereComprobante ? "*" : "(opcional)"}</label>
             <label className="inline-flex items-center gap-1.5 px-3 py-2 text-xs font-bold border border-slate-200 dark:border-white/10 rounded-lg cursor-pointer">
               {rArchivo ? rArchivo.name : "Adjuntar archivo"}
               <input type="file" accept="image/*,.pdf" className="hidden" onChange={(e) => setRArchivo(e.target.files?.[0] || null)} />
             </label>
-            {!rArchivo && <p className="text-[11px] text-rose-500 mt-1.5">Obligatorio -- adjuntá el comprobante.</p>}
+            {!rArchivo && (requiereComprobante
+              ? <p className="text-[11px] text-rose-500 mt-1.5">Obligatorio -- adjuntá el comprobante.</p>
+              : <p className="text-[11px] text-slate-400 mt-1.5">Pagado en efectivo -- no hace falta comprobante.</p>)}
 
             <div className="flex justify-end gap-2 mt-4">
               <button onClick={() => setShowRegistrar(false)} className="px-4 py-2 text-sm font-bold text-slate-500">Cancelar</button>

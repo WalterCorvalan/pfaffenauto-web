@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect, useRef } from "react";
-import { useSearchParams } from "next/navigation";
+import { useSearchParams, useRouter } from "next/navigation";
 import { supabase2 } from "@/lib/supabase/client";
 import { Search, Send, Bot, Check, Info, ChevronRight, PanelRight, Megaphone, Maximize2 } from "lucide-react";
 import LeadDetailModal from "@/components/panel/conversaciones/LeadDetailModal";
@@ -22,11 +22,32 @@ export default function RodiBandeja({ conversacionesIniciales, vendedores, miId 
   const [detalleAbierto, setDetalleAbierto] = useState(false);
   const mensajesEndRef = useRef<HTMLDivElement>(null);
   const searchParams = useSearchParams();
+  const router = useRouter();
 
   useEffect(() => {
     const id = searchParams.get("conversacion");
     if (id) setSeleccionada(id);
   }, [searchParams]);
+
+  useEffect(() => { setConversaciones(conversacionesIniciales); }, [conversacionesIniciales]);
+
+  // Antes esta bandeja no tenía ningún realtime propio -- solo escuchaba
+  // mensajes de la charla ya abierta (más abajo). Una conversación nueva de
+  // Rodi (o un last_message_at/unread_count actualizado en otra charla) no
+  // aparecía hasta recargar la página a mano, aunque la campana de alertas
+  // (canal aparte, en PanelLayoutClient.tsx) sí avisara al toque -- mismo
+  // patrón ya usado en ChatClient.tsx (whatsapp/instagram/messenger) y
+  // LeadsUnificadosClient.tsx: debounce corto + router.refresh() para traer
+  // la lista de vuelta del server component con los joins ya resueltos.
+  useEffect(() => {
+    let timeoutId: ReturnType<typeof setTimeout>;
+    const refrescarConDebounce = () => { clearTimeout(timeoutId); timeoutId = setTimeout(() => router.refresh(), 400); };
+    const canalBandeja = supabase2
+      .channel(`rodi-bandeja-${Math.random().toString(36).slice(2)}`)
+      .on("postgres_changes", { event: "*", schema: "public", table: "rodi_conversaciones" }, refrescarConDebounce)
+      .subscribe();
+    return () => { clearTimeout(timeoutId); supabase2.removeChannel(canalBandeja); };
+  }, [router]);
 
   useEffect(() => { mensajesEndRef.current?.scrollIntoView({ behavior: "smooth" }); }, [mensajes]);
 

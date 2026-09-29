@@ -140,22 +140,54 @@ async function procesarMensaje({ sessionId, texto, origenPagina, nombre, telefon
   const patchCalificacion: Record<string, unknown> = { calificacion };
   if (vehiculoFocoId) patchCalificacion.vehiculo_id = vehiculoFocoId;
 
-  // Mismo criterio que WhatsApp/Instagram/Messenger: si el auto en foco ya
-  // tiene vendedor asignado en Stock y esta charla todavía no tiene
-  // vendedor, se la asignamos a esa persona en vez de esperar a la ronda
-  // por sucursal del handoff.
-  if (vehiculoFocoId && !conversacion.vendedor_id) {
-    const { data: vehiculoFoco } = await supabase.from("vehiculos").select("vendedor_asignado_id, vendedor:vendedor_asignado_id ( activo )").eq("id", vehiculoFocoId).maybeSingle();
-    const vendedorAsignadoActivo = vehiculoFoco?.vendedor as { activo?: boolean } | { activo?: boolean }[] | null | undefined;
-    const estaActivo = Array.isArray(vendedorAsignadoActivo) ? vendedorAsignadoActivo[0]?.activo : vendedorAsignadoActivo?.activo;
-    if (vehiculoFoco?.vendedor_asignado_id && estaActivo) {
-      patchCalificacion.vendedor_id = vehiculoFoco.vendedor_asignado_id;
-      patchCalificacion.estado_lead = "asignado";
-      conversacion.vendedor_id = vehiculoFoco.vendedor_asignado_id;
+  // Pedido del 29/9: mismo criterio que WhatsApp/Instagram/Messenger -- todo
+  // 0km en foco va siempre a Gabriel (Casa Central), y si el auto en foco
+  // tiene vendedor responsable en Stock distinto del que ya tiene la
+  // charla, se reasigna (pisa lo que hubiera resuelto la ronda por
+  // sucursal del handoff más abajo). Cada reasignación queda anotada en
+  // Eventos del lead y avisa al nuevo vendedor.
+  const registrarEventoAsignacionRodi = (descripcion: string) =>
+    supabase.from("eventos_lead").insert({ rodi_conversacion_id: conversacion.id, tipo: "asignacion", descripcion }).then(({ error }) => {
+      if (error) registrarError("rodi:evento-asignacion", error, { conversacionId: conversacion.id });
+    });
+  let vendedorAsignadoAhora: string | null = null;
+
+  if (vehiculoFocoId) {
+    const { data: vehiculoFoco } = await supabase.from("vehiculos").select("condicion, marca, modelo, vendedor_asignado_id, vendedor:vendedor_asignado_id ( activo )").eq("id", vehiculoFocoId).maybeSingle();
+    const nombreAuto = vehiculoFoco ? `${vehiculoFoco.marca} ${vehiculoFoco.modelo}`.trim() : "ese auto";
+
+    if (vehiculoFoco?.condicion === "0km") {
+      const { data: gabriel } = await supabase.from("perfiles").select("id, nombre, sucursal:sucursal_id ( nombre )").ilike("nombre", "Gabriel%").eq("activo", true).maybeSingle();
+      const sucursalGabrielRaw = gabriel?.sucursal as { nombre?: string } | { nombre?: string }[] | null | undefined;
+      const sucursalGabriel = Array.isArray(sucursalGabrielRaw) ? sucursalGabrielRaw[0]?.nombre : sucursalGabrielRaw?.nombre;
+      if (gabriel?.id && sucursalGabriel && /casa central/i.test(sucursalGabriel) && gabriel.id !== conversacion.vendedor_id) {
+        patchCalificacion.vendedor_id = gabriel.id;
+        patchCalificacion.estado_lead = "asignado";
+        conversacion.vendedor_id = gabriel.id;
+        vendedorAsignadoAhora = gabriel.id;
+        registrarEventoAsignacionRodi(`Reasignado automáticamente a ${gabriel.nombre} — el auto en foco (${nombreAuto}) es 0km, todos los 0km los maneja Gabriel.`);
+      } else if (!gabriel?.id) {
+        registrarError("rodi:asignacion-gabriel", new Error("No se encontró a Gabriel (Casa Central) activo en perfiles"), { conversacionId: conversacion.id, vehiculoFocoId });
+      }
+    } else {
+      const vendedorAsignadoActivo = vehiculoFoco?.vendedor as { activo?: boolean } | { activo?: boolean }[] | null | undefined;
+      const estaActivo = Array.isArray(vendedorAsignadoActivo) ? vendedorAsignadoActivo[0]?.activo : vendedorAsignadoActivo?.activo;
+      if (vehiculoFoco?.vendedor_asignado_id && estaActivo && vehiculoFoco.vendedor_asignado_id !== conversacion.vendedor_id) {
+        patchCalificacion.vendedor_id = vehiculoFoco.vendedor_asignado_id;
+        patchCalificacion.estado_lead = "asignado";
+        conversacion.vendedor_id = vehiculoFoco.vendedor_asignado_id;
+        vendedorAsignadoAhora = vehiculoFoco.vendedor_asignado_id;
+        const { data: vendedorFoco } = await supabase.from("perfiles").select("nombre").eq("id", vehiculoFoco.vendedor_asignado_id).maybeSingle();
+        registrarEventoAsignacionRodi(`Reasignado automáticamente a ${vendedorFoco?.nombre || "vendedor"} — es el responsable de ${nombreAuto} en Stock.`);
+      }
     }
   }
 
   await supabase.from("rodi_conversaciones").update(patchCalificacion).eq("id", conversacion.id);
+
+  if (vendedorAsignadoAhora) {
+    notificarPersona(supabase, vendedorAsignadoAhora, "whatsapp_venta_zona", "Un cliente te consultó por Rodi (chat del sitio) por un auto que tenés asignado — se te asignó automáticamente.", `/panel/rodi?conversacion=${conversacion.id}`, { categoriaNotif: "leads", modulo: "leads" }).catch((err) => console.error("[rodi] error notificando asignación:", err));
+  }
 
   // Nombre/email/teléfono que el cliente vaya dando durante la charla se
   // guardan apenas se detectan, sin esperar al handoff — así quedan aunque

@@ -4,7 +4,7 @@ import { useEffect, useState } from "react";
 import { supabase2 } from "@/lib/supabase/client";
 import { Car, FolderKanban, Trophy, Banknote, Landmark, MessageCircleMore, FileClock, KeyRound } from "lucide-react";
 
-export default function TopTicker() {
+export default function TopTicker({ puedeVerCaja = false }: { puedeVerCaja?: boolean }) {
   const [stock, setStock] = useState<number | null>(null);
   const [ventas, setVentas] = useState<number | null>(null);
   const [expedientes, setExpedientes] = useState<number | null>(null);
@@ -17,14 +17,18 @@ export default function TopTicker() {
 
   useEffect(() => {
     const cargarMetricas = async () => {
-      supabase2
-        .rpc("saldos_totales_por_moneda")
-        .then(({ data }) => {
-          const porMoneda: Record<string, number> = {};
-          (data || []).forEach((r: any) => { porMoneda[r.moneda] = Number(r.total) || 0; });
-          setCajaUsd(porMoneda.USD || 0);
-          setCajaArs(porMoneda.ARS || 0);
-        });
+      // Ni se pide si no se va a mostrar -- antes se traía igual para
+      // todos los roles y solo se ocultaba en la UI.
+      if (puedeVerCaja) {
+        supabase2
+          .rpc("saldos_totales_por_moneda")
+          .then(({ data }) => {
+            const porMoneda: Record<string, number> = {};
+            (data || []).forEach((r: any) => { porMoneda[r.moneda] = Number(r.total) || 0; });
+            setCajaUsd(porMoneda.USD || 0);
+            setCajaArs(porMoneda.ARS || 0);
+          });
+      }
 
       fetch("/api/dolar-blue")
         .then((res) => res.json())
@@ -75,18 +79,20 @@ export default function TopTicker() {
     cargarMetricas();
     const timer = setInterval(cargarMetricas, 5 * 60 * 1000);
     return () => clearInterval(timer);
-  }, []);
+  }, [puedeVerCaja]);
 
   const MetricasGrupo = () => (
     <>
-      <div className="flex items-center gap-2 px-4 border-r border-indigo-100/50 dark:border-white/5 shrink-0">
-        <div className="bg-emerald-100 dark:bg-emerald-500/20 p-1 rounded-md">
-          <Banknote className="w-3 h-3 text-emerald-600 dark:text-emerald-400" />
+      {puedeVerCaja && (
+        <div className="flex items-center gap-2 px-4 border-r border-indigo-100/50 dark:border-white/5 shrink-0">
+          <div className="bg-emerald-100 dark:bg-emerald-500/20 p-1 rounded-md">
+            <Banknote className="w-3 h-3 text-emerald-600 dark:text-emerald-400" />
+          </div>
+          <span className="text-[11px] font-medium text-slate-600 dark:text-slate-300 tracking-wide">
+            Caja: <span className="font-bold text-emerald-600 dark:text-emerald-400">USD {(cajaUsd ?? 0).toLocaleString("es-AR")} · ARS {(cajaArs ?? 0).toLocaleString("es-AR")}</span>
+          </span>
         </div>
-        <span className="text-[11px] font-medium text-slate-600 dark:text-slate-300 tracking-wide">
-          Caja: <span className="font-bold text-emerald-600 dark:text-emerald-400">USD {(cajaUsd ?? 0).toLocaleString("es-AR")} · ARS {(cajaArs ?? 0).toLocaleString("es-AR")}</span>
-        </span>
-      </div>
+      )}
 
       <div className="flex items-center gap-2 px-4 border-r border-indigo-100/50 dark:border-white/5 shrink-0">
         <div className="bg-blue-100 dark:bg-blue-500/20 p-1 rounded-md">

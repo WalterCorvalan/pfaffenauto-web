@@ -375,7 +375,7 @@ async function ejecutarAgente(conversacionId: string) {
     return;
   }
 
-  const { reply, handoff, pausar_sin_notificar, calificacion, resumen_handoff, datos_detectados, intencion } = result.data;
+  const { reply, handoff, pausar_sin_notificar, calificacion, resumen_handoff, datos_detectados } = result.data;
   const { fotosParaEnviar, vehiculoFocoId, pedidoStock } = result;
 
   const estadoSegunCalificacion = calificacion === "caliente" ? "calificando" : undefined;
@@ -384,47 +384,66 @@ async function ejecutarAgente(conversacionId: string) {
   if (vehiculoFocoId) patchConversacion.vehiculo_id = vehiculoFocoId;
 
   // Pedido del usuario: todo auto 0km que el bot elige como foco de la
-  // charla, Y toda consulta de consignación (el cliente quiere que le
-  // vendamos SU auto), se derivan siempre a Gabriel (Casa Central), sin
-  // importar la ronda normal por sucursal -- los maneja una sola persona.
-  // Se busca por nombre/sucursal en vivo (no un UUID hardcodeado) para no
-  // romper si cambia el perfil; si no se encuentra a Gabriel activo en
-  // Casa Central, no rompe el resto del flujo, solo no fuerza el cambio.
-  let motivoAsignacionGabriel: "0km" | "consignacion" | null = null;
+  // charla se deriva siempre a Gabriel (Casa Central), sin importar la
+  // ronda normal por sucursal -- lo maneja una sola persona. Se busca por
+  // nombre/sucursal en vivo (no un UUID hardcodeado) para no romper si
+  // cambia el perfil; si no se encuentra a Gabriel activo en Casa Central,
+  // no rompe el resto del flujo, solo no fuerza el cambio.
+  // Pedido del 29/9: consignación deja de ir a Gabriel -- ahora cae en la
+  // ronda común (el trigger asignar_vendedor_conversacion_nueva ya le puso
+  // vendedor al crear la charla), igual que Instagram/Messenger/Rodi, que
+  // nunca tuvieron este caso especial.
+  let motivoAsignacionGabriel: "0km" | null = null;
   let vehiculoFocoVendedorId: string | null = null;
+  let vehiculoFocoNombre = "";
   if (vehiculoFocoId) {
-    const { data: vehiculoFoco } = await supabase.from("vehiculos").select("condicion, vendedor_asignado_id, vendedor:vendedor_asignado_id ( activo )").eq("id", vehiculoFocoId).maybeSingle();
+    const { data: vehiculoFoco } = await supabase.from("vehiculos").select("condicion, marca, modelo, vendedor_asignado_id, vendedor:vendedor_asignado_id ( activo )").eq("id", vehiculoFocoId).maybeSingle();
     if (vehiculoFoco?.condicion === "0km") motivoAsignacionGabriel = "0km";
+    vehiculoFocoNombre = vehiculoFoco ? `${vehiculoFoco.marca} ${vehiculoFoco.modelo}`.trim() : "";
     const vendedorAsignadoActivo = vehiculoFoco?.vendedor as { activo?: boolean } | { activo?: boolean }[] | null | undefined;
     const estaActivo = Array.isArray(vendedorAsignadoActivo) ? vendedorAsignadoActivo[0]?.activo : vendedorAsignadoActivo?.activo;
     if (vehiculoFoco?.vendedor_asignado_id && estaActivo) vehiculoFocoVendedorId = vehiculoFoco.vendedor_asignado_id;
   }
-  if (!motivoAsignacionGabriel && intencion === "CONSIGNACION") motivoAsignacionGabriel = "consignacion";
+
+  // Pedido del 29/9: además de avisarle al vendedor nuevo por qué le llegó
+  // (ya lo hacía la notificación de abajo), la reasignación automática
+  // queda anotada en Eventos del lead -- sin esto, quien abre el detalle
+  // más tarde (o el vendedor al que se lo sacaron) no tiene forma de saber
+  // que un lead que tenía asignado cambió de dueño solo, ni por qué.
+  const registrarEventoAsignacion = (descripcion: string) =>
+    supabase.from("eventos_lead").insert({ whatsapp_conversacion_id: conversacionId, tipo: "asignacion", descripcion }).then(({ error }) => {
+      if (error) registrarError("webhook-v2:evento-asignacion", error, { conversacionId });
+    });
 
   if (motivoAsignacionGabriel) {
     const { data: gabriel } = await supabase
       .from("perfiles")
-      .select("id, sucursal:sucursal_id ( nombre )")
+      .select("id, nombre, sucursal:sucursal_id ( nombre )")
       .ilike("nombre", "Gabriel%")
       .eq("activo", true)
       .maybeSingle();
     const sucursalGabrielRaw = gabriel?.sucursal as { nombre?: string } | { nombre?: string }[] | null | undefined;
     const sucursalGabriel = Array.isArray(sucursalGabrielRaw) ? sucursalGabrielRaw[0]?.nombre : sucursalGabrielRaw?.nombre;
     if (gabriel?.id && sucursalGabriel && /casa central/i.test(sucursalGabriel)) {
-      patchConversacion.vendedor_id = gabriel.id;
-      patchConversacion.estado_lead = "asignado";
+      if (gabriel.id !== conversacionActual?.vendedor_id) {
+        patchConversacion.vendedor_id = gabriel.id;
+        patchConversacion.estado_lead = "asignado";
+        registrarEventoAsignacion(`Reasignado automáticamente a ${gabriel.nombre} — el auto en foco (${vehiculoFocoNombre || "0km"}) es 0km, todos los 0km los maneja Gabriel.`);
+      }
     } else {
       registrarError("webhook-v2:asignacion-gabriel", new Error("No se encontró a Gabriel (Casa Central) activo en perfiles"), { conversacionId, vehiculoFocoId, motivoAsignacionGabriel });
     }
-  } else if (vehiculoFocoVendedorId && !conversacionActual?.vendedor_id) {
+  } else if (vehiculoFocoVendedorId && vehiculoFocoVendedorId !== conversacionActual?.vendedor_id) {
     // El auto en foco ya tiene un vendedor asignado en Stock (pedido del
     // usuario: "si alguien viene directamente buscando tal auto que lo
-    // tiene tal vendedor" tiene que llegarle a esa persona, no a quien le
-    // haya tocado por ronda) -- solo si la charla TODAVÍA no tiene vendedor,
-    // para no pisar una asignación manual/de ronda ya hecha antes de saber
-    // qué auto quería.
+    // tiene tal vendedor" tiene que llegarle a esa persona) -- pedido del
+    // 29/9: esto pisa a quien le haya tocado por ronda al arrancar la
+    // charla, no solo aplica si estaba sin asignar. El chequeo != evita un
+    // update/aviso/evento de "reasignación" inútil cuando ya era esa persona.
     patchConversacion.vendedor_id = vehiculoFocoVendedorId;
     patchConversacion.estado_lead = "asignado";
+    const { data: vendedorFoco } = await supabase.from("perfiles").select("nombre").eq("id", vehiculoFocoVendedorId).maybeSingle();
+    registrarEventoAsignacion(`Reasignado automáticamente a ${vendedorFoco?.nombre || "vendedor"} — es el responsable de ${vehiculoFocoNombre || "ese auto"} en Stock.`);
   }
 
   await supabase.from("whatsapp_conversaciones").update(patchConversacion).eq("id", conversacionId);
@@ -432,8 +451,7 @@ async function ejecutarAgente(conversacionId: string) {
   // Avisar recién después del update de arriba (así el link ya muestra la
   // conversación con el vendedor correcto si abre desde la alerta).
   if (patchConversacion.vendedor_id) {
-    const mensajeAsignacion = motivoAsignacionGabriel === "consignacion" ? "Un cliente quiere consignar su auto — se te asignó automáticamente."
-      : motivoAsignacionGabriel === "0km" ? "Un cliente está consultando por un 0km — se te asignó automáticamente."
+    const mensajeAsignacion = motivoAsignacionGabriel === "0km" ? "Un cliente está consultando por un 0km — se te asignó automáticamente."
       : "Un cliente está consultando por un auto que tenés asignado en Stock — se te asignó automáticamente.";
     notificarPersona(supabase, patchConversacion.vendedor_id as string, "whatsapp_venta_zona", mensajeAsignacion, `/panel/whatsapp?conversacion=${conversacionId}`, { categoriaNotif: "leads", modulo: "leads" }).catch((err) => console.error("[webhook-v2] error notificando asignación:", err));
   }

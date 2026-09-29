@@ -6,6 +6,7 @@ import { sendInstagramPrivateReply, sendInstagramMessage, sendInstagramImageMess
 import { decrypt } from "@/lib/crypto";
 import { rateLimit, ipDesdeRequest } from "@/lib/rateLimit";
 import { registrarError } from "@/lib/panel/logger";
+import { notificarPersona } from "@/lib/panel/notificaciones";
 import { subirArchivoR2, r2Configurado } from "@/lib/storage/r2";
 
 // Webhook de Meta para el Instagram de panel (Conversaciones → Instagram),
@@ -457,22 +458,49 @@ async function ejecutarAgente(conversacionId: string, igUserId: string) {
   // se perdía o confundía a los pocos mensajes.
   if (vehiculoFocoId) patchConversacion.vehiculo_id = vehiculoFocoId;
 
-  // Mismo criterio que WhatsApp (webhooks/whatsapp/[token]/route.ts): si el
-  // auto en foco ya tiene vendedor asignado en Stock y esta charla todavía
-  // no tiene vendedor (nadie la agarró antes de saber qué auto quería), se
-  // la asignamos a esa persona en vez de dejarla con quien le tocó por
-  // ronda al arrancar la charla.
-  if (vehiculoFocoId && !conversacionActual?.vendedor_id) {
-    const { data: vehiculoFoco } = await supabase.from("vehiculos").select("vendedor_asignado_id, vendedor:vendedor_asignado_id ( activo )").eq("id", vehiculoFocoId).maybeSingle();
-    const vendedorAsignadoActivo = vehiculoFoco?.vendedor as { activo?: boolean } | { activo?: boolean }[] | null | undefined;
-    const estaActivo = Array.isArray(vendedorAsignadoActivo) ? vendedorAsignadoActivo[0]?.activo : vendedorAsignadoActivo?.activo;
-    if (vehiculoFoco?.vendedor_asignado_id && estaActivo) {
-      patchConversacion.vendedor_id = vehiculoFoco.vendedor_asignado_id;
-      patchConversacion.estado_lead = "asignado";
+  // Pedido del 29/9: mismo criterio que WhatsApp ahora en los 4 canales --
+  // todo 0km en foco va siempre a Gabriel (Casa Central), y si el auto en
+  // foco tiene un vendedor responsable en Stock distinto del que ya tiene
+  // la charla, se reasigna a esa persona (pisa a quien le tocó por ronda).
+  // Cada reasignación queda anotada en Eventos del lead y avisa al nuevo
+  // vendedor, para que se sepa por qué cambió de dueño.
+  const registrarEventoAsignacionIg = (descripcion: string) =>
+    supabase.from("eventos_lead").insert({ instagram_conversacion_id: conversacionId, tipo: "asignacion", descripcion }).then(({ error }) => {
+      if (error) registrarError("webhook-v2:evento-asignacion", error, { conversacionId });
+    });
+
+  if (vehiculoFocoId) {
+    const { data: vehiculoFoco } = await supabase.from("vehiculos").select("condicion, marca, modelo, vendedor_asignado_id, vendedor:vendedor_asignado_id ( activo )").eq("id", vehiculoFocoId).maybeSingle();
+    const nombreAuto = vehiculoFoco ? `${vehiculoFoco.marca} ${vehiculoFoco.modelo}`.trim() : "ese auto";
+
+    if (vehiculoFoco?.condicion === "0km") {
+      const { data: gabriel } = await supabase.from("perfiles").select("id, nombre, sucursal:sucursal_id ( nombre )").ilike("nombre", "Gabriel%").eq("activo", true).maybeSingle();
+      const sucursalGabrielRaw = gabriel?.sucursal as { nombre?: string } | { nombre?: string }[] | null | undefined;
+      const sucursalGabriel = Array.isArray(sucursalGabrielRaw) ? sucursalGabrielRaw[0]?.nombre : sucursalGabrielRaw?.nombre;
+      if (gabriel?.id && sucursalGabriel && /casa central/i.test(sucursalGabriel) && gabriel.id !== conversacionActual?.vendedor_id) {
+        patchConversacion.vendedor_id = gabriel.id;
+        patchConversacion.estado_lead = "asignado";
+        registrarEventoAsignacionIg(`Reasignado automáticamente a ${gabriel.nombre} — el auto en foco (${nombreAuto}) es 0km, todos los 0km los maneja Gabriel.`);
+      } else if (!gabriel?.id) {
+        registrarError("webhook-v2:asignacion-gabriel", new Error("No se encontró a Gabriel (Casa Central) activo en perfiles"), { conversacionId, vehiculoFocoId });
+      }
+    } else {
+      const vendedorAsignadoActivo = vehiculoFoco?.vendedor as { activo?: boolean } | { activo?: boolean }[] | null | undefined;
+      const estaActivo = Array.isArray(vendedorAsignadoActivo) ? vendedorAsignadoActivo[0]?.activo : vendedorAsignadoActivo?.activo;
+      if (vehiculoFoco?.vendedor_asignado_id && estaActivo && vehiculoFoco.vendedor_asignado_id !== conversacionActual?.vendedor_id) {
+        patchConversacion.vendedor_id = vehiculoFoco.vendedor_asignado_id;
+        patchConversacion.estado_lead = "asignado";
+        const { data: vendedorFoco } = await supabase.from("perfiles").select("nombre").eq("id", vehiculoFoco.vendedor_asignado_id).maybeSingle();
+        registrarEventoAsignacionIg(`Reasignado automáticamente a ${vendedorFoco?.nombre || "vendedor"} — es el responsable de ${nombreAuto} en Stock.`);
+      }
     }
   }
 
   await supabase.from("instagram_conversaciones").update(patchConversacion).eq("id", conversacionId);
+
+  if (patchConversacion.vendedor_id && patchConversacion.vendedor_id !== conversacionActual?.vendedor_id) {
+    notificarPersona(supabase, patchConversacion.vendedor_id as string, "whatsapp_venta_zona", "Un cliente te escribió por Instagram por un auto que tenés asignado — se te asignó automáticamente.", `/panel/instagram?conversacion=${conversacionId}`, { categoriaNotif: "leads", modulo: "leads" }).catch((err) => console.error("[webhook-v2] error notificando asignación:", err));
+  }
 
   // El agente SÍ le pregunta el nombre real al cliente en Instagram (regla
   // DATOS DE CONTACTO), pero hasta ahora nunca se guardaba en ningún lado --
