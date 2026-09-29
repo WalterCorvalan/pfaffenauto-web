@@ -1,13 +1,22 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { supabase2 } from "@/lib/supabase/client";
-import { X, Loader2, DoorOpen, Globe, ScanLine, Search } from "lucide-react";
+import { X, Loader2, DoorOpen, Globe, ScanLine, Search, Car, XCircle } from "lucide-react";
 import EscanearDniModal, { type DatosDni } from "./EscanearDniModal";
 import { parseFechaLocal } from "@/lib/panel/fechas";
 import { crearAlerta } from "@/lib/panel/alertas";
 
-export const ORIGENES = ["Instagram", "Facebook", "Web", "Referido", "Showroom", "WhatsApp", "Otro"];
+// Se agregan los canales reales que faltaban (Google Ads, MercadoLibre,
+// Rodi, Messenger, Cliente anterior) -- mismo vocabulario que ya usa
+// CANALES_ORIGEN en components/panel/conversaciones/LeadDetailModal.tsx
+// para el mismo concepto ("canal de origen" de un lead), así este
+// formulario no queda con una lista propia desincronizada del resto del
+// panel. No se renombra "Showroom" a "Salón" (aunque es el nombre en
+// CANALES_ORIGEN) porque "Cómo nos conocieron" en Marketing → Embudo
+// agrupa por el string tal cual está guardado en `clientes.origen` --
+// renombrarlo rompería la agrupación de todos los clientes ya cargados.
+export const ORIGENES = ["Instagram", "Facebook", "Google Ads", "MercadoLibre", "Rodi", "Messenger", "Web", "Referido", "Showroom", "WhatsApp", "Cliente anterior", "Otro"];
 const ETAPAS = [
   { value: "sin_contactar", label: "Nuevo" },
   { value: "contactado", label: "Contactado" },
@@ -56,6 +65,16 @@ async function elegirPorRotacion(canal: string, disponibles: Perfil[]) {
 
 export default function NuevoClienteModal({ perfiles, disponibilidad, miId, editando, onClose, onCreado }: Props) {
   const esEdicion = !!editando;
+  // "Vendedor asignado" y la rotación automática de abajo usaban `perfiles`
+  // tal cual llega (TODOS los perfiles activos, sin filtrar por rol --
+  // page.tsx no aplica filtrarVendedoresAsignables acá porque `perfiles`
+  // también se usa en ClientesClient.tsx para cosas que sí necesitan la
+  // lista completa, como el mapa de nombres y el filtro "clientes por
+  // perfil" que puede incluir asignaciones históricas a encargado/gestoría).
+  // Filtrado local, solo para este selector: alguien de gestoría/finanzas
+  // (ej. Cecilia) no es vendedor y no debería aparecer para asignar un
+  // cliente nuevo, ni entrar en la rotación automática.
+  const vendedores = perfiles.filter((p) => p.roles?.includes("ventas") || p.roles?.includes("encargado"));
   const [canalIngreso, setCanalIngreso] = useState<"walk_in" | "lead_digital">(editando?.canal_ingreso || "lead_digital");
   const [nombre, setNombre] = useState(editando?.nombre || "");
   const [tipo, setTipo] = useState(editando?.tipo || "Regular");
@@ -66,6 +85,11 @@ export default function NuevoClienteModal({ perfiles, disponibilidad, miId, edit
   const [origen, setOrigen] = useState(editando?.origen || "Showroom");
   const [etapa, setEtapa] = useState(editando?.pipeline_stage || "sin_contactar");
   const [vehiculoTexto, setVehiculoTexto] = useState(editando?.vehiculo_interes_texto || "");
+  const [vehiculoInteresId, setVehiculoInteresId] = useState<string>(editando?.vehiculo_interes_id || "");
+  const [vehiculoInteresLabel, setVehiculoInteresLabel] = useState("");
+  const [busquedaVehiculo, setBusquedaVehiculo] = useState("");
+  const [resultadosVehiculo, setResultadosVehiculo] = useState<any[]>([]);
+  const [buscandoVehiculo, setBuscandoVehiculo] = useState(false);
   const [buscaMarca, setBuscaMarca] = useState(editando?.busca_marca || "");
   const [buscaModelo, setBuscaModelo] = useState(editando?.busca_modelo || "");
   const [buscaMoneda, setBuscaMoneda] = useState(editando?.busca_moneda || "USD");
@@ -80,6 +104,44 @@ export default function NuevoClienteModal({ perfiles, disponibilidad, miId, edit
   const [guardando, setGuardando] = useState(false);
   const [error, setError] = useState("");
   const [modalEscaner, setModalEscaner] = useState(false);
+
+  // Al editar un cliente que ya tiene vehiculo_interes_id, la fila de
+  // `clientes` (select("*") en page.tsx) no trae marca/modelo -- se resuelve
+  // acá una sola vez para mostrar el nombre en vez de un id pelado.
+  useEffect(() => {
+    if (!editando?.vehiculo_interes_id) return;
+    supabase2.from("vehiculos").select("marca, modelo, patente").eq("id", editando.vehiculo_interes_id).maybeSingle().then(({ data }) => {
+      if (data) setVehiculoInteresLabel(`${data.marca} ${data.modelo}${data.patente ? ` (${data.patente})` : ""}`);
+    });
+  }, [editando?.vehiculo_interes_id]);
+
+  // Búsqueda en vivo contra el stock disponible -- mismo criterio que
+  // VehiculoSelector.tsx (Señas/Ventas/Presupuestos/Permutas): debounce
+  // 300ms desde 2 caracteres, solo autos "disponible".
+  useEffect(() => {
+    const q = busquedaVehiculo.trim();
+    if (q.length < 2) { setResultadosVehiculo([]); return; }
+    setBuscandoVehiculo(true);
+    const timer = setTimeout(async () => {
+      const { data } = await supabase2
+        .from("vehiculos")
+        .select("id, marca, modelo, patente")
+        .eq("estado", "disponible")
+        .or(`marca.ilike.%${q}%,modelo.ilike.%${q}%,patente.ilike.%${q}%`)
+        .order("marca")
+        .limit(20);
+      setResultadosVehiculo(data || []);
+      setBuscandoVehiculo(false);
+    }, 300);
+    return () => clearTimeout(timer);
+  }, [busquedaVehiculo]);
+
+  const elegirVehiculoInteres = (v: any) => {
+    setVehiculoInteresId(v.id);
+    setVehiculoInteresLabel(`${v.marca} ${v.modelo}${v.patente ? ` (${v.patente})` : ""}`);
+    setBusquedaVehiculo("");
+    setResultadosVehiculo([]);
+  };
 
   const aplicarDatosDni = (datos: DatosDni) => {
     if (datos.nombre) setNombre(datos.nombre);
@@ -102,7 +164,7 @@ export default function NuevoClienteModal({ perfiles, disponibilidad, miId, edit
     try {
       let vendedorFinal = vendedorId || null;
       if (!vendedorFinal && !esEdicion) {
-        const disponibles = perfiles.filter((p) => {
+        const disponibles = vendedores.filter((p) => {
           const d = disponibilidad.find((x) => x.vendedor_id === p.id);
           return !d || d.recibir_leads !== false;
         });
@@ -120,6 +182,7 @@ export default function NuevoClienteModal({ perfiles, disponibilidad, miId, edit
         canal_ingreso: canalIngreso,
         pipeline_stage: etapa,
         pipeline_stage_manual: esEdicion ? editando.pipeline_stage_manual : etapa !== "sin_contactar",
+        vehiculo_interes_id: vehiculoInteresId || null,
         vehiculo_interes_texto: vehiculoTexto || null,
         busca_marca: buscaMarca || null,
         busca_modelo: buscaModelo || null,
@@ -220,11 +283,11 @@ export default function NuevoClienteModal({ perfiles, disponibilidad, miId, edit
             </div>
             <div>
               <label className={labelClass}>DNI / CUIT</label>
-              <input value={dniCuit} onChange={(e) => setDniCuit(e.target.value)} placeholder="12.345.678" className={inputClass} />
+              <input value={dniCuit} onChange={(e) => setDniCuit(e.target.value)} placeholder="Solo números, sin puntos" className={inputClass} />
             </div>
             <div>
               <label className={labelClass}>Teléfono</label>
-              <input value={telefono} onChange={(e) => setTelefono(e.target.value)} placeholder="+54 9 11 1234-5678" className={inputClass} />
+              <input value={telefono} onChange={(e) => setTelefono(e.target.value)} placeholder="Solo números, sin + ni espacios" className={inputClass} />
             </div>
             <div>
               <label className={labelClass}>Email</label>
@@ -245,13 +308,32 @@ export default function NuevoClienteModal({ perfiles, disponibilidad, miId, edit
 
             <div>
               <label className={labelClass}>Vehículo de interés (del stock)</label>
-              <div className="relative">
-                <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-slate-400" />
-                <select disabled title="El selector de Stock se conecta cuando construyamos ese módulo" className={`${inputClass} pl-9 opacity-60 cursor-not-allowed appearance-none`}>
-                  <option>— Sin vehículo específico / Otro —</option>
-                </select>
-              </div>
-              <p className="text-[10px] text-slate-400 mt-1">Buscá por marca, modelo, patente o propietario</p>
+              {vehiculoInteresId ? (
+                <div className="flex items-center justify-between gap-2 bg-emerald-50 dark:bg-emerald-500/10 border border-emerald-200 dark:border-emerald-500/20 rounded-xl px-3 py-2.5">
+                  <span className="flex items-center gap-1.5 text-sm font-semibold text-emerald-700 dark:text-emerald-300 truncate"><Car className="w-3.5 h-3.5 shrink-0" /> {vehiculoInteresLabel || "Vehículo seleccionado"}</span>
+                  <button type="button" onClick={() => { setVehiculoInteresId(""); setVehiculoInteresLabel(""); }} className="text-emerald-600 dark:text-emerald-300 hover:text-emerald-800 dark:hover:text-emerald-100 shrink-0"><XCircle className="w-4 h-4" /></button>
+                </div>
+              ) : (
+                <div className="relative">
+                  <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-slate-400" />
+                  <input value={busquedaVehiculo} onChange={(e) => setBusquedaVehiculo(e.target.value)} placeholder="Buscar por marca, modelo o patente..." className={`${inputClass} pl-9`} />
+                  {busquedaVehiculo.trim().length >= 2 && (
+                    <div className="absolute z-20 mt-1 w-full max-h-44 overflow-y-auto bg-white dark:bg-[#1a1a1a] border border-slate-200 dark:border-white/10 rounded-lg shadow-lg divide-y divide-slate-100 dark:divide-white/10">
+                      {buscandoVehiculo ? (
+                        <p className="px-3 py-2.5 text-[13px] text-slate-400 italic flex items-center gap-1.5"><Loader2 className="w-3.5 h-3.5 animate-spin" /> Buscando...</p>
+                      ) : resultadosVehiculo.length === 0 ? (
+                        <p className="px-3 py-2.5 text-[13px] text-slate-400 italic">Sin resultados en stock disponible.</p>
+                      ) : resultadosVehiculo.map((v) => (
+                        <button key={v.id} type="button" onMouseDown={(e) => { e.preventDefault(); elegirVehiculoInteres(v); }} className="w-full text-left px-3 py-2 text-sm hover:bg-slate-50 dark:hover:bg-white/5 flex items-center justify-between gap-2">
+                          <span className="truncate text-slate-800 dark:text-white">{v.marca} {v.modelo}</span>
+                          <span className="text-[11px] text-slate-400 shrink-0">{v.patente || "S/P"}</span>
+                        </button>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              )}
+              <p className="text-[10px] text-slate-400 mt-1">Si no está en stock, describilo en el campo de texto libre de abajo</p>
             </div>
             <div>
               <label className={labelClass}>Fecha de nacimiento</label>
@@ -309,7 +391,7 @@ export default function NuevoClienteModal({ perfiles, disponibilidad, miId, edit
               <label className={labelClass}>Vendedor asignado</label>
               <select value={vendedorId} onChange={(e) => setVendedorId(e.target.value)} className={inputClass}>
                 <option value="">— Sin asignar —</option>
-                {perfiles.map((p) => <option key={p.id} value={p.id}>{p.nombre}</option>)}
+                {vendedores.map((p) => <option key={p.id} value={p.id}>{p.nombre}</option>)}
               </select>
             </div>
 
