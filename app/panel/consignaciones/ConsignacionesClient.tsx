@@ -122,7 +122,7 @@ export default function ConsignacionesClient({ consignacionesIniciales, perfiles
         <div className="bg-white dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-2xl py-16 flex flex-col items-center justify-center text-center">
           <KeyRound className="w-8 h-8 text-slate-300 dark:text-slate-600 mb-2" />
           <p className="text-sm font-bold text-slate-600 dark:text-slate-300">Sin consignaciones</p>
-          <p className="text-xs text-slate-400 mt-1">Ningún registro matchea este tab/filtro.</p>
+          <p className="text-xs text-slate-400 mt-1">No hay ninguna consignación que coincida con esta pestaña/filtro.</p>
         </div>
       ) : (
         <TablaResponsiva<any>

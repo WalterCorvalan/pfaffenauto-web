@@ -538,7 +538,7 @@ export default function PanelLayoutClient({
       .from("configuracion_empresa")
       .select("modo_comision")
       .eq("id", true)
-      .single()
+      .maybeSingle()
       .then(({ data }) => {
         if (data) setComisionesActivas(data.modo_comision !== "ninguna");
       });

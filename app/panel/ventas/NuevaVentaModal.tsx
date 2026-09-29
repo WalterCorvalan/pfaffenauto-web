@@ -81,6 +81,16 @@ export default function NuevaVentaModal({ perfiles, clientes, vehiculos, miId, s
   const [vModelo, setVModelo] = useState(editando?.vehiculo_modelo || initial?.vehiculoDescripcion?.split(" ").slice(1).join(" ") || "");
   const [vAnio, setVAnio] = useState(editando?.vehiculo_anio ? String(editando.vehiculo_anio) : "");
   const [vPatente, setVPatente] = useState(editando?.vehiculo_patente || "");
+  // Combobox de Vehículo -- mismo patrón que "Cliente del CRM" más abajo
+  // (chip + búsqueda), local porque `vehiculos` ya llega filtrado a
+  // disponible/reservado/señado desde page.tsx (no hay corte de 1000 filas
+  // como sí pasaba con clientes).
+  const [busquedaVehiculo, setBusquedaVehiculo] = useState(
+    (editando?.vehiculo_id || initial?.vehiculoId) && (editando?.vehiculo_marca || initial?.vehiculoDescripcion)
+      ? `${editando?.vehiculo_marca || initial?.vehiculoDescripcion} ${editando?.vehiculo_anio || ""} · ${editando?.vehiculo_patente || "s/patente"}`.trim()
+      : ""
+  );
+  const [vehiculoDropdownAbierto, setVehiculoDropdownAbierto] = useState(false);
   const [vColor, setVColor] = useState(editando?.vehiculo_color || "");
   const [vCondicion, setVCondicion] = useState(editando?.vehiculo_condicion || "Muy bueno");
   const [km, setKm] = useState(editando?.km ? String(editando.km) : "");
@@ -308,15 +318,23 @@ export default function NuevaVentaModal({ perfiles, clientes, vehiculos, miId, s
 
   const elegirVehiculo = (id: string) => {
     setVehiculoId(id);
+    setVehiculoDropdownAbierto(false);
     const v = vehiculos.find((x) => x.id === id);
     if (v) {
       setVMarca(v.marca); setVModelo(v.modelo); setVAnio(String(v.anio)); setVPatente(v.patente || ""); setVColor(v.color || ""); setVCondicion(v.condicion);
       setKm(v.km ? String(v.km) : ""); setPrecioVenta(String(v.precio_venta)); setMonedaVenta(v.moneda_venta);
+      setBusquedaVehiculo(`${v.marca} ${v.modelo} ${v.anio} · ${v.patente || "s/patente"}`);
       if (!estadoTocado) setEstado("activa");
-    } else if (!estadoTocado) {
-      setEstado("borrador");
+    } else {
+      setBusquedaVehiculo("");
+      if (!estadoTocado) setEstado("borrador");
     }
   };
+
+  const vehiculosFiltrados = vehiculos.filter((v) => {
+    const q = busquedaVehiculo.trim().toLowerCase();
+    return !q || `${v.marca} ${v.modelo} ${v.anio} ${v.patente || ""}`.toLowerCase().includes(q);
+  });
 
   const elegirCliente = (c: Cliente | null) => {
     setClienteId(c?.id || "");
@@ -339,7 +357,7 @@ export default function NuevaVentaModal({ perfiles, clientes, vehiculos, miId, s
     setClienteDropdownAbierto(false);
     setBusquedaCliente(l.nombre);
     setCompradorNombre(l.nombre);
-    setCompradorTelefonoCelular(l.telefono || "");
+    setCompradorTelefono(l.telefono || "");
   };
 
   const agregarSeña = () => setSenas((prev) => [...prev, { monto: "", moneda: monedaVenta, fecha: hoyLocalISO(), cajaDestino: "" }]);
@@ -779,12 +797,41 @@ export default function NuevaVentaModal({ perfiles, clientes, vehiculos, miId, s
           <div>
             <p className={seccionClass}>Datos de la operación</p>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-              <div>
+              <div className="relative">
                 <label className={labelClass}>Vehículo</label>
-                <select value={vehiculoId} onChange={(e) => elegirVehiculo(e.target.value)} className={inputClass}>
-                  <option value="">— Buscar marca, modelo, patente... —</option>
-                  {vehiculos.map((v) => <option key={v.id} value={v.id}>{v.marca} {v.modelo} {v.anio} · {v.patente || "s/patente"}</option>)}
-                </select>
+                {vehiculoId ? (
+                  <div className="flex items-center justify-between gap-2 bg-emerald-50 dark:bg-emerald-500/10 border border-emerald-200 dark:border-emerald-500/20 rounded-xl px-3 py-2.5">
+                    <span className="flex items-center gap-1.5 text-sm font-medium text-emerald-700 dark:text-emerald-300 truncate">
+                      <Check className="w-3.5 h-3.5 shrink-0" /> {busquedaVehiculo}
+                    </span>
+                    <button type="button" onClick={() => elegirVehiculo("")} className="shrink-0 text-emerald-600 dark:text-emerald-300 hover:text-emerald-800 dark:hover:text-emerald-200 text-[11px] font-bold uppercase tracking-widest">
+                      Cambiar
+                    </button>
+                  </div>
+                ) : (
+                  <div className="relative">
+                    <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
+                    <input
+                      className={`${inputClass} pl-9`}
+                      placeholder="Buscar marca, modelo, patente..."
+                      value={busquedaVehiculo}
+                      onChange={(e) => { setBusquedaVehiculo(e.target.value); setVehiculoDropdownAbierto(true); }}
+                      onFocus={() => setVehiculoDropdownAbierto(true)}
+                      onBlur={() => setTimeout(() => setVehiculoDropdownAbierto(false), 150)}
+                    />
+                  </div>
+                )}
+                {!vehiculoId && vehiculoDropdownAbierto && (
+                  <div className="absolute z-10 mt-1 w-full max-h-48 overflow-y-auto bg-white dark:bg-[#1A1A1A] border border-slate-200 dark:border-white/10 rounded-xl shadow-lg divide-y divide-slate-100 dark:divide-white/10">
+                    {vehiculosFiltrados.slice(0, 20).map((v) => (
+                      <button key={v.id} type="button" onMouseDown={() => elegirVehiculo(v.id)} className="w-full text-left px-3 py-2.5 hover:bg-slate-50 dark:hover:bg-white/5 transition-colors flex items-center justify-between gap-2">
+                        <span className="text-sm font-medium text-slate-800 dark:text-white truncate">{v.marca} {v.modelo} {v.anio}</span>
+                        <span className="text-[11px] text-slate-400 shrink-0">{v.patente || "s/patente"}</span>
+                      </button>
+                    ))}
+                    {vehiculosFiltrados.length === 0 && <p className="px-3 py-3 text-[13px] text-slate-400 italic">Sin resultados.</p>}
+                  </div>
+                )}
               </div>
               <div>
                 <label className={labelClass}>Estado</label>
@@ -887,8 +934,7 @@ export default function NuevaVentaModal({ perfiles, clientes, vehiculos, miId, s
                 )}
               </div>
               <div><label className={labelClass}>Nombre *</label><input value={compradorNombre} onChange={(e) => setCompradorNombre(e.target.value)} className={inputClass} /></div>
-              <div><label className={labelClass}>Teléfono de línea</label><input value={compradorTelefono} onChange={(e) => setCompradorTelefono(e.target.value)} placeholder="+54 11 5555 5555" className={inputClass} /></div>
-              <div><label className={labelClass}>Celular</label><input value={compradorTelefonoCelular} onChange={(e) => setCompradorTelefonoCelular(e.target.value)} className={inputClass} /></div>
+              <div><label className={labelClass}>Teléfono</label><input value={compradorTelefono} onChange={(e) => setCompradorTelefono(e.target.value)} placeholder="11 5555 5555" className={inputClass} /></div>
               <div><label className={labelClass}>Email</label><input value={compradorEmail} onChange={(e) => setCompradorEmail(e.target.value)} className={inputClass} /></div>
               <div><label className={labelClass}>DNI</label><input value={compradorDni} onChange={(e) => setCompradorDni(e.target.value)} className={inputClass} /></div>
               <div><label className={labelClass}>CUIT/CUIL</label><input value={compradorCuitCuil} onChange={(e) => setCompradorCuitCuil(e.target.value)} placeholder="20-12345678-9" className={inputClass} /></div>

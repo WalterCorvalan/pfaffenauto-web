@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { supabase2 } from "@/lib/supabase/client";
-import { X, Save, Trash2, History } from "lucide-react";
+import { X, Save, Trash2, History, Search, Check } from "lucide-react";
 import { crearAlerta } from "@/lib/panel/alertas";
 import ConfirmDialog from "@/components/panel/ConfirmDialog";
 
@@ -15,6 +15,30 @@ export default function NuevoPedidoModal({ pedido, vendedores, clientes, miId, o
   const [error, setError] = useState("");
 
   const [clienteId, setClienteId] = useState(pedido?.cliente_id || "");
+  // `clientes` (prop) llega con .limit(2000) desde page.tsx, pero PostgREST
+  // corta en 1000 filas igual -- mismo bug P1-11 ya resuelto en
+  // ventas/NuevaVentaModal.tsx: con más de 1000 clientes reales, un
+  // <select> con la lista completa deja afuera todo lo que cayó después del
+  // corte. Mismo patrón acá: 2+ caracteres dispara una query real.
+  const [busquedaCliente, setBusquedaCliente] = useState(pedido?.cliente_id ? pedido?.nombre_cliente || "" : "");
+  const [clienteDropdownAbierto, setClienteDropdownAbierto] = useState(false);
+  const [resultadosClienteVivo, setResultadosClienteVivo] = useState<any[] | null>(null);
+  const [buscandoCliente, setBuscandoCliente] = useState(false);
+  useEffect(() => {
+    const q = busquedaCliente.trim();
+    if (q.length < 2) { setResultadosClienteVivo(null); return; }
+    setBuscandoCliente(true);
+    const timer = setTimeout(async () => {
+      const { data } = await supabase2.from("clientes").select("id, nombre, telefono").ilike("nombre", `%${q}%`).order("nombre").limit(20);
+      setResultadosClienteVivo(data || []);
+      setBuscandoCliente(false);
+    }, 300);
+    return () => clearTimeout(timer);
+  }, [busquedaCliente]);
+  const clientesFiltrados = resultadosClienteVivo ?? clientes.filter((c) => {
+    const q = busquedaCliente.trim().toLowerCase();
+    return q && c.nombre?.toLowerCase().includes(q);
+  });
   const [nombreCliente, setNombreCliente] = useState(pedido?.nombre_cliente || "");
   const [telefono, setTelefono] = useState(pedido?.telefono || "");
   const [tipo, setTipo] = useState(pedido?.tipo || "avisame");
@@ -38,10 +62,16 @@ export default function NuevoPedidoModal({ pedido, vendedores, clientes, miId, o
       .then(({ data }) => setReconfirmaciones(data || []));
   }, [isEditing, pedido?.id]);
 
-  const elegirCliente = (id: string) => {
-    setClienteId(id);
-    const c = clientes.find((x) => x.id === id);
-    if (c) { setNombreCliente(c.nombre); setTelefono(c.telefono || ""); }
+  const elegirCliente = (c: { id: string; nombre: string; telefono?: string | null } | null) => {
+    setClienteId(c?.id || "");
+    setClienteDropdownAbierto(false);
+    if (c) {
+      setBusquedaCliente(c.nombre);
+      setNombreCliente(c.nombre);
+      setTelefono(c.telefono || "");
+    } else {
+      setBusquedaCliente("");
+    }
   };
 
   const guardar = async () => {
@@ -122,12 +152,43 @@ export default function NuevoPedidoModal({ pedido, vendedores, clientes, miId, o
           {error && <div className="p-3 bg-rose-50 dark:bg-rose-500/10 text-rose-600 dark:text-rose-400 text-sm rounded-xl font-medium">{error}</div>}
 
           <div className="grid grid-cols-2 gap-3">
-            <div className="col-span-2">
+            <div className="col-span-2 relative">
               <label className={labelClass}>Cliente existente (opcional)</label>
-              <select value={clienteId} onChange={(e) => elegirCliente(e.target.value)} className={`${inputClass} cursor-pointer`}>
-                <option value="">— Cargar nombre a mano —</option>
-                {clientes.map((c) => <option key={c.id} value={c.id}>{c.nombre}</option>)}
-              </select>
+              {clienteId ? (
+                <div className="flex items-center justify-between gap-2 bg-emerald-50 dark:bg-emerald-500/10 border border-emerald-200 dark:border-emerald-500/20 rounded-xl px-3.5 py-2.5">
+                  <span className="flex items-center gap-1.5 text-sm font-medium text-emerald-700 dark:text-emerald-300 truncate">
+                    <Check className="w-3.5 h-3.5 shrink-0" /> {busquedaCliente}
+                  </span>
+                  <button type="button" onClick={() => elegirCliente(null)} className="shrink-0 text-emerald-600 dark:text-emerald-300 hover:text-emerald-800 dark:hover:text-emerald-200 text-[11px] font-bold uppercase tracking-widest">
+                    Cambiar
+                  </button>
+                </div>
+              ) : (
+                <div className="relative">
+                  <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
+                  <input
+                    className={`${inputClass} pl-9`}
+                    placeholder="Buscar por nombre, o cargalo a mano abajo..."
+                    value={busquedaCliente}
+                    onChange={(e) => { setBusquedaCliente(e.target.value); setClienteDropdownAbierto(true); }}
+                    onFocus={() => setClienteDropdownAbierto(true)}
+                    onBlur={() => setTimeout(() => setClienteDropdownAbierto(false), 150)}
+                  />
+                </div>
+              )}
+              {!clienteId && clienteDropdownAbierto && busquedaCliente && (
+                <div className="absolute z-10 mt-1 w-full max-h-48 overflow-y-auto bg-white dark:bg-[#1A1A1A] border border-slate-200 dark:border-white/10 rounded-xl shadow-lg divide-y divide-slate-100 dark:divide-white/10">
+                  {clientesFiltrados.slice(0, 20).map((c) => (
+                    <button key={c.id} type="button" onMouseDown={() => elegirCliente(c)} className="w-full text-left px-3 py-2.5 hover:bg-slate-50 dark:hover:bg-white/5 transition-colors flex items-center justify-between gap-2">
+                      <span className="text-sm font-medium text-slate-800 dark:text-white truncate">{c.nombre}</span>
+                      <span className="text-[11px] text-slate-400 shrink-0">{c.telefono || ""}</span>
+                    </button>
+                  ))}
+                  {buscandoCliente ? (
+                    <p className="px-3 py-3 text-[13px] text-slate-400 italic">Buscando...</p>
+                  ) : clientesFiltrados.length === 0 && <p className="px-3 py-3 text-[13px] text-slate-400 italic">Sin resultados.</p>}
+                </div>
+              )}
             </div>
             <div><label className={labelClass}>Nombre del cliente *</label><input value={nombreCliente} onChange={(e) => setNombreCliente(e.target.value)} className={inputClass} /></div>
             <div><label className={labelClass}>Teléfono</label><input value={telefono} onChange={(e) => setTelefono(e.target.value)} className={inputClass} /></div>
