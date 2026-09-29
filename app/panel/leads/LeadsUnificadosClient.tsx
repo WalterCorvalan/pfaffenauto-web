@@ -3,7 +3,7 @@
 import { useState, useMemo, useEffect } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { supabase2 } from "@/lib/supabase/client";
-import { Filter, Search, Radar, MessageCircle, AtSign, Bot, User, Plus, Radio, Building2, ChevronDown, Flame, Trash2, Megaphone } from "lucide-react";
+import { Filter, Search, Radar, MessageCircle, AtSign, Bot, User, Plus, Radio, Building2, ChevronDown, Flame, Trash2, Megaphone, PanelLeftClose, PanelLeftOpen } from "lucide-react";
 import LeadDetailModal, { CANALES_ORIGEN } from "@/components/panel/conversaciones/LeadDetailModal";
 import NuevoLeadManualModal from "./NuevoLeadManualModal";
 
@@ -78,6 +78,21 @@ export default function LeadsUnificadosClient({ leadsIniciales, vendedores, sucu
   const [seleccionado, setSeleccionado] = useState<{ id: string; origen: Origen } | null>(null);
   const [showNuevo, setShowNuevo] = useState(false);
   const [showFiltros, setShowFiltros] = useState(false);
+  // Achicar/ocultar la bandeja para ganar espacio de pantalla en el detalle
+  // (pedido del 29/9) -- solo aplica en desktop (md+), en mobile ya alterna
+  // sola entre lista y detalle. Se recuerda entre visitas (localStorage) para
+  // no tener que volver a ocultarla cada vez que se entra al módulo.
+  const [bandejaColapsada, setBandejaColapsada] = useState(() => {
+    if (typeof window === "undefined") return false;
+    try { return localStorage.getItem("leads_bandeja_colapsada") === "1"; } catch { return false; }
+  });
+  const toggleBandeja = () => {
+    setBandejaColapsada((prev) => {
+      const next = !prev;
+      try { localStorage.setItem("leads_bandeja_colapsada", next ? "1" : "0"); } catch { /* noop */ }
+      return next;
+    });
+  };
 
   useEffect(() => {
     const leadId = searchParams.get("lead");
@@ -169,11 +184,14 @@ export default function LeadsUnificadosClient({ leadsIniciales, vendedores, sucu
       {/* COLUMNA 1: BANDEJA — mismo criterio visual que app/panel/whatsapp/ChatClient.tsx
           (sidebar angosta, filas con avatar circular, sticky group headers) para que
           este módulo se sienta como una extensión natural del panel de WhatsApp. */}
-      <div className={`w-full md:w-[320px] flex-col bg-white dark:bg-[#111] border-r border-slate-200 dark:border-white/10 shrink-0 ${seleccionado ? "hidden md:flex" : "flex"}`}>
+      <div className={`w-full md:w-[320px] flex-col bg-white dark:bg-[#111] border-r border-slate-200 dark:border-white/10 shrink-0 ${seleccionado ? "hidden md:flex" : "flex"} ${bandejaColapsada ? "md:hidden" : ""}`}>
         <div className="p-2.5 border-b border-slate-100 dark:border-white/10 shrink-0 space-y-2">
           <div className="flex items-center justify-between gap-2">
             <h1 className="text-sm font-black text-slate-900 dark:text-white flex items-center gap-1.5"><img src="/icons/panel/leads.png" alt="" className="w-5 h-5 object-contain shrink-0" /> Leads</h1>
-            <button onClick={() => setShowNuevo(true)} className="flex items-center gap-1 px-2.5 py-1.5 text-[11px] font-bold bg-[#0145F2] hover:bg-[#0138c9] text-white rounded-lg shadow-sm"><Plus className="w-3.5 h-3.5" /> Nuevo</button>
+            <div className="flex items-center gap-1.5">
+              <button onClick={() => setShowNuevo(true)} className="flex items-center gap-1 px-2.5 py-1.5 text-[11px] font-bold bg-[#0145F2] hover:bg-[#0138c9] text-white rounded-lg shadow-sm"><Plus className="w-3.5 h-3.5" /> Nuevo</button>
+              <button onClick={toggleBandeja} title="Ocultar bandeja" className="hidden md:flex shrink-0 p-1.5 rounded-lg text-slate-400 hover:text-slate-700 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-white/10"><PanelLeftClose className="w-4 h-4" /></button>
+            </div>
           </div>
           <p className="text-[11px] text-slate-500 dark:text-slate-400">{leads.length} leads · {nuevosHoy} hoy · {sinAsignar} sin asignar</p>
 
@@ -279,7 +297,16 @@ export default function LeadsUnificadosClient({ leadsIniciales, vendedores, sucu
       </div>
 
       {/* COLUMNA 2: DETALLE */}
-      <div className={`flex-1 flex-col bg-[#f8fafc] dark:bg-[#0a0a0f] ${!seleccionado ? "hidden md:flex" : "flex"}`}>
+      <div className={`relative flex-1 flex-col bg-[#f8fafc] dark:bg-[#0a0a0f] ${!seleccionado ? "hidden md:flex" : "flex"}`}>
+        {bandejaColapsada && (
+          <button
+            onClick={toggleBandeja}
+            title="Mostrar bandeja"
+            className="hidden md:flex absolute left-0 top-1/2 -translate-y-1/2 z-10 items-center p-1.5 rounded-r-lg bg-white dark:bg-[#111] border border-l-0 border-slate-200 dark:border-white/10 text-slate-400 hover:text-slate-700 dark:hover:text-white shadow-sm"
+          >
+            <PanelLeftOpen className="w-4 h-4" />
+          </button>
+        )}
         {!seleccionado ? (
           <div className="flex-1 flex flex-col items-center justify-center text-slate-400 dark:text-slate-500 gap-2">
             <Megaphone className="w-8 h-8" />
