@@ -3,41 +3,9 @@
 import { Camera, ArrowUpRight } from "lucide-react";
 import MediaReel, { type ReelItem } from "./MediaReel";
 
-// TODO (Walter): reemplazar por publicaciones/videos reales de Instagram (imagen o thumbnail + link al posteo)
-// "imagen" queda como src del reel -- para un ítem "video" real, apuntar a
-// un .mp4 propio (no un thumbnail estático), MediaReel lo reproduce autoplay/mudo.
-const PUBLICACIONES: ReelItem[] = [
-  {
-    id: 1,
-    tipo: "foto",
-    src: "https://images.unsplash.com/photo-1503376780353-7e6692767b70?q=80&w=600&auto=format&fit=crop",
-    titulo: "Entrega Toyota Hilux 2023",
-    link: "https://instagram.com/pfaffen.cars",
-  },
-  {
-    id: 2,
-    tipo: "foto",
-    src: "https://images.unsplash.com/photo-1494905998402-395d579af36f?q=80&w=600&auto=format&fit=crop",
-    titulo: "Chevrolet Tracker recién entregada",
-    link: "https://instagram.com/pfaffen.cars",
-  },
-  {
-    id: 3,
-    tipo: "foto",
-    src: "https://images.unsplash.com/photo-1580273916550-e323be2ae537?q=80&w=600&auto=format&fit=crop",
-    titulo: "Volkswagen Amarok 0km entregada",
-    link: "https://instagram.com/pfaffen.cars",
-  },
-  {
-    id: 4,
-    tipo: "foto",
-    src: "https://images.unsplash.com/photo-1583121274602-3e2820c69888?q=80&w=600&auto=format&fit=crop",
-    titulo: "Ford Ranger lista para trabajar",
-    link: "https://instagram.com/pfaffen.cars",
-  },
-];
+export default function VentasRealizadas({ items }: { items: ReelItem[] }) {
+  if (items.length === 0) return null;
 
-export default function VentasRealizadas() {
   return (
     <section className="py-10 md:py-24 bg-[#f8f9fa] dark:bg-[#0a0a0f] border-t border-gray-200 dark:border-transparent">
       <div className="max-w-7xl mx-auto px-4 md:px-6">
@@ -62,7 +30,7 @@ export default function VentasRealizadas() {
         </div>
 
         <div className="flex justify-center">
-          <MediaReel items={PUBLICACIONES} className="h-[28rem] w-full max-w-sm" />
+          <MediaReel items={items} className="h-[28rem] w-full max-w-sm" />
         </div>
       </div>
     </section>

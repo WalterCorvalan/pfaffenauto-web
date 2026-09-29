@@ -12,6 +12,7 @@ const TABS: { label: string; href?: string }[] = [
   { label: "Asistente IA", href: "/panel/marketing/chatbot" },
   { label: "Instagram", href: "/panel/marketing/instagram" },
   { label: "WhatsApp", href: "/panel/marketing/whatsapp-metricas" },
+  { label: "Entregas", href: "/panel/marketing/entregas" },
 ];
 
 export default function MarketingHeader() {
