@@ -100,6 +100,11 @@ export default function LeadDetailModal({
 
   const [editandoDomicilio, setEditandoDomicilio] = useState(false);
   const [domicilio, setDomicilio] = useState("");
+  const [editandoTelefono, setEditandoTelefono] = useState(false);
+  const [telefonoForm, setTelefonoForm] = useState("");
+  const [guardandoTelefono, setGuardandoTelefono] = useState(false);
+  const [busquedaVehiculo, setBusquedaVehiculo] = useState("");
+  const [mostrarListaVehiculos, setMostrarListaVehiculos] = useState(false);
   const [guardandoCanalOrigen, setGuardandoCanalOrigen] = useState(false);
   const [guardandoSucursal, setGuardandoSucursal] = useState(false);
   const [editandoNotas, setEditandoNotas] = useState(false);
@@ -252,6 +257,28 @@ export default function LeadDetailModal({
   };
 
   const guardarDomicilio = async () => { await patch({ domicilio }); setEditandoDomicilio(false); };
+
+  // whatsapp/instagram guardan el teléfono en su tabla de contacto aparte
+  // (whatsapp_contactos/instagram_contactos, vía contacto_id); rodi/manual
+  // no tienen tabla de contacto separada -- el teléfono vive directo en la
+  // fila del lead (telefono_contacto en rodi, telefono en manual).
+  const guardarTelefono = async () => {
+    setGuardandoTelefono(true);
+    const valor = telefonoForm.trim() || null;
+    try {
+      if (contactoTabla && lead.contacto_id) {
+        const { data, error } = await supabase2.from(contactoTabla).update({ telefono: valor }).eq("id", lead.contacto_id).select("*").single();
+        if (error) throw error;
+        setContacto(data);
+      } else {
+        const campo = origen === "rodi" ? "telefono_contacto" : "telefono";
+        await patch({ [campo]: valor });
+        setContacto((prev: any) => ({ ...prev, telefono: valor }));
+      }
+      await registrarEvento("telefono", valor ? `Teléfono actualizado: ${valor}` : "Teléfono borrado");
+      setEditandoTelefono(false);
+    } catch { alert("No se pudo guardar el teléfono."); } finally { setGuardandoTelefono(false); }
+  };
   const cambiarCanalOrigen = async (nuevo: string) => {
     setGuardandoCanalOrigen(true);
     try {
@@ -423,8 +450,21 @@ export default function LeadDetailModal({
                 {ESTADOS_LEAD.map((e) => (<option key={e.value} value={e.value}>{e.label}</option>))}
               </select>
             </div>
-            <div className="flex items-center gap-4 text-[13px] text-slate-600 dark:text-slate-300">
-              <span className="flex items-center gap-1.5"><Phone className="w-3.5 h-3.5 text-slate-400" /> {telefono || "Sin teléfono"}</span>
+            <div className="flex items-center gap-4 text-[13px] text-slate-600 dark:text-slate-300 flex-wrap">
+              {editandoTelefono ? (
+                <div className="flex items-center gap-1.5">
+                  <Phone className="w-3.5 h-3.5 text-slate-400 shrink-0" />
+                  <input autoFocus value={telefonoForm} onChange={(e) => setTelefonoForm(e.target.value)} placeholder="11 2345 6789"
+                    className="bg-slate-50 dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-lg px-2 py-1 text-[13px] outline-none focus:border-rose-500 w-36" />
+                  <button onClick={guardarTelefono} disabled={guardandoTelefono} className="text-[#0145F2] hover:text-[#0138c9] disabled:opacity-50"><Check className="w-4 h-4" /></button>
+                  <button onClick={() => setEditandoTelefono(false)} className="text-slate-400 hover:text-slate-600 dark:hover:text-slate-200"><X className="w-4 h-4" /></button>
+                </div>
+              ) : (
+                <span className="flex items-center gap-1.5">
+                  <Phone className="w-3.5 h-3.5 text-slate-400" /> {telefono || "Sin teléfono"}
+                  <button onClick={() => { setTelefonoForm(telefono); setEditandoTelefono(true); }} className="text-slate-400 hover:text-[#0145F2]"><Edit2 className="w-3 h-3" /></button>
+                </span>
+              )}
               {linkWhatsApp && <a href={linkWhatsApp} target="_blank" rel="noreferrer" className="text-emerald-600 dark:text-emerald-300 font-bold text-xs hover:underline flex items-center gap-1"><MessageCircle className="w-3.5 h-3.5" /> WhatsApp</a>}
             </div>
             <div className="flex items-center gap-1.5 mt-3 flex-wrap">
@@ -468,10 +508,48 @@ export default function LeadDetailModal({
             <div className="space-y-4">
               <div className="bg-slate-50 dark:bg-white/5 border border-slate-100 dark:border-white/10 rounded-2xl p-4">
                 <h2 className={labelClass}><CarFront className="w-3.5 h-3.5" /> Vehículo de interés</h2>
-                <select value={lead.vehiculo_id || ""} disabled={guardandoVehiculo} onChange={(e) => cambiarVehiculo(e.target.value)} className={inputClass}>
-                  <option value="">Sin vincular</option>
-                  {vehiculosStock.map((v: any) => (<option key={v.id} value={v.id}>{v.marca} {v.modelo} {v.patente ? `— ${v.patente}` : ""}</option>))}
-                </select>
+                <div className="relative">
+                  {vehiculo && !mostrarListaVehiculos ? (
+                    <button type="button" disabled={guardandoVehiculo} onClick={() => { setBusquedaVehiculo(""); setMostrarListaVehiculos(true); }}
+                      className={`${inputClass} text-left flex items-center justify-between gap-2 disabled:opacity-50`}>
+                      <span className="truncate">{vehiculo.marca} {vehiculo.modelo} {vehiculo.patente ? `— ${vehiculo.patente}` : ""}</span>
+                      <Edit2 className="w-3.5 h-3.5 text-slate-400 shrink-0" />
+                    </button>
+                  ) : (
+                    <input
+                      autoFocus={mostrarListaVehiculos} value={busquedaVehiculo} disabled={guardandoVehiculo}
+                      onChange={(e) => setBusquedaVehiculo(e.target.value)}
+                      onFocus={() => setMostrarListaVehiculos(true)}
+                      onBlur={() => setTimeout(() => setMostrarListaVehiculos(false), 150)}
+                      placeholder="Buscar por marca, modelo o patente..." className={`${inputClass} disabled:opacity-50`}
+                    />
+                  )}
+                  {mostrarListaVehiculos && (
+                    <div className="absolute z-20 mt-1 w-full max-h-48 overflow-y-auto bg-white dark:bg-[#1a1a1a] border border-slate-200 dark:border-white/10 rounded-lg shadow-lg divide-y divide-slate-100 dark:divide-white/10">
+                      <button type="button" onMouseDown={(e) => { e.preventDefault(); cambiarVehiculo(""); setMostrarListaVehiculos(false); setBusquedaVehiculo(""); }}
+                        className="w-full text-left px-3 py-2 text-sm text-slate-400 hover:bg-slate-50 dark:hover:bg-white/5">Sin vincular</button>
+                      {vehiculosStock
+                        .filter((v: any) => {
+                          const q = busquedaVehiculo.trim().toLowerCase();
+                          if (!q) return true;
+                          return `${v.marca} ${v.modelo} ${v.patente || ""}`.toLowerCase().includes(q);
+                        })
+                        .slice(0, 30)
+                        .map((v: any) => (
+                          <button key={v.id} type="button" onMouseDown={(e) => { e.preventDefault(); cambiarVehiculo(v.id); setMostrarListaVehiculos(false); setBusquedaVehiculo(""); }}
+                            className="w-full text-left px-3 py-2 text-sm hover:bg-slate-50 dark:hover:bg-white/5 flex items-center justify-between gap-2">
+                            <span className="truncate text-slate-800 dark:text-white">{v.marca} {v.modelo}</span>
+                            <span className="text-[11px] text-slate-400 shrink-0">{v.patente || "S/P"}</span>
+                          </button>
+                        ))}
+                      {vehiculosStock.filter((v: any) => {
+                        const q = busquedaVehiculo.trim().toLowerCase();
+                        if (!q) return true;
+                        return `${v.marca} ${v.modelo} ${v.patente || ""}`.toLowerCase().includes(q);
+                      }).length === 0 && <p className="px-3 py-2 text-[13px] text-slate-400 italic">Sin resultados.</p>}
+                    </div>
+                  )}
+                </div>
               </div>
 
               <div className="bg-slate-50 dark:bg-white/5 border border-slate-100 dark:border-white/10 rounded-2xl p-4">
