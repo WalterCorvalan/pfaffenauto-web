@@ -147,9 +147,12 @@ export default function FichaVehiculoModal({ vehiculo, miId, perfiles, clientes,
         <div className="flex items-center gap-2 px-6 py-4 border-t border-slate-100 dark:border-white/10 shrink-0">
           <button onClick={onClose} className="px-4 py-2 rounded-xl text-sm font-bold text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-white/10">Cerrar</button>
           <div className="flex-1" />
-          {puedeEditarCompleto && (
-            <button onClick={() => setEditando("completo")} className="flex items-center gap-1.5 px-4 py-2 rounded-xl bg-[#0145F2] hover:bg-[#0138c9] text-white text-sm font-bold"><Edit2 className="w-3.5 h-3.5" /> Editar</button>
-          )}
+          {/* Sin puedeEditarCompleto el botón quedaba oculto entero -- un
+              vendedor/encargado (permiso "solo fotos") se quedaba sin forma
+              de abrir el modal para editar sus fotos. El botón siempre
+              aparece; NuevoVehiculoModal ya fuerza soloFotos si no tiene el
+              permiso completo (más abajo), esto solo destraba entrar. */}
+          <button onClick={() => setEditando("completo")} className="flex items-center gap-1.5 px-4 py-2 rounded-xl bg-[#0145F2] hover:bg-[#0138c9] text-white text-sm font-bold"><Edit2 className="w-3.5 h-3.5" /> Editar</button>
           {puedeEliminar && (
             <button onClick={() => onEliminar(vehiculo)} className="flex items-center gap-1.5 px-4 py-2 rounded-xl bg-rose-50 dark:bg-rose-500/10 hover:bg-rose-600 hover:text-white text-rose-600 dark:text-rose-300 text-sm font-bold"><Trash2 className="w-3.5 h-3.5" /> Eliminar</button>
           )}

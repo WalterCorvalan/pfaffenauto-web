@@ -88,8 +88,8 @@ function pendientesTexto(v: Vehiculo) {
 }
 
 export default function StockClient({
-  vehiculosIniciales, mandatosIniciales, perfiles, clientes, catalogoConfigInicial, sucursales, miId, diasEstancado = 90, chequesPendientes0km = [], cuentas = [], soyAdmin = false,
-}: { vehiculosIniciales: Vehiculo[]; mandatosIniciales: Mandato[]; perfiles: Perfil[]; clientes: Cliente[]; catalogoConfigInicial: CatalogoConfig | null; sucursales: { id: string; nombre: string }[]; miId: string; diasEstancado?: number; chequesPendientes0km?: { id: string; vehiculo_id: string; monto: number; moneda: string }[]; cuentas?: { id: string; nombre: string; moneda: string }[]; soyAdmin?: boolean }) {
+  vehiculosIniciales, mandatosIniciales, perfiles, clientes, catalogoConfigInicial, sucursales, miId, diasEstancado = 90, chequesPendientes0km = [], cuentas = [], soyAdmin = false, puedeVerValorStock = false,
+}: { vehiculosIniciales: Vehiculo[]; mandatosIniciales: Mandato[]; perfiles: Perfil[]; clientes: Cliente[]; catalogoConfigInicial: CatalogoConfig | null; sucursales: { id: string; nombre: string }[]; miId: string; diasEstancado?: number; chequesPendientes0km?: { id: string; vehiculo_id: string; monto: number; moneda: string }[]; cuentas?: { id: string; nombre: string; moneda: string }[]; soyAdmin?: boolean; puedeVerValorStock?: boolean }) {
   const router = useRouter();
   const searchParams = useSearchParams();
   const [vehiculos, setVehiculos] = useState(vehiculosIniciales);
@@ -330,13 +330,17 @@ export default function StockClient({
                 el stock disponible. */}
             <span title="Mide vehículos sincronizados con MercadoLibre, no la visibilidad en el catálogo propio" className={`shrink-0 flex items-center gap-1.5 text-[11px] font-bold px-3 py-1.5 rounded-full border whitespace-nowrap ${publicadoPct === 100 ? "bg-emerald-50 dark:bg-emerald-500/10 text-emerald-700 dark:text-emerald-300 border-emerald-100 dark:border-emerald-500/20" : "bg-amber-50 dark:bg-amber-500/10 text-amber-700 dark:text-amber-300 border-amber-100 dark:border-amber-500/20"}`}><TrendingUp className="w-3.5 h-3.5" /> {publicadoPct}% publicado en ML</span>
             {aRevisarCount > 0 && <span title="Sin publicar en MercadoLibre, sin foto o sin precio cargado" className="shrink-0 flex items-center gap-1.5 text-[11px] font-bold px-3 py-1.5 rounded-full bg-amber-50 dark:bg-amber-500/10 text-amber-700 dark:text-amber-300 border border-amber-100 dark:border-amber-500/20 whitespace-nowrap"><AlertTriangle className="w-3.5 h-3.5" /> {aRevisarCount} a revisar (ML)</span>}
-            <span className="hidden md:inline text-xs font-semibold text-slate-500 dark:text-slate-400 ml-auto whitespace-nowrap">
-              VALOR TOTAL DEL STOCK: <strong className="text-slate-800 dark:text-white">{Object.keys(valorTotalPorMoneda).length === 0 ? "—" : Object.entries(valorTotalPorMoneda).map(([m, n]) => fmtPrecio(n, m)).join(" · ")}</strong>
-            </span>
+            {puedeVerValorStock && (
+              <span className="hidden md:inline text-xs font-semibold text-slate-500 dark:text-slate-400 ml-auto whitespace-nowrap">
+                VALOR TOTAL DEL STOCK: <strong className="text-slate-800 dark:text-white">{Object.keys(valorTotalPorMoneda).length === 0 ? "—" : Object.entries(valorTotalPorMoneda).map(([m, n]) => fmtPrecio(n, m)).join(" · ")}</strong>
+              </span>
+            )}
           </div>
-          <p className="md:hidden text-xs font-semibold text-slate-500 dark:text-slate-400 mb-4">
-            VALOR TOTAL: <strong className="text-slate-800 dark:text-white">{Object.keys(valorTotalPorMoneda).length === 0 ? "—" : Object.entries(valorTotalPorMoneda).map(([m, n]) => fmtPrecio(n, m)).join(" · ")}</strong>
-          </p>
+          {puedeVerValorStock && (
+            <p className="md:hidden text-xs font-semibold text-slate-500 dark:text-slate-400 mb-4">
+              VALOR TOTAL: <strong className="text-slate-800 dark:text-white">{Object.keys(valorTotalPorMoneda).length === 0 ? "—" : Object.entries(valorTotalPorMoneda).map(([m, n]) => fmtPrecio(n, m)).join(" · ")}</strong>
+            </p>
+          )}
 
           <div className="flex items-center gap-1 mb-4 border-b border-slate-200 dark:border-white/10 overflow-x-auto -mx-4 px-4 md:mx-0 md:px-0">
             {[["general", "Stock general"], ["consignaciones", "Consignaciones"], ["0km", "0 km"], ["mandatos", "Mandatos"]].map(([v, label]) => (
@@ -434,7 +438,7 @@ export default function StockClient({
               ) : (
                 <>
                   <div className="bg-white dark:bg-white/[0.02] border border-slate-200 dark:border-white/5 rounded-xl shadow-sm px-4 py-2.5 mb-3 flex items-center justify-between flex-wrap gap-2 text-xs font-semibold text-slate-500 dark:text-slate-400">
-                    <span>{filtrados.length} vehículo{filtrados.length === 1 ? "" : "s"} en lista{Object.keys(valorTotalPorMoneda).length > 0 ? ` · ${Object.entries(valorTotalPorMoneda).map(([m, n]) => fmtPrecio(n, m)).join(" · ")}` : ""}</span>
+                    <span>{filtrados.length} vehículo{filtrados.length === 1 ? "" : "s"} en lista{puedeVerValorStock && Object.keys(valorTotalPorMoneda).length > 0 ? ` · ${Object.entries(valorTotalPorMoneda).map(([m, n]) => fmtPrecio(n, m)).join(" · ")}` : ""}</span>
                     <span className="flex items-center gap-3 text-[11px] font-bold">
                       <span className="flex items-center gap-1.5"><span className="w-2 h-2 rounded-full bg-sky-400" /> En stock</span>
                       <span className="flex items-center gap-1.5"><span className="w-2 h-2 rounded-full bg-amber-400" /> +30 días</span>

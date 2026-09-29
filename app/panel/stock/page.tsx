@@ -6,6 +6,12 @@ export default async function StockPage() {
   const { data: { user } } = await supabase.auth.getUser();
   const { data: miPerfil } = user ? await supabase.from("perfiles").select("roles").eq("id", user.id).maybeSingle() : { data: null };
   const soyAdmin = miPerfil?.roles?.includes("admin") ?? false;
+  // "Valor total del stock" (suma de precio_venta de todo el stock, no el
+  // costo interno de precio_compra) -- pedido de Walter 29/9: solo
+  // admin/finanzas ven ese número agregado, un vendedor/encargado ve el
+  // precio de cada auto individual (lo necesita para vender) pero no el
+  // total de todo el inventario junto.
+  const puedeVerValorStock = soyAdmin || (miPerfil?.roles?.includes("finanzas") ?? false);
 
   const [{ data: vehiculos }, { data: mandatos }, { data: perfiles }, { data: clientes }, { data: catalogoConfig }, { data: sucursales }, { data: config }, { data: chequesPendientes0km }, { data: cuentas }] = await Promise.all([
     // Sin límite esto crecía sin tope con toda la historia de stock (vendido
@@ -56,6 +62,7 @@ export default async function StockPage() {
       chequesPendientes0km={chequesPendientes0km || []}
       cuentas={cuentas || []}
       soyAdmin={soyAdmin}
+      puedeVerValorStock={puedeVerValorStock}
     />
   );
 }
