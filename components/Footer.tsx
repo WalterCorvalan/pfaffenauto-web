@@ -15,7 +15,7 @@ export interface RedesFooter {
 // Valores por defecto -- se usan si todavía no se cargó nada en el panel
 // (Contenido del Sitio → Footer y redes) o si la lectura server-side falla,
 // así el footer nunca queda sin links.
-const REDES_DEFAULT: Required<RedesFooter> = {
+const REDES_DEFAULT: { whatsapp: string; instagram: string; facebook: string; tiktok: string } = {
   whatsapp: "https://wa.me/5491121907000",
   instagram: "https://www.instagram.com/pfaffen.cars/",
   facebook: "https://www.facebook.com/PfaffenAutos",
