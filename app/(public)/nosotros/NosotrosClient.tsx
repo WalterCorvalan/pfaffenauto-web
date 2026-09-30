@@ -6,93 +6,82 @@ import Link from "next/link";
 import Image from "next/image";
 import { ChevronRight, Users, Landmark } from "lucide-react";
 
-const TEAM_MEMBERS = [
-  {
-    name: "Sergio Pfaffezeller",
-    role: "Fundador y Director Ejecutivo",
-    image: "https://images.unsplash.com/photo-1560250097-0b93528c311a?q=80&w=800&auto=format&fit=crop",
-    color: "bg-slate-800", 
-  },
-  {
-    name: "Gabriel",
-    role: "Encargado de Sucursal Casa Central",
-    image: "https://images.unsplash.com/photo-1519085360753-af0119f7cbe7?q=80&w=800&auto=format&fit=crop",
-    color: "bg-slate-800",
-  },
+export interface TimelineItem {
+  id: string;
+  anio: string;
+  titulo: string;
+  texto: string;
+  imagen1_url: string | null;
+  imagen2_url: string | null;
+}
+
+export interface EquipoMiembro {
+  id: string;
+  nombre: string;
+  rol: string;
+  imagen_url: string | null;
+}
+
+const HERO_DEFAULT = {
+  badge: "Nuestra Historia",
+  bajada: "Desde nuestros primeros pasos hasta convertirnos en la concesionaria referente de Zona Norte. Pasión por los motores, transparencia y el cliente siempre en el centro.",
+};
+
+// Fallback si la lectura server-side falla o todavía no se cargó nada en el
+// panel (Contenido del Sitio → Nuestra Historia) -- así la página nunca
+// queda vacía.
+const TIMELINE_DEFAULT: TimelineItem[] = [
+  { id: "d1", anio: "2010", titulo: "Los Inicios en Casa Central", texto: "Pfaffen Cars abrió sus puertas en nuestra Casa Central con una visión clara impulsada por nuestro fundador, Sergio Pfaffezeller: transformar la compra y venta de vehículos en una experiencia transparente, segura y humana.", imagen1_url: "/VDM.jpeg", imagen2_url: "https://images.unsplash.com/photo-1560958089-b8a1929cea89?q=80&w=1200&auto=format&fit=crop" },
+  { id: "d2", anio: "2018", titulo: "Expansión en Zona Norte", texto: "Gracias a la confianza inquebrantable de nuestros clientes, inauguramos nuestra sucursal estratégica en Don Torcuato. Esto nos consolidó como referentes absolutos en Zona Norte para la comercialización de vehículos 0KM y usados seleccionados de alta gama.", imagen1_url: "/pana.jpg", imagen2_url: null },
+  { id: "d3", anio: "Hoy", titulo: "Revolución y Servicio Premium", texto: "Integramos tecnología de punta para ofrecer cotizaciones en el acto, un proceso de consignación sin estrés y un catálogo 100% digitalizado. Mantenemos intacta la cercanía, el respaldo oficial y la pasión por los motores que nos caracteriza desde el día uno.", imagen1_url: "https://images.unsplash.com/photo-1619767886558-efeb9c0a149f?q=80&w=1200&auto=format&fit=crop", imagen2_url: "https://images.unsplash.com/photo-1552519507-da3b142c6e3d?q=80&w=1200&auto=format&fit=crop" },
+];
+const EQUIPO_DEFAULT: EquipoMiembro[] = [
+  { id: "e1", nombre: "Sergio Pfaffezeller", rol: "Fundador y Director Ejecutivo", imagen_url: "https://images.unsplash.com/photo-1560250097-0b93528c311a?q=80&w=800&auto=format&fit=crop" },
+  { id: "e2", nombre: "Gabriel", rol: "Encargado de Sucursal Casa Central", imagen_url: "https://images.unsplash.com/photo-1519085360753-af0119f7cbe7?q=80&w=800&auto=format&fit=crop" },
 ];
 
-export default function NosotrosClient() {
-  const data = [
-    {
-      title: "2010",
-      content: (
-        <div className="group">
-          <h3 className="text-2xl md:text-3xl font-black text-slate-900 dark:text-white mb-3 tracking-tight">
-            Los Inicios en Casa Central
-          </h3>
-          <p className="mb-8 text-sm md:text-base font-medium text-slate-600 dark:text-slate-400 leading-relaxed max-w-2xl">
-            Pfaffen Cars abrió sus puertas en nuestra Casa Central con una visión clara impulsada por nuestro fundador, <strong className="text-slate-900 dark:text-white">Sergio Pfaffezeller</strong>: transformar la compra y venta de vehículos en una experiencia transparente, segura y humana.
-          </p>
+export default function NosotrosClient({
+  timeline, equipo, heroBadge, heroBajada,
+}: { timeline?: TimelineItem[] | null; equipo?: EquipoMiembro[] | null; heroBadge?: string | null; heroBajada?: string | null }) {
+  const timelineFinal = timeline && timeline.length > 0 ? timeline : TIMELINE_DEFAULT;
+  const equipoFinal = equipo && equipo.length > 0 ? equipo : EQUIPO_DEFAULT;
+  const data = timelineFinal.map((item) => ({
+    title: item.anio,
+    content: (
+      <div className="group" key={item.id}>
+        <h3 className="text-2xl md:text-3xl font-black text-slate-900 dark:text-white mb-3 tracking-tight">
+          {item.titulo}
+        </h3>
+        <p className="mb-8 text-sm md:text-base font-medium text-slate-600 dark:text-slate-400 leading-relaxed max-w-2xl whitespace-pre-line">
+          {item.texto}
+        </p>
+        {(item.imagen1_url || item.imagen2_url) && (
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-6">
-            <div className="relative h-48 md:h-64 w-full rounded-[2rem] overflow-hidden border border-slate-200 dark:border-white/10 shadow-sm group-hover:shadow-xl transition-shadow duration-500">
-              <Image src="/VDM.jpeg" alt="Sede Casa Central" fill sizes="(max-width: 768px) 100vw, 50vw" className="object-cover group-hover:scale-105 transition-transform duration-700" />
-            </div>
-            <div className="relative h-48 md:h-64 w-full rounded-[2rem] overflow-hidden border border-slate-200 dark:border-white/10 shadow-sm group-hover:shadow-xl transition-shadow duration-500">
-              <Image src="https://images.unsplash.com/photo-1560958089-b8a1929cea89?q=80&w=1200&auto=format&fit=crop" alt="Primeros clientes" fill sizes="(max-width: 768px) 100vw, 50vw" className="object-cover group-hover:scale-105 transition-transform duration-700 delay-75" />
-            </div>
+            {item.imagen1_url && (
+              <div className="relative h-48 md:h-64 w-full rounded-[2rem] overflow-hidden border border-slate-200 dark:border-white/10 shadow-sm group-hover:shadow-xl transition-shadow duration-500">
+                <Image src={item.imagen1_url} alt={item.titulo} fill sizes="(max-width: 768px) 100vw, 50vw" className="object-cover group-hover:scale-105 transition-transform duration-700" />
+              </div>
+            )}
+            {item.imagen2_url && (
+              <div className="relative h-48 md:h-64 w-full rounded-[2rem] overflow-hidden border border-slate-200 dark:border-white/10 shadow-sm group-hover:shadow-xl transition-shadow duration-500">
+                <Image src={item.imagen2_url} alt={item.titulo} fill sizes="(max-width: 768px) 100vw, 50vw" className="object-cover group-hover:scale-105 transition-transform duration-700 delay-75" />
+              </div>
+            )}
           </div>
-        </div>
-      ),
-    },
-    {
-      title: "2018",
-      content: (
-        <div className="group">
-          <h3 className="text-2xl md:text-3xl font-black text-slate-900 dark:text-white mb-3 tracking-tight">
-            Expansión en Zona Norte
-          </h3>
-          <p className="mb-8 text-sm md:text-base font-medium text-slate-600 dark:text-slate-400 leading-relaxed max-w-2xl">
-            Gracias a la confianza inquebrantable de nuestros clientes, inauguramos nuestra sucursal estratégica en <strong className="text-slate-900 dark:text-white">Don Torcuato</strong>. Esto nos consolidó como referentes absolutos en Zona Norte para la comercialización de vehículos 0KM y usados seleccionados de alta gama.
-          </p>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-6">
-            <div className="relative h-48 md:h-64 w-full rounded-[2rem] overflow-hidden border border-slate-200 dark:border-white/10 shadow-sm group-hover:shadow-xl transition-shadow duration-500">
-              <Image src="/pana.jpg" alt="Sucursal Don Torcuato" fill sizes="(max-width: 768px) 100vw, 50vw" className="object-cover group-hover:scale-105 transition-transform duration-700" />
-            </div>
-          </div>
-        </div>
-      ),
-    },
-    {
-      title: "Hoy",
-      content: (
-        <div className="group">
-          <h3 className="text-2xl md:text-3xl font-black text-slate-900 dark:text-white mb-3 tracking-tight">
-            Revolución y Servicio Premium
-          </h3>
-          <p className="mb-8 text-sm md:text-base font-medium text-slate-600 dark:text-slate-400 leading-relaxed max-w-2xl">
-            Integramos tecnología de punta para ofrecer <strong className="text-slate-900 dark:text-white">cotizaciones en el acto</strong>, un proceso de <strong className="text-slate-900 dark:text-white">consignación sin estrés</strong> y un catálogo 100% digitalizado. Mantenemos intacta la cercanía, el respaldo oficial y la pasión por los motores que nos caracteriza desde el día uno.
-          </p>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-6">
-            <div className="relative h-48 md:h-64 w-full rounded-[2rem] overflow-hidden border border-slate-200 dark:border-white/10 shadow-sm group-hover:shadow-xl transition-shadow duration-500">
-              <Image src="https://images.unsplash.com/photo-1619767886558-efeb9c0a149f?q=80&w=1200&auto=format&fit=crop" alt="Innovación Tecnológica" fill sizes="(max-width: 768px) 100vw, 50vw" className="object-cover group-hover:scale-105 transition-transform duration-700" />
-            </div>
-            <div className="relative h-48 md:h-64 w-full rounded-[2rem] overflow-hidden border border-slate-200 dark:border-white/10 shadow-sm group-hover:shadow-xl transition-shadow duration-500">
-              <Image src="https://images.unsplash.com/photo-1552519507-da3b142c6e3d?q=80&w=1200&auto=format&fit=crop" alt="Autos de Alta Gama" fill sizes="(max-width: 768px) 100vw, 50vw" className="object-cover group-hover:scale-105 transition-transform duration-700 delay-75" />
-            </div>
-          </div>
-          
+        )}
+        {item.anio === "Hoy" && (
           <div className="mt-10">
-            <Link 
-              href="/catalogo" 
+            <Link
+              href="/catalogo"
               className="inline-flex items-center gap-2 bg-[#0145F2] hover:bg-blue-600 text-white font-black text-xs uppercase tracking-widest px-8 py-4 rounded-xl transition-all shadow-lg shadow-blue-500/20 active:scale-95"
             >
               Conocé nuestro stock <ChevronRight className="w-4 h-4" />
             </Link>
           </div>
-        </div>
-      ),
-    },
-  ];
+        )}
+      </div>
+    ),
+  }));
 
   return (
     <div className="min-h-screen bg-[#f8fafc] dark:bg-[#030303] font-sans text-slate-900 dark:text-white relative overflow-hidden">
@@ -108,7 +97,7 @@ export default function NosotrosClient() {
         <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-slate-50 dark:bg-white/5 border border-slate-200 dark:border-white/10 shadow-sm backdrop-blur-xl mb-8">
           <Landmark className="w-4 h-4 text-[#0145F2] dark:text-sky-400" />
           <span className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-700 dark:text-slate-300">
-            Nuestra Historia
+            {heroBadge || HERO_DEFAULT.badge}
           </span>
         </div>
 
@@ -122,7 +111,7 @@ export default function NosotrosClient() {
 
         {/* Bajada */}
         <p className="text-slate-500 dark:text-slate-400 max-w-2xl text-center text-sm md:text-base font-medium leading-relaxed mb-12">
-          Desde nuestros primeros pasos hasta convertirnos en la concesionaria referente de Zona Norte. Pasión por los motores, transparencia y el cliente siempre en el centro.
+          {heroBajada || HERO_DEFAULT.bajada}
         </p>
 
       </section>
@@ -151,23 +140,25 @@ export default function NosotrosClient() {
 
           {/* Grilla del Equipo (Retratos aspect-[3/4]) */}
           <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-8 md:gap-10">
-            {TEAM_MEMBERS.map((member) => (
-              <div key={member.name} className="flex flex-col group cursor-default">
-                
+            {equipoFinal.map((member) => (
+              <div key={member.id} className="flex flex-col group cursor-default">
+
                 {/* Contenedor de la Imagen Editorial */}
-                <div className={`w-full aspect-[3/4] rounded-[2rem] overflow-hidden mb-6 relative border border-white/10 shadow-2xl transition-all duration-500 group-hover:-translate-y-3 group-hover:shadow-[0_30px_60px_rgba(1,69,242,0.3)] ${member.color}`}>
-                  
+                <div className="w-full aspect-[3/4] rounded-[2rem] overflow-hidden mb-6 relative border border-white/10 shadow-2xl transition-all duration-500 group-hover:-translate-y-3 group-hover:shadow-[0_30px_60px_rgba(1,69,242,0.3)] bg-slate-800">
+
                   {/* Gradiente oscuro inferior (Viñeta) */}
                   <div className="absolute inset-x-0 bottom-0 h-1/2 bg-gradient-to-t from-[#0a0a0f] to-transparent opacity-80 z-10 pointer-events-none" />
-                  
+
                   {/* Imagen */}
-                  <Image
-                    src={member.image}
-                    alt={member.name}
-                    fill
-                    sizes="(max-width: 768px) 100vw, 33vw"
-                    className="object-cover grayscale-[30%] group-hover:grayscale-0 group-hover:scale-105 transition-all duration-700 ease-out relative z-0"
-                  />
+                  {member.imagen_url && (
+                    <Image
+                      src={member.imagen_url}
+                      alt={member.nombre}
+                      fill
+                      sizes="(max-width: 768px) 100vw, 33vw"
+                      className="object-cover grayscale-[30%] group-hover:grayscale-0 group-hover:scale-105 transition-all duration-700 ease-out relative z-0"
+                    />
+                  )}
                   
                   {/* Textura sutil (Opcional, para ese look film) */}
                   <div className="absolute inset-0 bg-[url('https://grainy-gradients.vercel.app/noise.svg')] opacity-10 mix-blend-overlay z-20 pointer-events-none" />
@@ -176,10 +167,10 @@ export default function NosotrosClient() {
                 {/* Textos del integrante */}
                 <div className="px-2">
                   <h3 className="text-2xl md:text-3xl font-black text-white tracking-tight mb-1">
-                    {member.name}
+                    {member.nombre}
                   </h3>
                   <p className="text-sm font-medium text-sky-400 uppercase tracking-widest">
-                    {member.role}
+                    {member.rol}
                   </p>
                 </div>
 
