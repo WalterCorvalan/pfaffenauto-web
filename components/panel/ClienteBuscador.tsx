@@ -150,7 +150,12 @@ export default function ClienteBuscador({
       onSeleccionar(data as any);
       setCreandoNuevo(false);
     } catch (err) {
-      alert(err instanceof Error ? err.message : "Error al crear el cliente.");
+      // Los errores de Supabase (PostgrestError) no son instancias de Error,
+      // así que "err instanceof Error" siempre daba false acá y el usuario
+      // veía el mensaje genérico en vez del motivo real (ej. fecha de
+      // nacimiento inválida rechazada por Postgres).
+      const mensaje = err instanceof Error ? err.message : (err as { message?: string })?.message;
+      alert(mensaje || "Error al crear el cliente.");
     } finally {
       setGuardando(false);
     }

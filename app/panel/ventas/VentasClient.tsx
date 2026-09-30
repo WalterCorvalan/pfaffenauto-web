@@ -43,6 +43,7 @@ export default function VentasClient({
   const router = useRouter();
   const searchParams = useSearchParams();
   const [ventas, setVentas] = useState(ventasIniciales);
+  useEffect(() => { setVentas(ventasIniciales); }, [ventasIniciales]);
   const [confirmDialog, setConfirmDialog] = useState<{ mensaje: string; accion: () => void } | null>(null);
   const [tab, setTab] = useState<Tab>("todas");
   const [soloMias, setSoloMias] = useState(false);
@@ -94,6 +95,19 @@ export default function VentasClient({
     const ventaParam = searchParams.get("venta");
     if (ventaParam) setDetalleId(ventaParam);
   }, [searchParams, router]);
+
+  // Sin esto, una venta creada/cerrada desde otra pestaña (o cargada acá y
+  // vista después de volver atrás) no aparecía hasta un F5 a mano -- mismo
+  // patrón que Consignaciones/Cotizaciones/Leads.
+  useEffect(() => {
+    let timeoutId: ReturnType<typeof setTimeout>;
+    const refrescarConDebounce = () => { clearTimeout(timeoutId); timeoutId = setTimeout(() => router.refresh(), 400); };
+    const canal = supabase2
+      .channel(`ventas-realtime-${Math.random().toString(36).slice(2)}`)
+      .on("postgres_changes", { event: "*", schema: "public", table: "ventas" }, refrescarConDebounce)
+      .subscribe();
+    return () => { clearTimeout(timeoutId); supabase2.removeChannel(canal); };
+  }, [router]);
 
   const perfilMap = useMemo(() => Object.fromEntries(perfiles.map((p) => [p.id, p.nombre])), [perfiles]);
   const permutaSet = useMemo(() => new Set(ventaIdsConPermuta), [ventaIdsConPermuta]);
