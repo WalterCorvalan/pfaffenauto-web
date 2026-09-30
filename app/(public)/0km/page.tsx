@@ -4,14 +4,18 @@ import VehiculosGrid from "@/components/VehiculosGrid";
 import { Sparkles, ShieldCheck, ChevronRight, Zap } from "lucide-react";
 import Link from "next/link";
 import type { Metadata } from "next";
+import { getBrandingSeo } from "@/lib/brandingSeo";
 
 export const revalidate = 60;
 
-export const metadata: Metadata = {
-  title: "Autos 0KM en Zona Norte, Buenos Aires | Pfaffen Cars",
-  description: "Comprá tu auto 0KM en Zona Norte con garantía oficial de fábrica, financiación a medida y entrega inmediata en Pfaffen Cars.",
-  alternates: { canonical: "https://www.pfaffencars.com/0km" },
-};
+export async function generateMetadata(): Promise<Metadata> {
+  const { nombre, zona } = await getBrandingSeo();
+  return {
+    title: `Autos 0KM en ${zona} | ${nombre}`,
+    description: `Comprá tu auto 0KM en ${zona} con garantía oficial de fábrica, financiación a medida y entrega inmediata en ${nombre}.`,
+    alternates: { canonical: "https://www.pfaffencars.com/0km" },
+  };
+}
 
 export default async function CeroKmPage() {
   const supabase = await createClient();

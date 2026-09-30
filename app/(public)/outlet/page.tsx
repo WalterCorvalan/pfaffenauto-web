@@ -4,14 +4,18 @@ import VehiculosGrid from "@/components/VehiculosGrid";
 import { Tag, AlertCircle, ChevronRight, Flame } from "lucide-react";
 import Link from "next/link";
 import type { Metadata } from "next";
+import { getBrandingSeo } from "@/lib/brandingSeo";
 
 export const revalidate = 60;
 
-export const metadata: Metadata = {
-  title: "Outlet de Autos Usados Baratos en Zona Norte | Pfaffen Cars",
-  description: "Autos usados a precios de liquidación en Buenos Aires. Ideales como primer auto, proyectos o herramienta de trabajo.",
-  alternates: { canonical: "https://www.pfaffencars.com/outlet" },
-};
+export async function generateMetadata(): Promise<Metadata> {
+  const { nombre, zona } = await getBrandingSeo();
+  return {
+    title: `Outlet de Autos Usados Baratos en ${zona} | ${nombre}`,
+    description: `Autos usados a precios de liquidación en ${zona}. Ideales como primer auto, proyectos o herramienta de trabajo.`,
+    alternates: { canonical: "https://www.pfaffencars.com/outlet" },
+  };
+}
 
 export default async function OutletPage() {
   const supabase = await createClient();

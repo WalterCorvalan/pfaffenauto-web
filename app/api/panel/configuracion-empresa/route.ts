@@ -50,6 +50,7 @@ const ConfigEmpresaSchema = z.object({
   branding_domicilio: z.string().trim().max(200).optional().nullable(),
   branding_telefono: z.string().trim().max(40).optional().nullable(),
   branding_cuit: z.string().trim().max(20).optional().nullable(),
+  branding_zona: z.string().trim().max(100).optional().nullable(),
   redes_whatsapp: z.string().trim().max(300).optional().nullable(),
   redes_instagram: z.string().trim().max(300).optional().nullable(),
   redes_facebook: z.string().trim().max(300).optional().nullable(),

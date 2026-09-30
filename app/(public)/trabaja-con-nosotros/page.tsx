@@ -1,14 +1,18 @@
 import type { Metadata } from "next";
 import { createClient as createAdminClient } from "@supabase/supabase-js";
 import TrabajaConNosotrosClient from "./TrabajaConNosotrosClient";
+import { getBrandingSeo } from "@/lib/brandingSeo";
 
 // Formulario con Turnstile/estado local -- tiene que ser client component,
 // por eso el metadata vive acá en un server component chico que lo envuelve.
-export const metadata: Metadata = {
-  title: "Trabajá con Nosotros | Pfaffen Cars",
-  description: "Sumate al equipo de Pfaffen Cars. Buscamos personas proactivas para Ventas, Administración, Marketing, Taller y más. Postulate online.",
-  alternates: { canonical: "https://www.pfaffencars.com/trabaja-con-nosotros" },
-};
+export async function generateMetadata(): Promise<Metadata> {
+  const { nombre } = await getBrandingSeo();
+  return {
+    title: `Trabajá con Nosotros | ${nombre}`,
+    description: `Sumate al equipo de ${nombre}. Buscamos personas proactivas para Ventas, Administración, Marketing, Taller y más. Postulate online.`,
+    alternates: { canonical: "https://www.pfaffencars.com/trabaja-con-nosotros" },
+  };
+}
 
 export const revalidate = 60;
 

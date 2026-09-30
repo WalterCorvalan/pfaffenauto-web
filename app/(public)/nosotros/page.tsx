@@ -1,12 +1,16 @@
 import type { Metadata } from "next";
 import { createClient as createAdminClient } from "@supabase/supabase-js";
 import NosotrosClient from "./NosotrosClient";
+import { getBrandingSeo } from "@/lib/brandingSeo";
 
-export const metadata: Metadata = {
-  title: "Nuestra Historia | Pfaffen Cars",
-  description: "Conocé la historia de Pfaffen Cars, nuestro equipo y los valores que nos convirtieron en una concesionaria de referencia en Zona Norte.",
-  alternates: { canonical: "https://www.pfaffencars.com/nosotros" },
-};
+export async function generateMetadata(): Promise<Metadata> {
+  const { nombre, zona } = await getBrandingSeo();
+  return {
+    title: `Nuestra Historia | ${nombre}`,
+    description: `Conocé la historia de ${nombre}, nuestro equipo y los valores que nos convirtieron en una concesionaria de referencia en ${zona}.`,
+    alternates: { canonical: "https://www.pfaffencars.com/nosotros" },
+  };
+}
 
 export const revalidate = 60;
 

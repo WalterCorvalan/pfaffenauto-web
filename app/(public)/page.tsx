@@ -1,12 +1,16 @@
 import { createClient } from "@/lib/supabase/server";
 import { createClient as createAdminClient } from "@supabase/supabase-js";
 import type { Metadata } from "next";
+import { getBrandingSeo } from "@/lib/brandingSeo";
 
-export const metadata: Metadata = {
-  title: "Pfaffen Cars | Concesionaria de 0KM y Usados en Zona Norte",
-  description: "Comprá o vendé tu auto con la concesionaria líder de Zona Norte. Stock de 0KM y usados seleccionados, financiación propia y respaldo oficial.",
-  alternates: { canonical: "https://www.pfaffencars.com" },
-};
+export async function generateMetadata(): Promise<Metadata> {
+  const { nombre, zona } = await getBrandingSeo();
+  return {
+    title: `${nombre} | Concesionaria de 0KM y Usados en ${zona}`,
+    description: `Comprá o vendé tu auto con la concesionaria líder de ${zona}. Stock de 0KM y usados seleccionados, financiación propia y respaldo oficial.`,
+    alternates: { canonical: "https://www.pfaffencars.com" },
+  };
+}
 
 // ================= COMPONENTES DE LA LANDING =================
 import Hero from "@/components/Hero";

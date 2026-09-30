@@ -6,6 +6,7 @@ import VehiculosGrid from "@/components/VehiculosGrid";
 import SucursalHeroAnimated from "./SucursalHeroAnimated";
 import Testimonials from "@/components/Testimonials";
 import type { Metadata } from "next";
+import { getBrandingSeo } from "@/lib/brandingSeo";
 
 const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE2_URL!,
@@ -48,10 +49,11 @@ function parseDireccion(direccion: string) {
 export async function generateMetadata({ params }: { params: Promise<{ slug: string }> }): Promise<Metadata> {
   const { slug } = await params;
   const { data: sucursal } = await supabase.from("sucursales").select("nombre, direccion").eq("slug", slug).maybeSingle();
-  const nombre = sucursal?.nombre || slug;
+  const nombreSucursal = sucursal?.nombre || slug;
+  const { nombre } = await getBrandingSeo();
   return {
-    title: `${nombre} | Sucursal Pfaffen Cars`,
-    description: `Visitá nuestra sucursal ${nombre}${sucursal?.direccion ? ` en ${sucursal.direccion}` : ""}. Stock disponible, financiación y respaldo oficial.`,
+    title: `${nombreSucursal} | Sucursal ${nombre}`,
+    description: `Visitá nuestra sucursal ${nombreSucursal}${sucursal?.direccion ? ` en ${sucursal.direccion}` : ""}. Stock disponible, financiación y respaldo oficial.`,
     alternates: { canonical: `https://www.pfaffencars.com/sucursales/${slug}` },
   };
 }
