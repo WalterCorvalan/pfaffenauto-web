@@ -1,4 +1,5 @@
 import { createClient } from "@/lib/supabase/server";
+import { createClient as createAdminClient } from "@supabase/supabase-js";
 import type { Metadata } from "next";
 
 export const metadata: Metadata = {
@@ -43,6 +44,29 @@ export default async function Page() {
     .eq("activo", true)
     .order("orden", { ascending: true });
 
+  // Sin RLS pública sobre configuracion_empresa todavía -- se lee con
+  // service role, igual que las redes del footer en (public)/layout.tsx.
+  let heroContenido;
+  try {
+    const admin = createAdminClient(process.env.NEXT_PUBLIC_SUPABASE2_URL!, process.env.SUPABASE2_SERVICE_ROLE_KEY!);
+    const { data } = await admin
+      .from("configuracion_empresa")
+      .select("hero_video_url, hero_badge, hero_titulo_prefijo, hero_titulo_destacado, hero_subtitulo")
+      .eq("id", true)
+      .maybeSingle();
+    if (data) {
+      heroContenido = {
+        videoUrl: data.hero_video_url,
+        badge: data.hero_badge,
+        tituloPrefijo: data.hero_titulo_prefijo,
+        tituloDestacado: data.hero_titulo_destacado,
+        subtitulo: data.hero_subtitulo,
+      };
+    }
+  } catch {
+    heroContenido = undefined;
+  }
+
   return (
     // Usamos el fondo claro premium que definimos para el resto de la web
     <main className="w-full bg-[#f8f9fa] dark:bg-[#0a0a0f] min-h-screen relative flex flex-col gap-0 pb-20">
@@ -50,7 +74,7 @@ export default async function Page() {
       <IntroLoader />
 
       {/* 1. Hero Principal */}
-      <Hero />
+      <Hero contenido={heroContenido} />
 
       {/* 2. Catálogo Destacado (Stock) — lo que la mayoría vino a buscar, justo
          después del Hero en vez de competir con un banner promocional primero */}

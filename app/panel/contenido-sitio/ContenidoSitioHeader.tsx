@@ -5,7 +5,7 @@ import { usePathname } from "next/navigation";
 
 const TABS: { label: string; href?: string }[] = [
   { label: "Entregas", href: "/panel/contenido-sitio/entregas" },
-  { label: "Hero (portada)" },
+  { label: "Hero (portada)", href: "/panel/contenido-sitio/hero" },
   { label: "Nuestra Historia" },
   { label: "Footer y redes", href: "/panel/contenido-sitio/footer-redes" },
   { label: "Formulario RRHH" },
