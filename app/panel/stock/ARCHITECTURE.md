@@ -75,6 +75,10 @@ Encontrado por reporte real del usuario: una Volkswagen Tiguan con precio visibl
 
 **Si agregás un lugar nuevo que escriba `precio_venta`/`moneda_venta` en `vehiculos`, seteá `precio_publicado_ars`/`usd` en el mismo `update`/`insert`** — no asumas que alguien va a reabrir el vehículo en `NuevoVehiculoModal.tsx` después para "publicarlo".
 
+## Historial de cambios de precio
+
+`vehiculo_precio_historial` registra cada cambio de precio (precio anterior/nuevo, moneda, usuario, fecha). Se inserta desde `PATCH /api/panel/vehiculos/precio` (service role, autentica al usuario con el cliente de servidor antes de escribir), **no** desde el cliente directo a `vehiculos` — `PrecioEditor.tsx` llama a ese endpoint en vez de hacer `supabase2.from("vehiculos").update(...)` como antes, así queda registrado quién cambió el precio y cuándo. El editor también muestra el historial (últimos 20 cambios) leyendo la tabla directo con `supabase2` (RLS: cualquier usuario autenticado puede ver el historial, solo el endpoint puede escribir). Si agregás otro lugar que edite `precio_venta` de un vehículo existente (no alta nueva), hacelo pasar por este mismo endpoint para no dejar un camino sin registrar.
+
 ## No tocar sin revisar el resto
 
 - No confundir `publicado_ml` con "visible en la web" en ningún indicador nuevo — son conceptos distintos y ya generó un hallazgo de auditoría por la confusión.
