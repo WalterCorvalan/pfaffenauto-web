@@ -59,6 +59,8 @@ const ConfigEmpresaSchema = z.object({
   hero_titulo_prefijo: z.string().trim().max(200).optional().nullable(),
   hero_titulo_destacado: z.string().trim().max(60).optional().nullable(),
   hero_subtitulo: z.string().trim().max(200).optional().nullable(),
+  nosotros_badge: z.string().trim().max(80).optional().nullable(),
+  nosotros_bajada: z.string().trim().max(300).optional().nullable(),
   resumen_diario_activo: z.boolean().optional(),
   resumen_diario_hora: z.coerce.number().min(0).max(23).optional(),
   resumen_diario_dias_expediente_atrasado: z.coerce.number().min(1).optional(),
