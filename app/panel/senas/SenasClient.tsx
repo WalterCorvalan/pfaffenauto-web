@@ -19,6 +19,11 @@ export default function SenasClient({
   const router = useRouter();
   const searchParams = useSearchParams();
   const [senas, setSenas] = useState(senasIniciales);
+  // router.refresh() (disparado por el realtime de abajo) vuelve a ejecutar
+  // el server component y pasa una senasIniciales nueva -- sin este sync el
+  // state local se quedaba pegado a la foto del primer render y el refresh
+  // no se notaba en pantalla.
+  useEffect(() => { setSenas(senasIniciales); }, [senasIniciales]);
   const [modalAbierto, setModalAbierto] = useState(false);
   const [seleccionada, setSeleccionada] = useState<any>(null);
   const [editando, setEditando] = useState<any>(null);
@@ -44,6 +49,22 @@ export default function SenasClient({
       router.replace("/panel/senas");
     }
   }, [searchParams, router]);
+
+  // NuevaSenaModal.tsx redirige a /senas/imprimir/<id> apenas guarda (no
+  // vuelve nunca a este componente) -- sin esto, la lista se queda con la
+  // foto inicial del server render hasta un F5 a mano: una seña recién
+  // creada (acá o desde otra pestaña) no aparecía al volver con "atrás"
+  // del navegador, daba la sensación de que no se había guardado. Mismo
+  // patrón que Consignaciones/Visitas.
+  useEffect(() => {
+    let timeoutId: ReturnType<typeof setTimeout>;
+    const refrescarConDebounce = () => { clearTimeout(timeoutId); timeoutId = setTimeout(() => router.refresh(), 400); };
+    const canal = supabase2
+      .channel(`senas-realtime-${Math.random().toString(36).slice(2)}`)
+      .on("postgres_changes", { event: "*", schema: "public", table: "senas" }, refrescarConDebounce)
+      .subscribe();
+    return () => { clearTimeout(timeoutId); supabase2.removeChannel(canal); };
+  }, [router]);
 
   const filtradas = useMemo(() => {
     const q = query.trim().toLowerCase();
