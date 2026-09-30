@@ -12,7 +12,7 @@ import { getCanalOrigen, getUtmRaw } from "@/lib/utm";
 import { supabase2 } from "@/lib/supabase/client";
 import { normalizarMarca } from "@/lib/vehiculos";
 import { MARCAS_ARGENTINA, MODELOS_POR_MARCA } from "@/lib/marcasModelos";
-import { LOGOS_MARCAS } from "@/lib/marcasLogos";
+import { LOGOS_MARCAS, esLogoOscuro } from "@/lib/marcasLogos";
 import { esDomingo, franjasParaFechaConAlmuerzo } from "@/lib/horarioAtencion";
 
 const marcasDisponibles = MARCAS_ARGENTINA;
@@ -352,7 +352,7 @@ export default function CotizadorForm({ vehiculoObjetivo }: { vehiculoObjetivo?:
             ) : marca && !modelo ? (
               <motion.div key="logo" initial={{ opacity: 0, scale: 0.8, filter: "blur(10px)" }} animate={{ opacity: 1, scale: 1, filter: "blur(0px)" }} exit={{ opacity: 0, scale: 1.1, filter: "blur(10px)" }} transition={{ duration: 0.5 }} className="flex flex-col items-center">
                 <div className="relative w-32 h-32 lg:w-48 lg:h-48 flex items-center justify-center">
-                  <img src={logoPath} alt={marca} className="max-w-full max-h-full object-contain drop-shadow-2xl" onError={(e) => { e.currentTarget.style.display = "none"; }} />
+                  <img src={logoPath} alt={marca} className={`max-w-full max-h-full object-contain drop-shadow-2xl ${esLogoOscuro(marca) ? "dark:brightness-0 dark:invert" : ""}`} onError={(e) => { e.currentTarget.style.display = "none"; }} />
                   <span className="absolute inset-0 flex items-center justify-center text-2xl lg:text-4xl font-black text-slate-900 dark:text-white opacity-10 dark:opacity-20 -z-10 tracking-tighter uppercase">{marca}</span>
                 </div>
               </motion.div>
@@ -362,7 +362,7 @@ export default function CotizadorForm({ vehiculoObjetivo }: { vehiculoObjetivo?:
                   <img src={carPath} alt={`${marca} ${modelo}`} className="w-full h-auto object-contain drop-shadow-[0_20px_40px_rgba(0,0,0,0.15)] dark:drop-shadow-[0_20px_50px_rgba(0,0,0,0.5)] z-10" onError={() => setImageError(true)} />
                 ) : (
                   <div className="flex flex-col items-center">
-                    <img src={logoPath} alt={marca} className="w-20 h-20 lg:w-32 lg:h-32 object-contain mb-4 lg:mb-8 opacity-70 dark:opacity-50" onError={(e) => { e.currentTarget.style.display = "none"; }} />
+                    <img src={logoPath} alt={marca} className={`w-20 h-20 lg:w-32 lg:h-32 object-contain mb-4 lg:mb-8 opacity-70 dark:opacity-50 ${esLogoOscuro(marca) ? "dark:brightness-0 dark:invert" : ""}`} onError={(e) => { e.currentTarget.style.display = "none"; }} />
                     <h2 className="text-2xl lg:text-4xl font-black text-slate-900 dark:text-white uppercase tracking-tighter text-center px-4">{marca} {modelo}</h2>
                   </div>
                 )}
