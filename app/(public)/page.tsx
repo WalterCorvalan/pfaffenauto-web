@@ -52,11 +52,12 @@ export default async function Page() {
   // Sin RLS pública sobre configuracion_empresa todavía -- se lee con
   // service role, igual que las redes del footer en (public)/layout.tsx.
   let heroContenido;
+  let serviciosContenido;
   try {
     const admin = createAdminClient(process.env.NEXT_PUBLIC_SUPABASE2_URL!, process.env.SUPABASE2_SERVICE_ROLE_KEY!);
     const { data } = await admin
       .from("configuracion_empresa")
-      .select("hero_video_url, hero_badge, hero_titulo_prefijo, hero_titulo_destacado, hero_subtitulo")
+      .select("hero_video_url, hero_badge, hero_titulo_prefijo, hero_titulo_destacado, hero_subtitulo, servicios_b1_titulo, servicios_b1_texto, servicios_b1_imagen_url, servicios_b2_titulo, servicios_b2_texto, servicios_b2_boton_texto, servicios_b2_link_url, servicios_b2_imagen_url, servicios_b3_titulo, servicios_b3_texto, servicios_b3_imagen_url")
       .eq("id", true)
       .maybeSingle();
     if (data) {
@@ -67,9 +68,23 @@ export default async function Page() {
         tituloDestacado: data.hero_titulo_destacado,
         subtitulo: data.hero_subtitulo,
       };
+      serviciosContenido = {
+        b1Titulo: data.servicios_b1_titulo,
+        b1Texto: data.servicios_b1_texto,
+        b1ImagenUrl: data.servicios_b1_imagen_url,
+        b2Titulo: data.servicios_b2_titulo,
+        b2Texto: data.servicios_b2_texto,
+        b2BotonTexto: data.servicios_b2_boton_texto,
+        b2LinkUrl: data.servicios_b2_link_url,
+        b2ImagenUrl: data.servicios_b2_imagen_url,
+        b3Titulo: data.servicios_b3_titulo,
+        b3Texto: data.servicios_b3_texto,
+        b3ImagenUrl: data.servicios_b3_imagen_url,
+      };
     }
   } catch {
     heroContenido = undefined;
+    serviciosContenido = undefined;
   }
 
   return (
@@ -92,7 +107,7 @@ export default async function Page() {
       <Marcas marcasEnStock={marcasEnStock} />
 
       {/* 5. Propuesta de Valor / Servicios */}
-      <Servicios />
+      <Servicios contenido={serviciosContenido} />
 
       {/* Seguimiento de compra: utilidad post-venta, no es lo primero que
          necesita un visitante nuevo — más abajo, cerca del cierre */}
