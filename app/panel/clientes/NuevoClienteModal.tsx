@@ -14,10 +14,14 @@ import { crearAlerta } from "@/lib/panel/alertas";
 // con una lista propia desincronizada del resto del panel. "Google Ads"
 // y "Cliente anterior" se sacaron a pedido -- no se cargan clientes a
 // mano con esos orígenes. "Showroom" también se sacó del selector (a
-// pedido), pero los clientes ya cargados con ese origen quedan como
-// están: "Cómo nos conocieron" en Marketing → Embudo sigue agrupando por
-// el string tal cual está guardado en `clientes.origen`.
-export const ORIGENES = ["Instagram", "Facebook", "MercadoLibre", "Rodi", "Messenger", "Web", "Referido", "WhatsApp", "Otro"];
+// pedido) y se reemplaza por "Salón" -- los clientes ya cargados con
+// "Showroom" quedan como están: "Cómo nos conocieron" en Marketing →
+// Embudo sigue agrupando por el string tal cual está guardado en
+// `clientes.origen`. IMPORTANTE: "Salón" necesita estar en el CHECK
+// constraint `clientes_origen_check` de la base -- si se agrega otro
+// valor acá, también hay que ampliar ese constraint (ver auditoría de
+// sep-2026, mismo bug que rompía el alta de cliente).
+export const ORIGENES = ["Instagram", "Facebook", "MercadoLibre", "Rodi", "Messenger", "Web", "Referido", "WhatsApp", "Salón", "Otro"];
 const ETAPAS = [
   { value: "sin_contactar", label: "Nuevo" },
   { value: "contactado", label: "Contactado" },
