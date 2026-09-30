@@ -131,6 +131,7 @@ export default async function SucursalPage({ params }: { params: Promise<{ slug:
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd).replace(/</g, "\\u003c") }} />
       <SucursalHeroAnimated
         nombre={nombreSucursal}
+        nombreMarca={nombreMarca}
         imagen={imagenFondo}
         direccion={direccion}
         telefono={telefono}

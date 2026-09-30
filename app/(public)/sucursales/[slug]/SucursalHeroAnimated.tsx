@@ -6,6 +6,7 @@ import EstadoHorario from "./EstadoHorario";
 
 interface HeroProps {
   nombre: string;
+  nombreMarca: string;
   imagen: string;
   direccion: string;
   telefono: string;
@@ -23,12 +24,16 @@ interface HeroProps {
   horarioHoraHasta2?: number | null;
 }
 
-export default function SucursalHeroAnimated({ nombre, imagen, direccion, telefono, horario, navLink, latitude, longitude, horarioDiaDesde, horarioDiaHasta, horarioHoraDesde, horarioHoraHasta, horarioDiaDesde2, horarioDiaHasta2, horarioHoraDesde2, horarioHoraHasta2 }: HeroProps) {
-  // Con lat/long cargadas (Configuración → Sucursales) el pin queda exacto;
-  // sin ellas, cae a buscar por dirección -- sigue funcionando, solo menos preciso.
-  const mapaSrc = latitude != null && longitude != null
-    ? `https://www.google.com/maps?q=${latitude},${longitude}&z=16&output=embed`
-    : `https://www.google.com/maps?q=${encodeURIComponent(direccion)}&output=embed`;
+export default function SucursalHeroAnimated({ nombre, nombreMarca, imagen, direccion, telefono, horario, navLink, latitude, longitude, horarioDiaDesde, horarioDiaHasta, horarioHoraDesde, horarioHoraHasta, horarioDiaDesde2, horarioDiaHasta2, horarioHoraDesde2, horarioHoraHasta2 }: HeroProps) {
+  // Buscamos por texto (nombre + dirección), igual que en el mapa del home,
+  // para que Google Maps resuelva la ficha real del negocio (nombre,
+  // reseñas) en vez de un pin pelado sin info -- coordenadas solas solo se
+  // usan si todavía no hay dirección cargada.
+  const mapaSrc = direccion
+    ? `https://maps.google.com/maps?q=${encodeURIComponent(`${nombreMarca} ${nombre} ${direccion}`)}&z=15&output=embed&hl=es`
+    : latitude != null && longitude != null
+      ? `https://maps.google.com/maps?q=${latitude},${longitude}&z=15&output=embed&hl=es`
+      : `https://maps.google.com/maps?q=${encodeURIComponent(`${nombreMarca} ${nombre}`)}&z=15&output=embed&hl=es`;
 
   return (
     <>

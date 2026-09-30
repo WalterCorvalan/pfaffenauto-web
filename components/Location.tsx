@@ -36,24 +36,29 @@ export interface SucursalLocation {
 // Antes esta sección tenía su propio array hardcodeado (mapUrl/navLink fijos
 // por slug), separado de Configuración → Sucursales -- una sucursal nueva
 // cargada desde el panel nunca aparecía acá. Ahora se arma todo a partir de
-// los datos reales de "sucursales": el iframe del mapa sale de
-// latitude/longitude si están cargadas (fallback a buscar por dirección), el
-// botón "Llegar" usa el mismo google_maps_url que ya se edita en el panel.
-function armarMapUrl(s: SucursalLocation): string {
+// los datos reales de "sucursales". El iframe busca por texto (nombre +
+// dirección) en vez de coordenadas: así Google Maps resuelve la ficha real
+// del negocio (nombre, reseñas) en vez de tirar un pin pelado sin info --
+// coordenadas solas solo se usan si no hay dirección cargada.
+function armarMapUrl(s: SucursalLocation, nombreMarca: string): string {
+  if (s.direccion) {
+    const query = encodeURIComponent(`${nombreMarca} ${s.nombre} ${s.direccion}`);
+    return `https://maps.google.com/maps?q=${query}&z=15&output=embed&hl=es`;
+  }
   if (s.latitude != null && s.longitude != null) {
     return `https://maps.google.com/maps?q=${s.latitude},${s.longitude}&z=15&output=embed&hl=es`;
   }
-  const query = encodeURIComponent(s.direccion || s.nombre);
+  const query = encodeURIComponent(`${nombreMarca} ${s.nombre}`);
   return `https://maps.google.com/maps?q=${query}&z=15&output=embed&hl=es`;
 }
 
-export default function Location({ sucursales }: { sucursales: SucursalLocation[] }) {
+export default function Location({ sucursales, nombreMarca }: { sucursales: SucursalLocation[]; nombreMarca: string }) {
   if (sucursales.length === 0) return null;
   const sucursalesData = sucursales.map((s) => ({
     id: s.id,
     nombre: s.nombre,
     direccion: s.direccion || "",
-    mapUrl: armarMapUrl(s),
+    mapUrl: armarMapUrl(s, nombreMarca),
     stockLink: s.slug ? `/sucursales/${s.slug}` : "/catalogo",
     navLink: s.google_maps_url || `https://maps.google.com/?q=${encodeURIComponent(s.direccion || s.nombre)}`,
   }));
