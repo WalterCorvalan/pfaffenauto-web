@@ -9,18 +9,22 @@ import { hoyLocalISO } from "@/lib/panel/fechas";
 interface Props {
   miId: string;
   miNombre: string;
+  // Prefill opcional -- usado cuando este mismo formulario se abre desde
+  // Consignaciones (lead ya cargó nombre/teléfono/auto en texto libre desde
+  // la web pública) en vez de en blanco desde Stock.
+  prefill?: { mandanteNombre?: string; mandanteTelefono?: string; mandanteEmail?: string; marca?: string; modelo?: string };
   onClose: () => void;
   onCreado: (mandato: any, vehiculo: any | null) => void;
 }
 
-export default function NuevoMandatoModal({ miId, miNombre, onClose, onCreado }: Props) {
-  const [mandanteNombre, setMandanteNombre] = useState("");
+export default function NuevoMandatoModal({ miId, miNombre, prefill, onClose, onCreado }: Props) {
+  const [mandanteNombre, setMandanteNombre] = useState(prefill?.mandanteNombre || "");
   const [mandanteDni, setMandanteDni] = useState("");
   const [mandanteDomicilio, setMandanteDomicilio] = useState("");
-  const [mandanteTelefono, setMandanteTelefono] = useState("");
-  const [mandanteEmail, setMandanteEmail] = useState("");
-  const [marca, setMarca] = useState("");
-  const [modelo, setModelo] = useState("");
+  const [mandanteTelefono, setMandanteTelefono] = useState(prefill?.mandanteTelefono || "");
+  const [mandanteEmail, setMandanteEmail] = useState(prefill?.mandanteEmail || "");
+  const [marca, setMarca] = useState(prefill?.marca || "");
+  const [modelo, setModelo] = useState(prefill?.modelo || "");
   const [anio, setAnio] = useState(String(new Date().getFullYear()));
   const [color, setColor] = useState("");
   const [patente, setPatente] = useState("");
