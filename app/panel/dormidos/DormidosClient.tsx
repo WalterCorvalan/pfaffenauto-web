@@ -1,7 +1,7 @@
 "use client";
 
 import { useMemo, useState } from "react";
-import { Moon, Crown, MessageCircle, X, Send } from "lucide-react";
+import { Moon, Crown, MessageCircle, X, Send, Search } from "lucide-react";
 
 interface Venta { cliente_id: string; fecha_cierre: string; precio_venta: number; moneda_venta: string; vehiculo_marca: string | null; vehiculo_modelo: string | null }
 interface Cliente { id: string; nombre: string; telefono: string | null; vendedor_id: string | null }
@@ -20,6 +20,7 @@ export default function DormidosClient({
   const [plazoFiltro, setPlazoFiltro] = useState("18");
   const [marcaFiltro, setMarcaFiltro] = useState("");
   const [vendedorFiltro, setVendedorFiltro] = useState("");
+  const [query, setQuery] = useState("");
   const [seleccionados, setSeleccionados] = useState<Set<string>>(new Set());
   const [modalCampana, setModalCampana] = useState(false);
 
@@ -63,8 +64,12 @@ export default function DormidosClient({
     let lista = elegibles.filter((d) => d.mesesDormido >= Number(plazoFiltro));
     if (marcaFiltro) lista = lista.filter((d) => d.marca === marcaFiltro);
     if (vendedorFiltro) lista = lista.filter((d) => d.vendedorId === vendedorFiltro);
+    if (query.trim()) {
+      const q = query.trim().toLowerCase();
+      lista = lista.filter((d) => [d.nombre, d.telefono, d.marca, d.modelo].filter(Boolean).join(" ").toLowerCase().includes(q));
+    }
     return lista.sort((a, b) => b.mesesDormido - a.mesesDormido);
-  }, [elegibles, plazoFiltro, marcaFiltro, vendedorFiltro]);
+  }, [elegibles, plazoFiltro, marcaFiltro, vendedorFiltro, query]);
 
   const conTelefono = filtrados.filter((d) => d.telefono);
   const vip = filtrados.filter((d) => d.cantidadCompras >= 2);
@@ -154,6 +159,13 @@ export default function DormidosClient({
                 </select>
               </div>
             )}
+            <div className="flex-1 min-w-[180px]">
+              <label className="text-[10px] font-black uppercase tracking-widest text-slate-400 block mb-1">Buscar</label>
+              <div className="relative">
+                <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-slate-400" />
+                <input value={query} onChange={(e) => setQuery(e.target.value)} placeholder="Nombre, teléfono o vehículo" className="w-full bg-slate-50 dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-lg py-2 pl-9 pr-3 text-xs outline-none focus:border-rose-500 text-slate-900 dark:text-white placeholder:text-slate-400" />
+              </div>
+            </div>
             {seleccionados.size > 0 && (
               <button onClick={() => setModalCampana(true)} className="ml-auto flex items-center gap-1.5 px-4 py-2 text-xs font-bold bg-[#0145F2] hover:bg-[#0138c9] text-white rounded-lg">
                 <Send className="w-3.5 h-3.5" /> Enviar campaña WhatsApp ({seleccionados.size})

@@ -3,7 +3,7 @@
 import { useState, useMemo, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { supabase2 } from "@/lib/supabase/client";
-import { CalendarCheck, CarFront, MapPin, Clock, User, CheckCircle2, XCircle, CalendarClock, MessageSquareText, Users, Loader2, Plus } from "lucide-react";
+import { CalendarCheck, CarFront, MapPin, Clock, User, CheckCircle2, XCircle, CalendarClock, MessageSquareText, Users, Loader2, Plus, Search } from "lucide-react";
 import { fmtFechaLocal, hoyLocalISO } from "@/lib/panel/fechas";
 import NuevaVisitaModal from "./NuevaVisitaModal";
 
@@ -77,6 +77,7 @@ export default function VisitasClient({
   const router = useRouter();
   const [visitas, setVisitas] = useState(visitasIniciales);
   const [modalNueva, setModalNueva] = useState(false);
+  const [query, setQuery] = useState("");
 
   useEffect(() => { setVisitas(visitasIniciales); }, [visitasIniciales]);
 
@@ -103,8 +104,13 @@ export default function VisitasClient({
   const actualizarUna = (v: any) => setVisitas((prev) => (prev.some((x) => x.id === v.id) ? prev.map((x) => (x.id === v.id ? { ...x, ...v } : x)) : [v, ...prev]));
 
   const hoy = hoyLocalISO();
-  const proximas = visitas.filter((v) => v.fecha_visita >= hoy && v.estado !== "Cancelada");
-  const pasadas = visitas.filter((v) => v.fecha_visita < hoy || v.estado === "Cancelada");
+  const visitasFiltradas = useMemo(() => {
+    if (!query.trim()) return visitas;
+    const q = query.trim().toLowerCase();
+    return visitas.filter((v) => [v.nombre_cliente, v.telefono_cliente, v.sucursal, v.vehiculo_marca, v.vehiculo_modelo, v.vehiculo_patente].filter(Boolean).join(" ").toLowerCase().includes(q));
+  }, [visitas, query]);
+  const proximas = visitasFiltradas.filter((v) => v.fecha_visita >= hoy && v.estado !== "Cancelada");
+  const pasadas = visitasFiltradas.filter((v) => v.fecha_visita < hoy || v.estado === "Cancelada");
 
   const total = visitas.length;
   const asistieron = visitas.filter((v) => v.estado === "Asistió").length;
@@ -173,6 +179,11 @@ export default function VisitasClient({
           <div className="flex items-center gap-1.5 bg-emerald-50 dark:bg-emerald-500/10 border border-emerald-200 dark:border-emerald-500/20 px-2.5 py-1 rounded-md text-[11px] font-bold text-emerald-700 dark:text-emerald-300"><CheckCircle2 className="w-3.5 h-3.5" /> {asistieron} Asistieron</div>
           <div className="flex items-center gap-1.5 bg-rose-50 dark:bg-rose-500/10 border border-rose-200 dark:border-rose-500/20 px-2.5 py-1 rounded-md text-[11px] font-bold text-rose-700 dark:text-rose-300"><XCircle className="w-3.5 h-3.5" /> {canceladas} Canceladas</div>
         </div>
+      </div>
+
+      <div className="relative mt-4 max-w-sm">
+        <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-slate-400" />
+        <input value={query} onChange={(e) => setQuery(e.target.value)} placeholder="Buscar por cliente, teléfono, auto o sucursal..." className="w-full bg-white dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-lg py-2 pl-9 pr-3 text-xs outline-none focus:border-rose-500 text-slate-900 dark:text-white placeholder:text-slate-400" />
       </div>
 
       <div className="mt-8">

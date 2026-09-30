@@ -225,6 +225,27 @@ export default function ClientesClient({
   const [origenFiltro, setOrigenFiltro] = useState<string | null>(null);
   const [sexoFiltro, setSexoFiltro] = useState<string | null>(null);
   const [query, setQuery] = useState("");
+  // Búsqueda en vivo contra la base desde 2+ caracteres -- el array `clientes`
+  // llega una sola vez con .limit(5000) desde page.tsx, pero PostgREST corta
+  // en 1000 filas igual, así que filtrar solo ese array nunca alcanza a los
+  // clientes que quedaron después del corte (mismo bug ya resuelto en
+  // ClienteBuscador.tsx/NuevaVentaModal.tsx). Con 0-1 carácter se sigue
+  // usando el array local (instantáneo).
+  const [resultadosVivoClientes, setResultadosVivoClientes] = useState<Cliente[] | null>(null);
+  useEffect(() => {
+    const q = query.trim();
+    if (q.length < 2) { setResultadosVivoClientes(null); return; }
+    const timer = setTimeout(async () => {
+      const { data } = await supabase2
+        .from("clientes")
+        .select("*")
+        .or(`nombre.ilike.%${q}%,dni_cuit.ilike.%${q}%,telefono.ilike.%${q}%,email.ilike.%${q}%`)
+        .order("created_at", { ascending: false })
+        .limit(50);
+      setResultadosVivoClientes((data as Cliente[]) || []);
+    }, 300);
+    return () => clearTimeout(timer);
+  }, [query]);
   const [vendedorFiltroPipeline, setVendedorFiltroPipeline] = useState<string>("todos");
   const [modalNuevo, setModalNuevo] = useState(false);
   const [modalDisponibilidad, setModalDisponibilidad] = useState(false);
@@ -298,7 +319,9 @@ export default function ClientesClient({
   const ingresosMes = clientes.filter((c) => !c.importado_excel && new Date(c.created_at) >= desdeMes! && new Date(c.created_at) <= hastaMes!).length;
 
   const clientesFiltrados = useMemo(() => {
-    let lista = clientes;
+    const q = query.trim();
+    const buscandoEnVivo = q.length >= 2 && resultadosVivoClientes !== null;
+    let lista = buscandoEnVivo ? resultadosVivoClientes! : clientes;
     if (tabLista === "mis_clientes") lista = lista.filter((c) => c.vendedor_id === miId);
     if (tabLista === "sin_contactar") lista = lista.filter((c) => c.pipeline_stage === "sin_contactar");
     if (tabLista === "contactados") lista = lista.filter((c) => ["contactado", "visita", "negociacion"].includes(c.pipeline_stage));
@@ -306,12 +329,12 @@ export default function ClientesClient({
     if (tabLista === "perdidos") lista = lista.filter((c) => c.pipeline_stage === "perdido");
     if (origenFiltro) lista = lista.filter((c) => c.origen === origenFiltro);
     if (sexoFiltro) lista = lista.filter((c) => c.sexo === sexoFiltro);
-    if (query.trim()) {
-      const q = query.trim().toLowerCase();
-      lista = lista.filter((c) => c.nombre.toLowerCase().includes(q) || (c.dni_cuit || "").includes(q) || (c.telefono || "").includes(q) || (c.email || "").toLowerCase().includes(q));
+    if (q && !buscandoEnVivo) {
+      const ql = q.toLowerCase();
+      lista = lista.filter((c) => c.nombre.toLowerCase().includes(ql) || (c.dni_cuit || "").includes(ql) || (c.telefono || "").includes(ql) || (c.email || "").toLowerCase().includes(ql));
     }
     return lista;
-  }, [clientes, tabLista, origenFiltro, sexoFiltro, query, miId]);
+  }, [clientes, tabLista, origenFiltro, sexoFiltro, query, resultadosVivoClientes, miId]);
 
   // Paginado simple en memoria -- con miles de clientes importados del
   // sistema anterior, renderizar la lista completa de una sola vez hacía

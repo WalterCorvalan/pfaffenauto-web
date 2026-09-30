@@ -1,4 +1,5 @@
 import { createClient } from "@/lib/supabase/server";
+import { fetchPaginado } from "@/lib/panel/fetchPaginado";
 import NpsClient from "./NpsClientLazy";
 
 export const metadata = { title: "NPS y Satisfacción | Pfaffen Cars" };
@@ -17,12 +18,14 @@ export default async function NpsPage() {
     { data: configuracion },
     { data: respuestas },
     { data: vendedoresActivos },
-    { data: clientes }
+    clientes
   ] = await Promise.all([
     supabase.from("configuracion_empresa").select("*").maybeSingle(),
     supabase.from("nps_respuestas").select("*, clientes(nombre), perfiles!nps_respuestas_vendedor_id_fkey(nombre)").order("created_at", { ascending: false }),
     supabase.from("perfiles").select("id, nombre, roles").eq("activo", true),
-    esAdminORecepcion ? supabase.from("clientes").select("id, nombre, telefono, vendedor_id").order("nombre") : Promise.resolve({ data: [] })
+    // Sin .limit() -- PostgREST corta en 1000 filas igual. fetchPaginado()
+    // trae la tabla entera.
+    esAdminORecepcion ? fetchPaginado(() => supabase.from("clientes").select("id, nombre, telefono, vendedor_id").order("nombre")) : Promise.resolve([])
   ]);
 
   // El rol real en panel-v2 es "ventas" (ver ROLES en api/panel/usuarios) --

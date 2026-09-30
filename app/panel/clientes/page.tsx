@@ -1,4 +1,5 @@
 import { createClient } from "@/lib/supabase/server";
+import { fetchPaginado } from "@/lib/panel/fetchPaginado";
 import ClientesClient from "./ClientesClient";
 
 export default async function ClientesPage() {
@@ -28,16 +29,20 @@ export default async function ClientesPage() {
   // todavía.
   const restringirAMisClientes = !!config?.cada_vendedor_ve_solo_sus_clientes && !esAdminOGestion;
 
-  let queryClientes = supabase.from("clientes").select("*").order("created_at", { ascending: false }).limit(5000);
-  // El toggle restringe leads (todavía no compraron), no clientes reales --
-  // un vendedor siempre puede ver la cartera completa de gente que ya
-  // compró, aunque el lead que la originó no haya sido suyo.
-  if (restringirAMisClientes) queryClientes = queryClientes.or(`vendedor_id.eq.${user?.id ?? ""},estado_relacion.eq.cliente`);
-
-  const [{ data: clientes }, { data: perfiles }, { data: disponibilidad }, { data: ventas }] = await Promise.all([
-    // Sin límite esto traía TODA la base de clientes de toda la historia --
-    // 5000 da margen de sobra hoy y evita que la query quede sin techo.
-    queryClientes,
+  const [clientes, { data: perfiles }, { data: disponibilidad }, { data: ventas }] = await Promise.all([
+    // PostgREST corta en 1000 filas cualquier select sin importar el
+    // .limit() pedido -- con la base real ya arriba de los 1000 clientes,
+    // el fetch simple de antes (.limit(5000)) perdía todo lo que caía
+    // después del corte. fetchPaginado() pagina con .range() hasta agotar
+    // la tabla. El toggle restringe leads (todavía no compraron), no
+    // clientes reales -- un vendedor siempre puede ver la cartera completa
+    // de gente que ya compró, aunque el lead que la originó no haya sido
+    // suyo.
+    fetchPaginado(() => {
+      let q = supabase.from("clientes").select("*").order("created_at", { ascending: false });
+      if (restringirAMisClientes) q = q.or(`vendedor_id.eq.${user?.id ?? ""},estado_relacion.eq.cliente`);
+      return q;
+    }),
     supabase.from("perfiles").select("id, nombre, roles").eq("activo", true).order("nombre"),
     supabase.from("disponibilidad_vendedor").select("*"),
     // Sin filtrar por cliente_id -- Ranking también rescata ventas por DNI

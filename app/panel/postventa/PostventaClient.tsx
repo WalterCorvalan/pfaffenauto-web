@@ -53,6 +53,21 @@ const BUCKET_COLOR: Record<string, string> = {
 
 function NuevoRecordatorioModal({ compras, miId, onClose, onCreado }: { compras: Compra[]; miId: string; onClose: () => void; onCreado: (r: Recordatorio) => void }) {
   const [compraId, setCompraId] = useState("");
+  // Buscador local -- `compras` ya llega completo (fetchPaginado en
+  // page.tsx), pero con años de ventas acumuladas un <select> con todas
+  // igual es inmanejable para tipear "Nombre · Marca Modelo" a ojo.
+  const [busquedaCompra, setBusquedaCompra] = useState("");
+  const [compraDropdownAbierto, setCompraDropdownAbierto] = useState(false);
+  const compraSeleccionada = compras.find((c) => c.id === compraId) || null;
+  const comprasFiltradas = compras.filter((c) => {
+    const q = busquedaCompra.trim().toLowerCase();
+    return !q || [c.comprador_nombre, c.vehiculo_marca, c.vehiculo_modelo, c.vehiculo_dominio].filter(Boolean).join(" ").toLowerCase().includes(q);
+  });
+  const elegirCompra = (c: Compra | null) => {
+    setCompraId(c?.id || "");
+    setCompraDropdownAbierto(false);
+    setBusquedaCompra(c ? "" : "");
+  };
   const [tipo, setTipo] = useState("llamada_seguimiento");
   const [fecha, setFecha] = useState(hoyLocalISO());
   const [descripcion, setDescripcion] = useState("");
@@ -83,12 +98,41 @@ function NuevoRecordatorioModal({ compras, miId, onClose, onCreado }: { compras:
           <button onClick={onClose} className="text-slate-400 hover:text-slate-700 dark:hover:text-white"><X className="w-4 h-4" /></button>
         </div>
         <div className="space-y-3">
-          <div>
+          <div className="relative">
             <label className={labelClass}>Cliente</label>
-            <select value={compraId} onChange={(e) => setCompraId(e.target.value)} className={inputClass}>
-              <option value="">— Elegir —</option>
-              {compras.map((c) => <option key={c.id} value={c.id}>{c.comprador_nombre} · {c.vehiculo_marca} {c.vehiculo_modelo}</option>)}
-            </select>
+            {compraSeleccionada ? (
+              <div className="flex items-center justify-between gap-2 bg-emerald-50 dark:bg-emerald-500/10 border border-emerald-200 dark:border-emerald-500/20 rounded-xl px-3 py-2.5">
+                <span className="flex items-center gap-1.5 text-sm font-medium text-emerald-700 dark:text-emerald-300 truncate">
+                  <Check className="w-3.5 h-3.5 shrink-0" /> {compraSeleccionada.comprador_nombre} · {compraSeleccionada.vehiculo_marca} {compraSeleccionada.vehiculo_modelo}
+                </span>
+                <button type="button" onClick={() => elegirCompra(null)} className="shrink-0 text-emerald-600 dark:text-emerald-300 hover:text-emerald-800 dark:hover:text-emerald-200 text-[11px] font-bold uppercase tracking-widest">
+                  Cambiar
+                </button>
+              </div>
+            ) : (
+              <div className="relative">
+                <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
+                <input
+                  className={`${inputClass} pl-9`}
+                  placeholder="Buscar por cliente o auto..."
+                  value={busquedaCompra}
+                  onChange={(e) => { setBusquedaCompra(e.target.value); setCompraDropdownAbierto(true); }}
+                  onFocus={() => setCompraDropdownAbierto(true)}
+                  onBlur={() => setTimeout(() => setCompraDropdownAbierto(false), 150)}
+                />
+              </div>
+            )}
+            {!compraSeleccionada && compraDropdownAbierto && busquedaCompra && (
+              <div className="absolute z-10 mt-1 w-full max-h-48 overflow-y-auto bg-white dark:bg-[#1A1A1A] border border-slate-200 dark:border-white/10 rounded-xl shadow-lg divide-y divide-slate-100 dark:divide-white/10">
+                {comprasFiltradas.slice(0, 20).map((c) => (
+                  <button key={c.id} type="button" onMouseDown={() => elegirCompra(c)} className="w-full text-left px-3 py-2.5 hover:bg-slate-50 dark:hover:bg-white/5 transition-colors">
+                    <span className="text-sm font-medium text-slate-800 dark:text-white">{c.comprador_nombre}</span>
+                    <span className="text-[11px] text-slate-400"> · {c.vehiculo_marca} {c.vehiculo_modelo}</span>
+                  </button>
+                ))}
+                {comprasFiltradas.length === 0 && <p className="px-3 py-3 text-[13px] text-slate-400 italic">Sin resultados.</p>}
+              </div>
+            )}
           </div>
           <div>
             <label className={labelClass}>Tipo</label>

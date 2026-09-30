@@ -1,8 +1,8 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { supabase2 } from "@/lib/supabase/client";
-import { X, Save } from "lucide-react";
+import { X, Save, Search, Check } from "lucide-react";
 import { crearAlerta } from "@/lib/panel/alertas";
 
 export default function CargarRespuestaModal({ clientes, vendedores, esAdminORecepcion, miId, onClose }: { clientes: any[], vendedores: any[], esAdminORecepcion: boolean, miId: string, onClose: () => void }) {
@@ -14,6 +14,33 @@ export default function CargarRespuestaModal({ clientes, vendedores, esAdminORec
     puntaje: "10",
     comentario: ""
   });
+  // Buscador en vivo -- el <select> con `clientes` completo (page.tsx corría
+  // sin .limit(), PostgREST corta en 1000 igual) dejaba inalcanzable
+  // cualquier cliente después del corte. Mismo patrón que NuevoPedidoModal.tsx.
+  const [busquedaCliente, setBusquedaCliente] = useState("");
+  const [clienteDropdownAbierto, setClienteDropdownAbierto] = useState(false);
+  const [resultadosClienteVivo, setResultadosClienteVivo] = useState<any[] | null>(null);
+  const [buscandoCliente, setBuscandoCliente] = useState(false);
+  useEffect(() => {
+    const q = busquedaCliente.trim();
+    if (q.length < 2) { setResultadosClienteVivo(null); return; }
+    setBuscandoCliente(true);
+    const timer = setTimeout(async () => {
+      const { data } = await supabase2.from("clientes").select("id, nombre, telefono, vendedor_id").or(`nombre.ilike.%${q}%,telefono.ilike.%${q}%`).order("nombre").limit(20);
+      setResultadosClienteVivo(data || []);
+      setBuscandoCliente(false);
+    }, 300);
+    return () => clearTimeout(timer);
+  }, [busquedaCliente]);
+  const clientesFiltrados = resultadosClienteVivo ?? clientes.filter((c) => {
+    const q = busquedaCliente.trim().toLowerCase();
+    return q && c.nombre.toLowerCase().includes(q);
+  });
+  const elegirCliente = (c: any | null) => {
+    setFormData((prev) => ({ ...prev, cliente_id: c?.id || "" }));
+    setClienteDropdownAbierto(false);
+    setBusquedaCliente(c ? c.nombre : "");
+  };
 
   const guardar = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -87,12 +114,43 @@ export default function CargarRespuestaModal({ clientes, vendedores, esAdminORec
                   {vendedores.map(v => <option key={v.id} value={v.id}>{v.nombre}</option>)}
                 </select>
               </div>
-              <div>
+              <div className="relative">
                 <label className="text-xs font-bold text-slate-500 dark:text-slate-400 block mb-1.5 uppercase tracking-widest">Cliente</label>
-                <select value={formData.cliente_id} onChange={e => setFormData({...formData, cliente_id: e.target.value})} className="w-full bg-slate-50 dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-xl px-3 py-2.5 text-sm outline-none text-slate-900 dark:text-white cursor-pointer">
-                  <option value="">(Anónimo)</option>
-                  {clientes.map(c => <option key={c.id} value={c.id}>{c.nombre}</option>)}
-                </select>
+                {formData.cliente_id ? (
+                  <div className="flex items-center justify-between gap-2 bg-emerald-50 dark:bg-emerald-500/10 border border-emerald-200 dark:border-emerald-500/20 rounded-xl px-3 py-2.5">
+                    <span className="flex items-center gap-1.5 text-sm font-medium text-emerald-700 dark:text-emerald-300 truncate">
+                      <Check className="w-3.5 h-3.5 shrink-0" /> {busquedaCliente}
+                    </span>
+                    <button type="button" onClick={() => elegirCliente(null)} className="shrink-0 text-emerald-600 dark:text-emerald-300 hover:text-emerald-800 dark:hover:text-emerald-200 text-[11px] font-bold uppercase tracking-widest">
+                      Cambiar
+                    </button>
+                  </div>
+                ) : (
+                  <div className="relative">
+                    <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
+                    <input
+                      className="w-full bg-slate-50 dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-xl pl-9 pr-3 py-2.5 text-sm outline-none text-slate-900 dark:text-white placeholder:text-slate-400"
+                      placeholder="Buscar por nombre o teléfono... (o dejalo anónimo)"
+                      value={busquedaCliente}
+                      onChange={(e) => { setBusquedaCliente(e.target.value); setClienteDropdownAbierto(true); }}
+                      onFocus={() => setClienteDropdownAbierto(true)}
+                      onBlur={() => setTimeout(() => setClienteDropdownAbierto(false), 150)}
+                    />
+                  </div>
+                )}
+                {!formData.cliente_id && clienteDropdownAbierto && busquedaCliente && (
+                  <div className="absolute z-10 mt-1 w-full max-h-48 overflow-y-auto bg-white dark:bg-[#1A1A1A] border border-slate-200 dark:border-white/10 rounded-xl shadow-lg divide-y divide-slate-100 dark:divide-white/10">
+                    {clientesFiltrados.slice(0, 20).map((c) => (
+                      <button key={c.id} type="button" onMouseDown={() => elegirCliente(c)} className="w-full text-left px-3 py-2.5 hover:bg-slate-50 dark:hover:bg-white/5 transition-colors flex items-center justify-between gap-2">
+                        <span className="text-sm font-medium text-slate-800 dark:text-white truncate">{c.nombre}</span>
+                        <span className="text-[11px] text-slate-400 shrink-0">{c.telefono || "sin teléfono"}</span>
+                      </button>
+                    ))}
+                    {buscandoCliente ? (
+                      <p className="px-3 py-3 text-[13px] text-slate-400 italic">Buscando...</p>
+                    ) : clientesFiltrados.length === 0 && <p className="px-3 py-3 text-[13px] text-slate-400 italic">Sin resultados.</p>}
+                  </div>
+                )}
               </div>
             </>
           )}

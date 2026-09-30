@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { supabase2 } from "@/lib/supabase/client";
-import { X, Loader2, CalendarCheck } from "lucide-react";
+import { X, Loader2, CalendarCheck, Search, Check } from "lucide-react";
 
 interface Sucursal { id: string; nombre: string }
 interface Vehiculo { id: string; marca: string; modelo: string; patente: string | null }
@@ -30,6 +30,28 @@ export default function NuevaVisitaModal({ sucursales, vehiculos, clientes, perf
   const [clienteId, setClienteId] = useState("");
   const [nombreCliente, setNombreCliente] = useState("");
   const [telefonoCliente, setTelefonoCliente] = useState("");
+  // Buscador en vivo -- el <select> con `clientes` completo (page.tsx sin
+  // .limit(), PostgREST corta en 1000 igual) dejaba inalcanzable cualquier
+  // cliente después del corte. Mismo patrón que NuevoPedidoModal.tsx.
+  const [busquedaCliente, setBusquedaCliente] = useState("");
+  const [clienteDropdownAbierto, setClienteDropdownAbierto] = useState(false);
+  const [resultadosClienteVivo, setResultadosClienteVivo] = useState<Cliente[] | null>(null);
+  const [buscandoCliente, setBuscandoCliente] = useState(false);
+  useEffect(() => {
+    const q = busquedaCliente.trim();
+    if (q.length < 2) { setResultadosClienteVivo(null); return; }
+    setBuscandoCliente(true);
+    const timer = setTimeout(async () => {
+      const { data } = await supabase2.from("clientes").select("id, nombre, telefono").or(`nombre.ilike.%${q}%,telefono.ilike.%${q}%`).order("nombre").limit(20);
+      setResultadosClienteVivo(data || []);
+      setBuscandoCliente(false);
+    }, 300);
+    return () => clearTimeout(timer);
+  }, [busquedaCliente]);
+  const clientesFiltrados = resultadosClienteVivo ?? clientes.filter((c) => {
+    const q = busquedaCliente.trim().toLowerCase();
+    return q && c.nombre.toLowerCase().includes(q);
+  });
   const [vehiculoId, setVehiculoId] = useState("");
   const [sucursal, setSucursal] = useState(sucursales[0]?.nombre || "");
   const [fecha, setFecha] = useState("");
@@ -46,10 +68,16 @@ export default function NuevaVisitaModal({ sucursales, vehiculos, clientes, perf
     });
   }, [sucursal, fecha]);
 
-  const elegirCliente = (id: string) => {
-    setClienteId(id);
-    const c = clientes.find((x) => x.id === id);
-    if (c) { setNombreCliente(c.nombre); setTelefonoCliente(c.telefono || ""); }
+  const elegirCliente = (c: Cliente | null) => {
+    setClienteId(c?.id || "");
+    setClienteDropdownAbierto(false);
+    if (c) {
+      setBusquedaCliente(c.nombre);
+      setNombreCliente(c.nombre);
+      setTelefonoCliente(c.telefono || "");
+    } else {
+      setBusquedaCliente("");
+    }
   };
 
   const guardar = async () => {
@@ -98,12 +126,43 @@ export default function NuevaVisitaModal({ sucursales, vehiculos, clientes, perf
         <div className="px-6 py-4 overflow-y-auto flex-1 min-h-0 space-y-4">
           {error && <div className="p-3 bg-rose-50 dark:bg-rose-500/10 text-rose-600 dark:text-rose-400 text-sm rounded-xl font-medium">{error}</div>}
 
-          <div>
+          <div className="relative">
             <label className={labelClass}>Cliente existente (opcional)</label>
-            <select value={clienteId} onChange={(e) => elegirCliente(e.target.value)} className={`${inputClass} cursor-pointer`}>
-              <option value="">— Cargar nombre a mano —</option>
-              {clientes.map((c) => <option key={c.id} value={c.id}>{c.nombre}</option>)}
-            </select>
+            {clienteId ? (
+              <div className="flex items-center justify-between gap-2 bg-emerald-50 dark:bg-emerald-500/10 border border-emerald-200 dark:border-emerald-500/20 rounded-xl px-3.5 py-2.5">
+                <span className="flex items-center gap-1.5 text-sm font-medium text-emerald-700 dark:text-emerald-300 truncate">
+                  <Check className="w-3.5 h-3.5 shrink-0" /> {busquedaCliente}
+                </span>
+                <button type="button" onClick={() => elegirCliente(null)} className="shrink-0 text-emerald-600 dark:text-emerald-300 hover:text-emerald-800 dark:hover:text-emerald-200 text-[11px] font-bold uppercase tracking-widest">
+                  Cambiar
+                </button>
+              </div>
+            ) : (
+              <div className="relative">
+                <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
+                <input
+                  className={`${inputClass} pl-9`}
+                  placeholder="Buscar por nombre, o cargalo a mano abajo..."
+                  value={busquedaCliente}
+                  onChange={(e) => { setBusquedaCliente(e.target.value); setClienteDropdownAbierto(true); }}
+                  onFocus={() => setClienteDropdownAbierto(true)}
+                  onBlur={() => setTimeout(() => setClienteDropdownAbierto(false), 150)}
+                />
+              </div>
+            )}
+            {!clienteId && clienteDropdownAbierto && busquedaCliente && (
+              <div className="absolute z-10 mt-1 w-full max-h-48 overflow-y-auto bg-white dark:bg-[#1A1A1A] border border-slate-200 dark:border-white/10 rounded-xl shadow-lg divide-y divide-slate-100 dark:divide-white/10">
+                {clientesFiltrados.slice(0, 20).map((c) => (
+                  <button key={c.id} type="button" onMouseDown={() => elegirCliente(c)} className="w-full text-left px-3 py-2.5 hover:bg-slate-50 dark:hover:bg-white/5 transition-colors flex items-center justify-between gap-2">
+                    <span className="text-sm font-medium text-slate-800 dark:text-white truncate">{c.nombre}</span>
+                    <span className="text-[11px] text-slate-400 shrink-0">{c.telefono || ""}</span>
+                  </button>
+                ))}
+                {buscandoCliente ? (
+                  <p className="px-3 py-3 text-[13px] text-slate-400 italic">Buscando...</p>
+                ) : clientesFiltrados.length === 0 && <p className="px-3 py-3 text-[13px] text-slate-400 italic">Sin resultados.</p>}
+              </div>
+            )}
           </div>
 
           <div className="grid grid-cols-2 gap-3">
