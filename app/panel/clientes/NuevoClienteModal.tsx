@@ -21,7 +21,7 @@ import { crearAlerta } from "@/lib/panel/alertas";
 // constraint `clientes_origen_check` de la base -- si se agrega otro
 // valor acá, también hay que ampliar ese constraint (ver auditoría de
 // sep-2026, mismo bug que rompía el alta de cliente).
-export const ORIGENES = ["Instagram", "Facebook", "MercadoLibre", "Rodi", "Messenger", "Web", "Referido", "WhatsApp", "Salón", "Otro"];
+export const ORIGENES = ["Instagram", "Facebook", "MercadoLibre", "Rodi", "Messenger", "Web", "Referido", "Salón", "WhatsApp", "Otro"];
 const ETAPAS = [
   { value: "sin_contactar", label: "Nuevo" },
   { value: "contactado", label: "Contactado" },
