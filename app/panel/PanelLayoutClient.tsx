@@ -826,7 +826,7 @@ export default function PanelLayoutClient({
               />
             </div>
 
-            <TopTicker puedeVerCaja={esAdmin || roles.includes("finanzas")} />
+            <TopTicker puedeVerCaja={esAdmin || roles.includes("finanzas") || roles.includes("director")} />
 
             <button
               onClick={toggleDarkMode}

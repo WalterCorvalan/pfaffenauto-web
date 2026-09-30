@@ -7,7 +7,7 @@ import { BarChart3, ChevronLeft, ChevronRight, Trophy, Clock, FolderKanban, Tick
 import { BarChart, Bar, XAxis, YAxis, ResponsiveContainer, Tooltip, CartesianGrid, Cell } from "recharts";
 
 interface Props {
-  miId: string; miNombre: string; soyAdmin: boolean; soyFinanzas: boolean; soyVentas: boolean; gananciasOcultas: boolean; mesInicial: string;
+  miId: string; miNombre: string; soyAdmin: boolean; soyFinanzas: boolean; soyDirector: boolean; soyVentas: boolean; gananciasOcultas: boolean; mesInicial: string;
   rankingInicial: any[]; premios: any[]; rankingVelocidadInicial: any[]; operacionesPorVendedorInicial: any[];
   origenLeadsInicial: any[]; embudoComercialInicial: any; expedientesResumenInicial: any; expedientesPorEstado: any[];
   infraccionesResumenInicial: any; tallerFacturacionInicial: any; ventasPorMes: any[]; ventasPorMarca: any[]; composicionVentas: any;
@@ -94,8 +94,8 @@ function SeccionRestringida({ titulo }: { titulo: string }) {
 }
 
 export default function ReportesClient(props: Props) {
-  const { miId, miNombre, premios, soyAdmin, soyFinanzas, gananciasOcultas } = props;
-  const puedeVerFinanzas = soyAdmin || soyFinanzas;
+  const { miId, miNombre, premios, soyAdmin, soyFinanzas, soyDirector, gananciasOcultas } = props;
+  const puedeVerFinanzas = soyAdmin || soyFinanzas || soyDirector;
   // "ganancia oculta" es la excepción por-usuario (perfiles.ganancias_ocultas)
   // -- separada de puedeVerFinanzas, que solo controla si ve la SECCIÓN de
   // reportes financieros. Un finanzas/admin con el margen oculto entra a la

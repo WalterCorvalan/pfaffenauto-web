@@ -8,10 +8,11 @@ import TablaResponsiva, { type ColumnaTabla } from "@/components/panel/TablaResp
 import ConfirmDialog from "@/components/panel/ConfirmDialog";
 import { normalizarUsuario } from "@/lib/panel/normalizarUsuario";
 
-const ROLES = ["admin", "encargado", "ventas", "finanzas", "gestoria", "taller"] as const;
-const ROL_LABEL: Record<string, string> = { admin: "Admin", encargado: "Encargado", ventas: "Ventas", finanzas: "Finanzas", gestoria: "Gestoría", taller: "Taller" };
+const ROLES = ["admin", "director", "encargado", "ventas", "finanzas", "gestoria", "taller"] as const;
+const ROL_LABEL: Record<string, string> = { admin: "Admin", director: "Director", encargado: "Encargado", ventas: "Ventas", finanzas: "Finanzas", gestoria: "Gestoría", taller: "Taller" };
 const ROL_COLOR: Record<string, string> = {
   admin: "bg-rose-100 text-rose-700 dark:bg-rose-500/10 dark:text-rose-300",
+  director: "bg-violet-100 text-violet-700 dark:bg-violet-500/10 dark:text-violet-300",
   encargado: "bg-indigo-100 text-indigo-700 dark:bg-indigo-500/10 dark:text-indigo-300",
   ventas: "bg-blue-100 text-blue-700 dark:bg-blue-500/10 dark:text-blue-300",
   finanzas: "bg-emerald-100 text-emerald-700 dark:bg-emerald-500/10 dark:text-emerald-300",

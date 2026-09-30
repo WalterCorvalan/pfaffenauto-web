@@ -43,7 +43,7 @@ export default async function ReportesPage() {
   const hasta3m = new Date(hoy.getFullYear(), hoy.getMonth(), 0).toISOString().slice(0, 10);
 
   const { data: miPerfil } = await supabase.from("perfiles").select("id, nombre, roles, ganancias_ocultas").eq("id", user.id).maybeSingle();
-  const puedeVerFinanzas = (miPerfil?.roles?.includes("admin") || miPerfil?.roles?.includes("finanzas")) ?? false;
+  const puedeVerFinanzas = (miPerfil?.roles?.includes("admin") || miPerfil?.roles?.includes("finanzas") || miPerfil?.roles?.includes("director")) ?? false;
 
   const [
     { data: ranking },
@@ -186,6 +186,7 @@ export default async function ReportesPage() {
       miNombre={miPerfil?.nombre || ""}
       soyAdmin={miPerfil?.roles?.includes("admin") ?? false}
       soyFinanzas={miPerfil?.roles?.includes("finanzas") ?? false}
+      soyDirector={miPerfil?.roles?.includes("director") ?? false}
       soyVentas={miPerfil?.roles?.includes("ventas") ?? false}
       gananciasOcultas={miPerfil?.ganancias_ocultas ?? false}
       mesInicial={mesActual}

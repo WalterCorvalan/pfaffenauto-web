@@ -6,7 +6,7 @@ import { MODULOS_CATALOGO, SECTORES } from "@/lib/panel/modulosCatalogo";
 
 // Único permiso fino (no de visibilidad de módulo) con UI propia por ahora
 // -- ver lib/panel/permisos.ts y app/panel/configuracion/ARCHITECTURE.md.
-const ROLES_PERMISOS = ["encargado", "ventas", "finanzas", "gestoria"] as const;
+const ROLES_PERMISOS = ["encargado", "ventas", "finanzas", "gestoria", "director"] as const;
 const PERMISO_VER_LIQUIDACION = "ver_liquidacion";
 
 async function verificarAdmin() {

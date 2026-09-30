@@ -11,7 +11,7 @@ export default async function StockPage() {
   // admin/finanzas ven ese número agregado, un vendedor/encargado ve el
   // precio de cada auto individual (lo necesita para vender) pero no el
   // total de todo el inventario junto.
-  const puedeVerValorStock = soyAdmin || (miPerfil?.roles?.includes("finanzas") ?? false);
+  const puedeVerValorStock = soyAdmin || (miPerfil?.roles?.includes("finanzas") ?? false) || (miPerfil?.roles?.includes("director") ?? false);
 
   const [{ data: vehiculos }, { data: mandatos }, { data: perfiles }, { data: clientes }, { data: catalogoConfig }, { data: sucursales }, { data: config }, { data: chequesPendientes0km }, { data: cuentas }] = await Promise.all([
     // Sin límite esto crecía sin tope con toda la historia de stock (vendido

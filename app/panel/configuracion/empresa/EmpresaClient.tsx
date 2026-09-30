@@ -14,7 +14,7 @@ interface Modulo { modulo: string; activo: boolean; }
 interface Visibilidad { modulo: string; sector: string; visible: boolean; }
 interface PermisoRol { rol: string; otorgado: boolean; }
 
-const ROL_LABEL: Record<string, string> = { encargado: "Encargado", ventas: "Ventas", finanzas: "Finanzas", gestoria: "Gestoría" };
+const ROL_LABEL: Record<string, string> = { encargado: "Encargado", ventas: "Ventas", finanzas: "Finanzas", gestoria: "Gestoría", director: "Director" };
 
 export default function EmpresaClient() {
   const [subtab, setSubtab] = useState<"modulos" | "comisiones" | "plazos" | "routing" | "resumen" | "branding">("modulos");
