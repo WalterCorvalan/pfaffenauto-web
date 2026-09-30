@@ -1,18 +1,19 @@
 # Oportunidades — cómo funciona y qué falta
 
-## v1 (actual): solo un link de búsqueda, sin datos propios
+## v1 (actual): búsqueda en vivo contra MercadoLibre, sin guardar nada
 
-`OportunidadesClient.tsx` no trae nada de Comunidauto a la base — arma `https://comunidauto.com.ar/search?q=<marca modelo>` y lo abre en una pestaña nueva. Cubre el caso de uso real (un cliente pide un auto que no tenés, buscás rápido si otra agencia lo tiene) sin depender de scraping ni de resolver los términos de uso del sitio.
+`OportunidadesClient.tsx` → `GET /api/panel/oportunidades/buscar` → `lib/ads/mercadolibreSearch.ts` → API pública de MercadoLibre (`/sites/MLA/search`, categoría `MLA1743` "Autos, Camionetas y Utilitarios"). Se consulta en vivo en cada búsqueda, **no se guarda nada en la base** — siempre refleja publicaciones activas en ese momento (ML no devuelve en el buscador público avisos pausados/finalizados/vendidos), sin necesidad de un cron que la mantenga actualizada.
 
-**El parámetro `q` de esa URL no está confirmado** — no se pudo abrir `comunidauto.com.ar` desde este entorno (bloqueado por el proxy de red de la sesión que lo armó) para verificar el nombre real del query param de búsqueda. Si al probarlo no filtra bien, hay que inspeccionar la URL real que arma el buscador de comunidauto.com.ar (con marca/modelo tipeados a mano en su sitio) y ajustar acá.
+Reusa `ML_CLIENT_ID`/`ML_CLIENT_SECRET` (mismas variables que ya usan `lib/ads/mercadolibrePublish.ts` y `lib/ads/mercadolibre.ts` para publicar stock y Product Ads) pero **no** necesita ningún refresh_token de vendedor — es de solo lectura, alcanza con un access_token de aplicación (`client_credentials`). Si esas dos variables no están configuradas, el endpoint devuelve 503 con un mensaje claro en vez de romperse.
 
-## v2 pendiente: traer las publicaciones a la base (catálogo real dentro del panel)
+El filtro de provincia es client-side, sobre lo que devolvió la búsqueda (`address.state_name` de cada resultado) — no se arma ningún parámetro de ubicación en el fetch a ML todavía, porque los códigos de "state" que acepta esa API son IDs opacos específicos de ML que no se pudieron verificar sin acceso de red real a `api.mercadolibre.com` desde el entorno donde se armó esto.
 
-Walter puede conseguir una cuenta de agencia asociada en Comunidauto — si tienen una API/feed de datos para partners (más estable que scrapear HTML), usar eso en vez de web scraping. Si no ofrecen nada así, la alternativa es scraping del HTML público, con el riesgo de romperse con cualquier cambio de su sitio y de pisar sus términos de uso (confirmar con ellos antes de scrapear, no asumir que está permitido).
+**Advertencia**: `lib/ads/mercadolibreSearch.ts` está armado según la documentación pública de MercadoLibre, sin poder probarlo contra una respuesta real todavía (mismo caso que `mercadolibrePublish.ts`/`mercadolibre.ts`). Si algo no calza (nombres de campos como `address.city_name`/`address.state_name`, el código de categoría `MLA1743`), ajustar con la primera respuesta real — mirar el error que devuelve `/api/panel/oportunidades/buscar` o el log de `registrarError`.
 
-Diseño pensado para v2 (no implementado):
-- Tabla `oportunidades_externas`: snapshot de publicaciones ajenas (marca, modelo, año, km, precio, agencia, ubicación, link original, fecha de captura) — se refresca periódicamente (cron), no en tiempo real.
-- El buscador de esta pantalla pasa a filtrar esa tabla en vez de abrir una pestaña externa.
-- El botón "Buscar en Comunidauto" (v1) puede quedarse como fallback para lo que el scraper/feed no haya capturado todavía.
+También queda el botón "Ver en Comunidauto" (v0, sin cambios) como alternativa/respaldo — abre la búsqueda de comunidauto.com.ar en una pestaña nueva, sin traer datos a la base. El parámetro `q` de esa URL tampoco está confirmado.
 
-No confundir con el módulo `oportunidades` de otras posibles lecturas del catálogo (`lib/panel/modulosCatalogo.ts`) — es el mismo módulo, esta es su única implementación real hoy.
+## v2 pendiente: ampliar con más fuentes o guardar publicaciones propias
+
+Si en algún momento Walter consigue una cuenta de agencia asociada en Comunidauto con API/feed de partner (más estable que scrapear su HTML), se podría sumar como una segunda fuente de resultados acá mismo, mezclada con las de MercadoLibre. No confirmar scraping de su HTML sin preguntarles primero si está permitido.
+
+No confundir con la idea original (mercado interno entre agencias colegas, cada una publicando sus propios autos con login limitado) — se descartó por ahora a favor de esta búsqueda contra MercadoLibre, que ya cubre el caso de uso real sin necesitar que otras agencias tengan cuenta en este sistema.
