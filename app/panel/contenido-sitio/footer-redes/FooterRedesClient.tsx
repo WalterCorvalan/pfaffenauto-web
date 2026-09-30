@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { Loader2, MessageCircle, Instagram, Facebook, Music2, ExternalLink } from "lucide-react";
+import { Loader2, MessageCircle, Camera, Globe2, Video, ExternalLink } from "lucide-react";
 
 const inputClass = "w-full bg-slate-50 dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-xl px-3 py-2.5 text-sm outline-none focus:border-[#0145F2] text-slate-900 dark:text-white placeholder:text-slate-400";
 
@@ -14,9 +14,9 @@ interface Config {
 
 const REDES: { key: keyof Config; label: string; icon: any; placeholder: string }[] = [
   { key: "redes_whatsapp", label: "WhatsApp", icon: MessageCircle, placeholder: "https://wa.me/5491121907000" },
-  { key: "redes_instagram", label: "Instagram", icon: Instagram, placeholder: "https://www.instagram.com/..." },
-  { key: "redes_facebook", label: "Facebook", icon: Facebook, placeholder: "https://www.facebook.com/..." },
-  { key: "redes_tiktok", label: "TikTok", icon: Music2, placeholder: "https://tiktok.com/@..." },
+  { key: "redes_instagram", label: "Instagram", icon: Camera, placeholder: "https://www.instagram.com/..." },
+  { key: "redes_facebook", label: "Facebook", icon: Globe2, placeholder: "https://www.facebook.com/..." },
+  { key: "redes_tiktok", label: "TikTok", icon: Video, placeholder: "https://tiktok.com/@..." },
 ];
 
 export default function FooterRedesClient() {
