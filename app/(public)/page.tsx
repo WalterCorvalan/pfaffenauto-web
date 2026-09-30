@@ -44,6 +44,11 @@ export default async function Page() {
     .eq("activo", true)
     .order("orden", { ascending: true });
 
+  const { data: sucursales } = await supabase
+    .from("sucursales")
+    .select("id, nombre, slug, direccion, google_maps_url, latitude, longitude")
+    .order("nombre", { ascending: true });
+
   // Sin RLS pública sobre configuracion_empresa todavía -- se lee con
   // service role, igual que las redes del footer en (public)/layout.tsx.
   let heroContenido;
@@ -102,7 +107,7 @@ export default async function Page() {
         <BannerFinanciacion linkAFinanciacion />
       </div>
 
-      <Location />
+      <Location sucursales={sucursales || []} />
 
       <VentasRealizadas items={entregas || []} />
 
