@@ -1,7 +1,10 @@
 "use client";
 
+"use client";
+
+import { useMemo, useState } from "react";
 import Link from "next/link";
-import { ClipboardCheck, CarFront, User, Calendar } from "lucide-react";
+import { ClipboardCheck, CarFront, User, Calendar, Search } from "lucide-react";
 import NuevoPeritajeModal from "./NuevoPeritajeModal";
 
 interface Lead {
@@ -13,6 +16,12 @@ interface Lead {
 }
 
 export default function PeritajesClient({ peritajes, leadsSinPeritaje }: { peritajes: any[]; leadsSinPeritaje: Lead[] }) {
+  const [query, setQuery] = useState("");
+  const peritajesFiltrados = useMemo(() => {
+    if (!query.trim()) return peritajes;
+    const q = query.trim().toLowerCase();
+    return peritajes.filter((p: any) => [p.vehiculo_descripcion, p.nombreCliente, p.perfiles?.nombre].filter(Boolean).join(" ").toLowerCase().includes(q));
+  }, [peritajes, query]);
   return (
     <div className="flex flex-col h-full overflow-hidden">
       <div className="flex-1 overflow-y-auto p-6 bg-slate-50 dark:bg-[#141414]">
@@ -24,8 +33,16 @@ export default function PeritajesClient({ peritajes, leadsSinPeritaje }: { perit
             </div>
             <NuevoPeritajeModal leads={leadsSinPeritaje} />
           </div>
+
+          {peritajes.length > 0 && (
+            <div className="relative mb-4 max-w-sm">
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-slate-400" />
+              <input value={query} onChange={(e) => setQuery(e.target.value)} placeholder="Buscar por vehículo, cliente o perito..." className="w-full bg-white dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-lg py-2 pl-9 pr-3 text-xs outline-none focus:border-rose-500 text-slate-900 dark:text-white placeholder:text-slate-400" />
+            </div>
+          )}
+
           <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
-          {peritajes.map((p: any) => (
+          {peritajesFiltrados.map((p: any) => (
             <Link
               key={p.id}
               href={`/panel/peritajes/${p.id}`}
@@ -60,6 +77,13 @@ export default function PeritajesClient({ peritajes, leadsSinPeritaje }: { perit
               <ClipboardCheck className="w-10 h-10 text-slate-300 dark:text-slate-600 mb-3" />
               <h3 className="text-[15px] font-bold text-slate-700 dark:text-slate-200">Sin peritajes todavía</h3>
               <p className="text-slate-500 dark:text-slate-400 text-xs mt-1">Iniciá uno con el botón "Nuevo peritaje" desde un lead de WhatsApp o Instagram.</p>
+            </div>
+          )}
+          {peritajes.length > 0 && peritajesFiltrados.length === 0 && (
+            <div className="col-span-full py-20 flex flex-col items-center justify-center text-center border-2 border-dashed border-slate-200 dark:border-white/10 rounded-2xl bg-white dark:bg-white/[0.02]">
+              <ClipboardCheck className="w-10 h-10 text-slate-300 dark:text-slate-600 mb-3" />
+              <h3 className="text-[15px] font-bold text-slate-700 dark:text-slate-200">Sin resultados</h3>
+              <p className="text-slate-500 dark:text-slate-400 text-xs mt-1">Ningún peritaje coincide con esa búsqueda.</p>
             </div>
           )}
           </div>

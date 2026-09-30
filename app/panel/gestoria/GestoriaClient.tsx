@@ -3,7 +3,7 @@
 import { useState, useMemo, useEffect } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { supabase2 } from "@/lib/supabase/client";
-import { ChevronDown, ChevronRight, MessageCircle, Check, ClipboardList, AlertTriangle, Clock, ShieldAlert, Lock } from "lucide-react";
+import { ChevronDown, ChevronRight, MessageCircle, Check, ClipboardList, AlertTriangle, Clock, ShieldAlert, Lock, Search } from "lucide-react";
 import ExpedienteDetalleModal from "../expedientes/ExpedienteDetalleModal";
 import { fmtFechaLocal, hoyLocalISO } from "@/lib/panel/fechas";
 import TablaResponsiva, { type ColumnaTabla } from "@/components/panel/TablaResponsiva";
@@ -33,6 +33,7 @@ export default function GestoriaClient({
   const [vista, setVista] = useState<"cards" | "tabla">("cards");
   const [expandidos, setExpandidos] = useState<Set<string>>(new Set());
   const [detalleId, setDetalleId] = useState<string | null>(null);
+  const [query, setQuery] = useState("");
 
   useEffect(() => {
     const id = searchParams.get("expediente");
@@ -54,7 +55,16 @@ export default function GestoriaClient({
     return dias > 15;
   }).length;
 
-  const lista = tab === "activos" ? activos : finalizados;
+  const listaTab = tab === "activos" ? activos : finalizados;
+  const lista = useMemo(() => {
+    if (!query.trim()) return listaTab;
+    const q = query.trim().toLowerCase();
+    return listaTab.filter((e) => {
+      const v = e.venta || {};
+      const gestor = e.gestor_asignado_id ? perfilMap[e.gestor_asignado_id] : "";
+      return [e.titulo, v.comprador_nombre, v.propietario_nombre, v.vehiculo_marca, v.vehiculo_modelo, v.vehiculo_patente, gestor].filter(Boolean).join(" ").toLowerCase().includes(q);
+    });
+  }, [listaTab, query, perfilMap]);
 
   const toggleExpandido = (id: string) => setExpandidos((prev) => { const n = new Set(prev); n.has(id) ? n.delete(id) : n.add(id); return n; });
   const expandirTodos = () => setExpandidos(new Set(lista.map((e) => e.id)));
@@ -124,6 +134,11 @@ export default function GestoriaClient({
             <button onClick={() => setVista("tabla")} className={`px-2.5 py-1 text-xs font-bold rounded-md ${vista === "tabla" ? "bg-white dark:bg-white/10 shadow-sm" : "text-slate-500"}`}>☰ Tabla</button>
           </div>
         </div>
+      </div>
+
+      <div className="relative mb-4 max-w-sm">
+        <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-slate-400" />
+        <input value={query} onChange={(e) => setQuery(e.target.value)} placeholder="Buscar por comprador, vehículo, patente o gestor..." className="w-full bg-white dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-lg py-2 pl-9 pr-3 text-xs outline-none focus:border-rose-500 text-slate-900 dark:text-white placeholder:text-slate-400" />
       </div>
 
       {lista.length === 0 ? (

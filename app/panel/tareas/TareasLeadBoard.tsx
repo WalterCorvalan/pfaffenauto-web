@@ -6,7 +6,7 @@ import { useSearchParams } from "next/navigation";
 import {
   AlertTriangle, Clock, UserPlus, CheckSquare, Phone,
   LayoutGrid, Calendar, History, Printer, ChevronLeft, ChevronRight,
-  PieChart as PieChartIcon,
+  PieChart as PieChartIcon, Search,
 } from "lucide-react";
 import {
   BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer,
@@ -71,17 +71,22 @@ export default function TareasLeadBoard({
   const vendedorInicial = useSearchParams().get("vendedor") || "";
   const [vendedorFiltro, setVendedorFiltro] = useState(vendedorInicial);
   const [calificacionFiltro, setCalificacionFiltro] = useState("");
+  const [query, setQuery] = useState("");
 
-  const filtrar = (lista: any[], getVendedorId: (x: any) => string | null, getCalificacion: (x: any) => string | null) =>
+  const filtrar = (lista: any[], getVendedorId: (x: any) => string | null, getCalificacion: (x: any) => string | null, getNombre: (x: any) => string | null, getTelefono: (x: any) => string | null) =>
     lista.filter((x) => {
       if (vendedorFiltro && getVendedorId(x) !== vendedorFiltro) return false;
       if (calificacionFiltro && getCalificacion(x) !== calificacionFiltro) return false;
+      if (query.trim()) {
+        const q = query.trim().toLowerCase();
+        if (!`${getNombre(x) || ""} ${getTelefono(x) || ""}`.toLowerCase().includes(q)) return false;
+      }
       return true;
     });
 
-  const tareas = useMemo(() => filtrar(tareasIniciales, (t) => t.lead?.vendedor_id, (t) => t.lead?.calificacion), [tareasIniciales, vendedorFiltro, calificacionFiltro]);
-  const completadas = useMemo(() => filtrar(tareasCompletadas, (t) => t.lead?.vendedor_id, (t) => t.lead?.calificacion), [tareasCompletadas, vendedorFiltro, calificacionFiltro]);
-  const sinContacto = useMemo(() => filtrar(leadsSinContacto, (l) => l.vendedor_id, (l) => l.calificacion), [leadsSinContacto, vendedorFiltro, calificacionFiltro]);
+  const tareas = useMemo(() => filtrar(tareasIniciales, (t) => t.lead?.vendedor_id, (t) => t.lead?.calificacion, (t) => t.lead?.nombre, (t) => t.lead?.telefono), [tareasIniciales, vendedorFiltro, calificacionFiltro, query]);
+  const completadas = useMemo(() => filtrar(tareasCompletadas, (t) => t.lead?.vendedor_id, (t) => t.lead?.calificacion, (t) => t.lead?.nombre, (t) => t.lead?.telefono), [tareasCompletadas, vendedorFiltro, calificacionFiltro, query]);
+  const sinContacto = useMemo(() => filtrar(leadsSinContacto, (l) => l.vendedor_id, (l) => l.calificacion, (l) => l.nombre, (l) => l.telefono), [leadsSinContacto, vendedorFiltro, calificacionFiltro, query]);
 
   const { vencidas, hoy, proximas } = useMemo(() => {
     const ahora = new Date();
@@ -137,6 +142,10 @@ export default function TareasLeadBoard({
             </div>
           </div>
           <div className="flex items-center gap-2 flex-wrap">
+            <div className="relative">
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-slate-400" />
+              <input value={query} onChange={(e) => setQuery(e.target.value)} placeholder="Buscar lead por nombre o teléfono..." className="bg-slate-50 dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-lg py-2 pl-9 pr-3 text-[13px] outline-none placeholder:text-slate-400" />
+            </div>
             <select value={calificacionFiltro} onChange={(e) => setCalificacionFiltro(e.target.value)} className="bg-slate-50 dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-lg px-3 py-2 text-[13px] outline-none">
               <option value="">Todo grado de interés</option>
               {CALIFICACIONES.map((c) => (<option key={c.value} value={c.value}>{c.label}</option>))}
