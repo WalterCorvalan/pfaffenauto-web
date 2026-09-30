@@ -69,6 +69,8 @@ export default async function SucursalPage({ params }: { params: Promise<{ slug:
 
   if (!sucursal) notFound();
 
+  const { nombre: nombreMarca } = await getBrandingSeo();
+
   const { data: vehiculos } = await supabase
     .from("vehiculos")
     .select(CAMPOS_VEHICULO_PUBLICO)
@@ -93,10 +95,10 @@ export default async function SucursalPage({ params }: { params: Promise<{ slug:
     "@context": "https://schema.org",
     "@type": "AutoDealer",
     "@id": `https://www.pfaffencars.com/sucursales/${slug}`,
-    name: `Pfaffen Cars ${nombreSucursal}`,
+    name: `${nombreMarca} ${nombreSucursal}`,
     url: `https://www.pfaffencars.com/sucursales/${slug}`,
     telephone: telefono,
-    parentOrganization: { "@type": "Organization", name: "Pfaffen Cars", url: "https://www.pfaffencars.com" },
+    parentOrganization: { "@type": "Organization", name: nombreMarca, url: "https://www.pfaffencars.com" },
     address: {
       "@type": "PostalAddress",
       streetAddress,
