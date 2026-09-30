@@ -7,10 +7,15 @@ import { crearAlerta } from "@/lib/panel/alertas";
 
 export const MARCAS = ["Toyota", "Volkswagen", "Ford", "Chevrolet", "Renault", "Peugeot", "Fiat", "Honda", "Hyundai", "Nissan", "Jeep", "Citroën", "BMW", "Mercedes-Benz", "Audi", "Otra"];
 const CATEGORIAS = ["Auto", "Pickup/Camioneta", "SUV", "Utilitario", "Moto", "Camión", "Camioneta", "Casa Rodante", "Ómnibus | Van"];
-const SEGMENTOS = [
+export const SEGMENTOS = [
   "Buses", "Cabriolet", "Coupe", "Familiar", "Monovolumen", "Otro", "Pickup", "Rural 5 Puertas",
   "Sedan 3p", "Sedan 4p", "Sedan 5p", "Todo Terreno | SUV", "Utilitarios", "Van | Mini-Van",
 ];
+// vehiculos.combustible tiene un CHECK en la base -- exportado para que
+// NuevaVentaModal.tsx (permutas) use el mismo listado en vez de un <input>
+// de texto libre, mismo bug que ya se corrigió para "tipo" (ver
+// ventas/ARCHITECTURE.md, 30/9).
+export const COMBUSTIBLES = ["Nafta", "Diésel", "Gasoil", "GNC", "Híbrido", "Eléctrico"];
 const PUERTAS = [2, 3, 4, 5];
 const PLAZAS = [2, 3, 4, 5, 6, 7, 8, 9];
 const ORIGENES = ["Compra", "Consignación", "Permuta", "Otro"];
@@ -817,7 +822,7 @@ export default function NuevoVehiculoModal({ perfiles, clientes, sucursales, miI
                 <label className={labelClass}>Combustible</label>
                 <select value={combustible} onChange={(e) => setCombustible(e.target.value)} className={inputClass}>
                   <option value="">— Sin especificar —</option>
-                  <option>Nafta</option><option>Diésel</option><option>Gasoil</option><option>GNC</option><option>Híbrido</option><option>Eléctrico</option>
+                  {COMBUSTIBLES.map((c) => <option key={c} value={c}>{c}</option>)}
                 </select>
               </div>
               <div>

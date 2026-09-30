@@ -8,6 +8,7 @@ import { crearAlerta } from "@/lib/panel/alertas";
 import { generarCodigoPublico } from "@/lib/generarCodigoPublico";
 import { totalEnMoneda, type Moneda } from "@/lib/moneda";
 import { buscarLeadsPorTexto, LEAD_ORIGEN_LABEL, type LeadEncontrado } from "@/lib/panel/buscarLeads";
+import { SEGMENTOS, COMBUSTIBLES } from "@/app/panel/stock/NuevoVehiculoModal";
 
 const TIPOS_RECORDATORIO: { value: string; label: string }[] = [
   { value: "llamada_seguimiento", label: "📞 Llamada de seguimiento" },
@@ -677,15 +678,20 @@ export default function NuevaVentaModal({ perfiles, clientes, vehiculos, miId, s
           if (!p.valor && !p.marca) continue;
           let vehiculoCreadoId: string | null = null;
           if (p.cargarAlStock && p.marca && p.modelo) {
-            // "tipo" NO se manda acá -- es texto libre en este formulario
-            // ("Ej: Sedan 5p") pero vehiculos.tipo tiene un CHECK en la base
-            // que solo acepta un set fijo de valores (ningún otro alta de
-            // stock, ni NuevoVehiculoModal.tsx ni NuevoMandatoModal.tsx,
-            // escribe esa columna) -- mandar cualquier texto tiraba
-            // "violates check constraint vehiculos_tipo_check" y dejaba la
-            // permuta guardada pero el auto sin cargar al stock. El texto
-            // igual queda guardado en venta_permutas.tipo (sin esa
-            // restricción), solo no se copia al vehículo del stock.
+            // "tipo" NO se manda acá -- es una nota de texto libre en este
+            // formulario ("Ej: Sedan 5p") pero vehiculos.tipo tiene un CHECK
+            // en la base que solo acepta un set fijo de valores (ningún
+            // otro alta de stock, ni NuevoVehiculoModal.tsx ni
+            // NuevoMandatoModal.tsx, escribe esa columna) -- mandar
+            // cualquier texto tiraba "violates check constraint
+            // vehiculos_tipo_check" y dejaba la permuta guardada pero el
+            // auto sin cargar al stock. El texto igual queda guardado en
+            // venta_permutas.tipo (sin esa restricción), solo no se copia
+            // al vehículo del stock. "segmento" y "combustible" SÍ tienen el
+            // mismo riesgo (también son <select> validados en
+            // NuevoVehiculoModal.tsx, o sea columnas con CHECK) -- por eso
+            // se convirtieron de <input> a <select> acá mismo en vez de
+            // sacarlos del insert, para no perder ese dato en el auto nuevo.
             const { data: vCreado, error: errVehiculo } = await supabase2.from("vehiculos").insert({
               categoria: "Auto", marca: p.marca.trim(), modelo: p.modelo.trim(), anio: p.anio ? Number(p.anio) : new Date().getFullYear(),
               km: p.km ? Number(p.km) : 0, patente: (p.patente || `PERMUTA-${venta.id.slice(0, 8)}`).toUpperCase(), color: p.color || "—",
@@ -1147,9 +1153,9 @@ export default function NuevaVentaModal({ perfiles, clientes, vehiculos, miId, s
                           <div><label className={labelClass}>Patente</label><input value={p.patente} onChange={(e) => actualizarPermuta(i, "patente", e.target.value)} className={inputClass} /></div>
                           <div><label className={labelClass}>Color</label><input value={p.color} onChange={(e) => actualizarPermuta(i, "color", e.target.value)} className={inputClass} /></div>
                           <div><label className={labelClass}>Condición</label><select value={p.condicion} onChange={(e) => actualizarPermuta(i, "condicion", e.target.value)} className={inputClass}>{CONDICIONES.map((c) => <option key={c} value={c}>{c}</option>)}</select></div>
-                          <div><label className={labelClass}>Segmento</label><input value={p.segmento} onChange={(e) => actualizarPermuta(i, "segmento", e.target.value)} className={inputClass} /></div>
-                          <div><label className={labelClass}>Tipo</label><input value={p.tipo} onChange={(e) => actualizarPermuta(i, "tipo", e.target.value)} placeholder="Ej: Sedan 5p" className={inputClass} /></div>
-                          <div><label className={labelClass}>Combustible</label><input value={p.combustible} onChange={(e) => actualizarPermuta(i, "combustible", e.target.value)} className={inputClass} /></div>
+                          <div><label className={labelClass}>Segmento</label><select value={p.segmento} onChange={(e) => actualizarPermuta(i, "segmento", e.target.value)} className={inputClass}><option value="">— Sin especificar —</option>{SEGMENTOS.map((s) => <option key={s} value={s}>{s}</option>)}</select></div>
+                          <div><label className={labelClass}>Tipo (nota interna, no se guarda en Stock)</label><input value={p.tipo} onChange={(e) => actualizarPermuta(i, "tipo", e.target.value)} placeholder="Ej: Sedan 5p" className={inputClass} /></div>
+                          <div><label className={labelClass}>Combustible</label><select value={p.combustible} onChange={(e) => actualizarPermuta(i, "combustible", e.target.value)} className={inputClass}><option value="">— Sin especificar —</option>{COMBUSTIBLES.map((c) => <option key={c} value={c}>{c}</option>)}</select></div>
                           <div><label className={labelClass}>Marca motor</label><input value={p.marcaMotor} onChange={(e) => actualizarPermuta(i, "marcaMotor", e.target.value)} className={inputClass} /></div>
                           <div><label className={labelClass}>Nº motor</label><input value={p.numeroMotor} onChange={(e) => actualizarPermuta(i, "numeroMotor", e.target.value)} className={inputClass} /></div>
                           <div><label className={labelClass}>Marca chasis</label><input value={p.marcaChasis} onChange={(e) => actualizarPermuta(i, "marcaChasis", e.target.value)} className={inputClass} /></div>
