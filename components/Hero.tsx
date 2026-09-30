@@ -18,7 +18,31 @@ const speedTrails = [
   { top: 85, width: 31, duration: 6.2, delay: 2.9 },
 ];
 
-export default function Hero() {
+export interface HeroContenido {
+  videoUrl?: string | null;
+  badge?: string | null;
+  tituloPrefijo?: string | null;
+  tituloDestacado?: string | null;
+  subtitulo?: string | null;
+}
+
+// Defaults -- se usan mientras no se cargó nada en el panel (Contenido del
+// Sitio → Hero) o si la lectura server-side falla, así la portada nunca
+// queda sin video ni sin texto.
+const HERO_DEFAULT: Required<HeroContenido> = {
+  videoUrl: "/hero-video.mp4",
+  badge: "Compra o Vende tu auto en el momento",
+  tituloPrefijo: "La forma mas confiable de comprar o vender",
+  tituloDestacado: "TU AUTO",
+  subtitulo: "Autos 0KM y usados seleccionados en Zona Norte, Buenos Aires",
+};
+
+export default function Hero({ contenido }: { contenido?: HeroContenido }) {
+  const videoUrl = contenido?.videoUrl || HERO_DEFAULT.videoUrl;
+  const badge = contenido?.badge || HERO_DEFAULT.badge;
+  const tituloPrefijo = contenido?.tituloPrefijo || HERO_DEFAULT.tituloPrefijo;
+  const tituloDestacado = contenido?.tituloDestacado || HERO_DEFAULT.tituloDestacado;
+  const subtitulo = contenido?.subtitulo || HERO_DEFAULT.subtitulo;
   const [searchTerm, setSearchTerm] = useState("");
   const router = useRouter();
   const prefiereMenosMovimiento = useReducedMotion();
@@ -47,7 +71,10 @@ export default function Hero() {
     >
 
       {/* ================= VIDEO DE FONDO ================= */}
+      {/* key=videoUrl -- <video>/<source> no recargan solos si src cambia
+         en un re-render, hace falta remontar el elemento entero. */}
       <video
+        key={videoUrl}
         autoPlay
         loop
         muted
@@ -55,8 +82,7 @@ export default function Hero() {
         preload="metadata"
         className="absolute inset-0 w-full h-full object-cover z-0 dark:opacity-70"
       >
-        {/* Asegurate de tener este archivo en tu carpeta public/ */}
-        <source src="/hero-video.mp4" type="video/mp4" />
+        <source src={videoUrl} type="video/mp4" />
       </video>
 
       {/* Capa de cristal (Overlay) para mantener la legibilidad de los textos */}
@@ -127,18 +153,17 @@ export default function Hero() {
             <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-blue-400 dark:bg-sky-400 opacity-75"></span>
             <span className="relative inline-flex rounded-full h-2 w-2 bg-blue-500 dark:bg-sky-400"></span>
           </span>
-          Compra o Vende tu auto en el momento
+          {badge}
         </motion.div>
 
         {/* Título Monumental */}
-        <motion.h1 
+        <motion.h1
           initial={{ opacity: 0, scale: 0.95 }}
           animate={{ opacity: 1, scale: 1 }}
           transition={{ duration: 0.5, delay: 0.1 }}
           className="text-4xl md:text-6xl lg:text-[72px] text-navy dark:text-white leading-[1.05] mb-10 font-light tracking-tighter drop-shadow-sm"
         >
-          La forma mas<br className="font-black hidden md:block"/>
-          confiable de comprar o vender<span className="font-black bg-clip-text text-transparent bg-gradient-to-r from-[#0145F2] to-sky-500 dark:from-sky-400 dark:to-blue-300"> TU AUTO</span>
+          {tituloPrefijo}<span className="font-black bg-clip-text text-transparent bg-gradient-to-r from-[#0145F2] to-sky-500 dark:from-sky-400 dark:to-blue-300"> {tituloDestacado}</span>
         </motion.h1>
 
         {/* Refuerza keyword real (0KM/usados + zona) cerca del H1 sin tocar
@@ -150,7 +175,7 @@ export default function Hero() {
           transition={{ duration: 0.5, delay: 0.2 }}
           className="text-sm md:text-base text-navy/70 dark:text-white/60 font-semibold -mt-6 mb-8"
         >
-          Autos 0KM y usados seleccionados en Zona Norte, Buenos Aires
+          {subtitulo}
         </motion.p>
 
         {/* ================= BUSCADOR ESPACIAL (GLASSMORPHISM) ================= */}
