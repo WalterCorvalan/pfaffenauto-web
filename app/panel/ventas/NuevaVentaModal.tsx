@@ -21,7 +21,7 @@ const TIPOS_RECORDATORIO: { value: string; label: string }[] = [
   { value: "otro", label: "📌 Otro recordatorio" },
 ];
 
-interface Vehiculo { id: string; marca: string; modelo: string; anio: number; patente: string | null; km: number | null; precio_venta: number; moneda_venta: string; estado: string; color: string | null; condicion: string }
+interface Vehiculo { id: string; marca: string; modelo: string; anio: number; patente: string | null; km: number | null; precio_venta: number; moneda_venta: string; estado: string; color: string | null; condicion: string; consignado_por: string | null }
 interface Cliente { id: string; nombre: string; apellido: string | null; telefono: string | null; email: string | null; dni_cuit: string | null }
 interface Perfil { id: string; nombre: string; roles: string[] }
 
@@ -324,6 +324,11 @@ export default function NuevaVentaModal({ perfiles, clientes, vehiculos, miId, s
       setVMarca(v.marca); setVModelo(v.modelo); setVAnio(String(v.anio)); setVPatente(v.patente || ""); setVColor(v.color || ""); setVCondicion(v.condicion);
       setKm(v.km ? String(v.km) : ""); setPrecioVenta(String(v.precio_venta)); setMonedaVenta(v.moneda_venta);
       setBusquedaVehiculo(`${v.marca} ${v.modelo} ${v.anio} · ${v.patente || "s/patente"}`);
+      // Autocompleta quién trajo la consignación -- antes había que
+      // acordarse de elegirlo a mano, y si se olvidaba esa persona nunca
+      // cobraba su comisión (comision_consignacion_pct solo se paga si
+      // responsable_consignacion_id quedó cargado).
+      setResponsableConsignacion(v.consignado_por || "");
       if (!estadoTocado) setEstado("activa");
     } else {
       setBusquedaVehiculo("");
@@ -333,7 +338,7 @@ export default function NuevaVentaModal({ perfiles, clientes, vehiculos, miId, s
       // (comparten el mismo estado) sin ninguna señal visual de que
       // quedaron datos viejos.
       setVMarca(""); setVModelo(""); setVAnio(""); setVPatente(""); setVColor(""); setVCondicion("Muy bueno");
-      setKm(""); setPrecioVenta(""); setMonedaVenta("USD");
+      setKm(""); setPrecioVenta(""); setMonedaVenta("USD"); setResponsableConsignacion("");
       if (!estadoTocado) setEstado("borrador");
     }
   };

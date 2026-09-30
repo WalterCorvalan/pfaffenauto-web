@@ -3,7 +3,7 @@
 import { useState, useMemo, useEffect } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { supabase2 } from "@/lib/supabase/client";
-import { Plus, Search, KeyRound, X, ExternalLink, Trash2 } from "lucide-react";
+import { Plus, Search, KeyRound, X, ExternalLink, Trash2, Loader2 } from "lucide-react";
 import NuevoMandatoModal from "@/app/panel/stock/NuevoMandatoModal";
 import { fmtFechaLocal, hoyLocalISO } from "@/lib/panel/fechas";
 import TablaResponsiva, { type ColumnaTabla } from "@/components/panel/TablaResponsiva";
@@ -19,7 +19,31 @@ const TABS: { value: string; label: string }[] = [
   { value: "cancelado", label: "Canceladas" },
 ];
 
-type Prefill = { mandanteNombre?: string; mandanteTelefono?: string; mandanteEmail?: string; marca?: string; modelo?: string } | undefined;
+type Prefill = { mandanteNombre?: string; mandanteTelefono?: string; mandanteEmail?: string; marca?: string; modelo?: string; consignadoPorId?: string } | undefined;
+
+// Sin esto, un lead que llega solo de la web pública (sin vendedor_id) nunca
+// tiene quién completarlo -- antes se asignaba desde el detalle liviano
+// (eliminado hoy), ahora vive acá para no perder la posibilidad de asignar
+// dueño a una consignación pendiente antes de completar el mandato.
+function VendedorSelector({ consignacionId, vendedorActualId, vendedores, onCambiado }: { consignacionId: string; vendedorActualId: string | null; vendedores: Perfil[]; onCambiado: (c: any) => void }) {
+  const [loading, setLoading] = useState(false);
+  const cambiar = async (nuevo: string) => {
+    setLoading(true);
+    const { data } = await supabase2.from("consignaciones").update({ vendedor_id: nuevo || null }).eq("id", consignacionId).select("*, vendedor:perfiles!consignaciones_vendedor_id_fkey ( id, nombre )").maybeSingle();
+    setLoading(false);
+    if (data) onCambiado(data);
+  };
+  return (
+    <div className="relative inline-flex items-center" onClick={(e) => e.stopPropagation()}>
+      <select defaultValue={vendedorActualId || ""} disabled={loading} onChange={(e) => cambiar(e.target.value)}
+        className="bg-slate-50 dark:bg-white/5 border border-slate-200 dark:border-white/10 text-xs font-medium text-slate-700 dark:text-slate-200 rounded-md pl-1.5 pr-5 py-1 outline-none cursor-pointer disabled:opacity-50">
+        <option value="">Sin asignar</option>
+        {vendedores.map((p) => <option key={p.id} value={p.id}>{p.nombre}</option>)}
+      </select>
+      {loading && <Loader2 className="w-3 h-3 text-indigo-500 animate-spin absolute right-1.5 pointer-events-none" />}
+    </div>
+  );
+}
 
 export default function ConsignacionesClient({ consignacionesIniciales, perfiles, miId, miNombre, soyAdmin }: { consignacionesIniciales: any[]; perfiles: Perfil[]; miId: string; miNombre: string; soyAdmin: boolean }) {
   const router = useRouter();
@@ -53,7 +77,7 @@ export default function ConsignacionesClient({ consignacionesIniciales, perfiles
     const partes = (c.vehiculo_descripcion || "").trim().split(/\s+/);
     setPrefillMandato({
       mandanteNombre: c.cliente_nombre || "", mandanteTelefono: c.cliente_telefono || "", mandanteEmail: c.cliente_email || "",
-      marca: partes[0] || "", modelo: partes.slice(1).join(" ") || "",
+      marca: partes[0] || "", modelo: partes.slice(1).join(" ") || "", consignadoPorId: c.vendedor_id || undefined,
     });
     setModalMandato(true);
   };
@@ -145,6 +169,7 @@ export default function ConsignacionesClient({ consignacionesIniciales, perfiles
   }, [consignaciones, tab, filtroVendedor, busqueda]);
 
   const perfilMap = Object.fromEntries(perfiles.map((p) => [p.id, p.nombre]));
+  const vendedores = perfiles.filter((p) => p.roles?.includes("ventas") || p.roles?.includes("encargado"));
 
   return (
     <div className="p-6">
@@ -202,7 +227,12 @@ export default function ConsignacionesClient({ consignacionesIniciales, perfiles
               { key: "fecha", header: "Fecha", cell: (c) => fmtFechaLocal(c.fecha_alta), claseTd: "text-xs text-slate-500 dark:text-slate-400 whitespace-nowrap" },
               { key: "cliente", header: "Cliente", cell: (c) => <><p className="text-sm font-bold text-slate-900 dark:text-white">{c.cliente_nombre}</p>{c.cliente_telefono && <p className="text-[11px] text-slate-400">{c.cliente_telefono}</p>}</>, ocultarEnMobile: true },
               { key: "vehiculo", header: "Vehículo", cell: (c) => c.vehiculo_descripcion, claseTd: "text-xs text-slate-600 dark:text-slate-300" },
-              { key: "vendedor", header: "Vendedor", cell: (c) => c.vendedor?.nombre || perfilMap[c.vendedor_id] || "—", claseTd: "text-xs text-slate-500 dark:text-slate-400" },
+              {
+                key: "vendedor", header: "Vendedor",
+                cell: (c) => c.mandato_id
+                  ? <span className="text-xs text-slate-500 dark:text-slate-400">{c.vendedor?.nombre || perfilMap[c.vendedor_id] || "—"}</span>
+                  : <VendedorSelector consignacionId={c.id} vendedorActualId={c.vendedor_id} vendedores={vendedores} onCambiado={(actualizado) => setConsignaciones((prev) => prev.map((x) => (x.id === actualizado.id ? actualizado : x)))} />,
+              },
               {
                 key: "estado", header: "Estado",
                 cell: (c) => c.vehiculo_id

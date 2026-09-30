@@ -11,8 +11,11 @@ interface Props {
   miNombre: string;
   // Prefill opcional -- usado cuando este mismo formulario se abre desde
   // Consignaciones (lead ya cargó nombre/teléfono/auto en texto libre desde
-  // la web pública) en vez de en blanco desde Stock.
-  prefill?: { mandanteNombre?: string; mandanteTelefono?: string; mandanteEmail?: string; marca?: string; modelo?: string };
+  // la web pública) en vez de en blanco desde Stock. `consignadoPorId` es el
+  // vendedor de la consignación de origen -- se copia al vehículo (campo
+  // informativo "Consignado por" de la ficha de Stock) sin exponer un select
+  // nuevo en este formulario.
+  prefill?: { mandanteNombre?: string; mandanteTelefono?: string; mandanteEmail?: string; marca?: string; modelo?: string; consignadoPorId?: string };
   onClose: () => void;
   onCreado: (mandato: any, vehiculo: any | null) => void;
 }
@@ -112,7 +115,7 @@ export default function NuevoMandatoModal({ miId, miNombre, prefill, onClose, on
             // precio_venta directo -- mismo criterio que NuevoVehiculoModal.tsx.
             precio_publicado_ars: moneda === "ARS" ? (valor ? Number(valor) : 0) : null,
             precio_publicado_usd: moneda === "USD" ? (valor ? Number(valor) : 0) : null,
-            estado: "en_preparacion", propio_agencia: false,
+            estado: "en_preparacion", propio_agencia: false, consignado_por: prefill?.consignadoPorId || null,
             propietario_nombre: mandanteNombre.trim(), propietario_dni: mandanteDni || null, propietario_telefono: mandanteTelefono || null, propietario_email: mandanteEmail || null,
             dueños_anteriores: duenosAnteriores ? Number(duenosAnteriores) : null,
             servicios_oficiales: serviciosOficiales === "Sí", manuales: manuales === "Sí", duplicado_llaves: duplicadoLlaves === "Sí",

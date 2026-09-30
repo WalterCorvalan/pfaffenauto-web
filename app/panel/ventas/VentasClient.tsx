@@ -21,7 +21,7 @@ interface Venta {
 }
 interface Perfil { id: string; nombre: string; roles: string[] }
 interface Cliente { id: string; nombre: string; apellido: string | null; telefono: string | null; email: string | null; dni_cuit: string | null }
-interface Vehiculo { id: string; marca: string; modelo: string; anio: number; patente: string | null; km: number | null; precio_venta: number; moneda_venta: string; estado: string; color: string | null; condicion: string }
+interface Vehiculo { id: string; marca: string; modelo: string; anio: number; patente: string | null; km: number | null; precio_venta: number; moneda_venta: string; estado: string; color: string | null; condicion: string; consignado_por: string | null }
 
 type Tab = "todas" | "borrador" | "activa" | "reserva" | "cerrada" | "caida" | "cancelada";
 const TABS: { value: Tab; label: string }[] = [
