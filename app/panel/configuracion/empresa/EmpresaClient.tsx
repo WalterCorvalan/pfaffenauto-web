@@ -636,6 +636,10 @@ function BrandingConfig() {
           <label className="text-xs font-semibold text-slate-500 block mb-1">Domicilio</label>
           <input type="text" defaultValue={config.branding_domicilio || ""} onBlur={(e) => guardar({ branding_domicilio: e.target.value || null })} className={inputClass} />
         </div>
+        <div>
+          <label className="text-xs font-semibold text-slate-500 block mb-1">Zona de venta (para SEO: títulos y descripciones de cada página)</label>
+          <input type="text" defaultValue={config.branding_zona || ""} placeholder="Zona Norte, Buenos Aires" onBlur={(e) => guardar({ branding_zona: e.target.value || null })} className={inputClass} />
+        </div>
         <div className="grid grid-cols-2 gap-4">
           <div>
             <label className="text-xs font-semibold text-slate-500 block mb-1">Teléfono</label>

@@ -1,11 +1,15 @@
 import type { Metadata } from "next";
 import Link from "next/link";
+import { getBrandingSeo } from "@/lib/brandingSeo";
 
-export const metadata: Metadata = {
-  title: "Política de Privacidad | Pfaffen Cars",
-  description: "Cómo Pfaffen Cars recopila, usa y protege tus datos personales.",
-  alternates: { canonical: "https://www.pfaffencars.com/privacidad" },
-};
+export async function generateMetadata(): Promise<Metadata> {
+  const { nombre } = await getBrandingSeo();
+  return {
+    title: `Política de Privacidad | ${nombre}`,
+    description: `Cómo ${nombre} recopila, usa y protege tus datos personales.`,
+    alternates: { canonical: "https://www.pfaffencars.com/privacidad" },
+  };
+}
 
 export default function PrivacidadPage() {
   return (

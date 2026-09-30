@@ -2,12 +2,16 @@ import type { Metadata } from "next";
 import { createClient } from "@supabase/supabase-js";
 import { CAMPOS_VEHICULO_PUBLICO } from "@/lib/vehiculos";
 import CatalogoClient from "./CatalogoClient";
+import { getBrandingSeo } from "@/lib/brandingSeo";
 
-export const metadata: Metadata = {
-  title: "Catálogo de Autos 0KM y Usados | Pfaffen Cars",
-  description: "Explorá todo el stock de Pfaffen Cars: 0KM y usados seleccionados, con filtros por marca, tipo, precio y financiación.",
-  alternates: { canonical: "https://www.pfaffencars.com/catalogo" },
-};
+export async function generateMetadata(): Promise<Metadata> {
+  const { nombre } = await getBrandingSeo();
+  return {
+    title: `Catálogo de Autos 0KM y Usados | ${nombre}`,
+    description: `Explorá todo el stock de ${nombre}: 0KM y usados seleccionados, con filtros por marca, tipo, precio y financiación.`,
+    alternates: { canonical: "https://www.pfaffencars.com/catalogo" },
+  };
+}
 
 export const revalidate = 60;
 

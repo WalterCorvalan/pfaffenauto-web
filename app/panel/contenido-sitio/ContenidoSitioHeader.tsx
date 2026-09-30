@@ -6,6 +6,7 @@ import { usePathname } from "next/navigation";
 const TABS: { label: string; href?: string }[] = [
   { label: "Entregas", href: "/panel/contenido-sitio/entregas" },
   { label: "Hero (portada)", href: "/panel/contenido-sitio/hero" },
+  { label: "Banners", href: "/panel/contenido-sitio/banners" },
   { label: "Nuestra Historia", href: "/panel/contenido-sitio/nuestra-historia" },
   { label: "Footer y redes", href: "/panel/contenido-sitio/footer-redes" },
   { label: "Formulario RRHH", href: "/panel/contenido-sitio/rrhh" },

@@ -11,12 +11,17 @@ import {
   HelpCircle 
 } from "lucide-react";
 import SimuladorReal from "./SimuladorReal";
+import { getBrandingSeo } from "@/lib/brandingSeo";
+import type { Metadata } from "next";
 
-export const metadata = {
-  title: "Financiación de Autos en Zona Norte | Pfaffen Cars",
-  description: "Créditos personales del Banco Nación con tasa preferencial para comprar tu auto 0KM o usado en Buenos Aires. Simulá tu cuota sobre un auto real del stock y solicitalo online.",
-  alternates: { canonical: "https://www.pfaffencars.com/financiacion" },
-};
+export async function generateMetadata(): Promise<Metadata> {
+  const { nombre, zona } = await getBrandingSeo();
+  return {
+    title: `Financiación de Autos en ${zona} | ${nombre}`,
+    description: `Créditos personales del Banco Nación con tasa preferencial para comprar tu auto 0KM o usado en ${zona}. Simulá tu cuota sobre un auto real del stock y solicitalo online.`,
+    alternates: { canonical: "https://www.pfaffencars.com/financiacion" },
+  };
+}
 
 const PASOS = [
   { 

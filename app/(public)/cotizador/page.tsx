@@ -1,11 +1,16 @@
 import CotizadorForm from "@/components/forms/CotizadorForm";
 import { createClient } from "@/lib/supabase/server";
+import { getBrandingSeo } from "@/lib/brandingSeo";
+import type { Metadata } from "next";
 
-export const metadata = {
-  title: "Cotizá tu vehículo | Pfaffen Cars",
-  description: "Dejanos los datos de tu vehículo y te garantizamos la venta en tiempo récord o cotizá online.",
-  alternates: { canonical: "https://www.pfaffencars.com/cotizador" },
-};
+export async function generateMetadata(): Promise<Metadata> {
+  const { nombre } = await getBrandingSeo();
+  return {
+    title: `Cotizá tu vehículo | ${nombre}`,
+    description: "Dejanos los datos de tu vehículo y te garantizamos la venta en tiempo récord o cotizá online.",
+    alternates: { canonical: "https://www.pfaffencars.com/cotizador" },
+  };
+}
 
 // ?permuta=<vehiculoId> desde el botón "¿Tenés un usado para entregar?" del
 // detalle de un auto — buscamos los datos frescos en la DB en vez de confiar
