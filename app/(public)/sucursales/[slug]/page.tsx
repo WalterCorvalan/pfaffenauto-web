@@ -6,6 +6,7 @@ import VehiculosGrid from "@/components/VehiculosGrid";
 import SucursalHeroAnimated from "./SucursalHeroAnimated";
 import Testimonials from "@/components/Testimonials";
 import type { Metadata } from "next";
+import { getBrandingSeo } from "@/lib/brandingSeo";
 
 const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE2_URL!,
@@ -48,10 +49,11 @@ function parseDireccion(direccion: string) {
 export async function generateMetadata({ params }: { params: Promise<{ slug: string }> }): Promise<Metadata> {
   const { slug } = await params;
   const { data: sucursal } = await supabase.from("sucursales").select("nombre, direccion").eq("slug", slug).maybeSingle();
-  const nombre = sucursal?.nombre || slug;
+  const nombreSucursal = sucursal?.nombre || slug;
+  const { nombre } = await getBrandingSeo();
   return {
-    title: `${nombre} | Sucursal Pfaffen Cars`,
-    description: `Visitá nuestra sucursal ${nombre}${sucursal?.direccion ? ` en ${sucursal.direccion}` : ""}. Stock disponible, financiación y respaldo oficial.`,
+    title: `${nombreSucursal} | Sucursal ${nombre}`,
+    description: `Visitá nuestra sucursal ${nombreSucursal}${sucursal?.direccion ? ` en ${sucursal.direccion}` : ""}. Stock disponible, financiación y respaldo oficial.`,
     alternates: { canonical: `https://www.pfaffencars.com/sucursales/${slug}` },
   };
 }
@@ -61,11 +63,13 @@ export default async function SucursalPage({ params }: { params: Promise<{ slug:
 
   const { data: sucursal } = await supabase
     .from("sucursales")
-    .select("id, nombre, direccion, telefono:telefono_encargado, slug, google_maps_url, imagen_url, horario_texto, horario_dia_desde, horario_dia_hasta, horario_hora_desde, horario_hora_hasta, latitude, longitude")
+    .select("id, nombre, direccion, telefono:telefono_encargado, slug, google_maps_url, imagen_url, horario_texto, horario_dia_desde, horario_dia_hasta, horario_hora_desde, horario_hora_hasta, horario2_dia_desde, horario2_dia_hasta, horario2_hora_desde, horario2_hora_hasta, latitude, longitude")
     .eq("slug", slug)
     .maybeSingle();
 
   if (!sucursal) notFound();
+
+  const { nombre: nombreMarca } = await getBrandingSeo();
 
   const { data: vehiculos } = await supabase
     .from("vehiculos")
@@ -83,18 +87,32 @@ export default async function SucursalPage({ params }: { params: Promise<{ slug:
   const horarioDiaHasta = sucursal.horario_dia_hasta ?? 6;
   const horarioHoraDesde = sucursal.horario_hora_desde ?? 9;
   const horarioHoraHasta = sucursal.horario_hora_hasta ?? 19;
+  const horarioDiaDesde2 = sucursal.horario2_dia_desde ?? null;
+  const horarioDiaHasta2 = sucursal.horario2_dia_hasta ?? null;
+  const horarioHoraDesde2 = sucursal.horario2_hora_desde ?? null;
+  const horarioHoraHasta2 = sucursal.horario2_hora_hasta ?? null;
+  const tieneRango2 = horarioDiaDesde2 != null && horarioDiaHasta2 != null && horarioHoraDesde2 != null && horarioHoraHasta2 != null;
 
   const { streetAddress, addressLocality, addressRegion, postalCode } = parseDireccion(direccion);
   const DIAS_SCHEMA = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"];
-  const dayOfWeek = Array.from({ length: horarioDiaHasta - horarioDiaDesde + 1 }, (_, i) => DIAS_SCHEMA[horarioDiaDesde + i]);
+  const formatearHora = (h: number) => `${String(Math.trunc(h)).padStart(2, "0")}:${String(Math.round((h % 1) * 60)).padStart(2, "0")}`;
+  const rangoSchema = (diaDesde: number, diaHasta: number, horaDesde: number, horaHasta: number) => ({
+    "@type": "OpeningHoursSpecification",
+    dayOfWeek: Array.from({ length: diaHasta - diaDesde + 1 }, (_, i) => DIAS_SCHEMA[diaDesde + i]),
+    opens: formatearHora(horaDesde),
+    closes: formatearHora(horaHasta),
+  });
+  const openingHoursSpecification = tieneRango2
+    ? [rangoSchema(horarioDiaDesde, horarioDiaHasta, horarioHoraDesde, horarioHoraHasta), rangoSchema(horarioDiaDesde2!, horarioDiaHasta2!, horarioHoraDesde2!, horarioHoraHasta2!)]
+    : rangoSchema(horarioDiaDesde, horarioDiaHasta, horarioHoraDesde, horarioHoraHasta);
   const jsonLd = {
     "@context": "https://schema.org",
     "@type": "AutoDealer",
     "@id": `https://www.pfaffencars.com/sucursales/${slug}`,
-    name: `Pfaffen Cars ${nombreSucursal}`,
+    name: `${nombreMarca} ${nombreSucursal}`,
     url: `https://www.pfaffencars.com/sucursales/${slug}`,
     telephone: telefono,
-    parentOrganization: { "@type": "Organization", name: "Pfaffen Cars", url: "https://www.pfaffencars.com" },
+    parentOrganization: { "@type": "Organization", name: nombreMarca, url: "https://www.pfaffencars.com" },
     address: {
       "@type": "PostalAddress",
       streetAddress,
@@ -105,12 +123,7 @@ export default async function SucursalPage({ params }: { params: Promise<{ slug:
     },
     ...(sucursal.google_maps_url ? { hasMap: sucursal.google_maps_url } : {}),
     ...(sucursal.latitude != null && sucursal.longitude != null ? { geo: { "@type": "GeoCoordinates", latitude: sucursal.latitude, longitude: sucursal.longitude } } : {}),
-    openingHoursSpecification: {
-      "@type": "OpeningHoursSpecification",
-      dayOfWeek,
-      opens: `${String(Math.trunc(horarioHoraDesde)).padStart(2, "0")}:${String(Math.round((horarioHoraDesde % 1) * 60)).padStart(2, "0")}`,
-      closes: `${String(Math.trunc(horarioHoraHasta)).padStart(2, "0")}:${String(Math.round((horarioHoraHasta % 1) * 60)).padStart(2, "0")}`,
-    },
+    openingHoursSpecification,
   };
 
   return (
@@ -118,6 +131,7 @@ export default async function SucursalPage({ params }: { params: Promise<{ slug:
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd).replace(/</g, "\\u003c") }} />
       <SucursalHeroAnimated
         nombre={nombreSucursal}
+        nombreMarca={nombreMarca}
         imagen={imagenFondo}
         direccion={direccion}
         telefono={telefono}
@@ -129,6 +143,10 @@ export default async function SucursalPage({ params }: { params: Promise<{ slug:
         horarioDiaHasta={horarioDiaHasta}
         horarioHoraDesde={horarioHoraDesde}
         horarioHoraHasta={horarioHoraHasta}
+        horarioDiaDesde2={horarioDiaDesde2}
+        horarioDiaHasta2={horarioDiaHasta2}
+        horarioHoraDesde2={horarioHoraDesde2}
+        horarioHoraHasta2={horarioHoraHasta2}
       />
 
       <div className="max-w-7xl mx-auto w-full px-4 md:px-6 pt-10">

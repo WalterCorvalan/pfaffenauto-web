@@ -7,6 +7,7 @@ import { CAMPOS_VEHICULO_PUBLICO } from "@/lib/vehiculos";
 import { LOGOS_MARCAS } from "@/lib/marcasLogos";
 import { MARCAS_ARGENTINA, slugificarMarca } from "@/lib/marcasModelos";
 import type { Metadata } from "next";
+import { getBrandingSeo } from "@/lib/brandingSeo";
 
 export const revalidate = 60;
 
@@ -23,9 +24,10 @@ function resolverNombreMarca(slug: string): string {
 export async function generateMetadata({ params }: { params: Promise<{ marca: string }> }): Promise<Metadata> {
   const { marca } = await params;
   const marcaName = resolverNombreMarca(marca);
+  const { nombre, zona } = await getBrandingSeo();
   return {
-    title: `Autos ${marcaName} en Zona Norte | Pfaffen Cars`,
-    description: `Encontrá vehículos ${marcaName} 0KM y usados seleccionados, con financiación y respaldo oficial en Pfaffen Cars.`,
+    title: `Autos ${marcaName} en ${zona} | ${nombre}`,
+    description: `Encontrá vehículos ${marcaName} 0KM y usados seleccionados, con financiación y respaldo oficial en ${nombre}.`,
     alternates: { canonical: `https://www.pfaffencars.com/marcas/${marca.toLowerCase()}` },
   };
 }

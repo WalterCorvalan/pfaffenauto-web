@@ -25,6 +25,10 @@ interface Sucursal {
   horario_dia_hasta: number;
   horario_hora_desde: number;
   horario_hora_hasta: number;
+  horario2_dia_desde: number | null;
+  horario2_dia_hasta: number | null;
+  horario2_hora_desde: number | null;
+  horario2_hora_hasta: number | null;
   latitude: number | null;
   longitude: number | null;
 }
@@ -42,6 +46,7 @@ const VACIO: Omit<Sucursal, "id"> = {
   nombre: "", slug: "", direccion: "", telefono_encargado: "", encargado_nombre: "",
   google_maps_url: "", imagen_url: "", horario_texto: "",
   horario_dia_desde: 1, horario_dia_hasta: 6, horario_hora_desde: 9, horario_hora_hasta: 19,
+  horario2_dia_desde: null, horario2_dia_hasta: null, horario2_hora_desde: null, horario2_hora_hasta: null,
   latitude: null, longitude: null,
 };
 
@@ -93,6 +98,10 @@ export default function SucursalesClient({ sucursalesIniciales }: { sucursalesIn
       horario_dia_hasta: form.horario_dia_hasta,
       horario_hora_desde: form.horario_hora_desde,
       horario_hora_hasta: form.horario_hora_hasta,
+      horario2_dia_desde: form.horario2_dia_desde,
+      horario2_dia_hasta: form.horario2_dia_hasta,
+      horario2_hora_desde: form.horario2_hora_desde,
+      horario2_hora_hasta: form.horario2_hora_hasta,
       latitude: form.latitude,
       longitude: form.longitude,
     };
@@ -127,6 +136,7 @@ export default function SucursalesClient({ sucursalesIniciales }: { sucursalesIn
   };
 
   const modalAbierto = nuevo || !!editando;
+  const hayRango2 = form.horario2_dia_desde != null;
 
   return (
     <div className="p-6 max-w-6xl mx-auto space-y-5">
@@ -243,6 +253,54 @@ export default function SucursalesClient({ sucursalesIniciales }: { sucursalesIn
                   </div>
                 </div>
               </div>
+
+              <div className="bg-slate-50 dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-xl p-4 space-y-3">
+                <div className="flex items-center justify-between">
+                  <p className="text-[11px] font-bold uppercase tracking-widest text-slate-400">Segundo rango (opcional, ej: sábados con otro horario)</p>
+                  {hayRango2 ? (
+                    <button
+                      type="button"
+                      onClick={() => setForm((f) => ({ ...f, horario2_dia_desde: null, horario2_dia_hasta: null, horario2_hora_desde: null, horario2_hora_hasta: null }))}
+                      className="text-[11px] font-bold text-rose-600 dark:text-rose-400 hover:underline"
+                    >
+                      Quitar
+                    </button>
+                  ) : (
+                    <button
+                      type="button"
+                      onClick={() => setForm((f) => ({ ...f, horario2_dia_desde: 6, horario2_dia_hasta: 6, horario2_hora_desde: 9, horario2_hora_hasta: 13 }))}
+                      className="text-[11px] font-bold text-[#0145F2] dark:text-sky-400 hover:underline"
+                    >
+                      + Agregar
+                    </button>
+                  )}
+                </div>
+                {hayRango2 && (
+                  <div className="grid grid-cols-2 gap-3">
+                    <div>
+                      <label className={labelClass}>Desde (día)</label>
+                      <select className={inputClass} value={form.horario2_dia_desde ?? 6} onChange={(e) => setForm((f) => ({ ...f, horario2_dia_desde: Number(e.target.value) }))}>
+                        {DIAS.map((d, i) => <option key={i} value={i}>{d}</option>)}
+                      </select>
+                    </div>
+                    <div>
+                      <label className={labelClass}>Hasta (día)</label>
+                      <select className={inputClass} value={form.horario2_dia_hasta ?? 6} onChange={(e) => setForm((f) => ({ ...f, horario2_dia_hasta: Number(e.target.value) }))}>
+                        {DIAS.map((d, i) => <option key={i} value={i}>{d}</option>)}
+                      </select>
+                    </div>
+                    <div>
+                      <label className={labelClass}>Hora de apertura</label>
+                      <input type="number" min={0} max={23} className={inputClass} value={form.horario2_hora_desde ?? 9} onChange={(e) => setForm((f) => ({ ...f, horario2_hora_desde: Number(e.target.value) }))} />
+                    </div>
+                    <div>
+                      <label className={labelClass}>Hora de cierre</label>
+                      <input type="number" min={0} max={23} className={inputClass} value={form.horario2_hora_hasta ?? 13} onChange={(e) => setForm((f) => ({ ...f, horario2_hora_hasta: Number(e.target.value) }))} />
+                    </div>
+                  </div>
+                )}
+              </div>
+
               <div className="grid grid-cols-2 gap-3">
                 <div>
                   <label className={labelClass}>Latitud (opcional, para el mapa)</label>

@@ -341,7 +341,7 @@ const GRUPOS: {
         icon: "/icons/panel/configuracion.png",
         modulo: "configuracion",
       },
-      { label: "Oportunidades", icon: "/icons/panel/oportunidades.png", modulo: "oportunidades" },
+      { href: "/panel/oportunidades", label: "Oportunidades", icon: "/icons/panel/oportunidades.png", modulo: "oportunidades" },
       {
         href: "/panel/errores",
         label: "Errores del sistema",
@@ -826,7 +826,7 @@ export default function PanelLayoutClient({
               />
             </div>
 
-            <TopTicker puedeVerCaja={esAdmin || roles.includes("finanzas")} />
+            <TopTicker puedeVerCaja={esAdmin || roles.includes("finanzas") || roles.includes("director")} />
 
             <button
               onClick={toggleDarkMode}

@@ -5,14 +5,18 @@ import { MARCAS_CHINAS } from "@/lib/marcasChinas";
 import { Globe2, AlertCircle } from "lucide-react";
 import Link from "next/link";
 import type { Metadata } from "next";
+import { getBrandingSeo } from "@/lib/brandingSeo";
 
 export const revalidate = 60;
 
-export const metadata: Metadata = {
-  title: "Mundo Chino | BAIC, Chery, Changan, JAC, BYD | Pfaffen Cars",
-  description: "Descubrí nuestra selección de marcas chinas: BAIC, Chery, Changan, JAC, BYD y más, con respaldo oficial en Pfaffen Cars.",
-  alternates: { canonical: "https://www.pfaffencars.com/mundo-chino" },
-};
+export async function generateMetadata(): Promise<Metadata> {
+  const { nombre } = await getBrandingSeo();
+  return {
+    title: `Mundo Chino | BAIC, Chery, Changan, JAC, BYD | ${nombre}`,
+    description: `Descubrí nuestra selección de marcas chinas: BAIC, Chery, Changan, JAC, BYD y más, con respaldo oficial en ${nombre}.`,
+    alternates: { canonical: "https://www.pfaffencars.com/mundo-chino" },
+  };
+}
 
 export default async function MundoChinoPage() {
   const supabase = await createClient();

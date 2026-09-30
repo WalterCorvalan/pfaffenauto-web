@@ -8,13 +8,17 @@ import { crearAlerta } from "@/lib/panel/alertas";
 import { rateLimit } from "@/lib/rateLimit";
 import { resolverContacto } from "@/lib/panel/contactoVehiculo";
 import DocumentosCliente from "./DocumentosCliente";
+import { getBrandingSeo } from "@/lib/brandingSeo";
 
 export const dynamic = "force-dynamic";
 
-export const metadata: Metadata = {
-  title: "Portal del Cliente | Pfaffen Cars",
-  robots: { index: false, follow: false },
-};
+export async function generateMetadata(): Promise<Metadata> {
+  const { nombre } = await getBrandingSeo();
+  return {
+    title: `Portal del Cliente | ${nombre}`,
+    robots: { index: false, follow: false },
+  };
+}
 
 const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE2_URL!,

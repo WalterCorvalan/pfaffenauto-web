@@ -24,7 +24,7 @@ export default async function FinanzasPage() {
   // Don Torcuato) solo ve, en Caja Grande/Chica, la sucursal que tiene
   // asignada en su perfil -- "encargado" NO es un rol que vea todo, es
   // por-sucursal como vendedor. Solo admin/finanzas ven todas las cajas.
-  const veTodasSucursales = miPerfil?.roles?.some((r: string) => ["admin", "finanzas"].includes(r)) ?? false;
+  const veTodasSucursales = miPerfil?.roles?.some((r: string) => ["admin", "finanzas", "director"].includes(r)) ?? false;
   const miSucursalId = miPerfil?.sucursal_id ?? null;
   // Pedido del 23/9: un encargado (ej. Lucas en Don Torcuato) no ve el resto
   // de Finanzas -- solo Caja Grande/Chica de su propia sucursal, nada más.

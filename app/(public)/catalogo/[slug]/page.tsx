@@ -23,6 +23,7 @@ import GaleriaVehiculo from "@/components/GaleriaVehiculo";
 import SimuladorFinanciacion from "@/components/SimuladorFinanciacion";
 import { CAMPOS_VEHICULO_DETALLE } from "@/lib/vehiculos";
 import { obtenerCotizacionDolar } from "@/lib/dolarBlueConfig";
+import { getBrandingSeo } from "@/lib/brandingSeo";
 
 export const revalidate = 60;
 
@@ -51,15 +52,15 @@ export async function generateMetadata({
   params: Promise<{ slug: string }>;
 }): Promise<Metadata> {
   const { slug } = await params;
-  const auto = await buscarAuto(slug);
-  if (!auto) return { title: "Vehículo no encontrado | Pfaffen Cars" };
+  const [auto, { nombre }] = await Promise.all([buscarAuto(slug), getBrandingSeo()]);
+  if (!auto) return { title: `Vehículo no encontrado | ${nombre}` };
 
   const esCeroKm = auto.km === 0;
-  const titulo = `${auto.marca} ${auto.modelo} ${auto.anio} ${esCeroKm ? "0KM" : "Usado"} | Pfaffen Cars`;
+  const titulo = `${auto.marca} ${auto.modelo} ${auto.anio} ${esCeroKm ? "0KM" : "Usado"} | ${nombre}`;
   const precioTexto = auto.precio_publicado_usd && !auto.precio_publicado_ars
     ? `US$ ${auto.precio_publicado_usd.toLocaleString("en-US")}`
     : `$${(auto.precio_publicado_ars || 0).toLocaleString("es-AR")}`;
-  const descripcion = `${auto.marca} ${auto.modelo} ${auto.anio}, ${esCeroKm ? "0km" : `${auto.km?.toLocaleString("es-AR")} km`}. Precio ${precioTexto}. Financiación disponible en Pfaffen Cars.`;
+  const descripcion = `${auto.marca} ${auto.modelo} ${auto.anio}, ${esCeroKm ? "0km" : `${auto.km?.toLocaleString("es-AR")} km`}. Precio ${precioTexto}. Financiación disponible en ${nombre}.`;
   const imagen = (auto.fotos as any)?.[0];
 
   return {

@@ -14,7 +14,7 @@ interface Modulo { modulo: string; activo: boolean; }
 interface Visibilidad { modulo: string; sector: string; visible: boolean; }
 interface PermisoRol { rol: string; otorgado: boolean; }
 
-const ROL_LABEL: Record<string, string> = { encargado: "Encargado", ventas: "Ventas", finanzas: "Finanzas", gestoria: "Gestoría" };
+const ROL_LABEL: Record<string, string> = { encargado: "Encargado", ventas: "Ventas", finanzas: "Finanzas", gestoria: "Gestoría", director: "Director" };
 
 export default function EmpresaClient() {
   const [subtab, setSubtab] = useState<"modulos" | "comisiones" | "plazos" | "routing" | "resumen" | "branding">("modulos");
@@ -635,6 +635,10 @@ function BrandingConfig() {
         <div>
           <label className="text-xs font-semibold text-slate-500 block mb-1">Domicilio</label>
           <input type="text" defaultValue={config.branding_domicilio || ""} onBlur={(e) => guardar({ branding_domicilio: e.target.value || null })} className={inputClass} />
+        </div>
+        <div>
+          <label className="text-xs font-semibold text-slate-500 block mb-1">Zona de venta (para SEO: títulos y descripciones de cada página)</label>
+          <input type="text" defaultValue={config.branding_zona || ""} placeholder="Zona Norte, Buenos Aires" onBlur={(e) => guardar({ branding_zona: e.target.value || null })} className={inputClass} />
         </div>
         <div className="grid grid-cols-2 gap-4">
           <div>
