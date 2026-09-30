@@ -30,7 +30,49 @@ declare global {
   }
 }
 
-export default function TrabajaConNosotrosClient() {
+export interface RrhhContenido {
+  badge?: string | null;
+  tituloPrefijo?: string | null;
+  tituloDestacado?: string | null;
+  bajada?: string | null;
+  beneficio1Titulo?: string | null;
+  beneficio1Texto?: string | null;
+  beneficio2Titulo?: string | null;
+  beneficio2Texto?: string | null;
+  beneficio3Titulo?: string | null;
+  beneficio3Texto?: string | null;
+  puestos?: string[] | null;
+}
+
+// Defaults -- se usan mientras no se cargó nada en el panel (Contenido del
+// Sitio → Formulario RRHH) o si la lectura server-side falla, así la
+// página nunca queda sin texto.
+const RRHH_DEFAULT = {
+  badge: "Sumate al equipo",
+  tituloPrefijo: "Construí tu futuro en",
+  tituloDestacado: "Pfaffen Cars",
+  bajada: "Somos una agencia líder en constante expansión. Buscamos personas proactivas, apasionadas por la industria automotriz y con ganas de desarrollarse en un entorno dinámico y profesional.",
+  beneficio1Titulo: "Desarrollo Profesional",
+  beneficio1Texto: "Oportunidades reales de crecimiento y capacitación constante en ventas y gestión.",
+  beneficio2Titulo: "Excelente Clima Laboral",
+  beneficio2Texto: "Fomentamos el trabajo en equipo, el respeto y la colaboración diaria entre todas las áreas.",
+  beneficio3Titulo: "Estabilidad y Beneficios",
+  beneficio3Texto: "Condiciones de contratación claras, esquema de comisiones competitivo y estabilidad garantizada.",
+  puestos: ["Ventas / Comercial", "Administración", "Marketing / Redes Sociales", "Taller / Mecánica", "Atención al Cliente", "Gerencia / Liderazgo", "Otro"],
+};
+
+export default function TrabajaConNosotrosClient({ contenido }: { contenido?: RrhhContenido }) {
+  const badge = contenido?.badge || RRHH_DEFAULT.badge;
+  const tituloPrefijo = contenido?.tituloPrefijo || RRHH_DEFAULT.tituloPrefijo;
+  const tituloDestacado = contenido?.tituloDestacado || RRHH_DEFAULT.tituloDestacado;
+  const bajadaHero = contenido?.bajada || RRHH_DEFAULT.bajada;
+  const beneficio1Titulo = contenido?.beneficio1Titulo || RRHH_DEFAULT.beneficio1Titulo;
+  const beneficio1Texto = contenido?.beneficio1Texto || RRHH_DEFAULT.beneficio1Texto;
+  const beneficio2Titulo = contenido?.beneficio2Titulo || RRHH_DEFAULT.beneficio2Titulo;
+  const beneficio2Texto = contenido?.beneficio2Texto || RRHH_DEFAULT.beneficio2Texto;
+  const beneficio3Titulo = contenido?.beneficio3Titulo || RRHH_DEFAULT.beneficio3Titulo;
+  const beneficio3Texto = contenido?.beneficio3Texto || RRHH_DEFAULT.beneficio3Texto;
+  const puestos = contenido?.puestos && contenido.puestos.length > 0 ? contenido.puestos : RRHH_DEFAULT.puestos;
   const [loading, setLoading] = useState(false);
   const [success, setSuccess] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -40,7 +82,7 @@ export default function TrabajaConNosotrosClient() {
   const [apellido, setApellido] = useState("");
   const [email, setEmail] = useState("");
   const [telefono, setTelefono] = useState("");
-  const [puesto, setPuesto] = useState("Ventas / Comercial");
+  const [puesto, setPuesto] = useState(puestos[0]);
   const [archivoCV, setArchivoCV] = useState<File | null>(null);
 
   // Turnstile (anti-spam) — antes este form insertaba directo a Supabase con
@@ -178,18 +220,16 @@ export default function TrabajaConNosotrosClient() {
           <div className="lg:col-span-5 flex flex-col gap-8 order-2 lg:order-1 mt-8 lg:mt-0">
             <div>
               <span className="inline-flex items-center gap-2 bg-[#0145F2]/10 dark:bg-sky-400/10 text-[#0145F2] dark:text-sky-300 text-[10px] font-black uppercase tracking-widest px-3 py-1.5 rounded-md mb-4 border border-[#0145F2]/20 dark:border-sky-400/20 backdrop-blur-md">
-                <Building2 className="w-3.5 h-3.5" /> Sumate al equipo
+                <Building2 className="w-3.5 h-3.5" /> {badge}
               </span>
               <h1 className="text-4xl lg:text-5xl font-black text-[#0f293e] dark:text-white tracking-tighter leading-tight mb-4 drop-shadow-sm">
-                Construí tu futuro en{" "}
+                {tituloPrefijo}{" "}
                 <span className="text-[#0145F2] dark:text-sky-300">
-                  Pfaffen Cars
+                  {tituloDestacado}
                 </span>
               </h1>
               <p className="text-slate-600 dark:text-slate-400 text-sm leading-relaxed font-medium">
-                Somos una agencia líder en constante expansión. Buscamos
-                personas proactivas, apasionadas por la industria automotriz y
-                con ganas de desarrollarse en un entorno dinámico y profesional.
+                {bajadaHero}
               </p>
             </div>
 
@@ -200,11 +240,10 @@ export default function TrabajaConNosotrosClient() {
                 </div>
                 <div>
                   <h3 className="text-sm font-black uppercase tracking-wider text-[#0f293e] dark:text-white">
-                    Desarrollo Profesional
+                    {beneficio1Titulo}
                   </h3>
                   <p className="text-xs text-slate-600 dark:text-slate-400 mt-1 leading-relaxed">
-                    Oportunidades reales de crecimiento y capacitación constante
-                    en ventas y gestión.
+                    {beneficio1Texto}
                   </p>
                 </div>
               </div>
@@ -215,11 +254,10 @@ export default function TrabajaConNosotrosClient() {
                 </div>
                 <div>
                   <h3 className="text-sm font-black uppercase tracking-wider text-[#0f293e] dark:text-white">
-                    Excelente Clima Laboral
+                    {beneficio2Titulo}
                   </h3>
                   <p className="text-xs text-slate-600 dark:text-slate-400 mt-1 leading-relaxed">
-                    Fomentamos el trabajo en equipo, el respeto y la
-                    colaboración diaria entre todas las áreas.
+                    {beneficio2Texto}
                   </p>
                 </div>
               </div>
@@ -230,11 +268,10 @@ export default function TrabajaConNosotrosClient() {
                 </div>
                 <div>
                   <h3 className="text-sm font-black uppercase tracking-wider text-[#0f293e] dark:text-white">
-                    Estabilidad y Beneficios
+                    {beneficio3Titulo}
                   </h3>
                   <p className="text-xs text-slate-600 dark:text-slate-400 mt-1 leading-relaxed">
-                    Condiciones de contratación claras, esquema de comisiones
-                    competitivo y estabilidad garantizada.
+                    {beneficio3Texto}
                   </p>
                 </div>
               </div>
@@ -370,23 +407,9 @@ export default function TrabajaConNosotrosClient() {
                         onChange={(e) => setPuesto(e.target.value)}
                         className="w-full bg-slate-50 dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-xl pl-10 pr-4 py-3.5 text-sm font-semibold text-[#0f293e] dark:text-white outline-none focus:bg-white dark:focus:bg-white/10 focus:border-[#0145F2] dark:focus:border-sky-400 focus:ring-4 focus:ring-blue-500/10 dark:focus:ring-sky-400/10 transition-all shadow-sm dark:shadow-none appearance-none cursor-pointer dark:[color-scheme:dark]"
                       >
-                        <option value="Ventas / Comercial">
-                          Ventas / Comercial
-                        </option>
-                        <option value="Administración">Administración</option>
-                        <option value="Marketing / Redes Sociales">
-                          Marketing / Redes Sociales
-                        </option>
-                        <option value="Taller / Mecánica">
-                          Taller / Mecánica
-                        </option>
-                        <option value="Atención al Cliente">
-                          Atención al Cliente
-                        </option>
-                        <option value="Gerencia / Liderazgo">
-                          Gerencia / Liderazgo
-                        </option>
-                        <option value="Otro">Otro puesto</option>
+                        {puestos.map((p) => (
+                          <option key={p} value={p}>{p}</option>
+                        ))}
                       </select>
                     </div>
                   </div>
