@@ -3,7 +3,7 @@
 import { useState, useMemo, useEffect } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { supabase2 } from "@/lib/supabase/client";
-import { Filter, Search, Radar, MessageCircle, AtSign, Bot, User, Plus, Radio, Building2, ChevronDown, Flame, Trash2, Megaphone, PanelLeftClose, PanelLeftOpen } from "lucide-react";
+import { Filter, Search, Radar, MessageCircle, AtSign, Bot, User, Plus, Radio, Building2, ChevronDown, Flame, Trash2, Megaphone, PanelLeftClose, PanelLeftOpen, ArrowDownWideNarrow, Clock3, Zap } from "lucide-react";
 import LeadDetailModal, { CANALES_ORIGEN } from "@/components/panel/conversaciones/LeadDetailModal";
 import NuevoLeadManualModal from "./NuevoLeadManualModal";
 
@@ -58,6 +58,35 @@ function diasDesde(iso: string | null) {
   if (!iso) return Infinity;
   return (Date.now() - new Date(iso).getTime()) / 86400000;
 }
+
+// Score simple y auditable para "a quién llamar primero" -- no es IA ni
+// predicción, es una suma de señales que ya están cargadas en cada lead
+// (mismo criterio que "Proyección del mes" en Reportes: una cuenta que un
+// vendedor pueda entender de un vistazo, no una caja negra). Los leads
+// perdidos/convertidos quedan siempre al final (ya no hay nada que priorizar).
+function calcularScore(l: LeadNormalizado & { sinRespuesta: boolean; esBasuraFinal: boolean }): number {
+  if (l.estado_lead === "perdido" || l.estado_lead === "convertido" || l.esBasuraFinal) return -1;
+  let score = 0;
+  score += l.calificacion === "caliente" ? 50 : l.calificacion === "tibio" ? 25 : l.calificacion === "frio" ? 5 : 15; // sin calificar: prioridad media, todavía no se sabe
+  if (l.estado_lead === "nuevo") score += 20;
+  else if (l.estado_lead === "calificando") score += 10;
+  if (l.sinRespuesta) score += 40; // caliente + cliente esperando respuesta hace 2+ días
+  if (!l.vendedor_id) score += 15; // nadie lo tiene asignado todavía
+  if (l.last_message_at && diasDesde(l.last_message_at) < 1) score += 5; // recién escribió
+  return score;
+}
+function prioridadDeScore(score: number): "alta" | "media" | "baja" | null {
+  if (score < 0) return null;
+  if (score >= 60) return "alta";
+  if (score >= 30) return "media";
+  return "baja";
+}
+const PRIORIDAD_LABEL: Record<string, string> = { alta: "Prioridad alta", media: "Prioridad media", baja: "Prioridad baja" };
+const PRIORIDAD_COLOR: Record<string, string> = {
+  alta: "text-rose-700 dark:text-rose-300 bg-rose-50 dark:bg-rose-500/10",
+  media: "text-amber-700 dark:text-amber-300 bg-amber-50 dark:bg-amber-500/10",
+  baja: "text-slate-500 dark:text-slate-400 bg-slate-100 dark:bg-white/10",
+};
 function formatDia(iso: string) {
   const d = new Date(iso);
   const hoy = new Date();
@@ -74,6 +103,7 @@ export default function LeadsUnificadosClient({ leadsIniciales, vendedores, sucu
   const [filtroOrigen, setFiltroOrigen] = useState<Origen | "todos">("todos");
   const [filtroCanal, setFiltroCanal] = useState("");
   const [filtroSucursal, setFiltroSucursal] = useState("");
+  const [orden, setOrden] = useState<"prioridad" | "recientes">("prioridad");
   const [busqueda, setBusqueda] = useState("");
   const [seleccionado, setSeleccionado] = useState<{ id: string; origen: Origen } | null>(null);
   const [showNuevo, setShowNuevo] = useState(false);
@@ -134,7 +164,8 @@ export default function LeadsUnificadosClient({ leadsIniciales, vendedores, sucu
     const sinRespuesta = sinContestarDelCliente && l.calificacion === "caliente" && !l.esBasura;
     const basuraAutomatica = sinContestarDelCliente && (l.calificacion === "frio" || !l.calificacion);
     const esBasuraFinal = l.esBasura || basuraAutomatica;
-    return { ...l, sinRespuesta, esBasuraFinal };
+    const score = calcularScore({ ...l, sinRespuesta, esBasuraFinal });
+    return { ...l, sinRespuesta, esBasuraFinal, score, prioridad: prioridadDeScore(score) };
   }), [leads]);
 
   const totalSinRespuesta = useMemo(() => clasificados.filter((l) => l.sinRespuesta).length, [clasificados]);
@@ -155,8 +186,14 @@ export default function LeadsUnificadosClient({ leadsIniciales, vendedores, sucu
       const q = busqueda.trim().toLowerCase();
       l = l.filter((c) => [c.nombre, c.telefono].filter(Boolean).join(" ").toLowerCase().includes(q));
     }
+    // "Prioridad" no aplica dentro de Sin respuesta/Basura -- esas dos
+    // pestañas ya son su propio criterio de orden (más viejo primero tiene
+    // más sentido ahí que el score general).
+    if (orden === "prioridad" && vista === "normal") {
+      l = [...l].sort((a, b) => b.score - a.score || new Date(b.last_message_at || b.created_at).getTime() - new Date(a.last_message_at || a.created_at).getTime());
+    }
     return l;
-  }, [clasificados, vista, filtroEstado, filtroOrigen, filtroCanal, filtroSucursal, busqueda]);
+  }, [clasificados, vista, filtroEstado, filtroOrigen, filtroCanal, filtroSucursal, busqueda, orden]);
 
   const actualizarUno = (id: string, patch: any) => setLeads((prev) => prev.map((c) => (c.id === id ? {
     ...c,
@@ -210,6 +247,18 @@ export default function LeadsUnificadosClient({ leadsIniciales, vendedores, sucu
               {ESTADOS.map((e) => (
                 <button key={e.value} onClick={() => setFiltroEstado(e.value)} className={`px-2 py-1 rounded-md text-[10px] font-bold border transition-colors ${filtroEstado === e.value ? "bg-slate-800 dark:bg-white text-white dark:text-slate-900 border-slate-800 dark:border-white" : "bg-white dark:bg-white/5 border-slate-200 dark:border-white/10 text-slate-600 dark:text-slate-300"}`}>{e.label}</button>
               ))}
+            </div>
+          )}
+
+          {vista === "normal" && (
+            <div className="flex items-center gap-1 text-[10px]">
+              <ArrowDownWideNarrow className="w-3 h-3 text-slate-400 shrink-0" />
+              <button onClick={() => setOrden("prioridad")} className={`flex items-center gap-1 px-2 py-1 rounded-md font-bold border transition-colors ${orden === "prioridad" ? "bg-[#0145F2] border-[#0145F2] text-white" : "bg-white dark:bg-white/5 border-slate-200 dark:border-white/10 text-slate-500"}`}>
+                <Zap className="w-3 h-3" /> A quién llamar primero
+              </button>
+              <button onClick={() => setOrden("recientes")} className={`flex items-center gap-1 px-2 py-1 rounded-md font-bold border transition-colors ${orden === "recientes" ? "bg-[#0145F2] border-[#0145F2] text-white" : "bg-white dark:bg-white/5 border-slate-200 dark:border-white/10 text-slate-500"}`}>
+                <Clock3 className="w-3 h-3" /> Más recientes
+              </button>
             </div>
           )}
 
@@ -284,6 +333,9 @@ export default function LeadsUnificadosClient({ leadsIniciales, vendedores, sucu
                     </div>
                     {c.sinRespuesta && vista !== "sin_respuesta" && (
                       <span className="inline-flex items-center gap-1 text-[10px] font-bold text-rose-700 dark:text-rose-300 bg-rose-50 dark:bg-rose-500/10 px-1.5 py-0.5 rounded-full mt-1"><Flame className="w-3 h-3" /> Sin responder</span>
+                    )}
+                    {!c.sinRespuesta && orden === "prioridad" && vista === "normal" && c.prioridad === "alta" && (
+                      <span className={`inline-flex items-center gap-1 text-[10px] font-bold px-1.5 py-0.5 rounded-full mt-1 ${PRIORIDAD_COLOR.alta}`}><Zap className="w-3 h-3" /> {PRIORIDAD_LABEL.alta}</span>
                     )}
                     {c.esBasuraFinal && vista !== "basura" && (
                       <span className="inline-flex items-center gap-1 text-[10px] font-bold text-slate-500 dark:text-slate-400 bg-slate-100 dark:bg-white/10 px-1.5 py-0.5 rounded-full mt-1"><Trash2 className="w-3 h-3" /> Basura</span>
