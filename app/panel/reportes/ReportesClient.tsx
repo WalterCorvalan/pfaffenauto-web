@@ -1,12 +1,13 @@
 "use client";
 
 import { useState, useMemo } from "react";
+import * as XLSX from "xlsx";
 import { supabase2 } from "@/lib/supabase/client";
-import { BarChart3, ChevronLeft, ChevronRight, Trophy, Clock, FolderKanban, Ticket, Wrench, Loader2, Lock, SearchCheck, TrendingUp } from "lucide-react";
+import { BarChart3, ChevronLeft, ChevronRight, Trophy, Clock, FolderKanban, Ticket, Wrench, Loader2, Lock, SearchCheck, TrendingUp, Download } from "lucide-react";
 import { BarChart, Bar, XAxis, YAxis, ResponsiveContainer, Tooltip, CartesianGrid, Cell } from "recharts";
 
 interface Props {
-  miId: string; miNombre: string; soyAdmin: boolean; soyFinanzas: boolean; soyVentas: boolean; gananciasOcultas: boolean; mesInicial: string;
+  miId: string; miNombre: string; soyAdmin: boolean; soyFinanzas: boolean; soyDirector: boolean; soyVentas: boolean; gananciasOcultas: boolean; mesInicial: string;
   rankingInicial: any[]; premios: any[]; rankingVelocidadInicial: any[]; operacionesPorVendedorInicial: any[];
   origenLeadsInicial: any[]; embudoComercialInicial: any; expedientesResumenInicial: any; expedientesPorEstado: any[];
   infraccionesResumenInicial: any; tallerFacturacionInicial: any; ventasPorMes: any[]; ventasPorMarca: any[]; composicionVentas: any;
@@ -93,8 +94,8 @@ function SeccionRestringida({ titulo }: { titulo: string }) {
 }
 
 export default function ReportesClient(props: Props) {
-  const { miId, miNombre, premios, soyAdmin, soyFinanzas, gananciasOcultas } = props;
-  const puedeVerFinanzas = soyAdmin || soyFinanzas;
+  const { miId, miNombre, premios, soyAdmin, soyFinanzas, soyDirector, gananciasOcultas } = props;
+  const puedeVerFinanzas = soyAdmin || soyFinanzas || soyDirector;
   // "ganancia oculta" es la excepción por-usuario (perfiles.ganancias_ocultas)
   // -- separada de puedeVerFinanzas, que solo controla si ve la SECCIÓN de
   // reportes financieros. Un finanzas/admin con el margen oculto entra a la
@@ -190,6 +191,57 @@ export default function ReportesClient(props: Props) {
   const ESTADO_STOCK_LABEL: Record<string, string> = { disponible: "Disponibles", reservado: "Reservados", "señado": "Señados", vendido: "Vendidos", en_preparacion: "En prep." };
   const ESTADO_STOCK_COLOR: Record<string, string> = { disponible: "bg-emerald-500", reservado: "bg-blue-500", "señado": "bg-amber-500", vendido: "bg-indigo-500", en_preparacion: "bg-sky-500" };
 
+  // Exporta lo que ya está cargado en pantalla para el mes elegido (no pega
+  // a la base de nuevo) -- un Excel con una hoja por vista "por vendedor" /
+  // "por mes" que ya existe en este dashboard. No hay quiebre por sucursal
+  // todavía: ninguna de las vistas de Reportes trae esa columna hoy.
+  const exportarReportes = () => {
+    const wb = XLSX.utils.book_new();
+
+    const hojaRanking = ranking.map((r: any) => ({
+      Vendedor: r.nombre, "Ventas (equiv.)": Number(r.ventas_equivalentes), Consignaciones: r.consignaciones,
+    }));
+    XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(hojaRanking), "Ranking del mes");
+
+    const hojaVelocidad = rankingVelocidad.map((r: any) => ({
+      Vendedor: r.vendedor_nombre, "Tiempo medio (min)": r.tiempo_medio_minutos, "% <1h": r.pct_bajo_1h,
+      Contactados: r.contactados, "Sin contactar": r.sin_contactar, Soltados: r.soltados,
+    }));
+    XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(hojaVelocidad), "Velocidad de respuesta");
+
+    const hojaProyeccion = props.proyeccionVentasInicial.map((r: any) => ({
+      Vendedor: r.nombre, Cerradas: r.ventas_cerradas_mes, "Pipeline abierto": r.pipeline_actual,
+      "Conversión hist. %": r.tasa_conversion_pct, Proyectadas: r.proyeccion,
+    }));
+    XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(hojaProyeccion), "Proyección");
+
+    const hojaOperaciones = operacionesPorVendedor.map((r: any) => ({ Vendedor: r.nombre, "Ventas del mes": r.ventas_mes }));
+    XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(hojaOperaciones), "Operaciones por vendedor");
+
+    const hojaClientes = props.clientesPorVendedor.map((r: any) => ({ Vendedor: r.nombre, Clientes: r.clientes }));
+    XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(hojaClientes), "Clientes por vendedor");
+
+    const hojaCotizaciones = props.cotizacionesPorVendedor.map((r: any) => ({ Vendedor: r.nombre, Cotizaciones: r.cotizaciones }));
+    XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(hojaCotizaciones), "Cotizaciones por vendedor");
+
+    const hojaVentasPorMes = ventasPorMesChart.map((r: any) => ({ Mes: r.mes, ARS: r.ARS, USD: r.USD }));
+    XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(hojaVentasPorMes), "Ventas por mes");
+
+    const hojaVentasPorMarca = ventasPorMarca.map((r: any) => ({ Marca: r.marca, Ventas: r.ventas_ponderadas }));
+    XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(hojaVentasPorMarca), "Ventas por marca");
+
+    const hojaVentasPorOrigen = ventasPorOrigen.map((r: any) => ({ Origen: r.origen, Ventas: r.cantidad }));
+    XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(hojaVentasPorOrigen), "Ventas por origen");
+
+    const hojaStockEstado = props.stockPorEstado.map((r: any) => ({ Estado: ESTADO_STOCK_LABEL[r.estado] || r.estado, Cantidad: r.cantidad }));
+    XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(hojaStockEstado), "Stock por estado");
+
+    const hojaStockMarca = props.stockPorMarca.map((r: any) => ({ Marca: r.marca, Cantidad: r.cantidad }));
+    XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(hojaStockMarca), "Stock por marca");
+
+    XLSX.writeFile(wb, `reportes-${mesStr.slice(0, 7)}.xlsx`);
+  };
+
   return (
     <div className="p-6 max-w-6xl mx-auto space-y-5">
       <div>
@@ -205,6 +257,7 @@ export default function ReportesClient(props: Props) {
         </div>
         {mesOffset !== 0 && <button onClick={() => cargarMes(0)} className="px-3 py-2 text-xs font-bold bg-white dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-xl text-slate-600 dark:text-slate-300">Volver al mes actual</button>}
         {cargando && <Loader2 className="w-4 h-4 animate-spin text-slate-400" />}
+        <button onClick={exportarReportes} className="flex items-center gap-1.5 px-3 py-2 text-xs font-semibold bg-white dark:bg-white/5 border border-slate-200 dark:border-white/10 hover:bg-slate-50 dark:hover:bg-white/10 rounded-xl text-slate-600 dark:text-slate-300 ml-auto"><Download className="w-3.5 h-3.5" /> Exportar Excel</button>
       </div>
 
       {/* Competencia del mes */}

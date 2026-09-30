@@ -63,6 +63,10 @@ La dirección del último mensaje **no vive en la fila de la conversación** —
 
 **Migración pendiente**: `migraciones/sql_leads_es_basura.sql` agrega `es_basura` a las 4 tablas. Hasta que se corra en Supabase, el toggle "Lead basura" falla al guardar (columna inexistente) — la regla automática de basura para leads fríos sí funciona sin la migración porque no depende de esa columna.
 
+## Scoring de leads (`calcularScore`) — "a quién llamar primero"
+
+`LeadsUnificadosClient.tsx` calcula un `score` numérico por lead (no persiste en la base, se recalcula en cada render a partir de campos que ya vienen cargados: `calificacion`, `estado_lead`, si está sin asignar, si el cliente quedó esperando respuesta, y si el último mensaje es reciente). Es una suma simple y auditable, mismo criterio que "Proyección del mes" en Reportes — no es un modelo ni IA. El toggle "A quién llamar primero" (default) ordena `filtrados` por ese score; "Más recientes" vuelve al orden anterior (por `last_message_at`/`created_at`). Los leads `perdido`/`convertido` y los de la pestaña Basura quedan con `score = -1` (`prioridad: null`), siempre al final y sin badge de prioridad. Solo se muestra el badge de **prioridad alta** en la fila (no media/baja, para no saturar la lista) y no se muestra si ya está el badge de "Sin responder" (ese ya es la señal más urgente posible). Si sumás un criterio nuevo de urgencia a algún canal, agregalo a `calcularScore()` — es la única función que decide el orden.
+
 ## No tocar sin revisar el resto
 
 - No agregar un 5° canal de leads sin actualizar los 3 lugares de arriba (unificación en `leads/page.tsx`, el mapeo FK de `tareas_lead`, y cualquier contador tipo "Leads sin atender") — y sin sumarle `es_basura` si tiene que participar de la pestaña "Lead basura".

@@ -12,7 +12,26 @@ export const ROL_A_SECTOR: Record<string, string> = {
   finanzas: "finanzas",
   gestoria: "gestoria",
   taller: "taller",
+  director: "director",
 };
+
+// "director" (rol CEO/dueño, pedido del 30/9): a propósito NO se agregó al
+// array de la línea de abajo que fuerza "clientes" siempre visible -- ese
+// override es justo lo que hay que evitar para este rol (el dueño no quiere
+// ver Leads/Clientes/Visitas/Recontactos por default). Queda 100% controlado
+// por "Visibilidad por sector" en Configuración → Empresa → Módulos: sin
+// fila ahí, el módulo es visible por default (mismo criterio que cualquier
+// otro rol), así que para ocultarle Leads/Clientes/Visitas/Recontactos/
+// Pedidos/Peritajes/Infracciones/Mensajes/WhatsApp/Instagram/Messenger hay
+// que tildar "No" en la columna "Director" de esa pantalla -- no es algo que
+// el código decida solo. Acceso a Finanzas (TopTicker, tiles del Dashboard,
+// secciones de Reportes, "ver todas las sucursales" en Finanzas) sí está
+// forzado en código (ver PanelLayoutClient.tsx, panel/page.tsx,
+// reportes/page.tsx, finanzas/page.tsx, stock/page.tsx) porque "acceso
+// completo a Finanzas" fue el pedido explícito, a diferencia de Señas/Ventas
+// (que el dueño solo quiere "ver", sin gate especial -- hoy no hay una
+// distinción real de solo-lectura en esos módulos, ve lo mismo que
+// cualquier otro rol con el módulo visible).
 
 // Mismo criterio que moduloVisible() en layout.tsx: admin nunca se filtra;
 // sin fila en visibilidad_sector, el módulo es visible por default; con

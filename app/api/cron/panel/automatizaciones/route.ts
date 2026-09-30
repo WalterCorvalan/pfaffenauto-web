@@ -155,6 +155,51 @@ async function alertarDocumentacionPendiente(): Promise<number> {
   return avisados;
 }
 
+// F. Encuesta NPS "post-entrega" automática -- antes había que entrar a
+// NPS → Enviar Encuesta y mandarla a mano por cada auto entregado. Ahora se
+// dispara sola cuando pasan entre 2 y 3 días de ventas.fecha_entrega (le
+// damos un día de margen para que el cliente ya haya usado el auto), usando
+// el mismo texto que ya se configura en Configuración → NPS
+// (nps_msg_post_entrega) y el mismo canal oficial de WhatsApp que el resto
+// de estas automatizaciones (no el link wa.me manual del modal). Solo cubre
+// ventas con cliente_id cargado (no comprador de mostrador sin ficha) y
+// teléfono disponible -- ver EnviarEncuestaModal.tsx para el flujo manual
+// que sigue existiendo para los demás casos.
+async function enviarNpsPostEntregaAutomatico(): Promise<number> {
+  const wa = await tokenWhatsapp();
+  if (!wa) return 0;
+
+  const { data: config } = await supabase.from("configuracion_empresa").select("nps_msg_post_entrega").eq("id", true).maybeSingle();
+  const mensaje = config?.nps_msg_post_entrega;
+  if (!mensaje) return 0;
+
+  const hace2dias = new Date(Date.now() - 2 * 24 * 3600 * 1000).toISOString();
+  const hace3dias = new Date(Date.now() - 3 * 24 * 3600 * 1000).toISOString();
+  const { data: ventas } = await supabase
+    .from("ventas")
+    .select("id, cliente_id, vendedor_id, comprador_telefono, comprador_telefono_celular")
+    .not("fecha_entrega", "is", null)
+    .not("cliente_id", "is", null)
+    .eq("nps_post_entrega_enviado", false)
+    .lte("fecha_entrega", hace2dias)
+    .gte("fecha_entrega", hace3dias);
+
+  let enviados = 0;
+  for (const v of ventas || []) {
+    const telefono = v.comprador_telefono_celular || v.comprador_telefono;
+    if (!telefono) continue;
+    try {
+      await sendTextMessage(wa.phoneNumberId, wa.token, telefono, mensaje);
+      await supabase.from("nps_envios").insert({ cliente_id: v.cliente_id, vendedor_id: v.vendedor_id, contexto: "post-entrega", enviado_por: null });
+      await supabase.from("ventas").update({ nps_post_entrega_enviado: true }).eq("id", v.id);
+      enviados++;
+    } catch (err) {
+      console.error("[cron/automatizaciones] error mandando NPS post-entrega", v.id, err);
+    }
+  }
+  return enviados;
+}
+
 // E. Handoff viejo sin actividad 30+ días -- reactiva a Rodi para que la
 // conversación no quede muda para siempre si el vendedor la dejó sin cerrar.
 // No borra nada del historial, solo vuelve a habilitar la IA.
@@ -185,13 +230,14 @@ export async function GET(req: Request) {
     return new Response("Unauthorized", { status: 401 });
   }
 
-  const [leadsCalientes, agradecimientos, nudges, docsPendientes, handoffReactivados] = await Promise.all([
+  const [leadsCalientes, agradecimientos, nudges, docsPendientes, handoffReactivados, npsPostEntrega] = await Promise.all([
     escalarLeadsCalientesSinAtender(),
     agradecerVentasRecientes(),
     nudgeSinRespuesta(),
     alertarDocumentacionPendiente(),
     reactivarHandoffViejo(),
+    enviarNpsPostEntregaAutomatico(),
   ]);
 
-  return Response.json({ ok: true, leadsCalientes, agradecimientos, nudges, docsPendientes, handoffReactivados });
+  return Response.json({ ok: true, leadsCalientes, agradecimientos, nudges, docsPendientes, handoffReactivados, npsPostEntrega });
 }

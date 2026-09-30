@@ -22,7 +22,7 @@ export default async function PanelV2Home() {
 
   const { data: miPerfil } = await supabase.from("perfiles").select("id, nombre, roles, ganancias_ocultas").eq("id", user.id).maybeSingle();
   const esAdmin = miPerfil?.roles?.includes("admin") ?? false;
-  const puedeVerFinanzas = esAdmin || (miPerfil?.roles?.includes("finanzas") ?? false);
+  const puedeVerFinanzas = esAdmin || (miPerfil?.roles?.includes("finanzas") ?? false) || (miPerfil?.roles?.includes("director") ?? false);
 
   const hoy = new Date();
   const inicioMes = new Date(hoy.getFullYear(), hoy.getMonth(), 1).toISOString().slice(0, 10);

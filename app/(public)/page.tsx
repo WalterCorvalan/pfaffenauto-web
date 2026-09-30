@@ -53,6 +53,8 @@ export default async function Page() {
     .select("id, nombre, slug, direccion, google_maps_url, latitude, longitude")
     .order("nombre", { ascending: true });
 
+  const { nombre: nombreMarca } = await getBrandingSeo();
+
   // Sin RLS pública sobre configuracion_empresa todavía -- se lee con
   // service role, igual que las redes del footer en (public)/layout.tsx.
   let heroContenido;
@@ -126,7 +128,7 @@ export default async function Page() {
         <BannerFinanciacion linkAFinanciacion />
       </div>
 
-      <Location sucursales={sucursales || []} />
+      <Location sucursales={sucursales || []} nombreMarca={nombreMarca} />
 
       <VentasRealizadas items={entregas || []} />
 

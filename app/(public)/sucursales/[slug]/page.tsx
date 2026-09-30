@@ -63,7 +63,7 @@ export default async function SucursalPage({ params }: { params: Promise<{ slug:
 
   const { data: sucursal } = await supabase
     .from("sucursales")
-    .select("id, nombre, direccion, telefono:telefono_encargado, slug, google_maps_url, imagen_url, horario_texto, horario_dia_desde, horario_dia_hasta, horario_hora_desde, horario_hora_hasta, latitude, longitude")
+    .select("id, nombre, direccion, telefono:telefono_encargado, slug, google_maps_url, imagen_url, horario_texto, horario_dia_desde, horario_dia_hasta, horario_hora_desde, horario_hora_hasta, horario2_dia_desde, horario2_dia_hasta, horario2_hora_desde, horario2_hora_hasta, latitude, longitude")
     .eq("slug", slug)
     .maybeSingle();
 
@@ -87,10 +87,24 @@ export default async function SucursalPage({ params }: { params: Promise<{ slug:
   const horarioDiaHasta = sucursal.horario_dia_hasta ?? 6;
   const horarioHoraDesde = sucursal.horario_hora_desde ?? 9;
   const horarioHoraHasta = sucursal.horario_hora_hasta ?? 19;
+  const horarioDiaDesde2 = sucursal.horario2_dia_desde ?? null;
+  const horarioDiaHasta2 = sucursal.horario2_dia_hasta ?? null;
+  const horarioHoraDesde2 = sucursal.horario2_hora_desde ?? null;
+  const horarioHoraHasta2 = sucursal.horario2_hora_hasta ?? null;
+  const tieneRango2 = horarioDiaDesde2 != null && horarioDiaHasta2 != null && horarioHoraDesde2 != null && horarioHoraHasta2 != null;
 
   const { streetAddress, addressLocality, addressRegion, postalCode } = parseDireccion(direccion);
   const DIAS_SCHEMA = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"];
-  const dayOfWeek = Array.from({ length: horarioDiaHasta - horarioDiaDesde + 1 }, (_, i) => DIAS_SCHEMA[horarioDiaDesde + i]);
+  const formatearHora = (h: number) => `${String(Math.trunc(h)).padStart(2, "0")}:${String(Math.round((h % 1) * 60)).padStart(2, "0")}`;
+  const rangoSchema = (diaDesde: number, diaHasta: number, horaDesde: number, horaHasta: number) => ({
+    "@type": "OpeningHoursSpecification",
+    dayOfWeek: Array.from({ length: diaHasta - diaDesde + 1 }, (_, i) => DIAS_SCHEMA[diaDesde + i]),
+    opens: formatearHora(horaDesde),
+    closes: formatearHora(horaHasta),
+  });
+  const openingHoursSpecification = tieneRango2
+    ? [rangoSchema(horarioDiaDesde, horarioDiaHasta, horarioHoraDesde, horarioHoraHasta), rangoSchema(horarioDiaDesde2!, horarioDiaHasta2!, horarioHoraDesde2!, horarioHoraHasta2!)]
+    : rangoSchema(horarioDiaDesde, horarioDiaHasta, horarioHoraDesde, horarioHoraHasta);
   const jsonLd = {
     "@context": "https://schema.org",
     "@type": "AutoDealer",
@@ -109,12 +123,7 @@ export default async function SucursalPage({ params }: { params: Promise<{ slug:
     },
     ...(sucursal.google_maps_url ? { hasMap: sucursal.google_maps_url } : {}),
     ...(sucursal.latitude != null && sucursal.longitude != null ? { geo: { "@type": "GeoCoordinates", latitude: sucursal.latitude, longitude: sucursal.longitude } } : {}),
-    openingHoursSpecification: {
-      "@type": "OpeningHoursSpecification",
-      dayOfWeek,
-      opens: `${String(Math.trunc(horarioHoraDesde)).padStart(2, "0")}:${String(Math.round((horarioHoraDesde % 1) * 60)).padStart(2, "0")}`,
-      closes: `${String(Math.trunc(horarioHoraHasta)).padStart(2, "0")}:${String(Math.round((horarioHoraHasta % 1) * 60)).padStart(2, "0")}`,
-    },
+    openingHoursSpecification,
   };
 
   return (
@@ -122,6 +131,7 @@ export default async function SucursalPage({ params }: { params: Promise<{ slug:
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd).replace(/</g, "\\u003c") }} />
       <SucursalHeroAnimated
         nombre={nombreSucursal}
+        nombreMarca={nombreMarca}
         imagen={imagenFondo}
         direccion={direccion}
         telefono={telefono}
@@ -133,6 +143,10 @@ export default async function SucursalPage({ params }: { params: Promise<{ slug:
         horarioDiaHasta={horarioDiaHasta}
         horarioHoraDesde={horarioHoraDesde}
         horarioHoraHasta={horarioHoraHasta}
+        horarioDiaDesde2={horarioDiaDesde2}
+        horarioDiaHasta2={horarioDiaHasta2}
+        horarioHoraDesde2={horarioHoraDesde2}
+        horarioHoraHasta2={horarioHoraHasta2}
       />
 
       <div className="max-w-7xl mx-auto w-full px-4 md:px-6 pt-10">
