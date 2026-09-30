@@ -9,7 +9,13 @@ import ComparadorModal from "@/components/modals/ComparadorModal";
 import { VehicleCard } from "@/components/Stock";
 import { MARCAS_CHINAS } from "@/lib/marcasChinas";
 
-const ITEMS_POR_PAGINA = 9;
+// 12 (no 9) -- tiene que ser múltiplo de las 3 cantidades de columnas que
+// usa la grilla según el ancho de pantalla (2 en mobile, 3 en lg, 4 en xl:
+// grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 más abajo). Con 9 la última fila
+// en desktop (4 columnas) quedaba con 1 tarjeta suelta y 3 huecos vacíos,
+// aunque hubiera más páginas -- daba la impresión de que ese era el último
+// auto disponible.
+const ITEMS_POR_PAGINA = 12;
 
 const normalizar = (texto: string) =>
   texto?.toLowerCase().normalize("NFD").replace(/[̀-ͯ]/g, "").trim() || "";
