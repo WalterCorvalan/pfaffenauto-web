@@ -17,9 +17,13 @@ interface HeroProps {
   horarioDiaHasta: number;
   horarioHoraDesde: number;
   horarioHoraHasta: number;
+  horarioDiaDesde2?: number | null;
+  horarioDiaHasta2?: number | null;
+  horarioHoraDesde2?: number | null;
+  horarioHoraHasta2?: number | null;
 }
 
-export default function SucursalHeroAnimated({ nombre, imagen, direccion, telefono, horario, navLink, latitude, longitude, horarioDiaDesde, horarioDiaHasta, horarioHoraDesde, horarioHoraHasta }: HeroProps) {
+export default function SucursalHeroAnimated({ nombre, imagen, direccion, telefono, horario, navLink, latitude, longitude, horarioDiaDesde, horarioDiaHasta, horarioHoraDesde, horarioHoraHasta, horarioDiaDesde2, horarioDiaHasta2, horarioHoraDesde2, horarioHoraHasta2 }: HeroProps) {
   // Con lat/long cargadas (Configuración → Sucursales) el pin queda exacto;
   // sin ellas, cae a buscar por dirección -- sigue funcionando, solo menos preciso.
   const mapaSrc = latitude != null && longitude != null
@@ -67,7 +71,7 @@ export default function SucursalHeroAnimated({ nombre, imagen, direccion, telefo
               <div className="min-w-0">
                 <span className="text-[11px] font-bold text-gray-400 dark:text-slate-500 uppercase tracking-widest block mb-0.5">Horario de atención</span>
                 <span className="text-sm font-bold block text-gray-900 dark:text-white">{horario}</span>
-                <EstadoHorario diaDesde={horarioDiaDesde} diaHasta={horarioDiaHasta} horaDesde={horarioHoraDesde} horaHasta={horarioHoraHasta} />
+                <EstadoHorario diaDesde={horarioDiaDesde} diaHasta={horarioDiaHasta} horaDesde={horarioHoraDesde} horaHasta={horarioHoraHasta} diaDesde2={horarioDiaDesde2} diaHasta2={horarioDiaHasta2} horaDesde2={horarioHoraDesde2} horaHasta2={horarioHoraHasta2} />
               </div>
             </div>
             <div className="flex divide-x divide-gray-100 dark:divide-white/10">
