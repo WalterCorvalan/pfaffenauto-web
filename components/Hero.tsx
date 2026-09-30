@@ -29,7 +29,7 @@ export interface HeroContenido {
 // Defaults -- se usan mientras no se cargó nada en el panel (Contenido del
 // Sitio → Hero) o si la lectura server-side falla, así la portada nunca
 // queda sin video ni sin texto.
-const HERO_DEFAULT: Required<HeroContenido> = {
+const HERO_DEFAULT: { videoUrl: string; badge: string; tituloPrefijo: string; tituloDestacado: string; subtitulo: string } = {
   videoUrl: "/hero-video.mp4",
   badge: "Compra o Vende tu auto en el momento",
   tituloPrefijo: "La forma mas confiable de comprar o vender",
