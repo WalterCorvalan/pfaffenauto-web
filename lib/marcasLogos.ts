@@ -31,7 +31,7 @@ export const LOGOS_MARCAS: Record<string, string> = {
   "Mercedes Benz": "https://upload.wikimedia.org/wikipedia/commons/9/90/Mercedes-Logo.svg",
   "Abarth": "https://upload.wikimedia.org/wikipedia/commons/7/72/Abarth_logo.svg",
   "AION": "https://upload.wikimedia.org/wikipedia/commons/7/7a/AION_logo.svg",
-  "Alfa Romeo": "https://upload.wikimedia.org/wikipedia/commons/9/98/Alfa_Romeo_2015.svg",
+  "Alfa Romeo": "https://upload.wikimedia.org/wikipedia/en/2/2a/Alfa_Romeo_logo.png",
   "Arcfox": "https://upload.wikimedia.org/wikipedia/commons/8/85/ARCFOX_logo.svg",
   "Aston Martin": "https://upload.wikimedia.org/wikipedia/commons/8/8e/Aston_Martin_Logo.svg",
   "BAW": "https://upload.wikimedia.org/wikipedia/commons/2/2a/BAW_logo.svg",
@@ -45,8 +45,8 @@ export const LOGOS_MARCAS: Record<string, string> = {
   "GAC Motor": "https://upload.wikimedia.org/wikipedia/commons/e/e6/GAC_Motor_logo.svg",
   "Great Wall": "https://upload.wikimedia.org/wikipedia/commons/5/57/Great_Wall_Motors_logo.svg",
   "GWM": "https://upload.wikimedia.org/wikipedia/commons/5/57/Great_Wall_Motors_logo.svg",
-  "Isuzu": "https://upload.wikimedia.org/wikipedia/commons/5/5a/Isuzu_logo.svg",
-  "Iveco": "https://upload.wikimedia.org/wikipedia/commons/1/17/Iveco_logo.svg",
+  "Isuzu": "https://upload.wikimedia.org/wikipedia/commons/4/49/Isuzu.svg",
+  "Iveco": "https://upload.wikimedia.org/wikipedia/commons/f/f7/Iveco_Logo_2023.svg",
   "Jaguar": "https://upload.wikimedia.org/wikipedia/commons/8/8e/Jaguar_logo_2021.svg",
   "Jetour": "https://upload.wikimedia.org/wikipedia/commons/9/94/Jetour_logo.svg",
   "JMC": "https://upload.wikimedia.org/wikipedia/commons/3/3a/JMC_logo.svg",
@@ -69,7 +69,7 @@ export const LOGOS_MARCAS: Record<string, string> = {
   "KGM / SsangYong": "https://upload.wikimedia.org/wikipedia/commons/6/6a/SsangYong_Motor_logo.svg",
   "SWM": "https://upload.wikimedia.org/wikipedia/commons/8/85/SWM_logo.svg",
   "Tank": "https://upload.wikimedia.org/wikipedia/commons/4/4b/TANK_logo.svg",
-  "Volvo": "https://upload.wikimedia.org/wikipedia/commons/0/0c/Volvo_logo.svg",
+  "Volvo": "https://upload.wikimedia.org/wikipedia/commons/5/54/Volvo_logo.svg",
   // Agregadas al recortar MARCAS_ARGENTINA en lib/marcasModelos.ts (antes
   // esta marca ni tenía logo mapeado). Estas usan el formato estable de
   // Wikimedia Commons Special:FilePath (redirige al archivo real sin
@@ -98,4 +98,21 @@ export const LOGOS_MARCAS: Record<string, string> = {
 export function getLogoMarca(marca: string | null | undefined): string | null {
   if (!marca) return null;
   return LOGOS_MARCAS[marca.trim()] || null;
+}
+
+// Logos que son negro/gris oscuro puro (sin color propio) -- en modo oscuro
+// quedan invisibles contra el fondo. Se invierten con CSS (ver esLogoOscuro).
+const LOGOS_OSCUROS = new Set([
+  "Peugeot",
+  "Renault",
+  "Nissan",
+  "Jeep",
+  "Chery",
+  "Haval",
+  "Audi",
+]);
+
+export function esLogoOscuro(marca: string | null | undefined): boolean {
+  if (!marca) return false;
+  return LOGOS_OSCUROS.has(marca.trim());
 }

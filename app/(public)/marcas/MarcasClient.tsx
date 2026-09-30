@@ -3,7 +3,7 @@
 import { useState } from "react";
 import Link from "next/link";
 import Image from "next/image";
-import { LOGOS_MARCAS } from "@/lib/marcasLogos";
+import { LOGOS_MARCAS, esLogoOscuro } from "@/lib/marcasLogos";
 import { MARCAS_ARGENTINA, slugificarMarca } from "@/lib/marcasModelos";
 
 const MarcaCard = ({
@@ -25,7 +25,7 @@ const MarcaCard = ({
             alt={`Logo de ${marca.nombre}`}
             fill
             sizes="64px"
-            className="object-contain"
+            className={`object-contain ${esLogoOscuro(marca.nombre) ? "dark:brightness-0 dark:invert" : ""}`}
             onError={() => setImgError(true)}
           />
         ) : (

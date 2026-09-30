@@ -4,7 +4,7 @@ import { useState } from "react";
 import Link from "next/link";
 import Image from "next/image";
 import { ChevronRight, ChevronLeft, ShieldCheck, Sparkles } from "lucide-react";
-import { LOGOS_MARCAS } from "@/lib/marcasLogos";
+import { LOGOS_MARCAS, esLogoOscuro } from "@/lib/marcasLogos";
 import { normalizarMarca } from "@/lib/vehiculos";
 
 // ================= SUBCOMPONENTE DE TARJETA ESTÁNDAR =================
@@ -23,7 +23,7 @@ function MarcaCard({ marca }: { marca: { nombre: string; slug: string; logo: str
             alt={`Logo de ${marca.nombre}`}
             fill
             sizes="64px"
-            className="object-contain"
+            className={`object-contain ${esLogoOscuro(marca.nombre) ? "dark:brightness-0 dark:invert" : ""}`}
             onError={() => setImgError(true)}
           />
         ) : (
