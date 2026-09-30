@@ -7,16 +7,17 @@ import EscanearDniModal, { type DatosDni } from "./EscanearDniModal";
 import { parseFechaLocal } from "@/lib/panel/fechas";
 import { crearAlerta } from "@/lib/panel/alertas";
 
-// Se agregan los canales reales que faltaban (Google Ads, MercadoLibre,
-// Rodi, Messenger, Cliente anterior) -- mismo vocabulario que ya usa
-// CANALES_ORIGEN en components/panel/conversaciones/LeadDetailModal.tsx
-// para el mismo concepto ("canal de origen" de un lead), así este
-// formulario no queda con una lista propia desincronizada del resto del
-// panel. No se renombra "Showroom" a "Salón" (aunque es el nombre en
-// CANALES_ORIGEN) porque "Cómo nos conocieron" en Marketing → Embudo
-// agrupa por el string tal cual está guardado en `clientes.origen` --
-// renombrarlo rompería la agrupación de todos los clientes ya cargados.
-export const ORIGENES = ["Instagram", "Facebook", "Google Ads", "MercadoLibre", "Rodi", "Messenger", "Web", "Referido", "Showroom", "WhatsApp", "Cliente anterior", "Otro"];
+// Se agregan los canales reales que faltaban (MercadoLibre, Rodi,
+// Messenger) -- mismo vocabulario que ya usa CANALES_ORIGEN en
+// components/panel/conversaciones/LeadDetailModal.tsx para el mismo
+// concepto ("canal de origen" de un lead), así este formulario no queda
+// con una lista propia desincronizada del resto del panel. "Google Ads"
+// y "Cliente anterior" se sacaron a pedido -- no se cargan clientes a
+// mano con esos orígenes. "Showroom" también se sacó del selector (a
+// pedido), pero los clientes ya cargados con ese origen quedan como
+// están: "Cómo nos conocieron" en Marketing → Embudo sigue agrupando por
+// el string tal cual está guardado en `clientes.origen`.
+export const ORIGENES = ["Instagram", "Facebook", "MercadoLibre", "Rodi", "Messenger", "Web", "Referido", "WhatsApp", "Otro"];
 const ETAPAS = [
   { value: "sin_contactar", label: "Nuevo" },
   { value: "contactado", label: "Contactado" },
@@ -82,7 +83,7 @@ export default function NuevoClienteModal({ perfiles, disponibilidad, miId, edit
   const [dniCuit, setDniCuit] = useState(editando?.dni_cuit || "");
   const [telefono, setTelefono] = useState(editando?.telefono || "");
   const [email, setEmail] = useState(editando?.email || "");
-  const [origen, setOrigen] = useState(editando?.origen || "Showroom");
+  const [origen, setOrigen] = useState(editando?.origen || "Otro");
   const [etapa, setEtapa] = useState(editando?.pipeline_stage || "sin_contactar");
   const [vehiculoTexto, setVehiculoTexto] = useState(editando?.vehiculo_interes_texto || "");
   const [vehiculoInteresId, setVehiculoInteresId] = useState<string>(editando?.vehiculo_interes_id || "");
