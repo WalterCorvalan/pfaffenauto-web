@@ -22,6 +22,21 @@ const RespuestaOCRSchema = z.object({
   codigo_postal: z.string().trim().max(20).nullable(),
 });
 
+function normalizarFechaISO(valor: string | null): string | null {
+  if (!valor) return null;
+  const iso = valor.match(/^(\d{4})-(\d{2})-(\d{2})$/);
+  const dmy = valor.match(/^(\d{2})\/(\d{2})\/(\d{4})$/);
+  const [anio, mes, dia] = iso ? [iso[1], iso[2], iso[3]] : dmy ? [dmy[3], dmy[2], dmy[1]] : [];
+  if (!anio) return null;
+  const fecha = new Date(`${anio}-${mes}-${dia}T00:00:00Z`);
+  const valida =
+    !Number.isNaN(fecha.getTime()) &&
+    fecha.getUTCFullYear() === Number(anio) &&
+    fecha.getUTCMonth() + 1 === Number(mes) &&
+    fecha.getUTCDate() === Number(dia);
+  return valida ? `${anio}-${mes}-${dia}` : null;
+}
+
 export async function POST(req: Request) {
   try {
     const limite = await rateLimit(ipDesdeRequest(req), { limite: 15, ventanaMs: 60 * 1000, proyecto: "v2" });
@@ -109,7 +124,12 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: "No se pudieron leer datos del DNI en la imagen. Probá con otra foto." }, { status: 422 });
     }
 
-    return NextResponse.json(parsed.data);
+    // La IA a veces no respeta el YYYY-MM-DD pedido (ej. DD/MM/YYYY) o devuelve
+    // una fecha inválida. Postgres rechaza el insert de "clientes" en ese caso
+    // con un error genérico que no explicaba el motivo real (bug encontrado en
+    // Señas -> "Cargar cliente nuevo"). Se normaliza acá para que todos los
+    // consumidores (ClienteBuscador.tsx, etc.) reciban YYYY-MM-DD o null.
+    return NextResponse.json({ ...parsed.data, fecha_nacimiento: normalizarFechaISO(parsed.data.fecha_nacimiento) });
   } catch (err) {
     registrarError("api/panel/ocr-dni", err);
     return NextResponse.json({ error: "Error interno del servidor." }, { status: 500 });
