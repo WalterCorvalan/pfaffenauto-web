@@ -677,12 +677,21 @@ export default function NuevaVentaModal({ perfiles, clientes, vehiculos, miId, s
           if (!p.valor && !p.marca) continue;
           let vehiculoCreadoId: string | null = null;
           if (p.cargarAlStock && p.marca && p.modelo) {
+            // "tipo" NO se manda acá -- es texto libre en este formulario
+            // ("Ej: Sedan 5p") pero vehiculos.tipo tiene un CHECK en la base
+            // que solo acepta un set fijo de valores (ningún otro alta de
+            // stock, ni NuevoVehiculoModal.tsx ni NuevoMandatoModal.tsx,
+            // escribe esa columna) -- mandar cualquier texto tiraba
+            // "violates check constraint vehiculos_tipo_check" y dejaba la
+            // permuta guardada pero el auto sin cargar al stock. El texto
+            // igual queda guardado en venta_permutas.tipo (sin esa
+            // restricción), solo no se copia al vehículo del stock.
             const { data: vCreado, error: errVehiculo } = await supabase2.from("vehiculos").insert({
               categoria: "Auto", marca: p.marca.trim(), modelo: p.modelo.trim(), anio: p.anio ? Number(p.anio) : new Date().getFullYear(),
               km: p.km ? Number(p.km) : 0, patente: (p.patente || `PERMUTA-${venta.id.slice(0, 8)}`).toUpperCase(), color: p.color || "—",
               condicion: p.condicion, precio_venta: p.precioPublicacion ? Number(p.precioPublicacion) : Number(p.valor || 0), moneda_venta: p.moneda,
               estado: "disponible", propio_agencia: true, propietario_nombre: p.duenoNombre || compradorNombre.trim(),
-              segmento: p.segmento || null, tipo: p.tipo || null, marca_motor: p.marcaMotor || null, numero_motor: p.numeroMotor || null,
+              segmento: p.segmento || null, marca_motor: p.marcaMotor || null, numero_motor: p.numeroMotor || null,
               marca_chasis: p.marcaChasis || null, numero_chasis: p.numeroChasis || null, combustible: p.combustible || null,
               radicado_localidad: p.radicadoLocalidad || null, radicado_provincia: p.radicadoProvincia || null,
               creado_por: miId || null,
