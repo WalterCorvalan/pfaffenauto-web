@@ -7,7 +7,7 @@ const TABS: { label: string; href?: string }[] = [
   { label: "Entregas", href: "/panel/contenido-sitio/entregas" },
   { label: "Hero (portada)" },
   { label: "Nuestra Historia" },
-  { label: "Footer y redes" },
+  { label: "Footer y redes", href: "/panel/contenido-sitio/footer-redes" },
   { label: "Formulario RRHH" },
 ];
 
