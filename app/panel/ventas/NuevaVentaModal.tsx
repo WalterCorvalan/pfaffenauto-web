@@ -29,6 +29,11 @@ interface Seña { monto: string; moneda: string; fecha: string; cajaDestino: str
 interface Permuta {
   valor: string; moneda: string; precioPublicacion: string; marca: string; modelo: string; anio: string; km: string; patente: string; color: string; condicion: string; cargarAlStock: boolean; duenoNombre: string;
   segmento: string; tipo: string; marcaMotor: string; numeroMotor: string; marcaChasis: string; numeroChasis: string; combustible: string; radicadoLocalidad: string; radicadoProvincia: string; tasadoEn: string;
+  // Presentes solo si la permuta ya existe en la base (edición) -- id de la
+  // fila en venta_permutas y, si ya se cargó a Stock, el id del vehiculo
+  // creado (para no duplicarlo al guardar de nuevo).
+  id?: string;
+  vehiculoCreadoId?: string | null;
 }
 
 export interface VentaPrefill {
@@ -245,6 +250,30 @@ export default function NuevaVentaModal({ perfiles, clientes, vehiculos, miId, s
     supabase2.from("venta_recordatorios").select("*").eq("venta_id", editando.id).eq("estado", "pendiente").order("fecha_vencimiento").then(({ data }) => setRecordatorios(data || []));
   }, [esEdicion, editando?.id]);
 
+  // Permutas ya guardadas -- antes el bloque de Permuta ni se mostraba en
+  // edición (ver más abajo, "{!esEdicion && ...}"), así que una vez cerrada
+  // la venta la permuta quedaba congelada para siempre, sin forma de
+  // corregir un dato mal cargado ni de cargarla a Stock si no se había
+  // tildado en su momento.
+  useEffect(() => {
+    if (!esEdicion) return;
+    supabase2.from("venta_permutas").select("*").eq("venta_id", editando.id).then(({ data }) => {
+      if (!data || data.length === 0) return;
+      setIncluirPermuta(true);
+      setPermutas(data.map((p): Permuta => ({
+        id: p.id, vehiculoCreadoId: p.vehiculo_creado_id,
+        valor: p.valor != null ? String(p.valor) : "", moneda: p.moneda || "USD",
+        precioPublicacion: p.precio_publicacion != null ? String(p.precio_publicacion) : "",
+        marca: p.marca || "", modelo: p.modelo || "", anio: p.anio != null ? String(p.anio) : "",
+        km: p.km != null ? String(p.km) : "", patente: p.patente || "", color: p.color || "",
+        condicion: p.condicion || "Muy bueno", cargarAlStock: !!p.vehiculo_creado_id, duenoNombre: p.dueno_nombre || "",
+        segmento: p.segmento || "", tipo: p.tipo || "", marcaMotor: p.marca_motor || "", numeroMotor: p.numero_motor || "",
+        marcaChasis: p.marca_chasis || "", numeroChasis: p.numero_chasis || "", combustible: p.combustible || "",
+        radicadoLocalidad: p.radicado_localidad || "", radicadoProvincia: p.radicado_provincia || "", tasadoEn: p.tasado_en || "",
+      })));
+    });
+  }, [esEdicion, editando?.id]);
+
   // Señas activas del módulo Señas, para vincularlas acá en vez de tipear el
   // monto de nuevo a mano (esto es lo que causaba que la seña quedara
   // registrada dos veces y sin conexión real con la venta).
@@ -396,6 +425,54 @@ export default function NuevaVentaModal({ perfiles, clientes, vehiculos, miId, s
   });
   const actualizarPermuta = (i: number, campo: keyof Permuta, val: string | boolean) => setPermutas((prev) => prev.map((p, idx) => (idx === i ? { ...p, [campo]: val } : p)));
 
+  // Compartido entre alta y edición -- inserta permutas nuevas (sin p.id) y
+  // actualiza las que ya existían en la base. Si una permuta ya tiene
+  // vehiculoCreadoId (cargada a Stock en un guardado anterior) no la vuelve
+  // a crear, solo actualiza sus datos.
+  const guardarPermutas = async (ventaId: string, compradorNombreFinal: string) => {
+    if (!incluirPermuta || permutas.length === 0) return;
+    for (const p of permutas) {
+      if (!p.valor && !p.marca) continue;
+      let vehiculoCreadoId: string | null = p.vehiculoCreadoId || null;
+      if (p.cargarAlStock && p.marca && p.modelo && !vehiculoCreadoId) {
+        const { data: vCreado, error: errVehiculo } = await supabase2.from("vehiculos").insert({
+          categoria: "Auto", marca: p.marca.trim(), modelo: p.modelo.trim(), anio: p.anio ? Number(p.anio) : new Date().getFullYear(),
+          km: p.km ? Number(p.km) : 0, patente: (p.patente || `PERMUTA-${ventaId.slice(0, 8)}`).toUpperCase(), color: p.color || "—",
+          condicion: p.condicion, precio_venta: p.precioPublicacion ? Number(p.precioPublicacion) : Number(p.valor || 0), moneda_venta: p.moneda,
+          estado: "disponible", propio_agencia: true, propietario_nombre: p.duenoNombre || compradorNombreFinal,
+          segmento: p.segmento || null, tipo: p.tipo || null, marca_motor: p.marcaMotor || null, numero_motor: p.numeroMotor || null,
+          marca_chasis: p.marcaChasis || null, numero_chasis: p.numeroChasis || null, combustible: p.combustible || null,
+          radicado_localidad: p.radicadoLocalidad || null, radicado_provincia: p.radicadoProvincia || null,
+          creado_por: miId || null,
+        }).select().single();
+        if (errVehiculo) alert(`La permuta se guardó, pero no se pudo cargar el auto al stock: ${errVehiculo.message}. Avisá a un encargado para cargarlo a mano.`);
+        vehiculoCreadoId = vCreado?.id || null;
+      }
+      const filaPermuta = {
+        venta_id: ventaId, valor: p.valor ? Number(p.valor) : null, moneda: p.moneda, precio_publicacion: p.precioPublicacion ? Number(p.precioPublicacion) : null,
+        marca: p.marca || null, modelo: p.modelo || null, anio: p.anio ? Number(p.anio) : null, km: p.km ? Number(p.km) : null,
+        patente: p.patente || null, color: p.color || null, condicion: p.condicion, cargar_a_stock: !!vehiculoCreadoId, dueno_nombre: p.duenoNombre || null,
+        vehiculo_creado_id: vehiculoCreadoId,
+        segmento: p.segmento || null, tipo: p.tipo || null, marca_motor: p.marcaMotor || null, numero_motor: p.numeroMotor || null,
+        marca_chasis: p.marcaChasis || null, numero_chasis: p.numeroChasis || null, combustible: p.combustible || null,
+        radicado_localidad: p.radicadoLocalidad || null, radicado_provincia: p.radicadoProvincia || null, tasado_en: p.tasadoEn || null,
+      };
+      // cargar_a_stock refleja si el vehículo realmente se creó, no el
+      // checkbox tal cual (marca/modelo vacíos o el insert fallando
+      // dejaban esto en true sin que exista ningún vehiculo_creado_id).
+      const { error: errorPermuta } = p.id
+        ? await supabase2.from("venta_permutas").update(filaPermuta).eq("id", p.id)
+        : await supabase2.from("venta_permutas").insert(filaPermuta);
+      if (errorPermuta) {
+        // Sin este chequeo, si el auto SÍ se había cargado al stock
+        // (vehiculoCreadoId) pero este insert/update fallaba, quedaba un
+        // vehículo huérfano en Stock sin ningún registro de permuta que
+        // lo explique -- parecía stock propio comprado normal.
+        alert(`Falló el registro de la permuta${vehiculoCreadoId && !p.id ? " (el auto ya quedó cargado en Stock)" : ""}: ${errorPermuta.message}. Revisalo a mano.`);
+      }
+    }
+  };
+
   const resolverCliente = async (estadoFinal: string): Promise<{ id: string | null; creadoNuevo: boolean }> => {
     if (clienteId) return { id: clienteId, creadoNuevo: false };
     if (!compradorNombre.trim() || (!compradorTelefono.trim() && !compradorDni.trim())) return { id: null, creadoNuevo: false };
@@ -522,6 +599,7 @@ export default function NuevaVentaModal({ perfiles, clientes, vehiculos, miId, s
       if (!venta) throw new Error("No se pudo confirmar el guardado (no se pudo releer la venta actualizada). Verificá permisos y volvé a intentar.");
 
       await guardarPagoEfectivo(editando.id);
+      await guardarPermutas(editando.id, compradorNombre.trim());
 
       if (Object.values(docsComprador).some(Boolean) || Object.values(docsPermutas).some((d) => Object.values(d).some(Boolean))) {
         await subirDocumentosVenta(editando.id);
@@ -672,45 +750,7 @@ export default function NuevaVentaModal({ perfiles, clientes, vehiculos, miId, s
       const totalPermutas = incluirPermuta
         ? totalEnMoneda(permutas.filter((p) => p.valor || p.marca).map((p) => ({ monto: p.valor, moneda: p.moneda as Moneda })), monedaVenta as Moneda, tipoCambio)
         : 0;
-      if (incluirPermuta && permutas.length > 0) {
-        for (const p of permutas) {
-          if (!p.valor && !p.marca) continue;
-          let vehiculoCreadoId: string | null = null;
-          if (p.cargarAlStock && p.marca && p.modelo) {
-            const { data: vCreado, error: errVehiculo } = await supabase2.from("vehiculos").insert({
-              categoria: "Auto", marca: p.marca.trim(), modelo: p.modelo.trim(), anio: p.anio ? Number(p.anio) : new Date().getFullYear(),
-              km: p.km ? Number(p.km) : 0, patente: (p.patente || `PERMUTA-${venta.id.slice(0, 8)}`).toUpperCase(), color: p.color || "—",
-              condicion: p.condicion, precio_venta: p.precioPublicacion ? Number(p.precioPublicacion) : Number(p.valor || 0), moneda_venta: p.moneda,
-              estado: "disponible", propio_agencia: true, propietario_nombre: p.duenoNombre || compradorNombre.trim(),
-              segmento: p.segmento || null, tipo: p.tipo || null, marca_motor: p.marcaMotor || null, numero_motor: p.numeroMotor || null,
-              marca_chasis: p.marcaChasis || null, numero_chasis: p.numeroChasis || null, combustible: p.combustible || null,
-              radicado_localidad: p.radicadoLocalidad || null, radicado_provincia: p.radicadoProvincia || null,
-              creado_por: miId || null,
-            }).select().single();
-            if (errVehiculo) alert(`La permuta se guardó, pero no se pudo cargar el auto al stock: ${errVehiculo.message}. Avisá a un encargado para cargarlo a mano.`);
-            vehiculoCreadoId = vCreado?.id || null;
-          }
-          // cargar_a_stock refleja si el vehículo realmente se creó, no el
-          // checkbox tal cual (marca/modelo vacíos o el insert fallando
-          // dejaban esto en true sin que exista ningún vehiculo_creado_id).
-          const { error: errorPermuta } = await supabase2.from("venta_permutas").insert({
-            venta_id: venta.id, valor: p.valor ? Number(p.valor) : null, moneda: p.moneda, precio_publicacion: p.precioPublicacion ? Number(p.precioPublicacion) : null,
-            marca: p.marca || null, modelo: p.modelo || null, anio: p.anio ? Number(p.anio) : null, km: p.km ? Number(p.km) : null,
-            patente: p.patente || null, color: p.color || null, condicion: p.condicion, cargar_a_stock: !!vehiculoCreadoId, dueno_nombre: p.duenoNombre || null,
-            vehiculo_creado_id: vehiculoCreadoId,
-            segmento: p.segmento || null, tipo: p.tipo || null, marca_motor: p.marcaMotor || null, numero_motor: p.numeroMotor || null,
-            marca_chasis: p.marcaChasis || null, numero_chasis: p.numeroChasis || null, combustible: p.combustible || null,
-            radicado_localidad: p.radicadoLocalidad || null, radicado_provincia: p.radicadoProvincia || null, tasado_en: p.tasadoEn || null,
-          });
-          if (errorPermuta) {
-            // Sin este chequeo, si el auto SÍ se había cargado al stock
-            // (vehiculoCreadoId) pero este insert fallaba, quedaba un
-            // vehículo huérfano en Stock sin ningún registro de permuta que
-            // lo explique -- parecía stock propio comprado normal.
-            alert(`Falló el registro de la permuta${vehiculoCreadoId ? " (el auto ya quedó cargado en Stock)" : ""}: ${errorPermuta.message}. Revisalo a mano.`);
-          }
-        }
-      }
+      await guardarPermutas(venta.id, compradorNombre.trim());
 
       if (metodoPago === "Financiado" && cuotasPlazo && Number(cuotasPlazo) > 0) {
         if (!puedeGenerarCuotas) {
@@ -1114,7 +1154,6 @@ export default function NuevaVentaModal({ perfiles, clientes, vehiculos, miId, s
                 )}
               </div>
 
-              {!esEdicion && (
               <div>
                 <div className="flex items-center justify-between mb-2">
                   <p className="text-[11px] font-black uppercase tracking-widest text-slate-400">Permuta</p>
@@ -1158,11 +1197,15 @@ export default function NuevaVentaModal({ perfiles, clientes, vehiculos, miId, s
                             </label>
                           ))}
                         </div>
-                        <label className="flex items-center gap-2.5 mt-3 px-3 py-2 rounded-lg bg-white dark:bg-white/5 border border-slate-200 dark:border-white/10 cursor-pointer">
-                          <input type="checkbox" checked={p.cargarAlStock} onChange={(e) => actualizarPermuta(i, "cargarAlStock", e.target.checked)} className="w-4 h-4 accent-[#0145F2]" />
+                        <label className={`flex items-center gap-2.5 mt-3 px-3 py-2 rounded-lg bg-white dark:bg-white/5 border border-slate-200 dark:border-white/10 ${p.vehiculoCreadoId ? "opacity-70" : "cursor-pointer"}`}>
+                          <input type="checkbox" checked={p.cargarAlStock} disabled={!!p.vehiculoCreadoId} onChange={(e) => actualizarPermuta(i, "cargarAlStock", e.target.checked)} className="w-4 h-4 accent-[#0145F2]" />
                           <span className="flex-1">
                             <span className="block text-xs font-bold text-slate-700 dark:text-slate-200">🚗 Cargar este vehículo al Stock {i === 0 ? "automáticamente" : ""}</span>
-                            {i === 0 && <span className="block text-[10px] text-slate-400">Al guardar la venta, el vehículo de permuta se crea en Stock con status Disponible y los datos cargados arriba.</span>}
+                            {p.vehiculoCreadoId ? (
+                              <span className="block text-[10px] text-emerald-600 dark:text-emerald-400">Ya está cargado en Stock -- los cambios de arriba se van a actualizar en esa ficha al guardar.</span>
+                            ) : i === 0 && (
+                              <span className="block text-[10px] text-slate-400">Al guardar la venta, el vehículo de permuta se crea en Stock con status Disponible y los datos cargados arriba.</span>
+                            )}
                           </span>
                         </label>
                         {p.cargarAlStock && <input value={p.duenoNombre} onChange={(e) => actualizarPermuta(i, "duenoNombre", e.target.value)} placeholder={`Dueño: ${compradorNombre || "..."}`} className={`${inputClass} mt-2`} />}
@@ -1172,7 +1215,6 @@ export default function NuevaVentaModal({ perfiles, clientes, vehiculos, miId, s
                   </div>
                 )}
               </div>
-              )}
 
               <div>
                 <p className={seccionClass}>🤝 Consignación</p>
