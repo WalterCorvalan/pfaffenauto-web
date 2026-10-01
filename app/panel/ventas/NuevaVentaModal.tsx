@@ -211,6 +211,7 @@ export default function NuevaVentaModal({ perfiles, clientes, vehiculos, miId, s
   const [comisionConsignacionPct, setComisionConsignacionPct] = useState(editando?.comision_consignacion_pct != null ? String(editando.comision_consignacion_pct) : "0.5");
   const [extraMonto, setExtraMonto] = useState(editando?.extra_cobrado_monto ? String(editando.extra_cobrado_monto) : "");
   const [extraMoneda, setExtraMoneda] = useState(editando?.extra_cobrado_moneda || "USD");
+  const [combinarTransferenciaBoleto, setCombinarTransferenciaBoleto] = useState(editando?.combinar_transferencia_boleto || false);
   const [vendedorCompartido, setVendedorCompartido] = useState(editando?.vendedor_compartido || false);
   const [companeroId, setCompaneroId] = useState(editando?.vendedor_compartido_id || "");
   const [companeroPct, setCompaneroPct] = useState(editando?.vendedor_compartido_pct != null ? String(editando.vendedor_compartido_pct) : "0.5");
@@ -593,7 +594,7 @@ export default function NuevaVentaModal({ perfiles, clientes, vehiculos, miId, s
         comision_manual: comisionManual, comision_vendedor_pct: Number(comisionVendedorEfectiva), comision_consignacion_pct: Number(comisionConsignacionPct),
         vendedor_compartido: vendedorCompartido, vendedor_compartido_id: vendedorCompartido ? (companeroId || null) : null,
         vendedor_compartido_pct: vendedorCompartido ? Number(companeroPct) : null,
-        extra_cobrado_monto: extraMonto ? Number(extraMonto) : null, extra_cobrado_moneda: extraMoneda,
+        extra_cobrado_monto: extraMonto ? Number(extraMonto) : null, extra_cobrado_moneda: extraMoneda, combinar_transferencia_boleto: combinarTransferenciaBoleto,
         entrega_tuerca_seguridad: entregaTuerca, entrega_duplicado_llave: entregaLlave, entrega_manuales: entregaManuales, entrega_cedula: entregaCedula,
         fecha_entrega: fechaEntrega || null, notas: notas || null, comentario_gestoria: comentarioGestoria || null, comentario_finanzas: comentarioFinanzas || null,
         calificacion_pedida: calificacionPedida,
@@ -696,7 +697,7 @@ export default function NuevaVentaModal({ perfiles, clientes, vehiculos, miId, s
         comision_manual: comisionManual, comision_vendedor_pct: Number(comisionVendedorEfectiva), comision_consignacion_pct: Number(comisionConsignacionPct),
         vendedor_compartido: vendedorCompartido, vendedor_compartido_id: vendedorCompartido ? (companeroId || null) : null,
         vendedor_compartido_pct: vendedorCompartido ? Number(companeroPct) : null,
-        extra_cobrado_monto: extraMonto ? Number(extraMonto) : null, extra_cobrado_moneda: extraMoneda,
+        extra_cobrado_monto: extraMonto ? Number(extraMonto) : null, extra_cobrado_moneda: extraMoneda, combinar_transferencia_boleto: combinarTransferenciaBoleto,
         entrega_tuerca_seguridad: entregaTuerca, entrega_duplicado_llave: entregaLlave, entrega_manuales: entregaManuales, entrega_cedula: entregaCedula,
         fecha_entrega: fechaEntrega || null, notas: notas || null, comentario_gestoria: comentarioGestoria || null, comentario_finanzas: comentarioFinanzasFinal || null,
         creado_por: miId || null,
@@ -1282,6 +1283,11 @@ export default function NuevaVentaModal({ perfiles, clientes, vehiculos, miId, s
                     <p className="text-[10px] text-slate-400 mt-1">Recargo a favor de la agencia. De acá se liquida la parte del vendedor según el % de abajo.</p>
                   </div>
                 </div>
+
+                <label className="flex items-start gap-2.5 mt-3 px-3 py-2.5 rounded-xl bg-slate-50 dark:bg-white/5 border border-slate-200 dark:border-white/10 cursor-pointer">
+                  <input type="checkbox" checked={combinarTransferenciaBoleto} onChange={(e) => setCombinarTransferenciaBoleto(e.target.checked)} className="w-4 h-4 mt-0.5 accent-[#0145F2]" />
+                  <span><span className="block text-xs font-bold text-slate-700 dark:text-slate-200">🧾 Combinar transferencia en el total del boleto</span><span className="block text-[10px] text-slate-400">El boleto impreso no va a mostrar el extra cobrado por separado -- lo suma directo al precio de venta en una sola línea. El desglose real queda guardado igual, solo no se imprime.</span></span>
+                </label>
 
                 <label className="flex items-start gap-2.5 mt-3 px-3 py-2.5 rounded-xl bg-slate-50 dark:bg-white/5 border border-slate-200 dark:border-white/10 cursor-pointer">
                   <input type="checkbox" checked={vendedorCompartido} onChange={(e) => setVendedorCompartido(e.target.checked)} className="w-4 h-4 mt-0.5 accent-[#0145F2]" />

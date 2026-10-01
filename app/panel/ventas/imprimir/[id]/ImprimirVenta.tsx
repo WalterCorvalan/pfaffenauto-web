@@ -120,8 +120,14 @@ export default function ImprimirVenta({ venta: v, branding, senaPrevia, permutaP
         </div>
 
         <div className="space-y-1 mb-2.5">
-          <div className="flex items-baseline gap-2 flex-wrap"><span className="w-64 shrink-0">por un precio de venta establecido en:</span><strong className="text-[14px]">{formatMoney(precioVenta)}</strong><span className="text-slate-500 italic">{enLetras(precioVenta)}</span></div>
-          <div className="flex items-baseline gap-2 flex-wrap"><span className="w-64 shrink-0">más un adicional por Transferencia y/o Patentamiento de:</span><strong className="text-[14px]">{formatMoney(adicionalTransferencia)}</strong><span className="text-slate-500 italic">{enLetras(adicionalTransferencia)}</span></div>
+          {v.combinar_transferencia_boleto ? (
+            <div className="flex items-baseline gap-2 flex-wrap"><span className="w-64 shrink-0">por un precio de venta, transferencia y/o patentamiento incluidos, establecido en:</span><strong className="text-[14px]">{formatMoney(precioVenta + adicionalTransferencia)}</strong><span className="text-slate-500 italic">{enLetras(precioVenta + adicionalTransferencia)}</span></div>
+          ) : (
+            <>
+              <div className="flex items-baseline gap-2 flex-wrap"><span className="w-64 shrink-0">por un precio de venta establecido en:</span><strong className="text-[14px]">{formatMoney(precioVenta)}</strong><span className="text-slate-500 italic">{enLetras(precioVenta)}</span></div>
+              <div className="flex items-baseline gap-2 flex-wrap"><span className="w-64 shrink-0">más un adicional por Transferencia y/o Patentamiento de:</span><strong className="text-[14px]">{formatMoney(adicionalTransferencia)}</strong><span className="text-slate-500 italic">{enLetras(adicionalTransferencia)}</span></div>
+            </>
+          )}
           {senaPrevia > 0 && (
             <div className="flex items-baseline gap-2 flex-wrap"><span className="w-64 shrink-0">descontando una Seña previamente abonada de:</span><strong className="text-[14px]">{formatMoney(senaPrevia)}</strong><span className="text-slate-500 italic">{enLetras(senaPrevia)}</span></div>
           )}
