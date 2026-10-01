@@ -57,6 +57,24 @@ export function filtrarVendedoresAsignables<T extends { roles?: string[] | null;
   });
 }
 
+// Round robin de leads (pedido 1/10): un vendedor solo tiene que ver las
+// conversaciones/leads que le llegaron a ÉL (en whatsapp/page.tsx,
+// instagram/page.tsx, messenger/page.tsx, rodi/page.tsx y leads/page.tsx),
+// no las de los demás vendedores -- antes los 5 módulos traían TODO sin
+// filtrar y lo mandaban igual al cliente, así que cualquier vendedor podía
+// ver la bandeja completa de la agencia. Encargado y admin siguen viendo
+// todo (regla de negocio explícita: "los encargados pueden ver todos los
+// chats y todos los leads"). Un lead sin vendedor_id todavía (recién
+// entrado, antes de que el reparto por ronda lo asigne) se le sigue
+// mostrando a un vendedor -- si no, nadie lo vería hasta que se le asigne.
+export function filtrarPorVendedorAsignado<T extends { vendedor_id?: string | null }>(
+  items: T[],
+  { soyAdmin, soyEncargado, miId }: { soyAdmin: boolean; soyEncargado: boolean; miId: string }
+): T[] {
+  if (soyAdmin || soyEncargado) return items;
+  return items.filter((i) => !i.vendedor_id || i.vendedor_id === miId);
+}
+
 export async function puedeVerModulo(supabase: SupabaseClient, perfilId: string, modulo: string): Promise<boolean> {
   const { data: perfil } = await supabase.from("perfiles").select("roles").eq("id", perfilId).maybeSingle();
   // Sin perfil (lookup falló o el id no existe) no podemos confirmar ningún
