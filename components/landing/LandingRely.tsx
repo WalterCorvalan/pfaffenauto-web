@@ -1,12 +1,22 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect, useRef } from "react";
 import Link from "next/link";
 import Image from "next/image";
+import Script from "next/script";
 import { Inter, JetBrains_Mono } from "next/font/google";
 import { ChevronRight, X, Menu, Loader2, CheckCircle2, Phone } from "lucide-react";
 import { RELY_VERSIONS } from "@/lib/rely-versions";
 import VehiculosCarousel from "./VehiculosCarousel";
+
+declare global {
+  interface Window {
+    turnstile?: {
+      render: (container: HTMLElement, options: Record<string, unknown>) => string;
+      reset: (widgetId?: string) => void;
+    };
+  }
+}
 
 const IMAGENES_CARRUSEL_RELY: Record<string, string> = {
   comfort: "/Rely-confort/Rely-confort.png",
@@ -75,18 +85,67 @@ export default function LandingRely() {
   const [versionInteres, setVersionInteres] = useState("Comfort");
   const [enviando, setEnviando] = useState(false);
   const [enviado, setEnviado] = useState(false);
+  const [errorReserva, setErrorReserva] = useState("");
 
-  const enviarReserva = (e: React.FormEvent) => {
+  // Turnstile (anti-spam) -- lo pide /api/panel/pedidos, mismo patrón que
+  // BuscadorFallBack.tsx (el "no encontramos resultados" del catálogo).
+  const [turnstileToken, setTurnstileToken] = useState("");
+  const [turnstileListo, setTurnstileListo] = useState(false);
+  const turnstileRef = useRef<HTMLDivElement>(null);
+  const turnstileWidgetId = useRef<string | null>(null);
+
+  useEffect(() => {
+    if (!turnstileListo || !turnstileRef.current || !window.turnstile) return;
+    if (turnstileWidgetId.current) return;
+    turnstileWidgetId.current = window.turnstile.render(turnstileRef.current, {
+      sitekey: process.env.NEXT_PUBLIC_TURNSTILE_SITE_KEY,
+      callback: (token: string) => setTurnstileToken(token),
+      "expired-callback": () => setTurnstileToken(""),
+      "error-callback": () => setTurnstileToken(""),
+    });
+  }, [turnstileListo]);
+
+  // Antes solo abría WhatsApp, sin dejar registro en el CRM -- pedido
+  // explícito de que la reserva quede sí o sí en Pedidos (/panel/pedidos),
+  // reusando la misma API que ya usa el buscador del catálogo público.
+  const enviarReserva = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!nombre.trim() || !apellido.trim() || !telefono.trim()) return;
+    if (!turnstileToken) {
+      setErrorReserva("Esperá que cargue la verificación anti-spam y volvé a intentar.");
+      return;
+    }
 
     setEnviando(true);
-    const mensaje = encodeURIComponent(
-      `Hola, quiero reservar la Rely Pick Up.\nNombre: ${nombre} ${apellido}\nTeléfono: ${telefono}\nVersión de interés: ${versionInteres}`
-    );
-    window.open(`https://wa.me/5491121907000?text=${mensaje}`, "_blank", "noopener,noreferrer");
-    setEnviado(true);
-    setEnviando(false);
+    setErrorReserva("");
+    try {
+      const res = await fetch("/api/panel/pedidos", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          turnstileToken,
+          nombre: `${nombre} ${apellido}`,
+          telefono,
+          busqueda: `Reserva Rely Pick Up — versión ${versionInteres}`,
+        }),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || "No se pudo enviar la reserva.");
+
+      const mensaje = encodeURIComponent(
+        `Hola, quiero reservar la Rely Pick Up.\nNombre: ${nombre} ${apellido}\nTeléfono: ${telefono}\nVersión de interés: ${versionInteres}`
+      );
+      window.open(`https://wa.me/5491121907000?text=${mensaje}`, "_blank", "noopener,noreferrer");
+      setEnviado(true);
+    } catch (err) {
+      setErrorReserva(err instanceof Error ? err.message : "No se pudo enviar la reserva. Probá de nuevo en unos minutos.");
+    } finally {
+      setEnviando(false);
+      if (turnstileWidgetId.current && window.turnstile) {
+        window.turnstile.reset(turnstileWidgetId.current);
+      }
+      setTurnstileToken("");
+    }
   };
 
   return (
@@ -99,7 +158,7 @@ export default function LandingRely() {
           onMouseLeave={() => setIsMenuOpen(false)}
         >
           <div className="flex items-center gap-3 py-3 md:py-4">
-            <Image src="/RelyLogo.png" alt="Rely" width={140} height={56} className="h-8 md:h-11 w-auto object-contain -my-2 md:-my-3 brightness-0 invert" />
+            <Image src="/RelyLogo.png" alt="Rely" width={140} height={56} className="h-9 md:h-12 w-auto object-contain -my-3 md:-my-4 brightness-0 invert" />
             <div className="h-5 w-[1px] bg-white/20 mx-1"></div>
             <Link href="/" className="relative flex items-center group">
               <Image src="/logo.png" alt="Pfaffen Cars" width={90} height={20} className="h-4 sm:h-5 md:h-5 w-auto object-contain brightness-0 invert opacity-80 group-hover:opacity-100 transition-opacity" />
@@ -280,7 +339,16 @@ export default function LandingRely() {
                   </select>
                 </div>
 
-                <button type="submit" disabled={enviando} className="w-full bg-white hover:bg-slate-200 disabled:bg-white/20 disabled:text-slate-500 text-black font-black uppercase tracking-[0.15em] text-xs py-5 rounded-2xl transition-all shadow-xl active:scale-[0.98] mt-4 flex items-center justify-center gap-2">
+                {errorReserva && <p className="text-rose-400 text-xs font-semibold text-center">{errorReserva}</p>}
+
+                <div ref={turnstileRef} className="flex justify-center" />
+                {!turnstileToken && (
+                  <p className="text-slate-500 text-[11px] text-center flex items-center justify-center gap-1.5">
+                    <Loader2 className="w-3 h-3 animate-spin" /> Cargando verificación anti-spam...
+                  </p>
+                )}
+
+                <button type="submit" disabled={enviando || !turnstileToken} className="w-full bg-white hover:bg-slate-200 disabled:bg-white/20 disabled:text-slate-500 text-black font-black uppercase tracking-[0.15em] text-xs py-5 rounded-2xl transition-all shadow-xl active:scale-[0.98] mt-4 flex items-center justify-center gap-2">
                   {enviando ? <Loader2 className="w-4 h-4 animate-spin" /> : "Solicitar Reserva"}
                 </button>
               </form>
@@ -288,6 +356,8 @@ export default function LandingRely() {
           </div>
 
         </div>
+
+        <Script src="https://challenges.cloudflare.com/turnstile/v0/api.js" strategy="lazyOnload" onLoad={() => setTurnstileListo(true)} />
       </section>
 
       {/* ================= VERSIONES DESTACADAS ================= */}
