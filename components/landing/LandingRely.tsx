@@ -62,7 +62,7 @@ const SPECS = [
 ];
 
 const WHATSAPP_LINK =
-  "https://wa.me/5491121907000?text=Hola%2C%20quiero%20cotizar%20la%20Rely%20R8";
+  "https://wa.me/5491156520726?text=Hola%2C%20quiero%20cotizar%20la%20Rely%20R8";
 
 export default function LandingRely() {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
@@ -102,7 +102,7 @@ export default function LandingRely() {
       const mensaje = encodeURIComponent(
         `Hola, quiero reservar la Rely Pick Up.\nNombre: ${nombre} ${apellido}\nTeléfono: ${telefono}\nVersión de interés: ${versionInteres}`
       );
-      window.open(`https://wa.me/5491121907000?text=${mensaje}`, "_blank", "noopener,noreferrer");
+      window.open(`https://wa.me/5491156520726?text=${mensaje}`, "_blank", "noopener,noreferrer");
       setEnviado(true);
     } catch (err) {
       setErrorReserva(err instanceof Error ? err.message : "No se pudo enviar la reserva. Probá de nuevo en unos minutos.");

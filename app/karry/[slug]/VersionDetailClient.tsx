@@ -17,7 +17,7 @@ interface Version {
 }
 
 const WHATSAPP_LINK =
-  "https://wa.me/5491121907000?text=Hola%2C%20quiero%20cotizar%20la%20Karry%20Pick%20Up";
+  "https://wa.me/5491156520726?text=Hola%2C%20quiero%20cotizar%20la%20Karry%20Pick%20Up";
 
 export default function VersionDetailClient({ version }: { version: Version }) {
   const [indice, setIndice] = useState(0);
