@@ -86,7 +86,7 @@ export default function PublicHeader() {
     >
       <div className="w-full px-4 md:px-8 h-20 grid grid-cols-[auto_1fr_auto] items-center gap-2 relative z-20">
         {/* ================= COLUMNA IZQUIERDA: LOGOS ================= */}
-        <div className="flex items-center gap-3 md:gap-4 justify-start shrink-0">
+        <div className="flex items-center gap-2 md:gap-4 justify-start shrink-0">
           <Link href="/" className="relative flex items-center group shrink-0">
             <Image
               src="/logo.png"
@@ -107,11 +107,11 @@ export default function PublicHeader() {
 
           <span className="h-6 w-[1px] bg-slate-300/75 dark:bg-white/15 hidden sm:block"></span>
 
-          <div className="flex items-center gap-1 sm:gap-2.5 sm:bg-white/30 dark:sm:bg-white/5 sm:border sm:border-white/50 dark:sm:border-white/10 rounded-full sm:pl-3 sm:pr-3 sm:py-1 min-w-0 mr-1 lg:mr-0">
-            <span className="text-[6.5px] sm:text-[8px] md:text-[9px] font-black uppercase tracking-wide sm:tracking-widest text-slate-600 dark:text-slate-300 whitespace-nowrap shrink-0 leading-none">
+          <div className="flex items-center gap-1 sm:gap-2.5 sm:bg-white/30 dark:sm:bg-white/5 sm:border sm:border-white/50 dark:sm:border-white/10 rounded-full sm:pl-3 sm:pr-3 sm:py-1 min-w-0 mr-5 lg:mr-0">
+            <span className="text-[7px] sm:text-[8px] md:text-[9px] font-black uppercase tracking-wide sm:tracking-widest text-slate-600 dark:text-slate-300 whitespace-nowrap shrink-0 leading-none">
               Concesionario oficial
             </span>
-            <div className="flex items-center gap-0 sm:gap-1 shrink-0 h-5 sm:h-6 md:h-7">
+            <div className="flex items-center gap-0 sm:gap-1 shrink-0 h-[22px] sm:h-6 md:h-7">
               <Link
                 href="/rely"
                 className="flex items-center h-full group shrink-0 rounded-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#0145F2] focus-visible:ring-offset-1"
@@ -122,7 +122,7 @@ export default function PublicHeader() {
                   alt="Rely"
                   width={1536}
                   height={1024}
-                  className="h-9 sm:h-10 md:h-[50px] w-auto object-contain transition-transform group-hover:scale-105 -my-2.5 sm:-my-2 md:-my-2.5 dark:brightness-0 dark:invert"
+                  className="h-10 sm:h-10 md:h-[50px] w-auto object-contain transition-transform group-hover:scale-105 -my-3 sm:-my-2 md:-my-2.5 dark:brightness-0 dark:invert"
                 />
               </Link>
               <Link
@@ -135,7 +135,7 @@ export default function PublicHeader() {
                   alt="Karry"
                   width={500}
                   height={240}
-                  className="h-5 sm:h-10 md:h-[30px] w-auto object-contain transition-transform group-hover:scale-105 -my-1 sm:-my-2 md:-my-2.5"
+                  className="h-[22px] sm:h-10 md:h-[30px] w-auto object-contain transition-transform group-hover:scale-105 -my-1.5 sm:-my-2 md:-my-2.5"
                 />
               </Link>
             </div>
