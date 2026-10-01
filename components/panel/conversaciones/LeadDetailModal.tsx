@@ -270,13 +270,32 @@ export default function LeadDetailModal({
     } catch { alert("No se pudo actualizar."); } finally { setGuardandoBasura(false); }
   };
 
+  // Pasa por el endpoint del servidor (no un update directo del cliente a
+  // la tabla del canal) para que la regla de quién puede reasignar a quién
+  // (vendedor->solo vendedor, encargado->vendedor/encargado, admin->
+  // cualquiera) se valide de verdad server-side, no solo confiando en que
+  // "vendedores" ya venga filtrado para el <select> -- antes esto
+  // dependía de que RLS permitiera el update directo, y para "ventas"
+  // normalmente no lo permite (quedaba "sin servir", sin error claro).
   const cambiarVendedor = async (vendedorId: string) => {
     setGuardandoVendedor(true);
     try {
-      await patch({ vendedor_id: vendedorId || null });
-      const nombre = vendedores.find((v) => v.id === vendedorId)?.nombre;
-      await registrarEvento("asignacion", vendedorId ? `Reasignado a ${nombre}` : "Vendedor removido");
-    } catch { alert("No se pudo reasignar."); } finally { setGuardandoVendedor(false); }
+      const res = await fetch("/api/panel/leads/reasignar", {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ origen, leadId, vendedorId: vendedorId || null }),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || "No se pudo reasignar.");
+      setLead(data.lead);
+      onActualizado(leadId, data.lead);
+      const { data: e } = await supabase2.from("eventos_lead").select("*, autor:perfiles(nombre)").eq(campoFk, leadId).order("created_at", { ascending: false });
+      setEventos(e || []);
+    } catch (err: any) {
+      alert(err?.message || "No se pudo reasignar.");
+    } finally {
+      setGuardandoVendedor(false);
+    }
   };
 
   const cambiarVehiculo = async (vehiculoId: string) => {

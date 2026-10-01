@@ -75,6 +75,16 @@ La dirección del último mensaje **no vive en la fila de la conversación** —
 
 Antes, si el "auto en foco" de la charla (el que el bot detecta que se está hablando) tenía un `vendedor_asignado_id` distinto al vendedor actual de la conversación, el webhook (`app/api/panel/webhooks/whatsapp/[token]/route.ts`) **pisaba** `vendedor_id` de la conversación con ese otro vendedor — combinado con el filtro de visibilidad de arriba, el chat directamente desaparecía de la bandeja del vendedor que lo venía atendiendo. Se sacó esa reasignación automática (la rama de Gabriel/0km sigue igual, esa es una regla de negocio explícita y distinta). Ahora `LeadDetailModal.tsx` (compartido entre los 4 módulos de conversaciones) muestra un aviso ("Este auto lo tiene asignado [nombre] en Stock") comparando en vivo `vehiculos.vendedor_asignado_id` contra `lead.vendedor_id`, sin tocar quién es el dueño del lead. El `vehiculo_id` de la conversación sí se sigue actualizando igual (eso no cambió) — solo se sacó el cambio de `vendedor_id`.
 
+## Reasignar un lead a otro vendedor (1/10)
+
+El selector "Vendedor asignado" de `LeadDetailModal.tsx` (compartido por los 5 orígenes) antes hacía `supabase2.from(tabla).update({ vendedor_id })` directo desde el navegador — dependía de que RLS permitiera ese update para cualquier rol, y para "ventas" normalmente no lo permite (quedaba "sin servir", sin error claro al usuario). Ahora pasa por `PATCH /api/panel/vehiculos/precio`-style endpoint: `PATCH /api/panel/leads/reasignar` (service role), que valida server-side la regla de negocio real:
+
+- **vendedor (rol "ventas")**: solo puede reasignar a otro perfil con rol "ventas". No puede dejar un lead sin asignar.
+- **encargado**: puede reasignar a cualquier perfil con rol "ventas" o "encargado".
+- **admin**: a cualquiera, incluido dejarlo sin asignar.
+
+El `<select>` del front ya venía mostrando solo los destinos permitidos (`filtrarVendedoresAsignables`), pero eso solo oculta opciones en la UI — no es un control de seguridad real (cualquiera podía mandar otro id por devtools). El endpoint es la verificación de verdad. Duplica el mapeo canal→tabla/columna FK de `TABLA_POR_ORIGEN`/`CAMPO_FK_POR_ORIGEN` (son const, no se pueden importar desde un route de servidor a un componente "use client") — si se agrega un 6° canal, actualizar los dos lugares.
+
 ## No tocar sin revisar el resto
 
 - No agregar un 5° canal de leads sin actualizar los 3 lugares de arriba (unificación en `leads/page.tsx`, el mapeo FK de `tareas_lead`, y cualquier contador tipo "Leads sin atender") — y sin sumarle `es_basura` si tiene que participar de la pestaña "Lead basura".
