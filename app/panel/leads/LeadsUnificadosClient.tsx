@@ -94,9 +94,66 @@ function formatDia(iso: string) {
   return d.toLocaleDateString("es-AR", { day: "2-digit", month: "2-digit" });
 }
 
+// Reasignar vendedor sin tener que abrir el detalle completo -- pedido de
+// Walter (1/10). Reusa la misma ruta /api/panel/leads/reasignar que ya
+// usa LeadDetailModal.tsx (valida ahí quién puede reasignar a quién, ver
+// el comentario en esa ruta). El selector vive afuera del <button> de la
+// fila (ahora un <div role="button">) porque un <select>/<button> anidado
+// dentro de otro <button> es HTML inválido y el click se filtra al padre.
+function VendedorLeadSelector({
+  lead, vendedores, misRoles, onReasignado,
+}: { lead: LeadNormalizado; vendedores: Perfil[]; misRoles: string[]; onReasignado: (id: string, vendedorId: string | null) => void }) {
+  const [editando, setEditando] = useState(false);
+  const [guardando, setGuardando] = useState(false);
+  const vendedor = vendedores.find((v) => v.id === lead.vendedor_id);
+  const soyAdmin = misRoles.includes("admin");
+  const opciones = vendedores.filter((v) => v.roles?.includes("ventas") || v.roles?.includes("encargado"));
+
+  const reasignar = async (vendedorId: string) => {
+    setGuardando(true);
+    try {
+      const res = await fetch("/api/panel/leads/reasignar", {
+        method: "PATCH", headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ origen: lead.origen, leadId: lead.id, vendedorId: vendedorId || null }),
+      });
+      const data = await res.json();
+      if (!res.ok) { alert(data.error || "No se pudo reasignar."); return; }
+      onReasignado(lead.id, vendedorId || null);
+    } finally {
+      setGuardando(false);
+      setEditando(false);
+    }
+  };
+
+  if (editando) {
+    return (
+      <select
+        autoFocus disabled={guardando} defaultValue={lead.vendedor_id || ""}
+        onClick={(e) => e.stopPropagation()}
+        onChange={(e) => reasignar(e.target.value)}
+        onBlur={() => setEditando(false)}
+        className="text-[11px] bg-white dark:bg-white/10 border border-indigo-300 dark:border-indigo-400 rounded px-1 py-0.5 outline-none max-w-[140px]"
+      >
+        {soyAdmin && <option value="">Sin asignar</option>}
+        {opciones.map((v) => <option key={v.id} value={v.id}>{v.nombre}</option>)}
+      </select>
+    );
+  }
+  return (
+    <button
+      type="button"
+      onClick={(e) => { e.stopPropagation(); setEditando(true); }}
+      className="text-[11px] text-slate-500 dark:text-slate-400 truncate hover:text-indigo-600 dark:hover:text-sky-300 hover:underline text-left"
+    >
+      {guardando ? "Guardando..." : (vendedor?.nombre || "Sin asignar")}
+    </button>
+  );
+}
+
 export default function LeadsUnificadosClient({ leadsIniciales, vendedores, sucursales, miId }: { leadsIniciales: LeadNormalizado[]; vendedores: Perfil[]; sucursales: Sucursal[]; miId: string }) {
   const router = useRouter();
   const searchParams = useSearchParams();
+  const misRoles = vendedores.find((v) => v.id === miId)?.roles || [];
   const [leads, setLeads] = useState(leadsIniciales);
   const [vista, setVista] = useState<"normal" | "sin_respuesta" | "basura">("normal");
   const [filtroEstado, setFiltroEstado] = useState("todos");
@@ -312,10 +369,14 @@ export default function LeadsUnificadosClient({ leadsIniciales, vendedores, sucu
           ) : (
             filtrados.map((c) => {
               const Icon = ORIGEN_ICON[c.origen];
-              const vendedor = vendedores.find((v) => v.id === c.vendedor_id);
               const iniciales = (c.nombre || "?").substring(0, 2).toUpperCase();
               return (
-                <button key={`${c.origen}-${c.id}`} onClick={() => setSeleccionado({ id: c.id, origen: c.origen })} className={`w-full text-left p-3 border-b border-slate-100 dark:border-white/5 transition-all flex gap-2.5 ${filaClase(c.id)}`}>
+                <div
+                  key={`${c.origen}-${c.id}`} role="button" tabIndex={0}
+                  onClick={() => setSeleccionado({ id: c.id, origen: c.origen })}
+                  onKeyDown={(e) => { if (e.key === "Enter") setSeleccionado({ id: c.id, origen: c.origen }); }}
+                  className={`w-full text-left p-3 border-b border-slate-100 dark:border-white/5 transition-all flex gap-2.5 cursor-pointer ${filaClase(c.id)}`}
+                >
                   <div className="relative shrink-0">
                     <div className="w-9 h-9 rounded-full bg-slate-600 text-white flex items-center justify-center font-bold text-xs">{iniciales}</div>
                     <span className={`absolute -top-0.5 -right-0.5 w-2.5 h-2.5 rounded-full border-2 border-white dark:border-[#111] ${CALIFICACION_DOT[c.calificacion || ""] || "bg-slate-300"}`} title={c.calificacion || "Sin calificar"} />
@@ -328,7 +389,7 @@ export default function LeadsUnificadosClient({ leadsIniciales, vendedores, sucu
                       <span className="text-[10px] text-slate-400 whitespace-nowrap shrink-0">{c.last_message_at ? formatDia(c.last_message_at) : ""}</span>
                     </div>
                     <div className="flex items-center justify-between gap-1.5 mt-0.5">
-                      <p className="text-[11px] text-slate-500 dark:text-slate-400 truncate">{vendedor?.nombre || "Sin asignar"}</p>
+                      <VendedorLeadSelector lead={c} vendedores={vendedores} misRoles={misRoles} onReasignado={(id, vendedorId) => actualizarUno(id, { vendedor_id: vendedorId })} />
                       <span className={`text-[9px] font-bold uppercase px-1.5 py-0.5 rounded-full shrink-0 ${ESTADO_COLOR[c.estado_lead] || ESTADO_COLOR.nuevo}`}>{ESTADO_LABEL[c.estado_lead] || "Nuevo"}</span>
                     </div>
                     {c.sinRespuesta && vista !== "sin_respuesta" && (
@@ -341,7 +402,7 @@ export default function LeadsUnificadosClient({ leadsIniciales, vendedores, sucu
                       <span className="inline-flex items-center gap-1 text-[10px] font-bold text-slate-500 dark:text-slate-400 bg-slate-100 dark:bg-white/10 px-1.5 py-0.5 rounded-full mt-1"><Trash2 className="w-3 h-3" /> Basura</span>
                     )}
                   </div>
-                </button>
+                </div>
               );
             })
           )}
