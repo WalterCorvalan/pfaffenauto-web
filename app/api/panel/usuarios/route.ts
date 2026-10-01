@@ -28,7 +28,7 @@ export async function GET() {
 
   const sb = admin();
   const [{ data: perfiles }, { data: authList }] = await Promise.all([
-    sb.from("perfiles").select("id, nombre, roles, activo, sucursal_id, whatsapp, usuario, created_at").order("created_at", { ascending: false }),
+    sb.from("perfiles").select("id, nombre, roles, activo, sucursal_id, whatsapp, usuario, comision_tipo, comision_valor, created_at").order("created_at", { ascending: false }),
     sb.auth.admin.listUsers({ perPage: 1000 }),
   ]);
 
@@ -98,6 +98,8 @@ const ActualizarSchema = z.object({
   activo: z.boolean().optional(),
   sucursal_id: z.string().uuid().nullable().optional(),
   whatsapp: z.string().trim().regex(/^\d+$/).max(20).nullable().optional(),
+  comision_tipo: z.enum(["porcentaje", "fijo"]).nullable().optional(),
+  comision_valor: z.number().nullable().optional(),
 });
 
 export async function PATCH(request: Request) {

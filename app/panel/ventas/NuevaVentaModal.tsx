@@ -24,7 +24,7 @@ const TIPOS_RECORDATORIO: { value: string; label: string }[] = [
 
 interface Vehiculo { id: string; marca: string; modelo: string; anio: number; patente: string | null; km: number | null; precio_venta: number; moneda_venta: string; estado: string; color: string | null; condicion: string; consignado_por: string | null }
 interface Cliente { id: string; nombre: string; apellido: string | null; telefono: string | null; email: string | null; dni_cuit: string | null }
-interface Perfil { id: string; nombre: string; roles: string[] }
+interface Perfil { id: string; nombre: string; roles: string[]; comision_tipo?: "porcentaje" | "fijo" | null; comision_valor?: number | null }
 
 interface Seña { monto: string; moneda: string; fecha: string; cajaDestino: string; senaOrigenId?: string | null }
 interface Permuta {
@@ -55,6 +55,7 @@ interface Props {
   vehiculos: Vehiculo[];
   miId: string;
   soyAdmin: boolean;
+  puedeVerComision: boolean;
   initial?: VentaPrefill;
   editando?: any;
   cuentas: any[];
@@ -69,7 +70,7 @@ const nuevaPermuta = (): Permuta => ({
   segmento: "", tipo: "", marcaMotor: "", numeroMotor: "", marcaChasis: "", numeroChasis: "", combustible: "", radicadoLocalidad: "", radicadoProvincia: "", tasadoEn: "",
 });
 
-export default function NuevaVentaModal({ perfiles, clientes, vehiculos, miId, soyAdmin, initial, editando, cuentas, onClose, onCreado }: Props) {
+export default function NuevaVentaModal({ perfiles, clientes, vehiculos, miId, soyAdmin, puedeVerComision, initial, editando, cuentas, onClose, onCreado }: Props) {
   const esEdicion = !!editando;
   const miPerfil = perfiles.find((p) => p.id === miId);
   const puedeGenerarCuotas = miPerfil?.roles?.some((r) => r === "admin" || r === "finanzas") ?? false;
@@ -208,6 +209,12 @@ export default function NuevaVentaModal({ perfiles, clientes, vehiculos, miId, s
 
   const [comisionManual, setComisionManual] = useState(editando?.comision_manual || false);
   const [comisionVendedorPct, setComisionVendedorPct] = useState(editando?.comision_vendedor_pct != null ? String(editando.comision_vendedor_pct) : "1");
+  // Esquema de comisión del vendedor elegido -- "porcentaje" (default) o
+  // "fijo" (monto fijo por venta). Se autocompleta desde perfiles.comision_tipo
+  // al elegir vendedor (solo en alta nueva) y queda "congelado" en la venta
+  // para no moverse si después cambiás el esquema del vendedor en Configuración.
+  const [comisionVendedorTipo, setComisionVendedorTipo] = useState<"porcentaje" | "fijo">(editando?.comision_vendedor_tipo || "porcentaje");
+  const [comisionMontoFijo, setComisionMontoFijo] = useState(editando?.comision_vendedor_monto_fijo != null ? String(editando.comision_vendedor_monto_fijo) : "");
   const [comisionConsignacionPct, setComisionConsignacionPct] = useState(editando?.comision_consignacion_pct != null ? String(editando.comision_consignacion_pct) : "0.5");
   const [extraMonto, setExtraMonto] = useState(editando?.extra_cobrado_monto ? String(editando.extra_cobrado_monto) : "");
   const [extraMoneda, setExtraMoneda] = useState(editando?.extra_cobrado_moneda || "USD");
@@ -592,6 +599,7 @@ export default function NuevaVentaModal({ perfiles, clientes, vehiculos, miId, s
         responsable_consignacion_id: responsableConsignacion || null,
         gestor_asignado_id: gestorAsignado || null,
         comision_manual: comisionManual, comision_vendedor_pct: Number(comisionVendedorEfectiva), comision_consignacion_pct: Number(comisionConsignacionPct),
+        comision_vendedor_tipo: vendedorCompartido ? "porcentaje" : comisionVendedorTipo, comision_vendedor_monto_fijo: !vendedorCompartido && comisionVendedorTipo === "fijo" && comisionMontoFijo ? Number(comisionMontoFijo) : null,
         vendedor_compartido: vendedorCompartido, vendedor_compartido_id: vendedorCompartido ? (companeroId || null) : null,
         vendedor_compartido_pct: vendedorCompartido ? Number(companeroPct) : null,
         extra_cobrado_monto: extraMonto ? Number(extraMonto) : null, extra_cobrado_moneda: extraMoneda, combinar_transferencia_boleto: combinarTransferenciaBoleto,
@@ -695,6 +703,7 @@ export default function NuevaVentaModal({ perfiles, clientes, vehiculos, miId, s
         responsable_consignacion_id: responsableConsignacion || null,
         gestor_asignado_id: gestorAsignado || null,
         comision_manual: comisionManual, comision_vendedor_pct: Number(comisionVendedorEfectiva), comision_consignacion_pct: Number(comisionConsignacionPct),
+        comision_vendedor_tipo: vendedorCompartido ? "porcentaje" : comisionVendedorTipo, comision_vendedor_monto_fijo: !vendedorCompartido && comisionVendedorTipo === "fijo" && comisionMontoFijo ? Number(comisionMontoFijo) : null,
         vendedor_compartido: vendedorCompartido, vendedor_compartido_id: vendedorCompartido ? (companeroId || null) : null,
         vendedor_compartido_pct: vendedorCompartido ? Number(companeroPct) : null,
         extra_cobrado_monto: extraMonto ? Number(extraMonto) : null, extra_cobrado_moneda: extraMoneda, combinar_transferencia_boleto: combinarTransferenciaBoleto,
@@ -942,7 +951,26 @@ export default function NuevaVentaModal({ perfiles, clientes, vehiculos, miId, s
               </div>
               <div>
                 <label className={labelClass}>Vendedor (cerró la venta) *</label>
-                <select value={vendedorId} onChange={(e) => setVendedorId(e.target.value)} className={inputClass}>
+                <select
+                  value={vendedorId}
+                  onChange={(e) => {
+                    setVendedorId(e.target.value);
+                    // Autocompletar el esquema de comisión propio del vendedor
+                    // elegido -- solo en alta nueva, para no pisar lo que ya
+                    // quedó congelado en una venta guardada.
+                    if (!esEdicion) {
+                      const p = vendedores.find((v) => v.id === e.target.value);
+                      if (p?.comision_tipo === "fijo") {
+                        setComisionVendedorTipo("fijo");
+                        setComisionMontoFijo(p.comision_valor != null ? String(p.comision_valor) : "");
+                      } else {
+                        setComisionVendedorTipo("porcentaje");
+                        if (p?.comision_tipo === "porcentaje" && p.comision_valor != null) setComisionVendedorPct(String(p.comision_valor));
+                      }
+                    }
+                  }}
+                  className={inputClass}
+                >
                   <option value="">—</option>
                   {vendedores.map((p) => <option key={p.id} value={p.id}>{p.nombre}</option>)}
                 </select>
@@ -1249,6 +1277,7 @@ export default function NuevaVentaModal({ perfiles, clientes, vehiculos, miId, s
                 </div>
               </div>
 
+              {puedeVerComision && (
               <div>
                 <p className={seccionClass}>Comisión</p>
                 {soyAdmin ? (
@@ -1261,16 +1290,28 @@ export default function NuevaVentaModal({ perfiles, clientes, vehiculos, miId, s
                 )}
                 <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
                   <div>
-                    <label className={labelClass}>% vendedor</label>
-                    <input type="number" step="0.1" value={comisionVendedorEfectiva} onChange={(e) => setComisionVendedorPct(e.target.value)} disabled={!comisionEditable || vendedorCompartido} className={inputClass} />
+                    <label className={labelClass}>Comisión del vendedor</label>
                     {comisionEditable && !vendedorCompartido && (
-                      <div className="flex flex-wrap gap-1.5 mt-1.5">
-                        {comisionPresets.map((p) => (
-                          <button key={p} type="button" onClick={() => setComisionVendedorPct(String(p))} className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-slate-100 dark:bg-white/10 text-slate-600 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-white/20">{p}%</button>
-                        ))}
+                      <div className="flex gap-1.5 mb-1.5">
+                        <button type="button" onClick={() => setComisionVendedorTipo("porcentaje")} className={`px-2.5 py-1 rounded-lg text-[10px] font-bold border ${comisionVendedorTipo === "porcentaje" ? "bg-[#0145F2] text-white border-[#0145F2]" : "bg-white dark:bg-white/5 border-slate-200 dark:border-white/10 text-slate-500"}`}>%</button>
+                        <button type="button" onClick={() => setComisionVendedorTipo("fijo")} className={`px-2.5 py-1 rounded-lg text-[10px] font-bold border ${comisionVendedorTipo === "fijo" ? "bg-[#0145F2] text-white border-[#0145F2]" : "bg-white dark:bg-white/5 border-slate-200 dark:border-white/10 text-slate-500"}`}>Monto fijo</button>
                       </div>
                     )}
-                    <p className="text-[10px] text-slate-400 mt-1">{vendedorCompartido ? "Split — 0.5% por compartir" : comisionEditable ? "Manual — editable" : "Fijo — sin selección manual"}</p>
+                    {comisionVendedorTipo === "fijo" ? (
+                      <input type="number" value={comisionMontoFijo} onChange={(e) => setComisionMontoFijo(e.target.value)} disabled={!comisionEditable || vendedorCompartido} placeholder="Monto fijo por venta" className={inputClass} />
+                    ) : (
+                      <>
+                        <input type="number" step="0.1" value={comisionVendedorEfectiva} onChange={(e) => setComisionVendedorPct(e.target.value)} disabled={!comisionEditable || vendedorCompartido} className={inputClass} />
+                        {comisionEditable && !vendedorCompartido && (
+                          <div className="flex flex-wrap gap-1.5 mt-1.5">
+                            {comisionPresets.map((p) => (
+                              <button key={p} type="button" onClick={() => setComisionVendedorPct(String(p))} className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-slate-100 dark:bg-white/10 text-slate-600 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-white/20">{p}%</button>
+                            ))}
+                          </div>
+                        )}
+                      </>
+                    )}
+                    <p className="text-[10px] text-slate-400 mt-1">{vendedorCompartido ? "Split — 0.5% por compartir" : comisionEditable ? "Manual — editable" : "Autocompletado del esquema del vendedor"}</p>
                   </div>
                   <div>
                     <label className={labelClass}>% consignación</label>
@@ -1310,6 +1351,7 @@ export default function NuevaVentaModal({ perfiles, clientes, vehiculos, miId, s
                   </div>
                 )}
               </div>
+              )}
 
               <div>
                 <p className={seccionClass}>Items que se entregan con el vehículo</p>

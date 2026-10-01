@@ -71,8 +71,10 @@ async function cargarDatosVenta(miId: string) {
   ]);
   // "perfiles" ya trae los roles de todos los activos, el usuario actual
   // incluido -- se deriva soyAdmin de ahí en vez de pedirlo aparte.
-  const soyAdmin = (perfiles || []).find((p) => p.id === miId)?.roles?.includes("admin") ?? false;
-  return { perfiles: perfiles || [], clientes: clientes || [], vehiculos: vehiculos || [], cuentas: cuentas || [], miId, soyAdmin };
+  const misRoles = (perfiles || []).find((p) => p.id === miId)?.roles || [];
+  const soyAdmin = misRoles.includes("admin");
+  const puedeVerComision = soyAdmin || misRoles.includes("finanzas");
+  return { perfiles: perfiles || [], clientes: clientes || [], vehiculos: vehiculos || [], cuentas: cuentas || [], miId, soyAdmin, puedeVerComision };
 }
 
 export default function QuickActionsButton() {
@@ -246,7 +248,7 @@ export default function QuickActionsButton() {
         <NuevoClienteModal perfiles={clienteDatos.perfiles} disponibilidad={clienteDatos.disponibilidad} miId={clienteDatos.miId} onClose={cerrarModales} onCreado={onCreadoGenerico} />
       )}
       {ventaDatos && (
-        <NuevaVentaModal perfiles={ventaDatos.perfiles} clientes={ventaDatos.clientes} vehiculos={ventaDatos.vehiculos} cuentas={ventaDatos.cuentas} miId={ventaDatos.miId} soyAdmin={ventaDatos.soyAdmin} onClose={cerrarModales} onCreado={onCreadoGenerico} />
+        <NuevaVentaModal perfiles={ventaDatos.perfiles} clientes={ventaDatos.clientes} vehiculos={ventaDatos.vehiculos} cuentas={ventaDatos.cuentas} miId={ventaDatos.miId} soyAdmin={ventaDatos.soyAdmin} puedeVerComision={ventaDatos.puedeVerComision} onClose={cerrarModales} onCreado={onCreadoGenerico} />
       )}
     </>
   );

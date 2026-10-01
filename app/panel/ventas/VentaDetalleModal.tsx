@@ -57,6 +57,7 @@ interface Props {
   ventaId: string;
   miId: string;
   soyAdmin: boolean;
+  puedeVerComision: boolean;
   puedeOperacionCaida: boolean;
   cuentas: any[];
   perfilMap: Record<string, string>;
@@ -66,7 +67,7 @@ interface Props {
   onEditar: (v: any) => void;
 }
 
-export default function VentaDetalleModal({ ventaId, miId, soyAdmin, puedeOperacionCaida, cuentas, perfilMap, onClose, onActualizado, onEliminado, onEditar }: Props) {
+export default function VentaDetalleModal({ ventaId, miId, soyAdmin, puedeVerComision, puedeOperacionCaida, cuentas, perfilMap, onClose, onActualizado, onEliminado, onEditar }: Props) {
   const [venta, setVenta] = useState<any>(null);
   const [confirmDialog, setConfirmDialog] = useState<{ mensaje: string; accion: () => void } | null>(null);
   const [senas, setSenas] = useState<any[]>([]);
@@ -326,7 +327,12 @@ export default function VentaDetalleModal({ ventaId, miId, soyAdmin, puedeOperac
   // NuevaVentaModal.tsx) -- sin sumarla, "Comisión" mostraba solo la mitad
   // de lo que la agencia realmente paga.
   const comisionPct = Number(venta.comision_vendedor_pct || 0) + (venta.responsable_consignacion_id ? Number(venta.comision_consignacion_pct || 0) : 0) + Number(venta.vendedor_compartido_pct || 0);
-  const comisionMonto = (Number(venta.precio_venta) * comisionPct) / 100;
+  const consignacionMonto = venta.responsable_consignacion_id ? (Number(venta.precio_venta) * Number(venta.comision_consignacion_pct || 0)) / 100 : 0;
+  // Si el vendedor tiene esquema "fijo" (congelado al cerrar la venta), el %
+  // no aplica -- se usa el monto fijo + lo que corresponda de consignación.
+  const comisionMonto = venta.comision_vendedor_tipo === "fijo"
+    ? Number(venta.comision_vendedor_monto_fijo || 0) + consignacionMonto
+    : (Number(venta.precio_venta) * comisionPct) / 100;
   const transicionesDisponibles = TRANSICIONES[venta.estado] || [];
 
   return (
@@ -454,6 +460,7 @@ export default function VentaDetalleModal({ ventaId, miId, soyAdmin, puedeOperac
             </Seccion>
           )}
 
+          {puedeVerComision && (
           <Seccion
             icono={Percent}
             titulo="Comisión"
@@ -496,6 +503,7 @@ export default function VentaDetalleModal({ ventaId, miId, soyAdmin, puedeOperac
               </div>
             )}
           </Seccion>
+          )}
 
           <div>
             <p className="text-[11px] font-black uppercase tracking-widest text-slate-400 mb-2 flex items-center gap-1.5"><History className="w-3.5 h-3.5" /> Historial de estados ({historial.length})</p>

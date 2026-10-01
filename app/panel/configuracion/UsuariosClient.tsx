@@ -20,7 +20,7 @@ const ROL_COLOR: Record<string, string> = {
   taller: "bg-teal-100 text-teal-700 dark:bg-teal-500/10 dark:text-teal-300",
 };
 
-interface Usuario { id: string; nombre: string; email: string; roles: string[]; activo: boolean; sucursal_id: string | null; whatsapp?: string | null; }
+interface Usuario { id: string; nombre: string; email: string; roles: string[]; activo: boolean; sucursal_id: string | null; whatsapp?: string | null; comision_tipo?: "porcentaje" | "fijo" | null; comision_valor?: number | null; }
 interface Sucursal { id: string; nombre: string; }
 
 export default function UsuariosClient() {
@@ -327,6 +327,8 @@ function ModalEditarUsuario({ usuario, sucursales, onClose, onSaved }: { usuario
   const [roles, setRoles] = useState<string[]>(usuario.roles);
   const [sucursalId, setSucursalId] = useState(usuario.sucursal_id || "");
   const [whatsapp, setWhatsapp] = useState(usuario.whatsapp || "");
+  const [comisionTipo, setComisionTipo] = useState<"" | "porcentaje" | "fijo">(usuario.comision_tipo || "");
+  const [comisionValor, setComisionValor] = useState(usuario.comision_valor != null ? String(usuario.comision_valor) : "");
   const [guardando, setGuardando] = useState(false);
   const [error, setError] = useState("");
 
@@ -335,7 +337,10 @@ function ModalEditarUsuario({ usuario, sucursales, onClose, onSaved }: { usuario
   const guardar = async () => {
     if (!nombre || !email || roles.length === 0) return setError("Completá nombre, email y al menos un rol.");
     setGuardando(true);
-    const body: Record<string, unknown> = { id: usuario.id, nombre, roles, sucursal_id: sucursalId || null, whatsapp: whatsapp.replace(/\D/g, "") || null };
+    const body: Record<string, unknown> = {
+      id: usuario.id, nombre, roles, sucursal_id: sucursalId || null, whatsapp: whatsapp.replace(/\D/g, "") || null,
+      comision_tipo: comisionTipo || null, comision_valor: comisionTipo && comisionValor ? Number(comisionValor) : null,
+    };
     // El email solo se manda si cambió -- evita tocar Auth (y recalcular el
     // usuario de login) en cada guardado cuando la persona ni lo tocó.
     if (email !== usuario.email) body.email = email;
@@ -381,6 +386,20 @@ function ModalEditarUsuario({ usuario, sucursales, onClose, onSaved }: { usuario
           <label className="text-xs font-semibold text-slate-500 block mb-1">WhatsApp propio (opcional)</label>
           <input value={whatsapp} onChange={(e) => setWhatsapp(e.target.value)} placeholder="Ej: 5491137564398" className="w-full bg-slate-50 dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-lg px-3 py-2 text-sm outline-none" />
           <p className="text-[11px] text-slate-400 mt-1">Es el número que ve el cliente en el sitio público si le asignan un auto a esta persona. Si lo dejás vacío, se usa el de la sucursal.</p>
+        </div>
+        <div>
+          <label className="text-xs font-semibold text-slate-500 block mb-1">Esquema de comisión de venta</label>
+          <div className="flex gap-2 mb-2">
+            {(["", "porcentaje", "fijo"] as const).map((t) => (
+              <button key={t || "default"} type="button" onClick={() => setComisionTipo(t)} className={`px-3 py-1.5 rounded-lg text-xs font-bold border ${comisionTipo === t ? "bg-[#0145F2] text-white border-[#0145F2]" : "bg-white dark:bg-white/5 border-slate-200 dark:border-white/10 text-slate-500"}`}>
+                {t === "" ? "Default de la empresa" : t === "porcentaje" ? "Porcentaje propio" : "Monto fijo"}
+              </button>
+            ))}
+          </div>
+          {comisionTipo !== "" && (
+            <input type="number" step="0.1" value={comisionValor} onChange={(e) => setComisionValor(e.target.value)} placeholder={comisionTipo === "porcentaje" ? "Ej: 1 (= 1%)" : "Ej: 200000"} className="w-full bg-slate-50 dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-lg px-3 py-2 text-sm outline-none" />
+          )}
+          <p className="text-[11px] text-slate-400 mt-1">"Default de la empresa" usa lo que diga Configuración → Empresa → Comisiones. Un esquema propio acá lo pisa solo para este vendedor, sin tocar el de los demás.</p>
         </div>
         {error && <p className="text-xs text-rose-600">{error}</p>}
         <button onClick={guardar} disabled={guardando} className="w-full bg-[#0145F2] hover:bg-[#0138c9] text-white font-bold py-2.5 rounded-lg text-sm disabled:opacity-50">
