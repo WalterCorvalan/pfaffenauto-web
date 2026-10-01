@@ -164,15 +164,19 @@ export default function DashboardGeneralTab(props: Props) {
 
       <div className="grid grid-cols-2 md:grid-cols-5 gap-3">
         <Tile label="Autos vendidos (mes)" valor={props.ventasDelMes} icon={Car} color="indigo" href="/panel/ventas" />
-        {monedasVenta.length === 0 && <Tile label="Ticket promedio" valor="—" icon={Ticket} color="indigo" oculto={props.ocultarMontos} href="/panel/ventas" />}
-        {monedasVenta.map((m) => (
-          <Tile key={`ticket-${m}`} label={`Ticket promedio (${m})`} valor={fmtMoneda(props.ticketPromedioPorMoneda[m] || 0, m)} icon={Ticket} oculto={props.ocultarMontos} href="/panel/ventas" zona={zonaVentaPorMoneda[m]} />
-        ))}
-        <Tile label="Egresos totales" valor={fmtPorMoneda(props.egresosPorMoneda)} icon={TrendingDown} color="rose" oculto={props.ocultarMontos} href="/panel/finanzas" />
-        {monedasNeto.length === 0 && <Tile label="Neto del mes" valor="—" icon={Activity} color="violet" oculto={props.ocultarMontos} href="/panel/finanzas" />}
-        {monedasNeto.map((m) => (
-          <Tile key={`neto-${m}`} label={`Neto del mes (${m})`} valor={fmtMoneda(props.netoPorMoneda[m] || 0, m)} icon={Activity} oculto={props.ocultarMontos} href="/panel/finanzas" zona={zonaNetoPorMoneda[m]} />
-        ))}
+        {props.puedeVerFinanzas && (
+          <>
+            {monedasVenta.length === 0 && <Tile label="Ticket promedio" valor="—" icon={Ticket} color="indigo" oculto={props.ocultarMontos} href="/panel/ventas" />}
+            {monedasVenta.map((m) => (
+              <Tile key={`ticket-${m}`} label={`Ticket promedio (${m})`} valor={fmtMoneda(props.ticketPromedioPorMoneda[m] || 0, m)} icon={Ticket} oculto={props.ocultarMontos} href="/panel/ventas" zona={zonaVentaPorMoneda[m]} />
+            ))}
+            <Tile label="Egresos totales" valor={fmtPorMoneda(props.egresosPorMoneda)} icon={TrendingDown} color="rose" oculto={props.ocultarMontos} href="/panel/finanzas" />
+            {monedasNeto.length === 0 && <Tile label="Neto del mes" valor="—" icon={Activity} color="violet" oculto={props.ocultarMontos} href="/panel/finanzas" />}
+            {monedasNeto.map((m) => (
+              <Tile key={`neto-${m}`} label={`Neto del mes (${m})`} valor={fmtMoneda(props.netoPorMoneda[m] || 0, m)} icon={Activity} oculto={props.ocultarMontos} href="/panel/finanzas" zona={zonaNetoPorMoneda[m]} />
+            ))}
+          </>
+        )}
       </div>
 
       <div className="rounded-2xl p-4 bg-white dark:bg-white/[0.02] border border-slate-200 dark:border-white/5 flex items-center justify-between flex-wrap gap-3">
@@ -192,10 +196,14 @@ export default function DashboardGeneralTab(props: Props) {
             (revenuePorMoneda) en dos tarjetas con nombres distintos -- se
             unifican acá, separadas por moneda, con el mismo semáforo de
             ventas vs gastos fijos+variables que Ticket promedio. */}
-        {monedasVenta.length === 0 && <Tile label="Ingresos por ventas" valor="—" icon={DollarSign} color="emerald" oculto={props.ocultarMontos} href="/panel/ventas" />}
-        {monedasVenta.map((m) => (
-          <Tile key={`ingresos-${m}`} label={`Ingresos por ventas (${m})`} valor={fmtMoneda(props.revenuePorMoneda[m] || 0, m)} icon={DollarSign} oculto={props.ocultarMontos} href="/panel/ventas" zona={zonaVentaPorMoneda[m]} />
-        ))}
+        {props.puedeVerFinanzas && (
+          <>
+            {monedasVenta.length === 0 && <Tile label="Ingresos por ventas" valor="—" icon={DollarSign} color="emerald" oculto={props.ocultarMontos} href="/panel/ventas" />}
+            {monedasVenta.map((m) => (
+              <Tile key={`ingresos-${m}`} label={`Ingresos por ventas (${m})`} valor={fmtMoneda(props.revenuePorMoneda[m] || 0, m)} icon={DollarSign} oculto={props.ocultarMontos} href="/panel/ventas" zona={zonaVentaPorMoneda[m]} />
+            ))}
+          </>
+        )}
         <Tile label="Ventas del mes" valor={props.ventasDelMes} icon={ShoppingCart} color="emerald" href="/panel/ventas" />
         <Tile label="Operaciones del mes" valor={props.operacionesDelMes} icon={TrendingUp} color="indigo" href="/panel/ventas" />
         <Tile label="Clientes sin contactar" valor={props.clientesSinContactar} icon={Users} color="amber" alerta={props.clientesSinContactar > 0} href="/panel/clientes" />
@@ -309,7 +317,7 @@ export default function DashboardGeneralTab(props: Props) {
               [
                 { key: "vehiculo", header: "Vehículo", cell: (v) => `${v.vehiculo_marca} ${v.vehiculo_modelo}`, claseTd: "font-bold text-slate-700 dark:text-slate-200", ocultarEnMobile: true },
                 { key: "cliente", header: "Cliente", cell: (v) => v.comprador_nombre || "—", claseTd: "text-slate-500" },
-                { key: "precio", header: "Precio", cell: (v) => fmtMoneda(Number(v.precio_venta), v.moneda_venta), claseTd: `text-right font-mono font-bold text-indigo-600 ${props.ocultarMontos ? "blur-sm select-none" : ""}` },
+                ...(props.puedeVerFinanzas ? [{ key: "precio", header: "Precio", cell: (v: typeof props.ultimasOperaciones[number]) => fmtMoneda(Number(v.precio_venta), v.moneda_venta), claseTd: `text-right font-mono font-bold text-indigo-600 ${props.ocultarMontos ? "blur-sm select-none" : ""}` }] : []),
                 { key: "estado", header: "Estado", cell: (v) => <span className="px-1.5 py-0.5 rounded bg-slate-100 dark:bg-white/10 text-[10px] font-bold">{v.estado}</span> },
                 { key: "vendedor", header: "Vendedor", cell: (v) => v.vendedorNombre, claseTd: "text-slate-500" },
                 { key: "fecha", header: "Fecha", cell: (v) => v.fecha_cierre ? new Date(`${v.fecha_cierre}T12:00:00Z`).toLocaleDateString("es-AR", { timeZone: "UTC" }) : "—", claseTd: "text-slate-400" },
