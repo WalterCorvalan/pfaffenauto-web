@@ -3,7 +3,7 @@
 import { useEffect, useRef, useState } from "react";
 import { supabase2 } from "@/lib/supabase/client";
 import { buscarClienteDuplicado } from "@/lib/panel/clienteDedupe";
-import { buscarLeadsPorTexto, LEAD_ORIGEN_LABEL, type LeadEncontrado } from "@/lib/panel/buscarLeads";
+import { LEAD_ORIGEN_LABEL, type LeadEncontrado } from "@/lib/panel/buscarLeads";
 import { Search, UserPlus, X, Check, ScanLine, Loader2, Megaphone } from "lucide-react";
 import ConfirmDialog from "@/components/panel/ConfirmDialog";
 
@@ -111,17 +111,21 @@ export default function ClienteBuscador({
     if (q.length < 2) { setResultadosVivo(null); setLeadsEncontrados([]); return; }
     setBuscando(true);
     const timer = setTimeout(async () => {
-      const [{ data }, leads] = await Promise.all([
+      const [{ data }, leadsRes] = await Promise.all([
         supabase2
           .from("clientes")
           .select("id, nombre, apellido, dni_cuit, cuit_cuil, telefono, telefono_linea, email, calle, numero_calle, depto, localidad, codigo_postal, provincia, estado_civil, profesion, fecha_nacimiento")
           .or(`nombre.ilike.%${q}%,apellido.ilike.%${q}%,dni_cuit.ilike.%${q}%`)
           .order("nombre")
           .limit(20),
-        buscarLeadsPorTexto(supabase2, q),
+        // Vía API (service-role) y no supabase2 directo -- la RLS de
+        // "cada vendedor ve solo sus leads asignados" le vaciaba este
+        // resultado a cualquiera que no sea admin, aunque el lead buscado
+        // fuera de otro vendedor o estuviera sin asignar.
+        fetch(`/api/panel/leads/buscar?q=${encodeURIComponent(q)}`).then((r) => r.json()).catch(() => ({ leads: [] })),
       ]);
       setResultadosVivo(data || []);
-      setLeadsEncontrados(leads);
+      setLeadsEncontrados(leadsRes.leads || []);
       setBuscando(false);
     }, 300);
     return () => clearTimeout(timer);
