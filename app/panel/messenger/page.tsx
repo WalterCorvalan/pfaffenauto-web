@@ -1,5 +1,6 @@
 import { createClient } from "@/lib/supabase/server";
 import ConversacionesShell from "@/components/panel/conversaciones/ConversacionesShell";
+import { filtrarPorVendedorAsignado } from "@/lib/panel/permisosModulos";
 
 // Mismo patrón exacto que app/panel/instagram/page.tsx -- construido en
 // paralelo (28/9) mientras la verificación de negocio de Meta está
@@ -37,6 +38,7 @@ export default async function MessengerPage() {
     if (soyEncargado) return p.roles?.includes("ventas") && p.sucursal_id === miSucursalId;
     return p.roles?.includes("ventas");
   });
+  const conversacionesVisibles = filtrarPorVendedorAsignado(conversacionesConUltimoMensaje, { soyAdmin, soyEncargado, miId: user?.id || "" });
 
   return (
     <ConversacionesShell
@@ -44,7 +46,7 @@ export default async function MessengerPage() {
       backTo="/panel/messenger?tab=leads"
       conversacionesIniciales={[]}
       conversacionesInstagramIniciales={[]}
-      conversacionesMessengerIniciales={conversacionesConUltimoMensaje}
+      conversacionesMessengerIniciales={conversacionesVisibles}
       vendedores={vendedores}
       miId={user?.id || ""}
     />

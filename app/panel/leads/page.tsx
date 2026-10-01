@@ -1,6 +1,6 @@
 import { createClient } from "@/lib/supabase/server";
 import LeadsUnificadosClient from "./LeadsUnificadosClient";
-import { filtrarVendedoresAsignables } from "@/lib/panel/permisosModulos";
+import { filtrarVendedoresAsignables, filtrarPorVendedorAsignado } from "@/lib/panel/permisosModulos";
 
 // Para las pestañas "Sin respuesta" y "Lead basura" hace falta saber si el
 // ÚLTIMO mensaje de la charla lo mandó el cliente ("in") o nosotros/la IA
@@ -60,10 +60,11 @@ export default async function LeadsPage() {
   const soyEncargado = miPerfil?.roles?.includes("encargado") ?? false;
   const miSucursalId = miPerfil?.sucursal_id ?? null;
   const vendedoresLista = filtrarVendedoresAsignables(vendedores || [], { soyAdmin, soyEncargado, miSucursalId });
+  const leadsVisibles = filtrarPorVendedorAsignado(normalizados, { soyAdmin, soyEncargado, miId: user?.id || "" });
 
   return (
     <LeadsUnificadosClient
-      leadsIniciales={normalizados}
+      leadsIniciales={leadsVisibles}
       vendedores={vendedoresLista}
       sucursales={sucursales || []}
       miId={user?.id || ""}

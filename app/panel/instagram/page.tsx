@@ -1,6 +1,6 @@
 import { createClient } from "@/lib/supabase/server";
 import ConversacionesShell from "@/components/panel/conversaciones/ConversacionesShell";
-import { filtrarVendedoresAsignables } from "@/lib/panel/permisosModulos";
+import { filtrarVendedoresAsignables, filtrarPorVendedorAsignado } from "@/lib/panel/permisosModulos";
 
 export default async function InstagramPage() {
   const supabase = await createClient();
@@ -31,13 +31,14 @@ export default async function InstagramPage() {
   const soyEncargado = miPerfilRes.data?.roles?.includes("encargado") ?? false;
   const miSucursalId = miPerfilRes.data?.sucursal_id ?? null;
   const vendedores = filtrarVendedoresAsignables(vendedoresRes.data || [], { soyAdmin, soyEncargado, miSucursalId });
+  const conversacionesVisibles = filtrarPorVendedorAsignado(conversacionesConUltimoMensaje, { soyAdmin, soyEncargado, miId: user?.id || "" });
 
   return (
     <ConversacionesShell
       canalFijo="instagram"
       backTo="/panel/instagram?tab=leads"
       conversacionesIniciales={[]}
-      conversacionesInstagramIniciales={conversacionesConUltimoMensaje}
+      conversacionesInstagramIniciales={conversacionesVisibles}
       vendedores={vendedores}
       miId={user?.id || ""}
     />

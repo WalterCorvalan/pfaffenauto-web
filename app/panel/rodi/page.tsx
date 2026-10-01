@@ -1,6 +1,6 @@
 import { createClient } from "@/lib/supabase/server";
 import RodiShell from "./RodiShell";
-import { filtrarVendedoresAsignables } from "@/lib/panel/permisosModulos";
+import { filtrarVendedoresAsignables, filtrarPorVendedorAsignado } from "@/lib/panel/permisosModulos";
 
 export const metadata = { title: "Rodi | Pfaffen Cars" };
 
@@ -21,10 +21,11 @@ export default async function RodiPage() {
   const soyEncargado = miPerfil?.roles?.includes("encargado") ?? false;
   const miSucursalId = miPerfil?.sucursal_id ?? null;
   const vendedores = filtrarVendedoresAsignables(vendedoresRes.data || [], { soyAdmin, soyEncargado, miSucursalId });
+  const conversacionesVisibles = filtrarPorVendedorAsignado(convRes.data || [], { soyAdmin, soyEncargado, miId: user?.id || "" });
 
   return (
     <RodiShell
-      conversacionesIniciales={convRes.data || []}
+      conversacionesIniciales={conversacionesVisibles}
       vendedores={vendedores}
       miId={user?.id || ""}
     />

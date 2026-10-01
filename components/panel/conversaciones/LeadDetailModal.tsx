@@ -172,8 +172,8 @@ export default function LeadDetailModal({
 
     const [{ data: c }, { data: v }, { data: vs }, { data: t }, { data: e }, { data: td }, { data: p }, { data: mot }] = await Promise.all([
       contactoTabla ? supabase2.from(contactoTabla).select("*").eq("id", l.contacto_id).maybeSingle() : Promise.resolve({ data: { nombre_perfil: l.nombre_contacto || l.nombre, telefono: l.telefono_contacto || l.telefono, email: l.email_contacto || l.email } }),
-      l.vehiculo_id ? supabase2.from("vehiculos").select("id, marca, modelo, anio, patente, sucursal:sucursal_id ( nombre )").eq("id", l.vehiculo_id).maybeSingle() : Promise.resolve({ data: null }),
-      supabase2.from("vehiculos").select("id, marca, modelo, patente, sucursal:sucursal_id ( nombre )").in("estado", ["disponible", "reservado"]).order("marca"),
+      l.vehiculo_id ? supabase2.from("vehiculos").select("id, marca, modelo, anio, patente, sucursal:sucursal_id ( nombre ), vendedor_asignado_id, vendedor_asignado:vendedor_asignado_id ( nombre )").eq("id", l.vehiculo_id).maybeSingle() : Promise.resolve({ data: null }),
+      supabase2.from("vehiculos").select("id, marca, modelo, patente, sucursal:sucursal_id ( nombre ), vendedor_asignado_id, vendedor_asignado:vendedor_asignado_id ( nombre )").in("estado", ["disponible", "reservado"]).order("marca"),
       supabase2.from("tareas_lead").select("*").eq(campoFk, leadId).order("fecha_vencimiento"),
       supabase2.from("eventos_lead").select("*, autor:perfiles(nombre)").eq(campoFk, leadId).order("created_at", { ascending: false }),
       supabase2.from("test_drives").select("*").eq(campoFk, leadId).order("fecha_hora", { ascending: false }),
@@ -588,6 +588,11 @@ export default function LeadDetailModal({
                     </div>
                   )}
                 </div>
+                {vehiculo?.vendedor_asignado_id && vehiculo.vendedor_asignado_id !== (lead.vendedor_id || null) && (
+                  <p className="mt-2.5 flex items-center gap-1.5 text-[11px] font-bold text-amber-700 dark:text-amber-300 bg-amber-50 dark:bg-amber-500/10 border border-amber-200 dark:border-amber-500/20 rounded-lg px-2.5 py-2">
+                    <AlertTriangle className="w-3.5 h-3.5 shrink-0" /> Este auto lo tiene asignado {vehiculo.vendedor_asignado?.nombre || "otro vendedor"} en Stock.
+                  </p>
+                )}
               </div>
 
               <div className={`border rounded-2xl p-4 ${SECCION_COLOR.vendedor.card}`}>

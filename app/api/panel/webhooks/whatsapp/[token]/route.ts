@@ -394,15 +394,11 @@ async function ejecutarAgente(conversacionId: string) {
   // vendedor al crear la charla), igual que Instagram/Messenger/Rodi, que
   // nunca tuvieron este caso especial.
   let motivoAsignacionGabriel: "0km" | null = null;
-  let vehiculoFocoVendedorId: string | null = null;
   let vehiculoFocoNombre = "";
   if (vehiculoFocoId) {
-    const { data: vehiculoFoco } = await supabase.from("vehiculos").select("condicion, marca, modelo, vendedor_asignado_id, vendedor:vendedor_asignado_id ( activo )").eq("id", vehiculoFocoId).maybeSingle();
+    const { data: vehiculoFoco } = await supabase.from("vehiculos").select("condicion, marca, modelo").eq("id", vehiculoFocoId).maybeSingle();
     if (vehiculoFoco?.condicion === "0km") motivoAsignacionGabriel = "0km";
     vehiculoFocoNombre = vehiculoFoco ? `${vehiculoFoco.marca} ${vehiculoFoco.modelo}`.trim() : "";
-    const vendedorAsignadoActivo = vehiculoFoco?.vendedor as { activo?: boolean } | { activo?: boolean }[] | null | undefined;
-    const estaActivo = Array.isArray(vendedorAsignadoActivo) ? vendedorAsignadoActivo[0]?.activo : vendedorAsignadoActivo?.activo;
-    if (vehiculoFoco?.vendedor_asignado_id && estaActivo) vehiculoFocoVendedorId = vehiculoFoco.vendedor_asignado_id;
   }
 
   // Pedido del 29/9: además de avisarle al vendedor nuevo por qué le llegó
@@ -433,27 +429,27 @@ async function ejecutarAgente(conversacionId: string) {
     } else {
       registrarError("webhook-v2:asignacion-gabriel", new Error("No se encontró a Gabriel (Casa Central) activo en perfiles"), { conversacionId, vehiculoFocoId, motivoAsignacionGabriel });
     }
-  } else if (vehiculoFocoVendedorId && vehiculoFocoVendedorId !== conversacionActual?.vendedor_id) {
-    // El auto en foco ya tiene un vendedor asignado en Stock (pedido del
-    // usuario: "si alguien viene directamente buscando tal auto que lo
-    // tiene tal vendedor" tiene que llegarle a esa persona) -- pedido del
-    // 29/9: esto pisa a quien le haya tocado por ronda al arrancar la
-    // charla, no solo aplica si estaba sin asignar. El chequeo != evita un
-    // update/aviso/evento de "reasignación" inútil cuando ya era esa persona.
-    patchConversacion.vendedor_id = vehiculoFocoVendedorId;
-    patchConversacion.estado_lead = "asignado";
-    const { data: vendedorFoco } = await supabase.from("perfiles").select("nombre").eq("id", vehiculoFocoVendedorId).maybeSingle();
-    registrarEventoAsignacion(`Reasignado automáticamente a ${vendedorFoco?.nombre || "vendedor"} — es el responsable de ${vehiculoFocoNombre || "ese auto"} en Stock.`);
   }
+  // Pedido del 1/10: ya NO se reasigna la charla solo porque el auto en
+  // foco tenga otro vendedor en Stock -- antes esto le sacaba el lead al
+  // vendedor que lo venía atendiendo (y, con el filtro de visibilidad por
+  // vendedor de leads/page.tsx y los 4 módulos de conversaciones, el chat
+  // directamente desaparecía de su bandeja). Ahora el vendedor original
+  // se queda con la conversación; LeadDetailModal.tsx muestra un aviso de
+  // "este auto lo tiene asignado [otro vendedor]" comparando en vivo
+  // vehiculos.vendedor_asignado_id contra la conversación, sin tocar quién
+  // es el dueño del lead. El caso de Gabriel/0km (arriba) sigue igual, no
+  // se tocó -- ese sí es una regla de negocio explícita de reasignar.
 
   await supabase.from("whatsapp_conversaciones").update(patchConversacion).eq("id", conversacionId);
 
   // Avisar recién después del update de arriba (así el link ya muestra la
   // conversación con el vendedor correcto si abre desde la alerta).
   if (patchConversacion.vendedor_id) {
-    const mensajeAsignacion = motivoAsignacionGabriel === "0km" ? "Un cliente está consultando por un 0km — se te asignó automáticamente."
-      : "Un cliente está consultando por un auto que tenés asignado en Stock — se te asignó automáticamente.";
-    notificarPersona(supabase, patchConversacion.vendedor_id as string, "whatsapp_venta_zona", mensajeAsignacion, `/panel/whatsapp?conversacion=${conversacionId}`, { categoriaNotif: "leads", modulo: "leads" }).catch((err) => console.error("[webhook-v2] error notificando asignación:", err));
+    // Única rama que llega acá ahora es Gabriel/0km (ver más arriba) -- el
+    // caso "auto con otro vendedor en Stock" ya no reasigna, solo avisa en
+    // el chat (LeadDetailModal.tsx), no hace falta notificación push.
+    notificarPersona(supabase, patchConversacion.vendedor_id as string, "whatsapp_venta_zona", "Un cliente está consultando por un 0km — se te asignó automáticamente.", `/panel/whatsapp?conversacion=${conversacionId}`, { categoriaNotif: "leads", modulo: "leads" }).catch((err) => console.error("[webhook-v2] error notificando asignación:", err));
   }
 
   // Nombre y mail que el cliente vaya dando durante la charla se guardan en
