@@ -209,8 +209,17 @@ async function guardarMensajeEntrante({ waId, nombrePerfil, msg }: { waId: strin
     // indefinidamente. Si el primer mensaje sí trae señal de Meta Ads o
     // MercadoLibre, los bloques de abajo lo pisan (ambos chequean también
     // canal_origen === "WhatsApp", no solo null).
-    const { data: nueva } = await supabase.from("whatsapp_conversaciones").insert({ contacto_id: contacto.id, canal_origen: "WhatsApp" }).select("id, vendedor_id, ai_habilitada, canal_origen, vehiculo_id").single();
-    conversacion = nueva;
+    const { data: nueva, error: errInsertConv } = await supabase.from("whatsapp_conversaciones").insert({ contacto_id: contacto.id, canal_origen: "WhatsApp" }).select("id, vendedor_id, ai_habilitada, canal_origen, vehiculo_id").single();
+    if (errInsertConv && errInsertConv.code === "23505") {
+      // Dos mensajes casi simultáneos del mismo contacto nuevo, en
+      // invocaciones de webhook distintas -- la otra ya creó la
+      // conversación primero (ver migraciones/sql_whatsapp_conversaciones_
+      // unique_contacto.sql), la buscamos de nuevo en vez de duplicarla.
+      // Sin esto, cada una respondía el menú de bienvenida por separado.
+      ({ data: conversacion } = await supabase.from("whatsapp_conversaciones").select("id, vendedor_id, ai_habilitada, canal_origen, vehiculo_id").eq("contacto_id", contacto.id).maybeSingle());
+    } else {
+      conversacion = nueva;
+    }
   }
   if (!conversacion) return null;
 
