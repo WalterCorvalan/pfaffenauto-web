@@ -22,9 +22,9 @@ interface Props {
   cierreMesAnterior: { autos: number; mejorVendedor: string | null; multasArs: number };
   calificaciones: { promedio: number | null; distribucion: number[]; pedidasSinResponder: number; total: number };
   gestoriaPorMoneda: Record<string, number>;
-  gananciaPorMes: { mes: string; monto: number }[];
-  resumenAnual: { anio: number; autos: number; usd: number }[];
-  tuOperacion: { ventas: number; usd: number; consignacionesAno: number };
+  gananciaPorMesPorMoneda: Record<string, { mes: string; monto: number }[]>;
+  resumenAnual: { anio: number; autos: number; porMoneda: Record<string, number> }[];
+  tuOperacion: { ventas: number; porMoneda: Record<string, number>; consignacionesAno: number };
 }
 
 const PREGUNTAS_RAPIDAS = ["¿Qué debería atacar hoy?", "¿Cómo venimos con el stock parado?", "¿Hay leads calientes sin contactar?", "¿Qué comisiones están trabadas?"];
@@ -42,7 +42,7 @@ function MiniStat({ label, valor, sub }: { label: string; valor: React.ReactNode
   );
 }
 
-export default function CockpitCeoTab({ miNombre, ocultarMontos, diaDelMes, diasEnElMes, ventasDelMes, ventasMesAnterior, objetivoVentasMensual, consignacionesDelMes, ranking, cierreMesAnterior, calificaciones, gananciaPorMes, resumenAnual, tuOperacion }: Props) {
+export default function CockpitCeoTab({ miNombre, ocultarMontos, diaDelMes, diasEnElMes, ventasDelMes, ventasMesAnterior, objetivoVentasMensual, consignacionesDelMes, ranking, cierreMesAnterior, calificaciones, gananciaPorMesPorMoneda, resumenAnual, tuOperacion }: Props) {
   const [mensajes, setMensajes] = useState<{ role: "user" | "assistant"; content: string; link?: string | null }[]>([]);
   const [pregunta, setPregunta] = useState("");
   const [cargando, setCargando] = useState(false);
@@ -230,19 +230,27 @@ export default function CockpitCeoTab({ miNombre, ocultarMontos, diaDelMes, dias
       )}
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-        <div className="rounded-2xl p-5 bg-white dark:bg-white/[0.02] border border-slate-200 dark:border-white/5 shadow-[0_2px_10px_rgba(15,23,42,0.06)] dark:shadow-[0_2px_14px_rgba(0,0,0,0.45)]">
-          <p className="text-sm font-bold text-slate-800 dark:text-white mb-3 flex items-center gap-1.5"><TrendingUp className="w-4 h-4 text-indigo-500" /> Ganancia últimos 12 meses (USD)</p>
-          <div className="h-[160px]">
-            <ResponsiveContainer width="100%" height="100%">
-              <BarChart data={gananciaPorMes}>
-                <XAxis dataKey="mes" tick={{ fontSize: 9 }} axisLine={false} tickLine={false} />
-                <YAxis tick={{ fontSize: 9 }} axisLine={false} tickLine={false} width={40} tickFormatter={(v) => new Intl.NumberFormat("es-AR", { notation: "compact" }).format(v)} />
-                <Tooltip formatter={(v: any) => [`USD ${Number(v).toLocaleString("es-AR")}`, "Ganancia"]} contentStyle={{ fontSize: 12, borderRadius: 8 }} />
-                <Bar dataKey="monto" fill="#6366f1" radius={[4, 4, 0, 0]} />
-              </BarChart>
-            </ResponsiveContainer>
+        {Object.entries(gananciaPorMesPorMoneda).map(([moneda, serie]) => (
+          <div key={moneda} className="rounded-2xl p-5 bg-white dark:bg-white/[0.02] border border-slate-200 dark:border-white/5 shadow-[0_2px_10px_rgba(15,23,42,0.06)] dark:shadow-[0_2px_14px_rgba(0,0,0,0.45)]">
+            <p className="text-sm font-bold text-slate-800 dark:text-white mb-3 flex items-center gap-1.5"><TrendingUp className="w-4 h-4 text-indigo-500" /> Ganancia últimos 12 meses ({moneda})</p>
+            <div className="h-[160px]">
+              <ResponsiveContainer width="100%" height="100%">
+                <BarChart data={serie}>
+                  <XAxis dataKey="mes" tick={{ fontSize: 9 }} axisLine={false} tickLine={false} />
+                  <YAxis tick={{ fontSize: 9 }} axisLine={false} tickLine={false} width={40} tickFormatter={(v) => new Intl.NumberFormat("es-AR", { notation: "compact" }).format(v)} />
+                  <Tooltip formatter={(v: any) => [fmtMoneda(Number(v), moneda), "Ganancia"]} contentStyle={{ fontSize: 12, borderRadius: 8 }} />
+                  <Bar dataKey="monto" fill="#6366f1" radius={[4, 4, 0, 0]} />
+                </BarChart>
+              </ResponsiveContainer>
+            </div>
           </div>
-        </div>
+        ))}
+        {Object.keys(gananciaPorMesPorMoneda).length === 0 && (
+          <div className="rounded-2xl p-5 bg-white dark:bg-white/[0.02] border border-slate-200 dark:border-white/5">
+            <p className="text-sm font-bold text-slate-800 dark:text-white mb-3 flex items-center gap-1.5"><TrendingUp className="w-4 h-4 text-indigo-500" /> Ganancia últimos 12 meses</p>
+            <p className="text-xs text-slate-400 text-center py-8">Sin ventas con margen cargado todavía.</p>
+          </div>
+        )}
 
         <div className="rounded-2xl p-5 bg-white dark:bg-white/[0.02] border border-slate-200 dark:border-white/5 shadow-[0_2px_10px_rgba(15,23,42,0.06)] dark:shadow-[0_2px_14px_rgba(0,0,0,0.45)]">
           <p className="text-sm font-bold text-slate-800 dark:text-white mb-3 flex items-center gap-1.5"><Award className="w-4 h-4 text-indigo-500" /> Resumen anual</p>
@@ -251,7 +259,12 @@ export default function CockpitCeoTab({ miNombre, ocultarMontos, diaDelMes, dias
               <div key={r.anio} className={`rounded-xl p-3 ${r.anio === new Date().getFullYear() ? "bg-indigo-50 dark:bg-indigo-500/10 border border-indigo-100 dark:border-indigo-500/20" : "bg-slate-50 dark:bg-white/5"}`}>
                 <p className="text-[10px] font-bold text-slate-400">{r.anio}{r.anio === new Date().getFullYear() ? " · en curso" : ""}</p>
                 <p className="text-lg font-black text-slate-900 dark:text-white">{r.autos} <span className="text-[10px] font-bold text-slate-400 uppercase">autos</span></p>
-                <p className={`text-xs font-bold text-slate-500 ${ocultarMontos ? "blur-sm select-none" : ""}`}>USD {r.usd.toLocaleString("es-AR")}</p>
+                <div className={`${ocultarMontos ? "blur-sm select-none" : ""}`}>
+                  {Object.entries(r.porMoneda).length === 0 && <p className="text-xs font-bold text-slate-400">—</p>}
+                  {Object.entries(r.porMoneda).map(([m, v]) => (
+                    <p key={m} className="text-xs font-bold text-slate-500">{fmtMoneda(v, m)}</p>
+                  ))}
+                </div>
               </div>
             ))}
           </div>
@@ -265,9 +278,14 @@ export default function CockpitCeoTab({ miNombre, ocultarMontos, diaDelMes, dias
             <p className="text-2xl font-black text-slate-900 dark:text-white">{tuOperacion.ventas}</p>
             <p className="text-[10px] font-bold uppercase text-slate-400">Ventas cerradas</p>
           </div>
-          <div className="text-right">
-            <p className={`text-lg font-black text-violet-600 dark:text-violet-400 ${ocultarMontos ? "blur-sm select-none" : ""}`}>USD {tuOperacion.usd.toLocaleString("es-AR")}</p>
-            <p className="text-[9px] text-slate-400">solo ventas en USD</p>
+          <div className={`text-right ${ocultarMontos ? "blur-sm select-none" : ""}`}>
+            {Object.entries(tuOperacion.porMoneda).length === 0 ? (
+              <p className="text-lg font-black text-violet-600 dark:text-violet-400">—</p>
+            ) : (
+              Object.entries(tuOperacion.porMoneda).map(([m, v]) => (
+                <p key={m} className="text-lg font-black text-violet-600 dark:text-violet-400">{fmtMoneda(v, m)}</p>
+              ))
+            )}
           </div>
         </div>
       </div>

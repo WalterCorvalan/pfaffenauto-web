@@ -24,6 +24,7 @@ interface Props {
   saldos: { moneda: string; total: number }[];
   recordatoriosHoy: number; alertasPendientes: number; cotizacionesActivas: number;
   expedientesActivos: number; comisionesPendientes: number; infraccionesPendientes: number; pedidosActivos: number;
+  mesSeleccionado: string; esMesActual: boolean;
   diaDelMes: number; diasEnElMes: number;
   ranking: { vendedor_id: string; nombre: string; ventas_equivalentes: number; consignaciones: number }[];
   gananciaPorMoneda: Record<string, number>;
@@ -31,7 +32,7 @@ interface Props {
   cierreMesAnterior: { autos: number; mejorVendedor: string | null; multasArs: number };
   calificaciones: { promedio: number | null; distribucion: number[]; pedidasSinResponder: number; total: number };
   gestoriaPorMoneda: Record<string, number>;
-  gananciaPorMes: { mes: string; monto: number }[];
+  gananciaPorMesPorMoneda: Record<string, { mes: string; monto: number }[]>;
   ventasPorMes12: { mes: string; cantidad: number }[];
   proyeccionCaja: {
     saldos: { moneda: string; total: number }[];
@@ -46,8 +47,8 @@ interface Props {
     premioSiguiente: { faltan: number; meta: number; premioUsd: number | null } | null;
   };
   cuotasPagarResumen: { totalPorMoneda: Record<string, number>; cantidadDelMes: number; vencidas: number };
-  resumenAnual: { anio: number; autos: number; usd: number }[];
-  tuOperacion: { ventas: number; usd: number; consignacionesAno: number };
+  resumenAnual: { anio: number; autos: number; porMoneda: Record<string, number> }[];
+  tuOperacion: { ventas: number; porMoneda: Record<string, number>; consignacionesAno: number };
   clientesIngresadosHoy: number; clientesUltimos7dias: number; canalTop: string | null;
   eventosProximos: { id: string; titulo: string; fecha: string }[];
   vencidos: number; venceHoy: number; venceProx7d: number;
@@ -120,7 +121,7 @@ export default function DashboardClient(props: Props) {
           cierreMesAnterior={props.cierreMesAnterior}
           calificaciones={props.calificaciones}
           gestoriaPorMoneda={props.gestoriaPorMoneda}
-          gananciaPorMes={props.gananciaPorMes}
+          gananciaPorMesPorMoneda={props.gananciaPorMesPorMoneda}
           resumenAnual={props.resumenAnual}
           tuOperacion={props.tuOperacion}
         />
@@ -148,6 +149,8 @@ export default function DashboardClient(props: Props) {
           comisionesPendientes={props.comisionesPendientes}
           infraccionesPendientes={props.infraccionesPendientes}
           pedidosActivos={props.pedidosActivos}
+          mesSeleccionado={props.mesSeleccionado}
+          esMesActual={props.esMesActual}
           ranking={props.ranking}
           clientesIngresadosHoy={props.clientesIngresadosHoy}
           canalTop={props.canalTop}

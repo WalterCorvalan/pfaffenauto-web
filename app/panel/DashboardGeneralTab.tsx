@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import { useRouter, useSearchParams } from "next/navigation";
 import {
   DollarSign, Car, TrendingUp, Users, ShoppingCart, CreditCard, Wallet,
   CalendarClock, AlertTriangle, Receipt, FolderKanban, Landmark, SearchCode,
@@ -13,6 +14,7 @@ import { zonaEquilibrio, CLASE_ZONA_CARD, type ZonaSemaforo } from "./finanzas/t
 
 interface Props {
   esAdmin: boolean; puedeVerFinanzas: boolean; ocultarMontos: boolean;
+  mesSeleccionado: string; esMesActual: boolean;
   revenuePorMoneda: Record<string, number>;
   ventasDelMes: number; operacionesDelMes: number;
   stockDisponible: number; stockReservado: number; stockSenado: number; stockVendido: number; stockEnPreparacion: number;
@@ -94,6 +96,52 @@ function SeccionTitulo({ children }: { children: React.ReactNode }) {
   return <p className="text-xs font-bold uppercase tracking-widest text-slate-400 mb-2 mt-1">{children}</p>;
 }
 
+// Selector de mes (pedido 1/10): todo lo "del mes" del dashboard (ventas,
+// ingresos, ranking, gastos...) viaja ya filtrado por mes desde page.tsx
+// según el query string ?mes=YYYY-MM -- este selector es el único que lo
+// escribe. Lo que es "de hoy" (vencidos, leads sin atender, visitas de
+// hoy) no se mueve con el selector, sigue siempre atado al día real.
+function MesSelectorDashboard({ mesSeleccionado, esMesActual }: { mesSeleccionado: string; esMesActual: boolean }) {
+  const router = useRouter();
+  const searchParams = useSearchParams();
+  const [anioSel, mesSel] = mesSeleccionado.split("-").map(Number);
+
+  const irA = (anio: number, mes1a12: number) => {
+    const key = `${anio}-${String(mes1a12).padStart(2, "0")}`;
+    const params = new URLSearchParams(searchParams.toString());
+    params.set("mes", key);
+    router.push(`/panel?${params.toString()}`);
+  };
+  const irAnterior = () => { const d = new Date(anioSel, mesSel - 2, 1); irA(d.getFullYear(), d.getMonth() + 1); };
+  const irSiguiente = () => { const d = new Date(anioSel, mesSel, 1); irA(d.getFullYear(), d.getMonth() + 1); };
+  const irHoy = () => { const params = new URLSearchParams(searchParams.toString()); params.delete("mes"); router.push(`/panel${params.toString() ? `?${params.toString()}` : ""}`); };
+
+  const opciones: { key: string; label: string }[] = [];
+  const hoy = new Date();
+  for (let i = 0; i < 18; i++) {
+    const d = new Date(hoy.getFullYear(), hoy.getMonth() - i, 1);
+    opciones.push({ key: `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}`, label: d.toLocaleDateString("es-AR", { month: "long", year: "numeric" }) });
+  }
+
+  return (
+    <div className="flex items-center justify-between gap-2 rounded-2xl p-3 bg-white dark:bg-white/[0.02] border border-slate-200 dark:border-white/5">
+      <div className="flex items-center gap-1">
+        <button onClick={irAnterior} className="w-8 h-8 rounded-lg flex items-center justify-center text-slate-500 hover:bg-slate-100 dark:hover:bg-white/10 font-bold">‹</button>
+        <select
+          value={mesSeleccionado}
+          onChange={(e) => { const [a, m] = e.target.value.split("-").map(Number); irA(a, m); }}
+          className="text-sm font-bold text-slate-800 dark:text-white bg-transparent outline-none capitalize cursor-pointer px-1"
+        >
+          {!opciones.some((o) => o.key === mesSeleccionado) && <option value={mesSeleccionado}>{mesSeleccionado}</option>}
+          {opciones.map((o) => <option key={o.key} value={o.key} className="capitalize">{o.label}</option>)}
+        </select>
+        <button onClick={irSiguiente} disabled={esMesActual} className="w-8 h-8 rounded-lg flex items-center justify-center text-slate-500 hover:bg-slate-100 dark:hover:bg-white/10 font-bold disabled:opacity-30 disabled:cursor-not-allowed">›</button>
+      </div>
+      {!esMesActual && <button onClick={irHoy} className="text-xs font-bold text-[#0145F2] hover:underline shrink-0">Volver al mes actual</button>}
+    </div>
+  );
+}
+
 export default function DashboardGeneralTab(props: Props) {
   const saldoUsd = props.saldos.find((s) => s.moneda === "USD")?.total || 0;
   const saldoArs = props.saldos.find((s) => s.moneda === "ARS")?.total || 0;
@@ -131,6 +179,8 @@ export default function DashboardGeneralTab(props: Props) {
 
   return (
     <div className="space-y-4">
+      <MesSelectorDashboard mesSeleccionado={props.mesSeleccionado} esMesActual={props.esMesActual} />
+
       <SeccionTitulo>Lo urgente hoy</SeccionTitulo>
       <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
         <Tile label="Leads sin atender" valor={props.leadsSinAtender} icon={Flame} color="rose" alerta={props.leadsSinAtender > 0} href="/panel/leads" />

@@ -15,7 +15,7 @@ function margenPorMoneda(expedientes: any[], desde: string, hasta: string) {
   return map;
 }
 
-export default async function PanelV2Home() {
+export default async function PanelV2Home({ searchParams }: { searchParams: Promise<{ mes?: string }> }) {
   const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) return null;
@@ -25,23 +25,37 @@ export default async function PanelV2Home() {
   const puedeVerFinanzas = esAdmin || (miPerfil?.roles?.includes("finanzas") ?? false) || (miPerfil?.roles?.includes("director") ?? false);
 
   const hoy = new Date();
-  const inicioMes = new Date(hoy.getFullYear(), hoy.getMonth(), 1).toISOString().slice(0, 10);
-  const finMes = new Date(hoy.getFullYear(), hoy.getMonth() + 1, 0).toISOString().slice(0, 10);
+  // Mes a mostrar en el Dashboard (pedido 1/10: "arriba de lo urgente de hoy
+  // algo para especificar en qué mes queremos ver los datos") -- viene por
+  // query string (?mes=YYYY-MM) desde el selector de DashboardGeneralTab.tsx.
+  // Todo lo que es "del mes" (ventas, ingresos, ranking, gastos...) se
+  // recalcula sobre ESTE mes; todo lo que es "de hoy" (leads sin atender,
+  // vencidos, recordatorios, visitas de hoy) sigue atado a `hoy` real, sin
+  // importar qué mes se esté mirando -- no tiene sentido "vencidos" de un
+  // mes pasado.
+  const { mes: mesParam } = await searchParams;
+  const mesValido = mesParam && /^\d{4}-\d{2}$/.test(mesParam);
+  const mesBase = mesValido ? new Date(Number(mesParam!.slice(0, 4)), Number(mesParam!.slice(5, 7)) - 1, 1) : new Date(hoy.getFullYear(), hoy.getMonth(), 1);
+  const esMesActual = mesBase.getFullYear() === hoy.getFullYear() && mesBase.getMonth() === hoy.getMonth();
+  const mesSeleccionado = `${mesBase.getFullYear()}-${String(mesBase.getMonth() + 1).padStart(2, "0")}`;
+
+  const inicioMes = new Date(mesBase.getFullYear(), mesBase.getMonth(), 1).toISOString().slice(0, 10);
+  const finMes = new Date(mesBase.getFullYear(), mesBase.getMonth() + 1, 0).toISOString().slice(0, 10);
   const hoyIso = hoy.toISOString().slice(0, 10);
-  const inicioMesAnterior = new Date(hoy.getFullYear(), hoy.getMonth() - 1, 1).toISOString().slice(0, 10);
-  const finMesAnterior = new Date(hoy.getFullYear(), hoy.getMonth(), 0).toISOString().slice(0, 10);
-  const inicioAno = `${hoy.getFullYear()}-01-01`;
+  const inicioMesAnterior = new Date(mesBase.getFullYear(), mesBase.getMonth() - 1, 1).toISOString().slice(0, 10);
+  const finMesAnterior = new Date(mesBase.getFullYear(), mesBase.getMonth(), 0).toISOString().slice(0, 10);
+  const inicioAno = `${mesBase.getFullYear()}-01-01`;
   const hace7dias = new Date(Date.now() - 7 * 86400000).toISOString().slice(0, 10);
   const hace30dias = new Date(Date.now() - 30 * 86400000).toISOString();
-  const hace6meses = new Date(hoy.getFullYear(), hoy.getMonth() - 6, 1).toISOString().slice(0, 10);
+  const hace6meses = new Date(mesBase.getFullYear(), mesBase.getMonth() - 6, 1).toISOString().slice(0, 10);
   const hace12meses = new Date(hoy.getFullYear(), hoy.getMonth() - 11, 1).toISOString().slice(0, 10);
   const en7dias = new Date(Date.now() + 7 * 86400000).toISOString().slice(0, 10);
-  const inicioMesAnteriorMismoMesAnoPasado = `${hoy.getFullYear() - 1}-${String(hoy.getMonth() + 1).padStart(2, "0")}-01`;
+  const inicioMesAnteriorMismoMesAnoPasado = `${mesBase.getFullYear() - 1}-${String(mesBase.getMonth() + 1).padStart(2, "0")}-01`;
   // Antes reusaba el día final del mes ACTUAL (finMes.split("-")[2]) -- en
   // febrero de año bisiesto vs. no bisiesto (o viceversa) el mes del año
   // pasado no tiene esa misma cantidad de días, perdiendo o sumando un día
   // de más en la comparación interanual.
-  const finMesMismoMesAnoPasado = new Date(hoy.getFullYear() - 1, hoy.getMonth() + 1, 0).toISOString().slice(0, 10);
+  const finMesMismoMesAnoPasado = new Date(mesBase.getFullYear() - 1, mesBase.getMonth() + 1, 0).toISOString().slice(0, 10);
 
   const [
     { data: ventasMes },
@@ -283,22 +297,32 @@ export default async function PanelV2Home() {
   const gestoriaPorMoneda: Record<string, number> = {};
   (extraCobradoMes || []).forEach((v: any) => { gestoriaPorMoneda[v.extra_cobrado_moneda] = (gestoriaPorMoneda[v.extra_cobrado_moneda] || 0) + Number(v.extra_cobrado_monto); });
 
-  // Ganancia últimos 12 meses (por mes, USD priorizado ya que es la moneda dominante de venta)
-  const gananciaPorMes: { mes: string; monto: number }[] = [];
+  // Ganancia últimos 12 meses, por moneda (pedido 1/10: antes solo mostraba
+  // USD -- una venta cerrada en ARS quedaba afuera del todo y la tarjeta
+  // daba 0 aunque sí hubiera ganancia real ese mes, solo que en otra
+  // moneda). Un mapa moneda -> serie de 12 meses, en vez de una sola serie.
+  const gananciaPorMesPorMoneda: Record<string, { mes: string; monto: number }[]> = {};
   {
-    const porMes = new Map<string, number>();
+    const porMesPorMoneda = new Map<string, Map<string, number>>();
     (ventasUltimos12Meses || []).forEach((e: any) => {
       const venta = Array.isArray(e.venta) ? e.venta[0] : e.venta;
-      if (!venta || venta.moneda_venta !== "USD" || e.precio_propietario_moneda !== "USD") return;
+      if (!venta || e.precio_propietario_moneda !== venta.moneda_venta) return;
       const mes = venta.fecha_cierre?.slice(0, 7);
       if (!mes) return;
+      const moneda = venta.moneda_venta;
+      if (!porMesPorMoneda.has(moneda)) porMesPorMoneda.set(moneda, new Map());
+      const porMes = porMesPorMoneda.get(moneda)!;
       porMes.set(mes, (porMes.get(mes) || 0) + (Number(venta.precio_venta) - Number(e.precio_propietario)));
     });
-    for (let i = 11; i >= 0; i--) {
-      const d = new Date(hoy.getFullYear(), hoy.getMonth() - i, 1);
-      const key = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}`;
-      gananciaPorMes.push({ mes: d.toLocaleDateString("es-AR", { month: "short", year: "2-digit" }), monto: Math.round(porMes.get(key) || 0) });
-    }
+    porMesPorMoneda.forEach((porMes, moneda) => {
+      const serie: { mes: string; monto: number }[] = [];
+      for (let i = 11; i >= 0; i--) {
+        const d = new Date(hoy.getFullYear(), hoy.getMonth() - i, 1);
+        const key = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}`;
+        serie.push({ mes: d.toLocaleDateString("es-AR", { month: "short", year: "2-digit" }), monto: Math.round(porMes.get(key) || 0) });
+      }
+      gananciaPorMesPorMoneda[moneda] = serie;
+    });
   }
 
   // Cantidad de ventas cerradas por mes, últimos 12 meses (para la curva de
@@ -321,20 +345,27 @@ export default async function PanelV2Home() {
     }
   }
 
-  // Resumen anual (2 años atrás, año pasado, año actual) -- el monto en USD
-  // es plata real de facturación, se oculta para no-admin (mismo criterio
-  // que gananciaPorMoneda/gananciaPorMes de arriba). La cantidad de autos no
-  // es sensible, se deja igual.
+  // Resumen anual (2 años atrás, año pasado, año actual) -- la facturación
+  // es plata real, se oculta para no-admin (mismo criterio que
+  // gananciaPorMoneda/gananciaPorMesPorMoneda de arriba). La cantidad de
+  // autos no es sensible, se deja igual. Pedido 1/10: antes solo sumaba
+  // USD -- un año con ventas en ARS mostraba "USD 0" aunque sí hubiera
+  // facturación real, solo que en otra moneda.
   const resumenAnual = [hoy.getFullYear() - 2, hoy.getFullYear() - 1, hoy.getFullYear()].map((anio) => {
     const delAno = (ventasPorAno || []).filter((v: any) => v.fecha_cierre?.startsWith(String(anio)));
-    if (!esAdmin) return { anio, autos: delAno.length, usd: 0 };
-    const usd = delAno.filter((v: any) => v.moneda_venta === "USD").reduce((a: number, v: any) => a + Number(v.precio_venta), 0);
-    return { anio, autos: delAno.length, usd: Math.round(usd) };
+    if (!esAdmin) return { anio, autos: delAno.length, porMoneda: {} };
+    const porMoneda: Record<string, number> = {};
+    delAno.forEach((v: any) => { porMoneda[v.moneda_venta] = (porMoneda[v.moneda_venta] || 0) + Number(v.precio_venta); });
+    Object.keys(porMoneda).forEach((m) => { porMoneda[m] = Math.round(porMoneda[m]); });
+    return { anio, autos: delAno.length, porMoneda };
   });
 
-  // Tu operación (vendedor logueado, en el año)
+  // Tu operación (vendedor logueado, en el año) -- pedido 1/10: antes solo
+  // sumaba USD, una venta propia en ARS quedaba afuera del total mostrado.
   const misVentasAno = ventasVendedorAno || [];
-  const misVentasUsd = misVentasAno.filter((v: any) => v.moneda_venta === "USD").reduce((a: number, v: any) => a + Number(v.precio_venta), 0);
+  const misVentasPorMoneda: Record<string, number> = {};
+  misVentasAno.forEach((v: any) => { misVentasPorMoneda[v.moneda_venta] = (misVentasPorMoneda[v.moneda_venta] || 0) + Number(v.precio_venta); });
+  Object.keys(misVentasPorMoneda).forEach((m) => { misVentasPorMoneda[m] = Math.round(misVentasPorMoneda[m]); });
 
   // Clientes que ingresaron
   const canalConteo: Record<string, number> = {};
@@ -459,7 +490,9 @@ export default async function PanelV2Home() {
       comisionesPendientes={comisionesPendientes ?? 0}
       infraccionesPendientes={infraccionesPendientes ?? 0}
       pedidosActivos={pedidosActivosCount ?? 0}
-      diaDelMes={hoy.getDate()}
+      mesSeleccionado={mesSeleccionado}
+      esMesActual={esMesActual}
+      diaDelMes={esMesActual ? hoy.getDate() : Number(finMes.split("-")[2])}
       diasEnElMes={Number(finMes.split("-")[2])}
       ranking={ranking || []}
       gananciaPorMoneda={gananciaPorMoneda}
@@ -472,7 +505,7 @@ export default async function PanelV2Home() {
       }}
       calificaciones={{ promedio: promedioCalificacion, distribucion: distribucionEstrellas, pedidasSinResponder, total: calificadas.length }}
       gestoriaPorMoneda={gestoriaPorMoneda}
-      gananciaPorMes={gananciaPorMes}
+      gananciaPorMesPorMoneda={gananciaPorMesPorMoneda}
       ventasPorMes12={ventasPorMes12}
       proyeccionCaja={{
         saldos: saldos || [],
@@ -491,7 +524,7 @@ export default async function PanelV2Home() {
         totalPorMoneda: cuotasPagarPorMoneda, cantidadDelMes: (cuotasPagarMes || []).length, vencidas: cuotasPagarVencidasCount ?? 0,
       }}
       resumenAnual={resumenAnual}
-      tuOperacion={{ ventas: misVentasAno.length, usd: Math.round(misVentasUsd), consignacionesAno: consignacionesVendedorAno ?? 0 }}
+      tuOperacion={{ ventas: misVentasAno.length, porMoneda: misVentasPorMoneda, consignacionesAno: consignacionesVendedorAno ?? 0 }}
       clientesIngresadosHoy={clientesIngresados?.length ?? 0}
       clientesUltimos7dias={clientesUltimos7diasCount ?? 0}
       canalTop={canalTop}
