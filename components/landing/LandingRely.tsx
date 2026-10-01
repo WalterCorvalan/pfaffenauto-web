@@ -4,7 +4,7 @@ import { useState } from "react";
 import Link from "next/link";
 import Image from "next/image";
 import { Inter, JetBrains_Mono } from "next/font/google";
-import { ChevronRight, X, Menu, Loader2, CheckCircle2, Phone } from "lucide-react";
+import { ChevronRight, X, Menu, Loader2, CheckCircle2, Phone, User, CarFront, ShieldCheck } from "lucide-react";
 import { RELY_VERSIONS } from "@/lib/rely-versions";
 import VehiculosCarousel from "./VehiculosCarousel";
 
@@ -75,18 +75,40 @@ export default function LandingRely() {
   const [versionInteres, setVersionInteres] = useState("Comfort");
   const [enviando, setEnviando] = useState(false);
   const [enviado, setEnviado] = useState(false);
+  const [errorReserva, setErrorReserva] = useState("");
 
-  const enviarReserva = (e: React.FormEvent) => {
+  // Antes solo abría WhatsApp, sin dejar registro en el CRM -- pedido
+  // explícito de que la reserva quede sí o sí en Pedidos (/panel/pedidos),
+  // reusando la misma API que ya usa el buscador del catálogo público.
+  const enviarReserva = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!nombre.trim() || !apellido.trim() || !telefono.trim()) return;
 
     setEnviando(true);
-    const mensaje = encodeURIComponent(
-      `Hola, quiero reservar la Rely Pick Up.\nNombre: ${nombre} ${apellido}\nTeléfono: ${telefono}\nVersión de interés: ${versionInteres}`
-    );
-    window.open(`https://wa.me/5491121907000?text=${mensaje}`, "_blank", "noopener,noreferrer");
-    setEnviado(true);
-    setEnviando(false);
+    setErrorReserva("");
+    try {
+      const res = await fetch("/api/panel/pedidos", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          nombre: `${nombre} ${apellido}`,
+          telefono,
+          busqueda: `Reserva Rely Pick Up — versión ${versionInteres}`,
+        }),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || "No se pudo enviar la reserva.");
+
+      const mensaje = encodeURIComponent(
+        `Hola, quiero reservar la Rely Pick Up.\nNombre: ${nombre} ${apellido}\nTeléfono: ${telefono}\nVersión de interés: ${versionInteres}`
+      );
+      window.open(`https://wa.me/5491121907000?text=${mensaje}`, "_blank", "noopener,noreferrer");
+      setEnviado(true);
+    } catch (err) {
+      setErrorReserva(err instanceof Error ? err.message : "No se pudo enviar la reserva. Probá de nuevo en unos minutos.");
+    } finally {
+      setEnviando(false);
+    }
   };
 
   return (
@@ -99,7 +121,7 @@ export default function LandingRely() {
           onMouseLeave={() => setIsMenuOpen(false)}
         >
           <div className="flex items-center gap-3 py-3 md:py-4">
-            <Image src="/RelyLogo.png" alt="Rely" width={140} height={56} className="h-8 md:h-11 w-auto object-contain -my-2 md:-my-3 brightness-0 invert" />
+            <Image src="/RelyLogo.png" alt="Rely" width={140} height={56} className="h-9 md:h-12 w-auto object-contain -my-3 md:-my-4 brightness-0 invert" />
             <div className="h-5 w-[1px] bg-white/20 mx-1"></div>
             <Link href="/" className="relative flex items-center group">
               <Image src="/logo.png" alt="Pfaffen Cars" width={90} height={20} className="h-4 sm:h-5 md:h-5 w-auto object-contain brightness-0 invert opacity-80 group-hover:opacity-100 transition-opacity" />
@@ -256,33 +278,50 @@ export default function LandingRely() {
                 <p className="text-sm text-slate-400 font-medium max-w-xs mx-auto">Te estamos conectando por WhatsApp con nuestro equipo comercial.</p>
               </div>
             ) : (
-              <form onSubmit={enviarReserva} className="space-y-6 relative z-10">
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
+              <form onSubmit={enviarReserva} className="space-y-5 relative z-10">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
                   <div>
                     <label className="text-[10px] text-slate-500 font-black uppercase tracking-[0.15em] mb-2 block">Nombre</label>
-                    <input required type="text" value={nombre} onChange={(e) => setNombre(e.target.value)} placeholder="Ej. Carlos" className="w-full bg-white/5 border border-white/10 rounded-2xl px-5 py-4 outline-none focus:border-white/30 focus:bg-white/10 transition-all text-white text-sm placeholder:text-slate-600" />
+                    <div className="relative">
+                      <User className="absolute left-5 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-500 pointer-events-none" />
+                      <input required type="text" value={nombre} onChange={(e) => setNombre(e.target.value)} placeholder="Ej. Carlos" className="w-full bg-white/5 border border-white/10 rounded-2xl pl-12 pr-5 py-4 outline-none focus:border-white/30 focus:bg-white/10 transition-all text-white text-sm placeholder:text-slate-600" />
+                    </div>
                   </div>
                   <div>
                     <label className="text-[10px] text-slate-500 font-black uppercase tracking-[0.15em] mb-2 block">Apellido</label>
-                    <input required type="text" value={apellido} onChange={(e) => setApellido(e.target.value)} placeholder="Ej. Rodríguez" className="w-full bg-white/5 border border-white/10 rounded-2xl px-5 py-4 outline-none focus:border-white/30 focus:bg-white/10 transition-all text-white text-sm placeholder:text-slate-600" />
+                    <div className="relative">
+                      <User className="absolute left-5 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-500 pointer-events-none" />
+                      <input required type="text" value={apellido} onChange={(e) => setApellido(e.target.value)} placeholder="Ej. Rodríguez" className="w-full bg-white/5 border border-white/10 rounded-2xl pl-12 pr-5 py-4 outline-none focus:border-white/30 focus:bg-white/10 transition-all text-white text-sm placeholder:text-slate-600" />
+                    </div>
                   </div>
                 </div>
 
                 <div>
                   <label className="text-[10px] text-slate-500 font-black uppercase tracking-[0.15em] mb-2 block">Teléfono Móvil</label>
-                  <input required type="tel" value={telefono} onChange={(e) => setTelefono(e.target.value)} placeholder="Ej. 11 2345 6789" className="w-full bg-white/5 border border-white/10 rounded-2xl px-5 py-4 outline-none focus:border-white/30 focus:bg-white/10 transition-all text-white text-sm placeholder:text-slate-600" />
+                  <div className="relative">
+                    <Phone className="absolute left-5 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-500 pointer-events-none" />
+                    <input required type="tel" value={telefono} onChange={(e) => setTelefono(e.target.value)} placeholder="Ej. 11 2345 6789" className="w-full bg-white/5 border border-white/10 rounded-2xl pl-12 pr-5 py-4 outline-none focus:border-white/30 focus:bg-white/10 transition-all text-white text-sm placeholder:text-slate-600" />
+                  </div>
                 </div>
 
                 <div>
                   <label className="text-[10px] text-slate-500 font-black uppercase tracking-[0.15em] mb-2 block">Versión de interés</label>
-                  <select value={versionInteres} onChange={(e) => setVersionInteres(e.target.value)} className="w-full bg-white/5 border border-white/10 rounded-2xl px-5 py-4 outline-none focus:border-white/30 focus:bg-white/10 transition-all text-white text-sm appearance-none cursor-pointer">
-                    {VERSIONS.map((v) => (<option key={v.code} className="bg-[#111]">{v.name}</option>))}
-                  </select>
+                  <div className="relative">
+                    <CarFront className="absolute left-5 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-500 pointer-events-none" />
+                    <select value={versionInteres} onChange={(e) => setVersionInteres(e.target.value)} className="w-full bg-white/5 border border-white/10 rounded-2xl pl-12 pr-5 py-4 outline-none focus:border-white/30 focus:bg-white/10 transition-all text-white text-sm appearance-none cursor-pointer">
+                      {VERSIONS.map((v) => (<option key={v.code} className="bg-[#111]">{v.name}</option>))}
+                    </select>
+                  </div>
                 </div>
+
+                {errorReserva && <p className="text-rose-400 text-xs font-semibold text-center">{errorReserva}</p>}
 
                 <button type="submit" disabled={enviando} className="w-full bg-white hover:bg-slate-200 disabled:bg-white/20 disabled:text-slate-500 text-black font-black uppercase tracking-[0.15em] text-xs py-5 rounded-2xl transition-all shadow-xl active:scale-[0.98] mt-4 flex items-center justify-center gap-2">
                   {enviando ? <Loader2 className="w-4 h-4 animate-spin" /> : "Solicitar Reserva"}
                 </button>
+                <p className="text-slate-500 text-[11px] text-center flex items-center justify-center gap-1.5">
+                  <ShieldCheck className="w-3.5 h-3.5 text-emerald-500" /> Sin cargo ni compromiso — te contactamos en menos de 24&nbsp;hs.
+                </p>
               </form>
             )}
           </div>

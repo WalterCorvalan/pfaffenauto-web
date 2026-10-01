@@ -198,7 +198,8 @@ export default function Stock({ vehiculos }: StockProps) {
                         (a) => a.id === auto.id,
                       )}
                       onToggleComparar={toggleComparar}
-                      bordeSuave
+                      variante="alt"
+                      compacta
                     />
                   </div>
                 ))}
@@ -377,12 +378,13 @@ export default function Stock({ vehiculos }: StockProps) {
                   className="min-w-[280px] md:min-w-[360px] h-[360px] md:h-[440px] relative rounded-[32px] overflow-hidden group snap-center shadow-lg dark:shadow-[0_20px_48px_rgba(0,0,0,0.6)] hover:shadow-2xl border border-white/40 dark:border-white/10 shrink-0 transition-all duration-500"
                 >
                   <div className="absolute inset-0 bg-slate-200 dark:bg-slate-900 z-0"></div>
-                  {/* Alto de la tarjeta: object-contain dejaba al auto
-                     "flotando" con espacio vacío (no convenció); 300/380 con
-                     object-cover se veía bien pero el título (marca+modelo)
-                     tapaba el techo/capot del auto por falta de aire arriba.
-                     360/440 le da lugar al texto sin volver al recorte
-                     excesivo de la versión original (380/480). */}
+                  {/* Solo en mobile: object-cover con scale-90 dejaba ver el
+                     fondo de la tarjeta como un "borde cuadrado" alrededor de
+                     fotos que ya vienen recortadas al auto (Karry/Rely) --
+                     object-contain ocupa toda la tarjeta sin recortar y el
+                     auto queda "más atrás" (más chico dentro del cuadro) en
+                     vez de pegado a los bordes. En sm+ se mantiene el
+                     recorte/zoom original, que ahí no tenía el problema. */}
                   <Image
                     src={
                       auto.fotos?.[0] ||
@@ -391,7 +393,7 @@ export default function Stock({ vehiculos }: StockProps) {
                     alt={`${auto.marca} ${auto.modelo} ${auto.anio}`}
                     fill
                     sizes="(max-width: 768px) 280px, 360px"
-                    className="object-cover scale-90 group-hover:scale-100 transition-transform duration-700 ease-out z-0 mix-blend-multiply dark:mix-blend-normal opacity-90 dark:opacity-85"
+                    className="object-contain p-6 scale-100 group-hover:scale-105 sm:object-cover sm:p-0 sm:scale-90 sm:group-hover:scale-100 transition-transform duration-700 ease-out z-0 mix-blend-multiply dark:mix-blend-normal opacity-90 dark:opacity-85"
                   />
                   <div className="absolute inset-0 bg-gradient-to-b from-black/70 via-transparent to-black/80 dark:from-black/80 dark:to-black/90 z-10" />
 
@@ -594,14 +596,59 @@ export function VehicleCard({
   bordeSuave,
   prioridad,
   variante,
+  compacta,
 }: {
   auto: any;
   estaSeleccionado?: boolean;
   onToggleComparar?: (e: React.MouseEvent, auto: any) => void;
   bordeSuave?: boolean;
   prioridad?: boolean;
+  /** "alt" = diseño con pastillas (año/km/sucursal) + botón "Ver detalle",
+     usado en Destacados. */
   variante?: "clasica" | "alt";
+  /** Solo aplica con variante="alt": usa una imagen más baja en mobile
+     (misma altura que la tarjeta clásica) para secciones donde el tamaño en
+     mobile ya está afinado y no se quiere agrandar (carrusel de Pick-ups,
+     grilla del catálogo) -- en desktop no cambia nada. */
+  compacta?: boolean;
 }) {
+  const [esFavorito, setEsFavorito] = useState(false);
+
+  useEffect(() => {
+    try {
+      const favs = JSON.parse(localStorage.getItem("pfaffen_favs") || "[]");
+      setEsFavorito(favs.some((f: any) => f.id === auto.id));
+    } catch {
+      setEsFavorito(false);
+    }
+  }, [auto.id]);
+
+  const toggleFavorito = (e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    let favs: any[] = [];
+    try {
+      favs = JSON.parse(localStorage.getItem("pfaffen_favs") || "[]");
+    } catch {
+      favs = [];
+    }
+    if (esFavorito) {
+      favs = favs.filter((f) => f.id !== auto.id);
+    } else {
+      favs.push({
+        id: auto.id,
+        marca: auto.marca,
+        modelo: auto.modelo,
+        slug: auto.slug,
+        precio_ars: auto.precio_publicado_ars,
+        precio_usd: auto.precio_publicado_usd,
+        imagen: auto.fotos?.[0],
+      });
+    }
+    localStorage.setItem("pfaffen_favs", JSON.stringify(favs));
+    setEsFavorito(!esFavorito);
+  };
+
   const precioMostrar = auto.precio_publicado_ars
     ? `$ ${auto.precio_publicado_ars.toLocaleString("es-AR")}`
     : auto.precio_publicado_usd
@@ -629,6 +676,23 @@ export function VehicleCard({
           </button>
         )}
 
+        {/* Favorito también afuera del <Link>, mismo motivo que el
+           comparador de arriba -- antes estaba anidado adentro del <a> y el
+           click disparaba el toggle Y la navegación al detalle a la vez,
+           dejando la tarjeta en un estado de carga raro a mitad de camino. */}
+        <button
+          onClick={toggleFavorito}
+          className={`absolute top-3 right-3 z-30 w-8 h-8 rounded-full backdrop-blur-md flex items-center justify-center shadow-sm transition-colors ${
+            esFavorito
+              ? "bg-red-500 text-white"
+              : "bg-white/90 dark:bg-black/50 text-gray-400 dark:text-slate-300 hover:text-red-500"
+          }`}
+          title={esFavorito ? "Quitar de favoritos" : "Agregar a favoritos"}
+          aria-label={esFavorito ? "Quitar de favoritos" : "Agregar a favoritos"}
+        >
+          <Heart className={`w-4 h-4 ${esFavorito ? "fill-current" : ""}`} />
+        </button>
+
         <Link href={`/catalogo/${auto.slug}`} className="block h-full focus:outline-none">
           <div className="bg-white dark:bg-[#11131c] rounded-2xl overflow-hidden flex flex-col h-full border border-gray-200/70 dark:border-white/10 shadow-[0_8px_24px_rgba(0,0,0,0.05)] dark:shadow-[0_8px_24px_rgba(0,0,0,0.35)] hover:shadow-[0_16px_36px_rgba(1,69,242,0.12)] transition-all duration-500 transform hover:-translate-y-1">
             {/* La tarjeta es 1 columna (ancho completo) en mobile y 2-4
@@ -636,18 +700,19 @@ export function VehicleCard({
                la de sm+, así que necesita más alto de imagen para no quedar
                achatada (se cortaban las ruedas). sm:h-[240px] es el valor ya
                probado en desktop/tablet, no tocar. */}
-            <div className="relative h-[300px] sm:h-[240px] bg-gray-100 dark:bg-white/5 overflow-hidden">
+            <div className={`relative ${compacta ? "h-[200px]" : "h-[300px]"} sm:h-[240px] bg-gray-100 dark:bg-white/5 overflow-hidden`}>
               <Image
                 src={auto.fotos?.[0] || "/placeholder.jpg"}
                 alt={`${auto.marca} ${auto.modelo}`}
                 fill
                 sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 300px"
                 priority={prioridad}
-                className="object-cover object-center group-hover:scale-105 transition-transform duration-700 ease-out"
+                className={
+                  compacta
+                    ? "object-cover object-[center_25%] group-hover:scale-105 transition-transform duration-700 ease-out"
+                    : "object-cover object-center group-hover:scale-105 transition-transform duration-700 ease-out"
+                }
               />
-              <span className="absolute top-3 right-3 w-8 h-8 rounded-full bg-white/90 dark:bg-black/50 backdrop-blur-md flex items-center justify-center text-gray-400 dark:text-slate-300 shadow-sm z-10">
-                <Heart className="w-4 h-4" />
-              </span>
             </div>
 
             <div className="p-3.5 sm:p-4 flex flex-col flex-grow">

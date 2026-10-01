@@ -14,12 +14,10 @@ import { agregarBusquedaReciente } from "@/lib/busquedasRecientes";
 
 export default function PublicHeader() {
   const [isOpen, setIsOpen] = useState(false);
-  const [isSearchMobileOpen, setIsSearchMobileOpen] = useState(false);
   const [favCount, setFavCount] = useState(0);
   const [isScrolled, setIsScrolled] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
   const [buscadorEnfocado, setBuscadorEnfocado] = useState(false);
-  const [buscadorMobileEnfocado, setBuscadorMobileEnfocado] = useState(false);
 
   const pathname = usePathname();
   const router = useRouter();
@@ -47,7 +45,6 @@ export default function PublicHeader() {
   useEffect(() => {
     updateFavCount();
     setIsOpen(false);
-    setIsSearchMobileOpen(false);
   }, [pathname, searchParams]);
 
   // Se agregaron íconos a todas las opciones para unificar el menú móvil
@@ -64,7 +61,6 @@ export default function PublicHeader() {
     if (searchQuery.trim()) {
       agregarBusquedaReciente(searchQuery);
       router.push(`/catalogo?q=${encodeURIComponent(searchQuery)}`);
-      setIsSearchMobileOpen(false);
       setSearchQuery("");
     }
   };
@@ -73,19 +69,11 @@ export default function PublicHeader() {
     agregarBusquedaReciente(texto);
     router.push(`/catalogo?q=${encodeURIComponent(texto)}`);
     setSearchQuery("");
-    setIsSearchMobileOpen(false);
     setBuscadorEnfocado(false);
-    setBuscadorMobileEnfocado(false);
   };
 
   const toggleMenu = () => {
     setIsOpen(!isOpen);
-    setIsSearchMobileOpen(false);
-  };
-
-  const toggleSearchMobile = () => {
-    setIsSearchMobileOpen(!isSearchMobileOpen);
-    setIsOpen(false);
   };
 
   return (
@@ -98,7 +86,7 @@ export default function PublicHeader() {
     >
       <div className="w-full px-4 md:px-8 h-20 grid grid-cols-[auto_1fr_auto] items-center gap-2 relative z-20">
         {/* ================= COLUMNA IZQUIERDA: LOGOS ================= */}
-        <div className="flex items-center gap-3 md:gap-4 justify-start shrink-0">
+        <div className="flex items-center gap-2 md:gap-4 justify-start shrink-0">
           <Link href="/" className="relative flex items-center group shrink-0">
             <Image
               src="/logo.png"
@@ -119,11 +107,11 @@ export default function PublicHeader() {
 
           <span className="h-6 w-[1px] bg-slate-300/75 dark:bg-white/15 hidden sm:block"></span>
 
-          <div className="flex items-center gap-1.5 sm:gap-2.5 sm:bg-white/30 dark:sm:bg-white/5 sm:border sm:border-white/50 dark:sm:border-white/10 rounded-full sm:pl-3 sm:pr-3 sm:py-1 min-w-0">
+          <div className="flex items-center gap-1 sm:gap-2.5 sm:bg-white/30 dark:sm:bg-white/5 sm:border sm:border-white/50 dark:sm:border-white/10 rounded-full sm:pl-3 sm:pr-3 sm:py-1 min-w-0 mr-5 lg:mr-0">
             <span className="text-[7px] sm:text-[8px] md:text-[9px] font-black uppercase tracking-wide sm:tracking-widest text-slate-600 dark:text-slate-300 whitespace-nowrap shrink-0 leading-none">
               Concesionario oficial
             </span>
-            <div className="flex items-center gap-0 sm:gap-1 shrink-0 h-4 sm:h-6 md:h-7">
+            <div className="flex items-center gap-0 sm:gap-1 shrink-0 h-[22px] sm:h-6 md:h-7">
               <Link
                 href="/rely"
                 className="flex items-center h-full group shrink-0 rounded-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#0145F2] focus-visible:ring-offset-1"
@@ -134,7 +122,7 @@ export default function PublicHeader() {
                   alt="Rely"
                   width={1536}
                   height={1024}
-                  className="h-8 sm:h-10 md:h-[50px] w-auto object-contain transition-transform group-hover:scale-105 -my-1.5 sm:-my-2 md:-my-2.5 dark:brightness-0 dark:invert"
+                  className="h-10 sm:h-10 md:h-[50px] w-auto object-contain transition-transform group-hover:scale-105 -my-3 sm:-my-2 md:-my-2.5 dark:brightness-0 dark:invert"
                 />
               </Link>
               <Link
@@ -147,7 +135,7 @@ export default function PublicHeader() {
                   alt="Karry"
                   width={500}
                   height={240}
-                  className="h-5 sm:h-10 md:h-[30px] w-auto object-contain transition-transform group-hover:scale-105 -my-1.5 sm:-my-2 md:-my-2.5"
+                  className="h-[22px] sm:h-10 md:h-[30px] w-auto object-contain transition-transform group-hover:scale-105 -my-1.5 sm:-my-2 md:-my-2.5"
                 />
               </Link>
             </div>
@@ -281,15 +269,6 @@ export default function PublicHeader() {
           </Link>
 
           <button
-            onClick={toggleSearchMobile}
-            className="lg:hidden p-2.5 mr-2 text-primary dark:text-sky-300 bg-white/40 dark:bg-white/5 backdrop-blur-md border border-white/60 dark:border-white/10 rounded-full shadow-sm"
-            title="Buscar"
-            aria-label="Buscar"
-          >
-            <Search className="w-3.5 h-3.5 md:w-5 md:h-5" />
-          </button>
-
-          <button
             onClick={toggleMenu}
             className="lg:hidden p-2.5 text-navy dark:text-white bg-white/40 dark:bg-white/5 backdrop-blur-md border border-white/60 dark:border-white/10 rounded-full shadow-sm transition-all"
             title={isOpen ? "Cerrar menú" : "Abrir menú"}
@@ -299,32 +278,6 @@ export default function PublicHeader() {
           </button>
         </div>
       </div>
-
-      {/* ================= BUSCADOR MÓVIL ================= */}
-      <AnimatePresence>
-        {isSearchMobileOpen && (
-          <motion.div
-            initial={{ opacity: 0, height: 0 }}
-            animate={{ opacity: 1, height: "auto" }}
-            exit={{ opacity: 0, height: 0 }}
-            className="lg:hidden bg-white/70 dark:bg-black/80 backdrop-blur-3xl border-t border-white/60 dark:border-white/10 overflow-hidden absolute w-full z-10"
-          >
-            <form onSubmit={handleSearch} className="p-4 relative">
-              <input
-                type="text"
-                placeholder="¿Qué auto buscás?"
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                onFocus={() => setBuscadorMobileEnfocado(true)}
-                onBlur={() => setBuscadorMobileEnfocado(false)}
-                className="w-full bg-white/50 dark:bg-white/5 backdrop-blur-md border border-white/80 dark:border-white/15 text-navy dark:text-white text-sm font-bold rounded-2xl pl-12 pr-4 py-3.5 outline-none"
-                autoFocus
-              />
-              <BuscadorSugerencias termino={searchQuery} enfocado={buscadorMobileEnfocado} onSeleccionar={irABusqueda} />
-            </form>
-          </motion.div>
-        )}
-      </AnimatePresence>
 
       {/* ================= MENÚ HAMBURGUESA MÓVIL (NUEVO DISEÑO NATIVO) ================= */}
       <AnimatePresence>

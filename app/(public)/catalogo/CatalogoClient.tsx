@@ -404,7 +404,7 @@ export default function CatalogoClient({ vehiculosIniciales = [], totalInicial =
   return (
     <div className="min-h-screen bg-[#f5f5f5] dark:bg-[#0a0a0f] pt-6 pb-20 font-sans text-gray-900 dark:text-white">
 
-      <div className="max-w-7xl mx-auto px-4 md:px-6">
+      <div className="max-w-7xl mx-auto px-2.5 md:px-6">
         
         {/* ================= MIGAS DE PAN Y BUSCADOR INTELIGENTE ================= */}
         <div className="mb-8">
@@ -712,7 +712,7 @@ export default function CatalogoClient({ vehiculosIniciales = [], totalInicial =
             {loading ? (
               // SKELETONS INICIALES (Sólidos)
               // CAMBIO ACÁ: grid-cols-2 para móvil por defecto
-              <div className="grid grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3 sm:gap-4 md:gap-6 pb-8">
+              <div className="grid grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-2 sm:gap-4 md:gap-6 pb-8">
                 {[...Array(6)].map((_, i) => (
                   <div
                     key={i}
@@ -733,13 +733,15 @@ export default function CatalogoClient({ vehiculosIniciales = [], totalInicial =
               <>
                 {/* AUTOS CARGADOS */}
                 {/* CAMBIO ACÁ: grid-cols-2 para móvil por defecto */}
-                <div className="grid grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3 sm:gap-4 md:gap-6 pb-8 w-full">
+                <div className="grid grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-2 sm:gap-4 md:gap-6 pb-8 w-full">
                   {vehiculos.map((auto, index) => (
                     <VehicleCard
                       key={`${auto.id}-${index}`}
                       auto={auto}
                       estaSeleccionado={autosComparar.some((a) => a.id === auto.id)}
                       onToggleComparar={toggleComparar}
+                      variante="alt"
+                      compacta
                     />
                   ))}
                 </div>

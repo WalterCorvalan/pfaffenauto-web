@@ -1,7 +1,6 @@
 "use client";
 
-import { useState, useEffect, useRef } from "react";
-import Script from "next/script";
+import { useState, useEffect } from "react";
 import { getCanalOrigen, getUtmRaw } from "@/lib/utm";
 import { CreditCard, CheckCircle2, Loader2, User, Phone, Mail, ArrowLeft, Search, Car } from "lucide-react";
 import {
@@ -9,15 +8,6 @@ import {
   PLAZOS_DISPONIBLES,
   topePctPorAnio, tnaPctPorAnioYPlazo, calcularCuotaFrances, type TopeFinanciacion, type TnaGrupo,
 } from "@/lib/financiacion";
-
-declare global {
-  interface Window {
-    turnstile?: {
-      render: (container: HTMLElement, options: Record<string, unknown>) => string;
-      reset: (widgetId?: string) => void;
-    };
-  }
-}
 
 interface VehiculoFinanciable {
   id: string;
@@ -86,26 +76,6 @@ export default function SimuladorReal() {
   const [email, setEmail] = useState("");
   const [telefono, setTelefono] = useState("");
 
-  const [turnstileToken, setTurnstileToken] = useState("");
-  const [turnstileListo, setTurnstileListo] = useState(false);
-  const turnstileRef = useRef<HTMLDivElement>(null);
-  const turnstileWidgetId = useRef<string | null>(null);
-
-  useEffect(() => {
-    if (window.turnstile) setTurnstileListo(true);
-  }, []);
-
-  useEffect(() => {
-    if (step !== 4 || !turnstileListo || !turnstileRef.current || !window.turnstile) return;
-    if (turnstileWidgetId.current) return;
-    turnstileWidgetId.current = window.turnstile.render(turnstileRef.current, {
-      sitekey: process.env.NEXT_PUBLIC_TURNSTILE_SITE_KEY || "",
-      callback: (token: string) => setTurnstileToken(token),
-      "expired-callback": () => setTurnstileToken(""),
-      "error-callback": () => setTurnstileToken(""),
-    });
-  }, [step, turnstileListo]);
-
   // Al entrar al paso 1 mostramos algunos autos ya (destacados) para no dejar
   // la pantalla vacía pidiendo que el usuario escriba primero.
   useEffect(() => {
@@ -148,18 +118,12 @@ export default function SimuladorReal() {
     setMeses(24);
     setCreditoPreaprobado(null);
     setNombre(""); setEmail(""); setTelefono("");
-    setTurnstileToken("");
-    turnstileWidgetId.current = null;
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError("");
     if (!vehiculo || !nombre || !email || !telefono) return;
-    if (!turnstileToken) {
-      setError("Completá la verificación anti-spam antes de continuar.");
-      return;
-    }
 
     setLoading(true);
     try {
@@ -168,7 +132,6 @@ export default function SimuladorReal() {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          turnstileToken,
           canalOrigen: getCanalOrigen(),
           utmSource: getUtmRaw().utm_source,
           utmMedium: getUtmRaw().utm_medium,
@@ -192,8 +155,6 @@ export default function SimuladorReal() {
       setSuccess(true);
     } catch (err) {
       setError(err instanceof Error ? err.message : "Hubo un error al enviar la solicitud. Intentá nuevamente.");
-      if (turnstileWidgetId.current && window.turnstile) window.turnstile.reset(turnstileWidgetId.current);
-      setTurnstileToken("");
     } finally {
       setLoading(false);
     }
@@ -393,10 +354,6 @@ export default function SimuladorReal() {
                 <input type="tel" required value={telefono} onChange={(e) => setTelefono(e.target.value)} className={inputClass} placeholder="Ej: 11 0000 0000" />
               </div>
 
-              <div className="flex justify-center pt-2">
-                <div ref={turnstileRef} />
-              </div>
-
               {error && (
                 <div className="bg-rose-50 dark:bg-rose-400/10 border border-rose-200 dark:border-rose-400/20 text-rose-600 dark:text-rose-300 text-xs font-semibold px-4 py-3 rounded-xl animate-shake">
                   {error}
@@ -405,7 +362,7 @@ export default function SimuladorReal() {
 
               <button
                 type="submit"
-                disabled={loading || !turnstileToken}
+                disabled={loading}
                 className={`${ctaClass} flex items-center justify-center gap-2`}
               >
                 {loading && <Loader2 className="w-4 h-4 animate-spin" />}
@@ -415,8 +372,6 @@ export default function SimuladorReal() {
           )}
         </div>
       )}
-
-      <Script src="https://challenges.cloudflare.com/turnstile/v0/api.js" strategy="lazyOnload" onLoad={() => setTurnstileListo(true)} />
     </div>
   );
 }

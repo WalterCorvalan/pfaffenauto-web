@@ -77,7 +77,7 @@ Antes, si el "auto en foco" de la charla (el que el bot detecta que se está hab
 
 ## Reasignar un lead a otro vendedor (1/10)
 
-El selector "Vendedor asignado" de `LeadDetailModal.tsx` (compartido por los 5 orígenes) antes hacía `supabase2.from(tabla).update({ vendedor_id })` directo desde el navegador — dependía de que RLS permitiera ese update para cualquier rol, y para "ventas" normalmente no lo permite (quedaba "sin servir", sin error claro al usuario). Ahora pasa por `PATCH /api/panel/vehiculos/precio`-style endpoint: `PATCH /api/panel/leads/reasignar` (service role), que valida server-side la regla de negocio real:
+El selector "Vendedor asignado" de `LeadDetailModal.tsx` (compartido por los 5 orígenes) antes hacía `supabase2.from(tabla).update({ vendedor_id })` directo desde el navegador — dependía de que RLS permitiera ese update para cualquier rol, y para "ventas" normalmente no lo permite (quedaba "sin servir", sin error claro al usuario). Ahora pasa por un endpoint: `PATCH /api/panel/leads/reasignar` (service role), que valida server-side la regla de negocio real:
 
 - **vendedor (rol "ventas")**: solo puede reasignar a otro perfil con rol "ventas". No puede dejar un lead sin asignar.
 - **encargado**: puede reasignar a cualquier perfil con rol "ventas" o "encargado".

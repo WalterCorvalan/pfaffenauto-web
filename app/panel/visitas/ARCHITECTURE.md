@@ -12,7 +12,7 @@ Una visita se puede crear desde 5 lugares — **si tocás uno, revisá los otros
 - **`app/api/panel/rodi/mensaje/route.ts`** — mismo caso pero para el bot de Rodi.
 - **`app/panel/visitas/NuevaVisitaModal.tsx`** — carga manual desde el panel (un vendedor/encargado agenda directo, sin pasar por sitio público ni bot). Ya sigue el mismo patrón (consulta el RPC, deshabilita horarios ocupados en el `<select>`) — quedó afuera de esta lista en una versión anterior del documento, sin ser un bug de código.
 
-Los 2 formularios públicos mandan el mismo payload al mismo endpoint (`vehiculo_id`, `nombre_cliente`, `telefono_cliente`, `fecha_visita`, `horario_visita`, `sucursal`, `turnstileToken`); los 2 bots insertan directo a la tabla con sus propios datos (nombre/teléfono del contacto de la conversación, vehículo si lo mencionó); `NuevaVisitaModal.tsx` inserta directo también, con los datos que carga el usuario del panel a mano.
+Los 2 formularios públicos mandan el mismo payload al mismo endpoint (`vehiculo_id`, `nombre_cliente`, `telefono_cliente`, `fecha_visita`, `horario_visita`, `sucursal`); los 2 bots insertan directo a la tabla con sus propios datos (nombre/teléfono del contacto de la conversación, vehículo si lo mencionó); `NuevaVisitaModal.tsx` inserta directo también, con los datos que carga el usuario del panel a mano.
 
 ## Horarios ocupados — RPC `visitas_horarios_ocupados`
 
