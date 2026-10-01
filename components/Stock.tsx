@@ -199,6 +199,7 @@ export default function Stock({ vehiculos }: StockProps) {
                       )}
                       onToggleComparar={toggleComparar}
                       bordeSuave
+                      variante="alt-mobile"
                     />
                   </div>
                 ))}
@@ -374,12 +375,13 @@ export default function Stock({ vehiculos }: StockProps) {
                   className="min-w-[280px] md:min-w-[360px] h-[360px] md:h-[440px] relative rounded-[32px] overflow-hidden group snap-center shadow-lg dark:shadow-[0_20px_48px_rgba(0,0,0,0.6)] hover:shadow-2xl border border-white/40 dark:border-white/10 shrink-0 transition-all duration-500"
                 >
                   <div className="absolute inset-0 bg-slate-200 dark:bg-slate-900 z-0"></div>
-                  {/* Alto de la tarjeta: object-contain dejaba al auto
-                     "flotando" con espacio vacío (no convenció); 300/380 con
-                     object-cover se veía bien pero el título (marca+modelo)
-                     tapaba el techo/capot del auto por falta de aire arriba.
-                     360/440 le da lugar al texto sin volver al recorte
-                     excesivo de la versión original (380/480). */}
+                  {/* Solo en mobile: object-cover con scale-90 dejaba ver el
+                     fondo de la tarjeta como un "borde cuadrado" alrededor de
+                     fotos que ya vienen recortadas al auto (Karry/Rely) --
+                     object-contain ocupa toda la tarjeta sin recortar y el
+                     auto queda "más atrás" (más chico dentro del cuadro) en
+                     vez de pegado a los bordes. En sm+ se mantiene el
+                     recorte/zoom original, que ahí no tenía el problema. */}
                   <Image
                     src={
                       auto.fotos?.[0] ||
@@ -388,7 +390,7 @@ export default function Stock({ vehiculos }: StockProps) {
                     alt={`${auto.marca} ${auto.modelo} ${auto.anio}`}
                     fill
                     sizes="(max-width: 768px) 280px, 360px"
-                    className="object-cover scale-90 group-hover:scale-100 transition-transform duration-700 ease-out z-0 mix-blend-multiply dark:mix-blend-normal opacity-90 dark:opacity-85"
+                    className="object-contain p-6 scale-100 group-hover:scale-105 sm:object-cover sm:p-0 sm:scale-90 sm:group-hover:scale-100 transition-transform duration-700 ease-out z-0 mix-blend-multiply dark:mix-blend-normal opacity-90 dark:opacity-85"
                   />
                   <div className="absolute inset-0 bg-gradient-to-b from-black/70 via-transparent to-black/80 dark:from-black/80 dark:to-black/90 z-10" />
 
@@ -597,15 +599,30 @@ export function VehicleCard({
   onToggleComparar?: (e: React.MouseEvent, auto: any) => void;
   bordeSuave?: boolean;
   prioridad?: boolean;
-  variante?: "clasica" | "alt";
+  /** "alt" = diseño con pastillas (año/km/sucursal) + botón "Ver detalle",
+     usado en Destacados. "alt-mobile" = ese mismo diseño pero solo en mobile
+     (<640px) -- en desktop se mantiene la tarjeta clásica, para secciones
+     (carrusel de Pick-ups, grilla del catálogo) donde el tamaño en desktop
+     ya está afinado y no se quiere agrandar. */
+  variante?: "clasica" | "alt" | "alt-mobile";
 }) {
+  const [esMobile, setEsMobile] = useState(false);
+
+  useEffect(() => {
+    if (variante !== "alt-mobile") return;
+    const onResize = () => setEsMobile(window.innerWidth < 640);
+    onResize();
+    window.addEventListener("resize", onResize);
+    return () => window.removeEventListener("resize", onResize);
+  }, [variante]);
+
   const precioMostrar = auto.precio_publicado_ars
     ? `$ ${auto.precio_publicado_ars.toLocaleString("es-AR")}`
     : auto.precio_publicado_usd
       ? `US$ ${auto.precio_publicado_usd.toLocaleString("es-AR")}`
       : "Consultar precio";
 
-  if (variante === "alt") {
+  if (variante === "alt" || (variante === "alt-mobile" && esMobile)) {
     return (
       <div className="relative h-full group">
         {/* Comparador afuera del <Link> a propósito -- ver comentario de más
