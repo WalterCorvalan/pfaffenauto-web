@@ -147,7 +147,7 @@ export default async function MarcaPage({
             Por el momento no tenemos unidades disponibles de esta marca. Dejanos tu consulta y te avisamos ni bien ingrese una.
           </p>
           <a
-            href={`https://wa.me/541121907000?text=${encodeURIComponent(`¡Hola! Buscaba un ${marcaName} en la web y vi que no hay stock. ¿Me avisan cuando ingrese uno?`)}`}
+            href={`https://wa.me/5491121907000?text=${encodeURIComponent(`¡Hola! Buscaba un ${marcaName} en la web y vi que no hay stock. ¿Me avisan cuando ingrese uno?`)}`}
             target="_blank"
             rel="noopener noreferrer"
             className="inline-flex items-center gap-2 bg-[#0145F2] hover:bg-blue-600 text-white font-black text-xs uppercase tracking-widest px-8 py-4 rounded-xl transition-all shadow-lg shadow-blue-500/20 active:scale-95 mb-6"

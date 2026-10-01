@@ -62,7 +62,7 @@ const SPECS = [
 ];
 
 const WHATSAPP_LINK =
-  "https://wa.me/541121907000?text=Hola%2C%20quiero%20cotizar%20la%20Karry%20Pick%20Up";
+  "https://wa.me/5491121907000?text=Hola%2C%20quiero%20cotizar%20la%20Karry%20Pick%20Up";
 
 export default function LandingKarry() {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
@@ -84,7 +84,7 @@ export default function LandingKarry() {
     const mensaje = encodeURIComponent(
       `Hola, quiero reservar la Karry Pick Up.\nNombre: ${nombre} ${apellido}\nTeléfono: ${telefono}\nVersión de interés: ${versionInteres}`
     );
-    window.open(`https://wa.me/541121907000?text=${mensaje}`, "_blank", "noopener,noreferrer");
+    window.open(`https://wa.me/5491121907000?text=${mensaje}`, "_blank", "noopener,noreferrer");
     setEnviado(true);
     setEnviando(false);
   };
