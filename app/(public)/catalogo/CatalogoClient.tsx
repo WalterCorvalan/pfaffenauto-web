@@ -740,7 +740,8 @@ export default function CatalogoClient({ vehiculosIniciales = [], totalInicial =
                       auto={auto}
                       estaSeleccionado={autosComparar.some((a) => a.id === auto.id)}
                       onToggleComparar={toggleComparar}
-                      variante="alt-mobile"
+                      variante="alt"
+                      compacta
                     />
                   ))}
                 </div>
