@@ -13,7 +13,7 @@ interface Config {
 }
 
 const REDES: { key: keyof Config; label: string; icon: any; placeholder: string }[] = [
-  { key: "redes_whatsapp", label: "WhatsApp", icon: MessageCircle, placeholder: "https://wa.me/541121907000" },
+  { key: "redes_whatsapp", label: "WhatsApp", icon: MessageCircle, placeholder: "https://wa.me/5491121907000" },
   { key: "redes_instagram", label: "Instagram", icon: Camera, placeholder: "https://www.instagram.com/..." },
   { key: "redes_facebook", label: "Facebook", icon: Globe2, placeholder: "https://www.facebook.com/..." },
   { key: "redes_tiktok", label: "TikTok", icon: Video, placeholder: "https://tiktok.com/@..." },

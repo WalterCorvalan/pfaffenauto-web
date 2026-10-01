@@ -113,7 +113,7 @@ export default function RootLayout({
     image: "https://www.pfaffencars.com/logo.png",
     "@id": "https://www.pfaffencars.com",
     url: "https://www.pfaffencars.com",
-    telephone: "+541121907000",
+    telephone: "+5491121907000",
     priceRange: "$$$",
     logo: "https://www.pfaffencars.com/logo.png",
     sameAs: [
