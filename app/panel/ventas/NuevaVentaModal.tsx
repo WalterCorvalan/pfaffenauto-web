@@ -39,6 +39,7 @@ interface Permuta {
 
 export interface VentaPrefill {
   compradorNombre?: string;
+  compradorTelefono?: string;
   vehiculoDescripcion?: string;
   precioVenta?: string;
   monedaVenta?: string;
@@ -149,7 +150,7 @@ export default function NuevaVentaModal({ perfiles, clientes, vehiculos, miId, s
     return !q || `${c.nombre} ${c.apellido || ""} ${c.dni_cuit || ""}`.toLowerCase().includes(q);
   });
   const [compradorNombre, setCompradorNombre] = useState(editando?.comprador_nombre || initial?.compradorNombre || "");
-  const [compradorTelefono, setCompradorTelefono] = useState(editando?.comprador_telefono || "");
+  const [compradorTelefono, setCompradorTelefono] = useState(editando?.comprador_telefono || initial?.compradorTelefono || "");
   const [compradorEmail, setCompradorEmail] = useState(editando?.comprador_email || "");
   const [compradorDni, setCompradorDni] = useState(editando?.comprador_dni || "");
   const [compradorTelefonoCelular, setCompradorTelefonoCelular] = useState(editando?.comprador_telefono_celular || "");

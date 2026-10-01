@@ -30,8 +30,14 @@ export interface ClienteSeleccionado {
 const inputClass = "w-full bg-slate-50 dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-xl px-3 py-2.5 text-sm outline-none focus:border-rose-500 focus:bg-white dark:focus:bg-white/10 transition-colors text-slate-900 dark:text-white placeholder:text-slate-400";
 
 export default function ClienteBuscador({
-  clientes, seleccionado, onSeleccionar,
-}: { clientes: any[]; seleccionado: ClienteSeleccionado | null; onSeleccionar: (cliente: ClienteSeleccionado | null) => void }) {
+  clientes, seleccionado, onSeleccionar, prefillNuevo,
+}: {
+  clientes: any[]; seleccionado: ClienteSeleccionado | null; onSeleccionar: (cliente: ClienteSeleccionado | null) => void;
+  /** Precarga el alta de "nuevo cliente" con nombre/teléfono ya conocidos
+     (ej. viene de un lead) y abre ese modo directo, sin que el vendedor
+     tenga que buscar y después apretar "Nuevo cliente" a mano. */
+  prefillNuevo?: { nombre: string; apellido?: string; telefono: string } | null;
+}) {
   const [busqueda, setBusqueda] = useState("");
   const [creandoNuevo, setCreandoNuevo] = useState(false);
   const [guardando, setGuardando] = useState(false);
@@ -44,6 +50,19 @@ export default function ClienteBuscador({
     email: "", calle: "", numero_calle: "", depto: "", localidad: "", codigo_postal: "",
     provincia: "", estado_civil: "", profesion: "", fecha_nacimiento: "",
   });
+
+  useEffect(() => {
+    if (!prefillNuevo || seleccionado) return;
+    const [nombrePref, ...restoPref] = prefillNuevo.nombre.split(" ");
+    setNuevo((prev) => ({
+      ...prev,
+      nombre: prefillNuevo.apellido ? prefillNuevo.nombre : (nombrePref || prefillNuevo.nombre),
+      apellido: prefillNuevo.apellido || restoPref.join(" "),
+      telefono: prefillNuevo.telefono || prev.telefono,
+    }));
+    setCreandoNuevo(true);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [prefillNuevo]);
 
   const escanearDNI = async (file: File) => {
     setErrorEscaneo("");

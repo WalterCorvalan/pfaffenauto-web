@@ -4,9 +4,11 @@ import { useEffect, useMemo, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
 import { FileText, Plus, Printer, CarFront, AlertTriangle, Search, X, ChevronLeft, ChevronRight } from "lucide-react";
+import { supabase2 } from "@/lib/supabase/client";
 import CompartirPresupuestoBoton from "./CompartirPresupuestoBoton";
-import NuevoPresupuestoModal from "./NuevoPresupuestoModal";
+import NuevoPresupuestoModal, { type PresupuestoPrefill } from "./NuevoPresupuestoModal";
 import PresupuestoDetalleModal from "./PresupuestoDetalleModal";
+import { obtenerPrefillLead } from "@/lib/panel/obtenerPrefillLead";
 
 type Periodo = "todos" | "hoy" | "7dias" | "este_mes" | "mes_pasado";
 
@@ -35,6 +37,7 @@ export default function PresupuestosClient({
   const searchParams = useSearchParams();
   const [presupuestos, setPresupuestos] = useState(presupuestosIniciales);
   const [modalAbierto, setModalAbierto] = useState(false);
+  const [prefillLead, setPrefillLead] = useState<PresupuestoPrefill | null>(null);
   const [seleccionado, setSeleccionado] = useState<any>(null);
 
   const [query, setQuery] = useState("");
@@ -44,10 +47,18 @@ export default function PresupuestosClient({
   const [hastaCustom, setHastaCustom] = useState("");
 
   useEffect(() => {
-    if (searchParams.get("nuevo") === "1") {
+    if (searchParams.get("nuevo") !== "1") return;
+    const leadOrigen = searchParams.get("lead_origen");
+    const leadId = searchParams.get("lead_id");
+    if (leadOrigen && leadId) {
+      obtenerPrefillLead(supabase2, leadOrigen, leadId).then((datos) => {
+        if (datos) setPrefillLead({ nombre: datos.nombre, telefono: datos.telefono, vehiculoId: datos.vehiculoId });
+        setModalAbierto(true);
+      });
+    } else {
       setModalAbierto(true);
-      router.replace("/panel/presupuestos");
     }
+    router.replace("/panel/presupuestos");
   }, [searchParams, router]);
 
   const presupuestosFiltrados = useMemo(() => {
@@ -227,7 +238,7 @@ export default function PresupuestosClient({
       </div>
 
       {modalAbierto && (
-        <NuevoPresupuestoModal clientes={clientes} vehiculos={vehiculos} vendedores={vendedores} sucursales={sucursales} onClose={() => setModalAbierto(false)} />
+        <NuevoPresupuestoModal clientes={clientes} vehiculos={vehiculos} vendedores={vendedores} sucursales={sucursales} initial={prefillLead} onClose={() => { setModalAbierto(false); setPrefillLead(null); }} />
       )}
 
       {seleccionado && <PresupuestoDetalleModal presupuesto={seleccionado} onClose={() => setSeleccionado(null)} />}

@@ -13,14 +13,35 @@ import ConfirmarPrecioModal from "@/components/panel/ConfirmarPrecioModal";
 const inputClass = "w-full bg-slate-50 dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-xl px-3 py-2.5 text-sm outline-none focus:border-rose-500 focus:bg-white dark:focus:bg-white/10 transition-colors text-slate-900 dark:text-white placeholder:text-slate-400";
 const labelClass = "text-[11px] font-bold text-slate-500 dark:text-slate-400 uppercase block mb-1.5";
 
+export interface PresupuestoPrefill {
+  nombre: string; telefono: string; vehiculoId: string | null;
+}
+
 export default function NuevoPresupuestoModal({
-  clientes, vehiculos, vendedores, sucursales, onClose,
-}: { clientes: any[]; vehiculos: any[]; vendedores: any[]; sucursales: any[]; onClose: () => void }) {
+  clientes, vehiculos, vendedores, sucursales, initial, onClose,
+}: { clientes: any[]; vehiculos: any[]; vendedores: any[]; sucursales: any[]; initial?: PresupuestoPrefill | null; onClose: () => void }) {
   const router = useRouter();
   const [guardando, setGuardando] = useState(false);
 
   const [cliente, setCliente] = useState<ClienteSeleccionado | null>(null);
   const [vehiculo, setVehiculo] = useState<VehiculoDatos | null>(null);
+
+  // Precarga desde un lead (botón "Presupuesto" en LeadDetailModal.tsx) --
+  // mismo criterio que NuevaSenaModal.tsx.
+  useEffect(() => {
+    if (!initial?.vehiculoId) return;
+    const v = vehiculos.find((x) => x.id === initial.vehiculoId);
+    if (!v) return;
+    setVehiculo({
+      vehiculo_id: v.id, dominio: v.patente || "", segmento: v.segmento || "", marca: v.marca || "", modelo: v.modelo || "",
+      tipo: v.tipo || "", marca_motor: v.marca_motor || "", numero_motor: v.numero_motor || "",
+      marca_chasis: v.marca_chasis || "", numero_chasis: v.numero_chasis || "", modelo_anio: String(v.anio || ""),
+      color: v.color || "", kilometros: String(v.km || ""), combustible: v.combustible || "", transmision: v.transmision || "",
+      traccion: v.traccion || "", precio_publicado_ars: v.precio_publicado_ars ?? null, precio_publicado_usd: v.precio_publicado_usd ?? null,
+      precio_venta: v.precio_venta ?? null, moneda_venta: v.moneda_venta ?? null,
+    });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [initial?.vehiculoId]);
   const [vendedorId, setVendedorId] = useState("");
   const [sucursalId, setSucursalId] = useState("");
   const [miId, setMiId] = useState<string | null>(null);
@@ -139,7 +160,7 @@ export default function NuevoPresupuestoModal({
           <div className="px-6 py-4 overflow-y-auto flex-1 min-h-0 space-y-6">
             <div className="bg-slate-50 dark:bg-white/[0.02] border border-slate-200 dark:border-white/5 rounded-2xl p-5 space-y-4">
               <h3 className="text-[11px] font-bold uppercase tracking-widest text-slate-500 dark:text-slate-400 border-b border-slate-100 dark:border-white/10 pb-3">Cliente</h3>
-              <ClienteBuscador clientes={clientes} seleccionado={cliente} onSeleccionar={setCliente} />
+              <ClienteBuscador clientes={clientes} seleccionado={cliente} onSeleccionar={setCliente} prefillNuevo={initial ? { nombre: initial.nombre, telefono: initial.telefono } : null} />
             </div>
 
             <div className="bg-slate-50 dark:bg-white/[0.02] border border-slate-200 dark:border-white/5 rounded-2xl p-5 space-y-4">

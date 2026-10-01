@@ -10,6 +10,7 @@ import VentaDetalleModal from "./VentaDetalleModal";
 import { fmtFechaLocal } from "@/lib/panel/fechas";
 import { supabase2 } from "@/lib/supabase/client";
 import ConfirmDialog from "@/components/panel/ConfirmDialog";
+import { obtenerPrefillLead } from "@/lib/panel/obtenerPrefillLead";
 import TablaResponsiva, { type ColumnaTabla } from "@/components/panel/TablaResponsiva";
 
 interface Venta {
@@ -78,7 +79,24 @@ export default function VentasClient({
 
   useEffect(() => {
     if (searchParams.get("nueva") === "1") {
-      setModalNueva(true);
+      const leadOrigen = searchParams.get("lead_origen");
+      const leadId = searchParams.get("lead_id");
+      if (leadOrigen && leadId) {
+        obtenerPrefillLead(supabase2, leadOrigen, leadId).then((datos) => {
+          if (datos) {
+            const v = datos.vehiculoId ? vehiculos.find((x) => x.id === datos.vehiculoId) : null;
+            setPrefill({
+              compradorNombre: datos.nombre,
+              compradorTelefono: datos.telefono,
+              vehiculoId: datos.vehiculoId || "",
+              vehiculoDescripcion: v ? `${v.marca} ${v.modelo}` : "",
+            });
+          }
+          setModalNueva(true);
+        });
+      } else {
+        setModalNueva(true);
+      }
       router.replace("/panel/ventas");
       return;
     }

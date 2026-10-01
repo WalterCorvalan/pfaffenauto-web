@@ -461,7 +461,6 @@ export default function LeadDetailModal({
   const telefono = contacto?.telefono || "";
   const numeroLimpio = String(telefono).replace(/\D/g, "");
   const linkWhatsApp = numeroLimpio ? `https://wa.me/${numeroLimpio}?text=${encodeURIComponent(`¡Hola ${nombre}! Te escribimos de Pfaffen Cars.`)}` : null;
-  const paramsLead = `${campoFk}=${leadId}`;
   const puedeEditar = true;
 
   const TareasGrupo = ({ titulo, icono, tareas }: { titulo: string; icono: React.ReactNode; tareas: any[] }) =>
@@ -750,13 +749,16 @@ export default function LeadDetailModal({
               </div>
             )}
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-2 pt-2 border-t border-slate-100 dark:border-white/10">
-              <Link href={`/panel/presupuestos?nuevo=1&${paramsLead}`} className="flex items-center justify-center gap-1.5 bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-2 rounded-xl text-[11px] uppercase tracking-widest">
+              <Link href={`/panel/presupuestos?nuevo=1&lead_origen=${origen}&lead_id=${leadId}`} className="flex items-center justify-center gap-1.5 bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-2 rounded-xl text-[11px] uppercase tracking-widest">
                 <Plus className="w-3.5 h-3.5" /> Presupuesto
               </Link>
-              <Link href={`/panel/senas?nuevo=1&${paramsLead}`} className="flex items-center justify-center gap-1.5 bg-slate-700 hover:bg-slate-800 dark:bg-white/10 dark:hover:bg-white/20 text-white font-bold py-2 rounded-xl text-[11px] uppercase tracking-widest">
+              <Link href={`/panel/senas?nuevo=1&lead_origen=${origen}&lead_id=${leadId}`} className="flex items-center justify-center gap-1.5 bg-slate-700 hover:bg-slate-800 dark:bg-white/10 dark:hover:bg-white/20 text-white font-bold py-2 rounded-xl text-[11px] uppercase tracking-widest">
                 <Plus className="w-3.5 h-3.5" /> Seña
               </Link>
-              <Link href={`/panel/ventas?nuevo=1&${paramsLead}`} className="flex items-center justify-center gap-1.5 bg-emerald-600 hover:bg-emerald-700 text-white font-bold py-2 rounded-xl text-[11px] uppercase tracking-widest">
+              {/* Esta iba a "ventas?nuevo=1" pero VentasClient.tsx solo
+                 escucha "nueva" -- nunca abría el modal, el botón no hacía
+                 nada. */}
+              <Link href={`/panel/ventas?nueva=1&lead_origen=${origen}&lead_id=${leadId}`} className="flex items-center justify-center gap-1.5 bg-emerald-600 hover:bg-emerald-700 text-white font-bold py-2 rounded-xl text-[11px] uppercase tracking-widest">
                 <Plus className="w-3.5 h-3.5" /> Venta
               </Link>
             </div>

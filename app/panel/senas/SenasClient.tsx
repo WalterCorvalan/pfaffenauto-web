@@ -6,10 +6,11 @@ import Link from "next/link";
 import { supabase2 } from "@/lib/supabase/client";
 import { Wallet, Plus, Printer, CarFront, AlertTriangle, Copy, Check, Search, Pencil, Trash2, SlidersHorizontal } from "lucide-react";
 import EstadoSenaSelector from "./EstadoSenaSelector";
-import NuevaSenaModal from "./NuevaSenaModal";
+import NuevaSenaModal, { type SenaPrefill } from "./NuevaSenaModal";
 import EditarSenaModal from "./EditarSenaModal";
 import SenaDetalleModal from "./SenaDetalleModal";
 import ConfirmDialog from "@/components/panel/ConfirmDialog";
+import { obtenerPrefillLead } from "@/lib/panel/obtenerPrefillLead";
 
 const COLOR_ESTADO: Record<string, string> = { Activa: "border-l-amber-400", Convertida: "border-l-emerald-400", Perdida: "border-l-rose-400" };
 
@@ -25,6 +26,7 @@ export default function SenasClient({
   // no se notaba en pantalla.
   useEffect(() => { setSenas(senasIniciales); }, [senasIniciales]);
   const [modalAbierto, setModalAbierto] = useState(false);
+  const [prefillLead, setPrefillLead] = useState<SenaPrefill | null>(null);
   const [seleccionada, setSeleccionada] = useState<any>(null);
   const [editando, setEditando] = useState<any>(null);
   const [codigoCopiadoId, setCodigoCopiadoId] = useState<string | null>(null);
@@ -44,10 +46,18 @@ export default function SenasClient({
   };
 
   useEffect(() => {
-    if (searchParams.get("nuevo") === "1") {
+    if (searchParams.get("nuevo") !== "1") return;
+    const leadOrigen = searchParams.get("lead_origen");
+    const leadId = searchParams.get("lead_id");
+    if (leadOrigen && leadId) {
+      obtenerPrefillLead(supabase2, leadOrigen, leadId).then((datos) => {
+        if (datos) setPrefillLead({ nombre: datos.nombre, telefono: datos.telefono, vehiculoId: datos.vehiculoId });
+        setModalAbierto(true);
+      });
+    } else {
       setModalAbierto(true);
-      router.replace("/panel/senas");
     }
+    router.replace("/panel/senas");
   }, [searchParams, router]);
 
   // NuevaSenaModal.tsx redirige a /senas/imprimir/<id> apenas guarda (no
@@ -231,7 +241,8 @@ export default function SenasClient({
       {modalAbierto && (
         <NuevaSenaModal
           clientes={clientes} vehiculos={vehiculos} vendedores={vendedores} sucursales={sucursales} cuentas={cuentas}
-          onClose={() => setModalAbierto(false)}
+          initial={prefillLead}
+          onClose={() => { setModalAbierto(false); setPrefillLead(null); }}
         />
       )}
 
