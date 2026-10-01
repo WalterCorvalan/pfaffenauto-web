@@ -15,20 +15,7 @@ import {
   User,
 } from "lucide-react";
 import Link from "next/link";
-import Script from "next/script";
-import React, { useEffect, useRef, useState } from "react";
-
-declare global {
-  interface Window {
-    turnstile?: {
-      render: (
-        container: HTMLElement,
-        options: Record<string, unknown>,
-      ) => string;
-      reset: (widgetId?: string) => void;
-    };
-  }
-}
+import React, { useRef, useState } from "react";
 
 export interface RrhhContenido {
   badge?: string | null;
@@ -85,67 +72,31 @@ export default function TrabajaConNosotrosClient({ contenido }: { contenido?: Rr
   const [puesto, setPuesto] = useState(puestos[0]);
   const [archivoCV, setArchivoCV] = useState<File | null>(null);
 
-  // Turnstile (anti-spam) — antes este form insertaba directo a Supabase con
-  // la anon key, sin captcha ni rate limit.
-  const [turnstileToken, setTurnstileToken] = useState("");
-  const [turnstileListo, setTurnstileListo] = useState(false);
-  const turnstileRef = useRef<HTMLDivElement>(null);
-  const turnstileWidgetId = useRef<string | null>(null);
-
-  useEffect(() => {
-    const intervalo = setInterval(() => {
-      if (window.turnstile) {
-        setTurnstileListo(true);
-        clearInterval(intervalo);
-      }
-    }, 300);
-
-    return () => clearInterval(intervalo);
-  }, []);
-
-  useEffect(() => {
-    if (!turnstileListo || !turnstileRef.current || !window.turnstile) return;
-    if (turnstileWidgetId.current) return;
-
-    turnstileWidgetId.current = window.turnstile.render(turnstileRef.current, {
-      sitekey: process.env.NEXT_PUBLIC_TURNSTILE_SITE_KEY || "",
-      callback: (token: string) => setTurnstileToken(token),
-      "expired-callback": () => setTurnstileToken(""),
-      "error-callback": () => setTurnstileToken(""),
-    });
-  }, [turnstileListo]);
-
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!nombre || !apellido || !email || !telefono || !archivoCV) {
       alert("Por favor completá todos los campos y adjuntá tu CV.");
       return;
     }
-    if (!turnstileToken) {
-      alert("Completá la verificación anti-spam antes de continuar.");
-      return;
-    }
 
     setLoading(true);
 
     try {
-      // 1. Subir el CV vía API server-side (Turnstile + rate limit + PDF
-      // real por magic bytes) -- antes se subía directo del navegador a
-      // Supabase Storage con la anon key, sin ninguna de esas validaciones.
+      // 1. Subir el CV vía API server-side (rate limit + PDF real por magic
+      // bytes) -- antes se subía directo del navegador a Supabase Storage
+      // con la anon key, sin ninguna de esas validaciones.
       const formDataCV = new FormData();
       formDataCV.append("file", archivoCV);
-      formDataCV.append("turnstileToken", turnstileToken);
       const uploadRes = await fetch("/api/upload-cv", { method: "POST", body: formDataCV });
       const uploadData = await uploadRes.json();
       if (!uploadRes.ok) throw new Error(uploadData.error || "No se pudo subir el CV.");
       const publicUrlData = { publicUrl: uploadData.publicUrl };
 
-      // 2. Guardar los datos vía API (Turnstile + zod + rate limit del lado servidor)
+      // 2. Guardar los datos vía API (zod + rate limit del lado servidor)
       const response = await fetch("/api/panel/postulaciones", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          turnstileToken,
           nombre: nombre.trim(),
           apellido: apellido.trim(),
           email: email.trim(),
@@ -178,10 +129,6 @@ export default function TrabajaConNosotrosClient({ contenido }: { contenido?: Rr
           ? error.message
           : "Hubo un error al enviar tu postulación. Por favor intentá nuevamente.",
       );
-      if (turnstileWidgetId.current && window.turnstile) {
-        window.turnstile.reset(turnstileWidgetId.current);
-      }
-      setTurnstileToken("");
     } finally {
       setLoading(false);
     }
@@ -464,13 +411,11 @@ export default function TrabajaConNosotrosClient({ contenido }: { contenido?: Rr
                     </div>
                   </div>
 
-                  <div ref={turnstileRef} className="flex justify-center" />
-
                   {/* Botón Submit */}
                   <div className="pt-2">
                     <button
                       type="submit"
-                      disabled={loading || !archivoCV || !turnstileToken}
+                      disabled={loading || !archivoCV}
                       className="w-full py-4 bg-[#0145F2] text-white font-black text-xs uppercase tracking-widest rounded-xl hover:bg-blue-700 transition-all shadow-[0_8px_20px_rgba(1,69,242,0.25)] disabled:opacity-50 disabled:shadow-none active:scale-[0.98] flex items-center justify-center gap-2"
                     >
                       {loading && <Loader2 className="w-4 h-4 animate-spin" />}
@@ -485,12 +430,6 @@ export default function TrabajaConNosotrosClient({ contenido }: { contenido?: Rr
           </div>
         </div>
       </div>
-
-      <Script
-        src="https://challenges.cloudflare.com/turnstile/v0/api.js"
-        strategy="lazyOnload"
-        onLoad={() => setTurnstileListo(true)}
-      />
     </main>
   );
 }

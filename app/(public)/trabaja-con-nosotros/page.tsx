@@ -3,8 +3,8 @@ import { createClient as createAdminClient } from "@supabase/supabase-js";
 import TrabajaConNosotrosClient from "./TrabajaConNosotrosClient";
 import { getBrandingSeo } from "@/lib/brandingSeo";
 
-// Formulario con Turnstile/estado local -- tiene que ser client component,
-// por eso el metadata vive acá en un server component chico que lo envuelve.
+// Formulario con estado local -- tiene que ser client component, por eso el
+// metadata vive acá en un server component chico que lo envuelve.
 export async function generateMetadata(): Promise<Metadata> {
   const { nombre } = await getBrandingSeo();
   return {

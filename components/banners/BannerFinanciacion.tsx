@@ -31,9 +31,9 @@ export default function BannerFinanciacion({ linkAFinanciacion = false }: { link
   };
 
   const beneficios = [
-    { icon: Calculator, titulo: `Tasa Fija del ${(TNA * 100).toFixed(0)}% TNA`, texto: "Línea \"+Autos con BNA\" del Banco Nación para vehículos 0km y usados." },
-    { icon: CreditCard, titulo: "Financiá hasta 72 meses", texto: "Elegí el plazo que mejor se adapte a tu bolsillo. Sin prenda." },
-    { icon: ShieldCheck, titulo: "Gestión 100% online", texto: "Aprobación ágil. Simulá, cargá tus datos y recibí respuesta sin moverte de tu casa." },
+    { icon: Calculator, titulo: `Tasa Fija del ${(TNA * 100).toFixed(0)}% TNA`, texto: "Línea \"+Autos con BNA\" para 0km y usados." },
+    { icon: CreditCard, titulo: "Financiá hasta 72 meses", texto: "Elegí el plazo que mejor te quede. Sin prenda." },
+    { icon: ShieldCheck, titulo: "Gestión 100% online", texto: "Simulá, cargá tus datos y recibí respuesta ya." },
   ];
 
   return (
@@ -51,7 +51,7 @@ export default function BannerFinanciacion({ linkAFinanciacion = false }: { link
               <span className="text-[#0145F2] dark:text-sky-400">hasta en 72 cuotas.</span>
             </h2>
             <p className="text-base text-slate-600 dark:text-slate-400 font-medium max-w-lg">
-              Con la línea "+Autos" del Banco Nación, llevarte la llave es mucho más fácil. Simulá tu plan ideal ahora mismo.
+              Con la línea "+Autos" del Banco Nación, llevarte la llave es más fácil.
             </p>
           </div>
         </div>
