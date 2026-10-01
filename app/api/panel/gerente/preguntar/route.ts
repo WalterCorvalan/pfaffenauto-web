@@ -16,10 +16,10 @@ const RespuestaSchema = z.object({
 const RUTAS_PANEL_VALIDAS = new Set([
   "alertas", "autorizaciones", "calendario", "clientes", "cobros", "comisiones", "configuracion",
   "consignaciones", "cotizaciones", "dormidos", "errores", "expedientes", "financiaciones", "finanzas",
-  "gestoria", "infracciones", "leads", "liquidaciones", "logs", "marketing", "mensajes", "mi-espacio",
-  "mi-perfil", "mis-ventas", "nps", "papelera", "pedidos", "peritajes", "postulaciones", "postventa",
-  "presupuestos", "reclamos", "recontactos", "reportes", "rodi", "senas", "stock", "sueldos", "taller",
-  "tareas", "telefonos", "tesoreria", "ventas", "visitas", "whatsapp",
+  "gestoria", "infracciones", "instagram", "leads", "liquidaciones", "logs", "marketing", "mensajes",
+  "messenger", "mi-espacio", "mi-perfil", "mis-ventas", "nps", "papelera", "pedidos", "peritajes",
+  "postulaciones", "postventa", "presupuestos", "reclamos", "recontactos", "reportes", "rodi", "senas",
+  "stock", "sueldos", "taller", "tareas", "telefonos", "tesoreria", "ventas", "visitas", "whatsapp",
 ]);
 
 function linkValido(link: string | null): string | null {
@@ -68,6 +68,13 @@ export async function POST(request: Request) {
     { data: instagramConversaciones },
     { data: liquidacionesSueldo },
     { data: pedidos },
+    { data: rodiConversaciones },
+    { data: messengerConversaciones },
+    { data: leadsManuales },
+    { data: tallerOrdenes },
+    { data: reclamos },
+    { count: telefonosUtiles },
+    { data: peritajesLead },
   ] = await Promise.all([
     supabase.from("ventas").select("precio_venta, moneda_venta, estado, vehiculo_marca, vehiculo_modelo, vendedor_id").gte("fecha_cierre", inicioMes).lte("fecha_cierre", finMes),
     supabase.from("vehiculos").select("estado"),
@@ -100,6 +107,19 @@ export async function POST(request: Request) {
     supabase.from("instagram_conversaciones").select("estado_lead, vendedor_id, handoff_at, ai_habilitada"),
     supabase.from("liquidaciones_sueldo").select("estado, total_final, moneda_total, mes").eq("mes", `${inicioMes.slice(0, 7)}-01`),
     supabase.from("pedidos").select("estado"),
+    // Pedido explícito 1/10: "el gerente" no sabía nada de Rodi (el chat del
+    // sitio público, canal propio, no suma a whatsapp/instagram), Messenger
+    // (canal nuevo), leads manuales (walk-in), Taller, Reclamos, Teléfonos
+    // útiles ni Peritajes de leads -- ninguno se había sumado nunca al
+    // snapshot, así que cualquier pregunta sobre esos módulos la contestaba
+    // "no tengo ese dato" aunque la info sí estuviera en la base.
+    supabase.from("rodi_conversaciones").select("estado_lead, vendedor_id, handoff_at, ai_habilitada"),
+    supabase.from("messenger_conversaciones").select("estado_lead, vendedor_id, handoff_at, ai_habilitada"),
+    supabase.from("leads_manuales").select("estado_lead"),
+    supabase.from("taller_ordenes").select("estado"),
+    supabase.from("reclamos").select("estado"),
+    supabase.from("telefonos_utiles").select("id", { count: "exact", head: true }),
+    supabase.from("peritajes_lead").select("estado"),
   ]);
 
   const ventasCerradas = (ventasMes || []).filter((v) => v.estado === "cerrada");
@@ -134,6 +154,14 @@ export async function POST(request: Request) {
     return acc;
   };
 
+  type ConversacionCanal = { estado_lead: string | null; vendedor_id: string | null; handoff_at: string | null; ai_habilitada: boolean | null };
+  const resumenCanal = (filas: ConversacionCanal[] | null) => ({
+    conversaciones_totales: (filas || []).length,
+    sin_asignar: (filas || []).filter((c) => !c.vendedor_id).length,
+    con_handoff_pendiente: (filas || []).filter((c) => c.handoff_at && !c.ai_habilitada).length,
+    por_estado_lead: contarPorEstado((filas || []).map((c) => ({ estado: c.estado_lead }))),
+  });
+
   const liquidacionesPendientes = (liquidacionesSueldo || []).filter((l) => l.estado !== "pagada");
   const totalSueldosPendientesPorMoneda: Record<string, number> = {};
   liquidacionesPendientes.forEach((l) => { totalSueldosPendientesPorMoneda[l.moneda_total] = (totalSueldosPendientesPorMoneda[l.moneda_total] || 0) + Number(l.total_final); });
@@ -159,20 +187,17 @@ export async function POST(request: Request) {
     postventa_recordatorios_pendientes: (postventaRecordatorios || []).filter((r) => r.estado === "pendiente").length,
     alertas_sin_leer_del_admin_que_pregunta: alertasSinLeer ?? 0,
     leads_financiacion_por_estado: contarPorEstado(leadsFinanciacion),
-    whatsapp: {
-      conversaciones_totales: (whatsappConversaciones || []).length,
-      sin_asignar: (whatsappConversaciones || []).filter((c) => !c.vendedor_id).length,
-      con_handoff_pendiente: (whatsappConversaciones || []).filter((c) => c.handoff_at && !c.ai_habilitada).length,
-      por_estado_lead: contarPorEstado((whatsappConversaciones || []).map((c) => ({ estado: c.estado_lead }))),
-    },
-    instagram: {
-      conversaciones_totales: (instagramConversaciones || []).length,
-      sin_asignar: (instagramConversaciones || []).filter((c) => !c.vendedor_id).length,
-      con_handoff_pendiente: (instagramConversaciones || []).filter((c) => c.handoff_at && !c.ai_habilitada).length,
-      por_estado_lead: contarPorEstado((instagramConversaciones || []).map((c) => ({ estado: c.estado_lead }))),
-    },
+    whatsapp: resumenCanal(whatsappConversaciones),
+    instagram: resumenCanal(instagramConversaciones),
+    rodi: resumenCanal(rodiConversaciones),
+    messenger: resumenCanal(messengerConversaciones),
+    leads_manuales_por_estado: contarPorEstado((leadsManuales || []).map((l) => ({ estado: l.estado_lead }))),
     sueldos_pendientes_de_pago_del_mes: { cantidad: liquidacionesPendientes.length, por_moneda: totalSueldosPendientesPorMoneda },
     pedidos_por_estado: contarPorEstado(pedidos),
+    taller_ordenes_por_etapa: contarPorEstado(tallerOrdenes),
+    reclamos_por_estado: contarPorEstado(reclamos),
+    telefonos_utiles_cargados: telefonosUtiles ?? 0,
+    peritajes_lead_por_estado: contarPorEstado(peritajesLead),
   };
 
   const systemMsg = `Sos "el gerente", un asistente que ayuda al dueño/admin de Pfaffen Cars (concesionaria) a entender el estado del negocio.
