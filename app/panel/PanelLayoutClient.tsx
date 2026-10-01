@@ -169,7 +169,7 @@ const GRUPOS: {
       {
         href: "/panel/contenido-sitio/entregas",
         label: "Contenido del Sitio",
-        icon: "/icons/panel/marketing.png",
+        icon: "/icons/panel/registro-cambios.png",
         modulo: "contenido_sitio",
       },
     ],

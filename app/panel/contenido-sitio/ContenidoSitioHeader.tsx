@@ -18,7 +18,7 @@ export default function ContenidoSitioHeader() {
   return (
     <header className="flex flex-col border-b border-slate-200 dark:border-white/5 bg-white dark:bg-white/[0.02] shrink-0 pt-6 px-6">
       <div className="flex items-center gap-3 pb-6">
-        <img src="/icons/panel/marketing.png" alt="" className="w-6 h-6 object-contain shrink-0" />
+        <img src="/icons/panel/registro-cambios.png" alt="" className="w-6 h-6 object-contain shrink-0" />
         <div>
           <h1 className="text-xl font-black text-slate-900 dark:text-white leading-tight">
             Contenido del Sitio
