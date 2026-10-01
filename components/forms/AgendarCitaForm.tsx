@@ -134,7 +134,7 @@ export default function AgendarCitaForm() {
               Vení a conocer tu próximo auto.
             </h2>
             <p className="text-slate-600 dark:text-slate-400 text-[15px] leading-relaxed mb-10">
-              Elegí el día y horario que mejor te quede. Queremos que te tomes el tiempo de ver la unidad en detalle, sacarte todas las dudas y recibir un asesoramiento honesto.
+              Elegí el día y horario que mejor te quede. Sin apuros, con asesoramiento honesto.
             </p>
 
             <div className="space-y-6">
@@ -144,7 +144,7 @@ export default function AgendarCitaForm() {
                 </div>
                 <div>
                   <h4 className="font-bold text-slate-900 dark:text-white text-[15px]">Atención exclusiva</h4>
-                  <p className="text-sm text-slate-500 dark:text-slate-400 mt-1">El vehículo estará listo y a tu disposición para que lo revises con tranquilidad.</p>
+                  <p className="text-sm text-slate-500 dark:text-slate-400 mt-1">El vehículo te espera listo para que lo revises con calma.</p>
                 </div>
               </div>
               <div className="flex items-start gap-4">
@@ -153,7 +153,7 @@ export default function AgendarCitaForm() {
                 </div>
                 <div>
                   <h4 className="font-bold text-slate-900 dark:text-white text-[15px]">Café de cortesía</h4>
-                  <p className="text-sm text-slate-500 dark:text-slate-400 mt-1">Relajate en nuestro showroom mientras charlamos sobre tus opciones.</p>
+                  <p className="text-sm text-slate-500 dark:text-slate-400 mt-1">Relajate en el showroom mientras charlamos tus opciones.</p>
                 </div>
               </div>
               <div className="flex items-start gap-4">
@@ -162,7 +162,7 @@ export default function AgendarCitaForm() {
                 </div>
                 <div>
                   <h4 className="font-bold text-slate-900 dark:text-white text-[15px]">Sin compromiso</h4>
-                  <p className="text-sm text-slate-500 dark:text-slate-400 mt-1">La visita es 100% gratuita y no genera ninguna obligación de compra.</p>
+                  <p className="text-sm text-slate-500 dark:text-slate-400 mt-1">Visita gratuita, sin obligación de compra.</p>
                 </div>
               </div>
             </div>

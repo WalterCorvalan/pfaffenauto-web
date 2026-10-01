@@ -1,18 +1,8 @@
 "use client";
 
-import { useState, useEffect, useRef } from "react";
-import Script from "next/script";
+import { useState, useEffect } from "react";
 import { Search, User, Phone, CarFront, Send, X, Loader2, CheckCircle2 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
-
-declare global {
-  interface Window {
-    turnstile?: {
-      render: (container: HTMLElement, options: Record<string, unknown>) => string;
-      reset: (widgetId?: string) => void;
-    };
-  }
-}
 
 interface BuscadorFallbackProps {
   isOpen: boolean;
@@ -28,37 +18,15 @@ export default function BuscadorFallback({ isOpen, onClose, busquedaPrevia = "" 
   const [error, setError] = useState("");
   const [enviado, setEnviado] = useState(false);
 
-  // Turnstile (anti-spam gratuito) — mismo patrón que el resto de los forms públicos.
-  const [turnstileToken, setTurnstileToken] = useState("");
-  const [turnstileListo, setTurnstileListo] = useState(false);
-  const turnstileRef = useRef<HTMLDivElement>(null);
-  const turnstileWidgetId = useRef<string | null>(null);
-
   // Actualizar el estado interno si cambia la búsqueda previa desde afuera
   useEffect(() => {
     setBusqueda(busquedaPrevia);
   }, [busquedaPrevia]);
 
-  useEffect(() => {
-    if (!isOpen || !turnstileListo || !turnstileRef.current || !window.turnstile) return;
-    if (turnstileWidgetId.current) return; // ya renderizado
-
-    turnstileWidgetId.current = window.turnstile.render(turnstileRef.current, {
-      sitekey: process.env.NEXT_PUBLIC_TURNSTILE_SITE_KEY,
-      callback: (token: string) => setTurnstileToken(token),
-      "expired-callback": () => setTurnstileToken(""),
-      "error-callback": () => setTurnstileToken(""),
-    });
-  }, [isOpen, turnstileListo]);
-
   const handleAvisame = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!busqueda.trim() || !nombre.trim() || !telefono.trim()) {
       setError("Completá todos los campos para que podamos comunicarnos con vos.");
-      return;
-    }
-    if (!turnstileToken) {
-      setError("Esperá que cargue la verificación anti-spam y volvé a intentar.");
       return;
     }
 
@@ -69,7 +37,7 @@ export default function BuscadorFallback({ isOpen, onClose, busquedaPrevia = "" 
       const res = await fetch("/api/panel/pedidos", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ turnstileToken, nombre, telefono, busqueda }),
+        body: JSON.stringify({ nombre, telefono, busqueda }),
       });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || "No se pudo enviar tu pedido.");
@@ -82,10 +50,6 @@ export default function BuscadorFallback({ isOpen, onClose, busquedaPrevia = "" 
       setError("No se pudo enviar tu pedido. Probá de nuevo en unos minutos.");
     } finally {
       setLoading(false);
-      if (turnstileWidgetId.current && window.turnstile) {
-        window.turnstile.reset(turnstileWidgetId.current);
-      }
-      setTurnstileToken("");
     }
   };
 
@@ -197,17 +161,10 @@ export default function BuscadorFallback({ isOpen, onClose, busquedaPrevia = "" 
 
               {error && <p className="text-rose-600 text-xs font-semibold text-center">{error}</p>}
 
-              <div ref={turnstileRef} className="flex justify-center" />
-              {!turnstileToken && (
-                <p className="text-slate-400 text-[11px] text-center flex items-center justify-center gap-1.5">
-                  <Loader2 className="w-3 h-3 animate-spin" /> Cargando verificación anti-spam...
-                </p>
-              )}
-
               <div className="pt-2">
                 <button
                   type="submit"
-                  disabled={loading || !turnstileToken}
+                  disabled={loading}
                   className="w-full bg-gradient-to-r from-[#0145F2] to-blue-600 hover:from-blue-600 hover:to-sky-500 active:scale-95 text-white font-black text-[11px] sm:text-xs uppercase tracking-widest px-6 py-3.5 rounded-xl flex items-center justify-center gap-2 transition-all shadow-lg shadow-blue-500/30 disabled:opacity-50"
                 >
                   {loading ? (
@@ -221,8 +178,6 @@ export default function BuscadorFallback({ isOpen, onClose, busquedaPrevia = "" 
               </>
             )}
           </motion.div>
-
-          <Script src="https://challenges.cloudflare.com/turnstile/v0/api.js" strategy="lazyOnload" onLoad={() => setTurnstileListo(true)} />
         </div>
       )}
     </AnimatePresence>

@@ -122,7 +122,7 @@ export default function PublicHeader() {
                   alt="Rely"
                   width={1536}
                   height={1024}
-                  className="h-11 sm:h-10 md:h-[50px] w-auto object-contain transition-transform group-hover:scale-105 -my-3 sm:-my-2 md:-my-2.5 dark:brightness-0 dark:invert"
+                  className="h-12 sm:h-10 md:h-[50px] w-auto object-contain transition-transform group-hover:scale-105 -my-3.5 sm:-my-2 md:-my-2.5 dark:brightness-0 dark:invert"
                 />
               </Link>
               <Link
@@ -135,7 +135,7 @@ export default function PublicHeader() {
                   alt="Karry"
                   width={500}
                   height={240}
-                  className="h-8 sm:h-10 md:h-[30px] w-auto object-contain transition-transform group-hover:scale-105 -my-2.5 sm:-my-2 md:-my-2.5"
+                  className="h-6 sm:h-10 md:h-[30px] w-auto object-contain transition-transform group-hover:scale-105 -my-1.5 sm:-my-2 md:-my-2.5"
                 />
               </Link>
             </div>
