@@ -308,7 +308,10 @@ export default function Stock({ vehiculos }: StockProps) {
                         <Link
                           key={`visto-${auto.id}-${idx}`}
                           href={`/catalogo/${auto.slug}`}
-                          className="bg-white/60 dark:bg-white/5 backdrop-blur-md border border-white/80 dark:border-white/10 rounded-2xl p-2.5 flex gap-3 items-center group hover:bg-white dark:hover:bg-white/10 hover:border-[#0145F2]/40 dark:hover:border-sky-400/30 transition-all shadow-sm focus:outline-none"
+                          // Sin backdrop-blur acá tampoco -- hasta 10 filas
+                          // dentro de un panel con su propio scroll interno,
+                          // mismo motivo que la tarjeta principal de arriba.
+                          className="bg-white/90 dark:bg-white/10 border border-white/80 dark:border-white/10 rounded-2xl p-2.5 flex gap-3 items-center group hover:bg-white dark:hover:bg-white/20 hover:border-[#0145F2]/40 dark:hover:border-sky-400/30 transition-all shadow-sm focus:outline-none"
                         >
                           <div className="h-14 w-16 shrink-0 rounded-xl overflow-hidden relative bg-white/50 dark:bg-white/5 mix-blend-multiply dark:mix-blend-normal">
                             <Image
@@ -705,7 +708,14 @@ export function VehicleCard({
         className="block h-full focus:outline-none"
       >
         <div
-          className={`bg-white/40 dark:bg-white/5 backdrop-blur-2xl rounded-2xl overflow-hidden flex flex-col h-full transition-all duration-500 relative transform group-hover:-translate-y-1 border ${
+          // Sin backdrop-blur acá a propósito -- esta tarjeta se renderiza
+          // docenas de veces en la misma pantalla (destacados, pickups,
+          // vistos recientemente, comparador), y el desenfoque se
+          // recalcula en cada fotograma de scroll para cada una: era la
+          // causa más probable del scroll trabado reportado (pedido del
+          // 1/10). bg-white/90 en vez de /40 compensa la pérdida de blur
+          // para que la tarjeta se siga viendo sólida sobre el fondo.
+          className={`bg-white/90 dark:bg-[#141414]/90 rounded-2xl overflow-hidden flex flex-col h-full transition-all duration-500 relative transform group-hover:-translate-y-1 border ${
             bordeSuave
               ? "shadow-none dark:shadow-none hover:shadow-md dark:hover:shadow-none hover:bg-white/70 dark:hover:bg-white/[0.07]"
               : "shadow-[0_8px_32px_rgba(0,0,0,0.04)] dark:shadow-[0_8px_32px_rgba(0,0,0,0.4)] hover:shadow-[0_20px_48px_rgba(1,69,242,0.12)] dark:hover:shadow-[0_20px_48px_rgba(1,69,242,0.2)] hover:bg-white/70 dark:hover:bg-white/10"
