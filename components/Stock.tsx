@@ -676,6 +676,23 @@ export function VehicleCard({
           </button>
         )}
 
+        {/* Favorito también afuera del <Link>, mismo motivo que el
+           comparador de arriba -- antes estaba anidado adentro del <a> y el
+           click disparaba el toggle Y la navegación al detalle a la vez,
+           dejando la tarjeta en un estado de carga raro a mitad de camino. */}
+        <button
+          onClick={toggleFavorito}
+          className={`absolute top-3 right-3 z-30 w-8 h-8 rounded-full backdrop-blur-md flex items-center justify-center shadow-sm transition-colors ${
+            esFavorito
+              ? "bg-red-500 text-white"
+              : "bg-white/90 dark:bg-black/50 text-gray-400 dark:text-slate-300 hover:text-red-500"
+          }`}
+          title={esFavorito ? "Quitar de favoritos" : "Agregar a favoritos"}
+          aria-label={esFavorito ? "Quitar de favoritos" : "Agregar a favoritos"}
+        >
+          <Heart className={`w-4 h-4 ${esFavorito ? "fill-current" : ""}`} />
+        </button>
+
         <Link href={`/catalogo/${auto.slug}`} className="block h-full focus:outline-none">
           <div className="bg-white dark:bg-[#11131c] rounded-2xl overflow-hidden flex flex-col h-full border border-gray-200/70 dark:border-white/10 shadow-[0_8px_24px_rgba(0,0,0,0.05)] dark:shadow-[0_8px_24px_rgba(0,0,0,0.35)] hover:shadow-[0_16px_36px_rgba(1,69,242,0.12)] transition-all duration-500 transform hover:-translate-y-1">
             {/* La tarjeta es 1 columna (ancho completo) en mobile y 2-4
@@ -696,18 +713,6 @@ export function VehicleCard({
                     : "object-cover object-center group-hover:scale-105 transition-transform duration-700 ease-out"
                 }
               />
-              <button
-                onClick={toggleFavorito}
-                className={`absolute top-3 right-3 w-8 h-8 rounded-full backdrop-blur-md flex items-center justify-center shadow-sm z-10 transition-colors ${
-                  esFavorito
-                    ? "bg-red-500 text-white"
-                    : "bg-white/90 dark:bg-black/50 text-gray-400 dark:text-slate-300 hover:text-red-500"
-                }`}
-                title={esFavorito ? "Quitar de favoritos" : "Agregar a favoritos"}
-                aria-label={esFavorito ? "Quitar de favoritos" : "Agregar a favoritos"}
-              >
-                <Heart className={`w-4 h-4 ${esFavorito ? "fill-current" : ""}`} />
-              </button>
             </div>
 
             <div className="p-3.5 sm:p-4 flex flex-col flex-grow">
