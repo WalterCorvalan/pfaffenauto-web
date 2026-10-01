@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react";
 import Link from "next/link";
-import { Settings, Loader2 } from "lucide-react";
+import { Settings, Loader2, Download } from "lucide-react";
 import { supabase2 } from "@/lib/supabase/client";
 import TablaResponsiva, { type ColumnaTabla } from "@/components/panel/TablaResponsiva";
 import Toggle from "@/components/panel/Toggle";
@@ -627,6 +627,16 @@ function BrandingConfig() {
               <input type="file" accept="image/*" disabled={subiendoLogo} className="hidden" onChange={(e) => e.target.files?.[0] && subirLogo(e.target.files[0])} />
             </label>
           </div>
+        </div>
+        <div>
+          <label className="text-xs font-semibold text-slate-500 block mb-1">QR a la web (para imprimir)</label>
+          <div className="flex items-center gap-3">
+            <img src="/qr-pfaffencars.png" alt="QR pfaffencars.com" className="h-16 w-16 object-contain rounded-lg border border-slate-200 dark:border-white/10 bg-white" />
+            <a href="/qr-pfaffencars.png" download="qr-pfaffencars.png" className="px-3 py-2 rounded-lg border border-slate-200 dark:border-white/10 text-xs font-bold hover:bg-slate-50 dark:hover:bg-white/5 inline-flex items-center gap-1.5">
+              <Download className="w-3.5 h-3.5" /> Descargar
+            </a>
+          </div>
+          <p className="text-[10px] text-slate-400 mt-1">Apunta a https://www.pfaffencars.com — es un archivo fijo (no se regenera solo). Si algún día cambia el dominio, hay que generar uno nuevo e imprimir de nuevo.</p>
         </div>
         <div>
           <label className="text-xs font-semibold text-slate-500 block mb-1">Nombre de la agencia</label>
