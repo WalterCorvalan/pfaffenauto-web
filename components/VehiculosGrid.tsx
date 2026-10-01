@@ -80,7 +80,7 @@ export default function VehiculosGrid({ vehiculos }: { vehiculos: any[] | null }
   }
 
   return (
-    <section className="w-full py-8 max-w-7xl mx-auto px-4 md:px-6">
+    <section className="w-full py-8 max-w-7xl mx-auto px-2.5 md:px-6">
       {categoriasDisponibles.length > 2 && (
         <div className="flex items-center gap-2 mb-6 overflow-x-auto pb-1">
           {categoriasDisponibles.map((cat) => (
@@ -100,7 +100,7 @@ export default function VehiculosGrid({ vehiculos }: { vehiculos: any[] | null }
       )}
 
       {/* ACÁ ESTÁ EL CAMBIO CLAVE: w-full y xl:grid-cols-4 para escritorio, manteniendo grid-cols-2 para móvil */}
-      <div className="w-full grid grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3 sm:gap-4 md:gap-6 pb-8">
+      <div className="w-full grid grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-2 sm:gap-4 md:gap-6 pb-8">
         {listaPaginada.map((auto) => (
           <VehicleCard
             key={auto.id}
