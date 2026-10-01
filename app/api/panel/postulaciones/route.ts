@@ -1,6 +1,5 @@
 import { z } from "zod";
 import { createClient } from "@supabase/supabase-js";
-import { verificarTurnstile } from "@/lib/turnstile";
 import { rateLimit, ipDesdeRequest } from "@/lib/rateLimit";
 import { registrarError } from "@/lib/panel/logger";
 import { crearAlerta } from "@/lib/panel/alertas";
@@ -11,7 +10,6 @@ const supabase = createClient(
 );
 
 const PostulacionSchema = z.object({
-  turnstileToken: z.string().min(1, "Falta verificación anti-spam."),
   nombre: z.string().trim().min(1).max(100),
   apellido: z.string().trim().min(1).max(100),
   email: z.string().trim().email().max(150),
@@ -34,12 +32,7 @@ export async function POST(req: Request) {
     if (!parsed.success) {
       return Response.json({ error: "Faltan datos obligatorios o tienen un formato inválido." }, { status: 400 });
     }
-    const { turnstileToken, ...postulacion } = parsed.data;
-
-    const humano = await verificarTurnstile(turnstileToken, ip);
-    if (!humano) {
-      return Response.json({ error: "No pudimos verificar que sos humano. Reintentá." }, { status: 400 });
-    }
+    const postulacion = parsed.data;
 
     const { data, error } = await supabase
       .from("postulaciones")

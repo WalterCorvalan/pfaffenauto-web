@@ -110,6 +110,10 @@ const LOGOS_OSCUROS = new Set([
   "Chery",
   "Haval",
   "Audi",
+  "Citroën",
+  "Citroen",
+  "Alfa Romeo",
+  "Chevrolet",
 ]);
 
 export function esLogoOscuro(marca: string | null | undefined): boolean {

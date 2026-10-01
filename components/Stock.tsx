@@ -198,8 +198,8 @@ export default function Stock({ vehiculos }: StockProps) {
                         (a) => a.id === auto.id,
                       )}
                       onToggleComparar={toggleComparar}
-                      bordeSuave
-                      variante="alt-mobile"
+                      variante="alt"
+                      compacta
                     />
                   </div>
                 ))}
@@ -309,7 +309,10 @@ export default function Stock({ vehiculos }: StockProps) {
                         <Link
                           key={`visto-${auto.id}-${idx}`}
                           href={`/catalogo/${auto.slug}`}
-                          className="bg-white/60 dark:bg-white/5 backdrop-blur-md border border-white/80 dark:border-white/10 rounded-2xl p-2.5 flex gap-3 items-center group hover:bg-white dark:hover:bg-white/10 hover:border-[#0145F2]/40 dark:hover:border-sky-400/30 transition-all shadow-sm focus:outline-none"
+                          // Sin backdrop-blur acá tampoco -- hasta 10 filas
+                          // dentro de un panel con su propio scroll interno,
+                          // mismo motivo que la tarjeta principal de arriba.
+                          className="bg-white/90 dark:bg-white/10 border border-white/80 dark:border-white/10 rounded-2xl p-2.5 flex gap-3 items-center group hover:bg-white dark:hover:bg-white/20 hover:border-[#0145F2]/40 dark:hover:border-sky-400/30 transition-all shadow-sm focus:outline-none"
                         >
                           <div className="h-14 w-16 shrink-0 rounded-xl overflow-hidden relative bg-white/50 dark:bg-white/5 mix-blend-multiply dark:mix-blend-normal">
                             <Image
@@ -593,6 +596,7 @@ export function VehicleCard({
   bordeSuave,
   prioridad,
   variante,
+  compacta,
 }: {
   auto: any;
   estaSeleccionado?: boolean;
@@ -600,21 +604,50 @@ export function VehicleCard({
   bordeSuave?: boolean;
   prioridad?: boolean;
   /** "alt" = diseño con pastillas (año/km/sucursal) + botón "Ver detalle",
-     usado en Destacados. "alt-mobile" = ese mismo diseño pero solo en mobile
-     (<640px) -- en desktop se mantiene la tarjeta clásica, para secciones
-     (carrusel de Pick-ups, grilla del catálogo) donde el tamaño en desktop
-     ya está afinado y no se quiere agrandar. */
-  variante?: "clasica" | "alt" | "alt-mobile";
+     usado en Destacados. */
+  variante?: "clasica" | "alt";
+  /** Solo aplica con variante="alt": usa una imagen más baja en mobile
+     (misma altura que la tarjeta clásica) para secciones donde el tamaño en
+     mobile ya está afinado y no se quiere agrandar (carrusel de Pick-ups,
+     grilla del catálogo) -- en desktop no cambia nada. */
+  compacta?: boolean;
 }) {
-  const [esMobile, setEsMobile] = useState(false);
+  const [esFavorito, setEsFavorito] = useState(false);
 
   useEffect(() => {
-    if (variante !== "alt-mobile") return;
-    const onResize = () => setEsMobile(window.innerWidth < 640);
-    onResize();
-    window.addEventListener("resize", onResize);
-    return () => window.removeEventListener("resize", onResize);
-  }, [variante]);
+    try {
+      const favs = JSON.parse(localStorage.getItem("pfaffen_favs") || "[]");
+      setEsFavorito(favs.some((f: any) => f.id === auto.id));
+    } catch {
+      setEsFavorito(false);
+    }
+  }, [auto.id]);
+
+  const toggleFavorito = (e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    let favs: any[] = [];
+    try {
+      favs = JSON.parse(localStorage.getItem("pfaffen_favs") || "[]");
+    } catch {
+      favs = [];
+    }
+    if (esFavorito) {
+      favs = favs.filter((f) => f.id !== auto.id);
+    } else {
+      favs.push({
+        id: auto.id,
+        marca: auto.marca,
+        modelo: auto.modelo,
+        slug: auto.slug,
+        precio_ars: auto.precio_publicado_ars,
+        precio_usd: auto.precio_publicado_usd,
+        imagen: auto.fotos?.[0],
+      });
+    }
+    localStorage.setItem("pfaffen_favs", JSON.stringify(favs));
+    setEsFavorito(!esFavorito);
+  };
 
   const precioMostrar = auto.precio_publicado_ars
     ? `$ ${auto.precio_publicado_ars.toLocaleString("es-AR")}`
@@ -622,7 +655,7 @@ export function VehicleCard({
       ? `US$ ${auto.precio_publicado_usd.toLocaleString("es-AR")}`
       : "Consultar precio";
 
-  if (variante === "alt" || (variante === "alt-mobile" && esMobile)) {
+  if (variante === "alt") {
     return (
       <div className="relative h-full group">
         {/* Comparador afuera del <Link> a propósito -- ver comentario de más
@@ -650,18 +683,31 @@ export function VehicleCard({
                la de sm+, así que necesita más alto de imagen para no quedar
                achatada (se cortaban las ruedas). sm:h-[240px] es el valor ya
                probado en desktop/tablet, no tocar. */}
-            <div className="relative h-[300px] sm:h-[240px] bg-gray-100 dark:bg-white/5 overflow-hidden">
+            <div className={`relative ${compacta ? "h-[200px]" : "h-[300px]"} sm:h-[240px] bg-gray-100 dark:bg-white/5 overflow-hidden`}>
               <Image
                 src={auto.fotos?.[0] || "/placeholder.jpg"}
                 alt={`${auto.marca} ${auto.modelo}`}
                 fill
                 sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 300px"
                 priority={prioridad}
-                className="object-cover object-center group-hover:scale-105 transition-transform duration-700 ease-out"
+                className={
+                  compacta
+                    ? "object-cover object-[center_25%] group-hover:scale-105 transition-transform duration-700 ease-out"
+                    : "object-cover object-center group-hover:scale-105 transition-transform duration-700 ease-out"
+                }
               />
-              <span className="absolute top-3 right-3 w-8 h-8 rounded-full bg-white/90 dark:bg-black/50 backdrop-blur-md flex items-center justify-center text-gray-400 dark:text-slate-300 shadow-sm z-10">
-                <Heart className="w-4 h-4" />
-              </span>
+              <button
+                onClick={toggleFavorito}
+                className={`absolute top-3 right-3 w-8 h-8 rounded-full backdrop-blur-md flex items-center justify-center shadow-sm z-10 transition-colors ${
+                  esFavorito
+                    ? "bg-red-500 text-white"
+                    : "bg-white/90 dark:bg-black/50 text-gray-400 dark:text-slate-300 hover:text-red-500"
+                }`}
+                title={esFavorito ? "Quitar de favoritos" : "Agregar a favoritos"}
+                aria-label={esFavorito ? "Quitar de favoritos" : "Agregar a favoritos"}
+              >
+                <Heart className={`w-4 h-4 ${esFavorito ? "fill-current" : ""}`} />
+              </button>
             </div>
 
             <div className="p-3.5 sm:p-4 flex flex-col flex-grow">
@@ -722,7 +768,14 @@ export function VehicleCard({
         className="block h-full focus:outline-none"
       >
         <div
-          className={`bg-white/40 dark:bg-white/5 backdrop-blur-2xl rounded-2xl overflow-hidden flex flex-col h-full transition-all duration-500 relative transform group-hover:-translate-y-1 border ${
+          // Sin backdrop-blur acá a propósito -- esta tarjeta se renderiza
+          // docenas de veces en la misma pantalla (destacados, pickups,
+          // vistos recientemente, comparador), y el desenfoque se
+          // recalcula en cada fotograma de scroll para cada una: era la
+          // causa más probable del scroll trabado reportado (pedido del
+          // 1/10). bg-white/90 en vez de /40 compensa la pérdida de blur
+          // para que la tarjeta se siga viendo sólida sobre el fondo.
+          className={`bg-white/90 dark:bg-[#141414]/90 rounded-2xl overflow-hidden flex flex-col h-full transition-all duration-500 relative transform group-hover:-translate-y-1 border ${
             bordeSuave
               ? "shadow-none dark:shadow-none hover:shadow-md dark:hover:shadow-none hover:bg-white/70 dark:hover:bg-white/[0.07]"
               : "shadow-[0_8px_32px_rgba(0,0,0,0.04)] dark:shadow-[0_8px_32px_rgba(0,0,0,0.4)] hover:shadow-[0_20px_48px_rgba(1,69,242,0.12)] dark:hover:shadow-[0_20px_48px_rgba(1,69,242,0.2)] hover:bg-white/70 dark:hover:bg-white/10"

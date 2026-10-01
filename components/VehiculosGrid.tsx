@@ -107,6 +107,8 @@ export default function VehiculosGrid({ vehiculos }: { vehiculos: any[] | null }
             auto={auto}
             estaSeleccionado={autosComparar.some((a) => a.id === auto.id)}
             onToggleComparar={toggleComparar}
+            variante="alt"
+            compacta
           />
         ))}
       </div>

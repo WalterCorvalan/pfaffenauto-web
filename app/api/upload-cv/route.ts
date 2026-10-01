@@ -1,7 +1,6 @@
 import { NextResponse } from "next/server";
 import { createClient } from "@supabase/supabase-js";
 import { rateLimit, ipDesdeRequest } from "@/lib/rateLimit";
-import { verificarTurnstile } from "@/lib/turnstile";
 import { validarYObtenerMimeReal } from "@/lib/validarArchivo";
 import { registrarError } from "@/lib/logger";
 
@@ -12,9 +11,8 @@ const supabase = createClient(
 
 // El form de "Trabajá con nosotros" subía el CV directo desde el navegador a
 // Supabase Storage con la clave anon, antes de que corriera cualquier
-// verificación -- sin Turnstile, sin límite de tamaño, sin chequear que el
-// archivo sea realmente un PDF. Server-side acá, mismo patrón que
-// upload-cotizacion (Turnstile + rate limit + magic bytes reales).
+// verificación -- sin límite de tamaño, sin chequear que el archivo sea
+// realmente un PDF. Server-side acá (rate limit + magic bytes reales).
 export async function POST(request: Request) {
   try {
     const ip = ipDesdeRequest(request);
@@ -25,11 +23,6 @@ export async function POST(request: Request) {
 
     const formData = await request.formData();
     const file = formData.get("file") as File;
-    const turnstileToken = formData.get("turnstileToken") as string;
-
-    if (!turnstileToken || !(await verificarTurnstile(turnstileToken, ip))) {
-      return NextResponse.json({ error: "No pudimos verificar que sos humano. Reintentá." }, { status: 400 });
-    }
 
     if (!file) {
       return NextResponse.json({ error: "No se encontró ningún archivo." }, { status: 400 });
