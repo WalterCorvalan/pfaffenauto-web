@@ -38,7 +38,7 @@ export default function SucursalHeroAnimated({ nombre, nombreMarca, imagen, dire
   return (
     <>
       {/* ================= BANNER ================= */}
-      <section className="relative h-64 md:h-80 lg:h-[420px] w-full overflow-hidden">
+      <section className="relative h-64 md:h-80 lg:h-[480px] xl:h-[600px] 2xl:h-[700px] w-full overflow-hidden">
         <Image src={imagen} alt={`Sucursal ${nombre}`} fill priority sizes="100vw" className="object-cover" />
         <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/30 to-black/10"></div>
 
