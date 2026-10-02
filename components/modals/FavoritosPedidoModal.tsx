@@ -47,7 +47,7 @@ export default function FavoritosPedidoModal({ isOpen, favoritos, onClose }: Pro
       const res = await fetch("/api/panel/pedidos", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ nombre, telefono, busqueda: busqueda.slice(0, 200) }),
+        body: JSON.stringify({ nombre, telefono, busqueda: busqueda.slice(0, 1000), tipo: "favoritos" }),
       });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || "No se pudo enviar tu pedido.");

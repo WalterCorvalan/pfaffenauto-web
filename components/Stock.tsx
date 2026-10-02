@@ -597,6 +597,7 @@ export function VehicleCard({
   prioridad,
   variante,
   compacta,
+  onToggleFavorito,
 }: {
   auto: any;
   estaSeleccionado?: boolean;
@@ -611,6 +612,9 @@ export function VehicleCard({
      mobile ya está afinado y no se quiere agrandar (carrusel de Pick-ups,
      grilla del catálogo) -- en desktop no cambia nada. */
   compacta?: boolean;
+  /** Se llama después de agregar/quitar el favorito (con el nuevo estado).
+     /favoritos lo usa para sacar la tarjeta de la lista al instante. */
+  onToggleFavorito?: (esFavorito: boolean) => void;
 }) {
   const [esFavorito, setEsFavorito] = useState(false);
 
@@ -647,6 +651,7 @@ export function VehicleCard({
     }
     localStorage.setItem("pfaffen_favs", JSON.stringify(favs));
     setEsFavorito(!esFavorito);
+    onToggleFavorito?.(!esFavorito);
   };
 
   const precioMostrar = auto.precio_publicado_ars

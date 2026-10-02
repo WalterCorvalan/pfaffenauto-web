@@ -95,6 +95,7 @@ export default function LandingKarry() {
           nombre: `${nombre} ${apellido}`,
           telefono,
           busqueda: `Reserva Karry Pick Up — versión ${versionInteres}`,
+          tipo: "reserva",
         }),
       });
       const data = await res.json();

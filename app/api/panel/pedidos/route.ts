@@ -11,7 +11,9 @@ const supabase = createClient(
 const PedidoSchema = z.object({
   nombre: z.string().trim().min(1).max(150),
   telefono: z.string().trim().min(6).max(30),
-  busqueda: z.string().trim().min(1).max(200),
+  busqueda: z.string().trim().min(1).max(1000),
+  // De dónde viene el pedido -- define el texto de las notas. Sin tipo = buscador del catálogo.
+  tipo: z.enum(["buscador", "favoritos", "reserva"]).optional(),
 });
 
 // Conecta el buscador del catálogo público (BuscadorFallBack.tsx — "no
@@ -29,15 +31,19 @@ export async function POST(req: Request) {
     if (!parsed.success) {
       return Response.json({ error: "Faltan datos obligatorios o tienen un formato inválido." }, { status: 400 });
     }
-    const { nombre, telefono, busqueda } = parsed.data;
+    const { nombre, telefono, busqueda, tipo } = parsed.data;
+    const notas =
+      tipo === "favoritos" ? `Consultó desde su lista de Favoritos: ${busqueda}`
+      : tipo === "reserva" ? `Reserva desde la landing: ${busqueda}`
+      : `Buscó "${busqueda}" en el catálogo y no encontró resultados.`;
 
     const { data, error } = await supabase
       .from("pedidos")
       .insert({
         nombre_cliente: nombre,
         telefono,
-        marca: busqueda.slice(0, 60),
-        notas: `Buscó "${busqueda}" en el catálogo y no encontró resultados.`,
+        marca: tipo === "favoritos" ? "Favoritos web" : busqueda.slice(0, 60),
+        notas,
         origen: "web",
       })
       .select("id")

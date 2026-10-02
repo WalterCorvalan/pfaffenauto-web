@@ -94,6 +94,7 @@ export default function LandingRely() {
           nombre: `${nombre} ${apellido}`,
           telefono,
           busqueda: `Reserva Rely Pick Up — versión ${versionInteres}`,
+          tipo: "reserva",
         }),
       });
       const data = await res.json();

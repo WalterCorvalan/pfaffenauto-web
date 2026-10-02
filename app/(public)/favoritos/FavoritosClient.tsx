@@ -2,28 +2,64 @@
 
 import { useState, useEffect } from "react";
 import Link from "next/link";
-import Image from "next/image";
-import { Trash2, Heart, Phone, Car, ChevronRight, Sparkles } from "lucide-react";
-import { motion } from "framer-motion";
+import { Heart, Phone, ChevronRight, Sparkles } from "lucide-react";
 import FavoritosPedidoModal from "@/components/modals/FavoritosPedidoModal";
+import { VehicleCard } from "@/components/Stock";
+import { CAMPOS_VEHICULO_PUBLICO } from "@/lib/vehiculos";
+import { supabase2 as supabase } from "@/lib/supabase/client";
 
 export default function FavoritosClient() {
   const [favoritos, setFavoritos] = useState<any[]>([]);
   const [mounted, setMounted] = useState(false);
   const [modalPedidoAbierto, setModalPedidoAbierto] = useState(false);
 
-  // Cargamos los favoritos desde el localStorage al iniciar
+  // Cargamos los favoritos desde el localStorage al iniciar. Ahí solo se
+  // guarda un resumen (marca, modelo, precio, foto), así que además traemos
+  // los datos completos de cada auto para dibujar la misma tarjeta que el
+  // catálogo (año, km, sucursal). Si un auto ya se vendió/despublicó no
+  // viene en la respuesta y se oculta, en vez de mostrar un link roto.
   useEffect(() => {
-    const favs = JSON.parse(localStorage.getItem("pfaffen_favs") || "[]");
-    setFavoritos(favs);
-    setMounted(true); // Previene errores de hidratación en Next.js
+    let favs: any[] = [];
+    try {
+      favs = JSON.parse(localStorage.getItem("pfaffen_favs") || "[]");
+    } catch {
+      favs = [];
+    }
+
+    // Fallback con lo guardado, con la forma que espera VehicleCard
+    const desdeResumen = (f: any) => ({
+      id: f.id, marca: f.marca, modelo: f.modelo, slug: f.slug,
+      precio_publicado_ars: f.precio_ars, precio_publicado_usd: f.precio_usd,
+      fotos: f.imagen ? [f.imagen] : [],
+    });
+
+    if (favs.length === 0) {
+      setFavoritos([]);
+      setMounted(true);
+      return;
+    }
+
+    supabase
+      .from("vehiculos")
+      .select(CAMPOS_VEHICULO_PUBLICO)
+      .in("id", favs.map((f) => f.id))
+      .in("estado", ["disponible", "reservado"])
+      .then(({ data, error }) => {
+        if (error || !data) {
+          setFavoritos(favs.map(desdeResumen));
+        } else {
+          const porId = new Map((data as any[]).map((v) => [v.id, v]));
+          setFavoritos(favs.map((f) => porId.get(f.id)).filter(Boolean) as any[]);
+        }
+        setMounted(true); // Previene errores de hidratación en Next.js
+      });
   }, []);
 
-  const eliminarFavorito = (id: string, e: React.MouseEvent) => {
-    e.preventDefault(); // Evita que se dispare el Link al auto
-    const nuevosFavs = favoritos.filter((f) => f.id !== id);
-    setFavoritos(nuevosFavs);
-    localStorage.setItem("pfaffen_favs", JSON.stringify(nuevosFavs));
+  // La tarjeta ya actualiza localStorage al tocar el corazón; acá solo
+  // sacamos el auto de la lista en pantalla.
+  const quitarDeLista = (id: string, sigueSiendoFavorito: boolean) => {
+    if (sigueSiendoFavorito) return;
+    setFavoritos((prev) => prev.filter((f) => f.id !== id));
   };
 
   // Evitamos renderizar hasta que el cliente esté montado
@@ -91,84 +127,17 @@ export default function FavoritosClient() {
       {/* ================= CONTENIDO (GRILLA O ESTADO VACÍO) ================= */}
       <div className="max-w-7xl mx-auto px-4 md:px-6 relative z-10">
         {favoritos.length > 0 ? (
-          <motion.div
-            initial="hidden" animate="visible"
-            variants={{ visible: { transition: { staggerChildren: 0.05 } } }}
-            className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6"
-          >
+          <div className="grid grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-2 sm:gap-4 md:gap-6">
             {favoritos.map((auto) => (
-              <motion.div
+              <VehicleCard
                 key={auto.id}
-                variants={{ hidden: { opacity: 0, y: 20 }, visible: { opacity: 1, y: 0 } }}
-                className="h-full"
-              >
-                <Link href={`/catalogo/${auto.slug}`} className="block group h-full">
-                  <div className="bg-white dark:bg-[#0a0a0a] rounded-[24px] border border-slate-200/80 dark:border-white/5 overflow-hidden flex flex-col h-full shadow-sm hover:shadow-xl dark:shadow-none transition-all duration-300 relative group-hover:-translate-y-1">
-
-                    {/* IMAGEN DEL VEHÍCULO Y BOTÓN ELIMINAR */}
-                    <div className="relative h-56 w-full bg-slate-100 dark:bg-[#111] overflow-hidden">
-                      {/* Botón Flotante Glassmorphism para eliminar */}
-                      <button
-                        onClick={(e) => eliminarFavorito(auto.id, e)}
-                        className="absolute top-4 right-4 z-10 bg-white/70 dark:bg-black/40 backdrop-blur-md hover:bg-red-500 text-slate-500 dark:text-slate-300 hover:text-white p-2.5 rounded-full shadow-sm transition-all duration-300 border border-white/50 dark:border-white/10"
-                        title="Quitar de favoritos"
-                      >
-                        <Trash2 className="w-4 h-4" />
-                      </button>
-
-                      {auto.imagen ? (
-                        <Image
-                          src={auto.imagen}
-                          alt={auto.modelo}
-                          fill
-                          sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 25vw"
-                          className="object-cover group-hover:scale-105 transition-transform duration-700 ease-out"
-                        />
-                      ) : (
-                        <div className="w-full h-full flex items-center justify-center">
-                          <Car className="w-12 h-12 text-slate-300 dark:text-slate-600" />
-                        </div>
-                      )}
-
-                      {/* Gradiente sutil en la base de la imagen */}
-                      <div className="absolute inset-x-0 bottom-0 h-1/2 bg-gradient-to-t from-black/30 dark:from-black/60 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
-                    </div>
-
-                    {/* CUERPO DE LA TARJETA */}
-                    <div className="p-6 flex flex-col flex-grow">
-                      <div className="mb-6">
-                        <span className="text-[10px] text-slate-400 dark:text-slate-500 font-black uppercase tracking-widest block mb-1">
-                          {auto.marca}
-                        </span>
-                        <h3 className="text-xl font-black text-slate-900 dark:text-white leading-tight line-clamp-2">
-                          {auto.modelo}
-                        </h3>
-                      </div>
-
-                      <div className="mt-auto">
-                        <div className="bg-slate-50 dark:bg-white/[0.02] rounded-2xl p-4 mb-4 border border-slate-100 dark:border-white/5">
-                          <span className="text-[9px] text-slate-400 dark:text-slate-500 font-bold uppercase tracking-widest block mb-0.5">
-                            Precio de lista
-                          </span>
-                          <span className="text-2xl font-black text-slate-900 dark:text-white tracking-tight">
-                            {auto.precio_usd
-                              ? `US$ ${auto.precio_usd.toLocaleString("en-US")}`
-                              : `$ ${auto.precio_ars?.toLocaleString("es-AR")}`}
-                          </span>
-                        </div>
-
-                        {/* Botón Ver Unidad */}
-                        <div className="w-full bg-slate-100 dark:bg-white/5 hover:bg-[#0145F2] hover:dark:bg-sky-500 text-slate-600 dark:text-slate-300 hover:text-white border border-transparent hover:border-[#0145F2] hover:dark:border-sky-400 font-black text-[11px] uppercase tracking-widest py-4 rounded-xl transition-all duration-300 flex items-center justify-center gap-1.5">
-                          Ver detalles <ChevronRight className="w-3.5 h-3.5" />
-                        </div>
-                      </div>
-                    </div>
-
-                  </div>
-                </Link>
-              </motion.div>
+                auto={auto}
+                variante="alt"
+                compacta
+                onToggleFavorito={(esFav) => quitarDeLista(auto.id, esFav)}
+              />
             ))}
-          </motion.div>
+          </div>
         ) : (
           /* ================= ESTADO VACÍO (Empty State Ultra Moderno) ================= */
           <div className="flex flex-col items-center justify-center py-10 px-4 text-center relative z-10">
