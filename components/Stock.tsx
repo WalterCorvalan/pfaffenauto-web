@@ -242,7 +242,7 @@ export default function Stock({ vehiculos }: StockProps) {
                   <div className="absolute inset-0 bg-slate-100 dark:bg-slate-900 z-0"></div>
                   <Image
                     src={
-                      urbanosYSedanes[0].fotos?.[0] || "/placeholder.jpg"
+                      urbanosYSedanes[0].fotos?.[0] || "/logo.png"
                     }
                     alt={`${urbanosYSedanes[0].marca} ${urbanosYSedanes[0].modelo} ${urbanosYSedanes[0].anio}`}
                     fill
@@ -303,7 +303,7 @@ export default function Stock({ vehiculos }: StockProps) {
                       const imagenSrc =
                         auto.imagen ||
                         auto.fotos?.[0] ||
-                        "/placeholder.jpg";
+                        "/logo.png";
 
                       return (
                         <Link
@@ -388,7 +388,7 @@ export default function Stock({ vehiculos }: StockProps) {
                   <Image
                     src={
                       auto.fotos?.[0] ||
-                      "/placeholder.jpg"
+                      "/logo.png"
                     }
                     alt={`${auto.marca} ${auto.modelo} ${auto.anio}`}
                     fill
@@ -453,7 +453,7 @@ export default function Stock({ vehiculos }: StockProps) {
                       <Image
                         src={
                           auto.fotos?.[0] ||
-                          "/placeholder.jpg"
+                          "/logo.png"
                         }
                         alt={auto.marca && auto.modelo ? `${auto.marca} ${auto.modelo}` : "Auto en comparación"}
                         fill
@@ -702,7 +702,7 @@ export function VehicleCard({
                probado en desktop/tablet, no tocar. */}
             <div className={`relative ${compacta ? "h-[200px]" : "h-[300px]"} sm:h-[240px] bg-gray-100 dark:bg-white/5 overflow-hidden`}>
               <Image
-                src={auto.fotos?.[0] || "/placeholder.jpg"}
+                src={auto.fotos?.[0] || "/logo.png"}
                 alt={`${auto.marca} ${auto.modelo}`}
                 fill
                 sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 300px"
@@ -796,7 +796,7 @@ export function VehicleCard({
 
           <div className="relative h-[200px] sm:h-[240px] bg-white/30 dark:bg-white/5 flex items-center justify-center overflow-hidden mix-blend-multiply dark:mix-blend-normal">
           <Image
-            src={auto.fotos?.[0] || "/placeholder.jpg"}
+            src={auto.fotos?.[0] || "/logo.png"}
             alt={`${auto.marca} ${auto.modelo}`}
             fill
             sizes="(max-width: 640px) 50vw, (max-width: 1024px) 25vw, 300px"

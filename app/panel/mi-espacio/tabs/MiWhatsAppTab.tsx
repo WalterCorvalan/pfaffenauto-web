@@ -5,7 +5,9 @@ import { supabase2 } from "@/lib/supabase/client";
 import { MessageCircle, Save } from "lucide-react";
 import { inputClass, labelClass } from "./shared";
 
-const DEFAULT_SALUDO = "Hola {nombre}! 👋 Te escribo de {agencia}. ¿Cómo estás? Quería saber si seguís interesado/a y si te puedo ayudar en algo.";
+// Sin emoji a propósito -- ver lib/panel/whatsappSaludo.ts (api.whatsapp.com
+// rompe cualquier emoji en el link de WhatsApp).
+const DEFAULT_SALUDO = "Hola {nombre}! Te escribo de {agencia}. ¿Cómo estás? Quería saber si seguís interesado/a y si te puedo ayudar en algo.";
 
 export default function MiWhatsAppTab({ miId, agenciaNombre = "Pfaffen Cars" }: { miId: string; agenciaNombre?: string }) {
   const [saludo, setSaludo] = useState("");

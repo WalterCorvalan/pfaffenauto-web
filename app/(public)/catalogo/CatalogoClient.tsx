@@ -814,7 +814,7 @@ export default function CatalogoClient({ vehiculosIniciales = [], totalInicial =
                       <Image
                         src={
                           auto.fotos?.[0] ||
-                          "/placeholder.jpg"
+                          "/logo.png"
                         }
                         alt={`${auto.marca} ${auto.modelo}`}
                         fill
