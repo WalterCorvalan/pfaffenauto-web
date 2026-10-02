@@ -17,7 +17,8 @@ function margenPorMoneda(expedientes: any[], desde: string, hasta: string) {
   return map;
 }
 
-export default async function PanelV2Home() {
+export default async function PanelV2Home({ searchParams }: { searchParams: Promise<{ mes?: string }> }) {
+  const { mes: mesParam } = await searchParams;
   const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) return null;
@@ -33,23 +34,36 @@ export default async function PanelV2Home() {
   // den el mismo día en el servidor (UTC) y en una PC local.
   const ahoraAR = new Date(Date.now() - 3 * 3600000);
   const hoy = new Date(ahoraAR.getUTCFullYear(), ahoraAR.getUTCMonth(), ahoraAR.getUTCDate(), 12);
-  const inicioMes = new Date(hoy.getFullYear(), hoy.getMonth(), 1).toISOString().slice(0, 10);
-  const finMes = new Date(hoy.getFullYear(), hoy.getMonth() + 1, 0).toISOString().slice(0, 10);
+  // Mes que se está mirando (?mes=AAAA-MM). Si no viene, o es inválido o futuro, es el mes actual.
+  // Todo lo "mensual" (ventas, ranking, caja, gastos, calificaciones) sigue a este mes; lo que es "de hoy"
+  // (stock, saldos, urgentes, proyección de caja, leads) sigue siendo de hoy.
+  const mesActualKey = `${hoy.getFullYear()}-${String(hoy.getMonth() + 1).padStart(2, "0")}`;
+  const mesKey = mesParam && /^\d{4}-(0[1-9]|1[0-2])$/.test(mesParam) && mesParam <= mesActualKey ? mesParam : mesActualKey;
+  const esMesActual = mesKey === mesActualKey;
+  const mesRef = new Date(Number(mesKey.slice(0, 4)), Number(mesKey.slice(5, 7)) - 1, 1, 12);
+  const mesAnteriorKey = (() => { const d = new Date(mesRef.getFullYear(), mesRef.getMonth() - 1, 1, 12); return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}`; })();
+  const mesSiguienteKey = esMesActual ? null : (() => { const d = new Date(mesRef.getFullYear(), mesRef.getMonth() + 1, 1, 12); return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}`; })();
+
+  const inicioMes = new Date(mesRef.getFullYear(), mesRef.getMonth(), 1, 12).toISOString().slice(0, 10);
+  const finMes = new Date(mesRef.getFullYear(), mesRef.getMonth() + 1, 0, 12).toISOString().slice(0, 10);
+  const inicioMesSiguiente = new Date(mesRef.getFullYear(), mesRef.getMonth() + 1, 1, 12).toISOString().slice(0, 10);
+  const inicioMesActual = new Date(hoy.getFullYear(), hoy.getMonth(), 1, 12).toISOString().slice(0, 10);
+  const finMesActual = new Date(hoy.getFullYear(), hoy.getMonth() + 1, 0, 12).toISOString().slice(0, 10);
   const hoyIso = hoy.toISOString().slice(0, 10);
-  const inicioMesAnterior = new Date(hoy.getFullYear(), hoy.getMonth() - 1, 1).toISOString().slice(0, 10);
-  const finMesAnterior = new Date(hoy.getFullYear(), hoy.getMonth(), 0).toISOString().slice(0, 10);
+  const inicioMesAnterior = new Date(mesRef.getFullYear(), mesRef.getMonth() - 1, 1, 12).toISOString().slice(0, 10);
+  const finMesAnterior = new Date(mesRef.getFullYear(), mesRef.getMonth(), 0, 12).toISOString().slice(0, 10);
   const inicioAno = `${hoy.getFullYear()}-01-01`;
   const hace7dias = new Date(hoy.getTime() - 7 * 86400000).toISOString().slice(0, 10);
   const hace30dias = new Date(Date.now() - 30 * 86400000).toISOString();
-  const hace6meses = new Date(hoy.getFullYear(), hoy.getMonth() - 6, 1).toISOString().slice(0, 10);
-  const hace12meses = new Date(hoy.getFullYear(), hoy.getMonth() - 11, 1).toISOString().slice(0, 10);
+  const hace6meses = new Date(mesRef.getFullYear(), mesRef.getMonth() - 6, 1, 12).toISOString().slice(0, 10);
+  const hace12meses = new Date(mesRef.getFullYear(), mesRef.getMonth() - 11, 1, 12).toISOString().slice(0, 10);
   const en7dias = new Date(hoy.getTime() + 7 * 86400000).toISOString().slice(0, 10);
-  const inicioMesAnteriorMismoMesAnoPasado = `${hoy.getFullYear() - 1}-${String(hoy.getMonth() + 1).padStart(2, "0")}-01`;
+  const inicioMesAnteriorMismoMesAnoPasado = `${mesRef.getFullYear() - 1}-${String(mesRef.getMonth() + 1).padStart(2, "0")}-01`;
   // Antes reusaba el día final del mes ACTUAL (finMes.split("-")[2]) -- en
   // febrero de año bisiesto vs. no bisiesto (o viceversa) el mes del año
   // pasado no tiene esa misma cantidad de días, perdiendo o sumando un día
   // de más en la comparación interanual.
-  const finMesMismoMesAnoPasado = new Date(hoy.getFullYear() - 1, hoy.getMonth() + 1, 0).toISOString().slice(0, 10);
+  const finMesMismoMesAnoPasado = new Date(mesRef.getFullYear() - 1, mesRef.getMonth() + 1, 0, 12).toISOString().slice(0, 10);
 
   const [
     { data: ventasMes },
@@ -109,6 +123,7 @@ export default async function PanelV2Home() {
     // --- Proyección de caja: saldos de ventas aún sin cobrar y cuotas a cobrar (solo quien ve finanzas) ---
     { data: ventasSinCobrar },
     { data: cuotasACobrar },
+    { data: cuotasPagarProyeccionMes },
   ] = await Promise.all([
     supabase.from("ventas").select("precio_venta, moneda_venta, estado").gte("fecha_cierre", inicioMes).lte("fecha_cierre", finMes),
     // Paginado: PostgREST corta en 1000 filas y con los vendidos acumulados el stock ya puede pasarlas.
@@ -136,7 +151,7 @@ export default async function PanelV2Home() {
     // cargado (ImportarXlsxModal) -- inflaba el número mezclando conceptos
     // de negocio distintos. La métrica real de "consignaciones" es la
     // propia tabla consignaciones.
-    supabase.from("consignaciones").select("id", { count: "exact", head: true }).gte("created_at", inicioMes),
+    supabase.from("consignaciones").select("id", { count: "exact", head: true }).gte("created_at", inicioMes).lt("created_at", inicioMesSiguiente),
     supabase.from("ventas").select("id", { count: "exact", head: true }).eq("estado", "cerrada").gte("fecha_cierre", inicioMesAnteriorMismoMesAnoPasado).lte("fecha_cierre", finMesMismoMesAnoPasado),
     supabase.rpc("ranking_ventas", { p_desde: inicioMesAnterior, p_hasta: finMesAnterior }),
     supabase.from("infracciones").select("ganancia_ars, estado, fecha").gte("fecha", inicioMesAnterior).lte("fecha", finMesAnterior),
@@ -194,8 +209,10 @@ export default async function PanelV2Home() {
       ? supabase.from("ventas").select("id, precio_venta, moneda_venta, tipo_cambio, pago_efectivo_ars, pago_efectivo_usd, monto_financiacion, comprador_nombre, vehiculo_marca, vehiculo_modelo, venta_senas(monto, moneda), venta_permutas(valor, moneda), cuotas_cobrar_clientes(monto, moneda)").in("estado", ["activa", "reserva", "cerrada"]).eq("comprador_pago_confirmado", false)
       : Promise.resolve({ data: [] }),
     puedeVerFinanzas
-      ? supabase.from("cuotas_cobrar_clientes").select("id, concepto, moneda, monto, monto_cobrado").eq("cobrada", false).lte("vencimiento", finMes)
+      ? supabase.from("cuotas_cobrar_clientes").select("id, concepto, moneda, monto, monto_cobrado").eq("cobrada", false).lte("vencimiento", finMesActual)
       : Promise.resolve({ data: [] }),
+    // La proyección de caja es de HOY (mes actual), aunque el Dashboard esté mirando otro mes.
+    supabase.from("cuotas_pagar_agencia").select("id, monto, moneda, concepto, acreedor").gte("vencimiento", inicioMesActual).lte("vencimiento", finMesActual).eq("pagada", false),
   ]);
 
   const leadsSinAtender = (leadsSinAtenderWhatsapp ?? 0) + (leadsSinAtenderInstagram ?? 0) + (leadsSinAtenderRodi ?? 0) + (leadsSinAtenderManuales ?? 0);
@@ -292,7 +309,7 @@ export default async function PanelV2Home() {
   const comisionesPendientesProyeccion = (comisionesPendientesDetalle || []).map((c: any) => ({
     id: c.id, label: c.concepto || c.beneficiario?.nombre || "Comisión", monto: Number(c.monto) - Number(c.monto_pagado || 0), moneda: c.moneda,
   })).filter((c: any) => c.monto > 0);
-  const cuotasPagarDetalleProyeccion = (cuotasPagarMes || []).map((c: any) => ({ id: c.id, label: c.concepto || c.acreedor || "Cuota", monto: Number(c.monto), moneda: c.moneda }));
+  const cuotasPagarDetalleProyeccion = (cuotasPagarProyeccionMes || []).map((c: any) => ({ id: c.id, label: c.concepto || c.acreedor || "Cuota", monto: Number(c.monto), moneda: c.moneda }));
   const salidasProyeccion = [...comisionesPendientesProyeccion, ...cuotasPagarDetalleProyeccion];
   const aPagarPorMoneda: Record<string, number> = {};
   salidasProyeccion.forEach((s) => { aPagarPorMoneda[s.moneda] = (aPagarPorMoneda[s.moneda] || 0) + s.monto; });
@@ -333,7 +350,7 @@ export default async function PanelV2Home() {
       porMes.set(mes, (porMes.get(mes) || 0) + (Number(venta.precio_venta) - Number(e.precio_propietario)));
     });
     for (let i = 11; i >= 0; i--) {
-      const d = new Date(hoy.getFullYear(), hoy.getMonth() - i, 1);
+      const d = new Date(mesRef.getFullYear(), mesRef.getMonth() - i, 1, 12);
       const key = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}`;
       gananciaPorMes.push({ mes: d.toLocaleDateString("es-AR", { month: "short", year: "2-digit" }), monto: Math.round(porMes.get(key) || 0) });
     }
@@ -353,7 +370,7 @@ export default async function PanelV2Home() {
       porMes.set(mes, (porMes.get(mes) || 0) + 1);
     });
     for (let i = 11; i >= 0; i--) {
-      const d = new Date(hoy.getFullYear(), hoy.getMonth() - i, 1);
+      const d = new Date(mesRef.getFullYear(), mesRef.getMonth() - i, 1, 12);
       const key = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}`;
       ventasPorMes12.push({ mes: d.toLocaleDateString("es-AR", { month: "short" }).toUpperCase().replace(".", ""), cantidad: porMes.get(key) || 0 });
     }
@@ -497,7 +514,8 @@ export default async function PanelV2Home() {
       comisionesPendientes={comisionesPendientes ?? 0}
       infraccionesPendientes={infraccionesPendientes ?? 0}
       pedidosActivos={pedidosActivosCount ?? 0}
-      diaDelMes={hoy.getDate()}
+      diaDelMes={esMesActual ? hoy.getDate() : Number(finMes.split("-")[2])}
+      mesSeleccionado={{ key: mesKey, label: mesRef.toLocaleDateString("es-AR", { month: "long", year: "numeric" }), anterior: mesAnteriorKey, siguiente: mesSiguienteKey, esActual: esMesActual }}
       diasEnElMes={Number(finMes.split("-")[2])}
       ranking={ranking || []}
       gananciaPorMoneda={gananciaPorMoneda}

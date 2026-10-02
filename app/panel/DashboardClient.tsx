@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { Target, LayoutDashboard, EyeOff, Eye, FileText, Receipt, Calculator } from "lucide-react";
+import { Target, LayoutDashboard, EyeOff, Eye, FileText, Receipt, Calculator, ChevronLeft, ChevronRight } from "lucide-react";
 import dynamic from "next/dynamic";
 import Link from "next/link";
 import { PanelSkeletonDashboard } from "@/components/panel/PanelSkeleton";
@@ -25,6 +25,7 @@ interface Props {
   recordatoriosHoy: number; alertasPendientes: number; cotizacionesActivas: number;
   expedientesActivos: number; comisionesPendientes: number; infraccionesPendientes: number; pedidosActivos: number;
   diaDelMes: number; diasEnElMes: number;
+  mesSeleccionado: { key: string; label: string; anterior: string; siguiente: string | null; esActual: boolean };
   ranking: { vendedor_id: string; nombre: string; ventas_equivalentes: number; consignaciones: number }[];
   gananciaPorMoneda: Record<string, number>;
   consignacionesDelMes: number; ventasMesAnterior: number;
@@ -83,9 +84,22 @@ export default function DashboardClient(props: Props) {
           <h1 className="text-2xl font-black text-slate-900 dark:text-white">Hola, {props.miNombre}</h1>
           <p className="text-sm text-slate-400 capitalize">Bienvenido, <span className="font-bold text-slate-500 dark:text-slate-300">{props.miNombre}</span> · {hoyLabel}</p>
         </div>
+        <div className="flex items-center gap-2 flex-wrap">
+          {/* Selector de mes: lo "mensual" (ventas, ranking, caja, gastos) sigue al mes elegido; lo de hoy (stock, saldos, urgentes) no cambia. */}
+          <div className="flex items-center bg-white dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-lg">
+            <Link href={`/panel?mes=${props.mesSeleccionado.anterior}`} aria-label="Mes anterior" className="p-2 text-slate-500 hover:text-slate-900 dark:hover:text-white"><ChevronLeft className="w-4 h-4" /></Link>
+            <span className="px-2 text-xs font-bold capitalize text-slate-700 dark:text-slate-200 min-w-[110px] text-center">{props.mesSeleccionado.label}</span>
+            {props.mesSeleccionado.siguiente
+              ? <Link href={props.mesSeleccionado.siguiente ? `/panel?mes=${props.mesSeleccionado.siguiente}` : "/panel"} aria-label="Mes siguiente" className="p-2 text-slate-500 hover:text-slate-900 dark:hover:text-white"><ChevronRight className="w-4 h-4" /></Link>
+              : <span className="p-2 text-slate-300 dark:text-slate-600"><ChevronRight className="w-4 h-4" /></span>}
+          </div>
+          {!props.mesSeleccionado.esActual && (
+            <Link href="/panel" className="px-3 py-2 text-xs font-bold bg-[#0145F2] text-white rounded-lg hover:bg-[#0138c9] transition-colors">Volver a este mes</Link>
+          )}
         <button onClick={() => setOcultarMontos((v) => !v)} className="flex items-center gap-1.5 px-3 py-2 text-xs font-bold bg-white dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-lg text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-white/10 transition-colors">
           {ocultarMontos ? <Eye className="w-3.5 h-3.5" /> : <EyeOff className="w-3.5 h-3.5" />} {ocultarMontos ? "Mostrar montos" : "Ocultar montos"}
         </button>
+        </div>
       </div>
 
       <div className="flex items-center gap-2 flex-wrap">
