@@ -14,7 +14,13 @@ export default function TallerClient({
   mecanicos,
   servicios,
   configuracion,
+  cobrosMes,
+  renglonesMes,
+  puedeVerPlata,
 }: {
+  cobrosMes: any[];
+  renglonesMes: any[];
+  puedeVerPlata: boolean;
   ordenesIniciales: any[];
   mecanicos: any[];
   servicios: any[];
@@ -106,7 +112,7 @@ export default function TallerClient({
         </div>
 
         {tabActivo === "Resumen" ? (
-          <TallerResumenTab ordenes={ordenesIniciales} />
+          <TallerResumenTab ordenes={ordenesIniciales} cobros={cobrosMes} renglones={renglonesMes} puedeVerPlata={puedeVerPlata} />
         ) : tabActivo === "Tablero" ? (
           ordenesIniciales.filter((o) => o.estado !== ETAPA_ENTREGA).length === 0 ? (
             <div className="bg-white dark:bg-white/[0.02] border border-slate-200 dark:border-white/5 border-dashed rounded-2xl flex flex-col items-center justify-center p-12 text-center h-64">

@@ -68,7 +68,7 @@ function diasEnStock(iso: string) {
 function bordeAntiguedad(dias: number, diasEstancado: number) {
   if (dias >= diasEstancado || dias >= 60) return "border-l-rose-500 dark:border-l-rose-500";
   if (dias >= 30) return "border-l-amber-400 dark:border-l-amber-400";
-  return "border-l-sky-400 dark:border-l-sky-400";
+  return "border-l-emerald-500 dark:border-l-emerald-500";
 }
 function fmtPrecio(n: number, moneda: string) {
   return moneda === "ARS" ? `$ ${n.toLocaleString("es-AR")}` : `${moneda} ${n.toLocaleString("es-AR")}`;
@@ -438,7 +438,7 @@ export default function StockClient({
                   <div className="bg-white dark:bg-white/[0.02] border border-slate-200 dark:border-white/5 rounded-xl shadow-sm px-4 py-2.5 mb-3 flex items-center justify-between flex-wrap gap-2 text-xs font-semibold text-slate-500 dark:text-slate-400">
                     <span>{filtrados.length} vehículo{filtrados.length === 1 ? "" : "s"} en lista{puedeVerValorStock && Object.keys(valorTotalPorMoneda).length > 0 ? ` · ${Object.entries(valorTotalPorMoneda).map(([m, n]) => fmtPrecio(n, m)).join(" · ")}` : ""}</span>
                     <span className="flex items-center gap-3 text-[11px] font-bold">
-                      <span className="flex items-center gap-1.5"><span className="w-2 h-2 rounded-full bg-sky-400" /> En stock</span>
+                      <span className="flex items-center gap-1.5"><span className="w-2 h-2 rounded-full bg-emerald-500" /> En stock</span>
                       <span className="flex items-center gap-1.5"><span className="w-2 h-2 rounded-full bg-amber-400" /> +30 días</span>
                       <span className="flex items-center gap-1.5"><span className="w-2 h-2 rounded-full bg-rose-500" /> +60 días</span>
                     </span>
@@ -532,16 +532,6 @@ export default function StockClient({
                         { key: "estado", header: "Estado", cell: (v) => <span className={`text-[10px] font-bold px-2 py-1 rounded-full border whitespace-nowrap ${ESTADO_COLOR[v.estado]}`}>{ESTADO_LABEL[v.estado]}</span> },
                         { key: "sucursal", header: "Sucursal", cell: (v) => puedeEditarCompleto ? <span onClick={(e) => e.stopPropagation()}><SucursalEditor vehiculoId={v.id} sucursalId={v.sucursal_id} sucursalNombre={v.sucursal?.nombre || null} vendedorId={v.vendedor_asignado_id} vendedorNombre={v.vendedor_asignado_id ? perfilMap[v.vendedor_asignado_id] : null} perfiles={perfiles} sucursales={sucursales} onActualizado={actualizarVehiculo} /></span> : <span>{v.sucursal?.nombre || "—"}</span>, claseTd: "text-xs whitespace-nowrap", ocultarEnMobile: true },
                         { key: "asignado", header: "Asignado", cell: (v) => puedeEditarCompleto ? <span onClick={(e) => e.stopPropagation()}><VendedorEditor vehiculoId={v.id} vendedorId={v.vendedor_asignado_id} vendedorNombre={v.vendedor_asignado_id ? perfilMap[v.vendedor_asignado_id] : null} vehiculoSucursalId={v.sucursal_id} perfiles={perfiles} onActualizado={actualizarVehiculo} /></span> : <span>{v.vendedor_asignado_id ? perfilMap[v.vendedor_asignado_id] : "—"}</span>, claseTd: "text-xs whitespace-nowrap", ocultarEnMobile: true },
-                        { key: "dias", header: "Días", cell: (v) => {
-                          const dias = diasEnStock(v.created_at);
-                          const diasColor = dias >= diasEstancado ? "text-rose-600 dark:text-rose-400 font-black" : dias >= 30 ? "text-amber-600 dark:text-amber-400 font-bold" : "text-slate-500";
-                          return <span className={diasColor}>{dias}d</span>;
-                        }, claseTd: "text-xs whitespace-nowrap" },
-                        { key: "ml", header: "ML", cell: (v) => (
-                          <span onClick={(e) => e.stopPropagation()}>
-                            <BotonPublicarTodo vehiculoId={v.id} publicado={v.publicado_ml} error={v.ml_publicar_error} onPublicado={(id) => actualizarVehiculo(id, { publicado_ml: true, ml_publicar_error: null })} />
-                          </span>
-                        ), ocultarEnMobile: true },
                       ] as ColumnaTabla<Vehiculo>[]
                     }
                     acciones={(v) => (

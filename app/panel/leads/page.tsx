@@ -9,8 +9,20 @@ import { filtrarVendedoresAsignables, filtrarPorVendedorAsignado } from "@/lib/p
 // ocurrencia por conversación (= el último mensaje real), en vez de una
 // query por conversación (200 conversaciones x 3 canales sería carísimo).
 async function ultimaDireccionPorConversacion(supabase: Awaited<ReturnType<typeof createClient>>, tabla: string) {
-  const { data } = await supabase.from(tabla).select("conversacion_id, direccion").order("created_at", { ascending: false }).limit(3000);
   const mapa: Record<string, "in" | "out"> = {};
+
+  // Camino rápido: la base devuelve UNA fila por conversación (rpc leads_ultima_direccion, ver
+  // migraciones/sql_volumen_indices_y_taller_reportes.sql) -- no escala con la cantidad de mensajes.
+  const canal = tabla.replace("_mensajes", "");
+  const { data: filas, error } = await supabase.rpc("leads_ultima_direccion", { p_canal: canal });
+  if (!error && filas) {
+    for (const m of filas as { conversacion_id: string; direccion: "in" | "out" }[]) mapa[m.conversacion_id] = m.direccion;
+    return mapa;
+  }
+
+  // Fallback (si la función todavía no existe en la base): el método viejo, con su techo de 3000 filas.
+  console.error(`[leads] rpc leads_ultima_direccion(${canal}) falló, uso el método viejo:`, error?.message);
+  const { data } = await supabase.from(tabla).select("conversacion_id, direccion").order("created_at", { ascending: false }).limit(3000);
   for (const m of data || []) {
     if (!mapa[m.conversacion_id]) mapa[m.conversacion_id] = m.direccion;
   }
@@ -26,11 +38,11 @@ export default async function LeadsPage() {
     { data: vendedores }, { data: sucursales }, { data: miPerfil },
     direccionWA, direccionIG, direccionMSG, direccionRodi,
   ] = await Promise.all([
-    supabase.from("whatsapp_conversaciones").select("id, vendedor_id, calificacion, estado_lead, canal_origen, sucursal_id, created_at, last_message_at, es_basura, whatsapp_contactos ( nombre_perfil, telefono )").order("last_message_at", { ascending: false }).limit(200),
-    supabase.from("instagram_conversaciones").select("id, vendedor_id, calificacion, estado_lead, canal_origen, sucursal_id, created_at, last_message_at, es_basura, instagram_contactos ( username, ig_user_id )").order("last_message_at", { ascending: false }).limit(200),
-    supabase.from("messenger_conversaciones").select("id, vendedor_id, calificacion, estado_lead, canal_origen, sucursal_id, created_at, last_message_at, messenger_contactos ( nombre_perfil, psid )").order("last_message_at", { ascending: false }).limit(200),
-    supabase.from("rodi_conversaciones").select("id, vendedor_id, calificacion, estado_lead, canal_origen, sucursal_id, created_at, last_message_at, es_basura, nombre_contacto, telefono_contacto").order("last_message_at", { ascending: false }).limit(200),
-    supabase.from("leads_manuales").select("id, vendedor_id, calificacion, estado_lead, canal_origen, sucursal_id, created_at, es_basura, nombre, telefono").order("created_at", { ascending: false }).limit(200),
+    supabase.from("whatsapp_conversaciones").select("id, vendedor_id, calificacion, estado_lead, canal_origen, sucursal_id, created_at, last_message_at, es_basura, whatsapp_contactos ( nombre_perfil, telefono )").order("last_message_at", { ascending: false }).limit(1000),
+    supabase.from("instagram_conversaciones").select("id, vendedor_id, calificacion, estado_lead, canal_origen, sucursal_id, created_at, last_message_at, es_basura, instagram_contactos ( username, ig_user_id )").order("last_message_at", { ascending: false }).limit(1000),
+    supabase.from("messenger_conversaciones").select("id, vendedor_id, calificacion, estado_lead, canal_origen, sucursal_id, created_at, last_message_at, messenger_contactos ( nombre_perfil, psid )").order("last_message_at", { ascending: false }).limit(1000),
+    supabase.from("rodi_conversaciones").select("id, vendedor_id, calificacion, estado_lead, canal_origen, sucursal_id, created_at, last_message_at, es_basura, nombre_contacto, telefono_contacto").order("last_message_at", { ascending: false }).limit(1000),
+    supabase.from("leads_manuales").select("id, vendedor_id, calificacion, estado_lead, canal_origen, sucursal_id, created_at, es_basura, nombre, telefono").order("created_at", { ascending: false }).limit(1000),
     supabase.from("perfiles").select("id, nombre, roles, sucursal_id").eq("activo", true).order("nombre"),
     supabase.from("sucursales").select("id, nombre").order("nombre"),
     user?.id ? supabase.from("perfiles").select("roles, sucursal_id").eq("id", user.id).maybeSingle() : Promise.resolve({ data: null }),
@@ -65,6 +77,7 @@ export default async function LeadsPage() {
   return (
     <LeadsUnificadosClient
       leadsIniciales={leadsVisibles}
+      topeAlcanzado={[whatsapp, instagram, messenger, rodi, manuales].some((c) => (c || []).length >= 1000)}
       vendedores={vendedoresLista}
       sucursales={sucursales || []}
       miId={user?.id || ""}

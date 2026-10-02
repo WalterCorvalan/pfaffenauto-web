@@ -150,7 +150,7 @@ function VendedorLeadSelector({
   );
 }
 
-export default function LeadsUnificadosClient({ leadsIniciales, vendedores, sucursales, miId }: { leadsIniciales: LeadNormalizado[]; vendedores: Perfil[]; sucursales: Sucursal[]; miId: string }) {
+export default function LeadsUnificadosClient({ leadsIniciales, vendedores, sucursales, miId, topeAlcanzado = false }: { leadsIniciales: LeadNormalizado[]; vendedores: Perfil[]; sucursales: Sucursal[]; miId: string; topeAlcanzado?: boolean }) {
   const router = useRouter();
   const searchParams = useSearchParams();
   const misRoles = vendedores.find((v) => v.id === miId)?.roles || [];
@@ -288,6 +288,7 @@ export default function LeadsUnificadosClient({ leadsIniciales, vendedores, sucu
             </div>
           </div>
           <p className="text-[11px] text-slate-500 dark:text-slate-400">{leads.length} leads · {nuevosHoy} hoy · {sinAsignar} sin asignar</p>
+          {topeAlcanzado && <p className="text-[10px] font-semibold text-amber-700 dark:text-amber-300 bg-amber-50 dark:bg-amber-500/10 border border-amber-200 dark:border-amber-500/20 rounded-lg px-2 py-1">Se muestran los 1000 leads más recientes de cada canal; hay más antiguos que no se listan acá.</p>}
 
           <div className="flex gap-1.5">
             <button onClick={() => setVista("sin_respuesta")} className={`flex-1 flex items-center justify-center gap-1.5 px-2 py-1.5 text-[11px] font-bold rounded-lg transition-colors ${vista === "sin_respuesta" ? "bg-rose-600 text-white" : "bg-slate-50 dark:bg-white/5 border border-slate-200 dark:border-white/10 text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-white/10"}`}>

@@ -17,6 +17,21 @@ export default async function TallerPage() {
   // permisosModulos.ts, ya tenía el mapeo taller->taller armado de antes).
   if (!(await puedeVerModulo(supabase, user.id, "taller"))) redirect("/panel");
 
+  const { data: miPerfil } = await supabase.from("perfiles").select("roles").eq("id", user.id).maybeSingle();
+  const puedeVerPlata = miPerfil?.roles?.some((r: string) => ["admin", "finanzas", "director"].includes(r)) ?? false;
+
+  // Cobros vigentes del mes (la facturación del Resumen sale de acá) y los renglones de esas órdenes (para el costo).
+  // Solo se piden si el usuario ve plata -- no viajan al navegador de quien no corresponde.
+  const hoy = new Date(Date.now() - 3 * 3600000); // día de Argentina
+  const inicioMes = `${hoy.getUTCFullYear()}-${String(hoy.getUTCMonth() + 1).padStart(2, "0")}-01`;
+  const cobrosMes = puedeVerPlata
+    ? ((await supabase.from("taller_cobros").select("orden_id, monto, moneda").eq("anulado", false).gte("fecha", inicioMes)).data || [])
+    : [];
+  const ordenIdsCobradas = Array.from(new Set(cobrosMes.map((c: any) => c.orden_id)));
+  const renglonesMes = puedeVerPlata && ordenIdsCobradas.length > 0
+    ? ((await supabase.from("taller_renglones").select("orden_id, costo, aprobado_cliente").in("orden_id", ordenIdsCobradas)).data || [])
+    : [];
+
   const [
     { data: ordenes },
     { data: mecanicos },
@@ -35,6 +50,9 @@ export default async function TallerPage() {
       mecanicos={mecanicos || []}
       servicios={servicios || []}
       configuracion={configuracion}
+      cobrosMes={cobrosMes}
+      renglonesMes={renglonesMes}
+      puedeVerPlata={puedeVerPlata}
     />
   );
 }
