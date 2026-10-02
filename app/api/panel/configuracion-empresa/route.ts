@@ -43,6 +43,7 @@ const ConfigEmpresaSchema = z.object({
   plazo_reasignacion_pedidos_horas: z.coerce.number().min(1).optional(),
   plazo_reconfirmacion_pedidos_dias: z.coerce.number().min(1).optional(),
   lead_routing_activo: z.boolean().optional(),
+  asignacion_leads_ronda: z.boolean().optional(),
   lead_routing_umbral_minutos: z.coerce.number().min(1).optional(),
   lead_routing_max_reasignaciones: z.coerce.number().min(1).optional(),
   cada_vendedor_ve_solo_sus_clientes: z.boolean().optional(),

@@ -394,6 +394,7 @@ function PlazosConfig() {
 }
 
 interface ConfigRouting {
+  asignacion_leads_ronda: boolean;
   lead_routing_activo: boolean;
   lead_routing_umbral_minutos: number;
   lead_routing_max_reasignaciones: number;
@@ -406,6 +407,17 @@ function LeadRoutingConfig() {
   const [vendedores, setVendedores] = useState<VendedorRouting[]>([]);
   const [cargando, setCargando] = useState(true);
   const [mensaje, setMensaje] = useState("");
+  const [repartiendo, setRepartiendo] = useState(false);
+
+  // Reparte por la misma ronda los leads que hoy no tienen vendedor (rpc repartir_leads_sin_asignar, solo admin).
+  const repartirSinAsignar = async () => {
+    if (!confirm("¿Repartir ahora todos los leads que están sin asignar entre los vendedores, por turnos?")) return;
+    setRepartiendo(true);
+    const { data, error } = await supabase2.rpc("repartir_leads_sin_asignar");
+    setRepartiendo(false);
+    setMensaje(error ? `No se pudo repartir: ${error.message}` : `Listo: se repartieron ${data ?? 0} lead${data === 1 ? "" : "s"}.`);
+    setTimeout(() => setMensaje(""), 4000);
+  };
 
   const cargar = async () => {
     setCargando(true);
@@ -443,6 +455,18 @@ function LeadRoutingConfig() {
 
   return (
     <div className="space-y-4">
+      <div className="bg-white dark:bg-white/[0.02] border border-slate-200 dark:border-white/5 rounded-2xl shadow-sm p-5 space-y-4">
+        <p className="text-sm font-bold text-slate-800 dark:text-white">Asignación automática de leads nuevos</p>
+        <p className="text-xs text-slate-400">Todo lead nuevo de WhatsApp, Instagram, Messenger y el chat de la web que llegue sin vendedor se asigna por turnos (round robin) entre los vendedores. Pensado para mientras el bot de WhatsApp no deriva solo. Respeta a los vendedores marcados como "no recibe leads".</p>
+        <label className="flex items-center gap-2">
+          <Toggle checked={config.asignacion_leads_ronda ?? true} onChange={(v) => guardarConfig({ asignacion_leads_ronda: v })} />
+          <span className="text-sm text-slate-700 dark:text-slate-200">Asignar leads nuevos automáticamente por ronda</span>
+        </label>
+        <button onClick={repartirSinAsignar} disabled={repartiendo} className="px-3 py-2 text-xs font-bold bg-[#0145F2] hover:bg-[#0138c9] text-white rounded-lg disabled:opacity-50">
+          {repartiendo ? "Repartiendo..." : "Repartir ahora los leads sin asignar"}
+        </button>
+      </div>
+
       <div className="bg-white dark:bg-white/[0.02] border border-slate-200 dark:border-white/5 rounded-2xl shadow-sm p-5 space-y-4">
         <p className="text-sm font-bold text-slate-800 dark:text-white">Reasignación automática</p>
         <p className="text-xs text-slate-400">Si un vendedor no marca el lead como contactado en el plazo fijado, pasa al siguiente de la ronda. Corre cada 10 minutos.</p>
