@@ -205,6 +205,8 @@ export default function VentaDetalleModal({ ventaId, miId, soyAdmin, puedeVerCom
 
     const huboEfectivo = ventaActual?.pago_efectivo_ars || ventaActual?.pago_efectivo_usd;
     if (huboEfectivo) avisos.push("Esta venta tenía efectivo acreditado en Tesorería -- revisá si hay que revertirlo a mano.");
+    if (venta?.comprador_pago_confirmado) avisos.push("El pago del comprador ya estaba confirmado y acreditado en Tesorería -- revisá si hay que devolverlo.");
+    if (venta?.estado_pago_tesoreria === "pagado") avisos.push("El pago al propietario ya figura como pagado -- revisá si hay que recuperarlo.");
   };
 
   // Solo para "cancelada" -- "caída" ya tiene su propio manejo de la seña

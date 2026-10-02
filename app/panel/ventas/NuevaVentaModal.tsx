@@ -64,7 +64,6 @@ interface Props {
   onCreado: (venta: any) => void;
 }
 
-const CAJAS = ["Caja USD", "Caja ARS", "Banco", "Otro"];
 const CONDICIONES = ["0km", "Excelente", "Muy bueno", "Bueno", "Regular"];
 const nuevaPermuta = (): Permuta => ({
   valor: "", moneda: "USD", precioPublicacion: "", marca: "", modelo: "", anio: "", km: "", patente: "", color: "", condicion: "Muy bueno", cargarAlStock: true, duenoNombre: "",
@@ -735,7 +734,7 @@ export default function NuevaVentaModal({ perfiles, clientes, vehiculos, miId, s
       }
 
       if (senas.length > 0) {
-        const filas = senas.filter((s) => s.monto).map((s) => ({ venta_id: venta.id, monto: Number(s.monto), moneda: s.moneda, fecha: s.fecha, caja_destino: s.cajaDestino || null, sena_origen_id: s.senaOrigenId || null }));
+        const filas = senas.filter((s) => s.monto).map((s) => ({ venta_id: venta.id, monto: Number(s.monto), moneda: s.moneda, fecha: s.fecha, caja_destino: s.senaOrigenId ? null : (cuentas.find((c) => c.id === s.cajaDestino)?.nombre || null), sena_origen_id: s.senaOrigenId || null }));
         let errorVentaSenas = null;
         if (filas.length > 0) {
           const { error } = await supabase2.from("venta_senas").insert(filas);
@@ -756,6 +755,19 @@ export default function NuevaVentaModal({ perfiles, clientes, vehiculos, miId, s
           // ninguna referencia a la venta que terminaron generando. Solo se
           // marcan si venta_senas se guardó bien -- si no, la seña queda como
           // estaba para poder reintentar el vínculo.
+          // Las señas tipeadas a mano en esta venta (no vinculadas al módulo
+          // Señas) nunca pasaron por Tesorería: el saldo del comprador las
+          // resta igual, así que si no se registran acá esa plata no figura
+          // en ningún lado. Las vinculadas ya ingresaron al cargar la seña.
+          for (const s of senas.filter((x) => x.monto && !x.senaOrigenId && x.cajaDestino)) {
+            const { error: errorCaja } = await supabase2.rpc("registrar_movimiento_caja", {
+              p_tipo: "ingreso", p_monto: Number(s.monto), p_cuenta_id: s.cajaDestino, p_fecha: s.fecha, p_categoria: "Seña",
+              p_forma_pago: null, p_vehiculo_id: vehiculoId || null, p_cliente_id: clienteResueltoId, p_venta_id: venta.id,
+              p_observaciones: `Seña cargada en la venta — ${vMarca || ""} ${vModelo || ""}`.trim(),
+            });
+            if (errorCaja) alert(`La venta se guardó, pero no se pudo registrar la seña de ${s.moneda} ${Number(s.monto).toLocaleString("es-AR")} en Tesorería: ${errorCaja.message}. Cargala a mano en Finanzas.`);
+          }
+
           const idsVinculados = senas.filter((s) => s.senaOrigenId).map((s) => s.senaOrigenId as string);
           if (idsVinculados.length > 0) {
             const { error: errorSenas } = await supabase2.from("senas").update({ estado: "Convertida", etapa_seguimiento: "Convertida" }).in("id", idsVinculados);
@@ -1100,9 +1112,19 @@ export default function NuevaVentaModal({ perfiles, clientes, vehiculos, miId, s
                           <button type="button" onClick={() => quitarSeña(i)} className="absolute top-2 right-2 text-slate-300 hover:text-rose-500"><Trash2 className="w-3.5 h-3.5" /></button>
                           {s.senaOrigenId && <p className="text-[10px] font-bold text-emerald-600 dark:text-emerald-400 mb-1.5">🔗 Vinculada al módulo Señas — se marca Convertida al guardar</p>}
                           <div className="grid grid-cols-2 gap-2 pr-6">
-                            <div><label className={labelClass}>Monto</label><div className="flex gap-1"><select value={s.moneda} onChange={(e) => actualizarSeña(i, "moneda", e.target.value)} className={`${inputClass} !w-20 shrink-0 py-2`}><option value="USD">USD</option><option value="ARS">ARS</option></select><input type="number" value={s.monto} onChange={(e) => actualizarSeña(i, "monto", e.target.value)} className={`${inputClass} flex-1 min-w-0`} /></div></div>
+                            <div><label className={labelClass}>Monto</label><div className="flex gap-1"><select value={s.moneda} onChange={(e) => { actualizarSeña(i, "moneda", e.target.value); actualizarSeña(i, "cajaDestino", ""); }} className={`${inputClass} !w-20 shrink-0 py-2`}><option value="USD">USD</option><option value="ARS">ARS</option></select><input type="number" value={s.monto} onChange={(e) => actualizarSeña(i, "monto", e.target.value)} className={`${inputClass} flex-1 min-w-0`} /></div></div>
                             <div><label className={labelClass}>Fecha</label><input type="date" value={s.fecha} onChange={(e) => actualizarSeña(i, "fecha", e.target.value)} className={inputClass} /></div>
-                            <div><label className={labelClass}>Caja destino</label><select value={s.cajaDestino} onChange={(e) => actualizarSeña(i, "cajaDestino", e.target.value)} className={inputClass}><option value="">— elegir —</option>{CAJAS.map((c) => <option key={c} value={c}>{c}</option>)}</select></div>
+                            {s.senaOrigenId ? (
+                              <div><label className={labelClass}>Caja destino</label><p className="text-[11px] text-slate-500 dark:text-slate-400 py-2.5">Ya ingresó a Tesorería cuando se cargó la seña.</p></div>
+                            ) : (
+                              <div>
+                                <label className={labelClass}>Caja destino (Tesorería)</label>
+                                <select value={s.cajaDestino} onChange={(e) => actualizarSeña(i, "cajaDestino", e.target.value)} className={inputClass}>
+                                  <option value="">No registrar en Tesorería</option>
+                                  {cuentas.filter((c) => c.moneda === s.moneda).map((c) => <option key={c.id} value={c.id}>{c.nombre}</option>)}
+                                </select>
+                              </div>
+                            )}
                             <div>
                               <label className={labelClass}>Comprobante</label>
                               <button type="button" disabled title="Todavía no construido" className="w-full flex items-center justify-center gap-1.5 py-2.5 rounded-xl border border-dashed border-slate-200 dark:border-white/10 text-[11px] font-bold text-amber-500 opacity-60 cursor-not-allowed">📎 Adjuntar</button>

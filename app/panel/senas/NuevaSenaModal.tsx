@@ -181,6 +181,9 @@ export default function NuevaSenaModal({
     if (!vehiculo || !vehiculo.marca || !vehiculo.modelo) return alert("Elegí o cargá el vehículo.");
     if (!sucursalId) return alert("Elegí la sucursal.");
     if (necesitaCotizacion && !tipoCambio) return alert("Cargá el tipo de cambio: hay montos en una moneda distinta a la de la venta.");
+    // Sin cuenta destino la seña queda en el módulo pero no entra a Tesorería
+    // -- la venta que la use después la va a restar del saldo igual.
+    if (!cuentaId && !confirm("No elegiste cuenta destino: esta seña NO va a figurar como ingreso en Finanzas/Tesorería. ¿Guardar igual?")) return;
     setMostrarModalPrecio(true);
   };
 

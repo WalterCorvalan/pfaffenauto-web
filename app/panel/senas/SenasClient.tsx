@@ -90,6 +90,13 @@ export default function SenasClient({
   }, [senas, query, vendedorFiltro, desde, hasta]);
 
   const eliminar = async (s: any) => {
+    // Una seña Convertida ya está descontada del saldo de una venta
+    // (venta_senas). Borrarla revierte el ingreso en Tesorería pero la venta
+    // sigue restándola -- Finanzas y la venta quedan desfasadas.
+    if (s.estado === "Convertida") {
+      alert("Esta seña ya se convirtió en una venta y no se puede eliminar. Si la venta se cae, cancelala desde Ventas: la seña vuelve a quedar Activa.");
+      return;
+    }
     // Si la seña tiene un ingreso real vinculado en Finanzas
     // (movimientos_caja.sena_id), borrar la seña sin más lo dejaba
     // huérfano -- la plata seguía contabilizada como ingreso para siempre,
