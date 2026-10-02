@@ -3,6 +3,7 @@ import { createClient } from "@/lib/supabase/server";
 import { puedeVerModulo } from "@/lib/panel/permisosModulos";
 import { tienePermiso } from "@/lib/panel/permisos";
 import FinanzasClient from "./FinanzasClient";
+import { fetchPaginado } from "@/lib/panel/fetchPaginado";
 
 export const metadata = { title: "Finanzas | Pfaffen Cars" };
 
@@ -78,7 +79,7 @@ export default async function FinanzasPage() {
     return (
       <FinanzasClient
         miId={user?.id || ""} soyAdmin={soyAdmin} soyAdminOFinanzas={soyAdminOFinanzas}
-        cuentasIniciales={[...cuentasConSaldoSucursal, ...cuentasDestinoAjenas]} movimientosIniciales={movimientosSucursal || []}
+        cuentasIniciales={[...cuentasConSaldoSucursal, ...cuentasDestinoAjenas]} movimientosIniciales={movimientosSucursal || []} movimientosMesIniciales={movimientosSucursal || []}
         cierresIniciales={[]} cuotasCobrarIniciales={[]} cuotasPagarIniciales={[]}
         vendedores={vendedoresSoloCaja || []} clientes={[]} vehiculos={[]} ventas={[]}
         chequesIniciales={[]} pagosDisponiblesIniciales={[]} consumosTarjetaIniciales={[]} retirosIniciales={[]} devolucionesIniciales={[]}
@@ -158,6 +159,19 @@ export default async function FinanzasPage() {
     .order("created_at", { ascending: false })
     .limit(200);
 
+  // Todos los movimientos del mes en curso (día de Argentina). "movimientosRecientes" son solo los últimos 200
+  // (para la pestaña Movimientos): los tiles "(mes)" de Resumen -- ingresos, egresos, punto de equilibrio,
+  // operatoria del área -- se calculaban sobre esos 200 y quedaban incompletos apenas el mes tenía más.
+  const ahoraAR = new Date(Date.now() - 3 * 3600000);
+  const inicioMesIso = `${ahoraAR.getUTCFullYear()}-${String(ahoraAR.getUTCMonth() + 1).padStart(2, "0")}-01`;
+  const movimientosMes = await fetchPaginado(() => supabase
+    .from("movimientos_caja")
+    .select("*, cuenta:cuentas(nombre, moneda), vehiculo:vehiculo_id ( marca, modelo, anio ), vendedor:vendedor_id ( nombre )")
+    .is("deleted_at", null)
+    .gte("fecha", inicioMesIso)
+    .order("fecha", { ascending: false })
+    .order("id", { ascending: true }));
+
   // Conecta Facturación (compra de vehículos) con AFIP/IVA -- no reemplaza
   // el cálculo existente (que sigue siendo 100% movimientos_caja), solo le
   // suma una fuente más para cruzar. Mismo gate que el resto de Liquidación
@@ -174,6 +188,7 @@ export default async function FinanzasPage() {
       soyAdminOFinanzas={soyAdminOFinanzas}
       cuentasIniciales={cuentasConSaldo}
       movimientosIniciales={movimientosRecientes || []}
+      movimientosMesIniciales={movimientosMes}
       cierresIniciales={cierres || []}
       cuotasCobrarIniciales={cuotasCobrar || []}
       cuotasPagarIniciales={cuotasPagar || []}

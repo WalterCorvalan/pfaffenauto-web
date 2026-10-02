@@ -1,5 +1,7 @@
 "use client";
 
+import { fetchPaginado } from "@/lib/panel/fetchPaginado";
+
 import { useState, useMemo, useEffect } from "react";
 import Link from "next/link";
 import dynamic from "next/dynamic";
@@ -103,14 +105,14 @@ function grupoDeTab(tabValue: string): string {
 }
 
 export default function FinanzasClient({
-  miId, soyAdmin, soyAdminOFinanzas, cuentasIniciales, movimientosIniciales, cierresIniciales,
+  miId, soyAdmin, soyAdminOFinanzas, cuentasIniciales, movimientosIniciales, movimientosMesIniciales, cierresIniciales,
   cuotasCobrarIniciales, cuotasPagarIniciales, vendedores, clientes, vehiculos, ventas,
   chequesIniciales, pagosDisponiblesIniciales, consumosTarjetaIniciales, retirosIniciales, devolucionesIniciales,
   expedientes, senasActivasPorMoneda,
   prestamosIniciales, presupuestosIniciales, recurrenciasIniciales, generacionesIniciales, arqueosIniciales, cierresDiariosIniciales, miNombre,
   senasIniciales, vehiculosDisponiblesFull, sucursales, veTodasSucursales, miSucursalId, vehiculosTodos, soloCajaSucursal, puedeVerLiquidacion, vehiculosFacturados,
 }: {
-  miId: string; soyAdmin: boolean; soyAdminOFinanzas: boolean; cuentasIniciales: any[]; movimientosIniciales: any[]; cierresIniciales: any[];
+  miId: string; soyAdmin: boolean; soyAdminOFinanzas: boolean; cuentasIniciales: any[]; movimientosIniciales: any[]; movimientosMesIniciales: any[]; cierresIniciales: any[];
   cuotasCobrarIniciales: any[]; cuotasPagarIniciales: any[]; vendedores: any[]; clientes: any[]; vehiculos: any[]; ventas: any[];
   chequesIniciales: any[]; pagosDisponiblesIniciales: any[]; consumosTarjetaIniciales: any[]; retirosIniciales: any[]; devolucionesIniciales: any[];
   expedientes: any[]; senasActivasPorMoneda: Record<string, number>;
@@ -140,6 +142,8 @@ export default function FinanzasClient({
   const grupoActivo = GRUPOS.find((g) => g.value === grupo) || GRUPOS[0];
   const [cuentas, setCuentas] = useState(cuentasIniciales);
   const [movimientos, setMovimientos] = useState(movimientosIniciales);
+  // Todos los movimientos del mes en curso (no solo los 200 más recientes) -- base de los tiles "(mes)".
+  const [movimientosMes, setMovimientosMes] = useState(movimientosMesIniciales);
   const [cierres, setCierres] = useState(cierresIniciales);
   const [cuotasCobrar, setCuotasCobrar] = useState(cuotasCobrarIniciales);
   const [cuotasPagar, setCuotasPagar] = useState(cuotasPagarIniciales);
@@ -184,6 +188,14 @@ export default function FinanzasClient({
         .order("created_at", { ascending: false })
         .limit(200);
       if (data) setMovimientos(data);
+      // Mes completo (paginado: PostgREST corta en 1000 filas)
+      const inicio = new Date(); inicio.setDate(1);
+      const inicioIso = `${inicio.getFullYear()}-${String(inicio.getMonth() + 1).padStart(2, "0")}-01`;
+      const delMes = await fetchPaginado(() => supabase2
+        .from("movimientos_caja")
+        .select("*, cuenta:cuentas(nombre, moneda), vehiculo:vehiculo_id ( marca, modelo, anio ), vendedor:vendedor_id ( nombre )")
+        .is("deleted_at", null).gte("fecha", inicioIso).order("fecha", { ascending: false }).order("id", { ascending: true }));
+      setMovimientosMes(delMes);
     };
     const refetchCheques = async () => {
       const { data } = await supabase2.from("cheques").select("*").order("fecha_cobro", { ascending: false }).limit(300);
@@ -287,8 +299,8 @@ export default function FinanzasClient({
   const movimientosDelMes = useMemo(() => {
     const inicioMes = new Date(); inicioMes.setDate(1); inicioMes.setHours(0, 0, 0, 0);
     const inicioMesStr = inicioMes.toISOString().slice(0, 10);
-    return movimientos.filter((m) => m.fecha >= inicioMesStr);
-  }, [movimientos]);
+    return movimientosMes.filter((m) => m.fecha >= inicioMesStr);
+  }, [movimientosMes]);
   // Mismo criterio que cajaPorSucursal más abajo: una transferencia entre
   // cajas propias entra como ingreso en una caja y egreso en la otra --
   // sumarla infla ingresos/egresos brutos sin que sea plata real, y puede
@@ -475,7 +487,7 @@ export default function FinanzasClient({
           puntoEquilibrioPorMoneda={puntoEquilibrioPorMoneda}
           setTab={setTab}
           ventas={ventas}
-          movimientos={movimientos}
+          movimientos={movimientosMes}
           vehiculosDisponiblesFull={vehiculosDisponiblesFull}
           gastosFijosTotales={gastosFijosTotales}
           gastosVariablesTotales={gastosVariablesTotales}

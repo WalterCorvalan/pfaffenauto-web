@@ -85,7 +85,7 @@ export default function NuevaOtModal({ mecanicos, onClose }: { mecanicos: any[];
               Ingreso del auto al taller: cliente, vehículo y estado de recepción.
             </h2>
           </div>
-          <button onClick={onClose} className="p-1.5 border border-slate-200 rounded-lg hover:bg-slate-50 text-slate-400">
+          <button onClick={onClose} className="p-1.5 border border-slate-200 dark:border-white/10 rounded-lg hover:bg-slate-50 dark:hover:bg-white/5 text-slate-400">
             <X className="w-4 h-4" />
           </button>
         </div>
@@ -104,14 +104,14 @@ export default function NuevaOtModal({ mecanicos, onClose }: { mecanicos: any[];
 
           <div className="grid grid-cols-2 gap-4">
             <div>
-              <label className="text-xs font-bold text-slate-600 mb-1.5 block">Tipo de orden</label>
+              <label className="text-xs font-bold text-slate-600 dark:text-slate-300 mb-1.5 block">Tipo de orden</label>
               <select className={inputClass} value={formData.tipo_orden} onChange={(e) => setFormData({ ...formData, tipo_orden: e.target.value })}>
                 <option value="externo">Cliente externo (de la calle)</option>
                 <option value="stock">Vehículo de stock</option>
               </select>
             </div>
             <div>
-              <label className="text-xs font-bold text-slate-600 mb-1.5 block">Moneda</label>
+              <label className="text-xs font-bold text-slate-600 dark:text-slate-300 mb-1.5 block">Moneda</label>
               <select className={inputClass} value={formData.moneda} onChange={(e) => setFormData({ ...formData, moneda: e.target.value })}>
                 <option value="USD">USD (dólares)</option>
                 <option value="ARS">ARS (pesos)</option>
@@ -121,18 +121,18 @@ export default function NuevaOtModal({ mecanicos, onClose }: { mecanicos: any[];
 
           <div className="grid grid-cols-2 gap-4">
             <div>
-              <label className="text-xs font-bold text-slate-600 mb-1.5 block">Cliente <span className="text-rose-500">*</span></label>
+              <label className="text-xs font-bold text-slate-600 dark:text-slate-300 mb-1.5 block">Cliente <span className="text-rose-500">*</span></label>
               <input className={inputClass} placeholder="Nombre y apellido" value={formData.cliente_nombre} onChange={(e) => setFormData({ ...formData, cliente_nombre: e.target.value })} />
             </div>
             <div>
-              <label className="text-xs font-bold text-slate-600 mb-1.5 block">Teléfono</label>
+              <label className="text-xs font-bold text-slate-600 dark:text-slate-300 mb-1.5 block">Teléfono</label>
               <input className={inputClass} placeholder="11 2345 6789" value={formData.cliente_telefono} onChange={(e) => setFormData({ ...formData, cliente_telefono: e.target.value })} />
             </div>
           </div>
 
           <div className="grid grid-cols-2 gap-4">
             <div>
-              <label className="text-xs font-bold text-slate-600 mb-1.5 block">Marca <span className="text-rose-500">*</span></label>
+              <label className="text-xs font-bold text-slate-600 dark:text-slate-300 mb-1.5 block">Marca <span className="text-rose-500">*</span></label>
               <select className={inputClass} value={formData.marca} onChange={(e) => setFormData({ ...formData, marca: e.target.value })}>
                 <option value="">Elegí la marca...</option>
                 <option value="Toyota">Toyota</option>
@@ -142,29 +142,29 @@ export default function NuevaOtModal({ mecanicos, onClose }: { mecanicos: any[];
               </select>
             </div>
             <div>
-              <label className="text-xs font-bold text-slate-600 mb-1.5 block">Modelo <span className="text-rose-500">*</span></label>
+              <label className="text-xs font-bold text-slate-600 dark:text-slate-300 mb-1.5 block">Modelo <span className="text-rose-500">*</span></label>
               <input className={inputClass} value={formData.modelo} onChange={(e) => setFormData({ ...formData, modelo: e.target.value })} />
             </div>
           </div>
 
           <div className="grid grid-cols-2 gap-4">
             <div>
-              <label className="text-xs font-bold text-slate-600 mb-1.5 block">Patente</label>
+              <label className="text-xs font-bold text-slate-600 dark:text-slate-300 mb-1.5 block">Patente</label>
               <input className={inputClass} value={formData.patente} onChange={(e) => setFormData({ ...formData, patente: e.target.value })} />
             </div>
             <div>
-              <label className="text-xs font-bold text-slate-600 mb-1.5 block">Año</label>
+              <label className="text-xs font-bold text-slate-600 dark:text-slate-300 mb-1.5 block">Año</label>
               <input className={inputClass} placeholder="2018" value={formData.anio} onChange={(e) => setFormData({ ...formData, anio: e.target.value })} />
             </div>
           </div>
 
           <div className="grid grid-cols-2 gap-4">
             <div>
-              <label className="text-xs font-bold text-slate-600 mb-1.5 block">Km al ingresar</label>
+              <label className="text-xs font-bold text-slate-600 dark:text-slate-300 mb-1.5 block">Km al ingresar</label>
               <input className={inputClass} placeholder="85000" type="number" value={formData.km_ingreso} onChange={(e) => setFormData({ ...formData, km_ingreso: e.target.value })} />
             </div>
             <div>
-              <label className="text-xs font-bold text-slate-600 mb-1.5 block">Mecánico a cargo</label>
+              <label className="text-xs font-bold text-slate-600 dark:text-slate-300 mb-1.5 block">Mecánico a cargo</label>
               <select className={inputClass} value={formData.mecanico_id} onChange={(e) => setFormData({ ...formData, mecanico_id: e.target.value })}>
                 <option value="">Sin asignar</option>
                 {mecanicos.map(m => <option key={m.id} value={m.id}>{m.nombre}</option>)}
@@ -173,7 +173,7 @@ export default function NuevaOtModal({ mecanicos, onClose }: { mecanicos: any[];
           </div>
 
           <div>
-            <label className="text-xs font-bold text-slate-600 mb-1.5 block">Motivo de ingreso (lo que dice el cliente)</label>
+            <label className="text-xs font-bold text-slate-600 dark:text-slate-300 mb-1.5 block">Motivo de ingreso (lo que dice el cliente)</label>
             <textarea 
               className={`${inputClass} resize-none`} 
               rows={3} 
@@ -184,23 +184,23 @@ export default function NuevaOtModal({ mecanicos, onClose }: { mecanicos: any[];
           </div>
 
           {/* Ficha de Ingreso */}
-          <div className="border border-slate-200 rounded-xl p-4 space-y-4">
-            <h3 className="font-bold text-sm text-slate-900">Ficha de ingreso</h3>
+          <div className="border border-slate-200 dark:border-white/10 rounded-xl p-4 space-y-4">
+            <h3 className="font-bold text-sm text-slate-900 dark:text-white">Ficha de ingreso</h3>
             
             <div className="grid grid-cols-2 gap-4">
               <div>
-                <label className="text-xs font-bold text-slate-600 mb-1.5 block">Combustible (%)</label>
+                <label className="text-xs font-bold text-slate-600 dark:text-slate-300 mb-1.5 block">Combustible (%)</label>
                 <input className={inputClass} placeholder="50" type="number" value={formData.combustible_pct} onChange={(e) => setFormData({ ...formData, combustible_pct: e.target.value })} />
               </div>
               <div>
-                <label className="text-xs font-bold text-slate-600 mb-1.5 block">Objetos dejados en el auto</label>
+                <label className="text-xs font-bold text-slate-600 dark:text-slate-300 mb-1.5 block">Objetos dejados en el auto</label>
                 <input className={inputClass} placeholder="Documentos, llave de rueda..." value={formData.objetos_dejados} onChange={(e) => setFormData({ ...formData, objetos_dejados: e.target.value })} />
               </div>
             </div>
 
             <div>
               <div className="flex justify-between items-center mb-1.5">
-                <label className="text-xs text-slate-600">Daños / observaciones al ingresar</label>
+                <label className="text-xs text-slate-600 dark:text-slate-300">Daños / observaciones al ingresar</label>
                 <button onClick={() => setDanos([...danos, { zona: "", detalle: "" }])} className="text-[#0145F2] text-xs font-medium hover:underline">+ Agregar</button>
               </div>
               {danos.map((dano, index) => (
@@ -213,14 +213,14 @@ export default function NuevaOtModal({ mecanicos, onClose }: { mecanicos: any[];
             </div>
 
             <div>
-               <label className="text-xs text-slate-600 mb-1.5 block">Fotos del estado de ingreso (máx 20)</label>
+               <label className="text-xs text-slate-600 dark:text-slate-300 mb-1.5 block">Fotos del estado de ingreso (máx 20)</label>
                <input type="file" multiple className="text-xs" />
             </div>
           </div>
         </div>
 
-        <div className="flex gap-3 p-6 border-t border-slate-100 bg-slate-50">
-          <button onClick={onClose} className="px-4 py-2 text-sm font-bold bg-white border border-slate-200 rounded-xl text-slate-700">Cancelar</button>
+        <div className="flex gap-3 p-6 border-t border-slate-100 dark:border-white/10 bg-slate-50 dark:bg-white/[0.03]">
+          <button onClick={onClose} className="px-4 py-2 text-sm font-bold bg-white dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-xl text-slate-700 dark:text-slate-200">Cancelar</button>
           <button onClick={guardarOT} disabled={cargando} className="px-6 py-2 text-sm font-bold bg-[#0145F2] text-white rounded-xl shadow-sm hover:bg-[#0138c9]">Crear OT</button>
         </div>
       </div>
