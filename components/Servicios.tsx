@@ -169,12 +169,14 @@ export default function Servicios({ contenido }: { contenido?: ServiciosContenid
                 >
                   Consignar Vehículo
                 </Link>
-                <Link
-                  href="/#sucursales"
+                <a
+                  href="/api/contactar-asesor"
+                  target="_blank"
+                  rel="noopener noreferrer"
                   className="inline-flex items-center justify-center gap-2 bg-black/20 text-white hover:bg-black/30 font-black text-[10px] sm:text-xs uppercase tracking-widest px-8 py-4 rounded-xl transition-all backdrop-blur-sm border border-white/10 active:scale-95"
                 >
                   Contactar Asesor
-                </Link>
+                </a>
               </div>
             </div>
 
