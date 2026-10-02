@@ -2,6 +2,7 @@ import { createClient } from "@/lib/supabase/server";
 import DashboardClient from "./DashboardClient";
 import { CATEGORIAS_GASTO_FIJO, CATEGORIAS_GASTO_VARIABLE } from "./finanzas/tabs/shared";
 import { fetchPaginado } from "@/lib/panel/fetchPaginado";
+import { totalEnMoneda, type Moneda } from "@/lib/moneda";
 
 export const metadata = { title: "Dashboard | Pfaffen Cars" };
 
@@ -25,18 +26,24 @@ export default async function PanelV2Home() {
   const esAdmin = miPerfil?.roles?.includes("admin") ?? false;
   const puedeVerFinanzas = esAdmin || (miPerfil?.roles?.includes("finanzas") ?? false) || (miPerfil?.roles?.includes("director") ?? false);
 
-  const hoy = new Date();
+  // Hora de Argentina (UTC-3, sin horario de verano), no la del servidor: en Vercel el
+  // servidor corre en UTC y entre las 21:00 y las 24:00 de Argentina ya "era mañana" --
+  // el día, y el último día del mes, saltaban 3 horas antes. Se arma una fecha al
+  // mediodía local con el día de Argentina para que getDate/getMonth/toISOString
+  // den el mismo día en el servidor (UTC) y en una PC local.
+  const ahoraAR = new Date(Date.now() - 3 * 3600000);
+  const hoy = new Date(ahoraAR.getUTCFullYear(), ahoraAR.getUTCMonth(), ahoraAR.getUTCDate(), 12);
   const inicioMes = new Date(hoy.getFullYear(), hoy.getMonth(), 1).toISOString().slice(0, 10);
   const finMes = new Date(hoy.getFullYear(), hoy.getMonth() + 1, 0).toISOString().slice(0, 10);
   const hoyIso = hoy.toISOString().slice(0, 10);
   const inicioMesAnterior = new Date(hoy.getFullYear(), hoy.getMonth() - 1, 1).toISOString().slice(0, 10);
   const finMesAnterior = new Date(hoy.getFullYear(), hoy.getMonth(), 0).toISOString().slice(0, 10);
   const inicioAno = `${hoy.getFullYear()}-01-01`;
-  const hace7dias = new Date(Date.now() - 7 * 86400000).toISOString().slice(0, 10);
+  const hace7dias = new Date(hoy.getTime() - 7 * 86400000).toISOString().slice(0, 10);
   const hace30dias = new Date(Date.now() - 30 * 86400000).toISOString();
   const hace6meses = new Date(hoy.getFullYear(), hoy.getMonth() - 6, 1).toISOString().slice(0, 10);
   const hace12meses = new Date(hoy.getFullYear(), hoy.getMonth() - 11, 1).toISOString().slice(0, 10);
-  const en7dias = new Date(Date.now() + 7 * 86400000).toISOString().slice(0, 10);
+  const en7dias = new Date(hoy.getTime() + 7 * 86400000).toISOString().slice(0, 10);
   const inicioMesAnteriorMismoMesAnoPasado = `${hoy.getFullYear() - 1}-${String(hoy.getMonth() + 1).padStart(2, "0")}-01`;
   // Antes reusaba el día final del mes ACTUAL (finMes.split("-")[2]) -- en
   // febrero de año bisiesto vs. no bisiesto (o viceversa) el mes del año
@@ -99,6 +106,9 @@ export default async function PanelV2Home() {
     { count: leadsSinAtenderInstagram },
     { count: leadsSinAtenderRodi },
     { count: leadsSinAtenderManuales },
+    // --- Proyección de caja: saldos de ventas aún sin cobrar y cuotas a cobrar (solo quien ve finanzas) ---
+    { data: ventasSinCobrar },
+    { data: cuotasACobrar },
   ] = await Promise.all([
     supabase.from("ventas").select("precio_venta, moneda_venta, estado").gte("fecha_cierre", inicioMes).lte("fecha_cierre", finMes),
     // Paginado: PostgREST corta en 1000 filas y con los vendidos acumulados el stock ya puede pasarlas.
@@ -177,6 +187,15 @@ export default async function PanelV2Home() {
     supabase.from("instagram_conversaciones").select("id", { count: "exact", head: true }).or("estado_lead.eq.nuevo,estado_lead.is.null"),
     supabase.from("rodi_conversaciones").select("id", { count: "exact", head: true }).or("estado_lead.eq.nuevo,estado_lead.is.null"),
     supabase.from("leads_manuales").select("id", { count: "exact", head: true }).or("estado_lead.eq.nuevo,estado_lead.is.null"),
+    // Antes "A cobrar" solo miraba señas Activas: al convertirse en venta, el saldo que falta cobrar
+    // desaparecía de la proyección. Se suman ventas con el pago del comprador sin confirmar y las
+    // cuotas a cobrar que vencen hasta fin de mes (incluye atrasadas). Gateado: no viaja a quien no ve plata.
+    puedeVerFinanzas
+      ? supabase.from("ventas").select("id, precio_venta, moneda_venta, tipo_cambio, pago_efectivo_ars, pago_efectivo_usd, monto_financiacion, comprador_nombre, vehiculo_marca, vehiculo_modelo, venta_senas(monto, moneda), venta_permutas(valor, moneda), cuotas_cobrar_clientes(monto, moneda)").in("estado", ["activa", "reserva", "cerrada"]).eq("comprador_pago_confirmado", false)
+      : Promise.resolve({ data: [] }),
+    puedeVerFinanzas
+      ? supabase.from("cuotas_cobrar_clientes").select("id, concepto, moneda, monto, monto_cobrado").eq("cobrada", false).lte("vencimiento", finMes)
+      : Promise.resolve({ data: [] }),
   ]);
 
   const leadsSinAtender = (leadsSinAtenderWhatsapp ?? 0) + (leadsSinAtenderInstagram ?? 0) + (leadsSinAtenderRodi ?? 0) + (leadsSinAtenderManuales ?? 0);
@@ -248,6 +267,23 @@ export default async function PanelV2Home() {
     if (ars > 0) entradas.push({ id: `${s.id}-ars`, label, monto: ars, moneda: "ARS" });
     if (usd > 0) entradas.push({ id: `${s.id}-usd`, label, monto: usd, moneda: "USD" });
     return entradas;
+  });
+  // Saldo pendiente de ventas (mismo cálculo que registrar_pago_comprador_venta): precio - señas - permutas
+  // - efectivo - financiación - cuotas (las cuotas se suman aparte, vencidas o del mes).
+  (ventasSinCobrar || []).forEach((v: any) => {
+    const moneda = v.moneda_venta as Moneda;
+    const tc = v.tipo_cambio;
+    const senas = totalEnMoneda((v.venta_senas || []).map((x: any) => ({ monto: x.monto, moneda: x.moneda as Moneda })), moneda, tc);
+    const permutas = totalEnMoneda((v.venta_permutas || []).map((x: any) => ({ monto: x.valor, moneda: x.moneda as Moneda })), moneda, tc);
+    const efectivo = totalEnMoneda([{ monto: v.pago_efectivo_ars, moneda: "ARS" }, { monto: v.pago_efectivo_usd, moneda: "USD" }], moneda, tc);
+    // Las cuotas del plan de financiación ya cubren parte del saldo (se cuentan aparte abajo, solo las que vencen).
+    const cuotasPlan = totalEnMoneda((v.cuotas_cobrar_clientes || []).map((x: any) => ({ monto: x.monto, moneda: x.moneda as Moneda })), moneda, tc);
+    const saldo = Number(v.precio_venta) - senas - permutas - efectivo - Number(v.monto_financiacion || 0) - cuotasPlan;
+    if (saldo > 0) entradasProyeccion.push({ id: `v-${v.id}`, label: `${v.vehiculo_marca || ""} ${v.vehiculo_modelo || ""}`.trim() || (v.comprador_nombre || "Venta"), monto: saldo, moneda: v.moneda_venta });
+  });
+  (cuotasACobrar || []).forEach((c: any) => {
+    const resto = Number(c.monto) - Number(c.monto_cobrado || 0);
+    if (resto > 0) entradasProyeccion.push({ id: `c-${c.id}`, label: c.concepto || "Cuota", monto: resto, moneda: c.moneda });
   });
   const aCobrarPorMoneda: Record<string, number> = {};
   entradasProyeccion.forEach((e) => { aCobrarPorMoneda[e.moneda] = (aCobrarPorMoneda[e.moneda] || 0) + e.monto; });

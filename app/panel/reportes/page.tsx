@@ -29,7 +29,13 @@ export default async function ReportesPage() {
   if (!user) redirect("/panel/login");
   if (!(await puedeVerModulo(supabase, user.id, "reportes"))) redirect("/panel");
 
-  const hoy = new Date();
+  // Hora de Argentina (UTC-3, sin horario de verano), no la del servidor: en Vercel el
+  // servidor corre en UTC y entre las 21:00 y las 24:00 de Argentina ya "era mañana" --
+  // el día, y el último día del mes, saltaban 3 horas antes. Se arma una fecha al
+  // mediodía local con el día de Argentina para que getDate/getMonth/toISOString
+  // den el mismo día en el servidor (UTC) y en una PC local.
+  const ahoraAR = new Date(Date.now() - 3 * 3600000);
+  const hoy = new Date(ahoraAR.getUTCFullYear(), ahoraAR.getUTCMonth(), ahoraAR.getUTCDate(), 12);
   const mesActual = `${hoy.getFullYear()}-${String(hoy.getMonth() + 1).padStart(2, "0")}-01`;
   const desde = mesActual;
   const hasta = new Date(hoy.getFullYear(), hoy.getMonth() + 1, 0).toISOString().slice(0, 10);
