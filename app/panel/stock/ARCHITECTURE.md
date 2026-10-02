@@ -49,9 +49,13 @@ Este fue el **piloto** de un pedido más amplio (cambiar rojo→azul en todo el 
 - Donde el acento sí se migró, el patrón `dark:text-rose-400` que acompañaba al `text-rose-600` original se cambió a `dark:text-[#5b8dff]` (azul más claro, pensado para fondo oscuro) — si agregás un acento nuevo, no dejes el modo oscuro en rojo mientras el claro queda azul.
 - El botón "Cerrar sesión" y el toast de alertas nuevas (`app/panel/layout.tsx`) se dejaron en rojo a propósito — no son acciones primarias de guardar/crear.
 
-## Vista por default: "lista", no "tabla"
+## Vista por default: "tabla" (Tabla detallada), primera en el toggle
 
-`vista` (el toggle Lista/Tarjetas/Tabla detallada) arranca en `"lista"` — pedido explícito, antes abría en `"tabla"`. Si cambiás el default de nuevo, hacelo a propósito y avisá, porque `app/panel/clientes/ARCHITECTURE.md` usa esta misma vista "lista" como referencia de diseño para otras pantallas del panel.
+`vista` (el toggle Tabla detallada / Tarjetas / Lista) arranca en `"tabla"` y ese es el primer botón -- pedido explícito del 2/10 (antes el default era `"lista"`, y antes de eso `"tabla"`). `app/panel/clientes/ARCHITECTURE.md` usa la vista "lista" como referencia de diseño para otras pantallas: ese uso no depende de cuál sea el default de Stock.
+
+## Click en un vehículo: abre el EDITOR, no una ficha rápida
+
+Tocar una fila/tarjeta/fila de tabla abre directo `NuevoVehiculoModal.tsx` en modo edición (con `soloFotos` para quien no tiene permiso de edición completa). La "ficha rápida" (`FichaRapidaModal.tsx`) **se eliminó**. La ficha completa (`FichaVehiculoModal.tsx`) se abre con el botón "Abrir ficha completa" que aparece en el pie del editor, entre "Cancelar" y "Guardar cambios" (prop opcional `onAbrirFicha`, solo en edición). Peritaje, plan de trabajo y eliminar ya vivían también en la ficha completa, no se perdió ninguna acción.
 
 ## `categoria` — lista ampliada, quedó desincronizada entre alta manual e importación masiva
 

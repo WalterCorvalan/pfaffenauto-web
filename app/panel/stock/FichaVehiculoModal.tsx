@@ -17,8 +17,8 @@ import dynamic from "next/dynamic";
 // (ver DonaMargen.tsx), no en el resto de este modal que se abre mucho más.
 const DonaMargen = dynamic(() => import("./DonaMargen"), { ssr: false });
 
-// Ficha de vehículo (Stock) -- se abre desde FichaRapidaModal.tsx ("Abrir
-// ficha completa"), no directo al click de la tarjeta. Contiene el
+// Ficha de vehículo (Stock) -- se abre desde el botón "Abrir ficha completa" del
+// editor (NuevoVehiculoModal.tsx, entre Cancelar y Guardar), no directo al click de la tarjeta. Contiene el
 // formulario como una de sus acciones ("Editar"), no lo reemplaza.
 // Del mockup de referencia (pedido del 24/9), "Clientes", "Gastos y
 // margen" y "Portal del propietario" pisaban módulos que ya existen

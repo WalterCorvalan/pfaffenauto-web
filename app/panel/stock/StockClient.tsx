@@ -13,7 +13,6 @@ import {
 import Link from "next/link";
 import NuevoVehiculoModal from "./NuevoVehiculoModal";
 import FichaVehiculoModal from "./FichaVehiculoModal";
-import FichaRapidaModal from "./FichaRapidaModal";
 import NuevoMandatoModal from "./NuevoMandatoModal";
 import TuCatalogoModal from "./TuCatalogoModal";
 import BotonPublicarTodo from "./BotonPublicarTodo";
@@ -111,12 +110,11 @@ export default function StockClient({
   const [presupuestoVehiculo, setPresupuestoVehiculo] = useState<Vehiculo | null>(null);
   const [editando, setEditando] = useState<Vehiculo | null>(null);
   const [fichaVehiculo, setFichaVehiculo] = useState<Vehiculo | null>(null);
-  const [fichaRapidaVehiculo, setFichaRapidaVehiculo] = useState<Vehiculo | null>(null);
   const [peritajeVehiculo, setPeritajeVehiculo] = useState<Vehiculo | null>(null);
   const [galeria, setGaleria] = useState<{ fotos: string[]; index: number } | null>(null);
   const [ocupadoId, setOcupadoId] = useState<string | null>(null);
   const [menuMobileAbierto, setMenuMobileAbierto] = useState(false);
-  const [vista, setVista] = useState<Vista>("lista");
+  const [vista, setVista] = useState<Vista>("tabla");
   const [orden, setOrden] = useState<Orden>("recientes");
 
   // Por default true (optimista) para no tapar los botones un instante a
@@ -407,9 +405,9 @@ export default function StockClient({
                     {(Object.keys(ORDEN_LABEL) as Orden[]).map((o) => <option key={o} value={o}>{ORDEN_LABEL[o]}</option>)}
                   </select>
                   <div className="flex items-center gap-1 bg-slate-100 dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-lg p-1">
-                    <button onClick={() => setVista("lista")} title="Vista lista" className={`flex items-center gap-1.5 px-2.5 py-1 rounded-md text-xs font-bold ${vista === "lista" ? "bg-[#0145F2] text-white" : "text-slate-500 dark:text-slate-400 hover:bg-white dark:hover:bg-white/10"}`}><List className="w-3.5 h-3.5" /> Lista</button>
-                    <button onClick={() => setVista("tarjetas")} title="Vista tarjetas" className={`flex items-center gap-1.5 px-2.5 py-1 rounded-md text-xs font-bold ${vista === "tarjetas" ? "bg-[#0145F2] text-white" : "text-slate-500 dark:text-slate-400 hover:bg-white dark:hover:bg-white/10"}`}><LayoutGrid className="w-3.5 h-3.5" /> Tarjetas</button>
                     <button onClick={() => setVista("tabla")} title="Vista tabla detallada" className={`flex items-center gap-1.5 px-2.5 py-1 rounded-md text-xs font-bold ${vista === "tabla" ? "bg-[#0145F2] text-white" : "text-slate-500 dark:text-slate-400 hover:bg-white dark:hover:bg-white/10"}`}><Table2 className="w-3.5 h-3.5" /> Tabla detallada</button>
+                    <button onClick={() => setVista("tarjetas")} title="Vista tarjetas" className={`flex items-center gap-1.5 px-2.5 py-1 rounded-md text-xs font-bold ${vista === "tarjetas" ? "bg-[#0145F2] text-white" : "text-slate-500 dark:text-slate-400 hover:bg-white dark:hover:bg-white/10"}`}><LayoutGrid className="w-3.5 h-3.5" /> Tarjetas</button>
+                    <button onClick={() => setVista("lista")} title="Vista lista" className={`flex items-center gap-1.5 px-2.5 py-1 rounded-md text-xs font-bold ${vista === "lista" ? "bg-[#0145F2] text-white" : "text-slate-500 dark:text-slate-400 hover:bg-white dark:hover:bg-white/10"}`}><List className="w-3.5 h-3.5" /> Lista</button>
                   </div>
                 </div>
               </div>
@@ -451,7 +449,7 @@ export default function StockClient({
                         const dias = diasEnStock(v.created_at);
                         const pendientes = pendientesTexto(v);
                         return (
-                          <div key={v.id} onClick={() => setFichaRapidaVehiculo(v)} className={`flex items-center gap-3 px-4 py-3 cursor-pointer hover:bg-slate-50 dark:hover:bg-white/5 border-l-4 ${bordeAntiguedad(dias, diasEstancado)}`}>
+                          <div key={v.id} onClick={() => setEditando(v)} className={`flex items-center gap-3 px-4 py-3 cursor-pointer hover:bg-slate-50 dark:hover:bg-white/5 border-l-4 ${bordeAntiguedad(dias, diasEstancado)}`}>
                             <div
                               onClick={(e) => { if (v.fotos?.length) { e.stopPropagation(); setGaleria({ fotos: v.fotos, index: 0 }); } }}
                               className={`w-14 h-14 rounded-lg bg-slate-100 dark:bg-white/5 border border-slate-200 dark:border-white/10 flex flex-col items-center justify-center shrink-0 overflow-hidden relative ${v.fotos?.length ? "cursor-zoom-in" : ""}`}
@@ -483,7 +481,7 @@ export default function StockClient({
                         const dias = diasEnStock(v.created_at);
                         const pendientes = pendientesTexto(v);
                         return (
-                          <div key={v.id} onClick={() => setFichaRapidaVehiculo(v)} className={`bg-white dark:bg-white/[0.02] border border-slate-200 dark:border-white/5 rounded-2xl overflow-hidden cursor-pointer hover:shadow-md transition-shadow border-l-4 ${bordeAntiguedad(dias, diasEstancado)}`}>
+                          <div key={v.id} onClick={() => setEditando(v)} className={`bg-white dark:bg-white/[0.02] border border-slate-200 dark:border-white/5 rounded-2xl overflow-hidden cursor-pointer hover:shadow-md transition-shadow border-l-4 ${bordeAntiguedad(dias, diasEstancado)}`}>
                             {/* Mismo criterio que la tarjeta del catálogo público (components/Stock.tsx,
                                variante "alt"): imagen más alta + detalle más compacto (menos padding,
                                menos margen entre filas) para que la foto gane espacio sin agrandar la
@@ -519,7 +517,7 @@ export default function StockClient({
                     filas={paginados}
                     keyExtractor={(v) => v.id}
                     claseFila={(v) => `border-l-4 ${bordeAntiguedad(diasEnStock(v.created_at), diasEstancado)}`}
-                    onRowClick={(v) => setFichaRapidaVehiculo(v)}
+                    onRowClick={(v) => setEditando(v)}
                     encabezadoMobile={renderVehiculoCell}
                     columnas={
                       [
@@ -584,20 +582,7 @@ export default function StockClient({
         </div>
       </div>
 
-      {(modalNuevo || editando) && <NuevoVehiculoModal perfiles={perfiles} clientes={clientes} sucursales={sucursales} miId={miId} editando={editando || undefined} soloFotos={!puedeEditarCompleto} soyAdmin={soyAdmin} onClose={() => { setModalNuevo(false); setEditando(null); }} onCreado={onCreadoVehiculo} />}
-      {fichaRapidaVehiculo && (
-        <FichaRapidaModal
-          vehiculo={fichaRapidaVehiculo}
-          miId={miId}
-          perfiles={perfiles}
-          puedeEliminar={puedeEliminar}
-          onClose={() => setFichaRapidaVehiculo(null)}
-          onAbrirCompleta={() => { setFichaVehiculo(fichaRapidaVehiculo); setFichaRapidaVehiculo(null); }}
-          onEditar={() => { setEditando(fichaRapidaVehiculo); setFichaRapidaVehiculo(null); }}
-          onAbrirPeritaje={() => { setPeritajeVehiculo(fichaRapidaVehiculo); setFichaRapidaVehiculo(null); }}
-          onEliminar={(v) => { eliminarVehiculo(v); setFichaRapidaVehiculo(null); }}
-        />
-      )}
+      {(modalNuevo || editando) && <NuevoVehiculoModal perfiles={perfiles} clientes={clientes} sucursales={sucursales} miId={miId} editando={editando || undefined} soloFotos={!puedeEditarCompleto} soyAdmin={soyAdmin} onAbrirFicha={editando ? () => { setFichaVehiculo(editando); setEditando(null); } : undefined} onClose={() => { setModalNuevo(false); setEditando(null); }} onCreado={onCreadoVehiculo} />}
       {peritajeVehiculo && <PeritajeModal vehiculo={peritajeVehiculo} miId={miId} onClose={() => setPeritajeVehiculo(null)} />}
       {fichaVehiculo && (
         <FichaVehiculoModal

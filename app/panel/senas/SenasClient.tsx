@@ -103,9 +103,9 @@ export default function SenasClient({
     // apuntando a una seña que ya no existe. Se chequea ANTES de mostrar el
     // diálogo de confirmación para poder avisar explícitamente si hay plata
     // de por medio.
-    const { data: mov } = await supabase2.from("movimientos_caja").select("id, monto, moneda").eq("sena_id", s.id).is("deleted_at", null).maybeSingle();
+    const { data: mov } = await supabase2.from("movimientos_caja").select("id, monto, cuenta:cuenta_id(moneda)").eq("sena_id", s.id).is("deleted_at", null).maybeSingle();
     const mensaje = mov
-      ? `¿Eliminar la seña${s.numero ? ` N° ${s.numero}` : ""} de ${s.apellido || s.cliente_nombre || "este cliente"}? Tiene un ingreso de ${mov.moneda} ${Number(mov.monto).toLocaleString("es-AR")} en Finanzas -- también se va a revertir. No se puede deshacer.`
+      ? `¿Eliminar la seña${s.numero ? ` N° ${s.numero}` : ""} de ${s.apellido || s.cliente_nombre || "este cliente"}? Tiene un ingreso de ${(mov as any).cuenta?.moneda || ""} ${Number(mov.monto).toLocaleString("es-AR")} en Finanzas -- también se va a revertir. No se puede deshacer.`
       : `¿Eliminar la seña${s.numero ? ` N° ${s.numero}` : ""} de ${s.apellido || s.cliente_nombre || "este cliente"}? No se puede deshacer.`;
     setConfirmDialog({
       mensaje,

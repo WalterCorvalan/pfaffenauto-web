@@ -2,7 +2,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import { supabase2 } from "@/lib/supabase/client";
-import { X, Loader2, ScanLine, ClipboardPaste, ImagePlus, Upload, CheckCircle2, AlertTriangle } from "lucide-react";
+import { X, Loader2, Maximize2, ScanLine, ClipboardPaste, ImagePlus, Upload, CheckCircle2, AlertTriangle } from "lucide-react";
 import { crearAlerta } from "@/lib/panel/alertas";
 
 export const MARCAS = ["Toyota", "Volkswagen", "Ford", "Chevrolet", "Renault", "Peugeot", "Fiat", "Honda", "Hyundai", "Nissan", "Jeep", "Citroën", "BMW", "Mercedes-Benz", "Audi", "Otra"];
@@ -42,11 +42,13 @@ interface Props {
   editando?: any;
   soloFotos?: boolean;
   soyAdmin?: boolean;
+  /** Solo en edición: abre la ficha completa del vehículo (entre Cancelar y Guardar). */
+  onAbrirFicha?: () => void;
   onClose: () => void;
   onCreado: (v: any) => void;
 }
 
-export default function NuevoVehiculoModal({ perfiles, clientes, sucursales, miId, editando, soloFotos = false, soyAdmin = false, onClose, onCreado }: Props) {
+export default function NuevoVehiculoModal({ perfiles, clientes, sucursales, miId, editando, soloFotos = false, soyAdmin = false, onAbrirFicha, onClose, onCreado }: Props) {
   // Un "editando" sin id es un prefill para alta nueva (ej: desde
   // Consignaciones, precarga propietario/marca pero crea un vehículo nuevo)
   // -- no confundir con edición real de un vehículo existente.
@@ -431,6 +433,7 @@ export default function NuevoVehiculoModal({ perfiles, clientes, sucursales, miI
               {error && <p className="text-xs font-semibold text-rose-600 bg-rose-50 dark:bg-rose-500/10 rounded-lg px-3 py-2">{error}</p>}
               <div className="pt-3 border-t border-slate-100 dark:border-white/10 flex gap-3">
                 <button type="button" onClick={onClose} className="flex-1 py-2.5 text-sm font-semibold bg-white dark:bg-white/5 border border-slate-200 dark:border-white/10 hover:bg-slate-50 dark:hover:bg-white/10 text-slate-600 dark:text-slate-300 rounded-xl transition-colors">Cancelar</button>
+                {esEdicion && onAbrirFicha && <button type="button" onClick={onAbrirFicha} disabled={guardando} className="flex-1 py-2.5 flex items-center justify-center gap-1.5 text-sm font-semibold bg-white dark:bg-white/5 border border-[#0145F2]/40 text-[#0145F2] dark:text-[#5b8dff] hover:bg-[#0145F2]/5 rounded-xl transition-colors disabled:opacity-50"><Maximize2 className="w-4 h-4" /> Abrir ficha completa</button>}
                 <button type="submit" disabled={guardando} className="flex-1 py-2.5 flex items-center justify-center gap-2 text-sm font-bold bg-[#0145F2] hover:bg-[#0138c9] text-white rounded-xl transition-colors disabled:opacity-50">
                   {guardando ? <Loader2 className="w-4 h-4 animate-spin" /> : "Guardar fotos"}
                 </button>
@@ -984,6 +987,7 @@ export default function NuevoVehiculoModal({ perfiles, clientes, sucursales, miI
 
           <div className="pt-3 border-t border-slate-100 dark:border-white/10 flex gap-3">
             <button type="button" onClick={onClose} className="flex-1 py-2.5 text-sm font-semibold bg-white dark:bg-white/5 border border-slate-200 dark:border-white/10 hover:bg-slate-50 dark:hover:bg-white/10 text-slate-600 dark:text-slate-300 rounded-xl transition-colors">Cancelar</button>
+            {esEdicion && onAbrirFicha && <button type="button" onClick={onAbrirFicha} disabled={guardando} className="flex-1 py-2.5 flex items-center justify-center gap-1.5 text-sm font-semibold bg-white dark:bg-white/5 border border-[#0145F2]/40 text-[#0145F2] dark:text-[#5b8dff] hover:bg-[#0145F2]/5 rounded-xl transition-colors disabled:opacity-50"><Maximize2 className="w-4 h-4" /> Abrir ficha completa</button>}
             <button type="submit" disabled={guardando} className="flex-1 py-2.5 flex items-center justify-center gap-2 text-sm font-bold bg-[#0145F2] hover:bg-[#0138c9] text-white rounded-xl transition-colors disabled:opacity-50">
               {guardando ? <Loader2 className="w-4 h-4 animate-spin" /> : esEdicion ? "Guardar cambios" : "Dar de alta"}
             </button>
